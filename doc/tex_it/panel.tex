@@ -1,0 +1,232 @@
+\chapter{Dati panel}
+\label{chap-panel}
+
+
+
+\section{Struttura panel}
+\label{panel-structure}
+
+I dati panel possono essere visti sotto tre dimensioni, ossia le
+variabili, le unità cross-section e i periodi temporali.  Per
+rappresentarli in un file testuale (e anche per poterli manipolare),
+queste tre dimensioni devono in qualche modo essere riportate a due.
+Questa procedura di ``appiattimento'' richiede di prendere degli
+``strati'' di dati che apparterrebbero alla terza dimensione e di
+impilarli nella dimensione verticale del file.\app{Gretl} si aspetta
+sempre di trovare dati organizzati ``per osservazione'', ossia in modo
+che ogni riga rappresenti un'osservazione (e che ogni variabile occupi
+esattamente una colonna). Alla luce di questo fatto, l'appiattimento
+dei dati panel può essere realizzato in due modi:
+\begin{itemize}
+\item Pila di dati cross section: ognuno dei blocchi di dati disposti
+  verticalmente contiene i valori per tutte le unità cross-section
+  (longitudinali) in un determinato periodo.
+\item Pila di serie storiche: ognuno dei blocchi di dati disposti
+  verticalmente contiene serie storiche per una determinata unità
+  cross-section.
+\end{itemize}
+
+È possibile usare entrambi i metodi. Il menù \textsf{Campione} di
+\app{gretl} contiene il comando ``Ristruttura panel'', che permette di
+passare dalla disposizione "pila di dati cross-section" a quella "pila
+di serie storiche" e viceversa.Quando si importano dati panel in
+\app{gretl} da un foglio di calcolo o da un file con valori separati
+da virgole, la struttura panel non verrà riconosciuta automaticamente
+(molto probabilmente i dati verranno trattati come ``non datati'').
+Per imporre un'interpretazione panel ai dati, è possibile procedere in
+due modi.
+    
+\begin{enumerate}
+\item Usando il comando dell'interfaccia grafica ``Campione, Struttura
+  dataset''. Nella prima finestra di dialogo occorre selezionare
+  ``Panel''; in quella successiva, occorre indicare se i dati sono
+  organizzati sotto forma di pila di serie storiche o di dati cross
+  section.  Nella finestra di dialogo successiva occorre indicare il
+  numero di unità cross section nel dataset, infine è possibile
+  controllare se la specificazione dei dati mostrata è corretta e
+  confermare l'operazione.
+ 	
+\item Usando il comando testuale \cmd{setobs}. Per i dati panel, la
+  sintassi del comando è \verb+setobs+ freq \verb+1:1+ struttura, dove
+  freq indica la ``dimensione dei blocchi'' di dati (ossia, il numero
+  di periodi nel caso delle pile di serie storiche, o il numero di
+  unità cross section nel caso di pila di dati cross section), mentre
+  struttura può essere uguale a \verb+--stacked-time-series+ o
+  \verb+--stacked-cross-section+. Di seguito vengono mostrati due
+  esempi: il primo per un dataset panel sotto forma di pila di serie
+  storiche con osservazioni per 20 periodi, il secondo per un dataset
+  panel sotto forma di pila di dati cross section, con 5 unità cross
+  section.
+	
+\begin{verbatim}
+	    setobs 20 1:1 --stacked-time-series
+	    setobs 5 1:1 --stacked-cross-section
+\end{verbatim}
+
+
+\end{enumerate}
+
+
+
+\section{Variabili dummy}
+\label{dummies}
+
+In uno studio panel, può nascere l'esigenza di costruire delle
+variabili dummy di uno dei seguenti tipi: (a) dummy che identificano
+ciascuna delle unità cross-section, o (b) dummy che identificano
+ciascuna delle unità temporali. Il primo tipo può essere usato per
+permettere all'intercetta della regressione di variare tra le unità
+cross-section, il secondo per permettere all'intercetta di variare tra
+i periodi.Per creare questo tipo di dummy, è possibile usare le tre
+funzioni speciali del menù \textsf{Dati, Aggiungi variabile}, o del
+comando testuale \cmd{genr}.
+\begin{enumerate}
+\item ``Dummy periodiche'' (comando testuale \cmd{genr dummy}). Questo
+  comando crea un insieme di variabili dummy che identificano i
+  periodi.  La variabile \verb+dummy_1+ avrà valore 1 in ogni riga dei
+  dati che corrisponde a un'osservazione del primo periodo, e 0
+  altrove; \verb+dummy_2+ avrà valore 1 in ogni riga dei dati che
+  corrisponde a un'osservazione del secondo, e così via.
+      
+\item ``Dummy per unità'' (comando testuale \cmd{genr unitdum}).
+  Questo comando crea un insieme di variabili dummy che identificano
+  le unità cross section.  La variabile \verb+du_1+ avrà valore 1 in
+  ogni riga dei dati che corrisponde a un'osservazione della prima
+  unità cross section, e 0 altrove; \verb+du_2+ avrà valore 1 in ogni
+  riga dei dati che corrisponde a un'osservazione della seconda unità
+  cross section, e così via.
+        
+\item ``Dummy panel'' (comando testuale \cmd{genr paneldum}). Questo
+  comando crea entrambi i tipi di dummy: sia quelle periodiche e
+  quelle relative alle unità cross section (longitudinali). Le dummy
+  longitudinali sono chiamate \verb+du_1+, \verb+du_2+ e così via,
+  mentre le dummy periodiche sono chiamate \verb+dt_1+, \verb+dt_2+,
+  ecc.
+\end{enumerate}
+
+Se un dataset panel contiene l'anno di ogni osservazione all'interno
+della variabile \verb+ANNO+, è possibile creare una dummy periodica
+per un anno particolare, ad esempio con \cmd{genr dum = (ANNO=1960)}.
+È anche possibile creare variabili dummy periodiche usando l'operatore
+modulo, \verb+%+.  Ad esempio, per creare una dummy che
+valga 1 ogni trenta osservazioni a partire dalla prima e 0 altrove,
+basta eseguire
+\begin{verbatim}
+      genr index 
+      genr dum = ((index-1)%30) = 0
+\end{verbatim}
+
+
+
+\section{Ritardi e differenze con dati panel}
+\label{panel-lagged}
+
+Se i periodi temporali sono distanziati in modo uniforme, è possibile
+usare valori ritardati delle variabili in una regressione panel, come
+anche costruire differenze prime delle variabili.Se un dataset è
+identificato correttamente come panel (si veda il paragrafo
+precedente), \app{gretl} gestirà correttamente la generazione di
+questo tipo di variabili. Ad esempio, il comando
+\verb+genr x1_1 = x1(-1)+ creerà una variabile che contiene il primo
+ritardo di \verb+x1+, laddove è disponibile, e il codice di valore
+mancante, laddove il ritardo non è disponibile.  Quanto si esegue una
+regressione che include questo tipo di variabili, il programma
+escluderà automaticamente le osservazioni mancanti.
+
+\section{Stima pooled}
+\label{pooled-est}
+
+Esiste un comando speciale di stima utilizzabile con i dati panel, il
+comando \textsf{Pooled OLS} nel menù \textsf{Modello}. Questo comando
+è disponibile solo se il dataset è riconosciuto come panel; per
+usarlo, occorre specificare un modello senza alcuna variabile dummy
+relativa alle unità cross-section. Il comando esegue una semplice
+stima OLS, trattando allo stesso modo la variazione longitudinale e
+quella temporale presente nei dati. Questo modello può essere
+appropriato o no: il menù \textsf{Test} della finestra del modello
+contiene il comando \textsf{Diagnosi panel}, che esegue un test del
+modello OLS pooled contro le principali alternative: il modello a
+effetti fissi e quello a effetti casuali.  Il modello a effetti fissi
+aggiunge una variabile dummy per tutte le unità cross section tranne
+una, permettendo così all'intercetta della regressione di variare per
+ogni unità.  Viene eseguito un test \emph{F} per la significatività
+congiunta di queste dummy: un basso p-value per questo test va contro
+l'ipotesi nulla (che il semplice modello pooled OLS sia adeguato) e a
+favore del modello a effetti fissi.Il modello a effetti casuali,
+d'altra parte, scompone la varianza dei residui in due parti: una
+specifica all'unità cross section, o ``gruppo'', e una specifica
+all'osservazione particolare (la stima può essere eseguita solo se il
+panel è abbastanza ``largo'', ossia se il numero delle unità cross
+section nel dataset è maggiore del numero dei parametri da stimare).
+La statistica LM di Breusch--Pagan testa l'ipotesi nulla (che il
+modello pooled OLS sia adeguato) contro l'alternativa a effetti
+casuali.  Può accadere che il modello pooled OLS sia rifiutato nei
+confronti di entrambe le alternative, a effetti fissi o casuali. Come
+giudicare quindi l'adeguatezza relativa dei due metodi alternativi di
+stima? Il test di Hausman (i cui risultati sono mostrati a patto che
+il modello a effetti casuali possa essere stimato) cerca di risolvere
+questo problema.  A patto che gli errori specifici di unità o di
+gruppo siano non correlati con le variabili indipendenti, lo stimatore
+a effetti casuali è più efficiente dello stimatore a effetti fissi;
+nel caso contrario lo stimatore a effetti casuali non è consistente e
+deve essergli preferito lo stimatore a effetti fissi.  L'ipotesi nulla
+per il test di Hausman è che l'errore specifico di gruppo non sia
+correlato con le variabili indipendenti (e quindi che il modello a
+effetti casuali sia preferibile). Un basso p-value per questo test
+suggerisce di rifiutare il modello a effetti casuali in favore del
+modello a effetti fissi.  Per una discussione rigorosa di questo
+argomento, si veda il capitolo 14 di Greene (2000).
+
+\section{Esempio: la Penn World Table}
+\label{PWT}
+
+La Penn World Table (homepage a
+\href{http://pwt.econ.upenn.edu/}{pwt.econ.upenn.edu}) è un ricco
+dataset panel macroeconomico, che comprende 152 paesi sull'arco
+temporale 1950--1992. I dati sono disponibili in formato \app{gretl}:
+si veda la
+\href{http://gretl.sourceforge.net/gretl_data_it.html}{pagina dei
+  dati} di \app{gretl} (i dati sono liberamente scaricabili, anche se
+non sono distribuiti nel pacchetto principale di
+\app{gretl}).L'Example \ref{examp-pwt} sottostante apre il file
+\verb+pwt56_60_89.gdt+, un sottoinsieme della Penn World Table che
+contiene dati per 120 paesi negli anni 1960--89, su 20 variabili,
+senza osservazioni mancanti (il dataset completo, anch'esso compreso
+nel pacchetto pwt per \app{gretl}, contiene molte osservazioni
+mancanti). Viene calcolata la crescita del PIL reale sul periodo
+1960--89 per ogni paese, e viene regredita sul livello del PIL reale
+dell'anno 1960, per analizzare l'ipotesi della ``convergenza'' (ossia
+di una crescita più veloce da parte dei paesi che partono da una
+situazione peggiore).
+
+\begin{script}[htbp]
+  \caption{Uso della Penn World Table}
+  \label{examp-pwt}
+
+\begin{verbatim}
+	  open pwt56_60_89.gdt 
+	  # Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
+	  genr gdp60 = RGDPL(-29) 
+	  # Calcola la crescita totale del PIL reale sui 30 anni
+	  genr gdpgro = (RGDPL - gdp60)/gdp60
+	  # Restringi il campione a una cross-section del 1989
+	  smpl --restrict YEAR=1989 
+	  # convergenza: i paesi che partono più indietro crescono di più?
+	  ols gdpgro const gdp60 
+	  # risultato: no! Proviamo una relazione inversa?
+	  genr gdp60inv = 1/gdp60 
+	  ols gdpgro const gdp60inv 
+	  # Ancora no. Proviamo a trattare l'Africa in modo speciale? 
+	  genr afdum = (CCODE = 1)
+	  genr afslope = afdum * gdp60 
+	  ols gdpgro const afdum gdp60 afslope 
+\end{verbatim}
+
+\end{script}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

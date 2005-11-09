@@ -1,0 +1,413 @@
+\chapter{Costrutti loop}
+\label{looping}
+
+
+
+\section{Introduzione}
+\label{loop-intro}
+
+Il comando \cmd{loop} apre una modalità speciale, in cui \app{gretl}
+accetta un blocco di comandi da ripetere una o più volte. Questa
+funzionalità è destinata all'uso per le simulazioni Monte Carlo, per
+il bootstrapping delle statistiche test e altre procedure di stima
+iterativa. La forma generale di un loop, o ciclo, è:
+\begin{verbatim}
+      loop espressione di controllo [ --progressive | --verbose ]
+         corpo del loop
+      endloop
+\end{verbatim}
+
+Come si spiega oltre, sono disponibili cinque tipi di espressione di
+controllo. Nel corpo del loop sono accettati i seguenti comandi:
+\cmd{genr}, \cmd{ols}, \cmd{print}, \cmd{printf}, \cmd{pvalue},
+\cmd{sim}, \cmd{smpl}, \cmd{store}, \cmd{summary}, \cmd{if},
+\cmd{else} e \cmd{endif}.In modalità predefinita, il comando
+\cmd{genr} all'interno di un loop opera in modo silenzioso (senza
+mostrare informazioni sulle variabili generate). Per ottenere
+informazioni da \cmd{genr} è possibile specificare l'opzione
+\verb+--verbose+ con \cmd{loop}.  L'opzione \verb+--progressive+ di
+\cmd{loop} modifica il comportamento dei comandi \cmd{ols},
+\cmd{print} e \cmd{store} rendendoli più comodi per l'uso in analisi
+di tipo Monte Carlo (si veda Section \ref{loop-progressive}).  Le
+sezioni che seguono descrivono le varie forme di espressioni di
+controllo e forniscono alcuni esempi di uso dei loop.  \tip{ Se
+  occorre eseguire un'analisi Monte Carlo con molte migliaia di
+  ripetizioni, possono verificarsi problemi di memoria e di tempo di
+  calcolo. Un modo per minimizzare l'uso delle risorse di sistema
+  consiste nell'eseguire lo script usando il programma a riga di
+  comando, \app{gretlcli}, redirigendo i risultati su un file.  }
+
+\section{Varianti di controllo del loop}
+\label{loop-control}
+
+
+
+\subsection{Loop limitati}
+\label{loop-count}
+
+Il modo più semplice di controllare un loop consiste nello specificare
+direttamente il numero di volte che il ciclo deve essere ripetuto, in
+un cosiddetto ``loop limitato''.  Il numero di ripetizioni può essere
+una costante numerica, ad esempio \verb+loop 1000+, o può essere letto
+da una variabile, come in \verb+loop volte+.Se il numero di
+ripetizioni è indicato da una variabile, ad es.  \verb+volte+, la
+variabile dovrebbe essere uno scalare intero: se si usa una serie,
+viene letto il primo valore, e se questo non è intero, viene troncata
+la sua parte decimale. Si noti che \verb+volte+ viene valutata solo
+una volta, quando il loop viene impostato.
+      
+
+\subsection{Loop di tipo while}
+\label{loop-while}
+
+Un secondo tipo di espressione di controllo consiste nell'uso del
+comando \cmd{while} seguito da una disuguaglianza, in cui il termine a
+sinistra è il nome di una variabile predefinita, mentre il lato destro
+può essere una costante numerica o il nome di un'altra variabile
+predefinita. Ad esempio:
+	
+\cmd{loop while differ > .00001} L'esecuzione del ciclo di comandi
+continuerà fintanto che la condizione specificata rimane vera. Se il
+termine a destra della disuguaglianza è una variabile, essa viene
+valutata all'inizio di ogni nuova iterazione del ciclo.
+
+\subsection{Loop con indice}
+\label{loop-index}
+
+Un terzo tipo di controllo di un loop utilizza la speciale variabile
+indice \verb+i+.  In questo caso, vengono specificati valori iniziali
+e finali per \verb+i+, che viene incrementata di uno ogni volta che
+viene eseguito il ciclo.  La sintassi è la seguente: \cmd{loop
+  i=1..20}.La variabile indice può essere usata all'interno del corpo
+del loop, in uno dei modi seguenti: è possibile accedere al valore di
+\verb+i+ (si veda l'Example \ref{loop-panel-script}), oppure è
+possibile usare la sua rappresentazione come stringa \verb+$i+ (si
+veda l'Example \ref{loop-string-script}).I valori iniziale e finale
+per l'indice possono essere indicati in forma numerica, o come
+riferimento a variabili predefinite.  Nell'ultimo caso, le variabili
+vengono valutate una volta, quando il loop viene impostato. Inoltre,
+con dataset di serie storiche è possibile indicare i valori iniziale e
+finale sotto forma di date, ad esempio: \cmd{loop i=1950:1..1999:4}.
+      
+
+\subsection{Loop di tipo for each}
+\label{loop-each}
+
+Anche il terzo tipo di controllo usa la variabile interna \verb+i+,
+che in questo caso può assumere valori solo all'interno di una lista
+specifica di stringhe. Il loop è eseguito una volta per ogni stringa
+presente nella lista, agevolando l'esecuzione di operazioni ripetitive
+su un gruppo di variabili. Ecco un esempio:
+      
+\begin{verbatim}
+        loop foreach i mele pere pesche
+          print "$i"
+        endloop
+\end{verbatim}
+
+Questo loop verrà eseguito tre volte, mostrando ``mele'', ``pere'' e
+``pesche'' ad ogni iterazione.  Per eseguire un loop su una lista di
+variabili contigue nel dataset, è possibile indicare i nomi della
+prima e dell'ultima variabile nella lista, separate da ``\verb+..+'',
+invece di dover indicare tutti i nomi. Ad esempio, ipotizzando di
+avere 50 variabili \verb+AK+, \verb+AL+, \dots{}, \verb+WY+, che
+contengono livelli di reddito per gli stati degli USA, per stimare una
+regressione del reddito sul tempo per ognuno degli stati, basta
+eseguire:
+       
+\begin{verbatim}
+       genr time
+       loop foreach i AL..WY
+          ols $i const time
+       endloop
+\end{verbatim}
+
+
+\subsection{Loop di tipo for}
+\label{loop-for}
+
+L'ultimo tipo di controllo usa una forma semplificata dell'istruzione
+\cmd{for} del linguaggio di programmazione C. L'espressione di
+controllo si compone di tre parti, separate da punto e virgola. La
+prima parte specifica una condizione iniziale, espressa per mezzo di
+una variabile di controllo; la seconda parte imposta una condizione di
+continuazione (espressa in funzione della stessa variabile di
+controllo), mentre la terza parte specifica un incremento (o un
+decremento) per la variabile di controllo, da applicare ogni volta che
+il ciclo viene eseguito. L'intera espressione deve essere racchiusa
+tra parentesi.  Ad esempio:\cmd{loop for (r=0.01; r<.991; r+=.01)}La
+variable \verb+r+ assumerà i valori 0.01, 0.02, \dots{}, 0.99 nel giro
+di 99 iterazioni. Si noti che a causa della precisione limitata
+dell'aritmetica in virgola mobile usata dal computer, può dover essere
+necessario usare una condizione di continuazione come quella mostrata
+sopra, \verb+r<.991+, invece della più ``naturale'' \verb+r<=.99+
+(usando numeri in doppia precisione su un processore x86, quando ci si
+aspetta che \verb+r+ valga 0.99, potrebbe in realtà valere
+0.990000000000001).Altre regole per i tre componenti dell'espressione
+di controllo: (1) la condizione iniziale deve avere forma X1 = Y1,
+dove Y1 deve essere una costante numerica o una variabile predefinita.
+Se la variabile X1 non esiste, viene creata automaticamente. (2) La
+condizione di continuazione deve avere la forma X1 operatore Y2, dove
+l'operatore può essere \verb+<+, \verb+>+, \verb+<=+ o \verb+>=+ e Y2
+deve essere una costante numerica o una variabile predefinita (nel
+caso in cui sia una variabile, essa viene valutata ad ogni esecuzione
+del ciclo). (3) L'espressione che indica l'incremento o il decremento
+deve avere la forma X1 += DELTA, oppre X1 -= DELTA, dove DELTA è una
+costante numerica o una variabile predefinita (nel secondo caso, essa
+viene valutata solo una volta, quando il loop viene impostato).
+      
+
+\section{La modalità progressiva}
+\label{loop-progressive}
+
+Usando l'opzione \verb+--progressive+ nel comando loop, l'effetto dei
+comandi \cmd{ols}, \cmd{print} e \cmd{store} è modificato nel modo
+seguente.\cmd{ols}: i risultati di ogni iterazione della regressione
+non vengono mostrati. Al contrario, una volta terminato il loop si
+ottiene un elenco dei seguenti valori: (a) il valore medio di ognuno
+dei coefficienti stimati, calcolato su tutte le iterazioni; (b) la
+deviazione standard relativa a questa media; (c) il valore medio
+dell'errore standard stimato per ogni coefficiente; (d) la deviazione
+standard degli errori standard stimati. Tutto ciò ha senso solo se
+ogni iterazione del loop contiene un elemento di casualità.
+\cmd{print}: se si usa questo comando per mostrare il valore di una
+variabile, questo non viene mostrato ad ogni iterazione. Al contrario,
+alla fine del loop si ottiene il valore medio e la deviazione standard
+della variabile, calcolata su tutte le iterazioni del ciclo. Questa
+funzione è utile per le variabili che assumono un singolo valore per
+ogni iterazione, ad esempio la somma dei quadrati degli errori di una
+regressione.  \cmd{store}: questo comando scrive i valori delle
+variabili specificate, ad ogni iterazione del loop, nel file indicato,
+ossia, tiene traccia completa del valore delle variabili in tutte le
+iterazioni. Ad esempio, si potrebbero salvare le stime dei
+coefficienti per poi studiarne la distribuzione di frequenza. È
+possibile usare il comando \cmd{store} solo una volta all'interno di
+un loop.
+
+\section{Esempi di loop}
+\label{loop-examples}
+
+
+
+\subsection{Esempio di procedura Monte Carlo}
+\label{loop-mc-example}
+
+Un semplice esempio di uso della modalità ``progressiva'' per
+realizzare una procedura Monte Carlo è mostrato in Example
+\ref{mc-loop}.
+
+\begin{script}[htbp]
+  \caption{Un semplice loop di tipo Monte Carlo}
+  \label{mc-loop}
+\begin{verbatim}
+	  nulldata 50
+	  seed 547
+	  genr x = 100 * uniform()
+	  # Apre un loop "progressivo", da ripetere 100 volte
+	  loop 100 --progressive
+	     genr u = 10 * normal()
+	     # Costruisce la variabile dipendente
+	     genr y = 10*x + u
+	     # Esegue la regressione OLS
+	     ols y const x
+	     # Definisce variabili per i coefficienti e R-quadro
+	     genr a = coeff(const)
+	     genr b = coeff(x)
+	     genr r2 = $rsq
+	     # Mostra le statistiche su queste variabili
+	     print a b r2
+	     # Salva i coefficienti in un file
+	     store coeffs.gdt a b
+	  endloop
+\end{verbatim}
+\end{script}
+
+Questo loop mostrerà le statistiche di riepilogo per le stime di "a",
+"b" e $R^2$ lungo le 100 iterazioni. Dopo aver eseguito il loop, è
+possibile aprire con \app{gretl} il file \verb+coeffs.gdt+, che
+contiene le stime dei singoli coefficienti durante tutte le
+iterazioni, ed esaminare nel dettaglio la distribuzione di frequenza
+delle stime.Il comando \cmd{nulldata} è utile per le procedure Monte
+Carlo: invece di aprire un ``vero'' dataset, \cmd{nulldata 50} (ad
+esempio) apre un finto dataset da 50 osservazioni, che contiene solo
+la costante e una variabile indice. Successivamente è possibile
+aggiungervi variabili usando il comando \cmd{genr}.Si veda il comando
+\cmd{set} per informazioni su come generare numeri pseudo-casuali in
+modo ripetibile.
+
+\subsection{Minimi quadrati iterati}
+\label{loop-ils-examples}
+
+L'Example \ref{greene-ils-script} usa un loop di tipo ``while'' per
+replicare la stima di una funzione di consumo non lineare nella forma
+	
+$C = \alpha + \beta Y^{\gamma} + \epsilon$ presentata in Greene (2000,
+Esempio 11.3).  Questo script è compreso nella distribuzione di
+\app{gretl} con il nome \verb+greene11_3.inp+; è possibile aprirlo
+usando il comando del menù ``File, Apri file comandi, File di esempio,
+Greene...''.L'opzione \verb+--print-final+ per il comando \cmd{ols} fa
+sì che non vengano mostrati i risultati della regressione per ogni
+iterazione, ma solo quelli dell'ultima iterazione del loop.
+
+\begin{script}[htbp]
+  \caption{Funzione di consumo non lineare}
+  \label{greene-ils-script}
+\begin{verbatim}
+	  open greene11_3.gdt
+	  # Esegue la regressione OLS iniziale
+	  ols C 0 Y
+	  genr essbak = $ess
+	  genr essdiff = 1
+	  genr beta = coeff(Y)
+	  genr gamma = 1
+	  # Itera OLS finché la somma dei quadrati degli errori converge
+	  loop while essdiff > .00001
+	     # Genera le variabili linearizzate
+	     genr C0 = C + gamma * beta * Y^gamma * log(Y)
+	     genr x1 = Y^gamma
+	     genr x2 = beta * Y^gamma * log(Y)
+	     # Esegue la regressione OLS 
+	     ols C0 0 x1 x2 --print-final --no-df-corr --vcv
+	     genr beta = coeff(x1)
+	     genr gamma = coeff(x2)
+	     genr ess = $ess
+	     genr essdiff = abs(ess - essbak)/essbak
+	     genr essbak = ess
+	  endloop 
+	  # Mostra le stime dei parametri usando i "nomi giusti"
+	  noecho
+	  printf "alfa = %g\n", coeff(0)
+	  printf "beta  = %g\n", beta
+	  printf "gamma = %g\n", gamma
+\end{verbatim}
+\end{script}
+
+L'Example \ref{jack-arma} (gentilmente fornito da Riccardo ``Jack''
+Lucchetti dell'Università di Ancona) mostra come sia possibile usare
+un loop per stimare un modello ARMA usando la regressione ``prodotto
+esterno del gradiente'' (OPG - ``outer product of the gradient'')
+discussa da Davidson e MacKinnon nel loro \emph{Estimation and
+  Inference in Econometrics}.
+
+\begin{script}[htbp]
+  \caption{ARMA 1, 1}
+  \label{jack-arma}
+\begin{verbatim}
+          open armaloop.gdt
+
+          genr c = 0
+          genr a = 0.1
+          genr m = 0.1
+
+          genr e = const * 0.0
+          genr de_c = e
+          genr de_a = e
+          genr de_m = e
+
+          genr crit = 1
+          loop while crit > 1.0e-9
+
+             # Errori di previsione "one-step"
+             genr e = y - c - a*y(-1) - m*e(-1)  
+
+             # Log-verosimiglianza 
+             genr loglik = -0.5 * sum(e^2)
+             print loglik
+
+             # Derivate parziali degli errori di previsione rispetto a c, a e m
+             genr de_c = -1 - m * de_c(-1) 
+             genr de_a = -y(-1) -m * de_a(-1)
+             genr de_m = -e(-1) -m * de_m(-1)
+     
+             # Derivate parziali di l rispetto a c, a e m
+             genr sc_c = -de_c * e
+             genr sc_a = -de_a * e
+             genr sc_m = -de_m * e
+     
+             # Regressione OPG
+             ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
+
+             # Aggiorna i parametri
+             genr dc = coeff(sc_c) 
+             genr c = c + dc
+             genr da = coeff(sc_a) 
+             genr a = a + da
+             genr dm = coeff(sc_m) 
+             genr m = m + dm
+
+             printf "  constant        = %.8g (gradient = %#.6g)\n",
+                                         %c, dc
+             printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
+             printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
+
+             genr crit = $T - $ess
+             print crit
+          endloop
+
+          genr se_c = stderr(sc_c)
+          genr se_a = stderr(sc_a)
+          genr se_m = stderr(sc_m)
+
+          noecho
+          print "
+          printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
+          printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
+          printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
+\end{verbatim}
+\end{script}
+
+
+\subsection{Esempi di loop con indice}
+
+
+L'Example \ref{loop-panel-script} mostra un loop con indice, in cui il
+comando \cmd{smpl} contiene la variabile indice \verb+i+.  Si supponga
+di avere un dataset di tipo panel, con osservazioni su alcuni ospedali
+per gli anni dal 1991 al 2000 (dove l'anno dell'osservazione è
+indicato da una variabile chiamata \verb+anno+).  Ad ogni iterazione,
+restringiamo il campione a un certo anno e calcoliamo statistiche di
+riepilogo sulla dimensione longitudinale (cross-section) per le
+variabili da 1 a 4.
+
+\begin{script}[htbp]
+  \caption{Statistiche panel}
+  \label{loop-panel-script}
+\begin{verbatim}
+	  open ospedali.gdt
+	  loop i=1991..2000
+	    smpl (annor=i) --restrict --replace
+	    summary 1 2 3 4
+	  endloop
+\end{verbatim}
+\end{script}
+
+
+L'Example \ref{loop-string-script} illustra un loop indicizzato per
+sostituire stringhe.
+
+\begin{script}[htbp]
+  \caption{Sostituzione di stringhe}
+  \label{loop-string-script}
+\begin{verbatim}
+	  open bea.dat
+	  loop i=1987..2001
+	    genr V = COMP$i
+	    genr TC = GOC$i - PBT$i
+	    genr C = TC - V
+	    ols PBT$i const TC V
+	  endloop
+\end{verbatim}
+
+\end{script}
+
+Alla prima iterazione, la variabile \verb+V+ verrà impostata a
+\verb+COMP1987+ e la variabile dipendente per il comando \cmd{ols}
+sarà \verb+PBT1987+.  All'iterazione successiva, \verb+V+ verrà
+ridefinita come \verb+COMP1988+ e la variabile dipendente della
+regressione sarà \verb+PBT1988+, e così via.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

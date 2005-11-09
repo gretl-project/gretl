@@ -1,0 +1,55 @@
+\documentclass{report}
+\usepackage{url,verbatim,fancyvrb,gretl}
+\usepackage{lucidabr}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage[pdftex]{graphicx}
+\usepackage[pdftex]{hyperref}
+\usepackage[pdftex]{thumbpdf}
+\usepackage[italian]{babel}
+
+\usepackage[a4paper,hmargin=1.1in,top=.8in]{geometry}
+%% \usepackage[body={6.3in,8.7in},top=.8in,left=1.1in,nohead]{geometry}
+
+\hypersetup{pdftitle={Manuale di Gretl},
+            pdfsubject={GNU Regression, Econometrics and Time Series Library},
+            pdfauthor={Allin Cottrell},
+            colorlinks=true,
+            linkcolor=blue,
+            urlcolor=red,
+            plainpages=false
+}
+
+\begin{document}
+
+\renewcommand{\refname}{Bibliografia}
+\renewcommand{\scriptname}{Esempio}
+
+\VerbatimFootnotes
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1ex}
+
+\tableofcontents
+
+\include{introduction}
+\include{starting}
+\include{modes}
+\include{datafiles}
+\include{genr}
+\include{panel}
+\include{sampling}
+\include{graphs}
+\include{nls}
+\include{looping}
+\include{functions}
+\include{vecm}
+\include{trouble}
+\include{cli}
+
+\appendix
+
+\include{appendices}
+\include{biblio}
+
+\end{document}

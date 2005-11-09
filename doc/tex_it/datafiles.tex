@@ -1,0 +1,470 @@
+\chapter{File di dati}
+\label{datafiles}
+
+
+
+\section{Formato interno}
+\label{native-format}
+
+\app{gretl} ha un formato nativo per i file di dati. La maggior parte
+degli utenti probabilmente non è interessata a leggere o scrivere
+questi file con altri programmi che non siano \app{gretl}, ma in
+alcune occasioni potrebbe essere utile farlo: per ulteriori dettagli
+si veda l'[?].
+
+\section{Altri formati dei file di dati}
+\label{other-formats}
+
+
+\app{gretl} legge anche file in altri formati:
+    
+\begin{itemize}
+\item File di testo semplice (ASCII). Possono essere importati in
+  \app{gretl} usando il comando ``File, Apri dati, Importa
+  ASCII\dots{}'' dell'interfaccia grafica o il comando \cmd{import}
+  dell'interfaccia a riga di comando. Per ulteriori dettagli su questo
+  tipo di file, si veda Section \ref{scratch}.
+\item File con valori separati da virgole (CSV).  Possono essere
+  importati in \app{gretl} usando il comando ``File, Apri dati,
+  Importa CSV\dots{}'' dell'interfaccia grafica o il comando
+  \cmd{import} dell'interfaccia a riga di comando.  Si veda anche
+  Section \ref{scratch}.
+\item Cartelle di lavoro in formato \app{MS Excel} o \app{Gnumeric}.
+  Possono essere importate in \app{gretl} con il comando ``File, Apri
+  dati, Importa''.  Section \ref{scratch} descrive i requisiti per
+  questo tipo di file.
+\item Dati in formato BOX1. Il
+  \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{Data
+    Extraction Service} del Bureau of the Census statunitense offre
+  (gratuitamente) molti dati microeconomici in questo formato.  I dati
+  BOX1 possono essere importati con il comando ``File, Apri dati,
+  Importa BOX\dots{}'', oppure con il comando \cmd{import -o}.
+\end{itemize}
+
+Quando vengono importati file in formato ASCII, CSV o BOX, \app{gretl}
+apre una finestra ``diagnostica'', che informa sullo stato della
+lettura dei dati. Se dovessero verificarsi dei problemi a causa di
+dati malformattati, questa finestra mostrerà dei suggerimenti per
+risolverli.Per venire incontro a chi vuole eseguire analisi più
+sofisticate, \app{gretl} offre la possibilità di salvare i dati nei
+formati usati dai programmi GNU R e GNU Octave (si veda l'[?]).
+Nell'interfaccia grafica, questa opzione si trova nel menù ``File'',
+mentre nel client a riga di comando occorre usare il comando
+\cmd{store} con l'opzione \cmd{-r} (per R) o \cmd{-m} (per Octave).
+
+\section{Database binari}
+\label{dbase}
+
+Per lavorare con grandi quantità di dati, \app{gretl} include una
+routine per operare su database binari. Un \emph{database}, al
+contrario di un \emph{file di dati}, non viene letto direttamente
+nello spazio di lavoro del programma, ma può contenere serie con
+frequenze e intervalli del campione diversi.  È possibile aprire un
+database, selezionare delle serie e importarle nel dataset corrente;
+le serie potranno poi essere salvate in un file di dati. È possibile
+accedere ai database attraverso il comando ``File, Consulta
+database''.Per i dettagli sul formato dei database di \app{gretl}, si
+veda l'[?].
+
+\subsection{Accesso ai database online}
+\label{online-data}
+
+Dalla versione 0.40, \app{gretl} è in grado di accedere ai database
+via internet. Alla Wake Forest University sono disponibili alcuni
+database, a cui è possibile accedere se il proprio computer è connesso
+a internet. Si veda la voce ``Accesso ai database online'' nel menù
+Aiuto di \app{gretl}.
+
+\subsection{Database RATS 4}
+\label{RATS}
+
+Grazie a Thomas Doan di \emph{Estima}, che mi ha fornito le specifiche
+del formato di database usato da RATS 4 (Regression Analysis of Time
+Series), \app{gretl} è in grado di gestire anche alcuni tipi di
+database RATS 4: per la precisione quelli che contengono dati mensili
+o trimestrali.  La mia università possiede il database RATS G7, che
+contiene dati per i sette maggiori paesi dell'OECD, e \app{gretl} lo
+legge correttamente.\tip{Per dettagli e aggiornamenti sui dati
+  disponibili, è possibile visitare la
+  \href{http://gretl.sourceforge.net/gretl_data_it.html}{pagina dei
+    dati} di \app{gretl}.}
+
+\section{Creare un file di dati da zero}
+\label{scratch}
+
+Ci sono cinque modi per compiere questa operazione.
+\begin{enumerate}
+\item Acquisire, o creare con un editor di testo, un file di testo
+  semplice ed aprirlo con il comando ``Importa ASCII'' di \app{gretl}.
+       
+\item Usare il proprio foglio di lavoro per inserire i dati, salvarlo
+  in formato con valori separati da virgole (Comma Separated Values)
+  se necessario (non dovrebbe essere necessario se il programma di
+  foglio elettronico è MS Excel o Gnumeric) e infine usare uno dei
+  comandi ``Importa'' di \app{gretl} (CSV, Excel o Gnumeric).
+       
+\item Usare il foglio elettronico contenuto in \app{gretl}.
+       
+\item Selezionare le serie di dati da un database.
+       
+\item Usare un editor di testo o altri programmi per creare un file di
+  dati nel formato interno di \app{gretl}.
+       
+\end{enumerate}
+
+Seguono alcune note a proposito dei vari metodi presentati.
+
+\subsection{Note comuni sui dati importati}
+
+
+Le opzioni 1 e 2 richiedono di usare il comando ``import'' di
+\app{gretl}.  Affinché i dati vengano letti correttamente, occorre che
+siano soddisfatte alcune condizioni:
+\begin{itemize}
+\item La prima riga deve contenere nomi di variabile validi, ossia
+  lunghi al massimo 8 caratteri (i nomi di variabile più lunghi
+  verranno troncati a 8 caratteri), che iniziano con una lettera e
+  sono composti solo da caratteri alfanumerici e dal carattere
+  trattino basso, \verb+_+.  Precisazioni per i file ASCII o CSV: se
+  il file non contiene righe con i nomi delle variabili, il programma
+  userà automaticamente i nomi \verb+v1+, \verb+v2+ e così via.
+  Inoltre, per ``prima riga'' si intende la prima riga
+  \emph{significativa}: nel caso dei file ASCII e CSV, le righe
+  bianche e quelle che iniziano con un carattere cancelletto,
+  \verb+#+, vengono ignorate. Nel caso dell'importazione di file Excel
+  e Gnumeric, viene presentata una finestra di dialogo in cui è
+  possibile indicare il numero di righe e/o di colonne del foglio di
+  lavoro da ignorare.
+	  
+\item I valori dei dati devono costituire un blocco rettangolare, con
+  una variabile per colonna e un'osservazione per riga.  Il numero
+  delle varibili (colonne dei dati) deve corrispondere al numero dei
+  nomi di variabile specificati.  Si veda anche Section
+  \ref{missing-data}. Il programma si aspetta dati di tipo numerico,
+  ma nel caso di importazione da file ASCII/CSV, c'è un supporto
+  limitato per dati di tipo carattere (stringa): se una colonna
+  contiene solo dati di tipo stringa, le stringhe sono sostituite da
+  codici numerici progressivi, e quando l'importazione si conclude,
+  viene mostrata una tabella di corrispondenza tra stringhe e codici.
+	  
+\item Date (o marcatori per le osservazioni): opzionalmente, la
+  \emph{prima} colonna può contenere stringhe, come date o etichette
+  identificative per osservazioni su dati cross-section. Queste
+  stringhe possono essere lunghe al massimo 8 caratteri (come avviene
+  per le variabili, i nomi più lunghi verranno troncati), mentre la
+  colonna che le ospita dovrebbe avere come nome \verb+obs+ o
+  \verb+date+, oppure nessun nome.Affinché una stringa sia
+  riconosciuta come data, deve rispettare uno dei formati seguenti:
+  per le serie \emph{annuali}, l'anno deve essere indicato con quattro
+  cifre; per le serie \emph{trimestrali} occorre indicare l'anno con
+  quattro cifre, seguito da un separatore (punto, due punti, o la
+  lettera \verb+Q+) e da una cifra che indica il trimestre, ad
+  esempio: \verb+1997.1+, \verb+2002:3+, \verb+1947Q1+; per le serie
+  \emph{mensili} occorre indicare l'anno con quattro cifre, seguito
+  dal punto o dai due punti, e da due cifre che indicano il mese, ad
+  esempio: \verb+1997.01+, \verb+2002:10+.
+	  
+\end{itemize}
+
+I file CSV possono usare virgole, spazi o tab come separatori fra le
+colonne: il separatore da usare può essere selezionato subito dopo
+aver eseguito il comando ``Importa CSV''. Se invece si usa ``Importa
+ASCII'' il programma cerca di riconoscere automaticamente il
+separatore usato nei dati.Se si usa un foglio elettronico per
+preparare i dati, è possibile applicare varie trasformazioni ai dati
+``grezzi'' (sommare variabili, calcolare percentuali, ecc.), ma queste
+elaborazioni possono essere compiute, forse più facilmente, anche in
+\app{gretl}, usando gli strumenti disponibili nel menù ``Dati,
+Aggiungi variabili'' e/o ``Variabile, Definisci nuova variabile''.
+
+\subsection{Importare dati e aggiungerli}
+
+
+Può essere necessario costruire un dataset di \app{gretl} a poco a
+poco, importando successivamente i dati da varie fonti. Questa
+funzionalità è fornita dai comandi del menu ``File, Aggiungi dati''.
+\app{gretl} controllerà che i nuovi dati siano compatibili con il
+dataset esistente e in caso positivo aggiungerà i nuovi dati. In
+questo modo è possibile aggiungere nuove variabili, a patto che la
+frequenza dei dati corrisponda a quella del dataset esistente. È anche
+possibile aggiungere nuove osservazioni per le serie di dati presenti
+nel dataset; in questo caso i nomi delle variabili devono
+corrispondere esattamente. Attenzione: se invece di ``Aggiungi dati''
+si sceglie ``Apri dati'', il dataset corrente verrà chiuso.
+	
+
+\subsection{Usare il foglio elettronico interno}
+
+
+È possibile creare un dataset con il comando ``File, Crea dataset'',
+scegliendo il tipo di dati (ad es. serie storiche trimestrali, dati
+cross-section), le date (o numero di osservazioni) iniziale e finale e
+il nome della prima variabile da creare nel dataset. Dopo aver
+effettuato queste scelte, viene presentato un semplice foglio
+elettronico in cui è possibile iniziare a inserire i valori. Facendo
+clic col tasto destro nella finestra del foglio elettronico, comparirà
+un menù che permette di aggiungere una nuova variabile (colonna), di
+aggiungere una nuova osservazione (aggiungere una riga in fondo al
+foglio), o di inserire un'osservazione nel punto indicato (i dati
+sottostanti saranno spostati in basso e verrà inserita una riga
+vuota).Dopo aver inserito i dati nel foglio elettronico, è possibile
+importarli nel foglio di lavoro di \app{gretl} premendo il pulsante
+``Applica le modifiche'' nella finestra del foglio elettronico.Si noti
+che il foglio elettronico di \app{gretl} è molto semplice e non
+permette di inserire funzioni o formule: per trasformare i dati è
+possibile usare i comandi disponibili nei menù ``Dati'' o
+``Variabile'' nella finestra principale di \app{gretl}.
+
+\subsection{Estrarre dati da un database}
+
+
+Un modo alternativo di creare un dataset consiste nel selezionare le
+variabili da un database.  \app{gretl} include un database di serie
+storiche macroeconomiche relative agli USA e, come visto sopra,
+consente di leggere i database RATS 4.Selezionando il comando ``File,
+Consulta database'', vengono presentate tre alternative: ``gretl'',
+``RATS 4'' e ``sul server di database''. Selezionando ``gretl'', si
+troverà il file \verb+fedstl.bin+, che contiene un'ampia raccolta di
+serie macroeconomiche USA ed è distribuito insieme al programma.Non si
+troverà nulla sotto ``RATS 4'' a meno di non aver acquistato dei dati
+RATS\footnote{Si veda \href{http://www.estima.com/}{www.estima.com}}.
+Se si possiedono dati RATS, occorre usare il comando ``File,
+Preferenze, Generali...'', selezionare la finestra Database e inserire
+il percorso completo dei propri file RATS.Se il proprio computer è
+connesso a internet è possibile accedere a vari database (alla Wake
+Forest University) scegliendo ``sul server di database''. È possibile
+consultare questi database da remoto, oppure installarli sul proprio
+computer. La finestra dei database ha una colonna che mostra, per ogni
+file, lo stato di installazione e lo stato di aggiornamento della
+copia locale rispetto alla versione disponibile alla Wake Forest.Dopo
+aver aperto un database è anche possibile importare singole serie
+nello spazio di lavoro di \app{gretl} usando il comando ``Importa''
+nella finestra del database, o nel menù che compare facendo clic col
+tasto destro, oppure trascinando la serie nella finestra principale
+del programma.
+	
+
+\subsection{Creare un file di dati nei formati interni di gretl}
+
+
+Se si hanno già molti dati archiviati in formato elettronico,
+l'approccio migliore può essere quello di creare un file di dati in
+uno dei formati interni di \app{gretl}, usando un editor di testo o
+altri programmi come \app{awk}, \app{sed} o \app{perl}. Ovviamente
+occorrerà studiare i formati di dati di \app{gretl} (il formato XML o
+quello ``tradizionale'') descritti nel chapter \ref{datafiles}.
+
+\subsection{Nota aggiuntiva}
+
+
+
+\app{gretl} non ha problemi a compattare serie di dati ad alta
+frequenza (ad es. mensile) trasformandole in una frequenza più bassa
+(ad es. trimestrale) utilizzando uno dei 4 metodi supportati (media
+dei dati nel periodo, somma dei dati nel periodo, dato di inizio
+periodo, dato di fine periodo).  Tuttavia, non c'è modo di convertire
+dati a bassa frequenza in alta frequenza, quindi se si intende
+importare serie con frequenza diversa da un database \emph{occorre
+  iniziare ad importare le serie con la frequenza minore}. In questo
+modo, il dataset di \app{gretl} verrà inizializzato con la frequenza
+più bassa e i dati a frequenza maggiore potranno essere importati in
+seguito (verranno compattati automaticamente). Se invece si inizia ad
+importare dati ad alta frequenza, non sarà possibile importare serie a
+frequenza più bassa in seguito.
+
+\section{Valori mancanti nei dati}
+\label{missing-data}
+
+I valori mancanti vengono rappresentati internamente come
+\verb+DBL_MAX+, il più alto numero in virgola mobile rappresentabile
+sul sistema (che è probabile sia almeno 10 alla trecentesima potenza,
+e non va interpretato come un valore legittimo dei dati).  Nei file di
+dati in formato interno vanno rappresentati come \verb+NA+, mentre se
+si importano dati in formato CSV \app{gretl} riconosce alcuni modi
+comuni di rappresentare i valori mancanti: $-$999, la stringa
+\verb+NA+ (in maiuscolo o minuscolo), un singolo punto, o
+semplicemente una stringa vuota. Queste ultime, ovviamente, vanno
+delimitate in modo opportuno, ad es. \verb+120.6,,5.38+ indica che il
+valore di mezzo è mancante.Per quanto riguarda il trattamento dei
+valori mancanti durante le analisi statistiche, \app{gretl} si
+comporta nel modo seguente:
+\begin{itemize}
+\item Nel calcolo delle statistiche descrittive (media, deviazione
+  standard, ecc.) con il comando \cmd{summary}, i valori mancanti sono
+  semplicemente ignorati, e la dimensione del campione viene corretta
+  adeguatamente.
+\item Nel calcolo delle regressioni, \app{gretl} per prima cosa
+  corregge l'inizio e la fine del campione, troncandolo dove occorre.
+  Ad esempio, possono esserci dei valori mancanti all'inizio del
+  campione perchè la regressione comprende serie differenziate,
+  ritardate e così via. Oppure i valori mancanti possono trovarsi alla
+  fine del campione, a causa della compresenza di serie con diverso
+  livello di aggiornamento, o di serie anticipate.
+\end{itemize}
+
+Se \app{gretl} trova dei valori mancanti ``all'interno''
+dell'intervallo del campione per una regressione (che può anche essere
+troncato), il risultato dipende dal tipo di dataset e dallo stimatore
+scelto. In molti casi, il programma eseguirà le stime saltando
+automaticamente le osservazioni che contengono valori mancanti,
+emettendo un messaggio che indica quante osservazioni sono state
+escluse. Tuttavia, ci sono procedure che non saltano automaticamente
+le osservazioni mancanti: tutti gli stimatori autoregressivi, gli
+stimatori di sistema (come il SUR) e i minimi quadrati non lineari.
+Nel caso di dati panel, l'esclusione automatica delle osservazioni
+mancanti avviene solo se il dataset risultante costituisce un panel
+"bilanciato". In tutti i casi in cui l'esclusione automatica delle
+osservazioni mancanti non è supportata, \app{gretl} emette un
+messaggio di errore e non produce stime.  In tutti i casi problematici
+dovuti a valori mancanti all'interno di un dataset, è possibile
+ricorrere alla funzione \cmd{misszero} (da usare con cautela!) del
+comando \cmd{genr}. Eseguendo \cmd{genr pippo = misszero(pluto)} è
+possibile produrre la serie \cmd{pippo}, che è identica a \cmd{pluto},
+tranne per il fatto che tutti i valori mancanti sono stati trasformati
+in zeri. In seguito, costruendo opportunamente delle variabili dummy,
+sarà possibile eliminare dalla regressione le osservazioni che
+contengono valori mancanti, pur mantenendo lo stesso intervallo del
+campione\footnote{\cmd{genr} offre anche la funzione inversa di
+  \cmd{misszero}, ossia \cmd{zeromiss}, che sostituisce in una serie i
+  valori zero con il codice per i valori mancanti.}.
+      
+
+\section{Raccolte di file di dati}
+\label{collections}
+
+
+Se si usa \app{gretl} nell'attività didattica, può essere utile creare
+una raccolta di file di dati e/o di script di comandi, personalizzati
+per il proprio corso, ad uso degli studenti.A partire dalla versione
+1.2.1 di \app{gretl}, ci sono tre modi per accedere a una raccolta di
+file:
+\begin{itemize}
+\item Per i file di dati: selezionare dal menù ``File, Apri dati, File
+  di esempio'', o fare clic sull'icona a forma di cartella sulla barra
+  degli strumenti di \app{gretl}.
+\item Per i file di comandi: selezionare dal menù ``File, Apri file
+  comandi, File di esempio''.
+\end{itemize}
+
+Quando un utente seleziona uno dei comandi visti sopra:
+\begin{itemize}
+\item Vengono elencati automaticamente i file di dati o di comandi
+  inclusi nella distribuzione di gretl (che comprendono i file
+  relativi a \emph{Introductory Econometrics} di Ramanathan e a
+  \emph{Econometric Analysis} di Greene).
+\item Il programma cerca alcune raccolte di dati opzionali, ad esempio
+  i file relativi ad alcuni libri di testo (Wooldridge, Gujarati,
+  Stock e Watson) e la Penn World Table (PWT 5.6). Si veda
+  \href{http://gretl.sourceforge.net/gretl_data_it.html}{la pagina dei
+    dati} sul sito web di gretl per ulteriori informazioni su queste
+  raccolte. Se queste raccolte vengono trovate, vengono aggiunte
+  all'elenco dei file disponibili.
+\item Il programma infine cerca delle raccolte di dati (non
+  necessariamente note) nei posti seguenti: la directory ``di
+  sistema'' dei file di dati, la directory di sistema dei file di
+  comandi, la directory utente e tutte le loro sotto-directory di
+  primo livello. Valori tipici per i nomi di queste directory sono
+  mostrati nella Table \ref{tab-colls}.)
+\end{itemize}
+
+\begin{table}[htbp]
+  \begin{center}
+    \caption{Posizioni tipiche delle raccolte di file}
+    \label{tab-colls}
+    \begin{tabular}{p{2in}ll}
+        & Linux & MS Windows\\
+        Directory di sistema per i dati & 
+        \verb+/usr/share/gretl/data+ & 
+        \verb+c:\userdata\gretl\data+\\
+        Directory di sistema per i comandi & 
+        \verb+/usr/share/gretl/scripts+ & 
+        \verb+c:\userdata\gretl\scripts+\\
+        Directory utente & \verb+/home/nomeutente/gretl+ & 
+        \verb+c:\userdata\gretl\user+\\
+      \end{tabular}
+    \end{center}
+  \end{table}
+
+  Le raccolte trovate verranno aggiunte all'elenco dei file
+  disponibili. In che formato deve essere una raccolta per essere
+  riconosciuta come tale? Una raccolta può essere costituita da un
+  gruppo di file di dati di \app{gretl} in fromato XML (con
+  l'estensione \verb+.gdt+) o da un gruppo di file di comandi (con
+  l'estensione \verb+.inp+), in entrambi i casi accompagnati da un
+  ``file principale'' o catalogo.  La distribuzione di \app{gretl}
+  contiene vari esempi di file di catalogo, ad esempio il file
+  \verb+descriptions+ nella sottodirectory \verb+misc+ della directory
+  dati di \app{gretl} e il file \verb+ps_descriptions+ nella
+  sottodirectory \verb+misc+ della directory dei comandi.  Se si
+  intende aggiungere una propria raccolta, occorrerà creare dei file
+  di catalogo, chiamati \verb+descriptions+ per i file di dati, e
+  \verb+ps_descriptions+ per i file di comandi, nelle rispettive
+  directory (ad es.  \verb+/usr/share/gretl/data/mydata+ o
+  \verb+c:\userdata\gretl\data\mydata+).La sintassi dei file di
+  catalogo (che sono file di testo) è semplice; ecco ad esempio le
+  prime righe del catalogo della raccolta di file di dati ``misc''
+  inclusa nella distribuzione di gretl:
+\begin{verbatim}
+      # Gretl: various illustrative datafiles
+      "arma","artificial data for ARMA script example"
+      "ects_nls","Nonlinear least squares example"
+      "hamilton","Prices and exchange rate, U.S. and Italy"
+\end{verbatim}
+
+
+  La prima riga, che deve iniziare con un carattere cancelletto,
+  contiene un nome breve, qui ``Gretl'', che comparirà come etichetta
+  identificativa per questa raccolta nella finestra di selezione dei
+  dati, seguito da una virgola e da una descrizione breve della
+  raccolta (opzionale).Le righe seguenti contengono due elementi,
+  separati da una virgola e racchiusi tra virgolette doppie. Il primo
+  è il nome del file di dati (escludendo l'estensione \verb+.gdt+),
+  mentre il secondo è una breve descrizione del contenuto del file di
+  dati. Dovrebbe esserci una riga come questa per ogni file di dati
+  della raccolta.I file di catalogo per le raccolte di file di comandi
+  sono molto simili a quelli appena visti, tranne per il fatto che
+  ogni riga del file contiene tre campi: il nome del file (senza
+  l'estensione \verb+.inp+), una breve descrizione del significato
+  econometrico della serie di comandi contenuti nel file e una breve
+  descrizione dei dati usati. Ecco un altro esempio: le prime righe
+  del catalogo della raccolta di file di comandi ``misc'' inclusa
+  nella distribuzione di gretl:
+\begin{verbatim}
+      # Gretl: various sample scripts
+      "arma.inp","ARMA modeling","artificial data"
+      "ects_nls","Nonlinear least squares (Davidson)","artificial data"
+      "leverage","Influential observations","artificial data"
+      "longley","Multicollinearity","US employment"
+\end{verbatim}
+
+  La procedura per creare la propria raccolta di dati e renderla
+  disponibile agli utenti è la seguente:
+  \begin{enumerate}
+  \item Assemblare i dati, nel formato più comodo.
+  \item Convertire i dati in formato \app{gretl} e salvarli come file
+    \verb+gdt+. Probabilmente il modo più semplice consiste
+    nell'importare i dati nel programma come testo semplice, CSV o
+    formato foglio elettronico (MS Excel o Gnumeric) e quindi
+    salvarli. Può essere utile aggiungere delle descrizioni delle
+    singole variabili (usando il comando ``Variabile, Modifica
+    attributi'') e delle informazioni sulle fonti dei dati (usando il
+    comando ``Dati, Modifica descrizione'').
+  \item Scrivere un file di catalogo per la raccolta, usando un editor
+    di testi.
+  \item Copiare i file di dati e il file di catalogo in una
+    sottodirectory della directory dei dati (o utente) di \app{gretl}.
+  \item Se la raccolta deve essere distribuita ad altri utenti, creare
+    un pacchetto contenente i file di dati e il catalogo, ad esempio
+    sotto forma di file zip.
+  \end{enumerate}
+
+  Se la raccolta creata non contiene dati proprietari, è possibile
+  inviarla al curatore di \app{gretl} in modo che venga resa
+  disponibile a tutti gli utenti del programma come pacchetto dati
+  opzionale.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

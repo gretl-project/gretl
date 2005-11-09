@@ -1,0 +1,195 @@
+\chapter{Introduzione}
+\label{intro}
+
+
+
+\section{Caratteristiche principali}
+\label{features}
+
+
+\app{gretl} è un pacchetto econometrico che comprende una libreria
+condivisa, un programma client a riga di comando e un'interfaccia
+grafica.
+    
+\begin{description}
+\item[Amichevole] \app{gretl} offre un'interfaccia utente intuitiva,
+  che permette di entrare subito nel vivo dell'analisi econometrica.
+  Grazie all'integrazione con i libri di testo di Ramu Ramanathan, di
+  Jeffrey Wooldridge, di James Stock e Mark Watson, il pacchetto offre
+  molti file di dati e script di comandi, commentati e pronti all'uso.
+\item[Flessibile] È possibile scegliere il proprio metodo di lavoro
+  preferito: dal punta-e-clicca interattivo alla modalità batch,
+  oppure una combinazione dei due approcci.
+\item[Multi-piattaforma] La piattaforma di sviluppo di \app{gretl} è
+  Linux, ma il programma è disponibile anche per MS Windows. È
+  possibile compilarlo per Mac OS X e AIX, e dovrebbe funzionare su
+  qualsiasi sistema operativo simile a UNIX che comprenda le librerie
+  di base richieste (si veda l'[?]).
+\item[Open source] L'intero codice sorgente di \app{gretl} è
+  disponibile per chiunque voglia criticarlo, correggerlo o
+  estenderlo. L'autore accoglie con piacere qualunque segnalazione di
+  bug.
+	    
+\item[Ragionevolmente sofisticato] \app{gretl} offre un'ampia varietà
+  di stimatori basati sui minimi quadrati, compresi i minimi quadrati
+  a due stadi e i minimi quadrati non lineari.  Offre anche la stima
+  (binomiale) logit e probit, e una struttura loop per le simulazioni
+  Monte Carlo e le procedure di stima iterativa dei modelli non
+  lineari. Anche se non include tutti gli stimatori e i test che
+  potrebbero servire a un econometrico di professione, supporta
+  l'esportazione dei dati nei formati usati da
+  \href{http://www.r-project.org/}{GNU R} e
+  \href{http://www.octave.org/}{GNU Octave} consentendo così analisi
+  più sofisticate (si veda l'[?]).
+\item[Accurato] \app{gretl} è stato testato a fondo con il dataset di
+  riferimento NIST. Si veda l'[?].
+\item[Pronto per internet] \app{gretl} può scaricare i database da un
+  server alla Wake Forest University. La versione MS Windows comprende
+  un'utilità di aggiornamento che controlla se è disponibile una nuova
+  versione del programma offrendo la possibilità di aggiornarlo
+  automaticamente.
+\item[Internazionale] \app{gretl} supporta le lingue inglese,
+  francese, italiana, spagnola e polacca, a seconda della lingua
+  impostata sul computer.
+	
+\end{description}
+
+
+
+\section{Ringraziamenti}
+\label{ack}
+
+
+Per prima cosa, grazie a Ramu Ramanathan della University of
+California, San Diego. Qualche anno fa, è stato così gentile da
+fornirmi il codice sorgente del suo programma \app{ESL}
+(``Econometrics Software Library''), che ho portato su Linux,
+collaborando con lui alla manutenzione e allo sviluppo del programma.
+Per il progetto \app{gretl} ho modificato il codice originale di
+\app{ESL} in modo profondo: sono state aggiunte nuove funzionalità
+econometriche e una nuova interfaccia grafica. Ovviamente il Professor
+Ramanathan non è responsabile di eventuali bug presenti in
+\app{gretl}.
+    
+Sono grato agli autori di molti testi di econometria per avermi dato
+il permesso di creare delle versioni \app{gretl} dei dataset contenuti
+nei loro libri. Questa lista al momento comprende William Greene,
+autore di \emph{Econometric Analysis}, Jeffrey Wooldridge
+(\emph{Introductory Econometrics: A Modern Approach}); James Stock e
+Mark Watson (\emph{Introduction to Econometrics}); Damodar Gujarati
+(\emph{Basic Econometrics}); Russell Davidson e James MacKinnon
+(\emph{Econometric Theory and Methods}).  La stima GARCH in
+\app{gretl} si basa sul codice pubblicato sul \emph{Journal of Applied
+  Econometrics} dai Prof. Fiorentini, Calzolari e Panattoni, mentre il
+codice per generare i \emph{p}-value per i test Dickey Fuller è di
+James MacKinnon. In ognuno dei casi sono grato agli autori per avermi
+permesso di usare il loro lavoro.  Per quanto riguarda
+l'internazionalizzazione di \app{gretl}, vorrei ringraziare Ignacio
+Díaz-Emparanza, Michel Robitaille, Cristian Rigamonti e Tadeusz Kufel,
+che hanno curato le traduzioni spagnola, francese, italiana e polacca.
+Ho beneficiato largamente del lavoro di molti sviluppatori di software
+open-source: per i dettagli si veda l'[?] a questo manuale. Devo
+ringraziare Richard Stallman della Free Software Foundation per il suo
+supporto al software libero in generale, ma in particolare per aver
+accettato di ``adottare'' \app{gretl} come programma GNU.Molti utenti
+di \app{gretl} hanno fornito utili suggerimenti e segnalazioni di
+errori. Un ringraziamento particolare a Ignacio Díaz-Emparanza,
+Tadeusz Kufel, Pawel Kufel, Alan Isaac, Cristian Rigamonti e Dirk
+Eddelbuettel, che cura il pacchetto \app{gretl} per Debian GNU/Linux.
+Oltre agli utili suggerimenti, Riccardo ``Jack'' Lucchetti ha fornito
+contributi sostanziali in termini di codice e conoscenza econometrica.
+
+\section{Installazione del programma}
+\label{install}
+
+
+
+\subsection{Linux}
+\label{linux-install}
+
+
+Sulla piattaforma Linux\footnote{Nota terminologica: in questo manuale
+  verrà usata l'abbreviazione ``Linux'' per riferirsi al sistema
+  operativo GNU/Linux. Ciò che viene detto a proposito di Linux vale
+  anche per altri sistemi simili a UNIX, anche se potrebbero essere
+  necessari alcuni adattamenti.}, è possibile compilare da sé il
+codice di \app{gretl}, oppure usare un pacchetto pre-compilato.
+Pacchetti già pronti sono disponibili in formato \app{rpm}
+(appropriato per sistemi Red Hat Linux e simili) e anche in formato
+\app{deb} (per Debian GNU/Linux), quest'ultimo grazie a Dirk
+Eddelbüttel. Se si preferisce compilare da sé (o si usa un sistema
+UNIX per cui non sono disponibili pacchetti pre-compilati), ecco come
+procedere:
+      
+\begin{enumerate}
+\item Scaricare il più recente pacchetto dei sorgenti di \app{gretl}
+  da \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
+        
+\item Decomprimere il pacchetto. Se si dispone delle utilità GNU,
+  usare il comando \cmd{tar -xvfz gretl-N.tar.gz} (sostituire \cmd{N}
+  con il numero di versione specifico del file scaricato).
+\item Spostarsi nella directory del codice sorgente di gretl appena
+  creata (ad es. \verb+gretl-1.1.5+).
+	  
+\item La sequenza basilare di comandi da eseguire è:
+	  
+\begin{verbatim}
+	    ./configure 
+	    make 
+	    make check
+	    make install
+\end{verbatim}
+
+  Tuttavia, potrebbe essere utile leggere per prima cosa il file
+  \verb+INSTALL+ e/o eseguire \cmd{./configure --help} per capire
+  quali opzioni di configurazione sono disponibili. Un'opzione che può
+  essere utile utilizzare è \cmd{--prefix}; il comportamento
+  predefinito è quello di installare il programma in
+  \verb+/usr/local+, ma è possibile modificarlo.  Ad esempio
+  \cmd{./configure --prefix=/usr} installerà il tutto sotto la
+  directory \verb+/usr+.  Se la procedura di configurazione si
+  interrompe perchè una delle librerie richieste non è disponibile sul
+  sistema, si veda l'[?] del manuale.
+\end{enumerate}
+
+A partire dalla versione 0.97, \app{gretl} supporta il desktop
+\app{gnome}. Per abilitare il supporto, occorre compilare il programma
+(come descritto sopra), mentre per disabilitare le funzionalità
+specifiche di \app{gnome}, occorre usare l'opzione
+\verb+--without-gnome+ con il comando \cmd{configure}.
+
+\subsection{MS Windows}
+\label{windows-install}
+
+
+La versione MS Windows è disponibile sotto forma di file eseguibile
+auto-estraente. Per installarlo, occorre scaricare
+\verb+gretl_install.exe+ ed eseguire questo programma. Verrà chiesta
+una posizione in cui installare il pacchetto (quella predefinita è
+\verb+c:\userdata\gretl+).
+
+\subsection{Aggiornamento}
+\label{updating}
+
+
+Se si ha un computer connesso a internet, all'avvio \app{gretl} può
+collegarsi al proprio sito web alla Wake Forest University per vedere
+se sono disponibili aggiornamenti al programma. In caso positivo,
+comparirà una finestra informativa. Per attivare questa funzionalità,
+occorre abilitare la casella ``Avvisa in caso di aggiornamenti di
+gretl'' nel menù ``File, Preferenze, Generali...'' di \app{gretl}.
+      
+La versione MS Windows di \app{gretl} fa un passo in più: dà anche la
+possibilità di aggiornare automaticamente il programma. È sufficiente
+seguire le indicazioni nella finestra pop-up: chiudere \app{gretl} ed
+eseguire il programma di aggiornamento ``gretl updater'' (che di
+solito si trova vicino alla voce \app{gretl} nel gruppo Programmi del
+menù Avvio di Windows). Quando il programma di aggiornamento ha
+concluso il suo funzionamento, è possibile avviare di nuovo
+\app{gretl}.
+      
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

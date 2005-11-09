@@ -1,0 +1,489 @@
+\chapter{Iniziare}
+\label{getting-started}
+
+\section{Eseguire una regressione}
+\label{starting-regression}
+
+Questa introduzione è dedicata prevalentemente alla versione grafica
+del programma; si veda il XXX e il [?]  per i dettagli sulla versione
+a riga di comando del programma, \app{gretlcli}.
+    
+È possibile fornire il nome di un file di dati da aprire come
+argomento a \app{gretl}, ma per il momento non facciamolo: avviamo
+semplicemente il programma\footnote{Per comodità, in questo manuale
+  chiamerò semplicemente \app{gretl} il client grafico del programma;
+  si noti comunque che il nome specifico del programma è differente a
+  seconda della piattaforma: su Linux si chiama \verb+gretl_x11+,
+  mentre su MS Windows è \verb+gretlw32.exe+. Sui sistemi Linux viene
+  installato anche uno script chiamato \verb+gretl+, si veda anche il
+  XXX.}. Apparirà la finestra principale (che di solito mostra le
+informazioni sul dataset, ma che ora è vuota) e vari menù, alcuni dei
+quali disabilitati.
+    
+Cosa si può fare a questo punto? Si possono sfogliare i file di dati
+(o i database) forniti, aprire un file di dati, crearne uno nuovo,
+leggere l'aiuto in linea, o aprire un file di comandi. Per ora,
+sfogliamo i file di dati forniti: dal menù File, scegliamo
+\textsf{Apri dati, File di esempio, Ramanathan\dots{}}. Si dovrebbe
+aprire una seconda finestra, che presenta un elenco dei file di dati
+forniti con il pacchetto (si veda la Figure \ref{fig-datafiles}). La
+numerazione dei file corrisponde all'organizzazione dei capitoli di
+Ramanathan (2002), che descrive l'analisi di questi dati, ma i dati
+sono utilizzabili per fare pratica anche senza avere il testo.
+    
+\begin{figure}[htbp]
+  \caption{Finestra dei file di esempio}
+  \label{fig-datafiles}
+  \begin{center}
+    \includegraphics[scale=0.5]{figures/datafiles}
+  \end{center}
+\end{figure}
+
+Selezionando una riga in questa finestra e facendo clic su ``Info'',
+si aprirà una finestra di descrizione del dataset in questione (che
+può contenere informazioni a proposito della fonte dei dati e della
+definizione delle variabili).  Se si trova un file interessante, è
+possibile aprirlo facendo clic su ``Apri'', o semplicemente facendo
+doppio clic sul nome del file. Per il momento, apriamo \verb+data3-6+.
+\tip{Nelle finestre di \app{gretl} che contengono liste, facendo
+  doppio clic su una riga viene eseguita l'azione predefinita per la
+  relativa voce nella lista: ad esempio mostrare i valori di una
+  serie, o aprire un file.  } Questo file contiene dati relativi a un
+oggetto classico dell'econometria, la funzione di consumo. La finestra
+dei dati dovrebbe ora contenere il nome del file di dati in uso,
+l'intervallo completo dei dati e quello del campione, i nomi delle
+variabili, insieme a delle loro brevi descrizioni (si veda la Figure
+\ref{fig-mainwin}).
+    
+\begin{figure}[htbp]
+  \caption{Finestra principale, con un file di esempio aperto}
+  \label{fig-mainwin}
+  \begin{center}
+    \includegraphics[scale=0.5]{figures/mainwin}
+  \end{center}
+\end{figure}
+
+OK, cosa possiamo fare ora? Le varie opzioni dei menù dovrebbero
+essere abbastanza chiare: per ora ci concentreremo sul menù Modello,
+ma una panoramica di tutti i menù della finestra principale è fornita
+più avanti (si veda Section \ref{menus}).
+    
+Il menù Modello di \app{gretl} offre varie routine di stima
+econometrica: quella più semplice e nota è rappresentata dai minimi
+quadrati ordinari (Ordinary Least Squares - OLS). Scegliendo OLS, si
+apre una finestra di dialogo che richiede una \emph{specificazione del
+  modello}; si veda la Figure \ref{fig-selector}.
+    
+\begin{figure}[htbp]
+  \caption{Specificazione del modello}
+  \label{fig-selector}
+  \begin{center}
+    \includegraphics[scale=0.5]{figures/selector}
+  \end{center}
+\end{figure}
+Per selezionare la variabile dipendente, fare clic su una variabile
+nella lista di sinistra e premere il pulsante ``Scegli'' con la
+freccia che punta verso il riquadro della variabile dipendente.
+Selezionando la casella ``Imposta come predefinito'', la variabile
+scelta verrà sempre pre-selezionata come variabile dipendente durante
+le prossime aperture della finestra di dialogo.  Trucco: facendo
+doppio clic su una variabile sulla sinistra, viene selezionata come
+variabile dipendente e impostata come scelta predefinita.  Per
+selezionare le variabili indipendenti, fare clic su di esse nella
+lista di sinistra e premere il pulsante ``Aggiungi'' (o fare clic col
+pulsante destro del mouse). È possibile selezionare più variabili
+contigue trascinando il mouse; se le variabili da selezionare non sono
+contigue, occorre fare clic tenendo prenuto il tasto \verb+Ctrl+.  Per
+eseguire una regressione con il consumo come variabile dipendente e il
+reddito come variabile indipendente, fare clic su \verb+Ct+ nel
+riquadro della variabile dipendente e aggiungere \verb+Yt+ alla lista
+delle variabili indipendenti.
+
+\section{Risultati della stima}
+\label{est-output}
+
+
+Una volta specificato un modello, apparirà una finestra che mostra i
+risultati della regressione, in un formato sufficientemente chiaro e
+standard (Figure \ref{fig-modelwin}).
+    
+\begin{figure}[htbp]
+  \caption{Finestra dei risultati del modello}
+  \label{fig-modelwin}
+  \begin{center}
+    \includegraphics[scale=0.5]{figures/modelwin}
+  \end{center}
+\end{figure}
+La finestra dei risultati contiene dei menù che consentono di
+ispezionare o mostrare graficamente i residui e i valori stimati, e di
+eseguire vari test diagnostici sul modello.Per la maggior parte dei
+modelli c'è anche un'opzione per stampare il risultato della
+regressione in formato {\LaTeX}. È possibile stampare i risultati in
+formato tabulare (simile a quello usato nella finestra dei risultati,
+ma con una migliore composizione tipografica) o sotto forma di
+equazione. Per ognuna di queste opzioni è possibile scegliere di
+vedere un'anteprima della pagina finale, o di salvare il risultato in
+un file da includere in un documento {\LaTeX}. L'anteprima richiede
+che si disponga di un sistema {\TeX} funzionante sul proprio computer.
+È possibile controllare l'aspetto del {\LaTeX} generato da \app{gretl}
+includendo un file chiamato \verb+gretlpre.tex+ nella propria
+directory utente \app{gretl} (si veda XXX). Il contenuto di tale file
+verrà usato come ``preambolo'' {\LaTeX}, il cui valore predefinito è
+il seguente:
+    
+\begin{verbatim}
+      \documentclass[11pt]{article}
+      \usepackage[latin1]{inputenc}
+      \usepackage{amsmath}
+      \usepackage{dcolumn,longtable}
+      \begin{document}
+      \thispagestyle{empty}
+\end{verbatim}
+
+Si noti che sono richiesti i pacchetti \verb+amsmath+ e
+\verb+dcolumn+.Per importare i risultati di \app{gretl}
+in un word processor, è possibile fare copia e incolla da una
+finestra dei risultati usando il menù \textsf{Modifica}
+(o il pulsante Copia, in alcuni contesti) nel programma di arrivo.
+Molte (non tutte) finestre di \app{gretl}
+offrono l'opzione di copiare in formato RTF (il ``Rich Text
+Format'' di Microsoft) o come {\LaTeX}. Se si deve incollare in
+      un word processor, RTF può essere una buona opzione, visto che
+      il formato tabulare dei risultati viene preservato\footnote{Si
+noti 
+che quando si copia come RTF in MS Windows,
+          Windows permetterà di incollare il materiale solo in applicazioni
+          che ``comprendono'' l'RTF. Quindi, sarà possibile
+          incollare in MS Word, ma non nel Blocco Note. Inoltre sembra
+          esserci un bug in alcune versioni di Windows, per cui
+          l'operazione di copia non funziona se l'applicazione ``di
+          arrivo'' (ad es. MS Word) non è stata avviata prima di
+          copiare il materiale in questione.}.
+      In alternativa, è possibile salvare i risultati come file di testo
+      semplice e importare successivamente il file nel programma di arrivo:
+      quando si conclude una sessione di \app{gretl}
+      si ha l'opportunità di salvare tutti i risultati della sessione in un
+      unico file.Si noti che nel desktop \app{gnome} e in
+      MS Windows, il menù \textsf{File} contiene un
+      comando per inviare i risultati direttamente a una stampante.
+
+    \tip{Quando si incollano o si importano dei risultati di
+	\app{gretl} sotto forma di testo semplice in
+        un word processor, conviene selezionare un carattere a spaziatura
+        fissa, in stile macchina da scrivere (ad es. il Courier), per
+        preservare il formato tabulare dei risultati. Selezionare un
+        carattere non troppo grande (Courier da 10 punti dovrebbe andare
+        bene) eviterà  che le righe dei risultati vengano spezzate nei
+        punti sbagliati.}
+
+\section{I menù della finestra principale}
+\label{menus}
+
+
+      Sulla barra dei menù della finestra principale si trovano,
+      nell'ordine da sinistra a destra, i menù File, Utilità, Sessione,
+      Dati, Campione, Variabile, Modello e Aiuto.
+    \begin{center}
+      \includegraphics[scale=0.5]{figures/menubar}
+    \end{center}
+
+\begin{itemize}
+\item \textsf{Menù file}
+  \begin{itemize}
+  \item \textsf{Apri dati}: apre un file di dati in formato interno di
+    \app{gretl} o lo importa da altri formati. Si veda il [?].
+  \item \textsf{Aggiungi dati}: Aggiunge dati al dataset in uso, da un
+    file di dati di \app{gretl}, un file con dati separati da virgole,
+    o un foglio elettronico.
+  \item \textsf{Salva dati}: salva il file di dati \app{gretl} in uso.
+              
+  \item \textsf{Salva dati come}: salva il dataset in uso in formato
+    interno, con la possibilità di usare la compressione gzip. Si veda
+    il [?].
+	    
+  \item \textsf{Esporta dati}: salva il dataset in uso in formato CSV
+    (valori separati da virgole), o nei formati di GNU R o GNU Octave.
+    Si veda il [?] e anche l'[?].
+  \item \textsf{Abbandona dataset}: cancella dalla memoria il dataset
+    in uso. Di solito questa operazione non è necessaria (visto che
+    aprendo un nuovo file di dati, quello in uso viene sostituito), ma
+    ci sono casi in cui è utile (si veda [?]).
+  \item \textsf{Consulta database}: Si veda [?] e [?].
+  \item \textsf{Crea dataset}: Apre il foglio elettronico integrato
+    per inserire dati manualmente.  Si veda [?].
+  \item \textsf{Visualizza log comandi}: Apre una finestra che
+    contiene la registrazione dei comandi eseguiti finora.
+  \item \textsf{Apri file comandi}: apre un file di comandi di
+    \app{gretl} creato dall'utente o uno dei file di esempio forntiti
+    con il programma. Se si intende creare un file di comandi da zero,
+    occorre usare il comando successivo, \textsf{Nuovo file comandi}.
+  \item \textsf{Preferenze}: imposta i percorsi per vari file a cui
+    \app{gretl} deve accedere; sceglie i caratteri usati per mostrare
+    i risultati; attiva la ``modalità esperto'' (che sopprime la
+    visualizzazione di alcuni messaggi di avvertimento); attiva o
+    sopprime il controllo per la disponibilità in rete di
+    aggiornamenti di \app{gretl}; configura o disattiva la barra degli
+    strumenti nella finestra principale.  Si veda il XXX per i
+    dettagli.
+  \item \textsf{Esci}: abbandona il programma.  Se non si è in
+    modalità esperto, verrà proposto di salvare il lavoro svolto.
+  \end{itemize}
+
+
+\item \textsf{Menù utilità}
+  \begin{itemize}
+  \item \textsf{Tavole statistiche}: cerca i valori critici per alcune
+    distribuzioni di uso comune (normale o Gaussiana, \emph{t},
+    chi-quadro, \emph{F} e Durbin--Watson).
+  \item \textsf{Calcola p-value}: apre una finestra che mostra i
+    p-value per le distribuzioni Gaussiana, \emph{t}, chi-quadro,
+    \emph{F} o gamma. Si veda anche il comando \cmd{pvalue} nel XXX.
+  \item \textsf{Calcola test}: calcola le statistiche test e i p-value
+    per una serie di test di ipotesi di uso comune (media della
+    popolazione, varianza e proporzione, differenza delle medie o
+    delle varianze e proporzioni). Occorre inserire nella finestra di
+    dialogo le necessarie statistiche del campione. Alcuni semplici
+    test richiedono che sia indicata una serie di dati, invece che
+    delle statistiche del campione: si veda ``Differenza delle medie''
+    e ``Differenza delle varianze'' nel menù Dati.
+  \item \textsf{Terminale di Gretl}: apre una finestra di
+    ``terminale'' in cui è possibile digitare dei comandi, come se si
+    stesse usando la versione a riga di comando \app{gretlcli}, invece
+    di quella con interfaccia grafica.
+	    
+  \item \textsf{Avvia Gnu R}: Avvia \app{R} (se è presente sul
+    sistema) e vi carica una copia del dataset in uso in \app{gretl}.
+    Si veda l'[?].
+	    
+  \item \textsf{Test NIST}: controlla l'accuratezza numerica di
+    \app{gretl} usando i test di riferimento per la regressione
+    lineare adottati dal National Institute of Standards and
+    Technology statunitense.
+  \end{itemize}
+
+
+\item \textsf{Menù sessione}
+  \begin{itemize}
+  \item \textsf{Visualizza icone}: apre una finestra che mostra la
+    sessione corrente di \app{gretl} sotto forma di un insieme di
+    icone. Per i dettagli si veda [?].
+	    
+  \item \textsf{Apri}: apre un file di sessione salvato in precedenza.
+	    
+  \item \textsf{Salva}: salva la sessione corrente in un file.
+	    
+  \item \textsf{Salva come}: salva la sessione corrente in un file,
+    scegliendone il nome.
+	    
+  \end{itemize}
+
+
+\item \textsf{Menù Dati}
+  \begin{itemize}
+  \item \textsf{Mostra valori}: apre una finestra con un elenco (non
+    modificabile) dei valori delle variabili (tutte o un sottoinsieme
+    di esse).
+  \item \textsf{Modifica valori}: apre una finestra di foglio
+    elettronico, con cui è possibile modificare valori, aggiungere
+    nuove variabili, o estendere il numero delle osservazioni.
+	      
+  \item \textsf{Ordina variabili}: riordina l'elenco delle variabili
+    nella finestra principale, seguendo l'ordine numerico dell'ID o
+    quello alfabetico del nome.
+	      
+  \item \textsf{Grafico delle variabili}: apre una finestra di dialogo
+    che permette di scegliere tra un grafico temporale, un grafico a
+    dispersione X--Y, un grafico X--Y a impulsi (barre verticali), un
+    grafico X--Y ``con fattore'' (ossia, con i punti colorati in modo
+    diverso a seconda del valore di una data variabile dummy), un
+    boxplot e un grafico 3D.  Si veda il [?] per i dettagli.
+  \item \textsf{Grafici multipli a dispersione}: mostra una raccolta
+    di grafici (al massimo sei), con una variabile sull'asse \emph{y},
+    rappresentata rispetto a diverse variabili sull'asse \emph{x},
+    oppure con diverse variabili sull'asse \emph{y} rappresentate
+    rispetto a una data variabile sull'asse \emph{x}. Può essere utile
+    per l'analisi esplorativa dei dati.
+  \item \textsf{Visualizza descrizione}, \textsf{Modifica
+      descrizione}: ``Visualizza descrizione'' mostra le informazioni
+    disponibili per il file di dati in uso; ``Modifica descrizione''
+    permette di modificarle (se si ha il permesso di farlo).
+  \item \textsf{Visualizza informazioni complete}: apre una finestra
+    con una descrizione completa del dataset in uso, che include le
+    informazioni di riepilogo e quelle specifiche di ogni variabile.
+  \item \textsf{Statistiche descrittive}: mostra un insieme abbastanza
+    ricco di statistiche descrittive per tutte le variabili del
+    dataset, o per le variabili selezionate.
+  \item \textsf{Matrice di correlazione}: mostra i coefficienti di
+    correlazione per tutte le coppie di variabili nel dataset, o per
+    quelle selezionate.
+  \item \textsf{Componenti principali}: attivo solo se si selezionano
+    due o più variabili; produce un'analisi delle componenti
+    principali delle variabili selezionate.
+          
+  \item \textsf{Distanze di Mahalonobis}: attivo solo se si
+    selezionano due o più variabili; calcola la distanza di
+    Mahalonobis per ogni osservazione dal centroide dell'insieme di
+    variabili selezionate.
+          
+  \item \textsf{Differenza delle medie}: calcola la statistica
+    \emph{t} per l'ipotesi nulla che le medie della popolazione siano
+    uguali per due variabili scelte, mostrando il p-value.
+  \item \textsf{Differenza delle varianze}: calcola la statistica
+    \emph{F} per l'ipotesi nulla che le varianze della popolazione
+    siano uguali per due variabili scelte, mostrando il p-value.
+  \item \textsf{Aggiungi variabili}: mostra un menù di trasformazioni
+    standard per le variabili (logaritmi, ritardi, quadrati, ecc) che
+    è possibile aggiungere al dataset. Dà anche l'opzione di
+    aggiungere variabili casuali e (per i dataset di serie storiche)
+    variabili dummy stagionali (ad es. variabily dummy trimestrali per
+    dati trimestrali). Include la possibilità di impostare il seme del
+    generatore di numeri pseudo-casuali.
+  \item \textsf{Aggiorna finestra}: a volte i comandi di \app{gretl}
+    generano nuove variabili. Questo comando sincronizza l'elenco
+    delle variabili visualizzato nella finestra principale con
+    l'elenco mantenuto internamente dal programma.
+  \item \textsf{Aggiungi osservazioni}: Mostra una finestra di dialogo
+    in cui è possibile scegliere un numero di osservazioni da
+    aggiungere alla fine del dataset attuale; da usare per le
+    previsioni.
+           
+  \item \textsf{Rimuove le osservazioni aggiuntive}: attivo solo se
+    sono state aggiunte automaticamente delle osservazioni durante la
+    procedura di previsione; cancella queste osservazioni aggiuntive.
+           
+  \end{itemize}
+
+
+\item \textsf{Menù campione}
+  \begin{itemize}
+  \item \textsf{Imposta intervallo}: seleziona punti di partenza e
+    arrivo diversi per il campione in uso, all'interno dell'intervallo
+    di dati disponibili.
+  \item \textsf{Ripristina campione completo}: si spiega da sé.
+  \item \textsf{Struttura dataset}: permette di modificare
+    l'interpretazione strutturale del dataset in uso. Ad esempio, se i
+    dati sono stati importati come cross section, è possibile fare in
+    modo che il programma li interpreti come serie storiche o come
+    panel. Si veda anche il [?].
+  \item \textsf{Compatta dati}: per serie storiche con frequenza
+    superiore a quella annuale, permette di diminuire la frequenza dei
+    dati, usando uno dei quattro metodi di compattamento disponibili
+    (media, somma, inizio del periodo, fine del periodo).
+  \item \textsf{Imposta in base a dummy}: data una variabile dummy
+    (indicatore) con valori 0 o 1, vengono scartate dal campione tutte
+    le osservazioni per cui la variabile dummy vale 0.
+  \item \textsf{Imposta in base a condizione}: simile al precedente,
+    tranne per il fatto che non si ha bisogno di una variabile
+    predefinita: basta fornire una condizione Booleana (ad es.
+    \verb+sqft > 1400+) e il campione sarà ristretto alle osservazioni
+    che soddisfano la condizione. Si veda la voce \cmd{genr} nel XXX
+    per maggiori dettagli sugli operatori Booleani che possono essere
+    usati.
+  \item \textsf{Scarta valori mancanti}: scarta dal campione corrente
+    tutte le osservazioni per cui almeno una variabile ha un valore
+    mancante (si veda [?]).
+	    
+  \item \textsf{Conta valori mancanti}: produce un rapporto sulle
+    osservazioni per cui mancano dei valori. Può essere utile durante
+    l'esame di un dataset panel, dove è abbastanza comune incontrare
+    valori mancanti.
+  \item \textsf{Imposta codice valori mancanti}: imposta il valore
+    numerico che sarà interpretato come ``mancante'' o ``non
+    disponibile''.
+  \item \textsf{Aggiungi marcatori}: richiede di specificare un file
+    di testo che contiene ``marcatori per le osservazioni'' (brevi
+    stringhe che identificano singole osservazioni) e aggiunge queste
+    informazioni al dataset. Si veda il [?].
+  \item \textsf{Rimuovi marcatori}: attivo solo se il dataset contiene
+    marcatori per le osservazioni; rimuove questi marcatori.
+  \item \textsf{Ristruttura panel}: permette di convertire un dataset
+    panel da una struttura "pila di dati cross-section" a una "pila di
+    serie storiche", o viceversa. A differenza del comando
+    \textsf{Struttura dataset}, questo modifica effettivamente
+    l'organizzazione dei dati.
+	    
+  \item \textsf{Trasponi dati}: trasforma ogni osservazione in una
+    variabile e viceversa (o, in altre parole, ogni riga della matrice
+    dei dati diventa una colonna della nuova matrice dei dati); può
+    essere utile per ``raddrizzare'' dati importati in modo errato.
+           
+  \end{itemize}
+
+
+\item \textsf{Menù variabile}: la maggior parte di questi comandi
+  operano su una sola variabile alla volta. La variabile ``attiva''
+  viene impostata facendo clic sulla riga che la contiene nella
+  finestra principale. La maggior parte delle opzioni si spiegano da
+  sole.  Si noti che è possibile rinominare una variabile e modificare
+  la sua etichetta descrittiva usando ``Modifica attributi''. È anche
+  possibile definire una nuova variabile attraverso una formula (che
+  può essere una funzione di una o più variabili esistenti). Per la
+  sintassi di queste formule, si veda la sezione ``Definisci nuova
+  variabile'' della guida in linea o la voce \cmd{genr}. Un semplice
+  esempio:
+	  
+\begin{verbatim}
+	    pippo = x1 * x2
+\end{verbatim}
+
+  creerà la nuova variabile \verb+pippo+ come prodotto delle variabili
+  esistenti \verb+x1+ e \verb+x2+.  In queste formule, le variabili
+  devono essere indicate per nome, non per numero identificativo.
+\item \textsf{Menù modello}: per i dettagli sui vari stimatori offerti
+  in questo menù, si consulti XXX oppure il capitolo ``Stima'' della
+  guida in linea. Si veda anche il [?] a proposito della stima di
+  modelli non lineari.
+\item \textsf{Menù Aiuto}: usatelo!  Fornisce dettagli sulla sintassi
+  dei comandi e delle finestre di dialogo.
+\end{itemize}
+
+
+
+\section{La barra degli strumenti di gretl}
+\label{toolbar}
+
+In basso a sinistra nella finestra principale si trova la barra
+      degli strumenti.\begin{center}
+        \includegraphics[scale=0.5]{figures/toolbar}
+      \end{center}
+Le icone sulla barra hanno il seguente significato, nell'ordine:
+\begin{enumerate}
+\item Avvia una calcolatrice. Una funzione comoda quando si ha bisogno
+  di usare velocemente una calcolatrice mentre si lavora in
+  \app{gretl}. Il programma avviato in modo predefinito è
+  \verb+calc.exe+ in MS Windows, o \verb+xcalc+ nel sistema X window.
+  È possibile cambiare il programma nel menà \textsf{File, Preferenze,
+    Generali}, sezione ``Programmi''.
+          
+\item Inizia un nuovo script. Apre una finestra in cui è possibile
+  digitare una serie di comandi da eseguire in modalità batch.
+\item Apri il terminale di gretl. Una scorciatoia per il comando del
+  menù ``Terminale di Gretl'' (si veda Section \ref{menus}).
+\item Apri la finestra di sessione di gretl.
+\item Apri il sito web di \app{gretl} nel proprio browser (funziona
+  solo se si è connessi a internet e si dispone di un browser).
+\item Apri l'ultima versione del manuale di gretl in formato PDF.
+  Richiede una connessione a internet e un browser in grado di gestire
+  i file PDF.
+\item Apri la guida in linea per la sintassi dei comandi (che mostra i
+  dettagli di tutti i comandi disponibili).
+	  
+\item Apri la finestra di dialogo per costruire un grafico.
+	  
+\item Apri la finestra di dialogo per stimare un modello con i minimi
+  quadrati ordinari.
+\item Apri una finestra che elenca i dataset relativi al libro
+  \emph{Introductory Econometrics} di Ramanathan (e anche i dataset
+  del libro di Jeffrey Wooldridge, se sono installati).
+\end{enumerate}
+
+
+      Se non si desidera visualizzare la barra degli strumenti, è possibile
+      disabilitarla nel menù \textsf{File, Preferenze, Generali},
+      de-selezionando la casella ``Mostra la barra degli strumenti di gretl''.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

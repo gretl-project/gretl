@@ -1,0 +1,229 @@
+\chapter{Funzioni speciali in genr}
+\label{chap-genr}
+
+
+
+\section{Introduzione}
+\label{genr-intro}
+
+Il comando \verb+genr+ offre un modo flessibile per definire nuove
+variabili. Il comando è documentato nel \emph{XXX}, mentre questo
+capitolo offre una discussione più approfondita di alcune delle
+funzioni speciali disponibili con \verb+genr+ e di alcune
+particolarità del comando.
+    
+
+\section{Filtri per serie storiche}
+\label{genr-filter}
+
+Un tipo di funzione specializzata di \verb+genr+ è il filtro per le
+serie storiche. Ne esistono di due tipi al momento: il filtro di
+Hodrick--Prescott e quello passa banda di Baxter--King.  Sono
+utilizzabili rispettivamente con le funzioni \verb+hpfilt()+ e
+\verb+bkfilt()+, che richiedono come argomento il nome della variabile
+da processare.
+    
+
+\subsection{Il filtro di Hodrick--Prescott}
+\label{hodrick-prescott}
+
+Da scrivere.
+
+\subsection{Il filtro di Baxter e King}
+\label{baxter-king}
+
+Si consideri la rappresentazione spettrale di una serie storica $y_t$:
+%	
+\[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
+%
+se volessimo estrarre solo la componente di \emph{y\ensuremath{_{t}}}
+che si trova tra le frequenze $\underline{\omega}$ e
+$\overline{\omega}$ potremmo applicare un filtro passa banda:
+	
+\[ c^*_t = \int_{-\pi}^{\pi} F^*(\omega) e^{i\omega} \mathrm{d}
+Z(\omega) \] dove $F^*(\omega) = 1$ per $\underline{\omega} < |\omega|
+< \overline{\omega}$ e 0 altrove. Ciò implicherebbe, nel dominio
+temporale, applicare alla serie un filtro con un numero infinito di
+coefficienti, cosa non desiderabile. Il filtro passa banda di Baxter e
+King applica a \emph{y\ensuremath{_{t}}} un polinomio finito
+nell'operatore di ritardo \emph{A}(\emph{L}):
+%	
+\[ c_t = A(L) y_t \]
+%
+dove \emph{A}(\emph{L}) è definito come
+%	
+\[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
+
+I coefficienti \emph{a\ensuremath{_{i}}} sono scelti in modo che
+$F(\omega) = A(e^{i\omega})A(e^{-i\omega})$ sia la migliore
+approssimazione di $F^*(\omega)$ per un dato \emph{k}. Chiaramente,
+maggiore è \emph{k}, migliore è l'approssimazione, ma poiché occorre
+scartare 2\emph{k} osservazioni, di solito si cerca un compromesso.
+Inoltre, il filtro ha altre proprietà teoriche interessanti, tra cui
+quella che \emph{A}(1) = 0, quindi una serie con una sola radice
+unitaria è resa stazionaria con l'applicazione del filtro.In pratica,
+il filtro è usato di solito con dati mensili o trimestrali per
+estrarne la componente di ``ciclo economico'', ossia la componente tra
+6 e 36 trimestri. I valori usuali per \emph{k} sono 8 o 12 (o forse di
+più per serie mensili).  I valori predefiniti per i limiti di
+frequenza sono 8 e 32, mentre il valore predefinito per l'ordine di
+approssimazione, \emph{k}, è 8.  È possibile impostare questi valori
+usando il comando \cmd{set}.  La parola chiave per impostare i limiti
+di frequenza è \verb+bkbp_limits+, mentre quella per \emph{k} è
+\verb+bkbp_k+.  Quindi ad esempio, se si stanno usando dati mensili e
+si vuole impostare i limiti di frequenza tra 18 e 96, e \emph{k} a 24,
+si può eseguire
+\begin{verbatim}
+	set bkbp_limits 18 96
+	set bkbp_k 24
+\end{verbatim}
+
+Questi valori resteranno in vigore per le chiamate alla funzione
+\verb+bkfilt+ finché non saranno modificati da un altro uso di
+\verb+set+.
+      
+
+\section{Ricampionamento e bootstrapping}
+\label{genr-resample}
+
+Un'altra funzione particolare è il ricampionamento, con reimmissione,
+di una serie. Da scrivere.
+    
+
+\section{Gestione dei valori mancanti}
+\label{genr-missing}
+
+Sono disponibili quattro funzioni speciali per gestire i valori
+mancanti.  La funzione booleana \verb+missing()+ richiede come unico
+argomento il nome di una variabile e produce una serie con valore 1
+per ogni osservazione in cui la variabile indicata ha un valore
+mancante, 0 altrove (ossia dove la variabile indicata ha un valore
+valido). La funzione \verb+ok()+ è il complemento di \verb+missing+,
+ossia una scorciatoia per \verb+!missing+ (dove \verb+!+ è l'operatore
+booleano NOT).  Ad esempio, è possibile contare i valori mancanti
+della variabile \verb+x+ usando
+\begin{verbatim}
+      genr nmanc_x = sum(missing(x))
+\end{verbatim}
+
+La funzione \verb+zeromiss()+, che richiede anch'essa come unico
+argomento il nome di una serie, produce una serie in cui tutti i
+valori zero sono trasformati in valori mancanti. Occorre usarla con
+attenzione (di solito non bisogna confondere valori mancanti col
+valore zero), ma può essere utile in alcuni casi: ad esempio, è
+possibile determinare la prima osservazione valida di una variabile
+\verb+x+ usando
+\begin{verbatim}
+        genr time
+        genr x0 = min(zeromiss(time * ok(x)))
+\end{verbatim}
+
+
+La funzione \verb+misszero()+ compie l'operazione opposta di
+\verb+zeromiss+, ossia converte tutti i valori mancanti in zero.  Può
+essere utile chiarire la propagazione dei valori mancanti all'interno
+delle formule di \verb+genr+. La regola generale è che nelle
+operazioni aritmetiche che coinvolgono due variabili, se una delle
+variabili ha un valore mancante in corrispondenza dell'osservazione
+\emph{t}, anche la serie risultante avrà un valore mancante in
+\emph{t}. L'unica eccezione a questa regola è la moltiplicazione per
+zero: zero moltiplicato per un valore mancante produce sempre zero
+(visto che matematicamente il risultato è zero a prescindere dal
+valore dell'altro fattore).
+    
+
+\section{Recupero di variabili interne}
+\label{genr-internal}
+
+Il comando \verb+genr+ fornisce un modo per recuperare vari valori
+calcolati dal programma nel corso della stima dei modelli o della
+verifica di ipotesi. Le variabili che possono essere richiamate in
+questo modo sono elencate nella XXX; qui ci occupiamo in particolare
+delle variabili speciali \verb+$test+ e \verb+$pvalue+.Queste
+variabili contengono, rispettivamente, il valore dell'ultima
+statistica test calcolata durante l'ultimo uso esplicito di un comando
+di test e il p-value per quella statistica test. Se non è stato
+eseguito alcun comando di test, le variabili contengono il codice di
+valore mancante. I ``comandi espliciti di test'' che funzionano in
+questo modo sono i seguenti: \cmd{add} (test congiunto per la
+significatività di variabili aggiunte a un modello); \cmd{adf} (test
+di Dickey--Fuller aumentato, si veda oltre); \cmd{arch} (test per
+ARCH); \cmd{chow} (test Chow per break strutturale); \cmd{coeffsum}
+(test per la somma dei coefficienti specificati); \cmd{cusum} (la
+statistica \emph{t} di Harvey--Collier); \cmd{kpss} (il test di
+stazionarietà KPSS, p-value non disponibile); \cmd{lmtest} (si veda
+oltre); \cmd{meantest} (test per la differenza delle medie);
+\cmd{omit} (test congiunto per la significatività delle variabili
+omesse da un modello); \cmd{reset} (test RESET di Ramsey);
+\cmd{restrict} (vincolo lineare generale); \cmd{runs} (test delle
+successioni per la casualità); \cmd{testuhat} (test per la normalità
+dei residui) e \cmd{vartest} (test per la differenza delle varianze).
+Nella maggior parte dei casi, vengono salvati valori sia in
+\verb+$test+ che in \verb+$pvalue+; l'eccezione è il test KPSS, per
+cui non è disponibile il p-value.
+    
+Un punto da tenere in considerazione a questo proposito è che le
+variabili interne \verb+$test+ e \verb+$pvalue+ vengono sovrascritte
+ogni volta che viene eseguito uno dei test elencati sopra. Se si
+intende referenziare questi valori durante una sequenza di comandi
+\app{gretl}, occorre farlo nel momento giusto.
+    
+Una questione correlata è che alcuni dei comandi di test generano di
+solito più di una statistica test e più di un p-value: in questi casi
+vengono salvati solo gli ultimi valori. Per controllare in modo
+preciso quali valori vengono recuperati da \verb+$test+ e
+\verb+$pvalue+ occorre formulare il comando di test in modo che il
+risultato non sia ambiguo. Questa nota vale in particolare per i
+comandi \verb+adf+ e \verb+lmtest+.
+\begin{itemize}
+\item Di solito, il comando \cmd{adf} genera tre varianti del test
+  Dickey--Fuller: una basata su una regressione che include una
+  costante, una che include costante e trend lineare, e una che
+  include costante e trend quadratico. Se si intende estrarre valori
+  da \verb+$test+ o \verb+$pvalue+ dopo aver usato questo comando, è
+  possibile selezionare la variante per cui verranno salvati i valori,
+  usando una delle opzioni \verb+--nc+, \verb+--c+, \verb+--ct+ o
+  \verb+--ctt+ con il comando \verb+adf+.
+	
+\item Di solito, il comando \cmd{lmtest} (che deve seguire una
+  regressione OLS) esegue vari test diagnostici sulla regressione in
+  questione. Per controllare cosa viene salvato in \verb+$test+ e
+  \verb+$pvalue+ occorre limitare il test usando una delle opzioni
+  \verb+--logs+, \verb+--autocorr+, \verb+--squares+ o \verb+--white+.
+	
+\end{itemize}
+
+Un aiuto all'uso dei valori immagazzinati in \verb+$test+ e
+\verb+$pvalue+ è dato dal fatto che il tipo di test a cui si
+riferiscono questi valori viene scritto nell'etichetta descrittiva
+della variabile generata. Per controllare di aver recuperato il valore
+corretto, è possibile leggere l'etichetta con il comando \cmd{label}
+(il cui unico argomento è il nome della variabile). La seguente
+sessione interattiva illustra la procedura.
+    
+\begin{verbatim}
+      ? adf 4 x1 --c
+
+      Test Dickey-Fuller aumentati, ordine 4, per x1
+      ampiezza campionaria 59
+      ipotesi nulla di radice unitaria: a = 1
+
+        test con costante
+        modello: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
+        valore stimato di (a - 1): -0.216889
+        statistica test: t = -1.83491
+        p-value asintotico 0.3638
+
+      P-value basati su MacKinnon (JAE, 1996)
+      ? genr pv = $pvalue
+      Generato lo scalare pv (ID 13) = 0.363844
+      ? label pv    
+      pv=Dickey-Fuller pvalue (scalar)
+\end{verbatim}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

@@ -1,0 +1,278 @@
+\chapter{Minimi quadrati non lineari}
+\label{chap-nls}
+
+
+\section{Introduzione ed esempi}
+\label{nls-intro}
+
+Dalla versione 1.0.9, \app{gretl} supporta i minimi quadrati non
+lineari (NLS - nonlinear least squares), usando una variante
+dell'algoritmo Levenberg--Marquandt.  L'utente deve fornire la
+specificazione della funzione di regressione, e, prima ancora di fare
+questo, occorre ``dichiarare'' i parametri da stimare e fornire dei
+valori iniziali. È anche possibile indicare analiticamente delle
+derivate della funzione di regressione rispetto a ognuno dei
+parametri. La tolleranza usata per fermare la procedura iterativa di
+stima può essere impostata con il comando \cmd{genr}.La sintassi per
+la specificazione della funzione da stimare è la stessa usata per il
+comando \cmd{genr}. Ecco due esempi, che includono anche le derivate.
+
+\begin{script}[htbp]
+  \caption{Funzione di consumo da Greene}
+  \label{nls-cons}
+\begin{verbatim}
+	  nls C = alfa + beta * Y^gamma
+	  deriv alfa = 1
+	  deriv beta = Y^gamma
+	  deriv gamma = beta * Y^gamma * log(Y)
+	  end nls
+\end{verbatim}
+\end{script}
+
+\begin{script}[htbp]
+  \caption{Funzione non lineare da Russell Davidson}
+  \label{nls-ects}
+\begin{verbatim}
+	  nls y = alfa + beta * x1 + (1/beta) * x2
+	  deriv alfa = 1
+	  deriv beta = x1 - x2/(beta*beta)
+	  end nls
+\end{verbatim}
+\end{script}
+
+Si notino i comandi \cmd{nls} (che indica la funzione di regressione),
+\cmd{deriv} (che indica la specificazione di una derivata) e \cmd{end
+  nls}, che conclude la specificazione e avvia la stima. Se si
+aggiunge l'opzione \cmd{--vcv} all'ultima riga, verrà mostrata la
+matrice di covarianza delle stime dei parametri.
+
+\section{Inizializzazione dei parametri}
+\label{nls-param}
+
+Occorre definire dei valori iniziali per i parametri della funzione di
+regressione prima di eseguire il comando \cmd{nls}. Per farlo, è
+possibile usare il comando \cmd{genr} (o, nella versione grafica del
+programma, con il comando \textsf{Definisci nuova variabile}).  In
+alcuni casi, in cui la funzione non lineare è una generalizzazione di
+un modello lineare (o di una sua forma ristretta), può essere
+conveniente eseguire un comando \cmd{ols} e inizializzare i parametri
+a partire dalle stime OLS dei coefficienti. In relazione al primo
+degli esempi visti sopra, si potrebbe usare:
+
+\begin{verbatim}
+      ols C 0 Y
+      genr alfa = coeff(0)
+      genr beta = coeff(Y)
+      genr gamma = 1
+\end{verbatim}
+
+E in relazione al secondo esempio si userebbe:
+
+\begin{verbatim}
+      ols y 0 x1 x2
+      genr alfa = coeff(0)
+      genr beta = coeff(x1)
+\end{verbatim}
+
+\section{Finestra di dialogo NLS}
+\label{nls-gui}
+
+Proabilmente il modo più comodo di formulare i comandi per una stima
+NLS consiste nell'usare uno script per \app{gretl}, ma è possibile
+anche procedere interattivamente, selezionando il comando
+\textsf{Minimi quadrati non lineari} dal menù Modello. In questo modo,
+si aprirà una finestra di dialogo in cui è possibile scrivere la
+specificazione della funzione (opzionalmente preceduta da linee
+\cmd{genr} per impostare i valori iniziali dei parametri) e le
+derivate, se sono disponibili. Un esempio è mostrato nella Figure
+\ref{fig-nls-dialog}.  Si noti che in questo contesto non occorre
+scrivere i comandi \cmd{nls} e \cmd{end nls}.
+
+\begin{figure}[htbp]
+  \caption{Finestra di dialogo NLS}
+  \label{fig-nls-dialog}
+  \begin{center}
+    \includegraphics[scale=0.5]{figures/nls_window}
+  \end{center}
+\end{figure}
+
+
+\section{Derivate analitiche e numeriche}
+\label{nls-deriv}
+
+Se si è in grado di calcolare le derivate dalla funzione di
+regressione rispetto ai parametri, è consigliabile indicarle come
+mostrato negli esempi precedenti. Se ciò non è possibile, \app{gretl}
+calcolerà delle derivate approssimate numericamente. Le proprietà
+dell'algoritmo NLS in questo caso potrebbero non essere ottimali (si
+veda Section \ref{nls-accuracy}).Se vengono fornite delle derivate
+analitiche, ne viene controllata la coerenza con la funzione non
+lineare data. Se esse sono chiaramente scorrette, la stima viene
+annullata con un messaggio di errore. Se le derivate sono
+``sospette'', viene mostrato un messaggio di avvertimento, ma la stima
+prosegue.  Questo avvertimento può essere causato da derivate
+scorrette, ma può anche essere dovuto a un alto grado di collinearità
+tra le derivate.Si noti che non è possibile mischiare derivate
+numeriche e analitiche: se si indicano espressioni analitiche per le
+derivate, occorre farlo per tutte.
+
+\section{Arresto della procedura}
+\label{nls-toler}
+
+La procedura di stima NLS è iterativa: l'iterazione viene arrestata si
+verifica una qualunque delle seguenti condizioni: viene raggiunto un
+criterio di convergenza, o si supera il massimo numero di iterazioni
+impostato. Il massimo numero di iterazioni è \cmd{100*(k+1)} se
+vengono fornite derivate analitiche, o \cmd{200*(k+1)} se vengono
+usate derivate numeriche, dove \verb+k+ indica il numero di parametri
+da stimare. Il criterio di convergenza consiste nel fatto che l'errore
+relativo nella somma dei quadrati e/o l'errore relativo tra il vettore
+dei coefficienti e la soluzione sia stimato inferiore a un certo
+valore piccolo. Questo ``valore piccolo'' è impostato in modo
+predefinito pari alla precisione della macchina elevato alla potenza
+3/4, ma può essere impostato con il comando \cmd{genr}, usando la
+variabile speciale \verb+toler+. Ad esempio
+
+\begin{verbatim}
+genr toler = .0001
+\end{verbatim}
+
+imposterà la tolleranza a 0.0001.
+
+\section{Dettagli sul codice}
+\label{nls-code}
+
+Il motore sottostante la stima NLS è basato sulla suite di funzioni
+\app{minpack}, disponibile su
+\href{http://www.netlib.org/minpack/}{netlib.org}.  Nello specifico,
+sono usate le seguenti funzioni \app{minpack}:
+
+\begin{center}
+  \begin{tabular}{ll}
+    \verb+lmder+ & 
+    Algoritmo Levenberg--Marquandt con derivate analitiche \\
+    \verb+chkder+ & 
+    Controllo delle derivate analitiche fornite \\
+    \verb+lmdif+ & 
+    Algoritmo Levenberg--Marquandt con derivate numeriche \\
+    \verb+fdjac2+ & 
+    Calcolo del Jacobiano approssimato finale se si usano le derivate 
+    numeriche \\
+    \verb+dpmpar+ & 
+    Determinazioen della precisione della macchina \\
+  \end{tabular}
+\end{center}
+
+In caso di successo nell'iterazione Levenberg--Marquandt, viene usata
+una regressione Gauss--Newton per calcolare la matrice di covarianza
+per le stime dei parametri. Poiché i risultati NLS sono asintotici, si
+può discutere sulla necessità di applicare una correzione per i gradi
+di libertà nel calcolo dell'errore standard della regressione (e di
+quello delle stime dei parametri). Per confrontabilità con OLS, e
+seguendo il ragionamento in Davidson e MacKinnon (1993), le stime
+calcolate in \app{gretl} \emph{usano} una correzione per i gradi di
+libertà.
+
+\section{Accuratezza numerica}
+\label{nls-accuracy}
+
+La Table \ref{tab-nls} mostra i risultati dell'uso della procedura NLS
+di \app{gretl} sui 27 "Statistical Reference Dataset" forniti dal
+National Institute of Standards and Technology (NIST) statunitense,
+per il test del software di regressione non lineare \footnote{Per una
+  discussione dell'accuratezza di \app{gretl} nella stima di modelli
+  lineari, si veda [?]}. Per ogni dataset, il file di test indicano
+due valori iniziali per i parametri, quindi il test completo riporta
+54 stime. Sono stati eseguiti due test completi, uno usando derivate
+analitiche e uno usando approssimazioni numeriche; in entrambi casi si
+è usata la tolleranza predefinita\footnote{I dati mostrati nella
+  tabella derivano da una versione di \app{gretl} 1.0.9, compilata con
+  \app{gcc} 3.3, collegata a \app{glibc} 2.3.2 ed eseguita in Linux su
+  un PC i686 (IBM ThinkPad A21m).}Sulle 54 stime, \app{gretl} non
+riesce a produrre una soluzione in 4 casi, se vengono usate le
+derivate analitiche, e in 5 casi se vengono usate le approssimazioni
+numeriche. Dei quattro fallimenti in modalità derivate analitiche, due
+sono dovuti alla non convergenza dell'algoritmo Levenberg--Marquandt
+dopo il numero massimo di iterazioni (su \verb+MGH09+ e
+\verb+Bennett5+, entrambi descritti dal NIST come di ``alta
+difficoltà'') e due sono dovuti ad errori di intervallo (valori in
+virgola mobile al di fuori dei limiti) occorsi durante il calcolo del
+Jacobiano (su \verb+BoxBOD+ e \verb+MGH17+, rispettivamente descritti
+come di ``alta difficoltà'' e di ``media difficoltà''). In modalità
+approssimazione numerica, l'ulteriore caso di fallimento è
+rappresentato da \verb+MGH10+ (``alta difficoltà'', massimo numero di
+iterazioni raggiunto).La tabella mostra informazioni su vari aspetti
+dei test: numero di fallimenti, numero medio di iterazioni richieste
+per produrre una soluzione, e due tipi di misura dell'accuratezza dei
+risultati per i parametri e per i loro errori standard.  Per ognuno
+dei 54 test eseguiti in ogni modalità, se è stata prodotta una
+soluzione, sono state confrontate le stime dei parametri ottenute da
+\app{gretl} con i valori certificati dal NIST. È stata definita la
+variabile ``numero minimo di cifre corrette'' per una data stima come
+il numero di cifre significative per cui la \emph{meno accurata} delle
+stime di \app{gretl} coincide con il valore certificato. La tabella
+mostra i valori medio e minimo di questa variabile, calcolati sulle
+stime che hanno prodotto una soluzione; la stessa informazione è
+fornita per gli errori standard stimati \footnote{Per gli errori
+  standard, dalle statistiche mostrate nella tabella, è stato escluso
+  l'outlier costituito da \verb+Lanczos1+, che rappresenta un caso
+  strano, composto da dati generati con un adattamento quasi esatto;
+  gli errori standard sono di 9 o 10 ordini di grandezza più piccoli
+  dei coefficienti. In questo caso \app{gretl} riesce a riprodurre gli
+  errori standard solo per 3 cifre (con derivate analitiche) e per 2
+  cifre (con derivate numeriche).}  La seconda misura di accuratezza
+mostrata è la percentuale di casi, tenendo conto di tutti i parametri
+di tutte le stime giunte a buon fine, in cui la stima di \app{gretl}
+concorda con il valore certificato per almeno 6 cifre significative,
+che sono mostrate in modo predefinito nei risultati delle regressioni
+di \app{gretl}.
+
+\begin{table}[htbp]
+  \caption{Regressione non lineare: i test NIST}
+  \label{tab-nls}
+  \begin{center}
+    \begin{tabular}{p{2in}cc}
+        & Derivate analitiche & Derivate numeriche\\
+        Falimenti in 54 test & 4 & 5\\
+        Iterazioni medie & 32 & 127\\
+        Media del "numero minimo di cifre corrette", stima dei
+        parametri & 
+        8.120 & 6.980\\
+        Valore minimo del "numero minimo di cifre corrette", stima dei
+        parametri & 
+        4 & 3\\
+        Media del "numero minimo di cifre corrette", stima degli
+        errori standard & 
+        8.000 & 5.673\\
+        Valore minimo del "numero minimo di cifre corrette", 
+        stima degli errori standard & 5 & 2\\
+        Percentuale delle stime corrette a 6 cifre, stima dei
+        parametri & 96.5 & 91.9\\
+        Percentuale delle stime corrette a 6 cifre, 
+        stima degli errori standard & 97.7 & 77.3\\
+      \end{tabular}
+    \end{center}
+  \end{table}
+
+  Usando derivate analitiche, i valori dei casi peggiori sia per le
+  stime dei parametri che per gli errori standard sono stati
+  migliorati a 6 cifre corrette restringendo il valore di tolleranza a
+  1.0e$-$14.  Usando derivate numeriche, la stessa modifica del limite
+  di tolleranza ha innalzato la precisione dei valori peggiori a 5
+  cifre corrette per i parametri e 3 cifre per gli errori standard, al
+  costo di un fallimento in più nella convergenza.  Si noti la
+  tendenziale superiorità delle derivate analitiche: in media le
+  soluzioni ai problemi dei test sono state ottenute con molte meno
+  iterazioni e i risultati sono più accurati (in modo evidente per gli
+  errori standard stimati). Si noti anche che i risultati a 6 cifre
+  mostrati da \app{gretl} non sono affidabili al 100 per cento per i
+  problemi non lineari difficili (in particolare se si usano derivate
+  numeriche). Tenendo presente questi limiti, la percentuale dei casi
+  in cui i risultati sono accurati alla sesta cifra o più sembra
+  sufficiente per giustificarne l'utilizzo in questa forma.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+

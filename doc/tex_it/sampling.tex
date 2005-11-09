@@ -1,0 +1,207 @@
+\chapter{Creare dei sotto-campioni}
+\label{sampling}
+
+\section{Introduzione}
+\label{sample-intro}
+
+Questo capitolo affronta alcune questioni correlate alla creazione di
+sotto-campioni in un dataset.È possibile definire un sotto-campione
+per un dataset in due modi diversi, che chiameremo rispettivamente
+``impostazione'' del campione e ``restrizione'' del campione.
+    
+\section{Impostazione del campione}
+\label{sample-set}
+
+Per ``impostazione'' del campione, si intende la definizione di un
+campione ottenuta indicando il punto iniziale e/o quello finale
+dell'intervallo attuale del campione. Questa modalità è usata
+tipicamente con serie storiche; ad esempio se si hanno dati
+trimestrali per l'intervallo da 1960:1 a 2003:4 e si vuole stimare una
+regressione usando solo i dati degli anni '70, un comando adeguato è
+
+\begin{verbatim}
+        smpl 1970:1 1979:4
+\end{verbatim}
+      
+Oppure se si vuole riservare la parte finale delle osservazioni
+disponibili per eseguire una previsione "fuori dal campione", si può
+usare il comando
+
+\begin{verbatim}
+        smpl ; 2000:4
+\end{verbatim}
+      
+dove il punto e virgola significa ``mantenere inalterata
+l'osservazione iniziale'' (e potrebbe essere usato in modo analogo al
+posto del secondo parametro, indicando di mantenere inalterata
+l'osservazione finale). Per ``inalterata'' in questo caso si intende
+inalterata relativamente all'ultima impostazione eseguita con
+\verb+smpl+, o relativamente all'intero dataset, se non è ancora stato
+definito alcun sotto-campione in precedenza.  Ad esempio, dopo
+
+\begin{verbatim}
+	smpl 1970:1 2003:4
+	smpl ; 2000:4
+\end{verbatim}
+      
+l'intervallo del campione sarà da 1970:1 a 2000:4.È possibile anche
+impostare l'intervallo del campione in modo incrementale o relativo:
+in questo caso occorre indicare per il punto iniziale e finale uno
+spostamento relativo, sotto forma di numero preceduto dal segno più o
+dal segno meno (o da un punto e virgola per indicare nessuna
+variazione). Ad esempio
+
+\begin{verbatim}
+	smpl +1 ;
+\end{verbatim}
+      
+sposterà in avanti di un'osservazione l'inizio del campione,
+mantenendo inalterata la fine del campione, mentre
+
+\begin{verbatim}
+	smpl +2 -1
+\end{verbatim}
+
+sposterà l'inizio del campione in avanti di due osservazioni e la fine
+del campione indietro di una.Una caratteristica importante
+dell'operazione di ``impostazione del campione'' descritta fin qui è
+che il sotto-campione creato risulta sempre composto da un insieme di
+osservazioni contigue. La struttura del dataset rimane quindi
+inalterata: se si lavora su una serie trimestrale, dopo aver impostato
+il campione la serie rimarrà trimestrale.
+    
+
+\section{Restrizione del campione}
+\label{sample-restrict}
+
+Per ``restrizione'' del campione si intende la definizione di un
+campione ottenuta selezionando le osservazioni in base a un criterio
+Booleano (logico), o usando un generatore di numeri casuali. Questa
+modalità è usata tipicamente con dati di tipo cross-section o panel.Si
+supponga di avere dei dati di tipo cross-section che descrivono il
+genere, il reddito e altre caratteristiche di un gruppo di individui e
+si vogliano analizzare solo le donne presenti nel campione. Se si
+dispone di una variabile dummy \verb+genere+, che vale 1 per gli
+uomini e 0 per le donne, si potrebbe ottenere questo risultato con
+
+\begin{verbatim}
+	smpl genere=0 --restrict
+\end{verbatim}
+    
+Oppure si supponga di voler limitare il campione di lavoro ai soli
+individui con un reddito superiore ai 50.000 euro. Si potrebbe usare
+\begin{verbatim}
+	smpl reddito>50000 --restrict
+\end{verbatim}
+
+Qui sorge un problema: eseguendo in sequenza i due comandi visti
+sopra, cosa conterrà il sotto-campione? Tutti gli individui con
+reddito superiore a 50.000 euro o solo le donne con reddito superiore
+a 50.000 euro? La risposta corretta è la seconda: la seconda
+restrizione si aggiunge alla prima, ossia la restrizione finale è il
+prodotto logico della nuova restrizione e di tutte le restrizioni
+precedenti.  Se si vuole applicare una nuova restrizione
+indipendentemente da quelle applicate in precedenza, occorre prima
+re-impostare il campione alla sua lunghezza originaria, usando
+    
+\begin{verbatim}
+      smpl full
+\end{verbatim}
+
+In alternativa, è possibile aggiungere l'opzione \verb+replace+ al
+comando \verb+smpl+:
+
+\begin{verbatim}
+      smpl income>50000 --restrict --replace
+\end{verbatim}
+
+Questa opzione ha l'effetto di re-impostare automaticamente il
+campione completo prima di applicare la nuova restrizione.A differenza
+della semplice ``impostazione'' del campione, la ``restrizione'' del
+campione può produrre un insieme di osservazioni non contigue nel
+dataset originale e può anche modificare la struttura del
+dataset.Questo fenomeno può essere osservato nel caso dei dati panel:
+si supponga di avere un panel di cinque imprese (indicizzate dalla
+variabile \verb+impresa+) osservate in ognuno degli anni identificati
+dalla variabile \verb+anno+.  La restrizione
+
+\begin{verbatim}
+	smpl anno=1995 --restrict
+\end{verbatim}
+
+produce un dataset che non è più di tipo panel, ma cross-section per
+l'anno 1995.  In modo simile
+      
+\begin{verbatim}
+	smpl impresa=3 --restrict
+\end{verbatim}
+
+produce un dataset di serie storiche per l'impresa numero 3.Per questi
+motivi (possibile non-contiguità nelle osservazioni, possibile
+cambiamento nella struttura dei dati) gretl si comporta in modo
+diverso a seconda che si operi una ``restrizione'' del campione o una
+semplice ``impostazione'' di esso. Nel caso dell'impostazione, il
+programma memorizza semplicemente le osservazioni iniziali e finali e
+le usa come parametri per i vari comandi di stima dei modelli, di
+calcolo delle statistiche ecc. Nel caso della restrizione, il
+programma crea una copia ridotta del dataset e la tratta come un
+semplice dataset di tipo cross-section non datato.  \footnote{Con una
+  eccezione: se si parte da un dataset panel bilanciato e la
+  restrizione è tale da preservare la struttura di panel bilanciato
+  (ad esempio perché implica la cancellazione di tutte le osservazioni
+  per una unità cross-section), allora il dataset ridotto è ancora
+  trattato come panel.}.  Se si vuole re-imporre un'interpretazione di
+tipo "serie storiche" o "panel" al dataset ridotto, occorre usare il
+comando \cmd{setobs}, o il comando dal menù ``Campione, Struttura
+dataset'', se appropriato).  Il fatto che una ``restrizione'' del
+campione comporti la creazione di una copia ridotta del dataset
+originale può creare problemi quando il dataset è molto grande
+(nell'ordine delle migliaia di osservazioni). Se si usano simili
+dataset, la creazione della copia può causare l'esaurimento della
+memoria del sistema durante il calcolo dei risultati delle
+regressioni. È possibile aggirare il problema in questo modo:
+
+\begin{enumerate}
+\item Aprire il dataset completo e imporre la restrizione sul
+  campione.
+\item Salvare una copia del dataset ridotto su disco.
+\item Chiudere il dataset completo e aprire quello ridotto.
+\item Procedere con l'analisi.
+\end{enumerate}
+
+\section{Campionamento casuale}
+\label{sample-random}
+
+Se si usano dataset molto grandi (o se si intende studiare le
+proprietà di uno stimatore), può essere utile estrarre un campione
+casuale dal dataset completo. È possibile farlo ad esempio con
+
+\begin{verbatim}
+	smpl 100 --random
+\end{verbatim}
+
+che seleziona 100 osservazioni.  Se occorre che il campione sia
+riproducibile, occorre per prima cosa impostare il seme del generatore
+di numeri casuali, usando il comando \cmd{set}.Questo tipo di
+campionamento è un esempio di ``restrizione'' del campione: viene
+infatti generata una copia ridotta del dataset.
+
+\section{I comandi del menù Campione}
+\label{sample-menu}
+
+Gli esempi visti finora hanno mostrato il comando testuale \cmd{set},
+ma è possibile creare un sotto-campione usando i comandi del menù
+\textsf{Campione} nell'interfaccia grafica del programma.I comandi del
+menù permettono di ottenere gli stessi risultati delle varianti del
+comando testuale \verb+smpl+, con la seguente eccezione: se si usa il
+comando ``Campione, Imposta in base a condizione...'' e sul dataset è
+già stato impostato un sotto-campione, viene data la possibilità di
+preservare la restrizione già attiva o di sostituirla (in modo analogo
+a quanto avviene invocando l'opzione \verb+replace+ descritta
+nelSection \ref{sample-restrict}.
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+
