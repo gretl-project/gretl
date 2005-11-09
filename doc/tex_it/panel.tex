@@ -58,10 +58,10 @@ due modi.
   panel sotto forma di pila di dati cross section, con 5 unità cross
   section.
 	
-\begin{verbatim}
+\begin{code}
 	    setobs 20 1:1 --stacked-time-series
 	    setobs 5 1:1 --stacked-cross-section
-\end{verbatim}
+\end{code}
 
 
 \end{enumerate}
@@ -111,10 +111,10 @@ per un anno particolare, ad esempio con \cmd{genr dum = (ANNO=1960)}.
 modulo, \verb+%+.  Ad esempio, per creare una dummy che
 valga 1 ogni trenta osservazioni a partire dalla prima e 0 altrove,
 basta eseguire
-\begin{verbatim}
+\begin{code}
       genr index 
       genr dum = ((index-1)%30) = 0
-\end{verbatim}
+\end{code}
 
 
 
@@ -203,7 +203,7 @@ situazione peggiore).
   \caption{Uso della Penn World Table}
   \label{examp-pwt}
 
-\begin{verbatim}
+\begin{code}
 	  open pwt56_60_89.gdt 
 	  # Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
 	  genr gdp60 = RGDPL(-29) 
@@ -220,7 +220,7 @@ situazione peggiore).
 	  genr afdum = (CCODE = 1)
 	  genr afslope = afdum * gdp60 
 	  ols gdpgro const afdum gdp60 afslope 
-\end{verbatim}
+\end{code}
 
 \end{script}
 

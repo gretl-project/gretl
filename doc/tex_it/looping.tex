@@ -11,11 +11,11 @@ accetta un blocco di comandi da ripetere una o più volte. Questa
 funzionalità è destinata all'uso per le simulazioni Monte Carlo, per
 il bootstrapping delle statistiche test e altre procedure di stima
 iterativa. La forma generale di un loop, o ciclo, è:
-\begin{verbatim}
+\begin{code}
       loop espressione di controllo [ --progressive | --verbose ]
          corpo del loop
       endloop
-\end{verbatim}
+\end{code}
 
 Come si spiega oltre, sono disponibili cinque tipi di espressione di
 controllo. Nel corpo del loop sono accettati i seguenti comandi:
@@ -99,11 +99,11 @@ specifica di stringhe. Il loop è eseguito una volta per ogni stringa
 presente nella lista, agevolando l'esecuzione di operazioni ripetitive
 su un gruppo di variabili. Ecco un esempio:
       
-\begin{verbatim}
+\begin{code}
         loop foreach i mele pere pesche
           print "$i"
         endloop
-\end{verbatim}
+\end{code}
 
 Questo loop verrà eseguito tre volte, mostrando ``mele'', ``pere'' e
 ``pesche'' ad ogni iterazione.  Per eseguire un loop su una lista di
@@ -115,12 +115,12 @@ contengono livelli di reddito per gli stati degli USA, per stimare una
 regressione del reddito sul tempo per ognuno degli stati, basta
 eseguire:
        
-\begin{verbatim}
+\begin{code}
        genr time
        loop foreach i AL..WY
           ols $i const time
        endloop
-\end{verbatim}
+\end{code}
 
 
 \subsection{Loop di tipo for}
@@ -199,7 +199,7 @@ realizzare una procedura Monte Carlo è mostrato in Example
 \begin{script}[htbp]
   \caption{Un semplice loop di tipo Monte Carlo}
   \label{mc-loop}
-\begin{verbatim}
+\begin{code}
 	  nulldata 50
 	  seed 547
 	  genr x = 100 * uniform()
@@ -219,7 +219,7 @@ realizzare una procedura Monte Carlo è mostrato in Example
 	     # Salva i coefficienti in un file
 	     store coeffs.gdt a b
 	  endloop
-\end{verbatim}
+\end{code}
 \end{script}
 
 Questo loop mostrerà le statistiche di riepilogo per le stime di "a",
@@ -252,7 +252,7 @@ iterazione, ma solo quelli dell'ultima iterazione del loop.
 \begin{script}[htbp]
   \caption{Funzione di consumo non lineare}
   \label{greene-ils-script}
-\begin{verbatim}
+\begin{code}
 	  open greene11_3.gdt
 	  # Esegue la regressione OLS iniziale
 	  ols C 0 Y
@@ -279,7 +279,7 @@ iterazione, ma solo quelli dell'ultima iterazione del loop.
 	  printf "alfa = %g\n", coeff(0)
 	  printf "beta  = %g\n", beta
 	  printf "gamma = %g\n", gamma
-\end{verbatim}
+\end{code}
 \end{script}
 
 L'Example \ref{jack-arma} (gentilmente fornito da Riccardo ``Jack''
@@ -292,7 +292,7 @@ discussa da Davidson e MacKinnon nel loro \emph{Estimation and
 \begin{script}[htbp]
   \caption{ARMA 1, 1}
   \label{jack-arma}
-\begin{verbatim}
+\begin{code}
           open armaloop.gdt
 
           genr c = 0
@@ -353,7 +353,7 @@ discussa da Davidson e MacKinnon nel loro \emph{Estimation and
           printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
           printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
           printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
-\end{verbatim}
+\end{code}
 \end{script}
 
 
@@ -372,13 +372,13 @@ variabili da 1 a 4.
 \begin{script}[htbp]
   \caption{Statistiche panel}
   \label{loop-panel-script}
-\begin{verbatim}
+\begin{code}
 	  open ospedali.gdt
 	  loop i=1991..2000
 	    smpl (annor=i) --restrict --replace
 	    summary 1 2 3 4
 	  endloop
-\end{verbatim}
+\end{code}
 \end{script}
 
 
@@ -388,7 +388,7 @@ sostituire stringhe.
 \begin{script}[htbp]
   \caption{Sostituzione di stringhe}
   \label{loop-string-script}
-\begin{verbatim}
+\begin{code}
 	  open bea.dat
 	  loop i=1987..2001
 	    genr V = COMP$i
@@ -396,7 +396,7 @@ sostituire stringhe.
 	    genr C = TC - V
 	    ols PBT$i const TC V
 	  endloop
-\end{verbatim}
+\end{code}
 
 \end{script}
 

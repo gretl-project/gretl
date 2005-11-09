@@ -131,14 +131,14 @@ directory utente \app{gretl} (si veda XXX). Il contenuto di tale file
 verrà usato come ``preambolo'' {\LaTeX}, il cui valore predefinito è
 il seguente:
     
-\begin{verbatim}
+\begin{code}
       \documentclass[11pt]{article}
       \usepackage[latin1]{inputenc}
       \usepackage{amsmath}
       \usepackage{dcolumn,longtable}
       \begin{document}
       \thispagestyle{empty}
-\end{verbatim}
+\end{code}
 
 Si noti che sono richiesti i pacchetti \verb+amsmath+ e
 \verb+dcolumn+.Per importare i risultati di \app{gretl}
@@ -422,9 +422,9 @@ che quando si copia come RTF in MS Windows,
   variabile'' della guida in linea o la voce \cmd{genr}. Un semplice
   esempio:
 	  
-\begin{verbatim}
+\begin{code}
 	    pippo = x1 * x2
-\end{verbatim}
+\end{code}
 
   creerà la nuova variabile \verb+pippo+ come prodotto delle variabili
   esistenti \verb+x1+ e \verb+x2+.  In queste formule, le variabili

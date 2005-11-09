@@ -127,13 +127,14 @@ If a file of this name is found, its contents will be used as the
 {\LaTeX} ``preamble''. The default value of the preamble is as
 follows:
     
-\begin{verbatim}
+\begin{code}
       \documentclass[11pt]{article}
       \usepackage[latin1]{inputenc}
       \usepackage{amsmath}
       \usepackage{dcolumn,longtable}
       \begin{document}
-      \thispagestyle{empty}\end{verbatim} 
+      \thispagestyle{empty}
+\end{code}
 
 Note that the \verb+amsmath+
  and \verb+dcolumn+ packages are required.To import \app{gretl} output
@@ -185,7 +186,6 @@ Note that the \verb+amsmath+
   \item \textsf{Save data as}: Write out the current data set in
     native format, with the option of using gzip data compression. See
     [?].
-	    
   \item \textsf{Export data}: Write out the current data set in Comma
     Separated Values (CSV) format, or the formats of GNU R or GNU
     Octave. See [?] and also [?].
@@ -214,7 +214,6 @@ Note that the \verb+amsmath+
   \item \textsf{Exit}: Quit the program. If expert mode is not
     selected you'll be prompted to save any unsaved work.
   \end{itemize}
-
 
 \item \textsf{Utilities menu}
   \begin{itemize}
@@ -247,7 +246,6 @@ Note that the \verb+amsmath+
     made available by the (US) National Institute of Standards and
     Technology.
   \end{itemize}
-
 
 \item \textsf{Session menu}
   \begin{itemize}
@@ -400,21 +398,20 @@ Note that the \verb+amsmath+
   or see the \cmd{genr} command in the \emph{Gretl Command Reference}.
   One simple example:
 	  
-\begin{verbatim} 
-	    foo = x1 * x2\end{verbatim}
-          will create a new variable
-	  \verb+foo+ as the product of the existing
-	  variables \verb+x1+ and \verb+x2+.
-	  In these formulae, variables must be referenced by name, not
-	  number.
-        \item \textsf{Model menu} For details on the various
-          estimators offered under this menu please consult the
-          \emph{Gretl Command Reference} and/or the online help under
-          ``Help, Estimation''.  Also see [?] regarding the estimation
-          of nonlinear models.
-        \item \textsf{Help menu} Please use this as needed! It gives
-          details on the syntax required in various dialog entries.
-        \end{itemize}
+\begin{code} 
+	    foo = x1 * x2
+\end{code}
+
+  will create a new variable \verb+foo+ as the product of the existing
+  variables \verb+x1+ and \verb+x2+.  In these formulae, variables
+  must be referenced by name, not number.
+\item \textsf{Model menu} For details on the various estimators
+  offered under this menu please consult the \emph{Gretl Command
+    Reference} and/or the online help under ``Help, Estimation''.
+  Also see [?] regarding the estimation of nonlinear models.
+\item \textsf{Help menu} Please use this as needed! It gives details
+  on the syntax required in various dialog entries.
+\end{itemize}
 
 
 
@@ -422,11 +419,15 @@ Note that the \verb+amsmath+
 \label{toolbar}
 
 At the bottom left of the main window sits the
-      toolbar.\begin{center}
-        \includegraphics[scale=0.5]{figures/toolbar}
-      \end{center}
+      toolbar.
+
+\begin{center}
+  \includegraphics[scale=0.5]{figures/toolbar}
+\end{center}
+
 The icons have the following functions, reading from left to
       right:
+
 \begin{enumerate}
 \item Launch a calculator program.  A convenience function in case you
   want quick access to a calculator when you're working in

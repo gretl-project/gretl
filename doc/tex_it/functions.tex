@@ -17,11 +17,11 @@ meccanismo per definire funzioni all'interno di uno script.
 
 Occorre definire una funzione prima di poterla utilizzare. La sintassi
 per farlo è la seguente:
-\begin{verbatim}
+\begin{code}
       function nome-funzione parametri
          corpo della funzione
       end function
-\end{verbatim}
+\end{code}
 
 
 Il nome-funzione identifica la funzione in modo univoco: deve iniziare
@@ -33,9 +33,9 @@ secondo caso, per evitare un errore (ossia per poter ridefinire una
 funzione utente), basta far precedere la definizione della funzione
 da:
     
-\begin{verbatim}
+\begin{code}
       function nome-funzioneclear
-\end{verbatim}
+\end{code}
 
 
 I parametri di una funzione (se esistono) vanno indicati sotto forma
@@ -47,9 +47,9 @@ termini: per prima cosa un indicatore di tipo (\verb+series+,
 verrà riconosciuto all'interno della funzione. Ecco un esempio (le
 parentesi che racchiudono la lista dei parametri sono opzionali):
     
-\begin{verbatim}
+\begin{code}
       function funzione (series y, list xvars, scalar verbose)
-\end{verbatim}
+\end{code}
 
 
 Quando una funzione viene chiamata, i parametri vengono istanziati
@@ -86,7 +86,7 @@ eventualmente seguito da argomenti; se si usano due o più argomenti,
 vanno separati da virgole. L'esempio seguente mostra una chiamata di
 funzione che rispetta la definizione della funzione stessa.
     
-\begin{verbatim}
+\begin{code}
       # Definizione della funzione
       function ols_ess (series y, list xvars)
         ols y 0 xvars --quiet
@@ -99,7 +99,7 @@ funzione che rispetta la definizione della funzione stessa.
       list xlist = 2 3 4
       # Chiamata della funzione (il valore restituito viene qui ignorato)
       ols_ess price, xlist
-\end{verbatim}
+\end{code}
 
 
 La chiamata della funzione contiene due argomenti: il primo è una
@@ -114,7 +114,7 @@ risultati completi della regressione, è possibile usare l'opzione
 Un secondo esempio mostra una chiamata di funzione che assegna i
 valori prodotti dalla funzione a variabili:
     
-\begin{verbatim}
+\begin{code}
       # Definizione di funzione
       function ess_uhat (series y, list xvars)
         ols y 0 xvars --quiet
@@ -128,7 +128,7 @@ valori prodotti dalla funzione a variabili:
       list xlist = 2 3 4
       # Chiamata di funzione
       (SSR, resids) = ess_uhat price, xlist
-\end{verbatim}
+\end{code}
 
 
 
@@ -164,9 +164,9 @@ quanto avviene per la lista dei parametri di una funzione).
 All'interno di una funzione può esserci solo una di queste
 dichiarazioni. Ecco un esempio di dichiarazione return valida:
     
-\begin{verbatim}
+\begin{code}
       return scalar SSR, series resid
-\end{verbatim}
+\end{code}
 
 
 Si noti che la dichiarazione \verb+return+ \emph{non} indica alla

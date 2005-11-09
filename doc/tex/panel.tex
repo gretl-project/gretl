@@ -6,68 +6,55 @@
 \section{Panel structure}
 \label{panel-structure}
 
-Panel data are inherently three dimensional --- the
-      dimensions being variable, cross-sectional unit, and
-      time-period.  For representation in a textual computer file (and
-      also for gretl's internal calculations) these three dimensions
-      must somehow be flattened into two.  This
-      ``flattening'' involves taking layers of the data
-      that would naturally stack in a third dimension, and stacking
-      them in the vertical dimension.\app{Gretl} always expects data to be
-      arranged ``by observation'', that is, such that each
-      row represents an observation (and each variable occupies one
-      and only one column).  In this context the flattening of a panel
-      data set can be done in either of two ways:
+Panel data are inherently three dimensional --- the dimensions being
+variable, cross-sectional unit, and time-period.  For representation
+in a textual computer file (and also for gretl's internal
+calculations) these three dimensions must somehow be flattened into
+two.  This ``flattening'' involves taking layers of the data that
+would naturally stack in a third dimension, and stacking them in the
+vertical dimension.\app{Gretl} always expects data to be arranged ``by
+observation'', that is, such that each row represents an observation
+(and each variable occupies one and only one column).  In this context
+the flattening of a panel data set can be done in either of two ways:
 \begin{itemize}
-\item 
-	  Stacked cross-sections: the successive vertical blocks each
-	  comprise a cross-section for a given period.
-\item 
-	  Stacked time-series: the successive vertical blocks each
-	  comprise a time series for a given cross-sectional
-	  unit.
+\item Stacked cross-sections: the successive vertical blocks each
+  comprise a cross-section for a given period.
+\item Stacked time-series: the successive vertical blocks each
+  comprise a time series for a given cross-sectional unit.
 \end{itemize}
 
 You may use whichever arrangement is more convenient. Under
-      \app{gretl}'s \textsf{Sample}
-      menu you will find an item ``Restructure panel''
-      which allows you to convert from stacked cross section form to
-      stacked time series or vice versa.When you import panel data into
-      \app{gretl} from a spreadsheet or comma
-      separated format, the panel nature of the data will not be
-      recognized automatically (most likely the data will be treated
-      as ``undated'').  A panel interpretation can be
-      imposed on the data in either of two ways.
+\app{gretl}'s \textsf{Sample} menu you will find an item ``Restructure
+panel'' which allows you to convert from stacked cross section form to
+stacked time series or vice versa.When you import panel data into
+\app{gretl} from a spreadsheet or comma separated format, the panel
+nature of the data will not be recognized automatically (most likely
+the data will be treated as ``undated'').  A panel interpretation can
+be imposed on the data in either of two ways.
 \begin{enumerate}
-\item Use the  GUI menu item ``Sample, Dataset
-	    structure''.  In the first dialog box that appears,
-	  select ``Panel''.  In the next dialog, make a
-	  selection between stacked time series or stacked cross
-	  sections depending on how your data are organized.  In the
-	  next, supply the number of cross-sectional units in the
-	  dataset.  Finally, check the specification that is shown to
-	  you, and confirm the change if it looks OK.
+\item Use the GUI menu item ``Sample, Dataset structure''.  In the
+  first dialog box that appears, select ``Panel''.  In the next
+  dialog, make a selection between stacked time series or stacked
+  cross sections depending on how your data are organized.  In the
+  next, supply the number of cross-sectional units in the dataset.
+  Finally, check the specification that is shown to you, and confirm
+  the change if it looks OK.
 	
-\item Use the script command \cmd{setobs}.  For
-	  panel data this command takes the form
-	  \verb+setobs+ freq
-	  \verb+1:1+ structure,
-	  where freq is replaced by the
-	  ``block size'' of the data (that is, the number
-	  of periods in the case of stacked time series, or the number
-	  of cross-sectional units in the case of stacked
-	  cross-sections) and structure is
-	  either \verb+--stacked-time-series+ or
-	  \verb+--stacked-cross-section+.  Two examples
-	  are given below: the first is suitable for a panel in the
-	  form of stacked time series with observations from 20
-	  periods; the second for stacked cross sections with 5
-	  cross-sectional units.   
+\item Use the script command \cmd{setobs}.  For panel data this
+  command takes the form \verb+setobs+ freq \verb+1:1+ structure,
+  where freq is replaced by the ``block size'' of the data (that is,
+  the number of periods in the case of stacked time series, or the
+  number of cross-sectional units in the case of stacked
+  cross-sections) and structure is either \verb+--stacked-time-series+
+  or \verb+--stacked-cross-section+.  Two examples are given below:
+  the first is suitable for a panel in the form of stacked time series
+  with observations from 20 periods; the second for stacked cross
+  sections with 5 cross-sectional units.
 	
-\begin{verbatim}
+\begin{code}
 	    setobs 20 1:1 --stacked-time-series
 	    setobs 5 1:1 --stacked-cross-section
-	\end{verbatim}
+\end{code}
 
 \end{enumerate}
 
@@ -76,146 +63,129 @@ You may use whichever arrangement is more convenient. Under
 \section{Dummy variables}
 \label{dummies}
 
-In a panel study you may wish to construct dummy variables
-      of one or both of the following sorts: (a) dummies as unique
-      identifiers for the cross-sectional units, and (b) dummies as
-      unique identifiers for the time periods.  The former may be used
-      to allow the intercept of the regression to differ across the
-      units, the latter to allow the intercept to differ across
-      periods.Three special functions are available to create such dummies.
-      These are found under the ``Data, Add variables''
-      menu in the GUI, or under the \cmd{genr} command in
-      script mode or \app{gretlcli}.
+In a panel study you may wish to construct dummy variables of one or
+both of the following sorts: (a) dummies as unique identifiers for the
+cross-sectional units, and (b) dummies as unique identifiers for the
+time periods.  The former may be used to allow the intercept of the
+regression to differ across the units, the latter to allow the
+intercept to differ across periods.Three special functions are
+available to create such dummies.  These are found under the ``Data,
+Add variables'' menu in the GUI, or under the \cmd{genr} command in
+script mode or \app{gretlcli}.
 \begin{enumerate}
-\item ``periodic dummies'' (script command
-	  \cmd{genr dummy}).  This command creates a set
-	  of dummy variables identifying the periods.  The variable
-	  \verb+dummy_1+ will have value 1 in each row
-	  corresponding to a period 1 observation, 0 otherwise;
-	  \verb+dummy_2+ will have value 1 in each row
-	  corresponding to a period 2 observation, 0 otherwise; and so
-	  on.
-\item ``unit dummies'' (script command
-	  \cmd{genr unitdum}).  This command creates a
-	  set of dummy variables identifying the cross-sectional
-	  units.  The variable \verb+du_1+ will have value
-	  1 in each row corresponding to a unit 1 observation, 0
-	  otherwise; \verb+du_2+ will have value 1 in each
-	  row corresponding to a unit 2 observation, 0 otherwise; and
-	  so on.
-\item ``panel dummies'' (script command
-	  \cmd{genr paneldum}).  This creates both period
-	  and unit dummy variables. The unit dummies are named
-	  \verb+du_1+, \verb+du_2+ and so on,
-	  while the period dummies are named \verb+dt_1+,
-	  \verb+dt_2+, etc.
+\item ``periodic dummies'' (script command \cmd{genr dummy}).  This
+  command creates a set of dummy variables identifying the periods.
+  The variable \verb+dummy_1+ will have value 1 in each row
+  corresponding to a period 1 observation, 0 otherwise; \verb+dummy_2+
+  will have value 1 in each row corresponding to a period 2
+  observation, 0 otherwise; and so on.
+\item ``unit dummies'' (script command \cmd{genr unitdum}).  This
+  command creates a set of dummy variables identifying the
+  cross-sectional units.  The variable \verb+du_1+ will have value 1
+  in each row corresponding to a unit 1 observation, 0 otherwise;
+  \verb+du_2+ will have value 1 in each row corresponding to a unit 2
+  observation, 0 otherwise; and so on.
+\item ``panel dummies'' (script command \cmd{genr paneldum}).  This
+  creates both period and unit dummy variables. The unit dummies are
+  named \verb+du_1+, \verb+du_2+ and so on, while the period dummies
+  are named \verb+dt_1+, \verb+dt_2+, etc.
 \end{enumerate}
 
-If a panel data set has the \verb+YEAR+ of the
-      observation entered as one of the variables you can create a
-      periodic dummy to pick out a particular year, e.g. \cmd{genr
-	dum = (YEAR=1960)}.  You can also create periodic
-      dummy variables using the modulus operator,
-      \verb+%+.  For instance, to create a dummy with
-      value 1 for the first observation and every thirtieth
-      observation thereafter, 0 otherwise, do
-\begin{verbatim}
+If a panel data set has the \verb+YEAR+ of the observation entered as
+one of the variables you can create a periodic dummy to pick out a
+particular year, e.g. \cmd{genr dum = (YEAR=1960)}.  You can also
+create periodic dummy variables using the modulus operator,
+\verb+%+.  For instance, to create a dummy with
+value 1 for the first observation and every thirtieth observation
+thereafter, 0 otherwise, do
+\begin{code}
       genr index 
       genr dum = ((index-1)%30) = 0
-    \end{verbatim}
+\end{code}
 
 
-\section{Lags and differences with panel
-      data}
+\section{Lags and differences with panel data}
 \label{panel-lagged}
 
-If the time periods are evenly spaced you may want to use
-      lagged values of variables in a panel regression; you may also
-      with to construct first differences of variables of
-      interest.Once a dataset is properly identified as a panel (as
-      described in the previous section),
-      \app{gretl} will handle the generation of
-      such variables correctly.  For example the command 
-      \verb+genr x1_1 = x1(-1)+ will create a variable that contains
-      the first lag of \verb+x1+ where available, and the
-      missing value code where the lag is not available.
-    When you run a regression using such variables, the program
-      will automatically skip the missing observations.
+If the time periods are evenly spaced you may want to use lagged
+values of variables in a panel regression; you may also with to
+construct first differences of variables of interest.Once a dataset is
+properly identified as a panel (as described in the previous section),
+\app{gretl} will handle the generation of such variables correctly.
+For example the command \verb+genr x1_1 = x1(-1)+ will create a
+variable that contains the first lag of \verb+x1+ where available, and
+the missing value code where the lag is not available.  When you run a
+regression using such variables, the program will automatically skip
+the missing observations.
 
 \section{Pooled estimation}
 \label{pooled-est}
 
-There is a special purpose estimation command for use with
-      panel data, the ``Pooled OLS'' option under the
-      \textsf{Model} menu. This command is available only if
-      the data set is recognized as a panel.  To take advantage of it,
-      you should specify a model without any dummy variables
-      representing cross-sectional units.  The routine presents
-      estimates for straightforward pooled OLS, which treats
-      cross-sectional and time-series variation at par.  This model
-      may or may not be appropriate.  Under the
-      \textsf{Tests} menu in the model window, you will find
-      an item ``panel diagnostics'', which tests pooled OLS
-      against the principal alternatives, the fixed effects and random
-      effects models.The fixed effects model adds a dummy variable for all but
-      one of the cross-sectional units, allowing the intercept of the
-      regression to vary across the units.  An
-      \emph{F}-test for the joint significance of these
-      dummies is presented: if the p-value for this test is small,
-      that counts against the null hypothesis (that the simple pooled
-      model is adequate) and in favor of the fixed effects
-      model.The random effects model, on the other hand, decomposes the
-      residual variance into two parts, one part specific to the
-      cross-sectional unit or ``group'' and the other
-      specific to the particular observation.  (This estimator can be
-      computed only if the panel is ``wide'' enough, that
-      is, if the number of cross-sectional units in the data set
-      exceeds the number of parameters to be estimated.)  The
-      Breusch--Pagan LM statistic tests the null hypothesis
-      (again, that the pooled OLS estimator is adequate) against the
-      random effects alternative.It is quite possible that the pooled OLS model is rejected
-      against both of the alternatives, fixed effects and random
-      effects. How, then, to assess the relative merits of the two
-      alternative estimators?  The Hausman test (also reported,
-      provided the random effects model can be estimated) addresses
-      this issue.  Provided the unit- or group-specific error is
-      uncorrelated with the independent variables, the random effects
-      estimator is more efficient than the fixed effects estimator;
-      otherwise the random effects estimator is inconsistent, in which
-      case the fixed effects estimator is to be preferred.  The null
-      hypothesis for the Hausman test is that the group-specific error
-      is not so correlated (and therefore the random effects model is
-      preferable).  Thus a low p-value for this tests counts against
-      the random effects model and in favor of fixed effects.For a rigorous discussion of this topic, see Greene (2000),
-      chapter 14.
+There is a special purpose estimation command for use with panel data,
+the ``Pooled OLS'' option under the \textsf{Model} menu. This command
+is available only if the data set is recognized as a panel.  To take
+advantage of it, you should specify a model without any dummy
+variables representing cross-sectional units.  The routine presents
+estimates for straightforward pooled OLS, which treats cross-sectional
+and time-series variation at par.  This model may or may not be
+appropriate.  Under the \textsf{Tests} menu in the model window, you
+will find an item ``panel diagnostics'', which tests pooled OLS
+against the principal alternatives, the fixed effects and random
+effects models.The fixed effects model adds a dummy variable for all
+but one of the cross-sectional units, allowing the intercept of the
+regression to vary across the units.  An \emph{F}-test for the joint
+significance of these dummies is presented: if the p-value for this
+test is small, that counts against the null hypothesis (that the
+simple pooled model is adequate) and in favor of the fixed effects
+model.The random effects model, on the other hand, decomposes the
+residual variance into two parts, one part specific to the
+cross-sectional unit or ``group'' and the other specific to the
+particular observation.  (This estimator can be computed only if the
+panel is ``wide'' enough, that is, if the number of cross-sectional
+units in the data set exceeds the number of parameters to be
+estimated.)  The Breusch--Pagan LM statistic tests the null hypothesis
+(again, that the pooled OLS estimator is adequate) against the random
+effects alternative.It is quite possible that the pooled OLS model is
+rejected against both of the alternatives, fixed effects and random
+effects. How, then, to assess the relative merits of the two
+alternative estimators?  The Hausman test (also reported, provided the
+random effects model can be estimated) addresses this issue.  Provided
+the unit- or group-specific error is uncorrelated with the independent
+variables, the random effects estimator is more efficient than the
+fixed effects estimator; otherwise the random effects estimator is
+inconsistent, in which case the fixed effects estimator is to be
+preferred.  The null hypothesis for the Hausman test is that the
+group-specific error is not so correlated (and therefore the random
+effects model is preferable).  Thus a low p-value for this tests
+counts against the random effects model and in favor of fixed
+effects.For a rigorous discussion of this topic, see Greene (2000),
+chapter 14.
 
 \section{Illustration: the Penn World Table}
 \label{PWT}
 
-The Penn World Table (homepage at \href{http://pwt.econ.upenn.edu/}{pwt.econ.upenn.edu})
-      is a rich macroeconomic panel dataset, spanning 152 countries
-      over the years 1950--1992.  The data are available in
-      \app{gretl} format; please see the
-      \app{gretl} \href{http://gretl.sourceforge.net/gretl_data.html}{data
-	site} (this is a free download, although it is not
-      included in the main \app{gretl}
-      package).Example \ref{examp-pwt} below opens
-      \verb+pwt56_60_89.gdt+, a subset of the pwt
-      containing data on 120 countries, 1960--89, for 20
-      variables, with no missing observations (the full data set,
-      which is also supplied in the pwt package for
-      \app{gretl}, has many missing
-      observations). Total growth of real GDP, 1960--89, is
-      calculated for each country and regressed against the 1960 level
-      of real GDP, to see if there is evidence for
-      ``convergence'' (i.e. faster growth on the part of
-      countries starting from a low base).
+The Penn World Table (homepage at
+\href{http://pwt.econ.upenn.edu/}{pwt.econ.upenn.edu}) is a rich
+macroeconomic panel dataset, spanning 152 countries over the years
+1950--1992.  The data are available in \app{gretl} format; please see
+the \app{gretl}
+\href{http://gretl.sourceforge.net/gretl_data.html}{data site} (this
+is a free download, although it is not included in the main
+\app{gretl} package).Example \ref{examp-pwt} below opens
+\verb+pwt56_60_89.gdt+, a subset of the pwt containing data on 120
+countries, 1960--89, for 20 variables, with no missing observations
+(the full data set, which is also supplied in the pwt package for
+\app{gretl}, has many missing observations). Total growth of real GDP,
+1960--89, is calculated for each country and regressed against the
+1960 level of real GDP, to see if there is evidence for
+``convergence'' (i.e. faster growth on the part of countries starting
+from a low base).
 
 \begin{script}[htbp]
-\caption{Use of the Penn World Table}
-\label{examp-pwt}
+  \caption{Use of the Penn World Table}
+  \label{examp-pwt}
 
-\begin{verbatim}
+\begin{code}
 	  open pwt56_60_89.gdt 
 	  # for 1989 (the last obs), lag 29 gives 1960, the first obs 
 	  genr gdp60 = RGDPL(-29) 
@@ -232,7 +202,7 @@ The Penn World Table (homepage at \href{http://pwt.econ.upenn.edu/}{pwt.econ.upe
 	  genr afdum = (CCODE = 1)
 	  genr afslope = afdum * gdp60 
 	  ols gdpgro const afdum gdp60 afslope 
-      \end{verbatim}
+\end{code}
 \end{script}
 
 

@@ -74,7 +74,7 @@ Per essere più specifici:
 
 Ecco un esempio di un file di descrizione dei dati ben scritto.
 	
-\begin{verbatim}
+\begin{code}
 	  (* 
 	  DATA9-6: 
 	  Dati su log(moneta), log(reddito) e tasso di interesse USA. 
@@ -84,7 +84,7 @@ Ecco un esempio di un file di descrizione dei dati ben scritto.
 	  *) 
 	  lmoneta lreddito tassint ; 
 	  1 1900 1989 BYOBS
-\end{verbatim}
+\end{code}
           
 Il corrispondente file di dati contiene tre colonne di dati, ognuna
 con 90 osservazioni.  Ci sono altre tre caratteristiche del formato
@@ -120,9 +120,9 @@ dati ``tradizionale'' degne di nota.
   descrizione) seguito da uno o più spazi, seguito dall'etichetta
   descrittiva. Ecco un esempio:
 
-\begin{verbatim}
+\begin{code}
   prezzo Indice dei prezzi delle auto nuove, anno base 1982
-\end{verbatim}
+\end{code}
 	
 \end{enumerate}
 
@@ -140,12 +140,12 @@ e un file binario (con estensione \verb+.bin+) che contiene i dati
 veri e propri. Ecco due esempi di voci contenute in un file
 \verb+idx+:
 
-\begin{verbatim}
+\begin{code}
       G0M910  Indice composto da 11 indicatori principali (1987=100) 
       M 1948.01 - 1995.11  n = 575
       currbal Bilancia dei pagamenti: parte corrente; corretta per la stagionalità
       Q 1960.1 - 1999.4 n = 160
-\end{verbatim}
+\end{code}
 
 Il primo campo è il nome della serie, il secondo è una descrizione
 della serie (al massimo di 128 caratteri). Sulla seconda riga, il
@@ -164,9 +164,9 @@ lettera.Opzionalmente, la prima riga del file indice può contenere un
 breve commento (al massimo 64 caratteri) a proposito della fonte e del
 tipo dei dati, che segue un carattere cancelletto. Ad esempio:
       
-\begin{verbatim}
+\begin{code}
       # Banca Centrale Europea (tassi di interesse)
-\end{verbatim}
+\end{code}
 
 Il corrispondente database binario contiene i valori dei dati,
 rappresentati come ``float'', ossia come numeri in virgola mobile a

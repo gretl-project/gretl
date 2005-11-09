@@ -21,13 +21,13 @@ accompanying derivatives.
 \begin{script}[htbp]
   \caption{Consumption function from Greene}
   \label{nls-cons}
-\begin{verbatim}
+\begin{code}
 	  nls C = alpha + beta * Y^gamma
 	  deriv alpha = 1
 	  deriv beta = Y^gamma
 	  deriv gamma = beta * Y^gamma * log(Y)
 	  end nls
-\end{verbatim}
+\end{code}
 \end{script}
 
 
@@ -35,12 +35,12 @@ accompanying derivatives.
 \begin{script}[htbp]
   \caption{Nonlinear function from Russell Davidson}
   \label{nls-ects}
-\begin{verbatim}
+\begin{code}
 	  nls y = alpha + beta * x1 + (1/beta) * x2
 	  deriv alpha = 1
 	  deriv beta = x1 - x2/(beta*beta)
 	  end nls
-\end{verbatim}
+\end{code}
 \end{script}
 
 
@@ -61,18 +61,18 @@ generalization of (or a restricted form of) a linear model, it may be
 convenient to run an \cmd{ols} and initialize the parameters from the
 OLS coefficient estimates.  In relation to the first example above,
 one might do:
-\begin{verbatim}
+\begin{code}
       ols C 0 Y
       genr alpha = coeff(0)
       genr beta = coeff(Y)
       genr gamma = 1
-\end{verbatim}
+\end{code}
 And in relation to the second example one might do:
-\begin{verbatim}
+\begin{code}
       ols y 0 x1 x2
       genr alpha = coeff(0)
       genr beta = coeff(x1)
-\end{verbatim}
+\end{code}
 
 
 \section{NLS dialog window}
@@ -131,9 +131,9 @@ and the solution, is estimated to be no larger than some small value.
 This ``small value'' is by default the machine precision to the power
 3/4, but it can be set with the \cmd{genr} command using the special
 variable \verb+toler+.  For example
-\begin{verbatim}
+\begin{code}
 genr toler = .0001
-\end{verbatim}
+\end{code}
  
 will relax the tolerance to 0.0001.
 

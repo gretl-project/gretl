@@ -6,116 +6,103 @@
 \section{Native format}
 \label{native-format}
 
-\app{gretl} has its own format for data files.  Most
-      users will probably not want to read or write such files outside of
-      \app{gretl} itself, but occasionally this may be useful
-      and full details on the file formats are given in [?].
+\app{gretl} has its own format for data files.  Most users will
+probably not want to read or write such files outside of \app{gretl}
+itself, but occasionally this may be useful and full details on the
+file formats are given in [?].
 
 \section{Other data file formats}
 \label{other-formats}
 
 
-      \app{gretl} will read various other data formats.
+\app{gretl} will read various other data formats.
     
 \begin{itemize}
 \item Plain text (ASCII) files.  These can be brought in using
-	  \app{gretl}'s ``File, Open Data, Import
-	    ASCII\dots{}'' menu item, or the \cmd{import} script
-	  command.  For details on what \app{gretl} expects of
-	  such files, see
-	  Section \ref{scratch}.
-\item Comma-Separated Values (CSV) files.  These can be imported
-	  using \app{gretl}'s ``File, Open Data, Import
-	    CSV\dots{}'' menu item, or the \cmd{import} script
-	  command. See also Section \ref{scratch}.
-\item Worksheets in the format of either MS
-	  \app{Excel} or \app{Gnumeric}.
-	  These are also brought in using \app{gretl}'s
-	  ``File, Open Data, Import'' menu.  The requirements for such
-	  files are given in 
-	  Section \ref{scratch}.
+  \app{gretl}'s ``File, Open Data, Import ASCII\dots{}'' menu item, or
+  the \cmd{import} script command.  For details on what \app{gretl}
+  expects of such files, see Section \ref{scratch}.
+\item Comma-Separated Values (CSV) files.  These can be imported using
+  \app{gretl}'s ``File, Open Data, Import CSV\dots{}'' menu item, or
+  the \cmd{import} script command. See also Section \ref{scratch}.
+\item Worksheets in the format of either MS \app{Excel} or
+  \app{Gnumeric}.  These are also brought in using \app{gretl}'s
+  ``File, Open Data, Import'' menu.  The requirements for such files
+  are given in Section \ref{scratch}.
 \item BOX1 format data.  Large amounts of micro data are available
-	  (for free) in this format via the \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{Data Extraction
-	    Service} of the US Bureau of the Census. BOX1 data may be
-	  imported using the ``File, Open Data, Import BOX\dots{}'' menu
-	  item or the \cmd{import -o} script command.
+  (for free) in this format via the
+  \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{Data
+    Extraction Service} of the US Bureau of the Census. BOX1 data may
+  be imported using the ``File, Open Data, Import BOX\dots{}'' menu
+  item or the \cmd{import -o} script command.
 \end{itemize}
 
-When you import data from the ASCII, CSV or BOX formats,
-      \app{gretl} opens a ``diagnostic'' window,
-      reporting on its progress in reading the data.  If you encounter a problem
-      with ill-formatted data, the messages in this window should give you a handle
-      on fixing the problem.For the convenience of anyone wanting to carry out more complex data
-      analysis, \app{gretl} has a facility for writing out data
-      in the native formats of GNU R and GNU Octave (see [?]).  In the GUI client this
-      option is found under the ``File'' menu; in the command-line client
-      use the \cmd{store} command with the flag \cmd{-r}
-      (R) or \cmd{-m} (Octave).
+When you import data from the ASCII, CSV or BOX formats, \app{gretl}
+opens a ``diagnostic'' window, reporting on its progress in reading
+the data.  If you encounter a problem with ill-formatted data, the
+messages in this window should give you a handle on fixing the
+problem.For the convenience of anyone wanting to carry out more
+complex data analysis, \app{gretl} has a facility for writing out data
+in the native formats of GNU R and GNU Octave (see [?]).  In the GUI
+client this option is found under the ``File'' menu; in the
+command-line client use the \cmd{store} command with the flag \cmd{-r}
+(R) or \cmd{-m} (Octave).
 
 \section{Binary databases}
 \label{dbase}
 
-For working with large amounts of data I have supplied
-      \app{gretl} with a database-handling routine.  A
-      \emph{database}, as opposed to a \emph{data file},
-      is not read directly into the program's workspace.  A database can contain
-      series of mixed frequencies and sample ranges.  You open the database and
-      select series to import into the working dataset.  You can then save those
-      series in a native format data file if you wish. Databases can be accessed via
-      \app{gretl}'s menu item ``File, Browse
-	databases''.For details on the format of \app{gretl} databases,
-      see [?].
+For working with large amounts of data I have supplied \app{gretl}
+with a database-handling routine.  A \emph{database}, as opposed to a
+\emph{data file}, is not read directly into the program's workspace.
+A database can contain series of mixed frequencies and sample ranges.
+You open the database and select series to import into the working
+dataset.  You can then save those series in a native format data file
+if you wish. Databases can be accessed via \app{gretl}'s menu item
+``File, Browse databases''.For details on the format of \app{gretl}
+databases, see [?].
 
 \subsection{Online access to databases}
 \label{online-data}
 
-As of version 0.40, \app{gretl} is able to access
-	databases via the internet.  Several databases are available from Wake
-	Forest University.  Your computer must be connected to the internet for this
-	option to work.  Please see the item on ``Online databases''
-	under \app{gretl}'s Help menu.
+As of version 0.40, \app{gretl} is able to access databases via the
+internet.  Several databases are available from Wake Forest
+University.  Your computer must be connected to the internet for this
+option to work.  Please see the item on ``Online databases'' under
+\app{gretl}'s Help menu.
 
 \subsection{RATS 4 databases}
 \label{RATS}
 
-Thanks to Thomas Doan of \emph{Estima}, who provided me
-	with the specification of the database format used by RATS 4 (Regression
-	Analysis of Time Series), \app{gretl} can also handle
-	such databases.  Well, actually, a subset of same: I have only worked on
-	time-series databases containing monthly and quarterly series.  My
-	university has the RATS G7 database containing data for the seven largest
-	OECD economies and \app{gretl} will read that
-	OK.\tip{Visit the \app{gretl} \href{http://gretl.sourceforge.net/gretl_data.html}{data page} for
-	  details and updates on available data.}
+Thanks to Thomas Doan of \emph{Estima}, who provided me with the
+specification of the database format used by RATS 4 (Regression
+Analysis of Time Series), \app{gretl} can also handle such databases.
+Well, actually, a subset of same: I have only worked on time-series
+databases containing monthly and quarterly series.  My university has
+the RATS G7 database containing data for the seven largest OECD
+economies and \app{gretl} will read that OK.\tip{Visit the \app{gretl}
+  \href{http://gretl.sourceforge.net/gretl_data.html}{data page} for
+  details and updates on available data.}
 
 \section{Creating a data file from scratch}
 \label{scratch}
 
 There are five ways to do this:
 \begin{enumerate}
-\item 
-	  Find, or create using a text editor, a plain text data file
-	  and open it with \app{gretl}'s
-	  ``Import ASCII'' option.
+\item Find, or create using a text editor, a plain text data file and
+  open it with \app{gretl}'s ``Import ASCII'' option.
 	
-\item 
-	  Use your favorite spreadsheet to establish the data file,
-	  save it in Comma Separated Values format if necessary (this
-	  should not be necessary if the spreadsheet program is MS
-	  Excel or Gnumeric), then use one of
-	  \app{gretl}'s ``Import''
-	  options (CSV, Excel or Gnumeric, as the case may be).
+\item Use your favorite spreadsheet to establish the data file, save
+  it in Comma Separated Values format if necessary (this should not be
+  necessary if the spreadsheet program is MS Excel or Gnumeric), then
+  use one of \app{gretl}'s ``Import'' options (CSV, Excel or Gnumeric,
+  as the case may be).
 	
-\item 
-	  Use \app{gretl}'s built-in spreadsheet.
+\item Use \app{gretl}'s built-in spreadsheet.
 	
-\item 
-	  Select data series from a suitable database.
+\item Select data series from a suitable database.
 	
-\item 
-	  Use your favorite text editor or other software tools to a
-	  create data file in \app{gretl} format
-	  independently.
+\item Use your favorite text editor or other software tools to a
+  create data file in \app{gretl} format independently.
 	
 \end{enumerate}
 
@@ -124,388 +111,333 @@ Here are a few comments and details on these methods.
 \subsection{Common points on imported data}
 
 
-Options (1) and (2) involve using
-	\app{gretl}'s ``import''
-	mechanism.  For \app{gretl} to read such
-	data successfully, certain general conditions must be
-	satisfied:
+Options (1) and (2) involve using \app{gretl}'s ``import'' mechanism.
+For \app{gretl} to read such data successfully, certain general
+conditions must be satisfied:
 \begin{itemize}
-\item The first row must contain valid variable names.  A
-	    valid variable name is of 8 characters maximum; starts
-	    with a letter; and contains nothing but letters, numbers
-	    and the underscore character, \verb+_+.
-	    (Longer variable names will be truncated to 8 characters.)
-	    Qualifications to the above:  First, in the case of an
-	    ASCII or CSV import, if the file contains no row with
-	    variable names the program will automatically add names,
-	    \verb+v1+, \verb+v2+ and so on.
-	    Second, by ``the first row'' is meant the first
-	    \emph{relevant} row.  In the case of ASCII
-	    and CSV imports, blank rows and rows beginning with a hash
-	    mark, \verb+#+, are ignored.  In the case of
-	    Excel and Gnumeric imports, you are presented with a
-	    dialog box where you can select an offset into the
-	    spreadsheet, so that \app{gretl} will
-	    ignore a specified number of rows and/or columns.
+\item The first row must contain valid variable names.  A valid
+  variable name is of 8 characters maximum; starts with a letter; and
+  contains nothing but letters, numbers and the underscore character,
+  \verb+_+.  (Longer variable names will be truncated to 8
+  characters.)  Qualifications to the above: First, in the case of an
+  ASCII or CSV import, if the file contains no row with variable names
+  the program will automatically add names, \verb+v1+, \verb+v2+ and
+  so on.  Second, by ``the first row'' is meant the first
+  \emph{relevant} row.  In the case of ASCII and CSV imports, blank
+  rows and rows beginning with a hash mark, \verb+#+, are ignored.  In
+  the case of Excel and Gnumeric imports, you are presented with a
+  dialog box where you can select an offset into the spreadsheet, so
+  that \app{gretl} will ignore a specified number of rows and/or
+  columns.
 	  
-\item Data values: these should constitute a rectangular
-	    block, with one variable per column (and one observation
-	    per row).  The number of variables (data columns) must
-	    match the number of variable names given. See also Section \ref{missing-data}.  Numeric data are expected, but
-	    in the case of importing from ASCII/CSV, the program
-	    offers limited handling of character (string) data: if a
-	    given column contains character data only, consecutive
-	    numeric codes are substituted for the strings, and once
-	    the import is complete a table is printed showing the
-	    correspondence between the strings and the codes.
+\item Data values: these should constitute a rectangular block, with
+  one variable per column (and one observation per row).  The number
+  of variables (data columns) must match the number of variable names
+  given. See also Section \ref{missing-data}.  Numeric data are
+  expected, but in the case of importing from ASCII/CSV, the program
+  offers limited handling of character (string) data: if a given
+  column contains character data only, consecutive numeric codes are
+  substituted for the strings, and once the import is complete a table
+  is printed showing the correspondence between the strings and the
+  codes.
 	  
-\item Dates (or observation labels): Optionally, the
-	    \emph{first} column may contain strings such
-	    as dates, or labels for cross-sectional observations.
-	    Such strings have a maximum of 8 characters (as with
-	    variable names, longer strings will be truncated).  A
-	    column of this sort should be headed with the string
-	    \verb+obs+ or \verb+date+, or the
-	    first row entry may be left blank.For dates to be recognized as such, the date strings
-	    must adhere to one or other of a set of specific formats,
-	    as follows.  For \emph{annual} data: 4-digit
-	    years.  For \emph{quarterly} data: a 4-digit
-	    year, followed by a separator (either a period, a colon,
-	    or the letter \verb+Q+), followed by a 1-digit
-	    quarter.  Examples: \verb+1997.1+,
-	    \verb+2002:3+, \verb+1947Q1+.  For
-	    \emph{monthly} data: a 4-digit year,
-	    followed by a period or a colon, followed by a two-digit
-	    month.  Examples: \verb+1997.01+,
-	    \verb+2002:10+.
+\item Dates (or observation labels): Optionally, the \emph{first}
+  column may contain strings such as dates, or labels for
+  cross-sectional observations.  Such strings have a maximum of 8
+  characters (as with variable names, longer strings will be
+  truncated).  A column of this sort should be headed with the string
+  \verb+obs+ or \verb+date+, or the first row entry may be left
+  blank.For dates to be recognized as such, the date strings must
+  adhere to one or other of a set of specific formats, as follows.
+  For \emph{annual} data: 4-digit years.  For \emph{quarterly} data: a
+  4-digit year, followed by a separator (either a period, a colon, or
+  the letter \verb+Q+), followed by a 1-digit quarter.  Examples:
+  \verb+1997.1+, \verb+2002:3+, \verb+1947Q1+.  For \emph{monthly}
+  data: a 4-digit year, followed by a period or a colon, followed by a
+  two-digit month.  Examples: \verb+1997.01+, \verb+2002:10+.
 	  
 \end{itemize}
 
-CSV files can use comma, space or tab as the column
-	separator.  When you use the ``Import CSV'' menu
-	item you are prompted to specify the separator.  In the case
-	of ``Import ASCII'' the program attempts to
-	auto-detect the separator that was used.If you use a spreadsheet to prepare your data you are able
-	to carry out various transformations of the ``raw''
-	data with ease (adding things up, taking percentages or
-	whatever): note, however, that you can also do this sort of
-	thing easily --- perhaps more easily --- within
-	\app{gretl}, by using the tools under the
-	``Data, Add variables'' menu and/or
-	``Variable, define new variable''.
+CSV files can use comma, space or tab as the column separator.  When
+you use the ``Import CSV'' menu item you are prompted to specify the
+separator.  In the case of ``Import ASCII'' the program attempts to
+auto-detect the separator that was used.If you use a spreadsheet to
+prepare your data you are able to carry out various transformations of
+the ``raw'' data with ease (adding things up, taking percentages or
+whatever): note, however, that you can also do this sort of thing
+easily --- perhaps more easily --- within \app{gretl}, by using the
+tools under the ``Data, Add variables'' menu and/or ``Variable, define
+new variable''.
 
 \subsection{Appending imported data}
 
 
-You may wish to establish a
-	\app{gretl} dataset piece by piece, by
-	incremental importation of data from other sources.  This is
-	supported via the ``File, Append data'' menu items.
-	\app{gretl} will check the new data for
-	conformability with the existing dataset and, if everything
-	seems OK, will merge the data.  You can add new variables in
-	this way, provided the data frequency matches that of the
-	existing dataset.  Or you can append new observations for
-	data series that are already present; in this case the
-	variable names must match up correctly.  Note that by default
-	(that is, if you choose ``Open data'' rather than
-	``Append data''), opening a new data file closes
-	the current one.
+You may wish to establish a \app{gretl} dataset piece by piece, by
+incremental importation of data from other sources.  This is supported
+via the ``File, Append data'' menu items.  \app{gretl} will check the
+new data for conformability with the existing dataset and, if
+everything seems OK, will merge the data.  You can add new variables
+in this way, provided the data frequency matches that of the existing
+dataset.  Or you can append new observations for data series that are
+already present; in this case the variable names must match up
+correctly.  Note that by default (that is, if you choose ``Open data''
+rather than ``Append data''), opening a new data file closes the
+current one.
 
 \subsection{Using the built-in spreadsheet}
 
 
-Under \app{gretl}'s ``File,
-	  Create data set'' menu you can choose the sort of
-	dataset you want to establish (e.g. quarterly time series,
-	cross-sectional).  You will then be prompted for starting and
-	ending dates (or observation numbers) and the name of the
-	first variable to add to the dataset. After supplying this
-	information you will be faced with a simple spreadsheet into
-	which you can type data values.  In the spreadsheet window,
-	clicking the right mouse button will invoke a popup menu which
-	enables you to add a new variable (column), to add an
-	observation (append a row at the foot of the sheet), or to
-	insert an observation at the selected point (move the data
-	down and insert a blank row.)Once you have entered data into the spreadsheet you import
-	these into \app{gretl}'s workspace using
-	the spreadsheet's ``Apply changes'' button.Please note that \app{gretl}'s
-	spreadsheet is quite basic and has no support for functions or
-	formulas.  Data transformations are done via the
-	``Data'' or ``Variable'' menus in the
-	main \app{gretl} window.
+Under \app{gretl}'s ``File, Create data set'' menu you can choose the
+sort of dataset you want to establish (e.g. quarterly time series,
+cross-sectional).  You will then be prompted for starting and ending
+dates (or observation numbers) and the name of the first variable to
+add to the dataset. After supplying this information you will be faced
+with a simple spreadsheet into which you can type data values.  In the
+spreadsheet window, clicking the right mouse button will invoke a
+popup menu which enables you to add a new variable (column), to add an
+observation (append a row at the foot of the sheet), or to insert an
+observation at the selected point (move the data down and insert a
+blank row.)Once you have entered data into the spreadsheet you import
+these into \app{gretl}'s workspace using the spreadsheet's ``Apply
+changes'' button.Please note that \app{gretl}'s spreadsheet is quite
+basic and has no support for functions or formulas.  Data
+transformations are done via the ``Data'' or ``Variable'' menus in the
+main \app{gretl} window.
 
 \subsection{Selecting from a database}
 
 
-Another alternative is to establish your dataset by
-	selecting variables from a database.
-	\app{gretl} comes with a database of US
-	macroeconomic time series and, as mentioned above, the program
-	will reads RATS 4 databases.Begin with \app{gretl}'s ``File,
-	  Browse databases'' menu item. This has three forks:
-	``gretl native'', ``RATS 4'' and
-	``on database server''.  You should be able to find
-	the file \verb+fedstl.bin+ in the file selector
-	that opens if you choose the ``gretl native''
-	option --- this file, which contains a large collection of
-	US macroeconomic time series, is supplied with the
-	distribution.You won't find anything under ``RATS 4'' unless
-	you have purchased RATS data.\footnote{See \href{http://www.estima.com/}{www.estima.com}}  If you do possess RATS data you should go into
-	\app{gretl}'s ``File, Preferences,
-	  General'' dialog, select the Databases tab, and fill
-	in the correct path to your RATS files.If your computer is connected to the internet you should
-	find several databases (at Wake Forest University) under
-	``on database server''.  You can browse these
-	remotely; you also have the option of installing them onto
-	your own computer.  The initial remote databases window has an
-	item showing, for each file, whether it is already installed
-	locally (and if so, if the local version is up to date with
-	the version at Wake Forest).Assuming you have managed to open a database you can
-	import selected series into \app{gretl}'s
-	workspace by using the ``Import'' menu item in the
-	database window, or via the popup menu that appears if you
-	click the right mouse button, or by dragging the series into
-	the program's main window.
+Another alternative is to establish your dataset by selecting
+variables from a database.  \app{gretl} comes with a database of US
+macroeconomic time series and, as mentioned above, the program will
+reads RATS 4 databases.Begin with \app{gretl}'s ``File, Browse
+databases'' menu item. This has three forks: ``gretl native'', ``RATS
+4'' and ``on database server''.  You should be able to find the file
+\verb+fedstl.bin+ in the file selector that opens if you choose the
+``gretl native'' option --- this file, which contains a large
+collection of US macroeconomic time series, is supplied with the
+distribution.You won't find anything under ``RATS 4'' unless you have
+purchased RATS data.\footnote{See
+  \href{http://www.estima.com/}{www.estima.com}} If you do possess
+RATS data you should go into \app{gretl}'s ``File, Preferences,
+General'' dialog, select the Databases tab, and fill in the correct
+path to your RATS files.If your computer is connected to the internet
+you should find several databases (at Wake Forest University) under
+``on database server''.  You can browse these remotely; you also have
+the option of installing them onto your own computer.  The initial
+remote databases window has an item showing, for each file, whether it
+is already installed locally (and if so, if the local version is up to
+date with the version at Wake Forest).Assuming you have managed to
+open a database you can import selected series into \app{gretl}'s
+workspace by using the ``Import'' menu item in the database window, or
+via the popup menu that appears if you click the right mouse button,
+or by dragging the series into the program's main window.
 
 \subsection{Creating a gretl data file independently}
 
 
-It is possible to create a data file in one or other of
-	\app{gretl}'s own formats using a text
-	editor or software tools such as
-	\app{awk}, \app{sed}
-	or \app{perl}.  This may be a good choice
-	if you have large amounts of data already in machine readable
-	form. You will, of course, need to study the
-	\app{gretl} data formats (XML format or
-	``traditional'' format) as described in 
-	chapter \ref{datafiles}.
+It is possible to create a data file in one or other of \app{gretl}'s
+own formats using a text editor or software tools such as \app{awk},
+\app{sed} or \app{perl}.  This may be a good choice if you have large
+amounts of data already in machine readable form. You will, of course,
+need to study the \app{gretl} data formats (XML format or
+``traditional'' format) as described in chapter \ref{datafiles}.
 
 \subsection{Further note}
 
 
 
-	\app{gretl} has no problem compacting
-	data series of relatively high frequency (e.g. monthly) to a
-	lower frequency (e.g. quarterly): you are given a choice of
-	method (average, sum, start of period, or end of period).
-	But it has no way of converting lower frequency data to
-	higher.  Therefore if you want to import series of various
-	different frequencies from a database into
-	\app{gretl} \emph{you must start by
-	  importing a series of the lowest frequency you intend to
-	  use.} This will initialize your
-	\app{gretl} dataset to the low
-	frequency, and higher frequency data can be imported
-	subsequently (they will be compacted automatically).  If you
-	start with a high frequency series you will not be able to
-	import any series of lower frequency.
+\app{gretl} has no problem compacting data series of relatively high
+frequency (e.g. monthly) to a lower frequency (e.g. quarterly): you
+are given a choice of method (average, sum, start of period, or end of
+period).  But it has no way of converting lower frequency data to
+higher.  Therefore if you want to import series of various different
+frequencies from a database into \app{gretl} \emph{you must start by
+  importing a series of the lowest frequency you intend to use.} This
+will initialize your \app{gretl} dataset to the low frequency, and
+higher frequency data can be imported subsequently (they will be
+compacted automatically).  If you start with a high frequency series
+you will not be able to import any series of lower frequency.
 
 \section{Missing data values}
 \label{missing-data}
 
-These are represented internally as
-      \verb+DBL_MAX+, the largest floating-point number
-      that can be represented on the system (which is likely to be at
-      least 10 to the power 300, and so should not be confused with
-      legitimate data values).  In a native-format data file they
-      should be represented as \verb+NA+. When importing
-      CSV data \app{gretl} accepts several common
-      representations of missing values including $-$999, the
-      string \verb+NA+ (in upper or lower case), a single
-      dot, or simply a blank cell.  Blank cells should, of course, be
-      properly delimited, e.g. \verb+120.6,,5.38+, in
-      which the middle value is presumed missing.As for handling of missing values in the course of
-      statistical analysis, \app{gretl} does the
-      following:
+These are represented internally as \verb+DBL_MAX+, the largest
+floating-point number that can be represented on the system (which is
+likely to be at least 10 to the power 300, and so should not be
+confused with legitimate data values).  In a native-format data file
+they should be represented as \verb+NA+. When importing CSV data
+\app{gretl} accepts several common representations of missing values
+including $-$999, the string \verb+NA+ (in upper or lower case), a
+single dot, or simply a blank cell.  Blank cells should, of course, be
+properly delimited, e.g. \verb+120.6,,5.38+, in which the middle value
+is presumed missing.As for handling of missing values in the course of
+statistical analysis, \app{gretl} does the following:
 \begin{itemize}
-\item In calculating descriptive statistics (mean,
-	  standard deviation, etc.) under the
-	  \cmd{summary} command, missing values are
-	  simply skipped and the sample size adjusted
-	  appropriately.
-\item In running regressions
-	  \app{gretl} first adjusts the beginning
-	  and end of the sample range, truncating the sample if need
-	  be.  Missing values at the beginning of the sample are
-	  common in time series work due to the inclusion of lags,
-	  first differences and so on; missing values at the end of
-	  the range are not uncommon due to differential updating of
-	  series and possibly the inclusion of
-	  leads.
+\item In calculating descriptive statistics (mean, standard deviation,
+  etc.) under the \cmd{summary} command, missing values are simply
+  skipped and the sample size adjusted appropriately.
+\item In running regressions \app{gretl} first adjusts the beginning
+  and end of the sample range, truncating the sample if need be.
+  Missing values at the beginning of the sample are common in time
+  series work due to the inclusion of lags, first differences and so
+  on; missing values at the end of the range are not uncommon due to
+  differential updating of series and possibly the inclusion of leads.
 \end{itemize}
 
-If \app{gretl} detects any missing
-      values ``inside'' the (possibly truncated) sample
-      range for a regression, the result depends on the character of
-      the dataset and the estimator chosen.  In many cases, the
-      program will automatically skip the missing observations when
-      calculating the regression results.  In this situation a message
-      is printed stating how many observations were dropped.  On the
-      other hand, the skipping of missing observations is not
-      supported for all procedures: exceptions include all
-      autoregressive estimators, system estimators such as SUR, and
-      nonlinear least squares.  In the case of panel data, the
-      skipping of missing observations is supported only if their
-      omission leaves a balanced panel. If missing observations are
-      found in cases where they are not supported,
-      \app{gretl} gives an error message and
-      refuses to produce estimates.In case missing values in the middle of a dataset present a
-      problem, the \cmd{misszero} function (use with
-      care!) is provided under the \cmd{genr} command. By
-      doing \cmd{genr foo = misszero(bar)}
-    you can produce a series \cmd{foo} which is
-      identical to \cmd{bar} except that any missing
-      values become zeros.  Then you can use carefully constructed
-      dummy variables to, in effect, drop the missing observations
-      from the regression while retaining the surrounding sample
-      range.\footnote{\cmd{genr} also offers the
-	  inverse function to \cmd{misszero}, namely
-	  \cmd{zeromiss}, which replaces zeros in a given
-	  series with the missing observation code.}
+If \app{gretl} detects any missing values ``inside'' the (possibly
+truncated) sample range for a regression, the result depends on the
+character of the dataset and the estimator chosen.  In many cases, the
+program will automatically skip the missing observations when
+calculating the regression results.  In this situation a message is
+printed stating how many observations were dropped.  On the other
+hand, the skipping of missing observations is not supported for all
+procedures: exceptions include all autoregressive estimators, system
+estimators such as SUR, and nonlinear least squares.  In the case of
+panel data, the skipping of missing observations is supported only if
+their omission leaves a balanced panel. If missing observations are
+found in cases where they are not supported, \app{gretl} gives an
+error message and refuses to produce estimates.In case missing values
+in the middle of a dataset present a problem, the \cmd{misszero}
+function (use with care!) is provided under the \cmd{genr} command. By
+doing \cmd{genr foo = misszero(bar)} you can produce a series
+\cmd{foo} which is identical to \cmd{bar} except that any missing
+values become zeros.  Then you can use carefully constructed dummy
+variables to, in effect, drop the missing observations from the
+regression while retaining the surrounding sample
+range.\footnote{\cmd{genr} also offers the inverse function to
+  \cmd{misszero}, namely \cmd{zeromiss}, which replaces zeros in a
+  given series with the missing observation code.}
 
 \section{Data file collections}
 \label{collections}
 
 
-      If you're using \app{gretl} in a teaching
-      context you may be interested in adding a collection of data
-      files and/or scripts that relate specifically to your course, in
-      such a way that students can browse and access them
-      easily.This is quite easy as of \app{gretl}
-      version 1.2.1.  There are three ways to access such collections of
-      files:
+If you're using \app{gretl} in a teaching context you may be
+interested in adding a collection of data files and/or scripts that
+relate specifically to your course, in such a way that students can
+browse and access them easily.This is quite easy as of \app{gretl}
+version 1.2.1.  There are three ways to access such collections of
+files:
 \begin{itemize}
-\item For data files: select the menu item
-	  ``File, Open data, sample file'', or click on the
-	  folder icon on the \app{gretl}
-	  toolbar.
-\item For script files: select the menu item
-	  ``File, Open command file, practice
-	    file''.
+\item For data files: select the menu item ``File, Open data, sample
+  file'', or click on the folder icon on the \app{gretl} toolbar.
+\item For script files: select the menu item ``File, Open command
+  file, practice file''.
 \end{itemize}
 
 When a user selects one of the items:
 \begin{itemize}
-\item The data or script files included in the gretl
-	  distribution are automatically shown (this includes files
-	  relating to Ramanathan's \emph{Introductory
-	    Econometrics} and Greene's
-	  \emph{Econometric Analysis}).
-\item The program looks for certain known collections
-	  of data files available as optional extras, for instance the
-	  datafiles from various econometrics textbooks (Wooldridge,
-	  Gujarati, Stock and Watson) and the Penn World Table (PWT
-	  5.6).  (See \href{http://gretl.sourceforge.net/gretl_data.html}{the
-	    data page} at the gretl website for information on
-	  these collections.)  If the additional files are found, they
-	  are added to the selection windows.
-\item The program then searches for valid file
-	  collections (not necessarily known in advance) in these
-	  places: the ``system'' data directory, the system
-	  script directory, the user directory, and all first-level
-	  subdirectories of these.  (For reference, typical values for
-	  these directories are shown in Table \ref{tab-colls}.)
+\item The data or script files included in the gretl distribution are
+  automatically shown (this includes files relating to Ramanathan's
+  \emph{Introductory Econometrics} and Greene's \emph{Econometric
+    Analysis}).
+\item The program looks for certain known collections of data files
+  available as optional extras, for instance the datafiles from
+  various econometrics textbooks (Wooldridge, Gujarati, Stock and
+  Watson) and the Penn World Table (PWT 5.6).  (See
+  \href{http://gretl.sourceforge.net/gretl_data.html}{the data page}
+  at the gretl website for information on these collections.)  If the
+  additional files are found, they are added to the selection windows.
+\item The program then searches for valid file collections (not
+  necessarily known in advance) in these places: the ``system'' data
+  directory, the system script directory, the user directory, and all
+  first-level subdirectories of these.  (For reference, typical values
+  for these directories are shown in Table \ref{tab-colls}.)
 \end{itemize}
 
 
 
 \begin{table}[htbp]
-\begin{center}
-\caption{Typical locations for file collections}
-\label{tab-colls}
-\begin{tabular}{lll}
-  & Linux & MS Windows\\
-system data dir & \verb+/usr/share/gretl/data+ & \verb+c:\userdata\gretl\data+\\
-system script dir & \verb+/usr/share/gretl/scripts+ & \verb+c:\userdata\gretl\scripts+\\
-user dir & \verb+/home/me/gretl+ & \verb+c:\userdata\gretl\user+\\
-\end{tabular}
-\end{center}
-\end{table}
+  \begin{center}
+    \caption{Typical locations for file collections}
+    \label{tab-colls}
+    \begin{tabular}{lll}
+        & Linux & MS Windows\\
+        system data dir & \verb+/usr/share/gretl/data+ 
+        & \verb+c:\userdata\gretl\data+\\
+        system script dir & \verb+/usr/share/gretl/scripts+ 
+        & \verb+c:\userdata\gretl\scripts+\\
+        user dir & \verb+/home/me/gretl+ 
+        & \verb+c:\userdata\gretl\user+\\
+      \end{tabular}
+    \end{center}
+  \end{table}
 
-Any valid collections will be added to the selection
-      windows. So what constitutes a valid file collection?  This
-      comprises either a set of data files in
-      \app{gretl} XML format (with the
-      \verb+.gdt+ suffix) or a set of script files
-      containing gretl commands (with \verb+.inp+ suffix),
-      in each case accompanied by a ``master file'' or
-      catalog.  The \app{gretl} distribution
-      contains several example catalog files, for instance the file
-      \verb+descriptions+ in the
-      \verb+misc+ sub-directory of the
-      \app{gretl} data directory and
-      \verb+ps_descriptions+ in the
-      \verb+misc+ sub-directory of the scripts
-      directory.
-    If you are adding your own collection, data catalogs should
-      be named \verb+descriptions+ and script catalogs
-      should be be named \verb+ps_descriptions+.  In
-      each case the catalog should be placed (along with the
-      associated data or script files) in its own specific
-      sub-directory (e.g.
-      \verb+/usr/share/gretl/data/mydata+ or
-      \verb+c:\userdata\gretl\data\mydata+).The syntax of the (plain text) description files is
-      straightforward.  Here, for example, are the first few lines of
-      gretl's ``misc'' data catalog:
-\begin{verbatim}
+  Any valid collections will be added to the selection windows. So
+  what constitutes a valid file collection?  This comprises either a
+  set of data files in \app{gretl} XML format (with the \verb+.gdt+
+  suffix) or a set of script files containing gretl commands (with
+  \verb+.inp+ suffix), in each case accompanied by a ``master file''
+  or catalog.  The \app{gretl} distribution contains several example
+  catalog files, for instance the file \verb+descriptions+ in the
+  \verb+misc+ sub-directory of the \app{gretl} data directory and
+  \verb+ps_descriptions+ in the \verb+misc+ sub-directory of the
+  scripts directory.  If you are adding your own collection, data
+  catalogs should be named \verb+descriptions+ and script catalogs
+  should be be named \verb+ps_descriptions+.  In each case the catalog
+  should be placed (along with the associated data or script files) in
+  its own specific sub-directory (e.g.
+  \verb+/usr/share/gretl/data/mydata+ or
+  \verb+c:\userdata\gretl\data\mydata+).The syntax of the (plain text)
+  description files is straightforward.  Here, for example, are the
+  first few lines of gretl's ``misc'' data catalog:
+
+\begin{code}
       # Gretl: various illustrative datafiles
       "arma","artificial data for ARMA script example"
       "ects_nls","Nonlinear least squares example"
-      "hamilton","Prices and exchange rate, U.S. and Italy"\end{verbatim}
+      "hamilton","Prices and exchange rate, U.S. and Italy"
+\end{code}
 
-      The first line, which must start with a hash mark, contains a
-      short name, here ``Gretl'', which will appear as
-      the label for this collection's tab in the data browser window,
-      followed by a colon, followed by an optional short description
-      of the collection.Subsequent lines contain two elements, separated by a comma
-      and wrapped in double quotation marks.  The first is a datafile
-      name (leave off the \verb+.gdt+ suffix here) and the
-      second is a short description of the content of that datafile.
-      There should be one such line for each datafile in the
-      collection.A script catalog file looks very similar, except that there
-      are three fields in the file lines: a filename (without its
-      \verb+.inp+ suffix), a brief description of the
-      econometric point illustrated in the script, and a brief
-      indication of the nature of the data used.  Again, here are the
-      first few lines of the supplied ``misc'' script
-      catalog:
-\begin{verbatim}
+  The first line, which must start with a hash mark, contains a short
+  name, here ``Gretl'', which will appear as the label for this
+  collection's tab in the data browser window, followed by a colon,
+  followed by an optional short description of the
+  collection.Subsequent lines contain two elements, separated by a
+  comma and wrapped in double quotation marks.  The first is a
+  datafile name (leave off the \verb+.gdt+ suffix here) and the second
+  is a short description of the content of that datafile.  There
+  should be one such line for each datafile in the collection.A script
+  catalog file looks very similar, except that there are three fields
+  in the file lines: a filename (without its \verb+.inp+ suffix), a
+  brief description of the econometric point illustrated in the
+  script, and a brief indication of the nature of the data used.
+  Again, here are the first few lines of the supplied ``misc'' script
+  catalog:
+
+\begin{code}
       # Gretl: various sample scripts
       "arma.inp","ARMA modeling","artificial data"
       "ects_nls","Nonlinear least squares (Davidson)","artificial data"
       "leverage","Influential observations","artificial data"
-      "longley","Multicollinearity","US employment"\end{verbatim}
-If you want to make your own data collection available to
-      users, these are the steps:
-\begin{enumerate}
-\item Assemble the data, in whatever format is
-	  convenient.
-\item Convert the data to
-	  \app{gretl} format and save as
-	  \verb+gdt+ files.  It is probably easiest to
-	  convert the data by importing them into the program from
-	  plain text, CSV, or a spreadsheet format (MS Excel or
-	  Gnumeric) then saving them. You may wish to add descriptions
-	  of the individual variables (the ``Variable, Edit
-	    attributes'' menu item), and add information on the
-	  source of the data (the ``Data, Edit info'' menu
-	  item).
-\item Write a descriptions file for the collection
-	  using a text editor.
-\item Put the datafiles plus the descriptions file in
-	  a subdirectory of the \app{gretl} data
-	  directory (or user directory).
-\item If the collection is to be distributed to other
-	  people, package the data files and catalog in some suitable
-	  manner, e.g. as a zipfile.
-\end{enumerate}
+      "longley","Multicollinearity","US employment"
+\end{code}
 
-If you assemble such a collection, and the data are not
-      proprietary, I would encourage you to submit the collection for
-      packaging as a \app{gretl} optional
-      extra.
+  If you want to make your own data collection available to users,
+  these are the steps:
+  \begin{enumerate}
+  \item Assemble the data, in whatever format is convenient.
+  \item Convert the data to \app{gretl} format and save as \verb+gdt+
+    files.  It is probably easiest to convert the data by importing
+    them into the program from plain text, CSV, or a spreadsheet
+    format (MS Excel or Gnumeric) then saving them. You may wish to
+    add descriptions of the individual variables (the ``Variable, Edit
+    attributes'' menu item), and add information on the source of the
+    data (the ``Data, Edit info'' menu item).
+  \item Write a descriptions file for the collection using a text
+    editor.
+  \item Put the datafiles plus the descriptions file in a subdirectory
+    of the \app{gretl} data directory (or user directory).
+  \item If the collection is to be distributed to other people,
+    package the data files and catalog in some suitable manner, e.g.
+    as a zipfile.
+  \end{enumerate}
+
+  If you assemble such a collection, and the data are not proprietary,
+  I would encourage you to submit the collection for packaging as a
+  \app{gretl} optional extra.
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"

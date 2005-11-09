@@ -73,10 +73,10 @@ di frequenza è \verb+bkbp_limits+, mentre quella per \emph{k} è
 \verb+bkbp_k+.  Quindi ad esempio, se si stanno usando dati mensili e
 si vuole impostare i limiti di frequenza tra 18 e 96, e \emph{k} a 24,
 si può eseguire
-\begin{verbatim}
+\begin{code}
 	set bkbp_limits 18 96
 	set bkbp_k 24
-\end{verbatim}
+\end{code}
 
 Questi valori resteranno in vigore per le chiamate alla funzione
 \verb+bkfilt+ finché non saranno modificati da un altro uso di
@@ -102,9 +102,9 @@ valido). La funzione \verb+ok()+ è il complemento di \verb+missing+,
 ossia una scorciatoia per \verb+!missing+ (dove \verb+!+ è l'operatore
 booleano NOT).  Ad esempio, è possibile contare i valori mancanti
 della variabile \verb+x+ usando
-\begin{verbatim}
+\begin{code}
       genr nmanc_x = sum(missing(x))
-\end{verbatim}
+\end{code}
 
 La funzione \verb+zeromiss()+, che richiede anch'essa come unico
 argomento il nome di una serie, produce una serie in cui tutti i
@@ -113,10 +113,10 @@ attenzione (di solito non bisogna confondere valori mancanti col
 valore zero), ma può essere utile in alcuni casi: ad esempio, è
 possibile determinare la prima osservazione valida di una variabile
 \verb+x+ usando
-\begin{verbatim}
+\begin{code}
         genr time
         genr x0 = min(zeromiss(time * ok(x)))
-\end{verbatim}
+\end{code}
 
 
 La funzione \verb+misszero()+ compie l'operazione opposta di
@@ -201,7 +201,7 @@ corretto, è possibile leggere l'etichetta con il comando \cmd{label}
 (il cui unico argomento è il nome della variabile). La seguente
 sessione interattiva illustra la procedura.
     
-\begin{verbatim}
+\begin{code}
       ? adf 4 x1 --c
 
       Test Dickey-Fuller aumentati, ordine 4, per x1
@@ -219,7 +219,7 @@ sessione interattiva illustra la procedura.
       Generato lo scalare pv (ID 13) = 0.363844
       ? label pv    
       pv=Dickey-Fuller pvalue (scalar)
-\end{verbatim}
+\end{code}
 
 
 %%% Local Variables: 

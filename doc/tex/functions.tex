@@ -6,81 +6,83 @@
 \section{Introduction}
 \label{func-intro}
 
-As of version 1.4.0, \app{gretl} contains a
-      revised mechanism for defining functions in the context of a script.  
-      Details follow.\footnote{Note that the revised definition of functions
-	  represents a backward-incompatible change relative to version 1.3.3 of
-	  the program.}
+As of version 1.4.0, \app{gretl} contains a revised mechanism for
+defining functions in the context of a script.  Details
+follow.\footnote{Note that the revised definition of functions
+  represents a backward-incompatible change relative to version 1.3.3
+  of the program.}
     
 
 \section{Defining a function}
 \label{func-define}
 
 Functions must be defined before they are called.  The syntax for
-      defining a function looks like this
+defining a function looks like this
     
-\begin{verbatim}
+\begin{code}
       function function-name parameters
          function body
-      end function\end{verbatim}
+      end function
+\end{code}
 
-      function-name is the unique identifier for the
-      function. Names must start with a letter. They have a maximum length of 31
-      characters; if you type a longer name it will be truncated.  Function names
-      cannot contain spaces.  You will get an error if you try to define a function
-      having the same name as an existing \app{gretl} command,
-      or with the same name as a previously defined user function.  To avoid an
-      error in the latter case (that is, to be able to redefine a user
-      function), preface the function definition with
+function-name is the unique identifier for the function. Names must
+start with a letter. They have a maximum length of 31 characters; if
+you type a longer name it will be truncated.  Function names cannot
+contain spaces.  You will get an error if you try to define a function
+having the same name as an existing \app{gretl} command, or with the
+same name as a previously defined user function.  To avoid an error in
+the latter case (that is, to be able to redefine a user function),
+preface the function definition with
     
-\begin{verbatim}
-      function function-name clear\end{verbatim}
+\begin{code}
+      function function-name clear
+\end{code}
 
-      The parameters for a function (if any) are
-      given in the form of a comma-separated list.  Parameters can be of three
-      types: ordinary variables (data series), scalar variables, or named lists
-      of variables.  Each element in the listing of parameters is composed of
-      two terms: first a type specifier (\verb+series+,
-      \verb+scalar+ or \verb+list+) then the
-      name by which the parameter shall be known within the function.  An
-      example follows (the parentheses enclosing the list of parameters are
-      optional):
+The parameters for a function (if any) are given in the form of a
+comma-separated list.  Parameters can be of three types: ordinary
+variables (data series), scalar variables, or named lists of
+variables.  Each element in the listing of parameters is composed of
+two terms: first a type specifier (\verb+series+, \verb+scalar+ or
+\verb+list+) then the name by which the parameter shall be known
+within the function.  An example follows (the parentheses enclosing
+the list of parameters are optional):
     
-\begin{verbatim}
-      function myfunc (series y, list xvars, scalar verbose)\end{verbatim}
+\begin{code}
+      function myfunc (series y, list xvars, scalar verbose)
+\end{code}
 
-      When a function is called, the parameters are instantiated by arguments
-      given by the caller.  There are automatic checks in place to ensure that
-      the number of arguments given in a function call matches the number of
-      parameters, and that the types of the given arguments match the types
-      specified in the definition of the function.  An error is flagged if
-      either of these conditions is violated.  A series argument may be
-      specified either using either the name of the variable in question or its
-      ID number.  Scalar arguments may be specified by giving the name of a
-      variable or a numerical value (the ID number of a variable is not
-      acceptable).  List arguments must be specified by name.  
+When a function is called, the parameters are instantiated by
+arguments given by the caller.  There are automatic checks in place to
+ensure that the number of arguments given in a function call matches
+the number of parameters, and that the types of the given arguments
+match the types specified in the definition of the function.  An error
+is flagged if either of these conditions is violated.  A series
+argument may be specified either using either the name of the variable
+in question or its ID number.  Scalar arguments may be specified by
+giving the name of a variable or a numerical value (the ID number of a
+variable is not acceptable).  List arguments must be specified by
+name.
     
-      The function body is composed of
-      \app{gretl} commands, or calls to user-defined
-      functions (that is, functions may be nested).  A function may call itself
-      (that is, functions may be recursive). There is a maximum ``stacking
-	depth'' for user functions: at present this is set to 8.  While
-      the function body may contain function calls, it may not contain function
-      definitions.  That is, you cannot define a function inside another
-      function.
-      Functions may be called, but may not be defined, within the context of a
-      command loop (see [?]).
+The function body is composed of \app{gretl} commands, or calls to
+user-defined functions (that is, functions may be nested).  A function
+may call itself (that is, functions may be recursive). There is a
+maximum ``stacking depth'' for user functions: at present this is set
+to 8.  While the function body may contain function calls, it may not
+contain function definitions.  That is, you cannot define a function
+inside another function.  Functions may be called, but may not be
+defined, within the context of a command loop (see [?]).
     
 
 \section{Calling a function}
 \label{func-call}
 
 A user function is called or invoked by typing its name followed by
-      zero or more arguments.  If there are two or more arguments these should
-      be separated by commas.  The following trivial example illustrates a
-      function call that correctly matches the function definition.
+zero or more arguments.  If there are two or more arguments these
+should be separated by commas.  The following trivial example
+illustrates a function call that correctly matches the function
+definition.
     
-\begin{verbatim}
+\begin{code}
       # function definition
       function ols_ess (series y, list xvars)
         ols y 0 xvars --quiet
@@ -92,21 +94,22 @@ A user function is called or invoked by typing its name followed by
       open data4-1
       list xlist = 2 3 4
       # function call (the return value is ignored here)
-      ols_ess price, xlist\end{verbatim}
+      ols_ess price, xlist
+\end{code}
 
-      The function call gives two arguments: the first is a data series
-      specified by name and the second is a named list of regressors.  Note that
-      while the function offers the variable \verb+myess+ as a
-      return value, it is ignored by the caller in this instance.
-    (As a side note here, if you want a function to calculate some value
-      having to do with a regression, but are not interested in the full results
-      of the regression, you may wish to use the \verb+--quiet+ flag
-      with the estimation command as shown above.)
+The function call gives two arguments: the first is a data series
+specified by name and the second is a named list of regressors.  Note
+that while the function offers the variable \verb+myess+ as a return
+value, it is ignored by the caller in this instance.  (As a side note
+here, if you want a function to calculate some value having to do with
+a regression, but are not interested in the full results of the
+regression, you may wish to use the \verb+--quiet+ flag with the
+estimation command as shown above.)
     
-      A second example shows how to write a function call that assigns return
-      values to variables in the caller:
+A second example shows how to write a function call that assigns
+return values to variables in the caller:
     
-\begin{verbatim}
+\begin{code}
       # function definition
       function ess_uhat (series y, list xvars)
         ols y 0 xvars --quiet
@@ -119,64 +122,67 @@ A user function is called or invoked by typing its name followed by
       open data4-1
       list xlist = 2 3 4
       # function call
-      (SSR, resids) = ess_uhat price, xlist\end{verbatim}
+      (SSR, resids) = ess_uhat price, xlist
+\end{code}
 
 
 \section{Scope of variables}
 \label{func-scope}
 
 All variables created within a function are local to that function,
-      and are destroyed when the function exits, unless they are made available
-      as return values and these values are ``picked up'' or assigned
-      by the caller.
+and are destroyed when the function exits, unless they are made
+available as return values and these values are ``picked up'' or
+assigned by the caller.
     
-      Functions do not have access to variables in ``outer scope''
-      (that is, variables that exist in the script from which the function is
-      called) except insofar as these are explicitly passed to the function as
-      arguments.  Even in this case, what the function actually gets is a copy
-      of the variables in question.  Therefore, variables in outer scope are
-      never modified by a function other than via assignment of the return
-      values from the function.
+Functions do not have access to variables in ``outer scope'' (that is,
+variables that exist in the script from which the function is called)
+except insofar as these are explicitly passed to the function as
+arguments.  Even in this case, what the function actually gets is a
+copy of the variables in question.  Therefore, variables in outer
+scope are never modified by a function other than via assignment of
+the return values from the function.
     
 
 \section{Return values}
 \label{func-return}
 
 
-      Functions can return zero or more values; these can be series or scalars
-      (not lists).  Return values are specified via a statement within the
-      function body beginning with the keyword \verb+return+,
-      followed by a comma-separated list, each element of which is
-      composed of a type specifier and the name of a variable (as in
-      the listing of parameters).  There can be only one such
-      statement.  An example of a valid return statement is shown below:
+Functions can return zero or more values; these can be series or
+scalars (not lists).  Return values are specified via a statement
+within the function body beginning with the keyword \verb+return+,
+followed by a comma-separated list, each element of which is composed
+of a type specifier and the name of a variable (as in the listing of
+parameters).  There can be only one such statement.  An example of a
+valid return statement is shown below:
     
-\begin{verbatim}
-      return scalar SSR, series resid\end{verbatim}
+\begin{code}
+      return scalar SSR, series resid
+\end{code}
 
-      Note that the \verb+return+ statement does
-      \emph{not} cause the function to return (exit) at the point
-      where it appears within the body of the function. Rather, it specifies
-      which variables are available for assignment when the function exits, and
-      a function exits only when (a) the end of the function code is reached, or
-      (b) a \verb+funcerr+ statement is reached (see below), or (c)
-      a gretl error occurs.
+Note that the \verb+return+ statement does \emph{not} cause the
+function to return (exit) at the point where it appears within the
+body of the function. Rather, it specifies which variables are
+available for assignment when the function exits, and a function exits
+only when (a) the end of the function code is reached, or (b) a
+\verb+funcerr+ statement is reached (see below), or (c) a gretl error
+occurs.
     
-      The \verb+funcerr+ keyword, which may be followed by
-      a string enclosed in double quotes, causes a function to exit with
-      an error flagged.  If a string is provided, this is printed on exit
-      otherwise a generic error message is printed.  
+The \verb+funcerr+ keyword, which may be followed by a string enclosed
+in double quotes, causes a function to exit with an error flagged.  If
+a string is provided, this is printed on exit otherwise a generic
+error message is printed.
     
 
 \section{Error checking}
 \label{func-errors}
 
-When gretl first reads and ``compiles'' a function
-      definition there is minimal error-checking: the only checks are that the
-      function name is acceptable, and, so far as the body is concerned, that
-      you are not trying to define a function inside a function (see Section \ref{func-define}). Otherwise, if the function body contains
-      invalid commands this will become apparent only when the function is
-      called, and its commands are executed.
+When gretl first reads and ``compiles'' a function definition there is
+minimal error-checking: the only checks are that the function name is
+acceptable, and, so far as the body is concerned, that you are not
+trying to define a function inside a function (see Section
+\ref{func-define}). Otherwise, if the function body contains invalid
+commands this will become apparent only when the function is called,
+and its commands are executed.
     
 %%% Local Variables: 
 %%% mode: latex

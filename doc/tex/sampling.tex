@@ -20,16 +20,16 @@ one wants to run a regression using only data from the 1970s.  A
 suitable command is then
 
       
-\begin{verbatim}
+\begin{code}
 	smpl 1970:1 1979:4
-\end{verbatim}
+\end{code}
 Or one wishes to set aside a block of observations at the end of the
 data period for out-of-sample forecasting.  In that case one might do
 
       
-\begin{verbatim}
+\begin{code}
 	smpl ; 2000:4
-\end{verbatim}
+\end{code}
 where the semicolon is shorthand for ``leave the starting observation
 unchanged''.  (The semicolon may also be used in place of the second
 parameter, to mean that the ending observation should be unchanged.)
@@ -38,10 +38,10 @@ By ``unchanged'' here, we mean unchanged relative to the last
 has been defined up to this point. For example, after
 
       
-\begin{verbatim}
+\begin{code}
 	smpl 1970:1 2003:4
 	smpl ; 2000:4
-\end{verbatim}
+\end{code}
 the sample range will be 1970:1 to 2000:4.An incremental or relative
 form of setting the sample range is also supported.  In this case a
 relative offset should be given, in the form of a signed integer (or a
@@ -49,16 +49,16 @@ semicolon to indicate no change), for both the starting and ending
 point. For example
 
       
-\begin{verbatim}
+\begin{code}
 	smpl +1 ;
-\end{verbatim}
+\end{code}
 will advance the starting observation by one while preserving the
 ending observation, and
 
       
-\begin{verbatim}
+\begin{code}
 	smpl +2 -1
-\end{verbatim}
+\end{code}
 will both advance the starting observation by two and retard the
 ending observation by one.An important feature of ``setting'' the
 sample as described above is that it necessarily results in the
@@ -79,16 +79,16 @@ characteristics.  We wish to select for analysis only the women.  If
 we have a \verb+gender+ dummy variable with value 1 for men and 0 for
 women we could do
 %      
-\begin{verbatim}
+\begin{code}
 	smpl gender=0 --restrict
-\end{verbatim}
+\end{code}
 %
 to this effect.  Or suppose we want to restrict the sample to
 respondents with incomes over \$50,000.  Then we could use
 %
-\begin{verbatim}
+\begin{code}
 	smpl income>50000 --restrict
-\end{verbatim}
+\end{code}
 
 A question arises here.  If we issue the two commands above in
 sequence, what do we end up with in our sub-sample: all cases with
@@ -100,16 +100,16 @@ and any restriction that is already in place.  If you want a new
 restriction to replace any existing restrictions you can first
 recreate the full dataset using
 %
-\begin{verbatim}
+\begin{code}
       smpl full
-\end{verbatim}
+\end{code}
 %
 Alternatively, you can add the \verb+replace+ option to the
 \verb+smpl+ command:
 %
-\begin{verbatim}
+\begin{code}
       smpl income>50000 --restrict --replace
-\end{verbatim}
+\end{code}
 
 This option has the effect of automatically re-establishing the full
 dataset before applying the new restriction.Unlike a simple
@@ -120,16 +120,16 @@ case of panel data.  Say we have a panel of five firms (indexed by the
 variable \verb+firm+) observed in each of several years (identified by
 the variable \verb+year+).  Then the restriction
 %
-\begin{verbatim}
+\begin{code}
 	smpl year=1995 --restrict
-\end{verbatim}
+\end{code}
 %
 produces a dataset that is not a panel, but a cross-section for the
 year 1995.  Similarly
 %
-\begin{verbatim}
+\begin{code}
 	smpl firm=3 --restrict
-\end{verbatim}
+\end{code}
 %
 produces a time-series dataset for firm number 3.For these reasons
 (possible non-contiguity in the observations, possible change in the
@@ -169,9 +169,9 @@ With very large datasets (or perhaps to study the properties of an
 estimator) you may wish to draw a random sample from the full dataset.
 This can be done using, for example,
 %
-\begin{verbatim}
+\begin{code}
 	smpl 100 --random
-\end{verbatim}
+\end{code}
 %
 to select 100 cases.  If you want the sample to be reproducible, you
 should set the seed for the random number generator first, using
