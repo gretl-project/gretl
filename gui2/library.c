@@ -288,7 +288,8 @@ void clear_data (void)
     free_modelspec(modelspec);
     modelspec = NULL;
 
-    gretl_saved_objects_cleanup();
+    /* FIXME re-running script */
+    gretl_saved_objects_cleanup(CLEANUP_CHANGE_SESSION);
 
     reset_model_count();
 

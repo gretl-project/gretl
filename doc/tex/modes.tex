@@ -6,22 +6,24 @@
 \section{Command scripts}
 \label{scripts}
 
-
 As you execute commands in \app{gretl}, using the GUI and filling in
 dialog entries, those commands are recorded in the form of a
 ``script'' or batch file.  Such scripts can be edited and re-run,
 using either \app{gretl} or the command-line client, \app{gretlcli}.
+
 To view the current state of the script at any point in a \app{gretl}
 session, choose ``View command log'' under the File menu. This log
 file is called \verb+session.inp+ and it is overwritten whenever you
 start a new session.  To preserve it, save the script under a
 different name.  Script files will be found most easily, using the GUI
-file selector, if you name them with the extension ``\verb+.inp+''.To
-open a script you have written independently, use the ``File, Open
+file selector, if you name them with the extension ``\verb+.inp+''.
+
+To open a script you have written independently, use the ``File, Open
 command file'' menu item; to create a script from scratch use the
 ``File, New command file'' item or the ``new script'' toolbar button.
 In either case a script window will open (see Figure
 \ref{fig-scriptwin}).
+
 \begin{figure}[htbp]
   \caption{Script window, editing a command file}
   \label{fig-scriptwin}
@@ -29,6 +31,7 @@ In either case a script window will open (see Figure
     \includegraphics[scale=0.5]{figures/scriptwin}
   \end{center}
 \end{figure}
+
 The toolbar at the top of the script window offers the following
 functions (left to right): (1) Save the file; (2) Save the file under
 a specified name; (3) Print the file (under Windows or the gnome
@@ -36,25 +39,31 @@ desktop only); (4) Execute the commands in the file; (5) Copy selected
 text; (6) Paste the selected text; (7) Find and replace text; (8) Undo
 the last Paste or Replace action; (9) Help (if you place the cursor in
 a command word and press the question mark you will get help on that
-command); (10) Close the window.  When you click the Execute icon or
-choose the ``File, Run'' menu item all output is directed to a single
-window, where it can be edited, saved or copied to the clipboard.  To
-learn more about the possibilities of scripting, take a look at the
-\app{gretl} Help item ``Script commands syntax,'' or start up the
-command-line program \app{gretlcli} and consult its help, or consult
-the \emph{Gretl Command Reference}. In addition, the \app{gretl}
-package includes over 70 ``practice'' scripts.  Most of these relate
-to Ramanathan (2002), but they may also be used as a free-standing
-introduction to scripting in \app{gretl} and to various points of
-econometric theory.  You can explore the practice files under ``File,
-Open command file, practice file'' There you will find a listing of
-the files along with a brief description of the points they illustrate
-and the data they employ.  Open any file and run it to see the output.
-Note that long commands in a script can be broken over two or more
-lines, using backslash as a continuation character.You can, if you
-wish, use the GUI controls and the scripting approach in tandem,
-exploiting each method where it offers greater convenience.  Here are
-two suggestions.
+command); (10) Close the window.  
+
+When you click the Execute icon or choose the ``File, Run'' menu item
+all output is directed to a single window, where it can be edited,
+saved or copied to the clipboard.  To learn more about the
+possibilities of scripting, take a look at the \app{gretl} Help item
+``Script commands syntax,'' or start up the command-line program
+\app{gretlcli} and consult its help, or consult the \emph{Gretl
+  Command Reference}.
+
+In addition, the \app{gretl} package includes over 70 ``practice''
+scripts.  Most of these relate to Ramanathan (2002), but they may also
+be used as a free-standing introduction to scripting in \app{gretl}
+and to various points of econometric theory.  You can explore the
+practice files under ``File, Open command file, practice file'' There
+you will find a listing of the files along with a brief description of
+the points they illustrate and the data they employ.  Open any file
+and run it to see the output.  Note that long commands in a script can
+be broken over two or more lines, using backslash as a continuation
+character.
+
+You can, if you wish, use the GUI controls and the scripting approach
+in tandem, exploiting each method where it offers greater convenience.
+Here are two suggestions.
+
 \begin{itemize}
 \item Open a data file in the GUI.  Explore the data --- generate
   graphs, run regressions, perform tests.  Then open the Command log,
@@ -71,7 +80,6 @@ two suggestions.
   To revisit the data at a later point, open and rerun the
   ``preparatory'' script first.
 \end{itemize}
-
 
 
 \section{Saving script objects}
@@ -148,12 +156,6 @@ or text) aa described above for script mode.
 \section{The Session concept}
 \label{session}
 
-
-
-\subsection{Introduction}
-\label{session-intro}
-
-
 \app{gretl} offers the idea of a ``session'' as a way of keeping track
 of your work and revisiting it later. The basic idea is to provide an
 iconic space containing various objects pertaining to your current
@@ -161,6 +163,7 @@ working session (see Figure \ref{fig-session}).  You can add objects
 (represented by icons) to this space as you go along.  If you save the
 session, these added objects should be available again if you re-open
 the session later.
+
 \begin{figure}[htbp]
   \caption{Icon view: one model and one graph have been added to the
     default icons}
@@ -178,17 +181,19 @@ matrix (``Correlations'') and descriptive summary statistics
 (``Summary''). All of these are activated by double-clicking the
 relevant icon.  The ``Data set'' icon is a little more complex:
 double-clicking opens up the data in the built-in spreadsheet, but you
-can also right-click on the icon for a menu of other actions.To add a
-model to the session view, first estimate it using the Model menu.
-Then pull down the File menu in the model window and select ``Save to
-session as icon\dots{}'' or ``Save as icon and close''.  Simply
-hitting the \verb+S+ key over the model window is a shortcut to the
-latter action.To add a graph, first create it (under the Data menu,
-``Graph specified vars'', or via one of \app{gretl}'s other
+can also right-click on the icon for a menu of other actions.
+
+To add a model to the session view, first estimate it using the Model
+menu.  Then pull down the File menu in the model window and select
+``Save to session as icon\dots{}'' or ``Save as icon and close''.
+Simply hitting the \verb+S+ key over the model window is a shortcut to
+the latter action.To add a graph, first create it (under the Data
+menu, ``Graph specified vars'', or via one of \app{gretl}'s other
 graph-generating commands).  Click on the graph window to bring up the
-graph menu, and select ``Save to session as icon''.Once a model or
-graph is added its icon should appear in the Icon View window.
-Double-clicking on the icon redisplays the object, while
+graph menu, and select ``Save to session as icon''.
+
+Once a model or graph is added its icon should appear in the Icon View
+window.  Double-clicking on the icon redisplays the object, while
 right-clicking brings up a menu which lets you display or delete the
 object.  This popup menu also gives you the option of editing graphs.
 
@@ -203,12 +208,14 @@ estimator used.  In this situation it is convenient to present the
 regression results in the form of a table, where each column contains
 the results (coefficient estimates and standard errors) for a given
 model, and each row contains the estimates for a given variable across
-the models.  In the Icon View window \app{gretl} provides a means of
-constructing such a table (and copying it in plain text, {\LaTeX} or
-Rich Text Format).  Here is how to do it:\footnote{The model table can
-  also be built non-interactively, in script mode.  For details on how
-  to do this, see the entry for \cmd{modeltab} in the \emph{Gretl
-    Command Reference}.  }
+the models.  
+
+In the Icon View window \app{gretl} provides a means of constructing
+such a table (and copying it in plain text, {\LaTeX} or Rich Text
+Format).  Here is how to do it:\footnote{The model table can also be
+  built non-interactively, in script mode.  For details on how to do
+  this, see the entry for \cmd{modeltab} in the \emph{Gretl Command
+    Reference}.  }
       
 \begin{enumerate}
 \item Estimate a model which you wish to include in the table, and in
@@ -258,14 +265,18 @@ installed, and are able to generate and view PostScript
 output.\footnote{Specifically, you must have \app{dvips} and
   \app{ghostscript} installed, along with a viewer such as \app{gv},
   \app{ggv} or \app{kghostview}. The default viewer for systems other
-  than MS Windows is \app{gv}.}  In the Icon View window, you can drag
-up to eight graphs onto the graph page icon.  When you double-click on
-the icon (or right-click and select ``Display''), a page containing
-the selected graphs (in EPS format) will be composed and opened in
-your postscript viewer.  From there you should be able to print the
-page.To clear the graph page, right-click on its icon and select
-``Clear''.On systems other than MS Windows, you may have to adjust the
-setting for the program used to view postscript.  Find that under the
+  than MS Windows is \app{gv}.}  
+
+In the Icon View window, you can drag up to eight graphs onto the
+graph page icon.  When you double-click on the icon (or right-click
+and select ``Display''), a page containing the selected graphs (in EPS
+format) will be composed and opened in your postscript viewer.  From
+there you should be able to print the page.
+
+To clear the graph page, right-click on its icon and select ``Clear''.
+
+On systems other than MS Windows, you may have to adjust the setting
+for the program used to view postscript.  Find that under the
 ``Programs'' tab in the Preferences dialog box (under the ``File''
 menu in the main window).  On Windows, you may need to adjust your
 file associations so that the appropriate viewer is called for the
@@ -278,6 +289,7 @@ If you create models or graphs that you think you may wish to
 re-examine later, then before quitting \app{gretl} select ``Save
 as\dots{}'' from the Session menu and give a name under which to save
 the session.  To re-open the session later, either
+
 \begin{itemize}
 \item Start \app{gretl} then re-open the session file by going to the
   ``Open'' item under the Session menu, or

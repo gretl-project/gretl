@@ -1,11 +1,8 @@
 \chapter{Introduzione}
 \label{intro}
 
-
-
 \section{Caratteristiche principali}
 \label{features}
-
 
 \app{gretl} è un pacchetto econometrico che comprende una libreria
 condivisa, un programma client a riga di comando e un'interfaccia
@@ -29,7 +26,6 @@ grafica.
   disponibile per chiunque voglia criticarlo, correggerlo o
   estenderlo. L'autore accoglie con piacere qualunque segnalazione di
   bug.
-	    
 \item[Ragionevolmente sofisticato] \app{gretl} offre un'ampia varietà
   di stimatori basati sui minimi quadrati, compresi i minimi quadrati
   a due stadi e i minimi quadrati non lineari.  Offre anche la stima
@@ -51,14 +47,10 @@ grafica.
 \item[Internazionale] \app{gretl} supporta le lingue inglese,
   francese, italiana, spagnola e polacca, a seconda della lingua
   impostata sul computer.
-	
 \end{description}
-
-
 
 \section{Ringraziamenti}
 \label{ack}
-
 
 Per prima cosa, grazie a Ramu Ramanathan della University of
 California, San Diego. Qualche anno fa, è stato così gentile da
@@ -83,21 +75,26 @@ Mark Watson (\emph{Introduction to Econometrics}); Damodar Gujarati
   Econometrics} dai Prof. Fiorentini, Calzolari e Panattoni, mentre il
 codice per generare i \emph{p}-value per i test Dickey Fuller è di
 James MacKinnon. In ognuno dei casi sono grato agli autori per avermi
-permesso di usare il loro lavoro.  Per quanto riguarda
-l'internazionalizzazione di \app{gretl}, vorrei ringraziare Ignacio
-Díaz-Emparanza, Michel Robitaille, Cristian Rigamonti e Tadeusz Kufel,
-che hanno curato le traduzioni spagnola, francese, italiana e polacca.
+permesso di usare il loro lavoro.  
+
+Per quanto riguarda l'internazionalizzazione di \app{gretl}, vorrei
+ringraziare Ignacio Díaz-Emparanza, Michel Robitaille, Cristian
+Rigamonti e Tadeusz Kufel, che hanno curato le traduzioni spagnola,
+francese, italiana e polacca.  
+
 Ho beneficiato largamente del lavoro di molti sviluppatori di software
 open-source: per i dettagli si veda l'[?] a questo manuale. Devo
 ringraziare Richard Stallman della Free Software Foundation per il suo
 supporto al software libero in generale, ma in particolare per aver
-accettato di ``adottare'' \app{gretl} come programma GNU.Molti utenti
-di \app{gretl} hanno fornito utili suggerimenti e segnalazioni di
-errori. Un ringraziamento particolare a Ignacio Díaz-Emparanza,
-Tadeusz Kufel, Pawel Kufel, Alan Isaac, Cristian Rigamonti e Dirk
-Eddelbuettel, che cura il pacchetto \app{gretl} per Debian GNU/Linux.
-Oltre agli utili suggerimenti, Riccardo ``Jack'' Lucchetti ha fornito
-contributi sostanziali in termini di codice e conoscenza econometrica.
+accettato di ``adottare'' \app{gretl} come programma GNU.
+
+Molti utenti di \app{gretl} hanno fornito utili suggerimenti e
+segnalazioni di errori. Un ringraziamento particolare a Ignacio
+Díaz-Emparanza, Tadeusz Kufel, Pawel Kufel, Alan Isaac, Cristian
+Rigamonti e Dirk Eddelbuettel, che cura il pacchetto \app{gretl} per
+Debian GNU/Linux.  Oltre agli utili suggerimenti, Riccardo ``Jack''
+Lucchetti ha fornito contributi sostanziali in termini di codice e
+conoscenza econometrica.
 
 \section{Installazione del programma}
 \label{install}
@@ -126,7 +123,7 @@ procedere:
   da \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
         
 \item Decomprimere il pacchetto. Se si dispone delle utilità GNU,
-  usare il comando \cmd{tar -xvfz gretl-N.tar.gz} (sostituire \cmd{N}
+  usare il comando \cmd{tar xvfz gretl-N.tar.gz} (sostituire \cmd{N}
   con il numero di versione specifico del file scaricato).
 \item Spostarsi nella directory del codice sorgente di gretl appena
   creata (ad es. \verb+gretl-1.1.5+).

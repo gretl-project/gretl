@@ -1038,7 +1038,7 @@ void libgretl_cleanup (void)
 
     gretl_rand_free();
     gretl_functions_cleanup();
-    gretl_saved_objects_cleanup();
+    gretl_saved_objects_cleanup(CLEANUP_AT_EXIT);
     gretl_transforms_cleanup();
     libset_cleanup();
     gretl_lists_cleanup();

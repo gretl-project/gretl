@@ -22,6 +22,11 @@
 
 #include "system.h"
 
+enum {
+    CLEANUP_CHANGE_SESSION,
+    CLEANUP_AT_EXIT
+};
+
 void *get_last_model (int *type);
 
 void set_as_last_model (void *ptr, int type);
@@ -74,7 +79,7 @@ void gretl_delete_saved_object (void *p);
 
 int parse_object_command (const char *s, char *name, char *cmd);
 
-void gretl_saved_objects_cleanup (void);
+void gretl_saved_objects_cleanup (int code);
 
 #endif
 

@@ -32,7 +32,7 @@
 \newcommand\theHscript      {\arabic{script}}
 \def\toclevel@script{0}
 
-\newcommand{\tip}[1]{\textbf{Tip}: {\sffamily #1}}
+\newcommand{\tip}[1]{\par\textbf{Tip}: {\sffamily #1}\par}
 
 %% define a very simple bibliography environment
 \renewenvironment{thebibliography}
@@ -88,7 +88,7 @@
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
                                      {-2.5ex\@plus -1ex \@minus -.2ex}%
                                      {.2ex \@plus .5ex}%
-                                     {\normalfont\large\bfseries}}
+                                     {\normalfont\bfseries}}
 
 \renewcommand\subsubsection{\@startsection{subsubsection}{2}{\z@}%
                                      {-3.0ex\@plus -1ex \@minus -.2ex}%

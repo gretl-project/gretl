@@ -11,19 +11,23 @@ I comandi eseguiti in \app{gretl} usando le finestre di dialogo
 dell'interfaccia grafica vengono registrati sotto forma di un file
 ``script'' o ``batch''. Questi file possono essere modificati e
 ri-eseguiti, usando \app{gretl} o l'applicazione a riga di comando
-\app{gretlcli}.  Per visualizzare lo stato attuale dello script
-durante una sessione di \app{gretl}, basta scegliere
-\textsf{Visualizza log comandi} dal menù File. Questo file di log si
-chiama \verb+session.inp+ e viene sovrascritto ogni volta che si
-inizia una nuova sessione: per conservarlo, basta salvarlo con un nome
-diverso. I file di comandi vengono visualizzati più facilmente nella
-finestra di selezione dei file se vengono salvati con l'estensione
-``\verb+.inp+''.Per aprire uno script di diversa provenienza, occorre
-usare il comando del menù \textsf{File, Apri file comandi}; per creare
-uno script da zero, occorre usare \textsf{File, Nuovo file comandi}
-dal menù, oppure il pulsante \textsf{Nuovo file comandi} dalla barra
-degli strumenti. In entrambi i casi si aprirà una finestra comandi (si
-veda la Figure \ref{fig-scriptwin}).
+\app{gretlcli}.
+
+Per visualizzare lo stato attuale dello script durante una sessione di
+\app{gretl}, basta scegliere \textsf{Visualizza log comandi} dal menù
+File. Questo file di log si chiama \verb+session.inp+ e viene
+sovrascritto ogni volta che si inizia una nuova sessione: per
+conservarlo, basta salvarlo con un nome diverso. I file di comandi
+vengono visualizzati più facilmente nella finestra di selezione dei
+file se vengono salvati con l'estensione ``\verb+.inp+''.
+
+Per aprire uno script di diversa provenienza, occorre usare il comando
+del menù \textsf{File, Apri file comandi}; per creare uno script da
+zero, occorre usare \textsf{File, Nuovo file comandi} dal menù, oppure
+il pulsante \textsf{Nuovo file comandi} dalla barra degli strumenti.
+In entrambi i casi si aprirà una finestra comandi (si veda la Figure
+\ref{fig-scriptwin}).
+
 \begin{figure}[htbp]
   \caption{Finestra comandi, modifica di un file di comandi}
   \label{fig-scriptwin}
@@ -31,6 +35,7 @@ veda la Figure \ref{fig-scriptwin}).
     \includegraphics[scale=0.5]{figures/scriptwin}
   \end{center}
 \end{figure}
+
 La barra degli strumenti in cima alla finestra comandi offre le
 seguenti funzioni (da sinistra a destra): (1) Salva il file; (2) Salva
 il file con un nome specifico; (3) Stampa il file (solo in Windows o
@@ -39,26 +44,30 @@ selezionato; (6) Incolla il testo selezionato; (7) Cerca e sostituisci
 testo; (8) Annulla l'ultimo comando Incolla o Sostituisci; (9) Aiuto
 (spostando il cursore sulla parola di un comando e premendo il punto
 di domanda si ottiene aiuto su quel comando); (10) Chiudi la finestra.
+
 Facendo clic sull'icona Esegui o scegliendo \textsf{File, Esegui} dal
 menù, i risultati sono diretti in un'unica finestra, dove possono
 essere modificati, salvati, o copiati negli appunti.  Per conoscere
 meglio le possibilità fornite dagli script, è possibile usare il
 comando del menù \textsf{Aiuto, Comandi testuali}, o eseguire la
 versione a riga di comando del programma \app{gretlcli} e consultare
-il suo aiuto, oppure consultare il XXX.  In aggiunta, il pacchetto
-\app{gretl} contiene più di 70 script ``di esempio'': la maggior parte
-di essi sono relativi a Ramanathan (2002), ma possono essere usati in
-modo autonomo anche come introduzione alle possibilità di script
-offerte da \app{gretl} e ad alcuni aspetti di teoria econometrica. È
-possibile esplorare i file di esempio dal menù \textsf{File, Apri file
-  comandi, File di esempio}: si troverà un elenco dei file, insieme a
-una breve descrizione dei problemi illustrati e dei dati utilizzati.
-Basta aprire un file ed eseguirlo per vederne i risultati.  Si noti
-che in uno script i comandi lunghi possono essere suddivisi in due o
-più righe, usando una barra inversa come carattere di continuazione
-della riga.È anche possibile, se si vuole, usare insieme l'interfaccia
-grafica e le funzionalità di script, sfruttando le comodità offerte da
-ognuno dei due approcci. Ecco alcuni suggerimenti:
+il suo aiuto, oppure consultare il XXX.  
+
+In aggiunta, il pacchetto \app{gretl} contiene più di 70 script ``di
+esempio'': la maggior parte di essi sono relativi a Ramanathan (2002),
+ma possono essere usati in modo autonomo anche come introduzione alle
+possibilità di script offerte da \app{gretl} e ad alcuni aspetti di
+teoria econometrica. È possibile esplorare i file di esempio dal menù
+\textsf{File, Apri file comandi, File di esempio}: si troverà un
+elenco dei file, insieme a una breve descrizione dei problemi
+illustrati e dei dati utilizzati.  Basta aprire un file ed eseguirlo
+per vederne i risultati.  Si noti che in uno script i comandi lunghi
+possono essere suddivisi in due o più righe, usando una barra inversa
+come carattere di continuazione della riga.
+
+È anche possibile, se si vuole, usare insieme l'interfaccia grafica e
+le funzionalità di script, sfruttando le comodità offerte da ognuno
+dei due approcci. Ecco alcuni suggerimenti:
     
 \begin{itemize}
 \item Aprire un file di dati dall'interfaccia grafica, esplorare i
@@ -67,7 +76,6 @@ ognuno dei due approcci. Ecco alcuni suggerimenti:
   salvarlo con un nome specifico ed eseguirlo, in modo da generare un
   singolo file che contiene i risultati della propria sessione di
   lavoro.
-      
 \item Partire da un nuovo file script e scrivere i comandi necessari
   per eseguire le trasformazioni desiderate su un dataset (si veda il
   comando \cmd{genr} nel XXX). Tipicamente è possibile svolgere questo
@@ -79,7 +87,6 @@ ognuno dei due approcci. Ecco alcuni suggerimenti:
   iniziale dei dati in un secondo momento, è sufficiente aprire ed
   eseguire di nuovo lo script ``preparatorio''.
 \end{itemize}
-
 
 
 \section{Salvare oggetti da uno script}
@@ -167,12 +174,6 @@ per la modalità script.
 \section{Il concetto di sessione}
 \label{session}
 
-
-
-\subsection{Introduzione}
-\label{session-intro}
-
-
 \app{gretl} offre il concetto di ``sessione'' per tenere traccia del
 proprio lavoro e richiamarlo in un secondo momento. L'idea di base è
 quella di fornire uno spazio che contiene, sotto forma di icone, vari
@@ -200,17 +201,20 @@ Tutte queste funzioni sono attivate facendo doppio clic sull'icona
 relativa. L'icona \textsf{Dataset} è un po' più complessa: un doppio
 clic apre i dati nel foglio di lavoro integrato, mentre facendo clic
 col tasto destro del mouse si ottiene un menù con altre azioni
-possibili.  Per aggiungere un modello alla finestra di sessione,
-occorre per prima cosa stimarlo usando il menù Modello, quindi aprire
-il menù File nella finestra del modello e selezionare \textsf{Salva
-  alla sessione come icona\dots{}} o \textsf{Salva come icona e
-  chiudi}.  L'ultima operazione può essere eseguita semplicemente
-anche premendo il tasto \verb+S+ da dentro la finestra del modello.Per
-aggiungere un grafico, occorre crearlo (dal menù Dati, \textsf{Grafico
-  delle variabili}, o attraverso uno degli altri comandi \app{gretl}
-di generazione dei grafici).  Facendo clic sulla finestra del grafico
-si ottiene un menù da cui si dovrà selezionare \textsf{Salva alla
-  sessione come icona}.Una volta che un modello o un grafico è stato
+possibili.
+
+Per aggiungere un modello alla finestra di sessione, occorre per prima
+cosa stimarlo usando il menù Modello, quindi aprire il menù File nella
+finestra del modello e selezionare \textsf{Salva alla sessione come
+  icona\dots{}} o \textsf{Salva come icona e chiudi}.  L'ultima
+operazione può essere eseguita semplicemente anche premendo il tasto
+\verb+S+ da dentro la finestra del modello.Per aggiungere un grafico,
+occorre crearlo (dal menù Dati, \textsf{Grafico delle variabili}, o
+attraverso uno degli altri comandi \app{gretl} di generazione dei
+grafici).  Facendo clic sulla finestra del grafico si ottiene un menù
+da cui si dovrà selezionare \textsf{Salva alla sessione come icona}.
+
+Una volta che un modello o un grafico è stato
 aggiunto, la sua icona dovrebbe comparire nella finestra delle icone
 di sessione. Facendo doppio clic sull'icona, l'oggetto viene
 visualizzato di nuovo, mentre facendo clic con il tasto destro del
@@ -228,12 +232,13 @@ questa situazione è comodo poter rappresentare i risultati delle
 regressioni sotto forma di una tabella dove ogni colonna contiene i
 risultati (stime dei coefficienti e errori standard) per un dato
 modello e ogni riga contiene le stime per una certa variabile nei
-differenti modelli.Nella finestra delle icone di sessione, \app{gretl}
-dà la possibilità di costruire una tabella simile (e di esportarla in
-testo semplice, {\LaTeX} o RTF - Rich Text Format).  Ecco come
-fare:\footnote{La tabella modelli può anche essere costruita in modo
-  non interattivo in uno script. Per i dettagli si veda il comando
-  \cmd{modeltab}.}
+differenti modelli.
+
+Nella finestra delle icone di sessione, \app{gretl} dà la possibilità
+di costruire una tabella simile (e di esportarla in testo semplice,
+{\LaTeX} o RTF - Rich Text Format).  Ecco come fare:\footnote{La
+  tabella modelli può anche essere costruita in modo non interattivo
+  in uno script. Per i dettagli si veda il comando \cmd{modeltab}.}
       
 \begin{enumerate}
 \item Stimare un modello che si vuole includere nella tabella e
@@ -289,21 +294,26 @@ generare e visualizzare file in formato postscript\footnote{In
   particolare occorre avere \app{dvips} e \app{ghostscript}
   installati, insieme a un visualizzatore come \app{gv}, \app{ggv} o
   \app{kghostview}. Il visualizzatore predefinito per sistemi diversi
-  da MS Windows è \app{gv}.}  Nella finestra della sessione, è
-possibile trascinare fino a otto grafici sull'icona della pagina dei
-grafici. Facendo doppio clic sull'icona della pagina dei grafici (o
-facendo clic col tasto destro e selezionando \textsf{Mostra}), una
-pagina contenente i grafici selezionati verrà composta e aperta con il
-proprio visualizzatore di file postscript, da cui sarà possibile
-stampare la pagina.Per pulire la pagina dei grafici, fare clic col
-tasto destro sull'icona e selezionare \textsf{Pulisci}.Su sistemi
-diversi da MS Windows, può essere necessario modificare l'impostazione
-del programma per visualizzare il postscript, attraverso la sezione
-\textsf{Programmi} della finestra di dialogo delle Preferenze di gretl
-(nel menù \textsf{File} della finestra principale).  Su Windows può
-essere necessario dover impostare le regole di associazione dei file
-in modo che sia usato il visualizzatore adeguato per l'azione
-\textsf{Apri} sui file con estensione \verb+.ps+.
+  da MS Windows è \app{gv}.}
+
+Nella finestra della sessione, è possibile trascinare fino a otto
+grafici sull'icona della pagina dei grafici. Facendo doppio clic
+sull'icona della pagina dei grafici (o facendo clic col tasto destro e
+selezionando \textsf{Mostra}), una pagina contenente i grafici
+selezionati verrà composta e aperta con il proprio visualizzatore di
+file postscript, da cui sarà possibile stampare la pagina.
+
+Per pulire la pagina dei grafici, fare clic col tasto destro
+sull'icona e selezionare \textsf{Pulisci}.
+
+Su sistemi diversi da MS Windows, può essere necessario modificare
+l'impostazione del programma per visualizzare il postscript,
+attraverso la sezione \textsf{Programmi} della finestra di dialogo
+delle Preferenze di gretl (nel menù \textsf{File} della finestra
+principale).  Su Windows può essere necessario dover impostare le
+regole di associazione dei file in modo che sia usato il
+visualizzatore adeguato per l'azione \textsf{Apri} sui file con
+estensione \verb+.ps+.
 
 \subsection{Salvare e riaprire sessioni}
 \label{session-save}
@@ -312,6 +322,7 @@ Se si creano modelli o grafici che si pensa di poter riutilizzare in
 seguito, è utile selezionare \textsf{Salva come\dots{}} dal menù
 Sessione prima di uscire da \app{gretl}. Per riaprire la sessione in
 seguito, è possibile:
+
 \begin{itemize}
 \item Avviare \app{gretl} e riaprire il file della sessione usando il
   comando \textsf{Apri} dal menù Sessione, oppure

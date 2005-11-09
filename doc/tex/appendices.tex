@@ -11,13 +11,14 @@ supplied with the \app{gretl} distribution and is installed in the
 system data directory (e.g. \url{/usr/share/gretl/data} on Linux.)
 Data files may be plain text or gzipped.  They contain the actual data
 values plus additional information such as the names and descriptions
-of variables, the frequency of the data, and so on.Most users will
-probably not have need to read or write such files other than via
-\app{gretl} itself, but if you want to manipulate them using other
-software tools you should examine the DTD and also take a look at a
-few of the supplied practice data files: \verb+data4-1.gdt+ gives a
-simple example; \verb+data4-10.gdt+ is an example where observation
-labels are included.
+of variables, the frequency of the data, and so on.
+
+Most users will probably not have need to read or write such files
+other than via \app{gretl} itself, but if you want to manipulate them
+using other software tools you should examine the DTD and also take a
+look at a few of the supplied practice data files: \verb+data4-1.gdt+
+gives a simple example; \verb+data4-10.gdt+ is an example where
+observation labels are included.
 
 \section{Traditional ESL format}
 \label{traddata}
@@ -144,12 +145,16 @@ for quarterly data, none for annual), a space, a hyphen, another
 space, the ending date, the string ``\verb+n = +'' and the integer
 number of observations. In the case of daily data the starting and
 ending dates should be given in the form \verb+YYYY/MM/DD+. This
-format must be respected exactly.Optionally, the first line of the
-index file may contain a short comment (up to 64 characters) on the
-source and nature of the data, following a hash mark.  For example:
+format must be respected exactly.
+
+Optionally, the first line of the index file may contain a short
+comment (up to 64 characters) on the source and nature of the data,
+following a hash mark.  For example:
+
 \begin{code}
       # Federal Reserve Board (interest rates)
 \end{code}
+
 The corresponding binary database file holds the data values,
 represented as ``floats'', that is, single-precision floating-point
 numbers, typically taking four bytes apiece.  The numbers are packed
@@ -227,9 +232,10 @@ for most purposes (with the option of using QR decomposition instead).
 The program has been tested rather thoroughly on the statistical
 reference datasets provided by NIST (the U.S. National Institute of
 Standards and Technology) and a full account of the results may be
-found on the gretl website (follow the link ``Numerical accuracy'').In
-October 2002 I had a useful exchange with Giovanni Baiocchi and Walter
-Distaso, who were writing a review of \app{gretl} for the
+found on the gretl website (follow the link ``Numerical accuracy'').
+
+In October 2002 I had a useful exchange with Giovanni Baiocchi and
+Walter Distaso, who were writing a review of \app{gretl} for the
 \emph{Journal of Applied Econometrics}, and James MacKinnon, software
 review editor for the journal.\footnote{This review has since been
   published; see Baiocchi and Distaso (2003).} and I am grateful to
@@ -283,14 +289,15 @@ As mentioned in the main text, \app{gretl} offers a reasonably full
 selection of least-squares based estimators, plus a few additional
 estimators such as (binomial) logit and probit and Least Absolute
 Deviations. Advanced users may, however, find \app{gretl}'s menu of
-statistical routines restrictive.No doubt some advanced users will
-prefer to write their own statistical code in a fundamental computer
-language such as C, C++ or Fortran.  Another option is to use a
-relatively high-level language that offers easy matrix manipulation
-and that already has numerous statistical routines built in, or
-available as add-on packages. If the latter option sounds attractive,
-and you are interested in using free, open source software, I would
-recommend taking a look at either GNU R
+statistical routines restrictive.
+
+No doubt some advanced users will prefer to write their own
+statistical code in a fundamental computer language such as C, C++ or
+Fortran.  Another option is to use a relatively high-level language
+that offers easy matrix manipulation and that already has numerous
+statistical routines built in, or available as add-on packages. If the
+latter option sounds attractive, and you are interested in using free,
+open source software, I would recommend taking a look at either GNU R
 (\href{http://www.r-project.org/}{r-project.org}) or GNU Octave
 (\href{http://www.octave.org/}{www.octave.org}).  These programs are
 very close to the commercial programs S and Matlab respectively.

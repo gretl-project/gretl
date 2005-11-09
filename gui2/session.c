@@ -2616,7 +2616,9 @@ int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, int rebuilding)
 	save = 1;
 	clear_model(*ppmod);
     } else {
-	/* no rebuild, no need to save */
+	/* no rebuild, no need to save 
+	   FIXME crash here
+	*/
 	clear_model(*ppmod);
     }
 

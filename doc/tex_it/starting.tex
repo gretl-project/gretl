@@ -45,10 +45,13 @@ può contenere informazioni a proposito della fonte dei dati e della
 definizione delle variabili).  Se si trova un file interessante, è
 possibile aprirlo facendo clic su ``Apri'', o semplicemente facendo
 doppio clic sul nome del file. Per il momento, apriamo \verb+data3-6+.
+
 \tip{Nelle finestre di \app{gretl} che contengono liste, facendo
   doppio clic su una riga viene eseguita l'azione predefinita per la
   relativa voce nella lista: ad esempio mostrare i valori di una
-  serie, o aprire un file.  } Questo file contiene dati relativi a un
+  serie, o aprire un file.} 
+
+Questo file contiene dati relativi a un
 oggetto classico dell'econometria, la funzione di consumo. La finestra
 dei dati dovrebbe ora contenere il nome del file di dati in uso,
 l'intervallo completo dei dati e quello del campione, i nomi delle
@@ -81,6 +84,7 @@ apre una finestra di dialogo che richiede una \emph{specificazione del
     \includegraphics[scale=0.5]{figures/selector}
   \end{center}
 \end{figure}
+
 Per selezionare la variabile dipendente, fare clic su una variabile
 nella lista di sinistra e premere il pulsante ``Scegli'' con la
 freccia che punta verso il riquadro della variabile dipendente.
@@ -114,16 +118,18 @@ standard (Figure \ref{fig-modelwin}).
     \includegraphics[scale=0.5]{figures/modelwin}
   \end{center}
 \end{figure}
+
 La finestra dei risultati contiene dei menù che consentono di
 ispezionare o mostrare graficamente i residui e i valori stimati, e di
-eseguire vari test diagnostici sul modello.Per la maggior parte dei
-modelli c'è anche un'opzione per stampare il risultato della
-regressione in formato {\LaTeX}. È possibile stampare i risultati in
-formato tabulare (simile a quello usato nella finestra dei risultati,
-ma con una migliore composizione tipografica) o sotto forma di
-equazione. Per ognuna di queste opzioni è possibile scegliere di
-vedere un'anteprima della pagina finale, o di salvare il risultato in
-un file da includere in un documento {\LaTeX}. L'anteprima richiede
+eseguire vari test diagnostici sul modello.
+
+Per la maggior parte dei modelli c'è anche un'opzione per stampare il
+risultato della regressione in formato {\LaTeX}. È possibile stampare
+i risultati in formato tabulare (simile a quello usato nella finestra
+dei risultati, ma con una migliore composizione tipografica) o sotto
+forma di equazione. Per ognuna di queste opzioni è possibile scegliere
+di vedere un'anteprima della pagina finale, o di salvare il risultato
+in un file da includere in un documento {\LaTeX}. L'anteprima richiede
 che si disponga di un sistema {\TeX} funzionante sul proprio computer.
 È possibile controllare l'aspetto del {\LaTeX} generato da \app{gretl}
 includendo un file chiamato \verb+gretlpre.tex+ nella propria
@@ -141,48 +147,45 @@ il seguente:
 \end{code}
 
 Si noti che sono richiesti i pacchetti \verb+amsmath+ e
-\verb+dcolumn+.Per importare i risultati di \app{gretl}
-in un word processor, è possibile fare copia e incolla da una
-finestra dei risultati usando il menù \textsf{Modifica}
-(o il pulsante Copia, in alcuni contesti) nel programma di arrivo.
-Molte (non tutte) finestre di \app{gretl}
-offrono l'opzione di copiare in formato RTF (il ``Rich Text
-Format'' di Microsoft) o come {\LaTeX}. Se si deve incollare in
-      un word processor, RTF può essere una buona opzione, visto che
-      il formato tabulare dei risultati viene preservato\footnote{Si
-noti 
-che quando si copia come RTF in MS Windows,
-          Windows permetterà di incollare il materiale solo in applicazioni
-          che ``comprendono'' l'RTF. Quindi, sarà possibile
-          incollare in MS Word, ma non nel Blocco Note. Inoltre sembra
-          esserci un bug in alcune versioni di Windows, per cui
-          l'operazione di copia non funziona se l'applicazione ``di
-          arrivo'' (ad es. MS Word) non è stata avviata prima di
-          copiare il materiale in questione.}.
-      In alternativa, è possibile salvare i risultati come file di testo
-      semplice e importare successivamente il file nel programma di arrivo:
-      quando si conclude una sessione di \app{gretl}
-      si ha l'opportunità di salvare tutti i risultati della sessione in un
-      unico file.Si noti che nel desktop \app{gnome} e in
-      MS Windows, il menù \textsf{File} contiene un
-      comando per inviare i risultati direttamente a una stampante.
+\verb+dcolumn+.
 
-    \tip{Quando si incollano o si importano dei risultati di
-	\app{gretl} sotto forma di testo semplice in
-        un word processor, conviene selezionare un carattere a spaziatura
-        fissa, in stile macchina da scrivere (ad es. il Courier), per
-        preservare il formato tabulare dei risultati. Selezionare un
-        carattere non troppo grande (Courier da 10 punti dovrebbe andare
-        bene) eviterà  che le righe dei risultati vengano spezzate nei
-        punti sbagliati.}
+Per importare i risultati di \app{gretl} in un word processor, è
+possibile fare copia e incolla da una finestra dei risultati usando il
+menù \textsf{Modifica} (o il pulsante Copia, in alcuni contesti) nel
+programma di arrivo.  Molte (non tutte) finestre di \app{gretl}
+offrono l'opzione di copiare in formato RTF (il ``Rich Text Format''
+di Microsoft) o come {\LaTeX}. Se si deve incollare in un word
+processor, RTF può essere una buona opzione, visto che il formato
+tabulare dei risultati viene preservato\footnote{Si noti che quando si
+  copia come RTF in MS Windows, Windows permetterà di incollare il
+  materiale solo in applicazioni che ``comprendono'' l'RTF. Quindi,
+  sarà possibile incollare in MS Word, ma non nel Blocco Note. Inoltre
+  sembra esserci un bug in alcune versioni di Windows, per cui
+  l'operazione di copia non funziona se l'applicazione ``di arrivo''
+  (ad es. MS Word) non è stata avviata prima di copiare il materiale
+  in questione.}.  In alternativa, è possibile salvare i risultati
+come file di testo semplice e importare successivamente il file nel
+programma di arrivo: quando si conclude una sessione di \app{gretl} si
+ha l'opportunità di salvare tutti i risultati della sessione in un
+unico file.Si noti che nel desktop \app{gnome} e in MS Windows, il
+menù \textsf{File} contiene un comando per inviare i risultati
+direttamente a una stampante.
+
+\tip{Quando si incollano o si importano dei risultati di \app{gretl}
+  sotto forma di testo semplice in un word processor, conviene
+  selezionare un carattere a spaziatura fissa, in stile macchina da
+  scrivere (ad es. il Courier), per preservare il formato tabulare dei
+  risultati. Selezionare un carattere non troppo grande (Courier da 10
+  punti dovrebbe andare bene) eviterà che le righe dei risultati
+  vengano spezzate nei punti sbagliati.}
 
 \section{I menù della finestra principale}
 \label{menus}
 
+Sulla barra dei menù della finestra principale si trovano, nell'ordine
+da sinistra a destra, i menù File, Utilità, Sessione, Dati, Campione,
+Variabile, Modello e Aiuto.
 
-      Sulla barra dei menù della finestra principale si trovano,
-      nell'ordine da sinistra a destra, i menù File, Utilità, Sessione,
-      Dati, Campione, Variabile, Modello e Aiuto.
     \begin{center}
       \includegraphics[scale=0.5]{figures/menubar}
     \end{center}

@@ -1359,6 +1359,8 @@ void clear_model (MODEL *pmod)
 void gretl_model_free (MODEL *pmod)
 {
     if (pmod != NULL) {
+	fprintf(stderr, "gretl_model_free: pmod at %p, incoming refcount = %d\n",
+		(void *) pmod, pmod->refcount);
 	pmod->refcount -= 1;
 	if (pmod->refcount <= 0) {
 	    clear_model(pmod);

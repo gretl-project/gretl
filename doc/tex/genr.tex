@@ -63,17 +63,18 @@ approximation is, but since 2$k$ observations have to be discarded, a
 compromise is usually sought. Moreover, the filter has also other
 appealing theoretical properties, among which the property that $A$(1)
 = 0, so a series with a single unit root is made stationary by
-application of the filter.In practice, the filter is normally used
-with monthly or quarterly data to extract the ``business cycle''
-component, namely the component between 6 and 36 quarters. Usual
-choices for $k$ are 8 or 12 (maybe higher for monthly series).  The
-default values for the frequency bounds are 8 and 32, and the default
-value for the approximation order, $k$, is 8. You can adjust these
-values using the \cmd{set} command. The keyword for setting the
-frequency limits is \verb+bkbp_limits+ and the keyword for $k$ is
-\verb+bkbp_k+.  Thus for example if you were using monthly data and
-wanted to adjust the frequency bounds to 18 and 96, and $k$ to 24, you
-could do
+application of the filter.
+
+In practice, the filter is normally used with monthly or quarterly
+data to extract the ``business cycle'' component, namely the component
+between 6 and 36 quarters. Usual choices for $k$ are 8 or 12 (maybe
+higher for monthly series).  The default values for the frequency
+bounds are 8 and 32, and the default value for the approximation
+order, $k$, is 8. You can adjust these values using the \cmd{set}
+command. The keyword for setting the frequency limits is
+\verb+bkbp_limits+ and the keyword for $k$ is \verb+bkbp_k+.  Thus for
+example if you were using monthly data and wanted to adjust the
+frequency bounds to 18 and 96, and $k$ to 24, you could do
 
 \begin{code}
 	set bkbp_limits 18 96
@@ -139,25 +140,27 @@ calculated by the program in the course of estimating models or
 testing hypotheses.  The variables that can be retrieved in this way
 are listed in the \emph{Gretl Command Reference} reference; here we
 say a bit more about the special variables \verb+$test+ and
-\verb+$pvalue+.These variables hold, respectively, the value of the
-last test statistic calculated using an explicit testing command and
-the p-value for that test statistic.  If no such test has been
-performed at the time when these variables are referenced, they will
-produce the missing value code.  The ``explicit testing commands''
-that work in this way are as follows: \cmd{add} (joint test for the
-significance of variables added to a model); \cmd{adf} (Augmented
-Dickey--Fuller test, see below); \cmd{arch} (test for ARCH);
-\cmd{chow} (Chow test for a structural break); \cmd{coeffsum} (test
-for the sum of specified coefficients); \cmd{cusum} (the
-Harvey--Collier $t$-statistic); \cmd{kpss} (KPSS stationarity test, no
-p-value available); \cmd{lmtest} (see below); \cmd{meantest} (test for
-difference of means); \cmd{omit} (joint test for the significance of
-variables omitted from a model); \cmd{reset} (Ramsey's RESET);
-\cmd{restrict} (general linear restriction); \cmd{runs} (runs test for
-randomness); \cmd{testuhat} (test for normality of residual); and
-\cmd{vartest} (test for difference of variances). In most cases both a
-\verb+$test+ and a \verb+$pvalue+ are stored; the exception is the
-KPSS test, for which a p-value is not currently available.
+\verb+$pvalue+.
+
+These variables hold, respectively, the value of the last test
+statistic calculated using an explicit testing command and the p-value
+for that test statistic.  If no such test has been performed at the
+time when these variables are referenced, they will produce the
+missing value code.  The ``explicit testing commands'' that work in
+this way are as follows: \cmd{add} (joint test for the significance of
+variables added to a model); \cmd{adf} (Augmented Dickey--Fuller test,
+see below); \cmd{arch} (test for ARCH); \cmd{chow} (Chow test for a
+structural break); \cmd{coeffsum} (test for the sum of specified
+coefficients); \cmd{cusum} (the Harvey--Collier $t$-statistic);
+\cmd{kpss} (KPSS stationarity test, no p-value available);
+\cmd{lmtest} (see below); \cmd{meantest} (test for difference of
+means); \cmd{omit} (joint test for the significance of variables
+omitted from a model); \cmd{reset} (Ramsey's RESET); \cmd{restrict}
+(general linear restriction); \cmd{runs} (runs test for randomness);
+\cmd{testuhat} (test for normality of residual); and \cmd{vartest}
+(test for difference of variances). In most cases both a \verb+$test+
+and a \verb+$pvalue+ are stored; the exception is the KPSS test, for
+which a p-value is not currently available.
     
 An important point to notice about this mechanism is that the internal
 variables \verb+$test+ and \verb+$pvalue+ are over-written each time

@@ -72,7 +72,14 @@ static int parse_object_request (const char *line,
     parse_object_command(line, word, param);
 
     /* if no dot param, nothing doing */
-    if (*param == 0) return OBJ_ACTION_NONE;
+    if (*param == 0) {
+	return OBJ_ACTION_NONE;
+    }
+
+    /* the model table is special, not handled here */
+    if (!strcmp(word, "modeltab")) {
+	return OBJ_ACTION_NONE;
+    }    
 
     /* see if there's an object associated with the name */
     err = gretl_get_object_and_type(word, pptr, &sort);

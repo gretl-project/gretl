@@ -328,6 +328,10 @@ void gretl_delete_saved_object (void *p)
 {
     int i, pos = -1;
 
+#if ODEBUG
+    fprintf(stderr, "gretl_delete_saved_object: got %p\n", p);
+#endif
+
     for (i=0; i<n_obj; i++) {
 	if (p == obj_stack[i].ptr) {
 	    pos = i;
@@ -806,7 +810,7 @@ int parse_object_command (const char *s, char *name, char *cmd)
     return 0;
 }
 
-void gretl_saved_objects_cleanup (void)
+void gretl_saved_objects_cleanup (int code)
 {
     int i;
 
@@ -815,6 +819,9 @@ void gretl_saved_objects_cleanup (void)
 	    /* don't double-free! */
 	    last_model.ptr = NULL;
 	}
+#if ODEBUG
+	fprintf(stderr, "gretl_saved_objects_cleanup: calling saved_object_free (1)\n");
+#endif
 	saved_object_free(&obj_stack[i], OBJ_FREE_FINAL);
     }
 
@@ -825,7 +832,10 @@ void gretl_saved_objects_cleanup (void)
     n_sys = 0;
     n_vars = 0;
 
-    if (last_model.ptr != NULL) {
+    if (code == CLEANUP_AT_EXIT && last_model.ptr != NULL) {
+#if ODEBUG
+	fprintf(stderr, "gretl_saved_objects_cleanup: calling saved_object_free (2)\n");
+#endif
 	saved_object_free(&last_model, OBJ_FREE_FINAL);
 	last_model.ptr = NULL;
 	last_model.type = 0;
