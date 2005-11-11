@@ -1,0 +1,114 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Dipendenze di gretl</title>
+  <link rel="STYLESHEET" type="text/css"
+ href="./css-gretl.html">
+  <meta name="GENERATOR" content="GNU Emacs">
+</head>
+<body>
+[<a href="http://gretl.sourceforge.net/gretl_portugues.html">página
+principal</a>]
+<center>
+<h1>Dependências de gretl</h1>
+</center>
+<p>Gretl depende de várias bibliotecas e do programa<tt> gnuplot</tt>,
+para algumas das suas funcionalidades. A tabela abaixo mostra um resumo
+destas dependências. A ligação à esquerda leva à página principal do
+pacote em questão (válido a partir de Abril de 2002),
+enquanto a ligação à direita leva à pesquisa do pacote em
+<tt>rpmfind.net</tt>.</p>
+<table border="0" cellpadding="4" cellspacing="4" width="90%">
+  <tbody>
+    <tr>
+      <th align="left" bgcolor="#808080"><font color="white">Pacote</font></th>
+      <th align="left" bgcolor="#808080"><font color="white">Relação
+com gretl</font></th>
+      <th align="left" bgcolor="#808080"><font color="white">Funcionalidade</font></th>
+      <th align="left" bgcolor="#808080"><font color="white">rpmfind</font></th>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="http://www.gtk.org/">gtk</a></td>
+      <td>Obrigatório</td>
+      <td>Fornece a interface gráfica do gretl</td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="http://gtkextra.sourceforge.net/">gtkextra</a></td>
+      <td>Facultativo</td>
+      <td>Diálogo de selecção de ficheiros, vista da sessão em modo
+ícone, folha de cálculo de edição de dados</td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk%2Bextra">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="http://www.xmlsoft.org/">libxml</a></td>
+      <td>Obrigatório</td>
+      <td>Abre e grava os ficheiros no formato predefinido</td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=libxml">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="http://www.netlib.org/lapack/">lapack</a></td>
+      <td>Obrigatório</td>
+      <td>Várias funções de álgebra linear</td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=lapack">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="http://www.gnuplot.info/">gnuplot</a></td>
+      <td>Obrigatório</td>
+      <td>Gera os gráficos</td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=gnuplot">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="ftp://ftp.gnome.org/pub/GNOME/stable/latest/sources/">gdk-pixbuf</a></td>
+      <td>Obrigatório</td>
+      <td>Gestor de imagens em formato PNG; torna os gráficos gnuplot
+interactivos<br>
+      </td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=gdk-pixbuf">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a
+ href="http://cnswww.cns.cwru.edu/%7Echet/readline/rltop.html">readline</a></td>
+      <td>Facultativo</td>
+      <td>Fornece um agradável editor de linha de comandos em <tt>gretlcli</tt>,
+a versão em modo de linha de comandos<br>
+      </td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=readline">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="http://www.gnome.org/">gnome</a></td>
+      <td>Facultativo</td>
+      <td>gretl fica integrado no ambiente de trabalho gnome (ícone e
+associação de ficheiros, sistema de ajuda&nbsp; HTML e outras coisas)</td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=gnome">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="ftp://ftp.gnome.org/pub/GNOME/sources/libole2/">libole2</a></td>
+      <td>Facultativo [<a href="#note1">1</a>]</td>
+      <td>Importa dados do MS Excel</td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=libole2">Procurar</a></td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td><a href="http://swox.com/gmp/">GMP</a></td>
+      <td>Facultativo</td>
+      <td>Suporte para o plugin OLS de precisão múltipla </td>
+      <td><a
+ href="http://rpmfind.net/linux/rpm2html/search.php?query=libgmp">Procurar</a></td>
+    </tr>
+  </tbody>
+</table>
+<h3>Note</h3>
+<p><a name="note1">1.</a> A parte relevante do código de libole2 está
+integrada no pacote de código fonte do gretl, e se não existir no seu
+sistema este código será compilado dentro do gretl.</p>
+</body>
+</html>
