@@ -1378,9 +1378,9 @@ void clear_model (MODEL *pmod)
 
 /**
  * gretl_model_free:
- * @p: pointer to #MODEL.
+ * @pmod: pointer to #MODEL.
  *
- * Free allocated content of MODEL then the pointer itself,
+ * Free allocated content of @pmod then the pointer itself,
  * if the model's reference count has reached zero.
  */
 
@@ -1401,9 +1401,9 @@ void gretl_model_free (MODEL *pmod)
 
 /**
  * gretl_model_free_on_exit:
- * @p: pointer to #MODEL.
+ * @pmod: pointer to #MODEL.
  *
- * Free allocated content of MODEL then the pointer itself,
+ * Free allocated content of @pmod then the pointer itself,
  * without regard to the model's reference count.
  */
 

@@ -665,7 +665,7 @@ static int real_periodic_dummy (const double *x, int n,
 /**
  * is_periodic_dummy:
  * @x: array to examine.
- * @n: number of elements in array.
+ * @pdinfo: pointer to dataset information struct.
  *
  * Returns: 1 if @x is a periodic dummy variable,
  * 0 otherwise.

@@ -36,8 +36,9 @@
 
 %% define a very simple bibliography environment
 \renewenvironment{thebibliography}
-     {\section*{\refname
-        \@mkboth{\MakeUppercase\refname}{\MakeUppercase\refname}}%
+     {\addcontentsline{toc}{chapter}{\refname}
+     \chapter*{\refname
+        \@mkboth{\refname}{\refname}}%
       \list{}{\itemindent -2em\listparindent\itemindent\leftmargin 2em
       \sloppy
       \clubpenalty4000
@@ -60,12 +61,14 @@
     \huge #1\par\nobreak
     \vskip 40\p@
   }}
+
 \def\@schapter#1{\if@twocolumn
                    \@topnewpage[\@makeschapterhead{#1}]%
                  \else
                    \@makeschapterhead{#1}%
                    \@afterheading
                  \fi}
+
 \def\@makeschapterhead#1{%
   \vspace*{10\p@}%
   {\parindent \z@ \centering

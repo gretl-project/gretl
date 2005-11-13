@@ -219,13 +219,13 @@ void calendar_date_string (char *str, int t, const DATAINFO *pdinfo)
 
 /**
  * MS_excel_date_string:
- * @str: date string to be filled out.
+ * @date: date string to be filled out.
  * @mst: MS Excel-type date code: days since base.
  * @pd: periodicity of data (or 0 if unknown).
  * @d1904: set to 1 if the base is 1904/01/01; otherwise
  * the base is assumed to be 1899/12/31.
  * 
- * Writes to @str the calendar representation of the date of
+ * Writes to @date the calendar representation of the date of
  * observation @mst, in the form YYYY/MM/DD if @pd is 0, 5,
  * 6, 7 or 52 (unknown, daily, or weekly frequency), otherwise 
  * in the appropriate format for annual, quarterly or monthly data.

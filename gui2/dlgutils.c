@@ -680,7 +680,9 @@ static void raise_and_focus_dialog (GtkEditable *editable, gpointer p)
     dialog_t *d = (dialog_t *) p;
 
     gdk_window_raise(d->dialog->window);
-    gtk_widget_grab_focus(d->edit);
+    if (!GTK_WIDGET_HAS_FOCUS(d->edit)) {
+	gtk_widget_grab_focus(d->edit);
+    }
 }
 
 static int edit_dialog_help_code (int ci, void *p)

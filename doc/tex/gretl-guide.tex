@@ -1,11 +1,11 @@
 \documentclass{report}
-\usepackage{url,verbatim,fancyvrb,gretl}
+\usepackage{url,verbatim,fancyvrb,gretl,appendix}
 \usepackage{lucidabr} % optional
 \usepackage[T1]{fontenc}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
-\usepackage[pdftex]{thumbpdf}
+%% \usepackage[pdftex]{thumbpdf}
 \usepackage[body={6.3in,8.9in},top=.75in,left=1.1in,nohead]{geometry}
 
 %% \pdfimageresolution=120
@@ -96,10 +96,11 @@ License, etc., goes here.
 \include{vecm}
 \include{trouble}
 \include{cli}
+\include{biblio}
 
 \appendix
 
 \include{appendices}
-\include{biblio}
+%% \include{biblio}
 
 \end{document}

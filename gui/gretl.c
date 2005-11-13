@@ -869,8 +869,6 @@ int main (int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-/* ........................................................... */
-
 static void augment_selection_count (gint i, gint *nsel)
 {
     *nsel += 1;
@@ -888,8 +886,6 @@ int mdata_selection_count (void)
 
     return selcount;
 }
-
-/* ........................................................... */
 
 gint main_varclick (GtkWidget *widget, GdkEventButton *event, 
 		    gpointer data)
@@ -928,8 +924,6 @@ gint main_varclick (GtkWidget *widget, GdkEventButton *event,
     return TRUE;
 }
 
-/* ........................................................... */
-
 static void check_varmenu_state (GtkCList *list, gint i, gint j,
 				 GdkEventButton *event, gpointer p)
 {
@@ -945,8 +939,6 @@ static void check_varmenu_state (GtkCList *list, gint i, gint j,
 	     (selcount > 1));
     }
 }
-
-/* ........................................................... */
 
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
@@ -967,8 +959,6 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     return 1;
 }
-
-/* ........................................................... */
 
 void populate_varlist (void)
 {
@@ -1034,8 +1024,6 @@ void populate_varlist (void)
     }
 }
 
-/* ........................................................... */
-
 void clear_varlist (GtkWidget *widget)
 {
     gtk_clist_clear(GTK_CLIST(widget));
@@ -1046,8 +1034,6 @@ void clear_varlist (GtkWidget *widget)
 	click_connected = 0;
     }
 }
-
-/* ......................................................... */
 
 static float get_gui_scale (void)
 {
@@ -1065,8 +1051,6 @@ static float get_gui_scale (void)
     
     return scale;
 }
-
-/* .................................................................. */
 
 static GtkWidget *list_box_create (GtkBox *box, char *titles[]) 
 {
@@ -1226,8 +1210,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     return main_vbox;
 }
 
-/* ........................................................... */
-
 static void set_up_main_menu (void)
 {
     GtkAccelGroup *main_accel;
@@ -1244,8 +1226,6 @@ static void set_up_main_menu (void)
     mdata->mbar = gtk_item_factory_get_widget (mdata->ifac, "<main>");
     gtk_accel_group_attach(main_accel, GTK_OBJECT (mdata->w));
 }
-
-/* ........................................................... */
 
 int restore_sample (gretlopt opt)
 {
@@ -1412,8 +1392,6 @@ static void auto_store (void)
 	file_selector(_("Save data file"), SAVE_DATA, FSEL_DATA_NONE, NULL);
     }	
 }
-
-/* ........................................................... */
 
 static gint 
 compare_var_ids (GtkCList *cl, gconstpointer p1, gconstpointer p2)

@@ -1460,7 +1460,7 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
 /**
  * gretl_matrix_row_mean:
  * @m: source matrix.
- * @col: zero-based index of row.
+ * @row: zero-based index of row.
  *
  * Returns: the mean of the elements in row @row of @m,
  * or #NADBL if the row is out of bounds.
