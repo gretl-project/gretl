@@ -99,6 +99,15 @@ static int gretl_object_get_refcount (stacker *s)
 {
     int rc = -1;
 
+#if ODEBUG
+    fprintf(stderr, "gretl_object_get_refcount: s = %p, s->ptr = %p\n", 
+	    (void *) s, (void *) s->ptr);
+#endif   
+
+    if (s->ptr == NULL) {
+	return 0;
+    }
+
     if (s->type == EQUATION) {
 	MODEL *pmod = (MODEL *) s->ptr;
 	rc = pmod->refcount;
@@ -107,10 +116,48 @@ static int gretl_object_get_refcount (stacker *s)
 	rc = var->refcount;
     } else if (s->type == SYSTEM) {
 	gretl_equation_system *sys = (gretl_equation_system *) s->ptr;
+        fprintf(stderr, "getting refcount on %p\n", (void *) s->ptr);
+	fflush(stderr);
 	rc = sys->refcount;
     }
 
     return rc;
+}
+
+static MODEL *protected_models[4] = {
+    NULL, NULL, NULL, NULL
+};
+
+void gretl_model_protect (MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<4; i++) {
+	if (protected_models[i] == NULL) {
+	    protected_models[i] = pmod;
+#if ODEBUG
+	    fprintf(stderr, "model at %p: setting as protected\n", (void *) pmod);
+#endif
+	    break;
+	}
+    }
+}
+
+static int model_is_protected (MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<4; i++) {
+	if (pmod == protected_models[i]) {
+#if ODEBUG
+	    fprintf(stderr, "model_is_protected: returning 1 for pmod = %p\n", 
+		    (void *) pmod);
+#endif
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 /* returns 1 if actual freeing will take place (the other possibility
@@ -134,11 +181,19 @@ static int saved_object_free (stacker *s, FreeCode code)
 #endif
 
     if (s->type == EQUATION) {
-	gretl_model_free(s->ptr);
+	if (!model_is_protected(s->ptr)) {
+	    gretl_model_free(s->ptr);
+	}
     } else if (s->type == VAR) {
 	gretl_VAR_free(s->ptr);
     } else if (s->type == SYSTEM) {
 	gretl_equation_system_destroy(s->ptr);
+    }
+
+    if (rc <= 1) {
+	/* we actually freed the object */
+	s->ptr = NULL;
+	s->type = 0;
     }
 
     return rc <= 1;
@@ -810,7 +865,7 @@ int parse_object_command (const char *s, char *name, char *cmd)
     return 0;
 }
 
-void gretl_saved_objects_cleanup (int code)
+void gretl_saved_objects_cleanup (void)
 {
     int i;
 
@@ -820,7 +875,8 @@ void gretl_saved_objects_cleanup (int code)
 	    last_model.ptr = NULL;
 	}
 #if ODEBUG
-	fprintf(stderr, "gretl_saved_objects_cleanup: calling saved_object_free (1)\n");
+	fprintf(stderr, "gretl_saved_objects_cleanup:\n"
+		" calling saved_object_free on obj_stack[%d]\n", i);
 #endif
 	saved_object_free(&obj_stack[i], OBJ_FREE_FINAL);
     }
@@ -832,9 +888,10 @@ void gretl_saved_objects_cleanup (int code)
     n_sys = 0;
     n_vars = 0;
 
-    if (code == CLEANUP_AT_EXIT && last_model.ptr != NULL) {
+    if (last_model.ptr != NULL) {
 #if ODEBUG
-	fprintf(stderr, "gretl_saved_objects_cleanup: calling saved_object_free (2)\n");
+	fprintf(stderr, "gretl_saved_objects_cleanup:\n"
+		" calling saved_object_free on last_model\n");
 #endif
 	saved_object_free(&last_model, OBJ_FREE_FINAL);
 	last_model.ptr = NULL;

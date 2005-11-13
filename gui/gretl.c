@@ -708,9 +708,9 @@ int main (int argc, char *argv[])
     models = malloc(3 * sizeof *models);
     if (models == NULL) noalloc(_("models")); 
 
-    models[0] = gretl_model_new();
-    models[1] = gretl_model_new();
-    models[2] = gretl_model_new();
+    models[0] = gretl_model_new_protected();
+    models[1] = gretl_model_new_protected();
+    models[2] = gretl_model_new_protected();
 
     if (models[0] == NULL || models[1] == NULL || models[2] == NULL) 
 	noalloc(_("models")); 

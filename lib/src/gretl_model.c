@@ -1136,6 +1136,29 @@ void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->smpl.t2 = pdinfo->t2;
 }
 
+static MODEL *real_gretl_model_new (int protected)
+{
+    MODEL *pmod = malloc(sizeof *pmod);
+
+#if MDEBUG
+    fprintf(stderr, "real_gretl_model_new: model at %p\n", (void *) pmod);
+#endif
+
+    if (pmod != NULL) {
+	gretl_model_init(pmod);
+    }
+
+    if (protected) {
+#if MDEBUG
+	fprintf(stderr, " protecting this model\n", (void *) pmod);
+#endif
+	gretl_model_protect(pmod);
+    }
+	
+
+    return pmod;
+}
+
 /**
  * gretl_model_new:
  * 
@@ -1147,17 +1170,22 @@ void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
 
 MODEL *gretl_model_new (void)
 {
-    MODEL *pmod = malloc(sizeof *pmod);
+    return real_gretl_model_new(0);
+}
 
-#if MDEBUG
-    fprintf(stderr, "gretl_model_new: model at %p\n", (void *) pmod);
-#endif
+/**
+ * gretl_model_new_protected:
+ * 
+ * Allocates memory for a gretl #MODEL struct and initializes the struct,
+ * using gretl_model_init().  Unlike plain gretl_model_new(), this function
+ * creates a model which will not be freed by the mechanisms in objstack.c.
+ *
+ * Returns: pointer to model (or %NULL if allocation fails).
+ */
 
-    if (pmod != NULL) {
-	gretl_model_init(pmod);
-    }
-
-    return pmod;
+MODEL *gretl_model_new_protected (void)
+{
+    return real_gretl_model_new(1);
 }
 
 /**
@@ -1359,8 +1387,10 @@ void clear_model (MODEL *pmod)
 void gretl_model_free (MODEL *pmod)
 {
     if (pmod != NULL) {
+#if MDEBUG
 	fprintf(stderr, "gretl_model_free: pmod at %p, incoming refcount = %d\n",
 		(void *) pmod, pmod->refcount);
+#endif
 	pmod->refcount -= 1;
 	if (pmod->refcount <= 0) {
 	    clear_model(pmod);

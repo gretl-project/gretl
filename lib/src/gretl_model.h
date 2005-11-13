@@ -106,6 +106,8 @@ typedef enum {
 
 MODEL *gretl_model_new (void);
 
+MODEL *gretl_model_new_protected (void);
+
 void gretl_model_init (MODEL *pmod);
 
 MODEL **gretl_model_array_new (int n);

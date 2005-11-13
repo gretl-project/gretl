@@ -313,7 +313,7 @@ static int clear_data (void)
     free_modelspec(modelspec);
     modelspec = NULL;
 
-    gretl_saved_objects_cleanup(CLEANUP_CHANGE_SESSION);
+    gretl_saved_objects_cleanup();
 
     reset_model_count();
 
@@ -568,8 +568,8 @@ int main (int argc, char *argv[])
     models = malloc(2 * sizeof *models);
     if (models == NULL) noalloc("models"); 
 
-    models[0] = gretl_model_new();
-    models[1] = gretl_model_new();
+    models[0] = gretl_model_new_protected();
+    models[1] = gretl_model_new_protected();
 
     if (models[0] == NULL || models[1] == NULL) {
 	noalloc("models"); 

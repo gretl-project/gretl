@@ -12,12 +12,13 @@
 #define HTMLLEN 1024
 #define BUFFER_SIZE 4096
 
-#define NLANGS 3
+#define NLANGS 4
 
 enum {
     EN,
     ES,
-    IT
+    IT,
+    PT
 };
 
 char substfile[FILENAME_MAX];
@@ -25,7 +26,8 @@ char substfile[FILENAME_MAX];
 const char *lang_names[] = {
     "en_US",
     "es_ES",
-    "it_IT"
+    "it_IT",
+    "pt_PT"
 };
 
 struct lang_strings_t {
@@ -377,6 +379,8 @@ int copy_substitute (const char *fsrc, const char *ftarg,
 	lang = ES;
     } else if (strstr(fsrc, "itali") || strstr(fsrc, "_it")) {
 	lang = IT;
+    } else if (strstr(fsrc, "portu") || strstr(fsrc, "_pt")) {
+	lang = PT;
     } else {
 	lang = EN;
     }
@@ -413,15 +417,17 @@ struct from_to {
 int process_templates (char *verstr)
 {
     struct from_to templates[] = {
-	{ "index_pat.html",          "index.html" },
-	{ "win32_pat.html",          "win32/index.html" },
-	{ "osx_pat.html",            "osx.html" },	
-	{ "gretl_espanol_pat.html",  "gretl_espanol.html" },
-	{ "win32_pat_es.html",       "win32/index_es.html", },
-	{ "osx_pat_es.html",         "osx_es.html" },
-	{ "gretl_italiano_pat.html", "gretl_italiano.html" },
-	{ "win32_pat_it.html",       "win32/index_it.html" },
-	{ "osx_pat_it.html",         "osx_it.html" },
+	{ "index_pat.html",           "index.html" },
+	{ "win32_pat.html",           "win32/index.html" },
+	{ "osx_pat.html",             "osx.html" },	
+	{ "gretl_espanol_pat.html",   "gretl_espanol.html" },
+	{ "win32_pat_es.html",        "win32/index_es.html", },
+	{ "osx_pat_es.html",          "osx_es.html" },
+	{ "gretl_italiano_pat.html",  "gretl_italiano.html" },
+	{ "win32_pat_it.html",        "win32/index_it.html" },
+	{ "osx_pat_it.html",          "osx_it.html" },
+	{ "gretl_portugues_pat.html", "gretl_portugues.html" },
+	{ "win32_pat_pt.html",        "win32/index_pt.html" },
 	{ NULL, NULL }
     };
     struct from_to *ptr = templates;
