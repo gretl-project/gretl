@@ -24,7 +24,7 @@
 #include "system_private.h"
 #include "objstack.h"
 
-#define ODEBUG 2
+#define ODEBUG 0
 
 typedef struct stacker_ stacker;
 
