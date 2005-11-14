@@ -1,11 +1,8 @@
 \chapter{The command line interface}
 \label{cli}
 
-
-
 \section{Gretl at the console}
 \label{cli-console}
-
 
 The \app{gretl} package includes the command-line program
 \app{gretlcli}. On Linux it can be run from the console, or in an
@@ -16,19 +13,20 @@ prompt. It can be run in batch mode, sending outout directly to a file
 (see alse the \emph{Gretl Command Reference}).
     
 If \app{gretlcli} is linked to the \app{readline} library (this is
-automatically the case in the MS Windows version; also see [?]), the
-command line is recallable and editable, and offers command
-completion.  You can use the Up and Down arrow keys to cycle through
-previously typed commands.  On a given command line, you can use the
-arrow keys to move around, in conjunction with Emacs editing
-keystokes.\footnote{Actually, the key bindings shown below are only
-  the defaults; they can be customized.  See the
+automatically the case in the MS Windows version; also see
+Appendix~\ref{app-technote}), the command line is recallable and
+editable, and offers command completion.  You can use the Up and Down
+arrow keys to cycle through previously typed commands.  On a given
+command line, you can use the arrow keys to move around, in
+conjunction with Emacs editing keystokes.\footnote{Actually, the key
+  bindings shown below are only the defaults; they can be customized.
+  See the
   \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{readline
     manual}.} The most common of these are:
 %    
 \begin{center}
   \begin{tabular}{cl}
-    Keystroke & \multicolumn{1}{c}{Effect}\\
+    \textit{Keystroke} & \multicolumn{1}{c}{\textit{Effect}}\\
     \verb+Ctrl-a+ & go to start of line\\
     \verb+Ctrl-e+ & go to end of line\\
     \verb+Ctrl-d+ & delete character to right\\

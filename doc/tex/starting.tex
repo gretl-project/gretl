@@ -1,8 +1,6 @@
 \chapter{Getting started}
 \label{getting-started}
 
-
-
 \section{Let's run a regression}
 \label{starting-regression}
 
@@ -27,11 +25,11 @@ What can you do at this point?  You can browse the supplied data files
 help items, or open a command script.  For now let's browse the
 supplied data files.  Under the File menu choose ``Open data, sample
 file, Ramanathan\dots{}''.  A second window should open, presenting a
-list of data files supplied with the package (see Figure
-\ref{fig-datafiles}).  The numbering of the files corresponds to the
-chapter organization of Ramanathan (2002), which contains discussion
-of the analysis of these data. The data will be useful for practice
-purposes even without the text.
+list of data files supplied with the package (see
+Figure~\ref{fig-datafiles}).  The numbering of the files corresponds
+to the chapter organization of Ramanathan (2002), which contains
+discussion of the analysis of these data. The data will be useful for
+practice purposes even without the text.
     
 \begin{figure}[htbp]
   \caption{Practice data files window}
@@ -56,7 +54,7 @@ This file contains data pertaining to a classic
 econometric ``chestnut'', the consumption function.  The data window
 should now display the name of the current data file, the overall data
 range and sample range, and the names of the variables along with
-brief descriptive tags --- see Figure \ref{fig-mainwin}.
+brief descriptive tags --- see Figure~\ref{fig-mainwin}.
     
 \begin{figure}[htbp]
   \caption{Main window, with a practice data file open}
@@ -68,13 +66,13 @@ brief descriptive tags --- see Figure \ref{fig-mainwin}.
 
 OK, what can we do now?  Hopefully the various menu options should be
 fairly self explanatory.  For now we'll dip into the Model menu; a
-brief tour of all the main window menus is given in Section
-\ref{menus} below.
+brief tour of all the main window menus is given in
+Section~\ref{menus} below.
     
 \app{gretl}'s Model menu offers numerous various econometric
 estimation routines.  The simplest and most standard is Ordinary Least
 Squares (OLS). Selecting OLS pops up a dialog box calling for a
-\emph{model specification} --- see Figure \ref{fig-selector}.
+\emph{model specification} --- see Figure~\ref{fig-selector}.
     
 \begin{figure}[htbp]
   \caption{Model specification dialog}
@@ -105,7 +103,7 @@ to the Independent variables list.
 
 Once you've specified a model, a window displaying the regression
 output will appear.  The output is reasonably comprehensive and in a
-standard format (Figure \ref{fig-modelwin}).
+standard format (Figure~\ref{fig-modelwin}).
     
 \begin{figure}[htbp]
   \caption{Model output window}
@@ -188,7 +186,7 @@ To import \app{gretl} output
 \item \textsf{File menu}
   \begin{itemize}
   \item \textsf{Open data}: Open a native \app{gretl} data file or
-    import from other formats.  See [?].
+    import from other formats.  See Chapter~\ref{datafiles}.
   \item \textsf{Append data}: Add data to the current working data
     set, from a \app{gretl} data file, a comma-separated values file
     or a spreadsheet file.
@@ -235,7 +233,7 @@ To import \app{gretl} output
     look up p-values from the Gaussian, \emph{t}, chi-square, \emph{F}
     or gamma distributions. See also the \cmd{pvalue} command in the
     \emph{Gretl Command Reference}.
-	    
+            
   \item \textsf{Test statistic calculator}: Calculate test statistics
     and p-values for a range of common hypothesis tests (population
     mean, variance and proportion; difference of means, variances and
@@ -247,11 +245,11 @@ To import \app{gretl} output
   \item \textsf{Gretl console}: Open a ``console'' window into which
     you can type commands as you would using the command-line program,
     \app{gretlcli} (as opposed to using point-and-click).
-	    
+            
   \item \textsf{Start Gnu R}: Start \app{R} (if it is installed on
     your system), and load a copy of the data set currently open in
     \app{gretl}.  See [?].
-	    
+            
   \item \textsf{NIST test suite}: Check the numerical accuracy of
     \app{gretl} against the reference results for linear regression
     made available by the (US) National Institute of Standards and
@@ -262,14 +260,14 @@ To import \app{gretl} output
   \begin{itemize}
   \item \textsf{Icon view}: Open a window showing the current
     \app{gretl} session as a set of icons.  For details see [?].
-	    
+            
   \item \textsf{Open}: Open a previously saved session file.
-	    
+            
   \item \textsf{Save}: Save the current session to file.
-	    
+            
   \item \textsf{Save as}: Save the current session to file under a
     chosen name.
-	    
+            
   \end{itemize}
 
 
@@ -281,10 +279,10 @@ To import \app{gretl} output
   \item \textsf{Edit values}: Pops up a spreadsheet window where you
     can make changes, add new variables, and extend the number of
     observations.
-	      
+              
   \item \textsf{Sort variables}: Rearrange the listing of variables in
     the main window, either by ID number or alphabetically by name.
-	      
+              
   \item \textsf{Graph specified vars}: Gives a choice between a time
     series plot, a regular X--Y scatter plot, an X--Y plot using
     impulses (vertical bars), an X--Y plot ``with factor separation''
@@ -313,11 +311,11 @@ To import \app{gretl} output
   \item \textsf{Principal components}: Active only if two or more
     variables are selected; produces a Principal Components Analysis
     of the selected variables.
-	      
+              
   \item \textsf{Mahalonobis distances}: Active only if two or more
     variables are selected; computes the Mahalonobis distance of each
     observation from the centroid of the selected set of variables.
-	      
+              
   \item \textsf{Difference of means}: Calculates the \emph{t}
     statistic for the null hypothesis that the population means are
     equal for two selected variables and shows its p-value.
@@ -334,11 +332,11 @@ To import \app{gretl} output
   \item \textsf{Add observations}: Gives a dialog box in which you can
     choose a number of observations to add at the end of the current
     dataset; for use with forecasting.
-	    
+            
   \item \textsf{Remove extra observations}: Active only if extra
     observations have been added automatically in the process of
     forecasting; deletes these extra observations.
-	    
+            
   \item \textsf{Refresh window}: Sometimes \app{gretl} commands
     generate new variables.  The ``refresh'' item ensures that the
     listing of variables visible in the main data window is in sync
@@ -372,7 +370,7 @@ To import \app{gretl} output
   \item \textsf{Drop all obs with missing values}: Drop from the
     current sample all observations for which at least one variable
     has a missing value (see [?]).
-	    
+            
   \item \textsf{Count missing values}: Give a report on observations
     where data values are missing. May be useful in examining a panel
     data set, where it's quite common to encounter missing values.
@@ -389,12 +387,12 @@ To import \app{gretl} output
     data set in stacked cross-section form into stacked time series or
     vice versa.  (Unlike the \textsf{Dataset structure} menu item
     above, this one actually changes the organization of the data.)
-	    
+            
   \item \textsf{Transpose data}: Turn each observation into a variable
     and vice versa (or in other words, each row of the data matrix
     becomes a column in the modified data matrix); can be useful with
     imported data that have been read in ``sideways''.
-	    
+            
   \end{itemize}
 
 
@@ -408,9 +406,9 @@ To import \app{gretl} output
   formulae, look at the online help for ``Generate variable syntax''
   or see the \cmd{genr} command in the \emph{Gretl Command Reference}.
   One simple example:
-	  
+          
 \begin{code} 
-	    foo = x1 * x2
+            foo = x1 * x2
 \end{code}
 
   will create a new variable \verb+foo+ as the product of the existing
@@ -449,7 +447,7 @@ The icons have the following functions, reading from left to
 \item Start a new script.  Opens an editor window in which you can
   type a series of commands to be sent to the program as a batch.
 \item Open the gretl console.  A shortcut to the ``Gretl console''
-  menu item (Section \ref{menus} above).
+  menu item (Section~\ref{menus} above).
 \item Open the gretl session window.
 \item Open the \app{gretl} website in your web browser.  This will
   work only if you are connected to the Internet and have a properly
@@ -472,7 +470,7 @@ The icons have the following functions, reading from left to
 If you don't care to have the toolbar displayed, you can turn it
 off under the ``File, Preferences, General'' menu. Go
       to the Toolbar tab and uncheck the ``show gretl
-	toolbar'' box.
+        toolbar'' box.
 
 %%% Local Variables: 
 %%% mode: latex

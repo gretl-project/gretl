@@ -58,8 +58,9 @@ read.  To be more specific:
     Generally these will be 1 and the number of observations
     respectively, for undated data.  For time-series data one can use
     dates of the form \cmd{1959.1} (quarterly, one digit after the
-    point) or \cmd{1967.03} (monthly, two digits after the point). See
-    [?] for special use of this line in the case of panel data.
+    point) or \cmd{1967.03} (monthly, two digits after the point).
+    See Chapter~\ref{chap-panel} for special use of this line in the
+    case of panel data.
   \item The keyword \verb+BYOBS+.
   \end{itemize}
 
@@ -68,17 +69,16 @@ read.  To be more specific:
 
 Here is an example of a well-formed data header file.
 
-	
 \begin{code} 
-	  (* 
-	  DATA9-6: 
-	  Data on log(money), log(income) and interest rate from US. 
-	  Source: Stock and Watson (1993) Econometrica 
-	  (unsmoothed data) Period is 1900-1989 (annual data). 
-	  Data compiled by Graham Elliott. 
-	  *) 
-	  lmoney lincome intrate ; 
-	  1 1900 1989 BYOBS
+          (* 
+          DATA9-6: 
+          Data on log(money), log(income) and interest rate from US. 
+          Source: Stock and Watson (1993) Econometrica 
+          (unsmoothed data) Period is 1900-1989 (annual data). 
+          Data compiled by Graham Elliott. 
+          *) 
+          lmoney lincome intrate ; 
+          1 1900 1989 BYOBS
 \end{code}
 
 The corresponding data file contains three columns of data, each
@@ -113,7 +113,7 @@ format may be noted.
   followed by the descriptive label. Here is an example:
   \verb+price New car price index, 1982 base year+
 
-	
+        
 \end{enumerate}
 
 If you want to save data in traditional format, use the \cmd{-t} flag

@@ -20,7 +20,7 @@ command-line client program and a graphical user interface.
 \item[Cross-platform] \app{gretl}'s home platform is Linux, but it is
   also available for MS Windows.  I have compiled it on Mac OS X and
   AIX and it should work on any unix-like system that has the
-  appropriate basic libraries (see~\ref{app-technote}).
+  appropriate basic libraries (see Appendix~\ref{app-technote}).
 \item[Open source] The full source code for \app{gretl} is available
   to anyone who wants to critique it, patch it, or extend it.  The
   author welcomes any bug reports.
@@ -33,9 +33,9 @@ command-line client program and a graphical user interface.
   econometrician might require, it supports the export of data to the
   formats of (\href{http://www.r-project.org/}{GNU R}) and
   (\href{http://www.octave.org/}{GNU Octave}) for further analysis
-  (see~\ref{app-advanced}).
+  (see Appendix~\ref{app-advanced}).
 \item[Accurate] \app{gretl} has been thoroughly tested on the NIST
-  reference datasets. See~\ref{app-accuracy}.
+  reference datasets. See Appendix~\ref{app-accuracy}.
 \item[Internet ready] \app{gretl} can access and fetch databases from
   a server at Wake Forest University.  The MS Windows version comes
   with an updater program which will detect when a new version is
@@ -79,10 +79,11 @@ and Tadeusz Kufel, who prepared the Spanish, French, Italian and
 Polish translations respectively.
 
 I have benefitted greatly from the work of numerous developers of
-open-source software: for specifics please see~\ref{app-technote}. My
-thanks are due to Richard Stallman of the Free Software Foundation,
-for his support of free software in general and for agreeing to
-``adopt'' \app{gretl} as a GNU program in particular.
+open-source software: for specifics please see
+Appendix~\ref{app-technote}. My thanks are due to Richard Stallman of
+the Free Software Foundation, for his support of free software in
+general and for agreeing to ``adopt'' \app{gretl} as a GNU program in
+particular.
 
 Many users of \app{gretl} have submitted useful suggestions and bug
 reports.  In this connection particular thanks are due to Ignacio
@@ -116,21 +117,21 @@ what to do.
 \begin{enumerate}
 \item Download the latest \app{gretl} source package from
   \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
-	  
+          
 \item Unzip and untar the package.  On a system with the GNU utilities
   available, the command would be \cmd{tar xvfz gretl-N.tar.gz}
   (replace \cmd{N} with the specific version number of the file you
   downloaded at step 1).
 \item Change directory to the gretl source directory created at step 2
   (e.g. \verb+gretl-1.1.5+).
-	  
+          
 \item The basic routine is then
-	    
+            
 \begin{code}
-	      ./configure 
-	      make 
-	      make check
-	      make install
+              ./configure 
+              make 
+              make check
+              make install
 \end{code}
   However, you should probably read the \verb+INSTALL+ file first,
   and/or do \cmd{./configure --help} first to see what options are
@@ -139,8 +140,8 @@ what to do.
   change this.  For example \cmd{./configure --prefix=/usr} will put
   everything under the \verb+/usr+ tree.  In the event that a required
   library is not found on your system, so that the configure process
-  fails, please take a look at~\ref{app-technote}.
-	  
+  fails, please see Appendix~\ref{app-technote}.
+          
 \end{enumerate}
 
 As of version 0.97 \app{gretl} offers support for the \app{gnome}

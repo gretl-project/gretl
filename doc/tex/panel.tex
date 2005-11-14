@@ -1,8 +1,6 @@
 \chapter{Panel data}
 \label{chap-panel}
 
-
-
 \section{Panel structure}
 \label{panel-structure}
 
@@ -31,6 +29,7 @@ stacked time series or vice versa.When you import panel data into
 nature of the data will not be recognized automatically (most likely
 the data will be treated as ``undated'').  A panel interpretation can
 be imposed on the data in either of two ways.
+
 \begin{enumerate}
 \item Use the GUI menu item ``Sample, Dataset structure''.  In the
   first dialog box that appears, select ``Panel''.  In the next
@@ -39,7 +38,6 @@ be imposed on the data in either of two ways.
   next, supply the number of cross-sectional units in the dataset.
   Finally, check the specification that is shown to you, and confirm
   the change if it looks OK.
-	
 \item Use the script command \cmd{setobs}.  For panel data this
   command takes the form \verb+setobs+ freq \verb+1:1+ structure,
   where freq is replaced by the ``block size'' of the data (that is,
@@ -50,15 +48,13 @@ be imposed on the data in either of two ways.
   the first is suitable for a panel in the form of stacked time series
   with observations from 20 periods; the second for stacked cross
   sections with 5 cross-sectional units.
-	
+        
 \begin{code}
-	    setobs 20 1:1 --stacked-time-series
-	    setobs 5 1:1 --stacked-cross-section
+            setobs 20 1:1 --stacked-time-series
+            setobs 5 1:1 --stacked-cross-section
 \end{code}
 
 \end{enumerate}
-
-
 
 \section{Dummy variables}
 \label{dummies}
@@ -72,6 +68,7 @@ intercept to differ across periods.Three special functions are
 available to create such dummies.  These are found under the ``Data,
 Add variables'' menu in the GUI, or under the \cmd{genr} command in
 script mode or \app{gretlcli}.
+
 \begin{enumerate}
 \item ``periodic dummies'' (script command \cmd{genr dummy}).  This
   command creates a set of dummy variables identifying the periods.
@@ -102,7 +99,6 @@ thereafter, 0 otherwise, do
       genr index 
       genr dum = ((index-1)%30) = 0
 \end{code}
-
 
 \section{Lags and differences with panel data}
 \label{panel-lagged}
@@ -186,22 +182,22 @@ from a low base).
   \label{examp-pwt}
 
 \begin{code}
-	  open pwt56_60_89.gdt 
-	  # for 1989 (the last obs), lag 29 gives 1960, the first obs 
-	  genr gdp60 = RGDPL(-29) 
-	  # find total growth of real GDP over 30 years
-	  genr gdpgro = (RGDPL - gdp60)/gdp60
-	  # restrict the sample to a 1989 cross-section 
-	  smpl --restrict YEAR=1989 
-	  # convergence: did countries with a lower base grow faster?  
-	  ols gdpgro const gdp60 
-	  # result: No! Try an inverse relationship?
-	  genr gdp60inv = 1/gdp60 
-	  ols gdpgro const gdp60inv 
-	  # no again.  Try treating Africa as special? 
-	  genr afdum = (CCODE = 1)
-	  genr afslope = afdum * gdp60 
-	  ols gdpgro const afdum gdp60 afslope 
+          open pwt56_60_89.gdt 
+          # for 1989 (the last obs), lag 29 gives 1960, the first obs 
+          genr gdp60 = RGDPL(-29) 
+          # find total growth of real GDP over 30 years
+          genr gdpgro = (RGDPL - gdp60)/gdp60
+          # restrict the sample to a 1989 cross-section 
+          smpl --restrict YEAR=1989 
+          # convergence: did countries with a lower base grow faster?  
+          ols gdpgro const gdp60 
+          # result: No! Try an inverse relationship?
+          genr gdp60inv = 1/gdp60 
+          ols gdpgro const gdp60inv 
+          # no again.  Try treating Africa as special? 
+          genr afdum = (CCODE = 1)
+          genr afslope = afdum * gdp60 
+          ols gdpgro const afdum gdp60 afslope 
 \end{code}
 \end{script}
 

@@ -47,38 +47,32 @@
       \sfcode`\.\@m\item\relax}}
       {\endlist}
 
-
 \def\@makechapterhead#1{%
   \vspace*{10\p@}%
-  {\parindent \z@ \centering
-    \normalfont
+  {\parindent \z@ \centering \normalfont
     \ifnum \c@secnumdepth >\m@ne
-        \Large\sffamily
-        \@chapapp\space \thechapter
+        \Large\sffamily \@chapapp\space \thechapter
         \par\nobreak
+        \vskip 5\p@
     \fi
     \interlinepenalty\@M
-    \huge #1\par\nobreak
-    \vskip 40\p@
+    \huge \sffamily #1\par\nobreak
+    \vskip 30\p@
   }}
-
 \def\@schapter#1{\if@twocolumn
                    \@topnewpage[\@makeschapterhead{#1}]%
                  \else
                    \@makeschapterhead{#1}%
                    \@afterheading
                  \fi}
-
 \def\@makeschapterhead#1{%
   \vspace*{10\p@}%
   {\parindent \z@ \centering
     \normalfont
-    \sffamily
     \interlinepenalty\@M
-    \Large \bfseries #1\par\nobreak
-    \vskip 40\p@
+    \Large \sffamily  #1\par\nobreak
+    \vskip 30\p@
   }}
-
 
 %% \def\@seccntformat#1{\protect\makebox[0pt][r]{\csname
 %%                      the#1\endcsname\quad}}

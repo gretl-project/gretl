@@ -1,19 +1,16 @@
 \chapter{Data files}
 \label{datafiles}
 
-
-
 \section{Native format}
 \label{native-format}
 
 \app{gretl} has its own format for data files.  Most users will
 probably not want to read or write such files outside of \app{gretl}
 itself, but occasionally this may be useful and full details on the
-file formats are given in [?].
+file formats are given in Appendix~\ref{app-datafile}.
 
 \section{Other data file formats}
 \label{other-formats}
-
 
 \app{gretl} will read various other data formats.
     
@@ -21,14 +18,14 @@ file formats are given in [?].
 \item Plain text (ASCII) files.  These can be brought in using
   \app{gretl}'s ``File, Open Data, Import ASCII\dots{}'' menu item, or
   the \cmd{import} script command.  For details on what \app{gretl}
-  expects of such files, see Section \ref{scratch}.
+  expects of such files, see Section~\ref{scratch}.
 \item Comma-Separated Values (CSV) files.  These can be imported using
   \app{gretl}'s ``File, Open Data, Import CSV\dots{}'' menu item, or
-  the \cmd{import} script command. See also Section \ref{scratch}.
+  the \cmd{import} script command. See also Section~\ref{scratch}.
 \item Worksheets in the format of either MS \app{Excel} or
   \app{Gnumeric}.  These are also brought in using \app{gretl}'s
   ``File, Open Data, Import'' menu.  The requirements for such files
-  are given in Section \ref{scratch}.
+  are given in Section~\ref{scratch}.
 \item BOX1 format data.  Large amounts of micro data are available
   (for free) in this format via the
   \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{Data
@@ -93,20 +90,20 @@ There are five ways to do this:
 \begin{enumerate}
 \item Find, or create using a text editor, a plain text data file and
   open it with \app{gretl}'s ``Import ASCII'' option.
-	
+        
 \item Use your favorite spreadsheet to establish the data file, save
   it in Comma Separated Values format if necessary (this should not be
   necessary if the spreadsheet program is MS Excel or Gnumeric), then
   use one of \app{gretl}'s ``Import'' options (CSV, Excel or Gnumeric,
   as the case may be).
-	
+        
 \item Use \app{gretl}'s built-in spreadsheet.
-	
+        
 \item Select data series from a suitable database.
-	
+        
 \item Use your favorite text editor or other software tools to a
   create data file in \app{gretl} format independently.
-	
+        
 \end{enumerate}
 
 Here are a few comments and details on these methods.
@@ -117,7 +114,9 @@ Here are a few comments and details on these methods.
 Options (1) and (2) involve using \app{gretl}'s ``import'' mechanism.
 For \app{gretl} to read such data successfully, certain general
 conditions must be satisfied:
+
 \begin{itemize}
+
 \item The first row must contain valid variable names.  A valid
   variable name is of 8 characters maximum; starts with a letter; and
   contains nothing but letters, numbers and the underscore character,
@@ -132,18 +131,18 @@ conditions must be satisfied:
   dialog box where you can select an offset into the spreadsheet, so
   that \app{gretl} will ignore a specified number of rows and/or
   columns.
-	  
+          
 \item Data values: these should constitute a rectangular block, with
   one variable per column (and one observation per row).  The number
   of variables (data columns) must match the number of variable names
-  given. See also Section \ref{missing-data}.  Numeric data are
+  given. See also Section~\ref{missing-data}.  Numeric data are
   expected, but in the case of importing from ASCII/CSV, the program
   offers limited handling of character (string) data: if a given
   column contains character data only, consecutive numeric codes are
   substituted for the strings, and once the import is complete a table
   is printed showing the correspondence between the strings and the
   codes.
-	  
+          
 \item Dates (or observation labels): Optionally, the \emph{first}
   column may contain strings such as dates, or labels for
   cross-sectional observations.  Such strings have a maximum of 8
@@ -160,7 +159,7 @@ conditions must be satisfied:
   \verb+1997.1+, \verb+2002:3+, \verb+1947Q1+.  For \emph{monthly}
   data: a 4-digit year, followed by a period or a colon, followed by a
   two-digit month.  Examples: \verb+1997.01+, \verb+2002:10+.
-	  
+          
 \end{itemize}
 
 CSV files can use comma, space or tab as the column separator.  When
@@ -176,7 +175,6 @@ new variable''.
 
 \subsection{Appending imported data}
 
-
 You may wish to establish a \app{gretl} dataset piece by piece, by
 incremental importation of data from other sources.  This is supported
 via the ``File, Append data'' menu items.  \app{gretl} will check the
@@ -190,7 +188,6 @@ rather than ``Append data''), opening a new data file closes the
 current one.
 
 \subsection{Using the built-in spreadsheet}
-
 
 Under \app{gretl}'s ``File, Create data set'' menu you can choose the
 sort of dataset you want to establish (e.g. quarterly time series,
@@ -245,17 +242,14 @@ program's main window.
 
 \subsection{Creating a gretl data file independently}
 
-
 It is possible to create a data file in one or other of \app{gretl}'s
 own formats using a text editor or software tools such as \app{awk},
 \app{sed} or \app{perl}.  This may be a good choice if you have large
 amounts of data already in machine readable form. You will, of course,
 need to study the \app{gretl} data formats (XML format or
-``traditional'' format) as described in chapter \ref{datafiles}.
+``traditional'' format) as described in Chapter~\ref{datafiles}.
 
 \subsection{Further note}
-
-
 
 \app{gretl} has no problem compacting data series of relatively high
 frequency (e.g. monthly) to a lower frequency (e.g. quarterly): you
@@ -326,7 +320,6 @@ sample range.\footnote{\cmd{genr} also offers the inverse function to
 \section{Data file collections}
 \label{collections}
 
-
 If you're using \app{gretl} in a teaching context you may be
 interested in adding a collection of data files and/or scripts that
 relate specifically to your course, in such a way that students can
@@ -360,7 +353,7 @@ When a user selects one of the items:
   necessarily known in advance) in these places: the ``system'' data
   directory, the system script directory, the user directory, and all
   first-level subdirectories of these.  (For reference, typical values
-  for these directories are shown in Table \ref{tab-colls}.)
+  for these directories are shown in Table~\ref{tab-colls}.)
 \end{itemize}
 
 \begin{table}[htbp]
