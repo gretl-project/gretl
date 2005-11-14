@@ -1,8 +1,6 @@
 \chapter{Loop constructs}
 \label{looping}
 
-
-
 \section{Introduction}
 \label{loop-intro}
 
@@ -11,36 +9,40 @@ accepts a block of commands to be repeated one or more times.  This
 feature is designed for use with Monte Carlo simulations,
 bootstrapping of test statistics, and iterative estimation procedures.
 The general form of a loop is:
+
 \begin{code}
       loop control-expression [ --progressive | --verbose ]
          loop body
       endloop
 \end{code}
+
 Five forms of control-expression are available, as explained below.
 In the loop body the following commands are accepted: \cmd{genr},
 \cmd{ols}, \cmd{print}, \cmd{printf}, \cmd{pvalue}, \cmd{sim},
 \cmd{smpl}, \cmd{store}, \cmd{summary}, \cmd{if}, \cmd{else} and
-\cmd{endif}.By default, the \cmd{genr} command operates quietly in the
-context of a loop (without printing information on the variable
-generated).  To force the printing of feedback from \cmd{genr} you may
-specify the \verb+--verbose+ option to \cmd{loop}.  The
-\verb+--progressive+ option to \cmd{loop} modifies the behavior of the
-commands \cmd{ols}, \cmd{print} and \cmd{store} in a manner that may
-be useful with Monte Carlo analyses (see Section
+\cmd{endif}.
+
+By default, the \cmd{genr} command operates quietly in the context of
+a loop (without printing information on the variable generated).  To
+force the printing of feedback from \cmd{genr} you may specify the
+\verb+--verbose+ option to \cmd{loop}.
+
+The \verb+--progressive+ option to \cmd{loop} modifies the behavior of
+the commands \cmd{ols}, \cmd{print} and \cmd{store} in a manner that
+may be useful with Monte Carlo analyses (see Section
 \ref{loop-progressive}).
     
 The following sections explain the various forms of the loop control
-expression and provide some examples of use of loops.  \tip{ If you
-  are carrying out a substantial Monte Carlo analysis with many
-  thousands of repetitions, memory capacity and processing time may be
-  an issue.  To minimize the use of computer resources, run your
-  script using the command-line program, \app{gretlcli}, with output
-  redirected to a file.  }
+expression and provide some examples of use of loops.  
+
+\tip{If you are carrying out a substantial Monte Carlo analysis with
+  many thousands of repetitions, memory capacity and processing time
+  may be an issue.  To minimize the use of computer resources, run
+  your script using the command-line program, \app{gretlcli}, with
+  output redirected to a file.}
 
 \section{Loop control variants}
 \label{loop-control}
-
-
 
 \subsection{Count loop}
 \label{loop-count}
@@ -49,12 +51,14 @@ The simplest form of loop control is a direct specification of the
 number of times the loop should be repeated.  We refer to this as a
 ``count loop''.  The number of repetitions may be a numerical
 constant, as in \verb+loop 1000+, or may be read from a variable, as
-in \verb+loop replics+.In the case where the loop count is given by a
-variable, say \verb+replics+, in concept \verb+replics+ is an integer
-scalar.  If it is in fact a series, its first value is read.  If the
-value is not integral, it is converted to an integer by truncation.
-Note that \verb+replics+ is evaluated only once, when the loop is
-initially compiled.
+in \verb+loop replics+.
+
+In the case where the loop count is given by a variable, say
+\verb+replics+, in concept \verb+replics+ is an integer scalar.  If it
+is in fact a series, its first value is read.  If the value is not
+integral, it is converted to an integer by truncation.  Note that
+\verb+replics+ is evaluated only once, when the loop is initially
+compiled.
       
 
 \subsection{While loop}
@@ -64,10 +68,14 @@ A second sort of control expression takes the form of the keyword
 \cmd{while} followed by an inequality: the left-hand term should be
 the name of a predefined variable; the right-hand side may be either a
 numerical constant or the name of another predefined variable.  For
-example, \cmd{loop while essdiff > .00001} Execution of the commands
-within the loop will continue so long as the specified condition
-evaluates as true. If the right-hand term of the inequality is a
-variable, it is evaluated at the top of the loop at each iteration.
+example, 
+
+\cmd{loop while essdiff > .00001} 
+
+Execution of the commands within the loop will continue so long as the
+specified condition evaluates as true. If the right-hand term of the
+inequality is a variable, it is evaluated at the top of the loop at
+each iteration.
 
 \subsection{Index loop}
 \label{loop-index}
@@ -75,16 +83,18 @@ variable, it is evaluated at the top of the loop at each iteration.
 A third form of loop control uses the special internal index variable
 \verb+i+.  In this case you specify starting and ending values for
 \verb+i+, which is incremented by one each time round the loop.  The
-syntax looks like this: \cmd{loop i=1..20}.The index variable may be
-used within the loop body in one or both of two ways: you can access
-the value of \verb+i+ (see Example \ref{loop-panel-script}) or you can
-use its string representation, \verb+$i+ (see Example
-\ref{loop-string-script}).The starting and ending values for the index
-can be given in numerical form, or by reference to predefined
-variables.  In the latter case the variables are evaluated once, when
-the loop is set up.  In addition, with time series data you can give
-the starting and ending values in the form of dates, as in \cmd{loop
-  i=1950:1..1999:4}.
+syntax looks like this: \cmd{loop i=1..20}.
+
+The index variable may be used within the loop body in one or both of
+two ways: you can access the value of \verb+i+ (see Example
+\ref{loop-panel-script}) or you can use its string representation,
+\verb+$i+ (see Example \ref{loop-string-script}).
+
+The starting and ending values for the index can be given in numerical
+form, or by reference to predefined variables.  In the latter case the
+variables are evaluated once, when the loop is set up.  In addition,
+with time series data you can give the starting and ending values in
+the form of dates, as in \cmd{loop i=1950:1..1999:4}.
       
 
 \subsection{For each loop}
@@ -101,14 +111,18 @@ variables.  Here is an example of the syntax:
 	   print "$i"
 	endloop
 \end{code}
+
 This loop will execute three times, printing out ``peach'', ``pear''
-and ``plum'' on the respective iterations.  If you wish to loop across
-a list of variables that are contiguous in the dataset, you can give
-the names of the first and last variables in the list, separated by
-``\verb+..+'', rather than having to type all the names.  For example,
-say we have 50 variables \verb+AK+, \verb+AL+, \dots{}, \verb+WY+,
-containing income levels for the states of the US.  To run a
-regression of income on time for each of the states we could do:
+and ``plum'' on the respective iterations.  
+
+If you wish to loop across a list of variables that are contiguous in
+the dataset, you can give the names of the first and last variables in
+the list, separated by ``\verb+..+'', rather than having to type all
+the names.  For example, say we have 50 variables \verb+AK+,
+\verb+AL+, \dots{}, \verb+WY+, containing income levels for the states
+of the US.  To run a regression of income on time for each of the
+states we could do:
+
 \begin{code}
 	genr time
 	loop foreach i AL..WY
@@ -128,25 +142,35 @@ variable; the second part gives a continuation condition (in terms of
 the same control variable); and the third part specifies an increment
 (or decrement) for the control variable, to be applied each time round
 the loop.  The entire expression is enclosed in parentheses.  For
-example:\cmd{loop for (r=0.01; r<.991; r+=.01)}In this example the
-variable \verb+r+ will take on the values 0.01, 0.02, \dots{}, 0.99
-across the 99 iterations.  Note that due to the finite precision of
-floating point arithmetic on computers it may be necessary to use a
-continuation condition such as the above, \verb+r<.991+, rather than
-the more ``natural'' \verb+r<=.99+.  (Using double-precision numbers
-on an x86 processor, at the point where you would expect \verb+r+ to
-equal 0.99 it may in fact have value 0.990000000000001.)To expand on
-the rules for the three components of the control expression: (1) the
-initial condition must take the form LHS1 = RHS1.  RHS1 must be a
-numeric constant or a predefined variable.  If the LHS1 variable does
-not exist already, it is automatically created.  (2) The continuation
-condition must be of the form LHS1 op RHS2, where op can be \verb+<+,
-\verb+>+, \verb+<=+ or \verb+>=+ and RHS2 must be a numeric constant
-or a predefined variable.  If RHS2 is a variable it is evaluated each
-time round the loop.  (3) The increment or decrement expression must
-be of the form LHS1 += DELTA or LHS1 -= DELTA, where DELTA is a
-numeric constant or a predefined variable.  If DELTA is a variable, it
-is evaluated only once, when the loop is set up.
+example:
+
+\cmd{loop for (r=0.01; r<.991; r+=.01)}
+
+In this example the variable \verb+r+ will take on the values 0.01,
+0.02, \dots{}, 0.99 across the 99 iterations.  Note that due to the
+finite precision of floating point arithmetic on computers it may be
+necessary to use a continuation condition such as the above,
+\verb+r<.991+, rather than the more ``natural'' \verb+r<=.99+.  (Using
+double-precision numbers on an x86 processor, at the point where you
+would expect \verb+r+ to equal 0.99 it may in fact have value
+0.990000000000001.)
+
+To expand on the rules for the three components of the control
+expression:
+
+\begin{enumerate}
+\item The initial condition must take the form LHS1 = RHS1.  RHS1 must
+  be a numeric constant or a predefined variable.  If the LHS1
+  variable does not exist already, it is automatically created.
+\item The continuation condition must be of the form LHS1 op RHS2,
+  where op can be \verb+<+, \verb+>+, \verb+<=+ or \verb+>=+ and RHS2
+  must be a numeric constant or a predefined variable.  If RHS2 is a
+  variable it is evaluated each time round the loop.
+\item The increment or decrement expression must be of the form LHS1
+  += DELTA or LHS1 -= DELTA, where DELTA is a numeric constant or a
+  predefined variable.  If DELTA is a variable, it is evaluated only
+  once, when the loop is set up.
+\end{enumerate}
       
 
 \section{Progressive mode}
@@ -154,30 +178,34 @@ is evaluated only once, when the loop is set up.
 
 If the \verb+--progressive+ option is given for a command loop, the
 effects of the commands \cmd{ols}, \cmd{print} and \cmd{store} are
-modified as follows.\cmd{ols}: The results from each individual
-iteration of the regression are not printed.  Instead, after the loop
-is completed you get a printout of (a) the mean value of each
-estimated coefficient across all the repetitions, (b) the standard
-deviation of those coefficient estimates, (c) the mean value of the
-estimated standard error for each coefficient, and (d) the standard
-deviation of the estimated standard errors.  This makes sense only if
-there is some random input at each step.\cmd{print}: When this command
-is used to print the value of a variable, you do not get a print each
-time round the loop.  Instead, when the loop is terminated you get a
-printout of the mean and standard deviation of the variable, across
-the repetitions of the loop.  This mode is intended for use with
-variables that have a single value at each iteration, for example the
-error sum of squares from a regression.\cmd{store}: This command
-writes out the values of the specified variables, from each time round
-the loop, to a specified file.  Thus it keeps a complete record of the
-variables across the iterations.  For example, coefficient estimates
-could be saved in this way so as to permit subsequent examination of
-their frequency distribution. Only one such \cmd{store} can be used in
-a given loop.
+modified as follows.
+
+\cmd{ols}: The results from each individual iteration of the
+regression are not printed.  Instead, after the loop is completed you
+get a printout of (a) the mean value of each estimated coefficient
+across all the repetitions, (b) the standard deviation of those
+coefficient estimates, (c) the mean value of the estimated standard
+error for each coefficient, and (d) the standard deviation of the
+estimated standard errors.  This makes sense only if there is some
+random input at each step.
+
+\cmd{print}: When this command is used to print the value of a
+variable, you do not get a print each time round the loop.  Instead,
+when the loop is terminated you get a printout of the mean and
+standard deviation of the variable, across the repetitions of the
+loop.  This mode is intended for use with variables that have a single
+value at each iteration, for example the error sum of squares from a
+regression.
+
+\cmd{store}: This command writes out the values of the specified
+variables, from each time round the loop, to a specified file.  Thus
+it keeps a complete record of the variables across the iterations.
+For example, coefficient estimates could be saved in this way so as to
+permit subsequent examination of their frequency distribution. Only
+one such \cmd{store} can be used in a given loop.
 
 \section{Loop examples}
 \label{loop-examples}
-
 
 
 \subsection{Monte Carlo example}
@@ -189,7 +217,6 @@ shown in Example \ref{mc-loop}.
 \begin{script}[htbp]
   \caption{Simple Monte Carlo loop}
   \label{mc-loop}
-
 \begin{code}
 	  nulldata 50
 	  seed 547
@@ -217,12 +244,13 @@ This loop will print out summary statistics for the `a' and `b'
 estimates and $R^2$ across the 100 repetitions.  After running the
 loop, \verb+coeffs.gdt+, which contains the individual coefficient
 estimates from all the runs, can be opened in \app{gretl} to examine
-the frequency distribution of the estimates in detail.The command
-\cmd{nulldata} is useful for Monte Carlo work.  Instead of opening a
-``real'' data set, \cmd{nulldata 50} (for instance) opens a dummy data
-set, containing just a constant and an index variable, with a series
-length of 50. Constructed variables can then be added using the
-\cmd{genr} command.See the \cmd{set} command for information on
+the frequency distribution of the estimates in detail.
+
+The command \cmd{nulldata} is useful for Monte Carlo work.  Instead of
+opening a ``real'' data set, \cmd{nulldata 50} (for instance) opens a
+dummy data set, containing just a constant and an index variable, with
+a series length of 50. Constructed variables can then be added using
+the \cmd{genr} command.See the \cmd{set} command for information on
 generating repeatable pseudo-random series.
 
 \subsection{Iterated least squares}
@@ -231,19 +259,21 @@ generating repeatable pseudo-random series.
 Example \ref{greene-ils-script} uses a ``while'' loop to replicate the
 estimation of a nonlinear consumption function of the form
 	
-$C = \alpha + \beta Y^{\gamma} + \epsilon$ as presented in Greene
-(2000, Example 11.3).  This script is included in the \app{gretl}
-distribution under the name \verb+greene11_3.inp+; you can find it in
-\app{gretl} under the menu item ``File, Open command file, practice
-file, Greene...''.The option \verb+--print-final+ for the \cmd{ols}
-command arranges matters so that the regression results will not be
-printed each time round the loop, but the results from the regression
-on the last iteration will be printed when the loop terminates.
+\[ C = \alpha + \beta Y^{\gamma} + \epsilon \]
+
+as presented in Greene (2000, Example 11.3).  This script is included
+in the \app{gretl} distribution under the name \verb+greene11_3.inp+;
+you can find it in \app{gretl} under the menu item ``File, Open
+command file, practice file, Greene...''.
+
+The option \verb+--print-final+ for the \cmd{ols} command arranges
+matters so that the regression results will not be printed each time
+round the loop, but the results from the regression on the last
+iteration will be printed when the loop terminates.
 
 \begin{script}[htbp]
   \caption{Nonlinear consumption function}
   \label{greene-ils-script}
-
 \begin{code}
 	  open greene11_3.gdt
 	  # run initial OLS
@@ -274,7 +304,7 @@ on the last iteration will be printed when the loop terminates.
 \end{code}
 \end{script}
 
-Example \ref{jack-arma} (kindly contributed by Riccardo ``Jack''
+Example~\ref{jack-arma} (kindly contributed by Riccardo ``Jack''
 Lucchetti of Ancona University) shows how a loop can be used to
 estimate an ARMA model, exploiting the ``outer product of the
 gradient'' (OPG) regression discussed by Davidson and MacKinnon in

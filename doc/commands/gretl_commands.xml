@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
+
 <commandlist language="english">
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>
@@ -3453,9 +3454,10 @@
 	certain characteristic, at each observation, rather than a 1
 	or 0 variable indicating whether the characteristic is present
 	or not) you should not use the <cmd>logit</cmd> command, but
-	rather construct the logit variable (e.g. <cmd>genr lgt_p =
-	  log(p/(1 - p))</cmd>) and use this as the dependent variable
-	in an OLS regression.  See Ramanathan, Chapter 12.
+	rather construct the logit variable (e.g. 
+	<lit>genr lgt_p = log(p/(1 - p))</lit>) and use this 
+	as the dependent variable in an OLS regression.  
+	See Ramanathan, Chapter 12.
       </para>
     </description>
 

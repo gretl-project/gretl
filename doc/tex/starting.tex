@@ -5,8 +5,8 @@
 \label{starting-regression}
 
 This introduction is mostly angled towards the graphical client
-program; please see [?] below and the \emph{Gretl Command Reference}
-for details on the command-line program, \app{gretlcli}.
+program; please see Chapter~\ref{cli} below and the \emph{Gretl Command
+  Reference} for details on the command-line program, \app{gretlcli}.
     
 You can supply the name of a data file to open as an argument to
 \app{gretl}, but for the moment let's not do that: just fire up the
@@ -194,17 +194,18 @@ To import \app{gretl} output
     data file.
   \item \textsf{Save data as}: Write out the current data set in
     native format, with the option of using gzip data compression. See
-    [?].
+    Chapter~\ref{datafiles}.
   \item \textsf{Export data}: Write out the current data set in Comma
     Separated Values (CSV) format, or the formats of GNU R or GNU
-    Octave. See [?] and also [?].
+    Octave. See Chapter~\ref{datafiles} and also
+    Appendix~\ref{app-advanced}.
   \item \textsf{Clear data set}: Clear the current data set out of
     memory.  Generally you don't have to do this (since opening a new
     data file automatically clears the old one) but sometimes it's
-    useful (see [?]).
-  \item \textsf{Browse databases}: See [?] and [?].
+    useful.
+  \item \textsf{Browse databases}: See Section~\ref{dbase}.
   \item \textsf{Create data set}: Initialize the built-in spreadsheet
-    for entering data manually.  See [?].
+    for entering data manually.  See Section~\ref{scratch}.
   \item \textsf{View command log}: Open a window containing a record
     of the commands executed so far.
   \item \textsf{Open command file}: Open a file of \app{gretl}
@@ -233,7 +234,6 @@ To import \app{gretl} output
     look up p-values from the Gaussian, \emph{t}, chi-square, \emph{F}
     or gamma distributions. See also the \cmd{pvalue} command in the
     \emph{Gretl Command Reference}.
-            
   \item \textsf{Test statistic calculator}: Calculate test statistics
     and p-values for a range of common hypothesis tests (population
     mean, variance and proportion; difference of means, variances and
@@ -245,11 +245,9 @@ To import \app{gretl} output
   \item \textsf{Gretl console}: Open a ``console'' window into which
     you can type commands as you would using the command-line program,
     \app{gretlcli} (as opposed to using point-and-click).
-            
   \item \textsf{Start Gnu R}: Start \app{R} (if it is installed on
     your system), and load a copy of the data set currently open in
-    \app{gretl}.  See [?].
-            
+    \app{gretl}.  See Appendix~\ref{app-advanced}.
   \item \textsf{NIST test suite}: Check the numerical accuracy of
     \app{gretl} against the reference results for linear regression
     made available by the (US) National Institute of Standards and
@@ -259,15 +257,12 @@ To import \app{gretl} output
 \item \textsf{Session menu}
   \begin{itemize}
   \item \textsf{Icon view}: Open a window showing the current
-    \app{gretl} session as a set of icons.  For details see [?].
-            
+    \app{gretl} session as a set of icons.  For details see
+    Section~\ref{session}.
   \item \textsf{Open}: Open a previously saved session file.
-            
   \item \textsf{Save}: Save the current session to file.
-            
   \item \textsf{Save as}: Save the current session to file under a
     chosen name.
-            
   \end{itemize}
 
 
@@ -279,17 +274,15 @@ To import \app{gretl} output
   \item \textsf{Edit values}: Pops up a spreadsheet window where you
     can make changes, add new variables, and extend the number of
     observations.
-              
   \item \textsf{Sort variables}: Rearrange the listing of variables in
     the main window, either by ID number or alphabetically by name.
-              
   \item \textsf{Graph specified vars}: Gives a choice between a time
     series plot, a regular X--Y scatter plot, an X--Y plot using
     impulses (vertical bars), an X--Y plot ``with factor separation''
     (i.e. with the points colored differently depending to the value
     of a given dummy variable), boxplots, and a 3-D graph. Serves up a
-    dialog box where you specify the variables to graph. See [?]  for
-    details.
+    dialog box where you specify the variables to graph. See
+    Chapter~\ref{chap-graphs} for details.
   \item \textsf{Multiple scatterplots}: Show a collection of (at most
     six) pairwise plots, with either a given variable on the \emph{y}
     axis plotted against several different variables on the \emph{x}
@@ -311,11 +304,9 @@ To import \app{gretl} output
   \item \textsf{Principal components}: Active only if two or more
     variables are selected; produces a Principal Components Analysis
     of the selected variables.
-              
   \item \textsf{Mahalonobis distances}: Active only if two or more
     variables are selected; computes the Mahalonobis distance of each
     observation from the centroid of the selected set of variables.
-              
   \item \textsf{Difference of means}: Calculates the \emph{t}
     statistic for the null hypothesis that the population means are
     equal for two selected variables and shows its p-value.
@@ -332,11 +323,9 @@ To import \app{gretl} output
   \item \textsf{Add observations}: Gives a dialog box in which you can
     choose a number of observations to add at the end of the current
     dataset; for use with forecasting.
-            
   \item \textsf{Remove extra observations}: Active only if extra
     observations have been added automatically in the process of
     forecasting; deletes these extra observations.
-            
   \item \textsf{Refresh window}: Sometimes \app{gretl} commands
     generate new variables.  The ``refresh'' item ensures that the
     listing of variables visible in the main data window is in sync
@@ -353,7 +342,7 @@ To import \app{gretl} output
     which allow you to change the structural interpretation of the
     current dataset.  For example, if data were read in as a cross
     section you can get the program to interpret them as time series
-    or as a panel.  See also [?].
+    or as a panel.  See also Chapter~\ref{chap-panel}.
   \item \textsf{Compact data}: For time-series data of higher than
     annual frequency, gives you the option of compacting the data to a
     lower frequency, using one of four compaction methods (average,
@@ -369,8 +358,7 @@ To import \app{gretl} output
     for details on the Boolean operators that can be used.
   \item \textsf{Drop all obs with missing values}: Drop from the
     current sample all observations for which at least one variable
-    has a missing value (see [?]).
-            
+    has a missing value (see Section~\ref{missing-data}).
   \item \textsf{Count missing values}: Give a report on observations
     where data values are missing. May be useful in examining a panel
     data set, where it's quite common to encounter missing values.
@@ -379,7 +367,7 @@ To import \app{gretl} output
   \item \textsf{Add case markers}: Prompts for the name of a text file
     containing ``case markers'' (short strings identifying the
     individual observations) and adds this information to the data
-    set. See [?].
+    set. See Chapter~\ref{datafiles}.
   \item \textsf{Remove case markers}: Active only if the dataset has
     case markers indentifying the observations; removes these case
     markers.
@@ -387,12 +375,10 @@ To import \app{gretl} output
     data set in stacked cross-section form into stacked time series or
     vice versa.  (Unlike the \textsf{Dataset structure} menu item
     above, this one actually changes the organization of the data.)
-            
   \item \textsf{Transpose data}: Turn each observation into a variable
     and vice versa (or in other words, each row of the data matrix
     becomes a column in the modified data matrix); can be useful with
     imported data that have been read in ``sideways''.
-            
   \end{itemize}
 
 
@@ -408,7 +394,7 @@ To import \app{gretl} output
   One simple example:
           
 \begin{code} 
-            foo = x1 * x2
+    foo = x1 * x2
 \end{code}
 
   will create a new variable \verb+foo+ as the product of the existing
@@ -417,25 +403,23 @@ To import \app{gretl} output
 \item \textsf{Model menu} For details on the various estimators
   offered under this menu please consult the \emph{Gretl Command
     Reference} and/or the online help under ``Help, Estimation''.
-  Also see [?] regarding the estimation of nonlinear models.
+  Also see Chapter~\ref{chap-nls} regarding the estimation of nonlinear
+  models.
 \item \textsf{Help menu} Please use this as needed! It gives details
   on the syntax required in various dialog entries.
 \end{itemize}
 
 
-
 \section{The gretl toolbar}
 \label{toolbar}
 
-At the bottom left of the main window sits the
-      toolbar.
+At the bottom left of the main window sits the toolbar.
 
 \begin{center}
   \includegraphics[scale=0.5]{figures/toolbar}
 \end{center}
 
-The icons have the following functions, reading from left to
-      right:
+The icons have the following functions, reading from left to right:
 
 \begin{enumerate}
 \item Launch a calculator program.  A convenience function in case you
@@ -466,11 +450,9 @@ The icons have the following functions, reading from left to
   they are installed).
 \end{enumerate}
 
-
-If you don't care to have the toolbar displayed, you can turn it
-off under the ``File, Preferences, General'' menu. Go
-      to the Toolbar tab and uncheck the ``show gretl
-        toolbar'' box.
+If you don't care to have the toolbar displayed, you can turn it off
+under the ``File, Preferences, General'' menu. Go o the Toolbar tab
+and uncheck the ``show gretl toolbar'' box.
 
 %%% Local Variables: 
 %%% mode: latex

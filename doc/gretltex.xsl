@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
-<xsl:stylesheet version="1.0" 
-xmlns:loop="http://informatik.hu-berlin.de/loop" 
-xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
+<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
 <xsl:param name="lang" select="'en'"/>
 
@@ -91,6 +89,11 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
   <xsl:text>''</xsl:text>
 </xsl:template>
 
+<xsl:template match="para">
+  <xsl:apply-templates/>
+  <xsl:text>&#10;&#10;</xsl:text>
+</xsl:template>
+
 <xsl:template match="variablelist">
   <xsl:text>&#10;\begin{description}&#10;</xsl:text>
   <xsl:apply-templates/>
@@ -136,6 +139,12 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
   <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="replaceable">
+  <xsl:text>\textsl{</xsl:text>
+  <xsl:value-of select="translate(., '_', '-')"/>
+  <xsl:text>} </xsl:text>
+</xsl:template>
+
 <xsl:template match="footnote">
   <xsl:text>\footnote{</xsl:text>  
   <xsl:apply-templates/>
@@ -143,9 +152,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 </xsl:template>
 
 <xsl:template match="superscript">
-  <xsl:text>^{</xsl:text>  
+  <xsl:text>\ensuremath{^{</xsl:text>  
   <xsl:apply-templates/>
-  <xsl:text>}</xsl:text> 
+  <xsl:text>}}</xsl:text> 
 </xsl:template>
 
 <xsl:template match="subscript">
@@ -155,9 +164,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 </xsl:template>
 
 <xsl:template match="programlisting">
-  <xsl:text>&#10;\begin{verbatim}&#10;</xsl:text>  
+  <xsl:text>&#10;\begin{code}</xsl:text>  
   <xsl:apply-templates/>
-  <xsl:text>&#10;\end{verbatim}&#10;&#10;</xsl:text> 
+  <xsl:text>&#10;\end{code}&#10;&#10;</xsl:text> 
 </xsl:template>
 
 <xsl:template match="literal">
@@ -307,21 +316,20 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 </xsl:template>
 
 <xsl:template match="informaltable">
-  <xsl:text>&#10;&#10;\begin{center}&#10;</xsl:text>
+  <xsl:text>&#10;&#10;</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>\end{tabular}&#10;</xsl:text>
-  <xsl:text>\end{center}&#10;&#10;</xsl:text>
+  <xsl:text>\end{tabular}&#10;&#10;</xsl:text>
 </xsl:template>
 
 <xsl:template match="table">
   <xsl:text>&#10;&#10;\begin{table}[htbp]&#10;</xsl:text>
-  <xsl:text>\begin{center}&#10;</xsl:text>
   <xsl:text>\caption{</xsl:text>
   <xsl:value-of select="title"/>
   <xsl:text>}&#10;</xsl:text>
   <xsl:text>\label{</xsl:text>
   <xsl:value-of select="@id"/>
   <xsl:text>}&#10;</xsl:text>  
+  <xsl:text>\begin{center}&#10;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>\end{tabular}&#10;</xsl:text>
   <xsl:text>\end{center}&#10;</xsl:text>

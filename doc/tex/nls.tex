@@ -1,10 +1,8 @@
 \chapter{Nonlinear least squares}
 \label{chap-nls}
 
-
 \section{Introduction and examples}
 \label{nls-intro}
-
 
 As of version 1.0.9, \app{gretl} supports nonlinear least squares
 (NLS) using a variant of the Levenberg--Marquandt algorithm.  The user
@@ -14,9 +12,11 @@ giving this specification the parameters to be estimated must be
 supply analytical derivatives of the regression function with respect
 to each of the parameters.  The tolerance (criterion for terminating
 the iterative estimation procedure) can be set using the \cmd{genr}
-command.The syntax for specifying the function to be estimated is the
-same as for the \cmd{genr} command.  Here are two examples, with
-accompanying derivatives.
+command.
+
+The syntax for specifying the function to be estimated is the same as
+for the \cmd{genr} command.  Here are two examples, with accompanying
+derivatives.
 
 \begin{script}[htbp]
   \caption{Consumption function from Greene}
@@ -30,8 +30,6 @@ accompanying derivatives.
 \end{code}
 \end{script}
 
-
-
 \begin{script}[htbp]
   \caption{Nonlinear function from Russell Davidson}
   \label{nls-ects}
@@ -42,7 +40,6 @@ accompanying derivatives.
 	  end nls
 \end{code}
 \end{script}
-
 
 Note the command words \cmd{nls} (which introduces the regression
 function), \cmd{deriv} (which introduces the specification of a
@@ -56,11 +53,12 @@ line the covariance matrix of the parameter estimates is printed.
 The parameters of the regression function must be given initial values
 prior to the \cmd{nls} command.  This can be done using the \cmd{genr}
 command (or, in the GUI program, via the menu item ``Define new
-variable'').  In some cases, where the nonlinear function is a
-generalization of (or a restricted form of) a linear model, it may be
-convenient to run an \cmd{ols} and initialize the parameters from the
-OLS coefficient estimates.  In relation to the first example above,
-one might do:
+variable'').  
+
+In some cases, where the nonlinear function is a generalization of (or
+a restricted form of) a linear model, it may be convenient to run an
+\cmd{ols} and initialize the parameters from the OLS coefficient
+estimates.  In relation to the first example above, one might do:
 \begin{code}
       ols C 0 Y
       genr alpha = coeff(0)
@@ -106,15 +104,18 @@ function with respect to the parameters, it is advisable to supply
 those derivatives as shown in the examples above.  If that is not
 possible, \app{gretl} will compute approximate numerical derivatives.
 The properties of the NLS algorithm may not be so good in this case
-(see Section \ref{nls-accuracy}).If analytical derivatives are
-supplied, they are checked for consistency with the given nonlinear
-function.  If the derivatives are clearly incorrect estimation is
-aborted with an error message.  If the derivatives are ``suspicious''
-a warning message is issued but estimation proceeds.  This warning may
-sometimes be triggered by incorrect derivatives, but it may also be
-triggered by a high degree of collinearity among the derivatives.Note
-that you cannot mix analytical and numerical derivatives: you should
-supply expressions for all of the derivatives or none.
+(see Section \ref{nls-accuracy}).
+
+If analytical derivatives are supplied, they are checked for
+consistency with the given nonlinear function.  If the derivatives are
+clearly incorrect estimation is aborted with an error message.  If the
+derivatives are ``suspicious'' a warning message is issued but
+estimation proceeds.  This warning may sometimes be triggered by
+incorrect derivatives, but it may also be triggered by a high degree
+of collinearity among the derivatives.
+
+Note that you cannot mix analytical and numerical derivatives: you
+should supply expressions for all of the derivatives or none.
 
 \section{Controlling termination}
 \label{nls-toler}
@@ -180,69 +181,78 @@ Table \ref{tab-nls} shows the results of running the \app{gretl} NLS
 procedure on the 27 Statistical Reference Datasets made available by
 the U.S.  National Institute of Standards and Technology (NIST) for
 testing nonlinear regression software.\footnote{For a discussion of
-  \app{gretl}'s accuracy in the estimation of linear models, see [?].}
-For each dataset, two sets of starting values for the parameters are
-given in the test files, so the full test comprises 54 runs.  Two full
-tests were performed, one using all analytical derivatives and one
-using all numerical approximations. In each case the default tolerance
-was used.\footnote{The data shown in the table were gathered from a
-  pre-release build of \app{gretl} version 1.0.9, compiled with
-  \app{gcc} 3.3, linked against \app{glibc} 2.3.2, and run under Linux
-  on an i686 PC (IBM ThinkPad A21m).}Out of the 54 runs, \app{gretl}
-failed to produce a solution in 4 cases when using analytical
-derivatives, and in 5 cases when using numeric approximation. Of the
-four failures in analytical derivatives mode, two were due to
-non-convergence of the Levenberg--Marquandt algorithm after the
-maximum number of iterations (on \verb+MGH09+ and \verb+Bennett5+,
-both described by NIST as of ``Higher difficulty'') and two were due
-to generation of range errors (out-of-bounds floating point values)
-when computing the Jacobian (on \verb+BoxBOD+ and \verb+MGH17+,
-described as of ``Higher difficulty'' and ``Average difficulty''
-respectively).  The additional failure in numerical approximation mode
-was on \verb+MGH10+ (``Higher difficulty'', maximum number of
-iterations reached).The table gives information on several aspects of
-the tests: the number of outright failures, the average number of
-iterations taken to produce a solution and two sorts of measure of the
-accuracy of the estimates for both the parameters and the standard
-errors of the parameters.For each of the 54 runs in each mode, if the
-run produced a solution the parameter estimates obtained by
-\app{gretl} were compared with the NIST certified values.  We define
-the ``minimum correct figures'' for a given run as the number of
-significant figures to which the \emph{least accurate} \app{gretl}
-estimate agreed with the certified value, for that run. The table
-shows both the average and the worst case value of this variable
-across all the runs that produced a solution.  The same information is
-shown for the estimated standard errors.\footnote{For the standard
-  errors, I excluded one outlier from the statistics shown in the
-  table, namely \verb+Lanczos1+.  This is an odd case, using generated
-  data with an almost-exact fit: the standard errors are 9 or 10
-  orders of magnitude smaller than the coefficients.  In this instance
-  \app{gretl} could reproduce the certified standard errors to only 3
-  figures (analytical derivatives) and 2 figures (numerical
-  derivatives).}  The second measure of accuracy shown is the
-percentage of cases, taking into account all parameters from all
-successful runs, in which the \app{gretl} estimate agreed with the
-certified value to at least the 6 significant figures which are
-printed by default in the \app{gretl} regression output.
+  \app{gretl}'s accuracy in the estimation of linear models, see
+  Appendix~\ref{app-accuracy}.}  For each dataset, two sets of
+starting values for the parameters are given in the test files, so the
+full test comprises 54 runs.  Two full tests were performed, one using
+all analytical derivatives and one using all numerical approximations.
+In each case the default tolerance was used.\footnote{The data shown
+  in the table were gathered from a pre-release build of \app{gretl}
+  version 1.0.9, compiled with \app{gcc} 3.3, linked against
+  \app{glibc} 2.3.2, and run under Linux on an i686 PC (IBM ThinkPad
+  A21m).}
+
+Out of the 54 runs, \app{gretl} failed to produce a solution
+in 4 cases when using analytical derivatives, and in 5 cases when
+using numeric approximation. Of the four failures in analytical
+derivatives mode, two were due to non-convergence of the
+Levenberg--Marquandt algorithm after the maximum number of iterations
+(on \verb+MGH09+ and \verb+Bennett5+, both described by NIST as of
+``Higher difficulty'') and two were due to generation of range errors
+(out-of-bounds floating point values) when computing the Jacobian (on
+\verb+BoxBOD+ and \verb+MGH17+, described as of ``Higher difficulty''
+and ``Average difficulty'' respectively).  The additional failure in
+numerical approximation mode was on \verb+MGH10+ (``Higher
+difficulty'', maximum number of iterations reached).
+
+The table gives information on several aspects of the tests: the
+number of outright failures, the average number of iterations taken to
+produce a solution and two sorts of measure of the accuracy of the
+estimates for both the parameters and the standard errors of the
+parameters.
+
+For each of the 54 runs in each mode, if the run produced a solution
+the parameter estimates obtained by \app{gretl} were compared with the
+NIST certified values.  We define the ``minimum correct figures'' for
+a given run as the number of significant figures to which the
+\emph{least accurate} \app{gretl} estimate agreed with the certified
+value, for that run. The table shows both the average and the worst
+case value of this variable across all the runs that produced a
+solution.  The same information is shown for the estimated standard
+errors.\footnote{For the standard errors, I excluded one outlier from
+  the statistics shown in the table, namely \verb+Lanczos1+.  This is
+  an odd case, using generated data with an almost-exact fit: the
+  standard errors are 9 or 10 orders of magnitude smaller than the
+  coefficients.  In this instance \app{gretl} could reproduce the
+  certified standard errors to only 3 figures (analytical derivatives)
+  and 2 figures (numerical derivatives).}  
+
+The second measure of accuracy shown is the percentage of cases,
+taking into account all parameters from all successful runs, in which
+the \app{gretl} estimate agreed with the certified value to at least
+the 6 significant figures which are printed by default in the
+\app{gretl} regression output.
 
 \begin{table}[htbp]
  \caption{Nonlinear regression: the NIST tests}
  \label{tab-nls}
   \begin{center}
-    \begin{tabular}{p{2in}cc}
-        & Analytical derivatives & Numerical derivatives\\
+    \begin{tabular}{lcc}
+        & \textit{Analytical derivatives} & \textit{Numerical derivatives}\\
         Failures in 54 tests & 4 & 5\\
         Average iterations & 32 & 127\\
-        Avg. of min. correct figures, parameters & 8.120 & 6.980\\
-        Worst of min. correct figures, parameters & 4 & 3\\
-        Avg. of min. correct figures, standard
-        errors & 8.000 & 5.673\\
-        Worst of min. correct figures, standard
-        errors & 5 & 2\\
-        Percent correct to at least 6 figures,
-        parameters & 96.5 & 91.9\\
-        Percent correct to at least 6 figures, standard
-        errors & 97.7 & 77.3\\
+        Mean of min. correct figures, & 8.120 & 6.980\\
+        parameters \\
+        Worst of min. correct figures, & 4 & 3\\
+        parameters \\
+        Mean of min. correct figures, & 8.000 & 5.673\\
+        standard errors \\
+        Worst of min. correct figures, & 5 & 2\\
+        standard errors \\
+        Percent correct to at least 6 figures, & 96.5 & 91.9\\
+        parameters \\
+        Percent correct to at least 6 figures, & 97.7 & 77.3\\
+        standard errors \\
       \end{tabular}
     \end{center}
   \end{table}
@@ -253,15 +263,17 @@ printed by default in the \app{gretl} regression output.
   Using numerical derivatives, the same tightening of the tolerance
   raised the worst values to 5 correct figures for the parameters and
   3 figures for standard errors, at a cost of one additional failure
-  of convergence.Note the overall superiority of analytical
-  derivatives: on average solutions to the test problems were obtained
-  with substantially fewer iterations and the results were more
-  accurate (most notably for the estimated standard errors).  Note
-  also that the six-digit results printed by \app{gretl} are not 100
-  percent reliable for difficult nonlinear problems (in particular
-  when using numerical derivatives).  Having registered this caveat,
-  the percentage of cases where the results were good to six digits or
-  better seems high enough to justify their printing in this form.
+  of convergence.
+
+  Note the overall superiority of analytical derivatives: on average
+  solutions to the test problems were obtained with substantially
+  fewer iterations and the results were more accurate (most notably
+  for the estimated standard errors).  Note also that the six-digit
+  results printed by \app{gretl} are not 100 percent reliable for
+  difficult nonlinear problems (in particular when using numerical
+  derivatives).  Having registered this caveat, the percentage of
+  cases where the results were good to six digits or better seems high
+  enough to justify their printing in this form.
 
 %%% Local Variables: 
 %%% mode: latex

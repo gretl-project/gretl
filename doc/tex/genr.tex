@@ -1,8 +1,6 @@
 \chapter{Special functions in genr}
 \label{chap-genr}
 
-
-
 \section{Introduction}
 \label{genr-intro}
 
@@ -47,8 +45,8 @@ where $F^*(\omega) = 1$ for $\underline{\omega} < |\omega| <
 \overline{\omega}$ and 0 elsewhere. This would imply, in the time
 domain, applying to the series a filter with an infinite number of
 coefficients, which is undesirable. The Baxter and King bandpass
-filter applies to $y\ensuremath{_{t}}$ a finite polynomial in the lag
-operator $A$($L$):
+filter applies to $y_t$ a finite polynomial in the lag
+operator $A(L)$:
 %	
 \[ c_t = A(L) y_t \]
 %
@@ -56,7 +54,7 @@ where $A$($L$) is defined as
 %	
 \[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
 
-The coefficients $a\ensuremath{_{i}}$ are chosen such that $F(\omega)
+The coefficients $a_i$ are chosen such that $F(\omega)
 = A(e^{i\omega})A(e^{-i\omega})$ is the best approximation to
 $F^*(\omega)$ for a given $k$. Clearly, the higher $k$ the better the
 approximation is, but since 2$k$ observations have to be discarded, a
@@ -122,12 +120,13 @@ for a variable \verb+x+ using
 \end{code}
 
 The function \verb+misszero()+ does the opposite of \verb+zeromiss+,
-that is, it converts all missing values to zero.  It may be worth
-commenting on the propagation of missing values within \verb+genr+
-formulae.  The general rule is that in arithmetical operations
-involving two variables, if either of the variables has a missing
-value at observation $t$ then the resulting series will also have a
-missing value at $t$.  The one exception to this rule is
+that is, it converts all missing values to zero.  
+
+It may be worth commenting on the propagation of missing values within
+\verb+genr+ formulae.  The general rule is that in arithmetical
+operations involving two variables, if either of the variables has a
+missing value at observation $t$ then the resulting series will also
+have a missing value at $t$.  The one exception to this rule is
 multiplication by zero: zero times a missing value produces zero
 (since this is mathematically valid regardless of the unknown value).
     
@@ -166,13 +165,16 @@ An important point to notice about this mechanism is that the internal
 variables \verb+$test+ and \verb+$pvalue+ are over-written each time
 one of the tests listed above is performed.  If you want to reference
 these values, you must do so at the correct point in the sequence of
-\app{gretl} commands.  A related point is that some of the test
-commands generate, by default, more than one test statistic and
-p-value; in these cases only the last values are stored. To get proper
-control over the retrieval of values via \verb+$test+ and
-\verb+$pvalue+ you should formulate the test command in such a way
-that the result is unambiguous.  This comment applies in particular to
-the \verb+adf+ and \verb+lmtest+ commands.
+\app{gretl} commands.  
+
+A related point is that some of the test commands generate, by
+default, more than one test statistic and p-value; in these cases only
+the last values are stored. To get proper control over the retrieval
+of values via \verb+$test+ and \verb+$pvalue+ you should formulate the
+test command in such a way that the result is unambiguous.  This
+comment applies in particular to the \verb+adf+ and \verb+lmtest+
+commands.
+
 \begin{itemize}
 \item By default, the \cmd{adf} command generates three variants of
   the Dickey--Fuller test: one based on a regression including a
@@ -182,14 +184,12 @@ the \verb+adf+ and \verb+lmtest+ commands.
   can control the variant that is recorded by using one of the flags
   \verb+--nc+, \verb+--c+, \verb+--ct+ or \verb+--ctt+ with
   \verb+adf+.
-	
 \item By default, the \cmd{lmtest} command (which must follow an OLS
   regression) performs several diagnostic tests on the regression in
   question.  To control what is recorded in \verb+$test+ and
   \verb+$pvalue+ you should limit the test using one of the flags
   \verb+--logs+, \verb+--autocorr+, \verb+--squares+ or
   \verb+--white+.
-	
 \end{itemize}
 
 As an aid in working with values retrieved using \verb+$test+ and

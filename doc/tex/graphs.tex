@@ -2,11 +2,8 @@
 \label{chap-graphs}
 
 
-
 \section{Gnuplot graphs}
 \label{gnuplot-graphs}
-
-
 
 \subsection{General gnuplot options}
 \label{gnuplot-opts}
@@ -74,7 +71,6 @@ copied), you have two options.
   data points, and it is unlikely to produce good results if the
   points are tightly clustered since the labels will tend to overlap.
 \end{itemize}
-
 
 To remove labels that have been affixed in either of these ways,
 select ``Edit'' from the graph pop-up and uncheck ``Show all data
@@ -179,10 +175,11 @@ is a ``printf'' format string as in the C programming language; if
 specified, this controls the printing of the median and quartiles next
 to the boxplot, if no \verb+numbers+ entry is given these values are
 not printed.  In the example, the values will be printed to a width of
-3 digits, with 2 digits of precision following the decimal point.Not
-all of the options need be specified, and the order doesn't matter.
-Lines not matching the pattern ``key = value'' are ignored, as are
-lines that begin with the hash mark, \verb+#+.
+3 digits, with 2 digits of precision following the decimal point.
+
+Not all of the options need be specified, and the order doesn't
+matter.  Lines not matching the pattern ``key = value'' are ignored,
+as are lines that begin with the hash mark, \verb+#+.
 
 After each variable specified in the boxplot command, a parenthesized
 boolean expression may be added, to limit the sample for the variable

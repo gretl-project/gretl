@@ -1,8 +1,6 @@
 \chapter{User-defined functions}
 \label{functions}
 
-
-
 \section{Introduction}
 \label{func-intro}
 
@@ -12,7 +10,6 @@ follow.\footnote{Note that the revised definition of functions
   represents a backward-incompatible change relative to version 1.3.3
   of the program.}
     
-
 \section{Defining a function}
 \label{func-define}
 
@@ -25,21 +22,21 @@ defining a function looks like this
       end function
 \end{code}
 
-function-name is the unique identifier for the function. Names must
-start with a letter. They have a maximum length of 31 characters; if
-you type a longer name it will be truncated.  Function names cannot
-contain spaces.  You will get an error if you try to define a function
-having the same name as an existing \app{gretl} command, or with the
-same name as a previously defined user function.  To avoid an error in
-the latter case (that is, to be able to redefine a user function),
-preface the function definition with
+\textsl{function-name} is the unique identifier for the function.
+Names must start with a letter. They have a maximum length of 31
+characters; if you type a longer name it will be truncated.  Function
+names cannot contain spaces.  You will get an error if you try to
+define a function having the same name as an existing \app{gretl}
+command, or with the same name as a previously defined user function.
+To avoid an error in the latter case (that is, to be able to redefine
+a user function), preface the function definition with
     
 \begin{code}
       function function-name clear
 \end{code}
 
-The parameters for a function (if any) are given in the form of a
-comma-separated list.  Parameters can be of three types: ordinary
+The \textsl{parameters} for a function (if any) are given in the form
+of a comma-separated list.  Parameters can be of three types: ordinary
 variables (data series), scalar variables, or named lists of
 variables.  Each element in the listing of parameters is composed of
 two terms: first a type specifier (\verb+series+, \verb+scalar+ or
@@ -63,14 +60,16 @@ giving the name of a variable or a numerical value (the ID number of a
 variable is not acceptable).  List arguments must be specified by
 name.
     
-The function body is composed of \app{gretl} commands, or calls to
-user-defined functions (that is, functions may be nested).  A function
-may call itself (that is, functions may be recursive). There is a
-maximum ``stacking depth'' for user functions: at present this is set
-to 8.  While the function body may contain function calls, it may not
-contain function definitions.  That is, you cannot define a function
-inside another function.  Functions may be called, but may not be
-defined, within the context of a command loop (see [?]).
+The \textsl{function body} is composed of \app{gretl} commands, or
+calls to user-defined functions (that is, functions may be nested).  A
+function may call itself (that is, functions may be recursive). There
+is a maximum ``stacking depth'' for user functions: at present this is
+set to 8.  While the function body may contain function calls, it may
+not contain function definitions.  That is, you cannot define a
+function inside another function.  
+
+Functions may be called, but may not be defined, within the context of
+a command loop (see Chapter~\ref{looping}).
     
 
 \section{Calling a function}

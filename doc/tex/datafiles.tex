@@ -42,10 +42,10 @@ problem.
 
 For the convenience of anyone wanting to carry out more complex data
 analysis, \app{gretl} has a facility for writing out data in the
-native formats of GNU R and GNU Octave (see [?]).  In the GUI client
-this option is found under the ``File'' menu; in the command-line
-client use the \cmd{store} command with the flag \cmd{-r} (R) or
-\cmd{-m} (Octave).
+native formats of GNU R and GNU Octave (see
+Appendix~\ref{app-advanced}).  In the GUI client this option is found
+under the ``File'' menu; in the command-line client use the
+\cmd{store} command with the flag \cmd{-r} (R) or \cmd{-m} (Octave).
 
 \section{Binary databases}
 \label{dbase}
@@ -59,7 +59,8 @@ dataset.  You can then save those series in a native format data file
 if you wish. Databases can be accessed via \app{gretl}'s menu item
 ``File, Browse databases''.
 
-For details on the format of \app{gretl} databases, see [?].
+For details on the format of \app{gretl} databases, see
+Appendix~\ref{app-datafile}.
 
 \subsection{Online access to databases}
 \label{online-data}
@@ -79,7 +80,9 @@ Analysis of Time Series), \app{gretl} can also handle such databases.
 Well, actually, a subset of same: I have only worked on time-series
 databases containing monthly and quarterly series.  My university has
 the RATS G7 database containing data for the seven largest OECD
-economies and \app{gretl} will read that OK.\tip{Visit the \app{gretl}
+economies and \app{gretl} will read that OK.
+
+\tip{Visit the \app{gretl}
   \href{http://gretl.sourceforge.net/gretl_data.html}{data page} for
   details and updates on available data.}
 
@@ -87,29 +90,24 @@ economies and \app{gretl} will read that OK.\tip{Visit the \app{gretl}
 \label{scratch}
 
 There are five ways to do this:
+
 \begin{enumerate}
 \item Find, or create using a text editor, a plain text data file and
   open it with \app{gretl}'s ``Import ASCII'' option.
-        
 \item Use your favorite spreadsheet to establish the data file, save
   it in Comma Separated Values format if necessary (this should not be
   necessary if the spreadsheet program is MS Excel or Gnumeric), then
   use one of \app{gretl}'s ``Import'' options (CSV, Excel or Gnumeric,
   as the case may be).
-        
 \item Use \app{gretl}'s built-in spreadsheet.
-        
 \item Select data series from a suitable database.
-        
 \item Use your favorite text editor or other software tools to a
   create data file in \app{gretl} format independently.
-        
 \end{enumerate}
 
 Here are a few comments and details on these methods.
 
 \subsection{Common points on imported data}
-
 
 Options (1) and (2) involve using \app{gretl}'s ``import'' mechanism.
 For \app{gretl} to read such data successfully, certain general
@@ -199,9 +197,11 @@ spreadsheet window, clicking the right mouse button will invoke a
 popup menu which enables you to add a new variable (column), to add an
 observation (append a row at the foot of the sheet), or to insert an
 observation at the selected point (move the data down and insert a
-blank row.)Once you have entered data into the spreadsheet you import
-these into \app{gretl}'s workspace using the spreadsheet's ``Apply
-changes'' button.
+blank row.)
+
+Once you have entered data into the spreadsheet you import these into
+\app{gretl}'s workspace using the spreadsheet's ``Apply changes''
+button.
 
 Please note that \app{gretl}'s spreadsheet is quite basic and has no
 support for functions or formulas.  Data transformations are done via
@@ -357,11 +357,12 @@ When a user selects one of the items:
 \end{itemize}
 
 \begin{table}[htbp]
-  \begin{center}
     \caption{Typical locations for file collections}
     \label{tab-colls}
+    \begin{center}
     \begin{tabular}{lll}
-        & Linux & MS Windows\\
+        & \multicolumn{1}{c}{\textit{Linux}} & 
+        \multicolumn{1}{c}{\textit{MS Windows}} \\
         system data dir & \verb+/usr/share/gretl/data+ 
         & \verb+c:\userdata\gretl\data+\\
         system script dir & \verb+/usr/share/gretl/scripts+ 
@@ -381,15 +382,18 @@ When a user selects one of the items:
   catalog files, for instance the file \verb+descriptions+ in the
   \verb+misc+ sub-directory of the \app{gretl} data directory and
   \verb+ps_descriptions+ in the \verb+misc+ sub-directory of the
-  scripts directory.  If you are adding your own collection, data
-  catalogs should be named \verb+descriptions+ and script catalogs
-  should be be named \verb+ps_descriptions+.  In each case the catalog
-  should be placed (along with the associated data or script files) in
-  its own specific sub-directory (e.g.
-  \verb+/usr/share/gretl/data/mydata+ or
-  \verb+c:\userdata\gretl\data\mydata+).The syntax of the (plain text)
-  description files is straightforward.  Here, for example, are the
-  first few lines of gretl's ``misc'' data catalog:
+  scripts directory.  
+
+  If you are adding your own collection, data catalogs should be named
+  \verb+descriptions+ and script catalogs should be be named
+  \verb+ps_descriptions+.  In each case the catalog should be placed
+  (along with the associated data or script files) in its own specific
+  sub-directory (e.g.  \verb+/usr/share/gretl/data/mydata+ or
+  \verb+c:\userdata\gretl\data\mydata+).
+
+  The syntax of the (plain text) description files is straightforward.
+  Here, for example, are the first few lines of gretl's ``misc'' data
+  catalog:
 
 \begin{code}
       # Gretl: various illustrative datafiles

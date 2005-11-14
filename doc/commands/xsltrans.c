@@ -46,7 +46,8 @@ enum {
     OUTPUT_DOCBOOK_STANDALONE,
     OUTPUT_HLP,
     OUTPUT_CLI_HLP,
-    OUTPUT_GUI_HLP
+    OUTPUT_GUI_HLP,
+    OUTPUT_DBTEX
 };
 
 #define ROOTNODE "commandlist"
@@ -109,31 +110,6 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
 		err = 1;
 	    } else {
 		fp = fopen("cmdlist.xml", "w");
-		if (fp == NULL) {
-		    err = 1;
-		} else {
-		    xsltSaveResultToFile(fp, result, style);
-		    fclose(fp);
-		}
-		xsltFreeStylesheet(style);
-		xmlFreeDoc(result);
-	    }	    
-	}
-    }
-
-    /* make "standalone" DocBook XML output (not needed) */
-    if (output == OUTPUT_DOCBOOK_STANDALONE) {
-	full_fname("gretlman.xsl", docdir, styname);
-	style = xsltParseStylesheetFile(styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_DOCBOOK_STANDALONE, lang);
-	    result = xsltApplyStylesheet(style, doc, xsl_params);
-	    if (result == NULL) {
-		err = 1;
-	    } else {
-		fp = fopen("cmdlist_standalone.xml", "w");
 		if (fp == NULL) {
 		    err = 1;
 		} else {
@@ -290,6 +266,8 @@ int main (int argc, char **argv)
 	    output = OUTPUT_DOCBOOK_STANDALONE;
 	} else if (!strcmp(argv[1], "--hlp")) {
 	    output = OUTPUT_HLP;
+	} else if (!strcmp(argv[1], "--dbtex")) {
+	    output = OUTPUT_DBTEX;
 	} else if (!strcmp(argv[1], "--all")) {
 	    output = OUTPUT_ALL;
 	}

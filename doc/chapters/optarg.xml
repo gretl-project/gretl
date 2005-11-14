@@ -306,17 +306,27 @@
       <listitem><para>In the user's gretl directory (see <xref
 	    linkend="tab-path"/> for the default values).</para>
       </listitem>
-      <listitem><para>In any immediate sub-directory of the user's
-	  gretl directory.</para></listitem>
-      <listitem><para>In the case of a data file, search continues
-	  with the main <application>gretl</application> data
-	  directory. In the case of a script file, the search proceeds
-	  to the system script directory.  See <xref
-	    linkend="tab-path"/> for the default settings.</para>
+      <listitem>
+	<para>
+	  In any immediate sub-directory of the user's gretl
+	  directory.</para></listitem> 
+      <listitem>
+	<para>
+	  In the case of a data
+	  file, search continues with the main <application>gretl</application>
+	  data directory. In the case of a script file, the search proceeds to
+	  the system script directory.  See <xref linkend="tab-path"/> for the
+	  default settings.  <emphasis>Note:</emphasis> In the table,
+	  <filename>PREFIX</filename> denotes the base directory chosen at the
+	  time <application>gretl</application> is installed.
+	</para>
       </listitem>
-      <listitem><para>In the case of data files the search then
+      <listitem>
+	<para>
+	  In the case of data files the search then
 	  proceeds to all immediate sub-directories of the main data
-	  directory.</para>
+	  directory.
+	</para>
       </listitem>
     </orderedlist>
 
@@ -348,19 +358,7 @@
 	  </row>
 	</tbody>
       </tgroup>
-      <tgroup cols="1">
-	<tbody>
-	  <row>
-	    <entry><emphasis>Note:</emphasis>
-	      <filename>PREFIX</filename> denotes the base directory
-	      chosen at the time <application>gretl</application> is
-	      installed.
-	    </entry>
-	  </row>
-	</tbody>
-      </tgroup>
     </table>
-		
 
     <para>Thus it is not necessary to specify the full path for a data
       or script file unless you wish to override the automatic

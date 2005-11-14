@@ -1,8 +1,9 @@
 <?PSGML NOFILL programlisting example informalequation?>
 
-  <chapter id="cmdref"><title>Command Reference</title>
+  <chapter id="cmdref"><title>Gretl commands</title>
 
-  <sect1 id="cmd-intro"><title>Introduction</title>
+  <sect1 id="cmd-intro"><title>Notation</title>
+
     <para>
       The commands defined below may be executed in the command-line
       client program.  They may also be placed in a
@@ -63,7 +64,7 @@
   </sect1>
 
   <sect1 id="cmd-cmd">
-    <title>gretl commands</title>
+    <title>Commands</title>
 
   &cmdlist;
   

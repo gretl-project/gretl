@@ -9,12 +9,31 @@
 \newcommand{\scriptname}{Example}
 
 \setcounter{secnumdepth}{1}
+\setcounter{chapter}{-1}
 
 \newcommand{\app}[1]{\textsf{#1}}
 \newcommand{\cmd}[1]{\texttt{#1}}
 
 \newenvironment{code}{\par\footnotesize\verbatim}
 {\endverbatim\normalsize}
+
+%% Unlike standard book class, running heads not in caps  
+%% \renewcommand{\chaptermark}[1]{\markboth{\chaptername\
+%%                                         \thechapter. #1}{}}
+%% \renewcommand{\sectionmark}[1]{\markright{#1}}
+
+%% Make TOC match revised chapter style
+\renewcommand\tableofcontents{%
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+    \chapter*{\contentsname
+        \@mkboth{\contentsname}{\contentsname}}%
+    \@starttoc{toc}%
+    \if@restonecol\twocolumn\fi}
+
 
 %% add script example as float
 \newcounter{script}
@@ -29,7 +48,7 @@
 \newenvironment{script*}
                {\@dblfloat{script}}
                {\end@dblfloat}
-\newcommand\theHscript      {\arabic{script}}
+\newcommand\theHscript{\arabic{script}}
 \def\toclevel@script{0}
 
 \newcommand{\tip}[1]{\par\textbf{Tip}: {\sffamily #1}\par}
@@ -47,6 +66,43 @@
       \sfcode`\.\@m\item\relax}}
       {\endlist}
 
+%% custom page headings 
+\if@twoside
+  \def\ps@headings{%
+      \let\@oddfoot\@empty\let\@evenfoot\@empty
+      \def\@evenhead{\thepage\hfil\sffamily\leftmark}%
+      \def\@oddhead{{\sffamily\rightmark}\hfil\sffamily\thepage}%
+      \let\@mkboth\markboth
+    \def\chaptermark##1{%
+      \markboth {{%
+        \ifnum \c@secnumdepth >\m@ne
+          \if@mainmatter
+            \@chapapp\ \thechapter. \ %
+          \fi
+        \fi
+        ##1}}{}}%
+    \def\sectionmark##1{%
+      \markright {{%
+        \ifnum \c@secnumdepth >\z@
+          \thesection. \ %
+        \fi
+        ##1}}}}
+\else
+  \def\ps@headings{%
+    \let\@oddfoot\@empty
+    \def\@oddhead{{\sffamily\rightmark}\hfil\sffamily\thepage}%
+    \let\@mkboth\markboth
+    \def\chaptermark##1{%
+      \markright {{%
+        \ifnum \c@secnumdepth >\m@ne
+          \if@mainmatter
+            \@chapapp\ \thechapter. \ %
+          \fi
+        \fi
+        ##1}}}}
+\fi
+
+
 \def\@makechapterhead#1{%
   \vspace*{10\p@}%
   {\parindent \z@ \centering \normalfont
@@ -59,12 +115,15 @@
     \huge \sffamily #1\par\nobreak
     \vskip 30\p@
   }}
-\def\@schapter#1{\if@twocolumn
-                   \@topnewpage[\@makeschapterhead{#1}]%
-                 \else
-                   \@makeschapterhead{#1}%
-                   \@afterheading
-                 \fi}
+
+\def\@schapter#1{%
+ \if@twocolumn \@topnewpage[\@makeschapterhead{#1}]
+ \else \@makeschapterhead{#1} 
+ \@afterheading\fi
+  \refstepcounter{chapter}
+  \if\pdfoutput=1 \@writetorep{#1}{chapter.\theHchapter}{0}\fi 
+ }
+
 \def\@makeschapterhead#1{%
   \vspace*{10\p@}%
   {\parindent \z@ \centering
@@ -80,7 +139,7 @@
 \renewcommand\section{\@startsection{section}{1}{\z@}%
                                    {-3ex \@plus -1ex \@minus -.2ex}%
                                    {.5ex \@plus.2ex}%
-                                   {\normalfont\Large\sffamily}}
+                                   {\normalfont\large\sffamily}}
 
 \renewcommand\subsection{\@startsection{subsection}{2}{\z@}%
                                      {-2.5ex\@plus -1ex \@minus -.2ex}%

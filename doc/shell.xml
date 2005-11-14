@@ -10,6 +10,7 @@
 <!ENTITY mu "$\mu$">
 <!ENTITY varepsilon "$\varepsilon$">
 <!ENTITY sigma "$\sigma$">
+<!ENTITY lgr "$\lambda$">
 <!ENTITY ne "$\ne$">
 <!ENTITY opto "[ \texttt{-o} ]">
 <!ENTITY cmdcol "82pt">
@@ -23,22 +24,9 @@
 <!ENTITY ut "$u_t$">
 <!ENTITY zt "$z_t$">
 <!ENTITY dollar "\$">
-<!ENTITY introduction SYSTEM "chapters/intro.xml">
-<!ENTITY starting SYSTEM "chapters/starting.xml">
-<!ENTITY modes SYSTEM "chapters/modes.xml">
-<!ENTITY datafiles SYSTEM "chapters/datafiles.xml">
-<!ENTITY genr SYSTEM "chapters/genr.xml">
-<!ENTITY panel SYSTEM "chapters/panel.xml">
-<!ENTITY sampling SYSTEM "chapters/sampling.xml">
-<!ENTITY graphs SYSTEM "chapters/graphs.xml">
-<!ENTITY nls SYSTEM "chapters/nls.xml">
-<!ENTITY looping SYSTEM "chapters/looping.xml">
-<!ENTITY functions SYSTEM "chapters/functions.xml">
-<!ENTITY vecm SYSTEM "chapters/vecm.xml">
-<!ENTITY trouble SYSTEM "chapters/trouble.xml">
-<!ENTITY cli SYSTEM "chapters/cli.xml">
-<!ENTITY appendices SYSTEM "chapters/appendices.xml">
-<!ENTITY biblio SYSTEM "chapters/biblio.xml">
+<!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
+<!ENTITY cmdlist SYSTEM "chapters/cmdlist.xml">
+<!ENTITY optarg SYSTEM "chapters/optarg.xml">
 %mathextra;
 ]>
 
@@ -47,7 +35,7 @@
 
 <book id="index" lang="en">
 
-  <title>Gretl Users' Guide</title>
+  <title>Gretl Command Reference</title>
 
   <bookinfo>
 
@@ -72,9 +60,8 @@
 
   </bookinfo>
 
-  &XXXX;
-
-
+  &cmdref;
+  &optarg;
 
 </book>
 

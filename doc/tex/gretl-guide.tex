@@ -1,4 +1,4 @@
-\documentclass{report}
+\documentclass[oneside]{book}
 \usepackage{url,verbatim,fancyvrb,gretl,appendix}
 \usepackage{lucidabr} % optional
 \usepackage[T1]{fontenc}
@@ -6,7 +6,7 @@
 \usepackage[pdftex]{graphicx}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 %% \usepackage[pdftex]{thumbpdf}
-\usepackage[body={6.3in,8.9in},top=.75in,left=1.1in,nohead]{geometry}
+\usepackage[body={6.3in,9in},top=.5in,left=1.1in]{geometry}
 
 %% \pdfimageresolution=120
 \hypersetup{pdftitle={Gretl Manual},
@@ -17,7 +17,6 @@
             urlcolor=red,
             plainpages=false
 }
-
 
 \begin{document}
 
@@ -64,17 +63,21 @@ November, 2005}
 
 \thispagestyle{empty}
 
-\begin{center}
 \label{license}
 
-License, etc., goes here.
+\vspace*{2in}
 
-\end{center}
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the \emph{GNU Free Documentation License}, Version
+1.1 or any later version published by the Free Software Foundation
+(see \url{http://www.gnu.org/licenses/fdl.html}).
+
 \clearpage
 
 %% end license page
 
 \pagenumbering{roman}
+\pagestyle{headings}
 
 \tableofcontents
 
@@ -96,11 +99,11 @@ License, etc., goes here.
 \include{vecm}
 \include{trouble}
 \include{cli}
-\include{biblio}
 
-\appendix
-
+\begin{appendices}
 \include{appendices}
-%% \include{biblio}
+\end{appendices}
+
+\include{biblio}
 
 \end{document}

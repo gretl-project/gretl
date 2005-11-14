@@ -29,6 +29,7 @@ program.  In this format (which was the default in \app{gretl} prior
 to version 0.98) a data set is represented by two files.  One contains
 the actual data and the other information on how the data should be
 read.  To be more specific:
+
 \begin{enumerate}
 \item \emph{Actual data}: A rectangular matrix of white-space
   separated numbers.  Each column represents a variable, each row an
@@ -63,8 +64,6 @@ read.  To be more specific:
     case of panel data.
   \item The keyword \verb+BYOBS+.
   \end{itemize}
-
-
 \end{enumerate}
 
 Here is an example of a well-formed data header file.
@@ -112,8 +111,6 @@ format may be noted.
   (as found in the header file), followed by one or more spaces,
   followed by the descriptive label. Here is an example:
   \verb+price New car price index, 1982 base year+
-
-        
 \end{enumerate}
 
 If you want to save data in traditional format, use the \cmd{-t} flag
@@ -128,12 +125,14 @@ A \app{gretl} database consists of two parts: an ASCII index file
 series, and a binary file (suffix \verb+.bin+) containing the actual
 data.  Two examples of the format for an entry in the \verb+idx+ file
 are shown below:
+
 \begin{code}
       G0M910  Composite index of 11 leading indicators (1987=100) 
       M 1948.01 - 1995.11  n = 575
       currbal Balance of Payments: Balance on Current Account; SA 
       Q 1960.1 - 1999.4 n = 160
 \end{code}
+
 The first field is the series name.  The second is a description of
 the series (maximum 128 characters).  On the second line the first
 field is a frequency code: \verb+M+ for monthly, \verb+Q+ for
@@ -182,16 +181,18 @@ library is found on the host system this will be used for
 \app{gretcli}, providing a much enhanced editable command line.  See
 the
 \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{readline
-  homepage}.  The graphical client program should compile and run on
-any system that, in addition to the above requirements, offers GTK
-version 1.2.3 or higher (see \href{http://www.gtk.org/}{gtk.org}).  As
-of this writing there are two main variants of the GTK libraries: the
-1.2 series and the 2.0 series which was launched in summer 2002.
-These variants are mutually incompatible.  \app{gretl} can be built
-using either one --- the source code package includes two
-sub-directories, \verb+gui+ for GTK 1.2 and \verb+gui2+ for GTK 2.0.
-I recommend use of GTK 2.0 if it is available, since it offers many
-enhancements over GTK 1.2.
+  homepage}.  
+
+The graphical client program should compile and run on any system
+that, in addition to the above requirements, offers GTK version 1.2.3
+or higher (see \href{http://www.gtk.org/}{gtk.org}).  As of this
+writing there are two main variants of the GTK libraries: the 1.2
+series and the 2.0 series which was launched in summer 2002.  These
+variants are mutually incompatible.  \app{gretl} can be built using
+either one --- the source code package includes two sub-directories,
+\verb+gui+ for GTK 1.2 and \verb+gui2+ for GTK 2.0.  I recommend use
+of GTK 2.0 if it is available, since it offers many enhancements over
+GTK 1.2.
   
 \app{gretl} calls gnuplot for graphing. You can find gnuplot at
 \href{http://www.gnuplot.info/}{gnuplot.info}.  As of this writing the
@@ -213,6 +214,7 @@ ported for use with win32) and linked against the Microsoft C library,
 \verb+msvcrt.dll+.  It uses Tor Lillqvist's port of GTK 2.0 to win32.
 The (free, open-source) Windows installer program is courtesy of
 Jordan Russell (\href{http://www.jrsoftware.org/}{jrsoftware.org}).
+
 I'm hopeful that some users with coding skills may consider
 \app{gretl} sufficiently interesting to be worth improving and
 extending.  The documentation of the libgretl API is by no means
@@ -273,14 +275,15 @@ NIST linear regression test suite.  You can find this under the
 ``Utilities'' menu in the main window.  When you run this test, the
 introductory text explains the expected result.  If you run this test
 and see anything other than the expected result, please send a bug
-report to \verb+cottrell@wfu.edu+.  As mentioned above, all regression
-statistics are printed to 6 significant figures in the current version
-of \app{gretl} (except when the multiple-precision plugin is used,
-then results are given to 12 figures).  If you want to examine a
-particular value more closely, first save it (for example, using the
-\cmd{genr} command) then print it using \cmd{print --ten} (see the
-\emph{Gretl Command Reference}).  This will show the value to 10
-digits.
+report to \verb+cottrell@wfu.edu+.  
+
+As mentioned above, all regression statistics are printed to 6
+significant figures in the current version of \app{gretl} (except when
+the multiple-precision plugin is used, then results are given to 12
+figures).  If you want to examine a particular value more closely,
+first save it (for example, using the \cmd{genr} command) then print
+it using \cmd{print --ten} (see the \emph{Gretl Command Reference}).
+This will show the value to 10 digits.
 
 \chapter{Advanced econometric analysis with free software}
 \label{app-advanced}
@@ -347,54 +350,35 @@ Below is a listing of the full URLs of websites mentioned in the text.
 \begin{description}
 
 \item[Census Bureau, Data Extraction Service]
-  \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{
-    http://www.census.gov/ftp/pub/DES/www/welcome.html}
-\item[Estima (RATS)] \href{http://www.estima.com/}{
-    http://www.estima.com/}
-\item[Gnome desktop homepage] \href{http://www.gnome.org/}{
-    http://www.gnome.org/}
+  \url{http://www.census.gov/ftp/pub/DES/www/welcome.html}
+\item[Estima (RATS)] \url{http://www.estima.com/}
+\item[Gnome desktop homepage] \url{http://www.gnome.org/}
 \item[GNU Multiple Precision (GMP) library]
-  \href{http://swox.com/gmp/}{ http://swox.com/gmp/}
-\item[GNU Octave homepage] \href{http://www.octave.org/}{
-    http://www.octave.org/}
-\item[GNU R homepage] \href{http://www.r-project.org/}{
-    http://www.r-project.org/}
+  \url{http://swox.com/gmp/}
+\item[GNU Octave homepage] \url{http://www.octave.org/}
+\item[GNU R homepage] \url{http://www.r-project.org/}
 \item[GNU R manual]
-  \href{http://cran.r-project.org/doc/manuals/R-intro.pdf}{
-    http://cran.r-project.org/doc/manuals/R-intro.pdf}
-\item[Gnuplot homepage] \href{http://www.gnuplot.info/}{
-    http://www.gnuplot.info/}
-\item[Gnuplot manual] \href{http://ricardo.ecn.wfu.edu/gnuplot.html}{
-    http://ricardo.ecn.wfu.edu/gnuplot.html}
+  \url{http://cran.r-project.org/doc/manuals/R-intro.pdf}
+\item[Gnuplot homepage] \url{http://www.gnuplot.info/}
+\item[Gnuplot manual] \url{http://ricardo.ecn.wfu.edu/gnuplot.html}
 \item[Gretl data page]
   \url{http://gretl.sourceforge.net/gretl_data.html}
-\item[Gretl homepage] \href{http://gretl.sourceforge.net/}{
-    http://gretl.sourceforge.net/}
-\item[GTK+ homepage] \href{http://www.gtk.org/}{ http://www.gtk.org/}
+\item[Gretl homepage] \url{http://gretl.sourceforge.net/}
+\item[GTK+ homepage] \url{http://www.gtk.org/}
 \item[GTK+ port for win32]
-  \href{http://user.sgic.fi/~tml/gimp/win32/}{
-    http://www.gimp.org/~tml/gimp/win32/}
-\item[Gtkextra homepage] \href{http://gtkextra.sourceforge.net/}{
-    http://gtkextra.sourceforge.net/}
+  \url{http://user.sgic.fi/~tml/gimp/win32/}
+\item[Gtkextra homepage] \url{http://gtkextra.sourceforge.net/}
 \item[InfoZip homepage]
-  \href{http://www.info-zip.org/pub/infozip/zlib/}{
-    http://www.info-zip.org/pub/infozip/zlib/}
-\item[JRSoftware] \href{http://www.jrsoftware.org/}{
-    http://www.jrsoftware.org/}
-\item[Mingw (gcc for win32) homepage] \href{http://www.mingw.org/}{
-    http://www.mingw.org/}
-\item[Minpack] \href{http://www.netlib.org/minpack/}{
-    http://www.netlib.org/minpack/}
-\item[Penn World Table] \href{http://pwt.econ.upenn.edu/}{
-    http://pwt.econ.upenn.edu/}
+  \url{http://www.info-zip.org/pub/infozip/zlib/}
+\item[JRSoftware] \url{http://www.jrsoftware.org/}
+\item[Mingw (gcc for win32) homepage] \url{http://www.mingw.org/}
+\item[Minpack] \url{http://www.netlib.org/minpack/}
+\item[Penn World Table] \url{http://pwt.econ.upenn.edu/}
 \item[Readline homepage]
-  \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{
-    http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}
+  \url{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}
 \item[Readline manual]
-  \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{
-    http://cnswww.cns.cwru.edu/~chet/readline/readline.html}
-\item[Xmlsoft homepage] \href{http://xmlsoft.org/}{
-    http://xmlsoft.org/}
+  \url{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}
+\item[Xmlsoft homepage] \url{http://xmlsoft.org/}
 
 \end{description}
 
