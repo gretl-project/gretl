@@ -142,7 +142,7 @@
 <xsl:template match="replaceable">
   <xsl:text>\textsl{</xsl:text>
   <xsl:value-of select="translate(., '_', '-')"/>
-  <xsl:text>} </xsl:text>
+  <xsl:text>}</xsl:text>
 </xsl:template>
 
 <xsl:template match="footnote">
@@ -273,14 +273,23 @@
 </xsl:template>
 
 <xsl:template match="entry">
-  <xsl:apply-templates/>
+  <xsl:choose>
+    <xsl:when test="ancestor::thead">
+      <xsl:text>\textit{</xsl:text>
+      <xsl:apply-templates/>
+      <xsl:text>}</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:apply-templates/>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:choose>
     <xsl:when test="following-sibling::entry">
       <xsl:text> &amp; </xsl:text>
     </xsl:when>
-    <xsl:when test="not(following-sibling)">
+    <xsl:otherwise>
       <xsl:text>\\&#10;</xsl:text>
-    </xsl:when>
+    </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
@@ -294,6 +303,7 @@
 
 <xsl:template match="thead">
   <xsl:apply-templates/>
+  <xsl:text> [4pt]&#10;</xsl:text>
 </xsl:template>
 
 <xsl:template name="tabcolstring">
