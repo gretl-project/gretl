@@ -23,11 +23,11 @@ In either case a script window will open (see Figure
 \ref{fig-scriptwin}).
 
 \begin{figure}[htbp]
-  \caption{Script window, editing a command file}
-  \label{fig-scriptwin}
   \begin{center}
     \includegraphics[scale=0.5]{figures/scriptwin}
   \end{center}
+  \caption{Script window, editing a command file}
+  \label{fig-scriptwin}
 \end{figure}
 
 The toolbar at the top of the script window offers the following
@@ -44,8 +44,7 @@ all output is directed to a single window, where it can be edited,
 saved or copied to the clipboard.  To learn more about the
 possibilities of scripting, take a look at the \app{gretl} Help item
 ``Script commands syntax,'' or start up the command-line program
-\app{gretlcli} and consult its help, or consult the \emph{Gretl
-  Command Reference}.
+\app{gretlcli} and consult its help, or consult the \GCR.
 
 In addition, the \app{gretl} package includes over 70 ``practice''
 scripts.  Most of these relate to Ramanathan (2002), but they may also
@@ -70,12 +69,12 @@ Here are two suggestions.
   of your work.
 \item Start by establishing a new script file.  Type in any commands
   that may be required to set up transformations of the data (see the
-  \cmd{genr} command in the \emph{Gretl Command Reference}). Typically
-  this sort of thing can be accomplished more efficiently via commands
-  assembled with forethought rather than point-and-click. Then save
-  and run the script: the GUI data window will be updated accordingly.
-  Now you can carry out further exploration of the data via the GUI.
-  To revisit the data at a later point, open and rerun the
+  \cmd{genr} command in the \GCR). Typically this sort of thing can be
+  accomplished more efficiently via commands assembled with
+  forethought rather than point-and-click. Then save and run the
+  script: the GUI data window will be updated accordingly.  Now you
+  can carry out further exploration of the data via the GUI.  To
+  revisit the data at a later point, open and rerun the
   ``preparatory'' script first.
 \end{itemize}
 
@@ -166,12 +165,12 @@ session, these added objects should be available again if you re-open
 the session later.
 
 \begin{figure}[htbp]
-  \caption{Icon view: one model and one graph have been added to the
-    default icons}
-  \label{fig-session}
   \begin{center}
     \includegraphics[scale=0.5]{figures/session}
   \end{center}
+  \caption{Icon view: one model and one graph have been added to the
+    default icons}
+  \label{fig-session}
 \end{figure}
 
 If you start \app{gretl} and open a data set, then select ``Icon
@@ -200,7 +199,6 @@ object.  This popup menu also gives you the option of editing graphs.
 
 \subsection{The model table}
 \label{model-table}
-
 
 In econometric research it is common to estimate several models with a
 common dependent variable --- the models differing in respect of which
@@ -245,14 +243,15 @@ Format).  Here is how to do it:\footnote{The model table can also be
   table''.  Then go back to step 4 above and try again.
 \end{enumerate}
 
-A simple instance of \app{gretl}'s model table is shown in Figure
-\ref{fig-model-table}.
+A simple instance of \app{gretl}'s model table is shown in
+Figure~\ref{fig-model-table}.
+
 \begin{figure}[htbp]
-  \caption{Example of model table}
-  \label{fig-model-table}
   \begin{center}
     \includegraphics[scale=0.5]{figures/model_table}
   \end{center}
+  \caption{Example of model table}
+  \label{fig-model-table}
 \end{figure}
 
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
+
 <commandlist language="italian">
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>
@@ -2297,14 +2298,14 @@
 	<program>wgnuplot</program>).
       </para>
 
-      <para>È disponibile un'ulteriore opzione per questo comando: dopo
-        la specificazione delle variabili e le eventuali opzioni, è possibile
-	aggiungere direttamente dei comandi gnuplot per modificare l'aspetto
-	visivo del grafico (ad esempio, impostando il titolo e o gli intervalli
+      <para>È disponibile un'ulteriore opzione per questo comando: dopo la
+        specificazione delle variabili e le eventuali opzioni, è possibile
+        aggiungere direttamente dei comandi gnuplot per modificare l'aspetto
+        visivo del grafico (ad esempio, impostando il titolo e o gli intervalli
         degli assi). Questi comandi aggiuntivi vanno inclusi tra parentesi
         graffe e ogni comando va separato con un punto e virgola; è possibile
-        usare una barra rovesciata (\) per continuare un gruppo di comandi gnuplot
-        sulla riga successiva. Ecco un esempio della sintassi:
+        usare una barra rovesciata (<lit>\</lit>) per continuare un gruppo di
+        comandi gnuplot sulla riga successiva. Ecco un esempio della sintassi:
       </para>
 
       <para>
@@ -3401,7 +3402,7 @@
         caratteristica in ogni osservazione, invece che una variabile
         binaria che indica se la caratteristica è presente o no), non
         bisogna usare il comando <cmd>logit</cmd>, ma occorre costruire
-        la variabile logit (ad es. <cmd>genr lgt_p = log(p/(1 - p))</cmd>)
+        la variabile logit (ad es. <lit>genr lgt_p = log(p/(1 - p))</lit>)
         e usare questa come variabile dipendente in una regressione OLS;
         si veda Ramanathan, capitolo 12.
       </para>

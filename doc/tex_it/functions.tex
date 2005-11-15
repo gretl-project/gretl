@@ -1,8 +1,6 @@
 \chapter{Funzioni definite dall'utente}
 \label{functions}
 
-
-
 \section{Introduzione}
 \label{func-intro}
 
@@ -11,38 +9,36 @@ meccanismo per definire funzioni all'interno di uno script.
 \footnote{Si noti che il nuovo modo di definire le funzioni presenta
   aspetti non compatibili con la versione 1.3.3 del programma.}
     
-
 \section{Definizione di una funzione}
 \label{func-define}
 
 Occorre definire una funzione prima di poterla utilizzare. La sintassi
 per farlo è la seguente:
+
 \begin{code}
       function nome-funzione parametri
          corpo della funzione
       end function
 \end{code}
 
-
-Il nome-funzione identifica la funzione in modo univoco: deve iniziare
-con una lettera, può essere lungo al massimo 31 caratteri (eventuali
-caratteri in più verranno troncati) e non può contenere spazi. Se si
-tenta di definire una funzione con lo stesso nome di un comando di
-\app{gretl} o di una funzione preesistente, si otterrà un'errore. Nel
-secondo caso, per evitare un errore (ossia per poter ridefinire una
-funzione utente), basta far precedere la definizione della funzione
-da:
+Il \textsl{nome-funzione} identifica la funzione in modo univoco: deve
+iniziare con una lettera, può essere lungo al massimo 31 caratteri
+(eventuali caratteri in più verranno troncati) e non può contenere
+spazi. Se si tenta di definire una funzione con lo stesso nome di un
+comando di \app{gretl} o di una funzione preesistente, si otterrà
+un'errore. Nel secondo caso, per evitare un errore (ossia per poter
+ridefinire una funzione utente), basta far precedere la definizione
+della funzione da:
     
 \begin{code}
       function nome-funzioneclear
 \end{code}
 
-
-I parametri di una funzione (se esistono) vanno indicati sotto forma
-di lista separata da virgole. I parametri possono essere di tre tipi:
-variabili ordinarie (serie di dati), variabili scalari, o liste di
-variabili. Ogni elemento della lista di parametri è composto da due
-termini: per prima cosa un indicatore di tipo (\verb+series+,
+I \textsl{parametri} di una funzione (se esistono) vanno indicati
+sotto forma di lista separata da virgole. I parametri possono essere
+di tre tipi: variabili ordinarie (serie di dati), variabili scalari, o
+liste di variabili. Ogni elemento della lista di parametri è composto
+da due termini: per prima cosa un indicatore di tipo (\verb+series+,
 \verb+scalar+ o \verb+list+), quindi il nome con cui il parametro
 verrà riconosciuto all'interno della funzione. Ecco un esempio (le
 parentesi che racchiudono la lista dei parametri sono opzionali):
@@ -65,18 +61,18 @@ essere indicati specificando il nome di una variabile o un valore
 numerico (non è possibile indicare il numero identificativo della
 variabile). Le liste devono essere indicate per nome.
     
-Il corpo della funzione è composto da comandi \app{gretl} o funzioni
-definite dall'utente (ossia, le funzioni possono essere nidificate).
-Una funzione può persino chiamare sé stessa (ossia, le funzioni
-possono essere ricorsive), fino a un massimo di 8 ``livelli di
-ricorsività'', ma questo valore è provvisorio, potrà essere aumentato
-se sembra troppo restrittivo.  Se il corpo della funzione può
-contenere chiamate ad altre funzioni non può però contenere
+Il \textsl{corpo della funzione} è composto da comandi \app{gretl} o
+funzioni definite dall'utente (ossia, le funzioni possono essere
+nidificate).  Una funzione può persino chiamare sé stessa (ossia, le
+funzioni possono essere ricorsive), fino a un massimo di 8 ``livelli
+di ricorsività'', ma questo valore è provvisorio, potrà essere
+aumentato se sembra troppo restrittivo.  Se il corpo della funzione
+può contenere chiamate ad altre funzioni non può però contenere
 definizioni di altre funzioni, ossia non è possibile definire una
 funzione all'interno di un'altra funzione.
     
 Le funzioni possono essere chiamate, ma non definite, all'interno di
-un loop (si veda il [?]).
+un loop (si veda il capitolo~\ref{looping}).
 
 \section{Chiamare una funzione}
 \label{func-call}
@@ -100,7 +96,6 @@ funzione che rispetta la definizione della funzione stessa.
       # Chiamata della funzione (il valore restituito viene qui ignorato)
       ols_ess price, xlist
 \end{code}
-
 
 La chiamata della funzione contiene due argomenti: il primo è una
 serie di dati specificata per nome, e il secondo è una lista di
@@ -129,7 +124,6 @@ valori prodotti dalla funzione a variabili:
       # Chiamata di funzione
       (SSR, resids) = ess_uhat price, xlist
 \end{code}
-
 
 
 \section{Ambito delle variabili}
@@ -167,7 +161,6 @@ dichiarazioni. Ecco un esempio di dichiarazione return valida:
 \begin{code}
       return scalar SSR, series resid
 \end{code}
-
 
 Si noti che la dichiarazione \verb+return+ \emph{non} indica alla
 funzione di produrre il valore (terminare) nel punto in cui essa

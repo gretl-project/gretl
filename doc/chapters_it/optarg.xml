@@ -307,13 +307,15 @@
       <listitem><para>Nella directory gretl dell'utente (si veda la <xref
 	    linkend="tab-path"/> per i valori predefiniti).</para>
       </listitem>
-      <listitem><para>In qualsiasi directory immediatamente contenuta
-          nella directory gretl dell'utente.</para></listitem>
-      <listitem><para>Nel caso di un file di dati, la ricerca continua nella
-          directory principale dei dati di <application>gretl</application>.
-          Nel caso di un file di comandi, la ricerca continua nella directory
-          principale dei file di comandi. Si veda la <xref
-	    linkend="tab-path"/> per i valori predefiniti.</para>
+      <listitem><para>In qualsiasi directory immediatamente contenuta nella
+          directory gretl dell'utente.</para></listitem> <listitem><para>Nel
+          caso di un file di dati, la ricerca continua nella directory
+          principale dei dati di <application>gretl</application>.  Nel caso di
+          un file di comandi, la ricerca continua nella directory principale dei
+          file di comandi. Si veda la <xref linkend="tab-path"/> per i valori
+          predefiniti.  <emphasis>Nota:</emphasis> <filename>PREFISSO</filename>
+          indica la directory base scelta al momento dell'installazione di
+          <application>gretl</application>.</para>
       </listitem>
       <listitem><para>Nel caso dei file di dati, la ricerca continua in tutte le
           directory immediatamente contenute nella directory principale dei dati.
@@ -349,18 +351,7 @@
 	  </row>
 	</tbody>
       </tgroup>
-      <tgroup cols="1">
-	<tbody>
-	  <row>
-	    <entry><emphasis>Nota:</emphasis>
-	      <filename>PREFISSO</filename> indica la directory base scelta
-              al momento dell'installazione di <application>gretl</application>.
-	    </entry>
-	  </row>
-	</tbody>
-      </tgroup>
     </table>
-		
 
     <para>Non è quindi necessario specificare il percorso completo per un file
       di dati o di comandi, a meno che non si voglia fare a meno del

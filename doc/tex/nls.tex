@@ -59,6 +59,7 @@ In some cases, where the nonlinear function is a generalization of (or
 a restricted form of) a linear model, it may be convenient to run an
 \cmd{ols} and initialize the parameters from the OLS coefficient
 estimates.  In relation to the first example above, one might do:
+
 \begin{code}
       ols C 0 Y
       genr alpha = coeff(0)
@@ -76,7 +77,6 @@ And in relation to the second example one might do:
 \section{NLS dialog window}
 \label{nls-gui}
 
-
 It is probably most convenient to compose the commands for NLS
 estimation in the form of a \app{gretl} script but you can also do so
 interactively, by selecting the item ``Nonlinear Least Squares'' under
@@ -88,11 +88,11 @@ this context you do not have to supply the \cmd{nls} and \cmd{end nls}
 tags.
 
 \begin{figure}[htbp]
-  \caption{NLS dialog box}
-  \label{fig-nls-dialog}
   \begin{center}
     \includegraphics[scale=0.5]{figures/nls_window}
   \end{center}
+  \caption{NLS dialog box}
+  \label{fig-nls-dialog}
 \end{figure}
 
 
@@ -238,7 +238,8 @@ the 6 significant figures which are printed by default in the
  \label{tab-nls}
   \begin{center}
     \begin{tabular}{lcc}
-        & \textit{Analytical derivatives} & \textit{Numerical derivatives}\\
+        & \textit{Analytical derivatives} & 
+          \textit{Numerical derivatives} \\ [4pt]
         Failures in 54 tests & 4 & 5\\
         Average iterations & 32 & 127\\
         Mean of min. correct figures, & 8.120 & 6.980\\

@@ -13,13 +13,14 @@ installato nella directory dei dati di sistema (ad es.
 \verb+/usr/share/gretl/data+ su Linux). I file di dati possono essere
 non compressi o compressi con gzip; oltre ai valori dei dati,
 contengono altre informazioni aggiuntive, come i nomi e le descrizioni
-delle variabili, la frequenza dei dati e così via.La maggior parte
-degli utenti probabilmente non avrà bisogno di leggere o scrivere
-questi file, se non usando \app{gretl} stesso, ma se si vuole
-manipolarli usando altri strumenti, può essere utile esaminare il DTD
-e qualcuno dei file di esempio forniti: il file \verb+data4-1.gdt+ dà
-un semplice esempio, il file \verb+data4-10.gdt+ invece contiene anche
-delle etichette per le osservazioni.
+delle variabili, la frequenza dei dati e così via.
+
+La maggior parte degli utenti probabilmente non avrà bisogno di
+leggere o scrivere questi file, se non usando \app{gretl} stesso, ma
+se si vuole manipolarli usando altri strumenti, può essere utile
+esaminare il DTD e qualcuno dei file di esempio forniti: il file
+\verb+data4-1.gdt+ dà un semplice esempio, il file \verb+data4-10.gdt+
+invece contiene anche delle etichette per le osservazioni.
 
 \section{Formato tradizionale di ESL}
 \label{traddata}
@@ -31,6 +32,7 @@ versioni di \app{gretl} precedenti alla 0.98) un dataset è
 rappresentato da due file: uno contiene i dati veri e propri, l'altro
 contiene la descrizione dei dati e le modalità per la loro lettura.
 Per essere più specifici:
+
 \begin{enumerate}
 \item \emph{Dati veri e propri}: una matrice rettangolare di numeri
   separati da spazio vuoto. Ogni colonna rappresenta una variabile,
@@ -68,8 +70,6 @@ Per essere più specifici:
     il [?] per l'uso speciale di questa riga nel caso dei dati panel.
   \item La parola chiave \verb+BYOBS+.
   \end{itemize}
-
-
 \end{enumerate}
 
 Ecco un esempio di un file di descrizione dei dati ben scritto.
@@ -160,9 +160,11 @@ trattino, un altro spazio, la data finale, la stringa ``\verb+n = +''
 e il numero delle osservazioni. Nel caso di dati giornalieri, le date
 iniziale e finale devono essere indicate nella forma
 \verb+YYYY/MM/DD+. Questo formato deve essere rispettato alla
-lettera.Opzionalmente, la prima riga del file indice può contenere un
-breve commento (al massimo 64 caratteri) a proposito della fonte e del
-tipo dei dati, che segue un carattere cancelletto. Ad esempio:
+lettera.
+
+Opzionalmente, la prima riga del file indice può contenere un breve
+commento (al massimo 64 caratteri) a proposito della fonte e del tipo
+dei dati, che segue un carattere cancelletto. Ad esempio:
       
 \begin{code}
       # Banca Centrale Europea (tassi di interesse)
@@ -197,9 +199,11 @@ ospita anche la libreria GNU readline, essa sarà usata per
 \app{gretcli}, fornendo una riga di comando molto più comoda da
 utilizzare. Si veda la
 \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{home page
-  di readline}.  Il client grafico dovrebbe essere compilabile e
-utilizzabile su ogni sistema che, oltre ai requisiti visti sopra,
-offra la libreria GTK nella versione 1.2.3 o superiore (si veda
+  di readline}.  
+
+Il client grafico dovrebbe essere compilabile e utilizzabile su ogni
+sistema che, oltre ai requisiti visti sopra, offra la libreria GTK
+nella versione 1.2.3 o superiore (si veda
 \href{http://www.gtk.org/}{gtk.org}). Al momento della scrittura di
 questo manuale esistono due varianti principali delle librerie GTK: la
 serie 1,2 e la serie 2.0, lanciata nell'estate 2002.  Poiché queste
@@ -230,13 +234,13 @@ compilatore GNU C, \app{gcc}, portato per l'uso con win32) e collegata
 alla libreria C di Microsoft C, \verb+msvcrt.dll+. Utilizza il port di
 GTK 2.0 su win32 di Tor Lillqvist. L'installatore per Windows (libero,
 open-source) è a cura di Jordan Russell
-(\href{http://www.jrsoftware.org/}{jrsoftware.org}).  Spero che gli
-utenti con conoscenze di programmazione possano considerare
-\app{gretl} abbastanza interessante e degno di essere migliorato ed
-esteso. La documentazione dell'API libgretl non è ancora completa, ma
-è possibile trovare alcuni dettagli seguendo il link ``Libgretl API
-docs'' sul sito web di \app{gretl}.
+(\href{http://www.jrsoftware.org/}{jrsoftware.org}).  
 
+Spero che gli utenti con conoscenze di programmazione possano
+considerare \app{gretl} abbastanza interessante e degno di essere
+migliorato ed esteso. La documentazione dell'API libgretl non è ancora
+completa, ma è possibile trovare alcuni dettagli seguendo il link
+``Libgretl API docs'' sul sito web di \app{gretl}.
 
 \chapter{Accuratezza numerica}
 \label{app-accuracy}
@@ -253,14 +257,16 @@ di usare la decomposizione QR). Il programma è stato testato
 abbastanza approfonditamente con i dataset di riferimento forniti dal
 NIST (il National Institute of Standards and Technology statunitense)
 e un rapporto completo dei risultati si trova sul sito web di gretl
-(seguendo il link ``Accuratezza numerica'').Nell'Ottobre del 2002 ho
-avuto un utile scambio di idee con Giovanni Baiocchi e Walter Distaso,
-che stavano scrivendo una recensione di \app{gretl} per il
-\emph{Journal of Applied Econometrics} e con James MacKinnon,
-responsabile delle recensioni di software per il giornale\footnote{La
-  recensione è poi stata pubblicata; si veda Baiocchi e Distaso
-  (2003).} e sono grato a Baiocchi e Distaso per il loro accurato
-esame del programma, che ha suggerito le seguenti modifiche.
+(seguendo il link ``Accuratezza numerica'').
+
+Nell'Ottobre del 2002 ho avuto un utile scambio di idee con Giovanni
+Baiocchi e Walter Distaso, che stavano scrivendo una recensione di
+\app{gretl} per il \emph{Journal of Applied Econometrics} e con James
+MacKinnon, responsabile delle recensioni di software per il
+giornale\footnote{La recensione è poi stata pubblicata; si veda
+  Baiocchi e Distaso (2003).} e sono grato a Baiocchi e Distaso per il
+loro accurato esame del programma, che ha suggerito le seguenti
+modifiche.
 
 \begin{enumerate}
 \item I recensori hanno trovato un bug nel ``calcolatore di p-value''
@@ -296,14 +302,15 @@ la suite NIST di test della regressione lineare. È possibile trovarlo
 nel menù ``Utilità'' della finestra principale. Quando viene eseguito
 questo test, un'introduzione spiega qual è il risultato atteso: se si
 esegue il test e si ottengono risultati diversi da quelli attesi, si
-prega di inviare un bug report a \verb+cottrell@wfu.edu+.  Come detto
-sopra, tutte le statistiche di regressione sono mostrate con 6 cifre
-significative nella versione attuale di \app{gretl} (tranne quando
-viene usato il plugin per precisione multipla, e allora i risultati
-sono mostrati con 12 cifre). Se occorre esaminare un valore più da
-vicino, basta per prima cosa salvarlo (si veda il comando \cmd{genr})
-e poi visualizzarlo usando il comando \cmd{print --ten}: verrà
-mostrato con 10 cifre significative.
+prega di inviare un bug report a \verb+cottrell@wfu.edu+.  
+
+Come detto sopra, tutte le statistiche di regressione sono mostrate
+con 6 cifre significative nella versione attuale di \app{gretl}
+(tranne quando viene usato il plugin per precisione multipla, e allora
+i risultati sono mostrati con 12 cifre). Se occorre esaminare un
+valore più da vicino, basta per prima cosa salvarlo (si veda il
+comando \cmd{genr}) e poi visualizzarlo usando il comando \cmd{print
+  --ten}: verrà mostrato con 10 cifre significative.
 
 \chapter{Analisi econometrica avanzata con software libero}
 \label{app-advanced}
@@ -311,8 +318,9 @@ mostrato con 10 cifre significative.
 Come descritto nel manuale, \app{gretl} offre una raccolta abbastanza
 completa di stimatori basati sui minimi quadrati e alcuni stimatori
 aggiuntivi, come logit, probit e le minime deviazioni assolute, ma gli
-utenti avanzati possono trovare questa lista troppo ristretta.Senza
-dubbio, alcuni utenti avanzati preferiranno scrivere da soli il
+utenti avanzati possono trovare questa lista troppo ristretta.
+
+Senza dubbio, alcuni utenti avanzati preferiranno scrivere da soli il
 proprio codice statistico usando qualche linguaggio di programmazione
 come C, C++ o Fortran. Un'altra opzione è quella di usare un
 linguaggio di livello più alto che offre funzioni per la manipolazione
@@ -368,57 +376,38 @@ ulteriori elementi saranno ignorati.
 Quello che segue è un elenco degli URL citati nel testo.
 
 \begin{description}
+
 \item[Census Bureau, Data Extraction Service]
-  \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{
-    http://www.census.gov/ftp/pub/DES/www/welcome.html}
-\item[Estima (RATS)] \href{http://www.estima.com/}{
-    http://www.estima.com/}
-\item[Home page del desktop Gnome] \href{http://www.gnome.org/}{
-    http://www.gnome.org/}
+  \url{http://www.census.gov/ftp/pub/DES/www/welcome.html}
+\item[Estima (RATS)] \url{http://www.estima.com/}
+\item[Home page del desktop Gnome] \url{http://www.gnome.org/}
 \item[Libreria GNU Multiple Precision (GMP)]
-  \href{http://swox.com/gmp/}{ http://swox.com/gmp/}
-\item[Home page di GNU Octave] \href{http://www.octave.org/}{
-    http://www.octave.org/}
-\item[Home page di GNU R] \href{http://www.r-project.org/}{
-    http://www.r-project.org/}
+  \url{http://swox.com/gmp/}
+\item[Home page di GNU Octave] \url{http://www.octave.org/}
+\item[Home page di GNU RGN] \url{http://www.r-project.org/}
 \item[Manuale di GNU R]
-  \href{http://cran.r-project.org/doc/manuals/R-intro.pdf}{
-    http://cran.r-project.org/doc/manuals/R-intro.pdf}
-\item[Home page di Gnuplot] \href{http://www.gnuplot.info/}{
-    http://www.gnuplot.info/}
-\item[Manuale di Gnuplot]
-  \href{http://ricardo.ecn.wfu.edu/gnuplot.html}{
-    http://ricardo.ecn.wfu.edu/gnuplot.html}
+  \url{http://cran.r-project.org/doc/manuals/R-intro.pdf}
+\item[Home page di Gnuplot] \url{http://www.gnuplot.info/}
+\item[Manuale di Gnuplot] \url{http://ricardo.ecn.wfu.edu/gnuplot.html}
 \item[Pagina dei dati di Gretl (versione italiana)]
   \url{http://gretl.sourceforge.net/gretl_data_it.html}
-\item[Home page di Gretl (versione italiana)]
+\item[Home page di Gretl (versione italiana)] 
   \url{http://gretl.sourceforge.net/gretl_italiano.html}
-\item[Home page di GTK+] \href{http://www.gtk.org/}{
-    http://www.gtk.org/}
+\item[Home page di GTK+] \url{http://www.gtk.org/}
 \item[Home page del port di GTK+ per win32]
-  \href{http://user.sgic.fi/~tml/gimp/win32/}{
-    http://www.gimp.org/~tml/gimp/win32/}
-\item[Home page di Gtkextra] \href{http://gtkextra.sourceforge.net/}{
-    http://gtkextra.sourceforge.net/}
+  \url{http://user.sgic.fi/~tml/gimp/win32/}
+\item[Home page di Gtkextra] \url{http://gtkextra.sourceforge.net/}
 \item[Home page di InfoZip]
-  \href{http://www.info-zip.org/pub/infozip/zlib/}{
-    http://www.info-zip.org/pub/infozip/zlib/}
-\item[JRSoftware] \href{http://www.jrsoftware.org/}{
-    http://www.jrsoftware.org/}
-\item[Home page di Mingw (gcc per win32)]
-  \href{http://www.mingw.org/}{ http://www.mingw.org/}
-\item[Minpack] \href{http://www.netlib.org/minpack/}{
-    http://www.netlib.org/minpack/}
-\item[Penn World Table] \href{http://pwt.econ.upenn.edu/}{
-    http://pwt.econ.upenn.edu/}
+  \url{http://www.info-zip.org/pub/infozip/zlib/}
+\item[JRSoftware] \url{http://www.jrsoftware.org/}
+\item[Home page di Mingw (gcc per win32)] \url{http://www.mingw.org/}
+\item[Minpack] \url{http://www.netlib.org/minpack/}
+\item[Penn World Table] \url{http://pwt.econ.upenn.edu/}
 \item[Home page di Readline]
-  \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{
-    http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}
+  \url{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}
 \item[Manuale di Readline]
-  \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{
-    http://cnswww.cns.cwru.edu/~chet/readline/readline.html}
-\item[Home page di Xmlsoft] \href{http://xmlsoft.org/}{
-    http://xmlsoft.org/}
+  \url{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}
+\item[Home page di Xmlsoft] \url{http://xmlsoft.org/}
 
 \end{description}
 

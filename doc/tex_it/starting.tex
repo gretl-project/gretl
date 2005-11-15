@@ -5,8 +5,9 @@
 \label{starting-regression}
 
 Questa introduzione è dedicata prevalentemente alla versione grafica
-del programma; si veda il XXX e il [?]  per i dettagli sulla versione
-a riga di comando del programma, \app{gretlcli}.
+del programma; si veda il capitolo~\ref{cli} e il \emph{Gretl Command
+  Reference} per i dettagli sulla versione a riga di comando del
+programma, \app{gretlcli}.
     
 È possibile fornire il nome di un file di dati da aprire come
 argomento a \app{gretl}, ma per il momento non facciamolo: avviamo
@@ -32,11 +33,11 @@ Ramanathan (2002), che descrive l'analisi di questi dati, ma i dati
 sono utilizzabili per fare pratica anche senza avere il testo.
     
 \begin{figure}[htbp]
-  \caption{Finestra dei file di esempio}
-  \label{fig-datafiles}
   \begin{center}
     \includegraphics[scale=0.5]{figures/datafiles}
   \end{center}
+  \caption{Finestra dei file di esempio}
+  \label{fig-datafiles}
 \end{figure}
 
 Selezionando una riga in questa finestra e facendo clic su ``Info'',
@@ -59,11 +60,11 @@ variabili, insieme a delle loro brevi descrizioni (si veda la Figure
 \ref{fig-mainwin}).
     
 \begin{figure}[htbp]
-  \caption{Finestra principale, con un file di esempio aperto}
-  \label{fig-mainwin}
   \begin{center}
     \includegraphics[scale=0.5]{figures/mainwin}
   \end{center}
+  \caption{Finestra principale, con un file di esempio aperto}
+  \label{fig-mainwin}
 \end{figure}
 
 OK, cosa possiamo fare ora? Le varie opzioni dei menù dovrebbero
@@ -78,11 +79,11 @@ apre una finestra di dialogo che richiede una \emph{specificazione del
   modello}; si veda la Figure \ref{fig-selector}.
     
 \begin{figure}[htbp]
-  \caption{Specificazione del modello}
-  \label{fig-selector}
   \begin{center}
     \includegraphics[scale=0.5]{figures/selector}
   \end{center}
+  \caption{Specificazione del modello}
+  \label{fig-selector}
 \end{figure}
 
 Per selezionare la variabile dipendente, fare clic su una variabile
@@ -112,11 +113,11 @@ risultati della regressione, in un formato sufficientemente chiaro e
 standard (Figure \ref{fig-modelwin}).
     
 \begin{figure}[htbp]
-  \caption{Finestra dei risultati del modello}
-  \label{fig-modelwin}
   \begin{center}
     \includegraphics[scale=0.5]{figures/modelwin}
   \end{center}
+  \caption{Finestra dei risultati del modello}
+  \label{fig-modelwin}
 \end{figure}
 
 La finestra dei risultati contiene dei menù che consentono di
@@ -167,9 +168,11 @@ tabulare dei risultati viene preservato\footnote{Si noti che quando si
 come file di testo semplice e importare successivamente il file nel
 programma di arrivo: quando si conclude una sessione di \app{gretl} si
 ha l'opportunità di salvare tutti i risultati della sessione in un
-unico file.Si noti che nel desktop \app{gnome} e in MS Windows, il
-menù \textsf{File} contiene un comando per inviare i risultati
-direttamente a una stampante.
+unico file.
+
+Si noti che nel desktop \app{gnome} e in MS Windows, il menù
+\textsf{File} contiene un comando per inviare i risultati direttamente
+a una stampante.
 
 \tip{Quando si incollano o si importano dei risultati di \app{gretl}
   sotto forma di testo semplice in un word processor, conviene
@@ -199,21 +202,20 @@ Variabile, Modello e Aiuto.
     file di dati di \app{gretl}, un file con dati separati da virgole,
     o un foglio elettronico.
   \item \textsf{Salva dati}: salva il file di dati \app{gretl} in uso.
-              
   \item \textsf{Salva dati come}: salva il dataset in uso in formato
     interno, con la possibilità di usare la compressione gzip. Si veda
-    il [?].
-	    
+    il capitolo~\ref{datafiles}.
   \item \textsf{Esporta dati}: salva il dataset in uso in formato CSV
     (valori separati da virgole), o nei formati di GNU R o GNU Octave.
-    Si veda il [?] e anche l'[?].
+    Si veda il capitolo~\ref{datafiles} e anche
+    l'appendice~\ref{app-advanced}.
   \item \textsf{Abbandona dataset}: cancella dalla memoria il dataset
     in uso. Di solito questa operazione non è necessaria (visto che
     aprendo un nuovo file di dati, quello in uso viene sostituito), ma
-    ci sono casi in cui è utile (si veda [?]).
-  \item \textsf{Consulta database}: Si veda [?] e [?].
+    ci sono casi in cui è utile.
+  \item \textsf{Consulta database}: Si veda la parte~\ref{dbase}.
   \item \textsf{Crea dataset}: Apre il foglio elettronico integrato
-    per inserire dati manualmente.  Si veda [?].
+    per inserire dati manualmente.  Si veda la parte~\ref{scratch}.
   \item \textsf{Visualizza log comandi}: Apre una finestra che
     contiene la registrazione dei comandi eseguiti finora.
   \item \textsf{Apri file comandi}: apre un file di comandi di
@@ -226,7 +228,7 @@ Variabile, Modello e Aiuto.
     visualizzazione di alcuni messaggi di avvertimento); attiva o
     sopprime il controllo per la disponibilità in rete di
     aggiornamenti di \app{gretl}; configura o disattiva la barra degli
-    strumenti nella finestra principale.  Si veda il XXX per i
+    strumenti nella finestra principale.  Si veda il \GCR per i
     dettagli.
   \item \textsf{Esci}: abbandona il programma.  Se non si è in
     modalità esperto, verrà proposto di salvare il lavoro svolto.
@@ -253,33 +255,25 @@ Variabile, Modello e Aiuto.
     ``terminale'' in cui è possibile digitare dei comandi, come se si
     stesse usando la versione a riga di comando \app{gretlcli}, invece
     di quella con interfaccia grafica.
-	    
   \item \textsf{Avvia Gnu R}: Avvia \app{R} (se è presente sul
     sistema) e vi carica una copia del dataset in uso in \app{gretl}.
-    Si veda l'[?].
-	    
+    Si veda l'appendice~\ref{app-advanced}.
   \item \textsf{Test NIST}: controlla l'accuratezza numerica di
     \app{gretl} usando i test di riferimento per la regressione
     lineare adottati dal National Institute of Standards and
     Technology statunitense.
   \end{itemize}
 
-
 \item \textsf{Menù sessione}
   \begin{itemize}
   \item \textsf{Visualizza icone}: apre una finestra che mostra la
     sessione corrente di \app{gretl} sotto forma di un insieme di
-    icone. Per i dettagli si veda [?].
-	    
+    icone. Per i dettagli si veda la parte~\ref{session}.
   \item \textsf{Apri}: apre un file di sessione salvato in precedenza.
-	    
   \item \textsf{Salva}: salva la sessione corrente in un file.
-	    
   \item \textsf{Salva come}: salva la sessione corrente in un file,
     scegliendone il nome.
-	    
   \end{itemize}
-
 
 \item \textsf{Menù Dati}
   \begin{itemize}
@@ -289,17 +283,16 @@ Variabile, Modello e Aiuto.
   \item \textsf{Modifica valori}: apre una finestra di foglio
     elettronico, con cui è possibile modificare valori, aggiungere
     nuove variabili, o estendere il numero delle osservazioni.
-	      
   \item \textsf{Ordina variabili}: riordina l'elenco delle variabili
     nella finestra principale, seguendo l'ordine numerico dell'ID o
     quello alfabetico del nome.
-	      
   \item \textsf{Grafico delle variabili}: apre una finestra di dialogo
     che permette di scegliere tra un grafico temporale, un grafico a
     dispersione X--Y, un grafico X--Y a impulsi (barre verticali), un
     grafico X--Y ``con fattore'' (ossia, con i punti colorati in modo
     diverso a seconda del valore di una data variabile dummy), un
-    boxplot e un grafico 3D.  Si veda il [?] per i dettagli.
+    boxplot e un grafico 3D.  Si veda il capitolo~\ref{chap-graphs}
+    per i dettagli.
   \item \textsf{Grafici multipli a dispersione}: mostra una raccolta
     di grafici (al massimo sei), con una variabile sull'asse \emph{y},
     rappresentata rispetto a diverse variabili sull'asse \emph{x},
@@ -322,12 +315,10 @@ Variabile, Modello e Aiuto.
   \item \textsf{Componenti principali}: attivo solo se si selezionano
     due o più variabili; produce un'analisi delle componenti
     principali delle variabili selezionate.
-          
   \item \textsf{Distanze di Mahalonobis}: attivo solo se si
     selezionano due o più variabili; calcola la distanza di
     Mahalonobis per ogni osservazione dal centroide dell'insieme di
     variabili selezionate.
-          
   \item \textsf{Differenza delle medie}: calcola la statistica
     \emph{t} per l'ipotesi nulla che le medie della popolazione siano
     uguali per due variabili scelte, mostrando il p-value.
@@ -349,13 +340,10 @@ Variabile, Modello e Aiuto.
     in cui è possibile scegliere un numero di osservazioni da
     aggiungere alla fine del dataset attuale; da usare per le
     previsioni.
-           
   \item \textsf{Rimuove le osservazioni aggiuntive}: attivo solo se
     sono state aggiunte automaticamente delle osservazioni durante la
     procedura di previsione; cancella queste osservazioni aggiuntive.
-           
   \end{itemize}
-
 
 \item \textsf{Menù campione}
   \begin{itemize}
@@ -367,7 +355,7 @@ Variabile, Modello e Aiuto.
     l'interpretazione strutturale del dataset in uso. Ad esempio, se i
     dati sono stati importati come cross section, è possibile fare in
     modo che il programma li interpreti come serie storiche o come
-    panel. Si veda anche il [?].
+    panel. Si veda anche il capitolo~\ref{chap-panel}.
   \item \textsf{Compatta dati}: per serie storiche con frequenza
     superiore a quella annuale, permette di diminuire la frequenza dei
     dati, usando uno dei quattro metodi di compattamento disponibili
@@ -379,13 +367,12 @@ Variabile, Modello e Aiuto.
     tranne per il fatto che non si ha bisogno di una variabile
     predefinita: basta fornire una condizione Booleana (ad es.
     \verb+sqft > 1400+) e il campione sarà ristretto alle osservazioni
-    che soddisfano la condizione. Si veda la voce \cmd{genr} nel XXX
+    che soddisfano la condizione. Si veda la voce \cmd{genr} nel \GCR
     per maggiori dettagli sugli operatori Booleani che possono essere
     usati.
   \item \textsf{Scarta valori mancanti}: scarta dal campione corrente
     tutte le osservazioni per cui almeno una variabile ha un valore
-    mancante (si veda [?]).
-	    
+    mancante (si veda la parte~\ref{missing-data}).
   \item \textsf{Conta valori mancanti}: produce un rapporto sulle
     osservazioni per cui mancano dei valori. Può essere utile durante
     l'esame di un dataset panel, dove è abbastanza comune incontrare
@@ -396,22 +383,19 @@ Variabile, Modello e Aiuto.
   \item \textsf{Aggiungi marcatori}: richiede di specificare un file
     di testo che contiene ``marcatori per le osservazioni'' (brevi
     stringhe che identificano singole osservazioni) e aggiunge queste
-    informazioni al dataset. Si veda il [?].
+    informazioni al dataset. Si veda il capitolo~\ref{datafiles}.
   \item \textsf{Rimuovi marcatori}: attivo solo se il dataset contiene
     marcatori per le osservazioni; rimuove questi marcatori.
   \item \textsf{Ristruttura panel}: permette di convertire un dataset
-    panel da una struttura "pila di dati cross-section" a una "pila di
-    serie storiche", o viceversa. A differenza del comando
+    panel da una struttura ``pila di dati cross-section'' a una ``pila di
+    serie storiche'', o viceversa. A differenza del comando
     \textsf{Struttura dataset}, questo modifica effettivamente
     l'organizzazione dei dati.
-	    
   \item \textsf{Trasponi dati}: trasforma ogni osservazione in una
     variabile e viceversa (o, in altre parole, ogni riga della matrice
     dei dati diventa una colonna della nuova matrice dei dati); può
     essere utile per ``raddrizzare'' dati importati in modo errato.
-           
   \end{itemize}
-
 
 \item \textsf{Menù variabile}: la maggior parte di questi comandi
   operano su una sola variabile alla volta. La variabile ``attiva''
@@ -433,23 +417,25 @@ Variabile, Modello e Aiuto.
   esistenti \verb+x1+ e \verb+x2+.  In queste formule, le variabili
   devono essere indicate per nome, non per numero identificativo.
 \item \textsf{Menù modello}: per i dettagli sui vari stimatori offerti
-  in questo menù, si consulti XXX oppure il capitolo ``Stima'' della
-  guida in linea. Si veda anche il [?] a proposito della stima di
-  modelli non lineari.
+  in questo menù, si consulti il \GCR oppure il capitolo ``Stima'' della
+  guida in linea. Si veda anche il capitolo~\ref{chap-nls} a proposito
+  della stima di modelli non lineari.
 \item \textsf{Menù Aiuto}: usatelo!  Fornisce dettagli sulla sintassi
   dei comandi e delle finestre di dialogo.
 \end{itemize}
 
-
-
 \section{La barra degli strumenti di gretl}
 \label{toolbar}
 
-In basso a sinistra nella finestra principale si trova la barra
-      degli strumenti.\begin{center}
-        \includegraphics[scale=0.5]{figures/toolbar}
-      \end{center}
+In basso a sinistra nella finestra principale si trova la barra degli
+strumenti.
+
+\begin{center}
+  \includegraphics[scale=0.5]{figures/toolbar}
+\end{center}
+
 Le icone sulla barra hanno il seguente significato, nell'ordine:
+
 \begin{enumerate}
 \item Avvia una calcolatrice. Una funzione comoda quando si ha bisogno
   di usare velocemente una calcolatrice mentre si lavora in
@@ -457,7 +443,6 @@ Le icone sulla barra hanno il seguente significato, nell'ordine:
   \verb+calc.exe+ in MS Windows, o \verb+xcalc+ nel sistema X window.
   È possibile cambiare il programma nel menà \textsf{File, Preferenze,
     Generali}, sezione ``Programmi''.
-          
 \item Inizia un nuovo script. Apre una finestra in cui è possibile
   digitare una serie di comandi da eseguire in modalità batch.
 \item Apri il terminale di gretl. Una scorciatoia per il comando del
@@ -470,9 +455,7 @@ Le icone sulla barra hanno il seguente significato, nell'ordine:
   i file PDF.
 \item Apri la guida in linea per la sintassi dei comandi (che mostra i
   dettagli di tutti i comandi disponibili).
-	  
 \item Apri la finestra di dialogo per costruire un grafico.
-	  
 \item Apri la finestra di dialogo per stimare un modello con i minimi
   quadrati ordinari.
 \item Apri una finestra che elenca i dataset relativi al libro
@@ -480,10 +463,10 @@ Le icone sulla barra hanno il seguente significato, nell'ordine:
   del libro di Jeffrey Wooldridge, se sono installati).
 \end{enumerate}
 
-
-      Se non si desidera visualizzare la barra degli strumenti, è possibile
-      disabilitarla nel menù \textsf{File, Preferenze, Generali},
-      de-selezionando la casella ``Mostra la barra degli strumenti di gretl''.
+Se non si desidera visualizzare la barra degli strumenti, è possibile
+disabilitarla nel menù \textsf{File, Preferenze, Generali},
+de-selezionando la casella ``Mostra la barra degli strumenti di
+gretl''.
 
 %%% Local Variables: 
 %%% mode: latex

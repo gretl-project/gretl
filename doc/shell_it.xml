@@ -24,16 +24,16 @@
 <!ENTITY ut "$u_t$">
 <!ENTITY zt "$z_t$">
 <!ENTITY dollar "\$">
-<!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
-<!ENTITY cmdlist SYSTEM "chapters/cmdlist.xml">
-<!ENTITY optarg SYSTEM "chapters/optarg.xml">
+<!ENTITY cmdref SYSTEM "chapters_it/cmdref.xml">
+<!ENTITY cmdlist SYSTEM "chapters_it/cmdlist.xml">
+<!ENTITY optarg SYSTEM "chapters_it/optarg.xml">
 %mathextra;
 ]>
 
 <!-- "shell" file for testing conversion from DB to LaTeX.  Include
      below the specific chapters to be converted.  -->
 
-<book id="index" lang="en">
+<book id="index" lang="it">
 
   <title>Gretl Command Reference</title>
 

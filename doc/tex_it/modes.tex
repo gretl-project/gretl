@@ -1,11 +1,8 @@
 \chapter{Modalità di lavoro}
 \label{modes}
 
-
-
 \section{Script di comandi}
 \label{scripts}
-
 
 I comandi eseguiti in \app{gretl} usando le finestre di dialogo
 dell'interfaccia grafica vengono registrati sotto forma di un file
@@ -29,11 +26,11 @@ In entrambi i casi si aprirà una finestra comandi (si veda la Figure
 \ref{fig-scriptwin}).
 
 \begin{figure}[htbp]
-  \caption{Finestra comandi, modifica di un file di comandi}
-  \label{fig-scriptwin}
   \begin{center}
     \includegraphics[scale=0.5]{figures/scriptwin}
   \end{center}
+  \caption{Finestra comandi, modifica di un file di comandi}
+  \label{fig-scriptwin}
 \end{figure}
 
 La barra degli strumenti in cima alla finestra comandi offre le
@@ -51,7 +48,7 @@ essere modificati, salvati, o copiati negli appunti.  Per conoscere
 meglio le possibilità fornite dagli script, è possibile usare il
 comando del menù \textsf{Aiuto, Comandi testuali}, o eseguire la
 versione a riga di comando del programma \app{gretlcli} e consultare
-il suo aiuto, oppure consultare il XXX.  
+il suo aiuto, oppure consultare il \GCR.  
 
 In aggiunta, il pacchetto \app{gretl} contiene più di 70 script ``di
 esempio'': la maggior parte di essi sono relativi a Ramanathan (2002),
@@ -78,7 +75,7 @@ dei due approcci. Ecco alcuni suggerimenti:
   lavoro.
 \item Partire da un nuovo file script e scrivere i comandi necessari
   per eseguire le trasformazioni desiderate su un dataset (si veda il
-  comando \cmd{genr} nel XXX). Tipicamente è possibile svolgere questo
+  comando \cmd{genr} nel \GCR). Tipicamente è possibile svolgere questo
   tipo di operazioni in modo più efficace scrivendo una sequenza ben
   ragionata di comandi, piuttosto che puntando e cliccando
   nell'interfaccia grafica. Salvare ed eseguire lo script: la finestra
@@ -163,13 +160,14 @@ comandi ed eseguirli interattivamente uno alla volta (premendo il
 tasto Invio), così come avviene nella versione a riga di comando
 \app{gretlcli}, con la differenza che l'interfaccia grafica viene
 aggiornata in base ai comandi eseguiti dal terminale, permettendo di
-lavorare con entrambi gli strumenti.Nel terminale è disponibile la
-``storia dei comandi'', ossia è possibile usare i tasti freccia su e
-freccia giù per scorrere la lista dei comandi già eseguiti. È
-possibile quindi recuperare un comando, modificarlo ed eseguirlo di
-nuovo.In modalità terminale, è possibile creare, visualizzare e
-cancellare oggetti (modelli, grafici o testo) nel modo descritto sopra
-per la modalità script.
+lavorare con entrambi gli strumenti.
+
+Nel terminale è disponibile la ``storia dei comandi'', ossia è
+possibile usare i tasti freccia su e freccia giù per scorrere la lista
+dei comandi già eseguiti. È possibile quindi recuperare un comando,
+modificarlo ed eseguirlo di nuovo.In modalità terminale, è possibile
+creare, visualizzare e cancellare oggetti (modelli, grafici o testo)
+nel modo descritto sopra per la modalità script.
 
 \section{Il concetto di sessione}
 \label{session}
@@ -183,12 +181,12 @@ salvarli assieme alla sessione, in modo che siano disponibili ad una
 successiva riapertura della sessione.
 	
 \begin{figure}[htbp]
-  \caption{Icone di sessione: un modello e un grafico sono stati
-    aggiunti alle icone predefinite}
-  \label{fig-session}
   \begin{center}
     \includegraphics[scale=0.5]{figures/session}
   \end{center}
+  \caption{Icone di sessione: un modello e un grafico sono stati
+    aggiunti alle icone predefinite}
+  \label{fig-session}
 \end{figure}
 
 Avviando \app{gretl}, aprendo un dataset e selezionando
@@ -214,16 +212,15 @@ attraverso uno degli altri comandi \app{gretl} di generazione dei
 grafici).  Facendo clic sulla finestra del grafico si ottiene un menù
 da cui si dovrà selezionare \textsf{Salva alla sessione come icona}.
 
-Una volta che un modello o un grafico è stato
-aggiunto, la sua icona dovrebbe comparire nella finestra delle icone
-di sessione. Facendo doppio clic sull'icona, l'oggetto viene
-visualizzato di nuovo, mentre facendo clic con il tasto destro del
-mouse si ottiene un menù che permette di visualizzare o cancellare
-l'oggetto, oppure di modificarlo, se si tratta di un grafico.
+Una volta che un modello o un grafico è stato aggiunto, la sua icona
+dovrebbe comparire nella finestra delle icone di sessione. Facendo
+doppio clic sull'icona, l'oggetto viene visualizzato di nuovo, mentre
+facendo clic con il tasto destro del mouse si ottiene un menù che
+permette di visualizzare o cancellare l'oggetto, oppure di
+modificarlo, se si tratta di un grafico.
 
 \subsection{La tabella modelli}
 \label{model-table}
-
 
 Nella ricerca econometrica è prassi comune stimare vari modelli con
 una variabile dipendente comune, mentre i modelli differiscono tra
@@ -245,10 +242,8 @@ di costruire una tabella simile (e di esportarla in testo semplice,
   selezionare, nel menù File della finestra di visualizzazione del
   modello, \textsf{Salva alla sessione come icona} o \textsf{Salva
     come icona e chiudi}.
-	    
 \item Ripetere il punto 1 per gli altri modelli da includere nella
   tabella (fino a un massimo di sei modelli).
-	
 \item Completata la stima dei modelli, aprire l'icona della sessione
   di gretl (selezionando \textsf{Visualizza Icone} nel menù Sessione
   della finestra principale di gretl, o facendo clic su \textsf{Icone
@@ -263,7 +258,6 @@ di costruire una tabella simile (e di esportarla in testo semplice,
 \item Ripetere il punto 4 per gli altri modelli da aggiungere alla
   tabella. Il secondo modello scelto apparirà nella seconda colonna da
   sinistra della tabella, e così via.
-	
 \item Ultimata la composizione della tabella, è possibile
   visualizzarla facendo doppio clic sulla sua icona. Per copiare la
   tabella negli appunti in uno dei formati supportati, basta fare clic
@@ -275,12 +269,13 @@ di costruire una tabella simile (e di esportarla in testo semplice,
 
 Un semplice esempio di tabella modelli di \app{gretl} è mostrato in
 Figure \ref{fig-model-table}.
+
 \begin{figure}[htbp]
-  \caption{Esempio della tabella modelli}
-  \label{fig-model-table}
   \begin{center}
     \includegraphics[scale=0.5]{figures/model_table}
   \end{center}
+  \caption{Esempio della tabella modelli}
+  \label{fig-model-table}
 \end{figure}
 
 

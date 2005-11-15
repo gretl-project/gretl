@@ -1,18 +1,6 @@
 # location of various things
 
-XSLDIR = /usr/share/sgml/docbook-xsl
-XMLDCL = /opt/jade/share/xml.dcl
-JADE = jade
-XSLTPROC = xsltproc
-CONVERT = convert # from ImageMagick suite
-HHC = wine "c:/Program Files/HTML Help Workshop/hhc.exe"
 WEBDIR = /home/cottrell/stats/esl/website
-
-DSL = manual-both.dsl
-ALTDSL = manual-a4.dsl
-MATHSS = TeXMath.dsl
-HMATHSS = HTMLMath.dsl
-TITLESS = titlepage.dsl
 
 REF_CHAPTERS = chapters/cmdref.xml chapters/optarg.xml
 CMDLIST = chapters/cmdlist.xml
@@ -22,102 +10,19 @@ REF_CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/optarg.xml
 CMDLIST_IT = chapters_it/cmdlist.xml
 CMDREF_IT = commands/gretl_commands.xml
 
-MANXSL = commands/gretlman.xsl
+SUBDIRS = tex tex_it
 
-THUMBS = man.thumbs man_a4.thumbs man_it.thumbs
+.PHONY : subdirs $(SUBDIRS) clean install 
 
-%.pdf: %.tex
-	pdfjadetex $<
-	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
-	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
-	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
-	-grep 'Rerun LaTeX' $(<:.tex=.log) >/dev/null && pdfjadetex $<
+subdirs: $(SUBDIRS)
 
-%.thumbs: %.pdf
-	thumbpdf $< && pdfjadetex $(<:.pdf=.tex) && touch $@
-
-all: $(THUMBS) # html chm html_it chm_it
-
-# Gretl Command Reference
-
-manual.pdf: manual.tex
-
-manual-a4.pdf: manual-a4.tex
-
-manual_it.pdf: manual_it.tex
-
-manual.tex: manual.xml $(REF_CHAPTERS) $(CMDLIST) mathextra.inc $(DSL) \
-	$(MATHSS) $(TITLESS) jadetex.cfg.en lucidabr.tex
-	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
-	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
-	./unescape_math.pl $@
-
-manual-a4.tex: manual-a4.xml $(REF_CHAPTERS) $(CMDLIST) mathextra.inc $(ALTDSL) \
-	$(MATHSS) $(TITLESS) jadetex.cfg.en lucidabr.tex
-	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
-	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
-	./unescape_math.pl $@
-
-manual_it.tex: manual_it.xml $(REF_CHAPTERS_IT) $(CMDLIST_IT) mathextra.inc $(ALTDSL) \
-	$(MATHSS) $(TITLESS) jadetex.cfg.it lucidabr.tex
-	rm -f jadetex.cfg && ln -s jadetex.cfg.it jadetex.cfg
-	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
-	./unescape_math.pl $@
-
-manual-a4.xml: manual.xml
-	cp $< $@
-
-$(CMDLIST): $(CMDREF) $(MANXSL) 
-	make -C commands -f cmdref.mk docbook
-
-$(CMDLIST_IT): $(CMDREF_IT) $(MANXSL) 
-	make -C commands -f cmdref.mk docbook_it
-
-html: manual.xml db2html $(DSL) $(HMATHSS) $(CMDLIST)
-	./db2html manual.xml
-	./texmath2png.pl manual.html/equation-list.sgml
-
-html_it: manual_it.xml db2html $(DSL) $(HMATHSS) $(CMDLIST_IT)
-	./db2html manual_it.xml
-	./texmath2png.pl manual_it.html/equation-list.sgml
-
-# make windows HTML help file for gretl
-
-topdoc = .
-
-chmfigs: $(topdoc)/figures/*.png
-	mkdir -p manual.chm/figures
-	cp $(topdoc)/figures/*.png manual.chm/figures
-	for f in manual.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
-	rm -f manual.chm/figures/*.png
-
-chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml $(CMDLIST) chmfigs
-	cd manual.chm && \
-	$(XSLTPROC) --param tex.math.in.alt latex \
-	../$(topdoc)/gretlhlp.xsl ../$(topdoc)/manual.xml && \
-	../fixtoc.sh && $(HHC) gretl.hhp
-
-chmfigs_it: $(topdoc)/figures/*.png $(topdoc)/figures_it/*.png
-	mkdir -p manual_it.chm/figures
-	cp $(topdoc)/figures/*.png manual_it.chm/figures
-	cp $(topdoc)/figures_it/*.png manual_it.chm/figures
-	for f in manual_it.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
-	rm -f manual_it.chm/figures/*.png
-
-chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml $(CMDLIST_IT) chmfigs_it
-	cd manual_it.chm && \
-	saxon ../$(topdoc)/manual_it.xml ../$(topdoc)/gretlhlp.xsl \
-	"tex.math.in.alt=latex" "lang=it" "htmlhelp.hhp=gretl_it.hhp" \
-	"htmlhelp.chm=gretl_it.chm" && \
-	../fixfigs.sh && ../fixtoc.sh && $(HHC) gretl_it.hhp
+$(SUBDIRS):
+	make -C $@
 
 clean:
-	rm -f *.aux *.log *.out *.pdf 
-	rm -f manual.tex manual-a4.tex manual_it.tex
-	rm -rf manual.html manual.chm manual_it.html manual_it.chm
-
-texclean:
-	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex manual_it.tex
+	make -C tex clean
+	make -C tex_it clean
 
 install: 
-	cp manual.pdf manual-a4.pdf manual_it.pdf $(WEBDIR)
+	make -C tex install
+	make -C tex_it install

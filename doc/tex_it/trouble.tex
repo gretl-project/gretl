@@ -30,19 +30,21 @@ dei comandi (ad es. da una finestra di xterm nel sistema X window, o
 da un ``Prompt di MS-DOS'' in MS Windows, nel qual caso occorre
 digitare \cmd{gretlw32.exe}), invece che da un menù o da un'icona: la
 finestra del terminale potrà quindi contenere messaggi di errore
-aggiuntivi.  Si tenga anche presente che nella maggior parte dei casi
-\app{gretl} assume che i programmi in questione siano disponibili nel
-``percorso di esecuzione'' (path) dell'utente, ossia che possano
-essere invocati semplicemente con il nome del programma, senza
-indicare il percorso completo \footnote{L'eccezione a questa regola è
-  costituita dall'invocazione di gnuplot in MS Windows, dove occorre
-  indicare il percorso completo del programma.}. Quindi se un certo
-programma non si avvia, conviene provare ad eseguirlo da un prompt dei
-comandi, come descritto qui sotto.
+aggiuntivi.  
+
+Si tenga anche presente che nella maggior parte dei casi \app{gretl}
+assume che i programmi in questione siano disponibili nel ``percorso
+di esecuzione'' (path) dell'utente, ossia che possano essere invocati
+semplicemente con il nome del programma, senza indicare il percorso
+completo.\footnote{L'eccezione a questa regola è costituita
+  dall'invocazione di gnuplot in MS Windows, dove occorre indicare il
+  percorso completo del programma.}  Quindi se un certo programma non
+si avvia, conviene provare ad eseguirlo da un prompt dei comandi, come
+descritto qui sotto.
       
 \begin{center}
   \begin{tabular}{llll}
-    Sistema & Grafica & Stampa & GNU R\\
+    & \textit{Grafica} & \textit{Stampa} & \textit{GNU R}\\
     Sistema X window & gnuplot & latex, xdvi & R\\
     MS Windows & wgnuplot.exe & latex, windvi & RGui.exe\\
   \end{tabular}

@@ -1,12 +1,8 @@
 \chapter{Grafici e diagrammi}
 \label{chap-graphs}
 
-
-
 \section{Grafici gnuplot}
 \label{gnuplot-graphs}
-
-
 
 \subsection{Opzioni generali di gnuplot}
 \label{gnuplot-opts}
@@ -18,9 +14,11 @@ miriade di opzioni. È disponibile su
 Windows di \app{gretl} comprende già gnuplot). \app{gretl} fornisce
 l'accesso, attraverso un'interfaccia grafica, a una parte di queste
 opzioni, ma è possibile anche controllare l'aspetto di un grafico in
-tutti i suoi dettagli, se si vuole.Mentre un grafico viene
-visualizzato, facendo clic sulla finestra del grafico si aprirà un
-menù pop-up con le seguenti opzioni:
+tutti i suoi dettagli, se si vuole.
+
+Mentre un grafico viene visualizzato, facendo clic sulla finestra del
+grafico si aprirà un menù pop-up con le seguenti opzioni:
+
 \begin{itemize}
 \item \textsf{Salva come PNG}: salva il grafico in formato Portable
   Network Graphics
@@ -29,7 +27,7 @@ menù pop-up con le seguenti opzioni:
 \item \textsf{Salva come Windows metafile}: save in formato Enhanced
   Metafile (EMF).
 \item \textsf{Salva alla sessione come icona}: il grafico apparirà
-  sotto forma di icona quando si seleziona "Visualizza Icone" dal menù
+  sotto forma di icona quando si seleziona ``Visualizza Icone'' dal menù
   Sessione
 \item \textsf{Ingrandisci}: permette di selezionare un'area
   all'interno del grafico per visualizzarla da vicino
@@ -41,17 +39,14 @@ menù pop-up con le seguenti opzioni:
     quando si incollano grafici nelle applicazioni di MS Office, usare
     il comando ``Modifica, Incolla speciale...''  dell'applicazione e
     selezionare l'opzione ``Immagine (Enhanced Metafile)''.}
-        
 \item \textsf{Modifica}: apre una finestra che permette di modificare
   vari dettagli dell'aspetto del grafico
 \item \textsf{Chiudi}: chiude la finestra del grafico
 \end{itemize}
 
 
-
 \subsection{Mostrare le etichette dei dati}
 \label{plot-labels}
-
 
 Nel caso di semplici diagrammi a dispersione X-Y (con o senza la retta
 di regressione), sono disponibili altre opzioni se il dataset contiene
@@ -73,16 +68,13 @@ copiato), ci sono due opzioni:
 \item Per fissare le etichette che sono mostrate in un dato momento,
   selezionare ``Fissa le etichette dei dati'' dal menù pop-up del
   grafico.
-       
 \item Per fissare le etichette per tutti i punti del grafico,
   selezionare ``Modifica'' dal menù pop-up e marcare la casella
   ``Mostra tutte le etichette dei dati''. Questa opzione è disponibile
   solo se ci sono meno di 55 punti, e produrrà i risultati migliori se
   i punti del grafico non sono troppo addensati, altrimenti le
   etichette tenderanno a sovrapporsi.
-       
 \end{itemize}
-
 
 Per rimuovere le etichette che sono state fissate in uno di questi due
 modi, basta selezionare ``Modifica'' dal menù pop-up e disattivare la
@@ -95,6 +87,7 @@ casella ``Mostra tutte le etichette dei dati''.
 Se si conosce \app{gnuplot} e si desidera un controllo sull'aspetto
 del grafico più preciso di quello fornito dalla finestra di modifica
 del grafico (opzione ``Modifica''), ci sono due possibilità:
+
 \begin{itemize}
 \item Una volta salvato il grafico come icona di sessione, facendo
   clic col tasto destro sull'icona si apre un altro menù pop-up. Una
@@ -109,7 +102,6 @@ del grafico (opzione ``Modifica''), ci sono due possibilità:
   finestra di modifica del grafico, quindi fare clic su ``File'':
   verrà visualizzato un menù a discesa con i formati in cui è
   possibile salvare il grafico.
-	
 \end{itemize}
 
 Per saperne di più su \app{gnuplot} si veda il
@@ -117,12 +109,13 @@ Per saperne di più su \app{gnuplot} si veda il
 \href{http://www.gnuplot.info/}{www.gnuplot.info}.Si veda anche la
 voce \cmd{gnuplot} nel XXX e i comandi \cmd{graph} e \cmd{plot} per
 generare dei semplici ``grafici ASCII''.
+
 \begin{figure}[htbp]
-  \caption{Finestra di modifica dei grafici gnuplot di gretl}
-  \label{fig-plot}
   \begin{center}
     \includegraphics[scale=0.5]{figures/plot_control}
   \end{center}
+  \caption{Finestra di modifica dei grafici gnuplot di gretl}
+  \label{fig-plot}
 \end{figure}
 
 
@@ -130,23 +123,28 @@ generare dei semplici ``grafici ASCII''.
 \label{sect-boxplots}
 
 I grafici boxplot non vengono generati con gnuplot, ma da \app{gretl}
-stesso.Questi grafici (da Tukey e Chambers) mostrano la distribuzione
-di una variabile. La ``scatola'' centrale (box) racchiude il 50 per
-cento centrale dei dati, ossia è delimitato dal primo e terzo
-quartile. I ``baffi'' (whiskers) si estendono fino ai valori minimo e
-massimo. Una linea trasversale sulla scatola indica la mediana.  Nel
-caso dei grafici a tacca ("notches"), una tacca indica i limiti
+stesso.
+
+Questi grafici (da Tukey e Chambers) mostrano la distribuzione di una
+variabile. La ``scatola'' centrale (box) racchiude il 50 per cento
+centrale dei dati, ossia è delimitato dal primo e terzo quartile. I
+``baffi'' (whiskers) si estendono fino ai valori minimo e massimo. Una
+linea trasversale sulla scatola indica la mediana.  
+
+Nel caso dei grafici a tacca (``notches''), una tacca indica i limiti
 dell'intervallo di confidenza approssimato al 90 per cento per la
 mediana, ottenuto col metodo bootstrap (se la serie dei dati è molto
-lunga, potrebbe essere necessario un po' di tempo).Facendo clic nella
-finestra del boxplot si ottiene un menù che permette di salvare il
-grafico come file encapsulated postscript (EPS) o come file postscript
-a piena pagina. Se si usa il sistema X Window è anche possibile
-salvare il grafico come file XPM, mentre in MS Windows è possibile
-copiarlo negli appunti in formato bitmap. Il menù dà anche la
-possibilità di mostrare un riepilogo in cinque numeri (minimo, primo
-quartile, mediana, terzo quartile, massimo) e un intervallo di
+lunga, potrebbe essere necessario un po' di tempo).
+
+Facendo clic nella finestra del boxplot si ottiene un menù che
+permette di salvare il grafico come file encapsulated postscript (EPS)
+o come file postscript a piena pagina. Se si usa il sistema X Window è
+anche possibile salvare il grafico come file XPM, mentre in MS Windows
+è possibile copiarlo negli appunti in formato bitmap. Il menù dà anche
+la possibilità di mostrare un riepilogo in cinque numeri (minimo,
+primo quartile, mediana, terzo quartile, massimo) e un intervallo di
 confidenza per la mediana, se il boxplot è del tipo ``a tacca''.
+
 Alcuni dettagli del funzionamento dei boxplot di gretl possono essere
 controllati attraverso un file testuale chiamato \verb+.boxplotrc+,
 che viene cercato, nell'ordine, nella directory di lavoro attuale,
@@ -164,15 +162,16 @@ mediana (l'impostazione predefinita non li mostra) e se occorre
 indicare separatamente gli outlier, ossia i punti che distano più di
 1.5 volte il range interquartile dalla scatola centrale
 (l'impostazione predefinita non li mostra). Ecco un esempio:
+
 \begin{code}
-        font = Times-Roman
-        fontsize = 16
-        max = 4.0
-        min = 0
-        width = 400
-        height = 448
-        numbers = %3.2f
-        outliers = true
+    font = Times-Roman
+    fontsize = 16
+    max = 4.0
+    min = 0
+    width = 400
+    height = 448
+    numbers = %3.2f
+    outliers = true
 \end{code}
 
 Sulla penultima riga, il valore associato a \verb+numbers+ è una
@@ -181,22 +180,25 @@ programmazione C; se viene specificata, controlla il modo in cui
 vengono mostrati la mediana e i quartili accanto al boxplot,
 altrimenti questi valori non vengono mostrati. Nell'esempio, i valori
 verranno mostrati usando 3 cifre in totale e 2 cifre di precisione
-dopo il punto decimale.Non occorre specificare tutte le opzioni, né
-importa l'ordine in cui vengono specificate. Le righe che non seguono
-la struttura ``variabile = valore'' vengono ignorate, così come le
-righe che iniziano con il carattere cancelletto, \verb+#+.  Dopo ogni
-variabile specificata nel comando boxplot è possibile inserire
-un'espressione booleana tra parentesi per limitare il campione da
-utilizzare per la variabile in questione, avendo cura di inserire uno
-spazio tra il nome (o il numero) della variabile e l'espressione. Si
-supponga di avere una variabile \verb+salario+ con gli stipendi di
-uomini e donne, e una variabile dummy \verb+GENERE+ che vale 1 per gli
-uomini e 0 per le donne. In questo caso è possibile disegnare dei
-boxplot comparativi usando il seguente comando nella finestra di
-dialogo:
+dopo il punto decimale.
+
+Non occorre specificare tutte le opzioni, né importa l'ordine in cui
+vengono specificate. Le righe che non seguono la struttura ``variabile
+= valore'' vengono ignorate, così come le righe che iniziano con il
+carattere cancelletto, \verb+#+.  
+
+Dopo ogni variabile specificata nel comando boxplot è possibile
+inserire un'espressione booleana tra parentesi per limitare il
+campione da utilizzare per la variabile in questione, avendo cura di
+inserire uno spazio tra il nome (o il numero) della variabile e
+l'espressione. Si supponga di avere una variabile \verb+salario+ con
+gli stipendi di uomini e donne, e una variabile dummy \verb+GENERE+
+che vale 1 per gli uomini e 0 per le donne. In questo caso è possibile
+disegnare dei boxplot comparativi usando il seguente comando nella
+finestra di dialogo:
       
 \begin{code}
-        salario (GENERE=1) salario (GENERE=0)
+    salario (GENERE=1) salario (GENERE=0)
 \end{code}
 
 

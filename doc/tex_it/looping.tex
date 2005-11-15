@@ -1,8 +1,6 @@
 \chapter{Costrutti loop}
 \label{looping}
 
-
-
 \section{Introduzione}
 \label{loop-intro}
 
@@ -11,6 +9,7 @@ accetta un blocco di comandi da ripetere una o più volte. Questa
 funzionalità è destinata all'uso per le simulazioni Monte Carlo, per
 il bootstrapping delle statistiche test e altre procedure di stima
 iterativa. La forma generale di un loop, o ciclo, è:
+
 \begin{code}
       loop espressione di controllo [ --progressive | --verbose ]
          corpo del loop
@@ -21,26 +20,29 @@ Come si spiega oltre, sono disponibili cinque tipi di espressione di
 controllo. Nel corpo del loop sono accettati i seguenti comandi:
 \cmd{genr}, \cmd{ols}, \cmd{print}, \cmd{printf}, \cmd{pvalue},
 \cmd{sim}, \cmd{smpl}, \cmd{store}, \cmd{summary}, \cmd{if},
-\cmd{else} e \cmd{endif}.In modalità predefinita, il comando
-\cmd{genr} all'interno di un loop opera in modo silenzioso (senza
-mostrare informazioni sulle variabili generate). Per ottenere
-informazioni da \cmd{genr} è possibile specificare l'opzione
-\verb+--verbose+ con \cmd{loop}.  L'opzione \verb+--progressive+ di
-\cmd{loop} modifica il comportamento dei comandi \cmd{ols},
-\cmd{print} e \cmd{store} rendendoli più comodi per l'uso in analisi
-di tipo Monte Carlo (si veda Section \ref{loop-progressive}).  Le
-sezioni che seguono descrivono le varie forme di espressioni di
-controllo e forniscono alcuni esempi di uso dei loop.  \tip{ Se
-  occorre eseguire un'analisi Monte Carlo con molte migliaia di
+\cmd{else} e \cmd{endif}.
+
+In modalità predefinita, il comando \cmd{genr} all'interno di un loop
+opera in modo silenzioso (senza mostrare informazioni sulle variabili
+generate). Per ottenere informazioni da \cmd{genr} è possibile
+specificare l'opzione \verb+--verbose+ con \cmd{loop}.
+
+L'opzione \verb+--progressive+ di \cmd{loop} modifica il comportamento
+dei comandi \cmd{ols}, \cmd{print} e \cmd{store} rendendoli più comodi
+per l'uso in analisi di tipo Monte Carlo (si veda Section
+\ref{loop-progressive}).
+
+Le sezioni che seguono descrivono le varie forme di espressioni di
+controllo e forniscono alcuni esempi di uso dei loop.
+
+\tip{Se occorre eseguire un'analisi Monte Carlo con molte migliaia di
   ripetizioni, possono verificarsi problemi di memoria e di tempo di
   calcolo. Un modo per minimizzare l'uso delle risorse di sistema
   consiste nell'eseguire lo script usando il programma a riga di
-  comando, \app{gretlcli}, redirigendo i risultati su un file.  }
+  comando, \app{gretlcli}, redirigendo i risultati su un file.}
 
 \section{Varianti di controllo del loop}
 \label{loop-control}
-
-
 
 \subsection{Loop limitati}
 \label{loop-count}
@@ -49,12 +51,13 @@ Il modo più semplice di controllare un loop consiste nello specificare
 direttamente il numero di volte che il ciclo deve essere ripetuto, in
 un cosiddetto ``loop limitato''.  Il numero di ripetizioni può essere
 una costante numerica, ad esempio \verb+loop 1000+, o può essere letto
-da una variabile, come in \verb+loop volte+.Se il numero di
-ripetizioni è indicato da una variabile, ad es.  \verb+volte+, la
-variabile dovrebbe essere uno scalare intero: se si usa una serie,
-viene letto il primo valore, e se questo non è intero, viene troncata
-la sua parte decimale. Si noti che \verb+volte+ viene valutata solo
-una volta, quando il loop viene impostato.
+da una variabile, come in \verb+loop volte+.
+
+Se il numero di ripetizioni è indicato da una variabile, ad es.
+\verb+volte+, la variabile dovrebbe essere uno scalare intero: se si
+usa una serie, viene letto il primo valore, e se questo non è intero,
+viene troncata la sua parte decimale. Si noti che \verb+volte+ viene
+valutata solo una volta, quando il loop viene impostato.
       
 
 \subsection{Loop di tipo while}
@@ -66,10 +69,12 @@ sinistra è il nome di una variabile predefinita, mentre il lato destro
 può essere una costante numerica o il nome di un'altra variabile
 predefinita. Ad esempio:
 	
-\cmd{loop while differ > .00001} L'esecuzione del ciclo di comandi
-continuerà fintanto che la condizione specificata rimane vera. Se il
-termine a destra della disuguaglianza è una variabile, essa viene
-valutata all'inizio di ogni nuova iterazione del ciclo.
+\cmd{loop while differ > .00001} 
+
+L'esecuzione del ciclo di comandi continuerà fintanto che la
+condizione specificata rimane vera. Se il termine a destra della
+disuguaglianza è una variabile, essa viene valutata all'inizio di ogni
+nuova iterazione del ciclo.
 
 \subsection{Loop con indice}
 \label{loop-index}
@@ -78,16 +83,20 @@ Un terzo tipo di controllo di un loop utilizza la speciale variabile
 indice \verb+i+.  In questo caso, vengono specificati valori iniziali
 e finali per \verb+i+, che viene incrementata di uno ogni volta che
 viene eseguito il ciclo.  La sintassi è la seguente: \cmd{loop
-  i=1..20}.La variabile indice può essere usata all'interno del corpo
-del loop, in uno dei modi seguenti: è possibile accedere al valore di
-\verb+i+ (si veda l'Example \ref{loop-panel-script}), oppure è
-possibile usare la sua rappresentazione come stringa \verb+$i+ (si
-veda l'Example \ref{loop-string-script}).I valori iniziale e finale
-per l'indice possono essere indicati in forma numerica, o come
-riferimento a variabili predefinite.  Nell'ultimo caso, le variabili
-vengono valutate una volta, quando il loop viene impostato. Inoltre,
-con dataset di serie storiche è possibile indicare i valori iniziale e
-finale sotto forma di date, ad esempio: \cmd{loop i=1950:1..1999:4}.
+  i=1..20}.
+
+La variabile indice può essere usata all'interno del corpo del loop,
+in uno dei modi seguenti: è possibile accedere al valore di \verb+i+
+(si veda l'Example~\ref{loop-panel-script}), oppure è possibile usare
+la sua rappresentazione come stringa \verb+$i+ (si veda l'Example
+\ref{loop-string-script}).
+
+I valori iniziale e finale per l'indice possono essere indicati in
+forma numerica, o come riferimento a variabili predefinite.
+Nell'ultimo caso, le variabili vengono valutate una volta, quando il
+loop viene impostato. Inoltre, con dataset di serie storiche è
+possibile indicare i valori iniziale e finale sotto forma di date, ad
+esempio: \cmd{loop i=1950:1..1999:4}.
       
 
 \subsection{Loop di tipo for each}
@@ -106,14 +115,15 @@ su un gruppo di variabili. Ecco un esempio:
 \end{code}
 
 Questo loop verrà eseguito tre volte, mostrando ``mele'', ``pere'' e
-``pesche'' ad ogni iterazione.  Per eseguire un loop su una lista di
-variabili contigue nel dataset, è possibile indicare i nomi della
-prima e dell'ultima variabile nella lista, separate da ``\verb+..+'',
-invece di dover indicare tutti i nomi. Ad esempio, ipotizzando di
-avere 50 variabili \verb+AK+, \verb+AL+, \dots{}, \verb+WY+, che
-contengono livelli di reddito per gli stati degli USA, per stimare una
-regressione del reddito sul tempo per ognuno degli stati, basta
-eseguire:
+``pesche'' ad ogni iterazione.  
+
+Per eseguire un loop su una lista di variabili contigue nel dataset, è
+possibile indicare i nomi della prima e dell'ultima variabile nella
+lista, separate da ``\verb+..+'', invece di dover indicare tutti i
+nomi. Ad esempio, ipotizzando di avere 50 variabili \verb+AK+,
+\verb+AL+, \dots{}, \verb+WY+, che contengono livelli di reddito per
+gli stati degli USA, per stimare una regressione del reddito sul tempo
+per ognuno degli stati, basta eseguire:
        
 \begin{code}
        genr time
@@ -135,50 +145,65 @@ continuazione (espressa in funzione della stessa variabile di
 controllo), mentre la terza parte specifica un incremento (o un
 decremento) per la variabile di controllo, da applicare ogni volta che
 il ciclo viene eseguito. L'intera espressione deve essere racchiusa
-tra parentesi.  Ad esempio:\cmd{loop for (r=0.01; r<.991; r+=.01)}La
-variable \verb+r+ assumerà i valori 0.01, 0.02, \dots{}, 0.99 nel giro
-di 99 iterazioni. Si noti che a causa della precisione limitata
+tra parentesi.  Ad esempio:
+
+\cmd{loop for (r=0.01; r<.991; r+=.01)}
+
+La variable \verb+r+ assumerà i valori 0.01, 0.02, \dots{}, 0.99 nel
+giro di 99 iterazioni. Si noti che a causa della precisione limitata
 dell'aritmetica in virgola mobile usata dal computer, può dover essere
 necessario usare una condizione di continuazione come quella mostrata
 sopra, \verb+r<.991+, invece della più ``naturale'' \verb+r<=.99+
 (usando numeri in doppia precisione su un processore x86, quando ci si
 aspetta che \verb+r+ valga 0.99, potrebbe in realtà valere
-0.990000000000001).Altre regole per i tre componenti dell'espressione
-di controllo: (1) la condizione iniziale deve avere forma X1 = Y1,
-dove Y1 deve essere una costante numerica o una variabile predefinita.
-Se la variabile X1 non esiste, viene creata automaticamente. (2) La
-condizione di continuazione deve avere la forma X1 operatore Y2, dove
-l'operatore può essere \verb+<+, \verb+>+, \verb+<=+ o \verb+>=+ e Y2
-deve essere una costante numerica o una variabile predefinita (nel
-caso in cui sia una variabile, essa viene valutata ad ogni esecuzione
-del ciclo). (3) L'espressione che indica l'incremento o il decremento
-deve avere la forma X1 += DELTA, oppre X1 -= DELTA, dove DELTA è una
-costante numerica o una variabile predefinita (nel secondo caso, essa
-viene valutata solo una volta, quando il loop viene impostato).
-      
+0.990000000000001).
+
+Altre regole per i tre componenti dell'espressione
+di controllo: 
+
+\begin{enumerate}
+\item La condizione iniziale deve avere forma X1 = Y1, dove Y1 deve
+  essere una costante numerica o una variabile predefinita.  Se la
+  variabile X1 non esiste, viene creata automaticamente.
+\item La condizione di continuazione deve avere la forma X1 operatore
+  Y2, dove l'operatore può essere \verb+<+, \verb+>+, \verb+<=+ o
+  \verb+>=+ e Y2 deve essere una costante numerica o una variabile
+  predefinita (nel caso in cui sia una variabile, essa viene valutata
+  ad ogni esecuzione del ciclo).
+\item L'espressione che indica l'incremento o il decremento deve avere
+  la forma X1 += DELTA, oppre X1 -= DELTA, dove DELTA è una costante
+  numerica o una variabile predefinita (nel secondo caso, essa viene
+  valutata solo una volta, quando il loop viene impostato)
+\end{enumerate}
+
 
 \section{La modalità progressiva}
 \label{loop-progressive}
 
 Usando l'opzione \verb+--progressive+ nel comando loop, l'effetto dei
 comandi \cmd{ols}, \cmd{print} e \cmd{store} è modificato nel modo
-seguente.\cmd{ols}: i risultati di ogni iterazione della regressione
-non vengono mostrati. Al contrario, una volta terminato il loop si
-ottiene un elenco dei seguenti valori: (a) il valore medio di ognuno
-dei coefficienti stimati, calcolato su tutte le iterazioni; (b) la
+seguente.
+
+\cmd{ols}: i risultati di ogni iterazione della regressione non
+vengono mostrati. Al contrario, una volta terminato il loop si ottiene
+un elenco dei seguenti valori: (a) il valore medio di ognuno dei
+coefficienti stimati, calcolato su tutte le iterazioni; (b) la
 deviazione standard relativa a questa media; (c) il valore medio
 dell'errore standard stimato per ogni coefficiente; (d) la deviazione
 standard degli errori standard stimati. Tutto ciò ha senso solo se
 ogni iterazione del loop contiene un elemento di casualità.
+
 \cmd{print}: se si usa questo comando per mostrare il valore di una
 variabile, questo non viene mostrato ad ogni iterazione. Al contrario,
 alla fine del loop si ottiene il valore medio e la deviazione standard
 della variabile, calcolata su tutte le iterazioni del ciclo. Questa
 funzione è utile per le variabili che assumono un singolo valore per
 ogni iterazione, ad esempio la somma dei quadrati degli errori di una
-regressione.  \cmd{store}: questo comando scrive i valori delle
-variabili specificate, ad ogni iterazione del loop, nel file indicato,
-ossia, tiene traccia completa del valore delle variabili in tutte le
+regressione.
+
+\cmd{store}: questo comando scrive i valori delle variabili
+specificate, ad ogni iterazione del loop, nel file indicato, ossia,
+tiene traccia completa del valore delle variabili in tutte le
 iterazioni. Ad esempio, si potrebbero salvare le stime dei
 coefficienti per poi studiarne la distribuzione di frequenza. È
 possibile usare il comando \cmd{store} solo una volta all'interno di
@@ -186,8 +211,6 @@ un loop.
 
 \section{Esempi di loop}
 \label{loop-examples}
-
-
 
 \subsection{Esempio di procedura Monte Carlo}
 \label{loop-mc-example}
@@ -227,13 +250,15 @@ Questo loop mostrerà le statistiche di riepilogo per le stime di "a",
 possibile aprire con \app{gretl} il file \verb+coeffs.gdt+, che
 contiene le stime dei singoli coefficienti durante tutte le
 iterazioni, ed esaminare nel dettaglio la distribuzione di frequenza
-delle stime.Il comando \cmd{nulldata} è utile per le procedure Monte
-Carlo: invece di aprire un ``vero'' dataset, \cmd{nulldata 50} (ad
-esempio) apre un finto dataset da 50 osservazioni, che contiene solo
-la costante e una variabile indice. Successivamente è possibile
-aggiungervi variabili usando il comando \cmd{genr}.Si veda il comando
-\cmd{set} per informazioni su come generare numeri pseudo-casuali in
-modo ripetibile.
+delle stime.
+
+Il comando \cmd{nulldata} è utile per le procedure Monte Carlo: invece
+di aprire un ``vero'' dataset, \cmd{nulldata 50} (ad esempio) apre un
+finto dataset da 50 osservazioni, che contiene solo la costante e una
+variabile indice. Successivamente è possibile aggiungervi variabili
+usando il comando \cmd{genr}.Si veda il comando \cmd{set} per
+informazioni su come generare numeri pseudo-casuali in modo
+ripetibile.
 
 \subsection{Minimi quadrati iterati}
 \label{loop-ils-examples}
@@ -241,13 +266,16 @@ modo ripetibile.
 L'Example \ref{greene-ils-script} usa un loop di tipo ``while'' per
 replicare la stima di una funzione di consumo non lineare nella forma
 	
-$C = \alpha + \beta Y^{\gamma} + \epsilon$ presentata in Greene (2000,
-Esempio 11.3).  Questo script è compreso nella distribuzione di
-\app{gretl} con il nome \verb+greene11_3.inp+; è possibile aprirlo
-usando il comando del menù ``File, Apri file comandi, File di esempio,
-Greene...''.L'opzione \verb+--print-final+ per il comando \cmd{ols} fa
-sì che non vengano mostrati i risultati della regressione per ogni
-iterazione, ma solo quelli dell'ultima iterazione del loop.
+\[ C = \alpha + \beta Y^{\gamma} + \epsilon \]
+
+presentata in Greene (2000, Esempio 11.3).  Questo script è compreso
+nella distribuzione di \app{gretl} con il nome \verb+greene11_3.inp+;
+è possibile aprirlo usando il comando del menù ``File, Apri file
+comandi, File di esempio, Greene...''.
+
+L'opzione \verb+--print-final+ per il comando \cmd{ols} fa sì che non
+vengano mostrati i risultati della regressione per ogni iterazione, ma
+solo quelli dell'ultima iterazione del loop.
 
 \begin{script}[htbp]
   \caption{Funzione di consumo non lineare}

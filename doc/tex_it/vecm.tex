@@ -1,10 +1,8 @@
 \chapter{Cointegrazione e modelli Vector Error Correction}
 \label{vecm-explanation}
 
-
 \section{Il test di cointegrazione di Johansen}
 \label{johansen-test}
-
 
 Il test di Johansen per la cointegrazione deve tenere conto di quali
 ipotesi vengono fatte a proposito dei termini deterministici, per cui
@@ -17,11 +15,11 @@ Si consideri una serie $x_t$ che si comporta nel modo seguente
 %      
 \[ x_t = m + x_{t-1} + \varepsilon_t \]
 %
-dove $m$ è un numero reale e $\varepsilon$$\ensuremath{_{t}}$ è un
-processo ``white noise''.  Come si può facilmente mostrare, $x_t$ è un
-``random walk'' che fluttua intorno a un trend deterministico con
-pendenza $m$. Nel caso particolare in cui $m$ = 0, il trend
-deterministico scompare e $x_t$ è un puro random walk.
+dove $m$ è un numero reale e $\varepsilon_t$ è un processo ``white
+noise''.  Come si può facilmente mostrare, $x_t$ è un ``random walk''
+che fluttua intorno a un trend deterministico con pendenza $m$. Nel
+caso particolare in cui $m$ = 0, il trend deterministico scompare e
+$x_t$ è un puro random walk.
     
 Si consideri ora un altro processo $y_t$, definito da
 %      
@@ -31,7 +29,7 @@ dove, ancora, $k$ è un numero reale e $u_t$ è un processo white noise.
 Poiché $u_t$ è stazionario per definizione, $x_t$ e $y_t$ sono
 cointegrate, ossia la loro differenza
 %      
-$z_t = y_t - x_t = k + u_t$
+\[ z_t = y_t - x_t = k + u_t \]
 %	
 è un processo stazionario. Per $k$ = 0, $z_t$ è un semplice white
 noise a media zero, mentre per $k$ $\ne$ 0 il processo $z_t$ è white
@@ -40,7 +38,6 @@ noise con media diversa da zero.
 Dopo alcune semplici sostituzioni, le due equazioni precedenti possono
 essere rappresentate congiuntamente come un sistema VAR(1)
 %      
-\renewcommand{\arraystretch}{1.3} \setlength{\arraycolsep}{.05in}
 \[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
   \begin{array}{c} k + m \\ m \end{array} \right] + \left[
   \begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
@@ -50,7 +47,6 @@ essere rappresentate congiuntamente come un sistema VAR(1)
 %	
 o in forma VECM
 %      
-\renewcommand{\arraystretch}{1.3} \setlength{\arraycolsep}{.05in}
 \begin{eqnarray*}
   \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
   \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
@@ -84,7 +80,6 @@ Possiamo ora considerare tre casi possibili:
   conseguenza neanche $y_t$.  Tuttavia, la distanza media tra $y_t$ e
   $x_t$ è diversa da zero. Il vettore $\mu_0$ è dato da
 %	  
-  \renewcommand{\arraystretch}{1.3} \setlength{\arraycolsep}{.05in}
   \[
   \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
   \]
@@ -95,7 +90,6 @@ Possiamo ora considerare tre casi possibili:
   $\mu$\ensuremath{_{0}} è un multiplo del vettore $\alpha$. Si noti
   che il VECM potrebbe essere scritto anche come
 %	  
-  \renewcommand{\arraystretch}{1.3} \setlength{\arraycolsep}{.05in}
   \[
   \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
   = \left[ \begin{array}{r} -1 \\ 0 \end{array} \right] \left[
@@ -135,13 +129,11 @@ L'esempio precedente può essere generalizzato in tre direzioni:
 \begin{enumerate}
 \item Se si considera un VAR di ordine maggiore di 1, l'algebra si
   complica, ma le conclusioni sono identiche.
-        
 \item Se il VAR include più di due variabili endogene, il rango di
   cointegrazione $r$ può essere maggiore di 1. In questo caso $\alpha$
   è una matrice con $r$ colonne e il caso con la costante vincolata
-  comporta che $\mu$\ensuremath{_{0}} sia una combinazione lineare
-  delle colonne di $\alpha$.
-	
+  comporta che $\mu_0$ sia una combinazione lineare delle colonne di
+  $\alpha$.
 \item Se si include un trend lineare nel modello, la parte
   deterministica del VAR diventa $\mu_0$ + $\mu_1$. Il ragionamento è
   praticamente quello visto sopra, tranne per il fatto che
@@ -155,7 +147,6 @@ L'esempio precedente può essere generalizzato in tre direzioni:
   quadratico nelle variabili (espresse in livelli). Questi due casi
   sono specificati rispettivamente con le opzioni \verb+--crt+ e
   \verb+--ct+ del comando \cmd{vecm}.
-	
 \end{enumerate}
 
 

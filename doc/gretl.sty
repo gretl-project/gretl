@@ -4,9 +4,9 @@
 
 \ProvidesPackage{gretl}
 
-%% i18n: translate here
 \newcommand{\refname}{References}
 \newcommand{\scriptname}{Example}
+\newcommand{\GCR}{\textit{Gretl Command Reference}}
 
 \setcounter{secnumdepth}{1}
 \setcounter{chapter}{-1}
@@ -132,6 +132,20 @@
     \Large \sffamily  #1\par\nobreak
     \vskip 30\p@
   }}
+
+%% revised caption style
+
+\long\def\@makecaption#1#2{%
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{\footnotesize {\bfseries #1}: #2}%
+  \ifdim \wd\@tempboxa >\hsize
+    {\footnotesize {\bfseries #1}: #2}\par
+  \else
+    \global \@minipagefalse
+    \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%
+  \fi
+  \vskip\belowcaptionskip}
+
 
 %% \def\@seccntformat#1{\protect\makebox[0pt][r]{\csname
 %%                      the#1\endcsname\quad}}

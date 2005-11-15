@@ -1,11 +1,8 @@
 \chapter{L'interfaccia a riga di comando}
 \label{cli}
 
-
-
 \section{Gretl sul terminale}
 \label{cli-console}
-
 
 Il pacchetto \app{gretl} include il programma a riga di comando
 \app{gretlcli}. Su Linux è possibile esegurlo in un terminale testuale
@@ -23,22 +20,20 @@ disponibile il completamento automatico dei comandi. Per muoversi
 nella lista dei comandi già eseguiti è possibile usare i tasti Freccia
 Su/Giù, mentre per muoversi sulla riga di comando è possibile usare i
 tasti Freccia a destra/sinistra e le scorciatoie in stile
-Emacs\footnote{In realtà quelli mostrati sono i valori predefiniti, ma
+Emacs.\footnote{In realtà quelli mostrati sono i valori predefiniti, ma
   possono essere modificati: si veda il
   \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{manuale
-    di readline}.}. Le scorciatoie più usate sono:
-    
-
+    di readline}.} Le scorciatoie più usate sono:
+%    
 \begin{center}
   \begin{tabular}{ll}
-    Scorciatoia & Effetto\\
+    \textit{Scorciatoia} & \textit{Effetto}\\
     \verb+Ctrl-a+ & Va all'inizio della riga\\
     \verb+Ctrl-e+ & Va alla fine della riga\\
     \verb+Ctrl-d+ & Cancella il carattere a destra\\
   \end{tabular}
 \end{center}
-
-
+%
 dove ``\verb+Ctrl-a+'' significa premere il tasto ``\verb+a+'' mentre
 si tiene premuto il tasto ``\verb+Ctrl+''.  Quindi se si vuole
 correggere qualcosa all'inizio della riga di comando, \emph{non
@@ -51,7 +46,6 @@ completare le lettere inserite, verrà inserito il comando
 corrispondente, altrimenti premendo Tab una seconda volta verrà
 visualizzata una lista delle alternative possibili.
     
-
 \section{Differenze con ESL di Ramanathan}
 \label{cli-syntax}
 
@@ -72,28 +66,24 @@ multilinea e il comando \cmd{freq}.
   la possibilità di spezzare le righe di comando su più righe dello
   schermo; in \app{gretlcli} si ottiene questo risultato inserendo una
   barra rovesciata \verb+\+ alla fine della riga da spezzare.
-	
 \item Per quanto riguarda \cmd{freq}, al momento non è possibile
   specificare intervalli personalizzati, come avviene in \app{ESL}.
   Inoltre, ai risultati del comando è stato aggiunto un test
   chi-quadro di normalità.
-	
 \end{itemize}
-
 
 Si noti anche che i comandi per usare la modalità batch sono stati
 semplificati. In \app{ESL} si usava, ad esempio:
       
 \begin{code}
-        esl -b filedati < fileinput > fileoutput
+    esl -b filedati < fileinput > fileoutput
 \end{code}
 
 mentre in \app{gretlcli} si usa:
       
 \begin{code}
-	gretlcli -b fileinput > fileoutput
+    gretlcli -b fileinput > fileoutput
 \end{code}
-
 
 Il file di input viene trattato come un argomento del programma,
 mentre il file di dati su cui operare va indicato all'interno del file

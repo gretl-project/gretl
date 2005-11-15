@@ -32,11 +32,11 @@ discussion of the analysis of these data. The data will be useful for
 practice purposes even without the text.
     
 \begin{figure}[htbp]
-  \caption{Practice data files window}
-  \label{fig-datafiles}
   \begin{center}
     \includegraphics[scale=0.5]{figures/datafiles}
   \end{center}
+  \caption{Practice data files window}
+  \label{fig-datafiles}
 \end{figure}
 
 If you select a row in this window and click on ``Info'' this opens a
@@ -57,11 +57,11 @@ range and sample range, and the names of the variables along with
 brief descriptive tags --- see Figure~\ref{fig-mainwin}.
     
 \begin{figure}[htbp]
-  \caption{Main window, with a practice data file open}
-  \label{fig-mainwin}
   \begin{center}
     \includegraphics[scale=0.5]{figures/mainwin}
   \end{center}
+  \caption{Main window, with a practice data file open}
+  \label{fig-mainwin}
 \end{figure}
 
 OK, what can we do now?  Hopefully the various menu options should be
@@ -75,11 +75,11 @@ Squares (OLS). Selecting OLS pops up a dialog box calling for a
 \emph{model specification} --- see Figure~\ref{fig-selector}.
     
 \begin{figure}[htbp]
-  \caption{Model specification dialog}
-  \label{fig-selector}
   \begin{center}
     \includegraphics[scale=0.5]{figures/selector}
   \end{center}
+  \caption{Model specification dialog}
+  \label{fig-selector}
 \end{figure}
 
 To select the dependent variable, highlight the variable you want in
@@ -106,11 +106,11 @@ output will appear.  The output is reasonably comprehensive and in a
 standard format (Figure~\ref{fig-modelwin}).
     
 \begin{figure}[htbp]
-  \caption{Model output window}
-  \label{fig-modelwin}
   \begin{center}
     \includegraphics[scale=0.5]{figures/modelwin}
   \end{center}
+  \caption{Model output window}
+  \label{fig-modelwin}
 \end{figure}
 
 The output window contains menus that allow you to inspect or graph
@@ -139,27 +139,25 @@ The default value of the preamble is as follows:
       \thispagestyle{empty}
 \end{code}
 
-Note that the \verb+amsmath+
- and \verb+dcolumn+ packages are required.
+Note that the \verb+amsmath+ and \verb+dcolumn+ packages are required.
 
-To import \app{gretl} output
- into a word processor, you may copy and paste from an output window,
- using its \textsf{Edit} menu (or Copy button, in some contexts) to
- the target program.  Many (not all) \app{gretl} windows offer the
- option of copying in RTF (Microsoft's ``Rich Text Format'') or as
- {\LaTeX}. If you are pasting into a word processor, RTF may be a good
- option because the tabular formatting of the output is
- preserved.\footnote{Note that when you copy as RTF under MS Windows,
- Windows will only allow you to paste the material into applications
- that ``understand'' RTF.  Thus you will be able to paste into MS
- Word, but not into notepad.  Note also that there appears to be a bug
- in some versions of Windows, whereby the paste will not work properly
- unless the ``target'' application (e.g.  MS Word) is already running
- prior to copying the material in question.}  Alternatively, you can
- save the output to a (plain text) file then import the file into the
- target program.  When you finish a \app{gretl} session you are given
- the option of saving all the output from the session to a single
- file.
+To import \app{gretl} output into a word processor, you may copy and
+paste from an output window, using its \textsf{Edit} menu (or Copy
+button, in some contexts) to the target program.  Many (not all)
+\app{gretl} windows offer the option of copying in RTF (Microsoft's
+``Rich Text Format'') or as {\LaTeX}. If you are pasting into a word
+processor, RTF may be a good option because the tabular formatting of
+the output is preserved.\footnote{Note that when you copy as RTF under
+  MS Windows, Windows will only allow you to paste the material into
+  applications that ``understand'' RTF.  Thus you will be able to
+  paste into MS Word, but not into notepad.  Note also that there
+  appears to be a bug in some versions of Windows, whereby the paste
+  will not work properly unless the ``target'' application (e.g.  MS
+  Word) is already running prior to copying the material in question.}
+Alternatively, you can save the output to a (plain text) file then
+import the file into the target program.  When you finish a
+\app{gretl} session you are given the option of saving all the output
+from the session to a single file.
 
  Note that on the \app{gnome} desktop and under MS Windows, the
  \textsf{File} menu includes a command to send the output directly to
@@ -219,7 +217,7 @@ To import \app{gretl} output
     this mode is selected various warning messages are suppressed.)
     Activate or suppress \app{gretl}'s messaging about the
     availability of program updates.  Configure or turn on/off the
-    main-window toolbar. See the \emph{Gretl Command Reference} for
+    main-window toolbar. See the \GCR for
     further details.
   \item \textsf{Exit}: Quit the program. If expert mode is not
     selected you'll be prompted to save any unsaved work.
@@ -264,7 +262,6 @@ To import \app{gretl} output
   \item \textsf{Save as}: Save the current session to file under a
     chosen name.
   \end{itemize}
-
 
 \item \textsf{Data menu}
   \begin{itemize}
@@ -332,7 +329,6 @@ To import \app{gretl} output
     with the program's internal state.
   \end{itemize}
 
-
 \item \textsf{Sample menu}
   \begin{itemize}
   \item \textsf{Set range}: Select a different starting and/or ending
@@ -354,7 +350,7 @@ To import \app{gretl} output
     above, except that you don't need a pre-defined variable: you
     supply a Boolean expression (e.g. \verb+sqft > 1400+) and the
     sample is restricted to observations satisfying that condition.
-    See the entry for \cmd{genr} in the \emph{Gretl Command Reference}
+    See the entry for \cmd{genr} in the \GCR
     for details on the Boolean operators that can be used.
   \item \textsf{Drop all obs with missing values}: Drop from the
     current sample all observations for which at least one variable
@@ -380,7 +376,6 @@ To import \app{gretl} output
     becomes a column in the modified data matrix); can be useful with
     imported data that have been read in ``sideways''.
   \end{itemize}
-
 
 \item \textsf{Variable menu} Most items under here operate on a single
   variable at a time.  The ``active'' variable is set by highlighting

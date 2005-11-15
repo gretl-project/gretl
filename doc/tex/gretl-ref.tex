@@ -6,8 +6,7 @@
 \usepackage[pdftex]{graphicx}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
 %% \usepackage[pdftex]{thumbpdf}
-\usepackage[letterpaper,hmargin=1.1in,top=.5in]{geometry}
-
+\usepackage[body={6.3in,9in},top=.5in,left=1.1in]{geometry}
 
 %% \pdfimageresolution=120
 \hypersetup{pdftitle={Gretl Manual},
@@ -44,7 +43,7 @@
 \begin{center}
 \label{titlepage}
 
-\gtitle{Gretl Users' Guide}
+\gtitle{Gretl Command Reference}
 
 \gsubtitle{Gnu Regression, Econometrics and Time-series}
 
@@ -85,26 +84,6 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 \clearpage
 \pagenumbering{arabic}
 
-\include{introduction}
-\include{starting}
-\include{modes}
-\include{datafiles}
-\include{genr}
-\include{panel}
-\include{sampling}
-\include{graphs}
-\include{nls}
-\include{mle}
-\include{looping}
-\include{functions}
-\include{vecm}
-\include{trouble}
-\include{cli}
-
-\begin{appendices}
-\include{appendices}
-\end{appendices}
-
-\include{biblio}
+\include{refbody}
 
 \end{document}

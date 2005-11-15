@@ -1,8 +1,6 @@
 \chapter{Funzioni speciali in genr}
 \label{chap-genr}
 
-
-
 \section{Introduzione}
 \label{genr-intro}
 
@@ -23,7 +21,6 @@ utilizzabili rispettivamente con le funzioni \verb+hpfilt()+ e
 \verb+bkfilt()+, che richiedono come argomento il nome della variabile
 da processare.
     
-
 \subsection{Il filtro di Hodrick--Prescott}
 \label{hodrick-prescott}
 
@@ -39,40 +36,44 @@ Si consideri la rappresentazione spettrale di una serie storica $y_t$:
 se volessimo estrarre solo la componente di \emph{y\ensuremath{_{t}}}
 che si trova tra le frequenze $\underline{\omega}$ e
 $\overline{\omega}$ potremmo applicare un filtro passa banda:
-	
+%	
 \[ c^*_t = \int_{-\pi}^{\pi} F^*(\omega) e^{i\omega} \mathrm{d}
-Z(\omega) \] dove $F^*(\omega) = 1$ per $\underline{\omega} < |\omega|
-< \overline{\omega}$ e 0 altrove. Ciò implicherebbe, nel dominio
+Z(\omega) \] 
+%
+dove $F^*(\omega) = 1$ per $\underline{\omega} < |\omega| <
+\overline{\omega}$ e 0 altrove. Ciò implicherebbe, nel dominio
 temporale, applicare alla serie un filtro con un numero infinito di
 coefficienti, cosa non desiderabile. Il filtro passa banda di Baxter e
-King applica a \emph{y\ensuremath{_{t}}} un polinomio finito
-nell'operatore di ritardo \emph{A}(\emph{L}):
+King applica a $y_t$ un polinomio finito nell'operatore di ritardo
+$A(L)$:
 %	
 \[ c_t = A(L) y_t \]
 %
-dove \emph{A}(\emph{L}) è definito come
+dove $A(L)$ è definito come
 %	
 \[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
 
-I coefficienti \emph{a\ensuremath{_{i}}} sono scelti in modo che
-$F(\omega) = A(e^{i\omega})A(e^{-i\omega})$ sia la migliore
-approssimazione di $F^*(\omega)$ per un dato \emph{k}. Chiaramente,
-maggiore è \emph{k}, migliore è l'approssimazione, ma poiché occorre
-scartare 2\emph{k} osservazioni, di solito si cerca un compromesso.
-Inoltre, il filtro ha altre proprietà teoriche interessanti, tra cui
-quella che \emph{A}(1) = 0, quindi una serie con una sola radice
-unitaria è resa stazionaria con l'applicazione del filtro.In pratica,
-il filtro è usato di solito con dati mensili o trimestrali per
-estrarne la componente di ``ciclo economico'', ossia la componente tra
-6 e 36 trimestri. I valori usuali per \emph{k} sono 8 o 12 (o forse di
+I coefficienti $a_i$ sono scelti in modo che $F(\omega) =
+A(e^{i\omega})A(e^{-i\omega})$ sia la migliore approssimazione di
+$F^*(\omega)$ per un dato $k$. Chiaramente, maggiore è $k$, migliore è
+l'approssimazione, ma poiché occorre scartare $2k$ osservazioni, di
+solito si cerca un compromesso.  Inoltre, il filtro ha altre proprietà
+teoriche interessanti, tra cui quella che $a(1) = 0$, quindi una serie
+con una sola radice unitaria è resa stazionaria con l'applicazione del
+filtro.
+
+In pratica, il filtro è usato di solito con dati mensili o trimestrali
+per estrarne la componente di ``ciclo economico'', ossia la componente
+tra 6 e 36 trimestri. I valori usuali per $k$ sono 8 o 12 (o forse di
 più per serie mensili).  I valori predefiniti per i limiti di
 frequenza sono 8 e 32, mentre il valore predefinito per l'ordine di
-approssimazione, \emph{k}, è 8.  È possibile impostare questi valori
-usando il comando \cmd{set}.  La parola chiave per impostare i limiti
-di frequenza è \verb+bkbp_limits+, mentre quella per \emph{k} è
-\verb+bkbp_k+.  Quindi ad esempio, se si stanno usando dati mensili e
-si vuole impostare i limiti di frequenza tra 18 e 96, e \emph{k} a 24,
-si può eseguire
+approssimazione, $k$, è 8.  È possibile impostare questi valori usando
+il comando \cmd{set}.  La parola chiave per impostare i limiti di
+frequenza è \verb+bkbp_limits+, mentre quella per $k$ è \verb+bkbp_k+.
+Quindi ad esempio, se si stanno usando dati mensili e si vuole
+impostare i limiti di frequenza tra 18 e 96, e $k$ a 24, si può
+eseguire
+
 \begin{code}
 	set bkbp_limits 18 96
 	set bkbp_k 24
@@ -102,6 +103,7 @@ valido). La funzione \verb+ok()+ è il complemento di \verb+missing+,
 ossia una scorciatoia per \verb+!missing+ (dove \verb+!+ è l'operatore
 booleano NOT).  Ad esempio, è possibile contare i valori mancanti
 della variabile \verb+x+ usando
+
 \begin{code}
       genr nmanc_x = sum(missing(x))
 \end{code}
@@ -113,6 +115,7 @@ attenzione (di solito non bisogna confondere valori mancanti col
 valore zero), ma può essere utile in alcuni casi: ad esempio, è
 possibile determinare la prima osservazione valida di una variabile
 \verb+x+ usando
+
 \begin{code}
         genr time
         genr x0 = min(zeromiss(time * ok(x)))
@@ -120,16 +123,17 @@ possibile determinare la prima osservazione valida di una variabile
 
 
 La funzione \verb+misszero()+ compie l'operazione opposta di
-\verb+zeromiss+, ossia converte tutti i valori mancanti in zero.  Può
-essere utile chiarire la propagazione dei valori mancanti all'interno
-delle formule di \verb+genr+. La regola generale è che nelle
-operazioni aritmetiche che coinvolgono due variabili, se una delle
-variabili ha un valore mancante in corrispondenza dell'osservazione
-\emph{t}, anche la serie risultante avrà un valore mancante in
-\emph{t}. L'unica eccezione a questa regola è la moltiplicazione per
-zero: zero moltiplicato per un valore mancante produce sempre zero
-(visto che matematicamente il risultato è zero a prescindere dal
-valore dell'altro fattore).
+\verb+zeromiss+, ossia converte tutti i valori mancanti in zero.  
+
+Può essere utile chiarire la propagazione dei valori mancanti
+all'interno delle formule di \verb+genr+. La regola generale è che
+nelle operazioni aritmetiche che coinvolgono due variabili, se una
+delle variabili ha un valore mancante in corrispondenza
+dell'osservazione $t$, anche la serie risultante avrà un valore
+mancante in $t$. L'unica eccezione a questa regola è la
+moltiplicazione per zero: zero moltiplicato per un valore mancante
+produce sempre zero (visto che matematicamente il risultato è zero a
+prescindere dal valore dell'altro fattore).
     
 
 \section{Recupero di variabili interne}
@@ -139,8 +143,9 @@ Il comando \verb+genr+ fornisce un modo per recuperare vari valori
 calcolati dal programma nel corso della stima dei modelli o della
 verifica di ipotesi. Le variabili che possono essere richiamate in
 questo modo sono elencate nella XXX; qui ci occupiamo in particolare
-delle variabili speciali \verb+$test+ e \verb+$pvalue+.Queste
-variabili contengono, rispettivamente, il valore dell'ultima
+delle variabili speciali \verb+$test+ e \verb+$pvalue+.
+
+Queste variabili contengono, rispettivamente, il valore dell'ultima
 statistica test calcolata durante l'ultimo uso esplicito di un comando
 di test e il p-value per quella statistica test. Se non è stato
 eseguito alcun comando di test, le variabili contengono il codice di
@@ -175,6 +180,7 @@ preciso quali valori vengono recuperati da \verb+$test+ e
 \verb+$pvalue+ occorre formulare il comando di test in modo che il
 risultato non sia ambiguo. Questa nota vale in particolare per i
 comandi \verb+adf+ e \verb+lmtest+.
+
 \begin{itemize}
 \item Di solito, il comando \cmd{adf} genera tre varianti del test
   Dickey--Fuller: una basata su una regressione che include una
@@ -184,13 +190,12 @@ comandi \verb+adf+ e \verb+lmtest+.
   possibile selezionare la variante per cui verranno salvati i valori,
   usando una delle opzioni \verb+--nc+, \verb+--c+, \verb+--ct+ o
   \verb+--ctt+ con il comando \verb+adf+.
-	
 \item Di solito, il comando \cmd{lmtest} (che deve seguire una
   regressione OLS) esegue vari test diagnostici sulla regressione in
   questione. Per controllare cosa viene salvato in \verb+$test+ e
   \verb+$pvalue+ occorre limitare il test usando una delle opzioni
-  \verb+--logs+, \verb+--autocorr+, \verb+--squares+ o \verb+--white+.
-	
+  \verb+--logs+, \verb+--autocorr+, \verb+--squares+ 
+  o \verb+--white+.
 \end{itemize}
 
 Un aiuto all'uso dei valori immagazzinati in \verb+$test+ e
