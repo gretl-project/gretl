@@ -18,12 +18,6 @@
       these in GUI dialog boxes; generally there are menu items which
       achieve the same effect.</para>
 
-    <para>The option flags shown below are in <quote>long
-	form</quote>, with a somewhat mnemonic term preceded by two
-      dashes.  There are also corresponding short forms: these are
-      shown in <xref linkend="tab-options"/>.
-    </para>
-
     <para>
       The following conventions are used below:
     </para>
