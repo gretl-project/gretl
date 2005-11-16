@@ -71,6 +71,12 @@
   <xsl:text>}</xsl:text>
 </xsl:template>
 
+<xsl:template match="function">
+  <xsl:text>\cmd{</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>}</xsl:text>
+</xsl:template>
+
 <xsl:template match="citetitle">
   <xsl:text>\emph{</xsl:text>
   <xsl:apply-templates/>
@@ -91,7 +97,9 @@
 
 <xsl:template match="para">
   <xsl:apply-templates/>
-  <xsl:text>&#10;&#10;</xsl:text>
+  <xsl:if test="not(ancestor::entry)">
+    <xsl:text>&#10;&#10;</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="variablelist">
@@ -171,7 +179,7 @@
 
 <xsl:template match="literal">
   <xsl:text>\verb+</xsl:text>
-  <xsl:value-of select="translate(., '&#10;', ' ')"/>
+  <xsl:value-of select="translate(., '&#10;', '')"/>
   <xsl:text>+</xsl:text> 
 </xsl:template>
 
@@ -255,9 +263,9 @@
 </xsl:template>
 
 <xsl:template match="tip">
-  <xsl:text>\tip{</xsl:text>
+  <xsl:text>&#10;\tip{</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>}</xsl:text>
+  <xsl:text>}&#10;</xsl:text>
 </xsl:template>
 
 <xsl:template match="example">
@@ -287,14 +295,19 @@
     <xsl:when test="following-sibling::entry">
       <xsl:text> &amp; </xsl:text>
     </xsl:when>
-    <xsl:otherwise>
-      <xsl:text>\\&#10;</xsl:text>
-    </xsl:otherwise>
   </xsl:choose>
 </xsl:template>
 
 <xsl:template match="row">
   <xsl:apply-templates/>
+  <xsl:choose>
+    <xsl:when test="ancestor::thead">
+      <xsl:text> \\ [4pt]&#10;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text> \\&#10;</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="tbody">
@@ -303,7 +316,6 @@
 
 <xsl:template match="thead">
   <xsl:apply-templates/>
-  <xsl:text> [4pt]&#10;</xsl:text>
 </xsl:template>
 
 <xsl:template name="tabcolstring">

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
+
 <commandlist language="spanish">
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>

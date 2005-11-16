@@ -24,30 +24,38 @@
 
     <itemizedlist>
 
-      <listitem><para>
-	  A <literal>typewriter font</literal> is used for material
-	  that you would type directly, and also for internal names of
-	  variables.
-	</para></listitem>
+      <listitem>
+	<para>
+	  A <literal>typewriter font</literal> is used for material that you
+	  would type directly, and also for internal names of variables.
+	</para>
+      </listitem>
 
-      <listitem><para>Terms in <replaceable>italics</replaceable> are
-	  place-holders: you should substitute something specific,
-	  e.g. you might type <varname>income</varname> in place of
-	  the generic <replaceable>xvar</replaceable>.
-	</para></listitem>
+      <listitem>
+	<para>
+	  Terms in a <replaceable>slanted font</replaceable> are place-holders:
+	  you should substitute something specific, e.g. you might type
+	  <varname>income</varname> in place of the generic
+	  <replaceable>xvar</replaceable>.</para>
+      </listitem>
 
-      <listitem><para><literal>The construction [</literal>
-	  <replaceable>arg</replaceable> <literal>]</literal> means
-	  that the argument <replaceable>arg</replaceable> is
-	  optional: you may supply it or not (but in any case don't
-	  type the brackets).
-	</para></listitem>
+      <listitem>
+	<para>
+	  <literal>The construction [</literal> <replaceable>arg</replaceable>
+	  <literal>]</literal> means that the argument
+	  <replaceable>arg</replaceable> is optional: you may supply it or not
+	  (but in any case don't type the brackets).
+	</para>
+      </listitem>
 
-      <listitem><para>The phrase <quote>estimation command</quote>
-	  means a command that generates estimates for a given model,
-	  for example <command>ols</command>, <command>ar</command> or
+      <listitem>
+	<para>
+	  The phrase <quote>estimation command</quote> means a command that
+	  generates estimates for a given model, for example
+	  <command>ols</command>, <command>ar</command> or
 	  <command>wls</command>.
-	</para></listitem>
+	</para>
+      </listitem>
 
     </itemizedlist>
 
@@ -66,11 +74,12 @@
 
   <sect1 id="estimators"><title>Estimators and tests: summary</title>
 
-    <para><xref linkend="tab-estim"/> shows the estimators available
-      under the Model menu in <application>gretl</application>'s main
-      window.  The corresponding script command (if there is one
-      available) is shown in parentheses.  For details consult the
-      command's entry in <xref linkend="cmdref"/>.</para>
+    <para>
+      <xref linkend="tab-estim"/> shows the estimators available under the Model
+      menu in <application>gretl</application>'s main window.  The corresponding
+      script command (if there is one available) is shown in parentheses.  For
+      details consult the command's entry in <xref linkend="cmdref"/>.
+    </para>
 
     <table id="tab-estim" frame="none">
       <title>Estimators</title>

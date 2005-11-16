@@ -2077,14 +2077,10 @@ static gchar *make_viewer_title (int role, const char *fname)
     return title;
 }
 
-/* ........................................................... */
-
 static void content_changed (GtkWidget *w, windata_t *vwin)
 {
     mark_content_changed(vwin);
 }
-
-/* ........................................................... */
 
 static windata_t *common_viewer_new (int role, const char *title, 
 				     gpointer data, int record)
@@ -2448,6 +2444,7 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 #ifndef OLD_GTK
     GtkTextBuffer *tbuf = NULL;
 #endif
+    gchar *fbuf = NULL;
     GtkWidget *close;
     windata_t *vwin;
     gchar *title = NULL;
@@ -2486,19 +2483,8 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 		     G_CALLBACK(delete_file_viewer), vwin);
     gtk_widget_show(close);
 
-    if (role == GUI_HELP_ENGLISH || role == GUI_HELP) {
-	gchar *fbuf = NULL;
-
-	if (g_file_get_contents(filename, &fbuf, NULL, NULL)) {
-	    vwin->data = fbuf;
-	}
-    } else {
-#ifndef OLD_GTK
-	text_buffer_insert_file(tbuf, filename, role); 
-#else
-	text_buffer_insert_file(vwin->w, filename, role);
-#endif
-    }
+    g_file_get_contents(filename, &fbuf, NULL, NULL);
+    vwin->data = fbuf;
 
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);

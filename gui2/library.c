@@ -890,10 +890,10 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     const char *title, *spintext, **opts;
 
     /* save the user's settings, per session */
-    static int active[] = { 0, 1, 1, 1, 0, 0 };
+    static int adf_active[] = { 0, 1, 1, 1, 0, 0 };
+    static int kpss_active[] = { 1, 0 };
     static int order = 1;
 
-    int actmax = (action == ADF)? 6 : 2;
     int okT, omax, err;
 
     if (order < 0) {
@@ -912,9 +912,6 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	spintext = kpss_spintext;
 	opts = kpss_opts;
 
-	active[0] = 1;
-	active[1] = 0;
-
 	okT = ok_obs_in_series(mdata->active_var);	
 	omax = okT / 2;
 	order = 4.0 * pow(okT / 100.0, 0.25);
@@ -924,9 +921,9 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	order = omax;
     }    
 
-    err = checks_dialog(_(title), 
-			opts, actmax,
-			active,
+    err = checks_dialog(_(title), opts,
+			(action == ADF)? 6 : 2,
+			(action == ADF)? adf_active : kpss_active,
 			&order, _(spintext),
 			0, omax, action);
     if (err < 0) {
@@ -934,10 +931,10 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     }
 
     if (action == ADF) {
-	if (active[0] == 0 &&
-	    active[1] == 0 &&
-	    active[2] == 0 &&
-	    active[3] == 0) {
+	if (adf_active[0] == 0 &&
+	    adf_active[1] == 0 &&
+	    adf_active[2] == 0 &&
+	    adf_active[3] == 0) {
 	    return;
 	}
     }
@@ -946,15 +943,15 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 			  selected_varname());
 
     if (action == ADF) {
-	if (active[0]) gretl_command_strcat(" --nc");
-	if (active[1]) gretl_command_strcat(" --c");
-	if (active[2]) gretl_command_strcat(" --ct");
-	if (active[3]) gretl_command_strcat(" --ctt");
-	if (active[4]) gretl_command_strcat(" --verbose");
-	if (active[5]) order = -order; /* auto-trim the lag order */
+	if (adf_active[0]) gretl_command_strcat(" --nc");
+	if (adf_active[1]) gretl_command_strcat(" --c");
+	if (adf_active[2]) gretl_command_strcat(" --ct");
+	if (adf_active[3]) gretl_command_strcat(" --ctt");
+	if (adf_active[4]) gretl_command_strcat(" --verbose");
+	if (adf_active[5]) order = -order; /* auto-trim the lag order */
     } else {
-	if (active[0]) gretl_command_strcat(" --trend");
-	if (active[1]) gretl_command_strcat(" --verbose");
+	if (kpss_active[0]) gretl_command_strcat(" --trend");
+	if (kpss_active[1]) gretl_command_strcat(" --verbose");
     } 
 
     if (check_and_record_command() || bufopen(&prn)) {

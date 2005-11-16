@@ -792,28 +792,6 @@ static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
     return FALSE;
 }
 
-static void helpwin_scroll_to_topic (windata_t *hwin, int pos)
-{
-#ifndef OLD_GTK  
-    GtkTextBuffer *buf;
-    GtkTextIter iter;
-    GtkTextMark *vis;
-
-    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(hwin->w));
-    gtk_text_buffer_get_iter_at_line_index(buf, &iter, pos, 0);
-    vis = gtk_text_buffer_create_mark(buf, "vis", &iter, FALSE);
-    gtk_text_view_scroll_to_mark(GTK_TEXT_VIEW(hwin->w), vis, 0.0, TRUE, 0.1, 0.0);
-#else
-    double frac;
-    gfloat adj;
-
-    frac = (double) pos * (double) GTK_TEXT(hwin->w)->vadj->upper;
-    frac /= (double) script_help_length;
-    adj = 0.999 * frac;
-    gtk_adjustment_set_value(GTK_TEXT(hwin->w)->vadj, adj);
-#endif 
-}
-
 static void real_do_help (guint pos, int cli)
 {
     static windata_t *gui_hwin;
@@ -838,11 +816,7 @@ static void real_do_help (guint pos, int cli)
 	gdk_window_raise(hwin->w->parent->window);
     }
 
-    if (hwin->data != NULL) {
-	set_gui_help_topic_buffer(hwin, pos);
-    } else {
-	helpwin_scroll_to_topic(hwin, pos);
-    }
+    set_help_topic_buffer(hwin, pos);
 }
 
 void do_gui_help (gpointer data, guint pos, GtkWidget *widget) 

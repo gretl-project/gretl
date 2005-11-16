@@ -49,7 +49,7 @@ void create_text (windata_t *vwin, GtkTextBuffer **buf,
 
 void text_table_setup (windata_t *vwin);
 
-void set_gui_help_topic_buffer (windata_t *hwin, int pos);
+void set_help_topic_buffer (windata_t *hwin, int pos);
 
 #ifdef USE_GTKSOURCEVIEW
 

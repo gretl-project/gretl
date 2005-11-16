@@ -1,5 +1,5 @@
 %% gretl.sty, written by Allin Cottrell, <2005/11/07>
-%% To be used when generating the Gretl Users' Guide 
+%% To be used when generating the Gretl manuals
 %% from LaTeX source.
 
 \ProvidesPackage{gretl}
@@ -7,6 +7,7 @@
 \newcommand{\refname}{References}
 \newcommand{\scriptname}{Example}
 \newcommand{\GCR}{\textit{Gretl Command Reference}}
+\newcommand{\GUG}{\textit{Gretl User's Guide}}
 
 \setcounter{secnumdepth}{1}
 \setcounter{chapter}{-1}
@@ -14,7 +15,7 @@
 \newcommand{\app}[1]{\textsf{#1}}
 \newcommand{\cmd}[1]{\texttt{#1}}
 
-\newenvironment{code}{\par\footnotesize\verbatim}
+\newenvironment{code}{\par\small\verbatim}
 {\endverbatim\normalsize}
 
 %% Unlike standard book class, running heads not in caps  
@@ -137,9 +138,9 @@
 
 \long\def\@makecaption#1#2{%
   \vskip\abovecaptionskip
-  \sbox\@tempboxa{\footnotesize {\bfseries #1}: #2}%
+  \sbox\@tempboxa{\small {\bfseries #1}: #2}%
   \ifdim \wd\@tempboxa >\hsize
-    {\footnotesize {\bfseries #1}: #2}\par
+    {\small {\bfseries #1}: #2}\par
   \else
     \global \@minipagefalse
     \hb@xt@\hsize{\hfil\box\@tempboxa\hfil}%

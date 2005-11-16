@@ -1,19 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
   <chapter id="c-optarg">
     <title>Opciones, argumentos y directorios</title>
 
     <sect1 id="optarg1">
       <title><application>gretl</application></title>
 
-      <para><command><application>gretl</application></command> (en MS Windows, <command>gretlw32.exe</command>)<footnote><para>En
-      Linux, se instala un <quote>lote de instrucciones de envoltura (wrapper)</quote>
-      llamado <filename>gretl</filename>. Este lote de instrucciones comprueba si
-      la variable de entorno <literal>DISPLAY</literal> está activada; si lo
-      está, lanza el programa GUI, <filename>gretl_x11</filename>, y si no,
-      lanza el programa de línea de instrucciones, <filename>gretlcli</filename>.</para></footnote></para>
+      <para>
+      <command><application>gretl</application></command> (en MS Windows,
+      <command>gretlw32.exe</command>)<footnote><para>En Linux, se instala un
+	  <quote>lote de instrucciones de envoltura (wrapper)</quote> llamado
+	  <filename>gretl</filename>. Este lote de instrucciones comprueba si la
+	  variable de entorno <literal>DISPLAY</literal> está activada; si lo
+	  está, lanza el programa GUI, <filename>gretl_x11</filename>, y si no,
+	  lanza el programa de línea de instrucciones,
+	  <filename>gretlcli</filename>.</para>
+      </footnote>
+    </para>
 
       <para>- Abre el programa y espera las instruccionest del usuario.</para>
 
-      <para><command><application>gretl</application></command> <replaceable>archivo_de_datos</replaceable></para>
+      <para><command><application>gretl</application></command> <replaceable>archivo_de_datos</replaceable>
+    </para>
 
       <para>- Abre el programa con el archivo de datos indicado en su ventana
       de trabajo. El archivo de datos puede estar en formato propio de
@@ -120,14 +128,17 @@
 
       <para>También hay algunas casillas para señalar. Señalando la casilla
       <quote>modo experto</quote> se suprimen algunos mensajes de aviso, que se
-      muestran en caso contrario. Marcar la casilla <quote>Informar sobre las actualizaciones de <application>gretl</application>
-      </quote> hace que <application>gretl</application> intente conectar con el servidor de
-      actualizaciones al empezar el programa. Desmarcar <quote>Mostrar barra
-      de herramientas de <application>gretl</application></quote> desactiva el icono
-      del mismo. Si el idioma del sistema no es el Inglés, y el carácter de punto
-      decimal no es el punto <quote><literal>.</literal></quote>,
-      desactivar la casilla <quote>Utilizar configuración local para el punto decimal</quote> hará que
-      <application>gretl</application> utilice el punto a pesar de todo.</para>
+      muestran en caso contrario. Marcar la casilla <quote>Informar sobre las
+	actualizaciones de <application>gretl</application></quote> hace que
+      <application>gretl</application> intente conectar con el servidor de
+      actualizaciones al empezar el programa. Desmarcar <quote>Mostrar barra de
+	herramientas de <application>gretl</application></quote> desactiva el
+      icono del mismo. Si el idioma del sistema no es el Inglés, y el carácter
+      de punto decimal no es el punto <quote><literal>.</literal></quote>,
+      desactivar la casilla <quote>Utilizar configuración local para el punto
+	decimal</quote> hará que <application>gretl</application> utilice el
+      punto a pesar de todo.
+    </para>
 
       <para>Finalmente, hay algunas elecciones alternativas: en la pestaña
       <quote>Abrir/Guardar camino</quote> puede

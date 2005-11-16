@@ -8,7 +8,8 @@ XMLFILES = ../chapters_it/cmdlist.xml \
 	../chapters_it/optarg.xml \
 	../shell_it.xml
 
-XSLT = ../gretltex.xsl
+TEXXSLT = ../gretltex.xsl
+MANXSLT = ../commands/gretlman.xsl
 
 $(GUIDE): gretl-guide-it.tex
 	pdflatex $<
@@ -18,8 +19,11 @@ $(REF): gretl-ref-it.tex refbody.tex
 	pdflatex $<
 	pdflatex $<
 
-refbody.tex: $(XMLFILES) $(XSLT) 
-	xsltproc -o refbody.tex $(XSLT) ../shell_it.xml
+refbody.tex: $(XMLFILES) $(TEXXSLT) 
+	xsltproc -o refbody.tex $(TEXXSLT) ../shell_it.xml
+
+../chapters_it/cmdlist.xml: ../commands/gretl_commands_it.xml $(MANXSLT)
+	make -C ../commands -f cmdref.mk dbtex_it
 
 thumbs: $(DOC)
 	thumbpdf $@ && pdflatex $< 	

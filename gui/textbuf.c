@@ -20,6 +20,8 @@
 #include "gretl.h"
 #include "textbuf.h"
 
+#define gui_help(r) (r == GUI_HELP || r == GUI_HELP_ENGLISH)
+
 extern GdkColor red, blue;
 
 void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
@@ -174,37 +176,69 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
     return 0;
 }
 
-void set_gui_help_topic_buffer (windata_t *hwin, int pos)
+void set_help_topic_buffer (windata_t *hwin, int pos)
 {
     char line[128];
     gchar *hbuf = (gchar *) hwin->data;
     int len = gtk_text_get_length(GTK_TEXT(hwin->w));
-    int nl = -2;
+    int nl = gui_help(hwin->role)? -2 : 0;
 
     gtk_text_freeze(GTK_TEXT(hwin->w));
     gtk_text_set_point(GTK_TEXT(hwin->w), 0);
     gtk_text_forward_delete(GTK_TEXT(hwin->w), len);
 
+    if (pos == 1) {
+	/* cli help with no topic selected */
+	const char *h1 = N_("Gretl Command Reference");
+	const char *h2 = N_("Please select from the Topics list");
+
+	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, "\n\n   ", -1);
+	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, _(h1), -1);
+	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, "\n\n   ", -1);
+	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, _(h2), -1);
+	gtk_text_thaw(GTK_TEXT(hwin->w));	
+	return;
+    }
+
     bufgets_init(hbuf);
 
     while (bufgets(line, sizeof line, hbuf)) {
 	if (*line == '#') {
-	    nl += 2;
+	    if (gui_help(hwin->role)) {
+		nl += 2;
+	    } else {
+		bufgets(line, 127, hbuf);
+		nl++;
+	    } 
 	} else {
 	    nl++;
 	}
-	if (nl == pos) {
-	    gchar *p;
 
-	    bufgets(line, sizeof line, hbuf);
-	    p = quoted_help_string(line);
-	    gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
-			    &red, NULL, p, strlen(p));
+	if (nl == pos) {
+	    if (gui_help(hwin->role)) {
+		gchar *p;
+
+		bufgets(line, sizeof line, hbuf);
+		p = quoted_help_string(line);
+		gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
+				&red, NULL, p, strlen(p));
+		free(p);
+	    } else {
+		char hword[9];
+
+		sscanf(line, "%8s", hword);
+		gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
+				&red, NULL, hword, strlen(hword));
+	    }
+
 	    gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
 			    NULL, NULL, "\n", 1);
-	    free(p);
+
 	    while (bufgets(line, sizeof line, hbuf)) {
-		if (*line == '#') {
+		if (*line == '@') {
+		    gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 
+				    NULL, NULL, "\n", 1);
+		} else if (*line == '#') {
 		    break;
 		} else {
 		    gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, 

@@ -32,6 +32,8 @@ enum {
     RED_TEXT
 };
 
+#define gui_help(r) (r == GUI_HELP || r == GUI_HELP_ENGLISH)
+
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
     GdkWindow *win = gtk_text_view_get_window(GTK_TEXT_VIEW(w),
@@ -503,37 +505,69 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     fclose(fp);
 }
 
-void set_gui_help_topic_buffer (windata_t *hwin, int pos)
+void set_help_topic_buffer (windata_t *hwin, int pos)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
     char line[128];
     gchar *hbuf = (gchar *) hwin->data;
-    int nl = -2;
+    int nl = gui_help(hwin->role)? -2 : 0;
 
     tbuf = gretl_text_buf_new();
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
+    if (pos == 1) {
+	/* cli help with no topic selected */
+	const char *h1 = N_("Gretl Command Reference");
+	const char *h2 = N_("Please select from the Topics list");
+
+	gtk_text_buffer_insert(tbuf, &iter, "\n\n   ", -1);
+	gtk_text_buffer_insert(tbuf, &iter, _(h1), -1);
+	gtk_text_buffer_insert(tbuf, &iter, "\n\n   ", -1);
+	gtk_text_buffer_insert(tbuf, &iter, _(h2), -1);
+	gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
+	return;
+    }
+
     bufgets_init(hbuf);
 
-    while (bufgets(line, 127, hbuf)) {
+    while (bufgets(line, sizeof line, hbuf)) {
 	if (*line == '#') {
-	    nl += 2;
+	    if (gui_help(hwin->role)) {
+		nl += 2;
+	    } else {
+		bufgets(line, sizeof line, hbuf);
+		nl++;
+	    } 
 	} else {
 	    nl++;
 	}
-	if (nl == pos) {
-	    gchar *p;
 
-	    bufgets(line, 127, hbuf);
-	    p = quoted_help_string(line);
-	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
-						     p, -1,
-						     "redtext", NULL);
+	if (nl == pos) {
+	    if (gui_help(hwin->role)) {
+		gchar *p;
+
+		bufgets(line, sizeof line, hbuf);
+		p = quoted_help_string(line);
+		gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+							 p, -1,
+							 "redtext", NULL);
+		free(p);
+	    } else {
+		char hword[9];
+
+		sscanf(line, "%8s", hword);
+		gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+							 hword, -1,
+							 "redtext", NULL);
+	    }
+
 	    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
-	    free(p);
-	    while (bufgets(line, 127, hbuf)) {
-		if (*line == '#') {
+
+	    while (bufgets(line, sizeof line, hbuf)) {
+		if (*line == '@') {
+		    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
+		} else if (*line == '#') {
 		    break;
 		} else {
 		    gtk_text_buffer_insert(tbuf, &iter, line, -1);

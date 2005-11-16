@@ -10,7 +10,8 @@ XMLFILES = ../chapters/cmdlist.xml \
 	../chapters/optarg.xml \
 	../shell.xml
 
-XSLT = ../gretltex.xsl
+TEXXSLT = ../gretltex.xsl
+MANXSLT = ../commands/gretlman.xsl
 
 $(GUIDE): gretl-guide.tex
 	pdflatex $<
@@ -34,8 +35,11 @@ gretl-guide-a4.tex: gretl-guide.tex
 gretl-ref-a4.tex: gretl-ref.tex
 	cat $< | sed s/letterpaper/a4paper/ > $@
 
-refbody.tex: $(XMLFILES) $(XSLT)
-	xsltproc -o refbody.tex $(XSLT) ../shell.xml
+refbody.tex: $(XMLFILES) $(TEXXSLT)
+	xsltproc -o refbody.tex $(TEXXSLT) ../shell.xml
+
+../chapters/cmdlist.xml: ../commands/gretl_commands.xml $(MANXSLT)
+	make -C ../commands -f cmdref.mk dbtex
 
 thumbs: $(DOC)
 	thumbpdf $@ && pdflatex $< 	

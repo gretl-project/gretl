@@ -1,3 +1,5 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+
   <?PSGML NOFILL programlisting example informalequation?>
 
   <chapter id="c-cmdref">
@@ -160,16 +162,21 @@
         <para>Calcula los estadísticos para dos contrastes de Dickey-Fuller.
         En ambos casos, la hipótesis nula es que la variable en cuestión presenta
         una raiz unitaria. El primero es un contraste <emphasis>t</emphasis>
-        basado en el modelo <informalequation><alt role="tex">\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]</alt><graphic
-        fileref="figures/adf1" /></informalequation> La hipótesis nula es que
+        basado en el modelo <informalequation>
+	  <alt role="tex">\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]</alt><graphic
+        fileref="figures/adf1" />
+	</informalequation> La hipótesis nula es que
         <emphasis>g</emphasis> = 0. El segundo contraste (aumentado) se hace
         estimando una regresión sin restricciones (con una constante,
         tendencia, el primer retardo de la variable, y un número igual a
         <replaceable>orden</replaceable> de retardos de la primera diferencia
         como los regresores), y una versión restringida (omitiendo la
         tendencia y el primer retardo). El estadístico de contraste es
-        <informalequation><alt role="tex">\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]</alt><graphic
-        fileref="figures/adf2" /></informalequation>donde
+        <informalequation>
+	  <alt role="tex">\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]</alt><graphic
+        fileref="figures/adf2" />
+	</informalequation>
+	donde
         <emphasis>T</emphasis> es el tamaño de la muestra,
         <emphasis>k</emphasis> el número de parámetros en el modelo sin
         restricciones, y los subíndices <emphasis>u</emphasis> y
@@ -204,24 +211,28 @@
           </tgroup>
         </informaltable>
 
-        <para>Calcula las estimaciones de los parámetros utilizando el
-        procedimiento iterativo generalizado de Cochrane-Orcutt (véase Sección
-        9.5 del libro de Ramanathan). Las iteraciones se dan por finalizadas cuando las
-        sucesivas sumas de cuadrados de los errores no difieren en más de un 0.005
-        por ciento, o después de 20 iteraciones. <replaceable>retardos</replaceable>
-        es una lista de retardos de los residuos, y termina con un punto y
-        coma. En el ejemplo de arriba, el término de error se especifica
-        como <informalequation><alt role="tex">\[u_t = \rho_1u_{t-1} + \rho_3
-        u_{t-3} + \rho_4 u_{t-4} + e_t\]</alt><graphic fileref="figures/corc" /></informalequation>
-        <replaceable>vardep</replaceable> es la variable dependiente y
-        <replaceable>varindeps</replaceable> es la lista de las variables
-        independientes. Poner la marca <literal>-o</literal> hace que se
-        muestre la matriz de covarianzas de los coeficientes de la regresión.
-        Los residuos de la regresión transformada se guardan con el nombre de
-        <varname>uhat</varname>, y se pueden recuperar mediante <command>genr</command>.
-        Otras variables internas pueden recuperarse utilizando la instrucción
-        <command>genr</command>, invocando
-        <command>genr</command> después de esta instrucción.</para>
+        <para>
+	Calcula las estimaciones de los parámetros utilizando el procedimiento
+	iterativo generalizado de Cochrane-Orcutt (véase Sección 9.5 del libro
+	de Ramanathan). Las iteraciones se dan por finalizadas cuando las
+	sucesivas sumas de cuadrados de los errores no difieren en más de un
+	0.005 por ciento, o después de 20 iteraciones.
+	<replaceable>retardos</replaceable> es una lista de retardos de los
+	residuos, y termina con un punto y coma. En el ejemplo de arriba, el
+	término de error se especifica como <informalequation><alt
+        role="tex">\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
+	    e_t\]</alt><graphic fileref="figures/corc" /></informalequation>
+	<replaceable>vardep</replaceable> es la variable dependiente y
+	<replaceable>varindeps</replaceable> es la lista de las variables
+	independientes. Poner la marca <literal>-o</literal> hace que se muestre
+	la matriz de covarianzas de los coeficientes de la regresión.  Los
+	residuos de la regresión transformada se guardan con el nombre de
+	<varname>uhat</varname>, y se pueden recuperar mediante
+	<command>genr</command>.  Otras variables internas pueden recuperarse
+	utilizando la instrucción <command>genr</command>, invocando
+	<command>genr</command> después de esta instrucción.
+      </para>
+
       </sect2>
 
       <sect2 id="arch">
@@ -248,17 +259,19 @@
           </tgroup>
         </informaltable>
 
-        <para>Esta instrucción contrasta la posibilidad de ARCH (Autoregressive Conditional
-        Heteroskedasticity - Heterocedasticidad Condicional Autorregresiva) en el modelo,
-        del orden de retardos especificado en <replaceable>orden</replaceable>,
-        que tiene que ser un número entero. Si el estadístico de contraste
-        LM tiene un valor p menor que 0.10, entonces
-        también se lleva a cabo la estimación ARCH. Si la varianza estimada de
-        alguna observación en la regresión auxiliar no es positiva, entonces
-        se utiliza el cuadrado del residuo correspondiente en su lugar. En
-        este caso, se hace la estimación mínimo-cuadrática ponderada sobre el
-        modelo original. La marca <literal>-o</literal> muestra la matriz de
-        covarianzas de los coeficientes.</para>
+        <para>
+	Esta instrucción contrasta la posibilidad de ARCH (Autoregressive
+	Conditional Heteroskedasticity - Heterocedasticidad Condicional
+	Autorregresiva) en el modelo, del orden de retardos especificado en
+	<replaceable>orden</replaceable>, que tiene que ser un número entero. Si
+	el estadístico de contraste LM tiene un valor p menor que 0.10, entonces
+	también se lleva a cabo la estimación ARCH. Si la varianza estimada de
+	alguna observación en la regresión auxiliar no es positiva, entonces se
+	utiliza el cuadrado del residuo correspondiente en su lugar. En este
+	caso, se hace la estimación mínimo-cuadrática ponderada sobre el modelo
+	original. La marca <literal>-o</literal> muestra la matriz de
+	covarianzas de los coeficientes.
+      </para>
       </sect2>
 
       <sect2 id="chow">
@@ -290,17 +303,18 @@
           </tgroup>
         </informaltable>
 
-        <para>Tiene que ejecutarse después de una regresión MCO. Crea una variable
-        ficticia que es igual a 1 desde el punto de corte especificado por
-        <replaceable>observación</replaceable> hasta el final de la muestra, y 0 en el resto.
-	También crea los términos de interacción entre esta
-        variable ficticia y las variables independientes originales. Se
-        ejecuta una regresión aumentada incluyendo estos términos y se calcula
-        un estadístico <emphasis>F</emphasis>, tomando la regresión aumentada
-        como la no restringida y la original como la restringida. Este
-        estadístico es apropiado para hacer un contraste de la hipótesis nula
-        de que no existe cambio estructural en el punto de ruptura
-        especificado.</para>
+        <para>
+	Tiene que ejecutarse después de una regresión MCO. Crea una variable
+	ficticia que es igual a 1 desde el punto de corte especificado por
+	<replaceable>observación</replaceable> hasta el final de la muestra, y 0
+	en el resto. También crea los términos de interacción entre esta
+	variable ficticia y las variables independientes originales. Se ejecuta
+	una regresión aumentada incluyendo estos términos y se calcula un
+	estadístico <emphasis>F</emphasis>, tomando la regresión aumentada como
+	la no restringida y la original como la restringida. Este estadístico es
+	apropiado para hacer un contraste de la hipótesis nula de que no existe
+	cambio estructural en el punto de ruptura especificado.
+      </para>
       </sect2>
 
       <sect2 id="coint">
@@ -332,14 +346,16 @@
           </tgroup>
         </informaltable>
 
-        <para>Lleva a cabo los contrastes de Dickey-Fuller Aumentados de la
-        hipótesis nula de que cada una de las variables incluidas en
-        la lista tiene una raíz unitaria, utilizando el orden de retardos
-        especificado. Se estima la regresión cointegrante y se hace un
-        contraste ADF sobre los residuos que resultan de esta regresión.
-        También se proporciona el estadístico de Durbin-Watson para la regresión
-        cointegrante. Téngase en cuenta que ninguno de estos estadísticos de
-        contraste pueden compararse con las tablas estadísticas habituales.</para>
+        <para>
+	Lleva a cabo los contrastes de Dickey-Fuller Aumentados de la hipótesis
+	nula de que cada una de las variables incluidas en la lista tiene una
+	raíz unitaria, utilizando el orden de retardos especificado. Se estima
+	la regresión cointegrante y se hace un contraste ADF sobre los residuos
+	que resultan de esta regresión. También se proporciona el estadístico de
+	Durbin-Watson para la regresión cointegrante. Téngase en cuenta que
+	ninguno de estos estadísticos de contraste pueden compararse con las
+	tablas estadísticas habituales.
+      </para>
       </sect2>
 
       <sect2 id="corc">
@@ -352,32 +368,23 @@
             <tbody>
               <row>
                 <entry>Argumentos:</entry>
-
                 <entry><replaceable>vardep varindeps</replaceable>
                 <literal>[ -o ]</literal></entry>
               </row>
-
               <row>
                 <entry>Ejemplos:</entry>
-
                 <entry><command>corc 1 0 2 4 6 7</command></entry>
               </row>
-
               <row>
                 <entry></entry>
-
                 <entry><command>corc -o 1 0 2 4 6 7</command></entry>
               </row>
-
               <row>
                 <entry></entry>
-
                 <entry><command>corc y 0 x1 x2 x3</command></entry>
               </row>
-
               <row>
                 <entry></entry>
-
                 <entry><command>corc -o y 0 x1 x2 x3</command></entry>
               </row>
             </tbody>
@@ -409,19 +416,14 @@
             <tbody>
               <row>
                 <entry>Argumento:</entry>
-
                 <entry>[ <replaceable>lista_var</replaceable> ]</entry>
               </row>
-
               <row>
                 <entry>Ejemplos:</entry>
-
                 <entry><command>corr 1 3 5</command></entry>
               </row>
-
               <row>
                 <entry></entry>
-
                 <entry><command>corr y x1 x2 x3</command></entry>
               </row>
             </tbody>
@@ -443,7 +445,6 @@
             <tbody>
               <row>
                 <entry>Argumentos:</entry>
-
                 <entry><replaceable>variable</replaceable> [
                 <replaceable>maxret</replaceable> ]</entry>
               </row>
@@ -486,13 +487,10 @@
             <tbody>
               <row>
                 <entry>Argumentos:</entry>
-
                 <entry><replaceable>scr T k</replaceable></entry>
               </row>
-
               <row>
                 <entry>Ejemplo:</entry>
-
                 <entry><command>criteria 23.45 45 8</command></entry>
               </row>
             </tbody>
@@ -550,11 +548,9 @@
         <informaltable role="cmd" frame="none">
           <tgroup cols="2">
             <colspec colwidth="82pt" colnum="1" />
-
             <tbody>
               <row>
                 <entry>Argumento:</entry>
-
                 <entry><replaceable>lista_var</replaceable></entry>
               </row>
             </tbody>
@@ -598,20 +594,15 @@
             <tbody>
               <row>
                 <entry>Argumentos:</entry>
-
                 <entry>[ <replaceable>primobs ultobs</replaceable> ]
                 <replaceable>nuevo_nombre_var</replaceable></entry>
               </row>
-
               <row>
                 <entry>Ejemplos:</entry>
-
                 <entry><command>fcast 1997.1 1999.4 f1</command></entry>
               </row>
-
               <row>
                 <entry></entry>
-
                 <entry><command>fcast f2</command></entry>
               </row>
             </tbody>
@@ -1072,7 +1063,10 @@
 
                 <entry>acumula: <inlineequation><alt role="tex">$y_t =
                 \sum_{\tau=1}^t x_{\tau}$</alt><inlinemediaobject><imageobject><imagedata
-                align="center" fileref="figures/cumulate" /></imageobject></inlinemediaobject></inlineequation></entry>
+                align="center" fileref="figures/cumulate" />
+		    </imageobject>
+		  </inlinemediaobject>
+		</inlineequation></entry>
               </row>
 
               <row>
@@ -1092,8 +1086,9 @@
               <row>
                 <entry><command>genr rho4 = rho(4)</command></entry>
 
-                <entry>guarda en <varname>rho4</varname> el coeficiente autorregresivo de cuarto orden obtenido del último
-                modelo (supone un modelo <command>ar</command>)</entry>
+                <entry>guarda en <varname>rho4</varname> el coeficiente
+                autorregresivo de cuarto orden obtenido del último modelo
+                (supone un modelo <command>ar</command>)</entry>
               </row>
 
               <row>
@@ -1113,7 +1108,7 @@
               <row>
                 <entry><command>genr bar = 3 * normal()</command></entry>
 
-                <entry>variable pseudoaleatoria normal , &mu = 0, &sigma =
+                <entry>variable pseudoaleatoria normal , &mu; = 0, &sigma; =
                 3</entry>
               </row>
             </tbody>

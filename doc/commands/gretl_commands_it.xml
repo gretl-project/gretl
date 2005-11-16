@@ -444,7 +444,7 @@
 	a Riccardo <quote>Jack</quote> Lucchetti: utilizza una procedura di
 	massima verosimiglianza condizionale, implementata attraverso la stima 
 	iterata	con minimi quadrati della regressione del prodotto esterno del
-	gradiente (OPG). Si veda l'<guideref targ="jack-arma"/> per la logica della
+	gradiente (OPG). Si veda il <guideref targ="jack-arma"/> per la logica della
 	procedura. I coefficienti AR (e quelli per gli eventuali regressori 
 	aggiuntivi) sono inizializzati usando una auto-regressione OLS, mentre
 	i coefficienti MA sono inizializzati a zero.</para>
@@ -527,7 +527,7 @@
       <para>Alcuni dettagli del funzionamento dei boxplot di gretl possono
         essere controllati attraverso un file testuale chiamato
         <filename>.boxplotrc</filename>.  Per ulteriori dettagli, si veda
-	<guideref targ="sect-boxplots"/>.</para>
+	il <guideref targ="sect-boxplots"/>.</para>
 
     </description>
 
@@ -1662,7 +1662,7 @@
       <para>
 	Apre un blocco di istruzioni che definiscono una funzione. Il blocco va
         chiuso con <lit>end function</lit>. Per i dettagli, si veda
-        <guideref targ="functions"/>.
+        il <guideref targ="functions"/>.
       </para>
     </description>
 
@@ -2075,7 +2075,7 @@
        <lit>$pvalue</lit>, contengono rispettivamente il valore e il
        p-value della statistica test che è stata generata dall'ultimo
        comando di test eseguito esplicitamente (ad es. <lit>chow</lit>).
-       Si veda <guideref targ="chap-genr"/> per i dettagli.
+       Si veda il <guideref targ="chap-genr"/> per i dettagli.
       </para>
 
       <para>La variabile <lit>t</lit> serve da indice per le osservazioni.
@@ -4063,7 +4063,7 @@
         di inserirle se possibile. La riga 10, <cmd>end nls</cmd>,
         completa il comando ed esegue la stima.</para>
 
-      <para>Per ulteriori dettagli sulla stima NLS si veda
+      <para>Per ulteriori dettagli sulla stima NLS si veda il
 	<guideref targ="chap-nls"/>.</para>
 
     </description>
@@ -4184,7 +4184,7 @@
       <para context="cli">L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
 	di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
         regressione in modo silenzioso per tutte le iterazioni del loop
-        tranne l'ultima. Si veda <guideref targ="loop-examples"/> per i dettagli.
+        tranne l'ultima. Si veda il <guideref targ="loop-examples"/> per i dettagli.
       </para>
 
       <para context="cli">È possibile salvare alcune variabili
@@ -5341,7 +5341,7 @@
       dei dati) vengono perse. È possibile reimpostare la struttura
       originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
 
-      <para>Si veda <guideref targ="sampling"/> per maggiori dettagli.</para>
+      <para>Si veda il <guideref targ="sampling"/> per maggiori dettagli.</para>
 
     </description>
   </command>

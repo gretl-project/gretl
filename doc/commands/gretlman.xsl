@@ -72,20 +72,24 @@
    <xsl:choose>
      <xsl:when test="count(argument) > 1">
        <entry>
-         <xsl:call-template name="gettext">
-           <xsl:with-param name="key" select="'args'"/>
-         </xsl:call-template>
+         <para>
+           <xsl:call-template name="gettext">
+             <xsl:with-param name="key" select="'args'"/>
+           </xsl:call-template>
+         </para>
        </entry>
      </xsl:when>
      <xsl:otherwise>
        <entry>
-         <xsl:call-template name="gettext">
-           <xsl:with-param name="key" select="'arg'"/>
-         </xsl:call-template>
+         <para>
+           <xsl:call-template name="gettext">
+             <xsl:with-param name="key" select="'arg'"/>
+           </xsl:call-template>
+         </para>
        </entry>
      </xsl:otherwise>
    </xsl:choose>
-  <entry><xsl:apply-templates/></entry>
+   <entry><para><xsl:apply-templates/></para></entry>
  </row> 
  <xsl:text>&#xa;</xsl:text>
 </xsl:template>
@@ -119,16 +123,18 @@
     <xsl:choose>
       <xsl:when test="position() = 1">
         <entry>
-          <xsl:call-template name="gettext">
-            <xsl:with-param name="key" select="'altforms'"/>
-          </xsl:call-template>
+          <para>
+            <xsl:call-template name="gettext">
+              <xsl:with-param name="key" select="'altforms'"/>
+            </xsl:call-template>
+          </para>
         </entry>
       </xsl:when>
       <xsl:otherwise>
         <entry/>
       </xsl:otherwise>
     </xsl:choose>
-    <entry><xsl:apply-templates/></entry>
+    <entry><para><xsl:apply-templates/></para></entry>
   </row>
   <xsl:text>&#xa;</xsl:text>
 </xsl:template>
@@ -140,16 +146,20 @@
         <xsl:choose>
           <xsl:when test="count(../option) > 1">
             <entry>
-              <xsl:call-template name="gettext">
-                <xsl:with-param name="key" select="'opts'"/>
-              </xsl:call-template>
+              <para>
+                <xsl:call-template name="gettext">
+                  <xsl:with-param name="key" select="'opts'"/>
+                </xsl:call-template>
+              </para> 
             </entry>
           </xsl:when>
           <xsl:otherwise>
             <entry>
-              <xsl:call-template name="gettext">
-                <xsl:with-param name="key" select="'opt'"/>
-              </xsl:call-template>
+              <para>
+                <xsl:call-template name="gettext">
+                  <xsl:with-param name="key" select="'opt'"/>
+                </xsl:call-template>
+              </para> 
             </entry>
           </xsl:otherwise>
         </xsl:choose>
@@ -158,7 +168,7 @@
         <entry/>
       </xsl:otherwise>
     </xsl:choose>
-    <entry><xsl:apply-templates/></entry>
+    <entry><para><xsl:apply-templates/></para></entry>
   </row>
   <xsl:call-template name="nl"/>
 </xsl:template>
@@ -170,16 +180,20 @@
         <xsl:choose>
           <xsl:when test="count(../example) > 1">
             <entry>
-              <xsl:call-template name="gettext">
-                <xsl:with-param name="key" select="'examples'"/>
-              </xsl:call-template>
+              <para>
+                <xsl:call-template name="gettext">
+                  <xsl:with-param name="key" select="'examples'"/>
+                </xsl:call-template>
+              </para>
             </entry>
           </xsl:when>
           <xsl:otherwise>
             <entry>
-              <xsl:call-template name="gettext">
-                <xsl:with-param name="key" select="'example'"/>
-              </xsl:call-template>
+              <para>
+                <xsl:call-template name="gettext">
+                  <xsl:with-param name="key" select="'example'"/>
+                </xsl:call-template>
+              </para>
             </entry>
           </xsl:otherwise>
         </xsl:choose>
@@ -188,7 +202,7 @@
         <entry/>
       </xsl:otherwise>
     </xsl:choose>
-    <entry><literal><xsl:apply-templates/></literal></entry>
+    <entry><para><literal><xsl:apply-templates/></literal></para></entry>
   </row>
   <xsl:call-template name="nl"/>
 </xsl:template>
@@ -317,9 +331,7 @@
 <xsl:template match="guideref">
   <xsl:choose>
     <xsl:when test="$standalone='true'">
-      <xsl:call-template name="gettext">
-        <xsl:with-param name="key" select="'guidebook'"/>
-      </xsl:call-template>
+      <xsl:text>\GUG{}</xsl:text>
     </xsl:when>
     <xsl:otherwise>
       <xref linkend="{@targ}"/>
@@ -388,7 +400,7 @@
 </xsl:template>
 
 <xsl:template match="cell">
-  <entry><xsl:apply-templates/></entry>
+  <entry><para><xsl:apply-templates/></para></entry>
 </xsl:template>
 
 <xsl:template name="nl">

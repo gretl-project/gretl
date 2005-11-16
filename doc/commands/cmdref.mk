@@ -19,6 +19,14 @@ dbtex_it: xsltrans gretl_commands_it.xml gretlman.xsl
 	cat cmdlist.xml >> ../chapters_it/cmdlist.xml && \
 	rm tmp.xml
 
+dbtex_es: xsltrans gretl_commands_es.xml gretlman.xsl
+	cat tex.entities > tmp.xml
+	cat gretl_commands_es.xml | grep -v DOCTYPE | grep -v 'xml version' >> tmp.xml
+	./xsltrans --docbook tmp.xml && \
+	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>" > ../chapters_es/cmdlist.xml && \
+	cat cmdlist.xml >> ../chapters_es/cmdlist.xml && \
+	rm tmp.xml
+
 docbook: xsltrans gretl_commands.xml gretlman.xsl
 	./xsltrans --docbook gretl_commands.xml && \
 	cp cmdlist.xml ../chapters/cmdlist.xml
