@@ -183,8 +183,8 @@ static int get_model_df (MODEL *pmod)
     int err = 0;
 
     pmod->ncoeff = pmod->list[0] - 1;
-
     pmod->dfd = pmod->nobs - pmod->ncoeff;
+
     if (pmod->dfd < 0) {
 	pmod->errcode = E_DF;
         sprintf(gretl_errmsg, _("No. of obs (%d) is less than no. "
@@ -672,7 +672,7 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
 
 	/* remove var from list and reduce number of coeffs */
 	gretl_list_delete_at_pos(pmod->list, targ);
-	pmod->ncoeff -= 1;
+	get_model_df(pmod);
 
 	/* compose a message */
 	if (trim == 0) {
