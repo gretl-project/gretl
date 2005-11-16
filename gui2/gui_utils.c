@@ -3345,6 +3345,7 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 
 static void panel_heteroskedasticity_menu (windata_t *vwin)
 {
+    const gchar *tpath = "/Tests";
     GtkItemFactoryEntry hitem;
 
     gtk_item_factory_delete_item(vwin->ifac, "/Tests/heteroskedasticity");
@@ -3354,13 +3355,13 @@ static void panel_heteroskedasticity_menu (windata_t *vwin)
 
     hitem.callback = do_lmtest;
     hitem.callback_action = LMTEST_WHITE;
-    hitem.path = g_strdup(_("/Tests/heteroskedasticity (White's test)"));
+    hitem.path = g_strdup_printf("%s/%s", tpath, _("heteroskedasticity (White's test)"));
     gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
     g_free(hitem.path);
 
     hitem.callback = do_lmtest;
     hitem.callback_action =  LMTEST_GROUPWISE;
-    hitem.path = g_strdup(_("/Tests/heteroskedasticity (groupwise)"));
+    hitem.path = g_strdup_printf("%s/%s", tpath, ("heteroskedasticity (groupwise)"));
     gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
     g_free(hitem.path);
 }
