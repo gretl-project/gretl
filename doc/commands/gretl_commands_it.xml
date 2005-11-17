@@ -1979,7 +1979,7 @@
             il calcolo di una regressione possono essere recuperate usando
 	    <cmd>genr</cmd>, nel modo seguente:</para>
 
-	  <table lwidth="100pt" rwidth="300pt">
+	  <table lwidth="100pt" rwidth="300pt" style="rpara">
 	    <row> 
 	      <cell><lit>$ess</lit></cell>
 	      <cell>somma dei quadrati degli errori</cell> 
@@ -2135,7 +2135,9 @@
       </ilist>
 
       <table id="tab-genr" title="Esempi di utilizzo del comando genr"
-	lhead="Formula" rhead="Commento">
+	lhead="Formula" rhead="Commento"
+	lwidth="100pt" rwidth="300pt" 
+	style="rpara">
 	<row>
 	  <cell><lit>y = x1^3</lit></cell>
 	  <cell><lit>x1</lit> al cubo</cell>
@@ -5442,31 +5444,31 @@
         <lit>--robust</lit> al comando <cmd>ols</cmd>. 
       </para>
 
-      <table lwidth="80pt" rwidth="320pt">
-	<row>
-	  <cell><lit>echo</lit></cell>
-	  <cell>Valori: <lit>off</lit> o <lit>on</lit> (valore predefinito).
+      <ilist>
+	<li>
+	  <para><lit>echo</lit>:
+	  <lit>off</lit> o <lit>on</lit> (valore predefinito).
 	    Sopprime o ripristina l'indicazione dei comandi eseguiti nell'output
-            dei risultati.</cell>
-	</row>
-	<row>
-	  <cell><lit>qr</lit></cell>
-	  <cell>Valori: <lit>on</lit> o <lit>off</lit> (valore predefinito).
+            dei risultati.</para>
+	</li>
+	<li>
+	  <para><lit>qr</lit>:
+	  <lit>on</lit> o <lit>off</lit> (valore predefinito).
 	    Usa la decomposizione QR invece di quella di Cholesky nel
-            calcolo delle stime OLS.</cell>
-	</row>
-        <row>
-          <cell><lit>seed</lit></cell>
-          <cell>valore: un intero senza segno. Imposta il seme per il
+            calcolo delle stime OLS.</para>
+	</li>
+        <li>
+          <para><lit>seed</lit>:
+          un intero senza segno. Imposta il seme per il
             generatore di numeri pseudo-casuali. Di solito il seme viene
             impostato a partire dall'ora di sistema, ma se si intende
             generare sequenze ripetibili di numeri casuali occorre impostare
             il seme manualmente.
-          </cell>
-        </row>
-	<row>
-	  <cell><lit>hac_lag</lit></cell>
-	  <cell>Valori: <lit>nw1</lit> (valore predefinito) o
+          </para>
+        </li>
+	<li>
+	  <para><lit>hac_lag</lit>:
+	  <lit>nw1</lit> (valore predefinito) o
 	    <lit>nw2</lit>, o un intero.  Imposta il massimo valore di
             ritardo, <mathvar>p</mathvar>, usato nel calcolo degli
             errori standard HAC (Heteroskedasticity and Autocorrelation Consistent)
@@ -5483,30 +5485,30 @@
 	    tex="$p = 4 \times (T/100)^{2/9}$"
 	    ascii="p = 4 * (T/100)^(2/9)"
 	    graphic="nw2"/>.	  
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>hc_version</lit></cell>
-	  <cell>Valori: 0 (valore predefinito), 1, 2 o 3. Imposta la
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hc_version</lit>:
+	  0 (valore predefinito), 1, 2 o 3. Imposta la
           variante da usare nel calcolo degli errori standard HAC
           (Heteroskedasticity and Autocorrelation Consistent) con dati
           di tipo cross section. Le opzioni corrispondono alle HC0, HC1,
           HC2 e HC3 discusse da Davidson e MacKinnon nel capitolo 5 di
           <book>Econometric Theory and Methods</book>.  HC0 produce
           quelli che di solito vengono chiamati <quote>errori standard di
-          White</quote>.</cell> </row>
-	<row>
-	  <cell><lit>force_hc</lit></cell> <cell>Valori: off (predefinito)
-	    o on. Lo stimatore HAC viene usato in modo predefinito con dati
+          White</quote>.</para> </li>
+	<li>
+	  <para><lit>force_hc</lit>: <lit>off</lit> (predefinito)
+	    o <lit>on</lit>. Lo stimatore HAC viene usato in modo predefinito con dati
             serie storiche e quando si usa l'opzione <lit>--robust</lit> di
             <lit>ols</lit>. Impostando invece <lit>force_hc</lit> a
             <quote>on</quote>, si forza l'uso della matrice di covarianza
 	    coerente con l'eteroschedasticità (che non tiene conto dell'autocorrelazione).
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>garch_vcv</lit></cell>
-	  <cell>Valori: <lit>unset</lit>, <lit>hessian</lit>,
+	  </para>
+	</li>
+	<li>
+	  <para><lit>garch_vcv</lit>:
+	  <lit>unset</lit>, <lit>hessian</lit>,
 	    <lit>im</lit> (matrice di informazione) , <lit>op</lit>
             (matrice dei prodotti esterni), <lit>qml</lit> (stimatore QML),
 	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifica la
@@ -5514,49 +5516,49 @@
             coefficienti nei modelli GARCH.  Se si usa <lit>unset</lit>
 	    (valore predefinito), viene usata l'Hessiana, a meno di
             usare l'opzione <quote>robust</quote> col comando garch, nel
-            qual caso viene usato QML.</cell>
-	</row>
-	<row>
-	  <cell><lit>hp_lambda</lit></cell>
-	  <cell>Valori: <lit>auto</lit> (valore predefinito), o un
+            qual caso viene usato QML.</para>
+	</li>
+	<li>
+	  <para><lit>hp_lambda</lit>:
+	  <lit>auto</lit> (valore predefinito), o un
           valore numerico. Imposta il parametro di livellamento per
           il filtro di Hodrick&ndash;Prescott (si veda la funzione
           <lit>hpfilt</lit> sotto il comando <lit>genr</lit>). Il valore
           predefinito è 100 volte il quadrato della periodicità, ossia
           100 per i dati annuali, 1600 per i dati trimestrali e così
-          via.</cell>
-	</row>
-        <row>
-          <cell><lit>bkbp_limits</lit></cell>
-          <cell>Valori: due interi, il secondo maggiore del primo
+          via.</para>
+	</li>
+        <li>
+          <para><lit>bkbp_limits</lit>:
+          due interi, il secondo maggiore del primo
            (i valori predefiniti sono 8 e 32). Imposta i limiti di
            frequenza per il filtro passa-banda di Baxter&ndash;King
            (si veda la funzione <lit>bkfilt</lit> nel comando <lit>genr</lit>).
-         </cell>
-        </row>
-        <row>
-          <cell><lit>bkbp_k</lit></cell>
-          <cell>Valori: un intero (il valore predefinito è 8). Imposta
+         </para>
+        </li>
+        <li>
+          <para><lit>bkbp_k</lit>:
+          un intero (il valore predefinito è 8). Imposta
             l'ordine di approssimazione per il filtro passa-banda di
             Baxter&ndash;King.
-          </cell>
-        </row>
-	<row>
-	  <cell><lit>horizon</lit></cell>
-	  <cell>Valori: un intero (il valore predefinito dipende dalla
+          </para>
+        </li>
+	<li>
+	  <para><lit>horizon</lit>:
+	  un intero (il valore predefinito dipende dalla
           frequenza dei dati). Imposta l'orizzonte per le funzioni impulso-risposta
           e per la decomposizione della varianza nel contesto delle autoregressioni
           vettoriali.
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>csv_delim</lit></cell>
-	  <cell>Valori: <lit>comma</lit> (virgola, valore predefinito), <lit>space</lit>
+	  </para>
+	</li>
+	<li>
+	  <para><lit>csv_delim</lit>:
+	  <lit>comma</lit> (virgola, valore predefinito), <lit>space</lit>
             (spazio), o <lit>tab</lit>. Imposta il delimitatore di colonna usato nel
             salvataggio di dati su file in formato CSV.
-	  </cell>
-	</row>
-      </table>
+	  </para>
+	</li>
+      </ilist>
 
     </description>
   </command>

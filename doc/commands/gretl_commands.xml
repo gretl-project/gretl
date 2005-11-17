@@ -2027,7 +2027,7 @@
 	    regression can be retrieved using <cmd>genr</cmd>, as follows:
 	  </para>
 
-	  <table lwidth="100pt" rwidth="300pt">
+	  <table lwidth="100pt" rwidth="300pt" style="rpara">
 	    <row> 
 	      <cell><lit>$ess</lit></cell>
 	      <cell>error sum of squares</cell> 
@@ -2184,7 +2184,8 @@
       </ilist>
 
       <table id="tab-genr" title="Examples of use of genr command"
-	lhead="Formula" rhead="Comment">
+	lhead="Formula" rhead="Comment" lwidth="100pt" rwidth="300pt" 
+	style="rpara">
 	<row>
 	  <cell><lit>y = x1^3</lit></cell>
 	  <cell><lit>x1</lit> cubed</cell>
@@ -5498,134 +5499,116 @@
 
     <description>
       <para>
-	Set the values of various program parameters.  The given value
-	remains in force for the duration of the gretl session unless
-	it is changed by a further call to <cmd>set</cmd>.  The
-	parameters that can be set in this way are enumerated below.
-	Note that the settings of <lit>hac_lag</lit> and
-	<lit>hc_version</lit> are used when the <lit>--robust</lit>
-	option is given to the <cmd>ols</cmd> command. 
+	Set the values of various program parameters.  The given value remains
+	in force for the duration of the gretl session unless it is changed by a
+	further call to <cmd>set</cmd>.  The parameters that can be set in this
+	way are enumerated below. Note that the settings of <lit>hac_lag</lit>
+	and <lit>hc_version</lit> are used when the <lit>--robust</lit> option
+	is given to the <cmd>ols</cmd> command. 
       </para>
 
-      <table lwidth="80pt" rwidth="320pt">
-	<row>
-	  <cell><lit>echo</lit></cell>
-	  <cell>values: <lit>off</lit> or <lit>on</lit> (the default).
-	    Suppress or resume the echoing of commands in gretl's
-	    output.</cell>
-	</row>
-	<row>
-	  <cell><lit>qr</lit></cell>
-	  <cell>values: <lit>on</lit> or <lit>off</lit> (the default).
-	    Use QR rather than Cholesky decomposition in calculating
-	    OLS estimates.</cell>
-	</row>
-	<row>
-	  <cell><lit>seed</lit></cell>
-	  <cell>value: an unsigned integer.  Sets the seed for the
-	    pseudo-random number generator.  By default this is set
-	    from the system time; if you want to generate repeatable
-	    sequences of random numbers you must set the seed
-	    manually.
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>hac_lag</lit></cell>
-	  <cell>values: <lit>nw1</lit> (the default) or
-	    <lit>nw2</lit>, or an integer.  Sets the maximum lag
-	    value, <mathvar>p</mathvar>, used when calculating HAC
-	    (Heteroskedasticity and Autocorrelation Consistent)
-	    standard errors using the Newey-West approach, for time
-	    series data. <lit>nw1</lit> and <lit>nw2</lit> represent
-	    two variant automatic calculations based on the sample
+      <ilist>
+	<li>
+	  <para><lit>echo</lit>: <lit>off</lit> or <lit>on</lit> (the
+	    default). Suppress or resume the echoing of commands in gretl's
+	    output.</para>
+	</li>
+	<li>
+	  <para><lit>qr</lit>: <lit>on</lit> or <lit>off</lit> (the
+	    default). Use QR rather than Cholesky decomposition in calculating
+	    OLS estimates.</para>
+	</li>
+	<li>
+	  <para><lit>seed</lit>: an unsigned integer.  Sets the seed for
+	    the pseudo-random number generator.  By default this is set from the
+	    system time; if you want to generate repeatable sequences of random
+	    numbers you must set the seed manually.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hac_lag</lit>: <lit>nw1</lit> (the default) or
+	    <lit>nw2</lit>, or an integer.  Sets the maximum lag value,
+	    <mathvar>p</mathvar>, used when calculating HAC (Heteroskedasticity
+	    and Autocorrelation Consistent) standard errors using the Newey-West
+	    approach, for time series data. <lit>nw1</lit> and <lit>nw2</lit>
+	    represent two variant automatic calculations based on the sample
 	    size, <mathvar>T</mathvar>: for nw1, 
 	  <equation status="inline"
 	    tex="$p = 0.75 \times T^{1/3}$"
 	    ascii="p = 0.75 * T^(1/3)"
-	    graphic="nw1"/>,
-	    and for nw2, 
+	    graphic="nw1"/>, and for nw2, 
 	  <equation status="inline"
 	    tex="$p = 4 \times (T/100)^{2/9}$"
 	    ascii="p = 4 * (T/100)^(2/9)"
 	    graphic="nw2"/>.	  
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>hc_version</lit></cell>
-	  <cell>values: 0 (the default), 1, 2 or 3. Sets the variant
-	    used when calculating Heteroskedasticity Consistent
-	    standard errors with cross-sectional data.  The options
-	    correspond to the HC0, HC1, HC2 and HC3 discussed by
-	    Davidson and MacKinnon in <book>Econometric Theory and
-	      Methods</book>, chapter 5.  HC0 produces what are
-	    usually called <quote>White's standard
-	      errors</quote>.</cell>
-	</row>
-	<row>
-	  <cell><lit>force_hc</lit></cell> <cell>values: off (the
-	    default) or on.  By default, with time-series data and
-	    when the <lit>--robust</lit> option is given with
-	    <lit>ols</lit>, the HAC estimator is used.  If you set
-	    <lit>force_hc</lit> to <quote>on</quote>, this forces
-	    calculation of the regular Heteroskedasticity Consistent
-	    Covariance Matrix (which does not take autocorrelation
-	    into account).
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>garch_vcv</lit></cell>
-	  <cell>values: <lit>unset</lit>, <lit>hessian</lit>,
-	    <lit>im</lit> (information matrix) , <lit>op</lit> (outer
-	    product matrix), <lit>qml</lit> (QML estimator),
-	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifies the
-	    variant that will be used for estimating the coefficient
-	    covariance matrix, for GARCH models.  If <lit>unset</lit>
-	    is given (the default) then the Hessian is used unless the
-	    <quote>robust</quote> option is given for the garch
-	    command, in which case QML is used.</cell>
-	</row>
-	<row>
-	  <cell><lit>hp_lambda</lit></cell>
-	  <cell>values: <lit>auto</lit> (the default), or a numerical
-	  value.  Sets the smoothing parameter for the
-	  Hodrick&ndash;Prescott filter (see the <lit>hpfilt</lit>
-	  function under the <lit>genr</lit> command).  The default is
-	  to use 100 times the square of the periodicity, which gives
-	  100 for annual data, 1600 for quarterly data, and so
-	  on.</cell>
-	</row>
-	<row>
-	  <cell><lit>bkbp_limits</lit></cell>
-	  <cell>values: two integers, the second greater than the
-	    first (the defaults are 8 and 32).  Sets the frequency
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>hc_version</lit>: 0 (the default), 1, 2 or 3. Sets the
+	    variant used when calculating Heteroskedasticity Consistent standard
+	    errors with cross-sectional data.  The options correspond to the
+	    HC0, HC1, HC2 and HC3 discussed by Davidson and MacKinnon in
+	    <book>Econometric Theory and Methods</book>, chapter 5.  HC0
+	    produces what are usually called <quote>White's standard
+	      errors</quote>.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>force_hc</lit>: <lit>off</lit> (the default) or
+	    <lit>on</lit>.  By default, with time-series data and when the
+	    <lit>--robust</lit> option is given with <lit>ols</lit>, the HAC
+	    estimator is used.  If you set <lit>force_hc</lit> to
+	    <quote>on</quote>, this forces calculation of the regular
+	    Heteroskedasticity Consistent Covariance Matrix (which does not take
+	    autocorrelation into account).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>garch_vcv</lit>: <lit>unset</lit>,
+	    <lit>hessian</lit>, <lit>im</lit> (information matrix) ,
+	    <lit>op</lit> (outer product matrix), <lit>qml</lit> (QML
+	    estimator), <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifies
+	    the variant that will be used for estimating the coefficient
+	    covariance matrix, for GARCH models.  If <lit>unset</lit> is given
+	    (the default) then the Hessian is used unless the
+	    <quote>robust</quote> option is given for the garch command, in
+	    which case QML is used.</para>
+	</li>
+	<li>
+	  <para><lit>hp_lambda</lit>: <lit>auto</lit> (the default), or a
+	    numerical value.  Sets the smoothing parameter for the
+	    Hodrick&ndash;Prescott filter (see the <lit>hpfilt</lit> function
+	    under the <lit>genr</lit> command).  The default is to use 100 times
+	    the square of the periodicity, which gives 100 for annual data, 1600
+	    for quarterly data, and so on.</para>
+	</li>
+	<li>
+	  <para><lit>bkbp_limits</lit>: two integers, the second greater
+	    than the first (the defaults are 8 and 32).  Sets the frequency
 	    bounds for the Baxter&ndash;King bandpass filter (see the
-	    <lit>bkfilt</lit> function under the <lit>genr</lit>
-	    command).
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>bkbp_k</lit></cell>
-	  <cell>value: one integer (the default is 8).  Sets the
-	    approximation order for the Baxter&ndash;King bandpass
-	    filter.
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>horizon</lit></cell>
-	  <cell>value: one integer (the default is based on the
-	    frequency of the data).  Sets the horizon for impulse
-	    responses and forecast variance decompositions in the
-	    context of vector autoregressions.
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>csv_delim</lit></cell>
-	  <cell>value: either <lit>comma</lit> (the default), <lit>space</lit>
-	    or <lit>tab</lit>.  Sets the column delimiter used when saving data
-	    to file in CSV format.
-	  </cell>
-	</row>
-      </table>
+	    <lit>bkfilt</lit> function under the <lit>genr</lit> command).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>bkbp_k</lit>: one integer (the default is 8).  Sets
+	    the approximation order for the Baxter&ndash;King bandpass filter.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>horizon</lit>: one integer (the default is based on
+	    the frequency of the data).  Sets the horizon for impulse responses
+	    and forecast variance decompositions in the context of vector
+	    autoregressions.
+	  </para>
+	</li>
+	<li>
+	  <para><lit>csv_delim</lit>: either <lit>comma</lit> (the
+	    default), <lit>space</lit> or <lit>tab</lit>.  Sets the column
+	    delimiter used when saving data to file in CSV format.
+	  </para>
+	</li>
+      </ilist>
 
     </description>
   </command>

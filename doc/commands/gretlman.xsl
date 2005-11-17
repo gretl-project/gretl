@@ -361,37 +361,41 @@
 
 <xsl:template match="table">
   <xsl:if test="not(@context) or @context=$hlp">
-  <xsl:choose>
-    <xsl:when test="@id">
-      <table id="{@id}" frame="none">
-        <title><xsl:value-of select="@title"/></title>
-        <tgroup cols="2">
-          <thead>
-            <row>
-              <entry><xsl:value-of select="@lhead"/></entry>
-              <entry><xsl:value-of select="@rhead"/></entry>
-            </row>
-          </thead>
-          <tbody>
-            <xsl:apply-templates/>
-          </tbody>
-        </tgroup>
-      </table>
-    </xsl:when>
-    <xsl:otherwise>
-      <informaltable role="cmd" frame="none">
-        <tgroup cols="2">
-          <xsl:if test="@lwidth and @rwidth">
-            <colspec colwidth="{@lwidth}"/>
-            <colspec colwidth="{@rwidth}"/>
-          </xsl:if>
-          <tbody>
-            <xsl:apply-templates/>
-          </tbody>
-        </tgroup>
-      </informaltable>
-    </xsl:otherwise>
-  </xsl:choose>    
+    <xsl:choose>
+      <xsl:when test="@id">
+        <table id="{@id}" frame="none">
+          <title><xsl:value-of select="@title"/></title>
+          <tgroup cols="2" style="{@style}">
+            <xsl:if test="@lwidth and @rwidth">
+              <colspec colwidth="{@lwidth}"/>
+              <colspec colwidth="{@rwidth}"/>
+            </xsl:if>
+            <thead>
+              <row>
+                <entry><xsl:value-of select="@lhead"/></entry>
+                <entry><xsl:value-of select="@rhead"/></entry>
+              </row>
+            </thead>
+            <tbody>
+              <xsl:apply-templates/>
+            </tbody>
+          </tgroup>
+        </table>
+      </xsl:when>
+      <xsl:otherwise>
+        <informaltable role="cmd" frame="none">
+          <tgroup cols="2" style="{@style}">
+            <xsl:if test="@lwidth and @rwidth">
+              <colspec colwidth="{@lwidth}"/>
+              <colspec colwidth="{@rwidth}"/>
+            </xsl:if>
+            <tbody>
+              <xsl:apply-templates/>
+            </tbody>
+          </tgroup>
+        </informaltable>
+      </xsl:otherwise>
+    </xsl:choose>    
   </xsl:if>
 </xsl:template>
 

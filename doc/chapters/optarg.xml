@@ -28,7 +28,7 @@
       &mdash; Starts the program with the specified datafile in its
       workspace. The data file may be in native
       <application>gretl</application> format, CSV format, or BOX1
-      format (see the <citetitle>Gretl Users' Guide</citetitle>).  The program
+      format (see the <citetitle>Gretl User's Guide</citetitle>).  The program
       will try to detect the format of the file and treat it
       appropriately. See also <xref linkend="path-search"/> below for
       path-searching behavior.
@@ -79,7 +79,7 @@
       database.  If the database files (the <filename>.bin</filename> file and
       its accompanying <filename>.idx</filename> file) are not in the default
       system database directory, you must specify the full path.  See also the
-      <citetitle>Gretl Users' Guide</citetitle> for details on databases.
+      <citetitle>Gretl User's Guide</citetitle> for details on databases.
     </para>
 
     <para>
@@ -156,7 +156,7 @@
       <literal>.dat</literal>, which was standard in earlier versions of the
       program.  If you set the default to <literal>.dat</literal> then data
       files will be saved in the <quote>traditional</quote> format (see the
-      <citetitle>Gretl Users' Guide</citetitle>). Also under the <quote>Data
+      <citetitle>Gretl User's Guide</citetitle>). Also under the <quote>Data
 	files</quote> tab you can select the action for the little folder icon
       on the toolbar: whether it should open a listing of the data files
       associated with Ramanathan's textbook, or those associated with
@@ -202,7 +202,7 @@
 
     <para>&mdash; Starts the program with the specified datafile in its
       workspace. The data file may be in any format supported by
-      <application>gretl</application> (see the <citetitle>Gretl Users'
+      <application>gretl</application> (see the <citetitle>Gretl User's
       Guide</citetitle> for details).  The program will try to detect the format
       of the file and treat it appropriately. See also <xref
       linkend="path-search"/> for path-searching behavior.</para>

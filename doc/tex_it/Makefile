@@ -11,11 +11,11 @@ XMLFILES = ../chapters_it/cmdlist.xml \
 TEXXSLT = ../gretltex.xsl
 MANXSLT = ../commands/gretlman.xsl
 
-$(GUIDE): gretl-guide-it.tex
+$(GUIDE): links gretl-guide-it.tex
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-it.tex refbody.tex
+$(REF): links gretl-ref-it.tex refbody.tex
 	pdflatex $<
 	pdflatex $<
 
@@ -24,6 +24,10 @@ refbody.tex: $(XMLFILES) $(TEXXSLT)
 
 ../chapters_it/cmdlist.xml: ../commands/gretl_commands_it.xml $(MANXSLT)
 	make -C ../commands -f cmdref.mk dbtex_it
+
+links:
+	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
+	rm -f figures && ln -s ../figures_it ./figures
 
 thumbs: $(DOC)
 	thumbpdf $@ && pdflatex $< 	

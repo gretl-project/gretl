@@ -5,10 +5,10 @@
 
 <xsl:output method="text" encoding="iso-8859-1"/>
 
-<xsl:include href="/usr/local/share/dblatex/xsl/common.xsl"/>
-<xsl:include href="/usr/local/share/dblatex/xsl/common/l10n.xsl"/>
-<xsl:include href="/usr/local/share/dblatex/xsl/common/common.xsl"/>
-<xsl:include href="/usr/local/share/dblatex/xsl/xref.xsl"/>
+<xsl:include href="/usr/share/sgml/dblatex/xsl/common.xsl"/>
+<xsl:include href="/usr/share/sgml/dblatex/xsl/common/l10n.xsl"/>
+<xsl:include href="/usr/share/sgml/dblatex/xsl/common/common.xsl"/>
+<xsl:include href="/usr/share/sgml/dblatex/xsl/xref.xsl"/>
 
 <xsl:strip-space elements="title"/>
 <xsl:preserve-space elements="*"/>
@@ -217,12 +217,6 @@
 
 <xsl:template match="figure">
   <xsl:text>&#10;\begin{figure}[htbp]&#10;</xsl:text>
-  <xsl:text>\caption{</xsl:text>
-  <xsl:value-of select="title"/>
-  <xsl:text>}&#10;</xsl:text>  
-  <xsl:text>\label{</xsl:text>
-  <xsl:value-of select="@id"/>
-  <xsl:text>}&#10;</xsl:text>
   <xsl:text>\begin{center}&#10;</xsl:text>
   <xsl:text>\includegraphics[scale=0.5]{</xsl:text>
   <xsl:choose>
@@ -235,6 +229,12 @@
   </xsl:choose>
   <xsl:text>}&#10;</xsl:text>
   <xsl:text>\end{center}&#10;</xsl:text>
+  <xsl:text>\caption{</xsl:text>
+  <xsl:value-of select="title"/>
+  <xsl:text>}&#10;</xsl:text>  
+  <xsl:text>\label{</xsl:text>
+  <xsl:value-of select="@id"/>
+  <xsl:text>}&#10;</xsl:text>
   <xsl:text>\end{figure}&#10;</xsl:text>
 </xsl:template>
 
@@ -328,12 +328,49 @@
   </xsl:call-template>
 </xsl:template>
 
+<xsl:template match="colspec">
+  <xsl:choose>
+    <xsl:when test="parent::*[@style='lpara']">
+      <xsl:choose>
+        <xsl:when test="position() = 1">
+          <xsl:text>&gt;{\raggedright\arraybackslash}p{</xsl:text>
+          <xsl:value-of select="@colwidth"/>
+          <xsl:text>}&#10;</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>l</xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:if test="not(following-sibling::colspec)">
+        <xsl:text>}&#10;</xsl:text>
+      </xsl:if>
+    </xsl:when>
+    <xsl:when test="parent::*[@style='rpara']">
+      <xsl:choose>
+        <xsl:when test="position() = 2">
+          <xsl:text>&gt;{\raggedright\arraybackslash}p{</xsl:text>
+          <xsl:value-of select="@colwidth"/>
+          <xsl:text>}&#10;</xsl:text>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:text>l</xsl:text>
+        </xsl:otherwise>
+      </xsl:choose>
+      <xsl:if test="not(following-sibling::colspec)">
+        <xsl:text>}&#10;</xsl:text>
+      </xsl:if>
+    </xsl:when>
+  </xsl:choose>
+</xsl:template>
+
 <xsl:template match="tgroup">
   <xsl:text>\begin{tabular}{</xsl:text>
-  <xsl:call-template name="tabcolstring">
-    <xsl:with-param name="colcount" select="@cols"/>
-  </xsl:call-template>
-  <xsl:text>}&#10;</xsl:text>
+  <xsl:if test="not(@style = 'lpara' or @style = 'rpara')">
+    <xsl:call-template name="tabcolstring">
+      <xsl:with-param name="colcount" select="@cols"/>
+    </xsl:call-template>      
+    <xsl:text>}&#10;</xsl:text>
+  </xsl:if>
   <xsl:apply-templates/>
 </xsl:template>
 

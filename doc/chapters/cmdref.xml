@@ -83,7 +83,9 @@
 
     <table id="tab-estim" frame="none">
       <title>Estimators</title>
-      <tgroup cols="2">
+      <tgroup cols="2" style="rpara">
+	<colspec colwidth="150pt"/>
+	<colspec colwidth="275pt"/>
 	<thead>
 	  <row>
 	    <entry>Estimator</entry>

@@ -1435,7 +1435,7 @@
 	<li><para> Usando <cmd>genr</cmd> se pueden recuperar los valores de algunas 
 	variables internas que se definen al ejecutar una regresión, de la siguiente foprma:</para>
 
-	  <table lwidth="100pt" rwidth="300pt">
+	  <table lwidth="100pt" rwidth="300pt" style="rpara">
 	    <row> 
 	      <cell><lit>$ess</lit></cell>
 	      <cell>suma de cuadrados de los residuos</cell> 
@@ -1578,7 +1578,9 @@
       </ilist>
 
       <table id="tab-genr" title="Ejemplos de uso de la instrucción genr"
-	lhead="Fórmula" rhead="Comentario">
+	lhead="Fórmula" rhead="Comentario"
+	lwidth="100pt" rwidth="300pt" 
+	style="rpara">
 	<row>
 	  <cell><lit>y = x1^3</lit></cell>
 	  <cell><lit>x1</lit> al cubo</cell>
@@ -2578,7 +2580,7 @@
 	en lugar de un 1 o un 0 indicando si la característica está 
 	presente o no) no debería usar la instrucción <cmd>logit</cmd>,
 	sino mejor debería construir la variable logit (p.ej. 
-	<cmd>genr lgt_p =  log(p/(1 - p))</cmd>) y usarla como variable 
+	<lit>genr lgt_p =  log(p/(1 - p))</lit>) y usarla como variable 
 	dependiente en una regresión MCO.  Ver Ramanathan, Capítulo 12.
       </para>
     </description>
@@ -3853,7 +3855,7 @@
 	<repl>var_número</repl> debe estar entre el 1 y el número de variables 
 	en el conjunto de datos. El nuevo nombre debe tener como máximo 8
 	caracteres, debe empezar con una letra y debe estar formado sólo por
-	letras dígitos y el carácter de subrayado (_).
+	letras dígitos y el carácter de subrayado (<lit>_</lit>).
 	character.
       </para>
     </description>
@@ -4202,7 +4204,7 @@
 	<cmd>ols</cmd>. 
       </para>
 
-      <table lwidth="80pt" rwidth="320pt">
+      <table lwidth="80pt" rwidth="320pt" style="rpara">
 	<row>
 	  <cell><lit>echo</lit></cell>
 	  <cell>valores: <lit>off</lit> u <lit>on</lit> (por defecto).

@@ -26,9 +26,9 @@
       <para>- Abre el programa con el archivo de datos indicado en su ventana
       de trabajo. El archivo de datos puede estar en formato propio de
       <application>gretl</application>, formato CSV, o formato BOX1 (véase el
-      <xref linkend="c-datafiles" /> arriba). El programa intenta detectar el
+      <citetitle>Gretl User's Guide</citetitle>). El programa intenta detectar el
       formato del archivo y procede en consecuencia. Véase también <xref
-      linkend="path-search" /> abajo para el comportamiento de búsqueda de
+      linkend="path-search"/> abajo para el comportamiento de búsqueda de
       directorios.</para>
 
       <para><command>gretl --help</command> (o <command>gretl -h</command>)</para>
@@ -55,9 +55,9 @@
       <para>- Abre el programa con una ventana en la que se muestra la base de
       datos especificada. Si los archivos de la base de datos (el archivo
       <filename>.bin</filename> y su acompañante <filename>.idx</filename> -
-      véase <xref linkend="dbase" />) no están en el directorio de bases de
-      datos por defecto del sistema, es preciso especificar la ubicación
-      completa.</para>
+      véase el <citetitle>Gretl User's Guide</citetitle>) no están en el
+      directorio de bases de datos por defecto del sistema, es preciso
+      especificar la ubicación completa.</para>
 
       <para>Podemos configurar varios detalles de <application>gretl</application>
       con el menú <quote>Archivo, Preferencias</quote>.</para>
@@ -78,8 +78,7 @@
         </listitem>
 
         <listitem>
-          <para>La instrucción para lanzar GNU R (véase el <xref
-          linkend="app-advanced" />).</para>
+          <para>La instrucción para lanzar GNU R.</para>
         </listitem>
 
         <listitem>
@@ -141,22 +140,21 @@
     </para>
 
       <para>Finalmente, hay algunas elecciones alternativas: en la pestaña
-      <quote>Abrir/Guardar camino</quote> puede
-      establecerse el directorio por defecto donde <application>gretl</application>
-      tiene que buscar al abrir o guardar un archivo - bien el directorio de
-      usuario de <application>gretl</application> o bien el directorio de
-      trabajo actual. En la pestaña <quote>Ficheros de datos</quote>
-      puede establecerse el sufijo a utilizar por defecto para los nombres de
-      archivos de datos. El sufijo normal es <literal>.gdt</literal> pero, si
-      se desea, se puede poner <literal>.dat</literal>, que era la norma
-      en las versiones anteriores del programa. Si se pone <literal>.dat</literal>
-      por defecto, entonces los archivos de datos serán guardados en el
-      formato <quote>tradicional</quote> (véase el <xref linkend="c-datafiles" />).
-      También es posible seleccionar la acción a asociar con el icono de
-      carpeta en la barra de herramientas en esta misma pestaña de
-      <quote>Ficheros de datos</quote>: se puede elegir entre abrir el listado
-      de los archivos de datos asociados con el libro de texto de Ramanathan,
-      o con el libro de Wooldridge.</para>
+      <quote>Abrir/Guardar camino</quote> puede establecerse el directorio por
+      defecto donde <application>gretl</application> tiene que buscar al abrir o
+      guardar un archivo - bien el directorio de usuario de
+      <application>gretl</application> o bien el directorio de trabajo
+      actual. En la pestaña <quote>Ficheros de datos</quote> puede establecerse
+      el sufijo a utilizar por defecto para los nombres de archivos de datos. El
+      sufijo normal es <literal>.gdt</literal> pero, si se desea, se puede poner
+      <literal>.dat</literal>, que era la norma en las versiones anteriores del
+      programa. Si se pone <literal>.dat</literal> por defecto, entonces los
+      archivos de datos serán guardados en el formato <quote>tradicional</quote>
+      (véase el <citetitle>Gretl User's Guide</citetitle>).  También es posible
+      seleccionar la acción a asociar con el icono de carpeta en la barra de
+      herramientas en esta misma pestaña de <quote>Ficheros de datos</quote>: se
+      puede elegir entre abrir el listado de los archivos de datos asociados con
+      el libro de texto de Ramanathan, o con el libro de Wooldridge.</para>
 
       <para>Las opciones establecidas de esta manera se gestionan de modo
       diferente dependiendo del contexto. En MS Windows se guardan en el
@@ -167,6 +165,7 @@
     </sect1>
 
     <sect1 id="optarg2">
+
       <title>gretlcli</title>
 
       <para><command>gretlcli</command></para>
@@ -175,13 +174,13 @@
 
       <para><command>gretlcli</command> <replaceable>archivo_de_datos</replaceable></para>
 
-      <para>- Abre el programa con un archivo de datos específico en su
-      espacio de trabajo. El archivo de datos puede estar en formato nativo de
+      <para>- Abre el programa con un archivo de datos específico en su espacio
+      de trabajo. El archivo de datos puede estar en formato nativo de
       <application>gretl</application>, formato CSV, o formato BOX1 (véase el
-      <xref linkend="c-datafiles" />). El programa intentará detectar el formato
-      del archivo y procederá en consecuencia. Véase también <xref
-      linkend="path-search" /> abajo, para más detalles sobre las características de búsqueda de
-      directorios.</para>
+      <citetitle>Gretl User's Guide</citetitle>). El programa intentará detectar
+      el formato del archivo y procederá en consecuencia. Véase también <xref
+      linkend="path-search"/> abajo, para más detalles sobre las
+      características de búsqueda de directorios.</para>
 
       <para><command>gretlcli --help</command> (o <command>gretlcli -h</command>)</para>
 
@@ -275,10 +274,12 @@
 
         <listitem>
           <para>En el caso de archivos de datos, la búsqueda continúa con el
-          directorio principal de <application>gretl</application>. En el caso de un lote de instrucciones, la
-          búsqueda continúa en el directorio de lotes de instrucciones del sistema.
-          Véase la <xref linkend="tab-path" /> para los valores dados por
-          defecto.</para>
+          directorio principal de <application>gretl</application>. En el caso
+          de un lote de instrucciones, la búsqueda continúa en el directorio de
+          lotes de instrucciones del sistema.  Véase la <xref linkend="tab-path"
+          /> para los valores dados por defecto.  <emphasis>Nota:</emphasis>
+          <filename>PREFIX</filename> denota el directorio base elegido en el
+          momento en que fue instalado <application>gretl</application>.</para>
         </listitem>
 
         <listitem>
@@ -295,46 +296,25 @@
           <thead>
             <row>
               <entry>&nbsp;</entry>
-
               <entry>Linux</entry>
-
               <entry>MS Windows</entry>
             </row>
           </thead>
-
           <tbody>
             <row>
               <entry>Directorio del usuario</entry>
-
               <entry><filename>$HOME/gretl</filename></entry>
-
               <entry><filename>PREFIX\gretl\user</filename></entry>
             </row>
-
             <row>
               <entry>Directorio de datos del sistema</entry>
-
               <entry><filename>PREFIX/share/gretl/data</filename></entry>
-
               <entry><filename>PREFIX\gretl\data</filename></entry>
             </row>
-
             <row>
               <entry>Directorio de lotes de instrucciones del sistema</entry>
-
               <entry><filename>PREFIX/share/gretl/scripts</filename></entry>
-
               <entry><filename>PREFIX\gretl\scripts</filename></entry>
-            </row>
-          </tbody>
-        </tgroup>
-
-        <tgroup cols="1">
-          <tbody>
-            <row>
-              <entry><emphasis>Nota:</emphasis> <filename>PREFIX</filename>
-              denota el directorio base elegido en el momento en que fue
-              instalado <application>gretl</application>.</entry>
             </row>
           </tbody>
         </tgroup>
@@ -356,20 +336,23 @@
       <sect2 id="MS-behave">
         <title>MS Windows</title>
 
-        <para>En MS Windows, la información sobre la configuración de
-        <application>gretl</application> y <application>gretlcli</application>
-        se guarda en el registro de Windows. Cuando <application>gretl</application> se instala por
-        primera vez, se crea un conjunto de entradas
-        de registro que pueden cambiarse mediante el menú
-        <quote>Archivo, Preferencias</quote>. En el caso
-        de que haya que llevar a cabo algunos ajustes de forma manual a esta
-        información, las entradas se encuentran (utilizando el programa
-        estándar de Windows, <application>regedit.exe</application>) dentro de
-        <literal>Software\gretl</literal> en <literal>HKEY_CLASSES_ROOT</literal>
-        (el directorio principal de <application>gretl</application> y la
-        instrucción para invocar <application>gnuplot</application>) y
-        <literal>HKEY_CURRENT_USER</literal> (las demás variables
-        configurables).</para>
+        <para>
+	En MS Windows, la información sobre la configuración de
+	<application>gretl</application> y <application>gretlcli</application>
+	se guarda en el registro de Windows. Cuando
+	<application>gretl</application> se instala por primera vez, se crea un
+	conjunto de entradas de registro que pueden cambiarse mediante el menú
+	<quote>Archivo, Preferencias</quote>. En el caso de que haya que llevar
+	a cabo algunos ajustes de forma manual a esta información, las entradas
+	se encuentran (utilizando el programa estándar de Windows,
+	<application>regedit.exe</application>) dentro de
+	<literal>Software\gretl</literal> en
+	<literal>HKEY_CLASSES_ROOT</literal> (el directorio principal de
+	<application>gretl</application> y la instrucción para invocar
+	<application>gnuplot</application>) y
+	<literal>HKEY_CURRENT_USER</literal> (las demás variables
+	configurables).
+      </para>
       </sect2>
     </sect1>
   </chapter>
