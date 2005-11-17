@@ -248,11 +248,17 @@ void set_as_last_model_if_unnamed (void *ptr, int type)
 {
     if (type == EQUATION) {
 	MODEL *pmod = (MODEL *) ptr;
+
+#if ODEBUG
+	fprintf(stderr, "set_as_last_model_if_unnamed: pmod->name = %s\n",
+		(pmod->name == NULL)? "NULL" : pmod->name);
+#endif
 	if (pmod->name == NULL) {
 	    set_as_last_model(ptr, type);
 	}
     } else if (type == VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) ptr;
+
 	if (var->name == NULL) {
 	    set_as_last_model(ptr, type);
 	}
@@ -583,10 +589,11 @@ static int stack_object (void *p, int type, const char *oname, PRN *prn)
 	gretl_object_set_refcount(&obj_stack[n_obj], REFCOUNT_PLUS);
 	n_obj++;
 	pprintf(prn, "Added object '%s'\n", oname);
+
     }
 
 #if ODEBUG
-    fprintf(stderr, "stack_object: oname='%s', type=%d, ptr=%p (n_obj=%d)\n",
+    fprintf(stderr, "stack_object: name='%s', type=%d, ptr=%p (n_obj=%d)\n",
 	    oname, type, (void *) p, n_obj);
 #endif  
 

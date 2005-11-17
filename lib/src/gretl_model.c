@@ -1150,11 +1150,10 @@ static MODEL *real_gretl_model_new (int protected)
 
     if (protected) {
 #if MDEBUG
-	fprintf(stderr, " protecting this model\n", (void *) pmod);
+	fprintf(stderr, " protecting this model\n");
 #endif
 	gretl_model_protect(pmod);
     }
-	
 
     return pmod;
 }

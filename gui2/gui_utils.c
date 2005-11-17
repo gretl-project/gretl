@@ -2669,9 +2669,16 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	return 1;
     }
 
-    /* set this model as target for genr etc., if we're not viewing
-       a previously saved (and hence, named) model */
-    set_as_last_model_if_unnamed(pmod, EQUATION);
+    /* If we're viewing an unnamed (hence, not already saved) model,
+       set it as the "last model" (target for genr, etc.).  If we're
+       viewing a named (saved) model, increment its refcount so it's
+       not destroyed when we close this window.
+    */
+    if (pmod->name == NULL) {
+	set_as_last_model(pmod, EQUATION);
+    } else {
+	gretl_object_ref(pmod, EQUATION);
+    }
 
 #ifdef OLD_GTK
     create_text(vwin, hsize, vsize, FALSE);
