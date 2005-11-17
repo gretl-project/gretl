@@ -123,12 +123,14 @@ static double **allocate_2d_array (int k, int T)
 static int vs_allocate (double ***pdhdp, double ***pg, 
 			double **pparam, double **paux3, double **psvc5,
 			double **pc, double **paux, double **pvc5,
-			double **pparpre, double ***ppartrc,
+			double **pparpre, double ***ppartrc, double **pyhat,
 			int np, int nrc, int T, int nll)
 {
     double *param = NULL, *aux3 = NULL, *svc5 = NULL;
     double *c = NULL, *aux = NULL, *vc5 = NULL, *parpre = NULL;
     double **D = NULL, **G = NULL, **P = NULL;
+    double *yhat = NULL;
+    int t;
 
     param = malloc(np * sizeof *param);
     aux3 = malloc(np * sizeof *aux3);
@@ -141,7 +143,9 @@ static int vs_allocate (double ***pdhdp, double ***pg,
 
     c = malloc(nrc * sizeof *c);
     aux = malloc(nrc * sizeof *aux);
-    if (c == NULL || aux == NULL) {
+    yhat = malloc(T * sizeof *yhat);
+
+    if (c == NULL || aux == NULL || yhat == NULL) {
 	goto bailout;
     }
 
@@ -165,6 +169,10 @@ static int vs_allocate (double ***pdhdp, double ***pg,
 	goto bailout;
     }
 
+    for (t=0; t<T; t++) {
+	yhat[t] = 0.0;
+    }
+
     *pdhdp = D;
     *pg = G;
     *pparam = param;
@@ -175,6 +183,7 @@ static int vs_allocate (double ***pdhdp, double ***pg,
     *pvc5 = vc5;
     *pparpre = parpre;
     *ppartrc = P;
+    *pyhat = yhat;
 
     return 0;
 
@@ -187,6 +196,7 @@ static int vs_allocate (double ***pdhdp, double ***pg,
     free(aux);
     free(vc5);
     free(parpre);
+    free(yhat);
     free_2d_array(D, np);
     free_2d_array(G, nrc);
     free_2d_array(P, np);
@@ -197,7 +207,7 @@ static int vs_allocate (double ***pdhdp, double ***pg,
 static void vs_free (double **dhdp, int np, double **g, int nrc, 
 		     double *param, double *aux3, double *svc5,
 		     double *c, double *aux, double *vcv,
-		     double *parpre, double **partrc)
+		     double *parpre, double **partrc, double *yhat)
 {
     free_2d_array(dhdp, np);
     free_2d_array(g, nrc);
@@ -209,6 +219,7 @@ static void vs_free (double **dhdp, int np, double **g, int nrc,
     free(aux);
     free(vcv);
     free(parpre);
+    free(yhat);
 }
 
 static void print_iter_info (int iter, double *theta, int m, double ll,
@@ -485,10 +496,38 @@ make_garch_vcv (int t1, int t2,
     return err;
 }
 
+/*
+
+   Parameters to garch_estimate()
+
+   t1:    beginning of sample in auxiliary database
+   t2:    end of sample in auxiliary database
+   nobs:  total number of observations in auxiliary database
+   X:     data matrix for auxiliary database (regressors, not needed on
+          output)
+   nx:    number of columns of X
+   coeff: vector of coefficient for the conditional mean, normally
+          initialised by OLS on input (not needed on output)
+   nc:    number of elements in coeff
+   vcv:   n^2 vector (0 on input) to store covariance matrix of coeff
+   res2:  vector of 0's on input, squared resids on output (not needed)
+   res:   vector of 0's on input, resids on output
+   h:     null pointer on input, conditional variances on output
+   y:     on input, vector with dep. var., not needed on output
+   amax:  vector; element 0 holds the garch intercept; 1 and 2 the
+          arch & garch orders; from 3 onwards, the arch & garch 
+          parameters
+   b:     0 on input, holds vector of coefficient for the conditional
+          mean on output
+   scale: double used to scale dep. var.
+   iters: int, 0 on input, holds number of iterations on output
+   prn:   print handle for info on iterations and other diagnostic output
+
+*/
+
 int garch_estimate (int t1, int t2, int nobs, 
-		    const double **X, int nx, double *yhat, 
-		    double *coeff, int nc, double *vcv, 
-		    double *res2, double *res, double *h,
+		    const double **X, int nx, double *coeff, int nc, 
+		    double *vcv, double *res2, double *res, double *h,
 		    const double *y, double *amax, double *b, 
 		    double scale, int *iters, PRN *prn, int vopt)
 {
@@ -509,6 +548,7 @@ int garch_estimate (int t1, int t2, int nobs,
     double **dhdp = NULL, **g = NULL;
     double *c = NULL, *aux = NULL;
     double *parpre, **partrc;
+    double *yhat = NULL;
     double *vc5 = NULL;
 
     int err = 0;
@@ -526,7 +566,7 @@ int garch_estimate (int t1, int t2, int nobs,
 
     if (vs_allocate(&dhdp, &g, &param, &aux3, &svc5, 
 		    &c, &aux, &vc5, &parpre, &partrc,
-		    nparam, nc, nobs, NLL)) {
+		    &yhat, nparam, nc, nobs, NLL)) {
 	pprintf(prn, "Out of memory\n");
 	return E_ALLOC;
     }
@@ -759,7 +799,7 @@ int garch_estimate (int t1, int t2, int nobs,
 
  L999:
     vs_free(dhdp, nparam, g, nc, param, aux3, svc5, c, aux, vc5,
-	    parpre, partrc);
+	    parpre, partrc, yhat);
 
     return err;
 }

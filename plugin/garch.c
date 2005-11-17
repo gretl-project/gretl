@@ -301,7 +301,7 @@ int do_fcp (const int *list, double **Z, double scale,
     double *y = NULL;
     double **X = NULL;
     double *h = NULL;
-    double *yhat = NULL, *amax = NULL; 
+    double *amax = NULL; 
     double *res = NULL, *res2 = NULL;
     double *coeff = NULL, *b = NULL;
     double *vcv = NULL;
@@ -325,18 +325,17 @@ int do_fcp (const int *list, double **Z, double scale,
     /* length of series to pass to garch_estimate */
     bign = nobs + pad;
 	
-    yhat = malloc(bign * sizeof *yhat);
     res2 = malloc(bign * sizeof *res2);
     res = malloc(bign * sizeof *res);
     h = malloc(bign * sizeof *h);
     amax = malloc(bign * sizeof *amax);
-    if (yhat == NULL || res2 == NULL || res == NULL || 
+    if (res2 == NULL || res == NULL || 
 	amax == NULL || h == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
     for (i=0; i<bign; i++) {
-	yhat[i] = res2[i] = res[i] = amax[i] = 0.0;
+	res2[i] = res[i] = amax[i] = 0.0;
     }   
  
     coeff = malloc(ncoeff * sizeof *coeff);
@@ -378,7 +377,7 @@ int do_fcp (const int *list, double **Z, double scale,
     }
 
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
-			 (const double **) X, nx, yhat, coeff, ncoeff, 
+			 (const double **) X, nx, coeff, ncoeff, 
 			 vcv, res2, res, h, y, amax, b, scale, &iters,
 			 prn, vopt);
 
@@ -410,7 +409,6 @@ int do_fcp (const int *list, double **Z, double scale,
 
  bailout:
 
-    free(yhat);
     free(res2);
     free(res);
     free(h);
