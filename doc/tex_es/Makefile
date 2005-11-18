@@ -11,11 +11,13 @@ XMLFILES = ../chapters_es/cmdlist.xml \
 TEXXSLT = ../gretltex.xsl
 MANXSLT = ../commands/gretlman.xsl
 
-$(GUIDE): links gretl-guide-es.tex
+$(GUIDE): gretl-guide-es.tex links
+	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(REF): links gretl-ref-es.tex refbody.tex
+$(REF): gretl-ref-es.tex refbody.tex links
+	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 

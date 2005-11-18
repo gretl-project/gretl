@@ -1,6 +1,7 @@
 \documentclass[oneside]{book}
 \usepackage{url,verbatim,fancyvrb,gretl,appendix}
 \usepackage{lucidabr} % optional
+\usepackage{pifont} % optional
 \usepackage[T1]{fontenc}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
@@ -29,17 +30,6 @@
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
-
-\newcommand{\gtitle}[1]{\vspace*{1in}
-   {\Huge \sffamily #1}\par
-   \vspace{.5in}
-  \includegraphics{figures/gretl-logo} 
-}
-
-\newcommand{\gsubtitle}[1]{%
-   {\Large \sffamily #1}
-   \vspace{.5in}
-}
 
 %% titlepage
 
@@ -72,9 +62,7 @@ Traduzione Italiana\\
 \end{center}
 \clearpage
 
-%% end titlepage
-
-%% license page
+%% end titlepage, begin license page
 
 \thispagestyle{empty}
 
