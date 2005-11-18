@@ -81,7 +81,7 @@
 
     <table id="tab-estim" frame="none">
       <title>Stimatori</title>
-      <tgroup cols="2" style="rpara">
+      <tgroup cols="2" style="allpara">
 	<colspec colwidth="150pt"/>
 	<colspec colwidth="275pt"/>
 	<thead>

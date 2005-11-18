@@ -129,7 +129,7 @@
    title    CDATA #IMPLIED
    lhead    CDATA #IMPLIED
    rhead    CDATA #IMPLIED
-   style (plain | lpara | rpara) "plain"
+   style (plain | lpara | rpara | allpara) "plain"
    context  (cli | gui | both) "both"
 >
 

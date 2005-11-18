@@ -325,7 +325,10 @@
 
     <table id="tab-path" frame="none">
       <title>Impostazioni predefinite dei percorsi</title>
-      <tgroup cols="3">
+      <tgroup cols="3" style="allpara">
+	<colspec colwidth="120pt"/>
+	<colspec colwidth="160pt"/>
+	<colspec colwidth="160pt"/>
 	<thead>
 	  <row>
 	    <entry>&nbsp;</entry>

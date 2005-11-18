@@ -330,6 +330,14 @@
 
 <xsl:template match="colspec">
   <xsl:choose>
+    <xsl:when test="parent::*[@style='allpara']">
+      <xsl:text>&gt;{\raggedright\arraybackslash}p{</xsl:text>
+      <xsl:value-of select="@colwidth"/>
+      <xsl:text>}&#10;</xsl:text>   
+      <xsl:if test="not(following-sibling::colspec)">
+        <xsl:text>}&#10;</xsl:text>
+      </xsl:if>  
+    </xsl:when>
     <xsl:when test="parent::*[@style='lpara']">
       <xsl:choose>
         <xsl:when test="position() = 1">
@@ -365,7 +373,7 @@
 
 <xsl:template match="tgroup">
   <xsl:text>\begin{tabular}{</xsl:text>
-  <xsl:if test="not(@style = 'lpara' or @style = 'rpara')">
+  <xsl:if test="not(@style='lpara' or @style='rpara' or @style='allpara')">
     <xsl:call-template name="tabcolstring">
       <xsl:with-param name="colcount" select="@cols"/>
     </xsl:call-template>      
