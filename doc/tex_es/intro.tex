@@ -106,16 +106,15 @@ En la plataforma Linux\footnote{La terminología nos origina aquí un
   referirnos al sistema operativo GNU/Linux.  Lo que aquí se dice
   acerca de Linux es, en su mayor parte, válido también para otros
   sistemas similares a Unix, aunque puede resultar necesaria alguna
-  que otra modificación local.
-  
-} tenemos la opción de compilar el código \app{gretl} o usar un
-paquete ya construido a propósito. Hay paquetes precompilados
-disponibles en el formato \app{rpm} (aconsejable para Red Hat Linux y
-sistemas relacionados con este) y también en el formato \app{deb}
-(Debian GNU/Linux). Estoy agradecido a Dirk Eddelbüttel por la
-construcción de este último. En el caso de que el usuario prefiriera
-construir uno por sí mismo, (o si el sistema unix no dispone de
-paquetes ya construidos), deberá seguir los siguientes pasos.
+  que otra modificación local.} tenemos la opción de compilar el
+código \app{gretl} o usar un paquete ya construido a propósito. Hay
+paquetes precompilados disponibles en el formato \app{rpm}
+(aconsejable para Red Hat Linux y sistemas relacionados con este) y
+también en el formato \app{deb} (Debian GNU/Linux). Estoy agradecido a
+Dirk Eddelbüttel por la construcción de este último. En el caso de que
+el usuario prefiriera construir uno por sí mismo, (o si el sistema
+unix no dispone de paquetes ya construidos), deberá seguir los
+siguientes pasos.
 
 
 \begin{enumerate}
@@ -130,8 +129,10 @@ paquetes ya construidos), deberá seguir los siguientes pasos.
 \item Entonces, la rutina básica de compilación es
         
 \begin{code}
-  ./configure make make check make install
-        
+  ./configure 
+  make 
+  make check 
+  make install
 \end{code}
 
 Sin embargo, antes de empezar, es conveniente leer el archivo
