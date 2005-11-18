@@ -2,359 +2,305 @@
 \label{c-panel}
 
 
-
 \section{Estructura de Panel}
 \label{panel-structure}
 
 Los datos de panel (una muestra combinada de datos de series
-      temporales y de sección cruzada) requieren un cuidado especial. He aquí
-      algunas observaciones a tener en cuenta.
+temporales y de sección cruzada) requieren un cuidado especial. He
+aquí algunas observaciones a tener en cuenta.
 
 Considérese un conjunto de datos consistente en observaciones de
-      \emph{n} unidades de sección cruzada (países,
-      provincias, personas, etc.) durante \emph{T} periodos. Supongamos 
-      que cada observación contiene los valores de \emph{m}
-      variables de interés. El conjunto de datos está formado entonces por
-      \emph{mnT} valores.
+\emph{n} unidades de sección cruzada (países, provincias, personas,
+etc.) durante \emph{T} periodos. Supongamos que cada observación
+contiene los valores de \emph{m} variables de interés. El conjunto de
+datos está formado entonces por \emph{mnT} valores.
 
-Los datos deben de ordenarse ``por observación'': cada fila
-      representa una observación; cada columna contiene los valores de una
-      variable en particular. La matriz de datos tiene entonces
-      \emph{nT} filas y \emph{m} columnas. Esto
-      deja abierta la cuestión de cómo ordenar las filas. Existen dos
-      posibilidades.\footnote{Si no queremos diferenciar de manera
-      conceptual o estadística entre variaciones muestrales y temporales,
-      podemos ordenar las filas de modo arbitrario, pero esto es probablemente
-      un derroche de datos.
-
-}
-
+Los datos deben de ordenarse ``por observación'': cada fila representa
+una observación; cada columna contiene los valores de una variable en
+particular. La matriz de datos tiene entonces \emph{nT} filas y
+\emph{m} columnas. Esto deja abierta la cuestión de cómo ordenar las
+filas. Existen dos posibilidades.\footnote{Si no queremos diferenciar
+  de manera conceptual o estadística entre variaciones muestrales y
+  temporales, podemos ordenar las filas de modo arbitrario, pero esto
+  es probablemente un derroche de datos.}
 
 \begin{itemize}
-\item Filas agrupadas por \emph{unidad}. Piénsese en
-          la matriz de datos como si estuviera compuesta de
-          \emph{n} bloques, cada uno con \emph{T}
-          filas. El primer bloque de \emph{T} filas contiene las
-          observaciones de la unidad 1 de la muestra para cada uno de los
-          periodos; el siguiente bloque contiene las observaciones de la
-          unidad 2 para todos los periodos; y así sucesivamente. De hecho, la
-          matriz de datos es un conjunto de datos de series temporales
-          apilados verticalmente.
-
-
-\item Filas agrupadas por \emph{periodo}. Piénsese en
-          la matriz de datos como si estuviera compuesta por
-          \emph{T} bloques, cada uno con \emph{n}
-          filas. La primera de las \emph{n} filas contiene las
-          observaciones de cada unidad muestral en el periodo 1; el siguiente
-          bloque contiene las observaciones de todas las unidades en el
-          periodo 2; y así sucesivamente. La matriz de datos es un conjunto de
-          datos de muestras de sección cruzada, apiladas verticalmente.
-
-
+\item Filas agrupadas por \emph{unidad}. Piénsese en la matriz de
+  datos como si estuviera compuesta de \emph{n} bloques, cada uno con
+  \emph{T} filas. El primer bloque de \emph{T} filas contiene las
+  observaciones de la unidad 1 de la muestra para cada uno de los
+  periodos; el siguiente bloque contiene las observaciones de la
+  unidad 2 para todos los periodos; y así sucesivamente. De hecho, la
+  matriz de datos es un conjunto de datos de series temporales
+  apilados verticalmente.
+\item Filas agrupadas por \emph{periodo}. Piénsese en la matriz de
+  datos como si estuviera compuesta por \emph{T} bloques, cada uno con
+  \emph{n} filas. La primera de las \emph{n} filas contiene las
+  observaciones de cada unidad muestral en el periodo 1; el siguiente
+  bloque contiene las observaciones de todas las unidades en el
+  periodo 2; y así sucesivamente. La matriz de datos es un conjunto de
+  datos de muestras de sección cruzada, apiladas verticalmente.
 \end{itemize}
 
-Puede utilizarse el esquema que resulte más conveniente. El
-      primero es quizá más fácil de mantener ordenado. Si se utiliza el
-      segundo, hay que asegurarse de que las unidades de sección cruzada
-      aparezcan en el mismo orden en cada uno de los bloques de datos de cada
-      periodo.
+Puede utilizarse el esquema que resulte más conveniente. El primero es
+quizá más fácil de mantener ordenado. Si se utiliza el segundo, hay
+que asegurarse de que las unidades de sección cruzada aparezcan en el
+mismo orden en cada uno de los bloques de datos de cada periodo.
 
 En cualquiera de los dos casos se puede utilizar el campo frecuencia
-      en la línea \emph{observaciones} del archivo de
-      cabecera de datos (véase el [?]) para que el
-      asunto resulte un poco más sencillo.
-
+en la línea \emph{observaciones} del archivo de cabecera de datos para
+que el asunto resulte un poco más sencillo.
 
 \begin{itemize}
-\item \emph{Agrupados por unidades}: Establecer la frecuencia
-          igual a \emph{T}. Supongamos que hay observaciones
-          sobre 20 unidades durante 5 periodos de tiempo. En este caso, la
-          línea de observaciones más apropiada es la siguiente:
-          \verb+5 1.1 20.5+ (léase: frecuencia 5, empezando con la
-          observación de la unidad 1, en el periodo 1, y finalizando con la
-          observación de la unidad 20, periodo 5). Entonces, por ejemplo, la
-          observación de la unidad 2 en el periodo 5 puede ser referenciada
-          como \verb+2.5+, y la correspondiente a la unidad 13 en
-          periodo 1 como \verb+13.1+.
-
-
-\item \emph{Agrupado por periodos}: Establecer la frecuencia
-          igual a \emph{n}. En este caso, si hay observaciones
-          sobre 20 unidades en cada uno de los 5 periodos, la línea de
-          observaciones debería ser: \verb+20 1.01 5.20+ (léase:
-          frecuencia 20, empezando con la observación del periodo 1, unidad
-          01, y finalizando con la observación del periodo 5, unidad 20). Así,
-          nos referiremos a la observación de la unidad 2, periodo 5 como
-          \verb+5.02+.
-
-
+\item \emph{Agrupados por unidades}: Establecer la frecuencia igual a
+  \emph{T}. Supongamos que hay observaciones sobre 20 unidades durante
+  5 periodos de tiempo. En este caso, la línea de observaciones más
+  apropiada es la siguiente: \verb+5 1.1 20.5+ (léase: frecuencia 5,
+  empezando con la observación de la unidad 1, en el periodo 1, y
+  finalizando con la observación de la unidad 20, periodo 5).
+  Entonces, por ejemplo, la observación de la unidad 2 en el periodo 5
+  puede ser referenciada como \verb+2.5+, y la correspondiente a la
+  unidad 13 en periodo 1 como \verb+13.1+.
+\item \emph{Agrupado por periodos}: Establecer la frecuencia igual a
+  \emph{n}. En este caso, si hay observaciones sobre 20 unidades en
+  cada uno de los 5 periodos, la línea de observaciones debería ser:
+  \verb+20 1.01 5.20+ (léase: frecuencia 20, empezando con la
+  observación del periodo 1, unidad 01, y finalizando con la
+  observación del periodo 5, unidad 20). Así, nos referiremos a la
+  observación de la unidad 2, periodo 5 como \verb+5.02+.
 \end{itemize}
 
-Si se construye un conjunto de datos de panel utilizando un
-      programa de hoja de cálculo para después importar los datos a
-      \app{gretl}, puede ser que el programa no
-      reconozca, al principio, la clase especial de los datos. Esto se puede
-      arreglar mediante la instrucción \cmd{setobs} (véase el [?]) o la opción del menú GUI ``Muestra, Seleccionar frecuencia, 
-      observación inicial...)''.
-
+Si se construye un conjunto de datos de panel utilizando un programa
+de hoja de cálculo para después importar los datos a \app{gretl},
+puede ser que el programa no reconozca, al principio, la clase
+especial de los datos. Esto se puede arreglar mediante la instrucción
+\cmd{setobs} (véase el \GCR) o la opción del menú GUI ``Muestra,
+Seleccionar frecuencia, observación inicial...)''.
 
 
 \section{Variables ficticias}
 \label{dummies}
 
 En un estudio de panel puede que se desee construir variables
-      ficticias de uno o ambos tipos descritos a continuación: (a) variables
-      ficticias como identificadores de las unidades muestrales, y (b)
-      variables ficticias como identificadores de los periodos de tiempo. El
-      primer método puede utilizarse para permitir que el intercepto de la
-      regresión sea diferente en diferentes unidades, y el segundo para
-      permitir lo mismo en diferente periodos.
+ficticias de uno o ambos tipos descritos a continuación: (a) variables
+ficticias como identificadores de las unidades muestrales, y (b)
+variables ficticias como identificadores de los periodos de tiempo. El
+primer método puede utilizarse para permitir que el intercepto de la
+regresión sea diferente en diferentes unidades, y el segundo para
+permitir lo mismo en diferente periodos.
 
-Hay dos opciones especiales para crear estas variables ficticias.
-      Se encuentran dentro del menú ``Datos, Añadir
-      variables'' en el GUI, o en la instrucción \cmd{genr} en
-      el modo lote de instrucciones, o \app{gretlcli}.
-
+Hay dos opciones especiales para crear estas variables ficticias.  Se
+encuentran dentro del menú ``Datos, Añadir variables'' en el GUI, o en
+la instrucción \cmd{genr} en el modo lote de instrucciones, o
+\app{gretlcli}.
 
 \begin{enumerate}
-\item ``variables ficticias periódicas''
-          (lote de instrucciones: \cmd{genr dummy}). Esta instrucción
-          normalmente se utiliza para crear variables ficticias periódicas
-          hasta la frecuencia de datos en los estudios de series temporales
-          (por ejemplo un conjunto de variables ficticias trimestrales para ser utilizado en
-          corrección estacional). No obstante, también funciona con datos de
-          panel. Nótese que la interpretación de las variables ficticias creadas
-          mediante esta instrucción difiere dependiendo de si las filas de datos
-          están agrupadas por unidad o por periodo. Si están agrupadas según
-          \emph{unidades} (frecuencia \emph{T})
-          las variables resultantes son \emph{variables ficticias periódicas}
-          y habrá un número \emph{T} de ellas. Por ejemplo,
-          \verb+dummy_2+ tendrá el valor 1 en cada fila de datos
-          correspondiente a una observación del periodo 2, o 0 en caso
-          contrario. Si están agrupadas según \emph{periodos}
-          (frecuencia \emph{n}) entonces se generaran
-          \emph{n} \emph{variables ficticias unitarias}:
-          \verb+dummy_2+ tendrá el valor 1 en cada fila de datos
-          asociada con la unidad muestral 2, o 0 en caso contrario.
-
-
-\item ``Variables ficticias de panel'' (en modo consola
-          \cmd{genr paneldum}). Esta instruccion crea todas
-          las variables ficticias, de cada unidad y periodo, de golpe. Se supone que por
-          defecto, las filas de datos están agrupadas por unidades. Las
-          variables ficticias de cada unidad se denominan \verb+du_1+,
-          \verb+du_2+ y así sucesivamente, mientras que las
-          variables ficticias periódicas se llaman \verb+dt_1+,
-          \verb+dt_2+, etc. Es incorrecto utilizar la \verb+u+ (por
-          unidad) y la \verb+t+ (por tiempo) en estos nombres si las 
-	  filas de datos están agrupadas por periodos: su
-          utilización correcta en este contexto se hace mediante
-          \cmd{genr paneldum -o} (sólo en modo lote de instrucciones).
-
-
+\item ``variables ficticias periódicas'' (lote de instrucciones:
+  \cmd{genr dummy}). Esta instrucción normalmente se utiliza para
+  crear variables ficticias periódicas hasta la frecuencia de datos en
+  los estudios de series temporales (por ejemplo un conjunto de
+  variables ficticias trimestrales para ser utilizado en corrección
+  estacional). No obstante, también funciona con datos de panel.
+  Nótese que la interpretación de las variables ficticias creadas
+  mediante esta instrucción difiere dependiendo de si las filas de
+  datos están agrupadas por unidad o por periodo. Si están agrupadas
+  según \emph{unidades} (frecuencia \emph{T}) las variables
+  resultantes son \emph{variables ficticias periódicas} y habrá un
+  número \emph{T} de ellas. Por ejemplo, \verb+dummy_2+ tendrá el
+  valor 1 en cada fila de datos correspondiente a una observación del
+  periodo 2, o 0 en caso contrario. Si están agrupadas según
+  \emph{periodos} (frecuencia \emph{n}) entonces se generaran \emph{n}
+  \emph{variables ficticias unitarias}: \verb+dummy_2+ tendrá el valor
+  1 en cada fila de datos asociada con la unidad muestral 2, o 0 en
+  caso contrario.
+\item ``Variables ficticias de panel'' (en modo consola \cmd{genr
+    paneldum}). Esta instruccion crea todas las variables ficticias,
+  de cada unidad y periodo, de golpe. Se supone que por defecto, las
+  filas de datos están agrupadas por unidades. Las variables ficticias
+  de cada unidad se denominan \verb+du_1+, \verb+du_2+ y así
+  sucesivamente, mientras que las variables ficticias periódicas se
+  llaman \verb+dt_1+, \verb+dt_2+, etc. Es incorrecto utilizar la
+  \verb+u+ (por unidad) y la \verb+t+ (por tiempo) en estos nombres si
+  las filas de datos están agrupadas por periodos: su utilización
+  correcta en este contexto se hace mediante \cmd{genr paneldum -o}
+  (sólo en modo lote de instrucciones).
 \end{enumerate}
 
-Si el conjunto de datos de panel contiene el año \verb+YEAR+
-      como una de las variables, es posible crear un periodo ficticio para de
-      escoger algún año en particular como en este ejemplo \cmd{genr dum =
-      (YEAR=1960)}. También es posible crear variables ficticias
-      periódicas utilizando el operador de módulo, \verb+%+. Por
-      ejemplo, para crear una variable ficticia con valor 1 para la
-      primera observación y cada treinta observaciones y 0 en lo demás casos, se puede hacer lo
-      siguiente
-
+Si el conjunto de datos de panel contiene el año \verb+YEAR+ como una
+de las variables, es posible crear un periodo ficticio para de escoger
+algún año en particular como en este ejemplo \cmd{genr dum =
+  (YEAR=1960)}. También es posible crear variables ficticias
+periódicas utilizando el operador de módulo, \verb+%+. Por
+ejemplo, para crear una variable ficticia con valor 1 para la primera
+observación y cada treinta observaciones y 0 en lo demás casos, se
+puede hacer lo siguiente
 
 \begin{code}
-      genr index
-      genr dum = ((index-1)%30) = 0
-    
+  genr index genr dum = ((index-1)%30) = 0
 \end{code}
-
 
 
 \section{Uso de valores retardados con datos de panel}
 \label{panel-lagged}
 
 Si los periodos de tiempo están divididos en intervalos regulares,
-      quizá queramos usar los valores retardados de las variables en una
-      regresión de panel. En este caso es preferible agrupar las filas de datos
-      por \emph{unidades} (series temporales apiladas).
+quizá queramos usar los valores retardados de las variables en una
+regresión de panel. En este caso es preferible agrupar las filas de
+datos por \emph{unidades} (series temporales apiladas).
 
-Supongamos que creamos un retardo de la variable
-      \verb+x1+, utilizando \cmd{genr x1_1 = x1(-1)}.
-      Los valores de esta variable serán en general correctos, pero en los
-      límites de los bloques de datos de cada unidad son ``
-      utilizables'': el valor ``previo'' no es realmente el
-      primer retardo de \verb+x1_1+, si no más bien la última
-      observación de \verb+x1+ para la unidad muestral previa.
-      \app{Gretl} marca estos valores como
-      ausentes.
+Supongamos que creamos un retardo de la variable \verb+x1+, utilizando
+\verb+genr x1_1 = x1(-1)+.  Los valores de esta variable serán en
+general correctos, pero en los límites de los bloques de datos de cada
+unidad son `` utilizables'': el valor ``previo'' no es realmente el
+primer retardo de \verb+x1_1+, si no más bien la última observación de
+\verb+x1+ para la unidad muestral previa.  \app{Gretl} marca estos
+valores como ausentes.
 
-Si hay que incluir un retardo de este tipo en una regresión, hay
-      que asegurarse de que la primera observación de cada bloque o unidad no
-      esté incluida. Un modo de hacer esto es mediante Mínimos Cuadrados
-      Ponderados (\cmd{wls}) utilizando una variable ficticia
-      apropiada como ponderación. Esta variable ficticia (vamos a denominarla
-      \cmd{lagdum}) debe tener el valor 0 para las observaciones
-      a descartar, y 1 en el caso contrario. Es decir, es complementaria a una
-      variable para el periodo 1. De este modo, si hemos utilizado la instrucción\cmd{
-      genr dummy} podemos teclear \cmd{genr lagdum = 1 - dummy_1}.
-      En caso de que hubiéramos utilizado \cmd{genr paneldum}
-      ahora tendríamos que teclear \cmd{genr lagdum = 1 - dt_1}.
-      De cualquier manera, la siguiente instrucción sería
+Si hay que incluir un retardo de este tipo en una regresión, hay que
+asegurarse de que la primera observación de cada bloque o unidad no
+esté incluida. Un modo de hacer esto es mediante Mínimos Cuadrados
+Ponderados (\cmd{wls}) utilizando una variable ficticia apropiada como
+ponderación. Esta variable ficticia (vamos a denominarla \cmd{lagdum})
+debe tener el valor 0 para las observaciones a descartar, y 1 en el
+caso contrario. Es decir, es complementaria a una variable para el
+periodo 1. De este modo, si hemos utilizado la instrucción\cmd{ genr
+  dummy} podemos teclear \verb+genr lagdum = 1 - dummy_1+.  En caso de
+que hubiéramos utilizado \cmd{genr paneldum} ahora tendríamos que
+teclear \verb+genr lagdum = 1 - dt_1+.  De cualquier manera, la
+siguiente instrucción sería
 
-\cmd{wls lagdum y const x1_1 ...}
+\verb+wls lagdum y const x1_1+ ...
 
-para obtener una regresión combinada utilizando el primer retardo
-      de \verb+x1+, descartando todas las observaciones del
-      periodo 1.
+para obtener una regresión combinada utilizando el primer retardo de
+\verb+x1+, descartando todas las observaciones del periodo 1.
 
-Otra opción es utilizar \cmd{smpl} con la marca
-      \cmd{-o} y una variable ficticia apropiada. El Ejemplo \ref{examp-pwt} muestra unas instrucciones de ejemplo, suponiendo que
-      cada bloque de datos de cada unidad contiene 30 observaciones y queremos
-      descartar la primera fila de cada uno. Podemos entonces ejecutar las
-      regresiones sobre el conjunto de datos restringido sin tener que usar la
-      instrucción \cmd{wls}. Si se desea reutilizar el conjunto de
-      datos restringido, podemos guardarlo mediante la instrucción
-      \cmd{store} (véase el [?] más abajo).
-
-
+Otra opción es utilizar \cmd{smpl} con la marca \cmd{-o} y una
+variable ficticia apropiada. El Ejemplo \ref{examp-pwt} muestra unas
+instrucciones de ejemplo, suponiendo que cada bloque de datos de cada
+unidad contiene 30 observaciones y queremos descartar la primera fila
+de cada uno. Podemos entonces ejecutar las regresiones sobre el
+conjunto de datos restringido sin tener que usar la instrucción
+\cmd{wls}. Si se desea reutilizar el conjunto de datos restringido,
+podemos guardarlo mediante la instrucción \cmd{store} (véase el \GCR).
 
 \begin{script}[htbp]
-\caption{Retardos con datos de panel}
-\label{examp-panel-lags}
-
+  \caption{Retardos con datos de panel}
+  \label{examp-panel-lags}
 \begin{code}
-      (* crear la variable índice *)
-      genr index
-      (* crear dum = 0 para cada 30 observaciones *)
-      genr dum = ((index-1)%30) > 0
-      (* establecer la muestra por medio de esa variable ficticia *)
-      smpl -o dum
-      (* crear de nuevo la estructura de observaciones, para 56 unidades *)
-      setobs 29 1.01 56.29
-    
+  # crear la variable índice
+  genr index 
+  # crear dum = 0 para cada 30 observaciones 
+  genr dum = ((index-1)%30) > 0
+  # establecer la muestra por medio de esa variable ficticia
+  smpl dum --dummy
+  # crear de nuevo la estructura de observaciones, para 56 unidades
+  setobs 29 1.01 56.29
 \end{code}
-
 \end{script}
-
 
 
 \section{Estimación combinada}
 \label{pooled-est}
 
 Llegados a este punto, podemos revelar que hay una instrucción de
-      estimación con el propósito especial de ser utilizado con datos de
-      panel, la opción ``MCO combinados'' en el menú
-      \textsf{Modelo}. Esta instrucción sólo está disponible cuando se
-      reconoce el conjunto de datos como un panel. Para aprovechar esta
-      opción, es preciso especificar un modelo que no contenga ninguna
-      variable ficticia para representar unidades de sección cruzada. La
-      rutina presenta estimaciones sencillas de MCO combinadas,
-      que tratan de igual manera las variaciones de sección cruzada y de
-      series temporales. Este modelo puede que sea el apropiado o no. En el
-      menú \textsf{Contrastes} en la ventana de modelo, se
-      encuentra una opción llamada ``Diagnósticos de panel'', la cual plantea
-      el contraste de MCO combinados contra las principales
-      alternativas, es decir, los modelos de efectos fijos o de efectos
-      aleatorios.
+estimación con el propósito especial de ser utilizado con datos de
+panel, la opción ``MCO combinados'' en el menú \textsf{Modelo}. Esta
+instrucción sólo está disponible cuando se reconoce el conjunto de
+datos como un panel. Para aprovechar esta opción, es preciso
+especificar un modelo que no contenga ninguna variable ficticia para
+representar unidades de sección cruzada. La rutina presenta
+estimaciones sencillas de MCO combinadas, que tratan de igual manera
+las variaciones de sección cruzada y de series temporales. Este modelo
+puede que sea el apropiado o no. En el menú \textsf{Contrastes} en la
+ventana de modelo, se encuentra una opción llamada ``Diagnósticos de
+panel'', la cual plantea el contraste de MCO combinados contra las
+principales alternativas, es decir, los modelos de efectos fijos o de
+efectos aleatorios.
 
-El modelo de efectos fijos añade una variable ficticia a todas
-      menos una de las unidades de sección cruzada, permitiendo que varíe el
-      intercepto de la regresión en cada unidad. Se presenta un contraste
-      \emph{F} para la significación conjunta de estas variables
-      ficticias: si el valor p para este contraste es
-      pequeño, entonces se rechaza la hipótesis nula (de que un simple modelo
-      combinado es adecuado) en favor de un modelo de efectos fijos.
+El modelo de efectos fijos añade una variable ficticia a todas menos
+una de las unidades de sección cruzada, permitiendo que varíe el
+intercepto de la regresión en cada unidad. Se presenta un contraste
+\emph{F} para la significación conjunta de estas variables ficticias:
+si el valor p para este contraste es pequeño, entonces se rechaza la
+hipótesis nula (de que un simple modelo combinado es adecuado) en
+favor de un modelo de efectos fijos.
 
-Por otro lado, el modelo de efectos aleatorios descompone la
-      varianza residual en dos partes, una parte específica a la unidad de
-      sección cruzada o ``grupo'' y la otra específica a una
-      observación en particular. (Este estimador sólo puede calcularse cuando
-      el panel es lo suficientemente ``amplio'', es decir, cuando
-      el número de unidades de sección cruzada en el conjunto de datos excede
-      el número de parámetros a estimar.) El contraste LM de Breusch-Pagan
-      comprueba la hipótesis nula (una vez más, de que el estimador de MCO
-      combinados es adecuado) contra la alternativa de efectos aleatorios.
+Por otro lado, el modelo de efectos aleatorios descompone la varianza
+residual en dos partes, una parte específica a la unidad de sección
+cruzada o ``grupo'' y la otra específica a una observación en
+particular. (Este estimador sólo puede calcularse cuando el panel es
+lo suficientemente ``amplio'', es decir, cuando el número de unidades
+de sección cruzada en el conjunto de datos excede el número de
+parámetros a estimar.) El contraste LM de Breusch-Pagan comprueba la
+hipótesis nula (una vez más, de que el estimador de MCO combinados es
+adecuado) contra la alternativa de efectos aleatorios.
 
-Cabe dentro de lo posible que el modelo MCO
-      combinados sea rechazado contra las dos alternativas de efectos
-      fijos y aleatorios. Entonces la pregunta es, ¿cómo podemos valorar los
-      méritos relativos de los estimadores alternativos? El contraste de
-      Hausman (también incluido en el informe, siempre que el modelo de
-      efectos aleatorios se pueda estimar) intenta resolver este problema. El
-      estimador de efectos aleatorios es más eficiente que el estimador de
-      efectos fijos, siempre y cuando el error especifico a la unidad o grupo
-      no esté correlacionado con las variables independientes; si no es así,
-      el estimador de efectos aleatorios es inconsistente, en cuyo caso es
-      preferible el estimador de efectos fijos. La hipótesis nula para el
-      contraste de Hausman dice que el error especifico al grupo no esta tan
-      correlacionado (y por lo tanto es preferible el modelo de efectos
-      aleatorios). Por lo tanto, un valor p pequeño para este contraste supone rechazar el modelo de efectos
-      aleatorios en favor del modelo de efectos fijos.
+Cabe dentro de lo posible que el modelo MCO combinados sea rechazado
+contra las dos alternativas de efectos fijos y aleatorios. Entonces la
+pregunta es, ¿cómo podemos valorar los méritos relativos de los
+estimadores alternativos? El contraste de Hausman (también incluido en
+el informe, siempre que el modelo de efectos aleatorios se pueda
+estimar) intenta resolver este problema. El estimador de efectos
+aleatorios es más eficiente que el estimador de efectos fijos, siempre
+y cuando el error especifico a la unidad o grupo no esté
+correlacionado con las variables independientes; si no es así, el
+estimador de efectos aleatorios es inconsistente, en cuyo caso es
+preferible el estimador de efectos fijos. La hipótesis nula para el
+contraste de Hausman dice que el error especifico al grupo no esta tan
+correlacionado (y por lo tanto es preferible el modelo de efectos
+aleatorios). Por lo tanto, un valor p pequeño para este contraste
+supone rechazar el modelo de efectos aleatorios en favor del modelo de
+efectos fijos.
 
-Para una discusión más rigurosa sobre este tema, véase Greene
-      (2000), capítulo 14.
-
+Para una discusión más rigurosa sobre este tema, véase Greene (2000),
+capítulo 14.
 
 
 \section{Ilustración: La Tabla Mundial de Penn}
 \label{PWT}
 
-La Tabla Mundial de Penn (Penn World Table) (dirección \href{http://pwt.econ.upenn.edu/}{pwt.econ.upenn.edu}) es un
-      excelente conjunto de datos macroeconómicos de panel, que incluye
-      datos sobre 152 países entre los años 1950-1992. Los datos están
-      disponibles en formato \app{gretl}; véase el sitio
-      web de datos de \app{gretl} \url{http://gretl.sourceforge.net/gretl_data.html}
-      (se puede descargar gratuitamente, aunque no está incluido en el paquete
-      principal de \app{gretl}).
+La Tabla Mundial de Penn (Penn World Table) (dirección
+\href{http://pwt.econ.upenn.edu/}{pwt.econ.upenn.edu}) es un excelente
+conjunto de datos macroeconómicos de panel, que incluye datos sobre
+152 países entre los años 1950-1992. Los datos están disponibles en
+formato \app{gretl}; véase el sitio web de datos de \app{gretl}
+\url{http://gretl.sourceforge.net/gretl_data.html} (se puede descargar
+gratuitamente, aunque no está incluido en el paquete principal de
+\app{gretl}).
 
-El Ejemplo \ref{examp-pwt} de abajo abre \verb+pwt56_60_89.gdt+,
-      un conjunto parcial de la pwt que contiene datos sobre 120 países, entre
-      los años 1960-89, para 20 variables, sin que haya ninguna observación
-      ausente (el conjunto de datos completo, que también está incluido en el
-      paquete pwt para \app{gretl}, contiene muchas
-      observaciones con valores ausentes). El total de crecimiento del PIB
-      real, entre 1960-89, se calcula para cada país y se regresa contra el
-      nivel real del PIB en 1960, para ver si hay indicios de
-      ``convergencia'' (es decir, crecimiento más rápido en los países
-      que empezaron con el nivel más bajo).
-
-
+El Ejemplo \ref{examp-pwt} de abajo abre \verb+pwt56_60_89.gdt+, un
+conjunto parcial de la pwt que contiene datos sobre 120 países, entre
+los años 1960-89, para 20 variables, sin que haya ninguna observación
+ausente (el conjunto de datos completo, que también está incluido en
+el paquete pwt para \app{gretl}, contiene muchas observaciones con
+valores ausentes). El total de crecimiento del PIB real, entre
+1960-89, se calcula para cada país y se regresa contra el nivel real
+del PIB en 1960, para ver si hay indicios de ``convergencia'' (es
+decir, crecimiento más rápido en los países que empezaron con el nivel
+más bajo).
 
 \begin{script}[htbp]
-\caption{Uso de la tabla mundial de Penn}
-\label{examp-pwt}
+  \caption{Uso de la tabla mundial de Penn}
+  \label{examp-pwt}
 
 \begin{code}
-      open pwt56_60_89.gdt
-      (*
-      para 1989 (última observación), el retardo 29 da 1960,
-      la primera observación
-      *)
-      genr gdp60 = RGDPL(-29)
-      (*
-      encontrar el crecimiento total del PNB total
-      durante 30 años
-      *)
-      genr gdpgro = (RGDPL - gdp60)/gdp60
-      (* restringir la muestra a la sección cruzada de año 1989 *)
-      smpl -r YEAR=1989
-      (*
-      ¿Hay convergencia?  ¿los países con una base menor,
-      crecieron mas rápido?
-      *)
-      ols gdpgro const gdp60
-      (* resultado: ¡No! Intentar la relación inversa *)
-      genr gdp60inv = 1/gdp60
-      ols gdpgro const gdp60inv
-      (* No otra vez.  ¿Intentar prescindir de Africa? *)
-      genr afdum = (CCODE = 1)
-      genr afslope = afdum * gdp60
-      ols gdpgro const afdum gdp60 afslope
-      
+  open pwt56_60_89.gdt 
+  # para 1989 (última observación), el retardo 29 da 1960, 
+  # la primera observación 
+  genr gdp60 = RGDPL(-29) 
+  # encontrar el crecimiento total del PNB total durante 30 años
+  genr gdpgro = (RGDPL - gdp60)/gdp60 
+  # restringir la muestra a la sección cruzada de año 1989 
+  smpl -r YEAR=1989 
+  # ¿Hay convergencia?  ¿los países con una base menor, 
+  # crecieron mas rápido?   
+  ols gdpgro const gdp60 
+  # resultado: ¡No! Intentar la relación inversa 
+  genr gdp60inv = 1/gdp60 
+  ols gdpgro const gdp60inv 
+  # No otra vez.  ¿Intentar prescindir de Africa? 
+  genr afdum = (CCODE = 1) genr
+  afslope = afdum * gdp60 
+  ols gdpgro const afdum gdp60 afslope
 \end{code}
-
 \end{script}
-

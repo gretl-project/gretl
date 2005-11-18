@@ -1,7 +1,6 @@
-  <chapter id="optarg"><title>Options, arguments and
-    path-searching</title>
+  <chapter id="optarg">
+  <title>Options, arguments and path-searching</title>
   
-
   <sect1 id="optarg1"><title>gretl</title>
 
     <para>
@@ -253,51 +252,16 @@
     <para>When using the <command>--run</command> and
       <command>--batch</command> options, the script file in question
       must call for a data file to be opened. This can be done using
-      the <command>open</command> command within the script. For
-      backward compatibility with Ramanathan's original
-      <application>ESL</application> program another mechanism is
-      offered (<application>ESL</application> doesn't have the
-      <command>open</command> command).  A line of the form:
-      
-      <programlisting> 
-	(* ! myfile.gdt *)</programlisting> will (a) cause
-      <application>gretlcli</application> to load
-      <filename>myfile.gdt</filename>, but will (b) be ignored as a
-      comment by the original <application>ESL</application>.  Note
-      the specification carefully: There is exactly one space between
-      the begin comment marker, <literal>(*</literal>, and the
-      <literal>!</literal>; there is exactly one space between the
-      <literal>!</literal> and the name of the data file.</para>
-
-    <para>One further kludge enables <application>gretl</application>
-      and <application>gretlcli</application> to get datafile
-      information from the <application>ESL</application>
-      <quote>practice files</quote> included with the
-      <application>gretl</application> package.  A typical practice
-      file begins like this:</para>
-
-    <para>
-      <literal> (* PS4.1, using data file DATA4-1, for reproducing
-	Table 4.2 *) </literal>
+      the <command>open</command> command within the script.
     </para>
-
-    <para>This algorithm is used: if an input line begins with the
-      comment marker, search it for the string <literal>DATA</literal>
-      (upper case).  If this is found, extract the string from the
-      <literal>D</literal> up to the next space or comma, put it into
-      lower case, and treat it as the name of a data file to be
-      opened.</para>
-
+      
   </sect1>
 
   <sect1 id="path-search"><title>Path searching</title>
 
     <para>When the name of a data file or script file is supplied to
-      <application>gretl</application> or
-      <application>gretlcli</application> on the command line (see
-      <xref
-	linkend="optarg1"/> and <xref linkend="optarg2"/>), the file
-      is looked for as follows:</para>
+      <application>gretl</application> or <application>gretlcli</application> on
+      the command line, the file is looked for as follows:</para>
 
     <orderedlist>
       <listitem><para><quote>As is</quote>.  That is, in the current
@@ -313,20 +277,19 @@
 	  directory.</para></listitem> 
       <listitem>
 	<para>
-	  In the case of a data
-	  file, search continues with the main <application>gretl</application>
-	  data directory. In the case of a script file, the search proceeds to
-	  the system script directory.  See <xref linkend="tab-path"/> for the
-	  default settings.  <emphasis>Note:</emphasis> In the table,
-	  <filename>PREFIX</filename> denotes the base directory chosen at the
-	  time <application>gretl</application> is installed.
+	  In the case of a data file, search continues with the main
+	  <application>gretl</application> data directory. In the case of a
+	  script file, the search proceeds to the system script directory.  See
+	  <xref linkend="tab-path"/> for the
+	  default settings. (<filename>PREFIX</filename> denotes the base
+	  directory chosen at the time <application>gretl</application> is
+	  installed.)
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  In the case of data files the search then
-	  proceeds to all immediate sub-directories of the main data
-	  directory.
+	  In the case of data files the search then proceeds to all immediate
+	  sub-directories of the main data directory.
 	</para>
       </listitem>
     </orderedlist>

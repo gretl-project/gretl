@@ -1,0 +1,11 @@
+<?xml version='1.0'?>
+<!DOCTYPE internationalization SYSTEM "l10n.dtd" [
+<!ENTITY en SYSTEM "en.xml">
+<!ENTITY es SYSTEM "es.xml">
+<!ENTITY it SYSTEM "it.xml">
+]>
+<internationalization>
+&en;
+&es;
+&it;
+</internationalization>

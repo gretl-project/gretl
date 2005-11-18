@@ -9,7 +9,7 @@ guarda en formato XML (extensible mark-up language).  Los archivos de
 datos corresponden a la simple DTD (document type definition)
 contenida en \verb+gretldata.dtd+, que viene con la distribución de
 \app{gretl} y se instala en el directorio de datos del sistema (por
-ejemplo \verb+/usr/share/gretl/data+ en Linux.) Los archivos de datos
+ejemplo \url{/usr/share/gretl/data} en Linux.) Los archivos de datos
 pueden ser de texto simple o comprimidos con gzip. Contienen los
 valores de los datos, además de información adicional tal como el
 nombre y la descripción de las variables, la frecuencia de los
@@ -59,18 +59,19 @@ otro contiene información sobre cómo leerlos. En otras palabras:
   archivo de datos, separadas por espacios en blanco. Los nombres
   tienen un limite de 8 caracteres, tienen que empezar por una letra,
   y estan restringidos a los caracteres alfanuméricos más el carácter
-  de subrayado (_). La lista puede ser de más de una línea; se termina
-  con un punto y coma, \verb+;+.
-\item (Obligatoria) línea de \emph{observaciones} con la forma \verb+1
-  1 85+. El primer elemento nos da la frecuencia de los datos (1 para
-  los datos sin fechas o anuales, 4 para los trimestrales, 12 para los
-  mensuales). Los elementos segundo y tercero dan las observaciones de
-  inicio y final. Generalmente, estas serán el 1 y el número de
-  observaciones respectivamente, para los datos sin fecha. Para las
-  series temporales, se pueden utilizar fechas en la forma
+  de subrayado (\verb+_+). La lista puede ser de más de una línea; se
+  termina con un punto y coma, \verb+;+.
+\item (Obligatoria) línea de \emph{observaciones} con la forma
+  \verb+1 1 85+. El primer elemento nos da la frecuencia de los datos
+  (1 para los datos sin fechas o anuales, 4 para los trimestrales, 12
+  para los mensuales). Los elementos segundo y tercero dan las
+  observaciones de inicio y final. Generalmente, estas serán el 1 y el
+  número de observaciones respectivamente, para los datos sin fecha.
+  Para las series temporales, se pueden utilizar fechas en la forma
   \cmd{1959.1} (trimestral, 1 dígito después del punto) o
-  \cmd{1967.03} (mensual, dos dígitos después del punto). Véase el [?]
-  para el uso especial de esta línea en el caso de datos panel.
+  \cmd{1967.03} (mensual, dos dígitos después del punto). Véase el
+  capítulo~\ref{chap-panel} para el uso especial de esta línea en el
+  caso de datos panel.
 \item La palabra clave \verb+BYOBS+.
 \end{itemize}
 \end{enumerate}
@@ -123,8 +124,10 @@ que tener en cuenta.
   datos. El formato de un archivo de etiquetas es sencillo: cada línea
   contiene el nombre de una variable (como en el archivo de cabecera),
   seguido por uno o más espacios, seguido por la etiqueta descriptiva.
-  Un ejemplo sería: \verb+precio Índice de precios de automóviles
-  nuevos, año base 1982+
+  Un ejemplo sería: 
+  \begin{code}
+    precio Índice de precios de automóviles nuevos, año base 1982
+  \end{code}
 \end{enumerate}
 
 Para guardar los datos en formato tradicional, se utiliza la
@@ -315,10 +318,10 @@ Como ya se ha mencionado, todos los estadísticos de regresión se
 imprimen con 6 cifras significativas en la actual versión de
 \app{gretl} (excepto cuando se usa el plugin de precisión múltiple, en
 cuyo caso los resultados se ofrecen con 12 cifras).  Si se desea
-examinar un valor con más precisión, se puede guardar primero (véase
-[?]) y a continuación pedir su presentación mediante la orden
-\cmd{print -t} (véase el [?]). De esta manera se mostrará el valor con
-hasta 10 dígitos.
+examinar un valor con más precisión, se puede guardar primero (se
+puede utilizar \cmd{genr}) y a continuación pedir su presentación
+mediante la orden \cmd{print -t} (véase el \GCR). De esta manera se
+mostrará el valor con hasta 10 dígitos.
 
 \chapter{Análisis econométrico avanzado con software libre}
 \label{app-advanced}
@@ -392,98 +395,38 @@ A continuación, hay una lista de las direcciones completas (URL) de
 los sitios web citados en el manual, según orden de apariencia.
 
 \begin{description}
-\item[Página web de GNU R] \href{http://www.r-project.org/}{
-    http://www.r-project.org/}
 
-  
-\item[Página web de GNU Octave] \href{http://www.octave.org/}{
-    http://www.octave.org/}
-
-  
-\item[Página web de Gretl] \href{http://gretl.sourceforge.net/}{
-    http://gretl.sourceforge.net/}
-
-  
 \item[Oficina del Censo, Servicio de Obtención de Datos (Census
   Bureau, Data Extraction Service)]
-  \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{
-    http://www.census.gov/ftp/pub/DES/www/welcome.html}
-
-  
-\item[Página de datos de Gretl]
-  \href{http://ricardo.ecn.wfu.edu/gretl/gretl_data.html}{
-    http://ricardo.ecn.wfu.edu/gretl/gretl_data.html}
-
-  
-\item[Estima (RATS)] \href{http://www.estima.com/}{
-    http://www.estima.com/}
-
-  
-\item[Tabla Mundial de Penn (Penn World Table)]
-  \href{http://pwt.econ.upenn.edu/}{ http://pwt.econ.upenn.edu/}
-
-  
-\item[Página web de Gnuplot] \href{http://www.gnuplot.info/}{
-    http://www.gnuplot.info/}
-
-  
-\item[Manual en línea de Gnuplot]
-  \href{http://ricardo.ecn.wfu.edu/gnuplot.html}{
-    http://ricardo.ecn.wfu.edu/gnuplot.html}
-
-  
-\item[Manual de GNU Readline]
-  \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{
-    http://cnswww.cns.cwru.edu/~chet/readline/readline.html}
-
-  
+  \url{http://www.census.gov/ftp/pub/DES/www/welcome.html}
+\item[Estima (RATS)] \url{http://www.estima.com/}
+\item[Página web del escritorio Gnome] \url{http://www.gnome.org/}
 \item[Biblioteca de Precisión Múltiple de GNU]
-  \href{http://swox.com/gmp/}{ http://swox.com/gmp/}
-
-  
-\item[Página web de InfoZip]
-  \href{http://www.info-zip.org/pub/infozip/zlib/}{
-    http://www.info-zip.org/pub/infozip/zlib/}
-
-  
-\item[Página web de Xmlsoft] \href{http://xmlsoft.org/}{
-    http://xmlsoft.org/}
-
-  
-\item[Página web de GNU Readline]
-  \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{
-    http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}
-
-  
-\item[Página web de GTK+] \href{http://www.gtk.org/}{
-    http://www.gtk.org/}
-
-  
-\item[Página web de Gtkextra] \href{http://gtkextra.sourceforge.net/}{
-    http://gtkextra.sourceforge.net/}
-
-  
-\item[Página web de Mingw (gcc para win32)]
-  \href{http://www.mingw.org/}{ http://www.mingw.org/}
-
-  
-\item[Port GTK+ para win32]
-  \href{http://user.sgic.fi/~tml/gimp/win32/}{
-    http://user.sgic.fi/~tml/gimp/win32/}
-
-  
-\item[JRSoftware] \href{http://www.jrsoftware.org/}{
-    http://www.jrsoftware.org/}
-
-  
-\item[Página web del escritorio Gnome] \href{http://www.gnome.org/}{
-    http://www.gnome.org/}
-
-  
+  \url{http://swox.com/gmp/}
+\item[Página web de GNU Octave] \url{http://www.octave.org/}
+\item[Página web de GNU R] \url{http://www.r-project.org/}
 \item[Manual de GNU R]
-  \href{http://cran.r-project.org/doc/manuals/R-intro.pdf}{
-    http://cran.r-project.org/doc/manuals/R-intro.pdf}
-
+  \url{http://cran.r-project.org/doc/manuals/R-intro.pdf}
+\item[Página web de Gnuplot] \url{http://www.gnuplot.info/}
+\item[Manual en línea de Gnuplot] \url{http://ricardo.ecn.wfu.edu/gnuplot.html}
+\item[Página de datos de Gretl]
+  \url{http://gretl.sourceforge.net/gretl_data.html}
+\item[Página web de Gretl] \url{http://gretl.sourceforge.net/}
+\item[Página web de GTK+] \url{http://www.gtk.org/}
+\item[Port GTK+ para win32]
+  \url{http://user.sgic.fi/~tml/gimp/win32/}
+\item[Página web de Gtkextra] \url{http://gtkextra.sourceforge.net/}
+\item[Página web de InfoZip]
+  \url{http://www.info-zip.org/pub/infozip/zlib/}
+\item[JRSoftware] \url{http://www.jrsoftware.org/}
+\item[Página web de Mingw (gcc para win32)] \url{http://www.mingw.org/}
+\item[Minpack] \url{http://www.netlib.org/minpack/}
+\item[Tabla Mundial de Penn (Penn World Table)] \url{http://pwt.econ.upenn.edu/}
+\item[Página web de GNU Readline]
+  \url{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}
+\item[Manual de GNU Readline]
+  \url{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}
+\item[Página web de Xmlsoft] \url{http://xmlsoft.org/}
 
 \end{description}
 

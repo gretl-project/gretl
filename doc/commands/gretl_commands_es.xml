@@ -4204,21 +4204,20 @@
 	<cmd>ols</cmd>. 
       </para>
 
-      <table lwidth="80pt" rwidth="320pt" style="rpara">
-	<row>
-	  <cell><lit>echo</lit></cell>
-	  <cell>valores: <lit>off</lit> u <lit>on</lit> (por defecto).
-	    Suprime o activa el eco de las instrucciones en la salida de gretl.</cell>
-	</row>
-	<row>
-	  <cell><lit>qr</lit></cell>
-	  <cell>valores: <lit>on</lit> u <lit>off</lit> (por defecto).
-	    Utiliza QR en lugar de la descomposición de Cholesky al 
-	    calcular las estimaciones por MCO.</cell>
-	</row>
-	<row>
-	  <cell><lit>hac_lag</lit></cell>
-	  <cell>valores: <lit>nw1</lit> (por defecto) o
+      <ilist>
+	<li>
+	  <para><lit>echo</lit>: <lit>off</lit> u <lit>on</lit> (por defecto).
+	    Suprime o activa el eco de las instrucciones en la salida de
+	    gretl.</para>
+	</li>
+	<li>
+	  <para><lit>qr</lit>: <lit>on</lit> u <lit>off</lit> (por defecto).
+	    Utiliza QR en lugar de la descomposición de Cholesky al calcular las
+	    estimaciones por MCO.</para>
+	</li>
+	<li>
+	  <para><lit>hac_lag</lit>:
+	  <lit>nw1</lit> (por defecto) o
 	    <lit>nw2</lit>, o un entero.  Establece el retardo máximo, 
 	    <mathvar>p</mathvar>, usado al calcular desviaciones típicas 
 	    HAC (Heteroskedasticity and Autocorrelation Consistent) usando 
@@ -4235,51 +4234,47 @@
 	    tex="$p = 4 \times (T/100)^{2/9}$"
 	    ascii="p = 4 * (T/100)^(2/9)"
 	    graphic="nw2"/>.	  
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>hc_version</lit></cell>
-	  <cell>valores: 0 (por defecto), 1, 2 o 3. Determina la variante
-	    usada al calcular desviaciones típicas consistentes ante 
+	  </para>
+	</li>
+	<li>
+	  <para><lit>hc_version</lit>: 0 (por defecto), 1, 2 o 3. Determina la
+	    variante usada al calcular desviaciones típicas consistentes ante
 	    heterocedasticidad con datos de sección cruzada. Las opciones
-	    corresponden a los valores HC0, HC1, HC2 y HC3 estudiadas por 
-	    Davidson y MacKinnon en <book>Econometric Theory and Methods</book>, 
-	    capítulo 5.  HC0 produce lo que normalmente se llaman 
-	    <quote>desviaciones típicas de White</quote>.</cell>
-	</row>
-	<row>
-	 <cell><lit>force_hc</lit></cell> <cell>valores: off (por 
-	    defecto) u on.  Por defecto, con datos de series temporales
-	    y cuando se da la opción <lit>--robust</lit> en 
-	    <cmd>ols</cmd>, se usa el estimador HAC. Si se establece
-	    <lit>force_hc</lit> en <quote>on</quote>, esto fuerza al 
-	    cálculo de la Matriz de Covarianzas Consistente ante 
-	    Heterocedasticidad regular (que no tiene en cuenta la
-	    autocorrelación).
-	  </cell>
-	</row>
-	<row>
-	  <cell><lit>garch_vcv</lit></cell>
-	  <cell>valores: <lit>unset</lit>, <lit>hessian</lit>,
-	    <lit>im</lit> (matriz de información) , <lit>op</lit> (matriz de 
-	    productos externos), <lit>qml</lit> (estimador QML),
-	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Especifica la variante
-	    que se usará para estimar la matriz de covarianzas de los 
-	    coeficientes para modelos GARCH. Si se da <lit>unset</lit>
-	    (por defecto) entonces se usa el Hessiano a no ser que se dé
-	    también la opción  <quote>robust</quote> para la instrucción 
-	    garch, en cuyo caso se usa QML.</cell>
-	</row>
-	<row>
-	  <cell><lit>hp_lambda</lit></cell>
-	  <cell>valores: <lit>auto</lit> (por defecto), o un valor numérico.  
-	  Determina el parámetro de suavizado para el filtro de
-	  Hodrick&ndash;Prescott (ver la función <lit>hpfilt</lit> bajo
-	  la instrucción <cmd>genr</cmd>).  El valor por defecto es usar
-	  100 veces el cuadrado de la periodicidad, lo cual da
-	  100 para datos anuales, 1600 para trimestrales, y así sucesivamente.</cell>
-	</row>
-      </table>
+	    corresponden a los valores HC0, HC1, HC2 y HC3 estudiadas por
+	    Davidson y MacKinnon en <book>Econometric Theory and Methods</book>,
+	    capítulo 5.  HC0 produce lo que normalmente se llaman
+	    <quote>desviaciones típicas de White</quote>.</para>
+	</li>
+	<li>
+	 <para><lit>force_hc</lit>: <lit>off</lit> (por defecto) u
+	    <lit>on</lit>.  Por defecto, con datos de series temporales y cuando
+	    se da la opción <lit>--robust</lit> en <cmd>ols</cmd>, se usa el
+	    estimador HAC. Si se establece <lit>force_hc</lit> en
+	    <quote>on</quote>, esto fuerza al cálculo de la Matriz de
+	    Covarianzas Consistente ante Heterocedasticidad regular (que no
+	    tiene en cuenta la autocorrelación).
+	  </para>
+	</li>
+	<li>
+	  <para><lit>garch_vcv</lit>: <lit>unset</lit>, <lit>hessian</lit>,
+	    <lit>im</lit> (matriz de información) , <lit>op</lit> (matriz de
+	    productos externos), <lit>qml</lit> (estimador QML), <lit>bw</lit>
+	    (Bollerslev&ndash;Wooldridge). Especifica la variante que se usará
+	    para estimar la matriz de covarianzas de los coeficientes para
+	    modelos GARCH. Si se da <lit>unset</lit> (por defecto) entonces se
+	    usa el Hessiano a no ser que se dé también la opción
+	    <quote>robust</quote> para la instrucción garch, en cuyo caso se usa
+	    QML.</para>
+	</li>
+	<li>
+	  <para><lit>hp_lambda</lit>: <lit>auto</lit> (por defecto), o un valor
+	    numérico. Determina el parámetro de suavizado para el filtro de
+	    Hodrick&ndash;Prescott (ver la función <lit>hpfilt</lit> bajo la
+	    instrucción <cmd>genr</cmd>).  El valor por defecto es usar 100
+	    veces el cuadrado de la periodicidad, lo cual da 100 para datos
+	    anuales, 1600 para trimestrales, y así sucesivamente.</para>
+	</li>
+      </ilist>
 
     </description>
   </command>

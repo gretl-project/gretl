@@ -6,16 +6,16 @@
 
 \app{Gretl} ofrece un soporte (limitado) para realizar simulaciones de
 Monte Carlo. Para hacer este tipo de trabajos se puede utilizar o bien
-el programa GUI en modo ``lote de instrucciones'' (véase [?] arriba),
-o bien el cliente de línea de instrucciones. La instrucción \cmd{loop}
-(bucle) abre el programa en un modo especial, en el cual se acepta la
-repetición de una instrucción el número de veces indicado . Sólo 7
-instrucciones pueden ser utilizadas dentro de dicho bucle: \cmd{genr},
-\cmd{ols}, \cmd{print}, \cmd{sim}, \cmd{smpl}, \cmd{store} y
-\cmd{summary}.  \cmd{genr} y \cmd{ols} permiten hacer bastantes
-operaciones.  Tecleando la instrucción \cmd{endloop} se sale de este
-modo: esto hace que se ejecute el lote de instrucciones.  Los bucles
-no pueden estar anidados.
+el programa GUI en modo ``lote de instrucciones'', o bien el cliente
+de línea de instrucciones. La instrucción \cmd{loop} (bucle) abre el
+programa en un modo especial, en el cual se acepta la repetición de
+una instrucción el número de veces indicado . Sólo 7 instrucciones
+pueden ser utilizadas dentro de dicho bucle: \cmd{genr}, \cmd{ols},
+\cmd{print}, \cmd{sim}, \cmd{smpl}, \cmd{store} y \cmd{summary}.
+\cmd{genr} y \cmd{ols} permiten hacer bastantes operaciones.
+Tecleando la instrucción \cmd{endloop} se sale de este modo: esto hace
+que se ejecute el lote de instrucciones.  Los bucles no pueden estar
+anidados.
 
 La instrucción \cmd{ols} produce un resultado especial dentro del modo
 bucle; no se muestran los resultados de cada regresión individual y,
@@ -87,7 +87,7 @@ ejemplo) abre un conjunto de datos vacío, con solamente una constante,
 y un tamaño muestral igual a 50. Después pueden añadirse variables
 mediante la instrucción \cmd{genr}.
 
-Véase la instrucción \cmd{seed} en el [?]  para información sobre cómo
+Véase la instrucción \cmd{seed} en el \GCR  para información sobre cómo
 generar series pseudo-aleatorias repetibles.
 
 \section{Mínimos cuadrados iterativos}

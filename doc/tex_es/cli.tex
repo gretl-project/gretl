@@ -2,111 +2,100 @@
 \label{c-cli}
 
 
-
 \section{Gretl en la consola}
 \label{cli-console}
 
-El paquete \app{gretl} incluye el programa
-      de línea de instrucciones \app{gretlcli}. Este
-      es, esencialmente, una versión actualizada del programa ESL de Ramu
-      Ramanathan. En Linux, puede ejecutarse desde la consola, o en un xterm (o
-      similar). En MS Windows, puede ejecutarse desde una ``ventana de
-      MSDOS''. \app{Gretlcli} cuenta con su propio
-      archivo de ayuda, al que puede accederse tecleando la palabra
-      ``help'' desde el cursor. Es posible ejecutarlo en un
-      proceso por lotes, y enviar los resultados directamente a un archivo (véase
-      [?] arriba).
+El paquete \app{gretl} incluye el programa de línea de instrucciones
+\app{gretlcli}. Este es, esencialmente, una versión actualizada del
+programa ESL de Ramu Ramanathan. En Linux, puede ejecutarse desde la
+consola, o en un xterm (o similar). En MS Windows, puede ejecutarse
+desde una ``ventana de MSDOS''. \app{Gretlcli} cuenta con su propio
+archivo de ayuda, al que puede accederse tecleando la palabra ``help''
+desde el cursor. Es posible ejecutarlo en un proceso por lotes, y
+enviar los resultados directamente a un archivo (véase el \GCR).
 
-Si \app{gretlcli} está conectado a la
-      biblioteca \app{``readline''} (esto ocurre
-      automáticamente en el caso de la versión MS Windows; véase también el [?]), la línea de instrucciones es recuperable y
-      editable, y ofrece terminación de las instrucciones. Podemos utilizar las
-      flechas de Arriba y Abajo para pasar a las instrucciones que ya han sido
-      tecleados previamente. En cualquier línea de instrucciones, podemos utilizar
-      las flechas para movernos, junto con las combinaciones de teclas para
-      editar de Emacs.\footnote{En realidad, las combinaciones dadas a
-      continuación son sólo laos que hay por defecto; pueden ser
-      personalizadas. Véase el \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{manual de readline
-      }.
+Si \app{gretlcli} está conectado a la biblioteca \app{``readline''}
+(esto ocurre automáticamente en el caso de la versión MS Windows;
+véase también el apéndice~\ref{app-technote}), la línea de
+instrucciones es recuperable y editable, y ofrece terminación de las
+instrucciones. Podemos utilizar las flechas de Arriba y Abajo para
+pasar a las instrucciones que ya han sido tecleados previamente. En
+cualquier línea de instrucciones, podemos utilizar las flechas para
+movernos, junto con las combinaciones de teclas para editar de
+Emacs.\footnote{En realidad, las combinaciones dadas a continuación
+  son sólo laos que hay por defecto; pueden ser personalizadas. Véase
+  el
+  \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{manual
+    de readline }.}
 
-} Las más comunes son :
-
-
+Las más comunes son :
 
 \begin{tabular}{ll}
-\textit{Combinaciones de teclas} & \textit{Efecto} \\ [4pt]
-\verb+Ctrl-a+ & ir al inicio de la línea \\
-\verb+Ctrl-e+ & ir al final de la línea \\
-\verb+Ctrl-d+ & eliminar el carácter de la derecha \\
+  \textit{Combinaciones de teclas} & \textit{Efecto} \\ [4pt]
+  \verb+Ctrl-a+ & ir al inicio de la línea \\
+  \verb+Ctrl-e+ & ir al final de la línea \\
+  \verb+Ctrl-d+ & eliminar el carácter de la derecha \\
 \end{tabular}
 
-donde ``\verb+Ctrl-a+'' significa pulsar la
-      tecla ``\verb+a+'' a la vez que la tecla
-      ``\verb+Ctrl+''. Así, si queremos cambiar algo en
-      el inicio de una instrucción, \emph{no} es preciso ir hacia
-      atrás por toda la línea, borrándola con nuestro paso. Simplemente
-      saltamos al inicio y añadimos o eliminamos caracteres.
+donde ``\verb+Ctrl-a+'' significa pulsar la tecla ``\verb+a+'' a la
+vez que la tecla ``\verb+Ctrl+''. Así, si queremos cambiar algo en el
+inicio de una instrucción, \emph{no} es preciso ir hacia atrás por
+toda la línea, borrándola con nuestro paso. Simplemente saltamos al
+inicio y añadimos o eliminamos caracteres.
 
 Al teclear las primeras letras de una instrucción, pulsando la tecla
-      Tab el programa \app{readline} intentará completar el
-      nombre de la instrucción. Si es una combinación única, saldrá la instrucción
-      automáticamente. Si hay más de una posibilidad, pulsando Tab otra vez,
-      se mostrará una lista.
-
+Tab el programa \app{readline} intentará completar el nombre de la
+instrucción. Si es una combinación única, saldrá la instrucción
+automáticamente. Si hay más de una posibilidad, pulsando Tab otra vez,
+se mostrará una lista.
 
 
 \section{Diferencias con ESL}
 \label{cli-syntax}
 
-Los lotes o guiones de instrucciones desarrollados para el programa \app{ESL}
-      original de Ramanathan deberían de ser utilizables en \app{gretlcli}
-      con pocos o ningún cambio: en lo único que hay que tener cuidado es en
-      las instrucciones multilineales y la instrucción \cmd{freq}.
-
+Los lotes o guiones de instrucciones desarrollados para el programa
+\app{ESL} original de Ramanathan deberían de ser utilizables en
+\app{gretlcli} con pocos o ningún cambio: en lo único que hay que
+tener cuidado es en las instrucciones multilineales y la instrucción
+\cmd{freq}.
 
 \begin{itemize}
-\item \app{ESL} utiliza el punto y coma como
-          terminación de muchas de las instrucciones. Esto ha sido eliminado en
-          \app{gretlcli}. El punto y coma simplemente se
-          ignora, excepto en unos casos especiales donde tiene un significado
-          determinante: como separador de dos listas en las instrucciones
-          \cmd{ar} y \cmd{tsls}, o como marcador
-          para una primera o última observación sin cambios en la instrucción
-          \cmd{smpl}. En \app{ESL}, el punto y coma da la
-          posibilidad de partir una instrucción larga de más de una linea;
-          en \app{gretlcli} esto se hace con un
-          \verb+\+ situado al final de la línea que va a
-          continuarse.
-
-
-\item Con \cmd{freq}, actualmente no se
-          pueden especificar rangos definidos por el usuario como en
-          \app{ESL}. Un contraste chi-cuadrado para
-          normalidad ha sido añadido a los resultados de esta instrucción.
-
-
+\item \app{ESL} utiliza el punto y coma como terminación de muchas de
+  las instrucciones. Esto ha sido eliminado en \app{gretlcli}. El
+  punto y coma simplemente se ignora, excepto en unos casos especiales
+  donde tiene un significado determinante: como separador de dos
+  listas en las instrucciones \cmd{ar} y \cmd{tsls}, o como marcador
+  para una primera o última observación sin cambios en la instrucción
+  \cmd{smpl}. En \app{ESL}, el punto y coma da la posibilidad de
+  partir una instrucción larga de más de una linea; en \app{gretlcli}
+  esto se hace con un \verb+\+ situado al final de la línea que va a
+  continuarse.
+\item Con \cmd{freq}, actualmente no se pueden especificar rangos
+  definidos por el usuario como en \app{ESL}. Un contraste
+  chi-cuadrado para normalidad ha sido añadido a los resultados de
+  esta instrucción.
 \end{itemize}
 
 Nótese que se ha simplificado la sintaxis de línea de instrucciones
-      para un proceso por lotes. En \app{ESL} se tecleaba,
-      por ejemplo
+para un proceso por lotes. En \app{ESL} se tecleaba, por ejemplo
       
 \begin{code}
-        esl -b datafile < inputfile > outputfile
-      
+  esl -b datafile < inputfile > outputfile
 \end{code}
 
- mientras que en \app{gretlcli} hay
-      que teclear: 
+mientras que en \app{gretlcli} hay que teclear:
+
 \begin{code}
-    gretlcli -b inputfile > outputfile
-      
+  gretlcli -b inputfile > outputfile
 \end{code}
 
+El archivo de entrada se trata como un argumento del programa; debe de
+especificar el archivo de datos que hay que usar de forma interna,
+utilizando la sintaxis 
 
-      El archivo de entrada se trata como un
-      argumento del programa; debe de especificar el archivo de datos que hay
-      que usar de forma interna, utilizando la sintaxis \cmd{open fichero_de_datos}
-      o el comentario especial \verb+(* !+
-      \textsl{datafile} \verb+*)+
+\begin{code}
+  open fichero_de_datos
+\end{code}
+
+o el comentario especial \verb+(* !+ \textsl{datafile} \verb+*)+
 

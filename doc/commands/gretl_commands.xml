@@ -5294,7 +5294,8 @@
 	approximate an upward-sloping line this suggests the variance
 	of the series is increasing in its mean; and if the points
 	approximate a downward sloping line this suggests the variance
-	is decreasing in the mean.</para>
+	is decreasing in the mean.
+      </para>
 
       <para>Besides the graph, gretl displays the means and ranges for
 	each subsample, along with the slope coefficient for an OLS

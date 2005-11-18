@@ -5,10 +5,10 @@
 
 <xsl:output method="text" encoding="iso-8859-1"/>
 
-<xsl:include href="/usr/share/sgml/dblatex/xsl/common.xsl"/>
-<xsl:include href="/usr/share/sgml/dblatex/xsl/common/l10n.xsl"/>
-<xsl:include href="/usr/share/sgml/dblatex/xsl/common/common.xsl"/>
-<xsl:include href="/usr/share/sgml/dblatex/xsl/xref.xsl"/>
+<xsl:include href="xsl/common.xsl"/>
+<xsl:include href="xsl/common/common.xsl"/>
+<xsl:include href="xsl/common/l10n.xsl"/>
+<xsl:include href="xsl/xref.xsl"/>
 
 <xsl:strip-space elements="title"/>
 <xsl:preserve-space elements="*"/>
@@ -50,11 +50,20 @@
   <xsl:text>&#10;&#10;\subsection{</xsl:text>
   <xsl:value-of select="title"/>
   <xsl:text>}&#10;</xsl:text>
-  <xsl:if test="@id">
-    <xsl:text>\label{</xsl:text>
-    <xsl:value-of select="@id"/>
-    <xsl:text>}</xsl:text>
-  </xsl:if>
+  <xsl:choose>
+    <xsl:when test="@xreflabel">
+      <xsl:text>\hypertarget{</xsl:text>
+      <xsl:value-of select="@id"/>
+      <xsl:text>}{}</xsl:text>    
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:if test="@id">
+        <xsl:text>\label{</xsl:text>
+        <xsl:value-of select="@id"/>
+        <xsl:text>}</xsl:text>
+      </xsl:if>    
+    </xsl:otherwise>    
+  </xsl:choose>
   <xsl:text>&#10;&#10;</xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
@@ -178,9 +187,9 @@
 </xsl:template>
 
 <xsl:template match="literal">
-  <xsl:text>\verb+</xsl:text>
+  <xsl:text>\verb@</xsl:text>
   <xsl:value-of select="translate(., '&#10;', '')"/>
-  <xsl:text>+</xsl:text> 
+  <xsl:text>@</xsl:text> 
 </xsl:template>
 
 <xsl:template match="filename">

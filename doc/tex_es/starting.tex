@@ -6,7 +6,8 @@
 
 Esta parte introductoria está enfocada principalmente hacia el
 programa de cliente gráfico; para más detalles del programa de línea
-de instrucciones, \app{gretlcli}, consultar XXX.
+de instrucciones, \app{gretlcli}, consultar el capítulo~\ref{cli}
+y el \GCR.
 
 Aunque es posible abrir \app{gretl} tecleando el nombre de un archivo
 de datos como argumento, por el momento no vamos a probar este modo;
@@ -187,24 +188,27 @@ Archivo, Utilidades, Sesión, Datos, Muestra, Variable, Modelo y Ayuda.
 
 \begin{itemize}
 \item \textsf{Abrir datos}: Abre un archivo de datos propio de
-  \app{gretl} o importa desde otro formato. Véase el [?].
+  \app{gretl} o importa desde otro formato. Véase el
+  capítulo~\ref{datafiles}.
 \item \textsf{Guardar datos}: Guarda el archivo de datos propio de
   \app{gretl} abierto en este momento.
 \item \textsf{Guardar datos como}: Escribe el conjunto de datos en
   formato propio, con las opciones de utilizar gzip para comprimir los
-  datos o guardar los datos en formato binario. Véase el [?].
+  datos o guardar los datos en formato binario. Véase el
+  capítulo~\ref{datafiles}.
 \item \textsf{Exportar datos}: Escribe el conjunto de datos en formato
   CSV (comma-separated values --- valores separados por comas), o en
-  los formatos de GNU R o GNU Octave. Véase el [?] así como el [?].
+  los formatos de GNU R o GNU Octave. Véase el
+  capítulo~\ref{datafiles} así como el apéndice~\ref{app-advanced}.
 \item \textsf{Cerrar conjunto de datos}: Cierra el conjunto de datos
   con que se está trabajando en la memoria. Generalmente no tenemos
   que hacer esto (ya que al abrir un archivo de datos nuevo, se cierra
   de manera automática el viejo) pero es de utilidad en algunas
-  ocasiones (véase [?]).
-\item \textsf{Revisar bases de datos}: Véanse [?] y [?].
+  ocasiones.
+\item \textsf{Revisar bases de datos}: Véanse~\ref{dbase}.
 \item \textsf{Crear conjunto de datos}: Inicia la hoja de cálculo
-  incorporada en el programa, para añadir datos de forma manual. Véase
-  [?].
+  incorporada en el programa, para añadir datos de forma manual.
+  Véase~\ref{scratch}.
 \item \textsf{Guardar el último gráfico}: Guarda el gráfico más
   reciente.
 \item \textsf{Ver historial de instrucciones}: Abre una ventana donde
@@ -259,7 +263,7 @@ Archivo, Utilidades, Sesión, Datos, Muestra, Variable, Modelo y Ayuda.
 \begin{itemize}
 \item \textsf{Vista de iconos}: Abre una ventana que muestra la sesión
   actual de \app{gretl} en forma de un conjunto de iconos. Para más
-  detalles véase [?].
+  detalles véase~\ref{session}.
 \item \textsf{Añadir el último gráfico}: Captura el gráfico más
   reciente en forma de icono de sesión, para poder acceder a él y
   manipularlo.
@@ -340,7 +344,7 @@ Archivo, Utilidades, Sesión, Datos, Muestra, Variable, Modelo y Ayuda.
 \item \textsf{Establecer frecuencia, observación inicial}: Impone una
   interpretación particular de los datos en términos de frecuencia y
   observación inicial. Está pensado principalmente para datos de
-  panel; véase [?].
+  panel; véase el capítulo~\ref{chap-panel}.
 \item \textsf{Definir a partir de v. ficticia}: Dada una variable
   ficticia (indicador) con valor 0 o 1, se eliminan todas las
   observaciones de la muestra actual donde la variable ficticia tenga
@@ -353,7 +357,8 @@ Archivo, Utilidades, Sesión, Datos, Muestra, Variable, Modelo y Ayuda.
   que se pueden utilizar.
 \item \textsf{Quitar todas las obs. con valores perdidos}: Elimina de
   la muestra actual todas las observaciones para las cuales hay, por
-  lo menos, una variable que tiene un valor perdido (véase [?]).
+  lo menos, una variable que tiene un valor perdido
+  (véase~\ref{missing-data}).
 \item \textsf{Contar valores perdidos}: Emite un informe sobre las
   observaciones en las que faltan valores de los datos. Puede ser útil
   para examinar conjuntos de datos de panel, en los cuales suele
@@ -361,11 +366,11 @@ Archivo, Utilidades, Sesión, Datos, Muestra, Variable, Modelo y Ayuda.
 \item \textsf{Añadir marcadores de caja}: Pregunta por el nombre de un
   archivo de texto que contenga marcadores de caja (etiquetas
   asociadas a observaciones individuales) y añade esta información al
-  conjunto de datos. Véase el [?].
+  conjunto de datos. Véase el capítulo~\ref{datafiles}.
 \item \textsf{Reestructurar panel}: Abre un cuadro de diálogo que nos
   permite determinar la interpretación de un conjunto de datos panel,
   bien como series temporales apiladas o como muestras transversales
-  apiladas (véase [?]).
+  apiladas.
 \end{itemize}
 
 
@@ -392,7 +397,7 @@ que referenciar las variables por su nombre, y no por su número.
 
 \item \textsf{Menú de modelo}: Ya comentado en el capítulo
   \ref{c-getting-started}. Para más detalles sobre los estimadores
-  ofrecidos en este menú, consúltese [?], el XXX a continuación, y/o
+  ofrecidos en este menú, consúltese el \GCR a continuación, y/o
   la ayuda \emph{en línea} sobre ``estimación''.
 
 \item \textsf{Menú de ayuda}: Incluye detalles sobre la sintaxis
@@ -447,7 +452,7 @@ derecha:
 \item Abrir una ventana mostrando los conjuntos de datos asociados al
   libro \emph{Introductory Econometrics} de Ramanathan
   (alternativamente puede configurarse este botón para que muestre los
-  conjuntos de datos de Wooldridge (2002)- véase el [?]).
+  conjuntos de datos de Wooldridge (2002)).
 \end{enumerate}
 
 Para desactivar la barra de herramientas, ir a al menú ``Archivo,
