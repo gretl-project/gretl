@@ -20,7 +20,7 @@ si veda l'appendice~\ref{app-datafile}.
   \app{gretl} usando il comando ``File, Apri dati, Importa
   ASCII\dots{}'' dell'interfaccia grafica o il comando \cmd{import}
   dell'interfaccia a riga di comando. Per ulteriori dettagli su questo
-  tipo di file, si veda la parte\ref{scratch}.
+  tipo di file, si veda la sezione~\ref{scratch}.
 \item File con valori separati da virgole (CSV).  Possono essere
   importati in \app{gretl} usando il comando ``File, Apri dati,
   Importa CSV\dots{}'' dell'interfaccia grafica o il comando
@@ -28,7 +28,7 @@ si veda l'appendice~\ref{app-datafile}.
   la parte\ref{scratch}.
 \item Cartelle di lavoro in formato \app{MS Excel} o \app{Gnumeric}.
   Possono essere importate in \app{gretl} con il comando ``File, Apri
-  dati, Importa''.  La parte\ref{scratch} descrive i requisiti per
+  dati, Importa''.  La sezione~\ref{scratch} descrive i requisiti per
   questo tipo di file.
 \item Dati in formato BOX1. Il
   \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{Data
@@ -136,19 +136,19 @@ siano soddisfatte alcune condizioni:
   e Gnumeric, viene presentata una finestra di dialogo in cui è
   possibile indicare il numero di righe e/o di colonne del foglio di
   lavoro da ignorare.
-	  
+          
 \item I valori dei dati devono costituire un blocco rettangolare, con
   una variabile per colonna e un'osservazione per riga.  Il numero
   delle varibili (colonne dei dati) deve corrispondere al numero dei
   nomi di variabile specificati.  Si veda anche la
-  parte~\ref{missing-data}. Il programma si aspetta dati di tipo
+  sezione~\ref{missing-data}. Il programma si aspetta dati di tipo
   numerico, ma nel caso di importazione da file ASCII/CSV, c'è un
   supporto limitato per dati di tipo carattere (stringa): se una
   colonna contiene solo dati di tipo stringa, le stringhe sono
   sostituite da codici numerici progressivi, e quando l'importazione
   si conclude, viene mostrata una tabella di corrispondenza tra
   stringhe e codici.
-	  
+          
 \item Date (o marcatori per le osservazioni): opzionalmente, la
   \emph{prima} colonna può contenere stringhe, come date o etichette
   identificative per osservazioni su dati cross-section. Queste
@@ -166,7 +166,7 @@ siano soddisfatte alcune condizioni:
   \verb+1947Q1+; per le serie \emph{mensili} occorre indicare l'anno
   con quattro cifre, seguito dal punto o dai due punti, e da due cifre
   che indicano il mese, ad esempio: \verb+1997.01+, \verb+2002:10+.
-	  
+          
 \end{itemize}
 
 I file CSV possono usare virgole, spazi o tab come separatori fra le
@@ -193,7 +193,7 @@ possibile aggiungere nuove osservazioni per le serie di dati presenti
 nel dataset; in questo caso i nomi delle variabili devono
 corrispondere esattamente. Attenzione: se invece di ``Aggiungi dati''
 si sceglie ``Apri dati'', il dataset corrente verrà chiuso.
-	
+        
 
 \subsection{Usare il foglio elettronico interno}
 
@@ -250,7 +250,7 @@ nello spazio di lavoro di \app{gretl} usando il comando ``Importa''
 nella finestra del database, o nel menù che compare facendo clic col
 tasto destro, oppure trascinando la serie nella finestra principale
 del programma.
-	
+        
 \subsection{Creare un file di dati nei formati interni di gretl}
 
 Se si hanno già molti dati archiviati in formato elettronico,

@@ -23,11 +23,11 @@ anche le derivate.
   \caption{Funzione di consumo da Greene}
   \label{nls-cons}
 \begin{code}
-	  nls C = alfa + beta * Y^gamma
-	  deriv alfa = 1
-	  deriv beta = Y^gamma
-	  deriv gamma = beta * Y^gamma * log(Y)
-	  end nls
+          nls C = alfa + beta * Y^gamma
+          deriv alfa = 1
+          deriv beta = Y^gamma
+          deriv gamma = beta * Y^gamma * log(Y)
+          end nls
 \end{code}
 \end{script}
 
@@ -35,10 +35,10 @@ anche le derivate.
   \caption{Funzione non lineare da Russell Davidson}
   \label{nls-ects}
 \begin{code}
-	  nls y = alfa + beta * x1 + (1/beta) * x2
-	  deriv alfa = 1
-	  deriv beta = x1 - x2/(beta*beta)
-	  end nls
+          nls y = alfa + beta * x1 + (1/beta) * x2
+          deriv alfa = 1
+          deriv beta = x1 - x2/(beta*beta)
+          end nls
 \end{code}
 \end{script}
 
@@ -183,18 +183,19 @@ libertà.
 \label{nls-accuracy}
 
 La Table \ref{tab-nls} mostra i risultati dell'uso della procedura NLS
-di \app{gretl} sui 27 "Statistical Reference Dataset" forniti dal
+di \app{gretl} sui 27 ``Statistical Reference Dataset'' forniti dal
 National Institute of Standards and Technology (NIST) statunitense,
-per il test del software di regressione non lineare \footnote{Per una
+per il test del software di regressione non lineare.\footnote{Per una
   discussione dell'accuratezza di \app{gretl} nella stima di modelli
-  lineari, si veda [?]}. Per ogni dataset, il file di test indicano
-due valori iniziali per i parametri, quindi il test completo riporta
-54 stime. Sono stati eseguiti due test completi, uno usando derivate
-analitiche e uno usando approssimazioni numeriche; in entrambi casi si
-è usata la tolleranza predefinita\footnote{I dati mostrati nella
-  tabella derivano da una versione di \app{gretl} 1.0.9, compilata con
-  \app{gcc} 3.3, collegata a \app{glibc} 2.3.2 ed eseguita in Linux su
-  un PC i686 (IBM ThinkPad A21m).}
+  lineari, si veda l'appendice~\ref{app-accuracy}.} Per ogni dataset,
+il file di test indicano due valori iniziali per i parametri, quindi
+il test completo riporta 54 stime. Sono stati eseguiti due test
+completi, uno usando derivate analitiche e uno usando approssimazioni
+numeriche; in entrambi casi si è usata la tolleranza
+predefinita.\footnote{I dati mostrati nella tabella derivano da una
+  versione di \app{gretl} 1.0.9, compilata con \app{gcc} 3.3,
+  collegata a \app{glibc} 2.3.2 ed eseguita in Linux su un PC i686
+  (IBM ThinkPad A21m).}
 
 Sulle 54 stime, \app{gretl} non riesce a produrre una soluzione in 4
 casi, se vengono usate le derivate analitiche, e in 5 casi se vengono

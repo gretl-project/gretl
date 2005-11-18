@@ -49,6 +49,7 @@ Per essere più specifici:
   un file di descrizioni, che ha lo stesso nome di base del file di
   dati, ma l'estensione \verb+.hdr+.  Questo file contiene,
   nell'ordine:
+
   \begin{itemize}
   \item (Opzionale) \emph{commenti} sui dati, introdotti dalla stringa
     di apertura \verb+(*+ e conclusi dalla stringa \verb+*)+; ognuna
@@ -59,31 +60,32 @@ Per essere più specifici:
     solo caratteri alfanumerici e il carattere trattino basso,
     \verb+_+. La lista può continuare su più righe e deve essere
     chiusa da un punto e virgola \verb+;+.
-  \item (Richiesta) riga \emph{osservazioni}, nel formato
-    \verb+1 1 85+. Il primo elemento indica la frequenza dei dati (1
-    per dati non datati o annuali, 4 per trimestrali, 12 per mensili).
-    Gli altri due elementi indicano le osservazioni iniziale e finale:
-    di solito questi saranno pari a 1 e al numero delle osservazioni,
-    per i dati non datati. Per le serie storiche, è possibile usare
-    date nella forma \cmd{1959.1} (trimestrale, una cifra dopo il
-    punto) o \cmd{1967.03} (mensile, due cifre dopo il punto). Si veda
-    il [?] per l'uso speciale di questa riga nel caso dei dati panel.
+  \item (Richiesta) riga \emph{osservazioni}, nel formato 
+    \verb+1 1 85+. Il primo elemento indica la frequenza dei dati (1 per dati
+    non datati o annuali, 4 per trimestrali, 12 per mensili).  Gli
+    altri due elementi indicano le osservazioni iniziale e finale: di
+    solito questi saranno pari a 1 e al numero delle osservazioni, per
+    i dati non datati. Per le serie storiche, è possibile usare date
+    nella forma \cmd{1959.1} (trimestrale, una cifra dopo il punto) o
+    \cmd{1967.03} (mensile, due cifre dopo il punto). Si veda il
+    capitolo~\ref{chap-panel} per l'uso speciale di questa riga nel
+    caso dei dati panel.
   \item La parola chiave \verb+BYOBS+.
   \end{itemize}
 \end{enumerate}
 
 Ecco un esempio di un file di descrizione dei dati ben scritto.
-	
+        
 \begin{code}
-	  (* 
-	  DATA9-6: 
-	  Dati su log(moneta), log(reddito) e tasso di interesse USA. 
-	  Fonte: Stock and Watson (1993) Econometrica 
-	  (dati grezzi) Il periodo è 1900-1989 (dati annuali). 
-	  Dati composti da Graham Elliott. 
-	  *) 
-	  lmoneta lreddito tassint ; 
-	  1 1900 1989 BYOBS
+    (* 
+      DATA9-6: 
+      Dati su log(moneta), log(reddito) e tasso di interesse USA. 
+      Fonte: Stock and Watson (1993) Econometrica 
+      (dati grezzi) Il periodo è 1900-1989 (dati annuali). 
+      Dati composti da Graham Elliott. 
+    *) 
+    lmoneta lreddito tassint ; 
+    1 1900 1989 BYOBS
 \end{code}
           
 Il corrispondente file di dati contiene tre colonne di dati, ognuna
@@ -123,7 +125,7 @@ dati ``tradizionale'' degne di nota.
 \begin{code}
   prezzo Indice dei prezzi delle auto nuove, anno base 1982
 \end{code}
-	
+        
 \end{enumerate}
 
 Se si vuole salvare i dati nel formato tradizionale, occorre usare

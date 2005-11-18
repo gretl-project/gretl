@@ -83,10 +83,10 @@ Rigamonti e Tadeusz Kufel, che hanno curato le traduzioni spagnola,
 francese, italiana e polacca.  
 
 Ho beneficiato largamente del lavoro di molti sviluppatori di software
-open-source: per i dettagli si veda l'[?] a questo manuale. Devo
-ringraziare Richard Stallman della Free Software Foundation per il suo
-supporto al software libero in generale, ma in particolare per aver
-accettato di ``adottare'' \app{gretl} come programma GNU.
+open-source: per i dettagli si veda l'appendice~\ref{app-technote}.
+Devo ringraziare Richard Stallman della Free Software Foundation per
+il suo supporto al software libero in generale, ma in particolare per
+aver accettato di ``adottare'' \app{gretl} come programma GNU.
 
 Molti utenti di \app{gretl} hanno fornito utili suggerimenti e
 segnalazioni di errori. Un ringraziamento particolare a Ignacio
@@ -96,14 +96,12 @@ Debian GNU/Linux.  Oltre agli utili suggerimenti, Riccardo ``Jack''
 Lucchetti ha fornito contributi sostanziali in termini di codice e
 conoscenza econometrica.
 
+
 \section{Installazione del programma}
 \label{install}
 
-
-
 \subsection{Linux}
 \label{linux-install}
-
 
 Sulla piattaforma Linux\footnote{Nota terminologica: in questo manuale
   verrà usata l'abbreviazione ``Linux'' per riferirsi al sistema
@@ -127,14 +125,14 @@ procedere:
   con il numero di versione specifico del file scaricato).
 \item Spostarsi nella directory del codice sorgente di gretl appena
   creata (ad es. \verb+gretl-1.1.5+).
-	  
+          
 \item La sequenza basilare di comandi da eseguire è:
-	  
+          
 \begin{code}
-	    ./configure 
-	    make 
-	    make check
-	    make install
+            ./configure 
+            make 
+            make check
+            make install
 \end{code}
 
   Tuttavia, potrebbe essere utile leggere per prima cosa il file
@@ -146,7 +144,7 @@ procedere:
   \cmd{./configure --prefix=/usr} installerà il tutto sotto la
   directory \verb+/usr+.  Se la procedura di configurazione si
   interrompe perchè una delle librerie richieste non è disponibile sul
-  sistema, si veda l'[?] del manuale.
+  sistema, si veda l'appendice~\ref{app-technote}.
 \end{enumerate}
 
 A partire dalla versione 0.97, \app{gretl} supporta il desktop
@@ -155,9 +153,9 @@ A partire dalla versione 0.97, \app{gretl} supporta il desktop
 specifiche di \app{gnome}, occorre usare l'opzione
 \verb+--without-gnome+ con il comando \cmd{configure}.
 
+
 \subsection{MS Windows}
 \label{windows-install}
-
 
 La versione MS Windows è disponibile sotto forma di file eseguibile
 auto-estraente. Per installarlo, occorre scaricare

@@ -27,7 +27,7 @@ leggere l'aiuto in linea, o aprire un file di comandi. Per ora,
 sfogliamo i file di dati forniti: dal menù File, scegliamo
 \textsf{Apri dati, File di esempio, Ramanathan\dots{}}. Si dovrebbe
 aprire una seconda finestra, che presenta un elenco dei file di dati
-forniti con il pacchetto (si veda la Figure \ref{fig-datafiles}). La
+forniti con il pacchetto (si veda la Figura~\ref{fig-datafiles}). La
 numerazione dei file corrisponde all'organizzazione dei capitoli di
 Ramanathan (2002), che descrive l'analisi di questi dati, ma i dati
 sono utilizzabili per fare pratica anche senza avere il testo.
@@ -56,7 +56,7 @@ Questo file contiene dati relativi a un
 oggetto classico dell'econometria, la funzione di consumo. La finestra
 dei dati dovrebbe ora contenere il nome del file di dati in uso,
 l'intervallo completo dei dati e quello del campione, i nomi delle
-variabili, insieme a delle loro brevi descrizioni (si veda la Figure
+variabili, insieme a delle loro brevi descrizioni (si veda la Figura
 \ref{fig-mainwin}).
     
 \begin{figure}[htbp]
@@ -70,13 +70,13 @@ variabili, insieme a delle loro brevi descrizioni (si veda la Figure
 OK, cosa possiamo fare ora? Le varie opzioni dei menù dovrebbero
 essere abbastanza chiare: per ora ci concentreremo sul menù Modello,
 ma una panoramica di tutti i menù della finestra principale è fornita
-più avanti (si veda Section \ref{menus}).
+più avanti (si veda la sezione~\ref{menus}).
     
 Il menù Modello di \app{gretl} offre varie routine di stima
 econometrica: quella più semplice e nota è rappresentata dai minimi
 quadrati ordinari (Ordinary Least Squares - OLS). Scegliendo OLS, si
 apre una finestra di dialogo che richiede una \emph{specificazione del
-  modello}; si veda la Figure \ref{fig-selector}.
+  modello}; si veda la Figura~\ref{fig-selector}.
     
 \begin{figure}[htbp]
   \begin{center}
@@ -110,7 +110,7 @@ delle variabili indipendenti.
 
 Una volta specificato un modello, apparirà una finestra che mostra i
 risultati della regressione, in un formato sufficientemente chiaro e
-standard (Figure \ref{fig-modelwin}).
+standard (Figura~\ref{fig-modelwin}).
     
 \begin{figure}[htbp]
   \begin{center}
@@ -197,7 +197,8 @@ Variabile, Modello e Aiuto.
 \item \textsf{Menù file}
   \begin{itemize}
   \item \textsf{Apri dati}: apre un file di dati in formato interno di
-    \app{gretl} o lo importa da altri formati. Si veda il [?].
+    \app{gretl} o lo importa da altri formati. Si veda il
+    capitolo~\ref{datafiles}.
   \item \textsf{Aggiungi dati}: Aggiunge dati al dataset in uso, da un
     file di dati di \app{gretl}, un file con dati separati da virgole,
     o un foglio elettronico.
@@ -213,9 +214,9 @@ Variabile, Modello e Aiuto.
     in uso. Di solito questa operazione non è necessaria (visto che
     aprendo un nuovo file di dati, quello in uso viene sostituito), ma
     ci sono casi in cui è utile.
-  \item \textsf{Consulta database}: Si veda la parte~\ref{dbase}.
+  \item \textsf{Consulta database}: Si veda la sezione~\ref{dbase}.
   \item \textsf{Crea dataset}: Apre il foglio elettronico integrato
-    per inserire dati manualmente.  Si veda la parte~\ref{scratch}.
+    per inserire dati manualmente.  Si veda la sezione~\ref{scratch}.
   \item \textsf{Visualizza log comandi}: Apre una finestra che
     contiene la registrazione dei comandi eseguiti finora.
   \item \textsf{Apri file comandi}: apre un file di comandi di
@@ -268,7 +269,7 @@ Variabile, Modello e Aiuto.
   \begin{itemize}
   \item \textsf{Visualizza icone}: apre una finestra che mostra la
     sessione corrente di \app{gretl} sotto forma di un insieme di
-    icone. Per i dettagli si veda la parte~\ref{session}.
+    icone. Per i dettagli si veda la sezione~\ref{session}.
   \item \textsf{Apri}: apre un file di sessione salvato in precedenza.
   \item \textsf{Salva}: salva la sessione corrente in un file.
   \item \textsf{Salva come}: salva la sessione corrente in un file,
@@ -372,7 +373,7 @@ Variabile, Modello e Aiuto.
     usati.
   \item \textsf{Scarta valori mancanti}: scarta dal campione corrente
     tutte le osservazioni per cui almeno una variabile ha un valore
-    mancante (si veda la parte~\ref{missing-data}).
+    mancante (si veda la sezione~\ref{missing-data}).
   \item \textsf{Conta valori mancanti}: produce un rapporto sulle
     osservazioni per cui mancano dei valori. Può essere utile durante
     l'esame di un dataset panel, dove è abbastanza comune incontrare
@@ -408,9 +409,9 @@ Variabile, Modello e Aiuto.
   sintassi di queste formule, si veda la sezione ``Definisci nuova
   variabile'' della guida in linea o la voce \cmd{genr}. Un semplice
   esempio:
-	  
+          
 \begin{code}
-	    pippo = x1 * x2
+            pippo = x1 * x2
 \end{code}
 
   creerà la nuova variabile \verb+pippo+ come prodotto delle variabili
@@ -446,7 +447,7 @@ Le icone sulla barra hanno il seguente significato, nell'ordine:
 \item Inizia un nuovo script. Apre una finestra in cui è possibile
   digitare una serie di comandi da eseguire in modalità batch.
 \item Apri il terminale di gretl. Una scorciatoia per il comando del
-  menù ``Terminale di Gretl'' (si veda Section \ref{menus}).
+  menù ``Terminale di Gretl'' (si veda la sezione~\ref{menus}).
 \item Apri la finestra di sessione di gretl.
 \item Apri il sito web di \app{gretl} nel proprio browser (funziona
   solo se si è connessi a internet e si dispone di un browser).

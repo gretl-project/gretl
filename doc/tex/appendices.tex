@@ -69,15 +69,15 @@ read.  To be more specific:
 Here is an example of a well-formed data header file.
 
 \begin{code} 
-          (* 
-           DATA9-6: 
-           Data on log(money), log(income) and interest rate from US. 
-           Source: Stock and Watson (1993) Econometrica 
-           (unsmoothed data) Period is 1900-1989 (annual data). 
-           Data compiled by Graham Elliott. 
-          *) 
-          lmoney lincome intrate ; 
-          1 1900 1989 BYOBS
+      (* 
+        DATA9-6: 
+        Data on log(money), log(income) and interest rate from US. 
+        Source: Stock and Watson (1993) Econometrica 
+        (unsmoothed data) Period is 1900-1989 (annual data). 
+        Data compiled by Graham Elliott. 
+      *) 
+      lmoney lincome intrate ; 
+      1 1900 1989 BYOBS
 \end{code}
 
 The corresponding data file contains three columns of data, each
@@ -116,6 +116,7 @@ format may be noted.
 If you want to save data in traditional format, use the \cmd{-t} flag
 with the \cmd{store} command, either in the command-line program or in
 the console window of the GUI program.
+
 
 \section{Binary database details}
 \label{dbdetails}
