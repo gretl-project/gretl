@@ -23,13 +23,14 @@
       <para><command><application>gretl</application></command> <replaceable>archivo_de_datos</replaceable>
     </para>
 
-      <para>- Abre el programa con el archivo de datos indicado en su ventana
-      de trabajo. El archivo de datos puede estar en formato propio de
-      <application>gretl</application>, formato CSV, o formato BOX1 (véase el
-      <citetitle>Gretl User's Guide</citetitle>). El programa intenta detectar el
-      formato del archivo y procede en consecuencia. Véase también <xref
-      linkend="path-search"/> abajo para el comportamiento de búsqueda de
-      directorios.</para>
+      <para>- Abre el programa con el archivo de datos indicado en su
+      ventana de trabajo. El archivo de datos puede estar en formato
+      propio de <application>gretl</application>, formato CSV, o
+      formato BOX1 (véase el &GUG;). El programa intenta detectar el
+      formato del archivo y procede en consecuencia. Véase también
+      <xref
+      linkend="path-search"/> abajo para el comportamiento de búsqueda
+      de directorios.</para>
 
       <para><command>gretl --help</command> (o <command>gretl -h</command>)</para>
 
@@ -52,10 +53,10 @@
       <para><command>gretl --db</command> <replaceable>base_de_datos</replaceable>
       (o <command>gretl -d</command> <replaceable>base_de_datos</replaceable>)</para>
 
-      <para>- Abre el programa con una ventana en la que se muestra la base de
-      datos especificada. Si los archivos de la base de datos (el archivo
-      <filename>.bin</filename> y su acompañante <filename>.idx</filename> -
-      véase el <citetitle>Gretl User's Guide</citetitle>) no están en el
+      <para>- Abre el programa con una ventana en la que se muestra la
+      base de datos especificada. Si los archivos de la base de datos
+      (el archivo <filename>.bin</filename> y su acompañante
+      <filename>.idx</filename> - véase el &GUG;) no están en el
       directorio de bases de datos por defecto del sistema, es preciso
       especificar la ubicación completa.</para>
 
@@ -150,7 +151,7 @@
       <literal>.dat</literal>, que era la norma en las versiones anteriores del
       programa. Si se pone <literal>.dat</literal> por defecto, entonces los
       archivos de datos serán guardados en el formato <quote>tradicional</quote>
-      (véase el <citetitle>Gretl User's Guide</citetitle>).  También es posible
+      (véase el &GUG;).  También es posible
       seleccionar la acción a asociar con el icono de carpeta en la barra de
       herramientas en esta misma pestaña de <quote>Ficheros de datos</quote>: se
       puede elegir entre abrir el listado de los archivos de datos asociados con
@@ -177,7 +178,7 @@
       <para>- Abre el programa con un archivo de datos específico en su espacio
       de trabajo. El archivo de datos puede estar en formato nativo de
       <application>gretl</application>, formato CSV, o formato BOX1 (véase el
-      <citetitle>Gretl User's Guide</citetitle>). El programa intentará detectar
+      &GUG;). El programa intentará detectar
       el formato del archivo y procederá en consecuencia. Véase también <xref
       linkend="path-search"/> abajo, para más detalles sobre las
       características de búsqueda de directorios.</para>

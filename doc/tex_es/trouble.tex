@@ -1,0 +1,64 @@
+\chapter{Solución de problemas en gretl}
+\label{c-trouble}
+
+
+\section{Informes de errores}
+\label{trouble-bugs}
+
+En el camino hacia una versión ``estable'' de \app{gretl} (versión
+1.0), la colaboración de los usuarios resulta muy útil, y por lo
+tanto, agradezco cualquier información sobre posibles errores
+encontrados en el programa. Creo que será difícil que haya errores en
+los cálculos llevados a cabo por \app{gretl} (aunque con esto no
+quiero garantizar nada). Pero es posible que haya errores en el
+comportamiento del interfaz gráfico. En este contexto, por favor,
+recuérdese que la utilidad de los informes de errores aumenta en
+función de detalles concretos: ¿qué ocurrió \emph{exactamente}, bajo
+qué condiciones, y en qué sistema operativo? ¿Si había un mensaje de
+error, qué decía exactamente? (Aunque no es necesario incluir los
+números de direcciones de memoria mostrados en los informe de errores
+de MS Windows - no significarán nada para mí.)
+
+
+\section{Programas auxiliares}
+\label{trouble-programs}
+
+Como se ha mencionado, \app{gretl} llama a otros programas para
+realizar ciertas tareas (gnuplot para los gráficos, LaTeX para un
+formateo de alta calidad de los resultados de las regresiones, GNU R).
+Si algo no va bien con estas conexiones externas, la tarea de producir
+una ventana de mensaje con información sobre los errores no siempre
+resulta fácil. Si falla alguna de estas conexiones cuando se accede
+desde el interfaz gráfico de \app{gretl}, es posible que encontremos
+más información si recomenzamos \app{gretl} desde el cursor de
+instrucciones (por ejemplo, desde un xterm en el sistema de ventanas
+X, o una ``ventana del MSDOS'' en MS Windows, tecleando
+\cmd{gretlw32.exe}), en vez de hacerlo desde el menú del escritorio o
+un icono. Puede que se muestren mensajes adicionales de errores en la
+ventana del terminal.
+
+Además, ténganse en cuenta que para la mayoría de las llamadas
+externas, \app{gretl} supone que los programas en cuestión están
+disponibles en nuestro ``directorio'' - es decir, pueden invocarse
+simplemente mediante el nombre del programa, sin la necesidad de tener
+que teclear la dirección entera.\footnote{La excepción a esta regla es
+  la invocación de gnuplot en MS Windows, donde consta la dirección
+  completa del programa.}
+  
+Así, si falla alguno de los programas disponibles, es conveniente
+experimentar poniendo el nombre del programa en la linea de
+instrucciones, como se muestra a continuación.
+
+\begin{tabular}{llll}
+ & \textit{Gráficos} & \textit{Composición} & \textit{GNU R} \\ [4pt]
+Sistema de ventanas X & gnuplot & latex, xdvi & R \\
+MS Windows & wgnuplot.exe & latex, windvi & RGui.exe \\
+\end{tabular}
+
+Si el programa no consigue empezar desde el cursor, entonces el
+problema no está relacionado con \app{gretl}, sino que el directorio
+del programa no está en nuestra senda de directorios, o que el
+programa no está instalado (correctamente). Para más detalles sobre
+cómo modificar la ubicación de directorios, consúltese la ayuda
+\emph{en línea} o la documentación para su sistema operativo (shell).
+

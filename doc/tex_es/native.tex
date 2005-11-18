@@ -1,0 +1,164 @@
+\chapter{Data file details}
+\label{app-datafile}
+
+
+
+\section{Basic native format}
+\label{native}
+
+In \app{gretl}'s native data format,
+	a data set is represented by two files.  One contains the
+	actual data and the other information on how the data should
+	be read.  To be more specific:
+
+
+\begin{enumerate}
+\item \emph{Actual data}: A
+	    rectangular matrix of white-space separated numbers.  Each
+	    column represents a variable, each row an observation on
+	    each of the variables (spreadsheet style). Data columns
+	    can be separated by spaces or tabs. The filename should
+	    have the suffix \verb+.gdt+.  By default the
+	    data file is ASCII (plain text).  Optionally it can be
+	    gzip-compressed to save disk space. You can insert
+	    comments into a data file: if a line begins with the hash
+	    mark (\verb+#+) the entire line is
+	    ignored. This is consistent with gnuplot and octave data
+	    files.
+
+
+\item \emph{Header}: The data file
+	    must be accompanied by a header file which has the same
+	    basename as the data file plus the suffix
+	    \verb+.hdr+.  This file contains, in
+	    order:
+
+
+\begin{itemize}
+\item (Optional) \emph{comments}
+		on the data, set off by the opening string
+		\verb+(*+ and the closing string
+		\verb+*)+, each of these strings to occur
+		on lines by themselves.
+
+
+\item (Required) list of white-space separated
+		\emph{names of the variables} in the
+		data file. Names are limited to 8 characters, must
+		start with a letter, and are limited to alphanumeric
+		characters plus the underscore.  The list may continue
+		over more than one line; it is terminated with a
+		semicolon, \verb+;+.
+
+
+\item (Required) \emph{observations} line of
+		the form \verb+1 1 85+.  The first element
+		gives the data frequency (1 for undated or annual
+		data, 4 for quarterly, 12 for monthly).  The second
+		and third elements give the starting and ending
+		observations. Generally these will be 1 and the number
+		of observations respectively, for undated data.  For
+		time-series data one can use dates of the form
+		\cmd{1959.1} (quarterly, one digit after
+		the point) or \cmd{1967.03} (monthly, two
+		digits after the point). See [?] below
+		for special use of this line in the case of panel
+		data.
+
+
+\item The keyword
+		\verb+BYOBS+.
+
+
+\end{itemize}
+
+
+\end{enumerate}
+
+Here is an example of a well-formed data header file.
+
+	
+\begin{code} 
+	  (* 
+	  DATA9-6: 
+	  Data on log(money), log(income) and interest rate from US. 
+	  Source: Stock and Watson (1993) Econometrica 
+	  (unsmoothed data) Period is 1900-1989 (annual data). 
+	  Data compiled by Graham Elliott. 
+	  *) 
+	  lmoney lincome intrate ; 
+	  1 1900 1989 BYOBS
+\end{code}
+
+
+
+	The corresponding data file contains three columns of data, each
+	having 90 entries.
+
+
+
+\section{Extensions to the basic data
+	format}
+\label{extensions}
+
+
+	The options available in \app{gretl} data
+	files are broader than the setup just described, in three
+	ways:
+      
+
+
+\begin{enumerate}
+\item If the \verb+BYOBS+ keyword is
+	    replaced by \verb+BYVAR+, and followed by the
+	    keyword \verb+BINARY+, this indicates that the
+	    corresponding data file is in binary format.  Such data
+	    files can be written from
+	    \app{gretlcli} using the
+	    \cmd{store} command with the
+	    \cmd{-s} flag (single precision) or the
+	    \cmd{-o} flag (double
+	    precision).
+
+
+\item If \verb+BYOBS+ is followed by the
+	    keyword \verb+MARKERS+,
+	    \app{gretl} expects a data file in
+	    which the \emph{first column} contains strings (8
+	    characters maximum) used to identify the observations.
+	    This may be handy in the case of cross-sectional data
+	    where the units of observation are identifiable:
+	    countries, states, cities or whatever.  It can also be
+	    useful for irregular time series data, such as daily stock
+	    price data where some days are not trading days --- in
+	    this case the observations can be marked with a date
+	    string such as \cmd{10/01/98}.  (Remember the
+	    8-character maximum.)  Note that \cmd{BINARY} and
+	    \cmd{MARKERS} are mutually exclusive flags. Also note
+	    that the ``markers'' are not considered to be a
+	    variable: this column does not have a corresponding entry
+	    in the list of variable names in the header
+	    file.
+
+
+\item If a file with the same base name as the data
+	    file and header files, but with the suffix
+	    \verb+.lbl+, is found, this is read to fill
+	    out the descriptive labels for the data series. The format
+	    of the (plain text) label file is simple: each line
+	    contains the name of one variable (as found in the header
+	    file), followed by one or more spaces, followed by the
+	    descriptive label. Here is an example: 
+
+	    \verb+price  New car price index, 1982 base year+
+
+	    A label file of this sort is created automatically when
+	    you save data from \app{gretl}, if
+	    there is any descriptive information to be saved.  Such
+	    information can be added under the ``Variable, Edit
+	      label'' menu item.
+	  
+
+
+\end{enumerate}
+

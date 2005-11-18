@@ -1,0 +1,456 @@
+\chapter{Puesta en marcha}
+\label{c-getting-started}
+
+\section{Ejecutar una regresión}
+\label{starting-regression}
+
+Esta parte introductoria está enfocada principalmente hacia el
+programa de cliente gráfico; para más detalles del programa de línea
+de instrucciones, \app{gretlcli}, consultar XXX.
+
+Aunque es posible abrir \app{gretl} tecleando el nombre de un archivo
+de datos como argumento, por el momento no vamos a probar este modo;
+simplemente ejecutamos el programa.\footnote{Por comodidad este manual
+  se refiere al programa de cliente gráfico simplemente como
+  \app{gretl}. Nótese, sin embargo, que el nombre especifico del
+  programa cambia según la plataforma del ordenador. En Linux se llama
+  \verb+gretl_x11+ mientras que en MS Windows se llama
+  \verb+gretlw32.exe+. En sistemas Linux también se instala un lote de
+  instrucciones de envoltura (wrapper script) llamado \verb+gretl+.}
+  
+Aparecerá una ventana principal (que puede tener alguna información
+sobre los datos pero que al principio está vacía) y varios menús,
+algunos de los cuales están desactivados al principio.
+
+¿Qué podemos hacer a partir de este punto? Se puede consultar los
+archivos (o bases) de datos que vienen con el programa, abrir un
+archivo de datos, crear un nuevo archivo de datos, leer los apartados
+de la ayuda, o abrir algún lote de instrucciones. Por ahora vamos a
+revisar los archivos de datos que acompañan al programa. Desde el menú
+Archivo elegir ``Abrir datos, archivo de muestra, Ramanathan...''. Se
+debería abrir una segunda ventana con una lista de archivos de datos
+que vienen con el paquete (véase la Figura \ref{fig-datafiles}). Los
+archivos están numerados siguiendo los capítulos del libro de
+Ramanathan (2002), el cual también contiene los puntos relacionados
+con el análisis de estos datos. Aún en el caso de que no dispongamos
+de este texto, los datos en sí son muy útiles para realizar ejercicios
+prácticos.
+
+\begin{figure}[htbp]
+\begin{center}
+  \includegraphics[scale=0.5]{figures/datafiles}
+\end{center}
+\caption{Ventana de archivo de datos para ejercicios prácticos}
+\label{fig-datafiles}
+\end{figure}
+
+Si seleccionamos una fila en esta ventana y pulsamos ``Información'',
+se abre el archivo de cabecera (header file) de los datos en cuestión,
+que contiene información sobre el origen y las definiciones de las
+variables. Para abrir algún archivo que nos interese, pulsar
+``Abrir'', o simplemente hacer doble clic sobre el nombre del archivo.
+Por el momento, abriremos el archivo \verb+data3-6+.
+
+\tip{En ventanas \app{gretl} con listas, un doble clic sobre una línea
+  lanza una acción asociada por defecto a esta entrada de la lista:
+  por ejemplo, mostrar valores de una serie de datos, abrir un
+  archivo.}
+  
+Este archivo contiene datos pertenecientes a un ``problema'' clásico
+de econometría: la función de consumo. Ahora, la ventana de datos
+debería mostrar el nombre del archivo de datos actual, el rango total
+de los datos y el rango de la muestra, así como los nombres de las
+variables junto con sus notas descriptivas - véase la Figura
+\ref{fig-mainwin}.
+
+\begin{figure}[htbp]
+\begin{center}
+  \includegraphics[scale=0.5]{figures/mainwin}
+\end{center}
+\caption{Ventana principal, con un archivo de datos para ejercicios
+  abierto}
+\label{fig-mainwin}
+\end{figure}
+
+Bien, ¿cuál es el siguiente paso? \app{gretl} intenta que las
+diferentes opciones del menú sean bastantes explícitas.  Primero,
+hagamos una breve visita al menú Modelo; en Sección \ref{menus} se
+realiza un breve recorrido a lo largo de los menús de la ventana
+principal.
+
+El menú Modelo de \app{gretl} ofrece numerosos métodos de estimación
+econométrica. El más sencillo y estándar es el de Mínimos Cuadrados
+Ordinarios (MCO). Si se selecciona MCO, aparece un cuadro de diálogo
+en el que hay que \emph{especificar el modelo} - véase la Figura
+\ref{fig-selector}.
+
+\begin{figure}[htbp]
+\begin{center}
+  \includegraphics[scale=0.5]{figures/selector}
+\end{center}
+\caption{Cuadro de diálogo de especificación del modelo}
+\label{fig-selector}
+\end{figure}
+
+Para seleccionar la variable dependiente, resaltamos la variable
+deseada en la lista que aparece a la izquierda y pulsamos el botón
+``Elegir'' que apunta hacia la caja de la variable dependiente. Si
+marcamos la casilla ``Selección por defecto'', esta variable será
+preseleccionada como dependiente la siguiente vez que abramos el
+cuadro de diálogo de especificación de modelo.  Un atajo: un doble
+clic sobre una variable dentro de la lista de la izquierda, hace que
+ésta sea la variable dependiente por defecto. Para seleccionar las
+variables independientes, primero las resaltamos en la lista de la
+izquierda, y a continuación pulsamos el botón ``Añadir'' (o el botón
+derecho del ratón con el cursor sobre la variable seleccionada). Para
+seleccionar varias variables en la lista, arrastramos el ratón sobre
+ellas; para seleccionar diferentes variables que no son contiguas,
+apretamos la tecla \verb+Ctrl+ y manteniéndola así, hacemos clic sobre
+las variables deseadas.
+
+Para ejecutar una regresión con el consumo como variable dependiente,
+y la renta como la independiente, hacemos clic sobre \verb+Ct+ para
+ponerla en el espacio de ``Variable dependiente'', y luego añadimos
+\verb+Yt+ a la lista de variables Independientes.
+
+\section{Resultados de la estimación}
+\label{est-output}
+
+Una vez que hayamos especificado un modelo, aparecerá una ventana
+mostrando los resultados de la regresión. La información que presenta
+es bastante comprensible y está escrita en un formato estándar.
+(Figura \ref{fig-modelwin}).
+
+\begin{figure}[htbp]
+\begin{center}
+  \includegraphics[scale=0.5]{figures/modelwin}
+\end{center}
+\caption{Ventana de resultados del modelo}
+\label{fig-modelwin}
+\end{figure}
+
+La ventana de resultados contiene menús que nos permiten inspeccionar
+o hacer gráficos de los valores ajustados y de los residuos, y además
+podemos ejecutar varios programas de diagnósticos sobre el modelo.
+
+Para la mayoría de los modelos, también existe la opción de reimprimir
+los resultados de la regresión en formato LaTeX. Podemos imprimir los
+resultados en formato tabular (similar a lo que hay en la ventana
+output, pero bien escritos) o como una ecuación, en una página. Para
+cada una de estas opciones podemos elegir entre una vista preliminar
+de la composición final, o guardar los resultados en un archivo para
+su posterior incorporación en un documento LaTeX. La vista preliminar
+requiere que tengamos un sistema TeX funcionando en nuestro ordenador.
+
+Para exportar los resultados de \app{gretl} a un procesador de textos,
+se puede copiar y pegar desde una ventana de resultados, utilizando su
+menú \textsf{Editar}, al programa deseado. Muchas (pero no todas) las
+ventanas de \app{gretl} ofrecen la opción de copiar como RTF (``Rich
+Text Format'' de Microsoft) o como documento LaTeX. Si se quiere pegar
+el contenido en un procesador de texto, la opción RTF quizá sea la
+mejor porque conserva el formato tabular de los resultados.
+\footnote{Téngase en cuenta que al copiar como RTF en MS Windows,
+  Windows sólo permitirá que se pegue en aquellas aplicaciones que
+  ``entiendan'' el formato RTF. Por lo tanto, se puede pegar en MS
+  Word, pero no en \app{notepad}.}
+  
+Alternativamente, podemos guardar los resultados en un archivo de
+texto y luego importar este archivo desde el programa que estemos
+utilizando .  Al terminar una sesión de gretl, tenemos la opción de
+guardar todos los resultados de la sesión en un único archivo.
+
+Téngase en cuenta que tanto en el escritorio \app{gnome} como bajo MS
+Windows, el menú \textsf{Archivo} incluye una instrucción para enviar
+los resultados directamente a una impresora.
+
+\tip{Al pegar o exportar los resultados de \app{gretl} como texto a un
+  procesador de textos, conviene seleccionar una fuente monoespaciada
+  o estilo máquina de escribir (e.g. Courier) para conservar el
+  formato tabular del output. Selecciónese un tamaño pequeño de fuente
+  (un Courier de 10 puntos será suficiente) para evitar que las líneas
+  de resultados se partan incorrectamente.}
+  
+
+\section{Menús de la ventana principal}
+\label{menus}
+
+Si se lee la barra del menú de la ventana principal, empezando por la
+izquierda hacia la derecha, se encuentran los siguientes menús:
+Archivo, Utilidades, Sesión, Datos, Muestra, Variable, Modelo y Ayuda.
+
+\begin{center}
+  \includegraphics[scale=0.5]{figures/menubar}
+\end{center}
+
+\begin{itemize}
+\item \textsf{Menú Archivo}
+
+\begin{itemize}
+\item \textsf{Abrir datos}: Abre un archivo de datos propio de
+  \app{gretl} o importa desde otro formato. Véase el [?].
+\item \textsf{Guardar datos}: Guarda el archivo de datos propio de
+  \app{gretl} abierto en este momento.
+\item \textsf{Guardar datos como}: Escribe el conjunto de datos en
+  formato propio, con las opciones de utilizar gzip para comprimir los
+  datos o guardar los datos en formato binario. Véase el [?].
+\item \textsf{Exportar datos}: Escribe el conjunto de datos en formato
+  CSV (comma-separated values --- valores separados por comas), o en
+  los formatos de GNU R o GNU Octave. Véase el [?] así como el [?].
+\item \textsf{Cerrar conjunto de datos}: Cierra el conjunto de datos
+  con que se está trabajando en la memoria. Generalmente no tenemos
+  que hacer esto (ya que al abrir un archivo de datos nuevo, se cierra
+  de manera automática el viejo) pero es de utilidad en algunas
+  ocasiones (véase [?]).
+\item \textsf{Revisar bases de datos}: Véanse [?] y [?].
+\item \textsf{Crear conjunto de datos}: Inicia la hoja de cálculo
+  incorporada en el programa, para añadir datos de forma manual. Véase
+  [?].
+\item \textsf{Guardar el último gráfico}: Guarda el gráfico más
+  reciente.
+\item \textsf{Ver historial de instrucciones}: Abre una ventana donde
+  puede verse el historial de todas las instrucciones ejecutadas hasta
+  el momento.
+\item \textsf{Abrir archivo de instrucciones}: Abre un lote de
+  instrucciones de \app{gretl}, bien uno ya creado por el usuario, o
+  bien uno de los archivos de ejercicios prácticos que acompañan al
+  programa. Si se desea crear un lote de instrucciones desde cero,
+  úsese la siguiente opción: \textsf{Nuevo archivo de instrucciones}.
+\item \textsf{Preferencias}: Especifica la ubicación de varios
+  archivos a los que \app{gretl} necesita acceder. Selecciona la
+  fuente en que \app{gretl} mostrará los textos generados. Activa o
+  desactiva el ``modo experto''. (Si se activa este modo, se suprimen
+  varios avisos.) Activa o desactiva los mensajes de \app{gretl} sobre
+  la disponibilidad de las nuevas versiones del programa. Configura o
+  quita/pone la barra de herramientas en la ventana principal.
+\item \textsf{Salir}: Salir del programa. Si no se ha activado el modo
+  experto, se mostrará un aviso para que se guarde cualquier trabajo
+  no guardado.
+\end{itemize}
+
+\item \textsf{Menú de Utilidades}
+\begin{itemize}
+\item \textsf{Tablas estadísticas}: Consultar los valores críticos de
+  las distribuciones más frecuentes (normal o gausiana, \emph{t},
+  chi-cuadrado, \emph{F} y Durbin-Watson).
+\item \textsf{Buscador de valores p}: Abre una ventana que nos permite
+  consultar valores p de distribuciones gausianas, \emph{t},
+  chi-cuadrado, \emph{F} o gamma. Véase también la instrucción
+  \cmd{pvalue}.
+\item \textsf{Calculadora de estadísticos de contraste}: Calcula los
+  estadísticos de contraste y valores p para una amplia gama de
+  contrastes de hipótesis comunes (media poblacional, varianzas y
+  proporciones; diferencias de medias, de varianzas y de
+  proporciones). Los estadísticos muestrales relevantes han de estar
+  disponibles con anterioridad para su incorporación en el cuadro de
+  diálogo. Para algunos contrastes sencillos, que toman como entrada
+  series de datos en vez de estadísticos muestrales previamente
+  calculados, véase ``Diferencia de medias'' y ``Diferencia de
+  varianzas'' en el menú de Datos.
+\item \textsf{Consola Gretl}: Abre una ventana tipo ``consola'' dentro
+  de la cual podemos escribir instrucciones (en lugar de apuntar y
+  hacer clic), del mismo modo que en el programa de línea de
+  instrucciones, \app{gretlcli}.
+\item \textsf{Iniciar GNU R}: Inicia una sesión de \app{R} (si está
+  instalado en el sistema), y carga una copia del conjunto de datos
+  que esté abierto en \app{gretl}.
+\end{itemize}
+
+\item \textsf{Menú de Sesión}
+\begin{itemize}
+\item \textsf{Vista de iconos}: Abre una ventana que muestra la sesión
+  actual de \app{gretl} en forma de un conjunto de iconos. Para más
+  detalles véase [?].
+\item \textsf{Añadir el último gráfico}: Captura el gráfico más
+  reciente en forma de icono de sesión, para poder acceder a él y
+  manipularlo.
+\item \textsf{Abrir}: Abre un archivo de sesión previamente guardado.
+\item \textsf{Guardar}: Guarda la sesión actual en un archivo.
+\item \textsf{Guardar como}: Guarda la sesión actual en el archivo
+  deseado.
+\end{itemize}
+
+
+\item \textsf{Menú de Datos}
+\begin{itemize}
+\item \textsf{Mostrar valores}: Muestra una ventana con una simple
+  vista (no editable) de los valores de las variables (todas o una
+  parte seleccionada).
+\item \textsf{Editar valores}: Muestra una ventana con una hoja de
+  cálculo en la cual podemos introducir cambios, añadir nuevas
+  variables, y extender el número de observaciones. (La matriz de
+  datos tiene que ser rectangular, con un número idéntico de
+  observaciones para cada serie.)
+\item \textsf{Gráficos}: Aquí se puede elegir entre trazar un gráfico
+  de series temporales, un diagrama de dispersión X-Y regular, un
+  gráfico X-Y de impulsos (barras verticales), un gráfico X-Y ``con
+  separación de factores'' (es decir, con los puntos en diferentes
+  colores dependiendo del valor de una variable ficticia) y gráficos
+  de caja (boxplots). Muestra un cuadro de diálogo donde se pueden
+  especificar las variables a trazar. La manera más sencilla de
+  rellenarlo es refiriéndose a las variables con sus números de
+  identificación (se encuentran en la primera columna de la izquierda
+  en la ventana principal de datos). Por lo tanto, si hemos elegido la
+  opción de diagrama de dispersión, poniendo ``2 3'' como los valores
+  de los datos, se dibuja la variable 2 (aquí, el consumo) contra la
+  variable 3 (renta). La última variable referenciada será situada en
+  el eje \emph{x}. El programa utiliza gnuplot para hacer los gráficos
+  (excepto en la opción gráficos de caja).
+\item \textsf{Gráficos bivariantes múltiples}: Muestra una colección
+  de (hasta un máximo de seis) diagramas, bien como una variable en el
+  eje \emph{y} contra varias variables en el eje \emph{x}, o como
+  varias variables en el eje \emph{y} contra uno en el eje \emph{x}.
+  Puede ser útil para realizar un análisis preliminar de los datos.
+\item \textsf{Leer información}, \textsf{Editar información}: ``Leer
+  información'' simplemente muestra la información de cabecera del
+  archivo actual; ``Editar información'' permite cambiar esta
+  información (en Linux, si tenemos los permisos para hacerlo).
+\item \textsf{Estadísticos principales}: Muestra un conjunto de
+  estadísticos descriptivos bastante completo respecto de todas las
+  variables incluidas en el conjunto de datos.
+\item \textsf{Matriz de correlación}: Muestra los coeficientes de
+  correlación de cada par de variables incluidas en el conjunto de
+  datos.
+\item \textsf{Diferencia de medias}: calcula el estadístico \emph{t}
+  para la hipótesis nula de que las medias poblacionales sean iguales
+  para dos variables seleccionadas y muestra su valor p.
+\item \textsf{Diferencia de varianzas}: Calcula el estadístico
+  \emph{F} para la hipótesis nula de que las varianzas poblacionales
+  sean iguales para dos variables seleccionadas y muestra su valor p.
+\item \textsf{Añadir variables}: Ofrece un submenú con las
+  transformaciones de variables más típicas (logaritmos, retardos,
+  cuadrados, etc.)  las cuales pueden añadirse al conjunto de datos.
+  También se da la opción de añadir variables aleatorias, y (para
+  datos de series temporales) añadir variables ficticias estacionales
+  (por ejemplo, variables ficticias trimestrales para datos
+  trimestrales). Incluye una opción para poner una semilla en el
+  generador de números pseudoaleatorios del programa.
+\item \textsf{Actualizar ventana}: A veces las instrucciones de
+  \app{gretl} generan variables nuevas. La ``actualización'' asegura
+  que el listado de variables visibles en la ventana principal de
+  datos esté sincronizado con el estado interno del programa.
+\end{itemize}
+
+
+\item \textsf{Menú de muestra}
+\begin{itemize}
+\item \textsf{Establecer rango}: Establecer un punto de partida y/o
+  terminación diferente para la muestra actual, dentro del rango de
+  los datos disponibles.
+\item \textsf{Restaurar el rango completo}: \emph{\textsl{idem}}.
+\item \textsf{Establecer frecuencia, observación inicial}: Impone una
+  interpretación particular de los datos en términos de frecuencia y
+  observación inicial. Está pensado principalmente para datos de
+  panel; véase [?].
+\item \textsf{Definir a partir de v. ficticia}: Dada una variable
+  ficticia (indicador) con valor 0 o 1, se eliminan todas las
+  observaciones de la muestra actual donde la variable ficticia tenga
+  el valor 0.
+\item \textsf{Restringir a partir de criterio}: Similar al anterior
+  excepto que no necesitamos una variable predefinida: escribimos una
+  expresión booleana (por ejemplo \verb+sqft > 1400+) y la muestra se
+  restringe a las observaciones que cumplen este requisito. Véase la
+  ayuda para \cmd{genr} para detalles sobre los operadores booleanos
+  que se pueden utilizar.
+\item \textsf{Quitar todas las obs. con valores perdidos}: Elimina de
+  la muestra actual todas las observaciones para las cuales hay, por
+  lo menos, una variable que tiene un valor perdido (véase [?]).
+\item \textsf{Contar valores perdidos}: Emite un informe sobre las
+  observaciones en las que faltan valores de los datos. Puede ser útil
+  para examinar conjuntos de datos de panel, en los cuales suele
+  faltar algún que otro valor.
+\item \textsf{Añadir marcadores de caja}: Pregunta por el nombre de un
+  archivo de texto que contenga marcadores de caja (etiquetas
+  asociadas a observaciones individuales) y añade esta información al
+  conjunto de datos. Véase el [?].
+\item \textsf{Reestructurar panel}: Abre un cuadro de diálogo que nos
+  permite determinar la interpretación de un conjunto de datos panel,
+  bien como series temporales apiladas o como muestras transversales
+  apiladas (véase [?]).
+\end{itemize}
+
+
+\item \textsf{Menú de variable}: La mayoría de las opciones que
+  encontramos aquí actúan sobre las variables una por una. Podemos
+  elegir la variable ``activa'' seleccionándola y pulsando sobre ella
+  en la ventana principal de datos. La mayoría de las opciones no
+  necesitan explicación. Nótese que es posible renombrar una variable
+  y editar su descripción.  También es posible ``Definir una nueva
+  variable'' mediante una formula (por ejemplo, con una función de
+  alguna/s variable/s ya existentes). Para conocer la sintaxis de
+  estas fórmulas, consúltese el término \cmd{genr} en la ayuda
+  \emph{en línea} o véase la instrucción \cmd{genr}.  Un ejemplo
+  sencillo sería:
+          
+\begin{code}
+  foo = x1 * x2
+\end{code}
+
+esto crearía una nueva variable \verb+foo+ como el producto de las
+variables \verb+x1+ y \verb+x2+ ya existentes. En estas fórmulas hay
+que referenciar las variables por su nombre, y no por su número.
+
+
+\item \textsf{Menú de modelo}: Ya comentado en el capítulo
+  \ref{c-getting-started}. Para más detalles sobre los estimadores
+  ofrecidos en este menú, consúltese [?], el XXX a continuación, y/o
+  la ayuda \emph{en línea} sobre ``estimación''.
+
+\item \textsf{Menú de ayuda}: Incluye detalles sobre la sintaxis
+  requerida en los cuadros de diálogo.(Nota del traductor: el fichero
+  de ayuda en Español suele actualizarse con retraso, por eso, a
+  partir de la versión gretl-1.0.9 se ha añadido en la ventana de
+  ayuda una nueva opción de menú que muestra la ayuda en Inglés,
+  normalmente más actualizada y que mostrará también la ayuda sobre
+  las nuevas instrucciones añadidas en la última versión))
+
+\end{itemize}
+
+\section{La barra de herramientas de gretl}
+\label{toolbar}
+
+La barra de herramientas está situada en la esquina inferior-izquierda
+de la ventana principal.
+
+\begin{center}
+  \includegraphics[scale=0.5]{figures/toolbar}
+\end{center}
+
+Los iconos tienen las siguientes funciones, empezando de izquierda a
+derecha:
+
+\begin{enumerate}
+\item Lanzar calculadora. Es una función cómoda si queremos un rápido
+  acceso a una calculadora mientras trabajamos en \app{gretl}. El
+  programa utilizado por defecto es \verb+calc.exe+ en MS Windows, o
+  \verb+xcalc+ en el sistema de ventanas X . Es posible cambiar el
+  programa desde el menú ``Archivo, Preferencias, General'', y submenú
+  ``Barra de herramientas''.
+\item Lanzar editor o procesador de textos. Por defecto
+  \verb+winword.exe+ en MS Windows, y \verb+emacs+ en X. Se puede
+  configurar de la misma manera que la calculadora.
+\item Abrir consola \app{gretl}. Un acceso rápido a la entrada del
+  menú ``Consola \app{gretl}'' (ver más arriba Sección \ref{menus}).
+\item Vista de iconos de sesión.
+\item Abrir el sitio web de \app{gretl} en nuestro navegador de
+  Internet. Esto sólo funcionará en el caso de que el ordenador esté
+  conectado a Internet y el navegador esté configurado de manera
+  correcta.
+\item Abrir la versión actual de este manual en formato PDF. Requiere
+  una conexión con Internet; además el navegador ha de tener la
+  capacidad de procesar archivos PDF.
+\item Abrir la ayuda sobre la sintaxis de lotes de instrucciones (es
+  decir, un listado detallando todas las instrucciones disponibles).
+\item Abrir un cuadro de diálogo para definir un gráfico.
+\item Grabar el último gráfico mostrado, para modificarlo.  (Este
+  botón no se muestra en Linux, donde se puede grabar el gráfico
+  mediante su menú desplegable)
+\item Abrir una ventana mostrando los conjuntos de datos asociados al
+  libro \emph{Introductory Econometrics} de Ramanathan
+  (alternativamente puede configurarse este botón para que muestre los
+  conjuntos de datos de Wooldridge (2002)- véase el [?]).
+\end{enumerate}
+
+Para desactivar la barra de herramientas, ir a al menú ``Archivo,
+preferencias, general'', y desmarcar la casilla de verificación
+``Mostrar barra de herramientas \app{gretl}''.
+

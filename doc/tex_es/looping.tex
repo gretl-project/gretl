@@ -1,0 +1,199 @@
+\chapter{Construcción de iteraciones}
+\label{c-looping}
+
+\section{Simulaciones Monte Carlo}
+\label{monte-carlo}
+
+\app{Gretl} ofrece un soporte (limitado) para realizar simulaciones de
+Monte Carlo. Para hacer este tipo de trabajos se puede utilizar o bien
+el programa GUI en modo ``lote de instrucciones'' (véase [?] arriba),
+o bien el cliente de línea de instrucciones. La instrucción \cmd{loop}
+(bucle) abre el programa en un modo especial, en el cual se acepta la
+repetición de una instrucción el número de veces indicado . Sólo 7
+instrucciones pueden ser utilizadas dentro de dicho bucle: \cmd{genr},
+\cmd{ols}, \cmd{print}, \cmd{sim}, \cmd{smpl}, \cmd{store} y
+\cmd{summary}.  \cmd{genr} y \cmd{ols} permiten hacer bastantes
+operaciones.  Tecleando la instrucción \cmd{endloop} se sale de este
+modo: esto hace que se ejecute el lote de instrucciones.  Los bucles
+no pueden estar anidados.
+
+La instrucción \cmd{ols} produce un resultado especial dentro del modo
+bucle; no se muestran los resultados de cada regresión individual y,
+en su lugar, el programa muestra (a) el valor medio de cada
+coeficiente estimado en cada una de las iteraciones, (b) la desviación
+típica de estos coeficientes estimados, (c) el valor medio de la
+desviación típica estimada de cada coeficiente, y (d) la desviación
+típica de las desviaciones típicas estimadas. Todos estos resultados
+cobran sentido solamente si se introduce algún efecto aleatorio.
+
+La instrucción \cmd{print} también se comporta de manera diferente en
+el modo bucle. Muestra la media y la desviación típica de la variable
+a lo largo de todas las repeticiones del bucle. Está pensada para ser
+utilizada con variables que tengan un sólo valor en cada iteración,
+por ejemplo la suma de cuadrados de los errores de una regresión.
+
+La instrucción \cmd{store} (a utilizar una única vez en cada bucle)
+escribe los valores de las variables especificadas en cada una de las
+iteraciones, en el archivo indicado por el usuario. Por lo tanto,
+mantiene un historial completo de las variables. Es posible leer y
+analizar este archivo de datos dentro del programa.
+
+En el Ejemplo \ref{script-loop} se muestra un sencillo ejemplo de
+simulación de Monte Carlo.
+
+\begin{script}[htbp]
+\caption{Una simulación sencilla de Monte Carlo}
+\label{script-loop}
+
+\begin{code}
+  # Crear un conjunto de datos vacío de tamaño 50  
+  nulldata 50 genr
+  x = uniform() 
+  # abrir un bucle que se repite 100 veces  
+  loop 100
+  genr u = normal() 
+  # construir la variable dependiente  
+  genr y = 10*x + 20*u 
+  # ejecutar una regresión MCO  
+  ols y const x 
+  # recuperar el R-cuadrado de la regresión  
+  genr r2 = $rsq 
+  # hacer que se muestren las estadísticas sobre los R-cuadrados calculados 
+  print r2 
+  # recuperar las estimaciones de los coeficientes
+  individuales  
+  genr a = coeff(const) 
+  genr b = coeff(x) 
+  # y guardarlas en un fichero  
+  store foo.gdt a b endloop
+\end{code}
+
+\end{script}
+
+Este bucle mostrará los estadísticos de resumen correspondientes a las
+estimaciones de `a' y `b' en cada una de las 100 ietraciones, así como
+los valores \emph{R}\ensuremath{^{2}} de las 100 regresiones. Después
+de ejecutar el bucle, el archivo \verb+foo.gdt+, que contiene las
+estimaciones de los coeficientes individuales de todas las veces que
+ha sido ejecutado el bucle, puede abrirse desde \app{gretl} para
+examinar la distribución de frecuencias de las estimaciones con más
+detalle. Por favor, téngase en cuenta que aunque se permiten líneas de
+comentarios dentro de una replicación (como muestra el ejemplo), estos
+no pueden exceder una linea.
+
+La instrucción \cmd{nulldata} es útil para realizar trabajos de Monte
+Carlo. En lugar de abrir unos datos ``reales'', \cmd{nulldata 50} (por
+ejemplo) abre un conjunto de datos vacío, con solamente una constante,
+y un tamaño muestral igual a 50. Después pueden añadirse variables
+mediante la instrucción \cmd{genr}.
+
+Véase la instrucción \cmd{seed} en el [?]  para información sobre cómo
+generar series pseudo-aleatorias repetibles.
+
+\section{Mínimos cuadrados iterativos}
+\label{ils}
+
+Se ha diseñado una segunda forma de estructurar las replicaciones,
+principalmente para calcular mínimos cuadrados iterativos. Greene
+(2000, c. 11) muestra cómo puede usarse este método para estimar
+modelos no lineales.
+
+Para comenzar este tipo de replicaciones, hay que especificar una
+\emph{condición} en lugar de un número incondicional de veces a
+iterar. Esta condición debe tener la forma de la palabra clave
+\cmd{while} (mientras) seguida por una desigualdad: el término de la
+izquierda debe ser el nombre de la variable ya definida; el término de
+la derecha puede ser una constante numérica o el nombre de otra
+variable predefinida. Por ejemplo,
+
+\cmd{loop while essdiff > .00001}
+
+Las instrucciones serán ejecutadas dentro del bucle (es decir, hasta
+que se encuentre \cmd{endloop}) mientras se cumpla la condición que
+estamos evaluando.
+
+El programa supone que si se especifica una replicación tipo ``número
+de veces'', probablemente estemos realizando un análisis de Monte
+Carlo, y, por lo tanto, no nos interesan los resultados de cada
+iteración individual, sino más bien los momentos de ciertas variables
+en el conjunto de las iteraciones. Por otra parte, si se especifica
+una replicación de tipo ``while'' probablemente se esté haciendo algo
+como mínimos cuadrados iterativos y por lo tanto nos gustaría
+visualizar el resultado final - y también, quizá, los valores de
+alguna(s) variable(s) (por ejemplo, la suma de cuadrados de los
+residuos) de cada iteración dentro del bucle.  El comportamiento de
+las instrucciones \cmd{print} y \cmd{ols} se acomoda a estas
+suposiciones. En una bucle ``while'', \cmd{print} se comporta como
+siempre; así que se imprimen la(s) variable(s) especificada(s) en cada
+iteración. La instrucción \cmd{ols} imprime los resultados de la
+estimación final.
+
+El Ejemplo \ref{greene-consump} utiliza un bucle ``while'' para
+reproducir la estimación de una función de consumo no lineal de la
+forma $C = \alpha + \beta Y^{\gamma} + \epsilon$ como en Greene (2000,
+Ejemplo 11.3). Este lote de instrucciones se incluye en la
+distribución de \app{gretl} bajo el nombre de\verb+ greene11_3.inp+;
+se puede encontrar en \app{gretl} bajo la opción del menú ``Archivo,
+Abrir archivo de instrucciones, archivo de ejercicios, Greene...''.
+
+\begin{script}[htbp]
+\caption{Función de consumo no lineal}
+\label{greene-consump}
+\begin{code}
+  open greene11_3.gdt 
+  # ejecutar MCO inicialmente  
+  ols C 0 Y 
+  genr essbak = $ess 
+  genr essdiff = 1 
+  genr b0 = coeff(Y) 
+  genr gamma0 = 1 
+  # formar las variables linealizadas  
+  genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
+  genr x1 = Y^gamma0 genr x2 = b0 * Y^gamma0 * log(Y) 
+  # iterar los MCO hasta que la suma de cuadrados converja 
+  loop while essdiff > .00001 
+  ols C0 0 x1 x2 -o 
+  genr b0 = coeff(x1)
+  genr gamma0 = coeff(x2) 
+  genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
+  genr x1 = Y^gamma0 
+  genr x2 = b0 * Y^gamma0 * log(Y) 
+  genr ess = $ess 
+  genr essdiff = abs(ess - essbak)/essbak 
+  genr essbak = ess
+  endloop 
+  # mostrar las estimaciones de los parámetros usando sus "propios nombres"  
+  genr alpha = coeff(0) 
+  genr beta = coeff(x1)
+  genr gamma = coeff(x2) 
+  print alpha beta gamma
+\end{code}
+\end{script}
+
+
+\section{Bucle con índice}
+
+El tercer modo de construir un bucle en \app{gretl} es hacer un bucle
+con índice, utilizando la variable interna \verb+i+. Es necesario
+especificar los valores inicial y final para \verb+i+, que aumenta en
+cada iteración del bucle. La sintaxis es la siguiente: \cmd{loop
+  i=1..20}. El Ejemplo \ref{panel-loop} muestra el uso de esta
+construcción. Considérese el caso de un conjunto de datos de panel,
+consistente en observaciones sobre varios hospitales entre los años
+1991-2000. Restringimos la muestra para cada uno de estos años
+sucesivamente y obtenemos los estadísticos de resumen de sección
+cruzada para las variables 1 a 4.
+
+\begin{script}[htbp]
+\caption{Ejemplo de un bucle indexado}
+\label{panel-loop}
+\begin{code}
+  open hospitals.gdt 
+  loop for i=1991..2000 
+    smpl -r (year=i) 
+    summary 1 2 3 4 
+  endloop
+\end{code}
+
+\end{script}
+

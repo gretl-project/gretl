@@ -1,0 +1,181 @@
+\chapter{Introducción}
+\label{c-intro}
+
+\section{Características principales}
+\label{features}
+
+\app{Gretl} es un paquete de cálculo econométrico, e incluye una
+librería compartida, un programa cliente de línea de instrucciones y
+un interfaz gráfico para el usuario (GUI).
+
+\begin{description}
+
+\item[Fácil de usar] \app{Gretl} ofrece un interfaz intuitivo para el
+  usuario; es muy fácil de instalar y de usar para realizar análisis
+  econométrico. El paquete está muy ligado al libro \emph{Introductory
+    Econometrics} de Ramanathan, lo cual permite ofrecer muchos
+  archivos de datos para ejercicios prácticos así como ficheros con
+  lotes de instrucciones (scripts). Estos son fácilmente accesibles y
+  vienen acompañados de muchos comentarios.
+
+\item[Flexibilidad] \app{Gretl} ofrece la posibilidad de elegir entre
+  un enorme rango de opciones; desde apuntar y hacer clic en modo
+  interactivo hasta la utilización de procesos por lotes, resultando
+  fácil además hacer diferentes combinaciones entre las mismas.
+
+\item[Multiplataforma] La plataforma nativa de \app{gretl} es Linux,
+  aunque hay una versión disponible para MS Windows. Fue compilada en
+  AIX y puede funcionar en cualquier sistema tipo unix que contenga
+  los archivos de biblioteca básicos adecuados (véase el [?]).
+
+\item[Código abierto] El código fuente de \app{gretl} se encuentra a
+  la total disposición de cualquiera que esté interesado en revisar,
+  completar o extender el programa. El autor agradece cualquier
+  información sobre errores o fallos del programa.
+
+\item[Sofisticación] \app{Gretl} ofrece una completa gama de
+  estimadores de mínimos cuadrados, incluyendo \emph{mínimos cuadrados
+    en dos etapas}. También ofrece estimación logit y probit
+  (binomial), y cuenta con una estructura de bucle para realizar
+  simulaciones de Monte Carlo o estimaciones de mínimo cuadrados
+  iterativas para modelos no lineales. Aunque no incluye todos los
+  estimadores y contrastes que un económetra profesional puede
+  necesitar, el programa permite exportar datos a los formatos
+  (\href{http://www.r-project.org/}{GNU R}) y
+  (\href{http://www.octave.org/}{GNU Octave}) para hacer otros tipos
+  de análisis (véase el [?]).
+
+\item[Precisión] \app{Gretl} funciona bien con los conjuntos de datos
+  de referencia de NIST. Véase el [?].
+
+\item[Uso de Internet] \app{Gretl} tiene acceso a un servidor en Wake
+  Forest University desde el cual puede descargar algunas bases de
+  datos. La versión para MS Windows incorpora un programa de
+  actualización que detecta la disponibilidad de nuevas versiones de
+  \app{gretl} y ofrece la opción de actualización de manera
+  automática.
+
+\item[Internacional] \app{Gretl} puede producir sus resultados en
+  inglés, español o francés, dependiendo del idioma nativo del
+  ordenador.
+
+\end{description}
+
+\section{Agradecimientos}
+\label{ack}
+
+En primer lugar estoy en deuda con el Profesor Ramu Ramanathan de la
+Universidad de California, San Diego, quien hace algunos años tuvo la
+bondad de poner a mi disposición el código fuente de su programa
+\app{ESL} (``Econometrics Software Library''), el cual traduje a
+Linux, y con quien he colaborado para extender y actualizar el
+programa. Para el proyecto \app{gretl}, he realizado muchos cambios en
+el código original de \app{ESL}. He añadido nuevas funcionalidades
+econométricas y el interfaz gráfico es completamente nuevo. Por favor,
+téngase en cuenta que el Profesor Ramanathan no es responsable de
+ningún error que \app{gretl} pueda tener en su código.
+
+Estoy agradecido a William Greene, autor del libro \emph{Econometric
+  Analysis}, por su permiso para incluir en la distribución de
+\app{gretl} algunos de los datos analizados en su libro, y a Jeffrey
+Wooldridge por su ayuda en la preparación de una versión \app{gretl}
+de los conjuntos de datos incluidos en su libro \emph{Introductory
+  Econometrics: A Modern Approach}.
+
+Con respecto a la internacionalización de \app{gretl}, quiero dar la
+gracias a Ignacio Díaz-Emparanza y Michel Robitaille, encargados de
+preparar las traducciones al Español y Francés respectivamente.
+
+Me he beneficiado mucho del trabajo realizado por numerosos
+programadores de software de código abierto: para más detalles véase
+el [?] de este manual. Mis agradecimientos van también para Richard
+Stallman de la Free Software Foundation, por su apoyo al software
+libre en general y, en particular, por su decisión de ``adoptar''
+\app{gretl} como un programa GNU.
+
+
+
+\section{Instalación de los programas}
+\label{install}
+
+\subsection{Linux}
+\label{linux-install}
+
+En la plataforma Linux\footnote{La terminología nos origina aquí un
+  pequeño problema, aunque en este manual usaremos ``Linux'' para
+  referirnos al sistema operativo GNU/Linux.  Lo que aquí se dice
+  acerca de Linux es, en su mayor parte, válido también para otros
+  sistemas similares a Unix, aunque puede resultar necesaria alguna
+  que otra modificación local.
+  
+} tenemos la opción de compilar el código \app{gretl} o usar un
+paquete ya construido a propósito. Hay paquetes precompilados
+disponibles en el formato \app{rpm} (aconsejable para Red Hat Linux y
+sistemas relacionados con este) y también en el formato \app{deb}
+(Debian GNU/Linux). Estoy agradecido a Dirk Eddelbüttel por la
+construcción de este último. En el caso de que el usuario prefiriera
+construir uno por sí mismo, (o si el sistema unix no dispone de
+paquetes ya construidos), deberá seguir los siguientes pasos.
+
+
+\begin{enumerate}
+\item Descargar la última distribución de \app{gretl} desde
+  \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
+\item Descomprimir (unzip+untar) el paquete. En un sistema que
+  disponga de utilidades GNU, la instrucción sería \cmd{tar -xvfz
+    gretl-N.tar.gz} (reemplazar \cmd{N} con el número de versión
+  específico del archivo que hemos bajado en el paso 1).
+\item Ir al directorio de \app{gretl} creado en el paso 2 (e.g.
+  \verb+gretl-1.0+).
+\item Entonces, la rutina básica de compilación es
+        
+\begin{code}
+  ./configure make make check make install
+        
+\end{code}
+
+Sin embargo, antes de empezar, es conveniente leer el archivo
+\verb+INSTALL,+ y/o hacer \cmd{./configure --help} para ver las
+opciones disponibles. Una de las opciones que el usuario puede querer
+ajustar es \cmd{--prefix}.  La instalación se hace en
+\verb+/usr/local+ por defecto, pero es posible cambiarlo. Por ejemplo,
+\cmd{./configure --prefix=/usr} pondrá todo bajo el directorio
+\verb+/usr+. En el caso de que algún archivo de biblioteca no se
+encuentre en el sistema, y por lo tanto falle todo el proceso de
+instalación, consúltese el [?] de este manual.
+\end{enumerate}
+
+Desde la versión 0.97 \app{gretl} es compatible con el escritorio de
+\app{gnome}. Para utilizarlo, se compila el programa en la forma
+descrita anteriormente.  Si se desean suprimir los rasgos específicos
+de gnome, es preciso pasar la opción \verb+--without-gnome+
+directamente a \cmd{configure}.
+
+\subsection{MS Windows}
+\label{windows-install}
+
+La versión para MS Windows se extrae y se ejecuta de forma automática.
+La instalación consiste simplemente en bajar \verb+gretl_install.exe+
+y ejecutar este programa. Es posible especificar el lugar donde se
+instalará el paquete (por defecto en \verb+c:\userdata\gretl+).
+
+\subsection{Actualizaciones}
+\label{updating}
+
+En el caso de que el ordenador este conectado a Internet, \app{gretl}
+cuenta con la posibilidad de conectarse a su sitio web, en la
+Universidad de Wake Forest, al iniciar el programa para ver si hay
+alguna nueva versión disponible. Si la hay, se abre una ventana
+informando al usuario de este hecho. Si queremos activar esta opción,
+hay que marcar la opción ``Informar sobre actualizaciones de
+\app{gretl}'' en el menú ``Archivo, Preferencias, General '' de
+\app{gretl}.
+
+La versión para MS Windows adelanta un paso más: da la opción de
+actualización automática si se desea. Para seleccionar esta opción,
+síganse las instrucciones en la ventana desplegable: cerrar
+\app{gretl} y a continuación ejecutar el programa llamado ``\app{gretl
+  updater}'' (que se encuentra, junto con el programa principal de
+\app{gretl}, bajo Programas en el menú de inicio de Windows). Una vez
+terminado el proceso de actualización, se puede reiniciar \app{gretl}.
+
