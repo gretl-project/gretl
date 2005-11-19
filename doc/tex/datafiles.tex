@@ -147,7 +147,7 @@ conditions must be satisfied:
   characters (as with variable names, longer strings will be
   truncated).  A column of this sort should be headed with the string
   \verb+obs+ or \verb+date+, or the first row entry may be left
-  blank
+  blank.
 
   For dates to be recognized as such, the date strings must adhere to
   one or other of a set of specific formats, as follows.  For
@@ -163,19 +163,20 @@ conditions must be satisfied:
 CSV files can use comma, space or tab as the column separator.  When
 you use the ``Import CSV'' menu item you are prompted to specify the
 separator.  In the case of ``Import ASCII'' the program attempts to
-auto-detect the separator that was used.If you use a spreadsheet to
-prepare your data you are able to carry out various transformations of
-the ``raw'' data with ease (adding things up, taking percentages or
-whatever): note, however, that you can also do this sort of thing
-easily --- perhaps more easily --- within \app{gretl}, by using the
-tools under the ``Data, Add variables'' menu and/or ``Variable, define
-new variable''.
+auto-detect the separator that was used.
+
+If you use a spreadsheet to prepare your data you are able to carry
+out various transformations of the ``raw'' data with ease (adding
+things up, taking percentages or whatever): note, however, that you
+can also do this sort of thing easily --- perhaps more easily ---
+within \app{gretl}, by using the tools under the ``Data, Add
+variables'' menu and/or ``Variable, define new variable''.
 
 \subsection{Appending imported data}
 
 You may wish to establish a \app{gretl} dataset piece by piece, by
 incremental importation of data from other sources.  This is supported
-via the ``File, Append data'' menu items.  \app{gretl} will check the
+via the ``File, Append data'' menu items:  \app{gretl} will check the
 new data for conformability with the existing dataset and, if
 everything seems OK, will merge the data.  You can add new variables
 in this way, provided the data frequency matches that of the existing
@@ -219,12 +220,13 @@ has three forks: ``gretl native'', ``RATS 4'' and ``on database
 server''.  You should be able to find the file \verb+fedstl.bin+ in
 the file selector that opens if you choose the ``gretl native'' option
 --- this file, which contains a large collection of US macroeconomic
-time series, is supplied with the distribution.You won't find anything
-under ``RATS 4'' unless you have purchased RATS data.\footnote{See
-  \href{http://www.estima.com/}{www.estima.com}} If you do possess
-RATS data you should go into \app{gretl}'s ``File, Preferences,
-General'' dialog, select the Databases tab, and fill in the correct
-path to your RATS files.
+time series, is supplied with the distribution.
+
+You won't find anything under ``RATS 4'' unless you have purchased
+RATS data.\footnote{See \href{http://www.estima.com/}{www.estima.com}}
+If you do possess RATS data you should go into \app{gretl}'s ``File,
+Preferences, General'' dialog, select the Databases tab, and fill in
+the correct path to your RATS files.
 
 If your computer is connected to the internet you should find several
 databases (at Wake Forest University) under ``on database server''.
