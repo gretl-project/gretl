@@ -31,6 +31,12 @@ links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s ../figures_es ./figures
 
+onepass:
+	pdflatex gretl-guide-es
+
+refpass: refbody.tex
+	pdflatex gretl-ref-es
+
 thumbs: $(DOC)
 	thumbpdf $@ && pdflatex $< 	
 
@@ -39,3 +45,7 @@ install: $(GUIDE) $(REF)
 
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt $(GUIDE) $(REF) *~
+	rm -f refbody.tex
+
+distclean: clean
+	rm -rf CVS

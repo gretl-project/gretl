@@ -149,7 +149,6 @@
   }}
 
 %% revised caption style
-
 \long\def\@makecaption#1#2{%
   \vskip\abovecaptionskip
   \sbox\@tempboxa{\small {\bfseries #1}: #2}%
@@ -161,7 +160,27 @@
   \fi
   \vskip\belowcaptionskip}
 
+%% table of contents
+\renewcommand{\l@chapter}[2]{%
+  \ifnum \c@tocdepth >\m@ne
+    \addpenalty{-\@highpenalty}%
+    \vskip 1.0em \@plus\p@
+    \setlength\@tempdima{2em}%
+    \begingroup
+      \parindent \z@ \rightskip \@pnumwidth
+      \parfillskip -\@pnumwidth
+      \leavevmode \bfseries
+      \advance\leftskip\@tempdima
+      \hskip -\leftskip
+      #1\nobreak\hfil \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
+      \penalty\@highpenalty
+    \endgroup
+  \fi}
 
+\renewcommand{\l@section}{\@dottedtocline{1}{1.5em}{2.8em}}
+\renewcommand{\l@subsection}{\@dottedtocline{2}{4.3em}{3.2em}}
+
+%% Make section numbers go into left margin:
 %% \def\@seccntformat#1{\protect\makebox[0pt][r]{\csname
 %%                      the#1\endcsname\quad}}
 

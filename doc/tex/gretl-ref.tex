@@ -5,9 +5,9 @@
 \usepackage[T1]{fontenc}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
-\usepackage[pdftex,hyperfootnotes=false]{hyperref}
 %% \usepackage[pdftex]{thumbpdf}
-\usepackage[body={6.3in,9in},top=.5in,left=1.1in]{geometry}
+\usepackage[letterpaper,hmargin=1.1in,top=.5in]{geometry}
+\usepackage[pdftex,hyperfootnotes=false]{hyperref}
 
 %% \pdfimageresolution=120
 \hypersetup{pdftitle={Gretl Command Reference},
@@ -31,7 +31,7 @@
 \thispagestyle{empty}
 
 \begin{center}
-\label{titlepage}
+\pdfbookmark[1]{Gretl Command Reference}{titlepage}
 
 \gtitle{Gretl Command Reference}
 
@@ -51,7 +51,7 @@ November, 2005}
 
 \thispagestyle{empty}
 
-\label{license}
+\pdfbookmark[1]{License}{license}
 
 \vspace*{2in}
 
@@ -62,7 +62,8 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 
 \clearpage
 
-%% end license page
+%% end license page, start table of contents
+\pdfbookmark[1]{Contents}{contents}
 
 \pagenumbering{roman}
 \pagestyle{headings}

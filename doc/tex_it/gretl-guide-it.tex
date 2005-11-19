@@ -1,7 +1,8 @@
 \documentclass[oneside]{book}
 \usepackage{url,verbatim,fancyvrb,gretl,appendix}
 \usepackage{lucidabr} % optional
-\usepackage{pifont} % optional
+\usepackage{pifont}
+\usepackage{array}
 \usepackage[T1]{fontenc}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
@@ -23,22 +24,23 @@
 \begin{document}
 
 \renewcommand{\scriptname}{Esempio}
-\renewcommand{\GCR}{\textit{Gretl Command Reference}{}}
-\renewcommand{\GUG}{\textit{Gretl User's Guide}{}}
+\renewcommand{\GCR}{\textit{Gretl Command Reference}}
+\renewcommand{\GUG}{\textit{Gretl User's Guide}}
 
 \VerbatimFootnotes
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
+\setcounter{tocdepth}{1}
 
 %% titlepage
 
 \thispagestyle{empty}
 
 \begin{center}
-\label{titlepage}
+\pdfbookmark[1]{Guida dell'utente}{titlepage}
 
-\gtitle{Gretl User's Guide}
+\gtitle{Guida dell'utente}
 
 \gsubtitle{Gnu Regression, Econometrics and Time-series}
 
@@ -52,7 +54,7 @@ Wake Forest university
 
 {\large \sffamily 
 Cristian Rigamonti\\
-Traduzione Italiana\\
+Traduzione Italiana
 }
 
 \vspace{20pt}
@@ -66,7 +68,7 @@ Traduzione Italiana\\
 
 \thispagestyle{empty}
 
-\label{license}
+\pdfbookmark[1]{Licenza}{license}
 
 \vspace*{2in}
 
@@ -78,7 +80,8 @@ dalla Free Software Foundation (si veda
 
 \clearpage
 
-%% end license page
+%% end license page, start table of contents
+\pdfbookmark[1]{Indice}{contents}
 
 \pagenumbering{roman}
 \pagestyle{headings}

@@ -22,7 +22,9 @@ $(SUBDIRS):
 clean:
 	make -C tex clean
 	make -C tex_it clean
+	make -C tex_es clean
 
 install: 
 	make -C tex install
 	make -C tex_it install
+	make -C tex_es clean

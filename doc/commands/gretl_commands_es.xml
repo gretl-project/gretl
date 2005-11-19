@@ -3949,15 +3949,15 @@
 
     <description>
       <para>
-        Crea las versiones rho-diferenciadas de las variables (dadas 
-	por nombre o número) de la lista <repl>listavar</repl> y 
-	las añade al conjunto de datos, usando el sufijo <lit>#</lit> 
-	para las nuevas variables. Dada la variable <lit>v1</lit> una
-	variable de <repl>listavar</repl>, y las entradas <lit>r1</lit> y
-	<lit>r2</lit> de <repl>listarho</repl>, se crea <lit>v1# = v1(t) -
-	r1*v1(t-1) - r2*v1(t-2)</lit>. Las entradas de <repl>listarho</repl>
-	pueden darse como valores numéricos o como nombres de variables 
-	definidas previamente.
+        Crea las versiones rho-diferenciadas de las variables (dadas
+	por nombre o número) de la lista <repl>listavar</repl> y las
+	añade al conjunto de datos, usando el sufijo <lit>#</lit> para
+	las nuevas variables. Dada la variable <lit>v1</lit> una
+	variable de <repl>listavar</repl>, y las entradas
+	<lit>r1</lit> y <lit>r2</lit> de <repl>listarho</repl>, se
+	crea <code>v1# = v1 - r1*v1(-1) - r2*v1(-2)</code> Las
+	entradas de <repl>listarho</repl> pueden darse como valores
+	numéricos o como nombres de variables definidas previamente.
       </para>
     </description>
 

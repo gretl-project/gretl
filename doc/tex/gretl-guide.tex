@@ -27,13 +27,14 @@
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{1ex}
+\setcounter{tocdepth}{1}
 
 %% titlepage
 
 \thispagestyle{empty}
 
 \begin{center}
-\label{titlepage}
+\pdfbookmark[1]{Gretl User's Guide}{titlepage}
 
 \gtitle{Gretl User's Guide}
 
@@ -53,7 +54,7 @@ November, 2005}
 
 \thispagestyle{empty}
 
-\label{license}
+\pdfbookmark[1]{License}{license}
 
 \vspace*{2in}
 
@@ -64,7 +65,8 @@ under the terms of the \emph{GNU Free Documentation License}, Version
 
 \clearpage
 
-%% end license page
+%% end license page, start table of contents
+\pdfbookmark[1]{Table of contents}{contents}
 
 \pagenumbering{roman}
 \pagestyle{headings}

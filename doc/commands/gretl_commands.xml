@@ -5256,10 +5256,11 @@
 	the data set, using the suffix <lit>#</lit> for the new
 	variables. Given variable <lit>v1</lit> in
 	<repl>varlist</repl>, and entries <lit>r1</lit> and
-	<lit>r2</lit> in <repl>rholist</repl>, <lit>v1# = v1(t) -
-	  r1*v1(t-1) - r2*v1(t-2)</lit> is created. The
-	<repl>rholist</repl> entries can be given as numerical values
-	or as the names of variables previously defined.
+	<lit>r2</lit> in <repl>rholist</repl>, the new variable
+	<lit>v1# = v1 - r1*v1(-1) - r2*v1(-2)</lit>
+	is created. The <repl>rholist</repl> entries can be given as
+	numerical values or as the names of variables previously
+	defined.
       </para>
     </description>
 

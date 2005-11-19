@@ -130,21 +130,28 @@ siguientes pasos.
 \item Entonces, la rutina básica de compilación es
         
 \begin{code}
-  ./configure 
-  make 
-  make check 
-  make install
+    ./configure 
+    make 
+    make check 
+    make install
 \end{code}
 
 Sin embargo, antes de empezar, es conveniente leer el archivo
-\verb+INSTALL,+ y/o hacer \cmd{./configure --help} para ver las
-opciones disponibles. Una de las opciones que el usuario puede querer
-ajustar es \cmd{--prefix}.  La instalación se hace en
+\verb+INSTALL,+ y/o hacer 
+\begin{code}
+    ./configure --help
+\end{code}
+para ver las opciones disponibles. Una de las opciones que el usuario
+puede querer ajustar es \cmd{--prefix}.  La instalación se hace en
 \verb+/usr/local+ por defecto, pero es posible cambiarlo. Por ejemplo,
-\cmd{./configure --prefix=/usr} pondrá todo bajo el directorio
-\verb+/usr+. En el caso de que algún archivo de biblioteca no se
-encuentre en el sistema, y por lo tanto falle todo el proceso de
-instalación, consúltese el Apéndice~\ref{app-technote}.
+\begin{code}
+    ./configure --prefix=/usr
+\end{code}
+pondrá todo bajo el directorio \verb+/usr+. En el caso de que algún
+archivo de biblioteca no se encuentre en el sistema, y por lo tanto
+falle todo el proceso de instalación, consúltese el
+Apéndice~\ref{app-technote}.
+
 \end{enumerate}
 
 Desde la versión 0.97 \app{gretl} es compatible con el escritorio de
