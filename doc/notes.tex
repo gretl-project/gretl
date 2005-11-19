@@ -44,7 +44,7 @@ the source files for the \textit{User's Guide} are in \LaTeX.
 If you have CVS access to gretl, you can get the new manual files that
 way: they're in the \texttt{doc} sub-directory.  Note that you have to
 give the \texttt{-d} option, as in \texttt{cvs update -d}, to get new
-directories from the CVS tree---and the manual now comprise some new
+directories from the CVS tree---and the manual now includes some new
 directories.
 
 If you would like to have translator access to \textsf{gretl} CVS,
@@ -53,7 +53,7 @@ to use CVS, you can download a snapshot of the complete sources for
 the \textsf{gretl} documentation from
 
 \begin{center}
-\url{http://ricardo.ecn.wfu.edu/pub/gretl/gretl-doc.tar.gz} 
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/manual/gretldoc.tar.gz} 
 \end{center}
 
 \section{Files for translation}
@@ -64,7 +64,7 @@ Table~\ref{cmd-files} gives a listing of the source files for the English
 version of the \textit{Gretl Command Reference}.  The paths are
 relative to the \texttt{doc} directory of the \textsf{gretl} source
 tree in CVS, and also relative to the top-level directory of the
-\texttt{gretl-doc} package.  On the right we show the corresponding
+\texttt{gretldoc} package.  On the right we show the corresponding
 paths for translated versions of these files, using Spanish as an
 example.
 
@@ -81,7 +81,7 @@ example.
 \end{table}
 
 The first two files (in the \texttt{chapters} directory) are in
-DocBook XML format; the third file is in a \textsf{gretl} XML format
+DocBook XML format; the third file is in a custom XML format
 for ease of conversion to plain text and \TeX.
 
 \subsection{User's guide files}
@@ -156,7 +156,7 @@ where \texttt{xx} is a placeholder for a two-letter language code
 such as \texttt{es} or \texttt{it}.  
 
 The first of these, \url{chapters_xx/cmdlist.xml}, is a file in
-DocBook XML format this is generated automatically via XSL
+DocBook XML format that is generated automatically via XSL
 transformation, using the file \url{commands/gretl_commands_xx.xml} as
 a basis.  
 
@@ -257,7 +257,7 @@ sources in English (US letter paper and A4), Italian and Spanish.
 Please see
 
 \begin{center}
-\url{http://ricardo.ecn.wfu.edu/pub/gretl-manual/} 
+\url{http://ricardo.ecn.wfu.edu/pub/gretl/manual/} 
 \end{center}
 
 \end{document}
