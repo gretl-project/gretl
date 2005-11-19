@@ -29,8 +29,8 @@ specificare l'opzione \verb+--verbose+ con \cmd{loop}.
 
 L'opzione \verb+--progressive+ di \cmd{loop} modifica il comportamento
 dei comandi \cmd{ols}, \cmd{print} e \cmd{store} rendendoli più comodi
-per l'uso in analisi di tipo Monte Carlo (si veda Section
-\ref{loop-progressive}).
+per l'uso in analisi di tipo Monte Carlo (si veda la
+sezione~\ref{loop-progressive}).
 
 Le sezioni che seguono descrivono le varie forme di espressioni di
 controllo e forniscono alcuni esempi di uso dei loop.
@@ -68,7 +68,7 @@ comando \cmd{while} seguito da una disuguaglianza, in cui il termine a
 sinistra è il nome di una variabile predefinita, mentre il lato destro
 può essere una costante numerica o il nome di un'altra variabile
 predefinita. Ad esempio:
-	
+        
 \cmd{loop while differ > .00001} 
 
 L'esecuzione del ciclo di comandi continuerà fintanto che la
@@ -87,9 +87,9 @@ viene eseguito il ciclo.  La sintassi è la seguente: \cmd{loop
 
 La variabile indice può essere usata all'interno del corpo del loop,
 in uno dei modi seguenti: è possibile accedere al valore di \verb+i+
-(si veda l'Example~\ref{loop-panel-script}), oppure è possibile usare
-la sua rappresentazione come stringa \verb+$i+ (si veda l'Example
-\ref{loop-string-script}).
+(si veda l'esempio~\ref{loop-panel-script}), oppure è possibile usare
+la sua rappresentazione come stringa \verb+$i+ (si veda
+l'esempio~\ref{loop-string-script}).
 
 I valori iniziale e finale per l'indice possono essere indicati in
 forma numerica, o come riferimento a variabili predefinite.
@@ -216,32 +216,32 @@ un loop.
 \label{loop-mc-example}
 
 Un semplice esempio di uso della modalità ``progressiva'' per
-realizzare una procedura Monte Carlo è mostrato in Example
-\ref{mc-loop}.
+realizzare una procedura Monte Carlo è mostrato in
+esempio~\ref{mc-loop}.
 
 \begin{script}[htbp]
   \caption{Un semplice loop di tipo Monte Carlo}
   \label{mc-loop}
 \begin{code}
-	  nulldata 50
-	  seed 547
-	  genr x = 100 * uniform()
-	  # Apre un loop "progressivo", da ripetere 100 volte
-	  loop 100 --progressive
-	     genr u = 10 * normal()
-	     # Costruisce la variabile dipendente
-	     genr y = 10*x + u
-	     # Esegue la regressione OLS
-	     ols y const x
-	     # Definisce variabili per i coefficienti e R-quadro
-	     genr a = coeff(const)
-	     genr b = coeff(x)
-	     genr r2 = $rsq
-	     # Mostra le statistiche su queste variabili
-	     print a b r2
-	     # Salva i coefficienti in un file
-	     store coeffs.gdt a b
-	  endloop
+          nulldata 50
+          seed 547
+          genr x = 100 * uniform()
+          # Apre un loop "progressivo", da ripetere 100 volte
+          loop 100 --progressive
+             genr u = 10 * normal()
+             # Costruisce la variabile dipendente
+             genr y = 10*x + u
+             # Esegue la regressione OLS
+             ols y const x
+             # Definisce variabili per i coefficienti e R-quadro
+             genr a = coeff(const)
+             genr b = coeff(x)
+             genr r2 = $rsq
+             # Mostra le statistiche su queste variabili
+             print a b r2
+             # Salva i coefficienti in un file
+             store coeffs.gdt a b
+          endloop
 \end{code}
 \end{script}
 
@@ -263,9 +263,9 @@ ripetibile.
 \subsection{Minimi quadrati iterati}
 \label{loop-ils-examples}
 
-L'Example \ref{greene-ils-script} usa un loop di tipo ``while'' per
+L'esempio~\ref{greene-ils-script} usa un loop di tipo ``while'' per
 replicare la stima di una funzione di consumo non lineare nella forma
-	
+        
 \[ C = \alpha + \beta Y^{\gamma} + \epsilon \]
 
 presentata in Greene (2000, Esempio 11.3).  Questo script è compreso
@@ -281,36 +281,36 @@ solo quelli dell'ultima iterazione del loop.
   \caption{Funzione di consumo non lineare}
   \label{greene-ils-script}
 \begin{code}
-	  open greene11_3.gdt
-	  # Esegue la regressione OLS iniziale
-	  ols C 0 Y
-	  genr essbak = $ess
-	  genr essdiff = 1
-	  genr beta = coeff(Y)
-	  genr gamma = 1
-	  # Itera OLS finché la somma dei quadrati degli errori converge
-	  loop while essdiff > .00001
-	     # Genera le variabili linearizzate
-	     genr C0 = C + gamma * beta * Y^gamma * log(Y)
-	     genr x1 = Y^gamma
-	     genr x2 = beta * Y^gamma * log(Y)
-	     # Esegue la regressione OLS 
-	     ols C0 0 x1 x2 --print-final --no-df-corr --vcv
-	     genr beta = coeff(x1)
-	     genr gamma = coeff(x2)
-	     genr ess = $ess
-	     genr essdiff = abs(ess - essbak)/essbak
-	     genr essbak = ess
-	  endloop 
-	  # Mostra le stime dei parametri usando i "nomi giusti"
-	  noecho
-	  printf "alfa = %g\n", coeff(0)
-	  printf "beta  = %g\n", beta
-	  printf "gamma = %g\n", gamma
+          open greene11_3.gdt
+          # Esegue la regressione OLS iniziale
+          ols C 0 Y
+          genr essbak = $ess
+          genr essdiff = 1
+          genr beta = coeff(Y)
+          genr gamma = 1
+          # Itera OLS finché la somma dei quadrati degli errori converge
+          loop while essdiff > .00001
+             # Genera le variabili linearizzate
+             genr C0 = C + gamma * beta * Y^gamma * log(Y)
+             genr x1 = Y^gamma
+             genr x2 = beta * Y^gamma * log(Y)
+             # Esegue la regressione OLS 
+             ols C0 0 x1 x2 --print-final --no-df-corr --vcv
+             genr beta = coeff(x1)
+             genr gamma = coeff(x2)
+             genr ess = $ess
+             genr essdiff = abs(ess - essbak)/essbak
+             genr essbak = ess
+          endloop 
+          # Mostra le stime dei parametri usando i "nomi giusti"
+          noecho
+          printf "alfa = %g\n", coeff(0)
+          printf "beta  = %g\n", beta
+          printf "gamma = %g\n", gamma
 \end{code}
 \end{script}
 
-L'Example \ref{jack-arma} (gentilmente fornito da Riccardo ``Jack''
+L'esempio~\ref{jack-arma} (gentilmente fornito da Riccardo ``Jack''
 Lucchetti dell'Università di Ancona) mostra come sia possibile usare
 un loop per stimare un modello ARMA usando la regressione ``prodotto
 esterno del gradiente'' (OPG - ``outer product of the gradient'')
@@ -387,8 +387,7 @@ discussa da Davidson e MacKinnon nel loro \emph{Estimation and
 
 \subsection{Esempi di loop con indice}
 
-
-L'Example \ref{loop-panel-script} mostra un loop con indice, in cui il
+L'esempio~\ref{loop-panel-script} mostra un loop con indice, in cui il
 comando \cmd{smpl} contiene la variabile indice \verb+i+.  Si supponga
 di avere un dataset di tipo panel, con osservazioni su alcuni ospedali
 per gli anni dal 1991 al 2000 (dove l'anno dell'osservazione è
@@ -401,31 +400,29 @@ variabili da 1 a 4.
   \caption{Statistiche panel}
   \label{loop-panel-script}
 \begin{code}
-	  open ospedali.gdt
-	  loop i=1991..2000
-	    smpl (annor=i) --restrict --replace
-	    summary 1 2 3 4
-	  endloop
+          open ospedali.gdt
+          loop i=1991..2000
+            smpl (annor=i) --restrict --replace
+            summary 1 2 3 4
+          endloop
 \end{code}
 \end{script}
 
-
-L'Example \ref{loop-string-script} illustra un loop indicizzato per
+L'esempio~\ref{loop-string-script} illustra un loop indicizzato per
 sostituire stringhe.
 
 \begin{script}[htbp]
   \caption{Sostituzione di stringhe}
   \label{loop-string-script}
 \begin{code}
-	  open bea.dat
-	  loop i=1987..2001
-	    genr V = COMP$i
-	    genr TC = GOC$i - PBT$i
-	    genr C = TC - V
-	    ols PBT$i const TC V
-	  endloop
+          open bea.dat
+          loop i=1987..2001
+            genr V = COMP$i
+            genr TC = GOC$i - PBT$i
+            genr C = TC - V
+            ols PBT$i const TC V
+          endloop
 \end{code}
-
 \end{script}
 
 Alla prima iterazione, la variabile \verb+V+ verrà impostata a

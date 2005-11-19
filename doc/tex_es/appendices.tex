@@ -81,10 +81,10 @@ correctamente.
        
 \begin{code} 
   (* 
-  DATA9-6: Datos sobre log(dinero), log(renta) y tipo de interés de
-  los EEUU.  Fuente: Stock and Watson (1993) Econometrica (datos sin
-  alisar) El periodo es 1900-1989 (datos anuales).  
-  Datos recogidos por Graham Elliott.  
+   DATA9-6: Datos sobre log(dinero), log(renta) y tipo de interés de
+   los EEUU.  Fuente: Stock and Watson (1993) Econometrica (datos sin
+   alisar) El periodo es 1900-1989 (datos anuales).  
+   Datos recogidos por Graham Elliott.  
   *) 
   ldinero lrenta tipoint ; 1 1900 1989 BYOBS
 \end{code}
@@ -164,7 +164,7 @@ ninguno para datos anuales), un espacio, un guión, otro espacio, la
 fecha de finalización, la cadena ``\verb+n = +'' y el número de
 observaciones en números enteros. En el caso de datos diarios, las
 fechas de inicio y finalización deben de venir en la forma
-\verb+YYYY/MM/DD (año/mes/día/)+. Este formato tiene que respetarse de
+\verb+YYYY/MM/DD+ (año/mes/día/). Este formato tiene que respetarse de
 manera estricta.
 
 Opcionalmente, la primera línea del archivo de índice puede contener
@@ -213,7 +213,7 @@ detallados arriba, ofrezca la versión de GTK 1.2.3 o superior (véase
 manual, hay dos variantes de las librerías GTK: la serie 1.2 y la
 serie 2.0, distribuida en el verano de 2002. Estas dos variantes son
 incompatibles entre sí. \app{Gretl} puede compilarse con cualquiera de
-las dos - el paquete de código fuente incluye dos subdirectorios,
+las dos --- el paquete de código fuente incluye dos subdirectorios,
 \verb+gui+ para GTK 1.2 y \verb+gui2+ para GTK 2.0. Si está
 disponible, recomendamos el uso de GTK 2.0, ya que ofrece muchas
 mejoras sobre GTK 1.2.

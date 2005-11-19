@@ -4,10 +4,9 @@
 
 \ProvidesPackage{gretl}
 
-\newcommand{\refname}{References}
 \newcommand{\scriptname}{Example}
-\newcommand{\GCR}{\textit{Gretl Command Reference}}
-\newcommand{\GUG}{\textit{Gretl User's Guide}}
+\newcommand{\GCR}{\textit{Gretl Command Reference}{}}
+\newcommand{\GUG}{\textit{Gretl User's Guide}{}}
 
 \newcommand{\gtitle}[1]{\vspace*{1in}
    {\Huge \sffamily #1}\par
@@ -66,14 +65,14 @@
 \def\toclevel@script{0}
 
 %% offset "tip" text
-\newcommand{\tip}[1]{\par
- \ding{43} {\sffamily #1}\par}
+\newcommand{\tip}[1]{\par\vspace{4pt}
+ \ding{43} {\small \sffamily #1}\par}
 
 %% define a very simple bibliography environment
 \renewenvironment{thebibliography}
-     {\addcontentsline{toc}{chapter}{\refname}
-     \chapter*{\refname
-        \@mkboth{\refname}{\refname}}%
+     {\chapter*{\bibname\@mkboth{\bibname}{\bibname}}
+      \label{refs}
+      \addcontentsline{toc}{chapter}{\bibname}
       \list{}{\itemindent -2em\listparindent\itemindent\leftmargin 2em
       \sloppy
       \clubpenalty4000

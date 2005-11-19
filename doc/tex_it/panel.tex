@@ -45,7 +45,7 @@ due modi.
   numero di unità cross section nel dataset, infine è possibile
   controllare se la specificazione dei dati mostrata è corretta e
   confermare l'operazione.
- 	
+        
 \item Usando il comando testuale \cmd{setobs}. Per i dati panel, la
   sintassi del comando è \verb+setobs+ freq \verb+1:1+ struttura, dove
   freq indica la ``dimensione dei blocchi'' di dati (ossia, il numero
@@ -57,10 +57,10 @@ due modi.
   storiche con osservazioni per 20 periodi, il secondo per un dataset
   panel sotto forma di pila di dati cross section, con 5 unità cross
   section.
-	
+        
 \begin{code}
-	    setobs 20 1:1 --stacked-time-series
-	    setobs 5 1:1 --stacked-cross-section
+            setobs 20 1:1 --stacked-time-series
+            setobs 5 1:1 --stacked-cross-section
 \end{code}
 
 
@@ -127,11 +127,14 @@ anche costruire differenze prime delle variabili.Se un dataset è
 identificato correttamente come panel (si veda il paragrafo
 precedente), \app{gretl} gestirà correttamente la generazione di
 questo tipo di variabili. Ad esempio, il comando
-\verb+genr x1_1 = x1(-1)+ creerà una variabile che contiene il primo
-ritardo di \verb+x1+, laddove è disponibile, e il codice di valore
-mancante, laddove il ritardo non è disponibile.  Quanto si esegue una
-regressione che include questo tipo di variabili, il programma
-escluderà automaticamente le osservazioni mancanti.
+\begin{code}
+    genr x1_1 = x1(-1)
+\end{code}
+creerà una variabile che contiene il primo ritardo di \verb+x1+,
+laddove è disponibile, e il codice di valore mancante, laddove il
+ritardo non è disponibile.  Quanto si esegue una regressione che
+include questo tipo di variabili, il programma escluderà
+automaticamente le osservazioni mancanti.
 
 \section{Stima pooled}
 \label{pooled-est}
@@ -146,36 +149,43 @@ quella temporale presente nei dati. Questo modello può essere
 appropriato o no: il menù \textsf{Test} della finestra del modello
 contiene il comando \textsf{Diagnosi panel}, che esegue un test del
 modello OLS pooled contro le principali alternative: il modello a
-effetti fissi e quello a effetti casuali.  Il modello a effetti fissi
-aggiunge una variabile dummy per tutte le unità cross section tranne
-una, permettendo così all'intercetta della regressione di variare per
-ogni unità.  Viene eseguito un test \emph{F} per la significatività
-congiunta di queste dummy: un basso p-value per questo test va contro
-l'ipotesi nulla (che il semplice modello pooled OLS sia adeguato) e a
-favore del modello a effetti fissi.Il modello a effetti casuali,
-d'altra parte, scompone la varianza dei residui in due parti: una
-specifica all'unità cross section, o ``gruppo'', e una specifica
-all'osservazione particolare (la stima può essere eseguita solo se il
-panel è abbastanza ``largo'', ossia se il numero delle unità cross
-section nel dataset è maggiore del numero dei parametri da stimare).
-La statistica LM di Breusch--Pagan testa l'ipotesi nulla (che il
-modello pooled OLS sia adeguato) contro l'alternativa a effetti
-casuali.  Può accadere che il modello pooled OLS sia rifiutato nei
-confronti di entrambe le alternative, a effetti fissi o casuali. Come
-giudicare quindi l'adeguatezza relativa dei due metodi alternativi di
-stima? Il test di Hausman (i cui risultati sono mostrati a patto che
-il modello a effetti casuali possa essere stimato) cerca di risolvere
-questo problema.  A patto che gli errori specifici di unità o di
-gruppo siano non correlati con le variabili indipendenti, lo stimatore
-a effetti casuali è più efficiente dello stimatore a effetti fissi;
-nel caso contrario lo stimatore a effetti casuali non è consistente e
-deve essergli preferito lo stimatore a effetti fissi.  L'ipotesi nulla
-per il test di Hausman è che l'errore specifico di gruppo non sia
+effetti fissi e quello a effetti casuali.  
+
+Il modello a effetti fissi aggiunge una variabile dummy per tutte le
+unità cross section tranne una, permettendo così all'intercetta della
+regressione di variare per ogni unità.  Viene eseguito un test
+\emph{F} per la significatività congiunta di queste dummy: un basso
+p-value per questo test va contro l'ipotesi nulla (che il semplice
+modello pooled OLS sia adeguato) e a favore del modello a effetti
+fissi.
+
+Il modello a effetti casuali, d'altra parte, scompone la varianza dei
+residui in due parti: una specifica all'unità cross section, o
+``gruppo'', e una specifica all'osservazione particolare (la stima può
+essere eseguita solo se il panel è abbastanza ``largo'', ossia se il
+numero delle unità cross section nel dataset è maggiore del numero dei
+parametri da stimare).  La statistica LM di Breusch--Pagan testa
+l'ipotesi nulla (che il modello pooled OLS sia adeguato) contro
+l'alternativa a effetti casuali.  
+
+Può accadere che il modello pooled OLS sia rifiutato nei confronti di
+entrambe le alternative, a effetti fissi o casuali. Come giudicare
+quindi l'adeguatezza relativa dei due metodi alternativi di stima? Il
+test di Hausman (i cui risultati sono mostrati a patto che il modello
+a effetti casuali possa essere stimato) cerca di risolvere questo
+problema.  A patto che gli errori specifici di unità o di gruppo siano
+non correlati con le variabili indipendenti, lo stimatore a effetti
+casuali è più efficiente dello stimatore a effetti fissi; nel caso
+contrario lo stimatore a effetti casuali non è consistente e deve
+essergli preferito lo stimatore a effetti fissi.  L'ipotesi nulla per
+il test di Hausman è che l'errore specifico di gruppo non sia
 correlato con le variabili indipendenti (e quindi che il modello a
 effetti casuali sia preferibile). Un basso p-value per questo test
 suggerisce di rifiutare il modello a effetti casuali in favore del
-modello a effetti fissi.  Per una discussione rigorosa di questo
-argomento, si veda il capitolo 14 di Greene (2000).
+modello a effetti fissi.  
+
+Per una discussione rigorosa di questo argomento, si veda il capitolo
+14 di Greene (2000).
 
 \section{Esempio: la Penn World Table}
 \label{PWT}
@@ -188,7 +198,9 @@ si veda la
 \href{http://gretl.sourceforge.net/gretl_data_it.html}{pagina dei
   dati} di \app{gretl} (i dati sono liberamente scaricabili, anche se
 non sono distribuiti nel pacchetto principale di
-\app{gretl}).L'Example \ref{examp-pwt} sottostante apre il file
+\app{gretl}).
+
+L'Example \ref{examp-pwt} sottostante apre il file
 \verb+pwt56_60_89.gdt+, un sottoinsieme della Penn World Table che
 contiene dati per 120 paesi negli anni 1960--89, su 20 variabili,
 senza osservazioni mancanti (il dataset completo, anch'esso compreso
@@ -204,22 +216,22 @@ situazione peggiore).
   \label{examp-pwt}
 
 \begin{code}
-	  open pwt56_60_89.gdt 
-	  # Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
-	  genr gdp60 = RGDPL(-29) 
-	  # Calcola la crescita totale del PIL reale sui 30 anni
-	  genr gdpgro = (RGDPL - gdp60)/gdp60
-	  # Restringi il campione a una cross-section del 1989
-	  smpl --restrict YEAR=1989 
-	  # convergenza: i paesi che partono più indietro crescono di più?
-	  ols gdpgro const gdp60 
-	  # risultato: no! Proviamo una relazione inversa?
-	  genr gdp60inv = 1/gdp60 
-	  ols gdpgro const gdp60inv 
-	  # Ancora no. Proviamo a trattare l'Africa in modo speciale? 
-	  genr afdum = (CCODE = 1)
-	  genr afslope = afdum * gdp60 
-	  ols gdpgro const afdum gdp60 afslope 
+          open pwt56_60_89.gdt 
+          # Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
+          genr gdp60 = RGDPL(-29) 
+          # Calcola la crescita totale del PIL reale sui 30 anni
+          genr gdpgro = (RGDPL - gdp60)/gdp60
+          # Restringi il campione a una cross-section del 1989
+          smpl --restrict YEAR=1989 
+          # convergenza: i paesi che partono più indietro crescono di più?
+          ols gdpgro const gdp60 
+          # risultato: no! Proviamo una relazione inversa?
+          genr gdp60inv = 1/gdp60 
+          ols gdpgro const gdp60inv 
+          # Ancora no. Proviamo a trattare l'Africa in modo speciale? 
+          genr afdum = (CCODE = 1)
+          genr afslope = afdum * gdp60 
+          ols gdpgro const afdum gdp60 afslope 
 \end{code}
 
 \end{script}

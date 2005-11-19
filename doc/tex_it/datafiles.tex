@@ -25,7 +25,7 @@ si veda l'appendice~\ref{app-datafile}.
   importati in \app{gretl} usando il comando ``File, Apri dati,
   Importa CSV\dots{}'' dell'interfaccia grafica o il comando
   \cmd{import} dell'interfaccia a riga di comando.  Si veda anche
-  la parte\ref{scratch}.
+  la sezione~\ref{scratch}.
 \item Cartelle di lavoro in formato \app{MS Excel} o \app{Gnumeric}.
   Possono essere importate in \app{gretl} con il comando ``File, Apri
   dati, Importa''.  La sezione~\ref{scratch} descrive i requisiti per
@@ -258,7 +258,7 @@ l'approccio migliore può essere quello di creare un file di dati in
 uno dei formati interni di \app{gretl}, usando un editor di testo o
 altri programmi come \app{awk}, \app{sed} o \app{perl}. Ovviamente
 occorrerà studiare i formati di dati di \app{gretl} (il formato XML o
-quello ``tradizionale'') descritti nel capitolo~\ref{datafiles}.
+quello ``tradizionale'') descritti nel appendice~\ref{app-datafile}.
 
 \subsection{Nota aggiuntiva}
 
@@ -372,7 +372,7 @@ Quando un utente seleziona uno dei comandi visti sopra:
   sistema'' dei file di dati, la directory di sistema dei file di
   comandi, la directory utente e tutte le loro sotto-directory di
   primo livello. Valori tipici per i nomi di queste directory sono
-  mostrati nella Table \ref{tab-colls}.)
+  mostrati nella tabella~\ref{tab-colls}.)
 \end{itemize}
 
 \begin{table}[htbp]
@@ -381,13 +381,13 @@ Quando un utente seleziona uno dei comandi visti sopra:
         & \multicolumn{1}{c}{\textit{Linux}} & 
         \multicolumn{1}{c}{\textit{MS Windows}} \\
         Directory di sistema per i dati & 
-        \verb+/usr/share/gretl/data+ & 
-        \verb+c:\userdata\gretl\data+\\
+        {\small \verb+/usr/share/gretl/data+} & 
+        {\small \verb+c:\userdata\gretl\data+}\\
         Directory di sistema per i comandi & 
-        \verb+/usr/share/gretl/scripts+ & 
-        \verb+c:\userdata\gretl\scripts+\\
-        Directory utente & \verb+/home/nomeutente/gretl+ & 
-        \verb+c:\userdata\gretl\user+\\
+        {\small \verb+/usr/share/gretl/scripts+} & 
+        {\small \verb+c:\userdata\gretl\scripts+}\\
+        Directory utente & {\small \verb+/home/nomeutente/gretl+} & 
+        {\small \verb+c:\userdata\gretl\user+}\\
       \end{tabular}
     \end{center}
     \caption{Posizioni tipiche delle raccolte di file}

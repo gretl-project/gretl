@@ -1943,18 +1943,6 @@
         serie e una frazione nell'intervallo da &minus;1 a 1.
       </para>
       
-      <para>
-	<func>uniform()</func> e <func>normal()</func>, che non richiedono
-        argomenti, producono delle serie pseudo-casuali estratte dalle
-        distribuzioni uniforme (0&ndash;1) e normale standard (si veda anche
-        l'opzione <lit>seed</lit> del comando <cmdref targ="set"/>).
-	Le serie dalla distribuzione uniforme sono generate usando il Mersenne Twister
-        <footnote><para>Si veda Matsumoto e Nishimura
-        (1998). L'implementazione è fornita da <program>glib</program>, se è
-        disponibile, o dal codice C scritto da Nishimura e Matsumoto.</para>
-        </footnote>; per le serie dalla distribuzione normale, viene usato il
-        metodo di Box e Muller (1958), prendendo l'input dal Mersenne Twister.</para>
-
       <para>Oltre agli operatori e alle funzioni mostrati, ci sono alcuni
         usi speciali del comando <cmd>genr</cmd>:
       </para>
@@ -2762,7 +2750,7 @@
        L'esponente di Hurst è discusso da Mandelbrot. In termini teorici è
        l'esponente <mathvar>H</mathvar> nella relazione
        <equation status="display"
-         tex="\[mathrm{RS}(x) = an^H\]"
+         tex="\[\mathrm{RS}(x) = an^H\]"
          ascii="RS(x) = an^H"
          graphic="hurst"/>dove RS è l'<quote>intervallo riscalato</quote>
          della variabile <mathvar>x</mathvar> in un campione dell'ampiezza

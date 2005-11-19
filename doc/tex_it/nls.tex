@@ -87,9 +87,9 @@ anche procedere interattivamente, selezionando il comando
 si aprirà una finestra di dialogo in cui è possibile scrivere la
 specificazione della funzione (opzionalmente preceduta da linee
 \cmd{genr} per impostare i valori iniziali dei parametri) e le
-derivate, se sono disponibili. Un esempio è mostrato nella Figure
-\ref{fig-nls-dialog}.  Si noti che in questo contesto non occorre
-scrivere i comandi \cmd{nls} e \cmd{end nls}.
+derivate, se sono disponibili. Un esempio è mostrato nella
+figura~\ref{fig-nls-dialog}.  Si noti che in questo contesto non
+occorre scrivere i comandi \cmd{nls} e \cmd{end nls}.
 
 \begin{figure}[htbp]
   \begin{center}
@@ -108,7 +108,7 @@ regressione rispetto ai parametri, è consigliabile indicarle come
 mostrato negli esempi precedenti. Se ciò non è possibile, \app{gretl}
 calcolerà delle derivate approssimate numericamente. Le proprietà
 dell'algoritmo NLS in questo caso potrebbero non essere ottimali (si
-veda Section \ref{nls-accuracy}).
+veda la sezione~\ref{nls-accuracy}).
 
 Se vengono fornite delle derivate analitiche, ne viene controllata la
 coerenza con la funzione non lineare data. Se esse sono chiaramente
@@ -182,20 +182,20 @@ libertà.
 \section{Accuratezza numerica}
 \label{nls-accuracy}
 
-La Table \ref{tab-nls} mostra i risultati dell'uso della procedura NLS
-di \app{gretl} sui 27 ``Statistical Reference Dataset'' forniti dal
-National Institute of Standards and Technology (NIST) statunitense,
-per il test del software di regressione non lineare.\footnote{Per una
-  discussione dell'accuratezza di \app{gretl} nella stima di modelli
-  lineari, si veda l'appendice~\ref{app-accuracy}.} Per ogni dataset,
-il file di test indicano due valori iniziali per i parametri, quindi
-il test completo riporta 54 stime. Sono stati eseguiti due test
-completi, uno usando derivate analitiche e uno usando approssimazioni
-numeriche; in entrambi casi si è usata la tolleranza
-predefinita.\footnote{I dati mostrati nella tabella derivano da una
-  versione di \app{gretl} 1.0.9, compilata con \app{gcc} 3.3,
-  collegata a \app{glibc} 2.3.2 ed eseguita in Linux su un PC i686
-  (IBM ThinkPad A21m).}
+La tabella~\ref{tab-nls} mostra i risultati dell'uso della procedura
+NLS di \app{gretl} sui 27 ``Statistical Reference Dataset'' forniti
+dal National Institute of Standards and Technology (NIST)
+statunitense, per il test del software di regressione non
+lineare.\footnote{Per una discussione dell'accuratezza di \app{gretl}
+  nella stima di modelli lineari, si veda
+  l'appendice~\ref{app-accuracy}.} Per ogni dataset, il file di test
+indicano due valori iniziali per i parametri, quindi il test completo
+riporta 54 stime. Sono stati eseguiti due test completi, uno usando
+derivate analitiche e uno usando approssimazioni numeriche; in
+entrambi casi si è usata la tolleranza predefinita.\footnote{I dati
+  mostrati nella tabella derivano da una versione di \app{gretl}
+  1.0.9, compilata con \app{gcc} 3.3, collegata a \app{glibc} 2.3.2 ed
+  eseguita in Linux su un PC i686 (IBM ThinkPad A21m).}
 
 Sulle 54 stime, \app{gretl} non riesce a produrre una soluzione in 4
 casi, se vengono usate le derivate analitiche, e in 5 casi se vengono
