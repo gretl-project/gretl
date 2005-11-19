@@ -5,9 +5,11 @@
 \label{sample-intro}
 
 Some subtle issues can arise here.  This chapter attempts to explain
-the issues.A sub-sample may be defined in relation to a full data set
-in two different ways: we will refer to these as ``setting'' the
-sample and ``restricting'' the sample respectively.
+the issues.
+
+A sub-sample may be defined in relation to a full data set in two
+different ways: we will refer to these as ``setting'' the sample and
+``restricting'' the sample respectively.
 
 \section{Setting the sample}
 \label{sample-set}
@@ -112,13 +114,14 @@ Alternatively, you can add the \verb+replace+ option to the
 \end{code}
 
 This option has the effect of automatically re-establishing the full
-dataset before applying the new restriction.Unlike a simple
-``setting'' of the sample, ``restricting'' the sample may result in
-selection of non-contiguous observations from the full data set.  It
-may also change the structure of the data set.This can be seen in the
-case of panel data.  Say we have a panel of five firms (indexed by the
-variable \verb+firm+) observed in each of several years (identified by
-the variable \verb+year+).  Then the restriction
+dataset before applying the new restriction.
+
+Unlike a simple ``setting'' of the sample, ``restricting'' the sample
+may result in selection of non-contiguous observations from the full
+data set.  It may also change the structure of the data set.This can
+be seen in the case of panel data.  Say we have a panel of five firms
+(indexed by the variable \verb+firm+) observed in each of several
+years (identified by the variable \verb+year+).  Then the restriction
 %
 \begin{code}
     smpl year=1995 --restrict

@@ -5,10 +5,9 @@
 \label{genr-intro}
 
 The \verb+genr+ command provides a flexible means of defining new
-variables.  It is documented in the \emph{Gretl Command Reference}.
-This chapter offers a more expansive discussion of some of the special
-functions available via \verb+genr+ and some of the finer points of
-the command.
+variables.  It is documented in the \GCR.  This chapter offers a more
+expansive discussion of some of the special functions available via
+\verb+genr+ and some of the finer points of the command.
     
 
 \section{Time-series filters}
@@ -31,13 +30,13 @@ To be written.
 \label{baxter-king}
 
 Consider the spectral representation of a time series $y_t$:
-%	
+%       
 \[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
 %
 if we wanted to extract only that component of $y_t$ that lies between
 the frequencies $\underline{\omega}$ and $\overline{\omega}$ one could
 apply a bandpass filter:
-%	
+%       
 \[ c^*_t = \int_{-\pi}^{\pi} F^*(\omega) e^{i\omega} \mathrm{d}
 Z(\omega) \]
 %
@@ -47,11 +46,11 @@ domain, applying to the series a filter with an infinite number of
 coefficients, which is undesirable. The Baxter and King bandpass
 filter applies to $y_t$ a finite polynomial in the lag
 operator $A(L)$:
-%	
+%       
 \[ c_t = A(L) y_t \]
 %
 where $A$($L$) is defined as
-%	
+%       
 \[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
 
 The coefficients $a_i$ are chosen such that $F(\omega)
@@ -75,8 +74,8 @@ example if you were using monthly data and wanted to adjust the
 frequency bounds to 18 and 96, and $k$ to 24, you could do
 
 \begin{code}
-	set bkbp_limits 18 96
-	set bkbp_k 24
+        set bkbp_limits 18 96
+        set bkbp_k 24
 \end{code}
 
 These values would then remain in force for calls to the \verb+bkfilt+
@@ -137,9 +136,8 @@ multiplication by zero: zero times a missing value produces zero
 The \verb+genr+ command provides a means of retrieving various values
 calculated by the program in the course of estimating models or
 testing hypotheses.  The variables that can be retrieved in this way
-are listed in the \emph{Gretl Command Reference} reference; here we
-say a bit more about the special variables \verb+$test+ and
-\verb+$pvalue+.
+are listed in the \GCR; here we say a bit more about the special
+variables \verb+$test+ and \verb+$pvalue+.
 
 These variables hold, respectively, the value of the last test
 statistic calculated using an explicit testing command and the p-value

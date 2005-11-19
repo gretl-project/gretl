@@ -5,9 +5,11 @@
 \label{sample-intro}
 
 Questo capitolo affronta alcune questioni correlate alla creazione di
-sotto-campioni in un dataset.È possibile definire un sotto-campione
-per un dataset in due modi diversi, che chiameremo rispettivamente
-``impostazione'' del campione e ``restrizione'' del campione.
+sotto-campioni in un dataset.
+
+È possibile definire un sotto-campione per un dataset in due modi
+diversi, che chiameremo rispettivamente ``impostazione'' del campione
+e ``restrizione'' del campione.
     
 \section{Impostazione del campione}
 \label{sample-set}
@@ -116,14 +118,15 @@ comando \verb+smpl+:
 \end{code}
 
 Questa opzione ha l'effetto di re-impostare automaticamente il
-campione completo prima di applicare la nuova restrizione.A differenza
-della semplice ``impostazione'' del campione, la ``restrizione'' del
-campione può produrre un insieme di osservazioni non contigue nel
-dataset originale e può anche modificare la struttura del
-dataset.Questo fenomeno può essere osservato nel caso dei dati panel:
-si supponga di avere un panel di cinque imprese (indicizzate dalla
-variabile \verb+impresa+) osservate in ognuno degli anni identificati
-dalla variabile \verb+anno+.  La restrizione
+campione completo prima di applicare la nuova restrizione.
+
+A differenza della semplice ``impostazione'' del campione, la
+``restrizione'' del campione può produrre un insieme di osservazioni
+non contigue nel dataset originale e può anche modificare la struttura
+del dataset.Questo fenomeno può essere osservato nel caso dei dati
+panel: si supponga di avere un panel di cinque imprese (indicizzate
+dalla variabile \verb+impresa+) osservate in ognuno degli anni
+identificati dalla variabile \verb+anno+.  La restrizione
 %
 \begin{code}
     smpl anno=1995 --restrict

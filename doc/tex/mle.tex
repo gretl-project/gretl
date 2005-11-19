@@ -11,21 +11,19 @@ procedures. Gretl provides a way to implement this method for a wide
 range of estimation problems, by use of the \texttt{mle} command. We
 give here a few examples.
 
-\subsection{Background}
-\label{sec:background}
-In order to illustrate the examples that follow, we start from a brief
-reminder on the basics of ML estimation.  Given a sample of size $T$,
-it is possible to define the density function\footnote{We are
+To give a fiundation for the examples that follow, we start from a
+brief reminder on the basics of ML estimation.  Given a sample of size
+$T$, it is possible to define the density function\footnote{We are
   imagining here that our data are a realisation of continuous random
   variables. For discrete random variable, everything continues to
   apply by referring to the probability function instead of the
   density. In both cases, the distribution may be conditional on some
-  exogenous variables.} for the whole sample, namely the joint distribution of
-all the observations $f(\mathbf{Y} ; \theta)$, where $\mathbf{Y} =
-\left\{ y_1, \ldots, y_T \right\}$.  Its shape is determined by a
-vector of unknown parameters $\theta$, which we assume contained in a
-set $\Theta$, and can be used to evaluate the probability of observing
-a sample with any given characteristic.
+  exogenous variables.} for the whole sample, namely the joint
+distribution of all the observations $f(\mathbf{Y} ; \theta)$, where
+$\mathbf{Y} = \left\{ y_1, \ldots, y_T \right\}$.  Its shape is
+determined by a vector of unknown parameters $\theta$, which we assume
+is contained in a set $\Theta$, and which can be used to evaluate the
+probability of observing a sample with any given characteristic.
 
 After observing the data, the values $\mathbf{Y}$ are given, and this
 function can be evaluated for any legitimate value of $\theta$. In
@@ -33,7 +31,7 @@ this case, we prefer to call it the \emph{likelihood} function; the
 need for another name stems from the fact that this function works as
 a density when we use the $y_t$'s as arguments and $\theta$ as
 parameters, whereas in this context $\theta$ is taken as the
-function's argument, and the data $\mathbf{Y}$ only have the r\^ole of
+function's argument, and the data $\mathbf{Y}$ only have the role of
 determining its shape.
 
 In standard cases, this function has a unique maximum.  The location
@@ -72,6 +70,7 @@ interesting statistical properties in its own right; it will be
 denoted here as $\mathbf{s}(\theta)$.
 
 Gradient-based methods can be shortly illustrated as follows:
+
 \begin{enumerate}
 \item pick a point $\theta_0 \in \Theta$ ;
 \item evaluate $\mathbf{s}(\theta_0)$;
@@ -81,12 +80,13 @@ Gradient-based methods can be shortly illustrated as follows:
 \item substitute $\theta_0$ with $\theta_1$ ;
 \item restart from 2.
 \end{enumerate}
+
 Many algorithms of this kind exist; they basically differ from one
 another in the way they compute the direction vector
 $d(\mathbf{s}(\theta_0))$, to ensure that $\LogLik(\theta_1) >
 \LogLik(\theta_0)$ (so that we eventually end up on the maximum).
 
-The method gretl uses to maximise the log-likelihood is a
+The method \app{gretl} uses to maximize the log-likelihood is a
 gradient-based algorithm known as the \textbf{BFGS} (Broyden,
 Fletcher, Goldfarb and Shanno) method. This technique is used in most
 econometric and statistical packages, as is well-established and
@@ -105,7 +105,7 @@ safe and efficient choice: this ensures that in large samples the
 starting point will be likely close to $\hat{\theta}$ and convergence
 can be achieved in few iterations. 
 
-\subsection{Gamma estimation}
+\section{Gamma estimation}
 \label{sec:gamma}
 
 Suppose we have a sample of $T$ independent and identically
@@ -130,10 +130,10 @@ where
 \[
   \ell_t = p \cdot \log (\alpha x_t) - \gamma(p) - \log x_t - \alpha x_t
 \]
-and $\gamma(\cdot)$ is the log of the gamma function.
-In order to estimate the parameters $\alpha$ and $p$ via ML, we need to maximise
-(\ref{eq:gammaloglik}) with respect to them. The corresponding gretl
-code snippet is
+and $\gamma(\cdot)$ is the log of the gamma function.  In order to
+estimate the parameters $\alpha$ and $p$ via ML, we need to maximize
+(\ref{eq:gammaloglik}) with respect to them. The corresponding
+\app{gretl} code snippet is
 
 \begin{code}
     scalar alpha = 1
@@ -142,17 +142,21 @@ code snippet is
     mle logl =  p*ln(alpha * x) - lngamma(p) - ln(x) - alpha * x 
     end mle 
 \end{code}
+
 The two statements
+
 \begin{code}
     alpha = 1
     p = 1
 \end{code}
-are necessary to ensure that \texttt{p} and \texttt{alpha} exist
-before the computation of \texttt{logl} is attempted. Their value will
-be changed by the execution of the \texttt{mle} command and will be
-replaced by the ML estimates after its successful completion. The
-starting value is 1 for both; this is arbitrary and does not matter
-much in this example (more on this later).
+
+are necessary to ensure that the variables \texttt{p} and
+\texttt{alpha} exist before the computation of \texttt{logl} is
+attempted. The values of these variables will be changed by the
+execution of the \texttt{mle} command; upon successful completion,
+they will be replaced by the ML estimates. The starting value is 1 for
+both; this is arbitrary and does not matter much in this example (more
+on this later).
 
 The above code can be made more readable, and marginally more
 efficient, by defining a variable to hold $\alpha \cdot x_t$. This
@@ -172,7 +176,7 @@ In this case, it is necessary to include the line \texttt{params alpha
 parameter to be estimated.
 
 In a simple example like this, the choice of the starting values is
-almost inconsequential, since the algorithm is likely to converge no
+almost inconsequential; the algorithm is likely to converge no
 matter what the starting values are. However, consistent
 method-of-moments estimators of $p$ and $\alpha$ can be simply
 recovered from the sample mean $m$ and variance $V$: since it can be
@@ -185,9 +189,8 @@ it follows that the following estimators
   \bar{\alpha} & = &  m/V \\
   \bar{p} & = & m \cdot \bar{\alpha} 
 \end{eqnarray*}
-are consistent, and therefore
-more suitable to be used as starting point for the algorithm. 
-The gretl script code then becomes
+are consistent, and therefore suitable to be used as starting point
+for the algorithm.  The gretl script code then becomes
 \begin{code}
     scalar m = mean(x)
     scalar alpha = var(x)/m
@@ -199,10 +202,10 @@ The gretl script code then becomes
     end mle 
 \end{code}
 
-\subsection{Stochastic frontier cost function}
+\section{Stochastic frontier cost function}
 \label{sec:frontier}
 
-When modelling a cost function, it is sometimes worthwhile to
+When modeling a cost function, it is sometimes worthwhile to
 incorporate explicitly into the statistical model the notion that
 firms may be inefficient, so that the observed cost deviates from the
 theoretical figure not only because of unobserved heterogeneity
@@ -223,8 +226,8 @@ the logarithms of the input prices and the output quantities.
 
 The \emph{stochastic frontier} model is a linear model of the form
 $y_i = x_i \beta + \varepsilon_i$ in which the error term
-$\varepsilon_i$ is the sum of $u_i$ and $v_i$.  A common assumption is
-to postulate that $u_i \sim N(0,\sigma_u^2)$ and $v_i \sim
+$\varepsilon_i$ is the sum of $u_i$ and $v_i$.  A common postulate is
+that $u_i \sim N(0,\sigma_u^2)$ and $v_i \sim
 \left|N(0,\sigma_v^2)\right|$. If independence between $u_i$ and $v_i$
 is also assumed, then it is possible to show that the density function
 of $\varepsilon_i$ has the form:
@@ -246,7 +249,7 @@ form (apart form an irrelevant constant)
   \log\Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right) -
   \left[ \log(\sigma) + \frac{\varepsilon_i^2}{2 \sigma^2} \right];
 \]
-therefore, a Cobb-Douglas cost function with stochastic frontier is the
+therefore, a Cobb--Douglas cost function with stochastic frontier is the
 model described by the following equations: 
 \begin{eqnarray*}
   \log C_i & = & \log C^*_i + \varepsilon_i \\
@@ -266,6 +269,7 @@ equation for $C^*_i$ can be rewritten as
   \log C_i - \log p_{in}  = c + \sum_{j=1}^m \beta_j \log y_{ij} +
   \sum_{j=2}^n \alpha_j (\log p_{ij} - \log p_{in})  + \varepsilon_i.
 \end{equation}
+
 The above equation could be estimated by OLS, but it would suffer from
 two drawbacks: first, the OLS estimator for the intercept $c$ is
 inconsistent because the disturbance term has a non-zero expected
@@ -278,9 +282,7 @@ values for the MLE algorithm.
 
 The following gretl script code shows how to implement the model
 described so far. The \texttt{banks91} file contains part of the data
-used in the article \emph{Banks' inefficiency and economic growth: a
-  micro-macro approach}, \textbf{Scottish Journal of Political
-  Economy}, vol. 48, n. 4. (2001), by Lucchetti, Papi and Zazzaro:
+used in Lucchetti, Papi and Zazzaro (2001).
 
 \begin{code}
 open banks91
@@ -311,13 +313,14 @@ scalar sv = 0.1
 mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   scalar ss = sqrt(su^2 + sv^2)
   scalar lambda = su/sv
-  series e = rcost-b0*const-b1*y-b2*rp1-b3*rp2
+  series e = rcost - b0*const - b1*y - b2*rp1 - b3*rp2
   params b0 b1 b2 b3 su sv
 end mle
 \end{code}
 
-\subsection{GARCH models}
+\section{GARCH models}
 \label{sec:garch}
+
 GARCH models are handled by gretl via a native function. However, it is
 instructive to see how they can be estimated through the \texttt{mle}
 command.
@@ -339,7 +342,7 @@ the whole sample (the joint density for all observations) is not just
 the product of the marginal densities.
 
 Maximum likelihood estimation, in these cases, is achieved by
-considering \emph{conditional} densities, so what we maximise is a
+considering \emph{conditional} densities, so what we maximize is a
 conditional likelihood function. If we define the information set at
 time $t$ as
 \[
@@ -351,7 +354,7 @@ then the density of $y_t$ conditional on $F_{t-1}$ is normal:
 \]
 
 By means of the properties of conditional distributions, the joint
-density can be factorised as follows
+density can be factorized as follows
 \[
   f(y_t, y_{t-1}, \ldots) = \left[ \prod_{t=1}^T f(y_t |F_{t-1})
   \right] \cdot f(y_0) ;
@@ -374,6 +377,7 @@ The following script shows a simple application of this technique,
 which uses the data file \texttt{djclose}; it is one of the example
 dataset supplied with gretl and contains daily data from the Dow Jones
 stock index.
+
 \begin{code}
 open djclose
 
@@ -392,7 +396,7 @@ mle ll = -0.5*(log(h) + (e^2)/h)
 end mle
 \end{code}
 
-\subsection{Analytical derivatives}
+\section{Analytical derivatives}
 \label{sec:anal-der}
 
 Computation of the score vector is essential for the working of the
@@ -487,7 +491,7 @@ end mle --verbose
 
 Note that the \texttt{params} statement has been replaced by a series
 of \texttt{deriv} statements; these have the double function of
-identifying the parameters over which to optimise and providing an
+identifying the parameters over which to optimize and providing an
 analytical expression for their respective score elements.
 
 %%% Local Variables: 
