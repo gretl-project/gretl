@@ -158,6 +158,9 @@ mklang: mklang.c
 	$(CC) -c -I.. -I$(libsrc) $<
 	$(LIBTOOL) --mode=link $(CC) -o $@ mklang.o ../lib/libgretl-1.0.la
 
+gretl.lang: mklang
+	./mklang > $@
+
 $(GTKEXTRA_LITE): 
 	make -C gtkextra-lite
 
@@ -187,9 +190,9 @@ install-exec: $(PROG) installdirs
 install-gnome: $(PROG) installdirs 
 	$(MAKE) -C ../gnome install 
 
-install-lang: 
+install-lang: gretl.lang
 	$(tooldir)/mkinstalldirs $(langdir)
-	$(INSTALL_DATA) $(topsrc)/gui2/gretl.lang $(langdir)
+	$(INSTALL_DATA) gretl.lang $(langdir)
 	$(INSTALL_DATA) $(topsrc)/gui2/gnuplot.lang $(langdir)
 
 installdirs:
