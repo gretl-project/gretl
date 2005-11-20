@@ -198,10 +198,6 @@ struct genr_func funcs[] = {
 # define MP_MATH(f) (f == T_MPOW)
 #endif
 
-#if GENR_DEBUG
-static const char *get_func_word (int fnum);
-#endif
-
 #define MAXTERMS  64
 #define TOKLEN   128
 #define ARGLEN    64
@@ -327,11 +323,11 @@ static int print_atom (genatom *atom)
 	fprintf(stderr, " atom->val = %g\n", atom->val);
     }
     if (atom->func > 0) {
-	const char *fword = get_func_word(atom->func);
+	const char *fword = get_genr_func_word(atom->func);
 
 	if (fword != NULL) {
 	    fprintf(stderr, " atom->func = %d (%s)\n", 
-		    atom->func, get_func_word(atom->func));
+		    atom->func, get_genr_func_word(atom->func));
 	} else {
 	    fprintf(stderr, " atom->func = %d (UNKNOWN!)\n", 
 		    atom->func);
@@ -583,7 +579,7 @@ static genatom *parse_token (const char *s, char op,
 
 	    if (func) {
 		DPRINTF(("recognized function #%d (%s)\n", func, 
-			 get_func_word(func)));
+			 get_genr_func_word(func)));
 		if (MP_MATH(func) || func == T_PVALUE || 
 		    func == T_CRIT || func == T_FRACDIFF ||
 		    BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
@@ -1092,7 +1088,7 @@ static int add_statistic_to_genr (GENERATOR *genr, genatom *atom)
 
 #if GENR_DEBUG
     fprintf(stderr, "add_statistic_to_genr:\n atom->func = %d (%s), val = %g, "
-	    "now atom->scalar = 1\n", atom->func, get_func_word(atom->func),
+	    "now atom->scalar = 1\n", atom->func, get_genr_func_word(atom->func),
 	    val);
 #endif
 
@@ -1917,8 +1913,7 @@ static int parenthesize (char *str)
     return 0;
 }
 
-#if GENR_DEBUG
-static const char *get_func_word (int fnum)
+const char *get_genr_func_word (int fnum)
 {
     int i;
 
@@ -1930,7 +1925,6 @@ static const char *get_func_word (int fnum)
 
     return NULL;
 }
-#endif
 
 int genr_function_from_string (const char *s)
 {

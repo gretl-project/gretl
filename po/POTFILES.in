@@ -1,3 +1,4 @@
+lib/src/adf_kpss.c
 lib/src/bhhh_max.c
 lib/src/calendar.c
 lib/src/compare.c
@@ -27,6 +28,7 @@ lib/src/gretl_string_table.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
 lib/src/interact.c
+lib/src/irfboot.c
 lib/src/laginfo.c
 lib/src/libset.c
 lib/src/missing.c
@@ -36,6 +38,7 @@ lib/src/monte_carlo.c
 lib/src/mt19937ar.c
 lib/src/nls.c
 lib/src/nonparam.c
+lib/src/objstack.c
 lib/src/options.c
 lib/src/plugins.c
 lib/src/printout.c
@@ -48,14 +51,15 @@ lib/src/system.c
 lib/src/texprint.c
 lib/src/transforms.c
 lib/src/var.c
+lib/src/varprint.c
+cli/cli_object.c
 cli/complete.c
 cli/gretlcli.c
 gui/gretl.c
 gui/guiprint.c
-gui/plotps.c
-gui/selector.c
-gui/ssheet.c
 gui/obsbutton.c
+gui/plotps.c
+gui/ssheet.c
 gui/textbuf.c
 gui2/about.c
 gui2/boxplots.c
@@ -97,9 +101,11 @@ gui2/toolbar.c
 gui2/treeutils.c
 gui2/webget.c
 plugin/arma.c
+plugin/arma_common.c
 plugin/arma_x12.c
 plugin/audio.c
 plugin/audioprint.c
+plugin/eviews_import.c
 plugin/excel_import.c
 plugin/fcp.c
 plugin/fiml.c
@@ -113,6 +119,7 @@ plugin/lad.c
 plugin/leverage.c
 plugin/liml.c
 plugin/logistic.c
+plugin/mailer.c
 plugin/midi_utils.c
 plugin/mp_ols.c
 plugin/panel_data.c
@@ -120,6 +127,7 @@ plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c
 plugin/range-mean.c
+plugin/stata_import.c
 plugin/stats_tables.c
 plugin/sysest.c
 plugin/tobit.c

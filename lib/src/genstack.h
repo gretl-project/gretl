@@ -161,4 +161,6 @@ int calc_push (double x, GENERATOR *genr);
 double calc_pop (GENERATOR *genr);
 void reset_calc_stack (GENERATOR *genr);
 
+const char *get_genr_func_word (int fnum);
+
 #endif /* GENSTACK_H */
