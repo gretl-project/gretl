@@ -6,6 +6,7 @@ have_gtk = @have_gtk@
 gretldir = $(prefix)/share/gretl
 tooldir = $(topsrc)/tools
 sharesrc = $(topsrc)/share
+pdfdir = $(topsrc)/doc/tex
 
 INSTALL_DATA = cp -fp
 
@@ -81,8 +82,8 @@ install_help: $(AUTO_HELPFILES) $(RECODE_FILES)
 	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
 	$(INSTALL_DATA) $(IT_GUI_HLP) $(gretldir)/gretl.hlp.it
 	$(INSTALL_DATA) $(IT_CLI_HLP) $(gretldir)/gretlcli.hlp.it
-	# $(INSTALL_DATA) $(sharesrc)/gretl-ref.pdf $(gretldir)/doc
-	# $(INSTALL_DATA) $(sharesrc)/gretl-guide.pdf $(gretldir)/doc
+	$(INSTALL_DATA) $(pdfdir)/gretl-ref.pdf $(gretldir)/doc
+	$(INSTALL_DATA) $(pdfdir)/gretl-guide.pdf $(gretldir)/doc
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 

@@ -33,6 +33,10 @@ int retrieve_remote_db_data (const char *dbname,
 			     char *errbuf,
 			     int opt);
 
+int retrieve_manfile (const char *fname, 
+		      const char *savefile, 
+		      char *errbuf);
+
 int update_query (void);
 
 int silent_update_query (void);

@@ -2385,8 +2385,8 @@ static void set_radio_opt (GtkWidget *w, int *opt)
     *opt = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 }
 
-int real_radio_dialog (const char *title, const char **opts, 
-		       int nopts, int deflt, int helpcode,
+int real_radio_dialog (const char *title, const char *label,
+		       const char **opts, int nopts, int deflt, int helpcode,
 		       int *spinvar, const char *spintxt,
 		       int spinmin, int spinmax)
 {
@@ -2397,6 +2397,18 @@ int real_radio_dialog (const char *title, const char **opts,
     int i, ret = -1;
 
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
+
+    if (label != NULL) {
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			   hbox, TRUE, TRUE, 5);
+	gtk_widget_show(hbox);
+
+	tmp = gtk_label_new(label);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+	gtk_widget_show(tmp);
+    }
 
     for (i=0; i<nopts; i++) {
 
@@ -2451,10 +2463,10 @@ int real_radio_dialog (const char *title, const char **opts,
     return ret;
 }
 
-int radio_dialog (const char *title, const char **opts, 
+int radio_dialog (const char *title, const char *label, const char **opts, 
 		  int nopts, int deflt, int helpcode)
 {
-    return real_radio_dialog(title, opts, nopts, deflt, helpcode,
+    return real_radio_dialog(title, label, opts, nopts, deflt, helpcode,
 			     NULL, NULL, 0, 0);
 }
 
@@ -2463,7 +2475,7 @@ int radio_dialog_with_spinner (const char *title, const char **opts,
 			       int *spinvar, const char *spintxt,
 			       int spinmin, int spinmax)
 {
-    return real_radio_dialog(title, opts, nopts, deflt, helpcode,
+    return real_radio_dialog(title, NULL, opts, nopts, deflt, helpcode,
 			     spinvar, spintxt, spinmin, spinmax);
 }
 

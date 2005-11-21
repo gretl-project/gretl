@@ -489,7 +489,7 @@ void window_tex_callback (GtkWidget *w, windata_t *vwin)
 	N_("Copy"),
 	N_("Save")
     };
-    int opt = radio_dialog("gretl: LaTeX", opts, 3, 0, 0);
+    int opt = radio_dialog("gretl: LaTeX", NULL, opts, 3, 0, 0);
 
     if (opt >= 0) {
 	special_text_handler(vwin, GRETL_FORMAT_TEX, opt);

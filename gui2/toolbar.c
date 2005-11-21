@@ -94,19 +94,14 @@ static void gretl_website (void)
 #endif
 }
 
-void gretl_pdf_manual (void)
+void toolbar_users_guide (void)
 {
-    char manurl[64];
+    display_pdf_help(NULL, 1, NULL);
+}
 
-    sprintf(manurl, "http://gretl.sourceforge.net/%s", _("manual.pdf"));
-
-#ifdef G_OS_WIN32
-    if (goto_url(manurl)) {
-	errbox(_("Failed to open URL"));
-    }
-#else
-    browser_open(manurl);
-#endif
+void toolbar_command_reference (void)
+{
+    display_pdf_help(NULL, 0, NULL);
 }
 
 static void xy_graph (void)
@@ -193,7 +188,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	N_("open gretl console"),
 	N_("session icon view"),
 	N_("gretl website"), 
-	N_("gretl manual (PDF)"),
+	N_("user's guide"),
 	N_("command reference"), 
 	N_("X-Y graph"), 
 	N_("OLS model"),
@@ -253,11 +248,11 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    break;  
 	case 5:
 	    toolxpm = mini_pdf_xpm;
-	    toolfunc = gretl_pdf_manual;
+	    toolfunc = toolbar_users_guide;
 	    break;    
 	case 6:
 	    toolxpm = mini_manual_xpm;
-	    toolfunc = do_script_help;
+	    toolfunc = toolbar_command_reference;
 	    break;
 	case 7:
 	    toolxpm = mini_plot_xpm;

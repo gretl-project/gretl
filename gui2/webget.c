@@ -24,7 +24,7 @@
    libgretl.
 */
 
-#undef WDEBUG
+#define WDEBUG 0
 
 #ifdef UPDATER
 # define I_(String) String
@@ -144,19 +144,65 @@ enum {
 };
 
 typedef enum {
-    NOCONERROR, HOSTERR, CONSOCKERR, CONERROR,
-    CONREFUSED, NEWLOCATION, NOTENOUGHMEM, CONPORTERR,
-    BINDERR, BINDOK, LISTENERR, ACCEPTERR, ACCEPTOK,
-    CONCLOSED, FTPOK, FTPLOGINC, FTPLOGREFUSED, FTPPORTERR,
-    FTPNSFOD, FTPRETROK, FTPUNKNOWNTYPE, FTPRERR,
-    FTPREXC, FTPSRVERR, FTPRETRINT, FTPRESTFAIL,
-    URLOK, URLHTTP, URLFTP, URLFILE, URLUNKNOWN, URLBADPORT,
-    URLBADHOST, FOPENERR, FWRITEERR, HOK, HLEXC, HEOF,
-    HERR, RETROK, RECLEVELEXC, FTPACCDENIED, WRONGCODE,
-    FTPINVPASV, FTPNOPASV,
-    RETRFINISHED, READERR, TRYLIMEXC, URLBADPATTERN,
-    FILEBADFILE, RANGEERR, RETRBADPATTERN, RETNOTSUP,
-    ROBOTSOK, NOROBOTS, PROXERR, AUTHFAILED, QUOTEXC, WRITEFAILED,
+    NOCONERROR, 
+    HOSTERR, 
+    CONSOCKERR, 
+    CONERROR,
+    CONREFUSED, 
+    NEWLOCATION, 
+    NOTENOUGHMEM, 
+    CONPORTERR,
+    BINDERR, 
+    BINDOK, 
+    LISTENERR, 
+    ACCEPTERR, 
+    ACCEPTOK,
+    CONCLOSED, 
+    FTPOK, 
+    FTPLOGINC, 
+    FTPLOGREFUSED, 
+    FTPPORTERR,
+    FTPNSFOD, 
+    FTPRETROK, 
+    FTPUNKNOWNTYPE, 
+    FTPRERR,
+    FTPREXC, 
+    FTPSRVERR, 
+    FTPRETRINT, 
+    FTPRESTFAIL,
+    URLOK, 
+    URLHTTP, 
+    URLFTP, 
+    URLFILE, 
+    URLUNKNOWN, 
+    URLBADPORT,
+    URLBADHOST, 
+    FOPENERR, 
+    FWRITEERR, 
+    HOK, 
+    HLEXC, 
+    HEOF,
+    HERR, 
+    RETROK, 
+    RECLEVELEXC, 
+    FTPACCDENIED, 
+    WRONGCODE,
+    FTPINVPASV, 
+    FTPNOPASV,
+    RETRFINISHED, 
+    READERR, 
+    TRYLIMEXC, 
+    URLBADPATTERN,
+    FILEBADFILE, 
+    RANGEERR, 
+    RETRBADPATTERN, 
+    RETNOTSUP,
+    ROBOTSOK, 
+    NOROBOTS, 
+    PROXERR, 
+    AUTHFAILED, 
+    QUOTEXC, 
+    WRITEFAILED,
     RETRCANCELED
 } uerr_t;
 
@@ -210,15 +256,16 @@ struct proto {
 
 struct urlinfo
 {
-    char *url;                    /* the URL */
-    uerr_t proto;                 /* URL protocol */
+    char *url;                   /* the URL */
+    uerr_t proto;                /* URL protocol */
     unsigned short port;
-    unsigned short saveopt;       /* save to buffer or file? */   
+    unsigned short saveopt;      /* save to buffer or file? */   
     char *path; 
     char *localfile;
     char **savebuf;
     char host[32];
     char errbuf[80];
+    FILE *fp;                   /* for saving content locally */
 };
 
 struct http_stat {
@@ -320,7 +367,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, int *dt,
 		       struct urlinfo *proxy);
 static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy);
 static struct urlinfo *newurl (void);
-static void freeurl (struct urlinfo *u, int complete);
+static void freeurl (struct urlinfo *u, int delfile);
 static int get_contents (int fd, FILE *fp, char **getbuf, long *len, 
 			 long expected, struct rbuf *rbuf);
 static int store_hostaddress (unsigned char *where, const char *hostname);
@@ -361,7 +408,7 @@ int ws_startup (void)
 
 #endif /* WIN32 */
 
-static int get_db_host_ip (char *h_ip, const char *h_name)
+static int get_host_ip (char *h_ip, const char *h_name)
 {
     struct hostent *h_ent;
 
@@ -383,8 +430,6 @@ static int get_db_host_ip (char *h_ip, const char *h_name)
     return 0;
 }
 
-/* ........................................................... */
-
 static char *time_str (time_t *tm)
 {
   static char tms[15];
@@ -401,8 +446,6 @@ static char *time_str (time_t *tm)
 }
 
 /* http header functions -- based on Wget */
-
-/* ........................................................... */
 
 static int rbuf_peek (struct rbuf *rbuf, char *store)
 {
@@ -422,8 +465,6 @@ static int rbuf_peek (struct rbuf *rbuf, char *store)
 
     return 1;
 }
-
-/* ........................................................... */
 
 #ifdef UPDATER
 
@@ -464,8 +505,6 @@ static char *g_strdup (const char *s)
 }
 
 #endif /* UPDATER */
-
-/* ........................................................... */
 
 static int header_get (struct rbuf *rbuf, char **hdr, 
 		       enum header_get_flags flags)
@@ -525,8 +564,6 @@ static int header_get (struct rbuf *rbuf, char **hdr,
     return HG_OK;
 }
 
-/* ........................................................... */
-
 static int header_extract_number (const char *header, void *closure)
 {
     const char *p = header;
@@ -544,15 +581,11 @@ static int header_extract_number (const char *header, void *closure)
     return 1;
 }
 
-/* ........................................................... */
-
 static int header_strdup (const char *header, void *closure)
 {
     *(char **) closure = g_strdup(header);
     return 1;
 }
-
-/* ........................................................... */
 
 static int skip_lws (const char *string)
 {
@@ -564,8 +597,6 @@ static int skip_lws (const char *string)
 
     return p - string;
 }
-
-/* ........................................................... */
 
 static int header_process (const char *header, const char *name,
 			   int (*procfun) (const char *, void *),
@@ -588,16 +619,12 @@ static int header_process (const char *header, const char *name,
 
 /* further functions from Wget's http.c */
 
-/* ........................................................... */
-
 static void rbuf_initialize (struct rbuf *rbuf, int fd)
 {
     rbuf->fd = fd;
     rbuf->buffer_pos = rbuf->buffer;
     rbuf->buffer_left = 0;
 }
-
-/* ........................................................... */
 
 static int parse_http_status_line (const char *line, 
 				   const char **reason_phrase_ptr)
@@ -676,11 +703,10 @@ struct http_process_range_closure {
     long entity_length;
 };
 
-/* ........................................................... */
-
-static int http_process_range (const char *hdr, void *arg)
 /* Parse the `Content-Range' header and extract the information it
    contains.  Returns 1 if successful, -1 otherwise.  */
+
+static int http_process_range (const char *hdr, void *arg)
 {
     struct http_process_range_closure *closure
 	= (struct http_process_range_closure *)arg;
@@ -729,11 +755,10 @@ static int http_process_range (const char *hdr, void *arg)
     return 1;
 }
 
-/* ........................................................... */
-
-static int http_process_none (const char *hdr, void *arg)
 /* Place 1 to ARG if the HDR contains the word "none", 0 otherwise.
    Used for `Accept-Ranges'.  */
+
+static int http_process_none (const char *hdr, void *arg)
 {
     int *where = (int *) arg;
 
@@ -746,10 +771,9 @@ static int http_process_none (const char *hdr, void *arg)
     return 1;
 }
 
-/* ........................................................... */
+/* Place the malloc-ed copy of HDR hdr, to the first `;' to ARG */
 
 static int http_process_type (const char *hdr, void *arg)
-/* Place the malloc-ed copy of HDR hdr, to the first `;' to ARG */
 {
     char **result = (char **) arg;
     char *p;
@@ -776,8 +800,6 @@ static int http_process_type (const char *hdr, void *arg)
   (x).newloc = (x).remote_time = (x).error = NULL;	\
 } while (0)
 
-/* ........................................................... */
-
 static int numdigit (long a)
 {
     int res = 1;
@@ -785,8 +807,6 @@ static int numdigit (long a)
     while ((a /= 10) != 0) ++res;
     return res;
 }
-
-/* ........................................................... */
 
 static char *herrmsg (int error)
 {
@@ -801,8 +821,6 @@ static char *herrmsg (int error)
     }
 }
 
-/* ........................................................... */
-
 static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, 
 		       int *dt, struct urlinfo *proxy)
 {
@@ -813,7 +831,6 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     int sock, hcount, num_written, all_length, statcode;
     long contlen, contrange;
     uerr_t err;
-    FILE *fp = NULL;
     struct rbuf rbuf;
 
     hs->len = 0L;
@@ -823,7 +840,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     hs->remote_time = NULL;
     hs->error = NULL;
 
-    /* If we're using a proxy, we'll connect to the proxy server. */
+    /* If we're using a proxy, we'll connect to the proxy server */
     conn = (proxy != NULL)? proxy : u;
 
     err = make_connection(&sock, conn->host, conn->port);
@@ -855,24 +872,10 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	break;
     } 
 
-#ifdef WDEBUG
+#if WDEBUG
     fprintf(stderr, "connected to %s, port %d at socket %d\n",
 	    conn->host, conn->port, sock);
 #endif   
-
-    if (u->saveopt == SAVE_TO_FILE) { 
-#ifdef USE_G_FOPEN
-	fp = g_fopen(u->localfile, "wb");
-#else
-	fp = fopen(u->localfile, "wb");
-#endif
-	if (fp == NULL) {
-	    close(sock);
-	    free(all_headers);
-	    fprintf(stderr, "Couldn't open local file '%s'\n", u->localfile);
-	    return FOPENERR;
-	}
-    } 
 
     if (proxy) {
 	path = mymalloc(strlen(u->host) + strlen(u->path) + 8);
@@ -886,7 +889,6 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	free(all_headers);
 	return NOTENOUGHMEM;
     }
-	
 
     command = (*dt & HEAD_ONLY)? "HEAD" : "GET";
 
@@ -924,9 +926,11 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    command, path, useragent, u->host, u->port, HTTP_ACCEPT,
 	    pragma_h); 
 
-    if (proxy) free(path);
+    if (proxy) {
+	free(path);
+    }
 
-#ifdef WDEBUG
+#if WDEBUG
     fprintf(stderr, "Request:\n%s", request);
 #endif
 
@@ -935,7 +939,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     free(request); /* moved from within following conditional, 03/25/01 */
     if (num_written < 0) {
 	close(sock);
-#ifdef WDEBUG
+#if WDEBUG
 	fprintf(stderr, "Failed to write to socket\n");
 #endif
 	return WRITEFAILED;
@@ -963,7 +967,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 			    (hcount == 1 ? HG_NO_CONTINUATIONS : HG_NONE));
 	/* Check for errors */
 	if (status == HG_EOF && *hdr) {
-#ifdef WDEBUG
+#if WDEBUG
 	    fprintf(stderr, "Got status = HG_EOF\n");
 #endif
 	    free(hdr);
@@ -973,7 +977,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    close(sock);
 	    return HEOF;
 	} else if (status == HG_ERROR) {
-#ifdef WDEBUG
+#if WDEBUG
 	    fprintf(stderr, "Got status = HG_ERROR\n");
 #endif
 	    free(hdr);
@@ -1012,7 +1016,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    goto done_header;
 	}
 
-#ifdef WDEBUG
+#if WDEBUG
 	fprintf(stderr, "hs->error: '%s'\n", hs->error);
 #endif
 
@@ -1021,28 +1025,33 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    free(hdr);
 	    break;
 	}
+
 	/* Try getting content-length */
 	if (contlen == -1) {
 	    if (header_process(hdr, "Content-Length", header_extract_number,
 			       &contlen))
 		goto done_header;
 	}
+
 	/* Try getting content-type */
 	if (!type) {
 	    if (header_process (hdr, "Content-Type", http_process_type, &type))
 		goto done_header;
 	}
+
 	/* Try getting location */
 	if (!hs->newloc) {
 	    if (header_process (hdr, "Location", header_strdup, &hs->newloc))
 		goto done_header;
 	}
+
 	/* Try getting last-modified */
 	if (!hs->remote_time) {
 	    if (header_process (hdr, "Last-Modified", header_strdup,
 				&hs->remote_time))
 		goto done_header;
 	}
+
 	/* Check for accept-ranges header.  If it contains the word
 	   `none', disable the ranges */
 	if (*dt & ACCEPTRANGES) {
@@ -1056,6 +1065,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		goto done_header;
 	    }
 	}
+
 	/* Try getting content-range */
 	if (contrange == -1) {
 	    struct http_process_range_closure closure;
@@ -1065,6 +1075,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		goto done_header;
 	    }
 	}
+
     done_header:
 	free(hdr);
     }
@@ -1114,14 +1125,12 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     }
 
     /* Get the contents of the document */
-    hs->res = get_contents(sock, fp, u->savebuf, &hs->len, 
+    hs->res = get_contents(sock, u->fp, u->savebuf, &hs->len, 
 			   (contlen != -1 ? contlen : 0), &rbuf);
 
-#ifdef WDEBUG
+#if WDEBUG
     fprintf(stderr, "get_contents returned %d\n", hs->res);
 #endif
-
-    if (fp != NULL) fclose(fp);
 
     free(all_headers);
     close(sock);
@@ -1135,14 +1144,12 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
 #define MAXTRY 5
 
-/* ........................................................... */
-
 static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 {
     int count = 0;
     char *tms;
     uerr_t err;
-    struct http_stat hstat;	/* HTTP status */
+    struct http_stat hstat; /* HTTP status */
 
     *dt = 0 | ACCEPTRANGES;
 
@@ -1159,7 +1166,7 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	/* Time? */
 	tms = time_str(NULL);
 
-#ifdef WDEBUG
+#if WDEBUG
 	fprintf(stderr, "http_loop: err (from gethttp) = %d, errbuf = '%s'\n", 
 		err, (proxy)? proxy->errbuf : u->errbuf);
 	if (err == RETRFINISHED) {
@@ -1214,12 +1221,12 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 
 /* other utility functions from Wget */
 
-/* ........................................................... */
 
-static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
 /* Flush RBUF's buffer to WHERE.  Flush MAXSIZE bytes at most.
    Returns the number of bytes actually copied.  If the buffer is
    empty, 0 is returned.  */
+
+static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
 {
     if (!rbuf->buffer_left) {
 	return 0;
@@ -1235,8 +1242,6 @@ static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
     }
 }
 
-/* ........................................................... */
-
 static void url_init (struct urlinfo *u)
 {
     u->url = NULL;
@@ -1250,11 +1255,13 @@ static void url_init (struct urlinfo *u)
     u->host[0] = '\0';
     u->errbuf[0] = '\0';
     u->saveopt = 0;
+    u->fp = NULL;
 }
 
-static struct urlinfo *newurl (void)
 /* Allocate a new urlinfo structure, fill it with default values and
    return a pointer to it.  */
+
+static struct urlinfo *newurl (void)
 {
     struct urlinfo *u;
 
@@ -1266,27 +1273,31 @@ static struct urlinfo *newurl (void)
     return u;
 }
 
-/* ........................................................... */
-
-static void freeurl (struct urlinfo *u, int complete)
 /* Perform a "deep" free of the urlinfo structure.  The structure
    should have been created with newurl, but need not have been used.
-   If complete is non-0, free the pointer itself.  */
+   If defile is non-zero and there's a local file open, delete
+   that file.
+*/
+
+static void freeurl (struct urlinfo *u, int delfile)
 {
     if (u == NULL) return;
 
     free(u->url);
     free(u->path);
-    if (u->localfile) {
+
+    if (u->localfile != NULL) {
+	if (u->fp != NULL) {
+	    fclose(u->fp);
+	}
+	if (delfile) {
+	    remove(u->localfile);
+	}
 	free(u->localfile);
     }
 
-    if (complete) {
-	free(u);
-    }
+    free(u);
 }
-
-/* ........................................................... */
 
 static int get_contents (int fd, FILE *fp, char **getbuf, long *len, 
 			 long expected, struct rbuf *rbuf)
@@ -1314,6 +1325,12 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     }
 
     *len = 0L;
+
+#if 0
+    if (fp != NULL) {
+	rewind(fp);
+    }
+#endif
 
     if (rbuf && RBUF_FD(rbuf) == fd) {
 	while ((res = rbuf_flush(rbuf, cbuf, sizeof cbuf)) != 0) {
@@ -1384,13 +1401,11 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     return res;
 }
 
-/* ........................................................... */
-
 static int store_hostaddress (unsigned char *where, const char *hostname)
 {
     unsigned long addr = (unsigned long) inet_addr(hostname);
 
-#ifdef WDEBUG
+#if WDEBUG
     fprintf(stderr, "store_hostaddress: hostname='%s', addr=%lu\n",
 	    hostname, addr);
 #endif
@@ -1405,8 +1420,6 @@ static int store_hostaddress (unsigned char *where, const char *hostname)
 #ifdef WIN32
 # define ECONNREFUSED WSAECONNREFUSED
 #endif
-
-/* ........................................................... */
 
 static uerr_t make_connection (int *sock, char *hostname, unsigned short port)
 /* Create an internet connection to HOSTNAME on PORT.  The created
@@ -1436,10 +1449,9 @@ static uerr_t make_connection (int *sock, char *hostname, unsigned short port)
     return NOCONERROR;
 }
 
-/* ........................................................... */
+/* Read at most len bytes from FD, storing them to buf. */
 
 static int iread (int fd, char *buf, int len)
-/* Read at most len bytes from FD, storing them to buf. */
 {
     int res;
 
@@ -1450,14 +1462,13 @@ static int iread (int fd, char *buf, int len)
     return res;
 }
 
-/* ........................................................... */
-
-static int iwrite (int fd, char *buf, int len)
 /* Write len bytes from buf to fd.  This is similar to iread(), but
    doesn't bother with select().  Unlike iread(), it makes sure that
    all of BUF is actually written to FD, so callers needn't bother
    with checking that the return value equals to LEN.  Instead, you
    should simply check for -1.  */
+
+static int iwrite (int fd, char *buf, int len)
 {
     int res = 0;
 
@@ -1475,8 +1486,6 @@ static int iwrite (int fd, char *buf, int len)
 
     return res;
 }
-
-/* ........................................................... */
 
 static char *print_option (int opt)
 {
@@ -1498,8 +1507,6 @@ static char *print_option (int opt)
     }
     return NULL;
 } 
-
-/* ........................................................... */
 
 static int get_update_info (char **saver, char *errbuf, time_t filedate,
 			    int queryopt)
@@ -1523,18 +1530,18 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
     u->path = mymalloc(strlen(cgi) + 64);
 
     if (u->path == NULL) {
-	freeurl(u, 1);
+	freeurl(u, 0);
 	return 1;
     }
 
 #ifdef UPDATER
-    err = get_db_host_ip(u->host, dbhost);
+    err = get_host_ip(u->host, dbhost);
 #else
-    err = get_db_host_ip(u->host, paths.dbhost);
+    err = get_host_ip(u->host, paths.dbhost);
 #endif
 
     if (err) {
-	freeurl(u, 1);
+	freeurl(u, 0);
 	return err;
     }
 
@@ -1553,7 +1560,7 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
 
     result = http_loop(u, &dt, proxy); 
 
-#ifdef WDEBUG
+#if WDEBUG
     fprintf(stderr, "http_loop returned %d, u->errbuf='%s'\n",
 	    (int) result, u->errbuf);
 #endif
@@ -1565,7 +1572,7 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
 	err = 1;
     }
 
-    freeurl(u, 1);
+    freeurl(u, 0);
 
     return err;
 }
@@ -1591,8 +1598,9 @@ static size_t get_size (char *buf)
 }
 # endif /* WIN32 */
 
+/* E.g. Sun Mar 16 13:50:52 EST 2003 */
+
 static time_t get_time_from_stamp_file (const char *fname)
-     /* E.g. Sun Mar 16 13:50:52 EST 2003 */
 {
     FILE *fp;
     struct tm stime;
@@ -1758,8 +1766,6 @@ int update_query (void)
 
 #endif /* ! UPDATER */
 
-/* ........................................................... */
-
 int proxy_init (const char *dbproxy)
 {
     char *p;
@@ -1798,17 +1804,35 @@ int proxy_init (const char *dbproxy)
     return 0;
 } 
 
-/* ........................................................... */
+static int open_local_file (struct urlinfo *u)
+{
+    int err = 0;
 
-static int 
-retrieve_url (int opt, const char *fname, const char *dbseries, 
-	      int saveopt, const char *savefile, char **savebuf,
-	      char *errbuf)
+    if (u->saveopt == SAVE_TO_FILE) { 
+#ifdef USE_G_FOPEN
+	u->fp = g_fopen(u->localfile, "wb");
+#else
+	u->fp = fopen(u->localfile, "wb");
+#endif
+	if (u->fp == NULL) {
+	    fprintf(stderr, "Couldn't open local file '%s'\n", u->localfile);
+	    err = E_FOPEN;
+	}
+    }
+
+    return err;
+}
+
 /* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored to
    a local file whose name is given by "savefile".  If saveopt = SAVE_TO_BUFFER
    then "savebuf" is presumed to point to a char buffer to which the data
    should be written.
 */
+
+static int 
+retrieve_url (int opt, const char *fname, const char *dbseries, 
+	      int saveopt, const char *savefile, char **savebuf,
+	      char *errbuf)
 {
     uerr_t result;
     struct urlinfo *u;
@@ -1837,18 +1861,18 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
 
     u->path = mymalloc(strlen(cgi) + fnlen + 64);
     if (u->path == NULL) {
-	freeurl(u, 1);
+	freeurl(u, 0);
 	return 1;
     }
 
 #ifdef UPDATER
-    err = get_db_host_ip(u->host, dbhost);
+    err = get_host_ip(u->host, dbhost);
 #else
-    err = get_db_host_ip(u->host, paths.dbhost);
+    err = get_host_ip(u->host, paths.dbhost);
 #endif
 
     if (err) {
-	freeurl(u, 1);
+	freeurl(u, 0);
 	return err;
     }
 
@@ -1872,6 +1896,11 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     if (saveopt == SAVE_TO_FILE) {
 	u->localfile = g_strdup(savefile);
 	u->savebuf = NULL;
+	err = open_local_file(u);
+	if (err) {
+	    freeurl(u, 0);
+	    return err;
+	}
     } else {
 	u->localfile = NULL;
 	u->savebuf = savebuf;
@@ -1879,7 +1908,7 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
 
     result = http_loop(u, &dt, proxy);
 
-#ifdef WDEBUG
+#if WDEBUG
     fprintf(stderr, "http_loop returned %d, u->errbuf='%s'\n",
 	    (int) result, u->errbuf);
 #endif
@@ -1891,10 +1920,74 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
 	err = 1;
     }
 
-    freeurl(u, 1);
+    freeurl(u, err);
 
     return err;
 }
+
+#ifndef UPDATER
+
+int retrieve_manfile (const char *fname, const char *savefile, char *errbuf)
+{
+    const char *manhost = "ricardo.ecn.wfu.edu";
+    uerr_t result;
+    struct urlinfo *u;
+    struct urlinfo *proxy = NULL; 
+    int dt, err = 0;
+
+    *errbuf = '\0';
+
+    if (use_proxy) {
+	proxy = &gretlproxy;
+    }
+
+    u = newurl();
+    if (u == NULL) {
+	return 1;
+    }
+
+    err = get_host_ip(u->host, manhost);
+    if (err) {
+	freeurl(u, 0);
+	return err;
+    }
+
+    u->path = g_strdup_printf("/pub/gretl/manual/PDF/%s", fname);
+    if (u->path == NULL) {
+	freeurl(u, 0);
+	return 1;
+    }
+
+    u->saveopt = SAVE_TO_FILE;
+    u->localfile = g_strdup(savefile);
+    u->savebuf = NULL;
+
+    err = open_local_file(u);
+    if (err) {
+	freeurl(u, 0);
+	return err;
+    }
+
+    result = http_loop(u, &dt, proxy);
+
+#if WDEBUG
+    fprintf(stderr, "http_loop returned %d, u->errbuf='%s'\n",
+	    (int) result, u->errbuf);
+#endif
+
+    if (result == RETROK) {
+	*errbuf = 0;
+    } else {
+	strcpy(errbuf, u->errbuf);
+	err = 1;
+    }
+
+    freeurl(u, err);
+
+    return err;
+}
+
+#endif /* !UPDATER */
 
 #ifdef WIN32
 

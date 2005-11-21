@@ -19,13 +19,11 @@ echo "making archive..."
 for f in `find gretl/gui -type l` ; do
    rm $f
 done
+make -C gretl/doc/tex clean
 mv gretl gretl-${version}
 rm -f $tarfile 
 tar cvjfX $tarfile tar_exclude gretl-${version}
 mv gretl-${version} gretl
 
-# scp gretl/doc/manual.pdf allin@gretl.sourceforge.net:~/www/
-# scp gretl/doc/manual-a4.pdf allin@gretl.sourceforge.net:~/www/
-# scp gretl/ChangeLog allin@gretl.sourceforge.net:~/www/
 
 

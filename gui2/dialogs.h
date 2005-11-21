@@ -64,7 +64,7 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd);
 
 int density_dialog (int vnum, double *bw);
 
-int radio_dialog (const char *title, const char **opts, 
+int radio_dialog (const char *title, const char *label, const char **opts, 
 		  int nopts, int deflt, int helpcode);
 
 int radio_dialog_with_spinner (const char *title, const char **opts, 

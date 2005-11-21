@@ -64,8 +64,8 @@ install: $(GUIDE) $(REF)
 	cp $(GUIDE) $(REF) $(WEBDIR)
 
 clean:
-	rm -f *.aux *.log *.out *.toc *.tpt $(GUIDE) $(REF) *~
-	rm -f refbody.tex
+	rm -f *.aux *.log *.out *.toc *.tpt $(ALTGUIDE) $(ALTREF) *~
+	rm -f refbody.tex gretl-guide-a4.tex gretl-ref-a4.tex
 
 distclean: clean
 	rm -rf CVS

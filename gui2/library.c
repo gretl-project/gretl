@@ -1085,13 +1085,14 @@ void gui_errmsg (const int errcode)
     }
 }
 
+/* OPT_M  drop all obs with missing data values 
+   OPT_O  sample using dummy variable
+   OPT_R  sample using boolean expression
+   OPT_N  random sub-sample
+   OPT_C  replace current restriction
+*/
+
 int bool_subsample (gretlopt opt)
-     /* OPT_M  drop all obs with missing data values 
-	OPT_O  sample using dummy variable
-	OPT_R  sample using boolean expression
-	OPT_N  random sub-sample
-	OPT_C  replace current restriction
-     */
 {
     const char *smplmsg;
     int err = restore_sample(opt);

@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "textbuf.h"
+#include "webget.h"
 
 #ifdef OLD_GTK
 # include "dlgutils.h"
@@ -1479,31 +1480,108 @@ static void osx_help (int uguide)
 }
 #endif 
 
+enum {
+    EN_LETTER,
+    EN_A4,
+    ITALIAN,
+    SPANISH
+};
+
+static char *full_doc_path (char *path, const char *fname)
+{
+    strcpy(path, paths.gretldir);
+    strcat(path, "doc");
+    strcat(path, SLASHSTR);
+    strcat(path, fname);
+}
+
+static int maybe_grab_pdf (int uguide, int i, char *fullpath)
+{
+    const char *guide_files[] = {
+	"gretl-guide.pdf",
+	"gretl-guide-a4.pdf",
+	"gretl-guide-it.pdf",
+	"gretl-guide-es.pdf"
+    };
+    const char *ref_files[] = {
+	"gretl-ref.pdf",
+	"gretl-ref-a4.pdf",
+	"gretl-ref-it.pdf",
+	"gretl-ref-es.pdf"  
+    };
+    const char *fname;
+    FILE *fp;
+    int err = 0;
+
+    if (uguide) {
+	fname = guide_files[i];
+    } else {
+	fname = ref_files[i];
+    }
+
+    full_doc_path(fullpath, fname);
+
+    /* see if file exists locally */
+    fp = fopen(fullpath, "r");
+    if (fp != NULL) {
+	fclose(fp);
+	return 0;
+    }
+
+    /* if not, grab from server */
+    err = retrieve_manfile(fname, fullpath, errtext);
+    if (err) {
+	if (*errtext) {
+	    errbox(errtext);
+	} else {
+	    errbox("Failed to download file");
+	}
+    }
+
+    return err;
+}
+
+static int manual_variant_dialog (void)
+{
+    const char *opts[] = {
+        N_("English (US letter paper)"),
+        N_("English (A4 paper)"),
+        N_("Italian"),
+	N_("Spanish"),
+    };
+
+    return radio_dialog("gretl: manual", "Preferred variant:",
+			opts, 4, 0, 0);
+}
+
 void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
 {
-    char fname[FILENAME_MAX];
+    char fullpath[FILENAME_MAX];
+    static int manpref = -1;
+    int err = 0;
 
 #ifdef OSX_PKG
     osx_help(uguide);
     return;
-#endif    
+#endif   
 
-    strcpy(fname, paths.gretldir);
-    strcat(fname, "doc");
-    strcat(fname, SLASHSTR);
+    if (manpref < 0) {
+	manpref = manual_variant_dialog();
+    }
 
-    if (uguide) {
-	strcat(fname, "gretl-guide.pdf");
-    } else {
-	strcat(fname, "gretl-ref.pdf");
+    fprintf(stderr, "manpref = %d\n", manpref);
+
+    err = maybe_grab_pdf(uguide, manpref, fullpath);
+    if (err) {
+	return;
     }
 
 #ifdef G_OS_WIN32
-    if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
+    if ((int) ShellExecute(NULL, "open", fullpath, NULL, NULL, SW_SHOW) <= 32) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
     }
 #else
-    gretl_fork(viewpdf, fname);
+    gretl_fork(viewpdf, fullpath);
 #endif
 }
