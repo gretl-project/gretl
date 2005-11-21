@@ -1461,3 +1461,49 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 {
     gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
 }
+
+#ifdef OSX_PKG
+static void osx_help (int uguide)
+{
+    char *prefix, *syscmd;
+   
+    prefix = getenv("GTK_EXE_PREFIX");
+    if (prefix == NULL) {
+        errbox("Couldn't find the manual");
+	return;
+    }
+    
+    syscmd = g_strdup_printf("%s/bin/manual.sh %s", prefix, (uguide)? "uguide" : "ref");
+    system(syscmd);
+    g_free(syscmd);
+}
+#endif 
+
+void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
+{
+    char fname[FILENAME_MAX];
+
+#ifdef OSX_PKG
+    osx_help(uguide);
+    return;
+#endif    
+
+    strcpy(fname, paths.gretldir);
+    strcat(fname, "doc");
+    strcat(fname, SLASHSTR);
+
+    if (uguide) {
+	strcat(fname, "gretl-guide.pdf");
+    } else {
+	strcat(fname, "gretl-ref.pdf");
+    }
+
+#ifdef G_OS_WIN32
+    if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
+	DWORD dw = GetLastError();
+	win_show_error(dw);
+    }
+#else
+    gretl_fork(viewpdf, fname);
+#endif
+}

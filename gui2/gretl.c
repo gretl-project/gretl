@@ -153,7 +153,7 @@ static void manual_update_query (gpointer p, guint u, GtkWidget *w)
     update_query();
 }
 
-#ifdef USE_GNOME
+#ifdef USE_GNOME_HELP
 static void gnome_help (void)
 {
     GError *error = NULL;
@@ -166,36 +166,6 @@ static void gnome_help (void)
     }
 }
 #endif 
-
-#ifdef OSX_PKG
-static void osx_help (void)
-{
-    char *prefix, *syscmd;
-   
-    prefix = getenv("GTK_EXE_PREFIX");
-    if (prefix == NULL) {
-        errbox("Couldn't find the manual");
-	return;
-    }
-    
-    syscmd = g_strdup_printf("%s/bin/manual.sh", prefix);
-    system(syscmd);
-    g_free(syscmd);
-}
-#endif 
-
-static void menu_manual_call (gpointer p, guint u, GtkWidget *w)
-{
-#if defined(USE_GNOME)
-    gnome_help();
-#elif defined(G_OS_WIN32)
-    win_help();
-#elif defined(OSX_PKG)
-    osx_help();
-#else
-    gretl_pdf_manual();
-#endif
-}
 
 #ifndef G_OS_WIN32
 static void root_check (void)
@@ -564,8 +534,8 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Help menu */
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>", NULL },
-    { N_("/Help/_Command reference"), NULL, do_script_help, 1, NULL, GNULL },
-    { N_("/Help/_Manual"), NULL, menu_manual_call, 0, NULL, GNULL },
+    { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, NULL, GNULL },
+    { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, NULL, GNULL },
     { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, NULL, GNULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", NULL },
@@ -1457,8 +1427,6 @@ static void startRcallback (gpointer p, guint opt, GtkWidget *w)
 {
     startR(Rcommand);
 }
-
-/* ........................................................... */
 
 #ifndef G_OS_WIN32
 

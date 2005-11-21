@@ -47,5 +47,6 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 void colorize_tooltips (GtkTooltips *tip);
 #endif
 
+void display_pdf_help (gpointer p, guint uguide, GtkWidget *w);
 
 #endif /* HELPFILES_H */

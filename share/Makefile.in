@@ -74,12 +74,15 @@ install_man: gretl.1
 
 install_help: $(AUTO_HELPFILES) $(RECODE_FILES)
 	$(tooldir)/mkinstalldirs $(gretldir)
+	$(tooldir)/mkinstalldirs $(gretldir)/doc
 	$(INSTALL_DATA) $(sharesrc)/gretl.hlp $(gretldir)/gretl.hlp
 	$(INSTALL_DATA) $(sharesrc)/gretlcli.hlp $(gretldir)/gretlcli.hlp
 	$(INSTALL_DATA) $(ES_GUI_HLP) $(gretldir)/gretl.hlp.es
 	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
 	$(INSTALL_DATA) $(IT_GUI_HLP) $(gretldir)/gretl.hlp.it
 	$(INSTALL_DATA) $(IT_CLI_HLP) $(gretldir)/gretlcli.hlp.it
+	# $(INSTALL_DATA) $(sharesrc)/gretl-ref.pdf $(gretldir)/doc
+	# $(INSTALL_DATA) $(sharesrc)/gretl-guide.pdf $(gretldir)/doc
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 

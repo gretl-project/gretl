@@ -30,7 +30,7 @@ void output_lang_file (void)
 
     /* gretl commands */
     puts("<keyword-list _name = \"Commands\" style = \"Keyword\" case-sensitive=\"TRUE\"");
-    puts("  beginning-regex=\"\b\" end-regex=\"\b\">");
+    puts("  beginning-regex=\"\\b\" end-regex=\"\\b\">");
     for (i=1; i<NC; i++) {
 	printf(" <keyword>%s</keyword>\n", gretl_command_word(i));
     }

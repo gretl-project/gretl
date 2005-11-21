@@ -138,23 +138,14 @@ static void manual_update_query (gpointer p, guint u, GtkWidget *w)
     update_query();
 }
 
-#ifdef USE_GNOME
+#ifdef USE_GNOME_HELP
 static void gnome_help (void)
 {
     static GnomeHelpMenuEntry help_entry = { "gretl", "index.html" };
 
     gnome_help_display(NULL, &help_entry);
 }
-#endif /* USE_GNOME */
-
-static void menu_manual_call (gpointer p, guint u, GtkWidget *w)
-{
-#if defined(USE_GNOME)
-    gnome_help();
-#else
-    gretl_pdf_manual();
-#endif
-}
+#endif /* USE_GNOME_HELP */
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
@@ -482,8 +473,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/High precision OLS..."), NULL, mp_ols_callback, MPOLS, NULL },
 #endif
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>" },
-    { N_("/Help/_Command reference"), NULL, do_script_help, 1, NULL },
-    { N_("/Help/_Manual"), NULL, menu_manual_call, 0, NULL },
+    { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, NULL },
+    { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, NULL },
     { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, NULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
@@ -1329,7 +1320,7 @@ drag_data_received  (GtkWidget *widget,
     }
 
     /* ignore the wrong sort of data */
-    if (data == NULL || (dfname = data->data) == NULL || 
+    if (data == NULL || (dfname = (char *) data->data) == NULL || 
 	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5))
 	return;
     
