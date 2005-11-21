@@ -2027,17 +2027,26 @@ static int
 expand_operator_abbrev (char *s, const char *lhs, char op)
 {
     int llen = strlen(lhs);
+    int add_parens = 0;
     int i, err = 0;
 
+    if (*s != '(') {
+	add_parens = 1;
+    }
+
     /* do we have space to make the insertion? */
-    if (strlen(s) + llen + 2 >= MAXLINE) {
+    if (strlen(s) + llen + 2 + 2 * add_parens >= MAXLINE) {
 	err = 1;
     } else {
-	memmove(s + llen + 1, s, strlen(s) + 1);
+	memmove(s + llen + 1 + add_parens, s, strlen(s) + 1);
 	for (i=0; i<llen; i++) {
 	    s[i] = lhs[i];
 	}
 	s[i] = op;
+	if (add_parens) {
+	    s[i+1] = '(';
+	    strcat(s, ")");
+	}
     }
 
     return err;

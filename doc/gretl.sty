@@ -24,6 +24,7 @@
 
 \newcommand{\app}[1]{\textsf{#1}}
 \newcommand{\cmd}[1]{\texttt{#1}}
+\newcommand{\varname}[1]{\texttt{#1}}
 
 \newenvironment{code}{\par\small\verbatim}
 {\endverbatim\normalsize}
@@ -49,12 +50,13 @@
 
 
 %% add script example as float
-\newcounter{script}
-\renewcommand\thescript{\@arabic\c@script}
+\newcounter{script}[chapter]
+\renewcommand \thescript
+     {\ifnum \c@chapter>\z@ \thechapter.\fi \@arabic\c@script}
 \def\fps@script{tbp}
-\def\ftype@script{2}
-\def\ext@script{lot}
-\def\fnum@script{\scriptname~\thescript}
+\def\ftype@script{1}
+\def\ext@script{los}
+\def\fnum@script{\scriptname\nobreakspace\thescript}
 \newenvironment{script}
                {\@float{script}}
                {\end@float}
