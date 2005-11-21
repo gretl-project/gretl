@@ -5,10 +5,10 @@
 # Thanks to Daniele "Madrid" Medri for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.4.0-pre1\n"
+"Project-Id-Version: gretl 1.4.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-11-20 10:10-0500\n"
-"PO-Revision-Date: 2005-08-24 12:07+0200\n"
+"PO-Revision-Date: 2005-11-21 11:33+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -316,17 +316,13 @@ msgstr ""
 "\n"
 
 #: lib/src/compare.c:1517
-#, fuzzy
 msgid "Cumulated sum of scaled residuals"
-msgstr "Somma dei quadrati dei residui"
+msgstr "Somma cumulata dei residui scalati"
 
 #: lib/src/compare.c:1520
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "('*' indicates a value outside of 95% confidence band)"
-msgstr ""
-"Somma cumulata dei residui scalati\n"
-"('*' indica un valore al di fuori della banda di confidenza al 95%%):\n"
-"\n"
+msgstr "(\"*\" indica un valore al di fuori della banda di confidenza al 95%)"
 
 #: lib/src/compare.c:1538
 #, c-format
@@ -1975,9 +1971,8 @@ msgid "Periodic dummy variables generated.\n"
 msgstr "Variabili dummy periodiche generate.\n"
 
 #: lib/src/generate.c:2456
-#, fuzzy
 msgid "Periodic dummy variables already present.\n"
-msgstr "Variabili dummy periodiche generate.\n"
+msgstr "Sono già presenti variabili dummy periodiche.\n"
 
 #: lib/src/generate.c:2461 lib/src/generate.c:2466
 msgid "Panel dummy variables generated.\n"
@@ -2210,9 +2205,9 @@ msgid "+- sqrt(h(t))"
 msgstr "+- sqrt(h(t))"
 
 #: lib/src/graphing.c:2824
-#, fuzzy, c-format
+#, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr "risposta di %s a uno shock in %s"
+msgstr "risposta di %s a uno shock in %s, con intervallo di confidenza bootstrap"
 
 #: lib/src/graphing.c:2829
 #, c-format
@@ -2220,32 +2215,30 @@ msgid "response of %s to a shock in %s"
 msgstr "risposta di %s a uno shock in %s"
 
 #: lib/src/graphing.c:2839
-#, fuzzy
 msgid "point estimate"
-msgstr "stime %s"
+msgstr "stime puntuali"
 
 #: lib/src/graphing.c:2841
 msgid "0.025 and 0.975 quantiles"
-msgstr ""
+msgstr "Quantili 0.025 e 0.975"
 
 #: lib/src/graphing.c:2890
-#, fuzzy
 msgid "VAR residuals"
-msgstr "Residui"
+msgstr "Residui del VAR"
 
 #: lib/src/graphing.c:2894
-#, fuzzy, c-format
+#, c-format
 msgid "Equation %d"
-msgstr "Equazione"
+msgstr "Equazione %d"
 
 #: lib/src/graphing.c:2964
 msgid "VAR inverse roots in relation to the unit circle"
-msgstr ""
+msgstr "Radici inverse del VAR, in relazione al cerchio unitario"
 
 #: lib/src/graphing.c:3034
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% confidence ellipse and 95% marginal intervals"
-msgstr "Intervallo di confidenza al 95%"
+msgstr "Ellisse di confidenza al 95% e intervalli marginali al 95%"
 
 #: lib/src/graphing.c:3067 plugin/range-mean.c:66
 msgid "with least squares fit"
@@ -2396,9 +2389,8 @@ msgstr ""
 "Correggere il campione e rieseguire la regressione originale, per prima cosa"
 
 #: lib/src/gretl_errors.c:73
-#, fuzzy
 msgid "The statistic you requested is not available"
-msgstr "La statistica richiesta non ha senso per questo modello"
+msgstr "La statistica richiesta non è disponibile"
 
 #: lib/src/gretl_errors.c:74
 msgid "Missing sub-sample information; can't merge data"
@@ -2418,9 +2410,8 @@ msgid "Missing values encountered"
 msgstr "Sono stati trovati valori mancanti"
 
 #: lib/src/gretl_errors.c:78
-#, fuzzy
 msgid "Not a Number in calculation"
-msgstr "Numero di equazioni"
+msgstr "Valore non numerico in un calcolo"
 
 #: lib/src/gretl_func.c:1281
 #, c-format
@@ -2643,6 +2634,10 @@ msgid ""
 "have been given numeric codes as follows.\n"
 "\n"
 msgstr ""
+"Sono state trovate variabili non numeriche.\n"
+"Gretl non può gestire direttamente queste variabili,\n"
+"quindi ha attribuito dei codici numerici nel modo seguente.\n"
+"\n"
 
 #: lib/src/gretl_string_table.c:245 lib/src/gretl_string_table.c:248
 #, c-format
@@ -3076,9 +3071,8 @@ msgid "S.D. of dependent variable"
 msgstr "D.S. della variabile dipendente"
 
 #: lib/src/modelprint.c:95
-#, fuzzy
 msgid "Unconditional error variance"
-msgstr "Impossibile recuperare la varianza dell'errore"
+msgstr "Varianza dell'errore non condizionale"
 
 #: lib/src/modelprint.c:123 lib/src/modelprint.c:142 lib/src/modelprint.c:155
 msgid "Mean of residuals"
@@ -3305,9 +3299,8 @@ msgid "NLS"
 msgstr "NLS"
 
 #: lib/src/modelprint.c:522
-#, fuzzy
 msgid "ML"
-msgstr "LIML"
+msgstr "ML"
 
 #: lib/src/modelprint.c:523 gui2/selector.c:1605
 msgid "Logistic"
@@ -3579,12 +3572,12 @@ msgstr "Convergenza raggiunta dopo %d iterazioni\n"
 #: lib/src/modelprint.c:1338
 #, c-format
 msgid "Function evaluations: %d\n"
-msgstr ""
+msgstr "Valutazioni della funzione: %d\n"
 
 #: lib/src/modelprint.c:1339
 #, c-format
 msgid "Evaluations of gradient: %d\n"
-msgstr ""
+msgstr "Valutazioni del gradiente: %d\n"
 
 #: lib/src/modelprint.c:1831
 msgid "Estimates of the AR coefficients"
@@ -3617,7 +3610,7 @@ msgstr "Modulo"
 
 #: lib/src/modelprint.c:1954
 msgid "AR (seasonal)"
-msgstr ""
+msgstr "AR (stagionale)"
 
 #: lib/src/modelprint.c:1974
 msgid "MA"
@@ -3625,7 +3618,7 @@ msgstr "MA"
 
 #: lib/src/modelprint.c:1994
 msgid "MA (seasonal)"
-msgstr ""
+msgstr "MA (stagionale)"
 
 #: lib/src/modelprint.c:2028 lib/src/modelprint.c:2032
 #: lib/src/modelprint.c:2039
@@ -3905,7 +3898,7 @@ msgstr "Non è stata specificata alcuna funzione di regressione"
 
 #: lib/src/nls.c:1975
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
-msgstr ""
+msgstr "Sono state fornite derivate analitiche: la riga \"params\" verrà ignorata"
 
 #: lib/src/nls.c:2108
 msgid "Using numerical derivatives\n"
@@ -4008,11 +4001,11 @@ msgstr "VAR - Autoregressione vettoriale"
 
 #: lib/src/objstack.c:463 gui2/selector.c:1623
 msgid "VECM"
-msgstr ""
+msgstr "VECM"
 
 #: lib/src/objstack.c:469
 msgid "System"
-msgstr ""
+msgstr "Sistema"
 
 #: lib/src/objstack.c:703 gui2/objectsave.c:165 gui2/objectsave.c:192
 #: gui2/objectsave.c:213 gui2/objectsave.c:250 gui2/objectsave.c:272
@@ -4241,13 +4234,12 @@ msgstr ""
 "Codice di \"pvalue\" non riconosciuto\n"
 
 #: lib/src/pvalues.c:470
-#, fuzzy
 msgid ""
 "\n"
 "pvalue: missing parameter\n"
 msgstr ""
 "\n"
-"p-value per t: parametro mancante\n"
+"p-value: parametro mancante\n"
 
 #: lib/src/pvalues.c:483
 #, c-format
@@ -4313,15 +4305,17 @@ msgid ""
 "Binomial (p = %g, n = %d):\n"
 " Prob(x > %d) = %g\n"
 msgstr ""
+"\n"
+"Binomiale (p = %g, n = %d):\n"
+" Prob(x > %d) = %g\n"
 
 #: lib/src/pvalues.c:555
-#, fuzzy
 msgid ""
 "\n"
 "Error computing pvalue\n"
 msgstr ""
 "\n"
-"Errore nel calcolo della distribuzione gamma\n"
+"Errore nel calcolo del p-value\n"
 
 #: lib/src/pvalues.c:582
 #, c-format
@@ -4640,28 +4634,24 @@ msgid "iterated %s"
 msgstr "%s iterato"
 
 #: lib/src/texprint.c:383 lib/src/varprint.c:636 gui2/gui_utils.c:3680
-#, fuzzy
 msgid "Cross-equation covariance matrix"
-msgstr "Errore nella generazione della matrice di covarianza"
+msgstr "Matrice di covarianza tra le equazioni"
 
 #: lib/src/texprint.c:422 lib/src/varprint.c:679
-#, fuzzy
 msgid "determinant"
-msgstr "log determinante"
+msgstr "determinante"
 
 #: lib/src/texprint.c:436 lib/src/varprint.c:565
-#, fuzzy
 msgid "Cointegrating vectors"
-msgstr "vettore di cointegrazione"
+msgstr "Vettori di cointegrazione"
 
 #: lib/src/texprint.c:438 lib/src/varprint.c:567 gui2/model_table.c:950
 msgid "standard errors in parentheses"
 msgstr "errori standard tra parentesi"
 
 #: lib/src/texprint.c:504 lib/src/varprint.c:788 lib/src/varprint.c:794
-#, fuzzy
 msgid "Determinant of covariance matrix"
-msgstr "Inversa della matrice di covarianza"
+msgstr "Determinante della matrice di covarianza"
 
 #: lib/src/texprint.c:804 gui2/model_table.c:794
 msgid "$t$-statistics in parentheses"
@@ -4741,18 +4731,17 @@ msgid "Number of equations"
 msgstr "Numero di equazioni"
 
 #: lib/src/var.c:2432
-#, fuzzy
 msgid "Lag order"
-msgstr "Ordine dei ritardi:"
+msgstr "Ordine dei ritardi"
 
 #: lib/src/var.c:2433
 msgid "Estimation period"
 msgstr "Periodo di stima"
 
 #: lib/src/var.c:2593
-#, fuzzy, c-format
+#, c-format
 msgid "vecm: rank %d is out of bounds"
-msgstr "Il numero di variabile %d è fuori dai limiti"
+msgstr "vecm: il rango %d è fuori dai limiti"
 
 #: lib/src/var.c:2656
 #, c-format
@@ -4760,9 +4749,9 @@ msgid "residual from VAR system, equation %d"
 msgstr "residuo dal sistema VAR, equazione %d"
 
 #: lib/src/var.c:2659
-#, fuzzy, c-format
+#, c-format
 msgid "residual from VECM system, equation %d"
-msgstr "residuo dal sistema VAR, equazione %d"
+msgstr "residuo dal sistema VECM, equazione %d"
 
 #: lib/src/varprint.c:96 lib/src/varprint.c:112 lib/src/varprint.c:127
 #, c-format
@@ -4784,73 +4773,61 @@ msgid "std. error"
 msgstr "errore std."
 
 #: lib/src/varprint.c:540
-#, fuzzy
 msgid "Case 1: No constant"
-msgstr "%s è una costante"
+msgstr "Caso 1: senza costante"
 
 #: lib/src/varprint.c:541
-#, fuzzy
 msgid "Case 2: Restricted constant"
-msgstr "Costante generata automaticamente"
+msgstr "Caso 2: costante vincolata"
 
 #: lib/src/varprint.c:542
-#, fuzzy
 msgid "Case 3: Unrestricted constant"
-msgstr "Costante generata automaticamente"
+msgstr "Caso 3: costante non vincolata"
 
 #: lib/src/varprint.c:543
 msgid "Case 4: Restricted trend, unrestricted constant"
-msgstr ""
+msgstr "Caso 4: trend vincolato, costante non vincolata"
 
 #: lib/src/varprint.c:544
 msgid "Case 5: Unrestricted trend and constant"
-msgstr ""
+msgstr "Caso 5: trend e costante non vincolati"
 
 #: lib/src/varprint.c:688
-#, fuzzy
 msgid "Cointegration rank"
-msgstr "Cointegrazione"
+msgstr "Rango di cointegrazione"
 
 #: lib/src/varprint.c:735 lib/src/varprint.c:737
-#, fuzzy, c-format
+#, c-format
 msgid "VECM system, lag order %d"
-msgstr ""
-"\n"
-"Sistema VAR, ordine ritardi %d\n"
-"\n"
+msgstr "Sistema VECM, ordine ritardi %d"
 
 #: lib/src/varprint.c:741 lib/src/varprint.c:743
-#, fuzzy, c-format
+#, c-format
 msgid "VAR system, lag order %d"
-msgstr ""
-"\n"
-"Sistema VAR, ordine ritardi %d\n"
-"\n"
+msgstr "Sistema VAR, ordine ritardi %d"
 
 #: lib/src/varprint.c:750
-#, fuzzy, c-format
+#, c-format
 msgid "%s estimates, observations %s--%s ($T=%d$)"
-msgstr "Stime %s usando le %d osservazioni %s%s%s"
+msgstr "Stime %s usando le osservazioni %s--%s ($T=%d$)"
 
 #: lib/src/varprint.c:751 lib/src/varprint.c:760
-#, fuzzy
 msgid "Maximum likelihood"
 msgstr "Massima verosimiglianza"
 
 #: lib/src/varprint.c:759
-#, fuzzy, c-format
+#, c-format
 msgid "%s estimates, observations %s%-%s (T = %d)"
-msgstr "Stime %s usando le %d osservazioni %s%s%s"
+msgstr "Stime %s usando le osservazioni %s%-%s (T = %d)"
 
 #: lib/src/varprint.c:768
-#, fuzzy, c-format
+#, c-format
 msgid "%s estimates, observations %s-%s (T = %d)"
-msgstr "stime %s usando le %d osservazioni %s-%s\n"
+msgstr "Stime %s usando le osservazioni %s-%s (T = %d)"
 
 #: lib/src/varprint.c:815 lib/src/varprint.c:819 lib/src/varprint.c:822
-#, fuzzy
 msgid "Equation for "
-msgstr "Equazione"
+msgstr "Equazione per "
 
 #: lib/src/varprint.c:838 lib/src/varprint.c:841 lib/src/varprint.c:843
 msgid "F-tests of zero restrictions"
@@ -4870,16 +4847,15 @@ msgstr "Tutte le variabili, ritardi %-6d "
 #: lib/src/varprint.c:917
 #, c-format
 msgid "the longest lag is %d"
-msgstr ""
+msgstr "il ritardo maggiore è %d"
 
 #: lib/src/varprint.c:921 lib/src/varprint.c:928 lib/src/varprint.c:935
 msgid "For the system as a whole"
-msgstr ""
+msgstr "Per il sistema nel complesso"
 
 #: lib/src/varprint.c:923 lib/src/varprint.c:930 lib/src/varprint.c:937
-#, fuzzy
 msgid "Alternative hypothesis"
-msgstr "Statistica alternativa"
+msgstr "Ipotesi alternativa"
 
 #: cli/cli_object.c:90 gui2/objectsave.c:120
 #, c-format
@@ -5207,49 +5183,40 @@ msgid "/File/Open data/sep1"
 msgstr "/File/Apri dati/sep1"
 
 #: gui/gretl.c:182 gui2/gretl.c:242
-#, fuzzy
 msgid "/File/Open data/Import"
-msgstr "/File/Apri dati/sep"
+msgstr "/File/Apri dati/Importa"
 
 #: gui/gretl.c:183 gui2/gretl.c:243
-#, fuzzy
 msgid "/File/Open data/Import/CSV..."
-msgstr "/File/Apri dati/Importa _CSV..."
+msgstr "/File/Apri dati/Importa/_CSV..."
 
 #: gui/gretl.c:184 gui2/gretl.c:244
-#, fuzzy
 msgid "/File/Open data/Import/ASCII..."
-msgstr "/File/Apri dati/Importa _ASCII..."
+msgstr "/File/Apri dati/Importa/_ASCII..."
 
 #: gui/gretl.c:185 gui2/gretl.c:245
-#, fuzzy
 msgid "/File/Open data/Import/Octave..."
-msgstr "/File/Apri dati/Importa _Octave..."
+msgstr "/File/Apri dati/Importa/_Octave..."
 
 #: gui/gretl.c:186 gui2/gretl.c:248 gui2/gretl.c:250
-#, fuzzy
 msgid "/File/Open data/Import/Gnumeric..."
-msgstr "/File/Apri dati/Importa _Gnumeric..."
+msgstr "/File/Apri dati/Importa/_Gnumeric..."
 
 #: gui/gretl.c:187 gui2/gretl.c:247 gui2/gretl.c:251
-#, fuzzy
 msgid "/File/Open data/Import/Excel..."
-msgstr "/File/Apri dati/Importa _Excel..."
+msgstr "/File/Apri dati/Importa/_Excel..."
 
 #: gui/gretl.c:188 gui2/gretl.c:253
-#, fuzzy
 msgid "/File/Open data/Import/Eviews..."
-msgstr "/File/Apri dati/Importa _Excel..."
+msgstr "/File/Apri dati/Importa/_Eviews..."
 
 #: gui/gretl.c:189 gui2/gretl.c:254
-#, fuzzy
 msgid "/File/Open data/Import/Stata..."
-msgstr "/File/Apri dati/Importa _CSV..."
+msgstr "/File/Apri dati/Importa/_Stata..."
 
 #: gui/gretl.c:190 gui2/gretl.c:255
-#, fuzzy
 msgid "/File/Open data/Import/BOX..."
-msgstr "/File/Apri dati/Importa _BOX..."
+msgstr "/File/Apri dati/Importa/_BOX..."
 
 #: gui/gretl.c:193 gui2/gretl.c:258
 msgid "/File/_Append data"
@@ -5280,14 +5247,12 @@ msgid "/File/Append data/from Excel..."
 msgstr "/File/Aggiungi dati/Da _Excel..."
 
 #: gui/gretl.c:200 gui2/gretl.c:265
-#, fuzzy
 msgid "/File/Append data/from Eviews..."
-msgstr "/File/Aggiungi dati/Da _Excel..."
+msgstr "/File/Aggiungi dati/Da _Eviews..."
 
 #: gui/gretl.c:201 gui2/gretl.c:266
-#, fuzzy
 msgid "/File/Append data/from Stata..."
-msgstr "/File/Aggiungi dati/Da _CSV..."
+msgstr "/File/Aggiungi dati/Da _Stata..."
 
 #: gui/gretl.c:204 gui2/gretl.c:269
 msgid "/File/_Save data"
@@ -5330,9 +5295,8 @@ msgid "/File/Export data/_PcGive..."
 msgstr "/File/Esporta dati/_PcGive..."
 
 #: gui/gretl.c:217 gui2/gretl.c:285
-#, fuzzy
 msgid "/File/Send To..."
-msgstr "/File/Stam_pa..."
+msgstr "/File/_Invia a..."
 
 #  "Abbandona" è più appropriato di "Cancella" per questa operazione
 #: gui/gretl.c:219 gui2/gretl.c:287
@@ -5777,9 +5741,8 @@ msgid "/Data/Add observations..."
 msgstr "/Dati/Aggiungi osservazioni..."
 
 #: gui/gretl.c:387 gui2/gretl.c:465
-#, fuzzy
 msgid "/Data/Remove extra observations"
-msgstr "/Dati/Aggiungi osservazioni..."
+msgstr "/Dati/Rimuovi osservazioni in più"
 
 #: gui/gretl.c:388 gui2/gretl.c:466
 msgid "/Data/Refresh window"
@@ -5810,9 +5773,8 @@ msgid "/Sample/Compact data..."
 msgstr "/Campione/_Compatta dati..."
 
 #: gui/gretl.c:397 gui2/gretl.c:475
-#, fuzzy
 msgid "/Sample/Expand data..."
-msgstr "/Campione/_Compatta dati..."
+msgstr "/Campione/_Espandi dati..."
 
 #: gui/gretl.c:398 gui2/gretl.c:476
 msgid "/Sample/sep2"
@@ -6059,14 +6021,12 @@ msgid "/Model/Nonlinear Least Squares..."
 msgstr "/Modello/_NLS - Minimi quadrati non lineari..."
 
 #: gui/gretl.c:479 gui2/gretl.c:559
-#, fuzzy
 msgid "/Model/Maximum likelihood..."
-msgstr "Massima verosimiglianza"
+msgstr "/Modello/_ML - Massima verosimiglianza..."
 
 #: gui/gretl.c:480 gui2/gretl.c:560
-#, fuzzy
 msgid "/Model/Simultaneous equations..."
-msgstr "/Modello/SPEA_RMAN - Correlazione di rango..."
+msgstr "/Modello/_Equazioni simultanee..."
 
 #: gui/gretl.c:482 gui2/gretl.c:562
 msgid "/Model/High precision OLS..."
@@ -6077,23 +6037,20 @@ msgid "/_Help"
 msgstr "/A_iuto"
 
 #: gui/gretl.c:485 gui2/gretl.c:567
-#, fuzzy
 msgid "/Help/_Command reference"
-msgstr "/File/Preferen_ze"
+msgstr "/Aiuto/Guida _Comandi"
 
 #: gui/gretl.c:486 gui2/gretl.c:568
-#, fuzzy
 msgid "/Help/_Manual"
-msgstr "/Aiuto/Manuale in PDF"
+msgstr "/Aiuto/_Manuale"
 
 #: gui/gretl.c:487 gui2/gretl.c:569
 msgid "/Help/sep1"
 msgstr "/Aiuto/sep1"
 
 #: gui/gretl.c:488 gui2/gretl.c:570
-#, fuzzy
 msgid "/Help/Check for _updates"
-msgstr "/Aiuto/_Controlla aggiornamenti"
+msgstr "/Aiuto/Controlla _aggiornamenti"
 
 #: gui/gretl.c:489 gui2/gretl.c:571
 msgid "/Help/sep2"
@@ -6327,13 +6284,12 @@ msgid "No undo information available"
 msgstr "Mancano informazioni per annullare"
 
 #: gui/textbuf.c:192 gui2/textbuf.c:521
-#, fuzzy
 msgid "Gretl Command Reference"
-msgstr "gretl file di comandi (*.inp)"
+msgstr "Guida ai comandi di gretl"
 
 #: gui/textbuf.c:193 gui2/textbuf.c:522
 msgid "Please select from the Topics list"
-msgstr ""
+msgstr "Selezionare dall'elenco degli argomenti"
 
 #: gui2/about.c:37
 msgid ""
@@ -6555,11 +6511,11 @@ msgstr "gretl: tavole statistiche"
 #: gui2/calculator.c:311
 #, c-format
 msgid "Binomial distribution: p = %g, %d trials"
-msgstr ""
+msgstr "Distribuzione binomiale: p = %g, %d prove"
 
 #: gui2/calculator.c:313
 msgid "x = number of 'successes'"
-msgstr ""
+msgstr "x = numero di \"successi\""
 
 #: gui2/calculator.c:351 gui2/calculator.c:376
 msgid "Invalid standard deviation"
@@ -6683,14 +6639,14 @@ msgstr ""
 " n = %d, media = %g, d.s. = %g\n"
 
 #: gui2/calculator.c:685 gui2/calculator.c:694
-#, fuzzy, c-format
+#, c-format
 msgid " standard error of mean = %g\n"
-msgstr "Errore standard dei residui = %g"
+msgstr " errore standard della media = %g\n"
 
 #: gui2/calculator.c:687 gui2/calculator.c:696
-#, fuzzy, c-format
+#, c-format
 msgid " 95%% confidence interval for mean: %g to %g\n"
-msgstr " intervallo di confidenza al 95%%\n"
+msgstr " intervallo di confidenza al 95%% per la media: da %g a %g\n"
 
 #: gui2/calculator.c:691
 #, c-format
@@ -6824,9 +6780,8 @@ msgid "gamma"
 msgstr "gamma"
 
 #: gui2/calculator.c:927
-#, fuzzy
 msgid "binomial"
-msgstr "Normale"
+msgstr "binomiale"
 
 #: gui2/calculator.c:948 gui2/calculator.c:957
 msgid "value"
@@ -6854,19 +6809,16 @@ msgid "variance"
 msgstr "Varianza"
 
 #: gui2/calculator.c:982
-#, fuzzy
 msgid "Prob"
-msgstr "Probit"
+msgstr "Prob"
 
 #: gui2/calculator.c:983
-#, fuzzy
 msgid "trials"
-msgstr "Residui"
+msgstr "prove"
 
 #: gui2/calculator.c:1301
-#, fuzzy
 msgid "Use variable from dataset"
-msgstr "variabile dummy per il test Chow"
+msgstr "Usa variabile dal dataset"
 
 #: gui2/calculator.c:1429
 msgid "proportion"
@@ -7013,14 +6965,12 @@ msgid "Open Excel file"
 msgstr "Apri file Excel"
 
 #: gui2/callbacks.c:247
-#, fuzzy
 msgid "Open Eviews workfile"
-msgstr "Apri file Excel"
+msgstr "Apri file Eviews"
 
 #: gui2/callbacks.c:251
-#, fuzzy
 msgid "Open Stata file"
-msgstr "Apri file dati"
+msgstr "Apri file Stata"
 
 #: gui2/callbacks.c:254
 msgid "gretl: add markers"
@@ -7089,14 +7039,12 @@ msgid "gretl: cointegration test"
 msgstr "gretl: test di cointegrazione"
 
 #: gui2/callbacks.c:412
-#, fuzzy
 msgid "gretl: VAR"
-msgstr "gretl: ARMA"
+msgstr "gretl: VAR"
 
 #: gui2/callbacks.c:412 gui2/library.c:2777
-#, fuzzy
 msgid "gretl: VECM"
-msgstr "gretl: ARMA"
+msgstr "gretl: VECM"
 
 #: gui2/callbacks.c:435 gui2/callbacks.c:443
 msgid "gretl: define graph"
@@ -7159,14 +7107,12 @@ msgid "Specify variables to plot:"
 msgstr "Specificare le variabili:"
 
 #: gui2/callbacks.c:510
-#, fuzzy
 msgid "gretl: maximum likelihood"
-msgstr "Massima verosimiglianza"
+msgstr "gretl: massima verosimiglianza"
 
 #: gui2/callbacks.c:511
-#, fuzzy
 msgid "MLE: Specify function, and derivatives if possible:"
-msgstr "NLS: specificare la funzione e le derivate, se possibile:"
+msgstr "MLE: specificare la funzione e le derivate, se possibile:"
 
 #: gui2/callbacks.c:516
 msgid "gretl: nonlinear least squares"
@@ -7177,14 +7123,12 @@ msgid "NLS: Specify function, and derivatives if possible:"
 msgstr "NLS: specificare la funzione e le derivate, se possibile:"
 
 #: gui2/callbacks.c:522 gui2/library.c:2376
-#, fuzzy
 msgid "gretl: simultaneous equations system"
-msgstr "gretl: dati di simulazione"
+msgstr "gretl: sistema di equazioni simultanee"
 
 #: gui2/callbacks.c:523
-#, fuzzy
 msgid "Specify simultaneous equations:"
-msgstr "Specificare i vincoli:"
+msgstr "Specificare le equazioni simultanee:"
 
 #: gui2/callbacks.c:528
 msgid "gretl: linear restrictions"
@@ -7293,6 +7237,12 @@ msgid ""
 "repeating each value %d times.  In general, this is\n"
 "not a valid thing to do."
 msgstr ""
+"Si desidera davvero aggiungere una serie con frequenza minore\n"
+"di quella del dataset?\n"
+"\n"
+"Rispondendo \"sì\", i dati della serie verranno espansi\n"
+"ripetendo ogni valore per %d volte. In generale questa\n"
+"procedura non è consigliabile."
 
 #: gui2/database.c:299
 msgid ""
@@ -7581,23 +7531,20 @@ msgid "period (.)"
 msgstr "punto (.)"
 
 #: gui2/dialogs.c:470
-#, fuzzy
 msgid "include observations column"
-msgstr "Aggiungi osservazioni"
+msgstr "includi la colonna delle osservazioni"
 
 #: gui2/dialogs.c:663
-#, fuzzy
 msgid "gretl: select format"
-msgstr "gretl: formato dati"
+msgstr "gretl: scelta formato"
 
 #: gui2/dialogs.c:679
 msgid "Copy as:"
 msgstr "Copia come:"
 
 #: gui2/dialogs.c:679
-#, fuzzy
 msgid "Save as"
-msgstr "Salva come..."
+msgstr "Salva come"
 
 #: gui2/dialogs.c:719
 msgid "plain text"
@@ -7726,9 +7673,8 @@ msgid "Number of observations to add:"
 msgstr "Numero di osservazioni da aggiungere:"
 
 #: gui2/dialogs.c:1882
-#, fuzzy
 msgid "select variable"
-msgstr "Variabile offset"
+msgstr "scelta variabile"
 
 #: gui2/dialogs.c:1991 gui2/dialogs.c:2279 gui2/dialogs.c:3019
 #: gui2/menustate.c:450
@@ -7795,39 +7741,36 @@ msgstr "annuale"
 
 #: gui2/dialogs.c:2175
 msgid "Compact quarterly data to annual"
-msgstr "Compattare dati trimestrali in annuali"
+msgstr "Compatta dati trimestrali in annuali"
 
 #: gui2/dialogs.c:2178
 msgid "Compact monthly data to:"
-msgstr "Compattare dati mensili in:"
+msgstr "Compatta dati mensili in:"
 
 #: gui2/dialogs.c:2184
 msgid "Compact daily data to:"
-msgstr "Compattare dati giornalieri in:"
+msgstr "Compatta dati giornalieri in:"
 
 #: gui2/dialogs.c:2187
 msgid "Compact daily data to weekly"
-msgstr "Compattare dati giornalieri in settimanali"
+msgstr "Compatta dati giornalieri in settimanali"
 
 #: gui2/dialogs.c:2194
-#, fuzzy
 msgid "Compact weekly data to monthly"
-msgstr "Compattare dati giornalieri in settimanali"
+msgstr "Compatta dati settimanali in mensili"
 
 #: gui2/dialogs.c:2328
-#, fuzzy, c-format
+#, c-format
 msgid "Adding %s series to %s dataset"
 msgstr "Si sta aggiungendo una serie %s a un dataset %s"
 
 #: gui2/dialogs.c:2334
-#, fuzzy
 msgid "Expand annual data to:"
-msgstr "dati annuali"
+msgstr "Espandi dati annuali in:"
 
 #: gui2/dialogs.c:2339
-#, fuzzy
 msgid "Expand quarterly data to monthly"
-msgstr "Compattare dati trimestrali in annuali"
+msgstr "Espandi dati trimestrali in annuali"
 
 #: gui2/dialogs.c:2495
 msgid "density estimation options"
@@ -8070,27 +8013,24 @@ msgid "Find next"
 msgstr "Trova successivo"
 
 #: gui2/dlgutils.c:495
-#, fuzzy
 msgid "Add equation"
-msgstr "Aggiungi osservazione"
+msgstr "Aggiungi equazione"
 
 #: gui2/dlgutils.c:496
-#, fuzzy
 msgid "Add derivative"
-msgstr "Aggiungi osservazione"
+msgstr "Aggiungi derivata"
 
 #: gui2/dlgutils.c:497
 msgid "Add identity"
-msgstr ""
+msgstr "Aggiungi identità"
 
 #: gui2/dlgutils.c:498
-#, fuzzy
 msgid "Add list of endogenous variables"
-msgstr "Prima variabile dipendente"
+msgstr "Aggiungi lista delle variabili endogene"
 
 #: gui2/dlgutils.c:499
 msgid "Add list of instruments"
-msgstr ""
+msgstr "Aggiungi lista degli strumenti"
 
 #: gui2/dlgutils.c:581
 msgid "add to current restriction"
@@ -8227,9 +8167,8 @@ msgid "TeX files (*.tex)"
 msgstr "file TeX (*.tex)"
 
 #: gui2/fileselect.c:648
-#, fuzzy
 msgid "RTF files (*.rtf)"
-msgstr "file TeX (*.tex)"
+msgstr "file RTF (*.rtf)"
 
 #: gui2/fileselect.c:655 gui2/fileselect.c:656
 msgid "ASCII files (*.txt)"
@@ -8248,14 +8187,12 @@ msgid "Excel files (*.xls)"
 msgstr "file Excel (*.xls)"
 
 #: gui2/fileselect.c:662 gui2/fileselect.c:663
-#, fuzzy
 msgid "Eviews workfiles (*.wf1)"
-msgstr "file xfig (*.fig)"
+msgstr "file di lavoro di Eviews (*.wf1)"
 
 #: gui2/fileselect.c:664 gui2/fileselect.c:665
-#, fuzzy
 msgid "Stata files (*.dta)"
-msgstr "gretl file di dati (*.dat)"
+msgstr "File di Stata (*.dta)"
 
 #: gui2/fileselect.c:666
 msgid "program files (*.exe)"
@@ -8323,14 +8260,12 @@ msgid "Save as PNG..."
 msgstr "Salva come PNG..."
 
 #: gui2/gpt_control.c:1764 gui2/gpt_control.c:1849
-#, fuzzy
 msgid "Save as PDF..."
-msgstr "Salva come PS"
+msgstr "Salva come PDF..."
 
 #: gui2/gpt_control.c:1776 gui2/gpt_control.c:1858
-#, fuzzy
 msgid "Freeze data labels"
-msgstr "Cancella le etichette dei dati"
+msgstr "Blocca le etichette dei dati"
 
 #: gui2/gpt_control.c:1779 gui2/gpt_control.c:1859
 msgid "Clear data labels"
@@ -8354,9 +8289,8 @@ msgid "Print..."
 msgstr "Stampa..."
 
 #: gui2/gpt_control.c:1801 gui2/gpt_control.c:1868
-#, fuzzy
 msgid "OLS estimates"
-msgstr "stime %s"
+msgstr "stime OLS"
 
 #: gui2/gpt_control.c:1803 gui2/gpt_control.c:1869 gui2/session.c:168
 #: gui2/session.c:176 gui2/session.c:2255 gui2/session.c:2263
@@ -8428,9 +8362,8 @@ msgid "Hide fitted line"
 msgstr "Nascondi la linea dei valori stimati"
 
 #: gui2/gpt_dialog.c:704
-#, fuzzy
 msgid "Show all data labels"
-msgstr "Cancella le etichette dei dati"
+msgstr "Mostra tutte le etichette dei dati"
 
 #: gui2/gpt_dialog.c:737 gui2/gpt_dialog.c:739
 msgid "None"
@@ -8776,9 +8709,8 @@ msgstr "Salva i dati"
 
 #: gui2/gui_utils.c:216 gui2/gui_utils.c:269 gui2/gui_utils.c:349
 #: gui2/gui_utils.c:405
-#, fuzzy
 msgid "/File/_Save as..."
-msgstr "/File/Sa_lva come testo..."
+msgstr "/File/Sa_lva come..."
 
 #: gui2/gui_utils.c:218 gui2/gui_utils.c:270 gui2/gui_utils.c:351
 #: gui2/gui_utils.c:363 gui2/gui_utils.c:406 gui2/gui_utils.c:418
@@ -8926,9 +8858,8 @@ msgid "/Model data/Confidence intervals for coefficients"
 msgstr "/Dati modello/Intervalli di confidenza per i coefficienti"
 
 #: gui2/gui_utils.c:257 gui2/gui_utils.c:310
-#, fuzzy
 msgid "/Model data/Confidence ellipse..."
-msgstr "/Dati modello/Definisci nuova variabile..."
+msgstr "/Dati modello/Ellisse di confidenza..."
 
 #: gui2/gui_utils.c:259 gui2/gui_utils.c:312
 msgid "/Model data/coefficient covariance matrix"
@@ -8988,9 +8919,8 @@ msgid "Unrecognized data type"
 msgstr "Tipo di dati sconosciuto"
 
 #: gui2/gui_utils.c:1034
-#, fuzzy
 msgid "Failed to import data"
-msgstr "Impossibile importare dati del foglio elettronico"
+msgstr "Impossibile importare i dati"
 
 #: gui2/gui_utils.c:1063 gui2/gui_utils.c:1204
 msgid "gretl: open data"
@@ -9002,6 +8932,9 @@ msgid ""
 "(cross-sectional).  Do you want to give the data a\n"
 "time-series or panel interpretation?"
 msgstr ""
+"I dati importati sono stati interpretati come non datati\n"
+"(cross-section). Si desidera interpretare i dati come\n"
+"serie storiche o panel?"
 
 #: gui2/gui_utils.c:1205
 msgid ""
@@ -9028,12 +8961,11 @@ msgstr ""
 "non salvato andrà perso. Procedere con l'apertura?"
 
 #: gui2/gui_utils.c:1244
-#, fuzzy
 msgid ""
 "There is already a session file of this name.\n"
 "OK to overwrite it?"
 msgstr ""
-"Esiste già un file di dati con questo nome.\n"
+"Esiste già un file di sessione con questo nome.\n"
 "Conferma la sovrascrittura?"
 
 #: gui2/gui_utils.c:1293
@@ -9080,9 +9012,8 @@ msgid "Can't open file for writing"
 msgstr "Impossibile aprire il file per la scrittura"
 
 #: gui2/gui_utils.c:1722
-#, fuzzy
 msgid "Nothing to send"
-msgstr "end: non c'è niente da finire"
+msgstr "Non c'è niente da inviare"
 
 #: gui2/gui_utils.c:1757 gui2/gui_utils.c:1784 gui2/session.c:180
 #: gui2/session.c:2243 gui2/textutil.c:476 gui2/textutil.c:490
@@ -9119,18 +9050,16 @@ msgid "Undo"
 msgstr "Annulla"
 
 #: gui2/gui_utils.c:1769 gui2/gui_utils.c:1796
-#, fuzzy
 msgid "Sort"
-msgstr "Inizio"
+msgstr "Ordina"
 
 #: gui2/gui_utils.c:1770 gui2/gui_utils.c:1797
 msgid "Sort by..."
-msgstr ""
+msgstr "Ordina per..."
 
 #: gui2/gui_utils.c:1771 gui2/gui_utils.c:1798
-#, fuzzy
 msgid "Send To..."
-msgstr "Salva come..."
+msgstr "Invia a..."
 
 #: gui2/gui_utils.c:1772 gui2/gui_utils.c:1799
 msgid "Help on command"
@@ -9142,7 +9071,7 @@ msgstr "LaTeX"
 
 #: gui2/gui_utils.c:1775 gui2/gui_utils.c:1802
 msgid "Reformat..."
-msgstr ""
+msgstr "Riformatta..."
 
 #: gui2/gui_utils.c:1776 gui2/gui_utils.c:1803
 msgid "Add to dataset..."
@@ -9288,7 +9217,7 @@ msgstr "/Grafici/Separazione"
 #: gui2/gui_utils.c:3229 gui2/gui_utils.c:3235
 #, c-format
 msgid "%s"
-msgstr ""
+msgstr "%s"
 
 #: gui2/gui_utils.c:3242
 #, c-format
@@ -9305,33 +9234,28 @@ msgid "impulse responses"
 msgstr "impulso-risposta"
 
 #: gui2/gui_utils.c:3301
-#, fuzzy
 msgid "variance decompositions"
-msgstr "Usa la scomposizione QR"
+msgstr "scomposizioni della varianza"
 
 #: gui2/gui_utils.c:3303 gui2/gui_utils.c:3407
 msgid "forecast horizon (periods):"
 msgstr "orizzonte di previsione (periodi)"
 
 #: gui2/gui_utils.c:3313
-#, fuzzy
 msgid "gretl: VAR covariance matrix"
-msgstr "Inversa della matrice di covarianza"
+msgstr "gretl: matrice di covarianza VAR"
 
 #: gui2/gui_utils.c:3316
-#, fuzzy
 msgid "gretl: VAR impulse responses"
-msgstr "impulso-risposta"
+msgstr "gretl: impulso-risposta VAR"
 
 #: gui2/gui_utils.c:3319
-#, fuzzy
 msgid "gretl: VAR variance decompositions"
-msgstr "gretl: test delle varianze"
+msgstr "gretl: scomposizioni della varianza VAR"
 
 #: gui2/gui_utils.c:3351
-#, fuzzy
 msgid "heteroskedasticity (White's test)"
-msgstr "/Test/Eteroschedasticità (test di White)"
+msgstr "eteroschedasticità (test di White)"
 
 #: gui2/gui_utils.c:3373
 msgid "x12sep"
@@ -9342,9 +9266,8 @@ msgid "view X-12-ARIMA output"
 msgstr "Visualizza risultati X-12-ARIMA"
 
 #: gui2/gui_utils.c:3395
-#, fuzzy
 msgid "include bootstrap confidence interval"
-msgstr "Impossibile calcolare l'intervallo di confidenza"
+msgstr "includi l'intervallo di confidenza bootstrap"
 
 #: gui2/gui_utils.c:3507 gui2/library.c:1338
 msgid "gretl: forecasts"
@@ -9368,55 +9291,48 @@ msgid "gretl: LM test (autocorrelation)"
 msgstr "gretl: test LM (autocorrelazione)"
 
 #: gui2/gui_utils.c:3602 gui2/gui_utils.c:3832
-#, fuzzy
 msgid "/Tests"
-msgstr "/_Test"
+msgstr "/Test"
 
 #: gui2/gui_utils.c:3603
 msgid "/Graphs"
 msgstr "/Grafici"
 
 #: gui2/gui_utils.c:3604
-#, fuzzy
 msgid "/Model data"
-msgstr "/_Dati modello"
+msgstr "/Dati modello"
 
 #: gui2/gui_utils.c:3605
-#, fuzzy
 msgid "/Model data/Forecasts"
-msgstr "/Dati modello/Previsione..."
+msgstr "/Dati modello/Previsione"
 
 #: gui2/gui_utils.c:3642
-#, fuzzy
 msgid "autocorrelation"
-msgstr "Non c'è autocorrelazione"
+msgstr "autocorrelazione"
 
 #: gui2/gui_utils.c:3651 gui2/model_table.c:335
 msgid "ARCH"
 msgstr "ARCH"
 
 #: gui2/gui_utils.c:3660 gui2/gui_utils.c:3861
-#, fuzzy
 msgid "normality of residuals"
-msgstr "/Test/TESTUHAT - Normalità residui"
+msgstr "normalità dei residui"
 
 #: gui2/gui_utils.c:3670 gui2/library.c:2263
 msgid "linear restrictions"
 msgstr "vincoli lineari"
 
 #: gui2/gui_utils.c:3697
-#, fuzzy
 msgid "forecast variance decomposition"
-msgstr "Usa la scomposizione QR"
+msgstr "scomposizione della varianza di previsione"
 
 #: gui2/gui_utils.c:3705
-#, fuzzy
 msgid "residual plot"
-msgstr "/Grafici/Residui"
+msgstr "grafico dei residui"
 
 #: gui2/gui_utils.c:3713
 msgid "VAR inverse roots"
-msgstr ""
+msgstr "Radici inverse del VAR"
 
 #: gui2/gui_utils.c:3736 gui2/gui_utils.c:3871
 msgid "residuals from equation"
@@ -9931,19 +9847,17 @@ msgid "Error generating index variable"
 msgstr "Errore nella generazione della variabile indice"
 
 #: gui2/library.c:3642
-#, fuzzy, c-format
+#, c-format
 msgid "Really delete the last %d observations?"
-msgstr "Dataset completo: %d osservazioni\n"
+msgstr "Cancellare davvero le ultime %d osservazioni?"
 
 #: gui2/library.c:3644
-#, fuzzy
 msgid "gretl: drop observations"
-msgstr "gretl: opzioni"
+msgstr "gretl: elimina osservazioni"
 
 #: gui2/library.c:3658
-#, fuzzy
 msgid "There are no extra observations to drop"
-msgstr "Ci sono osservazioni mancanti"
+msgstr "Non ci sono osservazioni in più da eliminare"
 
 #: gui2/library.c:3681
 msgid "gretl: generate lags"
@@ -10072,19 +9986,17 @@ msgstr ""
 "Ripristinare il campione completo ora?"
 
 #: gui2/library.c:5016
-#, fuzzy
 msgid "gretl: Expand data"
-msgstr "gretl: apri dati"
+msgstr "gretl: espandi dati"
 
 #: gui2/library.c:5017
-#, fuzzy
 msgid ""
 "The data set is currently sub-sampled.\n"
 "You must restore the full range before expanding.\n"
 "Restore the full range now?"
 msgstr ""
 "Al momento il campione del dataset è ridotto.\n"
-"Occorre ripristinare il campione completo prima di compattare.\n"
+"Occorre ripristinare il campione completo prima di espandere.\n"
 "Ripristinare il campione completo ora?"
 
 #: gui2/library.c:5044
@@ -10102,7 +10014,6 @@ msgstr ""
 "Procedere?"
 
 #: gui2/library.c:5057
-#, fuzzy
 msgid "Data transposed"
 msgstr "Dati trasposti"
 
@@ -10209,12 +10120,10 @@ msgid "/Model/Time series/_Autoregressive estimation..."
 msgstr "/Modello/Serie storiche/_AR - Stima autoregressiva..."
 
 #: gui2/menustate.c:107 gui2/menustate.c:125
-#, fuzzy
 msgid "/Model/Time series/AR_MA..."
-msgstr "/Modello/Serie storiche/ARMA_X..."
+msgstr "/Modello/Serie storiche/AR_MA..."
 
 #: gui2/menustate.c:108 gui2/menustate.c:126
-#, fuzzy
 msgid "/Model/Time series/_GARCH..."
 msgstr "/Modello/Serie storiche/_GARCH..."
 
@@ -10223,9 +10132,8 @@ msgid "/Model/Time series/_Vector Autoregression..."
 msgstr "/Modello/Serie storiche/_VAR - Autoregressione vettoriale..."
 
 #: gui2/menustate.c:110 gui2/menustate.c:128
-#, fuzzy
 msgid "/Model/Time series/VECM..."
-msgstr "/Modello/Serie storiche/_GARCH..."
+msgstr "/Modello/Serie storiche/V_ECM..."
 
 #: gui2/menustate.c:111 gui2/menustate.c:129
 msgid "/Model/Time series/Cointegration test"
@@ -10502,9 +10410,8 @@ msgid "You must specify a list of lags"
 msgstr "Occorre specificare una lista di ritardi"
 
 #: gui2/selector.c:1383
-#, fuzzy
 msgid "You must select two or more endogenous variables"
-msgstr "Occorre scegliere una variabile dipendente"
+msgstr "Occorre scegliere due o più variabili endogene"
 
 #: gui2/selector.c:1409
 msgid "You must select a Z-axis variable"
@@ -10587,9 +10494,8 @@ msgid "lag order:"
 msgstr "Ordine dei ritardi:"
 
 #: gui2/selector.c:1834
-#, fuzzy
 msgid "cointegration rank:"
-msgstr "Cointegrazione"
+msgstr "rango di cointegrazione:"
 
 #: gui2/selector.c:1870
 msgid "Factor (dummy)"
@@ -10612,19 +10518,16 @@ msgid "Deterministic variables"
 msgstr "Variabili deterministiche"
 
 #: gui2/selector.c:1980
-#, fuzzy
 msgid "Exogenous variables"
-msgstr "Nessuna variabile trovata"
+msgstr "Variabili esogene"
 
 #: gui2/selector.c:2139
-#, fuzzy
 msgid "Non-seasonal"
-msgstr "Termini AR non stagionali:"
+msgstr "Non stagionale"
 
 #: gui2/selector.c:2141
-#, fuzzy
 msgid "Seasonal"
-msgstr "Comandi"
+msgstr "Stagionale"
 
 #: gui2/selector.c:2153
 msgid "AR order:"
@@ -10651,18 +10554,16 @@ msgid "configure"
 msgstr "configura"
 
 #: gui2/selector.c:2293
-#, fuzzy
 msgid "Include a constant"
-msgstr "includi un trend"
+msgstr "Includi una costante"
 
 #: gui2/selector.c:2296
 msgid "Show details of regressions"
 msgstr "Mostra i dettagli delle regressioni"
 
 #: gui2/selector.c:2299
-#, fuzzy
 msgid "Include seasonal dummies"
-msgstr "Incluse %d unità cross section"
+msgstr "Includi dummy stagionali"
 
 #: gui2/selector.c:2308
 msgid "Fine-tune using Cochrane-Orcutt"
@@ -10677,29 +10578,24 @@ msgid "Use X-12-ARIMA"
 msgstr "Usa X-12-ARIMA"
 
 #: gui2/selector.c:2331
-#, fuzzy
 msgid "No constant"
-msgstr "la costante"
+msgstr "Senza costante"
 
 #: gui2/selector.c:2332
-#, fuzzy
 msgid "Restricted constant"
-msgstr "test con costante"
+msgstr "Costante vincolata"
 
 #: gui2/selector.c:2333
-#, fuzzy
 msgid "Unrestricted constant"
-msgstr "test con costante"
+msgstr "Costante non vincolata"
 
 #: gui2/selector.c:2334
-#, fuzzy
 msgid "Restricted trend"
-msgstr "Vincolo"
+msgstr "Trend vincolato"
 
 #: gui2/selector.c:2335
-#, fuzzy
 msgid "Unrestricted trend"
-msgstr "Log-verosimiglianza non vincolata"
+msgstr "Trend non vincolato"
 
 #: gui2/selector.c:2453
 msgid "plot with impulses"
@@ -10722,9 +10618,8 @@ msgid "Variables to test"
 msgstr "Variabili da testare"
 
 #: gui2/selector.c:2523
-#, fuzzy
 msgid "Endogenous variables"
-msgstr "Nessuna variabile trovata"
+msgstr "Variabili endogene"
 
 #: gui2/selector.c:2525
 msgid "Independent variables"
@@ -10819,9 +10714,8 @@ msgid "Copy data"
 msgstr "Copia i dati"
 
 #: gui2/series_view.c:377
-#, fuzzy
 msgid "Variable to sort by"
-msgstr "Variabili da testare"
+msgstr "Variabili per cui ordinare"
 
 #: gui2/series_view.c:542
 msgid "gretl: data format"
@@ -10860,9 +10754,8 @@ msgid "Options"
 msgstr "Opzioni"
 
 #: gui2/session.c:151 gui2/session.c:2332
-#, fuzzy
 msgid "Save as TeX..."
-msgstr "Salva come XPM"
+msgstr "Salva come TeX..."
 
 #: gui2/session.c:163 gui2/session.c:2298
 msgid "Edit plot commands"
@@ -10992,9 +10885,8 @@ msgid "Show gretl toolbar"
 msgstr "Mostra la barra degli strumenti di gretl"
 
 #: gui2/settings.c:182
-#, fuzzy
 msgid "Remember main window size"
-msgstr "finestra principale"
+msgstr "Ricorda la dimensione della finestra principale"
 
 #: gui2/settings.c:186
 msgid "Use locale setting for decimal point"
@@ -11006,7 +10898,7 @@ msgstr "Emula il look di Windows"
 
 #: gui2/settings.c:193
 msgid "Web browser"
-msgstr ""
+msgstr "Browser web"
 
 #: gui2/settings.c:196
 msgid "Command to launch gnuplot"
@@ -11029,9 +10921,8 @@ msgid "Command to view postscript files"
 msgstr "Comando per visualizzare i file postscript"
 
 #: gui2/settings.c:207
-#, fuzzy
 msgid "Command to view PDF files"
-msgstr "Comando per visualizzare i file DVI"
+msgstr "Comando per visualizzare i file PDF"
 
 #: gui2/settings.c:211
 msgid "Program to play MIDI files"
@@ -11259,9 +11150,8 @@ msgid "gretl manual (PDF)"
 msgstr "Manuale di gretl (PDF)"
 
 #: gui2/toolbar.c:197
-#, fuzzy
 msgid "command reference"
-msgstr "Riga di comando"
+msgstr "guida comandi"
 
 #: gui2/toolbar.c:198
 msgid "X-Y graph"
@@ -11363,14 +11253,12 @@ msgid "Failed to execute x12arima"
 msgstr "Impossibile eseguire x12arima"
 
 #: plugin/eviews_import.c:196
-#, fuzzy
 msgid "No variables were read\n"
-msgstr "Nessuna variabile indipendente è stata omessa"
+msgstr "Non è stata letta alcuna variabile\n"
 
 #: plugin/eviews_import.c:307
-#, fuzzy
 msgid "Error reading workfile header\n"
-msgstr "Errore nell'aggiunta delle variabili"
+msgstr "Errore nella lettura dell'intestazione del file di lavoro\n"
 
 #: plugin/excel_import.c:82
 msgid "Perhaps you need to adjust the starting column or row?"
@@ -11523,9 +11411,9 @@ msgstr ""
 "Rinominare questa variabile e riprovare"
 
 #: plugin/import_common.c:450 plugin/import_common.c:454
-#, fuzzy, c-format
+#, c-format
 msgid "Sending debugging output to %s"
-msgstr "Salvataggio dei risultati della sessione in %s%s\n"
+msgstr "Invio dell'output di debug a %s"
 
 #: plugin/import_common.c:557
 msgid "Sheet to import:"
@@ -11548,38 +11436,32 @@ msgid "row:"
 msgstr "Riga:"
 
 #: plugin/import_common.c:633 plugin/import_common.c:796
-#, fuzzy
 msgid "Produce debugging output"
-msgstr "Risultati sintetici"
+msgstr "Genera output di debug"
 
 #: plugin/johansen.c:232
-#, fuzzy
 msgid "renormalized beta"
-msgstr "rinormalizzato"
+msgstr "beta rinormalizzato"
 
 #: plugin/johansen.c:233
-#, fuzzy
 msgid "renormalized alpha"
-msgstr "rinormalizzato"
+msgstr "alfa rinormalizzato"
 
 #: plugin/johansen.c:236
-#, fuzzy
 msgid "beta (cointegrating vectors)"
-msgstr "vettore di cointegrazione"
+msgstr "beta (vettori di cointegrazione)"
 
 #: plugin/johansen.c:237
-#, fuzzy
 msgid "alpha (adjustment vectors)"
-msgstr "fattore di aggiustamento della banda:"
+msgstr "alfa (vettori di aggiustamento)"
 
 #: plugin/johansen.c:327
 msgid "long-run matrix (alpha * beta')"
-msgstr ""
+msgstr "matrice di lungo periodo (alfa * beta')"
 
 #: plugin/johansen.c:756
-#, fuzzy
 msgid "eigenvalue"
-msgstr "Autovalore"
+msgstr "autovalore"
 
 #: plugin/johansen.c:1015
 msgid "Rank"
@@ -11642,7 +11524,7 @@ msgstr "Non sono stati trovati punti influenti"
 #: plugin/logistic.c:61 plugin/logistic.c:64
 #, c-format
 msgid "The maximum must be greater than %g"
-msgstr ""
+msgstr "Il massimo deve essere maggiore di %g"
 
 #: plugin/logistic.c:93
 msgid "Logistic model"
@@ -11666,59 +11548,55 @@ msgstr "Valore invalido per il massimo della variabile dipendente"
 
 #: plugin/mailer.c:546
 msgid "To:"
-msgstr ""
+msgstr "To:"
 
 #: plugin/mailer.c:547
 msgid "Reply-To:"
-msgstr ""
+msgstr "Reply-To:"
 
 #: plugin/mailer.c:548
 msgid "Subject:"
-msgstr ""
+msgstr "Subject:"
 
 #: plugin/mailer.c:549
-#, fuzzy
 msgid "Note:"
-msgstr "Note"
+msgstr "Nota:"
 
 #: plugin/mailer.c:574
-#, fuzzy
 msgid "gretl: send mail"
-msgstr "gretl: modifica campione"
+msgstr "gretl: invia mail"
 
 #: plugin/mailer.c:585
 msgid "Message"
-msgstr ""
+msgstr "Messaggio"
 
 #: plugin/mailer.c:672
 msgid "Mail setup"
-msgstr ""
+msgstr "Impostazioni posta"
 
 #: plugin/mailer.c:680
 msgid "SMTP server:"
-msgstr ""
+msgstr "Server SMTP"
 
 #: plugin/mailer.c:690
-#, fuzzy
 msgid "port:"
-msgstr "Importa"
+msgstr "porta:"
 
 #: plugin/mailer.c:741
 msgid "POP server:"
-msgstr ""
+msgstr "Server POP:"
 
 #: plugin/mailer.c:742
 msgid "Username:"
-msgstr ""
+msgstr "Nome utente:"
 
 #: plugin/mailer.c:743
 msgid "Password:"
-msgstr ""
+msgstr "Password:"
 
 #: plugin/mailer.c:759
-#, fuzzy
 msgid "gretl: POP info"
-msgstr "gretl: informazioni"
+msgstr "gretl: informazioni POP"
 
 #: plugin/mp_ols.c:131
 #, c-format
@@ -12004,23 +11882,24 @@ msgid "p-value for H0: slope = 0 is %g\n"
 msgstr "Il p-value per H0: pendenza = 0 è %g\n"
 
 #: plugin/stata_import.c:246
-#, fuzzy
 msgid "unknown data type"
-msgstr "Tipo di dati sconosciuto"
+msgstr "tipo di dati sconosciuto"
 
 #: plugin/stata_import.c:454
 msgid ""
 "something strange in the file\n"
 "(Type 0 characteristic of nonzero length)"
 msgstr ""
+"problema nel file\n"
+"(caratteristica \"Type 0\" con lunghezza non nulla)"
 
 #: plugin/stata_import.c:612
 msgid "cannot read Stata .dta on this platform"
-msgstr ""
+msgstr "impossibile leggere il file .dta di Stata su questa piattaforma"
 
 #: plugin/stata_import.c:622
 msgid "This file does not seem to be a valid Stata dta file"
-msgstr ""
+msgstr "Il file non sembra essere un file dati di Stata"
 
 #: plugin/stats_tables.c:298
 msgid ""
@@ -12118,6 +11997,8 @@ msgid ""
 "Warning: the Hansen-Sargan over-identification test failed.\n"
 "This probably indicates that the estimation problem is ill-conditioned.\n"
 msgstr ""
+"Attenzione: il test di sovra-identificazione di Hansen-Sargan è fallito.\n"
+"Probabilmente il problema di stima è mal-condizionato.\n"
 
 #: plugin/sysest.c:482
 msgid "Hansen-Sargan over-identification test"
