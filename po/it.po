@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-11-21 22:03-0500\n"
-"PO-Revision-Date: 2005-11-21 11:33+0100\n"
+"PO-Revision-Date: 2005-11-22 09:42+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -6040,11 +6040,11 @@ msgstr "/A_iuto"
 
 #: gui/gretl.c:476 gui2/gretl.c:537
 msgid "/Help/_Command reference"
-msgstr "/Aiuto/Guida _Comandi"
+msgstr "/Aiuto/Guida _comandi"
 
 #: gui/gretl.c:477 gui2/gretl.c:538
 msgid "/Help/_User's guide"
-msgstr ""
+msgstr "/Aiuto/Guida all'_uso"
 
 #: gui/gretl.c:478 gui2/gretl.c:539
 msgid "/Help/sep1"
@@ -11027,9 +11027,8 @@ msgid "For GARCH estimation"
 msgstr "Per la stima GARCH"
 
 #: gui2/settings.c:286
-#, fuzzy
 msgid "PDF manual preference"
-msgstr "guida comandi"
+msgstr "Preferenze sulle guide PDF"
 
 #: gui2/settings.c:691
 msgid "gretl: options"
@@ -11045,19 +11044,19 @@ msgstr "Questa modifica avrà effetto al riavvio di gretl"
 
 #: gui2/settings.c:808
 msgid "English (US letter paper)"
-msgstr ""
+msgstr "Inglese (formato US letter)"
 
 #: gui2/settings.c:809
 msgid "English (A4 paper)"
-msgstr ""
+msgstr "Inglese (formato A4)"
 
 #: gui2/settings.c:810
 msgid "Italian"
-msgstr ""
+msgstr "Italiano"
 
 #: gui2/settings.c:811
 msgid "Spanish"
-msgstr ""
+msgstr "Spagnolo"
 
 #: gui2/settings.c:880 plugin/tramo_options.c:360
 msgid "General"
@@ -11080,9 +11079,8 @@ msgid "HCCME"
 msgstr "HCCME"
 
 #: gui2/settings.c:890
-#, fuzzy
 msgid "Manuals"
-msgstr "annuale"
+msgstr "Manuali"
 
 #: gui2/settings.c:1672 gui2/settings.c:2426 gui2/settings.c:2432
 msgid "Couldn't open config file for writing"
@@ -11167,7 +11165,7 @@ msgstr "Sito web di gretl"
 
 #: gui2/toolbar.c:191
 msgid "user's guide"
-msgstr ""
+msgstr "guida all'uso"
 
 #: gui2/toolbar.c:192
 msgid "command reference"
@@ -11918,7 +11916,6 @@ msgid "cannot read Stata .dta on this platform"
 msgstr "impossibile leggere il file .dta di Stata su questa piattaforma"
 
 #: plugin/stata_import.c:622
-#, fuzzy
 msgid "This file does not seem to be a valid Stata data file"
 msgstr "Il file non sembra essere un file dati di Stata"
 
