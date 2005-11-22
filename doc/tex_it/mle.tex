@@ -1,0 +1,497 @@
+\chapter{Stima di massima verosimiglianza}
+
+\newcommand{\LogLik}{\ensuremath\ell}
+\newcommand{\stackunder}[2]{\ensuremath\mathrel{\mathop{#2}\limits_{#1}}}
+\newcommand{\pder}[2]{\frac{\ensuremath\partial #1}{\partial #2}}
+
+\section{Stima di massima verosimiglianza con gretl}
+
+La stima di massima verosimiglianza è una pietra angolare delle procedure
+moderne di inferenza. Gretl fornisce un modo per implementare questa metodologia
+per un grande numero di problemi di stima, usando il comando \texttt{mle}.
+Seguono alcuni esempi.
+
+\subsection{Introduzione}
+\label{sec:background}
+Per illustrare gli esempi seguenti, inizieremo con un breve ripasso degli
+aspetti basilari della stima di massima verosimiglianza. Dato un campione di
+ampiezza $T$, è possibile definire la funzione di densità\footnote{Stiamo
+  supponendo che i nostri dati siano una realizzazione di variabili casuali
+  continue. Per variabili discrete, la trattazione rimane valida, riferendosi
+  alla funzione di probabilità invece che a quella di densità. In entrambi i
+  casi, la distribuzione può essere condizionale su alcune variabili esogene.}
+per l'intero campione, ossia la distribuzione congiunta di tutte le
+osservazioni $f(\mathbf{Y} ; \theta)$, dove $\mathbf{Y} =
+\left\{ y_1, \ldots, y_T \right\}$.  La sua forma è determinata da un vettore di
+parametri sconosciuti $\theta$, che assumiamo contenuti in un insieme $\Theta$,
+e che possono essere usati per stimare la probabilità di osservare un campione
+con qualsiasi data caratteristica.
+
+Dopo aver osservato i dati, i valori di $\mathbf{Y}$ sono noti, e questa
+funzione può essere valutata per tutti i possibili valori di $\theta$. Quando
+usiamo $y_t$ come argomento e $\theta$ come parametro, la funzione è
+interpretabile come una densità, mentre è preferibile chiamarla funzione di
+\emph{verosimiglianza} quando $\theta$ è considerato argomento della funzione
+e i valori dei dati $\mathbf{Y}$ hanno il solo compito di determinarne la forma.
+
+Nei casi più comuni, questa funzione possiede un massimo unico, la cui posizione
+non viene alterata dal fatto di considerare il logaritmo della verosimiglianza
+(ossia la log-verosimiglianza): questa funzione si esprime come
+\[
+  \LogLik(\theta) = \log  f(\mathbf{Y}; \theta) .
+\] 
+Le funzionidi log-verosimiglianza gestite da gretl sono quelle in cui
+$\LogLik(\theta)$ può essere scritto come
+\[
+  \LogLik(\theta) = \sum_{t=1}^T \ell_t(\theta) ,
+\] 
+che è vero nella maggior parte dei casi di interesse. Le funzioni
+$\ell_t(\theta)$ vengono chiamati contributi di log-verosimiglianza.
+
+Inoltre, la posizione del massimo è ovviamente determinata dai dati
+$\mathbf{Y}$. Ciò significa che il valore
+\begin{equation}
+  \label{eq:maxlik}
+  \hat{\theta}(\mathbf{Y}) = \stackunder{\theta \in \Theta}{\mathrm{Argmax}} \LogLik(\theta)
+\end{equation}
+è una qualche funzione dei dati osservati (ossia una statistica), che ha la
+proprietà, sotto alcune condizioni deboli, di essere uno stimatore consistente,
+asintoticamente normale e asintoticamente efficiente, di $\theta$.
+
+In alcuni casi è possibile scrivere esplicitamente la funzione
+$\hat{\theta}(\mathbf{Y})$, ma in generale ciò non è sempre vero, e il massimo
+va cercato con tecniche numeriche. Queste si basano spesso sul fatto che la
+log-verosimiglianza è una funzione continuamente differenziabile di $\theta$, e
+quindi nel massimo le sue derivate parziali devono essere tutte pari a 0.
+Il gradiente della log-verosimiglianza è chiamato il vettore degli \emph{score},
+ed è una funzione con molte proprietà interessanti dal punto di vista
+statistico, che verrà denotata con $\mathbf{s}(\theta)$.
+
+I metodi basati sul gradiente possono essere illustrati brevemente:
+
+\begin{enumerate}
+\item scegliere un punto $\theta_0 \in \Theta$ ;
+\item valutare $\mathbf{s}(\theta_0)$;
+\item se $\mathbf{s}(\theta_0)$ è ``piccolo'', fermarsi; altrimenti calcolare
+  un vettore di direzione $d(\mathbf{s}(\theta_0))$;
+\item valutare $\theta_1 = \theta_0 + d(\mathbf{s}(\theta_0))$ ;
+\item sostituire $\theta_0$ con $\theta_1$ ;
+\item ricominciare dal punto 2.
+\end{enumerate}
+
+Esistono molti algoritmi di questo tipo; si differenziano nel modo con cui
+calcolano il vettore di direzione
+$d(\mathbf{s}(\theta_0))$, per assicurarsi che sia $\LogLik(\theta_1) >
+\LogLik(\theta_0)$ (in modo che prima o poi si arrivi a un massimo).
+
+Il metodo usato da \app{gretl} per massimizzare la log-verosimiglianza è un algoritmo
+basato sul gradiente, noto come metodo di \textbf{BFGS} (Broyden,
+Fletcher, Goldfarb e Shanno). Questa tecnica è usata in molti pacchetti
+statistici ed econometrici, visto che è ritenuta valida e molto potente.
+Ovviamente, per rendere operativa questa tecnica, deve essere possibile
+calcolare il vettore $\mathbf{s}(\theta)$ per ogni valore di $\theta$.  In
+alcuni casi, la funzione $\mathbf{s}(\theta)$ può essere vista esplicitamente in
+termini di $\mathbf{Y}$. Talvolta questo non è possibile, o è troppo difficile,
+quindi la funzione $\mathbf{s}(\theta)$ è valutata numericamente.
+
+La scelta del valore iniziale $\theta_0$ è cruciale in alcuni contesti e
+ininfluente in altri. In generale è consigliabile far partire l'algoritmo da
+valori ``sensibili'', quando è possibile. Se è disponibile uno stimatore
+consistente, di solito è una scelta valida ed efficiente: ci si assicura che per
+grandi campioni il punto di partenza sarà probabilmente vicino a $\hat{\theta}$
+e la convergenza sarà raggiunta in poche iterazioni.
+
+\section{Stima di una Gamma}
+\label{sec:gamma}
+
+Si supponga di avere un campione di $T$ osservazioni indipendenti e
+identicamente distribuite da una distribuzione Gamma. La funzione di densità per
+ogni osservazione $x_t$ è
+\begin{equation}
+  \label{eq:gammadens}
+  f(x_t) = \frac{\alpha^p}{\Gamma(p)} x_t^{p-1} \exp\left({-\alpha
+      x_t}\right) .
+\end{equation}
+La log-verosimiglianza per l'intero campione può essere scritta come il
+logaritmo della densità congiunta di tutte le osservazioni. Visto che queste
+sono indipendenti e identiche, la densità congiunta è il prodotto delle densità
+individuali, e quindi il suo logaritmo è
+\begin{equation}
+  \label{eq:gammaloglik}
+  \LogLik(\alpha, p) = \sum_{t=1}^T \log \left[ \frac{\alpha^p}{\Gamma(p)} x_t^{p-1} \exp\left({-\alpha
+      x_t}\right) \right] = 
+      \sum_{t=1}^T \ell_t ,
+\end{equation}
+dove
+\[
+  \ell_t = p \cdot \log (\alpha x_t) - \gamma(p) - \log x_t - \alpha x_t
+\]
+e $\gamma(\cdot)$ è il logaritmo della funzione gamma.
+Per stimare i parametri $\alpha$ e $p$ con la massima verosimiglianza, occorre
+massimizzare (\ref{eq:gammaloglik}) rispetto ad essi. Il frammento di codice da
+eseguire in \app{gretl} è
+
+\begin{code}
+    scalar alpha = 1
+    scalar p = 1
+
+    mle logl =  p*ln(alpha * x) - lngamma(p) - ln(x) - alpha * x 
+    end mle 
+\end{code}
+
+I due comandi
+
+\begin{code}
+    alpha = 1
+    p = 1
+\end{code}
+
+sono necessari per assicurarsi che le variabili \texttt{p} e \texttt{alpha}
+esistano prima di tentare il calcolo di \texttt{logl}. Il loro valore sarà
+modificato dall'esecuzione del comando \texttt{mle} e sarà sostituito dalle
+stime di massima verosimiglianza se la procedura è andata a buon fine. Il valore
+iniziale è 1 per entrambi; è arbitrario e non conta molto in questo esempio (ma
+si veda oltre).
+
+Il codice visto può essere reso più leggibile, e leggermente più efficiente,
+definendo una variabile in cui memorizzare $\alpha \cdot x_t$. Questo comando
+può essere inserito nel blocco \texttt{mle} nel modo seguente:
+\begin{code}
+    scalar alpha = 1
+    scalar p = 1
+
+    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
+    series ax = alpha*x
+    params alpha p
+    end mle 
+\end{code}
+In questo caso, è necessario includere la riga \texttt{params alpha
+  p} per impostare i simboli \texttt{p} e \texttt{alpha} separatamente da
+\texttt{ax}, che è una variabile generata temporaneamente, e non un parametro da
+stimare.
+
+In un semplice esempio come questo, la scelta dei valori iniziali è quasi
+ininfluente, visto che l'algoritmo convergerà a prescindere dai valori iniziali.
+In ogni caso, stimatori consistenti basati sul metodo dei momenti
+per $p$ e $\alpha$ possono essere ricavati dalla media campionaria
+$m$ e dalla varianza $V$: visto che si può dimostrare che
+\[
+  E(x_t) = p/\alpha \qquad  V(x_t) = p/\alpha^2 ,
+\]
+segue che gli stimatori seguenti
+\begin{eqnarray*}
+  \bar{\alpha} & = &  m/V \\
+  \bar{p} & = & m \cdot \bar{\alpha} 
+\end{eqnarray*}
+sono consistenti, e quindi più appropriati da usare come punti di partenza per
+l'algoritmo.
+Lo script per \app{gretl} diventa quindi
+\begin{code}
+    scalar m = mean(x)
+    scalar alpha = var(x)/m
+    scalar p = m*alpha
+
+    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
+    series ax = alpha*x
+    params alpha p
+    end mle 
+\end{code}
+
+\section{Stochastic frontier cost function}
+\label{sec:frontier}
+
+When modelling a cost function, it is sometimes worthwhile to
+incorporate explicitly into the statistical model the notion that
+firms may be inefficient, so that the observed cost deviates from the
+theoretical figure not only because of unobserved heterogeneity
+between firms, but also because two firms could be operating at a
+different efficiency level, despite being identical under all other
+respects. In this case we may write
+\[
+  C_i = C^*_i + u_i + v_i ,
+\]
+where $C_i$ is some variable cost indicator, $C_i^*$ is its
+``theoretical'' value, $u_i$ is a zero-mean disturbance term and
+$v_i$ is the inefficiency term, which is supposed to be nonnegative
+by its very nature.
+
+A linear specification for $C_i^*$ is often chosen. For example, the
+Cobb-Douglas cost function arises when $C_i^*$ is a linear function of
+the logarithms of the input prices and the output quantities.
+
+The \emph{stochastic frontier} model is a linear model of the form
+$y_i = x_i \beta + \varepsilon_i$ in which the error term
+$\varepsilon_i$ is the sum of $u_i$ and $v_i$.  A common postulate is
+that $u_i \sim N(0,\sigma_u^2)$ and $v_i \sim
+\left|N(0,\sigma_v^2)\right|$. If independence between $u_i$ and $v_i$
+is also assumed, then it is possible to show that the density function
+of $\varepsilon_i$ has the form:
+\begin{equation}
+  \label{eq:frontdens}
+  f(\varepsilon_i) = 
+   \sqrt{\frac{2}{\pi}} 
+   \Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right)
+   \frac{1}{\sigma} \phi\left(\frac{\varepsilon_i}{\sigma}\right) ,
+\end{equation}
+where $\Phi(\cdot)$ and $\phi(\cdot)$ are, respectively, the distribution and density
+function of the standard normal, $\sigma =
+\sqrt{\sigma^2_u + \sigma^2_v}$ and $\lambda = \frac{\sigma_u}{\sigma_v}$.
+
+As a consequence, the log-verosimiglianza for one observation takes the
+form (apart form an irrelevant constant)
+\[
+  \ell_t = 
+  \log\Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right) -
+  \left[ \log(\sigma) + \frac{\varepsilon_i^2}{2 \sigma^2} \right];
+\]
+therefore, a Cobb-Douglas cost function with stochastic frontier is the
+model described by the following equations: 
+\begin{eqnarray*}
+  \log C_i & = & \log C^*_i + \varepsilon_i \\
+  \log C^*_i & = & c + \sum_{j=1}^m \beta_j \log y_{ij} + \sum_{j=1}^n \alpha_j \log p_{ij} \\
+  \varepsilon_i & = & u_i + v_i \\
+  u_i & \sim & N(0,\sigma_u^2) \\
+  v_i & \sim & \left|N(0,\sigma_v^2)\right|  .
+\end{eqnarray*}
+
+In most cases, one wants to ensure that the homogeneity of the cost
+function with respect to the prices holds by construction. Since this
+requirement is equivalent to $\sum_{j=1}^n \alpha_j = 1$, the above
+equation for $C^*_i$ can be rewritten as
+
+\begin{equation}
+  \label{eq:CobbDouglasFrontier}
+  \log C_i - \log p_{in}  = c + \sum_{j=1}^m \beta_j \log y_{ij} +
+  \sum_{j=2}^n \alpha_j (\log p_{ij} - \log p_{in})  + \varepsilon_i.
+\end{equation}
+
+The above equation could be estimated by OLS, but it would suffer from
+two drawbacks: first, the OLS estimator for the intercept $c$ is
+inconsistent because the disturbance term has a non-zero expected
+value; second, the OLS estimators for the other parameters are
+consistent, but inefficient in view of the non-normality of
+$\varepsilon_i$. Both issues can be addressed by estimating
+(\ref{eq:CobbDouglasFrontier}) by maximum likelihood. Nevertheless,
+OLS estimation is a quick and convenient way to provide starting
+values for the MLE algorithm.
+
+The following gretl script code shows how to implement the model
+described so far. The \texttt{banks91} file contains part of the data
+used in Lucchetti, Papi and Zazzaro (2001).
+
+\begin{code}
+open banks91
+
+# Cobb-Douglas cost function
+
+ols cost const y p1 p2 p3
+
+# Cobb-Douglas cost function with homogeneity restrictions
+
+genr rcost = cost - p3
+genr rp1 = p1 - p3
+genr rp2 = p2 - p3
+
+ols rcost const y rp1 rp2
+
+# Cobb-Douglas cost function with homogeneity restrictions 
+# and inefficiency 
+
+scalar b0 = coeff(const)
+scalar b1 = coeff(y)
+scalar b2 = coeff(rp1)
+scalar b3 = coeff(rp2)
+
+scalar su = 0.1
+scalar sv = 0.1
+
+mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
+  scalar ss = sqrt(su^2 + sv^2)
+  scalar lambda = su/sv
+  series e = rcost - b0*const - b1*y - b2*rp1 - b3*rp2
+  params b0 b1 b2 b3 su sv
+end mle
+\end{code}
+
+\section{GARCH models}
+\label{sec:garch}
+
+GARCH models are handled by gretl via a native function. However, it is
+instructive to see how they can be estimated through the \texttt{mle}
+command.
+
+The following equations provide the simplest example of a GARCH(1,1)
+model:
+\begin{eqnarray*}
+  y_t & = & \mu + \varepsilon_t \\
+  \varepsilon_t & = & u_t \cdot \sigma_t \\
+  u_t & \sim & N(0,1) \\
+  h_t & = & \omega + \alpha \varepsilon^2_{t-1} + \beta h_{t-1}.
+\end{eqnarray*}
+Since the variance of $y_t$ depends on past values, writing down the
+log-verosimiglianza function is not simply a matter of summing the log
+densities for individual observations. As is common in time series
+models, $y_t$ cannot be considered independent of the other
+observations in our sample, and consequently the density function for
+the whole sample (the joint density for all observations) is not just
+the product of the marginal densities.
+
+Maximum likelihood estimation, in these cases, is achieved by
+considering \emph{conditional} densities, so what we maximise is a
+conditional likelihood function. If we define the information set at
+time $t$ as
+\[
+  F_t = \left\{ y_t, y_{t-1}, \ldots \right\} ,
+\]
+then the density of $y_t$ conditional on $F_{t-1}$ is normal:
+\[
+  y_t | F_{t-1} \sim N\left[ \mu, h_{t} \right].
+\]
+
+By means of the properties of conditional distributions, the joint
+density can be factorised as follows
+\[
+  f(y_t, y_{t-1}, \ldots) = \left[ \prod_{t=1}^T f(y_t |F_{t-1})
+  \right] \cdot f(y_0) ;
+\]
+if we treat $y_0$ as fixed, then the term $f(y_0)$ does not depend on
+the unknown parameters, and therefore the conditional log-verosimiglianza
+can then be written as the sum of the individual contributions as
+\begin{equation}
+  \label{eq:garchloglik}
+  \LogLik(\mu,\omega,\alpha,\beta) = \sum_{t=1}^T \ell_t ,
+\end{equation}
+where 
+\[
+  \ell_t = \log \left[ \frac{1}{\sqrt{h_t}} \phi\left( \frac{y_t - \mu}{\sqrt{h_t}}
+    \right) \right] = 
+    - \frac{1}{2} \left[ \log(h_t) + \frac{(y_t - \mu)^2}{h_t} \right] .
+\]
+
+The following script shows a simple application of this technique,
+which uses the data file \texttt{djclose}; it is one of the example
+dataset supplied with gretl and contains daily data from the Dow Jones
+stock index.
+
+\begin{code}
+open djclose
+
+series y = 100*ldiff(djclose)
+
+scalar mu = 0.0
+scalar omega = 1
+scalar alpha = 0.4
+scalar beta = 0.0
+
+mle ll = -0.5*(log(h) + (e^2)/h)
+  series e = y - mu
+  series h = var(y)
+  series h = omega + alpha*(e(-1))^2 + beta*h(-1)
+  params mu omega alpha beta
+end mle
+\end{code}
+
+\section{Analytical derivatives}
+\label{sec:anal-der}
+
+Computation of the score vector is essential for the working of the
+BFGS method. In all the previous examples, no explicit formula for the
+computation of the score was given, so the algorithm was fed
+numerically evaluated gradients. Numerical computation of the score for
+the $i$-th parameter is performed via a finite approximation of the
+derivative, namely
+\[
+  \pder{\LogLik(\theta_1, \ldots, \theta_n)}{\theta_i} \simeq 
+  \frac{\LogLik(\theta_1, \ldots, \theta_i + h, \ldots, \theta_n) -
+    \LogLik(\theta_1, \ldots, \theta_i - h, \ldots, \theta_n)}{2h} ,
+\]
+where $h$ is a small number. 
+
+In many situations, this is rather efficient and accurate. However,
+one might want to avoid the approximation and specify an exact
+function for the derivatives. As an example, consider the following
+script:
+\begin{code}
+nulldata 1000
+
+genr x1 = normal()
+genr x2 = normal()
+genr x3 = normal()
+
+genr ystar = x1 + x2 + x3 + normal()
+genr y = (ystar > 0)
+
+scalar b0 = 0
+scalar b1 = 0
+scalar b2 = 0
+scalar b3 = 0
+
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+  series ndx = b0 + b1*x1 + b2*x2 + b3*x3
+  series P = cnorm(ndx)
+  params b0 b1 b2 b3
+end mle --verbose
+\end{code}
+
+Here, 1000 data points are artificially generated for an ordinary
+probit model\footnote{Again, gretl does provide a native
+  \texttt{probit} command, but a probit model makes for a nice
+  example here.}: $y_t$ is a binary variable, which takes the value 1 if
+$y_t^* = \beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t} +
+\varepsilon_t > 0$ and 0 otherwise. Therefore, $y_t = 1$ with
+probability $\Phi(\beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t}) =
+\pi_t$.  The probability function for one observation can be written
+as
+\[
+  P(y_t) = \pi_t^{y_t} ( 1 -\pi_t )^{1-y_t} ;
+\]
+since the observations are independent and identically distributed,
+the log-verosimiglianza is simply the sum of the individual
+contributions. Hence
+\[
+  \LogLik = \sum_{t=1}^T y_t \log(\pi_t) + (1 - y_t) \log(1 - \pi_t) .
+\]
+The \texttt{--verbose} switch at the end of the \texttt{end mle}
+statement produces a detailed account of the iterations done by the
+BFGS algorithm.
+
+In this case, numerical differentiation works rather well;
+nevertheless, computation of the analytical score is straightforward,
+since the derivative $\pder{\LogLik}{\beta_i}$ can be written as
+\[
+  \pder{\LogLik}{\beta_i} = \pder{\LogLik}{\pi_t} \cdot \pder{\pi_t}{\beta_i}
+\]
+via the chain rule, and it is easy to see that
+\begin{eqnarray*}
+  \pder{\LogLik}{\pi_t} & = & \frac{y_t}{\pi_t} - \frac{1 - y_t}{1 -
+    \pi_t} \\
+  \pder{\pi_t}{\beta_i} & = & \phi(\beta_1 x_{1t} + \beta_2 x_{2t} +
+  \beta_3 x_{3t}) \cdot x_{it} .
+\end{eqnarray*}
+
+The \texttt{mle} block in the above script can therefore be modified
+as follows:
+
+\begin{code}
+mle logl = y*ln(P) + (1-y)*ln(1-P)
+  series ndx = b0 + b1*x1 + b2*x2 + b3*x3
+  series P = cnorm(ndx)
+  series tmp = dnorm(ndx)*(y/P - (1-y)/(1-P))
+  deriv b0 = tmp
+  deriv b1 = tmp*x1
+  deriv b2 = tmp*x2
+  deriv b3 = tmp*x3
+end mle --verbose
+\end{code}
+
+Note that the \texttt{params} statement has been replaced by a series
+of \texttt{deriv} statements; these have the double function of
+identifying the parameters over which to optimise and providing an
+analytical expression for their respective score elements.
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+
+
