@@ -178,7 +178,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/Import/Excel..."), NULL, open_data, OPEN_EXCEL, NULL },
     { N_("/File/Open data/Import/Eviews..."), NULL, open_data, OPEN_WF1, NULL },
     { N_("/File/Open data/Import/Stata..."), NULL, open_data, OPEN_DTA, NULL },
-    { N_("/File/Open data/Import/BOX..."), NULL, open_data, OPEN_BOX, NULL },
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>" },

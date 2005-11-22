@@ -1816,7 +1816,7 @@ static int open_local_file (struct urlinfo *u)
 #endif
 	if (u->fp == NULL) {
 	    fprintf(stderr, "Couldn't open local file '%s'\n", u->localfile);
-	    err = E_FOPEN;
+	    err = 1;
 	}
     }
 

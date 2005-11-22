@@ -222,7 +222,6 @@ GtkItemFactoryEntry data_items[] = {
 #endif
     { N_("/File/Open data/Import/Eviews..."), NULL, open_data, OPEN_WF1, NULL, GNULL },
     { N_("/File/Open data/Import/Stata..."), NULL, open_data, OPEN_DTA, NULL, GNULL },
-    { N_("/File/Open data/Import/BOX..."), NULL, open_data, OPEN_BOX, NULL, GNULL },
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -262,7 +261,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Browse databases/_gretl native"), NULL, display_files, NATIVE_DB, NULL, GNULL },
     { N_("/File/Browse databases/_RATS 4"), NULL, display_files, RATS_DB, NULL, GNULL },
     { N_("/File/Browse databases/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/File/Browse databases/on database _server"), NULL, display_files, REMOTE_DB, NULL, GNULL },
+    { N_("/File/Browse databases/on database _server"), NULL, display_files, REMOTE_DB, 
+      "<StockItem>", GTK_STOCK_NETWORK },
 
     /* File, Create dataset */
     { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -534,12 +534,20 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Help menu */
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>", NULL },
+#if GTK_MINOR_VERSION >= 6
+    { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, "<StockItem>", GTK_STOCK_INFO },
+#else
     { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, NULL, GNULL },
-    { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, NULL, GNULL },
+#endif
+    { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, "<StockItem>", GTK_STOCK_HELP },
     { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, NULL, GNULL },
+    { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, "<StockItem>", GTK_STOCK_NETWORK },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", NULL },
+#if GTK_MINOR_VERSION >= 6
+    { N_("/Help/_About gretl"), NULL, about_dialog, 0, "<StockItem>", GTK_STOCK_ABOUT }
+#else
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, NULL, GNULL }
+#endif
 };
 
 static void gui_usage (void)

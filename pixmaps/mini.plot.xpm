@@ -2,7 +2,7 @@
 static char * mini_plot_xpm[] = {
 "16 16 4 1",
 " 	c None",
-".	c #8C8888",
+".	c #666666",
 "+	c #FFFFFF",
 "@	c #000000",
 "                ",

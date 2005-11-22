@@ -44,15 +44,15 @@ either of two ways.
   Finally, check the specification that is shown to you, and confirm
   the change if it looks OK.
 \item Use the script command \cmd{setobs}.  For panel data this
-  command takes the form \verb+setobs+ freq \verb+1:1+ structure,
-  where freq is replaced by the ``block size'' of the data (that is,
-  the number of periods in the case of stacked time series, or the
-  number of cross-sectional units in the case of stacked
-  cross-sections) and structure is either \verb+--stacked-time-series+
-  or \verb+--stacked-cross-section+.  Two examples are given below:
-  the first is suitable for a panel in the form of stacked time series
-  with observations from 20 periods; the second for stacked cross
-  sections with 5 cross-sectional units.
+  command takes the form \verb+setobs+ \textsl{freq} \verb+1:1+
+  structure, where \textsl{freq} is replaced by the ``block size'' of
+  the data (that is, the number of periods in the case of stacked time
+  series, or the number of cross-sectional units in the case of
+  stacked cross-sections) and structure is either
+  \verb+--stacked-time-series+ or \verb+--stacked-cross-section+.  Two
+  examples are given below: the first is suitable for a panel in the
+  form of stacked time series with observations from 20 periods; the
+  second for stacked cross sections with 5 cross-sectional units.
 \begin{code}
             setobs 20 1:1 --stacked-time-series
             setobs 5 1:1 --stacked-cross-section
@@ -99,7 +99,7 @@ cross-section for \varname{x1} in 1965, followed by a cross-section for
 the same variable in 1970.
 
 The following gretl script illustrates how we can accomplish the
-stacking, for both \varname{x1} and \varname{x2}.  I assume
+stacking, for both \varname{x1} and \varname{x2}.  We assume
 that the original data file is called \texttt{panel.txt}, and that in
 this file the columns are headed with ``variable names'' \varname{p1},
 \varname{p2}, \dots, \varname{p5}.  (The columns are not really
@@ -131,20 +131,10 @@ a \texttt{length} of 50 for the components of the stacked series, but
 this time we want gretl to start reading from the 50th row of the
 original data, and we specify \verb+--offset=50+.
 
-Line 4 imposes a panel interpretation on the data.  The first
-parameter to \texttt{setobs} is the data ``frequency,'' which in the
-context of stacked cross sections actually means the number of units
-in the cross-section (here \texttt{50} for the 50 states).  The second
-parameter denotes the starting observation, here observation
-\texttt{01} (the first state out of 50) for the first year (labeled
-\texttt{1}), giving \texttt{1.01}.  (You could also write
-\texttt{1:01}.)  The option flag \verb+--stacked-cross-section+ tells
-gretl to interpret this structure in the right way (50 cross-sectional
-units, not 50 time-periods).
-
-On line 5 we save the data in gretl format, with the panel
-interpretation, discarding the original ``variables'' \varname{p1}
-through \varname{p5}.
+Line 4 imposes a panel interpretation on the data, as explained in
+section~\ref{panel-structure}.  Finally, we save the data in gretl
+format, with the panel interpretation, discarding the original
+``variables'' \varname{p1} through \varname{p5}.
 
 The illustrative script above is appropriate when the number of
 variable to be processed is small.  When then are many variables in
@@ -217,11 +207,10 @@ If the time periods are evenly spaced you may want to use lagged
 values of variables in a panel regression; you may also with to
 construct first differences of variables of interest.
 
-Once a dataset is properly identified as a panel (as described in the
-previous section), \app{gretl} will handle the generation of such
-variables correctly.  For example the command
-\verb+genr x1_1 = x1(-1)+ will create a variable that contains the
-first lag of \verb+x1+ where available, and the missing value code
+Once a dataset is properly identified as a panel, \app{gretl} will
+handle the generation of such variables correctly.  For example the
+command \verb+genr x1_1 = x1(-1)+ will create a variable that contains
+the first lag of \verb+x1+ where available, and the missing value code
 where the lag is not available.  When you run a regression using such
 variables, the program will automatically skip the missing
 observations.
@@ -241,14 +230,14 @@ will find an item ``panel diagnostics'', which tests pooled OLS
 against the principal alternatives, the fixed effects and random
 effects models.
 
-The fixed effects model adds a dummy variable for all but one of the
-cross-sectional units, allowing the intercept of the regression to
-vary across the units.  An \emph{F}-test for the joint significance of
-these dummies is presented: if the p-value for this test is small,
+The \emph{fixed effects} model adds a dummy variable for all but one
+of the cross-sectional units, allowing the intercept of the regression
+to vary across the units.  An \emph{F}-test for the joint significance
+of these dummies is presented: if the p-value for this test is small,
 that counts against the null hypothesis (that the simple pooled model
 is adequate) and in favor of the fixed effects model.
 
-The random effects model, on the other hand, decomposes the
+The \emph{random effects} model, on the other hand, decomposes the
 residual variance into two parts, one part specific to the
 cross-sectional unit or ``group'' and the other specific to the
 particular observation.  (This estimator can be computed only if the
@@ -260,9 +249,9 @@ effects alternative.
 
 It is quite possible that the pooled OLS model is rejected against
 both of the alternatives, fixed effects and random effects. How, then,
-to assess the relative merits of the two alternative estimators?  The
-Hausman test (also reported, provided the random effects model can be
-estimated) addresses this issue.  Provided the unit- or group-specific
+do we assess the relative merits of the two alternative estimators?
+The Hausman test (also reported, provided the random effects model can
+be estimated) addresses this issue.  If the unit- or group-specific
 error is uncorrelated with the independent variables, the random
 effects estimator is more efficient than the fixed effects estimator;
 otherwise the random effects estimator is inconsistent, in which case
@@ -299,7 +288,6 @@ part of countries starting from a low base).
 \begin{script}[htbp]
   \caption{Use of the Penn World Table}
   \label{examp-pwt}
-
 \begin{code}
           open pwt56_60_89.gdt 
           # for 1989 (the last obs), lag 29 gives 1960, the first obs 

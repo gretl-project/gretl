@@ -45,11 +45,13 @@ refbody.tex: $(XMLFILES) $(TEXXSLT)
 ../chapters/cmdlist.xml: ../commands/gretl_commands.xml $(MANXSLT)
 	make -C ../commands -f cmdref.mk dbtex
 
-.PHONY : links thumbs install clean
+.PHONY : links alt thumbs install clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s ../figures ./figures
+
+alt: gretl-guide-a4.pdf gretl-ref-a4.pdf
 
 onepass:
 	pdflatex gretl-guide

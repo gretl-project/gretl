@@ -968,6 +968,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: databases on server"));
 	browse_func = open_remote_db_list;
+	gtk_widget_set_usize(vwin->w, 640, 480);
 	break;
     }
 
@@ -1030,9 +1031,6 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 			 (code == REMOTE_DB)?
 			 G_CALLBACK(grab_remote_db) :
 			 G_CALLBACK(display_datafile_info), vwin);
-    }
-
-    if (code == TEXTBOOK_DATA) {
 	button = gtk_button_new_with_label(_("Find"));
 	gtk_box_pack_start(GTK_BOX (button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
@@ -1210,7 +1208,7 @@ static GtkWidget *files_window (windata_t *fdata)
     full_width *= gui_scale;
     file_height *= gui_scale;
 
-    gtk_widget_set_usize (box, full_width, file_height);
+    gtk_widget_set_usize(box, full_width, file_height);
    
     scroller = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),

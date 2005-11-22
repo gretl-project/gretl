@@ -26,15 +26,13 @@ file formats are given in Appendix~\ref{app-datafile}.
   \app{Gnumeric}.  These are also brought in using \app{gretl}'s
   ``File, Open Data, Import'' menu.  The requirements for such files
   are given in Section~\ref{scratch}.
-\item BOX1 format data.  Large amounts of micro data are available
-  (for free) in this format via the
-  \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{Data
-    Extraction Service} of the US Bureau of the Census. BOX1 data may
-  be imported using the ``File, Open Data, Import BOX\dots{}'' menu
-  item or the \cmd{import -o} script command.
+\item \app{Stata} data files (\texttt{.dta}).
+\item \app{Eviews} workfiles (\texttt{.wf1}).\footnote{This is
+    somewhat experimental.  See
+    \url{http://www.ecn.wfu.edu/eviews_format/}.}
 \end{itemize}
 
-When you import data from the ASCII, CSV or BOX formats, \app{gretl}
+When you import data from the ASCII or CSV formats, \app{gretl}
 opens a ``diagnostic'' window, reporting on its progress in reading
 the data.  If you encounter a problem with ill-formatted data, the
 messages in this window should give you a handle on fixing the
@@ -363,12 +361,15 @@ When a user selects one of the items:
     \begin{tabular}{lll}
         & \multicolumn{1}{c}{\textit{Linux}} & 
         \multicolumn{1}{c}{\textit{MS Windows}} \\
-        system data dir & \verb+/usr/share/gretl/data+ 
-        & \verb+c:\userdata\gretl\data+\\
-        system script dir & \verb+/usr/share/gretl/scripts+ 
-        & \verb+c:\userdata\gretl\scripts+\\
-        user dir & \verb+/home/me/gretl+ 
-        & \verb+c:\userdata\gretl\user+\\
+        system data dir & 
+        {\small \verb+/usr/share/gretl/data+} &
+        {\small \verb+c:\userdata\gretl\data+} \\
+        system script dir & 
+        {\small \verb+/usr/share/gretl/scripts+} &
+        {\small \verb+c:\userdata\gretl\scripts+} \\
+        user dir & 
+        {\small \verb+/home/me/gretl+} &
+        {\small \verb+c:\userdata\gretl\user+}\\
       \end{tabular}
     \end{center}
     \caption{Typical locations for file collections}
