@@ -766,15 +766,15 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			     G_CALLBACK(okfunc), d);
 	}
 
-	g_signal_connect(G_OBJECT(GTK_EDITABLE(d->edit)), "changed", 
-			 G_CALLBACK(raise_and_focus_dialog), d);
-	
 	if (deftext != NULL && *deftext != '\0') {
 	    gtk_entry_set_text(GTK_ENTRY(d->edit), deftext);
 	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deftext));
 	}
 
 	gtk_widget_show(d->edit);
+
+	g_signal_connect(G_OBJECT(GTK_EDITABLE(d->edit)), "changed", 
+			 G_CALLBACK(raise_and_focus_dialog), d);
     }
 
     if (cmdcode == SMPLBOOL && dataset_is_restricted()) {
