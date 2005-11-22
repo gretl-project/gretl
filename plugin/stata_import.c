@@ -619,7 +619,7 @@ int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     err = parse_dta_header(fp, &namelen, &nvar, &nobs);
     if (err) {
-	pputs(prn, _("This file does not seem to be a valid Stata dta file"));
+	pputs(prn, _("This file does not seem to be a valid Stata data file"));
 	fclose(fp);
 	return E_DATA;
     }
