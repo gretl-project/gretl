@@ -6,10 +6,10 @@
 
 \section{Stima di massima verosimiglianza con gretl}
 
-La stima di massima verosimiglianza è una pietra angolare delle procedure
-moderne di inferenza. Gretl fornisce un modo per implementare questa metodologia
-per un grande numero di problemi di stima, usando il comando \texttt{mle}.
-Seguono alcuni esempi.
+La stima di massima verosimiglianza (maximum likelihood, ML) è una pietra
+angolare delle procedure moderne di inferenza. Gretl fornisce un modo per
+implementare questa metodologia per un grande numero di problemi di stima,
+usando il comando \texttt{mle}.  Seguono alcuni esempi.
 
 \subsection{Introduzione}
 \label{sec:background}
@@ -214,7 +214,7 @@ dove $C_i$ è qualche indicatore dei costi variabili, $C_i^*$ è il suo valore
 che modella l'inefficienza, che si suppone essere non negativo, per il suo
 significato.
 
-Spesso si sceglie una specificazione linare per $C_i^*$; ad esempio, la funzione di costo
+Spesso si sceglie una specificazione lineare per $C_i^*$; ad esempio, la funzione di costo
 Cobb-Douglas si ottiene quando $C_i^*$ è una funzione lineare dei logaritmi dei
 prezzi degli input e delle quantità di output.
 
@@ -265,13 +265,13 @@ può essere riscritta come
 \end{equation}
 
 Questa equazione può essere stimata con OLS, ma con due inconvenienti: per prima
-cosa lo stimatore OLS per l'intercetta $c$ non è consistente, perchè il termine
+cosa lo stimatore OLS per l'intercetta $c$ non è consistente, perché il termine
 di disturbo ha media diversa da zero; in secondo luogo, gli stimatori OLS per
 gli altri parametri sono consistenti, ma inefficienti, a causa della
 non-normalità di $\varepsilon_i$. Entrambi i problemi possono essere risolti
 stimando (\ref{eq:CobbDouglasFrontier}) con la massima verosimiglianza.
 Tuttavia, la stima OLS è un modo veloce e comodo per ricavare dei valori
-iniziali per l'algroritmo di massima verosimiglianza.
+iniziali per l'algoritmo di massima verosimiglianza.
 
 Il seguente script di gretl mostra come implementare il modello descritto
 finora. Il file \texttt{banks91} contiene parte dei dati usati in
@@ -311,65 +311,62 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
 end mle
 \end{code}
 
-\section{GARCH models}
+\section{Modelli GARCH}
 \label{sec:garch}
 
-GARCH models are handled by gretl via a native function. However, it is
-instructive to see how they can be estimated through the \texttt{mle}
-command.
+Gretl gestisce i modelli GARCH attraverso una funzione interna, tuttavia può
+essere istruttivo vedere come possono essere stimati usando il comando
+\texttt{mle}.
 
-The following equations provide the simplest example of a GARCH(1,1)
-model:
+Le equazioni seguenti mostrano l'esempio più semplice di modello GARCH(1,1):
 \begin{eqnarray*}
   y_t & = & \mu + \varepsilon_t \\
   \varepsilon_t & = & u_t \cdot \sigma_t \\
   u_t & \sim & N(0,1) \\
   h_t & = & \omega + \alpha \varepsilon^2_{t-1} + \beta h_{t-1}.
 \end{eqnarray*}
-Since the variance of $y_t$ depends on past values, writing down the
-log-verosimiglianza function is not simply a matter of summing the log
-densities for individual observations. As is common in time series
-models, $y_t$ cannot be considered independent of the other
-observations in our sample, and consequently the density function for
-the whole sample (the joint density for all observations) is not just
-the product of the marginal densities.
+Poiché la varianza di $y_t$ dipende dai valori passati, per scrivere la funzione
+di log-verosimiglianza non basta sommare i logaritmi delle densità per le
+singole osservazioni. Come spesso accade nei modelli di serie storiche, $y_t$
+non può essere considerato indipendente dalle altre osservazioni del campione,
+di conseguenza, la funzione di densità per l'intero campione (la densità
+congiunta di tutte le osservazioni) non è semplicemente il prodotto delle
+densità marginali.
 
-Maximum likelihood estimation, in these cases, is achieved by
-considering \emph{conditional} densities, so what we maximise is a
-conditional likelihood function. If we define the information set at
-time $t$ as
+La stima di massima verosimiglianza, in questi casi, si effettua considerando le
+densità \emph{condizionali}, quindi quello che si massimizza è una funzione di
+verosimiglianza condizionale. Se definiamo il set informativo al tempo $t$ come
 \[
   F_t = \left\{ y_t, y_{t-1}, \ldots \right\} ,
 \]
-then the density of $y_t$ conditional on $F_{t-1}$ is normal:
+la densità di $y_t$ condizionata a $F_{t-1}$ è normale:
 \[
   y_t | F_{t-1} \sim N\left[ \mu, h_{t} \right].
 \]
 
-By means of the properties of conditional distributions, the joint
-density can be factorised as follows
+Per le proprietà delle distribuzioni condizionali, la densità congiunta può
+essere fattorizzata nel modo seguente
 \[
   f(y_t, y_{t-1}, \ldots) = \left[ \prod_{t=1}^T f(y_t |F_{t-1})
   \right] \cdot f(y_0) ;
 \]
-if we treat $y_0$ as fixed, then the term $f(y_0)$ does not depend on
-the unknown parameters, and therefore the conditional log-verosimiglianza
-can then be written as the sum of the individual contributions as
+se trattiamo $y_0$ come fissato, il termine $f(y_0)$ non dipende dai parametri
+sconosciuti, e quindi la log-verosimiglianza condizionale può essere scritta
+come la somma dei contributi individuali
 \begin{equation}
   \label{eq:garchloglik}
   \LogLik(\mu,\omega,\alpha,\beta) = \sum_{t=1}^T \ell_t ,
 \end{equation}
-where 
+dove 
 \[
   \ell_t = \log \left[ \frac{1}{\sqrt{h_t}} \phi\left( \frac{y_t - \mu}{\sqrt{h_t}}
     \right) \right] = 
     - \frac{1}{2} \left[ \log(h_t) + \frac{(y_t - \mu)^2}{h_t} \right] .
 \]
 
-The following script shows a simple application of this technique,
-which uses the data file \texttt{djclose}; it is one of the example
-dataset supplied with gretl and contains daily data from the Dow Jones
-stock index.
+Lo script seguente mostra una semplice applicazione di questa tecnica, che usa
+il file di dati \texttt{djclose}, uno dei dataset di esempio forniti con gretl,
+che contiene dati giornalieri per l'indice azionario Dow Jones.
 
 \begin{code}
 open djclose
@@ -389,26 +386,24 @@ mle ll = -0.5*(log(h) + (e^2)/h)
 end mle
 \end{code}
 
-\section{Analytical derivatives}
+\section{Derivate analitiche}
 \label{sec:anal-der}
 
-Computation of the score vector is essential for the working of the
-BFGS method. In all the previous examples, no explicit formula for the
-computation of the score was given, so the algorithm was fed
-numerically evaluated gradients. Numerical computation of the score for
-the $i$-th parameter is performed via a finite approximation of the
-derivative, namely
+Il calcolo del vettore degli score è essenziale per lavorare col metodo BFGS.
+In tutti gli esempi precedenti non è stata data alcuna formula esplicita per il
+calcolo dello score, ma sono stati indicati all'algoritmo dei gradienti valutati
+numericamente. Il calcolo numerico dello score per il parametro
+$i$-esimo è effettuato tramite un'approssimazione finita della derivata, ossia
 \[
   \pder{\LogLik(\theta_1, \ldots, \theta_n)}{\theta_i} \simeq 
   \frac{\LogLik(\theta_1, \ldots, \theta_i + h, \ldots, \theta_n) -
     \LogLik(\theta_1, \ldots, \theta_i - h, \ldots, \theta_n)}{2h} ,
 \]
-where $h$ is a small number. 
+dove $h$ è un numero piccolo.
 
-In many situations, this is rather efficient and accurate. However,
-one might want to avoid the approximation and specify an exact
-function for the derivatives. As an example, consider the following
-script:
+In molte situazioni questo metodo è abbastanza efficiente e accurato, ma
+potrebbe esserci la necessità di evitare le approssimazioni e specificare una
+funzione esatta per le derivate. Come esempio, si consideri lo script seguente:
 \begin{code}
 nulldata 1000
 
@@ -431,35 +426,33 @@ mle logl = y*ln(P) + (1-y)*ln(1-P)
 end mle --verbose
 \end{code}
 
-Here, 1000 data points are artificially generated for an ordinary
-probit model\footnote{Again, gretl does provide a native
-  \texttt{probit} command, but a probit model makes for a nice
-  example here.}: $y_t$ is a binary variable, which takes the value 1 if
+Vengono generate artificialmente 1000 osservazioni per un modello probit
+ordinario\footnote{Ancora una volta ricordiamo che gretl contiene il comando
+  interno \texttt{probit}, ma in questo caso usiamo il modello probit come
+  esempio per la procedura}: $y_t$ è una variabile binaria, che assume valore 1 se
 $y_t^* = \beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t} +
-\varepsilon_t > 0$ and 0 otherwise. Therefore, $y_t = 1$ with
-probability $\Phi(\beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t}) =
-\pi_t$.  The probability function for one observation can be written
-as
+\varepsilon_t > 0$ e 0 altrove. Quindi, $y_t = 1$ con probabilità
+$\Phi(\beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t}) = \pi_t$.
+La funzione di probabilità per un'osservazione può essere scritta come
 \[
   P(y_t) = \pi_t^{y_t} ( 1 -\pi_t )^{1-y_t} ;
 \]
-since the observations are independent and identically distributed,
-the log-verosimiglianza is simply the sum of the individual
-contributions. Hence
+visto che le osservazioni sono indipendenti e identicamente distribuite, la
+log-verosimiglianza è semplicemente la somma dei contributi individuali. Quindi
 \[
   \LogLik = \sum_{t=1}^T y_t \log(\pi_t) + (1 - y_t) \log(1 - \pi_t) .
 \]
-The \texttt{--verbose} switch at the end of the \texttt{end mle}
-statement produces a detailed account of the iterations done by the
-BFGS algorithm.
+L'opzione \texttt{--verbose} alla dine del comando \texttt{end mle}
+produce un resoconto dettagliato delle iterazioni compiute dall'algoritmo
+BFGS.
 
-In this case, numerical differentiation works rather well;
-nevertheless, computation of the analytical score is straightforward,
-since the derivative $\pder{\LogLik}{\beta_i}$ can be written as
+In questo caso, la derivazione numerica funziona abbastanza bene, tuttavia è
+anche facile calcolare lo score in modo analitico, visto che la derivata
+$\pder{\LogLik}{\beta_i}$ può essere scritta come
 \[
   \pder{\LogLik}{\beta_i} = \pder{\LogLik}{\pi_t} \cdot \pder{\pi_t}{\beta_i}
 \]
-via the chain rule, and it is easy to see that
+ed è facile vedere che
 \begin{eqnarray*}
   \pder{\LogLik}{\pi_t} & = & \frac{y_t}{\pi_t} - \frac{1 - y_t}{1 -
     \pi_t} \\
@@ -467,8 +460,8 @@ via the chain rule, and it is easy to see that
   \beta_3 x_{3t}) \cdot x_{it} .
 \end{eqnarray*}
 
-The \texttt{mle} block in the above script can therefore be modified
-as follows:
+Il blocco \texttt{mle} nello script precedente può quindi essere modificato nel
+modo seguente:
 
 \begin{code}
 mle logl = y*ln(P) + (1-y)*ln(1-P)
@@ -482,10 +475,10 @@ mle logl = y*ln(P) + (1-y)*ln(1-P)
 end mle --verbose
 \end{code}
 
-Note that the \texttt{params} statement has been replaced by a series
-of \texttt{deriv} statements; these have the double function of
-identifying the parameters over which to optimise and providing an
-analytical expression for their respective score elements.
+Si noti che il comando \texttt{params} è stato sostituito da una serie di
+comandi \texttt{deriv}, che hanno la doppia funzione di identificare i parametri
+rispetto a cui ottimizzare e di fornire un'espressione analitica per i
+rispettivi elementi del vettore degli score.
 
 %%% Local Variables: 
 %%% mode: latex
