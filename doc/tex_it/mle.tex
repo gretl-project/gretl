@@ -197,35 +197,33 @@ Lo script per \app{gretl} diventa quindi
     end mle 
 \end{code}
 
-\section{Stochastic frontier cost function}
+\section{Funzioni di costo con frontiera stocastica}
 \label{sec:frontier}
 
-When modelling a cost function, it is sometimes worthwhile to
-incorporate explicitly into the statistical model the notion that
-firms may be inefficient, so that the observed cost deviates from the
-theoretical figure not only because of unobserved heterogeneity
-between firms, but also because two firms could be operating at a
-different efficiency level, despite being identical under all other
-respects. In this case we may write
+Quando si modella una funzione di costo, talvolta è utile incorporare
+esplicitamente nel modello statistico il fatto che le imprese possano essere
+inefficienti, così che il costo osservato si discosta dal valore teorico non
+solo per l'eterogeneità (non osservata) tra le imprese, ma anche perché due
+imprese, uguali sotto tutti gli aspetti, potrebbero operare a diversi regimi di
+efficienza. In questo caso, possiamo scrivere
 \[
   C_i = C^*_i + u_i + v_i ,
 \]
-where $C_i$ is some variable cost indicator, $C_i^*$ is its
-``theoretical'' value, $u_i$ is a zero-mean disturbance term and
-$v_i$ is the inefficiency term, which is supposed to be nonnegative
-by its very nature.
+dove $C_i$ è qualche indicatore dei costi variabili, $C_i^*$ è il suo valore
+``teorico'', $u_i$ è un termine di disturbo a media zero e $v_i$ è il termine
+che modella l'inefficienza, che si suppone essere non negativo, per il suo
+significato.
 
-A linear specification for $C_i^*$ is often chosen. For example, the
-Cobb-Douglas cost function arises when $C_i^*$ is a linear function of
-the logarithms of the input prices and the output quantities.
+Spesso si sceglie una specificazione linare per $C_i^*$; ad esempio, la funzione di costo
+Cobb-Douglas si ottiene quando $C_i^*$ è una funzione lineare dei logaritmi dei
+prezzi degli input e delle quantità di output.
 
-The \emph{stochastic frontier} model is a linear model of the form
-$y_i = x_i \beta + \varepsilon_i$ in which the error term
-$\varepsilon_i$ is the sum of $u_i$ and $v_i$.  A common postulate is
-that $u_i \sim N(0,\sigma_u^2)$ and $v_i \sim
-\left|N(0,\sigma_v^2)\right|$. If independence between $u_i$ and $v_i$
-is also assumed, then it is possible to show that the density function
-of $\varepsilon_i$ has the form:
+Il modello con \emph{frontiera stocastica} è un modello lineare del tipo
+$y_i = x_i \beta + \varepsilon_i$ in cui il termine di errore
+$\varepsilon_i$ è la somma di $u_i$ e $v_i$.  Un postulato tipico è che siano
+$u_i \sim N(0,\sigma_u^2)$ e $v_i \sim \left|N(0,\sigma_v^2)\right|$. Se si
+ipotizza anche l'indipendenza tra $u_i$ e $v_i$, è possibile dimostrare che la
+funzione di densità di $\varepsilon_i$ ha la forma:
 \begin{equation}
   \label{eq:frontdens}
   f(\varepsilon_i) = 
@@ -233,19 +231,20 @@ of $\varepsilon_i$ has the form:
    \Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right)
    \frac{1}{\sigma} \phi\left(\frac{\varepsilon_i}{\sigma}\right) ,
 \end{equation}
-where $\Phi(\cdot)$ and $\phi(\cdot)$ are, respectively, the distribution and density
-function of the standard normal, $\sigma =
-\sqrt{\sigma^2_u + \sigma^2_v}$ and $\lambda = \frac{\sigma_u}{\sigma_v}$.
+dove $\Phi(\cdot)$ e $\phi(\cdot)$ sono, rispettivamente, la funzione di
+distribuzione e quella di densità della normale standard, $\sigma =
+\sqrt{\sigma^2_u + \sigma^2_v}$ e $\lambda = \frac{\sigma_u}{\sigma_v}$.
 
-As a consequence, the log-verosimiglianza for one observation takes the
-form (apart form an irrelevant constant)
+Di conseguenza, la log-verosimiglianza per una osservazione ha la seguente forma
+(a meno di una costante non rilevante):
 \[
   \ell_t = 
   \log\Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right) -
   \left[ \log(\sigma) + \frac{\varepsilon_i^2}{2 \sigma^2} \right];
 \]
-therefore, a Cobb-Douglas cost function with stochastic frontier is the
-model described by the following equations: 
+e quindi il modello di funzione di costo Cobb-Douglas con frontiera stocastica è
+descritto dalle seguenti equazioni:
+
 \begin{eqnarray*}
   \log C_i & = & \log C^*_i + \varepsilon_i \\
   \log C^*_i & = & c + \sum_{j=1}^m \beta_j \log y_{ij} + \sum_{j=1}^n \alpha_j \log p_{ij} \\
@@ -254,10 +253,10 @@ model described by the following equations:
   v_i & \sim & \left|N(0,\sigma_v^2)\right|  .
 \end{eqnarray*}
 
-In most cases, one wants to ensure that the homogeneity of the cost
-function with respect to the prices holds by construction. Since this
-requirement is equivalent to $\sum_{j=1}^n \alpha_j = 1$, the above
-equation for $C^*_i$ can be rewritten as
+In molti casi, si intende assicurarsi che l'omogeneità della funzione di costo
+rispetto ai prezzi sia valida per costruzione; visto che questa condizione
+equivale a $\sum_{j=1}^n \alpha_j = 1$, l'equazione vista sopra per $C^*_i$
+può essere riscritta come
 
 \begin{equation}
   \label{eq:CobbDouglasFrontier}
@@ -265,28 +264,27 @@ equation for $C^*_i$ can be rewritten as
   \sum_{j=2}^n \alpha_j (\log p_{ij} - \log p_{in})  + \varepsilon_i.
 \end{equation}
 
-The above equation could be estimated by OLS, but it would suffer from
-two drawbacks: first, the OLS estimator for the intercept $c$ is
-inconsistent because the disturbance term has a non-zero expected
-value; second, the OLS estimators for the other parameters are
-consistent, but inefficient in view of the non-normality of
-$\varepsilon_i$. Both issues can be addressed by estimating
-(\ref{eq:CobbDouglasFrontier}) by maximum likelihood. Nevertheless,
-OLS estimation is a quick and convenient way to provide starting
-values for the MLE algorithm.
+Questa equazione può essere stimata con OLS, ma con due inconvenienti: per prima
+cosa lo stimatore OLS per l'intercetta $c$ non è consistente, perchè il termine
+di disturbo ha media diversa da zero; in secondo luogo, gli stimatori OLS per
+gli altri parametri sono consistenti, ma inefficienti, a causa della
+non-normalità di $\varepsilon_i$. Entrambi i problemi possono essere risolti
+stimando (\ref{eq:CobbDouglasFrontier}) con la massima verosimiglianza.
+Tuttavia, la stima OLS è un modo veloce e comodo per ricavare dei valori
+iniziali per l'algroritmo di massima verosimiglianza.
 
-The following gretl script code shows how to implement the model
-described so far. The \texttt{banks91} file contains part of the data
-used in Lucchetti, Papi and Zazzaro (2001).
+Il seguente script di gretl mostra come implementare il modello descritto
+finora. Il file \texttt{banks91} contiene parte dei dati usati in
+Lucchetti, Papi e Zazzaro (2001).
 
 \begin{code}
 open banks91
 
-# Cobb-Douglas cost function
+# Funzione di costo Cobb-Douglas
 
 ols cost const y p1 p2 p3
 
-# Cobb-Douglas cost function with homogeneity restrictions
+# Funzione di costo Cobb-Douglas con vincoli di omogeneità
 
 genr rcost = cost - p3
 genr rp1 = p1 - p3
@@ -294,8 +292,8 @@ genr rp2 = p2 - p3
 
 ols rcost const y rp1 rp2
 
-# Cobb-Douglas cost function with homogeneity restrictions 
-# and inefficiency 
+# Funzione di costo Cobb-Douglas con vincoli di omogeneità
+# e inefficienza
 
 scalar b0 = coeff(const)
 scalar b1 = coeff(y)
