@@ -72,6 +72,9 @@ char *storelist = NULL;
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/mini.plot.xpm"
+#include "../pixmaps/mini.tsplot.xpm"
+#include "../pixmaps/mini.boxplot.xpm"
+
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
@@ -1581,47 +1584,42 @@ void free_windata (GtkWidget *w, gpointer data)
 #ifndef OLD_GTK
 void gretl_stock_icons_init (void)
 {
+    char **xpms[] = {
+	mini_tex_xpm,
+	mail_16_xpm,
+	mini_plot_xpm,
+	mini_tsplot_xpm,
+	mini_boxplot_xpm
+    };
+    const char *stocks[] = {
+	GRETL_STOCK_TEX,
+	GRETL_STOCK_MAIL,
+	GRETL_STOCK_XY,
+	GRETL_STOCK_TS,
+	GRETL_STOCK_BOX
+    };
     static GtkIconFactory *ifac;
 
     if (ifac == NULL) {
 	GtkIconSource *source;
 	GtkIconSet *set;
 	GdkPixbuf *pbuf;
+	int i;
 
 	ifac = gtk_icon_factory_new();
 
-	set = gtk_icon_set_new();
-	source = gtk_icon_source_new();
-	gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
-	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_tex_xpm);
-	gtk_icon_source_set_pixbuf(source, pbuf);
-	g_object_unref(pbuf);
-	gtk_icon_set_add_source(set, source);
-	gtk_icon_source_free(source);
-	gtk_icon_factory_add(ifac, GRETL_STOCK_TEX, set);
-	gtk_icon_set_unref(set);
-
-	set = gtk_icon_set_new();
-	source = gtk_icon_source_new();
-	gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
-	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mail_16_xpm);
-	gtk_icon_source_set_pixbuf(source, pbuf);
-	g_object_unref(pbuf);
-	gtk_icon_set_add_source(set, source);
-	gtk_icon_source_free(source);
-	gtk_icon_factory_add(ifac, GRETL_STOCK_MAIL, set);
-	gtk_icon_set_unref(set);
-
-	set = gtk_icon_set_new();
-	source = gtk_icon_source_new();
-	gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
-	pbuf = gdk_pixbuf_new_from_xpm_data((const char **) mini_plot_xpm);
-	gtk_icon_source_set_pixbuf(source, pbuf);
-	g_object_unref(pbuf);
-	gtk_icon_set_add_source(set, source);
-	gtk_icon_source_free(source);
-	gtk_icon_factory_add(ifac, GRETL_STOCK_PLOT, set);
-	gtk_icon_set_unref(set);
+	for (i=0; i<5; i++) {
+	    set = gtk_icon_set_new();
+	    source = gtk_icon_source_new();
+	    gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);
+	    pbuf = gdk_pixbuf_new_from_xpm_data((const char **) xpms[i]);
+	    gtk_icon_source_set_pixbuf(source, pbuf);
+	    g_object_unref(pbuf);
+	    gtk_icon_set_add_source(set, source);
+	    gtk_icon_source_free(source);
+	    gtk_icon_factory_add(ifac, stocks[i], set);
+	    gtk_icon_set_unref(set);
+	}
 
 	gtk_icon_factory_add_default(ifac);
     }
@@ -1771,7 +1769,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Send To..."), GRETL_STOCK_MAIL, mail_script_callback, MAIL_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), GRETL_STOCK_TEX, window_tex_callback, TEX_ITEM },
-    { N_("Graph"), GRETL_STOCK_PLOT, series_view_graph, PLOT_ITEM },
+    { N_("Graph"), GRETL_STOCK_TS, series_view_graph, PLOT_ITEM },
     { N_("Reformat..."), GTK_STOCK_CONVERT, series_view_format_dialog, FORMAT_ITEM },
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
@@ -1798,7 +1796,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Send To..."), mail_16_xpm, mail_script_callback, MAIL_ITEM },
     { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), mini_tex_xpm, window_tex_callback, TEX_ITEM },
-    { N_("Graph"), mini_plot_xpm, series_view_graph, PLOT_ITEM },
+    { N_("Graph"), mini_tsplot_xpm, series_view_graph, PLOT_ITEM },
     { N_("Reformat..."), stock_convert_16_xpm, series_view_format_dialog, FORMAT_ITEM },
     { N_("Add to dataset..."), stock_add_16_xpm, add_data_callback, ADD_ITEM },
     { N_("Help"), stock_help_16_xpm, window_help, HELP_ITEM },
@@ -1806,6 +1804,23 @@ static struct viewbar_item viewbar_items[] = {
     { NULL, NULL, NULL, 0 }};
 
 #endif /* old versus new GTK */
+
+static void set_plot_icon (struct viewbar_item *vitem)
+{
+    if (dataset_is_time_series(datainfo)) {
+#ifndef OLD_GTK
+	vitem->icon = GRETL_STOCK_TS;
+#else
+	vitem->toolxpm = mini_tsplot_xpm;
+#endif
+    } else {
+#ifndef OLD_GTK
+	vitem->icon = GRETL_STOCK_BOX;
+#else
+	vitem->toolxpm = mini_boxplot_xpm;
+#endif
+    }
+}
 
 #define editor_role(r) (r == EDIT_SCRIPT || \
                         r == EDIT_HEADER || \
@@ -1953,6 +1968,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		       (vwin->role == PRINT && vwin->data != NULL)) {
 		toolfunc = multi_save_as_callback;
 	    }
+	}
+
+	if (viewbar_items[i].flag == PLOT_ITEM) {
+	    set_plot_icon(&viewbar_items[i]);
 	}
 
 #ifndef OLD_GTK

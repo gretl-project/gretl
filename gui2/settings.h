@@ -11,6 +11,8 @@ int using_olddat (void);
 
 int using_hc_by_default (void);
 
+int get_manpref (void);
+
 void set_rcfile (void);
 
 void write_rc (void);

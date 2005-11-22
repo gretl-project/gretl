@@ -113,6 +113,7 @@ GdkFont *fixed_font;
 static int usecwd;
 static int olddat;
 static int useqr;
+static int manpref = -1;
 char gpcolors[32];
 static char datapage[24];
 static char scriptpage[24];
@@ -135,13 +136,14 @@ char midiplayer[MAXSTR];
 #endif
 
 typedef enum {
-    ROOTSET = 1 << 0,
-    USERSET = 1 << 1,
-    BOOLSET = 1 << 2,
-    INTSET  = 1 << 3,
-    LISTSET = 1 << 4,
-    INVISET = 1 << 5,
-    FIXSET  = 1 << 6  /* setting fixed by admin (Windows network use) */
+    ROOTSET  = 1 << 0,
+    USERSET  = 1 << 1,
+    BOOLSET  = 1 << 2,
+    INTSET   = 1 << 3,
+    LISTSET  = 1 << 4,
+    RADIOSET = 1 << 5,
+    INVISET  = 1 << 6,
+    FIXSET   = 1 << 7  /* setting fixed by admin (Windows network use) */
 } rcflags;
 
 typedef struct {
@@ -154,6 +156,7 @@ typedef struct {
 			  BOOLSET boolean (user)
                           INTSET integer (user)
 			  LISTSET user string, from fixed menu
+                          RADIOSET user int, from fixed menu
 			  INVISET "invisible" (user) string 
 		       */
     int len;           /* storage size for string variable (also see Note) */
@@ -161,11 +164,15 @@ typedef struct {
     GtkWidget *widget;
 } RCVAR;
 
-/* Note: actually "len" above is overloaded: if an rc_var is of type
-   BOOLSET and not part of a radio group, then a non-zero value for
-   len will link the var's toggle button with the sensitivity of the
-   preceding rc_var's entry field.  For example, the "use_proxy" button
-   controls the sensitivity of the "dbproxy" entry widget. */
+/* Note: actually "len" above is overloaded: (1) if an rc_var is of
+   type BOOLSET and not part of a radio group, then a non-zero value
+   for len will link the var's toggle button with the sensitivity of
+   the preceding rc_var's entry field.  For example, the "use_proxy"
+   button controls the sensitivity of the "dbproxy" entry widget. (2)
+   if an rc_var is of type RADIOSET, len is used to represent the
+   number of radio (i.e. mutually incompatible) options for the
+   variable.
+*/
 
 RCVAR rc_vars[] = {
     { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
@@ -276,6 +283,8 @@ RCVAR rc_vars[] = {
       LISTSET, 5, 5, NULL },
     { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch, 
       LISTSET, 5, 5, NULL },
+    { "manpref", N_("PDF manual preference"), NULL, &manpref, 
+      INTSET | RADIOSET, 4, 6, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, 0, NULL }
 };
 
@@ -289,6 +298,11 @@ int using_olddat (void)
 int using_hc_by_default (void)
 {
     return hc_by_default;
+}
+
+int get_manpref (void)
+{
+    return manpref;
 }
 
 void set_datapage (const char *str)
@@ -697,6 +711,7 @@ void options_dialog (gpointer p, guint page, GtkWidget *w)
     make_prefs_tab(notebook, 3);
     make_prefs_tab(notebook, 4);
     make_prefs_tab(notebook, 5);
+    make_prefs_tab(notebook, 6);
 
     /* OK button */
     button = standard_button(GTK_STOCK_OK);
@@ -789,20 +804,30 @@ static GList *get_settings_list (void *var)
     char *garch_strs[] = {
 	"QML", "BW"
     };
+    const char *man_strs[] = {
+        N_("English (US letter paper)"),
+        N_("English (A4 paper)"),
+        N_("Italian"),
+	N_("Spanish"),
+    };
     GList *list = NULL;
-    char *strvar = (char *) var;
     int i, n;
 
-    if (strvar == hc_xsect || strvar == hc_tseri) {
+    if (var == hc_xsect || var == hc_tseri) {
 	n = sizeof hc_strs / sizeof hc_strs[0];
-	if (strvar == hc_xsect) n--;
+	if (var == hc_xsect) n--;
 	for (i=0; i<n; i++) {
 	    list = g_list_append(list, hc_strs[i]);
 	}
-    } else if (strvar == hc_garch) {
+    } else if (var == hc_garch) {
 	n = sizeof garch_strs / sizeof garch_strs[0];
 	for (i=0; i<n; i++) {
 	    list = g_list_append(list, garch_strs[i]);
+	}
+    } else if (var == &manpref) {
+	n = sizeof man_strs / sizeof man_strs[0];
+	for (i=0; i<n; i++) {
+	    list = g_list_append(list, _(man_strs[i]));
 	}
     }	
 
@@ -822,9 +847,19 @@ static void get_table_sizes (int page, int *b_count, int *s_count)
 	}
 	if (rc_vars[i].flags & BOOLSET) {
 	    *b_count += 1;
+	} else if (rc_vars[i].flags & RADIOSET) {
+	    *b_count += 1;
 	} else if (!(rc_vars[i].flags & INVISET)) {
 	    *s_count += 1;
-	}
+	} 
+    }
+}
+
+static void radio_change_value (GtkWidget *w, int *v)
+{
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	gint i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+	*v = i;
     }
 }
 
@@ -851,6 +886,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	w = gtk_label_new(_("File Open/Save"));
     } else if (tab == 5) {
 	w = gtk_label_new(_("HCCME"));
+    } else if (tab == 6) {
+	w = gtk_label_new(_("Manuals"));
     }
     
     gtk_widget_show(w);
@@ -1010,6 +1047,39 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rc->widget)->entry), 
 				      FALSE);
 	    gtk_widget_show(rc->widget);
+	} else if (rc->flags & RADIOSET) {
+	    int i, rcval = *(int *) (rc->var);
+	    GtkWidget *b;
+	    GSList *group = NULL;
+	    GList *list, *mylist;
+
+	    b_len++;
+	    b = gtk_label_new(_(rc->description));
+	    gtk_table_attach_defaults(GTK_TABLE(b_table), b, 
+				      b_col, b_col + 1, 
+				      b_len - 1, b_len);
+	    gtk_widget_show(b);
+
+	    mylist = list = get_settings_list(rc->var);
+
+	    for (i=0; i<rc->len; i++) {
+		b_len++;
+		gtk_table_resize(GTK_TABLE(b_table), b_len, 2);
+		b = gtk_radio_button_new_with_label(group, mylist->data);
+		gtk_table_attach_defaults(GTK_TABLE(b_table), b, 
+					  b_col, b_col + 1, 
+					  b_len - 1, b_len);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), i == rcval);
+		g_object_set_data(G_OBJECT(b), "action", 
+				  GINT_TO_POINTER(i));
+		g_signal_connect(G_OBJECT(b), "clicked",
+				 G_CALLBACK(radio_change_value),
+				 rc->var);
+		gtk_widget_show(b);
+		group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b));
+		mylist = g_list_next(mylist);
+	    }
+	    g_list_free(list);
 	} else if (!(rc->flags & INVISET)) { 
 	    /* visible string variable */
 	    char *strvar = (char *) rc->var;
@@ -1063,8 +1133,6 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_widget_show(hb);
     }
 }
-
-/* .................................................................. */
 
 #ifdef ENABLE_NLS
 static void set_lcnumeric (void)

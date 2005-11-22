@@ -1493,6 +1493,8 @@ static char *full_doc_path (char *path, const char *fname)
     strcat(path, "doc");
     strcat(path, SLASHSTR);
     strcat(path, fname);
+
+    return path;
 }
 
 static int maybe_grab_pdf (int uguide, int i, char *fullpath)
@@ -1541,37 +1543,26 @@ static int maybe_grab_pdf (int uguide, int i, char *fullpath)
     return err;
 }
 
-static int manual_variant_dialog (void)
-{
-    const char *opts[] = {
-        N_("English (US letter paper)"),
-        N_("English (A4 paper)"),
-        N_("Italian"),
-	N_("Spanish"),
-    };
-
-    return radio_dialog("gretl: manual", "Preferred variant:",
-			opts, 4, 0, 0);
-}
-
 void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
 {
     char fullpath[FILENAME_MAX];
-    static int manpref = -1;
-    int err = 0;
+    int pref, err = 0;
 
 #ifdef OSX_PKG
     osx_help(uguide);
     return;
 #endif   
 
-    if (manpref < 0) {
-	manpref = manual_variant_dialog();
+    if (get_manpref() < 0) {
+	options_dialog(NULL, 5, NULL);
     }
 
-    fprintf(stderr, "manpref = %d\n", manpref);
+    if ((pref = get_manpref()) < 0) {
+	/* canceled */
+	return;
+    }
 
-    err = maybe_grab_pdf(uguide, manpref, fullpath);
+    err = maybe_grab_pdf(uguide, pref, fullpath);
     if (err) {
 	return;
     }
