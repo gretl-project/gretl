@@ -30,15 +30,12 @@ si veda l'appendice~\ref{app-datafile}.
   Possono essere importate in \app{gretl} con il comando ``File, Apri
   dati, Importa''.  La sezione~\ref{scratch} descrive i requisiti per
   questo tipo di file.
-\item Dati in formato BOX1. Il
-  \href{http://www.census.gov/ftp/pub/DES/www/welcome.html}{Data
-    Extraction Service} del Bureau of the Census statunitense offre
-  (gratuitamente) molti dati microeconomici in questo formato.  I dati
-  BOX1 possono essere importati con il comando ``File, Apri dati,
-  Importa BOX\dots{}'', oppure con il comando \cmd{import -o}.
+\item File di dati di \app{Stata} (\texttt{.dta}).
+\item File di lavoro di \app{Eviews} (\texttt{.wf1}).\footnote{Questo supporto
+  è sperimentale. Si veda \url{http://www.ecn.wfu.edu/eviews_format/}.}
 \end{itemize}
 
-Quando vengono importati file in formato ASCII, CSV o BOX, \app{gretl}
+Quando vengono importati file in formato ASCII o CSV, \app{gretl}
 apre una finestra ``diagnostica'', che informa sullo stato della
 lettura dei dati. Se dovessero verificarsi dei problemi a causa di
 dati malformattati, questa finestra mostrerà dei suggerimenti per
@@ -173,7 +170,7 @@ I file CSV possono usare virgole, spazi o tab come separatori fra le
 colonne: il separatore da usare può essere selezionato subito dopo
 aver eseguito il comando ``Importa CSV''. Se invece si usa ``Importa
 ASCII'' il programma cerca di riconoscere automaticamente il
-separatore usato nei dati.Se si usa un foglio elettronico per
+separatore usato nei dati. Se si usa un foglio elettronico per
 preparare i dati, è possibile applicare varie trasformazioni ai dati
 ``grezzi'' (sommare variabili, calcolare percentuali, ecc.), ma queste
 elaborazioni possono essere compiute, forse più facilmente, anche in
@@ -343,7 +340,7 @@ mantenendo lo stesso intervallo del campione.\footnote{\cmd{genr}
 
 Se si usa \app{gretl} nell'attività didattica, può essere utile creare
 una raccolta di file di dati e/o di script di comandi, personalizzati
-per il proprio corso, ad uso degli studenti.A partire dalla versione
+per il proprio corso, ad uso degli studenti. A partire dalla versione
 1.2.1 di \app{gretl}, ci sono tre modi per accedere a una raccolta di
 file:
 
@@ -383,12 +380,13 @@ Quando un utente seleziona uno dei comandi visti sopra:
         & \multicolumn{1}{c}{\textit{Linux}} & 
         \multicolumn{1}{c}{\textit{MS Windows}} \\
         Directory di sistema per i dati & 
-        {\small \texttt{/usr/share/gretl/data}} & 
-        {\small \verb+c:\userdata\gretl\data+}\\
+        {\small \verb+/usr/share/gretl/data+} &
+        {\small \verb+c:\userdata\gretl\data+} \\
         Directory di sistema per i comandi & 
-        {\small \verb+/usr/share/gretl/scripts+} & 
-        {\small \verb+c:\userdata\gretl\scripts+}\\
-        Directory utente & {\small \verb+/home/nomeutente/gretl+} & 
+        {\small \verb+/usr/share/gretl/scripts+} &
+        {\small \verb+c:\userdata\gretl\scripts+} \\
+        Directory utente &
+        {\small \verb+/home/me/gretl+} &
         {\small \verb+c:\userdata\gretl\user+}\\
       \end{tabular}
     \end{center}

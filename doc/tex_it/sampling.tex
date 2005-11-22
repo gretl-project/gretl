@@ -46,7 +46,7 @@ definito alcun sotto-campione in precedenza.  Ad esempio, dopo
     smpl ; 2000:4
 \end{code}
       
-l'intervallo del campione sarà da 1970:1 a 2000:4.È possibile anche
+l'intervallo del campione sarà da 1970:1 a 2000:4. È possibile anche
 impostare l'intervallo del campione in modo incrementale o relativo:
 in questo caso occorre indicare per il punto iniziale e finale uno
 spostamento relativo, sotto forma di numero preceduto dal segno più o
@@ -65,7 +65,7 @@ mantenendo inalterata la fine del campione, mentre
 \end{code}
 
 sposterà l'inizio del campione in avanti di due osservazioni e la fine
-del campione indietro di una.Una caratteristica importante
+del campione indietro di una. Una caratteristica importante
 dell'operazione di ``impostazione del campione'' descritta fin qui è
 che il sotto-campione creato risulta sempre composto da un insieme di
 osservazioni contigue. La struttura del dataset rimane quindi
@@ -79,7 +79,7 @@ il campione la serie rimarrà trimestrale.
 Per ``restrizione'' del campione si intende la definizione di un
 campione ottenuta selezionando le osservazioni in base a un criterio
 Booleano (logico), o usando un generatore di numeri casuali. Questa
-modalità è usata tipicamente con dati di tipo cross-section o panel.Si
+modalità è usata tipicamente con dati di tipo cross-section o panel. Si
 supponga di avere dei dati di tipo cross-section che descrivono il
 genere, il reddito e altre caratteristiche di un gruppo di individui e
 si vogliano analizzare solo le donne presenti nel campione. Se si
@@ -123,7 +123,7 @@ campione completo prima di applicare la nuova restrizione.
 A differenza della semplice ``impostazione'' del campione, la
 ``restrizione'' del campione può produrre un insieme di osservazioni
 non contigue nel dataset originale e può anche modificare la struttura
-del dataset.Questo fenomeno può essere osservato nel caso dei dati
+del dataset. Questo fenomeno può essere osservato nel caso dei dati
 panel: si supponga di avere un panel di cinque imprese (indicizzate
 dalla variabile \verb+impresa+) osservate in ognuno degli anni
 identificati dalla variabile \verb+anno+.  La restrizione
@@ -189,7 +189,7 @@ casuale dal dataset completo. È possibile farlo ad esempio con
 
 che seleziona 100 osservazioni.  Se occorre che il campione sia
 riproducibile, occorre per prima cosa impostare il seme del generatore
-di numeri casuali, usando il comando \cmd{set}.Questo tipo di
+di numeri casuali, usando il comando \cmd{set}. Questo tipo di
 campionamento è un esempio di ``restrizione'' del campione: viene
 infatti generata una copia ridotta del dataset.
 

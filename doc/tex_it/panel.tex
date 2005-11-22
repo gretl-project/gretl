@@ -47,8 +47,8 @@ due modi.
   confermare l'operazione.
         
 \item Usando il comando testuale \cmd{setobs}. Per i dati panel, la
-  sintassi del comando è \verb+setobs+ freq \verb+1:1+ struttura, dove
-  freq indica la ``dimensione dei blocchi'' di dati (ossia, il numero
+  sintassi del comando è \verb+setobs+ \textsl{freq} \verb+1:1+ struttura, dove
+  \textsl{freq} indica la ``dimensione dei blocchi'' di dati (ossia, il numero
   di periodi nel caso delle pile di serie storiche, o il numero di
   unità cross section nel caso di pila di dati cross section), mentre
   struttura può essere uguale a \verb+--stacked-time-series+ o
@@ -132,18 +132,10 @@ vogliamo una lunghezza (\texttt{length}) di 50 per i componenti della serie
 impilata, ma questa volta vogliamo che gretl inizi a leggere dalla cinquantesima
 riga dei dati originali, quindi specifichiamo \verb+--offset=50+.
 
-La riga 4 impone un'interpretazione panel sui dati. Il primo parametro di
-\texttt{setobs} è la ``frequenza'' dei dati, che nel contesto di una pila di
-dati cross-section significa il numero di unità cross-section (qui \texttt{50}
-per i 50 stati). Il secondo parametero denota l'osservazione iniziale, ossia
-l'osservazione \texttt{01} (il primo dei 50 stati) per il primo anno (indicato
-come \texttt{1}), ossia \texttt{1.01} (avremmo anche potuto scrivere
-\texttt{1:01}). L'opzione \verb+--stacked-cross-section+ dice a gretl di
-interpretare questa procedura nel modo giusto (50 unità cross-section, non 50
-periodi temporali).
-
-Nella riga 5 salviamo i dati in formato gretl, con un'interpretazione panel,
-eliminando le ``variabili'' originali da \varname{p1} a \varname{p5}.
+La riga 4 impone un'interpretazione panel sui dati, come spiegato nella
+sezione~\ref{panel-structure}. Infine, salviamo i dati in formato gretl, con
+un'interpretazione panel, eliminando le ``variabili'' originali da \varname{p1}
+a \varname{p5}.
 
 Lo script di esempio visto sopra è approprioato quando il numero delle variabili
 da processare è piccolo. Quando ci sono molte variabili nel dataset, è più
@@ -218,9 +210,8 @@ basta eseguire
 
 Se i periodi temporali sono distanziati in modo uniforme, è possibile
 usare valori ritardati delle variabili in una regressione panel, come
-anche costruire differenze prime delle variabili.Se un dataset è
-identificato correttamente come panel (si veda il paragrafo
-precedente), \app{gretl} gestirà correttamente la generazione di
+anche costruire differenze prime delle variabili. Se un dataset è identificato
+correttamente come panel,  \app{gretl} gestirà correttamente la generazione di
 questo tipo di variabili. Ad esempio, il comando
 \begin{code}
     genr x1_1 = x1(-1)
@@ -246,7 +237,7 @@ contiene il comando \textsf{Diagnosi panel}, che esegue un test del
 modello OLS pooled contro le principali alternative: il modello a
 effetti fissi e quello a effetti casuali.  
 
-Il modello a effetti fissi aggiunge una variabile dummy per tutte le
+Il modello a \emph{effetti fissi} aggiunge una variabile dummy per tutte le
 unità cross section tranne una, permettendo così all'intercetta della
 regressione di variare per ogni unità.  Viene eseguito un test
 \emph{F} per la significatività congiunta di queste dummy: un basso
@@ -254,7 +245,7 @@ p-value per questo test va contro l'ipotesi nulla (che il semplice
 modello pooled OLS sia adeguato) e a favore del modello a effetti
 fissi.
 
-Il modello a effetti casuali, d'altra parte, scompone la varianza dei
+Il modello a \emph{effetti casuali}, d'altra parte, scompone la varianza dei
 residui in due parti: una specifica all'unità cross section, o
 ``gruppo'', e una specifica all'osservazione particolare (la stima può
 essere eseguita solo se il panel è abbastanza ``largo'', ossia se il
