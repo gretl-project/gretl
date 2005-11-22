@@ -24,7 +24,42 @@ da processare.
 \subsection{Il filtro di Hodrick--Prescott}
 \label{hodrick-prescott}
 
-Da scrivere.
+Una serie storica $y_t$ può essere scomposta in un trend, o componente di
+crescita $g_t$ e in una componente ciclica $c_t$.  
+%
+\[
+y_t = g_t + c_t, \quad t = 1,2,\dots,T
+\]
+%
+Il filtro di Hodrick--Prescott effettua questa scomposizione, minimizzando
+l'espressione seguente:
+%
+\[
+    \sum_{t = 1}^T {(y_t - g_t )^2 } + \lambda \sum_{t = 2}^{T -
+      1} \left((g_{t+1} - g_t) - (g_t - g_{t - 1} )\right)^2 .
+\]
+%
+Il primo termine è la somma dei quadrati delle componenti cicliche $c_t =
+y_t - g_t$. Il secondo termine è un multiplo $\lambda$ della somma dei quadrati
+delle differenze seconde della componente di trend. Questo secondo termine
+penalizza le variazioni nel tasso di crescita della componente di trend:
+maggiore è il valore di $\lambda$, maggiore sarà la penalizzazione, e quindi più
+regolare sarà la serie di trend.
+
+Si noti che la funzione \cmd{hpfilt} in \app{gretl} produce la componente di
+ciclo, $c_t$, della serie originale. Se si vuole il trend depurato, si può
+sottrarre il ciclo dalla serie originale:
+
+\begin{code}
+genr ct = hpfilt(yt)
+genr gt = yt - ct
+\end{code}
+
+Hodrick e Prescott (1997) suggeriscono che un valore $\lambda = 1600$ sia
+ragionevole per dati trimestrali. Il valore predefinito in \app{gretl} è il
+quadrato della frequenza dei dati, moltiplicato per 100 (che dà appunto 1600 per
+dati trimestrali).  Il valore può essere modificato con il comando \cmd{set} sul
+parametro \cmd{hp\_lambda}.  Ad esempio, \cmd{set hp\_lambda 1200}.
 
 \subsection{Il filtro di Baxter e King}
 \label{baxter-king}
@@ -33,9 +68,9 @@ Si consideri la rappresentazione spettrale di una serie storica $y_t$:
 %	
 \[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
 %
-se volessimo estrarre solo la componente di \emph{y\ensuremath{_{t}}}
-che si trova tra le frequenze $\underline{\omega}$ e
-$\overline{\omega}$ potremmo applicare un filtro passa banda:
+Per estrarre la componente di $y_t$ che si trova tra le frequenze
+$\underline{\omega}$ e $\overline{\omega}$ potremmo applicare un filtro passa
+banda:
 %	
 \[ c^*_t = \int_{-\pi}^{\pi} F^*(\omega) e^{i\omega} \mathrm{d}
 Z(\omega) \] 
@@ -75,8 +110,8 @@ impostare i limiti di frequenza tra 18 e 96, e $k$ a 24, si può
 eseguire
 
 \begin{code}
-	set bkbp_limits 18 96
-	set bkbp_k 24
+    set bkbp_limits 18 96
+    set bkbp_k 24
 \end{code}
 
 Questi valori resteranno in vigore per le chiamate alla funzione
@@ -88,8 +123,61 @@ Questi valori resteranno in vigore per le chiamate alla funzione
 \label{genr-resample}
 
 Un'altra funzione particolare è il ricampionamento, con reimmissione,
-di una serie. Da scrivere.
-    
+di una serie. Data una serie di dati originale \varname{x}, il comando
+\begin{code}
+    genr xr = resample(x)
+\end{code}
+crea una nuova serie in cui ognuno degli elementi è estratto in modo casuale
+dagli elementi di \varname{x}. Se la serie originale ha 100 osservazioni, ogni
+elemento di \varname{x} è scelto con probabilità $1/100$ ad ogni estrazione.
+L'effetto è quindi di ``rimescolare'' gli elementi di \varname{x}, con la
+particolarità che ogni elemento di \varname{x} può apparire più di una volta, o
+non apparire affatto, in \varname{xr}.
+
+L'uso principale di questa funzione è la costruzione di intervalli di confidenza
+o p-value con il metodo bootstrap. Ecco un semplice esempio: si supponga di aver
+stimato una semplice regressione OLS di $y$ su $x$ e di aver trovato che il
+coefficiente della pendenza abbia un rapporto $t$ pari a 2.5 con 40 gradi di
+libertà.  Il p-value a due code per l'ipotesi nulla che il parametro della
+pendenza sia pari a zero vale quindi 0.0166, usando la distribuzione $t(40)$. A
+seconda del contesto, però, potremmo dubitare del fatto che il rapporto tra il
+coefficiente e l'errore standard segua veramente una distribuzione $t(40)$. In
+questo caso, potremmo derivare un valore bootstrap per il p-value come mostrato
+nell'esempio \ref{resample-loop}.  
+
+Sotto l'ipotesi nulla che la pandenza rispetto a $x$ sia pari a zero,
+$y$ è uguale alla sua media più un termine di errore. Simuliamo $y$
+ricampionando i residui del modello OLS iniziale e ri-stimiamo il modello.
+Ripetiamo questa procedura un gran numero di volte e registriamo il numero di
+casi in cui il valore assoluto del rapporto $t$ è maggiore di 2.5: la
+proporzione di questo numero di casi è il nostro valore bootstrap per il
+p-value. Per una buona discussione dei test basati sulla simulazione e sui
+metodi bootstrap, si veda Davidson e MacKinnon (2004, capitolo 4).
+
+\begin{script}[htbp]
+  \caption{Calcolo del p-value col metodo bootstrap}
+  \label{resample-loop}
+\begin{code}
+    ols y 0 x
+    # salva i residui
+    genr ui = $uhat
+    scalar ybar = mean(y)
+    # numero delle replicazioni per il bootstrap
+    scalar replics = 10000
+    scalar tcount = 0
+    series ysim = 0
+    loop replics --quiet
+      # genera i valori simulati di y ricampionando
+      ysim = ybar + resample(ui)
+      ols ysim 0 x
+      scalar tsim = abs(coeff(x) / stderr(x))
+      tcount += (tsim > 2.5)
+    endloop      
+    printf "Proporzione dei casi con |t| > 2.5 = %g\n", \
+       tcount / replics
+\end{code}
+\end{script}
+   
 
 \section{Gestione dei valori mancanti}
 \label{genr-missing}
@@ -105,7 +193,7 @@ booleano NOT).  Ad esempio, è possibile contare i valori mancanti
 della variabile \verb+x+ usando
 
 \begin{code}
-      genr nmanc_x = sum(missing(x))
+    genr nmanc_x = sum(missing(x))
 \end{code}
 
 La funzione \verb+zeromiss()+, che richiede anch'essa come unico
@@ -117,8 +205,8 @@ possibile determinare la prima osservazione valida di una variabile
 \verb+x+ usando
 
 \begin{code}
-        genr time
-        genr x0 = min(zeromiss(time * ok(x)))
+    genr time
+    genr x0 = min(zeromiss(time * ok(x)))
 \end{code}
 
 
@@ -207,22 +295,22 @@ corretto, è possibile leggere l'etichetta con il comando \cmd{label}
 sessione interattiva illustra la procedura.
     
 \begin{code}
-      ? adf 4 x1 --c
+    ? adf 4 x1 --c
 
-      Test Dickey-Fuller aumentati, ordine 4, per x1
-      ampiezza campionaria 59
-      ipotesi nulla di radice unitaria: a = 1
+    Test Dickey-Fuller aumentati, ordine 4, per x1
+    ampiezza campionaria 59
+    ipotesi nulla di radice unitaria: a = 1
 
-        test con costante
-        modello: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
-        valore stimato di (a - 1): -0.216889
-        statistica test: t = -1.83491
-        p-value asintotico 0.3638
+      test con costante
+      modello: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
+      valore stimato di (a - 1): -0.216889
+      statistica test: t = -1.83491
+      p-value asintotico 0.3638
 
-      P-value basati su MacKinnon (JAE, 1996)
-      ? genr pv = $pvalue
-      Generato lo scalare pv (ID 13) = 0.363844
-      ? label pv    
+    P-value basati su MacKinnon (JAE, 1996)
+    ? genr pv = $pvalue
+    Generato lo scalare pv (ID 13) = 0.363844
+    ? label pv    
       pv=Dickey-Fuller pvalue (scalar)
 \end{code}
 
