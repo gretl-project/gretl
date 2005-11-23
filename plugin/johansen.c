@@ -325,17 +325,17 @@ static void print_lr_matrix (JohansenInfo *jv, gretl_matrix *Zeta_0,
     int i, j;
 
     pprintf(prn, "%s\n", _("long-run matrix (alpha * beta')"));
-    pprintf(prn, "%22s", pdinfo->varname[jv->list[1]]);
 
-    for (j=1; j<=cols; j++) {
-	if (j < jv->list[0]) {
-	    pprintf(prn, "%13s", pdinfo->varname[jv->list[j+1]]);
-	} else if (jv->code == J_REST_CONST) {
-	    pprintf(prn, "%13s", "const");
-	} else if (jv->code == J_REST_TREND) {
-	    pprintf(prn, "%13s", "trend");
-	}
+    pprintf(prn, "%22s", pdinfo->varname[jv->list[1]]); /* N.B. */
+    for (j=2; j<=jv->list[0]; j++) {
+	pprintf(prn, "%13s", pdinfo->varname[jv->list[j]]);
     }
+
+    if (jv->code == J_REST_CONST) {
+	pprintf(prn, "%13s", "const");
+    } else if (jv->code == J_REST_TREND) {
+	pprintf(prn, "%13s", "trend");
+    }    
 
     pputc(prn, '\n');
 
