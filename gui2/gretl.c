@@ -534,7 +534,7 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Help menu */
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>", NULL },
-#if GTK_MINOR_VERSION >= 6
+#if GTK_MINOR_VERSION >= 8
     { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, "<StockItem>", GTK_STOCK_INFO },
 #else
     { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, NULL, GNULL },
