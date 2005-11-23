@@ -71,10 +71,8 @@ char *storelist = NULL;
 
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
-#include "../pixmaps/mini.plot.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.boxplot.xpm"
-
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
@@ -1587,17 +1585,17 @@ void gretl_stock_icons_init (void)
     char **xpms[] = {
 	mini_tex_xpm,
 	mail_16_xpm,
-	mini_plot_xpm,
 	mini_tsplot_xpm,
 	mini_boxplot_xpm
     };
     const char *stocks[] = {
 	GRETL_STOCK_TEX,
 	GRETL_STOCK_MAIL,
-	GRETL_STOCK_XY,
 	GRETL_STOCK_TS,
 	GRETL_STOCK_BOX
     };
+    int n = sizeof stocks / sizeof stocks[0];
+
     static GtkIconFactory *ifac;
 
     if (ifac == NULL) {
@@ -1608,7 +1606,7 @@ void gretl_stock_icons_init (void)
 
 	ifac = gtk_icon_factory_new();
 
-	for (i=0; i<5; i++) {
+	for (i=0; i<n; i++) {
 	    set = gtk_icon_set_new();
 	    source = gtk_icon_source_new();
 	    gtk_icon_source_set_size(source, GTK_ICON_SIZE_MENU);

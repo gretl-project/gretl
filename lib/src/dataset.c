@@ -477,8 +477,14 @@ int allocate_Z (double ***pZ, const DATAINFO *pdinfo)
     }
 
     if (!err) {
-	for (t=0; t<pdinfo->n; t++) {
-	    Z[0][t] = 1.0; 
+	for (i=0; i<pdinfo->v; i++) {
+	    for (t=0; t<pdinfo->n; t++) {
+		if (i == 0) {
+		    Z[i][t] = 1.0; 
+		} else {
+		    Z[i][t] = NADBL;
+		}
+	    }
 	}
     }
 

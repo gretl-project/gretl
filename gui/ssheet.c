@@ -481,6 +481,7 @@ static void get_data_from_sheet (void)
     }
 
     colnum = 0;
+
     for (i=1; i<datainfo->v; i++) {
 	if (spreadsheet_hide(i, datainfo)) {
 	    continue;
@@ -603,6 +604,17 @@ static void free_spreadsheet (GtkWidget *widget, gpointer data)
     set_dataset_locked(FALSE);
 }
 
+static int first_var_all_missing (void)
+{
+    int t;
+
+    for (t=0; t<datainfo->n; t++) {
+	if (!na(Z[1][t])) return 0;
+    }
+
+    return 1;
+}
+
 static void maybe_exit_sheet (GtkWidget *w, GtkWidget *swin)
 {
     int resp;
@@ -615,6 +627,10 @@ static void maybe_exit_sheet (GtkWidget *w, GtkWidget *swin)
 	    get_data_from_sheet();
 	}
 	else if (resp == GRETL_CANCEL || resp == -1) return;
+    } else if (datainfo->v == 2 && first_var_all_missing()) {
+	data_status |= (GUI_DATA|MODIFIED_DATA);
+	register_data(NULL, NULL, 0);
+	infobox(_("Warning: there were missing observations"));
     }
   
     gtk_widget_destroy(swin);

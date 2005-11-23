@@ -46,8 +46,7 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
     if (old == NULL) {
 	errbox(_("No undo information available"));
     } else {
-	guint len = 
-	    gtk_text_get_length(GTK_TEXT(vwin->w));
+	gint len = gtk_text_get_length(GTK_TEXT(vwin->w));
 	guint pt = gtk_text_get_point(GTK_TEXT(vwin->w));
 
 	gtk_text_freeze(GTK_TEXT(vwin->w));

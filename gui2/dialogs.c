@@ -1502,29 +1502,28 @@ obs_spinbox (struct range_setting *rset, const char *label,
 
 void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 {
+    struct range_setting *rset = NULL;
+    GList *dumlist = NULL;
+    int thisdum = 0;
     GtkWidget *tempwid, *hbox;
-    struct range_setting *rset;
     char obstext[32];
 
-    rset = rset_new(u, p, NULL, NULL, _("gretl: set sample"));
-    if (rset == NULL) return;
-
     if (u == SMPLDUM) {
-	GList *dumlist;
-	int thisdum = 0;
-
 	dumlist = get_dummy_list(&thisdum);
-
 	if (dumlist == NULL) {
 	    if (dataset_is_restricted()) {
 		errbox(_("There are no dummy variables in the current sample"));
 	    } else {
 		errbox(_("There are no dummy variables in the dataset"));
 	    }
-	    gtk_widget_destroy(rset->dlg);
 	    return;
 	}
+    }
 
+    rset = rset_new(u, p, NULL, NULL, _("gretl: set sample"));
+    if (rset == NULL) return;
+
+    if (u == SMPLDUM) {
 	tempwid = gtk_label_new(_("Name of dummy variable to use:"));
 	hbox = gtk_hbox_new(TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);

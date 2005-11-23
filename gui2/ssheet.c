@@ -1291,6 +1291,17 @@ static Spreadsheet *spreadsheet_new (void)
 
 /* ........................................................... */
 
+static int first_var_all_missing (void)
+{
+    int t;
+
+    for (t=0; t<datainfo->n; t++) {
+	if (!na(Z[1][t])) return 0;
+    }
+
+    return 1;
+}
+
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 {
     int resp;
@@ -1303,6 +1314,10 @@ static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 	    get_data_from_sheet(NULL, sheet);
 	}
 	else if (resp == GRETL_CANCEL || resp == -1) return FALSE;
+    } else if (datainfo->v == 2 && first_var_all_missing()) {
+	data_status |= (GUI_DATA|MODIFIED_DATA);
+	register_data(NULL, NULL, 0);
+	infobox(_("Warning: there were missing observations"));
     }
   
     gtk_widget_destroy(sheet->win);
