@@ -597,7 +597,13 @@ static char *get_gui_help_string (int pos)
 static void english_help_callback (gpointer p, int script, 
 				   GtkWidget *w)
 {
-    helpwin(script, 1);
+    windata_t *hwin = (windata_t *) p;
+    windata_t *vwin = helpwin(script, 1);
+    int pos = hwin->active_var;
+
+    /* FIXME: need to map from Spanish or whatever to English "pos" */
+
+    set_help_topic_buffer(vwin, pos);    
 }
 
 static void add_english_help_item (windata_t *hwin, int script)
@@ -610,7 +616,7 @@ static void add_english_help_item (windata_t *hwin, int script)
     helpitem.item_type = NULL;
     helpitem.path = mpath;
     helpitem.callback = english_help_callback; 
-    gtk_item_factory_create_item(hwin->ifac, &helpitem, NULL, 1);
+    gtk_item_factory_create_item(hwin->ifac, &helpitem, hwin, 1);
 }
 #endif
 

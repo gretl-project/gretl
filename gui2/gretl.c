@@ -1041,8 +1041,6 @@ int main (int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-/* ........................................................... */
-
 static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 {
     if (mdata->ifac != NULL) {
@@ -1057,8 +1055,6 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 	     (selcount > 1));
     }
 }
-
-/* ........................................................... */
 
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
@@ -1094,8 +1090,6 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     return FALSE;
 }
-
-/* ........................................................... */
 
 void populate_varlist (void)
 {
@@ -1161,8 +1155,6 @@ void populate_varlist (void)
 	click_connected = 1;
     }
 }
-
-/* ......................................................... */
 
 static gint 
 compare_var_ids (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
@@ -1384,26 +1376,22 @@ static GtkWidget *make_main_window (int gui_get_data)
     return main_vbox;
 }
 
-/* ........................................................... */
-
 static void set_up_main_menu (void)
 {
     GtkAccelGroup *accel_group;
     gint n_items = sizeof data_items / sizeof data_items[0];
 
-    accel_group = gtk_accel_group_new ();
-    mdata->ifac = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
-					accel_group);
-    gtk_window_add_accel_group (GTK_WINDOW (mdata->w), accel_group);
-    g_object_unref (accel_group);
+    accel_group = gtk_accel_group_new();
+    mdata->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
+				       accel_group);
+    gtk_window_add_accel_group(GTK_WINDOW(mdata->w), accel_group);
+    g_object_unref(accel_group);
 #ifdef ENABLE_NLS
     gtk_item_factory_set_translate_func(mdata->ifac, menu_translate, NULL, NULL);
 #endif    
-    gtk_item_factory_create_items (mdata->ifac, n_items, data_items, NULL);
-    mdata->mbar = gtk_item_factory_get_widget (mdata->ifac, "<main>");
+    gtk_item_factory_create_items(mdata->ifac, n_items, data_items, NULL);
+    mdata->mbar = gtk_item_factory_get_widget(mdata->ifac, "<main>");
 }
-
-/* ........................................................... */
 
 int restore_sample (gretlopt opt)
 {
@@ -1571,10 +1559,8 @@ static void auto_store (void)
     }	
 }
 
-/* ........................................................... */
-
 static void get_selection_row (GtkTreeModel *model, GtkTreePath *path,
-			      GtkTreeIter *iter, int *row)
+			       GtkTreeIter *iter, int *row)
 {
     gint *indices = gtk_tree_path_get_indices(path);
     *row = indices[0];

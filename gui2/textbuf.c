@@ -579,6 +579,7 @@ void set_help_topic_buffer (windata_t *hwin, int pos)
     }
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
+    hwin->active_var = pos;
 }
 
 #ifndef USE_GTKSOURCEVIEW
