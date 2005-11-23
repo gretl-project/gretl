@@ -2868,13 +2868,20 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
     return gnuplot_make_graph();
 }
 
-static int real_VAR_residual_plot (const gretl_matrix *E, int t1, double ***pZ,
-				   DATAINFO *pdinfo)
+int gretl_VAR_residual_plot (const GRETL_VAR *var, 
+			     double ***pZ, DATAINFO *pdinfo)
 {
+    const gretl_matrix *E;
     FILE *fp = NULL;
-    char title[32];
     int nvars, nobs, pv;
-    int i, t, err;
+    int i, v, t, t1, err;
+
+    E = gretl_VAR_get_residual_matrix(var);
+    if (E == NULL) {
+	return E_DATA;
+    }
+
+    t1 = gretl_VAR_get_t1(var);
 
     err = gnuplot_init(PLOT_REGULAR, &fp);
     if (err) {
@@ -2891,8 +2898,8 @@ static int real_VAR_residual_plot (const gretl_matrix *E, int t1, double ***pZ,
 
     fputs("plot \\\n", fp);
     for (i=0; i<nvars; i++) {
-	sprintf(title, I_("Equation %d"), i + 1);
-	fprintf(fp, "'-' using 1:2 title '%s' w lines", title);
+	v = gretl_VAR_get_variable_number(var, i);
+	fprintf(fp, "'-' using 1:2 title '%s' w lines", pdinfo->varname[v]);
 	if (i == nvars - 1) {
 	    fputc('\n', fp);
 	} else {
@@ -2922,22 +2929,6 @@ static int real_VAR_residual_plot (const gretl_matrix *E, int t1, double ***pZ,
     fclose(fp);
 
     return gnuplot_make_graph();
-}
-
-int gretl_VAR_residual_plot (const GRETL_VAR *var, 
-			     double ***pZ, DATAINFO *pdinfo)
-{
-    const gretl_matrix *E;
-    int t1;
-
-    E = gretl_VAR_get_residual_matrix(var);
-    if (E == NULL) {
-	return E_DATA;
-    }
-
-    t1 = gretl_VAR_get_t1(var);
-
-    return real_VAR_residual_plot(E, t1, pZ, pdinfo);
 }
 
 int gretl_VAR_roots_plot (GRETL_VAR *var)

@@ -28,6 +28,8 @@
 #define GRETL_STOCK_MAIL   "gretl-mail"
 #define GRETL_STOCK_TS     "gretl-tsplot"
 #define GRETL_STOCK_BOX    "gretl-boxplot"
+#define GRETL_STOCK_PDF    "gretl-pdf"
+#define GRETL_STOCK_BOOK   "gretl-book"
 
 enum windata_flags {
     VWIN_HELP_ACTIVE = 1 << 0,

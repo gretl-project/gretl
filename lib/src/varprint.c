@@ -582,7 +582,7 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 	if (rtf) {
 	    pputs(prn, vname);
 	} else {
-	    pprintf(prn, "%-10s", vname);
+	    pprintf(prn, "%-12s", vname);
 	}
 
 	/* coefficients */
@@ -604,7 +604,7 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 	    if (rtf) {
 		pputs(prn, "\t");
 	    } else {
-		pprintf(prn, "%11s", " ");
+		pprintf(prn, "%13s", " ");
 	    }
 	    for (j=0; j<jv->rank; j++) {
 		if (i < jv->rank) {

@@ -73,6 +73,9 @@ char *storelist = NULL;
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.boxplot.xpm"
+#include "../pixmaps/mini.pdf.xpm"
+#include "../pixmaps/mini.manual.xpm"
+
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
@@ -1586,13 +1589,17 @@ void gretl_stock_icons_init (void)
 	mini_tex_xpm,
 	mail_16_xpm,
 	mini_tsplot_xpm,
-	mini_boxplot_xpm
+	mini_boxplot_xpm,
+	mini_pdf_xpm,
+	mini_manual_xpm
     };
     const char *stocks[] = {
 	GRETL_STOCK_TEX,
 	GRETL_STOCK_MAIL,
 	GRETL_STOCK_TS,
-	GRETL_STOCK_BOX
+	GRETL_STOCK_BOX,
+	GRETL_STOCK_PDF,
+	GRETL_STOCK_BOOK
     };
     int n = sizeof stocks / sizeof stocks[0];
 

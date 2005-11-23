@@ -534,14 +534,13 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Help menu */
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>", NULL },
-#if GTK_MINOR_VERSION >= 8
-    { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, "<StockItem>", GTK_STOCK_INFO },
-#else
-    { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, NULL, GNULL },
-#endif
-    { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, "<StockItem>", GTK_STOCK_HELP },
+    { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, "<StockItem>", 
+      GRETL_STOCK_BOOK },
+    { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, "<StockItem>", 
+      GRETL_STOCK_PDF },
     { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, "<StockItem>", GTK_STOCK_NETWORK },
+    { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, "<StockItem>", 
+      GTK_STOCK_NETWORK },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", NULL },
 #if GTK_MINOR_VERSION >= 6
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, "<StockItem>", GTK_STOCK_ABOUT }
