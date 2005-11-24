@@ -73,9 +73,11 @@ char *storelist = NULL;
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.boxplot.xpm"
+
+#ifndef OLD_GTK
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
-
+#endif
 
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
@@ -3406,21 +3408,15 @@ static void add_x12_output_menu_item (windata_t *vwin)
     g_free(item.path);
 }
 
-static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
+static int impulse_response_setup (int *horizon, int *bootstrap)
 {
-    windata_t *vwin = (windata_t *) p;
-    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     gchar *title;
     int h = default_VAR_horizon(datainfo);
-    gint targ;
-    int err;
-    const double **vZ = NULL;
     const char *impulse_opts[] = {
 	N_("include bootstrap confidence interval")
     };
     static int active[] = { 0 };
-
-    targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
+    int err;
 
     title = g_strdup_printf("gretl: %s", _("impulse responses"));
 
@@ -3433,15 +3429,62 @@ static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
     g_free(title);
 
     if (err < 0) {
-	return;
-    } 
+	/* cancelled */
+	*horizon = 0;
+    } else {
+	*horizon = h;
+	*bootstrap = active[0];
+    }
 
-    if (active[0]) {
+    return err;
+}
+
+static void impulse_plot_call (gpointer p, guint shock, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    int horizon, bootstrap;
+    gint targ;
+    const double **vZ = NULL;
+    int err;
+
+    targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
+
+    if (impulse_response_setup(&horizon, &bootstrap) < 0) {
+	return;
+    }
+
+    if (bootstrap) {
 	vZ = (const double **) Z;
     }
 
-    err = gretl_VAR_plot_impulse_response(var, targ, shock, h, vZ,
-					  datainfo);
+    err = gretl_VAR_plot_impulse_response(var, targ, shock, horizon,
+					  vZ, datainfo);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	register_graph();
+    }
+}
+
+static void multiple_irf_plot_call (gpointer p, guint vecm, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    int horizon, bootstrap;
+    const double **vZ = NULL;
+    int err;
+
+    if (impulse_response_setup(&horizon, &bootstrap) < 0) {
+	return;
+    }
+
+    if (bootstrap) {
+	vZ = (const double **) Z;
+    }    
+
+    err = gretl_VAR_plot_multiple_irf(var, horizon, vZ, datainfo);
 
     if (err) {
 	gui_errmsg(err);
@@ -3736,6 +3779,14 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     /* VAR inverse roots */
     varitem.path = g_strdup_printf("%s/%s", _(gpath), _("VAR inverse roots"));
     varitem.callback = VAR_roots_plot_call;
+    varitem.callback_action = vecm;
+    varitem.item_type = NULL;
+    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+    g_free(varitem.path);
+
+    /* Multiple IRFs */
+    varitem.path = g_strdup_printf("%s/%s", _(gpath), _("Impulse responses (combined)"));
+    varitem.callback = multiple_irf_plot_call;
     varitem.callback_action = vecm;
     varitem.item_type = NULL;
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);

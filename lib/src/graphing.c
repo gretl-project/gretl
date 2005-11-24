@@ -96,6 +96,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_TRI_GRAPH,      "TRAMO / X12A tri-graph" },
     { PLOT_VAR_ROOTS,      "VAR inverse roots plot" },
     { PLOT_ELLIPSE,        "confidence ellipse plot" },
+    { PLOT_MULTI_IRF,      "multiple impulse responses" },
     { PLOT_TYPE_MAX,       NULL }
 };
     
@@ -2860,6 +2861,105 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 	fputs("e\n", fp);
     }
 
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+    gretl_matrix_free(resp);
+
+    return gnuplot_make_graph();
+}
+
+int 
+gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
+			     const double **Z,
+			     const DATAINFO *pdinfo)
+{
+    FILE *fp = NULL;
+    int confint = 0;
+    int vtarg, vshock;
+    gretl_matrix *resp;
+    char title[128];
+    int t, err, i, j;
+
+    int n = var->neqns;
+    float plot_fraction = 1.0 / n;
+    float xorig = 0.0;
+    float yorig;
+
+    resp = gretl_VAR_get_impulse_response(var, 1, 1, periods, Z, pdinfo);
+    if (resp == NULL) {
+	return E_ALLOC;
+    }
+
+    if (gretl_matrix_cols(resp) > 1) {
+	confint = 1;
+    }
+
+    err = gnuplot_init(PLOT_MULTI_IRF, &fp);
+    if (err) {
+	gretl_matrix_free(resp);
+	return err;
+    }
+
+    if (!confint) {
+	fputs("# impulse response plot\n", fp);
+	fputs("set nokey\n", fp);
+    } else {
+	fputs("set key top left\n", fp);
+    }
+    fputs("set multiplot\n", fp);
+    fprintf(fp, "set xlabel '%s'\n", _("periods"));
+    fputs("set xzeroaxis\n", fp);
+    fprintf(fp, "set size %g,%g\n", plot_fraction, plot_fraction);
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<n; i++) {
+
+	yorig = 1.0 - plot_fraction;
+	vtarg = gretl_VAR_get_variable_number(var, i);
+
+	for(j=0; j<n; j++) {
+
+	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
+	    resp = gretl_VAR_get_impulse_response(var, j, i, periods, Z, pdinfo);
+	    if (resp == NULL) {
+		return E_ALLOC;
+	    }
+
+	    vshock = gretl_VAR_get_variable_number(var, j);
+	    sprintf(title, "%s -> %s", pdinfo->varname[vshock], pdinfo->varname[vtarg]);
+	    fprintf(fp, "set title '%s'\n", title);
+
+	    if (confint) {
+		fputs("plot \\\n'-' using 1:2 notitle w lines,\\\n", fp); 
+		fputs("'-' using 1:2:3:4 notitle w errorbars\n", fp);
+	    } else {
+		fputs("plot \\\n'-' using 1:2 w lines\n", fp);
+	    }
+
+	    for (t=0; t<periods; t++) {
+		fprintf(fp, "%d %.8g\n", t+1, gretl_matrix_get(resp, t, 0));
+	    }
+	    fputs("e\n", fp);
+
+	    if (confint) {
+		for (t=0; t<periods; t++) {
+		    fprintf(fp, "%d %.8g %.8g %.8g\n", t+1, 
+			    gretl_matrix_get(resp, t, 0),
+			    gretl_matrix_get(resp, t, 1),
+			    gretl_matrix_get(resp, t, 2));
+		}
+		fputs("e\n", fp);
+	    }
+	    
+	    yorig -= plot_fraction;
+	}
+
+	xorig += plot_fraction;
+    }
+
+    fputs("unset multiplot\n", fp);
     gretl_pop_c_numeric_locale();
 
     fclose(fp);

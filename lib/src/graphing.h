@@ -99,6 +99,7 @@ typedef enum {
     PLOT_KERNEL,
     PLOT_VAR_ROOTS,
     PLOT_ELLIPSE,
+    PLOT_MULTI_IRF,
     PLOT_TYPE_MAX
 } PlotType;
 
@@ -196,6 +197,11 @@ gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
 				 const double **Z,
 				 const DATAINFO *pdinfo);
+
+int 
+gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
+			     const double **Z,
+			     const DATAINFO *pdinfo);
 
 int gretl_VAR_residual_plot (const GRETL_VAR *var, 
 			     double ***pZ, DATAINFO *pdinfo);

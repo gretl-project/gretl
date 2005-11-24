@@ -561,6 +561,7 @@ static int get_gpt_marker (const char *line, char *label)
 
 #define cant_edit(p) (p == PLOT_CORRELOGRAM || \
                       p == PLOT_LEVERAGE || \
+                      p == PLOT_MULTI_IRF || \
                       p == PLOT_MULTI_SCATTER || \
                       p == PLOT_TRI_GRAPH || \
                       p == PLOT_VAR_ROOTS || \
