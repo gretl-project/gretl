@@ -425,7 +425,6 @@ static char *label_front (void)
     }
 }
 
-
 #endif /* WIN32 */
 
 /**

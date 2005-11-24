@@ -3784,13 +3784,15 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
 
-    /* Multiple IRFs */
-    varitem.path = g_strdup_printf("%s/%s", _(gpath), _("Impulse responses (combined)"));
-    varitem.callback = multiple_irf_plot_call;
-    varitem.callback_action = vecm;
-    varitem.item_type = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
-    g_free(varitem.path);
+    if (neqns <= 4) {
+	/* Multiple IRFs */
+	varitem.path = g_strdup_printf("%s/%s", _(gpath), _("Impulse responses (combined)"));
+	varitem.callback = multiple_irf_plot_call;
+	varitem.callback_action = vecm;
+	varitem.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
+    }
 
     for (i=0; i<neqns; i++) {
 	char maj[32], min[16];
