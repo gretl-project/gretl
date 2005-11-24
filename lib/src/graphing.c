@@ -49,8 +49,8 @@
 
 
 static char gnuplot_path[MAXLEN];
-
 static const char *auto_ols_string = "# plot includes automatic OLS line\n";
+static int gp_small_font_size;
 
 struct gnuplot_info {
     gnuplot_flags flags;
@@ -427,6 +427,26 @@ static char *label_front (void)
 
 #endif /* WIN32 */
 
+static void 
+write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
+{
+    int small = 0;
+
+    if (ptype == PLOT_MULTI_IRF && gp_small_font_size > 0) {
+	char fname[64];
+	int fsize;
+
+	if (sscanf(grfont, "%s %d", fname, &fsize) == 2) {
+	    sprintf(fstr, " font %s %d", fname, gp_small_font_size);
+	    small = 1;
+	}
+    }
+
+    if (!small) {
+	sprintf(fstr, " font %s", grfont);
+    }
+}
+
 /**
  * get_gretl_png_term_line:
  * @ptype: indication of the sort of plot to be made, which
@@ -465,7 +485,7 @@ const char *get_gretl_png_term_line (PlotType ptype)
 	    grfont = getenv("GRETL_PNG_GRAPH_FONT");
 	}
 	if (grfont != NULL && *grfont != 0) {
-	    sprintf(font_string, " font %s", grfont);
+	    write_gnuplot_font_string(font_string, grfont, ptype);
 	}
     }
 
@@ -2884,6 +2904,8 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     float plot_fraction = 1.0 / n;
     float xorig = 0.0;
     float yorig;
+
+    gp_small_font_size = (n == 4)? 6 : 0;
 
     resp = gretl_VAR_get_impulse_response(var, 1, 1, periods, Z, pdinfo);
     if (resp == NULL) {
