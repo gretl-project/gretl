@@ -20,7 +20,7 @@
 #include "gretl.h"
 #include "textbuf.h"
 
-#define gui_help(r) (r == GUI_HELP || r == GUI_HELP_ENGLISH)
+#define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
 
 extern GdkColor red, blue;
 
@@ -175,7 +175,7 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
     return 0;
 }
 
-void set_help_topic_buffer (windata_t *hwin, int pos)
+void set_help_topic_buffer (windata_t *hwin, int hcode, int pos)
 {
     char line[128];
     gchar *hbuf = (gchar *) hwin->data;
@@ -251,6 +251,7 @@ void set_help_topic_buffer (windata_t *hwin, int pos)
     }
 
     gtk_text_thaw(GTK_TEXT(hwin->w));
+    hwin->active_var = hcode;
 }
 
 int viewer_char_count (windata_t *vwin)

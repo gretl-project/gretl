@@ -32,7 +32,7 @@ enum {
     RED_TEXT
 };
 
-#define gui_help(r) (r == GUI_HELP || r == GUI_HELP_ENGLISH)
+#define gui_help(r) (r == GUI_HELP || r == GUI_HELP_EN)
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec)
 {
@@ -505,7 +505,7 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     fclose(fp);
 }
 
-void set_help_topic_buffer (windata_t *hwin, int pos)
+void set_help_topic_buffer (windata_t *hwin, int hcode, int pos)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
@@ -579,7 +579,7 @@ void set_help_topic_buffer (windata_t *hwin, int pos)
     }
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
-    hwin->active_var = pos;
+    hwin->active_var = hcode;
 }
 
 #ifndef USE_GTKSOURCEVIEW

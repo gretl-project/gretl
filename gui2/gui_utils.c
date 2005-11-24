@@ -1570,7 +1570,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_equation_system_destroy(vwin->data);
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
 	    free_multi_series_view(vwin->data);
-	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_ENGLISH) {
+	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_EN) {
 	    free(vwin->data); /* help file text */
 	}
 
@@ -2062,9 +2062,9 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: help")); break;
     case CLI_HELP:
 	title = g_strdup(_("gretl: command syntax")); break;
-    case GUI_HELP_ENGLISH: 
+    case GUI_HELP_EN: 
 	title = g_strdup("gretl: help"); break;
-    case CLI_HELP_ENGLISH:
+    case CLI_HELP_EN:
 	title = g_strdup("gretl: command syntax"); break;
     case VIEW_LOG:
 	title = g_strdup(_("gretl: command log")); break;

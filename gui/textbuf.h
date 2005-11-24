@@ -22,8 +22,8 @@
 
 #define help_role(r) (r == CLI_HELP || \
                       r == GUI_HELP || \
-                      r == CLI_HELP_ENGLISH || \
-                      r == GUI_HELP_ENGLISH)
+                      r == CLI_HELP_EN || \
+                      r == GUI_HELP_EN)
 
 void text_paste (windata_t *mydata, guint u, GtkWidget *widget);
 
@@ -38,7 +38,7 @@ void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn);
 
 int text_buffer_insert_file (GtkWidget *w, const char *filename, int role);
 
-void set_help_topic_buffer (windata_t *hwin, int pos);
+void set_help_topic_buffer (windata_t *hwin, int hcode, int pos);
 
 int viewer_char_count (windata_t *vwin);
 

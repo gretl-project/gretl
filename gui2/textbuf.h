@@ -22,8 +22,8 @@
 
 #define help_role(r) (r == CLI_HELP || \
                       r == GUI_HELP || \
-                      r == CLI_HELP_ENGLISH || \
-                      r == GUI_HELP_ENGLISH)
+                      r == CLI_HELP_EN || \
+                      r == GUI_HELP_EN)
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
 
@@ -49,7 +49,7 @@ void create_text (windata_t *vwin, GtkTextBuffer **buf,
 
 void text_table_setup (windata_t *vwin);
 
-void set_help_topic_buffer (windata_t *hwin, int pos);
+void set_help_topic_buffer (windata_t *hwin, int hcode, int pos);
 
 #ifdef USE_GTKSOURCEVIEW
 

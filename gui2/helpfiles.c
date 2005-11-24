@@ -31,13 +31,11 @@
 
 #define HDEBUG 0
 
-#ifdef ENABLE_NLS
 static int translated_helpfile = -1;
-static char *english_gui_helpfile;
-static char *english_script_helpfile;
-static int english_gui_help_length;
-static int english_script_help_length;
-#endif
+static char *en_gui_helpfile;
+static char *en_cli_helpfile;
+static int en_gui_help_length;
+static int en_cli_help_length;
 
 /* helpfile stuff */
 struct help_head_t {
@@ -48,10 +46,16 @@ struct help_head_t {
     int ntopics;
 };
 
-static int gui_help_length, script_help_length;
+static int gui_help_length, cli_help_length;
 static struct help_head_t **cli_heads, **gui_heads;
+static struct help_head_t **en_cli_heads, **en_gui_heads;
 
-static windata_t *helpwin (int script, int english);
+static windata_t *helpwin (int cli, int english);
+static void real_do_help (int hcode, guint pos, int cli);
+static void do_gui_help (gpointer p, guint pos, GtkWidget *w);
+static void do_cli_help (gpointer p, guint pos, GtkWidget *w);
+static int gui_pos_from_code (int hcode, int english);
+static int cli_pos_from_cmd (int cmd, int english);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *widget, gpointer data);
@@ -67,7 +71,7 @@ static GtkWidget *find_entry;
 static char *needle;
 
 #ifndef OLD_GTK
-GtkItemFactoryEntry script_help_menu_items[] = {
+GtkItemFactoryEntry cli_help_menu_items[] = {
     { N_("/_Topics"), NULL, NULL, 0, "<Branch>", GNULL },    
     { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
     { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },
@@ -78,7 +82,7 @@ GtkItemFactoryEntry gui_help_menu_items[] = {
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 #else
-GtkItemFactoryEntry script_help_menu_items[] = {
+GtkItemFactoryEntry cli_help_menu_items[] = {
     { N_("/_Topics"), NULL, NULL, 0, "<Branch>" },    
     { N_("/_Find"), NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
@@ -89,19 +93,17 @@ GtkItemFactoryEntry gui_help_menu_items[] = {
 };
 #endif
 
-#ifdef ENABLE_NLS
-# ifndef OLD_GTK
-GtkItemFactoryEntry english_help_items[] = {
+#ifndef OLD_GTK
+GtkItemFactoryEntry en_help_items[] = {
     { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
     { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
-# else
-GtkItemFactoryEntry english_help_items[] = {
+#else
+GtkItemFactoryEntry en_help_items[] = {
     { N_("/_Find"), NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
-# endif
 #endif
 
 struct gui_help_item {
@@ -182,11 +184,9 @@ static char *help_string_from_cmd (int cmd)
     return NULL;    
 }
 
-#ifdef ENABLE_NLS
-static void set_english_help_file (int gui)
+static void set_en_help_file (int gui)
 {
     char *helpfile, *tmp, *p;
-    FILE *fp;
 
     if (gui) {
 	helpfile = paths.helpfile;
@@ -206,32 +206,9 @@ static void set_english_help_file (int gui)
 	if (p != NULL) *p = 0;
 #endif
 	if (gui) {
-	    english_gui_helpfile = tmp;
+	    en_gui_helpfile = tmp;
 	} else {
-	    english_script_helpfile = tmp;
-	}
-
-	fp = gretl_fopen(tmp, "r");
-
-	if (fp != NULL) {
-	    char test[128];
-	    int len = 0;
-
-	    while (fgets(test, sizeof test, fp)) {
-		if (*test == '#') {
-		    if (gui) len += 2;
-		} else {
-		    len++;
-		}
-	    }
-
-	    fclose(fp);
-
-	    if (gui) {
-		english_gui_help_length = len;
-	    } else {
-		english_script_help_length = len;
-	    }
+	    en_cli_helpfile = tmp;
 	}
     }
 }
@@ -257,24 +234,23 @@ static void set_translated_helpfile (void)
 #endif
 
     if (translated_helpfile == 1) {
-	set_english_help_file(0);
-	set_english_help_file(1);
+	set_en_help_file(0);
+	set_en_help_file(1);
     }
 }
-#endif
 
-int match_heading (struct help_head_t **heads, int nh,
-		   const char *str)
+static int match_heading (struct help_head_t **heads, int nh,
+			  const char *str)
 {
     int i, match = -1;
 
     if (heads == NULL) return -1;
 
     for (i=0; i<nh; i++) {
-	if (!strcmp(str, (heads[i])->name)) {
+	if (!strcmp(str, heads[i]->name)) {
 #if HDEBUG
 	    fprintf(stderr, "str='%s', heads[%d].name='%s', matched\n",
-		    str, i, (heads[i])->name);
+		    str, i, heads[i]->name);
 #endif
 	    match = i;
 	    break;
@@ -296,13 +272,13 @@ static int add_help_heading (struct help_head_t ***pheads,
 
     heads[nh] = malloc(sizeof **heads);
     if (heads[nh] != NULL) {
-	(heads[nh])->name = malloc(strlen(str) + 1);
-	if ((heads[nh])->name != NULL) {
-	    strcpy((heads[nh])->name, str);
+	heads[nh]->name = malloc(strlen(str) + 1);
+	if (heads[nh]->name != NULL) {
+	    strcpy(heads[nh]->name, str);
 #if HDEBUG
 	    fprintf(stderr, "str='%s', heads[%d].name added new\n", str, nh);
 #endif
-	    (heads[nh])->ntopics = 1;
+	    heads[nh]->ntopics = 1;
 	    nh++;
 	} else err = 1;
     } else err = 1;
@@ -405,7 +381,7 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
     }
 
     m = match_heading(heads, nh, section);
-    nt = (heads[m])->ntopics;
+    nt = heads[m]->ntopics;
 
     n = gretl_command_number(word);
 
@@ -423,11 +399,11 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
 #if HDEBUG
     fprintf(stderr, "Set (heads[%d])->topicnames[%d] = \n"
 	    "  quoted_help_string(%s) = '%s'\n",
-	    m, nt, str, (heads[m])->topicnames[nt]);
+	    m, nt, str, heads[m]->topicnames[nt]);
 #endif
 
-    (heads[m])->pos[nt] = pos;
-    (heads[m])->ntopics += 1;
+    heads[m]->pos[nt] = pos;
+    heads[m]->ntopics += 1;
 
     return 0;
 }
@@ -520,21 +496,19 @@ get_help_length (struct help_head_t ***pheads, int *pnh, int *length,
     return err;
 }
 
-static int real_helpfile_init (int gui)
+static int real_helpfile_init (int gui, int english)
 {
-    FILE *fp;
-    char *helpfile;
     struct help_head_t **heads = NULL;
+    char *helpfile;
+    FILE *fp;
     int length, nh = 0;
     int err = 0;
 
-    helpfile = (gui)? paths.helpfile : paths.cmd_helpfile;
-
-#ifdef ENABLE_NLS
-    if (translated_helpfile < 0) { 
-	set_translated_helpfile();
+    if (english) {
+	helpfile = (gui)? en_gui_helpfile : en_cli_helpfile;
+    } else {
+	helpfile = (gui)? paths.helpfile : paths.cmd_helpfile;
     }
-#endif
 
     fp = gretl_fopen(helpfile, "r");
     if (fp == NULL) {
@@ -564,9 +538,17 @@ static int real_helpfile_init (int gui)
     fclose(fp);
 
     if (gui) {
-	gui_heads = heads;
+	if (english) {
+	    en_gui_heads = heads;
+	} else {
+	    gui_heads = heads;
+	}
     } else {
-	cli_heads = heads;
+	if (english) {
+	    en_cli_heads = heads;
+	} else {
+	    cli_heads = heads;
+	}
     }
 
     return length;
@@ -574,8 +556,17 @@ static int real_helpfile_init (int gui)
 
 void helpfile_init (void)
 {
-    script_help_length = real_helpfile_init(0);
-    gui_help_length = real_helpfile_init(1);
+    if (translated_helpfile < 0) { 
+	set_translated_helpfile();
+    }
+
+    cli_help_length = real_helpfile_init(0, 0);
+    gui_help_length = real_helpfile_init(1, 0);
+
+    if (translated_helpfile == 1) { 
+	en_cli_help_length = real_helpfile_init(0, 1);
+	en_gui_help_length = real_helpfile_init(1, 1);
+    }
 }
 
 static char *get_gui_help_string (int pos)
@@ -583,9 +574,9 @@ static char *get_gui_help_string (int pos)
     int i, j;
 
     for (i=0; gui_heads[i] != NULL; i++) { 
-	for (j=0; j<(gui_heads[i])->ntopics; j++) {
-	    if (pos == (gui_heads[i])->pos[j]) {
-		return help_string_from_cmd((gui_heads[i])->topics[j]);
+	for (j=0; j<gui_heads[i]->ntopics; j++) {
+	    if (pos == gui_heads[i]->pos[j]) {
+		return help_string_from_cmd(gui_heads[i]->topics[j]);
 	    }
 	}
     }
@@ -593,39 +584,42 @@ static char *get_gui_help_string (int pos)
     return NULL;
 }
 
-#ifdef ENABLE_NLS
-static void english_help_callback (gpointer p, int script, 
-				   GtkWidget *w)
+static void en_help_callback (gpointer p, int cli, GtkWidget *w)
 {
     windata_t *hwin = (windata_t *) p;
-    windata_t *vwin = helpwin(script, 1);
-    int pos = hwin->active_var;
+    windata_t *vwin = helpwin(cli, 1);
+    int pos, hc = hwin->active_var;
 
-    /* FIXME: need to map from Spanish or whatever to English "pos" */
+    if (cli) {
+	pos = cli_pos_from_cmd(hc, 1);
+    } else {
+	pos = gui_pos_from_code(hc, 1);
+    }
 
-    set_help_topic_buffer(vwin, pos);    
+    fprintf(stderr, "cli = %d, hc = %d, pos = %d\n", cli, hc, pos);
+
+    set_help_topic_buffer(vwin, hc, pos);    
 }
 
-static void add_english_help_item (windata_t *hwin, int script)
+static void add_en_help_item (windata_t *hwin, int cli)
 {
     GtkItemFactoryEntry helpitem;
     gchar mpath[] = "/_English";
 
     helpitem.accelerator = NULL;
-    helpitem.callback_action = script; 
+    helpitem.callback_action = cli; 
     helpitem.item_type = NULL;
     helpitem.path = mpath;
-    helpitem.callback = english_help_callback; 
+    helpitem.callback = en_help_callback; 
     gtk_item_factory_create_item(hwin->ifac, &helpitem, hwin, 1);
 }
-#endif
 
-static void add_help_topics (windata_t *hwin, int script)
+static void add_help_topics (windata_t *hwin, int cli)
 {
     int i, j;
     GtkItemFactoryEntry hitem;
     const gchar *mpath = N_("/_Topics");
-    struct help_head_t **hds = (script)? cli_heads : gui_heads;
+    struct help_head_t **hds = (cli)? cli_heads : gui_heads;
 
     hitem.accelerator = NULL;
 
@@ -635,11 +629,11 @@ static void add_help_topics (windata_t *hwin, int script)
     /* put the topics under the menu heading */
     for (i=0; hds[i] != NULL; i++) {
 
-	if ((hds[i])->ntopics == 0) continue;
+	if (hds[i]->ntopics == 0) continue;
 
 	hitem.callback_action = 0; 
 	hitem.item_type = "<Branch>";
-	hitem.path = g_strdup_printf("%s/%s", mpath, _((hds[i])->name));
+	hitem.path = g_strdup_printf("%s/%s", mpath, _(hds[i]->name));
 	hitem.callback = NULL; 
 
 	gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
@@ -648,45 +642,45 @@ static void add_help_topics (windata_t *hwin, int script)
 	for (j=0; j<(hds[i])->ntopics; j++) {
 	    int topic_ok = 1;
 
-	    hitem.callback_action = (hds[i])->pos[j]; 
+	    hitem.callback_action = hds[i]->pos[j]; 
 	    hitem.item_type = NULL;
 	    hitem.path = NULL;
 
-	    if ((hds[i])->topicnames != NULL) {
+	    if (hds[i]->topicnames != NULL) {
 		hitem.path = 
 		    g_strdup_printf("%s/%s/%s", 
-				    mpath, _((hds[i])->name), 
-				    (hds[i])->topicnames[j]);
+				    mpath, _(hds[i]->name), 
+				    hds[i]->topicnames[j]);
 #if HDEBUG
 		fprintf(stderr, "(1) Built help topic path from\n"
-			" '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
-			(hds[i])->topicnames[j]);
+			" '%s', '%s' and '%s'\n", mpath, _(hds[i]->name),
+			hds[i]->topicnames[j]);
 #endif
 	    } else {
-		int tnum = (hds[i])->topics[j];
+		int tnum = hds[i]->topics[j];
 
 		if (tnum < NC) {
 		    /* a regular gretl command */
 		    hitem.path = 
 			g_strdup_printf("%s/%s/%s", 
-					mpath, _((hds[i])->name), 
+					mpath, _(hds[i]->name), 
 					gretl_command_word(tnum));
 #if HDEBUG
 		    fprintf(stderr, "(2) Built help topic path from\n"
-			    " '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
+			    " '%s', '%s' and '%s'\n", mpath, _(hds[i]->name),
 			    gretl_command_word(tnum));
 #endif
-		} else if (!script) {
+		} else if (!cli) {
 		    /* a gui special item? */
-		    char *gstr = get_gui_help_string((hds[i])->pos[j]);
+		    char *gstr = get_gui_help_string(hds[i]->pos[j]);
 
 		    if (gstr != NULL) {
 			hitem.path = 
 			    g_strdup_printf("%s/%s/%s", 
-					    mpath, _((hds[i])->name), gstr);
+					    mpath, _(hds[i]->name), gstr);
 #if HDEBUG
 			fprintf(stderr, "(3) Built help topic path from\n"
-				" '%s', '%s' and '%s'\n", mpath, _((hds[i])->name),
+				" '%s', '%s' and '%s'\n", mpath, _(hds[i]->name),
 				gstr);
 #endif
 		    } else {
@@ -698,7 +692,7 @@ static void add_help_topics (windata_t *hwin, int script)
 	    }
 
 	    if (topic_ok) {
-		hitem.callback = (script)? do_script_help : do_gui_help; 
+		hitem.callback = (cli)? do_cli_help : do_gui_help; 
 		gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
 		g_free(hitem.path);
 	    }
@@ -706,61 +700,53 @@ static void add_help_topics (windata_t *hwin, int script)
     }
 }
 
-static windata_t *helpwin (int script, int english) 
+static windata_t *helpwin (int cli, int english) 
 {
     GtkItemFactoryEntry *items = NULL;
     windata_t *vwin = NULL;
     char *helpfile = NULL;
-    int helpcode;
+    int hcode;
 
-#ifdef ENABLE_NLS
-    if (script) {
-	helpfile = (english)? english_script_helpfile : paths.cmd_helpfile;
-	helpcode = (english)? CLI_HELP_ENGLISH : CLI_HELP;
-	items = (english)? english_help_items : script_help_menu_items;
+    if (cli) {
+	helpfile = (english)? en_cli_helpfile : paths.cmd_helpfile;
+	hcode = (english)? CLI_HELP_EN : CLI_HELP;
+	items = (english)? en_help_items : cli_help_menu_items;
     } else {
-	helpfile = (english)? english_gui_helpfile : paths.helpfile;
-	helpcode = (english)? GUI_HELP_ENGLISH : GUI_HELP;
-	items = (english)? english_help_items : gui_help_menu_items;
+	helpfile = (english)? en_gui_helpfile : paths.helpfile;
+	hcode = (english)? GUI_HELP_EN : GUI_HELP;
+	items = (english)? en_help_items : gui_help_menu_items;
     }
-#else
-    if (script) {
-	helpfile = paths.cmd_helpfile;
-	helpcode = CLI_HELP;
-	items = script_help_menu_items;
-    } else {
-	helpfile = paths.helpfile;
-	helpcode = GUI_HELP;
-	items = gui_help_menu_items;
-    }
-#endif
 
     if (helpfile == NULL) return NULL;
 
-    vwin = view_help_file(helpfile, helpcode, items);
+    vwin = view_help_file(helpfile, hcode, items);
 
     if (!english) {
-	add_help_topics(vwin, script);
+	add_help_topics(vwin, cli);
     }
 
-#ifdef ENABLE_NLS
     if (translated_helpfile && !english) {
-	add_english_help_item(vwin, script);
+	add_en_help_item(vwin, cli);
     }
-#endif
 
     return vwin;
 }
 
-void context_help (GtkWidget *widget, gpointer data)
+static int gui_pos_from_code (int hcode, int english)
 {
-    int i, j, help_code = GPOINTER_TO_INT(data);
-    int pos = -1;
+    struct help_head_t **heads;
+    int i, j, pos = -1;
 
-    for (i=0; gui_heads[i] != NULL; i++) {
-	for (j=0; j<(gui_heads[i])->ntopics; j++) {
-	    if (help_code == (gui_heads[i])->topics[j]) {
-		pos = (gui_heads[i])->pos[j];
+    if (english) {
+	heads = en_gui_heads;
+    } else {
+	heads = gui_heads;
+    }
+
+    for (i=0; heads[i] != NULL; i++) {
+	for (j=0; j<heads[i]->ntopics; j++) {
+	    if (hcode == heads[i]->topics[j]) {
+		pos = heads[i]->pos[j];
 		break;
 	    }
 	}
@@ -769,15 +755,15 @@ void context_help (GtkWidget *widget, gpointer data)
 
     /* special for gui-specific help items */
     if (pos < 0) {
-	char *helpstr = help_string_from_cmd(help_code);
+	char *helpstr = help_string_from_cmd(hcode);
 
 	if (helpstr != NULL) {
 	    int altcode = extra_command_number(helpstr);
 
-	    for (i=0; gui_heads[i] != NULL; i++) {
-		for (j=0; j<(gui_heads[i])->ntopics; j++) {
-		    if (altcode == (gui_heads[i])->topics[j]) {
-			pos = (gui_heads[i])->pos[j];
+	    for (i=0; heads[i] != NULL; i++) {
+		for (j=0; j<heads[i]->ntopics; j++) {
+		    if (altcode == heads[i]->topics[j]) {
+			pos = heads[i]->pos[j];
 			break;
 		    }
 		}
@@ -785,11 +771,36 @@ void context_help (GtkWidget *widget, gpointer data)
 	    }
 	}
     }
+    
+    return pos;
+}
+
+void context_help (GtkWidget *widget, gpointer data)
+{
+    int pos, hcode = GPOINTER_TO_INT(data);
+    int en = 0;
+
+    pos = gui_pos_from_code(hcode, 0);
+
+    if (pos < 0) {
+	if (translated_helpfile) {
+	    en = 1;
+	    pos = gui_pos_from_code(hcode, en);
+	}
+    }
 
     if (pos < 0) {
 	dummy_call();
     } else {
-	do_gui_help(NULL, pos, NULL);
+	if (en) {
+	    /* topic is missing in translated helpfile, so show the
+	       English equivalent for lack of anything better */
+	    windata_t *vwin = helpwin(0, 1);
+
+	    set_help_topic_buffer(vwin, hcode, pos);
+	} else {
+	    real_do_help(hcode, pos, 0);
+	}
     }
 }
 
@@ -799,57 +810,66 @@ static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
     return FALSE;
 }
 
-static void real_do_help (guint pos, int cli)
+static void real_do_help (int hcode, guint pos, int cli)
 {
     static windata_t *gui_hwin;
-    static windata_t *script_hwin;
+    static windata_t *cli_hwin;
 
-    windata_t *hwin = (cli)? script_hwin : gui_hwin;
+    windata_t *hwin = (cli)? cli_hwin : gui_hwin;
 
     if (hwin == NULL) {
 	hwin = helpwin(cli, 0);
 	if (hwin != NULL) {
 	    if (cli) {
-		script_hwin = hwin;
+		cli_hwin = hwin;
 	    } else {
 		gui_hwin = hwin;
 	    }
 	    g_signal_connect(G_OBJECT(hwin->w), "destroy",
 			     G_CALLBACK(nullify_hwin),
-			     (cli)? &script_hwin : &gui_hwin);
+			     (cli)? &cli_hwin : &gui_hwin);
 	}
     } else {
 	gdk_window_show(hwin->w->parent->window);
 	gdk_window_raise(hwin->w->parent->window);
     }
 
-    set_help_topic_buffer(hwin, pos);
+    set_help_topic_buffer(hwin, hcode, pos);
 }
 
-void do_gui_help (gpointer data, guint pos, GtkWidget *widget) 
+static void do_gui_help (gpointer p, guint pos, GtkWidget *w) 
 {
-    real_do_help(pos, 0);
+    real_do_help(0, pos, 0);
 }
 
-void do_script_help (gpointer data, guint pos, GtkWidget *widget) 
+static void do_cli_help (gpointer p, guint pos, GtkWidget *w) 
 {
-    real_do_help(pos, 1);
+    real_do_help(0, pos, 1);
 }
 
-static int pos_from_cmd (int cmd)
+static int cli_pos_from_cmd (int cmd, int english)
 {
+    struct help_head_t **heads;
     int i, j;
 
-    for (i=0; cli_heads[i] != NULL; i++) {
-	for (j=0; j<(cli_heads[i])->ntopics; j++) {
-	    if (cmd == (cli_heads[i])->topics[j]) {
-		return (cli_heads[i])->pos[j];
+    if (english) {
+	heads = en_cli_heads;
+    } else {
+	heads = cli_heads;
+    }
+    
+    for (i=0; heads[i] != NULL; i++) {
+	for (j=0; j<heads[i]->ntopics; j++) {
+	    if (cmd == heads[i]->topics[j]) {
+		return heads[i]->pos[j];
 	    }
 	}
     }
 
-    return 0;
+    return -1;
 }
+
+#ifndef OLD_GTK
 
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 		       windata_t *vwin)
@@ -859,16 +879,11 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	return FALSE;
     } else {
 	gchar *text = NULL;
-	int pos = 0;
-#ifndef OLD_GTK
+	int pos = -1;
+	int hcode = 0;
 	GtkTextBuffer *buf;
 	GtkTextIter iter;
-#else
-	int pt = GTK_EDITABLE(vwin->w)->current_pos;
-	int len = gtk_text_get_length(GTK_TEXT(vwin->w));
-#endif
 
-#ifndef OLD_GTK
 	buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 	gtk_text_buffer_get_iter_at_mark(buf, &iter,
 					 gtk_text_buffer_get_insert(buf));
@@ -893,9 +908,40 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 
 	    *word = '\0';
 	    strncat(word, text, 8);
-	    pos = pos_from_cmd(gretl_command_number(word));
+	    hcode = gretl_command_number(word);
+	    pos = cli_pos_from_cmd(hcode, 0);
 	} 
-#else
+
+	g_free(text);
+	unset_window_help_active(vwin);
+	text_set_cursor(vwin->w, 0);
+
+	if (pos < 0) {
+	    dummy_call();
+	    return FALSE;
+	}
+	
+	real_do_help(hcode, pos, 1);
+    }
+
+    return FALSE;
+}
+
+#else /* now old gtk */
+
+gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
+		       windata_t *vwin)
+{
+    if (!window_help_is_active(vwin)) { 
+	/* command help not activated */
+	return FALSE;
+    } else {
+	gchar *text = NULL;
+	int pos = -1;
+	int hcode = 0;
+	int pt = GTK_EDITABLE(vwin->w)->current_pos;
+	int len = gtk_text_get_length(GTK_TEXT(vwin->w));
+
 	text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 
 				      0, (pt + 9 > len)? -1 : pt + 8);
 
@@ -912,22 +958,26 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	    }
 	    *word = '\0';
 	    strncat(word, p, (q - p > 8)? 8 : q - p);
-	    pos = pos_from_cmd(gretl_command_number(word));
+	    hcode = gretl_command_number(word);
+	    pos = cli_pos_from_cmd(hcode, 0);
 	} 
-#endif
-	
-	real_do_help(pos, 1);
+
 	g_free(text);
-#ifndef OLD_GTK
-	text_set_cursor(vwin->w, 0);
-#else
-	gdk_window_set_cursor(GTK_TEXT(vwin->w)->text_area, NULL);
-#endif
 	unset_window_help_active(vwin);
+	gdk_window_set_cursor(GTK_TEXT(vwin->w)->text_area, NULL);
+
+	if (pos < 0) {
+	    dummy_call();
+	    return FALSE;
+	}	    
+	
+	real_do_help(hcode, pos, 1);
     }
 
     return FALSE;
 }
+
+#endif /* gtk versions */
 
 void menu_find (gpointer data, guint db, GtkWidget *widget)
 {
@@ -1003,18 +1053,14 @@ static void find_in_help (GtkWidget *widget, gpointer data)
 	gtk_text_get_length(GTK_TEXT(vwin->w)));
 
     if (vwin->role == CLI_HELP) {
-	help_length = script_help_length;
+	help_length = cli_help_length;
     } else if (vwin->role == GUI_HELP) {
 	help_length = gui_help_length;
+    } else if (vwin->role == CLI_HELP_EN) {
+	help_length = en_cli_help_length;
+    } else if (vwin->role == GUI_HELP_EN) {
+	help_length = en_gui_help_length;
     }
-
-# ifdef ENABLE_NLS
-    if (vwin->role == CLI_HELP_ENGLISH) {
-	help_length = english_script_help_length;
-    } else if (vwin->role == GUI_HELP_ENGLISH) {
-	help_length = english_gui_help_length;
-    }
-# endif
 
     if (needle) g_free(needle);
 
