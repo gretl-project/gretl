@@ -596,8 +596,6 @@ static void en_help_callback (gpointer p, int cli, GtkWidget *w)
 	pos = gui_pos_from_code(hc, 1);
     }
 
-    fprintf(stderr, "cli = %d, hc = %d, pos = %d\n", cli, hc, pos);
-
     set_help_topic_buffer(vwin, hc, pos);    
 }
 
@@ -639,12 +637,15 @@ static void add_help_topics (windata_t *hwin, int cli)
 	gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
 	g_free(hitem.path);
 
-	for (j=0; j<(hds[i])->ntopics; j++) {
+	for (j=0; j<hds[i]->ntopics; j++) {
+	    int tnum = -1;
 	    int topic_ok = 1;
 
 	    hitem.callback_action = hds[i]->pos[j]; 
 	    hitem.item_type = NULL;
 	    hitem.path = NULL;
+
+	    tnum = hds[i]->topics[j];
 
 	    if (hds[i]->topicnames != NULL) {
 		hitem.path = 
@@ -657,8 +658,6 @@ static void add_help_topics (windata_t *hwin, int cli)
 			hds[i]->topicnames[j]);
 #endif
 	    } else {
-		int tnum = hds[i]->topics[j];
-
 		if (tnum < NC) {
 		    /* a regular gretl command */
 		    hitem.path = 
@@ -693,7 +692,9 @@ static void add_help_topics (windata_t *hwin, int cli)
 
 	    if (topic_ok) {
 		hitem.callback = (cli)? do_cli_help : do_gui_help; 
-		gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
+		gtk_item_factory_create_item(hwin->ifac, &hitem, 
+					     GINT_TO_POINTER(tnum), 
+					     1);
 		g_free(hitem.path);
 	    }
 	}
@@ -839,12 +840,16 @@ static void real_do_help (int hcode, guint pos, int cli)
 
 static void do_gui_help (gpointer p, guint pos, GtkWidget *w) 
 {
-    real_do_help(0, pos, 0);
+    int hcode = GPOINTER_TO_INT(p);
+
+    real_do_help(hcode, pos, 0);
 }
 
 static void do_cli_help (gpointer p, guint pos, GtkWidget *w) 
 {
-    real_do_help(0, pos, 1);
+    int hcode = GPOINTER_TO_INT(p);
+
+    real_do_help(hcode, pos, 1);
 }
 
 static int cli_pos_from_cmd (int cmd, int english)
