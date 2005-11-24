@@ -51,7 +51,7 @@ static struct help_head_t **cli_heads, **gui_heads;
 static struct help_head_t **en_cli_heads, **en_gui_heads;
 
 static windata_t *helpwin (int cli, int english);
-static void real_do_help (int hcode, guint pos, int cli);
+static void real_do_help (int hcode, int pos, int cli, int en);
 static void do_gui_help (gpointer p, guint pos, GtkWidget *w);
 static void do_cli_help (gpointer p, guint pos, GtkWidget *w);
 static int gui_pos_from_code (int hcode, int english);
@@ -744,6 +744,10 @@ static int gui_pos_from_code (int hcode, int english)
 	heads = gui_heads;
     }
 
+    if (heads == NULL) {
+	return -1;
+    }
+
     for (i=0; heads[i] != NULL; i++) {
 	for (j=0; j<heads[i]->ntopics; j++) {
 	    if (hcode == heads[i]->topics[j]) {
@@ -783,26 +787,12 @@ void context_help (GtkWidget *widget, gpointer data)
 
     pos = gui_pos_from_code(hcode, 0);
 
-    if (pos < 0) {
-	if (translated_helpfile) {
-	    en = 1;
-	    pos = gui_pos_from_code(hcode, en);
-	}
+    if (pos < 0 && translated_helpfile) {
+	en = 1;
+	pos = gui_pos_from_code(hcode, en);
     }
 
-    if (pos < 0) {
-	dummy_call();
-    } else {
-	if (en) {
-	    /* topic is missing in translated helpfile, so show the
-	       English equivalent for lack of anything better */
-	    windata_t *vwin = helpwin(0, 1);
-
-	    set_help_topic_buffer(vwin, hcode, pos);
-	} else {
-	    real_do_help(hcode, pos, 0);
-	}
-    }
+    real_do_help(hcode, pos, 0, en);
 }
 
 static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
@@ -811,24 +801,50 @@ static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
     return FALSE;
 }
 
-static void real_do_help (int hcode, guint pos, int cli)
+static void real_do_help (int hcode, int pos, int cli, int en)
 {
     static windata_t *gui_hwin;
     static windata_t *cli_hwin;
+    static windata_t *en_gui_hwin;
+    static windata_t *en_cli_hwin;
 
-    windata_t *hwin = (cli)? cli_hwin : gui_hwin;
+    windata_t *hwin;
+
+    if (pos < 0) {
+	dummy_call();
+	return;
+    }
+
+    if (en) {
+	hwin = (cli)? en_cli_hwin : en_gui_hwin;
+    } else {
+	hwin = (cli)? cli_hwin : gui_hwin;
+    }
 
     if (hwin == NULL) {
-	hwin = helpwin(cli, 0);
+	hwin = helpwin(cli, en);
 	if (hwin != NULL) {
-	    if (cli) {
-		cli_hwin = hwin;
+	    windata_t **phwin;
+
+	    if (en) {
+		if (cli) {
+		    en_cli_hwin = hwin;
+		    phwin = &en_cli_hwin;
+		} else {
+		    en_gui_hwin = hwin;
+		    phwin = &en_gui_hwin;
+		}
 	    } else {
-		gui_hwin = hwin;
-	    }
+		if (cli) {
+		    cli_hwin = hwin;
+		    phwin = &cli_hwin;
+		} else {
+		    gui_hwin = hwin;
+		    phwin = &gui_hwin;
+		}
+	    }		
 	    g_signal_connect(G_OBJECT(hwin->w), "destroy",
-			     G_CALLBACK(nullify_hwin),
-			     (cli)? &cli_hwin : &gui_hwin);
+			     G_CALLBACK(nullify_hwin), phwin);
 	}
     } else {
 	gdk_window_show(hwin->w->parent->window);
@@ -842,14 +858,14 @@ static void do_gui_help (gpointer p, guint pos, GtkWidget *w)
 {
     int hcode = GPOINTER_TO_INT(p);
 
-    real_do_help(hcode, pos, 0);
+    real_do_help(hcode, pos, 0, 0);
 }
 
 static void do_cli_help (gpointer p, guint pos, GtkWidget *w) 
 {
     int hcode = GPOINTER_TO_INT(p);
 
-    real_do_help(hcode, pos, 1);
+    real_do_help(hcode, pos, 1, 0);
 }
 
 static int cli_pos_from_cmd (int cmd, int english)
@@ -861,6 +877,10 @@ static int cli_pos_from_cmd (int cmd, int english)
 	heads = en_cli_heads;
     } else {
 	heads = cli_heads;
+    }
+
+    if (heads == NULL) {
+	return -1;
     }
     
     for (i=0; heads[i] != NULL; i++) {
@@ -886,6 +906,7 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	gchar *text = NULL;
 	int pos = -1;
 	int hcode = 0;
+	int en = 0;
 	GtkTextBuffer *buf;
 	GtkTextIter iter;
 
@@ -914,19 +935,18 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	    *word = '\0';
 	    strncat(word, text, 8);
 	    hcode = gretl_command_number(word);
-	    pos = cli_pos_from_cmd(hcode, 0);
+	    pos = cli_pos_from_cmd(hcode, en);
+	    if (pos < 0 && translated_helpfile) {
+		en = 1;
+		pos = cli_pos_from_cmd(hcode, en);
+	    }
 	} 
 
 	g_free(text);
 	unset_window_help_active(vwin);
 	text_set_cursor(vwin->w, 0);
 
-	if (pos < 0) {
-	    dummy_call();
-	    return FALSE;
-	}
-	
-	real_do_help(hcode, pos, 1);
+	real_do_help(hcode, pos, 1, en);
     }
 
     return FALSE;
@@ -944,6 +964,7 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	gchar *text = NULL;
 	int pos = -1;
 	int hcode = 0;
+	int en = 0;
 	int pt = GTK_EDITABLE(vwin->w)->current_pos;
 	int len = gtk_text_get_length(GTK_TEXT(vwin->w));
 
@@ -964,19 +985,18 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 	    *word = '\0';
 	    strncat(word, p, (q - p > 8)? 8 : q - p);
 	    hcode = gretl_command_number(word);
-	    pos = cli_pos_from_cmd(hcode, 0);
+	    pos = cli_pos_from_cmd(hcode, en);
+	    if (pos < 0 && translated_helpfile) {
+		en = 1;
+		pos = cli_pos_from_cmd(hcode, en);
+	    }
 	} 
 
 	g_free(text);
 	unset_window_help_active(vwin);
 	gdk_window_set_cursor(GTK_TEXT(vwin->w)->text_area, NULL);
 
-	if (pos < 0) {
-	    dummy_call();
-	    return FALSE;
-	}	    
-	
-	real_do_help(hcode, pos, 1);
+	real_do_help(hcode, pos, 1, en);
     }
 
     return FALSE;
