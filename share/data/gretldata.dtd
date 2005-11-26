@@ -1,6 +1,5 @@
 <!--
-  The DTD for the gretl input file format.
-  Based on ideas from GGobi.
+  Document Type Definition (DTD) for gretl data files
  -->
 
 <!ENTITY % Boolean    " true | T | TRUE | false | F | FALSE ">
@@ -23,7 +22,7 @@
 <!ATTLIST variables
    count        CDATA #REQUIRED
 >
-<!-- Allows the name to be the only entry -->
+
 <!ELEMENT variable ( #PCDATA )>
 <!ATTLIST variable
     name           NMTOKEN #IMPLIED
@@ -40,6 +39,7 @@
    missval      CDATA #IMPLIED
    labels       CDATA #REQUIRED
 >
+
 <!ELEMENT obs  ( #PCDATA )>
 <!ATTLIST obs
    label     NMTOKEN                   #IMPLIED

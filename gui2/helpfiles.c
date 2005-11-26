@@ -71,39 +71,39 @@ static GtkWidget *find_entry;
 static char *needle;
 
 #ifndef OLD_GTK
-GtkItemFactoryEntry cli_help_menu_items[] = {
+
+GtkItemFactoryEntry help_menu_items[] = {
     { N_("/_Topics"), NULL, NULL, 0, "<Branch>", GNULL },    
     { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
     { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
-GtkItemFactoryEntry gui_help_menu_items[] = {
-    { N_("/_Topics"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
+
 #else
-GtkItemFactoryEntry cli_help_menu_items[] = {
+
+GtkItemFactoryEntry help_menu_items[] = {
     { N_("/_Topics"), NULL, NULL, 0, "<Branch>" },    
     { N_("/_Find"), NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
-GtkItemFactoryEntry gui_help_menu_items[] = {
-    { N_("/_Topics"), NULL, NULL, 0, "<Branch>" },    
-    { NULL, NULL, NULL, 0, NULL }
-};
+
 #endif
 
 #ifndef OLD_GTK
+
 GtkItemFactoryEntry en_help_items[] = {
     { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
     { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
+
 #else
+
 GtkItemFactoryEntry en_help_items[] = {
     { N_("/_Find"), NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
+
 #endif
 
 struct gui_help_item {
@@ -711,14 +711,14 @@ static windata_t *helpwin (int cli, int english)
     if (cli) {
 	helpfile = (english)? en_cli_helpfile : paths.cmd_helpfile;
 	hcode = (english)? CLI_HELP_EN : CLI_HELP;
-	items = (english)? en_help_items : cli_help_menu_items;
     } else {
 	helpfile = (english)? en_gui_helpfile : paths.helpfile;
 	hcode = (english)? GUI_HELP_EN : GUI_HELP;
-	items = (english)? en_help_items : gui_help_menu_items;
     }
 
     if (helpfile == NULL) return NULL;
+
+    items = (english)? en_help_items : help_menu_items;
 
     vwin = view_help_file(helpfile, hcode, items);
 

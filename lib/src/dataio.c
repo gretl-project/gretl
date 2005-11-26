@@ -1595,8 +1595,6 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     return 0;
 }
 
-/* ................................................. */
-
 static double obs_float (const DATAINFO *pdinfo, int end)
 {
     double xx, xx2 = 0.0;
@@ -1622,10 +1620,9 @@ static double obs_float (const DATAINFO *pdinfo, int end)
     return (double) x1 + xx2;
 }
 
-/* ................................................. */
+/* read data "labels" from file */
 
 static int readlbl (const char *lblfile, DATAINFO *pdinfo)
-     /* read data "labels" from file */
 {
     FILE * fp;
     char line[MAXLEN], *label, varname[VNAMELEN];
@@ -1663,8 +1660,6 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 
     return 0;
 }
-
-/* ................................................ */
 
 static int writelbl (const char *lblfile, const int *list, 
 		     const DATAINFO *pdinfo)
@@ -1764,8 +1759,6 @@ void gz_switch_ext (char *targ, char *src, char *ext)
     targ[i + 1] = '\0';
     strcat(targ, ext);
 }
-
-/* ................................................ */
 
 static void try_gdt (char *fname)
 {
@@ -3780,8 +3773,6 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
     return 1;
 }
 
-/* ................................................. */
-
 static char *unspace (char *s)
 {
     int i;
@@ -3938,16 +3929,6 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 	    unspace(boxinfo->varname[realv]);
 	    lower(boxinfo->varname[realv]);
 	    pprintf(prn, M_(" variable %d: '%s'\n"), v+1, boxinfo->varname[realv]);
-#ifdef notdef  
-	    /* This is wrong!  How do you identify character data? */
-	    if (line[51] != '2') {
-		pputs(prn, M_("   Non-numeric data: will be skipped\n"));
-		varstart[v] = 0;
-		varsize[v] = 0;
-		v++;
-		break;
-	    }
-#endif
 	    strncpy(tmp, line+52, 6);
 	    tmp[6] = '\0';
 	    varstart[v] = atoi(tmp) - 1;
@@ -4632,7 +4613,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	if (!pdinfo->vector[i]) {
 	    continue;
 	}
-	s = strpbrk(s, "01234567890+-NA");
+	s = strpbrk(s, "01234567890+-NA"); /* FIXME scientific notation */
 	if (s == NULL) {
 	    fprintf(stderr, "i = %d: s == NULL in process_values()\n", i);
 	    err = 1;

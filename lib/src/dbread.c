@@ -618,8 +618,6 @@ db_table *read_rats_db (FILE *fp)
     return tbl;
 }
 
-/* ........................................................... */
-
 static int find_rats_dir_by_number (FILE *fp, int first_dir, 
 				    int series_number)
 {
@@ -966,8 +964,6 @@ double *expand_db_series (const double *src, SERIESINFO *sinfo,
 
     return x;
 }
-
-/* ........................................................... */
 
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
 		 PRN *prn)
