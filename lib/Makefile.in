@@ -91,6 +91,7 @@ PUBLIC_HDRS = \
 	gretl_string_table.h \
 	gretl_utils.h \
 	gretl_win32.h \
+	gretl_xml.h \
 	interact.h \
 	libgretl.h \
 	libset.h \
@@ -113,7 +114,7 @@ PUBLIC_HDRS = \
 	texprint.h \
 	transforms.h \
 	var.h \
-	varprint.h
+	varprint.h 
 
 SRCS = adf_kpss.c \
 	bhhh_max.c \
@@ -143,6 +144,7 @@ SRCS = adf_kpss.c \
 	gretl_restrict.c \
 	gretl_string_table.c \
 	gretl_utils.c \
+	gretl_xml.c \
 	interact.c \
 	libset.c \
 	missing.c \

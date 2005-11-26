@@ -33,6 +33,7 @@
 #include "toolbar.h"
 #include "menustate.h"
 #include "fileselect.h"
+#include "gretl_xml.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -733,8 +734,8 @@ int main (int argc, char *argv[])
 				 prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = get_xmldata(&Z, &datainfo, paths.datfile, &paths, data_status, 
-			      prn, 0);
+	    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, data_status, 
+				 prn, 0);
 	    break;
 	case GRETL_CSV_DATA:
 	    err = import_csv(&Z, &datainfo, paths.datfile, prn);

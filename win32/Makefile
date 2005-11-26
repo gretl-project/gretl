@@ -142,6 +142,7 @@ LIBSRC = adf_kpss.c \
 	gretl_string_table.c \
 	gretl_utils.c \
 	gretl_win32.c \
+	gretl_xml.c \
 	interact.c \
 	libset.c \
 	missing.c \
@@ -163,7 +164,7 @@ LIBSRC = adf_kpss.c \
 	texprint.c \
 	transforms.c \
 	var.c \
-	varprint.c
+	varprint.c 
 
 LIBOBJ = $(LIBSRC:.c=.o)
 

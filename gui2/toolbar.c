@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "console.h"
 #include "session.h"
+#include "datafiles.h"
 
 #ifdef G_OS_WIN32
 # include "webget.h"

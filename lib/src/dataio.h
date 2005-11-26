@@ -75,6 +75,8 @@ typedef enum {
 
 #define DBNA  -999.0 /* missing value code for gretl databases */
 
+#define GRETL_SCALAR_DIGITS 12
+
 /* functions follow */
 
 int dateton (const char *date, const DATAINFO *pdinfo);
@@ -125,11 +127,6 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);
 GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 
 int check_varname (const char *varname);
-
-int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
-		 PATHS *ppaths, int data_status, PRN *prn, int gui); 
-
-char *get_xml_description (const char *fname);
 
 int check_atof (const char *numstr);
 

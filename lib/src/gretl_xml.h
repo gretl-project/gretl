@@ -13,25 +13,21 @@
  *
  *   You should have received a copy of the GNU General Public License
  *   along with this program; if not, write to the Free Software
- *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
 
-/* datafiles.h for gretl */
+#ifndef GRETL_XML_H
+#define GRETL_XML_H
 
-#ifndef DATAFILES_H
-#define DATAFILES_H
+int gretl_write_gdt (const char *fname, const int *list, 
+		     const double **Z, const DATAINFO *pdinfo, 
+		     GretlDataFormat fmt, PATHS *ppaths);
 
-void browser_open_data (GtkWidget *w, gpointer data);
+int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
+		    PATHS *ppaths, int data_status, PRN *prn, int gui);
 
-void browser_open_ps (GtkWidget *w, gpointer data);
+char *gretl_get_gdt_description (const char *fname);
 
-void destroy_file_collections (void);
 
-void display_files (gpointer p, guint code, GtkWidget *w);
-
-gint populate_filelist (windata_t *fdata, gpointer p);
-
-char *strip_extension (char *s);
-
-#endif /* DATAFILES_H */
+#endif /* GRETL_XML_H */

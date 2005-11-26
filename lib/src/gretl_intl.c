@@ -898,6 +898,31 @@ int get_translated_width (const char *str)
     return w;
 }
 
+static int printing_to_console;
+
+char *maybe_iso_gettext (const char *msgid)
+{
+   if (printing_to_console) {
+       return iso_gettext(msgid);
+   } else {
+       return gettext(msgid);
+   }
+} 
+
+void check_for_console (PRN *prn)
+{
+    if (prn == NULL) return;
+
+    if (printing_to_standard_stream(prn)) {
+	printing_to_console = 1;
+    } else {
+	printing_to_console = 0;
+    }
+}
+
+void console_off (void)
+{
+    printing_to_console = 0;
+}
+
 #endif /* ENABLE_NLS */
-
-

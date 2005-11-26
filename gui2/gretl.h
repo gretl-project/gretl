@@ -125,6 +125,7 @@ extern PangoFontDescription *fixed_font;
 
 #ifndef WIN32
 int gretl_fork (const char *prog, const char *arg);
+void set_wm_icon (GtkWidget *w, gpointer data);
 #endif
 
 int mdata_selection_count (void);
@@ -133,17 +134,7 @@ void clear_varlist (GtkWidget *widget);
 int restore_sample (gretlopt opt);
 
 /* functions defined in files other than gretl.c */
-
 void about_dialog (gpointer data);
-void gui_get_series (gpointer data, guint bci_code, GtkWidget *widget);
-void import_db_series (windata_t *dbwin);
-void display_files (gpointer data, guint code, GtkWidget *widget);
-void stats_calculator (gpointer data, guint code, GtkWidget *widget);
-
-#ifndef WIN32
-void set_wm_icon (GtkWidget *w, gpointer data);
-#else
-int create_child_process (char *prog, char *env);
-#endif
+void stats_calculator (gpointer p, guint code, GtkWidget *w);
 
 #endif /* GRETL_H */

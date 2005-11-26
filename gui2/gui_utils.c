@@ -23,6 +23,7 @@
 #include "modelspec.h"
 #include "forecast.h"
 #include "objstack.h"
+#include "gretl_xml.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1167,8 +1168,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	}
 
 	if (datatype == GRETL_XML_DATA) {
-	    err = get_xmldata(&Z, &datainfo, trydatfile, &paths, 
-			      clear_code, errprn, 1);
+	    err = gretl_read_gdt(&Z, &datainfo, trydatfile, &paths, 
+				 clear_code, errprn, 1);
 	} else {
 	    err = gretl_get_data(&Z, &datainfo, trydatfile, &paths, 
 				 clear_code, errprn);

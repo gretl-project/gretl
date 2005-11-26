@@ -64,7 +64,7 @@ static void doubleclick_action (windata_t *win)
     case NATIVE_SERIES:
     case RATS_SERIES:
     case REMOTE_SERIES:
-	gui_get_series(win, 0, NULL);
+	gui_get_db_series(win, 0, NULL);
 	break;
     default:
 	break;

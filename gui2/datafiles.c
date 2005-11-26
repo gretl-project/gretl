@@ -27,6 +27,7 @@
 #include "filelists.h"
 #include "webget.h"
 #include "menustate.h"
+#include "gretl_xml.h"
 
 #if !GLIB_CHECK_VERSION(2,0,0)
 # define OLD_GTK
@@ -625,7 +626,7 @@ static void display_datafile_info (GtkWidget *w, gpointer data)
     g_free(fname);
 #endif
 
-    descrip = get_xml_description(hdrname);
+    descrip = gretl_get_gdt_description(hdrname);
 
     if (descrip != NULL) {
 	prn = gretl_print_new_with_buffer(descrip);
@@ -694,8 +695,6 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 } 
 
-/* ........................................................... */
-
 static void set_browser_status (windata_t *vwin, int status)
 {
     if (status == BROWSER_BUSY) {
@@ -717,8 +716,6 @@ static gpointer get_browser_ptr (int role)
 {
     return (gpointer) &(browsers[role - TEXTBOOK_DATA]);
 }
-
-/* ........................................................... */
 
 static void get_local_status (char *fname, char *status, time_t remtime)
 {
@@ -752,8 +749,6 @@ static void get_local_status (char *fname, char *status, time_t remtime)
 	}
     }
 }
-
-/* ........................................................... */
 
 static int parse_db_list_line (char *line, char *fname, time_t *date)
 {
@@ -795,8 +790,6 @@ static int parse_db_list_line (char *line, char *fname, time_t *date)
     return 0;
 }
 
-/* ........................................................... */
-
 static gint populate_remote_db_list (windata_t *win)
 {
 #ifndef OLD_GTK
@@ -820,7 +813,7 @@ static gint populate_remote_db_list (windata_t *win)
     err = list_remote_dbs(&buf, errbuf);
 
     if (err) {
-	display_db_error(NULL, errbuf);
+	show_db_error(NULL, errbuf);
 	free(buf);
 	return err;
     }
@@ -919,7 +912,7 @@ static int browser_busy (guint code)
     return ret;
 }
 
-void display_files (gpointer data, guint code, GtkWidget *widget)
+void display_files (gpointer p, guint code, GtkWidget *w)
 {
     GtkWidget *filebox, *button;
     GtkWidget *main_vbox, *button_box;

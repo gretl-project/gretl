@@ -35,6 +35,7 @@
 #include "forecast.h"
 #include "cmd_private.h"
 #include "objstack.h"
+#include "gretl_xml.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -536,8 +537,8 @@ int main (int argc, char *argv[])
 	    err = gretl_get_data(&Z, &datainfo, paths.datfile, &paths, 
 				 DATA_NONE, prn);
 	} else if (err == GRETL_XML_DATA) {
-	    err = get_xmldata(&Z, &datainfo, paths.datfile, &paths, 
-			      DATA_NONE, prn, 0);
+	    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, 
+				 DATA_NONE, prn, 0);
 	} else if (err == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
 	} else if (err == GRETL_OCTAVE) {
@@ -1291,8 +1292,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {
-	    err = get_xmldata(&Z, &datainfo, datfile, &paths, 
-			      data_status, prn, 0);
+	    err = gretl_read_gdt(&Z, &datainfo, datfile, &paths, 
+				 data_status, prn, 0);
 	} else if (dbdata) {
 	    err = set_db_name(datfile, chk, &paths, prn);
 	} else {

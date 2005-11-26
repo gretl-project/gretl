@@ -62,6 +62,10 @@ int get_utf_width (const char *str, int width);
 
 int get_translated_width (const char *str);
 
+void check_for_console (PRN *prn);
+
+void console_off (void);
+
 # define UTF_WIDTH(s, w) get_utf_width(s, w) 
 # define TRANSLATED_WIDTH(s) get_translated_width(s)
 
