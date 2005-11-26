@@ -430,7 +430,7 @@ static char *label_front (void)
 static void 
 write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
 {
-    int small = 0;
+    int shrink = 0;
 
     if (ptype == PLOT_MULTI_IRF && gp_small_font_size > 0) {
 	char fname[64];
@@ -438,11 +438,11 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
 
 	if (sscanf(grfont, "%s %d", fname, &fsize) == 2) {
 	    sprintf(fstr, " font %s %d", fname, gp_small_font_size);
-	    small = 1;
+	    shrink = 1;
 	}
     }
 
-    if (!small) {
+    if (!shrink) {
 	sprintf(fstr, " font %s", grfont);
     }
 }
