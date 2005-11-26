@@ -4,7 +4,8 @@
 
 <!ELEMENT gretldb (source?, description?, codebook?, (chapter)*, (series)+)>
 <!ATTLIST gretldb
-   name         NMTOKEN #IMPLIED
+   name         NMTOKEN #REQUIRED
+   version      CDATA   #REQUIRED
 >
 
 <!ELEMENT source      ( #PCDATA )>

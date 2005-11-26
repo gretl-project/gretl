@@ -438,8 +438,6 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
     register_data(NULL, NULL, 0);
 }
 
-/* ........................................................... */
-
 static void gui_display_series (GtkWidget *w, windata_t *vwin)
 {
     gui_get_series(vwin, DB_DISPLAY, NULL);
@@ -459,8 +457,6 @@ void import_db_series (windata_t *vwin)
 {
     gui_get_series(vwin, DB_IMPORT, NULL);
 }
-
-/* ........................................................... */
 
 void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 {
@@ -525,8 +521,6 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     free_datainfo(dbinfo);
     free(sinfo);
 } 
-
-/* ........................................................... */
 
 static void db_view_codebook (GtkWidget *w, windata_t *vwin)
 {
@@ -752,8 +746,6 @@ static int display_db_series_list (int action, char *fname, char *buf)
     return err;
 }
 
-/* ........................................................... */
-
 static int check_serinfo (char *str, char *sername)
 {
     char pdc;
@@ -776,8 +768,6 @@ static int check_serinfo (char *str, char *sername)
 
     return err;
 }
-
-/* ........................................................... */
 
 static char *end_trim (char *s)
 {
@@ -987,8 +977,6 @@ static int populate_remote_series_list (windata_t *vwin, char *buf)
     return 0;
 }
 
-/* ......................................................... */
-
 #ifndef OLD_GTK
 static void insert_and_free_db_table (db_table *tbl, GtkTreeView *view)
 #else
@@ -1038,8 +1026,6 @@ static void insert_and_free_db_table (db_table *tbl, GtkTreeView *view)
     free(tbl);
 }
 
-/* ......................................................... */
-
 static int rats_populate_series_list (windata_t *vwin)
 {
     FILE *fp;
@@ -1077,8 +1063,6 @@ static int rats_populate_series_list (windata_t *vwin)
 
     return 0;
 }
-
-/* ......................................................... */
 
 #ifndef OLD_GTK
 
@@ -1286,8 +1270,6 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
     return sinfo;
 }
 
-/* ........................................................... */
-
 static int has_rats_suffix (const char *dbname)
 {
     const char *p = strrchr(dbname, '.');
@@ -1303,8 +1285,6 @@ static int has_rats_suffix (const char *dbname)
 
     return ret;
 }
-
-/* ........................................................... */
 
 void open_named_db_list (char *dbname)
 {
@@ -1613,8 +1593,6 @@ static int ggz_extract (char *errbuf, char *ggzname)
     return err;
 }
 
-/* ........................................................... */
-
 void grab_remote_db (GtkWidget *w, gpointer data)
 {
     gchar *dbname;
@@ -1706,8 +1684,6 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 #endif
     free(ggzname);
 }
-
-/* ........................................................... */
 
 static gchar *
 db_description (const char *fullname, const char *binname, 

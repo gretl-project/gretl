@@ -619,4 +619,136 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
     return err;
 }
 
+#ifdef notyet
+
+/* apparatus for writing XML databases */
+
+static void
+xml_write_tagged (const char *tag, const char *s, gzFile fz)
+{
+    gzprintf(fz, "<%s>\n", tag);
+    gzputs(s, gz);
+    gzprintf(fz, "</%s>\n", tag);
+}
+
+static void 
+xml_write_attrib (const char *attr, const char *s, gzFile fz)
+{
+    gzprintf(fz, "%s=\"", attr);
+    gzputs(s, gz);
+    gzputs("\"", gz);
+}
+
+static void 
+xml_write_int_attrib (const char *attr, int val, gzFile fz)
+{
+    gzprintf(fz, "%s=\"%d\" ", attr, val);
+}
+
+static void xml_write_db_header (const char *name, gzFile fz)
+{
+    double gretl_db_version = 1.0;
+
+    gzputs("<?xml version=\"1.0\"?>\n"
+	   "<!DOCTYPE gretldb SYSTEM \"gretldb.dtd\">\n\n",
+	   fz);
+    gzprintf(fz, "<gretldb name=\"%s\" version=\"%.1f\">\n", 
+	     name, gretl_db_version);
+}
+
+static void xml_open_tag (const char *tag, gzFile fz)
+{
+    gzprintf(fz, "<%s ", tag);
+}
+
+static void xml_close_tag (const char *tag, gzFile fz)
+{
+    gzprintf(fz, "\n</%s>\n", tag);
+}
+
+static void xml_write_db_footer (gzFile fz)
+{
+    gzputs("\n</gretldb>\n", fz);
+}
+
+int write_gretl_xml_db (gretl_db *db, const char *fname)
+{
+    gzFile *fz = Z_NULL;
+    int i, t, err = 0;
+
+    fz = gretl_gzopen(fname, "wb");
+    if (fz == Z_NULL) {
+	return E_FOPEN;
+    }
+
+    xml_write_db_header(db->name, fz);
+
+    if (db->source != NULL) {
+	xml_write_tagged("source", db->source, fz);
+    }
+    
+    if (db->descrip != NULL) {
+	xml_write_tagged("description", db->descrip, fz);
+    }
+
+    if (db->codebook != NULL) {
+	xml_write_tagged("codebook", db->codebook, fz);
+    }
+
+    for (i=0; i<db->nchaps; i++) {
+	xml_open_tag("chapter", fz);
+	xml_write_attrib("title", db->chapters[i]->title);
+	if (db->chapters[i]->descrip != NULL) {
+	    xml_write_tagged("description", db->chapters[i]->descrip);
+	}
+	xml_close_tag("chapter", fz);
+    }
+
+    for (i=0; i<db->nseries; i++) {
+	xml_open_tag("series", fz);
+	xml_write_attrib("name", db->series[i]->name);
+	if (db->series[i]->chapter > 0) {
+	    xml_write_int_attrib("chapter", db->series[i]->chapter);
+	}
+	if (db->series[i]->label != NULL) {
+	    xml_write_attrib("label", db->series[i]->label);
+	}
+	if (db->series[i]->displayname != NULL) {
+	    xml_write_attrib("displayname", db->series[i]->displayname);
+	}
+	if (db->series[i]->frequency > 0) {
+	    xml_write_int_attrib("frequency", db->series[i]->frequency);
+	}
+	xml_write_attrib("startobs", db->series[i]->startobs);
+	xml_write_attrib("endobs", db->series[i]->endobs);
+	/* FIXME type, compact-method */
+
+	xml_open_tag("observations", fz);
+	xml_write_int_attrib("count", db->series[i]->nobs);
+
+	if (db->series[i]->markers) {
+	    xml_write_attrib("labels", "true");
+	    for (t=0; i<db->series[i]->nobs; t++) {
+		gzprintf(fz, "<obs label=\"%s\">%.8g</obs>\n", 
+			 db->series[i]->S[t], db->series[i]->x[t]);
+	    }
+	} else {
+	    for (t=0; i<db->series[i]->nobs; t++) {
+		gzprintf(fz, "<obs>%.8g</obs>\n", db->series[i]->x[t]);
+	    }
+	}	    
+	
+	xml_close_tag("observations", fz);
+	xml_close_tag("series", fz);
+    }    
+	
+    xml_write_db_footer(fz);
+
+    gzclose(fz);
+
+    return err;
+}
+
+#endif
+
 

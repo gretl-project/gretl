@@ -4613,7 +4613,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	if (!pdinfo->vector[i]) {
 	    continue;
 	}
-	s = strpbrk(s, "01234567890+-NA"); /* FIXME scientific notation */
+	s = strpbrk(s, "01234567890+-NA");
 	if (s == NULL) {
 	    fprintf(stderr, "i = %d: s == NULL in process_values()\n", i);
 	    err = 1;
@@ -4719,7 +4719,8 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     while (cur && xmlIsBlankNode(cur)) {
 	cur = cur->next;
     }
-    if (cur == 0) {
+
+    if (cur == NULL) {
 	sprintf(gretl_errmsg, _("Got no observations\n"));
 	return 1;
     }
@@ -4742,7 +4743,9 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    return 1;
 		}
 	    }
+
 	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+
 	    if (tmp) {
 		if (process_values(*pZ, pdinfo, t, (char *) tmp)) {
 		    return 1;
@@ -4784,6 +4787,131 @@ static long get_filesize (const char *fname)
     }
 }
 
+static int xml_get_data_structure (xmlNodePtr node, int *dtype)
+{
+    xmlChar *tmp = xmlGetProp(node, (UTF) "type");
+    int err = 0;
+
+    if (tmp == NULL) {
+	sprintf(gretl_errmsg, 
+		_("Required attribute 'type' is missing from data file"));
+	err = 1;
+    } else {
+	if (!strcmp((char *) tmp, "cross-section")) {
+	    *dtype = CROSS_SECTION;
+	} else if (!strcmp((char *) tmp, "time-series")) {
+	    *dtype = TIME_SERIES;
+	} else if (!strcmp((char *) tmp, "stacked-time-series")) {
+	    *dtype = STACKED_TIME_SERIES;
+	} else if (!strcmp((char *) tmp, "stacked-cross-section")) {
+	    *dtype = STACKED_CROSS_SECTION;
+	} else {
+	    sprintf(gretl_errmsg, _("Unrecognized type attribute for data file"));
+	    err = 1;
+	}
+	free(tmp);
+    }
+
+    return err;
+}
+
+static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dtype)
+{
+    xmlChar *tmp = xmlGetProp(node, (UTF) "frequency");
+    int err = 0;
+
+    *pd = 1;
+
+    if (tmp != NULL) {
+	if (!strcmp((char *) tmp, "special")) {
+	    *dtype = SPECIAL_TIME_SERIES;
+	} else if (sscanf((char *) tmp, "%d", pd) != 1) {
+	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));
+	    err = 1;
+	}
+	free(tmp);
+    }
+
+    return err;
+}
+
+static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
+			     int caldata)
+{
+    xmlChar *tmp = xmlGetProp(node, (UTF) "startobs");
+    int err = 0;
+
+    if (tmp != NULL) {
+	char obstr[16];
+
+	obstr[0] = '\0';
+	strncat(obstr, (char *) tmp, 15);
+	charsub(obstr, ':', '.');
+	
+	if (strchr(obstr, '/') != NULL && caldata) {
+	    long ed = get_epoch_day((char *) tmp);
+
+	    if (ed < 0) {
+		err = 1;
+	    } else {
+		*sd0 = ed;
+	    }
+	} else {
+	    double x;
+
+	    if (sscanf(obstr, "%lf", &x) != 1) {
+		err = 1;
+	    } else {
+		*sd0 = x;
+	    }
+	}
+
+	if (err) {
+	    strcpy(gretl_errmsg, _("Failed to parse startobs"));
+	} else {
+	    stobs[0] = '\0';
+	    strncat(stobs, (char *) tmp, OBSLEN - 1);
+	    colonize_obs(stobs);
+	}
+
+	free(tmp);
+    }
+
+    return err;
+}
+
+static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
+{
+    xmlChar *tmp = xmlGetProp(node, (UTF) "endobs");
+    int err = 0;
+
+    if (tmp != NULL) {
+	if (caldata) {
+	    long ed = get_epoch_day((char *) tmp);
+
+	    if (ed < 0) err = 1;
+	} else {
+	    double x;
+
+	    if (sscanf((char *) tmp, "%lf", &x) != 1) {
+		err = 1;
+	    }
+	} 
+
+	if (err) {
+	    strcpy(gretl_errmsg, _("Failed to parse endobs"));
+	} else {
+	    endobs[0] = '\0';
+	    strncat(endobs, (char *) tmp, OBSLEN - 1);
+	    colonize_obs(endobs);
+	}
+
+	free(tmp);
+    }
+
+    return err;
+}
+
 /**
  * get_xmldata:
  * @pZ: pointer to data set.
@@ -4807,10 +4935,10 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 {
     DATAINFO *tmpdinfo;
     double **tmpZ = NULL;
-    xmlDocPtr doc;
+    xmlDocPtr doc = NULL;
     xmlNodePtr cur;
-    xmlChar *tmp;
     int gotvars = 0, gotobs = 0, err = 0;
+    int caldata = 0;
     int to_iso_latin = 0;
     long fsz, progress = 0L;
 
@@ -4852,134 +4980,47 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
         sprintf(gretl_errmsg, _("%s: empty document"), fname);
-	xmlFreeDoc(doc);
 	err = 1;
 	goto bailout;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
         sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
-	xmlFreeDoc(doc);
 	err = 1;
 	goto bailout;
     }
 
     /* set some datainfo parameters */
-    tmp = xmlGetProp(cur, (UTF) "type");
-    if (tmp == NULL) {
-	sprintf(gretl_errmsg, 
-		_("Required attribute 'type' is missing from data file"));
-	err = 1;
+
+    err = xml_get_data_structure(cur, &tmpdinfo->structure);
+    if (err) {
 	goto bailout;
-    } else {
-	if (!strcmp((char *) tmp, "cross-section")) {
-	    tmpdinfo->structure = CROSS_SECTION;
-	} else if (!strcmp((char *) tmp, "time-series")) {
-	    tmpdinfo->structure = TIME_SERIES;
-	} else if (!strcmp((char *) tmp, "stacked-time-series")) {
-	    tmpdinfo->structure = STACKED_TIME_SERIES;
-	} else if (!strcmp((char *) tmp, "stacked-cross-section")) {
-	    tmpdinfo->structure = STACKED_CROSS_SECTION;
-	} else {
-	    sprintf(gretl_errmsg, _("Unrecognized type attribute for data file"));
-	    free(tmp);
-	    err = 1;
-	    goto bailout;
-	}
-	free(tmp);
-    }
+    } 
 
-    tmpdinfo->pd = 1;
-
-    tmp = xmlGetProp(cur, (UTF) "frequency");
-    if (tmp) {
-	int pd = 0;
-
-	if (!strcmp((char *)tmp, "special")) {
-	    tmpdinfo->structure = SPECIAL_TIME_SERIES;
-	    tmpdinfo->pd = 1;
-	} else if (sscanf((char *) tmp, "%d", &pd) == 1) {
-	    tmpdinfo->pd = pd;
-	} else {
-	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));
-	    free(tmp);
-	    err = 1;
-	    goto bailout;
-	}
-	free(tmp);
-    }
+    err = xml_get_data_frequency(cur, &tmpdinfo->pd, &tmpdinfo->structure);
+    if (err) {
+	goto bailout;
+    }   
 
     gretl_push_c_numeric_locale();
 
     strcpy(tmpdinfo->stobs, "1");
+    caldata = dataset_is_daily(tmpdinfo) || dataset_is_weekly(tmpdinfo);
 
-    tmp = xmlGetProp(cur, (UTF) "startobs");
-
-    if (tmp != NULL) {
-	char obstr[16];
-
-	obstr[0] = '\0';
-	strncat(obstr, (char *) tmp, 15);
-	charsub(obstr, ':', '.');
-	
-	if (strchr(obstr, '/') != NULL && 
-	    (dataset_is_daily(tmpdinfo) || 
-	     dataset_is_weekly(tmpdinfo))) {
-	    long ed = get_epoch_day((char *) tmp);
-
-	    if (ed < 0) {
-		err = 1;
-	    } else {
-		tmpdinfo->sd0 = ed;
-	    }
-	} else {
-	    double x;
-
-	    if (sscanf(obstr, "%lf", &x) != 1) {
-		err = 1;
-	    } else {
-		tmpdinfo->sd0 = x;
-	    }
-	}
-	if (err) {
-	    strcpy(gretl_errmsg, _("Failed to parse startobs"));
-	    free(tmp);
-	    err = 1;
-	    goto bailout;
-	}
-	tmpdinfo->stobs[0] = '\0';
-	strncat(tmpdinfo->stobs, (char *) tmp, OBSLEN - 1);
-	colonize_obs(tmpdinfo->stobs);
-	free(tmp);
-    }
+    err = xml_get_startobs(cur, &tmpdinfo->sd0, tmpdinfo->stobs, caldata);
+    if (err) {
+	gretl_pop_c_numeric_locale();
+	goto bailout;
+    }     
 
     *tmpdinfo->endobs = '\0';
+    caldata = calendar_data(tmpdinfo);
 
-    tmp = xmlGetProp(cur, (UTF) "endobs");
-
-    if (tmp!= NULL) {
-	if (calendar_data(tmpdinfo)) {
-	    long ed = get_epoch_day((char *) tmp);
-
-	    if (ed < 0) err = 1;
-	} else {
-	    double x;
-
-	    if (sscanf((char *) tmp, "%lf", &x) != 1) {
-		err = 1;
-	    }
-	} 
-	if (err) {
-	    strcpy(gretl_errmsg, _("Failed to parse endobs"));
-	    free(tmp);
-	    err = 1;
-	    goto bailout;
-	}
-	tmpdinfo->endobs[0] = '\0';
-	strncat(tmpdinfo->endobs, (char *) tmp, OBSLEN - 1);
-	colonize_obs(tmpdinfo->endobs);
-	free(tmp);
-    }
+    err = xml_get_endobs(cur, tmpdinfo->endobs, caldata);
+    if (err) {
+	gretl_pop_c_numeric_locale();
+	goto bailout;
+    }     
 
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
@@ -4993,8 +5034,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	    } else {
 		gotvars = 1;
 	    }
-	}
-        else if (!xmlStrcmp(cur->name, (UTF) "observations")) {
+	} else if (!xmlStrcmp(cur->name, (UTF) "observations")) {
 	    if (!gotvars) {
 		sprintf(gretl_errmsg, _("Variables information is missing"));
 		err = 1;
@@ -5011,9 +5051,6 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 
     gretl_pop_c_numeric_locale();
 
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
-
     if (err) {
 	goto bailout;
     }
@@ -5023,6 +5060,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	err = 1;
 	goto bailout;
     }
+
     if (!gotobs) {
 	sprintf(gretl_errmsg, _("No observations were found"));
 	err = 1;
@@ -5053,6 +5091,11 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     }
 
  bailout:
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
 
     if (err) {
 	free_Z(tmpZ, tmpdinfo);
