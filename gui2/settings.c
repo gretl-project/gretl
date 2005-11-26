@@ -113,7 +113,7 @@ GdkFont *fixed_font;
 static int usecwd;
 static int olddat;
 static int useqr;
-static int manpref = -1;
+static int manpref;
 char gpcolors[32];
 static char datapage[24];
 static char scriptpage[24];

@@ -1628,16 +1628,9 @@ void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
 #ifdef OSX_PKG
     osx_help(uguide);
     return;
-#endif   
+#endif  
 
-    if (get_manpref() < 0) {
-	options_dialog(NULL, 5, NULL);
-    }
-
-    if ((pref = get_manpref()) < 0) {
-	/* canceled */
-	return;
-    }
+    pref = get_manpref();
 
     err = maybe_grab_pdf(uguide, pref, fullpath);
     if (err) {
