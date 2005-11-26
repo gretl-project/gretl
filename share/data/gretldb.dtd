@@ -1,0 +1,44 @@
+<!--
+  Document Type Definition (DTD) for gretl databases
+ -->
+
+<!ELEMENT gretldb (source?, description?, codebook?, (chapter)*, (series)+)>
+<!ATTLIST gretldb
+   name         NMTOKEN #IMPLIED
+>
+
+<!ELEMENT source      ( #PCDATA )>
+<!ELEMENT description ( #PCDATA )>
+<!ELEMENT codebook    ( #PCDATA )>
+
+<!ELEMENT chapter (description?)>
+<!ATTLIST chapter
+   title          CDATA #REQUIRED
+>
+
+<!ELEMENT series ( observations )>
+<!ATTLIST series
+    name           NMTOKEN #REQUIRED
+    chapter        CDATA   #IMPLIED
+    label          CDATA   #IMPLIED
+    displayname    CDATA   #IMPLIED
+    compact-method CDATA   #IMPLIED
+    frequency      CDATA   #IMPLIED
+    startobs       CDATA   #IMPLIED
+    endobs         CDATA   #IMPLIED
+    type           CDATA   #REQUIRED
+>
+
+<!ELEMENT observations ( obs )+>
+<!ATTLIST observations
+   count        CDATA #REQUIRED
+   missval      CDATA #IMPLIED
+   labels       CDATA #IMPLIED
+>
+
+<!ELEMENT obs  ( #PCDATA )>
+<!ATTLIST obs
+   label     NMTOKEN  #IMPLIED
+>   
+
+
