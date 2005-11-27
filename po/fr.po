@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-11-21 22:03-0500\n"
-"PO-Revision-Date: 2005-06-20 17:06-0400\n"
+"PO-Revision-Date: 2005-11-27 17:37-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -2223,7 +2223,7 @@ msgstr "%s estimés"
 
 #: lib/src/graphing.c:2841
 msgid "0.025 and 0.975 quantiles"
-msgstr ""
+msgstr "quantiles 0,025 et 0,975"
 
 #: lib/src/graphing.c:2890
 #, fuzzy
@@ -2240,9 +2240,9 @@ msgid "VAR inverse roots in relation to the unit circle"
 msgstr ""
 
 #: lib/src/graphing.c:3034
-#, fuzzy, no-c-format
+#, no-c-format
 msgid "95% confidence ellipse and 95% marginal intervals"
-msgstr "intervalle de confiance 95%"
+msgstr "ellipse de confiance 95% et intervalles marginaux 95%"
 
 #: lib/src/graphing.c:3067 plugin/range-mean.c:66
 msgid "with least squares fit"
@@ -3581,7 +3581,7 @@ msgstr "Convergence complétée après %d itérations\n"
 #: lib/src/modelprint.c:1338
 #, c-format
 msgid "Function evaluations: %d\n"
-msgstr ""
+msgstr "Évaluations de la fonction: %d\n"
 
 #: lib/src/modelprint.c:1339
 #, fuzzy, c-format
@@ -3619,7 +3619,7 @@ msgstr "Modulo"
 
 #: lib/src/modelprint.c:1954
 msgid "AR (seasonal)"
-msgstr ""
+msgstr "AR (saisonnier)"
 
 #: lib/src/modelprint.c:1974
 msgid "MA"
@@ -3627,7 +3627,7 @@ msgstr "MA"
 
 #: lib/src/modelprint.c:1994
 msgid "MA (seasonal)"
-msgstr ""
+msgstr "MA (saisonnier)"
 
 #: lib/src/modelprint.c:2028 lib/src/modelprint.c:2032
 #: lib/src/modelprint.c:2039
@@ -3910,7 +3910,7 @@ msgstr "Aucun fonction de régression n'a été spécifiée"
 
 #: lib/src/nls.c:1975
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
-msgstr ""
+msgstr "Utilisation de dérivatifs analytiques: \"params\" seront ignorés"
 
 #: lib/src/nls.c:2108
 msgid "Using numerical derivatives\n"
@@ -4013,11 +4013,11 @@ msgstr "VAR"
 
 #: lib/src/objstack.c:463 gui2/selector.c:1623
 msgid "VECM"
-msgstr ""
+msgstr "VECM"
 
 #: lib/src/objstack.c:469
 msgid "System"
-msgstr ""
+msgstr "Système"
 
 #: lib/src/objstack.c:703 gui2/objectsave.c:165 gui2/objectsave.c:192
 #: gui2/objectsave.c:213 gui2/objectsave.c:250 gui2/objectsave.c:272
@@ -4798,22 +4798,20 @@ msgid "Case 1: No constant"
 msgstr "%s est une constante"
 
 #: lib/src/varprint.c:541
-#, fuzzy
 msgid "Case 2: Restricted constant"
-msgstr "constante auto-générée"
+msgstr "case 2: constante restreinte"
 
 #: lib/src/varprint.c:542
-#, fuzzy
 msgid "Case 3: Unrestricted constant"
-msgstr "constante auto-générée"
+msgstr "Cas 3: constante sans restriction"
 
 #: lib/src/varprint.c:543
 msgid "Case 4: Restricted trend, unrestricted constant"
-msgstr ""
+msgstr "cas 4: tendance restreinte, constante sans restriction"
 
 #: lib/src/varprint.c:544
 msgid "Case 5: Unrestricted trend and constant"
-msgstr ""
+msgstr "cas 5: tendance et constante sans restriction"
 
 #: lib/src/varprint.c:688
 #, fuzzy
@@ -4879,11 +4877,11 @@ msgstr "Toutes les variables, délai %-6d "
 #: lib/src/varprint.c:917
 #, c-format
 msgid "the longest lag is %d"
-msgstr ""
+msgstr "le plus grand retard est %d"
 
 #: lib/src/varprint.c:921 lib/src/varprint.c:928 lib/src/varprint.c:935
 msgid "For the system as a whole"
-msgstr ""
+msgstr "Pour le système dans l'ensemble"
 
 #: lib/src/varprint.c:923 lib/src/varprint.c:930 lib/src/varprint.c:937
 #, fuzzy
@@ -6110,7 +6108,7 @@ msgstr "/Fichier/_Préférences"
 
 #: gui/gretl.c:477 gui2/gretl.c:538
 msgid "/Help/_User's guide"
-msgstr ""
+msgstr "/Aide/Guide de l'_utilisateur"
 
 #: gui/gretl.c:478 gui2/gretl.c:539
 msgid "/Help/sep1"
@@ -6581,11 +6579,11 @@ msgstr "gretl: table statistique"
 #: gui2/calculator.c:311
 #, c-format
 msgid "Binomial distribution: p = %g, %d trials"
-msgstr ""
+msgstr "Distribution binomiale: p = %g, %d épreuves"
 
 #: gui2/calculator.c:313
 msgid "x = number of 'successes'"
-msgstr ""
+msgstr "x = nombre de 'succès'"
 
 #: gui2/calculator.c:351 gui2/calculator.c:376
 msgid "Invalid standard deviation"
@@ -8105,7 +8103,7 @@ msgstr "Ajouter une observation"
 
 #: gui2/dlgutils.c:497
 msgid "Add identity"
-msgstr ""
+msgstr "Ajouter une une identité"
 
 #: gui2/dlgutils.c:498
 #, fuzzy
@@ -8114,7 +8112,7 @@ msgstr "Première variable dépendante"
 
 #: gui2/dlgutils.c:499
 msgid "Add list of instruments"
-msgstr ""
+msgstr "Ajouter la liste d'instruments"
 
 #: gui2/dlgutils.c:581
 msgid "add to current restriction"
@@ -9140,12 +9138,11 @@ msgstr "Début"
 
 #: gui2/gui_utils.c:1768 gui2/gui_utils.c:1795
 msgid "Sort by..."
-msgstr ""
+msgstr "Assortirer par..."
 
 #: gui2/gui_utils.c:1769 gui2/gui_utils.c:1796
-#, fuzzy
 msgid "Send To..."
-msgstr "Sauvegarder sous..."
+msgstr "Envoyer à..."
 
 #: gui2/gui_utils.c:1770 gui2/gui_utils.c:1797
 msgid "Help on command"
@@ -9157,7 +9154,7 @@ msgstr "LaTeX"
 
 #: gui2/gui_utils.c:1773 gui2/gui_utils.c:1800
 msgid "Reformat..."
-msgstr ""
+msgstr "Restructurer..."
 
 #: gui2/gui_utils.c:1774 gui2/gui_utils.c:1801
 msgid "Add to dataset..."
@@ -11172,19 +11169,19 @@ msgstr "Ce changement prendra effet lors de la prochaine exécution de gretl"
 
 #: gui2/settings.c:808
 msgid "English (US letter paper)"
-msgstr ""
+msgstr "Anglais (papier US letter)"
 
 #: gui2/settings.c:809
 msgid "English (A4 paper)"
-msgstr ""
+msgstr "Anglais (papier A4)"
 
 #: gui2/settings.c:810
 msgid "Italian"
-msgstr ""
+msgstr "Italien"
 
 #: gui2/settings.c:811
 msgid "Spanish"
-msgstr ""
+msgstr "Espagnol"
 
 #: gui2/settings.c:880 plugin/tramo_options.c:360
 msgid "General"
@@ -11294,7 +11291,7 @@ msgstr "site web de gretl"
 
 #: gui2/toolbar.c:191
 msgid "user's guide"
-msgstr ""
+msgstr "guide de l'utilisateur"
 
 #: gui2/toolbar.c:192
 #, fuzzy
@@ -11616,7 +11613,7 @@ msgstr "facteur d'ajustement de la largeur de bande:"
 
 #: plugin/johansen.c:327
 msgid "long-run matrix (alpha * beta')"
-msgstr ""
+msgstr "matrice de longue durée (alpha * beta')"
 
 #: plugin/johansen.c:756
 #, fuzzy
