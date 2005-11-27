@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-11-21 22:03-0500\n"
-"PO-Revision-Date: 2005-11-27 17:37-0500\n"
+"PO-Revision-Date: 2005-11-27 17:55-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -2231,9 +2231,9 @@ msgid "VAR residuals"
 msgstr "résidus"
 
 #: lib/src/graphing.c:2894
-#, fuzzy, c-format
+#, c-format
 msgid "Equation %d"
-msgstr "Équation"
+msgstr "Équation %d"
 
 #: lib/src/graphing.c:2964
 msgid "VAR inverse roots in relation to the unit circle"
@@ -3310,9 +3310,8 @@ msgid "NLS"
 msgstr "NLS"
 
 #: lib/src/modelprint.c:522
-#, fuzzy
 msgid "ML"
-msgstr "LIML"
+msgstr "ML"
 
 #: lib/src/modelprint.c:523 gui2/selector.c:1605
 msgid "Logistic"
@@ -4654,23 +4653,20 @@ msgid "Cross-equation covariance matrix"
 msgstr "Erreur lors de la génération de la matrice de covariance"
 
 #: lib/src/texprint.c:422 lib/src/varprint.c:679
-#, fuzzy
 msgid "determinant"
-msgstr "logarithme du déterminant"
+msgstr "déterminant"
 
 #: lib/src/texprint.c:436 lib/src/varprint.c:565
-#, fuzzy
 msgid "Cointegrating vectors"
-msgstr "vecteur de cointégration"
+msgstr "Vecteurs de cointégration"
 
 #: lib/src/texprint.c:438 lib/src/varprint.c:567 gui2/model_table.c:950
 msgid "standard errors in parentheses"
 msgstr "Erreur standard entre parenthèses"
 
 #: lib/src/texprint.c:504 lib/src/varprint.c:788 lib/src/varprint.c:794
-#, fuzzy
 msgid "Determinant of covariance matrix"
-msgstr "Inverse de la matrice de covariance"
+msgstr "Déterminant de la matrice de covariance"
 
 #: lib/src/texprint.c:804 gui2/model_table.c:794
 msgid "$t$-statistics in parentheses"
@@ -4750,9 +4746,8 @@ msgid "Number of equations"
 msgstr "Nombre d'équations"
 
 #: lib/src/var.c:2432
-#, fuzzy
 msgid "Lag order"
-msgstr "ordre de délai:"
+msgstr "ordre de délai"
 
 #: lib/src/var.c:2433
 msgid "Estimation period"
@@ -4761,7 +4756,7 @@ msgstr "Période d'estimation"
 #: lib/src/var.c:2593
 #, fuzzy, c-format
 msgid "vecm: rank %d is out of bounds"
-msgstr "Numéro de variable %d est hors limite"
+msgstr "vecm: Numéro de variable %d est hors limite"
 
 #: lib/src/var.c:2656
 #, c-format
@@ -4769,9 +4764,9 @@ msgid "residual from VAR system, equation %d"
 msgstr "résiduel du système VAR, équation %d"
 
 #: lib/src/var.c:2659
-#, fuzzy, c-format
+#, c-format
 msgid "residual from VECM system, equation %d"
-msgstr "résiduel du système VAR, équation %d"
+msgstr "résiduel du système VECM, équation %d"
 
 #: lib/src/varprint.c:96 lib/src/varprint.c:112 lib/src/varprint.c:127
 #, c-format
@@ -4793,9 +4788,8 @@ msgid "std. error"
 msgstr "erreur std."
 
 #: lib/src/varprint.c:540
-#, fuzzy
 msgid "Case 1: No constant"
-msgstr "%s est une constante"
+msgstr "Cas 1: pas de constante"
 
 #: lib/src/varprint.c:541
 msgid "Case 2: Restricted constant"
@@ -4819,20 +4813,14 @@ msgid "Cointegration rank"
 msgstr "Cointégration"
 
 #: lib/src/varprint.c:735 lib/src/varprint.c:737
-#, fuzzy, c-format
+#, c-format
 msgid "VECM system, lag order %d"
-msgstr ""
-"\n"
-"Système VAR, ordre de délai %d\n"
-"\n"
+msgstr "Système VECM, ordre de délai %d"
 
 #: lib/src/varprint.c:741 lib/src/varprint.c:743
-#, fuzzy, c-format
+#, c-format
 msgid "VAR system, lag order %d"
-msgstr ""
-"\n"
-"Système VAR, ordre de délai %d\n"
-"\n"
+msgstr "Système VAR, ordre de délai %d"
 
 #: lib/src/varprint.c:750
 #, fuzzy, c-format
@@ -4855,9 +4843,8 @@ msgid "%s estimates, observations %s-%s (T = %d)"
 msgstr "%s estimés utilisant les %d observations %s-%s\n"
 
 #: lib/src/varprint.c:815 lib/src/varprint.c:819 lib/src/varprint.c:822
-#, fuzzy
 msgid "Equation for "
-msgstr "Équation"
+msgstr "Équation de "
 
 #: lib/src/varprint.c:838 lib/src/varprint.c:841 lib/src/varprint.c:843
 msgid "F-tests of zero restrictions"
@@ -4884,9 +4871,8 @@ msgid "For the system as a whole"
 msgstr "Pour le système dans l'ensemble"
 
 #: lib/src/varprint.c:923 lib/src/varprint.c:930 lib/src/varprint.c:937
-#, fuzzy
 msgid "Alternative hypothesis"
-msgstr "Statistique alternative"
+msgstr "Hypothèse alternative"
 
 #: cli/cli_object.c:90 gui2/objectsave.c:120
 #, c-format
@@ -5223,49 +5209,40 @@ msgid "/File/Open data/sep1"
 msgstr "/Fichier/Ouvrir les données/sep1"
 
 #: gui/gretl.c:173 gui2/gretl.c:212
-#, fuzzy
 msgid "/File/Open data/Import"
-msgstr "/Fichier/Ouvrir les données/sep"
+msgstr "/Fichier/Ouvrir les données/Importer"
 
 #: gui/gretl.c:174 gui2/gretl.c:213
-#, fuzzy
 msgid "/File/Open data/Import/CSV..."
-msgstr "/Fichier/Ouvrir les données/importer CSV..."
+msgstr "/Fichier/Ouvrir les données/Importer/CSV..."
 
 #: gui/gretl.c:175 gui2/gretl.c:214
-#, fuzzy
 msgid "/File/Open data/Import/ASCII..."
-msgstr "/Fichier/Ouvrir les données/importer ASCII..."
+msgstr "/Fichier/Ouvrir les données/Importer/ASCII..."
 
 #: gui/gretl.c:176 gui2/gretl.c:215
-#, fuzzy
 msgid "/File/Open data/Import/Octave..."
-msgstr "/Fichier/Ouvrir les données/importer Octave..."
+msgstr "/Fichier/Ouvrir les données/Importer/Octave..."
 
 #: gui/gretl.c:177 gui2/gretl.c:218 gui2/gretl.c:220
-#, fuzzy
 msgid "/File/Open data/Import/Gnumeric..."
-msgstr "/Fichier/Ouvrir les données/importer Gnuméric..."
+msgstr "/Fichier/Ouvrir les données/Importer/Gnuméric..."
 
 #: gui/gretl.c:178 gui2/gretl.c:217 gui2/gretl.c:221
-#, fuzzy
 msgid "/File/Open data/Import/Excel..."
-msgstr "/Fichier/Ouvrir les données/importer Excel..."
+msgstr "/Fichier/Ouvrir les données/Importer/Excel..."
 
 #: gui/gretl.c:179 gui2/gretl.c:223
-#, fuzzy
 msgid "/File/Open data/Import/Eviews..."
-msgstr "/Fichier/Ouvrir les données/importer Excel..."
+msgstr "/Fichier/Ouvrir les données/Importer/Eviews..."
 
 #: gui/gretl.c:180 gui2/gretl.c:224
-#, fuzzy
 msgid "/File/Open data/Import/Stata..."
-msgstr "/Fichier/Ouvrir les données/importer CSV..."
+msgstr "/Fichier/Ouvrir les données/Importer/Stata..."
 
 #: gui/gretl.c:181 gui2/gretl.c:225
-#, fuzzy
 msgid "/File/Open data/Import/BOX..."
-msgstr "/Fichier/Ouvrir les données/importer BOX..."
+msgstr "/Fichier/Ouvrir les données/Importer/BOX..."
 
 #: gui/gretl.c:184 gui2/gretl.c:228
 msgid "/File/_Append data"
@@ -5296,14 +5273,12 @@ msgid "/File/Append data/from Excel..."
 msgstr "/Fichier/_Accoler les données/depuis Excel..."
 
 #: gui/gretl.c:191 gui2/gretl.c:235
-#, fuzzy
 msgid "/File/Append data/from Eviews..."
-msgstr "/Fichier/_Accoler les données/depuis Excel..."
+msgstr "/Fichier/_Accoler les données/depuis Eviews..."
 
 #: gui/gretl.c:192 gui2/gretl.c:236
-#, fuzzy
 msgid "/File/Append data/from Stata..."
-msgstr "/Fichier/_Accoler les données/depuis CSV..."
+msgstr "/Fichier/_Accoler les données/depuis Stata..."
 
 #: gui/gretl.c:195 gui2/gretl.c:239
 msgid "/File/_Save data"
@@ -5346,9 +5321,8 @@ msgid "/File/Export data/_PcGive..."
 msgstr "/Fichier/_Exporter les données/GNU _octave..."
 
 #: gui/gretl.c:208 gui2/gretl.c:255
-#, fuzzy
 msgid "/File/Send To..."
-msgstr "/Fichier/_Imprimer..."
+msgstr "/Fichier/Envoyer à..."
 
 #: gui/gretl.c:210 gui2/gretl.c:257
 msgid "/File/C_lear data set"
@@ -5802,9 +5776,8 @@ msgid "/Data/Add observations..."
 msgstr "/Données/Ajouter des observations..."
 
 #: gui/gretl.c:378 gui2/gretl.c:435
-#, fuzzy
 msgid "/Data/Remove extra observations"
-msgstr "/Données/Ajouter des observations..."
+msgstr "/Données/Enlevez des observations supplémentaires"
 
 #: gui/gretl.c:379 gui2/gretl.c:436
 msgid "/Data/Refresh window"
@@ -9423,9 +9396,8 @@ msgid "forecast variance decomposition"
 msgstr "Utiliser la décomposition QR"
 
 #: gui2/gui_utils.c:3724
-#, fuzzy
 msgid "residual plot"
-msgstr "/Graphes/traçé des résidus"
+msgstr "traçé des résidus"
 
 #: gui2/gui_utils.c:3732
 msgid "VAR inverse roots"
