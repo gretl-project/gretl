@@ -49,6 +49,10 @@ static int compact_string_to_int (const char *str)
     else return COMPACT_NONE;
 }
 
+/* given a full filename in @src, write to @dest a "simple"
+   counterpart without leading path or extension
+*/
+
 static char *simple_fname (char *dest, const char *src)
 {
     char *p;
@@ -85,6 +89,21 @@ static int alt_puts (const char *s, FILE *fp, gzFile *fz)
     return ret;
 }
 
+static const char *data_structure_string (int s)
+{
+    switch (s) {
+    case TIME_SERIES:
+    case SPECIAL_TIME_SERIES:
+	return "time-series";
+    case STACKED_TIME_SERIES:
+	return "stacked-time-series";
+    case STACKED_CROSS_SECTION:
+	return "stacked-cross-section";
+    default:
+	return "cross-section";
+    }
+}
+
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -110,7 +129,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int *pmax = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
-    char datname[MAXLEN], type[32], freqstr[16];
+    char datname[MAXLEN], freqstr[16];
     char numstr[128];
     char *xmlbuf = NULL;
     void *handle = NULL;
@@ -208,27 +227,13 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     free(xmlbuf);
 
-    switch (pdinfo->structure) {
-    case 0:
-	strcpy(type, "cross-section"); break;
-    case TIME_SERIES:
-    case SPECIAL_TIME_SERIES:
-	strcpy(type, "time-series"); break;
-    case STACKED_TIME_SERIES:
-	strcpy(type, "stacked-time-series"); break;
-    case STACKED_CROSS_SECTION:
-	strcpy(type, "stacked-cross-section"); break;
-    default:
-	strcpy(type, "cross-section"); break;
-    }
-
     if (gz) {
-	gzprintf(fz, "type=\"%s\">\n", type);
+	gzprintf(fz, "type=\"%s\">\n", data_structure_string(pdinfo->structure));
     } else {
-	fprintf(fp, "type=\"%s\">\n", type);
+	fprintf(fp, "type=\"%s\">\n", data_structure_string(pdinfo->structure));
     }
 
-    /* first deal with description, if any */
+    /* deal with description, if any */
     if (pdinfo->descrip != NULL) {
 	xmlbuf = gretl_xml_encode(pdinfo->descrip);
 	if (xmlbuf == NULL) {
@@ -339,15 +344,14 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	alt_puts("<obs", fp, fz);
 	if (pdinfo->markers && pdinfo->S != NULL) {
 	    if (gz) {
-		gzprintf(fz, " label=\"%s\">", pdinfo->S[t]);
+		gzprintf(fz, "<obs label=\"%s\">", pdinfo->S[t]);
 	    } else {
-		fprintf(fp, " label=\"%s\">", pdinfo->S[t]);
+		fprintf(fp, "<obs label=\"%s\">", pdinfo->S[t]);
 	    }
 	} else {
-	    alt_puts(">", fp, fz);
+	    alt_puts("<obs>", fp, fz);
 	}
 	for (i=1; i<=list[0]; i++) {
 	    if (!pdinfo->vector[list[i]]) {
@@ -853,7 +857,6 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
  * required.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
- *
  */
 
 int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,

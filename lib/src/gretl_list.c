@@ -585,9 +585,9 @@ int gretl_list_delete_at_pos (int *list, int pos)
  * a count of the number of elements following.
  *
  * Checks @list from position 1 onward for the presence of a constant
- * (the variable with ID number 0).  If this is found, is is deleted
+ * (the variable with ID number 0).  If this is found, it is deleted
  * from list (that is, any following elements are moved forward by one
- * and list[0] is decremented by 1.
+ * and list[0] is decremented by 1).
  *
  * Returns: 1 if the constant was found and deleted, else 0.
  */
@@ -692,7 +692,7 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
  * a count of the number of elements following.
  * @err: location to receive error code.
  *
- * Creates a list containing all but the last elements of @orig.
+ * Creates a list containing all but the last element of @orig.
  *
  * Returns: new list on success, %NULL on error.
  */
