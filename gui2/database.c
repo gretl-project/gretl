@@ -1843,6 +1843,8 @@ read_db_files_in_dir (DIR *dir, char *dbdir, windata_t *vwin, int ndb)
     int n, i;
 
     while ((dirent = readdir(dir)) != NULL) {
+	int addrow = 0;
+
 	fname = dirent->d_name;
 	n = strlen(fname);
 	if (vwin->role == NATIVE_DB) {
@@ -1850,6 +1852,7 @@ read_db_files_in_dir (DIR *dir, char *dbdir, windata_t *vwin, int ndb)
 		row[0] = fname;
 		descrip = real_get_db_description(NULL, fname, dbdir);
 		if (descrip != NULL) {
+		    addrow = 1;
 		    row[1] = descrip;
 		    i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
 		    gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, dbdir);
@@ -1859,13 +1862,15 @@ read_db_files_in_dir (DIR *dir, char *dbdir, windata_t *vwin, int ndb)
 	    }
 	} else if (!g_strcasecmp(fname + n - 4, ".rat")) {
 	    /* RATS database */
+	    addrow = 1;
 	    row[0] = fname;
 	    row[1] = NULL;
 	    i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
 	    gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, dbdir);
 	    ndb++;
 	}
-	if (ndb % 2) {
+
+	if (addrow && ndb % 2) {
 	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), i, &gray);
 	}
     }
