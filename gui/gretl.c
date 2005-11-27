@@ -473,7 +473,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/High precision OLS..."), NULL, mp_ols_callback, MPOLS, NULL },
 #endif
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>" },
-    { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, NULL },
+    { N_("/Help/_Command reference"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Help/Command reference/plain text"), NULL, plain_text_cmdref, 0, NULL },
+    { N_("/Help/Command reference/PDF"), NULL, display_pdf_help, 0, NULL },
     { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, NULL },
     { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, NULL },

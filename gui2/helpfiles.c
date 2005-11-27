@@ -624,6 +624,20 @@ static void add_help_topics (windata_t *hwin, int cli)
     /* See if there are any topics to add */
     if (hds == NULL) return;
 
+#ifndef OLD_GTK
+    if (cli) {
+	/* Add general index as "topic" */
+	hitem.callback_action = 1; 
+	hitem.item_type = NULL;
+	hitem.path = g_strdup_printf("%s/%s", mpath, _("Index"));
+	hitem.callback = do_cli_help;
+	gtk_item_factory_create_item(hwin->ifac, &hitem, 
+				     GINT_TO_POINTER(0), 
+				     1);
+	g_free(hitem.path);
+    }
+#endif
+
     /* put the topics under the menu heading */
     for (i=0; hds[i] != NULL; i++) {
 
@@ -795,9 +809,28 @@ void context_help (GtkWidget *widget, gpointer data)
     real_do_help(hcode, pos, 0, en);
 }
 
+#ifndef OLD_GTK
+
+static gboolean hwin_signals_connected = FALSE;
+
+void set_hwin_signals_connected (gboolean s)
+{
+    hwin_signals_connected = s;
+}
+
+gboolean get_hwin_signals_connected (void)
+{
+    return hwin_signals_connected;
+}
+
+#endif
+
 static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
 {
     *phwin = NULL;
+#ifndef OLD_GTK
+    hwin_signals_connected = FALSE;
+#endif
     return FALSE;
 }
 
@@ -867,6 +900,17 @@ static void do_cli_help (gpointer p, guint pos, GtkWidget *w)
 
     real_do_help(hcode, pos, 1, 0);
 }
+
+void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
+{
+    int pos = 1;
+
+    if (cmdnum > 0) {
+	pos = cli_pos_from_cmd(cmdnum, 0);
+    }
+	
+    real_do_help(0, pos, 1, 0);
+} 
 
 static int cli_pos_from_cmd (int cmd, int english)
 {

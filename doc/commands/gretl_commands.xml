@@ -1003,6 +1003,7 @@
         <example>critical t 20</example>
         <example>critical X 5</example>
         <example>critical F 3 37</example>
+	<example>critical d 50</example>
       </examples>
     </usage>
 
@@ -1917,13 +1918,14 @@
 	  </para>
 	</li>
 	
-	<li><para>Special statistical functions: <func>pvalue</func> (see
-	    below), <func>cnorm</func> (standard normal CDF), <func>dnorm</func>
-	    (standard normal PDF), <func>resample</func> (resample a series with
+	<li><para>Special statistical functions: <func>pvalue</func>
+	    and <func>critical</func> (see below), <func>cnorm</func>
+	    (standard normal CDF), <func>dnorm</func> (standard normal
+	    PDF), <func>resample</func> (resample a series with
 	    replacement, for bootstrap purposes), <func>hpfilt</func>
 	    (Hodrick&ndash;Prescott filter: this function returns the
-	    <quote>cycle</quote> component of the series), <func>bkfilt</func>
-	    (Baxter&ndash;King bandpass filter).
+	    <quote>cycle</quote> component of the series),
+	    <func>bkfilt</func> (Baxter&ndash;King bandpass filter).
 	  </para>
 	</li>
 
@@ -1978,19 +1980,55 @@
       </ilist> 
 
       <para>
-	All of the above functions with the exception of <func>cov</func>,
-	<func>corr</func>, <func>pvalue</func>, <func>fracdiff</func>,
-	<func>uniform</func> and <func>normal</func> take as their single
-	argument either the name of a variable or an expression that evaluates
-	to a variable (e.g. <cmd>ln((x1+x2)/2)</cmd>). The <func>pvalue</func>
-	function takes the same arguments as the <cmdref targ="pvalue"/>
-	command, but in this context commas should be placed between the
-	arguments. This function returns a one-tailed p-value, and in the case
-	of the normal and <emphasis>t</emphasis> distributions, it is for the
-	<quote>short tail</quote>.  With the normal, for example, both 1.96 and
-	&minus;1.96 will give a result of around 0.025. The
-	<func>fracdiff</func> takes two arguments: the name of the series and a
-	fraction, in the range &minus;1 to 1.
+	All of the above functions with the exception of
+	<func>cov</func>, <func>corr</func>, <func>pvalue</func>,
+	<func>critical</func>, <func>fracdiff</func>,
+	<func>uniform</func> and <func>normal</func> take as their
+	single argument either the name of a variable or an expression
+	that evaluates to a variable (e.g. <cmd>ln((x1+x2)/2)</cmd>).
+      </para>
+
+      <para>
+	The <func>pvalue</func> function takes the same arguments as
+	the <cmdref targ="pvalue"/> command, but in this context
+	commas should be placed between the arguments. It returns a
+	one-tailed p-value, and in the case of the normal and
+	<emphasis>t</emphasis> distributions, it is for the
+	<quote>short tail</quote>.  With the normal, for example, both
+	1.96 and &minus;1.96 will give a result of around 0.025. 
+      </para>
+
+      <para>
+	The <func>critical</func> function returns the critical value
+	for a specified probability distribution and a specified
+	proportion in the right-hand tail (with specified degrees of
+	freedom where applicable).  The distribution parameter, which
+	must come first, can be <cmd>z</cmd> or <cmd>N</cmd> (Normal
+	distribution), <cmd>t</cmd> (Student's
+	<emphasis>t</emphasis>), <cmd>X</cmd> (chi-square) or
+	<cmd>F</cmd>.  The last parameter is the right-hand tail
+	proportion.  If the first parameter is <cmd>t</cmd> or
+	<cmd>X</cmd>, a second parameter must give the degrees of
+	freedom.  For the <emphasis>F</emphasis> distribution, the
+	second and third parameters must give the numerator and
+	denominator degrees of freedom.  
+      </para>
+
+      <para>
+	Here are some examples of use of the <func>pvalue</func> and
+	<func>critical</func> functions (spaces between the arguments
+	are optional):
+      </para>
+      <code>
+	genr p1 = pvalue(z, 2.2)
+	genr p2 = pvalue(X, 3, 5.67)
+	genr c1 = critical(t, 20, 0.025)
+	genr c2 = critical(F, 4, 48, 0.05)
+      </code>
+
+      <para>
+	The <func>fracdiff</func> function takes two arguments: the
+	name of the series and a fraction, in the range &minus;1 to 1.
       </para>
 
       <para>Besides the operators and functions noted above there are
@@ -4924,6 +4962,7 @@
 	<example>pvalue X 3 5.6</example>
 	<example>pvalue F 4 58 fval</example>
 	<example>pvalue G xbar varx x</example>
+	<example>pvalue B bprob 10 6</example>
       </examples>
     </usage>
 
@@ -4932,12 +4971,21 @@
 	Computes the area to the right of <repl>xval</repl> in the
 	specified distribution (<lit>z</lit> for Gaussian,
 	<lit>t</lit> for Student's <mathvar>t</mathvar>, <lit>X</lit>
-	for chi-square, <lit>F</lit> for <mathvar>F</mathvar> and
-	<lit>G</lit> for gamma).  For the <mathvar>t</mathvar> and
-	chi-square distributions the degrees of freedom must be given;
-	for <mathvar>F</mathvar> numerator and denominator degrees of
-	freedom are required; and for gamma the mean and variance are
-	needed.
+	for chi-square, <lit>F</lit> for <mathvar>F</mathvar>,
+	<lit>G</lit> for gamma, or <lit>B</lit> for binomial).  
+      </para>
+      <para>
+	For the <mathvar>t</mathvar> and chi-square distributions the
+	degrees of freedom must be given; for <mathvar>F</mathvar>
+	numerator and denominator degrees of freedom are required; for
+	gamma the mean and variance are needed; and for the binomial
+	distribution the <quote>success</quote> probability and the
+	number of trials must be given.  In each case, these extra
+	values are provided before the <repl>xval</repl>.
+      </para>
+      <para>
+	As shown in the examples above, the numerical parameters
+	may be given in numeric form or as the names of variables.
       </para>
     </description>
 

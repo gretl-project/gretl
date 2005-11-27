@@ -334,44 +334,37 @@ static int val_from_string (const char *s, const double **Z,
 
 static char normalize_stat (char c)
 {
-    char n = 0;
-
     switch (c) {
     case '1':
     case 'z':
     case 'n':
-	n = 'z';
-	break;
+    case 'N':
+	return 'z'; /* Normal */
     case '2':
     case 't':
-	n = 't';
-	break;
+	return 't'; /* Student's t */
     case '3':
     case 'c':
     case 'x':
     case 'X':
-	n = 'X';
-	break;
+	return 'X'; /* Chi-square */
     case '4':
     case 'f':
     case 'F':
-	n = 'F';
-	break;
+	return 'F'; /* F */
     case '5':
     case 'g':
     case 'G':
-	n = 'G';
-	break;
+	return 'G'; /* Gamma */
     case '6':
     case 'b':
     case 'B':
-	n = 'B';
-	break;
+	return 'B'; /* Binomial */
     default:
 	break;
     }
 
-    return n;
+    return 0;
 }
 
 /**
@@ -398,7 +391,7 @@ double batch_pvalue (const char *str,
 {
     int n1 = 0, n2 = 0, n3 = 0;
     double x1 = 0, x2 = 0, x3 = 0;
-    char stat = 0;
+    char st = 0;
     double tmp, pv = NADBL;
     char s1[9] = {0};
     char s2[9] = {0};
@@ -407,36 +400,36 @@ double batch_pvalue (const char *str,
     int err = 0;
 
     for (;;) {
-	if (sscanf(str, "%c,%[^,],%[^,],%s", &stat, s1, s2, s3) == 4) {
+	if (sscanf(str, "%c,%[^,],%[^,],%s", &st, s1, s2, s3) == 4) {
 	    break;
 	}
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%c,%[^,],%s", &stat, s1, s3) == 3) {
+	if (sscanf(str, "%c,%[^,],%s", &st, s1, s3) == 3) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%c,%s", &stat, s3) == 2) {
+	if (sscanf(str, "%c,%s", &st, s3) == 2) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%s %c %s %s %s", cmd, &stat, s1, s2, s3) == 5) {
+	if (sscanf(str, "%s %c %s %s %s", cmd, &st, s1, s2, s3) == 5) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%s %c %s %s", cmd, &stat, s1, s3) == 4) {
+	if (sscanf(str, "%s %c %s %s", cmd, &st, s1, s3) == 4) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%s %c %s", cmd, &stat, s3) == 3) {
+	if (sscanf(str, "%s %c %s", cmd, &st, s3) == 3) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
 	break;
     }
 
-    stat = normalize_stat(stat);
+    st = normalize_stat(st);
 
-    if (stat == 0) {
+    if (st == 0) {
 	pputs(prn, _("\nunrecognized pvalue code\n"));
 	return NADBL;
     }
@@ -457,11 +450,11 @@ double batch_pvalue (const char *str,
     }
 
     /* check for missing params */
-    if (stat == 'z' && !*s3) {
+    if (st == 'z' && !*s3) {
 	err = 1;
-    } else if ((stat == 't' || stat == 'X') && (!*s1 || !*s3)) {
+    } else if ((st == 't' || st == 'X') && (!*s1 || !*s3)) {
 	err = 1;
-    } else if ((stat == 'F' || stat == 'G' || stat == 'B') &&
+    } else if ((st == 'F' || st == 'G' || st == 'B') &&
 	(!*s1 || !*s2 || !*s3)) {
 	err = 1;
     }
@@ -471,7 +464,7 @@ double batch_pvalue (const char *str,
 	return NADBL;
     }	
 
-    switch (stat) {
+    switch (st) {
 
     case 'z':
 	tmp = x3;
@@ -624,8 +617,6 @@ void interact_pvalue (void)
     } while (ans[0] == 'Y' || ans[0] == 'y');
 }
 
-/* ........................................................ */
-
 static void pnormal (void)
 {
     double xx, zx; 
@@ -756,26 +747,35 @@ static double chi_crit_a (double a, int df)
     }
 }
 
-static int parse_critical_input (const char *str, int *i, 
-				 int *df, int *n)
+static int 
+parse_critical_input (const char *s, int *df, int *n)
 {
-    *i = -1;
+    int ret = -1;
 
-    if (sscanf(str, "critical F %d %d", df, n) == 2) *i = 3;
-    else if (sscanf(str, "critical X %d", df) == 1) *i = 2;
-    else if (sscanf(str, "critical t %d", df) == 1) *i = 1;
-    else if (sscanf(str, "critical d %d", n) == 1) *i = 4;
-    else if (!strncmp(str, "critical N", 10)) *i = 0;
+    if (sscanf(s, "F %d %d", df, n) == 2) {
+	ret ='F';
+    } else if (sscanf(s, "X %d", df)) {
+	ret = 'X';
+    } else if (sscanf(s, "t %d", df)) {
+	ret = 't';
+    } else if (sscanf(s, "d %d", n)) {
+	ret = 'd';
+    } else if (*s == 'N' || *s == 'z') {
+	ret = 'z';
+    } 
 
-    return (*i == -1);
+    return ret;
 }
 
 /**
  * print_critical:
  * @line: the command line, which should be of one of the following forms:
+ * critical z (Normal); or
+ * critical N (Normal); or
  * critical t df (student's t); or
  * critical X df (chi-square); or
- * critical F dfn dfd (F distribution).
+ * critical F dfn dfd (F distribution); or
+ * critical d n (Durbin-Watson, sample size n).
  * @prn: gretl printing struct.
  *
  * Prints critical values for the specified distribution at the
@@ -792,66 +792,68 @@ int print_critical (const char *line, PRN *prn)
     void (*dw)(int, PRN *) = NULL;
     void (*tcrit)(int, PRN *, int) = NULL;
     void (*chicrit)(int, PRN *, int) = NULL;
-    int i, n = -1, df = -1, err = 0;
+    int st, n = -1, df = -1;
+    int err = 0;
 
-    if (parse_critical_input(line, &i, &df, &n)) {
+    st = parse_critical_input(line + 9, &df, &n);
+
+    if (st < 0) {
 	pputs(prn, _("Invalid input\n"));
 	err = 1;
-    }
-
-    if ((0 < i && i < 4 && df <= 0) || (i == 3 && n <= 0)) {
+    } else if ((st == 't' || st == 'X' || st == 'F') && df <= 0) {
+	pputs(prn, _("Invalid degrees of freedom\n"));
+    } else if (st == 'F' && n <= 0) {
 	pputs(prn, _("Invalid degrees of freedom\n"));
 	err = 1;
-    }
-    else if (i == 4 && n <= 0) {
+    } else if (st == 'd' && n <= 0) {
 	pputs(prn, _("Invalid sample size\n"));
 	err = 1;
     }    
 
     if (err) return 1;
 
-    switch (i) {
-    case 0: /* normal */
+    switch (st) {
+    case 'z': /* normal */
 	funp = norm_table = get_plugin_function("norm_lookup", &handle);
 	break;
-    case 1: /* t */
+    case 't': /* t */
 	funp = tcrit = get_plugin_function("t_lookup", &handle);
 	break;
-    case 2: /* chi-square */
+    case 'X': /* chi-square */
 	funp = chicrit = get_plugin_function("chisq_lookup", &handle);
 	break;
-    case 3: /* F */
+    case 'F': /* F */
 	break;
-    case 4: /* DW */
+    case 'd': /* DW */
 	funp = dw = get_plugin_function("dw_lookup", &handle);
 	break;
     default:
 	break;
     }
 
-    if (i != 3 && funp == NULL)  {
+    if (st != 'F' && funp == NULL)  {
 	pputs(prn, _("Couldn't load plugin function\n"));
 	return 1;
     }
     
-    switch (i) {
-    case 0:
+    switch (st) {
+    case 'z':
 	(*norm_table)(prn, 0);
 	break;
-    case 1:
+    case 't':
 	(*tcrit)(df, prn, 0);
 	break;
-    case 2:
+    case 'X':
 	(*chicrit)(df, prn, 0);
 	break;	
-    case 3:
+    case 'F':
 	pprintf(prn, _("Approximate critical values of F(%d, %d)\n\n"),
 		df, n);
 	pprintf(prn, _(" 10%% in right tail %.2f\n"), f_crit_a(.10, df, n));
 	pprintf(prn, "  5%%               %.2f\n", f_crit_a(.05, df, n));	
 	pprintf(prn, "  1%%               %.2f\n", f_crit_a(.01, df, n));
 	break;
-    case 4:
+    case 'd':
 	(*dw)(n, prn);
 	break;
     default:
@@ -868,33 +870,35 @@ int print_critical (const char *line, PRN *prn)
 static int parse_genr_critical_input (const char *str, 
 				      const double **Z, 
 				      const DATAINFO *pdinfo,
-				      int *i, int *dfn, int *dfd, 
+				      int *st, int *dfn, int *dfd, 
 				      double *a)
 {
     char dfnstr[VNAMELEN], dfdstr[VNAMELEN];
     char astr[VNAMELEN];
     double val;
-    *i = -1;
+    int err = 0;
 
     dfnstr[0] = dfdstr[0] = astr[0] = '\0';
 
     if (sscanf(str, "F,%8[^,],%8[^,],%8s", dfnstr, dfdstr, astr) == 3) {
-	*i = 3;
+	*st = 'F';
     } else if (sscanf(str, "X,%8[^,],%8s", dfnstr, astr) == 2) {
-	*i = 2;
+	*st = 'X';
     } else if (sscanf(str, "t,%8[^,],%8s", dfnstr, astr) == 2) {
-	*i = 1;
-    } else if (sscanf(str, "N,%8s", astr) == 1) {
-	*i = 0;
+	*st = 't';
+    } else if (sscanf(str, "N,%8s", astr) || sscanf(str, "z,%8s", astr)) {
+	*st = 'z';
 	*dfn = 500;
+    } else {
+	err = 1;
     }
 
-    if (*i == -1) return 1;
+    if (err) return err;
 
     if (*dfnstr != '\0') {
 	val = get_number_or_val(dfnstr, Z, pdinfo);
 	if (na(val)) {
-	    *i = -1;
+	    err = 1;
 	} else {
 	    *dfn = val;
 	}
@@ -903,7 +907,7 @@ static int parse_genr_critical_input (const char *str,
     if (*dfdstr != '\0') {
 	val = get_number_or_val(dfdstr, Z, pdinfo);
 	if (na(val)) {
-	    *i = -1;
+	    err = 1;
 	} else {
 	    *dfd = val;
 	}
@@ -912,11 +916,11 @@ static int parse_genr_critical_input (const char *str,
     if (*astr != '\0') {
 	*a = get_number_or_val(astr, Z, pdinfo);
 	if (na(*a) || *a < 0.0) {
-	    *i = -1;
+	    err = 1;
 	}
     }
 
-    return (*i == -1);
+    return err;
 }
 
 double genr_get_critical (const char *line, const double **Z, 
@@ -930,16 +934,20 @@ double genr_get_critical (const char *line, const double **Z,
 	return NADBL;
     }
 
-    if ((0 < st && st < 4 && dfn <= 0) || (st == 3 && dfd <= 0)) {
+    if ((st == 't' || st == 'X' || st == 'F') && dfn <= 0) {
 	strcpy(gretl_errmsg, _("Invalid degrees of freedom\n"));
 	return NADBL;
-    }
+    } else if (st == 'F' && dfd <= 0) {
+	strcpy(gretl_errmsg, _("Invalid degrees of freedom\n"));
+	return NADBL;
+    }	
 
-    if (st == 3) {
+    if (st == 'F') {
 	ret = f_crit_a(alpha, dfn, dfd);
-    } else if (st == 2) {
+    } else if (st == 'X') {
 	ret = chi_crit_a(alpha, dfn);
     } else {
+	/* normal or t */
 	ret = sqrt(f_crit_a(2.0 * alpha, 1, dfn));
     } 
 

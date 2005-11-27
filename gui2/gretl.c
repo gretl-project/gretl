@@ -535,8 +535,11 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Help menu */
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>", NULL },
-    { N_("/Help/_Command reference"), NULL, display_pdf_help, 0, "<StockItem>", 
+    { N_("/Help/_Command reference"), NULL, NULL, 0, "<Branch>", NULL },
+    { N_("/Help/Command reference/plain text"), NULL, plain_text_cmdref, 0, "<StockItem>", 
       GRETL_STOCK_BOOK },
+    { N_("/Help/Command reference/PDF"), NULL, display_pdf_help, 0, "<StockItem>", 
+      GRETL_STOCK_PDF },
     { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, "<StockItem>", 
       GRETL_STOCK_PDF },
     { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>", GNULL },

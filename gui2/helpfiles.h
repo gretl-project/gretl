@@ -24,8 +24,12 @@ void helpfile_init (void);
 
 void context_help (GtkWidget *widget, gpointer data);
 
+void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w);
+
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 		       windata_t *vwin);
+
+void display_pdf_help (gpointer p, guint uguide, GtkWidget *w);
 
 void datafile_find (GtkWidget *widget, gpointer data);
 
@@ -41,8 +45,9 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
 #ifdef OLD_GTK
 void colorize_tooltips (GtkTooltips *tip);
-#endif
-
-void display_pdf_help (gpointer p, guint uguide, GtkWidget *w);
+#else
+void set_hwin_signals_connected (gboolean s);
+gboolean get_hwin_signals_connected (void);
+#endif /* gtk versions */
 
 #endif /* HELPFILES_H */

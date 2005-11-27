@@ -382,6 +382,13 @@ static GtkTextTagTable *gretl_tags_new (void)
     g_object_set(tag, "foreground", "red", NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("title");
+    g_object_set(tag, "justification", GTK_JUSTIFY_CENTER,
+		 "pixels_above_lines", 20,
+		 "family", "sans",
+		 "size", 15 * PANGO_SCALE, NULL);
+    gtk_text_tag_table_add(table, tag);
+
     return table;
 }
 
@@ -505,6 +512,239 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     fclose(fp);
 }
 
+static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
+			 const gchar *text, gint page)
+{
+    GtkTextTag *tag;
+  
+    tag = gtk_text_buffer_create_tag(tbuf, NULL, 
+				     "foreground", "blue", 
+				     "underline", PANGO_UNDERLINE_SINGLE, 
+				     NULL);
+
+    g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
+    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
+}
+
+static void follow_if_link (GtkWidget *tview, GtkTextIter *iter)
+{
+    GSList *tags = NULL, *tagp = NULL;
+
+    tags = gtk_text_iter_get_tags(iter);
+
+    for (tagp = tags; tagp != NULL; tagp = tagp->next) {
+	GtkTextTag *tag = tagp->data;
+	gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT (tag), "page"));
+
+	if (page != 0) {
+	    plain_text_cmdref(NULL, page, NULL);
+	    break;
+	}
+    }
+
+    if (tags) {
+	g_slist_free (tags);
+    }
+}
+
+/* Links can be activated by pressing Enter */
+
+static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev)
+{
+    GtkTextIter iter;
+    GtkTextBuffer *tbuf;
+
+    switch (ev->keyval) {
+    case GDK_Return: 
+    case GDK_KP_Enter:
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tview));
+	gtk_text_buffer_get_iter_at_mark(tbuf, &iter, 
+					 gtk_text_buffer_get_insert(tbuf));
+	follow_if_link(tview, &iter);
+	break;
+
+    default:
+	break;
+    }
+
+    return FALSE;
+}
+
+/* Links can be activated by clicking */
+
+static gboolean cmdref_event_after (GtkWidget *tview, GdkEvent *ev)
+{
+    GtkTextIter start, end, iter;
+    GtkTextBuffer *buffer;
+    GdkEventButton *event;
+    gint x, y;
+
+    if (ev->type != GDK_BUTTON_RELEASE) {
+	return FALSE;
+    }
+
+    event = (GdkEventButton *) ev;
+
+    if (event->button != 1)
+	return FALSE;
+
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tview));
+
+    /* we shouldn't follow a link if the user has selected something */
+    gtk_text_buffer_get_selection_bounds(buffer, &start, &end);
+    if (gtk_text_iter_get_offset(&start) != gtk_text_iter_get_offset(&end))
+	return FALSE;
+
+    gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
+					  GTK_TEXT_WINDOW_WIDGET,
+					  event->x, event->y, &x, &y);
+
+    gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(tview), &iter, x, y);
+
+    follow_if_link(tview, &iter);
+
+    return FALSE;
+}
+
+static GdkCursor *hand_cursor = NULL;
+static GdkCursor *regular_cursor = NULL;
+
+static void
+set_cursor_if_appropriate (GtkTextView *tview, gint x, gint y)
+{
+    static gboolean hovering_over_link = FALSE;
+    GSList *tags = NULL, *tagp = NULL;
+    GtkTextBuffer *tbuf;
+    GtkTextIter iter;
+    gboolean hovering = FALSE;
+
+    tbuf = gtk_text_view_get_buffer(tview);
+    gtk_text_view_get_iter_at_location(tview, &iter, x, y);
+  
+    tags = gtk_text_iter_get_tags(&iter);
+    for (tagp = tags; tagp != NULL; tagp = tagp->next) {
+	GtkTextTag *tag = tagp->data;
+	gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(tag), "page"));
+
+	if (page != 0) { 
+	    hovering = TRUE;
+	    break;
+        }
+    }
+
+    if (hovering != hovering_over_link) {
+	hovering_over_link = hovering;
+
+	if (hovering_over_link) {
+	    gdk_window_set_cursor(gtk_text_view_get_window(tview, GTK_TEXT_WINDOW_TEXT), 
+				  hand_cursor);
+	} else {
+	    gdk_window_set_cursor(gtk_text_view_get_window(tview, GTK_TEXT_WINDOW_TEXT), 
+				  regular_cursor);
+	}
+    }
+
+    if (tags) {
+	g_slist_free(tags);
+    }
+}
+
+static gboolean 
+cmdref_motion_notify (GtkWidget *tview, GdkEventMotion *event)
+{
+    gint x, y;
+
+    gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
+					  GTK_TEXT_WINDOW_WIDGET,
+					  event->x, event->y, &x, &y);
+    set_cursor_if_appropriate (GTK_TEXT_VIEW(tview), x, y);
+
+    gdk_window_get_pointer(tview->window, NULL, NULL, NULL);
+
+    return FALSE;
+}
+
+static gboolean
+cmdref_visibility_notify (GtkWidget *tview,  GdkEventVisibility *e)
+{
+    gint wx, wy, bx, by;
+  
+    gdk_window_get_pointer(tview->window, &wx, &wy, NULL);
+  
+    gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
+					  GTK_TEXT_WINDOW_WIDGET,
+					  wx, wy, &bx, &by);
+    set_cursor_if_appropriate(GTK_TEXT_VIEW(tview), bx, by);
+
+    return FALSE;
+}
+
+static void cmdref_title_page (GtkWidget *w, GtkTextBuffer *tbuf)
+{
+    const char *header = N_("Gretl Command Reference");
+    GtkTextIter iter;
+    int i;
+
+    if (hand_cursor == NULL) {
+	hand_cursor = gdk_cursor_new(GDK_HAND2);
+    }
+    if (regular_cursor == NULL) {
+	regular_cursor = gdk_cursor_new(GDK_XTERM);
+    }
+
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+					     _(header), -1,
+					     "title", NULL);
+	
+    gtk_text_buffer_insert(tbuf, &iter, "\n\n\n", -1);
+
+    for (i=1; i<NC; i++) {
+	const char *word = gretl_command_word(i);
+
+	insert_link(tbuf, &iter, gretl_command_word(i), i);
+	if (i > 0 && i % 8 == 0) {
+	    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+	} else {
+	    int j, n = 10 - strlen(word);
+
+	    for (j=0; j<n; j++) {
+		gtk_text_buffer_insert(tbuf, &iter, " ", -1);
+	    }
+	}
+    }
+
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(w), tbuf);
+
+    if (!get_hwin_signals_connected()) {
+	g_signal_connect(w, "key-press-event", 
+			 G_CALLBACK(cmdref_key_press), NULL);
+	g_signal_connect(w, "event-after", 
+			 G_CALLBACK(cmdref_event_after), NULL);
+	g_signal_connect(w, "motion-notify-event", 
+			 G_CALLBACK(cmdref_motion_notify), NULL);
+	g_signal_connect(w, "visibility-notify-event", 
+			 G_CALLBACK(cmdref_visibility_notify), NULL);
+	set_hwin_signals_connected(TRUE);
+    }
+}
+
+#if 0
+static void old_cmdref_title_page (GtkTextBuffer *tbuf)
+{
+    const char *h1 = N_("Gretl Command Reference");
+    const char *h2 = N_("Please select from the Topics list");
+    GtkTextIter iter;
+
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);	
+
+    gtk_text_buffer_insert(tbuf, &iter, "\n\n   ", -1);
+    gtk_text_buffer_insert(tbuf, &iter, _(h1), -1);
+    gtk_text_buffer_insert(tbuf, &iter, "\n\n   ", -1);
+    gtk_text_buffer_insert(tbuf, &iter, _(h2), -1);
+}
+#endif
+
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos)
 {
     GtkTextBuffer *tbuf;
@@ -514,21 +754,14 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos)
     int nl = gui_help(hwin->role)? -2 : 0;
 
     tbuf = gretl_text_buf_new();
-    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
     if (pos == 1) {
 	/* cli help with no topic selected */
-	const char *h1 = N_("Gretl Command Reference");
-	const char *h2 = N_("Please select from the Topics list");
-
-	gtk_text_buffer_insert(tbuf, &iter, "\n\n   ", -1);
-	gtk_text_buffer_insert(tbuf, &iter, _(h1), -1);
-	gtk_text_buffer_insert(tbuf, &iter, "\n\n   ", -1);
-	gtk_text_buffer_insert(tbuf, &iter, _(h2), -1);
-	gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
+	cmdref_title_page(hwin->w, tbuf);
 	return;
     }
 
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     bufgets_init(hbuf);
 
     while (bufgets(line, sizeof line, hbuf)) {
