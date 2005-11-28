@@ -976,6 +976,7 @@
         <example>critical t 20</example>
         <example>critical X 5</example>
         <example>critical F 3 37</example>
+        <example>critical d 50</example>
       </examples>
     </usage>
 
@@ -1877,13 +1878,13 @@
           </para>
         </li>
         <li>
-          <para>Funzioni statistiche speciali: <func>pvalue</func> (si veda oltre),
-          <func>cnorm</func> (funzione di ripartizione normale standard),
-          <func>dnorm</func> (funzione di densità normale standard),
-          <func>resample</func> (ricampiona una serie con rimpiazzo, utile per
-          il bootstrap), <func>hpfilt</func> (componente di
-            <quote>ciclo</quote> della serie), <func>bkfilt</func> (filtro
-            passa-banda di Baxter&ndash;King).</para>
+          <para>Funzioni statistiche speciali: <func>pvalue</func> e
+          <func>critical</func> (si veda oltre), <func>cnorm</func> (funzione di
+          ripartizione normale standard), <func>dnorm</func> (funzione di
+          densità normale standard), <func>resample</func> (ricampiona una serie
+          con rimpiazzo, utile per il bootstrap), <func>hpfilt</func>
+          (componente di <quote>ciclo</quote> della serie), <func>bkfilt</func>
+          (filtro passa-banda di Baxter&ndash;King).</para>
 	</li>
 	<li><para>Funzioni per serie storiche: <func>diff</func>
             (differenza prima), <func>ldiff</func> (log-differenza,
@@ -1929,16 +1930,47 @@
 
       <para>
         Tutte le funzioni viste sopra, con l'eccezione di <func>cov</func>,
-        <func>corr</func>, <func>pvalue</func>, <func>fracdiff</func>,
-	<func>uniform</func> e <func>normal</func> hanno come unico argomento
-	il nome di una variabile o un'espressione che si risolve in una
-	variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
+        <func>corr</func>, <func>pvalue</func>, <func>critical</func>,
+        <func>fracdiff</func>, <func>uniform</func> e <func>normal</func> hanno
+        come unico argomento il nome di una variabile o un'espressione che si
+        risolve in una variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
+      </para>
+      <para>
 	La funzione <func>pvalue</func> richiede gli stessi argomenti del
 	comando <cmdref targ="pvalue"/>, ma in questo caso occorre separare
 	gli argomenti con delle virgole. Questa funzione produce un p-value
         a una coda, che nel caso delle distribuzioni normale e
         <emphasis>t</emphasis> è la <quote>coda corta</quote>. Con la normale,
         ad esempio, sia 1.96 sia -1.96 daranno un risultato di circa 0.025.
+      </para>
+
+      <para>
+	La funzione <func>critical</func> produce il valore critico per una
+        certa distribuzione di probabilità, data la proporzione sulla coda di
+        destra (e dati i gradi di libertà, in alcuni casi). L'argomento che
+        indica la distribuzione deve essere il primo e può valere <cmd>z</cmd> o
+        <cmd>N</cmd> per la distribuzione normale, <cmd>t</cmd> per la
+        <emphasis>t</emphasis> di Student, <cmd>X</cmd> per la chi-quadro, o
+        <cmd>F</cmd>. L'ultimo argomento è la proporzione sulla coda di destra.
+        Se il primo argomento è <cmd>t</cmd> o <cmd>X</cmd>, occorre specificare
+        un secondo argomento per i gradi di libertà, mentre per la distribuzione
+        <emphasis>F</emphasis>, occorre indicare i gradi di libertà del
+        numeratore e quelli del denominatore, rispettivamente come secondo e
+        terzo argomento.
+      </para>
+
+      <para>
+	Ecco alcuni esempi di uso delle funzioni <func>pvalue</func> e
+	<func>critical</func> (gli spazi tra gli argomenti sono opzionali):
+      </para>
+      <code>
+	genr p1 = pvalue(z, 2.2)
+	genr p2 = pvalue(X, 3, 5.67)
+	genr c1 = critical(t, 20, 0.025)
+	genr c2 = critical(F, 4, 48, 0.05)
+      </code>
+      
+      <para>
         La funzione <func>fracdiff</func> richiede due argomenti: il nome della
         serie e una frazione nell'intervallo da &minus;1 a 1.
       </para>
@@ -4847,6 +4879,7 @@
 	<example>pvalue X 3 5.6</example>
 	<example>pvalue F 4 58 fval</example>
 	<example>pvalue G xbar varx x</example>
+        <example>pvalue B bprob 10 6</example>
       </examples>
     </usage>
 
@@ -4855,12 +4888,18 @@
 	Calcola l'area alla destra del <repl>valore-x</repl> nella
         distribuzione indicata (<lit>z</lit> per la Gaussiana,
 	<lit>t</lit> per la <mathvar>t</mathvar> di Student, <lit>X</lit>
-	per la chi-quadro, <lit>F</lit> per la <mathvar>F</mathvar> e
-	<lit>G</lit> per la gamma).  Per le distribuzioni
-        <mathvar>t</mathvar> e chi-quadro vanno indicati i gradi di
-        libertà; per la <mathvar>F</mathvar> sono richiesti i gradi di
-        libertà al numeratore e al denominatore; per la gamma sono
-        richieste la media e la varianza.
+	per la chi-quadro, <lit>F</lit> per la <mathvar>F</mathvar>,
+	<lit>G</lit> per la gamma e <lit>B</lit> per la binomiale).
+        Per le distribuzioni <mathvar>t</mathvar> e chi-quadro vanno indicati i
+        gradi di libertà; per la <mathvar>F</mathvar> sono richiesti i gradi di
+        libertà al numeratore e al denominatore; per la gamma sono richieste la
+        media e la varianza; per la binomiale sono richieste la probabilità di
+        <quote>successo</quote> e il numero di tentativi. In ogni caso questi
+        argomenti aggiuntivi vanno specificati prima del <repl>valore-x</repl>.
+      </para>
+      <para>
+        Come si nota dagli esempi, gli argomenti numerici possono essere
+        indicati sotto forma di numero o come nomi di variabili.
       </para>
     </description>
 
