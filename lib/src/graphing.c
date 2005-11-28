@@ -97,6 +97,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_VAR_ROOTS,      "VAR inverse roots plot" },
     { PLOT_ELLIPSE,        "confidence ellipse plot" },
     { PLOT_MULTI_IRF,      "multiple impulse responses" },
+    { PLOT_PANEL,          "multiple panel plots" },
     { PLOT_TYPE_MAX,       NULL }
 };
     
@@ -2803,6 +2804,108 @@ hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+static void get_x_and_y_sizes (int n, int *x, int *y)
+{
+    if (n == 2) {
+	*x = 2;
+	*y = 1;
+    } else if (n == 3 || n == 4) {
+	*x = 2;
+	*y = 2;
+    } else if (n == 5 || n == 6) {
+	*x = 3;
+	*y = 2;
+    } else if (n > 6 && n < 10) {
+	*x = 3;
+	*y = 3;
+    } else {
+	*x = 0;
+	*y = 0;
+    }
+}
+
+/* plot one variable as a time series, with separate plots for
+   each cross-sectional unit */
+
+int 
+gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo) 
+{
+    FILE *fp = NULL;
+    int i, j, k;
+    int t, t0;
+    int xnum, ynum;
+    float xfrac, yfrac;
+    float xorig = 0.0;
+    float yorig;
+    int err = 0;
+
+    int T = pdinfo->pd;
+    int nunits = pdinfo->n / T;
+
+    get_x_and_y_sizes(nunits, &xnum, &ynum);
+    if (xnum == 0 || ynum == 0) {
+	return E_DATA;
+    }
+
+    err = gnuplot_init(PLOT_PANEL, &fp);
+    if (err) {
+	return err;
+    }
+
+    xfrac = 1.0 / xnum;
+    yfrac = 1.0 / ynum;
+
+    fputs("set key top left\n", fp);
+    fputs("set multiplot\n", fp);
+    fprintf(fp, "set xlabel '%s'\n", _("time"));
+    fputs("set xzeroaxis\n", fp);
+    fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
+
+    gretl_push_c_numeric_locale();
+
+    k = 0;
+    t0 = 0;
+
+    for (i=0; i<xnum; i++) {
+
+	yorig = 1.0 - yfrac;
+
+	for (j=0; j<ynum; j++) {
+	    int vj = list[1];
+
+	    if (k == nunits) {
+		break;
+	    }
+
+	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
+	    fprintf(fp, "set title '%s (%d)'\n", pdinfo->varname[vj], k);
+	    fputs("plot \\\n'-' using 1:2 notitle w lines\n", fp);
+
+	    for (t=0; t<T; t++) {
+		fprintf(fp, "%d %.8g\n", t+1, Z[vj][t+t0]);
+	    }
+	    fputs("e\n", fp);
+
+	    t0 += T;
+	    k++;
+	    yorig -= yfrac;
+	}
+
+	if (k == nunits) {
+	    break;
+	}	
+
+	xorig += xfrac;
+    }
+
+    fputs("unset multiplot\n", fp);
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
 int 
 gretl_VAR_plot_impulse_response (GRETL_VAR *var,
 				 int targ, int shock, int periods,
@@ -2923,7 +3026,6 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     }
 
     if (!confint) {
-	fputs("# impulse response plot\n", fp);
 	fputs("set nokey\n", fp);
     } else {
 	fputs("set key top left\n", fp);
@@ -2940,7 +3042,7 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	yorig = 1.0 - plot_fraction;
 	vtarg = gretl_VAR_get_variable_number(var, i);
 
-	for(j=0; j<n; j++) {
+	for (j=0; j<n; j++) {
 
 	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
 	    resp = gretl_VAR_get_impulse_response(var, j, i, periods, Z, pdinfo);

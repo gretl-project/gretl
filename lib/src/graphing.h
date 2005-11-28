@@ -100,6 +100,7 @@ typedef enum {
     PLOT_VAR_ROOTS,
     PLOT_ELLIPSE,
     PLOT_MULTI_IRF,
+    PLOT_PANEL,
     PLOT_TYPE_MAX
 } PlotType;
 
@@ -186,6 +187,9 @@ int rmplot (const int *list, const double **Z, DATAINFO *pdinfo,
 
 int hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, 
 	       PRN *prn);
+
+int 
+gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo);
 
 int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 

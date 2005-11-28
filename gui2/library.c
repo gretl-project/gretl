@@ -4365,11 +4365,30 @@ void delete_selected_vars (int id)
     }
 }
 
+static void do_stacked_ts_plot (int varnum)
+{
+    int list[2];
+    int err;
+    
+    list[0] = 1;
+    list[1] = varnum;
+
+    err = gretl_panel_ts_plot(list, (const double **) Z, datainfo);
+
+    gui_graph_handler(err);
+}
+
 void do_graph_var (int varnum)
 {
     int err, lines[1];
 
     if (varnum <= 0) return;
+
+    if (datainfo->structure == STACKED_TIME_SERIES &&
+	datainfo->n / datainfo->pd < 10) {
+	do_stacked_ts_plot(varnum);
+	return;
+    }
 
     if (!dataset_is_time_series(datainfo) &&
 	datainfo->structure != STACKED_TIME_SERIES) {
