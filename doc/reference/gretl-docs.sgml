@@ -28,6 +28,7 @@
 <!ENTITY gretl-string-table SYSTEM "xml/gretl_string_table.xml">
 <!ENTITY gretl-utils    SYSTEM "xml/gretl_utils.xml">
 <!ENTITY gretl-win32    SYSTEM "xml/gretl_win32.xml">
+<!ENTITY gretl-xml      SYSTEM "xml/gretl_xml.xml">
 <!ENTITY interact       SYSTEM "xml/interact.xml">
 <!ENTITY libgretl       SYSTEM "xml/libgretl.xml">
 <!ENTITY libset         SYSTEM "xml/libset.xml">
@@ -49,6 +50,8 @@
 <!ENTITY texprint       SYSTEM "xml/texprint.xml">
 <!ENTITY transforms     SYSTEM "xml/transforms.xml">
 <!ENTITY var            SYSTEM "xml/var.xml">
+<!ENTITY varprint       SYSTEM "xml/varprint.xml">
+
 ]>
 
 <book id="index">
@@ -72,7 +75,8 @@
 
   <chapter id="ch-dataset">
     <title>Data input and output</title>
-    &dataio;  
+    &dataio; 
+    &gretl-xml; 
     &dbread; 
     &dbwrite;
     &gretl-string-table;  
@@ -116,6 +120,7 @@
     &texprint;
     &graphing;
     &gretl-prn;
+    &varprint;
   </chapter>
 
   <chapter id="ch-matrix">

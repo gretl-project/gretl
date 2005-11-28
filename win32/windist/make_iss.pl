@@ -113,6 +113,10 @@ print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"DataPage\"; ValueData: \"Ramanathan\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"ScriptPage\"; ValueData: \"Ramanathan\"\n";
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"manpref\"; ValueData: \"0\"\n";
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"useqr\"; ValueData: \"false\"\n";
  
 # Establish file associations
 

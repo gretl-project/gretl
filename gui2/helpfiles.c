@@ -1639,6 +1639,10 @@ static int maybe_grab_pdf (int uguide, int i, char *fullpath)
     FILE *fp;
     int err = 0;
 
+    if (i < 0 || i > 3) {
+	i = 0;
+    }
+
     if (uguide) {
 	fname = guide_files[i];
     } else {

@@ -37,6 +37,7 @@ DataOpenCode
 GretlVarnameError
 free_datainfo
 DBNA
+GRETL_SCALAR_DIGITS
 dateton
 ntodate
 ntodate_full
@@ -56,8 +57,6 @@ import_box
 add_obs_markers_from_file
 detect_filetype
 check_varname
-get_xmldata
-get_xml_description
 check_atof
 transpose_data
 </SECTION>
@@ -256,8 +255,10 @@ free_plotspec
 get_termstr
 rmplot
 hurstplot
+gretl_panel_ts_plot
 plot_fcast_errs
 gretl_VAR_plot_impulse_response
+gretl_VAR_plot_multiple_irf
 gretl_VAR_residual_plot
 gretl_VAR_roots_plot
 confidence_ellipse_plot
@@ -865,6 +866,13 @@ set_gretl_png_font
 </SECTION>
 
 <SECTION>
+<FILE>gretl_xml</FILE>
+gretl_write_gdt
+gretl_read_gdt
+gretl_get_gdt_description
+</SECTION>
+
+<SECTION>
 <FILE>gretl_model</FILE>
 CoeffIntervals
 CoeffIntervals_
@@ -1092,7 +1100,6 @@ laggenr
 loggenr
 xpxgenr
 list_diffgenr
-list_ldiffgenr
 list_laggenr
 list_loggenr
 list_xpxgenr
@@ -1174,6 +1181,8 @@ print_as_html
 print_as_locale
 get_utf_width
 get_translated_width
+check_for_console
+console_off
 UTF_WIDTH
 TRANSLATED_WIDTH
 utf8_to_iso_latin_1
@@ -1183,6 +1192,7 @@ utf8_to_iso_latin_1
 <FILE>dataset</FILE>
 DatasetMarkerType
 dataset_is_time_series
+dataset_is_seasonal
 custom_time_series
 dataset_is_daily
 dataset_is_weekly

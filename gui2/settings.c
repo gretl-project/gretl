@@ -284,7 +284,7 @@ RCVAR rc_vars[] = {
     { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch, 
       LISTSET, 5, 5, NULL },
     { "manpref", N_("PDF manual preference"), NULL, &manpref, 
-      INTSET | RADIOSET, 4, 6, NULL },
+      RADIOSET | INTSET, 4, 6, NULL },
     { NULL, NULL, NULL, NULL, 0, 0, 0, NULL }
 };
 
@@ -1249,11 +1249,22 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 static void str_to_boolvar (char *s, void *b)
 {
+    int *bvar = (int *) b;
+
     if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0) {
-	*(int *) b = TRUE;
+	*bvar = TRUE;
     } else {
-	*(int *) b = FALSE;
+	*bvar = FALSE;
     }	
+}
+
+static void str_to_int (char *s, void *b)
+{
+    int *ivar = (int *) b;
+
+    if (sscanf(s, "%d", ivar) != 1) {
+	*ivar = 0;
+    }
 }
 
 #endif
@@ -1453,7 +1464,7 @@ static void read_rc (void)
 	    if (rc_vars[i].flags & BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
 	    } else if (rc_vars[i].flags & INTSET) {
-		*(int *) rc_vars[i].var = atoi(value);
+		str_to_int(value, rc_vars[i].var);
 	    } else {
 		strvar = (char *) rc_vars[i].var;
 		*strvar = '\0';
@@ -1557,7 +1568,7 @@ static int get_network_settings (void)
 			if (rc_vars[j].flags & BOOLSET) {
 			    str_to_boolvar(linevar, rc_vars[j].var);
 			} else if (rc_vars[j].flags & INTSET) {
-			    *(int *) rc_vars[j].var = atoi(linevar);
+			    str_to_int(linevar, rc_vars[j].var);
 			} else {
 			    if (!strcmp(key, "gretldir") && 
 				tolower(linevar[0]) != calldrive) {
@@ -1629,7 +1640,7 @@ void read_rc (void)
 	    if (rc_vars[i].flags & BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
 	    } else if (rc_vars[i].flags & INTSET) {
-		*(int *) rc_vars[i].var = atoi(value);
+		str_to_int(value, rc_vars[i].var);
 	    } else {
 		strvar = (char *) rc_vars[i].var;
 		*strvar = '\0';
@@ -1731,7 +1742,7 @@ static void read_rc (void)
 		    if (rc_vars[j].flags & BOOLSET) {
 			str_to_boolvar(linevar, rc_vars[j].var);
 		    } else if (rc_vars[j].flags & INTSET) {
-			*(int *) rc_vars[j].var = atoi(linevar);
+			str_to_int(linevar, rc_vars[j].var);
 		    } else {
 			strvar = (char *) rc_vars[j].var;
 			*strvar = '\0';
