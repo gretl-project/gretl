@@ -218,7 +218,11 @@ void ts_or_panel_menu_state (gboolean s)
     flip(mdata->ifac, "/Data/Add variables/lags of selected variables", s);
     flip(mdata->ifac, "/Data/Add variables/first differences of selected variables", s);
     flip(mdata->ifac, "/Data/Add variables/log differences of selected variables", s);
-    flip(mdata->ifac, "/Data/Add variables/periodic dummies", s);
+
+    flip(mdata->ifac, "/Data/Add variables/seasonal differences of selected variables",
+	 dataset_is_seasonal(datainfo));
+    flip(mdata->ifac, "/Data/Add variables/periodic dummies", 
+	 dataset_is_seasonal(datainfo));
 }
 
 void session_menu_state (gboolean s)

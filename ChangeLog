@@ -1,14 +1,19 @@
 version 1.4.2, in progress
 - Add VECM (Vector Error Correction Models) for time-series
   data
-- Add confidence ellipse option for two coefficients
+- Add confidence ellipse option for two coefficients, in 
+  model window menu
 - New command "mle" : a general-purpose maximizer of log
   likelihood, using the BFGS algorithm -- works much like the
   "nls" command, taking a user-specified log likelihood function
   as input, along with (optionally) derivatives of the log
   likelihood with respect to the parameters
 - More XLS importer fixes
-- Add support for seasonal ARMA
+- Add support for seasonal ARMA; add "sdiff" command (and
+  corresponding function in genr) for creating seasonal
+  differences
+- Add capacity to produce time-series graphs with panel
+  data sets
 - Accommodate custom time-series frequencies
 - Johansen cointegration test: extend to cover all 5 cases, 
   produce a fuller report (loadings, long-run matrix)
@@ -18,6 +23,7 @@ version 1.4.2, in progress
 - Add autocorrelation and ARCH tests for VAR equations
 - Add printing of cross-equation covariance matrix for VARs
 - Add combined plot of residuals for VARs
+- Add combined impulse response plot for VARs
 - Add log-likelihood, AIC and BIC for VARs
 - Add inverse roots plot for VARs (Jack Lucchetti)
 - Add "robust" option for logit and probit (compute QML
@@ -62,6 +68,9 @@ version 1.4.2, in progress
   calculation of sample statistics based on selection of variables
   from the current data set, with or without sub-sampling
   restrictions
+- Revamp the "online" (plain text) help system
+- Split gretl manual into a User's Guide and a Command Reference
+  and update both parts 
 
 06/30/2005 version 1.4.1
 - Fix horrid unnoticed breakage in bhhh_max (broke both arma 
