@@ -4371,7 +4371,8 @@ void do_graph_var (int varnum)
 
     if (varnum <= 0) return;
 
-    if (!dataset_is_time_series(datainfo)) {
+    if (!dataset_is_time_series(datainfo) &&
+	datainfo->structure != STACKED_TIME_SERIES) {
 	do_freqplot(NULL, 0, NULL);
 	return;
     }

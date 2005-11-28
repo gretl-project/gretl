@@ -75,7 +75,6 @@ varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 #define panel_index(i,t) ((panidx.ts)? (i * panidx.T + t + panidx.offset) : \
                                        (t * panidx.n + i + panidx.offset))
 
-/* .................................................................. */
 
 static void 
 diagnostics_init (diagnostics_t *diag, const MODEL *pmod, gretlopt opt)
@@ -359,6 +358,9 @@ group_means_variance (diagnostics_t *diag, double ***gZ, DATAINFO *ginfo)
 	diag->gm_var = gmmod.sigma * gmmod.sigma;
     } else {
 	err = gmmod.errcode;
+#if PDEBUG
+	fprintf(stderr, "error %d estimating group_means_variance\n", err);
+#endif
     }
 
     clear_model(&gmmod);
@@ -390,7 +392,7 @@ vcv_skip (const MODEL *pmod, int i, const diagnostics_t *diag, int op)
 
 /* fill out the covariance matrix for use with the Hausman test:
    the entries that get transcribed here are only those for
-   slopes with respect time-varying variables */
+   slopes with respect to time-varying variables */
 
 static void 
 vcv_slopes (diagnostics_t *diag, const MODEL *pmod, int op)
@@ -471,6 +473,14 @@ static int bXb (diagnostics_t *diag)
 	diag->H = 0.0;
 	for (i=0; i<diag->nbeta; i++) {
 	    diag->H += x[i] * diag->bdiff[i];
+#if PDEBUG
+	    fprintf(stderr, "added %g * %g to diag->H: now = %g\n",
+		    x[i], diag->bdiff[i], diag->H);
+#endif
+
+	}
+	if (diag->H < 0.0) {
+	    diag->H = NADBL;
 	}
     }
 

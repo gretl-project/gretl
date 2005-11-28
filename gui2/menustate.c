@@ -144,8 +144,14 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 #define DATASET_DB_OK(d) (d->pd == 1 || (d->structure == TIME_SERIES && \
                                          (d->pd == 4 || d->pd == 12)))
 
+#define extended_ts(d) ((d)->structure == TIME_SERIES || \
+			(d)->structure == SPECIAL_TIME_SERIES || \
+                        (d)->structure == STACKED_TIME_SERIES)
+
 void time_series_menu_state (gboolean s)
 {
+    gboolean sx = extended_ts(datainfo);
+
     if (mdata->ifac == NULL) {
 	return;
     }
@@ -153,11 +159,11 @@ void time_series_menu_state (gboolean s)
     /* File menu */
     flip(mdata->ifac, "/File/Save data as/database...", DATASET_DB_OK(datainfo));
 
-    /* Data menu */
-    flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);
+    /* Plots */
+    flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", sx);
+    flip(mdata->ifac, "/Variable/Time series plot", sx);
 
     /* Variable menu */
-    flip(mdata->ifac, "/Variable/Time series plot", s);
     flip(mdata->ifac, "/Variable/Correlogram", s);
     flip(mdata->ifac, "/Variable/Spectrum", s);
     flip(mdata->ifac, "/Variable/Runs test", s);
@@ -333,8 +339,10 @@ GtkWidget *build_var_popup (void)
     var_menu = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (!dataset_is_time_series(datainfo) && 
-	    (i == 2 || (i >= 6 && i <= 11))) {
+	if (!dataset_is_time_series(datainfo) && (i >= 6 && i <= 11)) {
+	    continue;
+	}
+	if (i == 2 && !extended_ts(datainfo)) {
 	    continue;
 	}
 	var_item = gtk_menu_item_new_with_label(_(var_items[i]));
@@ -402,7 +410,7 @@ GtkWidget *build_selection_popup (void)
     sel_menu = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (!dataset_is_time_series(datainfo) && i == 3) {
+	if (!extended_ts(datainfo) && i == 3) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));
@@ -419,8 +427,6 @@ GtkWidget *build_selection_popup (void)
 
     return sel_menu;
 }
-
-/* ......................................................... */
 
 void clear_sample_label (void)
 {
