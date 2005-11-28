@@ -23,6 +23,7 @@
 #include "var.h"  
 #include "varprint.h"
 #include "libset.h"
+#include "transforms.h"
 
 #define VAR_DEBUG 0
 #define BDEBUG    0  /* for debugging bootstrap IRFs */
@@ -2339,7 +2340,7 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
     /* put first differences of endog vars into VAR list */
     k = 1;
     for (i=1; i<=list[0]; i++) {
-	jvar->jinfo->varlist[k] = diffgenr(list[i], pZ, pdinfo, 0);
+	jvar->jinfo->varlist[k] = diffgenr(list[i], DIFF, pZ, pdinfo);
 	if (jvar->jinfo->varlist[k] < 0) {
 	    jvar->err = E_ALLOC;
 	    goto bailout;

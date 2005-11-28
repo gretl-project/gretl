@@ -1613,13 +1613,6 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     gretlopt opt = OPT_NONE;
     int err;
 
-    if (!balanced_panel(datainfo)) {
-	errbox(_("Sorry, can't do this test on an unbalanced panel.\n"
-	       "You need to have the same number of observations\n"
-	       "for each cross-sectional unit"));
-	return;
-    }
-
     panel_diagnostics = gui_get_plugin_function("panel_diagnostics", 
 						&handle);
     if (panel_diagnostics == NULL) {
@@ -3710,11 +3703,9 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 	err = list_loggenr(cmd.list, &Z, datainfo);
     } else if (action == SQUARE) {
 	err = list_xpxgenr(&cmd.list, &Z, datainfo, OPT_NONE);
-    } else if (action == DIFF) {
-	err = list_diffgenr(cmd.list, &Z, datainfo);
-    } else if (action == LDIFF) {
-	err = list_ldiffgenr(cmd.list, &Z, datainfo);
-    }
+    } else if (action == DIFF || action == LDIFF || action == SDIFF) {
+	err = list_diffgenr(cmd.list, action, &Z, datainfo);
+    } 
 
     if (err) {
 	if (*msg != '\0') {
@@ -4385,7 +4376,8 @@ void do_graph_var (int varnum)
     if (varnum <= 0) return;
 
     if (datainfo->structure == STACKED_TIME_SERIES &&
-	datainfo->n / datainfo->pd < 10) {
+	datainfo->n / datainfo->pd < 10 &&
+	balanced_panel(datainfo)) {
 	do_stacked_ts_plot(varnum);
 	return;
     }
@@ -5920,6 +5912,7 @@ int gui_exec_line (char *line,
     case RHODIFF:
     case RMPLOT: 
     case RUNS: 
+    case SDIFF:
     case SIM: 
     case SPEARMAN: 
     case SQUARE: 

@@ -1933,10 +1933,11 @@
 	  <para>
 	    Time-series functions: <func>diff</func> (first difference),
 	    <func>ldiff</func> (log-difference, or first difference of natural
-	    logs), <func>fracdiff</func> (fractional difference).  To generate
-	    lags of a variable <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>,
-	    where <lit>N</lit> represents the desired lag length; to generate
-	    leads, use <cmd>x(+N)</cmd>.
+	    logs), <func>sdiff</func> (seasonal difference),
+	    <func>fracdiff</func> (fractional difference).  To generate lags of
+	    a variable <lit>x</lit>, use the syntax <cmd>x(-N)</cmd>, where
+	    <lit>N</lit> represents the desired lag length; to generate leads,
+	    use <cmd>x(+N)</cmd>.
 	  </para>
 	</li>
 
@@ -5508,6 +5509,29 @@
 
     <gui-access>
       <menu-path>/Data/Multiple scatterplots</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="sdiff" section="Transformations" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	The seasonal difference of each variable in <repl>varlist</repl> is
+	obtained and the result stored in a new variable with the prefix
+	<lit>sd_</lit>.  This command is available only for seasonal time
+	series.  
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Data/Add variables/seasonal differences</menu-path>
     </gui-access>
 
   </command>

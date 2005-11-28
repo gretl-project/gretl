@@ -26,7 +26,7 @@ int default_lag_order (const DATAINFO *pdinfo);
 
 int is_standard_lag (int v, const DATAINFO *pdinfo);
 
-int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff);
+int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo);
 
 int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo);
 
@@ -34,9 +34,7 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo);
 
 int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo);
 
-int list_diffgenr (int *list, double ***pZ, DATAINFO *pdinfo);
-
-int list_ldiffgenr (int *list, double ***pZ, DATAINFO *pdinfo);
+int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo);
 
 int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo);
 

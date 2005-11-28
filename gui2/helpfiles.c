@@ -50,12 +50,8 @@ static int gui_help_length, cli_help_length;
 static struct help_head_t **cli_heads, **gui_heads;
 static struct help_head_t **en_cli_heads, **en_gui_heads;
 
-static windata_t *helpwin (int cli, int english);
+static windata_t *helpwin (int cli, int en);
 static void real_do_help (int hcode, int pos, int cli, int en);
-static void do_gui_help (gpointer p, guint pos, GtkWidget *w);
-static void do_cli_help (gpointer p, guint pos, GtkWidget *w);
-static int gui_pos_from_code (int hcode, int english);
-static int cli_pos_from_cmd (int cmd, int english);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *widget, gpointer data);
@@ -83,23 +79,6 @@ GtkItemFactoryEntry help_menu_items[] = {
 
 GtkItemFactoryEntry help_menu_items[] = {
     { N_("/_Topics"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/_Find"), NULL, menu_find, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL}
-};
-
-#endif
-
-#ifndef OLD_GTK
-
-GtkItemFactoryEntry en_help_items[] = {
-    { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
-    { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
-#else
-
-GtkItemFactoryEntry en_help_items[] = {
     { N_("/_Find"), NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
@@ -496,7 +475,7 @@ get_help_length (struct help_head_t ***pheads, int *pnh, int *length,
     return err;
 }
 
-static int real_helpfile_init (int gui, int english)
+static int real_helpfile_init (int gui, int en)
 {
     struct help_head_t **heads = NULL;
     char *helpfile;
@@ -504,7 +483,7 @@ static int real_helpfile_init (int gui, int english)
     int length, nh = 0;
     int err = 0;
 
-    if (english) {
+    if (en) {
 	helpfile = (gui)? en_gui_helpfile : en_cli_helpfile;
     } else {
 	helpfile = (gui)? paths.helpfile : paths.cmd_helpfile;
@@ -538,13 +517,13 @@ static int real_helpfile_init (int gui, int english)
     fclose(fp);
 
     if (gui) {
-	if (english) {
+	if (en) {
 	    en_gui_heads = heads;
 	} else {
 	    gui_heads = heads;
 	}
     } else {
-	if (english) {
+	if (en) {
 	    en_cli_heads = heads;
 	} else {
 	    cli_heads = heads;
@@ -569,6 +548,34 @@ void helpfile_init (void)
     }
 }
 
+static void do_gui_help (gpointer p, guint pos, GtkWidget *w) 
+{
+    int hcode = GPOINTER_TO_INT(p);
+
+    real_do_help(hcode, pos, 0, 0);
+}
+
+static void do_en_gui_help (gpointer p, guint pos, GtkWidget *w) 
+{
+    int hcode = GPOINTER_TO_INT(p);
+
+    real_do_help(hcode, pos, 0, 1);
+}
+
+static void do_cli_help (gpointer p, guint pos, GtkWidget *w) 
+{
+    int hcode = GPOINTER_TO_INT(p);
+
+    real_do_help(hcode, pos, 1, 0);
+}
+
+static void do_en_cli_help (gpointer p, guint pos, GtkWidget *w) 
+{
+    int hcode = GPOINTER_TO_INT(p);
+
+    real_do_help(hcode, pos, 1, 1);
+}
+
 static char *get_gui_help_string (int pos)
 {
     int i, j;
@@ -584,40 +591,114 @@ static char *get_gui_help_string (int pos)
     return NULL;
 }
 
+static int gui_pos_from_cmd (int cmd, int en)
+{
+    struct help_head_t **heads;
+    char *helpstr;
+    int i, j;
+
+    heads = (en)? en_gui_heads : gui_heads;
+
+    if (heads == NULL) {
+	return -1;
+    }
+
+    for (i=0; heads[i] != NULL; i++) {
+	for (j=0; j<heads[i]->ntopics; j++) {
+	    if (cmd == heads[i]->topics[j]) {
+		return heads[i]->pos[j];
+	    }
+	}
+    }
+
+    /* special for gui-specific help items */
+    helpstr = help_string_from_cmd(cmd);
+    if (helpstr != NULL) {
+	int altcode = extra_command_number(helpstr);
+
+	for (i=0; heads[i] != NULL; i++) {
+	    for (j=0; j<heads[i]->ntopics; j++) {
+		if (altcode == heads[i]->topics[j]) {
+		    return heads[i]->pos[j];
+		}
+	    }
+	}
+    }
+    
+    return -1;
+}
+
+static int cli_pos_from_cmd (int cmd, int en)
+{
+    struct help_head_t **heads;
+    int i, j;
+
+    heads = (en)? en_cli_heads : cli_heads;
+
+    if (heads == NULL) {
+	return -1;
+    }
+    
+    for (i=0; heads[i] != NULL; i++) {
+	for (j=0; j<heads[i]->ntopics; j++) {
+	    if (cmd == heads[i]->topics[j]) {
+		return heads[i]->pos[j];
+	    }
+	}
+    }
+
+    return -1;
+}
+
 static void en_help_callback (gpointer p, int cli, GtkWidget *w)
 {
     windata_t *hwin = (windata_t *) p;
-    windata_t *vwin = helpwin(cli, 1);
     int pos, hc = hwin->active_var;
 
     if (cli) {
 	pos = cli_pos_from_cmd(hc, 1);
+	if (pos <= 0) {
+	    pos = 1;
+	}
     } else {
-	pos = gui_pos_from_code(hc, 1);
+	pos = gui_pos_from_cmd(hc, 1);
     }
 
-    set_help_topic_buffer(vwin, hc, pos);    
+    real_do_help(hc, pos, cli, 1);
 }
 
 static void add_en_help_item (windata_t *hwin, int cli)
 {
-    GtkItemFactoryEntry helpitem;
-    gchar mpath[] = "/_English";
+    GtkItemFactoryEntry item;
 
-    helpitem.accelerator = NULL;
-    helpitem.callback_action = cli; 
-    helpitem.item_type = NULL;
-    helpitem.path = mpath;
-    helpitem.callback = en_help_callback; 
-    gtk_item_factory_create_item(hwin->ifac, &helpitem, hwin, 1);
+    item.accelerator = NULL;
+
+    item.item_type = "<Branch>";
+    item.callback = NULL;
+    item.callback_action = 0; 
+    item.path = "/_English";
+    gtk_item_factory_create_item(hwin->ifac, &item, NULL, 1);
+
+    item.item_type = NULL;
+    item.callback = en_help_callback; 
+    item.callback_action = cli; 
+    item.path = g_strdup_printf("/English/%s", _("Show English help"));
+    gtk_item_factory_create_item(hwin->ifac, &item, hwin, 1);
+    g_free(item.path);
 }
 
-static void add_help_topics (windata_t *hwin, int cli)
+static void add_help_topics (windata_t *hwin, int cli, int en)
 {
     int i, j;
     GtkItemFactoryEntry hitem;
     const gchar *mpath = N_("/_Topics");
-    struct help_head_t **hds = (cli)? cli_heads : gui_heads;
+    struct help_head_t **hds;
+
+    if (en) {
+	hds = (cli)? en_cli_heads : en_gui_heads;
+    } else {
+	hds = (cli)? cli_heads : gui_heads;
+    }
 
     hitem.accelerator = NULL;
 
@@ -630,7 +711,7 @@ static void add_help_topics (windata_t *hwin, int cli)
 	hitem.callback_action = 1; 
 	hitem.item_type = NULL;
 	hitem.path = g_strdup_printf("%s/%s", mpath, _("Index"));
-	hitem.callback = do_cli_help;
+	hitem.callback = (en)? do_en_cli_help : do_cli_help;
 	gtk_item_factory_create_item(hwin->ifac, &hitem, 
 				     GINT_TO_POINTER(0), 
 				     1);
@@ -705,7 +786,11 @@ static void add_help_topics (windata_t *hwin, int cli)
 	    }
 
 	    if (topic_ok) {
-		hitem.callback = (cli)? do_cli_help : do_gui_help; 
+		if (en) {
+		    hitem.callback = (cli)? do_en_cli_help : do_en_gui_help; 
+		} else {
+		    hitem.callback = (cli)? do_cli_help : do_gui_help; 
+		}
 		gtk_item_factory_create_item(hwin->ifac, &hitem, 
 					     GINT_TO_POINTER(tnum), 
 					     1);
@@ -715,83 +800,31 @@ static void add_help_topics (windata_t *hwin, int cli)
     }
 }
 
-static windata_t *helpwin (int cli, int english) 
+static windata_t *helpwin (int cli, int en) 
 {
-    GtkItemFactoryEntry *items = NULL;
     windata_t *vwin = NULL;
     char *helpfile = NULL;
-    int hcode;
+    int role;
 
     if (cli) {
-	helpfile = (english)? en_cli_helpfile : paths.cmd_helpfile;
-	hcode = (english)? CLI_HELP_EN : CLI_HELP;
+	helpfile = (en)? en_cli_helpfile : paths.cmd_helpfile;
+	role = (en)? CLI_HELP_EN : CLI_HELP;
     } else {
-	helpfile = (english)? en_gui_helpfile : paths.helpfile;
-	hcode = (english)? GUI_HELP_EN : GUI_HELP;
+	helpfile = (en)? en_gui_helpfile : paths.helpfile;
+	role = (en)? GUI_HELP_EN : GUI_HELP;
     }
 
     if (helpfile == NULL) return NULL;
 
-    items = (english)? en_help_items : help_menu_items;
+    vwin = view_help_file(helpfile, role, help_menu_items);
 
-    vwin = view_help_file(helpfile, hcode, items);
+    add_help_topics(vwin, cli, en);
 
-    if (!english) {
-	add_help_topics(vwin, cli);
-    }
-
-    if (translated_helpfile && !english) {
+    if (translated_helpfile && !en) {
 	add_en_help_item(vwin, cli);
-    }
+    }    
 
     return vwin;
-}
-
-static int gui_pos_from_code (int hcode, int english)
-{
-    struct help_head_t **heads;
-    int i, j, pos = -1;
-
-    if (english) {
-	heads = en_gui_heads;
-    } else {
-	heads = gui_heads;
-    }
-
-    if (heads == NULL) {
-	return -1;
-    }
-
-    for (i=0; heads[i] != NULL; i++) {
-	for (j=0; j<heads[i]->ntopics; j++) {
-	    if (hcode == heads[i]->topics[j]) {
-		pos = heads[i]->pos[j];
-		break;
-	    }
-	}
-	if (pos >= 0) break;
-    }
-
-    /* special for gui-specific help items */
-    if (pos < 0) {
-	char *helpstr = help_string_from_cmd(hcode);
-
-	if (helpstr != NULL) {
-	    int altcode = extra_command_number(helpstr);
-
-	    for (i=0; heads[i] != NULL; i++) {
-		for (j=0; j<heads[i]->ntopics; j++) {
-		    if (altcode == heads[i]->topics[j]) {
-			pos = heads[i]->pos[j];
-			break;
-		    }
-		}
-		if (pos > 0) break;
-	    }
-	}
-    }
-    
-    return pos;
 }
 
 void context_help (GtkWidget *widget, gpointer data)
@@ -799,38 +832,19 @@ void context_help (GtkWidget *widget, gpointer data)
     int pos, hcode = GPOINTER_TO_INT(data);
     int en = 0;
 
-    pos = gui_pos_from_code(hcode, 0);
+    pos = gui_pos_from_cmd(hcode, 0);
 
     if (pos < 0 && translated_helpfile) {
 	en = 1;
-	pos = gui_pos_from_code(hcode, en);
+	pos = gui_pos_from_cmd(hcode, en);
     }
 
     real_do_help(hcode, pos, 0, en);
 }
 
-#ifndef OLD_GTK
-
-static gboolean hwin_signals_connected = FALSE;
-
-void set_hwin_signals_connected (gboolean s)
-{
-    hwin_signals_connected = s;
-}
-
-gboolean get_hwin_signals_connected (void)
-{
-    return hwin_signals_connected;
-}
-
-#endif
-
 static gboolean nullify_hwin (GtkWidget *w, windata_t **phwin)
 {
     *phwin = NULL;
-#ifndef OLD_GTK
-    hwin_signals_connected = FALSE;
-#endif
     return FALSE;
 }
 
@@ -847,6 +861,15 @@ static void real_do_help (int hcode, int pos, int cli, int en)
 	dummy_call();
 	return;
     }
+
+#if HDEBUG
+    fprintf(stderr, "real_do_help: hcode=%d, pos=%d, cli=%d, en=%d\n",
+	    hcode, pos, cli, en);
+    fprintf(stderr, "gui_hwin = %p\n", (void *) gui_hwin);
+    fprintf(stderr, "cli_hwin = %p\n", (void *) cli_hwin);
+    fprintf(stderr, "en_gui_hwin = %p\n", (void *) en_gui_hwin);
+    fprintf(stderr, "en_cli_hwin = %p\n", (void *) en_cli_hwin);
+#endif
 
     if (en) {
 	hwin = (cli)? en_cli_hwin : en_gui_hwin;
@@ -884,59 +907,39 @@ static void real_do_help (int hcode, int pos, int cli, int en)
 	gdk_window_raise(hwin->w->parent->window);
     }
 
-    set_help_topic_buffer(hwin, hcode, pos);
+#if HDEBUG
+    fprintf(stderr, "real_do_help: doing set_help_topic_buffer:\n"
+	    " hwin=%p, hcode=%d, pos=%d, en=%d\n",
+	    (void *) hwin, hcode, pos, en);
+#endif
+
+    set_help_topic_buffer(hwin, hcode, pos, en);
 }
 
-static void do_gui_help (gpointer p, guint pos, GtkWidget *w) 
-{
-    int hcode = GPOINTER_TO_INT(p);
-
-    real_do_help(hcode, pos, 0, 0);
-}
-
-static void do_cli_help (gpointer p, guint pos, GtkWidget *w) 
-{
-    int hcode = GPOINTER_TO_INT(p);
-
-    real_do_help(hcode, pos, 1, 0);
-}
+/* called from main menu in gretl.c; also used as callback from
+   command ref index in textbuf.c (gtk2 version only)
+*/
 
 void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
 {
+    /* pos = 1 gives index of commands */
     int pos = 1;
+    int en = 0;
+
+    if (w == NULL && p != NULL) {
+	en = GPOINTER_TO_INT(p);
+    }
 
     if (cmdnum > 0) {
-	pos = cli_pos_from_cmd(cmdnum, 0);
-    }
-	
-    real_do_help(0, pos, 1, 0);
-} 
-
-static int cli_pos_from_cmd (int cmd, int english)
-{
-    struct help_head_t **heads;
-    int i, j;
-
-    if (english) {
-	heads = en_cli_heads;
-    } else {
-	heads = cli_heads;
-    }
-
-    if (heads == NULL) {
-	return -1;
-    }
-    
-    for (i=0; heads[i] != NULL; i++) {
-	for (j=0; j<heads[i]->ntopics; j++) {
-	    if (cmd == heads[i]->topics[j]) {
-		return heads[i]->pos[j];
-	    }
+	pos = cli_pos_from_cmd(cmdnum, en);
+	if (pos < 0 && !en && translated_helpfile == 1) {
+	    en = 1;
+	    pos = cli_pos_from_cmd(cmdnum, en);
 	}
     }
 
-    return -1;
-}
+    real_do_help(cmdnum, pos, 1, en);
+} 
 
 #ifndef OLD_GTK
 

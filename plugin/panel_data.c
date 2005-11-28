@@ -1141,8 +1141,6 @@ diagnostics_setup (diagnostics_t *diag, const MODEL *pmod,
     return err;
 }
 
-/* .................................................................. */
-
 #define ALLOW_UNBAL 1
 
 int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
@@ -1269,8 +1267,6 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }
-
-/* .................................................................. */
 
 static int 
 write_uvar_to_dataset (double *uvar, int nunits, int T,

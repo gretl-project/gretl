@@ -45,9 +45,6 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
 #ifdef OLD_GTK
 void colorize_tooltips (GtkTooltips *tip);
-#else
-void set_hwin_signals_connected (gboolean s);
-gboolean get_hwin_signals_connected (void);
-#endif /* gtk versions */
+#endif
 
 #endif /* HELPFILES_H */

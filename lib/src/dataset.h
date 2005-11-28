@@ -37,6 +37,17 @@ typedef enum {
 				   (p)->structure == SPECIAL_TIME_SERIES)
 
 /**
+ * dataset_is_seasonal:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains seasonal time series
+ * data (1) or not (0).
+ */
+#define dataset_is_seasonal(p) (((p)->structure == TIME_SERIES || \
+                                (p)->structure == SPECIAL_TIME_SERIES) && \
+                                (p)->pd > 1)
+
+/**
  * custom_time_series:
  * @p: pointer to data information struct.
  *

@@ -261,6 +261,7 @@ static int catch_command_alias (CMD *cmd)
                                   c == LOGS || \
                                   c == PCA || \
                                   c == PRINT || \
+                                  c == SDIFF || \
                                   c == SMPL || \
                                   c == SQUARE || \
                                   c == STORE || \
@@ -596,6 +597,7 @@ int auto_transform_ok (const char *s, int *lnum,
 	"logs",
 	"diff",
 	"ldiff",
+	"sdiff",
 	"square",
 	NULL
     };
@@ -642,10 +644,12 @@ int auto_transform_ok (const char *s, int *lnum,
     if (trans == 0) {
 	err = list_loggenr(genlist, pZ, pdinfo);
     } else if (trans == 1) {
-	err = list_diffgenr(genlist, pZ, pdinfo);
+	err = list_diffgenr(genlist, DIFF, pZ, pdinfo);
     } else if (trans == 2) {
-	err = list_ldiffgenr(genlist, pZ, pdinfo);
+	err = list_diffgenr(genlist, LDIFF, pZ, pdinfo);
     } else if (trans == 3) {
+	err = list_diffgenr(genlist, SDIFF, pZ, pdinfo);
+    } else if (trans == 4) {
 	err = list_xpxgenr(&genlist, pZ, pdinfo, opt);
     }
 
@@ -2661,6 +2665,7 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 #define list_genr_command(c) (c == DIFF || \
                               c == LDIFF || \
                               c == LOGS || \
+                              c == SDIFF || \
                               c == SQUARE)
 
 /* common code for command-line and GUI client programs, where the
@@ -2771,9 +2776,15 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case DIFF:
-	err = list_diffgenr(genlist, pZ, datainfo);
+    case LDIFF:
+    case SDIFF:
+	err = list_diffgenr(genlist, cmd->ci, pZ, datainfo);
 	if (err) {
-	    pputs(prn, _("Error adding first differences of variables.\n"));
+	    if (cmd->ci == LDIFF) {
+		pputs(prn, _("Error adding log differences of variables.\n"));
+	    } else if (cmd->ci == DIFF) {
+		pputs(prn, _("Error adding first differences of variables.\n"));
+	    }
 	} else {
 	    maybe_list_vars(datainfo, prn);
 	}
@@ -2786,15 +2797,6 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	order = atoi(cmd->param);
 	err = kpss_test(order, cmd->list[1], pZ, datainfo, cmd->opt, prn);
-	break;
-
-    case LDIFF:
-	err = list_ldiffgenr(genlist, pZ, datainfo);
-	if (err) {
-	    pputs(prn, _("Error adding log differences of variables.\n"));
-	} else {
-	    maybe_list_vars(datainfo, prn);
-	}
 	break;
 
     case LAGS:

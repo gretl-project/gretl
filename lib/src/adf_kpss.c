@@ -21,6 +21,7 @@
 #define KPSS_DEBUG 0
 
 #include "libgretl.h" 
+#include "transforms.h"
 
 enum {
     ADF_EG_TEST   = 1 << 0,
@@ -47,7 +48,7 @@ adf_prepare_vars (int order, int varno, double ***pZ, DATAINFO *pdinfo)
     pdinfo->t1 = 0;
 
     /* generate first difference of the given variable */
-    list[1] = diffgenr(varno, pZ, pdinfo, 0);
+    list[1] = diffgenr(varno, DIFF, pZ, pdinfo);
     if (list[1] < 0) {
 	pdinfo->t1 = orig_t1;
 	free(list);

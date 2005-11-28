@@ -907,6 +907,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case RHODIFF:
     case RMPLOT: 
     case RUNS: 
+    case SDIFF:
     case SIM: 
     case SPEARMAN:
     case SQUARE: 

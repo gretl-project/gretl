@@ -211,7 +211,7 @@ static int printvars (FILE *fp, int t, const int *list, const double **Z,
     int i, miss = 0;
     double xx;
 
-    for (i=1; i<=list[0]; i++)  {
+    for (i=1; i<=list[0]; i++) {
 	xx = Z[list[i]][t];
 	if (na(xx)) {
 	    fputs("? ", fp);
@@ -230,7 +230,7 @@ static int printvars (FILE *fp, int t, const int *list, const double **Z,
     }
 
     fputc('\n', fp);
-
+    
     return miss;
 }
 
@@ -1079,6 +1079,19 @@ print_gp_dummy_data (struct gnuplot_info *gpinfo, int *list,
     return 0;
 }
 
+static void 
+maybe_print_panel_jot (int t, const DATAINFO *pdinfo, FILE *fp)
+{
+    char obs[OBSLEN];
+    int maj, min;
+
+    ntodate(obs, t, pdinfo);
+    sscanf(obs, "%d:%d", &maj, &min);
+    if (maj > 1 && min == 1) {
+	fprintf(fp, "%g ?\n", t + 0.5);
+    }
+}
+
 static void
 print_gp_data (struct gnuplot_info *gpinfo, const int *list,
 	       const double **Z, const DATAINFO *pdinfo,
@@ -1113,7 +1126,13 @@ print_gp_data (struct gnuplot_info *gpinfo, const int *list,
 		    label = obs;
 		}
 	    }
+
+	    if (gpinfo->ts_plot && pdinfo->structure == STACKED_TIME_SERIES) {
+		maybe_print_panel_jot(t, pdinfo, fp);
+	    }
+
 	    t_miss = printvars(fp, t, datlist, Z, label, xoff);
+
 	    if ((gpinfo->flags & GP_GUI) && gpinfo->miss == 0) {
 		gpinfo->miss = t_miss;
 	    }
@@ -2859,6 +2878,10 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo)
     fputs("set multiplot\n", fp);
     fprintf(fp, "set xlabel '%s'\n", _("time"));
     fputs("set xzeroaxis\n", fp);
+
+    if (yfrac > 1.4 * xfrac) {
+	yfrac = 1.4 * xfrac;
+    }
     fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
 
     gretl_push_c_numeric_locale();
@@ -2878,7 +2901,7 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo)
 	    }
 
 	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
-	    fprintf(fp, "set title '%s (%d)'\n", pdinfo->varname[vj], k);
+	    fprintf(fp, "set title '%s (%d)'\n", pdinfo->varname[vj], k+1);
 	    fputs("plot \\\n'-' using 1:2 notitle w lines\n", fp);
 
 	    for (t=0; t<T; t++) {
@@ -2886,8 +2909,12 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo)
 	    }
 	    fputs("e\n", fp);
 
-	    t0 += T;
 	    k++;
+	    if (k == nunits) {
+		break;
+	    }
+
+	    t0 += T;
 	    yorig -= yfrac;
 	}
 

@@ -60,6 +60,7 @@ enum transformations {
     T_ATAN,
     T_DIFF,
     T_LDIFF, 
+    T_SDIFF,
     T_MEAN, 
     T_SD, 
     T_MIN,

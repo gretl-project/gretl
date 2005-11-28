@@ -419,6 +419,8 @@ GtkItemFactoryEntry data_items[] = {
       add_logs_etc, DIFF, NULL, GNULL },
     { N_("/Data/Add variables/log differences of selected variables"), NULL, 
       add_logs_etc, LDIFF, NULL, GNULL },
+    { N_("/Data/Add variables/seasonal differences of selected variables"), NULL, 
+      add_logs_etc, SDIFF, NULL, GNULL },
     { N_("/Data/Add variables/periodic dummies"), NULL, add_dummies, 0, NULL, GNULL },
     { N_("/Data/Add variables/unit dummies"), NULL, add_dummies, 1, NULL, GNULL },
     { N_("/Data/Add variables/panel dummies"), NULL, add_dummies, 2, NULL, GNULL },

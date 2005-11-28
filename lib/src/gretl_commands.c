@@ -128,6 +128,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { RUN,      "run" },
     { RUNS,     "runs" },
     { SCATTERS, "scatters" },
+    { SDIFF,    "sdiff" },
     { SET,      "set" },
     { SETOBS,   "setobs" },
     { SETMISS,  "setmiss" },

@@ -526,7 +526,7 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
     gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
 }
 
-static void follow_if_link (GtkWidget *tview, GtkTextIter *iter)
+static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 {
     GSList *tags = NULL, *tagp = NULL;
 
@@ -534,10 +534,10 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter)
 
     for (tagp = tags; tagp != NULL; tagp = tagp->next) {
 	GtkTextTag *tag = tagp->data;
-	gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT (tag), "page"));
+	gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(tag), "page"));
 
 	if (page != 0) {
-	    plain_text_cmdref(NULL, page, NULL);
+	    plain_text_cmdref(p, page, NULL);
 	    break;
 	}
     }
@@ -549,7 +549,8 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter)
 
 /* Links can be activated by pressing Enter */
 
-static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev)
+static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
+				  gpointer p)
 {
     GtkTextIter iter;
     GtkTextBuffer *tbuf;
@@ -560,9 +561,8 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev)
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tview));
 	gtk_text_buffer_get_iter_at_mark(tbuf, &iter, 
 					 gtk_text_buffer_get_insert(tbuf));
-	follow_if_link(tview, &iter);
+	follow_if_link(tview, &iter, p);
 	break;
-
     default:
 	break;
     }
@@ -572,7 +572,8 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev)
 
 /* Links can be activated by clicking */
 
-static gboolean cmdref_event_after (GtkWidget *tview, GdkEvent *ev)
+static gboolean cmdref_event_after (GtkWidget *tview, GdkEvent *ev,
+				    gpointer p)
 {
     GtkTextIter start, end, iter;
     GtkTextBuffer *buffer;
@@ -590,7 +591,7 @@ static gboolean cmdref_event_after (GtkWidget *tview, GdkEvent *ev)
 
     buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(tview));
 
-    /* we shouldn't follow a link if the user has selected something */
+    /* don't follow a link if the user has selected something */
     gtk_text_buffer_get_selection_bounds(buffer, &start, &end);
     if (gtk_text_iter_get_offset(&start) != gtk_text_iter_get_offset(&end))
 	return FALSE;
@@ -601,7 +602,7 @@ static gboolean cmdref_event_after (GtkWidget *tview, GdkEvent *ev)
 
     gtk_text_view_get_iter_at_location(GTK_TEXT_VIEW(tview), &iter, x, y);
 
-    follow_if_link(tview, &iter);
+    follow_if_link(tview, &iter, p);
 
     return FALSE;
 }
@@ -657,8 +658,7 @@ cmdref_motion_notify (GtkWidget *tview, GdkEventMotion *event)
     gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
 					  GTK_TEXT_WINDOW_WIDGET,
 					  event->x, event->y, &x, &y);
-    set_cursor_if_appropriate (GTK_TEXT_VIEW(tview), x, y);
-
+    set_cursor_if_appropriate(GTK_TEXT_VIEW(tview), x, y);
     gdk_window_get_pointer(tview->window, NULL, NULL, NULL);
 
     return FALSE;
@@ -670,7 +670,6 @@ cmdref_visibility_notify (GtkWidget *tview,  GdkEventVisibility *e)
     gint wx, wy, bx, by;
   
     gdk_window_get_pointer(tview->window, &wx, &wy, NULL);
-  
     gtk_text_view_window_to_buffer_coords(GTK_TEXT_VIEW(tview), 
 					  GTK_TEXT_WINDOW_WIDGET,
 					  wx, wy, &bx, &by);
@@ -679,9 +678,10 @@ cmdref_visibility_notify (GtkWidget *tview,  GdkEventVisibility *e)
     return FALSE;
 }
 
-static void cmdref_title_page (GtkWidget *w, GtkTextBuffer *tbuf)
+static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Command Reference");
+    int connected;
     GtkTextIter iter;
     int i;
 
@@ -694,7 +694,7 @@ static void cmdref_title_page (GtkWidget *w, GtkTextBuffer *tbuf)
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
-					     _(header), -1,
+					     (en)? header : _(header), -1,
 					     "title", NULL);
 	
     gtk_text_buffer_insert(tbuf, &iter, "\n\n\n", -1);
@@ -714,18 +714,24 @@ static void cmdref_title_page (GtkWidget *w, GtkTextBuffer *tbuf)
 	}
     }
 
-    gtk_text_view_set_buffer(GTK_TEXT_VIEW(w), tbuf);
+    gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
 
-    if (!get_hwin_signals_connected()) {
-	g_signal_connect(w, "key-press-event", 
-			 G_CALLBACK(cmdref_key_press), NULL);
-	g_signal_connect(w, "event-after", 
-			 G_CALLBACK(cmdref_event_after), NULL);
-	g_signal_connect(w, "motion-notify-event", 
+    connected = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
+				"sigs_connected"));
+
+    if (!connected) {
+	gpointer en_ptr = GINT_TO_POINTER(en);
+
+	g_signal_connect(hwin->w, "key-press-event", 
+			 G_CALLBACK(cmdref_key_press), en_ptr);
+	g_signal_connect(hwin->w, "event-after", 
+			 G_CALLBACK(cmdref_event_after), en_ptr);
+	g_signal_connect(hwin->w, "motion-notify-event", 
 			 G_CALLBACK(cmdref_motion_notify), NULL);
-	g_signal_connect(w, "visibility-notify-event", 
+	g_signal_connect(hwin->w, "visibility-notify-event", 
 			 G_CALLBACK(cmdref_visibility_notify), NULL);
-	set_hwin_signals_connected(TRUE);
+	g_object_set_data(G_OBJECT(hwin->w), "sigs_connected", 
+			  GINT_TO_POINTER(1));
     }
 }
 
@@ -745,7 +751,7 @@ static void old_cmdref_title_page (GtkTextBuffer *tbuf)
 }
 #endif
 
-void set_help_topic_buffer (windata_t *hwin, int hcode, int pos)
+void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
@@ -757,7 +763,8 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos)
 
     if (pos == 1) {
 	/* cli help with no topic selected */
-	cmdref_title_page(hwin->w, tbuf);
+	cmdref_title_page(hwin, tbuf, en);
+	hwin->active_var = 0;
 	return;
     }
 

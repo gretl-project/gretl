@@ -72,6 +72,9 @@ make_transform_varname (char *vname, const char *orig, int cmd,
     } else if (cmd == LDIFF) {
 	strcpy(vname, "ld_");
 	strncat(vname, orig, len - 3);
+    } else if (cmd == SDIFF) {
+	strcpy(vname, "sd_");
+	strncat(vname, orig, len - 3);
     } else if (cmd == LOGS) {
 	strcpy(vname, "l_");
 	strncat(vname, orig, len - 2);
@@ -105,6 +108,8 @@ make_transform_label (char *label, const char *parent,
 	sprintf(label, _("= first difference of %s"), parent);
     } else if (cmd == LDIFF) {
 	sprintf(label, _("= log difference of %s"), parent);
+    } else if (cmd == SDIFF) {
+	sprintf(label, _("= seasonal difference of %s"), parent);
     } else if (cmd == LOGS) {
 	sprintf(label, _("= log of %s"), parent);
     } else if (cmd == SQUARE) {
@@ -276,15 +281,16 @@ static int get_log (int v, double *logvec, const double **Z,
     return err;
 }
 
-/* write first diff of variable v into diffvec */
+/* write some sort of difference of variable v into diffvec */
 
 static int get_diff (int v, double *diffvec, int ci,
 		     const double **Z, const DATAINFO *pdinfo)
 {
     double x0, x1;
-    int t, t1;
+    int t, t0, t1;
 
-    t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
+    t0 = (ci == SDIFF)? pdinfo->pd : 1;
+    t1 = (pdinfo->t1 > t0)? pdinfo->t1 : t0;
 
     for (t=t1; t<=pdinfo->t2; t++) {
 	if (pdinfo->structure == STACKED_TIME_SERIES &&
@@ -295,7 +301,7 @@ static int get_diff (int v, double *diffvec, int ci,
 	if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	    x1 = (t - pdinfo->pd >= 0)? Z[v][t-pdinfo->pd] : NADBL;
 	} else {
-	    x1 = Z[v][t-1];
+	    x1 = Z[v][t - t0];
 	}
 	if (ci == LDIFF) {
 	    if (!na(x0) && !na(x1) && x0 > 0 && x1 > 0) {
@@ -425,7 +431,7 @@ static int get_transform (int ci, int v, int aux,
 	err = get_lag(v, aux, vx, (const double **) *pZ, pdinfo);
     } else if (ci == LOGS) {
 	err = get_log(v, vx, (const double **) *pZ, pdinfo);
-    } else if (ci == DIFF || ci == LDIFF) {
+    } else if (ci == DIFF || ci == LDIFF || ci == SDIFF) {
 	err = get_diff(v, vx, ci, (const double **) *pZ, pdinfo);
     } else if (ci == SQUARE) {
 	/* "aux" = second variable number */
@@ -518,23 +524,33 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 /**
  * diffgenr: 
  * @v: ID number in dataset of source variable.
+ * @ci: %DIFF (first difference), %LDIFF (log difference) or %SDIFF
+ * (seasonal difference).
  * @pZ: pointer to data array.
  * @pdinfo: information on dataset.
- * @ldiff: if non-zero, generate the log-difference.
  *
- * Creates the first difference (or log difference) of variable @v 
- * if this variable does not already exist.
+ * Creates the first difference (or log- or seasonal difference, 
+ * depending on the value of @ci) of variable @v, if the
+ * differenced variable does not already exist.
  *
  * Returns: the ID number of the differenced variable, or -1 on error.
  */
 
-int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
+int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo)
 {
     if (!pdinfo->vector[v]) {
 	return -1;
     }
 
-    return get_transform((ldiff)? LDIFF : DIFF, v, 0, pZ, pdinfo, 8);
+    if (ci != DIFF && ci != LDIFF && ci != SDIFF) {
+	return -1;
+    }
+
+    if (ci == SDIFF && !dataset_is_seasonal(pdinfo)) {
+	return -1;
+    }
+
+    return get_transform(ci, v, 0, pZ, pdinfo, 8);
 }
 
 /**
@@ -743,60 +759,36 @@ int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo)
  * list_diffgenr:
  * @list: on entry, list of variables to process; on exit,
  * ID numbers of the generated variables.
+ * @ci: must be %DIFF, %LDIFF or %SDIFF.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  *
- * Generate first-differences of the variables in @list, and add them
- * to the data set.
+ * Generate differences of the variables in @list, and add them
+ * to the data set.  If @ci is %DIFF these are ordinary first
+ * differences; if @ci is %LDIFF they are log differences; and
+ * if @ci is %SDIFF they are seasonal differences.
  *
  * Returns: 0 on successful completion, 1 on error.
- *
  */
 
-int list_diffgenr (int *list, double ***pZ, DATAINFO *pdinfo)
+int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
 {
     int i, v, startlen;
     int tnum, err = 0;
 
-    startlen = get_starting_length(list, pdinfo, 2);
-    
-    for (i=1; i<=list[0] && !err; i++) {
-	v = list[i];
-	tnum = get_transform(DIFF, v, 0, pZ, pdinfo, startlen);
-	if (tnum < 0) {
-	    err = 1;
-	} else {
-	    list[i] = tnum;
-	}
+    if (ci != DIFF && ci != LDIFF && ci != SDIFF) {
+	return 1;
     }
 
-    return err;
-}
+    if (ci == SDIFF && !dataset_is_seasonal(pdinfo)) {
+	return E_PDWRONG;
+    }    
 
-/**
- * list_ldiffgenr:
- * @list: on entry, list of variables to process; on exit,
- * ID numbers of the generated variables.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generate log-differences of the variables in @list, and add them
- * to the data set.
- *
- * Returns: 0 on successful completion, 1 on error.
- *
- */
-
-int list_ldiffgenr (int *list, double ***pZ, DATAINFO *pdinfo)
-{
-    int i, v, startlen;
-    int tnum, err = 0;
-
-    startlen = get_starting_length(list, pdinfo, 3);
+    startlen = get_starting_length(list, pdinfo, (ci == DIFF)? 2 : 3);
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	tnum = get_transform(LDIFF, v, 0, pZ, pdinfo, startlen);
+	tnum = get_transform(ci, v, 0, pZ, pdinfo, startlen);
 	if (tnum < 0) {
 	    err = 1;
 	} else {

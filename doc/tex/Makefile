@@ -33,6 +33,8 @@ $(ALTREF): gretl-ref-a4.tex links
 	pdflatex $<
 	pdflatex $<
 
+a4: $(ALTGUIDE) $(ALTREF)
+
 gretl-guide-a4.tex: gretl-guide.tex
 	cat $< | sed s/letterpaper/a4paper/ > $@
 

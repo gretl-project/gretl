@@ -116,6 +116,7 @@ struct genr_func funcs[] = {
     { T_ATAN,     "atan" },
     { T_DIFF,     "diff" },
     { T_LDIFF,    "ldiff" }, 
+    { T_SDIFF,    "sdiff" },
     { T_MEAN,     "mean" }, 
     { T_SD,       "sd" }, 
     { T_MIN,      "min" },
@@ -883,9 +884,16 @@ static int add_mp_series_to_genr (GENERATOR *genr, genatom *atom)
 static double *eval_compound_arg (GENERATOR *genr,
 				  genatom *this_atom)
 {
-    int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
+    int t, t1, t2;
     genatom *atom;
     double *xtmp;
+
+    /* changed 2005/11/28 */
+#if 1
+    t1 = 0; t2 = genr->pdinfo->n - 1;
+#else
+    t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
+#endif
 
     if (peek_child_atom(this_atom) == NULL) {
 	genr->err = E_SYNTAX;
@@ -1123,10 +1131,11 @@ static int evaluate_genr (GENERATOR *genr)
 	    genr->err = add_model_series_to_genr(genr, atom);
 	} else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
 	    genr->err = add_random_series_to_genr(genr, atom);
-	} else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
-		 atom->func == T_CUM || atom->func == T_SORT ||
-		 atom->func == T_RESAMPLE || atom->func == T_HPFILT ||
-		 atom->func == T_BKFILT || atom->func == T_FRACDIFF) {
+	} else if (atom->func == T_DIFF || 
+		   atom->func == T_LDIFF || atom->func == T_SDIFF ||
+		   atom->func == T_CUM || atom->func == T_SORT ||
+		   atom->func == T_RESAMPLE || atom->func == T_HPFILT ||
+		   atom->func == T_BKFILT || atom->func == T_FRACDIFF) {
 	    atom_stack_bookmark(genr);
 	    genr->err = add_tmp_series_to_genr(genr, atom);
 	    atom_stack_resume(genr);
@@ -3752,13 +3761,27 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
     fprintf(stderr, "*** Doing get_tmp_series, fn = %d ***\n", fn);
 #endif
 
+    if (fn == T_SDIFF && !dataset_is_seasonal(pdinfo)) {
+	genr->err = E_PDWRONG;
+	return NULL;
+    }
+
     x = malloc(pdinfo->n * sizeof *x); 
     if (x == NULL) {
 	return NULL;
     }
 
-    if (fn == T_DIFF || fn == T_LDIFF) {
-	for (t=t1+1; t<=t2; t++) {
+    if (fn == T_DIFF || fn == T_LDIFF || fn == T_SDIFF) {
+	int t0 = (fn == T_SDIFF)? pdinfo->pd : 1;
+
+	if (t1 < t0) {
+	    for (t=t1; t<t0; t++) {
+		x[t] = NADBL;
+	    }
+	    t1 = t0;
+	}
+	
+	for (t=t1; t<=t2; t++) {
 	    /* get "later" value */
 	    if (pdinfo->structure == STACKED_TIME_SERIES &&
 		panel_unit_first_obs(t, pdinfo)) {
@@ -3771,7 +3794,7 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
 	    if (pdinfo->structure == STACKED_CROSS_SECTION) {
 		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
 	    } else {
-		yy = mvec[t-1];
+		yy = mvec[t - t0];
 	    }
 
 	    if (na(xx) || na(yy)) {
@@ -3780,7 +3803,7 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
 	    }
 
 	    /* perform the differencing */
-	    if (fn == T_DIFF) {
+	    if (fn == T_DIFF || fn == T_SDIFF) {
 		x[t] = xx - yy;
 	    } else {
 		/* log difference */
@@ -3792,7 +3815,6 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
 		}
 	    }
 	}
-	x[t1] = NADBL;
     }
 
     else if (fn == T_CUM) {
