@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-11-29 11:58-0500\n"
-"PO-Revision-Date: 2005-11-29 12:12-0500\n"
+"PO-Revision-Date: 2005-11-29 23:36+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -9355,9 +9355,8 @@ msgid "VAR inverse roots"
 msgstr "Radici inverse del VAR"
 
 #: gui2/gui_utils.c:3796
-#, fuzzy
 msgid "Impulse responses (combined)"
-msgstr "impulso-risposta"
+msgstr "Impulso-risposta (combinati)"
 
 #: gui2/gui_utils.c:3820 gui2/gui_utils.c:3955
 msgid "residuals from equation"
@@ -9450,9 +9449,8 @@ msgid "Utilities"
 msgstr "Utilità"
 
 #: gui2/helpfiles.c:685
-#, fuzzy
 msgid "Show English help"
-msgstr "Aiuto"
+msgstr "Aiuto (in inglese)"
 
 #: gui2/helpfiles.c:713 gui2/textbuf.c:778
 msgid "Index"
