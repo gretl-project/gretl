@@ -1251,6 +1251,8 @@ static void str_to_boolvar (char *s, void *b)
 {
     int *bvar = (int *) b;
 
+    if (s == NULL) return;
+
     if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0) {
 	*bvar = TRUE;
     } else {
@@ -1261,6 +1263,8 @@ static void str_to_boolvar (char *s, void *b)
 static void str_to_int (char *s, void *b)
 {
     int *ivar = (int *) b;
+
+    if (s == NULL) return;
 
     if (sscanf(s, "%d", ivar) != 1) {
 	*ivar = 0;
