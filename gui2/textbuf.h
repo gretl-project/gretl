@@ -51,6 +51,9 @@ void text_table_setup (windata_t *vwin);
 
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
 
+gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event, 
+			     gpointer p);
+
 #ifdef USE_GTKSOURCEVIEW
 
 void create_source (windata_t *vwin, GtkSourceBuffer **buf, 

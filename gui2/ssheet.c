@@ -97,8 +97,6 @@ static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
     return ret;
 }
 
-/* .................................................................. */
-
 static char *single_underscores (char *targ, const char *src)
 {
     char *p = targ;
@@ -117,8 +115,6 @@ static char *single_underscores (char *targ, const char *src)
 
     return targ;
 }
-
-/* .................................................................. */
 
 static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 			       GtkTreeViewColumn *column)
@@ -139,8 +135,6 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
 		       sheet->cid, sheet->location);
     g_free(row_label);
 }
-
-/* .................................................................. */
 
 #ifndef OLD_SELECTION
 
@@ -181,8 +175,6 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
 }
 
 #endif
-
-/* .................................................................. */
 
 static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
@@ -233,8 +225,6 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 
     return FALSE;
 }
-
-/* .................................................................. */
 
 static void 
 spreadsheet_scroll_to_new_col (Spreadsheet *sheet, GtkTreeViewColumn *column)
@@ -296,8 +286,6 @@ static int real_add_new_var (Spreadsheet *sheet, const char *varname)
 
     return 0;
 }
-
-/* .................................................................. */
 
 static void 
 spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col)
@@ -408,8 +396,6 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
     sheet->modified = 1;
 }
 
-/* ........................................................... */
-
 static void name_new_var (GtkWidget *widget, dialog_t *dlg) 
 {
     Spreadsheet *sheet = (Spreadsheet *) edit_dialog_get_data(dlg);
@@ -463,8 +449,6 @@ static void new_case_dialog (Spreadsheet *sheet)
 		 NULL, name_new_obs, sheet, 
 		 0, 0);
 }
-
-/* ........................................................... */
 
 static int add_data_column (Spreadsheet *sheet)
 {
@@ -535,8 +519,6 @@ static int add_data_column (Spreadsheet *sheet)
     return 0;
 }
 
-/* ........................................................... */
-
 static void sheet_add_var_callback (gpointer data, guint u, GtkWidget *w)
 {
     Spreadsheet *sheet = (Spreadsheet *) data;
@@ -594,8 +576,6 @@ static void build_sheet_popup (Spreadsheet *sheet)
 		   G_CALLBACK(popup_sheet_insert_obs),
 		   sheet);
 }
-
-/* ......................................................... */
 
 #ifndef OLD_SELECTION
 
@@ -772,8 +752,6 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
     sheet->modified = 0;
 }
 
-/* ........................................................... */
-
 static void select_first_editable_cell (Spreadsheet *sheet)
 {
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
@@ -787,8 +765,6 @@ static void select_first_editable_cell (Spreadsheet *sheet)
 
     gtk_tree_path_free(path);
 }
-
-/* ........................................................... */
 
 static int add_data_to_sheet (Spreadsheet *sheet, SheetCode code)
 {
@@ -863,8 +839,6 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCode code)
     return 0;
 }
 
-/* ........................................................... */
-
 static gint get_string_width (const gchar *str)
 {
     gint width;
@@ -906,8 +880,6 @@ static gint get_data_col_width (void)
     return width;
 }
 
-/* ........................................................... */
-
 static void 
 set_up_sheet_column (GtkTreeViewColumn *column, gint width, gboolean expand)
 {
@@ -919,8 +891,6 @@ set_up_sheet_column (GtkTreeViewColumn *column, gint width, gboolean expand)
     gtk_tree_view_column_set_expand(column, expand);
 #endif
 }
-
-/* ........................................................... */
 
 static void create_sheet_cell_renderers (Spreadsheet *sheet)
 {
@@ -1249,8 +1219,6 @@ static int build_sheet_view (Spreadsheet *sheet)
     return 0;
 }
 
-/* ........................................................... */
-
 static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet) 
 {
     Spreadsheet *sheet = *psheet;
@@ -1288,8 +1256,6 @@ static Spreadsheet *spreadsheet_new (void)
 
     return sheet;
 }
-
-/* ........................................................... */
 
 static int first_var_all_missing (void)
 {
@@ -1343,8 +1309,6 @@ static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
 
     return FALSE;
 }
-
-/* ........................................................... */
 
 void show_spreadsheet (SheetCode code) 
 {

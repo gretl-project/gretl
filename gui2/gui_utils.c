@@ -2517,8 +2517,14 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 		     G_CALLBACK(catch_viewer_key), vwin);
 
 #ifndef OLD_GTK
-    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
-		     G_CALLBACK(catch_button_3), vwin->w);
+    if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN) {
+	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
+			 G_CALLBACK(help_popup_handler), 
+			 vwin);
+    } else {
+	g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
+			  G_CALLBACK(catch_button_3), vwin->w);
+    }	
 #endif
 
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 

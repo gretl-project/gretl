@@ -547,7 +547,7 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
     }
 }
 
-/* Links can be activated by pressing Enter */
+/* Help links can be activated by pressing Enter */
 
 static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
 				  gpointer p)
@@ -570,7 +570,7 @@ static gboolean cmdref_key_press (GtkWidget *tview, GdkEventKey *ev,
     return FALSE;
 }
 
-/* Links can be activated by clicking */
+/* Help links can be activated by clicking */
 
 static gboolean cmdref_event_after (GtkWidget *tview, GdkEvent *ev,
 				    gpointer p)
@@ -751,6 +751,87 @@ static void old_cmdref_title_page (GtkTextBuffer *tbuf)
 }
 #endif
 
+static gint help_popup_click (GtkWidget *w, gpointer p)
+{
+    windata_t *hwin = (windata_t *) p;
+    int action = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    gpointer enp = NULL;
+    int page = 0;
+
+    if (hwin->role == CLI_HELP_EN) {
+	enp = GINT_TO_POINTER(1);
+    }
+
+    if (action == 2) {
+	page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
+						 "backpage"));
+    }
+
+    plain_text_cmdref(enp, page, NULL);
+
+    return FALSE;
+}
+
+GtkWidget *build_help_popup (windata_t *hwin)
+{
+    const char *items[] = {
+	N_("Index"),
+	N_("Back")
+    };
+    GtkWidget *pmenu = gtk_menu_new();
+    GtkWidget *item;
+    int i;
+
+    /* not using "back" for now */
+
+    for (i=0; i<1; i++) {
+	item = gtk_menu_item_new_with_label(_(items[i]));
+	g_object_set_data(G_OBJECT(item), "action", GINT_TO_POINTER(i+1));
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(help_popup_click),
+			 hwin);
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(pmenu), item);
+    }
+
+    return pmenu;
+}
+
+gboolean 
+help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
+{
+    GdkModifierType mods;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+
+    if (mods & GDK_BUTTON3_MASK) {
+	windata_t *hwin = (windata_t *) p;
+
+	if (hwin->active_var == 0) {
+	    return TRUE;
+	}
+
+	if (hwin->popup) {
+	    gtk_widget_destroy(hwin->popup);
+	    hwin->popup = NULL;
+	}
+
+	hwin->popup = build_help_popup(hwin);
+
+	if (hwin->popup != NULL) {
+	    gtk_menu_popup(GTK_MENU(hwin->popup), NULL, NULL, NULL, NULL,
+			   event->button, event->time);
+	    gtk_signal_connect(GTK_OBJECT(hwin->popup), "destroy",
+			       GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
+			       &hwin->popup);
+	}
+
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 {
     GtkTextBuffer *tbuf;
@@ -819,6 +900,8 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     }
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
+    g_object_set_data(G_OBJECT(hwin->w), "backpage", 
+		      GINT_TO_POINTER(hwin->active_var));
     hwin->active_var = hcode;
 }
 
