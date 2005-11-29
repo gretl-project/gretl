@@ -175,7 +175,7 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
     return 0;
 }
 
-void set_help_topic_buffer (windata_t *hwin, int hcode, int pos)
+void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 {
     char line[128];
     gchar *hbuf = (gchar *) hwin->data;
@@ -192,9 +192,11 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos)
 	const char *h2 = N_("Please select from the Topics list");
 
 	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, "\n\n   ", -1);
-	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, _(h1), -1);
+	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, 
+			(en)? h1 : _(h1), -1);
 	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, "\n\n   ", -1);
-	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, _(h2), -1);
+	gtk_text_insert(GTK_TEXT(hwin->w), fixed_font, NULL, NULL, 
+			(en)? h2: _(h2), -1);
 	gtk_text_thaw(GTK_TEXT(hwin->w));	
 	return;
     }

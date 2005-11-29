@@ -265,8 +265,8 @@
       <para>
 	Opens a data file and appends the content to the current
 	dataset, if the new data are compatible.  The program will try
-	to detect the format of the data file (native, plain text, CSV
-	or BOX1).
+	to detect the format of the data file (native, plain text, CSV,
+	Gnumeric, Excel, etc.).
       </para>
 
     </description>
@@ -1016,7 +1016,7 @@
 	<repl>param1</repl> for t and chi-square, or
 	<repl>param1</repl> and <repl>param2</repl> for
 	<mathvar>F</mathvar>. If <repl>dist</repl> is <lit>d</lit>,
-	prints the upper and lower values of the Durbin-Watson
+	prints the upper and lower values of the Durbin&ndash;Watson
 	statistic at 5 percent significance, for the given number of
 	observations, <repl>param1</repl>, and for the range of 1 to 5
 	explanatory variables.
@@ -3826,27 +3826,56 @@
 	computed.
       </para>
 
+      <para>Simple example: Suppose we have a series X with values 0
+	or 1 and we wish to obtain the maximum likelihood estimate of
+	the probability, p, that X = 1.  (In this simple case we can
+	guess in advance that the ML estimate of p will simply equal
+	the proportion of Xs equal to 1 in the sample.)
+      </para>
+
+      <para>The parameter p must first be added to the dataset and
+	given an initial value.  This can be done using the genr
+	command.  For example:
+      </para>
+
+      <code>
+	genr p = 0.5
+      </code>
+
+      <para>We then construct the MLE command block:</para>
+
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	deriv p = X/p - (1-X)/(1-p)
+	end mle
+      </code>
+
       <para>
-	It is easiest to show what is required by example.  FIXME
-	example needs to be added.
+	The first line above specifies the log-likelihood function. It
+	starts with the keyword <quote>mle</quote>, then a dependent
+	variable is specified and an expression for the log-likelihood
+	is given (using the same syntax as in the <cmd>genr</cmd>
+	command).  The next line (which is optional) starts with the
+	keyword <quote>deriv</quote> and supplies the derivative of
+	the log-likelihood function with respect to the parameter
+	<lit>p</lit>. If no derivatives are given, you should include
+	a statement using the keyword <quote>params</quote> which
+	identifies the free parameters: these are listed on one line,
+	separated by spaces.  For example, the above could be changed
+	to:
+      </para>
+      <code>
+	mle loglik = X*log(p) + (1-X)*log(1-p)
+	params p
+	end mle
+      </code>
+      <para>
+	in which case numerical derivatives would be used.
       </para>
 
       <para>
-	FIXME empty reference.  The actual MLE commands occupy lines 6
-	to 10. On line 6 the <cmd>mle</cmd> command is given: a
-	dependent variable is specified, followed by an equals sign,
-	followed by a function specification.  The syntax for the
-	expression on the right is the same as that for the
-	<cmd>genr</cmd> command.  The next three lines specify the
-	derivatives of the log-likelihood function with respect to
-	each of the parameters in turn.  Each line begins with the
-	keyword <cmd>deriv</cmd>, gives the name of a parameter, an
-	equals sign, and an expression whereby the derivative can be
-	calculated (again, the syntax here is the same as for
-	<cmd>genr</cmd>). These <cmd>deriv</cmd> lines are optional,
-	but it is recommended that you supply them if possible. Line
-	10, <cmd>end mle</cmd>, completes the command and calls for
-	estimation.
+	The option flags, <lit>--vcv</lit> or <lit>--verbose</lit>,
+	should be appended to the ending line of the MLE block.
       </para>
 
     </description>

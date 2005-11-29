@@ -103,7 +103,8 @@ void toolbar_users_guide (void)
 
 void toolbar_command_reference (void)
 {
-    display_pdf_help(NULL, 0, NULL);
+    plain_text_cmdref(NULL, 0, NULL);
+    /* display_pdf_help(NULL, 0, NULL); */
 }
 
 static void xy_graph (void)
