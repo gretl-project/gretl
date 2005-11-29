@@ -260,7 +260,7 @@
        Apre un file di dati e aggiunge il suo contenuto al dataset
        corrente, se i nuovi dati sono compatibili. Il programma cerca
        di riconoscere il formato del file di dati (interno, testo semplice,
-       CSV, o BOX1).
+       CSV, Gnumeric, Excel, ecc.).
       </para>
 
     </description>
@@ -989,7 +989,7 @@
         o <repl>param1</repl> e <repl>param2</repl> per la
 	<mathvar>F</mathvar>. Se la <repl>distribuzione</repl> è <lit>d</lit>,
 	mostra i valori superiore e inferiore della statistica di 
-        Durbin-Watson al livello di significatività del 5 per cento, per
+        Durbin&ndash;Watson al livello di significatività del 5 per cento, per
         il dato numero di osservazioni <repl>param1</repl>, e per l'intervallo
         da 1 a 5 variabili esplicative.
       </para>
@@ -1889,6 +1889,7 @@
 	<li><para>Funzioni per serie storiche: <func>diff</func>
             (differenza prima), <func>ldiff</func> (log-differenza,
             ossia la differenza prima dei logaritmi naturali),
+            <func>sdiff</func> (differenza stagionale),
             <func>fracdiff</func> (differenza frazionale).
 	    Per generare ritardi della variabile <lit>x</lit>, si può usare
             la sintassi <cmd>x(-N)</cmd>, dove <lit>N</lit> rappresenta
@@ -3759,27 +3760,53 @@
         un'approssimazione numerica.
       </para>
 
-      <para>
-	It is easiest to show what is required by example.  FIXME
-	example needs to be added.
+      <para>Ecco un semplice esempio: supponiamo di avere una serie X con
+       valori 0 e 1, e di voler ottenere la stima di massima verosimiglianza della
+       probabilità, p, che valga X=1. In questo caso sappiamo già che la stima
+       di massima verosimiglianza di p sarà semplicemente pari alla proporzione
+       di osservazioni di X=1 nel campione.
       </para>
 
+      <para>Per prima cosa occorre aggiungere il parametro p al dataset e
+      assegnargli un valore iniziale; è possibile farlo con il comando genr:
+      </para>
+
+      <code>
+       genr p = 0.5
+      </code>
+
+      <para>Quindi costruiamo il blocco di comandi per la stima di massima
+      verosimiglianza:</para>
+
+      <code>
+       mle loglik = X*log(p) + (1-X)*log(1-p)
+       deriv p = X/p - (1-X)/(1-p)
+       end mle
+      </code>
+
       <para>
-	FIXME empty reference.  The actual MLE commands occupy lines 6
-	to 10. On line 6 the <cmd>mle</cmd> command is given: a
-	dependent variable is specified, followed by an equals sign,
-	followed by a function specification.  The syntax for the
-	expression on the right is the same as that for the
-	<cmd>genr</cmd> command.  The next three lines specify the
-	derivatives of the log-verosimiglianza function with respect to
-	each of the parameters in turn.  Each line begins with the
-	keyword <cmd>deriv</cmd>, gives the name of a parameter, an
-	equals sign, and an expression whereby the derivative can be
-	calculated (again, the syntax here is the same as for
-	<cmd>genr</cmd>). These <cmd>deriv</cmd> lines are optional,
-	but it is recommended that you supply them if possible. Line
-	10, <cmd>end mle</cmd>, completes the command and calls for
-	estimation.
+        La prima riga specifica la funzione di log-verosimiglianza: inizia con
+        la parola chiave <quote>mle</quote>, quindi contiene la variabile
+        dipendente e una specificazione per la log-verosimiglianza usando la
+        stessa sintassi del comando <cmd>genr</cmd>. La riga seguente (che è
+        opzionale), inizia con la parola chiave <quote>deriv</quote> e fornisce
+        la derivata della funzione di log-verosimiglianza rispetto al parametro
+        <lit>p</lit>. Se non vengono indicate derivate, occorre includere una
+        dichiarazione che identifica i parametri liberi (separati da spazi)
+        utilizzando la parola chiave <quote>params</quote>. Ad esempio si
+        sarebbe potuto scrivere:
+      </para>
+      <code>
+       mle loglik = X*log(p) + (1-X)*log(1-p)
+       params p
+       end mle
+      </code>
+      <para>
+       e in questo caso la derivata verrebbe calcolata numericamente.
+      </para>
+      <para>
+       Eventuali opzioni <lit>--vcv</lit> o <lit>--verbose</lit> vanno indicate
+       nella riga finale del blocco MLE.
       </para>
 
     </description>
@@ -5423,6 +5450,31 @@
     </gui-access>
 
   </command>
+
+  <command name="sdiff" section="Transformations" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>lista-variabili</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+       Calcola la differenza stagionale di ogni variabile della
+       <repl>lista-variabili</repl> e salva il risultato in una nuova variabile
+       con il prefisso <lit>sd_</lit>. Il comando è disponibile solo per serie storiche stagionali.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Dati/Aggiungi variabili/Differenze stagionali</menu-path>
+    </gui-access>
+
+  </command>
+
+
+  
 
   <command name="seed" section="Obsolete" context="cli">
     <description>
