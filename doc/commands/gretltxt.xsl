@@ -3,6 +3,7 @@
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
 <xsl:param name="hlp">cli</xsl:param>
+<xsl:param name="xrefs">false</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="iso-8859-1"/>
@@ -305,9 +306,18 @@
 </xsl:template>
 
 <xsl:template match="cmdref">
-<xsl:text>"</xsl:text>
-  <xsl:value-of select="@targ"/>
-<xsl:text>"</xsl:text>
+  <xsl:choose>
+    <xsl:when test="$xrefs='true'">
+      <xsl:text>&lt;reftarg="</xsl:text>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>"&gt;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>"</xsl:text>
+      <xsl:value-of select="@targ"/>
+      <xsl:text>"</xsl:text>      
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="guideref">

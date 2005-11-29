@@ -101,13 +101,19 @@ add_file ${TOPDIR}/gui2/gnuplot.lang \
   gretl/share/gtksourceview-1.0/language-specs/gnuplot.lang
 
 # help files, license, logo
-add_file ${TOPDIR}/share/gretl.hlp gretl/gretl_hlp.txt
+add_file ${TOPDIR}/share/gretlgui.hlp gretl/gretlgui_hlp.txt
+add_file ${TOPDIR}/share/gretlcmd.hlp gretl/gretlcmd_hlp.txt
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt
 for lang in es it ; do
-   $RECODE l1..utf-8 < ${TOPDIR}/share/gretl.hlp.$lang \
-       > ${TOPDIR}/share/gretl_hlp_${lang}.txt
-   add_file ${TOPDIR}/share/gretl_hlp_${lang}.txt \
-       gretl/gretl_hlp_${lang}.txt
+   $RECODE l1..utf-8 < ${TOPDIR}/share/gretlgui.hlp.$lang \
+       > ${TOPDIR}/share/gretlgui_hlp_${lang}.txt
+   add_file ${TOPDIR}/share/gretlgui_hlp_${lang}.txt \
+       gretl/gretlgui_hlp_${lang}.txt
+   $RECODE l1..utf-8 < ${TOPDIR}/share/gretlcmd.hlp.$lang \
+       > ${TOPDIR}/share/gretlcmd_hlp_${lang}.txt
+   add_file ${TOPDIR}/share/gretlcmd_hlp_${lang}.txt \
+       gretl/gretlcmd_hlp_${lang}.txt
+   # FIXME encoding
    $RECODE l1..utf-8 < ${TOPDIR}/share/gretlcli.hlp.$lang \
        > ${TOPDIR}/share/gretlcli_hlp_${lang}.txt
    add_file ${TOPDIR}/share/gretlcli_hlp_${lang}.txt \

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#define PARSIZE 32384  /* max size of paragraph buffer in bytes */
 #define MAXLEN  78     /* length at which lines will wrap */
 #define LINDENT  2     /* indent for itemized list items, table rows */
 #define NINDENT  3     /* indent for numbered list items */
@@ -145,11 +146,32 @@ static void trim_to_length (char *s)
     }
 }
 
+/* Special: handle xrefs embedded in script help destined for
+   the gui program.  The extra characters (12) will be stripped
+   out when the file is formatted in the help window, so they
+   should not be counted towards the length of the line.  
+   The xref pattern is: <reftarg="">
+*/
+
+static void fill_line_to_max (char *line, char *p, int n)
+{
+    int nc = 0, nmax = n;
+
+    while (*p && nc < nmax) {
+	if (!strncmp(p, "<ref", 4)) {
+	    nmax += 12;
+	}
+	line[nc++] = *p++;
+    }
+
+    line[nc] = '\0';
+}
+
 /* reflow a paragraph buffer, with max line length MAXLEN */
 
 static int format_buf (char *buf, int ptype)
 {
-    char *p, *q, line[80];
+    char *p, *q, line[256];
     int i, n, out, indent = 0, maxline = MAXLEN;
 
     if (ptype == ILISTPAR) {
@@ -168,7 +190,11 @@ static int format_buf (char *buf, int ptype)
     while (out < n - 1) {
 	*line = 0;
 	q = p;
+#if 1
+	fill_line_to_max(line, p, maxline);
+#else
 	strncat(line, p, maxline);
+#endif
 	trim_to_length(line);
 	out += strlen(line);
 	p = q + strlen(line);
@@ -426,7 +452,7 @@ int process_para (char *s, char *inbuf, int ptype)
 
 int main (void)
 { 
-    char buf[32384]; /* won't handle paragraphs > 32Kb */
+    char buf[PARSIZE];
     char line[128];
     int blank = 0;
 

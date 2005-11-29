@@ -183,34 +183,43 @@
 <xsl:template match="programlisting">
   <xsl:text>&#10;\begin{code}</xsl:text>  
   <xsl:apply-templates/>
-  <xsl:text>&#10;\end{code}&#10;&#10;</xsl:text> 
+  <xsl:text>\end{code}&#10;</xsl:text> 
 </xsl:template>
 
-<xsl:template match="literal">
-  <xsl:text>\verb@</xsl:text>
+<xsl:template match="literal|filename|varname">
+  <xsl:variable name="escape">
+    <xsl:choose>
+      <xsl:when test="contains(.,'_') or contains(.,'\') or 
+                      contains(.,'$') or contains(.,'^') or
+                      contains(.,'%') or contains(.,'&amp;') or
+                      contains(.,'#')">
+        <xsl:text>yes</xsl:text>
+      </xsl:when>    
+      <xsl:otherwise>
+        <xsl:text>no</xsl:text>
+      </xsl:otherwise>
+    </xsl:choose>    
+  </xsl:variable>
+  <xsl:choose>
+    <xsl:when test="$escape='yes'">
+      <xsl:text>\verb@</xsl:text>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>\texttt{</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:value-of select="translate(., '&#10;', '')"/>
-  <xsl:text>@</xsl:text> 
+  <xsl:choose>
+    <xsl:when test="$escape='yes'">
+      <xsl:text>@</xsl:text>
+    </xsl:when>    
+    <xsl:otherwise>
+      <xsl:text>}</xsl:text>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
-<xsl:template match="filename">
-  <xsl:text>\verb+</xsl:text>  
-  <xsl:apply-templates/>
-  <xsl:text>+</xsl:text> 
-</xsl:template>
-
-<xsl:template match="varname">
-  <xsl:text>\verb+</xsl:text>  
-  <xsl:apply-templates/>
-  <xsl:text>+</xsl:text> 
-</xsl:template>
-
-<xsl:template match="guimenu">
-  <xsl:text>\textsf{</xsl:text>  
-  <xsl:apply-templates/>
-  <xsl:text>}</xsl:text> 
-</xsl:template>
-
-<xsl:template match="guimenuitem">
+<xsl:template match="guimenu|guimenuitem">
   <xsl:text>\textsf{</xsl:text>  
   <xsl:apply-templates/>
   <xsl:text>}</xsl:text> 

@@ -47,6 +47,7 @@ enum {
     OUTPUT_HLP,
     OUTPUT_CLI_HLP,
     OUTPUT_GUI_HLP,
+    OUTPUT_XREF_HLP,
     OUTPUT_DBTEX
 };
 
@@ -77,11 +78,12 @@ static void build_params (char const **params, int output,
     if (output == OUTPUT_DOCBOOK_STANDALONE) {
 	params[i++] = "standalone";
 	params[i++] = "\"true\"";
-    }
-
-    else if (output == OUTPUT_GUI_HLP) {
+    } else if (output == OUTPUT_GUI_HLP) {
 	params[i++] = "hlp";
 	params[i++] = "\"gui\"";
+    } else if (output == OUTPUT_XREF_HLP) {
+	params[i++] = "xrefs";
+	params[i++] = "\"true\"";
     }
 }
 
@@ -91,7 +93,7 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
     xsltStylesheetPtr style;
     xmlDocPtr result;
     char styname[FILENAME_MAX];
-    char const *xsl_params[5] = {0};
+    char const *xsl_params[8] = {0};
     FILE *fp;
     int err = 0;
 
@@ -135,6 +137,21 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
 	    if (result == NULL) {
 		err = 1;
 	    } else {
+		fp = fopen("clilist.txt", "w");
+		if (fp == NULL) {
+		    err = 1;
+		} else {
+		    xsltSaveResultToFile(fp, result, style);
+		    fclose(fp);
+		}
+		xmlFreeDoc(result);
+	    }
+	    /* script help, gui version */
+	    build_params(xsl_params, OUTPUT_XREF_HLP, lang);
+	    result = xsltApplyStylesheet(style, doc, xsl_params);
+	    if (result == NULL) {
+		err = 1;
+	    } else {
 		fp = fopen("cmdlist.txt", "w");
 		if (fp == NULL) {
 		    err = 1;
@@ -144,7 +161,7 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
 		}
 		xmlFreeDoc(result);
 	    }
-	    /* gui version */
+	    /* gui help */
 	    build_params(xsl_params, OUTPUT_GUI_HLP, lang);
 	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {

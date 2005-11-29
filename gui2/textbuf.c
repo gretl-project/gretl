@@ -782,9 +782,7 @@ GtkWidget *build_help_popup (windata_t *hwin)
     GtkWidget *item;
     int i;
 
-    /* not using "back" for now */
-
-    for (i=0; i<1; i++) {
+    for (i=0; i<2; i++) {
 	item = gtk_menu_item_new_with_label(_(items[i]));
 	g_object_set_data(G_OBJECT(item), "action", GINT_TO_POINTER(i+1));
 	g_signal_connect(G_OBJECT(item), "activate",
@@ -832,11 +830,28 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
+static void
+insert_line_with_xrefs (GtkTextBuffer *tbuf, GtkTextIter *iter,
+			const char *s)
+{
+    char word[9];
+    const char *p;
+
+    while ((p = strstr(s, "<reftarg="))) {
+	gtk_text_buffer_insert(tbuf, iter, s, p - s);
+	sscanf(p + 10, "%8[^\"]", word);
+	insert_link(tbuf, iter, word, gretl_command_number(word));
+	s = p + 12 + strlen(word);
+    }
+
+    gtk_text_buffer_insert(tbuf, iter, s, -1);
+}
+
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
-    char line[128];
+    char line[256];
     gchar *hbuf = (gchar *) hwin->data;
     int nl = gui_help(hwin->role)? -2 : 0;
 
@@ -891,7 +906,11 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 		} else if (*line == '#') {
 		    break;
 		} else {
-		    gtk_text_buffer_insert(tbuf, &iter, line, -1);
+		    if (gui_help(hwin->role)) {
+			gtk_text_buffer_insert(tbuf, &iter, line, -1);
+		    } else {
+			insert_line_with_xrefs(tbuf, &iter, line);
+		    }
 		    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
 		}
 	    }

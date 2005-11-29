@@ -80,17 +80,20 @@ docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
 	cp cmdlist.xml $(CHAPDIR_IT)/cmdlist.xml && \
 	rm cmdlist.xml
 
-# Generate "online" help files, gretlcli.hlp and gretl.hlp
+# Generate "online" text help files
 hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS)
 	./xsltrans --hlp $(CMDSDIR)/gretl_commands.xml && \
-	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp
-	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp
+	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp
+	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp
+	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp
 	./xsltrans --hlp $(CMDSDIR)/gretl_commands_es.xml && \
-	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp.es
-	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp.es
+	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.es
+	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es
+	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp.es
 	./xsltrans --hlp $(CMDSDIR)/gretl_commands_it.xml && \
-	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp.it
-	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp.it
+	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.it
+	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it
+	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp.it
 
 $(XMLSTRS): $(TXTSTRS) hlpstrings
 	./hlpstrings $(TXTSTRS) > $(XMLSTRS)

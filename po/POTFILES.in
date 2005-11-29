@@ -27,6 +27,7 @@ lib/src/gretl_restrict.c
 lib/src/gretl_string_table.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
+lib/src/gretl_xml.c
 lib/src/interact.c
 lib/src/irfboot.c
 lib/src/laginfo.c
@@ -57,9 +58,9 @@ cli/complete.c
 cli/gretlcli.c
 gui/gretl.c
 gui/guiprint.c
-gui/obsbutton.c
 gui/plotps.c
 gui/ssheet.c
+gui/obsbutton.c
 gui/textbuf.c
 gui2/about.c
 gui2/boxplots.c
@@ -87,6 +88,7 @@ gui2/gui_utils.c
 gui2/helpfiles.c
 gui2/library.c
 gui2/menustate.c
+gui2/mklang.c
 gui2/model_table.c
 gui2/objectsave.c
 gui2/obsbutton.c

@@ -2083,6 +2083,10 @@
 	      <cell><lit>$df</lit></cell>
 	      <cell>degrees of freedom</cell> 
 	    </row> 
+	    <row> 
+	      <cell><lit>$ncoeff</lit></cell>
+	      <cell>total number of estimated coefficients</cell> 
+	    </row> 
 	    <row>
 	      <cell><lit>$trsq</lit></cell>
 	      <cell><emphasis>TR</emphasis>-squared (sample size times
@@ -3773,18 +3777,18 @@
 	also supply expressions for the derivatives of this function
 	with respect to each of the parameters if possible.</para>
 
-      <para>Simple example: Suppose we have a series X with values 0
-	or 1 and we wish to obtain the maximum likelihood estimate of
-	the probability, p, that X = 1.  (In this simple case we can
-	guess in advance that the ML estimate of p will simply equal
-	the proportion of Xs equal to 1 in the sample.)
+      <para>Simple example: Suppose we have a series <lit>X</lit> with values 0
+	or 1 and we wish to obtain the maximum likelihood estimate of the
+	probability, <lit>p</lit>, that <lit>X</lit> = 1.  (In this simple case
+	we can guess in advance that the ML estimate of <lit>p</lit> will simply
+	equal the proportion of Xs equal to 1 in the sample.)
       </para>
 
-      <para>The parameter p must first be added to the dataset and
-	given an initial value.  This can be done using the genr
-	command or via menu choices.  Appropriate <quote>genr</quote>
-	lines may be typed into the MLE specification window prior to
-	the specification of the log-likelihood function.</para>
+      <para>The parameter <lit>p</lit> must first be added to the dataset and
+	given an initial value.  This can be done using the genr command or via
+	menu choices.  Appropriate <quote>genr</quote> lines may be typed into
+	the MLE specification window prior to the specification of the
+	log-likelihood function.</para>
 
       <para>In the MLE window we type the following
 	lines:</para>
@@ -3826,21 +3830,17 @@
 	computed.
       </para>
 
-      <para>Simple example: Suppose we have a series X with values 0
-	or 1 and we wish to obtain the maximum likelihood estimate of
-	the probability, p, that X = 1.  (In this simple case we can
-	guess in advance that the ML estimate of p will simply equal
-	the proportion of Xs equal to 1 in the sample.)
+      <para>Simple example: Suppose we have a series <lit>X</lit> with values 0
+	or 1 and we wish to obtain the maximum likelihood estimate of the
+	probability, <lit>p</lit>, that <lit>X</lit> = 1.  (In this simple case
+	we can guess in advance that the ML estimate of <lit>p</lit> will simply
+	equal the proportion of Xs equal to 1 in the sample.)
       </para>
 
-      <para>The parameter p must first be added to the dataset and
+      <para>The parameter <lit>p</lit> must first be added to the dataset and
 	given an initial value.  This can be done using the genr
-	command.  For example:
+	command.  For example, <lit>genr p = 0.5</lit>.
       </para>
-
-      <code>
-	genr p = 0.5
-      </code>
 
       <para>We then construct the MLE command block:</para>
 
@@ -3852,14 +3852,14 @@
 
       <para>
 	The first line above specifies the log-likelihood function. It
-	starts with the keyword <quote>mle</quote>, then a dependent
+	starts with the keyword <lit>mle</lit>, then a dependent
 	variable is specified and an expression for the log-likelihood
 	is given (using the same syntax as in the <cmd>genr</cmd>
 	command).  The next line (which is optional) starts with the
-	keyword <quote>deriv</quote> and supplies the derivative of
+	keyword <lit>deriv</lit> and supplies the derivative of
 	the log-likelihood function with respect to the parameter
 	<lit>p</lit>. If no derivatives are given, you should include
-	a statement using the keyword <quote>params</quote> which
+	a statement using the keyword <lit>params</lit> which
 	identifies the free parameters: these are listed on one line,
 	separated by spaces.  For example, the above could be changed
 	to:

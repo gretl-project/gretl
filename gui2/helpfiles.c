@@ -390,7 +390,7 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
 static int assemble_topic_list (struct help_head_t **heads, int nh,
 				int gui, FILE *fp)
 {
-    char test[128], word[32];
+    char test[256], word[32];
     int pos = 0;
     int match, topic = 0;
 
@@ -433,7 +433,7 @@ static int
 get_help_length (struct help_head_t ***pheads, int *pnh, int *length,
 		 int gui, FILE *fp)
 {
-    char test[128], section[16];    
+    char test[256], section[16];    
     int len = 0, nh = 0;
     int match, err = 0;
 

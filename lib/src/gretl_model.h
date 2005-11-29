@@ -26,6 +26,7 @@ enum model_stat_index {
     M_RSQ,       /* R-squared */
     M_SIGMA,     /* standard error of residuals */
     M_DF,        /* degrees of freedom */
+    M_NCOEFF,    /* total number of estimated coefficients */
     M_LNL,       /* log-likelihood */
     M_AIC,       /* Akaike info criterion */
     M_BIC,       /* Bayesian info criterion */

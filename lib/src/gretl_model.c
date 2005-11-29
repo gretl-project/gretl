@@ -2592,6 +2592,8 @@ int gretl_model_stat_index (const char *s)
 	return M_SIGMA;
     if (!strcmp(test, "$df"))   
 	return M_DF;
+    if (!strcmp(test, "$ncoeff"))   
+	return M_NCOEFF;
     if (!strcmp(test, "$lnl"))   
 	return M_LNL;
     if (!strcmp(test, "$aic"))   
@@ -2643,6 +2645,9 @@ double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
 	break;
     case M_DF:
 	x = (double) pmod->dfd;
+	break;
+    case M_NCOEFF:
+	x = (double) pmod->ncoeff; /* is this always available? */
 	break;
     case M_T:
 	x = (double) pmod->nobs;

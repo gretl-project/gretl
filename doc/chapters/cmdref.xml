@@ -41,7 +41,7 @@
 
       <listitem>
 	<para>
-	  <literal>The construction [</literal> <replaceable>arg</replaceable>
+	  The construction <literal>[</literal> <replaceable>arg</replaceable>
 	  <literal>]</literal> means that the argument
 	  <replaceable>arg</replaceable> is optional: you may supply it or not
 	  (but in any case don't type the brackets).
