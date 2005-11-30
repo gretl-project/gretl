@@ -34,8 +34,6 @@
 static int translated_helpfile = -1;
 static char *en_gui_helpfile;
 static char *en_cli_helpfile;
-static int en_gui_help_length;
-static int en_cli_help_length;
 
 /* helpfile stuff */
 struct help_head_t {
@@ -46,7 +44,6 @@ struct help_head_t {
     int ntopics;
 };
 
-static int gui_help_length, cli_help_length;
 static struct help_head_t **cli_heads, **gui_heads;
 static struct help_head_t **en_cli_heads, **en_gui_heads;
 
@@ -58,7 +55,6 @@ static void find_in_text (GtkWidget *widget, gpointer data);
 static void find_in_listbox (GtkWidget *widget, gpointer data);
 static void find_string_dialog (void (*findfunc)(), gpointer data);
 #ifdef OLD_GTK
-static void find_in_help (GtkWidget *widget, gpointer data);
 static int clist_start_row;
 #endif
 
@@ -250,6 +246,7 @@ static int add_help_heading (struct help_head_t ***pheads,
     if (heads == NULL) return 1;
 
     heads[nh] = malloc(sizeof **heads);
+
     if (heads[nh] != NULL) {
 	heads[nh]->name = malloc(strlen(str) + 1);
 	if (heads[nh]->name != NULL) {
@@ -306,80 +303,63 @@ static int allocate_heads_info (struct help_head_t **heads, int nh, int gui)
     return err;
 }
 
-static int add_topic_to_heading (struct help_head_t **heads, int i,
-				 const char *word, int pos)
+char *quoted_help_string (const char *s)
 {
-    int n = gretl_command_number(word);
-    int m = heads[i]->ntopics;
+    const char *p, *q;
 
-    if (n <= 0) {
-	n = extra_command_number(word);
-    }
+    p = strchr(s, '"');
+    q = strrchr(s, '"');
 
-    if (n > 0) {
-	heads[i]->topics[m] = n;
-    } else {
-	return 1;
-    }
-
-    heads[i]->pos[m] = pos - 1;
-    heads[i]->ntopics += 1;
-
-#if HDEBUG
-    fprintf(stderr, "add_topic_to_hdg: word='%s', heads[%d].topics[%d]=%d, ",
-	    word, i, m, n);
-    fprintf(stderr, "heads[%d].pos[%d]=%d\n", i, m, heads[i]->pos[m]);
-#endif
-
-    return 0;
-}
-
-char *quoted_help_string (char *str)
-{
-    char *p, *q;
-
-    p = strchr(str, '"');
-    q = strrchr(str, '"');
-
-    if (p != NULL && q != NULL && q != p) {
-	*q = 0;
-	return g_strdup(p + 1);
+    if (p != NULL && q != NULL && q - p > 1) {
+	p++;
+	return g_strndup(p, q - p);
     }
 
     return g_strdup("Missing string");
 }
 
-static int new_add_topic_to_heading (struct help_head_t **heads, 
-				     int nh, char *str, int pos)
+static int add_topic_to_heading (struct help_head_t **heads, 
+				 int nh, char *s, int pos, 
+				 int gui)
 {
     char word[32], section[32];
     int n, m, nt;
 
-    if (sscanf(str + 1, "%31s %31s", word, section) != 2) {
+    if (sscanf(s + 1, "%31s %31s", word, section) != 2) {
 	return 1;
     }
+
+    if (!strcmp(section, "Obsolete")) {
+	return 0;
+    }
+
+#if HDEBUG
+    fprintf(stderr, "add_topic_to_heading: '%s' (%s), pos=%d\n", 
+	    word, section, pos);
+#endif
 
     m = match_heading(heads, nh, section);
     nt = heads[m]->ntopics;
 
     n = gretl_command_number(word);
-
     if (n <= 0) {
 	n = extra_command_number(word);
     }
 
     if (n > 0) {
-	(heads[m])->topics[nt] = n;
+	heads[m]->topics[nt] = n;
     } else {
 	return 1;
     }
 
-    (heads[m])->topicnames[nt] = quoted_help_string(str);
-#if HDEBUG
-    fprintf(stderr, "Set (heads[%d])->topicnames[%d] = \n"
-	    "  quoted_help_string(%s) = '%s'\n",
-	    m, nt, str, heads[m]->topicnames[nt]);
+    if (gui) {
+	heads[m]->topicnames[nt] = quoted_help_string(s);
+#if HDEBUG > 1
+	fprintf(stderr, "Set heads[%d]->topicnames[%d] = \n"
+		"  quoted_help_string(%s) = '%s'\n",
+		m, nt, s, heads[m]->topicnames[nt]);
 #endif
+    }
 
     heads[m]->pos[nt] = pos;
     heads[m]->ntopics += 1;
@@ -390,86 +370,44 @@ static int new_add_topic_to_heading (struct help_head_t **heads,
 static int assemble_topic_list (struct help_head_t **heads, int nh,
 				int gui, FILE *fp)
 {
-    char test[256], word[32];
+    char test[256];
     int pos = 0;
-    int match, topic = 0;
 
-    if (gui) {
-	pos = -2;
-	while (fgets(test, sizeof test, fp)) {
-	    if (*test == '#') {
-		new_add_topic_to_heading(heads, nh, test, pos);
-		pos += 2;
-	    } else {
-		pos++;
-	    }
-	}
-    } else {
-	while (fgets(test, sizeof test, fp)) {
-	    if (topic == 1) {
-		sscanf(test, "%31s", word);
-	    }
+#if HDEBUG
+    fprintf(stderr, "\n*** starting assemble_topic_list\n");
+#endif
 
-	    if (*test == '@') {
-		chopstr(test);
-		if (!strcmp(test, "@Obsolete")) continue;
-		match = match_heading(heads, nh, test + 1);
-		if (match >= 0) {
-		    add_topic_to_heading(heads, match, word, pos);
-		}
-	    } else {
-		pos++;
-	    }
-
-	    if (*test == '#') topic = 1;
-	    else topic = 0;
-	}
+    while (fgets(test, sizeof test, fp)) {
+	if (*test == '#') {
+	    add_topic_to_heading(heads, nh, test, pos, gui);
+	} 
+	pos += strlen(test);
     }
 
     return 0;
 }
 
 static int 
-get_help_length (struct help_head_t ***pheads, int *pnh, int *length,
-		 int gui, FILE *fp)
+get_help_topics (struct help_head_t ***pheads, int *pnh, FILE *fp)
 {
     char test[256], section[16];    
-    int len = 0, nh = 0;
+    int nh = 0;
     int match, err = 0;
 
-    if (gui) {
-	while (!err && fgets(test, sizeof test, fp)) {
-	    if (*test == '#') {
-		len += 2;
-		sscanf(test + 1, "%*s %15s", section);
+    while (!err && fgets(test, sizeof test, fp)) {
+	if (*test == '#') {
+	    sscanf(test + 1, "%*s %15s", section);
+	    if (strcmp(section, "Obsolete")) {
 		match = match_heading(*pheads, nh, section);
 		if (match >= 0) {
-		    ((*pheads)[match])->ntopics += 1;
+		    (*pheads)[match]->ntopics += 1;
 		} else {
 		    err = add_help_heading(pheads, &nh, section);
 		}
-	    } else {
-		len++;
 	    }
-	}
-    } else {
-	while (!err && fgets(test, sizeof test, fp)) {
-	    if (*test == '@') {
-		chopstr(test);
-		if (!strcmp(test, "@Obsolete")) continue;
-		match = match_heading(*pheads, nh, test + 1);
-		if (match >= 0) {
-		    ((*pheads)[match])->ntopics += 1;
-		} else {
-		    err = add_help_heading(pheads, &nh, test + 1);
-		} 
-	    } else {
-		len++;
-	    }
-	}
+	} 
     }
 
-    *length = len;
     *pnh = nh;
 
     return err;
@@ -480,7 +418,7 @@ static int real_helpfile_init (int gui, int en)
     struct help_head_t **heads = NULL;
     char *helpfile;
     FILE *fp;
-    int length, nh = 0;
+    int nh = 0;
     int err = 0;
 
     if (en) {
@@ -489,17 +427,23 @@ static int real_helpfile_init (int gui, int en)
 	helpfile = (gui)? paths.helpfile : paths.cmd_helpfile;
     }
 
+#if HDEBUG
+    fprintf(stderr, "\n*** real_helpfile_init: gui = %d, en = %d\n"
+	    " helpfile = '%s'\n", gui, en, helpfile);
+    fflush(stderr);
+#endif
+
     fp = gretl_fopen(helpfile, "r");
     if (fp == NULL) {
 	fprintf(stderr, I_("help file %s is not accessible\n"), helpfile);
-	return -1;
+	return 1;
     }
 
-    /* first pass: find length and number of topics */
-    err = get_help_length(&heads, &nh, &length, gui, fp);
+    /* first pass: find number of topics */
+    err = get_help_topics(&heads, &nh, fp);
 
 #if HDEBUG
-    fprintf(stderr, "got help length = %d, nh = %d\n", length, nh);
+    fprintf(stderr, "real_helpfile_init: found %d headings\n", nh);
 #endif
 
     if (!err) {
@@ -508,8 +452,12 @@ static int real_helpfile_init (int gui, int en)
 
     if (err) {
 	fclose(fp);
-	return -1;
+	return err;
     }
+
+#if HDEBUG
+    fprintf(stderr, "real_helpfile_init: done allocate_heads_info\n");
+#endif
 
     /* second pass, assemble the topic list */
     rewind(fp);
@@ -530,7 +478,7 @@ static int real_helpfile_init (int gui, int en)
 	}
     }
 
-    return length;
+    return err;
 }
 
 void helpfile_init (void)
@@ -539,12 +487,12 @@ void helpfile_init (void)
 	set_translated_helpfile();
     }
 
-    cli_help_length = real_helpfile_init(0, 0);
-    gui_help_length = real_helpfile_init(1, 0);
+    real_helpfile_init(0, 0);
+    real_helpfile_init(1, 0);
 
     if (translated_helpfile == 1) { 
-	en_cli_help_length = real_helpfile_init(0, 1);
-	en_gui_help_length = real_helpfile_init(1, 1);
+	real_helpfile_init(0, 1);
+	real_helpfile_init(1, 1);
     }
 }
 
@@ -657,8 +605,8 @@ static void en_help_callback (gpointer p, int cli, GtkWidget *w)
 
     if (cli) {
 	pos = cli_pos_from_cmd(hc, 1);
-	if (pos <= 0) {
-	    pos = 1;
+	if (pos < 0) {
+	    pos = 0;
 	}
     } else {
 	pos = gui_pos_from_cmd(hc, 1);
@@ -839,6 +787,11 @@ void context_help (GtkWidget *widget, gpointer data)
 	pos = gui_pos_from_cmd(hcode, en);
     }
 
+#if HDEBUG
+    fprintf(stderr, "context_help: hcode=%d, pos=%d, en=%d\n", 
+	    hcode, pos, en);
+#endif
+
     real_do_help(hcode, pos, 0, en);
 }
 
@@ -922,9 +875,10 @@ static void real_do_help (int hcode, int pos, int cli, int en)
 
 void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
 {
-    /* pos = 1 gives index of commands */
-    int pos = 1;
+    /* pos = 0 gives index of commands */
+    int pos = 0;
     int en = 0;
+    int cli = 1;
 
     if (w == NULL && p != NULL) {
 	en = GPOINTER_TO_INT(p);
@@ -938,7 +892,7 @@ void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
 	}
     }
 
-    real_do_help(cmdnum, pos, 1, en);
+    real_do_help(cmdnum, pos, cli, en);
 } 
 
 #ifndef OLD_GTK
@@ -1056,11 +1010,7 @@ void menu_find (gpointer data, guint db, GtkWidget *widget)
     if (db) {
 	find_string_dialog(find_in_listbox, data);
     } else {
-#ifndef OLD_GTK
 	find_string_dialog(find_in_text, data);
-#else
-	find_string_dialog(find_in_help, data);
-#endif
     }
 }
 
@@ -1111,59 +1061,6 @@ static int is_all_lower (const char *s)
     }
 
     return ret;
-}
-
-static void find_in_help (GtkWidget *widget, gpointer data)
-{
-    int found = 0, i, linecount = 0;
-    int help_length = 1000;
-    char *haystack;
-    windata_t *vwin = 
-	(windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
-
-    haystack = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0,
-	gtk_text_get_length(GTK_TEXT(vwin->w)));
-
-    if (vwin->role == CLI_HELP) {
-	help_length = cli_help_length;
-    } else if (vwin->role == GUI_HELP) {
-	help_length = gui_help_length;
-    } else if (vwin->role == CLI_HELP_EN) {
-	help_length = en_cli_help_length;
-    } else if (vwin->role == GUI_HELP_EN) {
-	help_length = en_gui_help_length;
-    }
-
-    if (needle) g_free(needle);
-
-    needle = gtk_editable_get_chars(GTK_EDITABLE (find_entry), 0, -1);
-    found = GTK_EDITABLE(vwin->w)->selection_end_pos;
-
-    if (is_all_lower(needle)) {
-	lower(haystack);
-    }
-
-    found = look_for_string(haystack, needle, found);
-
-    if (found >= 0) {
-	gtk_text_freeze(GTK_TEXT(vwin->w));
-        gtk_text_set_point (GTK_TEXT(vwin->w), found);
-        gtk_text_insert (GTK_TEXT(vwin->w), NULL, NULL, NULL, " ", 1);
-        gtk_text_backward_delete (GTK_TEXT(vwin->w), 1);
-	gtk_text_thaw(GTK_TEXT(vwin->w));
-        gtk_editable_select_region (GTK_EDITABLE(vwin->w), 
-				    found, found + strlen(needle));
-	for (i=0; i<found; i++) {
-	    if (haystack[i] == '\n') linecount++;
-	}
-	gtk_adjustment_set_value(GTK_TEXT(vwin->w)->vadj, 
-				 (gfloat) (linecount - 2) *
-				 GTK_TEXT(vwin->w)->vadj->upper / help_length);
-    } else {
-	infobox(_("String was not found."));
-    }
-
-    g_free(haystack);
 }
 
 static void find_in_text (GtkWidget *widget, gpointer data)
@@ -1539,17 +1436,7 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 
 void text_find_callback (GtkWidget *w, gpointer data)
 {
-#ifdef OLD_GTK
-    windata_t *vwin = (windata_t *) data;
-
-    if (help_role(vwin->role)) {
-	find_string_dialog(find_in_help, data);
-    } else {
-	find_string_dialog(find_in_text, data);
-    }
-#else
     find_string_dialog(find_in_text, data);
-#endif
 }
 
 #ifdef OLD_GTK

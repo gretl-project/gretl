@@ -2510,6 +2510,8 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 		     G_CALLBACK(delete_file_viewer), vwin);
     gtk_widget_show(close);
 
+    /* grab content of the appropriate help file into a buffer
+       and stick it onto vwin as data */
     g_file_get_contents(filename, &fbuf, NULL, NULL);
     vwin->data = fbuf;
 
@@ -2532,10 +2534,6 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
-
-#ifndef OLD_GTK
-    cursor_to_top(vwin); /* ? */
-#endif
 
     gtk_widget_grab_focus(vwin->w);
 

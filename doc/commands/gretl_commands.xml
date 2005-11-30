@@ -3629,7 +3629,7 @@
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inverse * (p - q))"
           graphic="mahal"/>where 
-	<equation status="inline" tex="$(p-q)$" ascii="(p - q)"/> is a
+	<equation status="inline" tex="$(p-q)$" ascii="(p - q)" graphic="mahal2"/> is a
 	<mathvar>k</mathvar>-vector. This reduces to Euclidean
 	distance if the covariance matrix is the identity
 	matrix.</para>

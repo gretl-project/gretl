@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.4.90\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-11-29 11:58-0500\n"
-"PO-Revision-Date: 2005-11-29 12:05-0500\n"
+"PO-Revision-Date: 2005-11-30 13:19-0500\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team:  Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -2402,7 +2402,7 @@ msgstr "gretlgui.hlp.es"
 
 #: lib/src/gretl_paths.c:821
 msgid "gretlcmd.hlp"
-msgstr "gretlgui.hlp.es"
+msgstr "gretlcmd.hlp.es"
 
 #: lib/src/gretl_paths.c:824
 msgid "gretlcli.hlp"

@@ -32,10 +32,7 @@
 </xsl:template>
 
 <xsl:template match="commandlist">
-  <xsl:if test="$hlp='gui'">
-    <xsl:text>@new-style gretl.hlp&#10;</xsl:text>     
-  </xsl:if>
-<xsl:apply-templates/> 
+  <xsl:apply-templates/> 
 </xsl:template>
 
 <xsl:template match="command">
@@ -43,26 +40,16 @@
   <xsl:if test="position() > 1">
     <xsl:call-template name="nl"/>
   </xsl:if>
-  <xsl:choose>
-    <xsl:when test="$hlp='gui'">
-      <xsl:text># </xsl:text>
-      <xsl:value-of select="@name"/>
-      <xsl:text> </xsl:text>
-      <xsl:value-of select="@section"/>
-      <xsl:text> "</xsl:text>
-      <xsl:value-of select="@label"/>
-      <xsl:text>"&#10;</xsl:text>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:text>#&#10;</xsl:text>
-      <xsl:value-of select="@name"/>
-      <xsl:text>&#10;@</xsl:text>
-      <xsl:value-of select="@section"/>
-      <xsl:if test="not(usage)">
-        <xsl:call-template name="nl"/>
-      </xsl:if>
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:text># </xsl:text>
+  <xsl:value-of select="@name"/>
+  <xsl:text> </xsl:text>
+  <xsl:value-of select="@section"/>
+  <xsl:if test="$hlp='gui'">
+    <xsl:text> "</xsl:text>
+    <xsl:value-of select="@label"/>
+    <xsl:text>"</xsl:text>
+  </xsl:if>
+  <xsl:text>&#10;</xsl:text>
   <xsl:apply-templates/>
   <xsl:call-template name="dnl"/>
   <xsl:if test="(not(@context) and $hlp='gui')">

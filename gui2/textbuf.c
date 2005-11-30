@@ -735,22 +735,6 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     }
 }
 
-#if 0
-static void old_cmdref_title_page (GtkTextBuffer *tbuf)
-{
-    const char *h1 = N_("Gretl Command Reference");
-    const char *h2 = N_("Please select from the Topics list");
-    GtkTextIter iter;
-
-    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);	
-
-    gtk_text_buffer_insert(tbuf, &iter, "\n\n   ", -1);
-    gtk_text_buffer_insert(tbuf, &iter, _(h1), -1);
-    gtk_text_buffer_insert(tbuf, &iter, "\n\n   ", -1);
-    gtk_text_buffer_insert(tbuf, &iter, _(h2), -1);
-}
-#endif
-
 static gint help_popup_click (GtkWidget *w, gpointer p)
 {
     windata_t *hwin = (windata_t *) p;
@@ -847,80 +831,71 @@ insert_line_with_xrefs (GtkTextBuffer *tbuf, GtkTextIter *iter,
     gtk_text_buffer_insert(tbuf, iter, s, -1);
 }
 
+/* pull the appropriate chunk of help text out of the buffer attached
+   to the help viewer and display it */
+
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter iter;
     char line[256];
-    gchar *hbuf = (gchar *) hwin->data;
-    int nl = gui_help(hwin->role)? -2 : 0;
+    gchar *hbuf;
 
     tbuf = gretl_text_buf_new();
 
-    if (pos == 1) {
+    if (pos == 0) {
 	/* cli help with no topic selected */
 	cmdref_title_page(hwin, tbuf, en);
+	cursor_to_top(hwin);
 	hwin->active_var = 0;
 	return;
     }
-
+    
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+
+    hbuf = (gchar *) hwin->data + pos;
     bufgets_init(hbuf);
+    bufgets(line, sizeof line, hbuf);
+
+    if (gui_help(hwin->role)) {
+	/* topic heading: descriptive string */
+	gchar *p = quoted_help_string(line);
+
+	gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+						 p, -1,
+						 "redtext", NULL);
+	free(p);
+    } else {
+	/* topic heading: plain command word */
+	char hword[9];
+
+	sscanf(line + 2, "%8s", hword);
+	gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+						 hword, -1,
+						 "redtext", NULL);
+    }
+
+    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
 
     while (bufgets(line, sizeof line, hbuf)) {
 	if (*line == '#') {
-	    if (gui_help(hwin->role)) {
-		nl += 2;
-	    } else {
-		bufgets(line, sizeof line, hbuf);
-		nl++;
-	    } 
-	} else {
-	    nl++;
-	}
-
-	if (nl == pos) {
-	    if (gui_help(hwin->role)) {
-		gchar *p;
-
-		bufgets(line, sizeof line, hbuf);
-		p = quoted_help_string(line);
-		gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
-							 p, -1,
-							 "redtext", NULL);
-		free(p);
-	    } else {
-		char hword[9];
-
-		sscanf(line, "%8s", hword);
-		gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
-							 hword, -1,
-							 "redtext", NULL);
-	    }
-
-	    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
-
-	    while (bufgets(line, sizeof line, hbuf)) {
-		if (*line == '@') {
-		    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
-		} else if (*line == '#') {
-		    break;
-		} else {
-		    if (gui_help(hwin->role)) {
-			gtk_text_buffer_insert(tbuf, &iter, line, -1);
-		    } else {
-			insert_line_with_xrefs(tbuf, &iter, line);
-		    }
-		    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
-		}
-	    }
+	    /* reached the next topic */
 	    break;
+	} else {
+	    if (gui_help(hwin->role)) {
+		gtk_text_buffer_insert(tbuf, &iter, line, -1);
+	    } else {
+		insert_line_with_xrefs(tbuf, &iter, line);
+	    }
+	    /* bufgets strips newlines */
+	    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
 	}
     }
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
     g_object_set_data(G_OBJECT(hwin->w), "backpage", 
 		      GINT_TO_POINTER(hwin->active_var));
+    cursor_to_top(hwin);
     hwin->active_var = hcode;
 }
 

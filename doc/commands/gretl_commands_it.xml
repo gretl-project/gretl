@@ -3557,7 +3557,7 @@
         tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inversa * (p - q))"
           graphic="mahal"/> dove
-       <equation status="inline" tex="$(p-q)$" ascii="(p - q)"/> è un
+       <equation status="inline" tex="$(p-q)$" ascii="(p - q)" graphic="mahal2"/> è un
        vettore a <mathvar>k</mathvar> dimensioni. Se la matrice di covarianza è
        la matrice identità, la distanza di Mahalanobis corrisponde alla distanza
        Euclidea.
@@ -3764,6 +3764,7 @@
       <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset e assegnargli un
         valore iniziale; è possibile farlo nel modo seguente con il comando genr:
       <lit>genr p = 0.5</lit>.
+	</para>
 
       <para>Quindi costruiamo il blocco di comandi per la stima di massima
       verosimiglianza:</para>
@@ -5234,7 +5235,7 @@
         nuove variabili. Ad esempio, data la variabile <lit>v1</lit> nella
 	<repl>lista-variabili</repl> e i valori <lit>r1</lit> e
 	<lit>r2</lit> nella <repl>lista-rho</repl>, viene creata
-        <code>v1# = v1 - r1*v1(-1) - r2*v1(-2)</code> I valori nella
+        <lit>v1# = v1 - r1*v1(-1) - r2*v1(-2)</lit>. I valori nella
 	<repl>lista-rho</repl> possono essere specificati sotto forma di
         valori numerici o di nomi di variabili definite in precedenza.
       </para>

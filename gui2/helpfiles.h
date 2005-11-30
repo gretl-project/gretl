@@ -37,7 +37,7 @@ void menu_find (gpointer data, guint dbfind, GtkWidget *widget);
 
 void text_find_callback (GtkWidget *w, gpointer data);
 
-char *quoted_help_string (char *str);
+char *quoted_help_string (const char *s);
 
 void gretl_tooltips_init (void);
 

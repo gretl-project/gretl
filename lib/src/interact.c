@@ -1692,6 +1692,7 @@ static void nl_strip (char *line)
 int help (const char *cmdword, const char *helpfile, PRN *prn)
 {
     FILE *fp;
+    char word[9];
     char line[128];
     int i, j, ok;
 
@@ -1731,18 +1732,18 @@ int help (const char *cmdword, const char *helpfile, PRN *prn)
 
     ok = 0;
     while (fgets(line, sizeof line, fp) != NULL) {
-	nl_strip(line);
-	if (!strcmp(cmdword, line)) {
+	if (*line != '#') {
+	    continue;
+	}
+	sscanf(line + 2, "%8s", word);
+	if (!strcmp(cmdword, word)) {
 	    ok = 1;
-	    pputc(prn, '\n');
-	    while (fgets(line, MAXLEN, fp)) {
+	    pprintf(prn, "\n%s\n", word);
+	    while (fgets(line, sizeof line, fp)) {
 		if (*line == '#') {
 		    break;
 		}
-		nl_strip(line);
-		if (*line != '@') {
-		    pprintf(prn, "%s\n", line);
-		}		
+		pputs(prn, line);
 	    }
 	    break;
 	}
