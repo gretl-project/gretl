@@ -102,7 +102,7 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
     /* make "full" DocBook XML output */
     if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK) {
 	full_fname("gretlman.xsl", docdir, styname);
-	style = xsltParseStylesheetFile(styname);
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
 	if (style == NULL) {
 	    err = 1;
 	} else {
@@ -127,7 +127,7 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
     /* make plain text "hlp" output */
     if (output == OUTPUT_ALL || output == OUTPUT_HLP) {
 	full_fname("gretltxt.xsl", docdir, styname);
-	style = xsltParseStylesheetFile(styname);
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
 	if (style == NULL) {
 	    err = 1;
 	} else {
@@ -231,7 +231,7 @@ int parse_commands_data (const char *fname, int output,
 	goto bailout;
     }
 
-    tmp = xmlGetProp(cur, (UTF) "language");
+    tmp = (char *) xmlGetProp(cur, (UTF) "language");
     if (tmp != NULL) {
 	get_abbreviated_lang(lang, tmp);
 	free(tmp);

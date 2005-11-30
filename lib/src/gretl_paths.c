@@ -728,18 +728,10 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	if (opt & OPT_N) {
 	    /* force english */
 	    sprintf(ppaths->helpfile, "%sgretlgui_hlp.txt", ppaths->gretldir);
-#ifdef USE_GTK2
 	    sprintf(ppaths->cmd_helpfile, "%sgretlcmd_hlp.txt", ppaths->gretldir);
-#else
-	    sprintf(ppaths->cmd_helpfile, "%sgretlcli_hlp.txt", ppaths->gretldir);
-#endif
 	} else {
 	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlgui_hlp.txt"));
-#ifdef USE_GTK2
 	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcmd_hlp.txt"));
-#else
-	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
-#endif
 	}
     } else { 
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
@@ -815,10 +807,18 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	if (opt & OPT_N) {
 	    /* force english */
 	    sprintf(ppaths->helpfile, "%sgretlgui.hlp", ppaths->gretldir);
+#ifdef USE_GTK2
 	    sprintf(ppaths->cmd_helpfile, "%sgretlcmd.hlp", ppaths->gretldir);
+#else
+	    sprintf(ppaths->cmd_helpfile, "%sgretlcli.hlp", ppaths->gretldir);
+#endif
 	} else {
 	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlgui.hlp"));
+#ifdef USE_GTK2
 	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcmd.hlp"));
+#else
+	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
+#endif
 	}
     } else {
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
