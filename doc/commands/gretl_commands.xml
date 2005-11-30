@@ -5335,10 +5335,11 @@
 	variables. Given variable <lit>v1</lit> in
 	<repl>varlist</repl>, and entries <lit>r1</lit> and
 	<lit>r2</lit> in <repl>rholist</repl>, the new variable
-	<lit>v1# = v1 - r1*v1(-1) - r2*v1(-2)</lit>
-	is created. The <repl>rholist</repl> entries can be given as
-	numerical values or as the names of variables previously
-	defined.
+      </para>
+      <code>v1# = v1 - r1*v1(-1) - r2*v1(-2)</code>
+      <para>
+	is created. The <repl>rholist</repl> entries can be given as numerical
+	values or as the names of variables previously defined.
       </para>
     </description>
 
