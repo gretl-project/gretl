@@ -2016,7 +2016,11 @@
 	    <row> 
 	      <cell><lit>$df</lit></cell>
 	      <cell>gradi di libertà</cell> 
-	    </row> 
+	    </row>
+            <row>
+              <cell><lit>$ncoeff</lit></cell>
+              <cell>numero dei coefficienti stimati</cell>
+            </row>
 	    <row>
 	      <cell><lit>$trsq</lit></cell>
 	      <cell><emphasis>TR</emphasis>-quadro (ampiezza del campione
@@ -3692,20 +3696,21 @@
 
     <description context="gui">
 
-      <para>Esegue la stima di massima verosimiglianza (ML, Performs Maximum
+      <para>Esegue la stima di massima verosimiglianza (ML, Maximum
         Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno).
         Occorre specificare la funzione di log-verosimiglianza, e se possibile è
         consigliabile indicare anche espressioni per le derivate di questa
         funzione, rispetto ad ognuno dei parametri.
       </para>
 
-      <para>Esempio: si supponga di avere una serie X con valori 0 o 1 e di
-        voler ottenere la stima di massima verosimiglianza della probabilità p
-        che X valga 1 (è semplice intuire che la stima ML di p
+      <para>
+        Esempio: si supponga di avere una serie <lit>X</lit> con valori 0 o 1 e di
+        voler ottenere la stima di massima verosimiglianza della probabilità <lit>p</lit> 
+        che <lit>X</lit> valga 1 (è semplice intuire che la stima ML di <lit>p</lit>
         corrisponderà alla proporzione dei valori 1 nel campione).
       </para>
 
-      <para>Occorre per prima cosa aggiungere p al dataset e assegnargli un
+      <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset e assegnargli un
         valore iniziale, attraverso il comando genr o i comandi del menù.
 	È possibile scrivere delle istruzioni <quote>genr</quote> appropriate
         nella finestra di specificazione del comando di stima, prima di indicare
@@ -3739,18 +3744,7 @@
 
     <description context="cli">
 
-      <para>
-	Performs Maximum Likelihood (ML) estimation using the BFGS
-	(Broyden, Fletcher, Goldfarb, Shanno) algorithm. The user must
-	specify the log-verosimiglianza function.  The parameters of this
-	function must be declared and given starting values (using the
-	<cmd>genr</cmd> command) prior to estimation.  Optionally, the
-	user may specify the derivatives of the log-verosimiglianza
-	function with respect to each of the parameters; if analytical
-	derivatives are not supplied, a numerical approximation is
-	computed.
-      </para>
-      <para>Esegue la stima di massima verosimiglianza (ML, Performs Maximum
+      <para>Esegue la stima di massima verosimiglianza (ML, Maximum
         Likelihood) usando l'algoritmo BFGS (Broyden, Fletcher, Goldfarb, Shanno).
         Occorre specificare la funzione di log-verosimiglianza e indicare dei
         valori iniziali per i parametri della funzione (utilizzando il comando
@@ -3760,20 +3754,16 @@
         un'approssimazione numerica.
       </para>
 
-      <para>Ecco un semplice esempio: supponiamo di avere una serie X con
-       valori 0 e 1, e di voler ottenere la stima di massima verosimiglianza della
-       probabilità, p, che valga X=1. In questo caso sappiamo già che la stima
-       di massima verosimiglianza di p sarà semplicemente pari alla proporzione
-       di osservazioni di X=1 nel campione.
+      <para>
+        Esempio: si supponga di avere una serie <lit>X</lit> con valori 0 o 1 e di
+        voler ottenere la stima di massima verosimiglianza della probabilità <lit>p</lit> 
+        che <lit>X</lit> valga 1 (è semplice intuire che la stima ML di <lit>p</lit>
+        corrisponderà alla proporzione dei valori 1 nel campione).
       </para>
 
-      <para>Per prima cosa occorre aggiungere il parametro p al dataset e
-      assegnargli un valore iniziale; è possibile farlo con il comando genr:
-      </para>
-
-      <code>
-       genr p = 0.5
-      </code>
+      <para>Occorre per prima cosa aggiungere <lit>p</lit> al dataset e assegnargli un
+        valore iniziale; è possibile farlo nel modo seguente con il comando genr:
+      <lit>genr p = 0.5</lit>.
 
       <para>Quindi costruiamo il blocco di comandi per la stima di massima
       verosimiglianza:</para>
@@ -3786,14 +3776,14 @@
 
       <para>
         La prima riga specifica la funzione di log-verosimiglianza: inizia con
-        la parola chiave <quote>mle</quote>, quindi contiene la variabile
+        la parola chiave <lit>mle</lit>, quindi contiene la variabile
         dipendente e una specificazione per la log-verosimiglianza usando la
         stessa sintassi del comando <cmd>genr</cmd>. La riga seguente (che è
-        opzionale), inizia con la parola chiave <quote>deriv</quote> e fornisce
+        opzionale), inizia con la parola chiave <lit>deriv</lit> e fornisce
         la derivata della funzione di log-verosimiglianza rispetto al parametro
         <lit>p</lit>. Se non vengono indicate derivate, occorre includere una
         dichiarazione che identifica i parametri liberi (separati da spazi)
-        utilizzando la parola chiave <quote>params</quote>. Ad esempio si
+        utilizzando la parola chiave <lit>params</lit>. Ad esempio si
         sarebbe potuto scrivere:
       </para>
       <code>
