@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.90\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-11-21 22:03-0500\n"
-"PO-Revision-Date: 2005-11-30 20:00+0100\n"
+"PO-Revision-Date: 2005-12-01 22:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -10479,7 +10479,7 @@ msgstr "Ograniczony trend"
 
 #: gui2/selector.c:2335
 msgid "Unrestricted trend"
-msgstr "Niograniczony trend"
+msgstr "Nieograniczony trend"
 
 #: gui2/selector.c:2453
 msgid "plot with impulses"
