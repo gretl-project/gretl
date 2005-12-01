@@ -1666,15 +1666,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     return cmd->errcode;
 }
 
-static void nl_strip (char *line)
-{
-    int n = strlen(line);
-
-    if (n > 0 && line[n-1] == '\n') {
-	line[n-1] = 0;
-    }
-}
-
 /**
  * help:
  * @cmdword: the command on which help is wanted.
