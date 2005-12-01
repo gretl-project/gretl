@@ -814,6 +814,28 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
+#if 0
+enum {
+    INSERT_XREF = 1,
+    INSERT_FIG
+};
+
+static int line_special (const char *s, const char **p)
+{
+    *p = strchr(s, '<');
+
+    if (*p != NULL) {
+	if (!strncmp(*p, "<reftarg=", 9)) {
+	    return INSERT_XREF;
+	} else if (!strncmp(*p, "<fig=", 4)) {
+	    return INSERT_FIG;
+	}
+    }
+
+    return 0;
+}
+#endif
+
 static void
 insert_line_with_xrefs (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			const char *s)
