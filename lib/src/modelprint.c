@@ -1222,9 +1222,15 @@ static void print_sargan_test (const MODEL *tmod, PRN *prn)
 
     if (df) {
 	double x = gretl_model_get_double(tmod, "SarganTest");
-	double pval = chisq(x, df);
 
-	pprintf(prn, "  Sargan test = %g (%d df, p-value = %g)\n", x, df, pval);
+	pprintf(prn, "  Sargan over-identification test = %g (%d df, p-value = %g)\n", 
+		x, df, chisq(x, df));
+#if 0
+        pprintf(prn, "  %s:\n", _("Sargan over-identification test"));
+        pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
+                df, x, _("with p-value"), chisq(x, df));
+        pputc(prn, '\n');
+#endif
     }
 }
 

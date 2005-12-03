@@ -2257,15 +2257,14 @@ tsls_sargan_test (MODEL *tsls_model, int *s1list, double ***pZ, DATAINFO *pdinfo
 /* below: work in progress!! */
 
 static void 
-tsls_redundancy_check (int *s1list, int *s2list, MODEL *pmod, int *prank)
+tsls_redundancy_check (int *s1list, int *s2list, int *reglist,
+		       MODEL *pmod, int *prank)
 {
     int dropped = s1list[0] - pmod->list[0];
 
     if (dropped > 0) {
 	int *dlist;
 	int i, pos;
-
-	printlist(s1list, "original s1list");
 
 	/* get the list of redundant instruments */
 	dlist = gretl_list_diff_new(s1list, pmod->list);
@@ -2274,17 +2273,16 @@ tsls_redundancy_check (int *s1list, int *s2list, MODEL *pmod, int *prank)
 	    return;
 	}
 
-	printlist(dlist, "list of redundant instruments");
-	printlist(s2list, "original s2list");
-
-	/* remove these vars from stage 2 list, if present */
+	/* remove these vars from stage 2 list, and from original
+	   reglist, if present */
 	for (i=1; i<=dlist[0]; i++) {
 	    if ((pos = in_gretl_list(s2list, dlist[i]))) {
 		gretl_list_delete_at_pos(s2list, pos);
 	    }
+	    if ((pos = in_gretl_list(reglist, dlist[i]))) {
+		gretl_list_delete_at_pos(reglist, pos);
+	    }	    
 	}
-
-	printlist(s2list, "new s2list");
 
 	free(dlist);
 
@@ -2303,7 +2301,6 @@ tsls_redundancy_check (int *s1list, int *s2list, MODEL *pmod, int *prank)
 	    for (i=0; i<=pmod->list[0]; i++) {
 		s1list[i] = pmod->list[i];
 	    }
-	    printlist(s1list, "new s1list");
 	}
     }
 }
@@ -2462,7 +2459,8 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	/* check to see if any redundant regressors have been
 	   dropped? */
 	if (i == 1) {
-	    tsls_redundancy_check(s1list, s2list, &tsls, &OverIdRank);
+	    tsls_redundancy_check(s1list, s2list, reglist, 
+				  &tsls, &OverIdRank);
 	    if (tsls.errcode) {
 		goto tsls_bailout;
 	    }	    
@@ -2492,11 +2490,6 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_NONE, 0.0);
     if (tsls.errcode) {
 	goto tsls_bailout;
-    }
-
-    /* transcribe final model list in case of any changes */
-    for (i=0; i<tsls.list[0]; i++) {
-	s2list[i] = tsls.list[i];
     }
 
     /* special: we need to use the original RHS vars to compute
@@ -2533,7 +2526,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	int nxpx = tsls.ncoeff * (tsls.ncoeff + 1) / 2;
 
 	xpx = malloc(nxpx * sizeof *xpx);
-	xpy = malloc((s2list[0] + 1) * sizeof *xpy);
+	xpy = malloc((tsls.list[0] + 1) * sizeof *xpy);
 	diag = malloc(tsls.ncoeff * sizeof *diag);
 
 	if (xpy == NULL || xpx == NULL || diag == NULL) {
