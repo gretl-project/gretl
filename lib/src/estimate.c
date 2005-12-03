@@ -2177,7 +2177,7 @@ static int
 tsls_make_replist (const int *reglist, int *instlist, int *replist)
 {
     int i, j, k = 0;
-    int endog, fixup = 0;
+    int endog, addconst = 0;
 
     for (i=2; i<=reglist[0]; i++) {  
 	endog = 1;
@@ -2189,7 +2189,7 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
 	}
 	if (reglist[i] == 0 && endog) {
 	    /* const is in reglist but not instlist: needs fixing */
-	    fixup = 1;
+	    addconst = 1;
 	} else if (endog) {
 	    replist[++k] = reglist[i];
 	} 
@@ -2197,8 +2197,8 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
 
     replist[0] = k;
 
-    if (fixup) {
-	/* add const to list of instruments */
+    if (addconst) {
+	/* add constant to list of instruments */
 	instlist[0] += 1;
 	for (i=instlist[0]; i>=2; i--) {
 	    instlist[i] = instlist[i - 1];
@@ -2254,6 +2254,59 @@ tsls_sargan_test (MODEL *tsls_model, int *s1list, double ***pZ, DATAINFO *pdinfo
     return err;
 }
 
+/* below: work in progress!! */
+
+static void 
+tsls_redundancy_check (int *s1list, int *s2list, MODEL *pmod, int *prank)
+{
+    int dropped = s1list[0] - pmod->list[0];
+
+    if (dropped > 0) {
+	int *dlist;
+	int i, pos;
+
+	printlist(s1list, "original s1list");
+
+	/* get the list of redundant instruments */
+	dlist = gretl_list_diff_new(s1list, pmod->list);
+	if (dlist == NULL) {
+	    pmod->errcode = E_ALLOC;
+	    return;
+	}
+
+	printlist(dlist, "list of redundant instruments");
+	printlist(s2list, "original s2list");
+
+	/* remove these vars from stage 2 list, if present */
+	for (i=1; i<=dlist[0]; i++) {
+	    if ((pos = in_gretl_list(s2list, dlist[i]))) {
+		gretl_list_delete_at_pos(s2list, pos);
+	    }
+	}
+
+	printlist(s2list, "new s2list");
+
+	free(dlist);
+
+	/* ?? is this right */
+	fprintf(stderr, "original OID rank = %d\n", *prank);
+	*prank = (s1list[0] - dropped) - s2list[0] + 1;
+	fprintf(stderr, "new OID rank = %d\n", *prank);
+	
+	if (*prank < 0) {
+	    strcpy(gretl_errmsg, 
+		   _("Rank condition for identification is not satisfied."));
+	    pmod->errcode = E_UNSPEC; 
+	} else {
+	    fprintf(stderr, "Stage 1: %d redundant regressor(s) dropped\n"
+		    " OverIdRank now = %d\n", dropped, *prank);
+	    for (i=0; i<=pmod->list[0]; i++) {
+		s1list[i] = pmod->list[i];
+	    }
+	    printlist(s1list, "new s1list");
+	}
+    }
+}
 
 /**
  * tsls_func:
@@ -2280,6 +2333,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     int *reglist = NULL, *instlist = NULL, *replist = NULL;
     int *s1list = NULL, *s2list = NULL;
     int pos, nelem, orig_nvar = pdinfo->v;
+    int rlen, ninst;
     int OverIdRank = 0;
 
     MODEL tsls;
@@ -2299,6 +2353,14 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
 			  (const double **) *pZ); 
 
+    /* number of elements in regression list (vars preceding
+       the separator at "pos" */
+    rlen = pos - 1;
+
+    /* number of instruments (vars following the separator at
+       "pos") */
+    ninst = list[0] - pos;
+
     /* 
        reglist: dependent var plus list of regressors
        instlist: list of instruments
@@ -2307,11 +2369,11 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
        replist: list of vars to be replaced by fitted values
                 for the second-stage regression
     */
-    reglist = malloc(pos * sizeof *reglist);
-    instlist = malloc((list[0] - pos + 2) * sizeof *instlist);
-    s1list = malloc((list[0] - pos + 3) * sizeof *s1list);
-    s2list = malloc(pos * sizeof *s2list);
-    replist = malloc(pos * sizeof *replist);
+    reglist = gretl_list_new(rlen);
+    instlist = gretl_list_new(ninst + 1); /* allow for adding const */
+    s1list = gretl_list_new(ninst + 2); 
+    s2list = gretl_list_new(rlen);
+    replist = gretl_list_new(rlen);
 
     if (reglist == NULL || instlist == NULL || s1list == NULL ||
 	s2list == NULL || replist == NULL) {
@@ -2320,14 +2382,13 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* dep. var. plus regressors: first portion of input list */
-    reglist[0] = pos - 1;
-    for (i=1; i<pos; i++) {
+    for (i=1; i<=rlen; i++) {
 	reglist[i] = list[i];
     }    
 
-    /* set up list of instruments: second portion of input list */
-    instlist[0] = list[0] - pos;
-    for (i=1; i<=instlist[0]; i++) {
+    /* list of instruments: second portion of input list */
+    instlist[0] = ninst;
+    for (i=1; i<=ninst; i++) {
 	instlist[i] = list[i + pos];
     }	
 
@@ -2338,10 +2399,13 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     rearrange_list(reglist);
     tsls_omitzero(instlist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
 
+    /* reset regression list length, in case vars were dropped */
+    rlen = reglist[0];
+
     /* initial composition of second-stage regression list (will be
        modified below) 
     */
-    for (i=0; i<pos; i++) {
+    for (i=0; i<=rlen; i++) {
 	s2list[i] = reglist[i];
     }
 
@@ -2349,16 +2413,18 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
        obtain fitted values in the first stage 
     */
     tsls_make_replist(reglist, instlist, replist);
+    ninst = instlist[0]; /* might have been augmented */
 
     /* check for order condition */
-    if (instlist[0] < reglist[0] - 1) {
+    OverIdRank = ninst - rlen + 1;
+    if (OverIdRank < 0) {
         sprintf(gretl_errmsg, 
 		_("Order condition for identification is not satisfied.\n"
 		"varlist 2 needs at least %d more variable(s) not in "
-		"varlist1."), reglist[0] - 1 - instlist[0]);
+		"varlist1."), -OverIdRank);
 	tsls.errcode = E_UNSPEC; 
 	goto tsls_bailout;
-    }
+    }	
 
     /* replist[0] holds the number of fitted vars to create */
     if (dataset_add_series(replist[0], pZ, pdinfo)) {
@@ -2368,9 +2434,9 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     /* common setup for first-stage regressions: regressors are copied
        from instlist */
-    s1list[0] = instlist[0] + 1;
-    for (i=2; i<=s1list[0]; i++) {
-	s1list[i] = instlist[i-1];
+    s1list[0] = ninst + 1;
+    for (i=0; i<ninst; i++) {
+	s1list[i+2] = instlist[i+1];
     }    
 
     /* 
@@ -2379,22 +2445,28 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
        the first stage regression, and add the fitted values into the
        data matrix Z
     */
-    for (i=1; i<=replist[0]; i++) { 
+
+    for (i=1; i<=replist[0]; i++) {
 	int newv = orig_nvar + i - 1;
 	int j;
 
-	/* select the dependent variable */
+	/* select the first-stage dependent variable */
         s1list[1] = replist[i];
 
 	/* run the first-stage regression */
-	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A | OPT_Z, 0.0);
+	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (tsls.errcode) {
 	    goto tsls_bailout;
 	}
 
-	if (tsls.ess > 1.0e-05) {
-	    OverIdRank++;
-	}	
+	/* check to see if any redundant regressors have been
+	   dropped? */
+	if (i == 1) {
+	    tsls_redundancy_check(s1list, s2list, &tsls, &OverIdRank);
+	    if (tsls.errcode) {
+		goto tsls_bailout;
+	    }	    
+	}
 
 	/* write the fitted values into data matrix, Z */
 	for (t=0; t<pdinfo->n; t++) {
@@ -2420,6 +2492,11 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_NONE, 0.0);
     if (tsls.errcode) {
 	goto tsls_bailout;
+    }
+
+    /* transcribe final model list in case of any changes */
+    for (i=0; i<tsls.list[0]; i++) {
+	s2list[i] = tsls.list[i];
     }
 
     /* special: we need to use the original RHS vars to compute
