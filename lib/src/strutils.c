@@ -577,12 +577,16 @@ char *shift_string_left (char *str, size_t move)
 
 char *chopstr (char *str)
 {
-    int i = strspn(str, " \t");
+    int i, n = strspn(str, " \t");
 
-    shift_string_left(str, i);
+    if (n > 0) {
+	shift_string_left(str, n);
+    }
 
-    for (i = strlen(str) - 1; i >= 0; i--) {
-	if (isspace((unsigned char) str[i]) || str[i] == '\r') {
+    n = strlen(str);
+
+    for (i = n - 1; i >= 0; i--) {
+	if (isspace(str[i]) || str[i] == '\r') {
 	    str[i] = '\0';
 	} else {
 	    break;

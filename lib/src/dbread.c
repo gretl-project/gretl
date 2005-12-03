@@ -25,7 +25,7 @@
 # include <glib.h>
 #endif
 
-#undef DB_DEBUG
+#define DB_DEBUG 0
 
 #define RECNUM long
 #define NAMELENGTH 16
@@ -319,13 +319,14 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 			   int n, int offset)
 {
     int startfrac = 0;
-    char pdstr[3]; 
+    char pdstr[4] = {0}; 
     int err = 0;
 
-    if (dinfo_sanity_check(dinfo)) return 1;
+    if (dinfo_sanity_check(dinfo)) {
+	return 1;
+    }
 
     sprintf(sinfo->stobs, "%d", dinfo->year); 
-    *pdstr = 0;
 
     if (dinfo->info == 4) {
 	sprintf(pdstr, ".%d", dinfo->month);
@@ -355,6 +356,7 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     if (*pdstr) {
 	strcat(sinfo->stobs, pdstr);
     }
+
     get_endobs(sinfo->endobs, dinfo->year, startfrac, dinfo->info, n);
 
     sinfo->pd = dinfo->info;
@@ -365,6 +367,10 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     strncat(sinfo->descrip, comment, MAXLABEL - 1);
 
     sinfo->offset = offset;
+
+#if DB_DEBUG
+    fprintf(stderr, "'%s': set sinfo->offset = %d\n", varname, (int) offset);
+#endif
 
     return err;
 }
@@ -436,6 +442,7 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
     fread(&rdir.first_data, sizeof(RECNUM), 1, fp);
     fread(rdir.series_name, 16, 1, fp);  
     rdir.series_name[8] = '\0';
+
     chopstr(rdir.series_name);
 
     if (series_name != NULL && strcmp(series_name, rdir.series_name)) {
@@ -444,7 +451,9 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
     }
 
     /* Now the dateinfo: we can't read this in one go either :-( */
-    fseek(fp, 12, SEEK_CUR); /* skip long, short, long, short */
+
+    /* skip long, short, long, short */
+    fseek(fp, 12, SEEK_CUR);
     fread(&dinfo.info, sizeof(long), 1, fp);
     fread(&dinfo.digits, sizeof(short), 1, fp);
     fread(&dinfo.year, sizeof(short), 1, fp);
@@ -465,6 +474,11 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
     rdir.comments[1][79] = '\0';
     chopstr(rdir.comments[1]);
 
+#if DB_DEBUG
+    fprintf(stderr, "read_rats_directory: sinfo = %p, row = %p\n", 
+	    (void *) sinfo, (void *) row);
+#endif
+
     if (sinfo != NULL) {
 	err = dinfo_to_sinfo(&dinfo, sinfo, rdir.series_name, rdir.comments[0],
 			     rdir.datapoints, rdir.first_data);
@@ -474,6 +488,11 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
     } else {
 	err = 1;
     }
+
+#if DB_DEBUG
+    fprintf(stderr, "read_rats_directory: err = %d, rdir.forward_point = %d\n",
+	    err, (int) rdir.forward_point);
+#endif
 
     if (err) {
 	return RATS_PARSE_ERROR;
@@ -716,7 +735,9 @@ int get_rats_data_by_series_number (const char *fname,
     offset = get_rats_series_offset_by_number(fp, series_number);
     if (offset < 0) return DB_NOT_FOUND;
 
-    fprintf(stderr, "get_rats_data_by_series_number: offset=%d\n", offset);
+#if DB_DEBUG
+    fprintf(stderr, "get_rats_data_by_series_number: offset = %d\n", offset);
+#endif
     
     fseek(fp, (offset - 1) * 256 + 12, SEEK_SET); 
     fread(&first_data, sizeof(RECNUM), 1, fp);
@@ -756,8 +777,12 @@ get_rats_series_offset_by_name (FILE *fp,
     while (forward) {
 	fseek(fp, (forward - 1) * 256L, SEEK_SET);
 	forward = read_rats_directory(fp, NULL, series_name, sinfo);
-	if (forward == RATS_PARSE_ERROR) sinfo->offset = -1;
-	if (sinfo->offset != 0) break;
+	if (forward == RATS_PARSE_ERROR) {
+	    sinfo->offset = -1;
+	}
+	if (sinfo->offset != 0) {
+	    break;
+	}
     }
 
     return sinfo->offset;
@@ -772,15 +797,23 @@ get_rats_series_info_by_name (const char *series_name,
     int ret = DB_OK;
 
     fp = gretl_fopen(db_name, "rb");
-    if (fp == NULL) return DB_NOT_FOUND;
+    if (fp == NULL) {
+	return DB_NOT_FOUND;
+    }
+
+#if DB_DEBUG
+    fprintf(stderr, "Opened %s\n", db_name);
+#endif
     
     offset = get_rats_series_offset_by_name(fp, series_name, sinfo);
     fclose(fp);
 
-    if (offset <= 0) return DB_NOT_FOUND;
+    if (offset <= 0) {
+	return DB_NOT_FOUND;
+    }
 
-#ifdef DB_DEBUG
-    fprintf(stderr, "get_rats_series_info_by_name: offset=%d\n", offset);
+#if DB_DEBUG
+    fprintf(stderr, "get_rats_series_info_by_name: offset = %d\n", offset);
     fprintf(stderr, " pd = %d, nobs = %d\n", sinfo->pd, sinfo->nobs);
 #endif
 
@@ -895,7 +928,7 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
     goodobs = (sinfo->nobs - skip - endskip) / compfac;
     sinfo->nobs = goodobs;
 
-#ifdef DB_DEBUG
+#if DB_DEBUG
     fprintf(stderr, "startskip = %d\n", skip);
     fprintf(stderr, "endskip = %d\n", endskip);
     fprintf(stderr, "goodobs = %d\n", goodobs);
@@ -1035,7 +1068,7 @@ int db_set_sample (const char *line, DATAINFO *pdinfo)
     pdinfo->n = t2 - t1 + 1;
     strcpy(pdinfo->endobs, stop);
 
-#ifdef DB_DEBUG
+#if DB_DEBUG
     fprintf(stderr, "db_set_sample: t1=%d, t2=%d, stobs='%s', endobs='%s' "
 	    "sd0 = %g, n = %d\n", 
 	    pdinfo->t1, pdinfo->t2, 
@@ -1139,12 +1172,13 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
     double **dbZ;
     int err = 0;
 
-#ifdef DB_DEBUG
+#if DB_DEBUG
     fprintf(stderr, "db_get_series: line='%s', pZ=%p, pdinfo=%p\n", 
 	    line, (void *) pZ, (void *) pdinfo);
+    fprintf(stderr, "db_name = '%s'\n", db_name);
 #endif
 
-    if (*db_name == 0) {
+    if (*db_name == '\0') {
 	strcpy(gretl_errmsg, _("No database has been opened"));
 	return 1;
     }   
@@ -1158,17 +1192,21 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 	/* see if the series is already in the dataset */
 	v = varindex(pdinfo, series);
-#ifdef DB_DEBUG
+#if DB_DEBUG
 	fprintf(stderr, "db_get_series: pdinfo->v = %d, v = %d\n", pdinfo->v, v);
 #endif
 	if (v < pdinfo->v && method == COMPACT_NONE) {
 	    this_var_method = COMPACT_METHOD(pdinfo, v);
 	}
 
+#if DB_DEBUG
+	fprintf(stderr, "this_var_method = %d\n", this_var_method);
+#endif
+
 	/* find the series information in the database */
 	if (db_type == GRETL_RATS_DB) {
 	    err = get_rats_series_info_by_name(series, &sinfo);
-	} else {	
+	} else {
 	    err = get_native_series_info(series, &sinfo);
 	} 
 
@@ -1266,7 +1304,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	}
     }
 
-#ifdef DB_DEBUG
+#if DB_DEBUG
     fprintf(stderr, "Z=%p\n", (void *) *pZ);
     fprintf(stderr, "pdinfo->n = %d, pdinfo->v = %d, pdinfo->varname = %p\n",
 	    pdinfo->n, pdinfo->v, (void *) pdinfo->varname);
@@ -1323,7 +1361,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     get_db_padding(sinfo, pdinfo, &pad1, &pad2);
 
     if (pad1 > 0) {
-#ifdef DB_DEBUG
+#if DB_DEBUG
 	fprintf(stderr, "Padding at start, %d obs\n", pad1);
 #endif
 	for (t=0; t<pad1; t++) {
@@ -1333,7 +1371,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     } else start = 0;
 
     if (pad2 > 0) {
-#ifdef DB_DEBUG
+#if DB_DEBUG
 	fprintf(stderr, "Padding at end, %d obs\n", pad2);
 #endif
 	for (t=n-1; t>=n-1-pad2; t--) {
@@ -1343,7 +1381,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     } else stop = n;
 
     /* fill in actual data values */
-#ifdef DB_DEBUG
+#if DB_DEBUG
     fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
 #endif
     for (t=start; t<stop; t++) {
@@ -1369,7 +1407,7 @@ static double *compact_series (const double *src, int i, int n, int oldn,
     int to_weekly = (compfac >= 5 && compfac <= 7);
     double *x;
 
-#ifdef DB_DEBUG
+#if DB_DEBUG
     printf("compact_series: startskip=%d, min_startskip=%d, compfac=%d "
 	   "lead=%d\n", startskip, min_startskip, compfac, lead);
 #endif

@@ -2209,6 +2209,52 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
     return 0;
 }
 
+static int 
+tsls_sargan_test (MODEL *tsls_model, int *s1list, double ***pZ, DATAINFO *pdinfo)
+{
+    int t1 = tsls_model->t1;
+    int t2 = tsls_model->t2;
+    int t, err = 0;
+
+    MODEL smod;
+    int *OT_list = NULL;
+    int nv = pdinfo->v;
+
+    double OTest;
+
+    err = dataset_add_series(1, pZ, pdinfo);
+    if (err) {
+	return err;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	(*pZ)[nv][t] = tsls_model->uhat[t];
+    }
+
+    OT_list = gretl_list_copy(s1list);
+    if (OT_list == NULL) {
+	dataset_drop_last_variables(1, pZ, pdinfo);
+	return E_ALLOC;
+    }
+
+    OT_list[1] = nv;
+
+    smod = lsq(OT_list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    if (smod.errcode) {
+	err = smod.errcode;
+    } else {
+	OTest = smod.rsq * smod.nobs;
+	gretl_model_set_double(tsls_model, "SarganTest", OTest);
+    }
+
+    clear_model(&smod);
+    dataset_drop_last_variables(1, pZ, pdinfo);
+    free(OT_list);
+
+    return err;
+}
+
+
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
@@ -2234,6 +2280,8 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     int *reglist = NULL, *instlist = NULL, *replist = NULL;
     int *s1list = NULL, *s2list = NULL;
     int pos, nelem, orig_nvar = pdinfo->v;
+    int OverIdRank = 0;
+
     MODEL tsls;
 
     if (pos_in > 0) {
@@ -2344,6 +2392,10 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	    goto tsls_bailout;
 	}
 
+	if (tsls.ess > 1.0e-05) {
+	    OverIdRank++;
+	}	
+
 	/* write the fitted values into data matrix, Z */
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[newv][t] = tsls.yhat[t];
@@ -2446,6 +2498,15 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     } else {
 	tsls.rho = tsls.dw = NADBL;
     }
+
+    if (OverIdRank > 0) {
+	int err;
+
+	err = tsls_sargan_test(&tsls, s1list, pZ, pdinfo);
+	if (!err) {
+	    gretl_model_set_int(&tsls, "OverIdRank", OverIdRank);
+	}
+    } 
 
     /* set command code on the model */
     tsls.ci = TSLS;

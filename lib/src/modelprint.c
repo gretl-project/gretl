@@ -1216,6 +1216,18 @@ static void r_squared_message (PRN *prn)
 	      "between observed and\nfitted values of the dependent variable"));
 }
 
+static void print_sargan_test (const MODEL *tmod, PRN *prn)
+{
+    int df = gretl_model_get_int(tmod, "OverIdRank");
+
+    if (df) {
+	double x = gretl_model_get_double(tmod, "SarganTest");
+	double pval = chisq(x, df);
+
+	pprintf(prn, "  Sargan test = %g (%d df, p-value = %g)\n", x, df, pval);
+    }
+}
+
 static void weighted_stats_message (PRN *prn)
 {
     if (plain_format(prn)) {
@@ -1468,6 +1480,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
 	    Fline(pmod, prn);
 	}
+
+	if (pmod->ci == TSLS) {
+	    print_sargan_test(pmod, prn);
+	}	
 
 	if (dataset_is_time_series(pdinfo)) {
 	    if (pmod->ci == OLS || pmod->ci == VAR ||
