@@ -519,8 +519,8 @@ gretlopt get_gretl_options (char *line, int *err)
 
 const char *print_flags (gretlopt oflags, int ci)
 {
-    static char flagstr[64];
-    char fbit[20];
+    static char flagstr[256];
+    char fbit[32];
     int i;
 
     flagstr[0] = '\0';
