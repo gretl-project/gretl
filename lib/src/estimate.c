@@ -2288,7 +2288,7 @@ tsls_redundancy_check (int *s1list, int *s2list, int *reglist,
 
 	/* ?? is this right */
 	fprintf(stderr, "original OID rank = %d\n", *prank);
-	*prank = (s1list[0] - dropped) - s2list[0] + 1;
+	*prank = pmod->list[0] - reglist[0];
 	fprintf(stderr, "new OID rank = %d\n", *prank);
 	
 	if (*prank < 0) {
