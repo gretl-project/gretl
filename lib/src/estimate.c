@@ -2339,7 +2339,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
         s1list[1] = replist[i];
 
 	/* run the first-stage regression */
-	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A | OPT_Z, 0.0);
 	if (tsls.errcode) {
 	    goto tsls_bailout;
 	}
