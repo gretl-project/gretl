@@ -2581,7 +2581,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	tsls.rho = tsls.dw = NADBL;
     }
 
-    if (OverIdRank > 0) {
+    if (OverIdRank > 0 && !(opt & OPT_S)) {
 	tsls_sargan_test(&tsls, OverIdRank, s1list, pZ, pdinfo);
     } 
 
