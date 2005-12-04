@@ -765,6 +765,25 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_tsls_droplist (const MODEL *pmod, 
+				 const DATAINFO *pdinfo,
+				 PRN *prn)
+{
+    const int *dlist = gretl_model_get_data(pmod, "tsls_droplist");
+    int i, v;
+
+    pputs(prn, _("Omitted due to exact collinearity:"));
+    for (i=1; i<=dlist[0]; i++) {
+	v = dlist[i];
+	if (v < pdinfo->v) {
+	    pprintf(prn, " %s", pdinfo->varname[v]);
+	} else {
+	    pprintf(prn, " %d", v);
+	}
+    }
+    pputc(prn, '\n');
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
@@ -943,7 +962,7 @@ static void print_model_heading (const MODEL *pmod,
 	int method = gretl_model_get_int(pmod, "method");
 
 	if (method != SYS_FIML && method != SYS_LIML) {
-	    print_tsls_instruments (pmod->list, pdinfo, prn);
+	    print_tsls_instruments(pmod->list, pdinfo, prn);
 	}
     }
 
@@ -995,12 +1014,18 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    /* message about new variable created */
+    /* message about collinear variables dropped */
     if (plain_format(prn) && gretl_msg[0] != '\0' &&
 	strstr(gretl_msg, _("Replaced")) == NULL &&
 	strstr(gretl_msg, _("Generated")) == NULL) {
 	pprintf(prn, "%s\n", gretl_msg);
     }
+
+    /* ditto, but special for TSLS */
+    if (plain_format(prn) && pmod->ci == TSLS &&
+	gretl_model_get_data(pmod, "tsls_droplist") != NULL) {
+	print_tsls_droplist(pmod, pdinfo, prn);
+    }    
 
     if (pmod->missmask == NULL && gretl_model_get_int(pmod, "wt_dummy")) { 
 	/* FIXME alt formats */
@@ -1214,24 +1239,6 @@ static void r_squared_message (PRN *prn)
     pprintf(prn, "%s.\n\n",    
 	    _("R-squared is computed as the square of the correlation "
 	      "between observed and\nfitted values of the dependent variable"));
-}
-
-static void print_sargan_test (const MODEL *tmod, PRN *prn)
-{
-    int df = gretl_model_get_int(tmod, "OverIdRank");
-
-    if (df) {
-	double x = gretl_model_get_double(tmod, "SarganTest");
-
-	pprintf(prn, "  Sargan over-identification test = %g (%d df, p-value = %g)\n", 
-		x, df, chisq(x, df));
-#if 0
-        pprintf(prn, "  %s:\n", _("Sargan over-identification test"));
-        pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-                df, x, _("with p-value"), chisq(x, df));
-        pputc(prn, '\n');
-#endif
-    }
 }
 
 static void weighted_stats_message (PRN *prn)
@@ -1486,10 +1493,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
 	    Fline(pmod, prn);
 	}
-
-	if (pmod->ci == TSLS) {
-	    print_sargan_test(pmod, prn);
-	}	
 
 	if (dataset_is_time_series(pdinfo)) {
 	    if (pmod->ci == OLS || pmod->ci == VAR ||

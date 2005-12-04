@@ -668,7 +668,7 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
 
     if (ret == 1) {
 	static char msg[ERRLEN];
-	int v = pmod->list[targ];
+	int rem, v = pmod->list[targ];
 
 	/* remove var from list and reduce number of coeffs */
 	gretl_list_delete_at_pos(pmod->list, targ);
@@ -678,7 +678,11 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
 	if (trim == 0) {
 	    strcpy(msg, _("Omitted due to exact collinearity:"));
 	}
-	if (pdinfo->varname[v][0] != 0) {
+
+	rem = ERRLEN - 1 - strlen(msg);
+
+	if (pdinfo->varname[v][0] != 0 && 
+	    rem > strlen(pdinfo->varname[v]) + 1) {
 	    strcat(msg, " ");
 	    strcat(msg, pdinfo->varname[v]);
 	}
@@ -2035,8 +2039,6 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     return rho;
 }
 
-/* .......................................................... */
-
 static int get_pos (const int *list)
 {
     int i, ret = -1;
@@ -2210,7 +2212,8 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
 }
 
 static int 
-tsls_sargan_test (MODEL *tsls_model, int *s1list, double ***pZ, DATAINFO *pdinfo)
+tsls_sargan_test (MODEL *tsls_model, int Orank, int *s1list, 
+		  double ***pZ, DATAINFO *pdinfo)
 {
     int t1 = tsls_model->t1;
     int t2 = tsls_model->t2;
@@ -2219,8 +2222,6 @@ tsls_sargan_test (MODEL *tsls_model, int *s1list, double ***pZ, DATAINFO *pdinfo
     MODEL smod;
     int *OT_list = NULL;
     int nv = pdinfo->v;
-
-    double OTest;
 
     err = dataset_add_series(1, pZ, pdinfo);
     if (err) {
@@ -2243,8 +2244,16 @@ tsls_sargan_test (MODEL *tsls_model, int *s1list, double ***pZ, DATAINFO *pdinfo
     if (smod.errcode) {
 	err = smod.errcode;
     } else {
-	OTest = smod.rsq * smod.nobs;
-	gretl_model_set_double(tsls_model, "SarganTest", OTest);
+	ModelTest *test = model_test_new(GRETL_TEST_SARGAN);
+	double OTest = smod.rsq * smod.nobs;
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_TR2);
+	    model_test_set_dfn(test, Orank);
+	    model_test_set_value(test, OTest);
+	    model_test_set_pvalue(test, chisq(OTest, Orank));
+	    maybe_add_test_to_model(tsls_model, test);
+	}	
     }
 
     clear_model(&smod);
@@ -2254,11 +2263,9 @@ tsls_sargan_test (MODEL *tsls_model, int *s1list, double ***pZ, DATAINFO *pdinfo
     return err;
 }
 
-/* below: work in progress!! */
-
 static void 
-tsls_redundancy_check (int *s1list, int *s2list, int *reglist,
-		       MODEL *pmod, int *prank)
+tsls_redundancy_check (int *s1list, int *s2list, int *reglist, int *instlist,
+		       MODEL *pmod, int *prank, int **pdlist)
 {
     int dropped = s1list[0] - pmod->list[0];
 
@@ -2273,23 +2280,27 @@ tsls_redundancy_check (int *s1list, int *s2list, int *reglist,
 	    return;
 	}
 
-	/* remove these vars from stage 2 list, and from original
-	   reglist, if present */
+	/* remove these vars from all other relevant lists,
+	   if present */
 	for (i=1; i<=dlist[0]; i++) {
 	    if ((pos = in_gretl_list(s2list, dlist[i]))) {
 		gretl_list_delete_at_pos(s2list, pos);
 	    }
 	    if ((pos = in_gretl_list(reglist, dlist[i]))) {
 		gretl_list_delete_at_pos(reglist, pos);
+	    }
+	    if ((pos = in_gretl_list(instlist, dlist[i]))) {
+		gretl_list_delete_at_pos(instlist, pos);
 	    }	    
 	}
 
-	free(dlist);
+	if (pdlist != NULL) {
+	    *pdlist = dlist;
+	} else {
+	    free(dlist);
+	}
 
-	/* ?? is this right */
-	fprintf(stderr, "original OID rank = %d\n", *prank);
 	*prank = pmod->list[0] - reglist[0];
-	fprintf(stderr, "new OID rank = %d\n", *prank);
 	
 	if (*prank < 0) {
 	    strcpy(gretl_errmsg, 
@@ -2329,6 +2340,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *reglist = NULL, *instlist = NULL, *replist = NULL;
     int *s1list = NULL, *s2list = NULL;
+    int *droplist = NULL;
     int pos, nelem, orig_nvar = pdinfo->v;
     int rlen, ninst;
     int OverIdRank = 0;
@@ -2368,7 +2380,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     */
     reglist = gretl_list_new(rlen);
     instlist = gretl_list_new(ninst + 1); /* allow for adding const */
-    s1list = gretl_list_new(ninst + 2); 
+    s1list = gretl_list_new(ninst + 2);
     s2list = gretl_list_new(rlen);
     replist = gretl_list_new(rlen);
 
@@ -2459,8 +2471,8 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	/* check to see if any redundant regressors have been
 	   dropped? */
 	if (i == 1) {
-	    tsls_redundancy_check(s1list, s2list, reglist, 
-				  &tsls, &OverIdRank);
+	    tsls_redundancy_check(s1list, s2list, reglist, instlist,
+				  &tsls, &OverIdRank, &droplist);
 	    if (tsls.errcode) {
 		goto tsls_bailout;
 	    }	    
@@ -2570,19 +2582,14 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (OverIdRank > 0) {
-	int err;
-
-	err = tsls_sargan_test(&tsls, s1list, pZ, pdinfo);
-	if (!err) {
-	    gretl_model_set_int(&tsls, "OverIdRank", OverIdRank);
-	}
+	tsls_sargan_test(&tsls, OverIdRank, s1list, pZ, pdinfo);
     } 
 
     /* set command code on the model */
     tsls.ci = TSLS;
 
     /* write the full tsls list (dep. var. and regressors, followed by
-       instruments, possibly purged of zero elements) into the model
+       instruments, possibly purged of redundant elements) into the model
        for future reference
     */
     nelem = reglist[0] + instlist[0];
@@ -2600,6 +2607,11 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	for (i=1; i<=instlist[0]; i++) {
 	    tsls.list[j++] = instlist[i];
 	}
+    }
+
+    if (droplist != NULL) {
+	gretl_model_set_data(&tsls, "tsls_droplist", droplist, 
+			     (droplist[0] + 1) * sizeof *droplist);
     }
 
  tsls_bailout:

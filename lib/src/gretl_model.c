@@ -1597,7 +1597,8 @@ static int gretl_test_print_string (const ModelTest *test, PRN *prn)
 	N_("Test for omission of variables"),
 	N_("RESET test for specification"),
 	N_("Non-linearity test (squares)"),
-	N_("White's test for heteroskedasticity")
+	N_("White's test for heteroskedasticity"),
+	N_("Sargan over-identification test")
     };
     char ordstr[16];
     char *param = NULL;
@@ -1681,7 +1682,8 @@ static int gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
 	N_("parameters are zero for the variables"),
 	N_("specification is adequate"),
 	N_("relationship is linear"),
-	N_("heteroskedasticity not present")
+	N_("heteroskedasticity not present"),
+	N_("TSLS estimates are consistent") /* ?? */
     };
 
     if (test->type >= GRETL_TEST_MAX) {
