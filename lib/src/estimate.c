@@ -2396,12 +2396,8 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	return tsls;
     }
 
-    /* adjust sample range for missing observations */
-    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-			  (const double **) *pZ); 
-
-    /* number of elements in regression list (vars preceding
-       the separator at "pos" */
+    /* number of elements in regression list (vars preceding the
+       separator at "pos" */
     rlen = pos - 1;
 
     /* number of instruments (vars following the separator at
@@ -2410,8 +2406,12 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
     if (rlen < 2 || ninst <= 0) {
 	tsls.errcode = E_DATA;
-	goto tsls_bailout;
-    }	
+	return tsls;
+    }
+
+    /* adjust sample range for missing observations */
+    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+			  (const double **) *pZ); 
 
     /* 
        reglist: dependent var plus list of regressors
