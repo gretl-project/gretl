@@ -2559,14 +2559,14 @@ tsls_redundancy_check (int *s1list, int *s2list, int *reglist, int *instlist,
     }
 }
 
-#define NEW_TSLS 0
+#define NEW_TSLS 1
 
 #if NEW_TSLS
 
 #define R_DIAG_MIN 1e-14 /* experiment with this? */
 
 static gretl_matrix * 
-tsls_Q (int *instlist, double ***pZ, DATAINFO *pdinfo)
+tsls_Q (int *instlist, const double **Z, int t1, int t2)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
@@ -2574,8 +2574,7 @@ tsls_Q (int *instlist, double ***pZ, DATAINFO *pdinfo)
     int i, k;
     int err = 0;
 
-    Q = gretl_matrix_data_subset(instlist, (const double **) *pZ, 
-				 pdinfo->t1, pdinfo->t2);
+    Q = gretl_matrix_data_subset(instlist, Z, t1, t2);
     if (Q == NULL) {
 	return NULL;
     }
@@ -2607,8 +2606,7 @@ tsls_Q (int *instlist, double ***pZ, DATAINFO *pdinfo)
 	k = instlist[0];
 	gretl_matrix_free(Q);
 	gretl_matrix_free(R);
-	Q = gretl_matrix_data_subset(instlist, (const double **) *pZ,
-				     pdinfo->t1, pdinfo->t2);
+	Q = gretl_matrix_data_subset(instlist, Z, t1, t2);
 	R = gretl_matrix_alloc(k, k);
 	err = gretl_matrix_QR_decomp(Q, R);
     }
@@ -2783,7 +2781,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     ninst = instlist[0]; /* might have been augmented */
 
 #if NEW_TSLS
-    Q = tsls_Q(instlist, pZ, pdinfo);
+    Q = tsls_Q(instlist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
     ninst = instlist[0];
 #endif
 
