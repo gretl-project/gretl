@@ -2407,7 +2407,8 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* number of instruments (vars following the separator at
        "pos") */
     ninst = list[0] - pos;
-    if (ninst <= 0) {
+
+    if (rlen < 2 || ninst <= 0) {
 	tsls.errcode = E_DATA;
 	goto tsls_bailout;
     }	
