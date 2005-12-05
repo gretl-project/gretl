@@ -2559,51 +2559,103 @@ tsls_redundancy_check (int *s1list, int *s2list, int *reglist, int *instlist,
     }
 }
 
-#if 0
+#define NEW_TSLS 0
+
+#if NEW_TSLS
 
 #define R_DIAG_MIN 1e-14 /* experiment with this? */
 
-static int 
-instrument_decomp (const int *list, double ***pZ, DATAINFO *pdinfo)
+static gretl_matrix * 
+tsls_Q (int *instlist, double ***pZ, DATAINFO *pdinfo)
 {
-    gretl_matrix *W;
-    gretl_matrix *R;
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
+    int ni0 = instlist[0];
     int i, k;
-    int merr, err = 0;
+    int err = 0;
 
-    W = gretl_matrix_data_subset(list, (const double **) *pZ, 
+    Q = gretl_matrix_data_subset(instlist, (const double **) *pZ, 
 				 pdinfo->t1, pdinfo->t2);
-    if (W == NULL) {
-	return E_ALLOC;
+    if (Q == NULL) {
+	return NULL;
     }
 
-    k = gretl_matrix_cols(W);
+    k = gretl_matrix_cols(Q);
     
     R = gretl_matrix_alloc(k, k);
     if (R == NULL) {
-	gretl_matrix_free(W);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }    
 
-    merr = gretl_matrix_QR_decomp(W, R);
-
-    gretl_matrix_print(R, "R");
+    err = gretl_matrix_QR_decomp(Q, R);
+    if (err) {
+	goto bailout;
+    }
 
     for (i=0; i<k; i++) {
 	double test = gretl_matrix_get(R, i, i);
-	int v = list[i+1];
+	int v = instlist[i+1];
 
-	fprintf(stderr, "R diag %d (%s) = %g\n", i, 
-		pdinfo->varname[v], test);
-	if (test < R_DIAG_MIN) {
-	    fprintf(stderr, " should drop variable %d\n", v);
+	if (fabs(test) < R_DIAG_MIN) {
+	    fprintf(stderr, "Dropping variable %d\n", v);
+	    gretl_list_delete_at_pos(instlist, i+1);
 	}
     }
-    
-    gretl_matrix_free(W);
-    gretl_matrix_free(R);
 
-    return err;
+    if (instlist[0] < ni0) {
+	k = instlist[0];
+	gretl_matrix_free(Q);
+	gretl_matrix_free(R);
+	Q = gretl_matrix_data_subset(instlist, (const double **) *pZ,
+				     pdinfo->t1, pdinfo->t2);
+	R = gretl_matrix_alloc(k, k);
+	err = gretl_matrix_QR_decomp(Q, R);
+    }
+
+ bailout:
+
+    gretl_matrix_free(R);
+    if (err) {
+	gretl_matrix_free(Q);
+	Q = NULL;
+    }
+
+    return Q;
+}
+
+static int tsls_form_yhat (gretl_matrix *Q, double *y, double *yhat,
+			   DATAINFO *pdinfo)
+{
+    double *r;
+    int T = gretl_matrix_rows(Q);
+    int k = gretl_matrix_cols(Q);
+    int i, t, s;
+
+    r = malloc(k * sizeof *r);
+    if (r == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<k; i++) {
+	r[i] = 0.0;
+	for (t=0; t<T; t++) {
+	    s = t + pdinfo->t1;
+	    r[i] += gretl_matrix_get(Q, t, i) * y[s];
+	}
+    }
+
+    for (t=0; t<T; t++) {
+	s = t + pdinfo->t1;
+	yhat[s] = 0.0;
+	for (i=0; i<k; i++) {
+	    yhat[s] += gretl_matrix_get(Q, s, i) * r[i];
+	}
+    }
+
+    free(r);
+
+    return 0;
 }
 
 #endif
@@ -2629,6 +2681,9 @@ instrument_decomp (const int *list, double ***pZ, DATAINFO *pdinfo)
 MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
+#if NEW_TSLS
+    gretl_matrix *Q = NULL;
+#endif
     int i, t;
     gretlopt lsqopt = OPT_NONE;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -2727,8 +2782,9 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     tsls_make_replist(reglist, instlist, replist);
     ninst = instlist[0]; /* might have been augmented */
 
-#if 0
-    instrument_decomp(instlist, pZ, pdinfo);
+#if NEW_TSLS
+    Q = tsls_Q(instlist, pZ, pdinfo);
+    ninst = instlist[0];
 #endif
 
     /* check for order condition */
@@ -2776,6 +2832,11 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	int newv = orig_nvar + i - 1;
 	int j;
 
+#if NEW_TSLS
+	/* form yhat = QQ'y */
+	tsls_form_yhat(Q, (*pZ)[replist[i]], (*pZ)[newv], pdinfo);
+#else
+
 	/* select the first-stage dependent variable */
         s1list[1] = replist[i];
 
@@ -2801,6 +2862,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	clear_model(&tsls);
+#endif
 
 	/* populate the list for the Hausman test? */
 	if (hatXlist != NULL) {
