@@ -57,6 +57,8 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 
 int gretl_list_has_const (const int *list);
 
+int gretl_list_separator_position (const int *list);
+
 int gretl_list_has_separator (const int *list);
 
 int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2);

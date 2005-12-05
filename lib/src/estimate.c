@@ -2039,20 +2039,6 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     return rho;
 }
 
-static int get_pos (const int *list)
-{
-    int i, ret = -1;
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    ret = i;
-	    break;
-	}
-    }
-
-    return ret;
-}
-
 void tsls_free_data (const MODEL *pmod)
 {
     const char *endog = gretl_model_get_data(pmod, "endog");
@@ -2081,7 +2067,7 @@ static int tsls_save_data (MODEL *pmod, const int *list,
     int recycle_X = 0;
     int recycle_e = 0;
 
-    pos = get_pos(pmod->list);
+    pos = gretl_list_separator_position(pmod->list);
     m = pos - 2;
     esize = m * sizeof *endog;
 
@@ -2167,6 +2153,56 @@ double *tsls_get_Xi (const MODEL *pmod, double **Z, int i)
     }
 
     return ret;
+}
+
+static void list_delete_var (int *list, int v)
+{
+    int i, j;
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == v) {
+	   for (j=i; j<list[0]; j++) {
+	      list[j] = list[j + 1]; 
+	   }
+	   list[0] -= 1;
+	}
+    }
+}
+
+static int in_tsls_list (const int *list, int v)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] == v) {
+	    return i;
+	}
+    }
+
+    return 0;
+}
+
+int *tsls_list_omit (const int *orig, const int *drop, int *err)
+{
+    int *newlist;
+    int i;
+
+    newlist = gretl_list_copy(orig);
+
+    for (i=1; i<=drop[0]; i++) {
+	if (in_tsls_list(orig, drop[i])) {
+	    list_delete_var(newlist, drop[i]);
+	} else {
+	    *err = 1;
+	}
+    }
+
+    if (*err) {
+	free(newlist);
+	newlist = NULL;
+    }
+
+    return newlist;
 }
 
 /*
@@ -2319,24 +2355,26 @@ tsls_redundancy_check (int *s1list, int *s2list, int *reglist, int *instlist,
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
- * @pos_in: position in the list for the separator between list
- *   of variables and list of instruments (or 0 if unknown).
+ * @ci: %TSLS for regular two-stage least squares, or
+ * %SYSTEM if the 2SLS estimates are wanted in the context of
+ * estimation of a system of equations.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @opt: may contain %OPT_R for robust VCV, %OPT_S to save second-
- * stage regressors (%OPT_S is used in context of three-stage least 
- * squares), %OPT_N (no df correction).
+ * @opt: may contain %OPT_O for printing covariance matrix, 
+ * %OPT_R for robust VCV, %OPT_N for no df correction.
  *
  * Estimate the model given in @list by means of Two-Stage Least
- * Squares.
+ * Squares.  If @ci is %SYSTEM, fitted values from the first-stage
+ * regressions are saved with the model: see tsls_get_Xi().
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
+MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
     int i, t;
+    gretlopt lsqopt = OPT_NONE;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *reglist = NULL, *instlist = NULL, *replist = NULL;
     int *s1list = NULL, *s2list = NULL;
@@ -2347,16 +2385,16 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     MODEL tsls;
 
-    if (pos_in > 0) {
-	pos = pos_in;
-    } else {
-	pos = get_pos(list);
-    }
-
     /* initialize model (in case we bail out early on error) */
     gretl_model_init(&tsls);
 
     *gretl_errmsg = '\0';
+
+    pos = gretl_list_separator_position(list);
+    if (pos == 0) {
+	tsls.errcode = E_PARSE;
+	return tsls;
+    }
 
     /* adjust sample range for missing observations */
     varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
@@ -2369,6 +2407,10 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     /* number of instruments (vars following the separator at
        "pos") */
     ninst = list[0] - pos;
+    if (ninst <= 0) {
+	tsls.errcode = E_DATA;
+	goto tsls_bailout;
+    }	
 
     /* 
        reglist: dependent var plus list of regressors
@@ -2455,6 +2497,11 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
        data matrix Z
     */
 
+    /* for now, don't automatically drop collinear
+       variables in case of system estimation
+    */    
+    lsqopt = (ci == TSLS)? OPT_A : (OPT_A | OPT_Z);
+
     for (i=1; i<=replist[0]; i++) {
 	int newv = orig_nvar + i - 1;
 	int j;
@@ -2463,14 +2510,14 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
         s1list[1] = replist[i];
 
 	/* run the first-stage regression */
-	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	tsls = lsq(s1list, pZ, pdinfo, OLS, lsqopt, 0.0);
 	if (tsls.errcode) {
 	    goto tsls_bailout;
 	}
 
 	/* check to see if any redundant regressors have been
 	   dropped? */
-	if (i == 1) {
+	if (ci == TSLS && i == 1) {
 	    tsls_redundancy_check(s1list, s2list, reglist, instlist,
 				  &tsls, &OverIdRank, &droplist);
 	    if (tsls.errcode) {
@@ -2496,10 +2543,12 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		break;
 	    }
 	}
-    } 
+    }
+
+    lsqopt = (ci == TSLS)? OPT_NONE : OPT_Z;
 
     /* second-stage regression */
-    tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_NONE, 0.0);
+    tsls = lsq(s2list, pZ, pdinfo, OLS, lsqopt, 0.0);
     if (tsls.errcode) {
 	goto tsls_bailout;
     }
@@ -2581,7 +2630,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	tsls.rho = tsls.dw = NADBL;
     }
 
-    if (OverIdRank > 0 && !(opt & OPT_S)) {
+    if (ci == TSLS && OverIdRank > 0) {
 	tsls_sargan_test(&tsls, OverIdRank, s1list, pZ, pdinfo);
     } 
 
@@ -2622,7 +2671,7 @@ MODEL tsls_func (const int *list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     free(s2list);
 
     /* save first-stage fitted values, if wanted */
-    if ((opt & OPT_S) && tsls.errcode == 0) {
+    if (ci == SYSTEM && tsls.errcode == 0) {
 	tsls_save_data(&tsls, replist, *pZ, pdinfo);
     }
 

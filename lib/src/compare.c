@@ -345,21 +345,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int add,
     return cmp;
 }
 
-static int get_tsls_pos (const int *list)
-{
-    int i, pos = 0;
-    
-    for (i=2; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    pos = i;
-	    break;
-	}
-    }
-
-    return pos;
-}
-
-/* reconstitute full varlist for WLS, POISSON, AR and TSLS models */
+/* reconstitute full varlist for WLS, POISSON, AR and models */
 
 static int *
 full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
@@ -367,8 +353,7 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
     int i, len, pos = 0;
     int *flist = NULL;
 
-    if (pmod->ci != WLS && pmod->ci != POISSON && 
-	pmod->ci != AR && pmod->ci != TSLS) {
+    if (pmod->ci != WLS && pmod->ci != POISSON && pmod->ci != AR) {
 	return NULL;
     }
 
@@ -376,9 +361,6 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 	len = inlist[0] + 2;
     } else if (pmod->ci == POISSON) {
 	len = inlist[0] + 3;
-    } else if (pmod->ci == TSLS) {
-	pos = get_tsls_pos(pmod->list);
-	len = inlist[0] + 2 + pmod->list[0] - pos; 
     } else {
 	pos = pmod->arinfo->arlist[0] + 1;
 	len = pos + inlist[0] + 2;
@@ -404,17 +386,6 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 	}
 	flist[flist[0] - 1] = LISTSEP;
 	flist[flist[0]] = offvar;
-    } else if (pmod->ci == TSLS) {
-	int j = 1;
-
-	flist[0] = len - 1;
-	for (i=1; i<=inlist[0]; i++) {
-	    flist[j++] = inlist[i];
-	}
-	for (i=pos; i<=pmod->list[0]; i++) {
-	    flist[j++] = pmod->list[i];
-	}
-	pos = get_tsls_pos(flist);
     } else if (pmod->ci == AR) {
 	flist[0] = len - 2;
 	for (i=1; i<pos; i++) {
@@ -459,7 +430,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	/* panel model with per-unit weights */
 	lsqopt |= OPT_W;
 	repci = POOLED;
-    } else if (orig->ci == WLS || orig->ci == AR || orig->ci == TSLS ||
+    } else if (orig->ci == WLS || orig->ci == AR || 
 	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
 	int *full_list = full_model_list(orig, list, &pos);
 
@@ -502,7 +473,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	rep = poisson_model(list, pZ, pdinfo, NULL);
 	break;
     case TSLS:
-	rep = tsls_func(list, pos, pZ, pdinfo, lsqopt);
+	rep = tsls_func(list, TSLS, pZ, pdinfo, lsqopt);
 	break;
     case LOGISTIC: 
 	{
@@ -806,8 +777,10 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
  * %OPT_I for silent operation.
  * @prn: gretl printing struct.
  *
- * Re-estimate a given model after removing a list of 
- * specified variables.
+ * Re-estimate a given model after removing the variables
+ * specified in @omitvars, or if @omitvars is %NULL and
+ * @orig was not estimated using two-stage least squares, after
+ * removing the last independent variable in @orig.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -838,11 +811,17 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     }
 
     if (omitvars == NULL || omitvars[0] == 0) {
-	omitlast = 1;
+	if (orig->ci == TSLS) {
+	    return E_PARSE;
+	} else {
+	    omitlast = 1;
+	}
     }
 
     /* create list for test model */
-    if (omitlast) {
+    if (orig->ci == TSLS) {
+	tmplist = tsls_list_omit(orig->list, omitvars, &err);	
+    } else if (omitlast) {
 	/* special: just drop the last variable */
 	tmplist = gretl_list_omit_last(orig->list, &err);
     } else {
@@ -851,6 +830,10 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
     if (tmplist == NULL) {
 	return err;
+    }
+
+    if (tmplist[0] == 1) {
+	return E_NOVARS;
     }
 
     /* impose as sample range the estimation range of the 

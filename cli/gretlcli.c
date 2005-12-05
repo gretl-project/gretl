@@ -1387,8 +1387,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    *models[0] = poisson_model(cmd.list, &Z, datainfo,
 				       (cmd.opt & OPT_V)? prn : NULL);
 	} else if (cmd.ci == TSLS) {
-	    *models[0] = tsls_func(cmd.list, atoi(cmd.param), 
-				   &Z, datainfo, cmd.opt);
+	    *models[0] = tsls_func(cmd.list, TSLS, &Z, datainfo, cmd.opt);
 	} else if (cmd.ci == LAD) {
 	    *models[0] = lad(cmd.list, &Z, datainfo);
 	} else if (cmd.ci == GARCH) {

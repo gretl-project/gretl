@@ -1046,6 +1046,29 @@ int gretl_list_has_const (const int *list)
 }
 
 /**
+ * gretl_list_separator_position:
+ * @list: an array of integer variable ID numbers, the first element
+ * of which holds a count of the number of elements following.
+ *
+ * Returns: if @list contains the separator for compound
+ * lists, #LISTSEP, the position in @list at which this is found,
+ * else 0.  The search begins at position 2.
+ */
+
+int gretl_list_separator_position (const int *list)
+{
+    int i;
+
+    for (i=2; i<=list[0]; i++) {
+        if (list[i] == LISTSEP) {
+	    return i;
+	}
+    }
+
+    return 0;
+}
+
+/**
  * gretl_list_has_separator:
  * @list: an array of integer variable ID numbers, the first element
  * of which holds a count of the number of elements following.
@@ -1056,15 +1079,7 @@ int gretl_list_has_const (const int *list)
 
 int gretl_list_has_separator (const int *list)
 {
-    int i;
-
-    for (i=2; i<=list[0]; i++) {
-        if (list[i] == LISTSEP) {
-	    return 1;
-	}
-    }
-
-    return 0;
+    return gretl_list_separator_position(list) > 0;
 }
 
 /**

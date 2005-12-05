@@ -2242,9 +2242,11 @@ int command_ok_for_model (int test_ci, int model_ci)
     case HAUSMAN:
 	if (model_ci != POOLED) ok = 0;
 	break;
+
     case RESTRICT:
 	if (model_ci == LAD || model_ci == NLS) ok = 0;
 	break;
+
     case TESTUHAT:
 	/* do we really need to exclude garch? */
 	if (model_ci == TOBIT || model_ci == GARCH) ok = 0;

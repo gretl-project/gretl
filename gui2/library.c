@@ -2620,8 +2620,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case TSLS:
-	*pmod = tsls_func(cmd.list, atoi(cmd.param), 
-			  &Z, datainfo, cmd.opt);
+	*pmod = tsls_func(cmd.list, TSLS, &Z, datainfo, cmd.opt);
 	err = model_output(pmod, prn);
 	break;
 
@@ -6433,8 +6432,7 @@ int gui_exec_line (char *line,
 	    *models[0] = poisson_model(cmd.list, &Z, datainfo,
 				       (cmd.opt & OPT_V)? outprn : NULL);
 	} else if (cmd.ci == TSLS) {
-	    *models[0] = tsls_func(cmd.list, atoi(cmd.param), 
-				   &Z, datainfo, cmd.opt);
+	    *models[0] = tsls_func(cmd.list, TSLS, &Z, datainfo, cmd.opt);
 	} else if (cmd.ci == HSK) {
 	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
 	} else if (cmd.ci == LAD) {

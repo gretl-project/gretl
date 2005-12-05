@@ -992,9 +992,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	} else if (method == SYS_3SLS || method == SYS_FIML || 
 		   method == SYS_TSLS) {
-	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_S);
+	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_NONE);
 	} else if (method == SYS_LIML) {
-	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_N | OPT_S);
+	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_N);
 	}
 
 	if (freeit) {
