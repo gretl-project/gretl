@@ -228,6 +228,8 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M);
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
+int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R);
+
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv,
 		      gretl_vector *uhat, double *s2);

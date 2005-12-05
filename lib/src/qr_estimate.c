@@ -601,8 +601,8 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
     return 0;
 }
 
-static int gretl_QR_decomp (gretl_matrix *Q, gretl_matrix *R,
-			    integer T, integer k)
+static int QR_decomp (gretl_matrix *Q, gretl_matrix *R,
+		      integer T, integer k)
 {
     integer info = 0;
     integer lwork = -1;
@@ -743,7 +743,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     get_model_data(pmod, (const double **) *pZ, Q, y);
 
-    err = gretl_QR_decomp(Q, R, T, k);
+    err = QR_decomp(Q, R, T, k);
 
     if (err == E_SINGULAR && !(opts & OPT_Z) &&
 	redundant_var(pmod, pZ, pdinfo, trim++)) {
@@ -849,7 +849,7 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
 	goto qr_cleanup;
     }
 
-    err = gretl_QR_decomp(Q, R, T, k);
+    err = QR_decomp(Q, R, T, k);
     if (err) {
 	goto qr_cleanup;
     }

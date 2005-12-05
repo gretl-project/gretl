@@ -658,6 +658,23 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static void remove_special_flags (gretlopt *popt)
+{
+    gretlopt opt = *popt;
+
+    if (opt & OPT_S) {
+	opt &= ~OPT_S;
+    }
+    if (opt & OPT_T) {
+	opt &= ~OPT_T;
+    }    
+    if (opt & OPT_B) {
+	opt &= ~OPT_B;
+    } 
+
+    *popt = opt;
+}
+
 /**
  * add_test:
  * @addvars: list of variables to add to original model.
@@ -667,7 +684,10 @@ int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * @pdinfo: information on the data set.
  * @opt: can contain %OPT_Q (quiet) to suppress printing
  * of the new model, %OPT_O to print covariance matrix,
- * %OPT_I for silent operation.
+ * %OPT_I for silent operation.  Additional options that
+ * are applicable only for 2SLS models: %OPT_B (add to
+ * both list of regressors and list of instruments), %OPT_T
+ * (add to list of instruments only).
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after adding the specified
@@ -680,11 +700,11 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn)
 {
+    gretlopt est_opt = opt;
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
     int *tmplist = NULL;
     const int orig_nvar = pdinfo->v; 
-    int save_test = 0;
     int err = 0;
 
     if (orig == NULL || orig->list == NULL) {
@@ -702,7 +722,12 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     }
 
     /* create augmented regression list */
-    tmplist = gretl_list_add(orig->list, addvars, &err);
+    if (orig->ci == TSLS) {
+	tmplist = tsls_list_add(orig->list, addvars, opt, &err);
+    } else {
+	tmplist = gretl_list_add(orig->list, addvars, &err);
+    }
+
     if (err) {
 	return err;
     }
@@ -711,18 +736,15 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
        when the original model was estimated */
     impose_model_smpl(orig, pdinfo);
 
-    if (opt & OPT_S) {
-	/* don't pass OPT_S to replicate_estimator() */
-	save_test = 1;
-	opt &= ~OPT_S;
-    }
+    /* don't pass special opts to replicate_estimator() */
+    remove_special_flags(&est_opt);
 
     /* Run augmented regression, matching the original estimation
        method; use OPT_Z to suppress the elimination of perfectly
        collinear variables.
     */
     *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
-			       (opt | OPT_Z), prn);
+			       (est_opt | OPT_Z), prn);
 
     if (new->errcode) {
 	pprintf(prn, "%s\n", gretl_errmsg);
@@ -734,7 +756,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	new->aux = AUX_ADD;
 
 	if (print_add_omit_model(new, opt)) {
-	    printmodel(new, pdinfo, opt, prn);
+	    printmodel(new, pdinfo, est_opt, prn);
 	}
 
 	if (new->nobs == orig->nobs) {
@@ -743,10 +765,6 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 
 	    addlist = gretl_list_diff_new(new->list, orig->list);
 	    cmp = add_or_omit_compare(orig, new, 1, addlist);
-
-	    if (save_test) {
-		opt |= OPT_S;
-	    }
 
 	    gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
 	    free(addlist);
@@ -774,7 +792,10 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
  * @pdinfo: information on the data set.
  * @opt: can contain %OPT_Q (quiet) to suppress printing
  * of the new model, %OPT_O to print covariance matrix,
- * %OPT_I for silent operation.
+ * %OPT_I for silent operation.  Additional options that
+ * are applicable only for 2SLS models: %OPT_B (omit from
+ * both list of regressors and list of instruments), %OPT_T
+ * (omit from list of instruments only).
  * @prn: gretl printing struct.
  *
  * Re-estimate a given model after removing the variables
@@ -789,12 +810,12 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
+    gretlopt est_opt = opt;
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
     int omitlast = 0;
     int *tmplist = NULL;
     int maxlag = 0;
-    int save_test = 0;
     int err = 0;
 
     if (orig == NULL || orig->list == NULL) {
@@ -820,7 +841,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
     /* create list for test model */
     if (orig->ci == TSLS) {
-	tmplist = tsls_list_omit(orig->list, omitvars, &err);	
+	tmplist = tsls_list_omit(orig->list, omitvars, opt, &err);	
     } else if (omitlast) {
 	/* special: just drop the last variable */
 	tmplist = gretl_list_omit_last(orig->list, &err);
@@ -857,13 +878,11 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	pdinfo->t1 -= 1;
     }
 
-    if (opt & OPT_S) {
-	/* don't pass OPT_S to replicate estimator */
-	save_test = 1;
-	opt &= ~OPT_S;
-    }
+    /* extract option flags that should not be passed to estimator
+       functions */
+    remove_special_flags(&est_opt);
 
-    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, opt, prn);
+    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, est_opt, prn);
 
     if (new->errcode) {
 	pprintf(prn, "%s\n", gretl_errmsg);
@@ -876,7 +895,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 	}
 
 	if (print_add_omit_model(orig, opt)) {
-	    printmodel(new, pdinfo, opt, prn); 
+	    printmodel(new, pdinfo, est_opt, prn); 
 	}	
 
 	if (new->nobs == orig->nobs && !omitlast) {
@@ -885,10 +904,6 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
 	    omitlist = gretl_list_diff_new(orig->list, new->list);
 	    cmp = add_or_omit_compare(orig, new, 0, omitlist);
-
-	    if (save_test) {
-		opt |= OPT_S;
-	    }
 
 	    gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
 	    free(omitlist);

@@ -1598,7 +1598,8 @@ static int gretl_test_print_string (const ModelTest *test, PRN *prn)
 	N_("RESET test for specification"),
 	N_("Non-linearity test (squares)"),
 	N_("White's test for heteroskedasticity"),
-	N_("Sargan over-identification test")
+	N_("Sargan over-identification test"),
+	N_("Hausman test")
     };
     char ordstr[16];
     char *param = NULL;
@@ -1683,7 +1684,8 @@ static int gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
 	N_("specification is adequate"),
 	N_("relationship is linear"),
 	N_("heteroskedasticity not present"),
-	N_("TSLS estimates are consistent") /* ?? */
+	N_("all instruments are valid"),
+	N_("OLS estimates are consistent")
     };
 
     if (test->type >= GRETL_TEST_MAX) {
@@ -2211,16 +2213,16 @@ int command_ok_for_model (int test_ci, int model_ci)
     switch (test_ci) {
     case ADD:
     case ADDTO:
-    case COEFFSUM:
-    case VIF:
-	if (model_ci == NLS || model_ci == TSLS ||
-	    model_ci == ARMA || model_ci == GARCH) ok = 0;
-	break;
-
     case OMIT:
     case OMITFROM:
 	if (model_ci == NLS || model_ci == ARMA || 
 	    model_ci == GARCH) ok = 0;
+	break;
+
+    case COEFFSUM:
+    case VIF:
+	if (model_ci == NLS || model_ci == TSLS ||
+	    model_ci == ARMA || model_ci == GARCH) ok = 0;
 	break;
 
     case EQNPRINT:

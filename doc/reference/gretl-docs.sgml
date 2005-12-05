@@ -58,7 +58,7 @@
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for gretl 1.4.2</releaseinfo>
+    <releaseinfo>for gretl 1.5.0</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">

@@ -94,6 +94,7 @@ pooled
 groupwise_hetero_test
 tsls_get_Xi
 tsls_free_data
+tsls_list_omit
 tsls_func
 hsk_func
 whites_test
@@ -1030,6 +1031,7 @@ gretl_list_insert_list
 rearrange_list
 list_members_replaced
 gretl_list_has_const
+gretl_list_separator_position
 gretl_list_has_separator
 gretl_list_split_on_separator
 gretl_list_duplicates

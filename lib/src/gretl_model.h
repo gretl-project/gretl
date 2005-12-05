@@ -103,6 +103,7 @@ typedef enum {
     GRETL_TEST_SQUARES,
     GRETL_TEST_WHITES,
     GRETL_TEST_SARGAN,
+    GRETL_TEST_TSLS_HAUSMAN,
     GRETL_TEST_MAX
 } ModelTestType;
 

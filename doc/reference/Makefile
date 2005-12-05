@@ -35,7 +35,8 @@ IGNORE_HFILES = \
 	version.h
 
 # Extra options to supply to gtkdoc-mkdb.
-MKDB_OPTIONS = --sgml-mode --output-format=xml --ignore-files="$(IGNORE_HFILES)"
+MKDB_OPTIONS = --output-format=xml --ignore-files="$(IGNORE_HFILES)" \
+               --expand-content-files=""
 
 # Extra options to supply to gtkdoc-fixref.
 FIXXREF_OPTIONS =

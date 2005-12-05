@@ -24,6 +24,14 @@
 	  <flag>--silent</flag>
 	  <effect>don't print anything</effect>
 	</option>
+	<option>
+	  <flag>--inst</flag>
+	  <effect>add as instrument, TSLS only</effect>
+	</option>
+	<option>
+	  <flag>--both</flag>
+	  <effect>add as both regressor and instrument, TSLS only</effect>
+	</option>
       </options>
       <examples>
         <example>add 5 7 9</example>
@@ -52,6 +60,15 @@
 	option is given, nothing is printed; nonetheless, the results
 	of the test can be retrieved using the special variables
         <lit>$test</lit> and <lit>$pvalue</lit>.
+      </para>
+      <para context="cli">
+	If the original model was estimated using two-stage least squares, an
+	ambiguity arises: should the new variables be added as regressors, as
+	instruments, or as both?  This is resolved as follows: by default the
+	new variables are added as endogenous regressors, but if the
+	<lit>--inst</lit> flag is given they are added as instruments, or
+	if the <lit>--both</lit> flag is given they are added as exogenous
+	regressors.
       </para>
       <para context="gui">
 	The selected variables are added to the previous model and the
@@ -4350,6 +4367,14 @@
 	  <flag>--silent</flag>
 	  <effect>don't print anything</effect>
 	</option>
+	<option>
+	  <flag>--inst</flag>
+	  <effect>omit as instrument, TSLS only</effect>
+	</option>
+	<option>
+	  <flag>--both</flag>
+	  <effect>omit as both regressor and instrument, TSLS only</effect>
+	</option>
       </options>
       <examples>
         <example>omit 5 7 9</example>
@@ -4378,6 +4403,15 @@
 	option is given, nothing is printed; nonetheless, the results
 	of the test can be retrieved using the special variables
         <lit>$test</lit> and <lit>$pvalue</lit>.
+      </para>
+      <para context="cli">
+	If the original model was estimated using two-stage least squares, an
+	ambiguity arises: should the selected variables be omitted as regressors, as
+	instruments, or as both?  This is resolved as follows: by default the
+	variables are dropped from the list of regressors, but if the
+	<lit>--inst</lit> flag is given they are dropped as instruments, or
+	if the <lit>--both</lit> flag is given they are dropped from the
+	model altogether.
       </para>
     </description>
 

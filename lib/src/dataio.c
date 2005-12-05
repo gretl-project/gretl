@@ -4057,6 +4057,14 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     return ftype;
 }
 
+/**
+ * check_atof:
+ * @numstr: string to check.
+ *
+ * Returns: 0 if @numstr is blank, or is a valid string representation
+ * of a floating point number, else 1.
+ */
+
 int check_atof (const char *numstr)
 {
     char *test;
@@ -4088,6 +4096,19 @@ int check_atof (const char *numstr)
 
     return 1;
 }
+
+/**
+ * transpose_data:
+ * @pZ: pointer to data array.
+ * @pdinfo: pointer to dataset information struct.
+ *
+ * Attempts to transpose the current dataset, so that each
+ * variable becomes interpreted as an observation and each
+ * observation as a variable.  This will not work if the
+ * dataset contains scalar variables.
+ *
+ * Returns: 0 on success, non-zero error code on error.
+ */
 
 int transpose_data (double ***pZ, DATAINFO *pdinfo)
 {

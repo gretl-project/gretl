@@ -2155,25 +2155,94 @@ double *tsls_get_Xi (const MODEL *pmod, double **Z, int i)
     return ret;
 }
 
-static void list_delete_var (int *list, int v)
+static void add_tsls_var (int *list, int v, gretlopt opt)
 {
+    int pos = gretl_list_separator_position(list);
+    int i;
+
+    if (opt & OPT_T) {
+	/* add as instrument */
+	list[0] += 1;
+	list[list[0]] = v;
+    } else if (opt & OPT_B) {
+	/* add as exogenous regressor */
+	list[0] += 2;
+	for (i=list[0]-1; i>pos; i--) {
+	    list[i] = list[i-1];
+	}
+	list[pos] = v;
+	list[list[0]] = v;
+    } else {
+	/* add as endogenous regressor */
+	list[0] += 1;
+	for (i=list[0]; i>pos; i--) {
+	    list[i] = list[i-1];
+	}
+	list[pos] = v;
+    }
+}
+
+static void delete_tsls_var (int *list, int v, gretlopt opt)
+{
+    int pos = gretl_list_separator_position(list);
     int i, j;
 
-    for (i=2; i<=list[0]; i++) {
-	if (list[i] == v) {
-	   for (j=i; j<list[0]; j++) {
-	      list[j] = list[j + 1]; 
-	   }
-	   list[0] -= 1;
+    if (opt & OPT_T) {
+	/* delete as instrument */
+	for (i=pos+1; i<=list[0]; i++) {
+	    if (list[i] == v) {
+		for (j=i; j<list[0]; j++) {
+		    list[j] = list[j + 1]; 
+		}
+		list[0] -= 1;
+		break;
+	    }
+	}
+    } else if (opt & OPT_B) {	
+	/* delete from both sub-lists */
+	for (i=2; i<=list[0]; i++) {
+	    if (list[i] == v) {
+		for (j=i; j<list[0]; j++) {
+		    list[j] = list[j + 1]; 
+		}
+		list[0] -= 1;
+	    }
+	}
+    } else {
+	/* delete from regressor list */
+	for (i=2; i<pos; i++) {
+	    if (list[i] == v) {
+		for (j=i; j<list[0]; j++) {
+		    list[j] = list[j + 1]; 
+		}
+		list[0] -= 1;
+		break;
+	    }
 	}
     }
 }
 
-static int in_tsls_list (const int *list, int v)
+static int in_tsls_list (const int *list, int v, gretlopt opt)
 {
-    int i;
+    int pos = gretl_list_separator_position(list);
+    int i, imin, imax;
 
-    for (i=2; i<=list[0]; i++) {
+    if (pos == 0) {
+	return 0;
+    }
+
+    if (opt & OPT_T) {
+	imin = pos + 1;
+	imax = list[0];
+    } else if (opt & OPT_B) {
+	imin = 2;
+	imax = list[0];
+    } else {
+	imin = 2;
+	imax = pos - 1;
+    }
+
+    for (i=imin; i<=imax; i++) {
 	if (list[i] == v) {
 	    return i;
 	}
@@ -2182,19 +2251,96 @@ static int in_tsls_list (const int *list, int v)
     return 0;
 }
 
-int *tsls_list_omit (const int *orig, const int *drop, int *err)
+/**
+ * tsls_list_omit:
+ * @orig: list specifying original TSLS model.
+ * @drop: list of variables to be omitted.
+ * @opt: may include %OPT_T (omit variable only as instrument)
+ * or %OPT_B (omit both as regressor and instrument).  The default
+ * is to omit (only) as regressor.
+ * @err: pointer to receive error code.
+ *
+ * Creates a new TSLS specification list, by first copying @orig
+ * then deleting from the copy the variables found in @drop.
+ *
+ * Returns: the new, reduced list or %NULL on error.
+ */
+
+int *
+tsls_list_omit (const int *orig, const int *drop, gretlopt opt, int *err)
 {
     int *newlist;
     int i;
 
+    if ((opt & OPT_T) && (opt & OPT_B)) {
+	/* incoherent options */
+	*err = E_PARSE;
+	return NULL;
+    }
+
     newlist = gretl_list_copy(orig);
 
     for (i=1; i<=drop[0]; i++) {
-	if (in_tsls_list(orig, drop[i])) {
-	    list_delete_var(newlist, drop[i]);
+	if (in_tsls_list(orig, drop[i], opt)) {
+	    delete_tsls_var(newlist, drop[i], opt);
 	} else {
-	    *err = 1;
+	    *err = E_UNSPEC;
 	}
+    }
+
+    if (*err) {
+	free(newlist);
+	newlist = NULL;
+    }
+
+    return newlist;
+}
+
+/**
+ * tsls_list_add:
+ * @orig: list specifying original TSLS model.
+ * @add: list of variables to be added.
+ * @opt: may include %OPT_T (add variable only as instrument)
+ * or %OPT_B (add both as regressor and instrument).  The default
+ * is to add as an endogenous regressor.
+ * @err: pointer to receive error code.
+ *
+ * Creates a new TSLS specification list, by copying @orig
+ * and adding the variables found in @add.
+ *
+ * Returns: the new, augmented list or %NULL on error.
+ */
+
+int *
+tsls_list_add (const int *orig, const int *add, gretlopt opt, int *err)
+{
+    int norig = orig[0];
+    int nadd = add[0];
+    int *newlist;
+    int i;
+
+    if ((opt & OPT_T) && (opt & OPT_B)) {
+	/* incoherent options */
+	*err = E_PARSE;
+	return NULL;
+    }
+
+    if (opt & OPT_B) {
+	nadd *= 2;
+    }
+
+    newlist = gretl_list_new(norig + nadd);
+
+    for (i=0; i<=norig; i++) {
+	newlist[i] = orig[i];
+    }
+
+    for (i=1; i<=add[0]; i++) {
+	if (in_tsls_list(orig, add[i], opt)) {
+	    *err = E_ADDDUP;
+	} else {
+	    add_tsls_var(newlist, add[i], opt);
+	} 
     }
 
     if (*err) {
@@ -2247,6 +2393,9 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
     return 0;
 }
 
+/* perform the Sargan overidentification test for a model
+   estimated via TSLS */
+
 static int 
 tsls_sargan_test (MODEL *tsls_model, int Orank, int *s1list, 
 		  double ***pZ, DATAINFO *pdinfo)
@@ -2295,6 +2444,64 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *s1list,
     clear_model(&smod);
     dataset_drop_last_variables(1, pZ, pdinfo);
     free(OT_list);
+
+    return err;
+}
+
+static int 
+tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatXlist,
+		   double ***pZ, DATAINFO *pdinfo)
+{
+    int err = 0;
+    int df = hatXlist[0];
+    double RRSS, URSS; 
+
+    MODEL hmod;
+    int *HT_list = NULL;
+
+    HT_list = gretl_list_copy(reglist);
+    if (HT_list == NULL) {
+	return E_ALLOC;
+    }
+
+    hmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A, 0.0);
+    if (hmod.errcode) {
+	err = hmod.errcode;
+	goto bailout;
+    } 
+
+    RRSS = hmod.ess;
+    clear_model(&hmod);
+
+    HT_list = gretl_list_add(reglist, hatXlist, &err);
+    if (err) {
+	fprintf(stderr, "gretl_add_list: %d\n", err);
+	goto bailout;
+    } 
+
+    hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A, 0.0);
+
+    if (hmod.errcode) {
+	err = hmod.errcode;
+	goto bailout;
+    } else {
+	URSS = hmod.ess;
+	double HTest = (RRSS/URSS - 1) * hmod.nobs;
+	ModelTest *test = model_test_new(GRETL_TEST_TSLS_HAUSMAN);
+
+	if (test != NULL) {
+	    model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+	    model_test_set_dfn(test, df);
+	    model_test_set_value(test, HTest);
+	    model_test_set_pvalue(test, chisq(HTest, df));
+	    maybe_add_test_to_model(tsls_model, test);
+	}       
+    }
+
+ bailout:
+
+    clear_model(&hmod);
+    free(HT_list);
 
     return err;
 }
@@ -2352,6 +2559,55 @@ tsls_redundancy_check (int *s1list, int *s2list, int *reglist, int *instlist,
     }
 }
 
+#if 0
+
+#define R_DIAG_MIN 1e-14 /* experiment with this? */
+
+static int 
+instrument_decomp (const int *list, double ***pZ, DATAINFO *pdinfo)
+{
+    gretl_matrix *W;
+    gretl_matrix *R;
+    int i, k;
+    int merr, err = 0;
+
+    W = gretl_matrix_data_subset(list, (const double **) *pZ, 
+				 pdinfo->t1, pdinfo->t2);
+    if (W == NULL) {
+	return E_ALLOC;
+    }
+
+    k = gretl_matrix_cols(W);
+    
+    R = gretl_matrix_alloc(k, k);
+    if (R == NULL) {
+	gretl_matrix_free(W);
+	return E_ALLOC;
+    }    
+
+    merr = gretl_matrix_QR_decomp(W, R);
+
+    gretl_matrix_print(R, "R");
+
+    for (i=0; i<k; i++) {
+	double test = gretl_matrix_get(R, i, i);
+	int v = list[i+1];
+
+	fprintf(stderr, "R diag %d (%s) = %g\n", i, 
+		pdinfo->varname[v], test);
+	if (test < R_DIAG_MIN) {
+	    fprintf(stderr, " should drop variable %d\n", v);
+	}
+    }
+    
+    gretl_matrix_free(W);
+    gretl_matrix_free(R);
+
+    return err;
+}
+
+#endif
+
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
@@ -2378,7 +2634,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *reglist = NULL, *instlist = NULL, *replist = NULL;
     int *s1list = NULL, *s2list = NULL;
-    int *droplist = NULL;
+    int *droplist = NULL, *hatXlist = NULL;
     int pos, nelem, orig_nvar = pdinfo->v;
     int rlen, ninst;
     int OverIdRank = 0;
@@ -2433,6 +2689,10 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	goto tsls_bailout;
     }
 
+    if (ci == TSLS) {
+	hatXlist = gretl_list_new(rlen);
+    }
+
     /* dep. var. plus regressors: first portion of input list */
     for (i=1; i<=rlen; i++) {
 	reglist[i] = list[i];
@@ -2467,6 +2727,10 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     tsls_make_replist(reglist, instlist, replist);
     ninst = instlist[0]; /* might have been augmented */
 
+#if 0
+    instrument_decomp(instlist, pZ, pdinfo);
+#endif
+
     /* check for order condition */
     OverIdRank = ninst - rlen + 1;
     if (OverIdRank < 0) {
@@ -2483,6 +2747,11 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	tsls.errcode = E_ALLOC;
 	goto tsls_bailout;
     } 
+
+    /* set up length of list for Hausman test */
+    if (hatXlist != NULL) {
+	hatXlist[0] = replist[0];
+    }
 
     /* common setup for first-stage regressions: regressors are copied
        from instlist */
@@ -2533,6 +2802,11 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
 	clear_model(&tsls);
 
+	/* populate the list for the Hausman test? */
+	if (hatXlist != NULL) {
+	    hatXlist[i] = newv;
+	}
+
 	/* give the fitted series the same name as the original */
 	strcpy(pdinfo->varname[newv], pdinfo->varname[replist[i]]);
 
@@ -2552,6 +2826,10 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     tsls = lsq(s2list, pZ, pdinfo, OLS, lsqopt, 0.0);
     if (tsls.errcode) {
 	goto tsls_bailout;
+    }
+
+    if (hatXlist != NULL) {
+	tsls_hausman_test(&tsls, reglist, hatXlist, pZ, pdinfo);
     }
 
     /* special: we need to use the original RHS vars to compute
@@ -2666,6 +2944,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
  tsls_bailout:
 
+    free(hatXlist);
     free(reglist); 
     free(instlist);
     free(s1list); 
@@ -3491,8 +3770,6 @@ static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
     }
 }
 
-/* ...........................................................*/
-
 static int depvar_zero (int t1, int t2, int yno, int nwt,
 			const double **Z)
 {
@@ -4091,6 +4368,22 @@ MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     return gmod;
 } 
 
+/**
+ * pooled:
+ * @list: regression list (dependent variable plus independent 
+ * variables).
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the (panel) data set.
+ * @opt: can include %OPT_W to do weighted least squares
+ * using weights based on the error variance for the 
+ * respective cross-sectional units.
+ * @prn: for printing details of iterations (or %NULL).
+ *
+ * Calculate pooled OLS or WLS estimates for a panel dataset.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
 MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn)
 {
@@ -4120,6 +4413,21 @@ MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     return wmod;
 }
+
+/**
+ * groupwise_hetero_test:
+ * @pmod: pooled OLS model to be tested.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the (panel) data set.
+ * @prn: for printing details of iterations (or %NULL).
+ *
+ * Calculates iterated WLS estimates using weights based on the error
+ * variance for the cross-sectional units and performs a Wald test
+ * for the null hypothesis that the error variance is uniform
+ * across the units.
+ * 
+ * Returns: 0 on success, non-zero error code on failure.
+ */
 
 int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			   PRN *prn)

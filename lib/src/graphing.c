@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Ramu Ramanathan and Allin Cottrell
+ *  Copyright (c) by Allin Cottrell and Riccardo Lucchetti
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -3072,7 +3072,7 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 	for (j=0; j<n; j++) {
 
 	    fprintf(fp, "set origin %g,%g\n", xorig, yorig);
-	    resp = gretl_VAR_get_impulse_response(var, j, i, periods, Z, pdinfo);
+	    resp = gretl_VAR_get_impulse_response(var, i, j, periods, Z, pdinfo);
 	    if (resp == NULL) {
 		return E_ALLOC;
 	    }
