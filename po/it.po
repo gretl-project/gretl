@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-12-06 12:53-0500\n"
-"PO-Revision-Date: 2005-11-29 23:36+0100\n"
+"PO-Revision-Date: 2005-12-06 21:08+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2342,14 +2342,12 @@ msgid "White's test for heteroskedasticity"
 msgstr "Test di White per l'eteroschedasticità"
 
 #: lib/src/gretl_model.c:1622
-#, fuzzy
 msgid "Sargan over-identification test"
-msgstr "Test di sovra-identificazione di Hansen-Sargan"
+msgstr "Test di sovra-identificazione di Sargan"
 
 #: lib/src/gretl_model.c:1623
-#, fuzzy
 msgid "Hausman test"
-msgstr "Test delle medie"
+msgstr "Test di Hausman"
 
 #: lib/src/gretl_model.c:1696 lib/src/gretl_model.c:1704
 msgid "parameters are zero for the variables"
@@ -2393,12 +2391,11 @@ msgstr "eteroschedasticità non presente"
 
 #: lib/src/gretl_model.c:1708
 msgid "all instruments are valid"
-msgstr ""
+msgstr "tutti gli strumenti sono validi"
 
 #: lib/src/gretl_model.c:1709
-#, fuzzy
 msgid "OLS estimates are consistent"
-msgstr "stime OLS"
+msgstr "Le stime OLS sono consistenti"
 
 #: lib/src/gretl_paths.c:675
 #, c-format
