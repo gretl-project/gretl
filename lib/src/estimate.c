@@ -2456,9 +2456,9 @@ static int
 tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatXlist,
 		   double ***pZ, DATAINFO *pdinfo)
 {
-    int err = 0;
     int df = hatXlist[0];
     double RRSS;
+    int err = 0;
 
     MODEL hmod;
     int *HT_list = NULL;
