@@ -24,6 +24,14 @@
  	  <flag>--silent</flag>
  	  <effect>non mostra nulla</effect>
  	</option>
+        <option>
+          <flag>--inst</flag>
+          <effect>aggiunge come strumento, solo per TSLS</effect>
+        </option>
+        <option>
+          <flag>--both</flag>
+          <effect>aggiunge come regressore e come strumento, solo per TSLS</effect>
+        </option>
       </options>
       <examples>
         <example>add 5 7 9</example>
@@ -50,6 +58,15 @@
  	Usando l'opzione <lit>--silent</lit>, non viene mostrato nulla; tuttavia
         i risultati del test possono essere recuperati usando le variabili
         speciali <lit>$test</lit> e <lit>$pvalue</lit>.
+      </para>
+      <para context="cli">
+       Se il modello originale è stato stimato con i minimi quadrati a due
+       stadi, può sorgere un'ambiguità: le nuove variabili vanno aggiunte come
+       regressori, come strumenti o con entrambe le funzioni? Per risolvere
+       l'ambiguità, nella modalità predefinita le variabili sono aggiunte come
+       regressori endogeni, se si usa l'opzione <lit>--inst</lit> sono aggiunte
+       come strumenti, mentre se si usa l'opzione <lit>--both</lit> sono aggiunte
+       come regressori esogeni.
       </para>
       <para context="gui">
 	Aggiunge le variabili selezionate al modello precedente e stima il
@@ -4264,6 +4281,14 @@
  	  <flag>--silent</flag>
  	  <effect>non mostra nulla</effect>
  	</option>
+        <option>
+          <flag>--inst</flag>
+          <effect>omette come strumento, solo per TSLS</effect>
+        </option>
+        <option>
+          <flag>--both</flag>
+          <effect>omette come regressore e come strumento, solo per TSLS</effect>
+        </option>
       </options>
       <examples>
         <example>omit 5 7 9</example>
@@ -4291,6 +4316,15 @@
  	Usando l'opzione <lit>--silent</lit>, non viene mostrato nulla; tuttavia
         i risultati del test possono essere recuperati usando le variabili
         speciali <lit>$test</lit> e <lit>$pvalue</lit>.
+      </para>
+      <para context="cli">
+       Se il modello originale è stato stimato con i minimi quadrati a due
+       stadi, può sorgere un'ambiguità: le nuove variabili vanno omesse come
+       regressori, come strumenti o con entrambe le funzioni? Per risolvere
+       l'ambiguità, nella modalità predefinita le variabili sono omesse
+       dall'elenco dei regressori, se si usa l'opzione <lit>--inst</lit> sono
+       omesse dall'elenco degli strumenti, mentre se si usa l'opzione
+       <lit>--both</lit> sono rimosse totalmente dal modello.
       </para>
     </description>
 
