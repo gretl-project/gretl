@@ -3583,42 +3583,119 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
     }
 }
 
+static char *
+get_missmask (const int *list, const double **Z, int t1, int t2, 
+	      int *err)
+{
+    char *mask = NULL;
+    int needmask = 0;
+    int i, t;
+
+    for (t=t1; t<=t2 && !needmask; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    if (na(Z[list[i]][t])) {
+		needmask = 1;
+		break;
+	    }
+	}
+    }
+
+    if (needmask) {
+	mask = calloc(t2 - t1 + 1, 1);
+	if (mask == NULL) {
+	    *err = 1;
+	} else {
+	    for (t=t1; t<=t2; t++) {
+		for (i=1; i<=list[0]; i++) {
+		    if (na(Z[list[i]][t])) {
+			mask[t - t1] = 1;
+			break;
+		    }
+		}
+	    }
+	}
+    }  
+
+    return mask;
+}
+
+static int ok_obs (const char *mask, int T)
+{
+    int t, ok = 0;
+
+    for (t=0; t<T; t++) {
+	if (!mask[t]) ok++;
+    }
+
+    return ok;
+}
+
 /**
  * gretl_matrix_data_subset:
  * @list: list of variable to process.
  * @Z: data array.
  * @t1: starting observation.
  * @t2: ending observation.
+ * @pmask: pointer to receive missing obs mask, or %NULL.
  *
  * Creates a gretl matrix holding the subset of variables from
  * @Z specified by @list, over the sample range @t1 to @t2,
- * inclusive.  Variables are in columns.
+ * inclusive.  Variables are in columns.  If @pmask is not
+ * %NULL and there are missing observations within the
+ * range @t1 to @t2, then @pmask receives a mask of length
+ * t2 - t1 + 1 (with value 1 for observations with missing
+ * values, value 0 otherwise) and the observations with
+ * missing values are skipped in constructing the returned
+ * matrix.
  *
  * Returns: allocated matrix or %NULL on failure. 
  */
 
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
-					int t1, int t2)
+					int t1, int t2, char **pmask)
 {
     gretl_matrix *M;
+    char *mask = NULL;
     int T = t2 - t1 + 1;
     int n = list[0];
-    int j, t, v;
+    int i, s, t, v;
+    int err = 0;
 
     if (T <= 0 || n <= 0) {
 	return NULL;
     }
 
+    if (pmask != NULL) {
+	mask = get_missmask(list, Z, t1, t2, &err);
+	if (err) {
+	    return NULL;
+	} 
+    }
+
+    if (mask != NULL) {
+	T = ok_obs(mask, T);
+    } 
+
     M = gretl_matrix_alloc(T, n);
     if (M == NULL) {
 	return NULL;
     }
-
-    for (j=0; j<n; j++) {
-	v = list[j + 1];
-	for (t=0; t<T; t++) {
-	    gretl_matrix_set(M, t, j, Z[v][t + t1]);
+    
+    s = 0;
+    for (t=t1; t<=t2; t++) {
+	if (mask != NULL && mask[t - t1]) {
+	    continue;
+	} else {
+	    for (i=0; i<n; i++) {
+		v = list[i+1];
+		gretl_matrix_set(M, s, i, Z[v][t]);
+	    }
+	    s++;
 	}
+    }
+
+    if (pmask != NULL) {
+	*pmask = mask;
     }
 
     return M;

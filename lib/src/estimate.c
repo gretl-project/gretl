@@ -2397,12 +2397,13 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
    estimated via TSLS */
 
 static int 
-tsls_sargan_test (MODEL *tsls_model, int Orank, int *s1list, 
+tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist, 
 		  double ***pZ, DATAINFO *pdinfo)
 {
     int t1 = tsls_model->t1;
     int t2 = tsls_model->t2;
-    int t, err = 0;
+    int ninst = instlist[0];
+    int i, t, err = 0;
 
     MODEL smod;
     int *OT_list = NULL;
@@ -2417,13 +2418,16 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *s1list,
 	(*pZ)[nv][t] = tsls_model->uhat[t];
     }
 
-    OT_list = gretl_list_copy(s1list);
+    OT_list = gretl_list_new(ninst + 1);
     if (OT_list == NULL) {
 	dataset_drop_last_variables(1, pZ, pdinfo);
 	return E_ALLOC;
     }
 
     OT_list[1] = nv;
+    for (i=2; i<=OT_list[0]; i++) {
+	OT_list[i] = instlist[i-1];
+    }
 
     smod = lsq(OT_list, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (smod.errcode) {
@@ -2506,81 +2510,28 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatXlist,
     return err;
 }
 
-static void 
-tsls_redundancy_check (int *s1list, int *s2list, int *reglist, int *instlist,
-		       MODEL *pmod, int *prank, int **pdlist)
-{
-    int dropped = s1list[0] - pmod->list[0];
-
-    if (dropped > 0) {
-	int *dlist;
-	int i, pos;
-
-	/* get the list of redundant instruments */
-	dlist = gretl_list_diff_new(s1list, pmod->list);
-	if (dlist == NULL) {
-	    pmod->errcode = E_ALLOC;
-	    return;
-	}
-
-	/* remove these vars from all other relevant lists,
-	   if present */
-	for (i=1; i<=dlist[0]; i++) {
-	    if ((pos = in_gretl_list(s2list, dlist[i]))) {
-		gretl_list_delete_at_pos(s2list, pos);
-	    }
-	    if ((pos = in_gretl_list(reglist, dlist[i]))) {
-		gretl_list_delete_at_pos(reglist, pos);
-	    }
-	    if ((pos = in_gretl_list(instlist, dlist[i]))) {
-		gretl_list_delete_at_pos(instlist, pos);
-	    }	    
-	}
-
-	if (pdlist != NULL) {
-	    *pdlist = dlist;
-	} else {
-	    free(dlist);
-	}
-
-	*prank = pmod->list[0] - reglist[0];
-	
-	if (*prank < 0) {
-	    strcpy(gretl_errmsg, 
-		   _("Rank condition for identification is not satisfied."));
-	    pmod->errcode = E_UNSPEC; 
-	} else {
-	    fprintf(stderr, "Stage 1: %d redundant regressor(s) dropped\n"
-		    " OverIdRank now = %d\n", dropped, *prank);
-	    for (i=0; i<=pmod->list[0]; i++) {
-		s1list[i] = pmod->list[i];
-	    }
-	}
-    }
-}
-
-#define NEW_TSLS 1
-
-#if NEW_TSLS
-
 #define R_DIAG_MIN 1e-14 /* experiment with this? */
 
 static gretl_matrix * 
-tsls_Q (int *instlist, const double **Z, int t1, int t2)
+tsls_Q (int *instlist, int *s2list, int *reglist, int **pdlist,
+	const double **Z, int t1, int t2, char **pmask)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
-    int ni0 = instlist[0];
-    int i, k;
+    char *mask = NULL;
+    int ndrop = 0;
+    int *droplist = NULL;
+    double test;
+    int i, k, v, pos;
     int err = 0;
 
-    Q = gretl_matrix_data_subset(instlist, Z, t1, t2);
+    Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
     if (Q == NULL) {
 	return NULL;
     }
 
     k = gretl_matrix_cols(Q);
-    
+
     R = gretl_matrix_alloc(k, k);
     if (R == NULL) {
 	err = E_ALLOC;
@@ -2593,20 +2544,43 @@ tsls_Q (int *instlist, const double **Z, int t1, int t2)
     }
 
     for (i=0; i<k; i++) {
-	double test = gretl_matrix_get(R, i, i);
-	int v = instlist[i+1];
-
+	test = gretl_matrix_get(R, i, i);
 	if (fabs(test) < R_DIAG_MIN) {
-	    fprintf(stderr, "Dropping variable %d\n", v);
-	    gretl_list_delete_at_pos(instlist, i+1);
+	    ndrop++;
 	}
     }
 
-    if (instlist[0] < ni0) {
+    if (ndrop > 0) {
+	droplist = gretl_list_new(ndrop);
+	if (droplist != NULL) {
+	    droplist[0] = 0;
+	}
+	for (i=0; i<k; i++) {
+	    v = instlist[i+1];
+	    test = gretl_matrix_get(R, i, i);
+	    if (fabs(test) < R_DIAG_MIN) {
+		if (droplist != NULL) {
+		    droplist[0] += 1;
+		    droplist[droplist[0]] = v;
+		}	    
+		fprintf(stderr, "Dropping redundant regressor %d\n", v);
+		gretl_list_delete_at_pos(instlist, i+1);
+		if ((pos = in_gretl_list(s2list, v))) {
+		    gretl_list_delete_at_pos(s2list, pos);
+		}
+		if ((pos = in_gretl_list(reglist, v))) {
+		    gretl_list_delete_at_pos(reglist, pos);
+		}
+	    }
+	}
+    }
+
+    if (ndrop > 0) {
 	k = instlist[0];
 	gretl_matrix_free(Q);
 	gretl_matrix_free(R);
-	Q = gretl_matrix_data_subset(instlist, Z, t1, t2);
+	free(mask);
+	Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
 	R = gretl_matrix_alloc(k, k);
 	err = gretl_matrix_QR_decomp(Q, R);
     }
@@ -2614,19 +2588,23 @@ tsls_Q (int *instlist, const double **Z, int t1, int t2)
  bailout:
 
     gretl_matrix_free(R);
+
     if (err) {
+	free(mask);
 	gretl_matrix_free(Q);
 	Q = NULL;
+    } else {
+	*pmask = mask;
+	*pdlist = droplist;
     }
 
     return Q;
 }
 
 static int tsls_form_yhat (gretl_matrix *Q, double *y, double *yhat,
-			   DATAINFO *pdinfo)
+			   DATAINFO *pdinfo, const char *mask)
 {
     double *r;
-    int T = gretl_matrix_rows(Q);
     int k = gretl_matrix_cols(Q);
     int i, t, s;
 
@@ -2635,28 +2613,36 @@ static int tsls_form_yhat (gretl_matrix *Q, double *y, double *yhat,
 	return E_ALLOC;
     }
 
+    /* form r = Q'y */
     for (i=0; i<k; i++) {
 	r[i] = 0.0;
-	for (t=0; t<T; t++) {
-	    s = t + pdinfo->t1;
-	    r[i] += gretl_matrix_get(Q, t, i) * y[s];
+	s = 0;
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    if (mask != NULL && mask[t - pdinfo->t1]) {
+		continue;
+	    }
+	    r[i] += gretl_matrix_get(Q, s++, i) * y[t];
 	}
     }
 
-    for (t=0; t<T; t++) {
-	s = t + pdinfo->t1;
+    /* form Qr = QQ'y */
+    s = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (mask != NULL && mask[t - pdinfo->t1]) {
+	    yhat[t] = NADBL;
+	    continue;
+	}
 	yhat[s] = 0.0;
 	for (i=0; i<k; i++) {
-	    yhat[s] += gretl_matrix_get(Q, s, i) * r[i];
+	    yhat[t] += gretl_matrix_get(Q, s, i) * r[i];
 	}
+	s++;
     }
 
     free(r);
 
     return 0;
 }
-
-#endif
 
 /**
  * tsls_func:
@@ -2679,18 +2665,17 @@ static int tsls_form_yhat (gretl_matrix *Q, double *y, double *yhat,
 MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
-#if NEW_TSLS
     gretl_matrix *Q = NULL;
-#endif
-    int i, t;
+    char *missmask = NULL;
     gretlopt lsqopt = OPT_NONE;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int *reglist = NULL, *instlist = NULL, *replist = NULL;
-    int *s1list = NULL, *s2list = NULL;
+    int *reglist = NULL, *instlist = NULL;
+    int *replist = NULL, *s2list = NULL;
     int *droplist = NULL, *hatXlist = NULL;
     int pos, nelem, orig_nvar = pdinfo->v;
     int rlen, ninst;
     int OverIdRank = 0;
+    int i, t;
 
     MODEL tsls;
 
@@ -2725,18 +2710,16 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* 
        reglist: dependent var plus list of regressors
        instlist: list of instruments
-       s1list: regression list for first-stage regressions
        s2list: regression list for second-stage regression
        replist: list of vars to be replaced by fitted values
                 for the second-stage regression
     */
     reglist = gretl_list_new(rlen);
     instlist = gretl_list_new(ninst + 1); /* allow for adding const */
-    s1list = gretl_list_new(ninst + 2);
     s2list = gretl_list_new(rlen);
     replist = gretl_list_new(rlen);
 
-    if (reglist == NULL || instlist == NULL || s1list == NULL ||
+    if (reglist == NULL || instlist == NULL || 
 	s2list == NULL || replist == NULL) {
 	tsls.errcode = E_ALLOC;
 	goto tsls_bailout;
@@ -2778,15 +2761,13 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
        obtain fitted values in the first stage 
     */
     tsls_make_replist(reglist, instlist, replist);
-    ninst = instlist[0]; /* might have been augmented */
 
-#if NEW_TSLS
-    Q = tsls_Q(instlist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
-    ninst = instlist[0];
-#endif
+    Q = tsls_Q(instlist, s2list, reglist, &droplist, 
+	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
+	       &missmask);
 
     /* check for order condition */
-    OverIdRank = ninst - rlen + 1;
+    OverIdRank = instlist[0] - reglist[0] + 1;
     if (OverIdRank < 0) {
         sprintf(gretl_errmsg, 
 		_("Order condition for identification is not satisfied.\n"
@@ -2807,62 +2788,21 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	hatXlist[0] = replist[0];
     }
 
-    /* common setup for first-stage regressions: regressors are copied
-       from instlist */
-    s1list[0] = ninst + 1;
-    for (i=0; i<ninst; i++) {
-	s1list[i+2] = instlist[i+1];
-    }    
-
     /* 
-       deal with the variables for which instruments are needed: cycle
-       through the list of variables to be instrumented (replist), run
-       the first stage regression, and add the fitted values into the
-       data matrix Z
+       Deal with the variables for which instruments are needed: cycle
+       through the list of variables to be instrumented (replist),
+       form the fitted values as QQ'y_i, and add these fitted values
+       into the data matrix Z.
     */
-
-    /* for now, don't automatically drop collinear
-       variables in case of system estimation
-    */    
-    lsqopt = (ci == TSLS)? OPT_A : (OPT_A | OPT_Z);
 
     for (i=1; i<=replist[0]; i++) {
 	int newv = orig_nvar + i - 1;
 	int j;
 
-#if NEW_TSLS
 	/* form yhat = QQ'y */
-	tsls_form_yhat(Q, (*pZ)[replist[i]], (*pZ)[newv], pdinfo);
-#else
+	tsls_form_yhat(Q, (*pZ)[replist[i]], (*pZ)[newv], pdinfo, missmask);
 
-	/* select the first-stage dependent variable */
-        s1list[1] = replist[i];
-
-	/* run the first-stage regression */
-	tsls = lsq(s1list, pZ, pdinfo, OLS, lsqopt, 0.0);
-	if (tsls.errcode) {
-	    goto tsls_bailout;
-	}
-
-	/* check to see if any redundant regressors have been
-	   dropped? */
-	if (ci == TSLS && i == 1) {
-	    tsls_redundancy_check(s1list, s2list, reglist, instlist,
-				  &tsls, &OverIdRank, &droplist);
-	    if (tsls.errcode) {
-		goto tsls_bailout;
-	    }	    
-	}
-
-	/* write the fitted values into data matrix, Z */
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[newv][t] = tsls.yhat[t];
-	}
-
-	clear_model(&tsls);
-#endif
-
-	/* populate the list for the Hausman test? */
+	/* populate the list for the Hausman test, if wanted */
 	if (hatXlist != NULL) {
 	    hatXlist[i] = newv;
 	}
@@ -2970,7 +2910,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (ci == TSLS && OverIdRank > 0) {
-	tsls_sargan_test(&tsls, OverIdRank, s1list, pZ, pdinfo);
+	tsls_sargan_test(&tsls, OverIdRank, instlist, pZ, pdinfo);
     } 
 
     /* set command code on the model */
@@ -3007,8 +2947,10 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     free(hatXlist);
     free(reglist); 
     free(instlist);
-    free(s1list); 
     free(s2list);
+
+    gretl_matrix_free(Q);
+    free(missmask);
 
     /* save first-stage fitted values, if wanted */
     if (ci == SYSTEM && tsls.errcode == 0) {
