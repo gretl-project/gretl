@@ -22,7 +22,7 @@
 
 /* #define LDEBUG 1 */
 
-#define R_DIAG_MIN 1.0e-10  /* minimum value of diagonal element
+#define R_DIAG_MIN 1.0e-8   /* minimum value of diagonal element
 			       of R (as in X = QR) that counts as
 			       non-zero for the purpose of 
 			       determining the rank of X */
