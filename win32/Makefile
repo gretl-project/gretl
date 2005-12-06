@@ -163,7 +163,7 @@ LIBSRC = adf_kpss.c \
 	system.c \
 	texprint.c \
 	transforms.c \
-	tsls.h \
+	tsls.c \
 	var.c \
 	varprint.c 
 

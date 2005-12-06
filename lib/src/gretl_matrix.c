@@ -1788,7 +1788,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 	fprintf(stderr, "dorgqr: info = %d\n", (int) info);
 	err = GRETL_MATRIX_ERR;
 	goto bailout;
-    }    
+    } 
 
  bailout:
 
@@ -1802,17 +1802,24 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 /**
  * gretl_matrix_QR_rank:
  * @R: matrix R from QR decomposition.
- * errp: pointer to receive error code.
+ * @pmask: pointer to array of char (see below) or %NULL.
+ * @errp: pointer to receive error code.
  * 
  * Checks the reciprocal condition number of R and
- * calculates the rank of the matrix QR.
+ * calculates the rank of the matrix QR.  If QR is of 
+ * less than full rank and @pmask is not %NULL, then
+ * on successful exit @pmask receives an allocated
+ * array of char, of length equal to the order of @R,
+ * with 1s in positions corresponding to zero diagonal
+ * elements of R (or redundant columns of Q) and 0s
+ * in all other positions.
  *
  * Returns: on success, the rank of QR.
  */
 
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */
 
-int gretl_matrix_QR_rank (gretl_matrix *R, int *errp)
+int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
 {
     integer n = R->rows;
     integer *iwork = NULL;
@@ -1823,6 +1830,8 @@ int gretl_matrix_QR_rank (gretl_matrix *R, int *errp)
     char diag = 'N';
     char norm = '1';
     int rank = n;
+
+    *errp = 0;
 
     work = malloc(3 * n * sizeof *work);
     iwork = malloc(n * sizeof *iwork);
@@ -1842,17 +1851,29 @@ int gretl_matrix_QR_rank (gretl_matrix *R, int *errp)
     }
 
     if (rcond < QR_RCOND_MIN) {
+	char *mask = NULL;
 	double d;
 	int i;
 
 	fprintf(stderr, "dtrcon: rcond = %g, but min is %g\n", rcond,
 		QR_RCOND_MIN);
 
+	if (pmask != NULL) {
+	    mask = calloc(n, 1);
+	}
+
 	for (i=0; i<n; i++) {
 	    d = gretl_matrix_get(R, i, i);
 	    if (fabs(d) < R_DIAG_MIN) {
+		if (mask != NULL) {
+		    mask[i] = 1;
+		}
 		rank--;
 	    }
+	}
+
+	if (pmask != NULL) {
+	    *pmask = mask;
 	}
     }
 

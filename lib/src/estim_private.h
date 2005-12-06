@@ -24,6 +24,4 @@ double dwstat (int order, MODEL *pmod, const double **Z);
 
 double rhohat (int order, int t1, int t2, const double *uhat);
 
-int cholesky_stderrs (MODEL *pmod, const double **Z);
-
 #endif /* ESTIM_PRIVATE_H */

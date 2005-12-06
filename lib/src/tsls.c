@@ -24,6 +24,19 @@
 #include "libset.h"
 #include "estim_private.h"
 
+static int translate_gretl_matrix_error (int gmerr)
+{
+    if (gmerr == GRETL_MATRIX_OK) {
+	return 0;
+    } else if (gmerr == GRETL_MATRIX_NOMEM) {
+	return E_ALLOC;
+    } else if (gmerr == GRETL_MATRIX_SINGULAR) {
+	return E_SINGULAR;
+    } else {
+	return E_UNSPEC;
+    }
+}
+
 static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
 {
     int i, v;
@@ -512,7 +525,8 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatlist,
 
 static gretl_matrix * 
 tsls_Q (int *instlist, int *reglist, int **pdlist,
-	const double **Z, int t1, int t2, char **pmask)
+	const double **Z, int t1, int t2, char **pmask,
+	int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
@@ -521,10 +535,10 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
     int *droplist = NULL;
     double test;
     int i, k, v, pos;
-    int err = 0;
 
     Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
     if (Q == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -532,20 +546,27 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 
     R = gretl_matrix_alloc(k, k);
     if (R == NULL) {
-	err = E_ALLOC;
+	*err = E_ALLOC;
 	goto bailout;
     }    
 
-    err = gretl_matrix_QR_decomp(Q, R);
-    if (err) {
+    *err = gretl_matrix_QR_decomp(Q, R);
+    if (*err) {
+	*err = translate_gretl_matrix_error(*err);
 	goto bailout;
     }
 
-    rank = gretl_matrix_QR_rank(R, &err);
-    if (err) {
+    rank = gretl_matrix_QR_rank(R, NULL, err);
+    if (*err) {
+	*err = translate_gretl_matrix_error(*err);
 	goto bailout;
     } else if (rank < k) {
 	fprintf(stderr, "k = %d, rank = %d\n", k, rank);
+	if (pdlist == NULL) {
+	    /* disallowing dropping of redundant vars */
+	    *err = E_SINGULAR;
+	    goto bailout;
+	}
 	ndrop = k - rank;
     }
 
@@ -576,20 +597,25 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 	free(mask);
 	Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
 	R = gretl_matrix_reuse(R, k, k);
-	err = gretl_matrix_QR_decomp(Q, R);
+	*err = gretl_matrix_QR_decomp(Q, R);
+	if (*err) {
+	    *err = translate_gretl_matrix_error(*err);
+	}
     }
 
  bailout:
 
     gretl_matrix_free(R);
 
-    if (err) {
+    if (*err) {
 	free(mask);
 	gretl_matrix_free(Q);
 	Q = NULL;
     } else {
 	*pmask = mask;
-	*pdlist = droplist;
+	if (pdlist != NULL) {
+	    *pdlist = droplist;
+	}
     }
 
     return Q;
@@ -643,6 +669,7 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
 {
     int den = (opt & OPT_N)? pmod->nobs : pmod->dfd;
     int yno = pmod->list[1];
+    double sigma0 = pmod->sigma;
     double yh;
     int i, t;
 
@@ -665,6 +692,14 @@ static void tsls_residuals (MODEL *pmod, const int *reglist,
 	pmod->sigma = 0.0;
     } else {
 	pmod->sigma = sqrt(pmod->ess / den);
+    }
+
+    if (sigma0 > 0.0) {
+	double corr = pmod->sigma / sigma0;
+
+	for (i=0; i<pmod->ncoeff; i++) {
+	    pmod->sderr[i] *= corr;
+	}
     }
 }
 
@@ -835,11 +870,10 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     */
     tsls_make_hatlist(reglist, instlist, hatlist);
 
-    Q = tsls_Q(instlist, reglist, &droplist, 
+    Q = tsls_Q(instlist, reglist, (ci == TSLS)? &droplist : NULL, 
 	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
-	       &missmask);
-    if (Q == NULL) {
-	tsls.errcode = E_ALLOC;
+	       &missmask, &tsls.errcode);
+    if (tsls.errcode) {
 	goto bailout;
     } 
 
@@ -910,13 +944,10 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     if ((opt & OPT_R) || get_use_qr()) {
 	/* QR decomp in force, or robust standard errors called for */
 	qr_tsls_vcv(&tsls, (const double **) *pZ, opt);
-    } else {
-	cholesky_stderrs(&tsls, (const double **) *pZ);
-    }
-
-    if (tsls.errcode) {
-	goto bailout;
-    }
+	if (tsls.errcode) {
+	    goto bailout;
+	}	
+    } 
 
     /* compute additional statistics (R^2, F, etc.) */
     tsls_extra_stats(&tsls, (const double **) *pZ);

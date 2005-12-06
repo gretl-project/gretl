@@ -616,7 +616,7 @@ static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R)
     }
 
     /* check rank of QR */
-    rank = gretl_matrix_QR_rank(R, &err);
+    rank = gretl_matrix_QR_rank(R, NULL, &err);
     if (err) {
 	return err;
     }

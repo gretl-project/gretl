@@ -1595,57 +1595,6 @@ int makevcv (MODEL *pmod)
     return 0;
 }
 
-/**
- * cholesky_stderrs:
- * @pmod: pointer to model.
- *
- * Computes the coefficient covariance matrix for @pmod,
- * where this model was estimated using 2SLS.
- * 
- * Returns: 0 on successful completion, error code on error.
- */
-
-int cholesky_stderrs (MODEL *pmod, const double **Z)
-{
-    double *xpx = NULL;
-    double *xpy = NULL;
-    double *diag = NULL;
-    int nc = pmod->ncoeff;
-    int nxpx = nc * (nc + 1) / 2;
-    int i;
-
-    /* is this stuff needed? what do pmod->xpx, pmod->xpy
-       look like _before_ doing this? */
-
-    xpx = malloc(nxpx * sizeof *xpx);
-    xpy = malloc((pmod->list[0] + 1) * sizeof *xpy);
-    diag = malloc(nc * sizeof *diag);
-
-    if (xpy == NULL || xpx == NULL || diag == NULL) {
-	free(xpx);
-	free(xpy);
-	free(diag);
-	pmod->errcode = E_ALLOC;
-	return E_ALLOC;
-    }
-
-    form_xpxxpy(pmod->list, pmod->t1, pmod->t2, Z, 0, 0.0, 0,
-		xpx, xpy, pmod->missmask);
-
-    cholbeta(xpx, xpy, NULL, NULL, nc);    
-    diaginv(xpx, xpy, diag, nc);
-
-    for (i=0; i<nc; i++) {
-	pmod->sderr[i] = pmod->sigma * sqrt(diag[i]); 
-    }
-
-    free(diag); 
-    free(xpx);
-    free(xpy);
-
-    return 0;
-}
-
 /*  dwstat: computes Durbin-Watson statistic
     order is the order of autoregression, 0 for OLS.
 */
