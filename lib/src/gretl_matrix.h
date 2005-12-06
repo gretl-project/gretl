@@ -22,6 +22,11 @@
 
 /* #define LDEBUG 1 */
 
+#define R_DIAG_MIN 1.0e-10  /* minimum value of diagonal element
+			       of R (as in X = QR) that counts as
+			       non-zero for the purpose of 
+			       determining the rank of X */
+
 typedef enum {
     GRETL_MATRIX_OK = 0,
     GRETL_MATRIX_NOMEM,
@@ -229,6 +234,8 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M);
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
 int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R);
+
+int gretl_matrix_QR_rank (gretl_matrix *R, int *errp);
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 		      gretl_vector *b, gretl_matrix *vcv,

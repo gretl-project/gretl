@@ -529,8 +529,11 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (model_missing(pmod, t)) {
 		continue;
-	    }	    
-	    x = Z[0][t]; /* in some special cases the constant is pre-transformed */
+	    }
+
+	    /* in some special cases the constant is pre-transformed */
+	    x = Z[0][t];
+
 	    if (dwt) {
 		if (Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
@@ -601,108 +604,37 @@ allocate_model_arrays (MODEL *pmod, int k, int T)
     return 0;
 }
 
-static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R,
-			   integer T, integer k)
+static int QR_decomp_plus (gretl_matrix *Q, gretl_matrix *R)
 {
-    integer info = 0;
-    integer lwork = -1;
-    integer lda = T;
-    integer *iwork = NULL;
-    doublereal *tau = NULL;
-    doublereal *work = NULL;
-    doublereal *work2;
-    doublereal rcond;
-    char uplo = 'U';
-    char diag = 'N';
-    char norm = '1';
-    int i, j;
-    int err = 0;
+    integer k = gretl_matrix_rows(R);
+    int rank, err;
 
-    /* dim of tau is min (T, k) */
-    tau = malloc(k * sizeof *tau);
-    work = malloc(sizeof *work);
-    iwork = malloc(k * sizeof *iwork);
-
-    if (tau == NULL || work == NULL || iwork == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    /* basic decomposition */
+    err = gretl_matrix_QR_decomp(Q, R);
+    if (err) {
+	return err;
     }
 
-    /* workspace size query */
-    dgeqrf_(&T, &k, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	err = 1;
-	goto bailout;
+    /* check rank of QR */
+    rank = gretl_matrix_QR_rank(R, &err);
+    if (err) {
+	return err;
     }
 
-    /* optimally sized work array */
-    lwork = (integer) work[0];
-    work2 = realloc(work, (size_t) lwork * sizeof *work);
-    if (work2 == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    }
-
-    work = work2;
-
-    /* run actual QR factorization */
-    dgeqrf_(&T, &k, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	err = 1;
-	goto bailout;
-    }
-
-    /* check reciprocal condition number of R */
-    dtrcon_(&norm, &uplo, &diag, &k, Q->val, &lda, &rcond, work, 
-	    iwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dtrcon: info = %d\n", (int) info);
-	err = 1;
-	goto bailout;
-    }
-
-    if (rcond < QR_RCOND_MIN) {
-	fprintf(stderr, "dtrcon: rcond = %g, but min is %g\n", rcond,
-		QR_RCOND_MIN);
+    if (rank < k) {
 	err = E_SINGULAR;
-	goto bailout;
-    }
+    } else {
+	/* invert R */
+	char uplo = 'U';
+	char diag = 'N';
+	integer info = 0;
 
-    /* invert R */
-    dtrtri_(&uplo, &diag, &k, Q->val, &lda, &info);
-    if (info != 0) {
-	fprintf(stderr, "dtrtri: info = %d\n", (int) info);
-	err = 1;
-	goto bailout;
-    }
-
-    /* copy the upper triangular R-inverse out of Q */
-    for (i=0; i<k; i++) {
-	for (j=0; j<k; j++) {
-	    if (i <= j) {
-		gretl_matrix_set(R, i, j, 
-				 gretl_matrix_get(Q, i, j));
-	    } else {
-		gretl_matrix_set(R, i, j, 0.0);
-	    }
+	dtrtri_(&uplo, &diag, &k, R->val, &k, &info);
+	if (info != 0) {
+	    fprintf(stderr, "dtrtri: info = %d\n", (int) info);
+	    err = 1;
 	}
-    }
-
-    /* obtain the real "Q" matrix */
-    dorgqr_(&T, &k, &k, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dorgqr: info = %d\n", (int) info);
-	err = 1;
-	goto bailout;
-    }    
-
- bailout:
-
-    free(tau);
-    free(work);
-    free(iwork);
+    }   
 
     return err;
 }
@@ -743,10 +675,11 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     get_model_data(pmod, (const double **) *pZ, Q, y);
 
-    err = QR_decomp_plus(Q, R, T, k);
+    err = QR_decomp_plus(Q, R);
 
     if (err == E_SINGULAR && !(opts & OPT_Z) &&
 	redundant_var(pmod, pZ, pdinfo, trim++)) {
+	/* FIXME this can be done more efficiently, using R */
 	gretl_matrix_null(&Q);
 	gretl_matrix_null(&R);
 	gretl_matrix_null(&xpxinv);
@@ -849,7 +782,7 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
 	goto qr_cleanup;
     }
 
-    err = QR_decomp_plus(Q, R, T, k);
+    err = QR_decomp_plus(Q, R);
     if (err) {
 	goto qr_cleanup;
     }

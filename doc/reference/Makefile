@@ -28,6 +28,7 @@ IGNORE_HFILES = \
 	clapack_double.h \
 	genstack.h \
 	cmd_private.h \
+        estim_private.h \
 	gretl_matrix_private.h \
 	loop_private.h \
 	missing_private.h \

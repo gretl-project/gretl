@@ -51,6 +51,7 @@ lib/src/subsample.c
 lib/src/system.c
 lib/src/texprint.c
 lib/src/transforms.c
+lib/src/tsls.c
 lib/src/var.c
 lib/src/varprint.c
 cli/cli_object.c
@@ -90,6 +91,7 @@ gui2/library.c
 gui2/menustate.c
 gui2/mklang.c
 gui2/model_table.c
+gui2/new.c
 gui2/objectsave.c
 gui2/obsbutton.c
 gui2/selector.c

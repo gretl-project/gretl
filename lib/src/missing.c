@@ -527,7 +527,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 /**
  * varlist_adjust_sample: 
  * @list: list of variables to be tested for missing values.
- * @t1: on entry, intial start of sample range; on exit,
+ * @t1: on entry, initial start of sample range; on exit,
  *      start of sample range adjusted for missing values.
  * @t2: on entry, initial end of sample range; on exit, end
  *      of sample range adjusted for missing values.

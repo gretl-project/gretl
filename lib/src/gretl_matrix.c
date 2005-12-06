@@ -1800,6 +1800,71 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 }
 
 /**
+ * gretl_matrix_QR_rank:
+ * @R: matrix R from QR decomposition.
+ * errp: pointer to receive error code.
+ * 
+ * Checks the reciprocal condition number of R and
+ * calculates the rank of the matrix QR.
+ *
+ * Returns: on success, the rank of QR.
+ */
+
+#define QR_RCOND_MIN 1e-15 /* experiment with this? */
+
+int gretl_matrix_QR_rank (gretl_matrix *R, int *errp)
+{
+    integer n = R->rows;
+    integer *iwork = NULL;
+    doublereal *work = NULL;
+    integer info = 0;
+    doublereal rcond;
+    char uplo = 'U';
+    char diag = 'N';
+    char norm = '1';
+    int rank = n;
+
+    work = malloc(3 * n * sizeof *work);
+    iwork = malloc(n * sizeof *iwork);
+
+    if (work == NULL || iwork == NULL) {
+	*errp = GRETL_MATRIX_NOMEM;
+	goto bailout;
+    }
+
+    dtrcon_(&norm, &uplo, &diag, &n, R->val, &n, &rcond, work, 
+	    iwork, &info);
+
+    if (info != 0) {
+	fprintf(stderr, "dtrcon: info = %d\n", (int) info);
+	*errp = GRETL_MATRIX_ERR;
+	goto bailout;
+    }
+
+    if (rcond < QR_RCOND_MIN) {
+	double d;
+	int i;
+
+	fprintf(stderr, "dtrcon: rcond = %g, but min is %g\n", rcond,
+		QR_RCOND_MIN);
+
+	for (i=0; i<n; i++) {
+	    d = gretl_matrix_get(R, i, i);
+	    if (fabs(d) < R_DIAG_MIN) {
+		rank--;
+	    }
+	}
+    }
+
+ bailout:
+
+    free(work);
+    free(iwork);
+
+    return rank;
+}
+
+/**
  * gretl_invert_general_matrix:
  * @a: matrix to invert.
  * 

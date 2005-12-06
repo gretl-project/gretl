@@ -49,6 +49,7 @@
 <!ENTITY system         SYSTEM "xml/system.xml">
 <!ENTITY texprint       SYSTEM "xml/texprint.xml">
 <!ENTITY transforms     SYSTEM "xml/transforms.xml">
+<!ENTITY tsls           SYSTEM "xml/tsls.xml">
 <!ENTITY var            SYSTEM "xml/var.xml">
 <!ENTITY varprint       SYSTEM "xml/varprint.xml">
 
@@ -89,6 +90,7 @@
     &nonparam; 
     &gretl-model;
     &modelspec;
+    &tsls;
     &nls;
     &system;   
     &var;   
