@@ -2765,6 +2765,10 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     Q = tsls_Q(instlist, s2list, reglist, &droplist, 
 	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
 	       &missmask);
+    if (Q == NULL) {
+	tsls.errcode = E_ALLOC;
+	goto tsls_bailout;
+    } 
 
     /* check for order condition */
     OverIdRank = instlist[0] - reglist[0] + 1;
@@ -2800,7 +2804,11 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	int j;
 
 	/* form yhat = QQ'y */
-	tsls_form_yhat(Q, (*pZ)[replist[i]], (*pZ)[newv], pdinfo, missmask);
+	tsls.errcode = tsls_form_yhat(Q, (*pZ)[replist[i]], (*pZ)[newv], pdinfo, 
+				      missmask);
+	if (tsls.errcode) {
+	    goto tsls_bailout;
+	}
 
 	/* populate the list for the Hausman test, if wanted */
 	if (hatXlist != NULL) {
