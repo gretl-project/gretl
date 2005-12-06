@@ -150,6 +150,27 @@ int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
 }
 
 /**
+ * gretl_model_set_list_as_data:
+ * @pmod: pointer to #MODEL.
+ * @key: key string, used in retrieval.
+ * @list: list to attach.
+ *
+ * Attaches @list to @pmod as data, recoverable via the key @key 
+ * using gretl_model_get_data().
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list)
+{
+    size_t size = (list[0] + 1) * sizeof *list;
+
+    return gretl_model_set_data_with_destructor(pmod, key, (void *) list, 
+						size, NULL);
+}
+
+
+/**
  * gretl_model_set_int:
  * @pmod: pointer to #MODEL.
  * @key: key string, used in retrieval.

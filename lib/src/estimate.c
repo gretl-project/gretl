@@ -2458,7 +2458,7 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatXlist,
 {
     int err = 0;
     int df = hatXlist[0];
-    double RRSS, URSS; 
+    double RRSS;
 
     MODEL hmod;
     int *HT_list = NULL;
@@ -2489,7 +2489,7 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatXlist,
 	err = hmod.errcode;
 	goto bailout;
     } else {
-	URSS = hmod.ess;
+	double URSS = hmod.ess;
 	double HTest = (RRSS/URSS - 1) * hmod.nobs;
 	ModelTest *test = model_test_new(GRETL_TEST_TSLS_HAUSMAN);
 
@@ -2946,8 +2946,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (droplist != NULL) {
-	gretl_model_set_data(&tsls, "tsls_droplist", droplist, 
-			     (droplist[0] + 1) * sizeof *droplist);
+	gretl_model_set_list_as_data(&tsls, "tsls_droplist", droplist); 
     }
 
  tsls_bailout:
