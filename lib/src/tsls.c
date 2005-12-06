@@ -554,6 +554,7 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 	if (droplist != NULL) {
 	    droplist[0] = 0;
 	}
+
 	for (i=0; i<k; i++) {
 	    v = instlist[i+1];
 	    test = gretl_matrix_get(R, i, i);
@@ -569,15 +570,12 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 		}
 	    }
 	}
-    }
 
-    if (ndrop > 0) {
 	k = instlist[0];
 	gretl_matrix_free(Q);
-	gretl_matrix_free(R);
 	free(mask);
 	Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
-	R = gretl_matrix_alloc(k, k);
+	R = gretl_matrix_reuse(R, k, k);
 	err = gretl_matrix_QR_decomp(Q, R);
     }
 
