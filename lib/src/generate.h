@@ -35,25 +35,6 @@ int genr_get_varnum (const GENERATOR *genr);
 
 int genr_get_err (const GENERATOR *genr);
 
-int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
-
-int genrunit (double ***pZ, DATAINFO *pdinfo);
-
-int dummy (double ***pZ, DATAINFO *pdinfo, int center);
-
-int paneldum (double ***pZ, DATAINFO *pdinfo); 
-
-int panel_unit_dummies (double ***pZ, DATAINFO *pdinfo);
-
-int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
-
-int plotvar (double ***pZ, DATAINFO *pdinfo, 
-	     const char *period);
-
-void varlist (const DATAINFO *pdinfo, PRN *prn);
-
-void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn);
-
 int varindex (const DATAINFO *pdinfo, const char *varname);
 
 int genr_fit_resid (const MODEL *pmod, 

@@ -1799,6 +1799,8 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     return err;
 }
 
+#define QR_RCOND_MIN 1e-15 /* experiment with this? */
+
 /**
  * gretl_matrix_QR_rank:
  * @R: matrix R from QR decomposition.
@@ -1816,8 +1818,6 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
  *
  * Returns: on success, the rank of QR.
  */
-
-#define QR_RCOND_MIN 1e-15 /* experiment with this? */
 
 int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
 {

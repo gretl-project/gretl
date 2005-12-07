@@ -1354,13 +1354,14 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
 /*
   cholbeta: does an in-place Cholesky decomposition of xpx (lower
-  triangular matrix stacked in columns) and solves the normal
-  equations for coeff.  
+  triangular matrix stacked in columns) and solves for the
+  least-squares coefficient estimates.
 
   xpx = X'X on input and Cholesky decomposition on output
   xpy = the X'y vector on input and Cholesky-transformed t
         vector on output 
   coeff = array of estimated coefficients 
+  rss = pointer to receive regression sum of squares
   nv = number of regression coefficients including the constant
 
   The number of floating-point operations is basically 3.5 * nv^2
@@ -1402,7 +1403,7 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
 #if 0
 	    fprintf(stderr, "cholbeta: test = %g\n", test);
 #endif
-	    if (rss != NULL) *rss = -1.0;
+	    *rss = -1.0;
 	    return E_SINGULAR;
         }
 	if (test < SMALL) {
@@ -1427,36 +1428,32 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
 
     kk--;
 
-    /* find regression sum of squares */
-    if (rss != NULL) {
-	d = 0.0;
-	for (j=1; j<=nv; j++) {
-	    d += xpy[j] * xpy[j];
-	}
-	*rss = d;
+    /* regression sum of squares */
+    d = 0.0;
+    for (j=1; j<=nv; j++) {
+	d += xpy[j] * xpy[j];
     }
+    *rss = d;
 
-    /* solve for the regression coefficients */
-    if (coeff != NULL) {
-	for (j=0; j<nv-1; j++) {
-	    coeff[j] = 0.0;
-	}
-	coeff[nv-1] = xpy[nv] * xpx[kk];
-	for (j=nv-1; j>=1; j--) {
-	    d = xpy[j];
-	    for (i=nv-1; i>=j; i--) {
-		kk--;
-		d -= coeff[i] * xpx[kk];
-	    }
+    /* solve for the coefficients */
+    for (j=0; j<nv-1; j++) {
+	coeff[j] = 0.0;
+    }
+    coeff[nv-1] = xpy[nv] * xpx[kk];
+    for (j=nv-1; j>=1; j--) {
+	d = xpy[j];
+	for (i=nv-1; i>=j; i--) {
 	    kk--;
-	    coeff[j-1] = d * xpx[kk];
+	    d -= coeff[i] * xpx[kk];
 	}
-	for (j=0; j<nv; j++) {
-	    if (isnan(coeff[j])) {
-		return E_NAN;
-	    }
-	}	
-    } 
+	kk--;
+	coeff[j-1] = d * xpx[kk];
+    }
+    for (j=0; j<nv; j++) {
+	if (isnan(coeff[j])) {
+	    return E_NAN;
+	}
+    }	
 
     return 0; 
 }
@@ -1484,7 +1481,9 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
         e = d * d;
         m = 0;
         if (l > 1) {
-	    for (j=1; j<=l-1; j++) m += nv - j;
+	    for (j=1; j<=l-1; j++) {
+		m += nv - j;
+	    }
 	}
         for (i=l+1; i<=nv; i++) {
             d = 0.0;

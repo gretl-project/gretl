@@ -14,6 +14,7 @@
 <!ENTITY estimate SYSTEM "xml/estimate.xml">
 <!ENTITY forecast SYSTEM "xml/forecast.xml">
 <!ENTITY generate SYSTEM "xml/generate.xml">
+<!ENTITY genrfuns SYSTEM "xml/genrfuncs.xml">
 <!ENTITY graphing SYSTEM "xml/graphing.xml">
 <!ENTITY gretl-commands SYSTEM "xml/gretl_commands.xml">
 <!ENTITY gretl-errors   SYSTEM "xml/gretl_errors.xml">
@@ -110,6 +111,7 @@
     &calendar; 
     &dataset;
     &generate;
+    &genrfuns;
     &transforms;
     &subsample;
     &missing;

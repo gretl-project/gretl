@@ -22,10 +22,10 @@
 
 /* #define LDEBUG 1 */
 
-#define R_DIAG_MIN 1.0e-8   /* minimum value of diagonal element
-			       of R (as in X = QR) that counts as
-			       non-zero for the purpose of 
-			       determining the rank of X */
+/* minimum value of diagonal element of R (as in X = QR) that counts
+   as non-zero for the purpose of determining the rank of X */
+
+#define R_DIAG_MIN 1.0e-8
 
 typedef enum {
     GRETL_MATRIX_OK = 0,
@@ -59,23 +59,25 @@ struct _gretl_matrix {
  * gretl_matrix_cols:
  * @m: matrix to query.
  * 
- * Returns: the number of columns in @m. 
+ * Gives the number of columns in @m. 
  */
+
 #define gretl_matrix_cols(m) ((m == NULL)? 0 : m->cols)
 
 /**
  * gretl_matrix_rows:
  * @m: matrix to query.
  * 
- * Returns: the number of rows in @m. 
+ * Gives the number of rows in @m. 
  */
+
 #define gretl_matrix_rows(m) ((m == NULL)? 0 : m->rows)
 
 /**
  * gretl_vector_get_length:
  * @v: vector to examine.
  * 
- * Returns: the length of vector @v (without regard to whether
+ * Gives the length of vector @v (without regard to whether
  * it is a row or column vector).
  */
 
@@ -89,6 +91,7 @@ struct _gretl_matrix {
  *
  * Allocates a new #gretl_vector with @i columns.
  */
+
 #define gretl_vector_alloc(i) gretl_matrix_alloc(1,(i))
 
 /**
@@ -97,6 +100,7 @@ struct _gretl_matrix {
  *
  * Allocates a new column gretl_vector with @i rows.
  */
+
 #define gretl_column_vector_alloc(i) gretl_matrix_alloc((i),1)
 
 /**
@@ -105,6 +109,7 @@ struct _gretl_matrix {
  *
  * Frees the vector @v and its associated storage.
  */
+
 #define gretl_vector_free(v) gretl_matrix_free(v)
 
 double gretl_matrix_get (const gretl_matrix *m, int i, int j);

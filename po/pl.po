@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.4.90\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-12-06 12:53-0500\n"
+"POT-Creation-Date: 2005-12-07 11:21-0500\n"
 "PO-Revision-Date: 2005-12-01 22:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
@@ -213,7 +213,7 @@ msgstr "Asymptotyczna statystyka testu"
 #: lib/src/gretl_model.c:1766 lib/src/gretl_model.c:1774
 #: lib/src/modelprint.c:259 lib/src/modelprint.c:1289
 #: lib/src/modelprint.c:1296 lib/src/modelprint.c:2195
-#: lib/src/modelprint.c:2226 lib/src/printout.c:254 lib/src/system.c:626
+#: lib/src/modelprint.c:2226 lib/src/printout.c:255 lib/src/system.c:626
 #: lib/src/varprint.c:932 lib/src/varprint.c:939 plugin/panel_data.c:1330
 #: plugin/panel_data.c:1807 plugin/sysest.c:51 plugin/sysest.c:59
 #: plugin/sysest.c:470 plugin/sysest.c:483
@@ -260,7 +260,7 @@ msgstr ""
 #: lib/src/gretl_model.c:1860 lib/src/gretl_model.c:1868
 #: lib/src/gretl_model.c:1877 lib/src/modelprint.c:260
 #: lib/src/modelprint.c:1289 lib/src/modelprint.c:1296
-#: lib/src/modelprint.c:1303 lib/src/printout.c:255 lib/src/printout.c:261
+#: lib/src/modelprint.c:1303 lib/src/printout.c:256 lib/src/printout.c:262
 #: lib/src/system.c:598 lib/src/system.c:627 plugin/panel_data.c:787
 #: plugin/panel_data.c:1801 plugin/panel_data.c:1806 plugin/sysest.c:52
 #: plugin/sysest.c:60 plugin/sysest.c:471 plugin/sysest.c:484
@@ -485,12 +485,12 @@ msgstr "Nie mo¿na wykorzystywaæ 'sta³ej' do realizacji tego celu"
 msgid "Bad varname '%s' in sim"
 msgstr "B³êdna nazwa zmiennej '%s' dla polecenia sim"
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:5205
+#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:4211
 #: lib/src/gretl_list.c:1012 lib/src/modelprint.c:1019
 msgid "Replaced"
 msgstr "Zamieniono"
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:5207
+#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:4213
 msgid "vector"
 msgstr "wektor"
 
@@ -759,7 +759,7 @@ msgstr "dane przekrojowe"
 msgid " datafile"
 msgstr " plik danych"
 
-#: lib/src/dataio.c:1939 lib/src/generate.c:4804
+#: lib/src/dataio.c:1939 lib/src/genrfuncs.c:966
 msgid "index variable"
 msgstr "indeks zmiennej"
 
@@ -1112,7 +1112,7 @@ msgstr "sta³a - automatycznie generowana"
 msgid "Please open a data file first"
 msgstr "Proszê najpierw otworzyæ plik danych"
 
-#: lib/src/dataset.c:1713 lib/src/generate.c:5205 lib/src/modelprint.c:1020
+#: lib/src/dataset.c:1713 lib/src/generate.c:4211 lib/src/modelprint.c:1020
 msgid "Generated"
 msgstr "Wygenerowano"
 
@@ -1359,15 +1359,15 @@ msgstr ""
 msgid "Fractional integration test failed"
 msgstr "B³±d oszacowania testu u³amkowego rzêdu integracji"
 
-#: lib/src/describe.c:2156 lib/src/describe.c:2157 lib/src/estimate.c:2746
-#: lib/src/estimate.c:2747 lib/src/modelprint.c:344 lib/src/modelprint.c:352
+#: lib/src/describe.c:2156 lib/src/describe.c:2157 lib/src/estimate.c:2694
+#: lib/src/estimate.c:2695 lib/src/modelprint.c:344 lib/src/modelprint.c:352
 #: lib/src/modelprint.c:365 lib/src/modelprint.c:1646
 #: lib/src/modelprint.c:1656 lib/src/modelprint.c:1693
 #: lib/src/modelprint.c:1743 lib/src/modelprint.c:1750
 #: lib/src/modelprint.c:1751 lib/src/modelprint.c:1752
-#: lib/src/modelprint.c:1775 lib/src/modelprint.c:2298 lib/src/printout.c:159
-#: lib/src/printout.c:167 lib/src/printout.c:229 lib/src/printout.c:571
-#: lib/src/printout.c:572 lib/src/texprint.c:307 lib/src/texprint.c:313
+#: lib/src/modelprint.c:1775 lib/src/modelprint.c:2298 lib/src/printout.c:160
+#: lib/src/printout.c:168 lib/src/printout.c:230 lib/src/printout.c:572
+#: lib/src/printout.c:573 lib/src/texprint.c:307 lib/src/texprint.c:313
 #: lib/src/texprint.c:314 lib/src/texprint.c:315 gui2/guiprint_common.c:90
 #: gui2/guiprint_common.c:92 gui2/guiprint_common.c:187
 #: gui2/guiprint_common.c:189 gui2/guiprint_common.c:296
@@ -1611,7 +1611,7 @@ msgstr "Liczba obserwacji (%d) jest mniejsza od liczby parametrów (%d)"
 msgid "Omitted due to exact collinearity:"
 msgstr "Z powodu ¶cis³ej wspó³liniowo¶ci pominiêto zmienn±:"
 
-#: lib/src/estimate.c:817 lib/src/estimate.c:1906 plugin/arma_common.c:205
+#: lib/src/estimate.c:817 lib/src/estimate.c:1854 plugin/arma_common.c:205
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr "B³êdnie wyliczona warto¶æ dla zmiennej %d, obserwacji %d"
@@ -1621,15 +1621,15 @@ msgstr "B³êdnie wyliczona warto¶æ dla zmiennej %d, obserwacji %d"
 msgid "Error sum of squares (%g) is not > 0"
 msgstr "Suma kwadratów reszt (%g) nie jest > 0"
 
-#: lib/src/estimate.c:1409
+#: lib/src/estimate.c:1410
 msgid "Warning: data matrix close to singularity!"
 msgstr "Uwaga: macierz danych jest osobliwa!"
 
-#: lib/src/estimate.c:1803 lib/src/estimate.c:1936
+#: lib/src/estimate.c:1751 lib/src/estimate.c:1884
 msgid "ESS"
 msgstr "ESS"
 
-#: lib/src/estimate.c:1995
+#: lib/src/estimate.c:1943
 #, c-format
 msgid ""
 "\n"
@@ -1642,7 +1642,7 @@ msgstr ""
 "ESS jest minimalne dla rho = %g\n"
 "\n"
 
-#: lib/src/estimate.c:2028
+#: lib/src/estimate.c:1976
 msgid ""
 "\n"
 "Fine-tune rho using the CORC procedure...\n"
@@ -1652,7 +1652,7 @@ msgstr ""
 "Koñcowy wynik rho wykorzystano w procedurze CORC...\n"
 "\n"
 
-#: lib/src/estimate.c:2030
+#: lib/src/estimate.c:1978
 msgid ""
 "\n"
 "Performing iterative calculation of rho...\n"
@@ -1662,11 +1662,11 @@ msgstr ""
 "Iteracyjne szacowanie parametru rho...\n"
 "\n"
 
-#: lib/src/estimate.c:2033
+#: lib/src/estimate.c:1981
 msgid "                 ITER       RHO        ESS"
 msgstr "                 ITER       RHO        ESS"
 
-#: lib/src/estimate.c:2074
+#: lib/src/estimate.c:2022
 #, c-format
 msgid ""
 "                final %11.5f\n"
@@ -1675,30 +1675,30 @@ msgstr ""
 "           ostateczna %11.5f\n"
 "\n"
 
-#: lib/src/estimate.c:2670
+#: lib/src/estimate.c:2618
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Estymacja metod± uogólnion± Cochrane'a-Orcutta"
 
-#: lib/src/estimate.c:2673
+#: lib/src/estimate.c:2621
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr "ITER             ESS           % ZMIANA"
 
-#: lib/src/estimate.c:2873
+#: lib/src/estimate.c:2821
 msgid "omitted because all obs are zero."
 msgstr "opuszczono, poniewa¿ wszystkie obserwacje s± zerami."
 
-#: lib/src/estimate.c:2969
+#: lib/src/estimate.c:2917
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "B³êdny rz±d opó¼nienia dla ARCH(%d)"
 
-#: lib/src/estimate.c:3029
+#: lib/src/estimate.c:2977
 #, c-format
 msgid "No of obs. = %d, unadjusted R^2 = %f\n"
 msgstr "Liczba obserwacji = %d, wsp. determinacji R^2 = %f\n"
 
-#: lib/src/estimate.c:3052
+#: lib/src/estimate.c:3000
 #, c-format
 msgid ""
 "LM test statistic (%f) is distributed as Chi-square (%d)\n"
@@ -1707,23 +1707,23 @@ msgstr ""
 "Statystyka testu LM (%f) ma rozk³ad Chi-kwadrat (%d)\n"
 "Prawostrony obszar testu, warto¶æ p = %f  "
 
-#: lib/src/estimate.c:3057
+#: lib/src/estimate.c:3005
 msgid "ARCH effect is insignificant at the 10 percent level"
 msgstr "Efekt ARCH jest nieistotny na poziomie 10% b³êdu"
 
-#: lib/src/estimate.c:3058
+#: lib/src/estimate.c:3006
 msgid "Weighted estimation not done"
 msgstr "Nie wykonano wa¿onej estymacji"
 
-#: lib/src/estimate.c:3061
+#: lib/src/estimate.c:3009
 msgid "ARCH effect is significant at the 10 percent level"
 msgstr "Efekt ARCH jest istotny na poziomie 10% b³êdu"
 
-#: lib/src/estimate.c:3219 lib/src/estimate.c:3265 lib/src/pvalues.c:835
+#: lib/src/estimate.c:3167 lib/src/estimate.c:3213 lib/src/pvalues.c:835
 msgid "Couldn't load plugin function\n"
 msgstr "Niemo¿liwe za³adowanie dodatkowych funkcji\n"
 
-#: lib/src/estimate.c:3543
+#: lib/src/estimate.c:3491
 msgid "This test is only available for panel data"
 msgstr "Ten test stosowany jest tylko dla danych panelowych"
 
@@ -1842,129 +1842,124 @@ msgstr ""
 "B³êdny argument funkcji dla obserwacji %d\n"
 "podstawa = %f, wyk³adnik = %f"
 
-#: lib/src/generate.c:4070
+#: lib/src/generate.c:3731
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "Nie mo¿liwe odzyskanie reszt (uhat): dane uleg³y zmianie"
 
-#: lib/src/generate.c:4072
+#: lib/src/generate.c:3733
 msgid "Can't retrieve yhat: data set has changed"
 msgstr ""
 "Nie mo¿liwe odzyskanie warto¶ci wyrównanych (yhat): dane uleg³y zmianie"
 
-#: lib/src/generate.c:4073
+#: lib/src/generate.c:3734
 msgid "Can't retrieve ht: data set has changed"
 msgstr "Nie mo¿liwe odzyskanie ht: dane uleg³y zmianie"
 
-#: lib/src/generate.c:4085
+#: lib/src/generate.c:3746
 msgid "Can't retrieve error variance"
 msgstr "Nie mo¿liwe odzyskanie wariancji b³êdu modelu"
 
-#: lib/src/generate.c:4306
-#, c-format
-msgid "= 1 if quarter = %d, 0 otherwise"
-msgstr "= 1 dla kwarta³u = %d, 0 pozosta³e"
-
-#: lib/src/generate.c:4312
-#, c-format
-msgid "= 1 if month is %s, 0 otherwise"
-msgstr "= 1 dla miesi±ca %s, 0 pozosta³e"
-
-#: lib/src/generate.c:4322
-#, c-format
-msgid "%s = 1 if period is %d, 0 otherwise"
-msgstr "%s = 1 dla okresu %d, 0 pozosta³e"
-
-#: lib/src/generate.c:4362 lib/src/gretl_errors.c:43
-msgid "This command won't work with the current periodicity"
-msgstr "To polecenie nie bêdzie pracowa³o z aktualn± okresowo¶ci±"
-
-#: lib/src/generate.c:4389 lib/src/gretl_errors.c:45
-msgid "Out of memory error"
-msgstr "B³±d pamiêci"
-
-#: lib/src/generate.c:4508 lib/src/generate.c:4542
-#, c-format
-msgid "%s = 1 if %s is %d, 0 otherwise"
-msgstr "%s = 1 je¿eli %s jest %d, 0 pozosta³e"
-
-#: lib/src/generate.c:4509 lib/src/generate.c:4543
-msgid "unit"
-msgstr "jednostka"
-
-#: lib/src/generate.c:4509 lib/src/generate.c:4543 lib/src/varprint.c:142
-#: lib/src/varprint.c:144 lib/src/varprint.c:146
-msgid "period"
-msgstr "okres"
-
-#: lib/src/generate.c:4621
-msgid "cross-sectional unit index"
-msgstr "indeks obserwacji dla jednostek sekcji"
-
-#: lib/src/generate.c:4682 lib/src/generate.c:4791 lib/src/generate.c:4797
-#: lib/src/generate.c:4810 lib/src/transforms.c:904
-msgid "time trend variable"
-msgstr "zmienna czasowa t"
-
-#: lib/src/generate.c:4685
-msgid "data index variable"
-msgstr "zmienna - indeks obserwacji"
-
-#: lib/src/generate.c:4749
-msgid "annual plotting variable"
-msgstr "Wykres rocznej zmiennej"
-
-#: lib/src/generate.c:4755
-msgid "quarterly plotting variable"
-msgstr "Wykres kwartalnej zmiennej"
-
-#: lib/src/generate.c:4762
-msgid "monthly plotting variable"
-msgstr "Wykres miesiêcznej zmiennej"
-
-#: lib/src/generate.c:4769
-msgid "hourly plotting variable"
-msgstr "Wykres godzinowej zmiennej"
-
-#: lib/src/generate.c:4778
-msgid "daily plotting variable"
-msgstr "Wykres dziennej zmiennej"
-
-#: lib/src/generate.c:4848
-#, c-format
-msgid "Listing %d variables:\n"
-msgstr "Lista %d zmiennych:\n"
-
-#: lib/src/generate.c:5204
+#: lib/src/generate.c:4210
 msgid "Modified"
 msgstr "Zmodyfikowane"
 
-#: lib/src/generate.c:5206
+#: lib/src/generate.c:4212
 msgid "variable"
 msgstr "zmienna"
 
-#: lib/src/generate.c:5207
+#: lib/src/generate.c:4213
 msgid "scalar"
 msgstr "skalar"
 
-#: lib/src/generate.c:5286
+#: lib/src/generate.c:4292
 #, c-format
 msgid "residual from model %d"
 msgstr "reszty z modelu %d"
 
-#: lib/src/generate.c:5292
+#: lib/src/generate.c:4298
 #, c-format
 msgid "fitted value from model %d"
 msgstr "wyrównane warto¶ci z modelu %d"
 
-#: lib/src/generate.c:5299
+#: lib/src/generate.c:4305
 #, c-format
 msgid "squared residual from model %d"
 msgstr "kwadraty reszt z modelu %d"
 
-#: lib/src/generate.c:5310
+#: lib/src/generate.c:4316
 #, c-format
 msgid "fitted variance from model %d"
 msgstr "wariancja warto¶ci wyrównanych z modelu %d"
+
+#: lib/src/genrfuncs.c:428
+#, c-format
+msgid "= 1 if quarter = %d, 0 otherwise"
+msgstr "= 1 dla kwarta³u = %d, 0 pozosta³e"
+
+#: lib/src/genrfuncs.c:434
+#, c-format
+msgid "= 1 if month is %s, 0 otherwise"
+msgstr "= 1 dla miesi±ca %s, 0 pozosta³e"
+
+#: lib/src/genrfuncs.c:444
+#, c-format
+msgid "%s = 1 if period is %d, 0 otherwise"
+msgstr "%s = 1 dla okresu %d, 0 pozosta³e"
+
+#: lib/src/genrfuncs.c:484 lib/src/gretl_errors.c:43
+msgid "This command won't work with the current periodicity"
+msgstr "To polecenie nie bêdzie pracowa³o z aktualn± okresowo¶ci±"
+
+#: lib/src/genrfuncs.c:511 lib/src/gretl_errors.c:45
+msgid "Out of memory error"
+msgstr "B³±d pamiêci"
+
+#: lib/src/genrfuncs.c:630 lib/src/genrfuncs.c:664
+#, c-format
+msgid "%s = 1 if %s is %d, 0 otherwise"
+msgstr "%s = 1 je¿eli %s jest %d, 0 pozosta³e"
+
+#: lib/src/genrfuncs.c:631 lib/src/genrfuncs.c:665
+msgid "unit"
+msgstr "jednostka"
+
+#: lib/src/genrfuncs.c:631 lib/src/genrfuncs.c:665 lib/src/varprint.c:142
+#: lib/src/varprint.c:144 lib/src/varprint.c:146
+msgid "period"
+msgstr "okres"
+
+#: lib/src/genrfuncs.c:743
+msgid "cross-sectional unit index"
+msgstr "indeks obserwacji dla jednostek sekcji"
+
+#: lib/src/genrfuncs.c:844 lib/src/genrfuncs.c:953 lib/src/genrfuncs.c:959
+#: lib/src/genrfuncs.c:972 lib/src/transforms.c:904
+msgid "time trend variable"
+msgstr "zmienna czasowa t"
+
+#: lib/src/genrfuncs.c:847
+msgid "data index variable"
+msgstr "zmienna - indeks obserwacji"
+
+#: lib/src/genrfuncs.c:911
+msgid "annual plotting variable"
+msgstr "Wykres rocznej zmiennej"
+
+#: lib/src/genrfuncs.c:917
+msgid "quarterly plotting variable"
+msgstr "Wykres kwartalnej zmiennej"
+
+#: lib/src/genrfuncs.c:924
+msgid "monthly plotting variable"
+msgstr "Wykres miesiêcznej zmiennej"
+
+#: lib/src/genrfuncs.c:931
+msgid "hourly plotting variable"
+msgstr "Wykres godzinowej zmiennej"
+
+#: lib/src/genrfuncs.c:940
+msgid "daily plotting variable"
+msgstr "Wykres dziennej zmiennej"
 
 #: lib/src/graphing.c:820
 #, c-format
@@ -2001,7 +1996,7 @@ msgid "actual"
 msgstr "empiryczne"
 
 #: lib/src/graphing.c:1522 lib/src/graphing.c:1525 lib/src/graphing.c:2147
-#: lib/src/printout.c:742 gui2/guiprint_common.c:610
+#: lib/src/printout.c:743 gui2/guiprint_common.c:610
 #: gui2/guiprint_common.c:666
 msgid "fitted"
 msgstr "wyrownane"
@@ -3024,26 +3019,26 @@ msgstr "Sta³a startowa do generowania liczb pseudolosowych wynosi: %d\n"
 msgid "Baxter-King approximation = %d\n"
 msgstr "aproksymacja Baxtera-Kinga = %d\n"
 
-#: lib/src/missing.c:704
+#: lib/src/missing.c:731
 #, c-format
 msgid "Set %d values to \"missing\"\n"
 msgstr "W zbiorze wystêpuje %d brakuj±ce dane\n"
 
-#: lib/src/missing.c:707
+#: lib/src/missing.c:734
 msgid "Didn't find any matching observations\n"
 msgstr "Nie znaleziono wyselekcjonowanych obserwacji\n"
 
-#: lib/src/missing.c:712
+#: lib/src/missing.c:739
 #, c-format
 msgid "The variable %s is a scalar\n"
 msgstr "Zmienna %s jest skalarem\n"
 
-#: lib/src/missing.c:718
+#: lib/src/missing.c:745
 #, c-format
 msgid "%s: set %d observations to \"missing\"\n"
 msgstr "%s: w %d obserwacjach brakuje danych\n"
 
-#: lib/src/missing.c:722
+#: lib/src/missing.c:749
 #, c-format
 msgid "%s: Didn't find any matching observations\n"
 msgstr "%s: Nie znaleziono ¿adnej pasuj±cej obserwacji\n"
@@ -3953,7 +3948,7 @@ msgid ""
 msgstr ""
 "Za ma³a próba do oszacowania warto¶ci p dla oceny normalno¶ci dystrybuanty\n"
 
-#: lib/src/nonparam.c:295 lib/src/printout.c:738 gui2/guiprint_common.c:745
+#: lib/src/nonparam.c:295 lib/src/printout.c:739 gui2/guiprint_common.c:745
 #: gui2/guiprint_common.c:798 gui2/guiprint_common.c:855
 #: gui2/guiprint_common.c:891
 msgid "Obs"
@@ -4033,43 +4028,43 @@ msgstr "B³±d w za³adowaniu funkcji: %s"
 msgid "Couldn't load plugin function"
 msgstr "Niemo¿liwe za³adowanie funkcji"
 
-#: lib/src/printout.c:58
+#: lib/src/printout.c:59
 msgid "Covariance matrix of regression coefficients"
 msgstr "Macierz wariancji i kowariancji ocen parametrów"
 
-#: lib/src/printout.c:79 lib/src/printout.c:148
+#: lib/src/printout.c:80 lib/src/printout.c:149
 msgid "Current session"
 msgstr "Bie¿±ca sesja"
 
-#: lib/src/printout.c:94 lib/src/printout.c:147
+#: lib/src/printout.c:95 lib/src/printout.c:148
 #, c-format
 msgid "gretl version %s\n"
 msgstr "gretl wersja %s\n"
 
-#: lib/src/printout.c:95
+#: lib/src/printout.c:96
 msgid "Copyright Ramu Ramanathan and Allin Cottrell"
 msgstr "Copyright Ramu Ramanathan and Allin Cottrell"
 
-#: lib/src/printout.c:96
+#: lib/src/printout.c:97
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
 msgstr "To jest oprogramowanie z Powszechn± Licencj± Publiczn± GNU"
 
-#: lib/src/printout.c:116
+#: lib/src/printout.c:117
 #, c-format
 msgid "gretl: gui client for gretl version %s,\n"
 msgstr "GRETL: klient GUI dla wersji %s,\n"
 
-#: lib/src/printout.c:117
+#: lib/src/printout.c:118
 msgid "copyright Allin Cottrell.\n"
 msgstr ""
 "Copyright Allin Cottrell, t³umaczenie: Tadeusz Kufel i Pawe³ Kufel (UMK "
 "Toruñ).\n"
 
-#: lib/src/printout.c:118
+#: lib/src/printout.c:119
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
 msgstr "To jest oprogramowanie z Powszechn± Licencj± Publiczn± GNU.\n"
 
-#: lib/src/printout.c:192
+#: lib/src/printout.c:193
 #, no-c-format
 msgid ""
 "      VARIABLE      COEFFICIENT      95% CONFIDENCE INTERVAL\n"
@@ -4078,7 +4073,7 @@ msgstr ""
 "      Zmienna      Wspó³czynnik      95% Przedzia³ ufno¶ci\n"
 "\n"
 
-#: lib/src/printout.c:219
+#: lib/src/printout.c:220
 msgid ""
 "\n"
 "Pairwise correlation coefficients:\n"
@@ -4088,16 +4083,16 @@ msgstr ""
 "Wspó³czynnik korelacji liniowej:\n"
 "\n"
 
-#: lib/src/printout.c:252
+#: lib/src/printout.c:253
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
 "Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny, test JB"
 
-#: lib/src/printout.c:259
+#: lib/src/printout.c:260
 msgid "Test for null hypothesis of gamma distribution"
 msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad gamma"
 
-#: lib/src/printout.c:289
+#: lib/src/printout.c:290
 #, c-format
 msgid ""
 "\n"
@@ -4106,12 +4101,12 @@ msgstr ""
 "\n"
 "Rozk³ad czêsto¶ci dla %s, obserwacje %d-%d (%d prawid³owych)\n"
 
-#: lib/src/printout.c:300
+#: lib/src/printout.c:301
 #, c-format
 msgid "number of bins = %d, mean = %g, sd = %g\n"
 msgstr "liczba przedzia³ów = %d, ¶rednia = %g, odch.std. = %g\n"
 
-#: lib/src/printout.c:303
+#: lib/src/printout.c:304
 msgid ""
 "\n"
 "       interval          midpt      frequency\n"
@@ -4121,37 +4116,37 @@ msgstr ""
 "     Przedzia³y     Punkt ¶rodkowy   Liczebno¶æ cz±stkowa\n"
 "\n"
 
-#: lib/src/printout.c:358 lib/src/printout.c:369
+#: lib/src/printout.c:359 lib/src/printout.c:370
 #, c-format
 msgid "Full data set: %d observations\n"
 msgstr "Pe³ny zakres danych: %d obserwacji\n"
 
-#: lib/src/printout.c:360
+#: lib/src/printout.c:361
 #, c-format
 msgid "Current sample: %d observations\n"
 msgstr "Bie¿±ca próba: %d obserwacji\n"
 
-#: lib/src/printout.c:371
+#: lib/src/printout.c:372
 msgid "Full data range"
 msgstr "Pe³ny zakres danych"
 
-#: lib/src/printout.c:375
+#: lib/src/printout.c:376
 msgid "Current sample"
 msgstr "Bie¿±ca próba"
 
-#: lib/src/printout.c:513
+#: lib/src/printout.c:514
 msgid "Cross-equation VCV for residuals"
 msgstr "Macierz wariancji i kowariancji dla reszt poszczególnych równañ"
 
-#: lib/src/printout.c:514
+#: lib/src/printout.c:515
 msgid "correlations above the diagonal"
 msgstr "skorelowania w nawisach - powy¿ej elemetów diagonalnych"
 
-#: lib/src/printout.c:534
+#: lib/src/printout.c:535
 msgid "log determinant"
 msgstr "logarytm wyznacznika"
 
-#: lib/src/printout.c:598
+#: lib/src/printout.c:599
 msgid ""
 "\n"
 "Take notes then press return key to continue (or q to quit)"
@@ -4159,7 +4154,7 @@ msgstr ""
 "\n"
 "Naci¶nij ENTER aby kontynuowaæ (lub q aby wyj¶æ)"
 
-#: lib/src/printout.c:600
+#: lib/src/printout.c:601
 msgid ""
 "\n"
 "Take notes then press return key to continue"
@@ -4167,52 +4162,57 @@ msgstr ""
 "\n"
 "Naci¶nij ENTER aby kontynuowaæ"
 
-#: lib/src/printout.c:731
+#: lib/src/printout.c:732
 #, c-format
 msgid "Model estimation range: %s - %s"
 msgstr "Zakres estymowanego modelu: %s - %s"
 
-#: lib/src/printout.c:735
+#: lib/src/printout.c:736
 #, c-format
 msgid "Standard error of residuals = %f\n"
 msgstr "B³±d standardowy reszt = %f\n"
 
-#: lib/src/printout.c:743
+#: lib/src/printout.c:744
 msgid "residuals"
 msgstr "reszty"
 
-#: lib/src/printout.c:1303
+#: lib/src/printout.c:1175
+#, c-format
+msgid "Listing %d variables:\n"
+msgstr "Lista %d zmiennych:\n"
+
+#: lib/src/printout.c:1365
 #, c-format
 msgid "Varname: %s\n"
 msgstr "Nazwa zmiennej: %s\n"
 
-#: lib/src/printout.c:1549
+#: lib/src/printout.c:1611
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr ""
 "Obja¶nienie: * oznacza resztê przekraczajac± 2.5 raza b³±d standardowy "
 "reszt\n"
 
-#: lib/src/printout.c:1593
+#: lib/src/printout.c:1655
 #, c-format
 msgid " For 95%% confidence intervals, z(.025) = %.2f\n"
 msgstr " Dla 95%% przedzia³u ufno¶ci, z(.025) = %.2f\n"
 
-#: lib/src/printout.c:1596
+#: lib/src/printout.c:1658
 #, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
 msgstr " Dla 95%% przedzia³u ufno¶ci, t(%d, .025) = %.3f\n"
 
-#: lib/src/printout.c:1603 gui2/guiprint_common.c:745
+#: lib/src/printout.c:1665 gui2/guiprint_common.c:745
 #: gui2/guiprint_common.c:799 gui2/guiprint_common.c:855
 #: gui2/guiprint_common.c:891
 msgid "prediction"
 msgstr "  prognoza"
 
-#: lib/src/printout.c:1606
+#: lib/src/printout.c:1668
 msgid " std. error"
 msgstr "b³±d ex ante"
 
-#: lib/src/printout.c:1607
+#: lib/src/printout.c:1669
 #, c-format
 msgid "   95%% confidence interval\n"
 msgstr "   95%% przedzia³ ufno¶ci\n"
@@ -4697,7 +4697,7 @@ msgstr "= %s times %s"
 msgid "squared time trend variable"
 msgstr "kwadrat zmiennej czasowej t"
 
-#: lib/src/tsls.c:852
+#: lib/src/tsls.c:884
 #, c-format
 msgid ""
 "Order condition for identification is not satisfied.\n"

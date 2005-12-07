@@ -29588,7 +29588,7 @@ Configuration:
   Script syntax highlighting:             ${use_gtksourceview}
   Use installed gtksourceview:            ${have_gtksourceview}
   Use installed libole2:                  ${have_libole2}
-  Use installed gtkextra:		  ${have_gtkextra}
+  Use installed gtkextra:                 ${have_gtkextra}
   Build with gnome support:               ${have_gnome}
   Gnome installation prefix:              ${gnome_prefix}
   X-12-ARIMA support:                     ${have_x12a}

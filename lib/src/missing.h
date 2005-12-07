@@ -29,6 +29,8 @@
 
 int model_missval_count (const MODEL *pmod);
 
+int array_adjust_t1t2 (const double *x, int *t1, int *t2);
+
 int varlist_adjust_sample (const int *list, int *t1, int *t2, 
 			   const double **Z);
 

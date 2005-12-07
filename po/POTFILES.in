@@ -12,6 +12,7 @@ lib/src/discrete.c
 lib/src/estimate.c
 lib/src/forecast.c
 lib/src/generate.c
+lib/src/genrfuncs.c
 lib/src/genstack.c
 lib/src/graphing.c
 lib/src/gretl_commands.c

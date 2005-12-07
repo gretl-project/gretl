@@ -352,6 +352,7 @@ struct mp_results_ {
 #include "dataset.h"
 #include "estimate.h"
 #include "generate.h"
+#include "genrfuncs.h"
 #include "compare.h"
 #include "gretl_intl.h"
 #include "gretl_list.h"

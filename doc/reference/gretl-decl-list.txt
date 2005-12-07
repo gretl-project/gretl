@@ -92,10 +92,6 @@ poisson_model
 garch
 pooled
 groupwise_hetero_test
-tsls_get_Xi
-tsls_free_data
-tsls_list_omit
-tsls_func
 hsk_func
 whites_test
 ar_func
@@ -203,15 +199,6 @@ execute_genr
 destroy_genr
 genr_get_varnum
 genr_get_err
-genrtime
-genrunit
-dummy
-paneldum
-panel_unit_dummies
-panel_unit_first_obs
-plotvar
-varlist
-maybe_list_vars
 varindex
 genr_fit_resid
 get_generated_value
@@ -624,6 +611,8 @@ print_contemp_covariance_matrix
 outcovmx
 obs_marker_init
 print_obs_marker
+varlist
+maybe_list_vars
 printdata
 print_data_sorted
 text_print_fit_resid
@@ -667,6 +656,7 @@ redundant_var
 
 <SECTION>
 <FILE>gretl_matrix</FILE>
+R_DIAG_MIN
 GretlMatrixError
 GretlMatrixMod
 gretl_matrix
@@ -735,6 +725,8 @@ gretl_general_matrix_eigenvals
 gretl_symmetric_matrix_eigenvals
 gretl_matrix_right_nullspace
 gretl_matrix_cholesky_decomp
+gretl_matrix_QR_decomp
+gretl_matrix_QR_rank
 gretl_matrix_ols
 gretl_matrix_restricted_ols
 gretl_matrix_svd_ols
@@ -897,6 +889,7 @@ gretl_model_free
 gretl_model_free_on_exit
 gretl_model_set_data_with_destructor
 gretl_model_set_data
+gretl_model_set_list_as_data
 gretl_model_destroy_data_item
 gretl_model_detach_data_item
 gretl_model_set_int
@@ -1087,6 +1080,7 @@ NADBL
 na
 model_missing
 model_missval_count
+array_adjust_t1t2
 varlist_adjust_sample
 check_for_missing_obs
 set_miss
@@ -1299,6 +1293,15 @@ coint
 </SECTION>
 
 <SECTION>
+<FILE>tsls</FILE>
+tsls_get_Xi
+tsls_free_data
+tsls_list_omit
+tsls_list_add
+tsls_func
+</SECTION>
+
+<SECTION>
 <FILE>varprint</FILE>
 gretl_VAR_print_VCV
 gretl_VAR_print
@@ -1306,5 +1309,19 @@ gretl_VAR_print_impulse_response
 gretl_VAR_print_all_fcast_decomps
 gretl_VAR_print_fcast_decomp
 gretl_VAR_print_all_impulse_responses
+</SECTION>
+
+<SECTION>
+<FILE>genrfuncs</FILE>
+hp_filter
+bkbp_filter
+get_fracdiff
+dummy
+panel_unit_dummies
+panel_unit_first_obs
+paneldum
+genrunit
+genrtime
+plotvar
 </SECTION>
 

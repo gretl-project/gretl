@@ -55,6 +55,10 @@ void obs_marker_init (const DATAINFO *pdinfo);
 
 void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn);
 
+void varlist (const DATAINFO *pdinfo, PRN *prn);
+
+void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn);
+
 int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 

@@ -23,6 +23,7 @@
 #include "version.h"
 #include "libset.h"
 #include "forecast.h"
+#include "gretl_func.h"
 
 #include <time.h>
 
@@ -1142,6 +1143,67 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
     } else {
 	ntodate(tmp, t, pdinfo);
 	pprintf(prn, "%8s ", tmp);
+    }
+}
+
+/**
+ * varlist:
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct
+ *
+ * Prints a list of the names of the variables currently defined.
+ */
+
+void varlist (const DATAINFO *pdinfo, PRN *prn)
+{
+    int level = 0;
+    int i, j, n;
+
+    if (gretl_executing_function()) {
+	level = gretl_function_stack_depth();
+
+	n = 0;
+	for (i=0; i<pdinfo->v; i++) {
+	    if (STACK_LEVEL(pdinfo, i) == level) {
+		n++;
+	    }
+	}
+    } else {
+	n = pdinfo->v;
+    }
+
+    pprintf(prn, _("Listing %d variables:\n"), n);
+
+    j = 1;
+    for (i=0; i<pdinfo->v; i++) {
+	if (level > 0 && STACK_LEVEL(pdinfo, i) != level) {
+	    continue;
+	}
+	pprintf(prn, "%3d) %-10s", i, pdinfo->varname[i]);
+	if (j % 5 == 0) {
+	    pputc(prn, '\n');
+	}
+	j++;
+    }
+
+    if (n % 5) pputc(prn, '\n');
+
+    pputc(prn, '\n');
+}
+
+/**
+ * maybe_list_vars:
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct
+ *
+ * Prints a list of the names of the variables currently defined,
+ * unless gretl messaging is turned off.
+ */
+
+void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn)
+{
+    if (gretl_messages_on()) {
+	varlist(pdinfo, prn);
     }
 }
 

@@ -524,6 +524,33 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     return ret;
 }
 
+/* drop first/last observations from sample if missing obs 
+   encountered -- also check for missing vals within the
+   remaining sample */
+
+int array_adjust_t1t2 (const double *x, int *t1, int *t2)
+{
+    int t, t1min = *t1, t2max = *t2;
+
+    for (t=t1min; t<t2max; t++) {
+	if (na(x[t])) t1min++;
+	else break;
+    }
+
+    for (t=t2max; t>t1min; t--) {
+	if (na(x[t])) t2max--;
+	else break;
+    }
+
+    for (t=t1min; t<=t2max; t++) {
+	if (na(x[t])) return t;
+    }
+
+    *t1 = t1min; *t2 = t2max;
+
+    return 0;
+}
+
 /**
  * varlist_adjust_sample: 
  * @list: list of variables to be tested for missing values.

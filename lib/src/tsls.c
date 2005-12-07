@@ -584,7 +584,7 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 		    droplist[0] += 1;
 		    droplist[droplist[0]] = v;
 		}	    
-		fprintf(stderr, "Dropping redundant regressor %d\n", v);
+		fprintf(stderr, "Dropping redundant instrument %d\n", v);
 		gretl_list_delete_at_pos(instlist, i+1);
 		if ((pos = in_gretl_list(reglist, v))) {
 		    gretl_list_delete_at_pos(reglist, pos);

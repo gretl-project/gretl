@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.2.9\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-12-06 12:53-0500\n"
+"POT-Creation-Date: 2005-12-07 11:21-0500\n"
 "PO-Revision-Date: 2005-04-15 18:28+0200\n"
 "Last-Translator: Susan-Orbe <etpormas@bs.ehu.es>\n"
 "Language-Team: basque <eu@li.org>\n"
@@ -202,7 +202,7 @@ msgstr "estatistiko testa"
 #: lib/src/gretl_model.c:1766 lib/src/gretl_model.c:1774
 #: lib/src/modelprint.c:259 lib/src/modelprint.c:1289
 #: lib/src/modelprint.c:1296 lib/src/modelprint.c:2195
-#: lib/src/modelprint.c:2226 lib/src/printout.c:254 lib/src/system.c:626
+#: lib/src/modelprint.c:2226 lib/src/printout.c:255 lib/src/system.c:626
 #: lib/src/varprint.c:932 lib/src/varprint.c:939 plugin/panel_data.c:1330
 #: plugin/panel_data.c:1807 plugin/sysest.c:51 plugin/sysest.c:59
 #: plugin/sysest.c:470 plugin/sysest.c:483
@@ -245,7 +245,7 @@ msgstr ""
 #: lib/src/gretl_model.c:1860 lib/src/gretl_model.c:1868
 #: lib/src/gretl_model.c:1877 lib/src/modelprint.c:260
 #: lib/src/modelprint.c:1289 lib/src/modelprint.c:1296
-#: lib/src/modelprint.c:1303 lib/src/printout.c:255 lib/src/printout.c:261
+#: lib/src/modelprint.c:1303 lib/src/printout.c:256 lib/src/printout.c:262
 #: lib/src/system.c:598 lib/src/system.c:627 plugin/panel_data.c:787
 #: plugin/panel_data.c:1801 plugin/panel_data.c:1806 plugin/sysest.c:52
 #: plugin/sysest.c:60 plugin/sysest.c:471 plugin/sysest.c:484
@@ -453,12 +453,12 @@ msgstr ""
 msgid "Bad varname '%s' in sim"
 msgstr ""
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:5205
+#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:4211
 #: lib/src/gretl_list.c:1012 lib/src/modelprint.c:1019
 msgid "Replaced"
 msgstr "Ordezkatuta"
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:5207
+#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:4213
 msgid "vector"
 msgstr "bektorea"
 
@@ -708,7 +708,7 @@ msgstr ""
 msgid " datafile"
 msgstr "data-fitxategia"
 
-#: lib/src/dataio.c:1939 lib/src/generate.c:4804
+#: lib/src/dataio.c:1939 lib/src/genrfuncs.c:966
 msgid "index variable"
 msgstr ""
 
@@ -1045,7 +1045,7 @@ msgstr ""
 msgid "Please open a data file first"
 msgstr "Mesedez, ireki datu fitxategia lehenik"
 
-#: lib/src/dataset.c:1713 lib/src/generate.c:5205 lib/src/modelprint.c:1020
+#: lib/src/dataset.c:1713 lib/src/generate.c:4211 lib/src/modelprint.c:1020
 msgid "Generated"
 msgstr "Sortuak"
 
@@ -1277,15 +1277,15 @@ msgstr ""
 msgid "Fractional integration test failed"
 msgstr ""
 
-#: lib/src/describe.c:2156 lib/src/describe.c:2157 lib/src/estimate.c:2746
-#: lib/src/estimate.c:2747 lib/src/modelprint.c:344 lib/src/modelprint.c:352
+#: lib/src/describe.c:2156 lib/src/describe.c:2157 lib/src/estimate.c:2694
+#: lib/src/estimate.c:2695 lib/src/modelprint.c:344 lib/src/modelprint.c:352
 #: lib/src/modelprint.c:365 lib/src/modelprint.c:1646
 #: lib/src/modelprint.c:1656 lib/src/modelprint.c:1693
 #: lib/src/modelprint.c:1743 lib/src/modelprint.c:1750
 #: lib/src/modelprint.c:1751 lib/src/modelprint.c:1752
-#: lib/src/modelprint.c:1775 lib/src/modelprint.c:2298 lib/src/printout.c:159
-#: lib/src/printout.c:167 lib/src/printout.c:229 lib/src/printout.c:571
-#: lib/src/printout.c:572 lib/src/texprint.c:307 lib/src/texprint.c:313
+#: lib/src/modelprint.c:1775 lib/src/modelprint.c:2298 lib/src/printout.c:160
+#: lib/src/printout.c:168 lib/src/printout.c:230 lib/src/printout.c:572
+#: lib/src/printout.c:573 lib/src/texprint.c:307 lib/src/texprint.c:313
 #: lib/src/texprint.c:314 lib/src/texprint.c:315 gui2/guiprint_common.c:90
 #: gui2/guiprint_common.c:92 gui2/guiprint_common.c:187
 #: gui2/guiprint_common.c:189 gui2/guiprint_common.c:296
@@ -1526,7 +1526,7 @@ msgstr ""
 msgid "Omitted due to exact collinearity:"
 msgstr ""
 
-#: lib/src/estimate.c:817 lib/src/estimate.c:1906 plugin/arma_common.c:205
+#: lib/src/estimate.c:817 lib/src/estimate.c:1854 plugin/arma_common.c:205
 #, c-format
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr ""
@@ -1536,15 +1536,15 @@ msgstr ""
 msgid "Error sum of squares (%g) is not > 0"
 msgstr "Akatsa  karratuen baturan (%g) ez da > 0"
 
-#: lib/src/estimate.c:1409
+#: lib/src/estimate.c:1410
 msgid "Warning: data matrix close to singularity!"
 msgstr ""
 
-#: lib/src/estimate.c:1803 lib/src/estimate.c:1936
+#: lib/src/estimate.c:1751 lib/src/estimate.c:1884
 msgid "ESS"
 msgstr "HKB"
 
-#: lib/src/estimate.c:1995
+#: lib/src/estimate.c:1943
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -1557,28 +1557,28 @@ msgstr ""
 "HKB minimoduna rho = %.2frentzat\n"
 "\n"
 
-#: lib/src/estimate.c:2028
+#: lib/src/estimate.c:1976
 msgid ""
 "\n"
 "Fine-tune rho using the CORC procedure...\n"
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:2030
+#: lib/src/estimate.c:1978
 msgid ""
 "\n"
 "Performing iterative calculation of rho...\n"
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:2033
+#: lib/src/estimate.c:1981
 #, fuzzy
 msgid "                 ITER       RHO        ESS"
 msgstr ""
 "    BATEZ.           MEDIANA           MIN             MAX\n"
 "\n"
 
-#: lib/src/estimate.c:2074
+#: lib/src/estimate.c:2022
 #, c-format
 msgid ""
 "                final %11.5f\n"
@@ -1587,30 +1587,30 @@ msgstr ""
 "                azken %11.5f\n"
 "\n"
 
-#: lib/src/estimate.c:2670
+#: lib/src/estimate.c:2618
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Cochrane-Orcutt zabalduaren estimazioa"
 
-#: lib/src/estimate.c:2673
+#: lib/src/estimate.c:2621
 #, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr ""
 
-#: lib/src/estimate.c:2873
+#: lib/src/estimate.c:2821
 msgid "omitted because all obs are zero."
 msgstr ""
 
-#: lib/src/estimate.c:2969
+#: lib/src/estimate.c:2917
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "arch (%d) atzerapen ordena baliogabea"
 
-#: lib/src/estimate.c:3029
+#: lib/src/estimate.c:2977
 #, c-format
 msgid "No of obs. = %d, unadjusted R^2 = %f\n"
 msgstr "Behak. kop. = %d, zuzendu gabeko R^2 = %f\n"
 
-#: lib/src/estimate.c:3052
+#: lib/src/estimate.c:3000
 #, c-format
 msgid ""
 "LM test statistic (%f) is distributed as Chi-square (%d)\n"
@@ -1619,23 +1619,23 @@ msgstr ""
 "LM test estatistikoa (%f) chi-karratua (%d) bezala banatua\n"
 "LMren eskumakoa area = %f  "
 
-#: lib/src/estimate.c:3057
+#: lib/src/estimate.c:3005
 msgid "ARCH effect is insignificant at the 10 percent level"
 msgstr "ARCH efektu  nabaririk  ez ehuneko 10eko mailarentzat"
 
-#: lib/src/estimate.c:3058
+#: lib/src/estimate.c:3006
 msgid "Weighted estimation not done"
 msgstr ""
 
-#: lib/src/estimate.c:3061
+#: lib/src/estimate.c:3009
 msgid "ARCH effect is significant at the 10 percent level"
 msgstr "ARCH efektu nabaria ehuneko 10eko mailarentzat"
 
-#: lib/src/estimate.c:3219 lib/src/estimate.c:3265 lib/src/pvalues.c:835
+#: lib/src/estimate.c:3167 lib/src/estimate.c:3213 lib/src/pvalues.c:835
 msgid "Couldn't load plugin function\n"
 msgstr ""
 
-#: lib/src/estimate.c:3543
+#: lib/src/estimate.c:3491
 msgid "This test is only available for panel data"
 msgstr ""
 
@@ -1753,128 +1753,123 @@ msgid ""
 "base value = %f, exponent = %f"
 msgstr ""
 
-#: lib/src/generate.c:4070
+#: lib/src/generate.c:3731
 msgid "Can't retrieve uhat: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:4072
+#: lib/src/generate.c:3733
 msgid "Can't retrieve yhat: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:4073
+#: lib/src/generate.c:3734
 msgid "Can't retrieve ht: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:4085
+#: lib/src/generate.c:3746
 msgid "Can't retrieve error variance"
 msgstr ""
 
-#: lib/src/generate.c:4306
-#, c-format
-msgid "= 1 if quarter = %d, 0 otherwise"
-msgstr "= 1 baldin eta urtelaurdena = %d bada, 0 bestela"
-
-#: lib/src/generate.c:4312
-#, c-format
-msgid "= 1 if month is %s, 0 otherwise"
-msgstr "= 1 baldin eta hilabetea %s bada, 0 bestela"
-
-#: lib/src/generate.c:4322
-#, c-format
-msgid "%s = 1 if period is %d, 0 otherwise"
-msgstr "%s = 1 baldin eta aldia %d bada, 0 bestela"
-
-#: lib/src/generate.c:4362 lib/src/gretl_errors.c:43
-msgid "This command won't work with the current periodicity"
-msgstr ""
-
-#: lib/src/generate.c:4389 lib/src/gretl_errors.c:45
-msgid "Out of memory error"
-msgstr ""
-
-#: lib/src/generate.c:4508 lib/src/generate.c:4542
-#, c-format
-msgid "%s = 1 if %s is %d, 0 otherwise"
-msgstr "%s = 1 baldin eta  %s  %d bada, 0 bestela"
-
-#: lib/src/generate.c:4509 lib/src/generate.c:4543
-msgid "unit"
-msgstr "unitatea"
-
-#: lib/src/generate.c:4509 lib/src/generate.c:4543 lib/src/varprint.c:142
-#: lib/src/varprint.c:144 lib/src/varprint.c:146
-msgid "period"
-msgstr "aldia"
-
-#: lib/src/generate.c:4621
-msgid "cross-sectional unit index"
-msgstr ""
-
-#: lib/src/generate.c:4682 lib/src/generate.c:4791 lib/src/generate.c:4797
-#: lib/src/generate.c:4810 lib/src/transforms.c:904
-msgid "time trend variable"
-msgstr "denbora tendentziaren aldagaia"
-
-#: lib/src/generate.c:4685
-msgid "data index variable"
-msgstr ""
-
-#: lib/src/generate.c:4749
-msgid "annual plotting variable"
-msgstr ""
-
-#: lib/src/generate.c:4755
-msgid "quarterly plotting variable"
-msgstr ""
-
-#: lib/src/generate.c:4762
-msgid "monthly plotting variable"
-msgstr ""
-
-#: lib/src/generate.c:4769
-msgid "hourly plotting variable"
-msgstr ""
-
-#: lib/src/generate.c:4778
-msgid "daily plotting variable"
-msgstr ""
-
-#: lib/src/generate.c:4848
-#, c-format
-msgid "Listing %d variables:\n"
-msgstr ""
-
-#: lib/src/generate.c:5204
+#: lib/src/generate.c:4210
 #, fuzzy
 msgid "Modified"
 msgstr "Eredua"
 
-#: lib/src/generate.c:5206
+#: lib/src/generate.c:4212
 msgid "variable"
 msgstr "aldagaia"
 
-#: lib/src/generate.c:5207
+#: lib/src/generate.c:4213
 msgid "scalar"
 msgstr "eskalarra"
 
-#: lib/src/generate.c:5286
+#: lib/src/generate.c:4292
 #, c-format
 msgid "residual from model %d"
 msgstr ""
 
-#: lib/src/generate.c:5292
+#: lib/src/generate.c:4298
 #, c-format
 msgid "fitted value from model %d"
 msgstr ""
 
-#: lib/src/generate.c:5299
+#: lib/src/generate.c:4305
 #, c-format
 msgid "squared residual from model %d"
 msgstr ""
 
-#: lib/src/generate.c:5310
+#: lib/src/generate.c:4316
 #, c-format
 msgid "fitted variance from model %d"
+msgstr ""
+
+#: lib/src/genrfuncs.c:428
+#, c-format
+msgid "= 1 if quarter = %d, 0 otherwise"
+msgstr "= 1 baldin eta urtelaurdena = %d bada, 0 bestela"
+
+#: lib/src/genrfuncs.c:434
+#, c-format
+msgid "= 1 if month is %s, 0 otherwise"
+msgstr "= 1 baldin eta hilabetea %s bada, 0 bestela"
+
+#: lib/src/genrfuncs.c:444
+#, c-format
+msgid "%s = 1 if period is %d, 0 otherwise"
+msgstr "%s = 1 baldin eta aldia %d bada, 0 bestela"
+
+#: lib/src/genrfuncs.c:484 lib/src/gretl_errors.c:43
+msgid "This command won't work with the current periodicity"
+msgstr ""
+
+#: lib/src/genrfuncs.c:511 lib/src/gretl_errors.c:45
+msgid "Out of memory error"
+msgstr ""
+
+#: lib/src/genrfuncs.c:630 lib/src/genrfuncs.c:664
+#, c-format
+msgid "%s = 1 if %s is %d, 0 otherwise"
+msgstr "%s = 1 baldin eta  %s  %d bada, 0 bestela"
+
+#: lib/src/genrfuncs.c:631 lib/src/genrfuncs.c:665
+msgid "unit"
+msgstr "unitatea"
+
+#: lib/src/genrfuncs.c:631 lib/src/genrfuncs.c:665 lib/src/varprint.c:142
+#: lib/src/varprint.c:144 lib/src/varprint.c:146
+msgid "period"
+msgstr "aldia"
+
+#: lib/src/genrfuncs.c:743
+msgid "cross-sectional unit index"
+msgstr ""
+
+#: lib/src/genrfuncs.c:844 lib/src/genrfuncs.c:953 lib/src/genrfuncs.c:959
+#: lib/src/genrfuncs.c:972 lib/src/transforms.c:904
+msgid "time trend variable"
+msgstr "denbora tendentziaren aldagaia"
+
+#: lib/src/genrfuncs.c:847
+msgid "data index variable"
+msgstr ""
+
+#: lib/src/genrfuncs.c:911
+msgid "annual plotting variable"
+msgstr ""
+
+#: lib/src/genrfuncs.c:917
+msgid "quarterly plotting variable"
+msgstr ""
+
+#: lib/src/genrfuncs.c:924
+msgid "monthly plotting variable"
+msgstr ""
+
+#: lib/src/genrfuncs.c:931
+msgid "hourly plotting variable"
+msgstr ""
+
+#: lib/src/genrfuncs.c:940
+msgid "daily plotting variable"
 msgstr ""
 
 #: lib/src/graphing.c:820
@@ -1912,7 +1907,7 @@ msgid "actual"
 msgstr "oraingo"
 
 #: lib/src/graphing.c:1522 lib/src/graphing.c:1525 lib/src/graphing.c:2147
-#: lib/src/printout.c:742 gui2/guiprint_common.c:610
+#: lib/src/printout.c:743 gui2/guiprint_common.c:610
 #: gui2/guiprint_common.c:666
 msgid "fitted"
 msgstr "doitutakoa"
@@ -2911,26 +2906,26 @@ msgstr ""
 msgid "Baxter-King approximation = %d\n"
 msgstr ""
 
-#: lib/src/missing.c:704
+#: lib/src/missing.c:731
 #, c-format
 msgid "Set %d values to \"missing\"\n"
 msgstr ""
 
-#: lib/src/missing.c:707
+#: lib/src/missing.c:734
 msgid "Didn't find any matching observations\n"
 msgstr ""
 
-#: lib/src/missing.c:712
+#: lib/src/missing.c:739
 #, c-format
 msgid "The variable %s is a scalar\n"
 msgstr "%s aldagaia eskalarra da\n"
 
-#: lib/src/missing.c:718
+#: lib/src/missing.c:745
 #, c-format
 msgid "%s: set %d observations to \"missing\"\n"
 msgstr ""
 
-#: lib/src/missing.c:722
+#: lib/src/missing.c:749
 #, c-format
 msgid "%s: Didn't find any matching observations\n"
 msgstr ""
@@ -3835,7 +3830,7 @@ msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
-#: lib/src/nonparam.c:295 lib/src/printout.c:738 gui2/guiprint_common.c:745
+#: lib/src/nonparam.c:295 lib/src/printout.c:739 gui2/guiprint_common.c:745
 #: gui2/guiprint_common.c:798 gui2/guiprint_common.c:855
 #: gui2/guiprint_common.c:891
 msgid "Obs"
@@ -3910,170 +3905,175 @@ msgstr ""
 msgid "Couldn't load plugin function"
 msgstr ""
 
-#: lib/src/printout.c:58
+#: lib/src/printout.c:59
 #, fuzzy
 msgid "Covariance matrix of regression coefficients"
 msgstr "Koerlazio Koefizienteak"
 
-#: lib/src/printout.c:79 lib/src/printout.c:148
+#: lib/src/printout.c:80 lib/src/printout.c:149
 msgid "Current session"
 msgstr ""
 
-#: lib/src/printout.c:94 lib/src/printout.c:147
+#: lib/src/printout.c:95 lib/src/printout.c:148
 #, c-format
 msgid "gretl version %s\n"
 msgstr "gretl bertsioa %s\n"
 
-#: lib/src/printout.c:95
+#: lib/src/printout.c:96
 msgid "Copyright Ramu Ramanathan and Allin Cottrell"
 msgstr ""
 
-#: lib/src/printout.c:96
+#: lib/src/printout.c:97
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
 msgstr ""
 
-#: lib/src/printout.c:116
+#: lib/src/printout.c:117
 #, c-format
 msgid "gretl: gui client for gretl version %s,\n"
 msgstr ""
 
-#: lib/src/printout.c:117
+#: lib/src/printout.c:118
 msgid "copyright Allin Cottrell.\n"
 msgstr ""
 
-#: lib/src/printout.c:118
+#: lib/src/printout.c:119
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
 msgstr ""
 
-#: lib/src/printout.c:192
+#: lib/src/printout.c:193
 #, no-c-format
 msgid ""
 "      VARIABLE      COEFFICIENT      95% CONFIDENCE INTERVAL\n"
 "\n"
 msgstr ""
 
-#: lib/src/printout.c:219
+#: lib/src/printout.c:220
 msgid ""
 "\n"
 "Pairwise correlation coefficients:\n"
 "\n"
 msgstr ""
 
-#: lib/src/printout.c:252
+#: lib/src/printout.c:253
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
 
-#: lib/src/printout.c:259
+#: lib/src/printout.c:260
 msgid "Test for null hypothesis of gamma distribution"
 msgstr ""
 
-#: lib/src/printout.c:289
+#: lib/src/printout.c:290
 #, c-format
 msgid ""
 "\n"
 "Frequency distribution for %s, obs %d-%d (%d valid observations)\n"
 msgstr ""
 
-#: lib/src/printout.c:300
+#: lib/src/printout.c:301
 #, c-format
 msgid "number of bins = %d, mean = %g, sd = %g\n"
 msgstr ""
 
-#: lib/src/printout.c:303
+#: lib/src/printout.c:304
 msgid ""
 "\n"
 "       interval          midpt      frequency\n"
 "\n"
 msgstr ""
 
-#: lib/src/printout.c:358 lib/src/printout.c:369
+#: lib/src/printout.c:359 lib/src/printout.c:370
 #, fuzzy, c-format
 msgid "Full data set: %d observations\n"
 msgstr "azken behaketa"
 
-#: lib/src/printout.c:360
+#: lib/src/printout.c:361
 #, fuzzy, c-format
 msgid "Current sample: %d observations\n"
 msgstr "Aldagaia %d, behaketa %d:\n"
 
-#: lib/src/printout.c:371
+#: lib/src/printout.c:372
 msgid "Full data range"
 msgstr ""
 
-#: lib/src/printout.c:375
+#: lib/src/printout.c:376
 msgid "Current sample"
 msgstr ""
 
-#: lib/src/printout.c:513
+#: lib/src/printout.c:514
 msgid "Cross-equation VCV for residuals"
 msgstr ""
 
-#: lib/src/printout.c:514
+#: lib/src/printout.c:515
 msgid "correlations above the diagonal"
 msgstr "koerlazioak diagonal gainean"
 
-#: lib/src/printout.c:534
+#: lib/src/printout.c:535
 msgid "log determinant"
 msgstr ""
 
-#: lib/src/printout.c:598
+#: lib/src/printout.c:599
 msgid ""
 "\n"
 "Take notes then press return key to continue (or q to quit)"
 msgstr ""
 
-#: lib/src/printout.c:600
+#: lib/src/printout.c:601
 msgid ""
 "\n"
 "Take notes then press return key to continue"
 msgstr ""
 
-#: lib/src/printout.c:731
+#: lib/src/printout.c:732
 #, c-format
 msgid "Model estimation range: %s - %s"
 msgstr ""
 
-#: lib/src/printout.c:735
+#: lib/src/printout.c:736
 #, c-format
 msgid "Standard error of residuals = %f\n"
 msgstr ""
 
-#: lib/src/printout.c:743
+#: lib/src/printout.c:744
 msgid "residuals"
 msgstr ""
 
-#: lib/src/printout.c:1303
+#: lib/src/printout.c:1175
+#, c-format
+msgid "Listing %d variables:\n"
+msgstr ""
+
+#: lib/src/printout.c:1365
 #, c-format
 msgid "Varname: %s\n"
 msgstr ""
 
-#: lib/src/printout.c:1549
+#: lib/src/printout.c:1611
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr ""
 
-#: lib/src/printout.c:1593
+#: lib/src/printout.c:1655
 #, fuzzy, c-format
 msgid " For 95%% confidence intervals, z(.025) = %.2f\n"
 msgstr ""
 "Ehuneko 95 konfidantza tarteak, $t(%d, .025) = %.3f$\n"
 "\n"
 
-#: lib/src/printout.c:1596
+#: lib/src/printout.c:1658
 #, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
 msgstr ""
 
-#: lib/src/printout.c:1603 gui2/guiprint_common.c:745
+#: lib/src/printout.c:1665 gui2/guiprint_common.c:745
 #: gui2/guiprint_common.c:799 gui2/guiprint_common.c:855
 #: gui2/guiprint_common.c:891
 msgid "prediction"
 msgstr "aurresana"
 
-#: lib/src/printout.c:1606
+#: lib/src/printout.c:1668
 msgid " std. error"
 msgstr "errore estad."
 
-#: lib/src/printout.c:1607
+#: lib/src/printout.c:1669
 #, c-format
 msgid "   95%% confidence interval\n"
 msgstr "   %%95eko konfidantza tartea\n"
@@ -4518,7 +4518,7 @@ msgstr "%s = %s bider %s"
 msgid "squared time trend variable"
 msgstr "denbora tendentziaren aldagaia"
 
-#: lib/src/tsls.c:852
+#: lib/src/tsls.c:884
 #, c-format
 msgid ""
 "Order condition for identification is not satisfied.\n"

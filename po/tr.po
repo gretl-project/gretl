@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-12-06 12:53-0500\n"
+"POT-Creation-Date: 2005-12-07 11:21-0500\n"
 "PO-Revision-Date: 2005-03-06 10:05+0200\n"
 "Last-Translator: Özgür İşgören <yol_gezer18@yahoo.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
@@ -226,7 +226,7 @@ msgstr "test istatistiği "
 #: lib/src/gretl_model.c:1766 lib/src/gretl_model.c:1774
 #: lib/src/modelprint.c:259 lib/src/modelprint.c:1289
 #: lib/src/modelprint.c:1296 lib/src/modelprint.c:2195
-#: lib/src/modelprint.c:2226 lib/src/printout.c:254 lib/src/system.c:626
+#: lib/src/modelprint.c:2226 lib/src/printout.c:255 lib/src/system.c:626
 #: lib/src/varprint.c:932 lib/src/varprint.c:939 plugin/panel_data.c:1330
 #: plugin/panel_data.c:1807 plugin/sysest.c:51 plugin/sysest.c:59
 #: plugin/sysest.c:470 plugin/sysest.c:483
@@ -278,7 +278,7 @@ msgstr ""
 #: lib/src/gretl_model.c:1860 lib/src/gretl_model.c:1868
 #: lib/src/gretl_model.c:1877 lib/src/modelprint.c:260
 #: lib/src/modelprint.c:1289 lib/src/modelprint.c:1296
-#: lib/src/modelprint.c:1303 lib/src/printout.c:255 lib/src/printout.c:261
+#: lib/src/modelprint.c:1303 lib/src/printout.c:256 lib/src/printout.c:262
 #: lib/src/system.c:598 lib/src/system.c:627 plugin/panel_data.c:787
 #: plugin/panel_data.c:1801 plugin/panel_data.c:1806 plugin/sysest.c:52
 #: plugin/sysest.c:60 plugin/sysest.c:471 plugin/sysest.c:484
@@ -525,13 +525,13 @@ msgstr "Değişmezi bu amaçla kullanamazsınız "
 msgid "Bad varname '%s' in sim"
 msgstr "sim'de kötü varadı '%s' "
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:5205
+#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:4211
 #: lib/src/gretl_list.c:1012 lib/src/modelprint.c:1019
 #, fuzzy
 msgid "Replaced"
 msgstr "Değiştirildi "
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:5207
+#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:4213
 #, fuzzy
 msgid "vector"
 msgstr "vektör "
@@ -827,7 +827,7 @@ msgstr "kesitsel "
 msgid " datafile"
 msgstr " veri dosyası "
 
-#: lib/src/dataio.c:1939 lib/src/generate.c:4804
+#: lib/src/dataio.c:1939 lib/src/genrfuncs.c:966
 #, fuzzy
 msgid "index variable"
 msgstr "dizin değişkeni "
@@ -1206,7 +1206,7 @@ msgstr "kendi kendine oluşmuş değişmez "
 msgid "Please open a data file first"
 msgstr "Lütfen ilk önce bir veri dosyası açın"
 
-#: lib/src/dataset.c:1713 lib/src/generate.c:5205 lib/src/modelprint.c:1020
+#: lib/src/dataset.c:1713 lib/src/generate.c:4211 lib/src/modelprint.c:1020
 #, fuzzy
 msgid "Generated"
 msgstr "Üretildi "
@@ -1483,15 +1483,15 @@ msgstr ""
 msgid "Fractional integration test failed"
 msgstr "Kesirli tümleştirme testi başarısız "
 
-#: lib/src/describe.c:2156 lib/src/describe.c:2157 lib/src/estimate.c:2746
-#: lib/src/estimate.c:2747 lib/src/modelprint.c:344 lib/src/modelprint.c:352
+#: lib/src/describe.c:2156 lib/src/describe.c:2157 lib/src/estimate.c:2694
+#: lib/src/estimate.c:2695 lib/src/modelprint.c:344 lib/src/modelprint.c:352
 #: lib/src/modelprint.c:365 lib/src/modelprint.c:1646
 #: lib/src/modelprint.c:1656 lib/src/modelprint.c:1693
 #: lib/src/modelprint.c:1743 lib/src/modelprint.c:1750
 #: lib/src/modelprint.c:1751 lib/src/modelprint.c:1752
-#: lib/src/modelprint.c:1775 lib/src/modelprint.c:2298 lib/src/printout.c:159
-#: lib/src/printout.c:167 lib/src/printout.c:229 lib/src/printout.c:571
-#: lib/src/printout.c:572 lib/src/texprint.c:307 lib/src/texprint.c:313
+#: lib/src/modelprint.c:1775 lib/src/modelprint.c:2298 lib/src/printout.c:160
+#: lib/src/printout.c:168 lib/src/printout.c:230 lib/src/printout.c:572
+#: lib/src/printout.c:573 lib/src/texprint.c:307 lib/src/texprint.c:313
 #: lib/src/texprint.c:314 lib/src/texprint.c:315 gui2/guiprint_common.c:90
 #: gui2/guiprint_common.c:92 gui2/guiprint_common.c:187
 #: gui2/guiprint_common.c:189 gui2/guiprint_common.c:296
@@ -1762,7 +1762,7 @@ msgstr "Obs sayısı (%d) parametre sayısından az (%d) "
 msgid "Omitted due to exact collinearity:"
 msgstr ""
 
-#: lib/src/estimate.c:817 lib/src/estimate.c:1906 plugin/arma_common.c:205
+#: lib/src/estimate.c:817 lib/src/estimate.c:1854 plugin/arma_common.c:205
 #, fuzzy, c-format
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr "%d değişkeni için karşılaşılan eksik değer, obs %d "
@@ -1772,17 +1772,17 @@ msgstr "%d değişkeni için karşılaşılan eksik değer, obs %d "
 msgid "Error sum of squares (%g) is not > 0"
 msgstr "Karelerin (%g) hata toplamı > 0 değil "
 
-#: lib/src/estimate.c:1409
+#: lib/src/estimate.c:1410
 #, fuzzy
 msgid "Warning: data matrix close to singularity!"
 msgstr "Uyarı: veri matrisi tekilliğe yakın! "
 
-#: lib/src/estimate.c:1803 lib/src/estimate.c:1936
+#: lib/src/estimate.c:1751 lib/src/estimate.c:1884
 #, fuzzy
 msgid "ESS"
 msgstr "ESS "
 
-#: lib/src/estimate.c:1995
+#: lib/src/estimate.c:1943
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -1796,7 +1796,7 @@ msgstr ""
 " için minimum\n"
 "\n"
 
-#: lib/src/estimate.c:2028
+#: lib/src/estimate.c:1976
 #, fuzzy
 msgid ""
 "\n"
@@ -1807,7 +1807,7 @@ msgstr ""
 "CORC yordamı kullanan ince ayarlı rho...\n"
 "\n"
 
-#: lib/src/estimate.c:2030
+#: lib/src/estimate.c:1978
 #, fuzzy
 msgid ""
 "\n"
@@ -1818,12 +1818,12 @@ msgstr ""
 "rhonun yinelemeli hesabı gerçekleştiriliyor...\n"
 "\n"
 
-#: lib/src/estimate.c:2033
+#: lib/src/estimate.c:1981
 #, fuzzy
 msgid "                 ITER       RHO        ESS"
 msgstr "ITER              ESS           % CHANGE "
 
-#: lib/src/estimate.c:2074
+#: lib/src/estimate.c:2022
 #, fuzzy, c-format
 msgid ""
 "                final %11.5f\n"
@@ -1832,32 +1832,32 @@ msgstr ""
 "                 son %11.5f\n"
 "\n"
 
-#: lib/src/estimate.c:2670
+#: lib/src/estimate.c:2618
 #, fuzzy
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Genelleştirilmiş Cochrane-Orcutt kestirimi"
 
-#: lib/src/estimate.c:2673
+#: lib/src/estimate.c:2621
 #, fuzzy, no-c-format
 msgid "ITER             ESS           % CHANGE"
 msgstr "ITER              ESS           % CHANGE "
 
-#: lib/src/estimate.c:2873
+#: lib/src/estimate.c:2821
 #, fuzzy
 msgid "omitted because all obs are zero."
 msgstr "bırakıldı çünkü bütün obs'lar sıfır değerinde. "
 
-#: lib/src/estimate.c:2969
+#: lib/src/estimate.c:2917
 #, fuzzy, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "arch (%d) geçersiz gecikme sırası "
 
-#: lib/src/estimate.c:3029
+#: lib/src/estimate.c:2977
 #, fuzzy, c-format
 msgid "No of obs. = %d, unadjusted R^2 = %f\n"
 msgstr "obs. sayısı = %d, düzeltilmemiş R^2 = %f\n"
 
-#: lib/src/estimate.c:3052
+#: lib/src/estimate.c:3000
 #, fuzzy, c-format
 msgid ""
 "LM test statistic (%f) is distributed as Chi-square (%d)\n"
@@ -1866,27 +1866,27 @@ msgstr ""
 "LM test istatistiği (%f) Ki-kare olarak dağıtıldı (%d)\n"
 "LM'in sağına doğru olan bölge = %f "
 
-#: lib/src/estimate.c:3057
+#: lib/src/estimate.c:3005
 #, fuzzy
 msgid "ARCH effect is insignificant at the 10 percent level"
 msgstr "ARCH etkisi yüzde 10 derecede önemsiz. "
 
-#: lib/src/estimate.c:3058
+#: lib/src/estimate.c:3006
 #, fuzzy
 msgid "Weighted estimation not done"
 msgstr "Ağırlıklı kestirim yapılmadı "
 
-#: lib/src/estimate.c:3061
+#: lib/src/estimate.c:3009
 #, fuzzy
 msgid "ARCH effect is significant at the 10 percent level"
 msgstr "ARCH etkisi yüzde 10 derecede önemli. "
 
-#: lib/src/estimate.c:3219 lib/src/estimate.c:3265 lib/src/pvalues.c:835
+#: lib/src/estimate.c:3167 lib/src/estimate.c:3213 lib/src/pvalues.c:835
 #, fuzzy
 msgid "Couldn't load plugin function\n"
 msgstr "Takılabilir fonksiyon yüklenemedi\n"
 
-#: lib/src/estimate.c:3543
+#: lib/src/estimate.c:3491
 #, fuzzy
 msgid "This test is only available for panel data"
 msgstr "Bu komut kullanımdaki OLS modelleri için uygun sadece\n"
@@ -2024,147 +2024,142 @@ msgstr ""
 "Obs için geçersiz güç fonksiyonu değişkenleri. %d\n"
 "temel değer = %f, üs = %f "
 
-#: lib/src/generate.c:4070
+#: lib/src/generate.c:3731
 #, fuzzy
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "uhat alınamıyor: veri kümesi değiştirildi "
 
-#: lib/src/generate.c:4072
+#: lib/src/generate.c:3733
 #, fuzzy
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "yhat alınamıyor: veri kümesi değiştirildi "
 
-#: lib/src/generate.c:4073
+#: lib/src/generate.c:3734
 #, fuzzy
 msgid "Can't retrieve ht: data set has changed"
 msgstr "ht alınamıyor: veri kümesi değiştirildi "
 
-#: lib/src/generate.c:4085
+#: lib/src/generate.c:3746
 #, fuzzy
 msgid "Can't retrieve error variance"
 msgstr "Hata değişintisi alınamıyor "
 
-#: lib/src/generate.c:4306
+#: lib/src/generate.c:4210
+#, fuzzy
+msgid "Modified"
+msgstr "Model %d"
+
+#: lib/src/generate.c:4212
+#, fuzzy
+msgid "variable"
+msgstr "değişken "
+
+#: lib/src/generate.c:4213
+#, fuzzy
+msgid "scalar"
+msgstr "skalar "
+
+#: lib/src/generate.c:4292
+#, fuzzy, c-format
+msgid "residual from model %d"
+msgstr "model %d'den kalıntı "
+
+#: lib/src/generate.c:4298
+#, fuzzy, c-format
+msgid "fitted value from model %d"
+msgstr "model %d'den kalifiye değer "
+
+#: lib/src/generate.c:4305
+#, fuzzy, c-format
+msgid "squared residual from model %d"
+msgstr "model %d'den kareli kalıntı "
+
+#: lib/src/generate.c:4316
+#, fuzzy, c-format
+msgid "fitted variance from model %d"
+msgstr "model %d'den kalifiye değişinti "
+
+#: lib/src/genrfuncs.c:428
 #, fuzzy, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
 msgstr "= üç aysa 1 = %d, aksi halde 0 "
 
-#: lib/src/generate.c:4312
+#: lib/src/genrfuncs.c:434
 #, fuzzy, c-format
 msgid "= 1 if month is %s, 0 otherwise"
 msgstr "= ay %s'se 1, aksi halde 0 "
 
-#: lib/src/generate.c:4322
+#: lib/src/genrfuncs.c:444
 #, fuzzy, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
 msgstr "%s = periyod %d ise 1, aksi halde 0 "
 
-#: lib/src/generate.c:4362 lib/src/gretl_errors.c:43
+#: lib/src/genrfuncs.c:484 lib/src/gretl_errors.c:43
 #, fuzzy
 msgid "This command won't work with the current periodicity"
 msgstr "Bu komut geçerli dönemsellikle çalışmaz "
 
-#: lib/src/generate.c:4389 lib/src/gretl_errors.c:45
+#: lib/src/genrfuncs.c:511 lib/src/gretl_errors.c:45
 #, fuzzy
 msgid "Out of memory error"
 msgstr "Yetersiz bellek hatası "
 
-#: lib/src/generate.c:4508 lib/src/generate.c:4542
+#: lib/src/genrfuncs.c:630 lib/src/genrfuncs.c:664
 #, fuzzy, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
 msgstr "%s = %s %d ise 1, aksi halde 0 "
 
-#: lib/src/generate.c:4509 lib/src/generate.c:4543
+#: lib/src/genrfuncs.c:631 lib/src/genrfuncs.c:665
 #, fuzzy
 msgid "unit"
 msgstr "ünite "
 
-#: lib/src/generate.c:4509 lib/src/generate.c:4543 lib/src/varprint.c:142
+#: lib/src/genrfuncs.c:631 lib/src/genrfuncs.c:665 lib/src/varprint.c:142
 #: lib/src/varprint.c:144 lib/src/varprint.c:146
 #, fuzzy
 msgid "period"
 msgstr "periyot"
 
-#: lib/src/generate.c:4621
+#: lib/src/genrfuncs.c:743
 #, fuzzy
 msgid "cross-sectional unit index"
 msgstr "kesitsel "
 
-#: lib/src/generate.c:4682 lib/src/generate.c:4791 lib/src/generate.c:4797
-#: lib/src/generate.c:4810 lib/src/transforms.c:904
+#: lib/src/genrfuncs.c:844 lib/src/genrfuncs.c:953 lib/src/genrfuncs.c:959
+#: lib/src/genrfuncs.c:972 lib/src/transforms.c:904
 #, fuzzy
 msgid "time trend variable"
 msgstr "zaman eğilim değişkeni "
 
-#: lib/src/generate.c:4685
+#: lib/src/genrfuncs.c:847
 #, fuzzy
 msgid "data index variable"
 msgstr "veri dizini değişkeni "
 
-#: lib/src/generate.c:4749
+#: lib/src/genrfuncs.c:911
 #, fuzzy
 msgid "annual plotting variable"
 msgstr "yıllık çizim değişkeni "
 
-#: lib/src/generate.c:4755
+#: lib/src/genrfuncs.c:917
 #, fuzzy
 msgid "quarterly plotting variable"
 msgstr "üç aylık çizim değişkeni "
 
-#: lib/src/generate.c:4762
+#: lib/src/genrfuncs.c:924
 #, fuzzy
 msgid "monthly plotting variable"
 msgstr "aylık çizim değişkeni "
 
-#: lib/src/generate.c:4769
+#: lib/src/genrfuncs.c:931
 #, fuzzy
 msgid "hourly plotting variable"
 msgstr "saatlik çizim değişkeni "
 
-#: lib/src/generate.c:4778
+#: lib/src/genrfuncs.c:940
 #, fuzzy
 msgid "daily plotting variable"
 msgstr "günlük çizim değişkeni "
-
-#: lib/src/generate.c:4848
-#, fuzzy, c-format
-msgid "Listing %d variables:\n"
-msgstr "%d değişkenleri listeleniyor:\n"
-
-#: lib/src/generate.c:5204
-#, fuzzy
-msgid "Modified"
-msgstr "Model %d"
-
-#: lib/src/generate.c:5206
-#, fuzzy
-msgid "variable"
-msgstr "değişken "
-
-#: lib/src/generate.c:5207
-#, fuzzy
-msgid "scalar"
-msgstr "skalar "
-
-#: lib/src/generate.c:5286
-#, fuzzy, c-format
-msgid "residual from model %d"
-msgstr "model %d'den kalıntı "
-
-#: lib/src/generate.c:5292
-#, fuzzy, c-format
-msgid "fitted value from model %d"
-msgstr "model %d'den kalifiye değer "
-
-#: lib/src/generate.c:5299
-#, fuzzy, c-format
-msgid "squared residual from model %d"
-msgstr "model %d'den kareli kalıntı "
-
-#: lib/src/generate.c:5310
-#, fuzzy, c-format
-msgid "fitted variance from model %d"
-msgstr "model %d'den kalifiye değişinti "
 
 #: lib/src/graphing.c:820
 #, fuzzy, c-format
@@ -2204,7 +2199,7 @@ msgid "actual"
 msgstr "gerçek "
 
 #: lib/src/graphing.c:1522 lib/src/graphing.c:1525 lib/src/graphing.c:2147
-#: lib/src/printout.c:742 gui2/guiprint_common.c:610
+#: lib/src/printout.c:743 gui2/guiprint_common.c:610
 #: gui2/guiprint_common.c:666
 #, fuzzy
 msgid "fitted"
@@ -3353,27 +3348,27 @@ msgstr "Sözde-rasgele sayı üreticisi %d ile başladı.\n"
 msgid "Baxter-King approximation = %d\n"
 msgstr ""
 
-#: lib/src/missing.c:704
+#: lib/src/missing.c:731
 #, fuzzy, c-format
 msgid "Set %d values to \"missing\"\n"
 msgstr "%d değerlerini \"missing\"e ayarlayın\n"
 
-#: lib/src/missing.c:707
+#: lib/src/missing.c:734
 #, fuzzy
 msgid "Didn't find any matching observations\n"
 msgstr "Eşleşen hiçbir gözlem bulunamadı\n"
 
-#: lib/src/missing.c:712
+#: lib/src/missing.c:739
 #, fuzzy, c-format
 msgid "The variable %s is a scalar\n"
 msgstr "Değişken %s bir skalardır\n"
 
-#: lib/src/missing.c:718
+#: lib/src/missing.c:745
 #, fuzzy, c-format
 msgid "%s: set %d observations to \"missing\"\n"
 msgstr "%s: %d gözlemlerini \"missing\"e ayarlayın\n"
 
-#: lib/src/missing.c:722
+#: lib/src/missing.c:749
 #, fuzzy, c-format
 msgid "%s: Didn't find any matching observations\n"
 msgstr "%s: Eşleşen hiçbir gözlem bulunamadı\n"
@@ -4424,7 +4419,7 @@ msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr "Örnek olağan dağıtıma bağlı p-değerini hesaplamak için çok küçük\n"
 
-#: lib/src/nonparam.c:295 lib/src/printout.c:738 gui2/guiprint_common.c:745
+#: lib/src/nonparam.c:295 lib/src/printout.c:739 gui2/guiprint_common.c:745
 #: gui2/guiprint_common.c:798 gui2/guiprint_common.c:855
 #: gui2/guiprint_common.c:891
 #, fuzzy
@@ -4508,47 +4503,47 @@ msgstr "Takılabilir %s'i yüklemede hata"
 msgid "Couldn't load plugin function"
 msgstr "Ttakılabilir işlemi yükleyemedi"
 
-#: lib/src/printout.c:58
+#: lib/src/printout.c:59
 #, fuzzy
 msgid "Covariance matrix of regression coefficients"
 msgstr "İlinti Katsayıları "
 
-#: lib/src/printout.c:79 lib/src/printout.c:148
+#: lib/src/printout.c:80 lib/src/printout.c:149
 #, fuzzy
 msgid "Current session"
 msgstr "Geçerli oturum"
 
-#: lib/src/printout.c:94 lib/src/printout.c:147
+#: lib/src/printout.c:95 lib/src/printout.c:148
 #, fuzzy, c-format
 msgid "gretl version %s\n"
 msgstr "%s gretl sürümü \n"
 
-#: lib/src/printout.c:95
+#: lib/src/printout.c:96
 #, fuzzy
 msgid "Copyright Ramu Ramanathan and Allin Cottrell"
 msgstr "Telif hakkı  Ramu Ramanathan ve Allin Cottrell"
 
-#: lib/src/printout.c:96
+#: lib/src/printout.c:97
 #, fuzzy
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
 msgstr "Bu HİÇBİR GARANTİSİ OLMAYAN serbest yazılımdır"
 
-#: lib/src/printout.c:116
+#: lib/src/printout.c:117
 #, fuzzy, c-format
 msgid "gretl: gui client for gretl version %s,\n"
 msgstr "gretl: %s gretl sürümü için rehber kullanıcı \n"
 
-#: lib/src/printout.c:117
+#: lib/src/printout.c:118
 #, fuzzy
 msgid "copyright Allin Cottrell.\n"
 msgstr "Telif hakkı Allin Cottrell.\n"
 
-#: lib/src/printout.c:118
+#: lib/src/printout.c:119
 #, fuzzy
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
 msgstr "Bu HİÇBİR GARANTİSİ OLMAYAN serbest yazılımdır.\n"
 
-#: lib/src/printout.c:192
+#: lib/src/printout.c:193
 #, fuzzy, no-c-format
 msgid ""
 "      VARIABLE      COEFFICIENT      95% CONFIDENCE INTERVAL\n"
@@ -4557,7 +4552,7 @@ msgstr ""
 "        DEĞİŞKEN       KATSAYISI      95% GÜVENLİK ARALIĞI\n"
 "\n"
 
-#: lib/src/printout.c:219
+#: lib/src/printout.c:220
 #, fuzzy
 msgid ""
 "\n"
@@ -4568,17 +4563,17 @@ msgstr ""
 "Pairwise ilinti katsayısı: \n"
 "\n"
 
-#: lib/src/printout.c:252
+#: lib/src/printout.c:253
 #, fuzzy
 msgid "Test for null hypothesis of normal distribution"
 msgstr "Boş hipotezin olağan dağıtımı için test"
 
-#: lib/src/printout.c:259
+#: lib/src/printout.c:260
 #, fuzzy
 msgid "Test for null hypothesis of gamma distribution"
 msgstr "Boş hipotezin olağan dağıtımı için test"
 
-#: lib/src/printout.c:289
+#: lib/src/printout.c:290
 #, fuzzy, c-format
 msgid ""
 "\n"
@@ -4587,12 +4582,12 @@ msgstr ""
 "\n"
 "%s için sıklık dağılımı, gözlenebilir %d-%d (%d geçerli gözlemler)\n"
 
-#: lib/src/printout.c:300
+#: lib/src/printout.c:301
 #, fuzzy, c-format
 msgid "number of bins = %d, mean = %g, sd = %g\n"
 msgstr "kutuların sayısı = %d, ortalama =%g, sd = %g\n"
 
-#: lib/src/printout.c:303
+#: lib/src/printout.c:304
 #, fuzzy
 msgid ""
 "\n"
@@ -4603,41 +4598,41 @@ msgstr ""
 "      sıklık midpt sıklığı\n"
 "\n"
 
-#: lib/src/printout.c:358 lib/src/printout.c:369
+#: lib/src/printout.c:359 lib/src/printout.c:370
 #, fuzzy, c-format
 msgid "Full data set: %d observations\n"
 msgstr "son gözlem"
 
-#: lib/src/printout.c:360
+#: lib/src/printout.c:361
 #, fuzzy, c-format
 msgid "Current sample: %d observations\n"
 msgstr "Sansürlü gözlemler"
 
-#: lib/src/printout.c:371
+#: lib/src/printout.c:372
 #, fuzzy
 msgid "Full data range"
 msgstr "Tam veri aralığı"
 
-#: lib/src/printout.c:375
+#: lib/src/printout.c:376
 #, fuzzy
 msgid "Current sample"
 msgstr "Geçerli örnek"
 
-#: lib/src/printout.c:513
+#: lib/src/printout.c:514
 #, fuzzy
 msgid "Cross-equation VCV for residuals"
 msgstr "Kalıntılar için VCV çapraz denklemi"
 
-#: lib/src/printout.c:514
+#: lib/src/printout.c:515
 #, fuzzy
 msgid "correlations above the diagonal"
 msgstr "köşegenin üstünde ilintiler"
 
-#: lib/src/printout.c:534
+#: lib/src/printout.c:535
 msgid "log determinant"
 msgstr ""
 
-#: lib/src/printout.c:598
+#: lib/src/printout.c:599
 #, fuzzy
 msgid ""
 "\n"
@@ -4646,7 +4641,7 @@ msgstr ""
 "\n"
 " Not alın sonra devam etmek için  Return tuşuna basın (veya çıkmak için q)"
 
-#: lib/src/printout.c:600
+#: lib/src/printout.c:601
 #, fuzzy
 msgid ""
 "\n"
@@ -4655,55 +4650,60 @@ msgstr ""
 "\n"
 " Not alın sonra devan etmek için  Return tuşuna basın "
 
-#: lib/src/printout.c:731
+#: lib/src/printout.c:732
 #, fuzzy, c-format
 msgid "Model estimation range: %s - %s"
 msgstr "Mode kestirim aralığı: %s - %s"
 
-#: lib/src/printout.c:735
+#: lib/src/printout.c:736
 #, fuzzy, c-format
 msgid "Standard error of residuals = %f\n"
 msgstr "Kalıntıların standart hatası = %f\n"
 
-#: lib/src/printout.c:743
+#: lib/src/printout.c:744
 #, fuzzy
 msgid "residuals"
 msgstr "kalıntılar"
 
-#: lib/src/printout.c:1303
+#: lib/src/printout.c:1175
+#, fuzzy, c-format
+msgid "Listing %d variables:\n"
+msgstr "%d değişkenleri listeleniyor:\n"
+
+#: lib/src/printout.c:1365
 #, fuzzy, c-format
 msgid "Varname: %s\n"
 msgstr "Değişken ismi: %s\n"
 
-#: lib/src/printout.c:1549
+#: lib/src/printout.c:1611
 #, fuzzy
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
 msgstr ""
 "Not: *2.5 standart hataların aşırılığında bir kalıntı  olduğunu gösterir\n"
 
-#: lib/src/printout.c:1593
+#: lib/src/printout.c:1655
 #, fuzzy, c-format
 msgid " For 95%% confidence intervals, z(.025) = %.2f\n"
 msgstr "95%%  güvenlik aralığı için, t(%d, .025) = %.3f\n"
 
-#: lib/src/printout.c:1596
+#: lib/src/printout.c:1658
 #, fuzzy, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
 msgstr "95%%  güvenlik aralığı için, t(%d, .025) = %.3f\n"
 
-#: lib/src/printout.c:1603 gui2/guiprint_common.c:745
+#: lib/src/printout.c:1665 gui2/guiprint_common.c:745
 #: gui2/guiprint_common.c:799 gui2/guiprint_common.c:855
 #: gui2/guiprint_common.c:891
 #, fuzzy
 msgid "prediction"
 msgstr "tahmin"
 
-#: lib/src/printout.c:1606
+#: lib/src/printout.c:1668
 #, fuzzy
 msgid " std. error"
 msgstr "standart hata"
 
-#: lib/src/printout.c:1607
+#: lib/src/printout.c:1669
 #, fuzzy, c-format
 msgid "   95%% confidence interval\n"
 msgstr "95%% güvenlik aralığı\n"
@@ -5220,7 +5220,7 @@ msgstr "%s = %s kez %s "
 msgid "squared time trend variable"
 msgstr "zaman eğilim değişkeni "
 
-#: lib/src/tsls.c:852
+#: lib/src/tsls.c:884
 #, fuzzy, c-format
 msgid ""
 "Order condition for identification is not satisfied.\n"

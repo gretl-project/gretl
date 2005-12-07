@@ -1,0 +1,108 @@
+\chapter{Model selection criteria}
+\label{select-criteria}
+
+% It's probably not worth translating this yet, since it's just
+% work in progress.
+
+\section{Introduction}
+\label{select-intro}
+
+In some contexts the econometrician chooses between alternative models
+based on a formal hypothesis test.  For example, one might choose a
+more general model over a more restricted one if the restriction in
+question can be formulated as a testable null hypothesis, and the null
+is rejected on an appropriate test.
+
+In other contexts one seeks a criterion for model selection that
+somehow measures the balance between goodness of fit or likelihood,
+on the one hand, and parsimony on the other.  The best known such
+criterion, for linear models estimated via least squares, is the
+adjusted $R^2$.
+
+FIXME more needed here.
+
+
+\section{Information criteria}
+\label{select-aic}
+
+The Akaike Information Criterion (AIC) can be a bit confusing, in
+that several variants of the calculation are ``in circulation.''
+Akaike (1974) writes the formula as
+%
+\begin{equation}
+\label{aic-orig}
+{\rm AIC} = -2 \ell(\hat{\theta}) + 2k
+\end{equation}
+%
+where $\ell(\hat{\theta})$ represents the maximum loglikelihood as a
+function of the vector of parameter estimates, $\hat{\theta}$, and $k$
+denotes the number of ``independently adjusted parameters within the
+model.''  In this formulation, with AIC negatively related to the
+likelihood, the researcher seeks the minimum AIC.
+
+Davidson and MacKinnon (2004) present a simplified version,
+%
+\[
+{\rm AIC} = \ell(\hat{\theta}) - k
+\]
+%
+which is just $-2$ times the original: in this case, obviously, one
+wants to maximize AIC.
+
+In the case of models estimated by least squares, the loglikelihood
+can be written as
+%
+\begin{equation}
+\label{ols-loglik}
+\ell(\hat{\theta}) = -\frac{n}{2}(1 + \log 2\pi - \log n)
+ - \frac{n}{2} \log {\rm SSR}
+\end{equation}
+%
+where $n$ denotes the number of observations and SSR the sum of
+squared residuals.  Substituting (\ref{ols-loglik}) into
+(\ref{aic-orig}) we get
+%
+\[
+{\rm AIC} = n(1 + \log 2\pi - \log n) + n\log {\rm SSR} + 2k
+\]
+%
+which can also be written as
+%
+\begin{equation}
+\label{full-aic-alt}
+{\rm AIC} = n\log \left( \frac{\rm SSR}{n} \right) + 2k + 
+  n(1 + \log 2\pi)
+\end{equation}
+%
+
+Some authors simplify the formula for the case of models estimated
+via least squares.  For instance, William Greene writes
+%
+\begin{equation}
+\label{aic-greene}
+{\rm AIC} = \log \left( \frac{\rm SSR}{n} \right) + \frac{2k}{n}
+\end{equation}
+%
+This variant can be derived from (\ref{full-aic-alt}) by dividing
+through by $n$ and subtracting the constant $1 + \log 2\pi$.  That is,
+writing AIC$'$ for the version given by Greene, we have
+%
+\[
+{\rm AIC}' = \frac{1}{n} {\rm AIC} - (1 + \log 2\pi)
+\]
+%
+
+Finally, Ramanathan gives a further variant:
+%
+\[
+{\rm AIC} = \left( \frac{\rm SSR}{n} \right) e^{2k/n}
+\]
+%
+which is the exponential of the one given by Greene.  
+
+Gretl began by using the Ramanathan variant, but since version 1.3.1
+the program has used the original Akaike formula (\ref{aic-orig}),
+using (\ref{full-aic-alt}) for models estimated via OLS.
+
+FIXME add something on the Schwartz criterion.
+
