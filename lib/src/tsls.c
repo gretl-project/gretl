@@ -530,7 +530,6 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
-    char *rmask = NULL;
     char *mask = NULL;
     int rank, ndrop = 0;
     int *droplist = NULL;
