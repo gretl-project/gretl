@@ -147,10 +147,10 @@ static void trim_to_length (char *s)
 }
 
 /* Special: handle xrefs embedded in script help destined for
-   the gui program.  The extra characters (12) will be stripped
+   the gui program.  The extra characters (9) will be stripped
    out when the file is formatted in the help window, so they
    should not be counted towards the length of the line.  
-   The xref pattern is: <reftarg="">
+   The xref pattern is: <xref="">
 */
 
 static void fill_line_to_max (char *line, char *p, int n)
@@ -158,8 +158,8 @@ static void fill_line_to_max (char *line, char *p, int n)
     int nc = 0, nmax = n;
 
     while (*p && nc < nmax) {
-	if (!strncmp(p, "<ref", 4)) {
-	    nmax += 12;
+	if (!strncmp(p, "<xref", 5)) {
+	    nmax += 9;
 	}
 	line[nc++] = *p++;
     }

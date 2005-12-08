@@ -32,7 +32,6 @@
 </xsl:template>
 
 <xsl:template match="commandlist">
-  <!-- not just yet
   <xsl:text>headings </xsl:text>
   <xsl:value-of select="count(command[not(@section = preceding-sibling::command/@section)])"/>
   <xsl:text>&#10;</xsl:text>
@@ -48,11 +47,15 @@
       <xsl:text>&#10;</xsl:text>
       <xsl:for-each select="/commandlist/command[@section = current()/@section and (not(@context) or @context=$hlp)]">
         <xsl:value-of select="@name"/>
+        <xsl:if test="$hlp='gui'">
+          <xsl:text> "</xsl:text>
+          <xsl:value-of select="@label"/>
+          <xsl:text>"</xsl:text>
+        </xsl:if>
         <xsl:text>&#10;</xsl:text>
       </xsl:for-each>      
     </xsl:if>
   </xsl:for-each>
-  -->
   <xsl:apply-templates/> 
 </xsl:template>
 
@@ -316,7 +319,7 @@
 <xsl:template match="cmdref">
   <xsl:choose>
     <xsl:when test="$xrefs='true'">
-      <xsl:text>&lt;reftarg="</xsl:text>
+      <xsl:text>&lt;xref="</xsl:text>
       <xsl:value-of select="@targ"/>
       <xsl:text>"&gt;</xsl:text>
     </xsl:when>

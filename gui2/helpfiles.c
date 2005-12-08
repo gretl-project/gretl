@@ -35,17 +35,18 @@ static int translated_helpfile = -1;
 static char *en_gui_helpfile;
 static char *en_cli_helpfile;
 
-/* helpfile stuff */
+typedef struct help_head_t help_head;
+
 struct help_head_t {
-    char *name;
-    int *topics;
-    char **topicnames;
-    int *pos;
-    int ntopics;
+    char *name;        /* name of heading, e.g. "Testing" */
+    int *topics;       /* array of topics under heading by command number */
+    char **topicnames; /* array of descriptive topic names (GUI help only) */
+    int *pos;          /* array of byte offsets into file for topics */
+    int ntopics;       /* number of topics under this heading */
 };
 
-static struct help_head_t **cli_heads, **gui_heads;
-static struct help_head_t **en_cli_heads, **en_gui_heads;
+static help_head **cli_heads, **gui_heads;
+static help_head **en_cli_heads, **en_gui_heads;
 
 static windata_t *helpwin (int cli, int en);
 static void real_do_help (int hcode, int pos, int cli, int en);
@@ -214,95 +215,6 @@ static void set_translated_helpfile (void)
     }
 }
 
-static int match_heading (struct help_head_t **heads, int nh,
-			  const char *str)
-{
-    int i, match = -1;
-
-    if (heads == NULL) return -1;
-
-    for (i=0; i<nh; i++) {
-	if (!strcmp(str, heads[i]->name)) {
-#if HDEBUG
-	    fprintf(stderr, "str='%s', heads[%d].name='%s', matched\n",
-		    str, i, heads[i]->name);
-#endif
-	    match = i;
-	    break;
-	}
-    }
-
-    return match;
-}
-
-static int add_help_heading (struct help_head_t ***pheads, 
-			     int *pnh, const char *str)
-{
-    struct help_head_t **heads;
-    int nh = *pnh;
-    int err = 0;
-
-    heads = realloc(*pheads, (nh + 2) * sizeof *heads);
-    if (heads == NULL) return 1;
-
-    heads[nh] = malloc(sizeof **heads);
-
-    if (heads[nh] != NULL) {
-	heads[nh]->name = malloc(strlen(str) + 1);
-	if (heads[nh]->name != NULL) {
-	    strcpy(heads[nh]->name, str);
-#if HDEBUG
-	    fprintf(stderr, "str='%s', heads[%d].name added new\n", str, nh);
-#endif
-	    heads[nh]->ntopics = 1;
-	    nh++;
-	} else err = 1;
-    } else err = 1;
-
-    if (!err) {
-	*pheads = heads;
-	*pnh = nh;
-    }
-
-    return err;
-}
-
-static int allocate_heads_info (struct help_head_t **heads, int nh, int gui)
-{
-    int *topics = NULL, *pos = NULL;
-    char **topicnames = NULL;
-    int i, nt, err = 0;
-
-    for (i=0; i<nh && !err; i++) {
-	nt = heads[i]->ntopics;
-	if (nt == 0) continue;
-
-	topics = malloc(nt * sizeof *topics);
-	if (topics == NULL) err = 1;
-
-	pos = malloc(nt * sizeof *pos);
-	if (pos == NULL) err = 1; 
-
-	if (gui) {
-	    topicnames = malloc(nt * sizeof *topicnames);
-	    if (topicnames == NULL) err = 1;
-	} 
-
-	if (!err) {
-	    heads[i]->topics = topics;
-	    heads[i]->topicnames = topicnames;
-	    heads[i]->pos = pos;
-	}
-
-	heads[i]->ntopics = 0;
-    }
-
-    /* sentinel */
-    heads[i] = NULL;
-
-    return err;
-}
-
 char *quoted_help_string (const char *s)
 {
     const char *p, *q;
@@ -318,107 +230,382 @@ char *quoted_help_string (const char *s)
     return g_strdup("Missing string");
 }
 
-static int add_topic_to_heading (struct help_head_t **heads, 
-				 int nh, char *s, int pos, 
-				 int gui)
+/* extract the word following "# " at the beginning of a new line
+   in a gretl help file (up to a max length of len) 
+*/
+
+static int get_following_word (char *s, int len, int *b, FILE *fp)
 {
-    char word[32], section[32];
-    int n, m, nt;
+    int c, i = 0;
 
-    if (sscanf(s + 1, "%31s %31s", word, section) != 2) {
+    memset(s, 0, len);
+
+    /* skip one space */
+    if ((c = getc(fp)) == EOF) {
 	return 1;
     }
 
-    if (!strcmp(section, "Obsolete")) {
-	return 0;
+    while ((c = getc(fp)) != EOF && i < len) {
+	if (c == ' ' || c == '\n') {
+	    i++;
+	    break;
+	} else {
+	    s[i++] = c;
+	}
     }
 
-#if HDEBUG
-    fprintf(stderr, "add_topic_to_heading: '%s' (%s), pos=%d\n", 
-	    word, section, pos);
-#endif
+    *b += i + 1;
 
-    m = match_heading(heads, nh, section);
-    nt = heads[m]->ntopics;
-
-    n = gretl_command_number(word);
-    if (n <= 0) {
-	n = extra_command_number(word);
-    }
-
-    if (n > 0) {
-	heads[m]->topics[nt] = n;
-    } else {
-	return 1;
-    }
-
-    if (gui) {
-	heads[m]->topicnames[nt] = quoted_help_string(s);
-#if HDEBUG > 1
-	fprintf(stderr, "Set heads[%d]->topicnames[%d] = \n"
-		"  quoted_help_string(%s) = '%s'\n",
-		m, nt, s, heads[m]->topicnames[nt]);
-#endif
-    }
-
-    heads[m]->pos[nt] = pos;
-    heads[m]->ntopics += 1;
-
-    return 0;
+    return (*s == 0);
 }
 
-static int assemble_topic_list (struct help_head_t **heads, int nh,
-				int gui, FILE *fp)
+static int help_topic_number (const char *word, int gui)
 {
-    char test[256];
-    int pos = 0;
+    int hnum = gretl_command_number(word);
 
-#if HDEBUG
-    fprintf(stderr, "\n*** starting assemble_topic_list\n");
-#endif
-
-    while (fgets(test, sizeof test, fp)) {
-	if (*test == '#') {
-	    add_topic_to_heading(heads, nh, test, pos, gui);
-	} 
-	pos += strlen(test);
+    if (hnum == 0 && gui) {
+	hnum = extra_command_number(word);
     }
 
-    return 0;
+    return hnum;
 }
 
 static int 
-get_help_topics (struct help_head_t ***pheads, int *pnh, FILE *fp)
+get_help_word (char *s, help_head **heads, int nh, int gui, int *pi, int *pj)
 {
-    char test[256], section[16];    
-    int nh = 0;
-    int match, err = 0;
+    int hnum;
+    int i, j;
 
-    while (!err && fgets(test, sizeof test, fp)) {
-	if (*test == '#') {
-	    sscanf(test + 1, "%*s %15s", section);
-	    if (strcmp(section, "Obsolete")) {
-		match = match_heading(*pheads, nh, section);
-		if (match >= 0) {
-		    (*pheads)[match]->ntopics += 1;
-		} else {
-		    err = add_help_heading(pheads, &nh, section);
-		}
-	    }
-	} 
+    hnum = help_topic_number(s, gui);
+    if (hnum == 0) {
+	*pi = -1;
+	*pj = -1;
+	return 0;
     }
 
-    *pnh = nh;
+    for (i=0; i<nh; i++) {
+	for (j=0; j<heads[i]->ntopics; j++) {
+	    if (hnum == heads[i]->topics[j]) {
+		*pi = i;
+		*pj = j;
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
+static int get_byte_positions (help_head **heads, int nh, int gui, FILE *fp)
+{
+    char word[16];
+    int m = 0, n = 0;
+    int c, cbak = 0;
+    int i, j, b = 0;
+    int err = 0;
+
+    rewind(fp);
+
+    for (i=0; i<nh; i++) {
+	n += heads[i]->ntopics;
+    }
+
+    while ((c = getc(fp)) != EOF) {
+	if (c == '#' && cbak == '\n') {
+	    int pos = b;
+
+	    err = get_following_word(word, 16, &b, fp);
+
+	    if (!err) {
+		/* look up 'test' and set pos */
+		err = get_help_word(word, heads, nh, gui, &i, &j);
+	    }
+
+	    if (!err && i >= 0 && j >= 0) {
+		heads[i]->pos[j] = pos;
+		m++;
+	    }
+
+#if HDEBUG
+	    if (i >= 0 && j >= 0) {
+		fprintf(stderr, "%s: setting heads[%d]->pos[%d] = %d\n", word, i, j, pos);
+	    } else {
+		fprintf(stderr, "%s: pos = %d\n", word, pos);
+	    }
+#endif
+
+	    if (err || m == n) {
+		break;
+	    }
+	}
+	b++;
+	cbak = c;
+    }
+
+#if HDEBUG
+    fprintf(stderr, "get_byte_positions: n = %d, m = %d, returning %d\n", 
+	    n, m, err);
+#endif
+
+    return err;
+}
+
+static void free_help_head (help_head *head)
+{
+    int i;
+
+    free(head->name);
+    free(head->topics);
+    free(head->pos);
+    
+    if (head->topicnames != NULL) {
+	for (i=0; i<head->ntopics; i++) {
+	    free(head->topicnames[i]);
+	}
+	free(head->topicnames);
+    }
+
+    free(head);
+}
+
+static int head_allocate_topicnames (help_head *head)
+{
+    int i;
+
+    head->topicnames = malloc(head->ntopics * sizeof *head->topicnames);
+    
+    if (head->topicnames == NULL) {
+	return 1;
+    }
+
+    for (i=0; i<head->ntopics; i++) {
+	head->topicnames[i] = NULL;
+    }
+
+    return 0;
+}
+
+static help_head *help_head_new (const char *name, int nt, int gui)
+{
+    help_head *head = malloc(sizeof *head);
+
+    if (head != NULL) {
+	head->ntopics = nt;
+	head->name = NULL;
+	head->topics = NULL;
+	head->pos = NULL;
+	head->topicnames = NULL;
+    }
+
+    head->name = gretl_strdup(name);
+    head->topics = malloc(nt * sizeof *head->topics);
+    head->pos = malloc(nt * sizeof *head->pos);
+
+    if (head->name == NULL || head->topics == NULL ||
+	head->pos == NULL) {
+	free_help_head(head);
+	head = NULL;
+    } else if (gui && head_allocate_topicnames(head)) {
+	free_help_head(head);
+	head = NULL;
+    }
+
+    return head;
+}
+
+static help_head **allocate_heads (int nh)
+{
+    help_head **heads;
+    int i;
+
+    heads = malloc(nh * sizeof *heads);
+
+    if (heads != NULL) {
+	for (i=0; i<nh; i++) {
+	    heads[i] = NULL;
+	}
+    }
+
+    return heads;
+}
+
+static void free_help_heads (help_head **heads, int nh)
+{
+    int i;
+
+    if (heads == NULL) return;
+
+    for (i=0; i<nh; i++) {
+	if (heads[i] != NULL) {
+	    free_help_head(heads[i]);
+	}
+    }
+
+    free(heads);
+}
+
+static int add_topic_to_head (help_head *head, int j, const char *word,
+			      char *label, int gui)
+{
+    int hnum, err = 0;
+
+    hnum = help_topic_number(word, gui);
+
+    if (hnum > 0) {
+	head->topics[j] = hnum;
+	if (label != NULL && head->topicnames != NULL) {
+	    head->topicnames[j] = label;
+	}
+    } else {
+	err = 1;
+    }
+
+#if HDEBUG
+    fprintf(stderr, "add_topic_to_head: topic %d: word = %s: hnum = %d\n", 
+	    j+1, word, hnum);
+#endif
+
+    return err;
+}
+
+static int 
+get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
+{
+    help_head **heads = NULL;
+    FILE *fp;
+    char line[128];
+    char tmp[32];
+    int i, j, nh2;
+    int nh = 0;
+    int err = 0;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	fprintf(stderr, I_("help file %s is not accessible\n"), fname);
+	return 1;
+    }
+
+    if (fgets(line, sizeof line, fp) == NULL) {
+	err = 1;
+	goto bailout;
+    }
+    
+    if (!sscanf(line, "headings %d", &nh) || nh <= 0) {
+	err = 1;
+	goto bailout;
+    }
+
+    heads = allocate_heads(nh + 1); /* NULL sentinel at end */
+    if (heads == NULL) {
+	err = 1;
+	goto bailout;
+    }
+
+#if HDEBUG
+    fprintf(stderr, "Found got %d topic headings\n", nh);
+#endif
+
+    nh2 = 0;
+
+    /* loop across the headings */
+
+    for (i=0; i<nh; i++) {
+	int nt;
+
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    err = 1;
+	    goto bailout;
+	}
+
+	if (string_is_blank(line)) {
+	    break;
+	}
+
+	/* heading name plus number of following topics */
+	if (sscanf(line, "%31s %d", tmp, &nt) != 2) {
+	    err = 1;
+	    goto bailout;
+	}	    
+
+	if (nt == 0 || !strcmp(tmp, "Obsolete")) {
+	    continue;
+	}
+
+#if HDEBUG
+	fprintf(stderr, "Heading %d (%s): got %d topics\n", nh2+1, tmp, nt);
+#endif
+
+	/* heading with at least one topic */
+	heads[nh2] = help_head_new(tmp, nt, gui);
+	if (heads[nh2] == NULL) {
+	    err = 1;
+	}
+
+	/* get topics under heading */
+	for (j=0; j<nt && !err; j++) {
+	    char *label = NULL;
+
+	    if (fgets(line, sizeof line, fp) == NULL) {
+		err = 1;
+	    }
+
+	    if (!err) {
+		err = sscanf(line, "%15s", tmp) != 1;
+	    }
+
+	    if (gui && !err) {
+		label = quoted_help_string(line);
+		if (label == NULL) {
+		    err = 1;
+		}
+	    }
+
+	    if (!err) {
+		err = add_topic_to_head(heads[nh2], j, tmp, label, gui);
+		if (err && label != NULL) {
+		    free(label);
+		}
+	    }
+	}
+
+	if (err) {
+	    goto bailout;
+	}
+
+	nh2++;
+    }
+
+    /* shrink array? */
+    if (nh2 < nh) {
+	heads = realloc(heads, (nh2 + 1) * sizeof *heads);
+	nh = nh2;
+    }
+
+#if HDEBUG
+    fprintf(stderr, "\nNumber of non-empty headings = %d\n\n", nh);
+#endif
+
+    /* find bytes offsets for all topics */
+    get_byte_positions(heads, nh, gui, fp);
+
+ bailout:
+
+    fclose(fp);
+
+    if (err) {
+	fprintf(stderr, "*** get_helpfile_structure: err = %d\n", err);
+	free_help_heads(heads, nh);
+    } else {
+	*pheads = heads;
+    }
 
     return err;
 }
 
 static int real_helpfile_init (int gui, int en)
 {
-    struct help_head_t **heads = NULL;
-    char *helpfile;
-    FILE *fp;
-    int nh = 0;
+    help_head **heads = NULL;
+    const char *helpfile;
     int err = 0;
 
     if (en) {
@@ -433,44 +620,15 @@ static int real_helpfile_init (int gui, int en)
     fflush(stderr);
 #endif
 
-    fp = gretl_fopen(helpfile, "r");
-    if (fp == NULL) {
-	fprintf(stderr, I_("help file %s is not accessible\n"), helpfile);
-	return 1;
-    }
+    err = get_helpfile_structure(&heads, gui, helpfile);
 
-    /* first pass: find number of topics */
-    err = get_help_topics(&heads, &nh, fp);
-
-#if HDEBUG
-    fprintf(stderr, "real_helpfile_init: found %d headings\n", nh);
-#endif
-
-    if (!err) {
-	err = allocate_heads_info(heads, nh, gui);
-    }
-
-    if (err) {
-	fclose(fp);
-	return err;
-    }
-
-#if HDEBUG
-    fprintf(stderr, "real_helpfile_init: done allocate_heads_info\n");
-#endif
-
-    /* second pass, assemble the topic list */
-    rewind(fp);
-    assemble_topic_list(heads, nh, gui, fp);
-    fclose(fp);
-
-    if (gui) {
+    if (!err && gui) {
 	if (en) {
 	    en_gui_heads = heads;
 	} else {
 	    gui_heads = heads;
 	}
-    } else {
+    } else if (!err) {
 	if (en) {
 	    en_cli_heads = heads;
 	} else {
@@ -541,7 +699,7 @@ static char *get_gui_help_string (int pos)
 
 static int gui_pos_from_cmd (int cmd, int en)
 {
-    struct help_head_t **heads;
+    help_head **heads;
     char *helpstr;
     int i, j;
 
@@ -578,7 +736,7 @@ static int gui_pos_from_cmd (int cmd, int en)
 
 static int cli_pos_from_cmd (int cmd, int en)
 {
-    struct help_head_t **heads;
+    help_head **heads;
     int i, j;
 
     heads = (en)? en_cli_heads : cli_heads;
@@ -640,7 +798,7 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
     int i, j;
     GtkItemFactoryEntry hitem;
     const gchar *mpath = N_("/_Topics");
-    struct help_head_t **hds;
+    help_head **hds;
 
     if (en) {
 	hds = (cli)? en_cli_heads : en_gui_heads;

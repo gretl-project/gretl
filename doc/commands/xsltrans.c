@@ -93,7 +93,7 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
     xsltStylesheetPtr style;
     xmlDocPtr result;
     char styname[FILENAME_MAX];
-    char const *xsl_params[8] = {0};
+    char const *xsl_params[12] = {0};
     FILE *fp;
     int err = 0;
 

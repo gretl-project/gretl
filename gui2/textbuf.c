@@ -358,7 +358,7 @@ static gchar *my_utf_string (char *t)
 
     if (error) {
         printf("DBG: %s. Codeset for system is: %s\n",
-	       error->message,from_codeset);
+	       error->message, from_codeset);
         printf("DBG: You should set the environment variable "
 	       "SMB_CODESET to ISO-8859-1\n");
 	g_error_free(error);
@@ -470,8 +470,6 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 	chunk = readbuf;
 #endif
 
-	if (help_role(role) && *chunk == '@') continue;
-
 	nextcolor = PLAIN_TEXT;
 	
 	if (role == SCRIPT_OUT && ends_with_backslash(chunk)) {
@@ -481,12 +479,7 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 	if (*chunk == '?') {
 	    thiscolor = (role == CONSOLE)? RED_TEXT : BLUE_TEXT;
 	} else if (*chunk == '#') {
-	    if (help_role(role)) {
-		*chunk = ' ';
-		nextcolor = RED_TEXT;
-	    } else {
-		thiscolor = BLUE_TEXT;
-	    }
+	    thiscolor = BLUE_TEXT;
 	} 
 
 	switch (thiscolor) {
@@ -516,7 +509,7 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const gchar *text, gint page)
 {
     GtkTextTag *tag;
-  
+
     tag = gtk_text_buffer_create_tag(tbuf, NULL, 
 				     "foreground", "blue", 
 				     "underline", PANGO_UNDERLINE_SINGLE, 
@@ -623,6 +616,7 @@ set_cursor_if_appropriate (GtkTextView *tview, gint x, gint y)
     gtk_text_view_get_iter_at_location(tview, &iter, x, y);
   
     tags = gtk_text_iter_get_tags(&iter);
+
     for (tagp = tags; tagp != NULL; tagp = tagp->next) {
 	GtkTextTag *tag = tagp->data;
 	gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(tag), "page"));
@@ -678,10 +672,30 @@ cmdref_visibility_notify (GtkWidget *tview,  GdkEventVisibility *e)
     return FALSE;
 }
 
+static void maybe_connect_help_signals (windata_t *hwin, int en)
+{
+    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
+						 "sigs_connected"));
+
+    if (!done) {
+	gpointer en_ptr = GINT_TO_POINTER(en);
+
+	g_signal_connect(hwin->w, "key-press-event", 
+			 G_CALLBACK(cmdref_key_press), en_ptr);
+	g_signal_connect(hwin->w, "event-after", 
+			 G_CALLBACK(cmdref_event_after), en_ptr);
+	g_signal_connect(hwin->w, "motion-notify-event", 
+			 G_CALLBACK(cmdref_motion_notify), NULL);
+	g_signal_connect(hwin->w, "visibility-notify-event", 
+			 G_CALLBACK(cmdref_visibility_notify), NULL);
+	g_object_set_data(G_OBJECT(hwin->w), "sigs_connected", 
+			  GINT_TO_POINTER(1));
+    }
+}
+
 static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Command Reference");
-    int connected;
     GtkTextIter iter;
     int i;
 
@@ -716,23 +730,7 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
 
-    connected = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
-				"sigs_connected"));
-
-    if (!connected) {
-	gpointer en_ptr = GINT_TO_POINTER(en);
-
-	g_signal_connect(hwin->w, "key-press-event", 
-			 G_CALLBACK(cmdref_key_press), en_ptr);
-	g_signal_connect(hwin->w, "event-after", 
-			 G_CALLBACK(cmdref_event_after), en_ptr);
-	g_signal_connect(hwin->w, "motion-notify-event", 
-			 G_CALLBACK(cmdref_motion_notify), NULL);
-	g_signal_connect(hwin->w, "visibility-notify-event", 
-			 G_CALLBACK(cmdref_visibility_notify), NULL);
-	g_object_set_data(G_OBJECT(hwin->w), "sigs_connected", 
-			  GINT_TO_POINTER(1));
-    }
+    maybe_connect_help_signals(hwin, en);
 }
 
 static gint help_popup_click (GtkWidget *w, gpointer p)
@@ -814,28 +812,6 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
-#if 0
-enum {
-    INSERT_XREF = 1,
-    INSERT_FIG
-};
-
-static int line_special (const char *s, const char **p)
-{
-    *p = strchr(s, '<');
-
-    if (*p != NULL) {
-	if (!strncmp(*p, "<reftarg=", 9)) {
-	    return INSERT_XREF;
-	} else if (!strncmp(*p, "<fig=", 4)) {
-	    return INSERT_FIG;
-	}
-    }
-
-    return 0;
-}
-#endif
-
 static void
 insert_line_with_xrefs (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			const char *s)
@@ -843,11 +819,11 @@ insert_line_with_xrefs (GtkTextBuffer *tbuf, GtkTextIter *iter,
     char word[9];
     const char *p;
 
-    while ((p = strstr(s, "<reftarg="))) {
+    while ((p = strstr(s, "<xref="))) {
 	gtk_text_buffer_insert(tbuf, iter, s, p - s);
-	sscanf(p + 10, "%8[^\"]", word);
+	sscanf(p + 7, "%8[^\"]", word);
 	insert_link(tbuf, iter, word, gretl_command_number(word));
-	s = p + 12 + strlen(word);
+	s = p + 9 + strlen(word);
     }
 
     gtk_text_buffer_insert(tbuf, iter, s, -1);
@@ -904,12 +880,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 	    /* reached the next topic */
 	    break;
 	} else {
-	    if (gui_help(hwin->role)) {
-		gtk_text_buffer_insert(tbuf, &iter, line, -1);
-	    } else {
-		insert_line_with_xrefs(tbuf, &iter, line);
-	    }
-	    /* bufgets strips newlines */
+	    insert_line_with_xrefs(tbuf, &iter, line);
 	    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
 	}
     }
@@ -917,6 +888,9 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
     g_object_set_data(G_OBJECT(hwin->w), "backpage", 
 		      GINT_TO_POINTER(hwin->active_var));
+#if 0
+    maybe_connect_help_signals(hwin, en);
+#endif
     cursor_to_top(hwin);
     hwin->active_var = hcode;
 }

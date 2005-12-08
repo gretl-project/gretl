@@ -690,10 +690,12 @@ static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
 {
     GdkModifierType mods;
 
-    gdk_window_get_pointer (w->window, NULL, NULL, &mods); 
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+
     if (mods & GDK_BUTTON3_MASK) {
 	return TRUE;
     }
+
     return FALSE;
 }
 
@@ -2250,8 +2252,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 		     G_CALLBACK(catch_viewer_key), vwin);
 
 #ifndef OLD_GTK    
-    g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
-		      G_CALLBACK(catch_button_3), vwin->w);
+    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+		     G_CALLBACK(catch_button_3), vwin->w);
 #endif
 
     gtk_widget_show(vwin->vbox);
@@ -2524,8 +2526,8 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 			 G_CALLBACK(help_popup_handler), 
 			 vwin);
     } else {
-	g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
-			  G_CALLBACK(catch_button_3), vwin->w);
+	g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+			 G_CALLBACK(catch_button_3), vwin->w);
     }	
 #endif
 
