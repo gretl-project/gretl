@@ -47,7 +47,8 @@ enum {
     OUTPUT_HLP,
     OUTPUT_CLI_HLP,
     OUTPUT_CMD_HLP,
-    OUTPUT_GUI_HLP
+    OUTPUT_GUI_HLP,
+    OUTPUT_TEST
 };
 
 #define ROOTNODE "commandlist"
@@ -104,6 +105,32 @@ int apply_xslt (xmlDocPtr doc, int output, int xrefs, const char *lang,
     int err = 0;
 
     xmlIndentTreeOutput = 1;
+
+    if (output == OUTPUT_TEST) {
+	/* not ready yet: may some day produce nicely formatted help
+	   text for use with GtkTextView */
+	full_fname("gretlhlp.xsl", docdir, styname);
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
+	if (style == NULL) {
+	    err = 1;
+	} else {
+	    build_params(xsl_params, OUTPUT_DOCBOOK, 0, lang);
+	    result = xsltApplyStylesheet(style, doc, xsl_params);
+	    if (result == NULL) {
+		err = 1;
+	    } else {
+		fp = fopen("cmdlist2.txt", "w");
+		if (fp == NULL) {
+		    err = 1;
+		} else {
+		    xsltSaveResultToFile(fp, result, style);
+		    fclose(fp);
+		}
+		xsltFreeStylesheet(style);
+		xmlFreeDoc(result);
+	    }	    
+	}
+    }	
 
     /* make "full" DocBook XML output */
     if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK) {
@@ -298,6 +325,8 @@ int main (int argc, char **argv)
 	    output = OUTPUT_ALL;
 	} else if (!strcmp(argv[i], "--xrefs")) {
 	    xrefs = 1;
+	} else if (!strcmp(argv[i], "--test")) {
+	    output = OUTPUT_TEST;
 	} else if (!strncmp(argv[i], "--docdir=", 9)) {
 	    strcpy(docdir, argv[i] + 9);
 	} else {

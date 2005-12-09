@@ -54,6 +54,9 @@ mtrand: mtrand.o
 check: nistcheck
 	./nistcheck $(topsrc)/tests
 
+qrcheck: nistcheck
+	GRETL_USE_QR=1 ./nistcheck $(topsrc)/tests
+
 clean:
 	rm -f nistcheck diehard mtrand *.o test.out
 	rm -f gretl_output.32 gretl_rand.txt

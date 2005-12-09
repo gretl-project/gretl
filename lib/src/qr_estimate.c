@@ -677,6 +677,19 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     err = QR_decomp_plus(Q, R);
 
+#if 0 /* experimenting here */
+    if (1) {
+	fprintf(stderr, "without pivot\n");
+	gretl_matrix_print(Q, "Q");
+	gretl_matrix_print(R, "R");
+	get_model_data(pmod, (const double **) *pZ, Q, y);
+	err = QR_decomp_plus(Q, R, 1);
+	fprintf(stderr, "with pivot\n");
+	gretl_matrix_print(Q, "Q");
+	gretl_matrix_print(R, "R");
+    }
+#endif
+
     if (err == E_SINGULAR && !(opts & OPT_Z) &&
 	redundant_var(pmod, pZ, pdinfo, trim++)) {
 	/* FIXME this can be done more efficiently, using R */

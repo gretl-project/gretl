@@ -3,7 +3,6 @@
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
 <xsl:param name="hlp">cli</xsl:param>
-<xsl:param name="xrefs">false</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
 <xsl:output method="text" encoding="iso-8859-1"/>
@@ -113,6 +112,7 @@
       </xsl:call-template>
     </xsl:otherwise> 
   </xsl:choose>
+  <xsl:text>&#x9;</xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
 
@@ -133,10 +133,13 @@
     </xsl:call-template>
   </xsl:if>
   <xsl:if test="@flag">
+    <xsl:text>&lt;@lit="</xsl:text>
     <xsl:value-of select="@flag"/>
+    <xsl:text>"&gt;</xsl:text>
   </xsl:if> 
+  <xsl:text>&lt;@var="</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text> </xsl:text>
+  <xsl:text>"&gt; </xsl:text>
   <xsl:if test="(@optional)">] </xsl:if> 
 </xsl:template>
 
@@ -157,11 +160,22 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="option|example">
+<xsl:template match="option">
   <xsl:if test="position() > 1">
-    <xsl:text>&#xa;            </xsl:text>
-  </xsl:if> 
+    <xsl:text>&#xa;&#x9;</xsl:text>
+  </xsl:if>
+  <xsl:text>&#x9;</xsl:text>
   <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="example">
+  <xsl:if test="position() > 1">
+    <xsl:text>&#xa;&#x9;</xsl:text>
+  </xsl:if> 
+  <xsl:text>&#x9;</xsl:text>
+  <xsl:text>&lt;@lit="</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>  
 </xsl:template>
 
 <xsl:template match="altforms">
@@ -175,13 +189,6 @@
 <xsl:template match="altform">
   <xsl:if test="position() > 1">
     <xsl:text>&#xa;                  </xsl:text>
-  </xsl:if> 
-  <xsl:apply-templates/>
-</xsl:template>
-
-<xsl:template match="option|example">
-  <xsl:if test="position() > 1">
-    <xsl:text>&#xa;            </xsl:text>
   </xsl:if> 
   <xsl:apply-templates/>
 </xsl:template>
@@ -203,10 +210,6 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="flag">
-  <xsl:apply-templates/>
-</xsl:template>
-
 <xsl:template match="effect">
   <xsl:text> (</xsl:text>
   <xsl:apply-templates/>
@@ -214,49 +217,43 @@
 </xsl:template>
 
 <xsl:template match="repl">
-  <xsl:if test="@quote='true'">
-    <xsl:text>"</xsl:text>
-  </xsl:if>
+  <xsl:text>&lt;@var="</xsl:text>
   <xsl:apply-templates/>
-  <xsl:if test="@quote='true'">
-    <xsl:text>"</xsl:text>
-  </xsl:if>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="cmd">
-  <xsl:text>"</xsl:text>
+  <xsl:text>&lt;@lit="</xsl:text>
   <xsl:apply-templates/>
-  <xsl:text>"</xsl:text>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="program">
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="lit">
+<xsl:template match="lit|func|filename|flag">
+  <xsl:text>&lt;@lit="</xsl:text>
   <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="mathvar">
+  <xsl:text>&lt;@itl="</xsl:text>
   <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="book">
+  <xsl:text>&lt;@itl="</xsl:text>
   <xsl:apply-templates/>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="quote">
   <xsl:text>"</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>"</xsl:text>
-</xsl:template>
-
-<xsl:template match="filename">
-  <xsl:apply-templates/>
-</xsl:template>
-
-<xsl:template match="func">
-  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="equation">
@@ -294,9 +291,9 @@
 
 <xsl:template match="code">
   <xsl:if test="not(@context) or @context=$hlp">
-    <xsl:call-template name="dnl"/>
+    <xsl:text>[CODE]</xsl:text>
     <xsl:apply-templates/>
-    <xsl:call-template name="dnl"/>
+    <xsl:text>[/CODE]&#xa;</xsl:text>
   </xsl:if>
 </xsl:template>
 
@@ -317,24 +314,17 @@
 </xsl:template>
 
 <xsl:template match="cmdref">
-  <xsl:choose>
-    <xsl:when test="$xrefs='true'">
-      <xsl:text>&lt;@ref="</xsl:text>
-      <xsl:value-of select="@targ"/>
-      <xsl:text>"&gt;</xsl:text>
-    </xsl:when>
-    <xsl:otherwise>
-      <xsl:text>"</xsl:text>
-      <xsl:value-of select="@targ"/>
-      <xsl:text>"</xsl:text>      
-    </xsl:otherwise>
-  </xsl:choose>
+  <xsl:text>&lt;@ref="</xsl:text>
+  <xsl:value-of select="@targ"/>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="guideref">
+  <xsl:text>&lt;@itl="</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'guidebook'"/>
   </xsl:call-template>
+  <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
 <xsl:template match="tabref">

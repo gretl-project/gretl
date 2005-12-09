@@ -26,6 +26,8 @@
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
 
+#define FORMAT_HELP_TEXT 0 /* not ready yet */
+
 enum {
     PLAIN_TEXT,
     BLUE_TEXT,
@@ -389,6 +391,30 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 "size", 15 * PANGO_SCALE, NULL);
     gtk_text_tag_table_add(table, tag);
 
+#if FORMAT_HELP_TEXT
+    tag = gtk_text_tag_new("italic");
+    g_object_set(tag, "family", "sans",
+		 "style", PANGO_STYLE_ITALIC, 
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("literal");
+    g_object_set(tag, "family", "monospace", NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("text");
+    g_object_set(tag, "family", "sans", NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("indented");
+    g_object_set(tag, "left_margin", 40, NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("code");
+    g_object_set(tag, "family", "monospace", NULL);
+    gtk_text_tag_table_add(table, tag);
+#endif
+
     return table;
 }
 
@@ -510,11 +536,7 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 {
     GtkTextTag *tag;
 
-    tag = gtk_text_buffer_create_tag(tbuf, NULL, 
-				     "foreground", "blue", 
-				     "underline", PANGO_UNDERLINE_SINGLE, 
-				     NULL);
-
+    tag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", NULL);
     g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
     gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
 }
@@ -693,6 +715,26 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
     }
 }
 
+#if FORMAT_HELP_TEXT
+
+static void maybe_set_help_tabs (windata_t *hwin)
+{
+    int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
+						 "tabs_set"));
+
+    if (!done) {
+	PangoTabArray *tabs;
+	
+	tabs = pango_tab_array_new(1, TRUE);
+	pango_tab_array_set_tab(tabs, 0, PANGO_TAB_LEFT, 45);
+	gtk_text_view_set_tabs(GTK_TEXT_VIEW(hwin->w), tabs);
+	pango_tab_array_free(tabs);
+	g_object_set_data(G_OBJECT(hwin->w), "tabs_set", GINT_TO_POINTER(1));
+    }
+}
+
+#endif
+
 static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Command Reference");
@@ -710,7 +752,6 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 					     (en)? header : _(header), -1,
 					     "title", NULL);
-	
     gtk_text_buffer_insert(tbuf, &iter, "\n\n\n", -1);
 
     for (i=1; i<NC; i++) {
@@ -731,6 +772,10 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
 
     maybe_connect_help_signals(hwin, en);
+
+#if FORMAT_HELP_TEXT
+    maybe_set_help_tabs(hwin);
+#endif
 }
 
 static gint help_popup_click (GtkWidget *w, gpointer p)
@@ -812,21 +857,193 @@ help_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer p)
     return FALSE;
 }
 
-static void
-insert_line_with_xrefs (GtkTextBuffer *tbuf, GtkTextIter *iter,
-			const char *s)
-{
-    char word[9];
-    const char *p;
+enum {
+    INSERT_NONE,
+    INSERT_REF,
+    INSERT_FIG,
+    INSERT_REPL,
+    INSERT_LIT,
+    INSERT_ITAL,
+    INSERT_TEXT
+};
 
-    while ((p = strstr(s, "<xref="))) {
+#if FORMAT_HELP_TEXT
+
+static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
+				const char *s, int ins, const char *indent)
+{
+    const char *ftag = NULL;
+
+    switch (ins) {
+    case INSERT_ITAL:
+    case INSERT_REPL:
+	ftag = "italic";
+	break;
+    case INSERT_LIT:
+	ftag = "literal";
+	break;
+    default:
+	break;
+    }
+
+    if (ftag != NULL) {
+	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, -1,
+						 ftag, indent, NULL);
+    }
+}
+
+static int get_instruction_and_string (const char *p, char *str)
+{
+    int ins = INSERT_NONE;
+    *str = '\0';
+
+    if (!strncmp(p, "ref", 3)) {
+	ins = INSERT_REF;
+    } else if (!strncmp(p, "fig", 3)) {
+	ins = INSERT_FIG;
+    } else if (!strncmp(p, "itl", 3)) {
+	ins = INSERT_ITAL;
+    } else if (!strncmp(p, "var", 3)) {
+	ins = INSERT_REPL;
+    } else if (!strncmp(p, "lit", 3)) {
+	ins = INSERT_LIT;
+    } 
+
+    if (ins != INSERT_NONE) {
+	int i = 0;
+
+	p += 5;
+	while (*p) {
+	    if (*p == '"' && *(p+1) == '>') {
+		str[i] = 0;
+		break;
+	    } else {
+		str[i++] = *p++;
+	    }
+	}
+    }
+
+    return ins;
+}
+
+static void
+insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
+			 const char *s)
+{
+    char targ[128];
+    const char *p;
+    int ins;
+
+    const char *indent = NULL;
+    const char *code = NULL;
+
+    while ((p = strstr(s, "<"))) {
+	int skip = 0;
+
+	if (code != NULL) {
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, p - s,
+						     "code", indent, NULL);
+	} else {
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, p - s,
+						     "text", indent, NULL);
+	}
+
+	p++;
+
+	if (*p == '@') {
+	    /* "atomic" markup */
+	    ins = get_instruction_and_string(p + 1, targ);
+	    if (ins == INSERT_REF) {
+		insert_link(tbuf, iter, targ, gretl_command_number(targ));
+	    } else if (ins == INSERT_FIG) {
+		gtk_text_buffer_insert(tbuf, iter, "fig goes here: ", -1);
+		gtk_text_buffer_insert(tbuf, iter, targ, -1);
+	    } else if (ins != INSERT_NONE) {
+		insert_tagged_text(tbuf, iter, targ, ins, indent);
+	    }
+	    skip = 8 + strlen(targ);
+	} else if (!strncmp(p, "indent", 6)) {
+	    indent = "indented";
+	    skip = 7 + (*(p+7) == '\n');
+	} else if (!strncmp(p, "/indent", 7)) {
+	    indent = NULL;
+	    skip = 8 + (*(p+8) == '\n');
+	} else if (!strncmp(p, "code", 4)) {
+	    code = "code";
+	    skip = 5 + (*(p+5) == '\n'); 
+	} else if (!strncmp(p, "/code", 5)) {
+	    code = NULL;
+	    skip = 6 + (*(p+6) == '\n');
+	} else {
+	    /* literal "<" */
+	    gtk_text_buffer_insert(tbuf, iter, "<", 1);
+	}
+
+	s = p + skip;
+    }
+
+    if (code != NULL) {
+	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, -1,
+						 "code", indent, NULL);
+    } else {
+	gtk_text_buffer_insert_with_tags_by_name(tbuf, iter, s, -1,
+						 "text", indent, NULL);
+    }
+}
+
+#else
+
+static int get_instruction_and_string (const char *p, char *str)
+{
+    int ins = INSERT_NONE;
+    *str = '\0';
+
+    if (!strncmp(p, "ref", 3)) {
+	ins = INSERT_REF;
+	p += 5;
+	while (*p != '"') {
+	    *str++ = *p++;
+	}
+	*str = '\0';
+    }
+
+    return ins;
+}
+
+static void
+insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
+			 const char *s)
+{
+    char targ[32];
+    const char *p;
+    int icode;
+
+    while ((p = strstr(s, "<@"))) {
 	gtk_text_buffer_insert(tbuf, iter, s, p - s);
-	sscanf(p + 7, "%8[^\"]", word);
-	insert_link(tbuf, iter, word, gretl_command_number(word));
-	s = p + 9 + strlen(word);
+	icode = get_instruction_and_string(p + 2, targ);
+	if (icode == INSERT_REF) {
+	    insert_link(tbuf, iter, targ, gretl_command_number(targ));
+	}
+	s = p + 9 + strlen(targ);
     }
 
     gtk_text_buffer_insert(tbuf, iter, s, -1);
+}
+
+#endif /* formatting help text or not */
+
+static char *grab_topic_buffer (const char *s)
+{
+    const char *p = strstr(s, "\n# ");
+    char *buf;
+
+    if (p != NULL) {
+	buf = g_strndup(s, p - s);
+    } else {
+	buf = g_strdup(s);
+    }
+
+    return buf;
 }
 
 /* pull the appropriate chunk of help text out of the buffer attached
@@ -838,6 +1055,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     GtkTextIter iter;
     char line[256];
     gchar *hbuf;
+    char *topicbuf;
 
     tbuf = gretl_text_buf_new();
 
@@ -853,7 +1071,10 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 
     hbuf = (gchar *) hwin->data + pos;
     bufgets_init(hbuf);
-    bufgets(line, sizeof line, hbuf);
+
+    if (bufgets(line, sizeof line, hbuf) == NULL) {
+	return;
+    }
 
     if (gui_help(hwin->role)) {
 	/* topic heading: descriptive string */
@@ -875,15 +1096,13 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 
     gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
 
-    while (bufgets(line, sizeof line, hbuf)) {
-	if (*line == '#') {
-	    /* reached the next topic */
-	    break;
-	} else {
-	    insert_line_with_xrefs(tbuf, &iter, line);
-	    gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
-	}
+    topicbuf = grab_topic_buffer(hbuf + strlen(line) + 1);
+    if (topicbuf == NULL) {
+	return;
     }
+
+    insert_text_with_markup(tbuf, &iter, topicbuf);
+    free(topicbuf);
 
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
     g_object_set_data(G_OBJECT(hwin->w), "backpage", 

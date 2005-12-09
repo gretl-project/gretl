@@ -2240,7 +2240,7 @@ int in_usa (void)
  * This function (which works rather like fgets) must be initialized 
  * via the call: bufgets_init(buf);
  * 
- * Returns: @s (%NULL if nothing more can be read from @buf).
+ * Returns: @s (or %NULL if nothing more can be read from @buf).
  */
 
 char *bufgets (char *s, size_t size, const char *buf)
@@ -2257,7 +2257,7 @@ char *bufgets (char *s, size_t size, const char *buf)
     /* mechanism for resetting p */
     if (s == NULL || size == 0) {
 	p = NULL;
-	return 0;
+	return NULL;
     }
 
     /* start at beginning of buffer */

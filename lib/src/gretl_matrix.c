@@ -1702,6 +1702,117 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
     return (info == 0)? GRETL_MATRIX_OK : GRETL_MATRIX_ERR;
 }
 
+#if 0 /* experimental */
+
+int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
+{
+    integer m = M->rows;
+    integer n = M->cols;
+
+    integer info = 0;
+    integer lwork = -1;
+    integer lda = m;
+    integer *iwork = NULL;
+    doublereal *tau = NULL;
+    doublereal *work = NULL;
+    doublereal *work2;
+    integer *jpvt = NULL;
+
+    int i, j;
+    int err = GRETL_MATRIX_OK;
+
+    if (R == NULL || R->rows != n || R->cols != n) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    /* dim of tau is min (m, n) */
+    tau = malloc(n * sizeof *tau);
+    work = malloc(sizeof *work);
+    iwork = malloc(n * sizeof *iwork);
+
+    if (tau == NULL || work == NULL || iwork == NULL) {
+	err = GRETL_MATRIX_NOMEM;
+	goto bailout;
+    }
+
+    /* workspace size query */
+    jpvt = malloc(n * sizeof *jpvt);
+    if (jpvt == NULL) {
+	err = GRETL_MATRIX_NOMEM;
+	goto bailout;
+    }
+
+    dgeqp3_(&m, &n, M->val, &lda, jpvt, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
+	err = GRETL_MATRIX_ERR;
+	goto bailout;
+    }
+
+    /* optimally sized work array */
+    lwork = (integer) work[0];
+    work2 = realloc(work, (size_t) lwork * sizeof *work);
+    if (work2 == NULL) {
+	err = GRETL_MATRIX_NOMEM;
+	goto bailout;
+    }
+
+    work = work2;
+
+#if TRY_SCALING
+    /* scale rows and/or columns? */
+    maybe_scale_matrix(M, &c);
+#endif
+
+    /* run actual QR factorization */
+    dgeqp3_(&m, &n, M->val, &lda, jpvt, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
+	err = GRETL_MATRIX_ERR;
+	goto bailout;
+    }
+
+    /* copy the upper triangular R out of M */
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    if (i <= j) {
+		gretl_matrix_set(R, i, j, 
+				 gretl_matrix_get(M, i, j));
+	    } else {
+		gretl_matrix_set(R, i, j, 0.0);
+	    }
+	}
+    }
+
+    /* obtain the real "Q" matrix (in M) */
+    dorgqr_(&m, &n, &n, M->val, &lda, tau, work, &lwork, &info);
+    if (info != 0) {
+	fprintf(stderr, "dorgqr: info = %d\n", (int) info);
+	err = GRETL_MATRIX_ERR;
+	goto bailout;
+    } 
+
+ bailout:
+
+    free(tau);
+    free(work);
+    free(iwork);
+
+#if 1
+    for (i=0; i<n; i++) {
+	fprintf(stderr, "jpvt[%d] = %d\n", i, (int) jpvt[i]);
+	if (jpvt[i] != i + 1) {
+	    fprintf(stderr, "column was moved\n");
+	}
+    }
+    free(jpvt);
+#endif
+
+    return err;
+}
+
+#endif 
+
 /**
  * gretl_matrix_QR_decomp:
  * @M: m x n matrix to be decomposed.

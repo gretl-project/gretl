@@ -622,17 +622,22 @@ static int real_helpfile_init (int gui, int en)
 
     err = get_helpfile_structure(&heads, gui, helpfile);
 
-    if (!err && gui) {
-	if (en) {
-	    en_gui_heads = heads;
+    if (err) {
+	sprintf(errtext, _("help file %s is not accessible\n"), helpfile);
+	errbox(errtext);
+    } else {
+	if (gui) {
+	    if (en) {
+		en_gui_heads = heads;
+	    } else {
+		gui_heads = heads;
+	    }
 	} else {
-	    gui_heads = heads;
-	}
-    } else if (!err) {
-	if (en) {
-	    en_cli_heads = heads;
-	} else {
-	    cli_heads = heads;
+	    if (en) {
+		en_cli_heads = heads;
+	    } else {
+		cli_heads = heads;
+	    }
 	}
     }
 

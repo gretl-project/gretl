@@ -22,7 +22,8 @@ enum {
     PARA,
     ILISTPAR,
     NLISTPAR,
-    TABLE
+    TABLE,
+    CODE
 } para_types;
 
 struct table_row {
@@ -146,11 +147,11 @@ static void trim_to_length (char *s)
     }
 }
 
-/* Special: handle xrefs embedded in script help destined for
+/* Special: handle cross-refs embedded in script help destined for
    the gui program.  The extra characters (9) will be stripped
    out when the file is formatted in the help window, so they
    should not be counted towards the length of the line.  
-   The xref pattern is: <xref="">
+   The pattern is: <@ref="">
 */
 
 static void fill_line_to_max (char *line, char *p, int n)
@@ -158,7 +159,7 @@ static void fill_line_to_max (char *line, char *p, int n)
     int nc = 0, nmax = n;
 
     while (*p && nc < nmax) {
-	if (!strncmp(p, "<xref", 5)) {
+	if (!strncmp(p, "<@ref", 5)) {
 	    nmax += 9;
 	}
 	line[nc++] = *p++;
@@ -169,7 +170,7 @@ static void fill_line_to_max (char *line, char *p, int n)
 
 /* reflow a paragraph buffer, with max line length MAXLEN */
 
-static int format_buf (char *buf, int ptype)
+static int format_buf (char *buf, int ptype, int markup)
 {
     char *p, *q, line[256];
     int i, n, out, indent = 0, maxline = MAXLEN;
@@ -183,6 +184,12 @@ static int format_buf (char *buf, int ptype)
 
     if (blank_string(buf)) return 0;
 
+    if (markup) {
+	if (ptype == NLISTPAR || ptype == ILISTPAR) {
+	    puts("<indent>");
+	} 
+    }
+
     n = strlen(buf);
 
     p = buf;
@@ -190,27 +197,35 @@ static int format_buf (char *buf, int ptype)
     while (out < n - 1) {
 	*line = 0;
 	q = p;
-#if 1
 	fill_line_to_max(line, p, maxline);
-#else
-	strncat(line, p, maxline);
-#endif
 	trim_to_length(line);
 	out += strlen(line);
 	p = q + strlen(line);
 	if (!blank_string(line)) {
-	    for (i=0; i<indent; i++) {
-		putchar(' ');
+	    if (markup) {
+		/* leave line-breaks and indent to be determined */
+		printf("%s ", (*line == ' ')? line + 1 : line);
+	    } else {
+		for (i=0; i<indent; i++) {
+		    putchar(' ');
+		}
+		printf("%s\n", (*line == ' ')? line + 1 : line);
 	    }
-	    printf("%s\n", (*line == ' ')? line + 1 : line);
 	}
-	if (ptype == NLISTPAR) {
+	if (ptype == NLISTPAR && !markup) {
 	    maxline = MAXLEN - NINDENT;
 	    indent = NINDENT;
 	}
     }
 
     putchar('\n');
+
+    if (markup) {
+	if (ptype == NLISTPAR || ptype == ILISTPAR) {
+	    puts("</indent>");
+	} 
+	putchar('\n');
+    }
     
     return 0;
 }
@@ -292,7 +307,9 @@ static void print_right_cell (const char *s, int start, int width)
 	    if (first) {
 		first = 0;
 	    } else {
-		for (i=0; i<start; i++) putchar(' ');
+		for (i=0; i<start; i++) {
+		    putchar(' ');
+		}
 	    }
 	    q = chunk;
 	    while (isspace(*q)) q++;
@@ -384,6 +401,23 @@ static int process_table (char *buf, int inlist)
     return 0;
 }
 
+static void format_code_buf (char *buf)
+{
+    int i, n = strlen(buf);
+
+    for (i=n-1; i>0; i--) {
+	if (isspace(buf[i])) {
+	    buf[i] = 0;
+	} else {
+	    break;
+	}
+    }
+
+    fputs("<code>", stdout);
+    puts(buf);
+    fputs("</code>\n\n", stdout);
+}
+
 /* remove special marker put into the text by xsl to identify
    paragraphs that should be re-flowed to the given line length.
 */
@@ -397,20 +431,22 @@ void strip_marker (char *s, const char *targ)
     }
 }
 
-int process_para (char *s, char *inbuf, int ptype)
+int process_para (char *s, char *inbuf, int ptype, int markup)
 {
     char line[128];
     const char *starts[] = { 
 	"[PARA]", 
 	"[ILISTPAR]", 
 	"[NLISTPAR]", 
-	"[TABLE]" 
+	"[TABLE]",
+	"[CODE]"
     };
     const char *stops[] = { 
 	"[/PARA]", 
 	"[/ILISTPAR]",
 	"[/NLISTPAR]",
-	"[/TABLE]" 
+	"[/TABLE]",
+	"[/CODE]"
     };
     char *p, *buf;
     int done = 0;
@@ -420,6 +456,7 @@ int process_para (char *s, char *inbuf, int ptype)
 
     p = strstr(s, starts[ptype]);
     strip_marker(p, starts[ptype]);
+
     strcpy(line, s);
     strcat(buf, line);
 
@@ -441,34 +478,47 @@ int process_para (char *s, char *inbuf, int ptype)
 	    (int) strlen(buf));
 #endif
 
-    if (ptype != TABLE) {
-	format_buf(buf, ptype);
-    } else {
+    if (ptype == TABLE) {
 	process_table(buf, ptype);
-    }
+    } else if (ptype == CODE) {
+	if (markup) {
+	    format_code_buf(buf);
+	} else {
+	    puts(buf);
+	}
+    } else {
+	format_buf(buf, ptype, markup);
+    } 
 
     return 0;
 }
 
-int main (void)
+int main (int argc, char **argv)
 { 
     char buf[PARSIZE];
     char line[128];
     int blank = 0;
+    int markup = 0;
+
+    if (argc == 2 && !strcmp(argv[1], "--markup")) {
+	markup = 1;
+    }
 
     while (fgets(line, sizeof line, stdin)) {
-
 	if (strstr(line, "[PARA]")) {
-	    process_para(line, buf, PARA);
+	    process_para(line, buf, PARA, markup);
 	    blank++;
 	} else if (strstr(line, "[ILISTPAR]")) {
-	    process_para(line, buf, ILISTPAR);
+	    process_para(line, buf, ILISTPAR, markup);
 	    blank++;
 	} else if (strstr(line, "[NLISTPAR]")) {
-	    process_para(line, buf, NLISTPAR);
+	    process_para(line, buf, NLISTPAR, markup);
 	    blank++;
 	} else if (strstr(line, "[TABLE]")) {
-	    process_para(line, buf, TABLE);
+	    process_para(line, buf, TABLE, markup);
+	    blank++;
+	} else if (strstr(line, "[CODE]")) {
+	    process_para(line, buf, CODE, markup);
 	    blank++;
 	} else {
 	    if (blank_string(line)) {
@@ -482,7 +532,6 @@ int main (void)
 		blank = 0;
 	    }
 	}	
-
     }
 
     return 0;
