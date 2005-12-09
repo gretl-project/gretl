@@ -3545,9 +3545,12 @@
 	certain characteristic, at each observation, rather than a 1
 	or 0 variable indicating whether the characteristic is present
 	or not) you should not use the <cmd>logit</cmd> command, but
-	rather construct the logit variable (e.g. 
-	<lit>genr lgt_p = log(p/(1 - p))</lit>) and use this 
-	as the dependent variable in an OLS regression.  
+	rather construct the logit variable, as in
+      </para>
+      <code>
+	genr lgt_p = log(p/(1 - p))
+      </code>
+      <para>and use this as the dependent variable in an OLS regression.  
 	See Ramanathan, Chapter 12.
       </para>
     </description>

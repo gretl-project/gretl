@@ -9,6 +9,8 @@ XML_LIBS = @XML_LIBS@
 XSLT_CFLAGS = @XSLT_CFLAGS@
 XSLT_LIBS = @XSLT_LIBS@
 
+have_gtk = @have_gtk@
+
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../../lib/libgretl-1.0.la
 
@@ -34,6 +36,12 @@ HLPXSL = $(CMDSDIR)/gretltxt.xsl
 
 XMLSTRS = $(CMDSDIR)/hlpstrings.xml
 TXTSTRS = $(CMDSDIR)/hlpstrings.txt
+
+ifeq ($(have_gtk),2.0)
+  HLPOPT = --hlp --xrefs
+else
+  HLPOPT = --hlp
+endif
 
 progs: xsltrans skeleton reflow hlpstrings validate 
 
@@ -82,15 +90,15 @@ docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
 
 # Generate "online" text help files
 hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS)
-	./xsltrans --hlp $(CMDSDIR)/gretl_commands.xml && \
+	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp
 	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp
-	./xsltrans --hlp $(CMDSDIR)/gretl_commands_es.xml && \
+	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_es.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.es
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es
 	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp.es
-	./xsltrans --hlp $(CMDSDIR)/gretl_commands_it.xml && \
+	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_it.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.it
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it
 	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp.it

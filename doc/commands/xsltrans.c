@@ -46,9 +46,8 @@ enum {
     OUTPUT_DOCBOOK_STANDALONE,
     OUTPUT_HLP,
     OUTPUT_CLI_HLP,
-    OUTPUT_GUI_HLP,
-    OUTPUT_XREF_HLP,
-    OUTPUT_DBTEX
+    OUTPUT_CMD_HLP,
+    OUTPUT_GUI_HLP
 };
 
 #define ROOTNODE "commandlist"
@@ -65,9 +64,13 @@ static void full_fname (const char *fname, const char *dir,
 }
 
 static void build_params (char const **params, int output, 
-			  const char *lang)
+			  int xrefs, const char *lang)
 {
     int i = 0;
+
+    if (output == OUTPUT_CMD_HLP && !xrefs) {
+	return;
+    }
 
     if (strcmp(lang, "en")) {
 	params[0] = "lang";
@@ -81,13 +84,16 @@ static void build_params (char const **params, int output,
     } else if (output == OUTPUT_GUI_HLP) {
 	params[i++] = "hlp";
 	params[i++] = "\"gui\"";
-    } else if (output == OUTPUT_XREF_HLP) {
+    } 
+
+    if (xrefs) {
 	params[i++] = "xrefs";
 	params[i++] = "\"true\"";
     }
+	
 }
 
-int apply_xslt (xmlDocPtr doc, int output, const char *lang, 
+int apply_xslt (xmlDocPtr doc, int output, int xrefs, const char *lang, 
 		const char *docdir)
 {
     xsltStylesheetPtr style;
@@ -106,7 +112,7 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
 	if (style == NULL) {
 	    err = 1;
 	} else {
-	    build_params(xsl_params, OUTPUT_DOCBOOK, lang);
+	    build_params(xsl_params, OUTPUT_DOCBOOK, 0, lang);
 	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {
 		err = 1;
@@ -132,7 +138,7 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
 	    err = 1;
 	} else {
 	    /* cli version */
-	    build_params(xsl_params, OUTPUT_CLI_HLP, lang);
+	    build_params(xsl_params, OUTPUT_CLI_HLP, 0, lang);
 	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {
 		err = 1;
@@ -146,8 +152,8 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
 		}
 		xmlFreeDoc(result);
 	    }
-	    /* script help, gui version */
-	    build_params(xsl_params, OUTPUT_XREF_HLP, lang);
+	    /* script help, gui version (gtk2 only) */
+	    build_params(xsl_params, OUTPUT_CMD_HLP, xrefs, lang);
 	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {
 		err = 1;
@@ -162,7 +168,7 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
 		xmlFreeDoc(result);
 	    }
 	    /* gui help */
-	    build_params(xsl_params, OUTPUT_GUI_HLP, lang);
+	    build_params(xsl_params, OUTPUT_GUI_HLP, xrefs, lang);
 	    result = xsltApplyStylesheet(style, doc, xsl_params);
 	    if (result == NULL) {
 		err = 1;
@@ -199,7 +205,7 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
 }
 
 int parse_commands_data (const char *fname, int output, 
-			 const char *docdir) 
+			 int xrefs, const char *docdir) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
@@ -237,7 +243,7 @@ int parse_commands_data (const char *fname, int output,
 	free(tmp);
     }
 
-    apply_xslt(doc, output, lang, docdir);
+    apply_xslt(doc, output, xrefs, lang, docdir);
 
  bailout:
 
@@ -261,38 +267,46 @@ static char *get_docdir (char *ddir, const char *fname)
     return ddir;
 }
 
+static void usage (void)
+{
+    fputs("Please give the name of an XML file to parse\n", stderr);
+    exit(EXIT_FAILURE);
+}
+
 int main (int argc, char **argv)
 {
-    const char *fname;
+    const char *fname = NULL;
     char docdir[FILENAME_MAX];
     int output = OUTPUT_ALL;
-    int err;
+    int xrefs = 0;
+    int i, err;
 
     if (argc < 2) {
-	fputs("Please give the name of an XML file to parse\n", stderr);
-	exit(EXIT_FAILURE);
+	usage();
     }
 
     *docdir = '\0';
 
-    if (argc >= 3) {
-	fname = argv[2];
-	if (!strcmp(argv[1], "--docbook")) {
+    for (i=1; i<argc; i++) {
+	if (!strcmp(argv[i], "--docbook")) {
 	    output = OUTPUT_DOCBOOK;
-	} else if (!strcmp(argv[1], "--docbook-standalone")) {
+	} else if (!strcmp(argv[i], "--docbook-standalone")) {
 	    output = OUTPUT_DOCBOOK_STANDALONE;
-	} else if (!strcmp(argv[1], "--hlp")) {
+	} else if (!strcmp(argv[i], "--hlp")) {
 	    output = OUTPUT_HLP;
-	} else if (!strcmp(argv[1], "--dbtex")) {
-	    output = OUTPUT_DBTEX;
-	} else if (!strcmp(argv[1], "--all")) {
+	} else if (!strcmp(argv[i], "--all")) {
 	    output = OUTPUT_ALL;
+	} else if (!strcmp(argv[i], "--xrefs")) {
+	    xrefs = 1;
+	} else if (!strncmp(argv[i], "--docdir=", 9)) {
+	    strcpy(docdir, argv[i] + 9);
+	} else {
+	    fname = argv[i];
 	}
-	if (argc == 4) {
-	    strcpy(docdir, argv[3]);
-	}
-    } else {
-	fname = argv[1];
+    }
+
+    if (fname == NULL) {
+	usage();
     }
 
     if (*docdir == '\0') {
@@ -302,7 +316,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "%s: input file '%s', docdir '%s'\n", 
 	    argv[0], fname, docdir);
 
-    err = parse_commands_data(fname, output, docdir);
+    err = parse_commands_data(fname, output, xrefs, docdir);
 
     return err;
 }

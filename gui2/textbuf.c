@@ -888,9 +888,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
     g_object_set_data(G_OBJECT(hwin->w), "backpage", 
 		      GINT_TO_POINTER(hwin->active_var));
-#if 0
     maybe_connect_help_signals(hwin, en);
-#endif
     cursor_to_top(hwin);
     hwin->active_var = hcode;
 }
