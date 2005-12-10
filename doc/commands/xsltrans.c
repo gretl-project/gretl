@@ -43,12 +43,15 @@
 enum {
     OUTPUT_ALL,
     OUTPUT_DOCBOOK,
-    OUTPUT_DOCBOOK_STANDALONE,
     OUTPUT_HLP,
     OUTPUT_CLI_HLP,
     OUTPUT_CMD_HLP,
-    OUTPUT_GUI_HLP,
-    OUTPUT_TEST
+    OUTPUT_GUI_HLP
+};
+
+enum {
+    OPT_XREFS  = 1 << 0,
+    OPT_MARKUP = 1 << 1
 };
 
 #define ROOTNODE "commandlist"
@@ -65,150 +68,117 @@ static void full_fname (const char *fname, const char *dir,
 }
 
 static void build_params (char const **params, int output, 
-			  int xrefs, const char *lang)
+			  int opt, const char *lang)
 {
     int i = 0;
 
-    if (output == OUTPUT_CMD_HLP && !xrefs) {
+    if (output == OUTPUT_CMD_HLP && !opt) {
+	/* gtk-1.2 help: no-op */
+	params[i] = NULL;
 	return;
     }
 
     if (strcmp(lang, "en")) {
-	params[0] = "lang";
-	params[1] = lang;
-	i = 2;
+	params[i++] = "lang";
+	params[i++] = lang;
     }    
     
-    if (output == OUTPUT_DOCBOOK_STANDALONE) {
-	params[i++] = "standalone";
-	params[i++] = "\"true\"";
-    } else if (output == OUTPUT_GUI_HLP) {
+    if (output == OUTPUT_GUI_HLP) {
 	params[i++] = "hlp";
 	params[i++] = "\"gui\"";
     } 
 
-    if (xrefs) {
+    if (opt == OPT_XREFS) {
 	params[i++] = "xrefs";
 	params[i++] = "\"true\"";
     }
-	
+
+    params[i] = NULL;
 }
 
-int apply_xslt (xmlDocPtr doc, int output, int xrefs, const char *lang, 
-		const char *docdir)
+int apply_xslt (xmlDocPtr doc, xsltStylesheetPtr style, char const **params,
+		const char *outname)
+{
+    xmlDocPtr result;
+    FILE *fp;
+    int err = 0;
+
+    result = xsltApplyStylesheet(style, doc, params);
+
+    if (result != NULL) {
+	fp = fopen(outname, "w");
+	if (fp != NULL) {
+	    xsltSaveResultToFile(fp, result, style);
+	    fclose(fp);
+	} else {
+	    err = 1;
+	}
+	xmlFreeDoc(result);
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
+int apply_xslt_all (xmlDocPtr doc, int output, int opt, const char *lang, 
+		    const char *docdir)
 {
     xsltStylesheetPtr style;
-    xmlDocPtr result;
     char styname[FILENAME_MAX];
     char const *xsl_params[12] = {0};
-    FILE *fp;
     int err = 0;
 
     xmlIndentTreeOutput = 1;
 
-    if (output == OUTPUT_TEST) {
-	/* not ready yet: may some day produce nicely formatted help
-	   text for use with GtkTextView */
-	full_fname("gretlhlp.xsl", docdir, styname);
-	style = xsltParseStylesheetFile((const xmlChar *) styname);
-	if (style == NULL) {
-	    err = 1;
-	} else {
-	    build_params(xsl_params, OUTPUT_DOCBOOK, 0, lang);
-	    result = xsltApplyStylesheet(style, doc, xsl_params);
-	    if (result == NULL) {
-		err = 1;
-	    } else {
-		fp = fopen("cmdlist2.txt", "w");
-		if (fp == NULL) {
-		    err = 1;
-		} else {
-		    xsltSaveResultToFile(fp, result, style);
-		    fclose(fp);
-		}
-		xsltFreeStylesheet(style);
-		xmlFreeDoc(result);
-	    }	    
-	}
-    }	
-
-    /* make "full" DocBook XML output */
+    /* DocBook XML output */
     if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK) {
 	full_fname("gretlman.xsl", docdir, styname);
+
 	style = xsltParseStylesheetFile((const xmlChar *) styname);
 	if (style == NULL) {
 	    err = 1;
 	} else {
 	    build_params(xsl_params, OUTPUT_DOCBOOK, 0, lang);
-	    result = xsltApplyStylesheet(style, doc, xsl_params);
-	    if (result == NULL) {
-		err = 1;
-	    } else {
-		fp = fopen("cmdlist.xml", "w");
-		if (fp == NULL) {
-		    err = 1;
-		} else {
-		    xsltSaveResultToFile(fp, result, style);
-		    fclose(fp);
-		}
-		xsltFreeStylesheet(style);
-		xmlFreeDoc(result);
-	    }	    
+	    err = apply_xslt(doc, style, xsl_params, "cmdlist.xml");
+	    xsltFreeStylesheet(style);
 	}
     }
 
-    /* make plain text "hlp" output */
+    /* output for plain command-line help file */
     if (output == OUTPUT_ALL || output == OUTPUT_HLP) {
 	full_fname("gretltxt.xsl", docdir, styname);
+
 	style = xsltParseStylesheetFile((const xmlChar *) styname);
 	if (style == NULL) {
 	    err = 1;
 	} else {
-	    /* cli version */
 	    build_params(xsl_params, OUTPUT_CLI_HLP, 0, lang);
-	    result = xsltApplyStylesheet(style, doc, xsl_params);
-	    if (result == NULL) {
-		err = 1;
-	    } else {
-		fp = fopen("clilist.txt", "w");
-		if (fp == NULL) {
-		    err = 1;
-		} else {
-		    xsltSaveResultToFile(fp, result, style);
-		    fclose(fp);
-		}
-		xmlFreeDoc(result);
-	    }
+	    err = apply_xslt(doc, style, xsl_params, "clilist.txt");
+	    xsltFreeStylesheet(style);
+	}
+    }
+
+    /* output for other "online" help files */
+    if (output == OUTPUT_ALL || output == OUTPUT_HLP) {
+	if (opt & OPT_MARKUP) {
+	    full_fname("gretlhlp.xsl", docdir, styname);
+	} else {
+	    full_fname("gretltxt.xsl", docdir, styname);
+	}
+
+	style = xsltParseStylesheetFile((const xmlChar *) styname);
+	if (style == NULL) {
+	    err = 1;
+	} else {
 	    /* script help, gui version (gtk2 only) */
-	    build_params(xsl_params, OUTPUT_CMD_HLP, xrefs, lang);
-	    result = xsltApplyStylesheet(style, doc, xsl_params);
-	    if (result == NULL) {
-		err = 1;
-	    } else {
-		fp = fopen("cmdlist.txt", "w");
-		if (fp == NULL) {
-		    err = 1;
-		} else {
-		    xsltSaveResultToFile(fp, result, style);
-		    fclose(fp);
-		}
-		xmlFreeDoc(result);
-	    }
+	    build_params(xsl_params, OUTPUT_CMD_HLP, opt, lang);
+	    err = apply_xslt(doc, style, xsl_params, "cmdlist.txt");
+
 	    /* gui help */
-	    build_params(xsl_params, OUTPUT_GUI_HLP, xrefs, lang);
-	    result = xsltApplyStylesheet(style, doc, xsl_params);
-	    if (result == NULL) {
-		err = 1;
-	    } else {
-		fp = fopen("guilist.txt", "w");
-		if (fp == NULL) {
-		    err = 1;
-		} else {
-		    xsltSaveResultToFile(fp, result, style);
-		    fclose(fp);
-		}
-		xmlFreeDoc(result);
-	    }
+	    build_params(xsl_params, OUTPUT_GUI_HLP, opt, lang);
+	    err = apply_xslt(doc, style, xsl_params, "guilist.txt");
+
 	    xsltFreeStylesheet(style);
 	}
     }
@@ -220,11 +190,9 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
 {
     if (!strcmp(full_lang, "italian")) {
 	strcpy(lang, "'it'");
-    }
-    else if (!strcmp(full_lang, "spanish")) {
+    } else if (!strcmp(full_lang, "spanish")) {
 	strcpy(lang, "'es'");
-    }
-    else if (!strcmp(full_lang, "french")) {
+    } else if (!strcmp(full_lang, "french")) {
 	strcpy(lang, "'fr'");
     }
 
@@ -232,7 +200,7 @@ char *get_abbreviated_lang (char *lang, const char *full_lang)
 }
 
 int parse_commands_data (const char *fname, int output, 
-			 int xrefs, const char *docdir) 
+			 int flags, const char *docdir) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
@@ -270,7 +238,7 @@ int parse_commands_data (const char *fname, int output,
 	free(tmp);
     }
 
-    apply_xslt(doc, output, xrefs, lang, docdir);
+    apply_xslt_all(doc, output, flags, lang, docdir);
 
  bailout:
 
@@ -305,7 +273,7 @@ int main (int argc, char **argv)
     const char *fname = NULL;
     char docdir[FILENAME_MAX];
     int output = OUTPUT_ALL;
-    int xrefs = 0;
+    int opt = 0;
     int i, err;
 
     if (argc < 2) {
@@ -317,16 +285,14 @@ int main (int argc, char **argv)
     for (i=1; i<argc; i++) {
 	if (!strcmp(argv[i], "--docbook")) {
 	    output = OUTPUT_DOCBOOK;
-	} else if (!strcmp(argv[i], "--docbook-standalone")) {
-	    output = OUTPUT_DOCBOOK_STANDALONE;
 	} else if (!strcmp(argv[i], "--hlp")) {
 	    output = OUTPUT_HLP;
 	} else if (!strcmp(argv[i], "--all")) {
 	    output = OUTPUT_ALL;
 	} else if (!strcmp(argv[i], "--xrefs")) {
-	    xrefs = 1;
-	} else if (!strcmp(argv[i], "--test")) {
-	    output = OUTPUT_TEST;
+	    opt |= OPT_XREFS;
+	} else if (!strcmp(argv[i], "--markup")) {
+	    opt |= OPT_MARKUP;
 	} else if (!strncmp(argv[i], "--docdir=", 9)) {
 	    strcpy(docdir, argv[i] + 9);
 	} else {
@@ -345,7 +311,7 @@ int main (int argc, char **argv)
     fprintf(stderr, "%s: input file '%s', docdir '%s'\n", 
 	    argv[0], fname, docdir);
 
-    err = parse_commands_data(fname, output, xrefs, docdir);
+    err = parse_commands_data(fname, output, opt, docdir);
 
     return err;
 }

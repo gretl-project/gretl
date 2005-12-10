@@ -32,13 +32,16 @@ CMDSRC = $(CMDSDIR)/gretl_commands.xml \
 	$(CMDSDIR)/gretl_commands_it.xml
 
 MANXSL = $(CMDSDIR)/gretlman.xsl
-HLPXSL = $(CMDSDIR)/gretltxt.xsl
+HLPXSL = $(CMDSDIR)/gretltxt.xsl \
+	$(CMDSDIR)/gretlhlp.xsl \
+	$(CMDSDIR)/equations.xsl
 
 XMLSTRS = $(CMDSDIR)/hlpstrings.xml
 TXTSTRS = $(CMDSDIR)/hlpstrings.txt
 
 ifeq ($(have_gtk),2.0)
-  HLPOPT = --hlp --xrefs
+  HLPOPT = --hlp --markup
+  FLOWOPT = --markup
 else
   HLPOPT = --hlp
 endif
@@ -88,20 +91,26 @@ docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
 	cp cmdlist.xml $(CHAPDIR_IT)/cmdlist.xml && \
 	rm cmdlist.xml
 
-# Generate "online" text help files
-hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS)
+$(CMDSDIR)/eqn_list.xml: $(CMDSDIR)/equations.xsl $(CMDSDIR)/gretl_commands.xml
+	xsltproc $(CMDSDIR)/equations.xsl $(CMDSDIR)/gretl_commands.xml > $@	
+
+helpfigs: $(CMDSDIR)/eqn_list.xml
+	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs
+
+# Generate "online" help files
+hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS) 
 	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp
-	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp
-	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp
+	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp
+	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp
 	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_es.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.es
-	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es
-	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp.es
+	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es
+	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp.es
 	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_it.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.it
-	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it
-	./reflow < guilist.txt > $(SHAREDIR)/gretlgui.hlp.it
+	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it
+	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp.it
 
 $(XMLSTRS): $(TXTSTRS) hlpstrings
 	./hlpstrings $(TXTSTRS) > $(XMLSTRS)
@@ -113,7 +122,7 @@ check: validate
 	./validate $(CMDSDIR)/gretl_commands_it.xml
 
 docclean:
-	 rm -f skeleton.xml cmdlist.* cmdlist_standalone.* guilist.txt
+	 rm -f skeleton.xml cmdlist.* guilist.txt
 
 clean: docclean
 	rm -f xsltrans skeleton reflow validate *.o

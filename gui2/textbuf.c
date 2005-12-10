@@ -26,7 +26,9 @@
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
 
-#define FORMAT_HELP_TEXT 0 /* not ready yet */
+#define FORMAT_HELP_TEXT /* not ready yet */
+
+#define GUIDE_PAGE 999
 
 enum {
     PLAIN_TEXT,
@@ -391,7 +393,7 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 "size", 15 * PANGO_SCALE, NULL);
     gtk_text_tag_table_add(table, tag);
 
-#if FORMAT_HELP_TEXT
+#ifdef FORMAT_HELP_TEXT
     tag = gtk_text_tag_new("italic");
     g_object_set(tag, "family", "sans",
 		 "style", PANGO_STYLE_ITALIC, 
@@ -419,7 +421,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     tag = gtk_text_tag_new("code");
     g_object_set(tag, "family", "monospace", NULL);
     gtk_text_tag_table_add(table, tag);
-#endif
+#endif /* FORMAT_HELP_TEXT */
 
     return table;
 }
@@ -540,11 +542,17 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
 			 const gchar *text, gint page)
 {
-    GtkTextTag *tag;
+    GtkTextTag *ltag;
 
-    tag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", NULL);
-    g_object_set_data(G_OBJECT(tag), "page", GINT_TO_POINTER(page));
-    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, tag, NULL);
+    if (page == GUIDE_PAGE) {
+	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
+					  "family", "sans", NULL);
+    } else {
+	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", NULL);
+    }
+
+    g_object_set_data(G_OBJECT(ltag), "page", GINT_TO_POINTER(page));
+    gtk_text_buffer_insert_with_tags(tbuf, iter, text, -1, ltag, NULL);
 }
 
 static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
@@ -558,7 +566,11 @@ static void follow_if_link (GtkWidget *tview, GtkTextIter *iter, gpointer p)
 	gint page = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(tag), "page"));
 
 	if (page != 0) {
-	    plain_text_cmdref(p, page, NULL);
+	    if (page == GUIDE_PAGE) {
+		display_pdf_help(NULL, 1, NULL);
+	    } else {
+		plain_text_cmdref(p, page, NULL);
+	    }
 	    break;
 	}
     }
@@ -721,7 +733,7 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
     }
 }
 
-#if FORMAT_HELP_TEXT
+#ifdef FORMAT_HELP_TEXT
 
 static void maybe_set_help_tabs (windata_t *hwin)
 {
@@ -779,7 +791,7 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 
     maybe_connect_help_signals(hwin, en);
 
-#if FORMAT_HELP_TEXT
+#ifdef FORMAT_HELP_TEXT
     maybe_set_help_tabs(hwin);
 #endif
 }
@@ -870,10 +882,11 @@ enum {
     INSERT_REPL,
     INSERT_LIT,
     INSERT_ITAL,
-    INSERT_TEXT
+    INSERT_TEXT,
+    INSERT_PDFLINK
 };
 
-#if FORMAT_HELP_TEXT
+#ifdef FORMAT_HELP_TEXT
 
 static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
 				const char *fig)
@@ -932,7 +945,9 @@ static int get_instruction_and_string (const char *p, char *str)
 	ins = INSERT_REPL;
     } else if (!strncmp(p, "lit", 3)) {
 	ins = INSERT_LIT;
-    } 
+    } else if (!strncmp(p, "pdf", 3)) {
+	ins = INSERT_PDFLINK;
+    }
 
     if (ins != INSERT_NONE) {
 	int i = 0;
@@ -980,6 +995,8 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    ins = get_instruction_and_string(p + 1, targ);
 	    if (ins == INSERT_REF) {
 		insert_link(tbuf, iter, targ, gretl_command_number(targ));
+	    } else if (ins == INSERT_PDFLINK) {
+		insert_link(tbuf, iter, targ, GUIDE_PAGE);
 	    } else if (ins == INSERT_FIG) {
 		insert_help_figure(tbuf, iter, targ);
 	    } else if (ins != INSERT_NONE) {
@@ -1015,7 +1032,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
     }
 }
 
-#else
+#else /* not formatting help */
 
 static int get_instruction_and_string (const char *p, char *str)
 {
@@ -1024,6 +1041,11 @@ static int get_instruction_and_string (const char *p, char *str)
 
     if (!strncmp(p, "ref", 3)) {
 	ins = INSERT_REF;
+    } else if (!strncmp(p, "pdf", 3)) {
+	ins = INSERT_PDFLINK;
+    }
+
+    if (ins != INSERT_NONE) {
 	p += 5;
 	while (*p != '"') {
 	    *str++ = *p++;
@@ -1040,13 +1062,15 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 {
     char targ[32];
     const char *p;
-    int icode;
+    int ins;
 
     while ((p = strstr(s, "<@"))) {
 	gtk_text_buffer_insert(tbuf, iter, s, p - s);
-	icode = get_instruction_and_string(p + 2, targ);
-	if (icode == INSERT_REF) {
+	ins = get_instruction_and_string(p + 2, targ);
+	if (ins == INSERT_REF) {
 	    insert_link(tbuf, iter, targ, gretl_command_number(targ));
+	} else if (ins == INSERT_PDFLINK) {
+	    insert_link(tbuf, iter, targ, GUIDE_PAGE);
 	}
 	s = p + 9 + strlen(targ);
     }

@@ -25,7 +25,8 @@ AUTO_HELP_SRCS = $(topsrc)/doc/commands/gretl_commands.xml \
 	$(topsrc)/doc/commands/gretl_commands_es.xml \
 	$(topsrc)/doc/commands/gretl_commands_it.xml 
 
-AUTO_HELP_STY = $(topsrc)/doc/commands/gretltxt.xsl
+AUTO_HELP_STY = $(topsrc)/doc/commands/gretltxt.xsl \
+	$(topsrc)/doc/commands/gretlhlp.xsl
 
 AUTO_HELP_STRS = $(topsrc)/doc/commands/hlpstrings.txt
 
@@ -80,7 +81,15 @@ install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
 	$(INSTALL_DATA) $(topsrc)/gretl.1 $(prefix)/share/man/man1
 
-install_gui_script_help:
+helpfigs.stamp:
+	make -C ../doc/commands helpfigs && touch $@
+
+install_helpfigs: helpfigs.stamp
+	$(tooldir)/mkinstalldirs $(gretldir)/helpfigs
+	for f in $(sharesrc)/texfigs/*.png ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/helpfigs ; done
+
+install_gui_script_help: $(sharesrc)/gretlcmd.hlp
 	$(INSTALL_DATA) $(sharesrc)/gretlcmd.hlp $(gretldir)/gretlcmd.hlp
 	$(INSTALL_DATA) $(ES_CMD_HLP) $(gretldir)/gretlcmd.hlp.es
 	$(INSTALL_DATA) $(IT_CMD_HLP) $(gretldir)/gretlcmd.hlp.it
@@ -94,8 +103,8 @@ install_help: $(AUTO_HELPFILES) $(RECODE_FILES)
 	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
 	$(INSTALL_DATA) $(IT_GUI_HLP) $(gretldir)/gretlgui.hlp.it
 	$(INSTALL_DATA) $(IT_CLI_HLP) $(gretldir)/gretlcli.hlp.it
-	$(INSTALL_DATA) $(pdfdir)/gretl-ref.pdf $(gretldir)/doc
-	$(INSTALL_DATA) $(pdfdir)/gretl-guide.pdf $(gretldir)/doc
+	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \
+	if test -f $$f ; then $(INSTALL_DATA) $$f $(gretldir)/doc ; fi ; done
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 

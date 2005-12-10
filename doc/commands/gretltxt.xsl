@@ -332,9 +332,15 @@
 </xsl:template>
 
 <xsl:template match="guideref">
+  <xsl:if test="$xrefs='true'">
+    <xsl:text>&lt;@pdf="</xsl:text>
+  </xsl:if>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'guidebook'"/>
   </xsl:call-template>
+  <xsl:if test="$xrefs='true'">
+    <xsl:text>&gt;"</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="tabref">

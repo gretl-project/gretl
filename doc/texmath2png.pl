@@ -9,14 +9,15 @@ my ($i, $n, $match);
 my ($opt, $den, $pkg);
 my $den_dflt = "96x96";
 my $textmp = "./eqntmp";
+my $figdir = ".";
 
 sub usage
 {
     die <<"EndUsage";
-usage: texmath2png.pl sgmlfile
+usage: texmath2png.pl xmlfile
 
 texmath2png.pl -- A program for making png images of equations from
-                  an SGML source file using dbtexmath mark-up.
+                  an XML source file using dbtexmath mark-up.
 
 EndUsage
 }
@@ -50,12 +51,15 @@ sub printtex {
     close (TEX);
     system ("latex $textmp");
     system ("dvips -o $textmp.eps $textmp -E");
-    system ("convert -density $den $textmp.eps texfigs/$figfile");
+    system ("convert -density $den $textmp.eps $figdir/$figfile");
     system ("rm -f $textmp.*");
 }
 
 if (@ARGV == 0) { &usage; }
 my $doc = $ARGV[0];
+if (@ARGV > 1) {
+  $figdir = $ARGV[1];
+}
 
 open (DOC, "<$doc") || die "Can't open $doc";
 

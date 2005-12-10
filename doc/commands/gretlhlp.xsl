@@ -79,8 +79,9 @@
     <xsl:call-template name="gettext">
       <xsl:with-param name="key" select="'scriptcommand'"/>
     </xsl:call-template>
-    <xsl:value-of select="@name"></xsl:value-of>
-    <xsl:call-template name="nl"/>
+    <xsl:text>&lt;@ref="</xsl:text>
+    <xsl:value-of select="@name"/>
+    <xsl:text>"&gt;&#10;</xsl:text>
   </xsl:if>
 </xsl:if>
 </xsl:template>
@@ -322,7 +323,7 @@
 </xsl:template>
 
 <xsl:template match="guideref">
-  <xsl:text>&lt;@itl="</xsl:text>
+  <xsl:text>&lt;@pdf="</xsl:text>
   <xsl:call-template name="gettext">
     <xsl:with-param name="key" select="'guidebook'"/>
   </xsl:call-template>

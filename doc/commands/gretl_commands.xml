@@ -195,7 +195,8 @@
       <para>
 	Computes statistics for a set of Dickey&ndash;Fuller tests on
 	the specified variable, the null hypothesis being that the
-	variable has a unit root.</para>
+	variable has a unit root.
+      </para>
 
       <para>By default, three variants of the test are shown: one
 	based on a regression containing a constant, one using a
@@ -554,7 +555,6 @@
 	for men and 0 for women.  In that case you could draw
 	comparative boxplots with the following <repl
 	  quote="true">varlist</repl>:</para>
-
       <code>
 	salary (GENDER=1) salary (GENDER=0)
       </code>
@@ -597,8 +597,10 @@
     </usage>
 
     <description>
-      <para context="gui">This command needs an observation number (or
-      date, with dated data).</para>
+      <para context="gui">
+	This command needs an observation number (or date, with dated
+	data).
+      </para>
 
       <para>
 	Must follow an OLS regression.  Creates a dummy variable which
@@ -797,7 +799,6 @@
 	3-variable case.  <lit>H0</lit> denotes the null hypothesis,
 	<lit>H1</lit> the alternative hypothesis, and <lit>c</lit> the
 	number of cointegrating relations.</para>
-
       <code>
                  Rank     Trace test         Lmax test
                           H0     H1          H0     H1
@@ -1081,13 +1082,14 @@
 	<mathvar>k</mathvar> + 1 observations and generates a
 	prediction for observation <mathvar>k</mathvar> + 2, and so on
 	(where <mathvar>k</mathvar> is the number of parameters in the
-	original model).  The cumulated sum of the scaled forecast
-	errors is printed and graphed.  The null hypothesis of
-	parameter stability is rejected at the 5 percent significance
-	level if the cumulated sum strays outside of the 95 percent
-	confidence band.
+	original model).
       </para>
-
+      <para>
+	The cumulated sum of the scaled forecast errors is printed and
+	graphed.  The null hypothesis of parameter stability is
+	rejected at the 5 percent significance level if the cumulated
+	sum strays outside of the 95 percent confidence band.
+      </para>
       <para>
 	The Harvey&ndash;Collier <mathvar>t</mathvar>-statistic for
 	testing the null hypothesis of parameter stability is also
@@ -1118,7 +1120,6 @@
 	established using the <cmdref targ="setobs"/> and <cmdref
 	  targ="smpl"/> commands
 	prior to using this command. Here is a full example:</para>
-
       <code>
 	open macrodat.rat
 	setobs 4 1959:1
@@ -1134,7 +1135,6 @@
       <para>If the series to be read are of higher frequency than the
 	working data set, you must specify a compaction method as
 	below:</para>
-
       <code>
 	data (compact=average) LHUR PUNEW</code>
 
@@ -1189,38 +1189,36 @@
 	the vicinity.</para>
       
       <para>The formula used to compute the estimated density at each
-	reference point, x, is
-      </para>
-
-      <code>
-	f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)
-      </code>
-
-      <para>where n denotes the number of data points, h is a
-	"bandwidth" parameter, and k() is the kernel function.  The
-	larger the value of the bandwidth parameter, the smoother the
-	estimated density.</para>
+	reference point, <mathvar>x</mathvar>, is
+      <equation status="display"
+	tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
+	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
+	graphic="kernel1"/>
+	where <mathvar>n</mathvar> denotes the number of data
+	points, <mathvar>h</mathvar> is a <quote>bandwidth</quote>
+	parameter, and <mathvar>k</mathvar>() is the kernel function.
+	The larger the value of the bandwidth parameter, the smoother
+	the estimated density.</para>
 
       <para>You are given the choice of using a Gaussian kernel (the
 	standard normal density) or the Epanechnikov kernel.  By
 	default, the bandwidth is that suggested as a rule of thumb by
 	Silverman (1986), namely
-      </para>
-
-      <code>
-	h = 0.9 min(s, IQR/1.349) n^{1/5}
-      </code>
-
-      <para>where s denotes the standard deviation of the data and IQR
-	denotes the inter-quartile range.  You can widen or shrink the
-	bandwidth via the <quote>bandwidth adjustment factor</quote>:
-	the actual bandwidth used is obtained by multiplying the
-	Silverman value by the adjustment factor.
+	<equation status="display"
+	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
+	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
+	  graphic="kernel2"/>
+	where <mathvar>s</mathvar> denotes the standard deviation
+	of the data and IQR denotes the inter-quartile range.  You can
+	widen or shrink the bandwidth via the <quote>bandwidth
+	  adjustment factor</quote>: the actual bandwidth used is
+	obtained by multiplying the Silverman value by the adjustment
+	factor.
       </para>
 
       <para>For a good introductory discussion of kernel density
 	estimation see Chapter 15 of Davidson and MacKinnon's
-	Econometric Theory and Methods.
+	<book>Econometric Theory and Methods</book>.
       </para>
 
     </description>
@@ -1264,9 +1262,11 @@
 	The first difference of each variable in <repl>varlist</repl>
 	is obtained and the result stored in a new variable with the
 	prefix <lit>d_</lit>.  Thus <cmd>diff x y</cmd> creates the
-	new variables <lit>d_x = x(t) - x(t-1)</lit> and <lit>d_y =
-	  y(t) - y(t-1)</lit>.
+	new variables
       </para>
+      <code>
+	d_x = x(t) - x(t-1)
+	d_y = y(t) - y(t-1)</code>
     </description>
 
     <gui-access>
@@ -1669,7 +1669,7 @@
 
     <description>
       <para>
-	A shortcut to <cmd>fcast</cmd>. Must follow an estimation
+	A shortcut to <cmdref targ="fcast"/>. Must follow an estimation
 	command.  Generates fitted values, in a series called
 	<lit>autofit</lit>, for the current sample, based on the last
 	regression.  In the case of time-series models, also pops up a
@@ -1833,8 +1833,8 @@
 	calls for the starting values of these parameters to be
 	set using an initial ARMA model, exploiting the relationship
 	between GARCH and ARMA set out in Chapter 21 of Hamilton's
-	Time Series Analysis.  In some cases this may improve the
-	chances of convergence.
+	<book>Time Series Analysis</book>.  In some cases this may 
+	improve the chances of convergence.
       </para>
 
     </description>
@@ -2248,7 +2248,6 @@
 	    otherwise, <lit>d2</lit> = 1 if <lit>x</lit> = 2, and so on.  To
 	    create these, use the commands:
 	  </para>
-
 	  <code>
 	    genr d1 = (x=1)
 	    genr d2 = (x=2)
@@ -2257,7 +2256,6 @@
 
 	<li><para>To create <lit>z</lit> = <lit>max(x,y)</lit>
 	    do</para>
-
 	  <code>
 	    genr d = x&gt;y
 	    genr z = (x*d)+(y*(1-d))</code>
@@ -2814,10 +2812,14 @@
 
     <description>
       <para>Computes parameter estimates for the specified model using
-	the Hildreth&ndash;Lu search procedure (fine-tuned by the CORC
-	procedure). This procedure is designed to correct for serial
-	correlation of the error term.  The error sum of squares of
-	the transformed model is graphed against the value of rho from
+	the Hildreth&ndash;Lu search procedure.  The results are
+	fine-tuned using the Cochrane&ndash;Orcutt iterative method,
+	unless the <lit>--no-corc</lit> flag is specified.
+      </para>
+      <para>
+	This procedure is designed to correct for serial correlation
+	of the error term.  The error sum of squares of the
+	transformed model is graphed against the value of rho from
 	&minus;0.99 to 0.99.
       </para>
     </description>
@@ -2853,7 +2855,8 @@
 	variables plus their squares.  The fitted values from the
 	auxiliary regression are then used to construct a weight
 	series, and the original model is re-estimated using weighted
-	least squares.  This final result is reported.</para>
+	least squares.  This final result is reported.
+      </para>
 
       <para>The weight series is formed as
 	<equation status="inline"
@@ -2987,8 +2990,8 @@
 
       <para>
 	With the <lit>--box1</lit> flag, reads a data file in BOX1
-	format, as can be obtained using the Data Extraction Service
-	of the US Bureau of the Census.
+	format, which could at one time be obtained via the Data
+	Extraction Service of the US Bureau of the Census.
       </para>
     </description>
 
@@ -3011,6 +3014,9 @@
 	Intended for use in a command script, primarily for including definitions of
 	functions.  Executes the commands in <repl>inputfile</repl> then returns
 	control to the main script. 
+      </para>
+      <para>
+	See also <cmdref targ="run"/>.
       </para>
     </description>
 
@@ -3245,10 +3251,16 @@
 	Creates new variables which are lagged values of each of the variables in
 	<repl>varlist</repl>.  By default the number of lagged variables equals the
 	periodicity of the data. For example, if the periodicity is 4 (quarterly),
-	the command <cmd>lags x</cmd> creates <lit>x_1</lit> = <lit>x(t-1)</lit>,
-	<lit>x_2</lit> = <lit>x(t-2)</lit>, <lit>x_3</lit> = <lit>x(t-3)</lit> and
-	<lit>x_4</lit> = <lit>x(t-4)</lit>.  The number of lags created can be
-	controlled by the optional first parameter.
+	the command <cmd>lags x</cmd> creates
+      </para>
+      <code>
+	x_1 = x(t-1)
+	x_2 = x(t-2)
+	x_3 = x(t-3)
+	x_4 = x(t-4)</code>
+      <para>
+	The number of lags created can be controlled by the optional
+	first parameter.
       </para>
     </description>
 
@@ -3271,16 +3283,12 @@
 	The first difference of the natural log of each variable in
 	<repl>varlist</repl> is obtained and the result stored in a
 	new variable with the prefix <lit>ld_</lit>.  Thus <cmd>ldiff
-	  x y</cmd> creates the new variables <lit>ld_x</lit> =
-	  <equation status="inline" 
-	  tex="$\ln(x_t) - \ln(x_{t-1})$"
-	  ascii="ln[x(t)] - ln[x(t-1)]"
-	  graphic="ldx"/> and <lit>ld_y</lit> =
-	  <equation status="inline" 
-	  tex="$\ln(y_t) - \ln(y_{t-1})$"
-	  ascii="ln[y(t)] - ln[y(t-1)]"
-	  graphic="ldy"/>.
+	  x y</cmd> creates the new variables
       </para>
+      <code>
+	ld_x = log(x) - log(x(-1))
+	ld_y = log(y) - log(y(-1))
+      </code>
     </description>
 
     <gui-access>
@@ -3332,14 +3340,18 @@
 	  graphic="dffit"/>. For a discussion of studentized residuals
 	and DFFITS see G. S. Maddala, <book>Introduction to
 	  Econometrics</book>, chapter 12; also Belsley, Kuh and
-	Welsch (1980).  Briefly, a <quote>predicted residual</quote>
-	is the difference between the observed value of the dependent
-	variable at observation <mathvar>t</mathvar>, and the fitted
-	value for observation <mathvar>t</mathvar> obtained from a
-	regression in which that observation is omitted (or a dummy
-	variable with value 1 for observation <mathvar>t</mathvar>
-	alone has been added); the studentized residual is obtained by
-	dividing the predicted residual by its standard error.</para>
+	Welsch (1980).
+      </para>
+      <para>
+	Briefly, a <quote>predicted residual</quote> is the difference
+	between the observed value of the dependent variable at
+	observation <mathvar>t</mathvar>, and the fitted value for
+	observation <mathvar>t</mathvar> obtained from a regression in
+	which that observation is omitted (or a dummy variable with
+	value 1 for observation <mathvar>t</mathvar> alone has been
+	added); the studentized residual is obtained by dividing the
+	predicted residual by its standard error.
+      </para>
 
       <para context="cli">If the <lit>--save</lit> flag is given with
 	this command, then the leverage, influence and DFFITS values
@@ -3401,10 +3413,11 @@
 
     <description context="cli">
       <para>
-	Must immediately follow an <cmd>ols</cmd> command. Carries out
-	some combination of the following: Lagrange Multiplier tests
-	for nonlinearity (logs and squares), White's test for
-	heteroskedasticity, and the LMF test for serial correlation up
+	Must immediately follow an <cmd>ols</cmd> command. Depending
+	on the options given, this command carries out some
+	combination of the following: Lagrange Multiplier tests for
+	nonlinearity (logs and squares); White's test for
+	heteroskedasticity; and the LMF test for serial correlation up
 	to the periodicity (see Kiviet, 1986).  The corresponding
 	auxiliary regression coefficients are also printed out.  See
 	Ramanathan, Chapters 7, 8, and 9 for details. 
@@ -3722,16 +3735,16 @@
 
     <description>
       <para>
-	This command needs the name of a file containing "case
-	markers", that is, short identifying strings for the
+	This command needs the name of a file containing <quote>case
+	  markers</quote>, that is, short identifying strings for the
 	individual observations in the data set (for example, country
 	or city names or codes).  These marker strings should be no
 	more than 8 characters long.  The file should contain one
 	marker per line, and there should be just as many markers as
 	observations in the current dataset. If these conditions are
 	met and the specified file is found, the case markers will be
-	added; they will be visible when you choose "Display values"
-	under gretl's Data menu.</para>
+	added; they will be visible when you choose <quote>Display
+	  values</quote> under gretl's Data menu.</para>
     </description>
   </command>
 
@@ -3756,12 +3769,15 @@
 	Calculates the <mathvar>t</mathvar> statistic for the null
 	hypothesis that the population means are equal for the
 	variables <repl>var1</repl> and <repl>var2</repl>, and shows
-	its p-value. By default the test statistic is calculated on
-	the assumption that the variances are equal for the two
-	variables; with the <lit>--unequal-vars</lit> option the
-	variances are assumed to be different.  This will make a
-	difference to the test statistic only if there are different
-	numbers of non-missing observations for the two variables.
+	its p-value.
+      </para>
+      <para>
+	By default the test statistic is calculated on the assumption
+	that the variances are equal for the two variables; with the
+	<lit>--unequal-vars</lit> option the variances are assumed to
+	be different.  This will make a difference to the test
+	statistic only if there are different numbers of non-missing
+	observations for the two variables.
       </para>
       <para context="gui">
 	Calculates the t statistic for the null hypothesis that the
@@ -3842,7 +3858,6 @@
 
       <para>In the MLE window we type the following
 	lines:</para>
-
       <code>
 	loglik = X*log(p) + (1-X)*log(1-p)
 	deriv p = X/p - (1-X)/(1-p)
@@ -3859,7 +3874,6 @@
 	If the parameter p was not previously declared we could
 	preface the above lines with something like the following:
       </para>
-
       <code>
 	genr p = 0.5
       </code>
@@ -3893,7 +3907,6 @@
       </para>
 
       <para>We then construct the MLE command block:</para>
-
       <code>
 	mle loglik = X*log(p) + (1-X)*log(1-p)
 	deriv p = X/p - (1-X)/(1-p)
@@ -4090,7 +4103,6 @@
 	create per capita versions of certain variables, and you have
 	the variable <lit>pop</lit> (population).  A suitable set of
 	commands is then:</para>
-      
       <code>
 	genr invpop = 1/pop
 	multiply invpop pc income</code>
@@ -4146,7 +4158,6 @@
 
       <para>In the NLS window we type the following
 	lines:</para>
-
       <code>
 	C = alpha + beta * Y^gamma
 	deriv alpha = 1
@@ -4163,7 +4174,6 @@
       <para>If the parameters alpha, beta and gamma were
 	not previously declared we could preface the above lines with
 	something like the following:</para>
-
       <code>
 	genr alpha = 1
 	genr beta = 1
@@ -4197,8 +4207,8 @@
 	the lines are for reference and are not part of the commands.
 	Note that the <lit>--vcv</lit> option, for printing the
 	covariance matrix of the parameter estimates, attaches to the
-	final command, <lit>end nls</lit>.</para>
-
+	final command, <lit>end nls</lit>.
+      </para>
       <code>
 	1   open greene11_3.gdt
 	2   ols C 0 Y
@@ -4655,12 +4665,12 @@
       </arguments>
       <options>
         <option>
-	  <flag>--save-all</flag>
-	  <effect>Save all components</effect>
-        </option>
-        <option>
 	  <flag>--save</flag>
 	  <effect>Save major components</effect>
+        </option>	
+        <option>
+	  <flag>--save-all</flag>
+	  <effect>Save all components</effect>
         </option>
       </options>
     </usage>
@@ -4711,17 +4721,16 @@
 	Computes and displays (and if not in batch mode, graphs) the
 	spectrum of the specified variable.  Without the
 	<lit>--bartlett</lit> flag the sample periodogram is given;
-	with the flag a Bartlett lag window of length
-	<equation status="inline"
-	  tex="$2\sqrt{T}$"
-	  ascii="2*sqrt(T)"
-	  graphic="tworootT"/> (where <mathvar>T</mathvar> is the
-	sample size) is used in estimating the spectrum (see Chapter
-	18 of Greene's <book>Econometric Analysis</book>). When the
-	sample periodogram is printed, a <mathvar>t</mathvar>-test for
-	fractional integration of the series (<quote>long
-	  memory</quote>) is also given: the null hypothesis is that
-	the integration order is zero.
+	with the flag a Bartlett lag window of length two times the
+	square root of the sample size is used in estimating the
+	spectrum (see Chapter 18 of Greene's <book>Econometric
+	  Analysis</book>).
+      </para>
+      <para>
+	When the sample periodogram is printed, a
+	<mathvar>t</mathvar>-test for fractional integration of the
+	series (<quote>long memory</quote>) is also given: the null
+	hypothesis is that the integration order is zero.
       </para>
     </description>
 
@@ -4767,17 +4776,18 @@
         <equation status="display" 
           tex="\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]"
           ascii="Pr(Y = y) = exp(-v) * v^y / y!"
-          graphic="poisson-dist"/>for <mathvar>y</mathvar> = 0, 1,
+          graphic="poisson1"/>
+	for <mathvar>y</mathvar> = 0, 1,
       2,&hellip;.  The mean and variance of the distribution are both
       equal to <mathvar>v</mathvar>.  In the Poisson regression model,
       the parameter <mathvar>v</mathvar> is represented as a function
       of one or more independent variables.  The most common version
       (and the only one supported by gretl) has
         <equation status="display" 
-          tex="\[v = \mathrm{exp}(\beta_0 + \beta_1 x_1 + \beta_2 x_2 +
-      \cdots)\]"
+          tex="\[v = \mathrm{exp}(\beta_0+\beta_1 x_1+\beta_2 x_2 + \cdots)\]"
           ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
-          graphic="poisson-model"/>or in other words the log of
+          graphic="poisson2"/>
+	or in other words the log of
       <mathvar>v</mathvar> is a linear function of the independent
       variables.</para>
 
@@ -4963,8 +4973,8 @@
 	expressions that are valid for the <cmd>genr</cmd> command, or
 	(c) the special functions <lit>varname()</lit> or
 	<lit>date()</lit>.  The following example prints the values of
-	two variables plus that of a calculated expression:</para>
-
+	two variables plus that of a calculated expression:
+      </para>
       <code>
 	ols 1 0 2 3
 	genr b = coeff(2)
@@ -4978,7 +4988,6 @@
 	given its ID number, and a date string, given a 1-based
 	observation number.
       </para>
-
       <code>
 	printf "The name of variable %d is %s\n", i, varname(i)
 	printf "The date of observation %d is %s\n", j, date(j)
@@ -5238,8 +5247,8 @@
       </para>
 
       <para>Here is an example of a set of restrictions for a
-	previously estimated model:</para>
-
+	previously estimated model:
+      </para>
       <code>
 	restrict
 	 b1 = 0
@@ -5251,7 +5260,6 @@
 	applied to a named system.  (If the name of the system does
 	not contain spaces, the surrounding quotes are not required.)
       </para>
-
       <code>
 	restrict "System 1"
 	 b[1,1] = 0
@@ -5295,8 +5303,8 @@
 	to represent multiplication, for example <lit>3.5*b4</lit>.
       </para>
 
-      <para>Here is an example of a set of restrictions:</para>
-
+      <para>Here is an example of a set of restrictions:
+      </para>
       <code>
 	b1 = 0
 	b2 - b3 = 0
@@ -5329,7 +5337,6 @@
 
       <para>Here is an example of a set of restrictions:
       </para>
-
       <code>
 	b[1,1] = 0
 	b[1,2] - b[2,2] = 0
@@ -5372,7 +5379,6 @@
 
       <para>Here is an example of a set of restrictions on a VECM of rank 1.
       </para>
-
       <code>
 	b0 + b1 = 0
 	b0 + b2 = 0</code>
@@ -5471,7 +5477,12 @@
     <description>
       <para>
 	Execute the commands in <repl>inputfile</repl> then return
-	control to the interactive prompt.
+	control to the interactive prompt.  This command is intended
+	for use with the command-line program gretlcli, or at the
+	<quote>gretl console</quote> in the GUI program.
+      </para>
+      <para>
+	See also <cmdref targ="include"/>.
       </para>
     </description>
 
@@ -5495,8 +5506,8 @@
 	randomness of the specified variable.  If you want to test for
 	randomness of deviations from the median, for a variable named
 	<lit>x1</lit> with a non-zero median, you can do the
-	following:</para>
-
+	following:
+      </para>
       <code>
 	genr signx1 = x1 - median(x1)
 	runs signx1
@@ -5646,10 +5657,12 @@
     <description>
       <para>Requires an integer as input.  Sets the seed for the
 	pseudo-random number generator used by the random uniform and
-	random normal options under the Data, Add variables menu.  By
-	default the seed is set when the program is started, using the
-	system time.  If you want to obtain repeatable sequences of
-	pseudo-random numbers you need to set the seed manually.
+	random normal options under the Data, Add variables menu.
+      </para>
+      <para>
+	By default the seed is set when the program is started, using
+	the system time.  If you want to obtain repeatable sequences
+	of pseudo-random numbers you need to set the seed manually.
       </para>
     </description>
   </command>

@@ -19,12 +19,6 @@ subdirs: $(SUBDIRS)
 $(SUBDIRS):
 	make -C $@
 
-commands/eqn_list.xml:
-	make -C commands -f cmdref.mk eqn_list.xml	
-
-texfigs: commands/eqn_list.xml
-	./texmath2png.pl commands/eqn_list.xml
-
 clean:
 	make -C tex clean
 	make -C tex_it clean
