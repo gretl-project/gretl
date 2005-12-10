@@ -276,53 +276,65 @@ void printlist (const int *list, const char *msg)
 
 /* Compute model selection criteria */
 
-int gretl_calculate_criteria (double *x, double ess, int nobs, int ncoeff)
+int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
+			      double *ll, double *aic, double *bic)
 {
-    if (na(ess) || ess <= 0.0 || ncoeff < 1 || nobs <= ncoeff) {
-	x[C_AIC] = NADBL;
-	x[C_BIC] = NADBL;
+    int err = 0;
 
-	return 1;
+    if (na(ess) || ess <= 0.0 || ncoeff < 1 || nobs <= ncoeff) {
+	*ll = NADBL;
+	*aic = NADBL;
+	*bic = NADBL;
+	err = 1;
     } else {
 	const double ln2pi1 = 2.837877066409345;
-	double ll;
 
 	errno = 0;
-	ll = -.5 * nobs * log(ess);
+
+	*ll = -.5 * nobs * log(ess);
 
 	if (errno == EDOM || errno == ERANGE) {
-	    x[C_AIC] = NADBL;
-	    x[C_BIC] = NADBL;
+	    *ll = NADBL;
+	    *aic = NADBL;
+	    *bic = NADBL;
 	} else {
-	    ll += -.5 * nobs * (ln2pi1 - log((double) nobs));
-	    x[C_AIC] = -2.0 * ll + 2 * ncoeff;
-	    x[C_BIC] = -2.0 * ll + ncoeff * log(nobs);
+	    *ll += -.5 * nobs * (ln2pi1 - log((double) nobs));
+	    *aic = -2.0 * *ll + 2 * ncoeff;
+	    *bic = -2.0 * *ll + ncoeff * log(nobs);
 	}
-
-	return 0;
     }
+
+    return err;
 }
 
 int ls_aic_bic (MODEL *pmod)
 {
-    return gretl_calculate_criteria(pmod->criterion, 
-				    pmod->ess, pmod->nobs,
-				    pmod->ncoeff);
+    double ll, aic, bic;
+    int err;
+
+    err = gretl_calculate_criteria(pmod->ess, pmod->nobs, pmod->ncoeff,
+				   &ll, &aic, &bic);
+
+    pmod->lnL = ll;
+    pmod->criterion[C_AIC] = aic;
+    pmod->criterion[C_BIC] = bic;
+
+    return err;
 }
 
 int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn)
 {
-    double x[2];
+    double ll, aic, bic;
     int err;
 
-    err = gretl_calculate_criteria(x, ess, nobs, ncoeff);
+    err = gretl_calculate_criteria(ess, nobs, ncoeff, &ll, &aic, &bic);
 
     if (err) {
 	pputs(prn, _("Error calculating model selection criteria\n"));
     } else {
 	pprintf(prn, _("Using ess = %g, %d observations, %d coefficients\n"), 
 		ess, nobs, ncoeff);
-	pprintf(prn, "\nAIC = %g\nBIC = %g\n\n", x[C_AIC], x[C_BIC]);
+	pprintf(prn, "\nAIC = %g\nBIC = %g\n\n", aic, bic);
     }
 
     return err;

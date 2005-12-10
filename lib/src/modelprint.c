@@ -1309,9 +1309,11 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 static void print_ll (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %#.8g\n", _("Log-likelihood"), pmod->lnL);
+	pprintf(prn, "  %s = %.*g\n", _("Log-likelihood"), GRETL_DIGITS,
+		pmod->lnL);
     } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %#.8g\n", I_("Log-likelihood"), pmod->lnL);
+	pprintf(prn, RTFTAB "%s = %.*g\n", I_("Log-likelihood"), GRETL_DIGITS,
+		pmod->lnL);
     } else if (tex_format(prn)) {
 	char xstr[32];
 
@@ -1512,6 +1514,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	if (pmod->ci == ARMA) {
 	    print_arma_stats(pmod, prn);
 	} else if (pmod->aux != AUX_VECM) {
+	    if (pmod->ci == OLS) {
+		print_ll(pmod, prn);
+	    }
 	    info_stats_lines(pmod, prn);
 	}
 

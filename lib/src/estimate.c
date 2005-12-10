@@ -1001,9 +1001,10 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Generate model selection statistics */
-    gretl_calculate_criteria(mdl.criterion, 
-			     (mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
-			     mdl.nobs, mdl.ncoeff);
+    gretl_calculate_criteria((mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
+			     mdl.nobs, mdl.ncoeff, &mdl.lnL, 
+			     &mdl.criterion[C_AIC],
+			     &mdl.criterion[C_BIC]);
 
     /* hccm command or HC3a */
     if (jackknife) {

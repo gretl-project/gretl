@@ -89,7 +89,8 @@ int gretl_spawn (const char *cmdline);
 
 /* model selection criteria */
 
-int gretl_calculate_criteria (double *x, double ess, int nobs, int ncoeff);
+int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
+			      double *ll, double *aic, double *bic);
 
 int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
