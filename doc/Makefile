@@ -12,12 +12,18 @@ CMDREF_IT = commands/gretl_commands.xml
 
 SUBDIRS = tex tex_it
 
-.PHONY : subdirs $(SUBDIRS) clean install 
+.PHONY : subdirs $(SUBDIRS) texfigs clean install 
 
 subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
 	make -C $@
+
+commands/eqn_list.xml:
+	make -C commands -f cmdref.mk eqn_list.xml	
+
+texfigs: commands/eqn_list.xml
+	./texmath2png.pl commands/eqn_list.xml
 
 clean:
 	make -C tex clean

@@ -50,7 +50,7 @@ sub printtex {
     close (TEX);
     system ("latex $textmp");
     system ("dvips -o $textmp.eps $textmp -E");
-    system ("convert -density $den $textmp.eps $figfile");
+    system ("convert -density $den $textmp.eps texfigs/$figfile");
     system ("rm -f $textmp.*");
 }
 

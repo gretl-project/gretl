@@ -37,6 +37,9 @@ docbook_it: xsltrans gretl_commands_it.xml gretlman.xsl
 
 xsltrans: xsltrans.c 
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)
+	
+eqn_list.xml: equations.xsl
+	xsltproc equations.xsl gretl_commands.xml	
 
 clean: 
 	rm -f cmdlist.xml
