@@ -80,6 +80,10 @@ char *storelist = NULL;
 #include "../pixmaps/mini.manual.xpm"
 #endif
 
+#if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION < 4)
+# include "../pixmaps/stock_network_16.xpm"
+#endif
+
 #define CONTENT_IS_CHANGED(w) (w->active_var == 1)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
@@ -1588,9 +1592,13 @@ void free_windata (GtkWidget *w, gpointer data)
 }
 
 #ifndef OLD_GTK
+
 void gretl_stock_icons_init (void)
 {
     char **xpms[] = {
+# if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION < 4)
+	stock_network_16.xpm,
+# endif
 	mini_tex_xpm,
 	mail_16_xpm,
 	mini_tsplot_xpm,
@@ -1599,6 +1607,9 @@ void gretl_stock_icons_init (void)
 	mini_manual_xpm
     };
     const char *stocks[] = {
+# if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION < 4)
+	GTK_STOCK_NETWORK,
+# endif
 	GRETL_STOCK_TEX,
 	GRETL_STOCK_MAIL,
 	GRETL_STOCK_TS,

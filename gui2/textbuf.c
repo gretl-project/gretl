@@ -26,7 +26,7 @@
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
 
-#define FORMAT_HELP_TEXT 0 /* not ready yet */
+#define FORMAT_HELP_TEXT 1 /* not ready yet */
 
 enum {
     PLAIN_TEXT,
@@ -393,6 +393,12 @@ static GtkTextTagTable *gretl_tags_new (void)
 
 #if FORMAT_HELP_TEXT
     tag = gtk_text_tag_new("italic");
+    g_object_set(tag, "family", "sans",
+		 "style", PANGO_STYLE_ITALIC, 
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
+
+    tag = gtk_text_tag_new("replaceable");
     g_object_set(tag, "family", "sans",
 		 "style", PANGO_STYLE_ITALIC, 
 		 NULL);
@@ -876,8 +882,10 @@ static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 
     switch (ins) {
     case INSERT_ITAL:
-    case INSERT_REPL:
 	ftag = "italic";
+	break;
+    case INSERT_REPL:
+	ftag = "replaceable";
 	break;
     case INSERT_LIT:
 	ftag = "literal";

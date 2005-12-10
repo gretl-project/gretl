@@ -31,6 +31,10 @@
 #define GRETL_STOCK_PDF    "gretl-pdf"
 #define GRETL_STOCK_BOOK   "gretl-book"
 
+#if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION < 4)
+# define GTK_STOCK_NETWORK  "gretl-network"
+#endif
+
 enum windata_flags {
     VWIN_HELP_ACTIVE = 1 << 0,
     VWIN_BUSY        = 1 << 1
