@@ -1013,7 +1013,7 @@
 	<equation status="display"
 	  tex="\[{\rm AIC} = -2 \ell + 2k\]"
 	  ascii="AIC = -2L + 2k"
-          graphic="aic-orig"/>
+          graphic="aic"/>
 	where <equation status="inline" 
 	  tex="$\ell$" ascii="L"
 	  graphic="ell"/> denotes the maximized log-likelihood.
@@ -1021,7 +1021,7 @@
 	<equation status="display"
 	  tex="\[{\rm BIC} = -2 \ell + k \log T\]"
 	  ascii="BIC = -2L + k log T"
-          graphic="bic-orig"/>
+          graphic="bic_orig"/>
 	Please see <guideref targ="select-criteria"/> for further 
 	details.
       </para>

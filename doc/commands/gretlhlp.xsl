@@ -260,7 +260,9 @@
   <xsl:if test="(@status='display')">
     <xsl:text>[/PARA]&#xa;&#xa;&#xa;  </xsl:text>
   </xsl:if>
-  <xsl:value-of select="@ascii"/>
+  <xsl:text>&lt;@fig="</xsl:text>
+  <xsl:value-of select="@graphic"/>
+  <xsl:text>"&gt;</xsl:text>
   <xsl:if test="(@status='display')">
     <xsl:text>&#xa;&#xa;&#xa;[PARA]</xsl:text>
   </xsl:if>

@@ -1597,7 +1597,7 @@ void gretl_stock_icons_init (void)
 {
     char **xpms[] = {
 # if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION < 4)
-	stock_network_16.xpm,
+	stock_network_16_xpm,
 # endif
 	mini_tex_xpm,
 	mail_16_xpm,

@@ -26,7 +26,7 @@
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
 
-#define FORMAT_HELP_TEXT 1 /* not ready yet */
+#define FORMAT_HELP_TEXT 0 /* not ready yet */
 
 enum {
     PLAIN_TEXT,
@@ -413,7 +413,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("indented");
-    g_object_set(tag, "left_margin", 40, NULL);
+    g_object_set(tag, "left_margin", 30, NULL);
     gtk_text_tag_table_add(table, tag);
 
     tag = gtk_text_tag_new("code");
@@ -875,6 +875,23 @@ enum {
 
 #if FORMAT_HELP_TEXT
 
+static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
+				const char *fig)
+{
+    char figfile[FILENAME_MAX];
+    GdkPixbuf *pixbuf;
+
+    sprintf(figfile, "%shelpfigs%c%s.png", paths.gretldir,
+	    SLASH, fig);
+
+    pixbuf = gdk_pixbuf_new_from_file(figfile, NULL);
+
+    if (pixbuf != NULL) {
+	gtk_text_buffer_insert_pixbuf(tbuf, iter, pixbuf);
+	g_object_unref(G_OBJECT(pixbuf));
+    }
+}
+
 static void insert_tagged_text (GtkTextBuffer *tbuf, GtkTextIter *iter,
 				const char *s, int ins, const char *indent)
 {
@@ -964,8 +981,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    if (ins == INSERT_REF) {
 		insert_link(tbuf, iter, targ, gretl_command_number(targ));
 	    } else if (ins == INSERT_FIG) {
-		gtk_text_buffer_insert(tbuf, iter, "fig goes here: ", -1);
-		gtk_text_buffer_insert(tbuf, iter, targ, -1);
+		insert_help_figure(tbuf, iter, targ);
 	    } else if (ins != INSERT_NONE) {
 		insert_tagged_text(tbuf, iter, targ, ins, indent);
 	    }
