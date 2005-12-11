@@ -1,0 +1,153 @@
+\chapter{Criteri di selezione dei modelli}
+\label{select-criteria}
+
+\section{Introduzione}
+\label{select-intro}
+
+In alcuni contesti, l'econometrico deve scegliere tra modelli alternativi
+basandosi su test di ipotesi formali. Ad esempio, si può scegliere un
+modello più generale rispetto ad uno più ristretto, se la restrizione in
+questione può essere formulata sotto forma di ipotesi nulla testabile e
+l'ipotesi nulla viene rifiutata da un apposito test.
+
+In altri contesti si ha bisogno invece di un criterio di selezione dei modelli
+che tenga conto da una parte dell'accuratezza dell'adattamento ai dati, o della
+verosimiglianza del modello, e dall'altra parte della sua parsimonia. È
+necessario mantenere questo equilibrio perché l'aggiunta di variabili a un
+modello può solo aumentare la sua capacità di adattamento o la sua
+verosimiglianza, ed è probabile che ciò avvenga anche se le variabili aggiuntive
+non sono veramente rilevanti per il processo che ha generato i dati.
+
+Il più famoso tra questi criteri di selezioni, per modelli lineari stimati con i
+minimi quafrati, è l'$R^2$ corretto,
+%
+\[
+\bar{R}^2 = 1 - \frac{{\rm SSR} / (n-k)}{{\rm TSS} / (n-1)}
+\]
+%
+dove $n$ è il numero di osservazioni nel campione, $k$ denota il numero di
+parametri stimati, SSR e TSS denotano rispettivamente la somma dei quadrati dei
+residui e la somma dei quadrati della variabile dipendente. Confrontato con il
+classico coefficiente di determinazione $R^2$
+%
+\[
+R^2 = 1 - \frac{{\rm SSR}}{{\rm TSS}}
+\]
+%
+la versione ``corretta'' penalizza l'inclusione di variabili aggiuntive, a
+parità di altre condizioni.
+
+\section{Criteri di informazione}
+\label{select-aic}
+
+Un criterio più generale, che segue un'impostazione simile, è il ``criterio di
+informazione di Akaike'' (AIC) del 1974. La formulazione originale di questa
+misura è
+%
+\begin{equation}
+\label{aic-orig}
+{\rm AIC} = -2 \ell(\hat{\theta}) + 2k
+\end{equation}
+%
+dove $\ell(\hat{\theta})$ rappresenta la massima log-verosimiglianza come
+funzione del vettore delle stime dei parametri, $\hat{\theta}$, e $k$
+(come sopra) indica il numero di ``parametri indipendenti all'interno del
+modello''. In questa formulazione, con AIC correlato negativamente alla
+verosimiglianza positivamente al numero dei parametri, il ricercatore mira a
+minimizzare il suo valore.
+
+L'AIC può generare confusione, dal momento che sono diffuse varie versioni per
+il suo calcolo; ad esempio, Davidson e MacKinnon (2004) ne presentano una versione
+semplificata,
+%
+\[
+{\rm AIC} = \ell(\hat{\theta}) - k
+\]
+%
+che vale quanto l'originale moltiplicata per $-2$: in questo caso, ovviamente,
+si cercherà di massimizzare l'AIC.
+
+Nel caso di modelli stimati con i minimi quadrati, la log-verosimiglianza può
+essere scritta come
+%
+\begin{equation}
+\label{ols-loglik}
+\ell(\hat{\theta}) = -\frac{n}{2}(1 + \log 2\pi - \log n)
+ - \frac{n}{2} \log {\rm SSR}
+\end{equation}
+%
+Sostituendo (\ref{ols-loglik}) in (\ref{aic-orig}) otteniamo
+%
+\[
+{\rm AIC} = n(1 + \log 2\pi - \log n) + n\log {\rm SSR} + 2k
+\]
+%
+che può essere scritta anche come
+%
+\begin{equation}
+\label{full-aic-alt}
+{\rm AIC} = n\log \left( \frac{\rm SSR}{n} \right) + 2k + 
+  n(1 + \log 2\pi)
+\end{equation}
+%
+
+Alcuni autori semplificano la formula nel caso di modelli stimati con i mini
+quadrati. Ad esempio William Greene scrive
+%
+\begin{equation}
+\label{aic-greene}
+{\rm AIC} = \log \left( \frac{\rm SSR}{n} \right) + \frac{2k}{n}
+\end{equation}
+%
+Questa variante può essere derivata da (\ref{full-aic-alt}) dividendo per
+$n$ e sottraendo la costante $1 + \log 2\pi$.  Ossia, chiamando 
+AIC$_G$ la versione proposta da Greene, abbiamo
+%
+\[
+{\rm AIC}_G = \frac{1}{n} {\rm AIC} - (1 + \log 2\pi)
+\]
+%
+
+Infine, Ramanathan offre un'altra variante:
+%
+\[
+{\rm AIC}_R = \left( \frac{\rm SSR}{n} \right) e^{2k/n}
+\]
+%
+che è l'esponenziale della versione di Greene.  
+
+All'inizio, gretl usava la versione di Ramanathan, ma a partire dalla versione
+1.3.1 del programma, viene usata la formula originale di Akaike
+(\ref{aic-orig}), e più specificamente (\ref{full-aic-alt}) per i modelli
+stimati con i minimi quadrati.
+
+\vspace{1ex}
+
+Anche se il criterio di Akaike è progettato per favorire la parsimonia, non lo
+fa in modo eccessivo. Ad esempio, se abbiamo due modelli annidati con
+rispettivamente $k$ e $k+1$ parametri, e se l'ipotesi nulla che il parametro
+$k+1$ valga 0 è vera, per grandi campioni l'AIC tenderà comunque a far preferire
+il modello meno parsimonioso in circa il 16 per cento dei casi (si veda
+Davidson e MacKinnon, 2004, capitolo 15).
+
+Un criterio alternativo all'AIC che non risente di questo problema è il
+``Criterio di informazione Bayesiana'' (BIC) di Schwarz (1978). Il BIC può
+essere scritto (in modo simile alla formulazione di Akaike di AIC) come
+%
+\[
+{\rm BIC} = -2 \ell(\hat{\theta}) + k \log n
+\]
+Il prodotto di $k$ per $\log n$ nel BIC significa che la penalizzazione per
+l'aggiunta di parametri addizionali aumenta con l'ampiezza campionaria. Ciò
+assicura che, asintoticamente, un modello troppo esteso non verrà mai scelto al
+posto di un modello parsimonioso ma correttamente specificato.
+
+\vspace{1ex}
+
+Gretl mostra sia AIC che BIC (calcolati nel modo spiegato sopra) per la maggior
+parte dei modelli.
+
+
+
+
+
