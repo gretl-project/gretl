@@ -309,7 +309,7 @@
   <xsl:call-template name="nl"/>
 </xsl:template>
 
-<xsl:template match="para">
+<xsl:template match="para|pre">
   <xsl:if test="not(@context) or @context=$hlp">
     <xsl:call-template name="nl"/>
     <para>

@@ -6278,7 +6278,7 @@ int gui_exec_line (char *line,
 	break;
 
     case HELP:
-	help(cmd.param, paths.cmd_helpfile, prn);
+	help(cmd.param, paths.cli_helpfile, prn);
 	break;
 
     case IMPORT:

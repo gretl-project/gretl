@@ -27,6 +27,8 @@ CHAPDIR = $(topsrc)/doc/chapters
 CHAPDIR_IT = $(topsrc)/doc/chapters_it
 SHAREDIR = $(topsrc)/share
 
+CMDDTD = $(CMDSDIR)/gretl_commands.dtd
+
 CMDSRC = $(CMDSDIR)/gretl_commands.xml \
 	$(CMDSDIR)/gretl_commands_es.xml \
 	$(CMDSDIR)/gretl_commands_it.xml
@@ -38,6 +40,12 @@ HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 
 XMLSTRS = $(CMDSDIR)/hlpstrings.xml
 TXTSTRS = $(CMDSDIR)/hlpstrings.txt
+
+EQNLIST = $(CMDSDIR)/eqn_list.xml
+EQNXSL = $(CMDSDIR)/equations.xsl
+
+HLPSTAMP = $(SHAREDIR)/hlp.stamp
+FIGSTAMP = $(SHAREDIR)/fig.stamp
 
 ifeq ($(have_gtk),2.0)
   HLPOPT = --hlp --markup
@@ -74,6 +82,35 @@ validate.o: validate.c
 skeleton.xml: skeleton gretl_commands.dtd
 	./skeleton $(CMDSDIR) > $@
 
+$(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands.xml
+	xsltproc $(EQNXSL) $(CMDSDIR)/gretl_commands.xml > eqn_list.new
+	if diff --brief $@ eqn_list.new	| grep eqn ; then cp eqn_list.new $@ ; fi
+	rm -f eqn_list.new
+
+$(XMLSTRS): $(TXTSTRS) hlpstrings
+	./hlpstrings $(TXTSTRS) > $(XMLSTRS)
+
+$(FIGSTAMP): $(EQNLIST)
+	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $@
+
+# Generate "online" help files
+$(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) 
+	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands.xml && \
+	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp
+	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp
+	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp
+	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_es.xml && \
+	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.es
+	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es
+	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp.es
+	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.it
+	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it
+	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp.it
+	touch $@
+
+.PHONY:
+
 # test validity of skeleton.xml, and ability of xsltrans
 # to generate formatted output (text and XML)
 test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
@@ -91,31 +128,7 @@ docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
 	cp cmdlist.xml $(CHAPDIR_IT)/cmdlist.xml && \
 	rm cmdlist.xml
 
-$(CMDSDIR)/eqn_list.xml: $(CMDSDIR)/equations.xsl $(CMDSDIR)/gretl_commands.xml
-	xsltproc $(CMDSDIR)/equations.xsl $(CMDSDIR)/gretl_commands.xml > eqn_list.new
-	if diff --brief $@ eqn_list.new	| grep eqn ; then cp eqn_list.new $@ ; fi
-	rm -f eqn_list.new
-
-helpfigs: $(CMDSDIR)/eqn_list.xml
-	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs
-
-# Generate "online" help files
-hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS) 
-	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands.xml && \
-	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp
-	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp
-	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp
-	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_es.xml && \
-	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.es
-	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es
-	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp.es
-	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_it.xml && \
-	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.it
-	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it
-	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp.it
-
-$(XMLSTRS): $(TXTSTRS) hlpstrings
-	./hlpstrings $(TXTSTRS) > $(XMLSTRS)
+help-all: $(HLPSTAMP) $(FIGSTAMP)
 
 # Validate the commands "master" XML files against libgretl
 check: validate 

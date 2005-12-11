@@ -233,6 +233,7 @@ struct PATHS_ {
     char scriptdir[MAXLEN];
     char helpfile[MAXLEN];
     char cmd_helpfile[MAXLEN];
+    char cli_helpfile[MAXLEN];
     char datfile[MAXLEN];
     char binbase[MAXLEN];
     char ratsbase[MAXLEN];

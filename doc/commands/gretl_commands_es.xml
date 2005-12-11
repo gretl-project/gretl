@@ -1446,68 +1446,83 @@
 	    panel &mdash; ver
 	    <cmdref targ="panel"/>.</para>
 	</li>
-	<li><para> Usando <cmd>genr</cmd> se pueden recuperar los valores de
-	    algunas variables internas que se definen al ejecutar una regresión,
-	    de la siguiente foprma:</para>
+      </ilist>
 
-	  <table lwidth="100pt" rwidth="300pt" style="rpara">
-	    <row> 
-	      <cell><lit>$ess</lit></cell>
-	      <cell>suma de cuadrados de los residuos</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$rsq</lit></cell> 
-	      <cell><emphasis>R</emphasis>-cuadrado no corregido</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$T</lit></cell> 
-	      <cell>número de observaciones usadas</cell> 
-	    </row> 
-	    <row> 
-	      <cell><lit>$df</lit></cell>
-	      <cell>grados de libertad</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$trsq</lit></cell>
-	      <cell><emphasis>TR</emphasis>-cuadrado (el tamaño muestral por el
-		<emphasis>R</emphasis>-cuadrado)</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$sigma</lit></cell> 
-	      <cell>desviación típica de los residuos</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$aic</lit></cell> 
-	      <cell>Criterio de información de Akaike</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$lnl</lit></cell> 
-	      <cell>logaritmo de la verosimilitud (donde es aplicable)</cell> 
-	    </row> 
-	    <row>
-	      <cell>coeff(<repl>var</repl>)</cell> 
-	      <cell>coeficiente estimado para la variable
-		<repl>var</repl></cell> 
-	    </row> 
-	    <row>
-	      <cell>stderr(<repl>var</repl>)</cell> 
-	      <cell>desviación típica estimada para la variable
-		<repl>var</repl> 
-	      </cell> 
-	    </row> 
-	    <row>
-	      <cell>rho(<repl>i</repl>)</cell>
-	      <cell>coeficiente autorregresivo de <repl>i</repl>-ésimo orden
-		de los residuos</cell> 
-	    </row> 
-	    <row>
-	      <cell>vcv(<repl>x1</repl>,<repl>x2</repl>)</cell>
-	      <cell>covarianza entre los coeficientes para las 
-		variables nombradas <repl>x1</repl> y <repl>x2</repl> 
-	      </cell> 
-	    </row>
-	  </table>
+      <para>Usando <cmd>genr</cmd> se pueden recuperar los valores de
+	algunas variables internas que se definen al ejecutar una regresión,
+	de la siguiente foprma:</para>
 
+      <ilist>
+	<li>
+	  <para>
+	   <lit>$ess</lit>: suma de cuadrados de los residuos
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$rsq</lit>: <emphasis>R</emphasis>-cuadrado no corregido
+	  </para>
+	</li>	
+	<li>
+	  <para>
+	   <lit>$T</lit>: número de observaciones usadas
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$df</lit>: grados de libertad
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>$trsq</lit>: <emphasis>TR</emphasis>-cuadrado (el tamaño
+	    muestral por el <emphasis>R</emphasis>-cuadrado)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$sigma</lit>: desviación típica de los residuos
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$aic</lit>: Criterio de información de Akaike
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$bic</lit>: Criterio de información de Schwarz
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$lnl</lit>: logaritmo de la verosimilitud (donde es aplicable)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>coeff</func>(<repl>var</repl>): coeficiente estimado para la
+	    variable <repl>var</repl>
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>stderr</func>(<repl>var</repl>): desviación típica estimada
+	    para la variable <repl>var</repl>
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>rho</func>(<repl>i</repl>): coeficiente autorregresivo de
+	    <repl>i</repl>-ésimo orden de los residuos
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>vcv</func>(<repl>x1</repl>,<repl>x2</repl>): covarianza entre
+	    los coeficientes para las variables nombradas <repl>x1</repl> y
+	    <repl>x2</repl>
+	  </para>
 	</li>
       </ilist> 
 
@@ -1565,9 +1580,7 @@
       </para>
 
       <para>
-	<tabref targ="tab-genr"/> da varios ejemplos de utilizaciones de 
-	<cmd>genr</cmd> con notas explicativas; aquí hay un par de sugerencias
-	sobre variable ficticias:
+	Aquí hay un par de sugerencias sobre variable ficticias:
       </para>
 
       <ilist>
@@ -2123,19 +2136,13 @@
     <description>
       <para>Control de flujo para la ejecución de instrucciones.  La sintaxis es:</para>
 
-      <table lwidth="25pt" rwidth="100pt">
-	<row><cell><lit>if</lit></cell>
-	  <cell><repl>condición</repl></cell>
-	</row>
-	<row><cell></cell><cell><repl>instrucciones1</repl></cell>
-	</row>
-	<row><cell><lit>else</lit></cell><cell></cell>
-	</row>
-	<row><cell></cell><cell><repl>instrucciones2</repl></cell>
-	</row>
-	<row><cell><lit>endif</lit></cell><cell></cell>
-	</row>
-      </table>
+      <pre>
+	<lit>if</lit> <repl>condición</repl>&par;
+	<lit>  </lit> <repl>instrucciones1</repl>&par;
+	<lit>else</lit>&par;
+	<lit>  </lit> <repl>instrucciones2</repl>&par;
+	<lit>endif</lit>
+      </pre>	
 
       <para><repl>condición</repl> debe ser una expresión Booleana, para su sintaxis
         ver <cmdref targ="genr"/>.  El bloque <cmd>else</cmd> es opcional; los 

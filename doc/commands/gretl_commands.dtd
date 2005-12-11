@@ -10,6 +10,7 @@
 <!ENTITY mdash  "&#8212;">
 <!ENTITY latex  "LaTeX">
 <!ENTITY minus  "&#8211;">
+<!ENTITY par    "">
 
 
 <!ELEMENT commandlist (command)+>
@@ -43,7 +44,7 @@
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
 <!ELEMENT altforms     (altform)+>
-<!ELEMENT description  (para | code | ilist | nlist | table)*>
+<!ELEMENT description  (para | code | pre | ilist | nlist | table)*>
 <!ELEMENT gui-access   (menu-path, other-access?)>
 
 <!ELEMENT argument (#PCDATA)>
@@ -72,8 +73,12 @@
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 lit | emphasis | book | quote | filename |
                 func | guideref | cmdref| tabref | footnote | cmd)*>
-
 <!ATTLIST para
+   context (cli | gui | both) "both"
+>
+
+<!ELEMENT pre (#PCDATA | repl | lit)*>
+<!ATTLIST pre
    context (cli | gui | both) "both"
 >
 

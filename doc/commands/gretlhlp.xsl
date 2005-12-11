@@ -189,8 +189,9 @@
 
 <xsl:template match="altform">
   <xsl:if test="position() > 1">
-    <xsl:text>&#xa;                  </xsl:text>
+    <xsl:text>&#xa;&#x9;</xsl:text>
   </xsl:if> 
+  <xsl:text>&#x9;</xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
 
@@ -300,6 +301,10 @@
   </xsl:if>
 </xsl:template>
 
+<xsl:template match="pre">
+  <xsl:apply-templates/>
+</xsl:template>
+
 <xsl:template match="ilist">
   <xsl:if test="not(@context) or @context=$hlp">
     <xsl:apply-templates/>
@@ -353,21 +358,7 @@
 </xsl:template>
 
 <xsl:template match="table"> 
-<xsl:if test="not(@context) or @context=$hlp">
-  <xsl:text>[TABLE]&#xa;</xsl:text>
-  <xsl:if test="@id">
-    <xsl:text>[ROW]&#xa;[CELL]&#xa;</xsl:text>
-    <xsl:value-of select="@lhead"/>
-    <xsl:text>[/CELL]&#xa;[CELL]&#xa;</xsl:text>
-    <xsl:value-of select="@rhead"/>
-    <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
-    <xsl:text>[ROW]&#xa;[CELL]&#xa;-------</xsl:text>
-    <xsl:text>[/CELL]&#xa;[CELL]&#xa;-------</xsl:text>
-    <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
-  </xsl:if>
-  <xsl:apply-templates/>
-  <xsl:text>[/TABLE]&#xa;</xsl:text>  
-</xsl:if>
+<!-- can't handle tables at present -->
 </xsl:template>
 
 <xsl:template match="row">

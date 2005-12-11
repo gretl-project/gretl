@@ -44,6 +44,7 @@ mkdir -p windist/gretl/scripts/misc
 mkdir -p windist/gretl/db
 mkdir -p windist/gretl/user
 mkdir -p windist/gretl/doc
+mkdir -p windist/gretl/helpfigs
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/plugins/data
 
@@ -118,6 +119,9 @@ for lang in es it ; do
        > ${TOPDIR}/share/gretlcli_hlp_${lang}.txt
    add_file ${TOPDIR}/share/gretlcli_hlp_${lang}.txt \
        gretl/gretlcli_hlp_${lang}.txt
+done
+for f in ${TOPDIR}/share/texfigs/*.png ; do
+   add_file $f gretl/helpfigs/`basename $f`
 done
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm

@@ -1858,14 +1858,14 @@
     <description>
       <para>
 	Creates new variables, usually through transformations of existing
-	variables. See also <cmdref targ="diff"/>, <cmdref
-	  targ="logs"/>, <cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref
-	  targ="multiply"/> and <cmdref targ="square"/> for shortcuts. In the
-	context of a <lit>genr</lit> formula, existing variables must be
-	referenced by name, not ID number.  The formula should be a well-formed
-	combination of variable names, constants, operators and functions
-	(described below).  Note that further details on some aspects of this
-	command can be found in <guideref targ="chap-genr"/>.
+	variables. See also <cmdref targ="diff"/>, <cmdref targ="logs"/>,
+	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref
+	targ="multiply"/>, <cmdref targ="sdiff"/> and <cmdref targ="square"/>
+	for shortcuts. In the context of a <lit>genr</lit> formula, existing
+	variables must be referenced by name, not ID number.  The formula should
+	be a well-formed combination of variable names, constants, operators and
+	functions (described below).  Note that further details on some aspects
+	of this command can be found in <guideref targ="chap-genr"/>.
       </para>
 
       <para>
@@ -2098,78 +2098,89 @@
 	    <cmdref targ="panel"/>.
 	  </para>
 	</li>
+      </ilist>
+
+      <para>
+	Various internal variables defined in the course of running a
+	regression can be retrieved using <cmd>genr</cmd>, as follows:
+      </para>
+
+      <ilist>
 	<li>
 	  <para>
-	    Various internal variables defined in the course of running a
-	    regression can be retrieved using <cmd>genr</cmd>, as follows:
+	   <lit>$ess</lit>: error sum of squares
 	  </para>
-
-	  <table lwidth="100pt" rwidth="300pt" style="rpara">
-	    <row> 
-	      <cell><lit>$ess</lit></cell>
-	      <cell>error sum of squares</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$rsq</lit></cell> 
-	      <cell>unadjusted <emphasis>R</emphasis>-squared</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$T</lit></cell> 
-	      <cell>number of observations used</cell> 
-	    </row> 
-	    <row> 
-	      <cell><lit>$df</lit></cell>
-	      <cell>degrees of freedom</cell> 
-	    </row> 
-	    <row> 
-	      <cell><lit>$ncoeff</lit></cell>
-	      <cell>total number of estimated coefficients</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$trsq</lit></cell>
-	      <cell><emphasis>TR</emphasis>-squared (sample size times
-		<emphasis>R</emphasis>-squared)</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$sigma</lit></cell> 
-	      <cell>standard error of residuals</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$aic</lit></cell> 
-	      <cell>Akaike Information Criterion</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$bic</lit></cell> 
-	      <cell>Schwarz's Bayesian Information Criterion</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$lnl</lit></cell> 
-	      <cell>log-likelihood (where applicable)</cell> 
-	    </row> 
-	    <row>
-	      <cell><func>coeff</func>(<repl>var</repl>)</cell> 
-	      <cell>estimated coefficient for variable
-		<repl>var</repl></cell> 
-	    </row> 
-	    <row>
-	      <cell><func>stderr</func>(<repl>var</repl>)</cell> 
-	      <cell>estimated standard error for variable
-		<repl>var</repl> 
-	      </cell> 
-	    </row> 
-	    <row>
-	      <cell><func>rho</func>(<repl>i</repl>)</cell>
-	      <cell><repl>i</repl>th order autoregressive coefficient
-		for residuals</cell> 
-	    </row> 
-	    <row>
-	      <cell><func>vcv</func>(<repl>x1</repl>,<repl>x2</repl>)</cell>
-	      <cell>estimated covariance between coefficients for the
-		variables <repl>x1</repl> and <repl>x2</repl> 
-	      </cell> 
-	    </row>
-	  </table>
-
+	</li>
+	<li>
+	  <para>
+	   <lit>$rsq</lit>: unadjusted <emphasis>R</emphasis>-squared
+	  </para>
+	</li>	
+	<li>
+	  <para>
+	   <lit>$T</lit>: number of observations used
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$df</lit>: degrees of freedom
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$ncoeff</lit>: total number of estimated coefficients
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>$trsq</lit>: <emphasis>TR</emphasis>-squared (sample size times
+	    <emphasis>R</emphasis>-squared)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$sigma</lit>: standard error of residuals
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$aic</lit>: Akaike Information Criterion
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$bic</lit>: Schwarz's Bayesian Information Criterion
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$lnl</lit>: log-likelihood (where applicable)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>coeff</func>(<repl>var</repl>): estimated coefficient for
+	    variable <repl>var</repl>
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>stderr</func>(<repl>var</repl>): estimated standard error for
+	    variable <repl>var</repl>
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>rho</func>(<repl>i</repl>): <repl>i</repl>th order
+	    autoregressive coefficient for residuals
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>vcv</func>(<repl>x1</repl>,<repl>x2</repl>): estimated
+	    covariance between coefficients for the variables <repl>x1</repl>
+	    and <repl>x2</repl> 
+	  </para>
 	</li>
       </ilist> 
 
@@ -2236,9 +2247,7 @@
       </para>
 
       <para>
-	<tabref targ="tab-genr"/> gives several examples of uses of
-	<cmd>genr</cmd> with explanatory notes; here are a couple of tips on
-	dummy variables:
+	Here are a couple of tips on dummy variables:
       </para>
 
       <ilist>
@@ -2941,21 +2950,15 @@
     <description>
       <para>Flow control for command execution.  The syntax is:</para>
 
-      <table lwidth="25pt" rwidth="100pt">
-	<row><cell><lit>if</lit></cell>
-	  <cell><repl>condition</repl></cell>
-	</row>
-	<row><cell></cell><cell><repl>commands1</repl></cell>
-	</row>
-	<row><cell><lit>else</lit></cell><cell></cell>
-	</row>
-	<row><cell></cell><cell><repl>commands2</repl></cell>
-	</row>
-	<row><cell><lit>endif</lit></cell><cell></cell>
-	</row>
-      </table>
+      <pre>
+	<lit>if</lit> <repl>condition</repl>&par;
+	<lit>  </lit> <repl>commands1</repl>&par;
+	<lit>else</lit>&par;
+	<lit>  </lit> <repl>commands2</repl>&par;
+	<lit>endif</lit>
+      </pre>	
 
-      <para><repl>condition</repl> must be a Boolean expression, for
+      <para><repl quote="true">condition</repl> must be a Boolean expression, for
 	the syntax of which see <cmdref targ="genr"/>.  The
 	<cmd>else</cmd> block is optional; <lit>if</lit> &hellip;
 	<lit>endif</lit> blocks may be nested.</para>

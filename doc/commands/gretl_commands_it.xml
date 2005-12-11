@@ -2039,77 +2039,88 @@
             da usare in un dataset di tipo panel &mdash; si veda
 	    <cmdref targ="panel"/>.</para>
 	</li>
-	<li><para>Alcune variabili interne che vengono generate durante
-            il calcolo di una regressione possono essere recuperate usando
-	    <cmd>genr</cmd>, nel modo seguente:</para>
+      </ilist>
 
-	  <table lwidth="100pt" rwidth="300pt" style="rpara">
-	    <row> 
-	      <cell><lit>$ess</lit></cell>
-	      <cell>somma dei quadrati degli errori</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$rsq</lit></cell> 
-	      <cell><emphasis>R</emphasis>-quadro</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$T</lit></cell> 
-	      <cell>numero delle osservazioni usate</cell> 
-	    </row> 
-	    <row> 
-	      <cell><lit>$df</lit></cell>
-	      <cell>gradi di libertà</cell> 
-	    </row>
-            <row>
-              <cell><lit>$ncoeff</lit></cell>
-              <cell>numero dei coefficienti stimati</cell>
-            </row>
-	    <row>
-	      <cell><lit>$trsq</lit></cell>
-	      <cell><emphasis>TR</emphasis>-quadro (ampiezza del campione
-                moltiplicata per <emphasis>R</emphasis>-quadro)</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$sigma</lit></cell> 
-	      <cell>errore standard dei residui</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$aic</lit></cell> 
-	      <cell>criterio di informazione di Akaike</cell> 
-	    </row> 
- 	    <row>
-	      <cell><lit>$bic</lit></cell> 
-	      <cell>criterio di informazione bayesiana di Schwarz</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$lnl</lit></cell> 
-	      <cell>log-verosimiglianza (dove è applicabile)</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$sigma</lit></cell> 
-	      <cell>errore standard dei residui</cell> 
-	    </row> 
-	    <row>
-	      <cell>coeff(<repl>variabile</repl>)</cell> 
-	      <cell>coefficiente stimato per la <repl>variabile</repl></cell> 
-	    </row> 
-	    <row>
-	      <cell>stderr(<repl>variabile</repl>)</cell> 
-	      <cell>errore standard stimato per la <repl>variabile</repl></cell> 
-	    </row> 
-	    <row>
-	      <cell>rho(<repl>i</repl>)</cell>
-	      <cell>coefficiente di autoregressione dei residui di ordine
-              <repl>i</repl>-esimo</cell> 
-	    </row> 
-	    <row>
-	      <cell>vcv(<repl>x1</repl>,<repl>x2</repl>)</cell>
-	      <cell>covarianza stimata tra i coefficienti delle variabili
-		<repl>x1</repl> e <repl>x2</repl> 
-	      </cell> 
-	    </row>
-	  </table>
+      <para>Alcune variabili interne che vengono generate durante
+	il calcolo di una regressione possono essere recuperate usando
+	<cmd>genr</cmd>, nel modo seguente:</para>
 
+      <ilist>
+	<li>
+	  <para>
+	   <lit>$ess</lit>: somma dei quadrati degli errori
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$rsq</lit>: <emphasis>R</emphasis>-quadro
+	  </para>
+	</li>	
+	<li>
+	  <para>
+	   <lit>$T</lit>: numero delle osservazioni usate
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$df</lit>: gradi di libertà
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$ncoeff</lit>: numero dei coefficienti stimati
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <lit>$trsq</lit>: <emphasis>TR</emphasis>-quadro (ampiezza del
+	    campione moltiplicata per <emphasis>R</emphasis>-quadro)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$sigma</lit>: errore standard dei residui
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$aic</lit>: criterio di informazione di Akaike
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$bic</lit>: criterio di informazione bayesiana di Schwarz
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$lnl</lit>: log-verosimiglianza (dove è applicabile)
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>coeff</func>(<repl>variabile</repl>): coefficiente stimato per
+	    la <repl>variabile</repl>
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>stderr</func>(<repl>variabile</repl>): errore standard stimato
+	    per la <repl>variabile</repl>
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>rho</func>(<repl>i</repl>): coefficiente di autoregressione
+	    dei residui di ordine <repl>i</repl>-esimo
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    <func>vcv</func>(<repl>x1</repl>,<repl>x2</repl>): covarianza
+	    stimata tra i coefficienti delle variabili <repl>x1</repl> e
+	    <repl>x2</repl> 
+	  </para>
 	</li>
       </ilist> 
 
@@ -2175,9 +2186,7 @@
       </para>
 
       <para>
-	La <tabref targ="tab-genr"/> mostra vari esempi di utilizzo di
-	<cmd>genr</cmd>, con alcune note esplicative; ecco qualche esempio di
-        utilizzo delle variabili dummy:
+	Ecco qualche esempio di utilizzo delle variabili dummy:
       </para>
 
       <ilist>
@@ -2880,19 +2889,13 @@
     <description>
       <para>Controllo di flusso per l'esecuzione dei comandi. La sintassi è:</para>
 
-      <table lwidth="25pt" rwidth="100pt">
-	<row><cell><lit>if</lit></cell>
-	  <cell><repl>condizione</repl></cell>
-	</row>
-	<row><cell></cell><cell><repl>comandi1</repl></cell>
-	</row>
-	<row><cell><lit>else</lit></cell><cell></cell>
-	</row>
-	<row><cell></cell><cell><repl>comandi2</repl></cell>
-	</row>
-	<row><cell><lit>endif</lit></cell><cell></cell>
-	</row>
-      </table>
+      <pre>
+	<lit>if</lit> <repl>condizione</repl>&par;
+	<lit>  </lit> <repl>comandi1</repl>&par;
+	<lit>else</lit>&par;
+	<lit>  </lit> <repl>comandi2</repl>&par;
+	<lit>endif</lit>
+      </pre>      
 
       <para>La <repl>condizione</repl> deve essere un'espressione
       Booleana, per la cui sintassi si veda <cmdref targ="genr"/>.

@@ -717,6 +717,14 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
     int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
 						 "sigs_connected"));
 
+    if (hand_cursor == NULL) {
+	hand_cursor = gdk_cursor_new(GDK_HAND2);
+    }
+
+    if (regular_cursor == NULL) {
+	regular_cursor = gdk_cursor_new(GDK_XTERM);
+    }    
+
     if (!done) {
 	gpointer en_ptr = GINT_TO_POINTER(en);
 
@@ -758,13 +766,6 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     const char *header = N_("Gretl Command Reference");
     GtkTextIter iter;
     int i;
-
-    if (hand_cursor == NULL) {
-	hand_cursor = gdk_cursor_new(GDK_HAND2);
-    }
-    if (regular_cursor == NULL) {
-	regular_cursor = gdk_cursor_new(GDK_XTERM);
-    }
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
@@ -966,6 +967,23 @@ static int get_instruction_and_string (const char *p, char *str)
     return ins;
 }
 
+static int get_code_skip (const char *s)
+{
+    int skip = 5;
+
+    while (*s) {
+	if (*s == '\n') {
+	    skip++;
+	    break;
+	} else if (isspace(*s)) {
+	    skip++;
+	}
+	s++;
+    } 
+
+    return skip;
+}
+
 static void
 insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 			 const char *s)
@@ -1011,7 +1029,7 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    skip = 8 + (*(p+8) == '\n');
 	} else if (!strncmp(p, "code", 4)) {
 	    code = "code";
-	    skip = 5 + (*(p+5) == '\n'); 
+	    skip = get_code_skip(p + 5);
 	} else if (!strncmp(p, "/code", 5)) {
 	    code = NULL;
 	    skip = 6 + (*(p+6) == '\n');

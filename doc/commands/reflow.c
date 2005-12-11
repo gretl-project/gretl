@@ -23,7 +23,8 @@ enum {
     ILISTPAR,
     NLISTPAR,
     TABLE,
-    CODE
+    CODE,
+    PRE
 } para_types;
 
 struct table_row {
@@ -431,6 +432,23 @@ void strip_marker (char *s, const char *targ)
     }
 }
 
+static int get_pre_skip (const char *s)
+{
+    int skip = 0;
+
+    while (*s) {
+	if (*s == '\n') {
+	    skip++;
+	    break;
+	} else if (isspace(*s)) {
+	    skip++;
+	}
+	s++;
+    } 
+
+    return skip;
+}
+
 int process_para (char *s, char *inbuf, int ptype, int markup)
 {
     char line[128];
@@ -439,14 +457,16 @@ int process_para (char *s, char *inbuf, int ptype, int markup)
 	"[ILISTPAR]", 
 	"[NLISTPAR]", 
 	"[TABLE]",
-	"[CODE]"
+	"[CODE]",
+	"[PRE]"
     };
     const char *stops[] = { 
 	"[/PARA]", 
 	"[/ILISTPAR]",
 	"[/NLISTPAR]",
 	"[/TABLE]",
-	"[/CODE]"
+	"[/CODE]",
+	"[/PRE]"
     };
     char *p, *buf;
     int done = 0;
@@ -486,6 +506,9 @@ int process_para (char *s, char *inbuf, int ptype, int markup)
 	} else {
 	    puts(buf);
 	}
+    } else if (ptype == PRE) {
+	buf += get_pre_skip(buf);
+	fputs(buf, stdout);
     } else {
 	format_buf(buf, ptype, markup);
     } 
@@ -519,6 +542,9 @@ int main (int argc, char **argv)
 	    blank++;
 	} else if (strstr(line, "[CODE]")) {
 	    process_para(line, buf, CODE, markup);
+	    blank++;
+	} else if (strstr(line, "[PRE]")) {
+	    process_para(line, buf, PRE, markup);
 	    blank++;
 	} else {
 	    if (blank_string(line)) {

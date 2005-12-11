@@ -292,6 +292,14 @@
  </xsl:if>
 </xsl:template>
 
+<xsl:template match="pre">
+  <xsl:if test="not(@context) or @context=$hlp">
+      <xsl:text>&#xa;[PRE]</xsl:text>
+      <xsl:apply-templates/>
+      <xsl:text>[/PRE]</xsl:text>
+ </xsl:if>
+</xsl:template>
+
 <xsl:template match="code">
   <xsl:if test="not(@context) or @context=$hlp">
     <xsl:call-template name="dnl"/>
