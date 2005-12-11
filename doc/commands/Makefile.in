@@ -92,7 +92,9 @@ docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
 	rm cmdlist.xml
 
 $(CMDSDIR)/eqn_list.xml: $(CMDSDIR)/equations.xsl $(CMDSDIR)/gretl_commands.xml
-	xsltproc $(CMDSDIR)/equations.xsl $(CMDSDIR)/gretl_commands.xml > $@	
+	xsltproc $(CMDSDIR)/equations.xsl $(CMDSDIR)/gretl_commands.xml > eqn_list.new
+	if diff --brief $@ eqn_list.new	| grep eqn ; then cp eqn_list.new $@ ; fi
+	rm -f eqn_list.new
 
 helpfigs: $(CMDSDIR)/eqn_list.xml
 	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs
