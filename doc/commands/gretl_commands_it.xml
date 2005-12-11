@@ -461,7 +461,7 @@
 	a Riccardo <quote>Jack</quote> Lucchetti: utilizza una procedura di
 	massima verosimiglianza condizionale, implementata attraverso la stima 
 	iterata	con minimi quadrati della regressione del prodotto esterno del
-	gradiente (OPG). Si veda il <guideref targ="jack-arma"/> per la logica della
+	gradiente (OPG). Si veda la <guideref targ="jack-arma"/> per la logica della
 	procedura. I coefficienti AR (e quelli per gli eventuali regressori 
 	aggiuntivi) sono inizializzati usando una auto-regressione OLS, mentre
 	i coefficienti MA sono inizializzati a zero.</para>
@@ -469,10 +469,14 @@
       <para>Il valore AIC mostrato nei modelli ARMA è calcolato secondo la
 	definizione usata in <program>X-12-ARIMA</program>, ossia
 	  <equation status="display" 
-	  tex="\[\mbox{AIC}=-2L+2k\]"
+	  tex="\[\mbox{AIC}=-2\ell+2k\]"
 	  ascii="AIC = -2L + 2k"
-	  graphic="aic"/> dove <mathvar>L</mathvar> è la log-verosimiglianza
-	e <mathvar>k</mathvar> è il numero totale di parametri stimati.
+	  graphic="aic"/> dove 
+	<equation status="inline" 
+	  tex="$\ell$" ascii="L"
+	  graphic="ell"/>
+        è la log-verosimiglianza e <mathvar>k</mathvar> è il numero totale di
+        parametri stimati.
 	Il valore di <quote>frequenza</quote> mostrato insieme alle radici
 	AR e MA è il valore di &lgr; che risolve
 	  <equation status="display" 
@@ -977,6 +981,23 @@
 	<repl>ess</repl> possono essere valori numerici o nomi di
         variabili definite in precedenza.
       </para>
+      <para>
+	L'AIC è calcolato come nella formulazione originale di Akaike (1974),
+        ossia
+	<equation status="display"
+	  tex="\[{\rm AIC} = -2 \ell + 2k\]"
+	  ascii="AIC = -2L + 2k"
+          graphic="aic"/>
+	dove <equation status="inline" 
+	  tex="$\ell$" ascii="L"
+	  graphic="ell"/> denota la log-verosimiglianza massimizzata.
+	Il BIC è calcolato come
+	<equation status="display"
+	  tex="\[{\rm BIC} = -2 \ell + k \log T\]"
+	  ascii="BIC = -2L + k log T"
+          graphic="bic_orig"/>
+	Si vada la <guideref targ="select-criteria"/> per ulteriori dettagli.
+      </para>
     </description>
 
   </command>
@@ -1032,6 +1053,8 @@
         <mathvar>k</mathvar> + 1 osservazioni per generare una previsione
         per l'osservazione <mathvar>k</mathvar> + 2 e così via (dove
 	<mathvar>k</mathvar> è il numero dei parametri nel modello originale).
+      </para>
+      <para>
 	Viene mostrata, anche graficamente, la somma cumulata degli errori 
         scalati di previsione. L'ipotesi nulla della stabilità dei parametri
         è rifiutata al livello di significatività del 5 per cento se la somma
@@ -1136,37 +1159,37 @@
       dati, e attribuendo ad ognuno di essi un valore di densità
       basato sui valori delle osservazioni circostanti.</para>
       
-      <para>La formula usata per calcolare la densità stimata in ognuno dei
-      punti di riferimento x è
-      </para>
-
-      <code>
-	f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)
-      </code>
-
-      <para>dove n denota il numero delle osservazioni, h è un parametro
-        di "larghezza di banda" e k() è la funzione kernel. All'aumentare
-        del parametro di banda, aumenta il livellamento della densità stimata.
+      <para>
+        La formula usata per calcolare la densità stimata in ognuno dei punti di
+        riferimento <mathvar>x</mathvar> è
+      <equation status="display"
+	tex="\[f(x)=(1/nh) \sum_{t-1}^{n} k\left((x-x_t)/h\right)\]"
+	ascii="f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)"
+	graphic="kernel1"/>
+      dove <mathvar>n</mathvar> denota il numero delle osservazioni,
+      <mathvar>h</mathvar> è un parametro di "larghezza di banda" e
+      <mathvar>k</mathvar>() è la funzione kernel. All'aumentare del parametro
+      di banda, aumenta il livellamento della densità stimata.
       </para>
 
       <para>È possibile usare un kernel Gaussiano (la densità normale
         standard) o il kernel di Epanechnikov, mentre la larghezza di banda
         predefinita è quella suggerita da Silverman (1986), ossia
-      </para>
+	<equation status="display"
+	  tex="\[h=0.9 {\rm min}(s, {\rm IQR}/1.349) n^{1/5}\]"
+	  ascii="h = 0.9 min(s, IQR/1.349) n^{1/5}"
+	  graphic="kernel2"/>
 
-      <code>
-	h = 0.9 min(s, IQR/1.349) n^{1/5}
-      </code>
-
-      <para>dove s denota la deviazione standard dei dati e IQR denota
-        il range interquartile. È possibile allargare o restringere
-        la banda usando il <quote>fattore di aggiustamento della banda</quote>:
-        la banda effettivamente utilizzata si ottiene moltiplicando il valore di
-	Silverman per il fattore di aggiustamento.
+      dove <mathvar>s</mathvar> denota la deviazione standard dei dati e IQR
+      denota il range interquartile. È possibile allargare o restringere la
+      banda usando il <quote>fattore di aggiustamento della banda</quote>: la
+      banda effettivamente utilizzata si ottiene moltiplicando il valore di
+      Silverman per il fattore di aggiustamento.
       </para>
 
       <para>Per una buona discussione introduttiva della stima kernel, si veda
-        il capitolo 15 di Econometric Theory and Methods di Davidson e MacKinnon.
+      il capitolo 15 di <book>Econometric Theory and Methods</book> di Davidson
+      e MacKinnon.
       </para>
 
     </description>
@@ -1212,8 +1235,11 @@
 	Calcola la differenza prima di ogni variabile nella <repl>lista-variabili</repl>
 	e la salva in una nuova variabile il cui nome è prefissato con
 	<lit>d_</lit>.  Quindi <cmd>diff x y</cmd> crea le nuove variabili
-	<lit>d_x = x(t) - x(t-1)</lit> e <lit>d_y = y(t) - y(t-1)</lit>.
       </para>
+      <code>
+	d_x = x(t) - x(t-1)
+        d_y = y(t) - y(t-1)
+      </code>
     </description>
 
     <gui-access>
@@ -1615,7 +1641,7 @@
 
     <description>
       <para>
-	Una scorciatoia per <cmd>fcast</cmd>, deve seguire un comando
+	Una scorciatoia per <cmdref targ="fcast"/>. Deve seguire un comando
         di stima. Genera valori stimati per il campione corrente basati
         sull'ultima regressione e li salva nella serie <lit>autofit</lit>.
 	Nel caso di modelli di serie storiche, mostra anche un grafico dei
@@ -1780,7 +1806,7 @@
         per la varianza dell'errore. L'opzione <lit>--arma-init</lit>
 	fa in modo che i valori iniziali per questi parametri siano ricavati da
         un modello ARMA iniziale, sfruttando la relazione tra GARCH
-        e ARMA mostrata nel capitolo 21 di Time Series Analysis di Hamilton.
+        e ARMA mostrata nel capitolo 21 di <book>Time Series Analysis</book> di Hamilton.
         In alcuni casi, questo metodo può aumentare le probabilità di convergenza.
       </para>
 
@@ -2730,8 +2756,12 @@
 
     <description>
       <para>Calcola le stime dei parametri per il modello specificato
-	usando la procedura di ricerca di Hildreth&ndash;Lu (ottimizzata
-        con la procedura CORC), progettata per correggere l'effetto
+	usando la procedura di ricerca di Hildreth&ndash;Lu. I risultati sono
+        ottimizzati con la procedura iterativa di Cochrane&ndash;Orcutt, a meno
+        che non si usi l'opzione <lit>--no-corc</lit>.
+      </para>
+      <para>
+        Questa procedura è progettata per correggere l'effetto
         della correlazione seriale nel termine di errore. Viene mostrato
         un grafico della somma dei quadrati degli errori per il modello
         trasformato rispetto ai valori di rho da &minus;0.99 a 0.99.
@@ -2900,7 +2930,7 @@
 
       <para>
 	Con l'opzione <lit>--box1</lit> viene letto un file in formato
-        BOX1, che può essere ottenuto usando il Servizio di Estrazione
+        BOX1, che un tempo poteva essere ottenuto usando il Servizio di Estrazione
         Dati del Bureau of the Census degli USA.
       </para>
     </description>
@@ -3154,9 +3184,16 @@
 	variabili nella <repl>lista-variabili</repl>. Il numero dei ritardi può
         essere indicato dal primo parametro opzionale, altrimenti sarà pari
         alla periodicità del dataset.  Ad esempio, se la periodicità è 4
-        (trimestrale), il comando <cmd>lags x y</cmd> crea <lit>x_1</lit> =
-        <lit>x(t-1)</lit>, <lit>x_2</lit> = <lit>x(t-2)</lit>, <lit>x_3</lit> =
-        <lit>x(t-3)</lit> e <lit>x_4</lit> = <lit>x(t-4)</lit>.
+        (trimestrale), il comando <cmd>lags x y</cmd> crea
+      </para>
+      <code>
+       x_1 = x(t-1)
+       x_2 = x(t-2)
+       x_3 = x(t-3)
+       x_4 = x(t-4)</code>
+      <para>
+        Il numero dei ritardi creati può essere indicato come primo parametro
+        opzionale.
       </para>
     </description>
 
@@ -3179,16 +3216,12 @@
 	Calcola la differenza prima del logaritmo naturale di ogni
         variabile della <repl>lista-variabili</repl> e la salva in una
         nuova variabile con il prefisso <lit>ld_</lit>.  Così, <cmd>ldiff
-	x y</cmd> crea le nuove variabili <lit>ld_x</lit> =
-	  <equation status="inline" 
-	  tex="$\ln(x_t) - \ln(x_{t-1})$"
-	  ascii="ln[x(t)] - ln[x(t-1)]"
-	  graphic="ldx"/> e <lit>ld_y</lit> =
-	  <equation status="inline" 
-	  tex="$\ln(y_t) - \ln(y_{t-1})$"
-	  ascii="ln[y(t)] - ln[y(t-1)]"
-	  graphic="ldy"/>.
+	x y</cmd> crea le nuove variabili 
       </para>
+      <code>
+	ld_x = log(x) - log(x(-1))
+	ld_y = log(y) - log(y(-1))
+      </code>
     </description>
 
     <gui-access>
@@ -3239,7 +3272,10 @@
 	  graphic="dffit"/>. Per una discussione dei residui
           studentizzati e dei valori DFFITS si veda G. S. Maddala,
         <book>Introduction to Econometrics</book>, capitolo 12 e anche
-        Belsley, Kuh e Welsch (1980). In breve, i <quote>residui previsti</quote>
+        Belsley, Kuh e Welsch (1980).
+        </para>
+        <para>
+        In breve, i <quote>residui previsti</quote>
 	sono la differenza tra il valore osservato e il valore stimato 
         della variabile dipendente all'osservazione
         <mathvar>t</mathvar>, ottenuti da una regressione in cui
@@ -3308,14 +3344,13 @@
 
     <description context="cli">
       <para>
-	Deve seguire immediatamente un comando <cmd>ols</cmd>. Esegue
-        una combinazione dei test seguenti: test dei moltiplicatori di
-        Lagrange per la non-linearità (logaritmi e quadrati), test di
-        White per l'eteroschedasticità e test LMF per la correlazione
-        seriale di ordine pari alla periodicità (si veda Kiviet, 1986),
-        mostrando anche i coefficienti delle corrispondenti regressioni
-        ausiliarie. Si veda Ramanathan, capitoli 7, 8 e 9 per i
-        dettagli.
+	Deve seguire immediatamente un comando <cmd>ols</cmd>. A seconda delle
+        opzioni usate, il comando esegue una combinazione dei test seguenti:
+        test dei moltiplicatori di Lagrange per la non-linearità (logaritmi e
+        quadrati), test di White per l'eteroschedasticità e test LMF per la
+        correlazione seriale di ordine pari alla periodicità (si veda Kiviet,
+        1986), mostrando anche i coefficienti delle corrispondenti regressioni
+        ausiliarie. Si veda Ramanathan, capitoli 7, 8 e 9 per i dettagli.
       </para>
     </description>
 
@@ -3389,7 +3424,7 @@
 	</para>
 
       <para>Si noti che se la variabile dipendente è binaria, occorre
-        usare il comando <cmd>logit</cmd> invece di questo comando.
+        usare il comando <cmdref targ="logit"/> invece di questo comando.
       </para>
     </description>
 
@@ -3431,10 +3466,19 @@
         statistica chi-quadro testa l'ipotesi nulla che tutti i
         coefficienti tranne la costante siano pari a zero.
       </para>
-      <para>
+      <para context="cli">
         In modalità predefinita, gli errori standard sono calcolati con
         l'inversa negativa dell'Hessiana.  Se si usa l'opzione
         <lit>--robust</lit>, verranno calcolati gli errori standard QML o quelli
+        di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
+        un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
+        prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
+        MacKinnon 2004, cap. 10.
+      </para>
+      <para context="gui">
+        In modalità predefinita, gli errori standard sono calcolati con
+        l'inversa negativa dell'Hessiana.  Se si seleziona la casella "Errori
+        standard robusti", verranno calcolati gli errori standard QML o quelli
         di Huber&ndash;White. In questo caso, la matrice di covarianza stimata è
         un <quote>sandwich</quote> dell'inversa dell'Hessiana stimata e del
         prodotto esterno del gradiente. Per i dettagli, si veda Davidson e
@@ -3446,9 +3490,14 @@
         caratteristica in ogni osservazione, invece che una variabile
         binaria che indica se la caratteristica è presente o no), non
         bisogna usare il comando <cmd>logit</cmd>, ma occorre costruire
-        la variabile logit (ad es. <lit>genr lgt_p = log(p/(1 - p))</lit>)
-        e usare questa come variabile dipendente in una regressione OLS;
-        si veda Ramanathan, capitolo 12.
+        la variabile logit come
+      </para>
+      <code>
+	genr lgt_p = log(p/(1 - p))
+      </code>
+      <para>
+        e usare questa come variabile dipendente in una regressione OLS.
+        Si veda Ramanathan, capitolo 12.
       </para>
     </description>
 
@@ -3615,15 +3664,15 @@
     <description>
       <para>
 	Questo comando richiede il nome di un file che contiene
-        "marcatori" per le osservazioni, ossia brevi stringhe
+        <quote>marcatori</quote> per le osservazioni, ossia brevi stringhe
         identificative per singole osservazioni del dataset (ad esempio
         nomi di paesi o città, o altri codici), che possono essere
         lunghe fino a 8 caratteri. Il file deve contenere un marcatore
         per riga e devono esserci tanti marcatori quante sono le
         osservazioni nel dataset corrente. Se queste condizioni sono
         rispettate e se il file specificato esiste, i marcatori verranno
-        aggiunti al dataset e saranno visibili scegliendo "Mostra
-        valori" dal menù "Dati" di gretl.</para>
+        aggiunti al dataset e saranno visibili scegliendo <quote>Mostra valori</quote>
+        dal menù Dati di gretl.</para>
     </description>
   </command>
 
@@ -3648,7 +3697,10 @@
 	Calcola la statistica <mathvar>t</mathvar> per l'ipotesi
 	nulla che le medie della popolazione siano uguali per le
         variabili <repl>var1</repl> e <repl>var2</repl>, mostrando il
-        suo p-value. L'impostazione predefinita prevede di assumere che
+        suo p-value.
+      </para>
+      <para>
+        L'impostazione predefinita prevede di assumere che
         le varianze delle due variabili siano uguali, mentre usando
         l'opzione <lit>--unequal-vars</lit>, si assume che esse siano
         diverse. Questo è rilevante per la statistica test solo se le
@@ -4529,12 +4581,12 @@
       </arguments>
       <options>
         <option>
-	  <flag>--save-all</flag>
-	  <effect>salva tutte le componenti</effect>
-        </option>
-        <option>
 	  <flag>--save</flag>
 	  <effect>salva le componenti principali</effect>
+        </option>
+        <option>
+	  <flag>--save-all</flag>
+	  <effect>salva tutte le componenti</effect>
         </option>
       </options>
     </usage>
@@ -4584,18 +4636,17 @@
 	Calcola e mostra (graficamente se non si è in modalità batch)
         lo spettro della variabile specificata. Senza l'opzione
 	<lit>--bartlett</lit>, viene mostrato il periodogramma nel
-        campione, usando l'opzione, lo spettro viene stimato usando una
-        finestra di Bartlett per i ritardi di lunghezza
-	<equation status="inline"
-	  tex="$2\sqrt{T}$"
-	  ascii="2*sqrt(T)"
-	  graphic="tworootT"/> (dove <mathvar>T</mathvar> è l'ampiezza
-          del campione); si veda il capitolo 18 di <book>Econometric
-          Analysis</book> di Greene. Se viene mostrato il periodogramma
-          del campione, viene mostrato anche il test <mathvar>t</mathvar>
-          per l'integrazione frazionale della serie (<quote>memoria
-          lunga</quote>): l'ipotesi nulla è che l'ordine di integrazione
-          sia zero.
+        campione; usando l'opzione, lo spettro viene stimato usando una
+        finestra di Bartlett per i ritardi di lunghezza pari al doppio della
+        radice quadrata dell'ampiezza campionaria (si veda il capitolo 18 di
+        <book>Econometric Analysis</book> di Greene).
+       </para>
+       <para>
+        Se viene mostrato il periodogramma
+        del campione, viene mostrato anche il test <mathvar>t</mathvar>
+        per l'integrazione frazionale della serie (<quote>memoria
+        lunga</quote>): l'ipotesi nulla è che l'ordine di integrazione
+        sia zero.
       </para>
     </description>
 
@@ -4641,17 +4692,18 @@
         <equation status="display"
           tex="\[\mathrm{Pr}(Y = y) = \frac{e^{-v} v^y}{y!}\]"
           ascii="Pr(Y = y) = exp(-v) * v^y / y!"
-          graphic="poisson-dist"/>per <mathvar>y</mathvar> = 0, 1,
+          graphic="poisson1"/>
+      per <mathvar>y</mathvar> = 0, 1,
       2,&hellip;.  La media e la varianza della distribuzione sono entrambe uguali a
       <mathvar>v</mathvar>. Nel modello di regressione di Poisson, il parametro
       <mathvar>v</mathvar> è rappresentato da una funzione di una o più varabili
       indipendenti. La versione più comune del modello (e l'unica supportata da
       gretl) ha
         <equation status="display"
-          tex="\[v = \mathrm{exp}(\beta_0 + \beta_1 x_1 + \beta_2 x_2 +
-      \cdots)\]"
+          tex="\[v = \mathrm{exp}(\beta_0+\beta_1 x_1+\beta_2 x_2 + \cdots)\]"
           ascii="v = exp(b0 + b1*x1 + b2*x2 + ...)"
-          graphic="poisson-model"/>, ossia il logaritmo di
+          graphic="poisson2"/>,
+      ossia il logaritmo di
       <mathvar>v</mathvar> è una funzione lineare delle variabili indipendenti.
       </para>
 
@@ -5338,7 +5390,12 @@
     <description>
       <para>
 	Esegue i comandi nel <repl>file-input</repl> e restituisce il
-        controllo al prompt interattivo.
+        controllo al prompt interattivo. Questo comando si intende usato con il
+        programma a riga di comando gretlcli, o con il <quote>terminale di gretl</quote>
+        nel programma con interfaccia grafica.
+      </para>
+      <para>
+	Si veda anche <cmdref targ="include"/>.
       </para>
     </description>
 
@@ -5517,10 +5574,12 @@
     <description>
       <para>Richiede un argomento intero. Imposta il seme del generatore
       di numeri pseudo-casuali usato dalle opzioni Variabile casuale
-      uniforme e normale nel menù Dati, Aggiungi variabili. Di solito il
-      seme è impostato al momento dell'avvio del programma usando
-      l'orologio di sistema, ma per ottenere sequenze ripetibili di
-      numeri pseudo-casuali occorre impostarlo manualmente.
+      uniforme e normale nel menù Dati, Aggiungi variabili.
+      </para>
+      <para>
+      Di solito il seme è impostato al momento dell'avvio del programma usando
+      l'orologio di sistema, ma per ottenere sequenze ripetibili di numeri
+      pseudo-casuali occorre impostarlo manualmente.
       </para>
     </description>
   </command>
@@ -6434,10 +6493,28 @@
         "strumenti". Questi ultimi comprendono le variabili esogene e/o
         altre variabili predeterminate che possono essere usate come
         regressori per derivare valori stimati delle variabili endogene
-        del modello.</para>
+        del modello.
+      </para>
 
       <para context="gui">Se alcune delle variabili del modello sono
-      esogene, vanno incluse in entrambe le liste.</para>
+        esogene, vanno incluse in entrambe le liste.
+      </para>
+      
+      <para>
+	L'output del comando comprende il test di Hausman e, se il modello è
+        sovra-identificato, il test di Sargano per la sovra-identificazione. Nel
+        test di Hausman, l'ipotesi nulla è che le stime OLS siano consistenti, o
+        in altre parole che non sia richiesta la stima per mezzo di variabili
+        strumentali. Un modello di questo tipo è sovra-identificato se ci sono
+        pià strumenti di quelli strettamente necessari. Il test di Sargan è
+        basato su una regressione ausiliaria dei residui del modello minimi
+        quadrati a due stadi sull'intera lista degli strumenti. L'ipotesi nulla
+        è che tutti gli strumenti siano validi, cosa di cui si dovrebbe dubitare
+        se la regressione ausiliaria ha un significativo potere esplicativo.
+	Davidson e MacKinnon (2004, capitolo 8) forniscono una buona spiegazione di
+        entrambi i test.
+      </para>
+
     </description>
 
     <gui-access>
