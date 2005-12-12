@@ -5,11 +5,11 @@
 \section{Features at a glance}
 \label{features}
 
-\app{gretl} is an econometrics package, including a shared library, a
+\app{Gretl} is an econometrics package, including a shared library, a
 command-line client program and a graphical user interface.
     
 \begin{description}
-\item[User-friendly] \app{gretl} offers an intuitive user interface;
+\item[User-friendly] \app{Gretl} offers an intuitive user interface;
   it is very easy to get up and running with econometric analysis.
   Thanks to its association with the econometrics textbooks by Ramu
   Ramanathan, Jeffrey Wooldridge, and James Stock and Mark Watson the
@@ -18,71 +18,67 @@ command-line client program and a graphical user interface.
 \item[Flexible] You can choose your preferred point on the spectrum
   from interactive point-and-click to batch processing, and can easily
   combine these approaches.
-\item[Cross-platform] \app{gretl}'s home platform is Linux, but it is
-  also available for MS Windows.  I have compiled it on Mac OS X and
-  AIX and it should work on any unix-like system that has the
-  appropriate basic libraries (see Appendix~\ref{app-technote}).
+\item[Cross-platform] \app{Gretl}'s ``home'' platform is Linux but it
+  is also available for MS Windows and Mac OS X, and should work on
+  any unix-like system that has the appropriate basic libraries (see
+  Appendix~\ref{app-technote}).
 \item[Open source] The full source code for \app{gretl} is available
-  to anyone who wants to critique it, patch it, or extend it.  The
-  author welcomes any bug reports.
-\item[Reasonably sophisticated] \app{gretl} offers a full range of
+  to anyone who wants to critique it, patch it, or extend it.
+\item[Reasonably sophisticated] \app{Gretl} offers a full range of
   least-squares based estimators, including two-stage least squares
-  and nonlinear least squares.  It also offers (binomial) logit and
-  probit estimation, and has a loop construct for running Monte Carlo
-  analyses or iterative estimation of non-linear models. While it does
-  not include all the estimators and tests that a professional
-  econometrician might require, it supports the export of data to the
-  formats of (\href{http://www.r-project.org/}{GNU R}) and
-  (\href{http://www.octave.org/}{GNU Octave}) for further analysis
-  (see Appendix~\ref{app-advanced}).
-\item[Accurate] \app{gretl} has been thoroughly tested on the NIST
+  and nonlinear least squares.  It also offers several specific
+  maximum-likelihood estimators (e.g.\ logit, probit, tobit) and, as
+  of version 1.5.0, general likelihood-maximization functionality.
+  The program supports estimation of systems of simultaneous
+  equations, GARCH, ARMA, vector autoregressions and vector error
+  correction models.
+\item[Accurate] \app{Gretl} has been thoroughly tested on the NIST
   reference datasets. See Appendix~\ref{app-accuracy}.
-\item[Internet ready] \app{gretl} can access and fetch databases from
+\item[Internet ready] \app{Gretl} can access and fetch databases from
   a server at Wake Forest University.  The MS Windows version comes
   with an updater program which will detect when a new version is
   available and offer the option of auto-updating.
-\item[International] \app{gretl} will produce its output in English,
-  French, Italian, Spanish or Polish, depending on your computer's
-  native language setting.
+\item[International] \app{Gretl} will produce its output in English,
+  French, Italian, Spanish, Polish or German, depending on your
+  computer's native language setting.
 \end{description}
 
 
 \section{Acknowledgements}
 \label{ack}
 
-My primary debt is to Professor Ramu Ramanathan of the University of
-California, San Diego.  A few years back he was kind enough to provide
-me with the source code for his program \app{ESL} (``Econometrics
-Software Library''), which I ported to Linux, and since then I have
-collaborated with him on updating and extending the program.  For the
-\app{gretl} project I have made extensive changes to the original
-\app{ESL} code.  New econometric functionality has been added, and the
-graphical interface is entirely new. Please note that Professor
-Ramanathan is not responsible for any bugs in \app{gretl}.
-    
-I am grateful to the authors of several econometrics textbooks for
-permission to package for \app{gretl} various datasets associated with
-their texts.  This list currently includes William Greene, author of
-\emph{Econometric Analysis}; Jeffrey Wooldridge (\emph{Introductory
+The \app{gretl} code base originally derived from the program
+\app{ESL} (``Econometrics Software Library''), written by Professor
+Ramu Ramanathan of the University of California, San Diego.  
+We are much in debt to Professor Ramanathan for making this code
+available under the GNU General Public Licence and for helping to
+steer \app{gretl}'s development.
+
+We are also grateful to the authors of several econometrics textbooks
+for permission to package for \app{gretl} various datasets associated
+with their texts.  This list currently includes William Greene, author
+of \emph{Econometric Analysis}; Jeffrey Wooldridge (\emph{Introductory
   Econometrics: A Modern Approach}); James Stock and Mark Watson
 (\emph{Introduction to Econometrics}); Damodar Gujarati (\emph{Basic
   Econometrics}); and Russell Davidson and James MacKinnon
-(\emph{Econometric Theory and Methods}).  GARCH estimation in
-\app{gretl} is based on code deposited in the archive of the
-\emph{Journal of Applied Econometrics} by Professors Fiorentini,
-Calzolari and Panattoni, and the code to generate \emph{p}-values for
-Dickey Fuller tests is due to James MacKinnon.  In each case I am
-grateful to the authors for permission to use their work.  
+(\emph{Econometric Theory and Methods}).  
 
-With regard to the internationalization of \app{gretl}, I wish to
-thank Ignacio Díaz-Emparanza, Michel Robitaille, Cristian Rigamonti
-and Tadeusz Kufel, who prepared the Spanish, French, Italian and
-Polish translations respectively.
+GARCH estimation in \app{gretl} is based on code deposited in the
+archive of the \emph{Journal of Applied Econometrics} by Professors
+Fiorentini, Calzolari and Panattoni, and the code to generate
+\emph{p}-values for Dickey--Fuller tests is due to James MacKinnon.  In
+each case we are grateful to the authors for permission to use their
+work.
 
-I have benefitted greatly from the work of numerous developers of
-open-source software: for specifics please see
-Appendix~\ref{app-technote}. My thanks are due to Richard Stallman of
-the Free Software Foundation, for his support of free software in
+With regard to the internationalization of \app{gretl}, thanks go to
+Ignacio Díaz-Emparanza, Michel Robitaille, Cristian Rigamonti, Tadeusz
+and Pawel Kufel, and Markus Hahn, who prepared the Spanish, French,
+Italian, Polish and German translations respectively.
+
+\app{Gretl} has benefitted greatly from the work of numerous
+developers of free, open-source software: for specifics please see
+Appendix~\ref{app-technote}.  Our thanks are due to Richard Stallman
+of the Free Software Foundation, for his support of free software in
 general and for agreeing to ``adopt'' \app{gretl} as a GNU program in
 particular.
 
@@ -90,8 +86,7 @@ Many users of \app{gretl} have submitted useful suggestions and bug
 reports.  In this connection particular thanks are due to Ignacio
 Díaz-Emparanza, Tadeusz Kufel, Pawel Kufel, Alan Isaac, Cri Rigamonti
 and Dirk Eddelbuettel, who maintains the \app{gretl} package for
-Debian GNU/Linux.  Besides making good suggestions, Riccardo ``Jack''
-Lucchetti has contributed substantial code and econometric expertise.
+Debian GNU/Linux.  
 
 
 \section{Installing the programs}
@@ -100,23 +95,20 @@ Lucchetti has contributed substantial code and econometric expertise.
 \subsection{Linux}
 \label{linux-install}
 
-On the Linux\footnote{Terminology is a bit of a problem here, but in
-  this manual I will use ``Linux'' as shorthand to refer to the
-  GNU/Linux operating system.  What is said herein about Linux mostly
-  applies to other unix-type systems too, though some local
-  modifications may be needed.} platform you have the choice of
+On the Linux\footnote{In this manual we use ``Linux'' as shorthand to
+  refer to the GNU/Linux operating system.  What is said herein about
+  Linux mostly applies to other unix-type systems too, though some
+  local modifications may be needed.} platform you have the choice of
 compiling the \app{gretl} code yourself or making use of a pre-built
 package. Ready-to-run packages are available in \app{rpm} format
 (suitable for Red Hat Linux and related systems) and also \app{deb}
-format (Debian GNU/Linux).  I am grateful to Dirk Eddelbüttel for
-making the latter.  If you prefer to compile your own (or are using a
-unix system for which pre-built packages are not available) here is
-what to do.
+format (Debian GNU/Linux).  If you prefer to compile your own (or are
+using a unix system for which pre-built packages are not available)
+here is what to do.
       
 \begin{enumerate}
 \item Download the latest \app{gretl} source package from
   \href{http://gretl.sourceforge.net/}{gretl.sourceforge.net}.
-          
 \item Unzip and untar the package.  On a system with the GNU utilities
   available, the command would be \cmd{tar xvfz gretl-N.tar.gz}
   (replace \cmd{N} with the specific version number of the file you
@@ -149,11 +141,11 @@ process fails, please see Appendix~\ref{app-technote}.
           
 \end{enumerate}
 
-As of version 0.97 \app{gretl} offers support for the \app{gnome}
-desktop.  To take advantage of this you should compile the program
-yourself (as described above).  If you want to suppress the
-\app{gnome}-specific features you can pass the option
-\verb+--without-gnome+ to \cmd{configure}.
+\app{Gretl} offers support for the \app{gnome} desktop.  To take
+advantage of this you should compile the program yourself (as
+described above).  If you want to suppress the \app{gnome}-specific
+features you can pass the option \verb+--without-gnome+ to
+\cmd{configure}.
 
 
 \subsection{MS Windows}

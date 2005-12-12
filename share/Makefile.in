@@ -50,9 +50,16 @@ IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
 
 VPATH = $(sharesrc)
 
-.PHONY :
-
 all: $(AUTO_HELPFILES) $(RECODE_FILES)
+
+$(AUTO_HELPFILES): $(AUTO_HELP_SRCS) $(AUTO_HELP_STY) $(AUTO_HELP_STRS)
+	make -C ../doc/commands help-all
+
+$(RECODE_FILES): $(sharesrc)/gretlgui.hlp.es $(sharesrc)/gretlcmd.hlp.es \
+	$(sharesrc)/gretlgui.hlp.it $(sharesrc)/gretlcmd.hlp.it
+	for f in $^ ; do recode l1..utf-8 < $$f > $$f.utf8 ; done
+
+.PHONY :
 
 install: installdirs install_datafiles install_scripts install_help \
 	$(INSTALL_GUI_SCRIPT_HELP) $(INSTALL_HELP_FIGS)
@@ -114,18 +121,14 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(gretldir)/db
 
-$(AUTO_HELPFILES): $(AUTO_HELP_SRCS) $(AUTO_HELP_STY) $(AUTO_HELP_STRS)
-	make -C ../doc/commands help-all
-
-$(RECODE_FILES): $(sharesrc)/gretlgui.hlp.es $(sharesrc)/gretlcmd.hlp.es \
-	$(sharesrc)/gretlgui.hlp.it $(sharesrc)/gretlcmd.hlp.it
-	for f in $^ ; do recode l1..utf-8 < $$f > $$f.utf8 ; done
-
 clean:
 	make -C bcih clean
 
 textclean: 
 	rm -f *.txt *.utf8
+
+helpclean:
+	for f in $(AUTO_HELPFILES) ; do rm -f $$f ; done
 
 distclean: clean
 	rm -f Makefile

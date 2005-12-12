@@ -105,7 +105,13 @@
 </xsl:template>
 
 <xsl:template match="para">
+  <xsl:if test="@role='preformatted'">
+    <xsl:text>\begin{raggedright}</xsl:text>
+  </xsl:if>
   <xsl:apply-templates/>
+  <xsl:if test="@role='preformatted'">
+    <xsl:text>\end{raggedright}</xsl:text>
+  </xsl:if>
   <xsl:if test="not(ancestor::entry)">
     <xsl:text>&#10;&#10;</xsl:text>
   </xsl:if>

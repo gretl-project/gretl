@@ -11,7 +11,8 @@
 <!ENTITY latex  "LaTeX">
 <!ENTITY minus  "&#8211;">
 <!ENTITY par    "">
-
+<!ENTITY eg     "e.g.">
+<!ENTITY ie     "i.e.">
 
 <!ELEMENT commandlist (command)+>
 <!ATTLIST commandlist

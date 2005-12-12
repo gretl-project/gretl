@@ -471,9 +471,8 @@ static int
 tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatlist,
 		   double ***pZ, DATAINFO *pdinfo)
 {
-    int df = hatlist[0];
     double RRSS;
-    int err = 0;
+    int df, err = 0;
 
     MODEL hmod;
     int *HT_list = NULL;
@@ -498,7 +497,11 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatlist,
     if (hmod.errcode) {
 	err = hmod.errcode;
 	goto bailout;
-    } else {
+    } else if ((df = hmod.list[0] - reglist[0]) > 0) {
+	/* Degrees of freedom for the Hausman test need not be equal to the
+	   number of added regressors, since some of them may not really be 
+	   endogenous.
+	*/
 	double URSS = hmod.ess;
 	double HTest = (RRSS/URSS - 1) * hmod.nobs;
 	ModelTest *test = model_test_new(GRETL_TEST_TSLS_HAUSMAN);
@@ -509,7 +512,7 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatlist,
 	    model_test_set_value(test, HTest);
 	    model_test_set_pvalue(test, chisq(HTest, df));
 	    maybe_add_test_to_model(tsls_model, test);
-	}       
+	}
     }
 
  bailout:

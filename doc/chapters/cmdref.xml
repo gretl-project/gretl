@@ -34,8 +34,8 @@
       <listitem>
 	<para>
 	  Terms in a <replaceable>slanted font</replaceable> are place-holders:
-	  you should substitute something specific, e.g. you might type
-	  <varname>income</varname> in place of the generic
+	  you should substitute some specific replacement.  For example, you
+	  might type <varname>income</varname> in place of the generic
 	  <replaceable>xvar</replaceable>.</para>
       </listitem>
 

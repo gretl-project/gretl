@@ -35,24 +35,7 @@
      below the specific chapters to be converted.  -->
 
 <book id="index" lang="es">
-
   <title>Gretl Command Reference</title>
-
-  <bookinfo>
-
-    <subtitle>Gnu Regression, Econometrics and Time-series
-      Library</subtitle>
-
-    <author>
-      <firstname>Allin</firstname>
-      <surname>Cottrell</surname>
-      <affiliation>
-	<orgdiv>Department of Economics</orgdiv>
-	<orgdiv>Wake Forest University</orgdiv>
-      </affiliation>
-    </author>
-
-  </bookinfo>
 
   &cmdref;
   &optarg;

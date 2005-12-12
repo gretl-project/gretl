@@ -165,15 +165,15 @@ variable 2, and so on.
 \chapter{Technical notes}
 \label{app-technote}
 
-\app{Gretl} is written in the C programming language.  I have abided
-as far as possible by the ISO/ANSI C Standard (C89), although the
-graphical user interface and some other components necessarily make
-use of platform-specific extensions.
+\app{Gretl} is written in the C programming language, abiding as far
+as possible by the ISO/ANSI C Standard (C90) although the graphical
+user interface and some other components necessarily make use of
+platform-specific extensions.
   
-\app{gretl} was developed under Linux. The shared library and
+The program was developed under Linux. The shared library and
 command-line client should compile and run on any platform that (a)
-supports ISO/ANSI C, (b) has the following libraries installed: zlib
-(data compression), libxml (XML manipulation), and LAPACK (linear
+supports ISO/ANSI C, and (b) has the following libraries installed:
+zlib (data compression), libxml (XML manipulation), and LAPACK (linear
 algebra support). The homepage for zlib can be found at
 \href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org}; libxml
 is at \href{http://xmlsoft.org/}{xmlsoft.org}; LAPACK is at
@@ -182,7 +182,7 @@ library is found on the host system this will be used for
 \app{gretcli}, providing a much enhanced editable command line.  See
 the
 \href{http://cnswww.cns.cwru.edu/~chet/readline/rltop.html}{readline
-  homepage}.  
+  homepage}.
 
 The graphical client program should compile and run on any system
 that, in addition to the above requirements, offers GTK version 1.2.3
@@ -191,11 +191,10 @@ writing there are two main variants of the GTK libraries: the 1.2
 series and the 2.0 series which was launched in summer 2002.  These
 variants are mutually incompatible.  \app{gretl} can be built using
 either one --- the source code package includes two sub-directories,
-\verb+gui+ for GTK 1.2 and \verb+gui2+ for GTK 2.0.  I recommend use
-of GTK 2.0 if it is available, since it offers many enhancements over
-GTK 1.2.
+\verb+gui+ for GTK 1.2 and \verb+gui2+ for GTK 2.0.  Use of GTK 2.0
+is recommended, since it offers many enhancements over GTK 1.2.
   
-\app{gretl} calls gnuplot for graphing. You can find gnuplot at
+\app{Gretl} calls gnuplot for graphing. You can find gnuplot at
 \href{http://www.gnuplot.info/}{gnuplot.info}.  As of this writing the
 most recent official release is 4.0 (of April, 2004).  The MS Windows
 version of \app{gretl} comes with a Windows version gnuplot 4.0; the
@@ -216,7 +215,7 @@ ported for use with win32) and linked against the Microsoft C library,
 The (free, open-source) Windows installer program is courtesy of
 Jordan Russell (\href{http://www.jrsoftware.org/}{jrsoftware.org}).
 
-I'm hopeful that some users with coding skills may consider
+We're hopeful that some users with coding skills may consider
 \app{gretl} sufficiently interesting to be worth improving and
 extending.  The documentation of the libgretl API is by no means
 complete, but you can find some details by following the link
@@ -225,7 +224,7 @@ complete, but you can find some details by following the link
 \chapter{Numerical accuracy}
 \label{app-accuracy}
 
-\app{gretl} uses double-precision arithmetic throughout --- except for
+\app{Gretl} uses double-precision arithmetic throughout --- except for
 the multiple-precision plugin invoked by the menu item ``Model/High
 precision OLS'' which represents floating-point values using a number
 of bits given by the environment variable \verb+GRETL_MP_BITS+
@@ -237,12 +236,9 @@ reference datasets provided by NIST (the U.S. National Institute of
 Standards and Technology) and a full account of the results may be
 found on the gretl website (follow the link ``Numerical accuracy'').
 
-In October 2002 I had a useful exchange with Giovanni Baiocchi and
-Walter Distaso, who were writing a review of \app{gretl} for the
-\emph{Journal of Applied Econometrics}, and James MacKinnon, software
-review editor for the journal.\footnote{This review has since been
-  published; see Baiocchi and Distaso (2003).} and I am grateful to
-Baiocchi and Distaso for their careful examination of the program,
+Giovanni Baiocchi and Walter Distaso published a review of \app{gretl}
+in the \emph{Journal of Applied Econometrics} (2003).  We are grateful
+to Baiocchi and Distaso for their careful examination of the program,
 which prompted the following modifications.
 
 \begin{enumerate}
@@ -262,13 +258,13 @@ which prompted the following modifications.
   the statistics associated with a regression are printed to 6
   significant figures.
 \item It transpired from the reviewer's tests that the numerical
-  accuracy of \app{gretl} on MS Windows was less than on Linux, where
-  I had done my testing.  For example, on the Longley data --- a
-  well-known ``ill-conditioned'' dataset often used for testing
-  econometrics programs --- the Windows version of gretl was getting
-  some coefficients wrong at the 7th digit while the same coefficients
-  were correct on Linux.  This anomaly was fixed in \app{gretl}
-  version 1.0pre3 (released October 10, 2002).
+  accuracy of \app{gretl} on MS Windows was less than on Linux.  For
+  example, on the Longley data --- a well-known ``ill-conditioned''
+  dataset often used for testing econometrics programs --- the Windows
+  version of gretl was getting some coefficients wrong at the 7th
+  digit while the same coefficients were correct on Linux.  This
+  anomaly was fixed in \app{gretl} version 1.0pre3 (released October
+  10, 2002).
 \end{enumerate}
 
 The current version of \app{gretl} includes a ``plugin'' that runs the
@@ -289,24 +285,17 @@ This will show the value to 10 digits.
 \chapter{Advanced econometric analysis with free software}
 \label{app-advanced}
 
-As mentioned in the main text, \app{gretl} offers a reasonably full
-selection of least-squares based estimators, plus a few additional
-estimators such as (binomial) logit and probit and Least Absolute
-Deviations. Advanced users may, however, find \app{gretl}'s menu of
-statistical routines restrictive.
-
-No doubt some advanced users will prefer to write their own
-statistical code in a fundamental computer language such as C, C++ or
-Fortran.  Another option is to use a relatively high-level language
-that offers easy matrix manipulation and that already has numerous
-statistical routines built in, or available as add-on packages. If the
-latter option sounds attractive, and you are interested in using free,
-open source software, I would recommend taking a look at either GNU R
+\app{Gretl} offers a reasonably full (and expanding) selection of
+estimators, and also offers various scripting constructs that may be
+useful in the creation of additional estimators. It does not, however,
+support the creation and manipulation of matrices as such.  If you are
+looking for this functionality in the realm of free, open-source
+software we recommend taking a look at either GNU R
 (\href{http://www.r-project.org/}{r-project.org}) or GNU Octave
 (\href{http://www.octave.org/}{www.octave.org}).  These programs are
 very close to the commercial programs S and Matlab respectively.
   
-Also as mentioned above, \app{gretl} offers the facility of exporting
+As mentioned above, \app{gretl} offers the facility of exporting
 data in the formats of both Octave and R.  In the case of Octave, the
 \app{gretl} data set is saved as a single matrix, \verb+X+. You can
 pull the \verb+X+ matrix apart if you wish, once the data are loaded
@@ -317,13 +306,12 @@ should be brought into R using the \cmd{source()} command.
   
 Of these two programs, R is perhaps more likely to be of immediate
 interest to econometricians since it offers more in the way of
-statistical routines (e.g.\ generalized linear models, maximum
-likelihood estimation, time series methods). I have therefore supplied
-\app{gretl} with a convenience function for moving data quickly into
-R. Under \app{gretl}'s Session menu, you will find the entry ``Start
-GNU R''.  This writes out an R version of the current \app{gretl} data
-set (\verb+Rdata.tmp+, in the user's gretl directory), and sources it
-into a new R session. A few details on this follow.
+specialized statistical routines.  \app{Gretl} therefore has a
+convenience function for moving data quickly into R. Under
+\app{gretl}'s Session menu, you will find the entry ``Start GNU R''.
+This writes out an R version of the current \app{gretl} data set
+(\verb+Rdata.tmp+, in the user's gretl directory), and sources it into
+a new R session. A few details on this follow.
   
 First, the data are brought into R by writing a temporary version of
 \verb+.Rprofile+ in the current working directory.  (If such a file
@@ -336,11 +324,8 @@ happy to hear of it.)
 Second, the particular way R is invoked depends on the internal
 \app{gretl} variable \verb+Rcommand+, whose value may be set under the
 File, Preferences menu.  The default command is \cmd{RGui.exe} under
-MS Windows. Under X it is either \cmd{R --gui=gnome} if an
-installation of the Gnome desktop
-(\href{http://www.gnome.org/}{gnome.org}) was detected at compile
-time, or \cmd{xterm -e R} if Gnome was not found. Please note that at
-most three space-separated elements in this command string will be
+MS Windows. Under X it is \cmd{xterm -e R}. Please note that at most
+three space-separated elements in this command string will be
 processed; any extra elements are ignored.
 
 \chapter{Listing of URLs}
