@@ -111,8 +111,8 @@ the <a href="http://www.gnu.org">Free Software Foundation</a>.</p>
 <li><p class="in-list">Easy intuitive interface (now in French,
   Italian, Spanish, Polish and German as well as English)</p></li>
 
-<li><p class="in-list">A wide variety of least-squares based estimators, including
-two-stage least squares and nonlinear least squares</p></li>
+<li><p class="in-list">A wide variety of least-squares and maximum-likelihood
+estimators, including systems estimators</p></li>
 
 <li><p class="in-list">Single commands to launch things like augmented Dickey-Fuller test,
 Chow test for structural stability, Vector Autoregressions, ARMA estimation</p></li>
@@ -134,8 +134,8 @@ simulations and iterative estimation procedures</p></li>
 <h2><a name="formats">Data formats</a></h2>
 
 <p>Reads own format XML data files, Comma Separated Values files, 
-Excel and Gnumeric worksheets, BOX1
-files, own format binary databases (allowing mixed data frequencies and
+Excel and Gnumeric worksheets, Stata <tt>.dta</tt> files, Eviews
+workfiles, own format binary databases (allowing mixed data frequencies and
 series lengths) and RATS 4 databases.  Includes a sample US macro database. 
 See also the <a href="./gretl_data.html">gretl data page</a>.
 </p>
@@ -221,15 +221,17 @@ release of gnuplot is version 4.0 (dated April 2004), which is available via
 
 <h2><a name="man">Manual</a></h2>
 
-<p>A comprehensive manual is available in PDF format (c. 1.5Mb, 100+ pages), in both
-	    US letter size (<a href="./manual.pdf">manual.pdf</a>) and A4 size (<a
-	      href="./manual-a4.pdf">manual-a4.pdf</a>). An Italian translation of
-	    the manual is also available (<a
-	      href="./manual_it.pdf">manual_it.pdf</a>), thanks to Cristian
-	    Rigamonti. If you don't have the software to read PDF files you can
-	    download it from <a
-	      href="http://www.adobe.com/products/acrobat/readstep2.html">the Adobe
-	      website</a>.</p>
+<p>
+The gretl manual comes in two PDF files, a <i>User's Guide</i> and a <i>Command
+Reference</i>.  English versions of these, formatted for U.S. letter-size paper,
+are included in the gretl source package and binary distributions.  Gretl will
+access the other available versions -- namely English (A4 paper), Italian and
+Spanish -- on demand, via the Internet.  You can also find the manual files 
+<a href="http://ricardo.ecn.wfu.edu/pub//gretl/manual/">here</a>.</p>
+
+<p>If you don't have the software to read PDF files you can download it from <a
+	    href="http://www.adobe.com/products/acrobat/readstep2.html">the
+	    Adobe website</a>.</p>
 
 <h2><a name="use">Do you use gretl?</a></h2>
 
@@ -286,13 +288,8 @@ Econometrics</i></a> (Dryden, currently in its 5th edition).  Ramu has
 also been a very helpful critic over the course of gretl's
 development.</p>
 
-<p>Riccardo "Jack" Lucchetti, of the University of Ancona, has played
-a special role in the development of gretl over the last few years,
-contributing several patches to add functionality in the areas of ARMA
-analysis, Tobit modeling, and time-series filters.</p>
-
 <p>Many people have sent in useful bug reports and suggestions for
-gretl's development; besides those already mentioned, I am
+gretl's development; besides those already mentioned, we are
 particularly indebted to Ignacio Díaz-Emparanza, Tadeusz Kufel and
 Dirk Eddelbuettel.</p>
 
@@ -307,7 +304,7 @@ Analysis</i></a>, for his permission to include in the gretl package
 some datasets relating to interesting examples in his text.</p>
 
 <p>Thanks to the good people on comp.lang.c and
-gtk-app-devel-list@gnome.org for straightening me out on several
+gtk-app-devel-list@gnome.org for export advice on many
 issues.  Thanks to Richard Stallman of the Free Software Foundation
 for all his work in developing and promoting free software, and more
 specifically for agreeing to "adopt" gretl as a GNU program.</p>
@@ -315,6 +312,7 @@ specifically for agreeing to "adopt" gretl as a GNU program.</p>
 <hr noshade>
 
 <p>Allin Cottrell, Wake Forest University</p>
+<p>Riccardo "Jack" Lucchetti, University of Ancona</p>
 <p>Last modified: LONGDATE
 </p>
 
