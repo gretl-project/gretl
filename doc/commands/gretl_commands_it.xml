@@ -2897,7 +2897,7 @@
 	<lit>endif</lit>
       </pre>      
 
-      <para>La <repl>condizione</repl> deve essere un'espressione
+      <para>La <repl quote="true">condizione</repl> deve essere un'espressione
       Booleana, per la cui sintassi si veda <cmdref targ="genr"/>.
       Il blocco <cmd>else</cmd> è opzionale; i blocchi <lit>if</lit> &hellip;
 	<lit>endif</lit> possono essere nidificati.</para>
