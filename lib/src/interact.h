@@ -49,6 +49,9 @@ typedef enum {
     ENGLISH = 1,
     BASQUE
 } ForcedLangs;
+
+#define HIDDEN_COMMAND(c) (c == FUNCERR || \
+                           c == REMEMBER)
     
 /* functions follow */
 

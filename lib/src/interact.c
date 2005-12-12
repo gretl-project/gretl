@@ -271,9 +271,6 @@ static int catch_command_alias (CMD *cmd)
                                c == PRINT || \
                                c == STORE)
 
-#define HIDDEN_COMMAND(c) (c == FUNCERR || \
-                           c == REMEMBER)
-
 static int flow_control (const char *line, double ***pZ, 
 			 DATAINFO *pdinfo, CMD *cmd)
 {

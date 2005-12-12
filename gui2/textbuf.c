@@ -26,7 +26,7 @@
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
 
-#define FORMAT_HELP_TEXT /* not ready yet */
+#define FORMAT_HELP_TEXT
 
 #define GUIDE_PAGE 999
 
@@ -765,7 +765,7 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
     const char *header = N_("Gretl Command Reference");
     GtkTextIter iter;
-    int i;
+    int i, j, k;
 
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
     gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
@@ -773,16 +773,23 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 					     "title", NULL);
     gtk_text_buffer_insert(tbuf, &iter, "\n\n\n", -1);
 
-    for (i=1; i<NC; i++) {
-	const char *word = gretl_command_word(i);
+    j = 1;
 
+    for (i=1; i<NC; i++) {
+	const char *word;
+
+	if (HIDDEN_COMMAND(i)) {
+	    continue;
+	}
+
+	word = gretl_command_word(i);
 	insert_link(tbuf, &iter, gretl_command_word(i), i);
-	if (i > 0 && i % 8 == 0) {
+	if (j++ % 8 == 0) {
 	    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 	} else {
-	    int j, n = 10 - strlen(word);
+	    int n = 10 - strlen(word);
 
-	    for (j=0; j<n; j++) {
+	    for (k=0; k<n; k++) {
 		gtk_text_buffer_insert(tbuf, &iter, " ", -1);
 	    }
 	}
