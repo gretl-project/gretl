@@ -19,6 +19,14 @@ export GTK_IM_MODULE_FILE
 DYLD_LIBRARY_PATH="$PREFIX/lib"
 export DYLD_LIBRARY_PATH
 
+# strenuous attempt to get fonts right!
+XFT_CONFIG="$PREFIX/etc/XftConfig"
+export XFT_CONFIG
+echo "dir \"$PREFIX/fonts\"" > "$XFT_CONFIG"
+echo "match any family == \"serif\" edit family += \"Luxi Serif\";" >> "$XFT_CONFIG"
+echo "match any family == \"sans\"  edit family += \"Luxi Sans\";"  >> "$XFT_CONFIG"
+echo "match any family == \"mono\"  edit family += \"Luxi Mono\";"  >> "$XFT_CONFIG"
+
 # location of gnuplot help file
 GNUHELP=$PREFIX/share/gnuplot/4.0/gnuplot.gih
 export GNUHELP
