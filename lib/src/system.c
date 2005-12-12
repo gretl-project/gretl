@@ -786,8 +786,9 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 				    PRN *prn)
 {
     gretlopt opt = OPT_NONE;
-    *gretl_errmsg = 0;
     int err = 0;
+
+    *gretl_errmsg = 0;
 
     if (sys == NULL) {
 	strcpy(gretl_errmsg, _(nosystem));

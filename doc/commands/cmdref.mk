@@ -39,4 +39,4 @@ xsltrans: xsltrans.c
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)
 
 clean: 
-	rm -f cmdlist.xml
+	rm -f cmdlist.xml *list.txt xsltrans reflow

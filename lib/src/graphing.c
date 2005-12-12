@@ -3060,9 +3060,10 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     fputs("set multiplot\n", fp);
     fprintf(fp, "set xlabel '%s'\n", _("periods"));
     fputs("set xzeroaxis\n", fp);
-    fprintf(fp, "set size %g,%g\n", plot_fraction, plot_fraction);
 
     gretl_push_c_numeric_locale();
+
+    fprintf(fp, "set size %g,%g\n", plot_fraction, plot_fraction);
 
     for (i=0; i<n; i++) {
 

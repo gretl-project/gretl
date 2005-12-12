@@ -70,6 +70,7 @@ install: $(GUIDE) $(REF)
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt $(ALTGUIDE) $(ALTREF) *~
 	rm -f refbody.tex gretl-guide-a4.tex gretl-ref-a4.tex
+	rm -rf auto
 
 distclean: clean
 	rm -rf CVS

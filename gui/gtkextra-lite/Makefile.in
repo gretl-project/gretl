@@ -15,7 +15,7 @@ HDRS = gtkextra.h gtkitementry.h gtkplotpc.h gtkpsfont.h \
 
 VPATH = $(topsrc)/gui/gtkextra-lite
 
-override CFLAGS += -I. $(GTK_CFLAGS) -I../..
+override CFLAGS += -I. $(GTK_CFLAGS) -I../.. -I$(topsrc)/lib/src
 
 OBJS = $(SRCS:.c=.o)
 
