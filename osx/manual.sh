@@ -1,9 +1,9 @@
 #!/bin/sh
 
 if [ "x$1" = "xuguide" ] ; then
-   MANUAL=$GTK_EXE_PREFIX/gretl-guide.pdf 
+   MANUAL="$GTK_EXE_PREFIX/share/doc/gretl-guide.pdf"
 else
-   MANUAL=$GTK_EXE_PREFIX/gretl-ref.pdf  
+   MANUAL="$GTK_EXE_PREFIX/share/doc/gretl-ref.pdf"  
 fi
 
 ASF=`echo $MANUAL | sed s+/++ | sed s+/+:+g`
