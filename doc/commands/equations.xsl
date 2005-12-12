@@ -13,22 +13,9 @@
   <xsl:text>&#10;&lt;/texequation&gt;&#10;</xsl:text>
 </xsl:template>
 
-<xsl:template match="para">
-  <xsl:apply-templates select="equation"/> 
-</xsl:template>
-
-<xsl:template match="description">
-  <xsl:apply-templates select="para"/> 
-  <xsl:apply-templates select="equation"/> 
-</xsl:template>
-
-<xsl:template match="command">
-  <xsl:apply-templates select="description"/> 
-</xsl:template>
-
 <xsl:template match="commandlist">
   <xsl:text>&lt;equation-set latexopt="12pt" density="96x96" usepackage="mathtime"&gt;&#10;</xsl:text>
-  <xsl:apply-templates select="command"/>
+  <xsl:apply-templates select=".//equation"/>
   <xsl:text>&lt;/equation-set&gt;&#10;</xsl:text>
 </xsl:template>
 

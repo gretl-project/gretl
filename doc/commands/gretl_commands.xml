@@ -949,32 +949,33 @@
 
     <description>
       <para>
-	Prints the values of the autocorrelation function for the
-	<repl>variable</repl> specified (either by name or number).
-	See Ramanathan, Section 11.7.  It is thus
+	Prints the values of the autocorrelation function for
+	<repl>variable</repl>, which may be specified by name or number.  The
+	values are defined as 
 	<equation status="inline" 
-	  tex="$\rho(u_t, u_{t-s})$"
-	  ascii="rho(u(t), u(t-s))"
-	  graphic="autocorr"/> where <mathvar>u<sub>t</sub></mathvar>
-	is the <mathvar>t</mathvar>th observation of the variable
-	<mathvar>u</mathvar> and <mathvar>s</mathvar> is the number of
-	lags.
+	  tex="$\hat{\rho}(u_t, u_{t-s})$" 
+	  ascii="rho(u(t), u(t-s))" 
+	  graphic="autocorr"/> where
+	<mathvar>u<sub>t</sub></mathvar> is the <mathvar>t</mathvar>th
+	observation of the variable <mathvar>u</mathvar> and
+	<mathvar>s</mathvar> is the number of lags.
       </para>
 
       <para>
-	The partial autocorrelations are also shown: these are net of
-	the effects of intervening lags.  The command also graphs the
-	correlogram and prints the Box&ndash;Pierce
-	<mathvar>Q</mathvar> statistic for testing the null hypothesis
-	that the series is <quote>white noise</quote>. This is
-	asymptotically distributed as chi-square with degrees of
-	freedom equal to the number of lags used.
+	The partial autocorrelations (calculated using the Durbin&ndash;Levinson
+	algorithm) are also shown: these are net of the effects of intervening
+	lags.  The command also graphs the correlogram and prints the
+	Box&ndash;Pierce <mathvar>Q</mathvar> statistic for testing the null
+	hypothesis that the series is <quote>white noise</quote>: this is
+	asymptotically distributed as chi-square with degrees of freedom equal
+	to the number of lags used.
       </para>
 
       <para>
 	If a <repl>maxlag</repl> value is specified the length of the
-	correlogram is limited to at most that number of lags,
-	otherwise the length is determined automatically.
+	correlogram is limited to at most that number of lags, otherwise the
+	length is determined automatically, as a function of the frequency of
+	the data and the number of observations.
       </para>
     </description>
 
@@ -3460,7 +3461,7 @@
 	logistic transformation of the dependent variable,
 	<equation status="display" 
 	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
-	  ascii="log(y/(ymax - y))"
+	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
       </para>
 
@@ -3469,27 +3470,28 @@
 	default is to use a <mathvar>y<super>*</super></mathvar> value
 	(the asymptotic maximum of the dependent variable) of 1. If
 	the dependent variable is a percentage, between 0 and 100, the
-	default <mathvar>y<super>*</super></mathvar> is 100.  If you
-	wish to set a different maximum, use the optional
-	<lit>ymax=</lit><repl>value</repl> syntax following the list
-	of regressors.  The supplied value must be greater than all of
-	the observed values of the dependent variable.</para>
+	default <mathvar>y<super>*</super></mathvar> is 100.
+      </para>
 
-      <para context="gui">The dependent variable must be strictly
-	positive.  If it is a decimal fraction, between 0 and 1, the
-	default is to use a ymax value (the asymptotic maximum of the
-	dependent variable) of 1.  If the dependent variable is a
-	percentage, between 0 and 100, the default ymax value is 100.
-	You are presented with a dialog box that allows you to specify
-	a different maximum if you wish.  The supplied ymax value must
-	be greater than all of the observed values of the dependent
-	variable.</para>
+      <para context="cli">
+	If you wish to set a different maximum, use the optional
+	<lit>ymax=</lit><repl>value</repl> syntax following the list of
+	regressors.  The supplied value must be greater than all of the observed
+	values of the dependent variable.
+      </para>
+
+      <para context="gui">
+	You are presented with a dialog box that allows you to specify a
+	different maximum if you wish.  The supplied
+	<mathvar>y<super>*</super></mathvar> value must be greater than all of
+	the observed values of the dependent variable.
+      </para>
 
       <para>The fitted values and residuals from the regression are
 	automatically transformed using 	  
 	<equation status="display" 
 	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"
-	  ascii="y = ymax / (1 + exp(-x))"
+	  ascii="y = y* / (1 + exp(-x))"
 	  graphic="logistic2"/> where <mathvar>x</mathvar> represents
 	either a fitted value or a residual from the OLS regression
 	using the transformed dependent variable.  The reported values

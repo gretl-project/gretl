@@ -1258,70 +1258,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
 }
 
-#ifdef PACF_BY_OLS
-
-static int get_pacf (double *pacf, int m, int varnum, 
-		     double ***pZ, DATAINFO *pdinfo, PRN *prn)
-{
-    int i, j, err = 0;
-    int *laglist, *list;
-    int t1 = pdinfo->t1;
-    int v = pdinfo->v;
-    MODEL tmp;
-
-    pdinfo->t1 = 0; 
-
-    list = malloc((m + 3) * sizeof *list);
-    laglist = malloc(m * sizeof *laglist);
-    if (list == NULL || laglist == NULL) {
-	pdinfo->t1 = t1;
-	return 1;
-    }
-
-    /* add appropriate number of lags to data set */
-    for (i=1; i<=m; i++) {
-	int lnum = laggenr(varnum, i, pZ, pdinfo);
-
-	if (lnum < 0) {
-	    free(list);
-	    free(laglist);
-	    return 1;
-	}
-	laglist[i-1] = lnum; 
-    }
-
-    gretl_model_init(&tmp, pdinfo);
-
-    pdinfo->t1 = t1;
-
-    list[1] = varnum;
-    for (i=2; i<=m; i++) {
-	list[0] = i + 2;
-	list[2] = 0;
-	for (j=0; j<i; j++) {
-	    list[j+3] = laglist[j];
-	}
-	tmp = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
-	if ((err = tmp.errcode)) {
-	    fprintf(stderr, "error estimating model for pacf\n");
-	    break;
-	}
-	pacf[i-1] = tmp.coeff[i];
-	clear_model(&tmp, pdinfo);
-    }
-
-    dataset_drop_last_variables(pdinfo->v - v, pZ, pdinfo);
-    free(laglist);
-    free(list);
-
-    pdinfo->t1 = t1;
-
-    return err;
-}
-
-#else
-
-/* Durbin-Levinson algorithm */
+/* PACF via Durbin-Levinson algorithm */
 
 static int get_pacf (double *pacf, const double *acf, int m)
 {
@@ -1357,8 +1294,6 @@ static int get_pacf (double *pacf, const double *acf, int m)
 
     return 0;
 }
-
-#endif
 
 int auto_acf_order (int pd, int nobs)
 {
@@ -1545,11 +1480,7 @@ int corrgram (int varno, int order, double ***pZ,
     /* for confidence bands */
     pm = 1.96 / sqrt((double) nobs);
 
-#ifdef PACF_BY_OLS
-    err = pacf_err = get_pacf(pacf, pacf_m, varno, pZ, pdinfo, prn);
-#else
     err = pacf_err = get_pacf(pacf, acf, pacf_m);
-#endif
 
     if (!err) {
 	pacf[0] = acf[0];

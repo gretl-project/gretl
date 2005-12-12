@@ -18,7 +18,7 @@ $\ell$
 \[z=re^{i2\pi\lambda}\]
 </texequation>
 <texequation fileref="autocorr">
-$\rho(u_t, u_{t-s})$
+$\hat{\rho}(u_t, u_{t-s})$
 </texequation>
 <texequation fileref="aic">
 \[{\rm AIC} = -2 \ell + 2k\]
@@ -46,6 +46,9 @@ $\ell$
 </texequation>
 <texequation fileref="garch_h">
 \[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p \beta_i h_{t-j}\]
+</texequation>
+<texequation fileref="cumulate">
+$y_t = \sum_{\tau=1}^t x_{\tau}$
 </texequation>
 <texequation fileref="hsk">
 $1/\sqrt{e^{y^*}}$
@@ -79,6 +82,12 @@ $(p-q)$
 </texequation>
 <texequation fileref="poisson2">
 \[v = \mathrm{exp}(\beta_0+\beta_1 x_1+\beta_2 x_2 + \cdots)\]
+</texequation>
+<texequation fileref="nw1">
+$p = 0.75 \times T^{1/3}$
+</texequation>
+<texequation fileref="nw2">
+$p = 4 \times (T/100)^{2/9}$
 </texequation>
 <texequation fileref="simformula">
 \[y_t=a_{0t} + a_{1t}y_{t-1} + a_{2t}y_{t-2} + \dots\]

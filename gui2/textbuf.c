@@ -393,6 +393,13 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 "size", 15 * PANGO_SCALE, NULL);
     gtk_text_tag_table_add(table, tag);
 
+    tag = gtk_text_tag_new("sansbold");
+    g_object_set(tag, "family", "sans",
+		 "weight", PANGO_WEIGHT_BOLD, 
+		 NULL);
+    gtk_text_tag_table_add(table, tag);
+
+
 #ifdef FORMAT_HELP_TEXT
     tag = gtk_text_tag_new("italic");
     g_object_set(tag, "family", "sans",
@@ -752,7 +759,7 @@ static void maybe_set_help_tabs (windata_t *hwin)
 	PangoTabArray *tabs;
 	
 	tabs = pango_tab_array_new(1, TRUE);
-	pango_tab_array_set_tab(tabs, 0, PANGO_TAB_LEFT, 45);
+	pango_tab_array_set_tab(tabs, 0, PANGO_TAB_LEFT, 50);
 	gtk_text_view_set_tabs(GTK_TEXT_VIEW(hwin->w), tabs);
 	pango_tab_array_free(tabs);
 	g_object_set_data(G_OBJECT(hwin->w), "tabs_set", GINT_TO_POINTER(1));
@@ -1155,7 +1162,7 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
 
 	gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
 						 p, -1,
-						 "redtext", NULL);
+						 "sansbold", NULL);
 	free(p);
     } else {
 	/* topic heading: plain command word */
