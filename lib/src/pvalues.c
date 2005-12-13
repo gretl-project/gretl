@@ -952,12 +952,18 @@ double genr_get_critical (const char *line, const double **Z,
 	if (ret < 0) {
 	    ret = NADBL;
 	}
-    } else {
-	/* normal or t */
+    } else if (st == 't') {
 	if (alpha > 0.5) {
 	    ret = -sqrt(f_crit_a(2.0 * (1.0 - alpha), 1, dfn));
 	} else {
 	    ret = sqrt(f_crit_a(2.0 * alpha, 1, dfn));
+	}
+    } else {
+	/* normal */
+	if (alpha > 0.5) {
+	    ret = ndtri(1.0 - alpha);
+	} else {
+	    ret = -ndtri(alpha);
 	}
     } 
 
