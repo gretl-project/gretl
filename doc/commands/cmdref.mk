@@ -27,14 +27,6 @@ dbtex_es: xsltrans gretl_commands_es.xml gretlman.xsl
 	cat cmdlist.xml >> ../chapters_es/cmdlist.xml && \
 	rm tmp.xml
 
-docbook: xsltrans gretl_commands.xml gretlman.xsl
-	./xsltrans --docbook gretl_commands.xml && \
-	cp cmdlist.xml ../chapters/cmdlist.xml
-
-docbook_it: xsltrans gretl_commands_it.xml gretlman.xsl
-	./xsltrans --docbook gretl_commands_it.xml && \
-	cp cmdlist.xml ../chapters_it/cmdlist.xml
-
 xsltrans: xsltrans.c 
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)
 

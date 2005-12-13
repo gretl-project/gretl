@@ -8,16 +8,16 @@
 
 <xsl:output method="xml" omit-xml-declaration="yes" indent="yes" encoding="iso-8859-1"/>
 
-<xsl:variable name="phrases"
-  select="document('hlpstrings.xml')/phrases"/>
+<xsl:variable name="intl"
+  select="document('hlp_l10n.xml')/internationalization"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>
-  <xsl:variable name="phrase"
-    select="$phrases/phrase[@key=$key and @lang=$lang]"/>
+  <xsl:variable name="itext"
+    select="$intl/localization[@language=$lang]/gentext[@key=$key]/@text"/>
   <xsl:choose>
-    <xsl:when test="$phrase">
-      <xsl:value-of select="$phrase"/>
+    <xsl:when test="$itext">
+      <xsl:value-of select="$itext"/>
     </xsl:when>
     <xsl:otherwise>
       <xsl:message terminate="yes">
@@ -349,10 +349,6 @@
       <xref linkend="{@targ}"/>
     </xsl:otherwise>
   </xsl:choose>
-</xsl:template>
-
-<xsl:template match="tabref">
-  <xref linkend="{@targ}"/>
 </xsl:template>
 
 <xsl:template match="menu-path">

@@ -1022,7 +1022,7 @@ Optional Features:
   --disable-nls           do not use Native Language Support
   --enable-gui		      Enable gui [default=yes]
   --enable-png-comments   Enable reading of PNG comment data [default=auto]
-  --enable-build-doc      Enable building of gretl docs [default=no]
+  --enable-build-doc      Enable building of gretl docs [CVS only]
   --enable-static[=PKGS]
                           build static libraries [default=no]
   --enable-shared[=PKGS]

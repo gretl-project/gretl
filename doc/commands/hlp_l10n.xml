@@ -1,0 +1,11 @@
+<?xml version='1.0'?>
+<!DOCTYPE internationalization SYSTEM "../xsl/common/l10n.dtd" [
+<!ENTITY en SYSTEM "hlpstrs_en.xml">
+<!ENTITY es SYSTEM "hlpstrs_es.xml">
+<!ENTITY it SYSTEM "hlpstrs_it.xml">
+]>
+<internationalization>
+&en;
+&es;
+&it;
+</internationalization>

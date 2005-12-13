@@ -944,16 +944,22 @@ double genr_get_critical (const char *line, const double **Z,
 
     if (st == 'F') {
 	ret = f_crit_a(alpha, dfn, dfd);
+	if (ret < 0) {
+	    ret = NADBL;
+	}
     } else if (st == 'X') {
 	ret = chi_crit_a(alpha, dfn);
+	if (ret < 0) {
+	    ret = NADBL;
+	}
     } else {
 	/* normal or t */
-	ret = sqrt(f_crit_a(2.0 * alpha, 1, dfn));
+	if (alpha > 0.5) {
+	    ret = -sqrt(f_crit_a(2.0 * (1.0 - alpha), 1, dfn));
+	} else {
+	    ret = sqrt(f_crit_a(2.0 * alpha, 1, dfn));
+	}
     } 
-
-    if (ret < 0) {
-	ret = NADBL;
-    }
 
     return ret;
 }

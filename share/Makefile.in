@@ -24,15 +24,6 @@ ifeq ($(build_docs),yes)
 	$(sharesrc)/gretlcli.hlp.it 
 endif
 
-AUTO_HELP_SRCS = $(topsrc)/doc/commands/gretl_commands.xml \
-	$(topsrc)/doc/commands/gretl_commands_es.xml \
-	$(topsrc)/doc/commands/gretl_commands_it.xml 
-
-AUTO_HELP_STY = $(topsrc)/doc/commands/gretltxt.xsl \
-	$(topsrc)/doc/commands/gretlhlp.xsl
-
-AUTO_HELP_STRS = $(topsrc)/doc/commands/hlpstrings.txt
-
 ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es
 IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
 
@@ -41,9 +32,9 @@ ifeq ($(have_gtk),2.0)
    INSTALL_HELP_FIGS = install_helpfigs
    EN_GUI_HLP = $(sharesrc)/gretlgui.hlp
    ES_GUI_HLP = $(sharesrc)/gretlgui.hlp.es
-   ES_CMD_HLP = $(sharesrc)/gretlcli.hlp.es
+   ES_CMD_HLP = $(sharesrc)/gretlcmd.hlp.es
    IT_GUI_HLP = $(sharesrc)/gretlgui.hlp.it
-   IT_CMD_HLP = $(sharesrc)/gretlcli.hlp.it
+   IT_CMD_HLP = $(sharesrc)/gretlcmd.hlp.it
 else
    EN_GUI_HLP = $(sharesrc)/latin1/gretlgui.hlp
    ES_GUI_HLP = $(sharesrc)/latin1/gretlgui.hlp.es
@@ -54,7 +45,7 @@ VPATH = $(sharesrc)
 
 all: $(AUTO_HELPFILES)
 
-$(AUTO_HELPFILES): $(AUTO_HELP_SRCS) $(AUTO_HELP_STY) $(AUTO_HELP_STRS)
+$(AUTO_HELPFILES): 
 	make -C ../doc/commands help-all
 
 .PHONY :

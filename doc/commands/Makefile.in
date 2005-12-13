@@ -38,8 +38,8 @@ HLPXSL = $(CMDSDIR)/gretltxt.xsl \
 	$(CMDSDIR)/gretlhlp.xsl \
 	$(CMDSDIR)/equations.xsl
 
-XMLSTRS = $(CMDSDIR)/hlpstrings.xml
-TXTSTRS = $(CMDSDIR)/hlpstrings.txt
+XMLSTRS = $(CMDSDIR)/hlp_l10n.xml $(CMDSDIR)/hlpstrs_en.xml \
+  $(CMDSDIR)/hlpstrs_es.xml $(CMDSDIR)/hlpstrs_it.xml
 
 EQNLIST = $(CMDSDIR)/eqn_list.xml
 EQNXSL = $(CMDSDIR)/equations.xsl
@@ -56,15 +56,12 @@ else
   OUTPUT_DIR = $(SHAREDIR)/latin1
 endif
 
-progs: xsltrans skeleton reflow hlpstrings validate 
+progs: xsltrans skeleton reflow validate 
 
 xsltrans: xsltrans.c 
 	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
 
 reflow: reflow.c
-	$(CC) $(CFLAGS) -o $@ $^ 
-
-hlpstrings: hlpstrings.c
 	$(CC) $(CFLAGS) -o $@ $^ 
 
 skeleton: skeleton.o
@@ -88,9 +85,6 @@ $(EQNLIST): $(EQNXSL) $(CMDSDIR)/gretl_commands.xml
 	xsltproc $(EQNXSL) $(CMDSDIR)/gretl_commands.xml > eqn_list.new
 	if diff --brief $@ eqn_list.new	| grep eqn ; then cp eqn_list.new $@ ; fi
 	rm -f eqn_list.new
-
-$(XMLSTRS): $(TXTSTRS) hlpstrings
-	./hlpstrings $(TXTSTRS) > $(XMLSTRS)
 
 $(FIGSTAMP): $(EQNLIST)
 	$(topsrc)/doc/texmath2png.pl $< $(SHAREDIR)/texfigs && touch $@

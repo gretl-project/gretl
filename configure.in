@@ -89,7 +89,7 @@ else
 fi])
 
 AC_ARG_ENABLE(build-doc,
-[  --enable-build-doc      Enable building of gretl docs [[default=no]]],
+[  --enable-build-doc      Enable building of gretl docs [[CVS only]]],
 [if test "$enableval" = "yes"
 then
   build_docs=yes

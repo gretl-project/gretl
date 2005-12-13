@@ -7,16 +7,16 @@
 
 <xsl:output method="text" encoding="utf-8"/>
 
-<xsl:variable name="phrases"
-  select="document('hlpstrings.xml')/phrases"/>
+<xsl:variable name="intl"
+  select="document('hlp_l10n.xml')/internationalization"/>
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>
-  <xsl:variable name="phrase"
-    select="$phrases/phrase[@key=$key and @lang=$lang]"/>
+  <xsl:variable name="itext"
+    select="concat(normalize-space($intl/localization[@language=$lang]/gentext[@key=$key]/@text),' ')"/>
   <xsl:choose>
-    <xsl:when test="$phrase">
-      <xsl:value-of select="$phrase"/>
+    <xsl:when test="$itext">
+      <xsl:value-of select="$itext"/>
     </xsl:when>
     <xsl:otherwise>
       <xsl:message terminate="yes">
@@ -335,12 +335,6 @@
   <xsl:text>"&gt;</xsl:text>
 </xsl:template>
 
-<xsl:template match="tabref">
-  <xsl:call-template name="gettext">
-    <xsl:with-param name="key" select="'tablebelow'"/>
-  </xsl:call-template>
-</xsl:template>
-
 <xsl:template match="menu-path">
   <xsl:text>&#xa;</xsl:text>
   <xsl:call-template name="gettext">
@@ -359,18 +353,6 @@
 
 <xsl:template match="table"> 
 <!-- can't handle tables at present -->
-</xsl:template>
-
-<xsl:template match="row">
-  <xsl:text>[ROW]&#xa;</xsl:text>
-  <xsl:apply-templates/>
-  <xsl:text>[/ROW]&#xa;</xsl:text>
-</xsl:template>
-
-<xsl:template match="cell">
-  <xsl:text>[CELL]&#xa;</xsl:text>
-  <xsl:apply-templates/>
-  <xsl:text>[/CELL]&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="footnote"/>
