@@ -169,7 +169,7 @@ stats_tables.la: stats_tables.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 panel_data.la: panel_data.lo
-	$(LINK) -o $@ $< $(GRETLLIB)
+	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
 range-mean.la: range-mean.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
@@ -193,10 +193,10 @@ vif.la: vif.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 urcdist.la: urcdist.lo
-	$(LINK) -o $@ $< -lz
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 pca.la: pca.lo
-	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
+	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 tramo-x12a.la: tramo-x12a.lo tramo_options.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
@@ -244,7 +244,7 @@ audio.la: audio.lo midi_utils.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(AUDIO_LIBS)
 
 mailer.la: mailer.lo codes.lo encode.lo md5c.lo
-	$(LINK) -o $@ $^ $(GTK_LIBS)
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

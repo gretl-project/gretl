@@ -30,5 +30,17 @@ dbtex_es: xsltrans gretl_commands_es.xml gretlman.xsl
 xsltrans: xsltrans.c 
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)
 
+reflow: reflow.c 
+	$(CC) -o $@ $^
+
+olddoc: xsltrans reflow gretl_commands.xml gretl_commands_it.xml gretl_commands_es.xml gretltxt.xsl
+	mkdir -p ../../share/latin1
+	./xsltrans --hlp gretl_commands.xml && \
+	./reflow < guilist.txt > ../../share/latin1/gretlgui.hlp
+	./xsltrans --hlp gretl_commands_it.xml && \
+	./reflow < guilist.txt > ../../share/latin1/gretlgui.hlp.it
+	./xsltrans --hlp gretl_commands_es.xml && \
+	./reflow < guilist.txt > ../../share/latin1/gretlgui.hlp.es
+
 clean: 
 	rm -f cmdlist.xml *list.txt xsltrans reflow
