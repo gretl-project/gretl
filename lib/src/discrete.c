@@ -759,3 +759,202 @@ static int cholesky_decomp (double *xpx, int nv)
     return 0; 
 }
 
+/* logistic model: doesn't exactly belong here but it seems like
+   the most suitable place for it 
+*/
+
+int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
+			double *ymax, double *lmax)
+{
+    int t;
+
+    *ymax = 0.0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(y[t])) {
+	    continue;
+	}
+	if (y[t] <= 0.0) {
+	    strcpy(gretl_errmsg, _("Illegal non-positive value of the "
+				   "dependent variable"));
+	    return 1;
+	}
+	if (y[t] > *ymax) {
+	    *ymax = y[t];
+	}
+    }
+
+    if (*ymax < 1.0) {
+	*lmax = 1.0;
+    } else if (*ymax < 100.0) {
+	*lmax = 100.0;
+    } else {
+	*lmax = 1.1 * *ymax;
+    }
+	    
+    return 0;
+}
+
+static double real_get_lmax (const double *y, const DATAINFO *pdinfo,
+			     const char *lmstr)
+{
+    double lmax, ymax = 0.0;
+    int err;
+
+    err = logistic_ymax_lmax(y, pdinfo, &ymax, &lmax);
+
+    if (err) {
+	return NADBL;
+    }
+
+    if (lmstr != NULL && *lmstr != '\0') {
+	lmax = atof(lmstr + 5);
+	if (lmax <= ymax) {
+	    gretl_errmsg_set(_("Invalid value for the maximum of the "
+			       "dependent variable"));
+	    lmax = NADBL;
+	}
+    }	
+	    
+    return lmax;
+}
+
+static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo, 
+				 int dv, double lmax)
+{
+    int t, v = pdinfo->v;
+
+    if (dataset_add_series(1, pZ, pdinfo)) {
+	return 1;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	double p = (*pZ)[dv][t];
+
+	if (na(p)) {
+	    (*pZ)[v][t] = NADBL;
+	} else {
+	    (*pZ)[v][t] = log(p / (lmax - p));
+	}
+    }
+
+    return 0;
+}
+
+static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
+				   MODEL *pmod, int dv, double lmax)
+{
+    int t;
+    double x;
+
+    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, Z[dv]);
+    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, Z[dv]);
+
+    /* make the VCV matrix before messing with the model stats */
+    makevcv(pmod);
+
+    pmod->ess = 0.0;
+    for (t=0; t<pdinfo->n; t++) {
+	x = pmod->yhat[t];
+	if (na(x)) {
+	    continue;
+	}
+	pmod->yhat[t] = lmax / (1.0 + exp(-x));
+	pmod->uhat[t] = Z[dv][t] - pmod->yhat[t];
+	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+    }
+
+    pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+
+    pmod->tss = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	x = Z[dv][t];
+	if (!na(x)) {
+	    pmod->tss += (x - pmod->ybar) * (x - pmod->ybar);
+	}
+    }
+
+    pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
+
+    pmod->rsq = pmod->adjrsq = NADBL;
+
+    if (pmod->tss > 0) {
+	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+	if (pmod->dfd > 0) {
+	    double den = pmod->tss * pmod->dfd;
+
+	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
+	}
+    }
+
+    pmod->list[1] = dv;
+    gretl_model_set_double(pmod, "lmax", lmax);
+    pmod->ci = LOGISTIC;
+    ls_aic_bic(pmod);
+
+    return 0;
+}
+
+/**
+ * logistic_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @param: may contain "ymax=value" for user setting of the
+ * asymptotic maximum of the dependent variable.
+ *
+ * Estimate the model given in @list using the logistic transformation
+ * of the dependent variable.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+		      const char *param) 
+{
+    double lmax;
+    int *llist = NULL;
+    int dv = list[1];
+    MODEL lmod;
+
+    gretl_model_init(&lmod); 
+
+    llist = gretl_list_copy(list);
+    if (llist == NULL) {
+	lmod.errcode = E_ALLOC;
+	return lmod;
+    }
+
+    lmax = real_get_lmax((*pZ)[dv], pdinfo, param);
+
+    if (na(lmax)) {
+	lmod.errcode = E_DATA;
+    } else if (lmax == 0.0) {
+	lmod.errcode = E_CANCEL;
+    }
+
+    if (!lmod.errcode) {
+	if (make_logistic_depvar(pZ, pdinfo, dv, lmax)) {
+	    lmod.errcode = E_ALLOC;	
+	}
+    }
+
+    if (lmod.errcode) {
+	free(llist);
+	return lmod;
+    }
+
+    llist[1] = pdinfo->v - 1;
+
+    lmod = lsq(llist, pZ, pdinfo, OLS, OPT_A, 0.0);
+    if (!lmod.errcode) {
+	rewrite_logistic_stats((const double **) *pZ, pdinfo, &lmod,
+			       dv, lmax);
+	set_model_id(&lmod);
+    }
+
+    dataset_drop_last_variables(1, pZ, pdinfo);
+    free(llist);
+    
+    return lmod;
+}

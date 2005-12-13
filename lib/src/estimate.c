@@ -3226,44 +3226,6 @@ MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo,
 } 
 
 /**
- * logistic_model:
- * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @param: 
- *
- * Estimate the model given in @list using the logistic transformation
- * of the dependent variable.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
-		      const char *param)
-{
-    MODEL lmod;
-    void *handle;
-    MODEL (*logistic_estimate) (const int *, double ***, DATAINFO *, const char *);
-
-    *gretl_errmsg = '\0';
-
-    logistic_estimate = get_plugin_function("logistic_estimate", &handle);
-    if (logistic_estimate == NULL) {
-	gretl_model_init(&lmod);
-	lmod.errcode = E_FOPEN;
-	return lmod;
-    }
-
-    lmod = (*logistic_estimate) (list, pZ, pdinfo, param);
-
-    close_plugin(handle);
-
-    set_model_id(&lmod);
-
-    return lmod;
-}
-
-/**
  * tobit_model:
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.

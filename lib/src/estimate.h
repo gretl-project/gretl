@@ -33,9 +33,6 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo);
 MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	    gretlopt opt, PRN *prn);
 
-MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
-		      const char *param);
-
 MODEL tobit_model (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn);
 

@@ -76,7 +76,6 @@ PLUGINSRC = \
 	arma.c \
         arma_x12.c \
 	workbook.c \
-	logistic.c \
 	tobit.c \
 	fcp.c \
 	garch.c \
@@ -106,7 +105,6 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/leverage.dll \
 	plugins/pca.dll \
 	plugins/nistcheck.dll \
-	plugins/logistic.dll \
 	plugins/tobit.dll \
 	plugins/garch.dll \
         plugins/audio.dll \
@@ -360,10 +358,6 @@ plugins/arma.dll: arma.o dllinit.o
 plugins/arma_x12.dll: arma_x12.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) $(LAPACK_LIBS)
-
-plugins/logistic.dll: logistic.o dllinit.o
-	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS)
 
 plugins/tobit.dll: tobit.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

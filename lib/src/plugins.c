@@ -43,7 +43,6 @@ enum {
     P_NISTCHECK,
     P_ARMA,
     P_ARMA_X12,
-    P_LOGISTIC,
     P_TOBIT,
     P_GARCH,
     P_AUDIO,
@@ -85,7 +84,6 @@ struct plugin_info plugins[] = {
     { P_NISTCHECK,       "nistcheck" },
     { P_ARMA,            "arma" },
     { P_ARMA_X12,        "arma_x12" },
-    { P_LOGISTIC,        "logistic" },
     { P_TOBIT,           "tobit" },
     { P_GARCH,           "garch" },
     { P_AUDIO,           "audio" },
@@ -160,7 +158,6 @@ struct plugin_function plugin_functions[] = {
     /* modeling */
     { "arma_model",        P_ARMA },
     { "arma_x12_model",    P_ARMA_X12 },
-    { "logistic_estimate", P_LOGISTIC },
     { "tobit_estimate",    P_TOBIT },
     { "garch_model",       P_GARCH },
     { "poisson_estimate",  P_POISSON },

@@ -17,10 +17,19 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* functions follow */
+#ifndef DISCRETE_H
+#define DISCRETE_H
 
 MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		    int ci, gretlopt opt);
+
+MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+		      const char *param); 
+
+int logistic_ymax_lmax (const double *y, const DATAINFO *pdinfo,
+			double *ymax, double *lmax);
+
+#endif /* DISCRETE_H */
 
 
 

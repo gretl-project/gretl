@@ -2538,6 +2538,31 @@ static void arma_maybe_suppress_const (void)
     }
 }
 
+static int logistic_model_get_lmax (CMD *cmd)
+{
+    double ymax, lmax;
+    int err;
+
+    err = logistic_ymax_lmax(Z[cmd->list[1]], datainfo, &ymax, &lmax);
+
+    if (!err) {
+	lmax_dialog(&lmax, ymax);
+	if (na(lmax)) {
+	    err = 1;
+	} else if (lmax == 0.0) {
+	    /* canceled */
+	    err = -1;
+	} else {
+	    free(cmd->param);
+	    cmd->param = g_strdup_printf("ymax=%g", lmax);
+	    gretl_command_strcat(" ");
+	    gretl_command_strcat(cmd->param);
+	}
+    }
+
+    return err;
+}
+
 void do_model (GtkWidget *widget, gpointer p) 
 {
     selector *sr = (selector *) p; 
@@ -2661,8 +2686,16 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case LOGISTIC:
-	*pmod = logistic_model(cmd.list, &Z, datainfo, NULL);
-	err = model_output(pmod, prn);
+	err = logistic_model_get_lmax(&cmd);
+	if (err < 0) {
+	    return;
+	} else if (err) {
+	    gui_errmsg(err);
+	    break;
+	} else {
+	    *pmod = logistic_model(cmd.list, &Z, datainfo, cmd.param);
+	    err = model_output(pmod, prn);
+	}
 	break;	
 
     case LAD:
@@ -2683,15 +2716,6 @@ void do_model (GtkWidget *widget, gpointer p)
 	    gretl_print_destroy(prn);
 	}
 	return;
-    }
-
-    if (action == LOGISTIC) {
-	double lmax = gretl_model_get_double(pmod, "lmax");
-
-	free(cmd.param);
-	cmd.param = g_strdup_printf("ymax=%g", lmax);
-	gretl_command_strcat(" ");
-	gretl_command_strcat(cmd.param);
     }
 
     if (check_lib_command() || lib_cmd_init()) {

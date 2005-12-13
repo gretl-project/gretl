@@ -2815,8 +2815,6 @@ static void msgbox (const char *msg, int err)
 
 #endif /* msgbox variants */
 
-/* ........................................................... */
-
 void errbox (const char *msg) 
 {
     msgbox(msg, 1);
@@ -3701,8 +3699,6 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
     free(dwinfo);
 }
 
-/* .................................................................. */
-
 void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
 {
     int sts = (datainfo->structure == STACKED_TIME_SERIES);
@@ -3737,4 +3733,113 @@ void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
 	    close_plugin(handle);
 	}
     }
+}
+
+struct lmax_opt {
+    GtkWidget *dlg;
+    GtkWidget *entry;
+    double *lmax;
+    double ymax;
+};
+
+static void lmax_opt_free (GtkWidget *w, struct lmax_opt *opt)
+{
+    free(opt);
+    gtk_main_quit();
+}
+
+static void lmax_opt_finalize (GtkWidget *w, struct lmax_opt *opt)
+{
+    const gchar *numstr;
+    char *test;
+    double x;
+
+    numstr = gtk_entry_get_text(GTK_ENTRY(opt->entry));
+    x = strtod(numstr, &test);
+
+    if (*test != 0 || x <= opt->ymax) {
+	sprintf(errtext, _("The maximum must be greater than %g"), opt->ymax);
+	errbox(errtext);
+	*opt->lmax = NADBL;
+    } else {
+	*opt->lmax = x;
+	gtk_widget_destroy(opt->dlg);
+    }
+}
+
+static void lmax_opt_cancel (GtkWidget *w, struct lmax_opt *opt)
+{
+    *opt->lmax = 0.0;
+    gtk_widget_destroy(opt->dlg);
+}
+
+void lmax_dialog (double *lmax, double ymax)
+{
+    GtkWidget *tmp, *hbox;
+    gchar *numstr;
+    struct lmax_opt *opt;
+
+    opt = malloc(sizeof *opt);
+    if (opt == NULL) return;
+
+    opt->dlg = gtk_dialog_new();
+    opt->lmax = lmax;
+    opt->ymax = ymax;
+
+    gtk_window_set_title(GTK_WINDOW(opt->dlg), _("Logistic model"));
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (opt->dlg)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (opt->dlg)->action_area), 5); 
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (opt->dlg)->vbox), 5);
+    gtk_window_set_position (GTK_WINDOW (opt->dlg), GTK_WIN_POS_MOUSE);
+
+    g_signal_connect (G_OBJECT(opt->dlg), "destroy", 
+		      G_CALLBACK(lmax_opt_free), opt);
+
+    /* label */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new (_("Maximum (asymptote) for the\n"
+			   "dependent variable"));
+    gtk_label_set_justify(GTK_LABEL(tmp), GTK_JUSTIFY_CENTER);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opt->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+
+    /* lmax entry */
+    hbox = gtk_hbox_new(FALSE, 5);
+    opt->entry = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(opt->entry), 12);
+    numstr = g_strdup_printf("%g", *lmax);
+    gtk_entry_set_text(GTK_ENTRY(opt->entry), numstr);
+    g_free(numstr);
+#ifndef OLD_GTK
+    gtk_entry_set_width_chars(GTK_ENTRY(opt->entry), 6);
+    gtk_entry_set_activates_default(GTK_ENTRY(opt->entry), TRUE);
+#endif
+    gtk_editable_select_region(GTK_EDITABLE(opt->entry), 0, -1);
+    gtk_box_pack_start(GTK_BOX(hbox), opt->entry, TRUE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opt->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+
+    /* Create the "OK" button */
+    tmp = ok_button(GTK_DIALOG(opt->dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(lmax_opt_finalize), opt);
+
+    /* And a Cancel button */
+#ifndef OLD_GTK
+    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+#else
+    tmp = gtk_button_new_with_label(_("Cancel"));
+#endif
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opt->dlg)->action_area), 
+			tmp, TRUE, TRUE, 0);
+
+    g_signal_connect(G_OBJECT (tmp), "clicked", 
+		     G_CALLBACK(lmax_opt_cancel), opt);
+
+    gtk_widget_show_all(opt->dlg);
+
+    gtk_main();
 }

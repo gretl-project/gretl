@@ -83,7 +83,6 @@ SRCS = excel_import.c \
 	nistcheck.c \
 	arma.c \
 	arma_x12.c \
-	logistic.c \
 	tobit.c \
 	garch.c \
 	urcdist.c \
@@ -114,7 +113,6 @@ GUI_DEPENDENT_PLUGINS = excel_import.la \
 	gnumeric_import.la \
 	progress_bar.la \
 	leverage.la \
-	logistic.la \
 	pca.la 
 
 MAILER_PLUGIN = mailer.la
@@ -232,9 +230,6 @@ arma.la: arma.lo
 
 arma_x12.la: arma_x12.lo 
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
-
-logistic.la: logistic.lo
-	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
 
 tobit.la: tobit.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
