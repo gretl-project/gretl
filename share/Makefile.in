@@ -2,6 +2,7 @@ topsrc = @top_srcdir@
 
 prefix = @prefix@
 have_gtk = @have_gtk@
+build_docs = @build_docs@
 
 gretldir = $(prefix)/share/gretl
 tooldir = $(topsrc)/tools
@@ -10,7 +11,8 @@ pdfdir = $(topsrc)/doc/tex
 
 INSTALL_DATA = cp -fp
 
-AUTO_HELPFILES = \
+ifeq ($(build_docs),yes)
+  AUTO_HELPFILES = \
 	$(sharesrc)/gretlgui.hlp \
 	$(sharesrc)/gretlcmd.hlp \
 	$(sharesrc)/gretlcli.hlp \
@@ -20,6 +22,7 @@ AUTO_HELPFILES = \
 	$(sharesrc)/gretlgui.hlp.it \
 	$(sharesrc)/gretlcmd.hlp.it \
 	$(sharesrc)/gretlcli.hlp.it 
+endif
 
 AUTO_HELP_SRCS = $(topsrc)/doc/commands/gretl_commands.xml \
 	$(topsrc)/doc/commands/gretl_commands_es.xml \
@@ -30,34 +33,29 @@ AUTO_HELP_STY = $(topsrc)/doc/commands/gretltxt.xsl \
 
 AUTO_HELP_STRS = $(topsrc)/doc/commands/hlpstrings.txt
 
+ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es
+IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
+
 ifeq ($(have_gtk),2.0)
-   ES_GUI_HLP = $(sharesrc)/gretlgui.hlp.es.utf8
-   ES_CMD_HLP = $(sharesrc)/gretlcmd.hlp.es.utf8
-   IT_GUI_HLP = $(sharesrc)/gretlgui.hlp.it.utf8
-   IT_CMD_HLP = $(sharesrc)/gretlcmd.hlp.it.utf8
-   RECODE_FILES = $(ES_GUI_HLP) $(ES_CMD_HLP) $(IT_GUI_HLP) $(IT_CMD_HLP)
    INSTALL_GUI_SCRIPT_HELP = install_gui_script_help
    INSTALL_HELP_FIGS = install_helpfigs
-else
+   EN_GUI_HLP = $(sharesrc)/gretlgui.hlp
    ES_GUI_HLP = $(sharesrc)/gretlgui.hlp.es
    ES_CMD_HLP = $(sharesrc)/gretlcli.hlp.es
    IT_GUI_HLP = $(sharesrc)/gretlgui.hlp.it
    IT_CMD_HLP = $(sharesrc)/gretlcli.hlp.it
+else
+   EN_GUI_HLP = $(sharesrc)/latin1/gretlgui.hlp
+   ES_GUI_HLP = $(sharesrc)/latin1/gretlgui.hlp.es
+   IT_GUI_HLP = $(sharesrc)/latin1/gretlgui.hlp.it
 endif
-
-ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es
-IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
 
 VPATH = $(sharesrc)
 
-all: $(AUTO_HELPFILES) $(RECODE_FILES)
+all: $(AUTO_HELPFILES)
 
 $(AUTO_HELPFILES): $(AUTO_HELP_SRCS) $(AUTO_HELP_STY) $(AUTO_HELP_STRS)
 	make -C ../doc/commands help-all
-
-$(RECODE_FILES): $(sharesrc)/gretlgui.hlp.es $(sharesrc)/gretlcmd.hlp.es \
-	$(sharesrc)/gretlgui.hlp.it $(sharesrc)/gretlcmd.hlp.it
-	for f in $^ ; do recode l1..utf-8 < $$f > $$f.utf8 ; done
 
 .PHONY :
 
@@ -100,11 +98,11 @@ install_gui_script_help: $(sharesrc)/gretlcmd.hlp
 	$(INSTALL_DATA) $(ES_CMD_HLP) $(gretldir)/gretlcmd.hlp.es
 	$(INSTALL_DATA) $(IT_CMD_HLP) $(gretldir)/gretlcmd.hlp.it
 
-install_help: $(AUTO_HELPFILES) $(RECODE_FILES)
+install_help: $(AUTO_HELPFILES)
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(tooldir)/mkinstalldirs $(gretldir)/doc
-	$(INSTALL_DATA) $(sharesrc)/gretlgui.hlp $(gretldir)/gretlgui.hlp
 	$(INSTALL_DATA) $(sharesrc)/gretlcli.hlp $(gretldir)/gretlcli.hlp
+	$(INSTALL_DATA) $(EN_GUI_HLP) $(gretldir)/gretlgui.hlp
 	$(INSTALL_DATA) $(ES_GUI_HLP) $(gretldir)/gretlgui.hlp.es
 	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
 	$(INSTALL_DATA) $(IT_GUI_HLP) $(gretldir)/gretlgui.hlp.it
@@ -125,7 +123,7 @@ clean:
 	make -C bcih clean
 
 textclean: 
-	rm -f *.txt *.utf8
+	rm -f *.txt
 
 helpclean:
 	for f in $(AUTO_HELPFILES) ; do rm -f $$f ; done

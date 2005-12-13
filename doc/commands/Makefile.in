@@ -50,8 +50,10 @@ FIGSTAMP = $(SHAREDIR)/fig.stamp
 ifeq ($(have_gtk),2.0)
   HLPOPT = --hlp --markup
   FLOWOPT = --markup
+  OUTPUT_DIR = $(SHAREDIR)
 else
   HLPOPT = --hlp
+  OUTPUT_DIR = $(SHAREDIR)/latin1
 endif
 
 progs: xsltrans skeleton reflow hlpstrings validate 
@@ -97,16 +99,22 @@ $(FIGSTAMP): $(EQNLIST)
 $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS) 
 	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp
-	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp
-	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp
+	if test -f cmdlist.txt ; then \
+	  ./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp ; \
+	fi
+	./reflow $(FLOWOPT) < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp
 	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_es.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.es
-	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es
-	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp.es
+	if test -f cmdlist.txt ; then \
+	  ./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.es ; \
+	fi 
+	./reflow $(FLOWOPT) < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.es
 	./xsltrans $(HLPOPT) $(CMDSDIR)/gretl_commands_it.xml && \
 	./reflow < clilist.txt > $(SHAREDIR)/gretlcli.hlp.it
-	./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it
-	./reflow $(FLOWOPT) < guilist.txt > $(SHAREDIR)/gretlgui.hlp.it
+	if test -f cmdlist.txt ; then \
+	  ./reflow $(FLOWOPT) < cmdlist.txt > $(SHAREDIR)/gretlcmd.hlp.it ; \
+	fi
+	./reflow $(FLOWOPT) < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.it
 	touch $@
 
 .PHONY:

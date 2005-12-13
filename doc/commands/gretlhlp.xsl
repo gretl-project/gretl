@@ -5,7 +5,7 @@
 <xsl:param name="hlp">cli</xsl:param>
 <xsl:param name="lang" select="'en'"/>
 
-<xsl:output method="text" encoding="iso-8859-1"/>
+<xsl:output method="text" encoding="utf-8"/>
 
 <xsl:variable name="phrases"
   select="document('hlpstrings.xml')/phrases"/>
