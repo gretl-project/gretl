@@ -108,8 +108,8 @@ e/o modificarlo secondo i termini della Licenza Pubblica Generica GNU
 <li><p class="in-list">Interfaccia facile e intuitiva (ora anche in francese, italiano, 
 spagnolo, polacco e tedesco, oltre che in inglese)</p></li>
 
-<li><p class="in-list">Un'ampia varietà di stimatori basati sui minimi quadrati, compresi
-i minimi quadrati a due stadi e i minimi quadrati non lineari</p></li>
+<li><p class="in-list">Un'ampia varietà di stimatori basati sui minimi quadrati e sulla
+massima verosimiglianza, inclusi gli stimatori di sistema.</p></li>
 
 <li><p class="in-list">Singoli comandi per eseguire operazioni come test di Dickey-Fuller,
 test di Chow per la stabilità strutturale, autoregressioni vettoriali, stime ARMA</p></li>
@@ -133,10 +133,10 @@ statistiche ancora più approfondite</p></li>
 <h2><a name="formats">Formati di dati</a></h2>
 
 <p>Legge file nel proprio formato XML, file csv (valori separati da 
-virgole), fogli di lavoro di Excel e Gnumeric, file BOX1, database
-nel proprio formato binario (che permette di archiviare dati con diverse
-frequenze e lunghezze delle serie) e database RATS 4. Include un database
-macro relativo all'economia USA. Si veda anche la <a
+virgole), fogli di lavoro di Excel e Gnumeric, file <tt>.dta</tt> di Stata,
+workfile di Eviews, database nel proprio formato binario (che permette di
+archiviare dati con diverse frequenze e lunghezze delle serie) e database RATS 4.
+Include un database macro relativo all'economia USA. Si veda anche la <a
 href="./gretl_data_it.html">pagina dei dati di gretl</a>.  </p>
 
 <h2><a name="dl">Download</a></h2>
@@ -222,10 +222,16 @@ di gnuplot è la 4.0 (dell'aprile 2004), disponibile su
 
 <h2><a name="man">Manuale</a></h2>
 
-<p>Il manuale completo di gretl è disponibile come file PDF (circa 1.6Mb e 100 pagine),  
-<a href="./manual_it.pdf">manual_it.pdf</a>.
-È possibile scaricare il software per leggere i file PDF dal
-<a href="http://www.adobe.com/products/acrobat/readstep2.html">sito
+<p>Il manuale di gretl è composto da due file PDFm una <i>Guida all'uso di Gretl</i>
+e una <i>Guida ai comandi di Gretl</i>. I pacchetti (binari e sorgenti) di gretl
+contengono una copia della versione inglese, con pagine in formato US Letter, ma
+il programma è in grado di accedere via internet alle altre versioni disponibili
+del manuale, ossia quella inglese in formato A4, quella spagnola e quella
+italiana. È anche possibile scaricare manualmente 
+<a href="http://ricardo.ecn.wfu.edu/pub//gretl/manual/">tutte le versioni del manuale</a>.</p>
+
+<p>Se non si dispone di software per leggere i file PDF, è possibile scaricarlo
+dal <a href="http://www.adobe.com/products/acrobat/readstep2.html">sito
 Adobe</a>.</p>
 
 <h2><a name="use">Usate gretl?</a></h2>
@@ -278,14 +284,9 @@ Econometrics</i></a> (Dryden, al momento alla 5a edizione).  Ramu ha
 fornito anche molti contributi critici molto utili nel corso dello sviluppo
 di gretl.</p>
 
-<p>Riccardo "Jack" Lucchetti, dell'Università di Ancona, ha svolto un ruolo
-speciale nello sviluppo di gretl negli ultimi anni, contribuendo con varie
-patch che hanno aggiunto funzionalità nel campo dell'analisi ARMA, dei modelli
-Tobit e dei filtri per serie storiche.</p>
-
 <p>Molte persone hanno spedito segnalazioni di errori e suggerimenti
-utili per lo sviluppo di gretl; oltre alle persone già nominate, sono particolarmente
-grato a Ignacio Díaz-Emparanza, Tadeusz Kufel e +Dirk Eddelbuettel.</p>
+utili per lo sviluppo di gretl; oltre alle persone già nominate, siamo particolarmente
+grati a Ignacio Díaz-Emparanza, Tadeusz Kufel e Dirk Eddelbuettel.</p>
 
 <p>Molte grazie a Ignacio Díaz-Emparanza, Michel Robitaille, Cristian
 Rigamonti, Tadeusz Kufel e Markus Hahn per le traduzioni spagnola, francese,
@@ -306,6 +307,7 @@ gretl nel sistema GNU.</p>
 
 <address>
 <p>Allin Cottrell, Wake Forest University</p>
+<p>Riccardo "Jack" Lucchetti, Università di Ancona</p>
 <p>Ultima modifica: LONGDATE
 </p>
 

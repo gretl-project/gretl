@@ -5,10 +5,10 @@
 \section{Formato interno di base}
 \label{native}
 
-Nel formato dati interno di \app{gretl} un dataset è immagazzinato in
+Nel formato dati interno di \app{Gretl} un dataset è immagazzinato in
 XML (extensible mark-up language).  I file di dati sono conformi al
 semplice DTD (document type definition) contenuto nel file
-\verb+gretldata.dtd+, fornito con la distribuzione di \app{gretl} e
+\verb+gretldata.dtd+, fornito con la distribuzione di \app{Gretl} e
 installato nella directory dei dati di sistema (ad es.
 \verb+/usr/share/gretl/data+ su Linux). I file di dati possono essere
 non compressi o compressi con gzip; oltre ai valori dei dati,
@@ -16,7 +16,7 @@ contengono altre informazioni aggiuntive, come i nomi e le descrizioni
 delle variabili, la frequenza dei dati e così via.
 
 La maggior parte degli utenti probabilmente non avrà bisogno di
-leggere o scrivere questi file, se non usando \app{gretl} stesso, ma
+leggere o scrivere questi file, se non usando \app{Gretl} stesso, ma
 se si vuole manipolarli usando altri strumenti, può essere utile
 esaminare il DTD e qualcuno dei file di esempio forniti: il file
 \verb+data4-1.gdt+ dà un semplice esempio, il file \verb+data4-10.gdt+
@@ -25,10 +25,10 @@ invece contiene anche delle etichette per le osservazioni.
 \section{Formato tradizionale di ESL}
 \label{traddata}
 
-Per compatibilità all'indietro, \app{gretl} può elaborare anche file
+Per compatibilità all'indietro, \app{Gretl} può elaborare anche file
 di dati nel formato ``tradizionale'' ereditato dal programma \app{ESL}
 di Ramanathan.  In questo formato (che era quello predefinito nelle
-versioni di \app{gretl} precedenti alla 0.98) un dataset è
+versioni di \app{Gretl} precedenti alla 0.98) un dataset è
 rappresentato da due file: uno contiene i dati veri e propri, l'altro
 contiene la descrizione dei dati e le modalità per la loro lettura.
 Per essere più specifici:
@@ -100,7 +100,7 @@ dati ``tradizionale'' degne di nota.
   \cmd{store} con l'opzione \cmd{-s} (precisione singola) o l'opzione
   \cmd{-o} (precisione doppia).
 \item Se \verb+BYOBS+ è seguita dalla parola chiave \verb+MARKERS+,
-  \app{gretl} si aspetta un file di dati in cui la \emph{prima
+  \app{Gretl} si aspetta un file di dati in cui la \emph{prima
     colonna} contiene stringhe (lunghe al massimo 8 caratteri) usate
   per identificare le osservazioni. Queste possono essere utili nel
   caso dei dati di tipo cross-section in cui le unità di osservazione
@@ -136,7 +136,7 @@ grafica del programma.
 \section{Dettagli sui database binari}
 \label{dbdetails}
 
-Un database di \app{gretl} consiste di due parti: un file indice ASCII
+Un database di \app{Gretl} consiste di due parti: un file indice ASCII
 (con l'estensione \verb+.idx+) che contiene informazioni sulle serie,
 e un file binario (con estensione \verb+.bin+) che contiene i dati
 veri e propri. Ecco due esempi di voci contenute in un file
@@ -183,12 +183,12 @@ sono le osservazioni per la variabile 2 e così via.
 \label{app-technote}
 
 
-\app{Gretl} è scritto nel linguaggio di programmazione C. Ho aderito
-nel modo più stretto possibile allo standard C ISO/ANSI (C89), anche
+\app{Gretl} è scritto nel linguaggio di programmazione C, aderendo
+nel modo più stretto possibile allo standard C ISO/ANSI (C90), anche
 se l'interfaccia grafica e alcune altre componenti devono fare uso
 necessariamente di estensioni specifiche per certe piattaforme.
   
-\app{gretl} è stato sviluppato sotto Linux.  La libreria condivisa e
+Il programma è stato sviluppato sotto Linux.  La libreria condivisa e
 il client a riga di comando dovrebbero essere compilabili su qualsiasi
 piattaforma che (a) supporti l'ISO/ANSI C e (b) abbia installate le
 seguenti librerie: zlib (per la compressione dei dati), libxml
@@ -209,25 +209,25 @@ nella versione 1.2.3 o superiore (si veda
 \href{http://www.gtk.org/}{gtk.org}). Al momento della scrittura di
 questo manuale esistono due varianti principali delle librerie GTK: la
 serie 1,2 e la serie 2.0, lanciata nell'estate 2002.  Poiché queste
-varianti sono mutualmente incompatibili, \app{gretl} può essere
+varianti sono mutualmente incompatibili, \app{Gretl} può essere
 compilato usando una sola di esse; il pacchetto sorgente contiene due
 directory: \verb+gui+ per GTK 1.2 e \verb+gui2+ per GTK 2.0.
 Raccomando l'uso di GTK 2.0 se è disponibile, visto che offre molti
 vantaggi rispetto a GTK 1.2.
   
-\app{gretl} chiama gnuplot per produrre grafici. È possibile trovare
+\app{Gretl} chiama gnuplot per produrre grafici. È possibile trovare
 gnuplot a \href{http://www.gnuplot.info/}{gnuplot.info}. Al momento
 della scrittura di questo manuale, la versione ufficiale più recente
 di gnuplot è la 4.0 (dell'Aprile 2004).  La versione MS Windows di
-\app{gretl} comprende la versione 4.0 di gnuplot per Windows; sul sito
-web di gretl è possibile trovare un pacchetto rpm di gnuplot 3.8j0 per
+\app{Gretl} comprende la versione 4.0 di gnuplot per Windows; sul sito
+web di Gretl è possibile trovare un pacchetto rpm di gnuplot 3.8j0 per
 sistemi Linux x86.
   
-Alcune funzionalità di \app{gretl} fanno uso della libreria
+Alcune funzionalità di \app{Gretl} fanno uso della libreria
 \app{gtkextra} di Adrian Feguin. È possibile trovare gtkextra a
 \href{http://gtkextra.sourceforge.net/}{gtkextra.sourceforge.net}.  Le
 parti rilevanti di questo pacchetto sono incluse (in forma leggermente
-modificata) con la distribuzione sorgente di \app{gretl}.
+modificata) con la distribuzione sorgente di \app{Gretl}.
   
 Una versione binaria del programma è disponibile per la piattaforma
 Microsoft Windows (versione 32-bit, ossia Windows 95 o superiore).
@@ -238,16 +238,16 @@ GTK 2.0 su win32 di Tor Lillqvist. L'installatore per Windows (libero,
 open-source) è a cura di Jordan Russell
 (\href{http://www.jrsoftware.org/}{jrsoftware.org}).  
 
-Spero che gli utenti con conoscenze di programmazione possano
-considerare \app{gretl} abbastanza interessante e degno di essere
+Speriamo che gli utenti con conoscenze di programmazione possano
+considerare \app{Gretl} abbastanza interessante e degno di essere
 migliorato ed esteso. La documentazione dell'API libgretl non è ancora
 completa, ma è possibile trovare alcuni dettagli seguendo il link
-``Libgretl API docs'' sul sito web di \app{gretl}.
+``Libgretl API docs'' sul sito web di \app{Gretl}.
 
 \chapter{Accuratezza numerica}
 \label{app-accuracy}
 
-\app{gretl} usa aritmetica a doppia precisione, ad eccezione del
+\app{Gretl} usa aritmetica a doppia precisione, ad eccezione del
 plugin per precisione multipla invocabile con il comando del menù
 ``Modello, Minimi quadrati in alta precisione'' che rappresenta i
 valori in virgola mobile usando un numero di bit indicato dalla
@@ -258,21 +258,17 @@ accurata per la maggior parte delle applicazioni (c'è anche l'opzione
 di usare la decomposizione QR). Il programma è stato testato
 abbastanza approfonditamente con i dataset di riferimento forniti dal
 NIST (il National Institute of Standards and Technology statunitense)
-e un rapporto completo dei risultati si trova sul sito web di gretl
+e un rapporto completo dei risultati si trova sul sito web di Gretl
 (seguendo il link ``Accuratezza numerica'').
 
-Nell'Ottobre del 2002 ho avuto un utile scambio di idee con Giovanni
-Baiocchi e Walter Distaso, che stavano scrivendo una recensione di
-\app{gretl} per il \emph{Journal of Applied Econometrics} e con James
-MacKinnon, responsabile delle recensioni di software per il
-giornale\footnote{La recensione è poi stata pubblicata; si veda
-  Baiocchi e Distaso (2003).} e sono grato a Baiocchi e Distaso per il
-loro accurato esame del programma, che ha suggerito le seguenti
-modifiche.
+Giovanni Baiocchi e Walter Distaso hanno pubblicato una recensione di
+\app{Gretl} per il \emph{Journal of Applied Econometrics} (2003).  Siamo grati a
+Baiocchi e Distaso per il loro accurato esame del programma, che ha suggerito le
+seguenti modifiche.
 
 \begin{enumerate}
 \item I recensori hanno trovato un bug nel ``calcolatore di p-value''
-  di \app{gretl}, perchè il programma mostrava il complemento della
+  di \app{Gretl}, perché il programma mostrava il complemento della
   probabilità corretta per i valori negativi di \emph{z}. Il bug è
   stato corretto nella versione 0.998 del programma (pubblicata il 9
   Luglio 2002).
@@ -280,26 +276,24 @@ modifiche.
   risultati non accurati per valori estremi di \emph{x} (ad es. valori
   da 8 a 10 nella distribuzione \emph{t} con 100 gradi di libertà).
   Anche questo problema è stato risolto nella versione 0.998 di
-  \app{gretl}, inserendo codice più accurato per la distribuzione di
+  \app{Gretl}, inserendo codice più accurato per la distribuzione di
   probabilità.
 \item I recensori hanno notato un difetto nella presentazione dei
-  coefficienti di regressione in \app{gretl}, perchè alcuni
+  coefficienti di regressione in \app{Gretl}, perché alcuni
   coefficienti venivano mostrati con un numero troppo basso di cifre
   significative. Il difetto è stato corretto nella versione 0.999
   (pubblicata il 25 Agosto 2002): ora tutte le statistiche associate
   con la regressione sono mostrate con 6 cifre significative.
 \item I test eseguiti dai recensori indicavano che l'accuratezza
-  numerica di \app{gretl} su MS Windows è minore che su Linux, dove io
-  avevo svolto i miei test.  Ad esempio, i dati Longley (un dataset
-  notoriamente ``mal-condizionato'' usato spesso per testare i
-  programmi econometrici) la versione Windows di gretl produceva
-  alcuni coefficienti con la settima cifra errata, mentre gli stessi
-  coefficienti risultavano corretti su Linux. Questa anomalia è stata
-  corretta nella versione 1.0pre3 di \app{gretl} (pubblicata il 10
-  Ottobre 2002).
+  numerica di \app{Gretl} su MS Windows era minore che su Linux.
+  Ad esempio, i dati Longley (un dataset notoriamente ``mal-condizionato'' usato
+  spesso per testare i programmi econometrici) la versione Windows di Gretl
+  produceva alcuni coefficienti con la settima cifra errata, mentre gli stessi
+  coefficienti risultavano corretti su Linux. Questa anomalia è stata corretta
+  nella versione 1.0pre3 di \app{Gretl} (pubblicata il 10 Ottobre 2002).
 \end{enumerate}
 
-La versione attuale di \app{gretl} comprende un ``plugin'' che esegue
+La versione attuale di \app{Gretl} comprende un ``plugin'' che esegue
 la suite NIST di test della regressione lineare. È possibile trovarlo
 nel menù ``Utilità'' della finestra principale. Quando viene eseguito
 questo test, un'introduzione spiega qual è il risultato atteso: se si
@@ -307,7 +301,7 @@ esegue il test e si ottengono risultati diversi da quelli attesi, si
 prega di inviare un bug report a \verb+cottrell@wfu.edu+.  
 
 Come detto sopra, tutte le statistiche di regressione sono mostrate
-con 6 cifre significative nella versione attuale di \app{gretl}
+con 6 cifre significative nella versione attuale di \app{Gretl}
 (tranne quando viene usato il plugin per precisione multipla, e allora
 i risultati sono mostrati con 12 cifre). Se occorre esaminare un
 valore più da vicino, basta per prima cosa salvarlo (si veda il
@@ -317,41 +311,32 @@ comando \cmd{genr}) e poi visualizzarlo usando il comando \cmd{print
 \chapter{Analisi econometrica avanzata con software libero}
 \label{app-advanced}
 
-Come descritto nel manuale, \app{gretl} offre una raccolta abbastanza
-completa di stimatori basati sui minimi quadrati e alcuni stimatori
-aggiuntivi, come logit, probit e le minime deviazioni assolute, ma gli
-utenti avanzati possono trovare questa lista troppo ristretta.
-
-Senza dubbio, alcuni utenti avanzati preferiranno scrivere da soli il
-proprio codice statistico usando qualche linguaggio di programmazione
-come C, C++ o Fortran. Un'altra opzione è quella di usare un
-linguaggio di livello più alto che offre funzioni per la manipolazione
-di matrici e altre routine statistiche incluse o disponibili come
-pacchetti aggiuntivi. Se si è attratti da quest'ultima opzione e si
-intende usare software libero, raccomando di dare un'occhiata a GNU R
-(\href{http://www.r-project.org/}{r-project.org}) o GNU Octave
-(\href{http://www.octave.org/}{www.octave.org}). Questi programmi sono
-molto simili rispettivamente ai programmi commerciali S e Matlab.
+\app{Gretl} offre una raccolta di stimatori abbastanza completa (e in
+continua crescita); inoltre dispone di vari costrutti di scripting che
+possono essere usati per creare nuovi stimatori. Tuttavia, non fornisce
+strumenti per la creazione e la manipolazione di matrici; se si è alla
+ricerca di software libero che includa questa funzionalità, raccomandiamo
+di dare un'occhiata a GNU R (\href{http://www.r-project.org/}{r-project.org}) o
+GNU Octave (\href{http://www.octave.org/}{www.octave.org}). Questi programmi
+sono molto simili rispettivamente ai programmi commerciali S e Matlab.
   
-Come già detto nel manuale, \app{gretl} offre la possibilità di
+Come già detto sopra, \app{Gretl} offre la possibilità di
 esportare i dati nei formati di Octave e R. Nel caso di Octave, il
-dataset di \app{gretl} viene salvato come matrice singola \verb+X+:
+dataset di \app{Gretl} viene salvato come matrice singola \verb+X+:
 una volta importati i dati in Octave, se si vuole, è possibile
 eliminare la matrice \verb+X+, si veda il manuale di Octave per i
 dettagli.  Per quanto riguarda R, il file dei dati esportati conserva
-qualsiasi struttura di serie storiche riconoscibile da \app{gretl}.
+qualsiasi struttura di serie storiche riconoscibile da \app{Gretl}.
 Le serie sono salvate come strutture individuali: i dati vanno
 importati in R con il comando \cmd{source()}.
   
 Di questi due programmi, R è forse quello di più immediato interesse
-per gli econometrici, visto che offre più routine statistiche (ad es.
-modelli lineari generalizzati, stima di massima verosimiglianza,
-metodi per serie storiche), quindi ho inserito in \app{gretl} una
-funzione per trasferire velocemente dati in R. Il menù Sessione di
-\app{gretl} contiene il comando \textsf{Avvia GNU R}, che salva una
-versione per R del dataset in uso (come file \verb+Rdata.tmp+ nella
-directory gretl dell'utente) e lo carica in una nuova sessione di R.
-Di seguito sono forniti alcuni dettagli su questa operazione.
+per gli econometrici, visto che offre più routine statistiche specializzate.
+\app{Gretl} dispone quindi di una funzione per trasferire velocemente dati in R.
+Il menù Sessione di \app{Gretl} contiene il comando \textsf{Avvia GNU R}, che
+salva una versione per R del dataset in uso (come file \verb+Rdata.tmp+ nella
+directory Gretl dell'utente) e lo carica in una nuova sessione di R.  Di seguito
+sono forniti alcuni dettagli su questa operazione.
   
 Per prima cosa, i dati vengono importati in R scrivendo una versione
 temporanea di \verb+.Rprofile+ nella directory di lavoro corrente (se
@@ -359,16 +344,13 @@ esiste un file di questo tipo, viene letto da R all'avvio). Se la
 directory contiene una versione personale di \verb+.Rprofile+, il file
 originale viene rinominato temporaneamente come
 \verb+.Rprofile.gretltmp+ e viene ripristinato all'uscita da
-\app{gretl} (se qualcuno ha un'idea migliore per questa operazione, mi
+\app{Gretl} (se qualcuno ha un'idea migliore per questa operazione, mi
 farebbe piacere ascoltarla).
   
 Inoltre, il modo esatto in cui R viene avviato dipende dalla variabile
-interna \verb+Rcommand+ di \app{gretl}, il cui valore deve essere
+interna \verb+Rcommand+ di \app{Gretl}, il cui valore deve essere
 impostato nel menù \textsf{File, Preferenze}. Il comando predefinito è
-\cmd{RGui.exe} in MS Windows, mentre in X è \cmd{R --gui=gnome} se al
-momento della compilazione è stata trovata un'installazione del
-desktop Gnome (\href{http://www.gnome.org/}{gnome.org}), oppure
-\cmd{xterm -e R} se Gnome non è disponibile. Si noti che questa
+\cmd{RGui.exe} in MS Windows, mentre in X è \cmd{xterm -e R}. Si noti che questa
 stringa può contenere al massimo tre elementi separati da spazi:
 ulteriori elementi saranno ignorati.
 
