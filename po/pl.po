@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.99\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-12-07 11:21-0500\n"
-"PO-Revision-Date: 2005-12-12 22:00+0100\n"
+"PO-Revision-Date: 2005-12-13 16:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -49,7 +49,7 @@ msgstr "nieznany"
 
 #: lib/src/adf_kpss.c:116
 msgid "asymptotic p-value"
-msgstr "asymptotyczna warto¶æ p"
+msgstr "asymptotyczna warto¶æ p ="
 
 #: lib/src/adf_kpss.c:122
 #, c-format
@@ -2296,11 +2296,11 @@ msgstr "Test White'a na heteroskedastyczno¶æ wariancji"
 
 #: lib/src/gretl_model.c:1622
 msgid "Sargan over-identification test"
-msgstr "Test Sargana nadmiernej identyfikacji"
+msgstr "Test Sargana - nadmiernej identyfikacji"
 
 #: lib/src/gretl_model.c:1623
 msgid "Hausman test"
-msgstr "test Hausmana"
+msgstr "Test Hausmana"
 
 #: lib/src/gretl_model.c:1696 lib/src/gretl_model.c:1704
 msgid "parameters are zero for the variables"
@@ -2344,7 +2344,7 @@ msgstr "heteroskedastyczno¶æ wariancji nie wystêpuje"
 
 #: lib/src/gretl_model.c:1708
 msgid "all instruments are valid"
-msgstr "wszystkie instrumenty s± poprawne"
+msgstr "wszystkie instrumenty s± wa¿ne - uzasadnione"
 
 #: lib/src/gretl_model.c:1709
 msgid "OLS estimates are consistent"
@@ -3712,7 +3712,7 @@ msgstr ""
 #: lib/src/monte_carlo.c:1991
 #, c-format
 msgid "%s estimates using the %d observations %s-%s\n"
-msgstr "estymacja %s dla %d obserwacji %s-%s\n"
+msgstr "Estymacja %s dla %d obserwacji %s-%s\n"
 
 #: lib/src/monte_carlo.c:1995
 #, c-format
@@ -4766,7 +4766,7 @@ msgstr "Estymacja %s z wykorzystaniem obserwacji %s--%s ($T=%d$)"
 
 #: lib/src/varprint.c:751 lib/src/varprint.c:760
 msgid "Maximum likelihood"
-msgstr "Najwiêksza wiarygodno¶æ"
+msgstr "najwiêksza wiarygodno¶æ"
 
 #: lib/src/varprint.c:759
 #, c-format
@@ -4776,7 +4776,7 @@ msgstr "Estymacja %s z wykorzystaniem obserwacji %s%-%s (T = %d)"
 #: lib/src/varprint.c:768
 #, c-format
 msgid "%s estimates, observations %s-%s (T = %d)"
-msgstr "estymacja %s dla obserwacji %s-%s (T = %d)"
+msgstr "Estymacja %s dla obserwacji %s-%s (T = %d)"
 
 #: lib/src/varprint.c:815 lib/src/varprint.c:819 lib/src/varprint.c:822
 msgid "Equation for "
@@ -4789,12 +4789,12 @@ msgstr "Test F dla hipotezy o braku restrykcji"
 #: lib/src/varprint.c:849 lib/src/varprint.c:855 lib/src/varprint.c:861
 #, c-format
 msgid "All lags of %-8s "
-msgstr "Wszystkie opó¼nienia dla zm. %-8s "
+msgstr "Wszystkie opó¼nienia zm. %-8s "
 
 #: lib/src/varprint.c:872 lib/src/varprint.c:878 lib/src/varprint.c:884
 #, c-format
 msgid "All vars, lag %-6d "
-msgstr "Wszystkie zmienne, opó¼nienie %-7d "
+msgstr "Wszystkie zm. opó¼nione o %-7d "
 
 #: lib/src/varprint.c:913 lib/src/varprint.c:914 lib/src/varprint.c:916
 #: lib/src/varprint.c:917
@@ -9250,7 +9250,7 @@ msgstr "Test normalno¶ci rozk³adu reszt"
 
 #: gui2/gui_utils.c:3742 gui2/library.c:2259
 msgid "linear restrictions"
-msgstr "liniowe restrykcje"
+msgstr "Test liniowych restrykcji"
 
 #: gui2/gui_utils.c:3769
 msgid "forecast variance decomposition"
@@ -9359,11 +9359,11 @@ msgstr "Narzêdzia"
 
 #: gui2/helpfiles.c:633
 msgid "Show English help"
-msgstr ""
+msgstr "Poka¿ angielski HELP"
 
 #: gui2/helpfiles.c:661 gui2/textbuf.c:762
 msgid "Index"
-msgstr ""
+msgstr "Indeks"
 
 #: gui2/helpfiles.c:1093 gui2/helpfiles.c:1170 gui2/helpfiles.c:1259
 #: gui2/helpfiles.c:1307
