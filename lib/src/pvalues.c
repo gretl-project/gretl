@@ -954,9 +954,9 @@ double genr_get_critical (const char *line, const double **Z,
 	}
     } else if (st == 't') {
 	if (alpha > 0.5) {
-	    ret = -sqrt(f_crit_a(2.0 * (1.0 - alpha), 1, dfn));
+	    ret = stdtri(dfn, 1.0 - alpha);
 	} else {
-	    ret = sqrt(f_crit_a(2.0 * alpha, 1, dfn));
+	    ret = -stdtri(dfn, alpha);
 	}
     } else {
 	/* normal */
