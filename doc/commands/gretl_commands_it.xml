@@ -924,9 +924,9 @@
       <para>
 	Mostra i valori della funzione di autocorrelazione per la
 	<repl>variabile</repl> specificata (dal nome o dal numero).
-	Si veda Ramanathan, Capitolo 11.7.  È definita come
+        I valori sono definiti come
 	<equation status="inline" 
-	  tex="$\rho(u_t, u_{t-s})$"
+	  tex="$\hat{\rho}(u_t, u_{t-s})$"
 	  ascii="rho(u(t), u(t-s))"
 	  graphic="autocorr"/> dove <mathvar>u<sub>t</sub></mathvar>
 	è la <mathvar>t</mathvar>-esima osservazione della variabile
@@ -935,7 +935,8 @@
       </para>
 
       <para>
-	Vengono mostrate anche le autocorrelazioni parziali, ossia al
+	Vengono mostrate anche le autocorrelazioni parziali (calcolate con
+        l'algoritmo di Durbin&ndash;Levinson), ossia al
 	netto dell'effetto dei ritardi intermedi. Il comando produce anche
         un grafico del correlogramma e mostra la statistica
         <mathvar>Q</mathvar> di Box&ndash;Pierce per testare l'ipotesi nulla
@@ -947,7 +948,8 @@
       <para>
 	Se viene specificato un valore <repl>max-ritardo</repl>, la lunghezza
         del correlogramma viene limitata al numero di ritardi specificato, altrimenti
-        viene scelta automaticamente.
+        viene scelta automaticamente in funzione della frequenza dei dati e del
+        numero di osservazioni.
       </para>
     </description>
 
@@ -3390,7 +3392,7 @@
         trasformazione logistica sulla variabile dipendente:
 	<equation status="display" 
 	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
-	  ascii="log(y/(ymax - y))"
+	  ascii="log(y/(y* - y))"
 	  graphic="logistic1"/>
       </para>
 
@@ -3400,26 +3402,28 @@
         (il massimo asintotico della variabile dipendente) è 1.
         Se la variabile dipendente è una percentuale, compresa tra 0 e
         100, il valore predefinito di <mathvar>y<super>*</super></mathvar>
-        è 100. È possibile indicare un valore diverso per il massimo,
+        è 100.
+      </para>
+        
+      <para context="cli">
+        È possibile indicare un valore diverso per il massimo,
         usando la sintassi opzionale <lit>ymax=</lit><repl>valore</repl>,
         che segue la lista dei regressori. Il valore fornito deve essere
         maggiore di tutti i valori osservati della variabile dipendente.
       </para>
-
-      <para context="gui">La variabile dipendente dev'essere
-        strettamente positiva. Se è una frazione decimale, compresa tra 0
-        e 1, il valore predefinito per ymax (il massimo asintotico della
-        variabile dipendente) è 1. Se la variabile dipendente è una
-        percentuale, compresa tra 0 e 100, il valore predefinito di ymax
-        è 100. È possibile indicare un diverso valore massimo nella
-        finestra di dialogo: il valore deve essere maggiore di tutti i
-        valori osservati della variabile dipendente.</para>
+        
+      <para context="gui">
+        Nella finestra di dialogo del comando, è possibile specificare
+        un valore diverso per il massimo. Il valore fornito
+        <mathvar>y<super>*</super></mathvar> deve essere
+        maggiore di tutti i valori osservati della variabile dipendente.
+      </para>
 
       <para>I valori stimati e i residui della regressione sono
         trasformati automaticamente usando 	  
 	<equation status="display" 
 	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"
-	  ascii="y = ymax / (1 + exp(-x))"
+	  ascii="y = y* / (1 + exp(-x))"
 	  graphic="logistic2"/> dove <mathvar>x</mathvar> rappresenta
 	un valore stimato oppure un residuo della regressione OLS,
         usando la variabile dipendente trasformata. I valori riportati
