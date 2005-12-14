@@ -26,6 +26,7 @@ version 1.4.2, in progress
 - Add combined impulse response plot for VARs
 - Add log-likelihood, AIC and BIC for VARs
 - Add inverse roots plot for VARs (Jack Lucchetti)
+- Add log-likelihood for models estimated via OLS
 - Add "robust" option for logit and probit (compute QML
   or Huber-White covariance matrix)
 - Add "robust" standard errors option for WLS

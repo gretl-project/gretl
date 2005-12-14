@@ -201,7 +201,7 @@ struct genr_func funcs[] = {
 
 #define MAXTERMS  64
 #define TOKLEN   128
-#define ARGLEN    64
+#define ARGLEN   128
 
 #define genr_is_scalar(g) ((g)->flags & GENR_SCALAR)
 #define genr_is_vector(g) (!((g)->flags & GENR_SCALAR))
@@ -456,12 +456,12 @@ static int evaluate_genr_function_args (char *s, GENERATOR *genr)
     }
 
     if (!err) {
-	char numstr[24];
+	char numstr[32];
 
 	*s = '\0';
 	strcat(s, st);
 	for (i=0; i<nf; i++) {
-	    sprintf(numstr, ",%.10g", vals[i]);
+	    sprintf(numstr, ",%.15g", vals[i]);
 	    strcat(s, numstr);
 	}
     }
