@@ -874,19 +874,19 @@ static int parse_genr_critical_input (const char *str,
 				      double *a)
 {
     char dfnstr[VNAMELEN], dfdstr[VNAMELEN];
-    char astr[VNAMELEN];
+    char astr[16];
     double val;
     int err = 0;
 
     dfnstr[0] = dfdstr[0] = astr[0] = '\0';
 
-    if (sscanf(str, "F,%8[^,],%8[^,],%8s", dfnstr, dfdstr, astr) == 3) {
+    if (sscanf(str, "F,%8[^,],%8[^,],%15s", dfnstr, dfdstr, astr) == 3) {
 	*st = 'F';
-    } else if (sscanf(str, "X,%8[^,],%8s", dfnstr, astr) == 2) {
+    } else if (sscanf(str, "X,%8[^,],%15s", dfnstr, astr) == 2) {
 	*st = 'X';
-    } else if (sscanf(str, "t,%8[^,],%8s", dfnstr, astr) == 2) {
+    } else if (sscanf(str, "t,%8[^,],%15s", dfnstr, astr) == 2) {
 	*st = 't';
-    } else if (sscanf(str, "N,%8s", astr) || sscanf(str, "z,%8s", astr)) {
+    } else if (sscanf(str, "N,%15s", astr) || sscanf(str, "z,%15s", astr)) {
 	*st = 'z';
 	*dfn = 500;
     } else {
