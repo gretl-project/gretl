@@ -471,6 +471,7 @@ static int my_mkdir (const char *dirname)
 	    err = 1;
 	}
     }
+
     return err;
 }
 
