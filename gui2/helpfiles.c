@@ -29,6 +29,14 @@
 # include "treeutils.h"
 #endif
 
+#ifndef G_OS_WIN32
+# include <sys/stat.h>
+# include <sys/types.h>
+# include <fcntl.h>
+# include <unistd.h>
+# include <dirent.h>
+#endif
+
 #define HDEBUG 0
 
 static int translated_helpfile = -1;
@@ -1661,7 +1669,9 @@ enum {
     SPANISH
 };
 
-static char *full_doc_path (char *path, const char *fname)
+#ifdef G_OS_WIN32
+
+static char *full_doc_path (char *path, const char *fname, int *err)
 {
     strcpy(path, paths.gretldir);
     strcat(path, "doc");
@@ -1670,6 +1680,92 @@ static char *full_doc_path (char *path, const char *fname)
 
     return path;
 }
+
+#else
+
+static int helpfile_exists (char *path, const char *fname, int i)
+{
+    FILE *fp = NULL;
+    int ret = 0;
+
+    if (i == 0) {
+	/* standard location */
+	sprintf(path, "%sdoc/%s", paths.gretldir, fname);
+    } else if (i == 1) {
+	sprintf(path, "%s../doc/%s", paths.gretldir, fname);
+	/* "system" location */
+    } else {
+	/* "user" location */
+	sprintf(path, "%sdoc/%s", paths.userdir, fname);
+    }
+
+    fp = fopen(path, "r");
+
+    if (fp != NULL) {
+	fclose(fp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+static int helpfile_is_writable (char *path, const char *fname, int i)
+{
+    FILE *fp;
+    int err = 0;
+    int ret = 0;
+
+    if (i == 0) {
+	/* standard location */
+	sprintf(path, "%sdoc/%s", paths.gretldir, fname);
+    } else if (i == 1) {
+	sprintf(path, "%s../doc/%s", paths.gretldir, fname);
+	/* "system" location */
+    } else {
+	/* "user" location */
+	DIR *dir;
+
+	sprintf(path, "%sdoc", paths.userdir);
+	dir = opendir(path);
+
+	if (dir != NULL) {
+	    closedir(dir);
+	} else if (mkdir(path, 0755)) {
+	    err = 1;
+	}
+	if (!err) {
+	    sprintf(path, "%sdoc/%s", paths.userdir, fname);
+	}
+    }
+
+    if (!err) {
+	fp = fopen(path, "w");
+	if (fp != NULL) {
+	    fclose(fp);
+	    remove(path);
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+static char *full_doc_path (char *path, const char *fname)
+{
+    int i;
+
+    for (i=0; i<3; i++) {
+	if (helpfile_exists(path, fname, i)) {
+	    return path;
+	} else if (helpfile_is_writable(path, fname, i)) {
+	    return path;
+	}
+    }
+
+    return NULL;
+}
+
+#endif
 
 static int maybe_grab_pdf (int uguide, int i, char *fullpath)
 {
@@ -1699,7 +1795,10 @@ static int maybe_grab_pdf (int uguide, int i, char *fullpath)
 	fname = ref_files[i];
     }
 
-    full_doc_path(fullpath, fname);
+    if (full_doc_path(fullpath, fname) == NULL) {
+	errbox("Failed to download file");
+	return 1;
+    }
 
     /* see if file exists locally */
     fp = fopen(fullpath, "r");
