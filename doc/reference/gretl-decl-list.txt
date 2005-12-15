@@ -64,6 +64,8 @@ transpose_data
 <SECTION>
 <FILE>discrete</FILE>
 logit_probit
+logistic_model
+logistic_ymax_lmax
 </SECTION>
 
 <SECTION>
@@ -86,7 +88,6 @@ lsq
 estimate_rho
 lad
 arma
-logistic_model
 tobit_model
 poisson_model
 garch
@@ -311,6 +312,7 @@ CMD
 CmdEchoFlags
 ProgramOptions
 ForcedLangs
+HIDDEN_COMMAND
 gretl_cmd_init
 gretl_cmd_free
 gretl_cmd_new

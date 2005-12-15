@@ -1671,7 +1671,7 @@ enum {
 
 #ifdef G_OS_WIN32
 
-static char *full_doc_path (char *path, const char *fname, int *err)
+static char *full_doc_path (char *path, const char *fname)
 {
     strcpy(path, paths.gretldir);
     strcat(path, "doc");

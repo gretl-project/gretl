@@ -1,4 +1,4 @@
-version 1.4.2, in progress
+12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series
   data
 - Add confidence ellipse option for two coefficients, in 
