@@ -194,42 +194,104 @@ static int push_fncall (fncall *call, const DATAINFO *pdinfo)
     return 0;
 }
 
-static int on_returns_list (const char *vname, char **returns, int n_returns)
-{
-    int k, ret = 0;
-
-    for (k=0; k<n_returns; k++) {
-	if (!strcmp(vname, returns[k])) {
-#if FN_DEBUG
-	    fprintf(stderr, "%s: this var is wanted\n", vname);
-#endif
-	    ret = 1;
-	    break;
-	}
-    }
-
-    return ret;
-}
-
 static void copy_values_to_assignee (int targ, int src, double **Z, 
 				     const DATAINFO *pdinfo)
 {
     int t, n = (pdinfo->vector[targ])? pdinfo->n : 1;
+
+#if FN_DEBUG
+    fprintf(stderr, "copy_values_to_assignee: copying from Z[%d] (%s) to Z[%d] (%s)\n",
+	    src, pdinfo->varname[src], targ, pdinfo->varname[targ]);
+#endif
 
     for (t=0; t<n; t++) {
 	Z[targ][t] = Z[src][t];
     }
 }
 
-static int 
-destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, 
-			      int nc)
+static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo, 
+			       int nc, int *locals)
+{
+    int i, j, src, targ;
+
+#if FN_DEBUG
+    fprintf(stderr, "\n*** start assignment of return values ***\n");
+#endif
+
+    if (call->asslist == NULL) {
+#if FN_DEBUG
+	fprintf(stderr, "function call: no assigments\n");
+#endif
+	return 0;
+    }
+
+#if FN_DEBUG
+    printlist(call->asslist, "call->asslist");
+    fprintf(stderr, "number of assignments = %d, number of returns = %d\n",
+	    call->asslist[0], call->fun->n_returns);
+#endif
+
+    if (call->fun->n_returns < call->asslist[0]) {
+	fprintf(stderr, "bad function call: assignments > returns\n");
+	return 1;
+    }
+
+    for (i=0; i<call->asslist[0]; i++) {
+	targ = call->asslist[i+1];
+	src = -1;
+
+#if FN_DEBUG
+	fprintf(stderr, " assv[%d] = '%s'\n", i, call->assv[i]);
+	fprintf(stderr, " return[%d] = '%s'\n", i, call->fun->returns[i]);
+#endif
+	if (call->assv[i] == NULL || *call->assv[i] == '\0') {
+	    fprintf(stderr, " got a null assignment\n");
+	    continue;
+	}
+
+	/* find the source variable */
+	for (j=1; j<pdinfo->v; j++) {
+	    if (STACK_LEVEL(pdinfo, j) != nc) {
+		continue;
+	    }
+	    if (!strcmp(pdinfo->varname[j], call->fun->returns[i])) {
+#if FN_DEBUG
+		fprintf(stderr, " identified source as var %d (%s)\n",
+			j, pdinfo->varname[j]);
+#endif
+		src = j;
+		break;
+	    }
+	}
+
+	if (src > 0) {
+	    if (targ > 0) {
+		/* copy values to pre-existing var at caller level */
+		copy_values_to_assignee(targ, src, *pZ, pdinfo);
+	    } else {
+		/* rename variable as caller desired and mark as global */
+		int pos;
+
+		strcpy(pdinfo->varname[src], call->assv[i]);
+		STACK_LEVEL(pdinfo, src) -= 1; 
+		if ((pos = in_gretl_list(locals, src))) {
+		    gretl_list_delete_at_pos(locals, pos);
+		}
+	    }
+	}		
+    }
+
+#if FN_DEBUG
+    fprintf(stderr, "*** done assignment of returns ***\n\n");
+#endif
+
+    return 0;
+}
+
+static int *make_locals_list (const DATAINFO *pdinfo, int nc, int *err)
 {
     int *locals = NULL;
-    int nlocal = 0;
-    int i, j, v;
-    int anyerr = 0;
-    int err = 0;
+    int i, nlocal = 0;
 
     for (i=1; i<pdinfo->v; i++) {
 	if (STACK_LEVEL(pdinfo, i) == nc) {
@@ -240,64 +302,37 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
     if (nlocal > 0) {
 	locals = gretl_list_new(nlocal);
 	if (locals == NULL) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	} else {
-	    locals[0] = 0;
-	}
-    } 
+	    int j = 1;
 
-    if (nlocal == 0 || err) {
+	    for (i=1; i<pdinfo->v; i++) {
+		if (STACK_LEVEL(pdinfo, i) == nc) {
+		    locals[j++] = i;
+		}
+	    }
+	}
+    }
+
+    return locals;
+}
+
+static int 
+destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, 
+			      int nc)
+{
+    int *locals = NULL;
+    int anyerr = 0;
+    int err = 0;
+
+    locals = make_locals_list(pdinfo, nc, &err);
+
+    if (locals == NULL || err) {
 	destroy_saved_lists_at_level(nc);
 	return err;
-    }
+    }    
 
-    v = 0;
-    j = 1;
-
-    /* now check for any local variables generated within the
-       function: if they are on the return list and wanted by the
-       caller, process them appropriately, otherwise tag them for
-       deletion then delete them in a batch
-    */
-
-    for (i=1; i<pdinfo->v; i++) {
-	int cv, saveit = 0;
-
-	if (STACK_LEVEL(pdinfo, i) != nc) {
-	    continue;
-	}
-
-	if (v < call->asslist[0]) {
-	    saveit = on_returns_list(pdinfo->varname[i], call->fun->returns,
-				     call->fun->n_returns);
-	} 
-
-	if (saveit) {
-	    /* does a variable of this name already exist at caller level? */
-	    cv = call->asslist[v+1];
-#if FN_DEBUG
-	    fprintf(stderr, " wanted by caller as '%s' (#%d)\n", call->assv[v], cv);
-#endif
-	    if (cv > 0) {
-		copy_values_to_assignee(cv, i, *pZ, pdinfo);
-		saveit = 0;
-	    } else {
-		/* rename variable as caller desired: mark for preservation */
-		strcpy(pdinfo->varname[i], call->assv[v]);
-		STACK_LEVEL(pdinfo, i) -= 1; 
-	    }
-	    v++;
-	}
-
-	if (!saveit) {
-#if FN_DEBUG
-	    fprintf(stderr, "local variable %d (%s) tagged for deletion\n", 
-		    i, pdinfo->varname[i]);
-#endif
-	    locals[j++] = i;
-	    locals[0] += 1;
-	}
-    }
+    err = new_var_assignment(call, pZ, pdinfo, nc, locals);
 
     anyerr = dataset_drop_listed_variables(locals, pZ, pdinfo, NULL);
     if (anyerr && !err) {
@@ -611,6 +646,55 @@ static int check_func_name (const char *fname)
     return err;
 }
 
+/* count fields that may be separated by spaces or commas,
+   including blank comma-delimited fields */
+
+static int special_count_fields (char *s)
+{
+    int n, nf = 0;
+
+    while (*s) {
+	while (*s == ' ') s++;
+	n = strcspn(s, " ,");
+	if (n > 0) {
+	    nf++;
+	    s += n;
+	    while (*s == ' ') s++;
+	    if (*s == ',') s++;
+	} else if (*s == ',') {
+	    nf++;
+	    s++;
+	}
+	while (*s == ' ') s++;
+    }
+
+    return nf;
+}
+
+static char *get_next_arg (char **parg, char *s, int maxlen)
+{
+    int m, n;
+
+    while (*s == ' ') s++;
+
+    n = strcspn(s, " ,");
+    
+    if (n > 0) {
+	m = (n > maxlen)? maxlen : n;
+	*parg = gretl_strndup(s, m);
+	s += n;
+	while (*s == ' ') s++;
+	if (*s == ',') s++;
+    } else if (*s == ',') {
+	*parg = gretl_strdup("");
+	s++;
+    }
+
+    while (*s == ' ') s++;
+
+    return s;
+}
+
 /* Parse line and return an allocated array of strings consisting of
    the space- or comma-separated fields in line, each one truncated if
    necessary to a maximum of maxlen characters.
@@ -619,11 +703,9 @@ static int check_func_name (const char *fname)
 static char **
 get_separated_fields (const char *line, int *nfields, int maxlen)
 {
-    char fmt[8];
     char **fields = NULL;
     char *cpy, *s;
-    char str[9];
-    int i, j, nf, err = 0;
+    int i, n, nf, err = 0;
 
     *nfields = 0;
 
@@ -636,46 +718,38 @@ get_separated_fields (const char *line, int *nfields, int maxlen)
 	return NULL;
     }
 
-    /* clean the string up */
+    /* clean up the copied string */
     s = cpy;
     s += strspn(s, " ");
     if (*s == '(') {
 	s++;
     }
     tailstrip(s);
-    j = strlen(s);
-    if (s[j-1] == ')') {
-	s[j-1] = '\0';
-    }    
+    n = strlen(s);
+    if (s[n-1] == ')') {
+	s[n-1] = '\0';
+    } 
 
-    charsub(s, ',', ' ');
+    nf = special_count_fields(s);
 
-    nf = count_fields(s);
-    fields = malloc(nf * sizeof *fields);
-    if (fields == NULL) {
-	free(s);
-	return NULL;
-    }
-
-    sprintf(fmt, "%%%ds", maxlen);
-
-    for (i=0; i<nf && !err; i++) {
-	sscanf(s, fmt, str);
-	fields[i] = gretl_strdup(str);
-	if (fields[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(fields[j]);
-	    }
-	    free(fields);
-	    fields = NULL;
+    if (nf > 0) {
+	fields = create_strings_array(nf);
+	if (fields == NULL) {
 	    err = 1;
 	} else {
-	    s += strcspn(s, " ");
-	    s += strspn(s, " ");
+	    for (i=0; i<nf && !err; i++) {
+		s = get_next_arg(&fields[i], s, maxlen);
+		if (fields[i] == NULL) {
+		    err = 1;
+		}
+	    }
 	}
     }
 
-    if (!err) {
+    if (err) {
+	free_strings_array(fields, nf);
+	fields = NULL;
+    } else {
 	*nfields = nf;
     }
 
@@ -1361,6 +1435,10 @@ static int check_function_assignments (ufunc *fun,
 #if FN_DEBUG
 	fprintf(stderr, "checking assignment %d to '%s'\n", i, assv[i]);
 #endif
+	if (assv[i] == NULL || *assv[i] == '\0') {
+	    /* placeholder, non-assignment */
+	    continue;
+	}
 	v = varindex(pdinfo, assv[i]);
 	if (v < pdinfo->v) {
 #if FN_DEBUG

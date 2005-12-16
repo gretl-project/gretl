@@ -3693,7 +3693,7 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 
     GRETL_VAR *var = NULL;
     int neqns, vtarg, vshock;
-    char tmp[16];
+    char tmp[32];
     int i, j;
 
     var = (GRETL_VAR *) vwin->data;
@@ -3815,13 +3815,13 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     }
 
     for (i=0; i<neqns; i++) {
-	char maj[32], min[16];
+	char maj[64], min[32];
 	int dv;
 
 	/* forecast items */
 	dv = gretl_VAR_get_variable_number(var, i);
-	varitem.path = g_strdup_printf("%s/%s", _(fpath), 
-				       datainfo->varname[dv]);
+	double_underscores(tmp, datainfo->varname[dv]);
+	varitem.path = g_strdup_printf("%s/%s", _(fpath), tmp);
 	varitem.callback = VAR_forecast_callback;
 	varitem.callback_action = i;
 	varitem.item_type = NULL;

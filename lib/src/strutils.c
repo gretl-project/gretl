@@ -507,7 +507,6 @@ void clear (char *str, int len)
  * @s: the string to process.
  *
  * Returns: the number of space-separated fields in @s.
- *
  */
 
 int count_fields (const char *s)

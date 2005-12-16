@@ -3001,4 +3001,76 @@ MahalDist *get_mahal_distances (const int *list, double ***pZ,
     return md;
 }
 
+#if 0 /* not ready yet */
+
+/**
+ * lorenz_curve:
+ * @vnum: ID number of variable to examine.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * @opt: not used yet.
+ * @prn: gretl printing struct.
+ *
+ * Graphs the Lorenz curve for variable @vnum and prints the
+ * Gini coefficient.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int lorenz_curve (int vnum, double ***pZ, DATAINFO *pdinfo, 
+		  gretlopt opt, PRN *prn)
+{
+    int m = pdinfo->t2 - pdinfo->t1 + 1;
+    double *x = (*pZ)[vnum];
+    double *sx = NULL, *lz = NULL;
+    double csx = 0.0, sumx = 0.0, sisx = 0.0;
+    double idx, gini;
+    int t, n = 0;
+    int err = 0;
+
+    sx = malloc(m * sizeof *sx);
+    lz = malloc(m * sizeof *lz);
+
+    if (sx == NULL || lz == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    n = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(x[t])) {
+	    sx[n++] = x[t];
+	    sumx += x[t];
+	}
+    }
+
+    qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
+
+    for (t=0; t<n; t++) {
+	csx += sx[t];
+	lz[t] = csx / sumx;
+	idx = t + 1;
+	sisx += idx * sx[t];
+    }
+
+    gini = 2.0 * sisx / (n * sumx) - ((double) n + 1) / n;
+
+    pprintf(prn, "gini = %g\n", gini);
+    pprintf(prn, "gnorm = %g\n", gini * (double) n / (n - 1));
+
+    for (t=0; t<n; t++) {
+	idx = t + 1;
+	pprintf(prn, "%g\t%g\n", idx / n, lz[t]);
+    }
+
+    bailout:
+
+    free(sx);
+    free(lz);
+
+    return err;
+}
+
+#endif
+
 
