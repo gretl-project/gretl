@@ -1,3 +1,8 @@
+version 1.5.1, inr progress
+- Fix translation bug for VAR menus
+- Fix bug in assignment of values returned from user-defined
+  functions
+
 12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series
   data
