@@ -1026,7 +1026,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     if (err) goto cleanup;
 
     if (method == SYS_LIML) {
-	/* compute the minimum eigenvalues and generated the
+	/* compute the minimum eigenvalues and generate the
 	   suitably transformed data matrices */
 	err = liml_driver(sys, pZ, pdinfo, prn);
 	if (err) goto cleanup;
