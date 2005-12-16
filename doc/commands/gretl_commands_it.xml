@@ -6327,11 +6327,12 @@
 	i valori stimati (<cmd>fitted</cmd>).
       </para>
       
-      <para>Per esempi completi di specificazione e stima
-      di un sistema di equazioni, si vedano gli script
-	<filename>klein.inp</filename> e
-	<filename>greene14_2.inp</filename> forniti con la distribuzione
-        di gretl.
+      <para>Per esempi completi di specificazione e stima di un
+	sistema di equazioni, si vedano gli script
+	<filename>klein.inp</filename>,
+	<filename>kmenta.inp</filename> e
+	<filename>greene14_2.inp</filename> forniti con la
+	distribuzione di gretl.
        </para>
 
     </description>

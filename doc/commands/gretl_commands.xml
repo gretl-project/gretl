@@ -6391,9 +6391,10 @@
       </para>
 
       <para>
-	For full examples of the specification and
-	estimation of systems of equations, please see the scripts
-	<filename>klein.inp</filename> and
+	For examples of the specification and estimation of systems of
+	equations, please see the scripts
+	<filename>klein.inp</filename>,
+	<filename>kmenta.inp</filename> and
 	<filename>greene14_2.inp</filename> (supplied with the gretl
 	distribution).
       </para>

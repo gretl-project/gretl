@@ -26,8 +26,6 @@
 # include <gtksourceview/gtksourcelanguagesmanager.h>
 #endif
 
-#define FORMAT_HELP_TEXT
-
 #define GUIDE_PAGE 999
 
 enum {
@@ -399,8 +397,6 @@ static GtkTextTagTable *gretl_tags_new (void)
 		 NULL);
     gtk_text_tag_table_add(table, tag);
 
-
-#ifdef FORMAT_HELP_TEXT
     tag = gtk_text_tag_new("italic");
     g_object_set(tag, "family", "sans",
 		 "style", PANGO_STYLE_ITALIC, 
@@ -428,7 +424,6 @@ static GtkTextTagTable *gretl_tags_new (void)
     tag = gtk_text_tag_new("code");
     g_object_set(tag, "family", "monospace", NULL);
     gtk_text_tag_table_add(table, tag);
-#endif /* FORMAT_HELP_TEXT */
 
     return table;
 }
@@ -547,13 +542,17 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 }
 
 static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter, 
-			 const gchar *text, gint page)
+			 const gchar *text, gint page,
+			 const char *indent)
 {
     GtkTextTag *ltag;
 
     if (page == GUIDE_PAGE) {
 	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
 					  "family", "sans", NULL);
+    } else if (indent != NULL) {
+	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
+					  "left_margin", 30, NULL);
     } else {
 	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", NULL);
     }
@@ -748,8 +747,6 @@ static void maybe_connect_help_signals (windata_t *hwin, int en)
     }
 }
 
-#ifdef FORMAT_HELP_TEXT
-
 static void maybe_set_help_tabs (windata_t *hwin)
 {
     int done = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(hwin->w), 
@@ -765,8 +762,6 @@ static void maybe_set_help_tabs (windata_t *hwin)
 	g_object_set_data(G_OBJECT(hwin->w), "tabs_set", GINT_TO_POINTER(1));
     }
 }
-
-#endif
 
 static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 {
@@ -790,7 +785,7 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
 	}
 
 	word = gretl_command_word(i);
-	insert_link(tbuf, &iter, gretl_command_word(i), i);
+	insert_link(tbuf, &iter, gretl_command_word(i), i, NULL);
 	if (j++ % 8 == 0) {
 	    gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
 	} else {
@@ -805,10 +800,7 @@ static void cmdref_title_page (windata_t *hwin, GtkTextBuffer *tbuf, int en)
     gtk_text_view_set_buffer(GTK_TEXT_VIEW(hwin->w), tbuf);
 
     maybe_connect_help_signals(hwin, en);
-
-#ifdef FORMAT_HELP_TEXT
     maybe_set_help_tabs(hwin);
-#endif
 }
 
 static gint help_popup_click (GtkWidget *w, gpointer p)
@@ -900,8 +892,6 @@ enum {
     INSERT_TEXT,
     INSERT_PDFLINK
 };
-
-#ifdef FORMAT_HELP_TEXT
 
 static void insert_help_figure (GtkTextBuffer *tbuf, GtkTextIter *iter,
 				const char *fig)
@@ -1026,9 +1016,9 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 	    /* "atomic" markup */
 	    ins = get_instruction_and_string(p + 1, targ);
 	    if (ins == INSERT_REF) {
-		insert_link(tbuf, iter, targ, gretl_command_number(targ));
+		insert_link(tbuf, iter, targ, gretl_command_number(targ), indent);
 	    } else if (ins == INSERT_PDFLINK) {
-		insert_link(tbuf, iter, targ, GUIDE_PAGE);
+		insert_link(tbuf, iter, targ, GUIDE_PAGE, indent);
 	    } else if (ins == INSERT_FIG) {
 		insert_help_figure(tbuf, iter, targ);
 	    } else if (ins != INSERT_NONE) {
@@ -1063,54 +1053,6 @@ insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
 						 "text", indent, NULL);
     }
 }
-
-#else /* not formatting help */
-
-static int get_instruction_and_string (const char *p, char *str)
-{
-    int ins = INSERT_NONE;
-    *str = '\0';
-
-    if (!strncmp(p, "ref", 3)) {
-	ins = INSERT_REF;
-    } else if (!strncmp(p, "pdf", 3)) {
-	ins = INSERT_PDFLINK;
-    }
-
-    if (ins != INSERT_NONE) {
-	p += 5;
-	while (*p != '"') {
-	    *str++ = *p++;
-	}
-	*str = '\0';
-    }
-
-    return ins;
-}
-
-static void
-insert_text_with_markup (GtkTextBuffer *tbuf, GtkTextIter *iter,
-			 const char *s)
-{
-    char targ[32];
-    const char *p;
-    int ins;
-
-    while ((p = strstr(s, "<@"))) {
-	gtk_text_buffer_insert(tbuf, iter, s, p - s);
-	ins = get_instruction_and_string(p + 2, targ);
-	if (ins == INSERT_REF) {
-	    insert_link(tbuf, iter, targ, gretl_command_number(targ));
-	} else if (ins == INSERT_PDFLINK) {
-	    insert_link(tbuf, iter, targ, GUIDE_PAGE);
-	}
-	s = p + 9 + strlen(targ);
-    }
-
-    gtk_text_buffer_insert(tbuf, iter, s, -1);
-}
-
-#endif /* formatting help text or not */
 
 static char *grab_topic_buffer (const char *s)
 {
