@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.4.99\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-12-07 11:21-0500\n"
-"PO-Revision-Date: 2005-12-13 10:21+0100\n"
+"PO-Revision-Date: 2005-12-15 22:06-0500\n"
 "Last-Translator: Ignacio Díaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -8778,7 +8778,7 @@ msgstr "/Gráficos/gráfico de ajustada-observada"
 #: gui2/gui_utils.c:257 gui2/gui_utils.c:310 gui2/gui_utils.c:3696
 #: gui2/gui_utils.c:3932
 msgid "/_Model data"
-msgstr "/Datos del _Modelo"
+msgstr "/_Datos del modelo"
 
 #: gui2/gui_utils.c:258 gui2/gui_utils.c:311
 msgid "/Model data/Display actual, fitted, residual"
@@ -8786,7 +8786,7 @@ msgstr "/Datos del modelo/Mostrar observada, ajustada, residuos"
 
 #: gui2/gui_utils.c:260 gui2/gui_utils.c:313
 msgid "/Model data/Forecasts..."
-msgstr "/Datos del _modelo/Predicciones..."
+msgstr "/Datos del modelo/Predicciones..."
 
 #: gui2/gui_utils.c:262 gui2/gui_utils.c:315
 msgid "/Model data/Confidence intervals for coefficients"
@@ -8798,7 +8798,7 @@ msgstr "/Datos del modelo/Elipse de confianza..."
 
 #: gui2/gui_utils.c:266 gui2/gui_utils.c:319
 msgid "/Model data/coefficient covariance matrix"
-msgstr "/Datos del _modelo/matriz de covarianzas de los coeficientes"
+msgstr "/Datos del modelo/matriz de covarianzas de los coeficientes"
 
 #: gui2/gui_utils.c:268 gui2/gui_utils.c:321 gui2/gui_utils.c:3678
 #: gui2/gui_utils.c:3915
@@ -9089,7 +9089,7 @@ msgstr "/Datos del modelo/Añadir al conjunto de datos/R-cuadrado"
 
 #: gui2/gui_utils.c:3014 gui2/gui_utils.c:3064
 msgid "/Model data/Add to data set/T*R-squared"
-msgstr "/Datos del _modelo/Añadir al conjunto de datos/T*R-cuadrado"
+msgstr "/Datos del modelo/Añadir al conjunto de datos/T*R-cuadrado"
 
 #: gui2/gui_utils.c:3019 gui2/gui_utils.c:3069
 msgid "/Model data/Add to data set/log likelihood"
@@ -9101,7 +9101,7 @@ msgstr "/Datos del modelo/Añadir al conjunto de datos/Criterio de información de
 
 #: gui2/gui_utils.c:3026 gui2/gui_utils.c:3076
 msgid "/Model data/Add to data set/Bayesian Information Criterion"
-msgstr "/Datos del _modelo/Añadir al conjunto de datos/Criterio de información de Bayes (BIC)"
+msgstr "/Datos del modelo/Añadir al conjunto de datos/Criterio de información de Bayes (BIC)"
 
 #: gui2/gui_utils.c:3031 gui2/gui_utils.c:3081
 msgid "/Model data/Add to data set/predicted error variance"
@@ -9109,7 +9109,7 @@ msgstr "/Datos del modelo/Añadir al conjunto de datos/varianza del error de pred
 
 #: gui2/gui_utils.c:3036 gui2/gui_utils.c:3086
 msgid "/Model data/sep1"
-msgstr "/Datos del _modelo/sep1"
+msgstr "/Datos del modelo/sep1"
 
 #: gui2/gui_utils.c:3037 gui2/gui_utils.c:3087
 msgid "/Model data/Define new variable..."
@@ -9117,7 +9117,7 @@ msgstr "/Datos del modelo/Definir nueva variable..."
 
 #: gui2/gui_utils.c:3050
 msgid "/Model data/Add to data set/degrees of freedom"
-msgstr "/Datos del _modelo/Añadir al conjunto de datos/grados de libertad"
+msgstr "/Datos del modelo/Añadir al conjunto de datos/grados de libertad"
 
 #: gui2/gui_utils.c:3171
 #, c-format
@@ -9229,15 +9229,15 @@ msgstr "/Contrastes"
 
 #: gui2/gui_utils.c:3675
 msgid "/Graphs"
-msgstr "/_Gráficos"
+msgstr "/Gráficos"
 
 #: gui2/gui_utils.c:3676
 msgid "/Model data"
-msgstr "/Datos del Modelo"
+msgstr "/Datos del modelo"
 
 #: gui2/gui_utils.c:3677
 msgid "/Model data/Forecasts"
-msgstr "/Datos del modelo/Predicciones..."
+msgstr "/Datos del modelo/Predicciones"
 
 #: gui2/gui_utils.c:3714
 msgid "autocorrelation"

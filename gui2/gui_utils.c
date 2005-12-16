@@ -3684,11 +3684,13 @@ static void VAR_resid_plot_call (gpointer p, guint vecm, GtkWidget *w)
 static void add_VAR_menu_items (windata_t *vwin, int vecm)
 {
     GtkItemFactoryEntry varitem;
+
     const gchar *tpath = N_("/Tests");
     const gchar *gpath = N_("/Graphs");
     const gchar *mpath = N_("/Model data");
     const gchar *fpath = N_("/Model data/Forecasts");
     const gchar *dpath = N_("/Model data/Add to data set");
+
     GRETL_VAR *var = NULL;
     int neqns, vtarg, vshock;
     char tmp[16];
