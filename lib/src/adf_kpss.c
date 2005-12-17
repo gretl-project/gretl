@@ -29,9 +29,11 @@ enum {
 } adf_flags;
 
 static int *
-adf_prepare_vars (int order, int varno, double ***pZ, DATAINFO *pdinfo)
+adf_prepare_vars (int order, int varno, int nseas, int *d0,
+		  double ***pZ, DATAINFO *pdinfo)
 {
-    int i, orig_t1 = pdinfo->t1;
+    int nl = 5 + nseas;
+    int i, j, orig_t1 = pdinfo->t1;
     int *list;
     int err = 0;
 
@@ -39,7 +41,7 @@ adf_prepare_vars (int order, int varno, double ***pZ, DATAINFO *pdinfo)
 	return NULL;
     }
 
-    list = malloc((6 + order) * sizeof *list);
+    list = gretl_list_new(nl + order);
     if (list == NULL) {
 	return NULL;
     }
@@ -67,6 +69,7 @@ adf_prepare_vars (int order, int varno, double ***pZ, DATAINFO *pdinfo)
     pdinfo->t1 = orig_t1;
 
     /* generate lags of difference for augmented test */
+    j = 3;
     for (i=1; i<=order && !err; i++) {
 	int lnum = laggenr(list[1], i, pZ, pdinfo);
 
@@ -74,9 +77,26 @@ adf_prepare_vars (int order, int varno, double ***pZ, DATAINFO *pdinfo)
 	    fprintf(stderr, "Error generating lag variable\n");
 	    err = 1;
 	} else {
-	    list[2 + i] = lnum;
+	    fprintf(stderr, "adding lag %d at list pos %d\n", i, j);
+	    list[j++] = lnum;
 	} 
     } 
+
+    if (nseas > 0 && !err) {
+	*d0 = dummy(pZ, pdinfo, 0); /* should we center these? */
+
+	if (*d0 < 0) {
+	    fprintf(stderr, "Error generating seasonal dummies\n");
+	    err = 1;
+	} 
+    }
+
+    if (err) {
+	free(list);
+	list = NULL;
+    } 
+
+    printlist(list, "adf initial list");
 
     return list;
 }
@@ -249,6 +269,9 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
     return pval;
 }
 
+#define default_mask(o) (!(o & OPT_N) && !(o & OPT_C) && \
+                         !(o & OPT_T) && !(o & OPT_R))
+
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, unsigned char flags,
@@ -265,7 +288,8 @@ static int real_adf_test (int varno, int order, int niv,
     double DFt = NADBL;
     double pv = NADBL;
     char mask[4] = {0};
-    int i, itv;
+    int i, itv, d0 = 0;
+    int nseas = 0;
     int err = 0;
 
 #if ADF_DEBUG
@@ -279,26 +303,28 @@ static int real_adf_test (int varno, int order, int niv,
 
     order_max = order;
 
-    list = adf_prepare_vars(order, varno, pZ, pdinfo);
+    if ((opt & OPT_D) && pdinfo->pd > 1) {
+	/* case of no constant?? */
+	nseas = pdinfo->pd - 1;
+    }
+
+    list = adf_prepare_vars(order, varno, nseas, &d0, pZ, pdinfo);
     if (list == NULL) {
 	return E_ALLOC;
     }
 
     if (auto_order) {
-	int tmp = list[0];
-
 	list[0] = order + 5;
 	biglist = gretl_list_copy(list);
 	if (biglist == NULL) {
 	    free(list);
 	    return E_ALLOC;
 	}
-	list[0] = tmp;
     }
 
     gretl_model_init(&dfmod);
 
-    if (opt == OPT_NONE || opt == OPT_V) {
+    if (default_mask(opt)) {
 	/* default display */
 	mask[1] = mask[2] = mask[3] = 1;
     } else {
@@ -321,7 +347,7 @@ static int real_adf_test (int varno, int order, int niv,
     }
 
     for (i=0; i<4; i++) {
-	int dfnum = (i > 0);
+	int j, dfnum = (i > 0);
 
 	if (mask[i] == 0) {
 	    continue;
@@ -332,9 +358,10 @@ static int real_adf_test (int varno, int order, int niv,
 	    copy_list_values(list, biglist);
 	}
 
-	list[0] = 2 + order + i;
+	list[0] = 2 + order + i + nseas;
 
 	if (i > 0) {
+	    /* stick constant on end of list */
 	    list[list[0]] = 0;
 	} 
 
@@ -352,6 +379,10 @@ static int real_adf_test (int varno, int order, int niv,
 		err = E_ALLOC;
 		goto bailout;
 	    }
+	}
+
+	for (j=0; j<nseas; j++) {
+	    list[5 + order + j] = d0 + j;
 	}
 
 	if (auto_order) {

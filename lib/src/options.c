@@ -69,6 +69,7 @@ struct gretl_option gretl_opts[] = {
     { ADDTO,    OPT_T, "inst" },
     { ADF,      OPT_N, "nc" }, 
     { ADF,      OPT_C, "c" }, 
+    { ADF,      OPT_D, "seasonals" },
     { ADF,      OPT_R, "ctt" },     
     { ADF,      OPT_T, "ct" }, 
     { ADF,      OPT_V, "verbose" },
