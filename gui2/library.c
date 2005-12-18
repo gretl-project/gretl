@@ -1798,8 +1798,10 @@ void do_gini (gpointer data, guint u, GtkWidget *w)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 78, 200, _("gretl: Gini coefficient"),
-		    PRINT, NULL);
+	gchar *title = g_strdup_printf("gretl: %s", _("Gini coefficient"));
+
+	view_buffer(prn, 78, 200, title, PRINT, NULL);
+	g_free(title);
 	register_graph();
     } 
 }

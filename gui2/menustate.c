@@ -283,6 +283,8 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	do_freqplot(NULL, 0, NULL);
     else if (!strcmp(item, _("Boxplot")))
 	do_boxplot_var(mdata->active_var);
+    else if (!strcmp(item, _("Gini coefficient")))
+	do_gini(NULL, 0, NULL);
     else if (!strcmp(item, _("Correlogram")))
 	do_corrgm(NULL, CORRGM, NULL);
     else if (!strcmp(item, _("Spectrum"))) 
@@ -322,6 +324,7 @@ GtkWidget *build_var_popup (void)
 	N_("Frequency distribution"),
 	N_("Frequency plot"),
 	N_("Boxplot"),
+	N_("Gini coefficient"),
 	N_("Correlogram"),
 	N_("Spectrum"),
 	N_("Spectrum (Bartlett)"),
@@ -343,7 +346,7 @@ GtkWidget *build_var_popup (void)
     var_menu = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (!dataset_is_time_series(datainfo) && (i >= 6 && i <= 11)) {
+	if (!dataset_is_time_series(datainfo) && (i >= 7 && i <= 12)) {
 	    continue;
 	}
 	if (i == 2 && !extended_ts(datainfo)) {

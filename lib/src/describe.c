@@ -3004,6 +3004,8 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
     double idx, gini;
     int t, n = 0;
 
+    *gretl_errmsg = '\0';
+
     sx = malloc(m * sizeof *sx);
 
     if (sx == NULL) {
@@ -3016,6 +3018,7 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
 	if (na(x[t])) {
 	    continue;
 	} else if (x[t] < 0.0) {
+	    strcpy(gretl_errmsg, _("illegal negative value"));
 	    *err = E_DATA;
 	    break;
 	} else {
@@ -3125,14 +3128,16 @@ int gini (int vnum, double ***pZ, DATAINFO *pdinfo,
     }
 
     fulln = pdinfo->t2 - pdinfo->t1 - 1;
-    pprintf(prn, "%s: n = %d", pdinfo->varname[vnum], n);
+    pprintf(prn, "%s: n = %d ", pdinfo->varname[vnum], n);
     if (n < fulln) {
-	pprintf(prn, " (dropped %d missing values)", fulln - n);
+	pprintf(prn, _("(dropped %d missing values)"), fulln - n);
     } 
 
     pputs(prn, "\n\n");
-    pprintf(prn, "Gini coefficient = %g\n", gini);
-    pprintf(prn, "Normalized Gini coeff = %g\n", gini * (double) n / (n - 1));
+
+    pprintf(prn, "%s = %g\n", _("Sample Gini coefficient"), gini);
+    pprintf(prn, "%s = %g\n", _("Population estimate"), 
+	    gini * (double) n / (n - 1));
 
     err = lorenz_graph(pdinfo->varname[vnum], lz, n);
 
