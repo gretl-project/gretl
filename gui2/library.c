@@ -877,6 +877,7 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	N_("with constant"),
 	N_("with constant and trend"),
 	N_("with constant, trend and trend squared"),
+	N_("include seasonal dummies"),
 	N_("show regression results"),
 	N_("test down from maximum lag order")
     };
@@ -892,7 +893,7 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     const char *title, *spintext, **opts;
 
     /* save the user's settings, per session */
-    static int adf_active[] = { 0, 1, 1, 1, 0, 0 };
+    static int adf_active[] = { 0, 1, 1, 1, 0, 0, 0 };
     static int kpss_active[] = { 1, 0 };
     static int order = 1;
 
@@ -921,10 +922,14 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 
     if (order > omax) {
 	order = omax;
-    }    
+    }  
+
+    if (action == ADF && datainfo->pd == 1) {
+	adf_active[4] = -1;
+    }
 
     err = checks_dialog(_(title), opts,
-			(action == ADF)? 6 : 2,
+			(action == ADF)? 7 : 2,
 			(action == ADF)? adf_active : kpss_active,
 			&order, _(spintext),
 			0, omax, action);
@@ -949,8 +954,9 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	if (adf_active[1]) gretl_command_strcat(" --c");
 	if (adf_active[2]) gretl_command_strcat(" --ct");
 	if (adf_active[3]) gretl_command_strcat(" --ctt");
-	if (adf_active[4]) gretl_command_strcat(" --verbose");
-	if (adf_active[5]) order = -order; /* auto-trim the lag order */
+	if (adf_active[4] > 0) gretl_command_strcat(" --seasonals");
+	if (adf_active[5]) gretl_command_strcat(" --verbose");
+	if (adf_active[6]) order = -order; /* auto-trim the lag order */
     } else {
 	if (kpss_active[0]) gretl_command_strcat(" --trend");
 	if (kpss_active[1]) gretl_command_strcat(" --verbose");

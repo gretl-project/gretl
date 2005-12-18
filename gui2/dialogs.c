@@ -2655,8 +2655,10 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 	button = gtk_check_button_new_with_label(_(opts[i]));
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
 			   button, TRUE, TRUE, 0);
-	if (active[i]) {
+	if (active[i] > 0) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	} else if (active[i] < 0) {
+	    gtk_widget_set_sensitive(button, FALSE);
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_checks_opt), active);
