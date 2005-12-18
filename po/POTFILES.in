@@ -60,9 +60,9 @@ cli/complete.c
 cli/gretlcli.c
 gui/gretl.c
 gui/guiprint.c
+gui/obsbutton.c
 gui/plotps.c
 gui/ssheet.c
-gui/obsbutton.c
 gui/textbuf.c
 gui2/about.c
 gui2/boxplots.c
@@ -92,7 +92,6 @@ gui2/library.c
 gui2/menustate.c
 gui2/mklang.c
 gui2/model_table.c
-gui2/new.c
 gui2/objectsave.c
 gui2/obsbutton.c
 gui2/selector.c
@@ -123,7 +122,6 @@ plugin/kernel.c
 plugin/lad.c
 plugin/leverage.c
 plugin/liml.c
-plugin/logistic.c
 plugin/mailer.c
 plugin/midi_utils.c
 plugin/mp_ols.c

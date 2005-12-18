@@ -177,6 +177,10 @@
 	  <effect>with constant, trend and trend squared</effect>
 	</option>
 	<option>
+	  <flag>--seasonals</flag>
+	  <effect>include seasonal dummy variables</effect>
+	</option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>print regression results</effect>
 	</option>

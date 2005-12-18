@@ -173,6 +173,10 @@
 	  <flag>--ctt</flag>
 	  <effect>con costante, trend e trend al quadrato</effect>
 	</option>
+        <option>
+	  <flag>--seasonals</flag>
+	  <effect>include variabili dummy stagionali</effect>
+        </option>
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i risultati della regressione</effect>
