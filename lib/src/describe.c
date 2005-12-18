@@ -3057,6 +3057,31 @@ static double gini_coeff (const double *x, int t1, int t2, double **plz,
     return gini;
 }
 
+/**
+ * gretl_gini:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the Gini coefficient for the series @x from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * on failure.
+ */
+
+double gretl_gini (int t1, int t2, const double *x)
+{
+    double g;
+    int err = 0;
+
+    g = gini_coeff(x, t1, t2, NULL, NULL, &err);
+
+    if (err) {
+	g = NADBL;
+    }
+
+    return g;
+}
+
 static int lorenz_graph (const char *vname, double *lz, int n)
 {
     FILE *fp;
@@ -3128,15 +3153,17 @@ int gini (int vnum, double ***pZ, DATAINFO *pdinfo,
     }
 
     fulln = pdinfo->t2 - pdinfo->t1 - 1;
-    pprintf(prn, "%s: n = %d ", pdinfo->varname[vnum], n);
+    pprintf(prn, "%s\n", pdinfo->varname[vnum], n);
+    pprintf(prn, _("Number of observations = %d\n"), n);
+
     if (n < fulln) {
-	pprintf(prn, _("(dropped %d missing values)"), fulln - n);
+	pputs(prn, _("Warning: there were missing values\n"));
     } 
 
-    pputs(prn, "\n\n");
+    pputc(prn, '\n');
 
     pprintf(prn, "%s = %g\n", _("Sample Gini coefficient"), gini);
-    pprintf(prn, "%s = %g\n", _("Population estimate"), 
+    pprintf(prn, "%s = %g\n", _("Estimate of population value"), 
 	    gini * (double) n / (n - 1));
 
     err = lorenz_graph(pdinfo->varname[vnum], lz, n);

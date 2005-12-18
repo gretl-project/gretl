@@ -145,6 +145,7 @@ struct genr_func funcs[] = {
     { T_SST,      "sst" },
     { T_COV,      "cov" },
     { T_MEDIAN,   "median" },
+    { T_GINI,     "gini" },
     { T_ZEROMISS, "zeromiss" },
     { T_PVALUE,   "pvalue" },
     { T_CRIT,     "critical" },
@@ -152,6 +153,7 @@ struct genr_func funcs[] = {
     { T_MPOW,     "mpow" },
     { T_DNORM,    "dnorm" },
     { T_CNORM,    "cnorm" },
+    { T_QNORM,    "qnorm" },
     { T_GAMMA,    "gamma" },
     { T_LNGAMMA,  "lngamma" },
     { T_RESAMPLE, "resample" },
@@ -174,14 +176,15 @@ struct genr_func funcs[] = {
 #define STANDARD_MATH(f) (f == T_LOG || f == T_LN || f == T_EXP || \
                           f == T_SIN || f == T_COS || f == T_TAN || \
                           f == T_ATAN || f == T_INT || f == T_ABS || \
-                          f == T_DNORM || f == T_CNORM || f == T_SQRT || \
-                          f == T_GAMMA || f == T_LNGAMMA)
+                          f == T_DNORM || f == T_CNORM || f == T_QNORM || \
+                          f == T_SQRT || f == T_GAMMA || f == T_LNGAMMA)
 
 #define UNIVARIATE_STAT(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                             t == T_VAR || t == T_MEDIAN || t == T_MIN || \
                             t == T_SST || t == T_MAX || t == T_NOBS || \
                             t == T_T1 || t == T_T2 || t == T_VARNUM || \
-                            t == T_VECTOR || t == T_ISLIST || t == T_NELEM)
+                            t == T_VECTOR || t == T_ISLIST || t == T_NELEM || \
+                            t == T_GINI)
 
 #define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
 
@@ -3072,6 +3075,9 @@ static double evaluate_math_function (double arg, int fn, int *err)
     case T_DNORM:
 	x = normal_pdf(arg);
 	break;
+    case T_QNORM:
+	x = ndtri(arg);
+	break;
     case T_GAMMA:
 	x = cephes_gamma(arg);
 	break;
@@ -3189,6 +3195,8 @@ static double evaluate_statistic (double *z, GENERATOR *genr, int fn)
 	x = gretl_sst(0, i, tmp);
     } else if (fn == T_MEDIAN) {
 	x = gretl_median(0, i, tmp);
+    } else if (fn == T_GINI) {
+	x = gretl_gini(0, i, tmp);
     } else if (fn == T_MIN || fn == T_MAX) {
 	double min, max;
 

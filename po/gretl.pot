@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-12-17 20:08-0500\n"
+"POT-Creation-Date: 2005-12-18 14:40-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -74,32 +74,40 @@ msgstr ""
 msgid "unit-root null hypothesis: a = 1"
 msgstr ""
 
-#: lib/src/adf_kpss.c:156
+#: lib/src/adf_kpss.c:155
+msgid "plus seasonal dummies"
+msgstr ""
+
+#: lib/src/adf_kpss.c:160
 msgid "model"
 msgstr ""
 
-#: lib/src/adf_kpss.c:163
+#: lib/src/adf_kpss.c:163 gui2/selector.c:1833
+msgid "lag order:"
+msgstr ""
+
+#: lib/src/adf_kpss.c:170
 msgid "estimated value of (a - 1)"
 msgstr ""
 
-#: lib/src/adf_kpss.c:164 lib/src/describe.c:1626 lib/src/describe.c:1864
+#: lib/src/adf_kpss.c:171 lib/src/describe.c:1626 lib/src/describe.c:1864
 #: gui2/calculator.c:543
 msgid "test statistic"
 msgstr ""
 
-#: lib/src/adf_kpss.c:453
+#: lib/src/adf_kpss.c:461
 msgid "P-values based on MacKinnon (JAE, 1996)\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:594
+#: lib/src/adf_kpss.c:602
 msgid "Robust estimate of variance"
 msgstr ""
 
-#: lib/src/adf_kpss.c:595
+#: lib/src/adf_kpss.c:603
 msgid "Sum of squares of cumulated residuals"
 msgstr ""
 
-#: lib/src/adf_kpss.c:600
+#: lib/src/adf_kpss.c:608
 #, c-format
 msgid ""
 "\n"
@@ -107,20 +115,20 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:601
+#: lib/src/adf_kpss.c:609
 msgid "(including trend)"
 msgstr ""
 
-#: lib/src/adf_kpss.c:601
+#: lib/src/adf_kpss.c:609
 msgid "(without trend)"
 msgstr ""
 
-#: lib/src/adf_kpss.c:602
+#: lib/src/adf_kpss.c:610
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:603 lib/src/compare.c:243 lib/src/compare.c:261
+#: lib/src/adf_kpss.c:611 lib/src/compare.c:243 lib/src/compare.c:261
 #: lib/src/compare.c:559 lib/src/compare.c:1047 lib/src/compare.c:1194
 #: lib/src/describe.c:2759 lib/src/gretl_intl.c:106 lib/src/gretl_model.c:1847
 #: lib/src/gretl_restrict.c:888 lib/src/modelprint.c:1286
@@ -129,26 +137,26 @@ msgstr ""
 msgid "Test statistic"
 msgstr ""
 
-#: lib/src/adf_kpss.c:604 lib/src/adf_kpss.c:608 lib/src/adf_kpss.c:611
+#: lib/src/adf_kpss.c:612 lib/src/adf_kpss.c:616 lib/src/adf_kpss.c:619
 msgid "Critical values"
 msgstr ""
 
-#: lib/src/adf_kpss.c:659
+#: lib/src/adf_kpss.c:667
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:684
+#: lib/src/adf_kpss.c:692
 #, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:710
+#: lib/src/adf_kpss.c:718
 #, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:716
+#: lib/src/adf_kpss.c:724
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -407,7 +415,7 @@ msgstr ""
 msgid "= rho-differenced %s"
 msgstr ""
 
-#: lib/src/compat.c:808 lib/src/dataio.c:730 lib/src/generate.c:2274
+#: lib/src/compat.c:808 lib/src/dataio.c:730 lib/src/generate.c:2277
 #, c-format
 msgid "Observation number out of bounds"
 msgstr ""
@@ -437,12 +445,12 @@ msgstr ""
 msgid "Bad varname '%s' in sim"
 msgstr ""
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:4211
+#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:4219
 #: lib/src/gretl_list.c:1012 lib/src/modelprint.c:1019
 msgid "Replaced"
 msgstr ""
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:4213
+#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:4221
 msgid "vector"
 msgstr ""
 
@@ -1025,7 +1033,7 @@ msgstr ""
 msgid "Please open a data file first"
 msgstr ""
 
-#: lib/src/dataset.c:1713 lib/src/generate.c:4211 lib/src/modelprint.c:1020
+#: lib/src/dataset.c:1713 lib/src/generate.c:4219 lib/src/modelprint.c:1020
 msgid "Generated"
 msgstr ""
 
@@ -1233,7 +1241,7 @@ msgid ""
 msgstr ""
 
 #: lib/src/describe.c:2007 lib/src/describe.c:2673 lib/src/describe.c:2675
-#: lib/src/describe.c:2753 lib/src/describe.c:2755
+#: lib/src/describe.c:2753 lib/src/describe.c:2755 lib/src/describe.c:3157
 #, c-format
 msgid "Number of observations = %d\n"
 msgstr ""
@@ -1478,21 +1486,20 @@ msgstr ""
 msgid "illegal negative value"
 msgstr ""
 
-#: lib/src/describe.c:3076
+#: lib/src/describe.c:3101
 msgid "Lorenz curve"
 msgstr ""
 
-#: lib/src/describe.c:3133
-#, c-format
-msgid "(dropped %d missing values)"
+#: lib/src/describe.c:3160 plugin/excel_import.c:1418
+msgid "Warning: there were missing values\n"
 msgstr ""
 
-#: lib/src/describe.c:3138
+#: lib/src/describe.c:3165
 msgid "Sample Gini coefficient"
 msgstr ""
 
-#: lib/src/describe.c:3139
-msgid "Population estimate"
+#: lib/src/describe.c:3166
+msgid "Estimate of population value"
 msgstr ""
 
 #: lib/src/discrete.c:356
@@ -1627,159 +1634,159 @@ msgstr ""
 msgid "predicted values"
 msgstr ""
 
-#: lib/src/generate.c:369
+#: lib/src/generate.c:372
 #, c-format
 msgid "Variable %s is a scalar; can't do lags/leads"
 msgstr ""
 
-#: lib/src/generate.c:544 lib/src/generate.c:556
+#: lib/src/generate.c:547 lib/src/generate.c:559
 #, c-format
 msgid "Undefined variable name '%s' in genr"
 msgstr ""
 
-#: lib/src/generate.c:1964
+#: lib/src/generate.c:1967
 #, c-format
 msgid "'%s' refers to a %s and may not be used as a variable name"
 msgstr ""
 
-#: lib/src/generate.c:1997
+#: lib/src/generate.c:2000
 msgid "residual vector"
 msgstr ""
 
-#: lib/src/generate.c:1999
+#: lib/src/generate.c:2002
 msgid "fitted values vector"
 msgstr ""
 
-#: lib/src/generate.c:2001
+#: lib/src/generate.c:2004
 msgid "constant"
 msgstr ""
 
-#: lib/src/generate.c:2003
+#: lib/src/generate.c:2006
 msgid "regr. coeff."
 msgstr ""
 
-#: lib/src/generate.c:2005
+#: lib/src/generate.c:2008
 msgid "standard error"
 msgstr ""
 
-#: lib/src/generate.c:2007
+#: lib/src/generate.c:2010
 msgid "autocorr. coeff."
 msgstr ""
 
-#: lib/src/generate.c:2009
+#: lib/src/generate.c:2012
 msgid "stats function"
 msgstr ""
 
-#: lib/src/generate.c:2011
+#: lib/src/generate.c:2014
 msgid "sampling concept"
 msgstr ""
 
-#: lib/src/generate.c:2013
+#: lib/src/generate.c:2016
 msgid "plotting variable"
 msgstr ""
 
-#: lib/src/generate.c:2015
+#: lib/src/generate.c:2018
 msgid "internal variable"
 msgstr ""
 
-#: lib/src/generate.c:2017 lib/src/generate.c:2024
+#: lib/src/generate.c:2020 lib/src/generate.c:2027
 msgid "math function"
 msgstr ""
 
-#: lib/src/generate.c:2338
+#: lib/src/generate.c:2341
 #, c-format
 msgid "Set tolerance to %g"
 msgstr ""
 
-#: lib/src/generate.c:2341
+#: lib/src/generate.c:2344
 msgid "The setting for \"toler\" must be numeric"
 msgstr ""
 
-#: lib/src/generate.c:2406
+#: lib/src/generate.c:2409
 #, c-format
 msgid "Replaced after model %d: "
 msgstr ""
 
-#: lib/src/generate.c:2466
+#: lib/src/generate.c:2469
 msgid "Periodic dummy variables generated.\n"
 msgstr ""
 
-#: lib/src/generate.c:2468
+#: lib/src/generate.c:2471
 msgid "Periodic dummy variables already present.\n"
 msgstr ""
 
-#: lib/src/generate.c:2473 lib/src/generate.c:2478
+#: lib/src/generate.c:2476 lib/src/generate.c:2481
 msgid "Panel dummy variables generated.\n"
 msgstr ""
 
-#: lib/src/generate.c:2769
+#: lib/src/generate.c:2772
 msgid "Specified a scalar, but a vector was produced."
 msgstr ""
 
-#: lib/src/generate.c:2801
+#: lib/src/generate.c:2804
 msgid "You cannot turn a scalar into a vector when the dataset is subsampled."
 msgstr ""
 
-#: lib/src/generate.c:2837
+#: lib/src/generate.c:2840
 msgid " (scalar)"
 msgstr ""
 
-#: lib/src/generate.c:2929
+#: lib/src/generate.c:2932
 #, c-format
 msgid "Zero denominator for obs %d"
 msgstr ""
 
-#: lib/src/generate.c:2943
+#: lib/src/generate.c:2946
 #, c-format
 msgid ""
 "Invalid power function args for obs. %d\n"
 "base value = %f, exponent = %f"
 msgstr ""
 
-#: lib/src/generate.c:3731
+#: lib/src/generate.c:3739
 msgid "Can't retrieve uhat: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:3733
+#: lib/src/generate.c:3741
 msgid "Can't retrieve yhat: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:3734
+#: lib/src/generate.c:3742
 msgid "Can't retrieve ht: data set has changed"
 msgstr ""
 
-#: lib/src/generate.c:3746
+#: lib/src/generate.c:3754
 msgid "Can't retrieve error variance"
 msgstr ""
 
-#: lib/src/generate.c:4210
+#: lib/src/generate.c:4218
 msgid "Modified"
 msgstr ""
 
-#: lib/src/generate.c:4212
+#: lib/src/generate.c:4220
 msgid "variable"
 msgstr ""
 
-#: lib/src/generate.c:4213
+#: lib/src/generate.c:4221
 msgid "scalar"
 msgstr ""
 
-#: lib/src/generate.c:4292
+#: lib/src/generate.c:4300
 #, c-format
 msgid "residual from model %d"
 msgstr ""
 
-#: lib/src/generate.c:4298
+#: lib/src/generate.c:4306
 #, c-format
 msgid "fitted value from model %d"
 msgstr ""
 
-#: lib/src/generate.c:4305
+#: lib/src/generate.c:4313
 #, c-format
 msgid "squared residual from model %d"
 msgstr ""
 
-#: lib/src/generate.c:4316
+#: lib/src/generate.c:4324
 #, c-format
 msgid "fitted variance from model %d"
 msgstr ""
@@ -10094,10 +10101,6 @@ msgstr ""
 msgid "Set as default"
 msgstr ""
 
-#: gui2/selector.c:1833
-msgid "lag order:"
-msgstr ""
-
 #: gui2/selector.c:1834
 msgid "cointegration rank:"
 msgstr ""
@@ -10918,10 +10921,6 @@ msgstr ""
 msgid ""
 "Expected numeric data, found string:\n"
 "%s\" at row %d, column %d\n"
-msgstr ""
-
-#: plugin/excel_import.c:1418
-msgid "Warning: there were missing values\n"
 msgstr ""
 
 #: plugin/fcp.c:232

@@ -57,7 +57,7 @@ struct atomset_ {
                                f == T_SD || f == T_VAR || f == T_SST || \
                                f == T_MEDIAN || f == T_MIN || f == T_MAX || \
                                f == T_DIFF || f == T_LDIFF || f == T_SDIFF || \
-                               f == T_T1 || f == T_T2 || \
+                               f == T_T1 || f == T_T2 || f == T_GINI || \
                                f == T_CUM || f == T_SORT || \
                                f == T_VARNUM || f == T_VECTOR || \
                                f == T_ISLIST || f == T_NELEM || \

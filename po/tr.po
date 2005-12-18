@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.3.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-12-17 20:08-0500\n"
+"POT-Creation-Date: 2005-12-18 14:40-0500\n"
 "PO-Revision-Date: 2005-03-06 10:05+0200\n"
 "Last-Translator: Özgür İşgören <yol_gezer18@yahoo.com>\n"
 "Language-Team: Turkish <gnu-tr-u12a@lists.sourceforge.net>\n"
@@ -85,36 +85,46 @@ msgstr "örneklem boyutu"
 msgid "unit-root null hypothesis: a = 1"
 msgstr ""
 
-#: lib/src/adf_kpss.c:156
+#: lib/src/adf_kpss.c:155
+#, fuzzy
+msgid "plus seasonal dummies"
+msgstr "kesitsel "
+
+#: lib/src/adf_kpss.c:160
 #, fuzzy
 msgid "model"
 msgstr "modeller"
 
-#: lib/src/adf_kpss.c:163
+#: lib/src/adf_kpss.c:163 gui2/selector.c:1833
+#, fuzzy
+msgid "lag order:"
+msgstr "gecikme sırası:"
+
+#: lib/src/adf_kpss.c:170
 msgid "estimated value of (a - 1)"
 msgstr ""
 
-#: lib/src/adf_kpss.c:164 lib/src/describe.c:1626 lib/src/describe.c:1864
+#: lib/src/adf_kpss.c:171 lib/src/describe.c:1626 lib/src/describe.c:1864
 #: gui2/calculator.c:543
 #, fuzzy
 msgid "test statistic"
 msgstr "test istatistiği "
 
-#: lib/src/adf_kpss.c:453
+#: lib/src/adf_kpss.c:461
 msgid "P-values based on MacKinnon (JAE, 1996)\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:594
+#: lib/src/adf_kpss.c:602
 #, fuzzy
 msgid "Robust estimate of variance"
 msgstr "Hata değişintisi alınamıyor "
 
-#: lib/src/adf_kpss.c:595
+#: lib/src/adf_kpss.c:603
 #, fuzzy
 msgid "Sum of squares of cumulated residuals"
 msgstr "Kareli kalıntıların toplamı"
 
-#: lib/src/adf_kpss.c:600
+#: lib/src/adf_kpss.c:608
 #, c-format
 msgid ""
 "\n"
@@ -122,20 +132,20 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:601
+#: lib/src/adf_kpss.c:609
 msgid "(including trend)"
 msgstr ""
 
-#: lib/src/adf_kpss.c:601
+#: lib/src/adf_kpss.c:609
 msgid "(without trend)"
 msgstr ""
 
-#: lib/src/adf_kpss.c:602
+#: lib/src/adf_kpss.c:610
 #, c-format
 msgid "Lag truncation parameter = %d\n"
 msgstr ""
 
-#: lib/src/adf_kpss.c:603 lib/src/compare.c:243 lib/src/compare.c:261
+#: lib/src/adf_kpss.c:611 lib/src/compare.c:243 lib/src/compare.c:261
 #: lib/src/compare.c:559 lib/src/compare.c:1047 lib/src/compare.c:1194
 #: lib/src/describe.c:2759 lib/src/gretl_intl.c:106 lib/src/gretl_model.c:1847
 #: lib/src/gretl_restrict.c:888 lib/src/modelprint.c:1286
@@ -145,27 +155,27 @@ msgstr ""
 msgid "Test statistic"
 msgstr "Test istatistiği "
 
-#: lib/src/adf_kpss.c:604 lib/src/adf_kpss.c:608 lib/src/adf_kpss.c:611
+#: lib/src/adf_kpss.c:612 lib/src/adf_kpss.c:616 lib/src/adf_kpss.c:619
 #, fuzzy
 msgid "Critical values"
 msgstr "Aykırı değerler için kritik değer:"
 
-#: lib/src/adf_kpss.c:659
+#: lib/src/adf_kpss.c:667
 #, fuzzy, c-format
 msgid "Step %d: testing for a unit root in %s\n"
 msgstr "Basamak %d: %s deki kök birimi için test ediyor\n"
 
-#: lib/src/adf_kpss.c:684
+#: lib/src/adf_kpss.c:692
 #, fuzzy, c-format
 msgid "Step %d: cointegrating regression\n"
 msgstr "Basamak %d: tümleştirme\n"
 
-#: lib/src/adf_kpss.c:710
+#: lib/src/adf_kpss.c:718
 #, fuzzy, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
 msgstr "Genişletilmiş Dickey--Fuller bağlanımı"
 
-#: lib/src/adf_kpss.c:716
+#: lib/src/adf_kpss.c:724
 #, fuzzy
 msgid ""
 "\n"
@@ -495,7 +505,7 @@ msgstr ""
 msgid "= rho-differenced %s"
 msgstr "%s = rho-farklı %s "
 
-#: lib/src/compat.c:808 lib/src/dataio.c:730 lib/src/generate.c:2274
+#: lib/src/compat.c:808 lib/src/dataio.c:730 lib/src/generate.c:2277
 #, fuzzy, c-format
 msgid "Observation number out of bounds"
 msgstr "Sınırın dışında gözlem sayısı "
@@ -525,13 +535,13 @@ msgstr "Değişmezi bu amaçla kullanamazsınız "
 msgid "Bad varname '%s' in sim"
 msgstr "sim'de kötü varadı '%s' "
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:4211
+#: lib/src/compat.c:912 lib/src/dataset.c:1713 lib/src/generate.c:4219
 #: lib/src/gretl_list.c:1012 lib/src/modelprint.c:1019
 #, fuzzy
 msgid "Replaced"
 msgstr "Değiştirildi "
 
-#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:4213
+#: lib/src/compat.c:912 lib/src/dataset.c:1714 lib/src/generate.c:4221
 #, fuzzy
 msgid "vector"
 msgstr "vektör "
@@ -1206,7 +1216,7 @@ msgstr "kendi kendine oluşmuş değişmez "
 msgid "Please open a data file first"
 msgstr "Lütfen ilk önce bir veri dosyası açın"
 
-#: lib/src/dataset.c:1713 lib/src/generate.c:4211 lib/src/modelprint.c:1020
+#: lib/src/dataset.c:1713 lib/src/generate.c:4219 lib/src/modelprint.c:1020
 #, fuzzy
 msgid "Generated"
 msgstr "Üretildi "
@@ -1455,7 +1465,7 @@ msgstr ""
 "%s için periodagram\n"
 
 #: lib/src/describe.c:2007 lib/src/describe.c:2673 lib/src/describe.c:2675
-#: lib/src/describe.c:2753 lib/src/describe.c:2755
+#: lib/src/describe.c:2753 lib/src/describe.c:2755 lib/src/describe.c:3157
 #, fuzzy, c-format
 msgid "Number of observations = %d\n"
 msgstr "Gözlem sayısı = %d\n"
@@ -1747,24 +1757,24 @@ msgstr "Komutlar %s olarak kaydedildi\n"
 msgid "illegal negative value"
 msgstr ""
 
-#: lib/src/describe.c:3076
+#: lib/src/describe.c:3101
 msgid "Lorenz curve"
 msgstr ""
 
-#: lib/src/describe.c:3133
-#, fuzzy, c-format
-msgid "(dropped %d missing values)"
-msgstr "eksik değerler"
+#: lib/src/describe.c:3160 plugin/excel_import.c:1418
+#, fuzzy
+msgid "Warning: there were missing values\n"
+msgstr "Uyarı: eksik değerler vardı\n"
 
-#: lib/src/describe.c:3138
+#: lib/src/describe.c:3165
 #, fuzzy
 msgid "Sample Gini coefficient"
 msgstr "Katsayıları toplamı"
 
-#: lib/src/describe.c:3139
+#: lib/src/describe.c:3166
 #, fuzzy
-msgid "Population estimate"
-msgstr "%s tahminler"
+msgid "Estimate of population value"
+msgstr "Farzedilen standart sapma nüfus değeri ayarlarında"
 
 #: lib/src/discrete.c:356
 #, fuzzy, c-format
@@ -1929,126 +1939,126 @@ msgstr "Bu komut kullanımdaki OLS modelleri için uygun sadece\n"
 msgid "predicted values"
 msgstr "tahmini değerler"
 
-#: lib/src/generate.c:369
+#: lib/src/generate.c:372
 #, fuzzy, c-format
 msgid "Variable %s is a scalar; can't do lags/leads"
 msgstr "Değişken %s bir skalar değil; gecikmeler/öndelemeler yapılamıyor "
 
-#: lib/src/generate.c:544 lib/src/generate.c:556
+#: lib/src/generate.c:547 lib/src/generate.c:559
 #, fuzzy, c-format
 msgid "Undefined variable name '%s' in genr"
 msgstr "Belirsiz değişken adı '%s' genr'deki "
 
-#: lib/src/generate.c:1964
+#: lib/src/generate.c:1967
 #, fuzzy, c-format
 msgid "'%s' refers to a %s and may not be used as a variable name"
 msgstr ""
 "'%s' bir %s'e başvurmuyor ve bir değişken ismi olarak kullanılmayabilir "
 
-#: lib/src/generate.c:1997
+#: lib/src/generate.c:2000
 #, fuzzy
 msgid "residual vector"
 msgstr "kalıntı vektörü "
 
-#: lib/src/generate.c:1999
+#: lib/src/generate.c:2002
 #, fuzzy
 msgid "fitted values vector"
 msgstr "kalifiye değerler vektörü "
 
-#: lib/src/generate.c:2001
+#: lib/src/generate.c:2004
 #, fuzzy
 msgid "constant"
 msgstr "değişmez "
 
-#: lib/src/generate.c:2003
+#: lib/src/generate.c:2006
 #, fuzzy
 msgid "regr. coeff."
 msgstr "bağl. kats. "
 
-#: lib/src/generate.c:2005
+#: lib/src/generate.c:2008
 #, fuzzy
 msgid "standard error"
 msgstr "standart hata "
 
-#: lib/src/generate.c:2007
+#: lib/src/generate.c:2010
 #, fuzzy
 msgid "autocorr. coeff."
 msgstr "özilin. kats. "
 
-#: lib/src/generate.c:2009
+#: lib/src/generate.c:2012
 #, fuzzy
 msgid "stats function"
 msgstr "durum fonksiyonu "
 
-#: lib/src/generate.c:2011
+#: lib/src/generate.c:2014
 #, fuzzy
 msgid "sampling concept"
 msgstr "örnekleme kavramı "
 
-#: lib/src/generate.c:2013
+#: lib/src/generate.c:2016
 #, fuzzy
 msgid "plotting variable"
 msgstr "çizim değişkeni "
 
-#: lib/src/generate.c:2015
+#: lib/src/generate.c:2018
 #, fuzzy
 msgid "internal variable"
 msgstr "iç değişken "
 
-#: lib/src/generate.c:2017 lib/src/generate.c:2024
+#: lib/src/generate.c:2020 lib/src/generate.c:2027
 #, fuzzy
 msgid "math function"
 msgstr "matematiksel fonksiyon "
 
-#: lib/src/generate.c:2338
+#: lib/src/generate.c:2341
 #, fuzzy, c-format
 msgid "Set tolerance to %g"
 msgstr "Hoşgörüyü %g'ye ayarla "
 
-#: lib/src/generate.c:2341
+#: lib/src/generate.c:2344
 #, fuzzy
 msgid "The setting for \"toler\" must be numeric"
 msgstr "\"toler\" için ayar sayısal olmalı "
 
-#: lib/src/generate.c:2406
+#: lib/src/generate.c:2409
 #, fuzzy, c-format
 msgid "Replaced after model %d: "
 msgstr "Model %d sonrası değiştirildi: "
 
-#: lib/src/generate.c:2466
+#: lib/src/generate.c:2469
 #, fuzzy
 msgid "Periodic dummy variables generated.\n"
 msgstr "Periyodik takma değişkenler üretildi.\n"
 
-#: lib/src/generate.c:2468
+#: lib/src/generate.c:2471
 #, fuzzy
 msgid "Periodic dummy variables already present.\n"
 msgstr "Periyodik takma değişkenler üretildi.\n"
 
-#: lib/src/generate.c:2473 lib/src/generate.c:2478
+#: lib/src/generate.c:2476 lib/src/generate.c:2481
 #, fuzzy
 msgid "Panel dummy variables generated.\n"
 msgstr "Pano takma değişkenleri üretildi.\n"
 
-#: lib/src/generate.c:2769
+#: lib/src/generate.c:2772
 msgid "Specified a scalar, but a vector was produced."
 msgstr ""
 
-#: lib/src/generate.c:2801
+#: lib/src/generate.c:2804
 msgid "You cannot turn a scalar into a vector when the dataset is subsampled."
 msgstr ""
 
-#: lib/src/generate.c:2837
+#: lib/src/generate.c:2840
 #, fuzzy
 msgid " (scalar)"
 msgstr " (skalar)"
 
-#: lib/src/generate.c:2929
+#: lib/src/generate.c:2932
 #, fuzzy, c-format
 msgid "Zero denominator for obs %d"
 msgstr "Obs %d için sıfır payda "
 
-#: lib/src/generate.c:2943
+#: lib/src/generate.c:2946
 #, fuzzy, c-format
 msgid ""
 "Invalid power function args for obs. %d\n"
@@ -2057,57 +2067,57 @@ msgstr ""
 "Obs için geçersiz güç fonksiyonu değişkenleri. %d\n"
 "temel değer = %f, üs = %f "
 
-#: lib/src/generate.c:3731
+#: lib/src/generate.c:3739
 #, fuzzy
 msgid "Can't retrieve uhat: data set has changed"
 msgstr "uhat alınamıyor: veri kümesi değiştirildi "
 
-#: lib/src/generate.c:3733
+#: lib/src/generate.c:3741
 #, fuzzy
 msgid "Can't retrieve yhat: data set has changed"
 msgstr "yhat alınamıyor: veri kümesi değiştirildi "
 
-#: lib/src/generate.c:3734
+#: lib/src/generate.c:3742
 #, fuzzy
 msgid "Can't retrieve ht: data set has changed"
 msgstr "ht alınamıyor: veri kümesi değiştirildi "
 
-#: lib/src/generate.c:3746
+#: lib/src/generate.c:3754
 #, fuzzy
 msgid "Can't retrieve error variance"
 msgstr "Hata değişintisi alınamıyor "
 
-#: lib/src/generate.c:4210
+#: lib/src/generate.c:4218
 #, fuzzy
 msgid "Modified"
 msgstr "Model %d"
 
-#: lib/src/generate.c:4212
+#: lib/src/generate.c:4220
 #, fuzzy
 msgid "variable"
 msgstr "değişken "
 
-#: lib/src/generate.c:4213
+#: lib/src/generate.c:4221
 #, fuzzy
 msgid "scalar"
 msgstr "skalar "
 
-#: lib/src/generate.c:4292
+#: lib/src/generate.c:4300
 #, fuzzy, c-format
 msgid "residual from model %d"
 msgstr "model %d'den kalıntı "
 
-#: lib/src/generate.c:4298
+#: lib/src/generate.c:4306
 #, fuzzy, c-format
 msgid "fitted value from model %d"
 msgstr "model %d'den kalifiye değer "
 
-#: lib/src/generate.c:4305
+#: lib/src/generate.c:4313
 #, fuzzy, c-format
 msgid "squared residual from model %d"
 msgstr "model %d'den kareli kalıntı "
 
-#: lib/src/generate.c:4316
+#: lib/src/generate.c:4324
 #, fuzzy, c-format
 msgid "fitted variance from model %d"
 msgstr "model %d'den kalifiye değişinti "
@@ -12336,11 +12346,6 @@ msgstr "Seç ->"
 msgid "Set as default"
 msgstr "Varsayılan olarak kur"
 
-#: gui2/selector.c:1833
-#, fuzzy
-msgid "lag order:"
-msgstr "gecikme sırası:"
-
 #: gui2/selector.c:1834
 #, fuzzy
 msgid "cointegration rank:"
@@ -13367,11 +13372,6 @@ msgstr ""
 "Beklenen sayısal veri, dizgi bulundu:\n"
 "%s sıra %d'de, sütun %d\n"
 
-#: plugin/excel_import.c:1418
-#, fuzzy
-msgid "Warning: there were missing values\n"
-msgstr "Uyarı: eksik değerler vardı\n"
-
 #: plugin/fcp.c:232
 #, fuzzy
 msgid " (using Hessian)"
@@ -14370,6 +14370,14 @@ msgstr ""
 #, fuzzy
 msgid "Unexpected error reading the file\n"
 msgstr "Dosyayı okurken beklenmeyen hata oluştu\n"
+
+#, fuzzy
+#~ msgid "(dropped %d missing values)"
+#~ msgstr "eksik değerler"
+
+#, fuzzy
+#~ msgid "Population estimate"
+#~ msgstr "%s tahminler"
 
 #, fuzzy
 #~ msgid "%s estimates, observations %s%-%s (T = %d)"

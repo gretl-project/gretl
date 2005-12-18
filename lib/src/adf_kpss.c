@@ -102,9 +102,9 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 }
 
 static void 
-print_adf_results (int order, double DFt, double pv, const MODEL *dfmod,
+print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL *dfmod,
 		   int dfnum, const char *vname, int *blurb_done,
-		   unsigned char flags, int i, PRN *prn)
+		   unsigned char flags, int i, int nseas, PRN *prn)
 {
     const char *models[] = {
 	"(1 - L)y = (a-1)*y(-1) + e",
@@ -138,7 +138,7 @@ print_adf_results (int order, double DFt, double pv, const MODEL *dfmod,
     } 
 
     if (*blurb_done == 0) {
-	if (order > 0) {
+	if (order > 0 && !auto_order) {
 	    pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
 		    order, vname);
 	} else {
@@ -150,11 +150,18 @@ print_adf_results (int order, double DFt, double pv, const MODEL *dfmod,
 	*blurb_done = 1;
     }
 
-    pprintf(prn, "   %s\n", _(teststrs[i]));
+    pprintf(prn, "   %s ", _(teststrs[i]));
+    if (nseas > 0 && i > 0) {
+	pputs(prn, _("plus seasonal dummies"));
+    }
+    pputc(prn, '\n');
 
     if (!(flags & ADF_EG_TEST)) {
 	pprintf(prn, "   %s: %s\n", _("model"), 
 		(order > 0)? aug_models[i] : models[i]);
+	if (auto_order) {
+	    pprintf(prn, "   %s %d\n", _("lag order:"), order);
+	}
     }
 
     pprintf(prn, "   %s: %g\n"
@@ -426,8 +433,9 @@ static int real_adf_test (int varno, int order, int niv,
 				   niv, i);
 
 	if (!(opt & OPT_Q)) {
-	    print_adf_results(order, DFt, pv, &dfmod, dfnum, pdinfo->varname[varno],
-			      &blurb_done, flags, i - 1, prn);
+	    print_adf_results(order, auto_order, DFt, pv, &dfmod, dfnum, 
+			      pdinfo->varname[varno], &blurb_done, flags, 
+			      i - 1, nseas, prn);
 	}
 
 	if (opt & OPT_V) {

@@ -169,6 +169,8 @@ int mahal_dist_get_n (const MahalDist *md);
 
 const int *mahal_dist_get_varlist(const MahalDist *md);
 
+double gretl_gini (int t1, int t2, const double *x);
+
 int gini (int vnum, double ***pZ, DATAINFO *pdinfo, 
 	  gretlopt opt, PRN *prn);
 

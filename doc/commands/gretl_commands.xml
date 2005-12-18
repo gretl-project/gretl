@@ -1940,7 +1940,8 @@
 	    <func>min</func> (minimum value in series), <func>mean</func>
 	    (arithmetic mean), <func>median</func>, <func>var</func> (variance),
 	    <func>sd</func> (standard deviation), <func>sst</func> (sum of
-	    squared deviations from the mean), <func>sum</func>.
+	    squared deviations from the mean), <func>sum</func>,
+	    <func>gini</func> (Gini coefficient).
 	  </para>
 	</li>
 
@@ -1964,13 +1965,13 @@
 	<li><para>Special statistical functions: <func>pvalue</func>
 	    and <func>critical</func> (see below), <func>cnorm</func>
 	    (standard normal CDF), <func>dnorm</func> (standard normal
-	    PDF), <func>resample</func> (resample a series with
-	    replacement, for bootstrap purposes), <func>hpfilt</func>
+	    PDF), <func>qnorm</func> (standard normal quantiles),
+	    <func>resample</func> (resample a series with replacement,
+	    for bootstrap purposes), <func>hpfilt</func>
 	    (Hodrick&ndash;Prescott filter: this function returns the
 	    <quote>cycle</quote> component of the series),
 	    <func>bkfilt</func> (Baxter&ndash;King bandpass filter).
-	  </para>
-	</li>
+	    </para> </li>
 
 	<li>
 	  <para>

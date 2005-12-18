@@ -1930,7 +1930,8 @@
           <para>Funzioni statistiche speciali: <func>pvalue</func> e
           <func>critical</func> (si veda oltre), <func>cnorm</func> (funzione di
           ripartizione normale standard), <func>dnorm</func> (funzione di
-          densità normale standard), <func>resample</func> (ricampiona una serie
+          densità normale standard), <func>qnorm</func> (quantili della
+          normale standard), <func>resample</func> (ricampiona una serie
           con rimpiazzo, utile per il bootstrap), <func>hpfilt</func>
           (componente di <quote>ciclo</quote> della serie), <func>bkfilt</func>
           (filtro passa-banda di Baxter&ndash;King).</para>
