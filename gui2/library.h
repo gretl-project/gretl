@@ -137,6 +137,8 @@ void do_vector_model (GtkWidget *widget, gpointer p);
 
 void do_graph_model (GPT_SPEC *spec);
 
+void do_gini (gpointer data, guint u, GtkWidget *w);
+
 void do_kernel (gpointer data, guint u, GtkWidget *w);
 
 void do_vif (gpointer data, guint u, GtkWidget *w);

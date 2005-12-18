@@ -107,7 +107,7 @@ static int urcval (int niv, int itv, int nobs, double arg,
     if (niv < 1 || niv > MAXVARS) {
 	return URC_BAD_PARAM;
     }
-    if (itv < UR_NO_CONST || itv > UR_TREND_SQUARED) {
+    if (itv < UR_NO_CONST || itv > UR_QUAD_TREND) {
 	return URC_BAD_PARAM;
     }
 

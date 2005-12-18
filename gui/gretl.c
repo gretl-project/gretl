@@ -422,6 +422,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Frequency plot/against Gamma"), NULL, do_freqplot, 
       DIST_GAMMA, NULL },
     { N_("/Variable/Estimated density plot..."), NULL, do_kernel, 0, NULL },
+    { N_("/Variable/Gini coefficient"), NULL, do_gini, 0, NULL },
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Variable/_Time series plot"), NULL, ts_plot_var, 0, NULL },

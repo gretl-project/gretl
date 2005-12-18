@@ -24,7 +24,8 @@ typedef enum {
     UR_NO_CONST = 1,
     UR_CONST,
     UR_TREND,
-    UR_TREND_SQUARED
+    UR_QUAD_TREND,
+    UR_MAX
 } AdfCode;
 
 int adf_test (int order, int varno, double ***pZ,

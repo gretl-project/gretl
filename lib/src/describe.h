@@ -17,6 +17,9 @@
  * Boston, MA 02111-1307, USA.
  */
 
+#ifndef DESCRIBE_H
+#define DESCRIBE_H
+
 typedef struct Summary_ Summary;
 typedef struct FreqDist_ FreqDist;
 typedef struct MahalDist_ MahalDist;
@@ -161,5 +164,12 @@ MahalDist *get_mahal_distances (const int *list, double ***pZ,
 void free_mahal_dist (MahalDist *md);
 
 const double *mahal_dist_get_distances (const MahalDist *md);
+
 int mahal_dist_get_n (const MahalDist *md);
+
 const int *mahal_dist_get_varlist(const MahalDist *md);
+
+int gini (int vnum, double ***pZ, DATAINFO *pdinfo, 
+	  gretlopt opt, PRN *prn);
+
+#endif /* DESCRIBE_H */

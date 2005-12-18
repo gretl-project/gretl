@@ -1576,8 +1576,6 @@ int corrgram (int varno, int order, double ***pZ,
     return err;
 }
 
-/* ...................................................... */
-
 static int roundup_mod (int i, double x)
 {
     return (int) ceil((double) x * i);
@@ -2079,8 +2077,6 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     return err;
 }
 
-/* ............................................................. */
-
 static void printf15 (double zz, PRN *prn)
 {
     if (na(zz)) {
@@ -2115,8 +2111,6 @@ static void center_line (char *str, PRN *prn, int dblspc)
 	pprintf(prn, "%s\n", str);
     }
 }
-
-/* ............................................................... */
 
 static void prhdr (const char *str, const DATAINFO *pdinfo, 
 		   int ci, int missing, PRN *prn)
@@ -3001,10 +2995,108 @@ MahalDist *get_mahal_distances (const int *list, double ***pZ,
     return md;
 }
 
-#if 0 /* not ready yet */
+static double gini_coeff (const double *x, int t1, int t2, double **plz,
+			  int *pn, int *err)
+{
+    int m = t2 - t1 + 1;
+    double *sx = NULL;
+    double csx = 0.0, sumx = 0.0, sisx = 0.0;
+    double idx, gini;
+    int t, n = 0;
+
+    sx = malloc(m * sizeof *sx);
+
+    if (sx == NULL) {
+	*err = E_ALLOC;
+	return NADBL;
+    }
+
+    n = 0;
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    continue;
+	} else if (x[t] < 0.0) {
+	    *err = E_DATA;
+	    break;
+	} else {
+	    sx[n++] = x[t];
+	    sumx += x[t];
+	}
+    }
+
+    if (*err) {
+	free(sx);
+	return NADBL;
+    } else if (n == 0) {
+	free(sx);
+	*err = E_DATA;
+	return NADBL;
+    }
+
+    qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
+
+    for (t=0; t<n; t++) {
+	csx += sx[t];
+	idx = t + 1;
+	sisx += idx * sx[t];
+	sx[t] = csx / sumx; /* now = Lorenz curve */
+    }
+
+    gini = 2.0 * sisx / (n * sumx) - ((double) n + 1) / n;
+
+    if (plz != NULL) {
+	*plz = sx;
+	*pn = n;
+    } else {
+	free(sx);
+    }
+
+    return gini;
+}
+
+static int lorenz_graph (const char *vname, double *lz, int n)
+{
+    FILE *fp;
+    double idx;
+    int t, err = 0;
+
+    if (gnuplot_init(PLOT_REGULAR, &fp)) {
+	return E_FOPEN;
+    }
+
+    fputs("set key top left\n", fp);
+
+    fprintf(fp, "set title '%s'\n", vname);
+    fprintf(fp, "plot \\\n"
+	    "'-' using 1:2 title '%s' w lines, \\\n"
+	    "'-' using 1:2 notitle w lines\n",
+	    I_("Lorenz curve"));
+
+    gretl_push_c_numeric_locale();
+
+    for (t=0; t<n; t++) {
+	idx = t + 1;
+	fprintf(fp, "%g %g\n", idx / n, lz[t]);
+    }    
+    fputs("e\n", fp);
+
+    for (t=0; t<n; t++) {
+	idx = ((double) t + 1) / n;
+	fprintf(fp, "%g %g\n", idx, idx);
+    }    
+    fputs("e\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    err = gnuplot_make_graph();
+
+    return err;
+}
 
 /**
- * lorenz_curve:
+ * gini:
  * @vnum: ID number of variable to examine.
  * @Z: data matrix.
  * @pdinfo: data information struct.
@@ -3017,60 +3109,35 @@ MahalDist *get_mahal_distances (const int *list, double ***pZ,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int lorenz_curve (int vnum, double ***pZ, DATAINFO *pdinfo, 
-		  gretlopt opt, PRN *prn)
+int gini (int vnum, double ***pZ, DATAINFO *pdinfo, 
+	  gretlopt opt, PRN *prn)
 {
-    int m = pdinfo->t2 - pdinfo->t1 + 1;
-    double *x = (*pZ)[vnum];
-    double *sx = NULL, *lz = NULL;
-    double csx = 0.0, sumx = 0.0, sisx = 0.0;
-    double idx, gini;
-    int t, n = 0;
+    double *lz = NULL;
+    double gini;
+    int n, fulln;
     int err = 0;
 
-    sx = malloc(m * sizeof *sx);
-    lz = malloc(m * sizeof *lz);
+    gini = gini_coeff((*pZ)[vnum], pdinfo->t1, pdinfo->t2, 
+		      &lz, &n, &err);
 
-    if (sx == NULL || lz == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    if (err) {
+	return err;
     }
 
-    n = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(x[t])) {
-	    sx[n++] = x[t];
-	    sumx += x[t];
-	}
-    }
+    fulln = pdinfo->t2 - pdinfo->t1 - 1;
+    pprintf(prn, "%s: n = %d", pdinfo->varname[vnum], n);
+    if (n < fulln) {
+	pprintf(prn, " (dropped %d missing values)", fulln - n);
+    } 
 
-    qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
+    pputs(prn, "\n\n");
+    pprintf(prn, "Gini coefficient = %g\n", gini);
+    pprintf(prn, "Normalized Gini coeff = %g\n", gini * (double) n / (n - 1));
 
-    for (t=0; t<n; t++) {
-	csx += sx[t];
-	lz[t] = csx / sumx;
-	idx = t + 1;
-	sisx += idx * sx[t];
-    }
+    err = lorenz_graph(pdinfo->varname[vnum], lz, n);
 
-    gini = 2.0 * sisx / (n * sumx) - ((double) n + 1) / n;
-
-    pprintf(prn, "gini = %g\n", gini);
-    pprintf(prn, "gnorm = %g\n", gini * (double) n / (n - 1));
-
-    for (t=0; t<n; t++) {
-	idx = t + 1;
-	pprintf(prn, "%g\t%g\n", idx / n, lz[t]);
-    }
-
-    bailout:
-
-    free(sx);
     free(lz);
 
     return err;
 }
-
-#endif
-
 

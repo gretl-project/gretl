@@ -77,14 +77,12 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 	    fprintf(stderr, "Error generating lag variable\n");
 	    err = 1;
 	} else {
-	    fprintf(stderr, "adding lag %d at list pos %d\n", i, j);
 	    list[j++] = lnum;
 	} 
     } 
 
     if (nseas > 0 && !err) {
 	*d0 = dummy(pZ, pdinfo, 0); /* should we center these? */
-
 	if (*d0 < 0) {
 	    fprintf(stderr, "Error generating seasonal dummies\n");
 	    err = 1;
@@ -96,7 +94,9 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 	list = NULL;
     } 
 
+#if ADF_DEBUG
     printlist(list, "adf initial list");
+#endif
 
     return list;
 }
@@ -171,12 +171,15 @@ static int auto_adjust_order (int *list, int order_max,
 {
     MODEL kmod;
     double tstat, pval = 1.0;
-    int i, k = order_max;
+    int k;
 
     for (k=order_max; k>0; k--) {
-	int j = k;
+	int pos = k;
 
-	if (list[list[0]] == 0) j++;
+	if (list[list[0]] == 0) {
+	    /* model includes constant */
+	    pos++;
+	}
 
 	kmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 
@@ -191,28 +194,25 @@ static int auto_adjust_order (int *list, int order_max,
 	printmodel(&kmod, pdinfo, OPT_NONE, prn);
 #endif
 
-	tstat = kmod.coeff[j] / kmod.sderr[j];
+	tstat = kmod.coeff[pos] / kmod.sderr[pos];
 	clear_model(&kmod);
 	pval = normal_pvalue_2(tstat);
 
 	if (pval > 0.10) {
 #if ADF_DEBUG
-	    fprintf(stderr, "auto_adjust_order: lagged difference not "
-		    "significant at order %d (t = %g)\n", k, tstat);
+	    pprintf(prn, "\nauto_adjust_order: lagged difference not "
+		    "significant at order %d (t = %g)\n\n", k, tstat);
 #endif
 	    if (k == 1) {
 		k = 0;
 		break;
 	    } else {
-		for (i=k+2; i<list[0]; i++) {
-		    list[i] = list[i+1];
-		}
-		list[0] -= 1;
+		gretl_list_delete_at_pos(list, k + 2);
 	    }
 	} else {
 #if ADF_DEBUG
-	    fprintf(stderr, "auto_adjust_order: lagged difference is "
-		    "significant at order %d (t = %g)\n", k, tstat);
+	    pprintf(prn, "\nauto_adjust_order: lagged difference is "
+		    "significant at order %d (t = %g)\n\n", k, tstat);
 #endif
 	    break;
 	}
@@ -220,6 +220,8 @@ static int auto_adjust_order (int *list, int order_max,
 
     return k;
 }
+
+/* targ must be big enough to accept all of src! */
 
 static void copy_list_values (int *targ, const int *src)
 {
@@ -269,8 +271,32 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
     return pval;
 }
 
-#define default_mask(o) (!(o & OPT_N) && !(o & OPT_C) && \
-                         !(o & OPT_T) && !(o & OPT_R))
+#define test_opt_not_set(o) (!(o & OPT_N) && !(o & OPT_C) && \
+                             !(o & OPT_T) && !(o & OPT_R))
+
+static int test_wanted (int test, gretlopt opt)
+{
+    int ret = 0;
+
+    switch (test) {
+    case UR_NO_CONST:
+	ret = (opt & OPT_N);
+	break;
+    case UR_CONST:
+	ret = (opt & OPT_C);
+	break;
+    case UR_TREND:
+	ret = (opt & OPT_T);
+	break;
+    case UR_QUAD_TREND:
+	ret = (opt & OPT_R);
+	break;
+    default:
+	break;
+    }
+
+    return ret;
+}
 
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
@@ -287,8 +313,7 @@ static int real_adf_test (int varno, int order, int niv,
     int *biglist = NULL;
     double DFt = NADBL;
     double pv = NADBL;
-    char mask[4] = {0};
-    int i, itv, d0 = 0;
+    int i, d0 = 0;
     int nseas = 0;
     int err = 0;
 
@@ -304,7 +329,6 @@ static int real_adf_test (int varno, int order, int niv,
     order_max = order;
 
     if ((opt & OPT_D) && pdinfo->pd > 1) {
-	/* case of no constant?? */
 	nseas = pdinfo->pd - 1;
     }
 
@@ -324,66 +348,57 @@ static int real_adf_test (int varno, int order, int niv,
 
     gretl_model_init(&dfmod);
 
-    if (default_mask(opt)) {
-	/* default display */
-	mask[1] = mask[2] = mask[3] = 1;
-    } else {
-	if (opt & OPT_N) {
-	    /* nc model */
-	    mask[0] = 1;
-	}
-	if (opt & OPT_C) {
-	    /* c */
-	    mask[1] = 1;
-	}
-	if (opt & OPT_T) {
-	    /* ct */
-	    mask[2] = 1;
-	}
-	if (opt & OPT_R) {
-	    /* ctt */
-	    mask[3] = 1;
-	}
+    if (test_opt_not_set(opt)) {
+	/* the default set of models */
+	opt |= (OPT_C | OPT_T | OPT_R);
     }
 
-    for (i=0; i<4; i++) {
-	int j, dfnum = (i > 0);
+    for (i=UR_NO_CONST; i<UR_MAX; i++) {
+	int j, k, dfnum = (i > UR_NO_CONST);
 
-	if (mask[i] == 0) {
+	if (!test_wanted(i, opt)) {
 	    continue;
 	}
 
 	if (auto_order) {
+	    /* re-establish max order before testing down */
 	    order = order_max;
 	    copy_list_values(list, biglist);
 	}
 
-	list[0] = 2 + order + i + nseas;
+	list[0] = 1 + order + i;
 
-	if (i > 0) {
+	/* list[1] and list[2], plus the "order" lags, are in common
+	   for all models */
+
+	if (i >= UR_TREND) {
+	    k = 3 + order;
+	    list[k] = gettrend(pZ, pdinfo, 0);
+	    if (list[k] == TREND_FAILED) {
+		err = E_ALLOC;
+		goto bailout;
+	    }
+	}
+
+	if (i == UR_QUAD_TREND) {
+	    k = 4 + order;
+	    list[k] = gettrend(pZ, pdinfo, 1);
+	    if (list[k] == TREND_FAILED) {
+		err = E_ALLOC;
+		goto bailout;
+	    }
+	}
+
+	if (i != UR_NO_CONST) {
+	    k = list[0];
+	    list[0] += nseas;
 	    /* stick constant on end of list */
 	    list[list[0]] = 0;
+	    /* preceded by seasonal dummies if wanted */
+	    for (j=0; j<nseas; j++) {
+		list[k++] = d0 + j;
+	    }	    
 	} 
-
-	if (i >= 2) {
-	    list[3 + order] = gettrend(pZ, pdinfo, 0);
-	    if (list[3 + order] == TREND_FAILED) {
-		err = E_ALLOC;
-		goto bailout;
-	    }
-	}
-
-	if (i > 2) {
-	    list[4 + order] = gettrend(pZ, pdinfo, 1);
-	    if (list[4 + order] == TREND_FAILED) {
-		err = E_ALLOC;
-		goto bailout;
-	    }
-	}
-
-	for (j=0; j<nseas; j++) {
-	    list[5 + order + j] = d0 + j;
-	}
 
 	if (auto_order) {
 	    order = auto_adjust_order(list, order_max, pZ, pdinfo, prn);
@@ -405,19 +420,14 @@ static int real_adf_test (int varno, int order, int niv,
 
 	DFt = dfmod.coeff[dfnum] / dfmod.sderr[dfnum];
 
-	itv = (i == 0)? UR_NO_CONST :
-	    (i == 1)? UR_CONST : 
-	    (i == 2)? UR_TREND :
-	    UR_TREND_SQUARED;
-
 	pv = df_pvalue_from_plugin(DFt, 
 				   /* use asymptotic p-value for augmented case */
 				   (order > 0)? 0 : dfmod.nobs, 
-				   niv, itv);
+				   niv, i);
 
 	if (!(opt & OPT_Q)) {
 	    print_adf_results(order, DFt, pv, &dfmod, dfnum, pdinfo->varname[varno],
-			      &blurb_done, flags, i, prn);
+			      &blurb_done, flags, i - 1, prn);
 	}
 
 	if (opt & OPT_V) {

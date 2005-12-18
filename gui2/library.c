@@ -1778,6 +1778,32 @@ static int reject_scalar (int vnum)
     return 0;
 }
 
+void do_gini (gpointer data, guint u, GtkWidget *w)
+{
+    gretlopt opt = OPT_NONE;
+    PRN *prn;
+    int err;
+
+    if (reject_scalar(mdata->active_var)) {
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    err = gini(mdata->active_var, &Z, datainfo, opt, prn);
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 78, 200, _("gretl: Gini coefficient"),
+		    PRINT, NULL);
+	register_graph();
+    } 
+}
+
 void do_kernel (gpointer data, guint u, GtkWidget *w)
 {
     void *handle;
