@@ -311,7 +311,7 @@ static int print_atom (genatom *atom)
 
     fprintf(stderr, " atom->scalar = %d\n", atom->scalar);
 
-    if (atom->varnum >= 0) {
+    if (atom->varnum != 0) {
 	fprintf(stderr, " atom->varnum = %d\n", atom->varnum);
     }
     if (atom->varobs >= 0) {
@@ -540,13 +540,8 @@ static genatom *parse_token (const char *s, char op,
 	    } else if (!strcmp(s, "NA")) {
 		val = NADBL;
 		scalar = 1;
-	    } else if (strstr(s, ".$")) {
-		if (catch_saved_object_scalar(s, &val)) {
-		    scalar = 1;
-		} else {
-		    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
-		    genr->err = E_UNKVAR;
-		}
+	    } else if (strstr(s, ".$") && catch_saved_object_scalar(s, &val)) {
+		scalar = 1;
 	    } else {
 		v = varindex(genr->pdinfo, s);
 
@@ -810,6 +805,15 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
 	    DPRINTF(("identity func: passed along %g\n", a));
 	    x = a;
 	}
+    }
+
+    /* named list: not acceptable in this context */
+    else if (atom->varnum < 0) {
+	DPRINTF(("eval_atom: got named list: error\n"));
+	if (atom->str != NULL) {
+	    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), atom->str);
+	}
+	genr->err = E_UNKVAR;
     }
 
     return x;
@@ -1122,9 +1126,10 @@ static int evaluate_genr (GENERATOR *genr)
     DPRINTF(("Doing evaluate_genr\n"));
 
     while (!genr->err && (atom = pop_atom(genr))) {
-	n_atoms++;
 
 	DPRINTF((" looking at atom %d\n", n_atoms));
+
+	n_atoms++;
 
 	if (atom->varnum == genr->varnum && atom->lag > m) {
 	    m = atom->lag;

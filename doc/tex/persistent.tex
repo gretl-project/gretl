@@ -1,0 +1,95 @@
+\chapter{Persistent objects}
+\label{persist}
+
+%%% Work in progress, not really ready for translation yet.
+
+\section{Named lists}
+\label{named-lists}
+
+Many \app{gretl} commands take one or more lists of variables as
+arguments.  To make this easier to handle in the context of command
+scripts, and in particular within user-defined functions, \app{gretl}
+offers the possibility of \textit{named lists}.  
+
+A named list is created using the keyword \texttt{list}, followed by
+the name of the list, an equals sign, and either \texttt{null} (to
+create an empty list) or one or more variables to be placed on the
+list.  For example,
+
+\begin{code}
+list xlist = 1 2 3 4
+list reglist = income price 
+list empty_list = null
+\end{code}
+
+The name of the list must start with a letter, and must be composed
+entirely of letters, numbers or the underscore character.  The maximum
+length of the name is 31 characters; list names cannot contain
+spaces.  When adding variables to a list, you can refer to them either
+by name or by their ID numbers. 
+
+Once a list has been created, it will be ``remembered' for the
+duration of the \app{gretl} session.  Lists can be modified in two
+ways.  To \textit{append variables} to an existing list, put the name
+of the list to the right of the equals sign, before the variables to
+be added, as in
+
+\begin{code}
+list xlist = xlist 5 6 7
+\end{code}
+
+In this example, if \texttt{xlist} originally contained variables 1,
+2, 3 and 4, it will now contain variables 1 to 7.
+
+To \textit{redefine} an existing list altogether, use the same syntax
+as for creating a list.  For example
+
+\begin{code}
+list xlist = 1 2 3
+list xlist = 4 5 6
+\end{code}
+
+After the second assignment, \texttt{xlist} contains just variables 4,
+4 and 6.  
+
+A named list can be used in any context where \app{gretl} expects a
+list of variables.  FIXME need examples.
+
+You can determine whether an unknown variable actually represents a list
+using the function \texttt{islist()}.
+
+\begin{code}
+series xl1 = log(x1)
+series xl2 = log(x2)
+list xvars = xl1 xl2
+genr isl_a = islist(xvars)
+genr isl_b = islist(xl1)
+\end{code}
+
+The first \texttt{genr} command above will assign a value of 1 to
+\texttt{isl\_a} since \texttt{xl} is in fact a named list.  The second
+genr will assign 0 to \texttt{isl\_b} since \texttt{xl1} is a data
+series, not a list.  
+
+You can also determine the number of variables or elements in a list
+using the function \texttt{nelem()}.
+
+\begin{code}
+list xlist = 1 2 3
+genr nl = nelem(xlist)
+\end{code}
+
+The scalar \texttt{nl} will be assigned a value of 3 since
+\texttt{xlist} contains 3 members.
+
+
+
+
+
+
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+

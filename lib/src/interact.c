@@ -40,6 +40,8 @@
 # endif
 #endif
 
+#define CMD_DEBUG 0
+
 #include "laginfo.c"
 
 typedef struct {
@@ -1077,15 +1079,15 @@ static int resize_command_list (CMD *cmd, int nf)
     return cmd->errcode;
 }
 
-static int maybe_print_object (const char *line, CMD *cmd)
+static int maybe_print_object (const char *line, int nf, CMD *cmd)
 {
-    char word[8];
     int ret = 0;
 
     if (cmd->opt & OPT_L) {
+	char word[8];
 	int *list;
 
-	if (sscanf(line, "%5s", word) && !strcmp(word, "print")) {
+	if (nf == 0 || (sscanf(line, "%5s", word) && !strcmp(word, "print"))) {
 	    list = get_list_by_name(cmd->param);
 	    if (list != NULL) {
 		free(cmd->list);
@@ -1137,6 +1139,20 @@ static int trap_comments (char *s, CMD *cmd)
     return ret;
 }
 
+static int creating_null_list (CMD *cmd, int nf, const char *s)
+{
+    int ret = 0;
+
+    if (nf == 2 && (cmd->opt & OPT_L)) {
+	if (!strcmp(s, " = null")) {
+	    cmd->list[0] = 0;
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1163,7 +1179,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     *gretl_errmsg = '\0';
 
     compress_spaces(line);
-#if 0
+
+#if CMD_DEBUG
     fprintf(stderr, "parsing '%s'\n", line);
 #endif
 
@@ -1203,6 +1220,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->errcode;
     }
 
+#if CMD_DEBUG
+    fprintf(stderr, "cmd->word = '%s'\n", cmd->word);
+#endif
+
     /* backwards compatibility */
     accommodate_obsolete_commands(line, cmd);
 
@@ -1213,6 +1234,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == REMEMBER) {
 	free(cmd->extra);
 	cmd->extra = gretl_strdup(line);
+#if CMD_DEBUG
+	fprintf(stderr, "cmd->extra = '%s'\n", cmd->extra);
+#endif
     }
 
     /* subsetted commands (e.g. "deriv" in relation to "nls") */
@@ -1236,6 +1260,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    }
 	}
     }
+
+#if CMD_DEBUG
+    fprintf(stderr, "cmd->ci = %d\n", cmd->ci);
+#endif
 
     /* if, else, endif controls: should this come earlier? */
     if (flow_control(line, pZ, pdinfo, cmd)) {
@@ -1326,6 +1354,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	goto bailout;
     }
 
+#if CMD_DEBUG
+    fprintf(stderr, "nf=%d, remainder='%s'\n", nf, remainder);
+#endif
+
     /* need to treat rhodiff specially -- put everything from
        the end of the command word to the first semicolon into
        "param", for processing later */
@@ -1394,15 +1426,15 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (cmd->ci == REMEMBER) {
-	if (nf == 0) {
-	    /* creating empty object, OK */
+	if (nf <= 1 && maybe_print_object(line, nf, cmd)) {
 	    return cmd->errcode;
-	} else if (nf == 1) {
-	    /* printing the remembered object? */
-	    if (maybe_print_object(line, cmd)) {
-		return cmd->errcode;
-	    }
-	}
+	} else if (nf == 0) {
+	    /* creating empty object implicitly, OK */
+	    return cmd->errcode;
+	} else if (creating_null_list(cmd, nf, remainder)) {
+	    /* creating empty object with explicit "null" */
+	    return cmd->errcode;
+	} 
 	line += strspn(line, " ");
 	if (*line != '=') {
 	    cmd->errcode = E_PARSE;
@@ -1477,8 +1509,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		cmd->errcode = gretl_list_insert_list(&cmd->list, savedlist,
 						      lnum);
 		lnum += savedlist[0];
-	    } else { /* possibly an auto-generated variable? */
-
+	    } else { 
+		/* possibly an auto-generated variable? */
 		if (strchr(field, '(') != NULL) {
 		    /* Case 1: automated lags: e.g. 'var(-1)' */
 		    if (auto_lag_ok(field, &lnum, pZ, pdinfo, cmd)) {
@@ -1612,7 +1644,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    /* suppress echo of the list -- may be too long */
 	    cmd->nolist = 1;
 	}
-    } else if (cmd->ci != SETMISS && cmd->ci != DELEET) {
+    } else if (cmd->ci != SETMISS && 
+	       cmd->ci != DELEET &&
+	       cmd->ci != REMEMBER) {
 	/* the command needs a list but doesn't have one */
 	if (cmd->list[0] == 0) {
 	    cmd->errcode = E_ARGS;
@@ -1650,8 +1684,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->errcode = E_ALLOC;
     }
 
-#if 0
+#if CMD_DEBUG
     printlist(cmd->list, "cmd->list");
+    fprintf(stderr, "cmd->errcode = %d, context=%d\n", cmd->errcode,
+	    cmd->context);
 #endif
 
     if (cmd->errcode) {
@@ -2134,6 +2170,10 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	if (cmd->ci == REMEMBER) {
 	    fputs(" =", stdout);
 	    *stdlen += 2;
+	    if (cmd->list[0] == 0) {
+		fputs(" null", stdout);
+		*stdlen += 5;
+	    }
 	} else if (cmd->ci == VECM) {
 	    *stdlen += printf(" %s", cmd->extra);
 	}
@@ -2155,6 +2195,10 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 	}
 	if (cmd->ci == REMEMBER) {
 	    *prnlen += pputs(prn, " =");
+	    if (cmd->list[0] == 0) {
+		pputs(prn, " null");
+		*prnlen += 5;
+	    }
 	} else if (cmd->ci == VECM) {
 	    pprintf(prn, " %s", cmd->extra);
 	    *prnlen += 1 + strlen(cmd->extra);
@@ -2995,8 +3039,6 @@ int simple_commands (CMD *cmd, const char *line,
     return err;
 }
 
-#define CDEBUG 0
-
 /**
  * get_command_index:
  * @line: command line.
@@ -3021,7 +3063,7 @@ int get_command_index (const char *line, CMD *cmd)
 
     cmd->ci = 0;
 
-#if CDEBUG
+#if CMD_DEBUG
     fprintf(stderr, "get_command_index: line='%s'\n", line);
 #endif
 
@@ -3037,7 +3079,7 @@ int get_command_index (const char *line, CMD *cmd)
 	return 0;
     }
 
-#if CDEBUG
+#if CMD_DEBUG
     fprintf(stderr, " got command word = '%s'\n", cmd->word);
 #endif
 
@@ -3051,12 +3093,12 @@ int get_command_index (const char *line, CMD *cmd)
 	   a command in its own right, so we don't set cmd->ci
 	   to the context value */
 	cmd->ci = context;
-#if CDEBUG
+#if CMD_DEBUG
 	fprintf(stderr, " context (static) = %d, ci = %d\n", context, cmd->ci);
 #endif
 	done = 1;
     } else if (catch_command_alias(cmd)) {
-#if CDEBUG
+#if CMD_DEBUG
 	fprintf(stderr, " caught command alias, ci = %d\n", cmd->ci);
 #endif
 	done = 1;
@@ -3064,7 +3106,7 @@ int get_command_index (const char *line, CMD *cmd)
 
     if (!done) {
 	cmd->ci = gretl_command_number(cmd->word);
-#if CDEBUG
+#if CMD_DEBUG
 	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
 #endif
 	if (cmd->ci == 0 && !plausible_genr_start(line, cmd)) {

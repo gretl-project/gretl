@@ -380,7 +380,7 @@ int *gretl_list_copy (const int *src)
     int *targ = NULL;
     int i;
 
-    if (src != NULL && src[0] != 0) {
+    if (src != NULL) {
 	targ = malloc((src[0] + 1) * sizeof *targ);
 	if (targ != NULL) {
 	    for (i=0; i<=src[0]; i++) {
