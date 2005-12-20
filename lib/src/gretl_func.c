@@ -337,6 +337,9 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
     anyerr = dataset_drop_listed_variables(locals, pZ, pdinfo, NULL);
     if (anyerr && !err) {
 	err = anyerr;
+#if FN_DEBUG
+	fprintf(stderr, "dataset_drop_listed_variables: err = %d\n", err);
+#endif
     }
 
     free(locals);
@@ -344,6 +347,9 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
     anyerr = destroy_saved_lists_at_level(nc);
     if (anyerr && !err) {
 	err = anyerr;
+#if FN_DEBUG
+	fprintf(stderr, "destroy_saved_lists_at_level(%d): err = %d\n", nc, err);
+#endif
     }
 
 #if FN_DEBUG

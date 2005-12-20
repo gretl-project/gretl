@@ -273,6 +273,13 @@ static int catch_command_alias (CMD *cmd)
                                c == PRINT || \
                                c == STORE)
 
+#define RETURNS_LIST(c) (c == DIFF || \
+                         c == LDIFF || \
+                         c == SDIFF || \
+                         c == LAGS || \
+                         c == LOGS || \
+                         c == SQUARE)
+
 static int flow_control (const char *line, double ***pZ, 
 			 DATAINFO *pdinfo, CMD *cmd)
 {
@@ -588,49 +595,83 @@ int auto_lag_ok (const char *s, int *lnum,
     return ok;
 } 
 
+static void parse_laglist_spec (const char *s, int *order, char **lname,
+				int *vnum, const double **Z,
+				const DATAINFO *pdinfo)
+{
+    int len = strcspn(s, ",;");
+
+    if (len < strlen(s)) {
+	char ostr[8] = {0};
+	char word[32] = {0};
+	int v;
+
+	sscanf(s, "%7[^ ,;]", ostr);
+	if (isdigit(*ostr)) {
+	    *order = atoi(ostr);
+	} else {
+	    v = varindex(pdinfo, ostr);
+	    if (v < pdinfo->v) {
+		*order = Z[v][0];
+	    }
+	}
+	sscanf(s + len + 1, "%31[^ )]", word);
+	v = varindex(pdinfo, word);
+	if (v < pdinfo->v) {
+	    *vnum = v;
+	} else {
+	    *lname = gretl_word_strdup(s + len + 1, NULL);
+	}
+    } else {
+	*lname = gretl_word_strdup(s, NULL);
+    }
+}
+
 int auto_transform_ok (const char *s, int *lnum,
 		       double ***pZ, DATAINFO *pdinfo,
 		       CMD *cmd)
 {
-    const char *trans_words[] = {
-	"logs",
-	"diff",
-	"ldiff",
-	"sdiff",
-	"square",
-	NULL
-    };
     char fword[9];
     int *genlist = NULL;
-    int trans = -1;
+    int trans = 0;
+    int order = 0;
     gretlopt opt = OPT_NONE;
-    int i, err = 0, ok = 1;
+    int err = 0, ok = 1;
 
     if (sscanf(s, "%8[^(](", fword)) {
-	char *lname;
+	char *lname = NULL;
 	int *gotlist;
+	int vnum = 0;
 
 	if (!strcmp(fword, "cross")) {
 	    strcpy(fword, "square");
 	    opt = OPT_O;
 	}
 
-	for (i=0; trans_words[i] != NULL; i++) {
-	    if (!strcmp(fword, trans_words[i])) {
-		trans = i;
-		break;
-	    }
+	trans = gretl_command_number(fword);
+	if (!RETURNS_LIST(trans)) {
+	    trans = 0;
 	}
 
-	if (trans >= 0) {
+	if (trans > 0) {
 	    s = strchr(s, '(') + 1;
-	    lname = gretl_word_strdup(s, NULL);
+	    if (trans == LAGS) {
+		parse_laglist_spec(s, &order, &lname, &vnum,
+				   (const double **) *pZ, pdinfo);
+	    } else {
+		lname = gretl_word_strdup(s, NULL);
+	    }
 	    if (lname != NULL) {
 		gotlist = get_list_by_name(lname);
 		if (gotlist != NULL) {
 		    genlist = gretl_list_copy(gotlist);
 		}
 		free(lname);
+	    } else if (vnum > 0) {
+		genlist = gretl_list_new(1);
+		if (genlist != NULL) {
+		    genlist[1] = vnum;
+		}
 	    }
 	}
     }
@@ -640,16 +681,14 @@ int auto_transform_ok (const char *s, int *lnum,
 	return 0;
     }	
 
-    if (trans == 0) {
+    if (trans == LOGS) {
 	err = list_loggenr(genlist, pZ, pdinfo);
-    } else if (trans == 1) {
-	err = list_diffgenr(genlist, DIFF, pZ, pdinfo);
-    } else if (trans == 2) {
-	err = list_diffgenr(genlist, LDIFF, pZ, pdinfo);
-    } else if (trans == 3) {
-	err = list_diffgenr(genlist, SDIFF, pZ, pdinfo);
-    } else if (trans == 4) {
+    } else if (trans == DIFF || trans == LDIFF || trans == SDIFF) {
+	err = list_diffgenr(genlist, trans, pZ, pdinfo);
+    } else if (trans == SQUARE) {
 	err = list_xpxgenr(&genlist, pZ, pdinfo, opt);
+    } else if (trans == LAGS) {
+	err = list_laggenr(&genlist, order, pZ, pdinfo);
     }
 
     if (err) {
@@ -820,34 +859,54 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
     }
 }
 
-#define FIELDLEN 32
+#define FIELDLEN 64
 
-static int field_from_line (char *field, const char *s)
+static int get_field_length (const char *s)
 {
-    const char *p;
-    int ret = 0;
+    int inparen = 0;
+    int len = 0;
 
-    sscanf(s, "%31s", field);
-    
-    p = strchr(field, '(');
-    if (p == NULL) return 0; /* no parens */
-
-    p = strchr(p + 1, ')');
-    if (p != NULL) return 0; /* balanced parens? */
-
-    /* fields that need to be glued together */
-    p = s + strlen(field);
-    if (!strncmp(p, " to ", 4)) {
-	char tmp[9];
-
-	if (sscanf(p, " to %8s", tmp)) {
-	    strcat(field, " to ");
-	    strcat(field, tmp);
-	    ret = 2;
+    while (*s) {
+	if (*s == '(') {
+	    inparen++;
+	} else if (*s == ')') {
+	    inparen--;
 	}
+	if (!inparen && *s == ' ') {
+	    break;
+	}
+	s++;
+	len++;
     }
 
-    return ret;
+    if (len >= FIELDLEN) {
+	fprintf(stderr, "list field in command is too long\n");
+	len = -1;
+    }
+
+    return len;
+}
+
+static int get_next_field (char *field, const char *s)
+{
+    int len, err = 0;
+
+    *field = '\0';
+
+    while (*s == ' ') s++;
+    len = get_field_length(s);
+
+    if (len >= 0) {
+	strncat(field, s, len);
+    } else {
+	err = 1;
+    }
+
+#if CMD_DEBUG
+    fprintf(stderr, "field_from_line, got '%s'\n", field);
+#endif
+
+    return err;
 }
 
 static void accommodate_obsolete_commands (char *line, CMD *cmd)
@@ -1153,6 +1212,55 @@ static int creating_null_list (CMD *cmd, int nf, const char *s)
     return ret;
 }
 
+/* below: count fields, considering space as the field separator but
+   only in case the material is not 'glued together' with parentheses
+*/
+
+int count_free_fields (const char *s)
+{
+    int inparen = 0;
+    int nf = 0;
+
+#if CMD_DEBUG
+    fprintf(stderr, "count_free_fields: looking at '%s'\n", s);
+#endif
+
+    if (s != NULL && *s != '\0') {
+	/* step past any leading spaces */
+	while (*s == ' ') {
+	    s++;
+	}
+
+	if (*s) {
+	    s++;
+	    nf++;
+	}
+
+	while (*s) {
+	    if (*s == '(') {
+		inparen++;
+	    } else if (*s == ')') {
+		inparen--;
+	    } 
+	    if (!inparen && *s == ' ') {
+		while (*s == ' ') s++;
+		if (*s) {
+		    nf++;
+		} else {
+		    break;
+		}
+	    }
+	    s++;
+	}
+    }
+
+#if CMD_DEBUG
+    fprintf(stderr, "count_free_fields: nf = %d\n", nf);
+#endif
+	    
+    return nf;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1346,7 +1454,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        record our reading position, and make a copy of the
        remainder of the line
     */
-    nf = count_fields(line) - 1;
+    nf = count_free_fields(line) - 1;
     pos = strlen(cmd->word);
     remainder = gretl_strdup(line + pos + 1);
     if (remainder == NULL) {
@@ -1470,7 +1578,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* now assemble the command list */
 
     for (j=1, lnum=1; j<=nf; j++) {
-	int skip;
 
 	strcpy(remainder, line + pos + 1);
 
@@ -1485,10 +1592,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    break;
 	}
 
-	skip = field_from_line(field, remainder);
-	if (skip > 0) {
-	    nf -= skip;
-	    cmd->list[0] -= skip;
+	cmd->errcode = get_next_field(field, remainder);
+	if (cmd->errcode) {
+	    goto bailout;
 	}
 
 	if (isalpha((unsigned char) *field)) {
@@ -1518,7 +1624,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 			pos += strlen(field) + 1;
 			continue; 
 		    }
-		    /* Case 2: automated transformations: e.g. 'logs(x,z)' */
+		    /* Case 2: automated transformations: e.g. 'logs(list)' */
 		    else if (auto_transform_ok(field, &lnum, pZ, pdinfo, cmd)) {
 			/* handled, get on with it */
 			pos += strlen(field) + 1;
@@ -2695,12 +2801,6 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-#define list_genr_command(c) (c == DIFF || \
-                              c == LDIFF || \
-                              c == LOGS || \
-                              c == SDIFF || \
-                              c == SQUARE)
-
 /* common code for command-line and GUI client programs, where the
    command doesn't require special handling on the client side 
 */
@@ -2714,7 +2814,7 @@ int simple_commands (CMD *cmd, const char *line,
     Summary *summ;
     int *genlist = NULL;
 
-    if (list_genr_command(cmd->ci)) {
+    if (RETURNS_LIST(cmd->ci)) {
 	genlist = gretl_list_copy(cmd->list);
 	if (genlist == NULL) {
 	    return E_ALLOC;
@@ -2834,7 +2934,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case LAGS:
 	order = atoi(cmd->param);
-	err = list_laggenr(order, cmd->list, pZ, datainfo); 
+	err = list_laggenr(&genlist, order, pZ, datainfo); 
 	if (err) {
 	    pputs(prn, _("Error adding lags of variables.\n"));
 	} else {

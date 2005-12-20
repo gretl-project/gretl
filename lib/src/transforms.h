@@ -36,7 +36,7 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo);
 
 int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo);
 
-int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo);
+int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo);
 
 int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
 

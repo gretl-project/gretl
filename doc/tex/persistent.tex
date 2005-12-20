@@ -3,6 +3,8 @@
 
 %%% Work in progress, not really ready for translation yet.
 
+FIXME This chapter needs to deal with saving models too.
+
 \section{Named lists}
 \label{named-lists}
 
@@ -11,11 +13,13 @@ arguments.  To make this easier to handle in the context of command
 scripts, and in particular within user-defined functions, \app{gretl}
 offers the possibility of \textit{named lists}.  
 
+\subsection{Creating and modifying named lists}
+
 A named list is created using the keyword \texttt{list}, followed by
 the name of the list, an equals sign, and either \texttt{null} (to
 create an empty list) or one or more variables to be placed on the
 list.  For example,
-
+%
 \begin{code}
 list xlist = 1 2 3 4
 list reglist = income price 
@@ -28,52 +32,58 @@ length of the name is 31 characters; list names cannot contain
 spaces.  When adding variables to a list, you can refer to them either
 by name or by their ID numbers. 
 
-Once a list has been created, it will be ``remembered' for the
-duration of the \app{gretl} session.  Lists can be modified in two
-ways.  To \textit{append variables} to an existing list, put the name
-of the list to the right of the equals sign, before the variables to
-be added, as in
-
+Once a named list has been created, it will be ``remembered'' for the
+duration of the \app{gretl} session, and can be used in the context of
+any \app{gretl} command where a list of variables is expected.  One
+simple example is the specification of a list of regressors:
+%
 \begin{code}
-list xlist = xlist 5 6 7
+list xlist = x1 x2 x3 x4
+ols y 0 xlist
 \end{code}
 
-In this example, if \texttt{xlist} originally contained variables 1,
-2, 3 and 4, it will now contain variables 1 to 7.
-
-To \textit{redefine} an existing list altogether, use the same syntax
-as for creating a list.  For example
-
+Lists can be modified in two ways.  To \textit{redefine} an existing
+list altogether, use the same syntax as for creating a list.  For
+example
+%
 \begin{code}
 list xlist = 1 2 3
 list xlist = 4 5 6
 \end{code}
 
 After the second assignment, \texttt{xlist} contains just variables 4,
-4 and 6.  
+4 and 6.
 
-A named list can be used in any context where \app{gretl} expects a
-list of variables.  FIXME need examples.
+To \textit{append} or \textit{prepend} variables to an existing list,
+we simply make use of the fact that a named list can stand in for a
+``longhand'' list.  For example, we can do
+%
+\begin{code}
+list xlist = xlist 5 6 7
+list xlist = 9 10 xlist 11 12
+\end{code}
+
+\subsection{Querying a list}
 
 You can determine whether an unknown variable actually represents a list
 using the function \texttt{islist()}.
-
+%
 \begin{code}
 series xl1 = log(x1)
 series xl2 = log(x2)
-list xvars = xl1 xl2
-genr isl_a = islist(xvars)
-genr isl_b = islist(xl1)
+list xlogs = xl1 xl2
+genr is1 = islist(xlogs)
+genr is2 = islist(xl1)
 \end{code}
 
 The first \texttt{genr} command above will assign a value of 1 to
-\texttt{isl\_a} since \texttt{xl} is in fact a named list.  The second
-genr will assign 0 to \texttt{isl\_b} since \texttt{xl1} is a data
+\texttt{is1} since \texttt{xlogs} is in fact a named list.  The second
+genr will assign 0 to \texttt{is2} since \texttt{xl1} is a data
 series, not a list.  
 
 You can also determine the number of variables or elements in a list
 using the function \texttt{nelem()}.
-
+%
 \begin{code}
 list xlist = 1 2 3
 genr nl = nelem(xlist)
@@ -81,6 +91,86 @@ genr nl = nelem(xlist)
 
 The scalar \texttt{nl} will be assigned a value of 3 since
 \texttt{xlist} contains 3 members.
+
+You can display the membership of a named list as illustrated in this
+interactive session:
+%
+\begin{code}
+? list xlist = x1 x2 x3
+ # list xlist = x1 x2 x3
+Added list 'xlist'
+? list xlist print
+ # list xlist = x1 x2 x3
+\end{code}
+%
+Note that \texttt{print xlist} will do something different, namely
+print the values of all the variables in \texttt{xlist}.
+
+\subsection{Generating lists of transformed variables}
+
+Given a named list of variables, you are able to generate lists of
+transformations of these variables using a special form of the
+commands \texttt{logs}, \texttt{lags}, \texttt{diff}, \texttt{ldiff},
+\texttt{sdiff} or \texttt{square}.  In this context these keywords
+must be followed directly by a named list in parentheses.  For example
+%
+\begin{code}
+list xlist = x1 x2 x3
+list lxlist = logs(xlist)
+list difflist = diff(xlist)
+\end{code}
+
+When generating a list of \textit{lags} in this way, you can specify
+the maximum lag order inside the parentheses, before the list name and
+separated by a comma.  For example
+%
+\begin{code}
+list xlist = x1 x2 x3
+list laglist = lags(2, xlist)
+\end{code}
+%
+or
+%
+\begin{code}
+scalar order = 4
+list laglist = lags(order, xlist)
+\end{code}
+
+These command will populate \texttt{laglist} with the specified number
+of lags of the variables in \texttt{xlist}.  (As with the ordinary
+\texttt{lags} command, you can omit the order, in which case this is
+determined automatically based on the frequency of the data.)  One
+further special feature is available when generating lags, namely, you
+can give the name of a single variable in place of a named list on the
+right-hand side, as in
+%
+\begin{code}
+series lx = log(x)
+list laglist = lags(4, lx)
+\end{code}
+
+Note that the ordinary syntax for, e.g., \texttt{logs}, is just
+%
+\begin{code}
+logs x1 x2 x3
+\end{code}
+%
+If \texttt{xlist} is a named list, you can also say
+%
+\begin{code}
+logs xlist
+\end{code}
+%
+but this form will not save the logs as a named list; for that you
+need the form
+%
+\begin{code}
+list loglist = logs(xlist)
+\end{code}
+
+
+
+
 
 
 

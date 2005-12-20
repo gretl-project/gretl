@@ -7,8 +7,10 @@ version 1.5.1, in progress
   Variable menu
 - Provide option of including seasonal dummy variables in
   Dickey-Fuller tests
-- Add two "genr" functions: qnorm (quantiles of normal distribution)
-  and gini (Gini coefficient)
+- Add two more "genr" functions: qnorm (quantiles of normal
+  distribution) and gini (Gini coefficient)
+- Fix some bugs in handling of named lists, and start documenting
+  this properly
 
 12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series

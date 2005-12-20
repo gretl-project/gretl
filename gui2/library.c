@@ -3755,7 +3755,7 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     }
 
     if (action == LAGS) {
-	err = list_laggenr(order, cmd.list, &Z, datainfo);
+	err = list_laggenr(&cmd.list, order, &Z, datainfo);
     } else if (action == LOGS) {
 	err = list_loggenr(cmd.list, &Z, datainfo);
     } else if (action == SQUARE) {

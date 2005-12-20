@@ -285,11 +285,16 @@ int destroy_saved_lists_at_level (int level)
 
     if (nl < n_lists) {
 	n_lists = nl;
-	lstack = realloc(list_stack, nl * sizeof *list_stack);
-	if (lstack == NULL) {
-	    err = E_ALLOC;
+	if (nl == 0) {
+	    free(list_stack);
+	    list_stack = NULL;
 	} else {
-	    list_stack = lstack;
+	    lstack = realloc(list_stack, nl * sizeof *list_stack);
+	    if (lstack == NULL) {
+		err = E_ALLOC;
+	    } else {
+		list_stack = lstack;
+	    }
 	}
     }
 

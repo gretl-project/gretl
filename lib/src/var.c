@@ -28,11 +28,6 @@
 #define VAR_DEBUG 0
 #define BDEBUG    0  /* for debugging bootstrap IRFs */
 
-/* in transforms.c */
-extern int 
-real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
-		   int maxlag, int **lagnums);
-
 static gretl_matrix *irf_bootstrap (const GRETL_VAR *var, 
 				    int targ, int shock, int periods,
 				    const double **Z, 
@@ -46,6 +41,38 @@ struct var_lists {
     int *testlist;
     int **lagvlist;
 };
+
+static int VAR_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
+			     int order, int **lagnums)
+{
+    int *tmplist = gretl_list_copy(list);
+    int i, j, k;
+    int err = 0;
+    
+    if (tmplist == NULL) {
+	return E_ALLOC;
+    }
+
+    err = list_laggenr(&tmplist, order, pZ, pdinfo);
+
+    if (!err && tmplist[0] < list[0] * order) {
+	/* we didn't get all the lags we wanted */
+	err = E_DATA;
+    }
+
+    if (!err) {
+	k = 1;
+	for (i=0; i<list[0]; i++) {
+	    for (j=1; j<=order; j++) {
+		lagnums[i][j] = tmplist[k++];
+	    }
+	}
+    }
+
+    free(tmplist);
+    
+    return err;
+}
 
 static int gretl_VAR_add_models (GRETL_VAR *var)
 {
@@ -1543,9 +1570,8 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     }
 
     /* generate the required lags */
-    if (real_list_laggenr(vlists.stochvars, pZ, pdinfo, 
-			  order, vlists.lagvlist)) {
-	*err = E_ALLOC;
+    if ((*err = VAR_list_laggenr(vlists.stochvars, pZ, pdinfo, 
+				 order, vlists.lagvlist))) {
 	goto var_bailout;
     }
 
@@ -1972,9 +1998,8 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 
     /* generate the required lags, if any */
     if (jvar->order > 0) {
-	if (real_list_laggenr(vlists.stochvars, pZ, pdinfo, 
-			      jvar->order, vlists.lagvlist)) {
-	    err = E_ALLOC;
+	if ((err = VAR_list_laggenr(vlists.stochvars, pZ, pdinfo, 
+				    jvar->order, vlists.lagvlist))) {
 	    goto var_bailout;
 	}
     }

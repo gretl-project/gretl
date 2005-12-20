@@ -671,44 +671,85 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
     return (n_ok > 0)? 0 : E_LOGS;
 }
 
-/* used in var.c */
-
-int 
-real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
-		   int maxlag, int **lagnums)
+static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
 {
-    int lagnum, l, i, v;
-    int startlen;
-    int *record = NULL;
+    int i, v, nl = 0;
 
-    startlen = get_starting_length(list, pdinfo, (maxlag > 9)? 3 : 2);
-    
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
+	if (v > 0 && pdinfo->vector[v]) {
+	    nl += order;
+	}
+    }
+
+    return gretl_list_new(nl);
+}
+
+/**
+ * list_laggenr:
+ * @plist: pointer to list of variables to process.  On exit
+ * the list holds the ID numbers of the lag variables.
+ * @order: number of lags to generate (or 0 for automatic).
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generates and adds to the data set @order lagged values of the 
+ * variables given in @list.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ */
+
+int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
+{
+    int *list = *plist;
+    int *laglist = NULL;
+    int l, i, j;
+    int startlen;
+
+    if (order < 0) {
+	return E_DATA;
+    }
+
+    if (order == 0) {
+	order = default_lag_order(pdinfo);
+    } 
+
+    laglist = make_lags_list(list, order, pdinfo);
+    if (laglist == NULL) {
+	return E_ALLOC;
+    }
+
+    startlen = get_starting_length(list, pdinfo, (order > 9)? 3 : 2);
+
+    j = 1;
+    
+    for (i=1; i<=list[0]; i++) {
+	int lv, v = list[i];
+
 	if (v == 0 || !pdinfo->vector[v]) {
 	    continue;
 	}
-	if (lagnums != NULL) {
-	    record = lagnums[i-1];
-	}
-	for (l=1; l<=maxlag; l++) {
-	    lagnum = get_transform(LAGS, v, l, pZ, pdinfo, startlen);
+
+	for (l=1; l<=order; l++) {
+	    lv = get_transform(LAGS, v, l, pZ, pdinfo, startlen);
 #if TRDEBUG > 1
-	    fprintf(stderr, "base var '%s', lag %d: lagnum = %d\n",
-		    pdinfo->varname[v], l, lagnum);
+	    fprintf(stderr, "base var '%s', lag %d: lv = %d\n",
+		    pdinfo->varname[v], l, lv);
 #endif
-	    if (lagnum < 0) {
+	    if (lv < 0) {
 		return 1;
 	    }
 #if TRDEBUG > 1
 	    fprintf(stderr, "lag var name '%s', label '%s'\n",
-		    pdinfo->varname[lagnum], VARLABEL(pdinfo, lagnum));
+		    pdinfo->varname[lv], VARLABEL(pdinfo, lv));
 #endif
-	    if (record != NULL) {
-		record[l] = lagnum;
-	    }
+	    laglist[j++] = lv;
 	}
     }
+
+    free(*plist);
+    *plist = laglist;
 
     return 0;
 }
@@ -731,28 +772,6 @@ int default_lag_order (const DATAINFO *pdinfo)
     }
 
     return order;
-}
-
-/**
- * list_laggenr:
- * @order: number of lags to generate (or 0 for automatic)
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generates and adds to the data set @order lagged values of the 
- * variables given in @list.
- *
- * Returns: 0 on successful completion, 1 on error.
- */
-
-int list_laggenr (int order, const int *list, double ***pZ, DATAINFO *pdinfo)
-{
-    if (order == 0) {
-	order = default_lag_order(pdinfo);
-    } 
-
-    return real_list_laggenr(list, pZ, pdinfo, order, NULL);  
 }
 
 /**
