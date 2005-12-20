@@ -67,7 +67,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { FIT,      "fit" }, 
     { FREQ,     "freq" }, 
     { FUNC,     "function" },
-    { FUNCERR,  "funcerr" },
+    { FUNCERR,  "error" },
     { GARCH,    "garch" },
     { GENR,     "genr" },     
     { GNUPLOT,  "gnuplot" },  
