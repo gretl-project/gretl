@@ -318,7 +318,7 @@ static void console_exec (void)
 
     /* the control structure below is rather weird and needs more
        testing/thought.  The issue is the nesting of loops inside
-       functions or vice versa */
+       functions or vice versa. */
 
     if (looprun) { 
     fn_run_loop:
