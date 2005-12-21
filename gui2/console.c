@@ -330,10 +330,14 @@ static void console_exec (void)
 	    console_function_exec(execline);
 	}
     } else if (gretl_executing_function()) {
+    fn_run_fn:
 	console_function_exec(execline);
 	if (looprun) {
-	    /* the function we are exec'ing includes a loop */
+	    /* the function we are exec'ing includes a loop */ 
 	    goto fn_run_loop;
+	} else if (gretl_executing_function()) {
+	    /* the function we are exec'ing includes a function */ 
+	    goto fn_run_fn;
 	}
     } 
 
