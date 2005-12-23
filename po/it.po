@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-12-18 14:40-0500\n"
-"PO-Revision-Date: 2005-12-06 21:08+0100\n"
+"PO-Revision-Date: 2005-12-23 23:59+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -78,9 +78,8 @@ msgid "unit-root null hypothesis: a = 1"
 msgstr "ipotesi nulla di radice unitaria: a = 1"
 
 #: lib/src/adf_kpss.c:155
-#, fuzzy
 msgid "plus seasonal dummies"
-msgstr "Includi dummy stagionali"
+msgstr "con dummy stagionali"
 
 #: lib/src/adf_kpss.c:160
 msgid "model"
@@ -1605,25 +1604,23 @@ msgstr "Distanze salvate in '%s'"
 
 #: lib/src/describe.c:3021
 msgid "illegal negative value"
-msgstr ""
+msgstr "valore negativo non valido"
 
 #: lib/src/describe.c:3101
 msgid "Lorenz curve"
-msgstr ""
+msgstr "Curva di lorenz"
 
 #: lib/src/describe.c:3160 plugin/excel_import.c:1418
 msgid "Warning: there were missing values\n"
 msgstr "Attenzione: ci sono valori mancanti\n"
 
 #: lib/src/describe.c:3165
-#, fuzzy
 msgid "Sample Gini coefficient"
-msgstr "Somma dei coefficienti"
+msgstr "Coefficiente di Gini campionario"
 
 #: lib/src/describe.c:3166
-#, fuzzy
 msgid "Estimate of population value"
-msgstr "Assumi che la deviazione standard sia il valore della popolazione"
+msgstr "Stima del valore della popolazione"
 
 #: lib/src/discrete.c:356
 #, c-format
@@ -5937,9 +5934,8 @@ msgid "/Variable/Estimated density plot..."
 msgstr "/Variabile/Grafico _densità stimata"
 
 #: gui/gretl.c:425 gui2/gretl.c:483
-#, fuzzy
 msgid "/Variable/Gini coefficient"
-msgstr "/Variabile/Test delle _successioni"
+msgstr "/Variabile/Coefficiente di _Gini"
 
 #: gui/gretl.c:426 gui2/gretl.c:484
 msgid "/Variable/Range-mean graph"
@@ -9622,7 +9618,6 @@ msgid "with constant, trend and trend squared"
 msgstr "con costante, trend e trend quadratico"
 
 #: gui2/library.c:880
-#, fuzzy
 msgid "include seasonal dummies"
 msgstr "Includi dummy stagionali"
 
@@ -9766,9 +9761,8 @@ msgid "gretl: collinearity"
 msgstr "gretl: collinearità"
 
 #: gui2/library.c:1807 gui2/menustate.c:286 gui2/menustate.c:327
-#, fuzzy
 msgid "Gini coefficient"
-msgstr "Coefficiente"
+msgstr "Coefficiente di Gini"
 
 #: gui2/library.c:1862
 msgid "This test only implemented for OLS models"
