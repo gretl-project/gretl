@@ -1909,10 +1909,11 @@
 	<li><para>Funzioni statistiche standard, che possono accettare un solo
             argomento e producono un risultato scalare: <func>max</func> (valore
             massimo in una serie), <func>min</func> (minimo),
-	    <func>mean</func> (media aritmetica), <func>median</func>,
+	    <func>mean</func> (media aritmetica), <func>median</func> (mediana),
 	    <func>var</func> (varianza) <func>sd</func> (deviazione
             standard), <func>sst</func> (somma dei quadrati delle
-            deviazioni dalla media), <func>sum</func>.</para>
+            deviazioni dalla media), <func>sum</func> (somma),
+            <func>gini</func> (coefficiente di Gini).</para>
         </li>
         <li>
           <para>Funzioni statistiche che accettano una serie con argomento e
