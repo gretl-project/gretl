@@ -11,6 +11,7 @@ version 1.5.1, in progress
   distribution) and gini (Gini coefficient)
 - Fix some bugs in handling of named lists, and start documenting
   this properly
+- Fix handling of decimal separator in genr formulae
 
 12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series

@@ -1942,7 +1942,7 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* print out basic info */
-    pprintf(prn, I_("periodicity: %d, maxobs: %d,\n"
+    pprintf(prn, M_("periodicity: %d, maxobs: %d,\n"
 	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 

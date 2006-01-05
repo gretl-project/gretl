@@ -23,6 +23,8 @@
 
 #include "libgretl.h" 
 #include "../../cephes/libprob.h"
+
+#include <errno.h>
  
 static void putxx (double xx);
 static void pnormal (void);
@@ -291,7 +293,7 @@ static double get_number_or_val (const char *s,
     return NADBL;
 }
 
-static int val_from_string (const char *s, const double **Z,
+static int val_from_string (char *s, const double **Z,
 			    const DATAINFO *pdinfo, 
 			    double *px, int *pn)
 {
@@ -379,6 +381,8 @@ static char normalize_stat (char c)
  * @Z: the data matrix.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
+ * @opt: OPT_G (for use within genr) forces uses of '.' as
+ * decimal separator.
  * 
  * Returns: the probability that a random variable distributed as
  * specified in the command line @str exceeds the value indicated
@@ -387,24 +391,24 @@ static char normalize_stat (char c)
 
 double batch_pvalue (const char *str, 
 		     const double **Z, const DATAINFO *pdinfo, 
-                     PRN *prn)
+                     PRN *prn, gretlopt opt)
 {
     int n1 = 0, n2 = 0, n3 = 0;
     double x1 = 0, x2 = 0, x3 = 0;
     char st = 0;
     double tmp, pv = NADBL;
-    char s1[9] = {0};
-    char s2[9] = {0};
-    char s3[9] = {0};
+    char s1[32] = {0};
+    char s2[32] = {0};
+    char s3[32] = {0};
     char cmd[7];
     int err = 0;
 
     for (;;) {
-	if (sscanf(str, "%c,%[^,],%[^,],%s", &st, s1, s2, s3) == 4) {
+	if (sscanf(str, "%c,%31[^,],%31[^,],%31s", &st, s1, s2, s3) == 4) {
 	    break;
 	}
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%c,%[^,],%s", &st, s1, s3) == 3) {
+	if (sscanf(str, "%c,%31[^,],%31s", &st, s1, s3) == 3) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
@@ -412,15 +416,15 @@ double batch_pvalue (const char *str,
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%s %c %s %s %s", cmd, &st, s1, s2, s3) == 5) {
+	if (sscanf(str, "%6s %c %31s %31s %31s", cmd, &st, s1, s2, s3) == 5) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%s %c %s %s", cmd, &st, s1, s3) == 4) {
+	if (sscanf(str, "%6s %c %31s %31s", cmd, &st, s1, s3) == 4) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%s %c %s", cmd, &st, s3) == 3) {
+	if (sscanf(str, "%6s %c %31s", cmd, &st, s3) == 3) {
 	    break;
 	} 
 	*s1 = *s2 = *s3 = '\0';
@@ -434,6 +438,10 @@ double batch_pvalue (const char *str,
 	return NADBL;
     }
 
+    if (opt & OPT_G) {
+	gretl_push_c_numeric_locale();
+    }
+
     err = val_from_string(s1, Z, pdinfo, &x1, &n1);
 
     if (!err) {
@@ -442,6 +450,10 @@ double batch_pvalue (const char *str,
 
     if (!err) {
 	err = val_from_string(s3, Z, pdinfo, &x3, &n3);
+    }
+
+    if (opt & OPT_G) {
+	gretl_pop_c_numeric_locale();
     }
 
     if (err) {
@@ -880,6 +892,8 @@ static int parse_genr_critical_input (const char *str,
 
     dfnstr[0] = dfdstr[0] = astr[0] = '\0';
 
+    gretl_push_c_numeric_locale();
+
     if (sscanf(str, "F,%8[^,],%8[^,],%24s", dfnstr, dfdstr, astr) == 3) {
 	*st = 'F';
     } else if (sscanf(str, "X,%8[^,],%24s", dfnstr, astr) == 2) {
@@ -892,6 +906,8 @@ static int parse_genr_critical_input (const char *str,
     } else {
 	err = 1;
     }
+
+    gretl_pop_c_numeric_locale();
 
     if (err) return err;
 

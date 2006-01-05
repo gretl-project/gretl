@@ -50,7 +50,7 @@ double rhocrit95 (int n);
 
 double batch_pvalue (const char *str, 
 		     const double **Z, const DATAINFO *pdinfo, 
-                     PRN *prn);
+                     PRN *prn, gretlopt opt);
 
 void interact_pvalue (void);
 

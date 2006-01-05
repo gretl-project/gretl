@@ -463,10 +463,12 @@ static int evaluate_genr_function_args (char *s, GENERATOR *genr)
 
 	*s = '\0';
 	strcat(s, st);
+	gretl_push_c_numeric_locale();
 	for (i=0; i<nf; i++) {
 	    sprintf(numstr, ",%.15g", vals[i]);
 	    strcat(s, numstr);
 	}
+	gretl_pop_c_numeric_locale();
     }
 
     free(tmp);
@@ -2176,7 +2178,7 @@ static void copy_compress (char *targ, const char *src, int len)
     int j = 0;
 
     while (*src && j < len) {
-	if (*src != ' ') {
+	if (*src != ' ' || (j > 0 && targ[j-1] == ',')) {
 	    targ[j++] = *src;
 	}
 	src++;
@@ -3217,7 +3219,7 @@ static double evaluate_statistic (double *z, GENERATOR *genr, int fn)
 static double evaluate_pvalue (const char *s, const double **Z,
 			       const DATAINFO *pdinfo, int *err)
 {
-    double x = batch_pvalue(s, Z, pdinfo, NULL);
+    double x = batch_pvalue(s, Z, pdinfo, NULL, OPT_G);
 
     if (na(x)) {
 	*err = E_INVARG;

@@ -1482,7 +1482,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case PVALUE:
 	if (batch || runit || (sscanf(line, "%s %s", s1, s2) == 2)) {
-	    batch_pvalue(line, (const double **) Z, datainfo, prn);
+	    batch_pvalue(line, (const double **) Z, datainfo, prn, OPT_NONE);
 	} else {
 	    interact_pvalue();
 	}

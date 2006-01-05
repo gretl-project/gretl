@@ -2805,7 +2805,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case PVALUE:
-		batch_pvalue(linecpy, (const double **) *pZ, *ppdinfo, prn);
+		batch_pvalue(linecpy, (const double **) *pZ, *ppdinfo, prn, OPT_NONE);
 		break;
 
 	    case VAR:

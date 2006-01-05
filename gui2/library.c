@@ -6593,7 +6593,7 @@ int gui_exec_line (char *line,
 	    help("pvalue", paths.cmd_helpfile, prn);	    
 	} else {
 	    err = (batch_pvalue(line, (const double **) Z, datainfo, 
-				outprn) == NADBL);
+				outprn, OPT_NONE) == NADBL);
 	}
 	break;
 
