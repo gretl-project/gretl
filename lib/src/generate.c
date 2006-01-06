@@ -2166,8 +2166,9 @@ static void fix_decimal_commas (char *str)
     if (p != NULL && *p != 0) {
 	p++;
 	while (*p && *(p + 1)) {
-	    if (*p == ',' && isdigit(*(p - 1)) && isdigit(*(p + 1)))
+	    if (*p == ',' && isdigit(*(p - 1)) && isdigit(*(p + 1))) {
 		*p = '.';
+	    }
 	    p++;
 	}
     }
@@ -2185,6 +2186,16 @@ static void copy_compress (char *targ, const char *src, int len)
     }
 
     targ[j] = '\0';
+}
+
+static void full_compress (char *s)
+{
+    while (*s) {
+	if (*s == ' ') {
+	    memmove(s, s + 1, strlen(s));
+	}
+	s++;
+    }
 }
 
 #define OBS_DEBUG 0
@@ -2542,8 +2553,8 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     DPRINTF(("\n*** starting genr, s='%s'\n", s));
 
 #ifdef ENABLE_NLS
-    if (',' == get_local_decpoint())
-	fix_decimal_commas(s);
+    fix_decimal_commas(s);
+    full_compress(s);
 #endif
     
     /* special cases which are not of the form "lhs=rhs" */
