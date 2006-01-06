@@ -946,6 +946,11 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 			     _("gretl: practice files"));
 	browse_func = browser_open_ps;
 	break;
+    case FUNC_FILES:
+	gtk_window_set_title(GTK_WINDOW(vwin->w), 
+			     _("gretl: function files"));
+	browse_func = dummy_call;
+	break;
     case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: data files"));
@@ -1043,11 +1048,100 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     }
 
     if (err) {
-	errbox(_("Couldn't open database"));
+	if (0) {
+	    /* FIXME? */
+	    errbox(_("Couldn't open database"));
+	}
 	gtk_widget_destroy(vwin->w);
     } else {
 	gtk_widget_show_all(vwin->w); 
     }
+}
+
+static char *get_func_description (const char *fname, const char *fndir)
+{
+    return g_strdup("Not ready yet");
+}
+
+static int
+read_fn_files_in_dir (DIR *dir, const char *fndir, 
+		      GtkListStore *store, GtkTreeIter *iter)
+{
+    struct dirent *dirent;
+    const char *fname;
+    char *descrip;
+    int n, nfn = 0;
+
+    while ((dirent = readdir(dir)) != NULL) {
+	fname = dirent->d_name;
+	n = strlen(fname);
+	if (!g_ascii_strcasecmp(fname + n - 4, ".inp")) {
+	    descrip = get_func_description(fname, fndir);
+	    if (descrip != NULL) {
+		gtk_list_store_append(store, iter);
+		gtk_list_store_set(store, iter, 0, fname, 1, descrip, 
+				   2, fndir, -1);
+		g_free(descrip);
+		nfn++;
+	    }
+	} 
+    }
+
+    return nfn;
+}
+
+gint populate_func_list (windata_t *vwin)
+{
+#ifndef OLD_GTK
+    GtkListStore *store;
+    GtkTreeIter iter;
+#endif
+    char fndir[FILENAME_MAX];
+    DIR *dir;
+    int nfn = 0;
+
+#ifndef OLD_GTK
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+#endif
+
+    /* pick up any function files in system dir */
+    sprintf(fndir, "%sfunctions", paths.gretldir);
+    dir = opendir(fndir);
+
+    if (dir != NULL) {
+#ifndef OLD_GTK
+	nfn += read_fn_files_in_dir(dir, fndir, store, &iter);
+#else
+	nfn += read_fn_files_in_dir(dir, fndir, vwin, 0);
+#endif
+	closedir(dir);
+    }
+
+    /* pick up any function files in the user's personal dir */
+    sprintf(fndir, "%sfunctions", paths.userdir);
+    dir = opendir(fndir);
+
+    if (dir != NULL) {
+#ifndef OLD_GTK
+	nfn += read_fn_files_in_dir(dir, fndir, store, &iter);
+#else
+	nfn = read_fn_files_in_dir(dir, fndir, vwin, ndb);
+#endif
+	closedir(dir);
+    }
+
+    if (nfn == 0) {
+	errbox(_("No function files found"));
+	/* FIXME don't leak list store */
+	return 1;
+    }
+
+#ifdef OLD_GTK
+    gtk_clist_select_row(GTK_CLIST(vwin->listbox), 0, 0);
+#endif
+
+    return 0;
 }
 
 gint populate_filelist (windata_t *vwin, gpointer p)
@@ -1056,6 +1150,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_dbfilelist(vwin);
     } else if (vwin->role == REMOTE_DB) {
 	return populate_remote_db_list(vwin);
+    } else if (vwin->role == FUNC_FILES) {
+	return populate_func_list(vwin);
     } else {
 	return read_file_descriptions(vwin, p);
     }
