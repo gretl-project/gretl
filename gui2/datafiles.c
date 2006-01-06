@@ -1079,7 +1079,7 @@ read_fn_files_in_dir (DIR *dir, const char *fndir,
 	    descrip = get_func_description(fname, fndir);
 	    if (descrip != NULL) {
 		gtk_list_store_append(store, iter);
-		gtk_list_store_set(store, iter, 0, fname, 1, descrip, 
+		gtk_list_store_set(store, iter, 0, fname, 1, descrip,
 				   2, fndir, -1);
 		g_free(descrip);
 		nfn++;
