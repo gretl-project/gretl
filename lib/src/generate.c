@@ -2155,47 +2155,18 @@ static int fix_obs_in_brackets (char *s)
     return err;
 }
 
-/* standardize on '.' for decimal point character within a
-   genr formula
-*/
-
-static void fix_decimal_commas (char *str)
-{
-    char *p = str;
-
-    if (p != NULL && *p != 0) {
-	p++;
-	while (*p && *(p + 1)) {
-	    if (*p == ',' && isdigit(*(p - 1)) && isdigit(*(p + 1))) {
-		*p = '.';
-	    }
-	    p++;
-	}
-    }
-}
-
 static void copy_compress (char *targ, const char *src, int len)
 {
     int j = 0;
 
     while (*src && j < len) {
-	if (*src != ' ' || (j > 0 && targ[j-1] == ',')) {
+	if (*src != ' ') {
 	    targ[j++] = *src;
 	}
 	src++;
     }
 
     targ[j] = '\0';
-}
-
-static void full_compress (char *s)
-{
-    while (*s) {
-	if (*s == ' ') {
-	    memmove(s, s + 1, strlen(s));
-	}
-	s++;
-    }
 }
 
 #define OBS_DEBUG 0
@@ -2552,11 +2523,6 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 
     DPRINTF(("\n*** starting genr, s='%s'\n", s));
 
-#ifdef ENABLE_NLS
-    fix_decimal_commas(s);
-    full_compress(s);
-#endif
-    
     /* special cases which are not of the form "lhs=rhs" */
     if (genr_special_func(s)) {
 	genr->err = genr_handle_special(s, genr, pZ, pdinfo);

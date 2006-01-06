@@ -468,7 +468,7 @@ double gretl_restricted_stddev (int t1, int t2, const double *x,
  * @t1: starting observation.
  * @t2: ending observation.
  * @x: data series.
- * @y: data seties.
+ * @y: data series.
  *
  * Returns: the covariance of the series @x and @y from obs
  * @t1 to obs @t2, skipping any missing values, or #NADBL 
@@ -525,7 +525,7 @@ double gretl_covar (int t1, int t2, const double *x, const double *y)
  * @t1: starting observation.
  * @t2: ending observation.
  * @x: data series.
- * @y: data seties.
+ * @y: data series.
  * @missing: location to receive information on the number
  * of missing observations that were skipped, or %NULL.
  *
@@ -600,7 +600,7 @@ double gretl_corr (int t1, int t2, const double *x, const double *y,
  * @t1: starting observation.
  * @t2: ending observation.
  * @x: data series.
- * @y: data seties.
+ * @y: data series.
  *
  * Returns: the square of the correlation coefficient for the series 
  * @x and @y from obs @t1 to obs @t2, skipping any missing values, 

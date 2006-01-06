@@ -369,6 +369,93 @@ static char normalize_stat (char c)
     return 0;
 }
 
+static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
+{
+    double tmp, pv = NADBL;
+
+    switch (st) {
+
+    case 'z':
+	tmp = x[0];
+	if (x[0] > 0.0) tmp = -tmp;
+	pv = normal_cdf(tmp);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {	
+	    pprintf(prn, _("\nStandard normal: area to the %s "
+			   "of %g = %g\n"), (x[0] > 0)? _("right"): _("left"), 
+		    x[0], pv);
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+		    2.0 * pv, 1.0 - 2.0 * pv);
+	}
+	break;
+
+    case 't':
+	pv = t_pvalue_2(x[1], n[0]);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pv *= 0.5;
+	    pprintf(prn, _("\nt(%d): area to the %s of %g = %g\n"), 
+		    n[0], (x[1] > 0)? _("right"): _("left"),
+		    x[1], pv);
+	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
+		    2.0 * pv, 1.0 - 2.0 * pv);
+	}
+	break;
+
+    case 'X':
+	pv = chisq(x[1], n[0]);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pprintf(prn, _("\nChi-square(%d): area to the right of %g = %g\n"), 
+		    n[0], x[1], pv);
+	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
+	}
+	break;
+
+    case 'F':
+	pv = fdist(x[2], n[0], n[1]);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pprintf(prn, _("\nF(%d, %d): area to the right of %g = %g\n"), 
+		    n[0], n[1], x[2], pv);
+	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
+	}
+	break;
+
+    case 'G':
+	pv = gamma_dist(x[0], x[1], x[2], 2);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
+			   "\n area to the right of %g = %g\n"), 
+		    x[0], x[1], x[0] * x[0] / x[1], x[1] / x[0],
+		    x[2], 1.0 - pv);
+	}
+	break;
+
+    case 'B':
+	pv = binomial_pvalue(n[2], n[1], x[0]);
+	if (pv < 0) {
+	    pv = NADBL;
+	} else if (!na(pv)) {
+	    pprintf(prn, _("\nBinomial (p = %g, n = %d):"
+			   "\n Prob(x > %d) = %g\n"), 
+		    x[0], n[1], n[2], pv);
+	}
+	break;
+
+    default:
+	break;
+    }
+
+    return pv;
+}
+
 /**
  * batch_pvalue:
  * @str: the command line, which should be of one of the following forms:
@@ -393,48 +480,54 @@ double batch_pvalue (const char *str,
 		     const double **Z, const DATAINFO *pdinfo, 
                      PRN *prn, gretlopt opt)
 {
-    int n1 = 0, n2 = 0, n3 = 0;
-    double x1 = 0, x2 = 0, x3 = 0;
+    int n[3] = {0};
+    double x[3] = {0.0};
     char st = 0;
-    double tmp, pv = NADBL;
+    double pv = NADBL;
     char s1[32] = {0};
     char s2[32] = {0};
     char s3[32] = {0};
-    char cmd[7];
+    int commas = 1;
+    int nf = 0;
     int err = 0;
 
-    for (;;) {
-	if (sscanf(str, "%c,%31[^,],%31[^,],%31s", &st, s1, s2, s3) == 4) {
-	    break;
-	}
-	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%c,%31[^,],%31s", &st, s1, s3) == 3) {
-	    break;
-	} 
-	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%c,%s", &st, s3) == 2) {
-	    break;
-	} 
-	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%6s %c %31s %31s %31s", cmd, &st, s1, s2, s3) == 5) {
-	    break;
-	} 
-	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%6s %c %31s %31s", cmd, &st, s1, s3) == 4) {
-	    break;
-	} 
-	*s1 = *s2 = *s3 = '\0';
-	if (sscanf(str, "%6s %c %31s", cmd, &st, s3) == 3) {
-	    break;
-	} 
-	*s1 = *s2 = *s3 = '\0';
-	break;
+    if (!strncmp(str, "pvalue ", 7)) {
+	str += 7;
+	commas = 0;
     }
 
-    st = normalize_stat(st);
-
-    if (st == 0) {
+    while (*str == ' ') str++;
+    
+    if (!sscanf(str, "%c", &st) || 
+	(st = normalize_stat(st)) == 0) {
 	pputs(prn, _("\nunrecognized pvalue code\n"));
+	return NADBL;
+    }
+
+    str++;
+    while (*str == ' ' || *str == ',') str++;
+
+    if (st == 'z') {
+	nf = sscanf(str, "%31s", s1);
+	if (nf != 1) err = 1;
+    } else if (st == 't' || st == 'X') {
+	if (commas) {
+	    nf = sscanf(str, "%31[^,],%31s", s1, s2);
+	} else {
+	    nf = sscanf(str, "%31s %31s", s1, s2);
+	}
+	if (nf != 2) err = 1;
+    } else {
+	if (commas) {
+	    nf = sscanf(str, "%31[^,],%31[^,],%31s", s1, s2, s3);
+	} else {
+	    nf = sscanf(str, "%31s %31s %31s", s1, s2, s3);
+	}
+	if (nf != 3) err = 1;
+    }	
+
+    if (err) {
+	pputs(prn, _("\npvalue: missing parameter\n"));
 	return NADBL;
     }
 
@@ -442,15 +535,13 @@ double batch_pvalue (const char *str,
 	gretl_push_c_numeric_locale();
     }
 
-    err = val_from_string(s1, Z, pdinfo, &x1, &n1);
-
-    if (!err) {
-	err = val_from_string(s2, Z, pdinfo, &x2, &n2);
-    }
-
-    if (!err) {
-	err = val_from_string(s3, Z, pdinfo, &x3, &n3);
-    }
+    err = val_from_string(s1, Z, pdinfo, &x[0], &n[0]);
+    if (!err && nf > 1) {
+	err = val_from_string(s2, Z, pdinfo, &x[1], &n[1]);
+    } 
+    if (!err && nf > 2) {
+	err = val_from_string(s3, Z, pdinfo, &x[2], &n[2]);
+    }	
 
     if (opt & OPT_G) {
 	gretl_pop_c_numeric_locale();
@@ -461,100 +552,7 @@ double batch_pvalue (const char *str,
 	return NADBL;
     }
 
-    /* check for missing params */
-    if (st == 'z' && !*s3) {
-	err = 1;
-    } else if ((st == 't' || st == 'X') && (!*s1 || !*s3)) {
-	err = 1;
-    } else if ((st == 'F' || st == 'G' || st == 'B') &&
-	(!*s1 || !*s2 || !*s3)) {
-	err = 1;
-    }
-
-    if (err) {
-	pputs(prn, _("\npvalue: missing parameter\n"));
-	return NADBL;
-    }	
-
-    switch (st) {
-
-    case 'z':
-	tmp = x3;
-	if (x3 > 0.0) tmp = -tmp;
-	pv = normal_cdf(tmp);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {	
-	    pprintf(prn, _("\nStandard normal: area to the %s "
-			   "of %g = %g\n"), (x3 > 0)? _("right"): _("left"), 
-		    x3, pv);
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
-		    2.0 * pv, 1.0 - 2.0 * pv);
-	}
-	break;
-
-    case 't':
-	pv = t_pvalue_2(x3, n1);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
-	    pv *= 0.5;
-	    pprintf(prn, _("\nt(%d): area to the %s of %g = %g\n"), 
-		    n1, (x3 > 0)? _("right"): _("left"),
-		    x3, pv);
-	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
-		    2.0 * pv, 1.0 - 2.0 * pv);
-	}
-	break;
-
-    case 'X':
-	pv = chisq(x3, n1);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
-	    pprintf(prn, _("\nChi-square(%d): area to the right of %g = %g\n"), 
-		    n1, x3, pv);
-	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
-	}
-	break;
-
-    case 'F':
-	pv = fdist(x3, n1, n2);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
-	    pprintf(prn, _("\nF(%d, %d): area to the right of %g = %g\n"), 
-		    n1, n2, x3, pv);
-	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
-	}
-	break;
-
-    case 'G':
-	pv = gamma_dist(x1, x2, x3, 2);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
-	    pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
-			   "\n area to the right of %g = %g\n"), 
-		    x1, x2, x1*x1/x2, x2/x1,
-		    x3, 1.0 - pv);
-	}
-	break;
-
-    case 'B':
-	pv = binomial_pvalue(n3, n2, x1);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
-	    pprintf(prn, _("\nBinomial (p = %g, n = %d):"
-			   "\n Prob(x > %d) = %g\n"), 
-		    x1, n2, n3, pv);
-	}
-	break;
-
-    default:
-	break;
-    }
+    pv = find_pvalue(st, n, x, prn);
 
     if (na(pv)) {
 	pputs(prn, _("\nError computing pvalue\n"));
