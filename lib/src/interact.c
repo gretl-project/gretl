@@ -28,6 +28,7 @@
 #include "forecast.h"
 #include "cmd_private.h"
 #include "libset.h"
+#include "usermat.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32
@@ -214,6 +215,7 @@ static int catch_command_alias (CMD *cmd)
                        c == LEVERAGE || \
                        c == LMTEST || \
                        c == LOOP || \
+                       c == MATRIX || \
                        c == MLE || \
                        c == MODELTAB || \
                        c == NLS || \
@@ -3118,6 +3120,10 @@ int simple_commands (CMD *cmd, const char *line,
 	} else if (cmd->opt & OPT_L) {
 	    err = remember_list(cmd->list, cmd->param, prn);
 	} 
+	break;
+
+    case MATRIX:
+	err = make_user_matrix_from_string(line, prn);
 	break;
 
     case TRANSPOSE:

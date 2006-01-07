@@ -5959,6 +5959,7 @@ int gui_exec_line (char *line,
     case LDIFF: 
     case LOGS:
     case MAHAL:
+    case MATRIX:
     case MEANTEST: 
     case MULTIPLY: 
     case OUTFILE: 

@@ -897,6 +897,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case LDIFF: 
     case LOGS:
     case MAHAL:
+    case MATRIX:
     case MEANTEST: 
     case MULTIPLY: 
     case OUTFILE: 

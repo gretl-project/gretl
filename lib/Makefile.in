@@ -115,6 +115,7 @@ PUBLIC_HDRS = \
 	texprint.h \
 	transforms.h \
 	tsls.h \
+	usermat.h \
 	var.h \
 	varprint.h 
 
@@ -169,6 +170,7 @@ SRCS = adf_kpss.c \
 	texprint.c \
 	transforms.c \
 	tsls.c \
+	usermat.c \
 	var.c \
 	varprint.c
 
