@@ -276,6 +276,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Utilities/sep"), NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL },
     { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Utilities/Additional functions..."), NULL, display_files, FUNC_FILES, NULL },
+    { N_("/Utilities/sep3"), NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Start GNU R"), NULL, startRcallback, 0, NULL },
     { N_("/Utilities/NIST test suite"), NULL, NULL, 0, "<Branch>" },
     { N_("/Utilities/NIST test suite/basic"), NULL, do_nistcheck, 0, NULL },

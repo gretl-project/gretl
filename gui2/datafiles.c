@@ -695,6 +695,37 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 } 
 
+void browser_load_func (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+    char fnfile[FILENAME_MAX];
+    gchar *fname;
+    gchar *dir;
+
+#ifndef OLD_GTK
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+			 0, &fname);
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+			 2, &dir);
+#else
+    gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
+		       0, &fname);
+    gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
+		       2, &dir); /* wrong */
+#endif
+
+    build_path(dir, fname, fnfile, NULL);
+
+    fprintf(stderr, "fnfile: '%s'\n", fnfile);
+
+#ifndef OLD_GTK
+    g_free(fname);
+    g_free(dir);
+#endif
+
+    gtk_widget_destroy(GTK_WIDGET(vwin->w));
+} 
+
 static void set_browser_status (windata_t *vwin, int status)
 {
     if (status == BROWSER_BUSY) {
@@ -949,7 +980,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     case FUNC_FILES:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: function files"));
-	browse_func = dummy_call;
+	browse_func = browser_load_func;
 	break;
     case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
@@ -1060,8 +1091,30 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 
 static char *get_func_description (const char *fname, const char *fndir)
 {
+    char fullname[FILENAME_MAX];
+    char line[128];
+    FILE *fp;
+
+    build_path(fndir, fname, fullname, NULL);
+    
+    fp = fopen(fullname, "r");
+    if (fp == NULL) {
+	return NULL;
+    }
+    
+    while (fgets(line, sizeof line, fp)) {
+	if (*line != '#') {
+	    break;
+	}
+	printf("%s", line + 2);
+    }
+
+    fclose(fp);
+
     return g_strdup("Not ready yet");
 }
+
+#ifndef OLD_GTK
 
 static int
 read_fn_files_in_dir (DIR *dir, const char *fndir, 
@@ -1090,6 +1143,41 @@ read_fn_files_in_dir (DIR *dir, const char *fndir,
     return nfn;
 }
 
+#else
+
+static int
+read_fn_files_in_dir (DIR *dir, char *fndir, windata_t *vwin, int nfn)
+{
+    struct dirent *dirent;
+    char *fname;
+    char *descrip;
+    gchar *row[2];
+    int n, i;
+
+    while ((dirent = readdir(dir)) != NULL) {
+	fname = dirent->d_name;
+	n = strlen(fname);
+	if (!g_strcasecmp(fname + n - 4, ".inp")) {
+	    descrip = get_func_description(fname, fndir);
+	    if (descrip != NULL) {
+		row[0] = fname;
+		row[1] = descrip;
+		i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
+		gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, fndir);
+		g_free(descrip);
+		nfn++;
+		if (nfn % 2) {
+		    gtk_clist_set_background(GTK_CLIST(vwin->listbox), i, &gray);
+		}
+	    } 
+	}
+    }
+
+    return nfn;
+}
+
+#endif
+
 gint populate_func_list (windata_t *vwin)
 {
 #ifndef OLD_GTK
@@ -1113,7 +1201,7 @@ gint populate_func_list (windata_t *vwin)
 #ifndef OLD_GTK
 	nfn += read_fn_files_in_dir(dir, fndir, store, &iter);
 #else
-	nfn += read_fn_files_in_dir(dir, fndir, vwin, 0);
+	nfn = read_fn_files_in_dir(dir, fndir, vwin, 0);
 #endif
 	closedir(dir);
     }
@@ -1126,7 +1214,7 @@ gint populate_func_list (windata_t *vwin)
 #ifndef OLD_GTK
 	nfn += read_fn_files_in_dir(dir, fndir, store, &iter);
 #else
-	nfn = read_fn_files_in_dir(dir, fndir, vwin, ndb);
+	nfn = read_fn_files_in_dir(dir, fndir, vwin, nfn);
 #endif
 	closedir(dir);
     }
@@ -1208,6 +1296,9 @@ static GtkWidget *files_window (windata_t *vwin)
 	titles = ps_titles;
 	cols = 3;
 	full_width = 480;
+	break;
+    case FUNC_FILES:
+	hidden_col = 1;
 	break;
     default:
 	break;
