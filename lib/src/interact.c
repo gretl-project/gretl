@@ -3123,7 +3123,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case MATRIX:
-	err = make_user_matrix_from_string(line, prn);
+	err = matrix_command(line, prn);
 	break;
 
     case TRANSPOSE:

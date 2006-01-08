@@ -227,42 +227,22 @@ static double get_double (char **s, int *err)
     return x;
 }
 
-/**
- * make_user_matrix_from_string:
- * @s: string that specifies matrix.
- * @prn: pointer to printing struct.
- *
- * Creates a matrix based on @s and adds it to the stack of
- * user-defined matrices: @s maybe something like:
- * "matrix A = { 1, 2, 3 ; 4, 5, 6 }"
- * 
- * Returns: 0 on success, non-zero code on failure.
- */
-
-int make_user_matrix_from_string (char *s, PRN *prn)
+static int create_matrix (const char *name, char *s, PRN *prn)
 {
     gretl_matrix *M = NULL;
-    char name[MNAMELEN];
+    char *p;
     double x;
+    int nm = n_matrices;
+    int transp = 0;
     int r = 0, c = 0;
     int i, j;
-    int transp = 0;
-    char *p;
     int err = 0;
 
-    if (!strncmp(s, "matrix ", 7)) s += 7;
-
-    if (!sscanf(s, "%31s", name)) {
+    p = strchr(s, '{');
+    if (p == NULL) {
 	err = 1;
     }
-
-    if (!err) {
-	p = strchr(s, '{');
-	if (p == NULL) {
-	    err = 1;
-	}
-	s = p + 1;
-    }
+    s = p + 1;
 
     if (!err) {
 	p = strchr(s, '}');
@@ -325,7 +305,76 @@ int make_user_matrix_from_string (char *s, PRN *prn)
     }
 
     if (!err) {
+	if (n_matrices > nm) {
+	    pprintf(prn, "Added matrix '%s'\n", name);
+	} else {
+	    pprintf(prn, "Replaced matrix '%s'\n", name);
+	}
+    } else {
+	pprintf(prn, "Error adding matrix '%s'\n", name);
+    }
+
+    return err;
+}
+
+static int print_matrix_by_name (const char *name, PRN *prn)
+{
+    gretl_matrix *M;
+    int err = 0;
+
+    M = get_matrix_by_name(name);
+    if (M == NULL) {
+	pprintf(prn, _("'%s': no such matrix\n"), name);
+	err = 1;
+    } else {
 	gretl_matrix_print_to_prn(M, name, prn);
+    }
+
+    return err;
+}
+
+/**
+ * make_command:
+ * @s: string that specifies matrix command.
+ * @prn: pointer to printing struct.
+ *
+ * Creates a matrix based on @s and adds it to the stack of
+ * user-defined matrices: @s may be something like:
+ * "matrix A = { 1, 2, 3 ; 4, 5, 6 }"
+ * 
+ * Returns: 0 on success, non-zero code on failure.
+ */
+
+int matrix_command (char *s, PRN *prn)
+{
+    char name[MNAMELEN];
+    char word[9];
+    int err = 0;
+
+    if (!strncmp(s, "matrix ", 7)) s += 7;
+
+    while (isspace(*s)) s++;
+
+    if (!sscanf(s, "%31s", name)) {
+	err = 1;
+    } else {
+	s += strlen(name);
+	while (isspace(*s)) s++;
+    }
+
+    if (err) {
+	return err;
+    }
+
+    if (*s == '=') {
+	/* defining a matrix */
+	err = create_matrix(name, s, prn);
+    } else {
+	*word = '\0';
+	sscanf(s, "%8s", word);
+	if (*word == '\0' || !strcmp(word, "print")) {
+	    err = print_matrix_by_name(name, prn);
+	}
     }
 
     return err;
