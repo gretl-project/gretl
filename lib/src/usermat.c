@@ -32,8 +32,8 @@ struct user_matrix_ {
     char name[MNAMELEN];
 };
 
-user_matrix **matrices;
-int n_matrices;
+static user_matrix **matrices;
+static int n_matrices;
 
 static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
 {
@@ -350,19 +350,14 @@ int matrix_command (char *s, PRN *prn)
     int err = 0;
 
     if (!strncmp(s, "matrix ", 7)) s += 7;
-
     while (isspace(*s)) s++;
 
     if (!sscanf(s, "%31s", name)) {
-	err = 1;
-    } else {
-	s += strlen(name);
-	while (isspace(*s)) s++;
-    }
+	return 1;
+    } 
 
-    if (err) {
-	return err;
-    }
+    s += strlen(name);
+    while (isspace(*s)) s++;
 
     if (*s == '=') {
 	/* defining a matrix */
@@ -373,6 +368,7 @@ int matrix_command (char *s, PRN *prn)
 	if (*word == '\0' || !strcmp(word, "print")) {
 	    err = print_matrix_by_name(name, prn);
 	} else {
+	    /* no other commands available yet */
 	    err = 1;
 	}
     } 
