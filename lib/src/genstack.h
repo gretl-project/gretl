@@ -31,12 +31,20 @@ void dprintf (const char *format, ...);
 
 #define ATOMLEN 32  /* length of auxiliary string in genr atom */
 
+enum {
+    ATOM_SERIES = 0,
+    ATOM_SCALAR = 1 << 0,
+    ATOM_MATRIX = 1 << 1,
+    ATOM_TMP    = 1 << 2,
+    ATOM_TRANSP = 1 << 3
+};
+
 typedef struct genatom_ genatom;
 typedef struct atomset_ atomset;
 
 struct genatom_ {
     char level;
-    char scalar;
+    char atype;
     int varnum;
     int varobs;
     int tmpvar;
@@ -46,6 +54,7 @@ struct genatom_ {
     char op;
     char popped;
     char str[ATOMLEN];
+    gretl_matrix *M;
     genatom *parent;
     atomset *aset;
 };
@@ -108,6 +117,8 @@ enum transformations {
     T_VECTOR,
     T_ISLIST,
     T_NELEM,
+    T_DET,
+    T_INV,
 #ifdef HAVE_MPFR
     T_MLOG,
 #endif
@@ -115,6 +126,7 @@ enum transformations {
 };
 
 #define VALSTACK_SIZE 32
+#define MATSTACK_SIZE 32
 
 enum genr_flags {
     GENR_SAVE         = 1 << 0,
@@ -123,7 +135,8 @@ enum genr_flags {
     GENR_NEED_SCALAR  = 1 << 3,
     GENR_WARN         = 1 << 4,
     GENR_SIMPLE_SORT  = 1 << 5,
-    GENR_PRIVATE      = 1 << 6
+    GENR_PRIVATE      = 1 << 6,
+    GENR_MATRIX       = 1 << 7
 };
 
 struct _GENERATOR {
@@ -144,6 +157,8 @@ struct _GENERATOR {
     atomset *aset;
     double valstack[VALSTACK_SIZE];
     int nvals;
+    gretl_matrix **mstack;
+    int nmats;
     char **S;
 };
 
@@ -163,6 +178,10 @@ int atom_stack_check_for_scalar (GENERATOR *genr);
 int calc_push (double x, GENERATOR *genr);
 double calc_pop (GENERATOR *genr);
 void reset_calc_stack (GENERATOR *genr);
+
+int matrix_calc_push (gretl_matrix *M, GENERATOR *genr);
+gretl_matrix *matrix_calc_pop (GENERATOR *genr);
+void reset_matrix_calc_stack (GENERATOR *genr);
 
 const char *get_genr_func_word (int fnum);
 

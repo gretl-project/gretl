@@ -878,6 +878,31 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
     gretl_print_destroy(prn);
 }
 
+/**
+ * debug_print_matrix:
+ * @m: matrix to print.
+ * @msg: accompanying message text (or %NULL if no message is wanted).
+ *
+ * Prints the matrix @m to stderr, as with gretl_matrix_print(), but
+ * appends the address of the matrix struct.
+ */
+
+void debug_print_matrix (const gretl_matrix *m, const char *msg)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+    char full[64] = {0};
+
+    if (msg != NULL) {
+	strncpy(full, msg, 32);
+	sprintf(full + strlen(full), " (%p)", (void *) m);
+    } else {
+	sprintf(full, " (%p)", (void *) m);
+    }
+
+    gretl_matrix_print_to_prn(m, full, prn);
+    gretl_print_destroy(prn);
+}
+
 #define EQTOL 1.0e-12
 
 static int sneq (double x, double y)

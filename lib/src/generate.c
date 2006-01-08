@@ -26,6 +26,7 @@
 #include "libset.h"
 #include "modelspec.h"
 #include "objstack.h"
+#include "usermat.h"
 
 #include "../../cephes/libprob.h"
 
@@ -43,6 +44,8 @@ enum {
 } genr_numbers;
 
 static double calc_xy (double x, double y, char op, int t, int *err);
+gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 
+			      char op, int *err);
 
 static double genr_cov_corr (const char *str, double ***pZ,
 			     const DATAINFO *pdinfo, int fn);
@@ -164,6 +167,8 @@ struct genr_func funcs[] = {
     { T_VECTOR,   "isvector" },
     { T_ISLIST,   "islist" },
     { T_NELEM,    "nelem" },
+    { T_DET,      "det" },
+    { T_INV,      "inv" },
 #ifdef HAVE_MPFR
     { T_MLOG,     "mlog" },
 #endif
@@ -206,6 +211,9 @@ struct genr_func funcs[] = {
 #define TOKLEN   128
 #define ARGLEN   128
 
+#define genr_is_matrix(g) ((g)->flags & GENR_MATRIX)
+#define genr_set_matrix(g) ((g)->flags |= GENR_MATRIX)
+
 #define genr_is_scalar(g) ((g)->flags & GENR_SCALAR)
 #define genr_is_vector(g) (!((g)->flags & GENR_SCALAR))
 #define genr_set_scalar(g) ((g)->flags |= GENR_SCALAR)
@@ -232,6 +240,27 @@ struct genr_func funcs[] = {
 
 #define genr_single_obs(g) ((g)->obs >= 0)
 
+static int genr_matrix_init (GENERATOR *genr, gretlopt opt)
+{
+    int i, err = 0;
+
+    genr->mstack = NULL;
+    genr->nmats = 0;
+
+    if (opt & OPT_M) {
+	genr->mstack = malloc(MATSTACK_SIZE * sizeof *genr->mstack);
+	if (genr->mstack == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<MATSTACK_SIZE; i++) {
+		genr->mstack[i] = NULL;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
     GENERATOR *genr;
@@ -244,7 +273,12 @@ static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     genr->err = 0;
     genr->done = 0;
 
-    genr->flags = GENR_SAVE | GENR_SCALAR;
+    if (opt & OPT_M) {
+	genr->flags = GENR_SAVE | GENR_MATRIX;
+    } else {
+	genr->flags = GENR_SAVE | GENR_SCALAR;
+    }
+
     genr->xvec = NULL;
     genr->varnum = 0;
     genr->obs = -1;
@@ -269,11 +303,16 @@ static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 
     reset_calc_stack(genr);
 
+    if (genr_matrix_init(genr, opt)) {
+	free(genr);
+	genr = NULL;
+    }
+
     return genr;
 }
 
-static genatom *make_atom (int scalar, int varnum, int varobs,
-			   int lag, double val,
+static genatom *make_atom (int atype, int varnum, int varobs,
+			   int lag, double val, gretl_matrix *M,
 			   int func, char op, char *str,
 			   int level, atomset *aset)
 {
@@ -282,12 +321,13 @@ static genatom *make_atom (int scalar, int varnum, int varobs,
     atom = malloc(sizeof *atom);
     if (atom == NULL) return NULL;
 
-    atom->scalar = scalar;
+    atom->atype = atype;
     atom->varnum = varnum;
     atom->varobs = varobs;
     atom->tmpvar = -1;
     atom->lag = lag;
     atom->val = val;
+    atom->M = M;
     atom->func = func;
     atom->op = op;
     atom->level = level;
@@ -299,6 +339,16 @@ static genatom *make_atom (int scalar, int varnum, int varobs,
     atom->aset = aset;
     atom->popped = 0;
 
+    if (atom->M != NULL && (atype & ATOM_TRANSP)) {
+	atom->M = gretl_matrix_copy_transpose(M);
+	if (atom->M == NULL) {
+	    free(atom);
+	    atom = NULL;
+	} else {
+	    atom->atype &= ~ATOM_TRANSP;
+	}
+    }
+
     return atom;
 }
 
@@ -309,7 +359,7 @@ static int print_atom (genatom *atom)
 
     fprintf(stderr, " atom->level = %d\n", atom->level);
 
-    fprintf(stderr, " atom->scalar = %d\n", atom->scalar);
+    fprintf(stderr, " atom->atype = %d\n", atom->atype);
 
     if (atom->varnum != 0) {
 	fprintf(stderr, " atom->varnum = %d\n", atom->varnum);
@@ -323,7 +373,7 @@ static int print_atom (genatom *atom)
     if (atom->lag > 0) {
 	fprintf(stderr, " atom->lag = %d\n", atom->lag);
     }
-    if (atom->scalar) {
+    if (atom->atype == ATOM_SCALAR) {
 	fprintf(stderr, " atom->val = %g\n", atom->val);
     }
     if (atom->func > 0) {
@@ -524,11 +574,15 @@ static int catch_saved_object_scalar (const char *s, double *x)
     return ret;
 }
 
+#define transposed(s) (s[strlen(s) - 1] == '\'')
+
 static genatom *parse_token (const char *s, char op,
 			     GENERATOR *genr, int level)
 {
     int v = -1, varobs = -1;
-    int scalar = 0, lag = 0, func = 0;
+    int atype = ATOM_SERIES;
+    int lag = 0, func = 0;
+    gretl_matrix *M = NULL;
     double val = 0.0;
     char str[ARGLEN] = {0};
 
@@ -538,12 +592,24 @@ static genatom *parse_token (const char *s, char op,
 	if (!strchr(s, '(') && !strchr(s, '[')) {
 	    if (!strcmp(s, "pi")) {
 		val = M_PI;
-		scalar = 1;
+		atype = ATOM_SCALAR;
 	    } else if (!strcmp(s, "NA")) {
 		val = NADBL;
-		scalar = 1;
+		atype = ATOM_SCALAR;
 	    } else if (strstr(s, ".$") && catch_saved_object_scalar(s, &val)) {
-		scalar = 1;
+		atype = ATOM_SCALAR;
+	    } else if (genr_is_matrix(genr)) {
+		M = get_matrix_by_name(s);
+		if (M == NULL) {
+		    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
+		    genr->err = E_UNKVAR;
+		} else {
+		    DPRINTF(("recognized matrix '%s'\n", s));
+		    atype = ATOM_MATRIX;
+		    if (transposed(s)) {
+			atype |= ATOM_TRANSP;
+		    }
+		}
 	    } else {
 		v = varindex(genr->pdinfo, s);
 
@@ -564,11 +630,11 @@ static genatom *parse_token (const char *s, char op,
 		    int k = loop_scalar_read(*s);
 
 		    val = k;
-		    scalar = 1;
+		    atype = ATOM_SCALAR;
 		} else if (v >= 0 && v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
 		    /* handle regular scalar variables here */
 		    varobs = 0;
-		    scalar = 1;
+		    atype = ATOM_SCALAR;
 		}
 	    }
 	} else if (strchr(s, '(')) {
@@ -591,24 +657,24 @@ static genatom *parse_token (const char *s, char op,
 			val = evaluate_pvalue(str, (const double **) *genr->pZ,
 					      genr->pdinfo,
 					      &genr->err);
-			scalar = 1;
+			atype = ATOM_SCALAR;
 		    }
 		} else if (func == T_CRIT) {
 		    if (!genr->err) {
 			val = evaluate_critval(str, (const double **) *genr->pZ,
 					       genr->pdinfo,
 					       &genr->err);
-			scalar = 1;
+			atype = ATOM_SCALAR;
 		    }
 		} else if (func == T_VARNUM || func == T_VECTOR ||
 			   func == T_ISLIST || func == T_NELEM) {
-		    scalar = 1;
+		    atype = ATOM_SCALAR;
 		} else if (MODEL_DATA_ELEMENT(func)) {
 		    val = get_model_data_element(str, genr, func);
-		    scalar = 1;
+		    atype = ATOM_SCALAR;
 		} else if (BIVARIATE_STAT(func)) {
 		    val = evaluate_bivariate_statistic(str, genr, func);
-		    scalar = 1;
+		    atype = ATOM_SCALAR;
 		}
 	    } else {
 		/* not a function: try a lagged variable */
@@ -631,7 +697,7 @@ static genatom *parse_token (const char *s, char op,
 		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		genr->err = E_SYNTAX; 
 	    } else {
-		scalar = 1;
+		atype = ATOM_SCALAR;
 	    }
 	}
     }
@@ -648,7 +714,7 @@ static genatom *parse_token (const char *s, char op,
 	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
 		     s, i));
 	    val = last_model_get_value_by_type(i, &genr->err);
-	    scalar = 1;
+	    atype = ATOM_SCALAR;
 	} else if ((i = model_vector_index(s)) > 0) { 
 	    DPRINTF(("recognized '%s' as model vector, index #%d\n", 
 		     s, i));
@@ -657,18 +723,18 @@ static genatom *parse_token (const char *s, char op,
 	    DPRINTF(("recognized '%s' as dataset var, index #%d\n", 
 		     s, i));
 	    val = get_dataset_statistic(genr->pdinfo, i);
-	    scalar = 1;
+	    atype = ATOM_SCALAR;
 	} else if ((i = test_stat_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as test-related var, index #%d\n", 
 		     s, i));
 	    val = get_test_stat_value(genr->label, i);
-	    scalar = 1;
+	    atype = ATOM_SCALAR;
 	} else {
 	    genr->err = E_UNKVAR;
 	}
     } else if (numeric_string(s)) {
 	val = dot_atof(s);
-	scalar = 1;
+	atype = ATOM_SCALAR;
     } else if (*s == '"') {
 	/* observation label? (basis for dummy series) */
 	val = obs_num(s, genr->pdinfo);
@@ -681,7 +747,7 @@ static genatom *parse_token (const char *s, char op,
 	/* time-series observation? */
 	val = obs_num(s, genr->pdinfo);
 	if (val > 0) {
-	    scalar = 1;
+	    atype = ATOM_SCALAR;
 	} else {
 	    genr->err = E_SYNTAX;
 	}
@@ -692,7 +758,7 @@ static genatom *parse_token (const char *s, char op,
 
     if (genr->err) return NULL;
 
-    return make_atom(scalar, v, varobs, lag, val, func, op, str, 
+    return make_atom(atype, v, varobs, lag, val, M, func, op, str, 
 		     level, genr->aset);
 }
 
@@ -750,7 +816,7 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
     double x = NADBL;
 
     /* constant, scalar variable, or specific obs from a series */
-    if (atom->scalar) {
+    if (atom->atype == ATOM_SCALAR) {
 	if (atom->varnum >= 0 && atom->varnum < HIGHNUM) {
 	    x = (*genr->pZ)[atom->varnum][atom->varobs];
 	} else {
@@ -1110,8 +1176,103 @@ static int add_statistic_to_genr (GENERATOR *genr, genatom *atom)
 #endif
 
     atom->val = val;
-    atom->scalar = 1;
+    atom->atype = ATOM_SCALAR;
     atom_eat_children(atom);
+
+    return genr->err;
+}
+
+static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
+				       gretl_matrix *M)
+{
+    gretl_matrix *R = NULL;
+
+    if (atom->M != NULL) {
+	R = atom->M;
+    } else if (atom->func) {
+	if (atom->func == T_DET) {
+	    fprintf(stderr, "FIXME need to do determinant\n");
+	} else if (atom->func == T_INV) {
+	    fprintf(stderr, "FIXME need to do inverse\n");
+	} else if (atom->func == T_IDENTITY) {
+	    DPRINTF(("identity func: passing along %p\n", (void *) M));
+	    R = M;
+	}
+    }
+
+    if (R == NULL) {
+	genr->err = 1;
+    }
+
+    return R;
+}
+
+static int evaluate_matrix_genr (GENERATOR *genr)
+{
+    gretl_matrix *A = NULL;
+    gretl_matrix *Abak = NULL;
+    genatom *atom;
+
+    int level = 0, npush = 0, npop = 0;
+#if GENR_DEBUG
+    int i = 0;
+#endif
+
+    reset_atom_stack(genr);
+
+    DPRINTF(("\n*** starting evaluate_matrix_genr\n"));
+
+    while ((atom = pop_atom(genr))) {
+	gretl_matrix *B = eval_matrix_atom(atom, genr, A);
+
+	DPRINTF(("\neval_matrix_atom (atom %d, atom->level %d)\n", 
+		 i++, atom->level));
+#if GENR_DEBUG
+	debug_print_matrix(B, "B");
+#endif
+
+	if (genr->err) {
+	    break;
+	}
+
+	if (atom->level < level) { 
+	    A = matrix_calc_pop(genr);
+	    npop++;
+	    DPRINTF(("popped matrix %p\n", (void *) A));
+	}
+
+	A = matrix_calc_AB(A, B, atom->op, &genr->err);
+	DPRINTF(("matrix_calc_AB gave A = %p\n", (void *) A));
+
+	if (atom->level > level) {
+	    int pad = atom->level - level - 1;
+
+	    genr->err = matrix_calc_push(Abak, genr);
+	    npush++;
+	    DPRINTF(("pushed matrix %p at level %d\n", (void *) Abak, level));
+	    while (pad--) {
+		genr->err = matrix_calc_push(NULL, genr);
+		DPRINTF(("pushed NULL at level %d\n", level)); /* ?? */
+		npush++;
+	    }
+	}
+
+	level = atom->level;
+	Abak = A;
+    }
+
+    if (!genr->err && npop > npush) {
+	/* excess pushes are harmless? */
+	fprintf(stderr, "genr error: npush = %d, npop = %d\n",
+		npush, npop);
+	genr->err = 1;
+    }
+
+    reset_matrix_calc_stack(genr);
+
+    if (!genr->err) {
+	genr->err = matrix_calc_push(A, genr);
+    }
 
     return genr->err;
 }
@@ -1161,6 +1322,12 @@ static int evaluate_genr (GENERATOR *genr)
     DPRINTF(("evaluate_genr: n_atoms = %d\n", n_atoms));
 
     if (genr->err) {
+	return genr->err;
+    }
+
+    if (genr_is_matrix(genr)) {
+	DPRINTF(("evaluate_genr: got matrix genr\n"));
+	genr->err = 1;
 	return genr->err;
     }
 
@@ -2655,7 +2822,27 @@ void destroy_genr (GENERATOR *genr)
 	free(genr->xvec);
     }
 
+    if (genr->mstack != NULL) {
+	/* FIXME */
+	free(genr->mstack);
+    }
+
     free(genr);
+}
+
+static int genr_write_matrix (GENERATOR *genr)
+{
+    gretl_matrix *M = matrix_calc_pop(genr);
+    int err = 0;
+
+    if (M == NULL) {
+	err = 1;
+    } else {
+	err = add_or_replace_user_matrix(M, genr->varname);
+	DPRINTF(("Adding matrix %p as '%s'\n", (void *) M, genr->varname));
+    }
+
+    return err;
 }
 
 int execute_genr (GENERATOR *genr, int oldv)
@@ -2666,19 +2853,27 @@ int execute_genr (GENERATOR *genr, int oldv)
 	genr->err = 0;
     }
 
-    evaluate_genr(genr);
+    if (genr_is_matrix(genr)) {
+	evaluate_matrix_genr(genr);
+    } else {
+	evaluate_genr(genr);
+    }
 
     if (!genr->err) {
 	if (!genr_doing_save(genr)) {
 	    eval_msg(genr);
 	} else {
 	    make_genr_varname(genr, genr->lhs);
-	    genr->err = genr_write_var(genr, genr->pZ);
-	    if (!genr->err && !genr_is_private(genr)) {
-		if (!genr_single_obs(genr)) {
-		    write_genr_label(genr, oldv);
+	    if (genr_is_matrix(genr)) {
+		genr->err = genr_write_matrix(genr);
+	    } else {
+		genr->err = genr_write_var(genr, genr->pZ);
+		if (!genr->err && !genr_is_private(genr)) {
+		    if (!genr_single_obs(genr)) {
+			write_genr_label(genr, oldv);
+		    }
+		    compose_genr_msg(genr, oldv);
 		}
-		compose_genr_msg(genr, oldv);
 	    }
 	} 
     }
@@ -2995,6 +3190,64 @@ static double calc_xy (double x, double y, char op, int t, int *err)
     DPRINTF(("calc_xy: out: x=%g\n", x));
 
     return x;
+}
+
+gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 
+			      char op, int *err) 
+{
+    gretl_matrix *C = NULL;
+    int r, c;
+
+    *err = 0;
+
+#if GENR_DEBUG
+    fprintf(stderr, "\n*** matrix_calc_AB: A = %p, B = %p, ", 
+	    (void *) A, (void *) B);
+    if (isprint(op)) fprintf(stderr, "op='%c'\n", op);
+    else fprintf(stderr, "op=%d\n", op);
+    debug_print_matrix(A, "input A");
+    debug_print_matrix(B, "input B");
+#endif
+
+    switch (op) {
+    case '\0':
+	C = B;
+	break;
+    case '+':
+	*err = gretl_matrix_add_to(A, B);
+	C = A;
+	break;
+    case '-':
+	*err = gretl_matrix_subtract_from(A, B);
+	C = A;
+	break;
+    case '*':
+	r = gretl_matrix_rows(A);
+	c = gretl_matrix_cols(B);
+	C = gretl_matrix_alloc(r, c);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE, 
+					     B, GRETL_MOD_NONE, 
+					     C);
+	    /* should we (when?) free A? */
+	}
+	break;
+    default:
+	*err = 1;
+	break;
+    } 
+
+    if (*err == GRETL_MATRIX_NON_CONFORM) {
+	strcpy(gretl_errmsg, "Matrices not conformable for operation\n");
+    }
+
+#if GENR_DEBUG
+    debug_print_matrix(C, "output C");
+#endif
+
+    return C;
 }
 
 /* below: math functions taking scalar arg and returning scalar */

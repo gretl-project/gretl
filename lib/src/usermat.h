@@ -26,6 +26,10 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name);
 
 void destroy_user_matrices (void);
 
-int matrix_command (char *s, PRN *prn);
+int destroy_user_matrices_at_level (int level);
+
+int is_user_matrix (gretl_matrix *m);
+
+int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
 #endif /* USERMAT_H_ */

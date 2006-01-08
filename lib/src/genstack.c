@@ -30,6 +30,7 @@
 
 #include "libgretl.h"
 #include "genstack.h"
+#include "usermat.h"
 
 enum {
     STACK_PUSH,
@@ -58,10 +59,12 @@ struct atomset_ {
                                f == T_MEDIAN || f == T_MIN || f == T_MAX || \
                                f == T_DIFF || f == T_LDIFF || f == T_SDIFF || \
                                f == T_T1 || f == T_T2 || f == T_GINI || \
-                               f == T_CUM || f == T_SORT || \
+                               f == T_CUM || f == T_SORT || f == T_DET || f == T_INV || \
                                f == T_VARNUM || f == T_VECTOR || \
                                f == T_ISLIST || f == T_NELEM || \
                                f == T_RESAMPLE || f == T_HPFILT || f == T_BKFILT)
+
+#define atom_is_scalar(a) (a->atype == ATOM_SCALAR || (a->atype & ATOM_TMP))
 
 static int all_children_scalar (genatom **atoms, int n,
 				int pos, int level)
@@ -72,11 +75,11 @@ static int all_children_scalar (genatom **atoms, int n,
 
     for (j=pos-1; j>=0; j--) {
 	/* below: unsure between "!= level + 1" and "<= level" */
-	if ((atoms[j])->level <= level) { 
+	if (atoms[j]->level <= level) { 
 	    if (j == pos - 1) sc = 0;
 	    break;
 	}
-	if (!(atoms[j])->scalar) {
+	if (!atom_is_scalar(atoms[j])) {
 	    sc = 0; 
 	    break;
 	}
@@ -93,8 +96,8 @@ static int real_check_for_scalar_result (genatom **atoms, int n)
 
     /* find highest nesting depth */
     for (i=0; i<n; i++) {
-	if ((atoms[i])->level > maxlevel) {
-	    maxlevel = (atoms[i])->level;
+	if (atoms[i]->level > maxlevel) {
+	    maxlevel = atoms[i]->level;
 	}
     }
 
@@ -104,24 +107,24 @@ static int real_check_for_scalar_result (genatom **atoms, int n)
     for (k=maxlevel-1; k>=0; k--) {
 	DPRINTF(("check_for_scalar: checking level %d\n", k));
 	for (i=0; i<n; i++) {
-	    if ((atoms[i])->level == k && !(atoms[i])->scalar) {
+	    if (atoms[i]->level == k && !atom_is_scalar(atoms[i])) {
 		DPRINTF(("check_for_scalar: checking atom %d\n", i));
 		if (all_children_scalar(atoms, n, i, k)) {
-		    DPRINTF(("check_for_scalar: setting scalar=-1 "
+		    DPRINTF(("check_for_scalar: setting ATOM_TMP "
 			     "for atom[%d]\n", i));
-		    (atoms[i])->scalar = -1; 
+		    atoms[i]->atype |= ATOM_TMP;
 		}
 	    }
 	}
     }
 
     for (i=0; i<n; i++) {
-	if ((atoms[i])->level == 0 && !(atoms[i])->scalar) {
+	if (atoms[i]->level == 0 && !atom_is_scalar(atoms[i])) {
 	    scalar = 0;
 	}
-	if ((atoms[i])->scalar == -1) {
-	    /* restore original property */
-	    (atoms[i])->scalar = 0;
+	if (atoms[i]->atype & ATOM_TMP) {
+	    /* restore original atom type */
+	    atoms[i]->atype &= ~ATOM_TMP;
 	}
     }
 
@@ -134,7 +137,7 @@ static int real_stack_eat_children (genatom *parent,
     int i, j, ndel = 0;
 
     for (i=0; i<n; i++) {
-	if ((atoms[i])->parent == parent) {
+	if (atoms[i]->parent == parent) {
 	    free(atoms[i]);
 	    DPRINTF(("freed child atom, pos %d\n", i));
 	    for (j=i; j<n-1; j++) {
@@ -158,15 +161,15 @@ static void real_stack_set_parentage (genatom **atoms, int n)
 
     for (i=n-1; i>=0; i--) {
 	DPRINTF(("checking for children: looking at atom %d\n", i));
-	if (must_know_children((atoms[i])->func)) {
-	    level = (atoms[i])->level;
+	if (must_know_children(atoms[i]->func)) {
+	    level = atoms[i]->level;
 	    DPRINTF((" got candidate (atom %d, level %d)...\n", i, level));
 	    for (j=i-1; j>=0; j--) {
 		DPRINTF(("  looking at atom %d\n", j));
-		if ((atoms[j])->level > level) {
+		if (atoms[j]->level > level) {
 		    DPRINTF(("    marking atom %d as parent of atom %d\n",
 			    i, j));
-		    (atoms[j])->parent = atoms[i];
+		    atoms[j]->parent = atoms[i];
 		} else {
 		    DPRINTF(("    not a child, breaking\n"));
 		    j++;
@@ -200,11 +203,14 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
 	}
     } else if (op == STACK_RESET) {
 	for (j=0; j<aset->n_atoms; j++) {
-	    (aset->atoms[j])->popped = 0;
+	    aset->atoms[j]->popped = 0;
 	}
 	aset->n_popped = 0;
     } else if (op == STACK_DESTROY) {
 	for (j=0; j<aset->n_atoms; j++) {
+	    if (aset->atoms[j]->M != NULL && !is_user_matrix(aset->atoms[j]->M)) {
+		gretl_matrix_free(aset->atoms[j]->M);
+	    }
 	    free(aset->atoms[j]);
 	}
 	free(aset->atoms);
@@ -213,15 +219,15 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
 	aset->n_popped = 0;
     } else if (op == STACK_POP_CHILDREN && atom != NULL) {
 	for (j=0; j<aset->n_atoms; j++) {
-	    if ((aset->atoms[j])->parent == atom && !(aset->atoms[j])->popped) {
+	    if (aset->atoms[j]->parent == atom && !aset->atoms[j]->popped) {
 		ret = aset->atoms[j];
-		(aset->atoms[j])->popped = 1;
+		aset->atoms[j]->popped = 1;
 		break;
 	    }
 	}
     } else if (op == STACK_PEEK_CHILDREN && atom != NULL) {
 	for (j=0; j<aset->n_atoms; j++) {
-	    if ((aset->atoms[j])->parent == atom) {
+	    if (aset->atoms[j]->parent == atom) {
 		ret = aset->atoms[j];
 		break;
 	    }
@@ -321,6 +327,48 @@ int atom_stack_check_for_scalar (GENERATOR *genr)
     return (atom_stack(NULL, genr->aset, STACK_SCALAR_CHECK) != NULL);
 }
 
+static gretl_matrix *matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr)
+{
+    gretl_matrix **mstack = genr->mstack;
+    gretl_matrix *R = NULL;
+    int i;
+
+    if (op == STACK_PUSH) {
+	if (genr->nmats == MATSTACK_SIZE - 1) {
+	    fprintf(stderr, "genr: matrix stack depth exceeded\n");
+	    genr->err = 1;
+	    return R;
+	} else {
+	    for (i=genr->nmats; i>0; i--) {
+		mstack[i] = mstack[i-1];
+	    }
+	    mstack[0] = M;
+	    genr->nmats += 1;
+	}
+    } else if (op == STACK_POP && genr->nmats > 0) {
+	R = mstack[0];
+	for (i=0; i<MATSTACK_SIZE-1; i++) {
+	    mstack[i] = mstack[i+1];
+	}
+	genr->nmats -= 1;
+    } else if (op == STACK_RESET) {
+	DPRINTF(("matrix_calc_stack: STACK_RESET\n"));
+	for (i=0; i<MATSTACK_SIZE; i++) {
+	    if (mstack[i] == NULL) {
+		DPRINTF(("mstack[%d] is NULL, breaking\n", i));
+		break;
+	    }
+	    if (!is_user_matrix(mstack[i])) {
+		gretl_matrix_free(mstack[i]);
+	    }
+	    mstack[i] = NULL;
+	}
+	genr->nmats = 0;
+    }
+
+    return R;
+}
+
 static double calc_stack (double val, int op, GENERATOR *genr)
 {
     double *valstack = genr->valstack;
@@ -369,6 +417,22 @@ double calc_pop (GENERATOR *genr)
 void reset_calc_stack (GENERATOR *genr)
 {
     calc_stack(0., STACK_RESET, genr);
+}
+
+int matrix_calc_push (gretl_matrix *M, GENERATOR *genr)
+{
+    matrix_calc_stack(M, STACK_PUSH, genr);
+    return genr->err;
+}
+
+gretl_matrix *matrix_calc_pop (GENERATOR *genr)
+{
+    return matrix_calc_stack(NULL, STACK_POP, genr);
+}
+
+void reset_matrix_calc_stack (GENERATOR *genr)
+{
+    matrix_calc_stack(NULL, STACK_RESET, genr);
 }
 
 #if GENR_DEBUG

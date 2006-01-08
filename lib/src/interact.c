@@ -2808,7 +2808,7 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 */
 
 int simple_commands (CMD *cmd, const char *line, 
-		     double ***pZ, DATAINFO *datainfo,
+		     double ***pZ, DATAINFO *pdinfo,
 		     PRN *prn)
 {
     int err = 0, order = 0;
@@ -2827,7 +2827,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case ADDOBS:
 	order = atoi(cmd->param);
-	err = add_obs(order, pZ, datainfo, prn);
+	err = add_obs(order, pZ, pdinfo, prn);
 	break;
 
     case ADF:
@@ -2836,29 +2836,29 @@ int simple_commands (CMD *cmd, const char *line,
 	    break;
 	}
 	order = atoi(cmd->param);
-	err = adf_test(order, cmd->list[1], pZ, datainfo, cmd->opt, prn);
+	err = adf_test(order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case COINT:
 	order = atoi(cmd->param);
-	err = coint(order, cmd->list, pZ, datainfo, cmd->opt, prn);
+	err = coint(order, cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case COINT2:
 	order = atoi(cmd->param);
-	err = johansen_test_simple(order, cmd->list, pZ, datainfo, 
+	err = johansen_test_simple(order, cmd->list, pZ, pdinfo, 
 				   cmd->opt, prn);
 	break;
 
     case CORR:
 	if (cmd->list[0] > 3) {
-	    err = gretl_corrmx(cmd->list, (const double **) *pZ, datainfo, 
+	    err = gretl_corrmx(cmd->list, (const double **) *pZ, pdinfo, 
 			       prn);
 	    if (err) 
 		pputs(prn, _("Error in generating correlation matrix\n"));
 	    break;
 	}
-	corrmat = corrlist(cmd->list, (const double **) *pZ, datainfo);
+	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo);
 	if (corrmat == NULL) {
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	} else {
@@ -2868,7 +2868,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case ESTIMATE:
-	err = estimate_named_system(line, pZ, datainfo, cmd->opt, prn);
+	err = estimate_named_system(line, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case FUNC:
@@ -2883,20 +2883,20 @@ int simple_commands (CMD *cmd, const char *line,
 	break;	
 
     case PCA:
-	corrmat = corrlist(cmd->list, (const double **) *pZ, datainfo);
+	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo);
 	if (corrmat == NULL) {
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	} else {
-	    err = call_pca_plugin(corrmat, pZ, datainfo, &cmd->opt, prn);
+	    err = call_pca_plugin(corrmat, pZ, pdinfo, &cmd->opt, prn);
 	    if (cmd->opt && !err) {
-		maybe_list_vars(datainfo, prn);
+		maybe_list_vars(pdinfo, prn);
 	    }
 	    free_vmatrix(corrmat);
 	}
 	break;
 
     case CRITERIA:
-	err = parse_criteria(line, (const double **) *pZ, datainfo, prn);
+	err = parse_criteria(line, (const double **) *pZ, pdinfo, prn);
 	if (err) { 
 	    pputs(prn, _("Error in computing model selection criteria.\n"));
 	}
@@ -2907,13 +2907,13 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case DATA:
-	err = db_get_series(line, pZ, datainfo, prn);
+	err = db_get_series(line, pZ, pdinfo, prn);
 	break;
 
     case DIFF:
     case LDIFF:
     case SDIFF:
-	err = list_diffgenr(genlist, cmd->ci, pZ, datainfo);
+	err = list_diffgenr(genlist, cmd->ci, pZ, pdinfo);
 	if (err) {
 	    if (cmd->ci == LDIFF) {
 		pputs(prn, _("Error adding log differences of variables.\n"));
@@ -2921,7 +2921,7 @@ int simple_commands (CMD *cmd, const char *line,
 		pputs(prn, _("Error adding first differences of variables.\n"));
 	    }
 	} else {
-	    maybe_list_vars(datainfo, prn);
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
@@ -2931,51 +2931,51 @@ int simple_commands (CMD *cmd, const char *line,
 	    break;
 	}
 	order = atoi(cmd->param);
-	err = kpss_test(order, cmd->list[1], pZ, datainfo, cmd->opt, prn);
+	err = kpss_test(order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case LAGS:
 	order = atoi(cmd->param);
-	err = list_laggenr(&genlist, order, pZ, datainfo); 
+	err = list_laggenr(&genlist, order, pZ, pdinfo); 
 	if (err) {
 	    pputs(prn, _("Error adding lags of variables.\n"));
 	} else {
-	    maybe_list_vars(datainfo, prn);
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case LOGS:
-	err = list_loggenr(genlist, pZ, datainfo);
+	err = list_loggenr(genlist, pZ, pdinfo);
 	if (err) {
 	    pputs(prn, _("Error adding logs of variables.\n"));
 	} else {
-	    maybe_list_vars(datainfo, prn);
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case SQUARE:
-	err = list_xpxgenr(&genlist, pZ, datainfo, cmd->opt);
+	err = list_xpxgenr(&genlist, pZ, pdinfo, cmd->opt);
 	if (err) {
 	    pputs(prn, _("Failed to generate squares\n"));
 	} else {
-	    maybe_list_vars(datainfo, prn);
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case MULTIPLY:
-	err = gretl_multiply(cmd->param, cmd->list, cmd->extra, pZ, datainfo);
+	err = gretl_multiply(cmd->param, cmd->list, cmd->extra, pZ, pdinfo);
 	if (!err) {
-	    maybe_list_vars(datainfo, prn);
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case GRAPH:
-	ascii_graph(cmd->list, (const double **) *pZ, datainfo, 
+	ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
 		    cmd->opt, prn);
 	break;
 
     case PLOT:
-	ascii_graph(cmd->list, (const double **) *pZ, datainfo, 
+	ascii_graph(cmd->list, (const double **) *pZ, pdinfo, 
 		    (cmd->opt | OPT_T), prn);
 	break;
 
@@ -2987,63 +2987,63 @@ int simple_commands (CMD *cmd, const char *line,
 	} else {
 	    if (cmd->ci == RMPLOT) {
 		err = rmplot(cmd->list, (const double **) *pZ, 
-			     datainfo, prn);
+			     pdinfo, prn);
 	    } else {
 		err = hurstplot(cmd->list, (const double **) *pZ, 
-				datainfo, prn);
+				pdinfo, prn);
 	    }
 	}
 	break;
 
     case INFO:
-	if (datainfo->descrip != NULL) {
-	    pprintf(prn, "%s\n", datainfo->descrip);
+	if (pdinfo->descrip != NULL) {
+	    pprintf(prn, "%s\n", pdinfo->descrip);
 	} else {
 	    pputs(prn, _("No data information is available.\n"));
 	}
 	break;
 
     case RENAME:
-	err = rename_var_by_id(cmd->extra, cmd->param, datainfo);
+	err = rename_var_by_id(cmd->extra, cmd->param, pdinfo);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    maybe_list_vars(datainfo, prn);
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case LABEL:
-	err = make_var_label(line, datainfo, prn);
+	err = make_var_label(line, pdinfo, prn);
 	break;
 
     case LABELS:
-	showlabels(datainfo, prn);
+	showlabels(pdinfo, prn);
 	break;
 
     case VARLIST:
-	varlist(datainfo, prn);
+	varlist(pdinfo, prn);
 	break;
 
     case PRINT:
 	if (*cmd->param != '\0') {
 	    do_print_string(cmd->param, prn);
 	} else {
-	    printdata(cmd->list, (const double **) *pZ, datainfo, 
+	    printdata(cmd->list, (const double **) *pZ, pdinfo, 
 		      cmd->opt, prn);
 	}
 	break;
 
     case RHODIFF:
-	err = rhodiff(cmd->param, cmd->list, pZ, datainfo);
+	err = rhodiff(cmd->param, cmd->list, pZ, pdinfo);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    maybe_list_vars(datainfo, prn);
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case SIM:
-	err = simulate(line, *pZ, datainfo);
+	err = simulate(line, *pZ, pdinfo);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
@@ -3052,37 +3052,37 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case SUMMARY:
-	summ = summary(cmd->list, (const double **) *pZ, datainfo, prn);
+	summ = summary(cmd->list, (const double **) *pZ, pdinfo, prn);
 	if (summ == NULL) {
 	    pputs(prn, _("generation of summary stats failed\n"));
 	} else {
-	    print_summary(summ, datainfo, prn);
+	    print_summary(summ, pdinfo, prn);
 	    free_summary(summ);
 	}
 	break; 
 
     case MAHAL:
-	err = mahalanobis_distance(cmd->list, pZ, datainfo, 
+	err = mahalanobis_distance(cmd->list, pZ, pdinfo, 
 				   cmd->opt, prn);
 	break;
 
     case MEANTEST:
-	err = means_test(cmd->list, (const double **) *pZ, datainfo, 
+	err = means_test(cmd->list, (const double **) *pZ, pdinfo, 
 			 cmd->opt, prn);
 	break;	
 
     case VARTEST:
-	err = vars_test(cmd->list, (const double **) *pZ, datainfo, 
+	err = vars_test(cmd->list, (const double **) *pZ, pdinfo, 
 			prn);
 	break;
 
     case RUNS:
-	err = runs_test(cmd->list[1], (const double **) *pZ, datainfo, 
+	err = runs_test(cmd->list[1], (const double **) *pZ, pdinfo, 
 			prn);
 	break;
 
     case SPEARMAN:
-	err = spearman(cmd->list, (const double **) *pZ, datainfo, 
+	err = spearman(cmd->list, (const double **) *pZ, pdinfo, 
 		       cmd->opt, prn);
 	break;
 
@@ -3102,13 +3102,13 @@ int simple_commands (CMD *cmd, const char *line,
 	    break;
 	}
 	if (write_data(cmd->param, cmd->list, (const double **) *pZ,
-		       datainfo, cmd->opt, NULL)) {
+		       pdinfo, cmd->opt, NULL)) {
 	    pprintf(prn, _("write of data file failed\n"));
 	    err = 1;
 	    break;
 	}
 	pprintf(prn, _("Data written OK.\n"));
-	if (((cmd->opt & OPT_O) || (cmd->opt & OPT_S)) && datainfo->markers) {
+	if (((cmd->opt & OPT_O) || (cmd->opt & OPT_S)) && pdinfo->markers) {
 	    pprintf(prn, _("Warning: case markers not saved in "
 			   "binary datafile\n"));
 	}
@@ -3123,11 +3123,11 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case MATRIX:
-	err = matrix_command(line, prn);
+	err = matrix_command(line, pZ, pdinfo, prn);
 	break;
 
     case TRANSPOSE:
-	err = transpose_data(pZ, datainfo);
+	err = transpose_data(pZ, pdinfo);
 	break;
 
     default:
