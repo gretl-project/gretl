@@ -334,13 +334,11 @@ static int print_matrix_by_name (const char *name, PRN *prn)
 }
 
 /**
- * make_command:
+ * matrix_command:
  * @s: string that specifies matrix command.
  * @prn: pointer to printing struct.
  *
- * Creates a matrix based on @s and adds it to the stack of
- * user-defined matrices: @s may be something like:
- * "matrix A = { 1, 2, 3 ; 4, 5, 6 }"
+ * To be written.
  * 
  * Returns: 0 on success, non-zero code on failure.
  */
@@ -374,8 +372,10 @@ int matrix_command (char *s, PRN *prn)
 	sscanf(s, "%8s", word);
 	if (*word == '\0' || !strcmp(word, "print")) {
 	    err = print_matrix_by_name(name, prn);
+	} else {
+	    err = 1;
 	}
-    }
+    } 
 
     return err;
 }
