@@ -32,6 +32,8 @@ int destroy_user_matrices_at_level (int level);
 
 int is_user_matrix (gretl_matrix *m);
 
+gretl_matrix *user_matrix_get_slice (const char *s, int *err);
+
 int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
 gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 

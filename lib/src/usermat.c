@@ -187,6 +187,113 @@ static user_matrix *get_user_matrix_by_name (const char *name)
     return NULL;
 }
 
+/* At present this only supports the extraction of scalars or vectors.
+   E.g. B[1,2] extracts a scalar, B[1,] extracts a row vector, and
+   B[,2] extracts a column vector.  To be extended.
+*/
+
+static gretl_matrix *
+real_matrix_get_slice (gretl_matrix *M, const char *s, int *err)
+{
+    gretl_matrix *S = NULL;
+    int m = gretl_matrix_rows(M);
+    int n = gretl_matrix_cols(M);
+    char *tmp;
+    int ri = -1, ci = -1;
+    int r = 0, c = 0;
+    const char *p;
+    int len;
+
+    p = strrchr(s, ']');
+    if (p == NULL) {
+	*err = E_SYNTAX;
+	return NULL;
+    }
+
+    s = strchr(s, '[') + 1;
+    len = p - s;
+    
+    tmp = gretl_strndup(s, len);
+    if (tmp == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    p = tmp;
+    if (isdigit(*p)) {
+	sscanf(p, "%d", &ri);
+    }
+
+    p += strspn(p, "0123456789");
+    while (*p == ' ' || *p == ',') p++;
+
+    if (isdigit(*p)) {
+	sscanf(p, "%d", &ci);
+    } 
+
+    if (ri == 0 || ci == 0) {
+	*err = 1;
+    }
+
+    if (!*err) {
+	if (ri > 0 || ci > 0) {
+	    if (ri > m) {
+		*err = 1;
+	    } else if (ci > n) {
+		*err = 1;
+	    } else {
+		if (ri > 0) ri--;
+		if (ci > 0) ci--;
+		r = (ri == -1)? m : 1;
+		c = (ci == -1)? n : 1; 
+		S = gretl_matrix_alloc(r, c);
+		if (S == NULL) {
+		    *err = E_ALLOC;	
+		}
+	    }
+	} else {
+	    *err = 1;
+	}
+    }
+
+    if (S != NULL) {
+	double x;
+	int i, j, k, l;
+
+	for (i=0; i<r; i++) {
+	    k = (ri >= 0)? ri : i;
+	    for (j=0; j<c; j++) {
+		l = (ci >= 0)? ci : j;
+		x = gretl_matrix_get(M, k, l);
+		gretl_matrix_set(S, i, j, x);
+	    }
+	}
+    }
+	
+    free(tmp);
+
+    return S;
+}
+
+gretl_matrix *user_matrix_get_slice (const char *s, int *err)
+{
+    gretl_matrix *M = NULL;
+    gretl_matrix *S = NULL;
+    char test[MNAMELEN];
+    int len = strcspn(s, "[");
+
+    if (len < MNAMELEN) {
+	*test = '\0';
+	strncat(test, s, len);
+	M = real_get_matrix_by_name(test, 0);
+	if (M != NULL) {
+	    S = real_matrix_get_slice(M, s, err);
+	}
+    }
+
+    return S;
+}
+
 /**
  * add_or_replace_user_matrix:
  * @M: gretl matrix.

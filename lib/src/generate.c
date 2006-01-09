@@ -735,17 +735,31 @@ static genatom *parse_token (const char *s, char op,
 		}
 	    }
 	} else if (strchr(s, '[')) {
-	    /* specific observation from a series */
+	    /* specific observation from a series, or slice of matrix? */
 	    int err;
 
 	    err = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo,
 				&v, &varobs);
-	    if (err) {
+	    if (!err) {
+		if (genr_is_matrix(genr)) {
+		    M = gretl_matrix_from_scalar((*genr->pZ)[v][varobs]);
+		    atype = ATOM_MATRIX;
+		    v = -1;
+		    varobs = -1;
+		} else {
+		    atype = ATOM_SCALAR;
+		}
+	    } else if (genr_is_matrix(genr)) {
+		M = user_matrix_get_slice(s, &genr->err);
+		if (M == NULL) {
+		    DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
+		} else {
+		    atype = ATOM_MATRIX;
+		}
+	    } else {
 		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		genr->err = E_SYNTAX; 
-	    } else {
-		atype = ATOM_SCALAR;
-	    }
+	    } 
 	}
     }
 
