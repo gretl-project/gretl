@@ -105,6 +105,38 @@ int is_user_matrix (gretl_matrix *m)
     return 0;
 }
 
+static gretl_matrix *
+real_get_matrix_by_name (const char *name, int transpose_ok)
+{
+    char test[MNAMELEN];
+    int level = gretl_function_stack_depth();
+    int transp = 0;
+    int i;
+
+    *test = '\0';
+    strncat(test, name, MNAMELEN - 1);
+
+    if (transpose_ok) {
+	if (test[strlen(test) - 1] == '\'') {
+	    test[strlen(test) - 1] = '\0';
+	    transp = 1;
+	}
+    } 
+
+    for (i=0; i<n_matrices; i++) {
+	if (!strcmp(test, matrices[i]->name) &&
+	    matrices[i]->level == level) {
+	    if (transp) {
+		return gretl_matrix_copy_transpose(matrices[i]->M);
+	    } else {
+		return matrices[i]->M;
+	    }
+	}
+    }
+
+    return NULL;
+}
+
 /**
  * get_matrix_by_name:
  * @name: name of the matrix.
@@ -116,24 +148,12 @@ int is_user_matrix (gretl_matrix *m)
 
 gretl_matrix *get_matrix_by_name (const char *name)
 {
-    char test[MNAMELEN];
-    int level = gretl_function_stack_depth();
-    int i;
+    return real_get_matrix_by_name(name, 1);
+}
 
-    *test = '\0';
-    strncat(test, name, MNAMELEN - 1);
-    if (test[strlen(test) - 1] == '\'') {
-	test[strlen(test) - 1] = '\0';
-    }
-
-    for (i=0; i<n_matrices; i++) {
-	if (!strcmp(test, matrices[i]->name) &&
-	    matrices[i]->level == level) {
-	    return matrices[i]->M;
-	}
-    }
-
-    return NULL;
+static gretl_matrix *original_matrix_by_name (const char *name)
+{
+    return real_get_matrix_by_name(name, 0);
 }
 
 static user_matrix *get_user_matrix_by_name (const char *name)
@@ -572,6 +592,10 @@ static int print_matrix_by_name (const char *name, PRN *prn)
 	err = 1;
     } else {
 	gretl_matrix_print_to_prn(M, name, prn);
+	if (!original_matrix_by_name(name)) {
+	    /* we got a transpose, created on the fly */
+	    gretl_matrix_free(M);
+	}
     }
 
     return err;
@@ -619,3 +643,124 @@ int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     return err;
 }
+
+/* for use in genr, for matrices */
+
+gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 
+			      char op, int *err) 
+{
+    gretl_matrix *C = NULL;
+    int r, c;
+
+    *err = 0;
+
+#if MDEBUG
+    fprintf(stderr, "\n*** matrix_calc_AB: A = %p, B = %p, ", 
+	    (void *) A, (void *) B);
+    if (isprint(op)) fprintf(stderr, "op='%c'\n", op);
+    else fprintf(stderr, "op=%d\n", op);
+    debug_print_matrix(A, "input A");
+    debug_print_matrix(B, "input B");
+#endif
+
+    switch (op) {
+    case '\0':
+	C = B;
+	break;
+    case '+':
+	*err = gretl_matrix_add_to(A, B);
+	C = A;
+	break;
+    case '-':
+	*err = gretl_matrix_subtract_from(A, B);
+	C = A;
+	break;
+    case '*':
+	r = gretl_matrix_rows(A);
+	c = gretl_matrix_cols(B);
+	C = gretl_matrix_alloc(r, c);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    *err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE, 
+					     B, GRETL_MOD_NONE, 
+					     C);
+	    /* should we (when?) free A? */
+	}
+	break;
+    default:
+	*err = 1;
+	break;
+    } 
+
+    if (*err == GRETL_MATRIX_NON_CONFORM) {
+	strcpy(gretl_errmsg, "Matrices not conformable for operation\n");
+    }
+
+#if MDEBUG
+    debug_print_matrix(C, "output C");
+#endif
+
+    return C;
+}
+
+double user_matrix_get_determinant (gretl_matrix *m)
+{
+    double d = NADBL;
+
+    if (m != NULL) {
+	gretl_matrix *tmp = gretl_matrix_copy(m);
+
+	if (tmp != NULL) {
+	    d = gretl_matrix_determinant(tmp);
+	    gretl_matrix_free(tmp);
+	}
+    }
+
+    return d;
+}
+
+gretl_matrix *user_matrix_get_determinant_as_matrix (gretl_matrix *m)
+{
+    double d = user_matrix_get_determinant(m);
+    gretl_matrix *dm = NULL;
+
+    if (!na(d)) {
+	dm = gretl_matrix_alloc(1, 1);
+	if (dm != NULL) {
+	    gretl_matrix_set(dm, 0, 0, d);
+	}
+    }
+
+    return dm;
+}
+
+gretl_matrix *user_matrix_get_inverse (gretl_matrix *m)
+{
+    gretl_matrix *R = NULL;
+
+    if (m != NULL) {
+	R = gretl_matrix_copy(m);
+	if (gretl_invert_general_matrix(R)) {
+	    gretl_matrix_free(R);
+	    R = NULL;
+	}
+    }
+
+    return R;
+}
+
+gretl_matrix *user_matrix_get_log_matrix (gretl_matrix *m)
+{
+    gretl_matrix *R = NULL;
+
+    if (m != NULL) {
+	R = gretl_matrix_copy(m);
+	if (gretl_matrix_log(R)) {
+	    gretl_matrix_free(R);
+	    R = NULL;
+	}
+    }
+
+    return R;
+}    

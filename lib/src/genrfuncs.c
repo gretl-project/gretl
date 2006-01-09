@@ -981,3 +981,6 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
     return vi;
 }
 
+
+
+

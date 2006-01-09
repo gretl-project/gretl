@@ -35,8 +35,7 @@ enum {
     ATOM_SERIES = 0,
     ATOM_SCALAR = 1 << 0,
     ATOM_MATRIX = 1 << 1,
-    ATOM_TMP    = 1 << 2,
-    ATOM_TRANSP = 1 << 3
+    ATOM_TMP    = 1 << 2
 };
 
 typedef struct genatom_ genatom;

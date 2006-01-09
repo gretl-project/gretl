@@ -389,19 +389,34 @@ void gretl_matrix_zero (gretl_matrix *m)
  * @m: input matrix.
  *
  * Sets all elements of @m to logs of original values.
+ *
+ * Returns: 0 on success, non-zero if non-positive values
+ * are encountered.
  */
 
-void gretl_matrix_log (gretl_matrix *m)
+int gretl_matrix_log (gretl_matrix *m)
 {
+    double x;
     int i, n;
+    int err = 0;
 
-    if (m == NULL || m->val == NULL) return;
+    if (m == NULL || m->val == NULL) {
+	return GRETL_MATRIX_ERR;
+    }
 
     n = m->rows * m->cols;
     
     for (i=0; i<n; i++) {
-	m->val[i] = log(m->val[i]);
+	x = m->val[i];
+	if (x <= 0) {
+	    err = GRETL_MATRIX_ERR;
+	    break;
+	} else {
+	    m->val[i] = log(x);
+	}
     }
+
+    return err;
 }
 
 /**
