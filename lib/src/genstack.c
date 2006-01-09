@@ -60,6 +60,8 @@ struct atomset_ {
                                f == T_DIFF || f == T_LDIFF || f == T_SDIFF || \
                                f == T_T1 || f == T_T2 || f == T_GINI || \
                                f == T_CUM || f == T_SORT || f == T_DET || f == T_INV || \
+                               f == T_LDET || f == T_TRACE || f == T_DIAG || \
+                               f == T_ROWS || f == T_COLS || f == T_TRANSP || \
                                f == T_VARNUM || f == T_VECTOR || \
                                f == T_ISLIST || f == T_NELEM || \
                                f == T_RESAMPLE || f == T_HPFILT || f == T_BKFILT)
@@ -209,6 +211,8 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
     } else if (op == STACK_DESTROY) {
 	for (j=0; j<aset->n_atoms; j++) {
 	    if (aset->atoms[j]->M != NULL && !is_user_matrix(aset->atoms[j]->M)) {
+		DPRINTF(("atom %d: freeing matrix at %p\n", j, 
+			 (void *) aset->atoms[j]->M));
 		gretl_matrix_free(aset->atoms[j]->M);
 	    }
 	    free(aset->atoms[j]);
@@ -327,7 +331,8 @@ int atom_stack_check_for_scalar (GENERATOR *genr)
     return (atom_stack(NULL, genr->aset, STACK_SCALAR_CHECK) != NULL);
 }
 
-static gretl_matrix *matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr)
+static gretl_matrix *
+matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr)
 {
     gretl_matrix **mstack = genr->mstack;
     gretl_matrix *R = NULL;
@@ -343,6 +348,9 @@ static gretl_matrix *matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr
 		mstack[i] = mstack[i-1];
 	    }
 	    mstack[0] = M;
+	    if (M != NULL) {
+		gretl_matrix_set_int(M, ATOM_MATRIX);
+	    }
 	    genr->nmats += 1;
 	}
     } else if (op == STACK_POP && genr->nmats > 0) {
@@ -354,14 +362,14 @@ static gretl_matrix *matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr
     } else if (op == STACK_RESET) {
 	DPRINTF(("matrix_calc_stack: STACK_RESET\n"));
 	for (i=0; i<MATSTACK_SIZE; i++) {
-	    if (mstack[i] == NULL) {
-		DPRINTF(("mstack[%d] is NULL, breaking\n", i));
-		break;
+	    if (mstack[i] != NULL) {
+		if (!is_user_matrix(mstack[i])) {
+		    DPRINTF(("freeing mstack[%d] at %p\n", i, 
+			     (void *) mstack[i]));
+		    gretl_matrix_free(mstack[i]);
+		}
+		mstack[i] = NULL;
 	    }
-	    if (!is_user_matrix(mstack[i])) {
-		gretl_matrix_free(mstack[i]);
-	    }
-	    mstack[i] = NULL;
 	}
 	genr->nmats = 0;
     }

@@ -292,6 +292,10 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
     int rows, cols;
     int i, j, n;
 
+    if (m == NULL) {
+	return NULL;
+    }
+
     if (mod == GRETL_MOD_TRANSPOSE) {
 	rows = m->cols;
 	cols = m->rows;
@@ -385,6 +389,58 @@ void gretl_matrix_zero (gretl_matrix *m)
 }
 
 /**
+ * gretl_matrix_get_diagonal:
+ * @m: square input matrix.
+ *
+ * Returns: a column vector containing the diagonal elements of
+ * @m, if @m is square, otherwise %NULL.
+ */
+
+gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m)
+{
+    gretl_matrix *d = NULL;
+    int i;
+    
+    if (m == NULL || m->rows != m->cols) {
+	return d;
+    }
+
+    d = gretl_column_vector_alloc(m->rows);
+
+    if (d != NULL) {
+	for (i=0; i<m->rows; i++) {
+	    d->val[i] = m->val[mdx(m, i, i)];
+	}
+    }
+
+    return d;
+}
+
+/**
+ * gretl_matrix_trace:
+ * @m: square input matrix.
+ *
+ * Returns: the trace (sum of diagonal elements) of @m, if 
+ * @m is square, otherwise #NADBL.
+ */
+
+double gretl_matrix_trace (const gretl_matrix *m)
+{
+    double tr = 0.0;
+    int i;
+    
+    if (m == NULL || m->rows != m->cols) {
+	return NADBL;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	tr += m->val[mdx(m, i, i)];
+    }
+
+    return tr;
+}
+
+/**
  * gretl_matrix_log:
  * @m: input matrix.
  *
@@ -408,11 +464,47 @@ int gretl_matrix_log (gretl_matrix *m)
     
     for (i=0; i<n; i++) {
 	x = m->val[i];
-	if (x <= 0) {
+	if (x <= 0.0) {
 	    err = GRETL_MATRIX_ERR;
 	    break;
 	} else {
 	    m->val[i] = log(x);
+	}
+    }
+
+    return err;
+}
+
+/**
+ * gretl_matrix_sqrt:
+ * @m: input matrix.
+ *
+ * Sets all elements of @m to te square roots of the original 
+ * values.
+ *
+ * Returns: 0 on success, non-zero if negative values
+ * are encountered.
+ */
+
+int gretl_matrix_sqrt (gretl_matrix *m)
+{
+    double x;
+    int i, n;
+    int err = 0;
+
+    if (m == NULL || m->val == NULL) {
+	return GRETL_MATRIX_ERR;
+    }
+
+    n = m->rows * m->cols;
+    
+    for (i=0; i<n; i++) {
+	x = m->val[i];
+	if (x < 0.0) {
+	    err = GRETL_MATRIX_ERR;
+	    break;
+	} else {
+	    m->val[i] = sqrt(x);
 	}
     }
 
@@ -1230,6 +1322,25 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
 	for (i=0; i<rows; i++) {
 	    m->val[p++] = X[j][i];
 	}
+    }
+
+    return m;
+}
+
+/**
+ * gretl_matrix_from_scalar:
+ * @x: scalar to be "promoted".
+ *
+ * Returns: allocated 1x1 gretl_matrix, the single element
+ * of which is set to @x, or %NULL on allocation failure.
+ */
+
+gretl_matrix *gretl_matrix_from_scalar (double x) 
+{
+    gretl_matrix *m = gretl_matrix_alloc(1, 1);
+
+    if (m != NULL) {
+	m->val[0] = x;
     }
 
     return m;
@@ -2726,7 +2837,9 @@ void gretl_matrix_set_int (gretl_matrix *m, int t)
 
 int gretl_matrix_get_int (const gretl_matrix *m)
 {
-    return m->t;
+    if (m != NULL) {
+	return m->t;
+    }
 }
 
 static int

@@ -118,6 +118,12 @@ enum transformations {
     T_NELEM,
     T_DET,
     T_INV,
+    T_LDET,
+    T_TRACE,
+    T_DIAG,
+    T_ROWS,
+    T_COLS,
+    T_TRANSP,
 #ifdef HAVE_MPFR
     T_MLOG,
 #endif

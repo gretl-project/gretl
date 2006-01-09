@@ -22,6 +22,7 @@
 #include "objstack.h"
 #include "cmd_private.h"
 #include "libset.h"
+#include "usermat.h"
 
 #include <errno.h>
 
@@ -1055,6 +1056,7 @@ void libgretl_cleanup (void)
     libset_cleanup();
     gretl_lists_cleanup();
     gretl_command_hash_cleanup();
+    destroy_user_matrices();
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

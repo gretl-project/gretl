@@ -141,7 +141,15 @@ gretl_vector *gretl_data_series_to_vector (const double **Z, int varno,
 gretl_matrix *gretl_matrix_from_2d_array (const double **X, 
 					  int rows, int cols);
 
+gretl_matrix *gretl_matrix_from_scalar (double x);
+
+gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m);
+
+double gretl_matrix_trace (const gretl_matrix *m);
+
 int gretl_matrix_log (gretl_matrix *m);
+
+int gretl_matrix_sqrt (gretl_matrix *m);
 
 double gretl_vector_mean (const gretl_vector *v);
 

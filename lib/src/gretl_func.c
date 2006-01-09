@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_func.h"
 #include "libset.h"
+#include "usermat.h"
 
 #define CALLSTACK_DEPTH 8
 
@@ -324,6 +325,9 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
     int *locals = NULL;
     int anyerr = 0;
     int err = 0;
+
+    /* FIXME: at some point these should be made returnable */
+    destroy_user_matrices_at_level(nc);
 
     locals = make_locals_list(pdinfo, nc, &err);
 

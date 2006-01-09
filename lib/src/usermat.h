@@ -22,6 +22,8 @@
 
 gretl_matrix *get_matrix_by_name (const char *name);
 
+int named_matrix_get_scalar (const char *name, double *x);
+
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name);
 
 void destroy_user_matrices (void);
@@ -37,10 +39,16 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 
 double user_matrix_get_determinant (gretl_matrix *m);
 
+double user_matrix_get_log_determinant (gretl_matrix *m);
+
 gretl_matrix *user_matrix_get_determinant_as_matrix (gretl_matrix *m);
+
+gretl_matrix *user_matrix_get_log_determinant_as_matrix (gretl_matrix *m);
 
 gretl_matrix *user_matrix_get_inverse (gretl_matrix *m);
 
 gretl_matrix *user_matrix_get_log_matrix (gretl_matrix *m);
+
+gretl_matrix *user_matrix_get_sqrt_matrix (gretl_matrix *m);
 
 #endif /* USERMAT_H_ */

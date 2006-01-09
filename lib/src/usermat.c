@@ -77,8 +77,9 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
     n_matrices++;
 
 #if MDEBUG
-    fprintf(stderr, "add_user_matrix\n");
-    debug_print_matrix(M, name);
+    fprintf(stderr, "add_user_matrix: allocated '%s' at %p (M at %p, %dx%d)\n",
+	    name, (void *) matrices[n_matrices-1], (void *) M,
+	    gretl_matrix_rows(M), gretl_matrix_cols(M));
 #endif
 
     return 0;
@@ -151,6 +152,21 @@ gretl_matrix *get_matrix_by_name (const char *name)
     return real_get_matrix_by_name(name, 1);
 }
 
+int named_matrix_get_scalar (const char *name, double *x)
+{
+    gretl_matrix *m = real_get_matrix_by_name(name, 0);
+    int err = 0;
+
+    if (m == NULL || gretl_matrix_rows(m) != 1 ||
+	gretl_matrix_cols(m) != 1) {
+	err = E_UNKVAR;
+    } else {
+	*x = gretl_matrix_get(m, 0, 0);
+    }
+
+    return err;
+}
+
 static gretl_matrix *original_matrix_by_name (const char *name)
 {
     return real_get_matrix_by_name(name, 0);
@@ -201,8 +217,16 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name)
 
 static void destroy_user_matrix (user_matrix *u)
 {
+#if 0
+    fprintf(stderr, "destroy_user_matrix: dummy call\n");
+#else
+#if MDEBUG
+    fprintf(stderr, "destroy_user_matrix: freeing matrix at %p\n", 
+	    (void *) u->M);
+#endif
     gretl_matrix_free(u->M);
     free(u);
+#endif
 }
 
 /**
@@ -264,7 +288,20 @@ void destroy_user_matrices (void)
 {
     int i;
 
+#if MDEBUG
+    fprintf(stderr, "destroy_user_matrices called, n_matrices = %d\n",
+	    n_matrices);
+#endif
+
+    if (matrices == NULL) {
+	return;
+    }
+
     for (i=0; i<n_matrices; i++) {
+#if MDEBUG
+	fprintf(stderr, "destroying user_matrix %d (%s) at %p\n", i,
+		matrices[i]->name, (void *) matrices[i]);
+#endif
 	destroy_user_matrix(matrices[i]);
     }
 
@@ -650,8 +687,9 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 			      char op, int *err) 
 {
     gretl_matrix *C = NULL;
-    int r, c;
-
+    double x;
+    int ra, ca;
+    int rb, cb;
     *err = 0;
 
 #if MDEBUG
@@ -668,24 +706,51 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	C = B;
 	break;
     case '+':
-	*err = gretl_matrix_add_to(A, B);
-	C = A;
-	break;
     case '-':
-	*err = gretl_matrix_subtract_from(A, B);
-	C = A;
-	break;
-    case '*':
-	r = gretl_matrix_rows(A);
-	c = gretl_matrix_cols(B);
-	C = gretl_matrix_alloc(r, c);
+	C = gretl_matrix_copy(A);
 	if (C == NULL) {
 	    *err = E_ALLOC;
+	} else if (op == '+') {
+	    *err = gretl_matrix_add_to(C, B);
 	} else {
-	    *err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE, 
-					     B, GRETL_MOD_NONE, 
-					     C);
-	    /* should we (when?) free A? */
+	    *err = gretl_matrix_subtract_from(C, B);
+	}
+	break;
+    case '*':
+	ra = gretl_matrix_rows(A);
+	ca = gretl_matrix_cols(A);
+	rb = gretl_matrix_rows(B);
+	cb = gretl_matrix_cols(B);
+
+	if (ra == 1 && ca == 1) {
+	    C = gretl_matrix_copy(B);
+	    if (C == NULL) {
+		*err = E_ALLOC;	
+	    } else {
+		x = gretl_matrix_get(A, 0, 0);
+		gretl_matrix_multiply_by_scalar(C, x);
+	    }
+	} else if (rb == 1 && cb == 1) {
+	    C = gretl_matrix_copy(A);
+	    if (C == NULL) {
+		*err = E_ALLOC;	
+	    } else {
+		x = gretl_matrix_get(B, 0, 0);
+		gretl_matrix_multiply_by_scalar(C, x);
+	    }
+	} else {
+	    C = gretl_matrix_alloc(ra, cb);
+#if MDEBUG
+	    fprintf(stderr, "matrix_calc_AB: allocated 'C' (%dx%d) at %p\n", 
+		    ra, cb, (void *) C);
+#endif
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		*err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE, 
+						 B, GRETL_MOD_NONE, 
+						 C);
+	    }
 	}
 	break;
     default:
@@ -697,14 +762,11 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	strcpy(gretl_errmsg, "Matrices not conformable for operation\n");
     }
 
-#if MDEBUG
-    debug_print_matrix(C, "output C");
-#endif
-
     return C;
 }
 
-double user_matrix_get_determinant (gretl_matrix *m)
+static double 
+real_user_matrix_get_determinant (gretl_matrix *m, int log)
 {
     double d = NADBL;
 
@@ -712,7 +774,11 @@ double user_matrix_get_determinant (gretl_matrix *m)
 	gretl_matrix *tmp = gretl_matrix_copy(m);
 
 	if (tmp != NULL) {
-	    d = gretl_matrix_determinant(tmp);
+	    if (log) {
+		d = gretl_matrix_log_determinant(tmp);
+	    } else {
+		d = gretl_matrix_determinant(tmp);
+	    }
 	    gretl_matrix_free(tmp);
 	}
     }
@@ -720,10 +786,27 @@ double user_matrix_get_determinant (gretl_matrix *m)
     return d;
 }
 
-gretl_matrix *user_matrix_get_determinant_as_matrix (gretl_matrix *m)
+double user_matrix_get_determinant (gretl_matrix *m)
 {
-    double d = user_matrix_get_determinant(m);
+    return real_user_matrix_get_determinant(m, 0);
+}
+
+double user_matrix_get_log_determinant (gretl_matrix *m)
+{
+    return real_user_matrix_get_determinant(m, 1);
+}
+
+static gretl_matrix *
+real_user_matrix_get_determinant_as_matrix (gretl_matrix *m, int log)
+{
     gretl_matrix *dm = NULL;
+    double d;
+
+    if (log) {
+	d = user_matrix_get_log_determinant(m);
+    } else {
+	d = user_matrix_get_determinant(m);
+    }
 
     if (!na(d)) {
 	dm = gretl_matrix_alloc(1, 1);
@@ -733,6 +816,16 @@ gretl_matrix *user_matrix_get_determinant_as_matrix (gretl_matrix *m)
     }
 
     return dm;
+}
+
+gretl_matrix *user_matrix_get_determinant_as_matrix (gretl_matrix *m)
+{
+    return real_user_matrix_get_determinant_as_matrix(m, 0);
+}
+
+gretl_matrix *user_matrix_get_log_determinant_as_matrix (gretl_matrix *m)
+{
+    return real_user_matrix_get_determinant_as_matrix(m, 1);
 }
 
 gretl_matrix *user_matrix_get_inverse (gretl_matrix *m)
@@ -757,6 +850,21 @@ gretl_matrix *user_matrix_get_log_matrix (gretl_matrix *m)
     if (m != NULL) {
 	R = gretl_matrix_copy(m);
 	if (gretl_matrix_log(R)) {
+	    gretl_matrix_free(R);
+	    R = NULL;
+	}
+    }
+
+    return R;
+}  
+
+gretl_matrix *user_matrix_get_sqrt_matrix (gretl_matrix *m)
+{
+    gretl_matrix *R = NULL;
+
+    if (m != NULL) {
+	R = gretl_matrix_copy(m);
+	if (gretl_matrix_sqrt(R)) {
 	    gretl_matrix_free(R);
 	    R = NULL;
 	}
