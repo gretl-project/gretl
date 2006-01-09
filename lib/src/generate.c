@@ -603,8 +603,167 @@ static double genr_get_matrix_scalar (const char *s, int func)
     return x;
 }
 
-static genatom *parse_token (const char *s, char op,
-			     GENERATOR *genr, int level)
+static int
+token_get_variable_or_constant (const char *s, GENERATOR *genr,
+				int *pv, int *varobs, double *pval, 
+				gretl_matrix **M, char *str) 
+{
+    int atype = ATOM_SERIES;
+    double val = 0.0;
+    int v = -1;
+
+    if (!strcmp(s, "pi")) {
+	val = M_PI;
+	atype = ATOM_SCALAR;
+    } else if (!strcmp(s, "NA")) {
+	val = NADBL;
+	atype = ATOM_SCALAR;
+    } else if (strstr(s, ".$") && catch_saved_object_scalar(s, &val)) {
+	atype = ATOM_SCALAR;
+    } else if (genr_is_matrix(genr)) {
+	*M = get_matrix_by_name(s);
+	if (*M != NULL) {
+	    DPRINTF(("recognized matrix '%s'\n", s));
+	    strncat(str, s, ARGLEN - 1);
+	    atype = ATOM_MATRIX;
+	    gretl_matrix_set_int(*M, ATOM_MATRIX);
+	} else {	
+	    /* try for a scalar, and promote to matrix? */
+	    v = varindex(genr->pdinfo, s);
+	    if (v < genr->pdinfo->v) {
+		if (genr->pdinfo->vector[v]) {
+		    sprintf(gretl_errmsg, _("Variable '%s' is not a matrix"), s);
+		    genr->err = E_UNKVAR;
+		} else {
+		    *M = gretl_matrix_from_scalar((*genr->pZ)[v][0]);
+		    atype = ATOM_MATRIX;
+		    v = -1;
+		}
+	    } else {
+		sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
+		genr->err = E_UNKVAR;
+	    }
+	} 
+    } else {
+	v = varindex(genr->pdinfo, s);
+
+	if (v == genr->pdinfo->v) { 
+	    if (get_list_by_name(s) != NULL) {
+		/* name of saved list, not single variable */
+		v = -1;
+		strncat(str, s, ARGLEN - 1);
+	    } else {
+		/* 1x1 matrix ? */
+		genr->err = named_matrix_get_scalar(s, &val);
+		if (!genr->err) {
+		    v = -1;
+		    atype = ATOM_SCALAR;
+		} else { 
+		    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
+		}
+	    }
+	} else {
+	    DPRINTF(("recognized var '%s' (#%d)\n", s, v));
+	}
+
+	if (v == INDEXNUM) { 
+	    int k = loop_scalar_read(*s);
+
+	    val = k;
+	    atype = ATOM_SCALAR;
+	} else if (v >= 0 && v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+	    /* handle regular scalar variables here */
+	    *varobs = 0;
+	    atype = ATOM_SCALAR;
+	}
+    }
+
+    *pv = v;
+    *pval = val;
+
+    return atype;
+}
+
+static int token_get_function (const char *s, GENERATOR *genr,
+			       int func, double *pval, char *str)
+{
+    int atype = ATOM_SERIES;
+    double val = 0.0;
+
+    DPRINTF(("recognized function #%d (%s)\n", func, 
+	     get_genr_func_word(func)));
+
+    if (MP_MATH(func) || func == T_PVALUE || 
+	func == T_CRIT || func == T_FRACDIFF ||
+	BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
+	genr->err = get_arg_string(str, s, func, genr);
+    } 
+
+    if (func == T_PVALUE) {
+	if (!genr->err) {
+	    val = evaluate_pvalue(str, (const double **) *genr->pZ,
+				  genr->pdinfo,
+				  &genr->err);
+	    atype = ATOM_SCALAR;
+	}
+    } else if (func == T_CRIT) {
+	if (!genr->err) {
+	    val = evaluate_critval(str, (const double **) *genr->pZ,
+				   genr->pdinfo,
+				   &genr->err);
+	    atype = ATOM_SCALAR;
+	}
+    } else if (func == T_VARNUM || func == T_VECTOR ||
+	       func == T_ISLIST || func == T_NELEM) {
+	atype = ATOM_SCALAR;
+    } else if (MODEL_DATA_ELEMENT(func)) {
+	val = get_model_data_element(str, genr, func);
+	atype = ATOM_SCALAR;
+    } else if (BIVARIATE_STAT(func)) {
+	val = evaluate_bivariate_statistic(str, genr, func);
+	atype = ATOM_SCALAR;
+    } else if (MATRIX_SCALAR_FUNC(func) && !genr_is_matrix(genr)) {
+	val = genr_get_matrix_scalar(s, func);
+	atype = ATOM_SCALAR;
+    }
+
+    *pval = val;
+
+    return atype;
+}
+
+static int token_get_dollar_var (const char *s, GENERATOR *genr, 
+				 int *v, int *lag, double *val)
+{
+    int i, atype = ATOM_SERIES;
+
+    if ((i = get_lagvar(s, lag, genr)) > 0) {
+	DPRINTF(("recognized var #%d lag %d\n", i, lag));
+	*v = i;
+    } else if ((i = gretl_model_stat_index(s)) > 0) {
+	DPRINTF(("recognized '%s' as model variable, index #%d\n", s, i));
+	*val = last_model_get_value_by_type(i, &genr->err);
+	atype = ATOM_SCALAR;
+    } else if ((i = model_vector_index(s)) > 0) { 
+	DPRINTF(("recognized '%s' as model vector, index #%d\n", s, i));
+	*v = i;
+    } else if ((i = dataset_var_index(s)) > 0) {
+	DPRINTF(("recognized '%s' as dataset var, index #%d\n", s, i));
+	*val = get_dataset_statistic(genr->pdinfo, i);
+	atype = ATOM_SCALAR;
+    } else if ((i = test_stat_index(s)) > 0) {
+	DPRINTF(("recognized '%s' as test-related var, index #%d\n", s, i));
+	*val = get_test_stat_value(genr->label, i);
+	atype = ATOM_SCALAR;
+    } else {
+	genr->err = E_UNKVAR;
+    }
+
+    return atype;
+}
+
+static genatom *
+parse_token (const char *s, char op, GENERATOR *genr, int level)
 {
     int v = -1, varobs = -1;
     int atype = ATOM_SERIES;
@@ -617,112 +776,12 @@ static genatom *parse_token (const char *s, char op,
 
     if (isalpha((unsigned char) *s)) {
 	if (!strchr(s, '(') && !strchr(s, '[')) {
-	    if (!strcmp(s, "pi")) {
-		val = M_PI;
-		atype = ATOM_SCALAR;
-	    } else if (!strcmp(s, "NA")) {
-		val = NADBL;
-		atype = ATOM_SCALAR;
-	    } else if (strstr(s, ".$") && catch_saved_object_scalar(s, &val)) {
-		atype = ATOM_SCALAR;
-	    } else if (genr_is_matrix(genr)) {
-		M = get_matrix_by_name(s);
-		if (M != NULL) {
-		    DPRINTF(("recognized matrix '%s'\n", s));
-		    strncat(str, s, ARGLEN - 1);
-		    atype = ATOM_MATRIX;
-		    gretl_matrix_set_int(M, ATOM_MATRIX);
-		} else {	
-		    /* try for a scalar, and promote to matrix? */
-		    v = varindex(genr->pdinfo, s);
-		    if (v < genr->pdinfo->v) {
-			if (genr->pdinfo->vector[v]) {
-			    sprintf(gretl_errmsg, _("Variable '%s' is not a matrix"), s);
-			    genr->err = E_UNKVAR;
-			} else {
-			    M = gretl_matrix_from_scalar((*genr->pZ)[v][0]);
-			    atype = ATOM_MATRIX;
-			    v = -1;
-			}
-		    } else {
-			sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
-			genr->err = E_UNKVAR;
-		    }
-		} 
-	    } else {
-		v = varindex(genr->pdinfo, s);
-
-		if (v == genr->pdinfo->v) { 
-		    if (get_list_by_name(s) != NULL) {
-			/* name of saved list, not single variable */
-			v = -1;
-			strncat(str, s, ARGLEN - 1);
-		    } else {
-			genr->err = named_matrix_get_scalar(s, &val);
-			if (!genr->err) {
-			    v = -1;
-			    atype = ATOM_SCALAR;
-			} else { 
-			    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
-			}
-		    }
-		} else {
-		    DPRINTF(("recognized var '%s' (#%d)\n", s, v));
-		}
-
-		if (v == INDEXNUM) { 
-		    int k = loop_scalar_read(*s);
-
-		    val = k;
-		    atype = ATOM_SCALAR;
-		} else if (v >= 0 && v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
-		    /* handle regular scalar variables here */
-		    varobs = 0;
-		    atype = ATOM_SCALAR;
-		}
-	    }
+	    /* ordinary variable, list or matrix? */
+	    atype = token_get_variable_or_constant(s, genr, &v, &varobs, &val, &M, str);
 	} else if (strchr(s, '(')) {
-	    /* try for a function first */
-	    lag = 0;
-	    v = -1;
-
-	    func = genr_function_from_string(s);
-
-	    if (func) {
-		DPRINTF(("recognized function #%d (%s)\n", func, 
-			 get_genr_func_word(func)));
-		if (MP_MATH(func) || func == T_PVALUE || 
-		    func == T_CRIT || func == T_FRACDIFF ||
-		    BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
-		    genr->err = get_arg_string(str, s, func, genr);
-		} 
-		if (func == T_PVALUE) {
-		    if (!genr->err) {
-			val = evaluate_pvalue(str, (const double **) *genr->pZ,
-					      genr->pdinfo,
-					      &genr->err);
-			atype = ATOM_SCALAR;
-		    }
-		} else if (func == T_CRIT) {
-		    if (!genr->err) {
-			val = evaluate_critval(str, (const double **) *genr->pZ,
-					       genr->pdinfo,
-					       &genr->err);
-			atype = ATOM_SCALAR;
-		    }
-		} else if (func == T_VARNUM || func == T_VECTOR ||
-			   func == T_ISLIST || func == T_NELEM) {
-		    atype = ATOM_SCALAR;
-		} else if (MODEL_DATA_ELEMENT(func)) {
-		    val = get_model_data_element(str, genr, func);
-		    atype = ATOM_SCALAR;
-		} else if (BIVARIATE_STAT(func)) {
-		    val = evaluate_bivariate_statistic(str, genr, func);
-		    atype = ATOM_SCALAR;
-		} else if (MATRIX_SCALAR_FUNC(func) && !genr_is_matrix(genr)) {
-		    val = genr_get_matrix_scalar(s, func);
-		    atype = ATOM_SCALAR;
-		}
+	    /* function or lagged variable? */
+	    if ((func = genr_function_from_string(s))) {
+		atype = token_get_function(s, genr, func, &val, str);
 	    } else {
 		/* not a function: try a lagged variable */
 		v = get_lagvar(s, &lag, genr);
@@ -744,8 +803,7 @@ static genatom *parse_token (const char *s, char op,
 		if (genr_is_matrix(genr)) {
 		    M = gretl_matrix_from_scalar((*genr->pZ)[v][varobs]);
 		    atype = ATOM_MATRIX;
-		    v = -1;
-		    varobs = -1;
+		    v = varobs = -1;
 		} else {
 		    atype = ATOM_SCALAR;
 		}
@@ -761,39 +819,10 @@ static genatom *parse_token (const char *s, char op,
 		genr->err = E_SYNTAX; 
 	    } 
 	}
-    }
-
-    /* by now, first char is not alpha */
-
-    else if (*s == '$') {
-	int i;
-
-	if ((i = get_lagvar(s, &lag, genr)) > 0) {
-	    DPRINTF(("recognized var #%d lag %d\n", i, lag));
-	    v = i;
-	} else if ((i = gretl_model_stat_index(s)) > 0) {
-	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
-		     s, i));
-	    val = last_model_get_value_by_type(i, &genr->err);
-	    atype = ATOM_SCALAR;
-	} else if ((i = model_vector_index(s)) > 0) { 
-	    DPRINTF(("recognized '%s' as model vector, index #%d\n", 
-		     s, i));
-	    v = i;
-	} else if ((i = dataset_var_index(s)) > 0) {
-	    DPRINTF(("recognized '%s' as dataset var, index #%d\n", 
-		     s, i));
-	    val = get_dataset_statistic(genr->pdinfo, i);
-	    atype = ATOM_SCALAR;
-	} else if ((i = test_stat_index(s)) > 0) {
-	    DPRINTF(("recognized '%s' as test-related var, index #%d\n", 
-		     s, i));
-	    val = get_test_stat_value(genr->label, i);
-	    atype = ATOM_SCALAR;
-	} else {
-	    genr->err = E_UNKVAR;
-	}
+    } else if (*s == '$') {
+	atype = token_get_dollar_var(s, genr, &v, &lag, &val);
     } else if (numeric_string(s)) {
+	/* plain number */
 	val = dot_atof(s);
 	atype = ATOM_SCALAR;
     } else if (*s == '"') {
