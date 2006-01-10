@@ -165,7 +165,10 @@ typedef enum {
     OP_LT  = '<',
     OP_NEQ = 21,
     OP_GTE = 22,
-    OP_LTE = 23
+    OP_LTE = 23,
+    OP_DOTMULT = 24,
+    OP_DOTDIV  = 25,
+    OP_DOTPOW  = 26
 } GretlOp;
 
 typedef unsigned long gretlopt;

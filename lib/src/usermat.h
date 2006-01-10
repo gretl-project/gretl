@@ -53,4 +53,6 @@ gretl_matrix *user_matrix_get_log_matrix (gretl_matrix *m);
 
 gretl_matrix *user_matrix_get_sqrt_matrix (gretl_matrix *m);
 
+int reposition_transpose_symbol (char *s);
+
 #endif /* USERMAT_H_ */

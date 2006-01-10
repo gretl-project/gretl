@@ -203,7 +203,12 @@ double gretl_vector_dot_product (const gretl_vector *a, const gretl_vector *b,
 				 int *errp);
 
 gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
-					 const gretl_matrix *b);
+					 const gretl_matrix *b,
+					 int *err);
+
+gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a, 
+				       const gretl_matrix *b,
+				       int *err);
 
 double gretl_matrix_row_mean (const gretl_matrix *m, int row);
 

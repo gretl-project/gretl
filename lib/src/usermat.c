@@ -904,12 +904,34 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	    }
 	}
 	break;
+    case OP_DOTMULT:
+	C = gretl_matrix_dot_multiply(A, B, err);
+	break;
+    case OP_DOTDIV:
+	C = gretl_matrix_dot_divide(A, B, err);
+	break;
+    case OP_DOTPOW:
+	if (gretl_matrix_rows(B) != 1 ||
+	    gretl_matrix_cols(B) != 1) {
+	    *err = 1;
+	} else {
+	    C = gretl_matrix_copy(A);
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		x = gretl_matrix_get(B, 0, 0);
+		gretl_matrix_dot_pow(C, x);
+	    }
+	}
+	break;
     default:
 	*err = 1;
 	break;
     } 
 
-    if (*err == GRETL_MATRIX_NON_CONFORM) {
+    if (*err == GRETL_MATRIX_NOMEM) {
+	*err = E_ALLOC;
+    } else if (*err == GRETL_MATRIX_NON_CONFORM) {
 	strcpy(gretl_errmsg, "Matrices not conformable for operation\n");
     }
 
@@ -1022,4 +1044,48 @@ gretl_matrix *user_matrix_get_sqrt_matrix (gretl_matrix *m)
     }
 
     return R;
-}    
+}  
+
+/* move tranpose symbol ' in front of parenthesized
+   matrix expression so genr can handle it as a function
+*/
+
+int reposition_transpose_symbol (char *s)
+{
+    int pc, len = strlen(s);
+    int offset;
+    int i, j, sz;
+    int err = 0;
+
+    for (i=3; i<len; i++) {
+	if (s[i] == '\'' && s[i-1] == ')') {
+	    pc = sz = 1;
+	    /* back up to matching left paren */
+	    for (j=i-2; j>=0; j--) {
+		if (s[j] == ')') {
+		    pc++;
+		} else if (s[j] == '(') {
+		    pc--;
+		}
+		sz++;
+		if (pc == 0) {
+		    offset = i - sz;
+		    memmove(s + offset + 1, s + offset, sz);
+		    s[offset] = '\'';
+		    i++;
+		    break;
+		}
+	    }
+	    if (j <= 0 && pc != 0) {
+		err = E_UNBAL;
+		break;
+	    }
+	}
+    }
+
+    return err;
+}
+
+		    
+
+

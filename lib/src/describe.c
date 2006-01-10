@@ -1738,6 +1738,7 @@ double LWE_obj_func (const gretl_matrix *I, double d,
     gretl_matrix *lambda2, *Itmp;
     double dd = 2.0 * d;
     double ret;
+    int err = 0;
 
     lambda2 = gretl_matrix_copy(lambda);
     if (lambda2 == NULL) {
@@ -1746,7 +1747,7 @@ double LWE_obj_func (const gretl_matrix *I, double d,
 
     gretl_matrix_dot_pow(lambda2, dd);
 
-    Itmp = gretl_matrix_dot_multiply(I, lambda2);
+    Itmp = gretl_matrix_dot_multiply(I, lambda2, &err);
     if (Itmp == NULL) {
 	gretl_matrix_free(lambda2);
 	return NADBL;

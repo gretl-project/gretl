@@ -774,10 +774,11 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 
     DPRINTF(("parse_token: looking at '%s'\n", s));
 
-    if (isalpha((unsigned char) *s)) {
-	if (!strchr(s, '(') && !strchr(s, '[')) {
+    if (isalpha((unsigned char) *s) || *s == '\'') {
+	if (!strchr(s, '(') && !strchr(s, '[') && *s != '\'') {
 	    /* ordinary variable, list or matrix? */
-	    atype = token_get_variable_or_constant(s, genr, &v, &varobs, &val, &M, str);
+	    atype = token_get_variable_or_constant(s, genr, &v, &varobs, 
+						   &val, &M, str);
 	} else if (strchr(s, '(')) {
 	    /* function or lagged variable? */
 	    if ((func = genr_function_from_string(s))) {
@@ -1305,6 +1306,8 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 		R = gretl_matrix_from_scalar(gretl_matrix_cols(M));
 	    }
 	}
+    } else if (atom->atype == ATOM_SCALAR && !na(atom->val)) {
+	R = gretl_matrix_from_scalar(atom->val);
     }
 
     if (R == NULL) {
@@ -1723,6 +1726,15 @@ static int catch_special_operators (char *s)
 	} else if (*s == '<' && *(s+1) == '=') {
 	    *s = OP_LTE;
 	    lshift = 1;
+	} else if (*s == '.' && *(s+1) == '*') {
+	    *s = OP_DOTMULT;
+	    lshift = 1;
+	} else if (*s == '.' && *(s+1) == '/') {
+	    *s = OP_DOTDIV;
+	    lshift = 1;
+	} else if (*s == '.' && *(s+1) == '^') {
+	    *s = OP_DOTPOW;
+	    lshift = 1;
 	} else if (*s == '*' && *(s+1) == '*') {
 	    *s = '^';
 	    lshift = 1;
@@ -1751,9 +1763,11 @@ static int catch_special_operators (char *s)
 
 static int op_level (int c)
 {
-    if (c == '^' || c == '!') 
+    if (c == '^' || c == '!' || c == OP_DOTPOW) 
 	return 1;
     if (c == '*' || c == '/' || c == '%') 
+	return 2;
+    if (c == OP_DOTMULT || c == OP_DOTDIV) 
 	return 2;
     if (c == '+' || c == '-') 
 	return 3;
@@ -2263,6 +2277,10 @@ int genr_function_from_string (const char *s)
 	strncat(word, s, p - s);
     } else {
 	strncat(word, s, 8);
+    }
+
+    if (word[0] == '\'' && word[1] == 0) {
+	return T_TRANSP;
     }
 
     for (i=0; funcs[i].fnum != 0; i++) {
@@ -2905,7 +2923,13 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 	if ((genr->err = genr_add_xvec(genr))) {
 	    return genr;
 	}
-    }
+    } else {
+	/* matrix genr: handle tranpose of compound matrices */
+	genr->err = reposition_transpose_symbol(s);
+	if (genr->err) {
+	    return genr;
+	}
+    }	
 
     /* impose operator hierarchy */
     if (parenthesize(s)) {
@@ -3326,6 +3350,10 @@ static double calc_xy (double x, double y, char op, int t, int *err)
 	} else {
 	    x = 1.0;
 	}
+	break;
+    default:
+	fprintf(stderr, "unsupported operator\n");
+	*err = 1;
 	break;
     } 
 

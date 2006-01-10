@@ -1577,6 +1577,7 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
  * gretl_matrix_dot_multiply:
  * @a: left-hand matrix.
  * @b: right-hand matrix.
+ * @err: location to receive error code.
  * 
  * Returns: a new matrix, each of whose elements is the product of the
  * corresponding elements of the matrices @a and @b (or %NULL on
@@ -1584,18 +1585,21 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
  */
 
 gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
-					 const gretl_matrix *b)
+					 const gretl_matrix *b,
+					 int *err)
 {
     gretl_matrix *c;
     int i, n;
 
     if (a->rows != b->rows || a->cols != b->cols) {
 	fputs("gretl_matrix_dot_multiply: matrices not conformable\n", stderr);
+	*err = GRETL_MATRIX_NON_CONFORM;
 	return NULL;
     }
 
     c = gretl_matrix_alloc(a->rows, a->cols);
     if (c == NULL) {
+	*err = GRETL_MATRIX_NOMEM;
 	return NULL;
     }
 
@@ -1603,6 +1607,45 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
 
     for (i=0; i<n; i++) {
 	c->val[i] = a->val[i] * b->val[i];
+    }
+
+    return c;
+}
+
+/**
+ * gretl_matrix_dot_divide:
+ * @a: left-hand matrix.
+ * @b: right-hand matrix.
+ * @err: location to receive error code.
+ * 
+ * Returns: a new matrix, each of whose elements is the quotient of the
+ * corresponding elements of the matrices @a and @b (or %NULL on
+ * failure).
+ */
+
+gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a, 
+				       const gretl_matrix *b,
+				       int *err)
+{
+    gretl_matrix *c;
+    int i, n;
+
+    if (a->rows != b->rows || a->cols != b->cols) {
+	fputs("gretl_matrix_dot_divide: matrices not conformable\n", stderr);
+	*err = GRETL_MATRIX_NON_CONFORM;
+	return NULL;
+    }
+
+    c = gretl_matrix_alloc(a->rows, a->cols);
+    if (c == NULL) {
+	*err = GRETL_MATRIX_NOMEM;
+	return NULL;
+    }
+
+    n = a->rows * a->cols;
+
+    for (i=0; i<n; i++) {
+	c->val[i] = a->val[i] / b->val[i];
     }
 
     return c;
@@ -2839,6 +2882,8 @@ int gretl_matrix_get_int (const gretl_matrix *m)
 {
     if (m != NULL) {
 	return m->t;
+    } else {
+	return 0;
     }
 }
 
