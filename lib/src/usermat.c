@@ -187,9 +187,35 @@ static user_matrix *get_user_matrix_by_name (const char *name)
     return NULL;
 }
 
-/* At present this only supports the extraction of scalars or vectors.
+static int 
+row_or_column_selection (const char *s, int *idx, int *err)
+{
+    int n = 0;
+
+    if (strchr(s, ':')) {
+	if (sscanf(s, "%d:%d", &idx[0], &idx[1]) != 2) {
+	    *err = 1;
+	} else if (idx[0] <= 0 || idx[1] <= 0) {
+	    *err = 1;
+	} else {
+	    n = idx[1] - idx[0] + 1;
+	}
+    } else if (sscanf(s, "%d", &idx[0]) != 1) {
+	*err = 1;
+    } else if (idx[0] <= 0) {
+	*err = 1;
+    } else {
+	idx[1] = idx[0];
+	n = 1;
+    }
+
+    return n;
+}
+
+/* This supports the extraction of scalars, vectors or sub-matrices.
    E.g. B[1,2] extracts a scalar, B[1,] extracts a row vector, and
-   B[,2] extracts a column vector.  To be extended.
+   B[,2] extracts a column vector.  B[1:2,2:3] extracts a sub-matrix
+   composed of the intersection of rows 1 and 2 with columns 2 and 3.
 */
 
 static gretl_matrix *
@@ -198,10 +224,12 @@ real_matrix_get_slice (gretl_matrix *M, const char *s, int *err)
     gretl_matrix *S = NULL;
     int m = gretl_matrix_rows(M);
     int n = gretl_matrix_cols(M);
-    char *tmp;
-    int ri = -1, ci = -1;
-    int r = 0, c = 0;
+    char tmp[32] = {0};
+    int r[2] = {-1, -1};
+    int c[2] = {-1, -1};
+    int nr = 0, nc = 0;
     const char *p;
+    char *q = NULL;
     int len;
 
     p = strrchr(s, ']');
@@ -210,68 +238,84 @@ real_matrix_get_slice (gretl_matrix *M, const char *s, int *err)
 	return NULL;
     }
 
+    if (strchr(s, ',') == NULL) {
+	*err = E_SYNTAX;
+	return NULL;
+    }    
+
     s = strchr(s, '[') + 1;
     len = p - s;
-    
-    tmp = gretl_strndup(s, len);
-    if (tmp == NULL) {
-	*err = E_ALLOC;
+
+    if (len > 31) {
+	*err = 1;
 	return NULL;
-    }
-
-    p = tmp;
-    if (isdigit(*p)) {
-	sscanf(p, "%d", &ri);
-    }
-
-    p += strspn(p, "0123456789");
-    while (*p == ' ' || *p == ',') p++;
-
-    if (isdigit(*p)) {
-	sscanf(p, "%d", &ci);
     } 
 
-    if (ri == 0 || ci == 0) {
+    strncat(tmp, s, len);
+    p = tmp;
+    while (*p == ' ') p++;
+
+    if (*p != ',') {
+	/* left-hand (row selection) block is present */
+	q = strchr(p, ',');
+	*q = '\0';
+	nr = row_or_column_selection(p, r, err);
+    } else {
+	/* default: whole range */
+	r[0] = 1;
+	r[1] = m;
+	nr = m;
+    }
+
+    if (q != NULL) {
+	/* undo masking of right-hand expression */
+	*q = ',';
+    }
+
+    if (!*err) {
+	/* skip to right-hand block, if any */
+	p += strspn(p, ":0123456789");
+	while (*p == ' ' || *p == ',') p++;
+	if (*p) {
+	    /* right-hand (column selection) block is present */
+	    nc = row_or_column_selection(p, c, err);
+	} else {
+	    /* default: whole range */
+	    c[0] = 1;
+	    c[1] = n;
+	    nc = n;
+	}
+    }
+
+    if (nr < 1 || nc < 1) {
+	*err = 1;
+    } else if (r[0] > m || c[0] > n) {
+	*err = 1;
+    } else if (r[1] > m || c[1] > n) {
 	*err = 1;
     }
 
     if (!*err) {
-	if (ri > 0 || ci > 0) {
-	    if (ri > m) {
-		*err = 1;
-	    } else if (ci > n) {
-		*err = 1;
-	    } else {
-		if (ri > 0) ri--;
-		if (ci > 0) ci--;
-		r = (ri == -1)? m : 1;
-		c = (ci == -1)? n : 1; 
-		S = gretl_matrix_alloc(r, c);
-		if (S == NULL) {
-		    *err = E_ALLOC;	
-		}
-	    }
-	} else {
-	    *err = 1;
+	S = gretl_matrix_alloc(nr, nc);
+	if (S == NULL) {
+	    *err = E_ALLOC;	
 	}
     }
 
     if (S != NULL) {
 	double x;
-	int i, j, k, l;
+	int i, j, l, k = 0;
 
-	for (i=0; i<r; i++) {
-	    k = (ri >= 0)? ri : i;
-	    for (j=0; j<c; j++) {
-		l = (ci >= 0)? ci : j;
-		x = gretl_matrix_get(M, k, l);
-		gretl_matrix_set(S, i, j, x);
+	for (i=r[0]-1; i<r[1]; i++) {
+	    l = 0;
+	    for (j=c[0]-1; j<c[1]; j++) {
+		x = gretl_matrix_get(M, i, j);
+		gretl_matrix_set(S, k, l++, x);
 	    }
+	    k++;
 	}
     }
 	
-    free(tmp);
-
     return S;
 }
 
