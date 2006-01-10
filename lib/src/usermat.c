@@ -39,6 +39,10 @@ struct user_matrix_ {
 static user_matrix **matrices;
 static int n_matrices;
 
+static const char *varchars = "acdefghijklmnopqrstuvwxyz"
+                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                              "0123456789_";
+
 static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
 {
     user_matrix *u;
@@ -61,6 +65,10 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
 static int add_user_matrix (gretl_matrix *M, const char *name)
 {
     user_matrix **tmp;
+
+    if (check_varname(name)) {
+	return E_DATA;
+    }
 
     tmp = realloc(matrices, (n_matrices + 1) * sizeof *tmp);
     if (tmp == NULL) {
@@ -461,10 +469,29 @@ void destroy_user_matrices (void)
     n_matrices = 0;
 }
 
+static int scalar_varnum (const char *s, const DATAINFO *pdinfo)
+{
+    char vname[VNAMELEN];
+    int len = strspn(s, varchars);
+    int v = 0;
+
+    if (len > 0 && len < VNAMELEN) {
+	*vname = '\0';
+	strncat(vname, s, len);
+	v = varindex(pdinfo, vname);
+	if (v == pdinfo->v || pdinfo->vector[v]) {
+	    v = 0;
+	} 
+    }
+
+    return v;
+}
+
 #define numeric_start(s) (strcspn(s, "+-0123456789") == 0)
 
 static int 
-get_rows_cols (const char *str, int *r, int *c, int *numeric)
+get_rows_cols (const char *str, const DATAINFO *pdinfo,
+	       int *r, int *c, int *scalars)
 {
     const char *p = str;
     char *s;
@@ -503,11 +530,15 @@ get_rows_cols (const char *str, int *r, int *c, int *numeric)
 
 	nf0 = nf1;
 
-	/* peek at first field: is it numeric? */
+	/* peek at first field: is it a scalar? */
 	if (i == 0) {
 	    p = s;
 	    while (isspace(*p)) p++;
-	    *numeric = numeric_start(p);
+	    if (numeric_start(p)) {
+		*scalars = 1;
+	    } else if (isalpha(*p)) {
+		*scalars = scalar_varnum(p, pdinfo);
+	    }
 	}
 
 	str += len + 1;
@@ -537,12 +568,12 @@ get_varnum (const char **s, const DATAINFO *pdinfo, int *err)
 	}
 
 	v = varindex(pdinfo, vname);
-	if (v >= pdinfo->v) {
+	if (v < pdinfo->v) {
+	    *s += len;
+	} else {
 	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
 	    *err = 1;
-	} else {
-	    *s += len;
-	}
+	} 
     } else {
 	*err = 1;
     }
@@ -550,7 +581,37 @@ get_varnum (const char **s, const DATAINFO *pdinfo, int *err)
     return v;
 }
 
-static double get_double (const char **s, int *err)
+static double get_var_double (const char **s, const double **Z,
+			      const DATAINFO *pdinfo, int *err)
+{
+    char vname[VNAMELEN];
+    double x = NADBL;
+    int v, len = strspn(*s, varchars);
+
+    if (len > VNAMELEN - 1) {
+	*err = 1;
+    } else {
+	*vname = '\0';
+	strncat(vname, *s, len);
+	v = varindex(pdinfo, vname);
+	if (v == pdinfo->v) {
+	    *err = E_UNKVAR;
+	} else if (pdinfo->vector[v]) {
+	    *err = E_DATA;
+	} else {
+	    x = Z[v][0];
+	    if (na(x)) {
+		*err = E_MISSDATA;
+	    } else {
+		*s += len;
+	    }
+	}
+    }
+
+    return x;
+}
+
+static double get_numeric_double (const char **s, int *err)
 {
     double x = NADBL;
     char *p;
@@ -578,8 +639,9 @@ static double get_double (const char **s, int *err)
 }
 
 static int 
-fill_matrix_from_numbers (gretl_matrix *M, const char *s, 
-			  int r, int c, int transp)
+fill_matrix_from_scalars (gretl_matrix *M, const char *s, 
+			  int r, int c, int transp,
+			  const double **Z, const DATAINFO *pdinfo)
 {
     double x;
     int i, j;
@@ -588,7 +650,11 @@ fill_matrix_from_numbers (gretl_matrix *M, const char *s,
     if (transp) {
 	for (j=0; j<c && !err; j++) {
 	    for (i=0; i<r && !err; i++) {
-		x = get_double(&s, &err);
+		if (isalpha(*s)) {
+		    x = get_var_double(&s, Z, pdinfo, &err);
+		} else {
+		    x = get_numeric_double(&s, &err);
+		}
 		if (!err) {
 		    gretl_matrix_set(M, i, j, x);
 		    s += strspn(s, " ,;");
@@ -598,7 +664,11 @@ fill_matrix_from_numbers (gretl_matrix *M, const char *s,
     } else {
 	for (i=0; i<r && !err; i++) {
 	    for (j=0; j<c && !err; j++) {
-		x = get_double(&s, &err);
+		if (isalpha(*s)) {
+		    x = get_var_double(&s, Z, pdinfo, &err);
+		} else {
+		    x = get_numeric_double(&s, &err);
+		}
 		if (!err) {
 		    gretl_matrix_set(M, i, j, x);	
 		    s += strspn(s, " ,;");
@@ -609,6 +679,12 @@ fill_matrix_from_numbers (gretl_matrix *M, const char *s,
 
     return err;
 }
+
+/* Fill a matrix with values from one or more series: since
+   gretl's matrix methods cannot handle missing values, it is
+   an error if any missing values are encountered in the
+   given series.
+*/
 
 static int fill_matrix_from_series (gretl_matrix *M, const char *s,
 				    int r, int c, int transp,
@@ -634,8 +710,12 @@ static int fill_matrix_from_series (gretl_matrix *M, const char *s,
 			} else {
 			    x = Z[v][0];
 			}
-			k = i * T + t;
-			gretl_matrix_set(M, k, j, x);
+			if (na(x)) {
+			    err = E_MISSDATA;
+			} else {
+			    k = i * T + t;
+			    gretl_matrix_set(M, k, j, x);
+			}
 		    }
 		    s += strspn(s, " ,;");
 		}
@@ -653,8 +733,12 @@ static int fill_matrix_from_series (gretl_matrix *M, const char *s,
 			} else {
 			    x = Z[v][0];
 			}
-			k = j * T + t;
-			gretl_matrix_set(M, i, k, x);
+			if (na(x)) {
+			    err = E_MISSDATA;
+			} else {			
+			    k = j * T + t;
+			    gretl_matrix_set(M, i, k, x);
+			}
 		    }
 		    s += strspn(s, " ,;");
 		}
@@ -688,7 +772,7 @@ static int create_matrix (const char *name, const char *s,
     gretl_matrix *M = NULL;
     char *p;
     int nm = n_matrices;
-    int numeric = 0;
+    int scalars = 0;
     int transp = 0;
     int r = 0, c = 0;
     int err = 0;
@@ -696,7 +780,7 @@ static int create_matrix (const char *name, const char *s,
     p = strchr(s, '{');
     if (p == NULL) {
 	err = matrix_genr(name, s, pZ, pdinfo);
-	goto message;
+	goto finalize;
     }
     s = p + 1;
 
@@ -711,13 +795,13 @@ static int create_matrix (const char *name, const char *s,
     }
 
     if (!err) {
-	err = get_rows_cols(s, &r, &c, &numeric);
+	err = get_rows_cols(s, pdinfo, &r, &c, &scalars);
 	if (!err && c == 0) {
 	    err = 1;
 	}
     }
 
-    if (!err && !numeric) {
+    if (!err && !scalars) {
 	c *= pdinfo->t2 - pdinfo->t1 + 1;
     }
 
@@ -729,8 +813,8 @@ static int create_matrix (const char *name, const char *s,
     }
 
 #if MDEBUG
-    fprintf(stderr, "r=%d, c=%d, transp=%d, numeric=%d\n",
-	    r, c, transp, numeric);
+    fprintf(stderr, "r=%d, c=%d, transp=%d, scalars=%d\n",
+	    r, c, transp, scalars);
 #endif
 
     if (!err) {
@@ -741,8 +825,10 @@ static int create_matrix (const char *name, const char *s,
     }
 
     if (!err) {
-	if (numeric) {
-	    err = fill_matrix_from_numbers(M, s, r, c, transp);
+	if (scalars) {
+	    err = fill_matrix_from_scalars(M, s, r, c, transp,
+					   (const double **) *pZ,
+					   pdinfo);
 	} else {
 	    err = fill_matrix_from_series(M, s, r, c, transp, 
 					  (const double **) *pZ, 
@@ -754,7 +840,7 @@ static int create_matrix (const char *name, const char *s,
 	err = add_or_replace_user_matrix(M, name);
     }
 
- message:
+ finalize:
 
     if (!err) {
 	if (n_matrices > nm) {
@@ -841,6 +927,8 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
     double x;
     int ra, ca;
     int rb, cb;
+    int merr = 0;
+
     *err = 0;
 
 #if MDEBUG
@@ -866,6 +954,10 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	} else {
 	    *err = gretl_matrix_subtract_from(C, B);
 	}
+	break;
+    case '~':
+	/* column-wise concatenation */
+	C = gretl_matrix_col_concat(A, B, &merr);
 	break;
     case '*':
 	ra = gretl_matrix_rows(A);
@@ -898,19 +990,20 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	    if (C == NULL) {
 		*err = E_ALLOC;
 	    } else {
-		*err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE, 
-						 B, GRETL_MOD_NONE, 
-						 C);
+		merr = gretl_matrix_multiply(A, B, C);
 	    }
 	}
 	break;
     case OP_DOTMULT:
-	C = gretl_matrix_dot_multiply(A, B, err);
+	/* element-wise multiplication */
+	C = gretl_matrix_dot_multiply(A, B, &merr);
 	break;
     case OP_DOTDIV:
-	C = gretl_matrix_dot_divide(A, B, err);
+	/* element-wise division */
+	C = gretl_matrix_dot_divide(A, B, &merr);
 	break;
     case OP_DOTPOW:
+	/* element-wise exponentiation */
 	if (gretl_matrix_rows(B) != 1 ||
 	    gretl_matrix_cols(B) != 1) {
 	    *err = 1;
@@ -924,15 +1017,20 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	    }
 	}
 	break;
+    case OP_KRON:
+	/* Kronecker product */
+	C = gretl_matrix_kronecker_product(A, B);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	}
+	break;
     default:
 	*err = 1;
 	break;
     } 
 
-    if (*err == GRETL_MATRIX_NOMEM) {
-	*err = E_ALLOC;
-    } else if (*err == GRETL_MATRIX_NON_CONFORM) {
-	strcpy(gretl_errmsg, "Matrices not conformable for operation\n");
+    if (merr && !*err) {
+	*err = gretl_matrix_err_to_gretl_err(merr);
     }
 
     return C;

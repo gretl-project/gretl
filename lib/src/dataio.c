@@ -331,11 +331,13 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 
 /**
  * check_varname:
- * @varname: putative name for variable.
+ * @varname: putative name for variable (or object).
  * 
- * Check a variable name for legality.
+ * Check a variable/object name for legality: the name
+ * must start with a letter, and be composed of letters,
+ * numbers or the underscore character, and nothing else.
  * 
- * Returns: 0 if name is OK, 1 if not.
+ * Returns: 0 if name is OK, non-zero if not.
  */
 
 int check_varname (const char *varname)

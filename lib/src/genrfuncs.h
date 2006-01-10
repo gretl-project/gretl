@@ -20,6 +20,8 @@
 #ifndef GENRFUNCS_H
 #define GENRFUNCS_H
 
+/* private functions, used only in generate.c */
+
 int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo);
 
 int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo);
@@ -27,18 +29,13 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo);
 int get_fracdiff (const double *y, double *diffvec, double d,
 		  const DATAINFO *pdinfo);
 
-int dummy (double ***pZ, DATAINFO *pdinfo, int center);
-
-int panel_unit_dummies (double ***pZ, DATAINFO *pdinfo);
-
-int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
-
-int paneldum (double ***pZ, DATAINFO *pdinfo);
-
 int genrunit (double ***pZ, DATAINFO *pdinfo);
 
-int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
+double genr_cov_corr (const char *s, double ***pZ, 
+		      const DATAINFO *pdinfo, int fn);
 
-int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period);
+double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod);
+
+int get_observation_number (const char *s, const DATAINFO *pdinfo);
 
 #endif /* GENRFUNCS_H */

@@ -31,7 +31,6 @@ typedef enum {
     GRETL_MATRIX_OK = 0,
     GRETL_MATRIX_NOMEM,
     GRETL_MATRIX_NON_CONFORM,
-    GRETL_MATRIX_RANGE,
     GRETL_MATRIX_SINGULAR,
     GRETL_MATRIX_ERR 
 } GretlMatrixError;
@@ -248,6 +247,10 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 					  int eigenvecs);
 
 gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M);
+
+gretl_matrix *
+gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
+			 int *err);
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 

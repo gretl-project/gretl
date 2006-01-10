@@ -2858,9 +2858,59 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M)
 }
 
 /**
+ * gretl_matrix_col_concat:
+ * @a: left-hand source matrix (m x n).
+ * @b: right-hand source matrix (m x p).
+ * @err: location to receive error code.
+ * 
+ * Returns: newly allocated matrix (m x (n+p)) that results from 
+ * the column-wise concatenation of @a and @b, or %NULL on failure.
+ */
+
+gretl_matrix *
+gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
+			 int *err)
+{
+    gretl_matrix *c = NULL;
+    double x;
+    int i, j, k, n;
+
+    if (a == NULL || b == NULL) {
+	*err = 1;
+	return NULL;
+    }
+
+    if (a->rows != b->rows) {
+	*err = GRETL_MATRIX_NON_CONFORM;
+	return NULL;
+    }
+
+    n = a->cols + b->cols;
+    c = gretl_matrix_alloc(a->rows, n);
+    if (c == NULL) {
+	*err = GRETL_MATRIX_NOMEM;
+	return NULL;
+    }
+
+    for (i=0; i<a->rows; i++) {
+	for (j=0; j<a->cols; j++) {
+	    x = a->val[mdx(a, i, j)];
+	    c->val[mdx(c, i, j)] = x;
+	}
+	for (j=0; j<b->cols; j++) {
+	    x = b->val[mdx(b, i, j)];
+	    k = a->cols + j;
+	    c->val[mdx(c, i, k)] = x;
+	}
+    }
+
+    return c;
+}
+
+/**
  * gretl_matrix_set_int:
  * @m: matrix to operate on.
- * @t: value to set
+ * @t: value to set.
  * 
  * Sets an integer value on the gretl_matrix (used for internal
  * information).  

@@ -68,9 +68,10 @@ enum gretl_error_codes {
     E_CANCEL,      /* 41 */
     E_MISSDATA,    /* 42 */
     E_NAN,         /* 43 */
-    E_DB_DUP,      /* 44 : duplicate vars found when saving to database */
-    E_OK,          /* 45 : not really an error */
-    E_MAX          /* 46 */
+    E_NONCONF,     /* 44 */
+    E_DB_DUP,      /* 45 : duplicate vars found when saving to database */
+    E_OK,          /* 46 : not really an error */
+    E_MAX          /* 47 */
 }; 
 
 /* functions follow */
@@ -92,3 +93,5 @@ int print_gretl_errmsg (PRN *prn);
 void gretl_errmsg_set (const char *str);
 
 void gretl_errmsg_clear (void);
+
+int gretl_matrix_err_to_gretl_err (int merr);

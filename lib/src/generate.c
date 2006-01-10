@@ -23,6 +23,7 @@
 #include "gretl_func.h"
 #include "loop_private.h"
 #include "genstack.h"
+#include "genrfuncs.h"
 #include "libset.h"
 #include "modelspec.h"
 #include "objstack.h"
@@ -45,13 +46,8 @@ enum {
 
 static double calc_xy (double x, double y, char op, int t, int *err);
 
-static double genr_cov_corr (const char *str, double ***pZ,
-			     const DATAINFO *pdinfo, int fn);
-static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
-			MODEL *pmod);
 static int genr_mpow (const char *str, double *xvec, double **Z, 
 		      DATAINFO *pdinfo);
-static int obs_num (const char *s, const DATAINFO *pdinfo);
 
 #ifdef HAVE_MPFR
 static int genr_mlog (const char *str, double *xvec, double **pZ, 
@@ -60,15 +56,12 @@ static int genr_mlog (const char *str, double *xvec, double **pZ,
 
 static void eval_msg (const GENERATOR *genr);
 static void compose_genr_msg (const GENERATOR *genr, int oldv);
-static int listpos (int v, const int *list);
 static int genr_write_var (GENERATOR *genr, double ***pZ);
 
 static int math_tokenize (char *s, GENERATOR *genr, int level);
 static int get_obs_value (const char *s, const double **Z, 
 			  const DATAINFO *pdinfo, int *v, int *obsnum);
-static int model_vector_index (const char *s);
-static int dataset_var_index (const char *s);
-static int test_stat_index (const char *s);
+
 static int op_level (int c);
 
 static double *get_model_series (const DATAINFO *pdinfo, int v);
@@ -603,6 +596,11 @@ static double genr_get_matrix_scalar (const char *s, int func)
     return x;
 }
 
+static void undefined_var_message (const char *s)
+{
+    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
+}
+
 static int
 token_get_variable_or_constant (const char *s, GENERATOR *genr,
 				int *pv, int *varobs, double *pval, 
@@ -640,7 +638,7 @@ token_get_variable_or_constant (const char *s, GENERATOR *genr,
 		    v = -1;
 		}
 	    } else {
-		sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
+		undefined_var_message(s);
 		genr->err = E_UNKVAR;
 	    }
 	} 
@@ -659,7 +657,7 @@ token_get_variable_or_constant (const char *s, GENERATOR *genr,
 		    v = -1;
 		    atype = ATOM_SCALAR;
 		} else { 
-		    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
+		    undefined_var_message(s);
 		}
 	    }
 	} else {
@@ -732,6 +730,61 @@ static int token_get_function (const char *s, GENERATOR *genr,
     return atype;
 }
 
+static int dataset_var_index (const char *s)
+{
+    char test[USER_VLEN];
+
+    *test = '\0';
+    strncat(test, s, USER_VLEN - 1);
+    lower(test);
+
+    if (!strcmp(test, "$nobs")) {
+	return R_NOBS;
+    }
+    if (!strcmp(test, "$pd")) {
+	return R_PD;
+    }
+    if (!strcmp(test, "$nvars")) {
+	return R_NVARS;
+    }
+
+    return 0;
+}
+
+static int test_stat_index (const char *s)
+{
+    char test[USER_VLEN];
+
+    *test = '\0';
+    strncat(test, s, USER_VLEN - 1);
+    lower(test);
+
+    if (!strcmp(test, "$pvalue"))  
+	return R_TEST_PVAL;
+    if (!strcmp(test, "$test")) 
+	return R_TEST_STAT;
+
+    return 0;
+}
+
+static int model_vector_index (const char *s)
+{
+    char test[USER_VLEN];
+
+    *test = '\0';
+    strncat(test, s, USER_VLEN - 1);
+    lower(test);
+
+    if (!strcmp(test, "$uhat"))  
+	return UHATNUM;
+    if (!strcmp(test, "$yhat")) 
+	return YHATNUM;
+    if (!strcmp(test, "$h"))
+	return HNUM;
+
+    return 0;
+}
+
 static int token_get_dollar_var (const char *s, GENERATOR *genr, 
 				 int *v, int *lag, double *val)
 {
@@ -761,6 +814,15 @@ static int token_get_dollar_var (const char *s, GENERATOR *genr,
 
     return atype;
 }
+
+/* Parse a "genr" token and construct a corresponding "atom".  In the
+   case of scalar tokens we could go ahead and attach a specific value
+   to the atom, but we defer this so far as possible.  We're currently
+   "compiling" a genr expression, and we may wish to "run" it more
+   than once, with differing values of the inputs -- so we prefer to
+   record the info required to obtain the scalar value, where
+   possible.
+*/
 
 static genatom *
 parse_token (const char *s, char op, GENERATOR *genr, int level)
@@ -828,7 +890,7 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 	atype = ATOM_SCALAR;
     } else if (*s == '"') {
 	/* observation label? (basis for dummy series) */
-	val = obs_num(s, genr->pdinfo);
+	val = get_observation_number(s, genr->pdinfo);
 	if (val > 0) {
 	    func = T_OBSNUM;
 	} else{
@@ -836,7 +898,7 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 	}
     } else if (strchr(s, ':')) {
 	/* time-series observation? */
-	val = obs_num(s, genr->pdinfo);
+	val = get_observation_number(s, genr->pdinfo);
 	if (val > 0) {
 	    atype = ATOM_SCALAR;
 	} else {
@@ -970,7 +1032,7 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
     else if (atom->varnum < 0) {
 	DPRINTF(("eval_atom: got named list: error\n"));
 	if (atom->str != NULL) {
-	    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), atom->str);
+	    undefined_var_message(atom->str);
 	}
 	genr->err = E_UNKVAR;
     }
@@ -1317,7 +1379,20 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
     return R;
 }
 
-#define is_atom_matrix(m) ((ATOM_MATRIX != gretl_matrix_get_int(m)))
+static void maybe_free_genr_matrix (gretl_matrix *M)
+{
+    if (M == NULL || is_user_matrix(M)) {
+	return;
+    }
+
+    if (gretl_matrix_get_int(M) == ATOM_MATRIX) {
+	return;
+    }
+
+    DPRINTF(("tmp matrix at %p: not user or atom matrix, freeing\n", 
+	     (void *) M));
+    gretl_matrix_free(M);
+}
 
 static int evaluate_matrix_genr (GENERATOR *genr)
 {
@@ -1372,22 +1447,17 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 	    DPRINTF(("pushed matrix %p at level %d\n", (void *) Abak, level));
 	    while (pad--) {
 		genr->err = matrix_calc_push(NULL, genr);
-		DPRINTF(("pushed NULL at level %d\n", level)); /* ?? */
+		DPRINTF(("pushed NULL at level %d\n", level));
 		npush++;
 	    }
-	} else if (Abak != NULL) {
+	} else {
 	    /* not pushing matrix Abak: free it, if it's not "spoken for" */
-	    if (!is_user_matrix(Abak) && gretl_matrix_get_int(Abak) != ATOM_MATRIX) {
-		DPRINTF(("Abak at %p: not user or atom matrix, freeing\n", (void *) Abak));
-		gretl_matrix_free(Abak);
-		Abak = NULL;
-	    }
+	    maybe_free_genr_matrix(Abak);
 	}
 
 	/* matrix 'B': free it if there's no further call on it */
-	if (freeB && B != NULL && !is_user_matrix(B) && 
-	    gretl_matrix_get_int(B) != ATOM_MATRIX) {
-	    gretl_matrix_free(B);
+	if (freeB) {
+	    maybe_free_genr_matrix(B);
 	}
 
 	level = atom->level;
@@ -1708,7 +1778,7 @@ static int unary_op_context (char *start, char *p)
     return ret;
 }
 
-static int catch_special_operators (char *s)
+static int catch_special_operators (GENERATOR *genr, char *s)
 {
     char *p = s;
     int err = 0;
@@ -1736,7 +1806,11 @@ static int catch_special_operators (char *s)
 	    *s = OP_DOTPOW;
 	    lshift = 1;
 	} else if (*s == '*' && *(s+1) == '*') {
-	    *s = '^';
+	    if (genr_is_matrix(genr)) {
+		*s = OP_KRON;
+	    } else {
+		*s = '^';
+	    }
 	    lshift = 1;
 	} else if ((*s == '-' || *s == '+') && unary_op_context(p, s)) {
 	    int np; /* need to insert parentheses? */
@@ -1767,9 +1841,9 @@ static int op_level (int c)
 	return 1;
     if (c == '*' || c == '/' || c == '%') 
 	return 2;
-    if (c == OP_DOTMULT || c == OP_DOTDIV) 
+    if (c == OP_DOTMULT || c == OP_DOTDIV || c == OP_KRON) 
 	return 2;
-    if (c == '+' || c == '-') 
+    if (c == '+' || c == '-' || c == '~') 
 	return 3;
     if (c == '>' || c == '<' || c == OP_GTE || c == OP_LTE) 
 	return 4;
@@ -2492,110 +2566,6 @@ static void copy_compress (char *targ, const char *src, int len)
     targ[j] = '\0';
 }
 
-#define OBS_DEBUG 0
-
-static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
-{
-    char *test;
-    int t = -1;
-
-#if OBS_DEBUG
-    fprintf(stderr, "plain_obs_number: looking at '%s'\n", obs);
-#endif
-
-    errno = 0;
-
-    strtol(obs, &test, 10);
-
-    if (*test != '\0' || !strcmp(obs, test) || errno == ERANGE) {
-	fprintf(stderr, "plain_obs_number: failed on '%s'\n", obs);
-    } else {
-	t = atoi(obs) - 1; /* convert from 1-based to 0-based */ 
-    } 
-
-    if (t >= pdinfo->n) {
-	t = -1;
-    }
-
-    return t;
-}
-
-static void fix_calendar_date (char *s)
-{
-    while (*s) {
-	if (*s == ':') *s = '/';
-	s++;
-    }
-}
-
-/* Given what looks like an observation number or date within "[" and
-   "]", try to determine the observation number.  This is quite tricky
-   since we try to handle both dates and plain observation numbers
-   (and in addition, variables representing the latter); and we may
-   have to deal with the translation from 1-based indexing in user
-   space to 0-based indexing for internal purposes.
-*/
-
-int get_t_from_obs_string (char *s, const double **Z, 
-			   const DATAINFO *pdinfo)
-{
-    int t;
-
-#if OBS_DEBUG
-    fprintf(stderr, "\nget_t_from_obs_string: s ='%s'\n", s);
-#endif
-
-    if (calendar_data(pdinfo)) {
-	fix_calendar_date(s);
-    } 
-
-    t = dateton(s, pdinfo);
-
-#if OBS_DEBUG
-    fprintf(stderr, " dateton gives t = %d\n", t);
-#endif
-
-    if (t < 0) {
-	if (isdigit((unsigned char) *s)) {
-	    t = plain_obs_number(s, pdinfo);
-#if OBS_DEBUG
-	    fprintf(stderr, " plain_obs_number gives t = %d\n", t);
-#endif
-	} else {
-	    int v = varindex(pdinfo, s);
-
-	    if (v < pdinfo->v) {
-		t = (int) Z[v][0];
-#if OBS_DEBUG
-		fprintf(stderr, " based on var %d: t = %d\n", v, t);
-#endif
-		if (t >= pdinfo->n) {
-		    char try[16];
-
-		    sprintf(try, "%d", t);
-		    t = dateton(try, pdinfo);
-#if OBS_DEBUG
-		    fprintf(stderr, " revised via dateton: t = %d\n", t);
-#endif
-		} else {
-		    /* convert to 0-based */
-		    t--;
-		}
-	    }
-	}
-    }
-
-    if (t < 0) {
-	sprintf(gretl_errmsg, _("Observation number out of bounds"));
-    }
-
-#if OBS_DEBUG
-    fprintf(stderr, " return value: t = %d\n", t);
-#endif
-
-    return t;
-}
-
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATOR *genr)
 {
@@ -2912,7 +2882,7 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     }
 
     /* pre-process special operators */
-    if ((genr->err = catch_special_operators(s))) {
+    if ((genr->err = catch_special_operators(genr, s))) {
 	return genr;
     }
 
@@ -3954,7 +3924,7 @@ get_model_data_element (const char *s, GENERATOR *genr, int idx)
 		   pmod->arinfo->arlist == NULL || 
 		   pmod->arinfo->rho == NULL) {
 	    genr->err = E_INVARG;
-	} else if (!(vi = listpos(atoi(s), pmod->arinfo->arlist))) {
+	} else if (!(vi = gretl_list_position(atoi(s), pmod->arinfo->arlist))) {
 	    genr->err = E_INVARG;
 	} else {
 	    x = pmod->arinfo->rho[vi-1];
@@ -3978,7 +3948,7 @@ get_model_data_element (const char *s, GENERATOR *genr, int idx)
 	    }
 	} else {
 	    lv = numeric_string(s)? atoi(s) : varindex(genr->pdinfo, s);
-	    vi = listpos(lv, pmod->list);
+	    vi = gretl_list_position(lv, pmod->list);
 
 	    if (vi < 2) {
 		genr->err = E_INVARG;
@@ -4138,111 +4108,6 @@ static double get_tnum (const DATAINFO *pdinfo, int t)
     }
 }
 
-static int obs_num (const char *s, const DATAINFO *pdinfo)
-{
-    char test[OBSLEN];
-    size_t n;
-    int t;
-
-    *test = 0;
-    strncat(test, (*s == '"')? s + 1 : s, OBSLEN - 1);
-
-    n = strlen(test);
-    if (test[n-1] == '"') {
-	test[n-1] = '\0';
-    }
-
-    if (pdinfo->markers && pdinfo->S != NULL) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!strcmp(test, pdinfo->S[t])) return t + 1;
-	}
-	if (calendar_data(pdinfo)) {
-	    charsub(test, ':', '/');
-	    for (t=0; t<pdinfo->n; t++) {
-		if (!strcmp(test, pdinfo->S[t]) ||
-		    !strcmp(test, pdinfo->S[t] + 2)) {
-		    return t + 1;
-		}
-	    }
-	}
-    }
-
-    if (pdinfo->structure == TIME_SERIES) {
-	t = dateton(test, pdinfo);
-	if (t >= 0) return t + 1;
-    }
-
-    if (calendar_data(pdinfo)) {
-	char datestr[OBSLEN];
-
-	charsub(test, ':', '/');
-	for (t=0; t<pdinfo->n; t++) {
-	    calendar_date_string(datestr, t, pdinfo);
-	    if (!strcmp(test, datestr) ||
-		!strcmp(test, datestr + 2)) {
-		return t + 1;
-	    }
-	}
-    }
-
-    return 0;
-}
-
-static int dataset_var_index (const char *s)
-{
-    char test[USER_VLEN];
-
-    *test = '\0';
-    strncat(test, s, USER_VLEN - 1);
-    lower(test);
-
-    if (!strcmp(test, "$nobs")) {
-	return R_NOBS;
-    }
-    if (!strcmp(test, "$pd")) {
-	return R_PD;
-    }
-    if (!strcmp(test, "$nvars")) {
-	return R_NVARS;
-    }
-
-    return 0;
-}
-
-static int test_stat_index (const char *s)
-{
-    char test[USER_VLEN];
-
-    *test = '\0';
-    strncat(test, s, USER_VLEN - 1);
-    lower(test);
-
-    if (!strcmp(test, "$pvalue"))  
-	return R_TEST_PVAL;
-    if (!strcmp(test, "$test")) 
-	return R_TEST_STAT;
-
-    return 0;
-}
-
-static int model_vector_index (const char *s)
-{
-    char test[USER_VLEN];
-
-    *test = '\0';
-    strncat(test, s, USER_VLEN - 1);
-    lower(test);
-
-    if (!strcmp(test, "$uhat"))  
-	return UHATNUM;
-    if (!strcmp(test, "$yhat")) 
-	return YHATNUM;
-    if (!strcmp(test, "$h"))
-	return HNUM;
-
-    return 0;
-}
-
 #define GEN_LEVEL_DEBUG 0
 
 /**
@@ -4383,154 +4248,6 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
 
 #endif /* HAVE_MPFR */
 
-static int varnames_from_arg (const char *s, char *v1str, char *v2str)
-{
-    int i, p, n = strlen(s);
-
-    if (n > 17) {
-	return 1;
-    }
-
-    p = haschar(',', s);
-    if (p < 0 || p > 8) {
-	return 1;
-    }
-
-    /* get first var name */
-    for (i=0; i<p; i++) {
-	v1str[i] = s[i];
-    }
-    v1str[p] = '\0';
-
-    /* get second var name */
-    n = n - p - 1;
-    for (i=0; i<n; i++) {
-	v2str[i] = s[p+1+i];
-    }
-    v2str[i] = '\0';
-
-    return 0;
-}
-
-static double genr_cov_corr (const char *str, double ***pZ, 
-			     const DATAINFO *pdinfo, int fn)
-{
-    char v1str[USER_VLEN], v2str[USER_VLEN];
-    int v1, v2;
-    double ret = NADBL;
-
-    if (varnames_from_arg(str, v1str, v2str)) {
-	return NADBL;
-    }
-
-    v1 = varindex(pdinfo, v1str);
-    v2 = varindex(pdinfo, v2str);
-
-    if (v1 >= pdinfo->v || v2 >= pdinfo->v) {
-	return NADBL;
-    }
-
-    if (fn == T_COV) {
-	ret = gretl_covar(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2]);
-    } else if (fn == T_CORR) {
-	ret = gretl_corr(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2], NULL);
-    }
-
-    return ret;
-}
-
-static int get_model_param_number (const MODEL *pmod, 
-				   const char *vname)
-{
-    int i, ret = 0;
-
-    if (pmod->params == NULL) {
-	return 0;
-    }
-
-    for (i=0; i<=pmod->ncoeff; i++) {
-	if (!strcmp(vname, pmod->params[i])) {
-	    ret = i + 1;
-	    break;
-	}
-    }
-
-    return ret;
-}
-
-static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
-			MODEL *pmod)
-{
-    int v1 = 0, v2 = 0;
-    int i, j, k, v1l, v2l;
-    char v1str[USER_VLEN], v2str[USER_VLEN];
-    int gotit;
-    double ret = NADBL;
-
-    if (pmod == NULL || pmod->list == NULL) {
-	return NADBL;
-    }
-
-    if (varnames_from_arg(str, v1str, v2str)) {
-	return NADBL;
-    }
-
-    /* are the varnames valid? */
-    if (pmod->ci != NLS && pmod->ci != ARMA) {
-	v1 = varindex(pdinfo, v1str);
-	v2 = varindex(pdinfo, v2str);
-	if (v1 >= pdinfo->v || v2 >= pdinfo->v) {
-	    return NADBL;
-	}
-    }
-
-    /* check model list */
-    if (pmod->ci == NLS || pmod->ci == ARMA) {
-	v1l = get_model_param_number(pmod, v1str);
-	v2l = get_model_param_number(pmod, v2str);
-    } else {
-	v1l = listpos(v1, pmod->list);
-	v2l = listpos(v2, pmod->list);
-    }
-
-    if (v1l == 0 || v2l == 0) {
-	return NADBL;
-    }
-
-    v1l -= 2;
-    v2l -= 2;
-
-    /* make model vcv matrix if need be */
-    if (pmod->vcv == NULL && makevcv(pmod)) {
-	return NADBL;
-    }
-
-    /* now find the right entry */
-    if (v1l > v2l) {
-	k = v1l;
-	v1l = v2l;
-	v2l = k;
-    }
-
-    gotit = 0;
-    k = 0;
-    for (i=0; i<pmod->ncoeff && !gotit; i++) {
-	for (j=0; j<pmod->ncoeff; j++) {
-	    if (j < i) {
-		continue;
-	    }
-	    if (i == v1l && j == v2l) {
-		ret = pmod->vcv[k];
-		gotit = 1;
-		break;
-	    }
-	    k++;
-	}
-    }
-
-    return ret;
-}
-
 static void eval_msg (const GENERATOR *genr)
 {
     double x = genr->xvec[genr->pdinfo->t1];
@@ -4588,102 +4305,3 @@ static void compose_genr_msg (const GENERATOR *genr, int oldv)
 	*gretl_errmsg = '\0';
     }
 }
-
-static int listpos (int v, const int *list)
-{
-    int i, lmax = list[0];
-
-    /* handle special TSLS list */
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    lmax = i - 1;
-	    break;
-	}
-    }
-	    
-    for (i=lmax; i>=1; i--) {
-	if (v == list[i]) return i;
-    }
-
-    return 0;
-}
-
-/**
- * genr_fit_resid:
- * @pmod: pointer to model to be tested.
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- * @code: GENR_RESID or GENR_FITTED or GENR_RESID2.
- * @undo: if non-zero, don't bother labeling the variables
- *
- * Adds residuals or fitted values or squared residuals from a
- * given model to the data set.
- * 
- * Returns: 0 on successful completion, error code on error.
- */
-
-int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		    int code, int undo)
-{
-    char vname[USER_VLEN], vlabel[MAXLABEL];
-    int i, t;
-    double *h = NULL;
-
-    if (code == GENR_H) {
-	h = gretl_model_get_data(pmod, "garch_h");
-	if (h == NULL) return E_DATA;
-    }
-
-    if (dataset_add_series(1, pZ, pdinfo)) {
-	return E_ALLOC;
-    }
-
-    i = pdinfo->v - 1;
-
-    for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[i][t] = NADBL;
-    }
-
-    if (code == GENR_RESID) {
-	sprintf(vname, "uhat%d", pmod->ID);
-	sprintf(vlabel, _("residual from model %d"), pmod->ID);
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = pmod->uhat[t];
-	}
-    } else if (code == GENR_FITTED) {
-	sprintf(vname, "yhat%d", pmod->ID);
-	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = pmod->yhat[t];
-	}
-    } else if (code == GENR_RESID2) { 
-	/* squared residuals */
-	sprintf(vname, "usq%d", pmod->ID);
-	sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    if (na(pmod->uhat[t])) {
-		(*pZ)[i][t] = NADBL;
-	    } else {
-		(*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
-	    }
-	}
-    } else if (code == GENR_H) { 
-	/* garch variance */
-	sprintf(vname, "h%d", pmod->ID);
-	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = h[t];
-	}
-    }
-
-    strcpy(pdinfo->varname[i], vname);
-
-    if (!undo) {
-	strcpy(VARLABEL(pdinfo, i), vlabel);
-    }
-
-    return 0;
-}
-
-
-    

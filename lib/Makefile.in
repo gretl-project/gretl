@@ -76,8 +76,6 @@ PUBLIC_HDRS = \
 	estimate.h \
 	forecast.h \
 	generate.h \
-	genrfuncs.h \
-	genstack.h \
 	graphing.h \
 	gretl_commands.h \
 	gretl_errors.h \

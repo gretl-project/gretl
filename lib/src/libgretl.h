@@ -166,9 +166,11 @@ typedef enum {
     OP_NEQ = 21,
     OP_GTE = 22,
     OP_LTE = 23,
+    /* matrix operators */
     OP_DOTMULT = 24,
     OP_DOTDIV  = 25,
-    OP_DOTPOW  = 26
+    OP_DOTPOW  = 26,
+    OP_KRON    = 27,
 } GretlOp;
 
 typedef unsigned long gretlopt;
@@ -356,7 +358,6 @@ struct mp_results_ {
 #include "dataset.h"
 #include "estimate.h"
 #include "generate.h"
-#include "genrfuncs.h"
 #include "compare.h"
 #include "gretl_intl.h"
 #include "gretl_list.h"

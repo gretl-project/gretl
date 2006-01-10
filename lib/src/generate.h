@@ -52,5 +52,19 @@ int genr_function_from_string (const char *s);
 int get_t_from_obs_string (char *s, const double **Z, 
 			   const DATAINFO *pdinfo);
 
+/* genrfuncs.c, public functions */
+
+int dummy (double ***pZ, DATAINFO *pdinfo, int center);
+
+int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
+
+int panel_unit_dummies (double ***pZ, DATAINFO *pdinfo);
+
+int paneldum (double ***pZ, DATAINFO *pdinfo);
+
+int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period);
+
+int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
+
 #endif /* GENERATE_H */
 

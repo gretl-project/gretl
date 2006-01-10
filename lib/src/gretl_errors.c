@@ -76,6 +76,7 @@ const char *gretl_error_messages[] = {
     N_("The operation was canceled"),                            /* E_CANCEL */
     N_("Missing values encountered"),                            /* E_MISSDATA */
     N_("Not a Number in calculation"),                           /* E_NAN */
+    N_("Matrices not conformable for operation"),                /* E_NONCONF */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */
@@ -187,7 +188,7 @@ int print_gretl_msg (PRN *prn)
 
 /**
  * gretl_errmsg_set:
- * @str: an error message
+ * @str: an error message.
  *
  * If gretl_errmsg is currently blank, copy the given string into
  * the message space.
@@ -204,4 +205,33 @@ void gretl_errmsg_set (const char *str)
 void gretl_errmsg_clear (void)
 {
     *gretl_errmsg = '\0';
+}
+
+/**
+ * gretl_matrix_err_to_gretl_err:
+ * @merr: error code from gretl matrix operation.
+ *
+ * Given a gretl matrix error code, convert to libgretl
+ * error code, possibly writing something appropriate to
+ * %gretl_errmsg in the process.
+ * 
+ * Returns: libgretl error code.
+ */
+
+int gretl_matrix_err_to_gretl_err (int merr)
+{
+    int err = 0;
+
+    if (merr == GRETL_MATRIX_NOMEM) {
+	err = E_ALLOC;
+    } else if (merr == GRETL_MATRIX_NON_CONFORM) {
+	err = E_NONCONF;
+    } else if (merr == GRETL_MATRIX_SINGULAR) {
+	strcpy(gretl_errmsg, _("Matrix is singular"));
+	err = E_SINGULAR;
+    } else if (merr == GRETL_MATRIX_ERR) {
+	err = 1;
+    }
+
+    return err;
 }
