@@ -868,6 +868,7 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 				&v, &varobs);
 	    if (!err) {
 		if (genr_is_matrix(genr)) {
+		    /* FIXME defer evaluation? */
 		    M = gretl_matrix_from_scalar((*genr->pZ)[v][varobs]);
 		    atype = ATOM_MATRIX;
 		    v = varobs = -1;
@@ -875,6 +876,7 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 		    atype = ATOM_SCALAR;
 		}
 	    } else if (genr_is_matrix(genr)) {
+		/* FIXME defer evaluation? */
 		M = user_matrix_get_slice(s, &genr->err);
 		if (M == NULL) {
 		    DPRINTF(("dead end at get_obs_value, s='%s'\n", s));

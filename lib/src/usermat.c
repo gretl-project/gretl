@@ -688,7 +688,8 @@ fill_matrix_from_scalars (gretl_matrix *M, const char *s,
 /* Fill a matrix with values from one or more series: since
    gretl's matrix methods cannot handle missing values, it is
    an error if any missing values are encountered in the
-   given series.
+   given series.  Each series occupies a column by default
+   (unless transp is non-zero).
 */
 
 static int fill_matrix_from_series (gretl_matrix *M, const char *s,
@@ -749,7 +750,7 @@ static int fill_matrix_from_series (gretl_matrix *M, const char *s,
 		}
 	    }
 	}
-    }
+    } 
 
     return err;
 }
@@ -769,6 +770,73 @@ static int matrix_genr (const char *name, const char *s,
 
     return err;
 }
+
+gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
+				     const DATAINFO *pdinfo, int transp,
+				     int *err)
+{
+    gretl_matrix *M = NULL;
+    char word[32];
+    char *mask = NULL;
+    const int *list;
+    int len;
+
+    while (isspace(*s)) s++;
+
+    len = strspn(s, varchars);
+    if (len == 0 || len > 31) {
+	return NULL;
+    }
+
+    *word = '\0';
+    strncat(word, s, len);
+    list = get_list_by_name(word);
+    if (list == NULL) {
+	return NULL;
+    }
+
+    M = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2, &mask);
+
+    if (M == NULL) {
+	*err = 1;
+    }
+
+    if (mask != NULL) {
+	*err = E_MISSDATA;
+	free(mask);
+	gretl_matrix_free(M);
+	M = NULL;
+    }
+
+    if (M != NULL && transp) {
+	gretl_matrix *R = gretl_matrix_copy_transpose(M);
+
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	    gretl_matrix_free(M);
+	    M = NULL;
+	} else {
+	    gretl_matrix_free(M);
+	    M = R;
+	}
+    }
+
+    return M;
+}
+
+/* Currently we can create a user matrix in any one of four ways (but
+   we can't mix these in a single matrix specification).
+
+   1. Full specification of scalar elements, either numerical values or
+      by reference to scalar variables.
+
+   2. Specification of individual data series to place in the matrix.
+
+   3. Specification of one named list of variables to place in matrix.
+
+   4. Use of a "genr"-type expression referring to existing matrices
+      and/or the I(n) function which gives an n x n identity matrix.
+*/
 
 static int create_matrix (const char *name, const char *s, 
 			  double ***pZ, DATAINFO *pdinfo,
@@ -796,6 +864,17 @@ static int create_matrix (const char *name, const char *s,
 	}
 	if (*(p+1) == '\'') {
 	    transp = 1;
+	}
+    }
+
+    if (!err) {
+	M = fill_matrix_from_list(s, (const double **) *pZ, pdinfo, 
+				  transp, &err);
+	if (err) {
+	    goto finalize;
+	} else if (M != NULL) {
+	    err = add_or_replace_user_matrix(M, name);
+	    goto finalize;
 	}
     }
 

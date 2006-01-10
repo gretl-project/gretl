@@ -1,0 +1,241 @@
+\chapter{Matrix manipulation}
+\label{chap-matrices}
+
+\section{Introduction}
+\label{matrix-intro}
+
+As of version 1.5.1, gretl offers the facility of creating and
+manipulating user-defined matrices.  This is currently experimental;
+it is not very advanced and some aspects of the syntax are liable to
+change.  Nontheless we set out the current situation here.
+
+\section{Creating matrices}
+\label{matrix-create}
+
+Matrices can be created in any one of four ways:
+
+\begin{enumerate}
+\item By full specification of the scalar values that compose the
+  matrix, either in numerical form or by reference to pre-existing
+  scalar variables, or both; or
+\item by providing a list of data series; or
+\item by providing a \textit{named list} of series; or
+\item using a formula of the same general type that is used
+  with the \texttt{genr} command, whereby a new matrix is defined
+  in terms of existing matrices and/or scalars.
+\end{enumerate}
+
+At present these methods cannot be mixed in the specification of a
+given matrix.  Examples of each follow.
+
+To specify a matrix directly in terms of scalars, the syntax is,
+for example: 
+
+\begin{code}
+matrix A = { 1, 2, 3 ; 4, 5, 6 }
+\end{code}
+
+The matrix is defined by rows; the elements on each row are separated
+by commas and the rows are separated by semi-colons.  The whole
+expression must be wrapped in braces.  Spaces within the braces are
+not significant.  The above expression defines a $2\times3$ matrix.
+Each element must be either a numerical value or the name of a
+pre-existing scalar variable.  Directly after the closing brace you
+can append a single quote or apostrophe to obtain the transpose.
+
+To specify a matrix in terms of data series the syntax is, for
+example:
+
+\begin{code}
+matrix A = { x1 ; x2 ; x3 }'
+\end{code}
+
+By default, each variable occupies a row (and there can only be one
+variable per row).  In the example above we have transposed the result
+so that the variables are in columns. The range of data values
+included in the matrix depends on the current setting of the sample
+range.
+
+While gretl's built-in statistical functions are mostly capable of
+handling missing values, the matrix arithmetic functions are not, and
+you will get an error if you try to build a matrix from series that
+include missing values.
+
+Instead of giving an explicit list of variables, you may instead
+provide the name of a saved list, as in
+
+\begin{code}
+list xlist = x1 x2 x3
+matrix A = { xlist }
+\end{code}
+
+Note that when you give a named list, the data series are by default
+placed in columns: if you want them in rows, append the transpose
+symbol.  
+
+\section{Manipulating matrices}
+\label{matrix-manip}
+
+You can create new matrices or replace existing matrices by means of
+various transformations, in a manner similar to the \texttt{genr}
+command for scalars and data series.  To get a matrix result, however,
+the command must start with \texttt{matrix}, not \texttt{genr}.
+
+The following operators are available for matrices:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{+} & matrix addition \\
+\texttt{-} & matrix subtraction \\
+\texttt{*} & matrix multiplication \\
+\texttt{.*} & element-wise multiplication \\
+\texttt{./} & element-wise divsion \\
+\verb+.^+ & element-wise exponentiation \\
+\verb+~+ & column-wise concatenation \\
+\texttt{**} & Kronecker product 
+\end{tabular}
+\end{center}
+
+To explain the less obvious cases: in element-wise multiplication if
+we write 
+%
+\begin{code}
+matrix C = A .* B
+\end{code}
+% 
+then $C_{ij} = A_{ij} \times B_{ij}$.  Likewise with element-wise
+divsion, $C_{ij} = A_{ij}/B_{ij}$. With element-wise exponentiation,
+%
+\begin{code}
+C = A .^ k
+\end{code}
+% 
+produces $C_{ij} = A_{ij}^k$.  The variable $k$ must be a scalar or
+$1\times 1$ matrix.
+
+In column-wise concatenation of an $m\times n$ matrix $A$ and
+an $m\times p$ matrix $B$, the result is an $m\times (n+p)$ matrix
+%
+\[
+C = \left[ \begin{array}{cc} A & B \end{array} \right]
+\]
+%
+
+The following functions are available for element-by-element
+transformations of matrices: \texttt{log}, \texttt{exp}, \texttt{sin},
+\texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int}, \texttt{abs},
+\texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm}, \texttt{qnorm},
+\texttt{gamma} and \texttt{lngamma}.  All of these have the same
+meanings as in \texttt{genr}.  For example, if a matrix \texttt{A} is
+already defined, then
+%
+\begin{code}
+matrix B = sqrt(A)
+\end{code}
+%
+generates a matrix such that $B_{ij} = \sqrt{A_{ij}}$.
+
+In addition these matrix-specific functions are available:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{det()} & determinant \\
+\texttt{ldet()} & log-determinant \\
+\texttt{inv()} & inverse \\
+\texttt{tr()} & trace \\
+\texttt{rows()} & number of rows \\
+\texttt{cols()} & number of columns \\
+\texttt{diag()} & extract principal diagonal as vector \\
+\texttt{transp()} & transpose 
+\end{tabular}
+\end{center}
+
+\section{Selecting sub-matrices}
+\label{matrix-sub}
+
+You can select sub-matrices of a given matrix using the syntax
+
+\texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
+
+where \textsl{rows} can take one of three forms:
+
+\begin{center}
+\begin{tabular}{ll}
+empty & selects all rows \\
+a single integer & selects the single specified row \\
+two integers separated by a colon & selects a range of rows 
+\end{tabular}
+\end{center}
+
+The \textsl{cols} specification works in the same way, \textit{mutatis
+  mutandis}.  Here are some examples.
+%
+\begin{code}
+matrix B = A[1,]
+matrix B = A[2:3,3:5]
+matrix B = A[2,2]
+\end{code}
+%
+The first example selects row 1 from matrix \texttt{A}, the second
+selects a $2\times 3$ submatrix, and the third selects a scalar.
+
+\section{Extended example}
+\label{matrix-example}
+
+Example \ref{examp-matrix} shows how matrix methods can be used to
+replicate the built-in OLS functionality.  The example illustrates
+various additional points.  First, if you just write \texttt{matrix
+  A}, where a matrix \texttt{A} is already defined, the effect is to
+print the matrix.  Second, there is some ``cross over'' between matrix
+expressions and \texttt{genr} (actually the synonym \texttt{scalar} is
+used in the script).  In a \texttt{genr} formula, you can use matrix
+functions that produce scalar results (e.g.\ \texttt{rows()}).  You
+can also reference $1\times 1$ matrices as if they were ordinary
+scalars (e.g.\ \texttt{SSR}).  And in a \texttt{matrix} formula you
+can reference scalar variables where appropriate.  Note, however, that
+ordinary data series cannot be used in \texttt{matrix} expressions,
+other than in the special case of defining a matrix from a list of
+series as in section~\ref{matrix-create} above.
+
+\begin{script}[htbp]
+  \caption{OLS via matrix methods}
+  \label{examp-matrix}
+\begin{code}
+  open data4-1
+  matrix X = { const ; sqft }'
+  matrix y = { price }'
+  matrix b = inv(X'*X) * X'*y
+  printf "estimated coefficient vector\n"
+  matrix b
+  matrix uh = y - X*b
+  matrix SSR = uh'*uh
+  matrix SSR
+  scalar s2 = SSR / (rows(X) - rows(b))
+  matrix V = s2 * inv(X'*X)
+  matrix V
+  matrix se = sqrt(diag(V))
+  printf "estimated standard errors\n"
+  matrix se
+  # compare with built-in function
+  ols price const sqft --vcv
+\end{code}
+\end{script}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
