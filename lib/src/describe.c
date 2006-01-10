@@ -1720,7 +1720,7 @@ gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
     }
 
     llambda = gretl_matrix_copy(lambda);
-    gretl_matrix_log(llambda);
+    gretl_matrix_transform_elements(llambda, T_LOG);
     *lcm = gretl_vector_mean(llambda);
 
 #if LWE_DEBUG

@@ -28,14 +28,6 @@
 #define R_DIAG_MIN 1.0e-8
 
 typedef enum {
-    GRETL_MATRIX_OK = 0,
-    GRETL_MATRIX_NOMEM,
-    GRETL_MATRIX_NON_CONFORM,
-    GRETL_MATRIX_SINGULAR,
-    GRETL_MATRIX_ERR 
-} GretlMatrixError;
-
-typedef enum {
     GRETL_MOD_NONE = 0,
     GRETL_MOD_TRANSPOSE,
     GRETL_MOD_SQUARE
@@ -146,9 +138,9 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m);
 
 double gretl_matrix_trace (const gretl_matrix *m);
 
-int gretl_matrix_log (gretl_matrix *m);
+int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 
-int gretl_matrix_sqrt (gretl_matrix *m);
+int gretl_matrix_transform_elements (gretl_matrix *m, GretlMathFunc fn);
 
 double gretl_vector_mean (const gretl_vector *v);
 

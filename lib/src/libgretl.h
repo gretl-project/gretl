@@ -156,7 +156,7 @@ enum gretl_opt_flags {
     OPT_W = 1 << 18,
     OPT_X = 1 << 19,
     OPT_Z = 1 << 20,
-    OPT_UNSET = ULONG_MAX
+    OPT_UNSET = 1 << 30
 };
 
 typedef enum {
@@ -172,6 +172,27 @@ typedef enum {
     OP_DOTPOW  = 26,
     OP_KRON    = 27,
 } GretlOp;
+
+typedef enum {
+    T_NONE,
+    T_LOG, 
+    T_EXP, 
+    T_SIN, 
+    T_COS,
+    T_TAN,
+    T_ATAN,
+    T_INT, 
+    T_ABS, 
+    T_SQRT, 
+    T_DNORM,
+    T_CNORM,
+    T_QNORM,
+    T_GAMMA,
+    T_LNGAMMA,
+    T_NORMAL, 
+    T_UNIFORM, 
+    T_MATHMAX
+} GretlMathFunc;
 
 typedef unsigned long gretlopt;
 

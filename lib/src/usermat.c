@@ -66,6 +66,11 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
 {
     user_matrix **tmp;
 
+    if (!strcmp(name, "I")) {
+	strcpy(gretl_errmsg, "The matrix name 'I' is reserved");
+	return 1;
+    }
+
     if (check_varname(name)) {
 	return E_DATA;
     }
@@ -927,7 +932,6 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
     double x;
     int ra, ca;
     int rb, cb;
-    int merr = 0;
 
     *err = 0;
 
@@ -957,7 +961,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	break;
     case '~':
 	/* column-wise concatenation */
-	C = gretl_matrix_col_concat(A, B, &merr);
+	C = gretl_matrix_col_concat(A, B, err);
 	break;
     case '*':
 	ra = gretl_matrix_rows(A);
@@ -990,17 +994,17 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	    if (C == NULL) {
 		*err = E_ALLOC;
 	    } else {
-		merr = gretl_matrix_multiply(A, B, C);
+		*err = gretl_matrix_multiply(A, B, C);
 	    }
 	}
 	break;
     case OP_DOTMULT:
 	/* element-wise multiplication */
-	C = gretl_matrix_dot_multiply(A, B, &merr);
+	C = gretl_matrix_dot_multiply(A, B, err);
 	break;
     case OP_DOTDIV:
 	/* element-wise division */
-	C = gretl_matrix_dot_divide(A, B, &merr);
+	C = gretl_matrix_dot_divide(A, B, err);
 	break;
     case OP_DOTPOW:
 	/* element-wise exponentiation */
@@ -1028,10 +1032,6 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	*err = 1;
 	break;
     } 
-
-    if (merr && !*err) {
-	*err = gretl_matrix_err_to_gretl_err(merr);
-    }
 
     return C;
 }
@@ -1105,44 +1105,51 @@ gretl_matrix *user_matrix_get_inverse (gretl_matrix *m)
 
     if (m != NULL) {
 	R = gretl_matrix_copy(m);
-	if (gretl_invert_general_matrix(R)) {
-	    gretl_matrix_free(R);
-	    R = NULL;
+	if (R != NULL) {
+	    if (gretl_invert_general_matrix(R)) {
+		gretl_matrix_free(R);
+		R = NULL;
+	    }
 	}
     }
 
     return R;
 }
 
-gretl_matrix *user_matrix_get_log_matrix (gretl_matrix *m)
+gretl_matrix *
+user_matrix_get_transformation (gretl_matrix *m, GretlMathFunc fn)
 {
     gretl_matrix *R = NULL;
 
     if (m != NULL) {
 	R = gretl_matrix_copy(m);
-	if (gretl_matrix_log(R)) {
-	    gretl_matrix_free(R);
-	    R = NULL;
+	if (R != NULL) {
+	    if (gretl_matrix_transform_elements(R, fn)) {
+		gretl_matrix_free(R);
+		R = NULL;
+	    }
 	}
     }
 
     return R;
 }  
 
-gretl_matrix *user_matrix_get_sqrt_matrix (gretl_matrix *m)
+gretl_matrix *user_matrix_get_random (gretl_matrix *m, int dist)
 {
     gretl_matrix *R = NULL;
 
     if (m != NULL) {
 	R = gretl_matrix_copy(m);
-	if (gretl_matrix_sqrt(R)) {
-	    gretl_matrix_free(R);
-	    R = NULL;
+	if (R != NULL) {
+	    if (gretl_matrix_random_fill(R, dist)) {
+		gretl_matrix_free(R);
+		R = NULL;
+	    }		
 	}
     }
 
     return R;
-}  
+}
 
 /* move tranpose symbol ' in front of parenthesized
    matrix expression so genr can handle it as a function

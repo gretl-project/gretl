@@ -117,7 +117,6 @@ struct genr_func funcs[] = {
     { T_MAX,      "max" },
     { T_SORT,     "sort" }, 
     { T_INT,      "int" }, 
-    { T_LN,       "ln" }, 
     { T_COEFF,    "coeff" },
     { T_ABS,      "abs" }, 
     { T_RHO,      "rho" }, 
@@ -166,6 +165,7 @@ struct genr_func funcs[] = {
     { T_ROWS,     "rows" },
     { T_COLS,     "cols" },
     { T_TRANSP,   "transp" },
+    { T_IMAT,     "I" },
 #ifdef HAVE_MPFR
     { T_MLOG,     "mlog" },
 #endif
@@ -175,7 +175,7 @@ struct genr_func funcs[] = {
 
 #define LEVELS 7
 
-#define STANDARD_MATH(f) (f == T_LOG || f == T_LN || f == T_EXP || \
+#define STANDARD_MATH(f) (f == T_LOG || f == T_EXP || \
                           f == T_SIN || f == T_COS || f == T_TAN || \
                           f == T_ATAN || f == T_INT || f == T_ABS || \
                           f == T_DNORM || f == T_CNORM || f == T_QNORM || \
@@ -683,7 +683,8 @@ token_get_variable_or_constant (const char *s, GENERATOR *genr,
 }
 
 static int token_get_function (const char *s, GENERATOR *genr,
-			       int func, double *pval, char *str)
+			       int func, double *pval, gretl_matrix **M,
+			       char *str)
 {
     int atype = ATOM_SERIES;
     double val = 0.0;
@@ -723,6 +724,9 @@ static int token_get_function (const char *s, GENERATOR *genr,
     } else if (MATRIX_SCALAR_FUNC(func) && !genr_is_matrix(genr)) {
 	val = genr_get_matrix_scalar(s, func);
 	atype = ATOM_SCALAR;
+    } else if (func == T_IMAT && genr_is_matrix(genr)) {
+	*M = gretl_identity_matrix_new(atoi(s+2));
+	atype = ATOM_MATRIX;
     }
 
     *pval = val;
@@ -844,7 +848,7 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 	} else if (strchr(s, '(')) {
 	    /* function or lagged variable? */
 	    if ((func = genr_function_from_string(s))) {
-		atype = token_get_function(s, genr, func, &val, str);
+		atype = token_get_function(s, genr, func, &val, &M, str);
 	    } else {
 		/* not a function: try a lagged variable */
 		v = get_lagvar(s, &lag, genr);
@@ -1349,15 +1353,14 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	    R = user_matrix_get_log_determinant_as_matrix(M);
 	} else if (atom->func == T_INV) {
 	    R = user_matrix_get_inverse(M);
-	    DPRINTF(("allocated inverse of M (%p) at %p\n", (void *)M, (void *)R));
-	} else if (atom->func == T_LOG) {
-	    R = user_matrix_get_log_matrix(M);
-	} else if (atom->func == T_SQRT) {
-	    R = user_matrix_get_sqrt_matrix(M);
 	} else if (atom->func == T_DIAG) {
 	    R = gretl_matrix_get_diagonal(M);
 	} else if (atom->func == T_TRANSP) {
 	    R = gretl_matrix_copy_transpose(M);
+	} else if (atom->func == T_NORMAL || atom->func == T_UNIFORM) {
+	    R = user_matrix_get_random(M, atom->func);
+	} else if (atom->func >= T_NONE && atom->func < T_MATHMAX) {
+	    R = user_matrix_get_transformation(M, atom->func);
 	} else if (atom->func == T_IDENTITY) {
 	    DPRINTF(("identity func: passing along M (%p) as R\n", (void *) M));
 	    R = M;
@@ -1869,7 +1872,8 @@ static int string_arg_function_word (const char *s)
 	!strncmp(s, "critical", 8) ||
 	!strncmp(s, "fracdiff", 8) ||
 	!strncmp(s, "mpow", 4) ||
-	!strncmp(s, "mlog", 4)) {
+	!strncmp(s, "mlog", 4) ||
+	!strncmp(s, "I", 1)) {
 	return 1;
     }
 
@@ -2361,6 +2365,11 @@ int genr_function_from_string (const char *s)
 	if (!strcmp(word, funcs[i].fword)) {
 	    return funcs[i].fnum;
 	}
+    }
+
+    /* aliases */
+    if (!strcmp(word, "ln")) {
+	return T_LOG;
     }
 
     return 0;
@@ -3347,7 +3356,6 @@ static double evaluate_math_function (double arg, int fn, int *err)
     switch (fn) {
 
     case T_LOG:
-    case T_LN:
 	if (arg <= 0.0) {
 	    fprintf(stderr, "genr: log arg = %g\n", arg);
 	    *err = E_LOGS;

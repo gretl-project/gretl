@@ -207,31 +207,3 @@ void gretl_errmsg_clear (void)
     *gretl_errmsg = '\0';
 }
 
-/**
- * gretl_matrix_err_to_gretl_err:
- * @merr: error code from gretl matrix operation.
- *
- * Given a gretl matrix error code, convert to libgretl
- * error code, possibly writing something appropriate to
- * %gretl_errmsg in the process.
- * 
- * Returns: libgretl error code.
- */
-
-int gretl_matrix_err_to_gretl_err (int merr)
-{
-    int err = 0;
-
-    if (merr == GRETL_MATRIX_NOMEM) {
-	err = E_ALLOC;
-    } else if (merr == GRETL_MATRIX_NON_CONFORM) {
-	err = E_NONCONF;
-    } else if (merr == GRETL_MATRIX_SINGULAR) {
-	strcpy(gretl_errmsg, _("Matrix is singular"));
-	err = E_SINGULAR;
-    } else if (merr == GRETL_MATRIX_ERR) {
-	err = 1;
-    }
-
-    return err;
-}

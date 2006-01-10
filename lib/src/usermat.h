@@ -49,9 +49,10 @@ gretl_matrix *user_matrix_get_log_determinant_as_matrix (gretl_matrix *m);
 
 gretl_matrix *user_matrix_get_inverse (gretl_matrix *m);
 
-gretl_matrix *user_matrix_get_log_matrix (gretl_matrix *m);
+gretl_matrix *
+user_matrix_get_transformation (gretl_matrix *m, GretlMathFunc fn);
 
-gretl_matrix *user_matrix_get_sqrt_matrix (gretl_matrix *m);
+gretl_matrix *user_matrix_get_random (gretl_matrix *m, int dist);
 
 int reposition_transpose_symbol (char *s);
 

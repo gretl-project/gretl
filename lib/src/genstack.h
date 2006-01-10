@@ -58,15 +58,12 @@ struct genatom_ {
     atomset *aset;
 };
 
-/* below: matches funcs[] in generate.c */
+/* below: matches funcs[] in generate.c -- these are in addition to
+   the (mostly) standard math functions in the GretlMathFunc
+   enumeration
+*/
 enum transformations {
-    T_LOG = 1, 
-    T_EXP, 
-    T_SIN, 
-    T_COS,
-    T_TAN,
-    T_ATAN,
-    T_DIFF,
+    T_DIFF = T_MATHMAX,
     T_LDIFF, 
     T_SDIFF,
     T_MEAN, 
@@ -74,18 +71,12 @@ enum transformations {
     T_MIN,
     T_MAX,
     T_SORT, 
-    T_INT, 
-    T_LN, 
     T_COEFF,
-    T_ABS, 
     T_RHO, 
-    T_SQRT, 
     T_SUM, 
     T_NOBS,
     T_T1,
     T_T2,
-    T_NORMAL, 
-    T_UNIFORM, 
     T_STDERR,
     T_CUM, 
     T_MISSING,
@@ -103,11 +94,9 @@ enum transformations {
     T_CRIT,
     T_OBSNUM,
     T_MPOW,
-    T_DNORM,
-    T_CNORM,
-    T_QNORM,
-    T_GAMMA,
-    T_LNGAMMA,
+#ifdef HAVE_MPFR
+    T_MLOG,
+#endif
     T_RESAMPLE,
     T_HPFILT,
     T_BKFILT,
@@ -124,9 +113,7 @@ enum transformations {
     T_ROWS,
     T_COLS,
     T_TRANSP,
-#ifdef HAVE_MPFR
-    T_MLOG,
-#endif
+    T_IMAT,
     T_IDENTITY
 };
 

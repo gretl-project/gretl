@@ -55,7 +55,7 @@ static int check_R_matrix (const gretl_matrix *R)
     int err = 0;
 
     m = gretl_matrix_alloc(k, k);
-    if (m == NULL) return GRETL_MATRIX_NOMEM;
+    if (m == NULL) return E_ALLOC;
 
     gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
 			      R, GRETL_MOD_TRANSPOSE,
@@ -808,7 +808,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 #endif
 
     if ((err = check_R_matrix(R))) {
-	if (err == GRETL_MATRIX_SINGULAR) {
+	if (err == E_SINGULAR) {
 	    pputs(prn, _("Matrix inversion failed:\n"
 			 " restrictions may be inconsistent or redundant\n"));
 	} else {
@@ -941,7 +941,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	err = restriction_set_form_matrices(rset, &R, &q);
 	if (!err) {
 	    err = check_R_matrix(R);
-	    if (err == GRETL_MATRIX_SINGULAR) {
+	    if (err == E_SINGULAR) {
 		pputs(prn, _("Matrix inversion failed:\n"
 			     " restrictions may be inconsistent or redundant\n"));
 	    } else if (err) {

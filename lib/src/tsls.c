@@ -24,19 +24,6 @@
 #include "libset.h"
 #include "estim_private.h"
 
-static int translate_gretl_matrix_error (int gmerr)
-{
-    if (gmerr == GRETL_MATRIX_OK) {
-	return 0;
-    } else if (gmerr == GRETL_MATRIX_NOMEM) {
-	return E_ALLOC;
-    } else if (gmerr == GRETL_MATRIX_SINGULAR) {
-	return E_SINGULAR;
-    } else {
-	return E_UNSPEC;
-    }
-}
-
 static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
 {
     int i, v;
@@ -555,13 +542,11 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 
     *err = gretl_matrix_QR_decomp(Q, R);
     if (*err) {
-	*err = translate_gretl_matrix_error(*err);
 	goto bailout;
     }
 
     rank = gretl_matrix_QR_rank(R, NULL, err);
     if (*err) {
-	*err = translate_gretl_matrix_error(*err);
 	goto bailout;
     } else if (rank < k) {
 	fprintf(stderr, "k = %d, rank = %d\n", k, rank);
@@ -601,9 +586,6 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 	Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
 	R = gretl_matrix_reuse(R, k, k);
 	*err = gretl_matrix_QR_decomp(Q, R);
-	if (*err) {
-	    *err = translate_gretl_matrix_error(*err);
-	}
     }
 
  bailout:
