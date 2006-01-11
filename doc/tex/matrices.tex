@@ -204,15 +204,21 @@ You can select sub-matrices of a given matrix using the syntax
 
 \texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
 
-where \textsl{rows} can take one of three forms:
+where \textsl{rows} can take one of four forms:
 
 \begin{center}
 \begin{tabular}{ll}
 empty & selects all rows \\
 a single integer & selects the single specified row \\
-two integers separated by a colon & selects a range of rows 
+two integers separated by a colon & selects a range of rows \\
+the name of a matrix & selects the specified rows
 \end{tabular}
 \end{center}
+
+With regard to the last option, the matrix given in the \textsl{rows}
+field must be either $p\times 1$ or $1\times p$, and should contain
+integer values in the range 1 to $n$, where $n$ is the number of rows
+in the matrix from which the selection is to be made.
 
 The \textsl{cols} specification works in the same way, \textit{mutatis
   mutandis}.  Here are some examples.
@@ -221,10 +227,13 @@ The \textsl{cols} specification works in the same way, \textit{mutatis
 matrix B = A[1,]
 matrix B = A[2:3,3:5]
 matrix B = A[2,2]
+matrix idx = { 1, 2, 6 }
+matrix B = A[idx,]
 \end{code}
 %
-The first example selects row 1 from matrix \texttt{A}, the second
-selects a $2\times 3$ submatrix, and the third selects a scalar.
+The first example selects row 1 from matrix \texttt{A}; the second
+selects a $2\times 3$ submatrix; the third selects a scalar; and
+the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
 
 \section{Extended example}
 \label{matrix-example}
