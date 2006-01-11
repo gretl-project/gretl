@@ -795,7 +795,7 @@ static int dataset_var_index (const char *s)
 static int test_stat_index (const char *s)
 {
     char test[USER_VLEN];
-    int ret = 0
+    int ret = 0;
 
     *test = '\0';
     strncat(test, s, USER_VLEN - 1);
