@@ -7,7 +7,7 @@
 As of version 1.5.1, gretl offers the facility of creating and
 manipulating user-defined matrices.  This is currently experimental;
 it is not very advanced and some aspects of the syntax are liable to
-change.  Nontheless we set out the current situation here.
+change.  Nonetheless we set out the current situation here.
 
 \section{Creating matrices}
 \label{matrix-create}
@@ -16,7 +16,7 @@ Matrices can be created in any one of four ways:
 
 \begin{enumerate}
 \item By full specification of the scalar values that compose the
-  matrix, either in numerical form or by reference to pre-existing
+  matrix, in numerical form or by reference to pre-existing
   scalar variables, or both; or
 \item by providing a list of data series; or
 \item by providing a \textit{named list} of series; or
@@ -41,7 +41,7 @@ expression must be wrapped in braces.  Spaces within the braces are
 not significant.  The above expression defines a $2\times3$ matrix.
 Each element must be either a numerical value or the name of a
 pre-existing scalar variable.  Directly after the closing brace you
-can append a single quote or apostrophe to obtain the transpose.
+can append a single quote (\texttt{'}) to obtain the transpose.
 
 To specify a matrix in terms of data series the syntax is, for
 example:
@@ -56,10 +56,10 @@ so that the variables are in columns. The range of data values
 included in the matrix depends on the current setting of the sample
 range.
 
-While gretl's built-in statistical functions are mostly capable of
-handling missing values, the matrix arithmetic functions are not, and
-you will get an error if you try to build a matrix from series that
-include missing values.
+Please note that while gretl's built-in statistical functions are
+mostly capable of handling missing values, the matrix arithmetic
+functions are not, and you will get an error if you try to build a
+matrix from series that include missing values.
 
 Instead of giving an explicit list of variables, you may instead
 provide the name of a saved list, as in
@@ -69,9 +69,9 @@ list xlist = x1 x2 x3
 matrix A = { xlist }
 \end{code}
 
-Note that when you give a named list, the data series are by default
-placed in columns: if you want them in rows, append the transpose
-symbol.  
+When you provide a named list, the data series are by default placed
+in columns, as is natural in an econometric context: if you want them
+in rows, append the transpose symbol.
 
 \section{Manipulating matrices}
 \label{matrix-manip}
@@ -79,15 +79,16 @@ symbol.
 You can create new matrices or replace existing matrices by means of
 various transformations, in a manner similar to the \texttt{genr}
 command for scalars and data series.  To get a matrix result, however,
-the command must start with \texttt{matrix}, not \texttt{genr}.
+the command must start with the keyword \texttt{matrix}, not
+\texttt{genr}.
 
 The following operators are available for matrices:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{+} & matrix addition \\
-\texttt{-} & matrix subtraction \\
-\texttt{*} & matrix multiplication \\
+\texttt{+} & addition \\
+\texttt{-} & subtraction \\
+\texttt{*} & ordinary matrix multiplication \\
 \texttt{.*} & element-wise multiplication \\
 \texttt{./} & element-wise divsion \\
 \verb+.^+ & element-wise exponentiation \\
@@ -104,7 +105,7 @@ matrix C = A .* B
 \end{code}
 % 
 then $C_{ij} = A_{ij} \times B_{ij}$.  Likewise with element-wise
-divsion, $C_{ij} = A_{ij}/B_{ij}$. With element-wise exponentiation,
+division, $C_{ij} = A_{ij}/B_{ij}$. Element-wise exponentiation, as in
 %
 \begin{code}
 C = A .^ k
@@ -125,7 +126,7 @@ The following functions are available for element-by-element
 transformations of matrices: \texttt{log}, \texttt{exp}, \texttt{sin},
 \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int}, \texttt{abs},
 \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm}, \texttt{qnorm},
-\texttt{gamma} and \texttt{lngamma}.  All of these have the same
+\texttt{gamma} and \texttt{lngamma}.  These functions have the same
 meanings as in \texttt{genr}.  For example, if a matrix \texttt{A} is
 already defined, then
 %
@@ -183,7 +184,7 @@ selects a $2\times 3$ submatrix, and the third selects a scalar.
 \label{matrix-example}
 
 Example \ref{examp-matrix} shows how matrix methods can be used to
-replicate the built-in OLS functionality.  The example illustrates
+replicate gretl's built-in OLS functionality.  The example illustrates
 various additional points.  First, if you just write \texttt{matrix
   A}, where a matrix \texttt{A} is already defined, the effect is to
 print the matrix.  Second, there is some ``cross over'' between matrix
