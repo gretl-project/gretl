@@ -24,7 +24,8 @@ gretl_matrix *get_matrix_by_name (const char *name);
 
 int named_matrix_get_scalar (const char *name, double *x);
 
-int add_or_replace_user_matrix (gretl_matrix *M, const char *name);
+int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
+				gretl_matrix **R);
 
 void destroy_user_matrices (void);
 
@@ -51,8 +52,6 @@ gretl_matrix *user_matrix_get_inverse (gretl_matrix *m);
 
 gretl_matrix *
 user_matrix_get_transformation (gretl_matrix *m, GretlMathFunc fn);
-
-gretl_matrix *user_matrix_get_random (gretl_matrix *m, int dist);
 
 int reposition_transpose_symbol (char *s);
 

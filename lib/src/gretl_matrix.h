@@ -119,6 +119,10 @@ gretl_matrix *gretl_packed_matrix_alloc (int rows);
 
 gretl_matrix *gretl_identity_matrix_new (int n);
 
+gretl_matrix *gretl_zero_matrix_new (int r, int c);
+
+gretl_matrix *gretl_unit_matrix_new (int r, int c);
+
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m);

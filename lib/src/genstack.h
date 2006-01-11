@@ -114,6 +114,8 @@ enum transformations {
     T_COLS,
     T_TRANSP,
     T_IMAT,
+    T_ZEROS,
+    T_ONES,
     T_IDENTITY
 };
 
@@ -166,6 +168,7 @@ void atom_eat_children (genatom *atom);
 void atom_stack_bookmark (GENERATOR *genr);
 void atom_stack_resume (GENERATOR *genr);
 int atom_stack_check_for_scalar (GENERATOR *genr);
+void atom_stack_nullify_matrix (gretl_matrix *M, GENERATOR *genr);
 
 int calc_push (double x, GENERATOR *genr);
 double calc_pop (GENERATOR *genr);

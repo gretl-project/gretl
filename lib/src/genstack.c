@@ -256,6 +256,18 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
     return ret;
 }
 
+void atom_stack_nullify_matrix (gretl_matrix *M, GENERATOR *genr)
+{
+    int i;
+
+    for (i=0; i<genr->aset->n_atoms; i++) {
+	if (genr->aset->atoms[i]->M == M) {
+	    genr->aset->atoms[i]->M = NULL;
+	    break;
+	}
+    }
+}
+
 int attach_atomset (GENERATOR *genr)
 {
     atomset *aset = malloc(sizeof *aset);

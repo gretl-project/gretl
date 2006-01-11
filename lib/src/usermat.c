@@ -66,8 +66,10 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
 {
     user_matrix **tmp;
 
-    if (!strcmp(name, "I")) {
-	strcpy(gretl_errmsg, "The matrix name 'I' is reserved");
+    if (!strcmp(name, "I") ||
+	!strcmp(name, "zeros") ||
+	!strcmp(name, "ones")) {
+	sprintf(gretl_errmsg, "The matrix name '%s' is reserved", name);
 	return 1;
     }
 
@@ -98,8 +100,13 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
     return 0;
 }
 
-static int replace_user_matrix (user_matrix *u, gretl_matrix *M)
+static int replace_user_matrix (user_matrix *u, gretl_matrix *M,
+				gretl_matrix **R)
 {
+    if (R != NULL) {
+	*R = u->M;
+    }
+
     gretl_matrix_free(u->M);
     u->M = M;
 
@@ -355,6 +362,8 @@ gretl_matrix *user_matrix_get_slice (const char *s, int *err)
  * add_or_replace_user_matrix:
  * @M: gretl matrix.
  * @name: name for the matrix.
+ * @R: location to receive address of matrix that was
+ * replaced, if any (or %NULL).
  *
  * Checks whether a matrix of the given @name already exists.
  * If so, the original matrix is replaced by @M; if not, the
@@ -364,14 +373,15 @@ gretl_matrix *user_matrix_get_slice (const char *s, int *err)
  * Returns: 0 on success, %E_ALLOC on failure.
  */
 
-int add_or_replace_user_matrix (gretl_matrix *M, const char *name)
+int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
+				gretl_matrix **R)
 {
     user_matrix *u;
     int err = 0;
 
     u = get_user_matrix_by_name(name);
     if (u != NULL) {
-	err = replace_user_matrix(u, M);
+	err = replace_user_matrix(u, M, R);
     } else {
 	err = add_user_matrix(M, name);
     }
@@ -873,7 +883,7 @@ static int create_matrix (const char *name, const char *s,
 	if (err) {
 	    goto finalize;
 	} else if (M != NULL) {
-	    err = add_or_replace_user_matrix(M, name);
+	    err = add_or_replace_user_matrix(M, name, NULL);
 	    goto finalize;
 	}
     }
@@ -921,7 +931,7 @@ static int create_matrix (const char *name, const char *s,
     }
     
     if (!err) {
-	err = add_or_replace_user_matrix(M, name);
+	err = add_or_replace_user_matrix(M, name, NULL);
     }
 
  finalize:
@@ -1212,23 +1222,6 @@ user_matrix_get_transformation (gretl_matrix *m, GretlMathFunc fn)
 
     return R;
 }  
-
-gretl_matrix *user_matrix_get_random (gretl_matrix *m, int dist)
-{
-    gretl_matrix *R = NULL;
-
-    if (m != NULL) {
-	R = gretl_matrix_copy(m);
-	if (R != NULL) {
-	    if (gretl_matrix_random_fill(R, dist)) {
-		gretl_matrix_free(R);
-		R = NULL;
-	    }		
-	}
-    }
-
-    return R;
-}
 
 /* move tranpose symbol ' in front of parenthesized
    matrix expression so genr can handle it as a function

@@ -216,6 +216,56 @@ gretl_matrix *gretl_identity_matrix_new (int n)
 }
 
 /**
+ * gretl_zero_matrix_new:
+ * @r: desired number of rows in the matrix.
+ * @r: desired number of columns in the matrix.
+ *
+ * Returns: pointer to a newly allocated zero matrix, or %NULL
+ * on failure.
+ */
+
+gretl_matrix *gretl_zero_matrix_new (int r, int c)
+{
+    gretl_matrix *m;
+    int i, n = r * c;
+
+    m = gretl_matrix_alloc(r, c);
+
+    if (m != NULL) {
+	for (i=0; i<n; i++) {
+	    m->val[i] = 0.0;
+	}
+    }
+
+    return m;
+}
+
+/**
+ * gretl_unit_matrix_new:
+ * @r: desired number of rows in the matrix.
+ * @r: desired number of columns in the matrix.
+ *
+ * Returns: pointer to a newly allocated matrix, all
+ * of whose elements equal 1, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_unit_matrix_new (int r, int c)
+{
+    gretl_matrix *m;
+    int i, n = r * c;
+
+    m = gretl_matrix_alloc(r, c);
+
+    if (m != NULL) {
+	for (i=0; i<n; i++) {
+	    m->val[i] = 1.0;
+	}
+    }
+
+    return m;
+}
+
+/**
  * gretl_column_vector_from_array:
  * @x: pointer to array of elements.
  * @n: number of elements.
