@@ -471,7 +471,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	} else if (what == W_COPY) {
 	    prn_to_clipboard(prn, fmt);
 	} else if (what == W_SAVE) {
-	    int action = (fmt == GRETL_FORMAT_TEX)? SAVE_TEX : SAVE_RTF;
+	    int action = (fmt & GRETL_FORMAT_TEX)? SAVE_TEX : SAVE_RTF;
 
 	    file_selector(_("Save"), action, FSEL_DATA_PRN, prn);
 	}
