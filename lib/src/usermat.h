@@ -22,10 +22,16 @@
 
 gretl_matrix *get_matrix_by_name (const char *name);
 
+gretl_matrix *get_matrix_by_name_at_level (const char *name, int level);
+
 int named_matrix_get_scalar (const char *name, double *x);
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 				gretl_matrix **R);
+
+int copy_named_matrix_as (const char *orig, const char *new);
+
+int user_matrix_reconfigure (gretl_matrix *M, char *newname, int level);
 
 void destroy_user_matrices (void);
 

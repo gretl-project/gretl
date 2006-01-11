@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "gretl_func.h"
+#include "libset.h"
 #include "usermat.h"
 
 #include <errno.h>
@@ -66,11 +67,8 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
 {
     user_matrix **tmp;
 
-    if (!strcmp(name, "I") ||
-	!strcmp(name, "zeros") ||
-	!strcmp(name, "ones")) {
-	sprintf(gretl_errmsg, "The matrix name '%s' is reserved", name);
-	return 1;
+    if (M == NULL) {
+	return E_ALLOC;
     }
 
     if (check_varname(name)) {
@@ -113,6 +111,14 @@ static int replace_user_matrix (user_matrix *u, gretl_matrix *M,
     return 0;
 }
 
+/**
+ * is_user_matrix:
+ * @m: gretl_matrix to test.
+ *
+ * Returns: 1 if the matrix @m is saved on the stack of matrices,
+ * else 0.
+ */
+
 int is_user_matrix (gretl_matrix *m)
 {
     int i;
@@ -126,12 +132,17 @@ int is_user_matrix (gretl_matrix *m)
     return 0;
 }
 
+/* If transpose_ok is non-zero, it's OK to pick up the transpose
+   of an existing matrix (e.g. A').  If slevel is non-negative,
+   search at the function execution depth given by slevel, 
+   otherwise search at the current function execution depth.
+*/
+
 static gretl_matrix *
-real_get_matrix_by_name (const char *name, int transpose_ok)
+real_get_matrix_by_name (const char *name, int transpose_ok, int slevel)
 {
     char test[MNAMELEN];
-    int level = gretl_function_stack_depth();
-    int transp = 0;
+    int level, transp = 0;
     int i;
 
     *test = '\0';
@@ -144,6 +155,12 @@ real_get_matrix_by_name (const char *name, int transpose_ok)
 	}
     } 
 
+    if (slevel < 0) {
+	level = gretl_function_stack_depth();
+    } else {
+	level = slevel;
+    }
+
     for (i=0; i<n_matrices; i++) {
 	if (!strcmp(test, matrices[i]->name) &&
 	    matrices[i]->level == level) {
@@ -152,6 +169,35 @@ real_get_matrix_by_name (const char *name, int transpose_ok)
 	    } else {
 		return matrices[i]->M;
 	    }
+	}
+    }
+
+    return NULL;
+}
+
+static user_matrix *get_user_matrix_by_name (const char *name)
+{
+    int level = gretl_function_stack_depth();
+    int i;
+
+    for (i=0; i<n_matrices; i++) {
+	if (!strcmp(name, matrices[i]->name) &&
+	    matrices[i]->level == level) {
+	    return matrices[i];
+	}
+    }
+
+    return NULL;
+}
+
+static user_matrix *get_user_matrix_by_data (gretl_matrix *M)
+{
+    int level = gretl_function_stack_depth();
+    int i;
+
+    for (i=0; i<n_matrices; i++) {
+	if (matrices[i]->M == M && matrices[i]->level == level) {
+	    return matrices[i];
 	}
     }
 
@@ -169,12 +215,92 @@ real_get_matrix_by_name (const char *name, int transpose_ok)
 
 gretl_matrix *get_matrix_by_name (const char *name)
 {
-    return real_get_matrix_by_name(name, 1);
+    return real_get_matrix_by_name(name, 1, -1);
 }
+
+/**
+ * get_matrix_by_name_at_level:
+ * @name: name of the matrix.
+ * @level: level of function execution at which to search.
+ *
+ * Looks up a user-defined matrix by name, at the given
+ * level fo function execution.
+ *
+ * Returns: pointer to matrix, or %NULL if not found.
+ */
+
+gretl_matrix *get_matrix_by_name_at_level (const char *name, int level)
+{
+    return real_get_matrix_by_name(name, 0, level);
+}
+
+/**
+ * copy_named_matrix_as:
+ * @orig: the name of the original matrix.
+ * @new: the name to be given to the copy.
+ *
+ * If a saved matrix is found by the name @orig, a copy of
+ * this matrix is added to the stack of saved matrices under the
+ * name @new.  This is intended for use when a matrix is given
+ * as the argument to a user-defined function: it is copied
+ * under the name assigned by the function's parameter list.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int copy_named_matrix_as (const char *orig, const char *new)
+{
+    user_matrix *u;
+    int err = 0;
+
+    u = get_user_matrix_by_name(orig);
+    if (u == NULL) {
+	err = 1;
+    } else {
+	err = add_user_matrix(gretl_matrix_copy(u->M), new);
+	if (!err) {
+	    /* for use in functions: increment level of last-added matrix */
+	    u = matrices[n_matrices - 1];
+	    u->level += 1;
+	}
+    }
+
+    return err;
+}
+
+int user_matrix_reconfigure (gretl_matrix *M, char *newname, int level)
+{
+    user_matrix *u = get_user_matrix_by_data(M);
+    int err = 0;
+
+    if (u == NULL) {
+	err = 1;
+    } else {
+	*u->name = '\0';
+	strncat(u->name, newname, MNAMELEN - 1);
+	u->level = level;
+    }
+
+    return err;
+}
+
+/**
+ * named_matrix_get_scalar:
+ * @name: name of the matrix.
+ * @x: location to receive scalar value.
+ *
+ * If there exists a matrix of the name @name at the current
+ * level of function execution, and if this matrix is 
+ * 1 x 1, then assign to @x the value of the single element
+ * of this matrix.
+ *
+ * Returns: 0 on success or non-zero if no matrix is found,
+ * or if the matrix is not 1 x 1.
+ */
 
 int named_matrix_get_scalar (const char *name, double *x)
 {
-    gretl_matrix *m = real_get_matrix_by_name(name, 0);
+    gretl_matrix *m = real_get_matrix_by_name(name, 0, -1);
     int err = 0;
 
     if (m == NULL || gretl_matrix_rows(m) != 1 ||
@@ -189,22 +315,7 @@ int named_matrix_get_scalar (const char *name, double *x)
 
 static gretl_matrix *original_matrix_by_name (const char *name)
 {
-    return real_get_matrix_by_name(name, 0);
-}
-
-static user_matrix *get_user_matrix_by_name (const char *name)
-{
-    int level = gretl_function_stack_depth();
-    int i;
-
-    for (i=0; i<n_matrices; i++) {
-	if (!strcmp(name, matrices[i]->name) &&
-	    matrices[i]->level == level) {
-	    return matrices[i];
-	}
-    }
-
-    return NULL;
+    return real_get_matrix_by_name(name, 0, -1);
 }
 
 static int 
@@ -339,6 +450,18 @@ real_matrix_get_slice (gretl_matrix *M, const char *s, int *err)
     return S;
 }
 
+/**
+ * user_matrix_get_slice:
+ * @s: string specifying a sub-matrix.
+ * @err: location to receive error code.
+ *
+ * If @s specifies a valid "slice" of an existing named
+ * matrix at the current level of function execution, 
+ * constructs a newly allocated sub-matrix.
+ *
+ * Returns: allocated sub-matrix on success, %NULL on failure.
+ */
+
 gretl_matrix *user_matrix_get_slice (const char *s, int *err)
 {
     gretl_matrix *M = NULL;
@@ -349,7 +472,7 @@ gretl_matrix *user_matrix_get_slice (const char *s, int *err)
     if (len < MNAMELEN) {
 	*test = '\0';
 	strncat(test, s, len);
-	M = real_get_matrix_by_name(test, 0);
+	M = real_get_matrix_by_name(test, 0, -1);
 	if (M != NULL) {
 	    S = real_matrix_get_slice(M, s, err);
 	}
@@ -391,15 +514,18 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 
 static void destroy_user_matrix (user_matrix *u)
 {
-#if 0
-    fprintf(stderr, "destroy_user_matrix: dummy call\n");
-#else
+    if (u == NULL) {
+	return;
+    }
+
 #if MDEBUG
-    fprintf(stderr, "destroy_user_matrix: freeing matrix at %p\n", 
+    fprintf(stderr, "destroy_user_matrix: freeing matrix at %p...", 
 	    (void *) u->M);
 #endif
     gretl_matrix_free(u->M);
     free(u);
+#if MDEBUG
+    fprintf(stderr, " done\n");
 #endif
 }
 
@@ -421,8 +547,20 @@ int destroy_user_matrices_at_level (int level)
     int i, j, nm = 0;
     int err = 0;
 
+#if MDEBUG
+    fprintf(stderr, "destroy_user_matrices_at_level: level = %d, "
+	    "n_matrices = %d\n", level, n_matrices);
+#endif
+
     for (i=0; i<n_matrices; i++) {
+	if (matrices[i] == NULL) {
+	    break;
+	}
 	if (matrices[i]->level == level) {
+#if MDEBUG
+	    fprintf(stderr, "destroying matrix[%d] (M at %p)\n",
+		    i, (void *) matrices[i]->M);
+#endif
 	    destroy_user_matrix(matrices[i]);
 	    for (j=i; j<n_matrices - 1; j++) {
 		matrices[j] = matrices[j+1];
@@ -937,10 +1075,12 @@ static int create_matrix (const char *name, const char *s,
  finalize:
 
     if (!err) {
-	if (n_matrices > nm) {
-	    pprintf(prn, "Added matrix '%s'\n", name);
-	} else {
-	    pprintf(prn, "Replaced matrix '%s'\n", name);
+	if (gretl_messages_on()) {
+	    if (n_matrices > nm) {
+		pprintf(prn, "Added matrix '%s'\n", name);
+	    } else {
+		pprintf(prn, "Replaced matrix '%s'\n", name);
+	    }
 	}
     } else {
 	pprintf(prn, "Error adding matrix '%s'\n", name);
@@ -1018,6 +1158,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 			      char op, int *err) 
 {
     gretl_matrix *C = NULL;
+    gretl_matrix *D = NULL;
     double x;
     int ra, ca;
     int rb, cb;
@@ -1084,6 +1225,23 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 		*err = E_ALLOC;
 	    } else {
 		*err = gretl_matrix_multiply(A, B, C);
+	    }
+	}
+	break;
+    case '/':
+	/* matrix "division" */
+	C = gretl_matrix_copy(A);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    D = gretl_matrix_copy(B);
+	    if (D == NULL) {
+		gretl_matrix_free(C);
+		C = NULL;
+		*err = E_ALLOC;
+	    } else {	
+		*err = gretl_LU_solve(D, C);
+		gretl_matrix_free(D);
 	    }
 	}
 	break;

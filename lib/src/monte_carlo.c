@@ -250,6 +250,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 
     if (ci == GENR ||
 	ci == LOOP ||
+	ci == MATRIX ||
 	ci == STORE ||
 	ci == PRINT ||
 	ci == PRINTF ||

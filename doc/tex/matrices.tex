@@ -22,7 +22,8 @@ Matrices can be created in any one of four ways:
 \item by providing a \textit{named list} of series; or
 \item using a formula of the same general type that is used
   with the \texttt{genr} command, whereby a new matrix is defined
-  in terms of existing matrices and/or scalars.
+  in terms of existing matrices and/or scalars, or via some
+  special functions.
 \end{enumerate}
 
 At present these methods cannot be mixed in the specification of a
@@ -57,9 +58,9 @@ included in the matrix depends on the current setting of the sample
 range.
 
 Please note that while gretl's built-in statistical functions are
-mostly capable of handling missing values, the matrix arithmetic
-functions are not, and you will get an error if you try to build a
-matrix from series that include missing values.
+capable of handling missing values, the matrix arithmetic functions
+are not, and you will get an error if you try to build a matrix from
+series that include missing values.
 
 Instead of giving an explicit list of variables, you may instead
 provide the name of a saved list, as in
@@ -89,38 +90,55 @@ The following operators are available for matrices:
 \texttt{+} & addition \\
 \texttt{-} & subtraction \\
 \texttt{*} & ordinary matrix multiplication \\
+\texttt{/} & matrix ``division'' (see below) \\
 \texttt{.*} & element-wise multiplication \\
-\texttt{./} & element-wise divsion \\
+\texttt{./} & element-wise division \\
 \verb+.^+ & element-wise exponentiation \\
 \verb+~+ & column-wise concatenation \\
 \texttt{**} & Kronecker product 
 \end{tabular}
 \end{center}
 
-To explain the less obvious cases: in element-wise multiplication if
-we write 
+Here are explanations of the less obvious cases.  First, in matrix
+``division'', $A/B$ is algebraically equivalent to $B^{-1}A$
+(pre-multiplication by the inverse of the ``divisor'').  Therefore the
+following two expressions are equivalent in principle:
+%
+\begin{code}
+matrix C = A / B
+matrix C = inv(B) * A
+\end{code}
+%
+where \texttt{inv()} is the matrix inversion function (see below for
+more on matrix functions).  The first form, however, may be more
+accurate than the second; the solution is obtained via LU
+decomposition, without the explicit calculation of the inverse matrix.
+
+In element-wise multiplication if we write
 %
 \begin{code}
 matrix C = A .* B
 \end{code}
 % 
-then $C_{ij} = A_{ij} \times B_{ij}$.  Likewise with element-wise
-division, $C_{ij} = A_{ij}/B_{ij}$. Element-wise exponentiation, as in
+then $c_{ij} = a_{ij} \times b_{ij}$.  Likewise with element-wise
+division, $c_{ij} = a_{ij}/b_{ij}$. Element-wise exponentiation, as in
 %
 \begin{code}
 C = A .^ k
 \end{code}
 % 
-produces $C_{ij} = A_{ij}^k$.  The variable $k$ must be a scalar or
+produces $c_{ij} = a_{ij}^k$.  The variable $k$ must be a scalar or
 $1\times 1$ matrix.
 
 In column-wise concatenation of an $m\times n$ matrix $A$ and
-an $m\times p$ matrix $B$, the result is an $m\times (n+p)$ matrix
+an $m\times p$ matrix $B$, the result is an $m\times (n+p)$ matrix.
+That is,
 %
-\[
-C = \left[ \begin{array}{cc} A & B \end{array} \right]
-\]
-%
+\begin{code}
+C = A ~ B
+\end{code}
+% 
+produces $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
 
 The following functions are available for element-by-element
 transformations of matrices: \texttt{log}, \texttt{exp}, \texttt{sin},
@@ -134,7 +152,9 @@ already defined, then
 matrix B = sqrt(A)
 \end{code}
 %
-generates a matrix such that $B_{ij} = \sqrt{A_{ij}}$.
+generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
+functions require a single matrix as argument, or an expression which
+evaluates to a single matrix.
 
 In addition these matrix-specific functions are available:
 
@@ -146,10 +166,36 @@ In addition these matrix-specific functions are available:
 \texttt{tr()} & trace \\
 \texttt{rows()} & number of rows \\
 \texttt{cols()} & number of columns \\
-\texttt{diag()} & extract principal diagonal as vector \\
+\texttt{diag()} & extract principal diagonal as column vector \\
 \texttt{transp()} & transpose 
 \end{tabular}
 \end{center}
+
+These functions also require a single matrix (or an expression which
+evaluates to a single matrix) as argument.
+
+Finally, there are some functions which generate certain sorts of
+matrices from scratch, given a specification of the desired
+dimensions.
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{I(}\textsl{n}\texttt{)} & $n\times n$ identity matrix \\
+\texttt{zeros(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} & 
+   $m\times n$ zero matrix \\
+\texttt{ones(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+   $m\times n$ matrix filled with 1s \\
+\texttt{uniform(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+   $m\times n$ matrix filled with uniform random values \\
+\texttt{normal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+   $m\times n$ matrix filled with normal random values \\
+\end{tabular}
+\end{center}
+
+The values \textsl{m} and \textsl{n} must be given numerically.  The
+\texttt{uniform()} and \texttt{normal()} matrix functions fill the
+matrix with drawings from the uniform (0--1) distribution and the
+standard normal distribution respectively.
 
 \section{Selecting sub-matrices}
 \label{matrix-sub}

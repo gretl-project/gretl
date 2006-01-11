@@ -1238,6 +1238,11 @@ int dataset_drop_listed_variables (const int *list, double ***pZ,
     int oldv = pdinfo->v, vmax = pdinfo->v;
     int i, v, ndel = 0; 
 
+    if (list == NULL) {
+	/* no-op */
+	return 0;
+    }
+
     if (renumber != NULL) {
 	*renumber = 0;
     }

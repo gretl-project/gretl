@@ -329,7 +329,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Utilities/sep"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },
     { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
+#if 0
     { N_("/Utilities/Additional functions..."), NULL, display_files, FUNC_FILES, NULL, GNULL },
+#endif
     { N_("/Utilities/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/Start GNU R"), NULL, startRcallback, 0, NULL, GNULL },
     { N_("/Utilities/sep4"), NULL, NULL, 0, "<Separator>", GNULL },

@@ -34,7 +34,8 @@ typedef struct fncall_ fncall;
 enum {
     ARG_SCALAR = 1,
     ARG_SERIES,
-    ARG_LIST
+    ARG_LIST,
+    ARG_MATRIX
 };
 
 struct ufunc_ {
@@ -214,6 +215,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 			       int nc, int *locals)
 {
     int i, j, src, targ;
+    int err = 0;
 
 #if FN_DEBUG
     fprintf(stderr, "\n*** start assignment of return values ***\n");
@@ -269,7 +271,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 	    if (targ > 0) {
 		/* copy values to pre-existing var at caller level */
 		copy_values_to_assignee(targ, src, *pZ, pdinfo);
-	    } else {
+	    } else if (locals != NULL) {
 		/* rename variable as caller desired and mark as global */
 		int pos;
 
@@ -279,14 +281,42 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 		    gretl_list_delete_at_pos(locals, pos);
 		}
 	    }
-	}		
+	} else {
+	    /* assigning a matrix, not a variable? */
+	    gretl_matrix *S = get_matrix_by_name(call->fun->returns[i]);
+
+
+	    if (S != NULL) {
+		gretl_matrix *T;
+#if FN_DEBUG
+		fprintf(stderr, " identified source as matrix '%s' (%p)\n",
+			call->fun->returns[i], (void *) S);
+#endif
+		T = get_matrix_by_name_at_level(call->assv[i], nc - 1); 
+		if (T != NULL) {
+#if FN_DEBUG
+		    fprintf(stderr, " identified target as matrix '%s' (%p)\n",
+			    call->assv[i], (void *) T);
+#endif
+		    /* copy values to pre-existing matrix at caller level */
+		    err = gretl_matrix_copy_values(T, S);
+		} else {
+#if FN_DEBUG
+		    fprintf(stderr, " renaming matrix '%s' (%p) as '%s'\n",
+			    call->fun->returns[i], (void *) S, call->assv[i]);
+#endif
+		    /* rename matrix as caller desired and mark as global */
+		    err = user_matrix_reconfigure(S, call->assv[i], nc - 1);
+		}
+	    }
+	}
     }
 
 #if FN_DEBUG
     fprintf(stderr, "*** done assignment of returns ***\n\n");
 #endif
 
-    return 0;
+    return err;
 }
 
 static int *make_locals_list (const DATAINFO *pdinfo, int nc, int *err)
@@ -318,6 +348,19 @@ static int *make_locals_list (const DATAINFO *pdinfo, int nc, int *err)
     return locals;
 }
 
+static int fn_offers_matrix (fncall *call)
+{
+    int i;
+
+    for (i=0; i< call->fun->n_returns; i++) {
+	if (call->fun->rtype[i] == ARG_MATRIX) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int 
 destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo, 
 			      int nc)
@@ -326,27 +369,33 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
     int anyerr = 0;
     int err = 0;
 
-    /* FIXME: at some point these should be made returnable */
-    destroy_user_matrices_at_level(nc);
+#if FN_DEBUG
+    fprintf(stderr, "destroy_or_assign_local_vars: depth = %d\n", nc);
+#endif
 
     locals = make_locals_list(pdinfo, nc, &err);
 
-    if (locals == NULL || err) {
+    if (err || (locals == NULL && !fn_offers_matrix(call))) {
+#if FN_DEBUG
+	fprintf(stderr, "locals = %p, err = %d, returning\n", 
+		(void *) locals, err);
+#endif
 	destroy_saved_lists_at_level(nc);
 	return err;
     }    
 
     err = new_var_assignment(call, pZ, pdinfo, nc, locals);
 
-    anyerr = dataset_drop_listed_variables(locals, pZ, pdinfo, NULL);
-    if (anyerr && !err) {
-	err = anyerr;
+    if (locals != NULL) {
+	anyerr = dataset_drop_listed_variables(locals, pZ, pdinfo, NULL);
+	if (anyerr && !err) {
+	    err = anyerr;
 #if FN_DEBUG
-	fprintf(stderr, "dataset_drop_listed_variables: err = %d\n", err);
+	    fprintf(stderr, "dataset_drop_listed_variables: err = %d\n", err);
 #endif
+	}
+	free(locals);
     }
-
-    free(locals);
 
     anyerr = destroy_saved_lists_at_level(nc);
     if (anyerr && !err) {
@@ -355,6 +404,14 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
 	fprintf(stderr, "destroy_saved_lists_at_level(%d): err = %d\n", nc, err);
 #endif
     }
+
+    anyerr = destroy_user_matrices_at_level(nc);
+    if (anyerr && !err) {
+	err = anyerr;
+#if FN_DEBUG
+	fprintf(stderr, "destroy_user_matrices_at_level(%d): err = %d\n", nc, err);
+#endif
+    }    
 
 #if FN_DEBUG
     fprintf(stderr, "destroy_or_assign_local_vars: returning err = %d\n", err);
@@ -866,6 +923,8 @@ static int get_param_type (const char *s)
 	ret = ARG_SERIES;
     } else if (!strcmp(s, "list")) {
 	ret = ARG_LIST;
+    } else if (!strcmp(s, "matrix")) {
+	ret = ARG_MATRIX;
     }
 
     return ret;
@@ -1416,6 +1475,14 @@ static int check_and_allocate_function_args (ufunc *fun,
 		sprintf(gretl_errmsg, "argument %d (%s): not a list", i+1, argv[i]);
 		err = 1;
 	    }
+	} else if (fun->ptype[i] == ARG_MATRIX) {
+	    if (get_matrix_by_name(argv[i]) != NULL) {
+		err = copy_named_matrix_as(argv[i], fun->params[i]);
+#if FN_DEBUG
+		fprintf(stderr, "done copy_named_matrix_as, '%s' -> '%s', err = %d\n", 
+			argv[i], fun->params[i], err);
+#endif
+	    }
 	} else {
 	    /* impossible */
 	    err = 1;
@@ -1459,12 +1526,15 @@ static int check_function_assignments (ufunc *fun,
 		(fun->rtype[i] == ARG_SERIES && !pdinfo->vector[v])) {
 		sprintf(gretl_errmsg, "%s: wrong type for assignment", assv[i]);
 		err = 1;
+	    } else if (fun->rtype[i] == ARG_MATRIX) {
+		sprintf(gretl_errmsg, "%s: wrong type for assignment", assv[i]);
+		err = 1;
 	    } else {
 		asslist[i+1] = v;
 	    }
 	} else if (fun->rtype[i] == ARG_LIST) {
-	    /* FIXME? */
 	    fprintf(stderr, "requested return of list as '%s'\n", assv[i]);
+	    /* FIXME? */
 	} else {
 	    err = check_varname(assv[i]);
 	}
