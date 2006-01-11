@@ -693,8 +693,6 @@ static int matrix_gen_function (const char *s, GENERATOR *genr,
     int atype = ATOM_SERIES;
     int r, c, nf = 0;
 
-    fprintf(stderr, "matrix_gen_function\n");
-
     s = strchr(s, '(') + 1;
 
     if (sscanf(s, "%d,%d", &r, &c) == 2) {
@@ -702,8 +700,6 @@ static int matrix_gen_function (const char *s, GENERATOR *genr,
     } else if (sscanf(s, "%d", &r)) {
 	nf = 1;
     }
-
-    fprintf(stderr, "nf = %d\n", nf);
 
     if (func == T_IMAT && nf == 1) {
 	*M = gretl_identity_matrix_new(r);
@@ -779,56 +775,59 @@ static int token_get_function (const char *s, GENERATOR *genr,
 static int dataset_var_index (const char *s)
 {
     char test[USER_VLEN];
+    int ret = 0;
 
     *test = '\0';
     strncat(test, s, USER_VLEN - 1);
     lower(test);
 
     if (!strcmp(test, "$nobs")) {
-	return R_NOBS;
-    }
-    if (!strcmp(test, "$pd")) {
-	return R_PD;
-    }
-    if (!strcmp(test, "$nvars")) {
-	return R_NVARS;
+	ret = R_NOBS;
+    } else if (!strcmp(test, "$pd")) {
+	ret = R_PD;
+    } else if (!strcmp(test, "$nvars")) {
+	ret = R_NVARS;
     }
 
-    return 0;
+    return ret;
 }
 
 static int test_stat_index (const char *s)
 {
     char test[USER_VLEN];
+    int ret = 0
 
     *test = '\0';
     strncat(test, s, USER_VLEN - 1);
     lower(test);
 
-    if (!strcmp(test, "$pvalue"))  
-	return R_TEST_PVAL;
-    if (!strcmp(test, "$test")) 
-	return R_TEST_STAT;
+    if (!strcmp(test, "$pvalue")) { 
+	ret = R_TEST_PVAL;
+    } else if (!strcmp(test, "$test")) {
+	ret = R_TEST_STAT;
+    }
 
-    return 0;
+    return ret;
 }
 
 static int model_vector_index (const char *s)
 {
     char test[USER_VLEN];
+    int ret = 0;
 
     *test = '\0';
     strncat(test, s, USER_VLEN - 1);
     lower(test);
 
-    if (!strcmp(test, "$uhat"))  
-	return UHATNUM;
-    if (!strcmp(test, "$yhat")) 
-	return YHATNUM;
-    if (!strcmp(test, "$h"))
-	return HNUM;
+    if (!strcmp(test, "$uhat")) { 
+	ret = UHATNUM;
+    } else if (!strcmp(test, "$yhat")) {
+	ret = YHATNUM;
+    } else if (!strcmp(test, "$h")) {
+	ret = HNUM;
+    }
 
-    return 0;
+    return ret;
 }
 
 static int token_get_dollar_var (const char *s, GENERATOR *genr, 
@@ -1016,18 +1015,16 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
 {
     double x = NADBL;
 
-    /* constant, scalar variable, or specific obs from a series */
     if (atom->atype == ATOM_SCALAR) {
+	/* constant, scalar variable, or specific obs from a series */
 	if (atom->varnum >= 0 && atom->varnum < HIGHNUM) {
 	    x = (*genr->pZ)[atom->varnum][atom->varobs];
 	} else {
 	    x = atom->val;
 	}
 	DPRINTF(("eval_atom: got scalar = %g\n", x));
-    } 
-
-    /* temporary variable */
-    else if (atom->tmpvar >= 0) {
+    } else if (atom->tmpvar >= 0) {
+	/* temporary variable */
 	if (!atom->lag) {
 	    x = genr->tmpZ[atom->tmpvar][t];
 	    DPRINTF(("eval_atom: got temp obs = %g\n", x));
@@ -1036,15 +1033,11 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
 	    DPRINTF(("eval_atom: got lagged temp obs (tmpvar %d, "
 		    "lag %d) = %g\n", atom->tmpvar, atom->lag, x));
 	}
-    }
-
-    /* trend/index variable */
-    else if (atom->varnum == TNUM) {
+    } else if (atom->varnum == TNUM) {
+	/* trend/index variable */
 	x = get_tnum(genr->pdinfo, t);
-    }
-
-    /* regular variable or lagged term */
-    else if (atom->varnum >= 0) {
+    } else if (atom->varnum >= 0) {
+	/* regular variable or lagged term */
 	if (!atom->lag) {
 	    x = (*genr->pZ)[atom->varnum][t];
 	    DPRINTF(("eval_atom: got data obs (var %d) = %g\n", 
@@ -1054,10 +1047,8 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
 	    DPRINTF(("eval_atom: got lagged data obs (var %d, "
 		    "lag %d) = %g\n", atom->varnum, atom->lag, x));
 	}
-    }
-
-    /* function */
-    else if (atom->func) {
+    } else if (atom->func) {
+	/* a function */
 	if (STANDARD_MATH(atom->func)) {
 	    x = evaluate_math_function(a, atom->func, &genr->err);
 	    DPRINTF(("evaluated math func %d: %g -> %g\n", 
@@ -1074,10 +1065,8 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
 	    DPRINTF(("identity func: passed along %g\n", a));
 	    x = a;
 	}
-    }
-
-    /* named list: not acceptable in this context */
-    else if (atom->varnum < 0) {
+    } else if (atom->varnum < 0) {
+	/* named list: not acceptable in this context */
 	DPRINTF(("eval_atom: got named list: error\n"));
 	if (atom->str != NULL) {
 	    undefined_var_message(atom->str);
