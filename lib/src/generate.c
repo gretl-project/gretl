@@ -687,18 +687,51 @@ token_get_variable_or_constant (const char *s, GENERATOR *genr,
     return atype;
 }
 
+static int get_matrix_dim (const char *s, GENERATOR *genr)
+{
+    int v, n = 0;
+
+    if (isdigit(*s)) {
+	n = atoi(s);
+    } else {
+	v = varindex(genr->pdinfo, s);
+	if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+	    n = (int) (*genr->pZ)[v][0];
+	}
+    }
+
+    return n;
+}
+
 static int matrix_gen_function (const char *s, GENERATOR *genr,
 				int func, gretl_matrix **M)
 {
     int atype = ATOM_SERIES;
-    int r, c, nf = 0;
+    char rstr[9], cstr[9];
+    int r = 0, c = 0;
+    int nf = 0;
 
     s = strchr(s, '(') + 1;
 
-    if (sscanf(s, "%d,%d", &r, &c) == 2) {
-	nf = 2;
-    } else if (sscanf(s, "%d", &r)) {
-	nf = 1;
+    if (sscanf(s, "%8[^,],%8[^)]", rstr, cstr) == 2) {
+	r = get_matrix_dim(rstr, genr);
+	c = get_matrix_dim(cstr, genr);
+	if (r <= 0 || c <= 0) {
+	    genr->err = E_SYNTAX;
+	} else {
+	    nf = 2;
+	}
+    } else if (sscanf(s, "%8s", rstr)) {
+	r = get_matrix_dim(rstr, genr);
+	if (r <= 0) {
+	    genr->err = E_SYNTAX;
+	} else {
+	    nf = 1;
+	}
+    }
+
+    if (genr->err) {
+	return atype;
     }
 
     if (func == T_IMAT && nf == 1) {

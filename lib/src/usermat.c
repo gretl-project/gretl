@@ -318,17 +318,6 @@ static gretl_matrix *original_matrix_by_name (const char *name)
     return real_get_matrix_by_name(name, 0, -1);
 }
 
-static int slice_count (const int *slice, int n)
-{
-    int i, s = 0;
-
-    for (i=0; i<n; i++) {
-	if (slice[i] > 0) s++;
-    }
-
-    return s;
-}
-
 /* A "slice" is a gretl list: the first element holds the
    count of the following elements, and the following
    elements indicate from which row (or column) of the
@@ -1064,8 +1053,8 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
       and/or the I(n) function which gives an n x n identity matrix.
 */
 
-static int create_matrix (const char *name, const char *s, 
-			  double ***pZ, DATAINFO *pdinfo,
+static int create_matrix (const char *name, const char *mask,
+			  const char *s, double ***pZ, DATAINFO *pdinfo,
 			  PRN *prn)
 {
     gretl_matrix *M = NULL;
@@ -1075,6 +1064,8 @@ static int create_matrix (const char *name, const char *s,
     int transp = 0;
     int r = 0, c = 0;
     int err = 0;
+
+    /* FIXME respect mask */
 
     p = strchr(s, '{');
     if (p == NULL) {
@@ -1167,10 +1158,13 @@ static int create_matrix (const char *name, const char *s,
     return err;
 }
 
-static int print_matrix_by_name (const char *name, PRN *prn)
+static int 
+print_matrix_by_name (const char *name, const char *mask, PRN *prn)
 {
     gretl_matrix *M;
     int err = 0;
+
+    /* FIXME respect mask */
 
     M = get_matrix_by_name(name);
     if (M == NULL) {
@@ -1199,28 +1193,39 @@ static int print_matrix_by_name (const char *name, PRN *prn)
 
 int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    char name[MNAMELEN];
+    char mask[48] = {0};
+    char name[48];
     char word[9];
+    char *p;
     int err = 0;
 
     if (!strncmp(line, "matrix ", 7)) line += 7;
     while (isspace(*line)) line++;
 
-    if (!sscanf(line, "%31s", name)) {
+    if (!sscanf(line, "%47s", name)) {
 	return 1;
     } 
 
     line += strlen(name);
     while (isspace(*line)) line++;
 
+    p = strchr(name, '[');
+    if (p != NULL) {
+	*p = '\0';
+	if (original_matrix_by_name(name) == NULL) {
+	    return E_UNKVAR;
+	}
+	strncat(mask, p + 1, 47);
+    } 
+
     if (*line == '=') {
 	/* defining a matrix */
-	err = create_matrix(name, line, pZ, pdinfo, prn);
+	err = create_matrix(name, mask, line, pZ, pdinfo, prn);
     } else {
 	*word = '\0';
 	sscanf(line, "%8s", word);
 	if (*word == '\0' || !strcmp(word, "print")) {
-	    err = print_matrix_by_name(name, prn);
+	    err = print_matrix_by_name(name, mask, prn);
 	} else {
 	    /* no other commands available yet */
 	    err = 1;
