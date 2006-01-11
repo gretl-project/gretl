@@ -318,29 +318,162 @@ static gretl_matrix *original_matrix_by_name (const char *name)
     return real_get_matrix_by_name(name, 0, -1);
 }
 
-static int 
-row_or_column_selection (const char *s, int *idx, int *err)
+static int slice_count (const int *slice, int n)
 {
-    int n = 0;
+    int i, s = 0;
 
-    if (strchr(s, ':')) {
-	if (sscanf(s, "%d:%d", &idx[0], &idx[1]) != 2) {
-	    *err = 1;
-	} else if (idx[0] <= 0 || idx[1] <= 0) {
-	    *err = 1;
-	} else {
-	    n = idx[1] - idx[0] + 1;
-	}
-    } else if (sscanf(s, "%d", &idx[0]) != 1) {
-	*err = 1;
-    } else if (idx[0] <= 0) {
-	*err = 1;
-    } else {
-	idx[1] = idx[0];
-	n = 1;
+    for (i=0; i<n; i++) {
+	if (slice[i] > 0) s++;
     }
 
-    return n;
+    return s;
+}
+
+/* A "slice" is a gretl list: the first element holds the
+   count of the following elements, and the following
+   elements indicate from which row (or column) of the
+   source matrix to draw the successive rows (columns) of
+   the submatrix.
+*/
+
+static int *parse_slice_spec (const char *s, int n, int *err)
+{
+    int *slice = NULL;
+    int i, sn = 0;
+
+    if (*s == '\0') {
+	/* null spec: use all rows or columns */
+	return NULL;
+    }
+
+    if (isalpha(*s)) {
+	/* should be an index matrix */
+	gretl_matrix *v = get_matrix_by_name(s);
+
+#if MDEBUG
+	fprintf(stderr, "index matrix? s='%s', v=%p\n", s, (void *) v);
+#endif
+	sn = gretl_vector_get_length(v);
+	slice = gretl_list_new(sn);
+	if (slice == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (i=0; i<sn; i++) {
+		slice[i+1] = gretl_vector_get(v, i);
+	    }
+	}
+    } else {
+	/* numerical specification, either p:q or plain p */
+	int idx[2];
+
+	if (strchr(s, ':')) {
+	    if (sscanf(s, "%d:%d", &idx[0], &idx[1]) != 2) {
+		*err = 1;
+	    } else if (idx[0] < 1 || idx[1] < 1 || idx[1] < idx[0]) {
+		*err = 1;
+	    } else {
+		sn = idx[1] - idx[0] + 1;
+	    }
+	} else if (sscanf(s, "%d", &idx[0]) != 1) {
+	    *err = 1;
+	} else if (idx[0] < 1) {
+	    *err = 1;
+	} else {
+	    idx[1] = idx[0];
+	    sn = 1;
+	}
+
+	if (!*err) {
+	    slice = gretl_list_new(sn);
+	    if (slice == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		for (i=0; i<sn; i++) {
+		    slice[i+1] = idx[0] + i;
+		}
+	    }
+	}
+    }
+
+    if (slice != NULL) {
+#if MDEBUG
+	printlist(slice, "slice");
+#endif
+	for (i=1; i<=slice[0] && !*err; i++) {
+	    if (slice[i] < 0 || slice[i] > n) {
+		fprintf(stderr, "index value %d is out of bounds\n", 
+			slice[i]);
+		*err = 1;
+	    }
+	}
+    }
+
+    if (*err && slice != NULL) {
+	free(slice);
+	slice = NULL;
+    }
+
+    return slice;    
+}
+
+static int get_slice_string (const char *s, char *spec, int i)
+{
+    int err = 0;
+
+    *spec = '\0';
+
+    if (i == 0) {
+	s = strchr(s, '[');
+	if (s == NULL || strchr(s, ',') == NULL) {
+	    err = 1;
+	} else {
+	    sscanf(s + 1, "%31[^,]", spec);
+	}
+    } else if (i == 1) {
+	s = strchr(s, ',');
+	if (s == NULL || strchr(s, ']') == NULL) {
+	    err = 1;
+	} else {	
+	    sscanf(s + 1, "%31[^]]", spec);
+	}	    
+    }
+
+#if MDEBUG
+    fprintf(stderr, "get_get_slice_string: spec = '%s', err = %d\n",
+	    spec, err);
+#endif
+
+    return err;
+}
+
+static int make_slices (const char *s, int m, int n, 
+			int **rslice, int **cslice)
+{
+    int *slice;
+    char spec[32];
+    int i, err = 0;
+
+    *rslice = *cslice = NULL;
+
+    for (i=0; i<2 && !err; i++) {
+	err = get_slice_string(s, spec, i);
+	if (!err) {
+	   slice = parse_slice_spec(spec, (i == 0)? m : n, &err);
+	}
+	if (!err) {
+	    if (i == 0) *rslice = slice;
+	    else *cslice = slice;
+	}
+    } 
+
+    if (err) {
+	free(*rslice);
+	*rslice = NULL;
+	free(*cslice);
+	*cslice = NULL;
+    }
+
+    return err;
 }
 
 /* This supports the extraction of scalars, vectors or sub-matrices.
@@ -350,102 +483,47 @@ row_or_column_selection (const char *s, int *idx, int *err)
 */
 
 static gretl_matrix *
-real_matrix_get_slice (gretl_matrix *M, const char *s, int *err)
+matrix_get_submatrix (gretl_matrix *M, const char *s, int *err)
 {
-    gretl_matrix *S = NULL;
+    gretl_matrix *S;
+    int *rslice = NULL;
+    int *cslice = NULL;
     int m = gretl_matrix_rows(M);
     int n = gretl_matrix_cols(M);
-    char tmp[32] = {0};
-    int r[2] = {-1, -1};
-    int c[2] = {-1, -1};
-    int nr = 0, nc = 0;
-    const char *p;
-    char *q = NULL;
-    int len;
+    int nr, nc;
 
-    p = strrchr(s, ']');
-    if (p == NULL) {
-	*err = E_SYNTAX;
+    *err = make_slices(s, m, n, &rslice, &cslice);
+    if (*err) {
 	return NULL;
     }
 
-    if (strchr(s, ',') == NULL) {
-	*err = E_SYNTAX;
-	return NULL;
-    }    
+    nr = (rslice == NULL)? m : rslice[0];
+    nc = (cslice == NULL)? n : cslice[0];
 
-    s = strchr(s, '[') + 1;
-    len = p - s;
-
-    if (len > 31) {
-	*err = 1;
-	return NULL;
-    } 
-
-    strncat(tmp, s, len);
-    p = tmp;
-    while (*p == ' ') p++;
-
-    if (*p != ',') {
-	/* left-hand (row selection) block is present */
-	q = strchr(p, ',');
-	*q = '\0';
-	nr = row_or_column_selection(p, r, err);
-    } else {
-	/* default: whole range */
-	r[0] = 1;
-	r[1] = m;
-	nr = m;
-    }
-
-    if (q != NULL) {
-	/* undo masking of right-hand expression */
-	*q = ',';
-    }
-
-    if (!*err) {
-	/* skip to right-hand block, if any */
-	p += strspn(p, ":0123456789");
-	while (*p == ' ' || *p == ',') p++;
-	if (*p) {
-	    /* right-hand (column selection) block is present */
-	    nc = row_or_column_selection(p, c, err);
-	} else {
-	    /* default: whole range */
-	    c[0] = 1;
-	    c[1] = n;
-	    nc = n;
-	}
-    }
-
-    if (nr < 1 || nc < 1) {
-	*err = 1;
-    } else if (r[0] > m || c[0] > n) {
-	*err = 1;
-    } else if (r[1] > m || c[1] > n) {
-	*err = 1;
-    }
-
-    if (!*err) {
-	S = gretl_matrix_alloc(nr, nc);
-	if (S == NULL) {
-	    *err = E_ALLOC;	
-	}
+    S = gretl_matrix_alloc(nr, nc);
+    if (S == NULL) {
+	*err = E_ALLOC;	
     }
 
     if (S != NULL) {
+	int i, j, k, l;
+	int mi, mj;
 	double x;
-	int i, j, l, k = 0;
 
-	for (i=r[0]-1; i<r[1]; i++) {
+	k = 0;
+	for (i=0; i<nr; i++) {
+	    mi = (rslice == NULL)? k++ : rslice[i+1] - 1;
 	    l = 0;
-	    for (j=c[0]-1; j<c[1]; j++) {
-		x = gretl_matrix_get(M, i, j);
-		gretl_matrix_set(S, k, l++, x);
+	    for (j=0; j<nc; j++) {
+		mj = (cslice == NULL)? l++ : cslice[j+1] - 1;
+		x = gretl_matrix_get(M, mi, mj);
+		gretl_matrix_set(S, i, j, x);
 	    }
-	    k++;
 	}
     }
+
+    free(rslice);
+    free(cslice);
 	
     return S;
 }
@@ -474,7 +552,7 @@ gretl_matrix *user_matrix_get_slice (const char *s, int *err)
 	strncat(test, s, len);
 	M = real_get_matrix_by_name(test, 0, -1);
 	if (M != NULL) {
-	    S = real_matrix_get_slice(M, s, err);
+	    S = matrix_get_submatrix(M, s, err);
 	}
     }
 

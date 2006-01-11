@@ -73,8 +73,8 @@ struct _gretl_matrix {
  */
 
 #define gretl_vector_get_length(v) ((v == NULL)? 0 : \
-                                    (v->cols > v->rows)? v->cols : \
-                                    v->rows)
+                                    (v->cols == 1)? v->rows : \
+                                    (v->rows == 1)? v->cols : 0)
 
 /**
  * gretl_vector_alloc:
