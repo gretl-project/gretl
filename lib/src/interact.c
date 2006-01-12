@@ -937,10 +937,11 @@ static int plausible_genr_start (const char *line, CMD *cmd)
     if (strchr(line, '=') != NULL) {
 	char word[9];
 
-	if (sscanf(line, "%8[^ =]", word)) {
+	if (sscanf(line, "%8[^[ =]", word)) {
 	    int n = strlen(word);
+	    int c = line[n];
 
-	    if ((line[n] == ' ' || line[n] == '=') &&
+	    if ((c == ' ' || c == '=' || c == '[') &&
 		check_varname(word) == 0) {
 		cmd->ci = GENR;
 	    }

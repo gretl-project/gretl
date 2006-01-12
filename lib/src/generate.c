@@ -2642,6 +2642,7 @@ static void copy_compress (char *targ, const char *src, int len)
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATOR *genr)
 {
+    char name[32], tag[32];
     char first[9];
 
     if (string_is_blank(line)) {
@@ -2668,23 +2669,22 @@ static void get_genr_formula (char *formula, const char *line,
 	line++;
     } 
 
-    if (genr_is_matrix(genr)) {
-	/* allow for generating a submatrix */
-	char mname[32], slice[32];
-
-	if (sscanf(line, "%31[^[ =][%31[^]]", mname, slice) == 2) {
-	    sprintf(genr->label, "[%s]", slice);
-	}
-    } else {
-	/* allow for generating a single value in a series */
-	char vname[USER_VLEN], obs[OBSLEN];
-
-	if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
-	    genr->obs = get_t_from_obs_string(obs, (const double **) *genr->pZ, 
-					  genr->pdinfo);
+    /* allow for generating a single value in a series, or
+       for generating a submatrix */
+    if (sscanf(line, "%31[^[ =][%31[^]]", name, tag) == 2) {
+	if (genr_is_matrix(genr)) {
+	    sprintf(genr->label, "[%s]", tag);
+	} else {
+	    genr->obs = get_t_from_obs_string(tag, (const double **) *genr->pZ, 
+					      genr->pdinfo);
 	    if (genr->obs < 0) {
-		genr->err = 1;
-		return;
+		/* observation string not found */
+		if (get_matrix_by_name(name) != NULL) {
+		    sprintf(genr->label, "[%s]", tag);
+		} else {
+		    genr->err = 1;
+		    return;
+		}
 	    }
 	}
     }

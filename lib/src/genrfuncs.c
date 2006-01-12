@@ -1274,7 +1274,9 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
     strtol(obs, &test, 10);
 
     if (*test != '\0' || !strcmp(obs, test) || errno == ERANGE) {
+#if OBS_DEBUG
 	fprintf(stderr, "plain_obs_number: failed on '%s'\n", obs);
+#endif
     } else {
 	t = atoi(obs) - 1; /* convert from 1-based to 0-based */ 
     } 

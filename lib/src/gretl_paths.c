@@ -30,12 +30,14 @@
 # include <dirent.h>
 #endif
 
-#if defined(USE_GTK2) && !defined(WIN32)
+#ifdef USE_GTK2
 # include <glib.h>
-# if GLIB_CHECK_VERSION(2,0,0)
-#  define GLIB2
-# endif /* GLIB_CHECK_VERSION */
-#endif /* GTK2, !WIN32 */
+# ifndef WIN32
+#  if GLIB_CHECK_VERSION(2,0,0)
+#   define GLIB2
+#  endif /* GLIB_CHECK_VERSION */
+# endif /* !WIN32 */
+#endif /* GTK2 */
 
 #if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
 # ifdef WIN32
@@ -66,9 +68,14 @@ static int add_gdt_suffix (char *fname)
 
 FILE *gretl_fopen (const char *filename, const char *mode)
 {
-#ifdef USE_G_FOPEN
+#if defined(USE_G_FOPEN)
     return g_fopen((const gchar *) filename, (const gchar *) mode);
-#else
+#elif defined(WIN32)
+    gchar *fconv = g_locale_from_utf8(filename, -1, NULL, NULL, NULL);
+
+    return fopen(fconv, mode);
+    g_free(fconv);
+#else    
     return fopen(filename, mode);
 #endif
 }
