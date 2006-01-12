@@ -711,7 +711,7 @@ static int matrix_gen_function (const char *s, GENERATOR *genr,
 	} else {
 	    nf = 2;
 	}
-    } else if (sscanf(s, "%8s", rstr)) {
+    } else if (sscanf(s, "%8[^)]", rstr)) {
 	r = get_matrix_dim(rstr, genr);
 	if (r <= 0) {
 	    genr->err = E_SYNTAX;
@@ -1466,7 +1466,7 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 
     DPRINTF(("\n*** starting evaluate_matrix_genr\n"));
 
-    while ((atom = pop_atom(genr))) {
+    while ((atom = pop_atom(genr)) && !genr->err) {
 	int freeB = 1;
 
 	gretl_matrix *B = eval_matrix_atom(atom, genr, A);
@@ -1480,9 +1480,7 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 	debug_print_matrix(B, "eval_matrix_atom: got B =");
 #endif
 
-	if (genr->err) {
-	    break;
-	}
+	if (genr->err) break;
 
 	if (atom->level < level) { 
 	    A = matrix_calc_pop(genr);
@@ -1495,6 +1493,8 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 	if (A == B) {
 	    freeB = 0;
 	}
+
+	if (genr->err) break;
 
 	if (atom->level > level) {
 	    int pad = atom->level - level - 1;
@@ -2540,7 +2540,7 @@ expand_operator_abbrev (char *s, const char *lhs, char op)
     return err;
 }
 
-static void excise_obs (char *s)
+static void excise_bracketed_term (char *s)
 {
     char *p, *q;
 
@@ -2549,16 +2549,17 @@ static void excise_obs (char *s)
     }
 }
 
-static int split_genr_formula (char *lhs, char *s, int obs)
+static int split_genr_formula (char *s, GENERATOR *genr)
 {
     char *p;
     int err = 0;
 
-    if (obs >= 0) {
-	excise_obs(s);
+    if (genr->obs >= 0 || *genr->label != '\0') {
+	/* obs number or matrix slice on left */
+	excise_bracketed_term(s);
     }    
 
-    *lhs = '\0';
+    *genr->lhs = '\0';
 
     if ((p = strchr(s, '=')) != NULL) {
 	char op = 0;
@@ -2581,9 +2582,9 @@ static int split_genr_formula (char *lhs, char *s, int obs)
 	    }
 
 	    /* should we warn if lhs name is truncated? */
-	    strncat(lhs, s, USER_VLEN - 1);
+	    strncat(genr->lhs, s, USER_VLEN - 1);
 
-	    if (gretl_reserved_word(lhs)) {
+	    if (gretl_reserved_word(genr->lhs)) {
 		err = 1;
 	    } else {
 		p++;
@@ -2592,7 +2593,7 @@ static int split_genr_formula (char *lhs, char *s, int obs)
 	}
 
 	if (!err && op != 0) {
-	    err = expand_operator_abbrev(s, lhs, op);
+	    err = expand_operator_abbrev(s, genr->lhs, op);
 	}
     }
 
@@ -2641,7 +2642,6 @@ static void copy_compress (char *targ, const char *src, int len)
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATOR *genr)
 {
-    char vname[USER_VLEN], obs[OBSLEN];
     char first[9];
 
     if (string_is_blank(line)) {
@@ -2668,13 +2668,24 @@ static void get_genr_formula (char *formula, const char *line,
 	line++;
     } 
 
-    /* allow for generating a single value in a series */
-    if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
-	genr->obs = get_t_from_obs_string(obs, (const double **) *genr->pZ, 
+    if (genr_is_matrix(genr)) {
+	/* allow for generating a submatrix */
+	char mname[32], slice[32];
+
+	if (sscanf(line, "%31[^[ =][%31[^]]", mname, slice) == 2) {
+	    sprintf(genr->label, "[%s]", slice);
+	}
+    } else {
+	/* allow for generating a single value in a series */
+	char vname[USER_VLEN], obs[OBSLEN];
+
+	if (sscanf(line, "%8[^[ =][%10[^]]", vname, obs) == 2) {
+	    genr->obs = get_t_from_obs_string(obs, (const double **) *genr->pZ, 
 					  genr->pdinfo);
-	if (genr->obs < 0) {
-	    genr->err = 1;
-	    return;
+	    if (genr->obs < 0) {
+		genr->err = 1;
+		return;
+	    }
 	}
     }
 
@@ -2857,6 +2868,15 @@ static int genr_handle_special (const char *s, GENERATOR *genr,
     return err;
 }
 
+static void maybe_set_matrix_genr (GENERATOR *genr)
+{
+    if (!genr_is_matrix(genr) && 
+	get_matrix_by_name(genr->lhs) != NULL) {
+	genr->flags = GENR_SAVE | GENR_MATRIX;
+	genr->err = genr_matrix_init(genr, OPT_M);
+    }
+}
+
 GENERATOR *
 genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
@@ -2879,6 +2899,7 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     get_genr_formula(s, line, genr);
 
     if (*s == '\0') {
+	DPRINTF(("\n*** get_genr_formula failed: line='%s'\n", line));
 	genr->err = E_EQN;
 	return genr;
     }
@@ -2896,11 +2917,11 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     }
 
     /* split into lhs = rhs */
-    genr->err = split_genr_formula(genr->lhs, s, genr->obs);
+    genr->err = split_genr_formula(s, genr);
     if (genr->err) {
 	return genr;
     }
-    
+
     DPRINTF(("after split, genr->lhs='%s', s='%s'\n", genr->lhs, s));
 
     if (*genr->lhs != '\0') {
@@ -2910,6 +2931,9 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 	    genr->err = E_SYNTAX;
 	}
 	genr->varnum = varindex(pdinfo, genr->lhs);
+	if (genr->varnum == pdinfo->v) {
+	    maybe_set_matrix_genr(genr);
+	}
     } else {
 	/* no "lhs=" bit */
 	if (!(genr_doing_save(genr))) {
@@ -3011,6 +3035,17 @@ void destroy_genr (GENERATOR *genr)
 	return;
     }
 
+    
+    if (genr_is_matrix(genr) && genr->err) {
+	gretl_matrix *R = NULL;
+
+	/* avoid double-freeing matrix to be replaced */
+	add_or_replace_user_matrix(NULL, genr->lhs, NULL, &R);
+	if (R != NULL) {
+	    atom_stack_nullify_matrix(R, genr);
+	}
+    }
+
     DPRINTF(("destroy_genr: freeing atom stack\n"));
     destroy_atom_stack(genr);
 
@@ -3038,23 +3073,42 @@ void destroy_genr (GENERATOR *genr)
 static int genr_write_matrix (GENERATOR *genr)
 {
     gretl_matrix *M = matrix_calc_pop(genr);
+    gretl_matrix *Mptr = M;
     gretl_matrix *R = NULL;
     int err = 0;
 
     if (M == NULL) {
 	err = 1;
     } else {
-	err = add_or_replace_user_matrix(M, genr->varname, &R);
+	err = add_or_replace_user_matrix(M, genr->varname, genr->label, &R);
+
+	if (R != NULL) {
+	    /* avoid double-freeing replaced R */
+	    atom_stack_nullify_matrix(R, genr);
+	}
+
+	if (*genr->label != '\0') { 
+	    /* and avoid double-freeing temporary matrix M */
+	    atom_stack_nullify_matrix(Mptr, genr);
+	}
+	    
 	if (!err) {
 	    if (R != NULL) {
-		atom_stack_nullify_matrix(R, genr);
-		DPRINTF(("genr_write_matrix: replaced matrix '%s' at %p "
-			 "with new matrix at %p\n" genr->varname,
-			 (void *) R, (void *) M));
+		if (*genr->label != '\0') { 
+		    DPRINTF(("genr_write_matrix: rewrote matrix '%s' at %p "
+			     "using submatrix spec %s\n", genr->varname,
+			     (void *) R, genr->label));
+		} else {
+		    DPRINTF(("genr_write_matrix: replaced matrix '%s' at %p "
+			     "with new matrix at %p\n", genr->varname,
+			     (void *) R, (void *) M));
+		}
 	    } else {
 		DPRINTF(("genr_write_matrix: added matrix %p as '%s'\n", 
 			 (void *) M, genr->varname));
 	    }
+	} else {
+	    DPRINTF(("genr_write_matrix: err = %d\n", err));
 	}
     }
 

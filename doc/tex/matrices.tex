@@ -192,8 +192,16 @@ dimensions.
 \end{tabular}
 \end{center}
 
-The values \textsl{m} and \textsl{n} must be given numerically.  The
-\texttt{uniform()} and \texttt{normal()} matrix functions fill the
+The values \textsl{m} and \textsl{n} may be given numerically, or by
+reference to pre-existing scalar variables, as in
+%
+\begin{code}
+scalar m = 4
+scalar n = 5
+matrix A = normal(m,n)
+\end{code}
+%
+The \texttt{uniform()} and \texttt{normal()} matrix functions fill the
 matrix with drawings from the uniform (0--1) distribution and the
 standard normal distribution respectively.
 
@@ -234,6 +242,25 @@ matrix B = A[idx,]
 The first example selects row 1 from matrix \texttt{A}; the second
 selects a $2\times 3$ submatrix; the third selects a scalar; and
 the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
+
+You can use selections of this sort on either the right-hand side of
+a matrix-generating formula or the left.  Here is an example of use of
+a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
+$3\times 3$ matrix $A$:
+%
+\begin{code}
+matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix B = A[1:2,2:3]
+\end{code}
+%
+And here is an example of a selection on the left, to write a $2\times
+2$ identity matrix into the bottom right corner of a $3\times 3$
+matrix $A$:
+%
+\begin{code}
+matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
+matrix A[2:3,2:3] = I(2)
+\end{code}
 
 \section{Extended example}
 \label{matrix-example}

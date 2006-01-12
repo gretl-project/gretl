@@ -260,6 +260,8 @@ void atom_stack_nullify_matrix (gretl_matrix *M, GENERATOR *genr)
 {
     int i;
 
+    if (M == NULL) return;
+
     for (i=0; i<genr->aset->n_atoms; i++) {
 	if (genr->aset->atoms[i]->M == M) {
 	    genr->aset->atoms[i]->M = NULL;

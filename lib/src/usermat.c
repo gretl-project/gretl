@@ -44,6 +44,9 @@ static const char *varchars = "acdefghijklmnopqrstuvwxyz"
                               "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                               "0123456789_";
 
+static int make_slices (const char *s, int m, int n, 
+			int **rslice, int **cslice);
+
 static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
 {
     user_matrix *u;
@@ -68,7 +71,7 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
     user_matrix **tmp;
 
     if (M == NULL) {
-	return E_ALLOC;
+	return 0;
     }
 
     if (check_varname(name)) {
@@ -98,17 +101,89 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
     return 0;
 }
 
-static int replace_user_matrix (user_matrix *u, gretl_matrix *M,
-				gretl_matrix **R)
+static int matrix_insert_submatrix (gretl_matrix *M, gretl_matrix *S,
+				    const char *mask)
 {
-    if (R != NULL) {
-	*R = u->M;
+    int mr = gretl_matrix_rows(M);
+    int mc = gretl_matrix_cols(M);
+    int sr = gretl_matrix_rows(S);
+    int sc = gretl_matrix_cols(S);
+    int *rslice = NULL;
+    int *cslice = NULL;
+    int err = 0;
+
+    if (sr > mr || sc > mc) {
+	err = E_NONCONF;
     }
 
-    gretl_matrix_free(u->M);
-    u->M = M;
+    if (!err) {
+	err = make_slices(mask, mr, mc, &rslice, &cslice);
+#if MDEBUG
+	printlist(rslice, "rslice");
+	printlist(cslice, "cslice");
+	fprintf(stderr, "M = %d x %d, S = %d x %d\n", mr, mc, sr, sc);
+#endif
+    }
 
-    return 0;
+    if (!err) {
+	if (rslice != NULL && rslice[0] != sr) {
+	    err = E_NONCONF;
+	} else if (cslice != NULL && cslice[0] != sc) {
+	    err = E_NONCONF;
+	}
+    }
+
+    if (!err) {
+	int i, j, k, l;
+	int mi, mj;
+	double x;
+
+	k = 0;
+	for (i=0; i<sr; i++) {
+	    mi = (rslice == NULL)? k++ : rslice[i+1] - 1;
+	    l = 0;
+	    for (j=0; j<sc; j++) {
+		mj = (cslice == NULL)? l++ : cslice[j+1] - 1;
+		x = gretl_matrix_get(S, i, j);
+		gretl_matrix_set(M, mi, mj, x);
+	    }
+	}
+    }
+
+    free(rslice);
+    free(cslice);
+
+    return err;
+}
+
+static int replace_user_matrix (user_matrix *u, gretl_matrix *M,
+				gretl_matrix **R, const char *mask)
+{
+    int err = 0;
+
+    if (R != NULL) {
+#if MDEBUG
+	fprintf(stderr, "replace_user_matrix: u->M = %p (matrix '%s')\n",
+		u->M, u->name);
+#endif
+	*R = u->M;
+    }  
+
+    if (M == NULL) {
+	return 0;
+    }
+
+    if (mask != NULL && *mask != '\0') {
+	/* the new matrix M is actally a submatrix, to be written
+	   into the original matrix, u->M */
+	err = matrix_insert_submatrix(u->M, M, mask);
+	gretl_matrix_free(M);
+    } else {
+	gretl_matrix_free(u->M);
+	u->M = M;
+    }
+
+    return err;
 }
 
 /**
@@ -257,7 +332,13 @@ int copy_named_matrix_as (const char *orig, const char *new)
     if (u == NULL) {
 	err = 1;
     } else {
-	err = add_user_matrix(gretl_matrix_copy(u->M), new);
+	gretl_matrix *M = gretl_matrix_copy(u->M);
+
+	if (M == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = add_user_matrix(M, new);
+	}
 	if (!err) {
 	    /* for use in functions: increment level of last-added matrix */
 	    u = matrices[n_matrices - 1];
@@ -552,6 +633,7 @@ gretl_matrix *user_matrix_get_slice (const char *s, int *err)
  * add_or_replace_user_matrix:
  * @M: gretl matrix.
  * @name: name for the matrix.
+ * @mask: submatrix specification (or empty string).
  * @R: location to receive address of matrix that was
  * replaced, if any (or %NULL).
  *
@@ -564,14 +646,14 @@ gretl_matrix *user_matrix_get_slice (const char *s, int *err)
  */
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
-				gretl_matrix **R)
+				const char *mask, gretl_matrix **R)
 {
     user_matrix *u;
     int err = 0;
 
     u = get_user_matrix_by_name(name);
     if (u != NULL) {
-	err = replace_user_matrix(u, M, R);
+	err = replace_user_matrix(u, M, R, mask);
     } else {
 	err = add_user_matrix(M, name);
     }
@@ -970,16 +1052,17 @@ static int fill_matrix_from_series (gretl_matrix *M, const char *s,
     return err;
 }
 
-static int matrix_genr (const char *name, const char *s, 
-			double ***pZ, DATAINFO *pdinfo)
+static int matrix_genr (const char *name, const char *mask, 
+			const char *s, double ***pZ, 
+			DATAINFO *pdinfo)
 {
     char genline[MAXLINE];
     int err;
 
-    if (strlen(name) + strlen(s) + 7 > MAXLINE - 1) {
+    if (strlen(name) + strlen(mask) + strlen(s) + 7 > MAXLINE - 1) {
 	err = 1;
     } else {
-	sprintf(genline, "genr %s %s", name, s);
+	sprintf(genline, "genr %s%s %s", name, mask, s);
 	err = generate(genline, pZ, pdinfo, OPT_M);
     }
 
@@ -1070,7 +1153,7 @@ static int create_matrix (const char *name, const char *mask,
 
     p = strchr(s, '{');
     if (p == NULL) {
-	err = matrix_genr(name, s, pZ, pdinfo);
+	err = matrix_genr(name, mask, s, pZ, pdinfo);
 	goto finalize;
     }
     s = p + 1;
@@ -1091,7 +1174,7 @@ static int create_matrix (const char *name, const char *mask,
 	if (err) {
 	    goto finalize;
 	} else if (M != NULL) {
-	    err = add_or_replace_user_matrix(M, name, NULL);
+	    err = add_or_replace_user_matrix(M, name, mask, NULL);
 	    goto finalize;
 	}
     }
@@ -1139,7 +1222,7 @@ static int create_matrix (const char *name, const char *mask,
     }
     
     if (!err) {
-	err = add_or_replace_user_matrix(M, name, NULL);
+	err = add_or_replace_user_matrix(M, name, mask, NULL);
     }
 
  finalize:
@@ -1163,16 +1246,26 @@ static int
 print_matrix_by_name (const char *name, const char *mask, PRN *prn)
 {
     gretl_matrix *M;
+    gretl_matrix *S;
     int err = 0;
-
-    /* FIXME respect mask */
 
     M = get_matrix_by_name(name);
     if (M == NULL) {
 	pprintf(prn, _("'%s': no such matrix\n"), name);
 	err = 1;
     } else {
-	gretl_matrix_print_to_prn(M, name, prn);
+	if (*mask != '\0') {
+	    S = matrix_get_submatrix(M, mask, &err);
+	    if (!err) {
+		char mspec[96];
+
+		sprintf(mspec, "%s%s", name, mask);
+		gretl_matrix_print_to_prn(S, mspec, prn);
+	    }
+	    gretl_matrix_free(S);
+	} else {
+	    gretl_matrix_print_to_prn(M, name, prn);
+	}
 	if (!original_matrix_by_name(name)) {
 	    /* we got a transpose, created on the fly */
 	    gretl_matrix_free(M);
@@ -1210,13 +1303,14 @@ int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     line += strlen(name);
     while (isspace(*line)) line++;
 
+    /* extract submatrix "mask", if any */
     p = strchr(name, '[');
     if (p != NULL) {
+	strncat(mask, p, 47);
 	*p = '\0';
 	if (original_matrix_by_name(name) == NULL) {
 	    return E_UNKVAR;
 	}
-	strncat(mask, p + 1, 47);
     } 
 
     if (*line == '=') {
@@ -1363,6 +1457,11 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	*err = 1;
 	break;
     } 
+
+    if (*err && C != NULL) {
+	gretl_matrix_free(C);
+	C = NULL;
+    }
 
     return C;
 }

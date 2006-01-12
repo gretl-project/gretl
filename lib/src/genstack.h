@@ -134,26 +134,29 @@ enum genr_flags {
 };
 
 struct _GENERATOR {
-    int err;
-    int done;
-    char orig_s[MAXLINE];
-    char lhs[USER_VLEN];
-    unsigned char flags;
-    double *xvec;
-    int varnum;
-    int obs;
-    char varname[VNAMELEN];
-    char label[MAXLABEL];
-    int tmpv;
-    double **tmpZ;
-    DATAINFO *pdinfo;
-    double ***pZ;
-    atomset *aset;
-    double valstack[VALSTACK_SIZE];
-    int nvals;
-    gretl_matrix **mstack;
-    int nmats;
-    char **S;
+    int err;                        /* error code */  
+    int done;                       /* completion indicator */
+    char orig_s[MAXLINE];           /* formula provided by user */
+    char lhs[USER_VLEN];            /* left-hand side of formula */
+    unsigned char flags;            /* option flags */
+    double *xvec;                   /* temporary storage */
+    int varnum;                     /* number of variable generated */
+    int obs;                        /* observation number, if generating
+				       a single observation */
+    char varname[32];               /* name of variable generated */
+    char label[MAXLABEL];           /* descriptive label for variable,
+				       or submatrix specification */
+    int tmpv;                       /* temporary variable ID */
+    double **tmpZ;                  /* temporary dataset */
+    DATAINFO *pdinfo;               /* pointer to "outer" data info */
+    double ***pZ;                   /* pointer to "outer" dataset */
+    atomset *aset;                  /* set of atomic compoenents */
+    double valstack[VALSTACK_SIZE]; /* stack of temporary values */
+    int nvals;                      /* number of temporary values */
+    gretl_matrix **mstack;          /* stack of temporary matrices */
+    int nmats;                      /* number of same */
+    char **S;                       /* array of obs strings, used in
+				       certain cases of sorting */
 };
 
 int attach_atomset (GENERATOR *genr);
