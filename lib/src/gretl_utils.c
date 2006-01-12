@@ -580,7 +580,48 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     return 0;
 }
 
-/* ......................................................  */
+/**
+ * gretl_integer_from_string:
+ * @s: string to examine.
+ * @Z: data array.
+ * @pdinfo: data information struct.
+ * @err: location to receive error code.
+ * 
+ * If @s is a valid string representation of an integer,
+ * return that integer, otherwise if @s is the name of a
+ * scalar variable, return the value of that variable,
+ * otherwise set the content of @err to a non-zero value.
+ *
+ * Returns: integer value.
+ */
+
+int gretl_integer_from_string (const char *s, const double **Z, 
+			       const DATAINFO *pdinfo, int *err)
+{
+    char *test;
+    int n = 0;
+
+    n = strtol(s, &test, 10);
+    if (*test == '\0') {
+	return n;
+    } else {
+	int v = varindex(pdinfo, s);
+	double x;
+
+	if (v < pdinfo->v && !pdinfo->vector[v]) {
+	    x = Z[v][0];
+	    if (na(x)) {
+		*err = 1;
+	    } else {
+		n = (int) x;
+	    }
+	} else {
+	    *err = 1;
+	}
+    }
+
+    return n;    
+}
 
 int positive_int_from_string (const char *s)
 {

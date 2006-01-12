@@ -689,18 +689,8 @@ token_get_variable_or_constant (const char *s, GENERATOR *genr,
 
 static int get_matrix_dim (const char *s, GENERATOR *genr)
 {
-    int v, n = 0;
-
-    if (isdigit(*s)) {
-	n = atoi(s);
-    } else {
-	v = varindex(genr->pdinfo, s);
-	if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
-	    n = (int) (*genr->pZ)[v][0];
-	}
-    }
-
-    return n;
+    return gretl_integer_from_string(s, (const double **) *genr->pZ,
+				     genr->pdinfo, &genr->err);
 }
 
 static int matrix_gen_function (const char *s, GENERATOR *genr,

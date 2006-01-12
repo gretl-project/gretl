@@ -2569,6 +2569,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case LAGS: 
 	    case LDIFF: 
 	    case LOGS:
+	    case MATRIX:
 	    case MEANTEST: 
 	    case MULTIPLY: 
 	    case OUTFILE:

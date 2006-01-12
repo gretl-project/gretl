@@ -903,7 +903,7 @@ fill_matrix_from_scalars (gretl_matrix *M, const char *s,
 /* Fill a matrix with values from one or more series: since
    gretl's matrix methods cannot handle missing values, it is
    an error if any missing values are encountered in the
-   given series.  Each series occupies a column by default
+   given series.  Each series occupies a row by default
    (unless transp is non-zero).
 */
 
@@ -1050,7 +1050,8 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
    3. Specification of one named list of variables to place in matrix.
 
    4. Use of a "genr"-type expression referring to existing matrices
-      and/or the I(n) function which gives an n x n identity matrix.
+      and/or the matrix-from-scratch functions such as I(n), which 
+      generates an n x n identity matrix.
 */
 
 static int create_matrix (const char *name, const char *mask,

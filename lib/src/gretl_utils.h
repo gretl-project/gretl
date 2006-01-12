@@ -61,6 +61,9 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt);
 
 void printlist (const int *list, const char *msg);
 
+int gretl_integer_from_string (const char *s, const double **Z, 
+			       const DATAINFO *pdinfo, int *err);
+
 int positive_int_from_string (const char *s);
 
 int varnum_from_string (const char *str, DATAINFO *pdinfo);
