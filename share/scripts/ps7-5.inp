@@ -21,7 +21,7 @@ list
 (*  The following is the basic model *)
 ols LWAGE const EDUC EXPER AGE  
 genr DFR = $df
-genr ut = uhat
+genr ut = $uhat
 (* Auxiliary regression *)
 ols ut const EDUC EXPER AGE GENDER RACE CLERICAL MAINT CRAFTS sq_EDUC \
  sq_EXPER sq_AGE ED_GEN ED_RACE ED_CLER ED_MAINT ED_CRAFT AGE_GEN \

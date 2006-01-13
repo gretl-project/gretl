@@ -552,7 +552,7 @@ static int make_slices (const char *s, int m, int n,
    composed of the intersection of rows 1 and 2 with columns 2 and 3.
 */
 
-static gretl_matrix *
+gretl_matrix *
 matrix_get_submatrix (gretl_matrix *M, const char *s, int *err)
 {
     gretl_matrix *S;
@@ -1509,12 +1509,7 @@ real_user_matrix_get_determinant_as_matrix (gretl_matrix *m, int log)
 	d = user_matrix_get_determinant(m);
     }
 
-    if (!na(d)) {
-	dm = gretl_matrix_alloc(1, 1);
-	if (dm != NULL) {
-	    gretl_matrix_set(dm, 0, 0, d);
-	}
-    }
+    dm = gretl_matrix_from_scalar(d);
 
     return dm;
 }

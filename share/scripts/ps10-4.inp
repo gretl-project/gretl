@@ -17,7 +17,7 @@ smpl 1949 1989
 (* Model B - General dynamic model with no restrictions *)
 ols Cons 0 C1 DI DI1 ;
 (* Save uhat for LM test for AR(1) and generate uhat(t-1) *)
-genr ut= uhat
+genr ut = $uhat
 genr ut1=ut(-1)
 (* Retrieve error sum of squares for Wald test *)
 genr essu = $ess
@@ -39,7 +39,7 @@ pvalue X 1 LM1
 smpl 1949 1989
 ols Cons 0 C1 DiffI
 (* Save uhat for LM test for AR(1) and generate uhat(t-1) *)
-genr utt = uhat
+genr utt = $uhat
 genr utt1=utt(-1)
 (* Retrieve error sum of squares for WALD test *)
 genr essr = $ess

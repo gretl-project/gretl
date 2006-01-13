@@ -53,7 +53,7 @@ loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
 	ols y 0 DU time DT y_1 dyt(-1 to -k) --quiet
 
 	# test significance of the last lag
-	genr tstat = coeff(dyt_$k) / stderr(dyt_$k)
+	genr tstat = $coeff(dyt_$k) / $stderr(dyt_$k)
 	genr pval = 2 * pvalue(z, tstat)
 
 	# printf "last lag (%d): t=%g, asy.
@@ -70,7 +70,7 @@ loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
 	ols y 0 DU time DT y_1 --quiet
     endif
    
-    genr t_alpha = (coeff(y_1) - 1.0) / stderr(y_1)
+    genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
     printf "%d: t_alpha = %8g (k=%d)\n", Tb, t_alpha, kstar
    
     if t_alpha < t_a_min
@@ -96,7 +96,7 @@ else
 endif
 
 # just checking
-genr t_alpha = (coeff(y_1) - 1.0) / stderr(y_1)
+genr t_alpha = ($coeff(y_1) - 1.0) / $stderr(y_1)
 printf "check: t_alpha = %g\n", t_alpha
 
 

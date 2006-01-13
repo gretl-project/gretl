@@ -59,6 +59,9 @@ gretl_matrix *user_matrix_get_inverse (gretl_matrix *m);
 gretl_matrix *
 user_matrix_get_transformation (gretl_matrix *m, GretlMathFunc fn);
 
+gretl_matrix *
+matrix_get_submatrix (gretl_matrix *M, const char *s, int *err);
+
 int reposition_transpose_symbol (char *s);
 
 #endif /* USERMAT_H_ */

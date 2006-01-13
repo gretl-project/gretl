@@ -2165,25 +2165,25 @@
 	</li>
 	<li>
 	  <para>
-	    <func>coeff</func>(<repl>var</repl>): estimated coefficient for
+	    <func>$coeff</func>(<repl>var</repl>): estimated coefficient for
 	    variable <repl>var</repl>
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>stderr</func>(<repl>var</repl>): estimated standard error for
+	    <func>$stderr</func>(<repl>var</repl>): estimated standard error for
 	    variable <repl>var</repl>
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>rho</func>(<repl>i</repl>): <repl>i</repl>th order
+	    <func>$rho</func>(<repl>i</repl>): <repl>i</repl>th order
 	    autoregressive coefficient for residuals
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>vcv</func>(<repl>x1</repl>,<repl>x2</repl>): estimated
+	    <func>$vcv</func>(<repl>x1</repl>,<repl>x2</repl>): estimated
 	    covariance between coefficients for the variables <repl>x1</repl>
 	    and <repl>x2</repl> 
 	  </para>
@@ -2348,17 +2348,17 @@
 	    from last regression</cell>
 	</row>
 	<row>
-	  <cell><lit>x = coeff(sqft)</lit></cell>
+	  <cell><lit>x = $coeff(sqft)</lit></cell>
 	  <cell>grab the estimated coefficient on the variable
 	    <lit>sqft</lit> from the last regression</cell>
 	</row>
 	<row>
-	  <cell><lit>rho4 = rho(4)</lit></cell>
+	  <cell><lit>rho4 = $rho(4)</lit></cell>
 	  <cell>grab the 4th-order autoregressive coefficient from the
 	    last model (presumes an <lit>ar</lit> model)</cell>
 	</row>
 	<row>
-	  <cell><lit>cvx1x2 = vcv(x1, x2)</lit></cell>
+	  <cell><lit>cvx1x2 = $vcv(x1, x2)</lit></cell>
 	  <cell>grab the estimated coefficient covariance of vars
 	    <lit>x1</lit> and <lit>x2</lit> from the last model</cell>
 	</row>
@@ -4222,8 +4222,8 @@
       <code>
 	1   open greene11_3.gdt
 	2   ols C 0 Y
-	3   genr alpha = coeff(0)
-	4   genr beta = coeff(Y)
+	3   genr alpha = $coeff(0)
+	4   genr beta = $coeff(Y)
 	5   genr gamma = 1.0
 	6   nls C = alpha + beta * Y^gamma
 	7   deriv alpha = 1
@@ -4987,8 +4987,8 @@
       </para>
       <code>
 	ols 1 0 2 3
-	genr b = coeff(2)
-	genr se_b = stderr(2)
+	genr b = $coeff(2)
+	genr se_b = $stderr(2)
 	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
       </code>
 

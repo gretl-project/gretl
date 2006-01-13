@@ -31,7 +31,7 @@ ols milit const govt longdef
 ols milit const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \
  lkwar lvwar lkrus lgorb lsalt
 (* LM test for first order autocorrelation *)
-genr ut = uhat
+genr ut = $uhat
 genr ut1 = ut(-1)
 smpl 1942 ;
 ols ut const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \

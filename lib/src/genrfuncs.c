@@ -1363,3 +1363,109 @@ int get_t_from_obs_string (char *s, const double **Z,
 
     return t;
 }
+
+static int arma_model_stat_pos (const char *s, const MODEL *pmod)
+{
+    int p = -1;
+
+    if (numeric_string(s)) {
+	p = atoi(s) - 1;
+	if (p >= pmod->ncoeff) p = -1;
+	return p;
+    } else if (pmod->params != NULL) {
+	int i;
+
+	for (i=1; i<=pmod->ncoeff; i++) {
+	    if (!strcmp(s, pmod->params[i])) {
+		p = i - 1;
+		break;
+	    }
+	}
+    }
+
+    return p;
+}
+
+#define AR1_MODEL(c) (c == CORC || c == HILU || c == PWE)
+
+/* retrieve a specific element from one of the arrays of data
+   on a model */
+
+double 
+get_model_data_element (MODEL *pmod, int idx, const char *key,
+			const DATAINFO *pdinfo, int *err)
+{
+    char s[32] = {0};
+    const char *p;
+    int lv, vi = 0;
+    double x = NADBL;
+
+    /* extract arg string in parentheses */
+    p = strchr(key, '(');
+    if (p != NULL) {
+	sscanf(p + 1, "%31[^) ]", s);
+    } else {
+	strncat(s, key, 31);
+    }
+
+    DPRINTF(("get_model_data_element: looking at key = '%s'\n", s));
+
+    if (idx == M_RHO_S) {
+	if (!(numeric_string(s))) {
+	    *err = E_INVARG;
+	} else if (dot_atof(s) == 1 && AR1_MODEL(pmod->ci)) {
+	    x = gretl_model_get_double(pmod, "rho_in");
+	} else if (pmod->ci != AR && dot_atof(s) == 1) {
+	    x = pmod->rho;
+	} else if (pmod->arinfo == NULL || 
+		   pmod->arinfo->arlist == NULL || 
+		   pmod->arinfo->rho == NULL) {
+	    *err = E_INVARG;
+	} else if (!(vi = gretl_list_position(atoi(s), pmod->arinfo->arlist))) {
+	    *err = E_INVARG;
+	} else {
+	    x = pmod->arinfo->rho[vi-1];
+	}
+    } else if (idx == M_VCV_S) {
+	x = genr_vcv(s, pdinfo, pmod);
+	if (na(x)) {
+	    *err = E_INVARG;
+	}
+    } else if (idx == M_COEFF_S || idx == M_SE_S) {
+	if (pmod == NULL || pmod->list == NULL) {
+	    *err = E_INVARG;
+	} else if (pmod->ci == ARMA) {
+	    vi = arma_model_stat_pos(s, pmod);
+	    if (vi < 0) {
+		*err = E_INVARG;
+	    }
+	} else {
+	    lv = numeric_string(s)? atoi(s) : varindex(pdinfo, s);
+	    vi = gretl_list_position(lv, pmod->list);
+
+	    if (vi < 2) {
+		*err = E_INVARG;
+	    } else {
+		vi -= 2;
+	    }
+	}
+
+	if (!*err) {
+	    if (idx == M_COEFF_S && pmod->coeff != NULL) { 
+		x = pmod->coeff[vi];
+	    } else if (pmod->sderr != NULL) {
+		x = pmod->sderr[vi];
+	    } else {
+		*err = E_INVARG;
+	    }
+	}
+    } 
+
+    if (*err) {
+	gretl_errno = *err;
+    }
+
+    DPRINTF(("get_model_data_element: err = %d\n", *err));
+
+    return x;
+}

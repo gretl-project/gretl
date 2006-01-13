@@ -37,11 +37,11 @@ loop while crit > 1.0e-9
    ols const sc_c sc_a sc_m --quiet
 
    # Update the parameters
-   genr dc = coeff(sc_c) 
+   genr dc = $coeff(sc_c) 
    genr c = c + dc
-   genr da = coeff(sc_a) 
+   genr da = $coeff(sc_a) 
    genr a = a + da
-   genr dm = coeff(sc_m) 
+   genr dm = $coeff(sc_m) 
    genr m = m + dm
 
    printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
@@ -52,9 +52,9 @@ loop while crit > 1.0e-9
    print crit
 endloop
 
-genr se_c = stderr(sc_c)
-genr se_a = stderr(sc_a)
-genr se_m = stderr(sc_m)
+genr se_c = $stderr(sc_c)
+genr se_a = $stderr(sc_a)
+genr se_m = $stderr(sc_m)
 
 noecho
 print "

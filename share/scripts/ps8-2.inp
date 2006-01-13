@@ -3,8 +3,8 @@ genr LNSALARY=ln(SALARY)
 genr YRS2 = YEARS*YEARS
 ols LNSALARY const YEARS YRS2 
 (* save absolute uhat, uhat squared, and its log *)
-genr usq = uhat*uhat
-genr absuhat = abs(uhat)
+genr usq = $uhat*$uhat
+genr absuhat = abs($uhat)
 genr lnusq = ln(usq)
 (* Breusch-Pagan test *)
 ols usq const YEARS YRS2 

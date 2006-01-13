@@ -3,7 +3,7 @@ ols 2 0 3
 (* Model B *)
 add 4 6 7 8  
 (* save residuals as ut *)
-genr ut = uhat 
+genr ut = $uhat 
 (* Model C *)
 omit 7 8 
 (* lmtest on Model C *)

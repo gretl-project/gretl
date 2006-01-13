@@ -2603,13 +2603,16 @@ const char *gretl_model_get_name (const MODEL *pmod)
     return NULL;
 }
 
-int gretl_model_stat_index (const char *s)
+int gretl_model_data_index (const char *s)
 {
     char test[8] = {0};
+    int ssel = 0;
+    int msel = 0;
 
     strncat(test, s, 7);
     lower(test);
 
+    /* scalar values */
     if (!strcmp(test, "$ess"))  
 	return M_ESS;
     if (!strcmp(test, "$t")) 
@@ -2632,46 +2635,36 @@ int gretl_model_stat_index (const char *s)
 	!strcmp(test, "$trsq")) 
 	return M_TRSQ;
 
-    return 0;
-}
-
-int gretl_model_series_index (const char *s)
-{
-    char test[8] = {0};
-
-    strncat(test, s, 7);
+    sscanf(s, "%7[^[( ]", test);
     lower(test);
 
-    if (!strcmp(test, "$uhat")) { 
-	return M_UHAT;
-    } else if (!strcmp(test, "$yhat")) {
-	return M_YHAT;
-    } else if (!strcmp(test, "$h")) {
-	return M_H;
+    if (strchr(s, '[')) {
+	/* selecting submatrix? */
+	msel = 1;
     }
 
-    return 0;
-}
-
-int gretl_model_matrix_index (const char *s)
-{
-    char test[8] = {0};
-
-    strncat(test, s, 7);
-    lower(test);
-
-    if (!strcmp(test, "$uhat"))  
+    /* series or matrices */
+    if (!strcmp(test, "$uhat")) 
 	return M_UHAT;
-    if (!strcmp(test, "$yhat")) 
+    if (!strcmp(test, "$yhat"))
 	return M_YHAT;
-    if (!strcmp(test, "$coeff"))  
-	return M_COEFF;
-    if (!strcmp(test, "$stderr"))  
-	return M_SE;
-    if (!strcmp(test, "$vcv"))   
-	return M_VCV;
-    if (!strcmp(test, "$h"))   
+    if (!strcmp(test, "$h"))
 	return M_H;
+
+    if (!msel && strchr(s, '(')) {
+	/* selecting scalar element from array? */
+	ssel = 1;
+    } 
+
+    /* matrices, not series */
+    if (!strcmp(test, "$coeff"))  
+	return (ssel)? M_COEFF_S : M_COEFF;
+    if (!strcmp(test, "$stderr"))  
+	return (ssel)? M_SE_S : M_SE;
+    if (!strcmp(test, "$vcv"))   
+	return (ssel)? M_VCV_S : M_VCV;
+    if (!strcmp(test, "$rho"))   
+	return (ssel)? M_RHO_S : M_RHO;
 
     return 0;
 }
@@ -2684,8 +2677,6 @@ double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
 	*err = E_BADSTAT;
 	return x;
     }
-
-    if (*err) return x;
 
     switch (idx) {  
     case M_ESS:

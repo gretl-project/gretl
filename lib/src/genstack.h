@@ -35,7 +35,7 @@ typedef enum {
     ATOM_SERIES   = 0,
     ATOM_SCALAR   = 1 << 0,
     ATOM_MATRIX   = 1 << 1,
-    ATOM_ACCESSOR = 1 << 2,
+    ATOM_MODELDAT = 1 << 2,
     ATOM_TMP      = 1 << 3
 } GenAtomType;
 
@@ -45,7 +45,7 @@ typedef struct atomset_ atomset;
 struct genatom_ {
     char level;        /* evaluation priority level */
     char atype;        /* flags giving type of atom (see GenAtomType) */
-    int varnum;        /* variable ID number (N.B. overloaded!) */
+    int varnum;        /* variable ID number */
     int varobs;        /* observation number, if applicable */
     int tmpvar;        /* ID number of temporary variable, if any */
     char lag;          /* lag, if lagged variable */
@@ -72,19 +72,15 @@ enum transformations {
     T_MIN,
     T_MAX,
     T_SORT, 
-    T_COEFF,
-    T_RHO, 
     T_SUM, 
     T_NOBS,
     T_T1,
     T_T2,
-    T_STDERR,
     T_CUM, 
     T_MISSING,
     T_OK,
     T_MISSZERO,
     T_CORR,
-    T_VCV,
     T_VAR,
     T_SST,
     T_COV,

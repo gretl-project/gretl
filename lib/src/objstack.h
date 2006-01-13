@@ -68,9 +68,11 @@ double saved_object_get_scalar (const char *oname, const char *key, int *err);
 
 int saved_object_print_scalar (const char *oname, const char *key, PRN *prn);
 
-double last_model_get_value_by_type (int idx, int *err);
+double saved_object_get_scalar_element (const char *oname, const char *key,
+					const DATAINFO *pdinfo, int *err);
 
-double *saved_object_get_series (const char *oname, const char *key, int *err);
+double *saved_object_get_series (const char *oname, const char *key, 
+				 const DATAINFO *pdinfo, int *err);
 
 gretl_matrix *
 saved_object_get_matrix (const char *oname, const char *key, int *err);

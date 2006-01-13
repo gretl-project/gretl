@@ -6,7 +6,7 @@ smpl 1.02 31.24
 (* estimate model with lagged dependent variable *)
 ols load 0 load1 temp
 (* Save residuals for Breusch-Godfrey test for AR(24) *)
-genr ut = uhat
+genr ut = $uhat
 (* generate 24 lags *)
 lags ut
 (* Suppress 25 observations *)

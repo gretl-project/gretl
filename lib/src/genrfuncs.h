@@ -38,4 +38,8 @@ double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod);
 
 int get_observation_number (const char *s, const DATAINFO *pdinfo);
 
+double 
+get_model_data_element (MODEL *pmod, int idx, const char *s,
+			const DATAINFO *pdinfo, int *err);
+
 #endif /* GENRFUNCS_H */

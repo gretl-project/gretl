@@ -7,7 +7,7 @@ genr YRS4 = YRS2*YRS2
 (* estimate log quadratic model *)
 ols LNSALARY const YEARS YRS2 
 (* save squared residuals *)
-genr usq=uhat*uhat
+genr usq=$uhat*$uhat
 (* auxiliary regression *)
 ols usq const YEARS YRS2 YRS3 YRS4 
 (* compute LM test statistic and p-value *)

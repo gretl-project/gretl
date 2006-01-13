@@ -7,7 +7,7 @@ ols WAGE 0 sq_EDUC EXPER
 (* estimate log-linear model *)
 ols l_WAGE 0 sq_EDUC EXPER 
 (* save fitted log values *)
-genr lwhat = l_WAGE - uhat
+genr lwhat = l_WAGE - $uhat
 (* save ess for bias correction *)
 genr sgmasq=$ess/$df
 (* generate adjusted fitted value *)

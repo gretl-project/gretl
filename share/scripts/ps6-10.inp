@@ -3,7 +3,7 @@
 square home inst svc tv age air y  
 (* estimate basic model *)
 ols sub const home inst svc tv age air y  
-genr ut=uhat
+genr ut=$uhat
 (* estimate auxiliary regression *)
 ols ut const home inst svc tv age air y sq_home sq_inst sq_svc sq_tv \
  sq_age sq_air sq_y  

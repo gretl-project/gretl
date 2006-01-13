@@ -36,11 +36,7 @@
 
 enum {
     HIGHNUM = 5000,
-    HNUM,
-    UHATNUM,
-    YHATNUM,
     TNUM,
-    OBSBOOLNUM,
     INDEXNUM
 } genr_numbers;
 
@@ -64,7 +60,6 @@ static int get_obs_value (const char *s, const double **Z,
 
 static int op_level (int c);
 
-static double *get_model_series (const DATAINFO *pdinfo, int v);
 static double *get_random_series (DATAINFO *pdinfo, int fn);
 static double *get_mp_series (const char *s, GENERATOR *genr,
 			      int fn, int *err);
@@ -73,8 +68,6 @@ static double *get_tmp_series (double *x, GENERATOR *genr,
 
 static double get_tnum (const DATAINFO *pdinfo, int t);
 static double evaluate_statistic (double *z, GENERATOR *genr, int fn);
-static double get_model_data_element (const char *s, GENERATOR *genr,
-				      int idx);
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx);
 static double get_test_stat_value (char *label, int idx);
 static double evaluate_math_function (double arg, int fn, int *err);
@@ -117,9 +110,7 @@ struct genr_func funcs[] = {
     { T_MAX,      "max" },
     { T_SORT,     "sort" }, 
     { T_INT,      "int" }, 
-    { T_COEFF,    "coeff" },
     { T_ABS,      "abs" }, 
-    { T_RHO,      "rho" }, 
     { T_SQRT,     "sqrt" }, 
     { T_SUM,      "sum" }, 
     { T_NOBS,     "nobs" },
@@ -127,13 +118,11 @@ struct genr_func funcs[] = {
     { T_T2,       "lastobs" },
     { T_NORMAL,   "normal" }, 
     { T_UNIFORM,  "uniform" }, 
-    { T_STDERR,   "stderr" },
     { T_CUM,      "cum" }, 
     { T_MISSING,  "missing" },
     { T_OK,       "ok" },        /* opposite of missing */
     { T_MISSZERO, "misszero" },
     { T_CORR,     "corr" },
-    { T_VCV,      "vcv" },
     { T_VAR,      "var" },
     { T_SST,      "sst" },
     { T_COV,      "cov" },
@@ -192,9 +181,6 @@ struct genr_func funcs[] = {
 
 #define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
 
-#define MODEL_DATA_ELEMENT(f) (f == T_COEFF || f == T_STDERR || \
-                               f == T_RHO || f == T_VCV)
-
 #define MISSVAL_FUNC(f) (f == T_MISSING || f == T_OK || \
                          f == T_MISSZERO || f == T_ZEROMISS)
 
@@ -203,8 +189,6 @@ struct genr_func funcs[] = {
 
 #define MATRIX_FILL_FUNC(f) (f == T_IMAT || f == T_ZEROS || f == T_ONES || \
                              f == T_UNIFORM || f == T_NORMAL)
-
-#define MODEL_VAR_INDEX(v) (v == HNUM || v == UHATNUM || v == YHATNUM)
 
 #ifdef HAVE_MPFR
 # define MP_MATH(f) (f == T_MPOW || f == T_MLOG)
@@ -368,7 +352,7 @@ static int print_atom (genatom *atom)
     if (atom->lag > 0) {
 	fprintf(stderr, " atom->lag = %d\n", atom->lag);
     }
-    if (atom->atype == ATOM_SCALAR) {
+    if (atom->atype & ATOM_SCALAR) {
 	fprintf(stderr, " atom->val = %g\n", atom->val);
     }
     if (atom->M != NULL) {
@@ -413,7 +397,7 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
     if (sscanf(s, format, vname, &m) == 2) {
 	v = varindex(genr->pdinfo, vname);
 	DPRINTF(("get_lagvar: looking at '%s' (v == %d)\n", vname, v));
-	if (v >= genr->pdinfo->v && !MODEL_VAR_INDEX(v)) {
+	if (v >= genr->pdinfo->v) {
 	    DPRINTF(("get_lagvar: rejecting '%s'\n", s));
 	    v = m = 0;
 	} else if (v < genr->pdinfo->v && genr->pdinfo->vector[v] == 0) {
@@ -554,64 +538,6 @@ static int get_arg_string (char *str, const char *s, int func, GENERATOR *genr)
     return err;
 }
 
-/* FIXME in this general area 2006-01-13 */
-
-static int catch_saved_object_scalar (const char *s, double *x)
-{
-    const char *p = strstr(s, ".$");
-    int len = strcspn(s, ".");
-    char *test;
-    int err = 0, ret = 0;
-
-    test = gretl_strndup(s, len);
-
-    if (test != NULL) {
-	*x = saved_object_get_scalar(test, p + 1, &err);
-	if (!err) ret = 1;
-	free(test);
-    }
-
-    return ret;
-}
-
-#if 0 /* work in progress !! */
-static int catch_saved_object_series (const char *s, double *x)
-{
-    const char *p = strstr(s, ".$");
-    int len = strcspn(s, ".");
-    char *test;
-    int err = 0, ret = 0;
-
-    test = gretl_strndup(s, len);
-
-    if (test != NULL) {
-	*x = saved_object_get_series(test, p + 1, &err);
-	if (!err) ret = 1;
-	free(test);
-    }
-
-    return ret;
-}
-#endif
-
-static int catch_saved_object_matrix (const char *s, gretl_matrix **M)
-{
-    const char *p = strstr(s, ".$");
-    int len = strcspn(s, ".");
-    char *test;
-    int err = 0, ret = 0;
-
-    test = gretl_strndup(s, len);
-
-    if (test != NULL) {
-	*M = saved_object_get_matrix(test, p + 1, &err);
-	if (!err) ret = 1;
-	free(test);
-    }
-
-    return ret;
-}
-
 static double genr_get_matrix_scalar (const char *s, int func)
 {
     gretl_matrix *m = NULL;
@@ -661,14 +587,6 @@ token_get_variable_or_constant (const char *s, GENERATOR *genr,
     } else if (!strcmp(s, "NA")) {
 	val = NADBL;
 	atype = ATOM_SCALAR;
-    } else if (strstr(s, ".$")) {
-	if (catch_saved_object_scalar(s, &val)) {
-	    atype = ATOM_SCALAR;
-	} else if (genr_is_matrix(genr)) {
-	    if (catch_saved_object_matrix(s, M)) {
-		atype = ATOM_MATRIX;
-	    }
-	} 
     } else if (genr_is_matrix(genr)) {
 	*M = get_matrix_by_name(s);
 	if (*M != NULL) {
@@ -802,7 +720,7 @@ static int token_get_function (const char *s, GENERATOR *genr,
 
     if (MP_MATH(func) || func == T_PVALUE || 
 	func == T_CRIT || func == T_FRACDIFF ||
-	BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
+	BIVARIATE_STAT(func)) {
 	genr->err = get_arg_string(str, s, func, genr);
     } 
 
@@ -822,9 +740,6 @@ static int token_get_function (const char *s, GENERATOR *genr,
 	}
     } else if (func == T_VARNUM || func == T_VECTOR ||
 	       func == T_ISLIST || func == T_NELEM) {
-	atype = ATOM_SCALAR;
-    } else if (MODEL_DATA_ELEMENT(func)) {
-	val = get_model_data_element(str, genr, func);
 	atype = ATOM_SCALAR;
     } else if (BIVARIATE_STAT(func)) {
 	val = evaluate_bivariate_statistic(str, genr, func);
@@ -879,55 +794,100 @@ static int test_stat_index (const char *s)
     return ret;
 }
 
-static int model_vector_index (const char *s)
-{
-    char test[USER_VLEN];
-    int ret = 0;
-
-    *test = '\0';
-    strncat(test, s, USER_VLEN - 1);
-    lower(test);
-
-    if (!strcmp(test, "$uhat")) { 
-	ret = UHATNUM;
-    } else if (!strcmp(test, "$yhat")) {
-	ret = YHATNUM;
-    } else if (!strcmp(test, "$h")) {
-	ret = HNUM;
-    }
-
-    return ret;
-}
-
-static int token_get_dollar_var (const char *s, GENERATOR *genr, 
-				 int *v, int *lag, double *val)
+static int 
+token_get_dollar_var (const char *s, GENERATOR *genr, double *val, 
+		      char *str, gretl_matrix **M)
 {
     int i, atype = ATOM_SERIES;
+    int found = 0;
 
-    if ((i = get_lagvar(s, lag, genr)) > 0) {
-	DPRINTF(("recognized var #%d lag %d\n", i, lag));
-	*v = i;
-    } else if ((i = gretl_model_stat_index(s)) > 0) {
-	DPRINTF(("recognized '%s' as model variable, index #%d\n", s, i));
-	*val = last_model_get_value_by_type(i, &genr->err);
-	atype = ATOM_SCALAR;
-    } else if ((i = model_vector_index(s)) > 0) { 
-	DPRINTF(("recognized '%s' as model vector, index #%d\n", s, i));
-	*v = i;
-    } else if ((i = dataset_var_index(s)) > 0) {
-	DPRINTF(("recognized '%s' as dataset var, index #%d\n", s, i));
-	*val = get_dataset_statistic(genr->pdinfo, i);
-	atype = ATOM_SCALAR;
-    } else if ((i = test_stat_index(s)) > 0) {
-	DPRINTF(("recognized '%s' as test-related var, index #%d\n", s, i));
-	*val = get_test_stat_value(genr->label, i);
-	atype = ATOM_SCALAR;
-    } else {
+    DPRINTF(("token_get_dollar_var: s='%s'\n", s));
+
+    if (*s == '$') {
+	if ((i = dataset_var_index(s)) > 0) {
+	    DPRINTF(("recognized '%s' as dataset var, index #%d\n", s, i));
+	    *val = get_dataset_statistic(genr->pdinfo, i);
+	    atype = ATOM_SCALAR;
+	    found = 1;
+	} else if ((i = test_stat_index(s)) > 0) {
+	    DPRINTF(("recognized '%s' as test-related var, index #%d\n", s, i));
+	    *val = get_test_stat_value(genr->label, i);
+	    atype = ATOM_SCALAR;
+	    found = 1;
+	}
+    }
+
+    if (!found) {
+	const char *key = s;
+	char *oname = NULL;
+	int idx = 0;
+
+	if (*s != '$') {
+	    key = strstr(s, ".$");
+	    oname = gretl_strndup(s, key - s);
+	    key++;
+	}
+
+	DPRINTF(("dollar var: key='%s'\n", key));
+
+	idx = gretl_model_data_index(key);
+
+	if (genr_is_matrix(genr)) {
+	    if (model_data_is_scalar(idx)) {
+		double x = saved_object_get_scalar(oname, key, &genr->err);
+
+		if (!genr->err) {
+		    *M = gretl_matrix_from_scalar(x);
+		} 
+		if (M == NULL) {
+		    genr->err = E_ALLOC;
+		} else {
+		    atype = ATOM_MATRIX;
+		    found = 1;
+		}
+	    } else if (model_data_is_matrix(idx)) {
+		*M = saved_object_get_matrix(oname, key, &genr->err);
+		if (!genr->err) {
+		    atype = ATOM_MATRIX;
+		    found = 1;
+		}
+	    }
+	} else {
+	    /* not generating a matrix */
+	    if (model_data_is_scalar(idx)) {
+		*val = saved_object_get_scalar(oname, key, &genr->err);
+		atype = ATOM_SCALAR;
+		found = 1;
+	    } else if (model_data_is_scalar_element(idx)) {
+		*val = saved_object_get_scalar_element(oname, key, genr->pdinfo,
+						       &genr->err);
+		if (!genr->err) {
+		    atype = ATOM_SCALAR;
+		    found = 1;
+		}
+	    } else if (model_data_is_series(idx)) {
+		atype = ATOM_SERIES | ATOM_MODELDAT;
+		strncat(str, s, ARGLEN - 1);
+		found = 1;
+	    }
+	}
+
+	free(oname);
+    }
+
+    if (!found && !genr->err) {
 	genr->err = E_UNKVAR;
     }
 
     return atype;
 }
+
+#define looks_like_dollar_token(s) (*s == '$' || \
+                                    (isalpha(*s) && strstr(s, ".$")))
+
+#define looks_like_var_or_func(s) (isalpha(*s) || *s == '\'')
+
+#define looks_like_plain_var(s) (!strchr(s, '(') && !strchr(s, '[') && *s != '\'')
 
 /* Parse a "genr" token and construct a corresponding "atom".  In the
    case of scalar tokens we could go ahead and attach a specific value
@@ -950,8 +910,10 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 
     DPRINTF(("parse_token: looking at '%s'\n", s));
 
-    if (isalpha((unsigned char) *s) || *s == '\'') {
-	if (!strchr(s, '(') && !strchr(s, '[') && *s != '\'') {
+    if (looks_like_dollar_token(s)) {
+	atype = token_get_dollar_var(s, genr, &val, str, &M);
+    } else if (looks_like_var_or_func(s)) {
+	if (looks_like_plain_var(s)) {
 	    /* ordinary variable, list or matrix? */
 	    atype = token_get_variable_or_constant(s, genr, &v, &varobs, 
 						   &val, &M, str);
@@ -998,8 +960,6 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 		genr->err = E_SYNTAX; 
 	    } 
 	}
-    } else if (*s == '$') {
-	atype = token_get_dollar_var(s, genr, &v, &lag, &val);
     } else if (numeric_string(s)) {
 	/* plain number */
 	val = dot_atof(s);
@@ -1013,7 +973,7 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 	    genr->err = E_SYNTAX;
 	}
     } else if (strchr(s, ':')) {
-	/* time-series observation? */
+	/* time-series observation? (as in "obs > 1986:4") */
 	val = get_observation_number(s, genr->pdinfo);
 	if (val > 0) {
 	    atype = ATOM_SCALAR;
@@ -1025,7 +985,9 @@ parse_token (const char *s, char op, GENERATOR *genr, int level)
 	genr->err = E_SYNTAX;
     }
 
-    if (genr->err) return NULL;
+    if (genr->err) {
+	return NULL;
+    }
 
     return make_atom(atype, v, varobs, lag, val, M, func, op, str, 
 		     level, genr->aset);
@@ -1183,19 +1145,37 @@ static int add_random_series_to_genr (GENERATOR *genr, genatom *atom)
 
 static int add_model_series_to_genr (GENERATOR *genr, genatom *atom)
 {
+    char *s = atom->str;
+    char *oname = NULL;
+    char *key;
     double *x;
+    int err = 0;
 
-    x = get_model_series((const DATAINFO *) genr->pdinfo, atom->varnum);
-    if (x == NULL) return 1;
-
-    if (genr_add_temp_var(genr, x)) {
-	free(x);
-	return E_ALLOC;
+    if (*s == '$') {
+	key = s;
+    } else if ((key = strstr(s, ".$")) != NULL) {
+	oname = gretl_strndup(s, key - s);
+	key++;
+    } else {
+	return 1;
     }
 
-    atom->tmpvar = genr->tmpv - 1;
+    x = saved_object_get_series(oname, key, genr->pdinfo, &err);
 
-    return genr->err;
+    free(oname);
+
+    if (!err) {
+	if (genr_add_temp_var(genr, x)) {
+	    free(x);
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	atom->tmpvar = genr->tmpv - 1;
+    }
+
+    return err;
 }
 
 static int add_mp_series_to_genr (GENERATOR *genr, genatom *atom)
@@ -1604,9 +1584,7 @@ static int evaluate_genr (GENERATOR *genr)
 	    m = atom->lag;
 	}
 
-	/* FIXME handle accessor atoms here? */
-
-	if (MODEL_VAR_INDEX(atom->varnum)) {
+	if (atom->atype & ATOM_MODELDAT) {
 	    genr->err = add_model_series_to_genr(genr, atom);
 	} else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
 	    genr->err = add_random_series_to_genr(genr, atom);
@@ -1964,10 +1942,7 @@ static int op_level (int c)
 
 static int string_arg_function_word (const char *s, GENERATOR *genr)
 {
-    if (!strncmp(s, "coeff", 5) ||
-	!strncmp(s, "stderr", 6) ||
-	!strncmp(s, "rho", 3) ||
-	!strncmp(s, "vcv", 3) ||
+    if (!strncmp(s, "vcv", 3) ||
 	!strncmp(s, "corr", 4) ||
 	!strncmp(s, "cov", 3) ||
 	!strncmp(s, "pvalue", 6) ||
@@ -1978,6 +1953,15 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
 	!strncmp(s, "zeros", 5) ||
 	!strncmp(s, "ones", 4) ||
 	!strncmp(s, "I", 1)) {
+	return 1;
+    }
+
+    /* FIXME this is dodgy */
+    if (isalpha(*s) && 
+	(strstr(s, "$coeff") ||
+	 strstr(s, "$stderr") ||
+	 strstr(s, "$vcv") ||
+	 strstr(s, "$rho"))) {
 	return 1;
     }
 
@@ -2004,41 +1988,68 @@ static int matrix_scalar_function_word (const char *s)
     return 0;
 }
 
+static int is_model_data_selector (const char *s)
+{
+    int ret = 0;
+
+    if (!strncmp(s, "$coeff(", 7) ||
+	!strncmp(s, "$stderr(", 8) ||
+	!strncmp(s, "$vcv(", 4) ||
+	!strncmp(s, "$rho(", 4)) {
+	int rp = 0;
+
+	s = strchr(s, '(') + 1;
+	while (*s) {
+	    if (*s == ')') rp++;
+	    s++;
+	}
+	if (rp == 1 && *(s-1) == ')') {
+	    ret = 1;
+	} 
+    }
+
+    return ret;
+}
+
 static int token_is_atomic (const char *s, GENERATOR *genr)
 {
     int count = 0;
+    int atomic = 0;
 
     DPRINTF(("token_is_atomic: looking at '%s'\n", s));
 
-    /* number in scientific notation */
     if (numeric_string(s)) {
-	return 1;
-    }
-
-    /* if not numeric string but begins with digit, can't
-       be atomic */
-    if (isdigit((unsigned char) *s)) {
-	return 0;
-    }
-
-    /* treat lag variable as atom */
-    if (get_lagvar(s, NULL, genr)) {
-	return 1;
-    }
-
-    while (*s) {
-	/* token is non-atomic if it contains an operator,
-	   or parentheses */
-	if (op_level(*s) || *s == '(') {
-	    count++;
+	/* number in scientific notation */
+	atomic = 1;
+    } else if (isdigit((unsigned char) *s)) {
+	/* not numeric string but begins with digit: can't be atomic */
+	atomic = 0;
+    } else if (get_lagvar(s, NULL, genr)) {
+	/* treat lag variable as atom */
+	atomic = 1;
+    } else if (*s == '$' && is_model_data_selector(s)) {
+	/* treat, e.g., "$coeff(x)" as atom */
+	atomic = 1;
+    } else {
+	while (*s) {
+	    /* token is non-atomic if it contains an operator
+	       or parentheses, otherwise atomic */
+	    if (op_level(*s) || *s == '(') {
+		count++;
+	    }
+	    if (count > 0) {
+		break;
+	    }
+	    s++;
 	}
-	if (count > 0) {
-	    break;
-	}
-	s++;
+	if (count == 0) {
+	   atomic = 1;
+	} 
     }
 
-    return (count == 0);
+    DPRINTF(("token_is_atomic: returning %d\n", atomic));
+
+    return atomic;
 }
 
 static int token_is_function (char *s, GENERATOR *genr, int level)
@@ -2046,6 +2057,13 @@ static int token_is_function (char *s, GENERATOR *genr, int level)
     int wlen = 0;
     int ret;
     const char *p = s;
+
+    DPRINTF(("token_is_function: looking at '%s'\n", s));
+
+    if (*s == '$') {
+	/* can look like a function, but is not */
+	return 0;
+    }
 
     while (*p) {
 	if (!op_level(*p) && *p != '(') {
@@ -2056,10 +2074,12 @@ static int token_is_function (char *s, GENERATOR *genr, int level)
 	p++;
     }
 
+    DPRINTF((" after processing, looking at '%s'\n", p));
+
     ret = (*p == '(' && p[strlen(p) - 1] == ')'); 
 
     if (ret) {
-	DPRINTF(("token is function...\n"));
+	DPRINTF((" yes, token is function...\n"));
 	if (string_arg_function_word(s, genr) || 
 	    (matrix_scalar_function_word(s) && !genr_is_matrix(genr))) {
 	    return ret;
@@ -2486,70 +2506,50 @@ int genr_function_from_string (const char *s)
     return 0;
 }
 
-static void otheruse (const char *s1, const char *s2)
-{
-    sprintf(gretl_errmsg, _("'%s' refers to a %s and may not be used as a "
-			    "variable name"), s1, s2); 
-}
-
 /**
  * gretl_reserved_word:
  * @str: string to be tested.
  *
- * Returns 1 if @str is a reserved word that cannot figure as the
+ * Returns non-zero if @str is a reserved word that cannot figure as the
  * name of a user-defined variable, otherwise 0.
  */
 
 int gretl_reserved_word (const char *str)
 {
-    const char *resword[] = {
-	"uhat", "yhat",
-	"const", "CONST", "pi", "NA",
-	"coeff", "stderr", "rho",
-	/* stats functions */
-	"mean", "median", "var", "cov", "vcv", "sd",
-	/* internal sampling vars */
-	"full", "subdum", 
-	/* plotting vars */
-	"t", "annual", "qtrs", "months", "hrs", 
-	/* other internal vars */
-	"i", "obs", "series",
-	NULL
+    const char *uses[] = {
+	N_("constant"),
+	N_("sampling concept"),
+	N_("plotting variable"),
+	N_("internal variable"),
+	N_("math function")
     };
-    int i, ret = 0;
+    int ret = 0;
 
-    for (i=0; resword[i] != NULL && !ret; i++) {
-	if (!strcmp(str, resword[i])) {
-	    if (i == 0) {
-		otheruse(str, _("residual vector"));
-	    } else if (i == 1) {
-		otheruse(str, _("fitted values vector"));
-	    } else if (i >= 2 && i <= 5) {
-		otheruse(str, _("constant"));
-	    } else if (i == 6) {
-		otheruse(str, _("regr. coeff."));
-	    } else if (i == 7) {
-		otheruse(str, _("standard error"));
-	    } else if (i == 8) {
-		otheruse(str, _("autocorr. coeff."));
-	    } else if (i >= 9 && i <= 14) {
-		otheruse(str, _("stats function"));
-	    } else if (i == 15 || i == 16) {
-		otheruse(str, _("sampling concept"));
-	    } else if (i >= 17 && i <= 21) {
-		otheruse(str, _("plotting variable"));
-	    } else if (i >= 22 && i <= 24) {
-		otheruse(str, _("internal variable"));
-	    } else {
-		otheruse(str, _("math function"));
-	    }
-	    ret = 1;
-	}
-    } 
-
-    if (!ret && genr_function_from_string(str)) {
-	otheruse(str, _("math function"));
+    if (!strcmp(str, "const") ||
+	!strcmp(str, "CONST") ||
+	!strcmp(str, "pi") ||
+	!strcmp(str, "NA")) {
 	ret = 1;
+    } else if (!strcmp(str, "full") ||
+	       !strcmp(str, "subdum")) {
+	ret = 2;
+    } else if (!strcmp(str, "t") ||
+	       !strcmp(str, "annual") ||
+	       !strcmp(str, "qtrs") ||
+	       !strcmp(str, "months") ||
+	       !strcmp(str, "hours")) {
+	ret = 3;
+    } else if (!strcmp(str, "i") ||
+	       !strcmp(str, "obs") ||
+	       !strcmp(str, "series")) {
+	ret = 4;
+    } else if (genr_function_from_string(str)) {
+	ret = 5;
+    }
+
+    if (ret > 0) {
+	sprintf(gretl_errmsg, _("'%s' refers to a %s and may not be used as a "
+			    "variable name"), str, _(uses[ret - 1])); 
     }
  
     return ret;
@@ -4056,108 +4056,6 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
     return x;
 }
 
-static int arma_model_stat_pos (const char *s, const MODEL *pmod)
-{
-    int p = -1;
-
-    if (numeric_string(s)) {
-	p = atoi(s) - 1;
-	if (p >= pmod->ncoeff) p = -1;
-	return p;
-    } else if (pmod->params != NULL) {
-	int i;
-
-	for (i=1; i<=pmod->ncoeff; i++) {
-	    if (!strcmp(s, pmod->params[i])) {
-		p = i - 1;
-		break;
-	    }
-	}
-    }
-
-    return p;
-}
-
-#define AR1_MODEL(c) (c == CORC || c == HILU || c == PWE)
-
-static double 
-get_model_data_element (const char *s, GENERATOR *genr, int idx)
-{
-    MODEL *pmod = NULL;
-    int type, lv, vi = 0;
-    double x = NADBL;
-
-    DPRINTF(("get_model_data_element: looking at '%s'\n", s));
-
-    pmod = get_last_model(&type);
-    if (type != EQUATION) {
-	return x;
-    }
-
-    if (idx == T_RHO) {
-	if (!(numeric_string(s))) {
-	    genr->err = E_INVARG;
-	} else if (dot_atof(s) == 1 && AR1_MODEL(pmod->ci)) {
-	    x = gretl_model_get_double(pmod, "rho_in");
-	} else if (pmod->ci != AR && dot_atof(s) == 1) {
-	    x = pmod->rho;
-	} else if (pmod->arinfo == NULL || 
-		   pmod->arinfo->arlist == NULL || 
-		   pmod->arinfo->rho == NULL) {
-	    genr->err = E_INVARG;
-	} else if (!(vi = gretl_list_position(atoi(s), pmod->arinfo->arlist))) {
-	    genr->err = E_INVARG;
-	} else {
-	    x = pmod->arinfo->rho[vi-1];
-	}
-    }
-
-    else if (idx == T_VCV) {
-	x = genr_vcv(s, genr->pdinfo, pmod);
-	if (na(x)) {
-	    genr->err = E_INVARG;
-	}
-    }
-
-    else if (idx == T_COEFF || idx == T_STDERR) {
-	if (pmod == NULL || pmod->list == NULL) {
-	    genr->err = E_INVARG;
-	} else if (pmod->ci == ARMA) {
-	    vi = arma_model_stat_pos(s, pmod);
-	    if (vi < 0) {
-		genr->err = E_INVARG;
-	    }
-	} else {
-	    lv = numeric_string(s)? atoi(s) : varindex(genr->pdinfo, s);
-	    vi = gretl_list_position(lv, pmod->list);
-
-	    if (vi < 2) {
-		genr->err = E_INVARG;
-	    } else {
-		vi -= 2;
-	    }
-	}
-
-	if (!genr->err) {
-	    if (idx == T_COEFF && pmod->coeff != NULL) { 
-		x = pmod->coeff[vi];
-	    } else if (pmod->sderr != NULL) {
-		x = pmod->sderr[vi];
-	    } else {
-		genr->err = E_INVARG;
-	    }
-	}
-    } 
-
-    if (genr->err) {
-	gretl_errno = genr->err;
-    }
-
-    DPRINTF(("get_model_data_element: err = %d\n", genr->err));
-
-    return x;
-}
-
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
 {
     double x = NADBL;
@@ -4216,71 +4114,6 @@ get_obs_value (const char *s, const double **Z, const DATAINFO *pdinfo,
     return err;
 }
 
-/* called at evaluation time, so gets current model as of
-   that time, if no specific model is given */
-
-static double *get_model_series (const DATAINFO *pdinfo, int v)
-{
-    MODEL *pmod;
-    int type;
-    double *x, *garch_h = NULL;
-    int t;
-
-    pmod = get_last_model(&type);
-    if (type != EQUATION) {
-	return NULL;
-    }
-
-    if (!MODEL_VAR_INDEX(v)) {
-	return NULL;
-    }
-
-    if (pmod->t2 - pmod->t1 + 1 > pdinfo->n || 
-	model_sample_issue(pmod, NULL, 0, pdinfo)) {
-	strcpy(gretl_errmsg, 
-	       (v == UHATNUM)? 
-	       _("Can't retrieve uhat: data set has changed") :
-	       (v == YHATNUM)?
-	       _("Can't retrieve yhat: data set has changed") :
-	       _("Can't retrieve ht: data set has changed"));
-	return NULL;
-    }   
-
-    if ((v == UHATNUM && pmod->uhat == NULL) ||
-	(v == YHATNUM && pmod->yhat == NULL)) {
-	return NULL;
-    }
-
-    if (v == HNUM) {
-	garch_h = gretl_model_get_data(pmod, "garch_h");
-	if (garch_h == NULL) {
-	    strcpy(gretl_errmsg, _("Can't retrieve error variance"));
-	    return NULL;
-	}
-    }
-
-    x = malloc(pdinfo->n * sizeof *x);
-    if (x == NULL) {
-	return NULL;
-    }
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (t < pmod->t1 || t > pmod->t2) {
-	    x[t] = NADBL;
-	} else {
-	    if (v == UHATNUM) {
-		x[t] = pmod->uhat[t];
-	    } else if (v == YHATNUM) {
-		x[t] = pmod->yhat[t];
-	    } else if (v == HNUM) {
-		x[t] = garch_h[t];
-	    }
-	}
-    }
-	    
-    return x;
-}
-
 static double get_tnum (const DATAINFO *pdinfo, int t)
 {
     if (pdinfo->structure == TIME_SERIES && pdinfo->pd == 1) {
@@ -4318,13 +4151,7 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 	check++;
     }
 
-    if (!strcmp(check, "uhat") || !strcmp(check, "$uhat")) {
-	return UHATNUM; 
-    } else if (!strcmp(check, "yhat") || !strcmp(check, "$yhat")) {
-	return YHATNUM; 
-    } else if (!strcmp(check, "$h")) {
-	return HNUM; 
-    } else if (!strcmp(check, "t") || !strcmp(check, "obs")) {
+    if (!strcmp(check, "t") || !strcmp(check, "obs")) {
 	return TNUM;
     } else if (!strcmp(check, "const") || !strcmp(check, "CONST")) {
 	return 0;

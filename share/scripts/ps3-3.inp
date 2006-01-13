@@ -2,7 +2,7 @@
 graph exphlth income  
 ols exphlth const income  
 (* copy residuals from uhat to ut *)
-genr ut=uhat
+genr ut=$uhat
 (* copy predicted value from yhat to yt *)
-genr yt=yhat
+genr yt=$yhat
 print -o exphlth yt ut 

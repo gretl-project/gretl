@@ -3,7 +3,7 @@ genr y = ln(wlfp/(100-wlfp))
 (* estimate the logit model *)
 ols y 0 yf educ ue urb wh
 (* save predicted values *)
-genr lyhat=yhat
+genr lyhat=$yhat
 (* take antilog and correct for bias in log model *)
 genr y1=exp(lyhat+($ess/(2*$df)))
 (* predict the participation rate and compute the errors *)

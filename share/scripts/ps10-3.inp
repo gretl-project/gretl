@@ -5,7 +5,7 @@ smpl 1.02 31.24
 (* Estimate transformed model *)
 ols load 0 load1 temp
 (* save residuals *)
-genr ut=uhat
+genr ut=$uhat
 (* Generate lag values for ut *)
 genr ut1=ut(-1)
 genr ut2=ut(-2)

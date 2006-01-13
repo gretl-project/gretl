@@ -1,7 +1,7 @@
 open ects_nls.gdt
 ols y 0 x1 x2 -o
-genr alpha = coeff(0)
-genr beta = coeff(x1)
+genr alpha = $coeff(0)
+genr beta = $coeff(x1)
 genr a0 = alpha
 genr b0 = beta
 nls y = alpha + beta*x1 + (1/beta)*x2

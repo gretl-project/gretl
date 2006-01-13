@@ -15,5 +15,5 @@ ols d_infl 0 d_infl_1 d_infl_2 d_infl_3 d_infl_4 \
 # ADF regression
 genr infl_1 = infl(-1)
 ols d_infl 0 infl_1 d_infl_1 d_infl_2 d_infl_3 d_infl_4
-genr adft = coeff(infl_1) / stderr(infl_1)
+genr adft = $coeff(infl_1) / $stderr(infl_1)
 print adft

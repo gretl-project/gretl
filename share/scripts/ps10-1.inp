@@ -7,7 +7,7 @@ smpl 1965.1 ;
 (* Estimate kitchen sink model by OLS *)
 ols r const M D M_1 M_2 M_3 M_4 D_1 D_2 D_3 D_4  
 (*  Perform LM test for AR(4) *)
-genr ut=uhat
+genr ut=$uhat
 lags ut  
 smpl 1966.1 ;
 (* Auxiliary regression for LM test *)

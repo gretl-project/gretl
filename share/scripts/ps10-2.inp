@@ -1,15 +1,16 @@
-(* PS10.2, using DATA10-2, for Koyck lag model in Example 10.2 *)
+# PS10.2, using DATA10-2, for Koyck lag model in Example 10.2
+open data10-2
 ols load 0 temp
-(* generate lagged load *)
+# generate lagged load
 genr load1 = load(-1)
-(* suppress the first observation and set range to 1.02-31.24 *)
+# suppress the first observation and set range to 1.02-31.24
 smpl 1.02 31.24
-(* estimate transformed model *)
+# estimate transformed model
 ols load 0 load1 temp
-(* retrieve coefficients *)
-genr b0 = coeff(temp)
-genr lambda=coeff(load1)
-(* compute long-run multiplier *)
+# retrieve coefficients
+genr b0 = $coeff(temp)
+genr lambda = $coeff(load1)
+# compute long-run multiplier
 genr lrmult = b0/(1-lambda)
-(* print values *)
+# print values
 print b0 lambda lrmult

@@ -66,7 +66,7 @@ struct atomset_ {
                                f == T_ISLIST || f == T_NELEM || \
                                f == T_RESAMPLE || f == T_HPFILT || f == T_BKFILT)
 
-#define atom_is_scalar(a) (a->atype == ATOM_SCALAR || (a->atype & ATOM_TMP))
+#define atom_is_scalar(a) ((a->atype & ATOM_SCALAR) || (a->atype & ATOM_TMP))
 
 static int all_children_scalar (genatom **atoms, int n,
 				int pos, int level)

@@ -4,8 +4,8 @@ genr x=income/pop
 (* estimate model by OLS and save absolute residuals, squared residuals,
 and their logs *)
 ols y const x seniors  
-genr absuhat=abs(uhat)
-genr usq=uhat*uhat
+genr absuhat=abs($uhat)
+genr usq=$uhat*$uhat
 genr lnusq=ln(usq)
 (* generate square and cross product variables; the flag -o generates cross 
 product *)
@@ -13,7 +13,7 @@ square x seniors -o
 (* Testing and estimation for the Glesjer approach *)
 ols absuhat const x seniors sq_x sq_senio 
 (* estimate residual s.d. from the auxiliary regression *)
-genr sigmahat=absuhat-uhat
+genr sigmahat=absuhat-$uhat
 (* compute LM test statistic and its p-value *)
 genr LM1=$nrsq
 pvalue 3 4 LM1
@@ -28,7 +28,7 @@ wls wt1 y const x seniors
 (* Testing and estimation for the Breusch-Pagan approach *)
 ols usq const x seniors sq_x sq_senio 
 (* estimate residual s.d. from the auxiliary regression *)
-genr usqhat1=usq-uhat
+genr usqhat1=usq-$uhat
 (* compute LM test statistic and its p-value *)
 genr LM2=$nrsq
 pvalue 3 4 LM2
@@ -42,7 +42,7 @@ genr wt2=1/sqrt(usqhat2)
 wls wt2 y const x seniors 
 (* Testing and estimation for White's procedure *)
 ols usq const x seniors sq_x sq_senio x_seni 
-genr usqhat3=usq-uhat
+genr usqhat3=usq-$uhat
 (* compute LM test statistic and its p-value *)
 genr LM3=$nrsq
 pvalue 3 5 LM3
@@ -63,7 +63,7 @@ pvalue 3 4 LM4
 (* Because the coefficients for x and x-squared are significant, another LM
 test is done with just these *)
 ols lnusq const x sq_x 
-genr lnusqhat=lnusq-uhat
+genr lnusqhat=lnusq-$uhat
 (* compute LM test statistic and its p-value *)
 genr LM5=$nrsq
 pvalue X 2 LM5

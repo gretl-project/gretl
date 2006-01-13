@@ -23,9 +23,9 @@ omit 7 9 10
 omit 8 
 omit 4 
 (* compute predicted values *)
-genr pred = PATENTS - uhat
+genr pred = PATENTS - $uhat
 (* save residuals *)
-genr error = uhat
+genr error = $uhat
 (* compute absolute % error *)
 genr abspcerr = 100*abs(error)/PATENTS
 (* print values as in a table with the -o flag *)

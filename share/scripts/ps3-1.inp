@@ -11,7 +11,7 @@ help fcast
 (* print values *)                        
 print phat1 
 (* ESL saves residuals under the name uhat.  Copy this to ut *)
-genr ut = uhat 
+genr ut = $uhat 
 (* another way to get fitted value is to subtract the error from the 
 actual value of the dependent variable *)
 genr phat2 = price - ut 

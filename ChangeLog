@@ -1,4 +1,5 @@
 version 1.5.1, in progress
+- Add matrix manipulation functionality
 - Fix translation bug for VAR menus
 - Fix bug in assignment of values returned from user-defined
   functions

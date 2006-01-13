@@ -1,7 +1,7 @@
 (* PS9.3, using DATA4-7, for the LM test in Example 9.4 *)
 ols chd 0 cig edfat spirits beer 
 (* save residuals *)
-genr ut=uhat
+genr ut=$uhat
 (* generate lag of ut *)
 genr ut1=ut(-1)
 (* print ut and ut1 to see how ut1 is internally stored *)

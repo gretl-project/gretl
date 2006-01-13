@@ -6,7 +6,7 @@ genr D2 = D(-2)
 (* estimate model *)
 ols r const M1 M2 D1 D2  
 (* generate uhat square and lags *)
-genr usq = uhat*uhat
+genr usq = $uhat*$uhat
 genr usq1 = usq(-1)
 genr usq2 = usq(-2)
 genr usq3 = usq(-3)
@@ -19,7 +19,7 @@ pvalue X 3 LM1
 ols usq const usq1 
 genr LM2=$nrsq
 (* generate predicted variance as observed minus error uhat *)
-genr usqhat = usq-uhat
+genr usqhat = usq-$uhat
 pvalue X 1 LM2
 (* all values of predicted variance are positive *)
 print usqhat 

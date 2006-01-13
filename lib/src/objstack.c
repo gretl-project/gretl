@@ -23,6 +23,8 @@
 #include "system.h"
 #include "system_private.h"
 #include "objstack.h"
+#include "genrfuncs.h"
+#include "usermat.h"
 
 #define ODEBUG 0
 
@@ -708,18 +710,13 @@ int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
 
 #define INVALID_STAT -999.999
 
-static double maybe_get_obj_scalar (void *p, int type, int idx)
+static double real_get_obj_scalar (void *p, int type, int idx)
 {
     double x = INVALID_STAT;
     int err = 0;
     
     if (idx <= 0) {
 	return x;
-    }
-
-    if (p == NULL) {
-	p = last_model.ptr;
-	type = last_model.type;
     }
 
     if (type == EQUATION) {
@@ -752,18 +749,40 @@ static double maybe_get_obj_scalar (void *p, int type, int idx)
     return x;
 }
 
-static double *maybe_get_obj_series (void *p, int type, int idx, int *err)
+static double 
+real_get_obj_scalar_element (void *p, int type, int idx, const char *key, 
+			     const DATAINFO *pdinfo, int *err)
 {
-    double *x = NULL;
-    DATAINFO *pdinfo = NULL; /* FIXME totally broken */
-
+    double x = INVALID_STAT;
+    
     if (idx <= 0) {
+	*err = 1;
 	return x;
     }
 
-    if (p == NULL) {
-	p = last_model.ptr;
-	type = last_model.type;
+    if (type == EQUATION) {
+	MODEL *pmod = (MODEL *) p;
+
+	x = get_model_data_element(pmod, idx, key, pdinfo, err);
+	if (*err) {
+	    x = INVALID_STAT;
+	}
+    } 
+
+    /* FIXME add accessors for systems, VARs */
+
+    return x;
+}
+
+static double *real_get_obj_series (void *p, int type, int idx, 
+				    const DATAINFO *pdinfo,
+				    int *err)
+{
+    double *x = NULL;
+
+    if (idx <= 0) {
+	*err = 1;
+	return x;
     }
 
     if (type == EQUATION) {
@@ -775,17 +794,13 @@ static double *maybe_get_obj_series (void *p, int type, int idx, int *err)
     return x;
 }
 
-static gretl_matrix *maybe_get_obj_matrix (void *p, int type, int idx, int *err)
+static gretl_matrix *real_get_obj_matrix (void *p, int type, int idx, int *err)
 {
     gretl_matrix *M = NULL;
     
     if (idx <= 0) {
+	*err = 1;
 	return M;
-    }
-
-    if (p == NULL) {
-	p = last_model.ptr;
-	type = last_model.type;
     }
 
     if (type == EQUATION) {
@@ -799,15 +814,20 @@ static gretl_matrix *maybe_get_obj_matrix (void *p, int type, int idx, int *err)
 
 static stacker *find_smatch (const char *oname)
 {
-    const char *test;
     stacker *smatch = NULL;
-    int i;
 
-    for (i=0; i<n_obj; i++) {
-	test = saved_object_get_name(&obj_stack[i]);
-	if (!strcmp(oname, test)) {
-	    smatch = &obj_stack[i];
-	    break;
+    if (oname == NULL || *oname == '\0') {
+	smatch = &last_model;
+    } else {
+	const char *test;
+	int i;
+	
+	for (i=0; i<n_obj; i++) {
+	    test = saved_object_get_name(&obj_stack[i]);
+	    if (!strcmp(oname, test)) {
+		smatch = &obj_stack[i];
+		break;
+	    }
 	}
     }
 
@@ -824,8 +844,8 @@ double saved_object_get_scalar (const char *oname, const char *key,
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	idx = gretl_model_stat_index(key);
-	ret = maybe_get_obj_scalar(smatch->ptr, smatch->type, idx);
+	idx = gretl_model_data_index(key);
+	ret = real_get_obj_scalar(smatch->ptr, smatch->type, idx);
     }
 
     if (ret == INVALID_STAT) {
@@ -835,7 +855,30 @@ double saved_object_get_scalar (const char *oname, const char *key,
     return ret;
 }
 
-double *saved_object_get_series (const char *oname, const char *key, int *err)
+double saved_object_get_scalar_element (const char *oname, const char *key,
+					const DATAINFO *pdinfo, int *err)
+{
+    double ret = INVALID_STAT;
+    stacker *smatch;
+    int idx;
+
+    smatch = find_smatch(oname);
+
+    if (smatch != NULL) {
+	idx = gretl_model_data_index(key);
+	ret = real_get_obj_scalar_element(smatch->ptr, smatch->type, idx, 
+					  key, pdinfo, err);
+    }
+
+    if (ret == INVALID_STAT && !*err) {
+	*err = 1;
+    }
+
+    return ret;
+}
+
+double *saved_object_get_series (const char *oname, const char *key, 
+				 const DATAINFO *pdinfo, int *err)
 {
     double *x = NULL;
     stacker *smatch;
@@ -844,11 +887,12 @@ double *saved_object_get_series (const char *oname, const char *key, int *err)
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	idx = gretl_model_series_index(key);
-	x = maybe_get_obj_series(smatch->ptr, smatch->type, idx, err);
+	idx = gretl_model_data_index(key);
+	x = real_get_obj_series(smatch->ptr, smatch->type, idx, 
+				pdinfo, err);
     }
 
-    if (x == NULL) {
+    if (x == NULL && !*err) {
 	*err = 1;
     }
 
@@ -859,17 +903,47 @@ gretl_matrix *
 saved_object_get_matrix (const char *oname, const char *key, int *err)
 {
     gretl_matrix *M = NULL;
+    const char *mspec = NULL;
     stacker *smatch;
     int idx;
 
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	idx = gretl_model_matrix_index(key);
-	M = maybe_get_obj_matrix(smatch->ptr, smatch->type, idx, err);
+	idx = gretl_model_data_index(key);
+	M = real_get_obj_matrix(smatch->ptr, smatch->type, idx, err);
+	mspec = strchr(key, '[');
     }
 
-    if (M == NULL) {
+    if (M != NULL && mspec != NULL) {
+	gretl_matrix *S = matrix_get_submatrix(M, mspec, err);
+	
+	gretl_matrix_free(M);
+	M = S;
+    }
+
+    if (M == NULL && !*err) {
+	*err = 1;
+    }    
+
+    return M;
+}
+
+gretl_matrix *
+saved_object_get_submatrix (const char *oname, const char *key, int *err)
+{
+    gretl_matrix *M = NULL;
+    stacker *smatch;
+    int idx;
+
+    smatch = find_smatch(oname);
+
+    if (smatch != NULL) {
+	idx = gretl_model_data_index(key);
+	M = real_get_obj_matrix(smatch->ptr, smatch->type, idx, err);
+    }
+
+    if (M == NULL && !*err) {
 	*err = 1;
     }    
 
@@ -889,18 +963,6 @@ saved_object_print_scalar (const char *oname, const char *key, PRN *prn)
     }
 
     return err;
-}
-
-double last_model_get_value_by_type (int idx, int *err)
-{
-    double x = maybe_get_obj_scalar(NULL, 0, idx);
-
-    if (x == INVALID_STAT) {
-	*err = E_BADSTAT;
-	x = NADBL;
-    }
-
-    return x;
 }
 
 /* try to parse an "object-priented" command, such as

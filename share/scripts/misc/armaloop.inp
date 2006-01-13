@@ -4,7 +4,7 @@ genr c = 0
 genr a = 0.1
 genr m = 0.1
 
-genr e = const * 0.0
+series e = 0.0
 genr de_c = e
 genr de_a = e
 genr de_m = e
@@ -34,11 +34,11 @@ loop while crit > 1.0e-9
    ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
    # Update the parameters
-   genr dc = coeff(sc_c) 
+   genr dc = $coeff(sc_c) 
    genr c = c + dc
-   genr da = coeff(sc_a) 
+   genr da = $coeff(sc_a) 
    genr a = a + da
-   genr dm = coeff(sc_m) 
+   genr dm = $coeff(sc_m) 
    genr m = m + dm
 
    printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
@@ -49,11 +49,11 @@ loop while crit > 1.0e-9
    print crit
 endloop
 
-genr se_c = stderr(sc_c)
-genr se_a = stderr(sc_a)
-genr se_m = stderr(sc_m)
+genr se_c = $stderr(sc_c)
+genr se_a = $stderr(sc_a)
+genr se_m = $stderr(sc_m)
 
-noecho
+set echo off
 print "
 printf "constant        = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
 printf "ar1 coefficient = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a

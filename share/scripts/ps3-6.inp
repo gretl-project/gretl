@@ -1,7 +1,7 @@
 (*  PS3.6 using DATA3-3 for application section 3.11 *)
 ols PATENTS const R_D 
 (* save residuals *)
-genr ut = uhat
+genr ut = $uhat
 (* compute fitted values *)
 genr temp = PATENTS - ut
 (* round to one decimal *)

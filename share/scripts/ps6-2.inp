@@ -4,10 +4,10 @@ square OUTPUT INPCOST
 ols UNITCOST 0 OUTPUT sq_OUTPU INPCOST sq_INPCO
 omit sq_INPCO
 (* retrieve regression coefficients *)
-genr b1 = coeff(0)
-genr b2 = coeff(OUTPUT)
-genr b3 = coeff(sq_OUTPU)
-genr b4 = coeff(INPCOST)
+genr b1 = $coeff(0)
+genr b2 = $coeff(OUTPUT)
+genr b3 = $coeff(sq_OUTPU)
+genr b4 = $coeff(INPCOST)
 (* generate estimated averages to graph the average cost function *)
 genr time
 genr x=40 +(time*5)

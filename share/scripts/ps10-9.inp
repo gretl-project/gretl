@@ -17,7 +17,7 @@ omit time calwag_1
 smpl 1960 1994
 ols calwage 0 uswage
 (* save residuals, generate their lags, and differences in lags *)
-genr ut = uhat
+genr ut = $uhat
 genr ut1 = ut(-1)
 genr diffut = diff(ut)
 genr diffut_1 = diffut(-1)

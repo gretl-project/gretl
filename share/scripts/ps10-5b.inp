@@ -19,7 +19,7 @@ load 0 load1 temp
 (* generate forecasts after incorporating the error structure *)
 fcast 2.02 31.24 yf
 (* Compute forecast error statistics *)
-genr abserror=abs(uhat)
+genr abserror=abs($uhat)
 genr abspcter=100*abserror/load
 (* Flag observations with percent error > 5 *)
 genr five =abspcter>5

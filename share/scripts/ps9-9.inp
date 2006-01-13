@@ -13,7 +13,7 @@ corr ly lprice cdd hdd
 (* estimate basic model by ols *)  
 ols lkwh const ly lprice cdd hdd  
 (* save residuals *)  
-genr ut = uhat
+genr ut = $uhat
 (* generate forecast after correcting for log model bias *)
 genr f1 = exp(lkwh-ut+($ess/($df*2)))
 (* forecast error *)
@@ -34,7 +34,7 @@ help ar
 (* estimate AR(4) model by generalized CORC *)  
 ar 1 2 3 4 ; lkwh const ly lprice cdd hdd  
 (* again obtain forecasts and errors *)
-genr f2 = exp(lkwh-uhat+($ess/($df*2)))
+genr f2 = exp(lkwh-$uhat+($ess/($df*2)))
 genr abserr2 = abs(kwh - f2)
 (* generate interaction terms to test for structural change *)  
 genr lyd74=ly*d74
@@ -66,7 +66,7 @@ omit d74cdd
 omit d83cdd  
 omit lprhdd  
 (* generate final model forecasts and errors* *)
-genr f3 = exp(lkwh-uhat+($ess/($df*2)))
+genr f3 = exp(lkwh-$uhat+($ess/($df*2)))
 genr abserr3 = abs(kwh - f3)
 (* exclude four initial observations and compute percent errors, mean 
 absolute percent error, and mean squared error *)

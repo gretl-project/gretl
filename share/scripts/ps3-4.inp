@@ -1,7 +1,7 @@
 (* PS3.4 using DATA3-1, for Example 3.8 on conf. intervals *)
 ols 1 0 2
 (* generate predicted price *)
-genr phat = price - uhat 
+genr phat = price - $uhat 
 (* retrieve the number of obs. *)
 genr n = $nobs 
 (* retrieve degrees of freedom *)
