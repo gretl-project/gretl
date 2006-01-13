@@ -20,7 +20,7 @@
 #ifndef GRETL_MODEL_H
 #define GRETL_MODEL_H
 
-enum model_stat_index {
+typedef enum {
     M_ESS = 1,   /* error sum of squares */
     M_T,         /* observations used */
     M_RSQ,       /* R-squared */
@@ -31,7 +31,17 @@ enum model_stat_index {
     M_AIC,       /* Akaike info criterion */
     M_BIC,       /* Bayesian info criterion */
     M_TRSQ,      /* T * R-squared, last model */
-};
+    M_SMAX
+} ModelStatIndex;
+
+typedef enum {
+    M_UHAT = M_SMAX,  /* residuals */
+    M_YHAT,           /* fitted values */
+    M_COEFF,          /* parameter estimates */
+    M_SE,             /* parameter standard errors */
+    M_VCV,            /* parameter covariance matrix */
+    M_H               /* GARCH predicted variances */
+} ModelMatrixIndex;
 
 typedef struct CoeffIntervals_ CoeffIntervals;
 
@@ -248,5 +258,15 @@ const char *gretl_model_get_name (const MODEL *pmod);
 int gretl_model_stat_index (const char *s);
 
 double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err);
+
+int gretl_model_series_index (const char *s);
+
+double *
+gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo, 
+			int idx, int *err);
+
+int gretl_model_matrix_index (const char *s);
+
+gretl_matrix *gretl_model_get_matrix (MODEL *pmod, int idx, int *err);
 
 #endif /* GRETL_MODEL_H */

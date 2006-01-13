@@ -137,7 +137,7 @@ static int saved_object_action (const char *line, PRN *prn)
 	err = estimate_saved_equation_system((gretl_equation_system *) ptr, 
 					     &Z, datainfo, prn);
     } else if (code == OBJ_ACTION_SHOW_STAT) {
-	err = saved_object_print_value(objname, param, prn);
+	err = saved_object_print_scalar(objname, param, prn);
     } else if (code == OBJ_ACTION_FREE) {
 	gretl_delete_saved_object(ptr);
     }	

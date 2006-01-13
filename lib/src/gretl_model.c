@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "objstack.h"
+#include "modelspec.h"
 
 #include "glib.h"
 
@@ -2634,6 +2635,47 @@ int gretl_model_stat_index (const char *s)
     return 0;
 }
 
+int gretl_model_series_index (const char *s)
+{
+    char test[8] = {0};
+
+    strncat(test, s, 7);
+    lower(test);
+
+    if (!strcmp(test, "$uhat")) { 
+	return M_UHAT;
+    } else if (!strcmp(test, "$yhat")) {
+	return M_YHAT;
+    } else if (!strcmp(test, "$h")) {
+	return M_H;
+    }
+
+    return 0;
+}
+
+int gretl_model_matrix_index (const char *s)
+{
+    char test[8] = {0};
+
+    strncat(test, s, 7);
+    lower(test);
+
+    if (!strcmp(test, "$uhat"))  
+	return M_UHAT;
+    if (!strcmp(test, "$yhat")) 
+	return M_YHAT;
+    if (!strcmp(test, "$coeff"))  
+	return M_COEFF;
+    if (!strcmp(test, "$stderr"))  
+	return M_SE;
+    if (!strcmp(test, "$vcv"))   
+	return M_VCV;
+    if (!strcmp(test, "$h"))   
+	return M_H;
+
+    return 0;
+}
+
 double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
 {
     double x = NADBL;
@@ -2679,6 +2721,8 @@ double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
     case M_T:
 	x = (double) pmod->nobs;
 	break;	
+    default:
+	break;
     }
 
     if (na(x)) {
@@ -2686,4 +2730,176 @@ double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
     }
 
     return x;
+}
+
+double *
+gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo, 
+			int idx, int *err)
+{
+    double *x = NULL;
+    double *garch_h = NULL;
+    int t;
+
+    if (pmod->t2 - pmod->t1 + 1 > pdinfo->n || 
+	model_sample_issue(pmod, NULL, 0, pdinfo)) {
+	strcpy(gretl_errmsg, 
+	       (idx == M_UHAT)? 
+	       _("Can't retrieve uhat: data set has changed") :
+	       (idx == M_YHAT)?
+	       _("Can't retrieve yhat: data set has changed") :
+	       _("Can't retrieve ht: data set has changed"));
+	*err = 1;
+	return NULL;
+    }   
+
+    if ((idx == M_UHAT && pmod->uhat == NULL) ||
+	(idx == M_YHAT && pmod->yhat == NULL)) {
+	*err = 1;
+	return NULL;
+    }
+
+    if (idx == M_H) {
+	garch_h = gretl_model_get_data(pmod, "garch_h");
+	if (garch_h == NULL) {
+	    strcpy(gretl_errmsg, _("Can't retrieve error variance"));
+	    *err = 1;
+	    return NULL;
+	}
+    }
+
+    x = malloc(pdinfo->n * sizeof *x);
+    if (x == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t < pmod->t1 || t > pmod->t2) {
+	    x[t] = NADBL;
+	} else {
+	    if (idx == M_UHAT) {
+		x[t] = pmod->uhat[t];
+	    } else if (idx == M_YHAT) {
+		x[t] = pmod->yhat[t];
+	    } else if (idx == M_H) {
+		x[t] = garch_h[t];
+	    }
+	}
+    }
+	    
+    return x;
+}
+
+static gretl_matrix *
+model_get_estvec (const MODEL *pmod, int idx, int *err)
+{
+    gretl_matrix *v = NULL;
+    double x;
+    int i;
+
+    v = gretl_column_vector_alloc(pmod->ncoeff);
+    if (v == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    x = (idx == M_COEFF)? pmod->coeff[i] : pmod->sderr[i];
+	    gretl_vector_set(v, i, x);
+	}
+    }
+
+    return v;
+}
+
+static gretl_matrix *
+model_get_hatvec (const MODEL *pmod, int idx, int *err)
+{
+    gretl_matrix *v = NULL;
+    double x;
+    int t;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->uhat[t])) {
+	    *err = E_MISSDATA;
+	    break;
+	}
+    }
+
+    if (!*err) {
+	v = gretl_column_vector_alloc(pmod->t2 - pmod->t1 + 1);
+	if (v == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		x = (idx == M_UHAT)? pmod->uhat[t] : pmod->yhat[t];
+		gretl_vector_set(v, t - pmod->t1, x);
+	    }
+	}
+    }
+
+    return v;
+}
+
+static gretl_matrix *model_get_hvec (const MODEL *pmod, int *err)
+{
+    double *garch_h = gretl_model_get_data(pmod, "garch_h");
+    gretl_matrix *v = NULL;
+    int t;
+
+    if (garch_h == NULL) {
+	*err = E_BADSTAT;
+    }
+
+    v = gretl_column_vector_alloc(pmod->t2 - pmod->t1 + 1);
+    if (v == NULL) {
+	*err = E_ALLOC;
+    } else {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    /* FIXME: is indexation right? */
+	    gretl_vector_set(v, t - pmod->t1, garch_h[t]);
+	}
+    }
+
+    return v;
+}
+
+gretl_matrix *gretl_model_get_matrix (MODEL *pmod, int idx, int *err)
+{
+    gretl_matrix *M = NULL;
+
+    if (pmod == NULL) {
+	*err = E_BADSTAT;
+	return M;
+    }
+
+    if (*err) return M;
+
+    switch (idx) {  
+    case M_UHAT:
+    case M_YHAT:
+	M = model_get_hatvec(pmod, idx, err);
+	break;
+    case M_COEFF:
+    case M_SE:
+	M = model_get_estvec(pmod, idx, err);
+	break;
+    case M_VCV:
+	M = gretl_vcv_matrix_from_model(pmod, NULL);
+	break;
+    case M_H:
+	if (pmod->ci != GARCH) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = model_get_hvec(pmod, err);
+	}
+	break;
+    default:
+	*err = E_BADSTAT;
+	break;
+    }
+
+    if (M == NULL && !*err) {
+	*err = E_ALLOC;
+    }
+
+    return M;
 }

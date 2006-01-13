@@ -554,6 +554,8 @@ static int get_arg_string (char *str, const char *s, int func, GENERATOR *genr)
     return err;
 }
 
+/* FIXME in this general area 2006-01-13 */
+
 static int catch_saved_object_scalar (const char *s, double *x)
 {
     const char *p = strstr(s, ".$");
@@ -564,7 +566,45 @@ static int catch_saved_object_scalar (const char *s, double *x)
     test = gretl_strndup(s, len);
 
     if (test != NULL) {
-	*x = saved_object_get_value(test, p + 1, &err);
+	*x = saved_object_get_scalar(test, p + 1, &err);
+	if (!err) ret = 1;
+	free(test);
+    }
+
+    return ret;
+}
+
+#if 0 /* work in progress !! */
+static int catch_saved_object_series (const char *s, double *x)
+{
+    const char *p = strstr(s, ".$");
+    int len = strcspn(s, ".");
+    char *test;
+    int err = 0, ret = 0;
+
+    test = gretl_strndup(s, len);
+
+    if (test != NULL) {
+	*x = saved_object_get_series(test, p + 1, &err);
+	if (!err) ret = 1;
+	free(test);
+    }
+
+    return ret;
+}
+#endif
+
+static int catch_saved_object_matrix (const char *s, gretl_matrix **M)
+{
+    const char *p = strstr(s, ".$");
+    int len = strcspn(s, ".");
+    char *test;
+    int err = 0, ret = 0;
+
+    test = gretl_strndup(s, len);
+
+    if (test != NULL) {
+	*M = saved_object_get_matrix(test, p + 1, &err);
 	if (!err) ret = 1;
 	free(test);
     }
@@ -621,8 +661,14 @@ token_get_variable_or_constant (const char *s, GENERATOR *genr,
     } else if (!strcmp(s, "NA")) {
 	val = NADBL;
 	atype = ATOM_SCALAR;
-    } else if (strstr(s, ".$") && catch_saved_object_scalar(s, &val)) {
-	atype = ATOM_SCALAR;
+    } else if (strstr(s, ".$")) {
+	if (catch_saved_object_scalar(s, &val)) {
+	    atype = ATOM_SCALAR;
+	} else if (genr_is_matrix(genr)) {
+	    if (catch_saved_object_matrix(s, M)) {
+		atype = ATOM_MATRIX;
+	    }
+	} 
     } else if (genr_is_matrix(genr)) {
 	*M = get_matrix_by_name(s);
 	if (*M != NULL) {
@@ -1557,6 +1603,8 @@ static int evaluate_genr (GENERATOR *genr)
 	if (atom->varnum == genr->varnum && atom->lag > m) {
 	    m = atom->lag;
 	}
+
+	/* FIXME handle accessor atoms here? */
 
 	if (MODEL_VAR_INDEX(atom->varnum)) {
 	    genr->err = add_model_series_to_genr(genr, atom);
@@ -4167,6 +4215,9 @@ get_obs_value (const char *s, const double **Z, const DATAINFO *pdinfo,
 
     return err;
 }
+
+/* called at evaluation time, so gets current model as of
+   that time, if no specific model is given */
 
 static double *get_model_series (const DATAINFO *pdinfo, int v)
 {

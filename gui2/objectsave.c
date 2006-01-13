@@ -327,7 +327,7 @@ int saved_object_action (const char *line, PRN *prn)
     } else if (code == OBJ_ACTION_SYS_FREE) {
 	err = delete_system_from_session(objname);
     } else if (code == OBJ_ACTION_SHOW_STAT) {
-	err = saved_object_print_value(objname, param, prn);
+	err = saved_object_print_scalar(objname, param, prn);
     }
 
     if (obj_action_free(code) && !err) {

@@ -31,31 +31,32 @@ void dprintf (const char *format, ...);
 
 #define ATOMLEN 32  /* length of auxiliary string in genr atom */
 
-enum {
-    ATOM_SERIES = 0,
-    ATOM_SCALAR = 1 << 0,
-    ATOM_MATRIX = 1 << 1,
-    ATOM_TMP    = 1 << 2
-};
+typedef enum {
+    ATOM_SERIES   = 0,
+    ATOM_SCALAR   = 1 << 0,
+    ATOM_MATRIX   = 1 << 1,
+    ATOM_ACCESSOR = 1 << 2,
+    ATOM_TMP      = 1 << 3
+} GenAtomType;
 
 typedef struct genatom_ genatom;
 typedef struct atomset_ atomset;
 
 struct genatom_ {
-    char level;
-    char atype;
-    int varnum;
-    int varobs;
-    int tmpvar;
-    char lag;
-    double val;
-    char func;
-    char op;
-    char popped;
-    char str[ATOMLEN];
-    gretl_matrix *M;
-    genatom *parent;
-    atomset *aset;
+    char level;        /* evaluation priority level */
+    char atype;        /* flags giving type of atom (see GenAtomType) */
+    int varnum;        /* variable ID number (N.B. overloaded!) */
+    int varobs;        /* observation number, if applicable */
+    int tmpvar;        /* ID number of temporary variable, if any */
+    char lag;          /* lag, if lagged variable */
+    double val;        /* numerical value, if applicable */
+    char func;         /* function code, if atom is function */
+    char op;           /* operator */
+    char popped;       /* flag indicating whether or not popped */
+    char str[ATOMLEN]; /* string info saved on atom */
+    gretl_matrix *M;   /* matrix pointer, if matrix atom */
+    genatom *parent;   /* pointer to parent, if child */
+    atomset *aset;     /* pointer to set to which the atom belongs */
 };
 
 /* below: matches funcs[] in generate.c -- these are in addition to
