@@ -211,8 +211,6 @@ static int gretl_matrix_get_structure (const gretl_matrix *m)
 	}
     }
 
-    fprintf(stderr, "gretl_matrix_get_structure: ret = %d\n", ret);
-
     return ret;
 }
 
@@ -484,7 +482,6 @@ void gretl_matrix_free (gretl_matrix *m)
  * @m: matrix to be set to zero.
  *
  * Sets all elements of @m to zero.
- * 
  */
 
 void gretl_matrix_zero (gretl_matrix *m)
@@ -1553,7 +1550,6 @@ matrix_multiply_self_transpose (const gretl_matrix *a,
  *
  * Returns: 0 on success; non-zero error code on
  * failure.
- * 
  */
 
 int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
