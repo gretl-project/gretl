@@ -40,10 +40,6 @@ struct user_matrix_ {
 static user_matrix **matrices;
 static int n_matrices;
 
-static const char *varchars = "acdefghijklmnopqrstuvwxyz"
-                              "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                              "0123456789_";
-
 static int make_slices (const char *s, int m, int n, 
 			int **rslice, int **cslice);
 
@@ -774,7 +770,7 @@ void destroy_user_matrices (void)
 static int scalar_varnum (const char *s, const DATAINFO *pdinfo)
 {
     char vname[VNAMELEN];
-    int len = strspn(s, varchars);
+    int len = gretl_varchar_spn(s);
     int v = 0;
 
     if (len > 0 && len < VNAMELEN) {
@@ -888,7 +884,7 @@ static double get_var_double (const char **s, const double **Z,
 {
     char vname[VNAMELEN];
     double x = NADBL;
-    int v, len = strspn(*s, varchars);
+    int v, len = gretl_varchar_spn(*s);
 
     if (len > VNAMELEN - 1) {
 	*err = 1;
@@ -1081,7 +1077,7 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
 
     while (isspace(*s)) s++;
 
-    len = strspn(s, varchars);
+    len = gretl_varchar_spn(s);
     if (len == 0 || len > 31) {
 	return NULL;
     }
@@ -1531,11 +1527,15 @@ gretl_matrix *user_matrix_get_inverse (gretl_matrix *m)
     if (m != NULL) {
 	R = gretl_matrix_copy(m);
 	if (R != NULL) {
-	    if (gretl_invert_general_matrix(R)) {
+	    if (gretl_invert_matrix(R)) {
 		gretl_matrix_free(R);
 		R = NULL;
 	    }
-	}
+	} 
+    }
+
+    if (R == NULL) {
+	strcpy(gretl_errmsg, _("Matrix inversion failed"));
     }
 
     return R;

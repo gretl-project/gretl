@@ -1386,8 +1386,6 @@ static int arma_model_stat_pos (const char *s, const MODEL *pmod)
     return p;
 }
 
-#define AR1_MODEL(c) (c == CORC || c == HILU || c == PWE)
-
 /* retrieve a specific element from one of the arrays of data
    on a model */
 

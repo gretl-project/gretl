@@ -1988,14 +1988,27 @@ static int matrix_scalar_function_word (const char *s)
     return 0;
 }
 
-static int is_model_data_selector (const char *s)
+static int is_varname_or_model_data_selector (const char *s)
 {
     int ret = 0;
 
+    if (*s != '$') {
+	s += gretl_varchar_spn(s);
+	if (*s == '\0') {
+	    /* got a varname */
+	    return 1;
+	}
+	if (!strncmp(s, ".$", 2)) {
+	    s++;
+	} else {
+	    return 0;
+	}
+    }
+
     if (!strncmp(s, "$coeff(", 7) ||
 	!strncmp(s, "$stderr(", 8) ||
-	!strncmp(s, "$vcv(", 4) ||
-	!strncmp(s, "$rho(", 4)) {
+	!strncmp(s, "$vcv(", 5) ||
+	!strncmp(s, "$rho(", 5)) {
 	int rp = 0;
 
 	s = strchr(s, '(') + 1;
@@ -2027,7 +2040,7 @@ static int token_is_atomic (const char *s, GENERATOR *genr)
     } else if (get_lagvar(s, NULL, genr)) {
 	/* treat lag variable as atom */
 	atomic = 1;
-    } else if (*s == '$' && is_model_data_selector(s)) {
+    } else if (is_varname_or_model_data_selector(s)) {
 	/* treat, e.g., "$coeff(x)" as atom */
 	atomic = 1;
     } else {

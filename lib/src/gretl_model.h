@@ -44,7 +44,7 @@ typedef enum {
     M_COEFF,      /* parameter estimates */
     M_SE,         /* parameter standard errors */
     M_VCV,        /* parameter covariance matrix */
-    M_RHO,        /* autoregressive coefficients */
+    M_RHO         /* autoregressive coefficients */
 } ModelDataIndex;
 
 #define model_data_is_scalar(i) (i > 0 && i < M_SCALAR_MAX)
@@ -69,6 +69,10 @@ struct CoeffIntervals_ {
                      c == GARCH || \
                      c == HILU || \
                      c == PWE)
+
+#define AR1_MODEL(c) (c == CORC || \
+                      c == HILU || \
+                      c == PWE)
 
 #define SIMPLE_AR_MODEL(c) (c == AR || \
                             c == CORC || \

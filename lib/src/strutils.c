@@ -489,6 +489,30 @@ char *gretl_trunc (char *str, size_t n)
 }
 
 /**
+ * gretl_varchar_spn:
+ * @s: the string to truncate.
+ *
+ * Returns: the length of the intial segment of @s which
+ * consists of characters that are valid in a gretl
+ * variable or object name, namely a-z, A-Z, 0-9 and _,
+ * starting with a letter.
+ */
+
+int gretl_varchar_spn (const char *s)
+{
+    const char *varchars = "acdefghijklmnopqrstuvwxyz"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"0123456789_";
+    int ret = 0;
+
+    if (isalpha(*s)) {
+	ret = strspn(s, varchars);
+    }
+
+    return ret;
+}
+
+/**
  * clear:
  * @str: the string to clear.
  * @len: the length of the string to be cleared.

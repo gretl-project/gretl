@@ -155,6 +155,67 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols)
     return m;
 }
 
+enum {
+    GRETL_MATRIX_SQUARE = 1,
+    GRETL_MATRIX_TRIANGULAR, /* 2 */
+    GRETL_MATRIX_SYMMETRIC,  /* 3 */
+    GRETL_MATRIX_DIAGONAL,   /* 4 */
+    GRETL_MATRIX_SCALAR      /* 5 */
+};
+
+static int gretl_matrix_get_structure (const gretl_matrix *m)
+{
+    int ret = 0;
+
+    if (m != NULL) {
+	if (m->rows == m->cols) {
+	    ret = GRETL_MATRIX_SQUARE;
+	    if (m->rows == 1) {
+		ret = GRETL_MATRIX_SCALAR;
+	    }
+	} 
+    }
+
+    if (ret == GRETL_MATRIX_SQUARE) {
+	int uzero = 1;
+	int lzero = 1;
+	int symm = 1;
+	int i, j;
+	
+
+	for (i=0; i<m->rows; i++) {
+	    for (j=0; j<m->cols; j++) {
+		if (j > i && m->val[mdx(m, i, j)] != 0.0) {
+		    uzero = 0;
+		} else if (i > j && m->val[mdx(m, i, j)] != 0.0) {
+		    lzero = 0;
+		}
+		if (j != i && m->val[mdx(m, i, j)] != m->val[mdx(m, j, i)]) {
+		    symm = 0;
+		}
+		if (!uzero && !lzero && !symm) {
+		    break;
+		}
+	    }
+	    if (!uzero && !lzero && !symm) {
+		break;
+	    }
+	}
+
+	if (uzero && lzero) {
+	    ret = GRETL_MATRIX_DIAGONAL;
+	} else if (uzero || lzero) {
+	    ret = GRETL_MATRIX_TRIANGULAR;
+	} else if (symm) {
+	    ret = GRETL_MATRIX_SYMMETRIC;
+	}
+    }
+
+    fprintf(stderr, "gretl_matrix_get_structure: ret = %d\n", ret);
+
+    return ret;
+}
+
 /**
  * gretl_matrix_reuse:
  * @m: matrix to reuse.
@@ -2433,11 +2494,42 @@ int gretl_invert_diagonal_matrix (gretl_matrix *a)
     }
 
     for (i=0; i<a->rows; i++) {
+	if (a->val[mdx(a,i,i)] == 0.0) {
+	    return 1;
+	}
+    }
+
+    for (i=0; i<a->rows; i++) {
 	x = a->val[mdx(a,i,i)];
 	a->val[mdx(a,i,i)] = 1.0 / x;
     }
 
     return 0;
+}
+
+/**
+ * gretl_invert_matrix:
+ * @a: matrix to invert.
+ * 
+ * Computes the inverse of matrix @a: on exit @a is 
+ * overwritten with the inverse.  If @a is diagonal
+ * or symmetric, appropriate simple inversion routines 
+ * are called.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_invert_matrix (gretl_matrix *a)
+{
+    int s = gretl_matrix_get_structure(a);
+
+    if (s == GRETL_MATRIX_DIAGONAL) {
+	return gretl_invert_diagonal_matrix(a);
+    } else if (s == GRETL_MATRIX_SYMMETRIC) {
+	return gretl_invert_symmetric_matrix(a);
+    } else {
+	return gretl_invert_general_matrix(a);
+    }
 }
 
 #if 0

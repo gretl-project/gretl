@@ -2853,6 +2853,37 @@ static gretl_matrix *model_get_hvec (const MODEL *pmod, int *err)
     return v;
 }
 
+static gretl_matrix *model_get_rhovec (const MODEL *pmod, int *err)
+{
+    gretl_matrix *r = NULL;
+
+    if (AR1_MODEL(pmod->ci)) {
+	double x = gretl_model_get_double(pmod, "rho_in");
+
+	r = gretl_matrix_from_scalar(x);
+    } else if (pmod->ci != AR) {
+	r = gretl_matrix_from_scalar(pmod->rho);
+    } else if (pmod->arinfo == NULL || 
+	       pmod->arinfo->arlist == NULL || 
+	       pmod->arinfo->rho == NULL) {
+	*err = E_INVARG;
+    } else {
+	int i, l0 = pmod->arinfo->arlist[0];
+	int lmax = pmod->arinfo->arlist[l0];
+
+	r = gretl_vector_alloc(lmax);
+	if (r != NULL) {
+	    gretl_matrix_zero(r);
+	    for (i=1; i<=l0; i++) {
+		gretl_vector_set(r, pmod->arinfo->arlist[i] - 1,
+				 pmod->arinfo->rho[i-1]);
+	    }
+	}
+    }
+
+    return r;
+}
+
 gretl_matrix *gretl_model_get_matrix (MODEL *pmod, int idx, int *err)
 {
     gretl_matrix *M = NULL;
@@ -2882,6 +2913,9 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, int idx, int *err)
 	} else {
 	    M = model_get_hvec(pmod, err);
 	}
+	break;
+    case M_RHO:
+	M = model_get_rhovec(pmod, err);
 	break;
     default:
 	*err = E_BADSTAT;
