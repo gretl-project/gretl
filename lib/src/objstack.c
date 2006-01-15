@@ -710,6 +710,9 @@ int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
 
 #define INVALID_STAT -999.999
 
+/* retrieve from an object some value that is stored on the object in
+   the form of a simple scalar */
+
 static double real_get_obj_scalar (void *p, int type, int idx)
 {
     double x = INVALID_STAT;
@@ -748,6 +751,9 @@ static double real_get_obj_scalar (void *p, int type, int idx)
 
     return x;
 }
+
+/* retrieve from an object some value that is stored on the object in
+   the form of a scalar element of an array */
 
 static double 
 real_get_obj_scalar_element (void *p, int type, int idx, const char *key, 
@@ -807,6 +813,14 @@ static gretl_matrix *real_get_obj_matrix (void *p, int type, int idx, int *err)
 	MODEL *pmod = (MODEL *) p;
 
 	M = gretl_model_get_matrix(pmod, idx, err);
+    } else if (type == SYSTEM) {
+	gretl_equation_system *sys = (gretl_equation_system *) p;
+
+	M = gretl_equation_system_get_matrix(sys, idx, err);
+    } else if (type == VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) p;
+
+	M = gretl_VAR_get_matrix(var, idx, err);
     }
 
     return M;

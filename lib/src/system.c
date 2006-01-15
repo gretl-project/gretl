@@ -1803,3 +1803,33 @@ system_set_restriction_matrices (gretl_equation_system *sys,
 
     sys->flags |= GRETL_SYS_RESTRICT;
 }
+
+gretl_matrix *
+gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx, 
+				  int *err)
+{
+    gretl_matrix *M = NULL;
+
+    if (sys == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    switch (idx) {  
+    case M_UHAT:
+	M = gretl_matrix_copy(sys->uhat);
+	break;
+    case M_VCV:
+	M = gretl_matrix_copy(sys->sigma);
+	break;
+    default:
+	*err = E_BADSTAT;
+	break;
+    }
+
+    if (M == NULL && !*err) {
+	*err = E_ALLOC;
+    }
+
+    return M;
+}

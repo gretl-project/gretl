@@ -65,6 +65,7 @@ static double *get_mp_series (const char *s, GENERATOR *genr,
 			      int fn, int *err);
 static double *get_tmp_series (double *x, GENERATOR *genr,
 			       int fn, double param);
+static int genr_add_temp_var (double *x, GENERATOR *genr, genatom *atom);
 
 static double get_tnum (const DATAINFO *pdinfo, int t);
 static double evaluate_statistic (double *z, GENERATOR *genr, int fn);
@@ -300,30 +301,27 @@ static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     return genr;
 }
 
-static genatom *make_atom (int atype, int varnum, int varobs,
-			   int lag, double val, gretl_matrix *M,
-			   int func, char op, char *str,
-			   int level, atomset *aset)
+static genatom *atom_new (int level, char op, atomset *aset)
 {
-    genatom *atom;
+    genatom *atom = malloc(sizeof *atom);
 
-    atom = malloc(sizeof *atom);
-    if (atom == NULL) return NULL;
+    if (atom == NULL) {
+	return NULL;
+    }
 
-    atom->atype = atype;
-    atom->varnum = varnum;
-    atom->varobs = varobs;
+    atom->atype = ATOM_SERIES;
+    atom->varnum = -1;
+    atom->varobs = -1;
     atom->tmpvar = -1;
-    atom->lag = lag;
-    atom->val = val;
-    atom->M = M;
-    atom->func = func;
+    atom->lag = 0;
+    atom->val = 0.0;
+    atom->M = NULL;
+    atom->func = 0;
+
     atom->op = op;
     atom->level = level;
 
     *atom->str = '\0';
-    strncat(atom->str, str, ATOMLEN - 1);
-
     atom->parent = NULL;
     atom->aset = aset;
     atom->popped = 0;
@@ -508,32 +506,31 @@ static int evaluate_genr_function_args (char *s, GENERATOR *genr)
     return err;
 }
 
-static int get_arg_string (char *str, const char *s, int func, GENERATOR *genr)
+static int 
+set_atom_arg_string (const char *s, GENERATOR *genr, genatom *atom)
 {
     const char *p = strchr(s, '(');
     int n = strlen(p) - 2;
     int err = 0;
 
-    *str = '\0';
-
-    DPRINTF(("get_arg_string: looking at '%s'\n", s));
+    DPRINTF(("set_atom_arg_string: looking at '%s'\n", s));
 
     if (n < 0 || n > ARGLEN - 1) {
 	err = 1;
     } else {
-	strncat(str, p + 1, n);
+	strncat(atom->str, p + 1, n);
     }
 
-    if (func == T_PVALUE || func == T_CRIT) {
-	err = evaluate_genr_function_args(str, genr);
-    } else if (func == T_FRACDIFF) {
+    if (atom->func == T_PVALUE || atom->func == T_CRIT) {
+	err = evaluate_genr_function_args(atom->str, genr);
+    } else if (atom->func == T_FRACDIFF) {
 	char vname[9];
 	double param;
 
-	err = sscanf(str, "%8[^,],%lf", vname, &param) != 2;
+	err = sscanf(atom->str, "%8[^,],%lf", vname, &param) != 2;
     }
 
-    DPRINTF(("get_arg_string: got '%s'\n", str));
+    DPRINTF(("get_arg_string: got '%s'\n", atom->str));
 
     return err;
 }
@@ -572,39 +569,55 @@ static void undefined_var_message (const char *s)
     sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), s);
 }
 
-static int
-token_get_variable_or_constant (const char *s, GENERATOR *genr,
-				int *pv, int *varobs, double *pval, 
-				gretl_matrix **M, char *str) 
+static void
+get_var_from_matrix (const char *s, GENERATOR *genr, genatom *atom)
 {
-    int atype = ATOM_SERIES;
-    double val = 0.0;
-    int v = -1;
+    double *x = NULL;
+    int len = 0;
+
+    genr->err = named_matrix_get_variable(s, genr->pdinfo, &x, &len);
+
+    if (!genr->err) {
+	if (len == 1) {
+	    atom->atype = ATOM_SCALAR;
+	    atom->val = x[0];
+	    free(x);
+	} else {
+	    genr_add_temp_var(x, genr, atom);
+	}
+    }
+}
+
+static void
+atom_get_variable_or_constant (const char *s, GENERATOR *genr,
+			       genatom *atom)
+{
+    int v;
 
     if (!strcmp(s, "pi")) {
-	val = M_PI;
-	atype = ATOM_SCALAR;
+	atom->val = M_PI;
+	atom->atype = ATOM_SCALAR;
     } else if (!strcmp(s, "NA")) {
-	val = NADBL;
-	atype = ATOM_SCALAR;
+	atom->val = NADBL;
+	atom->atype = ATOM_SCALAR;
     } else if (genr_is_matrix(genr)) {
-	*M = get_matrix_by_name(s);
-	if (*M != NULL) {
+	atom->M = get_matrix_by_name(s);
+	if (atom->M != NULL) {
 	    DPRINTF(("recognized matrix '%s'\n", s));
-	    strncat(str, s, ARGLEN - 1);
-	    atype = ATOM_MATRIX;
-	    gretl_matrix_set_int(*M, ATOM_MATRIX);
+	    strncat(atom->str, s, ATOMLEN - 1);
+	    atom->atype = ATOM_MATRIX;
+	    gretl_matrix_set_int(atom->M, ATOM_MATRIX); /* FIXME transpose? */
 	} else {	
-	    /* try for a scalar, and promote to matrix? */
+	    /* try for a regular variable scalar, and convert to matrix? */
 	    v = varindex(genr->pdinfo, s);
 	    if (v < genr->pdinfo->v) {
-		if (genr->pdinfo->vector[v]) {
+		atom->M = get_matrix_from_variable((const double **) *genr->pZ,
+						   genr->pdinfo, v);
+		if (atom->M == NULL) {
 		    sprintf(gretl_errmsg, _("Variable '%s' is not a matrix"), s);
 		    genr->err = E_UNKVAR;
 		} else {
-		    *M = gretl_matrix_from_scalar((*genr->pZ)[v][0]);
-		    atype = ATOM_MATRIX;
-		    v = -1;
+		    atom->atype = ATOM_MATRIX;
 		}
 	    } else {
 		undefined_var_message(s);
@@ -617,38 +630,30 @@ token_get_variable_or_constant (const char *s, GENERATOR *genr,
 	if (v == genr->pdinfo->v) { 
 	    if (get_list_by_name(s) != NULL) {
 		/* name of saved list, not single variable */
-		v = -1;
-		strncat(str, s, ARGLEN - 1);
+		strncat(atom->str, s, ATOMLEN - 1);
 	    } else {
-		/* 1x1 matrix ? */
-		genr->err = named_matrix_get_scalar(s, &val);
-		if (!genr->err) {
-		    v = -1;
-		    atype = ATOM_SCALAR;
-		} else { 
+		get_var_from_matrix(s, genr, atom);
+		if (genr->err) {
 		    undefined_var_message(s);
 		}
 	    }
 	} else {
 	    DPRINTF(("recognized var '%s' (#%d)\n", s, v));
+	    atom->varnum = v;
 	}
 
 	if (v == INDEXNUM) { 
 	    int k = loop_scalar_read(*s);
 
-	    val = k;
-	    atype = ATOM_SCALAR;
+	    atom->val = k;
+	    atom->atype = ATOM_SCALAR;
 	} else if (v >= 0 && v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
-	    /* handle regular scalar variables here */
-	    *varobs = 0;
-	    atype = ATOM_SCALAR;
+	    /* regular scalar variables are handled here */
+	    atom->varnum = v;
+	    atom->varobs = 0;
+	    atom->atype = ATOM_SCALAR;
 	}
     }
-
-    *pv = v;
-    *pval = val;
-
-    return atype;
 }
 
 static int get_matrix_dim (const char *s, GENERATOR *genr)
@@ -657,10 +662,9 @@ static int get_matrix_dim (const char *s, GENERATOR *genr)
 				     genr->pdinfo, &genr->err);
 }
 
-static int matrix_gen_function (const char *s, GENERATOR *genr,
-				int func, gretl_matrix **M)
+static void
+matrix_gen_function (const char *s, GENERATOR *genr, genatom *atom)
 {
-    int atype = ATOM_SERIES;
     char rstr[9], cstr[9];
     int r = 0, c = 0;
     int nf = 0;
@@ -685,75 +689,63 @@ static int matrix_gen_function (const char *s, GENERATOR *genr,
     }
 
     if (genr->err) {
-	return atype;
+	return;
     }
 
-    if (func == T_IMAT && nf == 1) {
-	*M = gretl_identity_matrix_new(r);
-	atype = ATOM_MATRIX;
-    } else if (func == T_ZEROS && nf == 2) {
-	*M = gretl_zero_matrix_new(r, c);
-	atype = ATOM_MATRIX;
-    } else if (func == T_ONES && nf == 2) {
-	*M = gretl_unit_matrix_new(r, c);
-	atype = ATOM_MATRIX;
-    } else if ((func == T_UNIFORM || func == T_NORMAL) && nf == 2) {
-	*M = gretl_matrix_alloc(r, c);
-	if (*M != NULL) {
-	    gretl_matrix_random_fill(*M, func);
-	    atype = ATOM_MATRIX;
+    if (atom->func == T_IMAT && nf == 1) {
+	atom->M = gretl_identity_matrix_new(r);
+	atom->atype = ATOM_MATRIX;
+    } else if (atom->func == T_ZEROS && nf == 2) {
+	atom->M = gretl_zero_matrix_new(r, c);
+	atom->atype = ATOM_MATRIX;
+    } else if (atom->func == T_ONES && nf == 2) {
+	atom->M = gretl_unit_matrix_new(r, c);
+	atom->atype = ATOM_MATRIX;
+    } else if ((atom->func == T_UNIFORM || atom->func == T_NORMAL) && nf == 2) {
+	atom->M = gretl_matrix_alloc(r, c);
+	if (atom->M != NULL) {
+	    gretl_matrix_random_fill(atom->M, atom->func);
+	    atom->atype = ATOM_MATRIX;
 	}
     }
-
-    return atype;
 }
 
-static int token_get_function (const char *s, GENERATOR *genr,
-			       int func, double *pval, gretl_matrix **M,
-			       char *str)
+static void
+atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 {
-    int atype = ATOM_SERIES;
-    double val = 0.0;
+    DPRINTF(("recognized function #%d (%s)\n", atom->func, 
+	     get_genr_func_word(atom->func)));
 
-    DPRINTF(("recognized function #%d (%s)\n", func, 
-	     get_genr_func_word(func)));
-
-    if (MP_MATH(func) || func == T_PVALUE || 
-	func == T_CRIT || func == T_FRACDIFF ||
-	BIVARIATE_STAT(func)) {
-	genr->err = get_arg_string(str, s, func, genr);
+    if (MP_MATH(atom->func) || atom->func == T_PVALUE || 
+	atom->func == T_CRIT || atom->func == T_FRACDIFF ||
+	BIVARIATE_STAT(atom->func)) {
+	genr->err = set_atom_arg_string(s, genr, atom);
     } 
 
-    if (func == T_PVALUE) {
+    if (atom->func == T_PVALUE) {
 	if (!genr->err) {
-	    val = evaluate_pvalue(str, (const double **) *genr->pZ,
-				  genr->pdinfo,
-				  &genr->err);
-	    atype = ATOM_SCALAR;
+	    atom->val = evaluate_pvalue(atom->str, (const double **) *genr->pZ,
+					genr->pdinfo, &genr->err);
+	    atom->atype = ATOM_SCALAR;
 	}
-    } else if (func == T_CRIT) {
+    } else if (atom->func == T_CRIT) {
 	if (!genr->err) {
-	    val = evaluate_critval(str, (const double **) *genr->pZ,
-				   genr->pdinfo,
-				   &genr->err);
-	    atype = ATOM_SCALAR;
+	    atom->val = evaluate_critval(atom->str, (const double **) *genr->pZ,
+					 genr->pdinfo, &genr->err);
+	    atom->atype = ATOM_SCALAR;
 	}
-    } else if (func == T_VARNUM || func == T_VECTOR ||
-	       func == T_ISLIST || func == T_NELEM) {
-	atype = ATOM_SCALAR;
-    } else if (BIVARIATE_STAT(func)) {
-	val = evaluate_bivariate_statistic(str, genr, func);
-	atype = ATOM_SCALAR;
-    } else if (MATRIX_SCALAR_FUNC(func) && !genr_is_matrix(genr)) {
-	val = genr_get_matrix_scalar(s, func);
-	atype = ATOM_SCALAR;
-    } else if (genr_is_matrix(genr) && MATRIX_FILL_FUNC(func)) {
-	atype = matrix_gen_function(s, genr, func, M);
+    } else if (atom->func == T_VARNUM || atom->func == T_VECTOR ||
+	       atom->func == T_ISLIST || atom->func == T_NELEM) {
+	atom->atype = ATOM_SCALAR;
+    } else if (BIVARIATE_STAT(atom->func)) {
+	atom->val = evaluate_bivariate_statistic(atom->str, genr, atom->func);
+	atom->atype = ATOM_SCALAR;
+    } else if (MATRIX_SCALAR_FUNC(atom->func) && !genr_is_matrix(genr)) {
+	atom->val = genr_get_matrix_scalar(s, atom->func);
+	atom->atype = ATOM_SCALAR;
+    } else if (genr_is_matrix(genr) && MATRIX_FILL_FUNC(atom->func)) {
+	matrix_gen_function(s, genr, atom);
     } 
-
-    *pval = val;
-
-    return atype;
 }
 
 static int dataset_var_index (const char *s)
@@ -794,25 +786,23 @@ static int test_stat_index (const char *s)
     return ret;
 }
 
-static int 
-token_get_dollar_var (const char *s, GENERATOR *genr, double *val, 
-		      char *str, gretl_matrix **M)
+static void 
+atom_get_dollar_var (const char *s, GENERATOR *genr, genatom *atom) 
 {
-    int i, atype = ATOM_SERIES;
-    int found = 0;
+    int i, found = 0;
 
-    DPRINTF(("token_get_dollar_var: s='%s'\n", s));
+    DPRINTF(("atom_get_dollar_var: s='%s'\n", s));
 
     if (*s == '$') {
 	if ((i = dataset_var_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as dataset var, index #%d\n", s, i));
-	    *val = get_dataset_statistic(genr->pdinfo, i);
-	    atype = ATOM_SCALAR;
+	    atom->val = get_dataset_statistic(genr->pdinfo, i);
+	    atom->atype = ATOM_SCALAR;
 	    found = 1;
 	} else if ((i = test_stat_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as test-related var, index #%d\n", s, i));
-	    *val = get_test_stat_value(genr->label, i);
-	    atype = ATOM_SCALAR;
+	    atom->val = get_test_stat_value(genr->label, i);
+	    atom->atype = ATOM_SCALAR;
 	    found = 1;
 	}
     }
@@ -837,37 +827,37 @@ token_get_dollar_var (const char *s, GENERATOR *genr, double *val,
 		double x = saved_object_get_scalar(oname, key, &genr->err);
 
 		if (!genr->err) {
-		    *M = gretl_matrix_from_scalar(x);
+		    atom->M = gretl_matrix_from_scalar(x);
 		} 
-		if (M == NULL) {
+		if (atom->M == NULL) {
 		    genr->err = E_ALLOC;
 		} else {
-		    atype = ATOM_MATRIX;
+		    atom->atype = ATOM_MATRIX;
 		    found = 1;
 		}
 	    } else if (model_data_is_matrix(idx)) {
-		*M = saved_object_get_matrix(oname, key, &genr->err);
+		atom->M = saved_object_get_matrix(oname, key, &genr->err);
 		if (!genr->err) {
-		    atype = ATOM_MATRIX;
+		    atom->atype = ATOM_MATRIX;
 		    found = 1;
 		}
 	    }
 	} else {
 	    /* not generating a matrix */
 	    if (model_data_is_scalar(idx)) {
-		*val = saved_object_get_scalar(oname, key, &genr->err);
-		atype = ATOM_SCALAR;
+		atom->val = saved_object_get_scalar(oname, key, &genr->err);
+		atom->atype = ATOM_SCALAR;
 		found = 1;
 	    } else if (model_data_is_scalar_element(idx)) {
-		*val = saved_object_get_scalar_element(oname, key, genr->pdinfo,
-						       &genr->err);
+		atom->val = saved_object_get_scalar_element(oname, key, genr->pdinfo,
+							    &genr->err);
 		if (!genr->err) {
-		    atype = ATOM_SCALAR;
+		    atom->atype = ATOM_SCALAR;
 		    found = 1;
 		}
 	    } else if (model_data_is_series(idx)) {
-		atype = ATOM_SERIES | ATOM_MODELDAT;
-		strncat(str, s, ARGLEN - 1);
+		atom->atype = ATOM_SERIES | ATOM_MODELDAT;
+		strncat(atom->str, s, ATOMLEN - 1);
 		found = 1;
 	    }
 	}
@@ -878,8 +868,6 @@ token_get_dollar_var (const char *s, GENERATOR *genr, double *val,
     if (!found && !genr->err) {
 	genr->err = E_UNKVAR;
     }
-
-    return atype;
 }
 
 #define looks_like_dollar_token(s) (*s == '$' || \
@@ -899,98 +887,102 @@ token_get_dollar_var (const char *s, GENERATOR *genr, double *val,
 */
 
 static genatom *
-parse_token (const char *s, char op, GENERATOR *genr, int level)
+token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 {
-    int v = -1, varobs = -1;
-    int atype = ATOM_SERIES;
-    int lag = 0, func = 0;
-    gretl_matrix *M = NULL;
-    double val = 0.0;
-    char str[ARGLEN] = {0};
+    genatom *atom = NULL;
+    int v, lag;
 
-    DPRINTF(("parse_token: looking at '%s'\n", s));
+    DPRINTF(("token_make_atom: looking at '%s'\n", s));
+
+    atom = atom_new(level, op, genr->aset);
+    if (atom == NULL) {
+	genr->err = E_ALLOC;
+	return NULL;
+    }
 
     if (looks_like_dollar_token(s)) {
-	atype = token_get_dollar_var(s, genr, &val, str, &M);
+	/* dollarized (internal) variable? */
+	atom_get_dollar_var(s, genr, atom);
     } else if (looks_like_var_or_func(s)) {
 	if (looks_like_plain_var(s)) {
 	    /* ordinary variable, list or matrix? */
-	    atype = token_get_variable_or_constant(s, genr, &v, &varobs, 
-						   &val, &M, str);
+	    atom_get_variable_or_constant(s, genr, atom);
 	} else if (strchr(s, '(')) {
 	    /* function or lagged variable? */
-	    if ((func = genr_function_from_string(s))) {
-		atype = token_get_function(s, genr, func, &val, &M, str);
+	    if ((atom->func = genr_function_from_string(s))) {
+		atom_get_function_data(s, genr, atom);
 	    } else {
 		/* not a function: try a lagged variable */
 		v = get_lagvar(s, &lag, genr);
 		if (v > 0) {
 		    DPRINTF(("recognized var #%d lag %d\n", v, lag));
+		    atom->varnum = v;
+		    atom->lag = lag;
 		} else {
 		    /* not a variable or function: dead end? */
-		    DPRINTF(("dead end in parse_token, s='%s'\n", s));
+		    DPRINTF(("dead end in token_make_atom, s='%s'\n", s));
 		    genr->err = E_SYNTAX; 
 		}
 	    }
 	} else if (strchr(s, '[')) {
 	    /* specific observation from a series, or slice of matrix? */
+	    int v, varobs;
 	    int err;
 
 	    err = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo,
 				&v, &varobs);
 	    if (!err) {
 		if (genr_is_matrix(genr)) {
-		    /* FIXME defer evaluation? */
-		    M = gretl_matrix_from_scalar((*genr->pZ)[v][varobs]);
-		    atype = ATOM_MATRIX;
-		    v = varobs = -1;
+		    atom->M = gretl_matrix_from_scalar((*genr->pZ)[v][varobs]);
+		    atom->atype = ATOM_MATRIX;
 		} else {
-		    atype = ATOM_SCALAR;
+		    atom->atype = ATOM_SCALAR;
 		}
 	    } else if (genr_is_matrix(genr)) {
-		/* FIXME defer evaluation? */
-		M = user_matrix_get_slice(s, &genr->err);
-		if (M == NULL) {
+		atom->M = user_matrix_get_slice(s, &genr->err);
+		if (atom->M == NULL) {
 		    DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		} else {
-		    atype = ATOM_MATRIX;
+		    atom->atype = ATOM_MATRIX;
 		}
 	    } else {
-		DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
-		genr->err = E_SYNTAX; 
-	    } 
+		get_var_from_matrix(s, genr, atom);
+		if (genr->err) {
+		    DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
+		}
+	    }
 	}
     } else if (numeric_string(s)) {
 	/* plain number */
-	val = dot_atof(s);
-	atype = ATOM_SCALAR;
+	atom->val = dot_atof(s);
+	atom->atype = ATOM_SCALAR;
     } else if (*s == '"') {
 	/* observation label? (basis for dummy series) */
-	val = get_observation_number(s, genr->pdinfo);
-	if (val > 0) {
-	    func = T_OBSNUM;
+	atom->val = get_observation_number(s, genr->pdinfo);
+	if (atom->val > 0) {
+	    atom->func = T_OBSNUM;
 	} else{
 	    genr->err = E_SYNTAX;
 	}
     } else if (strchr(s, ':')) {
 	/* time-series observation? (as in "obs > 1986:4") */
-	val = get_observation_number(s, genr->pdinfo);
-	if (val > 0) {
-	    atype = ATOM_SCALAR;
+	atom->val = get_observation_number(s, genr->pdinfo);
+	if (atom->val > 0) {
+	    atom->atype = ATOM_SCALAR;
 	} else {
 	    genr->err = E_SYNTAX;
 	}
     } else {
-	DPRINTF(("dead end in parse_token, s='%s'\n", s));
+	DPRINTF(("dead end in token_make_atom, s='%s'\n", s));
 	genr->err = E_SYNTAX;
     }
 
     if (genr->err) {
-	return NULL;
+	free(atom);
+	atom = NULL;
     }
 
-    return make_atom(atype, v, varobs, lag, val, M, func, op, str, 
-		     level, genr->aset);
+    return atom;
 }
 
 static double get_lag_at_obs (int v, int tmp, int lag, 
@@ -1108,22 +1100,29 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
     return x;
 }
 
-static int genr_add_temp_var (GENERATOR *genr, double *x)
+/* Add a pre-allocated series to genr's temporary dataset: this
+   function also takes charge of freeing x if the addition fails,
+   and of setting atom's tmpvar number */
+
+static int genr_add_temp_var (double *x, GENERATOR *genr, genatom *atom)
 {
+    int v = genr->tmpv;
     double **gZ;    
-    int v = genr->tmpv; 
 
     gZ = realloc(genr->tmpZ, (v + 1) * sizeof *gZ);
+
     if (gZ == NULL) {
+	free(x);
 	genr->err = E_ALLOC;
-	return 1;
+    } else {
+	atom->tmpvar = v;
+
+	gZ[v] = x;
+	genr->tmpZ = gZ;
+	genr->tmpv += 1;
     }
 
-    gZ[v] = x;
-    genr->tmpZ = gZ;
-    genr->tmpv += 1;
-
-    return 0;
+    return genr->err;
 }
 
 static int add_random_series_to_genr (GENERATOR *genr, genatom *atom)
@@ -1133,14 +1132,7 @@ static int add_random_series_to_genr (GENERATOR *genr, genatom *atom)
     x = get_random_series(genr->pdinfo, atom->func);
     if (x == NULL) return 1;
 
-    if (genr_add_temp_var(genr, x)) {
-	free(x);
-	return E_ALLOC;
-    }
-
-    atom->tmpvar = genr->tmpv - 1;
-
-    return 0;
+    return genr_add_temp_var(x, genr, atom);
 }
 
 static int add_model_series_to_genr (GENERATOR *genr, genatom *atom)
@@ -1165,14 +1157,7 @@ static int add_model_series_to_genr (GENERATOR *genr, genatom *atom)
     free(oname);
 
     if (!err) {
-	if (genr_add_temp_var(genr, x)) {
-	    free(x);
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	atom->tmpvar = genr->tmpv - 1;
+	err = genr_add_temp_var(x, genr, atom);
     }
 
     return err;
@@ -1185,14 +1170,7 @@ static int add_mp_series_to_genr (GENERATOR *genr, genatom *atom)
     x = get_mp_series(atom->str, genr, atom->func, &genr->err);
     if (x == NULL) return 1;
 
-    if (genr_add_temp_var(genr, x)) {
-	free(x);
-	return E_ALLOC;
-    }
-
-    atom->tmpvar = genr->tmpv - 1;
-
-    return genr->err;
+    return genr_add_temp_var(x, genr, atom);
 }
 
 static double *eval_compound_arg (GENERATOR *genr,
@@ -1340,13 +1318,11 @@ static int add_tmp_series_to_genr (GENERATOR *genr, genatom *atom)
 	return genr->err;
     }
 
-    if (genr_add_temp_var(genr, y)) {
-	free(y);
-	return E_ALLOC;
-    }
+    genr_add_temp_var(y, genr, atom);
 
-    atom->tmpvar = genr->tmpv - 1;
-    atom_eat_children(atom);
+    if (!genr->err) {
+	atom_eat_children(atom);
+    }
 
     return genr->err;
 }
@@ -2186,7 +2162,7 @@ static int stack_op_and_token (char *s, GENERATOR *genr, int level)
 	    if (*tok == '\0') fprintf(stderr, "genr: got a blank token\n");
 	    else fprintf(stderr, "token = '%s'\n", tok);
 #endif
-	    atom = parse_token(tok, op, genr, level);
+	    atom = token_make_atom(tok, op, genr, level);
 	    if (atom != NULL) {
 		genr->err = push_atom(atom);
 #if GENR_DEBUG
@@ -4159,6 +4135,10 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     if (varname == NULL) {
 	return ret;
     }
+
+    if (isdigit(*check)) {
+	return ret;
+    } 
 
     while (*check == '_') {
 	check++;

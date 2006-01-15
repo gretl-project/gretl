@@ -45,17 +45,16 @@ pre-existing scalar variable.  Directly after the closing brace you
 can append a single quote (\texttt{'}) to obtain the transpose.
 
 To specify a matrix in terms of data series the syntax is, for
-example:
-
+example,
+%
 \begin{code}
-matrix A = { x1 ; x2 ; x3 }'
+matrix A = { x1, x2, x3 }
 \end{code}
-
-By default, each variable occupies a row (and there can only be one
-variable per row).  In the example above we have transposed the result
-so that the variables are in columns. The range of data values
-included in the matrix depends on the current setting of the sample
-range.
+%
+where the names of the variables are separated by commas.  By default,
+each variable occupies a column (and there can only be one variable
+per column).  The range of data values included in the matrix depends
+on the current setting of the sample range.
 
 Please note that while gretl's built-in statistical functions are
 capable of handling missing values, the matrix arithmetic functions
@@ -64,12 +63,12 @@ series that include missing values.
 
 Instead of giving an explicit list of variables, you may instead
 provide the name of a saved list, as in
-
+%
 \begin{code}
 list xlist = x1 x2 x3
 matrix A = { xlist }
 \end{code}
-
+%
 When you provide a named list, the data series are by default placed
 in columns, as is natural in an econometric context: if you want them
 in rows, append the transpose symbol.
@@ -285,8 +284,8 @@ series as in section~\ref{matrix-create} above.
   \label{examp-matrix}
 \begin{code}
   open data4-1
-  matrix X = { const ; sqft }'
-  matrix y = { price }'
+  matrix X = { const, sqft }
+  matrix y = { price }
   matrix b = inv(X'*X) * X'*y
   printf "estimated coefficient vector\n"
   matrix b

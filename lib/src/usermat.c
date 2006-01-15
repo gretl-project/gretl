@@ -362,32 +362,148 @@ int user_matrix_reconfigure (gretl_matrix *M, char *newname, int level)
 }
 
 /**
- * named_matrix_get_scalar:
- * @name: name of the matrix.
- * @x: location to receive scalar value.
+ * named_matrix_get_variable:
+ * @mspec: name of matrix, possibly followed by selection string
+ * in square backets (e.g. "m[,1]" to get column 1 of m).
+ * @pdinfo: dataset information.
+ * @px: location to receive allocated series (array).
+ * @plen: location to receive length of array.
  *
- * If there exists a matrix of the name @name at the current
- * level of function execution, and if this matrix is 
- * 1 x 1, then assign to @x the value of the single element
- * of this matrix.
+ * If there exists a matrix of the given name at the current
+ * level of function execution, try to assign to @x the
+ * selection specified in @mspec.  This works only if (a)
+ * the matrix is in fact a vector of length equal to either the 
+ * full length of the dataset or the length of the current sample 
+ * range, or (b) the selection string "extracts" such a vector,
+ * or (c) the specified matrix is 1 x 1, in effect yielding a
+ * scalar result (array of length 1).
  *
- * Returns: 0 on success or non-zero if no matrix is found,
- * or if the matrix is not 1 x 1.
+ * If the sample is currently restricted while the selection has 
+ * a number of elements equal to the full length of the dataset, 
+ * the "out of sample" observations are set to #NADBL.
+ *
+ * Returns: 0 on success or non-zero if no matrix is found, or
+ * if the matrix selection does not have the required number of
+ * elements.
  */
 
-int named_matrix_get_scalar (const char *name, double *x)
+int named_matrix_get_variable (const char *mspec, const DATAINFO *pdinfo,
+			       double **px, int *plen)
 {
-    gretl_matrix *m = real_get_matrix_by_name(name, 0, -1);
+    double *x = NULL;
+    gretl_matrix *M = NULL;
+    gretl_matrix *S = NULL;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int i, len = 0;
     int err = 0;
 
-    if (m == NULL || gretl_matrix_rows(m) != 1 ||
-	gretl_matrix_cols(m) != 1) {
-	err = E_UNKVAR;
+    *plen = 0;
+
+    if (strchr(mspec, '[')) {
+	S = user_matrix_get_slice(mspec, &err);
+	if (!err) {
+	    len = gretl_vector_get_length(S);
+	}
     } else {
-	*x = gretl_matrix_get(m, 0, 0);
+	M = real_get_matrix_by_name(mspec, 0, -1);
+	if (M == NULL) {
+	    err = E_UNKVAR;
+	} else {
+	    len = gretl_vector_get_length(M);
+	}
+    }
+
+    if (!err) {
+	if (len != 1 && len != pdinfo->n && len != T) {
+	    err = E_NONCONF;
+	}
+    }
+
+    if (!err) {
+	gretl_matrix *P = (S != NULL)? S : M;
+
+	if (len == 1) {
+	    x = malloc(sizeof *x);
+	    if (x == NULL) {
+		err = E_ALLOC;
+	    } else {
+		*x = gretl_vector_get(P, 0);
+		*px = x;
+	    }
+	} else {
+	    x = malloc(pdinfo->n * sizeof *x);
+	    if (x == NULL) {
+		err = E_ALLOC;
+	    } else {
+	    
+		if (len < pdinfo->n) {
+		    for (i=0; i<pdinfo->n; i++) {
+			x[i] = NADBL;
+		    }
+		}
+		for (i=0; i<len; i++) {
+		    x[i + pdinfo->t1] = gretl_vector_get(P, i);
+		}
+		*px = x;
+	    }
+	}
+    }
+
+    *plen = len;
+
+    if (S != NULL) {
+	gretl_matrix_free(S);
     }
 
     return err;
+}
+
+/**
+ * get_matrix_from_variable:
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ * @v: ID number of variable.
+ *
+ * Converts the specified variable into a gretl matrix.  If
+ * the variable is a scalar, the returned matrix is 1 x 1;
+ * if the variable is a data series, the returned matrix is
+ * a column vector of length equal to the current sample
+ * range.
+ *
+ * Returns: allocated matrix, or %NULL on failure.
+ */
+
+gretl_matrix *
+get_matrix_from_variable (const double **Z, const DATAINFO *pdinfo, int v)
+{
+    gretl_matrix *m = NULL;
+
+    if (v < 0 || v >= pdinfo->v) {
+	return NULL;
+    }
+
+    if (pdinfo->vector[v]) {
+	int i, n = pdinfo->t2 - pdinfo->t1 + 1;
+	double x;
+
+	m = gretl_column_vector_alloc(n);
+	if (m != NULL) {
+	    for (i=0; i<n; i++) {
+		x = Z[v][i + pdinfo->t1];
+		if (na(x)) {
+		    gretl_matrix_free(m);
+		    m = NULL;
+		    break;
+		} else {
+		    gretl_vector_set(m, i, x);
+		}
+	    }
+	}
+    } else {
+	m = gretl_matrix_from_scalar(Z[v][0]);
+    }
+
+    return m;
 }
 
 static gretl_matrix *original_matrix_by_name (const char *name)
@@ -395,11 +511,11 @@ static gretl_matrix *original_matrix_by_name (const char *name)
     return real_get_matrix_by_name(name, 0, -1);
 }
 
-/* A "slice" is a gretl list: the first element holds the
-   count of the following elements, and the following
-   elements indicate from which row (or column) of the
-   source matrix to draw the successive rows (columns) of
-   the submatrix.
+/* A "slice" is a gretl list: the first element holds the count of the
+   following elements, and the following elements indicate from which
+   row (or column) of the source matrix to draw the successive rows
+   (columns) of the submatrix.  A NULL value is also OK, indicating
+   that all rows (columns) should be used.
 */
 
 static int *parse_slice_spec (const char *s, int n, int *err)
@@ -482,26 +598,39 @@ static int *parse_slice_spec (const char *s, int n, int *err)
     return slice;    
 }
 
+enum {
+    RSLICE,
+    CSLICE,
+    VSLICE
+};
+
 static int get_slice_string (const char *s, char *spec, int i)
 {
     int err = 0;
 
     *spec = '\0';
 
-    if (i == 0) {
+    if (i == RSLICE) {
 	s = strchr(s, '[');
 	if (s == NULL || strchr(s, ',') == NULL) {
 	    err = 1;
 	} else {
-	    sscanf(s + 1, "%31[^,]", spec);
+	    sscanf(s + 1, "%31[^,]]", spec);
 	}
-    } else if (i == 1) {
+    } else if (i == CSLICE) {
 	s = strchr(s, ',');
 	if (s == NULL || strchr(s, ']') == NULL) {
 	    err = 1;
 	} else {	
 	    sscanf(s + 1, "%31[^]]", spec);
 	}	    
+    } else if (i == VSLICE) {
+	s = strchr(s, '[');
+	if (s == NULL || strchr(s, ']') == NULL) {
+	    err = 1;
+	} else {
+	    sscanf(s + 1, "%31[^]]", spec);
+	}
     }
 
 #if MDEBUG
@@ -515,22 +644,36 @@ static int get_slice_string (const char *s, char *spec, int i)
 static int make_slices (const char *s, int m, int n, 
 			int **rslice, int **cslice)
 {
-    int *slice;
     char spec[32];
-    int i, err = 0;
+    int err = 0;
 
     *rslice = *cslice = NULL;
 
-    for (i=0; i<2 && !err; i++) {
-	err = get_slice_string(s, spec, i);
+    if ((m == 1 || n == 1) && strchr(s, ',') == NULL) {
+	/* vector: a single slice is acceptable */
+	err = get_slice_string(s, spec, VSLICE);
 	if (!err) {
-	   slice = parse_slice_spec(spec, (i == 0)? m : n, &err);
+	    if (m == 1) {
+		*cslice = parse_slice_spec(spec, n, &err);
+	    } else {
+		*rslice = parse_slice_spec(spec, m, &err);
+	    }
 	}
+    } else {
+	/* not a vector: must have both slice strings "in principle",
+	   even if one or the other is empty */
+	err = get_slice_string(s, spec, RSLICE);
 	if (!err) {
-	    if (i == 0) *rslice = slice;
-	    else *cslice = slice;
+	    *rslice = parse_slice_spec(spec, m, &err);
 	}
-    } 
+
+	if (!err) {
+	    err = get_slice_string(s, spec, CSLICE);
+	    if (!err) {
+		*cslice = parse_slice_spec(spec, n, &err);
+	    } 
+	}
+    }   
 
     if (err) {
 	free(*rslice);
@@ -767,46 +910,53 @@ void destroy_user_matrices (void)
     n_matrices = 0;
 }
 
-static int scalar_varnum (const char *s, const DATAINFO *pdinfo)
+static int first_field_is_series (const char *s, const DATAINFO *pdinfo)
 {
-    char vname[VNAMELEN];
-    int len = gretl_varchar_spn(s);
-    int v = 0;
+    char word[16];
+    int v, ret = 0;
 
-    if (len > 0 && len < VNAMELEN) {
-	*vname = '\0';
-	strncat(vname, s, len);
-	v = varindex(pdinfo, vname);
-	if (v == pdinfo->v || pdinfo->vector[v]) {
-	    v = 0;
-	} 
+    s += strspn(s, " {");
+
+    *word = '\0';
+    sscanf(s, "%15[^,; ]", word);
+    v = varindex(pdinfo, word);
+    if (v < pdinfo->v && pdinfo->vector[v]) {
+	ret = 1;
     }
 
-    return v;
+    return ret;
 }
 
 #define numeric_start(s) (strcspn(s, "+-0123456789") == 0)
 
 static int 
 get_rows_cols (const char *str, const DATAINFO *pdinfo,
-	       int *r, int *c, int *scalars)
+	       int *r, int *c, int *series)
 {
     const char *p = str;
+    char sepstr[2] = ";";
+    char sep = ';';
     char *s;
     int nf0 = 0, nf1;
     int i, len;
     int err = 0;
 
+    if (first_field_is_series(p, pdinfo)) {
+	*series = 1;
+	*sepstr = ',';
+	sep = ',';
+    }
+
     *r = 1;
     while (*p) {
-	if (*p == ';') {
+	if (*p == sep) {
 	    *r += 1;
 	}
 	p++;
     }
 
     for (i=0; i<*r && !err; i++) {
-	len = strcspn(str, ";");
+	len = strcspn(str, sepstr);
 
 	s = gretl_strndup(str, len);
 	if (s == NULL) {
@@ -827,26 +977,20 @@ get_rows_cols (const char *str, const DATAINFO *pdinfo,
 	}
 
 	nf0 = nf1;
-
-	/* peek at first field: is it a scalar? */
-	if (i == 0) {
-	    p = s;
-	    while (isspace(*p)) p++;
-	    if (numeric_start(p)) {
-		*scalars = 1;
-	    } else if (isalpha(*p)) {
-		*scalars = scalar_varnum(p, pdinfo);
-	    }
-	}
-
 	str += len + 1;
-
 	free(s);
     }
 
     if (!err) {
-	*c = nf0;
+	if (*series) {
+	    *c = *r;
+	    *r = nf0;
+	} else {
+	    *c = nf0;
+	}
     }
+
+    /* FIXME series and matrix orientation */
 
     return err;
 }
@@ -859,10 +1003,10 @@ get_varnum (const char **s, const DATAINFO *pdinfo, int *err)
 
     if (sscanf(*s, "%11s", vname)) {
 	int len = strlen(vname);
-	char *p = strrchr(vname, '}');
-	
-	if (p != NULL) {
-	    *p = '\0';
+	int vlen = gretl_varchar_spn(vname);
+
+	if (vlen < len) {
+	    vname[vlen] = '\0';
 	}
 
 	v = varindex(pdinfo, vname);
@@ -997,7 +1141,7 @@ static int fill_matrix_from_series (gretl_matrix *M, const char *s,
 
     s += strspn(s, " ");
 
-    if (transp) {
+    if (!transp) {
 	nvr /= T;
 	for (j=0; j<c && !err; j++) {
 	    for (i=0; i<nvr && !err; i++) {
@@ -1140,12 +1284,10 @@ static int create_matrix (const char *name, const char *mask,
     gretl_matrix *M = NULL;
     char *p;
     int nm = n_matrices;
-    int scalars = 0;
+    int series = 0;
     int transp = 0;
     int r = 0, c = 0;
     int err = 0;
-
-    /* FIXME respect mask */
 
     p = strchr(s, '{');
     if (p == NULL) {
@@ -1176,14 +1318,14 @@ static int create_matrix (const char *name, const char *mask,
     }
 
     if (!err) {
-	err = get_rows_cols(s, pdinfo, &r, &c, &scalars);
+	err = get_rows_cols(s, pdinfo, &r, &c, &series);
 	if (!err && c == 0) {
 	    err = 1;
 	}
     }
 
-    if (!err && !scalars) {
-	c *= pdinfo->t2 - pdinfo->t1 + 1;
+    if (!err && series) {
+	r *= pdinfo->t2 - pdinfo->t1 + 1;
     }
 
     if (!err && transp) {
@@ -1194,8 +1336,8 @@ static int create_matrix (const char *name, const char *mask,
     }
 
 #if MDEBUG
-    fprintf(stderr, "r=%d, c=%d, transp=%d, scalars=%d\n",
-	    r, c, transp, scalars);
+    fprintf(stderr, "r=%d, c=%d, transp=%d, series=%d\n",
+	    r, c, transp, series);
 #endif
 
     if (!err) {
@@ -1206,14 +1348,14 @@ static int create_matrix (const char *name, const char *mask,
     }
 
     if (!err) {
-	if (scalars) {
-	    err = fill_matrix_from_scalars(M, s, r, c, transp,
-					   (const double **) *pZ,
-					   pdinfo);
-	} else {
+	if (series) {
 	    err = fill_matrix_from_series(M, s, r, c, transp, 
 					  (const double **) *pZ, 
 					  pdinfo);
+	} else {
+	    err = fill_matrix_from_scalars(M, s, r, c, transp,
+					   (const double **) *pZ,
+					   pdinfo);
 	}
     }
     

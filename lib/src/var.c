@@ -2790,4 +2790,33 @@ const int *gretl_VECM_list (const GRETL_VAR *vecm)
     return NULL;
 }
 
+gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
+				    int *err)
+{
+    gretl_matrix *M = NULL;
+
+    if (var == NULL) {
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    switch (idx) {  
+    case M_UHAT:
+	M = gretl_matrix_copy(var->E);
+	break;
+    case M_VCV:
+	M = gretl_matrix_copy(var->S);
+	break;
+    default:
+	*err = E_BADSTAT;
+	break;
+    }
+
+    if (M == NULL && !*err) {
+	*err = E_ALLOC;
+    }
+
+    return M;
+}
+
 #include "irfboot.c"
