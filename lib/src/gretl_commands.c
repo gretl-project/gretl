@@ -134,7 +134,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { SETOBS,   "setobs" },
     { SETMISS,  "setmiss" },
     { SHELL,    "shell" },   
-    { SIM,      "sim" },     
     { SMPL,     "smpl" },
     { SPEARMAN, "spearman" },
     { SQUARE,   "square" },  

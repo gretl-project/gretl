@@ -75,7 +75,9 @@ double *saved_object_get_series (const char *oname, const char *key,
 				 const DATAINFO *pdinfo, int *err);
 
 gretl_matrix *
-saved_object_get_matrix (const char *oname, const char *key, int *err);
+saved_object_get_matrix (const char *oname, const char *key,
+			 const double **Z, const DATAINFO *pdinfo,
+			 int *err);
 
 void gretl_rename_saved_object (void *p, const char *name);
 

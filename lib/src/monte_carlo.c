@@ -284,7 +284,6 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	     ci == PCA ||
 	     ci == RHODIFF ||
 	     ci == RUNS || 
-	     ci == SIM ||
 	     ci == SPEARMAN || 
 	     ci == SQUARE || 
 	     ci == SUMMARY ||
@@ -2576,7 +2575,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case PCA:
 	    case RHODIFF:
 	    case RUNS: 
-	    case SIM:
 	    case SPEARMAN: 
 	    case SQUARE: 
 	    case SUMMARY:

@@ -219,6 +219,8 @@ int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo);
 int dataset_drop_listed_variables (const int *list, double ***pZ, 
 				   DATAINFO *pdinfo, int *renumber);
 
+int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo); 
+
 int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo);
 
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo);

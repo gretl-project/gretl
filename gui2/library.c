@@ -5971,7 +5971,6 @@ int gui_exec_line (char *line,
     case RMPLOT: 
     case RUNS: 
     case SDIFF:
-    case SIM: 
     case SPEARMAN: 
     case SQUARE: 
     case STORE:

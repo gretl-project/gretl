@@ -99,7 +99,7 @@ enum transformations {
     T_BKFILT,
     T_FRACDIFF,
     T_VARNUM,
-    T_VECTOR,
+    T_SERIES,
     T_ISLIST,
     T_NELEM,
     T_DET,
@@ -122,20 +122,21 @@ enum transformations {
 enum genr_flags {
     GENR_SAVE         = 1 << 0,
     GENR_SCALAR       = 1 << 1,
-    GENR_FORCE_VECTOR = 1 << 2,
+    GENR_FORCE_SERIES = 1 << 2,
     GENR_NEED_SCALAR  = 1 << 3,
     GENR_WARN         = 1 << 4,
     GENR_SIMPLE_SORT  = 1 << 5,
     GENR_PRIVATE      = 1 << 6,
-    GENR_MATRIX       = 1 << 7
+    GENR_MATRIX       = 1 << 7,
+    GENR_NO_MATRIX    = 1 << 8
 };
 
 struct _GENERATOR {
     int err;                        /* error code */  
     int done;                       /* completion indicator */
+    int flags;                      /* option flags */
     char orig_s[MAXLINE];           /* formula provided by user */
     char lhs[USER_VLEN];            /* left-hand side of formula */
-    unsigned char flags;            /* option flags */
     double *xvec;                   /* temporary storage */
     int varnum;                     /* number of variable generated */
     int obs;                        /* observation number, if generating

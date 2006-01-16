@@ -26,8 +26,8 @@ Matrices can be created in any one of four ways:
   special functions.
 \end{enumerate}
 
-At present these methods cannot be mixed in the specification of a
-given matrix.  Examples of each follow.
+These methods cannot be mixed in the specification of a given matrix.
+Examples of each follow.
 
 To specify a matrix directly in terms of scalars, the syntax is,
 for example: 
@@ -155,7 +155,7 @@ generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
 functions require a single matrix as argument, or an expression which
 evaluates to a single matrix.
 
-In addition these matrix-specific functions are available:
+The following matrix-specific functions are available:
 
 \begin{center}
 \begin{tabular}{ll}
@@ -173,7 +173,7 @@ In addition these matrix-specific functions are available:
 These functions also require a single matrix (or an expression which
 evaluates to a single matrix) as argument.
 
-Finally, there are some functions which generate certain sorts of
+In addition, there are some functions which generate certain sorts of
 matrices from scratch, given a specification of the desired
 dimensions.
 
@@ -204,6 +204,20 @@ The \texttt{uniform()} and \texttt{normal()} matrix functions fill the
 matrix with drawings from the uniform (0--1) distribution and the
 standard normal distribution respectively.
 
+Finally, there are special ``accessor'' strings that let you extract
+matrices from models previously estimated:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{\$coeff} & vector of estimated coefficients \\
+\texttt{\$stderr} & vector of estimated standard errors \\
+\texttt{\$uhat} & vector of residuals \\
+\texttt{\$yhat} & vector of fitted values \\
+\texttt{\$vcv} & covariance matrix for coefficients \\
+\texttt{\$rho} & autoregressive coefficients for error process
+\end{tabular}
+\end{center}
+
 \section{Selecting sub-matrices}
 \label{matrix-sub}
 
@@ -222,10 +236,12 @@ the name of a matrix & selects the specified rows
 \end{tabular}
 \end{center}
 
-With regard to the last option, the matrix given in the \textsl{rows}
-field must be either $p\times 1$ or $1\times p$, and should contain
-integer values in the range 1 to $n$, where $n$ is the number of rows
-in the matrix from which the selection is to be made.
+With regard to the second option, the integer value can be given
+numerically, or as the name of an existing scalar variable.  With the
+last option, the matrix given in the \textsl{rows} field must be
+either $p\times 1$ or $1\times p$, and should contain integer values
+in the range 1 to $n$, where $n$ is the number of rows in the matrix
+from which the selection is to be made.
 
 The \textsl{cols} specification works in the same way, \textit{mutatis
   mutandis}.  Here are some examples.
@@ -260,6 +276,37 @@ matrix $A$:
 matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
 matrix A[2:3,2:3] = I(2)
 \end{code}
+
+\section{Namespace issues}
+\label{matrix-namespace}
+
+Matrices share a common namespace with data series and scalar
+variables.  In other words, no two objects of any of these types can
+have the same name.  In case of potential collisions --- where an
+object of one type already exists with a certain name, and you try to
+create an object of a different type with the same name --- gretl
+follows the policy of \textit{giving priority to data series}.
+This means that
+%
+\begin{itemize}
+\item If a series called, say, \texttt{X}, exists and you try to
+  create a matrix named \texttt{X}, an error is flagged.
+\item If you create a series named \texttt{X} --- using the
+  \texttt{genr} or \texttt{series} commands, or by reading from a data
+  file, or by importation from a database --- then any pre-existing
+  matrix named \texttt{X} is automatically deleted.
+\end{itemize}
+
+\section{Deleting matrices}
+\label{matrix-delete}
+
+To delete a matrix, use the syntax
+%
+\begin{code}
+matrix A delete
+\end{code}
+%
+where \texttt{A} is the name of the matrix to be deleted.
 
 \section{Extended example}
 \label{matrix-example}

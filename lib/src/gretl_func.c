@@ -283,7 +283,8 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else {
 	    /* assigning a matrix, not a variable? */
-	    gretl_matrix *S = get_matrix_by_name(call->fun->returns[i]);
+	    gretl_matrix *S = get_matrix_by_name(call->fun->returns[i],
+						 pdinfo);
 
 
 	    if (S != NULL) {
@@ -292,7 +293,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 		fprintf(stderr, " identified source as matrix '%s' (%p)\n",
 			call->fun->returns[i], (void *) S);
 #endif
-		T = get_matrix_by_name_at_level(call->assv[i], nc - 1); 
+		T = get_matrix_by_name_at_level(call->assv[i], nc - 1, pdinfo); 
 		if (T != NULL) {
 #if FN_DEBUG
 		    fprintf(stderr, " identified target as matrix '%s' (%p)\n",
@@ -1476,7 +1477,7 @@ static int check_and_allocate_function_args (ufunc *fun,
 		err = 1;
 	    }
 	} else if (fun->ptype[i] == ARG_MATRIX) {
-	    if (get_matrix_by_name(argv[i]) != NULL) {
+	    if (get_matrix_by_name(argv[i], pdinfo) != NULL) {
 		err = copy_named_matrix_as(argv[i], fun->params[i]);
 #if FN_DEBUG
 		fprintf(stderr, "done copy_named_matrix_as, '%s' -> '%s', err = %d\n", 

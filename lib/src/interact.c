@@ -233,7 +233,6 @@ static int catch_command_alias (CMD *cmd)
                        c == SET || \
 	               c == SETOBS || \
 	               c == SHELL || \
-	               c == SIM || \
                        c == SYSTEM || \
                        c == TABPRINT || \
                        c == TESTUHAT || \
@@ -3040,15 +3039,6 @@ int simple_commands (CMD *cmd, const char *line,
 	    errmsg(err, prn);
 	} else {
 	    maybe_list_vars(pdinfo, prn);
-	}
-	break;
-
-    case SIM:
-	err = simulate(line, *pZ, pdinfo);
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    print_gretl_msg(prn);
 	}
 	break;
 

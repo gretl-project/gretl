@@ -124,7 +124,6 @@ typedef enum {
     SETOBS,
     SETMISS,
     SHELL,   
-    SIM,     
     SMPL,
     SPEARMAN,
     SQUARE,  

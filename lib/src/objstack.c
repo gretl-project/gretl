@@ -914,7 +914,9 @@ double *saved_object_get_series (const char *oname, const char *key,
 }
 
 gretl_matrix *
-saved_object_get_matrix (const char *oname, const char *key, int *err)
+saved_object_get_matrix (const char *oname, const char *key,
+			 const double **Z, const DATAINFO *pdinfo,
+			 int *err)
 {
     gretl_matrix *M = NULL;
     const char *mspec = NULL;
@@ -930,31 +932,10 @@ saved_object_get_matrix (const char *oname, const char *key, int *err)
     }
 
     if (M != NULL && mspec != NULL) {
-	gretl_matrix *S = matrix_get_submatrix(M, mspec, err);
+	gretl_matrix *S = matrix_get_submatrix(M, mspec, Z, pdinfo, err);
 	
 	gretl_matrix_free(M);
 	M = S;
-    }
-
-    if (M == NULL && !*err) {
-	*err = 1;
-    }    
-
-    return M;
-}
-
-gretl_matrix *
-saved_object_get_submatrix (const char *oname, const char *key, int *err)
-{
-    gretl_matrix *M = NULL;
-    stacker *smatch;
-    int idx;
-
-    smatch = find_smatch(oname);
-
-    if (smatch != NULL) {
-	idx = gretl_model_data_index(key);
-	M = real_get_obj_matrix(smatch->ptr, smatch->type, idx, err);
     }
 
     if (M == NULL && !*err) {

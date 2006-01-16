@@ -20,18 +20,21 @@
 #ifndef USERMAT_H_
 #define USERMAT_H_
 
-gretl_matrix *get_matrix_by_name (const char *name);
+gretl_matrix *get_matrix_by_name (const char *name, const DATAINFO *pdinfo);
 
-gretl_matrix *get_matrix_by_name_at_level (const char *name, int level);
+gretl_matrix *get_matrix_by_name_at_level (const char *name, int level,
+					   const DATAINFO *pdinfo);
 
-int named_matrix_get_variable (const char *mspec, const DATAINFO *pdinfo,
+int named_matrix_get_variable (const char *mspec, 
+			       const double **Z, const DATAINFO *pdinfo,
 			       double **px, int *plen);
 
 gretl_matrix *
 get_matrix_from_variable (const double **Z, const DATAINFO *pdinfo, int v);
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
-				const char *mask, gretl_matrix **R);
+				const char *mask, gretl_matrix **R,
+				const double **Z, const DATAINFO *pdinfo);
 
 int copy_named_matrix_as (const char *orig, const char *new);
 
@@ -43,7 +46,10 @@ int destroy_user_matrices_at_level (int level);
 
 int is_user_matrix (gretl_matrix *m);
 
-gretl_matrix *user_matrix_get_slice (const char *s, int *err);
+gretl_matrix *user_matrix_get_slice (const char *s, 
+				     const double **Z, 
+				     const DATAINFO *pdinfo,
+				     int *err);
 
 int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
@@ -64,7 +70,9 @@ gretl_matrix *
 user_matrix_get_transformation (gretl_matrix *m, GretlMathFunc fn);
 
 gretl_matrix *
-matrix_get_submatrix (gretl_matrix *M, const char *s, int *err);
+matrix_get_submatrix (gretl_matrix *M, const char *s, 
+		      const double **Z, const DATAINFO *pdinfo,
+		      int *err);
 
 int reposition_transpose_symbol (char *s);
 

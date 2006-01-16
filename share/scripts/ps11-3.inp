@@ -1,13 +1,14 @@
-(* PS11.3, using DATA11-1, for Example 11.3 on exponential smoothing *)
+# PS11.3, for Example 11.3 on exponential smoothing
+open data11-1
 genr time
 genr Y8 = TOTALEMP
-(* generate lamda X sub t for lambda = 0.2 *)
+# generate lamda X sub t for lambda = 0.2
 genr X2 = TOTALEMP*0.2
-(* Because the model is autoregressive, sim command should be used *)
-help sim
-sim 1983.02 1986.12 Y8 X2 0.8
+# generate autoregressive series
+genr Y8 = X2 + 0.8*Y8(-1)
 genr Y3 = TOTALEMP
-(* generate lamda X sub t for lambda = 0.7 *)
+# generate lamda X_t for lambda = 0.7
 genr X7 = TOTALEMP*0.7
-sim 1983.02 1986.12 Y3 X7 0.3
+# generate autoregressive series
+genr Y3 = X7 + 0.3*Y3(-1)
 print -o TOTALEMP Y8 Y3

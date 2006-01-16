@@ -144,7 +144,7 @@ struct genr_func funcs[] = {
     { T_BKFILT,   "bkfilt" },    /* Baxter-King filter */
     { T_FRACDIFF, "fracdiff" },  /* fractional difference */
     { T_VARNUM,   "varnum" },    /* variable's ID number from its name */
-    { T_VECTOR,   "isvector" },
+    { T_SERIES,   "isseries" },
     { T_ISLIST,   "islist" },
     { T_NELEM,    "nelem" },
     { T_DET,      "det" },
@@ -177,7 +177,7 @@ struct genr_func funcs[] = {
                             t == T_VAR || t == T_MEDIAN || t == T_MIN || \
                             t == T_SST || t == T_MAX || t == T_NOBS || \
                             t == T_T1 || t == T_T2 || t == T_VARNUM || \
-                            t == T_VECTOR || t == T_ISLIST || t == T_NELEM || \
+                            t == T_SERIES || t == T_ISLIST || t == T_NELEM || \
                             t == T_GINI)
 
 #define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
@@ -205,15 +205,18 @@ struct genr_func funcs[] = {
 #define genr_set_matrix(g) ((g)->flags |= GENR_MATRIX)
 
 #define genr_is_scalar(g) ((g)->flags & GENR_SCALAR)
-#define genr_is_vector(g) (!((g)->flags & GENR_SCALAR))
+#define genr_is_series(g) (!((g)->flags & GENR_SCALAR))
 #define genr_set_scalar(g) ((g)->flags |= GENR_SCALAR)
 #define genr_unset_scalar(g) ((g)->flags &= ~GENR_SCALAR)
 
-#define genr_force_vector(g) ((g)->flags |= GENR_FORCE_VECTOR)
-#define genr_forcing_vector(g) ((g)->flags & GENR_FORCE_VECTOR)
+#define genr_force_series(g) ((g)->flags |= (GENR_FORCE_SERIES|GENR_NO_MATRIX))
+#define genr_forcing_series(g) ((g)->flags & GENR_FORCE_SERIES)
 
-#define genr_set_require_scalar(g) ((g)->flags |= GENR_NEED_SCALAR)
+#define genr_set_require_scalar(g) ((g)->flags |= (GENR_NEED_SCALAR|GENR_NO_MATRIX))
 #define genr_require_scalar(g) ((g)->flags & GENR_NEED_SCALAR)
+
+#define genr_disallow_matrix(g) ((g)->flags |= GENR_NO_MATRIX)
+#define genr_matrix_disallowed(g) ((g)->flags & GENR_NO_MATRIX)
 
 #define genr_doing_save(g) ((g)->flags & GENR_SAVE)
 #define genr_set_save(g) ((g)->flags |= GENR_SAVE)
@@ -535,7 +538,8 @@ set_atom_arg_string (const char *s, GENERATOR *genr, genatom *atom)
     return err;
 }
 
-static double genr_get_matrix_scalar (const char *s, int func)
+static double 
+genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
 {
     gretl_matrix *m = NULL;
     char name[32];
@@ -544,7 +548,7 @@ static double genr_get_matrix_scalar (const char *s, int func)
     s = strchr(s, '(');
 
     if (s != NULL && sscanf(s+1, "%31[^)]", name)) {
-	m = get_matrix_by_name(name);
+	m = get_matrix_by_name(name, genr->pdinfo);
     }
 
     if (m != NULL) {
@@ -575,7 +579,9 @@ get_var_from_matrix (const char *s, GENERATOR *genr, genatom *atom)
     double *x = NULL;
     int len = 0;
 
-    genr->err = named_matrix_get_variable(s, genr->pdinfo, &x, &len);
+    genr->err = named_matrix_get_variable(s, (const double **) *genr->pZ,
+					  genr->pdinfo, 
+					  &x, &len);
 
     if (!genr->err) {
 	if (len == 1) {
@@ -601,14 +607,14 @@ atom_get_variable_or_constant (const char *s, GENERATOR *genr,
 	atom->val = NADBL;
 	atom->atype = ATOM_SCALAR;
     } else if (genr_is_matrix(genr)) {
-	atom->M = get_matrix_by_name(s);
+	atom->M = get_matrix_by_name(s, genr->pdinfo);
 	if (atom->M != NULL) {
 	    DPRINTF(("recognized matrix '%s'\n", s));
 	    strncat(atom->str, s, ATOMLEN - 1);
 	    atom->atype = ATOM_MATRIX;
 	    gretl_matrix_set_int(atom->M, ATOM_MATRIX); /* FIXME transpose? */
 	} else {	
-	    /* try for a regular variable scalar, and convert to matrix? */
+	    /* try for a regular variable, and convert to matrix? */
 	    v = varindex(genr->pdinfo, s);
 	    if (v < genr->pdinfo->v) {
 		atom->M = get_matrix_from_variable((const double **) *genr->pZ,
@@ -734,14 +740,14 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 					 genr->pdinfo, &genr->err);
 	    atom->atype = ATOM_SCALAR;
 	}
-    } else if (atom->func == T_VARNUM || atom->func == T_VECTOR ||
+    } else if (atom->func == T_VARNUM || atom->func == T_SERIES ||
 	       atom->func == T_ISLIST || atom->func == T_NELEM) {
 	atom->atype = ATOM_SCALAR;
     } else if (BIVARIATE_STAT(atom->func)) {
 	atom->val = evaluate_bivariate_statistic(atom->str, genr, atom->func);
 	atom->atype = ATOM_SCALAR;
     } else if (MATRIX_SCALAR_FUNC(atom->func) && !genr_is_matrix(genr)) {
-	atom->val = genr_get_matrix_scalar(s, atom->func);
+	atom->val = genr_get_matrix_scalar(s, genr, atom->func);
 	atom->atype = ATOM_SCALAR;
     } else if (genr_is_matrix(genr) && MATRIX_FILL_FUNC(atom->func)) {
 	matrix_gen_function(s, genr, atom);
@@ -836,7 +842,10 @@ atom_get_dollar_var (const char *s, GENERATOR *genr, genatom *atom)
 		    found = 1;
 		}
 	    } else if (model_data_is_matrix(idx)) {
-		atom->M = saved_object_get_matrix(oname, key, &genr->err);
+		atom->M = saved_object_get_matrix(oname, key, 
+						  (const double **) *genr->pZ,
+						  genr->pdinfo,
+						  &genr->err);
 		if (!genr->err) {
 		    atom->atype = ATOM_MATRIX;
 		    found = 1;
@@ -939,7 +948,8 @@ token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 		    atom->atype = ATOM_SCALAR;
 		}
 	    } else if (genr_is_matrix(genr)) {
-		atom->M = user_matrix_get_slice(s, &genr->err);
+		atom->M = user_matrix_get_slice(s, (const double **) *genr->pZ,
+						genr->pdinfo, &genr->err);
 		if (atom->M == NULL) {
 		    DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		} else {
@@ -1333,7 +1343,7 @@ static double genr_get_child_status (GENERATOR *genr, genatom *atom)
     genatom *child = pop_child_atom(atom);
 
     if (child != NULL) {
-	if (atom->func == T_VARNUM || atom->func == T_VECTOR) {
+	if (atom->func == T_VARNUM || atom->func == T_SERIES) {
 	    if (child->varnum >= 0 && child->varnum < genr->pdinfo->v) {
 		val = (atom->func == T_VARNUM)? child->varnum :
 		    genr->pdinfo->vector[child->varnum];
@@ -1366,7 +1376,7 @@ static int add_statistic_to_genr (GENERATOR *genr, genatom *atom)
 
     atom_stack_set_parentage(genr);
 
-    if (atom->func == T_VARNUM || atom->func == T_VECTOR ||
+    if (atom->func == T_VARNUM || atom->func == T_SERIES ||
 	atom->func == T_ISLIST || atom->func == T_NELEM) {
 	val = genr_get_child_status(genr, atom);
     } else {
@@ -2690,12 +2700,13 @@ static void get_genr_formula (char *formula, const char *line,
     sscanf(line, "%8s", first);
 
     if (!strcmp(first, "genr")) {
+	genr_disallow_matrix(genr);
 	line += 4;
     } else if (!strcmp(first, "eval")) {
 	genr_unset_save(genr);
 	line += 4;
     } else if (!strcmp(first, "series")) {
-	genr_force_vector(genr);
+	genr_force_series(genr);
 	line += 6;
     } else if (!strcmp(first, "scalar")) {
 	genr_set_require_scalar(genr);
@@ -2716,7 +2727,7 @@ static void get_genr_formula (char *formula, const char *line,
 					      genr->pdinfo);
 	    if (genr->obs < 0) {
 		/* observation string not found */
-		if (get_matrix_by_name(name) != NULL) {
+		if (get_matrix_by_name(name, genr->pdinfo) != NULL) {
 		    sprintf(genr->label, "[%s]", tag);
 		} else {
 		    genr->err = 1;
@@ -2907,8 +2918,8 @@ static int genr_handle_special (const char *s, GENERATOR *genr,
 
 static void maybe_set_matrix_genr (GENERATOR *genr)
 {
-    if (!genr_is_matrix(genr) && 
-	get_matrix_by_name(genr->lhs) != NULL) {
+    if (!genr_is_matrix(genr) && !genr_matrix_disallowed(genr) && 
+	get_matrix_by_name(genr->lhs, genr->pdinfo) != NULL) {
 	genr->flags = GENR_SAVE | GENR_MATRIX;
 	genr->err = genr_matrix_init(genr, OPT_M);
     }
@@ -3071,13 +3082,13 @@ void destroy_genr (GENERATOR *genr)
     if (genr == NULL) {
 	return;
     }
-
     
     if (genr_is_matrix(genr) && genr->err) {
 	gretl_matrix *R = NULL;
 
 	/* avoid double-freeing matrix to be replaced */
-	add_or_replace_user_matrix(NULL, genr->lhs, NULL, &R);
+	add_or_replace_user_matrix(NULL, genr->lhs, NULL, &R,
+				   NULL, NULL);
 	if (R != NULL) {
 	    atom_stack_nullify_matrix(R, genr);
 	}
@@ -3117,7 +3128,9 @@ static int genr_write_matrix (GENERATOR *genr)
     if (M == NULL) {
 	err = 1;
     } else {
-	err = add_or_replace_user_matrix(M, genr->varname, genr->label, &R);
+	err = add_or_replace_user_matrix(M, genr->varname, genr->label, &R,
+					 (const double **) *genr->pZ, 
+					 genr->pdinfo);
 
 	if (R != NULL) {
 	    /* avoid double-freeing replaced R */
@@ -3254,14 +3267,14 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 
     /* check that any request for a scalar can be honored,
        abort if not */
-    if (genr_require_scalar(genr) && genr_is_vector(genr)) {
-	strcpy(gretl_errmsg, _("Specified a scalar, but a vector "
+    if (genr_require_scalar(genr) && genr_is_series(genr)) {
+	strcpy(gretl_errmsg, _("Specified a scalar, but a series "
 			       "was produced."));
 	return 1;
     }	
 
     /* take into account any forcing the user has attempted */
-    if (genr_forcing_vector(genr) && genr_is_scalar(genr)) {
+    if (genr_forcing_series(genr) && genr_is_scalar(genr)) {
 	genr_unset_scalar(genr);
 	for (t=0; t<pdinfo->n; t++) {
 	    genr->xvec[t] = xt;
@@ -3270,7 +3283,7 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 
     if (v >= genr->pdinfo->v) {
 	/* the generated var is an addition to the data set */
-	if (genr_is_vector(genr)) {
+	if (genr_is_series(genr)) {
 	    err = dataset_add_series(1, pZ, pdinfo);
 	} else {
 	    err = dataset_add_scalar(pZ, pdinfo);
@@ -3283,10 +3296,10 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 	modifying = 1;
     }
 
-    /* generally we allow scalar -> vector expansion for existing
+    /* generally we allow scalar -> series expansion for existing
        vars, but not if the dataset is subsampled */
     if (modifying && complex_subsampled() &&
-	genr_is_vector(genr) && !pdinfo->vector[v]) {
+	genr_is_series(genr) && !pdinfo->vector[v]) {
 	strcpy(gretl_errmsg, _("You cannot turn a scalar into a vector "
 			       "when the dataset is subsampled."));
 	err = 1;
@@ -3313,7 +3326,7 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 	    }
 	} else if (genr_is_scalar(genr)) {
 	    if (pdinfo->vector[v]) {
-		/* we never allow vector -> scalar conversion for
+		/* we never allow series -> scalar conversion for
 		   existing vars, so expand the result */
 		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		    (*pZ)[v][t] = xt;
@@ -3327,7 +3340,7 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 		}
 	    }
 	} else {
-	    /* we generated, and will now transcribe, a vector result */
+	    /* we generated, and will now transcribe, a series result */
 	    if (modifying && !pdinfo->vector[v]) {
 		err = dataset_scalar_to_vector(v, pZ, pdinfo);
 	    }

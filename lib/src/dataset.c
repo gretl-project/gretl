@@ -1302,6 +1302,24 @@ int dataset_drop_listed_variables (const int *list, double ***pZ,
 }
 
 /**
+ * dataset_drop_variable:
+ * @v: ID number of variable to drop.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Deletes variable @v from the dataset.  
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo) 
+{
+    int list[2] = {1, v};
+
+    return dataset_drop_listed_variables(list, pZ, pdinfo, NULL);
+}
+
+/**
  * dataset_destroy_hidden_variables:
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
