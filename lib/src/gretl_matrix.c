@@ -838,19 +838,29 @@ void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
  * @x: scalar by which to divide.
  *
  * Divides all elements of @m by @x.
+ *
+ * Returns: 0 on success, 1 if x = 0.
  */
 
-void gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
+int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
 {
     int i, n;
 
-    if (m == NULL || m->val == NULL) return;
+    if (m == NULL || m->val == NULL) {
+	return 0;
+    }
+
+    if (x == 0.0) {
+	return 1;
+    }
 
     n = m->rows * m->cols;
     
     for (i=0; i<n; i++) {
 	m->val[i] /= x;
     }
+
+    return 0;
 }
 
 /**

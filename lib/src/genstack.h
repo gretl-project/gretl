@@ -21,15 +21,31 @@
 #define GENSTACK_H
 
 #define GENR_DEBUG 0
+#define GEN_MATRIX_DEBUG 0
+
+#if (GENR_DEBUG || GEN_MATRIX_DEBUG)
+void dprintf (const char *format, ...);
+#endif
 
 #if GENR_DEBUG
-void dprintf (const char *format, ...);
 # define DPRINTF(x) dprintf x
 #else 
 # define DPRINTF(x)
-#endif /* GENR_DEBUG */
+#endif
 
-#define ATOMLEN 32  /* length of auxiliary string in genr atom */
+#if GEN_MATRIX_DEBUG
+# define MPRINTF(x) dprintf x
+#else 
+# define MPRINTF(x)
+#endif
+
+#define ATOMLEN 32         /* length of auxiliary string in genr atom */
+#define MATRIX_ON_ATOM 333 /* int to indicate that matrix is temporarily
+			      attached to a genatom */
+
+#define matrix_is_on_atom(m) (MATRIX_ON_ATOM == gretl_matrix_get_int(m))
+#define set_matrix_on_atom(m) (gretl_matrix_set_int(m, MATRIX_ON_ATOM))
+#define unset_matrix_on_atom(m) (gretl_matrix_set_int(m, 0))
 
 typedef enum {
     ATOM_SERIES   = 0,
@@ -169,7 +185,7 @@ void atom_eat_children (genatom *atom);
 void atom_stack_bookmark (GENERATOR *genr);
 void atom_stack_resume (GENERATOR *genr);
 int atom_stack_check_for_scalar (GENERATOR *genr);
-void atom_stack_nullify_matrix (gretl_matrix *M, GENERATOR *genr);
+void atom_stack_nullify_matrix (const gretl_matrix *M, GENERATOR *genr);
 
 int calc_push (double x, GENERATOR *genr);
 double calc_pop (GENERATOR *genr);

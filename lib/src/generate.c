@@ -357,7 +357,8 @@ static int print_atom (genatom *atom)
 	fprintf(stderr, " atom->val = %g\n", atom->val);
     }
     if (atom->M != NULL) {
-	fprintf(stderr, " atom->M = %p\n", (void *) atom->M);
+	fprintf(stderr, " atom->M = %p (int = %d)\n", (void *) atom->M,
+		gretl_matrix_get_int(atom->M));
     }
     if (atom->func > 0) {
 	const char *fword = get_genr_func_word(atom->func);
@@ -541,7 +542,7 @@ set_atom_arg_string (const char *s, GENERATOR *genr, genatom *atom)
 static double 
 genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
 {
-    gretl_matrix *m = NULL;
+    const gretl_matrix *m = NULL;
     char name[32];
     double x = NADBL;
 
@@ -594,10 +595,21 @@ get_var_from_matrix (const char *s, GENERATOR *genr, genatom *atom)
     }
 }
 
+static void atom_set_matrix (genatom *atom, gretl_matrix *M, const char *s)
+{
+    atom->M = M;
+    atom->atype = ATOM_MATRIX;
+    set_matrix_on_atom(atom->M);
+    if (s != NULL) {
+	strncat(atom->str, s, ATOMLEN - 1); 
+    }
+}
+
 static void
 atom_get_variable_or_constant (const char *s, GENERATOR *genr,
 			       genatom *atom)
 {
+    gretl_matrix *M = NULL;
     int v;
 
     if (!strcmp(s, "pi")) {
@@ -607,23 +619,24 @@ atom_get_variable_or_constant (const char *s, GENERATOR *genr,
 	atom->val = NADBL;
 	atom->atype = ATOM_SCALAR;
     } else if (genr_is_matrix(genr)) {
-	atom->M = get_matrix_by_name(s, genr->pdinfo);
-	if (atom->M != NULL) {
+	M = get_matrix_by_name(s, genr->pdinfo);
+	if (M != NULL) {
 	    DPRINTF(("recognized matrix '%s'\n", s));
-	    strncat(atom->str, s, ATOMLEN - 1);
-	    atom->atype = ATOM_MATRIX;
-	    gretl_matrix_set_int(atom->M, ATOM_MATRIX); /* FIXME transpose? */
+	    atom_set_matrix(atom, M, s);
+	} else if ((M = get_matrix_transpose_by_name(s, genr->pdinfo))) {
+	    DPRINTF(("recognized transposed matrix '%s'\n", s));
+	    atom_set_matrix(atom, M, s);
 	} else {	
 	    /* try for a regular variable, and convert to matrix? */
 	    v = varindex(genr->pdinfo, s);
 	    if (v < genr->pdinfo->v) {
-		atom->M = get_matrix_from_variable((const double **) *genr->pZ,
-						   genr->pdinfo, v);
-		if (atom->M == NULL) {
+		M = get_matrix_from_variable((const double **) *genr->pZ,
+					     genr->pdinfo, v);
+		if (M == NULL) {
 		    sprintf(gretl_errmsg, _("Variable '%s' is not a matrix"), s);
 		    genr->err = E_UNKVAR;
 		} else {
-		    atom->atype = ATOM_MATRIX;
+		    atom_set_matrix(atom, M, s);
 		}
 	    } else {
 		undefined_var_message(s);
@@ -671,6 +684,7 @@ static int get_matrix_dim (const char *s, GENERATOR *genr)
 static void
 matrix_gen_function (const char *s, GENERATOR *genr, genatom *atom)
 {
+    gretl_matrix *M = NULL;
     char rstr[9], cstr[9];
     int r = 0, c = 0;
     int nf = 0;
@@ -699,20 +713,20 @@ matrix_gen_function (const char *s, GENERATOR *genr, genatom *atom)
     }
 
     if (atom->func == T_IMAT && nf == 1) {
-	atom->M = gretl_identity_matrix_new(r);
-	atom->atype = ATOM_MATRIX;
+	M = gretl_identity_matrix_new(r);
     } else if (atom->func == T_ZEROS && nf == 2) {
-	atom->M = gretl_zero_matrix_new(r, c);
-	atom->atype = ATOM_MATRIX;
+	M = gretl_zero_matrix_new(r, c);
     } else if (atom->func == T_ONES && nf == 2) {
-	atom->M = gretl_unit_matrix_new(r, c);
-	atom->atype = ATOM_MATRIX;
+	M = gretl_unit_matrix_new(r, c);
     } else if ((atom->func == T_UNIFORM || atom->func == T_NORMAL) && nf == 2) {
-	atom->M = gretl_matrix_alloc(r, c);
-	if (atom->M != NULL) {
-	    gretl_matrix_random_fill(atom->M, atom->func);
-	    atom->atype = ATOM_MATRIX;
+	M = gretl_matrix_alloc(r, c);
+	if (M != NULL) {
+	    gretl_matrix_random_fill(M, atom->func);
 	}
+    }
+
+    if (M != NULL) {
+	atom_set_matrix(atom, M, s);
     }
 }
 
@@ -829,25 +843,27 @@ atom_get_dollar_var (const char *s, GENERATOR *genr, genatom *atom)
 	idx = gretl_model_data_index(key);
 
 	if (genr_is_matrix(genr)) {
+	    gretl_matrix *M = NULL;
+
 	    if (model_data_is_scalar(idx)) {
 		double x = saved_object_get_scalar(oname, key, &genr->err);
 
 		if (!genr->err) {
-		    atom->M = gretl_matrix_from_scalar(x);
+		    M = gretl_matrix_from_scalar(x);
 		} 
-		if (atom->M == NULL) {
+		if (M == NULL) {
 		    genr->err = E_ALLOC;
 		} else {
-		    atom->atype = ATOM_MATRIX;
+		    atom_set_matrix(atom, M, s);
 		    found = 1;
 		}
 	    } else if (model_data_is_matrix(idx)) {
-		atom->M = saved_object_get_matrix(oname, key, 
-						  (const double **) *genr->pZ,
-						  genr->pdinfo,
-						  &genr->err);
+		M = saved_object_get_matrix(oname, key, 
+					    (const double **) *genr->pZ,
+					    genr->pdinfo,
+					    &genr->err);
 		if (!genr->err) {
-		    atom->atype = ATOM_MATRIX;
+		    atom_set_matrix(atom, M, s);
 		    found = 1;
 		}
 	    }
@@ -935,6 +951,7 @@ token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 	    }
 	} else if (strchr(s, '[')) {
 	    /* specific observation from a series, or slice of matrix? */
+	    gretl_matrix *M = NULL;
 	    int v = -1, varobs = -1;
 	    int err;
 
@@ -942,20 +959,20 @@ token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 				&v, &varobs);
 	    if (!err) {
 		if (genr_is_matrix(genr)) {
-		    atom->M = gretl_matrix_from_scalar((*genr->pZ)[v][varobs]);
-		    atom->atype = ATOM_MATRIX;
+		    M = gretl_matrix_from_scalar((*genr->pZ)[v][varobs]);
+		    atom_set_matrix(atom, M, s);
 		} else {
 		    atom->varnum = v;
 		    atom->varobs = varobs;
 		    atom->atype = ATOM_SCALAR;
 		}
 	    } else if (genr_is_matrix(genr)) {
-		atom->M = user_matrix_get_slice(s, (const double **) *genr->pZ,
-						genr->pdinfo, &genr->err);
-		if (atom->M == NULL) {
+		M = user_matrix_get_slice(s, (const double **) *genr->pZ,
+					  genr->pdinfo, &genr->err);
+		if (M == NULL) {
 		    DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
 		} else {
-		    atom->atype = ATOM_MATRIX;
+		    atom_set_matrix(atom, M, s);
 		}
 	    } else {
 		get_var_from_matrix(s, genr, atom);
@@ -1413,14 +1430,17 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 				       gretl_matrix *M)
 {
     gretl_matrix *R = NULL;
+    double x;
 
     if (atom->M != NULL) {
 	R = atom->M;
     } else if (atom->func) {
 	if (atom->func == T_DET) {
-	    R = user_matrix_get_determinant_as_matrix(M);
+	    x = user_matrix_get_determinant(M);
+	    R = gretl_matrix_from_scalar(x);
 	} else if (atom->func == T_LDET) {
-	    R = user_matrix_get_log_determinant_as_matrix(M);
+	    x = user_matrix_get_log_determinant(M);
+	    R = gretl_matrix_from_scalar(x);
 	} else if (atom->func == T_INV) {
 	    R = user_matrix_get_inverse(M);
 	} else if (atom->func == T_DIAG) {
@@ -1434,9 +1454,11 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	    R = M;
 	} else if (M != NULL) {
 	    if (atom->func == T_ROWS) {
-		R = gretl_matrix_from_scalar(gretl_matrix_rows(M));
+		x = gretl_matrix_rows(M);
+		R = gretl_matrix_from_scalar(x);
 	    } else if (atom->func == T_COLS) {
-		R = gretl_matrix_from_scalar(gretl_matrix_cols(M));
+		x = gretl_matrix_cols(M);
+		R = gretl_matrix_from_scalar(x);
 	    }
 	}
     } else if (atom->atype == ATOM_SCALAR && !na(atom->val)) {
@@ -1450,19 +1472,17 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
     return R;
 }
 
-static void maybe_free_genr_matrix (gretl_matrix *M)
+static int maybe_free_genr_matrix (gretl_matrix *M, const char *s)
 {
-    if (M == NULL || is_user_matrix(M)) {
-	return;
+    if (M == NULL || is_user_matrix(M) || matrix_is_on_atom(M)) {
+	return 0;
     }
 
-    if (gretl_matrix_get_int(M) == ATOM_MATRIX) {
-	return;
-    }
-
-    DPRINTF(("tmp matrix at %p: not user or atom matrix, freeing\n", 
-	     (void *) M));
+    MPRINTF(("tmp matrix '%s' at %p: not user or atom matrix, freeing\n", 
+	     s, (void *) M));
     gretl_matrix_free(M);
+
+    return 1;
 }
 
 static int evaluate_matrix_genr (GENERATOR *genr)
@@ -1478,9 +1498,10 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 
     reset_atom_stack(genr);
 
-    DPRINTF(("\n*** starting evaluate_matrix_genr\n"));
+    MPRINTF(("\n*** starting evaluate_matrix_genr\n"));
 
     while ((atom = pop_atom(genr)) && !genr->err) {
+	gretl_matrix *Apop = NULL;
 	int freeB = 1;
 
 	gretl_matrix *B = eval_matrix_atom(atom, genr, A);
@@ -1493,17 +1514,19 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 #if GENR_DEBUG
 	debug_print_matrix(B, "eval_matrix_atom: got B =");
 #endif
+	MPRINTF(("\nInitial A = %p; eval_matrix_atom gave B = %p\n", 
+		 (void *) A, (void *) B)); 
 
 	if (genr->err) break;
 
 	if (atom->level < level) { 
 	    A = matrix_calc_pop(genr);
+	    Apop = A;
 	    npop++;
-	    DPRINTF(("popped matrix %p\n", (void *) A));
 	}
 
 	A = matrix_calc_AB(A, B, atom->op, &genr->err);
-	DPRINTF(("matrix_calc_AB gave A = %p\n", (void *) A));
+	MPRINTF(("after matrix_calc_AB, A = %p\n", (void *) A)); 
 	if (A == B) {
 	    freeB = 0;
 	}
@@ -1515,23 +1538,30 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 
 	    genr->err = matrix_calc_push(Abak, genr);
 	    npush++;
-	    DPRINTF(("pushed matrix %p at level %d\n", (void *) Abak, level));
 	    while (pad--) {
 		genr->err = matrix_calc_push(NULL, genr);
 		DPRINTF(("pushed NULL at level %d\n", level));
 		npush++;
 	    }
-	} else {
+	} else if (maybe_free_genr_matrix(Abak, "Abak")) {
 	    /* not pushing matrix Abak: free it, if it's not "spoken for" */
-	    maybe_free_genr_matrix(Abak);
+	    Abak = NULL;
 	}
 
 	/* matrix 'B': free it if there's no further call on it */
-	if (freeB) {
-	    maybe_free_genr_matrix(B);
+	if (freeB && maybe_free_genr_matrix(B, "B")) {
+	    B = NULL;
 	}
 
+	/* matrix 'Apop': free it if there's no further call on it */
+	maybe_free_genr_matrix(Apop, "Apop");
+
 	level = atom->level;
+
+	MPRINTF(("old Abak = %p, setting Abak = %p\n", (void *) Abak, (void *) A));
+	MPRINTF(("old Abak: user_matrix? %s; atom_matrix? %s\n",
+		 is_user_matrix(Abak)? "yes" : "no",
+		 matrix_is_on_atom(Abak)? "yes" : "no"));
 	Abak = A;
     }
 
@@ -1545,6 +1575,7 @@ static int evaluate_matrix_genr (GENERATOR *genr)
     reset_matrix_calc_stack(genr);
 
     if (!genr->err) {
+	MPRINTF(("done: pushing A = %p onto stack\n", (void *) A)); 
 	genr->err = matrix_calc_push(A, genr);
     }
 
@@ -2927,6 +2958,20 @@ static void maybe_set_matrix_genr (GENERATOR *genr)
     }
 }
 
+static void genr_type_check (GENERATOR *genr)
+{
+    int v = genr->varnum;
+
+    if (genr->pdinfo->vector[v]) {
+	/* assigning to existing series variable */
+	if (genr_require_scalar(genr)) {
+	    sprintf(gretl_errmsg, _("'%s' is the name of a data series"), 
+		    genr->pdinfo->varname[v]);
+	    genr->err = E_DATA;
+	}
+    }
+}
+
 GENERATOR *
 genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
@@ -2983,6 +3028,8 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 	genr->varnum = varindex(pdinfo, genr->lhs);
 	if (genr->varnum == pdinfo->v) {
 	    maybe_set_matrix_genr(genr);
+	} else {
+	    genr_type_check(genr);
 	}
     } else {
 	/* no "lhs=" bit */
@@ -3086,11 +3133,10 @@ void destroy_genr (GENERATOR *genr)
     }
     
     if (genr_is_matrix(genr) && genr->err) {
-	gretl_matrix *R = NULL;
+	const gretl_matrix *R = get_matrix_by_name(genr->lhs, genr->pdinfo);
 
-	/* avoid double-freeing matrix to be replaced */
-	add_or_replace_user_matrix(NULL, genr->lhs, NULL, &R,
-				   NULL, NULL);
+	/* make sure we don't delete the matrix we were trying to
+	   assign to, if it pre-existed this failed call */
 	if (R != NULL) {
 	    atom_stack_nullify_matrix(R, genr);
 	}
@@ -3131,8 +3177,7 @@ static int genr_write_matrix (GENERATOR *genr)
 	err = 1;
     } else {
 	err = add_or_replace_user_matrix(M, genr->varname, genr->label, &R,
-					 (const double **) *genr->pZ, 
-					 genr->pdinfo);
+					 genr->pZ, genr->pdinfo);
 
 	if (R != NULL) {
 	    /* avoid double-freeing replaced R */

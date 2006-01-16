@@ -133,6 +133,20 @@ static int real_check_for_scalar_result (genatom **atoms, int n)
     return scalar;
 }
 
+static void free_atom (genatom *atom, int i)
+{
+    if (atom->M != NULL) {
+	if (!is_user_matrix(atom->M)) {
+	    MPRINTF(("atom %d: freeing matrix at %p\n", i, (void *) atom->M));
+	    gretl_matrix_free(atom->M);
+	} else {
+	    unset_matrix_on_atom(atom->M);
+	}
+    }
+
+    free(atom);
+}
+
 static int real_stack_eat_children (genatom *parent, 
 				    genatom **atoms, int n)
 {
@@ -140,8 +154,8 @@ static int real_stack_eat_children (genatom *parent,
 
     for (i=0; i<n; i++) {
 	if (atoms[i]->parent == parent) {
-	    free(atoms[i]);
-	    DPRINTF(("freed child atom, pos %d\n", i));
+	    DPRINTF(("freeing child atom, pos %d\n", i));
+	    free_atom(atoms[i], i);
 	    for (j=i; j<n-1; j++) {
 		atoms[j] = atoms[j+1];
 	    }
@@ -210,12 +224,7 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
 	aset->n_popped = 0;
     } else if (op == STACK_DESTROY) {
 	for (j=0; j<aset->n_atoms; j++) {
-	    if (aset->atoms[j]->M != NULL && !is_user_matrix(aset->atoms[j]->M)) {
-		DPRINTF(("atom %d: freeing matrix at %p\n", j, 
-			 (void *) aset->atoms[j]->M));
-		gretl_matrix_free(aset->atoms[j]->M);
-	    }
-	    free(aset->atoms[j]);
+	    free_atom(aset->atoms[j], j);
 	}
 	free(aset->atoms);
 	aset->atoms = NULL;
@@ -256,7 +265,7 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
     return ret;
 }
 
-void atom_stack_nullify_matrix (gretl_matrix *M, GENERATOR *genr)
+void atom_stack_nullify_matrix (const gretl_matrix *M, GENERATOR *genr)
 {
     int i;
 
@@ -362,10 +371,9 @@ matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr)
 		mstack[i] = mstack[i-1];
 	    }
 	    mstack[0] = M;
-	    if (M != NULL) {
-		gretl_matrix_set_int(M, ATOM_MATRIX);
-	    }
 	    genr->nmats += 1;
+	    MPRINTF(("matrix_calc_stack: STACK_PUSH: added %p, nmats = %d\n",
+		     M, genr->nmats));
 	}
     } else if (op == STACK_POP && genr->nmats > 0) {
 	R = mstack[0];
@@ -373,12 +381,14 @@ matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr)
 	    mstack[i] = mstack[i+1];
 	}
 	genr->nmats -= 1;
+	MPRINTF(("matrix_calc_stack: STACK_POP: returning %p, nmats = %d\n", R,
+		 genr->nmats));
     } else if (op == STACK_RESET) {
-	DPRINTF(("matrix_calc_stack: STACK_RESET\n"));
+	MPRINTF(("matrix_calc_stack: STACK_RESET\n"));
 	for (i=0; i<MATSTACK_SIZE; i++) {
 	    if (mstack[i] != NULL) {
-		if (!is_user_matrix(mstack[i])) {
-		    DPRINTF(("freeing mstack[%d] at %p\n", i, 
+		if (!is_user_matrix(mstack[i]) && !matrix_is_on_atom(mstack[i])) {
+		    MPRINTF(("freeing mstack[%d] at %p\n", i, 
 			     (void *) mstack[i]));
 		    gretl_matrix_free(mstack[i]);
 		}
@@ -457,7 +467,7 @@ void reset_matrix_calc_stack (GENERATOR *genr)
     matrix_calc_stack(NULL, STACK_RESET, genr);
 }
 
-#if GENR_DEBUG
+#if (GENR_DEBUG || GEN_MATRIX_DEBUG)
 # include <stdarg.h>
 void dprintf (const char *format, ...)
 {
@@ -469,4 +479,4 @@ void dprintf (const char *format, ...)
 
    return;
 }
-#endif /* GENR_DEBUG */
+#endif 

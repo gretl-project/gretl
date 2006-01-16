@@ -25,6 +25,9 @@ gretl_matrix *get_matrix_by_name (const char *name, const DATAINFO *pdinfo);
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level,
 					   const DATAINFO *pdinfo);
 
+gretl_matrix *
+get_matrix_transpose_by_name (const char *name, const DATAINFO *pdinfo);
+
 int named_matrix_get_variable (const char *mspec, 
 			       const double **Z, const DATAINFO *pdinfo,
 			       double **px, int *plen);
@@ -34,7 +37,7 @@ get_matrix_from_variable (const double **Z, const DATAINFO *pdinfo, int v);
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 				const char *mask, gretl_matrix **R,
-				const double **Z, const DATAINFO *pdinfo);
+				double ***pZ, DATAINFO *pdinfo);
 
 int copy_named_matrix_as (const char *orig, const char *new);
 
@@ -56,18 +59,14 @@ int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn);
 gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 
 			      char op, int *err);
 
-double user_matrix_get_determinant (gretl_matrix *m);
+double user_matrix_get_determinant (const gretl_matrix *m);
 
-double user_matrix_get_log_determinant (gretl_matrix *m);
+double user_matrix_get_log_determinant (const gretl_matrix *m);
 
-gretl_matrix *user_matrix_get_determinant_as_matrix (gretl_matrix *m);
-
-gretl_matrix *user_matrix_get_log_determinant_as_matrix (gretl_matrix *m);
-
-gretl_matrix *user_matrix_get_inverse (gretl_matrix *m);
+gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m);
 
 gretl_matrix *
-user_matrix_get_transformation (gretl_matrix *m, GretlMathFunc fn);
+user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn);
 
 gretl_matrix *
 matrix_get_submatrix (gretl_matrix *M, const char *s, 
