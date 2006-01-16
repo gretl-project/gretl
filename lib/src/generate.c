@@ -935,7 +935,7 @@ token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 	    }
 	} else if (strchr(s, '[')) {
 	    /* specific observation from a series, or slice of matrix? */
-	    int v, varobs;
+	    int v = -1, varobs = -1;
 	    int err;
 
 	    err = get_obs_value(s, (const double **) *genr->pZ, genr->pdinfo,
@@ -945,6 +945,8 @@ token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 		    atom->M = gretl_matrix_from_scalar((*genr->pZ)[v][varobs]);
 		    atom->atype = ATOM_MATRIX;
 		} else {
+		    atom->varnum = v;
+		    atom->varobs = varobs;
 		    atom->atype = ATOM_SCALAR;
 		}
 	    } else if (genr_is_matrix(genr)) {
