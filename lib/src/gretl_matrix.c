@@ -4022,6 +4022,39 @@ int gretl_is_zero_vector (const gretl_vector *v)
 }
 
 /**
+ * gretl_matrices_are_equal:
+ * @a: first matrix in comparison.
+ * @b: second matrix in comparison.
+ * @err: location to receive error code.
+ *
+ * Returns: 1 if the matrices @a and @b compare equal, 0 if they
+ * differ, and -1 if the comparison is invalid, in which case
+ * %E_NONCONF is written to @err.
+ */
+
+int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
+			      int *err)
+{
+    int i, j, idx;
+
+    if (a->rows != b->rows || a->cols != b->cols) {
+	*err = E_NONCONF;
+	return -1;
+    }
+
+    for (i=0; i<a->rows; i++) {
+	for (j=0; j<a->cols; j++) {
+	    idx = mdx(a,i,j);
+	    if (a->val[idx] != b->val[idx]) {
+		return 0;
+	    }
+	}
+    }
+
+    return 1;
+}
+
+/**
  * gretl_covariance_matrix_from_varlist:
  * @list: list of variables by ID number.
  * @Z: data array.

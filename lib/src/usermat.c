@@ -1693,6 +1693,23 @@ int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
+static gretl_matrix *
+matrix_test_equality (const gretl_matrix *A, const gretl_matrix *B, int *err)
+{
+    gretl_matrix *C = NULL;
+    int eq;
+
+    eq = gretl_matrices_are_equal(A, B, err);
+    if (!*err) {
+	C = gretl_matrix_from_scalar((double) eq);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    return C;
+}
+
 /* for use in genr, for matrices */
 
 gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 
@@ -1720,6 +1737,9 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
     switch (op) {
     case '\0':
 	C = B;
+	break;
+    case '=':
+	C = matrix_test_equality(A, B, err);
 	break;
     case '+':
     case '-':

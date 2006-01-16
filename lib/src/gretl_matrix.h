@@ -302,6 +302,9 @@ int gretl_is_identity_matrix (const gretl_matrix *m);
 
 int gretl_is_zero_vector (const gretl_vector *v);
 
+int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
+			      int *err);
+
 gretl_matrix *
 gretl_covariance_matrix_from_varlist (const int *list, const double **Z, 
 				      const DATAINFO *pdinfo, 

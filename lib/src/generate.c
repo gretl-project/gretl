@@ -203,6 +203,7 @@ struct genr_func funcs[] = {
 
 #define genr_is_matrix(g) ((g)->flags & GENR_MATRIX)
 #define genr_set_matrix(g) ((g)->flags |= GENR_MATRIX)
+#define genr_is_submatrix(g) (((g)->flags & GENR_MATRIX) && *g->label)
 
 #define genr_is_scalar(g) ((g)->flags & GENR_SCALAR)
 #define genr_is_series(g) (!((g)->flags & GENR_SCALAR))
@@ -2719,6 +2720,11 @@ static void copy_compress (char *targ, const char *src, int len)
     targ[j] = '\0';
 }
 
+static void genr_set_submatrix_string (GENERATOR *genr, const char *s)
+{
+    sprintf(genr->label, "[%s]", s);
+}
+
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATOR *genr)
 {
@@ -2754,14 +2760,14 @@ static void get_genr_formula (char *formula, const char *line,
        for generating a submatrix */
     if (sscanf(line, "%31[^[ =][%31[^]]", name, tag) == 2) {
 	if (genr_is_matrix(genr)) {
-	    sprintf(genr->label, "[%s]", tag);
+	    genr_set_submatrix_string(genr, tag);
 	} else {
 	    genr->obs = get_t_from_obs_string(tag, (const double **) *genr->pZ, 
 					      genr->pdinfo);
 	    if (genr->obs < 0) {
-		/* observation string not found */
+		/* observation string not found: implicit matrix? */
 		if (get_matrix_by_name(name, genr->pdinfo) != NULL) {
-		    sprintf(genr->label, "[%s]", tag);
+		    genr_set_submatrix_string(genr, tag);
 		} else {
 		    genr->err = 1;
 		    return;
@@ -3184,7 +3190,7 @@ static int genr_write_matrix (GENERATOR *genr)
 	    atom_stack_nullify_matrix(R, genr);
 	}
 
-	if (*genr->label != '\0') { 
+	if (genr_is_submatrix(genr)) { 
 	    /* and avoid double-freeing temporary matrix M */
 	    atom_stack_nullify_matrix(Mptr, genr);
 	}
