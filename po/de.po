@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-12-18 14:40-0500\n"
-"PO-Revision-Date: 2006-01-12 02:21+0100\n"
-"Last-Translator: Sven Schreiber <svetosch@gmx.net>\n"
+"PO-Revision-Date: 2006-01-16 20:04+0100\n"
+"Last-Translator: Sven S. <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-15\n"
@@ -1279,12 +1279,12 @@ msgstr ""
 #: lib/src/dbread.c:1331
 #, c-format
 msgid "%s: you must specify a compaction method"
-msgstr ""
+msgstr "%s: Sie müssen eine Methode zur Frequenzverringerung spezifizieren"
 
 #: lib/src/dbread.c:2053
 #: lib/src/dbread.c:2247
 msgid "Compacted dataset would be empty"
-msgstr ""
+msgstr "Datensatz mit verringerter Frequenz wäre leer"
 
 #: lib/src/dbwrite.c:459
 #: lib/src/dbwrite.c:468
@@ -1362,16 +1362,18 @@ msgstr "Korrelogramm"
 
 #: lib/src/describe.c:1460
 #: lib/src/describe.c:1526
+#, fuzzy
 msgid "lag"
-msgstr ""
+msgstr "Lag"
 
 #: lib/src/describe.c:1487
 msgid "Partial autocorrelations"
 msgstr "Teilweise Autokorrelation"
 
 #: lib/src/describe.c:1489
+#, fuzzy
 msgid "to lag"
-msgstr ""
+msgstr "verzögern"
 
 #: lib/src/describe.c:1507
 #, no-c-format
@@ -1620,12 +1622,12 @@ msgstr ""
 #: lib/src/describe.c:2384
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
-msgstr "%s ausgelassen: Stichprobenbereich enthält keine gültigen Beobachtungen\n"
+msgstr "%s entfernt: Stichprobenbereich enthält keine gültigen Beobachtungen\n"
 
 #: lib/src/describe.c:2387
 #, c-format
 msgid "Dropping %s: sample range has only one obs, namely %g\n"
-msgstr "%s ausgelassen: Stichprobenbereich enthält nur die eine Beobachtung %g\n"
+msgstr "%s entfernt: Stichprobenbereich enthält nur die eine Beobachtung %g\n"
 
 #: lib/src/describe.c:2560
 msgid "Correlation Coefficients"
@@ -3731,7 +3733,7 @@ msgstr ""
 #: lib/src/modelprint.c:885
 #: lib/src/modelprint.c:886
 msgid "Missing or incomplete observations dropped"
-msgstr "Fehlende oder unvollständige Beobachtungen ausgelassen"
+msgstr "Fehlende oder unvollständige Beobachtungen entfernt"
 
 #: lib/src/modelprint.c:898
 #: lib/src/modelprint.c:899
@@ -4797,7 +4799,7 @@ msgstr "Keine Beobachtung würde ausgelassen!"
 #: lib/src/subsample.c:730
 #: lib/src/subsample.c:737
 msgid "No observations were dropped!"
-msgstr "Keine Beobachtungen wurden ausgelassen!"
+msgstr "Keine Beobachtungen wurden entfernt!"
 
 #: lib/src/subsample.c:900
 #: lib/src/subsample.c:918
@@ -4811,7 +4813,7 @@ msgstr "Fehler in neuer Endbeobachtung"
 #: lib/src/subsample.c:1147
 #, c-format
 msgid "Out of memory expanding data set\n"
-msgstr ""
+msgstr "Zuwenig Speicher für Frequenzerhöhung\n"
 
 #: lib/src/subsample.c:1150
 #, c-format
@@ -6279,17 +6281,17 @@ msgstr ""
 #: gui/gretl.c:388
 #: gui2/gretl.c:446
 msgid "/Sample/Dataset structure..."
-msgstr ""
+msgstr "/Stichprobe/Datensatzstruktur..."
 
 #: gui/gretl.c:389
 #: gui2/gretl.c:447
 msgid "/Sample/Compact data..."
-msgstr ""
+msgstr "/Stichprobe/Verringere Datenfrequenz..."
 
 #: gui/gretl.c:390
 #: gui2/gretl.c:448
 msgid "/Sample/Expand data..."
-msgstr "/Stichprobe/Erweitere Daten..."
+msgstr "/Stichprobe/Erhöhe Datenfrequenz..."
 
 #: gui/gretl.c:391
 #: gui2/gretl.c:449
@@ -6299,17 +6301,17 @@ msgstr ""
 #: gui/gretl.c:392
 #: gui2/gretl.c:450
 msgid "/Sample/_Define, based on dummy..."
-msgstr ""
+msgstr "/Stichprobe/_Definieren durch Dummy..."
 
 #: gui/gretl.c:394
 #: gui2/gretl.c:452
 msgid "/Sample/_Restrict, based on criterion..."
-msgstr ""
+msgstr "/Stichprobe/Definieren durch _Bedingung..."
 
 #: gui/gretl.c:396
 #: gui2/gretl.c:454
 msgid "/Sample/R_andom sub-sample..."
-msgstr ""
+msgstr "/Stichprobe/_Zufallsstichprobe..."
 
 #: gui/gretl.c:397
 #: gui2/gretl.c:455
@@ -6319,17 +6321,17 @@ msgstr ""
 #: gui/gretl.c:398
 #: gui2/gretl.c:456
 msgid "/Sample/Drop all obs with _missing values"
-msgstr ""
+msgstr "/Stichprobe/Entferne Beobachtungen mit Fehlwerten"
 
 #: gui/gretl.c:400
 #: gui2/gretl.c:458
 msgid "/Sample/_Count missing values"
-msgstr ""
+msgstr "/Stichprobe/Zähle _Fehlwerte"
 
 #: gui/gretl.c:401
 #: gui2/gretl.c:459
 msgid "/Sample/Set missing _value code..."
-msgstr ""
+msgstr "/Stichprobe/Bestimme _Code für Fehlwerte"
 
 #: gui/gretl.c:403
 #: gui2/gretl.c:461
@@ -6354,64 +6356,64 @@ msgstr ""
 #: gui/gretl.c:407
 #: gui2/gretl.c:465
 msgid "/Sample/Restructure panel..."
-msgstr ""
+msgstr "/Stichprobe/Panel umstrukturieren..."
 
 #: gui/gretl.c:408
 #: gui2/gretl.c:466
 msgid "/Sample/Transpose data..."
-msgstr ""
+msgstr "/Stichprobe/Daten transponieren..."
 
 #: gui/gretl.c:411
 #: gui/ssheet.c:58
 #: gui2/gretl.c:469
 #: gui2/ssheet.c:76
 msgid "/_Variable"
-msgstr ""
+msgstr "/_Variable"
 
 #: gui/gretl.c:412
 #: gui2/gretl.c:470
 msgid "/Variable/Find..."
-msgstr ""
+msgstr "/Variable/Finde..."
 
 #: gui/gretl.c:413
 #: gui2/gretl.c:471
 msgid "/Variable/_Display values"
-msgstr ""
+msgstr "/Variable/Zeige _Werte"
 
 #: gui/gretl.c:414
 #: gui2/gretl.c:472
 msgid "/Variable/_Summary statistics"
-msgstr ""
+msgstr "/Variable/_Grundlegende Statistiken"
 
 #: gui/gretl.c:416
 #: gui2/gretl.c:474
 msgid "/Variable/_Frequency distribution"
-msgstr ""
+msgstr "/Variable/_Häufigkeitsverteilung"
 
 #: gui/gretl.c:418
 #: gui2/gretl.c:476
 msgid "/Variable/Frequency plot"
-msgstr ""
+msgstr "/Variable/Histogramm"
 
 #: gui/gretl.c:419
 #: gui2/gretl.c:477
 msgid "/Variable/Frequency plot/simple"
-msgstr ""
+msgstr "/Variable/Histogramm/einfach"
 
 #: gui/gretl.c:420
 #: gui2/gretl.c:478
 msgid "/Variable/Frequency plot/against Normal"
-msgstr ""
+msgstr "/Variable/Histogramm/gegenüber Normal"
 
 #: gui/gretl.c:422
 #: gui2/gretl.c:480
 msgid "/Variable/Frequency plot/against Gamma"
-msgstr ""
+msgstr "/Variable/Histogramm/gegenüber Gamma"
 
 #: gui/gretl.c:424
 #: gui2/gretl.c:482
 msgid "/Variable/Estimated density plot..."
-msgstr ""
+msgstr "/Variable/Kerndichteschätzung..."
 
 #: gui/gretl.c:425
 #: gui2/gretl.c:483
@@ -6431,47 +6433,47 @@ msgstr ""
 #: gui/gretl.c:428
 #: gui2/gretl.c:486
 msgid "/Variable/_Time series plot"
-msgstr ""
+msgstr "/Variable/_Zeitreihenplot"
 
 #: gui/gretl.c:429
 #: gui2/gretl.c:487
 msgid "/Variable/Correlogram"
-msgstr ""
+msgstr "/Variable/_Korrelogramm"
 
 #: gui/gretl.c:430
 #: gui2/gretl.c:488
 msgid "/Variable/Spectrum"
-msgstr ""
+msgstr "/Variable/Spektrum"
 
 #: gui/gretl.c:431
 #: gui2/gretl.c:489
 msgid "/Variable/Spectrum/sample periodogram"
-msgstr ""
+msgstr "/Variable/Spektrum/Periodogramm"
 
 #: gui/gretl.c:432
 #: gui2/gretl.c:490
 msgid "/Variable/Spectrum/Bartlett lag window"
-msgstr ""
+msgstr "/Variable/Spektrum/Bartlett Lag-Fenster"
 
 #: gui/gretl.c:433
 #: gui2/gretl.c:491
 msgid "/Variable/_Augmented Dickey-Fuller test"
-msgstr ""
+msgstr "/Variable/_Erweiterter Dickey-Fuller Test"
 
 #: gui/gretl.c:434
 #: gui2/gretl.c:492
 msgid "/Variable/_KPSS test"
-msgstr ""
+msgstr "/Variable/_KPSS-Test"
 
 #: gui/gretl.c:436
 #: gui2/gretl.c:494
 msgid "/Variable/X-12-ARIMA analysis"
-msgstr ""
+msgstr "/Variable/X-12-ARIMA-Analyse"
 
 #: gui/gretl.c:439
 #: gui2/gretl.c:497
 msgid "/Variable/TRAMO analysis"
-msgstr ""
+msgstr "/Variable/TRAMO-Analyse"
 
 #: gui/gretl.c:441
 #: gui2/gretl.c:499
@@ -6480,8 +6482,9 @@ msgstr "/Variable/Hurst-Exponent"
 
 #: gui/gretl.c:442
 #: gui2/gretl.c:500
+#, fuzzy
 msgid "/Variable/Runs test"
-msgstr ""
+msgstr "/Variable/Runs-Test"
 
 #: gui/gretl.c:443
 #: gui2/gretl.c:501
@@ -6491,12 +6494,12 @@ msgstr ""
 #: gui/gretl.c:444
 #: gui2/gretl.c:503
 msgid "/Variable/Set missing value code..."
-msgstr ""
+msgstr "/Variable/Bestimme Code für Fehlwerte..."
 
 #: gui/gretl.c:446
 #: gui2/gretl.c:502
 msgid "/Variable/_Edit attributes"
-msgstr ""
+msgstr "/Variable/_Bearbeite Attribute"
 
 #: gui/gretl.c:447
 #: gui2/gretl.c:505
@@ -6506,22 +6509,22 @@ msgstr ""
 #: gui/gretl.c:448
 #: gui2/gretl.c:506
 msgid "/Variable/Define _new variable..."
-msgstr ""
+msgstr "/Variable/Definiere _neue Variable..."
 
 #: gui/gretl.c:449
 #: gui2/gretl.c:509
 msgid "/_Model"
-msgstr ""
+msgstr "/_Modell"
 
 #: gui/gretl.c:450
 #: gui2/gretl.c:510
 msgid "/Model/_Ordinary Least Squares..."
-msgstr ""
+msgstr "/Modell/_Kleinste Quadrate..."
 
 #: gui/gretl.c:451
 #: gui2/gretl.c:511
 msgid "/Model/_Weighted Least Squares..."
-msgstr ""
+msgstr "/Modell/_Gewichtete Kleinste Quadrate..."
 
 #: gui/gretl.c:452
 #: gui2/gretl.c:512
@@ -6536,7 +6539,7 @@ msgstr ""
 #: gui/gretl.c:456
 #: gui2/gretl.c:516
 msgid "/Model/H_eteroskedasticity corrected..."
-msgstr ""
+msgstr "/Modell/H_eteroskedastizitäts-korrigiert..."
 
 #: gui/gretl.c:458
 #: gui2/gretl.c:518
@@ -6546,7 +6549,7 @@ msgstr ""
 #: gui/gretl.c:459
 #: gui2/gretl.c:519
 msgid "/Model/Time series"
-msgstr ""
+msgstr "/Modell/Zeitreihen"
 
 #: gui/gretl.c:460
 #: gui2/gretl.c:520
@@ -6556,52 +6559,52 @@ msgstr ""
 #: gui/gretl.c:461
 #: gui2/gretl.c:521
 msgid "/Model/_Two-Stage Least Squares..."
-msgstr ""
+msgstr "/Modell/Zweistufige Kleinste Quadrate..."
 
 #: gui/gretl.c:463
 #: gui2/gretl.c:523
 msgid "/Model/_Logit..."
-msgstr ""
+msgstr "/Modell/_Logit..."
 
 #: gui/gretl.c:464
 #: gui2/gretl.c:524
 msgid "/Model/_Probit..."
-msgstr ""
+msgstr "/Modell/_Probit..."
 
 #: gui/gretl.c:465
 #: gui2/gretl.c:525
 msgid "/Model/To_bit..."
-msgstr ""
+msgstr "/Modell/To_bit..."
 
 #: gui/gretl.c:467
 #: gui2/gretl.c:527
 msgid "/Model/Poi_sson..."
-msgstr ""
+msgstr "/Modell/Poi_sson..."
 
 #: gui/gretl.c:468
 #: gui2/gretl.c:528
 msgid "/Model/Lo_gistic..."
-msgstr ""
+msgstr "/Modell/Lo_gistisch..."
 
 #: gui/gretl.c:469
 #: gui2/gretl.c:529
 msgid "/Model/Least _Absolute Deviation..."
-msgstr ""
+msgstr "/Modell/Kleinste _Absolute Abweichungen..."
 
 #: gui/gretl.c:470
 #: gui2/gretl.c:530
 msgid "/Model/_Rank correlation..."
-msgstr ""
+msgstr "/Modell/_Rangkorrelation..."
 
 #: gui/gretl.c:471
 #: gui2/gretl.c:531
 msgid "/Model/_Pooled OLS (panel)..."
-msgstr ""
+msgstr "/Modell/_Gepoolte KQ (Panel)..."
 
 #: gui/gretl.c:472
 #: gui2/gretl.c:532
 msgid "/Model/Nonlinear Least Squares..."
-msgstr ""
+msgstr "/Modell/Nichtlineare Kleinste Quadrate..."
 
 #: gui/gretl.c:473
 #: gui2/gretl.c:533
@@ -6611,12 +6614,12 @@ msgstr "/Modell/Maximum Likelihood..."
 #: gui/gretl.c:474
 #: gui2/gretl.c:534
 msgid "/Model/Simultaneous equations..."
-msgstr ""
+msgstr "/Modell/Mehrgleichungssystem..."
 
 #: gui/gretl.c:476
 #: gui2/gretl.c:536
 msgid "/Model/High precision OLS..."
-msgstr ""
+msgstr "/Modell/KQ mit hoher Präzision..."
 
 #: gui/gretl.c:478
 #: gui2/gretl.c:540
@@ -6662,7 +6665,7 @@ msgstr ""
 #: gui2/gretl.c:553
 #: gui2/gretl.c:555
 msgid "/Help/_About gretl"
-msgstr ""
+msgstr "/Hilfe/Über gretl"
 
 #: gui/gretl.c:492
 #: gui2/gretl.c:562
@@ -6735,7 +6738,7 @@ msgstr ""
 #: gui/gretl.c:1107
 #: gui2/gretl.c:1266
 msgid "ID #"
-msgstr ""
+msgstr "ID #"
 
 #: gui/gretl.c:1108
 #: gui2/gretl.c:1267
@@ -6750,7 +6753,7 @@ msgstr "Beschreibung"
 #: gui/gretl.c:1119
 #: gui2/gretl.c:1286
 msgid "Econometrics program"
-msgstr ""
+msgstr "Ökonometrieprogramm"
 
 #: gui/gretl.c:1160
 #: gui2/gretl.c:1326
@@ -6848,6 +6851,8 @@ msgid ""
 "Enter name for new variable\n"
 "(max. 8 characters)"
 msgstr ""
+"Geben Sie einen Namen für die neue\n"
+"Variable ein (max. 8 Zeichen)"
 
 #: gui/ssheet.c:192
 #: gui2/ssheet.c:446
@@ -6865,19 +6870,19 @@ msgstr ""
 #: gui/ssheet.c:291
 #: gui2/ssheet.c:569
 msgid "Add Variable"
-msgstr ""
+msgstr "Füge Variable hinzu"
 
 #: gui/ssheet.c:275
 #: gui/ssheet.c:292
 #: gui2/ssheet.c:572
 msgid "Add Observation"
-msgstr ""
+msgstr "Füge Beobachtung hinzu"
 
 #: gui/ssheet.c:277
 #: gui/ssheet.c:293
 #: gui2/ssheet.c:575
 msgid "Insert Observation"
-msgstr ""
+msgstr "Füge Beobachtung ein"
 
 #: gui/ssheet.c:279
 #: gui/ssheet.c:294
@@ -6903,7 +6908,7 @@ msgstr ""
 #: gui2/ssheet.c:749
 #: gui2/ssheet.c:1286
 msgid "Warning: there were missing observations"
-msgstr ""
+msgstr "Warnung: es gab fehlende Beobachtungen"
 
 #: gui/ssheet.c:624
 #: gui2/dialogs.c:260
@@ -6913,6 +6918,8 @@ msgid ""
 "Do you want to save changes you have\n"
 "made to the current data set?"
 msgstr ""
+"Möchten Sie die Änderungen am\n"
+" derzeitigen Datensatz speichern?"
 
 #: gui/ssheet.c:653
 #: gui2/ssheet.c:1342
@@ -6922,11 +6929,11 @@ msgstr ""
 #: gui/ssheet.c:658
 #: gui2/ssheet.c:1349
 msgid "gretl: edit data"
-msgstr ""
+msgstr "gretl: Daten bearbeiten"
 
 #: gui/ssheet.c:717
 msgid "Apply Changes"
-msgstr ""
+msgstr "Änderungen anwenden"
 
 #: gui/ssheet.c:723
 #: gui2/boxplots.c:204
@@ -6946,7 +6953,7 @@ msgstr ""
 #: gui2/gui_utils.c:2671
 #: gui2/gui_utils.c:2761
 msgid "Close"
-msgstr ""
+msgstr "Schließen"
 
 #: gui/ssheet.c:773
 #: gui2/ssheet.c:1469
@@ -6970,7 +6977,7 @@ msgstr ""
 
 #: gui2/about.c:37
 msgid "An econometrics program for the gnome desktop issued under the GNU General Public License.  http://gretl.sourceforge.net/"
-msgstr ""
+msgstr "Ein Ökonometrieprogramm für den Gnome-Desktop, erschienen unter der GNU General Public License. http://gretl.sourceforge.net/"
 
 #: gui2/about.c:62
 #: gui2/about.c:183
@@ -6991,21 +6998,21 @@ msgstr ""
 #: gui2/about.c:160
 #: gui2/about.c:335
 msgid "About gretl"
-msgstr ""
+msgstr "Über gretl"
 
 #: gui2/about.c:204
 #: gui2/about.c:381
 msgid "About"
-msgstr ""
+msgstr "Über"
 
 #: gui2/about.c:221
 #: gui2/about.c:407
 msgid "License Agreement"
-msgstr ""
+msgstr "Lizenzvereinbarung"
 
 #: gui2/about.c:412
 msgid "  Close  "
-msgstr ""
+msgstr "Schließen"
 
 #: gui2/boxplots.c:143
 #: gui2/boxplots.c:155
@@ -7013,7 +7020,7 @@ msgstr ""
 #: gui2/boxplots.c:188
 #: gui2/boxplots.c:197
 msgid "Save boxplot file"
-msgstr ""
+msgstr "Boxplot-Datei speichern"
 
 #: gui2/boxplots.c:174
 #: gui2/boxplots.c:223
@@ -7031,12 +7038,12 @@ msgstr "Speichern in Sitzung als Symbol"
 #: gui2/boxplots.c:183
 #: gui2/boxplots.c:225
 msgid "Save as EPS..."
-msgstr ""
+msgstr "Speichern als E^PS..."
 
 #: gui2/boxplots.c:187
 #: gui2/boxplots.c:226
 msgid "Save as PS..."
-msgstr ""
+msgstr "Speichern als PS..."
 
 #: gui2/boxplots.c:192
 #: gui2/boxplots.c:228
@@ -7047,12 +7054,12 @@ msgstr ""
 #: gui2/menustate.c:389
 #: gui2/menustate.c:409
 msgid "Copy to clipboard"
-msgstr ""
+msgstr "In die Zwischenablage kopieren"
 
 #: gui2/boxplots.c:196
 #: gui2/boxplots.c:230
 msgid "Save as XPM..."
-msgstr ""
+msgstr "Speichern als XPM..."
 
 #: gui2/boxplots.c:201
 #: gui2/boxplots.c:232
@@ -7066,17 +7073,17 @@ msgstr ""
 #: gui2/session.c:153
 #: gui2/session.c:2320
 msgid "Help"
-msgstr ""
+msgstr "Hilfe"
 
 #: gui2/boxplots.c:698
 #: gui2/callbacks.c:503
 msgid "gretl: boxplots"
-msgstr ""
+msgstr "gretl: Boxplots"
 
 #: gui2/boxplots.c:970
 #: gui2/boxplots.c:998
 msgid "median"
-msgstr ""
+msgstr "Median"
 
 #: gui2/boxplots.c:995
 msgid "Five-number summary with bootstrapped confidence interval for median"
@@ -7094,7 +7101,7 @@ msgstr ""
 #: gui2/boxplots.c:1064
 #, c-format
 msgid "Dropping %s: insufficient observations"
-msgstr ""
+msgstr "%s entfernt: nicht genügend Beobachtungen"
 
 #: gui2/boxplots.c:1089
 msgid "Couldn't obtain confidence interval"
@@ -8375,7 +8382,7 @@ msgstr ""
 
 #: gui2/dialogs.c:1067
 msgid "compaction method (for reducing frequency):"
-msgstr ""
+msgstr "Methode zur Verringerung der Datenfrequenz:"
 
 #: gui2/dialogs.c:1169
 msgid "gretl: database description"
@@ -8504,24 +8511,26 @@ msgstr "Voreingestellte Methode:"
 
 #: gui2/dialogs.c:2084
 msgid "Compact by averaging"
-msgstr ""
+msgstr "Frequenzverringerung durch Mittelung"
 
 #: gui2/dialogs.c:2094
 msgid "Compact by summing"
-msgstr ""
+msgstr "Frequenzverringerung durch Summierung"
 
 #: gui2/dialogs.c:2104
+#, fuzzy
 msgid "Use end-of-period values"
-msgstr ""
+msgstr "Frequenzverringerung durch Endwerte"
 
 #: gui2/dialogs.c:2114
+#, fuzzy
 msgid "Use start-of-period values"
-msgstr ""
+msgstr "Frequenzverringerung durch Anfangswerte"
 
 #: gui2/dialogs.c:2155
 #: gui2/dialogs.c:2323
 msgid "gretl: compact data"
-msgstr ""
+msgstr "gretl: Datenfrequenz verringern"
 
 #: gui2/dialogs.c:2167
 #, c-format
@@ -8538,23 +8547,23 @@ msgstr ""
 
 #: gui2/dialogs.c:2174
 msgid "Compact quarterly data to annual"
-msgstr ""
+msgstr "Verringere Datenfrequenz von quartalsweise auf jährlich"
 
 #: gui2/dialogs.c:2177
 msgid "Compact monthly data to:"
-msgstr ""
+msgstr "Verringere Datenfrequenz von monatlich auf:"
 
 #: gui2/dialogs.c:2183
 msgid "Compact daily data to:"
-msgstr ""
+msgstr "Verringere Datenfrequenz von täglich auf:"
 
 #: gui2/dialogs.c:2186
 msgid "Compact daily data to weekly"
-msgstr ""
+msgstr "Verringere Datenfrequenz von täglich auf wöchentlich"
 
 #: gui2/dialogs.c:2193
 msgid "Compact weekly data to monthly"
-msgstr ""
+msgstr "Verringere Datenfrequenz von wöchentlich auf monatlich"
 
 #: gui2/dialogs.c:2327
 #, c-format
@@ -8563,11 +8572,11 @@ msgstr ""
 
 #: gui2/dialogs.c:2333
 msgid "Expand annual data to:"
-msgstr "Erweitere Jahresdaten auf:"
+msgstr "Erhöhe Frequenz von jährlich auf:"
 
 #: gui2/dialogs.c:2338
 msgid "Expand quarterly data to monthly"
-msgstr "Erweitere Quartalsdaten auf Monatsdaten"
+msgstr "Erhöhe Frequenz von quartalsweise auf monatlich"
 
 #: gui2/dialogs.c:2506
 msgid "density estimation options"
@@ -8576,16 +8585,16 @@ msgstr "Optionen für Dichteschätzung"
 #: gui2/dialogs.c:2511
 #: plugin/kernel.c:130
 msgid "Gaussian kernel"
-msgstr ""
+msgstr "Gauß-Kern"
 
 #: gui2/dialogs.c:2523
 #: plugin/kernel.c:131
 msgid "Epanechnikov kernel"
-msgstr ""
+msgstr "Epanechnikov-Kern"
 
 #: gui2/dialogs.c:2542
 msgid "bandwidth adjustment factor:"
-msgstr ""
+msgstr "Bandbreiten-Anpassungsfaktor:"
 
 #: gui2/dialogs.c:2737
 #: plugin/mailer.c:843
@@ -8605,7 +8614,7 @@ msgstr "gretl-Info"
 #: plugin/pca.c:194
 #: plugin/tramo-x12a.c:259
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: gui2/dialogs.c:2851
 msgid "Structure of dataset"
@@ -8633,11 +8642,11 @@ msgstr "Organisation der Paneldaten"
 
 #: gui2/dialogs.c:2857
 msgid "Number of cross-sectional units:"
-msgstr ""
+msgstr "Anzahl der Querschnittseinheiten:"
 
 #: gui2/dialogs.c:2858
 msgid "Confirm dataset structure:"
-msgstr ""
+msgstr "Datensatz-Struktur bestätigen:"
 
 #: gui2/dialogs.c:2915
 #, c-format
@@ -8697,15 +8706,15 @@ msgstr "Montag"
 
 #: gui2/dialogs.c:3109
 msgid "Tuesday"
-msgstr ""
+msgstr "Dienstag"
 
 #: gui2/dialogs.c:3110
 msgid "Wednesday"
-msgstr ""
+msgstr "Mittwoch"
 
 #: gui2/dialogs.c:3111
 msgid "Thursday"
-msgstr ""
+msgstr "Donnerstag"
 
 #: gui2/dialogs.c:3112
 msgid "Friday"
@@ -8713,7 +8722,7 @@ msgstr "Freitag"
 
 #: gui2/dialogs.c:3113
 msgid "Saturday"
-msgstr ""
+msgstr "Sonnabend"
 
 #: gui2/dialogs.c:3114
 msgid "Sunday"
@@ -8756,7 +8765,7 @@ msgstr "dekadische Daten"
 #: gui2/dialogs.c:3195
 #, c-format
 msgid "%s, observations 1 to %d"
-msgstr ""
+msgstr "%s, Beobachtungen 1 bis %d"
 
 #: gui2/dialogs.c:3195
 msgid "cross-sectional data"
@@ -8802,7 +8811,7 @@ msgstr "Panelstruktur in %s geändert"
 #: gui2/dialogs.c:3763
 #, c-format
 msgid "The maximum must be greater than %g"
-msgstr ""
+msgstr "Das Maximum muss größer sein als %g"
 
 #: gui2/dialogs.c:3791
 msgid "Logistic model"
@@ -8820,8 +8829,9 @@ msgstr ""
 #: gui2/session.c:144
 #: gui2/session.c:152
 #: gui2/session.c:2314
+#, fuzzy
 msgid "Clear"
-msgstr ""
+msgstr "Leere"
 
 #: gui2/dlgutils.c:40
 msgid "Apply"
@@ -8849,16 +8859,18 @@ msgid "Add derivative"
 msgstr "Ableitung hinzufügen"
 
 #: gui2/dlgutils.c:497
+#, fuzzy
 msgid "Add identity"
-msgstr ""
+msgstr "Füge Identität hinzu"
 
 #: gui2/dlgutils.c:498
 msgid "Add list of endogenous variables"
 msgstr "Liste der endogenen Variablen hinzufügen"
 
 #: gui2/dlgutils.c:499
+#, fuzzy
 msgid "Add list of instruments"
-msgstr ""
+msgstr "Füge Instrumentenliste hinzu"
 
 #: gui2/dlgutils.c:581
 msgid "add to current restriction"
@@ -8871,7 +8883,7 @@ msgstr "ersetze aktuelle Restriktion"
 #: gui2/dlgutils.c:633
 #: gui2/selector.c:2289
 msgid "Show details of iterations"
-msgstr ""
+msgstr "Zeige Details der Iterationen"
 
 #: gui2/dlgutils.c:664
 #: plugin/sysest.c:698
@@ -8909,6 +8921,8 @@ msgid ""
 "The suffix you selected should be used\n"
 "only for gretl datafiles"
 msgstr ""
+"Der gewählte Suffix sollte nur für gretl-\n"
+"Datendateien verwendet werden"
 
 #: gui2/fileselect.c:303
 #: gui2/library.c:344
@@ -9124,7 +9138,7 @@ msgstr "Drucken"
 #: gui2/gpt_control.c:1762
 #: gui2/gpt_control.c:1849
 msgid "Save as PNG..."
-msgstr ""
+msgstr "Speichern als PNG..."
 
 #: gui2/gpt_control.c:1766
 #: gui2/gpt_control.c:1851
@@ -9138,8 +9152,9 @@ msgstr "Datenbezeichner festhalten"
 
 #: gui2/gpt_control.c:1781
 #: gui2/gpt_control.c:1861
+#, fuzzy
 msgid "Clear data labels"
-msgstr ""
+msgstr "Leere Datenbezeichner"
 
 #: gui2/gpt_control.c:1785
 #: gui2/gpt_control.c:1863
@@ -9148,7 +9163,7 @@ msgstr "Zoom..."
 
 #: gui2/gpt_control.c:1793
 msgid " Drag to define zoom rectangle"
-msgstr ""
+msgstr "Ziehen Sie zur Auswahl des Zoom-Ausschnitts"
 
 #: gui2/gpt_control.c:1795
 #: gui2/gpt_control.c:1877
@@ -10289,7 +10304,7 @@ msgstr "gretl: Autokorrelation"
 #: gui2/library.c:2012
 #: gui2/library.c:2062
 msgid "gretl: ARCH test"
-msgstr "gretl: ARCH_Test"
+msgstr "gretl: ARCH-_Test"
 
 #: gui2/gui_utils.c:3622
 #: gui2/library.c:1953
@@ -10898,7 +10913,7 @@ msgstr "gretl: Beobachtungen entfernen"
 
 #: gui2/library.c:3711
 msgid "There are no extra observations to drop"
-msgstr "Es gibt keine zusätzlichen Beobachtungen zu entfernen"
+msgstr "Es gibt keine zusätzlichen Beobachtungen zum entfernen"
 
 #: gui2/library.c:3734
 msgid "gretl: generate lags"
@@ -11019,7 +11034,7 @@ msgstr ""
 
 #: gui2/library.c:5083
 msgid "gretl: Compact data"
-msgstr ""
+msgstr "gretl: Datenfrequenz verringern"
 
 #: gui2/library.c:5084
 msgid ""
@@ -11030,7 +11045,7 @@ msgstr ""
 
 #: gui2/library.c:5088
 msgid "gretl: Expand data"
-msgstr "gretl: Daten erweitern"
+msgstr "gretl: Datenfrequenz erhöhen"
 
 #: gui2/library.c:5089
 msgid ""
@@ -13050,14 +13065,17 @@ msgid "Breusch-Pagan test for diagonal covariance matrix"
 msgstr "Breusch-Pagan-Test für diagonale Kovarianzmatrix"
 
 #: plugin/sysest.c:476
+#, fuzzy
 msgid ""
 "Warning: the Hansen-Sargan over-identification test failed.\n"
 "This probably indicates that the estimation problem is ill-conditioned.\n"
 msgstr ""
+"Warnung: der Hansen-Sargan Überidentifikations-Test schlug fehl.\n"
+"Dies deutet wahrscheinlich auf ein .... hin.\n"
 
 #: plugin/sysest.c:482
 msgid "Hansen-Sargan over-identification test"
-msgstr ""
+msgstr "Hansen-Sargan Überidentifikations-Test"
 
 #: plugin/sysest.c:697
 #: plugin/sysest.c:701
@@ -13099,12 +13117,12 @@ msgstr "Speichere in Datensatz"
 #: plugin/tramo_options.c:520
 #: plugin/tramo-x12a.c:214
 msgid "Seasonally adjusted series"
-msgstr ""
+msgstr "Saisonbereinigte Reihen"
 
 #: plugin/tramo_options.c:530
 #: plugin/tramo-x12a.c:220
 msgid "Trend/cycle"
-msgstr ""
+msgstr "Trend/Zyklus"
 
 #: plugin/tramo_options.c:537
 #: plugin/tramo-x12a.c:226
@@ -13140,11 +13158,12 @@ msgstr "Keine Mittelwertkorrektur"
 
 #: plugin/tramo_options.c:731
 msgid "Outliers"
-msgstr ""
+msgstr "Ausreißer"
 
 #: plugin/tramo_options.c:734
+#, fuzzy
 msgid "Detect and correct for outliers"
-msgstr ""
+msgstr "Ausreißer"
 
 #: plugin/tramo_options.c:757
 msgid "Besides additive outliers, allow for:"
@@ -13156,53 +13175,54 @@ msgstr ""
 
 #: plugin/tramo_options.c:781
 msgid "shifts of level"
-msgstr ""
+msgstr "Niveau-Verschiebung"
 
 #: plugin/tramo_options.c:798
+#, fuzzy
 msgid "innovational outliers"
-msgstr ""
+msgstr "Ausreißer"
 
 #: plugin/tramo_options.c:822
 msgid "Critical value for outliers:"
-msgstr ""
+msgstr "Kritischer Wert für Ausreißer:"
 
 #: plugin/tramo_options.c:939
 msgid "ARIMA"
-msgstr ""
+msgstr "ARIMA"
 
 #: plugin/tramo_options.c:959
 msgid "Non-seasonal differences:"
-msgstr ""
+msgstr "Nicht-saisonale Differenzen:"
 
 #: plugin/tramo_options.c:966
 msgid "Seasonal differences:"
-msgstr ""
+msgstr "Saisonale Differenzen:"
 
 #: plugin/tramo_options.c:982
 msgid "Non-seasonal AR terms:"
-msgstr ""
+msgstr "Nicht-saisonale AR-Terme:"
 
 #: plugin/tramo_options.c:989
 msgid "Seasonal AR terms:"
-msgstr ""
+msgstr "Saisonale AR-Terme:"
 
 #: plugin/tramo_options.c:1005
 msgid "Non-seasonal MA terms:"
-msgstr ""
+msgstr "Nicht-saisonale MA-Terme:"
 
 #: plugin/tramo_options.c:1012
 msgid "Seasonal MA terms:"
-msgstr ""
+msgstr "Saisonale MA-Terme:"
 
 #: plugin/tramo-x12a.c:52
-#, c-format
+#, fuzzy, c-format
 msgid "seasonally adjusted %s"
-msgstr ""
+msgstr "saisonbereinigtes %s"
 
 #: plugin/tramo-x12a.c:53
 #, c-format
 msgid "trend/cycle for %s"
-msgstr ""
+msgstr "Trend/Zyklus für %s"
 
 #: plugin/tramo-x12a.c:54
 #, c-format
@@ -13220,7 +13240,7 @@ msgstr ""
 
 #: plugin/tramo-x12a.c:342
 msgid "trend/cycle"
-msgstr ""
+msgstr "Trend/Zyklus"
 
 #: plugin/tramo-x12a.c:356
 msgid "adjusted"
