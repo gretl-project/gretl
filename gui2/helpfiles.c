@@ -601,7 +601,8 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
     fclose(fp);
 
     if (err) {
-	fprintf(stderr, "*** get_helpfile_structure: err = %d\n", err);
+	fprintf(stderr, "*** get_helpfile_structure: err = %d for\n"
+		"filename = '%s'\n", err, fname);
 	free_help_heads(heads, nh);
     } else {
 	*pheads = heads;

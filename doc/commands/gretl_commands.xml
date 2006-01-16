@@ -5955,43 +5955,6 @@
 
   </command>
 
-  <command name="sim" section="Dataset"
-    label="Simulation" context="cli">
-
-    <usage>
-      <arguments>
-        <argument optional="true">startobs endobs</argument>
-	<argument>varname</argument>
-	<argument>a0 a1 a2 &hellip;</argument>
-      </arguments>
-      <examples>
-        <example>sim 1979.2 1983.1 y 0 0.9</example>
-	<example>sim 15 25 y 10 0.8 x</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Simulates values for <repl>varname</repl> for the current
-	sample range, or for the range <repl>startobs</repl> through
-	<repl>endobs</repl> if these optional arguments are given. The
-	variable <repl>y</repl> must have been defined earlier with
-	appropriate initial values. The formula used is 
-	<equation status="display"
-	  tex="\[y_t=a_{0t} + a_{1t}y_{t-1} + a_{2t}y_{t-2} + \dots\]"
-	  ascii="y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + ..."
-	  graphic="simformula"/> 
-	The <lit>ai(t)</lit> terms may be
-	either numerical constants or variable names previously
-	defined; these terms may be prefixed with a minus sign.
-      </para>
-
-      <para>This command is deprecated.  You should use <cmdref
-	  targ="genr"/> instead.</para>
-    </description>
-
-  </command>
-
   <command name="smpl" section="Dataset" context="cli">
 
     <!-- don't break the lines below or the text version will get messed
