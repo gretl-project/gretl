@@ -103,6 +103,17 @@ struct _gretl_matrix {
 
 #define gretl_vector_free(v) gretl_matrix_free(v)
 
+/**
+ * gretl_matrix_is_scalar:
+ * @m: matrix to test.
+ *
+ * Gives 1 if @m is 1 x 1, else 0.
+ */
+
+#define gretl_matrix_is_scalar(m) ((m) != NULL && \
+                                   (m)->rows == 1 && \
+                                   (m)->cols == 1)
+
 double gretl_matrix_get (const gretl_matrix *m, int i, int j);
 
 double gretl_vector_get (const gretl_vector *v, int i);

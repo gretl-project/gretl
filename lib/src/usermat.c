@@ -472,7 +472,7 @@ int named_matrix_get_variable (const char *mspec,
 	    len = gretl_vector_get_length(S);
 	}
     } else {
-	M = real_get_matrix_by_name(mspec, LEVEL_AUTO, pdinfo);
+	M = get_matrix_by_name(mspec, pdinfo);
 	if (M == NULL) {
 	    err = E_UNKVAR;
 	} else {
@@ -1043,9 +1043,8 @@ void destroy_user_matrices (void)
     n_matrices = 0;
 }
 
-static int delete_matrix_by_name (const char *name)
+static int real_delete_user_matrix (user_matrix *u)
 {
-    user_matrix *u = get_user_matrix_by_name(name);
     int err = 0;
 
     if (u == NULL) {
@@ -1080,6 +1079,26 @@ static int delete_matrix_by_name (const char *name)
     }
 
     return err;
+}
+
+static int delete_matrix_by_name (const char *name)
+{
+    user_matrix *u = get_user_matrix_by_name(name);
+
+    return real_delete_user_matrix(u);
+}
+
+int delete_user_matrix_by_data (gretl_matrix *M)
+{
+    int i;
+
+    for (i=0; i<n_matrices; i++) {
+	if (matrices[i]->M == M) {  
+	    return real_delete_user_matrix(matrices[i]);
+	}
+    }
+
+    return E_DATA;
 }
 
 static int first_field_is_series (const char *s, const DATAINFO *pdinfo)
@@ -1834,9 +1853,8 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	break;
     case OP_DOTPOW:
 	/* element-wise exponentiation */
-	if (gretl_matrix_rows(B) != 1 ||
-	    gretl_matrix_cols(B) != 1) {
-	    *err = 1;
+	if (!gretl_matrix_is_scalar(B)) {
+	    *err = E_NONCONF;
 	} else {
 	    C = gretl_matrix_copy(A);
 	    if (C == NULL) {
