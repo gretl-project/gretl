@@ -1186,6 +1186,12 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
     return x;
 }
 
+static void matrix_func_error_string (int func)
+{
+    sprintf(gretl_errmsg, "'%s': this function cannot be applied "
+	    "to matrices", get_genr_func_word(func));
+}
+
 static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 				       gretl_matrix *M)
 {
@@ -1219,7 +1225,11 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	    } else if (atom->func == T_COLS) {
 		x = gretl_matrix_cols(M);
 		R = gretl_matrix_from_scalar(x);
+	    } else {
+		matrix_func_error_string(atom->func);
 	    }
+	} else {
+	   matrix_func_error_string(atom->func); 
 	}
     } else if (atom->atype == ATOM_SCALAR && !na(atom->val)) {
 	R = gretl_matrix_from_scalar(atom->val);

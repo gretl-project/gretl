@@ -1860,7 +1860,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	}
 	break;
     default:
-	*err = 1;
+	*err = E_SYNTAX;
 	break;
     } 
 
