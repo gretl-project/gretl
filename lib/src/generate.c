@@ -448,14 +448,14 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 
 /* also used in do_printf function */
 
-int get_generated_value (const char *argv, double *val,
+int get_generated_value (const char *rhs, double *val,
 			 double ***pZ, DATAINFO *pdinfo,
 			 int t)
 {
     char genline[MAXLINE];
     int err = 0;
 
-    sprintf(genline, "genr argv=%s", argv);
+    sprintf(genline, "genr x___=%s", rhs);
 
 #if GENR_DEBUG
     fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
@@ -469,13 +469,13 @@ int get_generated_value (const char *argv, double *val,
     return err;
 }
 
-static int get_generated_matrix (const char *argv, gretl_matrix **M,
+static int get_generated_matrix (const char *rhs, gretl_matrix **M,
 				 double ***pZ, DATAINFO *pdinfo)
 {
     char genline[MAXLINE];
     int err = 0;
 
-    sprintf(genline, "genr M___=%s", argv);
+    sprintf(genline, "genr M___=%s", rhs);
 
 #if GENR_DEBUG
     fprintf(stderr, "get_generated_matrix: trying '%s'\n", genline);
@@ -484,9 +484,6 @@ static int get_generated_matrix (const char *argv, gretl_matrix **M,
     err = generate(genline, pZ, pdinfo, OPT_P | OPT_M | OPT_D);
     if (!err) {
 	err = genr_retrieve_result(NULL, M);
-	if (M == NULL) {
-	    err = 1;
-	}
     }
 
     return err;
@@ -3377,6 +3374,12 @@ int genr_get_err (const GENERATOR *genr)
     }
 }
 
+/* below: mechanism for depositing and retrieving a scalar
+   or matrix result (bypassing the usual mechanism whereby
+   genr adds its result to the dataset, or to the stack
+   of named matrices) 
+*/
+
 static double generated_x = NADBL;
 static gretl_matrix *generated_m;
 
@@ -3399,18 +3402,6 @@ static void genr_deposit_result (GENERATOR *genr)
 	generated_m = NULL;
     }	
 }
-
-/**
- * genr_retrieve_result:
- * @x: location to receive a double value.
- * @M: location to receive a matrix value.
- *
- * Grabs the scalar or matrix result from the last invocation
- * of generate() when %OPT_D was supplied, then invalidates
- * the stored result.
- * 
- * Returns: 0 on success, integer error code on error.
- */
 
 static int genr_retrieve_result (double *x, gretl_matrix **m)
 {
@@ -3438,7 +3429,8 @@ static int genr_retrieve_result (double *x, gretl_matrix **m)
 /* For generating scalars only (so far): we hit an error
    on the first try, but it could be because the RHS is
    a compound matrix-generating expression that yields a
-   1 x 1 matrix on evaluation via the matrix track.
+   1 x 1 matrix on evaluation via the matrix track.  Try
+   again on this assumption.
 */
 
 static int genr_try_matrix_expression (GENERATOR *genr, int oldv)
