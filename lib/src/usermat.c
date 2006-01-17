@@ -76,9 +76,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
     }
 
     u->M = M;
-
     u->level = gretl_function_stack_depth();
-
     *u->name = '\0';
     strncat(u->name, name, MNAMELEN - 1);
 
@@ -120,7 +118,7 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
     return 0;
 }
 
-static int matrix_insert_submatrix (gretl_matrix *M, gretl_matrix *S,
+static int matrix_insert_submatrix (gretl_matrix *M, const gretl_matrix *S,
 				    const char *mask)
 {
     int mr = gretl_matrix_rows(M);
@@ -216,7 +214,7 @@ static int replace_user_matrix (user_matrix *u, gretl_matrix *M,
  * else 0.
  */
 
-int is_user_matrix (gretl_matrix *m)
+int is_user_matrix (const gretl_matrix *m)
 {
     int i;
 
@@ -258,7 +256,7 @@ real_get_matrix_by_name (const char *name, int slevel, const DATAINFO *pdinfo)
     }
 
     /* if a series or scalar has been created with the same
-       name as a matrix, delete the matrix
+       name as the requested matrix, delete the matrix
     */
     if (name_is_variable(name, pdinfo)) {
 	delete_matrix_by_name(name);
@@ -290,7 +288,7 @@ static user_matrix *get_user_matrix_by_name (const char *name)
     return NULL;
 }
 
-static user_matrix *get_user_matrix_by_data (gretl_matrix *M)
+static user_matrix *get_user_matrix_by_data (const gretl_matrix *M)
 {
     int level = gretl_function_stack_depth();
     int i;
@@ -410,7 +408,20 @@ int copy_named_matrix_as (const char *orig, const char *new)
     return err;
 }
 
-int user_matrix_reconfigure (gretl_matrix *M, char *newname, int level)
+/**
+ * user_matrix_set_name_and_level:
+ * @m: matrix to be reconfigured.
+ * @name: new name to be given to matrix.
+ * @level: function execution level to be assigned to matrix.
+ *
+ * If matrix @m is found on the stack of saved matrices, change
+ * its name to @newname and change its level to @level.
+ *
+ * Returns: 0 on success, 1 if the matrix is not found.
+ */
+
+int user_matrix_set_name_and_level (const gretl_matrix *M, char *name, 
+				    int level)
 {
     user_matrix *u = get_user_matrix_by_data(M);
     int err = 0;
@@ -419,7 +430,7 @@ int user_matrix_reconfigure (gretl_matrix *M, char *newname, int level)
 	err = 1;
     } else {
 	*u->name = '\0';
-	strncat(u->name, newname, MNAMELEN - 1);
+	strncat(u->name, name, MNAMELEN - 1);
 	u->level = level;
     }
 
@@ -573,7 +584,7 @@ get_matrix_from_variable (const double **Z, const DATAINFO *pdinfo, int v)
     return m;
 }
 
-static int *slice_from_index_vector (gretl_matrix *v, int *err)
+static int *slice_from_index_vector (const gretl_matrix *v, int *err)
 {
     int sn = gretl_vector_get_length(v);
     int *slice = NULL;
@@ -798,7 +809,7 @@ make_slices (const char *s, int m, int n, int **rslice, int **cslice)
 */
 
 gretl_matrix *
-matrix_get_submatrix (gretl_matrix *M, const char *s, 
+matrix_get_submatrix (const gretl_matrix *M, const char *s, 
 		      const double **Z, const DATAINFO *pdinfo,
 		      int *err)
 {
@@ -1625,7 +1636,7 @@ print_matrix_by_name (const char *name, const char *mask,
 static int 
 print_matrix_address_by_name (const char *name, const DATAINFO *pdinfo, PRN *prn)
 {
-    gretl_matrix *M = get_matrix_by_name(name, pdinfo);
+    const gretl_matrix *M = get_matrix_by_name(name, pdinfo);
     int err = 0;
 
     if (M == NULL) {

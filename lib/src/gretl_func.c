@@ -307,7 +307,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 			    call->fun->returns[i], (void *) S, call->assv[i]);
 #endif
 		    /* rename matrix as caller desired and mark as global */
-		    err = user_matrix_reconfigure(S, call->assv[i], nc - 1);
+		    err = user_matrix_set_name_and_level(S, call->assv[i], nc - 1);
 		}
 	    }
 	}

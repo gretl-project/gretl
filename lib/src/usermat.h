@@ -41,13 +41,14 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 
 int copy_named_matrix_as (const char *orig, const char *new);
 
-int user_matrix_reconfigure (gretl_matrix *M, char *newname, int level);
+int user_matrix_set_name_and_level (const gretl_matrix *M, char *name, 
+				    int level);
 
 void destroy_user_matrices (void);
 
 int destroy_user_matrices_at_level (int level);
 
-int is_user_matrix (gretl_matrix *m);
+int is_user_matrix (const gretl_matrix *m);
 
 gretl_matrix *user_matrix_get_slice (const char *s, 
 				     const double **Z, 
@@ -69,7 +70,7 @@ gretl_matrix *
 user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn);
 
 gretl_matrix *
-matrix_get_submatrix (gretl_matrix *M, const char *s, 
+matrix_get_submatrix (const gretl_matrix *M, const char *s, 
 		      const double **Z, const DATAINFO *pdinfo,
 		      int *err);
 
