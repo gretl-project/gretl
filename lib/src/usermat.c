@@ -1088,19 +1088,6 @@ static int delete_matrix_by_name (const char *name)
     return real_delete_user_matrix(u);
 }
 
-int delete_user_matrix_by_data (gretl_matrix *M)
-{
-    int i;
-
-    for (i=0; i<n_matrices; i++) {
-	if (matrices[i]->M == M) {  
-	    return real_delete_user_matrix(matrices[i]);
-	}
-    }
-
-    return E_DATA;
-}
-
 static int first_field_is_series (const char *s, const DATAINFO *pdinfo)
 {
     char word[16];
