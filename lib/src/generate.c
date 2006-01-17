@@ -41,7 +41,8 @@ enum {
 } genr_numbers;
 
 enum {
-    E_MATVAR = E_MAX + 1 /* matrix found where regular var was expected */
+    E_MATVAR = E_MAX + 1, /* matrix found where regular var was expected */
+    E_SERIES              /* required scalar but got series */
 } genr_errors;
 
 static double calc_xy (double x, double y, char op, int t, int *err);
@@ -630,6 +631,17 @@ get_var_from_matrix (const char *s, GENERATOR *genr, genatom *atom)
     genr->err = named_matrix_get_variable(s, (const double **) *genr->pZ,
 					  genr->pdinfo, 
 					  &x, &len);
+
+    /* FIXME: it can be a problem to allow conversion from
+       matrix to series here, in context of generating
+       a scalar in particular -- e.g. u'*u !! */
+#if 0
+    fprintf(stderr, "get_var_from_matrix: s='%s', len=%d\n", s, len);
+    if (len != 1) {
+	genr->err = E_MATVAR;
+	return;
+    }
+#endif
 
     if (!genr->err) {
 	if (len == 1) {
@@ -3453,6 +3465,7 @@ static int genr_try_matrix_expression (GENERATOR *genr, int oldv)
     if (g != NULL) {
 	if (gretl_matrix_is_scalar(g)) {
 	    genr->xvec[0] = gretl_vector_get(g, 0);
+	    genr_set_scalar(genr);
 	} else {
 	    err = 1;
 	}

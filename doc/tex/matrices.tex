@@ -15,7 +15,7 @@ change.  Nonetheless we set out the current situation here.
 Matrices can be created in any one of four ways:
 
 \begin{enumerate}
-\item By full specification of the scalar values that compose the
+\item By direct specification of the scalar values that compose the
   matrix, in numerical form or by reference to pre-existing
   scalar variables, or both; or
 \item by providing a list of data series; or
@@ -29,8 +29,8 @@ Matrices can be created in any one of four ways:
 These methods cannot be mixed in the specification of a given matrix.
 Examples of each follow.
 
-To specify a matrix directly in terms of scalars, the syntax is,
-for example: 
+To specify a matrix \textit{directly in terms of scalars}, the syntax
+is, for example:
 
 \begin{code}
 matrix A = { 1, 2, 3 ; 4, 5, 6 }
@@ -44,8 +44,8 @@ Each element must be either a numerical value or the name of a
 pre-existing scalar variable.  Directly after the closing brace you
 can append a single quote (\texttt{'}) to obtain the transpose.
 
-To specify a matrix in terms of data series the syntax is, for
-example,
+To specify a matrix \textit{in terms of data series} the syntax is,
+for example,
 %
 \begin{code}
 matrix A = { x1, x2, x3 }
@@ -62,7 +62,8 @@ are not, and you will get an error if you try to build a matrix from
 series that include missing values.
 
 Instead of giving an explicit list of variables, you may instead
-provide the name of a saved list, as in
+provide the \textit{name of a saved list} (see Chapter~\ref{persist}),
+as in
 %
 \begin{code}
 list xlist = x1 x2 x3
@@ -218,6 +219,31 @@ matrices from models previously estimated:
 \end{tabular}
 \end{center}
 
+If these accessors are given without any prefix, they retrieve results
+from the last model estimated, if any.  Alternatively, they may be
+prefixed with the name of a saved model, plus a period (\texttt{.}), in
+which case they retrieve results from the specified model.  Here are
+some examples:
+%
+\begin{code}
+matrix u = $uhat
+matrix b = m1.$coeff
+matrix v2 = m1.$vcv[1:2,1:2]
+\end{code}%$
+%
+The first command grabs the residuals from the last model; the second
+grabs the coefficient vector from model \texttt{m1}; and the third
+(which uses the mechanism of sub-matrix selection described in the
+following section) grabs a portion of the covariance matrix from model
+\texttt{m1}.
+
+If the ``model'' in question is actually a system (a VAR
+or VECM, or system of simultaneous equations), \texttt{\$uhat}
+retrieves the matrix of residuals (one column per equation) and
+\texttt{\$vcv} gets the cross-equation covariance matrix.  At present
+the other accessors are not available for equation systems.
+
+
 \section{Selecting sub-matrices}
 \label{matrix-sub}
 
@@ -285,8 +311,10 @@ variables.  In other words, no two objects of any of these types can
 have the same name.  In case of potential collisions --- where an
 object of one type already exists with a certain name, and you try to
 create an object of a different type with the same name --- gretl
-follows the policy of \textit{giving priority to data series}.
-This means that
+follows the policy of allowing you to overwrite the existing object, 
+with the exception that \textit{data series are protected and cannot be
+over-written by scalars or matrices}.  Some implications of this
+policy are noted below.
 %
 \begin{itemize}
 \item If a series called, say, \texttt{X}, exists and you try to
@@ -295,7 +323,13 @@ This means that
   \texttt{genr} or \texttt{series} commands, or by reading from a data
   file, or by importation from a database --- then any pre-existing
   matrix named \texttt{X} is automatically deleted.
+\item If you create a scalar named \texttt{X}, any existing matrix
+  \texttt{X} is deleted.
 \end{itemize}
+%
+If you really want to create a matrix using a name that is currently
+assigned to a data series, you must first delete the data series using
+the \texttt{delete} command or rename it using \texttt{rename}.
 
 \section{Deleting matrices}
 \label{matrix-delete}

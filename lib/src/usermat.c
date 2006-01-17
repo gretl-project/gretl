@@ -470,8 +470,9 @@ int named_matrix_get_variable (const char *mspec,
 {
     double *x = NULL;
     gretl_matrix *M = NULL;
+    gretl_matrix *T = NULL;
     gretl_matrix *S = NULL;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int sn = pdinfo->t2 - pdinfo->t1 + 1;
     int i, len = 0;
     int err = 0;
 
@@ -480,32 +481,36 @@ int named_matrix_get_variable (const char *mspec,
     if (strchr(mspec, '[')) {
 	S = user_matrix_get_slice(mspec, Z, pdinfo, &err);
 	if (!err) {
-	    len = gretl_vector_get_length(S);
+	    M = S;
+	}
+    } else if (strchr(mspec, '\'')) {
+	T = get_matrix_transpose_by_name(mspec, pdinfo);
+	if (T != NULL) {
+	    M = T;
 	}
     } else {
 	M = get_matrix_by_name(mspec, pdinfo);
-	if (M == NULL) {
-	    err = E_UNKVAR;
-	} else {
-	    len = gretl_vector_get_length(M);
-	}
+    }
+
+    if (M != NULL) {
+	len = gretl_vector_get_length(M);
+    } else {
+	err = E_UNKVAR;
     }
 
     if (!err) {
-	if (len != 1 && len != pdinfo->n && len != T) {
+	if (len != 1 && len != pdinfo->n && len != sn) {
 	    err = E_NONCONF;
 	}
     }
 
     if (!err) {
-	gretl_matrix *P = (S != NULL)? S : M;
-
 	if (len == 1) {
 	    x = malloc(sizeof *x);
 	    if (x == NULL) {
 		err = E_ALLOC;
 	    } else {
-		*x = gretl_vector_get(P, 0);
+		*x = gretl_vector_get(M, 0);
 		*px = x;
 	    }
 	} else {
@@ -520,7 +525,7 @@ int named_matrix_get_variable (const char *mspec,
 		    }
 		}
 		for (i=0; i<len; i++) {
-		    x[i + pdinfo->t1] = gretl_vector_get(P, i);
+		    x[i + pdinfo->t1] = gretl_vector_get(M, i);
 		}
 		*px = x;
 	    }
@@ -531,7 +536,9 @@ int named_matrix_get_variable (const char *mspec,
 
     if (S != NULL) {
 	gretl_matrix_free(S);
-    }
+    } else if (T != NULL) {
+	gretl_matrix_free(T);
+    }    
 
     return err;
 }
