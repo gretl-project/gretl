@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-12-18 14:40-0500\n"
-"PO-Revision-Date: 2006-01-16 20:04+0100\n"
+"PO-Revision-Date: 2006-01-18 11:03+0100\n"
 "Last-Translator: Sven S. <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -6056,7 +6056,7 @@ msgstr ""
 #: gui/gretl.c:321
 #: gui2/gretl.c:377
 msgid "/Data/_Multiple scatterplots..."
-msgstr "/Data/_Mehrfache Streudiagramme..."
+msgstr "/Daten/_Mehrfache Streudiagramme..."
 
 #: gui/gretl.c:323
 #: gui2/gretl.c:379
@@ -6156,77 +6156,77 @@ msgstr "/Daten/sep5"
 #: gui/gretl.c:352
 #: gui2/gretl.c:409
 msgid "/Data/Add variables"
-msgstr "/Data/Variablen hinzufügen"
+msgstr "/Daten/Variablen hinzufügen"
 
 #: gui/gretl.c:353
 #: gui2/gretl.c:410
 msgid "/Data/Add variables/time trend"
-msgstr "/Data/Variablen hinzufügen/Zeittrend"
+msgstr "/Daten/Variablen hinzufügen/Zeittrend"
 
 #: gui/gretl.c:354
 #: gui2/gretl.c:411
 msgid "/Data/Add variables/index variable"
-msgstr "/Data/Variablen hinzufügen/Indexvariable"
+msgstr "/Daten/Variablen hinzufügen/Indexvariable"
 
 #: gui/gretl.c:355
 #: gui2/gretl.c:412
 msgid "/Data/Add variables/logs of selected variables"
-msgstr "/Data/Variablen hinzufügen/Logs der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/Logs der ausgewählten Variablen"
 
 #: gui/gretl.c:357
 #: gui2/gretl.c:414
 msgid "/Data/Add variables/lags of selected variables"
-msgstr "/Data/Variablen hinzufügen/Zeitdifferenz der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/Lags der ausgewählten Variablen"
 
 #: gui/gretl.c:359
 #: gui2/gretl.c:416
 msgid "/Data/Add variables/squares of selected variables"
-msgstr "/Data/Variablen hinzufügen/Quadrate der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/Quadrate der ausgewählten Variablen"
 
 #: gui/gretl.c:361
 #: gui2/gretl.c:418
 msgid "/Data/Add variables/first differences of selected variables"
-msgstr "/Data/Variablen hinzufügen/Erste Differenzen der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/Erste Differenzen der ausgewählten Variablen"
 
 #: gui/gretl.c:363
 #: gui2/gretl.c:420
 msgid "/Data/Add variables/log differences of selected variables"
-msgstr "/Data/Variablen hinzufügen/Log-Differenzen der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/Log-Differenzen der ausgewählten Variablen"
 
 #: gui/gretl.c:365
 #: gui2/gretl.c:422
 msgid "/Data/Add variables/seasonal differences of selected variables"
-msgstr "/Data/Variablen hinzufügen/Saison-Differenzen der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/Saison-Differenzen der ausgewählten Variablen"
 
 #: gui/gretl.c:367
 #: gui2/gretl.c:424
 msgid "/Data/Add variables/periodic dummies"
-msgstr "/Data/Variablen hinzufügen/Perioden-Dummies"
+msgstr "/Daten/Variablen hinzufügen/Perioden-Dummies"
 
 #: gui/gretl.c:368
 #: gui2/gretl.c:425
 msgid "/Data/Add variables/unit dummies"
-msgstr "/Data/Variablen hinzufügen/Einheits-Dummies"
+msgstr "/Daten/Variablen hinzufügen/Einheits-Dummies"
 
 #: gui/gretl.c:369
 #: gui2/gretl.c:426
 msgid "/Data/Add variables/panel dummies"
-msgstr "/Data/Variablen hinzufügen/Panel-Dummies"
+msgstr "/Daten/Variablen hinzufügen/Panel-Dummies"
 
 #: gui/gretl.c:370
 #: gui2/gretl.c:427
 msgid "/Data/Add variables/sep"
-msgstr "/Data/Variablen hinzufügen/sep"
+msgstr "/Daten/Variablen hinzufügen/sep"
 
 #: gui/gretl.c:371
 #: gui2/gretl.c:428
 msgid "/Data/Add variables/random normal..."
-msgstr "/Data/Variablen hinzufügen/normalverteilte Zufallszahlen..."
+msgstr "/Daten/Variablen hinzufügen/normalverteilte Zufallszahlen..."
 
 #: gui/gretl.c:373
 #: gui2/gretl.c:430
 msgid "/Data/Add variables/random uniform..."
-msgstr "/Data/Variablen hinzufügen/gleichverteilte Zufallszahlen..."
+msgstr "/Daten/Variablen hinzufügen/gleichverteilte Zufallszahlen..."
 
 #: gui/gretl.c:375
 #: gui2/gretl.c:432
@@ -6241,7 +6241,7 @@ msgstr "/Data/Variablen hinzufügen/sep2"
 #: gui/gretl.c:378
 #: gui2/gretl.c:435
 msgid "/Data/Add variables/Define _new variable..."
-msgstr "/Data/Variablen hinzufügen/Definiere _neue Variable..."
+msgstr "/Daten/Variablen hinzufügen/Definiere _neue Variable..."
 
 #: gui/gretl.c:379
 #: gui2/gretl.c:437
@@ -10862,7 +10862,7 @@ msgstr "Korrelogramm"
 
 #: gui2/library.c:3503
 msgid "Maximum lag:"
-msgstr "Maximale Zeitdifferenz:"
+msgstr "Maximaler Lag:"
 
 #: gui2/library.c:3551
 msgid "Periodogram command failed"
@@ -10917,11 +10917,11 @@ msgstr "Es gibt keine zusätzlichen Beobachtungen zum entfernen"
 
 #: gui2/library.c:3734
 msgid "gretl: generate lags"
-msgstr "gretl: Generiere Zeitdifferenzen"
+msgstr "gretl: Generiere Lags"
 
 #: gui2/library.c:3735
 msgid "Number of lags to create:"
-msgstr "Anzahl der zu erzeugenden Zeitdifferenzen:"
+msgstr "Anzahl der zu erzeugenden Lags:"
 
 #: gui2/library.c:3892
 #, c-format
