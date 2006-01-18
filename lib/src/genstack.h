@@ -144,8 +144,7 @@ enum genr_flags {
     GENR_SIMPLE_SORT  = 1 << 5,
     GENR_PRIVATE      = 1 << 6,
     GENR_MATRIX       = 1 << 7,
-    GENR_NO_MATRIX    = 1 << 8,
-    GENR_DEPOSIT      = 1 << 9
+    GENR_DEPOSIT      = 1 << 8
 };
 
 struct _GENERATOR {

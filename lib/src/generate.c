@@ -196,8 +196,11 @@ struct genr_func funcs[] = {
 #define MATRIX_SCALAR_FUNC(f) (f == T_DET || f == T_LDET || f == T_TRACE || \
 			       f == T_ROWS || f == T_COLS)
 
-#define MATRIX_FILL_FUNC(f) (f == T_IMAT || f == T_ZEROS || f == T_ONES || \
-                             f == T_UNIFORM || f == T_NORMAL)
+#define MATRIX_FILL_FUNC(f) (f == T_IMAT || f == T_ZEROS || f == T_ONES)
+
+#define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG)
+
+#define RAND_FUNC(f) (f == T_UNIFORM || f == T_NORMAL)
 
 #ifdef HAVE_MPFR
 # define MP_MATH(f) (f == T_MPOW || f == T_MLOG)
@@ -218,14 +221,11 @@ struct genr_func funcs[] = {
 #define genr_set_scalar(g) ((g)->flags |= GENR_SCALAR)
 #define genr_unset_scalar(g) ((g)->flags &= ~GENR_SCALAR)
 
-#define genr_force_series(g) ((g)->flags |= (GENR_FORCE_SERIES|GENR_NO_MATRIX))
+#define genr_force_series(g) ((g)->flags |= GENR_FORCE_SERIES)
 #define genr_forcing_series(g) ((g)->flags & GENR_FORCE_SERIES)
 
-#define genr_set_require_scalar(g) ((g)->flags |= (GENR_NEED_SCALAR|GENR_NO_MATRIX))
+#define genr_set_require_scalar(g) ((g)->flags |= GENR_NEED_SCALAR)
 #define genr_require_scalar(g) ((g)->flags & GENR_NEED_SCALAR)
-
-#define genr_disallow_matrix(g) ((g)->flags |= GENR_NO_MATRIX)
-#define genr_matrix_disallowed(g) ((g)->flags & GENR_NO_MATRIX)
 
 #define genr_doing_save(g) ((g)->flags & GENR_SAVE)
 #define genr_set_save(g) ((g)->flags |= GENR_SAVE)
@@ -244,6 +244,9 @@ struct genr_func funcs[] = {
 #define genr_set_depositing(g) ((g)->flags |= GENR_DEPOSIT)
 
 #define genr_single_obs(g) ((g)->obs >= 0)
+
+#define set_atom_is_series_from_matrix(a) (strcpy(a->str, "matrix_series"))
+#define atom_is_series_from_matrix(a) (!strcmp(a->str, "matrix_series"))
 
 static int genr_matrix_init (GENERATOR *genr, gretlopt opt)
 {
@@ -575,20 +578,29 @@ genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
 {
     const gretl_matrix *m = NULL;
     gretl_matrix *g = NULL;
-    char name[32];
+    char mstr[128];
     double x = NADBL;
 
     s = strchr(s, '(');
-
-    if (s != NULL && sscanf(s+1, "%31[^)]", name)) {
-	/* simple argument to matrix function? */
-	m = get_matrix_by_name(name, genr->pdinfo);
+    
+    if (s == NULL || *(s+1) == 0) {
+	goto bailout;
     }
+
+    /* simple argument to matrix function? */
+    sscanf(s+1, "%31[^)]", mstr);
+    m = get_matrix_by_name(mstr, genr->pdinfo);
 
     if (m == NULL) {
 	/* compound argument to matrix function? */
-	genr->err = get_generated_matrix(name, &g, genr->pZ, genr->pdinfo);
-	m = g;
+	int len = strlen(s+1) - 1;
+	    
+	if (len > 0 && len < 128) {
+	    *mstr = 0;
+	    strncat(mstr, s+1, len);
+	    genr->err = get_generated_matrix(mstr, &g, genr->pZ, genr->pdinfo);
+	    m = g;
+	}
     }
 
     if (m != NULL) {
@@ -609,8 +621,11 @@ genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
 	gretl_matrix_free(g);
     }
 
+ bailout:
+
     if (na(x)) {
-	sprintf(gretl_errmsg, "'%s': error in function argument", s);
+	sprintf(gretl_errmsg, "%s%s: error in function argument", 
+		get_genr_func_word(func), s);
 	genr->err = 1;
     }
 
@@ -628,20 +643,23 @@ get_var_from_matrix (const char *s, GENERATOR *genr, genatom *atom)
     double *x = NULL;
     int len = 0;
 
-    genr->err = named_matrix_get_variable(s, (const double **) *genr->pZ,
-					  genr->pdinfo, 
-					  &x, &len);
-
-    /* FIXME: it can be a problem to allow conversion from
-       matrix to series here, in context of generating
-       a scalar in particular -- e.g. u'*u !! */
-#if 0
-    fprintf(stderr, "get_var_from_matrix: s='%s', len=%d\n", s, len);
-    if (len != 1) {
-	genr->err = E_MATVAR;
-	return;
+    /* We have to be careful with this: we'll try conversion from
+       matrix to variable (scalar or series) only if the command
+       has explicitly typed the desired result as scalar or
+       series.
+    */
+    if (!genr_require_scalar(genr) && !genr_forcing_series(genr)) {
+	undefined_var_message(s);
+	genr->err = E_UNKVAR;
     }
-#endif
+
+    /* generating a scalar: we'll only accept 1 x 1 matrices */
+    if (genr_require_scalar(genr)) {
+	len = 1;
+    }
+
+    genr->err = named_matrix_get_variable(s, (const double **) *genr->pZ,
+					  genr->pdinfo, &x, &len);
 
     if (!genr->err) {
 	if (len == 1) {
@@ -650,6 +668,7 @@ get_var_from_matrix (const char *s, GENERATOR *genr, genatom *atom)
 	    free(x);
 	} else {
 	    genr_add_temp_var(x, genr, atom);
+	    set_atom_is_series_from_matrix(atom);
 	}
     } else if (genr_require_scalar(genr) && genr->err != E_UNKVAR) {
 	/* Flag the possibility that the RHS is a compound
@@ -692,19 +711,13 @@ atom_get_variable_or_constant (const char *s, GENERATOR *genr,
 	    DPRINTF(("recognized transposed matrix '%s'\n", s));
 	    atom_set_matrix(atom, M, s);
 	} else {	
-	    /* try for a regular variable, and convert to matrix? */
+	    /* try for a scalar? */
 	    v = varindex(genr->pdinfo, s);
-	    if (v < genr->pdinfo->v) {
-		M = get_matrix_from_variable((const double **) *genr->pZ,
-					     genr->pdinfo, v);
-		if (M == NULL) {
-		    sprintf(gretl_errmsg, _("Variable '%s' is not a matrix"), s);
-		    genr->err = E_UNKVAR;
-		} else {
-		    atom_set_matrix(atom, M, s);
-		}
+	    if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+		atom->val = (*genr->pZ)[v][0];
+		atom->atype = ATOM_SCALAR;
 	    } else {
-		undefined_var_message(s);
+		sprintf(gretl_errmsg, _("'%s': not a matrix or scalar"), s);
 		genr->err = E_UNKVAR;
 	    }
 	} 
@@ -829,9 +842,23 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
     } else if (MATRIX_SCALAR_FUNC(atom->func) && !genr_is_matrix(genr)) {
 	atom->val = genr_get_matrix_scalar(s, genr, atom->func);
 	atom->atype = ATOM_SCALAR;
-    } else if (genr_is_matrix(genr) && MATRIX_FILL_FUNC(atom->func)) {
+    } else if (RAND_FUNC(atom->func) && genr_is_matrix(genr)) {
 	matrix_gen_function(s, genr, atom);
-    } 
+    } else if (MATRIX_FILL_FUNC(atom->func)) {
+	if (genr_is_matrix(genr)) {
+	    matrix_gen_function(s, genr, atom);
+	} else if (genr_require_scalar(genr)) {
+	    genr->err = E_MATVAR; /* allow second pass in matrix mode */
+	} else {
+	    genr->err = E_TYPES;
+	}
+    } else if (MATRIX_MATRIX_FUNC(atom->func) && !genr_is_matrix(genr)) {
+	if (genr_require_scalar(genr)) {
+	    genr->err = E_MATVAR; /* allow second pass */
+	} else {
+	    genr->err = E_TYPES;
+	}
+    }
 }
 
 static int dataset_var_index (const char *s)
@@ -1128,8 +1155,8 @@ static double get_lag_at_obs (int v, int tmp, int lag,
     return x;
 }
 
-static double eval_atom (genatom *atom, GENERATOR *genr, int t, 
-			 double a)
+static double 
+eval_atom (genatom *atom, GENERATOR *genr, int t, double a)
 {
     double x = NADBL;
 
@@ -1195,12 +1222,6 @@ static double eval_atom (genatom *atom, GENERATOR *genr, int t,
     return x;
 }
 
-static void matrix_func_error_string (int func)
-{
-    sprintf(gretl_errmsg, "'%s': this function cannot be applied "
-	    "to matrices", get_genr_func_word(func));
-}
-
 static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 				       gretl_matrix *M)
 {
@@ -1235,16 +1256,18 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 		x = gretl_matrix_cols(M);
 		R = gretl_matrix_from_scalar(x);
 	    } else {
-		matrix_func_error_string(atom->func);
+		genr->err = E_TYPES;
+		fprintf(stderr, "type error in eval_matrix_atom()\n");
 	    }
 	} else {
-	   matrix_func_error_string(atom->func); 
+	    genr->err = E_TYPES;
+	    fprintf(stderr, "type error in eval_matrix_atom()\n");
 	}
     } else if (atom->atype == ATOM_SCALAR && !na(atom->val)) {
 	R = gretl_matrix_from_scalar(atom->val);
     }
 
-    if (R == NULL) {
+    if (R == NULL && !genr->err) {
 	genr->err = 1;
     }
 
@@ -1690,6 +1713,7 @@ static int evaluate_genr (GENERATOR *genr)
 {
     int t, t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
     int m = 0, tstart = t1;
+    int mseries = 0;
     int n_atoms = 0;
     genatom *atom;
 
@@ -1701,6 +1725,12 @@ static int evaluate_genr (GENERATOR *genr)
 
 	DPRINTF((" looking at atom %d\n", n_atoms));
 	n_atoms++;
+
+	if (mseries && n_atoms > 0) {
+	    genr->err = E_TYPES;
+	    fprintf(stderr, "type error in evaluate_genr()\n");
+	    break;
+	} 
 
 	if (atom->varnum == genr->varnum && atom->lag > m) {
 	    m = atom->lag;
@@ -1724,7 +1754,13 @@ static int evaluate_genr (GENERATOR *genr)
 	    atom_stack_resume(genr);
 	} else if (MP_MATH(atom->func)) {
 	    genr->err = add_mp_series_to_genr(genr, atom);
-	}	
+	} else if (atom_is_series_from_matrix(atom)) {
+	    if (n_atoms > 1) {
+		genr->err = E_TYPES;
+	    } else {
+		mseries = 1;
+	    }
+	}
     }
 
     DPRINTF(("evaluate_genr: n_atoms = %d\n", n_atoms));
@@ -2843,7 +2879,6 @@ static void get_genr_formula (char *formula, const char *line,
     sscanf(line, "%8s", first);
 
     if (!strcmp(first, "genr")) {
-	genr_disallow_matrix(genr);
 	line += 4;
     } else if (!strcmp(first, "eval")) {
 	genr_unset_save(genr);
@@ -3065,7 +3100,7 @@ static int genr_handle_special (const char *s, GENERATOR *genr,
 
 static void maybe_set_matrix_genr (GENERATOR *genr)
 {
-    if (!genr_is_matrix(genr) && !genr_matrix_disallowed(genr) && 
+    if (!genr_is_matrix(genr) && 
 	get_matrix_by_name(genr->lhs, genr->pdinfo) != NULL) {
 	genr->flags = GENR_SAVE | GENR_MATRIX;
 	genr->err = genr_matrix_init(genr, OPT_M);

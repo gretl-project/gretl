@@ -32,9 +32,6 @@ int named_matrix_get_variable (const char *mspec,
 			       const double **Z, const DATAINFO *pdinfo,
 			       double **px, int *plen);
 
-gretl_matrix *
-get_matrix_from_variable (const double **Z, const DATAINFO *pdinfo, int v);
-
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 				const char *mask, gretl_matrix **R,
 				double ***pZ, DATAINFO *pdinfo);

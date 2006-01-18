@@ -444,7 +444,8 @@ int user_matrix_set_name_and_level (const gretl_matrix *M, char *name,
  * @Z: data array.
  * @pdinfo: dataset information.
  * @px: location to receive allocated series (array).
- * @plen: location to receive length of array.
+ * @plen: on input, if this contains 1 then only a 1 x 1 matrix
+ * is acceptable; on output, the length of the array in @px.
  *
  * If there exists a matrix of the given name at the current
  * level of function execution, try to assign to @x the
@@ -475,14 +476,13 @@ int named_matrix_get_variable (const char *mspec,
     int i, len = 0;
     int err = 0;
 
-    *plen = 0;
-
     if (strchr(mspec, '[')) {
 	S = user_matrix_get_slice(mspec, Z, pdinfo, &err);
 	if (!err) {
 	    M = S;
 	}
     } else if (strchr(mspec, '\'')) {
+	/* we won't handle transposes in this context */
 	return 1;
     } else {
 	M = get_matrix_by_name(mspec, pdinfo);
@@ -495,7 +495,9 @@ int named_matrix_get_variable (const char *mspec,
     }
 
     if (!err) {
-	if (len != 1 && len != pdinfo->n && len != sn) {
+	if (*plen == 1 && len != 1) {
+	    err = 1;
+	} else if (len != 1 && len != pdinfo->n && len != sn) {
 	    err = E_NONCONF;
 	}
     }
@@ -535,54 +537,6 @@ int named_matrix_get_variable (const char *mspec,
     }   
 
     return err;
-}
-
-/**
- * get_matrix_from_variable:
- * @Z: data array.
- * @pdinfo: dataset information.
- * @v: ID number of variable.
- *
- * Converts the specified variable into a gretl matrix.  If
- * the variable is a scalar, the returned matrix is 1 x 1;
- * if the variable is a data series, the returned matrix is
- * a column vector of length equal to the current sample
- * range.
- *
- * Returns: allocated matrix, or %NULL on failure.
- */
-
-gretl_matrix *
-get_matrix_from_variable (const double **Z, const DATAINFO *pdinfo, int v)
-{
-    gretl_matrix *m = NULL;
-
-    if (v < 0 || v >= pdinfo->v) {
-	return NULL;
-    }
-
-    if (pdinfo->vector[v]) {
-	int i, n = pdinfo->t2 - pdinfo->t1 + 1;
-	double x;
-
-	m = gretl_column_vector_alloc(n);
-	if (m != NULL) {
-	    for (i=0; i<n; i++) {
-		x = Z[v][i + pdinfo->t1];
-		if (na(x)) {
-		    gretl_matrix_free(m);
-		    m = NULL;
-		    break;
-		} else {
-		    gretl_vector_set(m, i, x);
-		}
-	    }
-	}
-    } else {
-	m = gretl_matrix_from_scalar(Z[v][0]);
-    }
-
-    return m;
 }
 
 static int *slice_from_index_vector (const gretl_matrix *v, int *err)
@@ -1496,7 +1450,7 @@ static int create_matrix (const char *name, const char *mask,
     if (name_is_series(name, pdinfo)) {
 	/* can't overwrite data series with matrix */
 	sprintf(gretl_errmsg, _("'%s' is the name of a data series"), name);
-	return E_DATA;
+	return E_TYPES;
     }
 
     p = strchr(s, '{');
@@ -1872,7 +1826,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	}
 	break;
     default:
-	*err = E_SYNTAX;
+	*err = E_TYPES;
 	break;
     } 
 

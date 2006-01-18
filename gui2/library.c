@@ -5873,7 +5873,7 @@ int gui_exec_line (char *line,
 
     /* if we're stacking commands for a loop, parse "lightly" */
     if (loopstack) { 
-	err = get_command_index(line, &cmd);
+	err = get_command_index(line, &cmd, datainfo);
     } else {
 	err = parse_command_line(line, &cmd, &Z, datainfo);
     }

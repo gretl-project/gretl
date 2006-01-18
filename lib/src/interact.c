@@ -139,21 +139,19 @@ static int get_rhodiff_or_lags_param (char *s, CMD *cmd)
 /* catch aliased command words and assign ci; return 1
    if alias caught, else 0. */
 
-static int catch_command_alias (CMD *cmd)
+static int catch_command_alias (const char *line, CMD *cmd)
 {
     char *s = cmd->word;
 
     cmd->ci = 0;
 
-    if (!strcmp(s, "q")) {
+    if (!strcmp(line, "q")) {
 	strcpy(s, "quit");
 	cmd->ci = QUIT;
-    } if (!strcmp(s, "x")) {
+    } if (!strcmp(line, "x")) {
 	strcpy(s, "quit");
 	cmd->ci = QUIT;
 	cmd->opt = OPT_X;
-    } else if (!strcmp(s, "let")) {
-	cmd->ci = GENR;
     } else if (!strcmp(s, "ls")) {
 	cmd->ci = VARLIST;
     } else if (!strcmp(s, "boxplots")) { 
@@ -931,7 +929,8 @@ static void accommodate_obsolete_commands (char *line, CMD *cmd)
     }
 }
 
-static int plausible_genr_start (const char *line, CMD *cmd)
+static int plausible_genr_start (const char *line, CMD *cmd, 
+				 const DATAINFO *pdinfo)
 {
     if (strchr(line, '=') != NULL) {
 	char word[9];
@@ -943,6 +942,9 @@ static int plausible_genr_start (const char *line, CMD *cmd)
 	    if ((c == ' ' || c == '=' || c == '[') &&
 		check_varname(word) == 0) {
 		cmd->ci = GENR;
+		if (get_matrix_by_name(word, pdinfo)) {
+		    cmd->opt = OPT_M;
+		}
 	    }
 	}
     }
@@ -1338,7 +1340,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     accommodate_obsolete_commands(line, cmd);
 
     /* replace simple aliases and a few specials */
-    catch_command_alias(cmd);
+    catch_command_alias(line, cmd);
 
     /* "remember": capture the line in cmd's "extra" field */
     if (cmd->ci == REMEMBER) {
@@ -1362,7 +1364,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci = gretl_command_number(cmd->word);
 	if (cmd->ci == 0) {
 	    /* trap bogus commands */
-	    if (!plausible_genr_start(line, cmd)) {
+	    if (!plausible_genr_start(line, cmd, pdinfo)) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 			cmd->word);
@@ -3140,6 +3142,7 @@ int simple_commands (CMD *cmd, const char *line,
  * get_command_index:
  * @line: command line.
  * @cmd: pointer to gretl command struct.
+ * @pdinfo: dataset information.
  *
  * Parse @line and assign to the %ci field of @cmd the index number of
  * the command embedded in @line.  Note: this is a "lite" version of
@@ -3149,7 +3152,7 @@ int simple_commands (CMD *cmd, const char *line,
  * Returns: 1 on error, otherwise 0.
  */
 
-int get_command_index (const char *line, CMD *cmd)
+int get_command_index (const char *line, CMD *cmd, const DATAINFO *pdinfo)
 {
     static int context;
     int done = 0;
@@ -3194,7 +3197,7 @@ int get_command_index (const char *line, CMD *cmd)
 	fprintf(stderr, " context (static) = %d, ci = %d\n", context, cmd->ci);
 #endif
 	done = 1;
-    } else if (catch_command_alias(cmd)) {
+    } else if (catch_command_alias(line, cmd)) {
 #if CMD_DEBUG
 	fprintf(stderr, " caught command alias, ci = %d\n", cmd->ci);
 #endif
@@ -3206,7 +3209,7 @@ int get_command_index (const char *line, CMD *cmd)
 #if CMD_DEBUG
 	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
 #endif
-	if (cmd->ci == 0 && !plausible_genr_start(line, cmd)) {
+	if (cmd->ci == 0 && !plausible_genr_start(line, cmd, pdinfo)) {
 	    cmd->errcode = 1;
 	    sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 		    cmd->word);

@@ -77,6 +77,7 @@ const char *gretl_error_messages[] = {
     N_("Missing values encountered"),                            /* E_MISSDATA */
     N_("Not a Number in calculation"),                           /* E_NAN */
     N_("Matrices not conformable for operation"),                /* E_NONCONF */
+    N_("Data types not conformable for operation"),              /* E_TYPES */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */
