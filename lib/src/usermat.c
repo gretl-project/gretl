@@ -470,7 +470,6 @@ int named_matrix_get_variable (const char *mspec,
 {
     double *x = NULL;
     gretl_matrix *M = NULL;
-    gretl_matrix *T = NULL;
     gretl_matrix *S = NULL;
     int sn = pdinfo->t2 - pdinfo->t1 + 1;
     int i, len = 0;
@@ -484,10 +483,7 @@ int named_matrix_get_variable (const char *mspec,
 	    M = S;
 	}
     } else if (strchr(mspec, '\'')) {
-	T = get_matrix_transpose_by_name(mspec, pdinfo);
-	if (T != NULL) {
-	    M = T;
-	}
+	return 1;
     } else {
 	M = get_matrix_by_name(mspec, pdinfo);
     }
@@ -536,9 +532,7 @@ int named_matrix_get_variable (const char *mspec,
 
     if (S != NULL) {
 	gretl_matrix_free(S);
-    } else if (T != NULL) {
-	gretl_matrix_free(T);
-    }    
+    }   
 
     return err;
 }
