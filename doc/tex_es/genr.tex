@@ -1,0 +1,373 @@
+\chapter{Funciones especiales en genr}
+\label{chap-genr}
+
+\section{Introducción}
+\label{genr-intro}
+
+La instrucción \verb+genr+ proporciona una manera flexible de definir nuevas variables.  
+Está documentada en la \GCR.  Este capítulo ofrece una explicación más extensa de algunas funciones especiales que están disponibles por medio de \verb+genr+ y algunas de las características más 
+peculiares de la instrucción.
+    
+
+\section{Filtros de series temporales}
+\label{genr-filter}
+
+Una de las funciones especializadas de \verb+genr+ es el filtrado de series temporales.  
+Actualmente están disponibles dos filtros, el de
+Hodrick--Prescott filter y el filtro pasabanda de Baxter--King. Se accede a ellos
+usando \verb+hpfilt()+ y \verb+bkfilt()+ respectivamente:
+en cada caso la función tiene un argumento: el nombre de la variable a procesar.
+ 
+
+\subsection{Filtro de Hodrick--Prescott}
+\label{hodrick-prescott}
+
+Una serie temporal $y_t$ puede descomponerse en un componente de tendencia o de crecimiento
+$g_t$ y un componente cíclico $c_t$.  
+%
+\[
+y_t = g_t + c_t, \quad t = 1,2,\dots,T
+\]
+%
+El filtro de Hodrick--Prescott efectúa dicha descomposición mediante la minimización de:
+%
+\[
+    \sum_{t = 1}^T {(y_t - g_t )^2 } + \lambda \sum_{t = 2}^{T -
+      1} \left((g_{t+1} - g_t) - (g_t - g_{t - 1} )\right)^2 .
+\]
+%
+El primer término de arriba es la suma del componente cíclico $c_t = y_t - g_t$ al cuadrado. El segundo término es la suma de cuadrados de la segunda diferencia del componente de tendencia multiplicada por $\lambda$. Este segundo término penaliza las variaciones en la tasa de crecimiento del componente de tendencia: cuanto mayor sea el valor de $\lambda$, mayor es la penalización y así, más suave el componente de tendencia.
+
+Nótese que la función \cmd{hpfilt} en \app{gretl} produce el componente
+cíclico, $c_t$, de la serie original.  Si Vd desea obtener la tendencia suavizada,
+puede restar el ciclo a la serie original
+
+\begin{code}
+genr ct = hpfilt(yt)
+genr gt = yt - ct
+\end{code}
+
+Hodrick and Prescott (1997) sugieren que un valor de $\lambda = 1600$
+es razonable para datos trimestrales.  El valor por defecto en \app{gretl} es
+100 veces el cuadrado de la periodicidad de los datos (lo cual, obviamente, da
+1600 para datos trimestrales).  Ese valor puede ajustarse usando la instrucción
+\cmd{set} con un valor para el parámetro \cmd{hp\_lambda}.  Por ejemplo,
+\cmd{set hp\_lambda 1200}.
+
+
+\subsection{Filtro de Baxter y King}
+\label{baxter-king}
+
+Considérese la representación espectral de una serie temporal $y_t$:
+%       
+\[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
+%
+Para extraer el componente de $y_t$ de frecuencia entre $\underline{\omega}$ y $\overline{\omega}$
+se podría aplicar un filtro \textit{pasabanda}:
+% To extract the component of $y_t$ that lies between the frequencies
+% $\underline{\omega}$ and $\overline{\omega}$ one could apply a
+% bandpass filter:
+%       
+\[ c^*_t = \int_{-\pi}^{\pi} F^*(\omega) e^{i\omega} \mathrm{d}
+Z(\omega) \]
+%
+donde $F^*(\omega) = 1$ para $\underline{\omega} < |\omega| <
+\overline{\omega}$ y 0 en el resto. Esto implicaría, en el dominio del tiempo,
+aplicar a la serie un filtro con un número infinito de coeficientes, lo cual no es algo deseable.
+El filtro pasabanda de Baxter y King aplica a $y_t$ un polinomio finito en el operador de retardos
+$A(L)$:
+%       
+\[ c_t = A(L) y_t \]
+%
+donde $A$($L$) se define como
+%       
+\[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
+
+Los coeficientes $a_i$ se eligen de manera que $F(\omega)
+= A(e^{i\omega})A(e^{-i\omega})$ es la mejor aproximación a
+$F^*(\omega)$ para un $k$ dado. Claramente, cuanto mayor sea $k$ mejor será 
+la aproximación, pero como hay que descartar $2k$ observaciones, hay que buscar un valor de compromiso para $k$.  Por otra parte, el filtro tiene también otras características teóricas interesantes, entre ellas la propiedad de que $A(1) = 0$, así que, una serie con una sóla raíz unitaria
+se transforma en estacionaria mediante la aplicación del filtro.
+
+En la práctica, normalmente se usa el filtro con datos mensuales o trimestrales para extraer
+el componente de ``ciclo de negocios'', es decir, el componente cíclico de periodo entre 6 y 36 trimestres. Los valores más usuales que se eligen para $k$ son 8 ó 12 (puede ser mayor
+para series mensuales).  Los valores por defecto para las cotas de frecuencia son
+8 y 32, y el valor por defecto para el orden de aproximación, $k$, es 8. Estos valores se pueden ajustar mediante la instrucción \cmd{set}. El parámetro para elegir los límites de la frecuencia
+es \verb+bkbp_limits+ y el parámetro para $k$ es \verb+bkbp_k+.  Así, por ejemplo,
+si se estuvieran utilizando datos mensuales y se desea ajustar las cotas de frecuencia a 18 y 96
+y $k$ a 24, se ejecutaría
+
+\begin{code}
+    set bkbp_limits 18 96
+    set bkbp_k 24
+\end{code}
+
+Esos valores permanecerían en uso para llamadas posteriores a la función \verb+bkfilt+
+hasta que se cambien de nuevo mediante la instrucción \verb+set+.
+      
+
+\section{Remuestreo y \textit{bootstrap}}
+\label{genr-resample}
+
+Otra función especial de \cmd{genr} es el remuestreo con reemplazamiento de una serie.
+Dada una serie de datos original \varname{x}, la instrucción
+
+\begin{code}
+    genr xr = resample(x)
+\end{code}
+
+crea una nueva serie en la que cada uno de sus elementos se obtiene aleatoriamente desde
+los elementos de \varname{x}. Si la serie original tiene 100 observaciones, cada elemento de
+\varname{x} puede ser seleccionado con probabilidad $1/100$ en cada extracción. Así el efecto es
+``mezclar'' los elementos de \varname{x}, con la 
+peculiaridad de que cada elemento de \varname{x} puede aparecer más de
+una vez, o ninguna, en \varname{xr}.
+
+El uso primario de esta función es en la construcción de intervalos de confianza
+bootstrap o valores p. He aquí un ejemplo simple. Supongamos que estimamos una 
+regresión simple de $y$ sobre $x$ por medio de MCO y encontramos que
+el estadístico $t$ del coeficiente de pendiente se muestra igual
+a 2,5 con 40 grados de libertad. El valor p a dos colas para la
+hipótesis nula de que el parámetro de pendiente es igual a cero es
+entonces 0,0166 en la distribución $t(40)$. Sin embargo, dependiendo
+del contexto nosotros podemos dudar de si el cociente entre el
+coeficiente estimado y la desviación típica  realmente sigue la
+distribución $t(40)$. En ese caso, podríamos obtener un valor p
+``bootstrap'' como se muestra en el
+Ejemplo~\ref{resample-loop} 
+
+Bajo la hipótesis nula de que la pendiente con respecto a $x$ es cero,
+$y$ es simplemente igual a su media más un término de error. Se
+calcula la media de $y$ y se simulan nuevos datos de $y$ como la
+media de $y$ mas una muestra obtenida por remuestreo de los residuos
+de la estimación MCO inicial y se vuelve a estimar el modelo con las
+observaciones simuladas de $y$. Se repite este procedimiento un gran
+número de veces y se cuenta el número de veces que el valor
+absoluto del estadístico $t$ es mayor que 2,5: la proporción
+correspondiente a estos casos es nuestro valor p bootstrap. Para una
+buena discusión de contrastes basados en simulación y bootstrap, ver
+Davidson y MacKinnon (2004, capítulo 4).
+
+\begin{script}[htbp]
+  \caption{Cálculo de valor p bootstrap}
+  \label{resample-loop}
+\begin{code}
+    ols y 0 x
+    # se guardan los residuos
+    genr ui = $uhat
+    scalar ybar = mean(y)
+    # número de replicaciones para el bootstrap
+    scalar replics = 10000
+    scalar tcount = 0
+    series ysim = 0
+    loop replics --quiet
+      # generar la y simulada mediante remuestreo
+      ysim = ybar + resample(ui)
+      ols ysim 0 x
+      scalar tsim = abs(coeff(x) / stderr(x))
+      tcount += (tsim > 2.5)
+    endloop      
+    printf "proporcion de casos en que |t| > 2.5 = %g\n", \
+       tcount / replics
+\end{code}
+\end{script}%
+    
+
+\section{Valores ausentes}
+\label{genr-missing}
+
+Hay cuatro funciones especiales disponibles para el manejo de valores
+ausentes. La función booleana \verb+missing()+ toma como único
+argumento el nombre de una variable; devuelve una serie con valor 1
+para cada observación en que la serie tiene un valor ausente y un
+valor de 0 en los demás casos (es decir, si la variable dada tiene un
+valor válido en esa observación). La función \verb+ok()+ es la
+complementaria de \verb+missing+; es sólo un atajo de
+\verb+!missing+ (donde \verb+!+ es el operador booleano NO). Por
+ejemplo, se pueden contar los valores ausentes de la variable \verb+x+
+usando
+
+% Four special functions are available for the handling of missing
+% values.  The boolean function \verb+missing()+ takes the name of a
+% variable as its single argument; it returns a series with value 1
+%for
+% each observation at which the given variable has a missing value,
+%and
+% value 0 otherwise (that is, if the given variable has a valid value
+%at
+% that observation).  The function \verb+ok()+ is complementary to
+% \verb+missing+; it is just a shorthand for \verb+!missing+ (where
+% \verb+!+ is the boolean NOT operator).  For example, one can count
+%the
+% missing values for variable \verb+x+ using
+
+\begin{code}
+    genr nmiss_x = sum(missing(x))
+\end{code}
+
+La función \verb+zeromiss()+, que, de nuevo, toma el nombre de una
+serie como único argumento, devuelve una serie en la que a todos los
+valores cero se les asigna el código de valor ausente. Esto debe
+usarse con precaución --- uno no desea confundir valores ausentes y
+ceros --- pero puede ser útil en algunos contextos. Por ejemplo, es
+posible determinar cuál es la primera observación válida de una
+variable \verb+x+ utilizando
+
+% The function \verb+zeromiss()+, which again takes a single series as
+% its argument, returns a series where all zero values are set to the
+% missing code.  This should be used with caution --- one does not
+%want
+% to confuse missing values and zeros --- but it can be useful in some
+% contexts.  For example, one can determine the first valid
+%observation
+% for a variable \verb+x+ using
+
+\begin{code}
+    genr time
+    genr x0 = min(zeromiss(time * ok(x)))
+\end{code}
+
+La función \verb+misszero()+ realiza lo contrario de 
+\verb+zeromiss+, es decir, convierte todos los valores ausentes
+en ceros.  
+
+Puede ser conveniente comentar la propagación de los valores ausentes
+dentro de las fórmulas construidas mediante \verb+genr+.  La
+regla general es que en las operaciones aritméticas en las que
+intervienen dos variables, si alguna de las variables tiene un
+valor ausente en la observación $t$, entonces la serie resultante
+también tendrá un valor ausente en $t$. La única excepción a esta
+regla es la multiplicación por cero: el cero multiplicado por un
+valor ausente produce un cero (ya que esto es matemáticamente válido
+ independientemente de cuál sea el valor
+desconocido).
+    
+
+\section{Recuperar variables internas}
+\label{genr-internal}
+
+La instrucción \verb+genr+ proporciona un método para recuperar
+varios valores definidos internamente que calcula el programa al
+estimar los modelos o al contrastar hipótesis. Las variables que
+pueden ser recuperadas mediante este procedimiento están listadas en
+la \GCR; aquí sólo detallaremos un poco más el uso de las variables
+especiales \verb+$test+ y \verb+$pvalue+.
+
+% The \verb+genr+ command provides a means of retrieving various
+%values
+% calculated by the program in the course of estimating models or
+% testing hypotheses.  The variables that can be retrieved in this way
+% are listed in the \GCR; here we say a bit more about the special
+% variables \verb+$test+ and \verb+$pvalue+.
+
+Esas variables contienen, respectivamente, el valor del último
+estadístico de contraste calculado utilizando una instrucción de
+contraste específica y el valor p para ese estadístico de contraste.
+Si no se ha ejecutado ninguna instrucción de contraste en el momento
+en que se referencian esas variables, producirán el código de valor
+ausente. Las ``instrucciones de contraste específicas'' que funcionan
+de esta manera son las siguientes: \cmd{add} (contraste
+conjunto para la significación de variables añadidas a un modelo);
+\cmd{adf} (contraste de Dickey--Fuller aumentado,
+ver más abajo); \cmd{arch} (contraste de ARCH); \cmd{chow}
+(contraste de Chow de cambio estructural);
+\cmd{coeffsum} (contraste de la suma de los coeficeintes
+especificados); \cmd{cusum} (el estadístico $t$ de
+Harvey--Collier);
+\cmd{kpss} (contraste de estacionariedad KPSS, el valor p no está
+disponible);
+\cmd{lmtest} (ver más abajo); \cmd{meantest} (contraste de
+diferencia de medias); \cmd{omit} (contraste conjunto de
+significatividad de las variables que se han omitido en un
+modelo); \cmd{reset} (Contraste RESET de Ramsey);
+\cmd{restrict}
+(restricciones lineales en general);
+\cmd{runs} (contraste de rachas, de aleatoriedad);
+\cmd{testuhat} (contraste de normalidad de los residuos); y
+\cmd{vartest}
+(contraste de diferencia de varianzas). En la mayoría de los casos
+se guardan tanto el valor del estadístico (\verb+$test+) como el
+valor p (\verb+$pvalue+); la excepción es el contraste KPSS,
+para el que actualmente no está disponible el valor p.
+
+Es importante advertir respecto a este mecanismo que las variables
+internas \verb+$test+ y \verb+$pvalue+ se sobreescriben cada vez que
+se ejecuta alguno de los contrastes listados anteriormente. Si Vd.
+desea referirse a esos valores, debe hacerlo en el punto correcto
+dentro de la secuencia de instrucciones de \app{gretl}.
+
+También hay que mencionar que algunas de estas instrucciones de
+contraste  generan, por defecto, más de un estadístico de contraste y
+valor p; en estos casos sólo se guardan los últimos valores. Para
+controlar adecuadamente los valores que se recuperan por medio de 
+\verb+$test+ y \verb+$pvalue+ se debería formular la instrucción de
+contraste de tal forma que el resultado no sea ambiguo. Este
+comentario se refiere en particular a las instrucciones
+\verb+adf+ y \verb+lmtest+.
+
+
+\begin{itemize}
+\item Por defecto, la instrucción \cmd{adf} genera tres
+variantes del contraste de Dickey--Fuller: una basada en una
+regresión que incluye una constante, otra usando una constante y
+una tendencia lineal y otra utilizando una constante y una
+tendencia cuadrática. Cuando Vd. desea referirse a \verb+$test+ o
+\verb+$pvalue+ en relación a esta instrucción, Vd. puede controlar
+la variante que se graba mediante el uso de las opciones
+  \verb+--nc+, \verb+--c+, \verb+--ct+ o \verb+--ctt+ con
+  \verb+adf+.
+\item Por defecto, la instrucción \cmd{lmtest} (que debe
+ejecutarse después de una regresión MCO) desarrolla varios
+contrastes de diagnóstico sobre la regresión en cuestión. 
+Para controlar cuál se grana en \verb+$test+ y \verb+$pvalue+ Vd. 
+debería limitar el contraste usando una de las opciones
+  \verb+--logs+, \verb+--autocorr+, \verb+--squares+ o
+  \verb+--white+.
+\end{itemize}
+
+Como ayuda, al trabajar con valores recuperados mediante
+\verb+$test+ y \verb+pvalue+ se escribe el tipo de contraste
+correspondiente en la etiqueta descriptiva de la variable generada. 
+Vd. puede leer la etiqueta de la variable mediante la instrucción
+\cmd{label} (con sólo un argumento, el nombre de la variable), para
+comprobar que ha recuperado el valor correcto. Como ilustración de
+esto véase la siguiente sesión interactiva.
+
+% As an aid in working with values retrieved using \verb+$test+ and
+% \verb+$pvalue+, the nature of the test to which these values relate
+%is
+% written into the descriptive label for the generated variable.  You
+% can read the label for the variable using the \cmd{label} command
+% (with just one argument, the name of the variable), to check that
+%you
+% have retrieved the right value.  The following interactive session
+% illustrates this point.
+
+\begin{code}
+? adf 4 x1 --c
+
+Contrastes aumentados de Dickey-Fuller, orden 4, para x1:
+tamaño muestral 59
+hipótesis nula de raíz unitaria: a = 1
+
+   contraste con constante
+   modelo: (1 - L)y = b0 + (a-1)*y(-1) + ... + e
+   valor estimado de (a - 1): -0,216889
+   Estadístico de contraste: t = -1,83491
+   valor p asintótico 0,3638
+
+Valores p basados en el artículo de MacKinnon (JAE, 1996)
+
+? genr pv = $pvalue
+Generada escalar pv (ID 13) = 0,363844
+? label pv    
+pv=valor p de Dickey-Fuller (scalar)
+\end{code}
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+
