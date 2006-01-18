@@ -1337,7 +1337,7 @@ int get_t_from_obs_string (char *s, const double **Z,
 #if OBS_DEBUG
 		fprintf(stderr, " based on var %d: t = %d\n", v, t);
 #endif
-		if (t >= pdinfo->n) {
+		if (t > pdinfo->n) {
 		    char try[16];
 
 		    sprintf(try, "%d", t);

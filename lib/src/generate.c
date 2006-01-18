@@ -791,21 +791,29 @@ matrix_gen_function (const char *s, GENERATOR *genr, genatom *atom)
 	return;
     }
 
-    if (atom->func == T_IMAT && nf == 1) {
-	M = gretl_identity_matrix_new(r);
-    } else if (atom->func == T_ZEROS && nf == 2) {
-	M = gretl_zero_matrix_new(r, c);
-    } else if (atom->func == T_ONES && nf == 2) {
-	M = gretl_unit_matrix_new(r, c);
-    } else if ((atom->func == T_UNIFORM || atom->func == T_NORMAL) && nf == 2) {
-	M = gretl_matrix_alloc(r, c);
-	if (M != NULL) {
-	    gretl_matrix_random_fill(M, atom->func);
+    if ((atom->func == T_IMAT && nf != 1) || 
+	(atom->func != T_IMAT && nf != 2)) {
+	genr->err = 1;
+	sprintf(gretl_errmsg, "wrong number of arguments for function %s()\n",
+		get_genr_func_word(atom->func));
+    } else {
+	if (atom->func == T_IMAT) {
+	    M = gretl_identity_matrix_new(r);
+	} else if (atom->func == T_ZEROS) {
+	    M = gretl_zero_matrix_new(r, c);
+	} else if (atom->func == T_ONES) {
+	    M = gretl_unit_matrix_new(r, c);
+	} else if ((atom->func == T_UNIFORM || atom->func == T_NORMAL)) {
+	    M = gretl_matrix_alloc(r, c);
+	    if (M != NULL) {
+		gretl_matrix_random_fill(M, atom->func);
+	    }
 	}
-    }
-
-    if (M != NULL) {
-	atom_set_matrix(atom, M, s);
+	if (M == NULL) {
+	    genr->err = E_ALLOC;
+	} else {
+	    atom_set_matrix(atom, M, s);
+	} 
     }
 }
 
@@ -1633,11 +1641,11 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 
 	DPRINTF(("\natom %d, atom->level %d\n", 
 		 i++, atom->level));
-#if GENR_DEBUG
-	debug_print_matrix(B, "eval_matrix_atom: got B =");
-#endif
 	MPRINTF(("\nInitial A = %p; eval_matrix_atom gave B = %p\n", 
 		 (void *) A, (void *) B)); 
+#if GENR_DEBUG
+	gretl_matrix_print(B, "eval_matrix_atom: got B =");
+#endif
 
 	if (genr->err) break;
 
@@ -1670,7 +1678,7 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 		DPRINTF(("pushed NULL at level %d\n", level));
 		npush++;
 	    }
-	} else if (maybe_free_genr_matrix(Abak, "Abak")) {
+	} else if (Abak != A && maybe_free_genr_matrix(Abak, "Abak")) {
 	    /* not pushing matrix Abak: free it, if it's not "spoken for" */
 	    Abak = NULL;
 	}
@@ -2366,15 +2374,20 @@ static int strip_wrapper_parens (char *s)
 
 	strip = 1;
 	for (i=1; i<n-1; i++) {
-	    if (s[i] == '(') pcount++;
-	    else if (s[i] == ')') pcount--;
+	    if (s[i] == '(') {
+		pcount++;
+	    } else if (s[i] == ')') {
+		pcount--;
+	    }
 	    if (pcount == 0) { 
 		/* opening paren matched before end */
 		strip = 0;
 		break;
 	    }
 	}
-	if (strip) s[n-1] = '\0';
+	if (strip) {
+	    s[n-1] = '\0';
+	}
     }    
 
     return strip;

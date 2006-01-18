@@ -95,7 +95,8 @@ The following operators are available for matrices:
 \texttt{./} & element-wise division \\
 \verb+.^+ & element-wise exponentiation \\
 \verb+~+ & column-wise concatenation \\
-\texttt{**} & Kronecker product 
+\texttt{**} & Kronecker product \\
+\texttt{=} & test for equality 
 \end{tabular}
 \end{center}
 
@@ -225,11 +226,11 @@ prefixed with the name of a saved model, plus a period (\texttt{.}), in
 which case they retrieve results from the specified model.  Here are
 some examples:
 %
-\begin{code}
-matrix u = $uhat
-matrix b = m1.$coeff
-matrix v2 = m1.$vcv[1:2,1:2]
-\end{code}%$
+\begin{textcode}
+matrix u = \$uhat\\
+matrix b = m1.\$coeff\\
+matrix v2 = m1.\$vcv[1:2,1:2]
+\end{textcode}
 %
 The first command grabs the residuals from the last model; the second
 grabs the coefficient vector from model \texttt{m1}; and the third
@@ -331,6 +332,46 @@ If you really want to create a matrix using a name that is currently
 assigned to a data series, you must first delete the data series using
 the \texttt{delete} command or rename it using \texttt{rename}.
 
+\section{Creating a data series from a matrix}
+\label{matrix-create-series}
+
+Section~\ref{matrix-create} above describes how to create a matrix
+from a data series or set of series.  You may sometimes wish to go in
+the opposite direction, that is, to copy values from a matrix 
+into a regular data series.  The syntax for this operation is
+%
+\begin{textcode}
+series \textsl{sname} = \textsl{mspec}
+\end{textcode}
+%
+where \ttsl{sname} is the name of the series to create and
+\ttsl{mspec} is the name of the matrix to copy from, possibly followed
+by a matrix selection expression.  Here are two examples.
+%
+\begin{code}
+series s = x
+series u1 = U[,1]
+\end{code}
+%
+It is assumed that \texttt{x} and \texttt{U} are pre-existing
+matrices.  In the second example the series \texttt{u1} is formed from
+the first column of the matrix \texttt{U}.
+
+For this operation to work, the matrix (or matrix selection) must be a
+vector with length equal to either the full length of the current
+dataset, $n$, or the length of the current sample range, $n^{\prime}$.
+If $n^{\prime} < n$ then only $n^{\prime}$ elements are drawn from the
+matrix; if the matrix or selection comprises $n$ elements, the
+$n^{\prime}$ values starting at element $t_1$ are used, where $t_1$
+represents the starting observation of the sample range.  Any values
+in the series that are not assigned from the matrix are set to the
+missing code.
+ 
+Please note that when forming a series in this way, the right-hand
+side of the \texttt{series} command can be \textit{only} the name of a
+matrix, or the name of a matrix plus a selection expression.  There is
+no provision for matrix calculation in this context.
+
 \section{Deleting matrices}
 \label{matrix-delete}
 
@@ -342,23 +383,30 @@ matrix A delete
 %
 where \texttt{A} is the name of the matrix to be deleted.
 
-\section{Extended example}
+\section{Further points and example}
 \label{matrix-example}
 
 Example \ref{examp-matrix} shows how matrix methods can be used to
 replicate gretl's built-in OLS functionality.  The example illustrates
-various additional points.  First, if you just write \texttt{matrix
-  A}, where a matrix \texttt{A} is already defined, the effect is to
-print the matrix.  Second, there is some ``cross over'' between matrix
-expressions and \texttt{genr} (actually the synonym \texttt{scalar} is
-used in the script).  In a \texttt{genr} formula, you can use matrix
-functions that produce scalar results (e.g.\ \texttt{rows()}).  You
-can also reference $1\times 1$ matrices as if they were ordinary
-scalars (e.g.\ \texttt{SSR}).  And in a \texttt{matrix} formula you
-can reference scalar variables where appropriate.  Note, however, that
-ordinary data series cannot be used in \texttt{matrix} expressions,
-other than in the special case of defining a matrix from a list of
-series as in section~\ref{matrix-create} above.
+various additional points.  
+
+First, if you just write \texttt{matrix A}, where a matrix \texttt{A}
+is already defined, the effect is to print the matrix.
+
+Second, there is some ``cross over'' between matrix expressions and
+\texttt{genr} (actually the synonym \texttt{scalar} is used in the
+script).  In a \texttt{genr} formula, you can use matrix functions
+that produce scalar results (e.g.\ \texttt{rows()}).  You can also
+reference $1\times 1$ matrices as if they were ordinary scalars.  And
+in a \texttt{matrix} formula you can reference scalar variables where
+appropriate.  
+
+Note, however, that ordinary data series cannot be used in
+\texttt{matrix} expressions, other than in the special case of
+defining a matrix from a list of series as in
+section~\ref{matrix-create} above.  Similarly, matrices larger than
+$1\times 1$ than cannot be used in the generation of a data series,
+other than as described in section~\ref{matrix-create-series}.
 
 \begin{script}[htbp]
   \caption{OLS via matrix methods}
@@ -371,8 +419,7 @@ series as in section~\ref{matrix-create} above.
   printf "estimated coefficient vector\n"
   matrix b
   matrix uh = y - X*b
-  matrix SSR = uh'*uh
-  matrix SSR
+  scalar SSR = uh'*uh
   scalar s2 = SSR / (rows(X) - rows(b))
   matrix V = s2 * inv(X'*X)
   matrix V

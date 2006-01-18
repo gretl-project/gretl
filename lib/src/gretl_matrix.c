@@ -1449,8 +1449,18 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
     integer ldb = gretl_vector_get_length(b);
     integer *ipiv;
 
+    if (ldb == 0) {
+	fprintf(stderr, "gretl_LU_solve:\n"
+		" a->rows = %d, a->cols = %d\n"
+		" b->rows = %d, b->cols = %d\n", 
+		a->rows, a->cols, b->rows, b->cols);
+	return E_NONCONF;
+    }
+
     ipiv = malloc(n * sizeof *ipiv);
-    if (ipiv == NULL) return 1;
+    if (ipiv == NULL) {
+	return 1;
+    }
 
     dgetrf_(&m, &n, a->val, &n, ipiv, &info);
 
@@ -1462,6 +1472,11 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
     }
 
     dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_LU_solve: dgetrs gave info = %d\n", 
+		(int) info);
+    }    
 
     free(ipiv);
 
@@ -4046,6 +4061,9 @@ int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 	for (j=0; j<a->cols; j++) {
 	    idx = mdx(a,i,j);
 	    if (a->val[idx] != b->val[idx]) {
+		fprintf(stderr, "gretl_matrices_are_equal:\n "
+			"a(%d,%d) = %.15g but b(%d,%d) = %.15g\n",
+			i, j, a->val[idx], i, j, b->val[idx]);
 		return 0;
 	    }
 	}

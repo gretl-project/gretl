@@ -512,18 +512,18 @@ int named_matrix_get_variable (const char *mspec,
 		*px = x;
 	    }
 	} else {
+	    int mi;
+
 	    x = malloc(pdinfo->n * sizeof *x);
 	    if (x == NULL) {
 		err = E_ALLOC;
 	    } else {
-	    
-		if (len < pdinfo->n) {
-		    for (i=0; i<pdinfo->n; i++) {
-			x[i] = NADBL;
-		    }
+		for (i=0; i<pdinfo->n; i++) {
+		    x[i] = NADBL;
 		}
-		for (i=0; i<len; i++) {
-		    x[i + pdinfo->t1] = gretl_vector_get(M, i);
+		for (i=0; i<sn; i++) {
+		    mi = (len == sn)? i : i + pdinfo->t1;
+		    x[i + pdinfo->t1] = gretl_vector_get(M, mi);
 		}
 		*px = x;
 	    }
@@ -1682,6 +1682,29 @@ matrix_test_equality (const gretl_matrix *A, const gretl_matrix *B, int *err)
     return C;
 }
 
+#if MDEBUG
+static void print_calc_input_info (gretl_matrix *A, gretl_matrix *B, char op)
+{
+    fprintf(stderr, "matrix_calc_AB: A = %p", (void *) A);
+    if (A != NULL) {
+	fprintf(stderr, " (%dx%d)", gretl_matrix_rows(A), gretl_matrix_cols(A));
+    } 
+    fprintf(stderr, ", B = %p", (void *) B);
+    if (B != NULL) {
+	fprintf(stderr, " (%dx%d), ", gretl_matrix_rows(B), gretl_matrix_cols(B));
+    }
+    if (isprint(op)) {
+	fprintf(stderr, "op='%c'\n", op);
+    } else {
+	fprintf(stderr, "op=%d\n", (int) op);
+    }
+# if MDEBUG > 1
+    if (A != NULL) gretl_matrix_print(A, "input A");
+    if (B != NULL) gretl_matrix_print(B, "input B");
+# endif
+}
+#endif
+
 /* for use in genr, for matrices */
 
 gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 
@@ -1696,14 +1719,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
     *err = 0;
 
 #if MDEBUG
-    fprintf(stderr, "matrix_calc_AB: A = %p, B = %p, ", 
-	    (void *) A, (void *) B);
-    if (isprint(op)) fprintf(stderr, "op='%c'\n", op);
-    else fprintf(stderr, "op=%d\n", op);
-#endif
-#if MDEBUG > 1
-    debug_print_matrix(A, "input A");
-    debug_print_matrix(B, "input B");
+    print_calc_input_info(A, B, op);
 #endif
 
     switch (op) {

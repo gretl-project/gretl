@@ -26,8 +26,13 @@
 \newcommand{\cmd}[1]{\texttt{#1}}
 \newcommand{\varname}[1]{\texttt{#1}}
 
+\newcommand{\ttsl}[1]{\ttfamily{\textsl{#1}}\normalfont}
+
 \newenvironment{code}{\par\small\verbatim}
 {\endverbatim\normalsize\vspace{-1ex}}
+
+\newenvironment{textcode}{\par\small\ttfamily}
+{\normalfont\normalsize\par}
 
 \renewcommand{\arraystretch}{1.2}
 
