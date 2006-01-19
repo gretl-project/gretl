@@ -240,7 +240,7 @@ static int sn_from_tmp_dummy (double ***pZ, DATAINFO *pdinfo,
     /* + 4 to skip the command word "smpl" */
     sprintf(formula, "__tmpmsk=%s", line + 4);
 
-    err = generate(formula, pZ, pdinfo, OPT_P);
+    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
     *gretl_msg = '\0';
 
     if (err) {

@@ -22,10 +22,12 @@
 
 typedef struct _GENERATOR GENERATOR;
 
-int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt); 
+int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn); 
 
 GENERATOR *
-genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt);
+genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn);
 
 int execute_genr (GENERATOR *genr, int oldv);
 

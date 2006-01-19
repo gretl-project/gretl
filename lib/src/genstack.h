@@ -120,6 +120,8 @@ enum transformations {
     T_NELEM,
     T_DET,
     T_INV,
+    T_CHOL,
+    T_QR,
     T_LDET,
     T_TRACE,
     T_DIAG,
@@ -171,6 +173,7 @@ struct _GENERATOR {
     int nmats;                      /* number of same */
     char **S;                       /* array of obs strings, used in
 				       certain cases of sorting */
+    PRN *prn;                       /* for printing messages */
 };
 
 int attach_atomset (GENERATOR *genr);
@@ -188,6 +191,8 @@ int atom_stack_check_for_scalar (GENERATOR *genr);
 
 gretl_matrix *atom_stack_get_matrix (GENERATOR *genr, const char *str);
 void atom_stack_nullify_matrix (const gretl_matrix *M, GENERATOR *genr);
+
+int arg_atom_available (genatom *atom);
 
 int calc_push (double x, GENERATOR *genr);
 double calc_pop (GENERATOR *genr);

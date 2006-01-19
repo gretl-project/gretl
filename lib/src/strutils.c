@@ -500,7 +500,7 @@ char *gretl_trunc (char *str, size_t n)
 
 int gretl_varchar_spn (const char *s)
 {
-    const char *varchars = "acdefghijklmnopqrstuvwxyz"
+    const char *varchars = "abcdefghijklmnopqrstuvwxyz"
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"0123456789_";
     int ret = 0;

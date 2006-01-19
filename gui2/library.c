@@ -3041,7 +3041,7 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
     int err = 0;
 
-    err = generate(cmdline, &Z, datainfo, OPT_NONE); 
+    err = generate(cmdline, &Z, datainfo, OPT_NONE, NULL); 
 
     if (err) {
 	gui_errmsg(err);
@@ -6285,12 +6285,10 @@ int gui_exec_line (char *line,
 	break;
 
     case GENR:
-	err = generate(line, &Z, datainfo, cmd.opt);
+	err = generate(line, &Z, datainfo, cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
-	} else {
-	    print_gretl_msg(prn);
-	}
+	} 
 	break;
 
     case GNUPLOT:

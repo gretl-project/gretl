@@ -164,6 +164,7 @@ The following matrix-specific functions are available:
 \texttt{det()} & determinant \\
 \texttt{ldet()} & log-determinant \\
 \texttt{inv()} & inverse \\
+\texttt{cholesky()} & Cholesky decomposition \\
 \texttt{tr()} & trace \\
 \texttt{rows()} & number of rows \\
 \texttt{cols()} & number of columns \\
@@ -173,7 +174,10 @@ The following matrix-specific functions are available:
 \end{center}
 
 These functions also require a single matrix (or an expression which
-evaluates to a single matrix) as argument.
+evaluates to a single matrix) as argument.  The \texttt{cholesky}
+function computes the Choleski decomposition $L$ of a symmetric
+positive definite matrix $A$: $A = LL'$; $L$ is lower triangular (has
+zeros above the diagonal).
 
 In addition, there are some functions which generate certain sorts of
 matrices from scratch, given a specification of the desired
@@ -259,13 +263,13 @@ where \textsl{rows} can take one of four forms:
 empty & selects all rows \\
 a single integer & selects the single specified row \\
 two integers separated by a colon & selects a range of rows \\
-the name of a matrix & selects the specified rows
+the name of a matrix & selects the specified rows \\
 \end{tabular}
 \end{center}
 
 With regard to the second option, the integer value can be given
 numerically, or as the name of an existing scalar variable.  With the
-last option, the matrix given in the \textsl{rows} field must be
+last option, the index matrix given in the \textsl{rows} field must be
 either $p\times 1$ or $1\times p$, and should contain integer values
 in the range 1 to $n$, where $n$ is the number of rows in the matrix
 from which the selection is to be made.
@@ -285,6 +289,10 @@ The first example selects row 1 from matrix \texttt{A}; the second
 selects a $2\times 3$ submatrix; the third selects a scalar; and
 the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
 
+In addition there is a special pre-defined ``index matrix''
+specification, \texttt{diag}, which selects the principal diagonal of
+a square matrix, as in \texttt{B[diag]}, where \texttt{B} is square.
+
 You can use selections of this sort on either the right-hand side of
 a matrix-generating formula or the left.  Here is an example of use of
 a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
@@ -295,13 +303,16 @@ matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
 matrix B = A[1:2,2:3]
 \end{code}
 %
-And here is an example of a selection on the left, to write a $2\times
-2$ identity matrix into the bottom right corner of a $3\times 3$
-matrix $A$:
+And here are examples of selection on the left.  The second line below
+writes a $2\times 2$ identity matrix into the bottom right corner of the
+$3\times 3$ matrix $A$.  The fourth line replaces the diagonal of $A$ 
+with 1s.
 %
 \begin{code}
 matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
 matrix A[2:3,2:3] = I(2)
+matrix d = { 1, 1, 1 }
+matrix A[diag] = d
 \end{code}
 
 \section{Namespace issues}
@@ -405,7 +416,7 @@ Note, however, that ordinary data series cannot be used in
 \texttt{matrix} expressions, other than in the special case of
 defining a matrix from a list of series as in
 section~\ref{matrix-create} above.  Similarly, matrices larger than
-$1\times 1$ than cannot be used in the generation of a data series,
+$1\times 1$ cannot be used in the generation of a data series,
 other than as described in section~\ref{matrix-create-series}.
 
 \begin{script}[htbp]

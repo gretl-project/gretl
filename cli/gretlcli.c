@@ -1178,12 +1178,10 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case GENR:
-	err = generate(line, &Z, datainfo, cmd.opt);
+	err = generate(line, &Z, datainfo, cmd.opt, prn);
 	if (err) { 
 	    errmsg(err, prn);
-	} else {
-	    print_gretl_msg(prn);
-	}	
+	} 
 	break;
 
     case GNUPLOT:

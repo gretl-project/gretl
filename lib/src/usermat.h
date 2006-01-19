@@ -63,6 +63,12 @@ double user_matrix_get_log_determinant (const gretl_matrix *m);
 
 gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m);
 
+gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m);
+
+gretl_matrix *
+user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
+		       PRN *prn, int *err);
+
 gretl_matrix *
 user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn);
 

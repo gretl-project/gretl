@@ -118,6 +118,25 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
     return 0;
 }
 
+static int 
+matrix_insert_diagonal (gretl_matrix *M, const gretl_matrix *S,
+			int mr, int mc)
+{
+    double x;
+    int i, len = gretl_vector_get_length(S);
+
+    if (mr != mc || len != mr) {
+	return E_NONCONF;
+    }
+
+    for (i=0; i<len; i++) {
+	x = gretl_vector_get(S, i);
+	gretl_matrix_set(M, i, i, x);
+    }
+    
+    return 0;
+}
+
 static int matrix_insert_submatrix (gretl_matrix *M, const gretl_matrix *S,
 				    const char *mask)
 {
@@ -131,6 +150,10 @@ static int matrix_insert_submatrix (gretl_matrix *M, const gretl_matrix *S,
 
     if (sr > mr || sc > mc) {
 	err = E_NONCONF;
+    }
+
+    if (!err && !strcmp(mask, "[diag]")) {
+	return matrix_insert_diagonal(M, S, mr, mc);
     }
 
     if (!err) {
@@ -194,7 +217,10 @@ static int replace_user_matrix (user_matrix *u, gretl_matrix *M,
 	/* the new matrix M is actally a submatrix, to be written
 	   into the original matrix, u->M */
 	err = matrix_insert_submatrix(u->M, M, mask);
-	gretl_matrix_free(M);
+	if (!is_user_matrix(M)) {
+	    /* is this always right? */
+	    gretl_matrix_free(M);
+	}
     } else {
 #if MDEBUG
 	fprintf(stderr, " freeing u->M at %p, replacing with matrix at %p\n", u->M, M);
@@ -757,10 +783,32 @@ make_slices (const char *s, int m, int n, int **rslice, int **cslice)
     return err;
 }
 
+static gretl_matrix *
+try_diagonal (const gretl_matrix *M, const char *s, int *err)
+{
+    gretl_matrix *d = NULL;
+
+    s = strchr(s, '[');
+
+    if (s != NULL) {
+	char test[5];
+
+	if (sscanf(s + 1, "%4[^]]]", test)) {
+	    if (!strcmp(test, "diag")) {
+		d = gretl_matrix_get_diagonal(M, err);
+	    }
+	}
+    }
+
+    return d;
+}
+
 /* This supports the extraction of scalars, vectors or sub-matrices.
    E.g. B[1,2] extracts a scalar, B[1,] extracts a row vector, and
    B[,2] extracts a column vector.  B[1:2,2:3] extracts a sub-matrix
    composed of the intersection of rows 1 and 2 with columns 2 and 3.
+   As a special case B[diag] extracts the diagonal from a square
+   matrix B.
 */
 
 gretl_matrix *
@@ -774,6 +822,14 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
     int m = gretl_matrix_rows(M);
     int n = gretl_matrix_cols(M);
     int nr, nc;
+    
+    /* special case of "A[diag]": get the diagonal as vector */
+    if (strstr(s, "diag")) {
+	S = try_diagonal(M, s, err);
+	if (S != NULL || *err != 0) {
+	    return S;
+	}
+    }
 
     usermat_publish_dataset(Z, pdinfo);
 
@@ -1336,7 +1392,7 @@ static int fill_matrix_from_series (gretl_matrix *M, const char *s,
 
 static int matrix_genr (const char *name, const char *mask, 
 			const char *s, double ***pZ, 
-			DATAINFO *pdinfo)
+			DATAINFO *pdinfo, PRN *prn)
 {
     char genline[MAXLINE];
     int err;
@@ -1345,7 +1401,7 @@ static int matrix_genr (const char *name, const char *mask,
 	err = 1;
     } else {
 	sprintf(genline, "genr %s%s %s", name, mask, s);
-	err = generate(genline, pZ, pdinfo, OPT_M);
+	err = generate(genline, pZ, pdinfo, OPT_M, prn);
     }
 
     return err;
@@ -1410,6 +1466,7 @@ static int name_is_series (const char *name, const DATAINFO *pdinfo)
     int ret = 0;
 
     if (v < pdinfo->v && pdinfo->vector[v]) {
+	sprintf(gretl_errmsg, _("'%s' is the name of a data series"), name);
 	ret = 1;
     }
 
@@ -1449,13 +1506,12 @@ static int create_matrix (const char *name, const char *mask,
 
     if (name_is_series(name, pdinfo)) {
 	/* can't overwrite data series with matrix */
-	sprintf(gretl_errmsg, _("'%s' is the name of a data series"), name);
 	return E_TYPES;
     }
 
     p = strchr(s, '{');
     if (p == NULL) {
-	err = matrix_genr(name, mask, s, pZ, pdinfo);
+	err = matrix_genr(name, mask, s, pZ, pdinfo, prn);
 	goto finalize;
     }
     s = p + 1;
@@ -1501,8 +1557,8 @@ static int create_matrix (const char *name, const char *mask,
     }
 
 #if MDEBUG
-    fprintf(stderr, "r=%d, c=%d, transp=%d, series=%d\n",
-	    r, c, transp, series);
+    fprintf(stderr, "r=%d, c=%d, transp=%d, series=%d, s='%s'\n",
+	    r, c, transp, series, s);
 #endif
 
     if (!err) {
@@ -1906,6 +1962,111 @@ gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m)
     return R;
 }
 
+gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m)
+{
+    gretl_matrix *R = NULL;
+
+    if (m != NULL) {
+	R = gretl_matrix_copy(m);
+	if (R != NULL) {
+	    if (gretl_matrix_cholesky_decomp(R)) {
+		gretl_matrix_free(R);
+		R = NULL;
+	    }
+	} 
+    }
+
+    if (R == NULL) {
+	strcpy(gretl_errmsg, _("Matrix decomposition failed"));
+    }
+
+    return R;
+}
+
+static int 
+real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q, 
+			    gretl_matrix **R)
+{
+    int mc, err = 0;
+
+    *Q = NULL;
+    *R = NULL;
+
+    if (m != NULL) {
+	mc = gretl_matrix_cols(m);
+	*Q = gretl_matrix_copy(m);
+	*R = gretl_matrix_alloc(mc, mc);
+
+	if (*Q == NULL || *R == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = gretl_matrix_QR_decomp(*Q, *R);
+	} 
+    }
+
+    if (err) {
+	strcpy(gretl_errmsg, _("Matrix decomposition failed"));
+	gretl_matrix_free(*Q);
+	gretl_matrix_free(*R);
+	*Q = NULL;
+	*R = NULL;
+    }
+
+    return err;
+}
+
+gretl_matrix *
+user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
+		       PRN *prn, int *err)
+{
+    int nm = n_matrices;
+    gretl_matrix *M = NULL;
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
+    char qstr[64];
+    char *rstr;
+
+    *qstr = 0;
+    strncpy(qstr, str, 63);
+    rstr = strrchr(qstr, ',') ;
+
+    if (rstr == NULL || *(rstr+1) != '@' || *(rstr+2) == 0) {
+	*err = 1;
+    } else {
+	*rstr = 0;
+	rstr += 2;
+
+#if MDEBUG
+	fprintf(stderr, "QR: left-hand matrix = '%s'\n", qstr);
+	fprintf(stderr, "QR: right-hand matrix = '%s'\n", rstr);
+#endif
+
+	if (name_is_series(qstr, pdinfo) || name_is_series(rstr, pdinfo)) {
+	    return NULL;
+	}
+
+	M = get_matrix_by_name(qstr, pdinfo);
+	if (M == NULL) {
+	    *err = E_UNKVAR;
+	} else {
+	    *err = real_user_matrix_QR_decomp(M, &Q, &R);
+	}
+	if (R != NULL) {
+	    *err = add_or_replace_user_matrix(R, rstr, NULL, NULL, 
+					      pZ, pdinfo);
+	    if (gretl_messages_on()) {
+		if (n_matrices > nm) {
+		    pprintf(prn, "Added matrix '%s'\n", rstr);
+		} else {
+		    pprintf(prn, "Replaced matrix '%s'\n", rstr);
+		}
+	    }
+	}
+    }
+
+    return Q;
+}
+
 gretl_matrix *
 user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn)
 {
@@ -1924,15 +2085,16 @@ user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn)
     return R;
 }  
 
-/* move tranpose symbol ' in front of parenthesized
-   matrix expression so genr can handle it as a function
+/* move transpose symbol ' in front of parenthesized matrix expression
+   (possibly with a leading function word), so genr can handle it as
+   if it were a function
 */
 
 int reposition_transpose_symbol (char *s)
 {
     int pc, len = strlen(s);
     int offset;
-    int i, j, sz;
+    int i, j, k, sz;
     int err = 0;
 
     for (i=3; i<len; i++) {
@@ -1947,6 +2109,13 @@ int reposition_transpose_symbol (char *s)
 		}
 		sz++;
 		if (pc == 0) {
+		    /* back up to start of function word, if any */
+		    for (k=j-1; k>=0; k--) {
+			if (!isalpha(s[k]) && !isdigit(s[k]) && s[k] != '_') {
+			    break;
+			}
+			sz++;
+		    }
 		    offset = i - sz;
 		    memmove(s + offset + 1, s + offset, sz);
 		    s[offset] = '\'';

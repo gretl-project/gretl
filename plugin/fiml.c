@@ -307,7 +307,6 @@ fiml_form_sigma_and_psi (fiml_system *fsys, const double **Z, int t1)
 	err = gretl_matrix_cholesky_decomp(fsys->psi);
 	/* we actually want the transpose of psi (ETM, under eq (12.86) */
 	gretl_square_matrix_transpose(fsys->psi);
-	gretl_matrix_zero_lower(fsys->psi);
     }
 
 #if FDEBUG

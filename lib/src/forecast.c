@@ -578,7 +578,7 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 	pdinfo->t1 = fc->t1;
 	pdinfo->t2 = fc->t2;
 	sprintf(formula, "$nl_y = %s", nlfunc);
-	err = generate(formula, pZ, pdinfo, OPT_P);
+	err = generate(formula, pZ, pdinfo, OPT_P, NULL);
     }
 
     if (!err) {

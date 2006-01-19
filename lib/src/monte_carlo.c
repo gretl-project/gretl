@@ -2596,10 +2596,8 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case GENR:
-		err = generate(linecpy, pZ, *ppdinfo, cmd.opt);
-		if (loop_is_verbose(loop) && !err) { 
-		    print_gretl_msg(prn);
-		}
+		err = generate(linecpy, pZ, *ppdinfo, cmd.opt, 
+			       (loop_is_verbose(loop))? prn : NULL);
 		break;
 
 	    case ARMA:
@@ -2988,7 +2986,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     sprintf(formula, "__iftest=%s", line);
 
-    err = generate(formula, pZ, pdinfo, OPT_P);
+    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
 #if IFDEBUG
     fprintf(stderr, "if_eval: generate returned %d\n", err);
 #endif

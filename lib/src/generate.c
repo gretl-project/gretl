@@ -157,6 +157,8 @@ struct genr_func funcs[] = {
     { T_NELEM,    "nelem" },
     { T_DET,      "det" },
     { T_INV,      "inv" },
+    { T_CHOL,     "cholesky" },
+    { T_QR,       "qrdecomp" },
     { T_LDET,     "ldet" },
     { T_TRACE,    "tr" },
     { T_DIAG,     "diag" },
@@ -198,9 +200,12 @@ struct genr_func funcs[] = {
 
 #define MATRIX_FILL_FUNC(f) (f == T_IMAT || f == T_ZEROS || f == T_ONES)
 
-#define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG)
+#define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG || \
+                               f == T_INV || f == T_CHOL || f == T_QR)
 
 #define RAND_FUNC(f) (f == T_UNIFORM || f == T_NORMAL)
+
+#define needs_arg(f) (f > 0 && f != T_UNIFORM && f != T_NORMAL)
 
 #ifdef HAVE_MPFR
 # define MP_MATH(f) (f == T_MPOW || f == T_MLOG)
@@ -269,7 +274,8 @@ static int genr_matrix_init (GENERATOR *genr, gretlopt opt)
     return err;
 }
 
-static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
+static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt,
+			    PRN *prn)
 {
     GENERATOR *genr;
 
@@ -286,6 +292,8 @@ static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     } else {
 	genr->flags = GENR_SAVE | GENR_SCALAR;
     }
+
+    genr->prn = prn;
 
     genr->xvec = NULL;
     genr->varnum = 0;
@@ -465,7 +473,7 @@ int get_generated_value (const char *rhs, double *val,
     fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
 #endif
 
-    err = generate(genline, pZ, pdinfo, OPT_P | OPT_D);
+    err = generate(genline, pZ, pdinfo, OPT_P | OPT_D, NULL);
     if (!err) {
 	err = genr_retrieve_result(val, NULL);
     }
@@ -485,7 +493,7 @@ static int get_generated_matrix (const char *rhs, gretl_matrix **M,
     fprintf(stderr, "get_generated_matrix: trying '%s'\n", genline);
 #endif
 
-    err = generate(genline, pZ, pdinfo, OPT_P | OPT_M | OPT_D);
+    err = generate(genline, pZ, pdinfo, OPT_P | OPT_M | OPT_D, NULL);
     if (!err) {
 	err = genr_retrieve_result(NULL, M);
     }
@@ -844,19 +852,23 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 	atom->func == T_CRIT || atom->func == T_FRACDIFF ||
 	BIVARIATE_STAT(atom->func)) {
 	genr->err = set_atom_arg_string(s, genr, atom);
-    } 
+    } else if (atom->func == T_QR && genr_is_matrix(genr)) {
+	genr->err = set_atom_arg_string(s, genr, atom);
+    }
 
     if (atom->func == T_PVALUE) {
 	if (!genr->err) {
 	    atom->val = evaluate_pvalue(atom->str, (const double **) *genr->pZ,
 					genr->pdinfo, &genr->err);
 	    atom->atype = ATOM_SCALAR;
+	    atom->func = 0;
 	}
     } else if (atom->func == T_CRIT) {
 	if (!genr->err) {
 	    atom->val = evaluate_critval(atom->str, (const double **) *genr->pZ,
 					 genr->pdinfo, &genr->err);
 	    atom->atype = ATOM_SCALAR;
+	    atom->func = 0;
 	}
     } else if (atom->func == T_VARNUM || atom->func == T_SERIES ||
 	       atom->func == T_ISLIST || atom->func == T_NELEM) {
@@ -864,9 +876,11 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
     } else if (BIVARIATE_STAT(atom->func)) {
 	atom->val = evaluate_bivariate_statistic(atom->str, genr, atom->func);
 	atom->atype = ATOM_SCALAR;
+	atom->func = 0;
     } else if (MATRIX_SCALAR_FUNC(atom->func) && !genr_is_matrix(genr)) {
 	atom->val = genr_get_matrix_scalar(s, genr, atom->func);
 	atom->atype = ATOM_SCALAR;
+	atom->func = 0;
     } else if (RAND_FUNC(atom->func) && genr_is_matrix(genr)) {
 	matrix_gen_function(s, genr, atom);
     } else if (MATRIX_FILL_FUNC(atom->func)) {
@@ -1042,7 +1056,7 @@ token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 	genr->err = E_ALLOC;
 	return NULL;
     }
-
+    
     if (looks_like_dollar_token(s)) {
 	/* dollarized (internal) variable? */
 	atom_get_dollar_var(s, genr, atom);
@@ -1264,8 +1278,13 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	    R = gretl_matrix_from_scalar(x);
 	} else if (atom->func == T_INV) {
 	    R = user_matrix_get_inverse(M);
+	} else if (atom->func == T_CHOL) {
+	    R = user_matrix_cholesky_decomp(M);
+	} else if (atom->func == T_QR) {
+	    R = user_matrix_QR_decomp(atom->str, genr->pZ, genr->pdinfo, 
+				      genr->prn, &genr->err);
 	} else if (atom->func == T_DIAG) {
-	    R = gretl_matrix_get_diagonal(M);
+	    R = gretl_matrix_get_diagonal(M, &genr->err);
 	} else if (atom->func == T_TRANSP) {
 	    R = gretl_matrix_copy_transpose(M);
 	} else if (atom->func >= T_NONE && atom->func < T_MATHMAX) {
@@ -1590,6 +1609,7 @@ static int add_statistic_to_genr (GENERATOR *genr, genatom *atom)
     atom->val = val;
     atom->atype = ATOM_SCALAR;
     atom_eat_children(atom);
+    atom->func = 0;
 
     return genr->err;
 }
@@ -1779,6 +1799,10 @@ static int evaluate_genr (GENERATOR *genr)
 	    atom_stack_resume(genr);
 	} else if (MP_MATH(atom->func)) {
 	    genr->err = add_mp_series_to_genr(genr, atom);
+	} else if (needs_arg(atom->func) && !arg_atom_available(atom)) {
+	    genr->err = E_SYNTAX; /* FIXME? */
+	    fprintf(stderr, "%s(): needs an argument\n", 
+		    get_genr_func_word(atom->func));
 	} else if (atom_is_series_from_matrix(atom)) {
 	    if (n_atoms > 1) {
 		genr->err = E_TYPES;
@@ -2148,7 +2172,8 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
 
     if (genr_is_matrix(genr)) {
 	if (!strncmp(s, "uniform", 7) ||
-	    !strncmp(s, "normal", 6)) {
+	    !strncmp(s, "normal", 6) ||
+	    !strncmp(s, "qrdecomp", 8)) {
 	    return 1;
 	}
     }
@@ -2276,7 +2301,7 @@ static int token_is_function (char *s, GENERATOR *genr, int level)
 	DPRINTF((" yes, token is function...\n"));
 	if (string_arg_function_word(s, genr) || 
 	    (matrix_scalar_function_word(s) && !genr_is_matrix(genr))) {
-	    /* FIXME compound matrix arg */
+	    /* FIXME compound matrix arg? */
 	    return ret;
 	} else {
 	    char subtok[TOKLEN];
@@ -2950,7 +2975,7 @@ static void get_genr_formula (char *formula, const char *line,
     copy_compress(formula, line, MAXLINE - 10);
 }
 
-static int gentoler (const char *s)
+static int gentoler (const char *s, PRN *prn)
 {
     int err = 0;
 
@@ -2959,7 +2984,8 @@ static int gentoler (const char *s)
 
 	err = set_nls_toler(x);
 	if (!err) {
-	    sprintf(gretl_msg, _("Set tolerance to %g"), x);
+	    pprintf(prn, _("Set tolerance to %g"), x);
+	    pputc(prn, '\n');
 	}
     } else {
 	strcpy(gretl_errmsg, _("The setting for \"toler\" must be numeric"));
@@ -3091,22 +3117,22 @@ static int genr_handle_special (const char *s, GENERATOR *genr,
 	if (di0 == 0) {
 	    err = 1;
 	} else if (di0 == orig_v) {
-	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
+	    pputs(genr->prn, _("Periodic dummy variables generated.\n"));
 	} else {
-	    strcpy(gretl_msg, _("Periodic dummy variables already present.\n"));
+	    pputs(genr->prn, _("Periodic dummy variables already present.\n"));
 	}
     } else if (!strcmp(s, "paneldum")) {
 	err = paneldum(pZ, pdinfo);
 	if (!err) {
-	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
+	    pputs(genr->prn, _("Panel dummy variables generated.\n"));
 	}
     } else if (strcmp(s, "unitdum") == 0) {
 	err = panel_unit_dummies(pZ, pdinfo);
 	if (!err) {
-	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
+	    pputs(genr->prn, _("Panel dummy variables generated.\n"));
 	}
     } else if (!strncmp(s, "toler=", 6)) {
-	err = gentoler(s + 6);
+	err = gentoler(s + 6, genr->prn);
     } else if (!strcmp(s, "time")) {
 	err = genrtime(pZ, pdinfo, 1);
 	do_message = 1;
@@ -3152,7 +3178,8 @@ static void genr_type_check (GENERATOR *genr)
 }
 
 GENERATOR *
-genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
+genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
+	      PRN *prn)
 {
 #if GENR_DEBUG
     genatom *atom;
@@ -3161,9 +3188,8 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     char s[MAXLINE];
 
     *gretl_errmsg = *s = '\0';
-    *gretl_msg = '\0';
 
-    genr = genr_new(pZ, pdinfo, opt);
+    genr = genr_new(pZ, pdinfo, opt, prn);
     if (genr == NULL) {
 	return NULL;
     }
@@ -3350,12 +3376,13 @@ static int genr_write_matrix (GENERATOR *genr)
     gretl_matrix *M = matrix_calc_pop(genr);
     gretl_matrix *Mptr = M;
     gretl_matrix *R = NULL;
+    const char *mask = genr->label;
     int err = 0;
 
     if (M == NULL) {
 	err = 1;
     } else {
-	err = add_or_replace_user_matrix(M, genr->varname, genr->label, &R,
+	err = add_or_replace_user_matrix(M, genr->varname, mask, &R,
 					 genr->pZ, genr->pdinfo);
 
 	if (R != NULL) {
@@ -3555,6 +3582,7 @@ static int genr_try_matrix_expression (GENERATOR *genr, int oldv)
  * @pdinfo: information on the data set.
  * @opt: option flags: %OPT_P means we're generating a "private"
  * variable; %OPT_M means the result should be a matrix.
+ * @prn: printing struct.
  *
  * Generates a new variable, usually via some transformation of
  * existing variables, or by retrieving an internal variable associated
@@ -3563,13 +3591,14 @@ static int genr_try_matrix_expression (GENERATOR *genr, int oldv)
  * Returns: 0 on success, integer error code on error.
  */
 
-int generate (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt)
+int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn)
 {
     GENERATOR *genr;
     int oldv = pdinfo->v;
     int err = 0;
 
-    genr = genr_compile(line, pZ, pdinfo, opt);
+    genr = genr_compile(line, pZ, pdinfo, opt, prn);
     err = genr_get_err(genr);
 
     if (!genr->done) {
@@ -4595,9 +4624,9 @@ static void eval_msg (const GENERATOR *genr)
     double x = genr->xvec[genr->pdinfo->t1];
 
     if (na(x)) {
-	strcpy(gretl_msg, " NA");
+	pputs(genr->prn, " NA\n");
     } else {
-	sprintf(gretl_msg, " %g", x);
+	pprintf(genr->prn, " %g\n", x);
     }
 }
 
@@ -4606,6 +4635,10 @@ static void compose_genr_msg (const GENERATOR *genr, int oldv)
     double x;
     int scalar = genr_is_scalar(genr);
     int mutant = 0;
+
+    if (genr->prn == NULL || !gretl_messages_on()) {
+	return;
+    }
 
     /* no message for special internal vars */
     if (!strcmp(genr->varname, "argv") ||
@@ -4622,7 +4655,7 @@ static void compose_genr_msg (const GENERATOR *genr, int oldv)
 	}
     }
 
-    sprintf(gretl_msg, "%s %s %s (ID %d)", 
+    pprintf(genr->prn, "%s %s %s (ID %d)", 
 	    (genr->obs >= 0)? _("Modified") :
 	    (genr->varnum < oldv)? _("Replaced") : _("Generated"), 
 	    (mutant)? _("variable") :
@@ -4630,20 +4663,18 @@ static void compose_genr_msg (const GENERATOR *genr, int oldv)
 	    genr->varname, genr->varnum);
 
     if (scalar) {
-	char numstr[24];
-
 	x = genr->xvec[genr->pdinfo->t1];
 	if (na(x)) {
-	    strcpy(numstr, " = NA");
+	    pputs(genr->prn, " = NA");
 	} else {
-	    sprintf(numstr, " = %g", x);
+	    pprintf(genr->prn, " = %g", x);
 	}
-	strcat(gretl_msg, numstr);
     }
 
     if (genr_warn(genr)) {
-	strcat(gretl_msg, "\n");
-	strcat(gretl_msg, gretl_errmsg);
-	*gretl_errmsg = '\0';
+	pputc(genr->prn, '\n');
+	pputs(genr->prn, gretl_errmsg);
     }
+
+    pputc(genr->prn, '\n');
 }

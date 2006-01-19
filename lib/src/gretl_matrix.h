@@ -149,7 +149,7 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
 
 gretl_matrix *gretl_matrix_from_scalar (double x);
 
-gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m);
+gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err);
 
 double gretl_matrix_trace (const gretl_matrix *m);
 

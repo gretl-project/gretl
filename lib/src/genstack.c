@@ -61,6 +61,7 @@ struct atomset_ {
                                f == T_DIFF || f == T_LDIFF || f == T_SDIFF || \
                                f == T_T1 || f == T_T2 || f == T_GINI || \
                                f == T_CUM || f == T_SORT || f == T_DET || f == T_INV || \
+                               f == T_CHOL || f == T_QR || \
                                f == T_LDET || f == T_TRACE || f == T_DIAG || \
                                f == T_ROWS || f == T_COLS || f == T_TRANSP || \
                                f == T_VARNUM || f == T_SERIES || \
@@ -305,6 +306,43 @@ gretl_matrix *atom_stack_get_matrix (GENERATOR *genr, const char *str)
     }
 
     return M;
+}
+
+int arg_atom_available (genatom *atom)
+{
+    int j, ret = 0;
+
+    for (j=0; j<atom->aset->n_atoms; j++) {
+	if (atom->aset->atoms[j] == atom) {
+	    if (j > 0 && atom->aset->atoms[j-1]->level == atom->level + 1) {
+		ret = 1;
+		break;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+genatom *atom_stack_get_current_func (GENERATOR *genr)
+{
+    genatom *a = NULL;
+    int j;
+
+    if (genr->aset == NULL) {
+	return NULL;
+    }
+
+    fprintf(stderr, "n_atoms = %d\n", genr->aset->n_atoms);
+
+    for (j = genr->aset->n_atoms - 1; j >= 0; j--) {
+	if (genr->aset->atoms[j]->func != 0) {
+	    a = genr->aset->atoms[j];
+	    break;
+	}
+    }
+
+    return a;    
 }
 
 int attach_atomset (GENERATOR *genr)

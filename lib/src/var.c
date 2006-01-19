@@ -665,10 +665,10 @@ int gretl_VAR_do_error_decomp (const gretl_matrix *S,
 	err = gretl_matrix_cholesky_decomp(tmp);
     }
 
-    /* write the decomposition into the C matrix */
+    /* write the decomposition (lower triangle) into the C matrix */
     if (!err) {
 	for (i=0; i<g; i++) {
-	    for (j=0; j<g; j++) {
+	    for (j=0; j<=i; j++) {
 		x = gretl_matrix_get(tmp, i, j);
 		gretl_matrix_set(C, i, j, x);
 	    }

@@ -500,17 +500,22 @@ void gretl_matrix_zero (gretl_matrix *m)
 /**
  * gretl_matrix_get_diagonal:
  * @m: square input matrix.
+ * @err: location to receive error code.
  *
  * Returns: a column vector containing the diagonal elements of
- * @m, if @m is square, otherwise %NULL.
+ * @m, if @m is square, otherwise %NULL.  A non-zero value is
+ * assigned via @err on failure.
  */
 
-gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m)
+gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
 {
     gretl_matrix *d = NULL;
     int i;
+
+    *err = 0;
     
     if (m == NULL || m->rows != m->cols) {
+	*err = E_NONCONF;
 	return d;
     }
 
@@ -520,6 +525,8 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m)
 	for (i=0; i<m->rows; i++) {
 	    d->val[i] = m->val[mdx(m, i, i)];
 	}
+    } else {
+	*err = E_ALLOC;
     }
 
     return d;
@@ -2054,8 +2061,9 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m)
  * 
  * Computes the Cholesky factorization of the symmetric,
  * positive definite matrix @a.  On exit the lower triangle of 
- * @a is replaced by the factor L, as in a = LL'.
- * Uses the lapack function %dpotrf.
+ * @a is replaced by the factor L, as in a = LL', and the
+ * upper triangle is set to zero.  Uses the lapack function 
+ * %dpotrf.
  *
  * Returns: 0 on success; 1 on failure.
  */
@@ -2078,7 +2086,9 @@ int gretl_matrix_cholesky_decomp (gretl_matrix *a)
 	    fputs("gretl_matrix_cholesky_decomp: illegal argument to dpotrf\n", 
 		  stderr);
 	}
-    } 
+    } else {
+	gretl_matrix_zero_upper(a);
+    }
 
     return (info == 0)? 0 : 1;
 }
