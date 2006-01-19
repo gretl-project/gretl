@@ -185,6 +185,8 @@ void atom_eat_children (genatom *atom);
 void atom_stack_bookmark (GENERATOR *genr);
 void atom_stack_resume (GENERATOR *genr);
 int atom_stack_check_for_scalar (GENERATOR *genr);
+
+gretl_matrix *atom_stack_get_matrix (GENERATOR *genr, const char *str);
 void atom_stack_nullify_matrix (const gretl_matrix *M, GENERATOR *genr);
 
 int calc_push (double x, GENERATOR *genr);

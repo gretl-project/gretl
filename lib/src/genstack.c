@@ -44,6 +44,7 @@ enum {
     STACK_BOOKMARK,
     STACK_RESUME,
     STACK_SCALAR_CHECK,
+    STACK_GET_MATRIX,
     STACK_DESTROY
 };
 
@@ -200,7 +201,7 @@ static void real_stack_set_parentage (genatom **atoms, int n)
 static genatom *atom_stack (genatom *atom, atomset *aset, int op)
 {
     genatom *ret = NULL;
-    int j;
+    int i, j;
 
     if (op == STACK_PUSH && atom != NULL) {
 	genatom **atoms = 
@@ -224,6 +225,13 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
 	aset->n_popped = 0;
     } else if (op == STACK_DESTROY) {
 	for (j=0; j<aset->n_atoms; j++) {
+	    if (aset->atoms[j]->M != NULL) {
+		for (i=j+1; i<aset->n_atoms; i++) {
+		    if (aset->atoms[i]->M == aset->atoms[j]->M) {
+			aset->atoms[i]->M = NULL;
+		    }
+		}
+	    }
 	    free_atom(aset->atoms[j], j);
 	}
 	free(aset->atoms);
@@ -260,7 +268,7 @@ static genatom *atom_stack (genatom *atom, atomset *aset, int op)
 	if (real_check_for_scalar_result(aset->atoms, aset->n_atoms)) {
 	    ret = aset->atoms[0];
 	}
-    }
+    } 
 
     return ret;
 }
@@ -277,6 +285,26 @@ void atom_stack_nullify_matrix (const gretl_matrix *M, GENERATOR *genr)
 	    break;
 	}
     }
+}
+
+gretl_matrix *atom_stack_get_matrix (GENERATOR *genr, const char *str)
+{
+    gretl_matrix *M = NULL;
+    int j;
+
+    if (genr->aset == NULL) {
+	return NULL;
+    }
+
+    for (j=0; j<genr->aset->n_atoms; j++) {
+	if (genr->aset->atoms[j]->M != NULL && 
+	    !strcmp(genr->aset->atoms[j]->str, str)) {
+	    M = genr->aset->atoms[j]->M;
+	    break;
+	}
+    }
+
+    return M;
 }
 
 int attach_atomset (GENERATOR *genr)
@@ -359,7 +387,7 @@ matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr)
 {
     gretl_matrix **mstack = genr->mstack;
     gretl_matrix *R = NULL;
-    int i;
+    int i, j;
 
     if (op == STACK_PUSH) {
 	if (genr->nmats == MATSTACK_SIZE - 1) {
@@ -390,6 +418,12 @@ matrix_calc_stack (gretl_matrix *M, int op, GENERATOR *genr)
 		if (!is_user_matrix(mstack[i]) && !matrix_is_on_atom(mstack[i])) {
 		    MPRINTF(("freeing mstack[%d] at %p\n", i, 
 			     (void *) mstack[i]));
+		    for (j=i+1; j<MATSTACK_SIZE; j++) {
+			/* insure against double-freeing */
+			if (mstack[j] == mstack[i]) {
+			    mstack[j] = NULL;
+			}
+		    }
 		    gretl_matrix_free(mstack[i]);
 		}
 		mstack[i] = NULL;

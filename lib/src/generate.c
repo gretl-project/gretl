@@ -573,6 +573,27 @@ set_atom_arg_string (const char *s, GENERATOR *genr, genatom *atom)
     return err;
 }
 
+static gretl_matrix *genr_get_matrix_by_name (const char *s, GENERATOR *genr)
+{
+    gretl_matrix *m = atom_stack_get_matrix(genr, s);
+
+    if (m != NULL) {
+	DPRINTF(("recognized atom matrix '%s'\n", s));
+    } else {
+	m = get_matrix_by_name(s, genr->pdinfo);
+	if (m != NULL) {
+	    DPRINTF(("recognized matrix '%s'\n", s));
+	} else {
+	    m = get_matrix_transpose_by_name(s, genr->pdinfo);
+	    if (m != NULL) {
+		DPRINTF(("recognized transposed matrix '%s'\n", s));
+	    }
+	}
+    }
+
+    return m;
+}
+
 static double 
 genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
 {
@@ -589,7 +610,7 @@ genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
 
     /* simple argument to matrix function? */
     sscanf(s+1, "%31[^)]", mstr);
-    m = get_matrix_by_name(mstr, genr->pdinfo);
+    m = genr_get_matrix_by_name(mstr, genr);
 
     if (m == NULL) {
 	/* compound argument to matrix function? */
@@ -703,12 +724,8 @@ atom_get_variable_or_constant (const char *s, GENERATOR *genr,
 	atom->val = NADBL;
 	atom->atype = ATOM_SCALAR;
     } else if (genr_is_matrix(genr)) {
-	M = get_matrix_by_name(s, genr->pdinfo);
+	M = genr_get_matrix_by_name(s, genr);
 	if (M != NULL) {
-	    DPRINTF(("recognized matrix '%s'\n", s));
-	    atom_set_matrix(atom, M, s);
-	} else if ((M = get_matrix_transpose_by_name(s, genr->pdinfo))) {
-	    DPRINTF(("recognized transposed matrix '%s'\n", s));
 	    atom_set_matrix(atom, M, s);
 	} else {	
 	    /* try for a scalar? */
