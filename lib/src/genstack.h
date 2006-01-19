@@ -154,7 +154,7 @@ struct _GENERATOR {
     int done;                       /* completion indicator */
     int flags;                      /* option flags */
     char orig_s[MAXLINE];           /* formula provided by user */
-    char lhs[USER_VLEN];            /* left-hand side of formula */
+    char lhs[32];                   /* left-hand side of formula */
     double *xvec;                   /* temporary storage */
     int varnum;                     /* number of variable generated */
     int obs;                        /* observation number, if generating

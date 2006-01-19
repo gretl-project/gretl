@@ -176,6 +176,34 @@ print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 }
 
 /**
+ * print_centered:
+ * @s: string to print.
+ * @width: width of field.
+ * @prn: gretl printing struct.
+ *
+ * If the string @s is shorter than width, print it centered
+ * in a field of the given width (otherwise just print it
+ * straight).
+ */
+
+void print_centered (const char *s, int width, PRN *prn)
+{
+    int rem = width - strlen(s);
+
+    if (rem <= 1) {
+	pprintf(prn, "%s", s);
+    }
+    else {
+	int i, off = rem / 2;
+
+	for (i=0; i<off; i++) {
+	    pputs(prn, " ");
+	}
+	pprintf(prn, "%-*s", width - off, s);
+    }
+}
+
+/**
  * text_print_model_confints:
  * @cf: pointer to confidence intervals.
  * @prn: gretl printing struct.
@@ -437,9 +465,10 @@ static void cut_extra_zero (char *numstr, int digits)
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
 {
     char numstr[36], final[36];
-    char *p;
+    int totlen = 2 * digits + 5; /* try changing this? */
     int i, tmp, forept = 0;
     char decpoint = '.';
+    char *p;
 
 #ifdef ENABLE_NLS
     decpoint = get_local_decpoint();
@@ -476,7 +505,7 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
 
     strcat(final, numstr);
 
-    tmp = 2 * digits + 5 - strlen(final);
+    tmp = totlen - strlen(final);
     for (i=0; i<tmp; i++) {
 	strcat(final, " ");
     }
@@ -1156,20 +1185,25 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 
 void varlist (const DATAINFO *pdinfo, PRN *prn)
 {
-    int level = 0;
-    int i, j, n;
+    int level = gretl_function_stack_depth();
+    int len, maxlen = 0;
+    int nv = 4;
+    int i, j, n = 0;
 
-    if (gretl_executing_function()) {
-	level = gretl_function_stack_depth();
-
-	n = 0;
-	for (i=0; i<pdinfo->v; i++) {
-	    if (STACK_LEVEL(pdinfo, i) == level) {
-		n++;
+    for (i=0; i<pdinfo->v; i++) {
+	if (STACK_LEVEL(pdinfo, i) == level) {
+	    len = strlen(pdinfo->varname[i]);
+	    if (len > maxlen) {
+		maxlen = len;
 	    }
+	    n++;
 	}
-    } else {
-	n = pdinfo->v;
+    }
+
+    if (maxlen < 9) {
+	nv = 5;
+    } else if (maxlen > 13) {
+	nv = 3;
     }
 
     pprintf(prn, _("Listing %d variables:\n"), n);
@@ -1179,14 +1213,14 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
 	if (level > 0 && STACK_LEVEL(pdinfo, i) != level) {
 	    continue;
 	}
-	pprintf(prn, "%3d) %-10s", i, pdinfo->varname[i]);
-	if (j % 5 == 0) {
+	pprintf(prn, "%3d) %-*s", i, maxlen + 2, pdinfo->varname[i]);
+	if (j % nv == 0) {
 	    pputc(prn, '\n');
 	}
 	j++;
     }
 
-    if (n % 5) pputc(prn, '\n');
+    if (n % nv) pputc(prn, '\n');
 
     pputc(prn, '\n');
 }

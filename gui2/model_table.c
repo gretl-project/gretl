@@ -310,23 +310,6 @@ static int common_df (void)
     return 1;
 }
 
-static void center_in_field (const char *s, int width, PRN *prn)
-{
-    int rem = width - strlen(s);
-
-    if (rem <= 1) {
-	pprintf(prn, "%s", s);
-    }
-    else {
-	int i, off = rem / 2;
-
-	for (i=0; i<off; i++) {
-	    pputs(prn, " ");
-	}
-	pprintf(prn, "%-*s", width - off, s);
-    }
-}
-
 static const char *short_estimator_string (int ci, PRN *prn)
 {
     if (ci == HSK) return N_("HSK");
@@ -678,7 +661,7 @@ int display_model_table (int gui)
 
 	if (table_models[j] == NULL) continue;
 	sprintf(modhd, _("Model %d"), table_models[j]->ID);
-	center_in_field(modhd, 12, prn);
+	print_centered(modhd, 12, prn);
     }
     pputc(prn, '\n');
     
@@ -691,7 +674,7 @@ int display_model_table (int gui)
 	    strcpy(est, 
 		   _(short_estimator_string(table_models[j]->ci,
 					    prn)));
-	    center_in_field(est, 12, prn);
+	    print_centered(est, 12, prn);
 	}
 	pputc(prn, '\n');
     }

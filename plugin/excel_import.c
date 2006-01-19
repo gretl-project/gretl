@@ -805,11 +805,11 @@ static char *convert8to7 (const char *s, int count)
 {
     char *dest;
 
-    if (count > USER_VLEN - 1) {
-	count = USER_VLEN - 1;
+    if (count > VNAMELEN - 1) {
+	count = VNAMELEN - 1;
     }
 
-    dest = malloc(USER_VLEN);
+    dest = malloc(VNAMELEN);
     *dest = '\0';
     strncat(dest, s, count);
     iso_to_ascii(dest);
@@ -828,15 +828,15 @@ static char *convert16to7 (const unsigned char *s, int count)
     char *dest;
     int i, u, j = 0;
 
-    dest = malloc(USER_VLEN);
+    dest = malloc(VNAMELEN);
     if (dest == NULL) {
 	return NULL;
     }
 
-    memset(dest, 0, USER_VLEN);
+    memset(dest, 0, VNAMELEN);
 
 #if 1
-    for (i=0; i<count && j<USER_VLEN-1; i++) {
+    for (i=0; i<count && j<VNAMELEN-1; i++) {
 	u = MS_OLE_GET_GUINT16(s);
 	s += 2;
 	if ((isalnum(u) || ispunct(u)) && u < 128) {
@@ -850,7 +850,7 @@ static char *convert16to7 (const unsigned char *s, int count)
 	s += 2;
 	if ((isalnum(u) || ispunct(u) || u == ' ') && u < 128) {
 	    putchar(u);
-	    if (j<USER_VLEN-1) {
+	    if (j<VNAMELEN-1) {
 		dest[j++] = u;
 	    }
 	    if (i % 56 == 0) {
@@ -1189,7 +1189,7 @@ static int transcribe_data (double **Z, DATAINFO *pdinfo, wbook *book,
 
 	pdinfo->varname[j][0] = 0;
 	strncat(pdinfo->varname[j], rows[roff].cells[i] + 1, 
-		USER_VLEN - 1);
+		VNAMELEN - 1);
 	dprintf("accessing rows[%d].cells[%d] at %p\n",
 		roff, i, (void *) rows[roff].cells[i]);
 	dprintf("set varname[%d] = '%s'\n", j, pdinfo->varname[j]);

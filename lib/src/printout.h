@@ -88,6 +88,8 @@ char *gretl_fix_exponent (char *s);
 
 void bufspace (int n, PRN *prn);
 
+void print_centered (const char *s, int width, PRN *prn);
+
 void gretl_printxn (double x, int n, PRN *prn);
 
 int do_printf (const char *line, double ***pZ, 

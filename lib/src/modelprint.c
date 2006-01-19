@@ -1079,16 +1079,16 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
 
     if (plain_format(prn)) {
 	if (discrete) {
-	    pputs(prn, _("      VARIABLE      COEFFICIENT        STDERROR"
-			   "       T STAT       SLOPE\n"));
+	    pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
+			   "      T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
 		    "                 %s\n", _("(at mean)"));
 	} else if (use_param) {
-	    pputs(prn, _("      PARAMETER      ESTIMATE          STDERROR"
-			   "       T STAT   2Prob(t > |T|)\n\n"));
+	    pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"
+			   "      T STAT   P-VALUE\n\n"));
 	} else {
-	    pputs(prn, _("      VARIABLE      COEFFICIENT        STDERROR"
-			   "       T STAT   2Prob(t > |T|)\n\n"));
+	    pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
+			   "      T STAT   P-VALUE\n\n"));
 	}
 	return;
     } else {
@@ -1629,7 +1629,7 @@ static void print_pval_str (double pval, char *str)
     if (pval < .00001) {
 	sprintf(str, "< %.5f", 0.00001);
     } else {
-	sprintf(str, "%f", pval);
+	sprintf(str, "%.5f", pval);
     }
 }
 
@@ -1642,9 +1642,17 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     char varname[24];
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
+#if 0
     pprintf(prn, " %13s ", varname);
-
+#else
+    pputs(prn, "  ");
+#endif
+    print_centered(varname, 15, prn);
+    pputc(prn, ' ');
+    
+#if 0
     bufspace((strlen(varname) > 12)? 1 : 2, prn);
+#endif
 
     /* print coeff value if well-defined */
     if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
@@ -1654,7 +1662,9 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	gretl_print_value(pmod->coeff[i], prn);
     }
 
+#if 0
     bufspace(2, prn);
+#endif
 
     /* get out if std error is undefined */
     if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
@@ -1675,27 +1685,29 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	} else {
 	    pprintf(prn, " %7.3f", t);
 	}
+
 	if (pmod->aux == AUX_ADF || pmod->aux == AUX_DF) {
 	    if (i + 2 == gretl_model_get_int(pmod, "dfnum")) {
 		char pvalstr[16];
 
 		pvalue = gretl_model_get_double(pmod, "dfpval");
 		print_pval_str(pvalue, pvalstr);
-		pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 12), pvalstr);
+		pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
 	    } 
 	    do_pval = 0;
 	}
+
 	if (do_pval) {
 	    char pvalstr[16];
 
 	    pvalue = coeff_pval(pmod, t, pmod->dfd);
 	    print_pval_str(pvalue, pvalstr);
-	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 12), pvalstr);
+	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
 	}
     } else if (do_pval) { 
 	/* case of zero standard error */
 	do_pval = 0;
-	pprintf(prn, "     %*s", UTF_WIDTH(_("undefined"), 12), _("undefined"));
+	pprintf(prn, "     %*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
     }
 
     if (do_pval) {

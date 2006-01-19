@@ -3215,8 +3215,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		goto csv_bailout;
 	    } else {
 		csvinfo->varname[nv][0] = 0;
-		/* was VNAMELEN below */
-		strncat(csvinfo->varname[nv], csvstr, USER_VLEN - 1);
+		strncat(csvinfo->varname[nv], csvstr, VNAMELEN - 1);
 		if (starts_number(*csvstr)) {
 		    numcount++;
 		} else {
@@ -4156,7 +4155,7 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
     for (t=0; t<pdinfo->n; t++) {
 	if (pdinfo->S != NULL && pdinfo->S[t][0] != '\0') {
 	    tinfo->varname[t+1][0] = '\0';
-	    strncat(tinfo->varname[t+1], pdinfo->S[t], 8);
+	    strncat(tinfo->varname[t+1], pdinfo->S[t], VNAMELEN - 1);
 	} else {
 	    sprintf(tinfo->varname[t+1], "v%d", t+1);
 	}

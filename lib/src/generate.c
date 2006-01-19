@@ -416,11 +416,11 @@ static int print_atom (genatom *atom)
 static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 {
     static char format[16] = {0};
-    char vname[USER_VLEN];
+    char vname[VNAMELEN];
     int m = 0, v = 0;
 
     if (*format == 0) {
-	sprintf(format, "%%%d[^(](%%d)", USER_VLEN - 1);
+	sprintf(format, "%%%d[^(](%%d)", VNAMELEN - 1);
     }
 
     if (sscanf(s, format, vname, &m) == 2) {
@@ -441,7 +441,7 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
     if (lag == NULL) {
 	/* just testing for atomicity */
 	if (v > 0) {
-	    char test[USER_VLEN + 8];
+	    char test[VNAMELEN + 8];
 
 	    sprintf(test, "%s(%d)", vname, m);
 	    if (strcmp(test, s)) {
@@ -573,7 +573,7 @@ set_atom_arg_string (const char *s, GENERATOR *genr, genatom *atom)
 	char vname[9];
 	double param;
 
-	err = sscanf(atom->str, "%8[^,],%lf", vname, &param) != 2;
+	err = sscanf(atom->str, "%15[^,],%lf", vname, &param) != 2;
     }
 
     DPRINTF(("get_arg_string: got '%s'\n", atom->str));
@@ -789,13 +789,13 @@ static void
 matrix_gen_function (const char *s, GENERATOR *genr, genatom *atom)
 {
     gretl_matrix *M = NULL;
-    char rstr[9], cstr[9];
+    char rstr[VNAMELEN], cstr[VNAMELEN];
     int r = 0, c = 0;
     int nf = 0;
 
     s = strchr(s, '(') + 1;
 
-    if (sscanf(s, "%8[^,],%8[^)]", rstr, cstr) == 2) {
+    if (sscanf(s, "%15[^,],%15[^)]", rstr, cstr) == 2) {
 	r = get_matrix_dim(rstr, genr);
 	c = get_matrix_dim(cstr, genr);
 	if (r <= 0 || c <= 0) {
@@ -803,7 +803,7 @@ matrix_gen_function (const char *s, GENERATOR *genr, genatom *atom)
 	} else {
 	    nf = 2;
 	}
-    } else if (sscanf(s, "%8[^)]", rstr)) {
+    } else if (sscanf(s, "%15[^)]", rstr)) {
 	r = get_matrix_dim(rstr, genr);
 	if (r <= 0) {
 	    genr->err = E_SYNTAX;
@@ -902,11 +902,11 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 
 static int dataset_var_index (const char *s)
 {
-    char test[USER_VLEN];
+    char test[VNAMELEN];
     int ret = 0;
 
     *test = '\0';
-    strncat(test, s, USER_VLEN - 1);
+    strncat(test, s, VNAMELEN - 1);
     lower(test);
 
     if (!strcmp(test, "$nobs")) {
@@ -922,11 +922,11 @@ static int dataset_var_index (const char *s)
 
 static int test_stat_index (const char *s)
 {
-    char test[USER_VLEN];
+    char test[VNAMELEN];
     int ret = 0;
 
     *test = '\0';
-    strncat(test, s, USER_VLEN - 1);
+    strncat(test, s, VNAMELEN - 1);
     lower(test);
 
     if (!strcmp(test, "$pvalue")) { 
@@ -1463,7 +1463,7 @@ static double *
 get_target_fracdiff_series (GENERATOR *genr, genatom *atom,
 			    double *param)
 {
-    char vname[9];
+    char vname[VNAMELEN];
     double *x = NULL;
     int v, t;
 
@@ -1476,7 +1476,7 @@ get_target_fracdiff_series (GENERATOR *genr, genatom *atom,
     fprintf(stderr, "fracdiff_series: atom->str = '%s'\n", atom->str);
 #endif
 
-    if (sscanf(atom->str, "%8[^,],%lf", vname, param) != 2) {
+    if (sscanf(atom->str, "%15[^,],%lf", vname, param) != 2) {
 	genr->err = 1;
 	return NULL;
     }
@@ -2701,7 +2701,7 @@ const char *get_genr_func_word (int fnum)
 
 int genr_function_from_string (const char *s)
 {
-    char word[USER_VLEN];
+    char word[VNAMELEN];
     const char *p;
     int i;
 
@@ -2856,7 +2856,7 @@ static int split_genr_formula (char *s, GENERATOR *genr)
 	    }
 
 	    /* should we warn if lhs name is truncated? */
-	    strncat(genr->lhs, s, USER_VLEN - 1);
+	    strncat(genr->lhs, s, VNAMELEN - 1);
 
 	    if (gretl_reserved_word(genr->lhs)) {
 		err = 1;
@@ -2924,14 +2924,14 @@ static void get_genr_formula (char *formula, const char *line,
 			      GENERATOR *genr)
 {
     char name[32], tag[32];
-    char first[9];
+    char first[VNAMELEN];
 
     if (string_is_blank(line)) {
 	return;
     }
 
     /* look at first 'word' in line */
-    sscanf(line, "%8s", first);
+    sscanf(line, "%15s", first);
 
     if (!strcmp(first, "genr")) {
 	line += 4;
@@ -4446,10 +4446,10 @@ static int
 get_obs_value (const char *s, const double **Z, const DATAINFO *pdinfo, 
 	       int *v, int *obsnum)
 {
-    char vname[USER_VLEN], obs[OBSLEN];
+    char vname[VNAMELEN], obs[OBSLEN];
     int err = 0;
 
-    if (sscanf(s, "%8[^[][%10[^]]]", vname, obs) == 2) {
+    if (sscanf(s, "%15[^[][%10[^]]]", vname, obs) == 2) {
 	int t, i = varindex(pdinfo, vname);
 
 	if (i < pdinfo->v && pdinfo->vector[i]) {
@@ -4561,7 +4561,7 @@ static int genr_mpow (const char *str, double *xvec, double **Z,
 {
     int err, v;
     unsigned pwr;
-    char vname[USER_VLEN];
+    char vname[VNAMELEN];
     void *handle = NULL;
     int (*mp_raise) (const double *, double *, int, unsigned);
     
@@ -4592,11 +4592,11 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
 		      DATAINFO *pdinfo)
 {
     int err, v;
-    char vname[USER_VLEN];
+    char vname[VNAMELEN];
     void *handle = NULL;
     int (*mp_log) (const double *, double *, int);
     
-    if (sscanf(str, "%8s", vname) != 1) {
+    if (sscanf(str, "%15s", vname) != 1) {
 	return 1;
     }
 

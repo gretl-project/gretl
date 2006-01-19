@@ -467,7 +467,7 @@ make_dummy_name_and_label (int vi, const DATAINFO *pdinfo, int center,
 
 int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 {
-    char vname[USER_VLEN];
+    char vname[VNAMELEN];
     char vlabel[MAXLABEL];
     int vi, t, yy, pp, mm;
     int ndums, nnew = 0;
@@ -988,12 +988,12 @@ static int varnames_from_arg (const char *s, char *v1str, char *v2str)
 {
     int i, p, n = strlen(s);
 
-    if (n > 17) {
+    if (n > 2 * VNAMELEN + 1) {
 	return 1;
     }
 
     p = haschar(',', s);
-    if (p < 0 || p > 8) {
+    if (p < 0 || p > VNAMELEN - 1) {
 	return 1;
     }
 
@@ -1016,7 +1016,7 @@ static int varnames_from_arg (const char *s, char *v1str, char *v2str)
 double genr_cov_corr (const char *s, double ***pZ, 
 		      const DATAINFO *pdinfo, int fn)
 {
-    char v1str[USER_VLEN], v2str[USER_VLEN];
+    char v1str[VNAMELEN], v2str[VNAMELEN];
     int v1, v2;
     double ret = NADBL;
 
@@ -1063,7 +1063,7 @@ double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod)
 {
     int v1 = 0, v2 = 0;
     int i, j, k, v1l, v2l;
-    char v1str[USER_VLEN], v2str[USER_VLEN];
+    char v1str[VNAMELEN], v2str[VNAMELEN];
     int gotit;
     double ret = NADBL;
 
@@ -1148,7 +1148,7 @@ double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod)
 int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo)
 {
-    char vname[USER_VLEN], vlabel[MAXLABEL];
+    char vname[VNAMELEN], vlabel[MAXLABEL];
     int i, t;
     double *h = NULL;
 
