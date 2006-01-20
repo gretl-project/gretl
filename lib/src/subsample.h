@@ -30,7 +30,8 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 int restrict_sample (const char *line, 
 		     double ***pZ, DATAINFO **ppdinfo,
-		     const int *list, gretlopt oflag);
+		     const int *list, gretlopt oflag,
+		     PRN *prn);
 
 int complex_subsampled (void);
 

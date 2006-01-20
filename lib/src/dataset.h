@@ -226,7 +226,7 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo);
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo, 
-			     char *newvar, char *s);
+			     char *newvar, char *s, PRN *prn);
 
 int is_hidden_variable (int i, const DATAINFO *pdinfo);
 

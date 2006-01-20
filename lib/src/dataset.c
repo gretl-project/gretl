@@ -1528,6 +1528,7 @@ static int missing_tail (const double *x, int n)
  * @pdinfo: dataset information.
  * @newvar: name for new variable, produced by stacking
  * @s: instructions for stacking existing variables.
+ * @prn: printing apparatus.
  *
  * Really for internal use.  Don't worry about it.
  *
@@ -1535,7 +1536,7 @@ static int missing_tail (const double *x, int n)
  */
 
 int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo, 
-			     char *newvar, char *s)
+			     char *newvar, char *s, PRN *prn)
 {
     char vn1[VNAMELEN], vn2[VNAMELEN];
     char format[16];
@@ -1732,7 +1733,7 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	strcpy(pdinfo->varname[genv], newvar);
 	make_stack_label(VARLABEL(pdinfo, genv), scpy);
-	sprintf(gretl_msg, "%s %s %s (ID %d)", 
+	pprintf(prn, "%s %s %s (ID %d)", 
 		(genv == pdinfo->v - 1)? _("Generated") : _("Replaced"),
 		_("vector"), newvar, genv);
     }

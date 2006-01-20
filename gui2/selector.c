@@ -1731,11 +1731,11 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
     gtk_widget_show(tmp); 
 
 #ifdef OLD_GTK
-    entry = gtk_entry_new_with_max_length(8);
+    entry = gtk_entry_new_with_max_length(VNAMELEN-1);
 #else
     entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(entry), 8);
-    gtk_entry_set_width_chars(GTK_ENTRY(entry), 12);
+    gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN+3);
 #endif
 
     gtk_box_pack_start(GTK_BOX(x_hbox), entry, FALSE, FALSE, 0);
@@ -1785,11 +1785,11 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_widget_show(tmp); 
 
 #ifdef OLD_GTK
-    sr->depvar = gtk_entry_new_with_max_length(8);
+    sr->depvar = gtk_entry_new_with_max_length(VNAMELEN-1);
 #else
     sr->depvar = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), 8);
-    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), 12);
+    gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN-1);
+    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMELEN+3);
 #endif
 
     if (yvar) {

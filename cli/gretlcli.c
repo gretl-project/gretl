@@ -1583,7 +1583,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		break;
 	    } else {
 		err = restrict_sample(line, &Z, &datainfo, 
-				      cmd.list, cmd.opt);
+				      cmd.list, cmd.opt, prn);
 	    }
 	} else if (!strcmp(line, "smpl full") ||
 		   !strcmp(line, "smpl --full")) {
@@ -1594,8 +1594,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
 	if (err) {
 	    errmsg(err, prn);
-	} else if (get_gretl_msg()) {
-	    print_gretl_msg(prn);
 	} else {
 	    print_smpl(datainfo, get_full_length_n(), prn);
 	}

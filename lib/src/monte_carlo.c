@@ -2771,7 +2771,7 @@ int loop_exec (LOOPSET *loop, char *line,
 			break;
 		    } else {
 			err = restrict_sample(linecpy, pZ, ppdinfo, 
-					      cmd.list, cmd.opt);
+					      cmd.list, cmd.opt, NULL);
 		    }
 		} else if (!strcmp(linecpy, "smpl full") ||
 			   !strcmp(linecpy, "smpl --full")) {

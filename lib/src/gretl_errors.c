@@ -146,19 +146,6 @@ const char *get_gretl_errmsg (void)
     return gretl_errmsg;
 }
 
-const char *get_gretl_msg (void)
-{
-    const char *ret = NULL;
-
-    if (gretl_messages_on()) {
-	if (*gretl_msg != '\0') {
-	    ret = gretl_msg;
-	}
-    }
-
-    return ret;
-}
-
 int print_gretl_errmsg (PRN *prn)
 {
     int ret = 0;
@@ -168,20 +155,6 @@ int print_gretl_errmsg (PRN *prn)
 	ret = 1;
     } else if (get_errmsg(gretl_errno, NULL, prn)) {
 	ret = 1;
-    }
-
-    return ret;
-}
-
-int print_gretl_msg (PRN *prn)
-{
-    int ret = 0;
-
-    if (gretl_messages_on()) {
-	if (*gretl_msg != '\0') {
-	    pprintf(prn, "%s\n", gretl_msg);
-	    ret = 1;
-	}
     }
 
     return ret;

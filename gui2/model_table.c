@@ -220,7 +220,9 @@ static int real_list_length (int *list)
     int i;
 
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) return i - 1;
+	if (list[i] == LISTSEP) {
+	    return i - 1;
+	}
     }
 
     return list[0];
@@ -235,24 +237,30 @@ static int make_grand_varlist (void)
     free(grand_list);
 
     for (i=0; i<n_models; i++) {
-	if (table_models[i] == NULL) continue;
-	l0 += real_list_length(table_models[i]->list);
+	if (table_models[i] != NULL) {
+	    l0 += real_list_length(table_models[i]->list);
+	}
     }
 
-    grand_list = mymalloc((l0 + 1) * sizeof *grand_list);
-    if (grand_list == NULL) return 1;
+    grand_list = gretl_list_new(l0);
+    if (grand_list == NULL) {
+	return 1;
+    }
 
     for (i=0; i<n_models; i++) {
-	if (table_models[i] == NULL) continue;
-	pmod = table_models[i];
-	if (f == 1) {
-	    for (j=0; j<=pmod->list[0]; j++) {
-		if (pmod->list[j] == LISTSEP) break;
-		grand_list[j] = pmod->list[j];
+	if (table_models[i] != NULL) {
+	    pmod = table_models[i];
+	    if (f == 1) {
+		for (j=0; j<=pmod->list[0]; j++) {
+		    if (pmod->list[j] == LISTSEP) {
+			break;
+		    }
+		    grand_list[j] = pmod->list[j];
+		}
+		f = 0;
+	    } else {
+		add_to_grand_list(pmod->list);
 	    }
-	    f = 0;
-	} else {
-	    add_to_grand_list(pmod->list);
 	}
     }
 
@@ -281,11 +289,12 @@ static int common_estimator (void)
     int i, ci0 = -1;
 
     for (i=0; i<n_models; i++) {
-	if (table_models[i] == NULL) continue;
-	if (ci0 == -1) {
-	    ci0 = table_models[i]->ci;
-	} else {
-	    if (table_models[i]->ci != ci0) return 0;
+	if (table_models[i] != NULL) {
+	    if (ci0 == -1) {
+		ci0 = table_models[i]->ci;
+	    } else if (table_models[i]->ci != ci0) {
+		return 0;
+	    }
 	}
     }  
 
@@ -297,13 +306,16 @@ static int common_df (void)
     int i, dfn0 = -1, dfd0 = -1;
 
     for (i=0; i<n_models; i++) {
-	if (table_models[i] == NULL) continue;
-	if (dfn0 == -1) {
-	    dfn0 = table_models[i]->dfn;
-	    dfd0 = table_models[i]->dfd;
-	} else {
-	    if (table_models[i]->dfn != dfn0) return 0;
-	    if (table_models[i]->dfd != dfd0) return 0;
+	if (table_models[i] != NULL) {
+	    if (dfn0 == -1) {
+		dfn0 = table_models[i]->dfn;
+		dfd0 = table_models[i]->dfd;
+	    } else {
+		if (table_models[i]->dfn != dfn0 ||
+		    table_models[i]->dfd != dfd0) {
+		    return 0;
+		}
+	    }
 	}
     }  
 
@@ -335,7 +347,7 @@ static const char *get_pre_asts (double pval)
     return (pval >= 0.1)? "" : (pval >= 0.05)? "$\\,$" : "$\\,\\,$";
 }
 
-static void print_model_table_coeffs (PRN *prn)
+static void print_model_table_coeffs (int nwidth, PRN *prn)
 {
     int i, j, k;
     const MODEL *pmod;
@@ -355,7 +367,7 @@ static void print_model_table_coeffs (PRN *prn)
 	    print_rtf_row_spec(prn, 0);
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", datainfo->varname[v]);
 	} else {
-	    pprintf(prn, "%8s ", datainfo->varname[v]);
+	    pprintf(prn, "%-*s ", nwidth, datainfo->varname[v]);
 	}
 
 	/* print the coefficient estimates across a row */
@@ -392,22 +404,25 @@ static void print_model_table_coeffs (PRN *prn)
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval));
 		} else {
+		    /* note: strlen(asts) = 2 */
 		    pprintf(prn, "%*s%s", (f == 1)? 12 : 10,
 			    numstr, get_asts(pval));
 		}
 		f = 0;
 	    } else {
+		/* variable not present in this column */
 		if (tex) {
 		    pputs(prn, "& ");
 		} else if (rtf) {
 		    pputs(prn, "\\qc \\cell ");
 		} else {
-		    pputs(prn, "            ");
+		    pputs(prn, "            "); /* 12 */
 		}
 	    }
 	}
 
-	/* terminate the coefficient row and start the next one */
+	/* terminate the coefficient row and start the next one,
+	   which holds standard errors */
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	} else if (rtf) {
@@ -415,7 +430,8 @@ static void print_model_table_coeffs (PRN *prn)
 	    print_rtf_row_spec(prn, 1);
 	    pputs(prn, "\\intbl ");
 	} else {
-	    pputs(prn, "\n          ");
+	    pputc(prn, '\n');
+	    bufspace(nwidth + 2, prn);
 	}
 
 	/* print the t-stats or standard errors across a row */
@@ -455,12 +471,13 @@ static void print_model_table_coeffs (PRN *prn)
 		    pprintf(prn, "%12s", tmp);
 		}
 	    } else {
+		/* variable not present in this column */
 		if (tex) {
 		    pputs(prn, "& ");
 		} else if (rtf) {
 		    pputs(prn, "\\qc \\cell ");
 		} else {
-		    pputs(prn, "            ");
+		    pputs(prn, "            "); /* 12 */
 		}
 	    }
 	}
@@ -499,31 +516,46 @@ static int any_r_squared (void)
     return 0;
 }
 
-static void print_n_r_squared (PRN *prn, int *binary)
+static void print_n_r_squared (int wid, PRN *prn, int *binary)
 {
-    int j;
     int same_df, any_R2, any_ll;
     const MODEL *pmod;
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
+    int j;
 
-    if (rtf) print_rtf_row_spec(prn, 0);
+    if (rtf) {
+	print_rtf_row_spec(prn, 0);
+    }
 
-    if (tex) pprintf(prn, "$%s$ ", _("n"));
-    else if (rtf) pprintf(prn, "\\intbl \\qc %s\\cell ", _("n"));
-    else pprintf(prn, "%8s ", _("n"));
+    if (tex) {
+	pprintf(prn, "$%s$ ", _("n"));
+    } else if (rtf) {
+	pprintf(prn, "\\intbl \\qc %s\\cell ", _("n"));
+    } else {
+	pprintf(prn, "%*s", wid, _("n"));
+    }
 
     for (j=0; j<n_models; j++) {
 	pmod = table_models[j];
-	if (pmod == NULL) continue;
-	if (tex) pprintf(prn, "& %d ", pmod->nobs);
-	else if (rtf) pprintf(prn, "\\qc %d\\cell ", pmod->nobs);
-	else pprintf(prn, "%12d", pmod->nobs);
+	if (pmod != NULL) {
+	    if (tex) {
+		pprintf(prn, "& %d ", pmod->nobs);
+	    } else if (rtf) {
+		pprintf(prn, "\\qc %d\\cell ", pmod->nobs);
+	    } else {
+		pprintf(prn, "%12d", pmod->nobs);
+	    }
+	}
     }
 
-    if (tex) pputs(prn, "\\\\\n");
-    else if (rtf) pputs(prn, "\\intbl \\row\n\\intbl ");
-    else pputc(prn, '\n');
+    if (tex) {
+	pputs(prn, "\\\\\n");
+    } else if (rtf) {
+	pputs(prn, "\\intbl \\row\n\\intbl ");
+    } else {
+	pputc(prn, '\n');
+    }
 
     same_df = common_df();
     any_R2 = any_r_squared();
@@ -538,7 +570,7 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	    pprintf(prn, "\\qc %s\\cell ", 
 		    (same_df)? "R{\\super 2}" : _("Adj. R{\\super 2}"));
 	} else {
-	    pprintf(prn, "%9s", (same_df)? _("R-squared") : _("Adj. R**2"));
+	    pprintf(prn, "%*s", wid, (same_df)? _("R-squared") : _("Adj. R**2"));
 	}
 
 	for (j=0; j<n_models; j++) {
@@ -552,8 +584,7 @@ static void print_n_r_squared (PRN *prn, int *binary)
 		} else {
 		    pputs(prn, "            ");
 		}		
-	    }
-	    else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	    } else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 		*binary = 1;
 		/* McFadden */
 		if (tex) {
@@ -576,11 +607,15 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	    }
 	}
 
-	if (tex) pputs(prn, "\\\\\n");
-	else if (rtf) pputs(prn, "\\intbl \\row\n");
-	else {
+	if (tex) {
+	    pputs(prn, "\\\\\n");
+	} else if (rtf) {
+	    pputs(prn, "\\intbl \\row\n");
+	} else {
 	    pputc(prn, '\n');
-	    if (!any_ll) pputc(prn, '\n');
+	    if (!any_ll) {
+		pputc(prn, '\n');
+	    }
 	}
     }
 
@@ -592,7 +627,7 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	} else if (rtf) {
 	    pputs(prn, "\\qc lnL\\cell ");
 	} else {
-	    pprintf(prn, "%9s", "lnL");
+	    pprintf(prn, "%*s", wid, "lnL");
 	}
 
 	for (j=0; j<n_models; j++) {
@@ -617,10 +652,28 @@ static void print_n_r_squared (PRN *prn, int *binary)
 	    }
 	}
 
-	if (tex) pputs(prn, "\\\\\n");
-	else if (rtf) pputs(prn, "\\intbl \\row\n");
-	else pputs(prn, "\n\n");
+	if (tex) {
+	    pputs(prn, "\\\\\n");
+	} else if (rtf) {
+	    pputs(prn, "\\intbl \\row\n");
+	} else {
+	    pputs(prn, "\n\n");
+	}
     }
+}
+
+static int grand_list_namelen (void)
+{
+    int i, len, maxlen = 8;
+
+    for (i=2; i<=grand_list[0]; i++) {
+	len = strlen(datainfo->varname[grand_list[i]]);
+	if (len > maxlen) {
+	    maxlen = len;
+	}
+    }
+
+    return maxlen;
 }
 
 int display_model_table (int gui)
@@ -628,6 +681,7 @@ int display_model_table (int gui)
     int j, ci;
     int binary = 0;
     int winwidth = 78;
+    int namelen;
     PRN *prn;
 
     if (model_table_is_empty()) {
@@ -635,7 +689,11 @@ int display_model_table (int gui)
 	return 1;
     }
 
-    if (make_grand_varlist()) return 1;
+    if (make_grand_varlist()) {
+	return 1;
+    }
+
+    namelen = grand_list_namelen();
 
     if (bufopen(&prn)) {
 	clear_model_table(NULL);
@@ -654,41 +712,45 @@ int display_model_table (int gui)
     pprintf(prn, _("Dependent variable: %s\n"),
 	    datainfo->varname[grand_list[1]]);
 
-    pputs(prn, "\n            ");
+    pputc(prn, '\n');
+    bufspace(namelen + 4, prn);
 
     for (j=0; j<n_models; j++) {
 	char modhd[16];
 
-	if (table_models[j] == NULL) continue;
-	sprintf(modhd, _("Model %d"), table_models[j]->ID);
-	print_centered(modhd, 12, prn);
+	if (table_models[j] != NULL) {
+	    sprintf(modhd, _("Model %d"), table_models[j]->ID);
+	    print_centered(modhd, 12, prn);
+	}
     }
     pputc(prn, '\n');
     
     if (ci == 0) {
 	char est[12];	
 
-	pputs(prn, "            ");
+	bufspace(namelen + 4, prn);
 	for (j=0; j<n_models; j++) {
-	    if (table_models[j] == NULL) continue;
-	    strcpy(est, 
-		   _(short_estimator_string(table_models[j]->ci,
-					    prn)));
-	    print_centered(est, 12, prn);
+	    if (table_models[j] != NULL) {
+		strcpy(est, 
+		       _(short_estimator_string(table_models[j]->ci,
+						prn)));
+		print_centered(est, 12, prn);
+	    }
+	    pputc(prn, '\n');
 	}
-	pputc(prn, '\n');
     }
 
     pputc(prn, '\n'); 
 
-    print_model_table_coeffs(prn);
-    print_n_r_squared(prn, &binary);
+    print_model_table_coeffs(namelen, prn);
+    print_n_r_squared(namelen + 1, prn, &binary);
 
     if (use_tstats) {
 	pprintf(prn, "%s\n", _("t-statistics in parentheses"));
     } else {
 	pprintf(prn, "%s\n", _("Standard errors in parentheses"));
     }
+
     pprintf(prn, "%s\n", _("* indicates significance at the 10 percent level"));
     pprintf(prn, "%s\n", _("** indicates significance at the 5 percent level"));
    
@@ -697,7 +759,9 @@ int display_model_table (int gui)
 				 "McFadden's pseudo-R-squared"));
     }
 
-    if (real_table_n_models() > 5) winwidth = 90;
+    if (real_table_n_models() > 5) {
+	winwidth = 90;
+    }
 
     view_buffer(prn, winwidth, 450, _("gretl: model table"), VIEW_MODELTABLE, 
 		NULL);
@@ -716,7 +780,9 @@ static int tex_print_model_table (PRN *prn)
 	return 1;
     }
 
-    if (make_grand_varlist()) return 1;
+    if (make_grand_varlist()) {
+	return 1;
+    }
 
     gretl_print_set_format(prn, GRETL_FORMAT_TEX);
 
@@ -767,8 +833,8 @@ static int tex_print_model_table (PRN *prn)
 
     pputs(prn, " [6pt] \n");   
 
-    print_model_table_coeffs(prn);
-    print_n_r_squared(prn, &binary);
+    print_model_table_coeffs(0, prn);
+    print_n_r_squared(0, prn, &binary);
 
     pputs(prn, "\\end{tabular}\n\n");
     pputs(prn, "\\vspace{1em}\n");
@@ -864,8 +930,8 @@ static int rtf_print_model_table (PRN *prn)
 	pputs(prn, "\\intbl \\row\n");
     }
 
-    print_model_table_coeffs(prn);
-    print_n_r_squared(prn, &binary);
+    print_model_table_coeffs(0, prn);
+    print_n_r_squared(0, prn, &binary);
 
     pputs(prn, "}\n\n");
 

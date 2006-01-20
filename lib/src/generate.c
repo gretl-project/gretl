@@ -3224,7 +3224,8 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 
     /* special case of stacking a group of series */
     if (!strncmp(s, "stack(", 6)) {
-	genr->err = dataset_stack_variables(pZ, pdinfo, genr->lhs, s);
+	genr->err = dataset_stack_variables(pZ, pdinfo, genr->lhs, 
+					    s, genr->prn);
 	genr->done = 1;
 	return genr;
     }

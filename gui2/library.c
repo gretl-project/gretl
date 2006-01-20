@@ -1102,26 +1102,29 @@ void gui_errmsg (const int errcode)
 
 int bool_subsample (gretlopt opt)
 {
+    PRN *prn;
     const char *smplmsg;
     int err = restore_sample(opt);
 
-    if (err) return 1;
+    if (err || bufopen(&prn)) {
+	return 1;
+    }
 
     if (opt & OPT_M) {
-	err = restrict_sample(NULL, &Z, &datainfo, NULL, opt);
+	err = restrict_sample(NULL, &Z, &datainfo, NULL, opt, prn);
     } else {
-	err = restrict_sample(cmdline, &Z, &datainfo, NULL, opt);
+	err = restrict_sample(cmdline, &Z, &datainfo, NULL, opt, prn);
     }
 
     if (err) {
 	gui_errmsg(err);
-	return 1;
+	goto alldone;
     } 
 
-    smplmsg = get_gretl_msg();
-    if (smplmsg != NULL) {
+    smplmsg = gretl_print_get_buffer(prn);
+    if (smplmsg != NULL && *smplmsg != 0) {
 	infobox(smplmsg);
-	return 0;
+	goto alldone;
     }
 
     if (dataset_is_panel(datainfo) || dataset_is_time_series(datainfo)) {
@@ -1137,7 +1140,11 @@ int bool_subsample (gretlopt opt)
 	infobox(_("Sample now includes only complete observations"));
     } 
 
-    return 0;
+ alldone:
+
+    gretl_print_destroy(prn);
+
+    return err;
 }
 
 void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
@@ -3599,7 +3606,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 	errbox(_("Error generating covariance matrix"));
     } else {
 	text_print_vmatrix(vcv, prn);
-	view_buffer(prn, 78, 300, _("gretl: coefficient covariances"), 
+	view_buffer(prn, 80, 300, _("gretl: coefficient covariances"), 
 		    COVAR, vcv);
     }
 }
@@ -6658,7 +6665,7 @@ int gui_exec_line (char *line,
 		break;
 	    } else {
 		err = restrict_sample(line, &Z, &datainfo, 
-				      cmd.list, cmd.opt);
+				      cmd.list, cmd.opt, prn);
 	    }
 	} else if (!strcmp(line, "smpl full") ||
 		   !strcmp(line, "smpl --full")) {
@@ -6670,8 +6677,6 @@ int gui_exec_line (char *line,
 
 	if (err) {
 	    errmsg(err, prn);
-	} else if (get_gretl_msg()) {
-	    print_gretl_msg(prn);
 	} else {
 	    print_smpl(datainfo, get_full_length_n(), prn);
 	    if (cmd.opt) { 

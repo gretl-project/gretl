@@ -85,10 +85,6 @@ int get_gretl_errno (void);
 
 const char *get_gretl_errmsg (void);
 
-const char *get_gretl_msg (void);
-
-int print_gretl_msg (PRN *prn);
-
 int print_gretl_errmsg (PRN *prn);
 
 void gretl_errmsg_set (const char *str);

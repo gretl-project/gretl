@@ -152,7 +152,7 @@ void gui_script_logo (PRN *prn)
 static void 
 print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
-    pprintf(prn, " %8s ", cf->names[i]);
+    pprintf(prn, " %15s ", cf->names[i]);
 
     bufspace(3, prn);
 
@@ -218,7 +218,7 @@ void text_print_model_confints (const CoeffIntervals *cf, PRN *prn)
 
     pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, tcrit95(cf->df));
     /* xgettext:no-c-format */
-    pputs(prn, _("      VARIABLE      COEFFICIENT      95% CONFIDENCE "
+    pputs(prn, _("      VARIABLE         COEFFICIENT      95% CONFIDENCE "
 	    "INTERVAL\n\n"));      
 
     for (i=0; i<cf->ncoeff; i++) {

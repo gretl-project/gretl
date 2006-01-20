@@ -950,16 +950,10 @@ void varinfo_dialog (int varnum, int full)
 {
     GtkWidget *tempwid, *hbox;
     struct varinfo_settings *vset;
-    int entrylen = 8, canedit = 1;
     unsigned char flags;
 
     vset = mymalloc(sizeof *vset);
     if (vset == NULL) return;
-
-    if (strlen(datainfo->varname[varnum]) > 8) {
-	entrylen = strlen(datainfo->varname[varnum]);
-	canedit = 0;
-    }
 
     if (full) {
 	flags = GRETL_DLG_BLOCK | GRETL_DLG_RESIZE;
@@ -983,17 +977,17 @@ void varinfo_dialog (int varnum, int full)
     gtk_widget_show(tempwid);
 
 #ifdef OLD_GTK
-    vset->name_entry = gtk_entry_new_with_max_length(entrylen);
+    vset->name_entry = gtk_entry_new_with_max_length(VNAMELEN-1);
 #else
     vset->name_entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(vset->name_entry), entrylen);
-    gtk_entry_set_width_chars(GTK_ENTRY(vset->name_entry), entrylen + 3);
+    gtk_entry_set_max_length(GTK_ENTRY(vset->name_entry), VNAMELEN-1);
+    gtk_entry_set_width_chars(GTK_ENTRY(vset->name_entry), VNAMELEN+3);
 #endif
     gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
 		       datainfo->varname[varnum]);
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->name_entry, FALSE, FALSE, 0);
-    gtk_entry_set_editable(GTK_ENTRY(vset->name_entry), canedit);
+    gtk_entry_set_editable(GTK_ENTRY(vset->name_entry), TRUE);
     gtk_widget_show(vset->name_entry); 
     gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
 
@@ -3811,7 +3805,7 @@ void lmax_dialog (double *lmax, double ymax)
     /* lmax entry */
     hbox = gtk_hbox_new(FALSE, 5);
     opt->entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(opt->entry), 12);
+    gtk_entry_set_max_length(GTK_ENTRY(opt->entry), VNAMELEN-1);
     numstr = g_strdup_printf("%g", *lmax);
     gtk_entry_set_text(GTK_ENTRY(opt->entry), numstr);
     g_free(numstr);

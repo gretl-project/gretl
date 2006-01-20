@@ -241,16 +241,13 @@ static int sn_from_tmp_dummy (double ***pZ, DATAINFO *pdinfo,
     sprintf(formula, "__tmpmsk=%s", line + 4);
 
     err = generate(formula, pZ, pdinfo, OPT_P, NULL);
-    *gretl_msg = '\0';
 
     if (err) {
 	return -1;
     }
 
     dnum = varindex(pdinfo, "tmpmsk");
-
     isdum = gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[dnum]);
-
     copy_to_mask(mask, (*pZ)[dnum], pdinfo->n);
 
     dlist[0] = 1;
@@ -624,6 +621,7 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
  * @ppdinfo: address of original data info pointer. 
  * @list: list of variables in case of OPT_M (or %NULL).  
  * @oflag: option flag.
+ * @prn: printing apparatus.
  *
  * sub-sample the data set, based on the criterion of skipping all
  * observations with missing data values (OPT_M); or using as a mask a
@@ -638,7 +636,8 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
 
 int restrict_sample (const char *line, 
 		     double ***pZ, DATAINFO **ppdinfo, 
-		     const int *list, gretlopt oflag)
+		     const int *list, gretlopt oflag,
+		     PRN *prn)
 {
     char dname[VNAMELEN] = {0};
     int subnum = 0;
@@ -651,7 +650,6 @@ int restrict_sample (const char *line,
     int err = 0;
 
     *gretl_errmsg = '\0';
-    *gretl_msg = '\0';
 
     if (oflag & OPT_M) {
 	opt = SUBSAMPLE_DROP_MISSING;
@@ -727,7 +725,8 @@ int restrict_sample (const char *line,
 		strcpy(gretl_errmsg, _("No observations would be left!"));
 	    } else {
 		/* this is not really an error, just a no-op */
-		strcpy(gretl_msg, _("No observations were dropped!"));
+		pputs(prn, _("No observations were dropped!"));
+		pputc(prn, '\n');
 		free(mask);
 		return 0;
 	    }
@@ -870,7 +869,6 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     char cmd[5], newstart[OBSLEN], newstop[OBSLEN];
 
     *gretl_errmsg = '\0';
-    *gretl_msg = '\0';
 
     nf = count_fields(line);
 
@@ -1098,7 +1096,6 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
     int i, t, err = 0;
 
     *gretl_errmsg = '\0';
-    *gretl_msg = '\0';
 
 #if SUBDEBUG
     fprintf(stderr, "restore_full_sample: pZ=%p, ppdinfo=%p opt=%lu\n",
