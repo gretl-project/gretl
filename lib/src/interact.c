@@ -405,7 +405,7 @@ static int parse_lagvar (const char *s, LAGVAR *lv,
     lv->lastlag = 0;
     lv->varnum = 0;
 
-    if (sscanf(s, "%8[^(](%8s to %8[^)])", lv->varname, 
+    if (sscanf(s, "%15[^(](%8s to %8[^)])", lv->varname, 
 	       l1str, l2str) == 3) {
 	lv->varnum = varindex(pdinfo, lv->varname);
 	if (lv->varnum < pdinfo->v) {
@@ -771,7 +771,7 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 
     line += strlen(cmd->word);
 
-    if (sscanf(line, "%d %8s", &vnum, vname) != 2) {
+    if (sscanf(line, "%d %15s", &vnum, vname) != 2) {
 	cmd->errcode = E_DATA;
 	sprintf(gretl_errmsg, "rename: %s", 
 		_("requires a variable number and a new name"));
@@ -2637,7 +2637,7 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    if (sscanf(line, "label %8s", vname) != 1) {
+    if (sscanf(line, "label %15s", vname) != 1) {
 	return E_PARSE;
     }
 

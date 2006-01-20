@@ -1243,7 +1243,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	buf = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry));
 
-	if (sscanf(buf, "%8s", dumv) != 1) {
+	if (sscanf(buf, "%15s", dumv) != 1) {
 	    return TRUE;
 	}
 

@@ -224,7 +224,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 
 	if (*line1 == '#') continue;
 
-	if (sscanf(line1, "%8s", sername) != 1) break;
+	if (sscanf(line1, "%15s", sername) != 1) break;
 
 	if (!strcmp(series, sername)) {
 	    gotit = 1;

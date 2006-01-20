@@ -654,16 +654,18 @@ test_forloop_element (const char *s, LOOPSET *loop,
 		      DATAINFO *pdinfo, double ***pZ,
 		      int i)
 {
-    char lhs[9], opstr[3], rhs[9];
+    char lhs[VNAMELEN];
+    char rhs[VNAMELEN];
+    char opstr[3];
     int ngot, err = 0;
 
     if (s == NULL) return 1;
 
     if (i == 0) {
-	ngot = sscanf(s, "%8[^=]=%8s", lhs, rhs) + 1;
+	ngot = sscanf(s, "%15[^=]=%15s", lhs, rhs) + 1;
 	strcpy(opstr, "=");
     } else {
-	ngot = sscanf(s, "%8[^-+*/=<>]%2[-+*/=<>]%8[^-+*/=<>]", 
+	ngot = sscanf(s, "%15[^-+*/=<>]%2[-+*/=<>]%15[^-+*/=<>]", 
 		      lhs, opstr, rhs);
     }
 
@@ -845,7 +847,7 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 
     delchar(' ', s);
 
-    if (sscanf(s, "%8[^.]..%8s", vn1, vn2) != 2) {
+    if (sscanf(s, "%15[^.]..%15s", vn1, vn2) != 2) {
 	err = 1;
     } else {
 	v1 = varindex(pdinfo, vn1);
@@ -1088,16 +1090,16 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 
     /* try parsing the loop line in various ways */
 
-    if (sscanf(line, "while %8[^ <>=]%8[ <>=] %8s", lvar, op, rvar) == 3) {
+    if (sscanf(line, "while %15[^ <>=]%15[ <>=] %15s", lvar, op, rvar) == 3) {
 	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
     }
 
-    else if (sscanf(line, "%c = %8[^.]..%8s", &ichar, op, rvar) == 3) {
+    else if (sscanf(line, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
 				    ichar, NULL, op, rvar);
     }	
 
-    else if (sscanf(line, "for %8[^= ] = %8[^.]..%8s", lvar, op, rvar) == 3) {
+    else if (sscanf(line, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
 				    0, lvar, op, rvar);
     }
@@ -1110,7 +1112,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	err = parse_as_for_loop(loop, pdinfo, pZ, line + 3);
     }
 
-    else if (sscanf(line, "%8s", lvar) == 1) {
+    else if (sscanf(line, "%15s", lvar) == 1) {
 	err = parse_as_count_loop(loop, pdinfo, (const double **) *pZ, 
 				  lvar);
     }
@@ -2046,6 +2048,7 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 	mpf_set_d(sd2, 0.0);
     }
 
+    /* FIXME format */
     pprintf(prn, " %3d) %8s ", lmod->model0->list[c+2], 
 	   pdinfo->varname[lmod->model0->list[c+2]]);
 
@@ -2068,6 +2071,7 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     var2 = (lmod->ssq_sderr[c] - n * m2 * m2) / n;
     sd2 = (var2 <= 0.0)? 0 : sqrt((double) var2);
 
+    /* FIXME format */
     pprintf(prn, " %3d) %8s ", lmod->model0->list[c+2], 
 	   pdinfo->varname[lmod->model0->list[c+2]]);
 

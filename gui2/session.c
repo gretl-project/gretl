@@ -1377,7 +1377,7 @@ static char *boxplot_str (GRAPHT *graph)
 
 	while (fgets(line, 47, fp) && strlen(str) < MAXLEN-48) {
 	    chopstr(line);
-	    if (sscanf(line, "%*d varname = %8s", vname) == 1) { 
+	    if (sscanf(line, "%*d varname = %15s", vname) == 1) { 
 		strcat(str, strchr(line, '=') + 2);
 		strcat(str, " ");
 	    }

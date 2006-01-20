@@ -822,7 +822,8 @@ static int make_local_db_series_list (windata_t *vwin)
     gint i;
 #endif
     gchar *row[3];
-    char sername[9], line1[256], line2[72], dbidx[MAXLEN];
+    char sername[VNAMELEN];
+    char line1[256], line2[72], dbidx[MAXLEN];
     FILE *fp;
     size_t n;
     int err = 0;
@@ -867,7 +868,7 @@ static int make_local_db_series_list (windata_t *vwin)
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
 
-	if (sscanf(line1, "%8s", sername) != 1) {
+	if (sscanf(line1, "%15s", sername) != 1) {
 	    break;
 	}
 
@@ -921,7 +922,8 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
     gint i;
 #endif
     gchar *row[3];
-    char sername[9], line1[150], line2[150];
+    char sername[VNAMELEN];
+    char line1[150], line2[150];
     int n, err = 0;
 
 #ifndef OLD_GTK
@@ -948,7 +950,7 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 	my_utf_validate(line1);
 #endif
 
-	if (sscanf(line1, "%8s", sername) != 1) {
+	if (sscanf(line1, "%15s", sername) != 1) {
 	    break;
 	}
 

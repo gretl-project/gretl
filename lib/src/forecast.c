@@ -1835,8 +1835,8 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
     }
 
     /* the varname should either be in the 2nd or 4th position */
-    if (sscanf(str, "%*s %8s %8s %8s", t1str, t2str, varname) != 3) {
-	if (sscanf(str, "%*s" "%8s", varname) != 1) {
+    if (sscanf(str, "%*s %8s %8s %15s", t1str, t2str, varname) != 3) {
+	if (sscanf(str, "%*s" "%15s", varname) != 1) {
 	    return E_PARSE;
 	}
     }

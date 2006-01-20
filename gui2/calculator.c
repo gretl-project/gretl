@@ -1025,7 +1025,7 @@ static void trash_test (GtkWidget *w, gpointer data)
 static int get_restriction_vxy (const char *s, int *vx, int *vy, 
 				GretlOp *yop, double *yval)
 {
-    char test[16];
+    char test[VNAMELEN];
     char *p, *q = NULL;
     char *str = g_strdup(s);
     int err = 0;
@@ -1038,7 +1038,7 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     *p = 0;
     p++;
 
-    if (sscanf(str, "%8s", test) != 1) {
+    if (sscanf(str, "%15s", test) != 1) {
 	err = 1;
     } else {
 	*vx = varindex(datainfo, test);
@@ -1081,7 +1081,7 @@ static int get_restriction_vxy (const char *s, int *vx, int *vy,
     }
 
     if (!err) {
-	if (sscanf(p, "%8s", test) != 1) {
+	if (sscanf(p, "%15s", test) != 1) {
 	    err = 1;
 	} else {
 	    *vy = varindex(datainfo, test);

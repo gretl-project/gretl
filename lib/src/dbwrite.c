@@ -98,7 +98,7 @@ static char **get_db_series_names (const char *idxname)
 	}
 	i++;
 	if (i % 2) {
-	    sscanf(line, "%8s", varname); /* FIXME length? */
+	    sscanf(line, "%15s", varname);
 	    varlist[j] = gretl_strdup(varname);
 	    if (varlist[j] == NULL) {
 		break;

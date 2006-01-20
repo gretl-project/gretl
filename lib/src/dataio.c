@@ -3636,7 +3636,7 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 	int j;
 
 	if (*s == '#') {
-	    if (sscanf(line, "# name: %8s", name) == 1) {
+	    if (sscanf(line, "# name: %15s", name) == 1) {
 		;
 	    } else if (sscanf(line, "# rows: %d", &brows) == 1) {
 		t = 0;

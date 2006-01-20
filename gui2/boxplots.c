@@ -1568,7 +1568,7 @@ int retrieve_boxplot (const char *fname)
 		       sscanf(line, "%*d xbase = %lf", &plt->xbase) != 1) {
 		goto corrupt;
 	    } else if (j == 5) {
-		if (sscanf(line, "%*d varname = %8s", plt->varname) != 1) {
+		if (sscanf(line, "%*d varname = %15s", plt->varname) != 1) {
 		    goto corrupt;
 		} else {
 		    get_bool_from_line(line, plt);

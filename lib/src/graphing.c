@@ -813,7 +813,7 @@ static int auto_plot_var (const char *s)
 static void make_gtitle (FILE *fp, int code, const char *s1, const char *s2)
 {
     char title[128];
-    char depvar[9];
+    char depvar[VNAMELEN];
 
     switch (code) {
     case GTITLE_VLS:
@@ -821,7 +821,7 @@ static void make_gtitle (FILE *fp, int code, const char *s1, const char *s2)
 		s1, s2);
 	break;
     case GTITLE_RESID:
-	if (sscanf(s1, "residual for %8s", depvar) == 1) {
+	if (sscanf(s1, "residual for %15s", depvar) == 1) {
 	    sprintf(title, I_("Regression residuals (= observed - fitted %s)"), 
 		    depvar);
 	}
