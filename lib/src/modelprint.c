@@ -2080,9 +2080,9 @@ print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     int offvar = gretl_model_get_int(pmod, "offset_var");
 
     if (offvar > 0) {
-	char namestr[14];
+	char namestr[24];
 
-	sprintf(namestr, "log(%.8s)", pdinfo->varname[offvar]);
+	sprintf(namestr, "log(%s)", pdinfo->varname[offvar]);
 	if (plain_format(prn)) {
 	    pprintf(prn, "\n %13s         1.0\n", namestr);
 	} else if (rtf_format(prn)) {

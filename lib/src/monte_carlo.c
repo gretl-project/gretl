@@ -2048,10 +2048,8 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 	mpf_set_d(sd2, 0.0);
     }
 
-    /* FIXME format */
-    pprintf(prn, " %3d) %8s ", lmod->model0->list[c+2], 
-	   pdinfo->varname[lmod->model0->list[c+2]]);
-
+    pprintf(prn, " %*s ", VNAMELEN, 
+	    pdinfo->varname[lmod->model0->list[c+2]]);
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
 	    mpf_get_d(c2), mpf_get_d(sd2));
 
@@ -2071,10 +2069,8 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     var2 = (lmod->ssq_sderr[c] - n * m2 * m2) / n;
     sd2 = (var2 <= 0.0)? 0 : sqrt((double) var2);
 
-    /* FIXME format */
-    pprintf(prn, " %3d) %8s ", lmod->model0->list[c+2], 
+    pprintf(prn, " %*s ", VNAMELEN, 
 	   pdinfo->varname[lmod->model0->list[c+2]]);
-
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", (double) m1, (double) sd1, 
 	    (double) m2, (double) sd2);
 #endif
@@ -2106,7 +2102,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
 	} else {
 	    mpf_set_d(sd, 0.0);
 	}
-	pprintf(prn, " %8s ", pdinfo->varname[lprn->list[i]]);
+	pprintf(prn, " %*s ", VNAMELEN, pdinfo->varname[lprn->list[i]]);
 	pprintf(prn, "%#14g %#14g\n", mpf_get_d(mean), mpf_get_d(sd));
     }
 
@@ -2118,7 +2114,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
 	mean = lprn->sum[i-1] / n;
 	m = (lprn->ssq[i-1] - n * mean * mean) / n;
 	sd = (m < 0)? 0 : sqrt((double) m);
-	pprintf(prn, " %8s ", pdinfo->varname[lprn->list[i]]);
+	pprintf(prn, " %*s ", VNAMELEN, pdinfo->varname[lprn->list[i]]);
 	pprintf(prn, "%#14g %#14g\n", (double) mean, (double) sd);
     }
 #endif

@@ -130,10 +130,10 @@ make_transform_label (char *label, const char *parent,
 int is_standard_lag (int v, const DATAINFO *pdinfo)
 {
     const char *test = VARLABEL(pdinfo, v);
-    char pm, vname[13];
+    char pm, vname[VNAMELEN];
     int lag, ret = 0;
 
-    if (sscanf(test, "= %12[^(](t %c %d)", vname, &pm, &lag) == 3) {
+    if (sscanf(test, "= %15[^(](t %c %d)", vname, &pm, &lag) == 3) {
 	ret = 1;
     }
 
@@ -498,7 +498,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
     } else if (lag == 0) {
 	lno = v;
     } else {
-	lno = get_transform(LAGS, v, lag, pZ, pdinfo, 8);
+	lno = get_transform(LAGS, v, lag, pZ, pdinfo, VNAMELEN - 3);
     }
 
     return lno;
@@ -518,7 +518,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 
 int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 {
-    return get_transform(LOGS, v, 0, pZ, pdinfo, 8);
+    return get_transform(LOGS, v, 0, pZ, pdinfo, VNAMELEN - 3);
 }
 
 /**
@@ -550,7 +550,7 @@ int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo)
 	return -1;
     }
 
-    return get_transform(ci, v, 0, pZ, pdinfo, 8);
+    return get_transform(ci, v, 0, pZ, pdinfo, VNAMELEN - 3);
 }
 
 /**
@@ -575,13 +575,13 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    return get_transform(SQUARE, vi, vj, pZ, pdinfo, 8);
+    return get_transform(SQUARE, vi, vj, pZ, pdinfo, VNAMELEN - 3);
 }
 
 static int 
 get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
 {
-    int width = 8 - trim;
+    int width = VNAMELEN - 3 - trim;
     int len, maxlen = 0;
     int i, j;
 
@@ -593,8 +593,8 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
     }
 
     if (maxlen <= width) {
-	/* no problem: generated names will fit in 8 chars */
-	return 8;
+	/* no problem: generated names will fit in VNAMELEN - 3 chars */
+	return VNAMELEN - 3;
     }
 
     for (len=width; len<=maxlen; len++) {
@@ -620,10 +620,10 @@ get_starting_length (const int *list, DATAINFO *pdinfo, int trim)
 
     len += trim;
 
-    if (len < 8) {
-	len = 8;
-    } else if (len > VNAMELEN) {
-	len = VNAMELEN;
+    if (len < VNAMELEN - 3) {
+	len = VNAMELEN - 3;
+    } else if (len > VNAMELEN - 1) {
+	len = VNAMELEN - 1;
     }
 
     return len;

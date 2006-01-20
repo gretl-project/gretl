@@ -62,7 +62,12 @@ static void tex_print_double (double x, PRN *prn)
 /* printing of impulse responses and variance decompositions */
 
 #define IRF_ROW_MAX 4
+#define IRF_WIDTH  13
+
 #define VDC_ROW_MAX 5
+#define VDC_WIDTH  11
+
+#define VECM_WIDTH 13
 
 enum {
     IRF,
@@ -88,7 +93,7 @@ static void VAR_info_header_block (int code, int v, int block,
 {
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
-    char vname[16];
+    char vname[32];
 
     if (tex) {
 	pputs(prn, "\\vspace{1em}\n\n");
@@ -147,12 +152,12 @@ static void VAR_info_header_block (int code, int v, int block,
     }
 }
 
-static void VAR_info_print_vname (int code, int i, int v, int endrow, 
+static void VAR_info_print_vname (int i, int v, int endrow, int width,
 				  const DATAINFO *pdinfo, PRN *prn)
 {
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
-    char vname[16];
+    char vname[32];
 
     if (tex) {
 	pprintf(prn, " %s ", tex_escape(vname, pdinfo->varname[v]));
@@ -167,10 +172,7 @@ static void VAR_info_print_vname (int code, int i, int v, int endrow,
 	    pputs(prn, " \\intbl \\row");
 	} 
     } else {
-	int w = (code == IRF)? 13 : 11;
-
-	if (code == IRF && i == 0) w--; /* FIXME width for i18n */
-	pprintf(prn, "%*s", w, pdinfo->varname[v]);
+	pprintf(prn, "%*s", width, pdinfo->varname[v]);
     }
 }
 
@@ -207,8 +209,33 @@ static void VAR_info_end_table (PRN *prn)
     }
 }
 
-#define IRF_ROW_MAX 4
-#define VDC_ROW_MAX 5
+static int varprint_namelen (const GRETL_VAR *var, const DATAINFO *pdinfo,
+			     int rmax, int block)
+{
+    int len, maxlen = 0;
+    int i, k, v;
+
+    for (i=0; i<rmax; i++) {
+	k = rmax * block + i - 1;
+	if (k < 0) {
+	    continue;
+	}
+	if (k >= var->neqns) {
+	    break;
+	}
+	if (var->ci == VECM) {
+	    v = var->jinfo->list[k + 1];
+	} else {
+	    v = (var->models[k])->list[1];
+	}
+	len = strlen(pdinfo->varname[v]);
+	if (len > maxlen) {
+	    maxlen = len;
+	}
+    }
+
+    return maxlen;
+}
 
 /**
  * gretl_VAR_print_impulse_response:
@@ -270,9 +297,13 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 
     for (block=0; block<blockmax && !err; block++) {
 	int k, vtarg, endrow;
+	int namelen, width;
 	double r;
 
 	VAR_info_header_block(IRF, vsrc, block, pdinfo, prn);
+
+	namelen = varprint_namelen(var, pdinfo, IRF_ROW_MAX, block);
+	width = (namelen < IRF_WIDTH - 1)? IRF_WIDTH : namelen + 1;
 
 	for (i=0; i<IRF_ROW_MAX; i++) {
 	    k = IRF_ROW_MAX * block + i;
@@ -285,7 +316,7 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 		vtarg = (var->models[k])->list[1];
 	    }
 	    endrow = !(i < IRF_ROW_MAX - 1 && k < var->neqns - 1);
-	    VAR_info_print_vname(IRF, i, vtarg, endrow, pdinfo, prn);
+	    VAR_info_print_vname(i, vtarg, endrow, width, pdinfo, prn);
 	}
 
 	if (tex || rtf) {
@@ -323,7 +354,8 @@ gretl_VAR_print_impulse_response (GRETL_VAR *var, int shock,
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %.5g\\cell ", r);
 		} else {
-		    pprintf(prn, "%#12.5g ", r);
+		    if (i == 0) pputc(prn, ' ');
+		    pprintf(prn, "%#*.5g ", width - 1, r);
 		}
 	    }
 
@@ -369,8 +401,6 @@ int gretl_VAR_print_all_impulse_responses (GRETL_VAR *var, const DATAINFO *pdinf
 
     return err;
 }
-
-#define VD_ROW_MAX 5
 
 /**
  * gretl_VAR_print_fcast_decomp:
@@ -425,9 +455,13 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 
     for (block=0; block<blockmax; block++) {
 	int k, vsrc, endrow;
+	int namelen, width;
 	double r;
 
 	VAR_info_header_block(VDC, vtarg, block, pdinfo, prn);
+
+	namelen = varprint_namelen(var, pdinfo, VDC_ROW_MAX, block);
+	width = (namelen < VDC_WIDTH - 1)? VDC_WIDTH : namelen + 1;
 
 	for (i=0; i<VDC_ROW_MAX; i++) {
 	    k = VDC_ROW_MAX * block + i - 1;
@@ -437,7 +471,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 		} else if (rtf) {
 		    pprintf(prn, " \\qc %s\\cell ", I_("std. error"));
 		} else {
-		    pprintf(prn, " %12s ", _("std. error"));
+		    pprintf(prn, " %14s", _("std. error"));
 		}
 		continue;
 	    }
@@ -450,7 +484,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 		vsrc = (var->models[k])->list[1];
 	    }
 	    endrow = !(i < VDC_ROW_MAX - 1 && k < var->neqns - 1);
-	    VAR_info_print_vname(VDC, i, vsrc, endrow, pdinfo, prn);
+	    VAR_info_print_vname(i, vsrc, endrow, width, pdinfo, prn);
 	}
 
 	if (tex || rtf) {
@@ -464,6 +498,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 	    for (i=0; i<VDC_ROW_MAX; i++) {
 		k = VDC_ROW_MAX * block + i - 1;
 		if (k < 0) {
+		    /* standard error column */
 		    r = gretl_matrix_get(vd, t, var->neqns);
 		    if (tex) {
 			pprintf(prn, "%g & ", r);
@@ -486,7 +521,7 @@ gretl_VAR_print_fcast_decomp (GRETL_VAR *var, int targ,
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %.4f\\cell", r);
 		} else {
-		    pprintf(prn, "%10.4f ", r);
+		    pprintf(prn, "%*.4f ", width - 1, r);
 		}
 	    }
 
@@ -570,7 +605,7 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
     gretl_prn_newline(prn);
 
     for (i=0; i<rows; i++) {
-	char vname[16];
+	char vname[32];
 
 	if (i < jv->list[0]) {
 	    sprintf(vname, "%s(-1)", pdinfo->varname[jv->list[i+1]]);
@@ -582,7 +617,7 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 	if (rtf) {
 	    pputs(prn, vname);
 	} else {
-	    pprintf(prn, "%-12s", vname);
+	    pprintf(prn, "%-12s", vname); /* FIXME */
 	}
 
 	/* coefficients */
@@ -604,7 +639,7 @@ print_VECM_coint_eqns (JohansenInfo *jv, const DATAINFO *pdinfo, PRN *prn)
 	    if (rtf) {
 		pputs(prn, "\t");
 	    } else {
-		pprintf(prn, "%13s", " ");
+		bufspace(VECM_WIDTH, prn);
 	    }
 	    for (j=0; j<jv->rank; j++) {
 		if (i < jv->rank) {
@@ -648,7 +683,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 	    if (rtf) {
 		pprintf(prn, "\t%s", s);
 	    } else {
-		pprintf(prn, "%13s", s);
+		pprintf(prn, "%*s", VECM_WIDTH, s);
 	    }
 	}
     }
@@ -662,7 +697,7 @@ static void print_VECM_omega (GRETL_VAR *jvar, const DATAINFO *pdinfo, PRN *prn)
 		pputc(prn, '\t');
 	    }	    
 	} else {
-	    pprintf(prn, "%-13s", s);
+	    pprintf(prn, "%-*s", VECM_WIDTH, s);
 	}
 	for (j=0; j<jvar->neqns; j++) {
 	    if (rtf) {
@@ -840,27 +875,27 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	} else if (rtf) {
 	    pprintf(prn, "%s:\\par\n\n", I_("F-tests of zero restrictions"));
 	} else {
-	    pprintf(prn, "  %s:\n", _("F-tests of zero restrictions"));
+	    pprintf(prn, "  %s:\n\n", _("F-tests of zero restrictions"));
 	}
 
 	for (j=0; j<var->neqns; j++) {
 	    v = (var->models[j])->list[1];
 	    if (tex) {
-		pprintf(prn, I_("All lags of %-8s "), pdinfo->varname[v]);
+		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->order, dfd, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\\\\\n", I_("p-value"), 
 			fdist(var->Fvals[k], var->order, dfd));
 	    } else if (rtf) {
-		pprintf(prn, I_("All lags of %-8s "), pdinfo->varname[v]);
-		pprintf(prn, "F(%d, %d) = %10g, ", var->order, dfd, var->Fvals[k]);
+		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
+		pprintf(prn, "F(%d, %d) = %8.5g, ", var->order, dfd, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
 			fdist(var->Fvals[k], var->order, dfd));
 	    } else {
-		pputs(prn, "    ");
-		pprintf(prn, _("All lags of %-8s "), pdinfo->varname[v]);
+		pputs(prn, "  ");
+		pprintf(prn, _("All lags of %-15s "), pdinfo->varname[v]);
 		sprintf(Fstr, "F(%d, %d)", var->order, dfd);
-		pprintf(prn, "%12s = %#10.5g, ", Fstr, var->Fvals[k]);
+		pprintf(prn, "%12s = %#8.5g, ", Fstr, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\n", _("p-value"), 
 			fdist(var->Fvals[k], var->order, dfd));
 	    }
@@ -869,21 +904,21 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 
 	if (var->order > 1) {
 	    if (tex) {
-		pprintf(prn, I_("All vars, lag %-6d "), var->order);
+		pprintf(prn, I_("All vars, lag %-13d "), var->order);
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\\\\\n", I_("p-value"), 
 			fdist(var->Fvals[k], var->neqns, dfd));
 	    } else if (rtf) {
-		pprintf(prn, I_("All vars, lag %-6d "), var->order);
-		pprintf(prn, "F(%d, %d) = %10g, ", var->neqns, dfd, var->Fvals[k]);
+		pprintf(prn, I_("All vars, lag %-13d "), var->order);
+		pprintf(prn, "F(%d, %d) = %8.5g, ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
 			fdist(var->Fvals[k], var->neqns, dfd));
 	    } else {
-		pputs(prn, "    ");
-		pprintf(prn, _("All vars, lag %-6d "), var->order);
+		pputs(prn, "  ");
+		pprintf(prn, _("All vars, lag %-13d "), var->order);
 		sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
-		pprintf(prn, "%12s = %#10.5g, ", Fstr, var->Fvals[k]);
+		pprintf(prn, "%12s = %#8.5g, ", Fstr, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\n", _("p-value"), 
 			fdist(var->Fvals[k], var->neqns, dfd));
 	    } 

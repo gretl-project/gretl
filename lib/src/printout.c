@@ -192,8 +192,7 @@ void print_centered (const char *s, int width, PRN *prn)
 
     if (rem <= 1) {
 	pprintf(prn, "%s", s);
-    }
-    else {
+    } else {
 	int i, off = rem / 2;
 
 	for (i=0; i<off; i++) {

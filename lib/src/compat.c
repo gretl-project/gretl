@@ -638,7 +638,7 @@ int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
     p = 0;
     for (i=0; i<j; i++) {
 	if ((i == 0 || param[i] == ' ') && i < (j - 1)) {
-	    sscanf(param + i + (i? 1 : 0), "%8s", parmbit); 
+	    sscanf(param + i + (i? 1 : 0), "%15s", parmbit); 
 #ifdef RHODEBUG
 	    fprintf(stderr, "rhodiff: parmbit = '%s'\n", parmbit);
 #endif
@@ -666,7 +666,8 @@ int rhodiff (char *param, const int *list, double ***pZ, DATAINFO *pdinfo)
 
 	j = list[i];
 
-	strncat(pdinfo->varname[vr], pdinfo->varname[j], 7);
+	*pdinfo->varname[vr] = 0;
+	strncat(pdinfo->varname[vr], pdinfo->varname[j], VNAMELEN-2);
 	strcat(pdinfo->varname[vr], "#");
 
 	sprintf(VARLABEL(pdinfo, vr), _("= rho-differenced %s"),
