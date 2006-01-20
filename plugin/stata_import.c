@@ -390,7 +390,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     for (i=0; i<nvar && !err; i++) {
         read_string(fp, namelen + 1, aname, &err);
 	printf("variable %d: name = '%s'\n", i+1, aname);
-	strncat(dinfo->varname[i+1], aname, 8);
+	strncat(dinfo->varname[i+1], aname, VNAMELEN - 1);
     }
 
     /* sortlist -- not relevant */
@@ -538,16 +538,9 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		printf("label %d = '%s'\n", i, txt + off[i]);
 	    }
 
-#if 0 /* R-specific code */
-	    namesgets(levels, labels);
-	    SET_VECTOR_ELT(labeltable, j, levels);
-#endif
 	    free(off);
 	    free(txt);
 	}
-#if 0 /* R-specific code */
-	namesgets(labeltable, tmp);
-#endif
     }
 
     free(types);

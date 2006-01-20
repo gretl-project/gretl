@@ -85,7 +85,7 @@ int help (const char *cmdword, const char *helpfile, PRN *prn);
 int parseopt (const char **argv, int argc, char *fname, 
 	      int *force_lang);
 
-int shell (const char *arg);
+int gretl_shell (const char *arg);
 
 void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       unsigned char flags, PRN *prn);

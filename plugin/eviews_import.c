@@ -176,7 +176,7 @@ static int read_wf1_variables (FILE *fp, long pos, double **Z,
 	}
 	fprintf(stderr, "Got variable %d, '%s'\n", j + 1, vname);
 	dinfo->varname[++j][0] = 0;
-	strncat(dinfo->varname[j], vname, 8);
+	strncat(dinfo->varname[j], vname, VNAMELEN - 1);
 
 	/* get stream position for the data */
 	fseek(fp, pos + 14, SEEK_SET);

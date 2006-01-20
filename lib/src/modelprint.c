@@ -1627,7 +1627,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 static void print_pval_str (double pval, char *str)
 {
     if (pval < .00001) {
-	sprintf(str, "< %.5f", 0.00001);
+	sprintf(str, "<%.5f", 0.00001);
     } else {
 	sprintf(str, "%.5f", pval);
     }
@@ -1642,18 +1642,10 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     char varname[24];
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
-#if 0
-    pprintf(prn, " %13s ", varname);
-#else
     pputs(prn, "  ");
-#endif
     print_centered(varname, 15, prn);
     pputc(prn, ' ');
     
-#if 0
-    bufspace((strlen(varname) > 12)? 1 : 2, prn);
-#endif
-
     /* print coeff value if well-defined */
     if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
@@ -1661,10 +1653,6 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     } else {
 	gretl_print_value(pmod->coeff[i], prn);
     }
-
-#if 0
-    bufspace(2, prn);
-#endif
 
     /* get out if std error is undefined */
     if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {

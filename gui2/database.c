@@ -1157,7 +1157,7 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
     char pdc;
     gchar *temp;
     SERIESINFO *sinfo;
-    char stobs[11], endobs[11];
+    char stobs[OBSLEN], endobs[OBSLEN];
 
     sinfo = mymalloc(sizeof *sinfo);
 
@@ -1196,7 +1196,7 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
 #endif    
 
     *sinfo->varname = 0;
-    strncat(sinfo->varname, temp, 8);
+    strncat(sinfo->varname, temp, VNAMELEN - 1);
 
 #ifndef OLD_GTK
     g_free(temp);
@@ -1211,7 +1211,7 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
 #endif
 
     *sinfo->descrip = 0;
-    strncat(sinfo->descrip, temp, MAXLABEL-1);
+    strncat(sinfo->descrip, temp, MAXLABEL - 1);
 
 #ifndef OLD_GTK
     g_free(temp);
@@ -1269,8 +1269,8 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
     } else {
 	sinfo->stobs[0] = 0;
 	sinfo->endobs[0] = 0;
-	strncat(sinfo->stobs, stobs, 8);
-	strncat(sinfo->endobs, endobs, 8);
+	strncat(sinfo->stobs, stobs, OBSLEN - 1);
+	strncat(sinfo->endobs, endobs, OBSLEN - 1);
     }
 
     return sinfo;

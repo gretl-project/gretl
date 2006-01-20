@@ -239,6 +239,7 @@ static void pca_print (VMatrix *vmat, gretl_matrix *m,
 
     x = 0.0;
     y = 0.0;
+
     for (i=n-1; i>=0; i--) {
 	y += evals[i] / n;
 	pprintf(prn, "%5d%13.4f%13.4f%13.4f\n", n - i,
@@ -257,7 +258,7 @@ static void pca_print (VMatrix *vmat, gretl_matrix *m,
     while (cols > 0) {
 	int colsdone = 0;
 
-	pputs(prn, "Variable  ");
+	pprintf(prn, "%-16s", _("Variable"));
 	for (i=n-cols; i<n-cols+7 && i<n; i++) {
 	    char pcname[8];
 
@@ -267,7 +268,7 @@ static void pca_print (VMatrix *vmat, gretl_matrix *m,
 	}
 	pputc(prn, '\n');
 	for (i=0; i<n; i++) {
-	    pprintf(prn, "%-10s", vmat->names[i]);
+	    pprintf(prn, "%-16s", vmat->names[i]);
 	    for (j=cols-1; j>cols-8 && j>=0; j--) {
 		pprintf(prn, "%9.3f", gretl_matrix_get(m, i, j));
 	    }

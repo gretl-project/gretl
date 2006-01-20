@@ -137,7 +137,7 @@ int print_vifs (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     for (i=2; i<=pmod->list[0]; i++) {
 	v = pmod->list[i];
 	if (v != 0) {
-	    pprintf(prn, " %3d) %8s %8.3f\n", v, pdinfo->varname[v], vif[j++]);
+	    pprintf(prn, " %3d) %15s %8.3f\n", v, pdinfo->varname[v], vif[j++]);
 	}
     }
     pputc(prn, '\n');

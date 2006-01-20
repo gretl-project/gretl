@@ -2502,7 +2502,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    }	  
 	}
 
-	record_test_result(TR2, pval, "White's");
+	record_test_result(TR2, pval, _("White's"));
     }
 
     clear_model(&white);

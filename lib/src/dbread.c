@@ -361,8 +361,10 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 
     sinfo->pd = dinfo->info;
     sinfo->nobs = n;
+
     *sinfo->varname = 0;
-    strncat(sinfo->varname, varname, 8);
+    strncat(sinfo->varname, varname, VNAMELEN - 1);
+
     *sinfo->descrip = 0;
     strncat(sinfo->descrip, comment, MAXLABEL - 1);
 

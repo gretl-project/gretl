@@ -30,11 +30,8 @@ static void tex_modify_exponent (char *numstr)
 
     if (p != NULL) {
 	int expon = atoi(p + 1);
-#if 0
-	sprintf(p, "\\times 10^{%d}", expon);
-#else
+
 	sprintf(p, "\\mbox{e%s%d}", (expon > 0)? "+" : "", expon);
-#endif
     }
 }
 
@@ -198,7 +195,7 @@ static void tex_garch_coeff_name (char *targ, const char *src,
     char vname[VNAMELEN], vnesc[16];
     int lag;
 
-    if (sscanf(src, "%[^(](%d)", vname, &lag) == 2) {
+    if (sscanf(src, "%15[^(](%d)", vname, &lag) == 2) {
 	/* e.g. "alpha(0)" */
 	if (!inmath) {
 	    sprintf(targ, "$\\%s_%d$", vname, lag);
@@ -219,10 +216,10 @@ static void tex_garch_coeff_name (char *targ, const char *src,
 static void tex_arma_coeff_name (char *targ, const char *src,
 				 int inmath)
 {
-    char vname[VNAMELEN], vnesc[16], texname[24];
+    char vname[VNAMELEN], vnesc[32], texname[32];
     int lag;
 
-    if (sscanf(src, "%[^(](-%d)", vname, &lag) == 2) {
+    if (sscanf(src, "%15[^(](-%d)", vname, &lag) == 2) {
 	if (!strcmp(vname, "e")) {
 	    if (!inmath) {
 		strcpy(texname, "$\\varepsilon$");
@@ -256,11 +253,11 @@ static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
     int gotit = 0;
 
     if (strlen(lbl) > 2) {
-	char myvar[24], tmp[9];
+	char myvar[32], tmp[VNAMELEN];
 	int lag;
 
 	lbl += 2;
-	if (sscanf(lbl, "%8[^(](t - %d)", tmp, &lag) == 2) {
+	if (sscanf(lbl, "%15[^(](t - %d)", tmp, &lag) == 2) {
 	    tex_escape(myvar, tmp);
 	    sprintf(s, "%s$_{t-%d}$", myvar, lag);
 	    gotit = 1;
@@ -282,11 +279,11 @@ static void tex_vecm_varname (char *s, const DATAINFO *pdinfo, int v)
 	sprintf(s, "EC%d$_{t-1}$", cvnum);
 	gotit = 1;
     } else if (strlen(lbl) > 2) {
-	char myvar[24], tmp[9];
+	char myvar[32], tmp[VNAMELEN];
 	int lag;
 
 	lbl += 2;
-	if (sscanf(lbl, "d_%8[^(](t - %d)", tmp, &lag) == 2) {
+	if (sscanf(lbl, "d_%15[^(](t - %d)", tmp, &lag) == 2) {
 	    tex_escape(myvar, tmp);
 	    sprintf(s, "$\\Delta$%s$_{t-%d}$", myvar, lag);
 	    gotit = 1;
@@ -301,7 +298,7 @@ static void tex_vecm_varname (char *s, const DATAINFO *pdinfo, int v)
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int i, PRN *prn)
 {
-    char tmp[24], coeff[64], sderr[64], tratio[64], pval[64];
+    char tmp[32], coeff[64], sderr[64], tratio[64], pval[64];
 
     if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
 	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
@@ -375,7 +372,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 {
-    char vname[32];
+    char vname[48];
     const int *list = vecm->jinfo->list;
     double x;
     int i, j;
@@ -426,7 +423,7 @@ void tex_print_VECM_omega (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 
 void tex_print_VECM_coint_eqns (GRETL_VAR *vecm, const DATAINFO *pdinfo, PRN *prn)
 {
-    char s[16];
+    char s[32];
     JohansenInfo *jv = vecm->jinfo;
     int rows = gretl_matrix_rows(jv->Beta);
     int i, j;
@@ -541,7 +538,7 @@ static char tex_preamble_file[MAXLEN];
 #ifdef ENABLE_NLS
 static const char *get_gretltex_local (void)
 {
-    static char localtex[16] = {0};
+    static char localtex[32] = {0};
     char *lang = getenv("LANG");
 
     if (lang != NULL) {
@@ -667,7 +664,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     /* dependent variable */
     *tmp = '\0';
     if (pmod->ci == POISSON) {
-	char vname[24];
+	char vname[32];
 
 	tex_escape(vname, pdinfo->varname[pmod->list[1]]);
 	sprintf(tmp, "log(%s)", vname);

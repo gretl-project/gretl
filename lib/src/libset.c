@@ -60,6 +60,7 @@ struct set_vars_ {
     int use_qr;                 /* use QR decomposition? */
     unsigned int seed;          /* for PRNG */
     int halt_on_error;          /* halt cli program on script error? */
+    int shell_ok;               /* shell commands permitted? */
     double hp_lambda;           /* for Hodrick-Prescott filter */
     int horizon;                /* for VAR impulse responses */ 
     double nls_toler;           /* NLS convergence criterion */
@@ -133,6 +134,7 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
     sv->use_qr = state->use_qr;
     sv->seed = state->seed;
     sv->halt_on_error = state->halt_on_error;
+    sv->shell_ok = state->shell_ok;
     sv->hp_lambda = state->hp_lambda;
     sv->horizon = state->horizon;
     sv->nls_toler = state->nls_toler;
@@ -158,6 +160,7 @@ static void state_vars_init (set_vars *sv)
     sv->use_qr = UNSET_INT; 
     sv->seed = 0;
     sv->halt_on_error = UNSET_INT;
+    sv->shell_ok = 0;
     sv->hp_lambda = NADBL;
     sv->horizon = UNSET_INT;
     sv->nls_toler = NADBL;
@@ -579,12 +582,14 @@ static int display_settings (PRN *prn)
 	pprintf(prn, " horizon = %d\n", state->horizon);
     }
 
-    /* undocumented! */
+    /* FIXME: undocumented! */
     pprintf(prn, " nls_toler = %g\n", get_nls_toler());
     pprintf(prn, " messages = %d\n", state->gretl_msgs);
 
     ival =  get_halt_on_error(); /* checks env */
     pprintf(prn, " halt_on_error = %d\n", state->halt_on_error);
+
+    pprintf(prn, " shell_ok = %d\n", state->shell_ok);
 
     return 0;
 }
@@ -687,6 +692,8 @@ int execute_set_line (const char *line, PRN *prn)
 		state->halt_on_error = 0;
 		err = 0;
 	    }
+	} else if (!strcmp(setobj, "shell_ok")) {
+	    pprintf(prn, "You can only set this variable via the gretl GUI\n");
 	} else if (!strcmp(setobj, "seed")) {
 	    /* seed for PRNG */
 	    if (isdigit(*setarg)) {
@@ -785,6 +792,43 @@ int get_halt_on_error (void)
     } 
 
     return state->halt_on_error;
+}
+
+#ifndef WIN32
+static int read_cli_shell_status (void)
+{
+    char shellstamp[FILENAME_MAX];
+    FILE *fp;
+    int ok = 0;
+
+    sprintf(shellstamp, "%s.gretl_shell_stamp", gretl_user_dir());
+    fp = fopen(shellstamp, "r");
+    if (fp != NULL) {
+	ok = 1;
+	fclose(fp);
+    }
+
+    return ok;
+}
+#endif
+
+void set_shell_ok (int set)
+{
+    check_for_state();
+    state->shell_ok = set;
+}
+
+int get_shell_ok (void)
+{
+    check_for_state();
+
+#ifndef WIN32
+    if (!gretl_in_gui_mode()) {
+	state->shell_ok = read_cli_shell_status();
+    }
+#endif
+
+    return state->shell_ok;
 }
 
 /* Mechanism for pushing and popping program state for new-style

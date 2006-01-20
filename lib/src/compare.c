@@ -245,7 +245,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 		    cmp->dfn, cmp->dfd, cmp->F);
 	    pprintf(prn, _("with p-value = %g\n"), pval);
 	}
-	record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? "omit" : "add");
+	record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
 
 	if (test != NULL) {
 	    model_test_set_teststat(test, GRETL_STAT_F);
@@ -264,7 +264,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 		    _("Chi-square"), cmp->dfn, cmp->chisq);
 	    pprintf(prn, _("with p-value = %g\n\n"), pval);
 	}
-	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? "omit" : "add");
+	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? _("omit") : _("add"));
 
 	if (test != NULL) {
 	    model_test_set_teststat(test, (LIMDEP(cmp->ci))? 
@@ -574,7 +574,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
 	    }
 	}
 
-	record_test_result(trsq, pval, "non-linearity");
+	record_test_result(trsq, pval, _("non-linearity"));
     } 
 
     clear_model(&aux);
@@ -1203,7 +1203,7 @@ int autocorr_test (MODEL *pmod, int order,
 			lb, _("with p-value"), _("Chi-square"), order,
 			lb, chisq(lb, order));
 	    }
-	    record_test_result(LMF, pval, "autocorrelation");
+	    record_test_result(LMF, pval, _("autocorrelation"));
 	}
 
 	if (opt & OPT_S) {
@@ -2060,7 +2060,7 @@ int sum_test (const int *sumvars, MODEL *pmod,
 		pval = coeff_pval(&summod, tval, summod.dfd);
 		pprintf(prn, "   t(%d) = %g ", summod.dfd, tval);
 		pprintf(prn, _("with p-value = %g\n"), pval);
-		record_test_result(tval, pval, "sum");
+		record_test_result(tval, pval, _("sum"));
 	    }
 	}
     }

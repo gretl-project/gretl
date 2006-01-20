@@ -27,8 +27,8 @@
 typedef struct saved_list_ saved_list;
 
 struct saved_list_ {
+    char name[VNAMELEN];
     int *list;
-    char *name;
     int level;
 };
 
@@ -54,12 +54,8 @@ static saved_list *saved_list_new (const int *list, const char *name)
 	    free(sl);
 	    sl = NULL;
 	} else {
-	    sl->name = gretl_strndup(name, 31);
-	    if (sl->name == NULL) {
-		free(sl->list);
-		free(sl);
-		sl = NULL;
-	    }
+	    *sl->name = 0;
+	    strncat(sl->name, name, VNAMELEN - 1);
 	}
     }
 
@@ -69,7 +65,6 @@ static saved_list *saved_list_new (const int *list, const char *name)
 static void free_saved_list (saved_list *sl)
 {
     free(sl->list);
-    free(sl->name);
     free(sl);
 }
 

@@ -1657,7 +1657,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		else if (!cmd->errcode) {
 		    cmd->errcode = 1; /* presume guilt at this stage */
 		    if (strlen(field) > 8) {
-			char test[VNAMELEN];
+			char test[9];
 
 			*test = 0;
 			strncat(test, field, 8);
@@ -2015,13 +2015,18 @@ int parseopt (const char **argv, int argc, char *fname, int *force_lang)
 
 #ifndef WIN32
 
-int shell (const char *arg)
+int gretl_shell (const char *arg)
 {
     int pid;
     void (*old1)(int);
     void (*old2)(int);
     char shellnam[40];
     const char *theshell, *namep; 
+
+    if (!get_shell_ok()) {
+	strcpy(gretl_errmsg, "The shell command is not activated.");
+	return 1;
+    }
 
     old1 = signal(SIGINT, SIG_IGN);
     old2 = signal(SIGQUIT, SIG_IGN);
@@ -2672,13 +2677,15 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 
 static void showlabels (const DATAINFO *pdinfo, PRN *prn)
 {
+    const char *label;
     int i;
 
     pprintf(prn, _("Listing labels for variables:\n"));
+
     for (i=0; i<pdinfo->v; i++) {
-	if (strlen(VARLABEL(pdinfo, i)) > 2) {
-	    pprintf(prn, "%3d) %-10s %s\n", i, 
-		    pdinfo->varname[i], VARLABEL(pdinfo, i));
+	label = VARLABEL(pdinfo, i);
+	if (strlen(label) > 2) {
+	    pprintf(prn, " %s: %s\n", pdinfo->varname[i], label);
 	}
     }
 }
@@ -3121,6 +3128,10 @@ int simple_commands (CMD *cmd, const char *line,
 
     case TRANSPOSE:
 	err = transpose_data(pZ, pdinfo);
+	break;
+
+    case SHELL:
+	err = gretl_shell(line + 1);
 	break;
 
     default:

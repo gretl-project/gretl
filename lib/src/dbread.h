@@ -59,7 +59,7 @@ struct _db_table {
 typedef struct _SERIESINFO SERIESINFO;
 
 struct _SERIESINFO {
-    char varname[16];
+    char varname[VNAMELEN];
     char descrip[MAXLABEL];
     int nobs;
     char stobs[OBSLEN];

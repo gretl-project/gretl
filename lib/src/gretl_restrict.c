@@ -891,7 +891,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     pprintf(prn, _("with p-value = %g\n"), pval);
     pputc(prn, '\n');
 
-    record_test_result(F, pval, "restriction");
+    record_test_result(F, pval, _("restriction"));
 
  bailout:
 

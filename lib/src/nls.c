@@ -406,12 +406,9 @@ get_params_from_nlfunc (nls_spec *spec, const double **Z,
 	p = s;
 	if (isalpha(*s) && *(s + 1)) { 
 	    /* find a variable name */
-	    p++;
-	    n = 1;
-	    while (isalnum(*p) || *p == '_') {
-		p++; n++;
-	    }
-	    if (n > 8) {
+	    n = gretl_varchar_spn(s);
+	    p += n;
+	    if (n > VNAMELEN - 1) {
 		/* variable name is too long */
 		return 1;
 	    }
@@ -1743,7 +1740,7 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
     }
 
     *param->name = '\0';
-    strncat(param->name, vname, 8);
+    strncat(param->name, vname, VNAMELEN - 1);
     free(vname);
 
     v = varindex(pdinfo, param->name);

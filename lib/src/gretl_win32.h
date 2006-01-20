@@ -39,6 +39,8 @@ int winfork (char *cmdline, const char *dir, int wshow,
 
 char *desktop_path (void);
 
+int gretl_shell (const char *arg);
+
 #endif /* WIN32 */
 
 #endif /* GRETL_WIN32_H */

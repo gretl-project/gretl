@@ -5951,6 +5951,11 @@
 	interpreted as an escape to the user's shell.  Thus arbitrary
 	shell commands can be executed from within <program>gretl</program>.
       </para>
+      <para>
+	For reasons of security this facility is not enabled by default.  To
+	activate it, check the box titled <quote>Allow shell commands</quote>
+	under the File, Preferences menu in the GUI program.
+      </para> 
     </description>
 
   </command>

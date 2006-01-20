@@ -20,6 +20,7 @@
 /* gretl_win32.c for gretl */
 
 #include "libgretl.h"
+#include "libset.h"
 
 #include <windows.h>
 #include <shlobj.h>
@@ -102,6 +103,7 @@ int write_reg_val (HKEY tree, const char *base,
 
 void cli_read_registry (char *callname, PATHS *ppaths)
 {
+    char valstr[MAXLEN];
     int drive = callname[0];
 
     ppaths->gretldir[0] = '\0';
@@ -148,6 +150,14 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     read_reg_val(HKEY_CLASSES_ROOT, "x12arima", "x12adir", ppaths->x12adir);
     if (ppaths->x12adir[0] == '\0') {
 	sprintf(ppaths->x12a, "%c:\\userdata\\x12arima", drive);
+    }
+
+    valstr[0] = '\0';
+    read_reg_val(HKEY_CURRENT_USER, "gretl", "shellok", valstr);
+    if (!strcmp(valstr, "true") || !strcmp(valstr, "1")) {
+	set_shell_ok(1);
+    } else {
+	set_shell_ok(0);
     }
 }
 
@@ -227,6 +237,24 @@ char *desktop_path (void)
     }
 
     return (result == TRUE) ? gretl_strdup(dpath) : NULL;
+}
+
+int gretl_shell (const char *arg)
+{
+    UINT winret;
+    int err = 0;
+
+    if (!get_shell_ok()) {
+	strcpy(gretl_errmsg, "The shell command is not activated.");
+	err = 1;
+    } else {
+	winret = WinExec(arg + 1, SW_SHOWNORMAL);
+	if (winret <= 31) {
+	    err = 1;
+	}
+    }
+
+    return err;
 }
 
 

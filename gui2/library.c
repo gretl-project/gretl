@@ -2991,7 +2991,7 @@ void do_random (GtkWidget *widget, dialog_t *dlg)
     }
 
     *vname = 0;
-    strncat(vname, tmp, 8);
+    strncat(vname, tmp, VNAMELEN - 1);
     if (validate_varname(vname)) return;
 
     if (action == GENR_NORMAL) {
@@ -5971,6 +5971,7 @@ int gui_exec_line (char *line,
     case RMPLOT: 
     case RUNS: 
     case SDIFF:
+    case SHELL:
     case SPEARMAN: 
     case SQUARE: 
     case STORE:
@@ -6649,14 +6650,6 @@ int gui_exec_line (char *line,
     case SETMISS:
         set_miss(cmd.list, cmd.param, Z, datainfo, prn);
         break;
-
-    case SHELL:
-#ifdef G_OS_WIN32
-	WinExec(line + 1, SW_SHOWNORMAL);
-#else	
-	shell(line + 1);
-#endif
-	break;
 
     case SMPL:
 	if (cmd.opt) {

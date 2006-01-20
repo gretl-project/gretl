@@ -3005,74 +3005,31 @@ make_genr_varname (GENERATOR *genr, const char *vname)
     }
 }
 
-/* substitute something more informative in the genr label
-   when the user has called for "$pvalue" or "$test"
-*/
-
-static void substitute_in_genrs (char *genrs, char *src)
-{
-    const char *targ[] = {
-	"$pvalue",
-	"$test",
-	NULL
-    };
-    int i, slen = 0;
-    char *p;
-
-    for (i=0; targ[i] != NULL; i++) {
-	if ((p = strstr(genrs, targ[i])) != NULL) {
-	    slen = strlen(targ[i]);
-	    break;
-	}
-    }
-
-    if (slen > 0) {
-	int srclen = strlen(src);
-	
-	if (strlen(genrs) + srclen < MAXLINE) {
-	    int tail = strlen(p) + 1;
-
-	    *p = ' ';
-	    memmove(p + srclen, p, tail);
-	    memcpy(p, src, srclen);
-	}
-    }
-}
-
 /* create the label that will form the description of
    the generated variable */
 
 static void write_genr_label (GENERATOR *genr, int oldv)
 {
-    char tmp[64] = {0};
-    int llen = 0;
+    if (*genr->label == '\0') {
+	int mc, len = 0;
 
-    if (*genr->label != '\0') {
-	sprintf(tmp, "%.63s", genr->label);
-    }
+	if (genr->varnum < oldv) {
+	    mc = get_model_count();
+	    if (mc > 0) {
+		sprintf(genr->label, _("Replaced after model %d: "), mc);
+		len = strlen(genr->label);
+	    }
+	}	
 
-    if (genr->varnum < oldv) {
-	int mc = get_model_count();
-
-	if (mc > 0) {
-	    sprintf(genr->label, _("Replaced after model %d: "), mc);
-	    llen = 48;
+	if (strlen(genr->orig_s) > MAXLABEL - 1 - len) {
+	    strncat(genr->label, genr->orig_s, MAXLABEL - 4 - len);
+	    strcat(genr->label, "...");
+	} else {
+	    strncat(genr->label, genr->orig_s, MAXLABEL - 1);
 	}
-    }	
-
-    if (*tmp != '\0') {
-	*genr->label = '\0';
-	substitute_in_genrs(genr->orig_s, tmp);
     }
 
-    if (strlen(genr->orig_s) > MAXLABEL - 1 - llen) {
-	strncat(genr->label, genr->orig_s, MAXLABEL - 4 - llen);
-	strcat(genr->label, "...");
-    } else {
-	strncat(genr->label, genr->orig_s, MAXLABEL - 1);
-    }
-
-    strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);    
+    strcpy(VARLABEL(genr->pdinfo, genr->varnum), genr->label);
 }
 
 /* allocate temporary series used as workspace */

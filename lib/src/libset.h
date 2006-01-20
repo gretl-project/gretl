@@ -39,6 +39,9 @@ int pop_program_state (DATAINFO *pdinfo);
 void set_use_qr (int set);
 int get_use_qr (void);
 
+void set_shell_ok (int set);
+int get_shell_ok (void);
+
 void set_xsect_hccme (const char *s);
 void set_tseries_hccme (const char *s);
 

@@ -113,6 +113,7 @@ GdkFont *fixed_font;
 static int usecwd;
 static int olddat;
 static int useqr;
+static int shellok;
 static int manpref;
 char gpcolors[32];
 static char datapage[24];
@@ -200,6 +201,8 @@ RCVAR rc_vars[] = {
     { "browser", N_("Web browser"), NULL, Browser, 
       ROOTSET, MAXSTR, 3, NULL },
 #endif
+    { "shellok", N_("Allow shell commands"), NULL, &shellok, 
+      BOOLSET, 0, 1, NULL },
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
       ROOTSET, MAXLEN, 3, NULL },
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
@@ -344,6 +347,28 @@ void set_fixed_font (void)
     fixed_font = gdk_font_load(fixedfontname);
 #endif
 }
+
+#ifndef G_OS_WIN32
+
+static void record_shell_opt (void)
+{
+    char shellstamp[FILENAME_MAX];
+
+    sprintf(shellstamp, "%s.gretl_shell_stamp", paths.userdir);
+
+    if (shellok) {
+	FILE *fp = fopen(shellstamp, "w");
+
+	if (fp != NULL) {
+	    fputs("ok\n", fp);
+	    fclose(fp);
+	}
+    } else {
+	remove(shellstamp);
+    }
+}
+
+#endif
 
 #if !defined(USE_GNOME) && !defined(OLD_GTK)
 
@@ -1235,6 +1260,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
     /* register these for session using libset apparatus */
     set_use_qr(useqr);
+    set_shell_ok(shellok);
     set_xsect_hccme(hc_xsect);
     set_tseries_hccme(hc_tseri);
     set_garch_robust_vcv(hc_garch);
@@ -1286,6 +1312,7 @@ static void boolvar_to_str (void *b, char *s)
 static void common_read_rc_setup (void)
 {
     set_use_qr(useqr);
+    set_shell_ok(shellok);
     set_gp_colors();
     
     set_xsect_hccme(hc_xsect);
@@ -1336,10 +1363,9 @@ void write_rc (void)
     }
 
     save_file_lists(client);
-
     g_object_unref(G_OBJECT(client));
-
     set_paths(&paths, set_paths_opt);
+    record_shell_opt();
 }
 
 static void read_rc (void) 
@@ -1443,10 +1469,9 @@ void write_rc (void)
     }
 
     save_file_lists();
-
     gnome_config_sync();
-
     set_paths(&paths, set_paths_opt);
+    record_shell_opt();
 }
 
 static void read_rc (void) 
@@ -1540,7 +1565,6 @@ void write_rc (void)
     }
 
     save_file_lists();
-
     set_paths(&paths, set_paths_opt);
 }
 
@@ -1705,10 +1729,9 @@ void write_rc (void)
     }
 
     save_file_lists(rc);
-
     fclose(rc);
-
     set_paths(&paths, set_paths_opt);
+    record_shell_opt();
 }
 
 static void read_rc (void) 

@@ -1118,25 +1118,29 @@ enum {
 };
 
 static double
-record_or_get_test_result (double teststat, double pval, char *blurb,
+record_or_get_test_result (double teststat, double pval, char *instr,
 			   int code)
 {
+    static char savestr[MAXLABEL] = {0};
     static double val = NADBL;
     static double pv = NADBL;
-    static char info[MAXLABEL] = {0};
 
     double ret = NADBL;
 
     if (code == SET_TEST_STAT) {
 	val = teststat;
 	pv = pval;
-	*info = '\0';
-	if (blurb != NULL) {
-	    strncat(info, blurb, MAXLABEL - 1);
+	*savestr = '\0';
+	if (instr != NULL) {
+	    strncat(savestr, instr, MAXLABEL - 1);
 	} 
     } else if (code == GET_TEST_STAT || code == GET_TEST_PVAL) {
-	if (blurb != NULL) {
-	    strncat(blurb, info, MAXLABEL - 1);
+	if (instr != NULL) {
+	    if (code == GET_TEST_STAT) {
+		sprintf(instr, _("%s test"), savestr);
+	    } else {
+		sprintf(instr, _("p-value for %s test"), savestr);
+	    }
 	}
 	ret = (code == GET_TEST_STAT)? val : pv;
     } 

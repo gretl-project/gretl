@@ -2701,7 +2701,7 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (pval > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
 
-    record_test_result(t, pval, "difference of means");
+    record_test_result(t, pval, _("difference of means"));
 
     free(x);
     free(y);
@@ -2780,7 +2780,7 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (fdist(F, dfn, dfd) > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
 
-    record_test_result(F, pval, "difference of variances");
+    record_test_result(F, pval, _("difference of variances"));
 
     free(x);
     free(y);

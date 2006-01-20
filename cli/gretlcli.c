@@ -909,6 +909,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case RMPLOT: 
     case RUNS: 
     case SDIFF:
+    case SHELL:
     case SPEARMAN:
     case SQUARE: 
     case STORE:
@@ -1572,14 +1573,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case SETMISS:
 	set_miss(cmd.list, cmd.param, Z, datainfo, prn);
-	break;
-
-    case SHELL:
-#ifdef WIN32
-	WinExec(line + 1, SW_SHOWNORMAL);
-#else		
-	shell(line + 1);
-#endif
 	break;
 
     case SMPL:

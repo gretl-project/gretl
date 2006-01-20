@@ -27,7 +27,6 @@
 
 #define MDEBUG 0
 
-#define MNAMELEN 32
 #define LEVEL_AUTO -1
 
 enum {
@@ -40,7 +39,7 @@ typedef struct user_matrix_ user_matrix;
 struct user_matrix_ {
     gretl_matrix *M;
     int level;
-    char name[MNAMELEN];
+    char name[VNAMELEN];
 };
 
 static user_matrix **matrices;
@@ -78,7 +77,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
     u->M = M;
     u->level = gretl_function_stack_depth();
     *u->name = '\0';
-    strncat(u->name, name, MNAMELEN - 1);
+    strncat(u->name, name, VNAMELEN - 1);
 
     return u;
 }
@@ -360,10 +359,10 @@ gretl_matrix *
 get_matrix_transpose_by_name (const char *name, const DATAINFO *pdinfo)
 {
     gretl_matrix *M = NULL;
-    char test[MNAMELEN];
+    char test[VNAMELEN];
 
     *test = '\0';
-    strncat(test, name, MNAMELEN - 1);
+    strncat(test, name, VNAMELEN - 1);
 
     if (test[strlen(test) - 1] == '\'') {
 	test[strlen(test) - 1] = '\0';
@@ -456,7 +455,7 @@ int user_matrix_set_name_and_level (const gretl_matrix *M, char *name,
 	err = 1;
     } else {
 	*u->name = '\0';
-	strncat(u->name, name, MNAMELEN - 1);
+	strncat(u->name, name, VNAMELEN - 1);
 	u->level = level;
     }
 
@@ -713,21 +712,21 @@ static int get_slice_string (const char *s, char *spec, int i)
 	if (s == NULL || strchr(s, ',') == NULL) {
 	    err = 1;
 	} else {
-	    sscanf(s + 1, "%31[^,]]", spec);
+	    sscanf(s + 1, "%15[^,]]", spec);
 	}
     } else if (i == CSLICE) {
 	s = strchr(s, ',');
 	if (s == NULL || strchr(s, ']') == NULL) {
 	    err = 1;
 	} else {	
-	    sscanf(s + 1, "%31[^]]", spec);
+	    sscanf(s + 1, "%15[^]]", spec);
 	}	    
     } else if (i == VSLICE) {
 	s = strchr(s, '[');
 	if (s == NULL || strchr(s, ']') == NULL) {
 	    err = 1;
 	} else {
-	    sscanf(s + 1, "%31[^]]", spec);
+	    sscanf(s + 1, "%15[^]]", spec);
 	}
     }
 
@@ -742,7 +741,7 @@ static int get_slice_string (const char *s, char *spec, int i)
 static int 
 make_slices (const char *s, int m, int n, int **rslice, int **cslice)
 {
-    char spec[32];
+    char spec[VNAMELEN];
     int err = 0;
 
     *rslice = *cslice = NULL;
@@ -892,10 +891,10 @@ gretl_matrix *user_matrix_get_slice (const char *s,
 {
     gretl_matrix *M = NULL;
     gretl_matrix *S = NULL;
-    char test[MNAMELEN];
+    char test[VNAMELEN];
     int len = strcspn(s, "[");
 
-    if (len < MNAMELEN) {
+    if (len < VNAMELEN) {
 	*test = '\0';
 	strncat(test, s, len);
 	M = get_matrix_by_name(test, pdinfo);
@@ -1412,7 +1411,7 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
 				     int *err)
 {
     gretl_matrix *M = NULL;
-    char word[32];
+    char word[VNAMELEN];
     char *mask = NULL;
     const int *list;
     int len;
@@ -1420,7 +1419,7 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
     while (isspace(*s)) s++;
 
     len = gretl_varchar_spn(s);
-    if (len == 0 || len > 31) {
+    if (len == 0 || len > VNAMELEN - 1) {
 	return NULL;
     }
 
@@ -2023,19 +2022,12 @@ user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *M = NULL;
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
-    char qstr[64];
-    char *rstr;
+    char qstr[VNAMELEN];
+    char rstr[VNAMELEN];
 
-    *qstr = 0;
-    strncpy(qstr, str, 63);
-    rstr = strrchr(qstr, ',') ;
-
-    if (rstr == NULL || *(rstr+1) != '@' || *(rstr+2) == 0) {
+    if (sscanf(str, "%15[^,],@%15s", qstr, rstr) != 2) {
 	*err = 1;
     } else {
-	*rstr = 0;
-	rstr += 2;
-
 #if MDEBUG
 	fprintf(stderr, "QR: left-hand matrix = '%s'\n", qstr);
 	fprintf(stderr, "QR: right-hand matrix = '%s'\n", rstr);

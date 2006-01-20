@@ -653,9 +653,8 @@ int garch_pretest (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			OPT_S | OPT_Q, prn);
 
     if (!err) {
-	char teststat[64];
-	double LMF = get_last_test_statistic(teststat);
-	double pval = get_last_pvalue(teststat);
+	double LMF = get_last_test_statistic(NULL);
+	double pval = get_last_pvalue(NULL);
 
 	fprintf(stderr, "LMF = %g, pval = %g\n", LMF, pval);
     }
