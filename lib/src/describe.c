@@ -2132,7 +2132,7 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     }
 }
 
-static void print_summary_single (const Summary *summ,
+static void print_summary_single (const Summary *summ, int j,
 				  const DATAINFO *pdinfo,
 				  PRN *prn)
 {
@@ -2155,17 +2155,17 @@ static void print_summary_single (const Summary *summ,
 
     prhdr(_("Summary Statistics"), pdinfo, SUMMARY, 0, prn);
     sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
-	    pdinfo->varname[summ->list[1]], summ->n);
+	    pdinfo->varname[summ->list[j+1]], summ->n);
     center_line(tmp, prn, 1);
 
-    vals[0] = summ->mean[0];
-    vals[1] = summ->median[0];
-    vals[2] = summ->low[0];
-    vals[3] = summ->high[0];
-    vals[4] = summ->sd[0];
-    vals[5] = summ->cv[0];
-    vals[6] = summ->skew[0];
-    vals[7] = summ->xkurt[0];
+    vals[0] = summ->mean[j];
+    vals[1] = summ->median[j];
+    vals[2] = summ->low[j];
+    vals[3] = summ->high[j];
+    vals[4] = summ->sd[j];
+    vals[5] = summ->cv[j];
+    vals[6] = summ->skew[j];
+    vals[7] = summ->xkurt[j];
 
     for (i=0; i<8; i++) {
 	if (strlen(_(labels[i])) > slen) {
@@ -2202,10 +2202,28 @@ void print_summary (const Summary *summ,
 		    PRN *prn)
 {
     int pause = gretl_get_text_pause();
+    int len, maxlen = 0;
     int i, vi, lineno;
 
     if (summ->list[0] == 1) {
-	print_summary_single(summ, pdinfo, prn);
+	print_summary_single(summ, 0, pdinfo, prn);
+	return;
+    }
+
+    for (i=1; i<=summ->list[0]; i++) {
+	vi = summ->list[i];
+	len = strlen(pdinfo->varname[vi]);
+	if (len > maxlen) {
+	    maxlen = len;
+	}
+    }
+
+    len = (maxlen <= 8)? 10 : maxlen + 1;
+
+    if (len > 13) {
+	for (i=0; i<summ->list[0]; i++) {
+	    print_summary_single(summ, i, pdinfo, prn);
+	}
 	return;
     }
 
@@ -2222,7 +2240,7 @@ void print_summary (const Summary *summ,
 	    scroll_pause();
 	    lineno = 1;
 	}
-	pprintf(prn, "%-10s", pdinfo->varname[vi]);
+	pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
 	printf15(summ->mean[i], prn);
 	printf15(summ->median[i], prn);
 	printf15(summ->low[i], prn);
@@ -2251,7 +2269,7 @@ void print_summary (const Summary *summ,
 	    lineno = 1;
 	}
 
-	pprintf(prn, "%-10s", pdinfo->varname[vi]);
+	pprintf(prn, "%-*s", len, pdinfo->varname[vi]);
 
 	if (floateq(summ->mean[i], 0.0)) {
 	    cv = NADBL;

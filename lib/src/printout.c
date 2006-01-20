@@ -594,17 +594,17 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-static void outxx (const double xx, int ci, PRN *prn)
+static void outxx (const double xx, int ci, int wid, PRN *prn)
 {
     if (isnan(xx) || na(xx)) { 
 	if (ci == CORR) {
-	    pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), 13), 
+	    pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), wid), 
 		    _("undefined"));
 	} else {
-	    pputs(prn, "              ");
+	    bufspace(wid, prn);
 	}
     } else if (ci == CORR) {
-	pprintf(prn, " %13.4f", xx);
+	pprintf(prn, " %*.4f", wid - 1, xx);
     } else {
 	char numstr[18];
 
@@ -614,11 +614,9 @@ static void outxx (const double xx, int ci, PRN *prn)
 	    sprintf(numstr, "%g", xx);
 	}
 	gretl_fix_exponent(numstr);
-	pprintf(prn, "%14s", numstr);
+	pprintf(prn, "%*s", wid, numstr);
     }
 }
-
-/* ......................................................... */ 
 
 static int takenotes (int quit_opt)
 {
@@ -666,6 +664,21 @@ int scroll_pause_or_quit (void)
     return takenotes(1);
 }
 
+static int vmat_maxlen (VMatrix *vmat)
+{
+    int len, maxlen = 0;
+    int i;
+
+    for (i=0; i<vmat->dim; i++) {
+	len = strlen(vmat->names[i]);
+	if (len > maxlen) {
+	    maxlen = len;
+	}
+    }
+
+    return maxlen;
+}
+
 /*  Given a one dimensional array which represents a symmetric
     matrix, prints out an upper triangular matrix of any size.
 
@@ -683,19 +696,27 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
     register int i, j;
     int nf, li2, p, k, m, idx, ij2, lineno = 0;
     int pause = gretl_get_text_pause();
+    int maxlen = 0;
+    int fwidth = 14;
+    int fields = 5;
     const char *s;
-    enum { FIELDS = 5 };
 
     if (vmat->ci != CORR) {
 	covhdr(prn);
     }
 
+    maxlen = vmat_maxlen(vmat);
+    if (maxlen > 10) {
+	fields = 4;
+	fwidth = 16;
+    }
+
     m = 1;
 
-    for (i=0; i<=vmat->dim/FIELDS; i++) {
-	nf = i * FIELDS;
+    for (i=0; i<=vmat->dim/fields; i++) {
+	nf = i * fields;
 	li2 = vmat->dim - nf;
-	p = (li2 > FIELDS) ? FIELDS : li2;
+	p = (li2 > fields) ? fields : li2;
 	if (p == 0) break;
 
 	if (pause && i > 0) {
@@ -705,7 +726,7 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
 	    s = vmat->names[j + nf - 1];
-	    bufspace(14 - strlen(s), prn);
+	    bufspace(fwidth - strlen(s), prn);
 	    pputs(prn, s); 
 	}
 	pputc(prn, '\n');
@@ -721,9 +742,10 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 	    }
 	    for (k=0; k<p; k++) {
 		idx = ijton(j, nf+k, vmat->dim);
-		outxx(vmat->vec[idx], vmat->ci, prn);
+		outxx(vmat->vec[idx], vmat->ci, fwidth, prn);
 	    }
-	    pprintf(prn, "  %s\n", vmat->names[j]);
+	    if (fwidth < 15) pputc(prn, '\n');
+	    pprintf(prn, " %s\n", vmat->names[j]);
 	    lineno++;
 	}
 
@@ -735,12 +757,13 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 		lineno = 1;
 	    }
 	    ij2 = nf + j;
-	    bufspace(14 * j, prn);
+	    bufspace(fwidth * j, prn);
 	    for (k=j; k<p; k++) {
 		idx = ijton(ij2, nf+k, vmat->dim);
-		outxx(vmat->vec[idx], vmat->ci, prn);
+		outxx(vmat->vec[idx], vmat->ci, fwidth, prn);
 	    }
-	    pprintf(prn, "  %s\n", vmat->names[ij2]);
+	    if (fwidth < 15) pputc(prn, '\n');
+	    pprintf(prn, " %s\n", vmat->names[ij2]);
 	    lineno++;
 	}
 	pputc(prn, '\n');
@@ -779,7 +802,7 @@ static void fit_resid_head (const FITRESID *fr,
 
 /* prints names of variables in @list, positions v1 to v2 */
 
-static void varheading (const int *list, int v1, int v2, 
+static void varheading (const int *list, int v1, int v2, int wid,
 			const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
@@ -797,7 +820,7 @@ static void varheading (const int *list, int v1, int v2,
     } else {
 	pputs(prn, "\n     Obs ");
 	for (i=v1; i<=v2; i++) { 
-	    pprintf(prn, "%13s", pdinfo->varname[list[i]]);
+	    pprintf(prn, "%*s", wid, pdinfo->varname[list[i]]);
 	}
 	pputs(prn, "\n\n");
     }
@@ -1291,12 +1314,19 @@ static void print_scalar (double x, const char *vname,
 	pputc(prn, '\n');
     }
 
+    pprintf(prn, "%15s = ", vname);
+
     if (na(x)) {
-	pprintf(prn, "%8s = NA", vname);
-    } else if (opt & OPT_T) {
-	pprintf(prn, "%8s = %.10g", vname, x);
+	pputs(prn, "NA");
     } else {
-	pprintf(prn, "%8s = %10g", vname, x);
+	if (x >= 0.0) {
+	    pputc(prn, ' ');
+	}
+	if (opt & OPT_T) {
+	    pprintf(prn, "%.10e", x);
+	} else {
+	    pprintf(prn, "%e", x);
+	}
     }
 
     if (allconst) {
@@ -1323,9 +1353,10 @@ static void print_scalar (double x, const char *vname,
 int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
-    int j, v, v1, v2, j5, nvj5, lineno, ncol;
+    int j, v, v1, v2, jc, nvjc, lineno, ncol;
     int allconst, scalars = 0;
     int nvars = 0, sortvar = 0;
+    int maxlen = 0, bplen = 13;
     int *plist = NULL;
     int *pmax = NULL; 
     int t, nsamp;
@@ -1356,13 +1387,19 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* screen out any scalars and print them first */
     for (j=1; j<=plist[0]; j++) {
-	if (!pdinfo->vector[plist[j]]) {
-	    print_scalar(Z[plist[j]][0], pdinfo->varname[plist[j]],
-			 opt, 0, prn);
+	int len, v = plist[j];
+
+	if (!pdinfo->vector[v]) {
+	    print_scalar(Z[v][0], pdinfo->varname[v], opt, 0, prn);
 	    scalars = 1;
 	    gretl_list_delete_at_pos(plist, j);
 	    j--;
-	} 
+	} else {
+	    len = strlen(pdinfo->varname[v]);
+	    if (len > maxlen) {
+		maxlen = len;
+	    }
+	}
     }
 
     if (scalars) {
@@ -1391,7 +1428,8 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto endprint;
     }
 
-    if (!(opt & OPT_O)) { /* not by observations, but by variable */
+    if (!(opt & OPT_O)) { 
+	/* not by observations, but by variable */
 	if (plist[0] > 0) {
 	    pputc(prn, '\n');
 	}
@@ -1419,19 +1457,25 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     sortvar = check_for_sorted_var(plist, pdinfo);
 
+    if (maxlen > 13) {
+	ncol = 4;
+	bplen = 16;
+    } else {
+	ncol = 5;
+    }
+
     /* print data by observations */
-    ncol = 5;
     for (j=0; j<=plist[0]/ncol; j++) {
 	char obs_string[OBSLEN];
 
-	j5 = j * ncol;
-	nvj5 = plist[0] - j5;
-	v1 = j5 +1;
-	if (nvj5) {
+	jc = j * ncol;
+	nvjc = plist[0] - jc;
+	v1 = jc +1;
+	if (nvjc) {
 	    /* starting a new block of variables */
-	    v2 = (ncol > nvj5)? nvj5 : ncol;
-	    v2 += j5;
-	    varheading(plist, v1, v2, pdinfo, prn);
+	    v2 = (ncol > nvjc)? nvjc : ncol;
+	    v2 += jc;
+	    varheading(plist, v1, v2, bplen, pdinfo, prn);
 
 	    if (pause && j > 0 && takenotes(1)) {
 		goto endprint;
@@ -1456,8 +1500,11 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 		    if (na(xx)) {
 			strcat(line, "             ");
+			if (bplen == 16) {
+			    strcat(line, "   ");
+			}
 		    } else { 
-			bufprintnum(line, xx, pmax[v-1], 13);
+			bufprintnum(line, xx, pmax[v-1], bplen);
 		    }
 		}
 
@@ -1482,7 +1529,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 		lineno++;
 	    } /* end of printing obs (t) loop */
-	} /* end if nvj5 */
+	} /* end if nvjc */
     } /* end for j loop */
 
     pputc(prn, '\n');
@@ -1523,11 +1570,12 @@ int print_data_sorted (const int *list, const int *obsvec,
     double xx;
     char obs_string[OBSLEN];
     char line[128];
+    int bplen = 16;
     int T = obsvec[0];
     int i, s, t;
 
-    /* must have a list of up to 5 variables... */
-    if (list == NULL || list[0] > 5) {
+    /* must have a list of up to 4 variables... */
+    if (list == NULL || list[0] > 4) {
 	return E_DATA;
     }
 
@@ -1552,7 +1600,7 @@ int print_data_sorted (const int *list, const int *obsvec,
 	pmax[i-1] = get_signif(Z[list[i]] + pdinfo->t1, T);
     }
 
-    varheading(list, 1, list[0], pdinfo, prn);
+    varheading(list, 1, list[0], bplen, pdinfo, prn);
 
     if (csv) {
 	sdelim[0] = pdinfo->delim;
@@ -1577,13 +1625,13 @@ int print_data_sorted (const int *list, const int *obsvec,
 		if (csv) {
 		    strcat(line, "NA");
 		} else {
-		    strcat(line, "             ");
+		    strcat(line, "                ");
 		}
 	    } else { 
 		if (csv) {
 		    bufprintnum(line, xx, pmax[i-1], 0);
 		} else {
-		    bufprintnum(line, xx, pmax[i-1], 13);
+		    bufprintnum(line, xx, pmax[i-1], bplen);
 		}
 	    }
 	    if (csv && i < list[0]) {
