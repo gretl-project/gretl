@@ -2311,7 +2311,7 @@ static void mp_other_stats (const mp_results *mpvals, PRN *prn)
 static void print_mpvals_coeff (const mp_results *mpvals, 
 				int c, PRN *prn)
 {
-    pprintf(prn, " %3d) %8s ", mpvals->varlist[c+2], mpvals->varnames[c+1]);
+    pprintf(prn, " %*s ", VNAMELEN - 1, mpvals->varnames[c+1]);
 
     gretl_print_fullwidth_double(mpvals->coeff[c], 
 				 GRETL_MP_DIGITS, prn);
@@ -2344,6 +2344,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 	pprintf(prn, "%s: %s\n\n", _("Dependent variable"),
 		mpvals->varnames[0]);
 
+	bufspace(2, prn);
 	pputs(prn, _("      VARIABLE         COEFFICIENT          "
 		       "        STD. ERROR\n"));
     }

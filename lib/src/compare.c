@@ -1879,7 +1879,8 @@ int mp_ols (const int *list, const char *pos,
     mplsq = get_plugin_function("mplsq", &handle);
     if (mplsq == NULL) return 1;
 
-    if (!err && *pos) { /* got a list of polynomial terms? */
+    if (!err && *pos) { 
+	/* got a list of polynomial terms? */
 	err = make_mp_lists(list, pos, &tmplist, &polylist);
 	if (err) {
 	    pputs(prn, _("Failed to parse mp_ols command\n"));
@@ -1892,9 +1893,12 @@ int mp_ols (const int *list, const char *pos,
     }
 
     nc = list[0] - 1;
-    if (polylist != NULL) nc--;
+    if (polylist != NULL) {
+	nc--;
+    }
 
     mpvals = gretl_mp_results_new(nc);
+
     if (mpvals == NULL || allocate_mp_varnames(mpvals)) {
 	pprintf(prn, "%s\n", _("Out of memory!"));
 	err = 1;
@@ -1923,7 +1927,9 @@ static int varmatch (const int *sumvars, int test)
     int j;
 
     for (j=1; j<=sumvars[0]; j++) {
-	if (sumvars[j] == test) return 1;
+	if (sumvars[j] == test) {
+	    return 1;
+	}
     }
 
     return 0;

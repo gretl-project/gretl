@@ -88,18 +88,18 @@ static int mp_rearrange (int *list);
 
 static void mpf_constants_init (void)
 {
-    mpf_init_set_d (MPF_ONE, 1.0);
-    mpf_init_set_d (MPF_ZERO, 0.0);
-    mpf_init_set_d (MPF_MINUS_ONE, -1.0);
-    mpf_init_set_d (MPF_TINY, 1.0e-25);
+    mpf_init_set_d(MPF_ONE, 1.0);
+    mpf_init_set_d(MPF_ZERO, 0.0);
+    mpf_init_set_d(MPF_MINUS_ONE, -1.0);
+    mpf_init_set_d(MPF_TINY, 1.0e-25);
 }
 
 static void mpf_constants_clear (void)
 {
-    mpf_clear (MPF_ONE);
-    mpf_clear (MPF_ZERO);
-    mpf_clear (MPF_MINUS_ONE);
-    mpf_clear (MPF_TINY);
+    mpf_clear(MPF_ONE);
+    mpf_clear(MPF_ZERO);
+    mpf_clear(MPF_MINUS_ONE);
+    mpf_clear(MPF_TINY);
 }
 
 static void free_mpZ (mpf_t **mpZ, int v, int n)
@@ -107,17 +107,20 @@ static void free_mpZ (mpf_t **mpZ, int v, int n)
     int i, t;
 
     for (i=0; i<v; i++) {
-	for (t=0; t<n; t++) mpf_clear (mpZ[i][t]);
+	for (t=0; t<n; t++) {
+	    mpf_clear(mpZ[i][t]);
+	}
 	free(mpZ[i]);
     }
     free(mpZ);
 }
 
+/* reject the incoming data (a) if any values are missing, (b) if any
+   vars are all zero */
+
 static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
 			  char *errbuf)
 {
-    /* reject (a) if any values are missing, (b) if any vars are all
-       zero */
     int i, t, allzero;
 
     for (i=1; i<=list[0]; i++) {
@@ -142,16 +145,16 @@ static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
 	    return 1;
 	}
     }
+
     return 0;
 }
 
 static void make_poly_series (MPMODEL *pmod, mpf_t **mpZ,
 			      int pli, int ppos, int mpi)
 {
-    int t, s;
     unsigned long pwr = pmod->polylist[pli];
+    int t, s = 0;
 
-    s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 #ifdef MP_DEBUG
 	printf("generating mpZ[%d][%d] from mpZ[%d][%d],\n"
@@ -170,10 +173,9 @@ static void fill_mp_series (MPMODEL *pmod, double **Z, mpf_t **mpZ,
 			    unsigned char **digits,
 			    int i, int mpi)
 {
-    int t, s; 
     char numstr[64];
+    int t, s = 0; 
 
-    s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	/* do trick with strings? */
 	if (digits != NULL && digits[i] != NULL) {
@@ -182,7 +184,8 @@ static void fill_mp_series (MPMODEL *pmod, double **Z, mpf_t **mpZ,
 	    printf("setting mpZ[%d][%d] from '%s'\n", mpi, s, numstr);
 #endif
 	    mpf_init_set_str (mpZ[mpi][s], numstr, 10);
-	} else { /* or do straight conversion */
+	} else { 
+	    /* or do straight conversion */
 	    mpf_init_set_d (mpZ[mpi][s], Z[i][t]);
 	}
 	s++;
@@ -213,30 +216,37 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 			 char **varnames)
 {
     int i, s, t;
-    const int n = pmod->t2 - pmod->t1 + 1;
-    const int l0 = pmod->list[0];
+    int n = pmod->t2 - pmod->t1 + 1;
+    int l0 = pmod->list[0];
     int npoly, mp_poly_pos = 0;
     int listpt, nvars = 0, vnames = 1;
     mpf_t **mpZ = NULL;
     unsigned char **digits = (unsigned char **) pdinfo->data;
     int err = 0;
 
-    if (n <= 0) return NULL;
+    if (n <= 0) {
+	return NULL;
+    }
 
     /* "varlist" holds the regression specification using
-       the numbering of variables from the original dataset */
-    pmod->varlist = malloc((l0 + 1) * sizeof *pmod->varlist);
-    if (pmod->varlist == NULL) return NULL;
-    pmod->varlist[0] = l0;
+       the numbering of variables from the original dataset 
+    */
+
+    pmod->varlist = gretl_list_new(l0);
+    if (pmod->varlist == NULL) {
+	return NULL;
+    }
 
     mpZ = malloc(l0 * sizeof *mpZ);
-    if (mpZ == NULL) return NULL;
+    if (mpZ == NULL) {
+	return NULL;
+    }
 
     if (pmod->ifc) { 
 	mpZ[0] = malloc(n * sizeof **mpZ);
 	s = 0;
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    mpf_init_set_d (mpZ[0][s++], 1.0);
+	    mpf_init_set_d(mpZ[0][s++], 1.0);
 	}
 	if (varnames != NULL) {
 	    strcpy(varnames[vnames++], pdinfo->varname[0]);
@@ -247,8 +257,11 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
     }
 
     /* number of polynomial terms to be generated */
-    if (pmod->polylist != NULL) npoly = pmod->polylist[0];
-    else npoly = 0;
+    if (pmod->polylist != NULL) {
+	npoly = pmod->polylist[0];
+    } else {
+	npoly = 0;
+    }
 
     /* process the ordinary data */
     for (i=1; i<=l0-npoly; i++) {
@@ -271,13 +284,17 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 		   "and at slot %d in mpZ\n", i, nvars);
 #endif
 	    mp_poly_pos = nvars;
-	}	    
+	}
+	    
 	fill_mp_series(pmod, Z, mpZ, digits, pmod->list[i], nvars); 
 	pmod->varlist[i] = pmod->list[i];
+
 	if (varnames != NULL) {
 	    int targ = 0;
 
-	    if (i > 1) targ = vnames++;
+	    if (i > 1) {
+		targ = vnames++;
+	    }
 #ifdef MP_DEBUG
 	    fprintf(stderr, "writing varnames[%d] = '%s'\n",
 		    targ, pdinfo->varname[pmod->list[i]]);
@@ -291,6 +308,7 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
     listpt = i;
 
     /* generate polynomial data (if applicable) */
+
     for (i=0; i<npoly && !err; i++) {  
 	mpZ[nvars] = malloc(n * sizeof **mpZ);
 	if (mpZ[nvars] == NULL) {
@@ -299,6 +317,7 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 	}
 	make_poly_series(pmod, mpZ, i+1, mp_poly_pos, nvars);
 	pmod->varlist[i+listpt] = pmod->polyvar;
+
 	if (varnames != NULL) {
 	    sprintf(varnames[vnames++], "%s^%d", 
 		    pdinfo->varname[pmod->polyvar],
@@ -308,6 +327,7 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 		    vnames-1, varnames[vnames-1]);
 #endif
 	}
+
 	pmod->list[i+listpt] = nvars;
 	nvars++;
     }
@@ -325,33 +345,36 @@ static void mp_model_free (MPMODEL *pmod)
     int i, nx = pmod->list[0] - 1;
     int nt = nx * (nx + 1) / 2;
 
-    free (pmod->list);
-    free (pmod->varlist);
+    free(pmod->list);
+    free(pmod->varlist);
 
     if (pmod->coeff != NULL) {
-	for (i=0; i<pmod->ncoeff; i++) 
-	    mpf_clear (pmod->coeff[i]);
-	free (pmod->coeff);
+	for (i=0; i<pmod->ncoeff; i++) { 
+	    mpf_clear(pmod->coeff[i]);
+	}
+	free(pmod->coeff);
     }
 
     if (pmod->sderr != NULL) {    
-	for (i=0; i<pmod->ncoeff; i++) 
-	    mpf_clear (pmod->sderr[i]);
-	free (pmod->sderr);
+	for (i=0; i<pmod->ncoeff; i++) {
+	    mpf_clear(pmod->sderr[i]);
+	}
+	free(pmod->sderr);
     }
 
     if (pmod->xpx != NULL) {
-	for (i=0; i<nt; i++) 
-	    mpf_clear (pmod->xpx[i]);
-	free (pmod->xpx);
+	for (i=0; i<nt; i++) {
+	    mpf_clear(pmod->xpx[i]);
+	}
+	free(pmod->xpx);
     }
 
-    mpf_clear (pmod->ess);
-    mpf_clear (pmod->tss);
-    mpf_clear (pmod->sigma);
-    mpf_clear (pmod->rsq);
-    mpf_clear (pmod->adjrsq);
-    mpf_clear (pmod->fstt); 
+    mpf_clear(pmod->ess);
+    mpf_clear(pmod->tss);
+    mpf_clear(pmod->sigma);
+    mpf_clear(pmod->rsq);
+    mpf_clear(pmod->adjrsq);
+    mpf_clear(pmod->fstt); 
 }
 
 static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
@@ -359,6 +382,7 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->ID = 0;
     pmod->t1 = pdinfo->t1;
     pmod->t2 = pdinfo->t2;
+
     pmod->list = NULL;
     pmod->varlist = NULL;
     pmod->polylist = NULL; /* don't free, the caller does that */
@@ -366,12 +390,14 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->coeff = NULL;
     pmod->sderr = NULL;
     pmod->xpx = NULL;
-    mpf_init (pmod->ess);
-    mpf_init (pmod->tss);
-    mpf_init (pmod->sigma);
-    mpf_init (pmod->rsq);
-    mpf_init (pmod->adjrsq);
-    mpf_init (pmod->fstt); 
+
+    mpf_init(pmod->ess);
+    mpf_init(pmod->tss);
+    mpf_init(pmod->sigma);
+    mpf_init(pmod->rsq);
+    mpf_init(pmod->adjrsq);
+    mpf_init(pmod->fstt);
+
     pmod->errcode = 0;
     pmod->polyvar = 0;
 }
@@ -395,21 +421,21 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
 
     set_gretl_mp_bits();
 
-    mpf_init (src);
-    mpf_init (targ);
+    mpf_init(src);
+    mpf_init(targ);
 
     for (t=0; t<n; t++) {
 	if (na(srcvec[t])) {
 	    targvec[t] = NADBL;
 	    continue;
 	}
-	mpf_set_d (src, srcvec[t]);
+	mpf_set_d(src, srcvec[t]);
 	mpf_pow_ui(targ, src, (unsigned long) pwr);
-	targvec[t] = mpf_get_d (targ);
+	targvec[t] = mpf_get_d(targ);
     }
 
-    mpf_clear (src);
-    mpf_clear (targ);
+    mpf_clear(src);
+    mpf_clear(targ);
 
     return 0;
 }
@@ -431,21 +457,21 @@ int mp_vector_ln (const double *srcvec, double *targvec, int n)
 
     set_gretl_mpfr_bits();
 
-    mpfr_init (src);
-    mpfr_init (targ);
+    mpfr_init(src);
+    mpfr_init(targ);
 
     for (t=0; t<n; t++) {
 	if (na(srcvec[t])) {
 	    targvec[t] = NADBL;
 	    continue;
 	}
-	mpfr_set_d (src, srcvec[t], GMP_RNDN);
+	mpfr_set_d(src, srcvec[t], GMP_RNDN);
 	mpfr_log(targ, src, GMP_RNDN);
-	targvec[t] = mpfr_get_d (targ, GMP_RNDN);
+	targvec[t] = mpfr_get_d(targ, GMP_RNDN);
     }
 
-    mpfr_clear (src);
-    mpfr_clear (targ);
+    mpfr_clear(src);
+    mpfr_clear(targ);
 
     return 0;
 }
@@ -458,7 +484,9 @@ static int poly_check (MPMODEL *pmod, const int *list)
     /* check that all powers are > 1 */
 
     for (i=1; i<=pmod->polylist[0]; i++) {
-	if (pmod->polylist[i] < 2) return 1;
+	if (pmod->polylist[i] < 2) {
+	    return 1;
+	}
     }
 
     /* take the rightmost var in the regression list (other than 
@@ -471,7 +499,10 @@ static int poly_check (MPMODEL *pmod, const int *list)
 	}
     }
 
-    if (pmod->polyvar == 0) return 1;
+    if (pmod->polyvar == 0) {
+	return 1;
+    }
+
     return 0;
 }
 
@@ -480,11 +511,10 @@ static int *poly_copy_list (const int *list, const int *poly)
     int *targ;
     int i;
 
-    targ = malloc((list[0] + poly[0] + 1) * sizeof *targ);
-    
-    if (targ == NULL) return NULL;
-
-    targ[0] = list[0] + poly[0];
+    targ = gretl_list_new(list[0] + poly[0]);
+    if (targ == NULL) {
+	return NULL;
+    }
 
     for (i=1; i<=list[0]; i++) {
 	targ[i] = list[i];
@@ -502,9 +532,9 @@ static void set_gretl_mp_bits (void)
     char *user_bits = getenv("GRETL_MP_BITS");
     
     if (user_bits != NULL) {
-	mpf_set_default_prec ((unsigned long) atoi(user_bits));
+	mpf_set_default_prec((unsigned long) atoi(user_bits));
     } else {
-	mpf_set_default_prec ((unsigned long) DEFAULT_GRETL_MP_BITS);
+	mpf_set_default_prec((unsigned long) DEFAULT_GRETL_MP_BITS);
     }
 }
 
@@ -514,9 +544,9 @@ static void set_gretl_mpfr_bits (void)
     char *user_bits = getenv("GRETL_MP_BITS");
     
     if (user_bits != NULL) {
-	mpfr_set_default_prec ((unsigned long) atoi(user_bits));
+	mpfr_set_default_prec((unsigned long) atoi(user_bits));
     } else {
-	mpfr_set_default_prec ((unsigned long) DEFAULT_GRETL_MP_BITS);
+	mpfr_set_default_prec((unsigned long) DEFAULT_GRETL_MP_BITS);
     }
 } 
 #endif
@@ -527,14 +557,14 @@ static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
     int i, err = 0;
 
     for (i=0; i<pmod->ncoeff; i++) {
-	results->coeff[i] = mpf_get_d (pmod->coeff[i]);
-	results->sderr[i] = mpf_get_d (pmod->sderr[i]);
+	results->coeff[i] = mpf_get_d(pmod->coeff[i]);
+	results->sderr[i] = mpf_get_d(pmod->sderr[i]);
     }
 
-    results->sigma = mpf_get_d (pmod->sigma);
-    results->ess = mpf_get_d (pmod->ess);
-    results->rsq = mpf_get_d (pmod->rsq);
-    results->fstt = mpf_get_d (pmod->fstt);
+    results->sigma = mpf_get_d(pmod->sigma);
+    results->ess = mpf_get_d(pmod->ess);
+    results->rsq = mpf_get_d(pmod->rsq);
+    results->fstt = mpf_get_d(pmod->fstt);
 
     if (results->varnames != NULL) { 
 	/* will use results for printing */
@@ -543,7 +573,7 @@ static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
 	results->ifc = pmod->ifc;
 	results->dfn = pmod->dfn;
 	results->dfd = pmod->dfd;
-	results->adjrsq = mpf_get_d (pmod->adjrsq);
+	results->adjrsq = mpf_get_d(pmod->adjrsq);
 	results->varlist = gretl_list_copy(pmod->varlist);
 	if (results->varlist == NULL) {
 	    err = 1;
@@ -582,7 +612,9 @@ int mplsq (const int *list, const int *polylist,
     *errbuf = 0;
 
     if (list == NULL || pZ == NULL || *pZ == NULL || pdinfo == NULL ||
-	list[0] == 1 || pdinfo->v == 1) return E_DATA;
+	list[0] == 1 || pdinfo->v == 1) {
+	return E_DATA;
+    }
 
     set_gretl_mp_bits();
 
@@ -641,18 +673,20 @@ int mplsq (const int *list, const int *polylist,
 
     /* calculate regression results */
     xpxxpy = mp_xpxxpy_func(model.list, model.nobs, mpZ);
-    mpf_set (model.tss, xpxxpy.xpy[l0]);
+    mpf_set(model.tss, xpxxpy.xpy[l0]);
 
     mp_regress(&model, xpxxpy, mpZ, model.nobs, errbuf);
 
-    for (i=0; i<=l0; i++) mpf_clear (xpxxpy.xpy[i]);
+    for (i=0; i<=l0; i++) {
+	mpf_clear(xpxxpy.xpy[i]);
+    }
     free(xpxxpy.xpy);
     xpxxpy.xpy = NULL;
 
     ret = model.errcode;
 
     if (ret == 0) {
-	copy_mp_results (&model, pdinfo, results);
+	copy_mp_results(&model, pdinfo, results);
     }
 
     /* free all the mpf stuff */
@@ -662,8 +696,6 @@ int mplsq (const int *list, const int *polylist,
 
     return ret;
 }
-
-/* .......................................................... */
 
 static void mp_xpxxpy_init (MPXPXXPY *m)
 {
@@ -693,8 +725,13 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
         return xpxxpy;
     }
 
-    for (i=0; i<=l0; i++) mpf_init(xpxxpy.xpy[i]);
-    for (i=0; i<m; i++) mpf_init(xpxxpy.xpx[i]);
+    for (i=0; i<=l0; i++) {
+	mpf_init(xpxxpy.xpy[i]);
+    }
+
+    for (i=0; i<m; i++) {
+	mpf_init(xpxxpy.xpx[i]);
+    }
 
     mpf_init(xx);
     mpf_init(yy);
@@ -705,13 +742,13 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
     xpxxpy.nv = l0 - 1;
 
     for (t=0; t<n; t++) {
-        mpf_set (xx, mpZ[yno][t]);
-	mpf_add (xpxxpy.xpy[0], xpxxpy.xpy[0], xx);
-	mpf_mul (yy, xx, xx);
-	mpf_add (xpxxpy.xpy[l0], xpxxpy.xpy[l0], yy);
+        mpf_set(xx, mpZ[yno][t]);
+	mpf_add(xpxxpy.xpy[0], xpxxpy.xpy[0], xx);
+	mpf_mul(yy, xx, xx);
+	mpf_add(xpxxpy.xpy[l0], xpxxpy.xpy[l0], yy);
     }
 
-    if (mpf_sgn (xpxxpy.xpy[l0]) == 0) {
+    if (mpf_sgn(xpxxpy.xpy[l0]) == 0) {
          xpxxpy.ivalue = yno; 
          return xpxxpy; 
     }    
@@ -722,23 +759,23 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
         li = list[i];
         for (j=i; j<=l0; j++) {
             lj = list[j];
-            mpf_set (xx, MPF_ZERO);
+            mpf_set(xx, MPF_ZERO);
             for (t=0; t<n; t++) {
-		mpf_mul (tmp, mpZ[li][t], mpZ[lj][t]);
-		mpf_add (xx, xx, tmp);
+		mpf_mul(tmp, mpZ[li][t], mpZ[lj][t]);
+		mpf_add(xx, xx, tmp);
 	    }
-            if ((mpf_sgn (xx) == 0) && li == lj)  {
+            if ((mpf_sgn(xx) == 0) && li == lj)  {
                 xpxxpy.ivalue = li;
                 return xpxxpy;  
             }
-            mpf_set (xpxxpy.xpx[m++], xx);
+            mpf_set(xpxxpy.xpx[m++], xx);
         }
         mpf_set (xx, MPF_ZERO);
         for (t=0; t<n; t++) {
-	    mpf_mul (tmp, mpZ[yno][t], mpZ[li][t]);
-	    mpf_add (xx, xx, tmp);
+	    mpf_mul(tmp, mpZ[yno][t], mpZ[li][t]);
+	    mpf_add(xx, xx, tmp);
 	}
-        mpf_set (xpxxpy.xpy[i-1], xx);
+        mpf_set(xpxxpy.xpy[i-1], xx);
     }
 
     xpxxpy.ivalue = 0;
@@ -751,8 +788,6 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
 
     return xpxxpy; 
 }
-
-/* .......................................................... */
 
 static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 			char *errbuf)
@@ -771,16 +806,18 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
         return;
     }
 
-    for (i=0; i<nv; i++) mpf_init (pmod->sderr[i]);
+    for (i=0; i<nv; i++) {
+	mpf_init (pmod->sderr[i]);
+    }
 
-    mpf_init (den);
-    mpf_init (sgmasq);
-    mpf_init (ysum);
-    mpf_init (ypy);
-    mpf_init (zz);
-    mpf_init (rss);
-    mpf_init (tss);
-    mpf_init (tmp);
+    mpf_init(den);
+    mpf_init(sgmasq);
+    mpf_init(ysum);
+    mpf_init(ypy);
+    mpf_init(zz);
+    mpf_init(rss);
+    mpf_init(tss);
+    mpf_init(tmp);
 
     nobs = pmod->nobs;
     pmod->ncoeff = nv;
@@ -792,17 +829,17 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
     }
 
     pmod->dfn = nv - pmod->ifc;
-    mpf_set (ysum, xpxxpy.xpy[0]);
-    mpf_set (ypy, xpxxpy.xpy[nv + 1]);
+    mpf_set(ysum, xpxxpy.xpy[0]);
+    mpf_set(ypy, xpxxpy.xpy[nv + 1]);
     if (mpf_sgn(ypy) == 0) { 
         pmod->errcode = E_YPY;
         return; 
     }
 
-    mpf_mul (zz, ysum, ysum);
-    mpf_set_d (tmp, (double) nobs);
-    mpf_div (zz, zz, tmp);
-    mpf_sub (tss, ypy, zz);
+    mpf_mul(zz, ysum, ysum);
+    mpf_set_d(tmp, (double) nobs);
+    mpf_div(zz, zz, tmp);
+    mpf_sub(tss, ypy, zz);
     if (mpf_sgn(tss) < 0) { 
         pmod->errcode = E_TSS; 
         return; 
@@ -818,36 +855,37 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
         return;
     } 
 
-    mpf_set (rss, cb.rss);
-    mpf_clear (cb.rss);
+    mpf_set(rss, cb.rss);
+    mpf_clear(cb.rss);
     if (mpf_cmp(rss, MPF_MINUS_ONE) == 0) { 
         pmod->errcode = E_SINGULAR;
         return; 
     }
 
-    mpf_sub (pmod->ess, ypy, rss);
+    mpf_sub(pmod->ess, ypy, rss);
     ess = mpf_get_d(pmod->ess);
     if (fabs(ess) < DBL_EPSILON) {
-	mpf_set (pmod->ess, MPF_ZERO);
+	mpf_set(pmod->ess, MPF_ZERO);
     }
+
     if (mpf_sgn(pmod->ess) < 0) { 
 	sprintf(errbuf, _("Error sum of squares is not >= 0"));
         return; 
     }
 
     if (pmod->dfd == 0) {
-	mpf_set (pmod->sigma, MPF_ZERO);
-	mpf_set_d (pmod->adjrsq, NADBL);
+	mpf_set(pmod->sigma, MPF_ZERO);
+	mpf_set_d(pmod->adjrsq, NADBL);
     } else {
-	mpf_set_d (tmp, (double) pmod->dfd);
-	mpf_div (sgmasq, pmod->ess, tmp);
-	mpf_sqrt (pmod->sigma, sgmasq);
-	mpf_mul (den, tss, tmp);
+	mpf_set_d(tmp, (double) pmod->dfd);
+	mpf_div(sgmasq, pmod->ess, tmp);
+	mpf_sqrt(pmod->sigma, sgmasq);
+	mpf_mul(den, tss, tmp);
     }
 
-    if (mpf_sgn (tss) <= 0) {
-	mpf_set_d (pmod->rsq, NADBL);
-	mpf_set_d (pmod->adjrsq, NADBL);
+    if (mpf_sgn(tss) <= 0) {
+	mpf_set_d(pmod->rsq, NADBL);
+	mpf_set_d(pmod->adjrsq, NADBL);
 	pmod->errcode = E_TSS;
 	return;
     }       
@@ -857,43 +895,43 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 	return;
     }
 
-    mpf_div (tmp, pmod->ess, tss);
-    mpf_sub (pmod->rsq, MPF_ONE, tmp);
+    mpf_div(tmp, pmod->ess, tss);
+    mpf_sub(pmod->rsq, MPF_ONE, tmp);
 
     if (pmod->dfd > 0) {
-	mpf_set_d (tmp, (double) (nobs - 1));
-	mpf_div (tmp, tmp, den);
-	mpf_mul (tmp, tmp, pmod->ess);
-	mpf_sub (pmod->adjrsq, MPF_ONE, tmp);
+	mpf_set_d(tmp, (double) (nobs - 1));
+	mpf_div(tmp, tmp, den);
+	mpf_mul(tmp, tmp, pmod->ess);
+	mpf_sub(pmod->adjrsq, MPF_ONE, tmp);
 	if (!pmod->ifc) { 
 	    mpf_t df;
 
-	    mpf_div (tmp, pmod->ess, ypy);
-	    mpf_sub (pmod->rsq, MPF_ONE, tmp);
-	    mpf_sub (tmp, MPF_ONE, pmod->rsq);
-	    mpf_init_set_d (df, (double) (nobs - 1));
-	    mpf_mul (tmp, tmp, df);
-	    mpf_set_d (df, (double) pmod->dfd);
-	    mpf_div (tmp, tmp, df);
-	    mpf_sub (pmod->adjrsq, MPF_ONE, tmp);
-	    mpf_clear (df);
+	    mpf_div(tmp, pmod->ess, ypy);
+	    mpf_sub(pmod->rsq, MPF_ONE, tmp);
+	    mpf_sub(tmp, MPF_ONE, pmod->rsq);
+	    mpf_init_set_d(df, (double) (nobs - 1));
+	    mpf_mul(tmp, tmp, df);
+	    mpf_set_d(df, (double) pmod->dfd);
+	    mpf_div(tmp, tmp, df);
+	    mpf_sub(pmod->adjrsq, MPF_ONE, tmp);
+	    mpf_clear(df);
 	}
     }
 
     if (pmod->ifc && nv == 1) {
-        mpf_set (zz, MPF_ZERO);
+        mpf_set(zz, MPF_ZERO);
         pmod->dfn = 1;
     }
 
     if (mpf_sgn(sgmasq) != 1 || pmod->dfd == 0) {
-	mpf_set_d (pmod->fstt, NADBL);
+	mpf_set_d(pmod->fstt, NADBL);
     } else { 
-	mpf_set_d (tmp, (double) pmod->ifc);
-	mpf_mul (tmp, zz, tmp);
-	mpf_sub (pmod->fstt, rss, tmp);
-	mpf_div (pmod->fstt, pmod->fstt, sgmasq);
-	mpf_set_d (tmp, (double) pmod->dfn);
-	mpf_div (pmod->fstt, pmod->fstt, tmp);
+	mpf_set_d(tmp, (double) pmod->ifc);
+	mpf_mul(tmp, zz, tmp);
+	mpf_sub(pmod->fstt, rss, tmp);
+	mpf_div(pmod->fstt, pmod->fstt, sgmasq);
+	mpf_set_d(tmp, (double) pmod->dfn);
+	mpf_div(pmod->fstt, pmod->fstt, tmp);
     }
 
     diag = malloc(nv * sizeof *diag); 
@@ -902,31 +940,34 @@ static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 	return;
     }
 
-    for (i=0; i<nv; i++) mpf_init (diag[i]);
+    for (i=0; i<nv; i++) {
+	mpf_init (diag[i]);
+    }
 
     mp_diaginv(xpxxpy, diag);
 
     for (v=0; v<nv; v++) { 
-	mpf_sqrt (zz, diag[v]);
-	mpf_mul (pmod->sderr[v], pmod->sigma, zz);
+	mpf_sqrt(zz, diag[v]);
+	mpf_mul(pmod->sderr[v], pmod->sigma, zz);
     }
 
-    for (i=0; i<nv; i++) mpf_clear (diag[i]);
+    for (i=0; i<nv; i++) {
+	mpf_clear (diag[i]);
+    }
+
     free(diag); 
 
-    mpf_clear (den);
-    mpf_clear (sgmasq);
-    mpf_clear (ysum);
-    mpf_clear (ypy);
-    mpf_clear (zz);
-    mpf_clear (rss);
-    mpf_clear (tss);
-    mpf_clear (tmp);
+    mpf_clear(den);
+    mpf_clear(sgmasq);
+    mpf_clear(ysum);
+    mpf_clear(ypy);
+    mpf_clear(zz);
+    mpf_clear(rss);
+    mpf_clear(tss);
+    mpf_clear(tmp);
     
     return;  
 }
-
-/* .......................................................... */
 
 static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
 {
@@ -943,53 +984,55 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
         return cb;
     }
 
-    for (j=0; j<nv; j++) mpf_init (cb.coeff[j]);
+    for (j=0; j<nv; j++) {
+	mpf_init (cb.coeff[j]);
+    }
 
-    mpf_init (e);
-    mpf_init (d);
-    mpf_init (d1);
-    mpf_init (test);
-    mpf_init (rtest);
-    mpf_init (xx);
-    mpf_init (tmp);
+    mpf_init(e);
+    mpf_init(d);
+    mpf_init(d1);
+    mpf_init(test);
+    mpf_init(rtest);
+    mpf_init(xx);
+    mpf_init(tmp);
 
     cb.xpxxpy = xpxxpy;
 
-    mpf_sqrt (tmp, xpxxpy.xpx[0]);
-    mpf_div (e, MPF_ONE, tmp);
-    mpf_set (xpxxpy.xpx[0], e);
+    mpf_sqrt(tmp, xpxxpy.xpx[0]);
+    mpf_div(e, MPF_ONE, tmp);
+    mpf_set(xpxxpy.xpx[0], e);
     mpf_mul(xpxxpy.xpy[1], xpxxpy.xpy[1], e);
     for (i=1; i<nv; i++) { 
-	mpf_mul (xpxxpy.xpx[i], xpxxpy.xpx[i], e);
+	mpf_mul(xpxxpy.xpx[i], xpxxpy.xpx[i], e);
     }
 
     kk = nv;
 
     for (j=2; j<=nv; j++) {
 	/* diagonal elements */
-	mpf_set (d, MPF_ZERO);
-	mpf_set (d1, MPF_ZERO);
+	mpf_set(d, MPF_ZERO);
+	mpf_set(d1, MPF_ZERO);
         k = jm1 = j - 1;
         for (l=1; l<=jm1; l++) {
-	    mpf_set (xx, xpxxpy.xpx[k]);
-	    mpf_mul (tmp, xx, xpxxpy.xpy[l]);
-	    mpf_add (d1, d1, tmp);
-	    mpf_mul (tmp, xx, xx);
-	    mpf_add (d, d, tmp);
+	    mpf_set(xx, xpxxpy.xpx[k]);
+	    mpf_mul(tmp, xx, xpxxpy.xpy[l]);
+	    mpf_add(d1, d1, tmp);
+	    mpf_mul(tmp, xx, xx);
+	    mpf_add(d, d, tmp);
             k += nv-l;
         }
-	mpf_sub (test, xpxxpy.xpx[kk], d);
-	mpf_div (rtest, test, xpxxpy.xpx[kk]);
+	mpf_sub(test, xpxxpy.xpx[kk], d);
+	mpf_div(rtest, test, xpxxpy.xpx[kk]);
         if (mpf_sgn(test) != 1 || mpf_cmp(rtest, MPF_TINY) < 0) {
 	    fprintf(stderr, "mp_cholbeta: rtest = %g\n", mpf_get_d(rtest));
-	    mpf_set (cb.rss, MPF_MINUS_ONE); 
+	    mpf_set(cb.rss, MPF_MINUS_ONE); 
 	    goto mp_cholbeta_abort;
         }   
-	mpf_sqrt (tmp, test);
-	mpf_div (e, MPF_ONE, tmp);
-	mpf_set (xpxxpy.xpx[kk], e);
-	mpf_sub (tmp, xpxxpy.xpy[j], d1);
-	mpf_mul (xpxxpy.xpy[j], tmp, e);
+	mpf_sqrt(tmp, test);
+	mpf_div(e, MPF_ONE, tmp);
+	mpf_set(xpxxpy.xpx[kk], e);
+	mpf_sub(tmp, xpxxpy.xpy[j], d1);
+	mpf_mul(xpxxpy.xpy[j], tmp, e);
 
         /* off-diagonal elements */
         for (i=j+1; i<=nv; i++) {
@@ -997,52 +1040,50 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
             mpf_set (d, MPF_ZERO);
             k = j - 1;
             for (l=1; l<=jm1; l++) {
-		mpf_mul (tmp, xpxxpy.xpx[k], xpxxpy.xpx[k-j+i]);
-		mpf_add (d, d, tmp);
+		mpf_mul(tmp, xpxxpy.xpx[k], xpxxpy.xpx[k-j+i]);
+		mpf_add(d, d, tmp);
                 k += nv - l;
             }
-	    mpf_sub (tmp, xpxxpy.xpx[kk], d);
-	    mpf_mul (xpxxpy.xpx[kk], tmp, e);
+	    mpf_sub(tmp, xpxxpy.xpx[kk], d);
+	    mpf_mul(xpxxpy.xpx[kk], tmp, e);
         }
         kk++;
     }
 
     kk--;
-    mpf_set (d, MPF_ZERO);
+    mpf_set(d, MPF_ZERO);
 
     for (j=1; j<=nv; j++) {
-	mpf_mul (tmp, xpxxpy.xpy[j], xpxxpy.xpy[j]);
-	mpf_add (d, d, tmp);
+	mpf_mul(tmp, xpxxpy.xpy[j], xpxxpy.xpy[j]);
+	mpf_add(d, d, tmp);
     }
 
-    mpf_set (cb.rss, d);
-    mpf_mul (cb.coeff[nv-1], xpxxpy.xpy[nv], xpxxpy.xpx[kk]);
+    mpf_set(cb.rss, d);
+    mpf_mul(cb.coeff[nv-1], xpxxpy.xpy[nv], xpxxpy.xpx[kk]);
 
     for (j=nv-1; j>=1; j--) {
-	mpf_set (d, xpxxpy.xpy[j]);
+	mpf_set(d, xpxxpy.xpy[j]);
         for (i=nv-1; i>=j; i--) {
             kk--;
-	    mpf_mul (tmp, cb.coeff[i], xpxxpy.xpx[kk]);
-	    mpf_sub (d, d, tmp);
+	    mpf_mul(tmp, cb.coeff[i], xpxxpy.xpx[kk]);
+	    mpf_sub(d, d, tmp);
         }
         kk--;
-	mpf_mul (cb.coeff[j-1], d, xpxxpy.xpx[kk]);
+	mpf_mul(cb.coeff[j-1], d, xpxxpy.xpx[kk]);
     }  
 
  mp_cholbeta_abort:
 
-    mpf_clear (e);
-    mpf_clear (d);
-    mpf_clear (d1);
-    mpf_clear (test);
-    mpf_clear (rtest);
-    mpf_clear (xx);
-    mpf_clear (tmp);
+    mpf_clear(e);
+    mpf_clear(d);
+    mpf_clear(d1);
+    mpf_clear(test);
+    mpf_clear(rtest);
+    mpf_clear(xx);
+    mpf_clear(tmp);
  
     return cb; 
 }
-
-/* ...............................................................    */
 
 static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
 {
@@ -1051,61 +1092,65 @@ static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
     const int nxpx = nv * (nv + 1) / 2;
     mpf_t d, e, tmp;
 
-    mpf_init (d);
-    mpf_init (e);
-    mpf_init (tmp);
+    mpf_init(d);
+    mpf_init(e);
+    mpf_init(tmp);
 
     kk = 0;
 
     for (l=1; l<=nv-1; l++) {
-	mpf_set (d, xpxxpy.xpx[kk]);
-	mpf_set (xpxxpy.xpy[l], d);
-	mpf_mul (e, d, d);
+	mpf_set(d, xpxxpy.xpx[kk]);
+	mpf_set(xpxxpy.xpy[l], d);
+	mpf_mul(e, d, d);
         m = 0;
         if (l > 1) {
-	    for (j=1; j<=l-1; j++) m += nv - j;
+	    for (j=1; j<=l-1; j++) {
+		m += nv - j;
+	    }
 	}
         for (i=l+1; i<=nv; i++) {
-	    mpf_set (d, MPF_ZERO); 
+	    mpf_set(d, MPF_ZERO); 
             k = i + m - 1;
             for (j=l; j<=i-1; j++) {
-		mpf_mul (tmp, xpxxpy.xpy[j], xpxxpy.xpx[k]);
-		mpf_add (d, d, tmp);
+		mpf_mul(tmp, xpxxpy.xpy[j], xpxxpy.xpx[k]);
+		mpf_add(d, d, tmp);
                 k += nv - j;
             }
-	    mpf_mul (d, d, xpxxpy.xpx[k]);
-	    mpf_mul (d, d, MPF_MINUS_ONE);
-	    mpf_set (xpxxpy.xpy[i], d);
-	    mpf_mul (tmp, d, d);
-	    mpf_add (e, e, tmp);
+	    mpf_mul(d, d, xpxxpy.xpx[k]);
+	    mpf_mul(d, d, MPF_MINUS_ONE);
+	    mpf_set(xpxxpy.xpy[i], d);
+	    mpf_mul(tmp, d, d);
+	    mpf_add(e, e, tmp);
         }
         kk += nv + 1 - l;
-        mpf_set (diag[l-1], e);
+        mpf_set(diag[l-1], e);
     }
 
-    mpf_mul (diag[nv-1], xpxxpy.xpx[nxpx-1], xpxxpy.xpx[nxpx-1]);
+    mpf_mul(diag[nv-1], xpxxpy.xpx[nxpx-1], xpxxpy.xpx[nxpx-1]);
 
-    mpf_clear (d);
-    mpf_clear (e);
-    mpf_clear (tmp);
+    mpf_clear(d);
+    mpf_clear(e);
+    mpf_clear(tmp);
 }
 
-/* .........................................................   */
-
-static int mp_rearrange (int *list)
 /* checks a list for a constant term (ID # 0), and if present, 
    move it to the first indep var position.  Return 1 if constant found,
    else 0.
 */
+
+static int mp_rearrange (int *list)
 {
     int i, v;
 
     for (v=list[0]; v>2; v--) {
         if (list[v] == 0)  {
-	    for (i=v; i>2; i--) list[i] = list[i-1];
+	    for (i=v; i>2; i--) {
+		list[i] = list[i-1];
+	    }
 	    list[2] = 0;
 	    return 1;
         }
     }
+
     return (list[2] == 0);
 }

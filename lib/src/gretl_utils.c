@@ -894,7 +894,7 @@ int allocate_mp_varnames (mp_results *mpvals)
     }
 
     for (i=0; i<n; i++) {
-	mpvals->varnames[i] = malloc(12);
+	mpvals->varnames[i] = malloc(VNAMELEN + 8);
 	if (mpvals->varnames[i] == NULL) {
 	    for (j=0; j<i; j++) {
 		free(mpvals->varnames[j]);
@@ -929,7 +929,9 @@ mp_results *gretl_mp_results_new (int nc)
     int i;
 
     mpvals = malloc(sizeof *mpvals);
-    if (mpvals == NULL) return NULL;
+    if (mpvals == NULL) {
+	return NULL;
+    }
 
     mpvals->ncoeff = nc;
 
@@ -944,8 +946,10 @@ mp_results *gretl_mp_results_new (int nc)
 	return NULL;
     }
 
-    for (i=0; i<nc; i++) mpvals->coeff[i] = NADBL;
-    for (i=0; i<nc; i++) mpvals->sderr[i] = NADBL;
+    for (i=0; i<nc; i++) {
+	mpvals->coeff[i] = NADBL;
+	mpvals->sderr[i] = NADBL;
+    }
 
     mpvals->sigma = mpvals->ess = NADBL;
     mpvals->rsq = mpvals->fstt = NADBL;
