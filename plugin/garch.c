@@ -643,20 +643,21 @@ static int *make_ols_list (const int *list)
     return olist;
 }
 
-#if 0
+#if 1
 int garch_pretest (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		   PRN *prn)
+		   double *LMF, double *pvF)
 {
     int err;
 
     err = autocorr_test(pmod, pdinfo->pd, pZ, pdinfo,
-			OPT_S | OPT_Q, prn);
+			OPT_S | OPT_Q, NULL);
 
     if (!err) {
-	double LMF = get_last_test_statistic(NULL);
-	double pval = get_last_pvalue(NULL);
-
-	fprintf(stderr, "LMF = %g, pval = %g\n", LMF, pval);
+	*LMF = get_last_test_statistic(NULL);
+	*pvF = get_last_pvalue(NULL);
+    } else {
+	*LMF = NADBL;
+	*pvF = NADBL;
     }
 
     return err;
@@ -672,6 +673,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL model;
     int *list = NULL, *ols_list = NULL;
+    double LMF, pvF;
     double scale = 1.0;
     int t, err, init_err, yno = 0;
 
@@ -697,10 +699,10 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-#if 0
+#if 1
     /* pretest the residuals for autocorrelation */
     if (!err) {
-	err = garch_pretest(&model, pZ, pdinfo, prn);
+	garch_pretest(&model, pZ, pdinfo, &LMF, &pvF);
     }
 #endif
 
@@ -763,6 +765,10 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 
     free(ols_list);
     free(list);
+
+    if (model.errcode == E_NOCONV) {
+	pprintf(prn, "\nLMF = %g, pvF = %g\n", LMF, pvF);
+    }
 
     return model;
 }

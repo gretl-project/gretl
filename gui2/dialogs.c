@@ -3154,11 +3154,17 @@ static void datawiz_set_radio_opt (GtkWidget *w, struct setvar_and_spin *sspin)
 	    }
 	} else {
 	    gtk_widget_set_sensitive(sspin->spinner, FALSE);
+	    if (sspin->extra != NULL) {
+		*sspin->extra = TIME_SERIES;
+	    }
 	}
     }
 
 #if DWDEBUG
     fprintf(stderr, "datawiz_set_radio_opt: setting setvar to %d\n", val);
+    if (sspin->extra != NULL) {
+	fprintf(stderr, "datawiz_set_radio_opt: extra now = %d\n", *sspin->extra);
+    }
 #endif
 
     *sspin->setvar = val;
