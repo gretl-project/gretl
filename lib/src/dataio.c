@@ -1478,9 +1478,11 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
 	case 52:
 	    strcpy(str, _("weekly")); break;
 	case 5:
-	    strcpy(str, _("daily")); break;
+	case 6:
 	case 7:
 	    strcpy(str, _("daily")); break;
+	case 10:
+	    strcpy(str, _("decennial")); break;
 	default:
 	    strcpy(str, _("unknown")); break;
 	}

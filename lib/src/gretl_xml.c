@@ -129,7 +129,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int *pmax = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
-    char datname[MAXLEN], freqstr[16];
+    char datname[MAXLEN], freqstr[32];
     char numstr[128];
     char *xmlbuf = NULL;
     void *handle = NULL;
@@ -206,7 +206,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     }
 
     if (custom_time_series(pdinfo)) {
-	strcpy(freqstr, "special");
+	sprintf(freqstr, "special:%d", pdinfo->pd);
     } else {
 	sprintf(freqstr, "%d", pdinfo->pd);
     }
@@ -743,8 +743,13 @@ static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dtype)
     *pd = 1;
 
     if (tmp != NULL) {
-	if (!strcmp((char *) tmp, "special")) {
+	if (!strncmp((char *) tmp, "special", 7)) {
 	    *dtype = SPECIAL_TIME_SERIES;
+	    if (sscanf((char *) tmp + 7, ":%d", pd) == 1) {
+		fprintf(stderr, "custom time series, frequency %d\n", *pd);
+	    } else {
+		fprintf(stderr, "custom time series, using frequency 1\n");
+	    }
 	} else if (sscanf((char *) tmp, "%d", pd) != 1) {
 	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));
 	    err = 1;
