@@ -87,7 +87,7 @@ int gretl_compare_doubles (const void *a, const void *b);
 int gretl_copy_file (const char *src, const char *dest);
 
 #ifndef WIN32
-int gretl_spawn (const char *cmdline);
+int gretl_spawn (char *cmdline);
 #endif
 
 /* model selection criteria */

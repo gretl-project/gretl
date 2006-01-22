@@ -28,14 +28,11 @@
 
 #ifndef WIN32
 # include <signal.h>
+# ifdef USE_GTK2
+#  include <glib.h>
+#  define USE_GSPAWN
+# endif
 #endif
-
-#if defined(USE_GTK2) && !defined(WIN32)
-# include <glib.h>
-# if GLIB_CHECK_VERSION(2,0,0)
-#  define GLIB2
-# endif /* GLIB_CHECK_VERSION */
-#endif /* GTK2, !WIN32 */
 
 /**
  * date:
@@ -961,7 +958,8 @@ mp_results *gretl_mp_results_new (int nc)
     return mpvals;
 }
 
-#if GRETL_GLIB
+#ifndef WIN32
+# ifdef USE_GSPAWN
 
 static int font_not_found (const char *s)
 {
@@ -974,7 +972,7 @@ static int font_not_found (const char *s)
     }
 }
 
-int gretl_spawn (const char *cmdline)
+int gretl_spawn (char *cmdline)
 {
     GError *error = NULL;
     gchar *errout = NULL, *sout = NULL;
@@ -1025,11 +1023,9 @@ int gretl_spawn (const char *cmdline)
     return ret;
 }
 
-#endif
+# else /* now non-glib2 version */
 
-#if !defined(WIN32) && !defined(GRETL_GLIB)
-
-int gretl_spawn (const char *cmdline)
+int gretl_spawn (char *cmdline)
 {
     int err;
 
@@ -1046,7 +1042,8 @@ int gretl_spawn (const char *cmdline)
     return err;
 }
 
-#endif
+# endif
+#endif /* !WIN32 */
 
 /* file copying */
 

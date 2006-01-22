@@ -32,7 +32,7 @@
 # include <windows.h>
 #else
 # ifdef USE_GTK2
-#  define GLIB2
+#  define USE_GSPAWN
 #  include <glib.h>
 #  include <signal.h>
 #  if HAVE_SYS_WAIT_H
@@ -101,9 +101,9 @@ struct plot_type_info ptinfo[] = {
     { PLOT_TYPE_MAX,       NULL }
 };
     
-#ifdef GLIB2
+#ifdef USE_GSPAWN
 
-#undef SPAWN_DEBUG
+# define SPAWN_DEBUG 0  /* define != 0 for debugging statements */
 
 /**
  * gnuplot_test_command:
@@ -143,11 +143,11 @@ int gnuplot_test_command (const char *cmd)
 				   &serr,
 				   &error);
 
-#ifdef SPAWN_DEBUG
+# if SPAWN_DEBUG
     fprintf(stderr, "Testing gnuplot command '%s'\n", cmd);
     fprintf(stderr, "ok=%d, child_pid=%d, sinp=%d\n",
 	    ok, child_pid, sinp);
-#endif
+# endif
 
     if (ok) {
 	int test, status;
@@ -157,7 +157,7 @@ int gnuplot_test_command (const char *cmd)
 	write(sinp, "\n", 1);
 	close(sinp);
 	test = waitpid(child_pid, &status, 0);
-# ifdef SPAWN_DEBUG
+# if SPAWN_DEBUG
 	fprintf(stderr, "waitpid returned %d, WIFEXITED %d, "
 		"WEXITSTATUS %d\n", test, WIFEXITED(status),
 		WEXITSTATUS(status));
@@ -178,9 +178,9 @@ int gnuplot_test_command (const char *cmd)
 	g_error_free(error);
     }
 
-#ifdef SPAWN_DEBUG
+# if SPAWN_DEBUG
     fprintf(stderr, "gnuplot test: ret = %d\n", ret);
-#endif
+# endif
 
     return ret;
 }
@@ -203,7 +203,7 @@ int gnuplot_test_command (const char *cmd)
     return err;
 }
 
-#endif /* ! GLIB2, ! WIN32 */
+#endif /* ! USE_GSPAWN, ! WIN32 */
 
 static int printvars (FILE *fp, int t, const int *list, const double **Z,
 		      const char *label, double offset)
@@ -649,7 +649,7 @@ static int write_plot_type_string (PlotType ptype, FILE *fp)
 int gnuplot_init (PlotType ptype, FILE **fpp)
 {
     int gui = gretl_in_gui_mode();
-    char plotfile[MAXLEN] = {0};
+    char plotfile[FILENAME_MAX] = {0};
 
     if (gretl_looping()) {
 	return E_OK;
@@ -893,7 +893,7 @@ static const char *series_name (const DATAINFO *pdinfo, int v)
     if (pdinfo->varinfo != NULL && pdinfo->varinfo[v] != NULL) {
 	ret = DISPLAYNAME(pdinfo, v);
 	if (ret[0] == '\0') {
-	   ret = pdinfo->varname[v];
+	    ret = pdinfo->varname[v];
 	}
     } 
 
@@ -915,7 +915,7 @@ get_gnuplot_output_file (FILE **fpp, gnuplot_flags flags,
 	    err = E_FOPEN;
 	}
     } else if ((flags & GP_BATCH) && plot_count != NULL) {  
-	char fname[MAXLEN];
+	char fname[FILENAME_MAX];
 
 	if (*plotfile == '\0' || strstr(plotfile, "gpttmp") != NULL) {
 	    *plot_count += 1; 
@@ -2545,8 +2545,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	fprintf(fp, "set mxtics %s\n", spec->mxtics);
     }
 
-    /* using two y axes? */
     if (spec->flags & GPTSPEC_Y2AXIS) {
+	/* using two y axes */
 	fputs("set ytics nomirror\n", fp);
 	fputs("set y2tics\n", fp);
     } else if (spec->flags & GPTSPEC_MINIMAL_BORDER) {
@@ -2559,7 +2559,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     }
 
     /* in case of plots that are editable (see gui client), it is
-       important to re-write the comment string that identifies the
+       important to write out the comment string that identifies the
        sort of graph, so that it will be recognized by type when
        it is redisplayed */
 
@@ -2751,7 +2751,8 @@ int go_gnuplot (GPT_SPEC *spec, char *fname)
 #ifdef WIN32
 	int winshow = 0;
 
-	if (fname == NULL) { /* sending plot to screen */
+	if (fname == NULL) { 
+	    /* sending plot to screen */
 	    fputs("pause -1\n", fp);
 	    winshow = 1;
 	} 
@@ -2780,9 +2781,9 @@ int go_gnuplot (GPT_SPEC *spec, char *fname)
 int 
 rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 {
-    int err;
-    void *handle;
     int (*range_mean_graph) (int, const double **, const DATAINFO *, PRN *);
+    void *handle = NULL;
+    int err;
 
     range_mean_graph = get_plugin_function("range_mean_graph", &handle);
     if (range_mean_graph == NULL) {
@@ -2803,9 +2804,9 @@ rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 int 
 hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 {
-    int err;
-    void *handle;
     int (*hurst_exponent) (int, const double **, const DATAINFO *, PRN *);
+    void *handle = NULL;
+    int err;
 
     hurst_exponent = get_plugin_function("hurst_exponent", &handle);
     if (hurst_exponent == NULL) {
@@ -3186,9 +3187,9 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
 {
     const gretl_matrix *lam;
     FILE *fp = NULL;
-    int n;
     double x, y;
-    int i, err;
+    double px, py;
+    int i, n, err;
 
     lam = gretl_VAR_get_roots(var);
     if (lam == NULL) {
@@ -3215,13 +3216,16 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
     fputs("set polar\n", fp);
     fputs("plot 1 w lines , \\\n"
 	  "'-' w points pt 7\n", fp);
-    	
+
     gretl_push_c_numeric_locale();
     
     for (i=0; i<n; i++) {
         x = gretl_matrix_get(lam, i, 0);
         y = gretl_matrix_get(lam, i, 1);
-	fprintf(fp, "%.8f %.8f\n", x, y);
+	/* in polar form */
+	px = atan2(y, x);
+	py = sqrt(x * x + y * y);
+	fprintf(fp, "%.8f %.8f # %.2f,%.2f\n", px, py, x, y);
     }
 
     gretl_pop_c_numeric_locale();

@@ -37,6 +37,8 @@ void win_show_error (DWORD dw);
 int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);
 
+int gretl_spawn (char *cmdline);
+
 char *desktop_path (void);
 
 int gretl_shell (const char *arg);

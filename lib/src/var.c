@@ -1306,7 +1306,7 @@ static int gretl_VAR_add_roots (GRETL_VAR *var)
 	}
     }
 
-    /* save eigenvalues of companion form matrix in polar form */
+    /* save eigenvalues of companion form matrix */
     if (!err) {
         eigA = gretl_general_matrix_eigenvals(CompForm, NULL);
 	if (eigA == NULL) {
@@ -1314,13 +1314,13 @@ static int gretl_VAR_add_roots (GRETL_VAR *var)
 	} else {
 	    for (i=0; i<np; i++) {
 		x = eigA[i];
-		y = eigA[np+i];
-		gretl_matrix_set(var->lambda, i, 0, atan2(y, x));
-		gretl_matrix_set(var->lambda, i, 1, sqrt(x * x + y * y));
+		y = eigA[np + i];
+		gretl_matrix_set(var->lambda, i, 0, x);
+		gretl_matrix_set(var->lambda, i, 1, y);
 	    }
 #if 0
 	    gretl_matrix_print(var->A, "Companion form matrix");
-	    gretl_matrix_print(var->lambda, "Eigenvalues in polar form");
+	    gretl_matrix_print(var->lambda, "Eigenvalues");
 #endif
 	}
     }

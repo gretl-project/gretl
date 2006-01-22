@@ -285,11 +285,11 @@ static int gnuplot_compile (const char *fname)
 
 # ifdef WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, fname);
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 # else
     sprintf(plotcmd, "%s \"%s\"", paths.gnuplot, fname);
-    err = gretl_spawn(plotcmd);  
-# endif /* WIN32 */
+# endif
+
+    err = gretl_spawn(plotcmd);
 
     return err;
 }

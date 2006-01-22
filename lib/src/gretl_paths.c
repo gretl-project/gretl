@@ -32,16 +32,10 @@
 
 #ifdef USE_GTK2
 # include <glib.h>
-# ifndef WIN32
-#  if GLIB_CHECK_VERSION(2,0,0)
-#   define GLIB2
-#  endif /* GLIB_CHECK_VERSION */
-# endif /* !WIN32 */
-#endif /* GTK2 */
-
-#if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
-# ifdef WIN32
-#  define USE_G_FOPEN
+# if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
+#  ifdef WIN32
+#   define USE_G_FOPEN
+#  endif
 # endif
 #endif
 
@@ -568,7 +562,7 @@ static void set_gretl_libpath (const char *path)
 #ifdef WIN32
     strcpy(gretl_paths.libpath, path);
 #else
-# ifdef GLIB2 
+# ifdef USE_GTK2
     const char *sfx = "-gtk2/";
 # else
     const char *sfx = "-gtk1/";

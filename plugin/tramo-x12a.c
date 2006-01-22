@@ -27,7 +27,7 @@
 # include <windows.h>
 #else
 # if GLIB_CHECK_VERSION(2,0,0)
-#  define GLIB2
+#  define USE_GSPAWN
 #  include <signal.h>
 # endif /* GLIB_CHECK_VERSION */
 #endif
@@ -63,23 +63,22 @@ const char *default_mdl = {
     "(2 1 2)(0 1 1)\n"
 };  
 
-#ifdef GLIB2
+#ifdef USE_GSPAWN
 
-#undef SP_DEBUG
+# define SP_DEBUG 0
 
-static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
+static int glib_spawn (const char *workdir, const char *fmt, ...)
 {
-    va_list ap;
-    int i, nargs;
-    int ok;
-    int status = 0, ret = 0;
     GError *error = NULL;
-    gchar **argv = NULL;
-    gchar *sout = NULL, *serr = NULL;
+    gchar *sout = NULL;
+    gchar *serr = NULL;
+    gchar *argv[8];
+
+    va_list ap;
+    int i, ok, nargs;
+    int status = 0, ret = 0;
     char *s;
 
-    argv = malloc(2 * sizeof *argv);
-    if (argv == NULL) return 1;
     argv[0] = g_strdup(fmt);
     argv[1] = NULL;
     i = nargs = 1;
@@ -87,28 +86,20 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     va_start(ap, fmt);
 
     while ((s = va_arg(ap, char *))) {
-	i++;
-	argv = realloc(argv, (i+1) * sizeof *argv);
-	if (argv == NULL) {
-	    status = 1;
-	    break;
-	}
-	argv[i-1] = g_strdup(s);
-	argv[i] = NULL;
+	argv[i] = g_strdup(s);
+	argv[++i] = NULL;
     }
 
     va_end(ap);
 
-    if (status == 1) return 1;
-
     nargs = i;
 
-#ifdef SP_DEBUG
+# if SP_DEBUG
     fputs("spawning the following:\n", stderr);
     for (i=0; i<nargs; i++) {
 	fprintf(stderr, " argv[%d] = '%s'\n", i, argv[i]);
     }
-#endif
+# endif
 
     signal(SIGCHLD, SIG_DFL);
 
@@ -138,24 +129,23 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     if (serr != NULL) g_free(serr);
     if (sout != NULL) g_free(sout);
 
-    if (ret != 0) fputc(' ', stderr);
-
     for (i=0; i<nargs; i++) {
 	if (ret != 0) {
+	    if (i == 0) {
+		fputc(' ', stderr);
+	    }
 	    fprintf(stderr, "%s ", argv[i]);
+	    if (i == nargs - 1) {
+		fputc('\n', stderr);
+	    }
 	}
 	free(argv[i]);
     }
-    free(argv);
 
-    if (ret != 0) {
-	fputc('\n', stderr);
-    }
-    
     return ret;
 }
 
-#endif
+#endif /* USE_GSPAWN */
 
 #if GTK_MAJOR_VERSION == 1
 static void tx_dialog_ok (GtkWidget *w, tx_request *request)
@@ -405,7 +395,8 @@ static int add_series_from_file (const char *fname, int code,
 				 int v, int opt, char *errmsg)
 {
     FILE *fp;
-    char *p, line[128], varname[16], sfname[MAXLEN], date[8];
+    char *p, line[128], sfname[MAXLEN], date[8];
+    char varname[VNAMELEN];
     double x;
     int d, yr, per, err = 0;
     int t;
@@ -421,6 +412,7 @@ static int add_series_from_file (const char *fname, int code,
     }
 
     fp = gretl_fopen(sfname, "r");
+
     if (fp == NULL) {
 	int gotit = 0;
 
@@ -438,7 +430,9 @@ static int add_series_from_file (const char *fname, int code,
 	    }
 	    tramo_got_irfin = 0;
 	}
+
 	if (!gotit) {
+	    fprintf(stderr, "Couldn't open %s\n", sfname);
 	    sprintf(errmsg, _("Couldn't open %s"), sfname);
 	    return 1;
 	}
@@ -456,6 +450,7 @@ static int add_series_from_file (const char *fname, int code,
     /* copy varname and label into place */
     strcpy(pdinfo->varname[v], varname);
     sprintf(VARLABEL(pdinfo, v), _(tx_descrip_formats[code]), pdinfo->varname[0]);
+
     if (opt == TRAMO_SEATS) {
 	strcat(VARLABEL(pdinfo, v), " (TRAMO/SEATS)");
     } else {
@@ -522,7 +517,9 @@ static void set_opts (tx_request *request)
 	if (request->opt[i].check != NULL && 
 	    GTK_TOGGLE_BUTTON(request->opt[i].check)->active) {
 	    request->opt[i].save = 1;
-	    if (i != TRIGRAPH) request->savevars++;
+	    if (i != TRIGRAPH) {
+		request->savevars++;
+	    }
 	} else {
 	    request->opt[i].save = 0;
 	} 
@@ -542,16 +539,18 @@ static void cancel_savevars (tx_request *request)
 
 static int write_tramo_file (const char *fname, 
 			     double **Z, DATAINFO *pdinfo,
-			     int varnum, tx_request *request) 
+			     int v, tx_request *request) 
 {
+    int startyr, startper, tsamp = pdinfo->t2 - pdinfo->t1 + 1; 
+    char *p, tmp[8];
     double x;
     FILE *fp;
-    int startyr, startper, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int t;
-    char *p, tmp[8];
 
     fp = gretl_fopen(fname, "w");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	return 1;
+    }
 
     gretl_push_c_numeric_locale();
 
@@ -562,15 +561,15 @@ static int write_tramo_file (const char *fname,
     if (p != NULL) startper = atoi(p + 1);
     else startper = 1;
 
-    fprintf(fp, "%s\n", pdinfo->varname[varnum]);
+    fprintf(fp, "%s\n", pdinfo->varname[v]);
     fprintf(fp, "%d %d %d %d\n", tsamp, startyr, startper, pdinfo->pd);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (t && t % pdinfo->pd == 0) fputc('\n', fp);
-	if (na(Z[varnum][t])) {
+	if (na(Z[v][t])) {
 	    fputs("-99999 ", fp);
 	} else {
-	    fprintf(fp, "%g ", Z[varnum][t]);
+	    fprintf(fp, "%g ", Z[v][t]);
 	}
     }
     fputc('\n', fp);
@@ -588,16 +587,18 @@ static int write_tramo_file (const char *fname,
 
 static int write_spc_file (const char *fname, 
 			   double **Z, DATAINFO *pdinfo, 
-			   int varnum, int *varlist) 
+			   int v, int *varlist) 
 {
+    int startyr, startper;
+    char *p, tmp[8];
     double x;
     FILE *fp;
     int i, t;
-    int startyr, startper;
-    char *p, tmp[8];
 
     fp = gretl_fopen(fname, "w");
-    if (fp == NULL) return 1;   
+    if (fp == NULL) {
+	return 1;
+    }
 
     gretl_push_c_numeric_locale();
 
@@ -609,16 +610,16 @@ static int write_spc_file (const char *fname,
     else startper = 1;
 
     fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, 
-	    pdinfo->varname[varnum]);
+	    pdinfo->varname[v]);
     fprintf(fp, " start=%d.%d\n", startyr, startper);
     fputs(" data=(\n", fp);
 
     i = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (na(Z[varnum][t])) {
+	if (na(Z[v][t])) {
 	    fputs("-99999 ", fp); /* FIXME? */
 	} else {
-	    fprintf(fp, "%g ", Z[varnum][t]);
+	    fprintf(fp, "%g ", Z[v][t]);
 	}
 	if ((i + 1) % 7 == 0) fputc('\n', fp);
 	i++;
@@ -721,6 +722,71 @@ static int make_x_axis_var (double ***pZ, DATAINFO *pdinfo)
     }
 }
 
+#if defined(WIN32)
+
+static int helper_spawn (const char *prog, const char *vname,
+			 const char *workdir, int code)
+{
+    char cmd[MAXLEN];
+
+    if (code == TRAMO_ONLY) {
+	sprintf(cmd, "\"%s\" -i %s -k serie", prog, vname);
+    } else if (code == TRAMO_SEATS) {
+	sprintf(cmd, "\"%s\" -OF %s", prog, vname);
+    } else if (code == X12A) {
+	sprintf(cmd, "\"%s\" %s -r -p -q", prog, vname);
+    } else {
+	return 1;
+    }
+
+    return winfork(cmd, workdir, SW_SHOWMINIMIZED, 
+		   CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+}
+
+#elif defined(USE_GSPAWN)
+
+static int helper_spawn (const char *prog, const char *vname,
+			 const char *workdir, int code)
+{
+    int err;
+
+    if (code == TRAMO_ONLY) {
+	err = glib_spawn(workdir, prog, "-i", vname, "-k", "serie", NULL);
+    } else if (code == TRAMO_SEATS) {
+	err = glib_spawn(workdir, prog, "-OF", vname, NULL);
+    } else if (code == X12A) {
+	err = glib_spawn(workdir, prog, vname, "-r", "-p", "-q", NULL);
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
+#else
+
+static int helper_spawn (const char *prog, const char *vname,
+			 const char *workdir, int code)
+{
+    char cmd[MAXLEN];
+
+    if (code == TRAMO_ONLY) {
+	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", 
+		workdir, prog, vname);
+    } else if (code == TRAMO_SEATS) {
+	sprintf(cmd, "cd \"%s\" && \"%s\" -OF %s", workdir, prog, vname);	
+    } else if (code == X12A) {
+	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
+		workdir, prog, vname);
+    } else {
+	return 1;
+    }
+
+    return gretl_spawn(cmd);
+}
+
+#endif /* end spawn versions switch */
+
 int write_tx_data (char *fname, int varnum, 
 		   double ***pZ, DATAINFO *pdinfo, int *graph, 
 		   const char *prog, const char *workdir,
@@ -733,9 +799,6 @@ int write_tx_data (char *fname, int varnum,
     tx_request request;
     double **tmpZ;
     DATAINFO *tmpinfo;
-#ifndef GLIB2
-    char cmd[MAXLEN];
-#endif
 
     *errmsg = 0;
 
@@ -806,7 +869,8 @@ int write_tx_data (char *fname, int varnum,
 	/* write out the .spc file for x12a */
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, varname);
 	write_spc_file(fname, *pZ, pdinfo, varnum, varlist);
-    } else { /* TRAMO */
+    } else { 
+	/* TRAMO, possibly plus SEATS */
 	lower(varname);
 	sprintf(fname, "%s%c%s", workdir, SLASH, varname);
 	/* next line: this also sets request->code = TRAMO_ONLY if
@@ -818,51 +882,22 @@ int write_tx_data (char *fname, int varnum,
 	}
     }
 
-    /* run the program */
+    /* now run the program(s) */
+
     if (request.code == X12A) {
-#if defined(WIN32)
-	sprintf(cmd, "\"%s\" %s -r -p -q", prog, varname);
-	err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
-		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
-#elif defined(GLIB2)
-	err = tramo_x12a_spawn(workdir, prog, varname, "-r", "-p", "-q", NULL);
-#else
-	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
-		workdir, prog, varname);
-	err = gretl_spawn(cmd);
-#endif
-    } else { /* TRAMO_SEATS */
+	err = helper_spawn(prog, varname, workdir, X12A);
+    } else { 
 	char seats[MAXLEN];
 
 	/* ensure any stale files get deleted first, just in case */
 	clear_tramo_files(workdir, varname);
 
-#if defined(WIN32)
-	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
-	err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
-		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+	err = helper_spawn(prog, varname, workdir, TRAMO_ONLY);
+
 	if (!err && request.code == TRAMO_SEATS) {
 	    get_seats_command(seats, prog);
-	    sprintf(cmd, "\"%s\" -OF %s", seats, varname);
-	    err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
-			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+	    err = helper_spawn(seats, varname, workdir, TRAMO_SEATS);
 	}
-#elif defined(GLIB2)
-	err = tramo_x12a_spawn(workdir, prog, "-i", varname, "-k", "serie", NULL);
-	if (!err && request.code == TRAMO_SEATS) {
-	    get_seats_command(seats, prog);
-	    err = tramo_x12a_spawn(workdir, seats, varname, "-OF", NULL);
-	}
-#else
-	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", workdir, prog, 
-		varname);
-	err = gretl_spawn(cmd);
-	if (!err && request.code == TRAMO_SEATS) {
-	    get_seats_command(seats, prog);
-	    sprintf(cmd, "cd \"%s\" && \"%s\" -OF %s", workdir, seats, varname);
-	    err = gretl_spawn(cmd);
-	}
-#endif
     }
 
     if (!err) {
@@ -875,6 +910,7 @@ int write_tx_data (char *fname, int varnum,
 	/* save vars locally if needed; graph if wanted */
 	if (varlist[0] > 0) {
 	    copy_variable(tmpZ, tmpinfo, 0, *pZ, pdinfo, varnum);
+
 	    for (i=1; i<=varlist[0]; i++) {
 		err = add_series_from_file((request.code == X12A)? fname : workdir, 
 					   varlist[i], tmpZ, tmpinfo, i, 
@@ -883,6 +919,7 @@ int write_tx_data (char *fname, int varnum,
 		    fprintf(stderr, "add_series_from_file() failed\n");
 		}
 	    }
+
 	    if (request.opt[TRIGRAPH].save) {
 		int pv = make_x_axis_var(&tmpZ, tmpinfo);
 

@@ -218,6 +218,11 @@ int winfork (char *cmdline, const char *dir, int wshow,
     return 0;
 }
 
+int gretl_spawn (char *cmdline)
+{
+    return winfork(cndline, NULL, SW_SHOWMINIMIZED, 0);
+}
+
 char *desktop_path (void)
 {
     TCHAR dpath[MAX_PATH];

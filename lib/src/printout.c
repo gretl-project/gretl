@@ -1242,7 +1242,9 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
 	j++;
     }
 
-    if (n % nv) pputc(prn, '\n');
+    if (n % nv) {
+	pputc(prn, '\n');
+    }
 
     pputc(prn, '\n');
 }

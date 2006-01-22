@@ -26,7 +26,7 @@
 #include "fileselect.h"
 
 #define GPDEBUG 0
-#undef POINTS_DEBUG
+#define POINTS_DEBUG 0
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -66,7 +66,10 @@ enum {
     PLOT_Y2AXIS         = 1 << 3,
     PLOT_Y2LABEL        = 1 << 4,
     PLOT_MARKERS_UP     = 1 << 5,
+    PLOT_POLAR          = 1 << 6
 } plot_format_flags;
+
+#define MAX_MARKERS 100
 
 #define plot_is_saved(p)        (p->status & PLOT_SAVED)
 #define plot_has_controller(p)  (p->status & PLOT_HAS_CONTROLLER)
@@ -86,6 +89,7 @@ enum {
 #define plot_has_y2axis(p)       (p->format & PLOT_Y2AXIS)
 #define plot_has_y2label(p)      (p->format & PLOT_Y2LABEL)
 #define plot_has_data_markers(p) (p->format & PLOT_MARKERS_UP)
+#define plot_is_polar(p)         (p->format & PLOT_POLAR)
 
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
 #define plot_is_hurst(p)        (p->spec->code == PLOT_HURST)
@@ -413,11 +417,7 @@ void display_session_graph_png (char *fname)
     }
 
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, myfname);
-#ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
     err = gretl_spawn(plotcmd);
-#endif
     g_free(plotcmd);
 
     if (err) {
@@ -488,7 +488,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 
 #ifdef ENABLE_NLS
 	pprint_gnuplot_encoding(termstr, prn);
-#endif /* ENABLE_NLS */
+#endif
 	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq)) {
@@ -506,12 +506,7 @@ void save_this_graph (GPT_SPEC *plot, const char *fname)
 
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plottmp);
-
-#ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
     err = gretl_spawn(plotcmd);
-#endif /* G_OS_WIN32 */
 
     remove(plottmp);
     g_free(plotcmd);
@@ -551,6 +546,9 @@ static int get_gpt_marker (const char *line, char *label)
     if (p != NULL) {
 	sprintf(format, "%%%ds", OBSLEN - 1);
 	sscanf(p + 1, format, label);
+#if GPDEBUG > 1
+	fprintf(stderr, "read marker: '%s'\n", label);
+#endif
 	return 0;
     }
 
@@ -641,7 +639,7 @@ static GPT_SPEC *plotspec_new (void)
     return spec;
 }
 
-static int get_gpt_data (GPT_SPEC *spec, int have_markers, FILE *fp)
+static int get_gpt_data (GPT_SPEC *spec, int do_markers, FILE *fp)
 {
     char s[MAXLEN];
     char *got;
@@ -700,7 +698,7 @@ static int get_gpt_data (GPT_SPEC *spec, int have_markers, FILE *fp)
 		}
 	    }
 
-	    if (i == 0 && have_markers) {
+	    if (i == 0 && do_markers) {
 		get_gpt_marker(s, spec->markers[t]);
 	    }
 	}
@@ -932,14 +930,14 @@ static int allocate_plotspec_markers (GPT_SPEC *spec)
    the data).
 */
 
-static int get_plot_nobs (FILE *fp, PlotType *ptype, int *have_markers)
+static int get_plot_nobs (FILE *fp, PlotType *ptype, int *do_markers)
 {
     int n = 0, started = -1;
     char line[MAXLEN], label[9];
     char *p;
 
     *ptype = PLOT_REGULAR;
-    *have_markers = 0;
+    *do_markers = 0;
 
     while (fgets(line, MAXLEN - 1, fp)) {
 
@@ -958,9 +956,9 @@ static int get_plot_nobs (FILE *fp, PlotType *ptype, int *have_markers)
 	}
 
 	if (started == 1) {
-	    if (*have_markers == 0 && (p = strchr(line, '#')) != NULL) {
+	    if (*do_markers == 0 && (p = strchr(line, '#')) != NULL) {
 		if (sscanf(p + 1, "%8s", label) == 1) {
-		    *have_markers = 1;
+		    *do_markers = 1;
 		}
 	    }
 	    if (*line == 'e') {
@@ -1055,13 +1053,95 @@ static void maybe_set_all_markers_ok (GPT_SPEC *spec)
     if (spec->n_lines <= 2 &&
 	spec->lines[0].ncols == 2 &&
 	spec->lines[1].ncols == 0 &&
-	spec->markers != NULL &&
-	spec->n_markers > 0 &&
-	spec->n_markers < 55) {
+	spec->n_markers > 0) {
 	spec->flags |= GPTSPEC_ALL_MARKERS_OK;
+#if GPDEBUG > 1
+	fprintf(stderr, "set GPTSPEC_ALL_MARKERS_OK\n");
+#endif
     } else {
 	spec->flags &= ~GPTSPEC_ALL_MARKERS_OK;
+#if GPDEBUG > 1
+	fprintf(stderr, "unset GPTSPEC_ALL_MARKERS_OK\n");
+#endif
     }
+}
+
+static int 
+plot_get_data_and_markers (GPT_SPEC *spec, FILE *fp, int datacols, 
+			   int do_markers)
+{
+    int err = 0;
+
+#if GPDEBUG
+    fprintf(stderr, "allocating: nobs=%d, datacols=%d, size=%d\n", 
+	    spec->nobs, datacols, spec->nobs * datacols * sizeof *spec->data);
+#endif  
+
+    /* allocate for the plot data... */
+    spec->data = mymalloc(spec->nobs * datacols * sizeof *spec->data);
+    if (spec->data == NULL) {
+	err = 1;
+    }
+
+    /* and markers if any */
+    if (!err && do_markers) {
+	if (allocate_plotspec_markers(spec)) {
+	    free(spec->data);
+	    spec->data = NULL;
+	    err = 1;
+	}
+    }
+
+    /* Read the data (and perhaps markers) from the plot file */
+    if (!err) {
+	err = get_gpt_data(spec, do_markers, fp);
+    }
+
+#if GPDEBUG
+    fprintf(stderr, "plot_get_data_and_markers:\n"
+	    " spec->data = %p, spec->markers = %p, spec->n_markers = %d, err = %d\n",
+	    spec->data, (void *) spec->markers, spec->n_markers, err);
+#endif
+
+    return err;
+}
+
+static int uneditable_get_markers (GPT_SPEC *spec, FILE *fp, int *polar)
+{
+    char line[256];
+    long offset = 0;
+    int gotit = 0;
+    int err = 0;
+
+    rewind(fp);
+
+    /* advance to the right line (with data plus markers) */
+    while (fgets(line, sizeof line, fp)) {
+	if ((isdigit(*line) || *line == '-') && strchr(line, '#')) {
+	    gotit = 1;
+	    break;
+	} else if (strstr(line, "set polar")) {
+	    *polar = 1;
+	}
+	offset = ftell(fp);
+    }
+
+    if (!gotit) {
+	return 1;
+    } else {
+	fseek(fp, offset, SEEK_SET);
+    }
+
+    spec->n_lines = 1;
+    spec->lines[0].ncols = 2;
+
+    err = plot_get_data_and_markers(spec, fp, 2, 1);
+
+    if (!err) {
+	maybe_set_all_markers_ok(spec);
+    }
+
+    return err;
 }
 
 /* Read plotspec struct from gnuplot command file.  This is _not_ a
@@ -1069,10 +1149,10 @@ static void maybe_set_all_markers_ok (GPT_SPEC *spec)
    files auto-generated by gretl.
 */
 
-static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
+static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 {
     int i, done, labelno;
-    int have_markers = 0;
+    int do_markers = 0;
     int datacols = 0;
     int reglist[4] = {0};
     char gpline[MAXLEN];
@@ -1101,7 +1181,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
     }
 
     /* get the number of data-points, plot type, and check for markers */
-    spec->nobs = get_plot_nobs(fp, &spec->code, &have_markers);
+    spec->nobs = get_plot_nobs(fp, &spec->code, &do_markers);
     if (spec->nobs == 0 && spec->code != PLOT_ELLIPSE) {
 	/* failed reading plot data */
 #if GPDEBUG
@@ -1109,8 +1189,17 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 #endif
 	fclose(fp);
 	return 1;
-    } else if (cant_edit(spec->code)) {
+    }
+
+    if (spec->nobs > MAX_MARKERS && do_markers) {
+	do_markers = 0;
+    }
+
+    if (cant_edit(spec->code)) {
 	fprintf(stderr, "read_plotspec_from_file: plot is not editable\n");
+	if (do_markers) {
+	    uneditable_get_markers(spec, fp, polar);
+	}
 	fclose(fp);
 	return 0;
     }
@@ -1257,37 +1346,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd)
 	}
     }
 
-#if GPDEBUG
-    fprintf(stderr, "allocating: nobs=%d, datacols=%d, size=%d\n", 
-	    spec->nobs, datacols, spec->nobs * datacols * sizeof *spec->data);
-#endif    
+    err = plot_get_data_and_markers(spec, fp, datacols, do_markers);
 
-    /* allocate for the plot data... */
-    spec->data = mymalloc(spec->nobs * datacols * sizeof *spec->data);
-    if (spec->data == NULL) {
-	err = 1;
-	goto plot_bailout;
-    }
-
-    /* and markers if any */
-    if (have_markers) {
-	if (allocate_plotspec_markers(spec)) {
-	    free(spec->data);
-	    spec->data = NULL;
-	    err = 1;
-	    goto plot_bailout;
-	}
-    }
-
-    /* Read the data (and markers) from the plot file */
-    err = get_gpt_data(spec, have_markers, fp);
-
-#if GPDEBUG
-    fprintf(stderr, "spec->markers = %p, spec->n_markers = %d\n",
-	    (void *) spec->markers, spec->n_markers);
-#endif
-
-    if (reglist[0] > 0) {
+    if (!err && reglist[0] > 0) {
 	spec->reglist = gretl_list_copy(reglist);
     }
 
@@ -1311,6 +1372,9 @@ static int get_data_xy (png_plot *plot, int x, int y,
 {
     double xmin, xmax;
     double ymin, ymax;
+    double dx = NADBL;
+    double dy = NADBL;
+    int err = 0;
 
     if (plot_is_zoomed(plot)) {
 	xmin = plot->zoom_xmin;
@@ -1324,7 +1388,7 @@ static int get_data_xy (png_plot *plot, int x, int y,
 	ymax = plot->ymax;
     }
 
-#ifdef POINTS_DEBUG
+#if POINTS_DEBUG
     if (plot_doing_position(plot)) {
 	fprintf(stderr, "get_data_xy:\n"
 		" plot->xmin=%g, plot->xmax=%g, plot->ymin=%g, plot->ymax=%g\n",
@@ -1332,25 +1396,38 @@ static int get_data_xy (png_plot *plot, int x, int y,
     }
 #endif
 
-    if (xmin == 0.0 && xmax == 0.0) { /* unknown x range */
+    if (xmin == 0.0 && xmax == 0.0) { 
+	/* unknown x range */
 	fprintf(stderr, "get_data_xy: unknown x range\n");
-	*data_x = NADBL;
     } else {
-	*data_x = xmin + ((double) x - plot->pixel_xmin) / 
+	dx = xmin + ((double) x - plot->pixel_xmin) / 
 	    (plot->pixel_xmax - plot->pixel_xmin) * (xmax - xmin);
     }
 
-    if (!na(*data_x)) {
-	if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
+    if (!na(dx)) {
+	if (ymin == 0.0 && ymax == 0.0) { 
+	    /* unknown y range */
 	    fprintf(stderr, "get_data_xy: unknown y range\n");
-	    *data_y = NADBL;
 	} else {
-	    *data_y = ymax - ((double) y - plot->pixel_ymin) / 
+	    dy = ymax - ((double) y - plot->pixel_ymin) / 
 		(plot->pixel_ymax - plot->pixel_ymin) * (ymax - ymin);
 	}
     }
 
-    return (!na(*data_x) && !na(*data_y));
+    if (na(dx) || na(dx)) {
+	err = 1;
+    } else if (plot_is_polar(plot)) {
+	double px = atan2(dy, dx);
+	double py = sqrt(dx * dx + dy * dy);
+
+	dx = px;
+	dy = py;
+    }
+
+    *data_x = dx;
+    *data_y = dy;
+
+    return err;
 }
 
 static void x_to_date (double x, int pd, char *str)
@@ -1490,12 +1567,18 @@ static gint
 identify_point (png_plot *plot, int pixel_x, int pixel_y,
 		double x, double y) 
 {
+    const double *data_x = NULL;
+    const double *data_y = NULL;
     double xrange, yrange;
     double xdiff, ydiff;
     double min_xdist, min_ydist;
     int best_match = -1;
     int t;
-    const double *data_x, *data_y = NULL;
+
+#if GPDEBUG > 2
+    fprintf(stderr, "identify_point: pixel_x = %d (x=%g), pixel_y = %d (y=%g)\n",
+	    pixel_x, x, pixel_y, y);
+#endif
 
     if (plot->err) {
 	return TRUE;
@@ -1510,11 +1593,10 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 #ifndef OLD_GTK
     /* need array to keep track of which points are labeled */
     if (plot->spec->labeled == NULL) {
-	plot->spec->labeled = mymalloc(plot->spec->nobs);
+	plot->spec->labeled = calloc(plot->spec->nobs, 1);
 	if (plot->spec->labeled == NULL) {
 	    return TRUE;
 	}
-	memset(plot->spec->labeled, 0, plot->spec->nobs);
     }
 #endif
 
@@ -1554,6 +1636,9 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	if (na(data_x[t]) || na(data_y[t])) {
 	    continue;
 	}
+#if GPDEBUG > 2
+	fprintf(stderr, "considering t=%d: x=%g, y=%g\n", t, data_x[t], data_y[t]);
+#endif
 	xdiff = fabs(data_x[t] - x);
 	ydiff = fabs(data_y[t] - y);
 	if (xdiff <= min_xdist && ydiff <= min_ydist) {
@@ -1570,8 +1655,15 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     }
 #endif
 
+#if GPDEBUG > 2
+    fprintf(stderr, " best_match=%d, with data_x[%d]=%g, data_y[%d]=%g\n", 
+	    best_match, best_match, data_x[best_match], 
+	    best_match, data_y[best_match]);
+#endif
+
     /* if the match is good enough, show the label */
-    if (best_match >= 0 && min_xdist < TOLDIST * xrange &&
+    if (best_match >= 0 && 
+	min_xdist < TOLDIST * xrange &&
 	min_ydist < TOLDIST * yrange) {
 	write_label_to_plot(plot, plot->spec->markers[best_match],
 			    pixel_x, pixel_y);
@@ -1583,8 +1675,6 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 
     return TRUE;
 }
-
-#define MAX_MARKERS_SHOWN 250
 
 static gint
 motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
@@ -1616,7 +1706,6 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	if (na(data_x)) return TRUE;
 
 	if (!plot_has_no_markers(plot) && !plot_show_all_markers(plot) &&
-	    datainfo->t2 - datainfo->t1 < MAX_MARKERS_SHOWN &&
 	    !plot_is_zooming(plot) &&
 	    !na(data_y)) {
 	    identify_point(plot, x, y, data_x, data_y);
@@ -1983,13 +2072,7 @@ int redisplay_edited_png (png_plot *plot)
     /* get gnuplot to create a new PNG graph */
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plot->spec->fname);
-
-#ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else    
     err = gretl_spawn(plotcmd);
-#endif
-
     g_free(plotcmd);
 
     if (err) {
@@ -2057,11 +2140,7 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 				  plot->spec->fname);
     }
 
-#ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
     err = gretl_spawn(plotcmd);
-#endif
     g_free(plotcmd);  
 
     if (view == PNG_ZOOM) {
@@ -2376,7 +2455,7 @@ static void set_approx_pixel_bounds (png_plot *plot,
 	plot->pixel_xmax -= 11;
     }
 
-#ifdef POINTS_DEBUG
+#if POINTS_DEBUG
     fprintf(stderr, "set_approx_pixel_bounds():\n"
 	    " xmin=%d xmax=%d ymin=%d ymax=%d\n", 
 	    plot->pixel_xmin, plot->pixel_xmax,
@@ -2433,18 +2512,13 @@ static int get_dumb_plot_yrange (png_plot *plot)
 
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot,
 			      dumbgp);
-
-#ifdef G_OS_WIN32
-    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-#else
     err = gretl_spawn(plotcmd);
-#endif
-    
     g_free(plotcmd);
+
     remove(dumbgp);
 
     if (err) {
-#ifdef POINTS_DEBUG
+#if POINTS_DEBUG
 	fputs("get_dumb_plot_yrange(): plot command failed\n", stderr);
 #endif
 	return 1;
@@ -2478,7 +2552,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
 		continue; 
 	    }
 	    if (sscanf(s, "%lf", &y[i]) == 1) {
-#ifdef POINTS_DEBUG
+#if POINTS_DEBUG
 		fprintf(stderr, "from text plot: read y[%d]=%g\n",
 			i, y[i]);
 #endif
@@ -2499,7 +2573,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
 	gretl_pop_c_numeric_locale();
 
 	fclose(fpin);
-#ifndef POINTS_DEBUG
+#if (POINTS_DEBUG == 0)
 	remove(dumbtxt);
 #endif
 
@@ -2515,7 +2589,7 @@ static int get_dumb_plot_yrange (png_plot *plot)
 	    }
 	}	    
 
-#ifdef POINTS_DEBUG
+#if POINTS_DEBUG
 	fprintf(stderr, "Reading y range from text plot: plot->ymin=%g, "
 		"plot->ymax=%g\n", plot->ymin, plot->ymax);
 #endif
@@ -2598,7 +2672,7 @@ static int get_plot_ranges (png_plot *plot)
 	plot->xmax = b.xmax;
 	plot->ymin = b.ymin;
 	plot->ymax = b.ymax;
-# ifdef POINTS_DEBUG
+# if POINTS_DEBUG
 	fprintf(stderr, "get_png_bounds_info():\n"
 		" xmin=%d xmax=%d ymin=%d ymax=%d\n", 
 		plot->pixel_xmin, plot->pixel_xmax,
@@ -2639,7 +2713,7 @@ static int get_plot_ranges (png_plot *plot)
 	}
     } else {
 	plot->status |= (PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
-#ifdef POINTS_DEBUG 
+#if POINTS_DEBUG 
 	fputs("get_plot_ranges: setting PLOT_DONT_ZOOM, PLOT_DONT_MOUSE\n", 
 	      stderr);
 #endif
@@ -2693,6 +2767,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     GtkWidget *label_frame = NULL;
     GtkWidget *status_hbox = NULL;
     png_plot *plot;
+    int polar = 0;
     int err = 0;
 
 #if GPDEBUG
@@ -2727,12 +2802,21 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
        flag this, but it's not necessarily a show-stopper in
        terms of simply displaying the graph. 
     */
-    err = read_plotspec_from_file(plot->spec, &plot->pd);
+    err = read_plotspec_from_file(plot->spec, &plot->pd, &polar);
+
     if (err) {
 	plot->err = 1;
 	plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
     } else if (cant_edit(plot->spec->code)) {
-	plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+	if (plot->spec->n_markers > 0) {
+	    plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM);
+	    get_plot_ranges(plot);
+	    if (polar) {
+		plot->format |= PLOT_POLAR;
+	    }
+	} else {
+	    plot->status |= (PLOT_DONT_EDIT | PLOT_DONT_ZOOM | PLOT_DONT_MOUSE);
+	}
     } else {
 	set_plot_format_flags(plot);
 	get_plot_ranges(plot);
