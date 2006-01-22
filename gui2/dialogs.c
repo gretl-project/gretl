@@ -3265,7 +3265,7 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
     if (dwinfo->pd < 0) {
 	dwinfo->pd = 1;
     }
-
+    
     if (dwinfo->structure == CROSS_SECTION) {
 	dwinfo->n = 500;
 	dwinfo->t1 = 0;
@@ -3274,10 +3274,10 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 	dwinfo->n = 500;
 	dwinfo->t1 = 0;
 	if (dwinfo->pd > 1) {
-	    int p = dwinfo->pd / 10;
+	    int p = dwinfo->pd;
 
 	    strcpy(dwinfo->stobs, "1:");
-	    while (p / 10 > 0) {
+	    while ((p = p / 10) > 0) {
 		strcat(dwinfo->stobs, "0");
 	    }
 	    strcat(dwinfo->stobs, "1");
@@ -3358,6 +3358,23 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 #endif
 }
 
+int default_panel_size (DATAINFO *dwinfo, int smin)
+{
+    int sz = 1;
+
+    if (dwinfo->pd > 1) {
+	if (dwinfo->structure == STACKED_TIME_SERIES) {
+	    sz = dwinfo->n / dwinfo->pd;
+	} else {
+	    sz = dwinfo->pd;
+	}
+    } else {
+	sz = smin;
+    }
+
+    return sz;
+}
+
 static void dw_set_custom_frequency (GtkWidget *w, DATAINFO *dwinfo)
 {
     dwinfo->pd = (int) GTK_ADJUSTMENT(w)->value;
@@ -3402,18 +3419,13 @@ static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
 	spinmin = 1;
 	spinmax = 100; /* arbitrary */
 	spinstart = dwinfo->pd;
-    } else {
+    } else if (step == DW_PANEL_SIZE) {
 	spinmin = least_factor(datainfo->n);
 	spinmax = datainfo->n / 2;
-	if (dwinfo->pd > 1) {
-	    if (dwinfo->structure == STACKED_TIME_SERIES) {
-		spinstart = dwinfo->n / dwinfo->pd;
-	    } else {
-		spinstart = dwinfo->pd;
-	    }
-	} else {
-	   spinstart = spinmin;
-	}
+	spinstart = default_panel_size(dwinfo, spinmin);
+    } else {
+	/* should be impossible */
+	return NULL;
     }
 
     /* appropriate step size? */
