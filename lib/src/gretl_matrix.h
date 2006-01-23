@@ -154,7 +154,7 @@ gretl_matrix *gretl_matrix_from_scalar (double x);
 
 gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err);
 
-double gretl_matrix_trace (const gretl_matrix *m);
+double gretl_matrix_trace (const gretl_matrix *m, int *err);
 
 int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 
@@ -229,11 +229,11 @@ void gretl_matrix_demean_by_column (gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_vcv (gretl_matrix *m);
 
-double gretl_matrix_determinant (gretl_matrix *a);
+double gretl_matrix_determinant (gretl_matrix *a, int *err);
 
-double gretl_matrix_log_determinant (gretl_matrix *a);
+double gretl_matrix_log_determinant (gretl_matrix *a, int *err);
 
-double gretl_matrix_log_abs_determinant (gretl_matrix *a);
+double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err);
 
 double gretl_vcv_log_determinant (const gretl_matrix *m);
 
@@ -251,7 +251,7 @@ int gretl_invert_matrix (gretl_matrix *a);
 
 int gretl_SVD_invert_matrix (gretl_matrix *a);
 
-double gretl_symmetric_matrix_rcond (const gretl_matrix *m);
+double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err);
 
 int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank);
 

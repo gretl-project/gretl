@@ -158,13 +158,15 @@ struct genr_func funcs[] = {
     { T_DET,      "det" },
     { T_INV,      "inv" },
     { T_CHOL,     "cholesky" },
+    { T_CDMEAN,   "cdemean" },
+    { T_DIAG,     "diag" },
     { T_QR,       "qrdecomp" },
     { T_EIGSYM,   "eigensym" },
     { T_EIGGEN,   "eigengen" },
     { T_LDET,     "ldet" },
     { T_TRACE,    "tr" },
     { T_1NORM,    "onenorm" },
-    { T_DIAG,     "diag" },
+    { T_RCOND,    "rcond" },
     { T_ROWS,     "rows" },
     { T_COLS,     "cols" },
     { T_TRANSP,   "transp" },
@@ -199,11 +201,12 @@ struct genr_func funcs[] = {
                          f == T_MISSZERO || f == T_ZEROMISS)
 
 #define MATRIX_SCALAR_FUNC(f) (f == T_DET || f == T_LDET || f == T_TRACE || \
-			       f == T_ROWS || f == T_COLS || f == T_1NORM)
+			       f == T_ROWS || f == T_COLS || f == T_1NORM || \
+                               f == T_RCOND)
 
 #define MATRIX_FILL_FUNC(f) (f == T_IMAT || f == T_ZEROS || f == T_ONES)
 
-#define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG || \
+#define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG || f == T_CDMEAN || \
                                f == T_INV || f == T_CHOL || f == T_QR || \
                                f == T_EIGSYM || f == T_EIGGEN)
 
@@ -640,17 +643,19 @@ genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
 
     if (m != NULL) {
 	if (func == T_DET) {
-	    x = user_matrix_get_determinant(m);
+	    x = user_matrix_get_determinant(m, &genr->err);
 	} else if (func == T_LDET) {
-	    x = user_matrix_get_log_determinant(m);
+	    x = user_matrix_get_log_determinant(m, &genr->err);
 	} else if (func == T_TRACE) {
-	    x = gretl_matrix_trace(m);
+	    x = gretl_matrix_trace(m, &genr->err);
 	} else if (func == T_ROWS) {
 	    x = gretl_matrix_rows(m);
 	} else if (func == T_COLS) {
 	    x = gretl_matrix_cols(m);
 	} else if (func == T_1NORM) {
 	    x = gretl_matrix_one_norm(m);
+	} else if (func == T_RCOND) {
+	    x = gretl_symmetric_matrix_rcond(m, &genr->err);
 	}
     } 
 
@@ -663,7 +668,9 @@ genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
     if (na(x)) {
 	sprintf(gretl_errmsg, "%s%s: error in function argument", 
 		get_genr_func_word(func), s);
-	genr->err = 1;
+	if (genr->err == 0) {
+	    genr->err = 1;
+	}
     }
 
     return x;
@@ -1279,15 +1286,17 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	R = atom->M;
     } else if (atom->func) {
 	if (atom->func == T_DET) {
-	    x = user_matrix_get_determinant(M);
+	    x = user_matrix_get_determinant(M, &genr->err);
 	    R = gretl_matrix_from_scalar(x);
 	} else if (atom->func == T_LDET) {
-	    x = user_matrix_get_log_determinant(M);
+	    x = user_matrix_get_log_determinant(M, &genr->err);
 	    R = gretl_matrix_from_scalar(x);
 	} else if (atom->func == T_INV) {
 	    R = user_matrix_get_inverse(M);
 	} else if (atom->func == T_CHOL) {
 	    R = user_matrix_cholesky_decomp(M);
+	} else if (atom->func == T_CDMEAN) {
+	    R = user_matrix_column_demean(M);
 	} else if (atom->func == T_QR) {
 	    R = user_matrix_QR_decomp(atom->str, genr->pZ, genr->pdinfo, 
 				      genr->prn, &genr->err);
@@ -2206,6 +2215,7 @@ static int matrix_scalar_function_word (const char *s)
 	!strncmp(s, "rows", 4) ||
 	!strncmp(s, "cols", 4) ||
 	!strncmp(s, "onenorm", 7) ||
+	!strncmp(s, "rcond", 5) ||
 	!strncmp(s, "tr", 2)) {
 	return 1;
     }

@@ -1779,7 +1779,13 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 
     switch (op) {
     case '\0':
-	C = B;
+	/* We can generally get away with C = B, 
+	   but _not_ if B is a user matrix */
+	if (is_user_matrix(B)) {
+	    C = gretl_matrix_copy(B);
+	} else {
+	    C = B;
+	}
 	break;
     case '=':
 	C = matrix_test_equality(A, B, err);
@@ -1910,7 +1916,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 }
 
 static double 
-real_user_matrix_get_determinant (const gretl_matrix *m, int log)
+real_user_matrix_get_determinant (const gretl_matrix *m, int log, int *err)
 {
     double d = NADBL;
 
@@ -1919,9 +1925,9 @@ real_user_matrix_get_determinant (const gretl_matrix *m, int log)
 
 	if (tmp != NULL) {
 	    if (log) {
-		d = gretl_matrix_log_determinant(tmp);
+		d = gretl_matrix_log_determinant(tmp, err);
 	    } else {
-		d = gretl_matrix_determinant(tmp);
+		d = gretl_matrix_determinant(tmp, err);
 	    }
 	    gretl_matrix_free(tmp);
 	}
@@ -1930,14 +1936,14 @@ real_user_matrix_get_determinant (const gretl_matrix *m, int log)
     return d;
 }
 
-double user_matrix_get_determinant (const gretl_matrix *m)
+double user_matrix_get_determinant (const gretl_matrix *m, int *err)
 {
-    return real_user_matrix_get_determinant(m, 0);
+    return real_user_matrix_get_determinant(m, 0, err);
 }
 
-double user_matrix_get_log_determinant (const gretl_matrix *m)
+double user_matrix_get_log_determinant (const gretl_matrix *m, int *err)
 {
-    return real_user_matrix_get_determinant(m, 1);
+    return real_user_matrix_get_determinant(m, 1, err);
 }
 
 gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m)
@@ -1982,6 +1988,20 @@ gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m)
     return R;
 }
 
+gretl_matrix *user_matrix_column_demean (const gretl_matrix *m)
+{
+    gretl_matrix *R = NULL;
+
+    if (m != NULL) {
+	R = gretl_matrix_copy(m);
+	if (R != NULL) {
+	    gretl_matrix_demean_by_column(R);
+	} 
+    }
+
+    return R;
+}
+
 static int 
 real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q, 
 			    gretl_matrix **R)
@@ -2017,23 +2037,18 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
 static int get_two_matrix_names (const char *s, char *lstr, char *rstr,
 				 const DATAINFO *pdinfo)
 {
-    char tmp[VNAMELEN + 1];
     int err = 0;
 
-    if (sscanf(s, "%15[^,],%16s", lstr, tmp) != 2) {
+    if (sscanf(s, "%15[^,],%15s", lstr, rstr) != 2) {
 	err = 1;
     } else {
 #if MDEBUG
 	fprintf(stderr, "left-hand matrix = '%s'\n", lstr);
-	fprintf(stderr, "right-hand matrix = '%s'\n", tmp);
+	fprintf(stderr, "right-hand matrix = '%s'\n", rstr);
 #endif
-	if (!strcmp(tmp, "NULL")) {
+	if (!strcmp(rstr, "NULL")) {
 	    *rstr = 0;
-	} else if (*tmp == '@') {
-	    strcpy(rstr, tmp + 1);
-	} else {
-	    err = 1;
-	}
+	} 
 
 	if (!err && name_is_series(lstr, pdinfo)) {
 	    err = 1;
@@ -2077,8 +2092,8 @@ user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *M = NULL;
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
-    char qstr[VNAMELEN];
-    char rstr[VNAMELEN];
+    char qstr[VNAMELEN] = {0};
+    char rstr[VNAMELEN] = {0};
 
     *err = get_two_matrix_names(str, qstr, rstr, pdinfo);
 
@@ -2110,8 +2125,8 @@ user_matrix_eigen_analysis (const char *str, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *M = NULL;
     gretl_matrix *C = NULL;
     gretl_matrix *E = NULL;
-    char lstr[VNAMELEN];
-    char rstr[VNAMELEN];
+    char lstr[VNAMELEN] = {0};
+    char rstr[VNAMELEN] = {0};
     double *ev = NULL;
     int vecs = 0;
 

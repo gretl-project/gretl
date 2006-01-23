@@ -57,13 +57,15 @@ int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn);
 gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 
 			      char op, int *err);
 
-double user_matrix_get_determinant (const gretl_matrix *m);
+double user_matrix_get_determinant (const gretl_matrix *m, int *err);
 
-double user_matrix_get_log_determinant (const gretl_matrix *m);
+double user_matrix_get_log_determinant (const gretl_matrix *m, int *err);
 
 gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m);
 
 gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m);
+
+gretl_matrix *user_matrix_column_demean (const gretl_matrix *m);
 
 gretl_matrix *
 user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,

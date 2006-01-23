@@ -5,9 +5,7 @@
 \label{matrix-intro}
 
 As of version 1.5.1, gretl offers the facility of creating and
-manipulating user-defined matrices.  This is currently experimental;
-it is not very advanced and some aspects of the syntax are liable to
-change.  Nonetheless we set out the current situation here.
+manipulating user-defined matrices.  This is currently experimental.
 
 \section{Creating matrices}
 \label{matrix-create}
@@ -74,14 +72,15 @@ When you provide a named list, the data series are by default placed
 in columns, as is natural in an econometric context: if you want them
 in rows, append the transpose symbol.
 
-\section{Manipulating matrices}
-\label{matrix-manip}
-
-You can create new matrices or replace existing matrices by means of
+You can create new matrices, or replace existing matrices, by means of
 various transformations, in a manner similar to the \texttt{genr}
 command for scalars and data series.  To get a matrix result, however,
 the command must start with the keyword \texttt{matrix}, not
-\texttt{genr}.
+\texttt{genr}.  The relevant mechanisms are discussed in the next
+several sections.
+
+\section{Matrix operators}
+\label{matrix-op}
 
 The following operators are available for matrices:
 
@@ -141,13 +140,16 @@ C = A ~ B
 % 
 produces $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
 
-The following functions are available for element-by-element
-transformations of matrices: \texttt{log}, \texttt{exp}, \texttt{sin},
-\texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int}, \texttt{abs},
-\texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm}, \texttt{qnorm},
-\texttt{gamma} and \texttt{lngamma}.  These functions have the same
-meanings as in \texttt{genr}.  For example, if a matrix \texttt{A} is
-already defined, then
+\section{Matrix functions}
+\label{matrix-func}
+
+The following functions are available for \textit{element-by-element
+  transformations} of matrices: \texttt{log}, \texttt{exp},
+\texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int},
+\texttt{abs}, \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm},
+\texttt{qnorm}, \texttt{gamma} and \texttt{lngamma}.  These functions
+have the same meanings as in \texttt{genr}.  For example, if a matrix
+\texttt{A} is already defined, then
 %
 \begin{code}
 matrix B = sqrt(A)
@@ -163,44 +165,86 @@ vector ($p \times 1$ or $1\times p$).  The return value is a vector
 containing the elements of the input vector sorted in descending order
 of magnitude.
 
-The following matrix-specific functions are available (the return type
-is shown in parentheses):
+Several matrix-specific functions are available.  These functions fall
+into four categories:
+%
+\begin{enumerate}
+\item Those taking a single matrix as argument and returning a scalar.
+\item Those taking a single matrix as argument and returning a matrix.
+\item Those taking one or two dimensions as arguments and
+  returning a matrix.
+\item Those taking one or two matrices as arguments and returning one
+  or two matrices.
+\end{enumerate}
+%
+These sets of functions are discussed in turn below.
+
+\subsection{Matrix to scalar functions}
+\label{matrix-to-scalar}
+
+The functions which take a single matrix as argument and return a
+scalar are:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{det()} & determinant (scalar) \\
-\texttt{ldet()} & log-determinant (scalar)\\
-\texttt{inv()} & inverse (matrix) \\
-\texttt{cholesky()} & Cholesky decomposition (matrix) \\
-\texttt{qrdecomp()} & QR decomposition (two matrices) \\
-\texttt{tr()} & trace (scalar) \\
-\texttt{onenorm()} & 1-norm (scalar) \\
-\texttt{rows()} & number of rows (scalar) \\
-\texttt{cols()} & number of columns (scalar) \\
-\texttt{diag()} & returns principal diagonal (column vector) \\
-\texttt{transp()} & transpose (matrix)
+\texttt{det()} & determinant \\
+\texttt{ldet()} & log-determinant \\
+\texttt{tr()} & trace \\
+\texttt{onenorm()} & 1-norm \\
+\texttt{rcond()} & reciprocal condition number \\
+\texttt{rows()} & number of rows \\
+\texttt{cols()} & number of columns 
 \end{tabular}
 \end{center}
 
-These functions also require a single matrix (or an expression which
-evaluates to a single matrix) as argument.  Most of these functions
-should be self-explanatory, but some merit comment.
-
-The \texttt{cholesky} function computes the Choleski decomposition $L$
-of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower
-triangular (has zeros above the diagonal).
-
-The \texttt{qrdecomp} function computes the QR decomposition of an $m
-\times n$ matrix $A$: $A = QR$, where $Q$ is $m \times n$ and $R$ is
-$n \times n$ and upper triangular.  (FIXME finish this section).
+The single matrix argument to these functions may be given as the name
+of an existing matrix or as an expression that evaluates to a single
+matrix.  Note that the functions \texttt{det}, \texttt{ldet} and
+\texttt{tr} require a square matrix as input.  
 
 The \texttt{onenorm} function returns the 1-norm of a matrix --- that
 is, the maximum across the columns of the matrix of the sums of the
-absolute values of the column elements.
+absolute values of the column elements.  The function \texttt{rcond}
+returns the reciprocal condition number for a symmetric, positive
+definite matrix.
 
-In addition, there are some functions which generate certain sorts of
-matrices from scratch, given a specification of the desired
-dimensions.
+\subsection{Matrix to matrix functions}
+\label{matrix-to-matrix}
+
+The functions which take a single matrix as argument and return a
+matrix are:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{inv()} & inverse \\
+\texttt{cholesky()} & Cholesky decomposition \\
+\texttt{diag()} & extract principal diagonal \\
+\texttt{transp()} & transpose \\
+\texttt{cdemean()} & subtract column means 
+\end{tabular}
+\end{center}
+
+As with the previous set of functions, the argument may be given as
+the name of an existing matrix or as an expression that evaluates to a
+single matrix.
+
+The \texttt{cholesky} function computes the Cholesky decomposition $L$
+of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower
+triangular (has zeros above the diagonal).  
+
+The \texttt{diag} function returns the principal diagonal of an
+$n\times n$ matrix $A$ as a column vector --- that is, an
+$n$-vector $v$ such that $v_i = a_{ii}$.
+
+The \texttt{cdemean} function applied to an $m \times n$ matrix $A$
+returns an $m \times n$ matrix $B$ such that $b_{ij} = a_{ij} -
+\bar{A}_j$, where $\bar{A}_j$ denotes the mean of column $j$ of $A$.  
+
+\subsection{Matrix filling functions}
+\label{matrix-fill}
+
+The functions taking one or two dimensions as arguments and returning
+a matrix are:
 
 \begin{center}
 \begin{tabular}{ll}
@@ -216,8 +260,8 @@ dimensions.
 \end{tabular}
 \end{center}
 
-The values \textsl{m} and \textsl{n} may be given numerically, or by
-reference to pre-existing scalar variables, as in
+The dimensions \textsl{m} and \textsl{n} may be given numerically, or
+by reference to pre-existing scalar variables, as in
 %
 \begin{code}
 scalar m = 4
@@ -229,8 +273,86 @@ The \texttt{uniform()} and \texttt{normal()} matrix functions fill the
 matrix with drawings from the uniform (0--1) distribution and the
 standard normal distribution respectively.
 
-Finally, there are special ``accessor'' strings that let you extract
-matrices from models previously estimated:
+\subsection{Multiple-return matrix functions}
+\label{matrix-multiples}
+
+The functions that take one or two matrices as arguments and return
+one or two matrices are:
+
+\begin{center}
+\begin{tabular}{ll}
+\texttt{qrdecomp()} & QR decomposition \\
+\texttt{eigensym()} & Eigen-analysis of symmetric matrix \\
+\texttt{eigengen()} & Eigen-analysis of general matrix 
+\end{tabular}
+\end{center}
+
+The syntax for these functions is of the form
+%
+\begin{textcode}
+matrix B = func(\textsl{A}, \textsl{C})
+\end{textcode}
+%
+The first argument, \ttsl{A}, represents the input data, that is, the
+matrix whose decomposition or analysis is required.  This must be
+given as the name of an existing matrix; a compound expression that
+evaluates to a matrix is not accepted in this context.
+
+The second argument, \ttsl{C}, may be either the name of a matrix, in
+which case an auxiliary result is written to that matrix, or the
+keyword \texttt{NULL}, in which case the auxiliary result is not
+produced, or is discarded.
+
+In case the name of a matrix is given as the second argument, this
+matrix does not have to be previously defined; a new matrix of this
+name will be created.  If a matrix of the given name already exists,
+it will be over-written with the auxiliary result.  (It is not
+required that the existing matrix, if any, be of the right dimensions
+to receive the result.)
+
+The \texttt{qrdecomp} function computes the QR decomposition of an $m
+\times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
+orthonormal matrix and $R$ is an $n \times n$ upper triangular matrix.
+The matrix $Q$ is returned directly, while $R$ can be retrieved via
+the second argument.  Here are two examples:
+%
+\begin{code}
+matrix Q = qrdecomp(M, R)
+matrix Q = qrdecomp(M, NULL)
+\end{code}
+%
+In the first example, the triangular $R$ is saved as \texttt{R}; in
+the second, $R$ is discarded.
+
+The function \texttt{eigensym} computes the eigenvalues, and
+optionally the right eigenvectors, of a symmetric $n \times n$ matrix.
+The eigenvalues are returned directly in a column vector of length
+$n$; if the eigenvectors are required, they are returned in an $n
+\times n$ matrix.  For example:
+%
+\begin{code}
+matrix E = eigensym(M, V)
+matrix E = eigensym(M, NULL)
+\end{code}
+%
+In the first case \texttt{E} holds the eigenvalues of \texttt{M} and
+\texttt{V} holds the eigenvectors.  In the second, E holds the
+eigenvalues but the eigenvectors are not computed.
+
+The function \texttt{eigengen} computes the eigenvalues, and
+optionally the eigenvectors, of a general $n \times n$ matrix.  The
+eigenvalues are returned directly in a column vector of length $2n$:
+the first $n$ elements are the real components and the remaining $n$
+are the imaginary components.  If the eigenvectors are required (that
+is, if the second argument to \texttt{eigengen} is not \texttt{NULL}),
+they are returned in an $n \times n$ matrix.
+
+\section{Matrix accessors}
+\label{matrix-accessors}
+
+In addition to the matrix functions discussed above,
+various``accessor'' strings allow you to create copies of internal
+matrices associated with models previously estimated:
 
 \begin{center}
 \begin{tabular}{ll}
@@ -245,7 +367,7 @@ matrices from models previously estimated:
 
 If these accessors are given without any prefix, they retrieve results
 from the last model estimated, if any.  Alternatively, they may be
-prefixed with the name of a saved model, plus a period (\texttt{.}), in
+prefixed with the name of a saved model plus a period (\texttt{.}), in
 which case they retrieve results from the specified model.  Here are
 some examples:
 %

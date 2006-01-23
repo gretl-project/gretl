@@ -535,17 +535,26 @@ gretl_matrix *gretl_matrix_get_diagonal (const gretl_matrix *m, int *err)
 /**
  * gretl_matrix_trace:
  * @m: square input matrix.
+ * @err: location to receive error code.
  *
  * Returns: the trace (sum of diagonal elements) of @m, if 
  * @m is square, otherwise #NADBL.
  */
 
-double gretl_matrix_trace (const gretl_matrix *m)
+double gretl_matrix_trace (const gretl_matrix *m, int *err)
 {
     double tr = 0.0;
     int i;
+
+    *err = 0;
     
-    if (m == NULL || m->rows != m->cols) {
+    if (m == NULL) {
+	*err = E_DATA;
+	return NADBL;
+    }
+    
+    if (m->rows != m->cols) {
+	*err = E_NONCONF;
 	return NADBL;
     }
 
@@ -1326,7 +1335,8 @@ double gretl_vcv_log_determinant (const gretl_matrix *m)
    absolute value of the determinant.  
 */   
 
-static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
+static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
+				    int *err)
 {
     integer info;
     integer n = a->rows;
@@ -1334,13 +1344,19 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
     double det;
     int i;
 
+    *err = 0;
+
     if (a->rows != a->cols) {
 	fputs("gretl_LU_determinant: matrix must be square\n", stderr);
+	*err = E_NONCONF;
 	return NADBL;
     }
 
     ipiv = malloc(n * sizeof *ipiv);
-    if (ipiv == NULL) return NADBL;
+    if (ipiv == NULL) {
+	*err = E_ALLOC;
+	return NADBL;
+    }
 
     dgetrf_(&n, &n, a->val, &n, ipiv, &info);
 
@@ -1348,6 +1364,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
 	fprintf(stderr, "gretl_LU_determinant: dgetrf gave info = %d\n", 
 		(int) info);
 	free(ipiv);
+	*err = 1;
 	return NADBL;
     }
 
@@ -1381,6 +1398,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
 	}
 	if (!absval && negcount % 2) {
 	    fputs("gretl_matrix_log_determinant: determinant is < 0\n", stderr);
+	    *err = 1;
 	    det = NADBL;
 	}
     } else {
@@ -1401,6 +1419,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
 /**
  * gretl_matrix_determinant:
  * @a: gretl_matrix.
+ * @err: location to receive error code.
  *
  * Compute the determinant of the square matrix @a using the LU
  * factorization.  Matrix @a is not preserved: it is overwritten
@@ -1409,14 +1428,15 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval)
  * Returns: the determinant, or #NABDL on failure.
  */
 
-double gretl_matrix_determinant (gretl_matrix *a)
+double gretl_matrix_determinant (gretl_matrix *a, int *err)
 {
-    return gretl_LU_determinant(a, 0, 0);
+    return gretl_LU_determinant(a, 0, 0, err);
 }
 
 /**
  * gretl_matrix_log_determinant:
  * @a: gretl_matrix.
+ * @err: location to receive error code.
  *
  * Compute the log of the determinant of the square matrix @a using LU
  * factorization.  Matrix @a is not preserved: it is overwritten
@@ -1425,14 +1445,15 @@ double gretl_matrix_determinant (gretl_matrix *a)
  * Returns: the determinant, or #NABDL on failure.
  */
 
-double gretl_matrix_log_determinant (gretl_matrix *a)
+double gretl_matrix_log_determinant (gretl_matrix *a, int *err)
 {
-    return gretl_LU_determinant(a, 1, 0);
+    return gretl_LU_determinant(a, 1, 0, err);
 }
 
 /**
  * gretl_matrix_log_abs_determinant:
  * @a: gretl_matrix.
+ * @err: location to receive error code.
  *
  * Compute the log of the absolute value of the determinant of the 
  * square matrix @a using LU factorization.  Matrix @a is not 
@@ -1441,9 +1462,9 @@ double gretl_matrix_log_determinant (gretl_matrix *a)
  * Returns: the determinant, or #NABDL on failure.
  */
 
-double gretl_matrix_log_abs_determinant (gretl_matrix *a)
+double gretl_matrix_log_abs_determinant (gretl_matrix *a, int *err)
 {
-    return gretl_LU_determinant(a, 1, 1);
+    return gretl_LU_determinant(a, 1, 1, err);
 }
 
 /**
@@ -2051,6 +2072,7 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 /**
  * gretl_symmetric_matrix_rcond:
  * @m: matrix to examine.
+ * @err: location to receive error code.
  * 
  * Estimates the reciprocal condition number of the real symmetric
  * positive definite matrix @m (in the 1-norm), using the lapack 
@@ -2059,21 +2081,24 @@ int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
  * Returns: the estimate, or #NADBL on failure to allocate memory.
  */
 
-double gretl_symmetric_matrix_rcond (const gretl_matrix *m)
+double gretl_symmetric_matrix_rcond (const gretl_matrix *m, int *err)
 {
     gretl_matrix *a = NULL;
     char uplo = 'L';
-    integer n = a->rows;
-    integer lda = a->rows;
+    integer n = m->rows;
+    integer lda = m->rows;
     integer info, *iwork = NULL;
     double *work = NULL;
     double anorm, rcond = NADBL;
+
+    *err = 0;
 
     a = gretl_matrix_copy(m);
     work = malloc((3 * n) * sizeof *work);
     iwork = malloc(n * sizeof *iwork);
 
     if (a == NULL || work == NULL || iwork == NULL) {
+	*err = E_ALLOC;
 	goto bailout;
     }
 
@@ -2087,6 +2112,7 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m)
 	anorm = gretl_matrix_one_norm(a);
 	dpocon_(&uplo, &n, a->val, &lda, &anorm, &rcond, work, iwork, &info);
 	if (info != 0) {
+	    *err = 1;
 	    rcond = NADBL;
 	}
     }

@@ -60,7 +60,8 @@ struct atomset_ {
                                f == T_MEDIAN || f == T_MIN || f == T_MAX || \
                                f == T_DIFF || f == T_LDIFF || f == T_SDIFF || \
                                f == T_T1 || f == T_T2 || f == T_GINI || \
-                               f == T_CUM || f == T_SORT || f == T_DET || f == T_INV || \
+                               f == T_CUM || f == T_SORT || f == T_DET || \
+                               f == T_INV || f == T_CDMEAN || f == T_RCOND || \
                                f == T_CHOL || f == T_QR || f == T_1NORM || \
                                f == T_LDET || f == T_TRACE || f == T_DIAG || \
                                f == T_ROWS || f == T_COLS || f == T_TRANSP || \
