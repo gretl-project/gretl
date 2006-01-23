@@ -1845,27 +1845,6 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
  * failure).
  */
 
-/***
-
-Jack says:
-
-a) check if (rows(a) == rows(b)) && (cols(a) == cols(b)); in this case, we
-have element-by-element multiplication (Hadamard product if you will);
-otherwise
-
-b) check if (rows(a) == 1); if so, return c_{ij} = b_{ij}*a_j; otherwise,
-
-c) check if (rows(b) == 1); if so, return c_{ij} = a_{ij}*b_j; otherwise,
-proceed similarly with columns, that is,
-
-d) check if (cols(a) == 1); if so, return c_{ij} = b_{ij}*a_i; otherwise,
-
-e) check if (cols(b) == 1); if so, return c_{ij} = a_{ij}*b_i; otherwise,
-
-f) return an error.
-
-***/
-
 gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
 					 const gretl_matrix *b,
 					 int *err)
@@ -1873,14 +1852,6 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
     gretl_matrix *c = NULL;
     int i, j, k, n;
 
-    if (a->rows != b->rows || a->cols != b->cols) {
-	fputs("gretl_matrix_dot_multiply: matrices not conformable\n", stderr);
-	*err = E_NONCONF;
-	return NULL;
-    }
-
-#if 0
-    /* not at all checked yet */
     if (a->rows == b->rows && a->cols == b->cols) {
 	c = gretl_matrix_copy(b);
 	if (c != NULL) {
@@ -1889,7 +1860,8 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
 		c->val[i] *= a->val[i];
 	    }
 	}	    
-    } else if (a->rows == 1 || a->cols == 1) {
+    } else if ((a->rows == 1 && a->cols == b->cols) || 
+	       (a->cols == 1 && a->rows == b->rows)) {
 	c = gretl_matrix_copy(b);
 	if (c != NULL) {
 	    for (i=0; i<c->rows; i++) {
@@ -1899,7 +1871,8 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
 		}
 	    }
 	}
-    } else if (b->rows == 1 || b->cols == 1) {
+    } else if ((b->rows == 1 && b->cols == a->cols) || 
+	       (b->cols == 1 && b->rows == a->cols)) {
 	c = gretl_matrix_copy(a);
 	if (c != NULL) {
 	    for (i=0; i<c->rows; i++) {
@@ -1914,17 +1887,9 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
 	*err = E_NONCONF;
 	return NULL;
     }
-#endif	
 
     if (c == NULL) {
 	*err = E_ALLOC;
-	return NULL;
-    }
-
-    n = a->rows * a->cols;
-
-    for (i=0; i<n; i++) {
-	c->val[i] = a->val[i] * b->val[i];
     }
 
     return c;

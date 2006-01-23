@@ -152,7 +152,7 @@ void gui_script_logo (PRN *prn)
 static void 
 print_coeff_interval (const CoeffIntervals *cf, int i, PRN *prn)
 {
-    pprintf(prn, " %15s ", cf->names[i]);
+    pprintf(prn, " %*s ", VNAMELEN - 1, cf->names[i]);
 
     bufspace(3, prn);
 
@@ -374,13 +374,16 @@ void print_freq (const FreqDist *freq, PRN *prn)
  * @fulln: full length of data series.
  * @prn: gretl printing struct.
  *
- * Print current sample information to @prn.
- * 
+ * Prints the current sample information to @prn.
  */
 
 void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 {
     char date1[OBSLEN], date2[OBSLEN];
+
+    if (!gretl_messages_on()) {
+	return;
+    }
 
     if (fulln && !dataset_is_panel(pdinfo)) {
 	pprintf(prn, _("Full data set: %d observations\n"),
