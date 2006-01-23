@@ -14,9 +14,11 @@ peculiares de la instrucción.
 
 Una de las funciones especializadas de \verb+genr+ es el filtrado de series temporales.  
 Actualmente están disponibles dos filtros, el de
-Hodrick--Prescott filter y el filtro pasabanda de Baxter--King. Se accede a ellos
-usando \verb+hpfilt()+ y \verb+bkfilt()+ respectivamente:
-en cada caso la función tiene un argumento: el nombre de la variable a procesar.
+Hodrick--Prescott y el filtro pasabanda de Baxter--King. Se
+accede a ellos
+usando \verb+hpfilt()+ y \verb+bkfilt()+ respectivamente.
+En cada caso la función tiene un argumento: el nombre de la variable
+a procesar.
  
 
 \subsection{Filtro de Hodrick--Prescott}
@@ -39,7 +41,8 @@ El filtro de Hodrick--Prescott efectúa dicha descomposición mediante la minimiza
 El primer término de arriba es la suma del componente cíclico $c_t = y_t - g_t$ al cuadrado. El segundo término es la suma de cuadrados de la segunda diferencia del componente de tendencia multiplicada por $\lambda$. Este segundo término penaliza las variaciones en la tasa de crecimiento del componente de tendencia: cuanto mayor sea el valor de $\lambda$, mayor es la penalización y así, más suave el componente de tendencia.
 
 Nótese que la función \cmd{hpfilt} en \app{gretl} produce el componente
-cíclico, $c_t$, de la serie original.  Si Vd desea obtener la tendencia suavizada,
+cíclico, $c_t$, de la serie original.  Si se desea obtener la
+tendencia suavizada, se
 puede restar el ciclo a la serie original
 
 \begin{code}
@@ -47,9 +50,11 @@ genr ct = hpfilt(yt)
 genr gt = yt - ct
 \end{code}
 
-Hodrick and Prescott (1997) sugieren que un valor de $\lambda = 1600$
-es razonable para datos trimestrales.  El valor por defecto en \app{gretl} es
-100 veces el cuadrado de la periodicidad de los datos (lo cual, obviamente, da
+Hodrick y Prescott (1997) sugieren que, para datos trimestrales, es
+razonable un valor de $\lambda = 1600$.  El valor por defecto en
+\app{gretl} es
+100 veces el cuadrado de la periodicidad de los datos (lo cual,
+obviamente, da
 1600 para datos trimestrales).  Ese valor puede ajustarse usando la instrucción
 \cmd{set} con un valor para el parámetro \cmd{hp\_lambda}.  Por ejemplo,
 \cmd{set hp\_lambda 1200}.
@@ -120,17 +125,20 @@ crea una nueva serie en la que cada uno de sus elementos se obtiene aleatoriamen
 los elementos de \varname{x}. Si la serie original tiene 100 observaciones, cada elemento de
 \varname{x} puede ser seleccionado con probabilidad $1/100$ en cada extracción. Así el efecto es
 ``mezclar'' los elementos de \varname{x}, con la 
-peculiaridad de que cada elemento de \varname{x} puede aparecer más de
+peculiaridad de que cada uno de ellos puede
+aparecer más de
 una vez, o ninguna, en \varname{xr}.
 
-El uso primario de esta función es en la construcción de intervalos de confianza
+El uso primario de esta función es la construcción de intervalos de
+confianza
 bootstrap o valores p. He aquí un ejemplo simple. Supongamos que estimamos una 
 regresión simple de $y$ sobre $x$ por medio de MCO y encontramos que
 el estadístico $t$ del coeficiente de pendiente se muestra igual
 a 2,5 con 40 grados de libertad. El valor p a dos colas para la
 hipótesis nula de que el parámetro de pendiente es igual a cero es
 entonces 0,0166 en la distribución $t(40)$. Sin embargo, dependiendo
-del contexto nosotros podemos dudar de si el cociente entre el
+del contexto en que nos encontremos, podemos dudar de si el
+cociente entre el
 coeficiente estimado y la desviación típica  realmente sigue la
 distribución $t(40)$. En ese caso, podríamos obtener un valor p
 ``bootstrap'' como se muestra en el
@@ -138,14 +146,16 @@ Ejemplo~\ref{resample-loop}
 
 Bajo la hipótesis nula de que la pendiente con respecto a $x$ es cero,
 $y$ es simplemente igual a su media más un término de error. Se
-calcula la media de $y$ y se simulan nuevos datos de $y$ como la
-media de $y$ mas una muestra obtenida por remuestreo de los residuos
+calcula la media de $y$ y se simulan nuevos datos de $y$ mediante
+la
+media de $y$ más una muestra obtenida por remuestreo de los residuos
 de la estimación MCO inicial y se vuelve a estimar el modelo con las
 observaciones simuladas de $y$. Se repite este procedimiento un gran
 número de veces y se cuenta el número de veces que el valor
 absoluto del estadístico $t$ es mayor que 2,5: la proporción
-correspondiente a estos casos es nuestro valor p bootstrap. Para una
-buena discusión de contrastes basados en simulación y bootstrap, ver
+correspondiente a estos casos es nuestro valor p bootstrap. Una
+buena referencia sobre contrastes basados en
+simulación y bootstrap es
 Davidson y MacKinnon (2004, capítulo 4).
 
 \begin{script}[htbp]
@@ -208,8 +218,9 @@ usando
 La función \verb+zeromiss()+, que, de nuevo, toma el nombre de una
 serie como único argumento, devuelve una serie en la que a todos los
 valores cero se les asigna el código de valor ausente. Esto debe
-usarse con precaución --- uno no desea confundir valores ausentes y
-ceros --- pero puede ser útil en algunos contextos. Por ejemplo, es
+usarse con precaución --- no son lo mismlo valores ausentes que
+ceros --- pero puede ser útil en algunos contextos. Por ejemplo,
+es
 posible determinar cuál es la primera observación válida de una
 variable \verb+x+ utilizando
 
@@ -233,7 +244,7 @@ en ceros.
 
 Puede ser conveniente comentar la propagación de los valores ausentes
 dentro de las fórmulas construidas mediante \verb+genr+.  La
-regla general es que en las operaciones aritméticas en las que
+regla general es que, en las operaciones aritméticas en las que
 intervienen dos variables, si alguna de las variables tiene un
 valor ausente en la observación $t$, entonces la serie resultante
 también tendrá un valor ausente en $t$. La única excepción a esta
@@ -271,7 +282,7 @@ conjunto para la significación de variables añadidas a un modelo);
 \cmd{adf} (contraste de Dickey--Fuller aumentado,
 ver más abajo); \cmd{arch} (contraste de ARCH); \cmd{chow}
 (contraste de Chow de cambio estructural);
-\cmd{coeffsum} (contraste de la suma de los coeficeintes
+\cmd{coeffsum} (contraste de la suma de los coeficientes
 especificados); \cmd{cusum} (el estadístico $t$ de
 Harvey--Collier);
 \cmd{kpss} (contraste de estacionariedad KPSS, el valor p no está
@@ -319,7 +330,7 @@ la variante que se graba mediante el uso de las opciones
 \item Por defecto, la instrucción \cmd{lmtest} (que debe
 ejecutarse después de una regresión MCO) desarrolla varios
 contrastes de diagnóstico sobre la regresión en cuestión. 
-Para controlar cuál se grana en \verb+$test+ y \verb+$pvalue+ Vd. 
+Para controlar cuál se graba en \verb+$test+ y \verb+$pvalue+ Vd. 
 debería limitar el contraste usando una de las opciones
   \verb+--logs+, \verb+--autocorr+, \verb+--squares+ o
   \verb+--white+.
