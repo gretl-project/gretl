@@ -1,74 +1,75 @@
-(* PS8.8, using DATA8-3, for Application in Section 8.4 *)
+# PS8.8, for Application in Section 8.4
+open data8-3
 genr y=exphlth/pop 
 genr x=income/pop
-(* estimate model by OLS and save absolute residuals, squared residuals,
-and their logs *)
+# estimate model by OLS and save absolute residuals, squared residuals,
+# and their logs 
 ols y const x seniors  
 genr absuhat=abs($uhat)
 genr usq=$uhat*$uhat
 genr lnusq=ln(usq)
-(* generate square and cross product variables; the flag -o generates cross 
-product *)
+# generate square and cross product variables; the flag -o generates cross 
+# product
 square x seniors -o 
-(* Testing and estimation for the Glesjer approach *)
-ols absuhat const x seniors sq_x sq_senio 
-(* estimate residual s.d. from the auxiliary regression *)
+# Testing and estimation for the Glesjer approach
+ols absuhat const x seniors sq_x sq_seniors 
+# estimate residual s.d. from the auxiliary regression
 genr sigmahat=absuhat-$uhat
-(* compute LM test statistic and its p-value *)
+# compute LM test statistic and its p-value
 genr LM1=$nrsq
 pvalue 3 4 LM1
-(* print sigmahat and note that only one estimate is negative *)
+# print sigmahat and note that only one estimate is negative
 print sigmahat 
-(* replace negative value with original sigmahat and get weights *)
+# replace negative value with original sigmahat and get weights
 genr d1=(sigmahat>0.0)
 genr sigma2=(d1*sigmahat)+((1-d1)*absuhat)
 genr wt1=1/sigma2
-(* Estimate model by FGLS which is the same as WLS *)
+# Estimate model by FGLS which is the same as WLS
 wls wt1 y const x seniors 
-(* Testing and estimation for the Breusch-Pagan approach *)
-ols usq const x seniors sq_x sq_senio 
-(* estimate residual s.d. from the auxiliary regression *)
+# Testing and estimation for the Breusch-Pagan approach
+ols usq const x seniors sq_x sq_seniors
+# estimate residual s.d. from the auxiliary regression
 genr usqhat1=usq-$uhat
-(* compute LM test statistic and its p-value *)
+# compute LM test statistic and its p-value
 genr LM2=$nrsq
 pvalue 3 4 LM2
-(* print usqhat and note that several estimates are negative *)
+# print usqhat and note that several estimates are negative
 print usqhat1 
-(* replace negative values with original usqhat and get weights *)
+# replace negative values with original usqhat and get weights
 genr d2=(usqhat1>0.0)
 genr usqhat2=(d2*usqhat1)+((1-d2)*usq)
 genr wt2=1/sqrt(usqhat2)
-(* Estimate model by FGLS which is the same as WLS *)
+# Estimate model by FGLS which is the same as WLS
 wls wt2 y const x seniors 
-(* Testing and estimation for White's procedure *)
-ols usq const x seniors sq_x sq_senio x_seni 
+# Testing and estimation for White's procedure
+ols usq const x seniors sq_x sq_seniors x_seniors 
 genr usqhat3=usq-$uhat
-(* compute LM test statistic and its p-value *)
+# compute LM test statistic and its p-value
 genr LM3=$nrsq
 pvalue 3 5 LM3
-(* print usqhat and note that several estimates are negative *)
+# print usqhat and note that several estimates are negative
 print usqhat3
-(* replace negative values with original usqhat and get weights *)
+# replace negative values with original usqhat and get weights
 genr d3=(usqhat3>0.0)
 genr usqhat4=(d3*usqhat3)+((1-d3)*usq)
 genr wt3=1/sqrt(usqhat4)
-(* Estimate model by FGLS which is the same as WLS *)
+# Estimate model by FGLS which is the same as WLS
 wls wt3 y const x seniors 
-(* Test using the Harvey-Godfrey approach *)
-ols lnusq const x seniors sq_x sq_senio 
-(* compute LM test statistic and its p-value *)
+# Test using the Harvey-Godfrey approach
+ols lnusq const x seniors sq_x sq_seniors 
+# compute LM test statistic and its p-value
 genr LM4=$nrsq
-(* since the p-value is high, we do not reject homoscedasticity *)
+# since the p-value is high, we do not reject homoscedasticity
 pvalue 3 4 LM4
-(* Because the coefficients for x and x-squared are significant, another LM
-test is done with just these *)
+# Because the coefficients for x and x-squared are significant, another LM
+# test is done with just these
 ols lnusq const x sq_x 
 genr lnusqhat=lnusq-$uhat
-(* compute LM test statistic and its p-value *)
+# compute LM test statistic and its p-value
 genr LM5=$nrsq
 pvalue X 2 LM5
-(* since the p-value is acceptable, we reject homoscedasticity and
-procede with WLS estimation *)
+# since the p-value is acceptable, we reject homoscedasticity and
+# procede with WLS estimation
 genr usqhat5=exp(lnusqhat)
 genr wt4=1/sqrt(usqhat5)
 wls wt4 y const x seniors 

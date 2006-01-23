@@ -953,8 +953,8 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
 
     gretl_matrix_print_to_prn(C, "\nResidual correlation matrix, C", prn);
 
-    evals = gretl_symmetric_matrix_eigenvals(C, 1);
-    if (evals == NULL) {
+    evals = gretl_symmetric_matrix_eigenvals(C, 1, &err);
+    if (err) {
 	goto bailout;
     }
 

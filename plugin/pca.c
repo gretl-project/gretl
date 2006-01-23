@@ -288,6 +288,7 @@ int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
     int i, j, idx, n = corrmat->dim;
     double *evals;
     gretlopt oflag = 0L;
+    int err = 0;
 
     if (pflag != NULL) oflag = *pflag;
 
@@ -311,10 +312,10 @@ int pca_from_corrmat (VMatrix *corrmat, double ***pZ,
 	}
     }
 
-    evals = gretl_symmetric_matrix_eigenvals(m, 1);
-    if (evals == NULL) {
+    evals = gretl_symmetric_matrix_eigenvals(m, 1, &err);
+    if (err) {
 	gretl_matrix_free(m);
-	return 1;
+	return err;
     }
 
     if (prn != NULL) {

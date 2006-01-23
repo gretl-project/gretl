@@ -1,6 +1,7 @@
-(* PS6.9 using DATA4-4 for estimating demand elasticities -- Section 6.11 *)
+# PS6.9 for estimating demand elasticities -- Section 6.11
+open data4-4
 logs BUSTRAVL FARE GASPRICE INCOME POP DENSITY LANDAREA  
-ols l_BUSTRA const l_FARE l_GASPRI l_INCOME l_POP l_DENSIT l_LANDAR  
-omit l_DENSIT  
-omit l_GASPRI  
+ols l_BUSTRAVL const l_FARE l_GASPRICE l_INCOME l_POP l_DENSITY l_LANDAREA 
+omit l_DENSITY 
+omit l_GASPRICE  
 omit l_FARE  

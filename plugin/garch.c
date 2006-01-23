@@ -643,7 +643,10 @@ static int *make_ols_list (const int *list)
     return olist;
 }
 
-#if 1
+#define GARCH_AUTOCORR_TEST 1
+
+#if GARCH_AUTOCORR_TEST
+
 int garch_pretest (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		   double *LMF, double *pvF)
 {
@@ -662,7 +665,20 @@ int garch_pretest (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }
-#endif
+
+static void autocorr_message (double LMF, double pvF, int order, PRN *prn)
+{
+    if (!na(LMF) && pvF < 0.05) {
+	pputs(prn, "\nConvergence was not reached.  One possible reason "
+	      "for this is\nautocorrelation in the error term.\n");
+	pprintf(prn, "After estimating the model by OLS, the following result "
+		"was\nobtained for a test of autocorrelation of order %d:\n",
+		order);
+	pprintf(prn, "LMF = %g, with p-value %g\n", LMF, pvF);
+    }
+}
+
+#endif /* GARCH_AUTOCORR_TEST */
 
 #define GARCH_SCALE_SIGMA 1
 
@@ -699,29 +715,14 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-#if 1
+#if GARCH_AUTOCORR_TEST
     /* pretest the residuals for autocorrelation */
-    if (!err) {
+    if (!err && prn != NULL) {
 	garch_pretest(&model, pZ, pdinfo, &LMF, &pvF);
     }
 #endif
 
-#if GARCH_SCALE_SDY
-    if (!err) {
-	yno = ols_list[1];
-	scale = model.sdy;
-	for (t=0; t<pdinfo->n; t++) {
-	    if (!na((*pZ)[yno][t])) {
-		(*pZ)[yno][t] /= scale;
-	    }
-	}
-	for (t=0; t<model.ncoeff; t++) {
-	    model.coeff[t] *= scale;
-	}
-	model.ess /= scale * scale;
-	model.sigma = sqrt(model.ess / model.dfd);
-    } 
-#elif GARCH_SCALE_SIGMA
+#if GARCH_SCALE_SIGMA
     if (!err) {
 	yno = ols_list[1];
 	scale = model.sigma;
@@ -736,7 +737,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	model.ess /= scale * scale;
 	model.sigma = 1.0;
     } 
-#endif /* alternative scalings */
+#endif 
 
     /* default variance parameter initialization */
     vparm_init[0] = model.sigma * model.sigma;
@@ -766,9 +767,11 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     free(ols_list);
     free(list);
 
-    if (model.errcode == E_NOCONV) {
-	pprintf(prn, "\nLMF = %g, pvF = %g\n", LMF, pvF);
+#if GARCH_AUTOCORR_TEST
+    if (model.errcode == E_NOCONV && prn != NULL) {
+	autocorr_message(LMF, pvF, pdinfo->pd, prn);
     }
+#endif
 
     return model;
 }

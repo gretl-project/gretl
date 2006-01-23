@@ -84,7 +84,7 @@ genr esse = sum(uhate*uhate)
 criteria esse 5 2
 smpl 1960 1989
 # log-linear Model F
-corc l_calwag 0 time
+corc l_calwage 0 time
 # obtain predicted value
 fcast 1990 1994 yhatf --static
 smpl 1960 1994
@@ -101,7 +101,7 @@ genr essf = sum(uhatf*uhatf)
 criteria essf 5 2
 smpl 1960 1989
 # double-log Model G
-corc l_calwag 0 l_time
+corc l_calwage 0 l_time
 # obtain predicted value
 fcast 1990 1994 yhatg --static
 smpl 1960 1994

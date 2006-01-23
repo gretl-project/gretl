@@ -250,10 +250,13 @@ double gretl_symmetric_matrix_rcond (const gretl_matrix *m);
 
 int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank);
 
-double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev);
+double *gretl_general_matrix_eigenvals (gretl_matrix *m,
+					int eigenvecs, 
+					int *err);
 
 double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
-					  int eigenvecs);
+					  int eigenvecs, 
+					  int *err);
 
 gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M);
 

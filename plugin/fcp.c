@@ -683,13 +683,15 @@ int garch_estimate (int t1, int t2, int nobs,
 	}
 
         if (sumgra >= 1.0e-4) {
-	    fprintf(stderr, "\nParameters and gradients at iter. %d\n", ittot);
+	    pprintf(prn, "\nParameters and gradients at iteration %d:\n\n", 
+		    ittot);
 
 	    for (i=0; i<nparam; i++) {
-		fprintf(stderr, "%12.6f (%9.6f)\n", param[i], grad[i]);
+		pprintf(prn, "%12.6f (%9.6f)\n", param[i], grad[i]);
 	    }
 
-            fprintf(stderr, "Sum of gradients = %.9g\n", sumgra);
+            pprintf(prn, "\nSum of squared gradients = %.9g (should be less " 
+		    "than %g)\n", sumgra, 1.0e-4);
             err = E_NOCONV;
             goto garch_exit;
 	} else {

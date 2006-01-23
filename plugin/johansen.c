@@ -1092,21 +1092,15 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 	goto eigenvals_bailout;
     }
 
-    if (nv > n) {
-	/* "re-expand" this matrix */
-	gretl_matrix_reuse(TmpR, nv, nv);
-    }
-
-    eigvals = gretl_general_matrix_eigenvals(M, TmpR);
-    if (eigvals == NULL) {
+    eigvals = gretl_general_matrix_eigenvals(M, 1, &err);
+    if (err) {
 	pputs(prn, _("Failed to find eigenvalues\n"));
-	err = E_ALLOC;
     } else {
-	err = gretl_eigen_sort(eigvals, TmpR, rank);
+	err = gretl_eigen_sort(eigvals, M, rank);
     }
 
 #if JDEBUG
-    gretl_matrix_print(TmpR, "raw eigenvector(s)");
+    gretl_matrix_print(M, "raw eigenvector(s)");
 #endif
 
     if (!err) {
@@ -1117,15 +1111,15 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 	} 
 
 	/* normalize the eigenvectors */
-	johansen_normalize(jvar->jinfo, TmpR);
+	johansen_normalize(jvar->jinfo, M);
 #if JDEBUG
-	gretl_matrix_print(TmpR, "normalized tmpR");
+	gretl_matrix_print(M, "normalized tmpR");
 #endif
 
 	if (rank == 0) {
 	    /* just running cointegration test */
-	    jvar->jinfo->Beta = TmpR;
-	    TmpR = NULL;
+	    jvar->jinfo->Beta = M;
+	    M = NULL;
 	    err = compute_alpha(jvar->jinfo, n);
 	    if (!err) {
 		print_beta_and_alpha(jvar->jinfo, eigvals, n, pdinfo, prn);
@@ -1135,7 +1129,7 @@ int johansen_analysis (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo, PRN *prn
 	    /* estimating VECM */
 	    int do_stderrs = rank < jvar->neqns;
 
-	    jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
+	    jvar->jinfo->Beta = gretl_matrix_copy(M);
 	    if (jvar->jinfo->Beta == NULL) {
 		err = E_ALLOC;
 	    }
@@ -1236,33 +1230,26 @@ johansen_bootstrap_round (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	goto eigenvals_bailout;
     }    
 
-    if (nv > n) {
-	/* "re-expand" this matrix */
-	gretl_matrix_reuse(TmpR, nv, nv);
-    }
-
     if (!err) {
-	eigvals = gretl_general_matrix_eigenvals(M, TmpR);
-	if (eigvals == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = gretl_eigen_sort(eigvals, TmpR, jrank(jvar));
+	eigvals = gretl_general_matrix_eigenvals(M, 1, &err);
+	if (!err) {
+	    err = gretl_eigen_sort(eigvals, M, jrank(jvar));
 	}
     }
 
 #if JDEBUG
-    gretl_matrix_print(TmpR, "raw eigenvector(s)");
+    gretl_matrix_print(M, "raw eigenvector(s)");
 #endif
 
     if (!err) {
-	johansen_normalize(jvar->jinfo, TmpR); 
+	johansen_normalize(jvar->jinfo, M); 
 #if JDEBUG
-	gretl_matrix_print(TmpR, "normalized tmpR");
+	gretl_matrix_print(M, "normalized M");
 #endif
 	if (jvar->jinfo->Beta == NULL) {
-	    jvar->jinfo->Beta = gretl_matrix_copy(TmpR);
+	    jvar->jinfo->Beta = gretl_matrix_copy(M);
 	} else {
-	    gretl_matrix_copy_values(jvar->jinfo->Beta, TmpR);
+	    gretl_matrix_copy_values(jvar->jinfo->Beta, M);
 	}
 	if (jvar->jinfo->Beta == NULL) {
 	    err = E_ALLOC;
@@ -1417,12 +1404,9 @@ int vecm_beta_test (GRETL_VAR *jvar, PRN *prn)
     gretl_matrix_print_to_prn(M, "M", prn);
 
     if (!err) {
-	gretl_matrix_reuse(TmpR, m, m);
-	eigvals = gretl_general_matrix_eigenvals(M, TmpR);
-	if (eigvals == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = gretl_eigen_sort(eigvals, TmpR, jrank(jvar));
+	eigvals = gretl_general_matrix_eigenvals(M, 1, &err);
+	if (!err) {
+	    err = gretl_eigen_sort(eigvals, M, jrank(jvar));
 	}
     }
 

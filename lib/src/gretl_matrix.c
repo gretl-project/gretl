@@ -2737,13 +2737,14 @@ int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
 /**
  * gretl_general_matrix_eigenvals:
  * @m: square matrix on which to operate.
- * @ev: matrix in which to store the eigenvectors, or %NULL if 
- * the eigenvectors are not required.
+ * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
+ * @err: location to receive error code.
  * 
- * Computes the eigenvalues of the general matrix @m.  If @ev is
- * non-%NULL, write the right eigenvectors of @m into @ev.
- * Uses the lapack function %dgeev.
- *
+ * Computes the eigenvalues of the general matrix @m.  
+ * If @eigenvecs is non-zero, also compute the right
+ * eigenvectors of @m, which are stored in @m. Uses the lapack 
+ * function %dgeev.
+ * 
  * Returns: allocated storage containing the eigenvalues, or %NULL
  * on failure.  The returned array, on successful completion,
  * has 2n elements (where n = the number of rows and columns in the
@@ -2752,7 +2753,8 @@ int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
  * imaginary components.
  */
 
-double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev) 
+double *
+gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
 {
     integer n = m->rows;
     integer info;
@@ -2767,33 +2769,31 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
     if (m->rows != m->cols) {
 	fprintf(stderr, "gretl_general_matrix_eigenvals:\n"
 		" matrix must be square, is %d x %d\n", m->rows, m->cols);
+	*err = E_NONCONF;
 	return NULL;
     }
 
-    if (ev != NULL) {
-	if (ev->rows != n || ev->cols != n) {
-	    fprintf(stderr, "gretl_general_matrix_eigenvals:\n"
-		    " matrix to hold eigenvalues should be %d x %d, is %d x %d\n",
-		    m->rows, m->rows, ev->rows, ev->cols);
-	    return NULL;
-	}  
-    }  
-
     work = malloc(sizeof *work);
     if (work == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
     wr = malloc(2 * n * sizeof *wr);
     if (wr == NULL) {
+	*err = E_ALLOC;
 	goto bailout;
     } else {
 	wi = wr + n;
     }
 
-    if (ev != NULL) {
+    if (eigenvecs) {
 	/* eigenvectors wanted */
-	vr = ev->val;
+	vr = malloc(n * n * sizeof *vr);
+	if (vr == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
 	nvr = n;
 	jvr = 'V';
     } else {
@@ -2808,6 +2808,7 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
 
     if (info != 0 || work[0] <= 0.0) {
 	fputs(wspace_fail, stderr);
+	*err = 1;
 	goto bailout;
     }	
 
@@ -2815,6 +2816,7 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
 
     work2 = realloc(work, lwork * sizeof *work);
     if (work2 == NULL) {
+	*err = E_ALLOC;
 	goto bailout;
     } else {
 	work = work2;
@@ -2824,8 +2826,14 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
 	   &nvl, vr, &nvr, work, &lwork, &info);
 
     if (info != 0) {
+	*err = 1;
 	goto bailout;
     } 
+
+    if (eigenvecs) {
+	free(m->val);
+	m->val = vr;
+    }
 
     free(work);
 
@@ -2834,6 +2842,7 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
  bailout:
     free(work);
     free(wr);
+    free(vr);
 
     return NULL;    
 }
@@ -2842,6 +2851,7 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
  * gretl_symmetric_matrix_eigenvals:
  * @m: matrix to operate on.
  * @eigenvecs: non-zero to calculate eigenvectors, 0 to omit.
+ * @err: location to receive error code.
  * 
  * Computes the eigenvalues of the real symmetric matrix @m.  
  * If @eigenvecs is non-zero, also compute the orthonormal
@@ -2853,31 +2863,34 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
  */
 
 double *
-gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs) 
+gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err) 
 {
     integer n = m->rows;
     integer info;
     integer lwork;
 
-    double *work, *work2;
-    double *w;
+    double *work = NULL;
+    double *work2 = NULL;
+    double *w = NULL;
 
     char uplo = 'U', jobz = (eigenvecs)? 'V' : 'N';
 
     if (!matrix_is_symmetric(m)) {
 	fputs("gretl_symmetric_matrix_eigenvals: matrix is not symmetric\n", stderr);
+	*err = E_NONCONF;
 	return NULL;
     }
 
     work = malloc(sizeof *work);
     if (work == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
     w = malloc(n * sizeof *w);
     if (w == NULL) {
-	free(work);
-	return NULL;
+	*err = E_ALLOC;
+	goto bailout;
     }
 
     lwork = -1; /* find optimal workspace size */
@@ -2886,33 +2899,38 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs)
 
     if (info != 0 || work[0] <= 0.0) {
 	fputs(wspace_fail, stderr);
-	free(work);
-	free(w);
-	return NULL;
+	*err = 1;
+	goto bailout;
     }	
 
     lwork = (integer) work[0];
 
     work2 = realloc(work, lwork * sizeof *work);
     if (work2 == NULL) {
-	free(work);
-	free(w);
-	return NULL;
+	*err = E_ALLOC;
+	goto bailout;
     } else {
 	work = work2;
     }
-
+    
     dsyev_(&jobz, &uplo, &n, m->val, &n, 
 	   w, work, &lwork, &info);
 
     if (info != 0) {
-	free(w);
-	w = NULL;
+	*err = 1;
+	goto bailout;
     }
 
     free(work);
 
     return w;
+
+ bailout:
+
+    free(work);
+    free(w);
+
+    return NULL;
 }
 
 /* return the row-index of the element in column col of

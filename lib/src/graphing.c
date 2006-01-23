@@ -3244,7 +3244,7 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
     double xcoeff[2];
     double ycoeff[2];
     double *e = NULL;
-    int err;
+    int err = 0;
 
     maxerr[0] = t * sqrt(gretl_matrix_get(V, 0, 0));
     maxerr[1] = t * sqrt(gretl_matrix_get(V, 1, 1));
@@ -3254,9 +3254,9 @@ int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,
 	return err;
     }
 
-    e = gretl_symmetric_matrix_eigenvals(V, 1);
-    if (e == NULL) {
-	return E_ALLOC;
+    e = gretl_symmetric_matrix_eigenvals(V, 1, &err);
+    if (err) {
+	return err;
     }
 
     e[0] = sqrt(1.0 / e[0] * c);

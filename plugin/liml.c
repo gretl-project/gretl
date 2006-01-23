@@ -325,9 +325,8 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     err = gretl_matrix_multiply(Inv, W0, W2);
     if (err) goto bailout;
     
-    lambda = gretl_general_matrix_eigenvals(W2, NULL);
-    if (lambda == NULL) {
-	err = 1;
+    lambda = gretl_general_matrix_eigenvals(W2, 0, &err);
+    if (err) {
 	goto bailout;
     }
 

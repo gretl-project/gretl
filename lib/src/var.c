@@ -1308,10 +1308,8 @@ static int gretl_VAR_add_roots (GRETL_VAR *var)
 
     /* save eigenvalues of companion form matrix */
     if (!err) {
-        eigA = gretl_general_matrix_eigenvals(CompForm, NULL);
-	if (eigA == NULL) {
-	    err = E_ALLOC;
-	} else {
+        eigA = gretl_general_matrix_eigenvals(CompForm, 0, &err);
+	if (!err) {
 	    for (i=0; i<np; i++) {
 		x = eigA[i];
 		y = eigA[np + i];
