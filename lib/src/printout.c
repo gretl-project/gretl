@@ -743,7 +743,7 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 		idx = ijton(j, nf+k, vmat->dim);
 		outxx(vmat->vec[idx], vmat->ci, fwidth, prn);
 	    }
-	    if (fwidth < 15) pputc(prn, '\n');
+	    if (fwidth < 15) pputc(prn, ' ');
 	    pprintf(prn, " %s\n", vmat->names[j]);
 	    lineno++;
 	}
@@ -761,7 +761,7 @@ void text_print_vmatrix (VMatrix *vmat, PRN *prn)
 		idx = ijton(ij2, nf+k, vmat->dim);
 		outxx(vmat->vec[idx], vmat->ci, fwidth, prn);
 	    }
-	    if (fwidth < 15) pputc(prn, '\n');
+	    if (fwidth < 15) pputc(prn, ' ');
 	    pprintf(prn, " %s\n", vmat->names[ij2]);
 	    lineno++;
 	}
@@ -1326,7 +1326,7 @@ static void print_scalar (double x, const char *vname,
 	if (opt & OPT_T) {
 	    pprintf(prn, "%.10e", x);
 	} else {
-	    pprintf(prn, "%e", x);
+	    pprintf(prn, "%#.6g", x);
 	}
     }
 
