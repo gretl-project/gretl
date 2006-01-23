@@ -1871,18 +1871,22 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 {
     PRN *prn;
     double x, y;
+    double mod, freq;
     int i, err = 0;
 
     if (bufopen(&prn)) {
 	return;
     } 
 
-    pputs(prn, _("VAR roots (real, imaginary)"));
+    pputs(prn, _("VAR roots (real, imaginary, modulus, frequency)"));
     pputs(prn, "\n\n");
 
     for (i=0; i<spec->n_markers; i++) {
 	if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
-	    pprintf(prn, "%d: (%7.4f, %7.4f)\n", i+1, x, y);
+	    mod = sqrt(x*x + y*y);
+	    freq = atan2(y, x) / (2.0 * M_PI);
+	    pprintf(prn, "%2d: (%7.4f, %7.4f, %7.4f, %7.4f)\n", i+1, 
+		    x, y, mod, freq);
 	} else {
 	    err = E_DATA;
 	    break;
@@ -1895,7 +1899,7 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
     } else {
 	gchar *title = g_strdup_printf("gretl: %s", _("VAR roots"));
 
-	view_buffer(prn, 36, 340, title, PRINT, NULL);
+	view_buffer(prn, 72, 340, title, PRINT, NULL);
 	g_free(title);	
     }
 }

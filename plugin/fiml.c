@@ -217,9 +217,8 @@ over_identification_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
     }
 
     gretl_matrix_divide_by_scalar(urv, fsys->n);
-    ldetS = gretl_matrix_log_determinant(urv);
+    ldetS = gretl_matrix_log_determinant(urv, &err);
     if (na(ldetS)) {
-	err = 1;
 	goto bailout;
     }
 
@@ -663,7 +662,7 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
     double ldetG;
     double ldetS;
     int i, j, t;
-    int err;
+    int err = 0;
 
     fsys->ll = 0.0;
 
@@ -680,9 +679,9 @@ static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
        the original matrix */
 
     gretl_matrix_copy_values(fsys->Gtmp, fsys->G);
-    ldetG = gretl_matrix_log_abs_determinant(fsys->Gtmp);
+    ldetG = gretl_matrix_log_abs_determinant(fsys->Gtmp, &err);
     if (na(ldetG)) {
-	return 1;
+	return err;
     }
 
     gretl_matrix_copy_values(fsys->Stmp, fsys->sigma);

@@ -345,7 +345,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     /* compute and set log-likelihood, etc */
     ll = system_n_equations(sys) * LN_2_PI;
     ll += log(lmin);
-    ll += gretl_matrix_log_determinant(W1);
+    ll += gretl_matrix_log_determinant(W1, &err);
     ll *= -(T / 2.0);
     pmod->lnL = ll;
 

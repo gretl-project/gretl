@@ -1779,8 +1779,8 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 
     switch (op) {
     case '\0':
-	/* We can generally get away with C = B, 
-	   but _not_ if B is a user matrix */
+	/* We can generally get away with simply C = B, rather than a
+	   matrix copy, but _not_ if B is a user matrix */
 	if (is_user_matrix(B)) {
 	    C = gretl_matrix_copy(B);
 	} else {

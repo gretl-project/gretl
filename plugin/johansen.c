@@ -949,7 +949,7 @@ static int johansen_ll_calc (GRETL_VAR *jvar, const double *eigvals)
     if (Suu == NULL) {
 	err = E_ALLOC;
     } else {
-	ldet = gretl_matrix_log_determinant(Suu);
+	ldet = gretl_matrix_log_determinant(Suu, &err);
 	jvar->ll = - T_2 * n * (1.0 + LN_2_PI) - T_2 * ldet;
 	for (i=0; i<h; i++) {
 	    jvar->ll -= T_2 * log(1.0 - eigvals[i]); 
@@ -1281,7 +1281,9 @@ static int
 johansen_LR_calc (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
 {
     gretl_matrix *Suu;
-    double llr, ldet, T_2 = (double) jvar->T / 2.0;
+    double llr = 0.0;
+    double ldet = 0.0;
+    double T_2 = (double) jvar->T / 2.0;
     int n = jvar->neqns;
     int h, i, err = 0;
 
@@ -1292,13 +1294,19 @@ johansen_LR_calc (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
     if (Suu == NULL) {
 	err = E_ALLOC;
     } else {
-	ldet = gretl_matrix_log_determinant(Suu);
+	ldet = gretl_matrix_log_determinant(Suu, &err);
+    }
+
+    if (!err) {
 	llr = - T_2 * n * (1.0 + LN_2_PI) - T_2 * ldet;
 	for (i=0; i<h; i++) {
 	    pprintf(prn, "eigenvalue %d = %g\n", i+1, eigvals[i]);
 	    llr -= T_2 * log(1.0 - eigvals[i]); 
 	}
 	pputc(prn, '\n');
+    }
+
+    if (Suu != NULL) {
 	gretl_matrix_free(Suu);
     }
 
