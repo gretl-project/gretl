@@ -144,6 +144,9 @@ gretl_vector *gretl_column_vector_from_array (const double *x,
 gretl_vector *gretl_data_series_to_vector (const double **Z, int varno, 
 					   int t1, int t2);
 
+gretl_matrix *gretl_vector_from_array (const double *x, int n,
+				       GretlMatrixMod mod);
+
 gretl_matrix *gretl_matrix_from_2d_array (const double **X, 
 					  int rows, int cols);
 
@@ -233,6 +236,8 @@ double gretl_matrix_log_determinant (gretl_matrix *a);
 double gretl_matrix_log_abs_determinant (gretl_matrix *a);
 
 double gretl_vcv_log_determinant (const gretl_matrix *m);
+
+double gretl_matrix_one_norm (const gretl_matrix *m);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 

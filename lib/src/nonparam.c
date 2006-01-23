@@ -27,14 +27,6 @@ enum {
     RUN_CLEANUP
 };
 
-static int inverse_compare_doubles (const void *a, const void *b)
-{
-    const double *da = (const double *) a;
-    const double *db = (const double *) b;
-     
-    return (*da < *db) - (*da > *db);
-}
-
 /* alpha = .001, .01, .025, .05, .1 */
 
 static double spearman_critical[18][5] = {      /* n = */
@@ -123,8 +115,8 @@ static int spearman_rho (const double *x, const double *y, int n,
     }
 
     /* get sorted series */
-    qsort(sx, nn, sizeof *sx, inverse_compare_doubles);
-    qsort(sy, nn, sizeof *sy, inverse_compare_doubles);
+    qsort(sx, nn, sizeof *sx, gretl_inverse_compare_doubles);
+    qsort(sy, nn, sizeof *sy, gretl_inverse_compare_doubles);
 
     for (t=0; t<n; t++) {
 	rx[t] = ry[t] = 0.0;

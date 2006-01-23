@@ -157,27 +157,46 @@ generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
 functions require a single matrix as argument, or an expression which
 evaluates to a single matrix.
 
-The following matrix-specific functions are available:
+The \texttt{sort()} function is available for matrices as well as data
+series.  In the matrix case the argument to the function must be a
+vector ($p \times 1$ or $1\times p$).  The return value is a vector
+containing the elements of the input vector sorted in descending order
+of magnitude.
+
+The following matrix-specific functions are available (the return type
+is shown in parentheses):
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{det()} & determinant \\
-\texttt{ldet()} & log-determinant \\
-\texttt{inv()} & inverse \\
-\texttt{cholesky()} & Cholesky decomposition \\
-\texttt{tr()} & trace \\
-\texttt{rows()} & number of rows \\
-\texttt{cols()} & number of columns \\
-\texttt{diag()} & extract principal diagonal as column vector \\
-\texttt{transp()} & transpose 
+\texttt{det()} & determinant (scalar) \\
+\texttt{ldet()} & log-determinant (scalar)\\
+\texttt{inv()} & inverse (matrix) \\
+\texttt{cholesky()} & Cholesky decomposition (matrix) \\
+\texttt{qrdecomp()} & QR decomposition (two matrices) \\
+\texttt{tr()} & trace (scalar) \\
+\texttt{onenorm()} & 1-norm (scalar) \\
+\texttt{rows()} & number of rows (scalar) \\
+\texttt{cols()} & number of columns (scalar) \\
+\texttt{diag()} & returns principal diagonal (column vector) \\
+\texttt{transp()} & transpose (matrix)
 \end{tabular}
 \end{center}
 
 These functions also require a single matrix (or an expression which
-evaluates to a single matrix) as argument.  The \texttt{cholesky}
-function computes the Choleski decomposition $L$ of a symmetric
-positive definite matrix $A$: $A = LL'$; $L$ is lower triangular (has
-zeros above the diagonal).
+evaluates to a single matrix) as argument.  Most of these functions
+should be self-explanatory, but some merit comment.
+
+The \texttt{cholesky} function computes the Choleski decomposition $L$
+of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower
+triangular (has zeros above the diagonal).
+
+The \texttt{qrdecomp} function computes the QR decomposition of an $m
+\times n$ matrix $A$: $A = QR$, where $Q$ is $m \times n$ and $R$ is
+$n \times n$ and upper triangular.  (FIXME finish this section).
+
+The \texttt{onenorm} function returns the 1-norm of a matrix --- that
+is, the maximum across the columns of the matrix of the sums of the
+absolute values of the column elements.
 
 In addition, there are some functions which generate certain sorts of
 matrices from scratch, given a specification of the desired

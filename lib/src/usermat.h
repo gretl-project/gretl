@@ -70,7 +70,14 @@ user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn, int *err);
 
 gretl_matrix *
+user_matrix_eigen_analysis (const char *str, double ***pZ, DATAINFO *pdinfo,
+			    PRN *prn, int *err, int symm);
+
+gretl_matrix *
 user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn);
+
+gretl_matrix *
+user_matrix_get_sorted_vector (const gretl_matrix *m, int *err);
 
 gretl_matrix *
 matrix_get_submatrix (const gretl_matrix *M, const char *s, 

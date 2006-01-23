@@ -1496,9 +1496,12 @@ write_label_to_plot (png_plot *plot, const gchar *label,
 	gchar alt_label[12];
 	double x, y;
 
+	gretl_push_c_numeric_locale();
 	if (sscanf(label, "%lf,%lf", &x, &y) != 2) {
 	    return;
 	}
+	gretl_pop_c_numeric_locale();
+
 	sprintf(alt_label, "%.2f,%.2f", x, y);
 	label = alt_label;
     }
@@ -1549,9 +1552,12 @@ write_label_to_plot (png_plot *plot, const gchar *label,
 	gchar alt_label[12];
 	double x, y;
 
+	gretl_push_c_numeric_locale();
 	if (sscanf(label, "%lf,%lf", &x, &y) != 2) {
 	    return;
 	}
+	gretl_pop_c_numeric_locale();
+
 	sprintf(alt_label, "%.2f,%.2f", x, y);
 	label = alt_label;
     }

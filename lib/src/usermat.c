@@ -2014,6 +2014,61 @@ real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q,
     return err;
 }
 
+static int get_two_matrix_names (const char *s, char *lstr, char *rstr,
+				 const DATAINFO *pdinfo)
+{
+    char tmp[VNAMELEN + 1];
+    int err = 0;
+
+    if (sscanf(s, "%15[^,],%16s", lstr, tmp) != 2) {
+	err = 1;
+    } else {
+#if MDEBUG
+	fprintf(stderr, "left-hand matrix = '%s'\n", lstr);
+	fprintf(stderr, "right-hand matrix = '%s'\n", tmp);
+#endif
+	if (!strcmp(tmp, "NULL")) {
+	    *rstr = 0;
+	} else if (*tmp == '@') {
+	    strcpy(rstr, tmp + 1);
+	} else {
+	    err = 1;
+	}
+
+	if (!err && name_is_series(lstr, pdinfo)) {
+	    err = 1;
+	}
+
+	if (!err && *rstr && name_is_series(rstr, pdinfo)) {
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+static int add_or_replace_aux_matrix (gretl_matrix *A,
+				      const char *aname,
+				      int old_nm,
+				      double ***pZ,
+				      DATAINFO *pdinfo,
+				      PRN *prn)
+{
+    int err;
+
+    err = add_or_replace_user_matrix(A, aname, NULL, NULL, pZ, pdinfo);
+
+    if (!err && gretl_messages_on()) {
+	if (n_matrices > old_nm) {
+	    pprintf(prn, "Added matrix '%s'\n", aname);
+	} else {
+	    pprintf(prn, "Replaced matrix '%s'\n", aname);
+	}
+    }
+
+    return err;
+}
+
 gretl_matrix *
 user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn, int *err)
@@ -2025,18 +2080,9 @@ user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
     char qstr[VNAMELEN];
     char rstr[VNAMELEN];
 
-    if (sscanf(str, "%15[^,],@%15s", qstr, rstr) != 2) {
-	*err = 1;
-    } else {
-#if MDEBUG
-	fprintf(stderr, "QR: left-hand matrix = '%s'\n", qstr);
-	fprintf(stderr, "QR: right-hand matrix = '%s'\n", rstr);
-#endif
+    *err = get_two_matrix_names(str, qstr, rstr, pdinfo);
 
-	if (name_is_series(qstr, pdinfo) || name_is_series(rstr, pdinfo)) {
-	    return NULL;
-	}
-
+    if (!*err) {
 	M = get_matrix_by_name(qstr, pdinfo);
 	if (M == NULL) {
 	    *err = E_UNKVAR;
@@ -2044,19 +2090,76 @@ user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
 	    *err = real_user_matrix_QR_decomp(M, &Q, &R);
 	}
 	if (R != NULL) {
-	    *err = add_or_replace_user_matrix(R, rstr, NULL, NULL, 
-					      pZ, pdinfo);
-	    if (gretl_messages_on()) {
-		if (n_matrices > nm) {
-		    pprintf(prn, "Added matrix '%s'\n", rstr);
-		} else {
-		    pprintf(prn, "Replaced matrix '%s'\n", rstr);
-		}
+	    if (*rstr) {
+		*err = add_or_replace_aux_matrix(R, rstr, nm, pZ, 
+						 pdinfo, prn);
+	    } else {
+		gretl_matrix_free(R);
 	    }
 	}
     }
 
     return Q;
+}
+
+gretl_matrix *
+user_matrix_eigen_analysis (const char *str, double ***pZ, DATAINFO *pdinfo,
+			    PRN *prn, int *err, int symm)
+{
+    int nm = n_matrices;
+    gretl_matrix *M = NULL;
+    gretl_matrix *C = NULL;
+    gretl_matrix *E = NULL;
+    char lstr[VNAMELEN];
+    char rstr[VNAMELEN];
+    double *ev = NULL;
+    int vecs = 0;
+
+    *err = get_two_matrix_names(str, lstr, rstr, pdinfo);
+
+    if (!*err) {
+	int en = 0;
+
+	vecs = (*rstr != 0);
+
+	M = get_matrix_by_name(lstr, pdinfo);
+	if (M == NULL) {
+	    *err = E_UNKVAR;
+	} else {
+	    en = gretl_matrix_rows(M);
+	    if (!symm) {
+		en *= 2; /* allow for imaginary components */
+	    }
+	    C = gretl_matrix_copy(M);
+	    if (C == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+
+	if (!*err) {
+	    if (symm) {
+		ev = gretl_symmetric_matrix_eigenvals(C, vecs, err);
+	    } else {
+		ev = gretl_general_matrix_eigenvals(C, vecs, err);
+	    }
+	}
+
+	if (ev != NULL) {
+	    E = gretl_vector_from_array(ev, en, GRETL_MOD_NONE);
+	    free(ev);
+	}
+
+	if (!*err && vecs) {
+	    *err = add_or_replace_aux_matrix(C, rstr, nm, pZ, 
+					     pdinfo, prn);
+	}
+
+	if (!vecs) {
+	    gretl_matrix_free(C);
+	}
+    }
+
+    return E;
 }
 
 gretl_matrix *
@@ -2070,6 +2173,32 @@ user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn)
 	    if (gretl_matrix_transform_elements(R, fn)) {
 		gretl_matrix_free(R);
 		R = NULL;
+	    }
+	}
+    }
+
+    return R;
+}
+
+gretl_matrix *
+user_matrix_get_sorted_vector (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *R = NULL;
+    int len = gretl_vector_get_length(m);
+
+    if (len == 0) {
+	*err = E_NONCONF;
+	return NULL;
+    }
+
+    if (m != NULL) {
+	R = gretl_matrix_copy(m);
+	if (R == NULL) {
+	    *err = E_ALLOC;
+	} else {
+	    if (len > 1) {
+		qsort(R->val, len, sizeof *R->val, 
+		      gretl_inverse_compare_doubles);
 	    }
 	}
     }

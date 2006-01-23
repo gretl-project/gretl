@@ -1231,10 +1231,23 @@ static int matrix_is_symmetric (const gretl_matrix *m)
     return 1;
 }
 
-static double gretl_matrix_one_norm (const gretl_matrix *m)
+/**
+ * gretl_matrix_one_norm:
+ * @m: gretl_matrix.
+ *
+ * Returns: the 1-norm of @m (the maximum value across
+ * the columns of @m of the sum of the absolute values of
+ * the elements in the given column).
+ */
+
+double gretl_matrix_one_norm (const gretl_matrix *m)
 {
     double colsum, colmax = 0.0;
     int i, j;
+
+    if (m == NULL) {
+	return NADBL;
+    }
 
     for (j=0; j<m->cols; j++) {
 	colsum = 0.0;
@@ -1488,6 +1501,38 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
     free(ipiv);
 
     return info;
+}
+
+/**
+ * gretl_vector_from_array:
+ * @x: one-dimensional array of doubles.
+ * @n: number of elements in array.
+ * @mod: if %GRETL_MOD_NONE, create column vector; if
+ * %GRETL_MOD_TRANSPOSE, create row vector.
+ *
+ * Returns: allocated gretl_vector, the elements of which are set to
+ * the @n values in @x, or %NULL on allocation failure.
+ */
+
+gretl_matrix *gretl_vector_from_array (const double *x, int n,
+				       GretlMatrixMod mod)
+{
+    gretl_matrix *v;
+    int i;
+
+    if (mod == GRETL_MOD_TRANSPOSE) {
+	v = gretl_vector_alloc(n);
+    } else {
+	v = gretl_column_vector_alloc(n);
+    }
+
+    if (v == NULL) return v;
+
+    for (i=0; i<n; i++) {
+	v->val[i] = x[i];
+    }
+
+    return v;
 }
 
 /**
@@ -2651,14 +2696,6 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     return err;
 }
 
-static int inverse_compare_doubles (const void *a, const void *b)
-{
-    const double *da = (const double *) a;
-    const double *db = (const double *) b;
-
-    return (*da < *db) - (*da > *db);
-}
-
 /**
  * gretl_eigen_sort:
  * @evals: array of eigenvalues.
@@ -2709,7 +2746,7 @@ int gretl_eigen_sort (double *evals, gretl_matrix *evecs, int rank)
 	es[i].idx = i;
     }
 
-    qsort(es, n, sizeof *es, inverse_compare_doubles);
+    qsort(es, n, sizeof *es, gretl_inverse_compare_doubles);
 
     for (i=0; i<n; i++) {
 	evals[i] = es[i].vr;

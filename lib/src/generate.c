@@ -159,8 +159,11 @@ struct genr_func funcs[] = {
     { T_INV,      "inv" },
     { T_CHOL,     "cholesky" },
     { T_QR,       "qrdecomp" },
+    { T_EIGSYM,   "eigensym" },
+    { T_EIGGEN,   "eigengen" },
     { T_LDET,     "ldet" },
     { T_TRACE,    "tr" },
+    { T_1NORM,    "onenorm" },
     { T_DIAG,     "diag" },
     { T_ROWS,     "rows" },
     { T_COLS,     "cols" },
@@ -196,12 +199,15 @@ struct genr_func funcs[] = {
                          f == T_MISSZERO || f == T_ZEROMISS)
 
 #define MATRIX_SCALAR_FUNC(f) (f == T_DET || f == T_LDET || f == T_TRACE || \
-			       f == T_ROWS || f == T_COLS)
+			       f == T_ROWS || f == T_COLS || f == T_1NORM)
 
 #define MATRIX_FILL_FUNC(f) (f == T_IMAT || f == T_ZEROS || f == T_ONES)
 
 #define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG || \
-                               f == T_INV || f == T_CHOL || f == T_QR)
+                               f == T_INV || f == T_CHOL || f == T_QR || \
+                               f == T_EIGSYM || f == T_EIGGEN)
+
+#define MULTI_MATRIX_FUNC(f) (f == T_QR || f == T_EIGSYM || f == T_EIGGEN)
 
 #define RAND_FUNC(f) (f == T_UNIFORM || f == T_NORMAL)
 
@@ -643,6 +649,8 @@ genr_get_matrix_scalar (const char *s, GENERATOR *genr, int func)
 	    x = gretl_matrix_rows(m);
 	} else if (func == T_COLS) {
 	    x = gretl_matrix_cols(m);
+	} else if (func == T_1NORM) {
+	    x = gretl_matrix_one_norm(m);
 	}
     } 
 
@@ -852,7 +860,7 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 	atom->func == T_CRIT || atom->func == T_FRACDIFF ||
 	BIVARIATE_STAT(atom->func)) {
 	genr->err = set_atom_arg_string(s, genr, atom);
-    } else if (atom->func == T_QR && genr_is_matrix(genr)) {
+    } else if (MULTI_MATRIX_FUNC(atom->func) && genr_is_matrix(genr)) {
 	genr->err = set_atom_arg_string(s, genr, atom);
     }
 
@@ -1283,10 +1291,18 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	} else if (atom->func == T_QR) {
 	    R = user_matrix_QR_decomp(atom->str, genr->pZ, genr->pdinfo, 
 				      genr->prn, &genr->err);
+	} else if (atom->func == T_EIGSYM) {
+	    R = user_matrix_eigen_analysis(atom->str, genr->pZ, genr->pdinfo, 
+					   genr->prn, &genr->err, 1);
+	} else if (atom->func == T_EIGGEN) {
+	    R = user_matrix_eigen_analysis(atom->str, genr->pZ, genr->pdinfo, 
+					   genr->prn, &genr->err, 0);
 	} else if (atom->func == T_DIAG) {
 	    R = gretl_matrix_get_diagonal(M, &genr->err);
 	} else if (atom->func == T_TRANSP) {
 	    R = gretl_matrix_copy_transpose(M);
+	} else if (atom->func == T_SORT) {
+	    R = user_matrix_get_sorted_vector(M, &genr->err);
 	} else if (atom->func >= T_NONE && atom->func < T_MATHMAX) {
 	    R = user_matrix_get_transformation(M, atom->func);
 	} else if (atom->func == T_IDENTITY) {
@@ -2173,7 +2189,9 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
     if (genr_is_matrix(genr)) {
 	if (!strncmp(s, "uniform", 7) ||
 	    !strncmp(s, "normal", 6) ||
-	    !strncmp(s, "qrdecomp", 8)) {
+	    !strncmp(s, "qrdecomp", 8) ||
+	    !strncmp(s, "eigensym", 8) ||
+	    !strncmp(s, "eigengen", 8)) {
 	    return 1;
 	}
     }
@@ -2187,6 +2205,7 @@ static int matrix_scalar_function_word (const char *s)
 	!strncmp(s, "ldet", 4) ||
 	!strncmp(s, "rows", 4) ||
 	!strncmp(s, "cols", 4) ||
+	!strncmp(s, "onenorm", 7) ||
 	!strncmp(s, "tr", 2)) {
 	return 1;
     }

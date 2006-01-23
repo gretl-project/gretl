@@ -84,6 +84,8 @@ double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);
 
 int gretl_compare_doubles (const void *a, const void *b);
 
+int gretl_inverse_compare_doubles (const void *a, const void *b);
+
 int gretl_copy_file (const char *src, const char *dest);
 
 #ifndef WIN32

@@ -234,12 +234,42 @@ int gretl_isconst (int t1, int t2, const double *x)
     return ret;
 }
 
+/**
+ * gretl_compare_doubles:
+ * @a: pointer to first element to compare.
+ * @b: pointer to second element to compare.
+ *
+ * Comparison function for use with %qsort.  Sorts doubles in
+ * ascending order.
+ * 
+ * Returns: appropriate value for %qsort.
+ */
+
 int gretl_compare_doubles (const void *a, const void *b)
 {
     const double *da = (const double *) a;
     const double *db = (const double *) b;
      
     return (*da > *db) - (*da < *db);
+}
+
+/**
+ * gretl_inverse_compare_doubles:
+ * @a: pointer to first element to compare.
+ * @b: pointer to second element to compare.
+ * 
+ * Comparison function for use with %qsort.  Sorts doubles in
+ * descending order.
+ * 
+ * Returns: appropriate value for %qsort.
+ */
+
+int gretl_inverse_compare_doubles (const void *a, const void *b)
+{
+    const double *da = (const double *) a;
+    const double *db = (const double *) b;
+
+    return (*da < *db) - (*da > *db);
 }
 
 /**
