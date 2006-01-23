@@ -1845,12 +1845,33 @@ double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
  * failure).
  */
 
+/***
+
+Jack says:
+
+a) check if (rows(a) == rows(b)) && (cols(a) == cols(b)); in this case, we
+have element-by-element multiplication (Hadamard product if you will);
+otherwise
+
+b) check if (rows(a) == 1); if so, return c_{ij} = b_{ij}*a_j; otherwise,
+
+c) check if (rows(b) == 1); if so, return c_{ij} = a_{ij}*b_j; otherwise,
+proceed similarly with columns, that is,
+
+d) check if (cols(a) == 1); if so, return c_{ij} = b_{ij}*a_i; otherwise,
+
+e) check if (cols(b) == 1); if so, return c_{ij} = a_{ij}*b_i; otherwise,
+
+f) return an error.
+
+***/
+
 gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a, 
 					 const gretl_matrix *b,
 					 int *err)
 {
-    gretl_matrix *c;
-    int i, n;
+    gretl_matrix *c = NULL;
+    int i, j, k, n;
 
     if (a->rows != b->rows || a->cols != b->cols) {
 	fputs("gretl_matrix_dot_multiply: matrices not conformable\n", stderr);
@@ -1858,7 +1879,43 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
 	return NULL;
     }
 
-    c = gretl_matrix_alloc(a->rows, a->cols);
+#if 0
+    /* not at all checked yet */
+    if (a->rows == b->rows && a->cols == b->cols) {
+	c = gretl_matrix_copy(b);
+	if (c != NULL) {
+	    n = c->rows * c->cols;
+	    for (i=0; i<n; i++) {
+		c->val[i] *= a->val[i];
+	    }
+	}	    
+    } else if (a->rows == 1 || a->cols == 1) {
+	c = gretl_matrix_copy(b);
+	if (c != NULL) {
+	    for (i=0; i<c->rows; i++) {
+		for (j=0; j<c->cols; j++) {
+		    k = (a->rows == 1)? j : i;
+		    c->val[mdx(c,i,j)] *= a->val[k];
+		}
+	    }
+	}
+    } else if (b->rows == 1 || b->cols == 1) {
+	c = gretl_matrix_copy(a);
+	if (c != NULL) {
+	    for (i=0; i<c->rows; i++) {
+		for (j=0; j<c->cols; j++) {
+		    k = (b->rows == 1)? j : i;
+		    c->val[mdx(c,i,j)] *= b->val[k];
+		}
+	    }
+	}
+    } else {
+	fputs("gretl_matrix_dot_multiply: matrices not conformable\n", stderr);
+	*err = E_NONCONF;
+	return NULL;
+    }
+#endif	
+
     if (c == NULL) {
 	*err = E_ALLOC;
 	return NULL;
