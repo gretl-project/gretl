@@ -3225,7 +3225,7 @@ int gretl_VAR_roots_plot (GRETL_VAR *var)
 	/* in polar form */
 	px = atan2(y, x);
 	py = sqrt(x * x + y * y);
-	fprintf(fp, "%.8f %.8f # %.2f,%.2f\n", px, py, x, y);
+	fprintf(fp, "%.8f %.8f # %.4f,%.4f\n", px, py, x, y);
     }
 
     gretl_pop_c_numeric_locale();

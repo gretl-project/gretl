@@ -93,6 +93,7 @@ enum {
 
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
 #define plot_is_hurst(p)        (p->spec->code == PLOT_HURST)
+#define plot_is_roots(p)        (p->spec->code == PLOT_VAR_ROOTS)
 
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
 #define plot_show_all_markers(p) (p->spec->flags & GPTSPEC_ALL_MARKERS)
@@ -1491,6 +1492,17 @@ write_label_to_plot (png_plot *plot, const gchar *label,
 {
     static GdkFont *label_font;
 
+    if (plot_is_roots(plot)) {
+	gchar alt_label[12];
+	double x, y;
+
+	if (sscanf(label, "%lf,%lf", &x, &y) != 2) {
+	    return;
+	}
+	sprintf(alt_label, "%.2f,%.2f", x, y);
+	label = alt_label;
+    }
+
     if (plot->invert_gc == NULL) {
 	create_selection_gc(plot);
     }
@@ -1532,6 +1544,17 @@ write_label_to_plot (png_plot *plot, const gchar *label,
 {
     PangoContext *context;
     PangoLayout *pl;
+
+    if (plot_is_roots(plot)) {
+	gchar alt_label[12];
+	double x, y;
+
+	if (sscanf(label, "%lf,%lf", &x, &y) != 2) {
+	    return;
+	}
+	sprintf(alt_label, "%.2f,%.2f", x, y);
+	label = alt_label;
+    }
 
     if (plot->invert_gc == NULL) {
 	create_selection_gc(plot);
@@ -1838,6 +1861,39 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
     return TRUE;
 }
 
+static void show_numbers_from_markers (GPT_SPEC *spec)
+{
+    PRN *prn;
+    double x, y;
+    int i, err = 0;
+
+    if (bufopen(&prn)) {
+	return;
+    } 
+
+    pputs(prn, _("VAR roots (real, imaginary)"));
+    pputs(prn, "\n\n");
+
+    for (i=0; i<spec->n_markers; i++) {
+	if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
+	    pprintf(prn, "%d: (%7.4f, %7.4f)\n", i+1, x, y);
+	} else {
+	    err = E_DATA;
+	    break;
+	}
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	gchar *title = g_strdup_printf("gretl: %s", _("VAR roots"));
+
+	view_buffer(prn, 36, 340, title, PRINT, NULL);
+	g_free(title);	
+    }
+}
+
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -1891,6 +1947,8 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 #endif 
     else if (!strcmp(item, _("OLS estimates"))) { 
 	do_graph_model(plot->spec);
+    } else if (!strcmp(item, _("Numerical values"))) {
+	show_numbers_from_markers(plot->spec);
     } else if (!strcmp(item, _("Edit"))) { 
 	start_editing_png_plot(plot);
     } else if (!strcmp(item, _("Close"))) { 
@@ -1957,6 +2015,7 @@ static void build_plot_menu (png_plot *plot)
 	N_("Print"),
 #endif
 	N_("OLS estimates"),
+	N_("Numerical values"),
 	N_("Edit"),
 	N_("Help"),
         N_("Close"),
@@ -2019,6 +2078,11 @@ static void build_plot_menu (png_plot *plot)
 #endif
 	if (!plot_has_regression_list(plot) &&
 	    !strcmp(plot_items[i], "OLS estimates")) {
+	    i++;
+	    continue;
+	}
+	if (!plot_is_roots(plot) && 
+	    !strcmp(plot_items[i], "Numerical values")) {
 	    i++;
 	    continue;
 	}	
