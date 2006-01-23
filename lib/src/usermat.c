@@ -97,9 +97,20 @@ static int add_user_matrix (gretl_matrix *M, const char *name)
     tmp = realloc(matrices, (n_matrices + 1) * sizeof *tmp);
     if (tmp == NULL) {
 	return E_ALLOC;
+    } else {
+	matrices = tmp;
     }
 
-    matrices = tmp;
+    if (is_user_matrix(M)) {
+	/* ensure uniqueness of matrix pointers */
+	gretl_matrix *Mcpy = gretl_matrix_copy(M);
+
+	if (Mcpy == NULL) {
+	    return E_ALLOC;
+	}
+	M = Mcpy;
+    }
+
     matrices[n_matrices] = user_matrix_new(M, name);
 
     if (matrices[n_matrices] == NULL) {
@@ -220,12 +231,14 @@ static int replace_user_matrix (user_matrix *u, gretl_matrix *M,
 	    /* is this always right? */
 	    gretl_matrix_free(M);
 	}
-    } else {
+    } else if (M != u->M) {
 #if MDEBUG
 	fprintf(stderr, " freeing u->M at %p, replacing with matrix at %p\n", u->M, M);
 #endif
 	gretl_matrix_free(u->M);
 	u->M = M;
+    } else {
+	fprintf(stderr, " no-op: 'replacing' matrix with itself!\n");
     }
 
     return err;
@@ -1779,13 +1792,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 
     switch (op) {
     case '\0':
-	/* We can generally get away with simply C = B, rather than a
-	   matrix copy, but _not_ if B is a user matrix */
-	if (is_user_matrix(B)) {
-	    C = gretl_matrix_copy(B);
-	} else {
-	    C = B;
-	}
+	C = B;
 	break;
     case '=':
 	C = matrix_test_equality(A, B, err);

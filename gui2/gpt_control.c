@@ -1484,25 +1484,41 @@ static void draw_selection_rectangle (png_plot *plot,
 		       rx, ry, rw, rh);
 }
 
+static int make_alt_label (gchar *alt, const gchar *label)
+{
+    double x, y;
+    int err = 0;
+
+    gretl_push_c_numeric_locale();
+
+    if (sscanf(label, "%lf,%lf", &x, &y) != 2) {
+	err = 1;
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    if (!err) {
+	sprintf(alt, "%.2f,%.2f", x, y);
+    }
+
+    return err;
+}
+
 #ifdef OLD_GTK
 
 static void
-write_label_to_plot (png_plot *plot, const gchar *label,
-		     gint x, gint y)
+write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 {
+    const gchar *label = plot->spec->markers[i];
     static GdkFont *label_font;
 
     if (plot_is_roots(plot)) {
 	gchar alt_label[12];
-	double x, y;
-
-	gretl_push_c_numeric_locale();
-	if (sscanf(label, "%lf,%lf", &x, &y) != 2) {
+	
+	if (make_alt_label(alt_label, label)) {
 	    return;
 	}
-	gretl_pop_c_numeric_locale();
 
-	sprintf(alt_label, "%.2f,%.2f", x, y);
 	label = alt_label;
     }
 
@@ -1542,23 +1558,19 @@ write_label_to_plot (png_plot *plot, const gchar *label,
 #else
 
 static void
-write_label_to_plot (png_plot *plot, const gchar *label,
-		     gint x, gint y)
+write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 {
+    const gchar *label = plot->spec->markers[i];
     PangoContext *context;
     PangoLayout *pl;
 
     if (plot_is_roots(plot)) {
 	gchar alt_label[12];
-	double x, y;
-
-	gretl_push_c_numeric_locale();
-	if (sscanf(label, "%lf,%lf", &x, &y) != 2) {
+	
+	if (make_alt_label(alt_label, label)) {
 	    return;
 	}
-	gretl_pop_c_numeric_locale();
 
-	sprintf(alt_label, "%.2f,%.2f", x, y);
 	label = alt_label;
     }
 
@@ -1694,8 +1706,7 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     if (best_match >= 0 && 
 	min_xdist < TOLDIST * xrange &&
 	min_ydist < TOLDIST * yrange) {
-	write_label_to_plot(plot, plot->spec->markers[best_match],
-			    pixel_x, pixel_y);
+	write_label_to_plot(plot, best_match, pixel_x, pixel_y);
 #ifndef OLD_GTK
 	/* flag the point as labeled already */
 	plot->spec->labeled[best_match] = 1;
@@ -1883,8 +1894,8 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
 
     for (i=0; i<spec->n_markers; i++) {
 	if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
-	    mod = sqrt(x*x + y*y);
-	    freq = atan2(y, x) / (2.0 * M_PI);
+	    freq = spec->data[i] / (2.0 * M_PI);
+	    mod = spec->data[spec->nobs + i];
 	    pprintf(prn, "%2d: (%7.4f, %7.4f, %7.4f, %7.4f)\n", i+1, 
 		    x, y, mod, freq);
 	} else {
