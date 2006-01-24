@@ -120,11 +120,35 @@ In element-wise multiplication if we write
 matrix C = A .* B
 \end{code}
 % 
-then $c_{ij} = a_{ij} \times b_{ij}$.  Likewise with element-wise
-division, $c_{ij} = a_{ij}/b_{ij}$. Element-wise exponentiation, as in
+then the result depends on the dimensions of $A$ and $B$.  Let $A$ be
+an $m \times n$ matrix and let $B$ be $p \times q$.  
+%
+\begin{itemize}
+\item If $m=p$ and $n=q$ then $C$ is $m\times n$ with $c_{ij} = a_{ij}
+  \times b_{ij}$.
+\item Otherwise, if $m=1$ and $n=q$, or $n=1$ and $m=p$, then $C$ is
+  $p\times q$ with $c_{ij} = b_{ij} \times a_k$, where $k=j$ if $m=1$
+  else $k=i$.
+\item Otherwise, if $p=1$ and $n=q$, or $q=1$ and $m=p$, then $C$ is
+  $m\times n$ with $c_{ij} = a_{ij} \times b_k$, where $k=j$ if $p=1$
+  else $k=i$.
+\item If none of the above conditions are satisfied the product is
+  undefined and an error is flagged.
+\end{itemize}
+
+With element-wise division, the two matrix operands must be of the
+same dimensions.  Given
 %
 \begin{code}
-C = A .^ k
+matrix C = A ./ B
+\end{code}
+% 
+the result is a matrix $C$ such that $c_{ij} = a_{ij}/b_{ij}$.
+
+Element-wise exponentiation, as in 
+%
+\begin{code}
+matrix C = A .^ B
 \end{code}
 % 
 produces $c_{ij} = a_{ij}^k$.  The variable $k$ must be a scalar or

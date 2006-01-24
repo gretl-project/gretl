@@ -1910,25 +1910,25 @@ gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a,
 				       const gretl_matrix *b,
 				       int *err)
 {
-    gretl_matrix *c;
-    int i, n;
+    gretl_matrix *c = NULL;
+    int i, j, k, n;
 
-    if (a->rows != b->rows || a->cols != b->cols) {
+    if (a->rows == b->rows && a->cols == b->cols) {
+	c = gretl_matrix_copy(a);
+	if (c != NULL) {
+	    n = c->rows * c->cols;
+	    for (i=0; i<n; i++) {
+		c->val[i] /= b->val[i];
+	    }
+	}	    
+    } else {
 	fputs("gretl_matrix_dot_divide: matrices not conformable\n", stderr);
 	*err = E_NONCONF;
 	return NULL;
     }
 
-    c = gretl_matrix_alloc(a->rows, a->cols);
     if (c == NULL) {
 	*err = E_ALLOC;
-	return NULL;
-    }
-
-    n = a->rows * a->cols;
-
-    for (i=0; i<n; i++) {
-	c->val[i] = a->val[i] / b->val[i];
     }
 
     return c;
