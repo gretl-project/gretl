@@ -2636,7 +2636,9 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     int vardiff = (opt & OPT_O);
     int df, n1, n2, n = pdinfo->n;
 
-    if (list[0] < 2) return E_ARGS;
+    if (list[0] < 2) {
+	return E_ARGS;
+    }
 
     x = malloc(n * sizeof *x);
     if (x == NULL) {

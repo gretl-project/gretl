@@ -1962,15 +1962,15 @@
 	  </para>
 	</li>
 	
-	<li><para>Special statistical functions: <func>pvalue</func>
-	    and <func>critical</func> (see below), <func>cnorm</func>
-	    (standard normal CDF), <func>dnorm</func> (standard normal
-	    PDF), <func>qnorm</func> (standard normal quantiles),
-	    <func>resample</func> (resample a series with replacement,
-	    for bootstrap purposes), <func>hpfilt</func>
+	<li><para>Special statistical functions: <func>pvalue</func> and
+	    <func>critical</func> (see below), <func>cnorm</func> (standard
+	    normal CDF), <func>dnorm</func> (standard normal PDF),
+	    <func>qnorm</func> (standard normal quantiles, or inverse of
+	    standard normal PDF), <func>resample</func> (resample a series with
+	    replacement, for bootstrap purposes), <func>hpfilt</func>
 	    (Hodrick&ndash;Prescott filter: this function returns the
-	    <quote>cycle</quote> component of the series),
-	    <func>bkfilt</func> (Baxter&ndash;King bandpass filter).
+	    <quote>cycle</quote> component of the series), <func>bkfilt</func>
+	    (Baxter&ndash;King bandpass filter).
 	    </para> </li>
 
 	<li>
@@ -2070,6 +2070,17 @@
 	genr c1 = critical(t, 20, 0.025)
 	genr c2 = critical(F, 4, 48, 0.05)
       </code>
+
+      <para>
+	The functions relating to the standard normal density work thus, for a
+	given argument <mathvar>x</mathvar>: <func>cnorm</func> returns the area
+	under the standard normal density function integrated from minus
+	infinity to <mathvar>x</mathvar>; <func>dnorm</func> returns the 
+	standard normal density evaluated at <mathvar>x</mathvar>; and
+	<func>qnorm</func> returns the <mathvar>z</mathvar> such that the area
+	under the standard normal density, integrated from minus infinity to
+	<mathvar>z</mathvar>, equals <mathvar>x</mathvar>.
+      </para>
 
       <para>
 	The <func>fracdiff</func> function takes two arguments: the

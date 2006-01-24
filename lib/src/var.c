@@ -1662,21 +1662,36 @@ static int *
 maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, int *err)
 {
-    int needsep, addconst = 0, addseas = 0;
+    int needsep;
+    int addconst = 0;
+    int addtrend = 0;
+    int addseas = 0;
     int *vlist = NULL;
-    int i, l0, di0 = 0;
+    int i, l0, vt, di0 = 0;
 
     if (!(opt & OPT_N)) {
 	addconst = 1;
     }
 
+    if (opt & OPT_T) {
+	addtrend = 1;
+    }    
+
     if (pdinfo->pd > 1 && (opt & OPT_D)) {
 	addseas = 1;
     }
 
-    if (!addconst && !addseas) {
+    if (!addconst && !addtrend && !addseas) {
 	return NULL;
     }
+
+    if (addtrend) {
+	vt = gettrend(pZ, pdinfo, 0);
+	if (vt == 0) {
+	    *err = E_ALLOC;
+	    return NULL;
+	}
+    }	
 
     if (addseas) {
 	di0 = dummy(pZ, pdinfo, 0);
@@ -1687,11 +1702,9 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     needsep = !gretl_list_has_separator(list);
-    l0 = list[0] + needsep;
 
-    if (addconst) {
-	l0 += 1;
-    }
+    l0 = list[0] + needsep + addconst + addtrend;
+
     if (addseas) {
 	l0 += pdinfo->pd - 1;
     }
@@ -1714,6 +1727,9 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
 		vlist[j++] = di0 + i;
 	    }
 	}
+	if (addtrend) {
+	    vlist[j++] = vt;
+	}
 	if (addconst) {
 	    vlist[j++] = 0;
 	}
@@ -1734,6 +1750,7 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
  *       if includes %OPT_D, add seasonal dummies;
  *       if includes %OPT_N, do not include a constant.
  *       if includes %OPT_Q, do not show individual regressions.
+ *       if includes %OPT_T, include a linear trend.
  * @prn: gretl printing struct.
  *
  * Estimate a vector auto-regression (VAR), print and save
@@ -1750,6 +1767,7 @@ GRETL_VAR *full_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
 
     gretl_list_purge_const(list);
+
     vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, &err);
 
     if (!err) {
@@ -2114,7 +2132,12 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    vlists.reglist[1] = 0;
 	} else {
 	    vlists.reglist[1] = gettrend(pZ, pdinfo, 0);
+	    if (vlists.reglist[1] == 0) {
+		err = E_ALLOC;
+		goto var_bailout;
+	    }
 	}
+
 	if (vlists.reglist[0] == 1) {
 	    /* degenerate case */
 	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
@@ -2397,7 +2420,14 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
 
     if (jcode(jvar) == J_UNREST_TREND) {
 	/* add trend to VAR list */
-	jvar->jinfo->varlist[k++] = gettrend(pZ, pdinfo, 0);
+	int vt = gettrend(pZ, pdinfo, 0);
+
+	if (vt == 0) {
+	    jvar->err = E_ALLOC;
+	    goto bailout;
+	} else {
+	    jvar->jinfo->varlist[k++] = vt;
+	}
     }	
 
     if (jcode(jvar) >= J_UNREST_CONST) {

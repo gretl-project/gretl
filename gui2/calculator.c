@@ -836,7 +836,7 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
     /* label */
     gtk_table_resize(GTK_TABLE (tbl), *tbl_len, 2);
     tempwid = gtk_label_new(_(label));
-    gtk_misc_set_alignment (GTK_MISC (tempwid), 1, 0.5);
+    gtk_misc_set_alignment(GTK_MISC (tempwid), 1, 0.5);
     gtk_table_attach_defaults(GTK_TABLE (tbl), 
 			      tempwid, 0, 1, *tbl_len - 1, *tbl_len);
     gtk_widget_show(tempwid);

@@ -907,7 +907,7 @@ int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
     }
     
     if (dataset_add_series(1, pZ, pdinfo)) {
-	return TREND_FAILED;
+	return 0; /* error: valid value cannot == 0 */
     }
 
     for (t=0; t<pdinfo->n; t++) {

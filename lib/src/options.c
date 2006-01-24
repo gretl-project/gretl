@@ -192,6 +192,7 @@ struct gretl_option gretl_opts[] = {
     { VAR,      OPT_N, "nc" },
     { VAR,      OPT_Q, "quiet" }, 
     { VAR,      OPT_R, "robust" }, 
+    { VAR,      OPT_T, "trend" }, 
     { VECM,     OPT_A, "crt" },
     { VECM,     OPT_D, "seasonals" },
     { VECM,     OPT_F, "variance-decomp" },

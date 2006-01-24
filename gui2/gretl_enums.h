@@ -74,6 +74,7 @@ enum extra_cmds {
     SYS_RESTR,
     VECM_RESTR,
     ELLIPSE,
+    LAGS_DIALOG,
     GUI_CMD_MAX
 };
 

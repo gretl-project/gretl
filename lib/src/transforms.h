@@ -20,8 +20,6 @@
 #ifndef TRANSFORMS_H
 #define TRANSFORMS_H
 
-#define TREND_FAILED 9999
-
 int default_lag_order (const DATAINFO *pdinfo);
 
 int is_standard_lag (int v, const DATAINFO *pdinfo);

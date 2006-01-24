@@ -381,7 +381,7 @@ static int real_adf_test (int varno, int order, int niv,
 	if (i >= UR_TREND) {
 	    k = 3 + order;
 	    list[k] = gettrend(pZ, pdinfo, 0);
-	    if (list[k] == TREND_FAILED) {
+	    if (list[k] == 0) {
 		err = E_ALLOC;
 		goto bailout;
 	    }
@@ -390,7 +390,7 @@ static int real_adf_test (int varno, int order, int niv,
 	if (i == UR_QUAD_TREND) {
 	    k = 4 + order;
 	    list[k] = gettrend(pZ, pdinfo, 1);
-	    if (list[k] == TREND_FAILED) {
+	    if (list[k] == 0) {
 		err = E_ALLOC;
 		goto bailout;
 	    }
@@ -539,8 +539,12 @@ int kpss_test (int order, int varno, double ***pZ,
     list[0] = (2 + hastrend);
     list[1] = varno;
     list[2] = 0;
+
     if (hastrend) {
 	list[3] = gettrend(pZ, pdinfo, 0);
+	if (list[3] == 0) {
+	    return E_ALLOC;
+	}
     }
 
     /* OPT_M: reject missing values within sample range */

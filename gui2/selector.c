@@ -48,6 +48,7 @@ struct _selector {
     GtkWidget *ruvars;
     GtkWidget *default_check;
     GtkWidget *add_button;
+    GtkWidget *lags_button;
     GtkWidget *extra[N_EXTRA];
     int code;
     int active_var;
@@ -99,6 +100,8 @@ struct _selector {
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM)
 
+#define WANT_LAGSEL(c) (c == OLS) /* FIXME add others */
+
 static int default_var;
 static int want_seasonals;
 static int default_order;
@@ -125,6 +128,7 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 				   gpointer data);
 static gint add_right_click (GtkWidget *widget, GdkEventButton *event, 
 			     selector *sr);
+static void lags_dialog_driver (selector *sr);
 
 static int selection_at_max (selector *sr, int nsel)
 {
@@ -1968,7 +1972,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
-	tmp = gtk_label_new(_("Deterministic variables"));
+	tmp = gtk_label_new(_("Exogenous variables"));
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
 	auxiliary_varlist_box(sr, right_vbox);
@@ -2018,10 +2022,10 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     if (VEC_CODE(code)) {
 	dlgheight = 450;
-	if (code == VECM) {
+	if (code == VAR || code == VECM) {
 	    dlgheight += 80;
 	}
-    }
+    } 
 
     if (WANT_TOGGLES(code)) {
 	dlgheight += 40;
@@ -2041,6 +2045,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     sr->ruvars = NULL;
     sr->default_check = NULL;
     sr->add_button = NULL;
+    sr->lags_button = NULL;
 
     for (i=0; i<N_EXTRA; i++) {
 	sr->extra[i] = NULL;
@@ -2292,6 +2297,8 @@ build_selector_switches (selector *sr)
 	if (sr->code == VAR) {
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
 	    pack_switch(tmp, sr, TRUE, TRUE, OPT_N);
+	    tmp = gtk_check_button_new_with_label(_("Include a trend"));
+	    pack_switch(tmp, sr, FALSE, FALSE, OPT_T);
 	} else {
 	    tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
 	    pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
@@ -2358,6 +2365,25 @@ build_selector_radios (selector *sr)
 	pack_switch(button, sr, (opts[i] == deflt), FALSE, opts[i]);
     }
 }
+
+static void lag_selector_button (selector *sr)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
+    sr->lags_button = gtk_button_new_with_label(_("lag order..."));
+
+    /* FIXME add callback to enable this when vars are selected */
+
+    g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
+		     G_CALLBACK(lags_dialog_driver), sr);
+    gtk_widget_set_sensitive(sr->lags_button, FALSE);
+
+    gtk_box_pack_start(GTK_BOX(hbox), sr->lags_button, FALSE, FALSE, 0);
+    gtk_widget_show(sr->lags_button);
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);
+}    
 
 static void 
 build_selector_buttons (selector *sr, void (*okfunc)())
@@ -2434,6 +2460,11 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     selector *sr;
     gchar *topstr;
     int i;
+
+#if 0
+    int list[5] = {4,1,2,3,4};
+    lags_dialog_driver(list);
+#endif
 
     if (open_selector != NULL) {
 	gdk_window_raise(open_selector->window);
@@ -2610,6 +2641,13 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     if (WANT_RADIOS(sr->code)) {
 	build_selector_radios(sr);
     }
+
+#if 0 /* not ready yet! */
+    /* and lag selection for some */
+    if (dataset_is_time_series(datainfo) && WANT_LAGSEL(sr->code)) {
+	lag_selector_button(sr);
+    } 
+#endif   
 
     /* buttons: OK, Clear, Cancel, Help */
     build_selector_buttons(sr, okfunc);
@@ -3145,3 +3183,284 @@ void maybe_clear_selector (const int *dlist)
 	}
     }
 }
+
+/* ----------- lag selection apparatus -------------- */
+
+typedef struct var_lag_info_ var_lag_info;
+
+struct var_lag_info_ {
+    int nvl;
+    int lmin;
+    int lmax;
+    char *omit;
+    GtkWidget *spin1;
+    GtkWidget *spin2;
+    GtkWidget *entry;
+    var_lag_info *vlp;
+};
+
+static void lag_omit_callback (GtkWidget *w, gpointer p)
+{
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+    var_lag_info *vlinfo = (var_lag_info *) p;
+
+    free(vlinfo->omit);
+    vlinfo->omit = g_strdup(s);
+
+    if (vlinfo->vlp != NULL) {
+	/* set the default */
+	var_lag_info *vlset = vlinfo->vlp;
+	GtkWidget *e;
+	int i;
+
+	for (i=2; i<vlinfo->nvl; i++) {
+	    e = vlset[i].entry;
+	    if (e != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(vlset[i].entry), s);
+	    }
+	}
+    }
+}
+
+static void lag_set_callback (GtkWidget *w, gpointer p)
+{
+    var_lag_info *vlinfo;
+    double dlag;
+    int *lag;
+
+    vlinfo = (var_lag_info *) g_object_get_data(G_OBJECT(w), "vlinfo");
+
+    lag = (w == vlinfo->spin1)? &vlinfo->lmin : &vlinfo->lmax;
+
+#ifdef OLD_GTK
+    *lag = (int) GTK_ADJUSTMENT(w)->value;
+#else
+    *lag = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+#endif
+
+    dlag = *lag;
+
+    /* fix-ups, if need be */
+    if (w == vlinfo->spin1 && vlinfo->spin2 != NULL) {
+	int lmax = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(vlinfo->spin2));
+
+	if (lmax < *lag) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo->spin2), dlag);
+	}
+    } else if (vlinfo->spin1 != NULL) {
+	int lmin = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(vlinfo->spin1));
+
+	if (lmin > *lag) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo->spin1), dlag);
+	}
+    }	
+
+    if (vlinfo->vlp != NULL) {
+	/* set the default */
+	var_lag_info *vlset = vlinfo->vlp;
+	GtkWidget *s;
+	int i;
+
+	for (i=2; i<vlinfo->nvl; i++) {
+	    s = (w == vlinfo->spin1)? vlset[i].spin1 : vlset[i].spin2;
+	    if (s != NULL) {
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(s), dlag);
+	    }
+	}
+    }
+}
+
+static int lags_dialog (const int *list, var_lag_info *vlinfo) 
+{
+    GtkWidget *lbl, *dialog, *myvbox;
+    GtkWidget *tbl, *tmp, *hbox;
+    gint tbl_len;
+    double lmax, ldef;
+    int i, j, k;
+    int ret = 0;
+
+    dialog = gretl_dialog_new("Select lags", NULL, GRETL_DLG_BLOCK);
+    myvbox = gtk_vbox_new(FALSE, 5);
+
+    tbl_len = list[0] + 3;
+    lmax = (datainfo->t2 - datainfo->t1) / list[0];
+    ldef = datainfo->pd;
+
+    tbl = gtk_table_new(tbl_len, 5, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(myvbox), tbl, FALSE, FALSE, 0);
+
+    /* row 0 of table: headings */
+    lbl = gtk_label_new("Variable:");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, 0, 1);
+    lbl = gtk_label_new("lags:");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 1, 4, 0, 1);
+    lbl = gtk_label_new("omitting:");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 4, 5, 0, 1);
+
+    j = 0;
+    k = 1;
+    for (i=1; i<tbl_len; i++) {
+
+	if (i == 2) {
+	    /* separator following dependent var */
+	    tmp = gtk_hseparator_new();
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 5, i, i+1);
+	    continue;
+	}
+
+	if (i == 3) {
+	    lbl = gtk_label_new("default");
+	} else {
+	    lbl = gtk_label_new(datainfo->varname[list[k++]]);
+	}
+	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, i, i+1);
+
+	vlinfo[j].spin1 = gtk_spin_button_new_with_range(0, lmax, 1);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].spin1, 1, 2, i, i+1);
+	g_object_set_data(G_OBJECT(vlinfo[j].spin1), "vlinfo", &vlinfo[j]);
+	g_signal_connect(G_OBJECT(vlinfo[j].spin1), "value-changed", 
+			 G_CALLBACK(lag_set_callback), NULL);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin1), 0.0);
+
+	lbl = gtk_label_new("to:");
+	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, i, i+1);
+
+	vlinfo[j].spin2 = gtk_spin_button_new_with_range(0, lmax, 1);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].spin2, 3, 4, i, i+1);
+	g_object_set_data(G_OBJECT(vlinfo[j].spin2), "vlinfo", &vlinfo[j]);
+	g_signal_connect(G_OBJECT(vlinfo[j].spin2), "value-changed", 
+			 G_CALLBACK(lag_set_callback), NULL);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin2), 
+				  (j == 0)? 0.0 : ldef);
+
+	vlinfo[j].entry = gtk_entry_new();
+	gtk_entry_set_width_chars(GTK_ENTRY(vlinfo[j].entry), 12); /* FIXME */
+	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].entry, 4, 5, i, i+1);
+	g_signal_connect(G_OBJECT(vlinfo[j].entry), "changed", 
+			 G_CALLBACK(lag_omit_callback), &vlinfo[j]);
+
+	j++;
+    }
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show_all(hbox);
+
+    /* Create the "OK" button */
+    tmp = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(dummy_call), NULL);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), dialog);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
+
+    /* "Cancel" button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    /* "Help" button */
+    context_help_button(GTK_DIALOG(dialog)->action_area, LAGS_DIALOG);
+
+    gtk_widget_show(dialog);    
+
+    return ret;
+}
+
+static int 
+lag_list_for_var (const int *list, int i, int lmin, int lmax, char *omit)
+{
+    int v = list[i];
+    int *olist = NULL;
+    int *laglist = NULL;
+
+    /* This is not hooked up to anything yet.  We need to somehow feed
+       the lags information back into the main selector, or store it
+       in some static location.
+    */
+
+    if (omit != NULL) {
+	charsub(omit, ',', ' ');
+	olist = gretl_list_from_string(omit);
+    }
+
+    fprintf(stderr, "var %s, lags %d to %d\n", datainfo->varname[v], lmin, lmax);
+
+    if (olist != NULL) {
+	int nl = lmax - lmin + 1;
+	int j, k = 1;
+
+	if (nl > 0) {
+	    laglist = gretl_list_new(nl);
+	    laglist[0] = 0;
+	    for (j=lmin; j<=lmax; j++) { 
+		if (!in_gretl_list(olist, j)) {
+		    laglist[k++] = j;
+		    laglist[0] += 1;
+		}
+	    }
+	}
+
+	if (laglist != NULL) {
+	    printlist(laglist, "laglist");
+	    free(laglist);
+	}
+	
+	free(olist);
+    }
+
+    return 0;
+}
+
+static void lags_dialog_driver (selector *sr)
+{
+    int nvl, DFLT = 1;
+    var_lag_info *vlinfo;
+    int i, resp;
+    int list[5] = {4,1,2,3,4}; 
+
+    /* The above is (obviously) just for testing.  We need to
+       somehow extract the dependent var and list of 
+       independent variables from the "selector", sr.
+    */
+    
+    nvl = list[0] + 1;
+
+    vlinfo = mymalloc(nvl * sizeof *vlinfo);
+    if (vlinfo == NULL) {
+	return;
+    }
+
+    /* position 1 holds the default setter for the
+       independent variables */
+
+    for (i=0; i<nvl; i++) {
+	vlinfo[i].nvl = nvl;
+	vlinfo[i].lmin = 0;
+	vlinfo[i].lmax = 0;
+	vlinfo[i].omit = NULL;
+	vlinfo[i].spin1 = NULL;
+	vlinfo[i].spin2 = NULL;
+	vlinfo[i].entry = NULL;
+	vlinfo[i].vlp = (i == DFLT)? vlinfo : NULL;
+    }
+
+    resp = lags_dialog(list, vlinfo);
+
+    for (i=0; i<nvl; i++) {
+	if (resp == 0 && i != DFLT) {
+	    lag_list_for_var(list, (i == 0)? 1 : i,
+			     vlinfo[i].lmin, vlinfo[i].lmax, 
+			     vlinfo[i].omit);
+	}
+	if (vlinfo[i].omit != NULL) {
+	    free(vlinfo[i].omit);
+	}
+    }
+
+    free(vlinfo);
+}
+
