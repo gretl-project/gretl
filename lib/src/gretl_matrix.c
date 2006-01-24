@@ -1911,7 +1911,7 @@ gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a,
 				       int *err)
 {
     gretl_matrix *c = NULL;
-    int i, j, k, n;
+    int i, n;
 
     if (a->rows == b->rows && a->cols == b->cols) {
 	c = gretl_matrix_copy(a);
