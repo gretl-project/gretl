@@ -1,0 +1,164 @@
+\typeout{CVSId: $Id$}
+\chapter{Cointegración y Modelos de Correción del Error}
+\label{vecm-explanation}
+
+\section{El contraste de cointegración de Johansen}
+\label{johansen-test}
+
+El contraste de cointegración de Johansen requiere tener en cuenta
+la hipótesis que está uno dispuesto a establecer sobre los
+componentes deterministas, lo que deriva en los famosos ``cinco
+casos.'' Para ilustrar de forma completa y exhaustiva los cinco
+casos se requiere una gran cantidad de álgebra matricial, pero
+para comprender esta cuestión de manera intuitiva se puede
+utilizar un ejemplo sencillo. Sea $x_t$ una serie que se comporta
+como sigue
+\[ x_t = m + x_{t-1} + \varepsilon_t \]
+
+donde $m$ es un número real y $\varepsilon_t$ es un ruido blanco.
+Es fácil demostrar que $x_t$ sigue un paseo aleatorio que fluctúa
+alrededor de una tendencia determinista con pendiente igual a $m$.
+En el caso especial $m$ = 0, la tendencia determinista desaparece
+y $x_t$ es simplemente un paseo aleatorio.
+
+Considera ahora otro proceso $y_t$, definido por
+\[ y_t = k + x_t + u_t \]
+
+donde, de nuevo, $k$ es un número real y $u_t$ sigue un proceso de
+ruido blanco. Dado que $u_t$ es estacionario por definición, $x_t$
+e $y_t$ están cointegrados: esto es, su diferencia
+\[ z_t = y_t - x_t = k + u_t \]
+
+es un proceso estacionario. Para $k$ = 0, $z_t$ es un simple ruido
+blanco de media cero, mientras que si $k$ $\ne$ 0 el proceso $z_t$
+es un ruido blanco con media distinta de cero.
+
+Las dos ecuaciones anteriores se pueden representar conjuntamente
+como un sistema VAR(1).
+%
+\[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
+  \begin{array}{c} k + m \\ m \end{array} \right] + \left[
+  \begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
+  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \left[
+  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
+\right] \]
+%
+o en forma de un Modelo de Corrección de Error (MCE)
+%
+\begin{eqnarray*}
+  \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = &
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{rr} -1 & 1 \\ 0 & 0 \end{array} \right]
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] +
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = &
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
+  \left[  \begin{array}{rr} 1 & -1 \end{array} \right]
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] +
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = &
+  \mu_0 + \alpha \beta^{\prime} \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t =
+  \mu_0 + \alpha z_{t-1} + \eta_t ,
+\end{eqnarray*}
+
+donde $\beta$ es el vector de cointegración y $\alpha$ es el
+vector de ``pesos'' o de ``ajuste'' hacia el equilibrio.
+%
+%
+Podemos considerar ahora tres posibles casos:
+
+\begin{enumerate}
+\item $m$ $\ne$ 0: En este caso $x_t$ presenta una tendencia
+lineal determinista, tal y como hemos comentado anteriormente; por
+lo tanto $y_t$ también la presenta, ya que en media se mantiene a
+una distancia $k$ de la serie $x_t$. El vector $\mu_0$ no está
+restringido. Este es el caso por defecto de la instrucción
+\cmd{vecm} de gretl.
+
+\item $m$ = 0 y $k$ $\ne$ 0: En este caso, $x_t$ no presenta una
+tendencia lineal determinista y en consecuencia $y_t$ tampoco. Sin
+embargo, la distancia media entre $y_t$ y $x_t$ no es cero. El
+vector $\mu_0$ viene dado por
+  \[
+  \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
+  \]
+
+el cual no es cero por lo que el MCE anterior tiene un término
+constante. Sin embargo, el vector de parámetros asociados a la
+constante está sujeto a la restricción de que su segundo elemento
+tiene que ser 0. En términos más generales, $\mu_0$ es
+proporcional al vector $\alpha$. Notese que el MCE también se
+puede escribir de la siguiente forma:
+%
+
+ \[
+  \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
+  = \left[ \begin{array}{r} -1 \\ 0 \end{array} \right] \left[
+    \begin{array}{rrr} 1 & -1 & -k \end{array} \right] \left[
+    \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] +
+  \left[ \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t
+    \end{array} \right]
+  \]
+%
+donde el intercepto está dentro del vector de cointegración. Este
+caso se conoce con el nombre de ``constante restringida''; se
+puede elegir en el comando de gretl \cmd{vecm} utilizando la
+etiqueta opcional \verb+--rc+
+
+\item $m$ = 0 y $k$ = 0: Este caso es el más restrictivo:
+claramente, ni $x_t$ ni $y_t$ presentan tendencias deterministas,
+y la distancia media entre las dos series es cero. El vector
+$\mu_0$ también es 0, lo cual explica porqué este caso se denomina
+``sin constante.'' Este último caso se especifica utilizando la
+etiqueta opcional \verb+--nc+ con la instrucción \cmd{vecm}.
+
+\end{enumerate}
+En general en la práctica, la elección entre estas tres
+posibilidades se basa en una mezcla entre observación empírica y
+razonamiento económico. Si las variables de estudio parecen
+mostrar una tendencia lineal entonces no se debería imponer
+ninguna restricción sobre el intercepto. En otro caso, nos podemos
+preguntar si tiene sentido especificar una relación de
+cointegración que incluya un intercepto distinto de cero.  Un
+ejemplo donde esto sí es razonable es en la relación entre dos
+tipos de interés: en general, estas variables no presentan
+tendencia determinista, pero el VAR puede aún tener un intercepto
+porque la diferencia entre los dos (el ``spread o diferencial de
+los tipos de interés'') puede ser estacionario alrededor de una
+media distinta de cero (por ejemplo porque hay una prima de riesgo
+o de liquidez).
+%
+El ejemplo anterior se puede generalizar en tres direcciones:
+%
+\begin{enumerate}
+\item Si el VAR es de orden mayor que uno, el algebra se complica
+más pero se obtienen las mismas conclusiones.
+
+\item Si las series consideradas en el análisis del VAR son más de
+dos, el rango de cointegración $r$ puede ser mayor que 1. En ese
+caso, $\alpha$ es una matriz con $r$ columnas, y el caso de la
+constante restringida implicaría la restricción de que $\mu_0$
+debería de ser una combinación lineal de las columnas de $\alpha$.
+
+\item Si en el modelo se incluye una tendencia lineal $t$, la
+parte determinista del VAR es en este caso $\mu_0 + \mu_1 t$. El
+razonamiento es prácticamente el mismo que antes excepto que ahora
+la atención se centra en $\mu_1$ más que en $\mu_0$. El caso
+anterior de ``la constante restringida'' que se ha discutido antes
+sería ahora el caso de una ``tendencia restringida'' , tal que la
+o las relaciones de cointegración incluyen una tendencia pero las
+primeras diferencias de las variables en cuestión no. En el caso
+de una tendencia no restringida, esta aparece tanto en las
+relaciones de cointegración como en las primeras diferencias de
+las variables, lo cual corresponde con la presencia de una
+tendencia cuadrática en las series en niveles. Estos dos casos se
+especifican con las etiquetas opcionales \verb+--crt+  y
+\verb+--ct+, respectivamente, utilizando el comando \cmd{vecm}.
+\end{enumerate}
+
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End:
