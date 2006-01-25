@@ -2176,25 +2176,25 @@
 	</li>
 	<li>
 	  <para>
-	    <func>$coeff</func>(<repl>var</repl>): estimated coefficient for
+	    <lit>$coeff</lit>(<repl>var</repl>): estimated coefficient for
 	    variable <repl>var</repl>
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>$stderr</func>(<repl>var</repl>): estimated standard error for
+	    <lit>$stderr</lit>(<repl>var</repl>): estimated standard error for
 	    variable <repl>var</repl>
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>$rho</func>(<repl>i</repl>): <repl>i</repl>th order
+	    <lit>$rho</lit>(<repl>i</repl>): <repl>i</repl>th order
 	    autoregressive coefficient for residuals
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>$vcv</func>(<repl>x1</repl>,<repl>x2</repl>): estimated
+	    <lit>$vcv</lit>(<repl>x1</repl>,<repl>x2</repl>): estimated
 	    covariance between coefficients for the variables <repl>x1</repl>
 	    and <repl>x2</repl> 
 	  </para>
@@ -3287,6 +3287,49 @@
     <gui-access>
       <menu-path>/Data/Add variables/lags of selected variables</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="lags-dialog" section="Estimation" context="gui"
+    label="Lag selection box">
+
+    <description>
+      <para>
+	In this dialog you can select the lag order for the independent
+	variables in a time-series model, and in some cases for the dependent
+	variable also.  (But note that the common lag order for vector models
+	such as VARs and VECMs is handled separately, via a selection spinner in
+	the main model dialog box.)
+      </para>
+
+      <para>
+	The spinners on the left let you select a range of consecutive lags for
+	any given variable. To specify non-consecutive lags, click the check box
+	next to the entry field titled <quote>specific lags</quote>.  This
+	activates the entry box, into which you can type a list of lags,
+	separated by spaces.
+      </para>
+
+      <para>
+	The row marked <quote>default</quote> offers a quick way to set a common
+	lag specification for all the independent variables: values set in that
+	row are copied to all the others (apart from the dependent variable, if
+	present).  
+      </para>
+
+      <para>
+	The dependent variable is treated specially: the minimum lag must be
+	zero, which places the current value of the variable on the left-hand
+	side of the model.  Any higher lags appear with the independent
+	variables on the right-hand side of the model.
+      </para>
+
+      <para>
+	Values selected in this dialog are remembered for the duration of your
+	session with a given dataset.
+      </para>
+
+    </description>
 
   </command>
 

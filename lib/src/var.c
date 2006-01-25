@@ -1667,7 +1667,8 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
     int addtrend = 0;
     int addseas = 0;
     int *vlist = NULL;
-    int i, l0, vt, di0 = 0;
+    int vt = 0, di0 = 0;
+    int i, l0;
 
     if (!(opt & OPT_N)) {
 	addconst = 1;

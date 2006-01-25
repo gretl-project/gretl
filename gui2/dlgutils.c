@@ -26,9 +26,9 @@
 
 #include "system.h"
 
-/* Various buttons, usable in several sorts of dialogs */
-
 #ifdef OLD_GTK
+
+/* compatibility functions */
 
 GtkWidget *standard_button (int code)
 {
@@ -47,7 +47,21 @@ GtkWidget *standard_button (int code)
     return gtk_button_new_with_label(_(button_strings[code]));
 }
 
+GtkWidget *
+gtk_spin_button_new_with_range (double lo, double hi, double step)
+{
+    GtkAdjustment *adj;
+    GtkWidget *sb;
+
+    adj = (GtkAdjustment *) gtk_adjustment_new(lo, lo, hi, step, 10 * step, 0);
+    sb = gtk_spin_button_new(adj, 0, 0);
+
+    return sb;
+}
+
 #endif
+
+/* Various buttons, usable in several sorts of dialogs */
 
 GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
 {

@@ -124,6 +124,7 @@ static struct gui_help_item gui_help_items[] = {
     { MODEL_RESTR,    "restrict-model" },
     { SYS_RESTR,      "restrict-system" },
     { VECM_RESTR,     "restrict-vecm" },
+    { LAGS_DIALOG,    "lags-dialog" },
     { -1,          NULL },
 };
 

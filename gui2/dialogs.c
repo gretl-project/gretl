@@ -274,20 +274,6 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     return FALSE;
 }
 
-#ifdef OLD_GTK
-static GtkWidget *
-gtk_spin_button_new_with_range (double lo, double hi, double step)
-{
-    GtkAdjustment *adj;
-    GtkWidget *sb;
-
-    adj = (GtkAdjustment *) gtk_adjustment_new(lo, lo, hi, step, 10 * step, 0);
-    sb = gtk_spin_button_new(adj, 0, 0);
-
-    return sb;
-}
-#endif
-
 static void vbox_add_hsep (GtkWidget *vbox)
 {
     GtkWidget *hs = gtk_hseparator_new();

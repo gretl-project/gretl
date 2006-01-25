@@ -220,7 +220,7 @@ int winfork (char *cmdline, const char *dir, int wshow,
 
 int gretl_spawn (char *cmdline)
 {
-    return winfork(cndline, NULL, SW_SHOWMINIMIZED, 0);
+    return winfork(cmdline, NULL, SW_SHOWMINIMIZED, 0);
 }
 
 char *desktop_path (void)
