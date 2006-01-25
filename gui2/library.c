@@ -2754,7 +2754,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	    /* non-convergence info? */
 	    view_buffer(prn, 78, 400, _("gretl: ARMA"), PRINT, NULL);
 	} else if (action == GARCH && (cmd.opt & OPT_V)) {
-	    /* non-convergence info? */
+	    /* ditto */
 	    view_buffer(prn, 78, 400, _("gretl: GARCH"), PRINT, NULL);
 	} else {
 	    gretl_print_destroy(prn);

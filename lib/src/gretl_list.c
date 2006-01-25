@@ -396,11 +396,12 @@ int *gretl_list_copy (const int *src)
  * gretl_list_from_string:
  * @liststr: string representation of list of integers.
  *
- * Reads a string containing a list of integers and constructs
- * an array of these integers.  The first element is the number
- * of integers that follow.
+ * Reads a string containing a list of integers, separated by
+ * spaces and/or commas and possibly wrapped in parentheses,
+ * and constructs an array of these integers.  The first 
+ * element is the number of integers that follow.
  *
- * Returns: the allocated array.
+ * Returns: the allocated array, or %NULL on failure.
  */
 
 int *gretl_list_from_string (const char *liststr)
@@ -411,8 +412,8 @@ int *gretl_list_from_string (const char *liststr)
     int n = 0;
 
     while (*s) {
-	while (*s == ' ') s++;
-	if (sscanf(s, "%7s", numstr)) {
+	s += strspn(s, " ,()");
+	if (*s && sscanf(s, "%7[^ ,()]", numstr)) {
 	    n++;
 	    s += strlen(numstr);
 	}
@@ -422,18 +423,16 @@ int *gretl_list_from_string (const char *liststr)
 	return NULL;
     }
 
-    list = malloc((n + 1) * sizeof *list);
+    list = gretl_list_new(n);
     if (list == NULL) {
 	return NULL;
     }
 
-    list[0] = n;
-
     s = liststr;
     n = 1;
     while (*s) {
-	while (*s == ' ') s++;
-	if (sscanf(s, "%7s", numstr)) {
+	s += strspn(s, " ,()");
+	if (*s && sscanf(s, "%7[^ ,()]", numstr)) {
 	    list[n++] = atoi(numstr);
 	    s += strlen(numstr);
 

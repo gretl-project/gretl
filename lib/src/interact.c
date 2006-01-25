@@ -46,10 +46,11 @@
 #include "laginfo.c"
 
 typedef struct {
-    int firstlag;
-    int lastlag;
-    int varnum;
-    char varname[VNAMELEN];
+    int v;
+    char vname[VNAMELEN];
+    int lmin;
+    int lmax;
+    int *laglist;
 } LAGVAR;
 
 static void get_optional_filename (const char *line, CMD *cmd);
@@ -393,76 +394,97 @@ static void grab_gnuplot_literal_block (char *s, CMD *cmd)
 
 #define LAG_DEBUG 0
 
+static int get_contiguous_lags (LAGVAR *lv,
+				const char *l1str, const char *l2str,
+				const double **Z, const DATAINFO *pdinfo)
+{
+    const char *p;
+    int i, v, lag, lsign;
+    int err = 0;
+
+    for (i=0; i<2 && !err; i++) {
+	p = (i == 0)? l1str : l2str;
+
+	if (*p == '0') {
+	    lsign = 1;
+	} else if (*p == '-') {
+	    lsign = 1;
+	    p++;
+	} else if (*p == '+') {
+	    lsign = -1;
+	    p++;
+	} else {
+	    err = 1;
+	    break;
+	}
+
+	if (isdigit(*p)) {
+	    lag = atoi(p);
+	} else {
+	    v = varindex(pdinfo, p);
+	    if (v < pdinfo->v) {
+		lag = Z[v][0];
+	    } else {
+		err = 1;
+	    }
+	}
+
+	if (!err) {
+	    if (i == 0) {
+		lv->lmin = lsign * lag;
+	    } else {
+		lv->lmax = lsign * lag;
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int parse_lagvar (const char *s, LAGVAR *lv, 
 			 const double **Z, const DATAINFO *pdinfo)
 {
-    char l1str[10], l2str[10];
-    int lag, lsign;
-    int v, err = 1;
+    char l1str[16], l2str[16];
+    int lag, i, err = 1;
 
-    *lv->varname = 0;
-    lv->firstlag = 0;
-    lv->lastlag = 0;
-    lv->varnum = 0;
+    lv->v = 0;
+    *lv->vname = 0;
+    lv->lmin = 0;
+    lv->lmax = 0;
+    lv->laglist = NULL;
 
-    if (sscanf(s, "%15[^(](%8s to %8[^)])", lv->varname, 
+    if (sscanf(s, "%15[^(](%15s", lv->vname, l1str) != 2) {
+	return err;
+    }
+
+    lv->v = varindex(pdinfo, lv->vname);
+    if (lv->v == 0 || lv->v >= pdinfo->v) {
+	return err;
+    }
+
+    if (sscanf(s, "%15[^(](%15s to %15[^)])", lv->vname, 
 	       l1str, l2str) == 3) {
-	lv->varnum = varindex(pdinfo, lv->varname);
-	if (lv->varnum < pdinfo->v) {
-	    char *p;
-	    int i;
-
-	    err = 0;
-
-	    for (i=0; i<2 && !err; i++) {
-		p = (i == 0)? l1str : l2str;
-
-		if (*p == '0') {
-		    lsign = 1;
-		} else if (*p == '-') {
-		    lsign = 1;
-		    p++;
-		} else if (*p == '+') {
-		    lsign = -1;
-		    p++;
-		} else {
-		    err = 1;
-		    break;
-		}
-
-		if (isdigit(*p)) {
-		    lag = atoi(p);
-		} else {
-		    v = varindex(pdinfo, p);
-		    if (v < pdinfo->v) {
-			lag = Z[v][0];
-		    } else {
-			err = 1;
-		    }
-		}
-
-		if (!err) {
-		    if (i == 0) {
-			lv->firstlag = lsign * lag;
-		    } else {
-			lv->lastlag = lsign * lag;
-		    }
-		}
-
+	err = get_contiguous_lags(lv, l1str, l2str, Z, pdinfo);
+    } else if (strchr(l1str, ',') != NULL) {
+	lv->laglist = gretl_list_from_string(strchr(s, '(') + 1);
+	if (lv->laglist != NULL) {
+	    for (i=1; i<=lv->laglist[0]; i++) {
+		lv->laglist[i] = -lv->laglist[i];
 	    }
-	}
-    } else if (sscanf(s, "%8[^(](%d)", lv->varname, &lag) == 2) {
-	lv->varnum = varindex(pdinfo, lv->varname);
-	if (lv->varnum < pdinfo->v) {
-	    lv->firstlag = lv->lastlag = -lag;
 	    err = 0;
-	} 
+	}
+    } else if (sscanf(s, "%15[^(](%d)", lv->vname, &lag) == 2) {
+	lv->lmin = lv->lmax = -lag;
+	err = 0;
     }
 
 #if LAG_DEBUG
     fprintf(stderr, "parse_lagvar: s = '%s'\n", s);
-    fprintf(stderr, " firstlag = %d, lastlag = %d\n",
-	    lv->firstlag, lv->lastlag);
+    fprintf(stderr, " lmin = %d, lmax = %d\n",
+	    lv->lmin, lv->lmax);
+    if (lv->laglist != NULL) {
+	printlist(lv->laglist, "lv->laglist");
+    }
 #endif
 
     return err;
@@ -512,15 +534,18 @@ static int expand_command_list (CMD *cmd, int add)
    generating successive lags.  Allows for mixed leads
    and lags. */
 
-static int get_n_lags (int last, int first, int *incr)
+static int get_n_lags (LAGVAR *lv, int *incr)
 {
     int nl = 0;
 
-    if (last >= first) {
-	nl = last - first + 1;
+    if (lv->laglist != NULL) {
+	nl = lv->laglist[0];
+	*incr = 0;
+    } else if (lv->lmax >= lv->lmin) {
+	nl = lv->lmax - lv->lmin + 1;
 	*incr = 1;
     } else {
-	nl = first - last + 1;
+	nl = lv->lmin - lv->lmax + 1;
 	*incr = -1;
     }
 
@@ -538,34 +563,46 @@ int auto_lag_ok (const char *s, int *lnum,
     int ok = 1;
 	
     if (parse_lagvar(s, &lagvar, (const double **) *pZ, pdinfo)) {
-	return 0;
+	ok = 0;
+	goto bailout;
     }
 
-    nlags = get_n_lags(lagvar.lastlag, lagvar.firstlag, &lincr);
+    nlags = get_n_lags(&lagvar, &lincr);
 
 #if LAG_DEBUG
-    fprintf(stderr, "auto lags: last=%d, first=%d, n=%d, incr=%d\n",
-	    lagvar.lastlag, lagvar.firstlag, nlags, lincr);
+    if (lagvar.laglist != NULL) {
+	fprintf(stderr, "auto lags: n=%d, incr=%d\n", nlags, lincr);
+    } else {
+	fprintf(stderr, "auto lags: last=%d, first=%d, n=%d, incr=%d\n",
+		lagvar.lmax, lagvar.lmin, nlags, lincr);
+    }
 #endif
 
     if (nlags <= 0) {
 	cmd->errcode = E_PARSE;
-	return 0;
+	ok = 0;
+	goto bailout;
     }
 
     if (nlags > 1 && expand_command_list(cmd, nlags)) {
-	return 0;
+	ok = 0;
+	goto bailout;
     }
 
     for (i=0; i<nlags && ok; i++) {
 	int laglen, vnum;
 
-	laglen = lagvar.firstlag + i * lincr;
-	vnum = laggenr(lagvar.varnum, laglen, pZ, pdinfo);
+	if (lagvar.laglist != NULL) {
+	    laglen = lagvar.laglist[i+1];
+	} else {
+	    laglen = lagvar.lmin + i * lincr;
+	}
+
+	vnum = laggenr(lagvar.v, laglen, pZ, pdinfo);
 
 #if LAG_DEBUG
 	fprintf(stderr, "laggenr for var %d (%s), lag %d, gave vnum = %d\n",
-		lagvar.varnum, pdinfo->varname[lagvar.varnum], laglen, vnum);
+		lagvar.v, pdinfo->varname[lagvar.v], laglen, vnum);
 #endif
 	if (vnum < 0) {
 	    cmd->errcode = 1;
@@ -579,7 +616,7 @@ int auto_lag_ok (const char *s, int *lnum,
 	       see the echo_cmd() function. 
 	    */
 	    cmd->list[llen++] = vnum;
-	    err = add_to_list_lag_info(lagvar.varnum, laglen, vnum, cmd);
+	    err = add_to_list_lag_info(lagvar.v, laglen, vnum, cmd);
 	    if (err) {
 		cmd->errcode = E_ALLOC;
 		ok = 0;
@@ -589,6 +626,12 @@ int auto_lag_ok (const char *s, int *lnum,
 
     if (ok) {
 	*lnum = llen;
+    }
+
+ bailout:
+
+    if (lagvar.laglist != NULL) {
+	free(lagvar.laglist);
     }
 
     return ok;
