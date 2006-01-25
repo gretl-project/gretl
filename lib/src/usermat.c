@@ -829,11 +829,19 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
 		      int *err)
 {
     gretl_matrix *S;
+    const char *p;
     int *rslice = NULL;
     int *cslice = NULL;
     int m = gretl_matrix_rows(M);
     int n = gretl_matrix_cols(M);
     int nr, nc;
+
+    /* the selection string should end with ']' */
+    p = strrchr(s, ']');
+    if (p == NULL || *(p+1) != '\0') {
+	*err = E_SYNTAX;
+	return NULL;
+    }    
     
     /* special case of "A[diag]": get the diagonal as vector */
     if (strstr(s, "diag")) {

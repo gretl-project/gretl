@@ -3859,7 +3859,9 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	return FALSE;
     }
 
+#if 0
     printlist(list, "stochastic vars");
+#endif
 
     nvl = list[0] + 1; /* add one for the default setter */
 

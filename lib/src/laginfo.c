@@ -258,14 +258,14 @@ static int var_lags_contiguous (const int *laglist)
     return ret;    
 }
 
-/* returns number of bytes printed */
-
 static const char *lag_sign_str (int lag)
 {
     if (lag > 0) return "-";
     if (lag < 0) return "+";
     else return "";
 }
+
+/* returns number of bytes printed */
 
 static int print_var_lags (const int *laglist, PRN *prn)
 {
