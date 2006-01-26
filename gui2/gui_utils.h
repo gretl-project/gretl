@@ -43,6 +43,7 @@ enum {
 # define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
 # define gtk_radio_button_get_group(b)  gtk_radio_button_group(b)
 # define gtk_notebook_set_current_page(n, p) gtk_notebook_set_page(n, p)
+# define gtk_widget_set_size_request(v,w,h) gtk_widget_set_usize(v,w,h)
 
 void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting);
 

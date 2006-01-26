@@ -135,6 +135,7 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
 static gint add_right_click (GtkWidget *widget, GdkEventButton *event, 
 			     selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
+static void get_var_string (char *targ, int v, selector *sr, int which);
 
 static int selection_at_max (selector *sr, int nsel)
 {
@@ -178,42 +179,30 @@ static gboolean set_active_var (GtkWidget *widget, GdkEventButton *event,
 
 #ifdef OLD_GTK
 
-static void list_append_var (GtkWidget *w, gint *unused,
-			     const int *list, int i)
+static void list_append_var (GtkWidget *w, gint *unused, int v,
+			     selector *sr, int which)
 {
     gchar *row[2];
     gchar id[8];
+    char vstr[VNAMELEN+16];
 
-    if (list != NULL) {
-	sprintf(id, "%d", list[i]);
-	row[1] = datainfo->varname[list[i]];
-    } else {
-	sprintf(id, "%d", i);
-	row[1] = datainfo->varname[i];
-    }	
-
+    sprintf(id, "%d", v);
     row[0] = id;
+    get_var_string(vstr, v, sr, which);
+    row[1] = vstr;
     gtk_clist_append(GTK_CLIST(w), row);
 }
 
 #else
 
 static void list_append_var (GtkListStore *store, GtkTreeIter *iterp,
-			     const int *list, int i)
+			     int v, selector *sr, int which)
 {
-    gchar *vname;
-    gint vnum;
+    char vstr[VNAMELEN+16];
 
-    if (list != NULL) {
-	vnum = list[i];
-	vname = datainfo->varname[list[i]];
-    } else {
-	vnum = i;
-	vname = datainfo->varname[i];
-    }
-	
-    gtk_list_store_append(store, iterp);
-    gtk_list_store_set(store, iterp, 0, vnum, 1, vname, -1);
+    get_var_string(vstr, v, sr, which);
+    gtk_list_store_append(store, iterp);    
+    gtk_list_store_set(store, iterp, 0, v, 1, vstr, -1);
 }	
 
 #endif
@@ -232,7 +221,7 @@ listvar_special_undo (GtkCList *clist, gint arg1, gint arg2, gpointer p)
     gtk_clist_set_reorderable(clist, FALSE);
 }
 
-/* build a new clist, and pack into the given box */
+/* build a new CList, and pack into the given box */
 
 static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which) 
 {
@@ -241,12 +230,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
     view = gtk_clist_new(2);
     gtk_clist_clear(GTK_CLIST(view));
 
-#if 0
-    gtk_clist_set_column_width(GTK_CLIST(view), 1, 80);
-    gtk_widget_set_usize(view, 100 * gui_scale, 180 * gui_scale);
-#else
-    gtk_widget_set_usize(view, 100 * gui_scale, -1);
-#endif
+    gtk_widget_set_usize(view, 120 * gui_scale, -1);
     gtk_clist_set_selection_mode(GTK_CLIST(view), GTK_SELECTION_EXTENDED);
 
     if (which == SR_VARLIST) { 
@@ -267,7 +251,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
-				   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_container_add(GTK_CONTAINER(scroller), view);
     gtk_box_pack_start(box, scroller, TRUE, TRUE, 0);
 
@@ -289,61 +273,62 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
     GtkCellRenderer *renderer; 
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
-    int viewsize = 100;
+    int width = 120;
+    int height = -1;
 
-    store = gtk_list_store_new (2, G_TYPE_INT, G_TYPE_STRING);
+    store = gtk_list_store_new(2, G_TYPE_INT, G_TYPE_STRING);
 
-    view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
-    g_object_unref (G_OBJECT(store));
+    view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    g_object_unref(G_OBJECT(store));
 
-    renderer = gtk_cell_renderer_text_new ();
-    g_object_set (renderer, "ypad", 0, NULL);
-    column = gtk_tree_view_column_new_with_attributes (NULL,
-						       renderer,
-						       "text", 
-						       1, NULL);
+    renderer = gtk_cell_renderer_text_new();
+    g_object_set(renderer, "ypad", 0, NULL);
+    column = gtk_tree_view_column_new_with_attributes(NULL,
+						      renderer,
+						      "text", 
+						      1, NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);	
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
     gtk_tree_view_set_reorderable(GTK_TREE_VIEW(view), FALSE);
 
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
-    gtk_tree_selection_set_mode (select, GTK_SELECTION_EXTENDED);
+    gtk_tree_selection_set_mode(select, GTK_SELECTION_EXTENDED);
 
-    g_signal_connect (G_OBJECT(view), "motion_notify_event",
-		      G_CALLBACK(listbox_drag), NULL);
+    g_signal_connect(G_OBJECT(view), "motion_notify_event",
+		     G_CALLBACK(listbox_drag), NULL);
 
     if (which == SR_VARLIST) { 
 	/* left-hand box with the options */
-	g_signal_connect (G_OBJECT(view), "button_press_event",
-			  G_CALLBACK(add_right_click),
-			  sr);
-	g_signal_connect (G_OBJECT(view), "button_press_event",
-			  G_CALLBACK(set_active_var),
-			  sr);
-	g_signal_connect (G_OBJECT(view), "button_press_event",
-			  G_CALLBACK(dblclick_varlist_row),
-			  sr);
+	g_signal_connect(G_OBJECT(view), "button_press_event",
+			 G_CALLBACK(add_right_click),
+			 sr);
+	g_signal_connect(G_OBJECT(view), "button_press_event",
+			 G_CALLBACK(set_active_var),
+			 sr);
+	g_signal_connect(G_OBJECT(view), "button_press_event",
+			 G_CALLBACK(dblclick_varlist_row),
+			 sr);
     } else if (which == SR_RLVARS || which == SR_RUVARS) { 
 	/* lists of selected items */
-	g_signal_connect (G_OBJECT(view), "button_press_event",
-			  G_CALLBACK(set_active_var),
-			  NULL);
-	g_signal_connect (G_OBJECT(view), "button_press_event",
-			  G_CALLBACK(listvar_special_click),
-			  view);
+	g_signal_connect(G_OBJECT(view), "button_press_event",
+			 G_CALLBACK(set_active_var),
+			 NULL);
+	g_signal_connect(G_OBJECT(view), "button_press_event",
+			 G_CALLBACK(listvar_special_click),
+			 view);
     } 
 
-    scroller = gtk_scrolled_window_new (NULL, NULL);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
-				    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroller),
-                                         GTK_SHADOW_IN);    
-    gtk_container_add (GTK_CONTAINER(scroller), view);
+    scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (scroller),
+					GTK_SHADOW_IN);    
+    gtk_container_add(GTK_CONTAINER(scroller), view);
 
     gtk_box_pack_start(box, scroller, TRUE, TRUE, 0);
 
-    viewsize *= gui_scale;
-    gtk_widget_set_size_request(view, viewsize, -1);
+    width *= gui_scale;
+    gtk_widget_set_size_request(view, width, height);
     gtk_widget_show(view);
     gtk_widget_show(scroller);
 
@@ -621,7 +606,9 @@ static void add_to_right (gint i, selector *sr)
     gint already_there = 0;
     gint at_max = 0;
 
-    if (!GTK_IS_CLIST(sr->rlvars)) return;
+    if (!GTK_IS_CLIST(sr->rlvars)) {
+	return;
+    }
 
     rows = GTK_CLIST(sr->rlvars)->rows;
 
@@ -690,15 +677,14 @@ static void set_right_var_from_main (GtkTreeModel *model, GtkTreePath *path,
 {
     GtkTreeModel *rightmod;
     GtkTreeIter r_iter;
-    gchar *vname = NULL;
     gchar *vnum = NULL;
+    char vstr[VNAMELEN+16];
     int v;
 
-    gtk_tree_model_get(model, iter, 0, &vnum, 1, &vname, -1);
+    gtk_tree_model_get(model, iter, 0, &vnum, -1);
 
     rightmod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
     if (rightmod == NULL) {
-	g_free(vname);
 	g_free(vnum);
 	return;
     }
@@ -712,10 +698,10 @@ static void set_right_var_from_main (GtkTreeModel *model, GtkTreePath *path,
     }
 
     gtk_list_store_append(GTK_LIST_STORE(rightmod), &r_iter);
+    get_var_string(vstr, v, sr, SR_RLVARS);
     gtk_list_store_set(GTK_LIST_STORE(rightmod), &r_iter, 
-		       0, v, 1, vname, -1);
+		       0, v, 1, vstr, -1);
 
-    g_free(vname);
     g_free(vnum);
 }
 
@@ -736,7 +722,7 @@ static void set_vars_from_main (selector *sr)
 
 static void set_single_var (selector *sr, int v)
 {
-    list_append_var(sr->rlvars, NULL, NULL, v);
+    list_append_var(sr->rlvars, NULL, v);
 }
 
 #else
@@ -767,12 +753,12 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
     GtkWidget *list;
     GtkTreeModel *orig_model;
     GtkTreeIter orig_iter;
-    gint vnum, test;
-    gchar *vname = NULL;
+    char vstr[VNAMELEN+16];
+    gint v, test;
     gint already_there = 0;
     gint at_max = 0;
 
-    gtk_tree_model_get(model, iter, 0, &vnum, 1, &vname, -1);
+    gtk_tree_model_get(model, iter, 0, &v, -1);
 
     if (which == SR_RUVARS) {
 	/* upper right variables list */
@@ -788,7 +774,6 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
 
     orig_model = gtk_tree_view_get_model(GTK_TREE_VIEW(list));
     if (orig_model == NULL) {
-	g_free(vname);
 	return;
     }
 
@@ -801,7 +786,7 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
 		break;
 	    }
 	    gtk_tree_model_get(orig_model, &orig_iter, 0, &test, -1);
-	    if (test == vnum) {
+	    if (test == v) {
 		already_there = 1; 
 		break;
 	    }
@@ -814,15 +799,14 @@ static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter,
 
     if (!already_there && !at_max) {
         gtk_list_store_append(GTK_LIST_STORE(orig_model), &orig_iter);
-        gtk_list_store_set(GTK_LIST_STORE(orig_model), &orig_iter, 
-			   0, vnum, 1, vname, -1);
+	get_var_string(vstr, v, sr, which);
+	gtk_list_store_set(GTK_LIST_STORE(orig_model), &orig_iter, 
+			   0, v, 1, vstr, -1);
     }
 
     if (sr->add_button != NULL && at_max) {
 	gtk_widget_set_sensitive(sr->add_button, FALSE);
     }
-
-    g_free(vname);
 }
 
 static void add_to_right (GtkTreeModel *model, GtkTreePath *path,
@@ -1357,7 +1341,10 @@ discrete_lags_string (const char *vname, const int *laglist,
     }
 
     return s;
-}   
+}  
+
+/* for use in constructing command list, possibly with
+   embedded lags */
 
 static char *get_lagpref_string (int v, char context)
 {
@@ -1397,6 +1384,47 @@ static char *get_lagpref_string (int v, char context)
 
     return s;
 } 
+
+/* for use in listbox context */
+
+static void get_var_string (char *targ, int v, selector *sr, int which)
+{
+    const char *vname = datainfo->varname[v];
+    const int *laglist;
+    int lmin, lmax;
+    char context = 0;
+
+    if (sr == NULL || v == 0 || !dataset_is_time_series(datainfo)) {
+	strcpy(targ, vname);
+	return;
+    }
+
+    if (which == SR_RUVARS && select_lags_upper(sr->code)) {
+	context = (sr->code == TSLS)? LAG_INSTR : LAG_X;
+    } else if (which == SR_RLVARS && select_lags_lower(sr->code)) {
+	context = LAG_X;
+    } else {
+	strcpy(targ, vname);
+	return;
+    }
+
+    get_lag_preference(v, &lmin, &lmax, &laglist, context);
+
+    if (context == LAG_Y && lmax != lmin) {
+	lmin++;
+    }
+
+    if (laglist != NULL) {
+	sprintf(targ, "%s(...)", vname);
+    } else if (lmin != lmax) {
+	sprintf(targ, "%s(%s%d:-%d)", vname, (lmin > 0)? "-" : "",
+		lmin, lmax);
+    } else if (lmin != 0) {
+	sprintf(targ, "%s(%s%d)", vname, (lmin > 0)? "-" : "", lmin);
+    } else if (context != LAG_Y) {
+	strcpy(targ, vname);
+    }
+}
 
 static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 {
@@ -2075,20 +2103,26 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
     GtkWidget *tmp, *remove, *midhbox, *button_vbox;
 
     midhbox = gtk_hbox_new(FALSE, 5);
-    button_vbox = gtk_vbox_new(TRUE, 5);
+    button_vbox = gtk_vbox_new(TRUE, 0);
 
     tmp = gtk_button_new_with_label(_("Add ->"));
     gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(add_auxvar_callback), sr);
-    gtk_widget_show(tmp);
     
     remove = gtk_button_new_with_label(_("<- Remove"));
     gtk_box_pack_start(GTK_BOX(button_vbox), remove, TRUE, FALSE, 0);
-    gtk_widget_show(remove);
+
+    if (sr->code == VAR || sr->code == VECM) {
+	sr->lags_button = gtk_button_new_with_label(_("lags..."));
+	gtk_box_pack_start(GTK_BOX(button_vbox), sr->lags_button, TRUE, FALSE, 0);
+	g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
+			 G_CALLBACK(lags_dialog_driver), sr);
+	gtk_widget_set_sensitive(sr->lags_button, TRUE); /* FIXME */
+    }
 
     gtk_box_pack_start(GTK_BOX(midhbox), button_vbox, TRUE, TRUE, 0);
-    gtk_widget_show(button_vbox);
+    gtk_widget_show_all(button_vbox);
 
     /* then the listing */
     sr->ruvars = var_list_box_new(GTK_BOX(midhbox), sr, SR_RUVARS);
@@ -2104,10 +2138,13 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
 	int i;
 
 	for (i=1; i<=rulist[0]; i++) {
-	    list_append_var(store, &iter, rulist, i);
+	    list_append_var(store, &iter, rulist[i], sr, SR_RUVARS);
+	}
+	if (rulist[0] > 0 && (sr->code == VAR || sr->code == VECM)) {
+	    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 	}
     } else if (!VEC_CODE(sr->code)) {
-	list_append_var(store, &iter, NULL, 0);
+	list_append_var(store, &iter, 0, sr, SR_RUVARS);
     }
 
     /* hook up remove button to list box */
@@ -2198,7 +2235,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     if (VEC_CODE(code)) {
 	dlgheight = 450;
 	if (code == VAR || code == VECM) {
-	    dlgheight += 80;
+	    dlgheight += 90;
 	}
     } 
 
@@ -2261,7 +2298,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     gtk_container_set_border_width(GTK_CONTAINER(sr->vbox), 5);
     gtk_box_set_spacing(GTK_BOX(sr->vbox), 5);
 
-    hsep = gtk_hseparator_new ();
+    hsep = gtk_hseparator_new();
     gtk_widget_show(hsep);
     gtk_box_pack_start(GTK_BOX(base), hsep, FALSE, FALSE, 0);
 
@@ -2542,6 +2579,25 @@ build_selector_radios (selector *sr)
     }
 }
 
+static void lag_selector_button (selector *sr)
+{
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+
+    sr->lags_button = gtk_button_new_with_label(_("lags..."));
+
+    /* FIXME add callback to enable this when vars are selected */
+
+    g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
+		     G_CALLBACK(lags_dialog_driver), sr);
+    gtk_widget_set_sensitive(sr->lags_button, TRUE);
+
+    gtk_box_pack_start(GTK_BOX(hbox), sr->lags_button, FALSE, FALSE, 0);
+    gtk_widget_show(sr->lags_button);
+
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show(hbox);
+}    
+
 static void 
 build_selector_buttons (selector *sr, void (*okfunc)())
 {
@@ -2550,10 +2606,6 @@ build_selector_buttons (selector *sr, void (*okfunc)())
     tmp = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
-    if (dataset_is_time_series(datainfo) && WANT_LAGSEL(sr->code)) {
-	g_signal_connect(G_OBJECT(tmp), "clicked", 
-			 G_CALLBACK(lags_dialog_driver), sr);
-    } 
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(construct_cmdlist), sr);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
@@ -2598,17 +2650,9 @@ static int list_show_var (int v, int code)
 	ret = 0;
     } else if (screen_scalar(v, code)) {
 	ret = 0;
-    }
-
-#if 0
-    else if (VEC_CODE(code) && is_standard_lag(v, datainfo)) {
+    } else if (is_standard_lag(v, datainfo)) {
 	ret = 0;
     }
-#else
-    else if (code != TSLS && is_standard_lag(v, datainfo)) {
-	ret = 0; /* FIXME TSLS */
-    }
-#endif
 
     return ret;
 }
@@ -2674,7 +2718,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     
     for (i=0; i<datainfo->v; i++) {
 	if (list_show_var(i, cmdcode)) {
-	    list_append_var(store, &iter, NULL, i);
+	    list_append_var(store, &iter, i, NULL, 0);
 	}
     }
 
@@ -2730,20 +2774,18 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
 	indepvar_hbox = gtk_hbox_new(FALSE, 5);
 
 	/* push/pull buttons first, in their own little vbox */
-	button_vbox = gtk_vbox_new(TRUE, 5);
+	button_vbox = gtk_vbox_new(TRUE, 0);
 
 	tmp = gtk_button_new_with_label (_("Add ->"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
 	g_signal_connect (G_OBJECT(tmp), "clicked", 
 			  G_CALLBACK(add_to_right_callback), sr);
-	gtk_widget_show(tmp);
     
 	remove = gtk_button_new_with_label (_("<- Remove"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), remove, TRUE, FALSE, 0);
-	gtk_widget_show(remove);
 
 	gtk_box_pack_start(GTK_BOX(indepvar_hbox), button_vbox, TRUE, TRUE, 0);
-	gtk_widget_show(button_vbox);
+	gtk_widget_show_all(button_vbox);
 
 	/* then the listing */
 	sr->rlvars = var_list_box_new(GTK_BOX(indepvar_hbox), sr, SR_RLVARS);
@@ -2758,18 +2800,18 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
 
 	if (MODEL_CODE(cmdcode)) {
 	    /* stick the constant in by default */
-	    list_append_var(store, &iter, NULL, 0);
+	    list_append_var(store, &iter, 0, sr, SR_RLVARS);
 	    if (xlist != NULL) {
 		/* we have a saved list of regressors */
 		for (i=1; i<=xlist[0]; i++) {
 		    if (xlist[i] != 0) {
-			list_append_var(store, &iter, xlist, i);
+			list_append_var(store, &iter, xlist[i], sr, SR_RLVARS);
 		    }
 		}
 	    }
 	} else if (VEC_CODE(cmdcode) && veclist != NULL) {
 	    for (i=1; i<=veclist[0]; i++) {
-		list_append_var(store, &iter, veclist, i);
+		list_append_var(store, &iter, veclist[i], sr, SR_RLVARS);
 	    }
 	}
 
@@ -2805,6 +2847,12 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
     if (WANT_RADIOS(sr->code)) {
 	build_selector_radios(sr);
     }
+
+    /* and lag selection for some */
+    if (dataset_is_time_series(datainfo) && 
+	select_lags_lower(sr->code)) {
+	lag_selector_button(sr);
+    } 
 
     /* buttons: OK, Clear, Cancel, Help */
     build_selector_buttons(sr, okfunc);
@@ -3002,7 +3050,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     GtkWidget *store;
     gint iter = 0;
 #endif
-    GtkWidget *left_vbox, *mid_vbox, *right_vbox, *tmp;
+    GtkWidget *left_vbox, *button_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *remove_button;
     selector *sr;
     int i, vnum = 0;
@@ -3070,7 +3118,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
 	for (i=1; i<datainfo->v; i++) {
 	    if (list_show_var(i, cmdcode)) {
-		list_append_var(store, &iter, NULL, i);
+		list_append_var(store, &iter, i, NULL, 0);
 		vnum = i;
 		nleft++;
 	    }
@@ -3084,29 +3132,26 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     gtk_widget_show(left_vbox);
     
     /* middle: vertical holder for push/pull buttons */
-    mid_vbox = gtk_vbox_new(FALSE, 5);
+    button_vbox = gtk_vbox_new(TRUE, 0);
 
     sr->add_button = gtk_button_new_with_label(_("Select ->"));
-    gtk_box_pack_start(GTK_BOX(mid_vbox), sr->add_button, TRUE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(button_vbox), sr->add_button, TRUE, FALSE, 0);
     g_signal_connect(G_OBJECT(sr->add_button), "clicked", 
 		     G_CALLBACK(add_to_right_callback), sr);
-    gtk_widget_show(sr->add_button);
 
     if (p == NULL && !TWO_VARS_CODE(sr->code)) {
 	/* data save action */
 	tmp = gtk_button_new_with_label (_("All ->"));
-	gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
 	g_signal_connect (G_OBJECT(tmp), "clicked", 
 			  G_CALLBACK(add_all_to_right_callback), sr);
-	gtk_widget_show(tmp);
     }
     
     remove_button = gtk_button_new_with_label(_("<- Remove"));
-    gtk_box_pack_start(GTK_BOX(mid_vbox), remove_button, TRUE, FALSE, 0);
-    gtk_widget_show(remove_button);
+    gtk_box_pack_start(GTK_BOX(button_vbox), remove_button, TRUE, FALSE, 0);
 
-    gtk_box_pack_start(GTK_BOX(big_hbox), mid_vbox, TRUE, TRUE, 0);
-    gtk_widget_show(mid_vbox);
+    gtk_box_pack_start(GTK_BOX(big_hbox), button_vbox, TRUE, TRUE, 0);
+    gtk_widget_show_all(button_vbox);
 
     /* RHS: vertical holder for selected vars */
     right_vbox = gtk_vbox_new(FALSE, 5);
@@ -3361,6 +3406,7 @@ struct var_lag_info_ {
     GtkWidget *toggle;
     var_lag_info *vlp;
 };
+
 
 static void lag_entry_callback (GtkWidget *w, gpointer p)
 {
@@ -3666,8 +3712,8 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show_all(hbox);
 
-    /* Create the "OK" button */
-    tmp = ok_button(GTK_DIALOG(dialog)->action_area);
+    /* Create the "Apply" button */
+    tmp = apply_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(lag_toggle_register), &vlinfo[0]);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
@@ -3697,6 +3743,28 @@ static int not_const_or_trend (int v)
 }
 
 #ifdef OLD_GTK
+
+static void revise_var_string (var_lag_info *vlinfo, GtkWidget *list,
+			       int which, selector *sr)
+{
+    char *vnum;
+    int which, modv;
+    int k, rows;
+
+    rows = GTK_CLIST(list)->rows;
+
+    for (k=0; k<rows; k++) {
+	gtk_clist_get_text(GTK_CLIST(list[j]), k, 0, &vnum);
+	modv = atoi(vnum);
+	if (modv == vlinfo->v) {
+	    char vstr[32];
+
+	    get_var_string(vstr, vlinfo->v, sr->code, which);
+	    gtk_clist_set_text(GTK_CLIST(list), k, 1, vstr);
+	    break;
+	}
+    }
+}
 
 static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
 {
@@ -3774,6 +3842,32 @@ static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
 
 #else
 
+static void revise_var_string (var_lag_info *vlinfo, GtkWidget *list,
+			       int which, selector *sr)
+{
+    GtkTreeModel *mod;
+    GtkTreeIter iter;
+    int modv;
+
+    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(list));
+
+    gtk_tree_model_get_iter_first(mod, &iter);
+    while (1) {
+	gtk_tree_model_get(mod, &iter, 0, &modv, -1);
+	if (modv == vlinfo->v) {
+	    char vstr[32];
+
+	    get_var_string(vstr, vlinfo->v, sr, which);
+	    gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
+			       0, vlinfo->v, 1, vstr, -1);
+	    break;
+	}
+	if (!gtk_tree_model_iter_next(mod, &iter)) {
+	    break;
+	}
+    }
+}
+
 static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
 {
     GtkWidget *list[2] = {0};
@@ -3816,7 +3910,10 @@ static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
 	}
     }
 
-    if (nv[0] > 0) {
+    if (nv[0] == 0) {
+	/* no vars to deal with */
+	errbox("Please add some variables to the model first");
+    } else {
 	i = 1;
 	llen = nv[0] + 1; /* xvars plus defaults */
 	if (ynum > 0) {
@@ -3861,6 +3958,25 @@ static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
 }
 
 #endif
+
+static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
+{
+    GtkWidget *list = NULL;
+    int which;
+
+    if (vlinfo->context == LAG_X) {
+	list = (sr->code == VAR || sr->code == VECM)? sr->ruvars :
+	    sr->rlvars;
+	which = SR_RLVARS;
+    } else if (vlinfo->context == LAG_INSTR) {
+	list = sr->ruvars;
+	which = SR_RUVARS;
+    }
+
+    if (list != NULL) {
+	revise_var_string(vlinfo, list, which, sr);
+    } 
+}
 
 static int set_lags_for_var (var_lag_info *vlinfo)
 {
@@ -3972,6 +4088,9 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     for (j=0; j<nvl; j++) {
 	if (resp == 0) {
 	    set_lags_for_var(&vlinfo[j]);
+	    if (vlinfo[j].v > 0) {
+		maybe_revise_var_string(&vlinfo[j], sr);
+	    }
 	}
 	if (vlinfo[j].lspec != NULL) {
 	    free(vlinfo[j].lspec);
@@ -3980,12 +4099,6 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 
     free(list);
     free(vlinfo);
-
-    if (resp < 0) {
-	/* canceled */
-	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
-	return TRUE;
-    }
 
     return FALSE;
 }

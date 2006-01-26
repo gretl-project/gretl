@@ -130,6 +130,17 @@ GtkWidget *ok_button (GtkWidget *hbox)
     return w;
 }
 
+GtkWidget *apply_button (GtkWidget *hbox)
+{
+    GtkWidget *w;
+
+    w = standard_button(GTK_STOCK_APPLY);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+
+    return w;
+}
+
 GtkWidget *next_button (GtkWidget *hbox)
 {
     GtkWidget *w;

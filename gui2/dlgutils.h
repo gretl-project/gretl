@@ -40,6 +40,8 @@ GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
 
 GtkWidget *ok_button (GtkWidget *hbox);
 
+GtkWidget *apply_button (GtkWidget *hbox);
+
 GtkWidget *next_button (GtkWidget *hbox);
 
 GtkWidget *back_button (GtkWidget *hbox);
