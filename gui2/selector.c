@@ -1359,15 +1359,15 @@ discrete_lags_string (const char *vname, const int *laglist,
 static char *get_lagpref_string (int v, int is_depvar)
 {
     const char *vname = datainfo->varname[v];
+    const int *laglist;
     int lmin, lmax;
-    int *laglist;
     char *s = NULL;
 
     if (v == 0) {
 	return g_strdup(" 0");
     }
 
-    get_lag_preference(v, &lmin, &lmax, &laglist);
+    get_lag_preference(v, &lmin, &lmax, &laglist, LAG_X);
 
     if (is_depvar && lmax != lmin) {
 	lmin++;
@@ -1601,7 +1601,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
 	if (dataset_is_time_series(datainfo) && 
 	    select_lags_lower(sr->code)) {
-	    lagstr = get_lagpref_string(atoi(rvstr, 0));
+	    lagstr = get_lagpref_string(atoi(rvstr), 0);
 	    add_to_cmdlist(sr, lagstr);
 	    free(lagstr);
 	} else {
@@ -3530,7 +3530,8 @@ lags_dialog (const int *list, var_lag_info *vlinfo, GtkWidget *parent)
     int i, j, k;
     int ret = 0;
 
-    dialog = gretl_dialog_new(_("lag order"), parent, GRETL_DLG_BLOCK);
+    dialog = gretl_dialog_new(_("lag order"), parent, 
+			      GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
     myvbox = gtk_vbox_new(FALSE, 5);
 
     if (defpos == 0) {
@@ -3690,10 +3691,10 @@ static int not_const_or_trend (int v)
 
 static int *sr_get_stoch_list (selector *sr, int *defpos)
 {
-    GtkWidget *list[3] = {0};
+    GtkWidget *list[2] = {0};
     gchar *test;
     gint xnum, ynum = -1;
-    int nv = 0;
+    int nv[2] = {0};
     int i, j, k, rows;
     int *slist = NULL;
 
@@ -3706,7 +3707,7 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 	list[1] = sr->ruvars;
     } 
 
-    for (j=0; list[j] != NULL; j++) {
+    for (j=0; list[j] != NULL && j<2; j++) {
 	if (!GTK_IS_CLIST(list[j])) {
 	    return NULL;
 	}
@@ -3714,17 +3715,17 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 	for (k=0; k<rows; k++) {
 	    gtk_clist_get_text(GTK_CLIST(list[j]), k, 0, &test);
 	    if (not_const_or_trend(atoi(test))) {
-		nv++;
+		nv[j] += 1;
 	    }
 	}
     }
 
-    if (nv > 0) {
+    if (nv[0] > 0) {
 	i = 1;
 	if (ynum > 0) {
-	    nv++;
+	    nv[0] += 1;
 	}
-	slist = gretl_list_new(nv);
+	slist = gretl_list_new(nv[0]);
 	if (slist != NULL) {
 	    if (ynum > 0) {
 		slist[i++] = ynum;
@@ -3732,7 +3733,7 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 	    } else {
 		*defpos = 0;
 	    }
-	    for (j=0; list[j] != NULL; j++) {
+	    for (j=0; list[j] != NULL && j<2; j++) {
 		rows = GTK_CLIST(list[j])->rows;
 		for (k=0; k<rows; k++) {
 		    gtk_clist_get_text(GTK_CLIST(list[j]), k, 0, &test);
@@ -3752,11 +3753,12 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 
 static int *sr_get_stoch_list (selector *sr, int *defpos)
 {
-    GtkWidget *list[3] = {0};
+    GtkWidget *list[2] = {0};
     GtkTreeModel *model;
     GtkTreeIter iter;
     gint xnum, ynum = -1;
-    int i, j, nv = 0;
+    int nv[2] = {0};
+    int i, j;
     int *slist = NULL;
 
     if (sr->code != ARMA && sr->code != VAR) {
@@ -3768,7 +3770,7 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 	list[1] = sr->ruvars;
     } 
 
-    for (j=0; list[j] != NULL; j++) {
+    for (j=0; list[j] != NULL && j<2; j++) {
 	if (!GTK_IS_TREE_VIEW(list[j])) {
 	    return NULL;
 	}
@@ -3780,7 +3782,7 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 	    while (1) {
 		gtk_tree_model_get(model, &iter, 0, &xnum, -1);
 		if (not_const_or_trend(xnum)) {
-		    nv++;
+		    nv[j] += 1;
 		}
 		if (!gtk_tree_model_iter_next(model, &iter)) {
 		    break;
@@ -3789,12 +3791,12 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 	}
     }
 
-    if (nv > 0) {
+    if (nv[0] > 0) {
 	i = 1;
 	if (ynum > 0) {
-	    nv++;
+	    nv[0] += 1;
 	}
-	slist = gretl_list_new(nv);
+	slist = gretl_list_new(nv[0]);
 	if (slist != NULL) {
 	    if (ynum > 0) {
 		slist[i++] = ynum;
@@ -3802,7 +3804,7 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 	    } else {
 		*defpos = 0;
 	    }
-	    for (j=0; list[j] != NULL; j++) {
+	    for (j=0; list[j] != NULL && j<2; j++) {
 		model = gtk_tree_view_get_model(GTK_TREE_VIEW(list[j]));
 		gtk_tree_model_get_iter_first(model, &iter);
 		while (1) {
@@ -3826,6 +3828,7 @@ static int *sr_get_stoch_list (selector *sr, int *defpos)
 static int 
 set_lags_for_var (const int *list, int i, int lmin, int lmax, char *lspec)
 {
+    char context = LAG_X;
     int v = (i == 0)? 0 : list[i];
     int *llist = NULL;
     int err = 0;
@@ -3833,14 +3836,14 @@ set_lags_for_var (const int *list, int i, int lmin, int lmax, char *lspec)
     if (lspec != NULL && *lspec != 0) {
 	charsub(lspec, ',', ' ');
 	llist = gretl_list_from_string(lspec);
-	err = set_lag_prefs_from_list(v, llist);
+	err = set_lag_prefs_from_list(v, llist, context);
 	if (err) {
 	    free(llist);
 	}
     } else if (lmin != NOT_LAG && lmax != NOT_LAG) {
-	set_lag_prefs_from_minmax(v, lmin, lmax);
+	set_lag_prefs_from_minmax(v, lmin, lmax, context);
     } else {
-	set_null_lagpref(v);
+	set_null_lagpref(v, context);
     }
 
     return 0;
@@ -3875,14 +3878,14 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
        independent variables */
 
     for (i=0; i<nvl; i++) {
-	int *laglist = NULL;
+	const int *laglist = NULL;
 	int v;
 
 	v = (i == defpos)? 0 : (i == 0 && defpos)? list[1] : list[i];
 
 	/* pick up any saved preferences (including saved defaults) */
 	get_lag_preference(v, &vlinfo[i].lmin, &vlinfo[i].lmax, 
-			   &laglist);
+			   &laglist, LAG_X);
 	if (laglist != NULL) {
 	    vlinfo[i].lspec = gretl_list_to_string(laglist);
 	} else {

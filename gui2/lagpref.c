@@ -5,16 +5,22 @@
 */
 
 enum {
-    LAGS_NONE,
-    LAGS_MINMAX,
-    LAGS_LIST
-};
+    LAGS_NONE,    /* no lags specified */
+    LAGS_MINMAX,  /* min and max lags given (consecutive) */
+    LAGS_LIST     /* list of lags specific given */
+} SpecType;
+
+enum {
+    LAG_X,        /* lags set for regular variable context */
+    LAG_INSTR     /* lags set for the variable as instrument */
+} LagContext;
 
 typedef struct lagpref_ lagpref;
 
 struct lagpref_ {
     int v;
-    char ltype;
+    char context;
+    char spectype;
     union lspec {
 	int lminmax[2];
 	int *laglist;
@@ -41,7 +47,7 @@ static int add_lpref_to_stack (lagpref *lpref)
     return err;
 }
 
-static lagpref *lpref_new (int v)
+static lagpref *lpref_new (int v, char context)
 {
     lagpref *lpref = malloc(sizeof *lpref);
     
@@ -50,39 +56,40 @@ static lagpref *lpref_new (int v)
     }
 
     lpref->v = v;
-    lpref->ltype = LAGS_NONE;
+    lpref->spectype = LAGS_NONE;
+    lpref->context = context;
 
     return lpref;
 }
 
 static int 
-modify_lpref (lagpref *lpref, char ltype, int lmin, int lmax, int *laglist)
+modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 {
-    if (lpref->ltype == LAGS_LIST) {
+    if (lpref->spectype == LAGS_LIST) {
 	free(lpref->lspec.laglist);
     }    
 
-    if (ltype == LAGS_MINMAX) {
+    if (spectype == LAGS_MINMAX) {
 	lpref->lspec.lminmax[0] = lmin;
 	lpref->lspec.lminmax[1] = lmax;
-    } else if (ltype == LAGS_LIST) {
+    } else if (spectype == LAGS_LIST) {
 	lpref->lspec.laglist = laglist;
-    } else if (ltype == LAGS_NONE) {
+    } else if (spectype == LAGS_NONE) {
 	lpref->lspec.lminmax[0] = 0;
 	lpref->lspec.lminmax[1] = 0;
     }
 
-    lpref->ltype = ltype;
+    lpref->spectype = spectype;
 
     return 0;
 }
 
-static lagpref *get_lpref_by_varnum (int v)
+static lagpref *get_saved_lpref (int v, char context)
 {
     int i;
 
     for (i=0; i<n_prefs; i++) {
-	if (lprefs[i]->v == v) {
+	if (lprefs[i]->v == v && lprefs[i]->context == context) {
 	    return lprefs[i];
 	}
     }
@@ -90,13 +97,13 @@ static lagpref *get_lpref_by_varnum (int v)
     return NULL;
 }
 
-static int set_lag_prefs_from_list (int v, int *llist)
+static int set_lag_prefs_from_list (int v, int *llist, char context)
 {
-    lagpref *lpref = get_lpref_by_varnum(v);
+    lagpref *lpref = get_saved_lpref(v, context);
     int err = 0;
 
     if (lpref == NULL) {
-	lpref = lpref_new(v);
+	lpref = lpref_new(v, context);
 	if (lpref == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -111,13 +118,14 @@ static int set_lag_prefs_from_list (int v, int *llist)
     return err;
 }
 
-static int set_lag_prefs_from_minmax (int v, int lmin, int lmax)
+static int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
+				      char context)
 {
-    lagpref *lpref = get_lpref_by_varnum(v);
+    lagpref *lpref = get_saved_lpref(v, context);
     int err = 0;
 
     if (lpref == NULL) {
-	lpref = lpref_new(v);
+	lpref = lpref_new(v, context);
 	if (lpref == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -132,9 +140,9 @@ static int set_lag_prefs_from_minmax (int v, int lmin, int lmax)
     return err;
 }
 
-static void set_null_lagpref (int v)
+static void set_null_lagpref (int v, char context)
 {
-    lagpref *lpref = get_lpref_by_varnum(v);
+    lagpref *lpref = get_saved_lpref(v, context);
 
     if (lpref != NULL) {
 	modify_lpref(lpref, LAGS_NONE, 0, 0, NULL);
@@ -142,9 +150,10 @@ static void set_null_lagpref (int v)
 }
 
 static void
-get_lag_preference (int v, int *lmin, int *lmax, int **laglist)
+get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
+		    char context)
 {
-    lagpref *lpref = get_lpref_by_varnum(v);
+    lagpref *lpref = get_saved_lpref(v, context);
 
     *lmin = *lmax = 0;
     *laglist = NULL;
@@ -153,9 +162,9 @@ get_lag_preference (int v, int *lmin, int *lmax, int **laglist)
 	return;
     }
 
-    if (lpref->ltype == LAGS_LIST) {
+    if (lpref->spectype == LAGS_LIST) {
 	*laglist = lpref->lspec.laglist;
-    } else if (lpref->ltype == LAGS_MINMAX) {
+    } else if (lpref->spectype == LAGS_MINMAX) {
 	*lmin = lpref->lspec.lminmax[0];
 	*lmax = lpref->lspec.lminmax[1];
     } 
@@ -166,7 +175,7 @@ static void destroy_lag_preferences (void)
     int i;
     
     for (i=0; i<n_prefs; i++) {
-	if (lprefs[i]->ltype == LAGS_LIST) {
+	if (lprefs[i]->spectype == LAGS_LIST) {
 	    free(lprefs[i]->lspec.laglist);
 	}
 	free(lprefs[i]);
