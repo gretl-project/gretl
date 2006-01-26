@@ -4,6 +4,8 @@
    destroy the stacked preferences when we switch data sets.
 */
 
+#define LDEBUG 0
+
 enum {
     LAGS_NONE,    /* no lags specified */
     LAGS_MINMAX,  /* min and max lags given (consecutive) */
@@ -11,6 +13,7 @@ enum {
 } SpecType;
 
 enum {
+    LAG_Y,        /* lags for dependent variable */
     LAG_X,        /* lags set for regular variable context */
     LAG_INSTR     /* lags set for the variable as instrument */
 } LagContext;

@@ -426,15 +426,18 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 {
     static char format[16] = {0};
     char vname[VNAMELEN];
+    char ls[8];
     int m = 0, v = 0;
 
     if (*format == 0) {
-	sprintf(format, "%%%d[^(](%%d)", VNAMELEN - 1);
+	sprintf(format, "%%%d[^(](%%7[^)])", VNAMELEN - 1);
     }
 
-    if (sscanf(s, format, vname, &m) == 2) {
+    DPRINTF(("get_lagvar: looking at '%s'\n", s));
+
+    if (sscanf(s, format, vname, ls) == 2 && sscanf(ls, "%d", &m) == 1) {
 	v = varindex(genr->pdinfo, vname);
-	DPRINTF(("get_lagvar: looking at '%s' (v == %d)\n", vname, v));
+	DPRINTF(("get_lagvar: vname = '%s' (v == %d)\n", vname, v));
 	if (v >= genr->pdinfo->v) {
 	    DPRINTF(("get_lagvar: rejecting '%s'\n", s));
 	    v = m = 0;
@@ -444,17 +447,17 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 		    genr->pdinfo->varname[v]);
 	    genr->err = E_DATA;
 	    v = m = 0;
-	}
+	} 
     }
 
     if (lag == NULL) {
 	/* just testing for atomicity */
 	if (v > 0) {
-	    char test[VNAMELEN + 8];
+	    char *test;
 
-	    sprintf(test, "%s(%d)", vname, m);
-	    if (strcmp(test, s)) {
-		/* string s contains extra stuff */
+	    strtol(ls, &test, 10);
+	    if (*test != 0) {
+		/* string ls contains superfluous stuff */
 		v = 0;
 	    }
 	}
