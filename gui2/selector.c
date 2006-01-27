@@ -35,6 +35,7 @@ enum {
     SR_VARLIST = 1,
     SR_RLVARS,
     SR_RUVARS,
+    SR_DEPVAR,
     SR_EXTRA
 };
 
@@ -518,19 +519,20 @@ static void remove_specified_var_from_right (selector *sr, gint ynum)
 
 static void set_dependent_var_from_active (selector *sr)
 {
-    gint i = sr->active_var;
+    char vstr[VNAMELEN+16];
+    gint v = sr->active_var;
 
     if (sr->depvar == NULL) return;
 
     /* models: if we select foo as regressand, remove it from the
        list of regressors if need be */
     if (MODEL_CODE(sr->code)) {
-	remove_specified_var_from_right(sr, i);
+	remove_specified_var_from_right(sr, v);
     }
 
-    gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[i]);
-    g_object_set_data(G_OBJECT(sr->depvar), "data",
-		      GINT_TO_POINTER(i));
+    get_var_string(vstr, v, sr, SR_DEPVAR);
+    gtk_entry_set_text(GTK_ENTRY(sr->depvar), vstr);
+    g_object_set_data(G_OBJECT(sr->depvar), "data", GINT_TO_POINTER(v));
 }
 
 #endif
@@ -574,14 +576,14 @@ static void set_dependent_var_callback (GtkWidget *w, selector *sr)
 static void real_set_dependent_var (GtkTreeModel *model, GtkTreePath *path,
 				    GtkTreeIter *iter, selector *sr)
 {
-    gint vnum;
+    char vstr[VNAMELEN+16] = {0};
     gchar *vname;
+    gint v;
 
-    gtk_tree_model_get (model, iter, 0, &vnum, 1, &vname, -1);
-    gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
-    g_free(vname);
-    g_object_set_data(G_OBJECT(sr->depvar), "data", 
-		      GINT_TO_POINTER(vnum));
+    gtk_tree_model_get(model, iter, 0, &v, 1, &vname, -1);
+    get_var_string(vstr, v, sr, SR_DEPVAR);
+    gtk_entry_set_text(GTK_ENTRY(sr->depvar), vstr);
+    g_object_set_data(G_OBJECT(sr->depvar), "data", GINT_TO_POINTER(v));
 }
 
 static void set_dependent_var_callback (GtkWidget *w, selector *sr)
@@ -1410,6 +1412,8 @@ static int sr_get_lag_context (selector *sr, int locus)
 	c = (sr->code == TSLS)? LAG_INSTR : LAG_X;
     } else if (locus == SR_RLVARS && select_lags_lower(sr->code)) {
 	c = LAG_X;
+    } else if (locus == SR_DEPVAR && select_lags_depvar(sr->code)) {
+	c = LAG_Y;
     }
 
     return c;
@@ -1430,16 +1434,13 @@ static void get_var_string (char *targ, int v, selector *sr, int locus)
     }
 
     context = sr_get_lag_context(sr, locus);
+
     if (context == 0) {
 	strcpy(targ, vname);
 	return;
     }
 
     get_lag_preference(v, &lmin, &lmax, &laglist, context);
-
-    if (context == LAG_Y && lmax != lmin) {
-	lmin++;
-    }
 
     if (laglist != NULL) {
 	sprintf(targ, "%s(...)", vname);
@@ -1448,7 +1449,7 @@ static void get_var_string (char *targ, int v, selector *sr, int locus)
 		lmin, lmax);
     } else if (lmin != 0) {
 	sprintf(targ, "%s(%s%d)", vname, (lmin > 0)? "-" : "", lmin);
-    } else if (context != LAG_Y) {
+    } else {
 	strcpy(targ, vname);
     }
 }
@@ -3787,22 +3788,22 @@ static int not_const_or_trend (int v)
 static void 
 revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
 {
-    GtkWidget *list;
+    GtkWidget *w;
     char *vnum;
     int modv;
     int k, rows;
 
-    list = (locus == SR_RUVARS)? sr->ruvars : sr->rlvars;
-    rows = GTK_CLIST(list)->rows;
+    w = (locus == SR_RUVARS)? sr->ruvars : sr->rlvars;
+    rows = GTK_CLIST(w)->rows;
 
     for (k=0; k<rows; k++) {
-	gtk_clist_get_text(GTK_CLIST(list), k, 0, &vnum);
+	gtk_clist_get_text(GTK_CLIST(w), k, 0, &vnum);
 	modv = atoi(vnum);
 	if (modv == vlinfo->v) {
 	    char vstr[VNAMELEN+16];
 
 	    get_var_string(vstr, vlinfo->v, sr, locus);
-	    gtk_clist_set_text(GTK_CLIST(list), k, 1, vstr);
+	    gtk_clist_set_text(GTK_CLIST(w), k, 1, vstr);
 	    break;
 	}
     }
@@ -3891,13 +3892,13 @@ static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
 static void 
 revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
 {
-    GtkWidget *list;
+    GtkWidget *w;
     GtkTreeModel *mod;
     GtkTreeIter iter;
     int modv;
 
-    list = (locus == SR_RUVARS)? sr->ruvars : sr->rlvars;
-    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(list));
+    w = (locus == SR_RUVARS)? sr->ruvars : sr->rlvars;
+    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
 
     gtk_tree_model_get_iter_first(mod, &iter);
     while (1) {
@@ -4011,6 +4012,14 @@ static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
 
 #endif
 
+static void revise_depvar_string (var_lag_info *vlinfo, selector *sr)
+{
+    char vstr[VNAMELEN+16];
+
+    get_var_string(vstr, vlinfo->v, sr, SR_DEPVAR);
+    gtk_entry_set_text(GTK_ENTRY(sr->depvar), vstr);
+}
+
 static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
 {
     int locus = 0;
@@ -4020,6 +4029,8 @@ static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
 	    SR_RLVARS;
     } else if (vlinfo->context == LAG_INSTR) {
 	locus = SR_RUVARS;
+    } else if (vlinfo->context == LAG_Y) {
+	revise_depvar_string(vlinfo, sr);
     }
 
     if (locus > 0) {
