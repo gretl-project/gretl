@@ -981,7 +981,7 @@ static void add_to_rlvars_callback (GtkWidget *w, selector *sr)
 
 #ifdef OLD_GTK
 
-static void remove_right_var (gint i, GtkWidget *vars)
+static void real_remove_from_right (gint i, GtkWidget *vars)
 {
     gtk_clist_remove(GTK_CLIST(vars), i);
 }
@@ -993,7 +993,7 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
     selector *sr;
 
     mylist = g_list_sort(mylist, list_sorter);
-    g_list_foreach(mylist, (GFunc) remove_right_var, vars);
+    g_list_foreach(mylist, (GFunc) real_remove_from_right, vars);
 
     sr = g_object_get_data(G_OBJECT(data), "selector");
     if (sr != NULL && sr->add_button != NULL && 
@@ -1053,6 +1053,9 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
 	!selection_at_max(sr, nsel)) {
 	gtk_widget_set_sensitive(sr->add_button, TRUE);
     }
+
+    /* FIXME desensitize lags button if there's nothing
+       left to lag? */
 }
 
 #endif
