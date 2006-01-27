@@ -1077,7 +1077,11 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 #endif
 
-    if (key->keyval == GDK_e || key->keyval == GDK_t) {
+    if (
+	key->keyval == GDK_e || key->keyval == GDK_F2 /* edit */
+	|| key->keyval == GDK_Delete                  /* delete variable(s) */
+	|| key->keyval == GDK_t                       /* graph var */
+	) {
 	int selcount, row;
 
 	selcount = 
@@ -1090,12 +1094,19 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    mdata->active_var = atoi(varnum);
 	    g_free(varnum);
 
-	    if (key->keyval == GDK_e) {
+	    if (key->keyval == GDK_e || key->keyval == GDK_F2) {
 		varinfo_dialog(mdata->active_var, 1);
 	    } else if (key->keyval == GDK_t) {
 		do_graph_var(mdata->active_var);
-	    } 
+	    } else if (key->keyval == GDK_Delete) {
+		delete_selected_vars(mdata->active_var);
+	    }
+	} else if (selcount > 1) {
+	    if (key->keyval == GDK_Delete) {
+		delete_selected_vars(0);
+	    }
 	}
+	    
     } 
 
     return FALSE;
