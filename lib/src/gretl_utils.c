@@ -235,6 +235,32 @@ int gretl_isconst (int t1, int t2, const double *x)
 }
 
 /**
+ * gretl_isunits:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ * 
+ * Check whether variable @x equals 1 over the
+ * given sample range (aside from any missing values).
+ *
+ * Returns: 1 if so, otherwise 0.
+ */
+
+int gretl_isunits (int t1, int t2, const double *x)
+{
+    int t, ret = 1;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t]) && x[t] != 1.0) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
+/**
  * gretl_compare_doubles:
  * @a: pointer to first element to compare.
  * @b: pointer to second element to compare.

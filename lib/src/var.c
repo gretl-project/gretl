@@ -1767,7 +1767,7 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     GRETL_VAR *var = NULL;
     int *vlist = NULL;
 
-    gretl_list_purge_const(list);
+    gretl_list_truly_purge_const(list, (const double **) *pZ, pdinfo);
 
     vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, err);
 
@@ -2633,7 +2633,7 @@ GRETL_VAR *vecm (int order, int rank, int *list,
     int *endo_list = NULL, *exo_list = NULL;
     const int *vecm_list = list;
 
-    gretl_list_purge_const(list);
+    gretl_list_truly_purge_const(list, (const double **) *pZ, pdinfo);
 
     if (gretl_list_has_separator(list)) {
 	*err = gretl_list_split_on_separator(list, &endo_list, &exo_list);

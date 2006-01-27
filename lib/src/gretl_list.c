@@ -669,6 +669,64 @@ int gretl_list_purge_const (int *list)
     return gotc;
 }
 
+static int 
+true_const (int v, const double **Z, const DATAINFO *pdinfo)
+{
+    if (v < 0 || v >= pdinfo->v) {
+	return 0;
+    }
+
+    return gretl_isunits(pdinfo->t1, pdinfo->t2, Z[v]);
+}
+
+/**
+ * gretl_list_truly_purge_const:
+ * @list: list of variable ID numbers.
+ * @Z: data array.
+ * @pdinfo: dataset information.
+ *
+ * Checks @list from position 1 onward for the presence of a 
+ * variable whose values all equal 1.0.  If such a variable is 
+ * found, it is deleted from @list (that is, any following elements 
+ * are moved forward by one and list[0] is decremented by 1).
+ *
+ * Returns: 1 if a constant was found and deleted, else 0.
+ */
+
+int gretl_list_truly_purge_const (int *list, const double **Z,
+				  const DATAINFO *pdinfo)
+{
+    int i, gotc = 0;
+    int l0 = list[0];
+
+    /* handle the case where the constant comes last; if it's
+       the only element behind the list separator, remove both
+       the constant and the separator */
+
+    if (list[l0] == 0 || true_const(list[l0], Z, pdinfo)) {
+	gotc = 1;
+	list[0] -= 1;
+	if (list[l0 - 1] == LISTSEP) {
+	    list[l0 - 1] = 0;
+	    list[0] -= 1;
+	}
+    } else {
+	for (i=1; i<l0; i++) {
+	    if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
+		for ( ; i<l0; i++) {
+		    list[i] = list[i+1];
+		}
+		list[l0] = 0;
+		list[0] -= 1;
+		gotc = 1;
+		break;
+	    }
+	}
+    }
+
+    return gotc;
+}
+
 /**
  * gretl_list_add:
  * @orig: an array of integers, the first element of which holds
