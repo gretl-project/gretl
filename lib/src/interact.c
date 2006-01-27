@@ -175,8 +175,7 @@ static int catch_command_alias (const char *line, CMD *cmd)
     return cmd->ci;
 }
 
-#define REQUIRES_PARAM(c) (c == ADDOBS || \
-                           c == ADDTO || \
+#define REQUIRES_PARAM(c) (c == ADDTO || \
                            c == FCAST || \
                            c == FUNC || \
                            c == LOOP ||  \
@@ -185,6 +184,15 @@ static int catch_command_alias (const char *line, CMD *cmd)
                            c == OMITFROM || \
                            c == REMEMBER || \
                            c == SETMISS)
+
+#define REQUIRES_ORDER(c) (c == ADF || \
+                           c == ADDOBS || \
+                           c == ARCH || \
+                           c == COINT || \
+                           c == COINT2 || \
+                           c == KPSS || \
+                           c == VAR || \
+                           c == VECM)
 
 #define NO_VARLIST(c) (c == ADDOBS || \
                        c == APPEND || \
@@ -248,13 +256,11 @@ static int catch_command_alias (const char *line, CMD *cmd)
                          c == SCATTERS || \
                          c == TSLS)
 
-#define TAKES_LAG_ORDER(c) (c == ADF || \
-                            c == ARCH || \
-                            c == COINT || \
-                            c == COINT2 || \
-                            c == KPSS || \
-                            c == VAR || \
-                            c == VECM)
+#define NEEDS_LISTSEP(c) (c == AR || \
+                          c == ARMA || \
+                          c == GARCH || \
+                          c == SCATTERS || \
+                          c == TSLS)
 
 #define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \
                                   c == DIFF || \
@@ -1049,21 +1055,6 @@ static int check_end_command (CMD *cmd)
     return cmd->errcode;
 }
 
-static int int_to_cmd_param (CMD *cmd, int i)
-{
-    char numstr[16];
-
-    sprintf(numstr, "%d", i);
-
-    free(cmd->param);
-    cmd->param = gretl_strdup(numstr);
-    if (cmd->param == NULL) {
-	cmd->errcode = E_ALLOC;
-    }
-
-    return cmd->errcode;
-}
-
 static int resize_cmd_param (CMD *cmd, const char *s, int inlen)
 {
     char *param;
@@ -1098,7 +1089,9 @@ static int resize_cmd_param (CMD *cmd, const char *s, int inlen)
    none is found.
 */
 
-static int capture_param (const char *s, CMD *cmd)
+static int capture_param (const char *s, CMD *cmd,
+			  const double **Z, 
+			  const DATAINFO *pdinfo)
 {
     /* if param has already been written by some special
        routine, don't overwrite it */
@@ -1111,7 +1104,7 @@ static int capture_param (const char *s, CMD *cmd)
     s += strspn(s, " ");
 
     if (string_is_blank(s)) {
-	if (REQUIRES_PARAM(cmd->ci) || TAKES_LAG_ORDER(cmd->ci)) {
+	if (REQUIRES_PARAM(cmd->ci) || REQUIRES_ORDER(cmd->ci)) {
 	    cmd->errcode = E_PARSE;
 	    sprintf(gretl_errmsg, _("%s: required parameter is missing"),
 		    cmd->word);
@@ -1130,6 +1123,11 @@ static int capture_param (const char *s, CMD *cmd)
 	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
 		s, cmd->param);
 #endif
+	if (REQUIRES_ORDER(cmd->ci)) {
+	    cmd->order = gretl_int_from_string(cmd->param,
+					       Z, pdinfo, 
+					       &cmd->errcode);
+	}
     }
 
     if (cmd->ci == END) {
@@ -1323,7 +1321,8 @@ int count_free_fields (const char *s)
 int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo) 
 {
     int j, nf, linelen, pos, v, lnum;
-    int gotdata = 0, ar = 0, poly = 0;
+    int gotdata = 0, poly = 0;
+    int read_lags = 0;
     char *remainder = NULL;
     char field[FIELDLEN] = {0};
 
@@ -1446,7 +1445,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* commands that never take a list of variables */
     if (NO_VARLIST(cmd->ci)) { 
 	cmd->nolist = 1;
-	capture_param(line, cmd);
+	capture_param(line, cmd, (const double **) *pZ, pdinfo);
 	return cmd->errcode;
     }
 
@@ -1455,7 +1454,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* PRINT can take a list, but not in its string literal variant */
     if (cmd->ci == PRINT && strstr(line, "\"")) {
 	cmd->nolist = 1;
-	capture_param(line, cmd);
+	capture_param(line, cmd, NULL, NULL);
 	return cmd->errcode;
     }
 
@@ -1561,13 +1560,13 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
        "remember" takes a thing to remember;
        these are captured in cmd->param
     */
-    if (TAKES_LAG_ORDER(cmd->ci) ||
+    if (REQUIRES_ORDER(cmd->ci) ||
 	cmd->ci == ADDTO ||
 	cmd->ci == OMITFROM ||
 	cmd->ci == MULTIPLY ||
 	cmd->ci == REMEMBER ||
 	cmd->ci == SETMISS) {
-	capture_param(line, cmd);
+	capture_param(line, cmd, (const double **) *pZ, pdinfo);
 	if (cmd->errcode) {
 	    goto bailout;
 	} else {
@@ -1611,10 +1610,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	linelen = strlen(line);
     } 
 
-    if (cmd->ci == AR || cmd->ci == ARMA ||
-	cmd->ci == GARCH) {
+    if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of lags or ar, ma orders */
-	ar = 1;
+	read_lags = 1;
     }
 
     /* allocate space for the command list */
@@ -1653,7 +1651,13 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		field[strlen(field) - 1] = '\0';
 	    }
 
-	    if ((v = varindex(pdinfo, field)) < pdinfo->v) {
+	    if (read_lags) {
+		int k = gretl_int_from_string(field, (const double **) *pZ,
+					      pdinfo, &cmd->errcode);
+		if (!cmd->errcode) {
+		    cmd->list[lnum++] = k;
+		}
+	    } else if ((v = varindex(pdinfo, field)) < pdinfo->v) {
 		/* yes, it's an existing variable */
 		cmd->list[lnum++] = v;
 	    } else if ((savedlist = get_list_by_name(field)) != NULL) {
@@ -1734,24 +1738,21 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	else if (isdigit(*field)) {
 	    /* could be the ID number of a variable */
 	    v = atoi(field);
-	    if (!ar && !poly && v > pdinfo->v - 1) {
+	    if (!read_lags && !poly && v > pdinfo->v - 1) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, 
                        _("%d is not a valid variable number"), v);
 		goto bailout;
-	    }	
+	    }
 	    cmd->list[lnum++] = v;
 	}
 
 	else if (*field == ';') {
 	    /* could be the separator between two sub-lists */
 	    if (USES_LISTSEP(cmd->ci)) {
-		if (int_to_cmd_param(cmd, lnum)) {
-		    goto bailout;
-		}
 		pos += strlen(field) + 1;
 		cmd->list[lnum++] = LISTSEP;
-		ar = 0; /* turn off acceptance of AR lags */
+		read_lags = 0; /* turn off acceptance of AR lags etc */
 		if (cmd->ci == MPOLS) {
 		    poly = 1;
 		}
@@ -1773,7 +1774,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	/* check cmd->list for scalars */
-	if (!ar && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
+	if (!read_lags && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
 	    if (!pdinfo->vector[cmd->list[lnum-1]]) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("variable %s is a scalar"), field);
@@ -1810,10 +1811,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->errcode = E_ARGS;
     }
 
-    if ((cmd->ci == AR || cmd->ci == TSLS || 
-	 cmd->ci == ARMA || cmd->ci == SCATTERS ||
-	 cmd->ci == GARCH) && *cmd->param == '\0') {
-	/* missing param field */
+    if (NEEDS_LISTSEP(cmd->ci) && 
+	!gretl_list_separator_position(cmd->list)) {
+	/* missing field in command */
 	cmd->errcode = E_ARGS;
     }
 
@@ -2878,27 +2878,19 @@ int simple_commands (CMD *cmd, const char *line,
     switch (cmd->ci) {
 
     case ADDOBS:
-	order = atoi(cmd->param);
-	err = add_obs(order, pZ, pdinfo, prn);
+	err = add_obs(cmd->order, pZ, pdinfo, prn);
 	break;
 
     case ADF:
-	if (!isdigit(*cmd->param) && *cmd->param != '-') {
-	    pputs(prn, _("adf: lag order must be given first\n"));
-	    break;
-	}
-	order = atoi(cmd->param);
-	err = adf_test(order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
+	err = adf_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case COINT:
-	order = atoi(cmd->param);
-	err = coint(order, cmd->list, pZ, pdinfo, cmd->opt, prn);
+	err = coint(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case COINT2:
-	order = atoi(cmd->param);
-	err = johansen_test_simple(order, cmd->list, pZ, pdinfo, 
+	err = johansen_test_simple(cmd->order, cmd->list, pZ, pdinfo, 
 				   cmd->opt, prn);
 	break;
 
@@ -2982,8 +2974,7 @@ int simple_commands (CMD *cmd, const char *line,
 	    pputs(prn, _("kpss: lag order must be given first\n"));
 	    break;
 	}
-	order = atoi(cmd->param);
-	err = kpss_test(order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
+	err = kpss_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case LAGS:
@@ -3334,6 +3325,7 @@ int gretl_cmd_init (CMD *cmd)
     cmd->ci = 0;
     cmd->errcode = 0;
     cmd->context = 0;
+    cmd->order = 0;
     cmd->ignore = 0;
     *cmd->word = '\0';
 

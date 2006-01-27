@@ -54,7 +54,7 @@ int whites_test (MODEL *pmod,
 		 double ***pZ, DATAINFO *pdinfo, 
 		 gretlopt opt, PRN *prn);
 
-MODEL ar_func (const int *list, int pos, 
+MODEL ar_func (const int *list,  
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 

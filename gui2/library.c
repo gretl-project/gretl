@@ -2691,8 +2691,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case AR:
-	*pmod = ar_func(cmd.list, atoi(cmd.param), 
-			&Z, datainfo, OPT_NONE, prn);
+	*pmod = ar_func(cmd.list, &Z, datainfo, OPT_NONE, prn);
 	err = model_error(pmod);
 	break;
 
@@ -6061,17 +6060,15 @@ int gui_exec_line (char *line,
 
     case AR:
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, cmd.opt, outprn);
+	*models[0] = ar_func(cmd.list, &Z, datainfo, cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	}
 	break;
 
     case ARCH:
-	order = atoi(cmd.param);
 	clear_model(models[1]);
-	*models[1] = arch_model(cmd.list, order, &Z, datainfo, 
+	*models[1] = arch_model(cmd.list, cmd.order, &Z, datainfo, 
 				cmd.opt, outprn);
 	if ((err = (models[1])->errcode)) {
 	    errmsg(err, prn);
@@ -6756,8 +6753,7 @@ int gui_exec_line (char *line,
 	break;
 
     case VAR:
-	order = atoi(cmd.param);
-	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, outprn);
+	var = full_VAR(cmd.order, cmd.list, &Z, datainfo, cmd.opt, outprn);
 	if (var == NULL) {
 	    err = 1;
 	} else {
@@ -6766,8 +6762,7 @@ int gui_exec_line (char *line,
 	break;
 
     case VECM:
-	order = atoi(cmd.param);
-	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
+	var = vecm(cmd.order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
 		   cmd.opt, outprn);
 	if (var == NULL) {
 	    err = 1;

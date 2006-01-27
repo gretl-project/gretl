@@ -348,7 +348,7 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int add,
 /* reconstitute full varlist for WLS, POISSON, AR and models */
 
 static int *
-full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
+full_model_list (const MODEL *pmod, const int *inlist)
 {
     int i, len, pos = 0;
     int *flist = NULL;
@@ -397,8 +397,6 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 	}
     }
 
-    *ppos = pos;
-
     return flist;
 }
 
@@ -413,7 +411,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     MODEL rep;
     double rho = 0.0;
     int *list = *plist;
-    int pos = 0, mc = get_model_count();
+    int mc = get_model_count();
     int repci = orig->ci;
 
     gretl_model_init(&rep);
@@ -432,7 +430,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	repci = POOLED;
     } else if (orig->ci == WLS || orig->ci == AR || 
 	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
-	int *full_list = full_model_list(orig, list, &pos);
+	int *full_list = full_model_list(orig, list);
 
 	free(list);
 	if (full_list == NULL) {
@@ -449,7 +447,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     switch (orig->ci) {
 
     case AR:
-	rep = ar_func(list, pos, pZ, pdinfo, lsqopt, prn);
+	rep = ar_func(list, pZ, pdinfo, lsqopt, prn);
 	break;
     case ARCH:
 	rep = arch_model(list, orig->order, pZ, pdinfo, lsqopt, prn);

@@ -9,6 +9,7 @@ struct _CMD {
     char word[9];               /* command word */
     int ci;                     /* command index number */
     int context;                /* context for subsetted commands */
+    int order;                  /* lag order, for various commands */
     gretlopt opt;               /* option flags */
     char savename[MAXSAVENAME]; /* name used to save an object from the command */
     int nolist;                 /* = 1 if the command does not take a list */

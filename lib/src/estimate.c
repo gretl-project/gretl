@@ -2530,8 +2530,6 @@ static int ar_list_max (const int *list)
 /**
  * ar_func:
  * @list: list of lags plus dependent variable and list of regressors.
- * @pos: position in list of separator (dummy element) between lag list
- * and specification of dependent and independent variables.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: may contain OPT_O to print covariance matrix.
@@ -2543,7 +2541,7 @@ static int ar_list_max (const int *list)
  * Returns: #MODEL struct containing the results.
  */
 
-MODEL ar_func (const int *list, int pos, double ***pZ, 
+MODEL ar_func (const int *list, double ***pZ, 
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     double diff, ess, tss, xx;
@@ -2551,12 +2549,15 @@ MODEL ar_func (const int *list, int pos, double ***pZ,
     int err, lag, maxlag, v = pdinfo->v;
     int *arlist = NULL, *rholist = NULL;
     int *reglist = NULL, *reglist2 = NULL;
+    int pos;
     MODEL ar, rhomod;
 
     *gretl_errmsg = '\0';
 
     gretl_model_init(&ar);
     gretl_model_init(&rhomod);
+
+    pos = gretl_list_separator_position(list);
 
     arlist = malloc(pos * sizeof *arlist);
     reglist = malloc((list[0] - pos + 2) * sizeof *reglist);

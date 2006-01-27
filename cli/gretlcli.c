@@ -983,17 +983,15 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case AR:
 	clear_model(models[0]);
-	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, cmd.opt, prn);
+	*models[0] = ar_func(cmd.list, &Z, datainfo, cmd.opt, prn);
 	if ((err = models[0]->errcode)) { 
 	    errmsg(err, prn); 
 	}
 	break;
 
     case ARCH:
-	order = atoi(cmd.param);
 	clear_model(models[1]);
-	*models[1] = arch_model(cmd.list, order, &Z, datainfo, 
+	*models[1] = arch_model(cmd.list, cmd.order, &Z, datainfo, 
 				cmd.opt, prn);
 	if ((err = models[1]->errcode)) { 
 	    errmsg(err, prn);
@@ -1648,8 +1646,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case VAR:
-	order = atoi(cmd.param);
-	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
+	var = full_VAR(cmd.order, cmd.list, &Z, datainfo, cmd.opt, prn);
 	if (var == NULL) {
 	    err = 1;
 	} else {
@@ -1659,8 +1656,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case VECM:
-	order = atoi(cmd.param);
-	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
+	var = vecm(cmd.order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
 		   cmd.opt, prn);
 	if (var == NULL) {
 	    err = 1;

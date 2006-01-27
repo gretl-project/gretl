@@ -608,7 +608,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 }
 
 /**
- * gretl_integer_from_string:
+ * gretl_int_from_string:
  * @s: string to examine.
  * @Z: data array.
  * @pdinfo: data information struct.
@@ -622,29 +622,34 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
  * Returns: integer value.
  */
 
-int gretl_integer_from_string (const char *s, const double **Z, 
-			       const DATAINFO *pdinfo, int *err)
+int gretl_int_from_string (const char *s, const double **Z, 
+			   const DATAINFO *pdinfo, int *err)
 {
     char *test;
     int n = 0;
 
     n = strtol(s, &test, 10);
+
     if (*test == '\0') {
 	return n;
+    } else if (Z == NULL || pdinfo == NULL) {
+	*err = E_DATA;
     } else {
 	int v = varindex(pdinfo, s);
 	double x;
 
-	if (v < pdinfo->v && !pdinfo->vector[v]) {
+	if (v == pdinfo->v) {
+	    *err = E_UNKVAR;
+	} else if (pdinfo->vector[v]) {
+	    *err = E_TYPES;
+	} else {
 	    x = Z[v][0];
 	    if (na(x)) {
-		*err = 1;
+		*err = E_MISSDATA;
 	    } else {
 		n = (int) x;
 	    }
-	} else {
-	    *err = 1;
-	}
+	} 
     }
 
     return n;    
@@ -720,8 +725,6 @@ double *copyvec (const double *src, int n)
     return targ;
 }
 
-/* ........................................................... */
-
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo) 
 {
@@ -743,8 +746,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     switch (cmd.ci) {
     case AR:
-	*tmpmod = ar_func(cmd.list, atoi(cmd.param), pZ, 
-			  pdinfo, OPT_NONE, NULL);
+	*tmpmod = ar_func(cmd.list, pZ, pdinfo, OPT_NONE, NULL);
 	break;
     case CORC:
     case HILU:
@@ -789,8 +791,6 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     return err;
 }
-
-/* ........................................................... */
 
 int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 {

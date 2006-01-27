@@ -799,8 +799,8 @@ atom_get_variable_or_constant (const char *s, GENERATOR *genr,
 
 static int get_matrix_dim (const char *s, GENERATOR *genr)
 {
-    return gretl_integer_from_string(s, (const double **) *genr->pZ,
-				     genr->pdinfo, &genr->err);
+    return gretl_int_from_string(s, (const double **) *genr->pZ,
+				 genr->pdinfo, &genr->err);
 }
 
 static void
