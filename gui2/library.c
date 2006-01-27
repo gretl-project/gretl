@@ -801,16 +801,15 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     view_buffer(prn, hsize, vsize, title, action, obj);
 }
 
-void do_coint (GtkWidget *widget, gpointer p)
+int do_coint (selector *sr)
 {
-    selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
     int action = selector_code(sr);
     GRETL_VAR *jvar = NULL;
     PRN *prn;
     int err = 0, order = 0;
 
-    if (buf == NULL) return;
+    if (buf == NULL) return 1;
 
     cmd.opt = selector_get_opts(sr);
 
@@ -821,14 +820,14 @@ void do_coint (GtkWidget *widget, gpointer p)
     }	
 
     if (check_and_record_command() || bufopen(&prn)) {
-	return;
+	return 1;
     }
 
     order = atoi(cmd.param);
     if (!order) {
 	errbox(_("Couldn't read cointegration order"));
 	gretl_print_destroy(prn);
-	return;
+	return 1;
     }
 
     if (action == COINT) {
@@ -843,11 +842,13 @@ void do_coint (GtkWidget *widget, gpointer p)
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-	return;
+	return err;
     } 
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
 		action, (action == COINT2)? jvar : NULL);
+
+    return 0;
 }
 
 static int ok_obs_in_series (int varno)
@@ -980,20 +981,19 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     }    
 }
 
-void do_spearman (GtkWidget *widget, gpointer p)
+int do_spearman (selector *sr)
 {
-    selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
     PRN *prn;
     char title[64];
     gint err;
 
-    if (buf == NULL) return;
+    if (buf == NULL) return 1;
     
     gretl_command_sprintf("spearman%s --verbose", buf);
 
     if (check_and_record_command() || bufopen(&prn)) {
-	return;
+	return 1;
     }
 
     err = spearman(cmd.list, (const double **) Z, datainfo, OPT_V, prn);
@@ -1001,25 +1001,26 @@ void do_spearman (GtkWidget *widget, gpointer p)
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
-        return;
+        return 1;
     }
 
     strcpy(title, "gretl: ");
     strcat(title, _("rank correlation"));
 
     view_buffer(prn, 78, 400, title, SPEARMAN, NULL); 
+
+    return 0;
 }
 
-void do_two_var_test (GtkWidget *widget, gpointer p)
+int do_two_var_test (selector *sr)
 {
-    selector *sr = (selector *) p;
     int action = selector_code(sr);
     const char *buf = selector_list(sr);
     PRN *prn;
     char title[64];
     int err = 0;
 
-    if (buf == NULL) return;
+    if (buf == NULL) return 1;
 
     strcpy(title, "gretl: ");
 
@@ -1034,11 +1035,11 @@ void do_two_var_test (GtkWidget *widget, gpointer p)
 	strcat(title, _("variances test"));
     } else {
 	dummy_call();
-	return;
+	return 1;
     }
 
     if (check_and_record_command() || bufopen(&prn)) {
-	return;
+	return 1;
     }
 
     if (action == MEANTEST) {
@@ -1055,6 +1056,8 @@ void do_two_var_test (GtkWidget *widget, gpointer p)
     } else {
 	view_buffer(prn, 78, 300, title, action, NULL); 
     }
+
+    return err;
 }
 
 void open_info (gpointer data, guint edit, GtkWidget *widget)
@@ -1355,9 +1358,8 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     }
 }
 
-void do_coeff_sum (GtkWidget *widget, gpointer p)
+int do_coeff_sum (selector *sr)
 {
-    selector *sr = (selector *) p;
     windata_t *vwin = selector_get_data(sr);
     const char *buf = selector_list(sr);
     PRN *prn;
@@ -1366,13 +1368,13 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
     gint err;
 
     if (buf == NULL) {
-	return;
+	return 0;
     }
 
     gretl_command_sprintf("coeffsum %s", buf);
 
     if (check_lib_command() || bufopen(&prn)) {
-	return;
+	return 1;
     }
 
     pmod = vwin->data;
@@ -1381,7 +1383,7 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
-        return;
+        return 1;
     }
 
     model_command_init(pmod->ID);
@@ -1390,11 +1392,12 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
     strcat(title, _("Sum of coefficients"));
 
     view_buffer(prn, 78, 200, title, COEFFSUM, NULL); 
+
+    return 0;
 }
 
-void do_add_omit (GtkWidget *widget, gpointer p)
+int do_add_omit (selector *sr)
 {
-    selector *sr = (selector *) p;
     windata_t *vwin = selector_get_data(sr);
     const char *buf = selector_list(sr);
     PRN *prn;
@@ -1403,7 +1406,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     gint err;
 
     if (buf == NULL) {
-	return;
+	return 1;
     }
 
     orig = vwin->data;
@@ -1415,14 +1418,14 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     }
 
     if (check_lib_command() || bufopen(&prn)) {
-	return;
+	return 1;
     }
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
 	errbox(_("Out of memory"));
 	gretl_print_destroy(prn);
-	return;
+	return 0;
     }
 
     if (selector_code(sr) == ADD) { 
@@ -1435,14 +1438,14 @@ void do_add_omit (GtkWidget *widget, gpointer p)
         gui_errmsg(err);
         gretl_print_destroy(prn);
         clear_model(pmod); 
-        return;
+        return err;
     }
 
     update_model_tests(vwin);
 
     if (lib_cmd_init()) {
 	errbox(_("Error saving model information"));
-	return;
+	return 0;
     }
 
     /* record sub-sample info (if any) with the model */
@@ -1450,11 +1453,12 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title);
+
+    return 0;
 }
 
-void do_confidence_region (GtkWidget *widget, gpointer p)
+int do_confidence_region (selector *sr)
 {
-    selector *sr = (selector *) p;
     windata_t *vwin = selector_get_data(sr);
     const char *buf = selector_list(sr);
     MODEL *pmod;
@@ -1469,17 +1473,17 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
     int err;
 
     if (buf == NULL || sscanf(buf, "%d %d", &v[0], &v[1]) != 2) {
-	return;
+	return 0;
     }
 
     pmod = (MODEL *) vwin->data;
     if (pmod == NULL) {
-	return;
+	return 0;
     }
 
     mask = calloc(pmod->ncoeff, 1);
     if (mask == NULL) {
-	return;
+	return 0;
     }
 
     mask[v[0]] = mask[v[1]] = 1;
@@ -1487,7 +1491,7 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
     V = gretl_vcv_matrix_from_model(pmod, mask);
     if (V == NULL) {
 	free(mask);
-	return;
+	return 0;
     }
 
     b[0] = pmod->coeff[v[0]];
@@ -1504,6 +1508,8 @@ void do_confidence_region (GtkWidget *widget, gpointer p)
 
     gretl_matrix_free(V);
     free(mask);
+
+    return 0;
 }
 
 #ifdef OLD_GTK
@@ -2111,9 +2117,8 @@ static gint check_model_cmd (void)
 
 #ifdef ENABLE_GMP
 
-void do_mp_ols (GtkWidget *widget, gpointer p)
+int do_mp_ols (selector *sr)
 {
-    selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
     int action = selector_code(sr);
 
@@ -2126,7 +2131,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     int err;
 
     if (buf == NULL) {
-	return;
+	return 1;
     }
 
     strcpy(estimator, gretl_command_word(action));
@@ -2134,19 +2139,19 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     gretl_command_sprintf("%s %s", estimator, buf);
 
     if (check_and_record_command() || bufopen(&prn)) {
-	return;
+	return 1;
     }
 
     mplsq = gui_get_plugin_function("mplsq", &handle);
     if (mplsq == NULL) {
-	return;
+	return 0;
     }
 
     mpvals = gretl_mp_results_new(cmd.list[0] - 1);
 
     if (mpvals == NULL || allocate_mp_varnames(mpvals)) {
 	errbox(_("Out of memory!"));
-	return;
+	return 0;
     }
 
     err = (*mplsq)(cmd.list, NULL, &Z, datainfo, prn, errtext, mpvals);
@@ -2160,13 +2165,15 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 	    errbox(get_errmsg(err, errtext, NULL));
 	}
 	gretl_print_destroy(prn);
-	return;
+	return err;
     }
 
     print_mpols_results(mpvals, datainfo, prn);
 
     view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
 		MPOLS, mpvals);
+
+    return 0;
 }
 
 #endif /* ENABLE_GMP */
@@ -2604,9 +2611,8 @@ static int logistic_model_get_lmax (CMD *cmd)
     return err;
 }
 
-void do_model (GtkWidget *widget, gpointer p) 
+int do_model (selector *sr) 
 {
-    selector *sr = (selector *) p; 
     const char *buf;
     PRN *prn;
     MODEL *pmod;
@@ -2616,12 +2622,12 @@ void do_model (GtkWidget *widget, gpointer p)
     int err = 0;
 
     if (selector_error(sr)) {
-	return;
+	return 1;
     }
 
     buf = selector_list(sr);
     if (buf == NULL) {
-	return;
+	return 1;
     }
 
     action = selector_code(sr);
@@ -2637,17 +2643,17 @@ void do_model (GtkWidget *widget, gpointer p)
 #endif
 
     if (check_model_cmd()) {
-	return;
+	return 1;
     }
 
     if (bufopen(&prn)) {
-	return;
+	return 1;
     }
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
 	errbox(_("Out of memory"));
-	return;
+	return 1;
     }
 
     switch (action) {
@@ -2728,7 +2734,7 @@ void do_model (GtkWidget *widget, gpointer p)
     case LOGISTIC:
 	err = logistic_model_get_lmax(&cmd);
 	if (err < 0) {
-	    return;
+	    return 1;
 	} else if (err) {
 	    gui_errmsg(err);
 	    break;
@@ -2758,12 +2764,12 @@ void do_model (GtkWidget *widget, gpointer p)
 	} else {
 	    gretl_print_destroy(prn);
 	}
-	return;
+	return err;
     }
 
     if (check_lib_command() || lib_cmd_init()) {
 	errbox(_("Error saving model information"));
-	return;
+	return 0;
     }
 
     /* record sub-sample info (if any) with the model */
@@ -2771,11 +2777,12 @@ void do_model (GtkWidget *widget, gpointer p)
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title); 
+
+    return 0;
 }
 
-void do_vector_model (GtkWidget *widget, gpointer p) 
+int do_vector_model (selector *sr) 
 {
-    selector *sr = (selector *) p; 
     GRETL_VAR *var;
     char estimator[9];
     const char *buf;
@@ -2784,12 +2791,12 @@ void do_vector_model (GtkWidget *widget, gpointer p)
     int err = 0;
 
     if (selector_error(sr)) {
-	return;
+	return 1;
     }
 
     buf = selector_list(sr);
     if (buf == NULL) {
-	return;
+	return 1;
     }
 
     action = selector_code(sr);
@@ -2805,37 +2812,30 @@ void do_vector_model (GtkWidget *widget, gpointer p)
 #endif
 
     if (check_model_cmd()) {
-	return;
+	return 1;
     }
 
     if (bufopen(&prn)) {
-	return;
+	return 1;
     }
 
     sscanf(buf, "%d", &order);
     if (order > var_max_order(cmd.list, datainfo)) {
 	errbox(_("Insufficient degrees of freedom for regression"));
 	gretl_print_destroy(prn);
-	return;
+	return 1;
     }    
 
     if (action == VAR) {
-	var = full_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn);
-	if (var == NULL) {
-	    err = 1;
-	} else if (var->err != 0) {
-	    err = var->err;
-	} else {
+	var = gretl_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn, &err);
+	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 			VAR, var);
 	}
     } else if (action == VECM) {
-	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, prn);
-	if (var == NULL) {
-	    err = 1;
-	} else if (var->err != 0) {
-	    err = var->err;
-	} else {
+	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, 
+		   prn, &err);
+	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: VECM"), VECM, var);
 	}
     } else {
@@ -2845,7 +2845,9 @@ void do_vector_model (GtkWidget *widget, gpointer p)
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
-    }	
+    }
+
+    return err;
 }
 
 void do_graph_model (GPT_SPEC *spec)
@@ -4487,28 +4489,28 @@ void do_boxplot_var (int varnum)
     }
 }
 
-void do_scatters (GtkWidget *widget, gpointer p)
+int do_scatters (selector *sr)
 {
-    selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
     int err; 
 
-    if (buf == NULL) return;
+    if (buf == NULL) return 1;
 
     gretl_command_sprintf("scatters %s", buf);
 
     if (check_and_record_command()) {
-	return;
+	return 1;
     }
 
-    err = multi_scatters(cmd.list, atoi(cmd.param), &Z, 
-			 datainfo, NULL, 0);
+    err = multi_scatters(cmd.list, &Z, datainfo, NULL, 0);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
     } else {
 	register_graph();
     }
+
+    return 0;
 }
 
 void do_box_graph (GtkWidget *widget, dialog_t *dlg)
@@ -4540,25 +4542,24 @@ void do_box_graph (GtkWidget *widget, dialog_t *dlg)
 
 /* X, Y scatter with separation by dummy (factor) */
 
-void do_dummy_graph (GtkWidget *widget, gpointer p)
+int do_dummy_graph (selector *sr)
 {
-    selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
     gint err, lines[1] = {0}; 
 
-    if (buf == NULL) return;
+    if (buf == NULL) return 1;
 
     gretl_command_sprintf("gnuplot %s --dummy", buf);
 
     if (check_and_record_command()) {
-	return;
+	return 1;
     }
 
     if (cmd.list[0] != 3 || 
 	!gretl_isdummy(datainfo->t1, datainfo->t2, Z[cmd.list[3]])) {
 	errbox(_("You must supply three variables, the last\nof which "
 	       "is a dummy variable (values 1 or 0)"));
-	return;
+	return 1;
     }
 
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
@@ -4569,16 +4570,17 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     } else {
 	register_graph();
     }
+
+    return 0;
 }
 
-void do_graph_from_selector (GtkWidget *widget, gpointer p)
+int do_graph_from_selector (selector *sr)
 {
-    selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
     gint i, err, *lines = NULL;
     gint imp = (selector_code(sr) == GR_IMP);
 
-    if (buf == NULL) return;
+    if (buf == NULL) return 1;
 
     gretl_command_sprintf("gnuplot %s%s", buf, 
 			 (imp)? " --with-impulses" : "");
@@ -4588,13 +4590,13 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     }
 
     if (check_and_record_command()) {
-	return;
+	return 1;
     }
 
     if (!imp) {
 	lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
 	if (lines == NULL) {
-	    return;
+	    return 0;
 	}
 	for (i=0; i<cmd.list[0]-1 ; i++) {
 	    if (selector_code(sr) == GR_PLOT) {
@@ -4618,6 +4620,8 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     if (lines != NULL) {
 	free(lines);
     }
+
+    return 0;
 }
 
 #ifndef G_OS_WIN32
@@ -4691,18 +4695,17 @@ static int get_terminal (char *s)
 
 #endif /* not G_OS_WIN32 */
 
-void do_splot_from_selector (GtkWidget *widget, gpointer p)
+int do_splot_from_selector (selector *sr)
 {
     char line[MAXLINE];
-    selector *sr = (selector *) p;
     const char *buf = selector_list(sr);
     int err;
 
-    if (buf == NULL) return;
+    if (buf == NULL) return 1;
 
     sprintf(line, "gnuplot %s", buf);
     if (check_specific_command(line) || cmd.list[0] != 3) {
-	return;
+	return 1;
     }
 
     err = gnuplot_3d(cmd.list, NULL, &Z, datainfo,
@@ -4715,6 +4718,8 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
     } else {
 	launch_gnuplot_interactive();
     }
+
+    return 0;
 }
 
 static int list_position (int v, const int *list)
@@ -6315,8 +6320,8 @@ int gui_exec_line (char *line,
 			      &Z, datainfo, &plot_count, plotflags);
 	    }
 	} else {
-	    err = multi_scatters(cmd.list, atoi(cmd.param), &Z, 
-				 datainfo, &plot_count, plotflags);
+	    err = multi_scatters(cmd.list, &Z, datainfo, 
+				 &plot_count, plotflags);
 	}
 
 	if (err < 0) {
@@ -6753,20 +6758,17 @@ int gui_exec_line (char *line,
 	break;
 
     case VAR:
-	var = full_VAR(cmd.order, cmd.list, &Z, datainfo, cmd.opt, outprn);
-	if (var == NULL) {
-	    err = 1;
-	} else {
+	var = gretl_VAR(cmd.order, cmd.list, &Z, datainfo, cmd.opt, 
+			outprn, &err);
+	if (var != NULL) {
 	    err = maybe_save_var(&cmd, &var, prn);
 	}
 	break;
 
     case VECM:
 	var = vecm(cmd.order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
-		   cmd.opt, outprn);
-	if (var == NULL) {
-	    err = 1;
-	} else {
+		   cmd.opt, outprn, &err);
+	if (var != NULL) {
 	    err = maybe_save_var(&cmd, &var, prn);
 	}
 	break;

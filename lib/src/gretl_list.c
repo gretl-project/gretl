@@ -334,6 +334,10 @@ int *gretl_list_new (int nterms)
 {
     int *list = NULL;
     int i;
+    
+    if (nterms < 0) {
+	return NULL;
+    }
 
     list = malloc((nterms + 1) * sizeof *list);
 
@@ -342,6 +346,48 @@ int *gretl_list_new (int nterms)
 	for (i=1; i<=nterms; i++) {
 	    list[i] = 0;
 	}
+    }
+
+    return list;
+}
+
+/**
+ * gretl_list_resize:
+ * @oldlist: pointer to list to be resized.
+ * @nterms: the new maximum number of elements for the list.
+ * 
+ * Resizes the content of @oldlist to hold @nterms, and adjusts
+ * the first element to reflect the new size.  If the new
+ * list is longer than tha old, the extra elements are initialized 
+ * to zero.
+ *
+ * Returns: the resized list, or %NULL on failure.
+ */
+
+int *gretl_list_resize (int **oldlist, int nterms)
+{
+    int *list = NULL;
+    int i, oldn = 0;
+
+    if (nterms < 0 || oldlist == NULL) {
+	return NULL;
+    }
+
+    if (*oldlist != NULL) {
+	oldn = (*oldlist)[0];
+    }
+
+    list = realloc(*oldlist, (nterms + 1) * sizeof *list);
+
+    if (list != NULL) {
+	list[0] = nterms;
+	*oldlist = list;
+	for (i=oldn+1; i<=list[0]; i++) {
+	    list[i] = 0;
+	}
+    } else {
+	free(*oldlist);
+	*oldlist = NULL;
     }
 
     return list;

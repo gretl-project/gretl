@@ -162,7 +162,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
 	     int *plot_count, gnuplot_flags flags);
 
-int multi_scatters (const int *list, int pos, 
+int multi_scatters (const int *list, 
 		    double ***pZ, const DATAINFO *pdinfo, 
 		    int *plot_count, gnuplot_flags flags);
 

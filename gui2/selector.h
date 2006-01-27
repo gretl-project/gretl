@@ -20,14 +20,12 @@
 #ifndef SELECTOR_H
 #define SELECTOR_H
 
-typedef struct _selector selector;
-
 void clear_selector (void);
 
-void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode,
+void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 		       int preselect);
 
-void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
+void simple_selection (const char *title, int (*callback)(), guint cmdcode,
 		       gpointer p);
 
 char *main_window_selection_as_string (void);

@@ -413,26 +413,26 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 			 do_vector_model, action, 0);
     } else if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
 	       || action == SCATTERS || action == GR_3D) {
-	void (*okfunc)() = NULL;
+	int (*selfunc)() = NULL;
 
 	switch (action) {
 	case GR_XY:
 	case GR_IMP:
-	    okfunc = do_graph_from_selector;
+	    selfunc = do_graph_from_selector;
 	    break;
 	case GR_3D:
-	    okfunc = do_splot_from_selector;
+	    selfunc = do_splot_from_selector;
 	    break;
 	case GR_DUMMY:
-	    okfunc = do_dummy_graph;
+	    selfunc = do_dummy_graph;
 	    break;
 	case SCATTERS:
-	    okfunc = do_scatters;
+	    selfunc = do_scatters;
 	    break;
 	default:
 	    return;
 	}
-	selection_dialog(_("gretl: define graph"), okfunc, action, 0);
+	selection_dialog(_("gretl: define graph"), selfunc, action, 0);
     } else if (action == ADD || action == OMIT) {
 	simple_selection(_("gretl: model tests"), do_add_omit, action, vwin);
     } else if (action == COEFFSUM) {

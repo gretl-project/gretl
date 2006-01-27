@@ -1208,8 +1208,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case SCATTERS:
-	err = multi_scatters(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, &plot_count, 
+	err = multi_scatters(cmd.list, &Z, datainfo, &plot_count, 
 			     gp_flags(batch, cmd.opt));
 	if (err) {
 	    pputs(prn, _("scatters command failed\n"));
@@ -1646,10 +1645,9 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case VAR:
-	var = full_VAR(cmd.order, cmd.list, &Z, datainfo, cmd.opt, prn);
-	if (var == NULL) {
-	    err = 1;
-	} else {
+	var = gretl_VAR(cmd.order, cmd.list, &Z, datainfo, cmd.opt, 
+			prn, &err);
+	if (var != NULL) {
 	    err = maybe_stack_var(var, &cmd);
 	}
 	if (err) errmsg(err, prn);
@@ -1657,10 +1655,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case VECM:
 	var = vecm(cmd.order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
-		   cmd.opt, prn);
-	if (var == NULL) {
-	    err = 1;
-	} else {
+		   cmd.opt, prn, &err);
+	if (var != NULL) {
 	    err = maybe_stack_var(var, &cmd);
 	}
 	if (err) errmsg(err, prn);

@@ -37,6 +37,8 @@ int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);
 #endif
 
+typedef struct _selector selector;
+
 void library_command_init (void);
 
 void library_command_free (void);
@@ -59,7 +61,7 @@ gint bufopen (PRN **pprn);
 
 void do_menu_op (gpointer data, guint action, GtkWidget *widget);
 
-void do_two_var_test (GtkWidget *widget, gpointer p);
+int do_two_var_test (selector *sr);
 
 void do_run_script (gpointer data, guint code, GtkWidget *w);
 
@@ -101,15 +103,15 @@ int get_original_n (void);
 
 /* model-related functions */
 
-void do_coint (GtkWidget *widget, gpointer p);
+int do_coint (selector *sr);
 
 void do_forecast (gpointer data, guint u, GtkWidget *w);
 
-void do_coeff_sum (GtkWidget *widget, gpointer p);
+int do_coeff_sum (selector *sr);
 
-void do_add_omit (GtkWidget *widget, gpointer p);
+int do_add_omit (selector *sr);
 
-void do_confidence_region (GtkWidget *widget, gpointer p);
+int do_confidence_region (selector *sr);
 
 void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget);
 
@@ -131,9 +133,9 @@ void do_mle_model (GtkWidget *widget, dialog_t *dlg);
 
 void do_eqn_system (GtkWidget *widget, dialog_t *dlg);
 
-void do_model (GtkWidget *widget, gpointer p);
+int do_model (selector *sr);
 
-void do_vector_model (GtkWidget *widget, gpointer p);
+int do_vector_model (selector *sr);
 
 void do_graph_model (GPT_SPEC *spec);
 
@@ -151,10 +153,10 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 
 void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 
-void do_spearman (GtkWidget *widget, gpointer p);
+int do_spearman (selector *sr);
 
 #ifdef ENABLE_GMP
-void do_mp_ols (GtkWidget *widget, gpointer p);
+int do_mp_ols (selector *sr);
 #endif
 
 int out_of_sample_info (int add_ok, int *t2);
@@ -233,17 +235,17 @@ void do_boxplot_var (int varnum);
 
 void ts_plot_var (gpointer data, guint opt, GtkWidget *widget);
 
-void do_scatters (GtkWidget *widget, gpointer p);
+int do_scatters (selector *sr);
 
-void do_graph_from_selector (GtkWidget *widget, gpointer p);
+int do_graph_from_selector (selector *sr);
 
-void do_splot_from_selector (GtkWidget *widget, gpointer p);
+int do_splot_from_selector (selector *sr);
 
 void plot_from_selection (gpointer data, guint action, GtkWidget *widget);
 
 void do_box_graph (GtkWidget *widget, dialog_t *dlg);
 
-void do_dummy_graph (GtkWidget *widget, gpointer p);
+int do_dummy_graph (selector *sr);
 
 void delete_selected_vars (int id);
 

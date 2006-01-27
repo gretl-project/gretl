@@ -2809,15 +2809,13 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case VAR:
 	    case VECM:
 		if (cmd.ci == VAR) {
-		    var = full_VAR(atoi(cmd.param), cmd.list, pZ, *ppdinfo, 
-				   cmd.opt, prn);
+		    var = gretl_VAR(cmd.order, cmd.list, pZ, *ppdinfo, 
+				    cmd.opt, prn, &err);
 		} else {
-		    var = vecm(atoi(cmd.param), atoi(cmd.extra), cmd.list, 
-			   pZ, *ppdinfo, cmd.opt, prn);
+		    var = vecm(cmd.order, atoi(cmd.extra), cmd.list, 
+			       pZ, *ppdinfo, cmd.opt, prn, &err);
 		}
-		if (var == NULL) {
-		    err = 1;
-		} else {
+		if (var != NULL) {
 		    set_as_last_model(var, VAR);
 		}
 		break;

@@ -25,13 +25,13 @@
 
 int var_max_order (const int *list, const DATAINFO *pdinfo);
 
-GRETL_VAR *full_VAR (int order, int *list, 
-		     double ***pZ, DATAINFO *pdinfo,
-		     gretlopt opt, PRN *prn);
+GRETL_VAR *gretl_VAR (int order, int *list, 
+		      double ***pZ, DATAINFO *pdinfo,
+		      gretlopt opt, PRN *prn, int *err);
 
 GRETL_VAR *vecm (int order, int rank, int *list, 
 		 double ***pZ, DATAINFO *pdinfo,
-		 gretlopt opt, PRN *prn);
+		 gretlopt opt, PRN *prn, int *err);
 
 const gretl_matrix *
 gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, int pre_obs,

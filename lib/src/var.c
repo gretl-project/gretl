@@ -1740,7 +1740,7 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
- * full_VAR:
+ * gretl_VAR:
  * @order: lag order for the VAR
  * @list: specification for the first model in the set.
  * @pZ: pointer to data matrix.
@@ -1753,6 +1753,7 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
  *       if includes %OPT_Q, do not show individual regressions.
  *       if includes %OPT_T, include a linear trend.
  * @prn: gretl printing struct.
+ * @err: location to receive error code.
  *
  * Estimate a vector auto-regression (VAR), print and save
  * the results.
@@ -1760,22 +1761,21 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
  * Returns: pointer to VAR struct, which may be %NULL on error.
  */
 
-GRETL_VAR *full_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
-		     gretlopt opt, PRN *prn)
+GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
+		      gretlopt opt, PRN *prn, int *err)
 {
     GRETL_VAR *var = NULL;
     int *vlist = NULL;
-    int err = 0;
 
     gretl_list_purge_const(list);
 
-    vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, &err);
+    vlist = maybe_expand_VAR_list(list, pZ, pdinfo, opt, err);
 
-    if (!err) {
+    if (!*err) {
 	var = real_var(order, (vlist != NULL)? vlist : list, 
-		       pZ, pdinfo, opt, &err);
+		       pZ, pdinfo, opt, err);
     }
-
+    
     if (var != NULL) {
 	gretl_VAR_print(var, pdinfo, opt, prn);
     }
@@ -2619,26 +2619,25 @@ int johansen_test_simple (int order, const int *list, double ***pZ, DATAINFO *pd
  * @pdinfo: dataset information.
  * @opt:
  * @prn: gretl printing struct.
- *
+ * @err: location to receive error code.
  *
  * Returns: pointer to struct containing information on 
- * the VECM system.
+ * the VECM system or %NULL on failure.
  */
 
 GRETL_VAR *vecm (int order, int rank, int *list, 
 		 double ***pZ, DATAINFO *pdinfo,
-		 gretlopt opt, PRN *prn)
+		 gretlopt opt, PRN *prn, int *err)
 {
     GRETL_VAR *jvar = NULL;
     int *endo_list = NULL, *exo_list = NULL;
     const int *vecm_list = list;
-    int err = 0;
 
     gretl_list_purge_const(list);
 
     if (gretl_list_has_separator(list)) {
-	err = gretl_list_split_on_separator(list, &endo_list, &exo_list);
-	if (err) {
+	*err = gretl_list_split_on_separator(list, &endo_list, &exo_list);
+	if (*err) {
 	    return jvar;
 	}
 	vecm_list = endo_list;
@@ -2646,14 +2645,21 @@ GRETL_VAR *vecm (int order, int rank, int *list,
 
     if (rank <= 0 || rank > list[0]) {
 	sprintf(gretl_errmsg, _("vecm: rank %d is out of bounds"), rank);
+	*err = E_DATA;
 	return jvar;
     }
 
     jvar = johansen_wrapper(order, rank, vecm_list, exo_list,
 			    pZ, pdinfo, opt | OPT_S, prn);
     
-    if (jvar != NULL && !jvar->err) {
-	gretl_VAR_print(jvar, pdinfo, opt, prn);
+    if (jvar != NULL) {
+	if (!jvar->err) {
+	    gretl_VAR_print(jvar, pdinfo, opt, prn);
+	} else {
+	    *err = jvar->err;
+	}
+    } else {
+	*err = 1;
     }
 
     free(endo_list);

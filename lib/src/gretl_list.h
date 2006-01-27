@@ -22,6 +22,8 @@
 
 int *gretl_list_new (int nterms);
 
+int *gretl_list_resize (int **oldlist, int nterms);
+
 int *gretl_null_list (void);
 
 int *gretl_list_copy (const int *src);

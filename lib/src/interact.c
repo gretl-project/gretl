@@ -1611,7 +1611,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     } 
 
     if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
-	/* flag acceptance of lags or ar, ma orders */
+	/* flag acceptance of lag orders in list */
 	read_lags = 1;
     }
 

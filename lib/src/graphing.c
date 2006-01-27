@@ -1574,7 +1574,6 @@ int gnuplot (int *list, const int *lines, const char *literal,
 /**
  * multi_scatters:
  * @list: list of variables to plot, by ID number.
- * @pos: 
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @plot_count: count of graphs shown to date.
@@ -1586,14 +1585,16 @@ int gnuplot (int *list, const int *lines, const char *literal,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int multi_scatters (const int *list, int pos, double ***pZ, 
+int multi_scatters (const int *list, double ***pZ, 
 		    const DATAINFO *pdinfo, int *plot_count, 
 		    gnuplot_flags flags)
 {
     int i, t, err = 0, xvar, yvar;
     int *plotlist = NULL;
-    int nplots = 0;
+    int pos, nplots = 0;
     FILE *fp = NULL;
+
+    pos = gretl_list_separator_position(list);
 
     if (pos > 2) { 
 	/* plot several yvars against one xvar */
