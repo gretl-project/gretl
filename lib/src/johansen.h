@@ -75,6 +75,7 @@ struct GRETL_VAR_ {
     gretl_matrix *F;     /* optional forecast matrix */
     MODEL **models;      /* pointers to individual equation estimates */
     double *Fvals;       /* hold results of F-tests */
+    double *Ivals;       /* hold results of info criteria comparisons */
     double ldet;         /* log-determinant of S */
     double ll;           /* log-likelihood */
     double AIC;          /* Akaike criterion */

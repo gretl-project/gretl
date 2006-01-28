@@ -967,12 +967,22 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
 		    df, var->LR, I_("p-value"), chisq(var->LR, df));
 	} else {
-	    pprintf(prn, "%s\n", _("For the system as a whole"));
+	    int ordlen = (var->order > 10)? 2 : 1;
+
+	    pprintf(prn, "%s:\n\n", _("For the system as a whole"));
 	    pprintf(prn, "  %s: %s\n", _("Null hypothesis"), h0str);
 	    pprintf(prn, "  %s: %s\n", _("Alternative hypothesis"), h1str);
 	    pprintf(prn, "  %s: %s(%d) = %g (%s %f)\n",
 		    _("Likelihood ratio test"), _("Chi-square"), 
 		    df, var->LR, _("p-value"), chisq(var->LR, df));
+	    /* AIC, BIC comparison */
+	    pprintf(prn, "\n  %s:\n", _("Comparison of information criteria"));
+	    pputs(prn, "  ");
+	    pprintf(prn, _("Lag order %*d"), ordlen, var->order);
+	    pprintf(prn, ": AIC = %#.6g, BIC = %#.6g\n", var->AIC, var->BIC);
+	    pputs(prn, "  ");
+	    pprintf(prn, _("Lag order %*d"), ordlen, var->order - 1);
+	    pprintf(prn, ": AIC = %#.6g, BIC = %#.6g\n", var->Ivals[0], var->Ivals[1]);
 	}
     }
 

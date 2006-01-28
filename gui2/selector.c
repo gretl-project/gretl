@@ -3698,19 +3698,6 @@ static void lags_set_cancel (GtkWidget *w, gpointer p)
     *resp = LAGS_CANCEL;
 }
 
-#if 0
-static int get_sepcount (const int *list)
-{
-    int i, sc = 0;
-
-    for (i=1; i<list[0]; i++) {
-	if (list[i] == LISTSEP) sc++;
-    }
-
-    return sc;
-}
-#endif
-
 /* Below: we provide spinners for a lag range and also a free-form
    entry field for non-contiguous lags.  In some circumstances we
    allow specification of lags for the dependent variable as well
@@ -3726,7 +3713,6 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
     GtkWidget *tbl, *tmp, *hbox;
     gint tbl_len;
     double lmax, ldef;
-    int sep = 0;
     int i, j;
     int ret = LAGS_APPLY;
 
@@ -3757,15 +3743,11 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
     lbl = gtk_label_new(_("specific lags"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 6, 7, 0, 1);
 
-#if 0
-    sep = get_sepcount(list);
-#endif
-
     j = 0;
     for (i=1; i<=list[0]; i++) {
 
-	if (list[i] == LISTSEP) {
-	    if (++sep == 2 && sr->code == TSLS) {
+	if (list[i] >= LISTSEP) {
+	    if (list[i] - LISTSEP == LAG_INSTR) {
 		tmp = gtk_label_new(_("Instruments"));
 	    } else {
 		tmp = gtk_hseparator_new();
@@ -3971,7 +3953,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 	if (slist != NULL) {
 	    if (ynum > 0) {
 		slist[i++] = ynum;
-		slist[i++] = LISTSEP;
+		slist[i++] = LISTSEP + LAG_Y;
 		*ypos = 0;
 	    } else {
 		*ypos = -1;
@@ -3979,7 +3961,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 	    for (j=0; list[j] != NULL && j<2; j++) {
 		rows = GTK_CLIST(list[j])->rows;
 		if (j == 1) {
-		    slist[i++] = LISTSEP;
+		    slist[i++] = LISTSEP + LAG_X;
 		}
 		slist[i++] = VDEFLT;
 		for (k=0; k<rows; k++) {
@@ -4034,8 +4016,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
     GtkTreeIter iter;
     gint xnum, ynum = -1;
     int nv[2] = {0};
-    int llen = 0;
-    int sep = 0;
+    int llen, sep;
     int i, j;
     int *slist = NULL;
 
@@ -4069,14 +4050,6 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 	}
     }
 
-    if (ynum > 0) {
-	*context = LAG_Y;
-    } else if (nv[0] > 0) {
-	*context = LAG_X;
-    } else if (nv[1] > 0) {
-	*context = LAG_INSTR;
-    }
-
     if (nv[0] == 0) {
 	list[0] = NULL;
     }
@@ -4084,30 +4057,41 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 	list[1] = NULL;
     }
 
+    llen = sep = 0;
+
     if (nv[0] == 0 && nv[1] == 0) {
 	/* no vars to deal with */
 	errbox("Please add some variables to the model first");
     } else {
 	i = 1;
-	if (nv[0] > 0) {
-	    llen += nv[0] + 1; /* xvars plus their defaults */
-	}
 	if (ynum > 0) {
+	    *context = LAG_Y;
 	    llen += 2; /* dep var plus separator */
 	    sep++;
 	}
+	if (nv[0] > 0) {
+	    if (*context == 0) {
+		*context = LAG_X;
+	    }
+	    llen += nv[0] + 1; /* xvars plus their defaults */
+	}
 	if (nv[1] > 0) {
-	    llen += nv[1] + 1; /* instruments plus their defaults */
-	    if (nv[0] > 0) {
+	    if (nv[0] > 0 || ynum == 0) {
 		llen++; /* additional separator */
 		sep++;
 	    }
+	    if (*context == 0) {
+		*context = LAG_INSTR;
+	    }
+	    llen += nv[1] + 1; /* instruments plus their defaults */
 	}
+
 	slist = gretl_list_new(llen);
+
 	if (slist != NULL) {
 	    if (ynum > 0) {
 		slist[i++] = ynum;
-		slist[i++] = LISTSEP;
+		slist[i++] = LISTSEP + ((nv[0] > 0)? LAG_X : LAG_INSTR);
 	    } 
 	    for (j=0; j<2; j++) {
 		if (list[j] == NULL) {
@@ -4115,8 +4099,8 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 		}
 		model = gtk_tree_view_get_model(GTK_TREE_VIEW(list[j]));
 		gtk_tree_model_get_iter_first(model, &iter);
-		if (j == 1 && nv[0] > 0) {
-		    slist[i++] = LISTSEP;
+		if (j == 1 && (nv[0] > 0 || ynum == 0)) {
+		    slist[i++] = LISTSEP + LAG_INSTR;
 		}
 		slist[i++] = VDEFLT;
 		while (1) {
@@ -4240,8 +4224,12 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	const int *laglist = NULL;
 	int v = list[i];
 
-	if (v == LISTSEP) {
-	    context++;
+	if (v >= LISTSEP) {
+	    context = v - LISTSEP;
+#if LDEBUG
+	    fprintf(stderr, "list[%d] = %d: set context = %d\n",
+		    i, v, context);
+#endif
 	    continue;
 	}
 

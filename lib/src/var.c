@@ -167,6 +167,7 @@ static void gretl_VAR_zero (GRETL_VAR *var)
 
     var->models = NULL;
     var->Fvals = NULL;
+    var->Ivals = NULL;
     var->name = NULL;
 
     var->ll = var->ldet = NADBL;
@@ -213,6 +214,13 @@ static GRETL_VAR *gretl_VAR_new (int ci, int neqns, int order)
 	
 	var->Fvals = malloc(m  * sizeof *var->Fvals);
 	if (var->Fvals == NULL) {
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	var->Ivals = malloc(2  * sizeof *var->Ivals);
+	if (var->Ivals == NULL) {
 	    err = 1;
 	}
     }
@@ -271,6 +279,7 @@ void gretl_VAR_free (GRETL_VAR *var)
     gretl_matrix_free(var->F);
 
     free(var->Fvals);
+    free(var->Ivals);
     free(var->name);
 
     if (var->models != NULL) {
@@ -1370,7 +1379,18 @@ static int VAR_LR_lag_test (GRETL_VAR *var)
     }    
 
     if (!err) {
-	var->LR = var->T * (ldet - var->ldet);
+	double ll, AIC, BIC;
+	int T = var->T;
+	int g = var->neqns;
+	int k = var->ncoeff - g;
+
+	var->LR = T * (ldet - var->ldet);
+
+	ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
+	AIC = (-2.0 * ll + 2.0 * k * g) / T;
+	BIC = (-2.0 * ll + log(T) * k * g) / T;
+	var->Ivals[0] = AIC;
+	var->Ivals[1] = BIC;
     }
 
     gretl_matrix_free(S);
@@ -1382,8 +1402,9 @@ static int VAR_LR_lag_test (GRETL_VAR *var)
     return err;
 }
 
-/* per-equation F-tests for excluding variables and maximum
-   lag */
+/* Per-equation F-tests for excluding variables and for excluding the
+   last lag, plus AIC and BIC comparison for last lag.
+*/
 
 static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
 			      struct var_lists *vl,
@@ -1411,6 +1432,7 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
     }
 
     /* restrictions for all lags of specific variables */
+
     for (j=0; j<var->neqns && !err; j++) {
 
 	compose_varlist(vl, depvar, var->order, j + 1, 0, pdinfo);	
@@ -1438,6 +1460,7 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
     }
     
     /* restrictions for last lag, all variables */
+
     if (!err && var->order > 1) {
 
 	compose_varlist(vl, depvar, var->order - 1, 0, 0, pdinfo);	
