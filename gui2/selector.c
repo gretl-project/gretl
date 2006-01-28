@@ -3698,6 +3698,19 @@ static void lags_set_cancel (GtkWidget *w, gpointer p)
     *resp = LAGS_CANCEL;
 }
 
+#if 0
+static int get_sepcount (const int *list)
+{
+    int i, sc = 0;
+
+    for (i=1; i<list[0]; i++) {
+	if (list[i] == LISTSEP) sc++;
+    }
+
+    return sc;
+}
+#endif
+
 /* Below: we provide spinners for a lag range and also a free-form
    entry field for non-contiguous lags.  In some circumstances we
    allow specification of lags for the dependent variable as well
@@ -3743,6 +3756,10 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
     gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 5, 6, 0, 1);
     lbl = gtk_label_new(_("specific lags"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 6, 7, 0, 1);
+
+#if 0
+    sep = get_sepcount(list);
+#endif
 
     j = 0;
     for (i=1; i<=list[0]; i++) {
@@ -3902,7 +3919,7 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
     }
 }
 
-static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
+static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 {
     GtkWidget *list[2] = {0};
     gchar *test;
@@ -4010,7 +4027,7 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
     }
 }
 
-static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
+static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 {
     GtkWidget *list[2] = {0};
     GtkTreeModel *model;
@@ -4052,37 +4069,53 @@ static int *sr_get_stoch_list (selector *sr, int *ypos, int *nset)
 	}
     }
 
+    if (ynum > 0) {
+	*context = LAG_Y;
+    } else if (nv[0] > 0) {
+	*context = LAG_X;
+    } else if (nv[1] > 0) {
+	*context = LAG_INSTR;
+    }
+
+    if (nv[0] == 0) {
+	list[0] = NULL;
+    }
     if (nv[1] == 0) {
 	list[1] = NULL;
     }
 
-    if (nv[0] == 0) {
+    if (nv[0] == 0 && nv[1] == 0) {
 	/* no vars to deal with */
 	errbox("Please add some variables to the model first");
     } else {
 	i = 1;
-	llen = nv[0] + 1; /* xvars plus defaults */
+	if (nv[0] > 0) {
+	    llen += nv[0] + 1; /* xvars plus their defaults */
+	}
 	if (ynum > 0) {
 	    llen += 2; /* dep var plus separator */
 	    sep++;
 	}
 	if (nv[1] > 0) {
-	    llen += nv[1] + 2; /* instruments plus separator and defaults */
-	    sep++;
+	    llen += nv[1] + 1; /* instruments plus their defaults */
+	    if (nv[0] > 0) {
+		llen++; /* additional separator */
+		sep++;
+	    }
 	}
 	slist = gretl_list_new(llen);
 	if (slist != NULL) {
 	    if (ynum > 0) {
 		slist[i++] = ynum;
 		slist[i++] = LISTSEP;
-		*ypos = 0;
-	    } else {
-		*ypos = -1;
-	    }
-	    for (j=0; list[j] != NULL && j<2; j++) {
+	    } 
+	    for (j=0; j<2; j++) {
+		if (list[j] == NULL) {
+		    continue;
+		}
 		model = gtk_tree_view_get_model(GTK_TREE_VIEW(list[j]));
 		gtk_tree_model_get_iter_first(model, &iter);
-		if (j == 1) {
+		if (j == 1 && nv[0] > 0) {
 		    slist[i++] = LISTSEP;
 		}
 		slist[i++] = VDEFLT;
@@ -4177,12 +4210,12 @@ static void print_vlinfo (var_lag_info *vlinfo)
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 {
     var_lag_info *vlinfo;
-    char context;
+    int context = 0;
     int i, j, resp, nvl;
-    int ypos;
+    int ypos = -1;
     int *list;
 
-    list = sr_get_stoch_list(sr, &ypos, &nvl);
+    list = sr_get_stoch_list(sr, &nvl, &context);
     if (list == NULL) {
 	return FALSE;
     }
@@ -4198,7 +4231,9 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	return FALSE;
     }
 
-    context = (ypos < 0)? LAG_X : LAG_Y;
+    if (context == LAG_Y) {
+	ypos = 0;
+    }
 
     j = 0;
     for (i=1; i<=list[0]; i++) {
