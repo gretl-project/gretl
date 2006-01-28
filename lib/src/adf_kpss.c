@@ -178,13 +178,14 @@ static int auto_adjust_order (int *list, int order_max,
 {
     MODEL kmod;
     double tstat, pval = 1.0;
+    int l0 = list[0];
     int k;
 
     for (k=order_max; k>0; k--) {
 	int pos = k;
 
-	if (list[list[0]] == 0) {
-	    /* model includes constant */
+	if (list[l0] == 0) {
+	    /* constructed list includes constant */
 	    pos++;
 	}
 
@@ -651,11 +652,19 @@ int coint (int order, const int *list, double ***pZ,
 	   DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     int i, t, n, nv, l0 = list[0];
-    int hasconst = gretl_list_has_const(list);
+    int cpos, ifc, cnum = 0;
     MODEL cmod;
     int *cointlist = NULL;
 
-    if (order <= 0 || list[0] - hasconst < 2) {
+    cpos = gretl_list_const_pos(list, (const double **) *pZ, pdinfo);
+    if (cpos > 0) {
+	cnum = list[cpos];
+	ifc = 1;
+    } else {
+	ifc = 0;
+    }
+
+    if (order <= 0 || list[0] - ifc < 2) {
 	strcpy(gretl_errmsg, "coint: needs a positive lag order "
 	       "and at least two variables");
 	return 1;
@@ -665,7 +674,7 @@ int coint (int order, const int *list, double ***pZ,
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
-	if (list[i] == 0) {
+	if (list[i] == cnum) {
 	    continue;
 	}
 	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
@@ -675,7 +684,7 @@ int coint (int order, const int *list, double ***pZ,
     }
 
     /* step 2: carry out the cointegrating regression */
-    if (!hasconst && !(opt & OPT_N)) {
+    if (!ifc && !(opt & OPT_N)) {
 	/* add const to coint regression list */
 	cointlist = malloc((l0 + 2) * sizeof *cointlist);
 	if (cointlist == NULL) {

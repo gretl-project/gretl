@@ -322,13 +322,15 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     free(sys);
 }
 
-static void sur_rearrange_lists (gretl_equation_system *sys)
+static void sur_rearrange_lists (gretl_equation_system *sys,
+				 const double **Z,
+				 const DATAINFO *pdinfo)
 {
     if (sys->method == SYS_SUR) {
 	int i;
 
 	for (i=0; i<sys->n_equations; i++) {
-	    rearrange_list(sys->lists[i]);
+	    reglist_check_for_const(sys->lists[i], Z, pdinfo);
 	}
     }
 }
@@ -739,7 +741,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     if (err) goto system_bailout;
     
     if (sys->method == SYS_SUR) {
-	sur_rearrange_lists(sys);
+	sur_rearrange_lists(sys, (const double **) *pZ, pdinfo);
     }
 
     system_est = get_plugin_function("system_estimate", &handle);

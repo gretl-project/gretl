@@ -563,19 +563,6 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
     return missv;
 }
 
-static int const_pos (const int *list)
-{
-    int i;
-
-    for (i=2; i<=list[0]; i++) {
-        if (list[i] == 0) {
-	    return i;
-	}
-    }
-
-    return 0;
-}
-
 static void 
 lagged_depvar_check (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 {
@@ -844,12 +831,10 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     /* drop any vars that are all zero and repack the list */
     omitzero(&mdl, (const double **) *pZ, pdinfo);
 
-    /* if regressor list contains a constant, place it first */
-    i = const_pos(mdl.list);
-    mdl.ifc = (i > 1);
-    if (i > 2) {
-	rearrange_list(mdl.list);
-    }
+    /* if regressor list contains a constant, record this fact and 
+       place it first among the regressors */
+    mdl.ifc = reglist_check_for_const(mdl.list, (const double **) *pZ, 
+				      pdinfo);
 
     /* Check for presence of lagged dependent variable? 
        (Don't bother if this is an auxiliary regression.) */
@@ -2048,12 +2033,19 @@ int *augment_regression_list (const int *orig, int aux,
 {
     int *list;
     int listlen;
+    int cnum = 0;
     int i, k;
 
     if (aux == AUX_WHITE) {
-	int trv = orig[0] - 1 - gretl_list_has_const(orig);
-	int nt = (trv * trv + trv) / 2;
+	int cpos = gretl_list_const_pos(orig, (const double **) *pZ, 
+					pdinfo);
+	int nt, trv = orig[0] - 1;
 
+	if (cpos > 0) {
+	    trv--;
+	    cnum = orig[cpos];
+	}
+	nt = (trv * trv + trv) / 2;
 	listlen = orig[0] + nt + 1;
     } else {
 	listlen = 2 * orig[0];
@@ -2080,13 +2072,15 @@ int *augment_regression_list (const int *orig, int aux,
 
 	if (aux == AUX_SQ || aux == AUX_WHITE) {
 	    vnew = xpxgenr(vi, vi, pZ, pdinfo);
-	    if (vnew > 0) list[++k] = vnew;
+	    if (vnew > 0) {
+		list[++k] = vnew;
+	    }
 	    if (aux == AUX_WHITE) {
 		int j, vj;
 
 		for (j=i+1; j<=orig[0]; j++) {
 		    vj = orig[j];
-		    if (vj == 0) {
+		    if (vj == cnum) {
 			continue;
 		    }
 		    vnew = xpxgenr(vi, vj, pZ, pdinfo);
@@ -2095,7 +2089,9 @@ int *augment_regression_list (const int *orig, int aux,
 	    }
 	} else if (aux == AUX_LOG) {
 	    vnew = loggenr(vi, pZ, pdinfo);
-	    if (vnew > 0) list[++k] = vnew;
+	    if (vnew > 0) {
+		list[++k] = vnew;
+	    }
 	}
     }
 
@@ -2549,7 +2545,7 @@ MODEL ar_func (const int *list, double ***pZ,
     int err, lag, maxlag, v = pdinfo->v;
     int *arlist = NULL, *rholist = NULL;
     int *reglist = NULL, *reglist2 = NULL;
-    int pos;
+    int pos, cpos;
     MODEL ar, rhomod;
 
     *gretl_errmsg = '\0';
@@ -2583,9 +2579,7 @@ MODEL ar_func (const int *list, double ***pZ,
     rholist[0] = arlist[0] + 1;
     maxlag = ar_list_max(arlist);
 
-    if (const_pos(reglist) > 2) {
-	rearrange_list(reglist);
-    }
+    cpos = reglist_check_for_const(reglist, (const double **) *pZ, pdinfo);
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
@@ -2701,7 +2695,7 @@ MODEL ar_func (const int *list, double ***pZ,
     for (i=0; i<=reglist[0]; i++) {
 	ar.list[i] = reglist[i];
     }
-    if (gretl_list_has_const(reglist)) {
+    if (cpos > 0) {
 	ar.ifc = 1;
     }
     if (ar.ifc) {

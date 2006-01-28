@@ -369,11 +369,14 @@ tsls_make_hatlist (const int *reglist, int *instlist, int *replist)
 		break;
 	    }
 	}
-	if (reglist[i] == 0 && endog) {
-	    /* const is in reglist but not instlist: needs fixing */
-	    addconst = 1;
-	} else if (endog) {
-	    replist[++k] = reglist[i];
+	if (endog) {
+	    if (reglist[i] == 0) {
+		/* found const in reglist but not instlist: needs fixing
+		   FIXME non-official const? */
+		addconst = 1;
+	    } else {
+		replist[++k] = reglist[i];
+	    }
 	} 
     }
 
@@ -847,7 +850,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
        into first position among the independent vars 
     */
     tsls_omitzero(reglist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
-    rearrange_list(reglist);
+    reglist_check_for_const(reglist, (const double **) *pZ, pdinfo);
     tsls_omitzero(instlist, (const double **) *pZ, pdinfo->t1, pdinfo->t2);
 
     /* determine the list of variables (hatlist) for which we need to

@@ -565,32 +565,46 @@ int in_gretl_list (const int *list, int k)
     return ret;
 }
 
+static void reglist_move_const (int *list, int from)
+{
+    int i, cnum = list[from];
+
+    for (i=from; i>2; i--) {
+	list[i] = list[i-1];
+    }
+
+    list[2] = cnum;
+}
+
 /**
- * rearrange_list:
- * @list: an array of integers, the first element of which holds
- * a count of the number of elements following.
+ * reglist_check_for_const:
+ * @list: regression list suitable for use with a gretl
+ * model (should not contain #LISTSEP).
+ * @Z: data array.
+ * @pdinfo: dataset information.
  *
- * Checks @list for the presence of a constant term (ID 0), and 
- * if present, moves it to position 2 in @list.  This is
- * designed for producing a canonical version of a regression
- * list, with the constant (if any) preceding any other
- * regressors (position 1 holds the dependent variable in such
- * a list).
+ * Checks @list for an intercept term (a variable all of
+ * whose valid values in sample are 1).  If such a variable
+ * is present, it is moved to position 2 in the list.
+ *
+ * Returns: 1 if the list contains an intercept, else 0.
  */
 
-void rearrange_list (int *list)
+int reglist_check_for_const (int *list, const double **Z,
+			     const DATAINFO *pdinfo)
 {
-    int i, v;
+    int cpos = gretl_list_const_pos(list, Z, pdinfo);
+    int ret = 0;
 
-    for (v=list[0]; v>2; v--) {
-        if (list[v] == 0)  {
-	    for (i=v; i>2; i--) {
-		list[i] = list[i-1];
-	    }
-	    list[2] = 0;
-	    return;
-        }
+    if (cpos > 1) {
+	ret = 1;
     }
+
+    if (cpos > 2) {
+	reglist_move_const(list, cpos);
+    }
+
+    return ret;
 }
 
 /**
@@ -626,65 +640,21 @@ int gretl_list_delete_at_pos (int *list, int pos)
 
 /**
  * gretl_list_purge_const:
- * @list: an array of integers, the first element of which holds
- * a count of the number of elements following.
- *
- * Checks @list from position 1 onward for the presence of a constant
- * (the variable with ID number 0).  If this is found, it is deleted
- * from list (that is, any following elements are moved forward by one
- * and list[0] is decremented by 1).
- *
- * Returns: 1 if the constant was found and deleted, else 0.
- */
-
-int gretl_list_purge_const (int *list)
-{
-    int i, gotc = 0;
-    int l0 = list[0];
-
-    /* handle the case where the constant comes last; if it's
-       the only element behind the list separator, remove both
-       the constant and the separator */
-    if (list[l0] == 0) {
-	gotc = 1;
-	list[0] -= 1;
-	if (list[l0 - 1] == LISTSEP) {
-	    list[l0 - 1] = 0;
-	    list[0] -= 1;
-	}
-    } else {
-	for (i=1; i<l0; i++) {
-	    if (list[i] == 0) {
-		for ( ; i<l0; i++) {
-		    list[i] = list[i+1];
-		}
-		list[l0] = 0;
-		list[0] -= 1;
-		gotc = 1;
-		break;
-	    }
-	}
-    }
-
-    return gotc;
-}
-
-/**
- * gretl_list_truly_purge_const:
  * @list: list of variable ID numbers.
  * @Z: data array.
  * @pdinfo: dataset information.
  *
  * Checks @list from position 1 onward for the presence of a 
- * variable whose values all equal 1.0.  If such a variable is 
- * found, it is deleted from @list (that is, any following elements 
- * are moved forward by one and list[0] is decremented by 1).
+ * variable whose valid values in sample all equal 1.0.  If 
+ * such a variable is found, it is deleted from @list (that is, 
+ * any following elements are moved forward by one and list[0] 
+ * is decremented by 1).
  *
  * Returns: 1 if a constant was found and deleted, else 0.
  */
 
-int gretl_list_truly_purge_const (int *list, const double **Z,
-				  const DATAINFO *pdinfo)
+int gretl_list_purge_const (int *list, const double **Z,
+			    const DATAINFO *pdinfo)
 {
     int i, gotc = 0;
     int l0 = list[0];
@@ -1116,22 +1086,27 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
 }
 
 /**
- * gretl_list_has_const:
+ * gretl_list_const_pos:
  * @list: an array of integer variable ID numbers, the first element
  * of which holds a count of the number of elements following.
  *
- * Returns: 1 if the constant (variable ID 0) is found in @list,
- * in position 2 or higher.  This corresponds to determining
- * whether of not a set of regressors contains an intercept.
+ * Checks @list for the presence, in position 2 or higher, of
+ * a variable whose valid values in sample all equal 1.  This
+ * amounts to checking whether a list of regressors includes
+ * an intercept term.
+ * 
+ * Returns: The list position of the const, or 0 if none is
+ * found.
  */
 
-int gretl_list_has_const (const int *list)
+int gretl_list_const_pos (const int *list, const double **Z,
+			  const DATAINFO *pdinfo)
 {
     int i;
 
     for (i=2; i<=list[0]; i++) {
-        if (list[i] == 0) {
-	    return 1;
+        if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
+	    return i;
 	}
     }
 
