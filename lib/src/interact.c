@@ -1306,6 +1306,18 @@ int count_free_fields (const char *s)
     return nf;
 }
 
+static int get_sepcount (const char *s)
+{
+    int c = 0;
+
+    while (*s) {
+	if (*s == ';') c++;
+	s++;
+    }
+
+    return c;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1322,6 +1334,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 {
     int j, nf, linelen, pos, v, lnum;
     int gotdata = 0, poly = 0;
+    int sepcount = 0;
     int read_lags = 0;
     char *remainder = NULL;
     char field[FIELDLEN] = {0};
@@ -1610,6 +1623,16 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	linelen = strlen(line);
     } 
 
+    /* get a count of ';' separators in line */
+    sepcount = get_sepcount(line);
+
+    if (NEEDS_LISTSEP(cmd->ci) && sepcount == 0) {
+	/* missing field in command */
+	cmd->errcode = E_ARGS;
+	free(remainder);
+	return cmd->errcode;
+    }
+
     if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of lag orders in list */
 	read_lags = 1;
@@ -1752,7 +1775,11 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    if (USES_LISTSEP(cmd->ci)) {
 		pos += strlen(field) + 1;
 		cmd->list[lnum++] = LISTSEP;
-		read_lags = 0; /* turn off acceptance of AR lags etc */
+		sepcount--;
+		if (read_lags && sepcount == 0) {
+		    /* turn off acceptance of AR lags etc */
+		    read_lags = 0;
+		}
 		if (cmd->ci == MPOLS) {
 		    poly = 1;
 		}
@@ -1808,12 +1835,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (NEEDS_TWO_VARS(cmd->ci) && cmd->list[0] == 1) {
-	cmd->errcode = E_ARGS;
-    }
-
-    if (NEEDS_LISTSEP(cmd->ci) && 
-	!gretl_list_separator_position(cmd->list)) {
-	/* missing field in command */
 	cmd->errcode = E_ARGS;
     }
 
