@@ -59,6 +59,8 @@ void varlist (const DATAINFO *pdinfo, PRN *prn);
 
 void maybe_list_vars (const DATAINFO *pdinfo, PRN *prn);
 
+int get_printdata_blocks (void);
+
 int printdata (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
 

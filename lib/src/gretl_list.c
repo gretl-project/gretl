@@ -669,16 +669,6 @@ int gretl_list_purge_const (int *list)
     return gotc;
 }
 
-static int 
-true_const (int v, const double **Z, const DATAINFO *pdinfo)
-{
-    if (v < 0 || v >= pdinfo->v) {
-	return 0;
-    }
-
-    return gretl_isunits(pdinfo->t1, pdinfo->t2, Z[v]);
-}
-
 /**
  * gretl_list_truly_purge_const:
  * @list: list of variable ID numbers.

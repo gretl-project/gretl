@@ -4277,7 +4277,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	    free(list);
 	    return;
 	}
-	if (list[0] <= 5) {
+	if (get_printdata_blocks() == 1) {
 	    mview = multi_series_view_new(list);
 	}
 	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, mview);

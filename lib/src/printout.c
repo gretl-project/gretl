@@ -1338,6 +1338,13 @@ static void print_scalar (double x, const char *vname,
     }
 }
 
+static int printdata_blocks;
+
+int get_printdata_blocks (void)
+{
+    return printdata_blocks;
+}
+
 /**
  * printdata:
  * @list: list of variables to print.
@@ -1368,6 +1375,8 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     int err = 0;
 
     int pause = gretl_get_text_pause();
+
+    printdata_blocks = 0;
 
     if (list == NULL) {
 	plist = full_var_list(pdinfo, &nvars);
@@ -1480,6 +1489,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    v2 = (ncol > nvjc)? nvjc : ncol;
 	    v2 += jc;
 	    varheading(plist, v1, v2, bplen, pdinfo, prn);
+	    printdata_blocks++;
 
 	    if (pause && j > 0 && takenotes(1)) {
 		goto endprint;

@@ -1498,7 +1498,11 @@ static int make_alt_label (gchar *alt, const gchar *label)
     gretl_pop_c_numeric_locale();
 
     if (!err) {
-	sprintf(alt, "%.2f,%.2f", x, y);
+	if (get_local_decpoint() != '.') {
+	    sprintf(alt, "%.2f %.2f", x, y);
+	} else {
+	    sprintf(alt, "%.2f,%.2f", x, y);
+	}
     }
 
     return err;
@@ -1892,15 +1896,33 @@ static void show_numbers_from_markers (GPT_SPEC *spec)
     pputs(prn, _("VAR roots (real, imaginary, modulus, frequency)"));
     pputs(prn, "\n\n");
 
-    for (i=0; i<spec->n_markers; i++) {
-	if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
-	    freq = spec->data[i] / (2.0 * M_PI);
-	    mod = spec->data[spec->nobs + i];
-	    pprintf(prn, "%2d: (%7.4f, %7.4f, %7.4f, %7.4f)\n", i+1, 
-		    x, y, mod, freq);
-	} else {
-	    err = E_DATA;
-	    break;
+    if (get_local_decpoint() != '.') {
+	gretl_push_c_numeric_locale();
+	for (i=0; i<spec->n_markers; i++) {
+	    if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
+		freq = spec->data[i] / (2.0 * M_PI);
+		mod = spec->data[spec->nobs + i];
+		gretl_pop_c_numeric_locale();
+		pprintf(prn, "%2d: (%7.4f  %7.4f  %7.4f  %7.4f)\n", i+1, 
+			x, y, mod, freq);
+		gretl_push_c_numeric_locale();
+	    } else {
+		err = E_DATA;
+		break;
+	    }
+	}
+	gretl_pop_c_numeric_locale();
+    } else {
+	for (i=0; i<spec->n_markers; i++) {
+	    if (sscanf(spec->markers[i], "%lf,%lf", &x, &y) == 2) {
+		freq = spec->data[i] / (2.0 * M_PI);
+		mod = spec->data[spec->nobs + i];
+		pprintf(prn, "%2d: (%7.4f, %7.4f, %7.4f, %7.4f)\n", i+1, 
+			x, y, mod, freq);
+	    } else {
+		err = E_DATA;
+		break;
+	    }
 	}
     }
 

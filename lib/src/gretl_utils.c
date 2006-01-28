@@ -261,6 +261,27 @@ int gretl_isunits (int t1, int t2, const double *x)
 }
 
 /**
+ * true_const:
+ * @v: index number of variable to test.
+ * @Z: data array.
+ * @pdinfo: dataset information. 
+ * 
+ * Check whether variable Z[v] equals 1 over the sample
+ * range given in @pdinfo, (aside from any missing values).
+ *
+ * Returns: 1 if so, otherwise 0.
+ */
+
+int true_const (int v, const double **Z, const DATAINFO *pdinfo)
+{
+    if (v < 0 || v >= pdinfo->v) {
+	return 0;
+    }
+
+    return gretl_isunits(pdinfo->t1, pdinfo->t2, Z[v]);
+}
+
+/**
  * gretl_compare_doubles:
  * @a: pointer to first element to compare.
  * @b: pointer to second element to compare.

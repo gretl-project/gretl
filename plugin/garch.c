@@ -577,9 +577,10 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
 
 /* sanity/dimension check */
 
-static int *get_garch_list (const int *list, int *err)
+static int *get_garch_list (const int *list, const double **Z,
+			    const DATAINFO *pdinfo, int *err)
 {
-    int *ret = NULL;
+    int *glist = NULL;
     int i, p = list[1], q = list[2];
     int add0 = 1;
 
@@ -601,26 +602,25 @@ static int *get_garch_list (const int *list, int *err)
 
     /* insert constant if not present */
     for (i=4; i<=list[0]; i++) {
-	if (list[i] == 0) {
+	if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
 	    add0 = 0;
 	    break;
 	}
     }
 
-    ret = malloc((list[0] + 1 + add0) * sizeof *ret);
-    if (ret == NULL) {
+    glist = gretl_list_new(list[0] + add0);
+    if (glist == NULL) {
 	*err = E_ALLOC;
     } else {
-	ret[0] = list[0] + add0;
 	for (i=1; i<=list[0]; i++) {
-	    ret[i] = list[i];
+	    glist[i] = list[i];
 	}
 	if (add0) {
-	    ret[i] = 0;
+	    glist[i] = 0;
 	}
     }
 
-    return ret;
+    return glist;
 }
 
 /* make regresson list for initial OLS */
@@ -695,7 +695,8 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&model);
 
-    list = get_garch_list(cmdlist, &err);
+    list = get_garch_list(cmdlist, (const double **) *pZ,
+			  pdinfo, &err);
     if (err) {
 	model.errcode = err;
     }
