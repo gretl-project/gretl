@@ -655,6 +655,12 @@ static void real_add_to_rlvars (gint i, selector *sr)
     if (sr->add_button != NULL && at_max) {
 	gtk_widget_set_sensitive(sr->add_button, FALSE);
     }
+
+#if 0
+    if (nvars > 0 && lags_button_relevant(sr, SR_RLVARS)) {
+	gtk_widget_set_sensitive(sr->lags_button, TRUE);
+    }
+#endif
 }
 
 static void add_to_rlvars_callback (GtkWidget *w, selector *sr)
@@ -927,7 +933,7 @@ static void add_to_ruvars_callback (GtkWidget *w, selector *sr)
 
 #ifdef OLD_GTK
 
-static void add_all_to_right_callback (GtkWidget *w, selector *sr)
+static void add_all_to_rlvars_callback (GtkWidget *w, selector *sr)
 {
     GList *mylist;
 
