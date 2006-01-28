@@ -606,6 +606,19 @@ static void set_dependent_var_callback (GtkWidget *w, selector *sr)
 
 #endif
 
+static int lags_button_relevant (selector *sr, int locus)
+{
+    if (sr->lags_button != NULL) {
+	if (locus == SR_RUVARS && select_lags_upper(sr->code)) {
+	    return 1;
+	} else if (locus == SR_RLVARS && select_lags_lower(sr->code)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 #ifdef OLD_GTK
 
 static void real_add_to_rlvars (gint i, selector *sr)
@@ -614,12 +627,13 @@ static void real_add_to_rlvars (gint i, selector *sr)
     gint j, rows;
     gint already_there = 0;
     gint at_max = 0;
+    int nvars = 0;
 
     if (!GTK_IS_CLIST(sr->rlvars)) {
 	return;
     }
 
-    rows = GTK_CLIST(sr->rlvars)->rows;
+    nvars = rows = GTK_CLIST(sr->rlvars)->rows;
 
     gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 0, &row[0]);
 
@@ -650,17 +664,16 @@ static void real_add_to_rlvars (gint i, selector *sr)
 	/* FIXME lags? FIXME source of variable */
 	gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 1, &row[1]);
 	gtk_clist_append(GTK_CLIST(sr->rlvars), row);
+	nvars++;
     }
 
     if (sr->add_button != NULL && at_max) {
 	gtk_widget_set_sensitive(sr->add_button, FALSE);
     }
 
-#if 0
     if (nvars > 0 && lags_button_relevant(sr, SR_RLVARS)) {
 	gtk_widget_set_sensitive(sr->lags_button, TRUE);
     }
-#endif
 }
 
 static void add_to_rlvars_callback (GtkWidget *w, selector *sr)
@@ -766,19 +779,6 @@ static void set_single_datasave_var (selector *sr, int v)
 #endif
 
 #ifndef OLD_GTK
-
-static int lags_button_relevant (selector *sr, int locus)
-{
-    if (sr->lags_button != NULL) {
-	if (locus == SR_RUVARS && select_lags_upper(sr->code)) {
-	    return 1;
-	} else if (locus == SR_RLVARS && select_lags_lower(sr->code)) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
 
 static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter, 
 			      selector *sr, int locus)
@@ -886,6 +886,7 @@ static void real_add_to_ruvars (gint i, selector *sr)
     gint already_there = 0;
 
     gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 0, &row[0]);
+
     for (j=0; j<rows; j++) {
 	gchar *test;
 
@@ -895,6 +896,7 @@ static void real_add_to_ruvars (gint i, selector *sr)
 	    break;
 	}
     }
+
     if (!already_there) {
 	gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 1, &row[1]);
 	gtk_clist_append(GTK_CLIST(sr->ruvars), row);
