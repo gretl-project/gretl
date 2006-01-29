@@ -1947,10 +1947,11 @@
 
 	<li>
 	  <para>
-	    Statistical functions taking one series as argument and yielding a
-	    series or vector result: <func>sort</func> (sort a series is
-	    ascending order of magnitude), <func>cum</func> (cumulate, or
-	    running sum).
+	    Statistical functions taking one series as argument and
+	    yielding a series or vector result: <func>sort</func>
+	    (sort a series is ascending order of magnitude),
+	    <func>dsort</func> (sort in descending order),
+	    <func>cum</func> (cumulate, or running sum).
 	  </para>
 	</li>
 
@@ -2327,7 +2328,7 @@
 	    <lit>y</lit></cell>
 	</row>
 	<row>
-	  <cell><lit>y = -sort(-x)</lit></cell>
+	  <cell><lit>y = dsort(x)</lit></cell>
 	  <cell>sort <lit>x</lit> in decreasing order</cell>
 	</row>
 	<row>

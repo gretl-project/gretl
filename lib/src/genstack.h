@@ -88,6 +88,7 @@ enum transformations {
     T_MIN,
     T_MAX,
     T_SORT, 
+    T_DSORT,
     T_SUM, 
     T_NOBS,
     T_T1,

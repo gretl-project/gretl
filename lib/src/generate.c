@@ -118,6 +118,7 @@ struct genr_func funcs[] = {
     { T_MIN,      "min" },
     { T_MAX,      "max" },
     { T_SORT,     "sort" }, 
+    { T_DSORT,    "dsort" }, 
     { T_INT,      "int" }, 
     { T_ABS,      "abs" }, 
     { T_SQRT,     "sqrt" }, 
@@ -1320,7 +1321,9 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	} else if (atom->func == T_TRANSP) {
 	    R = gretl_matrix_copy_transpose(M);
 	} else if (atom->func == T_SORT) {
-	    R = user_matrix_get_sorted_vector(M, &genr->err);
+	    R = user_matrix_get_sorted_vector(M, SORT_ASCENDING, &genr->err);
+	} else if (atom->func == T_DSORT) {
+	    R = user_matrix_get_sorted_vector(M, SORT_DESCENDING, &genr->err);
 	} else if (atom->func >= T_NONE && atom->func < T_MATHMAX) {
 	    R = user_matrix_get_transformation(M, atom->func);
 	} else if (atom->func == T_IDENTITY) {
@@ -1819,9 +1822,9 @@ static int evaluate_genr (GENERATOR *genr)
 	    genr->err = add_model_series_to_genr(genr, atom);
 	} else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
 	    genr->err = add_random_series_to_genr(genr, atom);
-	} else if (atom->func == T_DIFF || 
-		   atom->func == T_LDIFF || atom->func == T_SDIFF ||
-		   atom->func == T_CUM || atom->func == T_SORT ||
+	} else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
+		   atom->func == T_SDIFF || atom->func == T_CUM ||
+		   atom->func == T_SORT || atom->func == T_DSORT ||
 		   atom->func == T_RESAMPLE || atom->func == T_HPFILT ||
 		   atom->func == T_BKFILT || atom->func == T_FRACDIFF) {
 	    atom_stack_bookmark(genr);
@@ -1855,7 +1858,7 @@ static int evaluate_genr (GENERATOR *genr)
     if (n_atoms == 2) {
 	reset_atom_stack(genr);
 	atom = pop_atom(genr);
-	if (atom->func == T_SORT) {
+	if (atom->func == T_SORT || atom->func == T_DSORT) {
 	    genr_set_simple_sort(genr);
 	}
     }
@@ -4153,6 +4156,14 @@ static int compare_vms (const void *a, const void *b)
     return (va->x > vb->x) - (va->x < vb->x);
 }
 
+static int inverse_compare_vms (const void *a, const void *b)
+{
+    const struct val_mark *va = (const struct val_mark *) a;
+    const struct val_mark *vb = (const struct val_mark *) b;
+     
+    return (vb->x > va->x) - (vb->x < va->x);
+}
+
 static void free_genr_S (GENERATOR *genr)
 {
     if (genr->S != NULL) {
@@ -4201,7 +4212,7 @@ static int allocate_genr_S (GENERATOR *genr)
 */
 
 static int 
-sort_series (const double *mvec, double *x, GENERATOR *genr)
+sort_series (const double *mvec, double *x, GENERATOR *genr, int fn)
 {
     DATAINFO *pdinfo = genr->pdinfo;
     double *tmp = NULL;
@@ -4248,10 +4259,18 @@ sort_series (const double *mvec, double *x, GENERATOR *genr)
 	}
     }
 
-    if (markers) {
-	qsort(vm, i + 1, sizeof *vm, compare_vms);
+    if (fn == T_DSORT) {
+	if (markers) {
+	    qsort(vm, i + 1, sizeof *vm, inverse_compare_vms);
+	} else {
+	    qsort(tmp, i + 1, sizeof *tmp, gretl_inverse_compare_doubles);
+	}
     } else {
-	qsort(tmp, i + 1, sizeof *tmp, gretl_compare_doubles);
+	if (markers) {
+	    qsort(vm, i + 1, sizeof *vm, compare_vms);
+	} else {
+	    qsort(tmp, i + 1, sizeof *tmp, gretl_compare_doubles);
+	}
     }
 
     i = 0;
@@ -4355,8 +4374,8 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
 	    if (na(mvec[t])) x[t] = x[t-1];
 	    else x[t] = x[t-1] + mvec[t];
 	}
-    } else if (fn == T_SORT) {
-	genr->err = sort_series(mvec, x, genr);
+    } else if (fn == T_SORT || fn == T_DSORT) {
+	genr->err = sort_series(mvec, x, genr, fn);
 	if (genr->err) {
 	    free(x);
 	    x = NULL;

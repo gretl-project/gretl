@@ -2211,7 +2211,7 @@ user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn)
 }
 
 gretl_matrix *
-user_matrix_get_sorted_vector (const gretl_matrix *m, int *err)
+user_matrix_get_sorted_vector (const gretl_matrix *m, int s, int *err)
 {
     gretl_matrix *R = NULL;
     int len = gretl_vector_get_length(m);
@@ -2227,8 +2227,13 @@ user_matrix_get_sorted_vector (const gretl_matrix *m, int *err)
 	    *err = E_ALLOC;
 	} else {
 	    if (len > 1) {
-		qsort(R->val, len, sizeof *R->val, 
-		      gretl_compare_doubles);
+		if (s == SORT_DESCENDING) {
+		    qsort(R->val, len, sizeof *R->val, 
+			  gretl_inverse_compare_doubles);
+		} else {
+		    qsort(R->val, len, sizeof *R->val, 
+			  gretl_compare_doubles);
+		}
 	    }
 	}
     }

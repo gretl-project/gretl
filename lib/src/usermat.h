@@ -79,7 +79,7 @@ gretl_matrix *
 user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn);
 
 gretl_matrix *
-user_matrix_get_sorted_vector (const gretl_matrix *m, int *err);
+user_matrix_get_sorted_vector (const gretl_matrix *m, int s, int *err);
 
 gretl_matrix *
 matrix_get_submatrix (const gretl_matrix *M, const char *s, 

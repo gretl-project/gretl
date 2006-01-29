@@ -20,6 +20,11 @@
 #ifndef GENERATE_H
 #define GENERATE_H
 
+enum {
+    SORT_ASCENDING,
+    SORT_DESCENDING
+};
+
 typedef struct _GENERATOR GENERATOR;
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
