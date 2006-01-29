@@ -2061,7 +2061,7 @@ static int get_two_matrix_names (const char *s, char *lstr, char *rstr,
 	fprintf(stderr, "left-hand matrix = '%s'\n", lstr);
 	fprintf(stderr, "right-hand matrix = '%s'\n", rstr);
 #endif
-	if (!strcmp(rstr, "NULL")) {
+	if (!strcmp(rstr, "null")) {
 	    *rstr = 0;
 	} 
 

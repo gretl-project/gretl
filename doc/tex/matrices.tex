@@ -324,7 +324,7 @@ evaluates to a matrix is not accepted in this context.
 
 The second argument, \ttsl{C}, may be either the name of a matrix, in
 which case an auxiliary result is written to that matrix, or the
-keyword \texttt{NULL}, in which case the auxiliary result is not
+keyword \texttt{null}, in which case the auxiliary result is not
 produced, or is discarded.
 
 In case the name of a matrix is given as the second argument, this
@@ -342,7 +342,7 @@ the second argument.  Here are two examples:
 %
 \begin{code}
 matrix Q = qrdecomp(M, R)
-matrix Q = qrdecomp(M, NULL)
+matrix Q = qrdecomp(M, null)
 \end{code}
 %
 In the first example, the triangular $R$ is saved as \texttt{R}; in
@@ -356,7 +356,7 @@ $n$; if the eigenvectors are required, they are returned in an $n
 %
 \begin{code}
 matrix E = eigensym(M, V)
-matrix E = eigensym(M, NULL)
+matrix E = eigensym(M, null)
 \end{code}
 %
 In the first case \texttt{E} holds the eigenvalues of \texttt{M} and
@@ -368,7 +368,7 @@ optionally the eigenvectors, of a general $n \times n$ matrix.  The
 eigenvalues are returned directly in a column vector of length $2n$:
 the first $n$ elements are the real components and the remaining $n$
 are the imaginary components.  If the eigenvectors are required (that
-is, if the second argument to \texttt{eigengen} is not \texttt{NULL}),
+is, if the second argument to \texttt{eigengen} is not \texttt{null}),
 they are returned in an $n \times n$ matrix.
 
 \section{Matrix accessors}
