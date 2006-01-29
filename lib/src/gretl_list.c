@@ -1104,8 +1104,16 @@ int gretl_list_const_pos (const int *list, const double **Z,
 {
     int i;
 
+    /* we give preference to the "official" const... */
     for (i=2; i<=list[0]; i++) {
-        if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
+        if (list[i] == 0) {
+	    return i;
+	}
+    }
+
+    /* ... but if it's not found */
+    for (i=2; i<=list[0]; i++) {
+        if (true_const(list[i], Z, pdinfo)) {
 	    return i;
 	}
     }

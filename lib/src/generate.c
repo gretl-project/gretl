@@ -425,9 +425,15 @@ static int print_atom (genatom *atom)
 static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 {
     static char format[16] = {0};
+    const char *p;
     char vname[VNAMELEN];
     char ls[8];
     int m = 0, v = 0;
+
+    /* an atomic lagvar must end with the first right paren */
+    if ((p = strchr(s, ')')) != NULL && *(p+1) != 0) {
+	return 0;
+    }
 
     if (*format == 0) {
 	sprintf(format, "%%%d[^(](%%7[^)])", VNAMELEN - 1);

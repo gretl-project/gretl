@@ -3907,8 +3907,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
     gchar *test;
     gint xnum, ynum = -1;
     int nv[2] = {0};
-    int llen = 0;
-    int sep = 0;
+    int llen, sep;
     int i, j, k, rows;
     int *slist = NULL;
 
@@ -3934,34 +3933,56 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 	}
     }
 
+    if (nv[0] == 0) {
+	list[0] = NULL;
+    }
     if (nv[1] == 0) {
 	list[1] = NULL;
     }
 
-    if (nv[0] > 0) {
+    llen = sep = 0;
+
+    if (nv[0] == 0 && nv[1] == 0) {
+	/* no vars to deal with */
+	errbox("Please add some variables to the model first");
+    } else {
 	i = 1;
-	llen = nv[0] + 1;
 	if (ynum > 0) {
-	    llen += 2;
+	    *context = LAG_Y;
+	    llen += 2; /* dep var plus separator */
 	    sep++;
+	}
+	if (nv[0] > 0) {
+	    if (*context == 0) {
+		*context = LAG_X;
+	    }
+	    llen += nv[0] + 1; /* xvars plus their defaults */
 	}
 	if (nv[1] > 0) {
-	    llen += nv[1] + 2;
-	    sep++;
+	    if (nv[0] > 0 || ynum == 0) {
+		llen++; /* additional separator */
+		sep++;
+	    }
+	    if (*context == 0) {
+		*context = LAG_INSTR;
+	    }
+	    llen += nv[1] + 1; /* instruments plus their defaults */
 	}
+
 	slist = gretl_list_new(llen);
+
 	if (slist != NULL) {
 	    if (ynum > 0) {
 		slist[i++] = ynum;
-		slist[i++] = LISTSEP + LAG_Y;
-		*ypos = 0;
-	    } else {
-		*ypos = -1;
-	    }
-	    for (j=0; list[j] != NULL && j<2; j++) {
+		slist[i++] = LISTSEP + ((nv[0] > 0)? LAG_X : LAG_INSTR);
+	    } 
+	    for (j=0; j<2; j++) {
+		if (list[j] == NULL) {
+		    continue;
+		}
 		rows = GTK_CLIST(list[j])->rows;
-		if (j == 1) {
-		    slist[i++] = LISTSEP + LAG_X;
+		if (j == 1 && (nv[0] > 0 || ynum == 0)) {
+		    slist[i++] = LISTSEP + LAG_INSTR;
 		}
 		slist[i++] = VDEFLT;
 		for (k=0; k<rows; k++) {
@@ -3971,7 +3992,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 			slist[i++] = xnum;
 		    }
 		}
-	    }		
+	    }	
 	}
 	*nset = llen - sep;
     }
