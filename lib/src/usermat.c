@@ -2228,7 +2228,7 @@ user_matrix_get_sorted_vector (const gretl_matrix *m, int *err)
 	} else {
 	    if (len > 1) {
 		qsort(R->val, len, sizeof *R->val, 
-		      gretl_inverse_compare_doubles);
+		      gretl_compare_doubles);
 	    }
 	}
     }
