@@ -9,7 +9,7 @@ logs ml g
 genr milit = ldiff(ml)
 genr govt = ldiff(g)
 # generate error correction term 
-genr longdef = l_g(-1) -l_ml(-1)
+genr longdef = l_g(-1) - l_ml(-1)
 # create interaction terms 
 genr lpres = longdef * pres
 genr lelect = longdef * elect

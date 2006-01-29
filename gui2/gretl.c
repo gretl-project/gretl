@@ -1077,16 +1077,30 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 #endif
 
+    if (key->keyval == GDK_h || key->keyval == GDK_F1) {
+	/* invoke help */
+	plain_text_cmdref(NULL, 0, NULL);
+	return FALSE;
+    }
+
+    if (key->keyval == GDK_g) {
+	/* invoke genr */
+	gretl_callback(NULL, GENR, NULL);
+	return FALSE;
+    }
+
     if (
-	key->keyval == GDK_e || key->keyval == GDK_F2 /* edit */
-	|| key->keyval == GDK_Delete                  /* delete variable(s) */
-	|| key->keyval == GDK_t                       /* graph var */
+	key->keyval == GDK_Return                        /* display variable(s) */
+	|| key->keyval == GDK_Delete                     /* delete variable(s) */
+	|| key->keyval == GDK_e || key->keyval == GDK_F2 /* edit variable's info */
+	|| key->keyval == GDK_t                          /* graph variable */
 	) {
 	int selcount, row;
 
 	selcount = 
 	    selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)),
 			    &row);
+
 	if (selcount == 1 && row != 0) {
 	    gchar *varnum;
 
@@ -1098,12 +1112,16 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		varinfo_dialog(mdata->active_var, 1);
 	    } else if (key->keyval == GDK_t) {
 		do_graph_var(mdata->active_var);
+	    } else if (key->keyval == GDK_Return) {
+		display_var();
 	    } else if (key->keyval == GDK_Delete) {
 		delete_selected_vars(mdata->active_var);
 	    }
 	} else if (selcount > 1) {
 	    if (key->keyval == GDK_Delete) {
 		delete_selected_vars(0);
+	    } else if (key->keyval == GDK_Return) {
+		display_selected(NULL, 0, NULL);
 	    }
 	}
 	    

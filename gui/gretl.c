@@ -952,10 +952,16 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     if (key->keyval == GDK_e || key->keyval == GDK_F2) {
 	varinfo_dialog(mdata->active_var, 1);
+    } else if (key->keyval == GDK_h || key->keyval == GDK_F1) {
+	plain_text_cmdref(NULL, 0, NULL);
+    } else if (key->keyval == GDK_g) {
+	gretl_callback(NULL, GENR, NULL);
     } else if (key->keyval == GDK_t) {
 	do_graph_var(mdata->active_var);
     } else if (key->keyval == GDK_Delete) {
 	delete_selected_vars(mdata->active_var);
+    } else if (key->keyval == GDK_Return) {
+	display_selected(NULL, 0, NULL);
     }
 
     return 1;
