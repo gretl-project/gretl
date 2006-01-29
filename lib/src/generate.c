@@ -2793,7 +2793,7 @@ int gretl_reserved_word (const char *str)
 	!strcmp(str, "CONST") ||
 	!strcmp(str, "pi") ||
 	!strcmp(str, "NA") ||
-	!strcmp(str, "NULL")) {
+	!strcmp(str, "null")) {
 	ret = 1;
     } else if (!strcmp(str, "full") ||
 	       !strcmp(str, "subdum")) {
