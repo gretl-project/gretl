@@ -591,6 +591,22 @@ int win_buf_to_clipboard (const char *buf)
     return 0;
 }
 
+int fnamecmp_win32 (const char *f1, const char *f2)
+{
+    gchar *c1, *c2;
+    int ret;
+
+    c1 = g_utf8_casefold(f1, -1);
+    c2 = g_utf8_casefold(f2, -1);
+
+    ret = strcmp(c1, c2);
+
+    g_free(c1);
+    g_free(c2);
+
+    return ret;
+}
+
 static char *fname_from_fullname (char *fullname)
 {
     char *fname = fullname;

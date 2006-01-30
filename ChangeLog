@@ -20,6 +20,8 @@ version 1.5.1, in progress
   /File/Preferences)
 - Change the names of the internal variables coeff, stderr and
   rho to $coeff, $stderr and $rho
+- Add various keyboard shortcuts to main window, including 
+  Alt-X for a "gretl minibuffer" a la Emacs
 
 12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series

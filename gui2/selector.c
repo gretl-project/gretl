@@ -112,6 +112,7 @@ static int default_var;
 static int want_seasonals;
 static int default_order;
 static int vartrend;
+static int lags_hidden;
 
 static int *xlist;
 static int *rulist;
@@ -138,6 +139,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 			       selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void get_var_string (char *targ, int v, selector *sr, int locus);
+static int list_show_var (int v, int code, int show_lags);
 
 static int selection_at_max (selector *sr, int nsel)
 {
@@ -2545,8 +2547,7 @@ static void pack_switch (GtkWidget *b, selector *sr,
 
 #define robust_conf(c) (c != LOGIT && c != PROBIT)
 
-static void 
-build_selector_switches (selector *sr) 
+static void build_selector_switches (selector *sr) 
 {
     GtkWidget *hbox, *tmp;
 
@@ -2629,8 +2630,50 @@ build_selector_switches (selector *sr)
 #endif
 } 
 
-static void 
-build_selector_radios (selector *sr)
+static void unhide_lags_callback (GtkWidget *w, selector *sr)
+{
+    int i, show_lags = GTK_TOGGLE_BUTTON(w)->active;
+#ifndef OLD_GTK
+    GtkListStore *store;
+    GtkTreeIter iter;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+#else
+    GtkWidget *store = sr->lvars;
+    gint iter = 0;
+
+    gtk_clist_clear(GTK_CLIST(sr->lvars));
+#endif
+
+    for (i=1; i<datainfo->v; i++) {
+	if (list_show_var(i, sr->code, show_lags)) {
+	    list_append_var(store, &iter, i, NULL, 0);
+	}
+    }
+}
+
+static void unhide_lags_switch (selector *sr) 
+{
+    GtkWidget *hbox, *tmp;
+    GtkWidget *button;
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
+    gtk_widget_show(tmp);
+
+    button = gtk_check_button_new_with_label(_("Show lagged variables"));
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(unhide_lags_callback), sr);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show_all(hbox);
+} 
+
+static void build_selector_radios (selector *sr)
 {
     GtkWidget *tmp;
     GtkWidget *button = NULL;
@@ -2737,11 +2780,11 @@ build_selector_buttons (selector *sr)
     }
 }
 
-/* FIXME lags and saving data? */
-
-static int list_show_var (int v, int code)
+static int list_show_var (int v, int code, int show_lags)
 {
     int ret = 1;
+
+    lags_hidden = 0;
 
     if (v == 0 && !MODEL_CODE(code)) {
 	ret = 0;
@@ -2749,7 +2792,8 @@ static int list_show_var (int v, int code)
 	ret = 0;
     } else if (screen_scalar(v, code)) {
 	ret = 0;
-    } else if (is_standard_lag(v, datainfo)) {
+    } else if (!show_lags && is_standard_lag(v, datainfo)) {
+	lags_hidden = 1;
 	ret = 0;
     }
 
@@ -2822,7 +2866,7 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 #endif
     
     for (i=0; i<datainfo->v; i++) {
-	if (list_show_var(i, cmdcode)) {
+	if (list_show_var(i, cmdcode, 0)) {
 	    list_append_var(store, &iter, i, NULL, 0);
 	}
     }
@@ -3225,7 +3269,7 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
 	int nleft = 0;
 
 	for (i=1; i<datainfo->v; i++) {
-	    if (list_show_var(i, cmdcode)) {
+	    if (list_show_var(i, cmdcode, 0)) {
 		list_append_var(store, &iter, i, NULL, 0);
 		vnum = i;
 		nleft++;
@@ -3278,6 +3322,11 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
+
+    /* unhide lags check box? */
+    if (SAVE_DATA_ACTION(sr->code) && lags_hidden) {
+	unhide_lags_switch(sr);
+    }
 
     /* buttons: "OK", Clear, Cancel, Help */
     build_selector_buttons(sr);

@@ -500,11 +500,13 @@ static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
 static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
 {
     gtk_widget_hide(finfo->dialog);
+
     if (finfo->action == W_COPY) {
 	window_copy(finfo->vwin, finfo->format, NULL);
     } else {
 	window_save(finfo->vwin, finfo->format);
     }
+
     gtk_widget_destroy(finfo->dialog);
 }
 
@@ -730,6 +732,11 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 
     /* and "Cancel" button */
     cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
+
+    /* Help button if needed */
+    if (can_do_csv(vwin)) {
+	context_help_button(GTK_DIALOG(dialog)->action_area, COPY_FORMATS);
+    }	
 
     gtk_widget_show(dialog);
 }

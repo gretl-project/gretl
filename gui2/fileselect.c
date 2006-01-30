@@ -811,9 +811,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	return;
     }
 
-#ifdef ENABLE_NLS
     my_filename_to_utf8(fname);
-#endif
 
     file_selector_process_result(fname, action, src, data);
 }

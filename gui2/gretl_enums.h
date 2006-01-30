@@ -75,6 +75,8 @@ enum extra_cmds {
     VECM_RESTR,
     ELLIPSE,
     LAGS_DIALOG,
+    COPY_FORMATS,
+    MINIBUF,
     GUI_CMD_MAX
 };
 

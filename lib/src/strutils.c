@@ -1116,9 +1116,17 @@ void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn)
 	ntodate_full(tmp, t, pdinfo);
 	if (quarterly_or_monthly(pdinfo)) {
 	    modify_date_for_csv(tmp, pdinfo->pd);
-	    pprintf(prn, "\"%s\"%c", tmp, pdinfo->delim);
+	    if (pdinfo->delim == ',') {
+		pprintf(prn, "\"%s\"%c", tmp, pdinfo->delim);
+	    } else {
+		pprintf(prn, "%s%c", tmp, pdinfo->delim);
+	    }
 	} else {
-	    pprintf(prn, "\"'%s\"%c", tmp, pdinfo->delim);
+	    if (pdinfo->delim == ',') {
+		pprintf(prn, "\"'%s\"%c", tmp, pdinfo->delim);
+	    } else {
+		pprintf(prn, "%s%c", tmp, pdinfo->delim);
+	    }
 	}
     }
 }	

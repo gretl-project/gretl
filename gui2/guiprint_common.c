@@ -1054,19 +1054,20 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     int i, t, l0 = list[0];
     int *pmax = NULL;
     int tsamp = datainfo->t2 - datainfo->t1 + 1;
-    char delim = datainfo->delim;
     double xx;
 
     if (l0 == 0) return 1;
 
-    if (delim == ',' && ',' == datainfo->decpoint) {
+    if (datainfo->delim == ',' && ',' == datainfo->decpoint) {
 	errbox(_("You can't use the same character for "
 		 "the column delimiter and the decimal point"));
 	return 1;
     }
 
-    pmax = malloc(l0 * sizeof *pmax);
-    if (pmax == NULL) return 1;
+    pmax = mymalloc(l0 * sizeof *pmax);
+    if (pmax == NULL) {
+	return 1;
+    }
 
     for (i=1; i<=l0; i++) {
 	if (datainfo->vector[list[i]]) {
@@ -1081,12 +1082,16 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 	gretl_push_c_numeric_locale();
     }
 
-    /* variable names */
-    pprintf(prn, "obs%c", delim);
-    for (i=1; i<l0; i++) {
-	pprintf(prn, "%s%c", datainfo->varname[list[i]], delim);
+    /* obs column heading? */
+    if (datainfo->S != NULL || datainfo->structure != CROSS_SECTION) {
+	pprintf(prn, "obs%c", datainfo->delim);
     }
-    pprintf(prn, "%s\n", datainfo->varname[list[l0]]);
+
+    /* variable names */
+    for (i=1; i<=l0; i++) {
+	pprintf(prn, "%s", datainfo->varname[list[i]]);
+	pputc(prn, (i < l0)? datainfo->delim : '\n');
+    }
 
     /* actual data values */
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
@@ -1101,7 +1106,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 	    } else {
 		pprintf(prn, "%.*f", pmax[i-1], xx);
 	    }
-	    pprintf(prn, "%c", (i < l0)? delim : '\n');
+	    pputc(prn, (i < l0)? datainfo->delim : '\n');
 	}
     }
 
@@ -1182,7 +1187,8 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 {
     int *list = series_view_get_list(vwin);
     PRN *prn = NULL;
-    char delim = datainfo->delim;
+    char save_delim = datainfo->delim;
+    char save_decpoint = datainfo->decpoint;
     int i, err = 0;
 
     if (list != NULL) {
@@ -1194,7 +1200,8 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 	}
 
 	if (fmt == GRETL_FORMAT_CSV) {
-	    delimiter_dialog(NULL);
+	    datainfo->delim = ',';
+	    datainfo->decpoint = '.';
 	} else {
 	    datainfo->delim = '\t';
 	}
@@ -1221,10 +1228,8 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 	free(list);
     }
 
-    if (fmt == GRETL_FORMAT_TABLE) {
-	/* restore default after forcing to TAB */
-	datainfo->delim = delim;
-    }
+    datainfo->delim = save_delim;
+    datainfo->decpoint = save_decpoint;
 
     return err;
 }

@@ -529,6 +529,11 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	query = N_("Specify restrictions:");
 	okfunc = do_restrict;
 	break;	
+    case MINIBUF:
+	title = N_("gretl: command entry");
+	query = N_("Type a command:");
+	okfunc = do_minibuf;
+	break;	
     default:
 	errbox("Bug: unrecognized action code in gretl_callback");
 	return;

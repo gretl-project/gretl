@@ -879,6 +879,40 @@
     </description>
   </command>
 
+  <command name="copy-formats" section="Utilities" context="gui"
+    label="Copy formats">
+
+    <description>
+      <para>
+	Besides plain text, you have three options for copying data
+	from this window.  
+      </para>
+
+      <para>
+	RTF: this is Microsoft's <quote>Rich Text Format</quote>.  In this
+	context, the RTF representation of the data is in a fixed tabular
+	format, using a monospaced (typewriter) font.  This will look tabular,
+	but note that it cannot easily be converted to a <quote>real</quote>
+	table in MS Word since the number of spaces between the data
+	columns is variable.
+      </para>
+
+      <para>
+	Tabbed text (or <quote>Table (MS Word)</quote>): The data are
+	copied as plain text, using tabs to separate the columns. If you paste
+	such data into MS Word, you can then select the pasted data and do
+	<quote>Table autoformat</quote> to produce a properly formatted table.
+      </para>
+
+      <para>
+	CSV (Comma Separated Values): use this format if you want to paste the
+	data into a spreadsheet.
+      </para>
+
+    </description>
+
+  </command>
+
   <command name="corc" section="Estimation" label="Cochrane-Orcutt estimation">
 
     <usage>

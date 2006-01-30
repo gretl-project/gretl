@@ -49,6 +49,8 @@ int prn_to_clipboard (PRN *prn, int copycode);
 
 int win_buf_to_clipboard (const char *buf);
 
+int fnamecmp_win32 (const char *f1, const char *f2);
+
 int send_file (char *fullname);
 
 #endif /* GRETLWIN32_H */

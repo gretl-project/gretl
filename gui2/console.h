@@ -30,10 +30,6 @@ gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
 
 void console_record_sample (const DATAINFO *pdinfo);
 
-#if 0
-gint console_click_handler (GtkWidget *w, GdkEventButton *event,
-			    gpointer p);
-#endif
-
+int console_sample_changed (const DATAINFO *pdinfo);
 
 #endif /* CONSOLE_H */

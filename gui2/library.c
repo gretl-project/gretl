@@ -24,6 +24,7 @@
 #include "textbuf.h"
 #include "gpt_control.h"
 #include "graph_page.h"
+#include "console.h"
 #include "system.h"
 #include "gretl_restrict.h"
 #include "gretl_func.h"
@@ -2934,12 +2935,47 @@ void do_simdata (GtkWidget *widget, dialog_t *dlg)
     register_data(NULL, NULL, 0);
 }
 
+void do_minibuf (GtkWidget *widget, dialog_t *dlg) 
+{
+    const gchar *buf = edit_dialog_get_text(dlg);
+    int oldv = datainfo->v;
+    LOOPSET *loop = NULL;
+    int lstack = 0, lrun = 0;
+    int err;
+
+    if (buf == NULL || *buf == 0) return;
+
+    gretl_command_sprintf("%s", buf);
+
+    if (dlg != NULL) {
+	close_dialog(dlg);
+    }
+
+    console_record_sample(datainfo);
+
+    err = gui_exec_line(cmdline, &loop, &lstack, &lrun, NULL, 
+			CONSOLE_EXEC, NULL);
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    /* update variable listing in main window if needed */
+    if (datainfo->v != oldv || !strncmp(cmdline, "rename", 6)) {
+	populate_varlist();
+    }
+
+    /* update sample info and options if needed */
+    if (console_sample_changed(datainfo)) {
+	set_sample_label(datainfo);
+    }
+}
+
 void do_genr (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf = edit_dialog_get_text(dlg);
     char test[8];
 
-    if (buf == NULL) return;
+    if (buf == NULL || *buf == 0) return;
 
     while (isspace((unsigned char) *buf)) buf++;
     sscanf(buf, "%7s", test);
@@ -2963,7 +2999,7 @@ void do_model_genr (GtkWidget *widget, dialog_t *dlg)
     MODEL *pmod = vwin->data;
 
     buf = edit_dialog_get_text(dlg);
-    if (buf == NULL) return;
+    if (buf == NULL || *buf == 0) return;
 
     gretl_command_sprintf("genr %s", buf);
 

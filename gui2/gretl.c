@@ -948,7 +948,7 @@ int main (int argc, char *argv[])
 	    break;
 	}
 
-#ifdef notdef
+#if 0
 	if (paths.datfile[0] != 0) {
 	    my_filename_to_utf8(paths.datfile);
 	}
@@ -1069,10 +1069,14 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
+    GdkModifierType mods;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     if (key->keyval == GDK_a) {
 	audio_render_window(vwin, AUDIO_LISTBOX);
-    } else if (key->keyval == GDK_x) {
+    } else if (key->keyval == GDK_x && !(mods & GDK_MOD1_MASK)) {
 	audio_render_window(NULL, AUDIO_LISTBOX);
     }
 #endif
@@ -1086,6 +1090,12 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (key->keyval == GDK_g) {
 	/* invoke genr */
 	gretl_callback(NULL, GENR, NULL);
+	return FALSE;
+    }
+
+    if (key->keyval == GDK_x && (mods & GDK_MOD1_MASK)) {
+	/* invoke minibuffer */
+	gretl_callback(NULL, MINIBUF, NULL);
 	return FALSE;
     }
 

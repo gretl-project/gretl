@@ -4332,13 +4332,24 @@ gchar *force_locale_from_utf8 (const gchar *src)
     return real_locale_from_utf8(src, 1);
 }
 
+#define FNAME_DEBUG 0
+
 gchar *my_filename_to_utf8 (char *fname)
 {
-    gchar *trfname;
-    gsize bytes;
+    gchar *trfname = NULL;
     GError *err = NULL;
+    gsize bytes;
+
+#if FNAME_DEBUG
+    fprintf(stderr, "my_filename_to_utf8: fname='%s'\n", fname);
+    fflush(stderr);
+#endif
 
     if (g_utf8_validate(fname, -1, NULL)) {
+#if FNAME_DEBUG
+	fprintf(stderr, " validates as utf8, returning fname\n");
+	fflush(stderr);
+#endif
 	return fname;
     }
 
@@ -4349,6 +4360,10 @@ gchar *my_filename_to_utf8 (char *fname)
 	g_error_free(err);
     } else {
 	strcpy(fname, trfname);
+#if FNAME_DEBUG
+	fprintf(stderr, " converted fname='%s'\n", fname);
+	fflush(stderr);
+#endif
     }
 
     g_free(trfname);

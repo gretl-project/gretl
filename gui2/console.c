@@ -239,7 +239,7 @@ void console_record_sample (const DATAINFO *pdinfo)
     console_sample_handler(pdinfo, SAMPLE_RECORD);
 }
 
-static int sample_changed (const DATAINFO *pdinfo)
+int console_sample_changed (const DATAINFO *pdinfo)
 {
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
@@ -396,7 +396,7 @@ static void console_exec (void)
     }
 
     /* update sample info and options if needed */
-    if (sample_changed(datainfo)) {
+    if (console_sample_changed(datainfo)) {
 	set_sample_label(datainfo);
     }
 }

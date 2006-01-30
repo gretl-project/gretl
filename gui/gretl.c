@@ -942,15 +942,21 @@ static void check_varmenu_state (GtkCList *list, gint i, gint j,
 
 static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
+    GdkModifierType mods;
+
+    gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+    
 #ifdef HAVE_FLITE
     if (key->keyval == GDK_a) {
 	audio_render_window(vwin, AUDIO_LISTBOX);
-    } else if (key->keyval == GDK_x) {
+    } else if (key->keyval == GDK_x && !(mods & GDK_MOD1_MASK)) {
 	audio_render_window(NULL, AUDIO_LISTBOX);
     }
 #endif
 
-    if (key->keyval == GDK_e || key->keyval == GDK_F2) {
+    if (key->keyval == GDK_x && (mods & GDK_MOD1_MASK)) {
+	gretl_callback(NULL, MINIBUF, NULL);
+    } else if (key->keyval == GDK_e || key->keyval == GDK_F2) {
 	varinfo_dialog(mdata->active_var, 1);
     } else if (key->keyval == GDK_h || key->keyval == GDK_F1) {
 	plain_text_cmdref(NULL, 0, NULL);

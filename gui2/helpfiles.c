@@ -125,6 +125,8 @@ static struct gui_help_item gui_help_items[] = {
     { SYS_RESTR,      "restrict-system" },
     { VECM_RESTR,     "restrict-vecm" },
     { LAGS_DIALOG,    "lags-dialog" },
+    { COPY_FORMATS,   "copy-formats" },
+    { MINIBUF,        "minibuffer" },
     { -1,          NULL },
 };
 

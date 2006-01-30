@@ -300,21 +300,24 @@ static void add_files_to_menu (int ftype)
     real_add_files_to_menus(ftype);
 }
 
-void mkfilelist (int filetype, char *fname)
+void mkfilelist (int filetype, char *fname_in)
 {
     char *tmp[MAXRECENT-1];
     char **filep;
+    char *fname;
     int i, match = -1;
 #if defined(ENABLE_NLS) && !defined(OLD_GTK)
     char trfname[MAXLEN];
 #endif
 
-    cut_multiple_slashes(fname);
+    cut_multiple_slashes(fname_in);
 
 #if defined(ENABLE_NLS) && !defined(OLD_GTK)
-    strcpy(trfname, fname);
+    strcpy(trfname, fname_in);
     my_filename_to_utf8(trfname);
     fname = trfname;
+#else
+    fname = fname_in;
 #endif
 
     filep = get_file_list(filetype);
@@ -323,12 +326,22 @@ void mkfilelist (int filetype, char *fname)
     }
 
     /* see if this file is already on the list */
+#ifdef G_OS_WIN32
+    for (i=0; i<MAXRECENT; i++) {
+	/* ignore case */
+        if (fnamecmp_win32(filep[i], fname) == 0) {
+            match = i;
+            break;
+        }
+    }
+#else
     for (i=0; i<MAXRECENT; i++) {
         if (strcmp(filep[i], fname) == 0) {
             match = i;
             break;
         }
     }
+#endif
 
     if (match == 0) {
 	/* file is on top: no change in list */
