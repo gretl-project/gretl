@@ -1457,6 +1457,10 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
     int best_AIC_row = var->order - 1;
     int best_BIC_row = var->order - 1;
 
+    double ll, AIC, BIC;
+    int T = var->T;
+    int g = var->neqns;
+
     double ldet;
     int depvar;
     int i, j, t;
@@ -1489,7 +1493,7 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	    err = testmod.errcode;
 	    if (!err) {
-		/* record residuals */
+		/* record residuals for equation i, order j */
 		tm = testmod.t1;
 		for (t=0; t<var->T; t++) {
 		    gretl_matrix_set(var->F, t, i, testmod.uhat[tm++]);
@@ -1498,13 +1502,10 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 	    clear_model(&testmod);
 	}
 	if (!err) {
-	    /* resids matrix should now be complete */
+	    /* resids matrix should now be complete for order j */
 	    ldet = gretl_VAR_ldet(var, &err);
 	}
 	if (!err) {
-	    double ll, AIC, BIC;
-	    int T = var->T;
-	    int g = var->neqns;
 	    int k = var->ncoeff - (g * (var->order - j));
 
 	    ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
