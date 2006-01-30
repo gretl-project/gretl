@@ -900,6 +900,11 @@ static void real_add_to_ruvars (gint i, selector *sr)
     if (!already_there) {
 	gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 1, &row[1]);
 	gtk_clist_append(GTK_CLIST(sr->ruvars), row);
+	rows++;
+    }
+
+    if (rows > 1 && lags_button_relevant(sr, SR_RUVARS)) {
+	gtk_widget_set_sensitive(sr->lags_button, TRUE);
     }
 }
 
