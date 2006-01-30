@@ -886,6 +886,41 @@
 
   </command>
 
+  <command name="copy-formats" section="Utilities" context="gui"
+    label="Formati di copia">
+
+    <description>
+      <para>
+	Per copiare i dati da questa finestra, è possibile scegliere il formato
+        testo semplice o altri tre formati.
+      </para>
+
+      <para>
+	RTF: il formato <quote>Rich Text Format</quote> di Microsoft. In questo
+        caso, la rappresentazione RTF dei dati è costituita da una tabella che
+        usa un carattere a spazio uniforme (stile macchina da scrivere). I dati
+        appariranno incolonnati, ma sarà difficile convertire questa
+        rappresentazione tabulare in una <quote>vera</quote> tabella in MS Word,
+        visto che il numero di spazi tra le colonne di dati è variabile.
+      </para>
+
+      <para>
+	Testo separato da tab (o <quote>Tabella (MS Word)</quote>): i dati sono
+        copiati sotto forma di testo semplice usando caratteri tab per separare
+        le colonne. Incollando i dati in MS Word e utilizzando il comando di
+        <quote>Formattazione automatica</quote> delle tabelle è possibile
+        produrre una vera e propria tabella.
+      </para>
+
+      <para>
+	CSV (Comma Separated Values): i valori dei dati sono separati da
+        virgole, in modo da poter essere incollati in un foglio elettronico.
+      </para>
+
+    </description>
+
+  </command>
+
   <command name="corr" section="Statistics" context="cli">
 
     <usage>
@@ -1918,7 +1953,8 @@
         <li>
           <para>Funzioni statistiche che accettano una serie con argomento e
           producono una serie o un vettore: <func>sort</func> (ordina una serie
-          in ordine ascendente di grandezza), <func>cum</func> (somma cumulata).
+          in ordine ascendente di grandezza), <func>dsort</func> (ordina una serie
+          in ordine discendente di grandezza), <func>cum</func> (somma cumulata).
           </para>
         </li>
 	<li>
@@ -1932,7 +1968,8 @@
           <func>critical</func> (si veda oltre), <func>cnorm</func> (funzione di
           ripartizione normale standard), <func>dnorm</func> (funzione di
           densità normale standard), <func>qnorm</func> (quantili della
-          normale standard), <func>resample</func> (ricampiona una serie
+          normale standard, o inversa della funzione di densità normale standard),
+          <func>resample</func> (ricampiona una serie
           con rimpiazzo, utile per il bootstrap), <func>hpfilt</func>
           (componente di <quote>ciclo</quote> della serie), <func>bkfilt</func>
           (filtro passa-banda di Baxter&ndash;King).</para>
@@ -2021,6 +2058,17 @@
 	genr c1 = critical(t, 20, 0.025)
 	genr c2 = critical(F, 4, 48, 0.05)
       </code>
+
+      <para>
+	Le funzioni relative alla densità normale standard funzionano nel modo
+        seguente, dato un argomento <mathvar>x</mathvar>: <func>cnorm</func> restituisce
+        l'area al di sotto della funzione di densità normale standard, integrata
+        da meno infinito a <mathvar>x</mathvar>; <func>dnorm</func> restituisce
+        la densità normale standard valutata in <mathvar>x</mathvar>, mentre
+        <func>qnorm</func> restituisce il valore <mathvar>z</mathvar> tale che
+        l'area al di sotto della funzione di densità normale standard, integrata
+        da meno infinito a <mathvar>z</mathvar> valga <mathvar>x</mathvar>.
+      </para>
       
       <para>
         La funzione <func>fracdiff</func> richiede due argomenti: il nome della
@@ -2107,25 +2155,25 @@
 	</li>
 	<li>
 	  <para>
-	    <func>coeff</func>(<repl>variabile</repl>): coefficiente stimato per
+	    <lit>$coeff</lit>(<repl>variabile</repl>): coefficiente stimato per
 	    la <repl>variabile</repl>
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>stderr</func>(<repl>variabile</repl>): errore standard stimato
+	    <lit>$stderr</lit>(<repl>variabile</repl>): errore standard stimato
 	    per la <repl>variabile</repl>
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>rho</func>(<repl>i</repl>): coefficiente di autoregressione
+	    <lit>$rho</lit>(<repl>i</repl>): coefficiente di autoregressione
 	    dei residui di ordine <repl>i</repl>-esimo
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    <func>vcv</func>(<repl>x1</repl>,<repl>x2</repl>): covarianza
+	    <lit>$vcv</lit>(<repl>x1</repl>,<repl>x2</repl>): covarianza
 	    stimata tra i coefficienti delle variabili <repl>x1</repl> e
 	    <repl>x2</repl> 
 	  </para>
@@ -2259,7 +2307,7 @@
 	    <lit>y</lit></cell>
 	</row>
 	<row>
-	  <cell><lit>y = -sort(-x)</lit></cell>
+	  <cell><lit>y = dsort(x)</lit></cell>
 	  <cell>ordina <lit>x</lit> in senso decrescente</cell>
 	</row>
 	<row>
@@ -2290,18 +2338,18 @@
             dell'ultima regressione</cell>
 	</row>
 	<row>
-	  <cell><lit>x = coeff(sqft)</lit></cell>
+	  <cell><lit>x = $coeff(sqft)</lit></cell>
 	  <cell>estrae il coefficiente stimato per la variabile
 	    <lit>sqft</lit> nell'ultima regressione</cell>
 	</row>
 	<row>
-	  <cell><lit>rho4 = rho(4)</lit></cell>
+	  <cell><lit>rho4 = $rho(4)</lit></cell>
 	  <cell>estrae il coefficiente di autoregressione del quarto
             ordine dall'ultimo modello (presume un modello
             <lit>ar</lit> model)</cell>
 	</row>
 	<row>
-	  <cell><lit>cvx1x2 = vcv(x1, x2)</lit></cell>
+	  <cell><lit>cvx1x2 = $vcv(x1, x2)</lit></cell>
 	  <cell>estrae il coefficiente di covarianza stimato tra le
             variabili <lit>x1</lit> e <lit>x2</lit> dall'ultimo modello</cell>
 	</row>
@@ -3211,6 +3259,52 @@
     <gui-access>
       <menu-path>/Dati/Aggiungi variabili/Ritardi delle variabili selezionate</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="lags-dialog" section="Estimation" context="gui"
+    label="Finestra di selezione dei ritardi">
+
+    <description>
+      <para>
+	In questa finestra di dialogo è possibile selezionare l'ordine dei
+        ritardi per le variabili indipendenti in un modello di serie storiche, e
+        in alcuni casi anche per la variabile dipendente (ma si noti che
+        l'ordine di ritardi comune per modelli vettoriali come i VAR e i VECM è
+        gestito separatamente attraverso un selettore nella finestra di dialogo
+        principale del modello).
+      </para>
+
+      <para>
+	I selettori sulla sinistra permettono di selezionare un intervallo di
+        ritardi consecutivi per ogni variabile. Per specificare ritardi non
+        consecutivi, occorre selezionare la casella vicino al campo intitolato
+	<quote>ritardi specifici</quote>. In questo modo si attiva il campo,
+        all'interno del quale è possibile inserire una lista di ritardi separati
+        da spazi.
+      </para>
+
+      <para>
+        La riga denominata <quote>predefinito</quote> offre un modo veloce per
+        impostare una specificazione di ritardi comune a tutte le variabili
+        indipendentei: i valori inseriti in questa riga vengono copiati in tutte
+        le righe successive (tranne quella della variabile dipendente, se
+        esiste).
+      </para>
+
+      <para>
+        La variabile dipendente è trattata in modo speciale: il ritardo di
+        ordine zero indica che la variabile apparirà nel modello a sinistra del
+        segno uguale, mentre ulteriori ordini di ritardo saranno aggiunti a
+        destra dell'uguale, insieme alle variabili indipendenti.
+      </para>
+
+      <para>
+	I valori selezionati in questa finestra di dialogo vengono ricordati per
+        l'intera durata della sessione di lavoro con un certo dataset.
+      </para>
+
+    </description>
 
   </command>
 
@@ -4152,8 +4246,8 @@
       <code>
 	1   open greene11_3.gdt
 	2   ols C 0 Y
-	3   genr alfa = coeff(0)
-	4   genr beta = coeff(Y)
+	3   genr alfa = $coeff(0)
+	4   genr beta = $coeff(Y)
 	5   genr gamma = 1.0
 	6   nls C = alfa + beta * Y^gamma
 	7   deriv alfa = 1
@@ -4903,8 +4997,8 @@
 
       <code>
 	ols 1 0 2 3
-	genr b = coeff(2)
-	genr se_b = stderr(2)
+	genr b = $coeff(2)
+	genr se_b = $stderr(2)
 	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
       </code>
 
@@ -5886,44 +5980,12 @@
         possibile eseguire comandi shell arbitrari dall'interno di
 	<program>gretl</program>.
       </para>
-    </description>
-
-  </command>
-
-  <command name="sim" section="Dataset"
-    label="Simulazione" context="cli">
-
-    <usage>
-      <arguments>
-        <argument optional="true">oss-iniziale oss-finale</argument>
-	<argument>variabile</argument>
-	<argument>a0 a1 a2 &hellip;</argument>
-      </arguments>
-      <examples>
-        <example>sim 1979.2 1983.1 y 0 0.9</example>
-	<example>sim 15 25 y 10 0.8 x</example>
-      </examples>
-    </usage>
-
-    <description>
+      
       <para>
-	Simula valori per la <repl>variabile</repl> nell'intervallo del
-        campione in uso, o per l'intervallo che va da <repl>oss-iniziale</repl>
-        a <repl>oss-finale</repl>, se vengono dati questi parametri
-        opzionali. La variabile <repl>y</repl> deve essere stata
-        definita in precedenza con valori iniziali appropriati. La
-        formula usata è
-	<equation status="display"
-	  tex="\[y_t=a_{0t} + a_{1t}y_{t-1} + a_{2t}y_{t-2} + \dots\]"
-	  ascii="y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + ..."
-	  graphic="simformula"/> 
-	I termini <lit>ai(t)</lit> possono essere costanti numeriche o
-        nomi di variabili definite in precedenza e possono essere
-        preceduti dal segno meno.
+        Per motivi di sicurezza, questa funzionalità è disabilitata in modalità
+        predefinita. Per attivarla, occorre selezionare la casella
+        <quote>Abilita comandi shell</quote> nel menù File, Preferenze.
       </para>
-
-      <para>L'uso di questo comando è sconsigliato. Si consiglia di usare <cmdref
-	  targ="genr"/>.</para>
     </description>
 
   </command>
