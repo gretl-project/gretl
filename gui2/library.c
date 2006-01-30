@@ -2943,7 +2943,7 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
     int lstack = 0, lrun = 0;
     int err;
 
-    if (buf == NULL || *buf == 0) return;
+    if (buf == NULL) return;
 
     gretl_command_sprintf("%s", buf);
 
@@ -2975,7 +2975,7 @@ void do_genr (GtkWidget *widget, dialog_t *dlg)
     const gchar *buf = edit_dialog_get_text(dlg);
     char test[8];
 
-    if (buf == NULL || *buf == 0) return;
+    if (buf == NULL) return;
 
     while (isspace((unsigned char) *buf)) buf++;
     sscanf(buf, "%7s", test);
@@ -2999,7 +2999,7 @@ void do_model_genr (GtkWidget *widget, dialog_t *dlg)
     MODEL *pmod = vwin->data;
 
     buf = edit_dialog_get_text(dlg);
-    if (buf == NULL || *buf == 0) return;
+    if (buf == NULL) return;
 
     gretl_command_sprintf("genr %s", buf);
 

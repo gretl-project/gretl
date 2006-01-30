@@ -1186,14 +1186,14 @@ static int organize_var_lists (const int *list, const double **Z,
 
 /* Compose a VAR regression list: it may be complete, or one variable
    may be omitted (to run an F-test), or the order may be one less
-   than the full VAR order (again, for an F-test).  If test = 1, also
-   compose a list containing the maximum lag of each stochastic
+   than the full VAR order (again, for an F-test).  If misstest = 1,
+   also compose a list containing the maximum lag of each stochastic
    variable, for use in testing for missing values.
 */
 
 static int
 compose_varlist (struct var_lists *vl, int depvar, int order, int omit, 
-		 int test, const DATAINFO *pdinfo)
+		 int misstest, const DATAINFO *pdinfo)
 {
     int l0 = 1 + vl->detvars[0] + order * vl->stochvars[0];
     int i, j, pos;
@@ -1220,7 +1220,7 @@ compose_varlist (struct var_lists *vl, int depvar, int order, int omit,
 	}
     }
 
-    /* append the deterministic vars */
+    /* append the exogenous vars */
     for (i=1; i<=vl->detvars[0]; i++) {
 	vl->reglist[pos++] = vl->detvars[i];
     }
@@ -1229,8 +1229,8 @@ compose_varlist (struct var_lists *vl, int depvar, int order, int omit,
     printlist(vl->reglist, "composed VAR list");
 #endif
 
-    if (test) {
-	/* now build the test list (to screen missing values) */
+    if (misstest) {
+	/* build a test list to screen missing values */
 	pos = 1;
 	for (i=1; i<=vl->stochvars[0]; i++) {
 	    vl->testlist[pos++] = vl->stochvars[i];
@@ -1353,30 +1353,36 @@ const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var)
     return var->lambda;
 }
 
-static int VAR_LR_lag_test (GRETL_VAR *var)
+static double gretl_VAR_ldet (GRETL_VAR *var, int *err)
 {
     gretl_matrix *S = NULL;
     double ldet = NADBL;
-    int err = 0;
 
     S = gretl_matrix_alloc(var->neqns, var->neqns);
-    if (S == NULL) {
-	err = 1;
-    }
 
-    if (!err) {
+    if (S == NULL) {
+	*err = E_ALLOC;
+    } else {
 	gretl_matrix_multiply_mod(var->F, GRETL_MOD_TRANSPOSE,
 				  var->F, GRETL_MOD_NONE,
 				  S);
 	gretl_matrix_divide_by_scalar(S, var->T);
+	ldet = gretl_vcv_log_determinant(S);
+	if (na(ldet)) {
+	    *err = 1;
+	}
+	gretl_matrix_free(S);
     }
 
-    if (!err) {
-	ldet = gretl_vcv_log_determinant(S);
-	if (na(var->ldet)) {
-	    err = 1;
-	}
-    }    
+    return ldet;
+}
+
+static int VAR_LR_lag_test (GRETL_VAR *var)
+{
+    double ldet;
+    int err = 0;
+
+    ldet = gretl_VAR_ldet(var, &err);
 
     if (!err) {
 	double ll, AIC, BIC;
@@ -1393,14 +1399,151 @@ static int VAR_LR_lag_test (GRETL_VAR *var)
 	var->Ivals[1] = BIC;
     }
 
-    gretl_matrix_free(S);
-
     /* we're done with this set of residuals */
     gretl_matrix_free(var->F);
     var->F = NULL;
 
     return err;
 }
+
+#define TEST_LAGSEL 1
+
+#if TEST_LAGSEL
+
+static void gretl_VAR_print_lagsel (gretl_matrix *table, 
+				    int best_AIC_row,
+				    int best_BIC_row)
+{
+    int maxlag = gretl_matrix_rows(table);
+    PRN *prn;
+    double x;
+    int i;
+
+    prn = gretl_print_new(GRETL_PRINT_STDERR);
+
+    pputs(prn, "lags      Akaike     Schwartz\n\n");
+
+    for (i=0; i<maxlag; i++) {
+	pprintf(prn, "%4d", i + 1);
+	x = gretl_matrix_get(table, i, 0);
+	pprintf(prn, "%12.6f", x);
+	if (i == best_AIC_row) {
+	    pputc(prn, '*');
+	} else {
+	    pputc(prn, ' ');
+	}
+	x = gretl_matrix_get(table, i, 1);
+	pprintf(prn, "%12.6f", x);
+	if (i == best_BIC_row) {
+	    pputs(prn, "*\n");
+	} else {
+	    pputs(prn, " \n");
+	}
+    }
+
+    gretl_print_destroy(prn);
+}
+
+static int 
+gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
+		     double ***pZ, DATAINFO *pdinfo)
+{
+    gretl_matrix *table = NULL;
+    MODEL testmod;
+
+    /* initialize the "best" at the longest lag */
+    double best_AIC = var->AIC;
+    double best_BIC = var->BIC;
+    int best_AIC_row = var->order - 1;
+    int best_BIC_row = var->order - 1;
+
+    double ldet;
+    int depvar;
+    int i, j, t;
+    int tm, m = 0;
+    int err = 0;
+
+    if (var->order < 3) {
+	return 0;
+    }
+
+    if (var->F != NULL) {
+	gretl_matrix_free(var->F);
+    }
+
+    var->F = gretl_matrix_alloc(var->T, var->neqns);
+    if (var->F == NULL) {
+	return E_ALLOC;
+    }
+
+    table = gretl_matrix_alloc(var->order, 2);
+    if (table == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    for (j=1; j<var->order && !err; j++) {
+	for (i=0; i<var->neqns && !err; i++) {
+	    depvar = vl->stochvars[i + 1];
+	    compose_varlist(vl, depvar, j, 0, 0, pdinfo);
+	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    err = testmod.errcode;
+	    if (!err) {
+		/* record residuals */
+		tm = testmod.t1;
+		for (t=0; t<var->T; t++) {
+		    gretl_matrix_set(var->F, t, i, testmod.uhat[tm++]);
+		}
+	    }
+	    clear_model(&testmod);
+	}
+	if (!err) {
+	    /* resids matrix should now be complete */
+	    ldet = gretl_VAR_ldet(var, &err);
+	}
+	if (!err) {
+	    double ll, AIC, BIC;
+	    int T = var->T;
+	    int g = var->neqns;
+	    int k = var->ncoeff - (g * (var->order - j));
+
+	    ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
+	    AIC = (-2.0 * ll + 2.0 * k * g) / T;
+	    BIC = (-2.0 * ll + log(T) * k * g) / T;
+
+	    gretl_matrix_set(table, m, 0, AIC);
+	    gretl_matrix_set(table, m, 1, BIC);
+
+	    if (AIC < best_AIC) {
+		best_AIC = AIC;
+		best_AIC_row = m;
+	    }
+	    if (BIC < best_BIC) {
+		best_BIC = BIC;
+		best_BIC_row = m;
+	    }	
+	
+	    m++;
+	}
+    }
+
+    if (!err) {
+	gretl_matrix_set(table, m, 0, var->AIC);
+	gretl_matrix_set(table, m, 1, var->BIC);
+	gretl_VAR_print_lagsel(table, best_AIC_row, best_BIC_row);
+    }
+
+    gretl_matrix_free(table);
+
+    bailout:
+
+    gretl_matrix_free(var->F);
+    var->F = NULL;
+
+    return err;
+}
+
+#endif /* TEST_LAGSEL */
 
 /* Per-equation F-tests for excluding variables and for excluding the
    last lag, plus AIC and BIC comparison for last lag.
@@ -1649,12 +1792,6 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 
  var_bailout:
 
-    var_lists_free(&vlists);
-
-    /* reset sample range */
-    pdinfo->t1 = oldt1;
-    pdinfo->t2 = oldt2;
-
     if (!*err) {
 	var->ncoeff = var->models[0]->ncoeff;
 	var->t1 = var->models[0]->t1;
@@ -1662,6 +1799,18 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 	var->T = var->t2 - var->t1 + 1;
 	*err = VAR_add_stats(var);
     }
+
+#if TEST_LAGSEL
+    if (!*err) {
+	*err = gretl_VAR_do_lagsel(var, &vlists, pZ, pdinfo);
+    }
+#endif
+
+    /* reset original sample range */
+    pdinfo->t1 = oldt1;
+    pdinfo->t2 = oldt2;    
+
+    var_lists_free(&vlists);
 
     if (!*err) {
 	*err = gretl_VAR_do_error_decomp(var->S, var->C);
