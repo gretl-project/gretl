@@ -62,32 +62,42 @@ static int add_gdt_suffix (char *fname)
 
 FILE *gretl_fopen (const char *filename, const char *mode)
 {
-#if defined(USE_G_FOPEN)
-    return g_fopen((const gchar *) filename, (const gchar *) mode);
-#elif defined(WIN32)
-    gchar *fconv = g_locale_from_utf8(filename, -1, NULL, NULL, NULL);
+    FILE *fp = NULL;
 
-    return fopen(fconv, mode);
+#if defined(USE_G_FOPEN)
+    fp = g_fopen((const gchar *) filename, (const gchar *) mode);
+#elif defined(WIN32)
+    gchar *fconv;
+    gsize wrote;
+
+    fconv = g_locale_from_utf8(filename, -1, NULL, &wrote, NULL);
+    fp = fopen(fconv, mode);
     g_free(fconv);
 #else    
-    return fopen(filename, mode);
+    fp = fopen(filename, mode);
 #endif
+
+    return fp;
 }
 
 gzFile gretl_gzopen (const char *filename, const char *mode)
 {
+    gzFile fz;
+
 #ifdef USE_G_FOPEN
-    gchar *cp_filename = g_locale_from_utf8(filename, -1, NULL, NULL, NULL);
-    gzFile fz = gzopen(cp_filename, mode);
     int save_errno = errno;
+    gchar *fconv;
+    gsize wrote;
 
-    g_free(cp_filename);
-
+    fconv = g_locale_from_utf8(filename, -1, NULL, &wrote, NULL);
+    fz = gzopen(fconv, mode);
+    g_free(fconv);
     errno = save_errno;
-    return fz;
 #else
-    return gzopen(filename, mode);
+    fz = gzopen(filename, mode);
 #endif
+
+    return fz;
 }
 
 int gretl_path_prepend (char *file, const char *path)

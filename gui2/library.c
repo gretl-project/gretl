@@ -5179,10 +5179,14 @@ int do_store (char *savename, gretlopt opt, int overwrite)
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
-    if (maybe_restore_full_data(SAVE_DATA)) goto store_get_out;
+    if (maybe_restore_full_data(SAVE_DATA)) {
+	goto store_get_out;
+    }
 
     /* "storelist" is a global */
-    if (storelist == NULL) showlist = 0;
+    if (storelist == NULL) {
+	showlist = 0;
+    }
 
     if (opt != OPT_NONE) { 
 	/* not a bog-standard native save */
