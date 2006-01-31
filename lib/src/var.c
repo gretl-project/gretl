@@ -1455,7 +1455,8 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
     int r = var->order - 1;
     int best_row[3] = { r, r, r };
 
-    double ll, AIC, BIC, HQ;
+    double ll;
+    double crit[3];
     int T = var->T;
     int g = var->neqns;
 
@@ -1505,29 +1506,20 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 	}
 	if (!err) {
 	    int p = var->ncoeff - (g * (var->order - j));
-	    int k = g * p;
+	    int c, k = g * p;
 
 	    ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
-	    AIC = (-2.0 * ll + 2.0 * k) / T;
-	    BIC = (-2.0 * ll + k * log(T)) / T;
-	    HQ = (-2.0 * ll + 2.0 * k * log(log(T))) / T;
-
-	    gretl_matrix_set(table, m, 0, AIC);
-	    gretl_matrix_set(table, m, 1, BIC);
-	    gretl_matrix_set(table, m, 2, HQ);
-
-	    if (AIC < best[0]) {
-		best[0] = AIC;
-		best_row[0] = m;
+	    crit[0] = (-2.0 * ll + 2.0 * k) / T;               /* AIC */
+	    crit[1] = (-2.0 * ll + k * log(T)) / T;            /* BIC */
+	    crit[2] = (-2.0 * ll + 2.0 * k * log(log(T))) / T; /* HQ */
+	    
+	    for (c=0; c<3; c++) {
+		gretl_matrix_set(table, m, c, crit[c]);
+		if (crit[c] < best[c]) {
+		    best[c] = crit[c];
+		    best_row[c] = m;
+		}
 	    }
-	    if (BIC < best[1]) {
-		best[1] = BIC;
-		best_row[1] = m;
-	    }
-	    if (HQ < best[2]) {
-		best[2] = HQ;
-		best_row[2] = m;
-	    }	
 	
 	    m++;
 	}
