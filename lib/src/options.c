@@ -189,6 +189,7 @@ struct gretl_option gretl_opts[] = {
     { VAR,      OPT_D, "seasonals" },
     { VAR,      OPT_F, "variance-decomp" },
     { VAR,      OPT_I, "impulse-responses" },
+    { VAR,      OPT_L, "lagselect" },
     { VAR,      OPT_N, "nc" },
     { VAR,      OPT_Q, "quiet" }, 
     { VAR,      OPT_R, "robust" }, 

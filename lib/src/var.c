@@ -1406,22 +1406,25 @@ static int VAR_LR_lag_test (GRETL_VAR *var)
     return err;
 }
 
-#define TEST_LAGSEL 1
-
-#if TEST_LAGSEL
-
 static void gretl_VAR_print_lagsel (gretl_matrix *table, 
 				    int best_AIC_row,
-				    int best_BIC_row)
+				    int best_BIC_row,
+				    PRN *prn)
 {
     int maxlag = gretl_matrix_rows(table);
-    PRN *prn;
     double x;
     int i;
 
-    prn = gretl_print_new(GRETL_PRINT_STDERR);
+    pprintf(prn, _("VAR system, maximum lag order %d"), maxlag);
+    pputs(prn, "\n\n");
 
-    pputs(prn, "lags      Akaike     Schwartz\n\n");
+    pputs(prn, ("The asterisks below indicate the best (that is, minimized) values\n"
+	  "of the respective information criteria, AIC = Akaike criterion and\n"
+	  "BIC = Schwartz Bayesian criterion."));
+    pputs(prn, "\n\n");
+
+    pputs(prn, _("lags      AIC          BIC"));
+    pputs(prn, "\n\n");
 
     for (i=0; i<maxlag; i++) {
 	pprintf(prn, "%4d", i + 1);
@@ -1440,13 +1443,11 @@ static void gretl_VAR_print_lagsel (gretl_matrix *table,
 	    pputs(prn, " \n");
 	}
     }
-
-    gretl_print_destroy(prn);
 }
 
 static int 
 gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
-		     double ***pZ, DATAINFO *pdinfo)
+		     double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     gretl_matrix *table = NULL;
     MODEL testmod;
@@ -1461,7 +1462,7 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
     int T = var->T;
     int g = var->neqns;
 
-    double ldet;
+    double ldet = NADBL;
     int depvar;
     int i, j, t;
     int tm, m = 0;
@@ -1531,7 +1532,7 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
     if (!err) {
 	gretl_matrix_set(table, m, 0, var->AIC);
 	gretl_matrix_set(table, m, 1, var->BIC);
-	gretl_VAR_print_lagsel(table, best_AIC_row, best_BIC_row);
+	gretl_VAR_print_lagsel(table, best_AIC_row, best_BIC_row, prn);
     }
 
     gretl_matrix_free(table);
@@ -1543,8 +1544,6 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 
     return err;
 }
-
-#endif /* TEST_LAGSEL */
 
 /* Per-equation F-tests for excluding variables and for excluding the
    last lag, plus AIC and BIC comparison for last lag.
@@ -1626,7 +1625,7 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
 	}
 
 	if (!err && var->F != NULL) {
-	    /* record residuals for LR test */
+	    /* record residuals for LR test, AIC, BIC */
 	    int j, t = testmod.t1;
 
 	    for (j=0; j<var->T; j++) {
@@ -1708,14 +1707,13 @@ static int VAR_add_stats (GRETL_VAR *var)
 */
 
 static GRETL_VAR *real_var (int order, const int *inlist, 
+			    struct var_lists *vl,
 			    double ***pZ, DATAINFO *pdinfo,
 			    gretlopt opt, int *err)
 {
     GRETL_VAR *var = NULL;
-    int oldt1 = pdinfo->t1;
-    int oldt2 = pdinfo->t2;
-    struct var_lists vlists;
     gretlopt lsqopt = OPT_A | OPT_Z;
+    int lagtest = (opt & OPT_L);
     int i, k, neqns;
 
     if (order < 1) {
@@ -1729,22 +1727,22 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     }
 
     *err = organize_var_lists(inlist, (const double **) *pZ, pdinfo, 
-			      order, &vlists);
+			      order, vl);
     if (*err) {
 	return NULL;
     }
 
     /* generate the required lags */
-    if ((*err = VAR_list_laggenr(vlists.stochvars, pZ, pdinfo, 
-				 order, vlists.lagvlist))) {
+    if ((*err = VAR_list_laggenr(vl->stochvars, pZ, pdinfo, 
+				 order, vl->lagvlist))) {
 	goto var_bailout;
     }
 
-    neqns = vlists.stochvars[0];    
+    neqns = vl->stochvars[0];    
 
     /* compose base VAR list (entry 1 will vary across equations);
        assemble test list for t1 and t2 while we're at it */
-    *err = compose_varlist(&vlists, vlists.stochvars[1], 
+    *err = compose_varlist(vl, vl->stochvars[1], 
 			   order, 0, 1, pdinfo);
     if (*err) {
 	*err = E_DATA;
@@ -1752,7 +1750,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     }
 
     /* sort out sample range */
-    if (check_for_missing_obs(vlists.testlist, &pdinfo->t1, &pdinfo->t2,
+    if (check_for_missing_obs(vl->testlist, &pdinfo->t1, &pdinfo->t2,
 			      (const double **) *pZ, NULL)) {
 	*err = E_MISSDATA;
 	goto var_bailout;
@@ -1770,10 +1768,9 @@ static GRETL_VAR *real_var (int order, const int *inlist,
     for (i=0; i<neqns && !*err; i++) {
 	MODEL *pmod = var->models[i];
 
-	compose_varlist(&vlists, vlists.stochvars[i + 1], 
-			order, 0, 0, pdinfo);
+	compose_varlist(vl, vl->stochvars[i + 1], order, 0, 0, pdinfo);
 
-	*pmod = lsq(vlists.reglist, pZ, pdinfo, VAR, lsqopt, 0.0);
+	*pmod = lsq(vl->reglist, pZ, pdinfo, VAR, lsqopt, 0.0);
 
 	if (pmod->errcode) {
 	    *err = pmod->errcode;
@@ -1787,7 +1784,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 	}
 
 	if (!*err) {
-	    *err = VAR_compute_tests(pmod, var, &vlists, pZ, pdinfo, i, &k);
+	    *err = VAR_compute_tests(pmod, var, vl, pZ, pdinfo, i, &k);
 	}
     }
 
@@ -1801,19 +1798,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 	*err = VAR_add_stats(var);
     }
 
-#if TEST_LAGSEL
-    if (!*err) {
-	*err = gretl_VAR_do_lagsel(var, &vlists, pZ, pdinfo);
-    }
-#endif
-
-    /* reset original sample range */
-    pdinfo->t1 = oldt1;
-    pdinfo->t2 = oldt2;    
-
-    var_lists_free(&vlists);
-
-    if (!*err) {
+    if (!*err && !lagtest) {
 	*err = gretl_VAR_do_error_decomp(var->S, var->C);
     }
 
@@ -1912,6 +1897,15 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
     return vlist;
 }
 
+static void var_lists_null (struct var_lists *vl)
+{
+    vl->detvars = NULL;
+    vl->stochvars = NULL;
+    vl->reglist = NULL;
+    vl->testlist = NULL;
+    vl->lagvlist = NULL;
+}
+
 /**
  * gretl_VAR:
  * @order: lag order for the VAR
@@ -1925,6 +1919,7 @@ maybe_expand_VAR_list (const int *list, double ***pZ, DATAINFO *pdinfo,
  *       if includes %OPT_N, do not include a constant.
  *       if includes %OPT_Q, do not show individual regressions.
  *       if includes %OPT_T, include a linear trend.
+ *       if includes %OPT_L, test for optimal lag length (only).
  * @prn: gretl printing struct.
  * @err: location to receive error code.
  *
@@ -1938,7 +1933,13 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 		      gretlopt opt, PRN *prn, int *err)
 {
     GRETL_VAR *var = NULL;
+    struct var_lists vl;
     int *vlist = NULL;
+    /* record original sample range */
+    int oldt1 = pdinfo->t1;
+    int oldt2 = pdinfo->t2;
+
+    var_lists_null(&vl);
 
     gretl_list_purge_const(list, (const double **) *pZ, pdinfo);
 
@@ -1946,16 +1947,28 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (!*err) {
 	var = real_var(order, (vlist != NULL)? vlist : list, 
-		       pZ, pdinfo, opt, err);
+		       &vl, pZ, pdinfo, opt, err);
     }
     
     if (var != NULL) {
-	gretl_VAR_print(var, pdinfo, opt, prn);
+	if (opt & OPT_L) {
+	    gretl_VAR_do_lagsel(var, &vl, pZ, pdinfo, prn);
+	    gretl_VAR_free(var);
+	    var = NULL;
+	} else {
+	    gretl_VAR_print(var, pdinfo, opt, prn);
+	}
     }
+
+    var_lists_free(&vl);
 
     if (vlist != NULL) {
 	free(vlist);
     }
+
+    /* reset original sample range */
+    pdinfo->t1 = oldt1;
+    pdinfo->t2 = oldt2; 
 
     return var;
 }
@@ -2177,6 +2190,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 			 gretlopt opt, PRN *prn)
 {
     struct var_lists vlists;
+    struct var_lists *vl = &vlists;
     MODEL jmod;
     int i, err = 0;
 
@@ -2188,18 +2202,18 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 
     /* generate the required lags, if any */
     if (jvar->order > 0) {
-	if ((err = VAR_list_laggenr(vlists.stochvars, pZ, pdinfo, 
-				    jvar->order, vlists.lagvlist))) {
+	if ((err = VAR_list_laggenr(vl->stochvars, pZ, pdinfo, 
+				    jvar->order, vl->lagvlist))) {
 	    goto var_bailout;
 	}
     }
 
-    jvar->neqns = vlists.stochvars[0];    
+    jvar->neqns = vl->stochvars[0];    
 
     /* compose base VAR list (entry 1 will vary across equations);
        assemble test list for setting t1 and t2 while we're at it 
     */
-    err = compose_varlist(&vlists, vlists.stochvars[1], 
+    err = compose_varlist(&vlists, vl->stochvars[1], 
 			  jvar->order, 0, 1, pdinfo);
     if (err) {
 	err = E_DATA;
@@ -2208,7 +2222,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 
     if (jvar->t2 == 0) {
 	/* sample hasn't been determined yet */
-	if (check_for_missing_obs(vlists.testlist, &pdinfo->t1, &pdinfo->t2,
+	if (check_for_missing_obs(vl->testlist, &pdinfo->t1, &pdinfo->t2,
 				  (const double **) *pZ, NULL)) {
 	    err = E_MISSDATA;
 	    goto var_bailout;
@@ -2225,7 +2239,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (jrank(jvar) > 0) {
-	err = make_johansen_VECM_lists(jvar->jinfo, vlists.reglist, 
+	err = make_johansen_VECM_lists(jvar->jinfo, vl->reglist, 
 				       jvar->neqns);
 	if (err) {
 	    goto var_bailout;
@@ -2241,7 +2255,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     for (i=0; i<jvar->neqns; i++) {
 
 	/* insert the appropriate dependent variable */
-	vlists.reglist[1] = vlists.stochvars[i + 1];
+	vl->reglist[1] = vl->stochvars[i + 1];
 
 	if (jrank(jvar) > 0) {
 	    /* VECM: record ID number of first difference.  Note:
@@ -2249,20 +2263,20 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	       the final VECM models, even if the order of the present
 	       VAR is zero.
 	    */
-	    jvar->jinfo->difflist[i+1] = vlists.reglist[1];
+	    jvar->jinfo->difflist[i+1] = vl->reglist[1];
 	}
 
 	/* VAR in differences */
-	if (vlists.reglist[0] == 1) {
+	if (vl->reglist[0] == 1) {
 	    /* degenerate model (nothing to concentrate out) */
-	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
+	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
 				    jvar->jinfo->u, i, jvar->t1);
 	} else {
-	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
+	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
 	    if ((err = jmod.errcode)) {
 		fprintf(stderr, "*** johansen_VAR: VAR in differences, eqn %d, "
 			"lsq err %d\n", i+1, err);
-		printlist(vlists.reglist, "list for this model");
+		printlist(vl->reglist, "list for this model");
 		goto var_bailout;
 	    }
 	    if (opt & OPT_V) {
@@ -2278,13 +2292,13 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	/* y_{t-1} regressions */
-	vlists.reglist[1] = jvar->jinfo->levels_list[i + 1];
-	if (vlists.reglist[0] == 1) {
+	vl->reglist[1] = jvar->jinfo->levels_list[i + 1];
+	if (vl->reglist[0] == 1) {
 	    /* degenerate */
-	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
+	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
 				    jvar->jinfo->v, i, jvar->t1);
 	} else {
-	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
+	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
 	    if ((err = jmod.errcode)) {
 		fprintf(stderr, "johansen_VAR: y_{t-1} regression, eqn %d, lsq err %d\n",
 			i+1, err);
@@ -2303,21 +2317,21 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
     /* supplementary regressions for restricted cases */
     if (restricted(jvar)) {
 	if (jcode(jvar) == J_REST_CONST) {
-	    vlists.reglist[1] = 0;
+	    vl->reglist[1] = 0;
 	} else {
-	    vlists.reglist[1] = gettrend(pZ, pdinfo, 0);
-	    if (vlists.reglist[1] == 0) {
+	    vl->reglist[1] = gettrend(pZ, pdinfo, 0);
+	    if (vl->reglist[1] == 0) {
 		err = E_ALLOC;
 		goto var_bailout;
 	    }
 	}
 
-	if (vlists.reglist[0] == 1) {
+	if (vl->reglist[0] == 1) {
 	    /* degenerate case */
-	    transcribe_data_as_uhat(vlists.reglist[1], (const double **) *pZ,
+	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
 				    jvar->jinfo->v, i, jvar->t1);
 	} else {	    
-	    jmod = lsq(vlists.reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
 	    if ((err = jmod.errcode)) {
 		fprintf(stderr, "johansen_VAR: restriction regression, eqn %d, lsq err %d\n",
 			i+1, err);

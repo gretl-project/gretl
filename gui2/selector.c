@@ -78,7 +78,8 @@ struct _selector {
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
 
-#define VEC_CODE(c) (c == COINT || c == COINT2 || c == VAR || c == VECM)
+#define VEC_CODE(c) (c == COINT || c == COINT2 || c == VAR || \
+                     c == VECM || c == VLAGSEL)
 
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
                         c == DIFF || c == LDIFF)
@@ -100,11 +101,12 @@ struct _selector {
                          c == TSLS || \
                          c == VAR || \
                          c == VECM || \
+                         c == VLAGSEL || \
                          c == WLS)
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM)
 
-#define select_lags_upper(c) (c == VAR || c == VECM || c == TSLS)
+#define select_lags_upper(c) (c == VAR || c == VECM || c == VLAGSEL || c == TSLS)
 #define select_lags_lower(c) (MODEL_CODE(c)) 
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA) 
 
@@ -1758,7 +1760,8 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
     /* ancillary varlist on the upper right? */
 
-    if (sr->code == TSLS || sr->code == VAR || sr->code == VECM) {
+    if (sr->code == TSLS || sr->code == VAR || 
+	sr->code == VLAGSEL || sr->code == VECM) {
 #ifndef OLD_GTK
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars));
 	gtk_tree_model_get_iter_first(model, &iter);
@@ -1912,6 +1915,8 @@ static char *est_str (int cmdnum)
 	return N_("GARCH");
     case VAR:
 	return N_("VAR");
+    case VLAGSEL:
+	return N_("VAR lag selection");
     case VECM:
 	return N_("VECM");
     case LAD:
@@ -2138,7 +2143,11 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
 
     for (i=0; i<nspin; i++) {
 	hbox = gtk_hbox_new(FALSE, 5);
-	tmp = gtk_label_new(_(labels[i]));
+	if (sr->code == VLAGSEL) {
+	    tmp = gtk_label_new(_("maximum lag:"));
+	} else {
+	    tmp = gtk_label_new(_(labels[i]));
+	}
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 	gtk_widget_show(tmp);
 	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
@@ -2201,7 +2210,7 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
     remove = gtk_button_new_with_label(_("<- Remove"));
     gtk_box_pack_start(GTK_BOX(button_vbox), remove, TRUE, FALSE, 0);
 
-    if (sr->code == VAR || sr->code == VECM) {
+    if (sr->code == VAR || sr->code == VLAGSEL || sr->code == VECM) {
 	sr->lags_button = gtk_button_new_with_label(_("lags..."));
 	gtk_box_pack_start(GTK_BOX(button_vbox), sr->lags_button, TRUE, FALSE, 0);
 	g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
@@ -2228,7 +2237,8 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
 	for (i=1; i<=rulist[0]; i++) {
 	    list_append_var(store, &iter, rulist[i], sr, SR_RUVARS);
 	}
-	if (rulist[0] > 0 && (sr->code == VAR || sr->code == VECM)) {
+	if (rulist[0] > 0 && (sr->code == VAR || sr->code == VLAGSEL ||
+			      sr->code == VECM)) {
 	    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 	}
     } else if (!VEC_CODE(sr->code)) {
@@ -2265,7 +2275,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra[0], 
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra[0]); 
-    } else if (sr->code == VAR) {
+    } else if (sr->code == VAR || sr->code == VLAGSEL) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
@@ -2324,6 +2334,8 @@ static void selector_init (selector *sr, guint code, const char *title,
 	dlgheight = 450;
 	if (code == VAR || code == VECM) {
 	    dlgheight += 90;
+	} else if (code == VLAGSEL) {
+	    dlgheight += 40;
 	}
     } 
 
@@ -2595,8 +2607,9 @@ static void build_selector_switches (selector *sr)
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
-    } else if (sr->code == COINT2 || sr->code == VECM || sr->code == VAR) {
-	if (sr->code == VAR) {
+    } else if (sr->code == COINT2 || sr->code == VECM || 
+	       sr->code == VAR || sr->code == VLAGSEL) {
+	if (sr->code == VAR || sr->code == VLAGSEL) {
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
 	    pack_switch(tmp, sr, TRUE, TRUE, OPT_N);
 	    tmp = gtk_check_button_new_with_label(_("Include a trend"));
@@ -3965,7 +3978,8 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
     int i, j, k, rows;
     int *slist = NULL;
 
-    if (sr->code != ARMA && sr->code != VAR) {
+    if (sr->code != ARMA && sr->code != VAR && 
+	sr->code != VECM && sr->code != VLAGSEL) {
 	ynum = selector_get_depvar_number(sr);
     }
 
@@ -4095,7 +4109,8 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
     int i, j;
     int *slist = NULL;
 
-    if (sr->code != ARMA && sr->code != VAR) {
+    if (sr->code != ARMA && sr->code != VAR &&
+	sr->code != VECM && sr->code != VLAGSEL) { 
 	ynum = selector_get_depvar_number(sr);
     }
 
@@ -4210,8 +4225,9 @@ static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
     int locus = 0;
 
     if (vlinfo->context == LAG_X) {
-	locus = (sr->code == VAR || sr->code == VECM)? SR_RUVARS : 
-	    SR_RLVARS;
+	locus = (sr->code == VAR || 
+		 sr->code == VECM ||
+		 sr->code == VLAGSEL)? SR_RUVARS : SR_RLVARS;
     } else if (vlinfo->context == LAG_INSTR) {
 	locus = SR_RUVARS;
     } else if (vlinfo->context == LAG_Y) {

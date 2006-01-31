@@ -77,6 +77,7 @@ enum extra_cmds {
     LAGS_DIALOG,
     COPY_FORMATS,
     MINIBUF,
+    VLAGSEL,
     GUI_CMD_MAX
 };
 

@@ -574,6 +574,19 @@ static int ar_init_by_ols (const int *list, double *coeff,
 	nq += ainfo->Q;
     }
 
+#if ARMA_DEBUG
+    printlist(alist, "'alist' in ar_init_by_ols");
+#endif
+
+    if (alist[0] == 1) {
+	/* arma 0, q model */
+	for (i=0; i<nq; i++) {
+	    /* insert zeros for MA coeffs */
+	    coeff[i + np + ainfo->ifc] = 0.0;
+	} 
+	goto exit_init;
+    }
+
     /* run the OLS */
     armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z, 0.0);
     err = armod.errcode;
@@ -592,12 +605,18 @@ static int ar_init_by_ols (const int *list, double *coeff,
     }
 
 #if ARMA_DEBUG
-    fprintf(stderr, "OLS init: ncoeff = %d, nobs = %d\n", 
-	    armod.ncoeff, armod.nobs);
-    for (i=0; i<armod.ncoeff; i++) {
-	fprintf(stderr, " coeff[%d] = %g\n", i, armod.coeff[i]);
+    if (!err) {
+	fprintf(stderr, "OLS init: ncoeff = %d, nobs = %d\n", 
+		armod.ncoeff, armod.nobs);
+	for (i=0; i<armod.ncoeff; i++) {
+	    fprintf(stderr, " coeff[%d] = %g\n", i, armod.coeff[i]);
+	}
+    } else {
+	fprintf(stderr, "OLS init: armod.errcode = %d\n", err);
     }
 #endif
+
+ exit_init:
 
     /* clear everything up */
     free(alist);

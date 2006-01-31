@@ -2800,10 +2800,15 @@ int do_vector_model (selector *sr)
 	return 1;
     }
 
-    action = selector_code(sr);
-    strcpy(estimator, gretl_command_word(action));
-
     cmd.opt = selector_get_opts(sr);
+    action = selector_code(sr);
+
+    if (action == VLAGSEL) {
+	cmd.opt |= OPT_L;
+	action = VAR;
+    }
+
+    strcpy(estimator, gretl_command_word(action));
 
     gretl_command_sprintf("%s %s%s", estimator, buf, 
 			  print_flags(cmd.opt, action));
@@ -2827,13 +2832,22 @@ int do_vector_model (selector *sr)
 	return 1;
     }    
 
-    if (action == VAR) {
+    if (action == VAR && !(cmd.opt & OPT_L)) {
+	/* regular VAR, not VAR lag selection */
 	var = gretl_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn, &err);
 	if (!err) {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 			VAR, var);
 	}
+    } else if (action == VAR) {
+	/* VAR lag selection */
+	gretl_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn, &err);
+	if (!err) {
+	    view_buffer(prn, 78, 300, _("gretl: VAR lag selection"), 
+			PRINT, NULL);
+	}	
     } else if (action == VECM) {
+	/* Vector Error Correction Model */
 	var = vecm(order, atoi(cmd.extra), cmd.list, &Z, datainfo, cmd.opt, 
 		   prn, &err);
 	if (!err) {
