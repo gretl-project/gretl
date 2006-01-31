@@ -80,6 +80,7 @@ struct GRETL_VAR_ {
     double ll;           /* log-likelihood */
     double AIC;          /* Akaike criterion */
     double BIC;          /* Bayesian criterion */
+    double HQ;           /* Hannan-Quinn criterion */
     double LR;           /* for likelihood-ratio testing */
     JohansenInfo *jinfo; /* extra information for VECMs */
     char *name;          /* for use in session management */
