@@ -1555,10 +1555,10 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 	gretl_VAR_print_lagsel(lltab, crittab, best_row, prn);
     }
 
+    bailout:
+
     gretl_matrix_free(crittab);
     gretl_matrix_free(lltab);
-
-    bailout:
 
     gretl_matrix_free(var->F);
     var->F = NULL;
