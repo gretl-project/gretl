@@ -640,7 +640,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 			     4 * sizeof *act_pred);
     }
 
-    mle_aic_bic(&dmod, 0);
+    mle_criteria(&dmod, 0);
 
     dmod.ID = model_count_plus();
 
@@ -890,7 +890,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     pmod->list[1] = dv;
     gretl_model_set_double(pmod, "lmax", lmax);
     pmod->ci = LOGISTIC;
-    ls_aic_bic(pmod);
+    ls_criteria(pmod);
 
     return 0;
 }

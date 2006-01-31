@@ -352,7 +352,8 @@ void printlist (const int *list, const char *msg)
 /* Compute model selection criteria */
 
 int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
-			      double *ll, double *aic, double *bic)
+			      double *ll, double *aic, double *bic,
+			      double *hqc)
 {
     int err = 0;
 
@@ -360,6 +361,7 @@ int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
 	*ll = NADBL;
 	*aic = NADBL;
 	*bic = NADBL;
+	*hqc = NADBL;
 	err = 1;
     } else {
 	const double ln2pi1 = 2.837877066409345;
@@ -372,44 +374,47 @@ int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
 	    *ll = NADBL;
 	    *aic = NADBL;
 	    *bic = NADBL;
+	    *hqc = NADBL;
 	} else {
 	    *ll += -.5 * nobs * (ln2pi1 - log((double) nobs));
 	    *aic = -2.0 * *ll + 2 * ncoeff;
 	    *bic = -2.0 * *ll + ncoeff * log(nobs);
+	    *hqc = -2.0 * *ll + 2 * ncoeff * log(log(nobs));
 	}
     }
 
     return err;
 }
 
-int ls_aic_bic (MODEL *pmod)
+int ls_criteria (MODEL *pmod)
 {
-    double ll, aic, bic;
+    double ll, aic, bic, hqc;
     int err;
 
     err = gretl_calculate_criteria(pmod->ess, pmod->nobs, pmod->ncoeff,
-				   &ll, &aic, &bic);
+				   &ll, &aic, &bic, &hqc);
 
     pmod->lnL = ll;
     pmod->criterion[C_AIC] = aic;
     pmod->criterion[C_BIC] = bic;
+    pmod->criterion[C_HQC] = hqc;
 
     return err;
 }
 
 int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn)
 {
-    double ll, aic, bic;
+    double ll, aic, bic, hqc;
     int err;
 
-    err = gretl_calculate_criteria(ess, nobs, ncoeff, &ll, &aic, &bic);
+    err = gretl_calculate_criteria(ess, nobs, ncoeff, &ll, &aic, &bic, &hqc);
 
     if (err) {
 	pputs(prn, _("Error calculating model selection criteria\n"));
     } else {
 	pprintf(prn, _("Using ess = %g, %d observations, %d coefficients\n"), 
 		ess, nobs, ncoeff);
-	pprintf(prn, "\nAIC = %g\nBIC = %g\n\n", aic, bic);
+	pprintf(prn, "\nAIC = %g\nBIC = %g\nHQC = %g\n\n", aic, bic, hqc);
     }
 
     return err;

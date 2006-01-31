@@ -6667,7 +6667,7 @@
       <arguments>
         <argument>order</argument>
         <argument>varlist</argument>
-	<argument separated="true">detlist</argument>
+	<argument separated="true">exolist</argument>
       </arguments>
       <options>
         <option>
@@ -6690,10 +6690,15 @@
 	  <flag>--variance-decomp</flag>
 	  <effect>print forecast variance decompositions</effect>
         </option>
+        <option>
+	  <flag>--lagselect</flag>
+	  <effect>show information criteria for lag selection</effect>
+        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
 	<example>var 4 x1 x2 x3 --seasonals</example>
+	<example>var 12 x1 x2 x3 --lagselect</example>
       </examples>
     </usage>
 
@@ -6708,16 +6713,16 @@
 	    system;</para>
 	</li>
 
-	<li><para context="gui">- any "deterministic" or exogenous terms (but
-	    note that a constant is included automatically unless you
-	    specify otherwise, and seasonal dummy variables can be added
-	    using the seasonals checkbox); and
+	<li><para context="gui">- any exogenous variables (but note that a
+	    constant is included automatically unless you specify otherwise, a
+	    trend can be added using the trend checkbox, and seasonal dummy
+	    variables can be added using the seasonals checkbox); and
 	  </para>
 	</li>
 
 	<li><para context="gui">- a list of endogenous variables, lags
-	    of which will be included on the right-hand side of the
-	    equations (note: do not include lagged variables in this
+	    of which will be included on the right-hand side of each
+	    equation (note: do not include lagged variables in this
 	    list -- they will be added automatically).</para>
 	</li>
       </ilist>
@@ -6731,12 +6736,13 @@
 
       <para context="cli">
 	Sets up and estimates (using OLS) a vector autoregression (VAR).  The
-	first argument specifies the lag order, then follows the setup for the
-	first equation.  Don't include lags among the elements of
-	<repl>varlist</repl> &mdash; they will be added automatically.  The
-	semi-colon separates the stochastic variables, for which
-	<repl>order</repl> lags will be included, from deterministic or
-	exogenous terms in <repl>detlist</repl>.</para>
+	first argument specifies the lag order &mdash; or the maximum lag order
+	in case the <lit>--lagselect</lit> option is given (see below).
+	Then follows the setup for the first equation.  Don't include lags among
+	the elements of <repl>varlist</repl> &mdash; they will be added
+	automatically.  The semi-colon separates the stochastic variables, for
+	which <repl>order</repl> lags will be included, from exogenous variables
+	in <repl>exolist</repl>.</para>
 
       <para context="cli">
 	In fact, gretl is able to recognize the more common deterministic
@@ -6744,29 +6750,38 @@
 	1) as such, so these do not have to placed after the semi-colon.  More
 	complex deterministic variables (&eg; a time trend interacted with a
 	dummy variable) must be put after the semi-colon.  Note that a constant
-	is included automatically unless you give the <lit>--nc</lit> flag, and
-	seaonal dummy variables may be added using the <lit>--seasonals</lit>
-	flag.
+	is included automatically unless you give the <lit>--nc</lit> flag, a
+	trend can be added with the <lit>--trend</lit> flag, and seaonal dummy
+	variables may be added using the <lit>--seasonals</lit> flag.
       </para>
 
       <para context="cli">
-	A separate regression is run for each variable in
-	<repl>varlist</repl>. Output for each equation includes
-	<mathvar>F</mathvar>-tests for zero restrictions on all lags
-	of each of the variables, an <mathvar>F</mathvar>-test for the
-	significance of the maximum lag, and, if the
-	<lit>--impulse-responses</lit> flag is given, forecast
-	variance decompositions and impulse responses.</para>
+	A separate regression is run for each variable in <repl>varlist</repl>.
+	Output for each equation includes <mathvar>F</mathvar>-tests for zero
+	restrictions on all lags of each of the variables, an
+	<mathvar>F</mathvar>-test for the significance of the maximum lag, and,
+	if the <lit>--impulse-responses</lit> flag is given, forecast variance
+	decompositions and impulse responses.
+      </para>
 
       <para>
-	Forecast variance decompositions and impulse responses are
-	based on the Cholesky decomposition of the contemporaneous
-	covariance matrix, and in this context the order in which the
-	(stochastic) variables are given matters.  The first variable
-	in the list is assumed to be <quote>most exogenous</quote>
-	within-period. The horizon for variance decompositions and
-	impulse responses can be set using the <cmdref targ="set"/> 
-	command.
+	Forecast variance decompositions and impulse responses are based on the
+	Cholesky decomposition of the contemporaneous covariance matrix, and in
+	this context the order in which the (stochastic) variables are given
+	matters.  The first variable in the list is assumed to be <quote>most
+	  exogenous</quote> within-period. The horizon for variance
+	decompositions and impulse responses can be set using the <cmdref
+	  targ="set"/> command.
+      </para>
+
+      <para context="cli">
+	If the <lit>--lagselect</lit> option is given, the first parameter to
+	the <lit>var</lit> command is taken as the maximum lag order.  Output
+	consists of a table showing the values of the Akaike (AIC), Schwartz
+	(BIC) and Hannan&ndash;Quinn (HQ) information criteria computed from
+	VARs of order 1 to the given maximum.  The is intended to help
+	with the selection of the optimal lag order.  The usual VAR output is
+	not presented.
       </para>
 
     </description>

@@ -2366,19 +2366,21 @@ int highest_numbered_var_in_model (const MODEL *pmod,
     return vmax;
 }
 
-int mle_aic_bic (MODEL *pmod, int addk)
+int mle_criteria (MODEL *pmod, int addk)
 {
     int err = 0;
 
     if (na(pmod->lnL)) {
 	pmod->criterion[C_AIC] = NADBL;
 	pmod->criterion[C_BIC] = NADBL;
+	pmod->criterion[C_HQC] = NADBL;
 	err = 1;
     } else {
 	int k = pmod->ncoeff + addk;
 
 	pmod->criterion[C_AIC] = -2.0 * pmod->lnL + 2.0 * k;
 	pmod->criterion[C_BIC] = -2.0 * pmod->lnL + k * log(pmod->nobs);
+	pmod->criterion[C_HQC] = -2.0 * pmod->lnL + 2 * k * log(log(pmod->nobs));
     }
 
     return err;
@@ -2631,6 +2633,8 @@ int gretl_model_data_index (const char *s)
 	return M_AIC;
     if (!strcmp(test, "$bic"))   
 	return M_BIC;
+    if (!strcmp(test, "$hqc"))   
+	return M_HQC;
     if (!strcmp(test, "$nrsq") || 
 	!strcmp(test, "$trsq")) 
 	return M_TRSQ;
@@ -2693,6 +2697,9 @@ double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
 	break;
     case M_BIC:
 	x = pmod->criterion[C_BIC];
+	break;
+    case M_HQC:
+	x = pmod->criterion[C_HQC];
 	break;
     case M_SIGMA:
 	if (pmod->nwt) x = pmod->sigma_wt;

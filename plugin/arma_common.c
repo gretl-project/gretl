@@ -110,7 +110,7 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     }
 
     if (arma != NULL) {
-	mle_aic_bic(pmod, 1);
+	mle_criteria(pmod, 1);
     }
 
     if (ainfo->seasonal) {

@@ -122,7 +122,7 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     fprintf(stderr, "log-likelihood = %g\n", targ->lnL);
 #endif
 
-    mle_aic_bic(targ, 0); 
+    mle_criteria(targ, 0); 
 
     /* mask invalid statistics */
     targ->rsq = NADBL;

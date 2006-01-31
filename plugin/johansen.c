@@ -980,6 +980,7 @@ static int vecm_ll_stats (GRETL_VAR *vecm)
 
     vecm->AIC = (-2.0 * vecm->ll + 2.0 * k * g) / T;
     vecm->BIC = (-2.0 * vecm->ll + log(T) * k * g) / T;
+    vecm->HQC = (-2.0 * vecm->ll + 2.0 * log(log(T)) * k * g) / T;
 
     return 0;
 }

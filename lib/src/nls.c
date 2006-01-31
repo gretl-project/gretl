@@ -1163,7 +1163,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     }
 
     if (gnr.errcode == 0) {
-	ls_aic_bic(&gnr);
+	ls_criteria(&gnr);
 	add_coeffs_to_model(&gnr, spec->coeff);
 	add_param_names_to_model(&gnr, spec, pdinfo);
 	add_fit_resid_to_model(&gnr, spec, uhat, Z, perfect);
@@ -1225,7 +1225,7 @@ static int make_mle_model (MODEL *pmod, nls_spec *spec,
 
     pmod->ci = MLE;
     pmod->lnL = pspec->ll;
-    mle_aic_bic(pmod, 0);
+    mle_criteria(pmod, 0);
 
     add_coeffs_to_model(pmod, spec->coeff);
 

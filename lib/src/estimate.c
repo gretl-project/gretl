@@ -989,7 +989,8 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_calculate_criteria((mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
 			     mdl.nobs, mdl.ncoeff, &mdl.lnL, 
 			     &mdl.criterion[C_AIC],
-			     &mdl.criterion[C_BIC]);
+			     &mdl.criterion[C_BIC],
+			     &mdl.criterion[C_HQC]);
 
     /* hccm command or HC3a */
     if (jackknife) {
@@ -2732,7 +2733,7 @@ MODEL ar_func (const int *list, double ***pZ,
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     }
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
-    ls_aic_bic(&ar);
+    ls_criteria(&ar);
     ar.dw = dwstat(maxlag, &ar, (const double **) *pZ);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 

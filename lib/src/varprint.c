@@ -824,11 +824,13 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		exp(var->ldet));
 	pprintf(prn, "%s = %.4f\\par\n", I_("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\\par\n", I_("BIC"), var->BIC);
+	pprintf(prn, "%s = %.4f\\par\n", I_("HQC"), var->HQC);
     } else {
 	pprintf(prn, "%s = %#g\n", _("Log-likelihood"), var->ll);
 	pprintf(prn, "%s = %#g\n", _("Determinant of covariance matrix"), exp(var->ldet));
 	pprintf(prn, "%s = %.4f\n", _("AIC"), var->AIC);
 	pprintf(prn, "%s = %.4f\n", _("BIC"), var->BIC);
+	pprintf(prn, "%s = %.4f\n", _("HQC"), var->HQC);
     }
 
     if (vecm) {
@@ -975,14 +977,16 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    pprintf(prn, "  %s: %s(%d) = %g (%s %f)\n",
 		    _("Likelihood ratio test"), _("Chi-square"), 
 		    df, var->LR, _("p-value"), chisq(var->LR, df));
-	    /* AIC, BIC comparison */
+	    /* Info criteria comparison */
 	    pprintf(prn, "\n  %s:\n", _("Comparison of information criteria"));
 	    pputs(prn, "  ");
 	    pprintf(prn, _("Lag order %*d"), ordlen, var->order);
-	    pprintf(prn, ": AIC = %#.6g, BIC = %#.6g\n", var->AIC, var->BIC);
+	    pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n", 
+		    var->AIC, var->BIC, var->HQC);
 	    pputs(prn, "  ");
 	    pprintf(prn, _("Lag order %*d"), ordlen, var->order - 1);
-	    pprintf(prn, ": AIC = %#.6g, BIC = %#.6g\n", var->Ivals[0], var->Ivals[1]);
+	    pprintf(prn, ": AIC = %#.6g, BIC = %#.6g, HQC = %#.6g\n", 
+		    var->Ivals[0], var->Ivals[1], var->Ivals[2]);
 	}
     }
 

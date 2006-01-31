@@ -194,6 +194,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 	    else if (!strcmp(statname, "lnlkhd")) pmod->lnL = x;
 	    else if (!strcmp(statname, "aic")) pmod->criterion[C_AIC] = x;
 	    else if (!strcmp(statname, "bic")) pmod->criterion[C_BIC] = x;
+	    else if (!strcmp(statname, "hnquin")) pmod->criterion[C_HQC] = x;
 	}
     }
 

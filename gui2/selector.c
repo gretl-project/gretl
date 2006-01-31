@@ -2122,7 +2122,7 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
     GtkObject *adj;
 #ifdef OLD_GTK
     gfloat lag; 
-    gfloal minlag;
+    gfloat minlag;
     gfloat maxlag;
 #else
     gdouble lag; 
@@ -2957,6 +2957,15 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 	remove = gtk_button_new_with_label (_("<- Remove"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), remove, TRUE, FALSE, 0);
 
+	if (dataset_is_time_series(datainfo) && select_lags_lower(sr->code) &&
+	    sr->code != TSLS) {
+	    sr->lags_button = gtk_button_new_with_label(_("lags..."));
+	    gtk_box_pack_start(GTK_BOX(button_vbox), sr->lags_button, TRUE, FALSE, 0);
+	    g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
+			     G_CALLBACK(lags_dialog_driver), sr);
+	    gtk_widget_set_sensitive(sr->lags_button, FALSE);
+	}
+
 	gtk_box_pack_start(GTK_BOX(indepvar_hbox), button_vbox, TRUE, TRUE, 0);
 	gtk_widget_show_all(button_vbox);
 
@@ -3022,8 +3031,7 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
     }
 
     /* and lag selection for some */
-    if (dataset_is_time_series(datainfo) && 
-	select_lags_lower(sr->code)) {
+    if (dataset_is_time_series(datainfo) && sr->code == TSLS) {
 	lag_selector_button(sr);
     } 
 

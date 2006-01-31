@@ -349,7 +349,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     ll *= -(T / 2.0);
     pmod->lnL = ll;
 
-    mle_aic_bic(pmod, 0); /* check the "0" (additional params) here */
+    mle_criteria(pmod, 0); /* check the "0" (additional params) here */
 
  bailout:
 

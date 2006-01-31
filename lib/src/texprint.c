@@ -504,6 +504,7 @@ void tex_print_VAR_ll_stats (GRETL_VAR *var, PRN *prn)
 
     pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("AIC"), var->AIC);
     pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("BIC"), var->BIC);
+    pprintf(prn, "\\noindent\n%s $= %.4f$ \\par\n", I_("HQC"), var->HQC);
 }
 
 static PRN *make_tex_prn (int ID, char *texfile,

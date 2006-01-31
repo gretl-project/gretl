@@ -25,6 +25,7 @@
 typedef enum {
     C_AIC,
     C_BIC,
+    C_HQC,
     C_MAX
 } model_selection_criteria;
 
@@ -99,11 +100,12 @@ int gretl_spawn (char *cmdline);
 /* model selection criteria */
 
 int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
-			      double *ll, double *aic, double *bic);
+			      double *ll, double *aic, double *bic, 
+			      double *hqc);
 
 int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
-int ls_aic_bic (MODEL *pmod);
+int ls_criteria (MODEL *pmod);
 
 /* panel data utilities */
 

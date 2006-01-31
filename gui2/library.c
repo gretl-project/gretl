@@ -4002,6 +4002,13 @@ void add_model_stat (MODEL *pmod, int which)
 	Z[i][0] = pmod->criterion[C_BIC];
 	strcpy(statname, "$bic");
 	break;
+    case HQC:
+	sprintf(vname, "hqc_%d", pmod->ID);
+	sprintf(vlabel, _("Hannan-Quinn Information Criterion from model %d"), 
+		pmod->ID);
+	Z[i][0] = pmod->criterion[C_HQC];
+	strcpy(statname, "$hqc");
+	break;
     }
 
     strcpy(datainfo->varname[i], make_varname_unique(vname, i, datainfo));

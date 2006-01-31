@@ -746,6 +746,8 @@ static double real_get_obj_scalar (void *p, int type, int idx)
 	    x = var->AIC;
 	} else if (idx == M_BIC) {
 	    x = var->BIC;	
+	} else if (idx == M_HQC) {
+	    x = var->HQC;
 	}
     }
 

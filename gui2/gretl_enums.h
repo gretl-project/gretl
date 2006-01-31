@@ -158,7 +158,8 @@ enum stat_codes {
     SIGMA,
     LNL,
     AIC,
-    BIC
+    BIC,
+    HQC
 };
 
 enum exec_codes {

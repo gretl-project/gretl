@@ -295,7 +295,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 
     pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
 
-    mle_aic_bic(pmod, 1);
+    mle_criteria(pmod, 1);
 
     make_vcv(pmod, VCV, scale);
 

@@ -30,6 +30,7 @@ typedef enum {
     M_LNL,        /* log-likelihood */
     M_AIC,        /* Akaike info criterion */
     M_BIC,        /* Bayesian info criterion */
+    M_HQC,        /* Hannan-Quinn criterion */
     M_TRSQ,       /* T * R-squared, last model */
     M_SCALAR_MAX, /* -- separator -- */
     M_COEFF_S,    /* single coefficient */
@@ -252,7 +253,7 @@ void model_list_to_string (int *list, char *buf);
 int highest_numbered_var_in_model (const MODEL *pmod, 
 				   const DATAINFO *pdinfo);
 
-int mle_aic_bic (MODEL *pmod, int addk);
+int mle_criteria (MODEL *pmod, int addk);
 
 double coeff_pval (const MODEL *pmod, double x, int df);
 

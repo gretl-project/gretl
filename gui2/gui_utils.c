@@ -3037,7 +3037,9 @@ static GtkItemFactoryEntry criteria_items[] = {
     { N_("/Model data/Add to data set/Akaike Information Criterion"), NULL, 
       model_stat_callback, AIC, NULL, GNULL },
     { N_("/Model data/Add to data set/Bayesian Information Criterion"), NULL, 
-      model_stat_callback, BIC, NULL, GNULL }
+      model_stat_callback, BIC, NULL, GNULL },
+    { N_("/Model data/Add to data set/Hannan-Quinn Information Criterion"), NULL, 
+      model_stat_callback, HQC, NULL, GNULL }
 };
 
 static GtkItemFactoryEntry garch_data_item = {
@@ -3087,7 +3089,9 @@ static GtkItemFactoryEntry criteria_items[] = {
     { N_("/Model data/Add to data set/Akaike Information Criterion"), NULL, 
       model_stat_callback, AIC, NULL },
     { N_("/Model data/Add to data set/Bayesian Information Criterion"), NULL, 
-      model_stat_callback, BIC, NULL }
+      model_stat_callback, BIC, NULL },
+    { N_("/Model data/Add to data set/Hannan-Quinn Information Criterion"), NULL, 
+      model_stat_callback, HQC, NULL }
 };
 
 static GtkItemFactoryEntry garch_data_item = {

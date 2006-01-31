@@ -171,7 +171,7 @@ static void gretl_VAR_zero (GRETL_VAR *var)
     var->name = NULL;
 
     var->ll = var->ldet = NADBL;
-    var->AIC = var->BIC = var->HQ = NADBL;
+    var->AIC = var->BIC = var->HQC = NADBL;
     var->LR = NADBL;
 }
 
@@ -1385,7 +1385,7 @@ static int VAR_LR_lag_test (GRETL_VAR *var)
     ldet = gretl_VAR_ldet(var, &err);
 
     if (!err) {
-	double ll, AIC, BIC, HQ;
+	double ll, AIC, BIC, HQC;
 	int T = var->T;
 	int g = var->neqns;
 	int m = var->ncoeff - g;
@@ -1396,10 +1396,10 @@ static int VAR_LR_lag_test (GRETL_VAR *var)
 	ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
 	AIC = (-2.0 * ll + 2.0 * k) / T;
 	BIC = (-2.0 * ll + k * log(T)) / T;
-	HQ = (-2.0 * ll + 2.0 * k * log(log(T))) / T;
+	HQC = (-2.0 * ll + 2.0 * k * log(log(T))) / T;
 	var->Ivals[0] = AIC;
 	var->Ivals[1] = BIC;
-	var->Ivals[2] = HQ;
+	var->Ivals[2] = HQC;
     }
 
     /* we're done with this set of residuals */
@@ -1409,11 +1409,12 @@ static int VAR_LR_lag_test (GRETL_VAR *var)
     return err;
 }
 
-static void gretl_VAR_print_lagsel (gretl_matrix *table, 
+static void gretl_VAR_print_lagsel (gretl_matrix *lltab,
+				    gretl_matrix *crittab,
 				    int *best_row,
 				    PRN *prn)
 {
-    int maxlag = gretl_matrix_rows(table);
+    int maxlag = gretl_matrix_rows(crittab);
     double x;
     int i, j;
 
@@ -1422,16 +1423,24 @@ static void gretl_VAR_print_lagsel (gretl_matrix *table,
 
     pputs(prn, ("The asterisks below indicate the best (that is, minimized) values\n"
 	  "of the respective information criteria, AIC = Akaike criterion,\n"
-	  "BIC = Schwartz Bayesian criterion and HQ = Hannan-Quinn criterion."));
+	  "BIC = Schwartz Bayesian criterion and HQC = Hannan-Quinn criterion."));
     pputs(prn, "\n\n");
 
-    pputs(prn, _("lags      AIC          BIC          HQ"));
+    pputs(prn, _("lags      loglik    p(LR)       AIC          BIC          HQC"));
     pputs(prn, "\n\n");
 
     for (i=0; i<maxlag; i++) {
 	pprintf(prn, "%4d", i + 1);
+	x = gretl_matrix_get(lltab, i, 0);
+	pprintf(prn, "%12.6f", x);
+	if (i > 0) {
+	    x = gretl_matrix_get(lltab, i, 1);
+	    pprintf(prn, "%9.5f", x);
+	} else {
+	    pputs(prn, "         ");
+	}
 	for (j=0; j<3; j++) {
-	    x = gretl_matrix_get(table, i, j);
+	    x = gretl_matrix_get(crittab, i, j);
 	    pprintf(prn, "%12.6f", x);
 	    if (i == best_row[j]) {
 		pputc(prn, '*');
@@ -1447,16 +1456,17 @@ static int
 gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 		     double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    gretl_matrix *table = NULL;
+    gretl_matrix *crittab = NULL;
+    gretl_matrix *lltab = NULL;
     MODEL testmod;
 
     /* initialize the "best" at the longest lag */
-    double best[3] = { var->AIC, var->BIC, var->HQ };
+    double best[3] = { var->AIC, var->BIC, var->HQC };
     int r = var->order - 1;
     int best_row[3] = { r, r, r };
 
-    double ll;
     double crit[3];
+    double LRtest;
     int T = var->T;
     int g = var->neqns;
 
@@ -1479,8 +1489,9 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 	return E_ALLOC;
     }
 
-    table = gretl_matrix_alloc(var->order, 3);
-    if (table == NULL) {
+    crittab = gretl_matrix_alloc(var->order, 3);
+    lltab = gretl_matrix_alloc(var->order, 2);
+    if (crittab == NULL || lltab == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -1505,16 +1516,25 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 	    ldet = gretl_VAR_ldet(var, &err);
 	}
 	if (!err) {
+	    double ll;
 	    int p = var->ncoeff - (g * (var->order - j));
 	    int c, k = g * p;
 
 	    ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * ldet;
 	    crit[0] = (-2.0 * ll + 2.0 * k) / T;               /* AIC */
 	    crit[1] = (-2.0 * ll + k * log(T)) / T;            /* BIC */
-	    crit[2] = (-2.0 * ll + 2.0 * k * log(log(T))) / T; /* HQ */
+	    crit[2] = (-2.0 * ll + 2.0 * k * log(log(T))) / T; /* HQC */
+
+	    gretl_matrix_set(lltab, m, 0, ll);
+	    if (j == 1) {
+		gretl_matrix_set(lltab, m, 1, 0);
+	    } else {
+		LRtest = 2.0 * (ll - gretl_matrix_get(lltab, m-1, 0));
+		gretl_matrix_set(lltab, m, 1, chisq(LRtest, g * g));
+	    }	
 	    
 	    for (c=0; c<3; c++) {
-		gretl_matrix_set(table, m, c, crit[c]);
+		gretl_matrix_set(crittab, m, c, crit[c]);
 		if (crit[c] < best[c]) {
 		    best[c] = crit[c];
 		    best_row[c] = m;
@@ -1526,13 +1546,17 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
     }
 
     if (!err) {
-	gretl_matrix_set(table, m, 0, var->AIC);
-	gretl_matrix_set(table, m, 1, var->BIC);
-	gretl_matrix_set(table, m, 2, var->HQ);
-	gretl_VAR_print_lagsel(table, best_row, prn);
+	gretl_matrix_set(lltab, m, 0, var->ll);
+	LRtest = 2.0 * (var->ll - gretl_matrix_get(lltab, m - 1, 0));
+	gretl_matrix_set(lltab, m, 1, chisq(LRtest, g * g));
+	gretl_matrix_set(crittab, m, 0, var->AIC);
+	gretl_matrix_set(crittab, m, 1, var->BIC);
+	gretl_matrix_set(crittab, m, 2, var->HQC);
+	gretl_VAR_print_lagsel(lltab, crittab, best_row, prn);
     }
 
-    gretl_matrix_free(table);
+    gretl_matrix_free(crittab);
+    gretl_matrix_free(lltab);
 
     bailout:
 
@@ -1622,7 +1646,7 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
 	}
 
 	if (!err && var->F != NULL) {
-	    /* record residuals for LR test, AIC, BIC, HQ */
+	    /* record residuals for LR test, AIC, BIC, HQC */
 	    int j, t = testmod.t1;
 
 	    for (j=0; j<var->T; j++) {
@@ -1677,7 +1701,7 @@ static int VAR_add_stats (GRETL_VAR *var)
 	var->ll = -(g * T / 2.0) * (LN_2_PI + 1) - (T / 2.0) * var->ldet;
 	var->AIC = (-2.0 * var->ll + 2.0 * k) / T;
 	var->BIC = (-2.0 * var->ll + k * log(T)) / T;
-	var->HQ = (-2.0 * var->ll + 2.0 * k * log(log(T))) / T;
+	var->HQC = (-2.0 * var->ll + 2.0 * k * log(log(T))) / T;
     }
 
     if (!err && var->F != NULL) {

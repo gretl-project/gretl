@@ -201,8 +201,12 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 
 static const char *aic_str = N_("Akaike information criterion");
 static const char *bic_str = N_("Schwarz Bayesian criterion");
+static const char *hqc_str = N_("Hannan-Quinn criterion");
+static const char *tex_hqc_str = N_("Hannan--Quinn criterion");
+
 static const char *aic_abbrev = N_("AIC");
 static const char *bic_abbrev = N_("BIC");
+static const char *hqc_abbrev = N_("HQC");
 
 static void info_stats_lines (const MODEL *pmod, PRN *prn)
 {
@@ -214,7 +218,7 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 	return;
     }
 
-    if (na(crit[C_AIC]) || na(crit[C_BIC])) {
+    if (na(crit[C_AIC]) || na(crit[C_BIC]) || na(crit[C_HQC])) {
 	return;
     }
 
@@ -223,9 +227,12 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 		GRETL_DIGITS, crit[C_AIC]);
 	pprintf(prn, "  %s (%s) = %.*g\n", _(bic_str), _(bic_abbrev),
 		GRETL_DIGITS, crit[C_BIC]);
+	pprintf(prn, "  %s (%s) = %.*g\n", _(hqc_str), _(hqc_abbrev),
+		GRETL_DIGITS, crit[C_HQC]);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_(aic_str), crit[C_AIC]);
 	pprintf(prn, RTFTAB "%s = %g\n", I_(bic_str), crit[C_BIC]);
+	pprintf(prn, RTFTAB "%s = %g\n", I_(hqc_str), crit[C_HQC]);
     } else if (tex_format(prn)) {  
 	char cval[32];
 
@@ -233,6 +240,8 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n", I_(aic_str), cval);
 	tex_dcolumn_double(crit[C_BIC], cval);
 	pprintf(prn, "%s & %s \\\\\n", I_(bic_str), cval);
+	tex_dcolumn_double(crit[C_HQC], cval);
+	pprintf(prn, "%s & %s \\\\\n", I_(tex_hqc_str), cval);
     }
 }
 
@@ -2119,10 +2128,12 @@ static void print_arma_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
 	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[C_AIC]);
 	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[C_BIC]);
+	pprintf(prn, "  %s = %.3f\n", _("HQC"), pmod->criterion[C_HQC]);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("AIC"), pmod->criterion[C_AIC]);
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("BIC"), pmod->criterion[C_BIC]);
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("HQC"), pmod->criterion[C_HQC]);
     } else if (tex_format(prn)) {
 	char xstr[32];
 
@@ -2132,6 +2143,8 @@ static void print_arma_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n", I_("AIC"), xstr);
 	tex_dcolumn_double(pmod->criterion[C_BIC], xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("BIC"), xstr);
+	tex_dcolumn_double(pmod->criterion[C_HQC], xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("HQC"), xstr);
     }
 }
 
@@ -2204,6 +2217,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_AIC]);
 	pprintf(prn, "  %s (%s) = %g\n", _(bic_str), _(bic_abbrev),
 		crit[C_BIC]);
+	pprintf(prn, "  %s (%s) = %g\n", _(hqc_str), _(hqc_abbrev),
+		crit[C_HQC]);
 	pprintf(prn, "  %s = %g\n", _("McFadden's pseudo-R-squared"), pmod->rsq);
 	pputc(prn, '\n');
 
@@ -2235,6 +2250,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_AIC]);
 	pprintf(prn, "\\par %s (%s) = %g\\par\n", I_(bic_str), I_(bic_abbrev),
 		crit[C_BIC]);
+	pprintf(prn, "\\par %s (%s) = %g\\par\n", I_(hqc_str), I_(hqc_abbrev),
+		crit[C_HQC]);
 	pprintf(prn, "\\par %s = %g\\par\n", I_("McFadden's pseudo-R{\\super 2}"), 
 		pmod->rsq);
 	pputc(prn, '\n');
@@ -2268,6 +2285,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_AIC]);
 	pprintf(prn, "%s (%s) = %g\\\\\n", I_(bic_str), I_(bic_abbrev),
 		crit[C_BIC]);
+	pprintf(prn, "%s (%s) = %g\\\\\n", I_(tex_hqc_str), I_(hqc_abbrev),
+		crit[C_HQC]);
 	pprintf(prn, "%s = %g\\\\\n", I_("McFadden's pseudo-$R^2$"), pmod->rsq);
 	pputs(prn, "\\end{raggedright}\n");
     }
