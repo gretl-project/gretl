@@ -2843,7 +2843,7 @@ int do_vector_model (selector *sr)
 	/* VAR lag selection */
 	gretl_VAR(order, cmd.list, &Z, datainfo, cmd.opt, prn, &err);
 	if (!err) {
-	    view_buffer(prn, 78, 300, _("gretl: VAR lag selection"), 
+	    view_buffer(prn, 72, 350, _("gretl: VAR lag selection"), 
 			PRINT, NULL);
 	}	
     } else if (action == VECM) {

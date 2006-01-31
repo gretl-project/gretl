@@ -2121,11 +2121,13 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
     GtkWidget *tmp, *hbox;
     GtkObject *adj;
 #ifdef OLD_GTK
-    gfloat order; 
-    gfloat ordermax;
+    gfloat lag; 
+    gfloal minlag;
+    gfloat maxlag;
 #else
-    gdouble order; 
-    gdouble ordermax;
+    gdouble lag; 
+    gdouble minlag;
+    gdouble maxlag;
 #endif
     const char *labels[] = {
 	N_("lag order:"),
@@ -2133,12 +2135,21 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
     };
     int i, nspin = (code == LAG_AND_RANK)? 2 : 1;
 
-    ordermax = (datainfo->n < 72)? (datainfo->n / 2) : 36;
+    maxlag = (datainfo->n < 72)? (datainfo->n / 2) : 36;
+    minlag = 1;
 
-    if (default_order > 0 && default_order <= ordermax) {
-	order = default_order;
+    if (default_order > 0 && default_order <= maxlag) {
+	lag = default_order;
     } else {
-	order = (datainfo->pd > 12)? 12 : datainfo->pd;
+	lag = (datainfo->pd > 12)? 12 : datainfo->pd;
+    }
+
+    if (sr->code == VLAGSEL) {
+	minlag = 2;
+	lag *= 2;
+	if (lag > maxlag) {
+	    lag = maxlag;
+	}
     }
 
     for (i=0; i<nspin; i++) {
@@ -2153,7 +2164,7 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
 	gtk_misc_set_alignment(GTK_MISC(tmp), 0.0, 0.5);
 	
 	if (i == 0) {
-	    adj = gtk_adjustment_new(order, 1, ordermax, 1, 1, 1);
+	    adj = gtk_adjustment_new(lag, minlag, maxlag, 1, 1, 1);
 	} else {
 	    adj = gtk_adjustment_new(1, 1, 10, 1, 1, 1);
 	}
