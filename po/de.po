@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-01 15:00-0500\n"
-"PO-Revision-Date: 2006-02-01 15:17-0500\n"
+"PO-Revision-Date: 2006-02-01 17:28-0500\n"
 "Last-Translator: Sven S. <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -5482,7 +5482,7 @@ msgstr "/Daten/Drucke Beschreibung"
 
 #: gui/gretl.c:333 gui2/gretl.c:389
 msgid "/Data/_Summary statistics"
-msgstr "/Daten/Grundlegende Statistiken/"
+msgstr "/Daten/Grundlegende Statistiken"
 
 #: gui/gretl.c:334 gui2/gretl.c:390
 msgid "/Data/_Summary statistics/_all variables"
