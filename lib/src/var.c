@@ -3065,3 +3065,4 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 }
 
 #include "irfboot.c"
+#include "varomit.c"

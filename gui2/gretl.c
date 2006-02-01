@@ -209,7 +209,7 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Open data/sample file..."), "", display_files, TEXTBOOK_DATA, 
       "<StockItem>", GTK_STOCK_OPEN },
-    { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>", GNULL }, 
+    { "/File/Open data/sep1", NULL, NULL, 0, "<Separator>", GNULL }, 
     { N_("/File/Open data/Import"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/Open data/Import/CSV..."), NULL, open_data, OPEN_CSV, NULL, GNULL },
     { N_("/File/Open data/Import/ASCII..."), NULL, open_data, OPEN_ASCII, NULL, GNULL },
@@ -255,13 +255,13 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Send To..."), NULL, email_data, OPEN_DATA, "<StockItem>", GRETL_STOCK_MAIL },
 #endif
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, "<StockItem>", GTK_STOCK_CLEAR },
-    { N_("/File/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/File/sep0", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, Browse databases */
     { N_("/File/_Browse databases"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/Browse databases/_gretl native"), NULL, display_files, NATIVE_DB, NULL, GNULL },
     { N_("/File/Browse databases/_RATS 4"), NULL, display_files, RATS_DB, NULL, GNULL },
-    { N_("/File/Browse databases/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/File/Browse databases/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/Browse databases/on database _server"), NULL, display_files, REMOTE_DB, 
       "<StockItem>", GTK_STOCK_NETWORK },
 
@@ -290,9 +290,9 @@ GtkItemFactoryEntry data_items[] = {
       NULL, newdata_callback, 0, NULL, GNULL }, 
     { N_("/File/Create data set/simulation"), NULL, gretl_callback, 
       NULLDATA, NULL, GNULL },
-    { N_("/File/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/File/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/_View command log"), NULL, view_command_log, 0, NULL, GNULL },
-    { N_("/File/sep2a"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/File/sep2a", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, command files */
     { N_("/File/Open command file"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -305,7 +305,7 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_NEW },
     { N_("/File/New command file/Monte Carlo loop"), "", do_new_script, 1, 
       "<StockItem>", GTK_STOCK_NEW },
-    { N_("/File/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/File/sep3", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, preferences */
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -317,7 +317,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Preferences/_Menu font..."), NULL, font_selector, 
       APP_FONT_SELECTION, "<StockItem>", GTK_STOCK_SELECT_FONT },
 #endif
-    { N_("/File/sep5"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/File/sep5", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/File/E_xit"), "<control>X", menu_exit_check, 0, "<StockItem>", GTK_STOCK_QUIT },
 
     /* Utilities menu */
@@ -326,15 +326,15 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Utilities/p-value finder"), NULL, stats_calculator, CALC_PVAL, NULL, GNULL },
     { N_("/Utilities/Test statistic calculator"), NULL, stats_calculator, CALC_TEST, 
       NULL, GNULL },
-    { N_("/Utilities/sep"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Utilities/sep", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },
-    { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Utilities/sep2", NULL, NULL, 0, "<Separator>", GNULL },
 #if 0
     { N_("/Utilities/Additional functions..."), NULL, display_files, FUNC_FILES, NULL, GNULL },
-    { N_("/Utilities/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Utilities/sep3", NULL, NULL, 0, "<Separator>", GNULL },
 #endif
     { N_("/Utilities/Start GNU R"), NULL, startRcallback, 0, NULL, GNULL },
-    { N_("/Utilities/sep4"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Utilities/sep4", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/NIST test suite"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Utilities/NIST test suite/basic"), NULL, do_nistcheck, 0, NULL, GNULL },
     { N_("/Utilities/NIST test suite/verbose"), NULL, do_nistcheck, 1, NULL, GNULL },
@@ -343,9 +343,9 @@ GtkItemFactoryEntry data_items[] = {
     /* Session menu */
     { N_("/_Session"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Session/_Icon view"), NULL, view_session, 0, NULL, GNULL },
-    { N_("/Session/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Session/sep0", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Session/_Open..."), "", open_script, OPEN_SESSION, "<StockItem>", GTK_STOCK_OPEN },
-    { N_("/Session/sep1"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Session/sep1", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Session/_Save"), "", save_session_callback, SAVE_AS_IS, 
       "<StockItem>", GTK_STOCK_SAVE },
     { N_("/Session/Save _as..."), "", save_session_callback, SAVE_RENAME, 
@@ -362,7 +362,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Sort variables"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Data/Sort variables/by ID number"), NULL, sort_varlist, 0, NULL, GNULL },
     { N_("/Data/Sort variables/by name"), NULL, sort_varlist, 1, NULL, GNULL },
-    { N_("/Data/sep1"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Data/sep1", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/_Graph specified vars"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Data/Graph specified vars/Time series plot..."), 
       NULL, selector_callback, GR_PLOT, NULL, GNULL },
@@ -380,11 +380,11 @@ GtkItemFactoryEntry data_items[] = {
       NULL, selector_callback, GR_3D, NULL, GNULL },
     { N_("/Data/_Multiple scatterplots..."), 
       NULL, selector_callback, SCATTERS, NULL, GNULL },
-    { N_("/Data/sep2"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Data/sep2", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/_Read info"), NULL, open_info, 0, NULL, GNULL },
     { N_("/Data/Edit _info"), NULL, edit_header, 0, NULL, GNULL },
     { N_("/Data/Print description"), NULL, print_report, 0, NULL, GNULL },
-    { N_("/Data/sep3"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Data/sep3", NULL, NULL, 0, "<Separator>", NULL },
 
     { N_("/Data/_Summary statistics"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Data/_Summary statistics/_all variables"), NULL, 
@@ -401,7 +401,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Principal components"), NULL, do_menu_op, PCA, NULL, GNULL },
     { N_("/Data/_Mahalanobis distances"), NULL, do_menu_op, MAHAL, NULL, GNULL },
 
-    { N_("/Data/sep4"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Data/sep4", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Difference of means"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Data/Difference of means/assuming equal variances..."), NULL, 
       selector_callback, MEANTEST, NULL, GNULL },
@@ -409,7 +409,7 @@ GtkItemFactoryEntry data_items[] = {
       selector_callback, MEANTEST2, NULL, GNULL },
     { N_("/Data/Difference of variances..."), NULL, selector_callback, VARTEST, NULL, 
       GNULL },
-    { N_("/Data/sep5"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Data/sep5", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Add variables"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Data/Add variables/time trend"), NULL, add_index, 1, NULL, GNULL },
     { N_("/Data/Add variables/index variable"), NULL, add_index, 0, NULL, GNULL },
@@ -428,14 +428,14 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Add variables/periodic dummies"), NULL, add_dummies, 0, NULL, GNULL },
     { N_("/Data/Add variables/unit dummies"), NULL, add_dummies, 1, NULL, GNULL },
     { N_("/Data/Add variables/panel dummies"), NULL, add_dummies, 2, NULL, GNULL },
-    { N_("/Data/Add variables/sep"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Data/Add variables/sep", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Add variables/random normal..."), NULL, 
       add_random_callback, GENR_NORMAL, NULL, GNULL },
     { N_("/Data/Add variables/random uniform..."), NULL, 
       add_random_callback, GENR_UNIFORM, NULL, GNULL },
     { N_("/Data/Add variables/seed generator..."), NULL, gretl_callback, 
       SETSEED, NULL, GNULL },
-    { N_("/Data/Add variables/sep2"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Data/Add variables/sep2", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Add variables/Define _new variable..."), NULL, gretl_callback, 
       GENR, NULL, GNULL },
     { N_("/Data/Add observations..."), NULL, do_add_obs, 0, NULL, GNULL },
@@ -446,26 +446,26 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/_Sample"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Sample/_Set range..."), NULL, sample_range_dialog, SMPL, NULL, GNULL },
     { N_("/Sample/_Restore full range"), NULL, restore_sample_callback, 1, NULL, GNULL },
-    { N_("/Sample/sep1"), NULL, NULL, 0, "<Separator>", NULL }, 
+    { "/Sample/sep1", NULL, NULL, 0, "<Separator>", NULL }, 
     { N_("/Sample/Dataset structure..."), NULL, data_structure_wizard, 0, NULL, GNULL },
     { N_("/Sample/Compact data..."), NULL, do_compact_data_set, 0, NULL, GNULL },
     { N_("/Sample/Expand data..."), NULL, do_expand_data_set, 0, NULL, GNULL },
-    { N_("/Sample/sep2"), NULL, NULL, 0, "<Separator>", NULL },   
+    { "/Sample/sep2", NULL, NULL, 0, "<Separator>", NULL },   
     { N_("/Sample/_Define, based on dummy..."), NULL, sample_range_dialog, 
       SMPLDUM, NULL, GNULL },
     { N_("/Sample/_Restrict, based on criterion..."), NULL, gretl_callback, 
       SMPLBOOL, NULL, GNULL },
     { N_("/Sample/R_andom sub-sample..."), NULL, sample_range_dialog, SMPLRAND, NULL, GNULL },
-    { N_("/Sample/sep3"), NULL, NULL, 0, "<Separator>", NULL },  
+    { "/Sample/sep3", NULL, NULL, 0, "<Separator>", NULL },  
     { N_("/Sample/Drop all obs with _missing values"), NULL, drop_all_missing, 
       0, NULL, GNULL },
     { N_("/Sample/_Count missing values"), NULL, count_missing, 0, NULL, GNULL },
     { N_("/Sample/Set missing _value code..."), NULL, gretl_callback, 
       GSETMISS, NULL, GNULL },
-    { N_("/Sample/sep4"), NULL, NULL, 0, "<Separator>", NULL },  
+    { "/Sample/sep4", NULL, NULL, 0, "<Separator>", NULL },  
     { N_("/Sample/_Add case markers..."), NULL, open_data, OPEN_MARKERS, NULL, GNULL },
     { N_("/Sample/Remove case _markers"), NULL, do_remove_markers, 0, NULL, GNULL },
-    { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Sample/sep5", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Sample/Restructure panel..."), NULL, panel_restructure_dialog, 0, NULL, GNULL },
     { N_("/Sample/Transpose data..."), NULL, gui_transpose_data, 0, NULL, GNULL },
 
@@ -486,7 +486,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Estimated density plot..."), NULL, do_kernel, 0, NULL, GNULL },
     { N_("/Variable/Gini coefficient"), NULL, do_gini, 0, NULL, GNULL },
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL, GNULL }, 
-    { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Variable/sep1", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Variable/_Time series plot"), NULL, ts_plot_var, 0, NULL, GNULL },
     { N_("/Variable/Correlogram"), NULL, do_corrgm, CORRGM, NULL, GNULL },
     { N_("/Variable/Spectrum"), NULL, NULL, 0, "<Branch>", NULL },
@@ -502,26 +502,23 @@ GtkItemFactoryEntry data_items[] = {
 #endif
     { N_("/Variable/Hurst exponent"), NULL, do_hurst, 0, NULL, GNULL }, 
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL, GNULL }, 
-    { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Variable/sep2", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Variable/_Edit attributes"), NULL, varinfo_callback, 0, NULL, GNULL },
     { N_("/Variable/Set missing value code..."), NULL, gretl_callback, 
       VSETMISS, NULL, GNULL },
-    { N_("/Variable/sep3"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Variable/sep3", NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Variable/Define _new variable..."), NULL, gretl_callback, GENR, NULL, GNULL },
 
     /* Model menu */
     { N_("/_Model"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Model/_Ordinary Least Squares..."), NULL, model_callback, OLS, NULL, GNULL },
     { N_("/Model/_Weighted Least Squares..."), NULL, model_callback, WLS, NULL, GNULL },
-    { N_("/Model/sep1"),  NULL, NULL, 0, "<Separator>", GNULL },
-#if 0
-    { N_("/Model/HCC_M..."), NULL, model_callback, HCCM, NULL, GNULL },
-#endif
+    { "/Model/sep1",  NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Model/H_eteroskedasticity corrected..."), NULL, model_callback, 
       HSK, NULL, GNULL },
-    { N_("/Model/sep2"),  NULL, NULL, 0, "<Separator>", NULL },
+    { "/Model/sep2",  NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Model/Time series"), NULL, NULL, 0, "<Branch>", NULL },
-    { N_("/Model/sep3"),  NULL, NULL, 0, "<Separator>", NULL },
+    { "/Model/sep3",  NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Model/_Two-Stage Least Squares..."), NULL, model_callback, TSLS, NULL, GNULL },
     { "/Model/sep4",  NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Model/_Logit..."), NULL, model_callback, LOGIT, NULL, GNULL },
@@ -549,10 +546,10 @@ GtkItemFactoryEntry data_items[] = {
       GRETL_STOCK_PDF },
     { N_("/Help/_User's guide"), NULL, display_pdf_help, 1, "<StockItem>", 
       GRETL_STOCK_PDF },
-    { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Help/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Help/Check for _updates"), NULL, manual_update_query, 0, "<StockItem>", 
       GTK_STOCK_NETWORK },
-    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", NULL },
+    { "/Help/sep2", NULL, NULL, 0, "<Separator>", NULL },
 #if GTK_MINOR_VERSION >= 6
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, "<StockItem>", GTK_STOCK_ABOUT }
 #else
@@ -1017,8 +1014,7 @@ int main (int argc, char *argv[])
     /* try opening specified database */
     if (gui_get_data == OPT_DBOPEN) {
 	open_named_db_list(dbname);
-    }
-    else if (gui_get_data == OPT_WEBDB) {
+    } else if (gui_get_data == OPT_WEBDB) {
 	open_named_remote_db_list(dbname);
     }
 

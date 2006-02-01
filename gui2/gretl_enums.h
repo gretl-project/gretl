@@ -78,6 +78,7 @@ enum extra_cmds {
     COPY_FORMATS,
     MINIBUF,
     VLAGSEL,
+    VAROMIT,
     GUI_CMD_MAX
 };
 

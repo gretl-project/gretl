@@ -1,6 +1,8 @@
+/* Based on the specification stored in the VAR struct, constitute a
+   list of the exogenous variables in the system.  
+*/
 
-
-static int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err)
+int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err)
 {
     int *vlist, *elist;
     int nendo, nexo;
@@ -13,8 +15,8 @@ static int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err)
 
     vlist = var->models[0]->list;
 
-    /* the endogenous vars start in position 2, and there are
-       order * neqns such terms */
+    /* the _endogenous_ vars start in position 2 or 3 (3 if a constant
+       is included), and there are (order * neqns) such terms */
 
     nendo = var->order * var->neqns;
     nexo = vlist[0] - 1 - nendo;
@@ -29,13 +31,25 @@ static int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err)
 	return NULL;
     }
 
-    j = 1;
-    for (i=nendo+2; i<=vlist[0]; i++) {
+    if (vlist[2] == 0) {
+	/* got const at position 2 */
+	elist[1] = 0;
+	j = 2;
+    } else {
+	j = 1;
+    }
+
+    for (i=nendo+j+1; i<=vlist[0]; i++) {
 	elist[j++] = vlist[i];
     }
 
     return elist;
 }
+
+/* Based on the specification stored in the VAR struct, reconstitute
+   the list that was intially passed to the gretl_VAR() function ro
+   set up the system.
+*/
 
 static int *rebuild_VAR_list (const GRETL_VAR *orig, int *exolist, int *err)
 {
@@ -68,9 +82,15 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
 {
     int *omitlist;
     double LR, pval;
-    int df, err = 0;
+    int i, df, err = 0;
 
-    omitlist = gretl_list_diff_new(exolist0, exolist1);
+#if 0
+    fprintf(stderr, "gretl_VAR_real_omit_test: about to diff lists\n");
+    printlist(exolist0, "exolist0");
+    printlist(exolist1, "exolist1");
+#endif
+
+    omitlist = gretl_list_diff_new(exolist0, exolist1, 1);
     if (omitlist == NULL) {
 	return E_ALLOC;
     }
@@ -85,7 +105,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
 	pprintf(prn, "    %s\n", pdinfo->varname[omitlist[i]]);	
     }
 
-    pprintf(prn, "\n  %s:%s%s(%d) = %g, ", _("Test statistic"), 
+    pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
 	    _("Chi-square"), df, LR);
     pprintf(prn, _("with p-value = %g\n\n"), pval);
 
@@ -115,12 +135,13 @@ int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 			 PRN *prn)
 {
     GRETL_VAR *var = NULL;
-    gretlopt opt = OPT_NONE; /* FIXME: need to pickup opts from orig */
+    gretlopt opt = OPT_NONE;
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
     int *exolist = NULL;
     int *tmplist = NULL;
     int *varlist = NULL;
+    int c0, c1;
     int err = 0;
 
     if (orig == NULL) {
@@ -137,8 +158,15 @@ int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 	return err;
     }
 
+    c0 = gretl_list_const_pos(exolist, 1, (const double **) *pZ, pdinfo);
+    if (c0 > 0) {
+	c1 = !gretl_list_const_pos(omitvars, 1, (const double **) *pZ, pdinfo);
+    } else {
+	c1 = 0;
+    }
+
     /* create exogenous vars list for test VAR */
-    tmplist = gretl_list_omit(exolist, omitvars, &err);
+    tmplist = gretl_list_omit(exolist, omitvars, 1, &err);
     if (tmplist == NULL) {
 	goto bailout;
     }
@@ -149,12 +177,22 @@ int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 	goto bailout;
     }
 
+    /* If the original VAR did not include a constant, we need to
+       pass OPT_N to the test VAR to prevent the addition of a
+       constant.  We also need to pass OPT_N in case the constant was
+       present originally but is now to be omitted.
+    */
+    if (c0 == 0 || c1 == 0) {
+	opt = OPT_N;
+    }
+
     /* impose as sample range the estimation range of the 
        original model */
     pdinfo->t1 = orig->t1;
     pdinfo->t2 = orig->t2;
 
-    var = gretl_VAR(orig->order, list, pZ, pdinfo, opt, NULL, &err);
+    /* should "prn" be NULL below? */
+    var = gretl_VAR(orig->order, varlist, pZ, pdinfo, opt, prn, &err);
 
     /* now, if var is non-NULL, do the actual test(s) */
     if (var != NULL) {

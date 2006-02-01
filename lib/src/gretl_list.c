@@ -593,7 +593,7 @@ static void reglist_move_const (int *list, int from)
 int reglist_check_for_const (int *list, const double **Z,
 			     const DATAINFO *pdinfo)
 {
-    int cpos = gretl_list_const_pos(list, Z, pdinfo);
+    int cpos = gretl_list_const_pos(list, 2, Z, pdinfo);
     int ret = 0;
 
     if (cpos > 1) {
@@ -818,15 +818,18 @@ static int list_count (const int *list)
  * @orig: an array of integers, the first element of which holds
  * a count of the number of elements following.
  * @omit: list of variables to drop.
+ * @minpos: minimum position to check.  This should be 2 for a regular
+ * regression list, to skip the dependent var in position 1; but it
+ * may be 1 to start from the first element of @orig.
  * @err: pointer to receive error code.
  *
  * Creates a list containing the elements of @orig that are not
- * present in @omit. 
+ * present in @omit.
  *
  * Returns: new list on success, %NULL on error.
  */
 
-int *gretl_list_omit (const int *orig, const int *omit, int *err)
+int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 {
     int i, j, k;
     int *smal;
@@ -839,7 +842,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
     for (i=1; i<=nomit; i++) {
 	int pos = in_gretl_list(orig, omit[i]);
 
-	if (pos <= 1) {
+	if (pos < minpos) {
 	    sprintf(gretl_errmsg, _("Variable %d was not in the original list"),
 		    omit[i]);
 	    *err = 1;
@@ -847,23 +850,35 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
 	}
     }
 
-    /* check for attempt to omit all vars */
-    if (nomit == norig - 1) {
-	*err = E_NOVARS;
-	return NULL;
+    if (minpos > 1) {
+	/* it's an error to attempt to omit all vars */
+	if (nomit == norig - 1) {
+	    *err = E_NOVARS;
+	    return NULL;
+	}
     }
 
-    smal = malloc((norig - nomit + 1) * sizeof *smal);
+    if (nomit == norig) {
+	/* omitting all */
+	smal = gretl_null_list();
+	if (smal == NULL) {
+	    *err = E_ALLOC;
+	}
+	return smal;
+    }
+
+    smal = gretl_list_new(norig - nomit);
     if (smal == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    smal[0] = norig - nomit;
-    smal[1] = orig[1];
+    for (i=1; i<minpos; i++) {
+	smal[i] = orig[i];
+    }
 
     k = 1;
-    for (i=2; i<=norig; i++) {
+    for (i=minpos; i<=norig; i++) {
         int match = 0;
 
         for (j=1; j<=nomit; j++) {
@@ -927,15 +942,16 @@ int gretl_list_diff (int *targ, const int *biglist, const int *sublist)
  * gretl_list_diff_new:
  * @biglist: inclusive list.
  * @sublist: subset of biglist.
+ * @minpos: position in lists at which to start.
  *
  * Returns: a newly allocated list including the elements of @biglist,
- * from position 2 onwards, that are not present in @sublist, or %NULL on 
- * failure.  It is assumed that the variable ID number in position 1
- * (dependent variable) is the same in both lists.  It is an error
- * if, from position 2 on, @sublist is not a proper subset of @biglist.
+ * from position @minpos onwards, that are not present in @sublist, 
+ * or %NULL on failure.  It is an error if, from position @minpos on, 
+ * @sublist is not a proper subset of @biglist.
  */
 
-int *gretl_list_diff_new (const int *biglist, const int *sublist)
+int *gretl_list_diff_new (const int *biglist, const int *sublist,
+			  int minpos)
 {
     int *targ = NULL;
     int i, j, n, k = 0;
@@ -949,9 +965,9 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist)
 
     targ = gretl_list_new(n);
 
-    for (i=2; i<=biglist[0]; i++) {
+    for (i=minpos; i<=biglist[0]; i++) {
 	match = 0;
-	for (j=2; j<=sublist[0]; j++) {
+	for (j=minpos; j<=sublist[0]; j++) {
 	    if (sublist[j] == biglist[i]) {
 		match = 1;
 		break;
@@ -1089,9 +1105,10 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
  * gretl_list_const_pos:
  * @list: an array of integer variable ID numbers, the first element
  * of which holds a count of the number of elements following.
+ * @minpos: position in @list at which to start the search (>= 1).
  *
- * Checks @list for the presence, in position 2 or higher, of
- * a variable whose valid values in sample all equal 1.  This
+ * Checks @list for the presence, in position @minpos or higher, of
+ * a variable whose valid values in sample all equal 1.  This usually
  * amounts to checking whether a list of regressors includes
  * an intercept term.
  * 
@@ -1099,20 +1116,24 @@ int list_members_replaced (const int *list, const DATAINFO *pdinfo,
  * found.
  */
 
-int gretl_list_const_pos (const int *list, const double **Z,
+int gretl_list_const_pos (const int *list, int minpos, const double **Z, 
 			  const DATAINFO *pdinfo)
 {
     int i;
 
+    if (minpos < 1) {
+	return 0;
+    }
+
     /* we give preference to the "official" const... */
-    for (i=2; i<=list[0]; i++) {
+    for (i=minpos; i<=list[0]; i++) {
         if (list[i] == 0) {
 	    return i;
 	}
     }
 
     /* ... but if it's not found */
-    for (i=2; i<=list[0]; i++) {
+    for (i=minpos; i<=list[0]; i++) {
         if (true_const(list[i], Z, pdinfo)) {
 	    return i;
 	}

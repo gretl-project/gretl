@@ -437,6 +437,8 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	selection_dialog(_("gretl: define graph"), selfunc, action, 0);
     } else if (action == ADD || action == OMIT) {
 	simple_selection(_("gretl: model tests"), do_add_omit, action, vwin);
+    } else if (action == VAROMIT) {
+	simple_selection(_("gretl: model tests"), do_VAR_omit, action, vwin);
     } else if (action == COEFFSUM) {
 	simple_selection(_("gretl: model tests"), do_coeff_sum, action, vwin);
     } else if (action == ELLIPSE) {

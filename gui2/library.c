@@ -1458,6 +1458,43 @@ int do_add_omit (selector *sr)
     return 0;
 }
 
+int do_VAR_omit (selector *sr)
+{
+    windata_t *vwin = selector_get_data(sr);
+    const char *buf = selector_list(sr);
+    int *omitlist;
+    GRETL_VAR *var;
+    PRN *prn;
+    gint err;
+
+    if (buf == NULL) {
+	return 1;
+    }
+
+    var = vwin->data;
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
+
+    omitlist = gretl_list_from_string(buf);
+    if (omitlist == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = gretl_VAR_omit_test(omitlist, var, &Z, datainfo, prn);
+    }
+
+    if (err) {
+        gui_errmsg(err);
+        gretl_print_destroy(prn);
+        return err;
+    }
+
+    view_buffer(prn, 78, 420, _("gretl: vector autoregression"), PRINT, NULL); 
+
+    return 0;
+}
+
 int do_confidence_region (selector *sr)
 {
     windata_t *vwin = selector_get_data(sr);

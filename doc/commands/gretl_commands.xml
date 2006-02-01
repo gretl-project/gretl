@@ -6778,7 +6778,7 @@
 	If the <lit>--lagselect</lit> option is given, the first parameter to
 	the <lit>var</lit> command is taken as the maximum lag order.  Output
 	consists of a table showing the values of the Akaike (AIC), Schwartz
-	(BIC) and Hannan&ndash;Quinn (HQ) information criteria computed from
+	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
 	VARs of order 1 to the given maximum.  The is intended to help
 	with the selection of the optimal lag order.  The usual VAR output is
 	not presented.
@@ -6789,6 +6789,45 @@
     <gui-access>
       <menu-path>/Model/Time series/Vector autoregression</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="VAR-lagselect" section="Tests" context="gui"
+    label="VAR lag-length selection">
+
+    <description>
+      <para>
+	In this dialog box you specify a VAR as usual, but use the lag order
+	spin button to set the maximum number of lags to test.
+      </para>
+
+      <para>
+	Output will consist of a table showing the values of the Akaike (AIC),
+	Schwartz (BIC) and Hannan&ndash;Quinn (HQC) information criteria computed
+	from VARs of order 1 to the chosen maximum.  This is intended to help with
+	the selection of the optimal lag order.  
+      </para>
+    </description>
+
+  </command>
+
+  <command name="VAR-omit" section="Tests" context="gui"
+    label="Test exogenous variables in VAR">
+
+    <description>
+      <para>
+	Use this dialog box to specify a subset of exogenous variables in a VAR.
+	These variables will be omitted from the original VAR, and the system
+	re-estimated.
+      </para>
+      <para>
+	A Likelihood Ratio test is reported, where the null hypothesis is that
+	the true parameter values are zero, in all equations of the VAR, for the
+	omitted variables.  The test is based on the difference between the
+	log-determinant of the variance matrix for the unrestricted system, and
+	that for the restricted system with the selected variables omitted.
+      </para>
+    </description>
 
   </command>
 

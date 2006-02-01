@@ -656,7 +656,7 @@ int coint (int order, const int *list, double ***pZ,
     MODEL cmod;
     int *cointlist = NULL;
 
-    cpos = gretl_list_const_pos(list, (const double **) *pZ, pdinfo);
+    cpos = gretl_list_const_pos(list, 2, (const double **) *pZ, pdinfo);
     if (cpos > 0) {
 	cnum = list[cpos];
 	ifc = 1;

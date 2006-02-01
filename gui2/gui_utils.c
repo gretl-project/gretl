@@ -3755,8 +3755,8 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
 
-    /* linear restrictions on cointegrating relations */
     if (vecm) {
+	/* linear restrictions on cointegrating relations */
 	varitem.path = g_strdup_printf("%s/%s", _(tpath), 
 				       _("linear restrictions"));
 	varitem.callback = gretl_callback;
@@ -3764,7 +3764,22 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	varitem.item_type = NULL;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
-    }	
+    } else {
+	/* regular VAR: omit exogenous variables test */
+	int err, *exolist;
+
+	exolist = gretl_VAR_get_exo_list(var, &err);
+	if (exolist != NULL) {
+	    varitem.path = g_strdup_printf("%s/%s", _(tpath), 
+				       _("omit exogenous variables..."));
+	    varitem.callback = selector_callback;
+	    varitem.callback_action = VAROMIT;
+	    varitem.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
+	    free(exolist);
+	}	    
+    }
 
     /* cross-equation VCV */
     varitem.path = g_strdup_printf("%s/%s", _(mpath), 

@@ -41,13 +41,13 @@ int gretl_list_purge_const (int *list, const double **Z,
 
 int *gretl_list_add (const int *orig, const int *add, int *err);
 
-int *gretl_list_omit (const int *orig, const int *omit, int *err);
+int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err);
 
 int *gretl_list_omit_last (const int *orig, int *err);
 
 int gretl_list_diff (int *targ, const int *biglist, const int *sublist);
 
-int *gretl_list_diff_new (const int *biglist, const int *sublist);
+int *gretl_list_diff_new (const int *biglist, const int *sublist, int minpos);
 
 int gretl_list_add_list (int **targ, const int *src);
 
@@ -56,7 +56,7 @@ int gretl_list_insert_list (int **targ, const int *src, int pos);
 int reglist_check_for_const (int *list, const double **Z,
 			     const DATAINFO *pdinfo);
 
-int gretl_list_const_pos (const int *list, const double **Z,
+int gretl_list_const_pos (const int *list, int minpos, const double **Z,
 			  const DATAINFO *pdinfo);
 
 int list_members_replaced (const int *list, const DATAINFO *pdinfo,

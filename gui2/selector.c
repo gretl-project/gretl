@@ -24,6 +24,7 @@
 #include "dlgutils.h"
 #include "menustate.h"
 #include "fileselect.h"
+#include "var.h"
 
 #ifndef OLD_GTK
 # include "treeutils.h"
@@ -142,6 +143,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static void get_var_string (char *targ, int v, selector *sr, int locus);
 static int list_show_var (int v, int code, int show_lags);
+
 
 static int selection_at_max (selector *sr, int nsel)
 {
@@ -757,26 +759,38 @@ static void set_vars_from_main (selector *sr)
 
 #ifdef OLD_GTK
 
-static void set_single_datasave_var (selector *sr, int v)
+static void select_singleton (selector *sr)
 {
-    list_append_var(sr->rlvars, NULL, v, NULL, 0);
+    char vstr[8];
+
+    gtk_clist_get_text(GTK_CLIST(sr->lvars), 0, 0, &vstr);    
+    list_append_var(sr->rlvars, NULL, atoi(vstr), NULL, 0);
 }
 
 #else
 
-static void set_single_datasave_var (selector *sr, int v)
+static void select_singleton (selector *sr)
 {
-    GtkTreeModel *mod;
+    GtkTreeModel *lmod, *rmod;
     GtkTreeIter iter;
+    int v;
 
-    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
-    if (mod == NULL) {
+    lmod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars));
+    if (lmod == NULL) {
+	return;
+    }    
+
+    rmod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
+    if (rmod == NULL) {
 	return;
     }
 
-    gtk_tree_model_get_iter_first(mod, &iter);
-    gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
-    gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
+    gtk_tree_model_get_iter_first(lmod, &iter);
+    gtk_tree_model_get(lmod, &iter, 0, &v, -1);
+
+    gtk_tree_model_get_iter_first(rmod, &iter);
+    gtk_list_store_append(GTK_LIST_STORE(rmod), &iter);
+    gtk_list_store_set(GTK_LIST_STORE(rmod), &iter, 
 		       0, v, 1, datainfo->varname[v], -1);
 }
 
@@ -1183,14 +1197,24 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 
 #ifdef OLD_GTK
 
-static void clear_vars (GtkWidget *w, selector *sr)
+static void varlist_insert_const (GtkWidget *w)
 {
     gchar *row[2];
 
+    row[0] = "0";
+    row[1] = "const";
+    gtk_clist_append(GTK_CLIST(w), row);
+}
+
+static void clear_vars (GtkWidget *w, selector *sr)
+{
     gtk_clist_unselect_all(GTK_CLIST(sr->lvars));
 
     if (sr->depvar != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
+				     FALSE);
+	default_var = 0;
     }
 
     if (sr->code == GR_DUMMY || sr->code == GR_3D) {
@@ -1203,28 +1227,55 @@ static void clear_vars (GtkWidget *w, selector *sr)
     }
 
     if (MODEL_CODE(sr->code)) {
-	row[0] = "0";
-	row[1] = "const";
-	gtk_clist_append(GTK_CLIST(sr->rlvars), row);
+	varlist_insert_const(sr->rlvars);
     }
+
+    if (sr->ruvars != NULL) {
+	gtk_clist_clear(GTK_CLIST(sr->ruvars));
+	if (sr->code == TSLS) {
+	    varlist_insert_const(sr->ruvars);
+	}
+    }
+
+    if (sr->lags_button != NULL) {
+	gtk_widget_set_sensitive(sr->lags_button, FALSE);
+    }  
 }
 
 #else
+
+static void varlist_insert_const (GtkWidget *w)
+{
+    GtkTreeModel *mod = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
+    GtkTreeIter iter;
+
+    gtk_tree_model_get_iter_first(mod, &iter);
+    gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
+    gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
+		       0, 0, 1, "const", -1);
+}
 
 static void clear_vars (GtkWidget *w, selector *sr)
 {
     GtkTreeSelection *selection;
 
+    /* deselect all vars on left */
     selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
     gtk_tree_selection_unselect_all(selection);
 
+    /* clear dependent var slot */
     if (sr->depvar != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
+				     FALSE);
+	default_var = 0;
     }
 
     if (sr->code == GR_DUMMY || sr->code == GR_3D) {
+	/* clear special slot */
 	gtk_entry_set_text(GTK_ENTRY(sr->rlvars), "");
     } else {
+	/* empty lower right variable list */
 	clear_varlist(sr->rlvars);
 	if (sr->add_button != NULL) {
 	    gtk_widget_set_sensitive(sr->add_button, TRUE);
@@ -1232,14 +1283,20 @@ static void clear_vars (GtkWidget *w, selector *sr)
     }
 
     if (MODEL_CODE(sr->code)) {
-	GtkTreeModel *model = 
-	    gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
-	GtkTreeIter iter;
+	/* insert default const in regressors box */
+	varlist_insert_const(sr->rlvars);
+    }
 
-	gtk_tree_model_get_iter_first(model, &iter);
-	gtk_list_store_append(GTK_LIST_STORE(model), &iter);
-	gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
-			   0, 0, 1, "const", -1);
+    if (sr->ruvars != NULL) {
+	/* empty upper right variable list */
+	clear_varlist(sr->ruvars);
+	if (sr->code == TSLS) {
+	    varlist_insert_const(sr->ruvars);
+	}
+    }
+
+    if (sr->lags_button != NULL) {
+	gtk_widget_set_sensitive(sr->lags_button, FALSE);
     }
 }
 
@@ -1843,13 +1900,14 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
     if (!sr->error) {
 	/* record some choices as defaults */
-	if ((sr->code == VECM || sr->code == VAR) && (sr->opts & OPT_D)) {
+	if ((sr->code == VECM || sr->code == VAR || sr->code == VLAGSEL) 
+	    && (sr->opts & OPT_D)) {
 	    want_seasonals = 1;
 	}
 	if (sr->code == VECM || sr->code == VAR) {
 	    default_order = order;
 	}
-	if (sr->code == VAR && (sr->opts & OPT_T)) {
+	if ((sr->code == VAR || sr->code == VLAGSEL) && (sr->opts & OPT_T)) {
 	    vartrend = 1;
 	}
     }
@@ -3057,6 +3115,7 @@ static char *get_topstr (int cmdnum)
     case ADD:
 	return N_("Select variables to add");
     case OMIT:
+    case VAROMIT:
 	return N_("Select variables to omit");
     case COEFFSUM:
 	return N_("Select coefficients to sum");
@@ -3088,13 +3147,20 @@ static char *get_topstr (int cmdnum)
 
 #ifdef OLD_GTK
 
-static void add_omit_list (gpointer p, selector *sr)
+static int add_omit_list (gpointer p, selector *sr)
 {
     windata_t *vwin = (windata_t *) p;
-    MODEL *pmod = (MODEL *) vwin->data;
+    GRETL_VAR *var = NULL;
+    MODEL *pmod = NULL;
     gchar *row[2];
     gchar id[5];
-    int i;
+    int i, nvars = 0;
+
+    if (sr->code == VAROMIT) {
+	var = (GRETL_VAR *) vwin->data;
+    } else {
+	pmod = (MODEL *) vwin->data;
+    }
 
     if (sr->code == ELLIPSE) {
 	char pname[VNAMELEN];
@@ -3105,6 +3171,7 @@ static void add_omit_list (gpointer p, selector *sr)
 	    row[0] = id;
 	    row[1] = pname;
 	    gtk_clist_append(GTK_CLIST(sr->lvars), row);
+	    nvars++;
 	}
 	g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
 			  GINT_TO_POINTER(1));
@@ -3120,8 +3187,9 @@ static void add_omit_list (gpointer p, selector *sr)
 	    row[0] = id;
 	    row[1] = datainfo->varname[pmod->list[i]];
 	    gtk_clist_append(GTK_CLIST(sr->lvars), row);
+	    nvars++;
 	} 
-    } else {
+    } else if (sr->code == ADD) {
 	for (i=1; i<datainfo->v; i++) {
 	    int j, match = 0;
 
@@ -3136,19 +3204,45 @@ static void add_omit_list (gpointer p, selector *sr)
 	    row[0] = id;
 	    row[1] = datainfo->varname[i];
 	    gtk_clist_append(GTK_CLIST(sr->lvars), row);
+	    nvars++;
 	}
-    }
+    } else if (sr->code == VAROMIT) {
+	int vi, *exolist;
+
+	exolist = gretl_VAR_get_exo_list(var, &err);
+	if (exolist == NULL) {
+	    err = 1;
+	} else {
+	    for (i=1; i<=exolist[0]; i++) {
+		vi = exolist[i];
+		sprintf(id, "%d", vi);
+		row[0] = id;
+		row[1] = datainfo->varname[vi];
+		gtk_clist_append(GTK_CLIST(sr->lvars), row);
+		nvars++;
+	    }	    
+	} 
+    } 
+
+    return nvars;
 }
 
 #else
 
-static void add_omit_list (gpointer p, selector *sr)
+static int add_omit_list (gpointer p, selector *sr)
 {
     windata_t *vwin = (windata_t *) p;
-    MODEL *pmod = (MODEL *) vwin->data;
+    GRETL_VAR *var = NULL;
+    MODEL *pmod = NULL;
     GtkListStore *store;
     GtkTreeIter iter;
-    int i;
+    int i, nvars = 0;
+
+    if (sr->code == VAROMIT) {
+	var = (GRETL_VAR *) vwin->data;
+    } else {
+	pmod = (MODEL *) vwin->data;
+    }
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
@@ -3164,6 +3258,7 @@ static void add_omit_list (gpointer p, selector *sr)
 			       0, i, 
 			       1, pname,
 			       -1);
+	    nvars++;
 	}
 	g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
 			  GINT_TO_POINTER(1));
@@ -3180,8 +3275,9 @@ static void add_omit_list (gpointer p, selector *sr)
 			       0, pmod->list[i], 
 			       1, datainfo->varname[pmod->list[i]],
 			       -1);
+	    nvars++;
 	} 
-    } else {
+    } else if (sr->code == ADD) {
 	for (i=1; i<datainfo->v; i++) {
 	    int j, match = 0;
 
@@ -3191,15 +3287,33 @@ static void add_omit_list (gpointer p, selector *sr)
 		    break;
 		}
 	    }
-	    if (match) continue;
-
-	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 
-			       0, i, 
-			       1, datainfo->varname[i],
-			       -1);
+	    if (!match) {
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter, 
+				   0, i, 
+				   1, datainfo->varname[i],
+				   -1);
+		nvars++;
+	    }
 	}
-    }
+    } else if (sr->code == VAROMIT) {
+	int err, vi, *exolist;
+
+	exolist = gretl_VAR_get_exo_list(var, &err);
+	if (exolist != NULL) {
+	    for (i=1; i<=exolist[0]; i++) {
+		vi = exolist[i];
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter, 
+				   0, vi, 
+				   1, datainfo->varname[vi],
+				   -1);
+		nvars++;
+	    }	    
+	}
+    } 
+
+    return nvars;
 }
 
 #endif
@@ -3237,7 +3351,8 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
     GtkWidget *left_vbox, *button_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *remove_button;
     selector *sr;
-    int i, vnum = 0;
+    int nleft = 0;
+    int i;
 
     if (open_selector != NULL) {
 	gdk_window_raise(open_selector->window);
@@ -3292,23 +3407,18 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
 #endif
 
     if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM ||
-	cmdcode == ELLIPSE) {
-        add_omit_list(p, sr);
+	cmdcode == ELLIPSE || cmdcode == VAROMIT) {
+        nleft = add_omit_list(p, sr);
 	g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 			 G_CALLBACK(remove_busy_signal), 
 			 p);
     } else {
-	int nleft = 0;
-
+	nleft = 0;
 	for (i=1; i<datainfo->v; i++) {
 	    if (list_show_var(i, cmdcode, 0)) {
 		list_append_var(store, &iter, i, NULL, 0);
-		vnum = i;
 		nleft++;
 	    }
-	}
-	if (nleft != 1) {
-	    vnum = 0;
 	}
     }
 
@@ -3366,8 +3476,8 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
     if (TWO_VARS_CODE(sr->code) && sr->code != ELLIPSE &&
 	mdata_selection_count() == 2) {
 	set_vars_from_main(sr);
-    } else if (SAVE_DATA_ACTION(sr->code) && vnum > 0) {
-	set_single_datasave_var(sr, vnum);
+    } else if (nleft == 1) {
+	select_singleton(sr);
     }
 
     gtk_widget_show(sr->dlg);

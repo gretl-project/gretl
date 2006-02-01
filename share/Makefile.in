@@ -50,6 +50,9 @@ $(AUTO_HELPFILES):
 
 .PHONY :
 
+help:
+	make -C ../doc/commands help-all
+
 install: installdirs install_datafiles install_scripts install_help \
 	$(INSTALL_GUI_SCRIPT_HELP) $(INSTALL_HELP_FIGS)
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(gretldir)/gretl.stamp

@@ -2038,7 +2038,7 @@ int *augment_regression_list (const int *orig, int aux,
     int i, k;
 
     if (aux == AUX_WHITE) {
-	int cpos = gretl_list_const_pos(orig, (const double **) *pZ, 
+	int cpos = gretl_list_const_pos(orig, 2, (const double **) *pZ, 
 					pdinfo);
 	int nt, trv = orig[0] - 1;
 

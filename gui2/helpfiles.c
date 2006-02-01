@@ -127,6 +127,8 @@ static struct gui_help_item gui_help_items[] = {
     { LAGS_DIALOG,    "lags-dialog" },
     { COPY_FORMATS,   "copy-formats" },
     { MINIBUF,        "minibuffer" },
+    { VLAGSEL,        "VAR-lagselect" },
+    { VAROMIT,        "VAR-omit" },
     { -1,          NULL },
 };
 

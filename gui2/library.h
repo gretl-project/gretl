@@ -111,6 +111,8 @@ int do_coeff_sum (selector *sr);
 
 int do_add_omit (selector *sr);
 
+int do_VAR_omit (selector *sr);
+
 int do_confidence_region (selector *sr);
 
 void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget);
