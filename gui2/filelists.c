@@ -20,6 +20,10 @@
 #include "gretl.h"
 #include "filelists.h"
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#endif
+
 /* lists of recently opened files */
 static char datalist[MAXRECENT][MAXSTR];
 static char sessionlist[MAXRECENT][MAXSTR];

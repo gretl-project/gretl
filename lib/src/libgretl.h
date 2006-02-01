@@ -327,7 +327,7 @@ struct MODEL_ {
     double fstt;                 /* F-statistic */
     double lnL;                  /* log-likelihood */
     double ybar, sdy;            /* mean and std. dev. of dependent var. */
-    double criterion[2];         /* array of model selection statistics */
+    double criterion[3];         /* array of model selection statistics */
     double dw, rho;              /* Durbin-Watson stat. and estimated 1st
 				    order autocorrelation coefficient */
     ARINFO *arinfo;              /* pointer to struct to hold special info for 
