@@ -34,6 +34,8 @@
 
 #include "arma_common.c"
 
+static PRN *errprn;
+
 /* check whether the MA estimates have gone out of bounds in the
    course of BHHH iterations */
 
@@ -116,6 +118,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *ma_coeff,
 	im = roots[i].i;
 	rt = re * re + im * im;
 	if (rt > DBL_EPSILON && rt <= 1.0) {
+	    pprintf(errprn, "MA root %d = %g\n", i, rt);
 	    fprintf(stderr, "MA root %d = %g\n", i, rt);
 	    err = 1;
 	    break;
@@ -203,6 +206,7 @@ static int arma_ll (double *coeff,
 #endif
 
     if (ma_out_of_bounds(ainfo, ma_coeff, sma_coeff)) {
+	pputs(errprn, "arma: MA estimate(s) out of bounds\n");
 	fputs("arma: MA estimate(s) out of bounds\n", stderr);
 	return 1;
     }
@@ -660,7 +664,10 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     if (opt & OPT_V) {
 	aprn = prn;
-    } 
+	errprn = prn;
+    } else {
+	errprn = NULL;
+    }
 
     ainfo.atype = ARMA_NATIVE;
 
@@ -756,6 +763,8 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(coeff);
     free(X);
     model_info_free(arma);
+
+    errprn = NULL;
 
     return armod;
 }
