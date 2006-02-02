@@ -3617,9 +3617,9 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = corrgram(cmd.list[1], order, pZ, pdinfo, 0, prn);
+	err = corrgram(cmd.list[1], order, pZ, pdinfo, prn, OPT_NONE);
     } else {
-	err = corrgram(pdinfo->v - 1, order, pZ, pdinfo, 0, prn);
+	err = corrgram(pdinfo->v - 1, order, pZ, pdinfo, prn, OPT_R);
     }
 
     if (err) {
@@ -3667,7 +3667,7 @@ void residual_correlogram (gpointer data, guint u, GtkWidget *widget)
 }
 
 static void 
-real_do_pergm (guint opt, double ***pZ, DATAINFO *pdinfo, int code)
+real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 {
     gint err;
     PRN *prn;
@@ -3675,7 +3675,7 @@ real_do_pergm (guint opt, double ***pZ, DATAINFO *pdinfo, int code)
     if (bufopen(&prn)) return;
 
     if (code == SELECTED_VAR) {
-	if (opt) {
+	if (bartlett) {
 	    gretl_command_sprintf("pergm %s --bartlett", selected_varname());
 	} else {
 	    gretl_command_sprintf("pergm %s", selected_varname());
@@ -3684,9 +3684,13 @@ real_do_pergm (guint opt, double ***pZ, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = periodogram(cmd.list[1], pZ, pdinfo, 0, opt, prn);
+	err = periodogram(cmd.list[1], pZ, pdinfo, prn, cmd.opt);
     } else {
-	err = periodogram(pdinfo->v - 1, pZ, pdinfo, 0, opt, prn);
+	gretlopt opt = OPT_R;
+	if (bartlett) {
+	    opt |= OPT_O;
+	}
+	err = periodogram(pdinfo->v - 1, pZ, pdinfo, prn, opt);
     }
 
     if (err) {
@@ -6330,7 +6334,7 @@ int gui_exec_line (char *line,
 
     case CORRGM:
 	order = atoi(cmd.param);
-	err = corrgram(cmd.list[1], order, &Z, datainfo, 1, outprn);
+	err = corrgram(cmd.list[1], order, &Z, datainfo, outprn, OPT_A);
 	if (err) {
 	    pprintf(prn, _("Failed to generate correlogram\n"));
 	}
@@ -6766,7 +6770,7 @@ int gui_exec_line (char *line,
 	break;
 
     case PERGM:
-	err = periodogram(cmd.list[1], &Z, datainfo, 1, cmd.opt, outprn);
+	err = periodogram(cmd.list[1], &Z, datainfo, outprn, cmd.opt | OPT_N);
 	if (err) pprintf(prn, _("Failed to generate periodogram\n"));
 	break;
 

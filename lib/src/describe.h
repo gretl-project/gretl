@@ -108,11 +108,10 @@ int auto_acf_order (int pd, int nobs);
 
 int corrgram (int varno, int order, 
 	      double ***pZ, DATAINFO *pdinfo, 
-	      int batch, PRN *prn);
+	      PRN *prn, gretlopt opt);
 
-int periodogram (int varno, 
-		 double ***pZ, const DATAINFO *pdinfo, 
-		 int batch, int opt, PRN *prn);
+int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
+		 PRN *prn, gretlopt opt);
 
 Summary *summary (const int *list, const double **Z, 
 		       const DATAINFO *pdinfo,

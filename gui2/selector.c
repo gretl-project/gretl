@@ -3042,11 +3042,17 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 	    /* stick the constant in by default */
 	    list_append_var(store, &iter, 0, sr, SR_RLVARS);
 	    if (xlist != NULL) {
+		int nx = 0;
+
 		/* we have a saved list of regressors */
 		for (i=1; i<=xlist[0]; i++) {
 		    if (xlist[i] != 0) {
 			list_append_var(store, &iter, xlist[i], sr, SR_RLVARS);
+			nx++;
 		    }
+		}
+		if (nx > 0 && sr->code == ARMA) {
+		    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 		}
 	    }
 	} else if (VEC_CODE(cmdcode) && veclist != NULL) {
@@ -3089,9 +3095,10 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
     }
 
     /* and lag selection if wanted */
-    if (dataset_is_time_series(datainfo) && 
-	MODEL_CODE(sr->code) && sr->code != ARMA) {
-	lag_selector_button(sr);
+    if (dataset_is_time_series(datainfo)) {
+	if (MODEL_CODE(sr->code) && sr->code != ARMA) {
+	    lag_selector_button(sr);
+	} 
     } 
 
     /* buttons: OK, Clear, Cancel, Help */

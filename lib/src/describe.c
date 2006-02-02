@@ -1360,8 +1360,10 @@ static char *corrgm_crit_string (void)
  * @order: integer order for autocorrelation function.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @batch: if = 1, use ASCII graphic rather than gnuplot graph.
  * @prn: gretl printing struct.
+ * @opt: if includes %OPT_A, use ASCII graphics; if includes
+ * %OPT_R, variable in question is a model residual generated
+ * "on the fly".
  *
  * Computes the autocorrelation function and plots the correlogram for
  * the variable specified by @varno.
@@ -1370,7 +1372,7 @@ static char *corrgm_crit_string (void)
  */
 
 int corrgram (int varno, int order, double ***pZ, 
-	      DATAINFO *pdinfo, int batch, PRN *prn)
+	      DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
     double *acf, box, pm;
     double *pacf = NULL;
@@ -1420,9 +1422,13 @@ int corrgram (int varno, int order, double ***pZ,
 	acf[l-1] = gretl_acf(nobs, l, &(*pZ)[varno][t1]);
     }
 
-    sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
-	    pdinfo->varname[varno]);
-    pprintf(prn, "\n%s\n\n", gretl_tmp_str);
+    if (opt & OPT_R) {
+	pprintf(prn, "\n%s\n\n", _("Residual autocorrelation function"));
+    } else {
+	sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
+		pdinfo->varname[varno]);
+	pprintf(prn, "\n%s\n\n", gretl_tmp_str);
+    }
 
     /* add Ljung-Box statistic */
     box = 0;
@@ -1444,8 +1450,8 @@ int corrgram (int varno, int order, double ***pZ,
     }
     pputc(prn, '\n');
 
-    if (batch) { 
-	/* batch mode: use ASCII graphics, not gnuplot */
+    if (opt & OPT_A) { 
+	/* use ASCII graphics, not gnuplot */
 	double *xl = malloc(acf_m * sizeof *xl);
 
 	if (xl == NULL) {
@@ -1508,7 +1514,7 @@ int corrgram (int varno, int order, double ***pZ,
 	    corrgm_crit_string(),
 	    pm);
 
-    if (batch) {
+    if (opt & OPT_A) {
 	goto acf_getout;
     } else if (gnuplot_init(PLOT_CORRELOGRAM, &fq)) {
 	err = E_FOPEN;
@@ -1530,8 +1536,12 @@ int corrgram (int varno, int order, double ***pZ,
     if (!pacf_err) {
 	fputs("set origin 0.0,0.50\n", fq);
     }
-    fprintf(fq, "set title '%s %s'\n", I_("ACF for"), 
-	    pdinfo->varname[varno]);
+    if (opt & OPT_R) {
+	fprintf(fq, "set title '%s'\n", I_("Residual ACF"));
+    } else {
+	fprintf(fq, "set title '%s %s'\n", I_("ACF for"), 
+		pdinfo->varname[varno]);
+    }
     fprintf(fq, "set xrange [0:%d]\n", acf_m + 1);
     fprintf(fq, "plot \\\n"
 	    "'-' using 1:2 notitle w impulses, \\\n"
@@ -1545,8 +1555,12 @@ int corrgram (int varno, int order, double ***pZ,
     if (!pacf_err) {
 	/* lower plot: Partial Autocorrelation Function or PACF */
 	fputs("set origin 0.0,0.0\n", fq);
-	fprintf(fq, "set title '%s %s'\n", I_("PACF for"), 
-		pdinfo->varname[varno]);
+	if (opt & OPT_R) {
+	    fprintf(fq, "set title '%s'\n", I_("Residual PACF"));
+	} else {
+	    fprintf(fq, "set title '%s %s'\n", I_("PACF for"), 
+		    pdinfo->varname[varno]);
+	}
 	fprintf(fq, "set xrange [0:%d]\n", pacf_m + 1);
 	fprintf(fq, "plot \\\n"
 		"'-' using 1:2 notitle w impulses, \\\n"
@@ -1875,9 +1889,10 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
  * @varno: ID number of variable to process.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @batch: if non-zero, don't show gnuplot graph.
- * @opt: if non-zero, use Bartlett lag window for periodogram.
  * @prn: gretl printing struct.
+ * @opt: if includes %OPT_O, use Bartlett lag window for periodogram;
+ * if includes %OPT_N, don't display gnuplot graph; if includes
+ * %OPT_R, the variable is a model residual.
  *
  * Computes and displays the periodogram for the variable specified 
  * by @varno.
@@ -1887,14 +1902,15 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
  */
 
 int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
-		 int batch, int opt, PRN *prn)
+		 PRN *prn, gretlopt opt)
 {
     double *autocov, *omega, *hhat, *savexx = NULL;
     double xx, yy, varx, w;
     int err = 0, k, xmax, L, nT; 
     int nobs, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
-    int do_graph = !batch;
+    int do_graph = !(opt & OPT_N);
+    int window = (opt & OPT_O);
     FILE *fq = NULL;
 
     *gretl_errmsg = 0;
@@ -1923,7 +1939,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     }
 
     /* Chatfield (1996); Greene 4ed, p. 772 */
-    if (opt) {
+    if (window) {
 	L = (int) 2.0 * sqrt((double) nobs);
     } else {
 	L = nobs - 1; 
@@ -1985,10 +2001,13 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	fputs("set xzeroaxis\n", fq);
 	fputs("set nokey\n", fq);
 
-	sprintf(titlestr, I_("Spectrum of %s"), pdinfo->varname[varno]);
+	if (opt & OPT_R) {
+	    strcpy(titlestr, I_("Residual spectrum"));
+	} else {
+	    sprintf(titlestr, I_("Spectrum of %s"), pdinfo->varname[varno]);
+	}
 	fprintf(fq, "set title '%s", titlestr);
-
-	if (opt) {
+	if (window) {
 	    sprintf(titlestr, I_("Bartlett window, length %d"), L);
 	    fprintf(fq, " (%s)'\n", titlestr);
 	} else {
@@ -2004,9 +2023,14 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	err = 1;
     }
 
-    pprintf(prn, _("\nPeriodogram for %s\n"), pdinfo->varname[varno]);
+    if (opt & OPT_R) {
+	pprintf(prn, "\n%s\n", _("Residual periodogram"));
+    } else {
+	pprintf(prn, _("\nPeriodogram for %s\n"), pdinfo->varname[varno]);
+    }
+
     pprintf(prn, _("Number of observations = %d\n"), nobs);
-    if (opt) {
+    if (window) {
 	pprintf(prn, _("Using Bartlett lag window, length %d\n\n"), L);
     }
     pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
@@ -2027,7 +2051,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	yy = 2 * M_PI * t / (double) nobs;
 	xx = varx; 
 	for (k=1; k<=L; k++) {
-	    if (opt) {
+	    if (window) {
 		w = 1 - (double) k/(L + 1);
 	    } else {
 		w = 1.0;
@@ -2064,7 +2088,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	err = gnuplot_make_graph();
     }
 
-    if (opt == 0) {
+    if (!window) {
 	if (fract_int_GPH(nT, hhat, omega, prn)) {
 	    pprintf(prn, "\n%s\n", _("Fractional integration test failed"));
 	}

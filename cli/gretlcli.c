@@ -1056,7 +1056,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case CORRGM:
 	order = atoi(cmd.param);
-	err = corrgram(cmd.list[1], order, &Z, datainfo, batch, prn);
+	err = corrgram(cmd.list[1], order, &Z, datainfo, prn, OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}
@@ -1466,7 +1466,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case PERGM:
-	err = periodogram(cmd.list[1], &Z, datainfo, batch, cmd.opt, prn);
+	err = periodogram(cmd.list[1], &Z, datainfo, prn, cmd.opt | OPT_N);
 	if (err) {
 	    pputs(prn, _("Failed to generate periodogram\n"));
 	}
