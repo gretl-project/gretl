@@ -4447,43 +4447,6 @@
 
   </command>
 
-  <command name="sim" section="Dataset"
-    label="Simulación">
-
-    <usage>
-      <arguments>
-        <argument optional="true">obs_inicial obs_final</argument>
-	<argument>nombre_var</argument>
-	<argument>a0 a1 a2 &hellip;</argument>
-      </arguments>
-      <examples>
-        <example>sim 1979.2 1983.1 y 0 0.9</example>
-	<example>sim 15 25 y 10 0.8 x</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-        Simula valores para <repl>nombre_var</repl> para el rango muestral actual
-	o para el rango <repl>obs_inicial</repl> hasta <repl>obs_final</repl> 
-	si se dan estos argumentos. La variable <repl>y</repl> debe haber sido 
-	definida antes con valores iniciales apropiados. La fórmula
-	utilizada es 
-	<equation status="display"
-	  tex="\[y_t=a_{0t} + a_{1t}y_{t-1} + a_{2t}y_{t-2} + \dots\]"
-	  ascii="y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + ..."
-	  graphic="simformula"/> 
-	Los términos <lit>ai(t)</lit> pueden ser números constantes o nombres
-	de variables definidas previamente; esos términos pueden ir precedidos 
-	de un signo menos.
-      </para>
-
-      <para>Esta instrucción ya no se recomienda.  En su lugar debería de
-      usarse <cmdref targ="genr"/>.</para>
-    </description>
-
-  </command>
-
   <command name="smpl" section="Dataset" context="cli">
 
     <!-- don't break the lines below or the text version will get messed

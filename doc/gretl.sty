@@ -41,20 +41,7 @@
 %%                                         \thechapter. #1}{}}
 %% \renewcommand{\sectionmark}[1]{\markright{#1}}
 
-%% Make TOC match revised chapter style
-\renewcommand\tableofcontents{%
-    \if@twocolumn
-      \@restonecoltrue\onecolumn
-    \else
-      \@restonecolfalse
-    \fi
-    \chapter*{\contentsname
-        \@mkboth{\contentsname}{\contentsname}}%
-    \@starttoc{toc}%
-    \if@restonecol\twocolumn\fi}
-
-
-%% add script example as float
+%% add script as float (Example)
 \newcounter{script}[chapter]
 \renewcommand \thescript
      {\ifnum \c@chapter>\z@ \thechapter.\fi \@arabic\c@script}
@@ -68,8 +55,20 @@
 \newenvironment{script*}
                {\@dblfloat{script}}
                {\end@dblfloat}
-\newcommand\theHscript{\arabic{script}}
-\def\toclevel@script{0}
+\newcommand\theHscript{\thechapter.\arabic{script}}
+%% \def\toclevel@script{0}
+
+%% Make TOC match revised chapter style
+\renewcommand\tableofcontents{%
+    \if@twocolumn
+      \@restonecoltrue\onecolumn
+    \else
+      \@restonecolfalse
+    \fi
+    \chapter*{\contentsname
+        \@mkboth{\contentsname}{\contentsname}}%
+    \@starttoc{toc}%
+    \if@restonecol\twocolumn\fi}
 
 %% offset "tip" text
 \newcommand{\tip}[1]{\par\vspace{4pt}
@@ -205,6 +204,7 @@
                                      {-3.0ex\@plus -1ex \@minus -.2ex}%
                                      {1.1ex \@plus .2ex}%
                                      {\normalfont\normalsize\itshape}}
-                             
+
+                           
 \endinput
 %% end of gretl.sty

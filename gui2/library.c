@@ -3674,18 +3674,21 @@ real_do_pergm (guint opt, double ***pZ, DATAINFO *pdinfo, int code)
 
     if (bufopen(&prn)) return;
 
-    if (opt) {
-	gretl_command_sprintf("pergm %s --bartlett", selected_varname());
+    if (code == SELECTED_VAR) {
+	if (opt) {
+	    gretl_command_sprintf("pergm %s --bartlett", selected_varname());
+	} else {
+	    gretl_command_sprintf("pergm %s", selected_varname());
+	}
+	if (check_and_record_command()) {
+	    gretl_print_destroy(prn);
+	    return;
+	}
+	err = periodogram(cmd.list[1], pZ, pdinfo, 0, opt, prn);
     } else {
-	gretl_command_sprintf("pergm %s", selected_varname());
+	err = periodogram(pdinfo->v - 1, pZ, pdinfo, 0, opt, prn);
     }
 
-    if (check_and_record_command()) {
-	gretl_print_destroy(prn);
-	return;
-    }
-
-    err = periodogram(cmd.list[1], &Z, datainfo, 0, opt, prn);
     if (err) {
 	gretl_errmsg_set(_("Periodogram command failed"));
 	gui_errmsg(1);
@@ -3727,7 +3730,7 @@ void residual_periodogram (gpointer data, guint opt, GtkWidget *widget)
 	ginfo = datainfo;
     }    
 
-    real_do_pergm(0, gZ, ginfo, MODEL_VAR); /* FIXME */
+    real_do_pergm(1, gZ, ginfo, MODEL_VAR);
 
     dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo); 
 }

@@ -280,10 +280,13 @@ $\varepsilon_i$. Both issues can be addressed by estimating
 OLS estimation is a quick and convenient way to provide starting
 values for the MLE algorithm.
 
-The following gretl script code shows how to implement the model
+Example \ref{cost-estimation} shows how to implement the model
 described so far. The \texttt{banks91} file contains part of the data
 used in Lucchetti, Papi and Zazzaro (2001).
 
+\begin{script}[htbp]
+  \caption{Estimation of stochastic frontier cost function}
+  \label{cost-estimation}
 \begin{code}
 open banks91
 
@@ -302,10 +305,10 @@ ols rcost const y rp1 rp2
 # Cobb-Douglas cost function with homogeneity restrictions 
 # and inefficiency 
 
-scalar b0 = coeff(const)
-scalar b1 = coeff(y)
-scalar b2 = coeff(rp1)
-scalar b3 = coeff(rp2)
+scalar b0 = $coeff(const)
+scalar b1 = $coeff(y)
+scalar b2 = $coeff(rp1)
+scalar b3 = $coeff(rp2)
 
 scalar su = 0.1
 scalar sv = 0.1
@@ -317,6 +320,7 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   params b0 b1 b2 b3 su sv
 end mle
 \end{code}
+\end{script}
 
 \section{GARCH models}
 \label{sec:garch}

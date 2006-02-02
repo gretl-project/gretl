@@ -212,11 +212,11 @@ one such \cmd{store} can be used in a given loop.
 \label{loop-mc-example}
 
 A simple example of a Monte Carlo loop in ``progressive'' mode is
-shown in Example \ref{mc-loop}.
+shown in Example~\ref{monte-carlo-loop}.
 
 \begin{script}[htbp]
   \caption{Simple Monte Carlo loop}
-  \label{mc-loop}
+  \label{monte-carlo-loop}
 \begin{code}
 	  nulldata 50
 	  seed 547
@@ -229,8 +229,8 @@ shown in Example \ref{mc-loop}.
 	     # run OLS regression
 	     ols y const x
 	     # grab the coefficient estimates and R-squared
-	     genr a = coeff(const)
-	     genr b = coeff(x)
+	     genr a = $coeff(const)
+	     genr b = $coeff(x)
 	     genr r2 = $rsq
 	     # arrange for printing of stats on these
 	     print a b r2
@@ -280,7 +280,7 @@ iteration will be printed when the loop terminates.
 	  ols C 0 Y
 	  genr essbak = $ess
 	  genr essdiff = 1
-	  genr beta = coeff(Y)
+	  genr beta = $coeff(Y)
 	  genr gamma = 1
 	  # iterate OLS till the error sum of squares converges
 	  loop while essdiff > .00001
@@ -290,15 +290,15 @@ iteration will be printed when the loop terminates.
 	     genr x2 = beta * Y^gamma * log(Y)
 	     # run OLS 
 	     ols C0 0 x1 x2 --print-final --no-df-corr --vcv
-	     genr beta = coeff(x1)
-	     genr gamma = coeff(x2)
+	     genr beta = $coeff(x1)
+	     genr gamma = $coeff(x2)
 	     genr ess = $ess
 	     genr essdiff = abs(ess - essbak)/essbak
 	     genr essbak = ess
 	  endloop 
 	  # print parameter estimates using their "proper names"
 	  noecho
-	  printf "alpha = %g\n", coeff(0)
+	  printf "alpha = %g\n", $coeff(0)
 	  printf "beta  = %g\n", beta
 	  printf "gamma = %g\n", gamma
 \end{code}
@@ -320,7 +320,7 @@ their \emph{Estimation and Inference in Econometrics}.
 	genr a = 0.1
 	genr m = 0.1
 
-	genr e = const * 0.0
+	series e = 1.0
 	genr de_c = e
 	genr de_a = e
 	genr de_m = e
@@ -349,15 +349,14 @@ their \emph{Estimation and Inference in Econometrics}.
 	   ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
 
 	   # Update the parameters
-	   genr dc = coeff(sc_c) 
+	   genr dc = $coeff(sc_c) 
 	   genr c = c + dc
-	   genr da = coeff(sc_a) 
+	   genr da = $coeff(sc_a) 
 	   genr a = a + da
-	   genr dm = coeff(sc_m) 
+	   genr dm = $coeff(sc_m) 
 	   genr m = m + dm
 
-	   printf "  constant        = %.8g (gradient = %#.6g)\n", c,
-                                       %dc
+	   printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
 	   printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
 	   printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
 
@@ -365,9 +364,9 @@ their \emph{Estimation and Inference in Econometrics}.
 	   print crit
 	endloop
 
-	genr se_c = stderr(sc_c)
-	genr se_a = stderr(sc_a)
-	genr se_m = stderr(sc_m)
+	genr se_c = $stderr(sc_c)
+	genr se_a = $stderr(sc_a)
+	genr se_m = $stderr(sc_m)
 
 	noecho
 	print "

@@ -51,21 +51,21 @@ simulación de Monte Carlo.
   x = uniform() 
   # abrir un bucle que se repite 100 veces  
   loop 100
-  genr u = normal() 
-  # construir la variable dependiente  
-  genr y = 10*x + 20*u 
-  # ejecutar una regresión MCO  
-  ols y const x 
-  # recuperar el R-cuadrado de la regresión  
-  genr r2 = $rsq 
-  # hacer que se muestren las estadísticas sobre los R-cuadrados calculados 
-  print r2 
-  # recuperar las estimaciones de los coeficientes
-  individuales  
-  genr a = coeff(const) 
-  genr b = coeff(x) 
-  # y guardarlas en un fichero  
-  store foo.gdt a b endloop
+    genr u = normal() 
+    # construir la variable dependiente  
+    genr y = 10*x + 20*u 
+    # ejecutar una regresión MCO  
+    ols y const x 
+    # recuperar el R-cuadrado de la regresión  
+    genr r2 = $rsq 
+    # hacer que se muestren las estadísticas sobre los R-cuadrados calculados 
+    print r2 
+    # recuperar las estimaciones de los coeficientes individuales  
+    genr a = $coeff(const) 
+    genr b = $coeff(x) 
+    # y guardarlas en un fichero  
+    store foo.gdt a b 
+  endloop
 \end{code}
 
 \end{script}
@@ -145,7 +145,7 @@ Abrir archivo de instrucciones, archivo de ejercicios, Greene...''.
   ols C 0 Y 
   genr essbak = $ess 
   genr essdiff = 1 
-  genr b0 = coeff(Y) 
+  genr b0 = $coeff(Y) 
   genr gamma0 = 1 
   # formar las variables linealizadas  
   genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
@@ -153,8 +153,8 @@ Abrir archivo de instrucciones, archivo de ejercicios, Greene...''.
   # iterar los MCO hasta que la suma de cuadrados converja 
   loop while essdiff > .00001 
   ols C0 0 x1 x2 -o 
-  genr b0 = coeff(x1)
-  genr gamma0 = coeff(x2) 
+  genr b0 = $coeff(x1)
+  genr gamma0 = $coeff(x2) 
   genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y) 
   genr x1 = Y^gamma0 
   genr x2 = b0 * Y^gamma0 * log(Y) 
@@ -163,9 +163,9 @@ Abrir archivo de instrucciones, archivo de ejercicios, Greene...''.
   genr essbak = ess
   endloop 
   # mostrar las estimaciones de los parámetros usando sus "propios nombres"  
-  genr alpha = coeff(0) 
-  genr beta = coeff(x1)
-  genr gamma = coeff(x2) 
+  genr alpha = $coeff(0) 
+  genr beta = $coeff(x1)
+  genr gamma = $coeff(x2) 
   print alpha beta gamma
 \end{code}
 \end{script}

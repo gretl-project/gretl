@@ -67,6 +67,9 @@ thumbs: $(DOC)
 install: $(GUIDE) $(REF)
 	cp $(GUIDE) $(REF) $(WEBDIR)
 
+mildclean:
+	rm -f *.aux *.log *.out *.toc *.tpt
+
 clean:
 	rm -f *.aux *.log *.out *.toc *.tpt $(ALTGUIDE) $(ALTREF) *~
 	rm -f refbody.tex gretl-guide-a4.tex gretl-ref-a4.tex

@@ -5789,6 +5789,10 @@
 	and <lit>hc_version</lit> are used when the <lit>--robust</lit> option
 	is given to the <cmd>ols</cmd> command. 
       </para>
+      <para>
+	If the <cmd>set</cmd>command is given without any parameters, the
+	current settings for all the relevant variables are printed.
+      </para>
 
       <ilist>
 	<li>
@@ -5796,6 +5800,21 @@
 	    default). Suppress or resume the echoing of commands in gretl's
 	    output.</para>
 	</li>
+	<li>
+	  <para><lit>messages</lit>: <lit>off</lit> or <lit>on</lit> (the
+	  default). Suppress or resume the printing of non-error messages
+	  associated with various commands, for example when a new variable is
+	  generated or when the sample range is changed.
+         </para>
+	</li>
+      <li>
+	<para>
+	  <lit>nls_toler</lit>: a floating-point value (the default is the
+	  machine precision to the power 3/4).  Sets the tolerance used in
+	  judging whether or not convergence has occurred in nonlinear least
+	  squares estimation using the <cmdref targ="nls"/> command.
+	</para>
+      </li>
 	<li>
 	  <para><lit>qr</lit>: <lit>on</lit> or <lit>off</lit> (the
 	    default). Use QR rather than Cholesky decomposition in calculating

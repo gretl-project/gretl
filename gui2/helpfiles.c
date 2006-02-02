@@ -470,6 +470,8 @@ static int add_topic_to_head (help_head *head, int j, const char *word,
 	    head->topicnames[j] = label;
 	}
     } else {
+	fprintf(stderr, "helpfile: add_topic_to_head: hnum=%d for word='%s'\n", 
+		hnum, word);
 	err = 1;
     }
 
@@ -504,6 +506,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
     }
     
     if (!sscanf(line, "headings %d", &nh) || nh <= 0) {
+	fprintf(stderr, "Couldn't reading number of headings in helpfile\n");
 	err = 1;
 	goto bailout;
     }
@@ -526,6 +529,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 	int nt;
 
 	if (fgets(line, sizeof line, fp) == NULL) {
+	    fprintf(stderr, "Couldn't read line from helpfile: i=%d\n", i);
 	    err = 1;
 	    goto bailout;
 	}
@@ -536,6 +540,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 
 	/* heading name plus number of following topics */
 	if (sscanf(line, "%31s %d", tmp, &nt) != 2) {
+	    fprintf(stderr, "Couldn't read heading and number of topics: i=%d\n", i);
 	    err = 1;
 	    goto bailout;
 	}	    
@@ -551,6 +556,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 	/* heading with at least one topic */
 	heads[nh2] = help_head_new(tmp, nt, gui);
 	if (heads[nh2] == NULL) {
+	    fprintf(stderr, "healp_head_new() failed\n");
 	    err = 1;
 	}
 
@@ -575,8 +581,10 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 
 	    if (!err) {
 		err = add_topic_to_head(heads[nh2], j, tmp, label, gui);
-		if (err && label != NULL) {
-		    free(label);
+		if (err) {
+		    if (label != NULL) {
+			free(label);
+		    }
 		}
 	    }
 	}

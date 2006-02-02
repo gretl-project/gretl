@@ -62,15 +62,15 @@ estimates.  In relation to the first example above, one might do:
 
 \begin{code}
       ols C 0 Y
-      genr alpha = coeff(0)
-      genr beta = coeff(Y)
+      genr alpha = $coeff(0)
+      genr beta = $coeff(Y)
       genr gamma = 1
 \end{code}
 And in relation to the second example one might do:
 \begin{code}
       ols y 0 x1 x2
-      genr alpha = coeff(0)
-      genr beta = coeff(x1)
+      genr alpha = $coeff(0)
+      genr beta = $coeff(x1)
 \end{code}
 
 
@@ -121,21 +121,31 @@ should supply expressions for all of the derivatives or none.
 \label{nls-toler}
 
 The NLS estimation procedure is an iterative process.  Iteration is
-terminated when a convergence criterion is met or when a set maximum
-number of iterations is reached, whichever comes first.  The maximum
+terminated when the criterion for convergence is met or when the
+maximum number of iterations is reached, whichever comes first.
+
+Let $k$ denote the number of parameters being estimated.  The maximum
 number of iterations is $100 \times (k+1)$ when analytical derivatives
-are given and $200 \times (k+1)$ when numerical derivatives are used,
-where $k$ denotes the number of parameters being estimated.  The
-convergence criterion is that the relative error in the sum of
-squares, and/or the relative error between the the coefficient vector
-and the solution, is estimated to be no larger than some small value.
-This ``small value'' is by default the machine precision to the power
-3/4, but it can be set with the \cmd{genr} command using the special
-variable \verb+toler+.  For example
+are given, and $200 \times (k+1)$ when numerical derivatives are used.
+
+Let $\epsilon$ denote a small number.  The iteration is deemed to have
+converged if one or both of the following conditions are satisfied:
+
+\begin{itemize}
+\item Both the actual and predicted relative reductions in the sum of
+  squares are at most $\epsilon$.
+\item The relative error between two consecutive iterates is at most
+  $\epsilon$.
+\end{itemize}
+
+This default value of $\epsilon$ is the machine precision to the power
+3/4, but it can be adjusted using the \cmd{set} command with the
+parameter \verb+nls_toler+.  For example
+%
 \begin{code}
-genr toler = .0001
+set nls_toler .0001
 \end{code}
- 
+% 
 will relax the tolerance to 0.0001.
 
 \section{Details on the code}

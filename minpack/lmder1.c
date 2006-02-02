@@ -176,8 +176,8 @@
     gtol = zero;
     mode = 1;
     nprint = 0;
-    lmder_((U_fp)fcn, m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, &
-	    ftol, &xtol, &gtol, &maxfev, &wa[1], &mode, &factor, &nprint, 
+    lmder_((U_fp)fcn, m, n, &x[1], &fvec[1], &fjac[fjac_offset], ldfjac, 
+	    &ftol, &xtol, &gtol, &maxfev, &wa[1], &mode, &factor, &nprint, 
 	    info, &nfev, &njev, &ipvt[1], &wa[*n + 1], &wa[(*n << 1) + 1], &
 	    wa[*n * 3 + 1], &wa[(*n << 2) + 1], &wa[*n * 5 + 1]);
     if (*info == 8) {

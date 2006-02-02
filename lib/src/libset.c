@@ -544,6 +544,22 @@ static char delim_from_arg (const char *s)
     return ret;
 }
 
+static const char *arg_from_delim (char c)
+{
+    const char *ret = "unset";
+
+    if (c == ',') {
+	ret = "comma";
+    } else if (c == ' ') {
+	ret = "space";
+    } else if (c == '\t') {
+	ret = "tab";
+    }
+
+    return ret;
+
+}
+
 static int display_settings (PRN *prn)
 {
     unsigned int uval;
@@ -582,7 +598,6 @@ static int display_settings (PRN *prn)
 	pprintf(prn, " horizon = %d\n", state->horizon);
     }
 
-    /* FIXME: undocumented! */
     pprintf(prn, " nls_toler = %g\n", get_nls_toler());
     pprintf(prn, " messages = %d\n", state->gretl_msgs);
 
@@ -590,6 +605,7 @@ static int display_settings (PRN *prn)
     pprintf(prn, " halt_on_error = %d\n", state->halt_on_error);
 
     pprintf(prn, " shell_ok = %d\n", state->shell_ok);
+    pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
 
     return 0;
 }
