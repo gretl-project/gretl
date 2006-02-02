@@ -3183,19 +3183,31 @@ static void add_vars_to_plot_menu (windata_t *vwin)
    varitem.callback_action = 0; 
 
     for (i=0; i<2; i++) {
+	/* residual correlogram and spectrum */
+	if (dataset_is_time_series(datainfo) && i == 0) {
+	    varitem.path = g_strdup_printf(_("%s/correlogram"), mpath[i]);
+	    varitem.callback = residual_correlogram;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
+	    varitem.path = g_strdup_printf(_("%s/spectrum"), mpath[i]);
+	    varitem.callback = residual_periodogram;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    g_free(varitem.path);
+	}
+
+	/* plot against time/obs number */
 	if (dataset_is_time_series(datainfo)) {
-	    varitem.path = 
-		g_strdup_printf(_("%s/against time"), mpath[i]);
+	    varitem.path = g_strdup_printf(_("%s/against time"), mpath[i]);
 	} else {
-	    varitem.path = 
-		g_strdup_printf(_("%s/by observation number"), mpath[i]);	
+	    varitem.path = g_strdup_printf(_("%s/by observation number"), mpath[i]);
 	}
 	varitem.callback = (i==0)? resid_plot : fit_actual_plot;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
 
-	if (pmod->ci == ARMA || pmod->ci == NLS || pmod->ci == GARCH) 
+	if (pmod->ci == ARMA || pmod->ci == NLS || pmod->ci == GARCH) { 
 	    continue;
+	}
 
 	varstart = (i == 0)? 1 : 2;
 

@@ -193,7 +193,11 @@ void do_freqplot (gpointer data, guint gamma, GtkWidget *widget);
 
 void do_corrgm (gpointer data, guint u, GtkWidget *widget);
 
+void residual_correlogram (gpointer data, guint u, GtkWidget *widget);
+
 void do_pergm (gpointer data, guint opt, GtkWidget *widget);
+
+void residual_periodogram (gpointer data, guint opt, GtkWidget *widget);
 
 #if defined (HAVE_TRAMO) || defined (HAVE_X12A)
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget);

@@ -761,7 +761,7 @@ static void set_vars_from_main (selector *sr)
 
 static void select_singleton (selector *sr)
 {
-    char vstr[8];
+    gchar *vstr;
 
     gtk_clist_get_text(GTK_CLIST(sr->lvars), 0, 0, &vstr);    
     list_append_var(sr->rlvars, NULL, atoi(vstr), NULL, 0);
@@ -3015,14 +3015,15 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 	remove = gtk_button_new_with_label (_("<- Remove"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), remove, TRUE, FALSE, 0);
 
-	if (dataset_is_time_series(datainfo) && select_lags_lower(sr->code) &&
-	    sr->code != TSLS) {
+#if 0
+	if (0) {
 	    sr->lags_button = gtk_button_new_with_label(_("lags..."));
 	    gtk_box_pack_start(GTK_BOX(button_vbox), sr->lags_button, TRUE, FALSE, 0);
 	    g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
 			     G_CALLBACK(lags_dialog_driver), sr);
 	    gtk_widget_set_sensitive(sr->lags_button, FALSE);
 	}
+#endif
 
 	gtk_box_pack_start(GTK_BOX(indepvar_hbox), button_vbox, TRUE, TRUE, 0);
 	gtk_widget_show_all(button_vbox);
@@ -3088,8 +3089,8 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 	build_selector_radios(sr);
     }
 
-    /* and lag selection for some */
-    if (dataset_is_time_series(datainfo) && sr->code == TSLS) {
+    /* and lag selection if wanted */
+    if (dataset_is_time_series(datainfo) && MODEL_CODE(sr->code)) {
 	lag_selector_button(sr);
     } 
 
@@ -3207,12 +3208,10 @@ static int add_omit_list (gpointer p, selector *sr)
 	    nvars++;
 	}
     } else if (sr->code == VAROMIT) {
-	int vi, *exolist;
+	int err, vi, *exolist;
 
 	exolist = gretl_VAR_get_exo_list(var, &err);
-	if (exolist == NULL) {
-	    err = 1;
-	} else {
+	if (exolist != NULL) {
 	    for (i=1; i<=exolist[0]; i++) {
 		vi = exolist[i];
 		sprintf(id, "%d", vi);

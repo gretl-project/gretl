@@ -3586,17 +3586,22 @@ void do_hurst (gpointer data, guint opt, GtkWidget *widget)
 		NULL);
 }
 
-void do_corrgm (gpointer data, guint u, GtkWidget *widget)
+enum {
+    SELECTED_VAR,
+    MODEL_VAR
+};
+
+static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 {
     char title[64];
     int order, err = 0;
-    int T = datainfo->t2 - datainfo->t1 + 1;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
     PRN *prn;
 
     strcpy(title, "gretl: ");
     strcat(title, _("correlogram"));
 
-    order = auto_acf_order(datainfo->pd, T);
+    order = auto_acf_order(pdinfo->pd, T);
 
     err = spin_dialog(title, &order, _("Maximum lag:"),
 		      1, T - 1, CORRGM);
@@ -3606,14 +3611,16 @@ void do_corrgm (gpointer data, guint u, GtkWidget *widget)
 
     if (bufopen(&prn)) return;
 
-    gretl_command_sprintf("corrgm %s %d", selected_varname(), order);
-
-    if (check_and_record_command()) {
-	gretl_print_destroy(prn);
-	return;
+    if (code == SELECTED_VAR) {
+	gretl_command_sprintf("corrgm %s %d", selected_varname(), order);
+	if (check_and_record_command()) {
+	    gretl_print_destroy(prn);
+	    return;
+	}
+	err = corrgram(cmd.list[1], order, pZ, pdinfo, 0, prn);
+    } else {
+	err = corrgram(pdinfo->v - 1, order, pZ, pdinfo, 0, prn);
     }
-
-    err = corrgram(cmd.list[1], order, &Z, datainfo, 0, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -3626,7 +3633,41 @@ void do_corrgm (gpointer data, guint u, GtkWidget *widget)
     view_buffer(prn, 78, 360, title, CORRGM, NULL);
 }
 
-void do_pergm (gpointer data, guint opt, GtkWidget *widget)
+void do_corrgm (gpointer data, guint u, GtkWidget *widget)
+{
+    real_do_corrgm(&Z, datainfo, SELECTED_VAR);
+}
+
+void residual_correlogram (gpointer data, guint u, GtkWidget *widget)
+{
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
+    int origv;
+    double ***gZ;
+    DATAINFO *ginfo;
+
+    origv = (pmod->dataset != NULL)? 
+	pmod->dataset->dinfo->v : datainfo->v;
+
+    /* add residuals to data set temporarily */
+    if (add_fit_resid(pmod, 0, 1)) return;
+
+    /* handle model estimated on different subsample */
+    if (pmod->dataset != NULL) {
+	gZ = &(pmod->dataset->Z);
+	ginfo = pmod->dataset->dinfo;
+    } else {
+	gZ = &Z;
+	ginfo = datainfo;
+    }    
+
+    real_do_corrgm(gZ, ginfo, MODEL_VAR);
+
+    dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo);    
+}
+
+static void 
+real_do_pergm (guint opt, double ***pZ, DATAINFO *pdinfo, int code)
 {
     gint err;
     PRN *prn;
@@ -3656,6 +3697,39 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 
     view_buffer(prn, 60, 400, _("gretl: periodogram"), PERGM, 
 		NULL);
+}
+
+void do_pergm (gpointer data, guint opt, GtkWidget *widget)
+{
+    real_do_pergm(opt, &Z, datainfo, SELECTED_VAR);
+}
+
+void residual_periodogram (gpointer data, guint opt, GtkWidget *widget)
+{
+    windata_t *vwin = (windata_t *) data;
+    MODEL *pmod = (MODEL *) vwin->data;
+    int origv;
+    double ***gZ;
+    DATAINFO *ginfo;
+
+    origv = (pmod->dataset != NULL)? 
+	pmod->dataset->dinfo->v : datainfo->v;
+
+    /* add residuals to data set temporarily */
+    if (add_fit_resid(pmod, 0, 1)) return;
+
+    /* handle model estimated on different subsample */
+    if (pmod->dataset != NULL) {
+	gZ = &(pmod->dataset->Z);
+	ginfo = pmod->dataset->dinfo;
+    } else {
+	gZ = &Z;
+	ginfo = datainfo;
+    }    
+
+    real_do_pergm(0, gZ, ginfo, MODEL_VAR); /* FIXME */
+
+    dataset_drop_last_variables(ginfo->v - origv, gZ, ginfo); 
 }
 
 void do_coeff_intervals (gpointer data, guint u, GtkWidget *w)
