@@ -5716,6 +5716,10 @@
 	<lit>hc_version</lit> sono usate quando viene data l'opzione
         <lit>--robust</lit> al comando <cmd>ols</cmd>. 
       </para>
+      <para>
+        Se il comando <cmd>set</cmd> è usato senza parametri, vengono
+        mostrate le impostazioni attuali per tutti i parametri rilevanti.
+      </para>
 
       <ilist>
 	<li>
@@ -5724,6 +5728,23 @@
 	    Sopprime o ripristina l'indicazione dei comandi eseguiti nell'output
             dei risultati.</para>
 	</li>
+ 	<li>
+	  <para><lit>messages</lit>: <lit>off</lit> o <lit>on</lit> (valore
+            predefinito). Sopprime o ripristina l'indicazione dei messaggi
+            informativi associati a vari comandi, ad esempio quando viene
+            generata una nuova variabile o viene modificato l'intervallo del
+            campione.
+         </para>
+	</li>
+        <li>
+	<para>
+	  <lit>nls_toler</lit>: un valore in virgola mobile (il valore
+          predefinito è pari alla precisione della macchina elevata alla potenza
+          3/4). Imposta la tolleranza usata per stabilire se è stata raggiunta
+          la convergenza nelle procedure iterative di stima con i minimi
+          quadrati non lineari usate dal comando <cmdref targ="nls"/>.
+	</para>
+        </li>
 	<li>
 	  <para><lit>qr</lit>:
 	  <lit>on</lit> o <lit>off</lit> (valore predefinito).
@@ -6606,7 +6627,7 @@
       <arguments>
         <argument>ordine</argument>
         <argument>lista-variabili</argument>
-	<argument separated="true">lista-deterministica</argument>
+	<argument separated="true">lista-esogene</argument>
       </arguments>
       <options>
         <option>
@@ -6629,10 +6650,15 @@
 	  <flag>--variance-decomp</flag>
 	  <effect>mostra decomposizioni della varianza della previsione</effect>
         </option>
+        <option>
+	  <flag>--lagselect</flag>
+	  <effect>mostra i criteri di informazione per la selezione dei ritardi</effect>
+        </option>
       </options>
       <examples>
         <example>var 4 x1 x2 x3 ; time mydum</example>
 	<example>var 4 x1 x2 x3 --seasonals</example>
+	<example>var 12 x1 x2 x3 --lagselect</example>
       </examples>
     </usage>
 
@@ -6646,7 +6672,7 @@
         di ritardi di ogni variabile presente nel sistema;</para>
 	</li>
 
-        <li><para context="gui">- Eventuali termini "deterministici" o esogeni
+        <li><para context="gui">- Eventuali termini esogeni
         (ma si noti che una costante viene inclusa automaticamente, a meno che
         non si richieda altrimenti; inoltre è possibile includere variabili
         dummy stagionali con l'apposita casella); e
@@ -6669,13 +6695,14 @@
 
       <para context="cli">
 	Imposta e stima (usando OLS) un'autoregressione vettoriale (VAR).
-        Il primo argomento specifica l'ordine di ritardo, quindi segue
+        Il primo argomento specifica l'ordine di ritardo (o il massimo ordine di
+        ritardi se è stata usata l'opzione <lit>--lagselect</lit>). Quindi segue
         l'impostazione della prima equazione. Non occorre includere i ritardi
         tra gli elementi della <repl>lista-variabili</repl>:
         verranno aggiunti automaticamente. Il punto e virgola separa le
         variabili stocastiche, per cui verrà incluso un numero di
         ritardi pari a <repl>ordine</repl>, dai termini deterministici o esogeni
-        presenti nella <repl>lista-deterministica</repl>.</para>
+        presenti nella <repl>lista-esogene</repl>.</para>
 
       <para context="cli">
 	gretl è in grado di riconoscere le più comuni variabili
@@ -6686,7 +6713,8 @@
         variabile dummy) devono invece essere indicate esplicitamente.
         Si noti che viene inclusa automaticamente una costante, a meno che
         non si usi l'opzione <lit>--nc</lit>; inoltre è possibile aggiungere
-        variabili dummy stagionali con l'opzione <lit>--seasonals</lit>.</para>
+        un trend con l'opzione <lit>--trend</lit> e variabili dummy stagionali
+        con l'opzione <lit>--seasonals</lit>.</para>
 
       <para context="cli">
 	Viene calcolata una regressione separata per ognuna delle
@@ -6708,12 +6736,60 @@
         per le decomposizioni della varianza e le funzioni di impulso-risposta
         può essere impostato usando il comando <cmdref targ="set"/>.
       </para> 
+      <para context="cli">
+        Se si usa l'opzione <lit>--lagselect</lit>, il primo parametro del comando
+	<lit>var</lit> viene interpretato come il massimo ordine di ritardo.
+        In questo caso, il comando non produce il solito risultato della stima del VAR, ma
+        una tabella che mostra i valori dei criteri di informazione di Akaike
+        (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC) calcolati per VAR
+        dall'ordine 1 fino all'ordine massimo indicato, in modo da aiutare nella
+        scelta dell'ordine di ritardo ottimale.
+       </para>
 
     </description>
 
     <gui-access>
       <menu-path>/Modello/Serie storiche/VAR - Autoregressione vettoriale</menu-path>
     </gui-access>
+
+  </command>
+  
+  <command name="VAR-lagselect" section="Tests" context="gui"
+    label="Scelta dell'ordine di ritardi in un VAR">
+
+    <description>
+      <para>
+        In questa finestra di dialogo è possibile testare la stima di un VAR
+        per diversi ordini di ritardi; oltre a indicare la specificazione del
+        VAR è possibile selezionare il massimo ordine di ritardi da testare.
+      </para>
+
+      <para>
+        Il risultato consiste in una tabella che mostra i valori dei criteri
+        di informazione di Akaike (AIC), Schwartz (BIC) e Hannan&ndash;Quinn (HQC)
+        calcolati per VAR dall'ordine 1 fino all'ordine massimo indicato.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="VAR-omit" section="Tests" context="gui"
+    label="Test per variabili esogene in un VAR">
+
+    <description>
+      <para>
+        In questa finestra di dialogo è possibile testare l'omissione da un VAR
+        di un gruppo di variabili esogene.
+      </para>
+      <para>
+        Viene calcolato un test del rapporto di verosimiglianza sotto l'ipotesu
+        nulla che i coefficienti delle variabili indicate valgano zero in
+        tutte le equazioni del VAR. Il test si basa sulla differenza tra il
+        log-determinante della matrice di varianza per il modello non vincolato
+        e per il modello con il vincolo che i coefficienti delle variabili
+        indicate valgano zero.
+      </para>
+    </description>
 
   </command>
 
