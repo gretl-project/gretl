@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-01 15:00-0500\n"
-"PO-Revision-Date: 2005-12-23 23:59+0100\n"
+"PO-Revision-Date: 2006-02-03 09:37+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -209,15 +209,15 @@ msgstr "F robusta"
 msgid "with p-value = %g\n"
 msgstr "con p-value = %g\n"
 
-#: lib/src/compare.c:248 lib/src/compare.c:267
 #, fuzzy
+#: lib/src/compare.c:248 lib/src/compare.c:267
 msgid "omit"
-msgstr "Tobit"
+msgstr "omit"
 
-#: lib/src/compare.c:248 lib/src/compare.c:267
 #, fuzzy
+#: lib/src/compare.c:248 lib/src/compare.c:267
 msgid "add"
-msgstr "dfd"
+msgstr "add"
 
 #: lib/src/compare.c:262 lib/src/gretl_model.c:1846
 msgid "Asymptotic test statistic"
@@ -271,9 +271,8 @@ msgstr ""
 
 # / gui2/library.c:1605
 #: lib/src/compare.c:575
-#, fuzzy
 msgid "non-linearity"
-msgstr " (non linearità)"
+msgstr "non linearità"
 
 #: lib/src/compare.c:1046 lib/src/compare.c:1193 lib/src/compare.c:1197
 #: lib/src/compare.c:1201 lib/src/describe.c:1627 lib/src/describe.c:1866
@@ -436,7 +435,7 @@ msgstr "Errore Standard"
 
 #: lib/src/compare.c:2067
 msgid "sum"
-msgstr ""
+msgstr "somma"
 
 #: lib/src/compat.c:220
 #, c-format
@@ -678,9 +677,8 @@ msgid "daily"
 msgstr "giornaliero"
 
 #: lib/src/dataio.c:1485
-#, fuzzy
 msgid "decennial"
-msgstr "Decennale"
+msgstr "decennale"
 
 #: lib/src/dataio.c:1513
 #, c-format
@@ -1563,9 +1561,8 @@ msgstr ""
 "\n"
 
 #: lib/src/describe.c:2706
-#, fuzzy
 msgid "difference of means"
-msgstr "/Dati/Differenza delle _medie"
+msgstr "differenza delle medie"
 
 #: lib/src/describe.c:2772
 msgid ""
@@ -1593,9 +1590,8 @@ msgid "The two population variances are equal"
 msgstr "Le varianze delle due popolazioni sono uguali"
 
 #: lib/src/describe.c:2785
-#, fuzzy
 msgid "difference of variances"
-msgstr "/Dati/Differenza delle _varianze..."
+msgstr "differenza delle varianze"
 
 #: lib/src/describe.c:2871 gui2/library.c:551 gui2/library.c:699
 #: gui2/menustate.c:385 gui2/menustate.c:410
@@ -1738,7 +1734,7 @@ msgstr ""
 
 #: lib/src/estimate.c:2502
 msgid "White's"
-msgstr ""
+msgstr "Di White"
 
 #: lib/src/estimate.c:2615
 msgid "Generalized Cochrane-Orcutt estimation"
@@ -1807,9 +1803,9 @@ msgid "Undefined variable name '%s' in genr"
 msgstr "Nome di variabile '%s' non definito in genr"
 
 #: lib/src/generate.c:770
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': not a matrix or scalar"
-msgstr "'%s' non è una variabile dummy"
+msgstr "'%s' non è una matrice o uno scalare"
 
 #: lib/src/generate.c:2787
 msgid "constant"
@@ -1864,14 +1860,13 @@ msgid "Panel dummy variables generated.\n"
 msgstr "Variabili dummy per il panel generate.\n"
 
 #: lib/src/generate.c:3172 lib/src/usermat.c:1489
-#, fuzzy, c-format
+#, c-format
 msgid "'%s' is the name of a data series"
-msgstr "'%s' non è il nome di una variabile"
+msgstr "'%s' è il nome di una serie"
 
 #: lib/src/generate.c:3637
-#, fuzzy
 msgid "Specified a scalar, but a series was produced."
-msgstr "Era stato specificato uno scalare, ma è stato prodotto un vettore."
+msgstr "Era stato specificato uno scalare, ma è stata prodotta una serie."
 
 #: lib/src/generate.c:3669
 msgid "You cannot turn a scalar into a vector when the dataset is subsampled."
@@ -2284,14 +2279,12 @@ msgid "Not a Number in calculation"
 msgstr "Valore non numerico in un calcolo"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Matrices not conformable for operation"
-msgstr "I nuovi dati non sono nel formato adatto per essere aggiunti\n"
+msgstr "Le matrici non sono conformabili"
 
 #: lib/src/gretl_errors.c:80
-#, fuzzy
 msgid "Data types not conformable for operation"
-msgstr "I nuovi dati non sono nel formato adatto per essere aggiunti\n"
+msgstr "I tipi di dati non sono conformabili per l'operazione richiesta"
 
 #: lib/src/gretl_func.c:1425
 #, c-format
@@ -2544,9 +2537,8 @@ msgid "Failed to compute F statistic for test\n"
 msgstr "Impossibile calcolare la statistica F per il test\n"
 
 #: lib/src/gretl_restrict.c:894
-#, fuzzy
 msgid "restriction"
-msgstr "Vincolo"
+msgstr "vincolo"
 
 #: lib/src/gretl_string_table.c:172
 #, c-format
@@ -2683,14 +2675,14 @@ msgid "Couldn't write to %s"
 msgstr "Impossibile scrivere su %s"
 
 #: lib/src/gretl_utils.c:1223
-#, fuzzy, c-format
+#, c-format
 msgid "%s test"
-msgstr "Test delle successioni"
+msgstr "test %s"
 
 #: lib/src/gretl_utils.c:1225
-#, fuzzy, c-format
+#, c-format
 msgid "p-value for %s test"
-msgstr "p-value per"
+msgstr "p-value per il test %s"
 
 #: lib/src/gretl_win32.c:45
 #, c-format
@@ -3200,13 +3192,12 @@ msgid "Schwarz Bayesian criterion"
 msgstr "Criterio bayesiano di Schwarz"
 
 #: lib/src/modelprint.c:204
-#, fuzzy
 msgid "Hannan-Quinn criterion"
-msgstr "Criterio di informazione di Akaike"
+msgstr "Criterio di Hannan-Quinn"
 
 #: lib/src/modelprint.c:205
 msgid "Hannan--Quinn criterion"
-msgstr ""
+msgstr "Criterio di Hannan-Quinn"
 
 #: lib/src/modelprint.c:207 lib/src/modelprint.c:2129
 #: lib/src/modelprint.c:2134 lib/src/modelprint.c:2143 lib/src/texprint.c:505
@@ -3224,7 +3215,7 @@ msgstr "BIC"
 #: lib/src/modelprint.c:2136 lib/src/modelprint.c:2147 lib/src/texprint.c:507
 #: lib/src/varprint.c:827 lib/src/varprint.c:833
 msgid "HQC"
-msgstr ""
+msgstr "HQC"
 
 #: lib/src/modelprint.c:267 plugin/sysest.c:467
 msgid "LR over-identification test"
@@ -3557,35 +3548,30 @@ msgid "Weight var is a dummy variable, effective obs ="
 msgstr "La variabile dei pesi è una variabile dummy, osservazioni effettive ="
 
 #: lib/src/modelprint.c:1091
-#, fuzzy
 msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
 msgstr ""
-"      VARIABILE     COEFFICIENTE        ERRORE STD      STAT T      "
-"PENDENZA\n"
+"      VARIABILE      COEFFICIENTE        ERRORE STD   STAT T       PENDENZA\n"
 
 #: lib/src/modelprint.c:1094
 msgid "(at mean)"
 msgstr "(alla media)"
 
 #: lib/src/modelprint.c:1096
-#, fuzzy
 msgid ""
 "      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr ""
-"      PARAMETRO      STIMA         ERRORE STANDARD     T STAT    2Prob(t>|"
-"T|)\n"
+"      PARAMETRO       STIMA         ERRORE STANDARD   T STAT   P-VALUE\n"
 "\n"
 
 #: lib/src/modelprint.c:1099
-#, fuzzy
 msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr ""
-"      VARIABILE     COEFFICIENTE        ERRORE STD      STAT T      "
-"PENDENZA\n"
+"      VARIABILE      COEFFICIENTE        ERRORE STD   STAT T   P-VALUE\n"
+"\n"
 
 #: lib/src/modelprint.c:1107
 msgid "Parameter"
@@ -4168,12 +4154,12 @@ msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
 msgstr "Questo è software libero SENZA ALCUNA GARANZIA\n"
 
 #: lib/src/printout.c:220
-#, fuzzy, no-c-format
+#, no-c-format
 msgid ""
 "      VARIABLE         COEFFICIENT      95% CONFIDENCE INTERVAL\n"
 "\n"
 msgstr ""
-"      VARIABILE     COEFFICIENTE     INTERVALLO DI CONFIDENZA 95%\n"
+"      VARIABILE        COEFFICIENTE     INTERVALLO DI CONFIDENZA 95%\n"
 "\n"
 
 #: lib/src/printout.c:247
@@ -4809,32 +4795,26 @@ msgstr ""
 "presenti nella prima."
 
 #: lib/src/usermat.c:1643 lib/src/usermat.c:1674
-#, fuzzy, c-format
+#, c-format
 msgid "'%s': no such matrix\n"
-msgstr "%s: nessun oggetto\n"
+msgstr "%s: matrice inesistente\n"
 
 #: lib/src/usermat.c:1979
-#, fuzzy
 msgid "Matrix inversion failed"
-msgstr "Test per integrazione frazionale fallito"
+msgstr "Inversione della matrice fallita"
 
 #: lib/src/usermat.c:2000 lib/src/usermat.c:2042
-#, fuzzy
 msgid "Matrix decomposition failed"
-msgstr "scomposizioni della varianza"
+msgstr "Decomposizione della matrice fallita"
 
 #: lib/src/var.c:1421
-#, fuzzy, c-format
+#, c-format
 msgid "VAR system, maximum lag order %d"
-msgstr "Sistema VAR, ordine ritardi %d"
+msgstr "Sistema VAR, ordine massimo ritardi %d"
 
-#  Mantenere gli spazi così!
 #: lib/src/var.c:1429
-#, fuzzy
 msgid "lags      loglik    p(LR)       AIC          BIC          HQC"
-msgstr ""
-"    MEDIA          MEDIANA           MIN             MAX\n"
-"\n"
+msgstr "ritardi   logver    p(LR)       AIC          BIC          HQC"
 
 #: lib/src/var.c:1743
 msgid "Not much point in a zero-order \"VAR\" surely?\n"
@@ -4974,14 +4954,14 @@ msgid "F-tests of zero restrictions"
 msgstr "Test F per zero vincoli"
 
 #: lib/src/varprint.c:886 lib/src/varprint.c:892 lib/src/varprint.c:898
-#, fuzzy, c-format
+#, c-format
 msgid "All lags of %-15s "
-msgstr "Tutti i ritardi di %-8s "
+msgstr "Tutti i ritardi di %-15s "
 
 #: lib/src/varprint.c:909 lib/src/varprint.c:915 lib/src/varprint.c:921
-#, fuzzy, c-format
+#, c-format
 msgid "All vars, lag %-13d "
-msgstr "Tutte le variabili, ritardi %-6d "
+msgstr "Tutte le variabili, ritardo %-13d "
 
 #: lib/src/varprint.c:950 lib/src/varprint.c:951 lib/src/varprint.c:953
 #: lib/src/varprint.c:954
@@ -4998,14 +4978,13 @@ msgid "Alternative hypothesis"
 msgstr "Ipotesi alternativa"
 
 #: lib/src/varprint.c:981
-#, fuzzy
 msgid "Comparison of information criteria"
-msgstr "Criterio di informazione di Akaike"
+msgstr "Confronto dei criteri di informazione"
 
 #: lib/src/varprint.c:983 lib/src/varprint.c:987
-#, fuzzy, c-format
+#, c-format
 msgid "Lag order %*d"
-msgstr "Ordine dei ritardi"
+msgstr "Ordine dei ritardi %*d"
 
 #: cli/cli_object.c:90 gui2/objectsave.c:120
 #, c-format
@@ -5581,9 +5560,8 @@ msgid "/Utilities/Gretl console"
 msgstr "/Utilità/T_erminale di gretl"
 
 #: gui/gretl.c:280 gui2/gretl.c:333
-#, fuzzy
 msgid "/Utilities/Additional functions..."
-msgstr "/Utilità/T_erminale di gretl"
+msgstr "/Utilità/_Funzioni aggiuntive..."
 
 #: gui/gretl.c:283 gui2/gretl.c:336
 msgid "/Utilities/Start GNU R"
@@ -7087,9 +7065,8 @@ msgid "gretl: VECM"
 msgstr "gretl: VECM"
 
 #: gui2/callbacks.c:415 gui2/library.c:2883
-#, fuzzy
 msgid "gretl: VAR lag selection"
-msgstr "gretl: scomposizioni della varianza VAR"
+msgstr "gretl: scelta dei ritardi VAR"
 
 #: gui2/callbacks.c:437 gui2/callbacks.c:447
 msgid "gretl: define graph"
@@ -7185,14 +7162,12 @@ msgid "Specify restrictions:"
 msgstr "Specificare i vincoli:"
 
 #: gui2/callbacks.c:537
-#, fuzzy
 msgid "gretl: command entry"
-msgstr "gretl: comandi testuali"
+msgstr "gretl: voce comando"
 
 #: gui2/callbacks.c:538
-#, fuzzy
 msgid "Type a command:"
-msgstr "Aiuto sul comando"
+msgstr "Scrivere un comando:"
 
 #: gui2/callbacks.c:578
 msgid "Sorry, not yet implemented"
@@ -7471,9 +7446,8 @@ msgid "gretl: practice files"
 msgstr "gretl: file di esempio"
 
 #: gui2/datafiles.c:982
-#, fuzzy
 msgid "gretl: function files"
-msgstr "gretl: file di esempio"
+msgstr "gretl: file di funzioni"
 
 #: gui2/datafiles.c:987
 msgid "gretl: data files"
@@ -7500,9 +7474,8 @@ msgid "Find"
 msgstr "Trova"
 
 #: gui2/datafiles.c:1223
-#, fuzzy
 msgid "No function files found"
-msgstr "Non è stato trovato alcun file database"
+msgstr "Non è stato trovato alcun file di funzioni"
 
 #: gui2/datafiles.c:1253 gui2/datafiles.c:1326
 msgid "File"
@@ -8315,12 +8288,11 @@ msgstr "Stampa"
 
 #: gui2/gpt_control.c:1896
 msgid "VAR roots (real, imaginary, modulus, frequency)"
-msgstr ""
+msgstr "Radici del VAR (reale, immaginaria, modulo, frequenza)"
 
 #: gui2/gpt_control.c:1933
-#, fuzzy
 msgid "VAR roots"
-msgstr "Radici inverse del VAR"
+msgstr "Radici del VAR"
 
 #: gui2/gpt_control.c:1950 gui2/gpt_control.c:2039
 msgid "Save as PNG..."
@@ -8360,9 +8332,8 @@ msgid "OLS estimates"
 msgstr "stime OLS"
 
 #: gui2/gpt_control.c:1993 gui2/gpt_control.c:2061
-#, fuzzy
 msgid "Numerical values"
-msgstr "Valori critici"
+msgstr "Valori numerici"
 
 #: gui2/gpt_control.c:1995 gui2/gpt_control.c:2062 gui2/session.c:168
 #: gui2/session.c:176 gui2/session.c:2255 gui2/session.c:2263
@@ -9242,9 +9213,8 @@ msgid "/Model data/Add to data set/Bayesian Information Criterion"
 msgstr "/Dati modello/Aggiungi al dataset/Criterio di informazione Bayesiano"
 
 #: gui2/gui_utils.c:3041 gui2/gui_utils.c:3093
-#, fuzzy
 msgid "/Model data/Add to data set/Hannan-Quinn Information Criterion"
-msgstr "/Dati modello/Aggiungi al dataset/Criterio di informazione Bayesiano"
+msgstr "/Dati modello/Aggiungi al dataset/Criterio di informazione di Hannan-Quinn"
 
 #: gui2/gui_utils.c:3046 gui2/gui_utils.c:3098
 msgid "/Model data/Add to data set/predicted error variance"
@@ -9396,9 +9366,8 @@ msgid "linear restrictions"
 msgstr "vincoli lineari"
 
 #: gui2/gui_utils.c:3774
-#, fuzzy
 msgid "omit exogenous variables..."
-msgstr "Variabili esogene"
+msgstr "ometti variabili esogene..."
 
 #: gui2/gui_utils.c:3803
 msgid "forecast variance decomposition"
@@ -9431,13 +9400,13 @@ msgid "to %s"
 msgstr "a %s"
 
 #: gui2/gui_utils.c:4066
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Variable name %s... is too long\n"
 "(the max is %d characters)"
 msgstr ""
 "Il nome della variabile %s... è troppo lungo\n"
-"(il massimo è 8 caratteri)"
+"(il massimo è %d caratteri)"
 
 #: gui2/gui_utils.c:4073
 #, c-format
@@ -9801,9 +9770,8 @@ msgid "gretl: ARMA"
 msgstr "gretl: ARMA"
 
 #: gui2/library.c:2801
-#, fuzzy
 msgid "gretl: GARCH"
-msgstr "gretl: VAR"
+msgstr "gretl: GARCH"
 
 #: gui2/library.c:2969
 msgid "Data series length missing or invalid"
@@ -10010,9 +9978,9 @@ msgid "Bayesian Information Criterion from model %d"
 msgstr "Criterio di Informazione Bayesiano dal modello %d"
 
 #: gui2/library.c:4044
-#, fuzzy, c-format
+#, c-format
 msgid "Hannan-Quinn Information Criterion from model %d"
-msgstr "Criterio di Informazione Bayesiano dal modello %d"
+msgstr "Criterio di Informazione di Hannan-Quinn dal modello %d"
 
 #: gui2/library.c:4312 gui2/library.c:4369 gui2/library.c:4950
 msgid "Out of memory in display buffer"
@@ -10239,9 +10207,8 @@ msgid "/Model/Time series/_Vector Autoregression..."
 msgstr "/Modello/Serie storiche/_VAR - Autoregressione vettoriale..."
 
 #: gui2/menustate.c:110 gui2/menustate.c:129
-#, fuzzy
 msgid "/Model/Time series/VAR lag selection..."
-msgstr "/Modello/Serie storiche/AR_MA..."
+msgstr "/Modello/Serie storiche/Scelta _ritardi VAR..."
 
 #: gui2/menustate.c:111 gui2/menustate.c:130
 msgid "/Model/Time series/VECM..."
@@ -10559,7 +10526,7 @@ msgstr "AR - Stima autoregressiva"
 
 #: gui2/selector.c:1977
 msgid "VAR lag selection"
-msgstr ""
+msgstr "Selezione ritardi del VAR"
 
 #: gui2/selector.c:1984
 msgid "Cointegration"
@@ -10610,9 +10577,8 @@ msgid "cointegration rank:"
 msgstr "rango di cointegrazione:"
 
 #: gui2/selector.c:2216
-#, fuzzy
 msgid "maximum lag:"
-msgstr "Ritardo massimo:"
+msgstr "ritardo massimo:"
 
 #: gui2/selector.c:2241
 msgid "Factor (dummy)"
@@ -10631,9 +10597,8 @@ msgid "<- Remove"
 msgstr "<- Rimuovi"
 
 #: gui2/selector.c:2283 gui2/selector.c:2799 gui2/selector.c:3020
-#, fuzzy
 msgid "lags..."
-msgstr "Ritardo"
+msgstr "ritardi..."
 
 #: gui2/selector.c:2352 gui2/selector.c:2361
 msgid "Exogenous variables"
@@ -10676,9 +10641,8 @@ msgid "Include a constant"
 msgstr "Includi una costante"
 
 #: gui2/selector.c:2684
-#, fuzzy
 msgid "Include a trend"
-msgstr "includi un trend"
+msgstr "Includi un trend"
 
 #: gui2/selector.c:2687
 msgid "Show details of regressions"
@@ -10701,9 +10665,8 @@ msgid "Use X-12-ARIMA"
 msgstr "Usa X-12-ARIMA"
 
 #: gui2/selector.c:2748
-#, fuzzy
 msgid "Show lagged variables"
-msgstr "Errore nella generazione delle variabili ritardate"
+msgstr "Mostra variabili ritardate"
 
 #: gui2/selector.c:2764
 msgid "No constant"
@@ -10842,24 +10805,20 @@ msgid "Copy data"
 msgstr "Copia i dati"
 
 #: gui2/selector.c:3915
-#, fuzzy
 msgid "lag order"
-msgstr "Ordine dei ritardi:"
+msgstr "ordine dei ritardi"
 
 #: gui2/selector.c:3933
-#, fuzzy
 msgid "lags"
-msgstr "Ritardo"
+msgstr "ritardi"
 
 #: gui2/selector.c:3937
-#, fuzzy
 msgid "or"
-msgstr "per"
+msgstr "o"
 
 #: gui2/selector.c:3939
-#, fuzzy
 msgid "specific lags"
-msgstr "speciale"
+msgstr "ritardi specifici"
 
 #: gui2/series_view.c:377
 msgid "Variable to sort by"
@@ -11050,7 +11009,7 @@ msgstr "Browser web"
 
 #: gui2/settings.c:204
 msgid "Allow shell commands"
-msgstr ""
+msgstr "Abilita comandi shell"
 
 #: gui2/settings.c:206
 msgid "Command to launch gnuplot"
