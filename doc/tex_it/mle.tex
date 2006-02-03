@@ -273,11 +273,13 @@ stimando (\ref{eq:CobbDouglasFrontier}) con la massima verosimiglianza.
 Tuttavia, la stima OLS è un modo veloce e comodo per ricavare dei valori
 iniziali per l'algoritmo di massima verosimiglianza.
 
-Il seguente script di gretl mostra come implementare il modello descritto
+L'esempio \ref{cost-estimation} mostra come implementare il modello descritto
 finora. Il file \texttt{banks91} contiene parte dei dati usati in
 Lucchetti, Papi e Zazzaro (2001).
 
-\begin{code}
+\begin{script}[htbp]
+  \caption{Stima di una funzione di costo con frontiera stocastica}
+  \label{cost-estimation}
 open banks91
 
 # Funzione di costo Cobb-Douglas
@@ -295,10 +297,10 @@ ols rcost const y rp1 rp2
 # Funzione di costo Cobb-Douglas con vincoli di omogeneità
 # e inefficienza
 
-scalar b0 = coeff(const)
-scalar b1 = coeff(y)
-scalar b2 = coeff(rp1)
-scalar b3 = coeff(rp2)
+scalar b0 = $coeff(const)
+scalar b1 = $coeff(y)
+scalar b2 = $coeff(rp1)
+scalar b3 = $coeff(rp2)
 
 scalar su = 0.1
 scalar sv = 0.1
@@ -310,6 +312,7 @@ mle logl = ln(cnorm(e*lambda/ss)) - (ln(ss) + 0.5*(e/ss)^2)
   params b0 b1 b2 b3 su sv
 end mle
 \end{code}
+\end{script}
 
 \section{Modelli GARCH}
 \label{sec:garch}

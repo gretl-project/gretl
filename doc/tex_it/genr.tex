@@ -143,7 +143,7 @@ pendenza sia pari a zero vale quindi 0.0166, usando la distribuzione $t(40)$. A
 seconda del contesto, però, potremmo dubitare del fatto che il rapporto tra il
 coefficiente e l'errore standard segua veramente una distribuzione $t(40)$. In
 questo caso, potremmo derivare un valore bootstrap per il p-value come mostrato
-nell'esempio \ref{resample-loop}.  
+nell'esempio~\ref{resampling-loop}.  
 
 Sotto l'ipotesi nulla che la pandenza rispetto a $x$ sia pari a zero,
 $y$ è uguale alla sua media più un termine di errore. Simuliamo $y$
@@ -156,7 +156,7 @@ metodi bootstrap, si veda Davidson e MacKinnon (2004, capitolo 4).
 
 \begin{script}[htbp]
   \caption{Calcolo del p-value col metodo bootstrap}
-  \label{resample-loop}
+  \label{resampling-loop}
 \begin{code}
     ols y 0 x
     # salva i residui
@@ -170,7 +170,7 @@ metodi bootstrap, si veda Davidson e MacKinnon (2004, capitolo 4).
       # genera i valori simulati di y ricampionando
       ysim = ybar + resample(ui)
       ols ysim 0 x
-      scalar tsim = abs(coeff(x) / stderr(x))
+      scalar tsim = abs($coeff(x) / $stderr(x))
       tcount += (tsim > 2.5)
     endloop      
     printf "Proporzione dei casi con |t| > 2.5 = %g\n", \

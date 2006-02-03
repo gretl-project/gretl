@@ -64,8 +64,8 @@ degli esempi visti sopra, si potrebbe usare:
 
 \begin{code}
       ols C 0 Y
-      genr alfa = coeff(0)
-      genr beta = coeff(Y)
+      genr alfa = $coeff(0)
+      genr beta = $coeff(Y)
       genr gamma = 1
 \end{code}
 
@@ -73,8 +73,8 @@ E in relazione al secondo esempio si userebbe:
 
 \begin{code}
       ols y 0 x1 x2
-      genr alfa = coeff(0)
-      genr beta = coeff(x1)
+      genr alfa = $coeff(0)
+      genr beta = $coeff(x1)
 \end{code}
 
 \section{Finestra di dialogo NLS}
@@ -125,24 +125,34 @@ per tutte.
 \section{Arresto della procedura}
 \label{nls-toler}
 
-La procedura di stima NLS è iterativa: l'iterazione viene arrestata si
-verifica una qualunque delle seguenti condizioni: viene raggiunto un
+La procedura di stima NLS è iterativa: l'iterazione viene arrestata quando
+si verifica una qualunque delle seguenti condizioni: viene raggiunto il
 criterio di convergenza, o si supera il massimo numero di iterazioni
-impostato. Il massimo numero di iterazioni è $100 \times (k+1)$ se
-vengono fornite derivate analitiche, o $200 \times (k+1)$ se vengono
-usate derivate numeriche, dove $k$ indica il numero di parametri
-da stimare. Il criterio di convergenza consiste nel fatto che l'errore
-relativo nella somma dei quadrati e/o l'errore relativo tra il vettore
-dei coefficienti e la soluzione sia stimato inferiore a un certo
-valore piccolo. Questo ``valore piccolo'' è impostato in modo
-predefinito pari alla precisione della macchina elevato alla potenza
-3/4, ma può essere impostato con il comando \cmd{genr}, usando la
-variabile speciale \verb+toler+. Ad esempio
+impostato.
+
+Se $k$ denota il numero di parametri da stimare, il numero massimo di iterazioni
+è $100 \times (k+1)$ quando si indicano le derivate analitiche, mentre $200
+\times (k+1)$ quando si usano le derivate numeriche.
+
+Preso un numero $\epsilon$ piccolo a piacere, la convergenza si ritiene
+raggiunta se è soddisfatta una delle due condizioni seguenti:
+
+\begin{itemize}
+\item Entrambe le riduzioni effettiva o prevista della somma dei quadrati
+  sono minori di $\epsilon$.
+\item L'errore relativo tra due iterazioni consecutive è minore di
+  $\epsilon$.
+\end{itemize}
+
+Il valore predefinito per $\epsilon$ è pari alla precisione della macchina
+elevata alla potenza 3/4, ma può essere modificato usando il comando \cmd{set}
+con il parametro \verb+nls_toler+. Ad esempio
+%
 
 \begin{code}
-genr toler = .0001
+set nls_toler .0001
 \end{code}
-
+%
 imposterà la tolleranza a 0.0001.
 
 \section{Dettagli sul codice}
