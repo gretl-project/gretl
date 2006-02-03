@@ -2122,8 +2122,21 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
     }
 }
 
-static void build_depvar_section (selector *sr, GtkWidget *right_vbox,
-				  int preselect)
+static void maybe_activate_depvar_lags (GtkWidget *w, selector *sr)
+{
+    if (select_lags_depvar(sr->code) && sr->lags_button != NULL) {
+	const gchar *txt = gtk_entry_get_text(GTK_ENTRY(w));
+
+	if (txt != NULL && *txt != 0) {
+	    gtk_widget_set_sensitive(sr->lags_button, TRUE);
+	}
+    }
+}
+
+/* returns 1 if a variable is pre-inserted as dependent, 0 otherwise */
+
+static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
+				 int preselect)
 {
     GtkWidget *tmp, *depvar_hbox;
     int yvar = (preselect)? preselect : default_var;
@@ -2148,8 +2161,14 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMELEN+3);
 #endif
 
+    g_signal_connect(G_OBJECT(sr->depvar), "changed",
+		     G_CALLBACK(maybe_activate_depvar_lags), sr);
+
     if (yvar) {
-        gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[yvar]);
+	char vstr[VNAMELEN+16];
+	
+	get_var_string(vstr, yvar, sr, SR_DEPVAR);	
+        gtk_entry_set_text(GTK_ENTRY(sr->depvar), vstr);
         g_object_set_data(G_OBJECT(sr->depvar), "data",
                           GINT_TO_POINTER(yvar));
     }
@@ -2167,6 +2186,8 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox,
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);
+
+    return yvar;
 }
 
 enum {
@@ -2918,6 +2939,7 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
     GtkWidget *big_hbox;
     GtkWidget *button_vbox;
     selector *sr;
+    int yvar = 0;
     int i;
 
     if (open_selector != NULL) {
@@ -2962,7 +2984,7 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 
     if (MODEL_CODE(cmdcode)) { 
 	/* models: top right -> dependent variable */
-	build_depvar_section(sr, right_vbox, preselect);
+	yvar = build_depvar_section(sr, right_vbox, preselect);
     } else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
 	       || cmdcode == SCATTERS || cmdcode == GR_3D) {
 	/* graphs: top right -> x-axis variable */
@@ -3099,6 +3121,9 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 	if (MODEL_CODE(sr->code) && sr->code != ARMA) {
 	    lag_selector_button(sr);
 	} 
+	if (select_lags_depvar(sr->code) && yvar > 0) {
+	    maybe_activate_depvar_lags(sr->depvar, sr);
+	}
     } 
 
     /* buttons: OK, Clear, Cancel, Help */
@@ -3987,7 +4012,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
 	g_object_set_data(G_OBJECT(vlinfo[j].spin2), "vlinfo", &vlinfo[j]);
 	lagsel_spin_connect(vlinfo[j].spin2);
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin2), 
-				  (j == ypos)? 0.0 : vlinfo[j].lmax);
+				  vlinfo[j].lmax);
 
 	/* spacer column */
 	lbl = gtk_label_new("  ");
@@ -4013,11 +4038,10 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
 			 G_CALLBACK(lag_entry_callback), &vlinfo[j]);
 	if (j == ypos) {
 	    /* dependent variable slot */
-	    gtk_entry_set_text(GTK_ENTRY(vlinfo[j].entry), "0 ");
-	    gtk_widget_set_sensitive(vlinfo[j].entry, FALSE);
 	    g_object_set_data(G_OBJECT(vlinfo[j].entry), "yvar", 
 			      GINT_TO_POINTER(1));
-	} else if (vlinfo[j].lspec != NULL && vlinfo[j].lspec[0] != 0) {
+	}
+	if (vlinfo[j].lspec != NULL && vlinfo[j].lspec[0] != 0) {
 	    /* got a saved non-contiguous lag spec */
 	    gtk_entry_set_text(GTK_ENTRY(vlinfo[j].entry), vlinfo[j].lspec);
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vlinfo[j].toggle),
@@ -4105,9 +4129,9 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
 
 static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 {
-    GtkWidget *list[2] = {0};
+    GtkWidget *list[2] = { NULL, NULL };
     gchar *test;
-    gint xnum, ynum = -1;
+    gint xnum, ynum = 0;
     int nv[2] = {0};
     int llen, sep;
     int i, j, k, rows;
@@ -4145,15 +4169,19 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 
     llen = sep = 0;
 
-    if (nv[0] == 0 && nv[1] == 0) {
+    if (ynum == 0 && nv[0] == 0 && nv[1] == 0) {
 	/* no vars to deal with */
 	errbox("Please add some variables to the model first");
     } else {
 	i = 1;
 	if (ynum > 0) {
 	    *context = LAG_Y;
-	    llen += 2; /* dep var plus separator */
-	    sep++;
+	    llen++; /* dep var row */
+	    if (nv[0] > 0 || nv[1] > 0) {
+		/* add separator */
+		llen++;
+		sep++;
+	    }
 	}
 	if (nv[0] > 0) {
 	    if (*context == 0) {
@@ -4177,7 +4205,11 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 	if (slist != NULL) {
 	    if (ynum > 0) {
 		slist[i++] = ynum;
-		slist[i++] = LISTSEP + ((nv[0] > 0)? LAG_X : LAG_INSTR);
+		if (nv[0] > 0) {
+		    slist[i++] = LISTSEP + LAG_X;
+		} else if (nv[1] > 0) {
+		    slist[i++] = LISTSEP + LAG_INSTR;
+		}
 	    } 
 	    for (j=0; j<2; j++) {
 		if (list[j] == NULL) {
@@ -4215,8 +4247,8 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
 
     w = (locus == SR_RUVARS)? sr->ruvars : sr->rlvars;
     mod = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
-
     gtk_tree_model_get_iter_first(mod, &iter);
+
     while (1) {
 	gtk_tree_model_get(mod, &iter, 0, &modv, -1);
 	if (modv == vlinfo->v) {
@@ -4235,10 +4267,10 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
 
 static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 {
-    GtkWidget *list[2] = {0};
+    GtkWidget *list[2] = { NULL, NULL };
     GtkTreeModel *model;
     GtkTreeIter iter;
-    gint xnum, ynum = -1;
+    gint xnum, ynum = 0;
     int nv[2] = {0};
     int llen, sep;
     int i, j;
@@ -4284,15 +4316,19 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 
     llen = sep = 0;
 
-    if (nv[0] == 0 && nv[1] == 0) {
+    if (ynum == 0 && nv[0] == 0 && nv[1] == 0) {
 	/* no vars to deal with */
 	errbox("Please add some variables to the model first");
     } else {
 	i = 1;
 	if (ynum > 0) {
 	    *context = LAG_Y;
-	    llen += 2; /* dep var plus separator */
-	    sep++;
+	    llen++; /* dep var row */
+	    if (nv[0] > 0 || nv[1] > 0) {
+		/* add separator */
+		llen++;
+		sep++;
+	    }
 	}
 	if (nv[0] > 0) {
 	    if (*context == 0) {
@@ -4316,7 +4352,11 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *context)
 	if (slist != NULL) {
 	    if (ynum > 0) {
 		slist[i++] = ynum;
-		slist[i++] = LISTSEP + ((nv[0] > 0)? LAG_X : LAG_INSTR);
+		if (nv[0] > 0) {
+		    slist[i++] = LISTSEP + LAG_X;
+		} else if (nv[1] > 0) {
+		    slist[i++] = LISTSEP + LAG_INSTR;
+		}
 	    } 
 	    for (j=0; j<2; j++) {
 		if (list[j] == NULL) {
@@ -4396,7 +4436,7 @@ static int set_lags_for_var (var_lag_info *vlinfo)
     return 0;
 }
 
-#if LDEBUG > 1
+#if LDEBUG > 2
 static void print_vlinfo (var_lag_info *vlinfo)
 {
     fprintf(stderr, "\nCreated vlinfo struct:\n");
@@ -4478,7 +4518,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	vlinfo[j].entry = NULL;
 	vlinfo[j].toggle = NULL;
 	vlinfo[j].vlp = vlinfo;
-#if LDEBUG > 1
+#if LDEBUG > 2
 	print_vlinfo(&vlinfo[j]);
 #endif
 	j++;

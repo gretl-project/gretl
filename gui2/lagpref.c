@@ -65,6 +65,28 @@ static lagpref *lpref_new (int v, char context)
     return lpref;
 }
 
+#if LDEBUG > 1
+static void print_lpref (lagpref *lpref)
+{
+    if (lpref == NULL) {
+	fprintf(stderr, "No lag reference recorded\n");
+	return;
+    }
+
+    fprintf(stderr, "lagpref at %p: v = %d, context = %d\n",
+	    (void *) lpref, lpref->v, lpref->context);
+
+    if (lpref->spectype == LAGS_NONE) {
+	fprintf(stderr, "type == LAGS_NONE (%d)\n", LAGS_NONE);
+    } else if (lpref->spectype == LAGS_MINMAX) {
+	fprintf(stderr, "type == LAGS_MINMAX (%d), min=%d, max=%d\n",
+		LAGS_MINMAX, lpref->lspec.lminmax[0], lpref->lspec.lminmax[1]);
+    } else if (lpref->spectype == LAGS_LIST) {
+	printlist(lpref->lspec.laglist, "type == LAGS_LIST");
+    } 
+}
+#endif
+
 static int 
 modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 {
@@ -84,20 +106,33 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 
     lpref->spectype = spectype;
 
+#if LDEBUG > 1
+    fprintf(stderr, "modify_lpref: type=%d, lmin=%d, lmax=%d list=%p\n", 
+	    spectype, lmin, lmax, (void *) laglist);
+    print_lpref(lpref);
+#endif    
+
     return 0;
 }
 
 static lagpref *get_saved_lpref (int v, char context)
 {
+    lagpref *lpref = NULL;
     int i;
 
     for (i=0; i<n_prefs; i++) {
 	if (lprefs[i]->v == v && lprefs[i]->context == context) {
-	    return lprefs[i];
+	    lpref = lprefs[i];
+	    break;
 	}
     }
 
-    return NULL;
+#if LDEBUG > 1
+    fprintf(stderr, "get_saved_lpref: v=%d, context=%d\n", v, context);
+    print_lpref(lpref);
+#endif    
+
+    return lpref;
 }
 
 static int set_lag_prefs_from_list (int v, int *llist, char context)

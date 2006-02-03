@@ -1222,6 +1222,7 @@ record_or_get_test_result (double teststat, double pval, char *instr,
 	    if (code == GET_TEST_STAT) {
 		sprintf(instr, _("%s test"), savestr);
 	    } else {
+		/* GET_TEST_PVAL */
 		sprintf(instr, _("p-value for %s test"), savestr);
 	    }
 	}
