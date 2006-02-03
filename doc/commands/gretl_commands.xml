@@ -3713,6 +3713,10 @@
 	  <flag>--verbose</flag>
 	  <effect>report details of genr commands</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>do not report number of iterations performed</effect>
+	</option>
       </options>
       <examples>
         <example>loop 1000</example>

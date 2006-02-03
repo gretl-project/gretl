@@ -11,7 +11,7 @@ bootstrapping of test statistics, and iterative estimation procedures.
 The general form of a loop is:
 
 \begin{code}
-      loop control-expression [ --progressive | --verbose ]
+      loop control-expression [ --progressive | --verbose | --quiet ]
          loop body
       endloop
 \end{code}
@@ -25,7 +25,9 @@ In the loop body the following commands are accepted: \cmd{genr},
 By default, the \cmd{genr} command operates quietly in the context of
 a loop (without printing information on the variable generated).  To
 force the printing of feedback from \cmd{genr} you may specify the
-\verb+--verbose+ option to \cmd{loop}.
+\verb+--verbose+ option to \cmd{loop}.  The \verb+--quiet+ option
+suppresses the usual printout of the number of iterations performed,
+which may be desirable when loops are nested.
 
 The \verb+--progressive+ option to \cmd{loop} modifies the behavior of
 the commands \cmd{ols}, \cmd{print} and \cmd{store} in a manner that

@@ -5032,7 +5032,7 @@ void display_var (void)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	vwin = view_buffer(prn, 28, height, 
+	vwin = view_buffer(prn, 36, height, 
 			   datainfo->varname[list[1]], 
 			   (vec)? VIEW_SERIES : VIEW_SCALAR, 
 			   NULL);

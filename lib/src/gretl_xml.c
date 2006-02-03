@@ -31,6 +31,29 @@
 
 #undef XML_DEBUG
 
+#ifdef WIN32
+# include <glib.h>
+static xmlDocPtr gretl_xmlParseFile (const char *fname)
+{
+    int save_errno = errno;
+    xmlDocPtr ptr = NULL;
+    gchar *fconv;
+    gsize wrote;
+
+    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
+    if (fconv != NULL) {
+	ptr = xmlParseFile(fconv);
+	g_free(fconv);
+    }
+
+    errno = save_errno;
+
+    return ptr;
+}
+#else
+# define gretl_xmlParseFile(f) xmlParseFile(f)
+#endif
+
 static char *compact_method_to_string (int method)
 {
     if (method == COMPACT_SUM) return "COMPACT_SUM";
@@ -898,7 +921,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	if (gui) progress = fsz;
     }
 
-    doc = xmlParseFile(fname);
+    doc = gretl_xmlParseFile(fname);
     if (doc == NULL) {
 	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
 	err = 1;
@@ -1062,7 +1085,7 @@ char *gretl_get_gdt_description (const char *fname)
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
 
-    doc = xmlParseFile(fname);
+    doc = gretl_xmlParseFile(fname);
     if (doc == NULL) {
 	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
 	return NULL;

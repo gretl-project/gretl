@@ -144,10 +144,29 @@ penalty for adding extra parameters grows with the sample size.  This
 ensures that, asymptotically, one will not select a larger model over
 a correctly specified parsimonious model.
 
+A further alternative to AIC, which again tends to select more
+parsimonious models than AIC, is the Hannan--Quinn criterion or HQC
+(Hannan and Quinn, 1979).  Written consistently with the formulations
+above, this is
+%
+\[
+{\rm HQC} = -2 \ell(\hat{\theta}) + 2k \log \log n
+\]
+%
+The Hannan--Quinn calculation is based on the law of the iterated
+logarithm (note that the last term is the log of the log of the sample
+size).  The authors argue that their procedure provides a ``strongly
+consistent estimation procedure for the order of an autoregression'',
+and that ``compared to other strongly consistent procedures this
+procedure will underestimate the order to a lesser degree.''
+
 \vspace{1ex}
 
-Gretl reports the AIC and BIC (calculated as explained above) for most
-sorts of models.
+Gretl reports the AIC, BIC and HQC (calculated as explained above) for
+most sorts of models.  The key point is interpreting these values is
+to know whether they are calculated such that smaller values are
+better, or such that larger values are better.  In gretl, smaller
+values are better: one wants to minimize the chosen criterion.
 
 
 
