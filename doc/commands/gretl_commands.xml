@@ -5790,7 +5790,7 @@
 	is given to the <cmd>ols</cmd> command. 
       </para>
       <para>
-	If the <cmd>set</cmd>command is given without any parameters, the
+	If the <cmd>set</cmd> command is given without any parameters, the
 	current settings for all the relevant variables are printed.
       </para>
 
@@ -6798,7 +6798,7 @@
 	the <lit>var</lit> command is taken as the maximum lag order.  Output
 	consists of a table showing the values of the Akaike (AIC), Schwartz
 	(BIC) and Hannan&ndash;Quinn (HQC) information criteria computed from
-	VARs of order 1 to the given maximum.  The is intended to help
+	VARs of order 1 to the given maximum.  This is intended to help
 	with the selection of the optimal lag order.  The usual VAR output is
 	not presented.
       </para>
