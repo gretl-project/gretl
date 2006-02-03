@@ -1,0 +1,183 @@
+\chapter{Oggetti persistenti}
+\label{persist}
+
+%%% Work in progress, not really ready for translation yet.
+
+FIXME This chapter needs to deal with saving models too.
+
+\section{Liste personalizzate}
+\label{named-lists}
+
+Molti comandi di \app{gretl} richiedono come argomeni una o più liste di
+variabili. Per semplificare la loro gestione negli script di comandi, in
+particolare nelle funzioni definite dall'utente, \app{gretl} offre la
+possibilità di creare \textit{liste personalizzate}.  
+
+\subsection{Creare e modificare liste personalizzate}
+
+Per creare una lista occorre usare il comando \texttt{list}, seguito dal nome
+della lista, un segno di uguale, e, in alternativa, \texttt{null} (per creare
+una lista vuota) o il nome di una o più variabili da inserire nella lista. Ad
+esempio:
+%
+\begin{code}
+list xlist = 1 2 3 4
+list reglist = income price 
+list empty_list = null
+\end{code}
+
+Il nome della lista deve iniziare con una lettera e deve essere composto
+interamente da lettere, numeri o il carattere trattino basso (non da spazi). La
+lunghezza massima del nome è di 31 caratteri. Quando si aggiungono variabili a
+una lista è possibile riferirsi a essa per nome o per numero identificativo.
+
+Una volta creata, una lista viene ``ricordata'' per l'intera durata della
+sessione di \app{gretl} e può essere usata nel contesto di qualsiasi comando
+\app{gretl} che accetta liste di variabili. Un semplice esempio è la
+specificazione di una lista di regressori:
+%
+\begin{code}
+list xlist = x1 x2 x3 x4
+ols y 0 xlist
+\end{code}
+
+Le liste possono essere modificate in due modi. Per \textit{ridefinire} una
+lista si usa la stessa sintassi usata per crearla. Ad esempio
+%
+\begin{code}
+list xlist = 1 2 3
+list xlist = 4 5 6
+\end{code}
+
+Dopo il secondo comando, \texttt{xlist} contiene solo le variabili 4,
+5 e 6.
+
+Per \textit{accodare} o \textit{premettere} variabili a una lista esistente,
+è possibile usare il nome di una lista all'interno del comando di definizione
+della lista stessa. Ad esempio, è possibile scrivere
+%
+\begin{code}
+list xlist = xlist 5 6 7
+list xlist = 9 10 xlist 11 12
+\end{code}
+
+\subsection{Interrogare le liste}
+
+È possibile determinare se una variabile sconosciuta rappresenta una lista
+usando la funzione \texttt{islist()}.
+%
+\begin{code}
+series xl1 = log(x1)
+series xl2 = log(x2)
+list xlogs = xl1 xl2
+genr is1 = islist(xlogs)
+genr is2 = islist(xl1)
+\end{code}
+
+Il primo comando \texttt{genr} assegnerà il valore 1 a \texttt{is1} visto che
+\texttt{xlogs} in effetti è una lista. Il secondo comando genr assegnerà il
+valore 0 a \texttt{is2}, visto che \texttt{xl1} è una serie di dati, non una
+lista.
+
+È anche possibile determinare il numero di elementi che compongono una lista
+usando la funzione \texttt{nelem()}.
+%
+\begin{code}
+list xlist = 1 2 3
+genr nl = nelem(xlist)
+\end{code}
+
+Lo scalare \texttt{nl} avrà un valore di 3, visto che
+\texttt{xlist} contiene 3 membri.
+
+È possibile mostrare i membri di una lista come illustrato in questa sessione
+interattiva:
+%
+\begin{code}
+? list xlist = x1 x2 x3
+ # list xlist = x1 x2 x3
+Added list 'xlist'
+? list xlist print
+ # list xlist = x1 x2 x3
+\end{code}
+%
+Si noti che \texttt{print xlist} produrrà un effetto diverso, ossia mostrerà i
+valori di tutte le variabili contenute in \texttt{xlist}.
+
+\subsection{Generare liste di variabili trasformate}
+
+Data una lista di variabili, è possibile generare liste che contengono
+trasformazioni di queste variabili usando una forma speciale dei comandi
+\texttt{logs}, \texttt{lags}, \texttt{diff}, \texttt{ldiff},
+\texttt{sdiff} o \texttt{square}. In pratica basta far seguire questi comandi
+dal nome della lista tra parentesi. Ad esempio:
+%
+\begin{code}
+list xlist = x1 x2 x3
+list lxlist = logs(xlist)
+list difflist = diff(xlist)
+\end{code}
+
+Quando si genera una lista di \textit{ritardi} in questo modo, è possibile
+specificare il massimo ordine di ritardi, inserendolo per primo tra parentesi e
+separandolo dal nome della lista con una virgola. Ad esempio
+%
+\begin{code}
+list xlist = x1 x2 x3
+list laglist = lags(2, xlist)
+\end{code}
+%
+o
+%
+\begin{code}
+scalar order = 4
+list laglist = lags(order, xlist)
+\end{code}
+
+Questi comandi riempiranno \texttt{laglist} col numero specificato di ritardi
+delle variabili presenti in \texttt{xlist}. Come avviene per il normale comando
+\texttt{lags} è possibile omettere l'ordine, che sarà così determinato
+automaticamente a seconda della frequenza dei dati. Un altro modo speciale di
+utilizzare questi comandi consiste nell'indicare tra parentesi il nome di una
+singola variabile al posto di quello di una lista, come in
+%
+\begin{code}
+series lx = log(x)
+list laglist = lags(4, lx)
+\end{code}
+
+Si noti che la sintassi normale per questi comandi, ad esempio \texttt{logs},
+è semplicemente
+%
+\begin{code}
+logs x1 x2 x3
+\end{code}
+%
+Se \texttt{xlist} è una lista, è anche possibile scrivere
+%
+\begin{code}
+logs xlist
+\end{code}
+%
+ma questo comando non salverà i logaritmi in una lista; per avere questo
+risultato occorre usare la sintassi
+%
+\begin{code}
+list loglist = logs(xlist)
+\end{code}
+
+
+
+
+
+
+
+
+
+
+    
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+
