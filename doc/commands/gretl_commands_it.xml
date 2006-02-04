@@ -3654,6 +3654,10 @@
           <flag>--verbose</flag>
           <effect>mostra i dettagli dei comandi genr</effect>
         </option>
+        <option>
+          <flag>--quiet</flag>
+          <effect>non mostra il numero di iterazioni eseguite</effect>
+        </option>
       </options>
       <examples>
         <example>loop 1000</example>
