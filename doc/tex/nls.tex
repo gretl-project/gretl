@@ -22,11 +22,11 @@ derivatives.
   \caption{Consumption function from Greene}
   \label{nls-cons}
 \begin{code}
-	  nls C = alpha + beta * Y^gamma
-	  deriv alpha = 1
-	  deriv beta = Y^gamma
-	  deriv gamma = beta * Y^gamma * log(Y)
-	  end nls
+          nls C = alpha + beta * Y^gamma
+          deriv alpha = 1
+          deriv beta = Y^gamma
+          deriv gamma = beta * Y^gamma * log(Y)
+          end nls
 \end{code}
 \end{script}
 
@@ -34,10 +34,10 @@ derivatives.
   \caption{Nonlinear function from Russell Davidson}
   \label{nls-ects}
 \begin{code}
-	  nls y = alpha + beta * x1 + (1/beta) * x2
-	  deriv alpha = 1
-	  deriv beta = x1 - x2/(beta*beta)
-	  end nls
+          nls y = alpha + beta * x1 + (1/beta) * x2
+          deriv alpha = 1
+          deriv beta = x1 - x2/(beta*beta)
+          end nls
 \end{code}
 \end{script}
 
@@ -132,21 +132,23 @@ Let $\epsilon$ denote a small number.  The iteration is deemed to have
 converged if one or both of the following conditions are satisfied:
 
 \begin{itemize}
-\item Both the actual and predicted relative reductions in the sum of
-  squares are at most $\epsilon$.
+\item Both the actual and predicted relative reductions in the error
+  sum of squares are at most $\epsilon$.
 \item The relative error between two consecutive iterates is at most
   $\epsilon$.
 \end{itemize}
 
 This default value of $\epsilon$ is the machine precision to the power
-3/4, but it can be adjusted using the \cmd{set} command with the
-parameter \verb+nls_toler+.  For example
+3/4,\footnote{On a 32-bit Intel Pentium machine a likely value for
+  this parameter is $1.82\times 10^{-12}$.} but it can be adjusted
+using the \cmd{set} command with the parameter \verb+nls_toler+.  For
+example
 %
 \begin{code}
 set nls_toler .0001
 \end{code}
 % 
-will relax the tolerance to 0.0001.
+will relax the value of $\epsilon$ to 0.0001.
 
 \section{Details on the code}
 \label{nls-code}
