@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-01 15:00-0500\n"
-"PO-Revision-Date: 2006-02-03 09:37+0100\n"
+"PO-Revision-Date: 2006-02-04 12:45+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -209,12 +209,14 @@ msgstr "F robusta"
 msgid "with p-value = %g\n"
 msgstr "con p-value = %g\n"
 
-#, fuzzy
+#  Lasciare non tradotto, viene usato per le label di variabili in cui si sono
+#  salvati i risultati di test di omissione/aggiunta variabili.
 #: lib/src/compare.c:248 lib/src/compare.c:267
 msgid "omit"
 msgstr "omit"
 
-#, fuzzy
+#  Lasciare non tradotto, viene usato per le label di variabili in cui si sono
+#  salvati i risultati di test di omissione/aggiunta variabili.
 #: lib/src/compare.c:248 lib/src/compare.c:267
 msgid "add"
 msgstr "add"
