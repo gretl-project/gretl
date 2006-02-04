@@ -5,15 +5,15 @@
 
 FIXME This chapter needs to deal with saving models too.
 
-\section{Liste personalizzate}
+\section{Liste definite dall'utente}
 \label{named-lists}
 
 Molti comandi di \app{gretl} richiedono come argomeni una o più liste di
 variabili. Per semplificare la loro gestione negli script di comandi, in
 particolare nelle funzioni definite dall'utente, \app{gretl} offre la
-possibilità di creare \textit{liste personalizzate}.  
+possibilità di creare \textit{liste definite dall'utente}.  
 
-\subsection{Creare e modificare liste personalizzate}
+\subsection{Creazione e modifica di una lista}
 
 Per creare una lista occorre usare il comando \texttt{list}, seguito dal nome
 della lista, un segno di uguale, e, in alternativa, \texttt{null} (per creare
@@ -28,7 +28,7 @@ list empty_list = null
 
 Il nome della lista deve iniziare con una lettera e deve essere composto
 interamente da lettere, numeri o il carattere trattino basso (non da spazi). La
-lunghezza massima del nome è di 31 caratteri. Quando si aggiungono variabili a
+lunghezza massima del nome è di 15 caratteri. Quando si aggiungono variabili a
 una lista è possibile riferirsi a essa per nome o per numero identificativo.
 
 Una volta creata, una lista viene ``ricordata'' per l'intera durata della
@@ -61,7 +61,7 @@ list xlist = xlist 5 6 7
 list xlist = 9 10 xlist 11 12
 \end{code}
 
-\subsection{Interrogare le liste}
+\subsection{Interrogazione delle liste}
 
 È possibile determinare se una variabile sconosciuta rappresenta una lista
 usando la funzione \texttt{islist()}.
@@ -104,7 +104,7 @@ Added list 'xlist'
 Si noti che \texttt{print xlist} produrrà un effetto diverso, ossia mostrerà i
 valori di tutte le variabili contenute in \texttt{xlist}.
 
-\subsection{Generare liste di variabili trasformate}
+\subsection{Liste di variabili trasformate}
 
 Data una lista di variabili, è possibile generare liste che contengono
 trasformazioni di queste variabili usando una forma speciale dei comandi

@@ -139,21 +139,22 @@ raggiunta se è soddisfatta una delle due condizioni seguenti:
 
 \begin{itemize}
 \item Entrambe le riduzioni effettiva o prevista della somma dei quadrati
-  sono minori di $\epsilon$.
+  degli errori sono minori di $\epsilon$.
 \item L'errore relativo tra due iterazioni consecutive è minore di
   $\epsilon$.
 \end{itemize}
 
 Il valore predefinito per $\epsilon$ è pari alla precisione della macchina
-elevata alla potenza 3/4, ma può essere modificato usando il comando \cmd{set}
-con il parametro \verb+nls_toler+. Ad esempio
+elevata alla potenza 3/4\footnote{Su una macchina Intel Pentium a 32-bit, il
+valore è pari a circa $1.82\times 10^{-12}$.}, ma può essere modificato usando
+il comando \cmd{set} con il parametro \verb+nls_toler+. Ad esempio
 %
 
 \begin{code}
 set nls_toler .0001
 \end{code}
 %
-imposterà la tolleranza a 0.0001.
+imposterà il valore di $\epsilon$ a 0.0001.
 
 \section{Dettagli sul codice}
 \label{nls-code}

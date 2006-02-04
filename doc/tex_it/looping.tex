@@ -11,7 +11,7 @@ il bootstrapping delle statistiche test e altre procedure di stima
 iterativa. La forma generale di un loop, o ciclo, è:
 
 \begin{code}
-      loop espressione di controllo [ --progressive | --verbose ]
+      loop espressione di controllo [ --progressive | --verbose | --quiet ]
          corpo del loop
       endloop
 \end{code}
@@ -25,7 +25,9 @@ controllo. Nel corpo del loop sono accettati i seguenti comandi:
 In modalità predefinita, il comando \cmd{genr} all'interno di un loop
 opera in modo silenzioso (senza mostrare informazioni sulle variabili
 generate). Per ottenere informazioni da \cmd{genr} è possibile
-specificare l'opzione \verb+--verbose+ con \cmd{loop}.
+specificare l'opzione \verb+--verbose+ con \cmd{loop}. L'opzione
+\verb+--quiet+ sopprime il consueto riepilogo del numero di iterazioni eseguite,
+cosa desiderabile quando i loop sono annidati.
 
 L'opzione \verb+--progressive+ di \cmd{loop} modifica il comportamento
 dei comandi \cmd{ols}, \cmd{print} e \cmd{store} rendendoli più comodi

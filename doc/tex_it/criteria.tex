@@ -142,10 +142,28 @@ l'aggiunta di parametri addizionali aumenta con l'ampiezza campionaria. Ciò
 assicura che, asintoticamente, un modello troppo esteso non verrà mai scelto al
 posto di un modello parsimonioso ma correttamente specificato.
 
+Un'altra alternativa all'AIC che tende a favorire modelli più parsimoniosi è il
+criterio di Hannan--Quinn, o HQC (Hannan e Quinn, 1979). Volendo essere coerenti
+con la formulazione usata finora, può essere scritto nel modo seguente:
+%
+\[
+{\rm HQC} = -2 \ell(\hat{\theta}) + 2k \log \log n
+\]
+%
+Il calcolo di Hannan--Quinn si basa sulla regola del logaritmo iterato (si noti
+che l'ultimo termine è il logaritmo del logaritmo dell'ampiezza campionaria).
+Gli autori affermano che questa procedura fornisce un ``procedura di stima
+consistente in senso forte per l'ordine di una autoregressione'', e che
+``confrontata con altre procedure consistenti in senso forte, questa sottostimerà
+l'ordine in modo minore''.
+
 \vspace{1ex}
 
-Gretl mostra sia AIC che BIC (calcolati nel modo spiegato sopra) per la maggior
-parte dei modelli.
+Gretl mostra AIC, BIC e HQC (calcolati nel modo spiegato sopra) per la maggior
+parte dei modelli. Quando si interpretano questi valori occorre sempre
+ricordarsi se sono calcolati in modo da essere massimizzati o minimizzati. In
+gretl essi sono sempre calcolati per essere minimizzati: valori minori sono
+da preferire.
 
 
 
