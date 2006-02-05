@@ -121,18 +121,19 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
+ * @err: location to receive error code.
  *
  * Re-estimates a given VAR after removing the variables
  * specified in @omitvars, and reports per-equation F-tests
  * and system-wide LR tests for the null hypothesis that
  * the omitted variables have zero parameters.
  * 
- * Returns: 0 on successful completion, error code on error.
+ * Returns: restricted VAR on sucess, %NULL on error.
  */
 
-int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
-			 double ***pZ, DATAINFO *pdinfo, 
-			 PRN *prn)
+GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
+				double ***pZ, DATAINFO *pdinfo, 
+				PRN *prn, int *err)
 {
     GRETL_VAR *var = NULL;
     gretlopt opt = OPT_NONE;
@@ -142,20 +143,23 @@ int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     int *tmplist = NULL;
     int *varlist = NULL;
     int c0, c1;
-    int err = 0;
+
+    *err = 0;
 
     if (orig == NULL) {
-	return 1;
+	*err = E_DATA;
+	return NULL;
     }
 
     if (omitvars == NULL || omitvars[0] == 0) {
-	return E_PARSE;
+	*err = E_PARSE;
+	return NULL;
     }
 
     /* recreate the exog vars list for original VAR */
-    exolist = gretl_VAR_get_exo_list(orig, &err);
+    exolist = gretl_VAR_get_exo_list(orig, err);
     if (exolist == NULL) {
-	return err;
+	return NULL;
     }
 
     c0 = gretl_list_const_pos(exolist, 1, (const double **) *pZ, pdinfo);
@@ -166,13 +170,13 @@ int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     }
 
     /* create exogenous vars list for test VAR */
-    tmplist = gretl_list_omit(exolist, omitvars, 1, &err);
+    tmplist = gretl_list_omit(exolist, omitvars, 1, err);
     if (tmplist == NULL) {
 	goto bailout;
     }
 
     /* recreate full input VAR list for test VAR */
-    varlist = rebuild_VAR_list(orig, tmplist, &err);
+    varlist = rebuild_VAR_list(orig, tmplist, err);
     if (varlist == NULL) {
 	goto bailout;
     }
@@ -191,14 +195,12 @@ int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     pdinfo->t1 = orig->t1;
     pdinfo->t2 = orig->t2;
 
-    /* should "prn" be NULL below? */
-    var = gretl_VAR(orig->order, varlist, pZ, pdinfo, opt, prn, &err);
+    var = gretl_VAR(orig->order, varlist, pZ, pdinfo, opt, prn, err);
 
     /* now, if var is non-NULL, do the actual test(s) */
     if (var != NULL) {
-	err = gretl_VAR_real_omit_test(orig, exolist, var, tmplist,
-				       pdinfo, prn);
-	gretl_VAR_free(var);
+	*err = gretl_VAR_real_omit_test(orig, exolist, var, tmplist,
+					pdinfo, prn);
     }
 
     /* put back into pdinfo what was there on input */
@@ -211,5 +213,5 @@ int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
     free(tmplist);
     free(varlist);
 
-    return err;
+    return var;
 }

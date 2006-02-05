@@ -658,10 +658,7 @@ int garch_pretest (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (!err) {
 	*LMF = get_last_test_statistic(NULL);
 	*pvF = get_last_pvalue(NULL);
-    } else {
-	*LMF = NADBL;
-	*pvF = NADBL;
-    }
+    } 
 
     return err;
 }
@@ -688,8 +685,10 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn, gretlopt opt) 
 {
     MODEL model;
-    int *list = NULL, *ols_list = NULL;
-    double LMF, pvF;
+    int *list = NULL;
+    int *ols_list = NULL;
+    double LMF = NADBL;
+    double pvF = NADBL;
     double scale = 1.0;
     int t, err, init_err, yno = 0;
 
@@ -769,8 +768,12 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     free(list);
 
 #if GARCH_AUTOCORR_TEST
-    if (model.errcode == E_NOCONV && prn != NULL) {
-	autocorr_message(LMF, pvF, pdinfo->pd, prn);
+    if (!na(LMF)) {
+	if (model.errcode == E_NOCONV) {
+	    autocorr_message(LMF, pvF, pdinfo->pd, prn);
+	} else {
+	    gretl_model_destroy_tests(&model);
+	}
     }
 #endif
 

@@ -1463,7 +1463,8 @@ int do_VAR_omit (selector *sr)
     windata_t *vwin = selector_get_data(sr);
     const char *buf = selector_list(sr);
     int *omitlist;
-    GRETL_VAR *var;
+    GRETL_VAR *orig;
+    GRETL_VAR *var = NULL;
     PRN *prn;
     gint err;
 
@@ -1471,7 +1472,7 @@ int do_VAR_omit (selector *sr)
 	return 1;
     }
 
-    var = vwin->data;
+    orig = vwin->data;
 
     if (bufopen(&prn)) {
 	return 1;
@@ -1481,18 +1482,18 @@ int do_VAR_omit (selector *sr)
     if (omitlist == NULL) {
 	err = E_ALLOC;
     } else {
-	err = gretl_VAR_omit_test(omitlist, var, &Z, datainfo, prn);
+	var = gretl_VAR_omit_test(omitlist, orig, &Z, datainfo, prn, &err);
     }
 
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
-        return err;
+    } else {
+	view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
+		    VAR, var);
     }
 
-    view_buffer(prn, 78, 420, _("gretl: vector autoregression"), PRINT, NULL); 
-
-    return 0;
+    return err;
 }
 
 int do_confidence_region (selector *sr)

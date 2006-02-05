@@ -352,6 +352,39 @@ int *gretl_list_new (int nterms)
 }
 
 /**
+ * gretl_consecutive_list_new:
+ * @lmin: starting value for consecutive list elements.
+ * @lmax: ending value.
+ * 
+ * Creates a newly allocated list whose elements run from
+ * @lmin to @lmax consecutively.
+ *
+ * Returns: the newly allocated list, or %NULL on failure.
+ */
+
+int *gretl_consecutive_list_new (int lmin, int lmax)
+{
+    int *list = NULL;
+    int i, n;
+
+    n = lmax - lmin + 1;
+    if (n <= 0) {
+	return NULL;
+    }
+
+    list = malloc((n + 1) * sizeof *list);
+
+    if (list != NULL) {
+	list[0] = n;
+	for (i=0; i<n; i++) {
+	    list[i+1] = lmin + i;
+	}
+    }
+
+    return list;
+}
+
+/**
  * gretl_list_resize:
  * @oldlist: pointer to list to be resized.
  * @nterms: the new maximum number of elements for the list.
@@ -635,7 +668,7 @@ int gretl_list_delete_at_pos (int *list, int pos)
 	list[0] -= 1;
     }
 
-    return 0;
+    return err;
 }
 
 /**
@@ -1364,5 +1397,27 @@ int gretl_list_position (int v, const int *list)
     }
 
     return 0;
+}
+
+/**
+ * gretl_list_is_consecutive:
+ * @list: list to check.
+ *
+ * Returns: 1 if the elements of @list, from position 1 onward,
+ * are consecutive integer values, else 0.
+ */
+
+int gretl_list_is_consecutive (const int *list)
+{
+    int i, ret = 1;
+
+    for (i=2; i<=list[0]; i++) {
+	if (list[i] != list[i-1] + 1) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
 }
 

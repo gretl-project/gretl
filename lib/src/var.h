@@ -58,9 +58,9 @@ int gretl_VAR_normality_test (const GRETL_VAR *var, PRN *prn);
 
 int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err);
 
-int gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
-			 double ***pZ, DATAINFO *pdinfo, 
-			 PRN *prn);
+GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig, 
+				double ***pZ, DATAINFO *pdinfo, 
+				PRN *prn, int *err);
 
 void gretl_VAR_free (GRETL_VAR *var);
 

@@ -447,6 +447,8 @@
 	<repl>P</repl> and <repl>Q</repl> represent seasonal AR and MA
 	orders; these are relevant only if the data have a frequency
 	greater than 1 (for example, quarterly or monthly data).
+	The respective orders can be given in numerical form, or as
+	the names of pre-existing scalar variables.
       </para>
 
       <para context="cli">
@@ -1819,8 +1821,9 @@
 	Conditional Heteroskedasticity), either a univariate model or,
 	if <repl>indepvars</repl> are specified, including the given
 	exogenous variables.  The integer values <repl>p</repl> and
-	<repl>q</repl> represent the lag orders in the conditional
-	variance equation:
+	<repl>q</repl> (which may be given in numerical form or as the
+	names of pre-existing scalar variables) represent the lag
+	orders in the conditional variance equation:
 	<equation status="display"
 	  tex="\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
 	  \sum_{j=1}^p \beta_i h_{t-j}\]"
@@ -6758,14 +6761,17 @@
 	response functions.</para>
 
       <para context="cli">
-	Sets up and estimates (using OLS) a vector autoregression (VAR).  The
-	first argument specifies the lag order &mdash; or the maximum lag order
-	in case the <lit>--lagselect</lit> option is given (see below).
-	Then follows the setup for the first equation.  Don't include lags among
-	the elements of <repl>varlist</repl> &mdash; they will be added
-	automatically.  The semi-colon separates the stochastic variables, for
-	which <repl>order</repl> lags will be included, from exogenous variables
-	in <repl>exolist</repl>.</para>
+	Sets up and estimates (using OLS) a vector autoregression
+	(VAR).  The first argument specifies the lag order &mdash; or
+	the maximum lag order in case the <lit>--lagselect</lit>
+	option is given (see below).  The order may be given
+	numerically, or as the name of a pre-existing scalar variable.
+	Then follows the setup for the first equation.  Don't include
+	lags among the elements of <repl>varlist</repl> &mdash; they
+	will be added automatically.  The semi-colon separates the
+	stochastic variables, for which <repl>order</repl> lags will
+	be included, from exogenous variables in
+	<repl>exolist</repl>.</para>
 
       <para context="cli">
 	In fact, gretl is able to recognize the more common deterministic

@@ -26,6 +26,8 @@ int *gretl_list_resize (int **oldlist, int nterms);
 
 int *gretl_null_list (void);
 
+int *gretl_consecutive_list_new (int lmin, int lmax);
+
 int *gretl_list_copy (const int *src);
 
 int *gretl_list_from_string (const char *liststr);
@@ -67,6 +69,8 @@ int gretl_list_position (int v, const int *list);
 int gretl_list_separator_position (const int *list);
 
 int gretl_list_has_separator (const int *list);
+
+int gretl_list_is_consecutive (const int *list);
 
 int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2);
 
