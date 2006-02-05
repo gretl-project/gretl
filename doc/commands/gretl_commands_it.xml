@@ -434,6 +434,8 @@
         I valori interi opzionali <repl>P</repl> e <repl>Q</repl> rappresentano
         gli ordini AR e MA stagionali; essi sono rilevanti solo la frequenza dei
         dati è superiore a 1 (ad esempio, dati trimestrali o mensili).
+        I valori possono essere indicati in forma numerica o con i nomi di
+        variabili scalari preesistenti.
       </para>
       <para context="cli">
         Nel caso univariato la scelta predefinita include un'intercetta nel
@@ -1797,8 +1799,10 @@
 	Stima un modello GARCH (Generalized Autoregressive
 	Conditional Heteroskedasticity) univariato, o, se sono specificate delle
 	<repl>variabili-indipendenti</repl>, includendo delle variabili esogene.
-	I valori interi <repl>p</repl> e <repl>q</repl> rappresentano gli ordini
-        di ritardo nell'equazione della varianza condizionale.
+	I valori interi <repl>p</repl> e <repl>q</repl> (che possono essere
+        indicati in forma numerica o col nome di variabili scalari preesistenti)
+        rappresentano gli ordini di ritardo nell'equazione della varianza
+        condizionale.
 	<equation status="display"
 	  tex="\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
 	  \sum_{j=1}^p \beta_i h_{t-j}\]"
@@ -6700,13 +6704,15 @@
       <para context="cli">
 	Imposta e stima (usando OLS) un'autoregressione vettoriale (VAR).
         Il primo argomento specifica l'ordine di ritardo (o il massimo ordine di
-        ritardi se è stata usata l'opzione <lit>--lagselect</lit>). Quindi segue
-        l'impostazione della prima equazione. Non occorre includere i ritardi
-        tra gli elementi della <repl>lista-variabili</repl>:
-        verranno aggiunti automaticamente. Il punto e virgola separa le
-        variabili stocastiche, per cui verrà incluso un numero di
-        ritardi pari a <repl>ordine</repl>, dai termini deterministici o esogeni
-        presenti nella <repl>lista-esogene</repl>.</para>
+        ritardi se è stata usata l'opzione <lit>--lagselect</lit>). L'ordine può
+        essere indicato numericamente o con il nome di una variabile scalare
+        preesistente.  Quindi segue l'impostazione della prima equazione. Non
+        occorre includere i ritardi tra gli elementi della
+        <repl>lista-variabili</repl>: verranno aggiunti automaticamente. Il
+        punto e virgola separa le variabili stocastiche, per cui verrà incluso
+        un numero di ritardi pari a <repl>ordine</repl>, dai termini
+        deterministici o esogeni presenti nella
+        <repl>lista-esogene</repl>.</para>
 
       <para context="cli">
 	gretl è in grado di riconoscere le più comuni variabili
