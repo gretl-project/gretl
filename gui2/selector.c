@@ -127,15 +127,6 @@ static GtkWidget *x_axis_item;
 
 static selector *open_selector;
 
-#ifdef OLD_GTK
-static void 
-dblclick_lvars_row (GtkCList *clist, gint row, gint column, 
-		    GdkEventButton *event, selector *sr);
-#else
-static gint dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, 
-				selector *sr); 
-#endif
-
 static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data);
 static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event, 
@@ -189,7 +180,57 @@ static int lag_context_from_widget (GtkWidget *w)
     return context;
 }
 
-#ifndef OLD_GTK
+static int lags_button_relevant (selector *sr, int locus)
+{
+    if (sr->lags_button != NULL) {
+	if (locus == SR_RUVARS && select_lags_upper(sr->code)) {
+	    return 1;
+	} else if (locus == SR_RLVARS && select_lags_lower(sr->code)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+void clear_selector (void)
+{
+    default_var = 0;
+    default_order = 0;
+    vartrend = 0;
+
+    free(xlist);
+    xlist = NULL;
+
+    free(rulist);
+    rulist = NULL;
+
+    free(veclist);
+    veclist = NULL;
+
+    destroy_lag_preferences();
+}
+
+static int selector_get_depvar_number (selector *sr)
+{
+    int ynum = 0;
+
+    if (sr != NULL && sr->depvar != NULL) {
+	ynum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), 
+						 "data"));
+    }
+
+    return ynum;
+}
+
+#ifdef OLD_GTK
+# include "selector-gtk1.c"
+#else
+
+static gint dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, 
+				selector *sr); 
+
+/* gtk 2.0 versions of several utility functions */
 
 static void 
 real_varlist_set_var (int v, int lag, GtkListStore *store, GtkTreeIter *iter)
@@ -312,68 +353,6 @@ static gboolean set_active_var (GtkWidget *widget, GdkEventButton *event,
     return FALSE;
 }
 
-#endif
-
-#ifdef OLD_GTK
-
-static void 
-real_varlist_append_var (int v, int lag, GtkWidget *w)
-{
-    gchar vstr[VNAMELEN+8];
-    gchar id[8];
-    gchar lstr[8];
-    gchar *row[3];
-    
-    sprintf(id, "%d", v);
-    row[0] = id;
-    
-    if (lag == 0) {
-	row[1] = NULL;
-	row[2] = datainfo->varname[v];
-    } else {
-	sprintf(lstr, "%d", lag);
-	row[1] = lstr;
-	sprintf(vstr, "%s(-%d)", datainfo->varname[v], lag);
-	row[2] = vstr;
-    }
-
-    gtk_clist_append(GTK_CLIST(w), row); 
-} 
-
-static void list_append_var_simple (GtkWidget *w, gpointer unused, int v)
-{
-    real_varlist_append_var(v, 0, w);
-}
-
-static void list_append_var (GtkWidget *w, gpointer unused, 
-			     int v, selector *sr, int locus)
-{
-    int i, lcontext = 0;
-
-    if (v > 0 && dataset_is_time_series(datainfo)) {
-	lcontext = sr_get_lag_context(sr, locus);
-    }
-
-    if (lcontext) {
-	int *laglist = get_lag_pref_as_list(v, lcontext);
-
-	if (laglist != NULL) {
-	    for (i=1; i<=laglist[0]; i++) {
-		real_varlist_append_var(v, laglist[i], w);
-	    }
-	    free(laglist);
-	} else {
-	    lcontext = 0;
-	}
-    }
-
-    if (lcontext == 0) {
-	real_varlist_append_var(v, 0, w);
-    }
-}
-
-#else
-
 static void list_append_var_simple (GtkListStore *store, GtkTreeIter *iterp, int v)
 {
     const char *vname = datainfo->varname[v];
@@ -410,67 +389,6 @@ static void list_append_var (GtkListStore *store, GtkTreeIter *iter,
 	real_varlist_set_var(v, 0, store, iter);
     }
 }
-
-#endif
-
-#ifdef OLD_GTK
-
-static gint list_sorter (gconstpointer a, gconstpointer b)
-{
-    return GPOINTER_TO_INT(b) - GPOINTER_TO_INT(a);
-}
-
-static void 
-listvar_special_undo (GtkCList *clist, gint arg1, gint arg2, gpointer p)
-{
-    gtk_clist_set_selection_mode(clist, GTK_SELECTION_EXTENDED);
-    gtk_clist_set_reorderable(clist, FALSE);
-}
-
-/* build a new CList, and pack into the given box */
-
-static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus) 
-{
-    GtkWidget *view, *scroller;
-
-    view = gtk_clist_new(3);
-    gtk_clist_clear(GTK_CLIST(view));
-
-    g_object_set_data(G_OBJECT(view), "sr", sr);
-    g_object_set_data(G_OBJECT(view), "locus", GINT_TO_POINTER(locus));
-
-    gtk_widget_set_usize(view, 120 * gui_scale, -1);
-    gtk_clist_set_selection_mode(GTK_CLIST(view), GTK_SELECTION_EXTENDED);
-
-    if (locus == SR_LVARS) { 
-	/* left-hand box with the possible selections */
-	gtk_signal_connect(GTK_OBJECT(view), "button_press_event",
-			   GTK_SIGNAL_FUNC(lvars_right_click),
-			   sr);
-	gtk_signal_connect_after(GTK_OBJECT(view), "select_row", 
-				 GTK_SIGNAL_FUNC(dblclick_lvars_row), 
-				 sr);
-    } else if (locus == SR_RLVARS || locus == SR_RUVARS) { 
-	/* lists of selected items */
-	gtk_signal_connect(GTK_OBJECT(view), "row-move",
-			   GTK_SIGNAL_FUNC(listvar_special_undo), NULL);
-	gtk_signal_connect(GTK_OBJECT(view), "button_press_event",
-			   GTK_SIGNAL_FUNC(listvar_special_click), view);
-    }
-
-    scroller = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (scroller),
-				   GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_container_add(GTK_CONTAINER(scroller), view);
-    gtk_box_pack_start(box, scroller, TRUE, TRUE, 0);
-
-    gtk_widget_show(view);
-    gtk_widget_show(scroller);
-
-    return view;
-}
-
-#else
 
 /* build a new liststore and associated tree view, and pack into the
    given box */
@@ -547,69 +465,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int locus)
     return view;
 }
 
-#endif
-
-void clear_selector (void)
-{
-    default_var = 0;
-    default_order = 0;
-    vartrend = 0;
-
-    free(xlist);
-    xlist = NULL;
-
-    free(rulist);
-    rulist = NULL;
-
-    free(veclist);
-    veclist = NULL;
-
-    destroy_lag_preferences();
-}
-
-static int selector_get_depvar_number (selector *sr)
-{
-    int ynum = 0;
-
-    if (sr != NULL && sr->depvar != NULL) {
-	ynum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), 
-						 "data"));
-    }
-
-    return ynum;
-}
-
 /* add to "extra" var slot the current selection from sr->lvars */
-
-#ifdef OLD_GTK
-
-static void real_set_extra_var (gint i, selector *sr)
-{
-    gchar *vnum, *vname;
-
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 0, &vnum); 
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 2, &vname);
-    gtk_entry_set_text(GTK_ENTRY(sr->extra[0]), vname);
-    gtk_object_set_data(GTK_OBJECT(sr->extra[0]), "data",
-			GINT_TO_POINTER(atoi(vnum)));
-}
-
-static void set_extra_var_callback (GtkWidget *w, selector *sr)
-{
-    GList *mylist;
-
-    if (!GTK_IS_CLIST(sr->lvars)) {
-	return;
-    }
-
-    mylist = GTK_CLIST(sr->lvars)->selection;
-    if (mylist != NULL) {
-	mylist = g_list_first(mylist);
-	g_list_foreach(mylist, (GFunc) real_set_extra_var, sr);
-    }
-}
-
-#else
 
 static void real_set_extra_var (GtkTreeModel *model, GtkTreePath *path,
 				GtkTreeIter *iter, selector *sr)
@@ -635,33 +491,6 @@ static void set_extra_var_callback (GtkWidget *w, selector *sr)
 					sr);
 }
 
-#endif
-
-#ifdef OLD_GTK
-
-static void real_set_factor (gint i, selector *sr)
-{
-    gchar *vnum, *vname;
-
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 0, &vnum); 
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 2, &vname);
-    gtk_entry_set_text(GTK_ENTRY(sr->rlvars), vname);
-    gtk_object_set_data(GTK_OBJECT(sr->rlvars), "data",
-			GINT_TO_POINTER(atoi(vnum)));
-}
-
-static void set_factor_callback (GtkWidget *w, selector *sr)
-{
-    GList *mylist = GTK_CLIST(sr->lvars)->selection;
-
-    if (mylist != NULL) {
-	mylist = g_list_first(mylist);
-	g_list_foreach(mylist, (GFunc) real_set_factor, sr);
-    }
-}
-
-#else
-
 static void real_set_factor (GtkTreeModel *model, GtkTreePath *path,
 			     GtkTreeIter *iter, selector *sr)
 {
@@ -685,70 +514,6 @@ static void set_factor_callback (GtkWidget *w, selector *sr)
 					real_set_factor,
 					sr);
 }
-
-#endif
-
-#ifdef OLD_GTK
-
-static void remove_as_indep_var (selector *sr, gint v)
-{
-    gint i, rows = GTK_CLIST(sr->rlvars)->rows; 
-    gchar *xnum;
-
-    for (i=0; i<rows; i++) {
-	gtk_clist_get_text(GTK_CLIST(sr->rlvars), i, 0, &xnum);
-	if (v == atoi(xnum)) {
-	    gtk_clist_remove(GTK_CLIST(sr->rlvars), i);
-	    break;
-	}
-    }
-}
-
-static void maybe_insert_depvar_lags (selector *sr, int v)
-{
-    int *laglist = get_lag_pref_as_list(v, LAG_Y);
-    GtkWidget *w;
-    gchar *modv;
-    int rows, append = 1;
-    int i, row = 0;
-
-    if (laglist == NULL) return;
-
-    w = sr->rlvars; /* TSLS? */
-    if (w == NULL) {
-	return;
-    }
-
-    /* varlist_remove_var_full(v, mod, &iter); */
-
-    rows = GTK_CLIST(w)->rows;
-
-    for (i=0; i<rows; i++) {
-	gtk_clist_get_text(GTK_CLIST(w), i, 1, &modv);
-	fprintf(stderr, "maybe_insert_depvar_lags: modv=%s\n", modv);
-	if (atoi(modv) > 0) {
-	    append = 0;
-	    break;
-	}
-	row++;
-    } 
-
-    /* FIXME */
-
-    for (i=1; i<=laglist[0]; i++) {
-	if (append) {
-	    gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
-	} else {
-	    gtk_list_store_insert(GTK_LIST_STORE(mod), &iter, row++);
-	}
-	fprintf(stderr, "adding var %d, lag %d\n", v, laglist[i]);
-	real_varlist_set_var(v, laglist[i], GTK_LIST_STORE(mod), &iter);
-    }    
-
-    free(laglist);
-}
-
-#else
 
 static void remove_as_indep_var (selector *sr, gint v)
 {
@@ -832,46 +597,6 @@ static void set_dependent_var_from_active (selector *sr)
     }
 }
 
-#endif
-
-#ifdef OLD_GTK
-
-static void real_set_dependent_var (gint i, selector *sr)
-{
-    gchar *vnum, *vname;
-
-    if (sr->depvar == NULL) return;
-
-    if (MODEL_CODE(sr->code)) {
-	remove_as_indep_var(sr, i);
-    }
-
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 0, &vnum); 
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 2, &vname);
-    gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
-    gtk_object_set_data(GTK_OBJECT(sr->depvar), "data",
-			GINT_TO_POINTER(atoi(vnum))); 
-
-    if (select_lags_depvar(sr->code)) {
-	maybe_insert_depvar_lags(sr, atoi(vnum));
-    }
-}
-
-static void set_dependent_var_callback (GtkWidget *w, selector *sr)
-{
-    GList *mylist;
-
-    if (!GTK_IS_CLIST(sr->lvars)) return;
-
-    mylist = GTK_CLIST(sr->lvars)->selection;
-    if (mylist != NULL) {
-	mylist = g_list_first(mylist);
-	g_list_foreach(mylist, (GFunc) real_set_dependent_var, sr);
-    }
-}
-
-#else
-
 static void real_set_dependent_var (GtkTreeModel *model, GtkTreePath *path,
 				    GtkTreeIter *iter, selector *sr)
 {
@@ -899,103 +624,6 @@ static void set_dependent_var_callback (GtkWidget *w, selector *sr)
 					 real_set_dependent_var,
 					 sr);
 }
-
-#endif
-
-static int lags_button_relevant (selector *sr, int locus)
-{
-    if (sr->lags_button != NULL) {
-	if (locus == SR_RUVARS && select_lags_upper(sr->code)) {
-	    return 1;
-	} else if (locus == SR_RLVARS && select_lags_lower(sr->code)) {
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-#ifdef OLD_GTK
-
-static void real_add_to_rlvars (gint i, selector *sr)
-{
-    gchar *row[3] = { NULL, NULL, NULL };
-    gint j, rows;
-    gint already_there = 0;
-    gint at_max = 0;
-    int nvars = 0;
-
-    if (!GTK_IS_CLIST(sr->rlvars)) {
-	return;
-    }
-
-    nvars = rows = GTK_CLIST(sr->rlvars)->rows;
-
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 0, &row[0]);
-
-    /* models: don't add the regressand to the list of regressors */
-    if (MODEL_CODE(sr->code)) {
-	int ynum = selector_get_depvar_number(sr);
-
-	if (ynum == atoi(row[0])) {
-	    return;
-	}
-    }    
-
-    for (j=0; j<rows; j++) {
-	gchar *test;
-
-	if (selection_at_max(sr, j + 1)) {
-	    at_max = 1; 
-	    break;
-	}	    
-	gtk_clist_get_text(GTK_CLIST(sr->rlvars), j, 0, &test);
-	if (!strcmp(test, row[0])) {
-	    already_there = 1; 
-	    break;
-	}
-    }
-
-    if (!already_there && !at_max) {
-	/* FIXME lags? FIXME source of variable */
-	gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 2, &row[2]);
-	gtk_clist_append(GTK_CLIST(sr->rlvars), row);
-	nvars++;
-    }
-
-    if (sr->add_button != NULL && at_max) {
-	gtk_widget_set_sensitive(sr->add_button, FALSE);
-    }
-
-    if (nvars > 0 && lags_button_relevant(sr, SR_RLVARS)) {
-	gtk_widget_set_sensitive(sr->lags_button, TRUE);
-    }
-}
-
-static void add_to_rlvars_callback (GtkWidget *w, selector *sr)
-{
-    GList *mylist;
-
-    if (!GTK_IS_CLIST(sr->lvars) ||
-	!GTK_IS_CLIST(sr->rlvars)) return;
-
-    mylist = GTK_CLIST(sr->lvars)->selection;
-
-    if (mylist != NULL) {
-	g_list_foreach(mylist, (GFunc) real_add_to_rlvars, sr);
-    }
-}
-
-static void set_vars_from_main (selector *sr)
-{
-    GList *mylist = GTK_CLIST(mdata->listbox)->selection;
-
-    if (mylist != NULL) {
-	g_list_foreach(mylist, (GFunc) real_add_to_rlvars, sr);
-    }
-}
-
-#else
 
 static void set_right_var_from_main (GtkTreeModel *model, GtkTreePath *path,
 				     GtkTreeIter *iter, selector *sr)
@@ -1038,23 +666,9 @@ static void set_vars_from_main (selector *sr)
 					sr);
 }
 
-#endif
-
 /* Append a specified variable in the SR_RLVARS locus: used when
    saving data and there's only one variable to save.
 */
-
-#ifdef OLD_GTK
-
-static void select_singleton (selector *sr)
-{
-    gchar *vstr;
-
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), 0, 0, &vstr);    
-    list_append_var_simple(sr->rlvars, NULL, atoi(vstr));
-}
-
-#else
 
 static void select_singleton (selector *sr)
 {
@@ -1080,10 +694,6 @@ static void select_singleton (selector *sr)
     gtk_list_store_set(GTK_LIST_STORE(rmod), &iter, 
 		       0, v, 1, 0, 2, datainfo->varname[v], -1);
 }
-
-#endif
-
-#ifndef OLD_GTK
 
 static void real_add_generic (GtkTreeModel *model, GtkTreeIter *iter, 
 			      selector *sr, int locus)
@@ -1178,50 +788,6 @@ static void add_to_rlvars (GtkTreeModel *model, GtkTreePath *path,
     real_add_generic(model, iter, sr, SR_RLVARS);
 }
 
-#endif
-
-#ifdef OLD_GTK
-
-static void real_add_to_ruvars (gint i, selector *sr)
-{
-    gchar *row[3] = { NULL, NULL, NULL };
-    gint j, rows = GTK_CLIST(sr->ruvars)->rows;
-    gint already_there = 0;
-
-    gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 0, &row[0]);
-
-    for (j=0; j<rows; j++) {
-	gchar *test;
-
-	gtk_clist_get_text(GTK_CLIST(sr->ruvars), j, 0, &test);
-	if (!strcmp(test, row[0])) {
-	    already_there = 1; 
-	    break;
-	}
-    }
-
-    if (!already_there) {
-	gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 2, &row[2]);
-	gtk_clist_append(GTK_CLIST(sr->ruvars), row);
-	rows++;
-    }
-
-    if (rows > 1 && lags_button_relevant(sr, SR_RUVARS)) {
-	gtk_widget_set_sensitive(sr->lags_button, TRUE);
-    }
-}
-
-static void add_to_ruvars_callback (GtkWidget *w, selector *sr)
-{
-    GList *mylist = GTK_CLIST(sr->lvars)->selection;
-
-    if (mylist != NULL) {
-	g_list_foreach(mylist, (GFunc) real_add_to_ruvars, sr);
-    }
-}
-
-#else
-
 static void add_to_ruvars (GtkTreeModel *model, GtkTreePath *path,
 			   GtkTreeIter *iter, selector *sr)
 {
@@ -1238,29 +804,6 @@ static void add_to_ruvars_callback (GtkWidget *w, selector *sr)
 					 add_to_ruvars,
 					 sr);
 }
-
-#endif
-
-#ifdef OLD_GTK
-
-static void add_all_to_rlvars_callback (GtkWidget *w, selector *sr)
-{
-    GList *mylist;
-
-    if (!GTK_IS_CLIST(sr->lvars) ||
-	!GTK_IS_CLIST(sr->rlvars)) {
-	return;
-    }
-
-    gtk_clist_select_all(GTK_CLIST(sr->lvars));
-    mylist = GTK_CLIST(sr->lvars)->selection;
-
-    if (mylist != NULL) {
-	g_list_foreach(mylist, (GFunc) real_add_to_rlvars, sr);
-    }
-}
-
-#else
 
 static void add_all_to_rlvars_callback (GtkWidget *w, selector *sr)
 {
@@ -1292,50 +835,6 @@ static void add_to_rlvars_callback (GtkWidget *w, selector *sr)
 					 add_to_rlvars,
 					 sr);
 }
-
-#endif
-
-#ifdef OLD_GTK
-
-static void real_remove_from_right (gint i, GtkWidget *vars)
-{
-    int context = lag_context_from_widget(vars);
-
-    if (context) {
-	gchar *vstr, *lstr;
-	int lag = 0;
-
-	gtk_clist_get_text(GTK_CLIST(vars), i, 0, &vstr);
-	gtk_clist_get_text(GTK_CLIST(vars), i, 1, &lstr);
-	if (lstr != NULL) {
-	    lag = atoi(lstr);
-	}
-	remove_specific_lag(atoi(vstr), lag, context);
-    }
-
-    gtk_clist_remove(GTK_CLIST(vars), i);
-}
-
-static void remove_from_right_callback (GtkWidget *w, gpointer data)
-{
-    GtkWidget *vars = GTK_WIDGET(data);
-    GList *mylist = g_list_copy(GTK_CLIST(vars)->selection);
-    selector *sr = g_object_get_data(G_OBJECT(data), "selector");
-
-    mylist = g_list_sort(mylist, list_sorter);
-    g_list_foreach(mylist, (GFunc) real_remove_from_right, vars);
-
-    if (sr != NULL && sr->add_button != NULL && 
-	!GTK_WIDGET_SENSITIVE(sr->add_button)) {
-	int nsel = GTK_CLIST(vars)->rows;
-
-	if (!selection_at_max(sr, nsel)) {
-	    gtk_widget_set_sensitive(sr->add_button, TRUE);
-	}
-    }
-}
-
-#else
 
 static void remove_from_right_callback (GtkWidget *w, gpointer data)
 {
@@ -1392,26 +891,8 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
     }
 }
 
-#endif
-
 /* callbacks from button presses in list boxes: double and right
    clicks do special stuff */
-
-#ifdef OLD_GTK
-
-static void 
-dblclick_lvars_row (GtkCList *clist, gint row, gint column, 
-		    GdkEventButton *event, selector *sr) 
-{
-    if (event != NULL && event->type == GDK_2BUTTON_PRESS) { 
-	real_set_dependent_var(row, sr);
-	if (sr->default_check != NULL) 
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
-					 TRUE);
-    }
-}
-
-#else
 
 static gint 
 dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, selector *sr) 
@@ -1424,35 +905,6 @@ dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, selector *sr)
     }
     return FALSE;
 }
-
-#endif
-
-#ifdef OLD_GTK
-
-static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
-				   gpointer data)
-{
-    GdkWindow *topwin;
-    GdkModifierType mods;
-
-    topwin = gtk_widget_get_parent_window(GTK_WIDGET(data));
-    gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
-
-    if (mods & GDK_BUTTON2_MASK) {
-	gtk_clist_set_selection_mode(GTK_CLIST(data), 
-				     GTK_SELECTION_SINGLE);
-	gtk_clist_set_reorderable(GTK_CLIST(data), TRUE);
-    } 
-
-    if (mods & GDK_BUTTON3_MASK) {
-	remove_from_right_callback(NULL, data);
-	return TRUE;
-    }
-
-    return FALSE;
-}
-
-#else
 
 static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
 				   gpointer data)
@@ -1477,7 +929,7 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
     return FALSE;
 }
 
-#endif
+#endif /* functions specific to gtk-2.0 */
 
 static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event, 
 			       selector *sr)
@@ -1498,55 +950,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 
 /* end special click callbacks */
 
-#ifdef OLD_GTK
-
-static void varlist_insert_const (GtkWidget *w)
-{
-    gchar *row[3];
-
-    row[0] = "0";
-    row[1] = NULL;
-    row[2] = "const";
-    gtk_clist_append(GTK_CLIST(w), row);
-}
-
-static void clear_vars (GtkWidget *w, selector *sr)
-{
-    gtk_clist_unselect_all(GTK_CLIST(sr->lvars));
-
-    if (sr->depvar != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
-				     FALSE);
-	default_var = 0;
-    }
-
-    if (sr->code == GR_DUMMY || sr->code == GR_3D) {
-	gtk_entry_set_text(GTK_ENTRY(sr->rlvars), "");
-    } else {
-	gtk_clist_clear(GTK_CLIST(sr->rlvars));
-	if (sr->add_button != NULL) {
-	    gtk_widget_set_sensitive(sr->add_button, TRUE);
-	}
-    }
-
-    if (MODEL_CODE(sr->code)) {
-	varlist_insert_const(sr->rlvars);
-    }
-
-    if (sr->ruvars != NULL) {
-	gtk_clist_clear(GTK_CLIST(sr->ruvars));
-	if (sr->code == TSLS) {
-	    varlist_insert_const(sr->ruvars);
-	}
-    }
-
-    if (sr->lags_button != NULL) {
-	gtk_widget_set_sensitive(sr->lags_button, FALSE);
-    }  
-}
-
-#else
+#ifndef OLD_GTK
 
 static void varlist_insert_const (GtkWidget *w)
 {
@@ -1604,63 +1008,6 @@ static void clear_vars (GtkWidget *w, selector *sr)
     }
 }
 
-#endif
-
-static void topslot_empty (int code)
-{
-    switch (code) {
-    case GR_XY:
-    case GR_3D:
-    case GR_IMP:
-	errbox(_("You must select an X-axis variable"));
-	break;
-    case SCATTERS:
-	errbox(_("You must select a Y-axis variable"));
-	break;
-    default:
-	errbox(_("You must select a dependent variable"));
-    }
-}
-
-#ifdef OLD_GTK
-
-static gint varlist_row_count (GtkWidget *w, int *realrows)
-{
-    int lcontext = 0;
-    gint i, n = 0;
-
-    if (realrows != NULL) {
-	lcontext = lag_context_from_widget(w);
-	*realrows = 0;
-    }
-
-    if (w != NULL && GTK_IS_CLIST(w)) {
-	n = GTK_CLIST(w)->rows;
-    }
-
-    if (lcontext && n > 0) {
-	gchar *vstr, *lstr;
-
-	for (i=0; i<n; i++) {
-	    gtk_clist_get_text(GTK_CLIST(w), i, 0, &vstr);
-	    gtk_clist_get_text(GTK_CLIST(w), i, 1, &lstr);
-	    if (lstr == NULL) {
-		*realrows += 1;
-	    } else if (!is_lag_dummy(atoi(vstr), atoi(lstr), lcontext)) {
-		*realrows += 1;
-	    }
-	}
-    }
-
-    if (realrows != NULL && lcontext == 0) {
-	*realrows = n;
-    }
-
-    return n;
-}
-
-#else
-
 static gint varlist_row_count (GtkWidget *w, int *realrows)
 {
     int lcontext = 0;
@@ -1697,6 +1044,23 @@ static gint varlist_row_count (GtkWidget *w, int *realrows)
 }
 
 #endif
+
+static void topslot_empty (int code)
+{
+    switch (code) {
+    case GR_XY:
+    case GR_3D:
+    case GR_IMP:
+	errbox(_("You must select an X-axis variable"));
+	break;
+    case SCATTERS:
+	errbox(_("You must select a Y-axis variable"));
+	break;
+    default:
+	errbox(_("You must select a dependent variable"));
+    }
+}
+
 
 static void reverse_list (char *list)
 {
@@ -4444,28 +3808,31 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
 	gtk_clist_get_text(GTK_CLIST(w), k, 0, &vnum);
 	modv = atoi(vnum);
 	if (modv == vlinfo->v) {
-	    varlist_insert_var_full(vlinfo->v, mod, &iter, sr, locus);
+	    varlist_insert_var_full(vlinfo->v, w, k, sr, locus);
 	    break;
 	}
     }
 }
 
-static void 
-clist_row_get_v_and_lag (GtkCList *clist, int row, int *v, int *lag)
+static int count_laggable_vars (GtkWidget *w, int context)
 {
-    gchar *vstr, *lstr;
+    gint rows, xnum, lag;
+    int k, nv = 0;
 
-    gtk_clist_get_text(clist, row, 0, &vstr);
-    *v = atoi(vstr);
+    if (!GTK_IS_CLIST(w)) {
+	return 0;
+    }  
 
-    if (lag != NULL) {
-	gtk_clist_get_text(clist, row, 1, &lstr);
-	if (lstr != NULL) {
-	    *lag = atoi(lstr);
-	} else {
-	    *lag = 0;
+    rows = GTK_CLIST(w)->rows;
+
+    for (k=0; k<rows; k++) {
+	clist_row_get_v_and_lag(GTK_CLIST(w), k, &xnum, &lag);
+	if (laggable_var(xnum, lag, context)) {
+	    nv++;
 	}
     }
+
+    return nv;
 }
 
 static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
@@ -4489,17 +3856,8 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
     } 
 
     for (j=0; list[j] != NULL && j<2; j++) {
-	if (!GTK_IS_CLIST(list[j])) {
-	    return NULL;
-	}
 	context = (j == 1)? LAG_INSTR : LAG_X;
-	rows = GTK_CLIST(list[j])->rows;
-	for (k=0; k<rows; k++) {
-	    clist_row_get_v_and_lag(GTK_CLIST(list[j]), k, &xnum, &lag);
-	    if (laggable_var(xnum, lag, context)) {
-		nv[j] += 1;
-	    }
-	}
+	nv[j] = count_laggable_vars(list[j], context);
     }
 
     if (nv[0] == 0) {
@@ -4600,6 +3958,33 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
     } while (gtk_tree_model_iter_next(mod, &iter));
 }
 
+static int count_laggable_vars (GtkWidget *w, int context)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gint xnum, lag;
+    int nv = 0;
+
+    if (!GTK_IS_TREE_VIEW(w)) {
+	return 0;
+    }
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
+    if (model == NULL) {
+	return 0;
+    }
+
+    if (gtk_tree_model_get_iter_first(model, &iter)) {
+	do {
+	    gtk_tree_model_get(model, &iter, 0, &xnum, 1, &lag, -1);
+	    if (laggable_var(xnum, lag, context)) { 
+		nv++;
+	    }
+	} while (gtk_tree_model_iter_next(model, &iter));
+    }
+
+    return nv;
+}
+
 static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 {
     GtkWidget *list[2] = { NULL, NULL };
@@ -4624,22 +4009,8 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
     } 
 
     for (j=0; list[j] != NULL && j<2; j++) {
-	if (!GTK_IS_TREE_VIEW(list[j])) {
-	    return NULL;
-	}
-	model = gtk_tree_view_get_model(GTK_TREE_VIEW(list[j]));
-	if (model == NULL) {
-	    return NULL;
-	}
 	context = (j == 1)? LAG_INSTR : LAG_X;
-	if (gtk_tree_model_get_iter_first(model, &iter)) {
-	    do {
-		gtk_tree_model_get(model, &iter, 0, &xnum, 1, &lag, -1);
-		if (laggable_var(xnum, lag, context)) { 
-		    nv[j] += 1;
-		}
-	    } while (gtk_tree_model_iter_next(model, &iter));
-	}
+	nv[j] = count_laggable_vars(list[j], context);
     }
 
     if (nv[0] == 0) {
