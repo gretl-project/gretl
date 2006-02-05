@@ -77,6 +77,11 @@ per gli scalari e le serie di dati. Per ottenere una matrice come risultato,
 però, il comando deve iniziare con la parola chiave \texttt{matrix}, non
 \texttt{genr}.  I prossimi paragrafi spiegano nel dettaglio questi meccanismi.
 
+\tip{I nomi delle matrici devono soddisfare gli stessi requisiti dei nomi delle
+variabili in gretl: il nome non può essere più lungo di 15 caratteri, deve
+iniziare per una lettera e deve essere composto da lettere, numeri e il
+carattere trattino basso.}
+
 \section{Operatori matriciali}
 \label{matrix-op}
 
@@ -161,129 +166,124 @@ C = A ~ B
 % 
 produce $C = \left[ \begin{array}{cc} A & B \end{array} \right]$.
 
-\section{Matrix functions}
+\section{Funzioni matriciali}
 \label{matrix-func}
 
-The following functions are available for \textit{element-by-element
-  transformations} of matrices: \texttt{log}, \texttt{exp},
+Sono disponibili le seguenti funzioni per \textit{la trasformazione
+elemento per elemento} delle matrici: \texttt{log}, \texttt{exp},
 \texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int},
 \texttt{abs}, \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm},
-\texttt{qnorm}, \texttt{gamma} and \texttt{lngamma}.  These functions
-have the same meanings as in \texttt{genr}.  For example, if a matrix
-\texttt{A} is already defined, then
+\texttt{qnorm}, \texttt{gamma} e \texttt{lngamma}. Queste funzioni hanno
+lo stesso significato di quando sono usate con \texttt{genr}. Ad esempio,
+se una matrice \texttt{A} è già stata definita,
 %
 \begin{code}
 matrix B = sqrt(A)
 \end{code}
 %
-generates a matrix such that $b_{ij} = \sqrt{a_{ij}}$.  All of these
-functions require a single matrix as argument, or an expression which
-evaluates to a single matrix.
+genera una matrice tale che $b_{ij} = \sqrt{a_{ij}}$.  Tutte queste
+funzioni richiedono una sola matrice come argomento, o un'espressione
+che si risolve in una singola matrice.
 
-The functions \texttt{sort()} and \texttt{dsort()} are available for
-matrices as well as data series.  In the matrix case the argument to
-these functions must be a vector ($p \times 1$ or $1\times p$).  The
-return value is a vector containing the elements of the input vector
-sorted in ascending order of magnitude (\texttt{sort}) or descending
-order (\texttt{dsort}).
+Le funzioni \texttt{sort()} e \texttt{dsort()} utilizzabili con le serie di
+dati, possono essere usate anche con le matrici. In questo caso,
+l'argomento di queste funzioni deve essere un vettore ($p \times 1$ o
+$1\times p$).  Il valore restituito è un vettore che contiene gli elementi del
+vettore originale riordinati in ordine di grandezza crescente (\texttt{sort})
+o decrescente (\texttt{dsort}).
 
-Several matrix-specific functions are available.  These functions fall
-into four categories:
+Infine, ci sono funzioni dedicate in modo specifico alle matrici, che è
+possibile suddividere in quattro categorie:
 %
 \begin{enumerate}
-\item Those taking a single matrix as argument and returning a scalar.
-\item Those taking a single matrix as argument and returning a matrix.
-\item Those taking one or two dimensions as arguments and
-  returning a matrix.
-\item Those taking one or two matrices as arguments and returning one
-  or two matrices.
+\item Quelle che richiedono come argomento una sola matrice e restituiscono uno scalare.
+\item Quelle che richiedono come argomento una sola matrice e restituiscono una matrice.
+\item Quelle che richiedono come argomento uno o due valori e restituiscono una matrice.
+\item Quelle che richiedono come argomento una o due matrici e restituiscono una o due matrici.
 \end{enumerate}
 %
-These sets of functions are discussed in turn below.
+Questi gruppi di funzioni vengono presentati nell'ordine.
 
-\subsection{Matrix to scalar functions}
+\subsection{Funzioni da matrice a scalare}
 \label{matrix-to-scalar}
 
-The functions which take a single matrix as argument and return a
-scalar are:
+Le funzioni che richiedono come argomento una sola matrice e restituiscono uno
+scalare sono:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{det()} & determinant \\
-\texttt{ldet()} & log-determinant \\
-\texttt{tr()} & trace \\
-\texttt{onenorm()} & 1-norm \\
-\texttt{rcond()} & reciprocal condition number \\
-\texttt{rows()} & number of rows \\
-\texttt{cols()} & number of columns 
+\texttt{det()} & determinante \\
+\texttt{ldet()} & log-determinante \\
+\texttt{tr()} & traccia \\
+\texttt{onenorm()} & norma-1 \\
+\texttt{rcond()} & reciproco del numero di condizione \\
+\texttt{rows()} & numero di righe \\
+\texttt{cols()} & numero di colonne 
 \end{tabular}
 \end{center}
 
-The single matrix argument to these functions may be given as the name
-of an existing matrix or as an expression that evaluates to a single
-matrix.  Note that the functions \texttt{det}, \texttt{ldet} and
-\texttt{tr} require a square matrix as input.  
+L'argomento di queste funzioni può essere il nome di una matrice esistente o
+un'espressione che si risolve in una matrice. Si noti che le funzioni
+\texttt{det}, \texttt{ldet} e \texttt{tr} richiedono una matrice quadrata.
 
-The \texttt{onenorm} function returns the 1-norm of a matrix --- that
-is, the maximum across the columns of the matrix of the sums of the
-absolute values of the column elements.  The function \texttt{rcond}
-returns the reciprocal condition number for a symmetric, positive
-definite matrix.
+La funzione \texttt{onenorm} restituisce la norma-1 di una matrice, ossia
+il massimo tra le colonne della matrice della somma dei valori assoluti degli
+elementi della colonna. La funzione \texttt{rcond} restituisce il reciproco del
+numero di condizione per una matrice simmetrica definita positiva.
 
-\subsection{Matrix to matrix functions}
+\subsection{Funzioni da matrice a matrice}
 \label{matrix-to-matrix}
 
-The functions which take a single matrix as argument and return a
-matrix are:
+Le funzioni che richiedono come argomento una sola matrice e restituiscono una
+matrice sono:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{inv()} & inverse \\
-\texttt{cholesky()} & Cholesky decomposition \\
-\texttt{diag()} & extract principal diagonal \\
-\texttt{transp()} & transpose \\
-\texttt{cdemean()} & subtract column means 
+\texttt{inv()} & inversa \\
+\texttt{cholesky()} & scomposizione di Cholesky \\
+\texttt{diag()} & diagonale principale \\
+\texttt{transp()} & trasposta \\
+\texttt{cdemean()} & sottrazione della media delle colonne 
 \end{tabular}
 \end{center}
 
-As with the previous set of functions, the argument may be given as
-the name of an existing matrix or as an expression that evaluates to a
-single matrix.
+Come per il gruppo precedente di funzioni, l'argomento deve essere il nome di
+una matrice esistente o un'espressione che si risolve in una matrice.
 
-The \texttt{cholesky} function computes the Cholesky decomposition $L$
-of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower
-triangular (has zeros above the diagonal).  
+La funzione \texttt{cholesky} calcola la scomposizione di Cholesky
+$L$ di una matrice simmetrica definita positiva $A$: $A = LL'$; $L$ è
+triangolare inferiore (contiene zeri al di sopra della diagonale).
 
-The \texttt{diag} function returns the principal diagonal of an
-$n\times n$ matrix $A$ as a column vector --- that is, an
-$n$-vector $v$ such that $v_i = a_{ii}$.
+La funzione \texttt{diag} restituisce la diagonale principale di una matrice
+$n\times n$ $A$ come vettore colonna, ossia come vettore $n$-dimensionale $v$
+tale che $v_i = a_{ii}$.
 
-The \texttt{cdemean} function applied to an $m \times n$ matrix $A$
-returns an $m \times n$ matrix $B$ such that $b_{ij} = a_{ij} -
-\bar{A}_j$, where $\bar{A}_j$ denotes the mean of column $j$ of $A$.  
+La funzione \texttt{cdemean} applicata a una matrice $A$ $m \times n$
+restituisce una mattrice $B$ $m \times n$ tale che $b_{ij} = a_{ij} -
+\bar{A}_j$, dove $\bar{A}_j$ indica la media della colonna $j$ di $A$.  
 
 \subsection{Matrix filling functions}
 \label{matrix-fill}
 
-The functions taking one or two dimensions as arguments and returning
-a matrix are:
+Le funzioni che richiedono come argomento uno o due valori e restituiscono una
+matrice sono:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{I(}\textsl{n}\texttt{)} & $n\times n$ identity matrix \\
+\texttt{I(}\textsl{n}\texttt{)} & matrice identità $n\times n$ \\
 \texttt{zeros(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} & 
-   $m\times n$ zero matrix \\
+   matrice nulla $m\times n$ \\
 \texttt{ones(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
-   $m\times n$ matrix filled with 1s \\
+   matrice $m\times n$ con tutti gli elementi pari a 1 \\
 \texttt{uniform(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
-   $m\times n$ matrix filled with uniform random values \\
+   matrice $m\times n$ con elementi casuali uniformi \\
 \texttt{normal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
-   $m\times n$ matrix filled with normal random values \\
+   matrice $m\times n$ con elementi casuali normali \\
 \end{tabular}
 \end{center}
 
-The dimensions \textsl{m} and \textsl{n} may be given numerically, or
-by reference to pre-existing scalar variables, as in
+Le dimensioni \textsl{m} e \textsl{n} possono essere indicate numericamente o
+per riferimento a variabili scalari pre-esistenti, come in
 %
 \begin{code}
 scalar m = 4
@@ -291,83 +291,82 @@ scalar n = 5
 matrix A = normal(m,n)
 \end{code}
 %
-The \texttt{uniform()} and \texttt{normal()} matrix functions fill the
-matrix with drawings from the uniform (0--1) distribution and the
-standard normal distribution respectively.
+Le funzioni matriciali \texttt{uniform()} e \texttt{normal()} riempiono la
+matrice con valori estratti dalla distribuzione uniforme (0--1) e dalla
+distribuzione normale standard.
 
 \subsection{Multiple-return matrix functions}
 \label{matrix-multiples}
 
-The functions that take one or two matrices as arguments and return
-one or two matrices are:
+Le funzioni che richiedono come argomento una o due matrici e restituiscono una
+o due matrici sono:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{qrdecomp()} & QR decomposition \\
-\texttt{eigensym()} & Eigen-analysis of symmetric matrix \\
-\texttt{eigengen()} & Eigen-analysis of general matrix 
+\texttt{qrdecomp()} & Scomposizione QR \\
+\texttt{eigensym()} & Auto-analisi di una matrice simmetrica \\
+\texttt{eigengen()} & Auto-analisi di una matrice generica
 \end{tabular}
 \end{center}
 
-The syntax for these functions is of the form
+La sintassi per queste funzioni è della forma
 %
 \begin{textcode}
 matrix B = func(\textsl{A}, \textsl{C})
 \end{textcode}
 %
-The first argument, \ttsl{A}, represents the input data, that is, the
-matrix whose decomposition or analysis is required.  This must be
-given as the name of an existing matrix; a compound expression that
-evaluates to a matrix is not accepted in this context.
+Il primo argomento, \ttsl{A}, rappresenta i dati in ingresso, ossia la matrice
+di cui è richiesta la scomposizione o l'analisi. Questo deve essere specificato
+sotto forma di nome di una matrice esistente; in questo caso non è accettata
+un'espressione che si risolve in una matrice.
 
-The second argument, \ttsl{C}, may be either the name of a matrix, in
-which case an auxiliary result is written to that matrix, or the
-keyword \texttt{null}, in which case the auxiliary result is not
-produced, or is discarded.
+Il secondo argomento, \ttsl{C}, può essere il nome di una matrice, nel qual caso
+il risultato della funzione viene scritto in quella matrice, oppure la parola
+chiave \texttt{null}, nel qual caso il risultato non è mostrato o è scartato.
 
-In case the name of a matrix is given as the second argument, this
-matrix does not have to be previously defined; a new matrix of this
-name will be created.  If a matrix of the given name already exists,
-it will be over-written with the auxiliary result.  (It is not
-required that the existing matrix, if any, be of the right dimensions
-to receive the result.)
+Nel caso in cui venga specificato il nome di una matrice come secondo argomento,
+se questa matrice non era già stata definita in precedenza, verrà creata una nuova
+matrice con questo nome. Se esiste già una matrice con questo nome, sarà
+sovrascritta con il risultato della funzione (non è richiesto che la matrice
+preesistente abbia le dimensioni corrette per ricevere il risultato della
+funzione).
 
-The \texttt{qrdecomp} function computes the QR decomposition of an $m
-\times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
-orthonormal matrix and $R$ is an $n \times n$ upper triangular matrix.
-The matrix $Q$ is returned directly, while $R$ can be retrieved via
-the second argument.  Here are two examples:
+La funzione \texttt{qrdecomp} calcola la scomposizione QE di una matrice $m
+\times n$ $A$: $A = QR$, dove $Q$ è una matrice ortonormale $m \times n$
+e $R$ è una matrice $n \times n$ triangolare superiore.
+La matrice $Q$ è prodotta direttamente, mentre $R$ può essere recuperata
+attraverso il secondo argomento. Ecco due esempi:
 %
 \begin{code}
 matrix Q = qrdecomp(M, R)
 matrix Q = qrdecomp(M, null)
 \end{code}
 %
-In the first example, the triangular $R$ is saved as \texttt{R}; in
-the second, $R$ is discarded.
+Nel primo esempio, la matrice triangolare $R$ è salvata come \texttt{R};
+nel secondo, $R$ è scartata.
 
-The function \texttt{eigensym} computes the eigenvalues, and
-optionally the right eigenvectors, of a symmetric $n \times n$ matrix.
-The eigenvalues are returned directly in a column vector of length
-$n$; if the eigenvectors are required, they are returned in an $n
-\times n$ matrix.  For example:
+La funzione \texttt{eigensym} calcola gli autovalori, e opzionalmente gli
+autovettori destri, di una matrice simmetrica $n \times n$.
+Gli autovalori sono restituiti direttamente in un vettore colonna di lunghezza
+$n$; se vengono richiesti gli autovettori, sono restituiti in una matrice $n
+\times n$. Ad esempio:
 %
 \begin{code}
 matrix E = eigensym(M, V)
 matrix E = eigensym(M, null)
 \end{code}
 %
-In the first case \texttt{E} holds the eigenvalues of \texttt{M} and
-\texttt{V} holds the eigenvectors.  In the second, \texttt{E} holds the
-eigenvalues but the eigenvectors are not computed.
+Nel primo caso \texttt{E} contiene gli autovalori di \texttt{M} e
+\texttt{V} contiene gli autovettori. Nel secondo, \texttt{E} contiene gli
+autovalori, ma gli autovettori non vengono calcolati.
 
-The function \texttt{eigengen} computes the eigenvalues, and
-optionally the eigenvectors, of a general $n \times n$ matrix.  The
-eigenvalues are returned directly in a column vector of length $2n$:
-the first $n$ elements are the real components and the remaining $n$
-are the imaginary components.  If the eigenvectors are required (that
-is, if the second argument to \texttt{eigengen} is not \texttt{null}),
-they are returned in an $n \times n$ matrix.
+La funzione \texttt{eigengen} calcola gli autovalori, e opzionalmente gli
+autovettori, di una matrice generica $n \times n$. Gli autovalori vengono
+restituiti direttamente in un vettore colonna di lunghezza $2n$: i primi
+$n$ elementi sono le componenti reali, mentre i restanti $n$ sono le componenti
+immaginarie. Se vengono richiesti gli autovettori (ossia il secondo argomento di
+\texttt{eigengen} non è \texttt{null}), essi vengono restituiti in una matrice
+$n \times n$.
 
 \section{Matrix accessors}
 \label{matrix-accessors}
