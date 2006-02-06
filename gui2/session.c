@@ -1298,8 +1298,12 @@ void save_session_callback (GtkWidget *w, guint code, gpointer data)
 
 static char *model_cmd_str (MODEL *pmod)
 {
-    char *str;
-    
+    char *str = NULL;
+
+    if (pmod->ncoeff > 10) {
+	return NULL;
+    }
+
     str = malloc(MAXLEN);
     if (str == NULL) {
 	return NULL;

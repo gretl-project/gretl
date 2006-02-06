@@ -595,8 +595,12 @@ char *gretl_list_to_string (const int *list)
 	    err = 1;
 	    break;
 	}
-	sprintf(numstr, " %d", list[i]);
-	strcat(buf, numstr);
+	if (list[i] == LISTSEP) {
+	    strcat(buf, " ;");
+	} else {
+	    sprintf(numstr, " %d", list[i]);
+	    strcat(buf, numstr);
+	}
     }
 
     if (err) {
