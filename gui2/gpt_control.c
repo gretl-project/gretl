@@ -1860,13 +1860,15 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 	strcpy(plot->spec->termtype, "postscript");
 	if (color) {
 	    strcat(plot->spec->termtype, " color");
-	}
+	} 
 	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(parent_item, _("Save as Windows metafile (EMF)..."))) {
 	strcpy(plot->spec->termtype, "emf");
 	if (color) {
 	    strcat(plot->spec->termtype, " color");
+	} else {
+	    strcat(plot->spec->termtype, " mono");
 	}
 	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      FSEL_DATA_MISC, plot->spec);
@@ -3299,7 +3301,9 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     int err, done_pt2 = 0;
 
     /* create temporary file to hold the special gnuplot commands */
-    if (user_fopen("gptout.tmp", plottmp, &prn)) return;
+    if (user_fopen("gptout.tmp", plottmp, &prn)) {
+	return;
+    }
 
     /* open the gnuplot source file for the graph */
     fq = gretl_fopen(spec->fname, "r");
