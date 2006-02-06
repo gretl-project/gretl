@@ -3962,6 +3962,11 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
     } while (gtk_tree_model_iter_next(mod, &iter));
 }
 
+/* go through a list box and find the vars that are candidates for
+   lag selection: this excludes constant and trend, and also
+   list entries that are themselves just dummy placeholders
+   for already selected lags of a variable */
+
 static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 {
     GtkTreeModel *model;

@@ -26,7 +26,7 @@
 
 #include <unistd.h>
 
-#define GP_DEBUG 0
+#define GP_DEBUG 1
 
 #ifdef _WIN32
 # include <windows.h>
@@ -764,7 +764,7 @@ int gnuplot_make_graph (void)
     char plotcmd[MAXLEN];
 
 #ifdef ENABLE_NLS  
-    if (use_latin_2()) {
+    if (use_latin_2() && gnuplot_has_ttf()) {
 # if GP_DEBUG
 	fprintf(stderr, "gnuplot_make_graph: calling recode_gnuplot_file()\n");
 # endif
