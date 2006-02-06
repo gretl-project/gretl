@@ -8,7 +8,8 @@ dblclick_lvars_row (GtkCList *clist, gint row, gint column,
 static void 
 clist_row_get_v_and_lag (GtkCList *clist, int row, int *v, int *lag)
 {
-    gchar *vstr, *lstr = NULL;
+    gchar *vstr;
+    gchar *lstr = NULL;
 
     gtk_clist_get_text(clist, row, 0, &vstr);
     *v = atoi(vstr);
@@ -287,14 +288,15 @@ static void remove_as_indep_var (selector *sr, gint v)
 	gtk_clist_get_text(GTK_CLIST(sr->rlvars), i, 0, &xnum);
 	if (v == atoi(xnum)) {
 	    gtk_clist_remove(GTK_CLIST(sr->rlvars), i);
-	    break;
 	}
     }
 }
 
-static void maybe_insert_depvar_lags (selector *sr, int v, int lcontext)
+static void 
+maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
+				    int revise)
 {
-    int *laglist = get_lag_pref_as_list(v, LAG_Y);
+    int *laglist = NULL;
     GtkWidget *w;
     gchar vstr[VNAMELEN+8];
     gchar id[8];
@@ -306,10 +308,10 @@ static void maybe_insert_depvar_lags (selector *sr, int v, int lcontext)
     int jmin = 0, jmax = 1;
     int i, j;
 
-    if (context == LAG_Y_X) {
+    if (lcontext == LAG_Y_X) {
 	jmin = 0;
 	jmax = 1;
-    } else if (lcontext == LAG_Y_INSTR) {
+    } else if (lcontext == LAG_Y_W) {
 	/* TSLS */
 	jmin = 1;
 	jmax = 2;
@@ -320,15 +322,20 @@ static void maybe_insert_depvar_lags (selector *sr, int v, int lcontext)
 
     for (j=0; j<jmax; j++) {
 
+	w = (j > 0)? sr->ruvars: sr->rlvars;
+	if (w == NULL) {
+	    return;
+	}
+
 	if (lcontext == 0) {
-	    lcontext = (j > 0)? LAG_Y_INSTR : LAG_Y_X;
+	    lcontext = (j > 0)? LAG_Y_W : LAG_Y_X;
 	}
 
 	laglist = get_lag_pref_as_list(v, lcontext);
-	if (laglist == NULL) return;
-
-	w = (j > 0)? sr->ruvars: sr->rlvars;
-	if (w == NULL) {
+	if (laglist == NULL) {
+	    if (revise) {
+		varlist_remove_var_full(v, w);
+	    }
 	    return;
 	}
 
@@ -365,24 +372,51 @@ static void maybe_insert_depvar_lags (selector *sr, int v, int lcontext)
     }
 }
 
+static void maybe_insert_depvar_lags (selector *sr, int v, int lcontext)
+{
+    maybe_insert_or_revise_depvar_lags(sr, v, lcontext, 0);
+}
+
+static void maybe_revise_depvar_lags (selector *sr, int v, int lcontext)
+{
+    maybe_insert_or_revise_depvar_lags(sr, v, lcontext, 1);
+}
+
+static void dependent_var_cleanup (selector *sr, int newy)
+{
+    int oldy = selector_get_depvar_number(sr);
+
+    if (oldy > 0) {
+	remove_as_indep_var(sr, oldy);
+	if (oldy != newy) {
+	    y_x_lags_enabled = 0;
+	    y_w_lags_enabled = 0;
+	}
+    }
+    remove_as_indep_var(sr, newy);
+}
+
 static void real_set_dependent_var (gint i, selector *sr)
 {
     gchar *vnum, *vname;
+    int v;
 
     if (sr->depvar == NULL) return;
 
-    if (MODEL_CODE(sr->code)) {
-	remove_as_indep_var(sr, i);
-    }
-
     gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 0, &vnum); 
     gtk_clist_get_text(GTK_CLIST(sr->lvars), i, 2, &vname);
+    v = atoi(vnum);
+
+    if (MODEL_CODE(sr->code)) {
+	dependent_var_cleanup(sr, v);
+    }    
+
     gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
     gtk_object_set_data(GTK_OBJECT(sr->depvar), "data",
-			GINT_TO_POINTER(atoi(vnum))); 
+			GINT_TO_POINTER(v)); 
 
     if (select_lags_depvar(sr->code)) {
-	maybe_insert_depvar_lags(sr, atoi(vnum));
+	maybe_insert_depvar_lags(sr, v, 0);
     }
 }
 

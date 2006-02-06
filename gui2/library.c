@@ -6428,7 +6428,7 @@ int gui_exec_line (char *line,
 	}
 	strcpy(texfile, cmd.param);
 	err = texprint(models[0], datainfo, texfile, 
-		       (cmd.ci == EQNPRINT)? (cmd.opt & OPT_E) :
+		       (cmd.ci == EQNPRINT)? (cmd.opt | OPT_E) :
 		       cmd.opt);
 	if (err) {
 	    pprintf(prn, _("Couldn't open tex file for writing\n"));

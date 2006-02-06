@@ -426,6 +426,42 @@ int *gretl_list_resize (int **oldlist, int nterms)
     return list;
 }
 
+int gretl_compare_ints (const void *a, const void *b)
+{
+    const int *ia = (const int *) a;
+    const int *ib = (const int *) b;
+     
+    return (*ia > *ib) - (*ia < *ib);
+}
+
+/**
+ * gretl_list_sort:
+ * @list: list to be sorted.
+ * 
+ * Sorts the elements from position 1 to the end of @list
+ * in ascending order.
+ *
+ * Returns: the sorted list.
+ */
+
+int *gretl_list_sort (int *list)
+{
+    int i, sorted = 1;
+
+    for (i=1; i<list[0]; i++) {
+	if (list[i] > list[i+1]) {
+	    sorted = 0;
+	    break;
+	}
+    }
+
+    if (!sorted) {
+	qsort(list + 1, list[0], sizeof *list, gretl_compare_ints);
+    }
+
+    return list;
+}
+
 /**
  * gretl_null_list:
  * 
@@ -852,8 +888,8 @@ static int list_count (const int *list)
  * a count of the number of elements following.
  * @omit: list of variables to drop.
  * @minpos: minimum position to check.  This should be 2 for a regular
- * regression list, to skip the dependent var in position 1; but it
- * may be 1 to start from the first element of @orig.
+ * regression list, to skip the dependent var in position 1; but in
+ * other contexts it may be 1 to start from the first element of @orig.
  * @err: pointer to receive error code.
  *
  * Creates a list containing the elements of @orig that are not
@@ -907,10 +943,11 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
     }
 
     for (i=1; i<minpos; i++) {
+	/* copy unaltered portion */
 	smal[i] = orig[i];
     }
 
-    k = 1;
+    k = minpos;
     for (i=minpos; i<=norig; i++) {
         int match = 0;
 
@@ -921,7 +958,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
             }
         }
         if (!match) { /* var is not in omit list: keep it */
-            smal[++k] = orig[i];
+            smal[k++] = orig[i];
         }
     }
 

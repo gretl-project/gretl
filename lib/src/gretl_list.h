@@ -24,6 +24,8 @@ int *gretl_list_new (int nterms);
 
 int *gretl_list_resize (int **oldlist, int nterms);
 
+int *gretl_list_sort (int *list);
+
 int *gretl_null_list (void);
 
 int *gretl_consecutive_list_new (int lmin, int lmax);

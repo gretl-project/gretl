@@ -15,8 +15,8 @@ enum {
 enum {
     LAG_X = 1,    /* lags set for regular variable context */
     LAG_Y_X,      /* lags for dependent variable */
-    LAG_INSTR,    /* lags set for variable as instrument */
-    LAG_Y_INSTR   /* lags for dependent var as instrument */
+    LAG_W,        /* lags set for variable as instrument */
+    LAG_Y_W       /* lags for dependent var as instrument */
 } LagContext;
 
 typedef struct lagpref_ lagpref;
@@ -60,8 +60,16 @@ static lagpref *lpref_new (int v, char context)
     }
 
     lpref->v = v;
-    lpref->spectype = LAGS_NONE;
     lpref->context = context;
+
+    if (context == LAG_Y_X || context == LAG_Y_W) {
+	/* by default: one lag, but not enabled */
+	lpref->spectype = LAGS_MINMAX;
+	lpref->lspec.lminmax[0] = 1;
+	lpref->lspec.lminmax[1] = 1;
+    } else {
+	lpref->spectype = LAGS_NONE;
+    }
 
     return lpref;
 }
@@ -125,8 +133,12 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
     }
 
     if (mod == 0) {
+	fprintf(stderr, "modify_lpref: no changes made\n");
 	return mod;
     }
+
+    fprintf(stderr, "modify_lpref: lmin=%d, lmax=%d, laglist=%p\n",
+	    lmin, lmax, (void *) laglist);
 
     if (lpref->spectype == LAGS_LIST) {
 	free(lpref->lspec.laglist);
@@ -136,7 +148,7 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 	lpref->lspec.lminmax[0] = lmin;
 	lpref->lspec.lminmax[1] = lmax;
     } else if (spectype == LAGS_LIST) {
-	lpref->lspec.laglist = laglist;
+	lpref->lspec.laglist = gretl_list_sort(laglist);
     } else if (spectype == LAGS_NONE) {
 	lpref->lspec.lminmax[0] = 0;
 	lpref->lspec.lminmax[1] = 0;
@@ -173,7 +185,7 @@ static lagpref *get_saved_lpref (int v, char context)
     return lpref;
 }
 
-/* determine if a variable in a listbox is just a lag "dummy"
+/* determine if a variable in a listbox is just a "dummy" lag
    entry or not */
 
 static int is_lag_dummy (int v, int lag, char context)
@@ -210,8 +222,8 @@ static int remove_specific_lag (int v, int lag, char context)
     if (v == ynum) {
 	if (context == LAG_X) {
 	    context = LAG_Y_X;
-	} else if (context == LAG_INSTR) {
-	    context = LAG_Y_INSTR;
+	} else if (context == LAG_W) {
+	    context = LAG_Y_W;
 	}
     }
 
@@ -274,6 +286,20 @@ static int remove_specific_lag (int v, int lag, char context)
     return err;
 }
 
+static lagpref *lpref_add (int v, char context)
+{
+    lagpref *lpref = lpref_new(v, context);
+
+    if (lpref != NULL) {
+	if (add_lpref_to_stack(lpref)) {
+	    free(lpref);
+	    lpref = NULL;
+	}
+    }
+
+    return lpref;
+}
+
 static int set_lag_prefs_from_list (int v, int *llist, char context,
 				    int *changed)
 {
@@ -284,22 +310,34 @@ static int set_lag_prefs_from_list (int v, int *llist, char context,
 
     if (lpref == NULL) {
 	*changed = 1;
-	lpref = lpref_new(v, context);
-	if (lpref == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = add_lpref_to_stack(lpref);
-	}
+	lpref = lpref_add(v, context);
     }
 
-    if (!err) {
+    if (lpref == NULL) {
+	err = E_ALLOC;
+    } else {
 	mod = modify_lpref(lpref, LAGS_LIST, 0, 0, llist);
 	if (!*changed && mod) {
 	    *changed = 1;
 	}
-    }
+    } 
 
     return err;
+}
+
+static int minmax_defaults (int lmin, int lmax, char context)
+{
+    if ((context == LAG_X || context == LAG_W) &&
+	lmin == 0 && lmax == 0) {
+	return 1;
+    }
+
+    if ((context == LAG_Y_X || context == LAG_Y_W) &&
+	lmin == 1 && lmax == 1) {
+	return 1;
+    }
+
+    return 0;
 }
 
 static int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
@@ -310,22 +348,23 @@ static int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
 
     *changed = 0;
 
-    if (lpref == NULL) {
-	*changed = 1;
-	lpref = lpref_new(v, context);
-	if (lpref == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    err = add_lpref_to_stack(lpref);
-	}
+    if (lpref == NULL && minmax_defaults(lmin, lmax, context)) {
+	return 0;
     }
 
-    if (!err) {
+    if (lpref == NULL) {
+	*changed = 1;
+	lpref = lpref_add(v, context);
+    }
+
+    if (lpref == NULL) {
+	err = E_ALLOC;
+    } else {
 	mod = modify_lpref(lpref, LAGS_MINMAX, lmin, lmax, NULL);
 	if (!*changed && mod) {
 	    *changed = 1;
 	}	
-    }    
+    } 
 
     return err;
 }
@@ -349,6 +388,16 @@ get_lag_preference (int v, int *lmin, int *lmax, const int **laglist,
 
     *lmin = *lmax = 0;
     *laglist = NULL;
+
+    if ((context == LAG_Y_X && !y_x_lags_enabled) ||
+	(context == LAG_Y_W && !y_w_lags_enabled)) {
+	return;
+    }  
+
+    if ((context == LAG_Y_X || context == LAG_Y_W) && lpref == NULL) {
+	*lmin = *lmax = 1;
+	return;
+    }  
     
     if (lpref == NULL || v >= datainfo->v) {
 	return;
@@ -366,6 +415,20 @@ static int *get_lag_pref_as_list (int v, char context)
 {
     lagpref *lpref = get_saved_lpref(v, context);
     int *list = NULL;
+
+    if ((context == LAG_Y_X && !y_x_lags_enabled) ||
+	(context == LAG_Y_W && !y_w_lags_enabled)) {
+	return NULL;
+    }
+
+    if ((context == LAG_Y_X || context == LAG_Y_W) && lpref == NULL) {
+	/* the default: a single lag */
+	list = gretl_list_new(1);
+	if (list != NULL) {
+	    list[1] = 1;
+	}
+	return list;
+    }
 
     if (lpref != NULL) { 
 	if (lpref->spectype == LAGS_LIST) {
