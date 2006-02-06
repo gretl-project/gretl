@@ -26,7 +26,7 @@
 
 #include <unistd.h>
 
-#define GP_DEBUG 1
+#define GP_DEBUG 0
 
 #ifdef _WIN32
 # include <windows.h>
