@@ -2247,9 +2247,11 @@ int command_ok_for_model (int test_ci, int model_ci)
 	    model_ci == ARMA || model_ci == GARCH) ok = 0;
 	break;
 
+#if 0
     case EQNPRINT:
 	if (model_ci != OLS) ok = 0; /* FIXME: unduly restrictive? */
 	break;
+#endif
 
     case LMTEST:
 	if (model_ci != OLS && model_ci != POOLED) ok = 0;

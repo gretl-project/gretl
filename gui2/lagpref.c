@@ -13,9 +13,10 @@ enum {
 } SpecType;
 
 enum {
-    LAG_Y = 1,    /* lags set for dependent variable */
-    LAG_X,        /* lags set for regular variable context */
-    LAG_INSTR     /* lags set for the variable as instrument */
+    LAG_X = 1,    /* lags set for regular variable context */
+    LAG_Y_X,      /* lags for dependent variable */
+    LAG_INSTR,    /* lags set for variable as instrument */
+    LAG_Y_INSTR   /* lags for dependent var as instrument */
 } LagContext;
 
 typedef struct lagpref_ lagpref;
@@ -87,9 +88,46 @@ static void print_lpref (lagpref *lpref)
 }
 #endif
 
+static int listsame (const int *list1, const int *list2)
+{
+    int i;
+
+    for (i=0; i<=list1[0]; i++) {
+	if (list2[i] != list1[i]) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
+/* return 1 if actually changed, else 0 */
+
 static int 
 modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 {
+    int mod = 1;
+
+    if (spectype == lpref->spectype) {
+	if (spectype == LAGS_LIST) {
+	    if (listsame(laglist, lpref->lspec.laglist)) {
+		free(laglist);
+		mod = 0;
+	    }
+	} else if (spectype == LAGS_MINMAX) {
+	    if (lmin == lpref->lspec.lminmax[0] &&
+		lmax == lpref->lspec.lminmax[1]) {
+		mod = 0;
+	    }
+	} else if (spectype == LAGS_NONE) {
+	    mod = 0;
+	}
+    }
+
+    if (mod == 0) {
+	return mod;
+    }
+
     if (lpref->spectype == LAGS_LIST) {
 	free(lpref->lspec.laglist);
     }    
@@ -112,7 +150,7 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
     print_lpref(lpref);
 #endif    
 
-    return 0;
+    return mod;
 }
 
 static lagpref *get_saved_lpref (int v, char context)
@@ -164,9 +202,20 @@ static int is_lag_dummy (int v, int lag, char context)
 
 static int remove_specific_lag (int v, int lag, char context)
 {
-    lagpref *lpref = get_saved_lpref(v, context);
+    int ynum = selector_get_depvar_number(open_selector);
+    lagpref *lpref;
     int lmin, lmax;
     int err = 0;
+
+    if (v == ynum) {
+	if (context == LAG_X) {
+	    context = LAG_Y_X;
+	} else if (context == LAG_INSTR) {
+	    context = LAG_Y_INSTR;
+	}
+    }
+
+    lpref = get_saved_lpref(v, context);
 
     if (lpref == NULL) {
 	err = 1;
@@ -225,12 +274,16 @@ static int remove_specific_lag (int v, int lag, char context)
     return err;
 }
 
-static int set_lag_prefs_from_list (int v, int *llist, char context)
+static int set_lag_prefs_from_list (int v, int *llist, char context,
+				    int *changed)
 {
     lagpref *lpref = get_saved_lpref(v, context);
-    int err = 0;
+    int mod, err = 0;
+
+    *changed = 0;
 
     if (lpref == NULL) {
+	*changed = 1;
 	lpref = lpref_new(v, context);
 	if (lpref == NULL) {
 	    err = E_ALLOC;
@@ -240,19 +293,25 @@ static int set_lag_prefs_from_list (int v, int *llist, char context)
     }
 
     if (!err) {
-	modify_lpref(lpref, LAGS_LIST, 0, 0, llist);
+	mod = modify_lpref(lpref, LAGS_LIST, 0, 0, llist);
+	if (!*changed && mod) {
+	    *changed = 1;
+	}
     }
 
     return err;
 }
 
 static int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
-				      char context)
+				      char context, int *changed)
 {
     lagpref *lpref = get_saved_lpref(v, context);
-    int err = 0;
+    int mod, err = 0;
+
+    *changed = 0;
 
     if (lpref == NULL) {
+	*changed = 1;
 	lpref = lpref_new(v, context);
 	if (lpref == NULL) {
 	    err = E_ALLOC;
@@ -262,18 +321,23 @@ static int set_lag_prefs_from_minmax (int v, int lmin, int lmax,
     }
 
     if (!err) {
-	modify_lpref(lpref, LAGS_MINMAX, lmin, lmax, NULL);
+	mod = modify_lpref(lpref, LAGS_MINMAX, lmin, lmax, NULL);
+	if (!*changed && mod) {
+	    *changed = 1;
+	}	
     }    
 
     return err;
 }
 
-static void set_null_lagpref (int v, char context)
+static void set_null_lagpref (int v, char context, int *changed)
 {
     lagpref *lpref = get_saved_lpref(v, context);
 
     if (lpref != NULL) {
-	modify_lpref(lpref, LAGS_NONE, 0, 0, NULL);
+	*changed = modify_lpref(lpref, LAGS_NONE, 0, 0, NULL);
+    } else {
+	*changed = 0;
     }
 }
 
@@ -309,9 +373,6 @@ static int *get_lag_pref_as_list (int v, char context)
 	} else if (lpref->spectype == LAGS_MINMAX) {
 	    list = gretl_consecutive_list_new(lpref->lspec.lminmax[0],
 					      lpref->lspec.lminmax[1]);
-	}
-	if (context == LAG_Y) {
-	    gretl_list_delete_at_pos(list, 1);
 	}
     }
 

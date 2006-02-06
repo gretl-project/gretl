@@ -133,7 +133,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 			       selector *sr);
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static int list_show_var (int v, int code, int show_lags);
-static int selector_get_depvar_number (selector *sr);
+static int selector_get_depvar_number(selector *sr);
 
 #include "lagpref.c"
 
@@ -161,7 +161,7 @@ static int sr_get_lag_context (selector *sr, int locus)
     } else if (locus == SR_RLVARS && select_lags_lower(sr->code)) {
 	c = LAG_X;
     } else if (locus == SR_DEPVAR && select_lags_depvar(sr->code)) {
-	c = LAG_Y;
+	c = LAG_Y_X; /* FIXME TSLS */
     }
 
     return c;
@@ -533,48 +533,76 @@ static void remove_as_indep_var (selector *sr, gint v)
     }
 }
 
-static void maybe_insert_depvar_lags (selector *sr, int v)
+static void maybe_insert_depvar_lags (selector *sr, int v, int lcontext)
 {
-    int *laglist = get_lag_pref_as_list(v, LAG_Y);
+    int *laglist = NULL;
     GtkWidget *w;
     GtkTreeModel *mod;
     GtkTreeIter iter;
     int append = 1;
-    int i, modv, row = 0;
+    int modv, row = 0;
+    int jmin = 0, jmax = 1;
+    int i, j;
 
-    if (laglist == NULL) return;
-
-    w = sr->rlvars; /* TSLS? */
-    if (w == NULL) {
-	return;
+    if (lcontext == LAG_Y_X) {
+	jmin = 0;
+	jmax = 1;
+    } else if (lcontext == LAG_Y_INSTR) {
+	/* TSLS */
+	jmin = 1;
+	jmax = 2;
+    } else if (sr->code == TSLS) {
+	jmin = 0;
+	jmax = 2;
     }
 
-    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
-    varlist_remove_var_full(v, mod, &iter);
+    for (j=0; j<jmax; j++) {
 
-    gtk_tree_model_get_iter_first(mod, &iter);
-
-    do {
-	gtk_tree_model_get(mod, &iter, 0, &modv, -1);
-	fprintf(stderr, "maybe_insert_depvar_lags: modv=%d\n", modv);
-	if (modv > 0) {
-	    append = 0;
-	    break;
+	if (lcontext == 0) {
+	    lcontext = (j > 0)? LAG_Y_INSTR : LAG_Y_X;
 	}
-	row++;
-    } while (gtk_tree_model_iter_next(mod, &iter));
 
-    for (i=1; i<=laglist[0]; i++) {
-	if (append) {
-	    gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
-	} else {
-	    gtk_list_store_insert(GTK_LIST_STORE(mod), &iter, row++);
+	laglist = get_lag_pref_as_list(v, lcontext);
+	if (laglist == NULL) return;
+
+	w = (j > 0)? sr->ruvars: sr->rlvars;
+	if (w == NULL) {
+	    return;
 	}
-	fprintf(stderr, "adding var %d, lag %d\n", v, laglist[i]);
-	real_varlist_set_var(v, laglist[i], GTK_LIST_STORE(mod), &iter);
-    }    
 
-    free(laglist);
+	mod = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
+	varlist_remove_var_full(v, mod, &iter);
+
+	gtk_tree_model_get_iter_first(mod, &iter);
+
+	do {
+	    gtk_tree_model_get(mod, &iter, 0, &modv, -1);
+	    fprintf(stderr, "maybe_insert_depvar_lags: modv=%d\n", modv);
+	    if (modv > 0) {
+		append = 0;
+		break;
+	    }
+	    row++;
+	} while (gtk_tree_model_iter_next(mod, &iter));
+
+	for (i=1; i<=laglist[0]; i++) {
+#if 1
+	    /* FIXME: this should be caught much earlier!! */
+	    if (laglist[i] == 0) {
+		continue;
+	    }
+#endif
+	    if (append) {
+		gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
+	    } else {
+		gtk_list_store_insert(GTK_LIST_STORE(mod), &iter, row++);
+	    }
+	    fprintf(stderr, "adding var %d, lag %d\n", v, laglist[i]);
+	    real_varlist_set_var(v, laglist[i], GTK_LIST_STORE(mod), &iter);
+	}    
+
+	free(laglist);
+    }
 }
 
 static void set_dependent_var_from_active (selector *sr)
@@ -593,7 +621,7 @@ static void set_dependent_var_from_active (selector *sr)
     g_object_set_data(G_OBJECT(sr->depvar), "data", GINT_TO_POINTER(v));
 
     if (select_lags_depvar(sr->code)) {
-	maybe_insert_depvar_lags(sr, v);
+	maybe_insert_depvar_lags(sr, v, 0);
     }
 }
 
@@ -608,7 +636,7 @@ static void real_set_dependent_var (GtkTreeModel *model, GtkTreePath *path,
     g_object_set_data(G_OBJECT(sr->depvar), "data", GINT_TO_POINTER(v));
 
     if (select_lags_depvar(sr->code)) {
-	maybe_insert_depvar_lags(sr, v);
+	maybe_insert_depvar_lags(sr, v, 0);
     }
 }
 
@@ -1008,15 +1036,18 @@ static void clear_vars (GtkWidget *w, selector *sr)
     }
 }
 
-static gint varlist_row_count (GtkWidget *w, int *realrows)
+static gint varlist_row_count (selector *sr, int locus, int *realrows)
 {
     int lcontext = 0;
+    GtkWidget *w;
     GtkTreeModel *mod;
     GtkTreeIter iter;
     gint v, lag, n = 0;
 
+    w = (locus == SR_RLVARS)? sr->rlvars : sr->ruvars;
+
     if (realrows != NULL) {
-	lcontext = lag_context_from_widget(w);
+	lcontext = sr_get_lag_context(sr, locus);
 	*realrows = 0;
     }
 
@@ -1140,9 +1171,7 @@ static void add_pq_vals_to_cmdlist (selector *sr)
 
 /* Take the stored preferred laglist for a variable (if any) and
    convert to a string specification for adding to the regression
-   command line.  Note that if we're looking at the dependent
-   variable, we skip the first element of the laglist since that will
-   appear separately, on the left.
+   command line.
 */
 
 static char *
@@ -1150,29 +1179,22 @@ discrete_lags_string (const char *vname, const int *laglist,
 		      char context)
 {
     int len = strlen(vname) + 4;
-    int nlags = laglist[0];
-    int istart = 1;
     gchar *tmp;
     char *s;
-    int i, l;
+    int i, li;
     int err = 0;
 
-    if (context == LAG_Y) {
-	nlags--;
-	istart++;
-    }
-
-    s = malloc(len + nlags * 6);
+    s = malloc(len + laglist[0] * 6);
 
     if (s != NULL) {
 	sprintf(s, " %s(", vname);
-	for (i=istart; i<=laglist[0]; i++) {
-	    l = laglist[i];
-	    if (l > 999) {
+	for (i=1; i<=laglist[0]; i++) {
+	    li = laglist[i];
+	    if (li > 999) {
 		err = 1;
 		break;
 	    }
-	    tmp = g_strdup_printf("%s%d", (l > 0)? "-" : "", l);
+	    tmp = g_strdup_printf("%s%d", (li > 0)? "-" : "", li);
 	    strcat(s, tmp);
 	    if (i < laglist[0]) {
 		strcat(s, ", ");
@@ -1207,10 +1229,6 @@ static char *get_lagpref_string (int v, char context)
 
     get_lag_preference(v, &lmin, &lmax, &laglist, context);
 
-    if (context == LAG_Y && lmax != lmin) {
-	lmin++;
-    }
-
     if (laglist != NULL) {
 	s = discrete_lags_string(vname, laglist, context);
     } else if (lmin != lmax) {
@@ -1219,7 +1237,7 @@ static char *get_lagpref_string (int v, char context)
     } else if (lmin != 0) {
 	s = g_strdup_printf(" %s(%s%d)", vname, (lmin > 0)? "-" : "",
 			    lmin);
-    } else if (context != LAG_Y) {
+    } else if (context != LAG_Y_X && context != LAG_Y_INSTR) {
 	s = g_strdup_printf(" %d", v);
     }
 
@@ -1258,6 +1276,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     gint rows = 0, realrows = 0;
     gchar numstr[8], endbit[12] = {0};
     char *dvlags = NULL;
+    char *idvlags = NULL;
     int context = 0;
     int order = 0;
 #ifndef OLD_GTK
@@ -1276,7 +1295,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     sr->cmdlist[0] = 0;
 
     if (sr->code != GR_DUMMY && sr->code != GR_3D) {
-	rows = varlist_row_count(sr->rlvars, &realrows);
+	rows = varlist_row_count(sr, SR_RLVARS, &realrows);
     }
 
     /* deal with content of first "extra" widget */
@@ -1351,6 +1370,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    sr->error = 1;
 	} else {
 	    int ynum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), "data"));
+
 	    if (sr->code == GR_XY || sr->code == GR_IMP) {
 		sprintf(endbit, " %d", ynum);
 	    } else {
@@ -1359,7 +1379,10 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    }
 	    if (dataset_is_time_series(datainfo) && 
 		select_lags_depvar(sr->code)) {
-		dvlags = get_lagpref_string(ynum, LAG_Y);
+		dvlags = get_lagpref_string(ynum, LAG_Y_X);
+		if (sr->code == TSLS) {
+		    idvlags = get_lagpref_string(ynum, LAG_Y_INSTR);
+		}
 	    }
 	    if (sr->default_check != NULL && 
 		GTK_TOGGLE_BUTTON(sr->default_check)->active) {
@@ -1491,7 +1514,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars));
 	gtk_tree_model_get_iter_first(model, &iter);
 #endif
-	rows = varlist_row_count(sr->ruvars, &realrows);
+	rows = varlist_row_count(sr, SR_RUVARS, &realrows);
 
 	if (rows > 0) {
 	    int context = sr_get_lag_context(sr, SR_RUVARS);
@@ -1500,6 +1523,13 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    if (rulist != NULL) {
 		rulist[0] = rows;
 	    }
+
+	    if (sr->code == TSLS && dvlags != NULL) {
+		add_to_cmdlist(sr, dvlags);
+		free(dvlags);
+		dvlags = NULL;
+	    }
+
 	    add_to_cmdlist(sr, " ;");
 
 #ifndef OLD_GTK
@@ -1573,6 +1603,9 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     } else if (dvlags != NULL) {
 	add_to_cmdlist(sr, dvlags);
 	free(dvlags);
+    } else if (idvlags != NULL) {
+	add_to_cmdlist(sr, idvlags);
+	free(idvlags);
     }
 
     if (sr->code == SCATTERS) {
@@ -2507,7 +2540,7 @@ static void lag_selector_button (selector *sr)
 
     g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
 		     G_CALLBACK(lags_dialog_driver), sr);
-    if (varlist_row_count(sr->rlvars, NULL) < 2) {
+    if (varlist_row_count(sr, SR_RLVARS, NULL) < 2) {
 	gtk_widget_set_sensitive(sr->lags_button, FALSE);
     }
 
@@ -3431,18 +3464,12 @@ enum {
     LAGS_CANCEL
 };
 
+#define depvar_row(c) (c == LAG_Y_X || c == LAG_Y_INSTR)
+
 static void lag_entry_callback (GtkWidget *w, gpointer p)
 {
     const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
     var_lag_info *vlinfo = (var_lag_info *) p;
-
-    if (g_object_get_data(G_OBJECT(w), "yvar")) {
-	if (*s && strcmp(s, "0") && strncmp(s, "0 ", 2)) {
-	    errbox("Bad lag specification for the dependent variable."
-		   "This must include lag 0.");
-	    return;
-	}
-    }
 
     free(vlinfo->lspec);
     vlinfo->lspec = g_strdup(s);
@@ -3542,9 +3569,7 @@ static void activate_specific_lags (GtkWidget *w, var_lag_info *vlinfo)
 	gtk_widget_set_sensitive(vlinfo->spin2, FALSE);
     } else {
 	gtk_widget_set_sensitive(vlinfo->entry, FALSE);
-	if (!g_object_get_data(G_OBJECT(w), "yvar")) {
-	    gtk_widget_set_sensitive(vlinfo->spin1, TRUE);
-	}
+	gtk_widget_set_sensitive(vlinfo->spin1, TRUE);
 	gtk_widget_set_sensitive(vlinfo->spin2, TRUE);
     } 
 
@@ -3573,6 +3598,16 @@ static void lag_toggle_register (GtkWidget *w, var_lag_info *vlinfo)
     if (vlset == NULL) return;
 
     for (i=0; i<vlinfo->nvl; i++) {
+	if (depvar_row(vlset[i].context)) {
+	    if (!GTK_WIDGET_SENSITIVE(vlset[i].spin1) &&
+		!GTK_WIDGET_SENSITIVE(vlset[i].entry)) {
+		/* dependent var lags disabled */
+		vlset[i].lmin = vlset[i].lmax = NOT_LAG;
+		free(vlset[i].lspec);
+		vlset[i].lspec = NULL;
+		continue;
+	    }
+	}
 	active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vlset[i].toggle));
 	if (active) {
 	    vlset[i].lmin = vlset[i].lmax = NOT_LAG; 
@@ -3580,6 +3615,20 @@ static void lag_toggle_register (GtkWidget *w, var_lag_info *vlinfo)
 	    free(vlset[i].lspec);
 	    vlset[i].lspec = NULL;
 	}
+    }
+}
+
+static void activate_y_lags (GtkWidget *w, var_lag_info *vlinfo)
+{
+    gboolean active = 
+	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+    gtk_widget_set_sensitive(vlinfo->spin1, active);
+    gtk_widget_set_sensitive(vlinfo->spin2, active);
+
+    if (active) {
+	vlinfo->lmin = spinner_get_int(vlinfo->spin1);
+	vlinfo->lmax = spinner_get_int(vlinfo->spin2);
     }
 }
 
@@ -3614,18 +3663,17 @@ static void lags_set_cancel (GtkWidget *w, gpointer p)
 /* Below: we provide spinners for a lag range and also a free-form
    entry field for non-contiguous lags.  In some circumstances we
    allow specification of lags for the dependent variable as well
-   as the independent vars, but we restrict that option, insisting
-   on having lag 0 of the dependent variable in the spec.
+   as the independent vars.
 */
 
 static int 
-lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
-	     selector *sr) 
+lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr) 
 {
     GtkWidget *lbl, *dialog, *myvbox;
     GtkWidget *tbl, *tmp, *hbox;
+    GtkWidget *y_check = NULL;
     gint tbl_len;
-    double lmax, ldef;
+    double lmin, lmax, ldef;
     int i, j;
     int ret = LAGS_APPLY;
 
@@ -3662,10 +3710,14 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
 	if (list[i] >= LISTSEP) {
 	    if (list[i] - LISTSEP == LAG_INSTR) {
 		tmp = gtk_label_new(_("Instruments"));
+		gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 7, i, i+1);
+	    } else if (depvar_row(list[i] - LISTSEP)) { 
+		y_check = gtk_check_button_new_with_label(_("Lags of dependent variable"));
+		gtk_table_attach_defaults(GTK_TABLE(tbl), y_check, 0, 7, i, i+1);
 	    } else {
 		tmp = gtk_hseparator_new();
+		gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 7, i, i+1);
 	    }
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 7, i, i+1);
 	    continue;
 	}
 
@@ -3676,13 +3728,15 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
 	}
 	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 0, 1, i, i+1);
 
+	lmin = (depvar_row(vlinfo[j].context))? 1 : 0;
+
 	/* min. lag spinner */
-	vlinfo[j].spin1 = gtk_spin_button_new_with_range(0, lmax, 1);
+	vlinfo[j].spin1 = gtk_spin_button_new_with_range(lmin, lmax, 1);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].spin1, 1, 2, i, i+1);
 	g_object_set_data(G_OBJECT(vlinfo[j].spin1), "vlinfo", &vlinfo[j]);
 	lagsel_spin_connect(vlinfo[j].spin1);
-	if (j == ypos) {
-	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin1), 0);
+	if (depvar_row(vlinfo[j].context)) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin1), 1);
 	    gtk_widget_set_sensitive(vlinfo[j].spin1, FALSE);
 	} else {
 	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin1), 
@@ -3693,12 +3747,17 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
 	gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, i, i+1);
 
 	/* max. lag spinner */
-	vlinfo[j].spin2 = gtk_spin_button_new_with_range(0, lmax, 1);
+	vlinfo[j].spin2 = gtk_spin_button_new_with_range(lmin, lmax, 1);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].spin2, 3, 4, i, i+1);
 	g_object_set_data(G_OBJECT(vlinfo[j].spin2), "vlinfo", &vlinfo[j]);
 	lagsel_spin_connect(vlinfo[j].spin2);
-	gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin2), 
-				  vlinfo[j].lmax);
+	if (depvar_row(vlinfo[j].context)) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin2), 1);
+	    gtk_widget_set_sensitive(vlinfo[j].spin2, FALSE);
+	} else {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(vlinfo[j].spin2), 
+				      vlinfo[j].lmax);
+	}
 
 	/* spacer column */
 	lbl = gtk_label_new("  ");
@@ -3709,10 +3768,6 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
 	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].toggle, 5, 6, i, i+1);
 	g_signal_connect(G_OBJECT(vlinfo[j].toggle), "toggled", 
 			 G_CALLBACK(activate_specific_lags), &vlinfo[j]);
-	if (j == ypos) {
-	    g_object_set_data(G_OBJECT(vlinfo[j].toggle), "yvar", 
-			      GINT_TO_POINTER(1));
-	}
 
 	/* entry widget for specific lags */
 	vlinfo[j].entry = gtk_entry_new();
@@ -3722,11 +3777,6 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
 	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].entry, 6, 7, i, i+1);
 	g_signal_connect(G_OBJECT(vlinfo[j].entry), "changed", 
 			 G_CALLBACK(lag_entry_callback), &vlinfo[j]);
-	if (j == ypos) {
-	    /* dependent variable slot */
-	    g_object_set_data(G_OBJECT(vlinfo[j].entry), "yvar", 
-			      GINT_TO_POINTER(1));
-	}
 	if (vlinfo[j].lspec != NULL && vlinfo[j].lspec[0] != 0) {
 	    /* got a saved non-contiguous lag spec */
 	    gtk_entry_set_text(GTK_ENTRY(vlinfo[j].entry), vlinfo[j].lspec);
@@ -3735,6 +3785,13 @@ lags_dialog (const int *list, var_lag_info *vlinfo, int ypos,
 	} else {
 	    gtk_widget_set_sensitive(vlinfo[j].entry, FALSE);
 	}
+
+	if (depvar_row(vlinfo[j].context) && y_check != NULL) {
+	    g_signal_connect(G_OBJECT(y_check), "toggled", 
+			     G_CALLBACK(activate_y_lags), &vlinfo[j]);
+	    y_check = NULL;
+	}
+	    
 
 	j++;
     }
@@ -3814,10 +3871,10 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
     }
 }
 
-static int count_laggable_vars (GtkWidget *w, int context)
+static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 {
     gint rows, xnum, lag;
-    int k, nv = 0;
+    int k, n = 0;
 
     if (!GTK_IS_CLIST(w)) {
 	return 0;
@@ -3828,111 +3885,15 @@ static int count_laggable_vars (GtkWidget *w, int context)
     for (k=0; k<rows; k++) {
 	clist_row_get_v_and_lag(GTK_CLIST(w), k, &xnum, &lag);
 	if (laggable_var(xnum, lag, context)) {
-	    nv++;
-	}
-    }
-
-    return nv;
-}
-
-static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
-{
-    GtkWidget *list[2] = { NULL, NULL };
-    gint xnum, lag, ynum = 0;
-    int nv[2] = {0};
-    int llen, sep;
-    int context;
-    int i, j, k, rows;
-    int *slist = NULL;
-
-    if (sr->code != ARMA && sr->code != VAR && 
-	sr->code != VECM && sr->code != VLAGSEL) {
-	ynum = selector_get_depvar_number(sr);
-    }
-
-    list[0] = (select_lags_lower(sr->code))? sr->rlvars : sr->ruvars;
-    if (sr->code == TSLS) {
-	list[1] = sr->ruvars;
-    } 
-
-    for (j=0; list[j] != NULL && j<2; j++) {
-	context = (j == 1)? LAG_INSTR : LAG_X;
-	nv[j] = count_laggable_vars(list[j], context);
-    }
-
-    if (nv[0] == 0) {
-	list[0] = NULL;
-    }
-    if (nv[1] == 0) {
-	list[1] = NULL;
-    }
-
-    llen = sep = 0;
-
-    if (ynum == 0 && nv[0] == 0 && nv[1] == 0) {
-	/* no vars to deal with */
-	errbox("Please add some variables to the model first");
-    } else {
-	i = 1;
-	if (ynum > 0) {
-	    *pcontext = LAG_Y;
-	    llen++; /* dep var row */
-	    if (nv[0] > 0 || nv[1] > 0) {
-		/* add separator */
-		llen++;
-		sep++;
+	    if (list != NULL) {
+		list[*i] = xnum;
+		*i += 1;
 	    }
+	    n++;
 	}
-	if (nv[0] > 0) {
-	    if (*pcontext == 0) {
-		*pcontext = LAG_X;
-	    }
-	    llen += nv[0] + 1; /* xvars plus their defaults */
-	}
-	if (nv[1] > 0) {
-	    if (nv[0] > 0 || ynum == 0) {
-		llen++; /* additional separator */
-		sep++;
-	    }
-	    if (*pcontext == 0) {
-		*pcontext = LAG_INSTR;
-	    }
-	    llen += nv[1] + 1; /* instruments plus their defaults */
-	}
-
-	slist = gretl_list_new(llen);
-
-	if (slist != NULL) {
-	    if (ynum > 0) {
-		slist[i++] = ynum;
-		if (nv[0] > 0) {
-		    slist[i++] = LISTSEP + LAG_X;
-		} else if (nv[1] > 0) {
-		    slist[i++] = LISTSEP + LAG_INSTR;
-		}
-	    } 
-	    for (j=0; j<2; j++) {
-		if (list[j] == NULL) {
-		    continue;
-		}
-		context = (j == 1)? LAG_INSTR : LAG_X;
-		rows = GTK_CLIST(list[j])->rows;
-		if (j == 1 && (nv[0] > 0 || ynum == 0)) {
-		    slist[i++] = LISTSEP + LAG_INSTR;
-		}
-		slist[i++] = VDEFLT;
-		for (k=0; k<rows; k++) {
-		    clist_row_get_v_and_lag(GTK_CLIST(list[j]), k, &xnum, &lag);
-		    if (laggable_var(xnum, lag, context)) {
-			slist[i++] = xnum;
-		    }
-		}
-	    }	
-	}
-	*nset = llen - sep;
     }
 
-    return slist;
+    return n;
 }
 
 #else
@@ -3958,16 +3919,17 @@ revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
     } while (gtk_tree_model_iter_next(mod, &iter));
 }
 
-static int count_laggable_vars (GtkWidget *w, int context)
+static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 {
     GtkTreeModel *model;
     GtkTreeIter iter;
     gint xnum, lag;
-    int nv = 0;
+    int n = 0;
 
     if (!GTK_IS_TREE_VIEW(w)) {
 	return 0;
     }
+
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(w));
     if (model == NULL) {
 	return 0;
@@ -3977,20 +3939,23 @@ static int count_laggable_vars (GtkWidget *w, int context)
 	do {
 	    gtk_tree_model_get(model, &iter, 0, &xnum, 1, &lag, -1);
 	    if (laggable_var(xnum, lag, context)) { 
-		nv++;
+		if (list != NULL) {
+		    list[*i] = xnum;
+		    *i += 1;
+		}
+		n++;
 	    }
 	} while (gtk_tree_model_iter_next(model, &iter));
     }
 
-    return nv;
+    return n;
 }
+
+#endif
 
 static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 {
     GtkWidget *list[2] = { NULL, NULL };
-    GtkTreeModel *model;
-    GtkTreeIter iter;
-    gint xnum, lag;
     gint ynum = 0;
     int nv[2] = {0};
     int llen, sep;
@@ -4010,7 +3975,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 
     for (j=0; list[j] != NULL && j<2; j++) {
 	context = (j == 1)? LAG_INSTR : LAG_X;
-	nv[j] = count_laggable_vars(list[j], context);
+	nv[j] = get_laggable_vars(list[j], context, NULL, NULL);
     }
 
     if (nv[0] == 0) {
@@ -4026,70 +3991,71 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 	/* no vars to deal with */
 	errbox("Please add some variables to the model first");
     } else {
-	i = 1;
-	if (ynum > 0) {
-	    *pcontext = LAG_Y;
-	    llen++; /* dep var row */
-	    if (nv[0] > 0 || nv[1] > 0) {
-		/* add separator */
-		llen++;
-		sep++;
-	    }
-	}
 	if (nv[0] > 0) {
-	    if (*pcontext == 0) {
-		*pcontext = LAG_X;
-	    }
+	    *pcontext = LAG_X;
 	    llen += nv[0] + 1; /* xvars plus their defaults */
+	    if (ynum > 0) {
+		llen++; /* separator */
+		sep++;
+		llen++; /* dep var row */
+	    }
 	}
 	if (nv[1] > 0) {
-	    if (nv[0] > 0 || ynum == 0) {
-		llen++; /* additional separator */
+	    if (nv[0] > 0) {
+		llen++; /* separator from X's */
 		sep++;
-	    }
-	    if (*pcontext == 0) {
+	    } else {
 		*pcontext = LAG_INSTR;
 	    }
+	    llen++; /* "instruments" heading */
+	    sep++;
 	    llen += nv[1] + 1; /* instruments plus their defaults */
+	    if (ynum > 0) {
+		llen++; /* separator */
+		sep++;
+		llen++; /* dep var row */
+	    }	    
+	}
+	if (nv[0] == 0 && nv[1] == 0) {
+	    /* only the dependent variable is present */
+	    *pcontext = LAG_Y_X;
+	    llen++; /* "separator" */
+	    sep++;
+	    llen++; /* dep var row */
 	}
 
 	slist = gretl_list_new(llen);
 
 	if (slist != NULL) {
-	    if (ynum > 0) {
-		slist[i++] = ynum;
-		if (nv[0] > 0) {
-		    slist[i++] = LISTSEP + LAG_X;
-		} else if (nv[1] > 0) {
-		    slist[i++] = LISTSEP + LAG_INSTR;
-		}
-	    } 
+	    i = 1;
 	    for (j=0; j<2; j++) {
 		if (list[j] == NULL) {
 		    continue;
 		}
 		context = (j == 1)? LAG_INSTR : LAG_X;
-		model = gtk_tree_view_get_model(GTK_TREE_VIEW(list[j]));
-		gtk_tree_model_get_iter_first(model, &iter);
-		if (j == 1 && (nv[0] > 0 || ynum == 0)) {
+		if (j == 1) {
+		    if (nv[0] > 0) {
+			slist[i++] = LISTSEP;
+		    }
 		    slist[i++] = LISTSEP + LAG_INSTR;
 		}
 		slist[i++] = VDEFLT;
-		do {
-		    gtk_tree_model_get(model, &iter, 0, &xnum, 1, &lag, -1);
-		    if (laggable_var(xnum, lag, context)) {
-			slist[i++] = xnum;
-		    }
-		} while (gtk_tree_model_iter_next(model, &iter));
-	    }		
+		get_laggable_vars(list[j], context, slist, &i);
+		if (ynum > 0) {
+		    slist[i++] = LISTSEP + ((j > 0)? LAG_Y_INSTR : LAG_Y_X);
+		    slist[i++] = ynum;
+		}
+	    }
+	    if (nv[0] == 0 && nv[1] == 0) {
+		slist[i++] = LISTSEP + LAG_Y_X;
+		slist[i++] = ynum;
+	    }
 	}
 	*nset = llen - sep;
     }
 
     return slist;
 }
-
-#endif
 
 static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
 {
@@ -4101,9 +4067,9 @@ static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
 		 sr->code == VLAGSEL)? SR_RUVARS : SR_RLVARS;
     } else if (vlinfo->context == LAG_INSTR) {
 	locus = SR_RUVARS;
-    } else if (vlinfo->context == LAG_Y) {
+    } else if (depvar_row(vlinfo->context)) { 
 	fprintf(stderr, "calling maybe_insert_depvar_lags\n");
-	maybe_insert_depvar_lags(sr, vlinfo->v);
+	maybe_insert_depvar_lags(sr, vlinfo->v, vlinfo->context);
     }
 
     if (locus > 0) {
@@ -4111,26 +4077,33 @@ static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
     } 
 }
 
+/* return 1 if lags changed, else 0 */
+
 static int set_lags_for_var (var_lag_info *vlinfo)
 {
     int *llist = NULL;
+    int changed = 0;
     int err = 0;
+
+    fprintf(stderr, "set_lags_for_var: v=%d, lmin=%d, lmax=%d, lspec=%p\n",
+	    vlinfo->v, vlinfo->lmin, vlinfo->lmax, (void *) vlinfo->lspec);
 
     if (vlinfo->lspec != NULL && *vlinfo->lspec != 0) {
 	charsub(vlinfo->lspec, ',', ' ');
 	llist = gretl_list_from_string(vlinfo->lspec);
-	err = set_lag_prefs_from_list(vlinfo->v, llist, vlinfo->context);
+	err = set_lag_prefs_from_list(vlinfo->v, llist, vlinfo->context,
+				      &changed);
 	if (err) {
 	    free(llist);
 	}
     } else if (vlinfo->lmin != NOT_LAG && vlinfo->lmax != NOT_LAG) {
 	set_lag_prefs_from_minmax(vlinfo->v, vlinfo->lmin, vlinfo->lmax, 
-				  vlinfo->context);
+				  vlinfo->context, &changed);
     } else {
-	set_null_lagpref(vlinfo->v, vlinfo->context);
+	set_null_lagpref(vlinfo->v, vlinfo->context, &changed);
     }
 
-    return 0;
+    return changed;
 }
 
 #if LDEBUG > 2
@@ -4159,7 +4132,6 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     var_lag_info *vlinfo;
     int context = 0;
     int i, j, resp, nvl;
-    int ypos = -1;
     int *list;
 
     list = sr_get_stoch_list(sr, &nvl, &context);
@@ -4176,10 +4148,6 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     if (vlinfo == NULL) {
 	free(list);
 	return FALSE;
-    }
-
-    if (context == LAG_Y) {
-	ypos = 0;
     }
 
     j = 0;
@@ -4221,12 +4189,13 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
 	j++;
     }
 
-    resp = lags_dialog(list, vlinfo, ypos, sr);
+    resp = lags_dialog(list, vlinfo, sr);
 
     for (j=0; j<nvl; j++) {
 	if (resp != LAGS_CANCEL) {
-	    set_lags_for_var(&vlinfo[j]);
-	    if (vlinfo[j].v != VDEFLT) {
+	    int changed = set_lags_for_var(&vlinfo[j]);
+
+	    if (vlinfo[j].v != VDEFLT && changed) {
 		maybe_revise_var_string(&vlinfo[j], sr);
 	    }
 	}

@@ -292,7 +292,7 @@ static void remove_as_indep_var (selector *sr, gint v)
     }
 }
 
-static void maybe_insert_depvar_lags (selector *sr, int v)
+static void maybe_insert_depvar_lags (selector *sr, int v, int lcontext)
 {
     int *laglist = get_lag_pref_as_list(v, LAG_Y);
     GtkWidget *w;
@@ -302,45 +302,67 @@ static void maybe_insert_depvar_lags (selector *sr, int v)
     gchar *row[3];
     gchar *modv;
     int rows, append = 1;
-    int i, rnum = 0;
+    int rnum = 0;
+    int jmin = 0, jmax = 1;
+    int i, j;
 
-    if (laglist == NULL) return;
-
-    w = sr->rlvars; /* TSLS? */
-    if (w == NULL) {
-	return;
+    if (context == LAG_Y_X) {
+	jmin = 0;
+	jmax = 1;
+    } else if (lcontext == LAG_Y_INSTR) {
+	/* TSLS */
+	jmin = 1;
+	jmax = 2;
+    } else if (sr->code == TSLS) {
+	jmin = 0;
+	jmax = 2;
     }
 
-    varlist_remove_var_full(v, w);
-    rows = GTK_CLIST(w)->rows;
+    for (j=0; j<jmax; j++) {
 
-    for (i=0; i<rows; i++) {
-	gtk_clist_get_text(GTK_CLIST(w), i, 1, &modv);
-	fprintf(stderr, "maybe_insert_depvar_lags: modv=%s\n", modv);
-	if (atoi(modv) > 0) {
-	    append = 0;
-	    break;
+	if (lcontext == 0) {
+	    lcontext = (j > 0)? LAG_Y_INSTR : LAG_Y_X;
 	}
-	rnum++;
-    } 
 
-    sprintf(id, "%d", v);
-    row[0] = id;
-    row[1] = lag;
-    row[2] = vstr;
+	laglist = get_lag_pref_as_list(v, lcontext);
+	if (laglist == NULL) return;
 
-    for (i=1; i<=laglist[0]; i++) {
-	fprintf(stderr, "adding var %d, lag %d\n", v, laglist[i]);
-	sprintf(lag, "%d", laglist[i]);
-	sprintf(vstr, "%s(-%d)", datainfo->varname[v], laglist[i]);
-	if (append) {
-	    gtk_clist_append(GTK_CLIST(w), row);
-	} else {
-	    gtk_clist_insert(GTK_CLIST(w), rnum, row);
+	w = (j > 0)? sr->ruvars: sr->rlvars;
+	if (w == NULL) {
+	    return;
 	}
-    }    
 
-    free(laglist);
+	varlist_remove_var_full(v, w);
+	rows = GTK_CLIST(w)->rows;
+
+	for (i=0; i<rows; i++) {
+	    gtk_clist_get_text(GTK_CLIST(w), i, 1, &modv);
+	    fprintf(stderr, "maybe_insert_depvar_lags: modv=%s\n", modv);
+	    if (atoi(modv) > 0) {
+		append = 0;
+		break;
+	    }
+	    rnum++;
+	} 
+
+	sprintf(id, "%d", v);
+	row[0] = id;
+	row[1] = lag;
+	row[2] = vstr;
+
+	for (i=1; i<=laglist[0]; i++) {
+	    fprintf(stderr, "adding var %d, lag %d\n", v, laglist[i]);
+	    sprintf(lag, "%d", laglist[i]);
+	    sprintf(vstr, "%s(-%d)", datainfo->varname[v], laglist[i]);
+	    if (append) {
+		gtk_clist_append(GTK_CLIST(w), row);
+	    } else {
+		gtk_clist_insert(GTK_CLIST(w), rnum, row); /* rnum++? */
+	    }
+	}    
+
+	free(laglist);
+    }
 }
 
 static void real_set_dependent_var (gint i, selector *sr)
@@ -646,10 +668,13 @@ static void clear_vars (GtkWidget *w, selector *sr)
     }  
 }
 
-static gint varlist_row_count (GtkWidget *w, int *realrows)
+static gint varlist_row_count (selector *sr, int locus, int *realrows)
 {
     int lcontext = 0;
+    GtkWidget *w;
     gint i, n = 0;
+
+    w = (locus == SR_RLVARS)? sr->rlvars : sr->ruvars;
 
     if (realrows != NULL) {
 	lcontext = lag_context_from_widget(w);
