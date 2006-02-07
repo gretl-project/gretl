@@ -1300,7 +1300,8 @@ static char *model_cmd_str (MODEL *pmod)
 {
     char *str = NULL;
 
-    if (pmod->ncoeff > 10) {
+    if (pmod->ci == MLE || pmod->ncoeff > 10 ||
+	pmod->list[0] > 10) {
 	return NULL;
     }
 
@@ -1316,9 +1317,7 @@ static char *model_cmd_str (MODEL *pmod)
         strcat(str, "; ");
     }
 
-    if (pmod->ci != MLE) {
-	model_list_to_string(pmod->list, str); 
-    }
+    model_list_to_string(pmod->list, str); 
 
     return str;
 }
@@ -1858,16 +1857,21 @@ static void session_view_init (void)
     icon_table = NULL;
 }
 
-static void delete_icons_at_close (gui_obj *gobj, gpointer p)
+static void delete_session_icon (gui_obj *gobj, gpointer p)
 {
-   if (gobj->name) g_free(gobj->name); 
+    if (gobj != NULL) {
+	if (gobj->name != NULL) {
+	    g_free(gobj->name); 
+	}
+	free(gobj);
+    }
 }
 
 static void session_view_free (GtkWidget *w, gpointer data)
 {
     iconview = NULL;
 
-    g_list_foreach(icon_list, (GFunc) delete_icons_at_close, NULL);
+    g_list_foreach(icon_list, (GFunc) delete_session_icon, NULL);
 
     g_list_free(icon_list);
     icon_list = NULL;
@@ -2918,13 +2922,16 @@ static void size_name_entry (GtkWidget *w, const char *name)
 #endif    
 
     layout = gtk_entry_get_layout(GTK_ENTRY(w));
+
 #ifdef USE_GNOME
     pfd = pango_font_description_from_string(fontname);
     g_free(fontname);
 #else
     pfd = pango_font_description_from_string(get_app_fontname());
 #endif
+
     pango_layout_set_font_description(layout, pfd);
+    pango_font_description_free(pfd);
 
     pango_layout_get_pixel_extents(layout, NULL, &logrect);
     gtk_widget_set_size_request(w, 1.1 * logrect.width, -1); 

@@ -463,6 +463,28 @@ int *gretl_list_sort (int *list)
 }
 
 /**
+ * gretl_list_cmp:
+ * @list1: gretl list.
+ * @list1: gretl list.
+ * 
+ * Returns: 0 if @list1 and @list2 have identical content,
+ * otherwise 1.
+ */
+
+int gretl_list_cmp (const int *list1, const int *list2)
+{
+    int i;
+
+    for (i=0; i<=list1[0]; i++) {
+	if (list2[i] != list1[i]) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/**
  * gretl_null_list:
  * 
  * Creates a newly allocated "list" with only one member, 

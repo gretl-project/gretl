@@ -812,7 +812,7 @@ static int wildcard_expand_ok (const char *s, int *lnum,
 #endif 
 
 static void parse_rename_cmd (const char *line, CMD *cmd, 
-			      const DATAINFO *pdinfo)
+			      const double **Z, const DATAINFO *pdinfo)
 {
     int v, vnum;
     char vname[VNAMELEN];
@@ -820,11 +820,26 @@ static void parse_rename_cmd (const char *line, CMD *cmd,
 
     line += strlen(cmd->word);
 
-    if (sscanf(line, "%d %15s", &vnum, vname) != 2) {
+    if (sscanf(line, "%15s %15s", numstr, vname) != 2) {
 	cmd->errcode = E_DATA;
 	sprintf(gretl_errmsg, "rename: %s", 
 		_("requires a variable number and a new name"));
 	return;
+    }
+
+    if (isdigit(*numstr)) {
+	vnum = atoi(numstr);
+    } else {
+	/* we're given a scalar variable? */
+	vnum = varindex(pdinfo, numstr);
+	if (vnum < pdinfo->v) {
+	    vnum = (int) Z[vnum][0];
+	} else {
+	    cmd->errcode = E_DATA;
+	    sprintf(gretl_errmsg, "rename: %s", 
+		_("requires a variable number and a new name"));
+	    return;
+	}	    
     }
 
     if (vnum >= pdinfo->v || vnum < 1) {
@@ -982,9 +997,9 @@ static int plausible_genr_start (const char *line, CMD *cmd,
 				 const DATAINFO *pdinfo)
 {
     if (strchr(line, '=') != NULL) {
-	char word[9];
+	char word[VNAMELEN];
 
-	if (sscanf(line, "%8[^[ =]", word)) {
+	if (sscanf(line, "%15[^[ =]", word)) {
 	    int n = strlen(word);
 	    int c = line[n];
 
@@ -1452,7 +1467,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* the "rename" command calls for a variable number and a
        new name */
     else if (cmd->ci == RENAME) {
-	parse_rename_cmd(line, cmd, pdinfo);
+	parse_rename_cmd(line, cmd, (const double **) *pZ, pdinfo);
     }  
 
     /* commands that never take a list of variables */
@@ -2906,6 +2921,10 @@ int simple_commands (CMD *cmd, const char *line,
 	err = adf_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
 	break;
 
+    case KPSS:
+	err = kpss_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
+	break;
+
     case COINT:
 	err = coint(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;
@@ -2988,14 +3007,6 @@ int simple_commands (CMD *cmd, const char *line,
 	} else {
 	    maybe_list_vars(pdinfo, prn);
 	}
-	break;
-
-    case KPSS:
-	if (!isdigit((unsigned char) *cmd->param)) {
-	    pputs(prn, _("kpss: lag order must be given first\n"));
-	    break;
-	}
-	err = kpss_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case LAGS:

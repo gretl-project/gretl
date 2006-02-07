@@ -2316,8 +2316,8 @@ void set_model_id (MODEL *pmod)
 
 void model_list_to_string (int *list, char *buf)
 {
+    char numstr[8];
     int i;
-    char numstr[5];
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {

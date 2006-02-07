@@ -96,19 +96,6 @@ static void print_lpref (lagpref *lpref)
 }
 #endif
 
-static int listsame (const int *list1, const int *list2)
-{
-    int i;
-
-    for (i=0; i<=list1[0]; i++) {
-	if (list2[i] != list1[i]) {
-	    return 0;
-	}
-    }
-
-    return 1;
-}
-
 /* return 1 if actually changed, else 0 */
 
 static int 
@@ -118,7 +105,7 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
 
     if (spectype == lpref->spectype) {
 	if (spectype == LAGS_LIST) {
-	    if (listsame(laglist, lpref->lspec.laglist)) {
+	    if (!gretl_list_cmp(laglist, lpref->lspec.laglist)) {
 		free(laglist);
 		mod = 0;
 	    }
@@ -209,6 +196,29 @@ static int is_lag_dummy (int v, int lag, char context)
     return ret;
 }
 
+static void maybe_destroy_depvar_lags (lagpref *lpref, char context)
+{
+    if (lpref != NULL) {
+	if (lpref->spectype == LAGS_MINMAX &&
+	    lpref->lspec.lminmax[0] == 0 &&
+	    lpref->lspec.lminmax[1] == 0) {
+	    lpref->lspec.lminmax[0] = 1;
+	    lpref->lspec.lminmax[1] = 1;
+	    if (context == LAG_Y_X) {
+		y_x_lags_enabled = 0;
+	    } else {
+		y_w_lags_enabled = 0;
+	    }
+	}
+    } else {
+	if (context == LAG_Y_X) {
+	    y_x_lags_enabled = 0;
+	} else {
+	    y_w_lags_enabled = 0;
+	}
+    }	    
+}
+
 /* called when a specific lag, e.g. foo(-3), is removed from
    a list of selected variables with the mouse */
 
@@ -286,27 +296,9 @@ static int remove_specific_lag (int v, int lag, char context)
 	}
     }
 
-    /* special handling of dependent var lags FIXME too complex? */
+    /* special handling of dependent var lags */
     if (context == LAG_Y_X || context == LAG_Y_W) {
-	if (lpref != NULL) {
-	    if (lpref->spectype == LAGS_MINMAX &&
-		lpref->lspec.lminmax[0] == 0 &&
-		lpref->lspec.lminmax[1] == 0) {
-		lpref->lspec.lminmax[0] = 1;
-		lpref->lspec.lminmax[1] = 1;
-		if (context == LAG_Y_X) {
-		    y_x_lags_enabled = 0;
-		} else {
-		    y_w_lags_enabled = 0;
-		}
-	    }
-	} else {
-	    if (context == LAG_Y_X) {
-		y_x_lags_enabled = 0;
-	    } else {
-		y_w_lags_enabled = 0;
-	    }
-	}	    
+	maybe_destroy_depvar_lags(lpref, context);
     }
 
     return err;

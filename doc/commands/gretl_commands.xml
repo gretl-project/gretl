@@ -5272,7 +5272,7 @@
       <para>Changes the name of the variable with identification
 	number <repl>varnumber</repl> to <repl>newname</repl>.  The
 	<repl>varnumber</repl> must be between 1 and the number of
-	variables in the dataset.  The new name must be of 8
+	variables in the dataset.  The new name must be of 15
 	characters maximum, must start with a letter, and must be
 	composed of only letters, digits, and the underscore
 	character.

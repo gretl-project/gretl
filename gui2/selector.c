@@ -883,11 +883,11 @@ static void add_to_rlvars_callback (GtkWidget *w, selector *sr)
 	return;
     }
 
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(sr->lvars));
-    gtk_tree_selection_selected_foreach (selection, 
-					 (GtkTreeSelectionForeachFunc) 
-					 add_to_rlvars,
-					 sr);
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
+    gtk_tree_selection_selected_foreach(selection, 
+					(GtkTreeSelectionForeachFunc) 
+					add_to_rlvars,
+					sr);
 }
 
 static void remove_from_right_callback (GtkWidget *w, gpointer data)
@@ -1297,177 +1297,20 @@ static int maybe_resize_recorder_lists (selector *sr, int n)
     return err;
 }
 
-static void construct_cmdlist (GtkWidget *w, selector *sr)
-{
-    gint rows = 0, realrows = 0;
-    gchar numstr[8], endbit[12] = {0};
-    char *dvlags = NULL;
-    char *idvlags = NULL;
-    int context = 0;
-    int order = 0;
 #ifndef OLD_GTK
+
+static void get_rlvars_data (selector *sr, int rows, int context)
+{
     GtkTreeModel *model;
     GtkTreeIter iter;
-#endif
-    int i, j;
-
-    sr->error = 0;
-
-    sr->cmdlist = mymalloc(MAXLEN); 
-    if (sr->cmdlist == NULL) {
-	return;
-    }
-
-    sr->cmdlist[0] = 0;
-
-    if (sr->code != GR_DUMMY && sr->code != GR_3D) {
-	rows = varlist_row_count(sr, SR_RLVARS, &realrows);
-    }
-
-    /* deal with content of first "extra" widget */
-
-    if (sr->code == WLS) {
-	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
-
-	if (str == NULL || *str == '\0') {
-	    errbox(_("You must select a weight variable"));
-	    sr->error = 1;
-	} else {
-	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
-	    sprintf(numstr, "%d ", i);
-	    add_to_cmdlist(sr, numstr);
-	}
-    } else if (sr->code == POISSON) {
-	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
-
-	if (str != NULL && *str != '\0') {
-	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
-	    sprintf(endbit, " ; %d", i);
-	}
-    } else if (sr->code == AR) {
-	const gchar *lags;
-
-	lags = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
-	if (*lags == '\0') {
-	    errbox(_("You must specify a list of lags"));
-	    sr->error = 1;
-	} else {
-	    add_to_cmdlist(sr, lags);
-	    add_to_cmdlist(sr, " ; ");
-	}
-    } else if (VEC_CODE(sr->code)) {
-	GtkAdjustment *adj;
-
-	/* lag order */
-	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[0]));
-	order = (gint) adj->value;
-	sprintf(numstr, "%d ", order);
-	add_to_cmdlist(sr, numstr);
-
-	if (sr->code == VECM) {
-	    /* cointegration rank */
-	    adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
-	    i = (gint) adj->value;
-	    sprintf(numstr, "%d", i);
-	    add_to_cmdlist(sr, numstr);
-	}
-    } else if (sr->code == ARMA || sr->code == GARCH) {
-	add_pq_vals_to_cmdlist(sr);
-    } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
-	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
-
-	if (str == NULL || *str == '\0') {
-	    errbox(_("You must select a Y-axis variable"));
-	    sr->error = 1;
-	} else {
-	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
-	    sprintf(numstr, "%d ", i);
-	    add_to_cmdlist(sr, numstr);
-	}
-    }
-
-    /* next deal with the "depvar" widget */
-
-    if (!sr->error && sr->depvar != NULL) {
-	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
-
-	if (str == NULL || *str == 0) {
-	    topslot_empty(sr->code);
-	    sr->error = 1;
-	} else {
-	    int ynum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), "data"));
-
-	    if (sr->code == GR_XY || sr->code == GR_IMP) {
-		sprintf(endbit, " %d", ynum);
-	    } else {
-		sprintf(numstr, "%d", ynum);
-		add_to_cmdlist(sr, numstr);
-	    }
-	    if (dataset_is_time_series(datainfo) && 
-		select_lags_depvar(sr->code)) {
-		dvlags = get_lagpref_string(ynum, LAG_Y_X);
-		if (sr->code == TSLS) {
-		    idvlags = get_lagpref_string(ynum, LAG_Y_W);
-		}
-	    }
-	    if (sr->default_check != NULL && 
-		GTK_TOGGLE_BUTTON(sr->default_check)->active) {
-		default_var = ynum;
-	    }
-	}
-    }
-
-    if (VEC_CODE(sr->code) && rows < 2) {
-	errbox(_("You must select two or more endogenous variables"));
-	sr->error = 1;
-    }
-
-    /* bail out if things have gone wrong already */
-    if (sr->error) {
-	return;
-    }
-
-    if (sr->code == SCATTERS) {
-	add_to_cmdlist(sr, ";");
-    }
-
-    if (sr->code == GR_DUMMY || sr->code == GR_3D) { /* special case */
-	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->rlvars));
-
-	if (str == NULL || !*str) {
-	    if (sr->code == GR_3D) {
-		errbox(_("You must select a Z-axis variable"));
-	    } else {
-		errbox(_("You must select a factor variable"));
-	    }
-	    sr->error = 1;
-	} else {
-	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->rlvars), 
-						  "data"));
-	    sprintf(numstr, " %d", i);
-	    add_to_cmdlist(sr, numstr);
-	}
-	return;
-    }
-
-    if (realrows > 0) {
-	maybe_resize_recorder_lists(sr, realrows);
-    }
-
-    /* now for the varlist on the lower right, which usually contains
-       the independent variables in a regression context
-    */
-
-    context = sr_get_lag_context(sr, SR_RLVARS);
-
-#ifndef OLD_GTK
+    gint rvar, lag;
+    gchar *rvstr;
+    int i, j = 1;
+	
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
     gtk_tree_model_get_iter_first(model, &iter);
 
-    j = 1;
     for (i=0; i<rows; i++) {
-	gint rvar, lag;
-	gchar *rvstr;
 
 	gtk_tree_model_get(model, &iter, 0, &rvar, 1, &lag, -1);
 
@@ -1499,11 +1342,19 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 	gtk_tree_model_iter_next(model, &iter);
     }
+}
+
 #else
-    j = 1;
+
+static void get_rlvars_data (selector *sr, int rows, int context)
+{
+    gchar *rvstr, *lagstr;
+    int lag;
+    int i, j = 1;
+
     for (i=0; i<rows; i++) {
-	gchar *rvstr, *lagstr = NULL;
-	int lag = 0;
+	lagstr = NULL;
+	lag = 0;
 
 	gtk_clist_get_text(GTK_CLIST(sr->rlvars), i, 0, &rvstr);
 	gtk_clist_get_text(GTK_CLIST(sr->rlvars), i, 1, &lagstr);
@@ -1530,20 +1381,276 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    veclist[j++] = atoi(rvstr);
 	}
     }
+}
+
 #endif
 
-    /* ancillary varlist on the upper right? */
+#ifndef OLD_GTK
 
+static void get_ruvars_data (selector *sr, int rows, int context)
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gint exog, lag;
+    gchar *tmp;
+    int i, j = 1;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars));
+    gtk_tree_model_get_iter_first(model, &iter);
+
+    for (i=0; i<rows; i++) {
+
+	gtk_tree_model_get(model, &iter, 0, &exog, 1, &lag, -1);
+		
+	if (is_lag_dummy(exog, lag, context)) {
+	    gtk_tree_model_iter_next(model, &iter);
+	    continue;
+	}
+
+	if (context) {
+	    tmp = get_lagpref_string(exog, context);
+	} else {
+	    tmp = g_strdup_printf(" %d", exog);
+	}
+
+	add_to_cmdlist(sr, tmp);
+	g_free(tmp);
+
+	if (rulist != NULL) {
+	    rulist[j++] = exog;
+	}
+
+	gtk_tree_model_iter_next(model, &iter);
+    }
+} 
+
+#else
+
+static void get_ruvars_data (selector *sr, int rows, int context)
+{
+    gchar *tmp;
+    gchar *exog;
+    gchar *lstr;
+    int lag;
+    int i, j = 1;
+
+    for (i=0; i<rows; i++) {
+	lstr = NULL;
+	lag = 0;
+
+	gtk_clist_get_text(GTK_CLIST(sr->ruvars), i, 0, &exog);
+	gtk_clist_get_text(GTK_CLIST(sr->ruvars), i, 1, &lstr);
+
+	if (lstr != NULL) {
+	    lag = atoi(lstr);
+	}
+
+	if (is_lag_dummy(atoi(exog), lag, context)) {
+	    continue;
+	}
+
+	if (context) {
+	    tmp = get_lagpref_string(atoi(exog), context);
+	    add_to_cmdlist(sr, tmp);
+	    free(tmp);
+	} else {
+	    add_to_cmdlist(sr, " ");
+	    add_to_cmdlist(sr, exog);
+	}
+
+	if (rulist != NULL) {
+	    rulist[j++] = atoi(exog);
+	}
+    }
+
+}
+
+#endif
+
+static void parse_extra_widgets (selector *sr, char *endbit)
+{
+    const gchar *txt = NULL;
+    char numstr[8];
+    int k;
+
+    if (sr->code == WLS || sr->code == POISSON || sr->code == AR ||
+	sr->code == GR_DUMMY || sr->code == GR_3D) {
+	txt = gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
+	if (txt == NULL || *txt == '\0') {
+	    if (sr->code == WLS) {
+		errbox(_("You must select a weight variable"));
+		sr->error = 1;
+	    } else if (sr->code == AR) {
+		errbox(_("You must specify a list of lags"));
+		sr->error = 1;
+	    } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
+		errbox(("You must select a Y-axis variable"));
+		sr->error = 1;
+	    }
+	}
+    }
+
+    if (sr->error) {
+	return;
+    }
+
+    if (sr->code == WLS || sr->code == GR_DUMMY || sr->code == GR_3D) {
+	k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
+	sprintf(numstr, "%d ", k);
+	add_to_cmdlist(sr, numstr);
+    } else if (sr->code == POISSON) {
+	if (txt != NULL && *txt != '\0') {
+	    k = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra[0]), "data"));
+	    sprintf(endbit, " ; %d", k);
+	}
+    } else if (sr->code == AR) {
+	add_to_cmdlist(sr, txt);
+	add_to_cmdlist(sr, " ; ");
+    } 
+}
+
+static void vec_get_spinner_data (selector *sr, int *order)
+{
+    GtkAdjustment *adj;
+    char numstr[8];
+    int k;
+
+    /* lag order */
+    adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[0]));
+    *order = (int) adj->value;
+    sprintf(numstr, "%d ", *order);
+    add_to_cmdlist(sr, numstr);
+
+    if (sr->code == VECM) {
+	/* cointegration rank */
+	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[1]));
+	k = (int) adj->value;
+	sprintf(numstr, "%d", k);
+	add_to_cmdlist(sr, numstr);
+    }
+}
+
+static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
+				 char **idvlags)
+{
+    const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
+
+    txt = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
+
+    if (txt == NULL || *txt == 0) {
+	topslot_empty(sr->code);
+	sr->error = 1;
+    } else {
+	int ynum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), "data"));
+	char numstr[8];
+
+	if (sr->code == GR_XY || sr->code == GR_IMP) {
+	    sprintf(endbit, " %d", ynum);
+	} else {
+	    sprintf(numstr, "%d", ynum);
+	    add_to_cmdlist(sr, numstr);
+	}
+	if (dataset_is_time_series(datainfo) && 
+	    select_lags_depvar(sr->code)) {
+	    *dvlags = get_lagpref_string(ynum, LAG_Y_X);
+	    if (sr->code == TSLS) {
+		*idvlags = get_lagpref_string(ynum, LAG_Y_W);
+	    }
+	}
+	if (sr->default_check != NULL && 
+	    GTK_TOGGLE_BUTTON(sr->default_check)->active) {
+	    default_var = ynum;
+	}
+    }
+}
+
+static void parse_special_graph_data (selector *sr)
+{
+    const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sr->rlvars));
+    char numstr[8];
+
+    if (txt == NULL || !*txt) {
+	if (sr->code == GR_3D) {
+	    errbox(_("You must select a Z-axis variable"));
+	} else {
+	    errbox(_("You must select a factor variable"));
+	}
+	sr->error = 1;
+    } else {
+	int v = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->rlvars), 
+						  "data"));
+	sprintf(numstr, " %d", v);
+	add_to_cmdlist(sr, numstr);
+    }
+}
+
+static void construct_cmdlist (GtkWidget *w, selector *sr)
+{
+    gint rows = 0, realrows = 0;
+    gchar endbit[12] = {0};
+    char *dvlags = NULL;
+    char *idvlags = NULL;
+    int context = 0;
+    int order = 0;
+
+    sr->error = 0;
+    sr->cmdlist = mymalloc(MAXLEN); 
+    if (sr->cmdlist == NULL) {
+	return;
+    }
+    sr->cmdlist[0] = 0;
+
+    /* deal with content of "extra" widgets */
+    if (sr->code == ARMA || sr->code == GARCH) {
+	add_pq_vals_to_cmdlist(sr);
+    } else if (VEC_CODE(sr->code)) {
+	vec_get_spinner_data(sr, &order);
+    } else {
+	parse_extra_widgets(sr, endbit);
+    }
+
+    /* deal with the "depvar" widget */
+    if (!sr->error && sr->depvar != NULL) {
+	parse_depvar_widget(sr, endbit, &dvlags, &idvlags);
+    }
+
+    /* bail out if things have gone wrong already */
+    if (sr->error) {
+	return;
+    }
+
+    if (sr->code == SCATTERS) {
+	add_to_cmdlist(sr, ";");
+    }
+
+    if (sr->code == GR_DUMMY || sr->code == GR_3D) { 
+	parse_special_graph_data(sr);
+	return;
+    } 
+
+    rows = varlist_row_count(sr, SR_RLVARS, &realrows);
+
+    if (VEC_CODE(sr->code) && rows < 2) {
+	errbox(_("You must select two or more endogenous variables"));
+	sr->error = 1;
+	return;
+    }
+
+    if (realrows > 0) {
+	maybe_resize_recorder_lists(sr, realrows);
+    }
+
+    /* now for the varlist on the lower right, which usually contains
+       the independent variables in a regression context */
+    context = sr_get_lag_context(sr, SR_RLVARS);
+    get_rlvars_data(sr, rows, context);
+
+    /* and the ancillary varlist on the upper right? */
     if (sr->code == TSLS || sr->code == VAR || 
 	sr->code == VLAGSEL || sr->code == VECM) {
-#ifndef OLD_GTK
-	model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars));
-	gtk_tree_model_get_iter_first(model, &iter);
-#endif
 	rows = varlist_row_count(sr, SR_RUVARS, &realrows);
-
 	if (rows > 0) {
-	    int context = sr_get_lag_context(sr, SR_RUVARS);
+	    context = sr_get_lag_context(sr, SR_RUVARS);
 
 	    rulist = realloc(rulist, (realrows + 1) * sizeof *rulist);
 	    if (rulist != NULL) {
@@ -1558,64 +1665,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 	    add_to_cmdlist(sr, " ;");
 
-#ifndef OLD_GTK
-	    j = 1;
-	    for (i=0; i<rows; i++) {
-		gchar *tmp;
-		gint exog, lag;
-
-		gtk_tree_model_get(model, &iter, 0, &exog, 1, &lag, -1);
-		
-		if (is_lag_dummy(exog, lag, context)) {
-		    gtk_tree_model_iter_next(model, &iter);
-		    continue;
-		}
-
-		if (context) {
-		    tmp = get_lagpref_string(exog, context);
-		} else {
-		    tmp = g_strdup_printf(" %d", exog);
-		}
-
-		add_to_cmdlist(sr, tmp);
-		g_free(tmp);
-		if (rulist != NULL) {
-		    rulist[j++] = exog;
-		}
-
-		gtk_tree_model_iter_next(model, &iter);
-	    }
-#else
-	    j = 1;
-	    for (i=0; i<rows; i++) {
-		gchar *tmp;
-		gchar *exog;
-		gchar *lstr = NULL;
-		int lag = 0;
-
-		gtk_clist_get_text(GTK_CLIST(sr->ruvars), i, 0, &exog);
-		gtk_clist_get_text(GTK_CLIST(sr->ruvars), i, 1, &lstr);
-		if (lstr != NULL) {
-		    lag = atoi(lstr);
-		}
-
-		if (is_lag_dummy(atoi(exog), lag, context)) {
-		    continue;
-		}
-
-		if (context) {
-		    tmp = get_lagpref_string(atoi(exog), context);
-		    add_to_cmdlist(sr, tmp);
-		    free(tmp);
-		} else {
-		    add_to_cmdlist(sr, " ");
-		    add_to_cmdlist(sr, exog);
-		}
-		if (rulist != NULL) {
-		    rulist[j++] = atoi(exog);
-		}
-	    }
-#endif
+	    get_ruvars_data(sr, rows, context);
 	} else if (sr->code == TSLS) {
 	    errbox(_("You must specify a set of instrumental variables"));
 	    sr->error = 1;
@@ -1623,7 +1673,6 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     /* deal with any trailing strings */
-
     if (endbit[0] != '\0') {
 	add_to_cmdlist(sr, endbit);
     } else if (dvlags != NULL) {
@@ -2217,9 +2266,9 @@ static void selector_init (selector *sr, guint code, const char *title,
     
     gtk_window_set_default_size(GTK_WINDOW(sr->dlg), -1, dlgheight); 
 
-    g_signal_connect (G_OBJECT(sr->dlg), "destroy", 
-		      G_CALLBACK(destroy_selector), 
-		      sr); 
+    g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
+		     G_CALLBACK(destroy_selector), 
+		     sr); 
 
     /* create equivalent of gtkdialog structure */
     base = gtk_vbox_new(FALSE, 5);
@@ -2584,7 +2633,7 @@ static void selector_doit (GtkWidget *w, selector *sr)
     if (!sr->error) {
 	int err = sr->callback(sr);
 
-	if (!err) {
+	if (!err && open_selector != NULL) {
 	    gtk_widget_destroy(sr->dlg);
 	}
     } 
@@ -3384,7 +3433,6 @@ static int data_save_selection_callback (selector *sr)
     }
 
     storelist = g_strdup(sr->cmdlist);
-
     gtk_widget_destroy(sr->dlg);
 
     if (code != COPY_CSV) {
@@ -4135,8 +4183,10 @@ static int set_lags_for_var (var_lag_info *vlinfo, int yxlags, int ywlags)
     int changed = 0;
     int err = 0;
 
+#if LDEBUG
     fprintf(stderr, "set_lags_for_var: v=%d, lmin=%d, lmax=%d, lspec=%p\n",
 	    vlinfo->v, vlinfo->lmin, vlinfo->lmax, (void *) vlinfo->lspec);
+#endif
 
     if (vlinfo->lspec != NULL && *vlinfo->lspec != 0) {
 	charsub(vlinfo->lspec, ',', ' ');
