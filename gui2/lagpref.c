@@ -254,10 +254,6 @@ static int remove_specific_lag (int v, int lag, char context)
 	} else if (lpref->spectype == LAGS_MINMAX) {
 	    lmin = lpref->lspec.lminmax[0];
 	    lmax = lpref->lspec.lminmax[1];
-
-	    fprintf(stderr, "On entry, lmin=%d, lmax=%d, and lag to remove=%d\n",
-		    lmin, lmax, lag);
-
 	    if (lag < lmin || lag > lmax) {
 		err = 1;
 	    } else if (lag == lmin && lmin == lmax) {
