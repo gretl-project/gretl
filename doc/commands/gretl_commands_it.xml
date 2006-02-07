@@ -554,7 +554,7 @@
       <para>Alcuni dettagli del funzionamento dei boxplot di gretl possono
         essere controllati attraverso un file testuale chiamato
         <filename>.boxplotrc</filename>.  Per ulteriori dettagli, si veda
-	il <guideref targ="sect-boxplots"/>.</para>
+	la <guideref targ="sect-boxplots"/>.</para>
 
     </description>
 
@@ -743,7 +743,7 @@
         si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
         quattro opzioni mostrate sopra, che sono mutualmente esclusive,
         producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-        casi e i criteri per scegliere tra di essi sono spiegati in
+        casi e i criteri per scegliere tra di essi sono spiegati nella
 	<guideref targ="vecm-explanation"/>.
       </para>
       <para context="gui">
@@ -756,7 +756,7 @@
         si fa riferimento a questo come al <quote>caso 3</quote>.  Le prime
         quattro opzioni mostrate sopra, che sono mutualmente esclusive,
         producono rispettivamente i casi 1, 2, 4 e 5. Il significato di questi
-        casi e i criteri per scegliere tra di essi sono spiegati in
+        casi e i criteri per scegliere tra di essi sono spiegati nella
 	<guideref targ="vecm-explanation"/>.
       </para>
       <para context="cli">
@@ -1749,7 +1749,7 @@
       <para>
 	Apre un blocco di istruzioni che definiscono una funzione. Il blocco va
         chiuso con <lit>end function</lit>. Per i dettagli, si veda
-        il <guideref targ="functions"/>.
+        la <guideref targ="functions"/>.
       </para>
     </description>
 
@@ -1883,7 +1883,7 @@
         devono essere referenziate per nome, non per numero identificativo.
         La formula dev'essere una combinazione ben definita di nomi di
         variabile, costanti, operatori e funzioni (descritte oltre). Ulteriori
-        dettagli su alcuni aspetti di questo comando si possono trovare in
+        dettagli su alcuni aspetti di questo comando si possono trovare nella
         <guideref targ="chap-genr"/>.
       </para>
 
@@ -2214,7 +2214,7 @@
        <lit>$pvalue</lit>, contengono rispettivamente il valore e il
        p-value della statistica test che è stata generata dall'ultimo
        comando di test eseguito esplicitamente (ad es. <lit>chow</lit>).
-       Si veda il <guideref targ="chap-genr"/> per i dettagli.
+       Si veda la <guideref targ="chap-genr"/> per i dettagli.
       </para>
 
       <para>La variabile <lit>t</lit> serve da indice per le osservazioni.
@@ -2988,7 +2988,7 @@
         dati nelle righe rimanenti. Le variabili devono essere disposte
 	<quote>per osservazione</quote> (una colonna per variabile, ogni
         riga rappresenta un'osservazione).
-	Si veda il <guideref targ="datafiles"/> per i dettagli.
+	Si veda la <guideref targ="datafiles"/> per i dettagli.
       </para>
 
       <para>
@@ -3699,7 +3699,7 @@
         questo punto i comandi indicati vengono eseguiti.
       </para>
 
-      <para>Si veda il <guideref targ="looping"/> per ulteriori dettagli,
+      <para>Si veda la <guideref targ="looping"/> per ulteriori dettagli,
       esempi e per la spiegazione dell'opzione <lit>--progressive</lit> (che è destinata
       ad essere usata nelle simulazioni Monte Carlo).</para>
     </description>
@@ -4067,7 +4067,7 @@
     </description>
 
     <description context="cli">
-      <para>Manipola la <quote>tabella modelli</quote> di gretl. Si veda il
+      <para>Manipola la <quote>tabella modelli</quote> di gretl. Si veda la
       	<guideref targ="modes"/> per i dettagli. Le opzioni hanno i
         seguenti effetti: <cmd>add</cmd> aggiunge l'ultimo modello
         stimato alla tabella modelli, se possibile; <cmd>show</cmd>
@@ -4223,7 +4223,7 @@
 	genr gamma = 1
       </code>
 
-      <para>Per ulteriori dettagli sulla stima NLS si veda il
+      <para>Per ulteriori dettagli sulla stima NLS si veda la
 	<guideref targ="chap-nls"/>.</para>
 
     </description>
@@ -4287,7 +4287,7 @@
         di inserirle se possibile. La riga 10, <cmd>end nls</cmd>,
         completa il comando ed esegue la stima.</para>
 
-      <para>Per ulteriori dettagli sulla stima NLS si veda il
+      <para>Per ulteriori dettagli sulla stima NLS si veda la
 	<guideref targ="chap-nls"/>.</para>
 
     </description>
@@ -4408,7 +4408,7 @@
       <para context="cli">L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
 	di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
         regressione in modo silenzioso per tutte le iterazioni del loop
-        tranne l'ultima. Si veda il <guideref targ="loop-examples"/> per i dettagli.
+        tranne l'ultima. Si veda la <guideref targ="loop-examples"/> per i dettagli.
       </para>
 
       <para context="cli">È possibile salvare alcune variabili
@@ -5597,7 +5597,7 @@
       dei dati) vengono perse. È possibile reimpostare la struttura
       originale con <quote>Campione/Imposta frequenza e inizio...</quote>.</para>
 
-      <para>Si veda il <guideref targ="sampling"/> per maggiori dettagli.</para>
+      <para>Si veda la <guideref targ="sampling"/> per maggiori dettagli.</para>
 
     </description>
   </command>
@@ -6112,7 +6112,7 @@
       struttura originale con il comando <cmdref targ="setobs"/>.
       </para>
 
-      <para>Si veda il <guideref targ="sampling"/> per ulteriori dettagli.</para>
+      <para>Si veda la <guideref targ="sampling"/> per ulteriori dettagli.</para>
     
     </description>
 
@@ -6267,7 +6267,7 @@
         <program>Octave</program>, <program>R</program> e
         <program>PcGive</program> sono destinati ad essere usati con i
         rispettivi programmi. La compressione con gzip può essere utile per
-        grandi dataset. Si veda il <guideref targ="datafiles"/> per i dettagli sui
+        grandi dataset. Si veda la <guideref targ="datafiles"/> per i dettagli sui
         vari formati.</para>
 
       <para>
@@ -6932,7 +6932,7 @@
         3</quote>.  Le prime quattro opzioni mostrate sopra, che sono
         mutualmente esclusive, producono rispettivamente i casi 1, 2, 4 e 5. Il
         significato di questi casi e i criteri per scegliere tra di essi sono
-        spiegati in <guideref targ="vecm-explanation"/>.
+        spiegati nella <guideref targ="vecm-explanation"/>.
       </para>
       <para context="gui">
         Nel riquadro <quote>Variabili endogene</quote>, è possibile selezionare
@@ -6946,7 +6946,7 @@
         come al <quote>caso 3</quote>.  Le prime quattro opzioni mostrate sopra,
         che sono mutualmente esclusive, producono rispettivamente i casi 1, 2, 4
         e 5. Il significato di questi casi e i criteri per scegliere tra di essi
-        sono spiegati in <guideref targ="vecm-explanation"/>.
+        sono spiegati nella <guideref targ="vecm-explanation"/>.
       </para>
       <para context="cli">
         L'opzione <lit>--seasonals</lit>, che può accompagnare una qualsiasi
