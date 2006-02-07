@@ -2587,7 +2587,7 @@ static void selector_doit (GtkWidget *w, selector *sr)
 	if (!err) {
 	    gtk_widget_destroy(sr->dlg);
 	}
-    }
+    } 
 }
 
 static void 

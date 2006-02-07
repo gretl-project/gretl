@@ -194,7 +194,7 @@ static int is_lag_dummy (int v, int lag, char context)
     int ynum = selector_get_depvar_number(open_selector);
     int ret = 0;
 
-    if (v == ynum) {
+    if (v > 0 && v == ynum) {
 	ret = 1;
     } else if (lpref != NULL) {
 	if (lpref->spectype == LAGS_LIST &&

@@ -1,3 +1,6 @@
+#define VO_DEBUG 0
+
+
 /* Based on the specification stored in the VAR struct, constitute a
    list of the exogenous variables in the system.  
 */
@@ -47,16 +50,17 @@ int *gretl_VAR_get_exo_list (const GRETL_VAR *var, int *err)
 }
 
 /* Based on the specification stored in the VAR struct, reconstitute
-   the list that was intially passed to the gretl_VAR() function ro
+   the list that was intially passed to the gretl_VAR() function to
    set up the system.
 */
 
 static int *rebuild_VAR_list (const GRETL_VAR *orig, int *exolist, int *err)
 {
     int *list = NULL;
+    int lsep = (exolist[0] > 0);
     int i, j = 1;
 
-    list = gretl_list_new(orig->neqns + exolist[0]);
+    list = gretl_list_new(orig->neqns + exolist[0] + lsep);
     if (list == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -64,6 +68,10 @@ static int *rebuild_VAR_list (const GRETL_VAR *orig, int *exolist, int *err)
 
     for (i=0; i<orig->neqns; i++) {
 	list[j++] = orig->models[i]->list[1];
+    }
+
+    if (lsep) {
+	list[j++] = LISTSEP;
     }
 
     for (i=1; i<=exolist[0]; i++) {
@@ -84,7 +92,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
     double LR, pval;
     int i, df, err = 0;
 
-#if 0
+#if VO_DEBUG
     fprintf(stderr, "gretl_VAR_real_omit_test: about to diff lists\n");
     printlist(exolist0, "exolist0");
     printlist(exolist1, "exolist1");
@@ -162,6 +170,10 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 	return NULL;
     }
 
+#if VO_DEBUG
+    printlist(exolist, "original exolist");
+#endif
+
     c0 = gretl_list_const_pos(exolist, 1, (const double **) *pZ, pdinfo);
     if (c0 > 0) {
 	c1 = !gretl_list_const_pos(omitvars, 1, (const double **) *pZ, pdinfo);
@@ -175,11 +187,20 @@ GRETL_VAR *gretl_VAR_omit_test (const int *omitvars, const GRETL_VAR *orig,
 	goto bailout;
     }
 
+#if VO_DEBUG
+    fprintf(stderr, "co = %d, c1 = %d\n", c0, c1);
+    printlist(tmplist, "exog vars list for test VAR");
+#endif
+
     /* recreate full input VAR list for test VAR */
     varlist = rebuild_VAR_list(orig, tmplist, err);
     if (varlist == NULL) {
 	goto bailout;
     }
+
+#if VO_DEBUG
+    printlist(varlist, "full list for test VAR");
+#endif
 
     /* If the original VAR did not include a constant, we need to
        pass OPT_N to the test VAR to prevent the addition of a
