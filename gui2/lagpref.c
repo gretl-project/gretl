@@ -254,8 +254,15 @@ static int remove_specific_lag (int v, int lag, char context)
 	} else if (lpref->spectype == LAGS_MINMAX) {
 	    lmin = lpref->lspec.lminmax[0];
 	    lmax = lpref->lspec.lminmax[1];
+
+	    fprintf(stderr, "On entry, lmin=%d, lmax=%d, and lag to remove=%d\n",
+		    lmin, lmax, lag);
+
 	    if (lag < lmin || lag > lmax) {
 		err = 1;
+	    } else if (lag == lmin && lmin == lmax) {
+		lpref->lspec.lminmax[0] = 0;
+		lpref->lspec.lminmax[1] = 0;
 	    } else if (lag == lmin) {
 		lpref->lspec.lminmax[0] += 1;
 	    } else if (lag == lmax) {
@@ -281,6 +288,29 @@ static int remove_specific_lag (int v, int lag, char context)
 	} else {
 	    err = 1;
 	}
+    }
+
+    /* special handling of dependent var lags FIXME too complex? */
+    if (context == LAG_Y_X || context == LAG_Y_W) {
+	if (lpref != NULL) {
+	    if (lpref->spectype == LAGS_MINMAX &&
+		lpref->lspec.lminmax[0] == 0 &&
+		lpref->lspec.lminmax[1] == 0) {
+		lpref->lspec.lminmax[0] = 1;
+		lpref->lspec.lminmax[1] = 1;
+		if (context == LAG_Y_X) {
+		    y_x_lags_enabled = 0;
+		} else {
+		    y_w_lags_enabled = 0;
+		}
+	    }
+	} else {
+	    if (context == LAG_Y_X) {
+		y_x_lags_enabled = 0;
+	    } else {
+		y_w_lags_enabled = 0;
+	    }
+	}	    
     }
 
     return err;
