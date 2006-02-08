@@ -723,6 +723,7 @@ static gint varlist_row_count (selector *sr, int locus, int *realrows)
 	gchar *vstr, *lstr;
 
 	for (i=0; i<n; i++) {
+	    lstr = NULL;
 	    gtk_clist_get_text(GTK_CLIST(w), i, 0, &vstr);
 	    gtk_clist_get_text(GTK_CLIST(w), i, 1, &lstr);
 	    if (lstr == NULL) {
