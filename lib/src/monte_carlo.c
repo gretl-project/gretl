@@ -657,7 +657,8 @@ test_forloop_element (const char *s, LOOPSET *loop,
     char lhs[VNAMELEN];
     char rhs[VNAMELEN];
     char opstr[3];
-    int ngot, err = 0;
+    int ngot = 0;
+    int err = 0;
 
     if (s == NULL) return 1;
 
@@ -667,6 +668,14 @@ test_forloop_element (const char *s, LOOPSET *loop,
     } else {
 	ngot = sscanf(s, "%15[^-+*/=<>]%2[-+*/=<>]%15[^-+*/=<>]", 
 		      lhs, opstr, rhs);
+    }
+
+    if (i == 2 && ngot == 2) {
+	if (!strcmp(opstr, "++") || !strcmp(opstr, "--")) {
+	    strcpy(opstr, (*opstr == '+')? "+=" : "-=");
+	    strcpy(rhs, "1");
+	    ngot = 3;
+	} 
     }
 
 #if LOOP_DEBUG

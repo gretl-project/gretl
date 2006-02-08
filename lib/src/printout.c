@@ -2053,6 +2053,18 @@ static char *varname_string (const char *s, const DATAINFO *pdinfo)
     return vname;
 }
 
+static char *literal_string (const char *s)
+{
+    char *ret = NULL;
+    int n = strlen(s);
+
+    if (*s == '"' && s[n - 1] == '"') {
+	ret = gretl_strndup(s + 1, n - 2);
+    }
+
+    return ret;
+}
+
 static int get_conversion (const char *s, int *skip)
 {
     *skip = strspn(s, "#0123456789.");
@@ -2181,6 +2193,8 @@ static int real_do_printf (const char *line, double ***pZ,
 	} else if ((special = varname_string(argv, pdinfo)) != NULL) {
 	    svals[i] = special;
 	} else if ((special = date_string(argv, *pZ, pdinfo)) != NULL) {
+	    svals[i] = special;
+	} else if ((special = literal_string(argv)) != NULL) {
 	    svals[i] = special;
 	} else {
 	    int v = varindex(pdinfo, argv);

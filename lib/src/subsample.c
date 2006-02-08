@@ -20,6 +20,7 @@
 /* subsample.c for gretl */
 
 #include "libgretl.h"
+#include "libset.h"
 
 #undef SUBDEBUG
 
@@ -725,8 +726,10 @@ int restrict_sample (const char *line,
 		strcpy(gretl_errmsg, _("No observations would be left!"));
 	    } else {
 		/* this is not really an error, just a no-op */
-		pputs(prn, _("No observations were dropped!"));
-		pputc(prn, '\n');
+		if (gretl_messages_on()) {
+		    pputs(prn, _("No observations were dropped!"));
+		    pputc(prn, '\n');
+		}
 		free(mask);
 		return 0;
 	    }
