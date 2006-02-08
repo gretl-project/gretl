@@ -1530,8 +1530,9 @@ drag_data_received  (GtkWidget *widget,
 
     /* ignore the wrong sort of data */
     if (data == NULL || (dfname = (gchar *) data->data) == NULL || 
-	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5))
+	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5)) {
 	return;
+    }
 
     if (strncmp(dfname, "file://", 7) == 0) skip = 7;
 #ifdef G_OS_WIN32
@@ -1552,6 +1553,8 @@ drag_data_received  (GtkWidget *widget,
 
 #ifdef G_OS_WIN32
     slash_convert(tmp, TO_BACKSLASH);
+    /* also convert to UTF-8 here? */
+    my_filename_to_utf8(tmp);
 #endif
 
     suff = strrchr(tmp, '.');

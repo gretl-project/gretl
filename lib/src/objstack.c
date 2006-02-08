@@ -962,14 +962,17 @@ saved_object_print_scalar (const char *oname, const char *key, PRN *prn)
     return err;
 }
 
+#define OPDEBUG 0
+
 /* try to parse an "object-priented" command, such as
    MyModel.free or "System 1".show */
 
-int parse_object_command (const char *s, char *name, char *cmd)
+int parse_object_command (const char *s, char *name, char **cmd)
 {
-    int start = 0, len, d;
+    int len, start = 0;
     int quoted = 0;
     const char *p;
+    int err = 0;
 
     *name = 0;
     *cmd = 0;
@@ -990,25 +993,17 @@ int parse_object_command (const char *s, char *name, char *cmd)
     /* crawl to end of (possibly quoted) "name" */
     len = 0;
     while (*s) {
-	if (*s == '"') quoted = 0;
-	if (!quoted && isspace(*s)) break;
+	if (*s == '"') {
+	    quoted = 0;
+	    len--;
+	}
+	if (!quoted && (isspace(*s) || *s == '.')) break;
 	s++; len++;
-    }
-
-#if 0
-    fprintf(stderr, "remaining s ='%s', len=%d\n", s, len);
-#endif
-
-    /* is an object command embedded? */
-    d = dotpos(p);
-    if (d < s - p) {
-	strncat(cmd, p + d + 1, len - d - 1);
-	len -= (len - d);
     }
 
     if (len == 0) {
 	return 0;
-    }
+    }    
 
     if (len > MAXSAVENAME - 1) {
 	len = MAXSAVENAME - 1;
@@ -1016,15 +1011,26 @@ int parse_object_command (const char *s, char *name, char *cmd)
 
     strncat(name, p, len);
 
-    if (name[len - 1] == '"') {
-	name[len - 1] = 0;
+    /* is an object command embedded? */
+    if (*s == '.') {
+	s++;
+	if (*s && !isspace(*s)) {
+	    *cmd = gretl_strdup(s);
+	    if (*cmd == NULL) {
+		err = 1;
+	    }
+	}
     }
 
-#if 0
-    fprintf(stderr, "name='%s', cmd='%s'\n", name, cmd);
+#if OPDEBUG
+    if (*cmd != NULL) {
+	fprintf(stderr, "name='%s', cmd='%s'\n", name, *cmd);
+    } else {
+	fprintf(stderr, "name='%s'\n", name);
+    }
 #endif
     
-    return 0;
+    return err;
 }
 
 void gretl_saved_objects_cleanup (void)

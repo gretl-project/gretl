@@ -5262,20 +5262,18 @@
   <command name="rename" section="Dataset" context="cli">
 
     <usage>
-      <arguments>
-        <argument>varnumber</argument>
-        <argument>newname</argument>
-      </arguments>
+      <altforms>
+	<altform><lit>rename</lit> <repl>varnumber</repl> <repl>newname</repl></altform>
+	<altform><lit>rename</lit> <repl>varname</repl> <repl>newname</repl></altform>
+      </altforms>
     </usage>
 
     <description>
-      <para>Changes the name of the variable with identification
-	number <repl>varnumber</repl> to <repl>newname</repl>.  The
-	<repl>varnumber</repl> must be between 1 and the number of
-	variables in the dataset.  The new name must be of 15
-	characters maximum, must start with a letter, and must be
-	composed of only letters, digits, and the underscore
-	character.
+      <para>Changes the name of the variable with identification number
+	<repl>varnumber</repl> or current name <repl>varname</repl> to
+	<repl>newname</repl>.  The new name must be of 15 characters maximum,
+	must start with a letter, and must be composed of only letters, digits,
+	and the underscore character.
       </para>
     </description>
 

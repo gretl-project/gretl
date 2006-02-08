@@ -22,6 +22,33 @@
 
 #include "system.h"
 
+enum {
+    OBJ_ACTION_NONE,
+    OBJ_ACTION_INVALID,
+    OBJ_ACTION_NULL,
+    OBJ_ACTION_FREE,
+    OBJ_ACTION_MODEL_SHOW,
+    OBJ_ACTION_MODEL_FREE,
+    OBJ_ACTION_VAR_SHOW,
+    OBJ_ACTION_VAR_IRF,
+    OBJ_ACTION_VAR_FREE,
+    OBJ_ACTION_GRAPH_SHOW,
+    OBJ_ACTION_GRAPH_FREE,
+    OBJ_ACTION_TEXT_SHOW,
+    OBJ_ACTION_TEXT_FREE,
+    OBJ_ACTION_SYS_SHOW,
+    OBJ_ACTION_SYS_FREE,
+    OBJ_ACTION_SHOW_STAT,
+    OBJ_ACTION_MODEL_ADD,
+    OBJ_ACTION_MODEL_OMIT,
+    OBJ_ACTION_VAR_OMIT
+};
+
+#define obj_action_free(a) (a == OBJ_ACTION_MODEL_FREE || \
+                            a == OBJ_ACTION_VAR_FREE || \
+                            a == OBJ_ACTION_SYS_FREE || \
+                            a == OBJ_ACTION_FREE)
+
 void *get_last_model (int *type);
 
 void set_as_last_model (void *ptr, int type);
@@ -83,7 +110,7 @@ void gretl_rename_saved_object (void *p, const char *name);
 
 void gretl_delete_saved_object (void *p);
 
-int parse_object_command (const char *s, char *name, char *cmd);
+int parse_object_command (const char *s, char *name, char **cmd);
 
 void gretl_saved_objects_cleanup (void);
 

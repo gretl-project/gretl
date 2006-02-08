@@ -21,23 +21,13 @@
 
 #include "varprint.h"
 
-enum {
-    OBJ_ACTION_NONE,
-    OBJ_ACTION_INVALID,
-    OBJ_ACTION_NULL,
-    OBJ_ACTION_MODEL_SHOW,
-    OBJ_ACTION_VAR_SHOW,
-    OBJ_ACTION_VAR_IRF,
-    OBJ_ACTION_SYS_SHOW,
-    OBJ_ACTION_SHOW_STAT,
-    OBJ_ACTION_FREE
-};
-
-static int match_object_command (const char *s, int sort)
+static int cli_match_object_command (const char *s, int sort)
 {
     if (sort == EQUATION) {
 	if (*s == 0) return OBJ_ACTION_MODEL_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_MODEL_SHOW;
+	if (strncmp(s, "add", 3) == 0) return OBJ_ACTION_MODEL_ADD;
+	if (strncmp(s, "omit", 4) == 0) return OBJ_ACTION_MODEL_OMIT;
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
 	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     }
@@ -46,6 +36,7 @@ static int match_object_command (const char *s, int sort)
 	if (*s == 0) return OBJ_ACTION_VAR_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_VAR_SHOW;
 	if (strcmp(s, "irf") == 0)  return OBJ_ACTION_VAR_IRF;
+	if (strncmp(s, "omit", 4) == 0)  return OBJ_ACTION_VAR_OMIT;
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
 	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     }
@@ -61,7 +52,7 @@ static int match_object_command (const char *s, int sort)
 }
 
 static int parse_object_request (const char *line, 
-				 char *objname, char *param,
+				 char *objname, char **param,
 				 void **pptr, PRN *prn)
 {
     char word[MAXSAVENAME] = {0};
@@ -72,7 +63,7 @@ static int parse_object_request (const char *line,
     parse_object_command(line, word, param);
 
     /* if no dot param, nothing doing */
-    if (*param == 0) {
+    if (*param == NULL) {
 	return OBJ_ACTION_NONE;
     }
 
@@ -92,10 +83,10 @@ static int parse_object_request (const char *line,
 	return OBJ_ACTION_NULL;
     }
 
-    action = match_object_command(param, sort);
+    action = cli_match_object_command(*param, sort);
 
     if (action == OBJ_ACTION_INVALID) {
-	pprintf(prn, _("command '%s' not recognized"), param);
+	pprintf(prn, _("command '%s' not recognized"), *param);
 	pputc(prn, '\n');
     } else {
 	strcpy(objname, word);
@@ -104,25 +95,105 @@ static int parse_object_request (const char *line,
     return action;
 }
 
+static int object_command_setup (CMD *pcmd, char *cmdstr)
+{
+    char *myline;
+    int err = 0;
+
+    myline = malloc(MAXLINE);
+
+    if (myline == NULL) {
+	err = E_ALLOC;
+    } else {
+	gretl_cmd_init(pcmd);
+	*myline = 0;
+	strncat(myline, cmdstr, MAXLINE - 1);
+	err = parse_command_line(myline, pcmd, &Z, datainfo);
+	free(myline);
+    }
+
+    return err;
+}
+
+static int 
+object_model_add_or_omit (MODEL *pmod, int code, char *cmdstr, PRN *prn)
+{
+    CMD mycmd;
+    int err;
+
+    err = object_command_setup(&mycmd, cmdstr);
+    if (err) {
+	return err;
+    }
+
+    clear_model(models[1]);
+    if (code == OBJ_ACTION_MODEL_ADD) {
+	err = add_test(mycmd.list, pmod, models[1], 
+		       &Z, datainfo, mycmd.opt, prn);
+    } else {
+	err = omit_test(mycmd.list, pmod, models[1],
+			&Z, datainfo, mycmd.opt, prn);
+    }
+
+    if (err) {
+	errmsg(err, prn);
+	clear_model(models[1]);
+    } else {
+	if (!(mycmd.opt & OPT_Q)) {
+	    swap_models(&models[0], &models[1]);
+	} 
+	clear_model(models[1]);
+    }
+
+    gretl_cmd_free(&mycmd);
+
+    return err;
+}
+
+static int object_VAR_omit (GRETL_VAR *orig, char *cmdstr, PRN *prn)
+{
+    GRETL_VAR *var;
+    CMD mycmd;
+    int err;
+
+    err = object_command_setup(&mycmd, cmdstr);
+    if (err) {
+	return err;
+    }
+
+    var = gretl_VAR_omit_test(mycmd.list, orig, &Z, datainfo, prn, &err);
+    gretl_VAR_free(var);
+
+    if (err) {
+	errmsg(err, prn);
+    }
+
+    gretl_cmd_free(&mycmd);
+
+    return err;    
+}
+
 static int saved_object_action (const char *line, PRN *prn)
 {
     char objname[MAXSAVENAME] = {0};
-    char param[9] = {0};
+    char *param = NULL;
     void *ptr = NULL;
-    int code, err;
+    int code, err = 0;
 
     if (*line == '!' || *line == '#') { 
 	/* shell command or comment */
 	return 0;
     }
 
-    code = parse_object_request(line, objname, param, &ptr, prn);
+    code = parse_object_request(line, objname, &param, &ptr, prn);
 
     if (code == OBJ_ACTION_NONE) {
+	free(param);
 	return 0;
     }
 
     if (code == OBJ_ACTION_NULL || code == OBJ_ACTION_INVALID) {
+	free(param);
 	return -1;
     }
 
@@ -140,7 +211,17 @@ static int saved_object_action (const char *line, PRN *prn)
 	err = saved_object_print_scalar(objname, param, prn);
     } else if (code == OBJ_ACTION_FREE) {
 	gretl_delete_saved_object(ptr);
-    }	
+    } else if (code == OBJ_ACTION_MODEL_ADD || code == OBJ_ACTION_MODEL_OMIT) {
+	err = object_model_add_or_omit((MODEL *) ptr, code, param, prn);
+    } else if (code == OBJ_ACTION_VAR_OMIT) {
+	err = object_VAR_omit((GRETL_VAR *) ptr, param, prn);
+    }
+
+    if (obj_action_free(code) && !err) {
+	pprintf(prn, _("Freed %s\n"), objname);
+    }
+
+    free(param);
 
     return 1;
 }

@@ -812,63 +812,56 @@ static int wildcard_expand_ok (const char *s, int *lnum,
 #endif 
 
 static void parse_rename_cmd (const char *line, CMD *cmd, 
-			      const double **Z, const DATAINFO *pdinfo)
+			      const DATAINFO *pdinfo)
 {
-    int v, vnum;
-    char vname[VNAMELEN];
+    int vtest, vtarg;
+    char targ[VNAMELEN];
+    char newname[VNAMELEN];
     char numstr[8];
 
     line += strlen(cmd->word);
 
-    if (sscanf(line, "%15s %15s", numstr, vname) != 2) {
+    if (sscanf(line, "%15s %15s", targ, newname) != 2) {
 	cmd->errcode = E_DATA;
 	sprintf(gretl_errmsg, "rename: %s", 
 		_("requires a variable number and a new name"));
 	return;
     }
 
-    if (isdigit(*numstr)) {
-	vnum = atoi(numstr);
+    if (isdigit(*targ)) {
+	vtarg = atoi(targ);
     } else {
-	/* we're given a scalar variable? */
-	vnum = varindex(pdinfo, numstr);
-	if (vnum < pdinfo->v) {
-	    vnum = (int) Z[vnum][0];
-	} else {
-	    cmd->errcode = E_DATA;
-	    sprintf(gretl_errmsg, "rename: %s", 
-		_("requires a variable number and a new name"));
-	    return;
-	}	    
+	/* we're given the name of a variable? */
+	vtarg = varindex(pdinfo, targ);
     }
 
-    if (vnum >= pdinfo->v || vnum < 1) {
+    if (vtarg >= pdinfo->v || vtarg < 1) {
 	cmd->errcode = E_DATA;
-	sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), vnum);
+	sprintf(gretl_errmsg, _("Variable number %d is out of bounds"), vtarg);
 	return;
     } 
 
-    v = varindex(pdinfo, vname);
-    if (v < pdinfo->v && v != vnum) {
+    vtest = varindex(pdinfo, newname);
+    if (vtest < pdinfo->v && vtest != vtarg) {
 	sprintf(gretl_errmsg, _("'%s': there is already a variable "
-				"of this name"), vname);
+				"of this name"), newname);
 	cmd->errcode = E_DATA;
 	return;
     }
 
-    if (check_varname(vname)) {
+    if (check_varname(newname)) {
 	cmd->errcode = E_DATA;
 	return;
     }
 
     free(cmd->param);
-    cmd->param = gretl_strdup(vname);
+    cmd->param = gretl_strdup(newname);
     if (cmd->param == NULL) {
 	cmd->errcode = E_ALLOC;
 	return;
     }
 
-    sprintf(numstr, "%d", vnum);
+    sprintf(numstr, "%d", vtarg);
 
     free(cmd->extra);
     cmd->extra = gretl_strdup(numstr);
@@ -1467,7 +1460,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     /* the "rename" command calls for a variable number and a
        new name */
     else if (cmd->ci == RENAME) {
-	parse_rename_cmd(line, cmd, (const double **) *pZ, pdinfo);
+	parse_rename_cmd(line, cmd, pdinfo);
     }  
 
     /* commands that never take a list of variables */
