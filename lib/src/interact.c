@@ -140,7 +140,7 @@ static int get_rhodiff_or_lags_param (char *s, CMD *cmd)
 /* catch aliased command words and assign ci; return 1
    if alias caught, else 0. */
 
-static int catch_command_alias (const char *line, CMD *cmd)
+static int catch_command_alias (char *line, CMD *cmd)
 {
     char *s = cmd->word;
 
@@ -159,6 +159,9 @@ static int catch_command_alias (const char *line, CMD *cmd)
 	cmd->ci = BXPLOT;
     } else if (!strcmp(s, "man")) {
 	cmd->ci = HELP;
+    } else if (!strcmp(line, "smpl full")) {
+	strcpy(line, "smpl");
+	cmd->opt = OPT_F;
     } else if (!strcmp(s, "sample")) {
 	cmd->ci = SMPL;
     } else if (!strcmp(s, "eval") ||
@@ -3222,7 +3225,7 @@ int simple_commands (CMD *cmd, const char *line,
  * Returns: 1 on error, otherwise 0.
  */
 
-int get_command_index (const char *line, CMD *cmd, const DATAINFO *pdinfo)
+int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 {
     static int context;
     int done = 0;

@@ -39,7 +39,7 @@ int get_full_length_n (void);
 
 int set_sample (const char *line, const double **Z, DATAINFO *pdinfo);
 
-int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt); 
+int restore_full_sample (double ***pZ, DATAINFO **ppdinfo); 
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 

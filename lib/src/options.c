@@ -167,6 +167,7 @@ struct gretl_option gretl_opts[] = {
     { SETOBS,   OPT_T, "time-series" },
     { SETOBS,   OPT_X, "cross-section" },
     { SETOBS,   OPT_N, "special-time-series" },
+    { SMPL,     OPT_F, "full" },
     { SMPL,     OPT_C, "replace" },    
     { SMPL,     OPT_O, "dummy" },
     { SMPL,     OPT_M, "no-missing" },

@@ -266,7 +266,7 @@ void clear_data (void)
 {
     *paths.datfile = 0;
 
-    restore_sample(OPT_C);
+    gui_restore_sample();
 
     if (Z != NULL) {
 	free_Z(Z, datainfo);
@@ -1108,9 +1108,9 @@ int bool_subsample (gretlopt opt)
 {
     PRN *prn;
     const char *smplmsg;
-    int err = restore_sample(opt);
+    int err;
 
-    if (err || bufopen(&prn)) {
+    if (bufopen(&prn)) {
 	return 1;
     }
 
@@ -5282,7 +5282,7 @@ int maybe_restore_full_data (int action)
 	}
 
 	if (resp == GRETL_YES) {
-	    restore_sample(OPT_C);
+	    gui_restore_sample();
 	} else if (resp == GRETL_CANCEL || resp < 0 || 
 		   action == COMPACT || action == EXPAND) {
 	    return 1;
@@ -5809,7 +5809,7 @@ int execute_script (const char *runfile, const char *buf,
 
 	    if (gretl_executing_function()) {
 		gotline = gretl_function_get_line(line, MAXLINE,
-						  &Z, datainfo, &exec_err);
+						  &Z, &datainfo, &exec_err);
 	    } else if (fb != NULL) {
 		gotline = fgets(line, MAXLINE, fb);
 	    } else {
@@ -5826,7 +5826,7 @@ int execute_script (const char *runfile, const char *buf,
 		*tmp = '\0';
 
 		if (gretl_executing_function()) {
-		    gretl_function_get_line(tmp, MAXLINE, &Z, datainfo, &exec_err);
+		    gretl_function_get_line(tmp, MAXLINE, &Z, &datainfo, &exec_err);
 		} else if (fb != NULL) {
 		    fgets(tmp, MAXLINE, fb);
 		} else {
@@ -6844,19 +6844,13 @@ int gui_exec_line (char *line,
         break;
 
     case SMPL:
-	if (cmd.opt) {
-	    err = restore_sample(cmd.opt);
-	    if (err) {
-		break;
-	    } else {
-		err = restrict_sample(line, &Z, &datainfo, 
-				      cmd.list, cmd.opt, prn);
-	    }
-	} else if (!strcmp(line, "smpl full") ||
-		   !strcmp(line, "smpl --full")) {
-	    restore_sample(OPT_C);
+	if (cmd.opt == OPT_F) {
+	    gui_restore_sample();
 	    chk = 1;
-	} else {
+	} else if (cmd.opt) {
+	    err = restrict_sample(line, &Z, &datainfo, 
+				  cmd.list, cmd.opt, prn);
+	} else { 
 	    err = set_sample(line, (const double **) Z, datainfo);
 	}
 
@@ -6864,7 +6858,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	} else {
 	    print_smpl(datainfo, get_full_length_n(), prn);
-	    if (cmd.opt) { 
+	    if (cmd.opt && cmd.opt != OPT_F) { /* FIXME? */
 		set_sample_label_special();
 	    } else {
 		set_sample_label(datainfo);
@@ -6961,7 +6955,7 @@ int gui_exec_line (char *line,
 
     /* clean up in case a user function bombed */
     if (err && gretl_executing_function()) {
-	gretl_function_stop_on_error(datainfo, prn);
+	gretl_function_stop_on_error(&Z, &datainfo, prn);
     }    
 
     /* log the specific command? */

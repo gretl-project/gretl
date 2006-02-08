@@ -2769,23 +2769,15 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case SMPL:
-		if (cmd.opt) {
-		    err = restore_full_sample(pZ, ppdinfo, cmd.opt);
-		    if (err) {
-			errmsg(err, prn);
-			break;
-		    } else {
-			err = restrict_sample(linecpy, pZ, ppdinfo, 
-					      cmd.list, cmd.opt, NULL);
-		    }
-		} else if (!strcmp(linecpy, "smpl full") ||
-			   !strcmp(linecpy, "smpl --full")) {
-		    err = restore_full_sample(pZ, ppdinfo, OPT_C);
+		if (cmd.opt == OPT_F) {
+		    err = restore_full_sample(pZ, ppdinfo);
+		} else if (cmd.opt) {
+		    err = restrict_sample(linecpy, pZ, ppdinfo, 
+					  cmd.list, cmd.opt, NULL);
 		} else { 
-		    err = set_sample(linecpy, (const double **) *pZ,
+		    err = set_sample(linecpy, (const double **) *pZ, 
 				     *ppdinfo);
 		}
-
 		if (err) {
 		    errmsg(err, prn);
 		} else if (1 || gretl_echo_on()) {

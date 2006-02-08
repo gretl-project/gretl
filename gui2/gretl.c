@@ -1434,11 +1434,11 @@ static void set_up_main_menu (void)
     mdata->mbar = gtk_item_factory_get_widget(mdata->ifac, "<main>");
 }
 
-int restore_sample (gretlopt opt)
+int gui_restore_sample (void)
 {
     int err;
 
-    err = restore_full_sample(&Z, &datainfo, opt);
+    err = restore_full_sample(&Z, &datainfo);
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -1450,11 +1450,11 @@ int restore_sample (gretlopt opt)
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 {
-    int err = restore_sample(OPT_C); 
+    int err = gui_restore_sample(); 
 
     if (verbose && !err) {
 	set_sample_label(datainfo);    
-	gretl_command_strcpy("smpl full");
+	gretl_command_strcpy("smpl --full");
 	check_and_record_command();
     }
 }

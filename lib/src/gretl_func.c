@@ -147,7 +147,7 @@ static void callstack_destroy (void)
     callstack = NULL;
 }
 
-static int real_gretl_function_stack_depth (void)
+int gretl_function_stack_depth (void)
 {
     int i, n = 0;
 
@@ -163,11 +163,6 @@ static int real_gretl_function_stack_depth (void)
     }
 
     return n;
-}
-
-int gretl_function_stack_depth (void)
-{
-    return real_gretl_function_stack_depth();
 }
 
 static int push_fncall (fncall *call, const DATAINFO *pdinfo)
@@ -421,7 +416,7 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
+static int unstack_fncall (double ***pZ, DATAINFO **ppdinfo)
 {
     fncall *call;   
     int i, nc;
@@ -441,11 +436,11 @@ static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
 	    call->fun->name, nc);
 #endif
 
-    err = destroy_or_assign_local_vars(call, pZ, pdinfo, nc);
+    pop_program_state(pZ, ppdinfo);
+
+    err = destroy_or_assign_local_vars(call, pZ, *ppdinfo, nc);
 
     set_executing_off(call);
-    pop_program_state(pdinfo);
-
     free_fncall(call);
 
     for (i=0; i<nc; i++) {
@@ -1597,7 +1592,7 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 }
 
 char *gretl_function_get_line (char *line, int len,
-			       double ***pZ, DATAINFO *pdinfo,
+			       double ***pZ, DATAINFO **ppdinfo,
 			       int *err)
 {
     fncall *call = current_call();
@@ -1630,7 +1625,7 @@ char *gretl_function_get_line (char *line, int len,
     } 
 
     if (unstack) {
-	*err = unstack_fncall(pZ, pdinfo);
+	*err = unstack_fncall(pZ, ppdinfo);
 	return "";
     }	
 
@@ -1646,14 +1641,14 @@ void gretl_functions_cleanup (void)
     ufuncs_destroy();
 }
 
-void gretl_function_stop_on_error (DATAINFO *pdinfo, PRN *prn)
+void gretl_function_stop_on_error (double ***pZ, DATAINFO **ppdinfo, PRN *prn)
 {
     gretl_function_flagged_error(NULL, prn);
 
     callstack_destroy();
 
     if (fn_executing > 0) {
-	libset_restore_state_zero(pdinfo);
+	libset_restore_state_zero(pZ, ppdinfo);
     }
 
     fn_executing = 0;

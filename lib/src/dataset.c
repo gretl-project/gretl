@@ -1213,7 +1213,7 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)
     return 0;
 }
 
-#undef DROPDBG
+#define DROPDBG 1
 
 /**
  * dataset_drop_listed_variables:
@@ -1248,7 +1248,10 @@ int dataset_drop_listed_variables (const int *list, double ***pZ,
     }
 
 #if DROPDBG
-    printlist(list, "vars to be deleted");
+    fprintf(stderr, "dataset_drop_listed_variables: dropping these vars:\n");
+    for (i=1; i<=list[0]; i++) {
+	fprintf(stderr, " %d: %s\n", list[i], pdinfo->varname[list[i]]);
+    }
 #endif
 
     /* free and set to NULL all the vars to be deleted */

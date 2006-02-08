@@ -31,10 +31,10 @@ enum vcv_codes {
 
 int libset_init (void);
 void libset_cleanup (void);
-int libset_restore_state_zero (DATAINFO *pdinfo);
+int libset_restore_state_zero (double ***pZ, DATAINFO **ppdinfo);
 
 int push_program_state (const DATAINFO *pdinfo);
-int pop_program_state (DATAINFO *pdinfo);
+int pop_program_state (double ***pZ, DATAINFO **ppdinfo);
 
 void set_use_qr (int set);
 int get_use_qr (void);

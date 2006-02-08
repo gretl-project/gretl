@@ -215,7 +215,7 @@ int fn_get_line (void)
     int err = 0;
 
     clear(line, MAXLINE);
-    gretl_function_get_line(line, MAXLINE, &Z, datainfo, &err);
+    gretl_function_get_line(line, MAXLINE, &Z, &datainfo, &err);
 
     if (*line != '\0') {
 	*linebak = 0;
@@ -297,7 +297,7 @@ static int clear_data (void)
 
     *paths.datfile = 0;
 
-    err = restore_full_sample(&Z, &datainfo, OPT_C); 
+    err = restore_full_sample(&Z, &datainfo); 
 
     if (Z != NULL) {
 	free_Z(Z, datainfo); 
@@ -367,7 +367,7 @@ static int maybe_get_input_line_continuation (char *tmp)
 	tmp[0] = '\0';
 
 	if (gretl_executing_function()) {
-	    gretl_function_get_line(tmp, MAXLINE - 1, &Z, datainfo, &err);
+	    gretl_function_get_line(tmp, MAXLINE - 1, &Z, &datainfo, &err);
 	} else if (batch || runit) {
 	    fgets(tmp, MAXLINE - 1, fb);
 	} else {
@@ -800,7 +800,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     } else {
 	err = parse_command_line(line, &cmd, &Z, datainfo);
 	if (err && gretl_executing_function()) {
-	    gretl_function_stop_on_error(datainfo, prn);
+	    gretl_function_stop_on_error(&Z, &datainfo, prn);
 	}	
     }
 
@@ -1573,22 +1573,14 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case SMPL:
-	if (cmd.opt) {
-	    err = restore_full_sample(&Z, &datainfo, cmd.opt);
-	    if (err) {
-		errmsg(err, prn);
-		break;
-	    } else {
-		err = restrict_sample(line, &Z, &datainfo, 
-				      cmd.list, cmd.opt, prn);
-	    }
-	} else if (!strcmp(line, "smpl full") ||
-		   !strcmp(line, "smpl --full")) {
-	    err = restore_full_sample(&Z, &datainfo, OPT_C);
+	if (cmd.opt == OPT_F) {
+	    err = restore_full_sample(&Z, &datainfo);
+	} else if (cmd.opt) {
+	    err = restrict_sample(line, &Z, &datainfo, 
+				  cmd.list, cmd.opt, prn);
 	} else { 
 	    err = set_sample(line, (const double **) Z, datainfo);
 	}
-
 	if (err) {
 	    errmsg(err, prn);
 	} else {
@@ -1670,7 +1662,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     }
 
     if (err && gretl_executing_function()) {
-	gretl_function_stop_on_error(datainfo, prn);
+	gretl_function_stop_on_error(&Z, &datainfo, prn);
     }
 
     if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)

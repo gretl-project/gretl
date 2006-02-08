@@ -22,6 +22,8 @@
 #include "libgretl.h"
 #include "libset.h"
 
+#define PDEBUG 1
+
 enum {
     AUTO_LAG_STOCK_WATSON,
     AUTO_LAG_WOOLDRIDGE
@@ -131,6 +133,9 @@ static void sample_info_init (struct sample_info *sinfo)
 
 static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
 {
+#if PDEBUG
+    fprintf(stderr, "state_vars_copy called: pdinfo=%p\n", (void *) pdinfo);
+#endif
     sv->use_qr = state->use_qr;
     sv->seed = state->seed;
     sv->halt_on_error = state->halt_on_error;
@@ -150,6 +155,11 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
 	sv->sinfo.t1 = pdinfo->t1;
 	sv->sinfo.t2 = pdinfo->t2;
 	sv->sinfo.subsampled = complex_subsampled();
+#if PDEBUG
+	fprintf(stderr, " sinfo.t1=%d, sinfo.t2=%d, "
+		"sinfo.subsampled=%d\n", sv->sinfo.t1,
+		sv->sinfo.t2, sv->sinfo.subsampled);
+#endif
     } else {
 	sample_info_init(&sv->sinfo);
     }
@@ -157,6 +167,9 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
 
 static void state_vars_init (set_vars *sv)
 {
+#if PDEBUG
+    fprintf(stderr, "state_vars_init called\n");
+#endif
     sv->use_qr = UNSET_INT; 
     sv->seed = 0;
     sv->halt_on_error = UNSET_INT;
@@ -610,6 +623,12 @@ static int display_settings (PRN *prn)
     return 0;
 }
 
+#define boolean_on(s) (!strcmp(s, "on") || !strcmp(s, "1") || \
+                       !strcmp(s, "true"))
+
+#define boolean_off(s) (!strcmp(s, "off") || !strcmp(s, "0") || \
+                        !strcmp(s, "false"))
+
 int execute_set_line (const char *line, PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
@@ -640,18 +659,18 @@ int execute_set_line (const char *line, PRN *prn)
 
 	/* set command echo on/off */
 	if (!strcmp(setobj, "echo")) {
-	    if (!strcmp(setarg, "off")) {
+	    if (boolean_off(setarg)) {
 		state->gretl_echo = 0;
 		err = 0;
-	    } else if (!strcmp(setarg, "on")) {
+	    } else if (boolean_on(setarg)) {
 		state->gretl_echo = 1;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "messages")) {
-	    if (!strcmp(setarg, "off")) {
+	    if (boolean_off(setarg)) {
 		state->gretl_msgs = 0;
 		err = 0;
-	    } else if (!strcmp(setarg, "on")) {
+	    } else if (boolean_on(setarg)) {
 		state->gretl_msgs = 1;
 		err = 0;
 	    }
@@ -681,10 +700,10 @@ int execute_set_line (const char *line, PRN *prn)
 	    err = parse_hc_variant(setarg);
 	} else if (!strcmp(setobj, "force_hc")) {
 	    /* use HCCM, not HAC, even for time series */
-	    if (!strcmp(setarg, "on")) { 
+	    if (boolean_on(setarg)) { 
 		set_force_hc(1);
 		err = 0;
-	    } else if (!strcmp(setarg, "off")) { 
+	    } else if (boolean_off(setarg)) { 
 		set_force_hc(0);
 		err = 0;
 	    }
@@ -693,18 +712,18 @@ int execute_set_line (const char *line, PRN *prn)
 	    err = set_garch_vcv_variant(setarg);
 	} else if (!strcmp(setobj, "qr")) {
 	    /* switch QR vs Cholesky decomposition */
-	    if (!strcmp(setarg, "on")) {
+	    if (boolean_on(setarg)) {
 		state->use_qr = 1;
 		err = 0;
-	    } else if (!strcmp(setarg, "off")) {
+	    } else if (boolean_off(setarg)) {
 		state->use_qr = 0;
 		err = 0;
 	    }
 	} else if (!strcmp(setobj, "halt_on_error")) {
-	    if (!strcmp(setarg, "on")) {
+	    if (boolean_on(setarg)) {
 		state->halt_on_error = 1;
 		err = 0;
-	    } else if (!strcmp(setarg, "off")) {
+	    } else if (boolean_off(setarg)) {
 		state->halt_on_error = 0;
 		err = 0;
 	    }
@@ -847,7 +866,16 @@ int get_shell_ok (void)
     return state->shell_ok;
 }
 
-/* Mechanism for pushing and popping program state for new-style
+static void update_sample_info (set_vars *sv, const DATAINFO *pdinfo)
+{
+    if (pdinfo != NULL) {
+	sv->sinfo.t1 = pdinfo->t1;
+	sv->sinfo.t2 = pdinfo->t2;
+	sv->sinfo.subsampled = complex_subsampled();
+    }	 
+}
+
+/* Mechanism for pushing and popping program state for user-defined
    functions. push_program_state() is used when a function starts
    execution: the function gets a copy of the current program state,
    while that state is pushed onto the stack for restoration when the
@@ -859,17 +887,29 @@ static set_vars **state_stack;
 
 int push_program_state (const DATAINFO *pdinfo)
 {
-    set_vars *mystate, **sstack;
+    set_vars **sstack;
+    set_vars *newstate;
     int ns = n_states;
     int err = 0;
 
-    mystate = malloc(sizeof *mystate);
-    if (mystate == NULL) {
+#if PDEBUG
+    fprintf(stderr, "push_program_state: ns=%d\n", ns);
+    if (pdinfo != NULL) {
+	fprintf(stderr, " pdinfo=%p, t1=%d, t2=%d\n",
+		(void *) pdinfo, pdinfo->t1, pdinfo->t2);
+    } else {
+	fprintf(stderr, " pdinfo is NULL\n");
+    }
+#endif
+
+    newstate = malloc(sizeof *newstate);
+
+    if (newstate == NULL) {
 	err = 1;
     } else {
 	sstack = realloc(state_stack, (ns + 1) * sizeof *sstack);
 	if (sstack == NULL) {
-	    free(mystate);
+	    free(newstate);
 	    err = 1;
 	}
     }
@@ -877,17 +917,47 @@ int push_program_state (const DATAINFO *pdinfo)
     if (!err) {
 	if (ns == 0) {
 	    /* set all defaults */
-	    state_vars_init(mystate);
+	    state_vars_init(newstate);
 	} else {
+	    /* set sample on existing state */
+	    update_sample_info(state, pdinfo);
 	    /* copy existing state */
-	    state_vars_copy(mystate, pdinfo);
+	    state_vars_copy(newstate, pdinfo);
 	}
 	state_stack = sstack;
-	state = state_stack[ns] = mystate;
+	state = state_stack[ns] = newstate;
 	n_states++;
     }
 
+#if PDEBUG
+    if (!err) {
+	fprintf(stderr, " state is now state_stack[%d]\n", ns);
+    }
+#endif
+
     return err;
+}
+
+static int subsampled_at_level (const DATAINFO *pdinfo, int level)
+{
+    int i, ret = 0;
+
+    if (!complex_subsampled()) {
+	return 0;
+    }
+    
+    for (i=1; i<pdinfo->v; i++) {
+	if (!strcmp(pdinfo->varname[i], "subdum") &&
+	    STACK_LEVEL(pdinfo, i) == level) {
+#if PDEBUG
+	    fprintf(stderr, "Found subdum at level %d, position %d\n", level, i);
+#endif
+	    ret = 1;
+	    break;
+	}
+    }
+
+    return ret;
 }
 
 /* Called when a new-style function exits: restores the program state
@@ -898,11 +968,16 @@ int push_program_state (const DATAINFO *pdinfo)
    requires more careful thought.
 */
 
-int pop_program_state (DATAINFO *pdinfo)
+int pop_program_state (double ***pZ, DATAINFO **ppdinfo)
 {
     set_vars **sstack;
     int ns = n_states;
     int err = 0;
+
+#if PDEBUG
+    fprintf(stderr, "pop_program_state called: ns=%d, pdinfo=%p\n",
+	    ns, (void *) *ppdinfo);
+#endif
 
     if (ns < 2) {
 	err = 1;
@@ -921,14 +996,32 @@ int pop_program_state (DATAINFO *pdinfo)
 	n_states--;
     }
 
-    if (!err && pdinfo != NULL && sinfo_is_set(state->sinfo)) {
-	/* restore original t1, t2 if complex subsample in force
-	   neither before nor after the function call */
-	if (!complex_subsampled() && !state->sinfo.subsampled) {
-	    pdinfo->t1 = state->sinfo.t1;
-	    pdinfo->t2 = state->sinfo.t2;
-	}
+#if PDEBUG
+    fprintf(stderr, " state is now state_stack[%d]\n", ns - 2);
+#endif
+
+    if (!err && *ppdinfo != NULL && sinfo_is_set(state->sinfo)) {
+	if (subsampled_at_level(*ppdinfo, ns - 1)) {
+#if PDEBUG
+	    fprintf(stderr, " undoing current sub-sampling\n");
+#endif
+	    restore_full_sample(pZ, ppdinfo);
+	    if (subsampled_at_level(*ppdinfo, ns - 2)) {
+		fprintf(stderr, " FIXME need to restore prior sample restriction\n");
+		/* problem: this won't show up, because "fullZ" will have been
+		   set to NULL already by the above command */
+	    }	
+	} 
+	(*ppdinfo)->t1 = state->sinfo.t1;
+	(*ppdinfo)->t2 = state->sinfo.t2;
     }
+
+#if PDEBUG
+    if (*ppdinfo != NULL) {
+	fprintf(stderr, " err=%d, pdinfo->t1=%d, pdinfo->t2=%d\n",
+		err, (*ppdinfo)->t1, (*ppdinfo)->t2);
+    } 
+#endif
 
     return err;
 }
@@ -939,6 +1032,10 @@ int libset_init (void)
 {
     static int done;
     int err = 0;
+
+#if PDEBUG
+    fprintf(stderr, "libset_init called, done=%d\n", done);
+#endif
 
     if (!done) {
 	err = push_program_state(NULL);
@@ -961,13 +1058,13 @@ void libset_cleanup (void)
     n_states = 0;
 }
 
-int libset_restore_state_zero (DATAINFO *pdinfo)
+int libset_restore_state_zero (double ***pZ, DATAINFO **ppdinfo)
 {
     int i, ns = n_states;
     int err = 0;
 
     for (i=ns; i>=2 && !err; i--) {
-	err = pop_program_state(pdinfo);
+	err = pop_program_state(pZ, ppdinfo);
     }
 
     return err;

@@ -34,12 +34,12 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 			       DATAINFO *pdinfo);
 
 char *gretl_function_get_line (char *line, int len,
-			       double ***pZ, DATAINFO *pdinfo,
+			       double ***pZ, DATAINFO **ppdinfo,
 			       int *err);
 
 int gretl_function_stack_depth (void);
 
-void gretl_function_stop_on_error (DATAINFO *pdinfo, PRN *prn);
+void gretl_function_stop_on_error (double ***pZ, DATAINFO **ppdinfo, PRN *prn);
 
 int gretl_function_flagged_error (const char *s, PRN *prn);
 

@@ -250,7 +250,7 @@ static int console_function_exec (char *execline)
     int err = 0;
 
     while (!looprun) {
-	gotline = gretl_function_get_line(execline, MAXLINE, &Z, datainfo, &err);
+	gotline = gretl_function_get_line(execline, MAXLINE, &Z, &datainfo, &err);
 	if (gotline == NULL || *gotline == '\0') {
 	    break;
 	}

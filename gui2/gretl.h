@@ -131,7 +131,7 @@ void set_wm_icon (GtkWidget *w, gpointer data);
 int mdata_selection_count (void);
 void populate_varlist (void);
 void clear_varlist (GtkWidget *widget);
-int restore_sample (gretlopt opt);
+int gui_restore_sample (void);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (gpointer data);

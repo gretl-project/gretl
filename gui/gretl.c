@@ -1237,11 +1237,11 @@ static void set_up_main_menu (void)
     gtk_accel_group_attach(main_accel, GTK_OBJECT (mdata->w));
 }
 
-int restore_sample (gretlopt opt)
+int gui_restore_sample (void)
 {
     int err;
 
-    err = restore_full_sample(&Z, &datainfo, opt);
+    err = restore_full_sample(&Z, &datainfo);
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -1253,7 +1253,7 @@ int restore_sample (gretlopt opt)
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 {
-    int err = restore_sample(OPT_NONE); /* FIXME OPT_C? */
+    int err = gui_restore_sample();
 
     if (verbose && !err) {
 	set_sample_label(datainfo);    
