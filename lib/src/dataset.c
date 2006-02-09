@@ -1213,7 +1213,7 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)
     return 0;
 }
 
-#define DROPDBG 1
+#define DROPDBG 0
 
 /**
  * dataset_drop_listed_variables:

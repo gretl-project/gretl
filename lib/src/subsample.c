@@ -48,9 +48,7 @@ static double **fullZ;
 static DATAINFO *fullinfo;
 static const DATAINFO *peerinfo;
 
-static int 
-real_restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt);
-
+static int parent_subdum_index (const DATAINFO *pdinfo);
 
 #define SUBMASK_SENTINEL 127
 
@@ -97,6 +95,16 @@ void maybe_free_full_dataset (const DATAINFO *pdinfo)
     }
 }
 
+static void relink_full_dataset (double ***pZ, DATAINFO **ppdinfo)
+{
+    *pZ = fullZ;
+    *ppdinfo = fullinfo;
+
+    fullZ = NULL;
+    fullinfo = NULL;
+    peerinfo = NULL;
+}
+
 /* sync malloced elements of the fullinfo struct that might
    have been moved via realloc
 */
@@ -121,6 +129,10 @@ attach_subsample_to_datainfo (DATAINFO *subinfo, const double **Z,
     }
 
     s = varindex(pdinfo, "subdum");
+
+    if (s == pdinfo->v) {
+	s = parent_subdum_index(pdinfo);
+    }	
 
     if (s == pdinfo->v) { 
 	/* safety measure: should be impossible */
@@ -165,6 +177,123 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
     return err;
 }
 
+/* apparatus for updating full dataset when restoring full sample
+   after sub-sampling */
+
+static void
+update_full_data_values (const double **subZ, const DATAINFO *pdinfo)
+{
+    int i, t;
+
+    for (i=1; i<fullinfo->v; i++) {
+	int subt = 0;
+
+	if (!pdinfo->vector[i]) {
+	    fullZ[i][0] = subZ[i][0];
+	} else {
+	    for (t=0; t<fullinfo->n; t++) {
+		if (pdinfo->submask[t]) {
+		    fullZ[i][t] = subZ[i][subt++];
+		}
+	    }
+	}
+    }
+}
+
+static int update_case_markers (const DATAINFO *pdinfo)
+{
+    int err = 0;
+
+    if (pdinfo->markers && !fullinfo->markers) {
+	dataset_allocate_obs_markers(fullinfo);
+	if (fullinfo->S == NULL) {
+	    err = 1;
+	} else {
+	    int t, subt = 0;
+
+	    for (t=0; t<fullinfo->n; t++) {
+		if (pdinfo->submask[t]) {
+		    strcpy(fullinfo->S[t], pdinfo->S[subt++]);
+		} else {
+		    sprintf(fullinfo->S[t], "%d", t + 1);
+		}
+	    }
+	}
+    }	
+	
+    return err;
+}
+
+static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
+{
+    int i, t, subt;
+    int newvars = pdinfo->v - fullinfo->v;
+    int n = fullinfo->n;
+    double **newZ = NULL;
+    int err = 0;
+
+    if (newvars <= 0) {
+	return 0;
+    }
+
+    if (pdinfo->submask == NULL) {
+	return E_NOMERGE;
+    }
+
+    /* allocate expanded data array */
+    newZ = realloc(fullZ, pdinfo->v * sizeof *fullZ);
+    if (newZ != NULL) {
+	for (i=0; i<newvars; i++) {
+	    if (pdinfo->vector[fullinfo->v+i]) {
+		newZ[fullinfo->v+i] = malloc(n * sizeof **newZ);
+	    } else {
+		newZ[fullinfo->v+i] = malloc(sizeof **newZ);
+	    }
+	    if (newZ[fullinfo->v+i] == NULL) {
+		err = 1;
+		break;
+	    }
+	}
+    } else {
+	err = 1;
+    }
+
+    if (err) {
+	return E_ALLOC;
+    }
+    
+    fullZ = newZ;
+
+    for (i=fullinfo->v; i<pdinfo->v; i++) {
+	if (!pdinfo->vector[i]) {
+	   fullZ[i][0] = Z[i][0]; 
+	}
+    }
+
+    subt = 0;
+
+    for (t=0; t<n; t++) {
+	if (pdinfo->submask[t]) {
+	    for (i=fullinfo->v; i<pdinfo->v; i++) {
+		if (pdinfo->vector[i]) {
+		    fullZ[i][t] = Z[i][subt];
+		}
+	    }
+	    subt++;
+	} else {
+	    for (i=fullinfo->v; i<pdinfo->v; i++) { 
+		if (pdinfo->vector[i]) {
+		    fullZ[i][t] = NADBL;
+		}
+	    }
+	}
+    }
+
+    fullinfo->v = pdinfo->v;
+
+    return 0;
+}
+
 static int parent_subdum_index (const DATAINFO *pdinfo)
 {
     int i, d = gretl_function_stack_depth();
@@ -175,7 +304,7 @@ static int parent_subdum_index (const DATAINFO *pdinfo)
     if (d > 0) {
 	for (i=1; i<pdinfo->v; i++) {
 	    if (STACK_LEVEL(pdinfo, i) == d - 1 &&
-		!strcmp(pdinfo->varname[v], "subdum")) {
+		!strcmp(pdinfo->varname[i], "subdum")) {
 		v = i;
 		break;
 	    }
@@ -183,6 +312,156 @@ static int parent_subdum_index (const DATAINFO *pdinfo)
     }
 
     return v;
+}
+
+static int maybe_add_subdum (double ***pZ, DATAINFO *pdinfo, int *snum)
+{
+    int v = varindex(pdinfo, "subdum");
+
+    if (v == pdinfo->v) {
+	v = parent_subdum_index(pdinfo);
+    }
+
+    if (v == pdinfo->v) {
+	/* variable doesn't exist: create it */
+	if (dataset_add_series(1, pZ, pdinfo)) {
+	    return 1;
+	}
+	strcpy(pdinfo->varname[v], "subdum");
+	strcpy(VARLABEL(pdinfo, v), _("automatic sub-sampling dummy"));
+    } 
+
+    *snum = v;
+
+    return 0;
+}
+
+static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
+{
+    int old_vmax = pdinfo->v;
+    int v, t;
+    int err = 0;
+
+    /* add "subdum" variable if it's not already present */
+    if (maybe_add_subdum(pZ, pdinfo, &v)) {
+	err = 1;
+    } else if (v == old_vmax) {
+	/* no pre-existing mask: write it from scratch */
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[v][t] = (t < pdinfo->t1 || t > pdinfo->t2)? 0.0 : 1.0;
+	}
+    } else {
+	/* there was a pre-existing mask: adjust it */
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t < pdinfo->t1 || t > pdinfo->t2) {
+		(*pZ)[v][t] = 0.0;
+	    }
+	}	
+    }
+
+    return err;
+}
+
+/* If the third parameter, "cumulate", is non-zero, we're restoring
+   the full data set just as a preliminary to applying a sample
+   restriction that will be the logical product of some new
+   restriction and any existing restriction.
+*/
+
+static int 
+real_restore_full_sample (double ***pZ, DATAINFO **ppdinfo, int cumulate)
+{
+    int i, t, err = 0;
+
+    *gretl_errmsg = '\0';
+
+#if SUBDEBUG
+    fprintf(stderr, "real_restore_full_sample: pZ=%p, ppdinfo=%p cum=%d\n",
+	    (void *) pZ, (void *) ppdinfo, cumulate);
+    fprintf(stderr, "*pZ=%p, *ppdinfo=%p\n",
+	    (void *) *pZ, (void *) *ppdinfo);
+#endif
+
+    if (*pZ != NULL && cumulate) {  
+	/* cumulating, not replacing restrictions: we need to
+	   ensure that an appropriate mask is in place */
+	err = make_smpl_mask(pZ, *ppdinfo);
+	if (err) {
+	    return err;
+	}
+    }
+
+    /* simple case: merely resetting the sample starting
+       and ending points to full range */
+    if (!complex_subsampled()) {
+	(*ppdinfo)->t1 = 0;
+	(*ppdinfo)->t2 = (*ppdinfo)->n - 1;
+#if SUBDEBUG
+	fprintf(stderr, " reset t1 and t2; all done\n");
+#endif
+	return 0;
+    }
+
+    /* beyond this point we are doing a non-trivial restoration
+       of a stored full dataset, which has previously been
+       subsampled, e.g., by some boolean criterion 
+    */
+
+    /* reattach malloc'd elements of subsampled dataset,
+       which may have moved */
+    sync_dataset_elements(*ppdinfo);
+
+    /* update values for pre-existing series, which may have been
+       modified via genr */
+    update_full_data_values((const double **) *pZ, *ppdinfo);
+
+    /* if case markers were added when subsampled, carry them back */
+    update_case_markers(*ppdinfo);
+
+    /* in case any new vars were added when subsampled, try to merge
+       them into the full dataset */
+    err = add_new_vars_to_full((const double **) *pZ, *ppdinfo);
+    if (err == E_ALLOC) {
+        sprintf(gretl_errmsg, _("Out of memory expanding data set\n"));
+    } else if (err == E_NOMERGE) {
+        sprintf(gretl_errmsg, 
+		_("Missing sub-sample information; can't merge data\n"));
+    }
+
+    /* If we plan to destroy/replace any existing sample restrictions,
+       zero out the "subdum" dummy variable. */
+    if (!cumulate) {
+	i = varindex(fullinfo, "subdum");
+	if (i < fullinfo->v) {
+	    for (t=0; t<fullinfo->n; t++) {
+		fullZ[i][t] = 0.0;
+	    }
+	}
+    }
+
+    free_Z(*pZ, *ppdinfo);
+    clear_datainfo(*ppdinfo, CLEAR_SUBSAMPLE);
+    free(*ppdinfo);
+
+    relink_full_dataset(pZ, ppdinfo);
+
+    return 0;
+}
+
+/* restore_full_sample: 
+ * @pZ: pointer to data array.  
+ * @ppdinfo: address of data info pointer. 
+ *
+ * Restore the full data range, undoing any sub-sampling that was
+ * previously performed (either by shifting the endpoints of the
+ * sample range or by selecting cases on some criterion or other).
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
+{
+    return real_restore_full_sample(pZ, ppdinfo, 0);
 }
 
 static double *get_old_mask (double **Z, const DATAINFO *pdinfo)
@@ -361,24 +640,6 @@ static int make_random_mask (double *oldmask, int fulln, int subn,
     return cases;
 }
 
-static int maybe_add_subdum (double ***pZ, DATAINFO *pdinfo, int *snum)
-{
-    int s = varindex(pdinfo, "subdum");
-
-    if (s == pdinfo->v) {
-	/* variable doesn't exist: create it */
-	if (dataset_add_series(1, pZ, pdinfo)) {
-	    return 1;
-	}
-	strcpy(pdinfo->varname[s], "subdum");
-	strcpy(VARLABEL(pdinfo, s), _("automatic sub-sampling dummy"));
-    } 
-
-    *snum = s;
-
-    return 0;
-}
-
 enum {
     SUBSAMPLE_UNKNOWN,
     SUBSAMPLE_DROP_MISSING,
@@ -393,16 +654,6 @@ static void backup_full_dataset (double ***pZ, DATAINFO **ppdinfo,
     fullZ = *pZ;
     fullinfo = *ppdinfo;
     peerinfo = newinfo;
-}
-
-static void relink_full_dataset (double ***pZ, DATAINFO **ppdinfo)
-{
-    *pZ = fullZ;
-    *ppdinfo = fullinfo;
-
-    fullZ = NULL;
-    fullinfo = NULL;
-    peerinfo = NULL;
 }
 
 int complex_subsampled (void)
@@ -659,12 +910,12 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
  * Sub-sample the data set, based on the criterion of skipping all
  * observations with missing data values (OPT_M); or using as a mask a
  * specified dummy variable (OPT_O); or masking with a specified
- * boolean condition (OPT_R); or selecting at random (OPT_N).
+ * boolean condition (OPT_T); or selecting at random (OPT_N).
  *
  * In case OPT_M a @list of variables may be supplied; in cases
- * OPT_O, OPT_R and OPT_N, @line must contain specifics.
+ * OPT_O, OPT_T and OPT_N, @line must contain specifics.
  *
- * In case OPT_C is included, the restriction will replaCe any
+ * In case OPT_R is included, the restriction will Replace any
  * existing sample restriction, otherwise the resulting restriction
  * will be the logical product of the new restriction and any
  * existing restriction.
@@ -683,6 +934,7 @@ int restrict_sample (const char *line,
     double **subZ = NULL;
     DATAINFO *subinfo = NULL;
     char *mask = NULL;
+    int cumulate = 1;
     int subnum = 0;
     int t, sn = 0;
     int err = 0;
@@ -691,7 +943,7 @@ int restrict_sample (const char *line,
 
     if (opt & OPT_M) {
 	mode = SUBSAMPLE_DROP_MISSING;
-    } else if (opt & OPT_R) {
+    } else if (opt & OPT_T) {
 	mode = SUBSAMPLE_BOOLEAN;
     } else if (opt & OPT_N) {
 	mode = SUBSAMPLE_RANDOM;
@@ -706,11 +958,14 @@ int restrict_sample (const char *line,
 	return 1;
     }
 
-    /* the first step is to restore the full data range (but if
-       OPT_C (replaCe) is not given, we'll record the existing
-       sample mask and AND it with the new one)
-    */
-    err = real_restore_full_sample(pZ, ppdinfo, opt);
+    if (opt & OPT_R) {
+	/* Replace any existing restrictions, don't cumulate. */
+	cumulate = 0;
+    }
+
+    /* The first step is to restore the full data range for
+       housekeeping purposes. */
+    err = real_restore_full_sample(pZ, ppdinfo, cumulate);
     if (err) {
 	return err;
     }
@@ -990,242 +1245,6 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
     pdinfo->t2 = new_t2;
 
     return 0;
-}
-
-/* apparatus for updating full dataset when restoring full sample
-   after sub-sampling */
-
-static void
-update_full_data_values (const double **subZ, const DATAINFO *pdinfo)
-{
-    int i, t;
-
-    for (i=1; i<fullinfo->v; i++) {
-	int subt = 0;
-
-	if (!pdinfo->vector[i]) {
-	    fullZ[i][0] = subZ[i][0];
-	} else {
-	    for (t=0; t<fullinfo->n; t++) {
-		if (pdinfo->submask[t]) {
-		    fullZ[i][t] = subZ[i][subt++];
-		}
-	    }
-	}
-    }
-}
-
-static int update_case_markers (const DATAINFO *pdinfo)
-{
-    int err = 0;
-
-    if (pdinfo->markers && !fullinfo->markers) {
-	dataset_allocate_obs_markers(fullinfo);
-	if (fullinfo->S == NULL) {
-	    err = 1;
-	} else {
-	    int t, subt = 0;
-
-	    for (t=0; t<fullinfo->n; t++) {
-		if (pdinfo->submask[t]) {
-		    strcpy(fullinfo->S[t], pdinfo->S[subt++]);
-		} else {
-		    sprintf(fullinfo->S[t], "%d", t + 1);
-		}
-	    }
-	}
-    }	
-	
-    return err;
-}
-
-static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
-{
-    int i, t, subt;
-    int newvars = pdinfo->v - fullinfo->v;
-    int n = fullinfo->n;
-    double **newZ = NULL;
-    int err = 0;
-
-    if (newvars <= 0) {
-	return 0;
-    }
-
-    if (pdinfo->submask == NULL) {
-	return E_NOMERGE;
-    }
-
-    /* allocate expanded data array */
-    newZ = realloc(fullZ, pdinfo->v * sizeof *fullZ);
-    if (newZ != NULL) {
-	for (i=0; i<newvars; i++) {
-	    if (pdinfo->vector[fullinfo->v+i]) {
-		newZ[fullinfo->v+i] = malloc(n * sizeof **newZ);
-	    } else {
-		newZ[fullinfo->v+i] = malloc(sizeof **newZ);
-	    }
-	    if (newZ[fullinfo->v+i] == NULL) {
-		err = 1;
-		break;
-	    }
-	}
-    } else {
-	err = 1;
-    }
-
-    if (err) {
-	return E_ALLOC;
-    }
-    
-    fullZ = newZ;
-
-    for (i=fullinfo->v; i<pdinfo->v; i++) {
-	if (!pdinfo->vector[i]) {
-	   fullZ[i][0] = Z[i][0]; 
-	}
-    }
-
-    subt = 0;
-
-    for (t=0; t<n; t++) {
-	if (pdinfo->submask[t]) {
-	    for (i=fullinfo->v; i<pdinfo->v; i++) {
-		if (pdinfo->vector[i]) {
-		    fullZ[i][t] = Z[i][subt];
-		}
-	    }
-	    subt++;
-	} else {
-	    for (i=fullinfo->v; i<pdinfo->v; i++) { 
-		if (pdinfo->vector[i]) {
-		    fullZ[i][t] = NADBL;
-		}
-	    }
-	}
-    }
-
-    fullinfo->v = pdinfo->v;
-
-    return 0;
-}
-
-static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
-{
-    int old_vmax = pdinfo->v;
-    int v, t;
-    int err = 0;
-
-    /* add "subdum" variable if it's not already present */
-    if (maybe_add_subdum(pZ, pdinfo, &v)) {
-	err = 1;
-    } else if (v == old_vmax) {
-	/* no pre-existing mask: write it from scratch */
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[v][t] = (t < pdinfo->t1 || t > pdinfo->t2)? 0.0 : 1.0;
-	}
-    } else {
-	/* there was a pre-existing mask: adjust it */
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t < pdinfo->t1 || t > pdinfo->t2) {
-		(*pZ)[v][t] = 0.0;
-	    }
-	}	
-    }
-
-    return err;
-}
-
-/* restore_full_sample is called under various circumstances.
-   Complexities arise if it is being called as a prelude to
-   the imposition of a (new) sample restriction: then we have
-   to know whether the new restriction will replace any old
-   one, or whether the restrictions should be cumulated.
-
-   If the call is a prelude to _replacing_ an existing
-   sample restriction, the "opt" parameter should equal
-   OPT_C (think "replaCe"!).
-*/
-
-static int 
-real_restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)
-{
-    int i, t, err = 0;
-
-    *gretl_errmsg = '\0';
-
-#if SUBDEBUG
-    fprintf(stderr, "restore_full_sample: pZ=%p, ppdinfo=%p opt=%lu\n",
-	    (void *) pZ, (void *) ppdinfo, opt);
-    fprintf(stderr, "*pZ=%p, *ppdinfo=%p\n",
-	    (void *) *pZ, (void *) *ppdinfo);
-#endif
-
-    if (*pZ != NULL && !(opt & OPT_C)) {  
-	/* cumulating, not replacing restrictions: we need to
-	   ensure that an appropriate mask is in place */
-	err = make_smpl_mask(pZ, *ppdinfo);
-	if (err) {
-	    return err;
-	}
-    }
-
-    /* simple case: merely resetting the sample starting
-       and ending points to full range */
-    if (!complex_subsampled()) {
-	(*ppdinfo)->t1 = 0;
-	(*ppdinfo)->t2 = (*ppdinfo)->n - 1;
-	return 0;
-    }
-
-    /* beyond this point we are doing a non-trivial restoration
-       of a stored full dataset, which has previously been
-       subsampled, e.g., by some boolean criterion 
-    */
-
-    /* reattach malloc'd elements of subsampled dataset,
-       which may have moved */
-    sync_dataset_elements(*ppdinfo);
-
-    /* update values for pre-existing series, which may have been
-       modified via genr */
-    update_full_data_values((const double **) *pZ, *ppdinfo);
-
-    /* if case markers were added when subsampled, carry them back */
-    update_case_markers(*ppdinfo);
-
-    /* in case any new vars were added when subsampled, try to merge
-       them into the full dataset */
-    err = add_new_vars_to_full((const double **) *pZ, *ppdinfo);
-    if (err == E_ALLOC) {
-        sprintf(gretl_errmsg, _("Out of memory expanding data set\n"));
-    } else if (err == E_NOMERGE) {
-        sprintf(gretl_errmsg, 
-		_("Missing sub-sample information; can't merge data\n"));
-    }
-
-    /* if we plan to replace existing sample restrictions,
-       zero out the "subdum" dummy variable */
-    if (opt & OPT_C) {
-	i = varindex(fullinfo, "subdum");
-	if (i < fullinfo->v) {
-	    for (t=0; t<fullinfo->n; t++) {
-		fullZ[i][t] = 0.0;
-	    }
-	}
-    }
-
-    free_Z(*pZ, *ppdinfo);
-    clear_datainfo(*ppdinfo, CLEAR_SUBSAMPLE);
-    free(*ppdinfo);
-
-    relink_full_dataset(pZ, ppdinfo);
-
-    return 0;
-}
-
-int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
-{
-    return real_restore_full_sample(pZ, ppdinfo, OPT_C);
 }
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
