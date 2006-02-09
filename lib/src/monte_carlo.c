@@ -2772,15 +2772,15 @@ int loop_exec (LOOPSET *loop, char *line,
 		if (cmd.opt == OPT_F) {
 		    err = restore_full_sample(pZ, ppdinfo);
 		} else if (cmd.opt) {
-		    err = restrict_sample(linecpy, pZ, ppdinfo, 
-					  cmd.list, cmd.opt, NULL);
+		    err = restrict_sample(linecpy, cmd.list, pZ, ppdinfo, 
+					  cmd.opt, NULL);
 		} else { 
 		    err = set_sample(linecpy, (const double **) *pZ, 
 				     *ppdinfo);
 		}
 		if (err) {
 		    errmsg(err, prn);
-		} else if (1 || gretl_echo_on()) {
+		} else if (1 || gretl_echo_on()) { /* FIXME */
 		    print_smpl(*ppdinfo, get_full_length_n(), prn);
 		}
 		break;

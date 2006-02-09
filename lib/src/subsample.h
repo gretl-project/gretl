@@ -22,16 +22,28 @@
 #ifndef SUBSAMPLE_H
 #define SUBSAMPLE_H
 
-/* functions follow */
+typedef enum {
+    SUBSAMPLE_NONE,
+    SUBSAMPLE_DROP_MISSING,
+    SUBSAMPLE_USE_DUMMY,
+    SUBSAMPLE_BOOLEAN,
+    SUBSAMPLE_RANDOM,
+    SUBSAMPLE_UNKNOWN
+} SubsampleMode;
 
 char *copy_subsample_mask (const char *src);
 
+char *copy_datainfo_submask (const DATAINFO *pdinfo);
+
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
-int restrict_sample (const char *line, 
+int restrict_sample (const char *line, const int *list,  
 		     double ***pZ, DATAINFO **ppdinfo,
-		     const int *list, gretlopt oflag,
-		     PRN *prn);
+		     gretlopt oflag, PRN *prn);
+
+int 
+restrict_sample_from_mask (const char *mask, int mode, 
+			   double ***pZ, DATAINFO **ppdinfo);
 
 int complex_subsampled (void);
 

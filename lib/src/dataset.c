@@ -110,6 +110,8 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	pdinfo->submask = NULL;
     }
 
+    pdinfo->submode = 0;
+
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
     if (code == CLEAR_FULL) {
 	if (pdinfo->varname != NULL) {
@@ -382,6 +384,8 @@ DATAINFO *datainfo_new (void)
     dinfo->descrip = NULL;
     dinfo->vector = NULL;
     dinfo->submask = NULL;
+    dinfo->submode = 0;
+
     dinfo->data = NULL;
 
     dinfo->structure = CROSS_SECTION;
@@ -529,6 +533,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->descrip = NULL;
     pdinfo->data = NULL;
     pdinfo->submask = NULL;
+    pdinfo->submode = 0;
     
     return 0;
 }
@@ -1176,31 +1181,45 @@ int dataset_copy_variable_as (int v, const char *newname,
     return err;
 }
 
+enum {
+    DROP_NORMAL,
+    DROP_SPECIAL
+};
+
+/* DROP_SPECIAL is used when deleting variables from the "full" shadow
+   of a sub-sampled dataset: in that case we don't mess with the
+   pointer elements of the DATAINFO struct, because these are shared
+   between the full and sub-sampled datasets.
+*/
+
 static int 
-shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)
+shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv, int drop)
 {
-    char **varname;
-    char *vector;
-    VARINFO **varinfo;
     double **newZ;
+
+    if (drop == DROP_NORMAL) {
+	char **varname;
+	char *vector;
+	VARINFO **varinfo;
     
-    varname = realloc(pdinfo->varname, nv * sizeof *varname);
-    if (varname == NULL) {
-	return E_ALLOC;
-    }
-    pdinfo->varname = varname;
+	varname = realloc(pdinfo->varname, nv * sizeof *varname);
+	if (varname == NULL) {
+	    return E_ALLOC;
+	}
+	pdinfo->varname = varname;
 
-    vector = realloc(pdinfo->vector, nv * sizeof *vector);
-    if (vector == NULL) {
-	return E_ALLOC;
-    }
-    pdinfo->vector = vector;
+	vector = realloc(pdinfo->vector, nv * sizeof *vector);
+	if (vector == NULL) {
+	    return E_ALLOC;
+	}
+	pdinfo->vector = vector;
 
-    varinfo = realloc(pdinfo->varinfo, nv * sizeof *varinfo);
-    if (varinfo == NULL) {
-	return E_ALLOC;
+	varinfo = realloc(pdinfo->varinfo, nv * sizeof *varinfo);
+	if (varinfo == NULL) {
+	    return E_ALLOC;
+	}
+	pdinfo->varinfo = varinfo;
     }
-    pdinfo->varinfo = varinfo;
 
     newZ = realloc(*pZ, nv * sizeof *newZ); 
     if (newZ == NULL) {
@@ -1214,6 +1233,93 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)
 }
 
 #define DROPDBG 0
+
+static int real_dataset_drop_listed_vars (const int *list, double ***pZ, 
+					  DATAINFO *pdinfo, int *renumber,
+					  int drop)
+{
+    double **Z = *pZ;
+    int oldv = pdinfo->v, vmax = pdinfo->v;
+    int i, v, ndel = 0; 
+
+    if (list == NULL) {
+	/* no-op */
+	return 0;
+    }
+
+    if (renumber != NULL) {
+	*renumber = 0;
+    }
+
+#if DROPDBG
+    fprintf(stderr, "dataset_drop_listed_variables: dropping %d vars:\n",
+	    list[0]);
+    if (drop == DROP_NORMAL) {
+	for (i=1; i<=list[0]; i++) {
+	    fprintf(stderr, " %d: %s\n", list[i], pdinfo->varname[list[i]]);
+	}
+    }
+#endif
+
+    /* free and set to NULL all the vars to be deleted */
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (v > 0 && v < oldv) {
+	    free(Z[v]);
+	    Z[v] = NULL;
+	    if (drop == DROP_NORMAL) {
+		free(pdinfo->varname[v]);
+		if (pdinfo->varinfo[v] != NULL) {
+		    free(pdinfo->varinfo[v]);
+		}
+	    }
+	    ndel++;
+	}
+    }
+
+    /* rearrange pointers if necessary */
+
+    for (v=1; v<vmax; v++) {
+	if (Z[v] == NULL) {
+	    int gap = 1;
+
+	    for (i=v+1; i<vmax; i++) {
+		if (Z[i] == NULL) {
+		    gap++;
+		} else {
+		    break;
+		}
+	    }
+
+	    if (i < vmax) {
+		vmax -= gap;
+		for (i=v; i<vmax; i++) {
+		    if (drop == DROP_NORMAL) {
+			if (renumber != NULL && !is_hidden_variable(i + gap, pdinfo)) {
+			    *renumber = 1;
+			}
+			pdinfo->varname[i] = pdinfo->varname[i + gap];
+			pdinfo->varinfo[i] = pdinfo->varinfo[i + gap];
+			pdinfo->vector[i] = pdinfo->vector[i + gap];
+		    }
+		    Z[i] = Z[i + gap];
+		}		    
+	    } else {
+		/* deleting all subsequent vars */
+		break;
+	    }
+	}
+    }
+
+    return shrink_dataset_to_size(pZ, pdinfo, oldv - ndel, drop);
+}
+
+/* in subsample.c */
+
+extern double ***fetch_full_Z (void);
+extern void reset_full_Z (double ***pZ);
+extern DATAINFO *fetch_full_datainfo (void);
 
 /**
  * dataset_drop_listed_variables:
@@ -1235,73 +1341,21 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv)
 int dataset_drop_listed_variables (const int *list, double ***pZ, 
 				   DATAINFO *pdinfo, int *renumber)
 {
-    int oldv = pdinfo->v, vmax = pdinfo->v;
-    int i, v, ndel = 0; 
+    int err;
 
-    if (list == NULL) {
-	/* no-op */
-	return 0;
+    err = real_dataset_drop_listed_vars(list, pZ, pdinfo, renumber,
+					DROP_NORMAL);
+
+    if (!err && complex_subsampled()) {
+	double ***fZ = fetch_full_Z();
+	DATAINFO *fdinfo = fetch_full_datainfo();
+
+	err = real_dataset_drop_listed_vars(list, fZ, fdinfo, NULL,
+					    DROP_SPECIAL);
+	reset_full_Z(fZ);
     }
 
-    if (renumber != NULL) {
-	*renumber = 0;
-    }
-
-#if DROPDBG
-    fprintf(stderr, "dataset_drop_listed_variables: dropping these vars:\n");
-    for (i=1; i<=list[0]; i++) {
-	fprintf(stderr, " %d: %s\n", list[i], pdinfo->varname[list[i]]);
-    }
-#endif
-
-    /* free and set to NULL all the vars to be deleted */
-
-    for (i=1; i<=list[0]; i++) {
-	v = list[i];
-	if (v > 0 && v < oldv) {
-	    free((*pZ)[v]);
-	    (*pZ)[v] = NULL;
-	    free(pdinfo->varname[v]);
-	    if (pdinfo->varinfo[v] != NULL) {
-		free(pdinfo->varinfo[v]);
-	    }
-	    ndel++;
-	}
-    }
-
-    /* rearrange pointers if necessary */
-
-    for (v=1; v<vmax; v++) {
-	if ((*pZ)[v] == NULL) {
-	    int gap = 1;
-
-	    for (i=v+1; i<vmax; i++) {
-		if ((*pZ)[i] == NULL) {
-		    gap++;
-		} else {
-		    break;
-		}
-	    }
-
-	    if (i < vmax) {
-		vmax -= gap;
-		for (i=v; i<vmax; i++) {
-		    if (renumber != NULL && !is_hidden_variable(i + gap, pdinfo)) {
-			*renumber = 1;
-		    }
-		    pdinfo->varname[i] = pdinfo->varname[i + gap];
-		    pdinfo->varinfo[i] = pdinfo->varinfo[i + gap];
-		    pdinfo->vector[i] = pdinfo->vector[i + gap];
-		    (*pZ)[i] = (*pZ)[i + gap];
-		}		    
-	    } else {
-		/* deleting all subsequent vars */
-		break;
-	    }
-	}
-    }
-
-    return shrink_dataset_to_size(pZ, pdinfo, oldv - ndel);
+    return err;
 }
 
 /**
@@ -1403,7 +1457,7 @@ int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    return shrink_dataset_to_size(pZ, pdinfo, v - delvars);
+    return shrink_dataset_to_size(pZ, pdinfo, v - delvars, DROP_NORMAL);
 }
 
 static void make_stack_label (char *label, char *s)

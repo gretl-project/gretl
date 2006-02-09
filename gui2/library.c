@@ -1115,9 +1115,9 @@ int bool_subsample (gretlopt opt)
     }
 
     if (opt & OPT_M) {
-	err = restrict_sample(NULL, &Z, &datainfo, NULL, opt, prn);
+	err = restrict_sample(NULL, NULL, &Z, &datainfo, opt, prn);
     } else {
-	err = restrict_sample(cmdline, &Z, &datainfo, NULL, opt, prn);
+	err = restrict_sample(cmdline, NULL, &Z, &datainfo, opt, prn);
     }
 
     if (err) {
@@ -6848,8 +6848,8 @@ int gui_exec_line (char *line,
 	    gui_restore_sample();
 	    chk = 1;
 	} else if (cmd.opt) {
-	    err = restrict_sample(line, &Z, &datainfo, 
-				  cmd.list, cmd.opt, prn);
+	    err = restrict_sample(line, cmd.list, &Z, &datainfo, 
+				  cmd.opt, prn);
 	} else { 
 	    err = set_sample(line, (const double **) Z, datainfo);
 	}

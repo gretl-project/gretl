@@ -2110,15 +2110,18 @@ static int compress_daily (DATAINFO *pdinfo, int pd)
 static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
 {
     int t, yr, mon, day;
+    char sep1[2], sep2[2];
     int sret, err = 0;
 
     for (t=0; t<pdinfo->n && !err; t++) {
-	if (dorder == DDMMYYYY) {
-	    sret = sscanf(pdinfo->S[t], "%d/%d/%d", &day, &mon, &yr);
+	if (dorder == YYYYMMDD) {
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", &yr, sep1, &mon, sep2, &day);
+	} else if (dorder == DDMMYYYY) {
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", &day, sep1, &mon, sep2, &yr);
 	} else {
-	    sret = sscanf(pdinfo->S[t], "%d/%d/%d", &mon, &day, &yr);
+	    sret = sscanf(pdinfo->S[t], "%d%1[/-]%d%1[/-]%d", &mon, sep1, &day, sep2, &yr);
 	}
-	if (sret == 3) {
+	if (sret == 5) {
 	    sprintf(pdinfo->S[t], "%02d/%02d/%02d", yr, mon, day);
 	} else {
 	    err = 1;
@@ -2213,11 +2216,12 @@ static int
 csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     int d1[3], d2[3];
+    char sep1[2], sep2[2];
     char *lbl1 = pdinfo->S[0];
     char *lbl2 = pdinfo->S[pdinfo->n - 1];
 
-    if (sscanf(lbl1, "%d/%d/%d", &d1[0], &d1[1], &d1[2]) == 3 &&
-	sscanf(lbl2, "%d/%d/%d", &d2[0], &d2[1], &d2[2]) == 3) {
+    if (sscanf(lbl1, "%d%1[/-]%d%1[/-]%d", &d1[0], sep1, &d1[1], sep2, &d1[2]) == 5 &&
+	sscanf(lbl2, "%d%1[/-]%d%1[/-]%d", &d2[0], sep1, &d2[1], sep2, &d2[2]) == 5) {
 	int yr1, mon1, day1;
 	int yr2, mon2, day2;
 	int dorder = get_date_order(d1[0], d2[0]);
@@ -2255,7 +2259,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    day1 > 0 && day1 < 32 &&
 	    day2 > 0 && day2 < 32) {
 	    /* looks promising for calendar dates */
-	    if (dorder != YYYYMMDD) {
+	    if (dorder != YYYYMMDD || *sep1 != '/' || *sep2 != '/') {
 		if (transform_daily_dates(pdinfo, dorder)) {
 		    return -1;
 		}

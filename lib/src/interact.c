@@ -2952,7 +2952,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case FUNC:
-	err = gretl_start_compiling_function(line);
+	err = gretl_start_compiling_function(line, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}

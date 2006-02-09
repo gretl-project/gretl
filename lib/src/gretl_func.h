@@ -24,7 +24,7 @@ int gretl_compiling_function (void);
 
 int gretl_executing_function (void);
 
-int gretl_start_compiling_function (const char *line);
+int gretl_start_compiling_function (const char *line, PRN *prn);
 
 int gretl_function_append_line (const char *line);
 

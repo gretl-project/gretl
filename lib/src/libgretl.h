@@ -237,6 +237,7 @@ struct DATAINFO_ {
 			   observation markers */
     char delim;         /* default delimiter for "CSV" files */
     char decpoint;      /* character used to represent decimal point */
+    char submode;       /* mode of sub-sampling in force, if any */
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
     char *vector;       /* hold info on vars: vector versus scalar */

@@ -1576,8 +1576,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if (cmd.opt == OPT_F) {
 	    err = restore_full_sample(&Z, &datainfo);
 	} else if (cmd.opt) {
-	    err = restrict_sample(line, &Z, &datainfo, 
-				  cmd.list, cmd.opt, prn);
+	    err = restrict_sample(line, cmd.list, &Z, &datainfo, 
+				  cmd.opt, prn);
 	} else { 
 	    err = set_sample(line, (const double **) Z, datainfo);
 	}

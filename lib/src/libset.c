@@ -22,7 +22,7 @@
 #include "libgretl.h"
 #include "libset.h"
 
-#define PDEBUG 1
+#define PDEBUG 0
 
 enum {
     AUTO_LAG_STOCK_WATSON,
@@ -55,7 +55,8 @@ struct bkbp_opts {
 struct sample_info {
     int t1;
     int t2;
-    int subsampled;
+    char submode;
+    char *submask;
 };
     
 struct set_vars_ {
@@ -126,7 +127,8 @@ static void sample_info_init (struct sample_info *sinfo)
 {
     sinfo->t1 = UNSET_INT;
     sinfo->t2 = UNSET_INT;
-    sinfo->subsampled = 0;
+    sinfo->submask = NULL;
+    sinfo->submode = 0;
 }
 
 #define sinfo_is_set(s) (s.t1 != UNSET_INT && s.t2 != UNSET_INT)
@@ -154,11 +156,13 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
     if (pdinfo != NULL) {
 	sv->sinfo.t1 = pdinfo->t1;
 	sv->sinfo.t2 = pdinfo->t2;
-	sv->sinfo.subsampled = complex_subsampled();
+	sv->sinfo.submode = pdinfo->submode;
+	sv->sinfo.submask = copy_datainfo_submask(pdinfo);
 #if PDEBUG
 	fprintf(stderr, " sinfo.t1=%d, sinfo.t2=%d, "
-		"sinfo.subsampled=%d\n", sv->sinfo.t1,
-		sv->sinfo.t2, sv->sinfo.subsampled);
+		"sinfo.submode=%d, sinfo.submask=%p\n", sv->sinfo.t1,
+		sv->sinfo.t2, sv->sinfo.submode,
+		(void *) sv->sinfo.submask);
 #endif
     } else {
 	sample_info_init(&sv->sinfo);
@@ -871,7 +875,9 @@ static void update_sample_info (set_vars *sv, const DATAINFO *pdinfo)
     if (pdinfo != NULL) {
 	sv->sinfo.t1 = pdinfo->t1;
 	sv->sinfo.t2 = pdinfo->t2;
-	sv->sinfo.subsampled = complex_subsampled();
+	sv->sinfo.submode = pdinfo->submode;
+	free(sv->sinfo.submask);
+	sv->sinfo.submask = copy_datainfo_submask(pdinfo);
     }	 
 }
 
@@ -957,7 +963,19 @@ static int subsampled_at_level (const DATAINFO *pdinfo, int level)
 	}
     }
 
+#if PDEBUG
+    fprintf(stderr, "pdinfo->submask = %p\n", (void *) pdinfo->submask);
+#endif
+
     return ret;
+}
+
+static void free_state (set_vars *sv)
+{
+    if (sv->sinfo.submask != NULL) {
+	free(sv->sinfo.submask);
+    }
+    free(sv);
 }
 
 /* Called when a new-style function exits: restores the program state
@@ -982,7 +1000,7 @@ int pop_program_state (double ***pZ, DATAINFO **ppdinfo)
     if (ns < 2) {
 	err = 1;
     } else {
-	free(state_stack[ns - 1]);
+	free_state(state_stack[ns - 1]);
 	state_stack[ns - 1] = NULL;
 	sstack = realloc(state_stack, (ns - 1) * sizeof *sstack);
 	if (sstack == NULL) {
@@ -1006,12 +1024,11 @@ int pop_program_state (double ***pZ, DATAINFO **ppdinfo)
 	    fprintf(stderr, " undoing current sub-sampling\n");
 #endif
 	    restore_full_sample(pZ, ppdinfo);
-	    if (subsampled_at_level(*ppdinfo, ns - 2)) {
-		fprintf(stderr, " FIXME need to restore prior sample restriction\n");
-		/* problem: this won't show up, because "fullZ" will have been
-		   set to NULL already by the above command */
-	    }	
 	} 
+	if (state->sinfo.submask != NULL) {
+	    restrict_sample_from_mask(state->sinfo.submask, state->sinfo.submode, 
+				      pZ, ppdinfo);
+	}
 	(*ppdinfo)->t1 = state->sinfo.t1;
 	(*ppdinfo)->t2 = state->sinfo.t2;
     }
@@ -1050,7 +1067,7 @@ void libset_cleanup (void)
     int i;
 
     for (i=0; i<n_states; i++) {
-	free(state_stack[i]);
+	free_state(state_stack[i]);
     }
 
     free(state_stack);

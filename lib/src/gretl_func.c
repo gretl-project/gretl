@@ -685,7 +685,7 @@ static void delete_ufunc_from_list (ufunc *fun)
     }
 }
 
-static int check_func_name (const char *fname)
+static int check_func_name (const char *fname, PRN *prn)
 {
     int i, err = 0;
 
@@ -697,15 +697,15 @@ static int check_func_name (const char *fname)
 		fname);
 	err = 1;
     } else {
-	for (i=0; i<n_ufuns && !err; i++) {
-	    if (!strcmp(fname, (ufuns[i])->name)) {
-		sprintf(gretl_errmsg, "'%s': function is already defined",
-		    fname);
-		err = 1;
+	for (i=0; i<n_ufuns; i++) {
+	    if (!strcmp(fname, ufuns[i]->name)) {
+		pprintf(prn, "Redefining function '%s'\n", fname);
+		delete_ufunc_from_list(ufuns[i]);
+		break;
 	    }
 	}
     }
-
+    
     return err;
 }
 
@@ -1035,7 +1035,8 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
 
 static int 
 parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
-				char **pptype, const char *str)
+				char **pptype, const char *str,
+				PRN *prn)
 {
     char **parmv = NULL;
     char *ptype = NULL;
@@ -1067,7 +1068,7 @@ parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
 	    }
 	}
 	if (!err) {
-	    err = check_func_name(fname);
+	    err = check_func_name(fname, prn);
 	}
 	if (!err) {
 	    str += len;
@@ -1121,7 +1122,7 @@ parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
     return err;
 }
 
-int gretl_start_compiling_function (const char *line)
+int gretl_start_compiling_function (const char *line, PRN *prn)
 {
     char **params = NULL;
     char *ptype = NULL;
@@ -1146,7 +1147,7 @@ int gretl_start_compiling_function (const char *line)
     }
 
     err = parse_fn_definition_or_returns(fname, &params, &n_params, 
-					 &ptype, line + 8);
+					 &ptype, line + 8, prn);
 
     if (!err) {
 	fun = add_ufunc();
@@ -1190,7 +1191,8 @@ static int create_function_return_list (ufunc *fun, const char *line)
     err = parse_fn_definition_or_returns(NULL, &fun->returns, 
 					 &fun->n_returns, 
 					 &fun->rtype, 
-					 line);
+					 line,
+					 NULL);
 
     return err;
 }
