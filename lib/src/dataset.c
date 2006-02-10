@@ -1296,7 +1296,8 @@ static int real_dataset_drop_listed_vars (const int *list, double ***pZ,
 		vmax -= gap;
 		for (i=v; i<vmax; i++) {
 		    if (drop == DROP_NORMAL) {
-			if (renumber != NULL && !is_hidden_variable(i + gap, pdinfo)) {
+			if (renumber != NULL && 
+			    !is_hidden_variable(i + gap, pdinfo)) {
 			    *renumber = 1;
 			}
 			pdinfo->varname[i] = pdinfo->varname[i + gap];

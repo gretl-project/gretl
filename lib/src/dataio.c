@@ -146,11 +146,13 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
     int i, t, n = pdinfo->n;
     char c, marker[OBSLEN];
     int err = 0;
-    float x;
 
     gretl_errmsg[0] = '\0';
 
-    if (binary == 1) { /* single-precision binary data */
+    if (binary == 1) { 
+	/* single-precision binary data */
+	float x;
+
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof x, 1, fp)) {
@@ -158,15 +160,29 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 			    "var %d"), i);
 		    return 1;
 		}
-		Z[i][t] = (double) x;
+		if (x == -999.0) {
+		    Z[i][t] = NADBL;
+		} else {
+		    Z[i][t] = (double) x;
+		}
 	    }
 	}
-    } else if (binary == 2) { /* double-precision binary data */
+    } else if (binary == 2) { 
+	/* double-precision binary data */
+	double x;
+
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!fread(Z[i], sizeof(double), n, fp)) {
-		sprintf(gretl_errmsg, 
-			_("WARNING: binary data read error at var %d"), i);
-		return 1;
+	    for (t=0; t<n; t++) {
+		if (!fread(&x, sizeof x, 1, fp)) {
+		    sprintf(gretl_errmsg, 
+			    _("WARNING: binary data read error at var %d"), i);
+		    return 1;
+		}
+		if (x == -999.0) {
+		    Z[i][t] = NADBL;
+		} else {
+		    Z[i][t] = x;
+		}
 	    }
 	}
     } else if (old_byvar) {
@@ -1182,20 +1198,30 @@ int write_data (const char *fname, const int *list,
 
     if (fp == NULL) return 1;
 
-    if (fmt == GRETL_DATA_FLOAT) { /* single-precision binary */
+    if (fmt == GRETL_DATA_FLOAT) { 
+	/* single-precision binary */
 	float x;
 
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
-	    x = (float) Z[v][0];
+	    if (na(Z[v][0])) {
+		x = -999.0;
+	    } else {
+		x = (float) Z[v][0];
+	    }
 	    for (t=0; t<n; t++) {
 		if (pdinfo->vector[v]) {
-		    x = (float) Z[v][t];
+		    if (na(Z[v][0])) {
+			x = -999.0;
+		    } else {	
+			x = (float) Z[v][t];
+		    }
 		}
 		fwrite(&x, sizeof x, 1, fp);
 	    }
 	}
-    } else if (fmt == GRETL_DATA_DOUBLE) { /* double-precision binary */
+    } else if (fmt == GRETL_DATA_DOUBLE) { 
+	/* double-precision binary */
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
 	    if (pdinfo->vector[v]) {
@@ -1229,7 +1255,8 @@ int write_data (const char *fname, const int *list,
     if (fmt == GRETL_DATA_CSV && pdinfo->decpoint == ',') ;
     else gretl_push_c_numeric_locale();
 
-    if (fmt == GRETL_DATA_TRAD) { /* plain ASCII */
+    if (fmt == GRETL_DATA_TRAD) { 
+	/* plain ASCII */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (pdinfo->markers && pdinfo->S != NULL) {
 		fprintf(fp, "%s ", pdinfo->S[t]);

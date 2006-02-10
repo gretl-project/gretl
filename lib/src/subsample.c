@@ -69,6 +69,19 @@ DATAINFO *fetch_full_datainfo (void)
 
 /* end specials */
 
+static int full_data_length (const DATAINFO *pdinfo)
+{
+    int n = 0;
+
+    if (fullinfo != NULL) {
+	n = fullinfo->n;
+    } else if (pdinfo != NULL) {
+	n = pdinfo->n;
+    } 
+
+    return n;
+}
+
 static int get_submask_length (const char *s)
 {
     int n = 1;
@@ -320,12 +333,13 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 
 static char *make_current_sample_mask (DATAINFO *pdinfo)
 {
+    int n = full_data_length(pdinfo);
     char *currmask = NULL;
     int s, t;
 
     if (pdinfo->submask == NULL) {
 	/* no pre-existing mask: not sub-sampled */
-	currmask = make_submask(pdinfo->n);
+	currmask = make_submask(n);
 	if (currmask != NULL) {
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		currmask[t] = 1;
@@ -336,7 +350,7 @@ static char *make_current_sample_mask (DATAINFO *pdinfo)
 	currmask = copy_subsample_mask(pdinfo->submask);
 	if (currmask != NULL) {
 	    s = -1;
-	    for (t=0; t<fullinfo->n; t++) {
+	    for (t=0; t<n; t++) {
 		if (pdinfo->submask[t]) s++;
 		if (s < pdinfo->t1 || s > pdinfo->t2) {
 		    currmask[t] = 0;
@@ -483,8 +497,9 @@ static int copy_dummy_to_mask (char *mask, const double *x, int n)
     return err;
 }
 
-static int mask_from_temp_dummy (double ***pZ, DATAINFO *pdinfo, 
-				 const char *line, char *mask)
+static int mask_from_temp_dummy (const char *line,
+				 double ***pZ, DATAINFO *pdinfo, 
+				 char *mask)
 {
     char formula[MAXLEN];
     int dnum, err;
@@ -508,11 +523,21 @@ static int mask_from_temp_dummy (double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static int mask_from_dummy (const double **Z, const DATAINFO *pdinfo,
-			    const char *dname, char *mask)
+static int mask_from_dummy (const char *line,
+			    const double **Z, const DATAINFO *pdinfo,
+			    char *mask)
 {
-    int dnum = varindex(pdinfo, dname);
-    int err = 0;
+    char dname[VNAMELEN] = {0};
+    int dnum, err = 0;
+
+    sscanf(line + 4, "%15s", dname);
+
+    if (*dname == 0) {
+	strcpy(gretl_errmsg, "Unrecognized sample command");
+	return 1;
+    }
+
+    dnum = varindex(pdinfo, dname);
 
     if (dnum == pdinfo->v) {
 	sprintf(gretl_errmsg, _("Variable '%s' not defined"), dname);
@@ -852,34 +877,26 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
     sprintf(subinfo->endobs, "%d", subinfo->n);
 }
 
-int get_restriction_mode (const char *line, gretlopt opt, 
-			  char *dumname, int *err)
+int get_restriction_mode (gretlopt opt)
 {
     int mode = SUBSAMPLE_UNKNOWN;
 
     if (opt & OPT_M) {
 	mode = SUBSAMPLE_DROP_MISSING;
-    } else if (opt & OPT_T) {
+    } else if (opt & OPT_R) {
 	mode = SUBSAMPLE_BOOLEAN;
     } else if (opt & OPT_N) {
 	mode = SUBSAMPLE_RANDOM;
     } else if (opt & OPT_O) {
-	if (line != NULL && sscanf(line, "%*s %15s", dumname)) {
-	    mode = SUBSAMPLE_USE_DUMMY;
-	} else {
-	    mode = SUBSAMPLE_DROP_MISSING;
-	}
-    } else {
-	strcpy(gretl_errmsg, "Unrecognized sample command");
-	*err = 1;
-    }
+	mode = SUBSAMPLE_USE_DUMMY;
+    } 
 
     return mode;
 }
 
 static int 
 make_restriction_mask (int mode, const char *line, const int *list, 
-		       const char *dumname, double ***pZ, DATAINFO *pdinfo,
+		       double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn, const char *oldmask, char **pmask)
 {
     char *mask = NULL;
@@ -896,14 +913,11 @@ make_restriction_mask (int mode, const char *line, const int *list,
     } else if (mode == SUBSAMPLE_RANDOM) {
 	err = make_random_mask(oldmask, line, (const double **) *pZ,
 			       pdinfo, mask);
-    } else if (mode == SUBSAMPLE_USE_DUMMY || mode == SUBSAMPLE_BOOLEAN) {
-	if (mode == SUBSAMPLE_USE_DUMMY) {
-	    err = mask_from_dummy((const double **) *pZ, pdinfo, dumname, mask);
-	} else {
-	    err = mask_from_temp_dummy(pZ, pdinfo, line, mask);
-	}
+    } else if (mode == SUBSAMPLE_USE_DUMMY) {
+	err = mask_from_dummy(line, (const double **) *pZ, pdinfo, mask);
+    } else if (mode == SUBSAMPLE_BOOLEAN) {
+	err = mask_from_temp_dummy(line, pZ, pdinfo, mask);
     } else {
-	/* impossible */
 	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));
 	err = 1;
     }
@@ -1023,12 +1037,12 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
  * Sub-sample the data set, based on the criterion of skipping all
  * observations with missing data values (OPT_M); or using as a mask a
  * specified dummy variable (OPT_O); or masking with a specified
- * boolean condition (OPT_T); or selecting at random (OPT_N).
+ * boolean condition (OPT_R); or selecting at random (OPT_N).
  *
  * In case OPT_M a @list of variables may be supplied; in cases
- * OPT_O, OPT_T and OPT_N, @line must contain specifics.
+ * OPT_O, OPT_R and OPT_N, @line must contain specifics.
  *
- * In case OPT_R is included, the restriction will Replace any
+ * In case OPT_P is included, the restriction will rePlace any
  * existing sample restriction, otherwise the resulting restriction
  * will be the logical product of the new restriction and any
  * existing restriction.
@@ -1040,20 +1054,19 @@ int restrict_sample (const char *line, const int *list,
 		     double ***pZ, DATAINFO **ppdinfo, 
 		     gretlopt opt, PRN *prn)
 {
-    int mode = SUBSAMPLE_UNKNOWN;
-    char dumname[VNAMELEN] = {0};
     char *oldmask = NULL;
     char *mask = NULL;
-    int err = 0;
+    int mode, err = 0;
 
     *gretl_errmsg = '\0';
 
-    mode = get_restriction_mode(line, opt, dumname, &err);
-    if (err) {
+    mode = get_restriction_mode(opt);
+    if (mode == SUBSAMPLE_UNKNOWN) {
+	strcpy(gretl_errmsg, "Unrecognized sample command");
 	return 1;
     }
 
-    if (!(opt & OPT_R)) {
+    if (!(opt & OPT_P)) {
 	/* not replacing but cumulating any existing restrictions */
 	oldmask = make_current_sample_mask(*ppdinfo);
 	if (oldmask == NULL) {
@@ -1069,7 +1082,7 @@ int restrict_sample (const char *line, const int *list,
     }
 
     if (!err) {
-	err = make_restriction_mask(mode, line, list, dumname, pZ, *ppdinfo, 
+	err = make_restriction_mask(mode, line, list, pZ, *ppdinfo, 
 				    prn, oldmask, &mask);
     }
 

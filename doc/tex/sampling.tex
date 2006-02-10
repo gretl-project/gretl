@@ -44,11 +44,12 @@ has been defined up to this point. For example, after
     smpl ; 2000:4
 \end{code}
 
-the sample range will be 1970:1 to 2000:4.An incremental or relative
-form of setting the sample range is also supported.  In this case a
-relative offset should be given, in the form of a signed integer (or a
-semicolon to indicate no change), for both the starting and ending
-point. For example
+the sample range will be 1970:1 to 2000:4.  
+
+An incremental or relative form of setting the sample range is also
+supported.  In this case a relative offset should be given, in the
+form of a signed integer (or a semicolon to indicate no change), for
+both the starting and ending point. For example
 
 \begin{code}
     smpl +1 ;
@@ -62,12 +63,14 @@ ending observation, and
 \end{code}
 
 will both advance the starting observation by two and retard the
-ending observation by one.An important feature of ``setting'' the
-sample as described above is that it necessarily results in the
-selection of a subset of observations that are contiguous in the full
-dataset. The structure of the dataset is therefore unaffected (for
-example, if it is a quarterly time series before setting the sample,
-it remains a quarterly time series afterwards).
+ending observation by one.
+
+An important feature of ``setting'' the sample as described above is
+that it necessarily results in the selection of a subset of
+observations that are contiguous in the full dataset. The structure of
+the dataset is therefore unaffected (for example, if it is a quarterly
+time series before setting the sample, it remains a quarterly time
+series afterwards).
 
 \section{Restricting the sample}
 \label{sample-restrict}
@@ -75,11 +78,12 @@ it remains a quarterly time series afterwards).
 By ``restricting'' the sample we mean selecting observations on the
 basis of some Boolean (logical) criterion, or by means of a random
 number generator.  This is likely to be most relevant for
-cross-sectional or panel data.Suppose we have data on a cross-section
-of individuals, recording their gender, income and other
-characteristics.  We wish to select for analysis only the women.  If
-we have a \verb+gender+ dummy variable with value 1 for men and 0 for
-women we could do
+cross-sectional or panel data.
+
+Suppose we have data on a cross-section of individuals, recording
+their gender, income and other characteristics.  We wish to select for
+analysis only the women.  If we have a \verb+gender+ dummy variable
+with value 1 for men and 0 for women we could do
 %      
 \begin{code}
     smpl gender=0 --restrict
@@ -103,7 +107,7 @@ restriction to replace any existing restrictions you can first
 recreate the full dataset using
 %
 \begin{code}
-    smpl full
+    smpl --full
 \end{code}
 %
 Alternatively, you can add the \verb+replace+ option to the
@@ -118,10 +122,12 @@ dataset before applying the new restriction.
 
 Unlike a simple ``setting'' of the sample, ``restricting'' the sample
 may result in selection of non-contiguous observations from the full
-data set.  It may also change the structure of the data set.This can
-be seen in the case of panel data.  Say we have a panel of five firms
-(indexed by the variable \verb+firm+) observed in each of several
-years (identified by the variable \verb+year+).  Then the restriction
+data set.  It may also change the structure of the data set.
+
+This can be seen in the case of panel data.  Say we have a panel of
+five firms (indexed by the variable \verb+firm+) observed in each of
+several years (identified by the variable \verb+year+).  Then the
+restriction
 %
 \begin{code}
     smpl year=1995 --restrict
@@ -191,13 +197,12 @@ The discussion above has focused on the script command \cmd{smpl}. You
 can also use the items under the \textsf{Sample} menu in the GUI
 program to select a sub-sample.
 
-The menu items mostly work in the same way as the corresponding
-\verb+smpl+ variant, except that when you use the item ``Sample,
-Restrict based on criterion'', and the dataset is already sub-sampled,
-you are given the option of preserving or replacing the current
-restriction.  Replacing the current restriction means, in effect,
-invoking the \verb+replace+ option described above
-(Section~\ref{sample-restrict}).
+The menu items work in the same way as the corresponding \verb+smpl+
+variants.  When you use the item ``Sample, Restrict based on
+criterion'', and the dataset is already sub-sampled, you are given the
+option of preserving or replacing the current restriction.  Replacing
+the current restriction means, in effect, invoking the \verb+replace+
+option described above (Section~\ref{sample-restrict}).
     
 %%% Local Variables: 
 %%% mode: latex

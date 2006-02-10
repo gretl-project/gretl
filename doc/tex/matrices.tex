@@ -130,7 +130,8 @@ an $m \times n$ matrix and let $B$ be $p \times q$.
 %
 \begin{itemize}
 \item If $m=p$ and $n=q$ then $C$ is $m\times n$ with $c_{ij} = a_{ij}
-  \times b_{ij}$.
+  \times b_{ij}$.  This is technically known as the \emph{Hadamard
+    product}.
 \item Otherwise, if $m=1$ and $n=q$, or $n=1$ and $m=p$, then $C$ is
   $p\times q$ with $c_{ij} = b_{ij} \times a_k$, where $k=j$ if $m=1$
   else $k=i$.
@@ -342,7 +343,7 @@ to receive the result.)
 
 The \texttt{qrdecomp} function computes the QR decomposition of an $m
 \times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
-orthonormal matrix and $R$ is an $n \times n$ upper triangular matrix.
+orthogonal matrix and $R$ is an $n \times n$ upper triangular matrix.
 The matrix $Q$ is returned directly, while $R$ can be retrieved via
 the second argument.  Here are two examples:
 %

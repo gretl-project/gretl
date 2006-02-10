@@ -2785,7 +2785,6 @@ int gretl_reserved_word (const char *str)
 {
     const char *uses[] = {
 	N_("constant"),
-	N_("sampling concept"),
 	N_("plotting variable"),
 	N_("internal variable"),
 	N_("math function")
@@ -2798,20 +2797,18 @@ int gretl_reserved_word (const char *str)
 	!strcmp(str, "NA") ||
 	!strcmp(str, "null")) {
 	ret = 1;
-    } else if (!strcmp(str, "full")) {
-	ret = 2;
     } else if (!strcmp(str, "t") ||
 	       !strcmp(str, "annual") ||
 	       !strcmp(str, "qtrs") ||
 	       !strcmp(str, "months") ||
 	       !strcmp(str, "hours")) {
-	ret = 3;
+	ret = 2;
     } else if (!strcmp(str, "i") ||
 	       !strcmp(str, "obs") ||
 	       !strcmp(str, "series")) {
-	ret = 4;
+	ret = 3;
     } else if (genr_function_from_string(str)) {
-	ret = 5;
+	ret = 4;
     }
 
     if (ret > 0) {

@@ -354,6 +354,8 @@ get_maybe_quoted_storename (CMD *cmd, char *s, int *nf)
     int quoted = 0;
     int q, len;
 
+    while (*s == ' ') s++;
+
     q = *s;
 
     if (q == '"' || q == '\'') {
