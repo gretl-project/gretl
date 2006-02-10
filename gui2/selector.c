@@ -1654,7 +1654,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 	    rulist = realloc(rulist, (realrows + 1) * sizeof *rulist);
 	    if (rulist != NULL) {
-		rulist[0] = rows;
+		rulist[0] = realrows;
 	    }
 
 	    if (sr->code == TSLS && dvlags != NULL) {
