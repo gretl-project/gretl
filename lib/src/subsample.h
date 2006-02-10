@@ -35,6 +35,8 @@ char *copy_subsample_mask (const char *src);
 
 char *copy_datainfo_submask (const DATAINFO *pdinfo);
 
+int submask_cmp (const char *m1, const char *m2);
+
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 int restrict_sample (const char *line, const int *list,  

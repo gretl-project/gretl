@@ -107,6 +107,30 @@ char *copy_datainfo_submask (const DATAINFO *pdinfo)
     return mask;
 }
 
+int submask_cmp (const char *m1, const char *m2)
+{
+    while (*m1 != SUBMASK_SENTINEL && *m2 != SUBMASK_SENTINEL) {
+	if (*m1 != *m2) {
+	    return 1;
+	}
+	m1++;
+	m2++;
+    }
+
+    return 0;
+}
+
+static char *make_submask (int n)
+{
+    char *mask = calloc(n + 1, 1);
+    
+    if (mask != NULL) {
+	mask[n] = SUBMASK_SENTINEL;
+    }
+
+    return mask;
+}
+
 void maybe_free_full_dataset (const DATAINFO *pdinfo)
 {
     if (pdinfo == peerinfo) {
@@ -144,73 +168,6 @@ static void sync_dataset_elements (const DATAINFO *pdinfo)
     fullinfo->varinfo = pdinfo->varinfo;
     fullinfo->vector = pdinfo->vector;
     fullinfo->descrip = pdinfo->descrip;      
-}
-
-static int get_subdum_index (const DATAINFO *pdinfo)
-{
-    int i, d = gretl_function_stack_depth();
-    int lev, v = pdinfo->v;
-
-#if SUBDEBUG
-    fprintf(stderr, "get_subdum_index called: fn depth = %d\n", d);
-#endif
-
-    for (lev=d; lev>=0; lev--) {
-	for (i=1; i<pdinfo->v; i++) {
-	    if (STACK_LEVEL(pdinfo, i) == lev &&
-		!strcmp(pdinfo->varname[i], "subdum")) {
-		v = i;
-		break;
-	    }
-	}
-	if (v < pdinfo->v) {
-	    break;
-	}
-    }
-
-#if SUBDEBUG
-    if (v < pdinfo->v) {
-	fprintf(stderr, " returning v = %d, at level %d\n", v, lev);
-    } else {
-	fprintf(stderr, " subdum not found, returning v = %d\n", v);
-    }
-#endif
-
-    return v;
-}
-
-/* attach to the restricted dataset, represented by subinfo, a mask
-   recording the sub-sampling dummy variable set on the full dataset,
-   represented by pdinfo.
-*/
-
-static int 
-attach_subsample_to_datainfo (DATAINFO *subinfo, const double **Z, 
-			      const DATAINFO *pdinfo)
-{
-    int N = pdinfo->n;
-    int i, sv;
-
-    subinfo->submask = malloc((N + 1) * sizeof *subinfo->submask);
-    if (subinfo->submask == NULL) {
-	return E_ALLOC;
-    }
-
-    sv = get_subdum_index(pdinfo);
-
-    if (sv == pdinfo->v) { 
-	/* safety measure: should be impossible */
-	fprintf(stderr, "mystery failure in attach_subsample_to_dataset\n");
-	return 1;   
-    } 
-
-    for (i=0; i<N; i++) {
-	subinfo->submask[i] = Z[sv][i];
-    }
-
-    subinfo->submask[N] = SUBMASK_SENTINEL;
-
-    return 0;
 }
 
 /* attach_subsample_to_model:
@@ -361,91 +318,49 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     return 0;
 }
 
-static int maybe_add_subdum (double ***pZ, DATAINFO *pdinfo, int *sv)
+static char *make_current_sample_mask (DATAINFO *pdinfo, int *err)
 {
-    int v = varindex(pdinfo, "subdum");
-    int err = 0;
+    char *currmask = NULL;
+    int t;
 
-    if (v == pdinfo->v) {
-	/* variable doesn't exist at this level: create it */
-	if (dataset_add_series(1, pZ, pdinfo)) {
-	    err = E_ALLOC;
+    if (pdinfo->submask == NULL) {
+	/* no pre-existing mask: write it from scratch */
+	currmask = make_submask(pdinfo->n);
+	if (currmask == NULL) {
+	    *err = E_ALLOC;
 	} else {
-	    strcpy(pdinfo->varname[v], "subdum");
-	    strcpy(VARLABEL(pdinfo, v), _("automatic sub-sampling dummy"));
-	}
-    } 
-    
-    if (!err) {
-	*sv = v;
-    }
-
-    return err;
-}
-
-static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
-{
-    int sv0 = get_subdum_index(pdinfo);
-    int old_vmax = pdinfo->v;
-    int sv, t;
-    int err;
-
-    err = maybe_add_subdum(pZ, pdinfo, &sv);
-    if (err) {
-	return err;
-    }
-
-#if SUBDEBUG
-    fprintf(stderr, "make_smpl_mask: old_vmax=%d, sv=%d, sv0=%d\n",
-	    old_vmax, sv, sv0);
-#endif
-
-    if (sv == old_vmax) {
-	if (sv == sv0) {
-	    /* no pre-existing mask: write it from scratch */
-	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[sv][t] = (t < pdinfo->t1 || t > pdinfo->t2)? 0.0 : 1.0;
+	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+		currmask[t] = 1;
 	    }
-	} else {
-	    /* found a pre-existing mask at parent level: make an adjusted
-	       copy */
-	    for (t=0; t<pdinfo->n; t++) {
-		if (t < pdinfo->t1 || t > pdinfo->t2) {
-		    (*pZ)[sv][t] = 0.0;
-		} else {
-		    (*pZ)[sv][t] = (*pZ)[sv0][t];
-		}
-	    }	    
 	}
     } else {
-	/* found a pre-existing mask at this level: adjust it */
-	for (t=0; t<pdinfo->n; t++) {
+	/* found a pre-existing mask: adjust it */
+	currmask = pdinfo->submask;
+	pdinfo->submask = NULL;
+	for (t=0; t<fullinfo->n; t++) {
 	    if (t < pdinfo->t1 || t > pdinfo->t2) {
-		(*pZ)[sv][t] = 0.0;
+		currmask[t] = 0;
 	    }
-	}	
+	}
     }
 
-#if SUBDEBUG > 1
-    for (t=0; t<pdinfo->n; t++) {
-	fprintf(stderr, "subdum[%d] = %g\n", t, (*pZ)[sv][t]);
-    }
-#endif
-
-    return err;
+    return currmask;
 }
 
-/* If the third parameter, "cumulate", is non-zero, we're restoring
-   the full data set as a preliminary to creating a sub-sampled
-   dataset whose selection mask will be the logical product of a
-   new restriction and any existing restriction.  We therefore need to
-   make a record of any existing restriction.
-*/
+/* restore_full_sample: 
+ * @pZ: pointer to data array.  
+ * @ppdinfo: address of data info pointer. 
+ *
+ * Restore the full data range, undoing any sub-sampling that was
+ * previously performed (either by shifting the endpoints of the
+ * sample range or by selecting cases on some criterion or other).
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
 
-static int 
-real_restore_full_sample (double ***pZ, DATAINFO **ppdinfo, int cumulate)
+int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
 {
-    int i, t, err = 0;
+    int err = 0;
 
     *gretl_errmsg = '\0';
 
@@ -455,15 +370,6 @@ real_restore_full_sample (double ***pZ, DATAINFO **ppdinfo, int cumulate)
     fprintf(stderr, "*pZ=%p, *ppdinfo=%p\n",
 	    (void *) *pZ, (void *) *ppdinfo);
 #endif
-
-    if (*pZ != NULL && cumulate) {  
-	/* cumulating, not replacing restrictions: we need to
-	   ensure that an appropriate mask is in place */
-	err = make_smpl_mask(pZ, *ppdinfo);
-	if (err) {
-	    return err;
-	}
-    }
 
     /* simple case: merely resetting the sample starting
        and ending points to full range */
@@ -502,74 +408,21 @@ real_restore_full_sample (double ***pZ, DATAINFO **ppdinfo, int cumulate)
 		_("Missing sub-sample information; can't merge data\n"));
     }
 
-    /* If we plan to destroy/replace any existing sample restrictions,
-       zero out the "subdum" dummy variable. */
-    if (!cumulate) {
-	i = varindex(fullinfo, "subdum");
-	if (i < fullinfo->v) {
-	    for (t=0; t<fullinfo->n; t++) {
-		fullZ[i][t] = 0.0;
-	    }
-	}
-    }
-
     free_Z(*pZ, *ppdinfo);
     clear_datainfo(*ppdinfo, CLEAR_SUBSAMPLE);
     free(*ppdinfo);
 
     relink_full_dataset(pZ, ppdinfo);
 
-    return 0;
+    return err;
 }
 
-/* restore_full_sample: 
- * @pZ: pointer to data array.  
- * @ppdinfo: address of data info pointer. 
- *
- * Restore the full data range, undoing any sub-sampling that was
- * previously performed (either by shifting the endpoints of the
- * sample range or by selecting cases on some criterion or other).
- *
- * Returns: 0 on success, non-zero error code on failure.
- */
-
-int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
-{
-    return real_restore_full_sample(pZ, ppdinfo, 0);
-}
-
-/* for use in restrict_sample() below: find the mask representing
-   the sub-samping restriction previously in force, if any */
-
-static double *get_old_mask (double **Z, const DATAINFO *pdinfo)
-{
-    int sv = get_subdum_index(pdinfo);
-    double *mask = NULL;
-
-#if SUBDEBUG
-    fprintf(stderr, "get_old_mask: sv = %d (pdinfo->v = %d)\n", 
-	    sv, pdinfo->v);
-#endif
-
-    if (sv < pdinfo->v) {
-	if (gretl_isdummy(0, pdinfo->n - 1, Z[sv])) {
-	    mask = Z[sv];
-	}
-    } 
-
-#if SUBDEBUG
-    fprintf(stderr, " returning mask = %p\n", (void *) mask);
-#endif   
-
-    return mask;
-}
-
-static int overlay_masks (char *targ, const double *src, int n)
+static int overlay_masks (char *targ, const char *src, int n)
 {
     int i, sn = 0;
     
     for (i=0; i<n; i++) {
-	if (targ[i] == 1 && src[i] == 1.0) {
+	if (targ[i] == 1 && src[i] == 1) {
 	    targ[i] = 1;
 	    sn++;
 	} else {
@@ -686,7 +539,7 @@ static int count_selected_cases (const char *x, int n)
     return count;
 }
 
-static int make_random_mask (double *oldmask, const char *line, 
+static int make_random_mask (const char *oldmask, const char *line, 
 			     const double **Z, const DATAINFO *pdinfo,
 			     char *mask)
 {
@@ -716,7 +569,7 @@ static int make_random_mask (double *oldmask, const char *line,
 	int oldn = 0;
 
 	for (i=0; i<pdinfo->n; i++) {
-	    if (oldmask[i] != 0.0) {
+	    if (oldmask[i]) {
 		oldn++;
 	    }
 	}
@@ -736,7 +589,7 @@ static int make_random_mask (double *oldmask, const char *line,
 
     for (i=0; (cases != subn); i++) {
 	u = gretl_rand_int_max(pdinfo->n);
-	if (oldmask == NULL || oldmask[u] == 1.0) {
+	if (oldmask == NULL || oldmask[u]) {
 	    mask[u] = 1;
 	}
 	if (i >= subn - 1) {
@@ -1026,24 +879,17 @@ int get_restriction_mode (const char *line, gretlopt opt,
 static int 
 make_restriction_mask (int mode, const char *line, const int *list, 
 		       const char *dumname, double ***pZ, DATAINFO *pdinfo,
-		       PRN *prn, char **pmask)
+		       PRN *prn, const char *oldmask, char **pmask)
 {
-    double *oldmask = NULL;
     char *mask = NULL;
     int sn = 0, err = 0;
 
-    /* allocate temporary (char) mask series */
-    mask = calloc(pdinfo->n, 1);
+    mask = make_submask(pdinfo->n);
     if (mask == NULL) {
 	return E_ALLOC;
     }
 
-    /* if there's no currently existing sub-sample mask, 
-       oldmask will be NULL (which is OK) */
-    oldmask = get_old_mask(*pZ, pdinfo);
-
     /* construct subsample mask in one of several possible ways */
-
     if (mode == SUBSAMPLE_DROP_MISSING) {   
 	err = make_missing_mask(list, (const double **) *pZ, pdinfo, mask);
     } else if (mode == SUBSAMPLE_RANDOM) {
@@ -1100,12 +946,12 @@ make_restriction_mask (int mode, const char *line, const int *list,
 }
 
 int 
-restrict_sample_from_mask (const char *mask, int mode, double ***pZ, DATAINFO **ppdinfo)
+restrict_sample_from_mask (const char *mask, int mode, double ***pZ, 
+			   DATAINFO **ppdinfo)
 {
     double **subZ = NULL;
     DATAINFO *subinfo = NULL;
-    int sn = 0, subnum = 0;
-    int t, err = 0;
+    int err = 0;
 
     /* allocate new datainfo */
     subinfo = datainfo_new();
@@ -1113,29 +959,16 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ, DATAINFO **
 	return E_ALLOC;
     }
 
-    /* create "hidden" dummy in full dataset to record sub-sample, 
-       if need be */
-    if (maybe_add_subdum(pZ, *ppdinfo, &subnum)) {
-	free(subinfo);
-	return E_ALLOC;
-    } 
-
-    /* write the new mask into the "subdum" variable */
-    for (t=0; t<(*ppdinfo)->n; t++) {
-	(*pZ)[subnum][t] = mask[t];
-	if (mask[t]) sn++;
-    }
-
     /* set up the sub-sampled datainfo */
-    subinfo->n = sn;
+    subinfo->n = count_selected_cases(mask, (*ppdinfo)->n);
     subinfo->v = (*ppdinfo)->v;
     if (start_new_Z(&subZ, subinfo, 1)) {
 	free(subinfo);
 	return E_ALLOC;
     }
 
-    /* link (don't copy) varnames and descriptions, 
-       these are not dependent on the series length */
+    /* link (don't copy) varnames and descriptions, since these are
+       not dependent on the series length */
     subinfo->varname = (*ppdinfo)->varname;
     subinfo->varinfo = (*ppdinfo)->varinfo;
     subinfo->descrip = (*ppdinfo)->descrip;
@@ -1156,9 +989,6 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ, DATAINFO **
     copy_data_to_subsample(subZ, subinfo, (const double **) *pZ, 
 			   *ppdinfo, mask);
 
-    attach_subsample_to_datainfo(subinfo, (const double **) *pZ, 
-				 *ppdinfo);
-
     if (mode == SUBSAMPLE_USE_DUMMY || 
 	mode == SUBSAMPLE_BOOLEAN ||
 	mode == SUBSAMPLE_DROP_MISSING) {
@@ -1172,6 +1002,7 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ, DATAINFO **
     /* save state */
     backup_full_dataset(pZ, ppdinfo, subinfo);
     subinfo->submode = mode;
+    subinfo->submask = copy_subsample_mask(mask);
 
     /* and switch pointers */
     *pZ = subZ;
@@ -1210,8 +1041,8 @@ int restrict_sample (const char *line, const int *list,
 {
     int mode = SUBSAMPLE_UNKNOWN;
     char dumname[VNAMELEN] = {0};
+    char *oldmask = NULL;
     char *mask = NULL;
-    int cumulate = 1;
     int err = 0;
 
     *gretl_errmsg = '\0';
@@ -1221,21 +1052,24 @@ int restrict_sample (const char *line, const int *list,
 	return 1;
     }
 
-    if (opt & OPT_R) {
-	/* Replace any existing restrictions, don't cumulate */
-	cumulate = 0;
+    if (!(opt & OPT_R)) {
+	/* not replacing but cumulating any existing restrictions */
+	oldmask = make_current_sample_mask(*ppdinfo, &err);
+	if (err) {
+	    return err;
+	}
     }
 
     /* We must first restore the full data range, for housekeeping
        purposes */
-    err = real_restore_full_sample(pZ, ppdinfo, cumulate);
+    err = restore_full_sample(pZ, ppdinfo);
     if (err) {
 	return err;
     }
 
     if (!err) {
 	err = make_restriction_mask(mode, line, list, dumname, pZ, *ppdinfo, 
-				    prn, &mask);
+				    prn, oldmask, &mask);
     }
 
     if (!err && mask != NULL) {
@@ -1243,6 +1077,7 @@ int restrict_sample (const char *line, const int *list,
     }
 
     free(mask);
+    free(oldmask);
 
     return err;
 }

@@ -1816,8 +1816,7 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 
 int is_hidden_variable (int i, const DATAINFO *pdinfo)
 {
-    if (strcmp(pdinfo->varname[i], "subdum") == 0 ||
-	strcmp(pdinfo->varname[i], "annual") == 0 ||
+    if (strcmp(pdinfo->varname[i], "annual") == 0 ||
 	strcmp(pdinfo->varname[i], "qtrs") == 0 ||
 	strcmp(pdinfo->varname[i], "months") == 0 ||
 	strcmp(pdinfo->varname[i], "hrs") == 0 ||

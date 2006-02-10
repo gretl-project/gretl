@@ -944,28 +944,23 @@ int push_program_state (const DATAINFO *pdinfo)
     return err;
 }
 
-static int subsampled_at_level (const DATAINFO *pdinfo, int level)
+static int 
+subsampled_at_this_level (const DATAINFO *pdinfo, set_vars *sv)
 {
-    int i, ret = 0;
+    int ret = 0;
 
     if (!complex_subsampled()) {
 	return 0;
     }
-    
-    for (i=1; i<pdinfo->v; i++) {
-	if (!strcmp(pdinfo->varname[i], "subdum") &&
-	    STACK_LEVEL(pdinfo, i) == level) {
-#if PDEBUG
-	    fprintf(stderr, "Found subdum at level %d, position %d\n", level, i);
-#endif
+
+    if (pdinfo->submask != NULL) {
+	if (sv->sinfo.submask == NULL) {
 	    ret = 1;
-	    break;
+	} else if (submask_cmp(pdinfo->submask, sv->sinfo.submask)) {
+	    ret = 1;
 	}
     }
 
-#if PDEBUG
-    fprintf(stderr, "pdinfo->submask = %p\n", (void *) pdinfo->submask);
-#endif
 
     return ret;
 }
@@ -1019,7 +1014,7 @@ int pop_program_state (double ***pZ, DATAINFO **ppdinfo)
 #endif
 
     if (!err && *ppdinfo != NULL && sinfo_is_set(state->sinfo)) {
-	if (subsampled_at_level(*ppdinfo, ns - 1)) {
+	if (subsampled_at_this_level(*ppdinfo, state)) {
 #if PDEBUG
 	    fprintf(stderr, " undoing current sub-sampling\n");
 #endif

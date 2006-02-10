@@ -2798,8 +2798,7 @@ int gretl_reserved_word (const char *str)
 	!strcmp(str, "NA") ||
 	!strcmp(str, "null")) {
 	ret = 1;
-    } else if (!strcmp(str, "full") ||
-	       !strcmp(str, "subdum")) {
+    } else if (!strcmp(str, "full")) {
 	ret = 2;
     } else if (!strcmp(str, "t") ||
 	       !strcmp(str, "annual") ||

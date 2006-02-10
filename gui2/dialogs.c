@@ -1337,9 +1337,6 @@ static GList *get_dummy_list (int *thisdum)
     int i;
 
     for (i=1; i<datainfo->v; i++) {
-	if (!strcmp(datainfo->varname[i], "subdum")) {
-	    continue;
-	} 
 	if (!datainfo->vector[i]) {
 	    continue;
 	}
