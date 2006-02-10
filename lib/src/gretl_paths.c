@@ -67,16 +67,19 @@ FILE *gretl_fopen (const char *filename, const char *mode)
 #if defined(USE_G_FOPEN)
     fp = g_fopen((const gchar *) filename, (const gchar *) mode);
 #elif defined(WIN32)
-    int save_errno = errno;
-    gchar *fconv;
-    gsize wrote;
+    fp = fopen(filename, mode);
+    if (fp == NULL) {
+	int save_errno = errno;
+	gchar *fconv;
+	gsize wrote;
 
-    fconv = g_locale_from_utf8(filename, -1, NULL, &wrote, NULL);
-    if (fconv != NULL) {
-	fp = fopen(fconv, mode);
-	g_free(fconv);
+	fconv = g_locale_from_utf8(filename, -1, NULL, &wrote, NULL);
+	if (fconv != NULL) {
+	    fp = fopen(fconv, mode);
+	    g_free(fconv);
+	}
+	errno = save_errno;
     }
-    errno = save_errno;
 #else    
     fp = fopen(filename, mode);
 #endif

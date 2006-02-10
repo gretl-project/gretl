@@ -35,18 +35,24 @@
 # include <glib.h>
 static xmlDocPtr gretl_xmlParseFile (const char *fname)
 {
-    int save_errno = errno;
     xmlDocPtr ptr = NULL;
-    gchar *fconv;
-    gsize wrote;
+    FILE *fp = fopen(fname, "r");
 
-    fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
-    if (fconv != NULL) {
-	ptr = xmlParseFile(fconv);
-	g_free(fconv);
+    if (fp != NULL) {
+	fclose(fp);
+	ptr = xmlParseFile(fname);
+    } else {
+	int save_errno = errno;
+	gchar *fconv;
+	gsize wrote;
+
+	fconv = g_locale_from_utf8(fname, -1, NULL, &wrote, NULL);
+	if (fconv != NULL) {
+	    ptr = xmlParseFile(fconv);
+	    g_free(fconv);
+	}
+	errno = save_errno;
     }
-
-    errno = save_errno;
 
     return ptr;
 }
