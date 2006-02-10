@@ -530,6 +530,7 @@ static int mask_from_dummy (const char *line,
     char dname[VNAMELEN] = {0};
     int dnum, err = 0;
 
+    /* + 4 to skip the command word "smpl" */
     sscanf(line + 4, "%15s", dname);
 
     if (*dname == 0) {

@@ -60,6 +60,38 @@ enum db_data_actions {
     DB_IMPORT
 };
 
+#ifndef OLD_GTK
+
+int validate_db_string (char *orig)
+{
+    int err = 0;
+
+    if (!g_utf8_validate(orig, -1, NULL)) {
+	GError *gerr = NULL;
+	gchar *conv;
+	gsize wrote;
+
+	conv = g_convert(orig, -1,
+			 "UTF-8",
+			 "ISO-8859-1",
+			 NULL, &wrote, &gerr);
+
+	if (gerr != NULL) {
+	    errbox(gerr->message);
+	    g_error_free(gerr);
+	    strcpy(orig, "invalid string");
+	    err = 1;
+	} else {
+	    strcpy(orig, conv);
+	    g_free(conv);
+	} 
+    }
+
+    return err;
+}
+
+#endif
+
 static void update_statusline (windata_t *vwin, const char *s)
 {
     gchar *tmp = g_strdup_printf(_("Network status: %s"), s);
@@ -853,18 +885,15 @@ static int make_local_db_series_list (windata_t *vwin)
     i = 0;
 #endif
 
-    while (1) {
-	if (fgets(line1, sizeof line1, fp) == NULL) {
-	    break;
-	}
+    while (fgets(line1, sizeof line1, fp) != NULL && !err) {
+
 	if (*line1 == '#') {
 	    continue;
 	}
 
 #ifndef OLD_GTK
-	my_utf_validate(line1);
+	err = validate_db_string(line1);
 #endif
-
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
 
@@ -877,7 +906,10 @@ static int make_local_db_series_list (windata_t *vwin)
 	row[0] = sername;
 	row[1] = start_trim(line1 + n + 1);
 
-	fgets(line2, sizeof line2, fp);
+	if (fgets(line2, sizeof line2, fp) == NULL) {
+	    break;
+	}
+
 	end_trim(line2);
 	row[2] = line2;
 
@@ -896,7 +928,6 @@ static int make_local_db_series_list (windata_t *vwin)
 	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), 
 				     i, &gray);
 	}
-
 	i++;
 #endif
     }
@@ -937,9 +968,9 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 
     bufgets_init(buf);
 
-    while (bufgets(line1, sizeof line1, buf)) {
+    while (bufgets(line1, sizeof line1, buf) && !err) {
 
-	if (line1[0] == '#') {
+	if (*line1 == '#') {
 	    continue;
 	}
 
@@ -947,7 +978,7 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 	charsub(line1, '\t', ' ');
 
 #ifndef OLD_GTK
-	my_utf_validate(line1);
+	err = validate_db_string(line1);
 #endif
 
 	if (sscanf(line1, "%15s", sername) != 1) {
@@ -958,7 +989,10 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 	row[0] = sername;
 	row[1] = start_trim(line1 + n + 1);
 
-	bufgets(line2, sizeof line2, buf);
+	if (bufgets(line2, sizeof line2, buf) == NULL) {
+	    break;
+	}
+
 	row[2] = line2;
 	if (!err) {
 	    err = check_serinfo(line2, sername);
@@ -983,20 +1017,47 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
     return 0;
 }
 
-#ifndef OLD_GTK
-static void insert_and_free_db_table (db_table *tbl, GtkTreeView *view)
-#else
-     static void insert_and_free_db_table (db_table *tbl, GtkCList *clist)
-#endif     
+static gchar *iso_comment_to_utf8 (const gchar *src, int *err)
 {
-    int i;
+    gchar *conv = NULL;
+
+    if (!g_utf8_validate(src, -1, NULL)) {
+	GError *gerr = NULL;
+	gsize wrote;
+
+	conv = g_convert(src, -1,
+			 "UTF-8",
+			 "ISO-8859-1",
+			 NULL, &wrote, &gerr);
+
+	if (gerr != NULL) {
+	    if (err != NULL) {
+		errbox(gerr->message);
+		*err = 1;
+	    }
+	    g_error_free(gerr);
+	} 
+    } else {
+	conv = g_strdup(src);
+    }
+
+    return conv;
+}
+
+static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
+{
 #ifndef OLD_GTK
-    gchar *comment;
-    GtkTreeIter iter;
+    GtkTreeView *view = GTK_TREE_VIEW(w);
     GtkListStore *store;
+    GtkTreeIter iter;
+    gchar *comment;
+    int err = 0;
+    int *perr = &err;
 #else
+    GtkCList *clist = GTK_CLIST(w);
     gchar *row[3];
 #endif
+    int i;
 
 #ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
@@ -1005,17 +1066,27 @@ static void insert_and_free_db_table (db_table *tbl, GtkTreeView *view)
 
     for (i=0; i<tbl->nrows; i++) {    
 #ifndef OLD_GTK
-	comment = my_locale_to_utf8(tbl->rows[i].comment);
-
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set(store, &iter, 
-			   0, tbl->rows[i].varname, 
-			   1, comment,
-			   2, tbl->rows[i].obsinfo, 
-			   -1);
-	if (comment != NULL) {
-	    g_free(comment);
+
+	comment = iso_comment_to_utf8(tbl->rows[i].comment, perr);
+	if (perr != NULL && *perr) {
+	    /* don't keep displaying error messages */
+	    perr = NULL;
 	}
+
+	if (comment != NULL) {
+	    gtk_list_store_set(store, &iter, 
+			       0, tbl->rows[i].varname, 
+			       1, comment,
+			       2, tbl->rows[i].obsinfo, 
+			       -1);
+	    g_free(comment);
+	} else {
+	    gtk_list_store_set(store, &iter, 
+			       0, tbl->rows[i].varname, 
+			       2, tbl->rows[i].obsinfo, 
+			       -1);
+	}	    
 #else
 	row[0] = tbl->rows[i].varname;
 	row[1] = tbl->rows[i].comment;
@@ -1053,11 +1124,7 @@ static int make_rats_db_series_list (windata_t *vwin)
 	return 1;
     }
 
-#ifndef OLD_GTK
-    insert_and_free_db_table(tbl, GTK_TREE_VIEW(vwin->listbox));
-#else
-    insert_and_free_db_table(tbl, GTK_CLIST(vwin->listbox));
-#endif
+    insert_and_free_db_table(tbl, vwin->listbox);
 
     vwin->active_var = 0;
 
@@ -1717,16 +1784,14 @@ real_get_db_description (const char *fullname, const char *binname,
 
 	fgets(tmp, sizeof tmp, fp);
 	fclose(fp);
-	if (*tmp == '#') {
-	    int len = strlen(tmp);
+	if (*tmp == '#' && strlen(tmp) > 2) {
+	    char *s = tmp + 2;
 
-	    if (len > 2) {
-		tailstrip(tmp);
+	    tailstrip(s);
 #ifndef OLD_GTK
-		my_utf_validate(tmp);
+	    validate_db_string(s);
 #endif
-		descrip = g_strdup(tmp + 2);
-	    }
+	    descrip = g_strdup(s);
 	}
     }
 
@@ -1881,6 +1946,170 @@ read_db_files_in_dir (DIR *dir, char *dbdir, windata_t *vwin, int ndb)
 }
 
 #endif
+
+static void get_local_db_status (char *fname, char *status, time_t remtime)
+{
+    char fullname[MAXLEN];
+    struct stat fbuf;
+    int err;
+
+    build_path(paths.binbase, fname, fullname, NULL);
+
+    if ((err = stat(fullname, &fbuf)) == -1) {
+	if (errno == ENOENT) {
+#ifdef G_OS_WIN32
+	    strcpy(status, _("Not installed"));
+#else
+	    /* try user dir too if not on Windows */
+	    build_path(paths.userdir, fname, fullname, NULL);
+	    if ((err = stat(fullname, &fbuf)) == -1) {
+		strcpy(status, _("Not installed"));
+	    } 
+#endif
+	} else {
+	    strcpy(status, _("Unknown: access error"));
+	}
+    }
+
+    if (!err) {
+	if (difftime(remtime, fbuf.st_ctime) > 360) {
+	    strcpy(status, _("Not up to date"));
+	} else {
+	    strcpy(status, _("Up to date"));
+	}
+    }
+}
+
+
+static int parse_db_list_line (char *line, char *fname, time_t *date)
+{
+    char mon[4], hrs[9];
+    int day, yr;
+    struct tm mytime;
+    const char *months[] = {
+	"Jan", "Feb", "Mar", "Apr",
+	"May", "Jun", "Jul", "Aug",
+	"Sep", "Oct", "Nov", "Dec"
+    };
+    int i;
+
+    if (sscanf(line, "%*s%*s%3s%2d%8s%4d%16s", 
+	       mon, &day, hrs, &yr, fname) != 5) {
+	return 1;
+    }
+
+    hrs[2] = 0;
+
+    mytime.tm_sec = 0;
+    mytime.tm_min = 0;   
+    mytime.tm_wday = 0;   
+    mytime.tm_yday = 0;   
+    mytime.tm_isdst = -1; 
+    mytime.tm_hour = atoi(hrs);
+    mytime.tm_year = yr - 1900;
+    mytime.tm_mday = day;
+    mytime.tm_mon = 0;
+
+    for (i=0; i<12; i++) {
+	if (strcmp(mon, months[i]) == 0) {
+	    mytime.tm_mon = i;
+	}
+    }
+
+    *date = mktime(&mytime);
+
+    return 0;
+}
+
+gint populate_remote_db_list (windata_t *win)
+{
+#ifndef OLD_GTK
+    GtkListStore *store;
+    GtkTreeIter iter;  
+#endif  
+    int err;
+    char *buf;
+    char fname[16], line[128], errbuf[80], status[20];
+    gchar *row[3];
+    gint i;
+    time_t remtime;
+
+    buf = mymalloc(GRETL_BUFSIZE);
+    if (buf == NULL) return 1;
+
+    memset(buf, 0, GRETL_BUFSIZE);
+
+    *errbuf = '\0';
+
+    err = list_remote_dbs(&buf, errbuf);
+
+    if (err) {
+	show_db_error(NULL, errbuf);
+	free(buf);
+	return err;
+    }
+
+#ifndef OLD_GTK
+    store = GTK_LIST_STORE(gtk_tree_view_get_model 
+			   (GTK_TREE_VIEW(win->listbox)));
+    gtk_list_store_clear (store);
+    gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
+#else
+    gtk_clist_clear(GTK_CLIST(win->listbox));
+    gtk_clist_freeze(GTK_CLIST(win->listbox));
+#endif
+
+    bufgets_init(buf);
+    i = 0;
+
+    while (bufgets(line, sizeof line, buf)) {
+	if (strstr(line, "idx")) {
+	    continue;
+	}
+	if (parse_db_list_line(line, fname, &remtime)) {
+	    continue;
+	}
+	get_local_db_status(fname, status, remtime);
+	row[0] = strip_extension(fname);
+
+	if (bufgets(line, sizeof line, buf)) {
+#ifndef OLD_GTK
+	    validate_db_string(line);
+#endif
+	    row[1] = line + 2;
+	} else {
+	    row[1] = NULL;
+	}
+
+	row[2] = status;
+#ifndef OLD_GTK
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
+			    2, row[2], -1);
+#else
+	gtk_clist_append(GTK_CLIST(win->listbox), row);
+	if (i % 2) {
+	    gtk_clist_set_background(GTK_CLIST(win->listbox), i, &gray);
+	}
+#endif
+	i++;
+    }
+
+#ifdef OLD_GTK
+    gtk_clist_thaw(GTK_CLIST(win->listbox));
+#endif
+
+    free(buf);
+
+    if (i == 0) errbox(_("No database files found"));
+#ifdef OLD_GTK
+    else {
+	gtk_clist_select_row(GTK_CLIST(win->listbox), 0, 0);
+    }
+#endif
+
+    return 0;
+}
 
 gint populate_dbfilelist (windata_t *vwin)
 {

@@ -118,8 +118,9 @@ static int y_x_lags_enabled;
 static int y_w_lags_enabled;
 
 static int *xlist;
-static int *rulist;
+static int *instlist;
 static int *veclist;
+static int *vecxlist;
 
 static GtkWidget *scatters_label;
 static GtkWidget *scatters_menu;
@@ -201,12 +202,13 @@ void clear_selector (void)
 
     free(xlist);
     xlist = NULL;
-
-    free(rulist);
-    rulist = NULL;
+    free(instlist);
+    instlist = NULL;
 
     free(veclist);
     veclist = NULL;
+    free(vecxlist);
+    vecxlist = NULL;
 
     destroy_lag_preferences();
 }
@@ -1297,6 +1299,23 @@ static int maybe_resize_recorder_lists (selector *sr, int n)
     return err;
 }
 
+static int maybe_resize_exog_recorder_lists (selector *sr, int n)
+{
+    int *newlist;
+    int err = 0;
+
+    if (sr->code == TSLS) {
+	newlist = gretl_list_resize(&instlist, n);
+    } else {
+	newlist = gretl_list_resize(&vecxlist, n);
+    }
+    if (newlist == NULL) {
+	err = E_ALLOC;
+    }
+
+    return err;
+}
+
 #ifndef OLD_GTK
 
 static void get_rlvars_data (selector *sr, int rows, int context)
@@ -1392,11 +1411,14 @@ static void get_ruvars_data (selector *sr, int rows, int context)
     GtkTreeModel *model;
     GtkTreeIter iter;
     gint exog, lag;
+    int *reclist;
     gchar *tmp;
     int i, j = 1;
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars));
     gtk_tree_model_get_iter_first(model, &iter);
+
+    reclist = (sr->code == TSLS)? instlist : vecxlist;
 
     for (i=0; i<rows; i++) {
 
@@ -1416,8 +1438,8 @@ static void get_ruvars_data (selector *sr, int rows, int context)
 	add_to_cmdlist(sr, tmp);
 	g_free(tmp);
 
-	if (rulist != NULL) {
-	    rulist[j++] = exog;
+	if (reclist != NULL) {
+	    reclist[j++] = exog;
 	}
 
 	gtk_tree_model_iter_next(model, &iter);
@@ -1431,8 +1453,11 @@ static void get_ruvars_data (selector *sr, int rows, int context)
     gchar *tmp;
     gchar *exog;
     gchar *lstr;
+    int *reclist;
     int lag;
     int i, j = 1;
+
+    reclist = (sr->code == TSLS)? instlist : vecxlist;
 
     for (i=0; i<rows; i++) {
 	lstr = NULL;
@@ -1458,8 +1483,8 @@ static void get_ruvars_data (selector *sr, int rows, int context)
 	    add_to_cmdlist(sr, exog);
 	}
 
-	if (rulist != NULL) {
-	    rulist[j++] = atoi(exog);
+	if (reclist != NULL) {
+	    reclist[j++] = atoi(exog);
 	}
     }
 
@@ -1650,12 +1675,10 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	sr->code == VLAGSEL || sr->code == VECM) {
 	rows = varlist_row_count(sr, SR_RUVARS, &realrows);
 	if (rows > 0) {
-	    context = sr_get_lag_context(sr, SR_RUVARS);
-
-	    rulist = realloc(rulist, (realrows + 1) * sizeof *rulist);
-	    if (rulist != NULL) {
-		rulist[0] = realrows;
+	    if (realrows > 0) {
+		maybe_resize_exog_recorder_lists(sr, realrows);
 	    }
+	    context = sr_get_lag_context(sr, SR_RUVARS);
 
 	    if (sr->code == TSLS && dvlags != NULL) {
 		add_to_cmdlist(sr, dvlags);
@@ -2080,6 +2103,7 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
     GtkWidget *store;
     gint iter = 0;
 #endif
+    int *reclist = NULL;
     
     GtkWidget *tmp, *remove, *midhbox, *button_vbox;
 
@@ -2115,14 +2139,20 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
     store = sr->ruvars;
 #endif
 
-    if (rulist != NULL) {
+    if (sr->code == TSLS) {
+	reclist = instlist;
+    } else if (sr->code == VAR || sr->code == VLAGSEL || sr->code == VECM) {
+	reclist = vecxlist;
+    }
+
+    if (reclist != NULL) {
 	int i;
 
-	for (i=1; i<=rulist[0]; i++) {
-	    list_append_var(store, &iter, rulist[i], sr, SR_RUVARS);
+	for (i=1; i<=reclist[0]; i++) {
+	    list_append_var(store, &iter, reclist[i], sr, SR_RUVARS);
 	}
-	if (rulist[0] > 0 && (sr->code == VAR || sr->code == VLAGSEL ||
-			      sr->code == VECM)) {
+	if (reclist[0] > 0 && (sr->code == VAR || sr->code == VLAGSEL ||
+			       sr->code == VECM)) {
 	    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 	}
     } else if (!VEC_CODE(sr->code)) {

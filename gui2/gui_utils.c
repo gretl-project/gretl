@@ -4100,26 +4100,6 @@ int validate_varname (const char *varname)
     return 0;
 }
 
-#ifndef OLD_GTK
-int my_utf_validate (char *s)
-{
-    if (!g_utf8_validate(s, -1, NULL)) {
-	gchar *new = my_locale_to_utf8(s);
-
-	if (new != NULL) {
-	    strcpy(s, new);
-	    g_free(new);
-	} else {
-	    *s = '\0';
-	}
-	return 1;
-    }
-    return 0;
-}
-#endif	
-
-/* ......................................................... */
-
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 			 gpointer data)
 {
@@ -4136,8 +4116,6 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
     }
     return FALSE;
 }
-
-/* .................................................................. */
 
 void add_popup_item (const gchar *label, GtkWidget *menu,
 #ifndef OLD_GTK
@@ -4159,8 +4137,6 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 		      G_CALLBACK(callback), data);
     gtk_widget_show(item);
 }
-
-/* .................................................................. */
 
 void *gui_get_plugin_function (const char *funcname, 
 			       void **phandle)

@@ -391,7 +391,7 @@ int *gretl_consecutive_list_new (int lmin, int lmax)
  * 
  * Resizes the content of @oldlist to hold @nterms, and adjusts
  * the first element to reflect the new size.  If the new
- * list is longer than tha old, the extra elements are initialized 
+ * list is longer than the old, the extra elements are initialized 
  * to zero.
  *
  * Returns: the resized list, or %NULL on failure.
@@ -408,6 +408,10 @@ int *gretl_list_resize (int **oldlist, int nterms)
 
     if (*oldlist != NULL) {
 	oldn = (*oldlist)[0];
+	if (nterms == oldn) {
+	    /* no-op */
+	    return *oldlist;
+	}
     }
 
     list = realloc(*oldlist, (nterms + 1) * sizeof *list);
