@@ -167,7 +167,7 @@ static void sync_dataset_elements (const DATAINFO *pdinfo)
     fullinfo->varname = pdinfo->varname;
     fullinfo->varinfo = pdinfo->varinfo;
     fullinfo->vector = pdinfo->vector;
-    fullinfo->descrip = pdinfo->descrip;      
+    fullinfo->descrip = pdinfo->descrip;
 }
 
 /* attach_subsample_to_model:
@@ -318,28 +318,29 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     return 0;
 }
 
-static char *make_current_sample_mask (DATAINFO *pdinfo, int *err)
+static char *make_current_sample_mask (DATAINFO *pdinfo)
 {
     char *currmask = NULL;
-    int t;
+    int s, t;
 
     if (pdinfo->submask == NULL) {
-	/* no pre-existing mask: write it from scratch */
+	/* no pre-existing mask: not sub-sampled */
 	currmask = make_submask(pdinfo->n);
-	if (currmask == NULL) {
-	    *err = E_ALLOC;
-	} else {
+	if (currmask != NULL) {
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		currmask[t] = 1;
 	    }
 	}
     } else {
-	/* found a pre-existing mask: adjust it */
-	currmask = pdinfo->submask;
-	pdinfo->submask = NULL;
-	for (t=0; t<fullinfo->n; t++) {
-	    if (t < pdinfo->t1 || t > pdinfo->t2) {
-		currmask[t] = 0;
+	/* there's a pre-existing mask */
+	currmask = copy_subsample_mask(pdinfo->submask);
+	if (currmask != NULL) {
+	    s = -1;
+	    for (t=0; t<fullinfo->n; t++) {
+		if (pdinfo->submask[t]) s++;
+		if (s < pdinfo->t1 || s > pdinfo->t2) {
+		    currmask[t] = 0;
+		} 
 	    }
 	}
     }
@@ -1054,9 +1055,9 @@ int restrict_sample (const char *line, const int *list,
 
     if (!(opt & OPT_R)) {
 	/* not replacing but cumulating any existing restrictions */
-	oldmask = make_current_sample_mask(*ppdinfo, &err);
-	if (err) {
-	    return err;
+	oldmask = make_current_sample_mask(*ppdinfo);
+	if (oldmask == NULL) {
+	    return E_ALLOC;
 	}
     }
 

@@ -959,8 +959,7 @@ subsampled_at_this_level (const DATAINFO *pdinfo, set_vars *sv)
 	} else if (submask_cmp(pdinfo->submask, sv->sinfo.submask)) {
 	    ret = 1;
 	}
-    }
-
+    } 
 
     return ret;
 }
@@ -1019,10 +1018,13 @@ int pop_program_state (double ***pZ, DATAINFO **ppdinfo)
 	    fprintf(stderr, " undoing current sub-sampling\n");
 #endif
 	    restore_full_sample(pZ, ppdinfo);
-	} 
-	if (state->sinfo.submask != NULL) {
-	    restrict_sample_from_mask(state->sinfo.submask, state->sinfo.submode, 
-				      pZ, ppdinfo);
+	    if (state->sinfo.submask != NULL) {
+#if PDEBUG
+		fprintf(stderr, " reimposing outer sample restriction\n");
+#endif
+		restrict_sample_from_mask(state->sinfo.submask, state->sinfo.submode, 
+					  pZ, ppdinfo);
+	    }
 	}
 	(*ppdinfo)->t1 = state->sinfo.t1;
 	(*ppdinfo)->t2 = state->sinfo.t2;
