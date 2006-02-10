@@ -1,4 +1,4 @@
-\chapter{Matrix manipulation}
+\chapter{Operazioni con le matrici}
 \label{chap-matrices}
 
 \section{Introduzione}
@@ -17,7 +17,7 @@ definite dall'utente. Questa funzionalità è ancora sperimentale.
   in forma numerica o per riferimento a variabili scalari preesistenti, o in un
   modo misto;
 \item fornendo una lista di serie di dati;
-\item fornnendo una \textit{lista personalizzata} di serie:
+\item fornendo una \textit{lista personalizzata} di serie:
 \item usando una formula simile a quelle usate con il comando
   \texttt{genr}, in cui una nuova matrice viene definita in termini di matrici
   e/o scalari esistenti, oppure attraverso funzioni speciali.
@@ -259,10 +259,10 @@ $n\times n$ $A$ come vettore colonna, ossia come vettore $n$-dimensionale $v$
 tale che $v_i = a_{ii}$.
 
 La funzione \texttt{cdemean} applicata a una matrice $A$ $m \times n$
-restituisce una mattrice $B$ $m \times n$ tale che $b_{ij} = a_{ij} -
+restituisce una matrice $B$ $m \times n$ tale che $b_{ij} = a_{ij} -
 \bar{A}_j$, dove $\bar{A}_j$ indica la media della colonna $j$ di $A$.  
 
-\subsection{Matrix filling functions}
+\subsection{Funzioni da scalare a matrice}
 \label{matrix-fill}
 
 Le funzioni che richiedono come argomento uno o due valori e restituiscono una
@@ -295,7 +295,7 @@ Le funzioni matriciali \texttt{uniform()} e \texttt{normal()} riempiono la
 matrice con valori estratti dalla distribuzione uniforme (0--1) e dalla
 distribuzione normale standard.
 
-\subsection{Multiple-return matrix functions}
+\subsection{Funzioni da matrici a matrici}
 \label{matrix-multiples}
 
 Le funzioni che richiedono come argomento una o due matrici e restituiscono una
@@ -368,29 +368,29 @@ immaginarie. Se vengono richiesti gli autovettori (ossia il secondo argomento di
 \texttt{eigengen} non è \texttt{null}), essi vengono restituiti in una matrice
 $n \times n$.
 
-\section{Matrix accessors}
+\section{Matrici accessorie}
 \label{matrix-accessors}
 
-In addition to the matrix functions discussed above,
-various ``accessor'' strings allow you to create copies of internal
-matrices associated with models previously estimated:
+Oltre alle funzioni matriciali viste sopra, esistono vari ``accessori'' che
+permettono di salvare una copia di alcune matrici che vengono generate
+automaticamente dal programma quando viene stimato un modello:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{\$coeff} & vector of estimated coefficients \\
-\texttt{\$stderr} & vector of estimated standard errors \\
-\texttt{\$uhat} & vector of residuals \\
-\texttt{\$yhat} & vector of fitted values \\
-\texttt{\$vcv} & covariance matrix for coefficients \\
-\texttt{\$rho} & autoregressive coefficients for error process
+\texttt{\$coeff} & vettore dei coefficienti stimati \\
+\texttt{\$stderr} & vettore degli errori standard stimati \\
+\texttt{\$uhat} & vettore dei residui \\
+\texttt{\$yhat} & vettore dei valori stimati \\
+\texttt{\$vcv} & matrice di covarianza dei coefficienti \\
+\texttt{\$rho} & coefficienti di autoregressione per il processo di errore
 \end{tabular}
 \end{center}
 
-If these accessors are given without any prefix, they retrieve results
-from the last model estimated, if any.  Alternatively, they may be
-prefixed with the name of a saved model plus a period (\texttt{.}), in
-which case they retrieve results from the specified model.  Here are
-some examples:
+Quando questi accessori sono utilizzati senza farli precedere da alcun prefisso,
+producono i risultati dell'ultimo modello stimato, se esiste. Altrimenti,
+se sono prefissati dal nome di un modello salvato in precedenza, separato
+da un punto (\texttt{.}), producono i risultati dal modello specificato. Ecco
+alcuni esempi:
 %
 \begin{textcode}
 matrix u = \$uhat\\
@@ -398,46 +398,47 @@ matrix b = m1.\$coeff\\
 matrix v2 = m1.\$vcv[1:2,1:2]
 \end{textcode}
 %
-The first command grabs the residuals from the last model; the second
-grabs the coefficient vector from model \texttt{m1}; and the third
-(which uses the mechanism of sub-matrix selection described in the
-following section) grabs a portion of the covariance matrix from model
+Il primo comando produce i residui dell'ultimo modello; il secondo produce il
+vettore dei coefficienti del modello \texttt{m1}, mentre il terzo (che usa il
+meccanismo della selezione di sotto-matrici descritto nel prossimo paragrafo)
+produce una porzione della matrice di covarianza del modello
 \texttt{m1}.
 
-If the ``model'' in question is actually a system (a VAR
-or VECM, or system of simultaneous equations), \texttt{\$uhat}
-retrieves the matrix of residuals (one column per equation) and
-\texttt{\$vcv} gets the cross-equation covariance matrix.  At present
-the other accessors are not available for equation systems.
+Se il ``modello'' in questione è in realtà un sistema (un VAR, un VECM, o un
+sistema di equazioni simultanee), \texttt{\$uhat} produce la matrice dei
+residui (una colonna per equazione) e \texttt{\$vcv} produce la matrice di
+covarianza tra le equazioni. Al momento non sono disponibili altri accessori
+per i sistemi di equazioni.
 
 
-\section{Selecting sub-matrices}
+\section{Selezione di sotto-matrici}
 \label{matrix-sub}
 
-You can select sub-matrices of a given matrix using the syntax
+È possibile selezionare delle sotto-matrici a partire da una matrice usando la
+sintassi:
 
-\texttt{A[}\textsl{rows},\textsl{cols}\texttt{]}
+\texttt{A[}\textsl{righe},\textsl{colonne}\texttt{]}
 
-where \textsl{rows} can take one of four forms:
+dove \textsl{righe} può avere una delle seguenti quattro forme:
 
 \begin{center}
 \begin{tabular}{ll}
-empty & selects all rows \\
-a single integer & selects the single specified row \\
-two integers separated by a colon & selects a range of rows \\
-the name of a matrix & selects the specified rows \\
+Vuoto & seleziona tutte le righe \\
+Un valore intero & seleziona la riga identificata dal numero \\
+Due interi separati dal carattere due punti & seleziona un intervallo di righe \\
+Il nome di una matrice & seleziona le righe specificate dai valori della matrice \\
 \end{tabular}
 \end{center}
 
-With regard to the second option, the integer value can be given
-numerically, or as the name of an existing scalar variable.  With the
-last option, the index matrix given in the \textsl{rows} field must be
-either $p\times 1$ or $1\times p$, and should contain integer values
-in the range 1 to $n$, where $n$ is the number of rows in the matrix
-from which the selection is to be made.
+Rispetto alla seconda opzione, il valore intero può essere indicato
+numericamente o attraverso il nome di una variabile scalare esistente.
+Con l'ultima opzione, la matrice indicata nel campo \textsl{righe} deve
+avere dimensioni $p\times 1$ o $1\times p$ e deve contenere valori interi
+nell'intervallo da 1 a $n$, dove $n$ è il numero di righe da selezionare
+dalla matrice principale.
 
-The \textsl{cols} specification works in the same way, \textit{mutatis
-  mutandis}.  Here are some examples.
+L'uso del parametro \textsl{colonne} è simile, \textit{mutatis
+  mutandis}.  Ecco alcuni esempi.
 %
 \begin{code}
 matrix B = A[1,]
@@ -447,28 +448,27 @@ matrix idx = { 1, 2, 6 }
 matrix B = A[idx,]
 \end{code}
 %
-The first example selects row 1 from matrix \texttt{A}; the second
-selects a $2\times 3$ submatrix; the third selects a scalar; and
-the fourth selects rows 1, 2, and 6 from matrix \texttt{A}.
+Il primo esempio seleziona la prima riga dalla matrice \texttt{A}; il secondo
+seleziona una sotto-matrice $2\times 3$; il terzo seleziona uno scalare, mentre
+il quarto seleziona le righe 1, 2 e 6 dalla matrice \texttt{A}.
 
-In addition there is a special pre-defined ``index matrix''
-specification, \texttt{diag}, which selects the principal diagonal of
-a square matrix, as in \texttt{B[diag]}, where \texttt{B} is square.
+In aggiunta, c'è una ``matrice indice'' predefinita, \texttt{diag}, che
+seleziona la diagonale principale di una matrice quadrata, come in
+\texttt{B[diag]}, dove \texttt{B} è quadrata.
 
-You can use selections of this sort on either the right-hand side of
-a matrix-generating formula or the left.  Here is an example of use of
-a selection on the right, to extract a $2\times 2$ submatrix $B$ from a
-$3\times 3$ matrix $A$:
+È possibile usare la selezione di sotto-matrici sia a destra sia a sinistra in
+una formula che genera una matrice. Ecco un esempio di uso della selezione nella
+parte destra, per estrarre una sotto-matrice $2\times 2$ $B$ da una matrice
+$3\times 3$ $A$:
 %
 \begin{code}
 matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
 matrix B = A[1:2,2:3]
 \end{code}
 %
-And here are examples of selection on the left.  The second line below
-writes a $2\times 2$ identity matrix into the bottom right corner of the
-$3\times 3$ matrix $A$.  The fourth line replaces the diagonal of $A$ 
-with 1s.
+Ed ecco un esempio di selezione sulla sinistra. La seconda riga nell'esempio
+scrive una matrice identità $2\times 2$ nell'angolo inferiore destro della matrice
+$3\times 3$ $A$. La quarta riga rimpiazza la diagonale di $A$ con valori 1.
 %
 \begin{code}
 matrix A = { 1, 2, 3; 4, 5, 6; 7, 8, 9 }
@@ -477,73 +477,71 @@ matrix d = { 1, 1, 1 }
 matrix A[diag] = d
 \end{code}
 
-\section{Namespace issues}
+\section{Conflitti tra nomi}
 \label{matrix-namespace}
 
-Matrices share a common namespace with data series and scalar
-variables.  In other words, no two objects of any of these types can
-have the same name.  In case of potential collisions --- where an
-object of one type already exists with a certain name, and you try to
-create an object of a different type with the same name --- gretl
-follows the policy of allowing you to overwrite the existing object, 
-with the exception that \textit{data series are protected and cannot be
-over-written by scalars or matrices}.  Some implications of this
-policy are noted below.
+Le matrici condividono lo spazio dei nomi consentiti con le serie di dati e le
+variabili scalari. In altre parole, non possono esistere due oggetti di questo
+tipo con lo stesso nome. In caso di potenziali conflitti, quando un oggetto di
+un certo tipo esiste già e si tenta di creare un altro oggetto con lo stesso
+nome, gretl permette di sovrascrivere l'oggetto preesistente, con la sola
+eccezione che \textit{le serie di dati sono protette e non possono essere
+sovrascritte da scalari o matrici}. Di seguito sono presentate alcune
+implicazioni di questa regola.
 %
 \begin{itemize}
-\item If a series called, say, \texttt{X}, exists and you try to
-  create a matrix named \texttt{X}, an error is flagged.
-\item If you create a series named \texttt{X} --- using the
-  \texttt{genr} or \texttt{series} commands, or by reading from a data
-  file, or by importation from a database --- then any pre-existing
-  matrix named \texttt{X} is automatically deleted.
-\item If you create a scalar named \texttt{X}, any existing matrix
-  \texttt{X} is deleted.
+\item Se esiste una serie chiamata \texttt{X} e si tenta di creare una matrice
+  di nome \texttt{X}, viene segnalato un errore.
+\item Se si crea una serie chiamata \texttt{X} usando i comandi
+  \texttt{genr} o \texttt{series}, oppure leggendola da un file di dati, o
+  importandola da un database, una eventuale matrice preesistente chiamata
+  \texttt{X} viene automaticamente cancellata.
+\item Se si crea uno scalare chiamato \texttt{X}, una eventuale matrice
+  preesistente \texttt{X} viene cancellata.
 \end{itemize}
 %
-If you really want to create a matrix using a name that is currently
-assigned to a data series, you must first delete the data series using
-the \texttt{delete} command or rename it using \texttt{rename}.
+Se si vuole davvero creare una matrice con il nome di una serie esistente,
+occorre per prima cosa cancellare la serie con il comando \texttt{delete}
+o rinominarla con il comando \texttt{rename}.
 
-\section{Creating a data series from a matrix}
+\section{Creazione di una serie di dati da una matrice}
 \label{matrix-create-series}
 
-Section~\ref{matrix-create} above describes how to create a matrix
-from a data series or set of series.  You may sometimes wish to go in
-the opposite direction, that is, to copy values from a matrix 
-into a regular data series.  The syntax for this operation is
+Il capitolo~\ref{matrix-create} descrive come creare una matrice da una o più
+serie di dati. In alcuni casi può essere necessario dover fare l'operazione
+inversa, ossia copiare valori da una matrice a una serie. La sintassi da usare è
 %
 \begin{textcode}
-series \textsl{sname} = \textsl{mspec}
+series \textsl{serie} = \textsl{matrice}
 \end{textcode}
 %
-where \ttsl{sname} is the name of the series to create and
-\ttsl{mspec} is the name of the matrix to copy from, possibly followed
-by a matrix selection expression.  Here are two examples.
+dove \ttsl{serie} è il nome della serie da creare e \ttsl{matrice} è il nome della
+matrice da cui copiare i valori (che può essere seguita da un'espressione di
+selezione). Ecco alcuni esempi:
 %
 \begin{code}
 series s = x
 series u1 = U[,1]
 \end{code}
 %
-It is assumed that \texttt{x} and \texttt{U} are pre-existing
-matrices.  In the second example the series \texttt{u1} is formed from
-the first column of the matrix \texttt{U}.
+Si assume che \texttt{x} e \texttt{U} siano matrici preesistenti. Nel secondo
+esempio, la serie \texttt{u1} è formata dalla prima colonna della matrice
+\texttt{U}.
 
-For this operation to work, the matrix (or matrix selection) must be a
-vector with length equal to either the full length of the current
-dataset, $n$, or the length of the current sample range, $n^{\prime}$.
-If $n^{\prime} < n$ then only $n^{\prime}$ elements are drawn from the
-matrix; if the matrix or selection comprises $n$ elements, the
-$n^{\prime}$ values starting at element $t_1$ are used, where $t_1$
-represents the starting observation of the sample range.  Any values
-in the series that are not assigned from the matrix are set to the
-missing code.
+Affinché questa operazione funzioni, la matrice (o il risultato dell'operazione
+di selezione matriciale) deve essere un vettore con lunghezza pari alla
+lunghezza del dataset attuale, $n$, oppure alla lunghezza dell'intervallo del
+campione attuale, $n^{\prime}$. Se $n^{\prime} < n$, verranno estratti dalla
+matrice solo $n^{\prime}$ elementi; se la matrice comprende $n$ elementi,
+vengono usati i $n^{\prime}$ valori a partire dall'elemento $t_1$, dove $t_1$
+rappresenta l'osservazione iniziale dell'intervallo del campione. Ad ogni valore
+della serie che non proviene dalla matrice viene assegnato il codice di
+valore mancante.
  
-Please note that when forming a series in this way, the right-hand
-side of the \texttt{series} command can be \textit{only} the name of a
-matrix, or the name of a matrix plus a selection expression.  There is
-no provision for matrix calculation in this context.
+Si noti che quando si crea una serie in questo modo, il secondo membro del
+comando \texttt{series} può essere \textit{solo} il nome di una matrice, o il
+nome di una matrice seguito da un'espressione di selezione. Non è possibile
+eseguire operazioni tra le matrici in questo contesto.
 
 \section{Eliminazione di matrici}
 \label{matrix-delete}
@@ -556,40 +554,40 @@ matrix A delete
 %
 dove \texttt{A} è il nome della matrice da eliminare.
 
-\section{Further points and example}
+\section{Approfondimenti ed esempi}
 \label{matrix-example}
 
-Example \ref{examp-matrix} shows how matrix methods can be used to
-replicate gretl's built-in OLS functionality.  The example illustrates
-various additional points.  
+L'esempio~\ref{examp-matrix} mostra l'uso delle operazioni con le matrici per
+replicare la funzionalità di stima OLS già fornita da gretl. L'esempio illustra
+altri punti importanti.
 
-First, if you just write \texttt{matrix A}, where a matrix \texttt{A}
-is already defined, the effect is to print the matrix.
+Per prima cosa, se si scrive solamente \texttt{matrix A}, quando esiste già una
+matrice \texttt{A}, l'effetto è quello di mostrare il contenuto della matrice.
 
-Second, there is some ``cross over'' between matrix expressions and
-\texttt{genr} (actually the synonym \texttt{scalar} is used in the
-script).  In a \texttt{genr} formula, you can use matrix functions
-that produce scalar results (e.g.\ \texttt{rows()}).  You can also
-reference $1\times 1$ matrices as if they were ordinary scalars.  And
-in a \texttt{matrix} formula you can reference scalar variables where
-appropriate.  
+Inoltre, è possibile ``incrociare'' le espressioni  matriciali e il comando
+\texttt{genr} (anche se nell'esempio è usato il suo sinonimo \texttt{scalar}).
+In una formula \texttt{genr}, è possibile usare funzioni matriciali che
+producono risultati scalari (ad esempio \texttt{rows()}). Inoltre, è possibile
+fare riferimento a matrici $1\times 1$ come se fossero scalari ordinari. Infine,
+in una formula \texttt{matrix} è possibile fare riferimento a variabili scalari,
+ove appropriato.
 
-Note, however, that ordinary data series cannot be used in
-\texttt{matrix} expressions, other than in the special case of
-defining a matrix from a list of series as in
-section~\ref{matrix-create} above.  Similarly, matrices larger than
-$1\times 1$ cannot be used in the generation of a data series,
-other than as described in section~\ref{matrix-create-series}.
+Si noti, comunque, che le serie di dati non possono essere usate nelle
+espressioni \texttt{matrix} al di fuori del caso speciale della definizione di
+una matrice da un eenco di serie, come mostrato in precedenza nel
+paragrafo~\ref{matrix-create}.  In modo simile, non è possibile usare matrici
+con dimensioni maggiori di $1\times 1$ nella generazione di una serie di dati,
+al di fuori del modo descritto nel paragrafo~\ref{matrix-create-series}.
 
 \begin{script}[htbp]
-  \caption{OLS via matrix methods}
+  \caption{OLS usando le matrici}
   \label{examp-matrix}
 \begin{code}
   open data4-1
   matrix X = { const, sqft }
   matrix y = { price }
   matrix b = inv(X'*X) * X'*y
-  printf "estimated coefficient vector\n"
+  printf "vettore dei coefficienti stimati\n"
   matrix b
   matrix uh = y - X*b
   scalar SSR = uh'*uh
@@ -597,9 +595,9 @@ other than as described in section~\ref{matrix-create-series}.
   matrix V = s2 * inv(X'*X)
   matrix V
   matrix se = sqrt(diag(V))
-  printf "estimated standard errors\n"
+  printf "errori standard stimati\n"
   matrix se
-  # compare with built-in function
+  # Confronto con la funzione OLS di gretl
   ols price const sqft --vcv
 \end{code}
 \end{script}
