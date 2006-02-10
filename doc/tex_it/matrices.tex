@@ -128,7 +128,8 @@ $m \times n$ e $B$ è una matrice $p \times q$.
 %
 \begin{itemize}
 \item Se $m=p$ e $n=q$, $C$ sarà una matrice $m\times n$ con $c_{ij} = a_{ij}
-  \times b_{ij}$.
+  \times b_{ij}$. Questo tipo di prodotto è tecnicamente noto come
+  \emph{prodotto di Hadamard}.
 \item Se $m=1$ e $n=q$, oppure $n=1$ e $m=p$, $C$ sarà una matrice
   $p\times q$ con $c_{ij} = b_{ij} \times a_k$, dove $k=j$ se $m=1$,
   altrimenti $k=i$.
@@ -331,7 +332,7 @@ sovrascritta con il risultato della funzione (non è richiesto che la matrice
 preesistente abbia le dimensioni corrette per ricevere il risultato della
 funzione).
 
-La funzione \texttt{qrdecomp} calcola la scomposizione QE di una matrice $m
+La funzione \texttt{qrdecomp} calcola la scomposizione QR di una matrice $m
 \times n$ $A$: $A = QR$, dove $Q$ è una matrice ortonormale $m \times n$
 e $R$ è una matrice $n \times n$ triangolare superiore.
 La matrice $Q$ è prodotta direttamente, mentre $R$ può essere recuperata
@@ -574,7 +575,7 @@ ove appropriato.
 
 Si noti, comunque, che le serie di dati non possono essere usate nelle
 espressioni \texttt{matrix} al di fuori del caso speciale della definizione di
-una matrice da un eenco di serie, come mostrato in precedenza nel
+una matrice da un elenco di serie, come mostrato in precedenza nel
 paragrafo~\ref{matrix-create}.  In modo simile, non è possibile usare matrici
 con dimensioni maggiori di $1\times 1$ nella generazione di una serie di dati,
 al di fuori del modo descritto nel paragrafo~\ref{matrix-create-series}.
