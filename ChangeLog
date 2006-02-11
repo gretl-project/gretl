@@ -32,6 +32,8 @@ version 1.5.1, in progress
 - Add Hannan-Quinn criterion in all contexts where Akaike and
   and Schwartz criteria are shown
 - Various fixes for model selection dialog
+- win32: fix the issue whereby copy-and-pasted EMFs had a 
+  large margin to the top and right
 
 12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series
