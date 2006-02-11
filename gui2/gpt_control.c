@@ -29,6 +29,7 @@
 #define POINTS_DEBUG 0
 
 #ifdef G_OS_WIN32
+# include <io.h>
 # include "gretlwin32.h"
 #endif
 
@@ -420,7 +421,7 @@ void display_session_graph_png (char *fname)
     }
 }
 
-static int maybe_switch_emf_point_style (char *s, PRN *prn)
+int maybe_switch_emf_point_style (char *s, PRN *prn)
 {
     char *p = strstr(s, "w points");
     int do_pt2 = 0;

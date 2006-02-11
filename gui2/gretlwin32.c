@@ -23,6 +23,7 @@
 #include "gretlwin32.h"
 #include "textutil.h"
 #include "guiprint.h"
+#include "gpt_control.h"
 
 #include <gdk/gdkwin32.h>
 #include <dirent.h>
