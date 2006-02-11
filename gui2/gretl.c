@@ -889,6 +889,7 @@ int main (int argc, char *argv[])
 	if (unmangle(filearg, paths.datfile)) {
 	    exit(EXIT_FAILURE);
 	}
+	my_filename_to_utf8(paths.datfile);
 #else
 	record_filearg(paths.datfile, filearg);
 #endif

@@ -194,7 +194,7 @@ int unmangle (const char *dosname, char *longname)
 	return 0;
     }
 
-    sprintf(longname, "%c:", drive);
+    sprintf(longname, "%c:", tolower(drive));
     p = dosname + 2;
 
     while (!done) {

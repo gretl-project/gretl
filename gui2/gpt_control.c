@@ -3317,7 +3317,6 @@ static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     pprintf(prn, "%s\n", get_gretl_emf_term_line(spec->code, color));
     emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
     pprintf(prn, "set output '%s'\n", emfname);
-    pprintf(prn, "set size 0.8,0.8\n");
     while (fgets(plotline, MAXLEN-1, fq)) {
 	if (!done_pt2 && strstr(plotline, "using 1:2")) {
 	    done_pt2 = maybe_switch_emf_point_style(plotline, prn);
