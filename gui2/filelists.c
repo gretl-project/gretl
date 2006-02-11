@@ -72,20 +72,21 @@ static char **get_file_list (int filetype)
     }
 }
 
+static const char *file_sections[] = {
+    "recent_data_files",
+    "recent_session_files",
+    "recent_script_files"
+};
+
 #if defined(USE_GNOME) && !defined(OLD_GTK)
 
 static void printfilelist (int filetype, GConfClient *client)
 {
     GSList *flist = NULL;
-    gchar *key;
-    int i;
-    char **filep;
     GError *err = NULL;
-    const char *file_sections[] = {
-	"recent_data_files",
-	"recent_session_files",
-	"recent_script_files"
-    };
+    gchar *key;
+    char **filep;
+    int i;
 
     filep = get_file_list(filetype);
     if (filep == NULL) {
@@ -120,14 +121,9 @@ void save_file_lists (GConfClient *client)
 
 static void printfilelist (int filetype)
 {
-    int i;
-    char **filep;
     char gpath[MAXLEN];
-    const char *file_sections[] = {
-	"recent data files",
-	"recent session files",
-	"recent script files"
-    };
+    char **filep;
+    int i;
 
     filep = get_file_list(filetype);
     if (filep == NULL) {
@@ -151,14 +147,9 @@ void save_file_lists (void)
 
 static void printfilelist (int filetype)
 {
-    int i;
-    char **filep;
     char rpath[MAXLEN];
-    const char *file_sections[] = {
-	"recent data files",
-	"recent session files",
-	"recent script files"
-    };
+    char **filep;
+    int i;
 
     filep = get_file_list(filetype);
     if (filep == NULL) {
@@ -184,13 +175,8 @@ void save_file_lists (void)
 
 static void printfilelist (int filetype, FILE *fp)
 {
-    int i;
     char **filep;
-    const char *file_sections[] = {
-	"recent data files",
-	"recent session files",
-	"recent script files"
-    };
+    int i;
 
     filep = get_file_list(filetype);
     if (filep == NULL) {

@@ -25,6 +25,11 @@ enum {
     FROM_BACKSLASH
 };
 
+enum {
+    WIN32_TO_CLIPBOARD,
+    WIN32_TO_PRINTER
+};
+
 int create_child_process (char *prog, char *env);
 
 void startR (const char *Rcommand);
@@ -52,5 +57,7 @@ int win_buf_to_clipboard (const char *buf);
 int fnamecmp_win32 (const char *f1, const char *f2);
 
 int send_file (char *fullname);
+
+void win32_process_graph (GPT_SPEC *spec, int color, int dest);
 
 #endif /* GRETLWIN32_H */

@@ -22,7 +22,9 @@
 #include "gretl.h"
 #include "gretlwin32.h"
 #include "textutil.h"
+#include "guiprint.h"
 
+#include <gdk/gdkwin32.h>
 #include <dirent.h>
 #include <mapi.h>
 #include <shlobj.h>
@@ -684,5 +686,118 @@ int send_file (char *fullname)
     return err;
 }
 
+/* copy plot to clipboard by generating an EMF file (enhanced
+   metafile), reading it into a buffer, and putting it on the
+   clipboard.
 
+   Weirdness: when an emf is put on the clipboard as below, Word 2000
+   behaves thus: a straight "Paste" puts in a version of the graph
+   with squashed up numbers on the axes and no legend text; but a
+   "Paste special" (where one accepts the default of pasting it as an
+   enhanced metafile) puts in an accurate version with correct text.
+   Go figure.  (This is on win98)
+*/
 
+static int emf_to_clip (char *emfname)
+{
+    HWND mainw;
+    HENHMETAFILE hemf, hemfclip;
+    HANDLE htest;
+
+    mainw = GDK_WINDOW_HWND(mdata->w->window);
+    if (mainw == NULL) {
+	errbox("Got NULL HWND");
+	return 1;
+    }	
+
+    if (!OpenClipboard(mainw)) {
+	errbox(_("Cannot open the clipboard"));
+	return 1;
+    }
+
+    EmptyClipboard();
+
+    hemf = GetEnhMetaFile(emfname);
+    if (hemf == NULL) {
+	errbox("Couldn't get handle to graphic metafile");
+	return 1;
+    }
+
+    hemfclip = CopyEnhMetaFile(hemf, NULL);
+    if (hemfclip == NULL) {
+	errbox("Couldn't copy graphic metafile");
+	return 1;
+    }    
+
+    htest = SetClipboardData(CF_ENHMETAFILE, hemfclip);
+    if (htest == NULL) {
+	errbox("Failed to put data on clipboard");
+	return 1;
+    }  	
+
+    CloseClipboard();
+
+    DeleteEnhMetaFile(hemf);
+
+    return 0;
+}
+
+void win32_process_graph (GPT_SPEC *spec, int color, int dest)
+{
+    FILE *fq;
+    PRN *prn;
+    char plottmp[MAXLEN], plotline[MAXLEN];
+    gchar *plotcmd = NULL;
+    gchar *emfname = NULL;
+    int err, done_pt2 = 0;
+
+    /* create temporary file to hold the special gnuplot commands */
+    if (user_fopen("gptout.tmp", plottmp, &prn)) {
+	return;
+    }
+
+    /* open the gnuplot source file for the graph */
+    fq = gretl_fopen(spec->fname, "r");
+    if (fq == NULL) {
+	errbox(_("Couldn't access graph info"));
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    /* generate gnuplot source file to make emf */
+    pprintf(prn, "%s\n", get_gretl_emf_term_line(spec->code, color));
+    emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
+    pprintf(prn, "set output '%s'\n", emfname);
+    while (fgets(plotline, MAXLEN-1, fq)) {
+	if (!done_pt2 && strstr(plotline, "using 1:2")) {
+	    done_pt2 = maybe_switch_emf_point_style(plotline, prn);
+	} else if (strncmp(plotline, "set term", 8) && 
+	    strncmp(plotline, "set output", 10)) {
+	    pputs(prn, plotline);
+	}
+    }
+
+    gretl_print_destroy(prn);
+    fclose(fq);
+
+    /* get gnuplot to create the emf file */
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
+			      plottmp);
+    err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
+    g_free(plotcmd);
+    remove(plottmp);
+    
+    if (err) {
+        errbox(_("Gnuplot error creating graph"));
+    } else if (dest == WIN32_TO_CLIPBOARD) {
+	err = emf_to_clip(emfname);
+	if (!err) {
+	    infobox(_("To paste, use Edit/Paste special.../Enhanced metafile"));
+	}
+    } else if (dest == WIN32_TO_PRINTER) {
+	err = winprint_graph(emfname);
+    }
+
+    remove(emfname);
+    g_free(emfname);
+}

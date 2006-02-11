@@ -1017,6 +1017,8 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
     return 0;
 }
 
+#ifndef OLD_GTK
+
 static gchar *iso_comment_to_utf8 (const gchar *src, int *err)
 {
     gchar *conv = NULL;
@@ -1043,6 +1045,8 @@ static gchar *iso_comment_to_utf8 (const gchar *src, int *err)
 
     return conv;
 }
+
+#endif
 
 static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
 {
