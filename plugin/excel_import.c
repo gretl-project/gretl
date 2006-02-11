@@ -279,24 +279,12 @@ static int is_date_format (int fmt)
 {
     int ret = 0;
 
-    switch (fmt) {
-    case 14:
-    case 15:
-    case 16:
-    case 17:
-    case 18:
-    case 19:
-    case 20:
-    case 21:
-    case 22:
-    case 45:
-    case 46:
-    case 47:
-    case 50:
+    if (fmt >= 14 && fmt <= 22) {
 	ret = 1;
-	break;
-    default:
-	break;
+    } else if (fmt >= 45 && fmt <= 47) {
+	ret = 1;
+    } else if (fmt >= 50 && fmt <= 58) {
+	ret = 1;
     }
 
     return ret;

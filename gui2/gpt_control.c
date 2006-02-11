@@ -96,7 +96,7 @@ enum {
 #define plot_is_roots(p)        (p->spec->code == PLOT_VAR_ROOTS)
 
 #define plot_has_regression_list(p) (p->spec->reglist != NULL)
-#define plot_show_all_markers(p) (p->spec->flags & GPTSPEC_ALL_MARKERS)
+#define plot_show_all_markers(p)    (p->spec->flags & GPTSPEC_ALL_MARKERS)
 
 enum {
     PNG_START,
