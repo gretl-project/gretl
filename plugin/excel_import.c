@@ -279,6 +279,8 @@ static int is_date_format (int fmt)
 {
     int ret = 0;
 
+    fprintf(stderr, "is_date_format? fmt=%d\n", fmt);
+
     if (fmt >= 14 && fmt <= 22) {
 	ret = 1;
     } else if (fmt >= 45 && fmt <= 47) {

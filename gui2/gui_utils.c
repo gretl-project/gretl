@@ -4260,9 +4260,9 @@ static int maybe_recode_file (const char *fname)
 
 gchar *my_filename_from_utf8 (char *fname)
 {
-    gchar *trfname;
-    gsize bytes;
+    gchar *trfname = NULL;
     GError *err = NULL;
+    gsize bytes;
 
     if (seven_bit_string((unsigned char *) fname)) {
 	return fname;
@@ -4271,7 +4271,7 @@ gchar *my_filename_from_utf8 (char *fname)
     trfname = g_filename_from_utf8(fname, -1, NULL, &bytes, &err);
 
     if (err != NULL) {
-	errbox("g_filename_from_utf8 failed");
+	errbox(err->message);
 	g_error_free(err);
     } else {
 	strcpy(fname, trfname);

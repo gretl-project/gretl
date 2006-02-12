@@ -352,11 +352,11 @@ tsls_list_add (const int *orig, const int *add, gretlopt opt, int *err)
 /*
   tsls_make_hatlist: determines which variables in reglist, when
   checked against the predetermined and exogenous vars in instlist,
-  need to be instrumented, and populates replist accordingly
+  need to be instrumented, and populates hatlist accordingly
 */
 
 static int 
-tsls_make_hatlist (const int *reglist, int *instlist, int *replist)
+tsls_make_hatlist (const int *reglist, int *instlist, int *hatlist)
 {
     int i, j, k = 0;
     int endog, addconst = 0;
@@ -375,12 +375,12 @@ tsls_make_hatlist (const int *reglist, int *instlist, int *replist)
 		   FIXME non-official const? */
 		addconst = 1;
 	    } else {
-		replist[++k] = reglist[i];
+		hatlist[++k] = reglist[i];
 	    }
 	} 
     }
 
-    replist[0] = k;
+    hatlist[0] = k;
 
     if (addconst) {
 	/* add constant to list of instruments */
@@ -516,6 +516,8 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatlist,
 /* form matrix of instruments and perform QR decomposition
    of this matrix; return Q */
 
+#define EXPERIMENTAL 0
+
 static gretl_matrix * 
 tsls_Q (int *instlist, int *reglist, int **pdlist,
 	const double **Z, int t1, int t2, char **pmask,
@@ -561,6 +563,36 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 	ndrop = k - rank;
     }
 
+#if EXPERIMENTAL
+    if (ndrop > 0) {
+	int *qlist = gretl_list_copy(instlist);
+
+	droplist = gretl_list_new(ndrop);
+	if (droplist != NULL) {
+	    droplist[0] = 0;
+	}
+
+	for (i=0; i<k; i++) {
+	    v = qlist[i+1];
+	    test = gretl_matrix_get(R, i, i);
+	    if (fabs(test) < R_DIAG_MIN) {
+		if (droplist != NULL) {
+		    droplist[0] += 1;
+		    droplist[droplist[0]] = v;
+		}	    
+		fprintf(stderr, "Dropping redundant instrument %d\n", v);
+		gretl_list_delete_at_pos(qlist, i+1);
+	    }
+	}
+
+	k = qlist[0];
+	gretl_matrix_free(Q);
+	free(mask);
+	Q = gretl_matrix_data_subset(qlist, Z, t1, t2, &mask);
+	R = gretl_matrix_reuse(R, k, k);
+	*err = gretl_matrix_QR_decomp(Q, R);
+    }
+#else
     if (ndrop > 0) {
 	droplist = gretl_list_new(ndrop);
 	if (droplist != NULL) {
@@ -577,6 +609,7 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 		}	    
 		fprintf(stderr, "Dropping redundant instrument %d\n", v);
 		gretl_list_delete_at_pos(instlist, i+1);
+		/* is this right? */
 		if ((pos = in_gretl_list(reglist, v))) {
 		    gretl_list_delete_at_pos(reglist, pos);
 		}
@@ -590,6 +623,7 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 	R = gretl_matrix_reuse(R, k, k);
 	*err = gretl_matrix_QR_decomp(Q, R);
     }
+#endif
 
  bailout:
 
@@ -874,7 +908,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 		"varlist1."), -OverIdRank);
 	tsls.errcode = E_UNSPEC; 
 	goto bailout;
-    }	
+    }
 
     /* hatlist[0] holds the number of fitted vars to create */
     if (dataset_add_series(hatlist[0], pZ, pdinfo)) {

@@ -296,13 +296,13 @@ void mkfilelist (int filetype, char *fname_in)
     char **filep;
     char *fname;
     int i, match = -1;
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+#ifndef OLD_GTK
     char trfname[MAXLEN];
 #endif
 
     cut_multiple_slashes(fname_in);
 
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+#ifndef OLD_GTK
     strcpy(trfname, fname_in);
     my_filename_to_utf8(trfname);
     fname = trfname;
@@ -395,12 +395,21 @@ void delete_from_filelist (int filetype, const char *fname)
     }
 
     /* save pointers to current order */
+#ifdef G_OS_WIN32
+    for (i=0; i<MAXRECENT; i++) {
+	tmp[i] = filep[i];
+        if (fnamecmp_win32(filep[i], fname) == 0) {
+            match = i;
+        }
+    }
+#else
     for (i=0; i<MAXRECENT; i++) {
 	tmp[i] = filep[i];
 	if (!strcmp(filep[i], fname)) {
 	    match = i;
 	}
     }
+#endif
 
     if (match == -1) {
 	return;
@@ -423,7 +432,8 @@ void delete_from_filelist (int filetype, const char *fname)
 static void copy_sys_filename (char *targ, const char *src)
 {
     strcpy(targ, src);
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+    /* check this: very confusing! */
+#if !defined(OLDGTK) && !defined(G_OS_WIN32)
     my_filename_from_utf8(targ);
 #endif
 }    

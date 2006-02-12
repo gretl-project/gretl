@@ -334,7 +334,7 @@ static int obs_column_heading (const char *label)
     if (label == NULL) {
 	ret = 1;
     } else {
-#if 0
+#if 1
 	fprintf(stderr, "obs_column_heading: looking at '%s'\n", label);
 #endif
 	if (*label == '"') {
