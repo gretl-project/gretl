@@ -608,6 +608,10 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
     printlist(pmod->list, "original model list");
 #endif
 
+    /* back up along the list of regressors, trying to find a
+       variable such that, when it is deleted, the exact
+       collinearity error goes away. */
+
     while (err == E_SINGULAR && ml0 > 3) {
 
 	list[0] = ml0 - 1;
@@ -654,9 +658,6 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
     if (ret == 1) {
 	int v = pmod->list[targ];
 
-#if COLL_DEBUG
-	fprintf(stderr, "dropping variable %d\n", v);
-#endif
 	/* remove var from list and reduce number of coeffs */
 	gretl_list_delete_at_pos(pmod->list, targ);
 	get_model_df(pmod);

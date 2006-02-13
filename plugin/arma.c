@@ -24,6 +24,7 @@
 
 #include "libgretl.h"
 #include "bhhh_max.h"
+#include "libset.h"
 
 #include "../cephes/polrt.c"
 
@@ -636,8 +637,7 @@ static model_info *
 set_up_arma_model_info (struct arma_info *ainfo)
 {
     model_info *arma;
-
-    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, 1.0e-6);
+    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, get_bhhh_toler());
 
     if (arma == NULL) return NULL;
 

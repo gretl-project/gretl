@@ -5915,6 +5915,23 @@
 	    delimiter used when saving data to file in CSV format.
 	  </para>
 	</li>
+	<li>	
+	<para><lit>bhhh_maxiter</lit>: one integer, maximum number of
+            iterations for gretl's internal BHHH routine, which
+            is used in the <cmd>arma</cmd> and <cmd>tobit</cmd>
+            commands. If convergence is not achieved after
+            <lit>bhhh_maxiter</lit>, the program returns an error. The
+            default is set at 100.
+	  </para>
+	  </li>	  
+	<li>	  
+	  <para><literal>bhhh_toler</literal>: one floating point value: this is used in gretl's
+            internal BHHH routine to check if convergence has occurred. The
+            algorithm stops iterating as soon as the increment in the
+            log-likelihood between iterations is smaller than
+            <lit>bhhh_toler</lit>. Default value = 1.0E-09.
+	    </para>
+	    </li>
       </ilist>
 
     </description>

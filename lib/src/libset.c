@@ -59,6 +59,11 @@ struct sample_info {
     char *submask;
 };
     
+struct bhhh_opts {
+    double tolerance;
+    int maxiter;
+};
+
 struct set_vars_ {
     int use_qr;                 /* use QR decomposition? */
     unsigned int seed;          /* for PRNG */
@@ -74,6 +79,7 @@ struct set_vars_ {
     struct garch_opts gopts;    /* GARCH covariance matrix */
     struct bkbp_opts bkopts;    /* Baxter-King filter */
     struct sample_info sinfo;   /* record of dataset sample state */
+    struct bhhh_opts maxopts;   /* options for BHHH maximisation */
 };
 
 /* global state */
@@ -123,6 +129,18 @@ static void bkbp_opts_copy (struct bkbp_opts *opts)
     opts->periods[1] = state->bkopts.periods[1];
 }
 
+static void bhhh_opts_init (struct bhhh_opts *opts)
+{
+    opts->tolerance = 1.0E-09;
+    opts->maxiter = 100;
+}
+
+static void bhhh_opts_copy (struct bhhh_opts *opts)
+{
+    opts->tolerance = state->maxopts.tolerance;
+    opts->maxiter = state->maxopts.maxiter;
+}
+
 static void sample_info_init (struct sample_info *sinfo)
 {
     sinfo->t1 = UNSET_INT;
@@ -152,6 +170,7 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
     robust_opts_copy(&sv->ropts);
     garch_opts_copy(&sv->gopts);
     bkbp_opts_copy(&sv->bkopts);
+    bhhh_opts_copy(&sv->maxopts);
 
     if (pdinfo != NULL) {
 	sv->sinfo.t1 = pdinfo->t1;
@@ -188,6 +207,7 @@ static void state_vars_init (set_vars *sv)
     robust_opts_init(&sv->ropts);
     garch_opts_init(&sv->gopts);
     bkbp_opts_init(&sv->bkopts);
+    bhhh_opts_init(&sv->maxopts);
     sample_info_init(&sv->sinfo);
 }
 
@@ -215,6 +235,49 @@ void get_bkbp_periods (int *periods)
     periods[0] = state->bkopts.periods[0];
     periods[1] = state->bkopts.periods[1];
 }
+
+double get_bhhh_toler (void)
+{
+    check_for_state();
+    return state->maxopts.tolerance;
+}
+
+int get_bhhh_maxiter (void)
+{
+    check_for_state();
+    return state->maxopts.maxiter;
+}
+
+int set_bhhh_toler (double tol)
+{
+    int err = 0;
+
+    check_for_state();
+
+    if (tol <= 0.0) {
+	err = 1;
+    } else {
+	state->maxopts.tolerance = tol;
+    }
+
+    return err;
+}
+
+int set_bhhh_maxiter (int n)
+{
+    int err = 0;
+
+    check_for_state();
+
+    if (n < 1) {
+	err = 1;
+    } else {
+	state->maxopts.maxiter = n;
+    }
+
+    return err;
+}
+
 
 int get_VAR_horizon (void)
 {
@@ -616,6 +679,8 @@ static int display_settings (PRN *prn)
     }
 
     pprintf(prn, " nls_toler = %g\n", get_nls_toler());
+    pprintf(prn, " bhhh_toler = %g\n", get_bhhh_toler());
+    pprintf(prn, " bhhh_maxiter = %d\n", get_bhhh_maxiter());
     pprintf(prn, " messages = %d\n", state->gretl_msgs);
 
     ival =  get_halt_on_error(); /* checks env */
@@ -780,6 +845,18 @@ int execute_set_line (const char *line, PRN *prn)
 
 	    if (sscanf(setarg, "%lf", &tol)) {
 		err = set_nls_toler(tol);
+	    }
+	} else if (!strcmp(setobj, "bhhh_toler")) {
+	    /* Tolerance for BHHH (ARMA, Tobit) */
+	    double tol;
+
+	    if (sscanf(setarg, "%lf", &tol)) {
+		err = set_bhhh_toler(tol);
+	    }
+	} else if (!strcmp(setobj, "bhhh_maxiter")) {
+	    /* Maximum iterations for BHHH (ARMA, Tobit) */
+	    if (isdigit(*setarg)) {
+		err = set_bhhh_maxiter(atoi(setarg));
 	    }
 	}
     } else if (nw == 3) {

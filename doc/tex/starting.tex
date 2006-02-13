@@ -178,7 +178,7 @@ File, Utilities, Session, Data, Sample, Variable, Model and Help
 menus.
 
 \begin{center}
-  \includegraphics[scale=0.5]{figures/menubar}
+  \includegraphics[scale=0.75]{figures/menubar}
 \end{center}
 
 \begin{itemize}
@@ -409,29 +409,31 @@ menus.
 \label{keyb-accel}
 
 When working in the main \app{gretl} window, some common operations
-may be performed using the keyboard:
+may be performed using the keyboard, as shown in the table below.
 
-\begin{description}
-\item[Return:] opens a window displaying the values of the currently
-  selected variables: it is the same as selecting ``Data, Display Values''.
-\item[Delete:] pressing this key has the effect of deleting the
+\begin{center}
+\begin{tabular}{lp{5in}}
+\texttt{Return} & Opens a window displaying the values of the currently
+  selected variables: it is the same as selecting ``Data, Display
+  Values''. \\
+\texttt{Delete} & Pressing this key has the effect of deleting the
   selected variables. A confirmation is required, to prevent
-  accidental deletions.
-\item["e" key:] this has the same effect as selecting ``Edit
-  attributes'' from the ``Variable'' menu.
-\item[F2 key:] same as ``e''. Included for compatibility with other
-  programs.
-\item["g" key:] this has the same effect as selecting ``Define new
+  accidental deletions. \\
+\texttt{e} & Has the same effect as selecting ``Edit
+  attributes'' from the ``Variable'' menu. \\
+\texttt{F2} & Same as ``e''. Included for compatibility with other
+  programs.\\
+\texttt{g} & Has the same effect as selecting ``Define new
   variable'' from the ``Variable'' menu (which maps onto the
-  \texttt{genr} command).
-\item["h" key:] opens a help window for gretl commands.
-\item[F1 key:] same as ``h''. Included for compatibility with other
-  programs.
-\item["t" key:] Graphs the selected variable; a line graph is used for
+  \texttt{genr} command).\\
+\texttt{h} & Opens a help window for gretl commands.\\
+\texttt{F1} & Same as ``h''. Included for compatibility with other
+  programs.\\
+\texttt{t} & Graphs the selected variable; a line graph is used for
   time-series datasets, whereas a distribution plot is used for
   cross-sectional data. 
-\end{description}
-
+\end{tabular}
+\end{center}
 
 \section{The gretl toolbar}
 \label{toolbar}

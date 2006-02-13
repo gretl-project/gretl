@@ -62,6 +62,11 @@ void get_bkbp_periods (int *periods);
 
 int gretl_get_text_pause (void);
 
+double get_bhhh_toler (void);
+int get_bhhh_maxiter (void);
+int set_bhhh_toler (double tol);
+int set_bhhh_maxiter (int n);
+
 int get_VAR_horizon (void);
 
 double get_nls_toler (void);

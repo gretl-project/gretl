@@ -54,22 +54,6 @@ struct _model_info {
     MODEL *pmod;
 };
 
-#define DEFAULT_MAX_ITER 1000
-
-static int get_maxiter (void)
-{
-    char *mistr = getenv("GRETL_MAX_ITER");
-    int mi = DEFAULT_MAX_ITER;
-
-    if (mistr != NULL) {
-	if (!sscanf(mistr, "%d", &mi)) {
-	    mi = DEFAULT_MAX_ITER;
-	}
-    }
-
-    return mi;
-}
-
 /**
  * model_info_free:
  * @minfo: model info pointer.
@@ -572,7 +556,7 @@ int bhhh_max (LL_FUNC loglik,
     bmod = gretl_model_new();
 
     iters = 0;
-    itermax = get_maxiter();
+    itermax = get_bhhh_maxiter();
 
     while (crit > minfo->tol && iters++ < itermax) {
 
