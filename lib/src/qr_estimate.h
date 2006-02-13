@@ -25,6 +25,6 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts);
 
-int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim);
+int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist);
 
 #endif  /* QR_ESTIMATE_H */

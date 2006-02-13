@@ -577,7 +577,8 @@ lagged_depvar_check (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 
 #define COLL_DEBUG 0
 
-int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
+int 
+redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
 {
     MODEL cmod;
     int targ, ml0 = pmod->list[0];
@@ -603,7 +604,7 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
     }
 
 #if COLL_DEBUG
-    fprintf(stderr, "\n*** redundant_var called (trim = %d) ***\n", trim);
+    fprintf(stderr, "\n*** redundant_var called ***\n");
     printlist(pmod->list, "original model list");
 #endif
 
@@ -627,7 +628,6 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
 	    fprintf(stderr, "target list position = %d\n", targ);
 	    printlist(list, "temp list for redundancy check");
 #endif
-
 	    cmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_Z, 0.0);
 
 	    err = cmod.errcode;
@@ -652,27 +652,17 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
     }
 
     if (ret == 1) {
-	static char msg[ERRLEN];
-	int rem, v = pmod->list[targ];
+	int v = pmod->list[targ];
 
+#if COLL_DEBUG
+	fprintf(stderr, "dropping variable %d\n", v);
+#endif
 	/* remove var from list and reduce number of coeffs */
 	gretl_list_delete_at_pos(pmod->list, targ);
 	get_model_df(pmod);
 
-	/* compose a message */
-	if (trim == 0) {
-	    strcpy(msg, _("Omitted due to exact collinearity:"));
-	}
-
-	rem = ERRLEN - 1 - strlen(msg);
-
-	if (pdinfo->varname[v][0] != 0 && 
-	    rem > strlen(pdinfo->varname[v]) + 1) {
-	    strcat(msg, " ");
-	    strcat(msg, pdinfo->varname[v]);
-	}
-
-	strcpy(gretl_msg, msg);
+	/* add redundant var to list of drops */
+	gretl_list_append_term(droplist, v);
 
 	/* if there's a lagged dep var, it may have moved */
 	if (gretl_model_get_int(pmod, "ldepvar")) {
@@ -880,12 +870,12 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, pZ, pdinfo, opt);
     } else {
-	int trim = 0;
+	int *droplist = NULL;
 	int l, nxpx;
 
     trim_var:
 
-	if (trim) {
+	if (droplist != NULL) {
 	    l0 = mdl.list[0];
 	    free(mdl.xpx);
 	    free(mdl.coeff);
@@ -939,8 +929,12 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	free(xpy);
 
 	if (mdl.errcode == E_SINGULAR && !(opt & OPT_Z) &&
-	    redundant_var(&mdl, pZ, pdinfo, trim++)) {
+	    redundant_var(&mdl, pZ, pdinfo, &droplist)) {
 	    goto trim_var;
+	}
+
+	if (droplist != NULL) {
+	    gretl_model_set_list_as_data(&mdl, "droplist", droplist);
 	}
     }
 

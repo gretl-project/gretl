@@ -24,6 +24,8 @@ int *gretl_list_new (int nterms);
 
 int *gretl_list_resize (int **oldlist, int nterms);
 
+int *gretl_list_append_term (int **plist, int v);
+
 int *gretl_list_sort (int *list);
 
 int gretl_list_cmp (const int *list1, const int *list2);

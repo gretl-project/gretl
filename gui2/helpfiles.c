@@ -841,10 +841,10 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
 #ifndef OLD_GTK
     if (cli) {
 	/* Add general index as "topic" */
-	hitem.callback_action = 1; 
+	hitem.callback_action = 0; 
 	hitem.item_type = NULL;
 	hitem.path = g_strdup_printf("%s/%s", mpath, _("Index"));
-	hitem.callback = (en)? do_en_cli_help : do_cli_help;
+	hitem.callback = plain_text_cmdref;
 	gtk_item_factory_create_item(hwin->ifac, &hitem, 
 				     GINT_TO_POINTER(0), 
 				     1);
@@ -1068,6 +1068,11 @@ void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
     if (w == NULL && p != NULL) {
 	en = GPOINTER_TO_INT(p);
     }
+
+#if HDEBUG
+    fprintf(stderr, "plain_text_cmdref: p=%p, cmdnum=%d, w=%p\n", 
+	    (void *) p, cmdnum, (void *) w);
+#endif
 
     if (cmdnum > 0) {
 	pos = cli_pos_from_cmd(cmdnum, en);

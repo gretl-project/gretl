@@ -774,6 +774,25 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_model_droplist (const MODEL *pmod, 
+				  const DATAINFO *pdinfo,
+				  PRN *prn)
+{
+    const int *dlist = gretl_model_get_data(pmod, "droplist");
+    int i, v;
+
+    pputs(prn, _("Omitted due to exact collinearity:"));
+    for (i=1; i<=dlist[0]; i++) {
+	v = dlist[i];
+	if (v < pdinfo->v) {
+	    pprintf(prn, " %s", pdinfo->varname[v]);
+	} else {
+	    pprintf(prn, " %d", v);
+	}
+    }
+    pputc(prn, '\n');
+}
+
 static void print_tsls_droplist (const MODEL *pmod, 
 				 const DATAINFO *pdinfo,
 				 PRN *prn)
@@ -781,7 +800,7 @@ static void print_tsls_droplist (const MODEL *pmod,
     const int *dlist = gretl_model_get_data(pmod, "tsls_droplist");
     int i, v;
 
-    pputs(prn, _("Omitted due to exact collinearity:"));
+    pputs(prn, _("Redundant instruments:"));
     for (i=1; i<=dlist[0]; i++) {
 	v = dlist[i];
 	if (v < pdinfo->v) {
@@ -1023,17 +1042,16 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
-    /* message about collinear variables dropped */
-    if (plain_format(prn) && gretl_msg[0] != '\0' &&
-	strstr(gretl_msg, _("Replaced")) == NULL &&
-	strstr(gretl_msg, _("Generated")) == NULL) {
-	pprintf(prn, "%s\n", gretl_msg);
-    }
-
-    /* ditto, but special for TSLS */
+    /* TSLS: message about redundant instruments */
     if (plain_format(prn) && pmod->ci == TSLS &&
 	gretl_model_get_data(pmod, "tsls_droplist") != NULL) {
 	print_tsls_droplist(pmod, pdinfo, prn);
+    }  
+
+    /* message about collinear regressors dropped */
+    if (plain_format(prn) && 
+	gretl_model_get_data(pmod, "droplist") != NULL) {
+	print_model_droplist(pmod, pdinfo, prn);
     }    
 
     if (pmod->missmask == NULL && gretl_model_get_int(pmod, "wt_dummy")) { 

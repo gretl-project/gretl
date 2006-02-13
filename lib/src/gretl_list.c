@@ -430,6 +430,44 @@ int *gretl_list_resize (int **oldlist, int nterms)
     return list;
 }
 
+/**
+ * gretl_list_append_term:
+ * @plist: pointer to list to be augmented.
+ * @v: the term to be added.
+ * 
+ * Resizes (or allocates from scratch) the content of @plist,
+ * so that it can hold one extra element, and sets the last
+ * element to @v.
+ *
+ * Returns: the augmented list, or %NULL on failure.
+ */
+
+int *gretl_list_append_term (int **plist, int v)
+{
+    int *list = NULL;
+
+    if (*plist == NULL) {
+	list = gretl_list_new(1);
+	if (list != NULL) {
+	    list[1] = v;
+	}
+    } else {
+	int oldn = (*plist)[0];
+
+	list = realloc(*plist, (oldn + 2) * sizeof *list);
+	if (list != NULL) {
+	    list[0] += 1;
+	    list[list[0]] = v;
+	} else {
+	    free(*plist);
+	}
+    }
+
+    *plist = list;
+
+    return list;
+}
+
 int gretl_compare_ints (const void *a, const void *b)
 {
     const int *ia = (const int *) a;

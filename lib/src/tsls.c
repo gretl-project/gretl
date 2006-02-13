@@ -458,7 +458,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 }
 
 static int 
-tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatlist,
+tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 		   double ***pZ, DATAINFO *pdinfo)
 {
     double RRSS;
@@ -501,7 +501,7 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatlist,
 	    model_test_set_dfn(test, df);
 	    model_test_set_value(test, HTest);
 	    model_test_set_pvalue(test, chisq(HTest, df));
-	    maybe_add_test_to_model(tsls_model, test);
+	    maybe_add_test_to_model(tmod, test);
 	}
     }
 
@@ -516,8 +516,6 @@ tsls_hausman_test (MODEL *tsls_model, int *reglist, int *hatlist,
 /* form matrix of instruments and perform QR decomposition
    of this matrix; return Q */
 
-#define EXPERIMENTAL 0
-
 static gretl_matrix * 
 tsls_Q (int *instlist, int *reglist, int **pdlist,
 	const double **Z, int t1, int t2, char **pmask,
@@ -529,7 +527,10 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
     int rank, ndrop = 0;
     int *droplist = NULL;
     double test;
-    int i, k, v, pos;
+    int i, k, v;
+#if 0
+    int pos;
+#endif
 
     Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
     if (Q == NULL) {
@@ -563,36 +564,6 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 	ndrop = k - rank;
     }
 
-#if EXPERIMENTAL
-    if (ndrop > 0) {
-	int *qlist = gretl_list_copy(instlist);
-
-	droplist = gretl_list_new(ndrop);
-	if (droplist != NULL) {
-	    droplist[0] = 0;
-	}
-
-	for (i=0; i<k; i++) {
-	    v = qlist[i+1];
-	    test = gretl_matrix_get(R, i, i);
-	    if (fabs(test) < R_DIAG_MIN) {
-		if (droplist != NULL) {
-		    droplist[0] += 1;
-		    droplist[droplist[0]] = v;
-		}	    
-		fprintf(stderr, "Dropping redundant instrument %d\n", v);
-		gretl_list_delete_at_pos(qlist, i+1);
-	    }
-	}
-
-	k = qlist[0];
-	gretl_matrix_free(Q);
-	free(mask);
-	Q = gretl_matrix_data_subset(qlist, Z, t1, t2, &mask);
-	R = gretl_matrix_reuse(R, k, k);
-	*err = gretl_matrix_QR_decomp(Q, R);
-    }
-#else
     if (ndrop > 0) {
 	droplist = gretl_list_new(ndrop);
 	if (droplist != NULL) {
@@ -609,10 +580,12 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 		}	    
 		fprintf(stderr, "Dropping redundant instrument %d\n", v);
 		gretl_list_delete_at_pos(instlist, i+1);
-		/* is this right? */
+#if 0
+		/* drop as regressor too: this is not always right? */
 		if ((pos = in_gretl_list(reglist, v))) {
 		    gretl_list_delete_at_pos(reglist, pos);
 		}
+#endif
 	    }
 	}
 
@@ -623,7 +596,6 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 	R = gretl_matrix_reuse(R, k, k);
 	*err = gretl_matrix_QR_decomp(Q, R);
     }
-#endif
 
  bailout:
 
@@ -786,6 +758,26 @@ static void replace_list_element (int *list, int targ, int repl)
 	    break;
 	}
     }
+}
+
+static int 
+reglist_remove_redundant_vars (const MODEL *tmod, int *s2list, int *reglist)
+{
+    int *dlist = gretl_model_get_data(tmod, "droplist");
+    int i, pos;
+
+    if (dlist == NULL) {
+	return 1;
+    }
+
+    for (i=1; i<=dlist[0]; i++) {
+	pos = in_gretl_list(s2list, dlist[i]);
+	if (pos > 1) {
+	    gretl_list_delete_at_pos(reglist, pos);
+	}
+    }
+
+    return 0;
 }
 
 /**
@@ -956,6 +948,12 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     tsls = lsq(s2list, pZ, pdinfo, OLS, (ci == TSLS)? OPT_NONE : OPT_Z, 0.0);
     if (tsls.errcode) {
 	goto bailout;
+    }
+
+    if (tsls.list[0] < s2list[0]) {
+	/* collinear regressors dropped? If so, adjustments are needed */
+	OverIdRank += s2list[0] - tsls.list[0];
+	reglist_remove_redundant_vars(&tsls, s2list, reglist);
     }
 
     /* special: we need to use the original RHS vars to compute

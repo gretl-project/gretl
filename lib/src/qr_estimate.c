@@ -652,7 +652,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *Q = NULL, *y = NULL;
     gretl_matrix *R = NULL, *g = NULL, *b = NULL;
     gretl_matrix *xpxinv = NULL;
-    int trim = 0;
+    int *droplist = NULL;
     int err = 0;
 
  trim_var:
@@ -691,7 +691,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     if (err == E_SINGULAR && !(opts & OPT_Z) &&
-	redundant_var(pmod, pZ, pdinfo, trim++)) {
+	redundant_var(pmod, pZ, pdinfo, &droplist)) {
 	/* FIXME this can be done more efficiently, using R */
 	gretl_matrix_null(&Q);
 	gretl_matrix_null(&R);
@@ -699,6 +699,10 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	goto trim_var;
     } else if (err) {
 	goto qr_cleanup;
+    }
+
+    if (droplist != NULL) {
+	gretl_model_set_list_as_data(pmod, "droplist", droplist);
     }
 
     /* allocate temporary arrays */
