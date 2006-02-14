@@ -858,7 +858,10 @@ int execute_set_line (const char *line, PRN *prn)
 	    /* Tolerance for BHHH (ARMA, Tobit) */
 	    double tol;
 
-	    if (sscanf(setarg, "%lf", &tol)) {
+	    if (!strcmp(setarg, "default")) {
+		set_bhhh_toler(NADBL);
+		err = 0;
+	    } else if (sscanf(setarg, "%lf", &tol)) {
 		err = set_bhhh_toler(tol);
 	    }
 	} else if (!strcmp(setobj, "bhhh_maxiter")) {

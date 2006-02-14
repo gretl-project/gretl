@@ -5924,12 +5924,14 @@
 	  </para>
 	  </li>	  
 	<li>	  
-	  <para><lit>bhhh_toler</lit>: one floating point value: this is
-	    used in gretl's internal BHHH routine to check if convergence has
-	    occurred. The algorithm stops iterating as soon as the increment in
-	    the log-likelihood between iterations is smaller than
-	    <lit>bhhh_toler</lit>.  The default values are 1.0E&minus;06 for
-	    <cmd>arma</cmd> and 1.0E&minus;10 for <cmd>tobit</cmd>.
+	  <para><lit>bhhh_toler</lit>: one floating point value, or the string
+	    <lit>default</lit>.  This is used in gretl's internal BHHH routine
+	    to check if convergence has occurred. The algorithm stops iterating
+	    as soon as the increment in the log-likelihood between iterations is
+	    smaller than <lit>bhhh_toler</lit>.  The default values are
+	    1.0E&minus;06 for <cmd>arma</cmd> and 1.0E&minus;10 for
+	    <cmd>tobit</cmd>; these values may be re-established by typing
+	    <lit>default</lit> in place of a numeric value.
 	    </para>
 	    </li>
       </ilist>
