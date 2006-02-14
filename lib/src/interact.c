@@ -173,6 +173,12 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->opt = OPT_L;
     } else if (*s == '!') {
 	cmd->ci = SHELL;
+    } else if (!strcmp(s, "funcerr")) {
+	cmd->ci = FUNCERR;
+    } else if (!strcmp(line, "end if")) {
+	strcpy(s, "endif");
+	strcpy(line, "endif");
+	cmd->ci = ENDIF;
     }
 
     return cmd->ci;

@@ -131,8 +131,8 @@ static void bkbp_opts_copy (struct bkbp_opts *opts)
 
 static void bhhh_opts_init (struct bhhh_opts *opts)
 {
-    opts->tolerance = 1.0E-09;
-    opts->maxiter = 100;
+    opts->tolerance = NADBL;
+    opts->maxiter = 250;
 }
 
 static void bhhh_opts_copy (struct bhhh_opts *opts)
@@ -642,6 +642,7 @@ static const char *arg_from_delim (char c)
 
 static int display_settings (PRN *prn)
 {
+    double dval;
     unsigned int uval;
     int ival;
 
@@ -679,7 +680,14 @@ static int display_settings (PRN *prn)
     }
 
     pprintf(prn, " nls_toler = %g\n", get_nls_toler());
-    pprintf(prn, " bhhh_toler = %g\n", get_bhhh_toler());
+
+    dval = get_bhhh_toler();
+    if (na(dval)) {
+	pputs(prn, " bhhh_toler = default\n");
+    } else {
+	pprintf(prn, " bhhh_toler = %g\n", dval);
+    }
+
     pprintf(prn, " bhhh_maxiter = %d\n", get_bhhh_maxiter());
     pprintf(prn, " messages = %d\n", state->gretl_msgs);
 

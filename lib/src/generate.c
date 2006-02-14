@@ -4365,10 +4365,24 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
 	    }
 	}
     } else if (fn == T_CUM) {
-	x[t1] = (na(mvec[t1])) ? 0.0 : mvec[t1];
-	for (t=t1+1; t<=t2; t++) {
-	    if (na(mvec[t])) x[t] = x[t-1];
-	    else x[t] = x[t-1] + mvec[t];
+	int t0 = t1;
+
+	for (t=t1; t<=t2; t++) {
+	    if (na(mvec[t])) {
+		x[t0++] = NADBL;
+	    } else {
+		break;
+	    }
+	}
+	if (t0 < t2) {
+	    x[t0] = (na(mvec[t0])) ? 0.0 : mvec[t0];
+	    for (t=t0+1; t<=t2; t++) {
+		if (na(mvec[t])) {
+		    x[t] = x[t-1];
+		} else {
+		    x[t] = x[t-1] + mvec[t];
+		}
+	    }
 	}
     } else if (fn == T_SORT || fn == T_DSORT) {
 	genr->err = sort_series(mvec, x, genr, fn);

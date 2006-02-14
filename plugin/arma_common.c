@@ -223,7 +223,8 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 
 /* remove the intercept from list of regressors */
 
-static int remove_const (int *list, int seasonal)
+static int remove_const (int *list, int seasonal, const double **Z,
+			 const DATAINFO *pdinfo)
 {
     int xstart, ret = 0;
     int i, j;
@@ -231,7 +232,7 @@ static int remove_const (int *list, int seasonal)
     xstart = (seasonal)? 8 : 5;
 
     for (i=xstart; i<=list[0]; i++) {
-	if (list[i] == 0) {
+	if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
 	    for (j=i; j<list[0]; j++) {
 		list[j] = list[j+1];
 	    }
@@ -246,8 +247,9 @@ static int remove_const (int *list, int seasonal)
 
 #define has_seasonals(l) (l[0] > 5 && l[3] == LISTSEP && l[6] == LISTSEP)
 
-static int 
-check_arma_list (int *list, gretlopt opt, struct arma_info *ainfo)
+static int check_arma_list (int *list, gretlopt opt, 
+			    const double **Z, const DATAINFO *pdinfo,
+			    struct arma_info *ainfo)
 {
     int armax = 0;
     int hadconst = 0;
@@ -309,7 +311,7 @@ check_arma_list (int *list, gretlopt opt, struct arma_info *ainfo)
 
     if (!err) {
 	if (armax) {
-	    hadconst = remove_const(list, ainfo->seasonal);
+	    hadconst = remove_const(list, ainfo->seasonal, Z, pdinfo);
 	}
 	if ((opt & OPT_S) || (armax && !hadconst)) {
 	    ainfo->ifc = 0;

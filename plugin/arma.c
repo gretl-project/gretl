@@ -636,8 +636,14 @@ static int ar_init_by_ols (const int *list, double *coeff,
 static model_info *
 set_up_arma_model_info (struct arma_info *ainfo)
 {
+    double tol = get_bhhh_toler();
     model_info *arma;
-    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, get_bhhh_toler());
+
+    if (na(tol)) {
+	tol = 1.0e-6;
+    }
+
+    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, tol);
 
     if (arma == NULL) return NULL;
 
@@ -680,7 +686,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (check_arma_list(alist, opt, &ainfo)) {
+    if (check_arma_list(alist, opt, Z, pdinfo, &ainfo)) {
 	armod.errcode = E_UNSPEC;
 	goto bailout;
     }

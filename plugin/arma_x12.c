@@ -683,7 +683,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (check_arma_list(alist, opt, &ainfo)) {
+    if (check_arma_list(alist, opt, Z, pdinfo, &ainfo)) {
 	armod.errcode = E_UNSPEC;
 	goto bailout;
     }

@@ -23,10 +23,11 @@
 
 #include "libgretl.h"
 #include "bhhh_max.h"
+#include "libset.h"
 
 #undef TDEBUG 
 
-#define TOBIT_TOL 1.0e-10 /* was 1.0e-9: do more checking? */
+#define TOBIT_TOL 1.0e-10 /* calibrated against William Greene */
 
 /* Below: we are buying ourselves a considerable simplification when it comes
    to the tobit_ll function.  That function needs access to the original y
@@ -310,9 +311,14 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 static model_info *
 tobit_model_info_init (int nobs, int k, int n_series)
 {
+    double tol = get_bhhh_toler();
     model_info *tobit;
 
-    tobit = model_info_new(k, 0, nobs - 1, TOBIT_TOL);
+    if (na(tol)) {
+	tol = TOBIT_TOL;
+    }
+
+    tobit = model_info_new(k, 0, nobs - 1, tol);
 
     if (tobit != NULL) {
 	model_info_set_opts(tobit, FULL_VCV_MATRIX);

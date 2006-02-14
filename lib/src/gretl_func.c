@@ -32,7 +32,8 @@ typedef struct fncall_ fncall;
 #define FN_NAMELEN 32
 
 enum {
-    ARG_SCALAR = 1,
+    ARG_NONE = 0,
+    ARG_SCALAR,
     ARG_SERIES,
     ARG_LIST,
     ARG_MATRIX
@@ -758,26 +759,46 @@ static char *get_next_arg (char **parg, char *s, int maxlen)
     return s;
 }
 
+static int is_type_name (const char *s)
+{
+    int ret = ARG_NONE;
+
+    if (!strcmp(s, "scalar")) {
+	ret = ARG_SCALAR;
+    } else if (!strcmp(s, "series")) {
+	ret = ARG_SERIES;
+    } else if (!strcmp(s, "matrix")) {
+	ret = ARG_MATRIX;
+    }
+
+    return ret;
+}
+
 /* Parse line and return an allocated array of strings consisting of
    the space- or comma-separated fields in line, each one truncated if
    necessary to a maximum of maxlen characters.
 */ 
 
 static char **
-get_separated_fields (const char *line, int *nfields, int maxlen)
+get_separated_fields (const char *line, int *nfields, int maxlen, 
+		      char **passtypes, int *err)
 {
     char **fields = NULL;
+    char *asstypes = NULL;
     char *cpy, *s;
-    int i, n, nf, err = 0;
+    int realnf;
+    int i, n, nf;
 
     *nfields = 0;
 
     if (string_is_blank(line)) {
+	*err = E_PARSE;
 	return NULL;
     }
 
     cpy = gretl_strdup(line);
     if (cpy == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -793,27 +814,71 @@ get_separated_fields (const char *line, int *nfields, int maxlen)
 	s[n-1] = '\0';
     } 
 
-    nf = special_count_fields(s);
+    realnf = nf = special_count_fields(s);
 
     if (nf > 0) {
-	fields = create_strings_array(nf);
-	if (fields == NULL) {
-	    err = 1;
-	} else {
-	    for (i=0; i<nf && !err; i++) {
-		s = get_next_arg(&fields[i], s, maxlen);
-		if (fields[i] == NULL) {
-		    err = 1;
+	if (passtypes != NULL) {
+	    asstypes = calloc(nf, 1);
+	    if (asstypes == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	if (!*err) {
+	    fields = create_strings_array(nf);
+	    if (fields == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	if (!*err) {
+	    int atype = 0;
+	    int j = 0;
+
+	    for (i=0; i<nf && !*err; i++) {
+		if (asstypes != NULL && atype) {
+		    asstypes[j] = atype;
 		}
+		s = get_next_arg(&fields[j], s, maxlen);
+		if (fields[j] == NULL) {
+		    *err = E_ALLOC;
+		} else if ((atype = is_type_name(fields[j]))) {
+		    if (asstypes == NULL || i == nf - 1) {
+			*err = E_PARSE;
+		    } else {
+			free(fields[j]);
+			fields[j] = NULL;
+		    } 
+		} else {
+		    j++;
+		}
+	    }
+	    realnf = j;
+	}
+    }
+
+    if (!*err && realnf < nf) {
+	if (realnf == 0) {
+	    *err = E_PARSE;
+	} else {
+	    char **realf = realloc(fields, realnf * sizeof *fields);
+
+	    if (realf == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		fields = realf;
+		nf = realnf;
 	    }
 	}
     }
 
-    if (err) {
+    if (*err) {
 	free_strings_array(fields, nf);
 	fields = NULL;
+	free(asstypes);
     } else {
 	*nfields = nf;
+	if (passtypes != NULL) {
+	    *passtypes = asstypes;
+	}
     }
 
     free(cpy);
@@ -823,7 +888,7 @@ get_separated_fields (const char *line, int *nfields, int maxlen)
 
 static int 
 parse_function_args_etc (const char *s, int *argc, char ***pargv,
-			 int **asslist, char ***passv)
+			 int **asslist, char ***passv, char **passtypes)
 {
     char **argv = NULL;
     char **assign = NULL;
@@ -838,14 +903,16 @@ parse_function_args_etc (const char *s, int *argc, char ***pargv,
 	char *astr = gretl_strndup(s, p - s);
 
 	/* seems we have a left-hand side assignment */
-	assign = get_separated_fields(astr, &na, 8);
-	if (assign == NULL) {
-	    err = E_ALLOC;
-	} 
+	assign = get_separated_fields(astr, &na, VNAMELEN - 1, 
+				      passtypes, &err);
 	free(astr);
 	s = p + 1;
     } else {
 	s++;
+    }
+
+    if (err) {
+	return err;
     }
 
     if (na > 0) {
@@ -879,10 +946,8 @@ parse_function_args_etc (const char *s, int *argc, char ***pargv,
 #if FN_DEBUG
 	    fprintf(stderr, "function_args: looking at '%s'\n", s);
 #endif
-	    argv = get_separated_fields(s, &na, 32);
-	    if (argv == NULL) {
-		err = 1;
-	    } else {
+	    argv = get_separated_fields(s, &na, 32, NULL, &err);
+	    if (!err) {
 		*pargv = argv;
 		*argc = na;
 	    }
@@ -1366,19 +1431,25 @@ static int localize_list (const char *oldname, const char *newname,
     int *orig = NULL;
     int *new = NULL;
     int origv = pdinfo->v;
+    int orig0 = 0;
     int i, v, match, err = 0;
 
-    orig = get_list_by_name(oldname);
-    if (orig == NULL) {
-	return 1;
+    if (!strcmp(oldname, "null")) {
+	new = gretl_null_list();
+    } else {
+	orig = get_list_by_name(oldname);
+	if (orig == NULL) {
+	    return 1;
+	}
+	new = gretl_list_copy(orig);
+	orig0 = orig[0];
     }
 
-    new = gretl_list_copy(orig);
     if (new == NULL) {
 	return E_ALLOC;
     }
 
-    for (i=1; i<=orig[0] && !err; i++) {
+    for (i=1; i<=orig0 && !err; i++) {
 	v = orig[i];
 	if (v == pdinfo->v) {
 	    /* unknown variable */
@@ -1462,7 +1533,7 @@ static int check_and_allocate_function_args (ufunc *fun,
 		err = 1;
 	    } 
 	} else if (fun->ptype[i] == ARG_LIST) {
-	    if (get_list_by_name(argv[i]) != NULL) {
+	    if (get_list_by_name(argv[i]) != NULL || !strcmp(argv[i], "null")) {
 #ifdef LOCAL_COPY_LISTS
 		err = localize_list(argv[i], fun->params[i], pZ, pdinfo,
 				    &outlist, &inlist);
@@ -1493,8 +1564,8 @@ static int check_and_allocate_function_args (ufunc *fun,
     return err;
 }
 
-static int check_function_assignments (ufunc *fun,
-				       int *asslist, char **assv, 
+static int check_function_assignments (ufunc *fun, int *asslist, 
+				       char **assv, char *asstypes,
 				       DATAINFO *pdinfo)
 {
     int i, v, err = 0;
@@ -1534,7 +1605,14 @@ static int check_function_assignments (ufunc *fun,
 	    fprintf(stderr, "requested return of list as '%s'\n", assv[i]);
 	    /* FIXME? */
 	} else {
-	    err = check_varname(assv[i]);
+	    /* new variable */
+	    if (asstypes != NULL && asstypes[i] && asstypes[i] != fun->rtype[i]) {
+		sprintf(gretl_errmsg, "%s: wrong type for assignment", assv[i]);
+		err = 1;
+	    }
+	    if (!err) {
+		err = check_varname(assv[i]);
+	    }
 	}
     }
 
@@ -1546,6 +1624,7 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 {
     char **argv = NULL;
     char **assv = NULL;
+    char *asstypes = NULL;
     int *asslist = NULL;
     char fname[FN_NAMELEN];
     ufunc *fun;
@@ -1560,9 +1639,9 @@ int gretl_function_start_exec (const char *line, double ***pZ,
 	return 1;
     }
 
-    err = parse_function_args_etc(line, &argc, &argv, &asslist, &assv);
+    err = parse_function_args_etc(line, &argc, &argv, &asslist, &assv, &asstypes);
     if (err) {
-	return E_ALLOC;
+	return err;
     }
 
     if (argc > 0) {
@@ -1570,8 +1649,10 @@ int gretl_function_start_exec (const char *line, double ***pZ,
     }
     
     if (!err && asslist[0] > 0) {
-	err = check_function_assignments(fun, asslist, assv, pdinfo);
+	err = check_function_assignments(fun, asslist, assv, asstypes, pdinfo);
     }
+
+    free(asstypes);
 
     if (err) {
 	free_strings_array(argv, argc);
