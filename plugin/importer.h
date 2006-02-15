@@ -21,12 +21,29 @@ typedef struct wbook_ wbook;
 typedef struct wsheet_ wsheet;
 
 typedef enum {
-    FIRST_COL_DATE_FORMAT = 1 << 0,
-    DATE_BASE_1904        = 1 << 1
+    BOOK_NUMERIC_DATES   = 1 << 0,
+    BOOK_DATE_BASE_1904  = 1 << 1,
+    BOOK_AUTO_VARNAMES   = 1 << 2,
+    BOOK_TIME_SERIES     = 1 << 3,
+    BOOK_OBS_LABELS      = 1 << 4,
+    BOOK_DEBUG           = 1 << 5
 } BookFlag;
 
-#define book_numeric_dates(b) (b.flags & FIRST_COL_DATE_FORMAT)
-#define book_base_1904(b) (b.flags & DATE_BASE_1904)
+#define book_numeric_dates(b) ((b)->flags & BOOK_NUMERIC_DATES)
+#define book_base_1904(b)     ((b)->flags & BOOK_DATE_BASE_1904)
+#define book_auto_varnames(b) ((b)->flags & BOOK_AUTO_VARNAMES)
+#define book_time_series(b)   ((b)->flags & BOOK_TIME_SERIES)
+#define book_obs_labels(b)    ((b)->flags & BOOK_OBS_LABELS)
+#define book_debugging(b)     ((b)->flags & BOOK_DEBUG)
+
+#define book_set_numeric_dates(b) ((b)->flags |= BOOK_NUMERIC_DATES)
+#define book_set_base_1904(b)     ((b)->flags |= BOOK_DATE_BASE_1904)
+#define book_set_auto_varnames(b) ((b)->flags |= BOOK_AUTO_VARNAMES)
+#define book_set_time_series(b)   ((b)->flags |= BOOK_TIME_SERIES)
+#define book_set_obs_labels(b)    ((b)->flags |= BOOK_OBS_LABELS)
+#define book_set_debug(b)         ((b)->flags |= BOOK_DEBUG)
+
+#define book_unset_obs_labels(b)  ((b)->flags &= ~BOOK_OBS_LABELS)
 
 struct wbook_ {
     int version;
@@ -40,13 +57,13 @@ struct wbook_ {
     BookFlag flags;
     int totmiss;
     char *missmask;
-    int debug;
 };
 
 struct wsheet_ {
     int maxcol, maxrow;
     int text_cols, text_rows;
     int col_offset, row_offset;
+    int colheads;
     int ID;
     BookFlag flags;
     char *name;

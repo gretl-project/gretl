@@ -127,6 +127,11 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 {
     int i, j, t;
 
+#if 1
+    fprintf(stderr, "wsheet_allocate: allocating %d variables, each %d obs\n",
+	    cols, rows);
+#endif
+
     sheet->Z = malloc(cols * sizeof *(sheet->Z));
     if (sheet->Z == NULL) return 1;
 
@@ -224,7 +229,7 @@ static void check_for_date_format (wsheet *sheet, const char *fmt)
     if (strchr(fmt, '/') || 
 	(strstr(fmt, "mm") && !(strchr(fmt, ':'))) || 
 	strstr(fmt, "yy")) {
-	sheet->flags |= FIRST_COL_DATE_FORMAT;
+	book_set_numeric_dates(sheet);
     }
 }
 
@@ -235,6 +240,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     double x;
     int i, t, vtype = 0;
     char *toprows, *leftcols;
+    int gotlabels = 0;
     int cols, rows;
     int colmin, rowmin;
     int err = 0;
@@ -267,6 +273,8 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
     colmin = sheet->col_offset;
     rowmin = sheet->row_offset;
 
+    sheet->colheads = 0;
+
     while (p && !err) {
 	if (!xmlStrcmp(p->name, (UTF) "Cell")) {
 	    int i_real = 0, t_real = 0;
@@ -292,13 +300,15 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		if (tmp) {
 		    vtype = atoi(tmp);
 		    free(tmp);
-		} else { /* a formula perhaps? */
+		} else { 
+		    /* a formula perhaps? */
 		    pprintf(prn, _("Couldn't get value for col %d, row %d.\n"
 				   "Maybe there's a formula in the sheet?"),
 			    i, t);
 		    err = 1;
 		}
 
+#if 0
 		/* check the top-left cell */
 		if (!err && i_real == 0 && t_real == 0) {
 		    if (VTYPE_IS_NUMERIC(vtype)) {
@@ -311,6 +321,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    pputs(prn, _("Expected to find a variable name"));
 		    err = 1;
 		}
+#endif
 
 		if (!err && (tmp = (char *) xmlNodeGetContent(p))) {
 		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
@@ -335,12 +346,15 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    } else if (vtype == VALUE_STRING) {
 			if (t_real == 0) {
 			    strncat(sheet->varname[i_real], tmp, VNAMELEN - 1);
+			    sheet->colheads += 1;
 			    if (i_real == 0 && !strcmp(tmp, "obs")) {
 				; /* keep going */
 			    } else if (check_varname(sheet->varname[i_real])) {
 				invalid_varname(prn);
 				err = 1;
 			    }
+			} else if (i_real == 0) {
+			    gotlabels = 1;
 			}
 			toprows[t_real] = leftcols[i_real] = 1;
 		    }
@@ -349,6 +363,12 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	    }
 	}
 	p = p->next;
+    }
+
+    if (gotlabels && sheet->colheads == 1) {
+	/* rough notion here: if there's only one heading, it's
+	   probably not really a variable name */
+	sheet->colheads = 0;
     }
 
     if (!err) {
@@ -391,7 +411,7 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
 
-    doc = xmlParseFile(fname);
+    doc = xmlParseFile(fname); /* FIXME? */
     if (doc == NULL) {
 	pprintf(prn, _("xmlParseFile failed on %s"), fname);
 	return 1;
@@ -433,22 +453,19 @@ static int wsheet_get_data (const char *fname, wsheet *sheet, PRN *prn)
 				}
 				free(tmp);
 			    }
-			} else if (got_sheet &&
-				 !xmlStrcmp(snode->name, (UTF) "MaxCol")) {
+			} else if (got_sheet && !xmlStrcmp(snode->name, (UTF) "MaxCol")) {
 			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
 				sheet->maxcol = atoi(tmp);
 				free(tmp);
 			    }
-			} else if (got_sheet &&
-				 !xmlStrcmp(snode->name, (UTF) "MaxRow")) {
+			} else if (got_sheet && !xmlStrcmp(snode->name, (UTF) "MaxRow")) {
 			    tmp = (char *) xmlNodeGetContent(snode);
 			    if (tmp) {
 				sheet->maxrow = atoi(tmp);
 				free(tmp);
 			    }
-			} else if (got_sheet &&
-				 !xmlStrcmp(snode->name, (UTF) "Cells")) {
+			} else if (got_sheet && !xmlStrcmp(snode->name, (UTF) "Cells")) {
 			    wsheet_get_real_size(snode, sheet);
 			    err = wsheet_parse_cells(snode, sheet, prn);
 			}
@@ -565,17 +582,18 @@ static int wsheet_setup (wsheet *sheet, wbook *book, int n)
 
 static int wsheet_labels_complete (wsheet *sheet)
 {
-    int t, rows = sheet->maxrow + 1 - sheet->row_offset;
-    int complete = 1;
+    int rmin = (sheet->colheads)? 1 : 0;
+    int rmax = sheet->maxrow + 1 - sheet->row_offset;
+    int i, ret = 1;
     
-    for (t=1; t<rows; t++) {
-	if (sheet->label[t][0] == '\0') {
-	    complete = 0;
+    for (i=rmin; i<rmax; i++) {
+	if (sheet->label[i][0] == '\0') {
+	    ret = 0;
 	    break;
 	}
     }
 
-    return complete;
+    return ret;
 }
 
 static int rigorous_dates_check (wsheet *sheet, DATAINFO *pdinfo)
@@ -602,11 +620,47 @@ static int rigorous_dates_check (wsheet *sheet, DATAINFO *pdinfo)
     return err;
 }
 
+static void 
+sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
+{
+    const char *s;
+
+    if (sheet->colheads == 0) {
+	s = sheet->label[0];
+    } else {
+	s = sheet->label[1];
+    }
+
+    if (book_numeric_dates(book)) {
+	int d0 = atoi(s);
+
+	MS_excel_date_string(newinfo->stobs, d0, pd, book_base_1904(book));
+    } else {
+	if (*s == '"' || *s == '\'') s++;
+	strcpy(newinfo->stobs, s);
+	colonize_obs(newinfo->stobs);
+    }
+
+    newinfo->pd = pd;
+    newinfo->structure = TIME_SERIES;
+
+    fprintf(stderr, "stobs='%s'\n", newinfo->stobs);
+    newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
+    fprintf(stderr, "sd0=%g\n", newinfo->sd0);
+
+    sheet->text_cols = 1;
+
+    book_set_time_series(book);
+    book_unset_obs_labels(book);
+}
+
 int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		    PRN *prn)
 {
-    wbook book;
-    wsheet sheet;
+    wbook gbook;
+    wbook *book = &gbook;
+    wsheet gsheet;
+    wsheet *sheet = &gsheet;
     int sheetnum = -1;
     double **newZ = NULL;
     DATAINFO *newinfo;
@@ -618,47 +672,47 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    wsheet_init(&sheet);
+    wsheet_init(sheet);
 
     gretl_push_c_numeric_locale();
 
-    if (wbook_get_info(fname, &book, prn)) {
+    if (wbook_get_info(fname, book, prn)) {
 	pputs(prn, _("Failed to get workbook info"));
 	err = 1;
 	goto getout;
     } 
 
-    wbook_print_info(&book);
+    wbook_print_info(book);
 
-    if (book.nsheets == 0) {
+    if (book->nsheets == 0) {
 	pputs(prn, _("No worksheets found"));
 	err = 1;
 	goto getout;
     }
 
-    if (book.nsheets > 1) {
-	wsheet_menu(&book, 1);
-	sheetnum = book.selected;
+    if (book->nsheets > 1) {
+	wsheet_menu(book, 1);
+	sheetnum = book->selected;
     } else {
-	wsheet_menu(&book, 0);
+	wsheet_menu(book, 0);
 	sheetnum = 0;
     }
 
-    if (book.selected == -1) {
+    if (book->selected == -1) {
 	/* canceled */
 	err = -1;
     }
 
     if (!err && sheetnum >= 0) {
 	fprintf(stderr, "Getting data...\n");
-	if (wsheet_setup(&sheet, &book, sheetnum)) {
+	if (wsheet_setup(sheet, book, sheetnum)) {
 	    pputs(prn, _("error in wsheet_setup()"));
 	    err = 1;
 	} else {
-	    err = wsheet_get_data(fname, &sheet, prn);
+	    err = wsheet_get_data(fname, sheet, prn);
 	    if (!err) {
-		wsheet_print_info(&sheet);
-		book.flags |= sheet.flags;
+		wsheet_print_info(sheet);
+		book->flags |= sheet->flags;
 	    } 
 	}
     } 
@@ -666,30 +720,43 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (err) {
 	goto getout;
     } else {
-	int nrows = sheet.maxrow + 1 - sheet.row_offset;
-	int i, j, t, i_sheet, label_strings = sheet.text_cols;
-	int time_series = 0;
+	int nrows = sheet->maxrow + 1 - sheet->row_offset;
+	int r0 = sheet->row_offset;
+	int i, j, t, i_sheet;
 	int blank_cols = 0;
 	int pd = 0;
 
+	if (sheet->text_cols > 0) {
+	    book_set_obs_labels(book);
+	}
+
+	if (sheet->colheads == 0) {
+	    book_set_auto_varnames(book);
+	    if (sheet->row_offset > 0) {
+		r0--;
+	    }
+	}
+
 	if (book_numeric_dates(book)) {
-	    pd = pd_from_numeric_dates(nrows, sheet.row_offset, 0, sheet.label,
-				       &book);
-	} else if (obs_column_heading(sheet.label[0])) {
-	    pd = consistent_date_labels(nrows, sheet.row_offset, 0, sheet.label);
+	    pd = pd_from_numeric_dates(nrows, r0, 0, sheet->label, book);
+	} else if (sheet->colheads > 0) {
+	    if (obs_column_heading(sheet->label[0])) {
+		pd = consistent_date_labels(nrows, r0, 0, sheet->label);
+	    }
 	}
 
 	if (pd) {
-	    time_series_setup(sheet.label[1], newinfo, pd,
-			      &sheet.text_cols, &time_series, 
-			      &label_strings, book.flags);
+	    sheet_time_series_setup(sheet, book, newinfo, pd);
 	    if (!book_numeric_dates(book)) {
-		rigorous_dates_check(&sheet, newinfo);
+		rigorous_dates_check(sheet, newinfo);
 	    }
 	}	
 
-	newinfo->v = sheet.maxcol + 2 - sheet.col_offset - sheet.text_cols;
-	newinfo->n = sheet.maxrow - sheet.row_offset + book.totmiss;
+	newinfo->v = sheet->maxcol + 2 - sheet->col_offset - sheet->text_cols;
+	newinfo->n = sheet->maxrow - sheet->row_offset + book->totmiss;
+	if (sheet->colheads == 0) {
+	    newinfo->n += 1;
+	}
 
 	fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 		newinfo->v, newinfo->n);
@@ -699,7 +766,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    goto getout;
 	}
 
-	if (!time_series) {
+	if (!book_time_series(book)) {
 	    strcpy(newinfo->stobs, "1");
 	    sprintf(newinfo->endobs, "%d", newinfo->n);
 	    newinfo->sd0 = 1.0;
@@ -713,20 +780,24 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	j = 1;
 
 	for (i=1; i<newinfo->v; i++) {
-	    i_sheet = i - 1 + sheet.text_cols;
-	    if (*sheet.varname[i_sheet] == '\0') {
+	    i_sheet = i - 1 + sheet->text_cols;
+	    if (sheet->colheads && *sheet->varname[i_sheet] == '\0') {
 		blank_cols++;
 	    } else {
-		int s = 1;
+		int s = (sheet->colheads)? 1 : 0;
 
-		strcpy(newinfo->varname[j], sheet.varname[i_sheet]);
+		if (sheet->colheads) {
+		    strcpy(newinfo->varname[j], sheet->varname[i_sheet]);
+		} else {
+		    sprintf(newinfo->varname[j], "v%d", j);
+		}
 		for (t=0; t<newinfo->n; t++) {
-		    if (book.missmask != NULL) {
-			while (book.missmask[t]) {
+		    if (book->missmask != NULL) {
+			while (book->missmask[t]) {
 			    newZ[j][t++] = NADBL;
 			}
 		    }
-		    newZ[j][t] = sheet.Z[i_sheet][s++];
+		    newZ[j][t] = sheet->Z[i_sheet][s++];
 		}
 		j++;
 	    }
@@ -742,11 +813,13 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    dataset_drop_last_variables(blank_cols, &newZ, newinfo);
 	}
 
-	if (label_strings && wsheet_labels_complete(&sheet)) {
+	if (book_obs_labels(book) && wsheet_labels_complete(sheet)) {
+	    int offset = (sheet->colheads)? 1 : 0;
+
 	    dataset_allocate_obs_markers(newinfo);
 	    if (newinfo->S != NULL) {
 		for (t=0; t<newinfo->n; t++) {
-		    strcpy(newinfo->S[t], sheet.label[t+1]);
+		    strcpy(newinfo->S[t], sheet->label[t+offset]);
 		}
 	    }
 	}
@@ -761,8 +834,8 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
  getout:
 
-    wbook_free(&book);
-    wsheet_free(&sheet);
+    wbook_free(book);
+    wsheet_free(sheet);
 
     gretl_pop_c_numeric_locale();
 

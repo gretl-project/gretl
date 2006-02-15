@@ -68,7 +68,8 @@ enum {
     VARNAMES_OK = 0,
     VARNAMES_NULL,
     VARNAMES_NOTSTR,
-    VARNAMES_INVALID
+    VARNAMES_INVALID,
+    VARNAMES_NONE
 } varname_errors;
 
 char **sst = NULL;
@@ -333,7 +334,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		is_date_format(fmt)) {
 		fprintf(stderr, "Testing first obs cell (%d, %d): date format %d\n", 
 			i, j, fmt);
-		book->flags |= FIRST_COL_DATE_FORMAT;
+		book_set_numeric_dates(book);
 	    }
 	}
     }
@@ -977,7 +978,7 @@ static int first_col_strings (wbook *book)
     int i, j = book->col_offset;
     int startrow = book->row_offset + 1;
     int ret = 1;
-    
+
     for (i=startrow; i<nrows; i++) {
 	dprintf("book->row_offset=%d, i=%d\n", book->row_offset, i);
 	dprintf("rows = %p\n", (void *) rows);
@@ -989,6 +990,10 @@ static int first_col_strings (wbook *book)
 	}
 	dprintf("first_col_strings: rows[%d].cells[%d]: '%s'\n", i, j,
 		rows[i].cells[j]);
+    }
+
+    if (ret) {
+	book_set_obs_labels(book);
     }
 
     return ret;
@@ -1014,16 +1019,23 @@ static int fix_varname (char *vname)
 }   
 
 static int 
-check_all_varnames (wbook *book, int ncols, const char *blank_col, int skip)
+check_all_varnames (wbook *book, int ncols, const char *blank_col)
 {
     int j, i = book->row_offset;
-    int startcol = skip + book->col_offset;
-    char *test;
+    int startcol = book->col_offset;
+    int realcols = 0;
+    int vnames = 0;
+    int ret = VARNAMES_NONE;
+
+    if (book_obs_labels(book)) {
+	startcol++;
+    }
 
     for (j=startcol; j<ncols; j++) { 
 	if (blank_col[j]) {
 	    continue;
 	}
+
 	if (rows[i].cells[j] == NULL) {
 	    dprintf("got_varnames: rows[%d].cells[%d] is NULL\n", i, j);
 	    return VARNAMES_NULL;
@@ -1032,32 +1044,38 @@ check_all_varnames (wbook *book, int ncols, const char *blank_col, int skip)
 	dprintf("got_varnames: rows[%d].cells[%d] is '%s'\n", i, j, 
 		rows[i].cells[j]);
 
-	if (!IS_STRING(rows[i].cells[j])) {
-	    return VARNAMES_NOTSTR;
-	}
+	if (IS_STRING(rows[i].cells[j])) {
+	    /* skip beyond the quote */
+	    char *test = rows[i].cells[j] + 1;
 
-	/* skip beyond the quote */
-	test = rows[i].cells[j] + 1;
+	    /* "obs" or "id" is OK in the first col of the selection, 
+	       but not thereafter */
+	    if (j == startcol && obs_string(test)) {
+		/* pass along */
+		;
+	    } else {
+		int verr = check_varname(test);
 
-	/* "obs" or "id" is OK in the first col of the selection, 
-	   but not thereafter */
-	if (j == startcol && obs_string(test)) {
-	    /* pass along */
-	    ;
-	} else {
-	    int verr = check_varname(test);
-
-	    if (verr == VARNAME_BADCHAR) {
-		verr = fix_varname(test);
-	    }
+		if (verr == VARNAME_BADCHAR) {
+		    verr = fix_varname(test);
+		}
 	    
-	    if (verr) {
-		return VARNAMES_INVALID;
+		if (verr) {
+		    return VARNAMES_INVALID;
+		}
 	    }
+	    vnames++;
 	}
+	realcols++;
     }
 
-    return VARNAMES_OK;
+    if (vnames == realcols) {
+	ret = VARNAMES_OK;
+    } else if (vnames > 0) {
+	ret = VARNAMES_NOTSTR;
+    }
+
+    return ret;
 }
 
 static int missval_string (const char *s)
@@ -1091,11 +1109,15 @@ struct string_err {
 
 static int 
 check_data_block (wbook *book, int ncols, const char *blank_col,
-		  int skip, struct string_err *err)
+		  struct string_err *err)
 {
-    int startcol = skip + book->col_offset;
+    int startcol = book->col_offset;
     int startrow = book->row_offset + 1;
     int j, i, ret = 0;
+
+    if (book_obs_labels(book)) {
+	startcol++;
+    }
 
     err->row = 0;
     err->column = 0;
@@ -1142,11 +1164,12 @@ check_data_block (wbook *book, int ncols, const char *blank_col,
 */
 
 static int 
-n_vars_from_col (int totcols, char *blank_col, int offset, int first_special)
+n_vars_from_col (wbook *book, int totcols, char *blank_col)
 {
+    int offset = book->col_offset;
     int i, nv = 1;
 
-    if (first_special) {
+    if (book_time_series(book) || book_obs_labels(book)) {
 	offset++;
     }
 
@@ -1159,12 +1182,16 @@ n_vars_from_col (int totcols, char *blank_col, int offset, int first_special)
     return nv;
 }
 
-static int transcribe_data (double **Z, DATAINFO *pdinfo, wbook *book,
-			    int totcols, int startcol, 
-			    char *blank_col)
+static int transcribe_data (wbook *book, double **Z, DATAINFO *pdinfo, 
+			    int totcols, char *blank_col)
 {
+    int startcol = book->col_offset;
     int roff = book->row_offset;
     int i, t, j = 1;
+
+    if (book_time_series(book) || book_obs_labels(book)) {
+	startcol++;
+    }    
 
     for (i=startcol; i<totcols; i++) {
 	int ts, missing = 0;
@@ -1178,10 +1205,14 @@ static int transcribe_data (double **Z, DATAINFO *pdinfo, wbook *book,
 	}
 
 	pdinfo->varname[j][0] = 0;
-	strncat(pdinfo->varname[j], rows[roff].cells[i] + 1, 
-		VNAMELEN - 1);
-	dprintf("accessing rows[%d].cells[%d] at %p\n",
-		roff, i, (void *) rows[roff].cells[i]);
+	if (book_auto_varnames(book)) {
+	    sprintf(pdinfo->varname[j], "v%d", j);
+	} else {
+	    strncat(pdinfo->varname[j], rows[roff].cells[i] + 1, 
+		    VNAMELEN - 1);
+	    dprintf("accessing rows[%d].cells[%d] at %p\n",
+		    roff, i, (void *) rows[roff].cells[i]);
+	}
 	dprintf("set varname[%d] = '%s'\n", j, pdinfo->varname[j]);
 
 	for (t=0; t<pdinfo->n; t++) {
@@ -1290,13 +1321,38 @@ get_sheet_dimensions (int *totcols, int *datacols, char **blank_col,
     return 0;
 }
 
+static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
+{
+    const char *s = rows[1 + book->row_offset].cells[book->col_offset];
+
+    if (book_numeric_dates(book)) {
+	int d0 = atoi(s);
+
+	MS_excel_date_string(newinfo->stobs, d0, pd, book_base_1904(book));
+    } else {
+	if (*s == '"' || *s == '\'') s++;
+	strcpy(newinfo->stobs, s);
+	colonize_obs(newinfo->stobs);
+    }
+
+    newinfo->pd = pd;
+    newinfo->structure = TIME_SERIES;
+
+    fprintf(stderr, "stobs='%s'\n", newinfo->stobs);
+    newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
+    fprintf(stderr, "sd0=%g\n", newinfo->sd0);
+
+    book_set_time_series(book);
+    book_unset_obs_labels(book);
+}
+
 int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		    PRN *prn)
 {
-    wbook book;
+    wbook xbook;
+    wbook *book = &xbook;
     double **newZ = NULL;
     DATAINFO *newinfo;
-    int label_strings, time_series = 0;
     int datacols, totcols;
     struct string_err strerr;
     char *blank_col = NULL;
@@ -1311,34 +1367,30 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     gretl_push_c_numeric_locale();
 
-    wbook_init(&book);
+    wbook_init(book);
 
-    if (excel_book_get_info(fname, &book)) {
+    if (excel_book_get_info(fname, book)) {
 	pputs(prn, _("Failed to get workbook info"));
 	err = 1;
-    } else if (book.nsheets == 0) {
+    } else if (book->nsheets == 0) {
 	pputs(prn, _("No worksheets found"));
 	err = 1;
     } else {
-	wbook_print_info(&book);
+	wbook_print_info(book);
     }
 
     if (!err) {
-	if (book.nsheets > 1) {
-	    wsheet_menu(&book, 1);
-	} else {
-	    wsheet_menu(&book, 0);
-	}
-	debug_print = book.debug;
-	if (debug_print) {
+	wsheet_menu(book, book->nsheets > 1);
+	if (book_debugging(book)) {
+	    debug_print = 1;
 	    print_version();
 	}
     }
 
     dprintf("sheet selected=%d; import offsets: col=%d, row=%d\n",
-	    book.selected, book.col_offset, book.row_offset);
+	    book->selected, book->col_offset, book->row_offset);
 
-    if (book.selected == -1) {
+    if (book->selected == -1) {
 	/* canceled */
 	err = -1; 
     }
@@ -1346,7 +1398,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (err) goto getout;
 
     /* processing for specific worksheet */
-    err = process_sheet(fname, &book, prn);
+    err = process_sheet(fname, book, prn);
 
     if (err) {
 	const char *buf = gretl_print_get_buffer(prn);
@@ -1365,37 +1417,41 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (err) goto getout;
 
     /* check feasibility of offsets */
-    if (book.row_offset > nrows) {
+    if (book->row_offset > nrows) {
 	pputs(prn, _("Starting row is out of bounds.\n"));
 	err = 1;
-    } else if (book.col_offset > totcols) {
+    } else if (book->col_offset > totcols) {
 	pputs(prn, _("Starting column is out of bounds.\n"));
 	err = 1;
     }
 
     if (err) goto getout;
 
-    label_strings = first_col_strings(&book);
-    if (label_strings) {
+    if (first_col_strings(book)) {
 	puts("found label strings in first imported column");
     } else {
 	puts("check for label strings in first imported column: not found");
     }
 
     /* any bad or missing variable names? */
-    err = check_all_varnames(&book, totcols, blank_col, label_strings);
+    err = check_all_varnames(book, totcols, blank_col);
 
     if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	pputs(prn, _("One or more variable names are missing.\n"));
 	pputs(prn, _(adjust_rc));
     } else if (err == VARNAMES_INVALID) {
 	invalid_varname(prn);
+    } else if (err == VARNAMES_NONE) {
+	pputs(prn, _("it seems there are no variable names\n"));
+	book_set_auto_varnames(book);
+	book->row_offset -= 1;
+	err = 0;
     }
 
     if (err) goto getout; 
 
     /* any bad data? */
-    err = check_data_block(&book, totcols, blank_col, label_strings, &strerr);
+    err = check_data_block(book, totcols, blank_col, &strerr);
 
     if (err == 1) {
 	pprintf(prn, _("Expected numeric data, found string:\n"
@@ -1410,24 +1466,25 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }	    
 
     /* do we have a first column containing dates? */
-
     if (book_numeric_dates(book)) {
-	pd = pd_from_numeric_dates(nrows, book.row_offset, book.col_offset, NULL,
-				   &book);
-    } else if (obs_column_heading(rows[book.row_offset].cells[book.col_offset])) {
-	pd = consistent_date_labels(nrows, book.row_offset, book.col_offset, NULL); 
+	pd = pd_from_numeric_dates(nrows, book->row_offset, book->col_offset, NULL,
+				   book);
+    } else if (!book_auto_varnames(book)) {
+	int r0 = book->row_offset;
+	int c0 = book->col_offset;
+	
+	if (obs_column_heading(rows[r0].cells[c0])) {
+	    pd = consistent_date_labels(nrows, r0, c0, NULL);
+	}
     }
 
     if (pd) {
-	time_series_setup(rows[1 + book.row_offset].cells[book.col_offset],
-			  newinfo, pd, NULL, &time_series, &label_strings,
-			  book.flags);
+	book_time_series_setup(book, newinfo, pd);
     }    
 
     /* number of variables and observations for import dataset */
-    newinfo->v = n_vars_from_col(totcols, blank_col, book.col_offset,
-				 time_series || label_strings);
-    newinfo->n = nrows - 1 - book.row_offset + book.totmiss;
+    newinfo->v = n_vars_from_col(book, totcols, blank_col);
+    newinfo->n = nrows - 1 - book->row_offset + book->totmiss;
     fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 	    newinfo->v, newinfo->n);
 
@@ -1439,7 +1496,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     set_all_missing(newZ, newinfo);
 
-    if (time_series) {
+    if (book_time_series(book)) {
 	ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
     } else {
 	strcpy(newinfo->stobs, "1");
@@ -1450,20 +1507,18 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* OK: actually populate the dataset */
-    transcribe_data(newZ, newinfo, &book, totcols,
-		    book.col_offset + (time_series || label_strings),
-		    blank_col);
+    transcribe_data(book, newZ, newinfo, totcols, blank_col);
 
     if (fix_varname_duplicates(newinfo)) {
 	pputs(prn, _("warning: some variable names were duplicated\n"));
     }
 
-    if (label_strings) {
+    if (book_obs_labels(book)) {
 	dataset_allocate_obs_markers(newinfo);
 	if (newinfo->S != NULL) {
-	    i = book.col_offset;
+	    i = book->col_offset;
 	    for (t=0; t<newinfo->n; t++) {
-		int ts = t + 1 + book.row_offset;
+		int ts = t + 1 + book->row_offset;
 
 		strncat(newinfo->S[t], rows[ts].cells[i] + 1, OBSLEN - 1);
 	    }
@@ -1480,7 +1535,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
  getout:
     
     free(blank_col);
-    wbook_free(&book);
+    wbook_free(book);
     free_sheet();
 
     gretl_pop_c_numeric_locale();

@@ -36,6 +36,8 @@ version 1.5.1, in progress
   large margin to the top and right
 - win32: fix opening of files with non-ascii characters in their 
   names
+- XLS and Gnumeric importers: supply automatic varnames if no
+  variable names are present 
 
 12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series

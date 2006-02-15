@@ -37,35 +37,6 @@ static void set_all_missing (double **Z, DATAINFO *pdinfo)
 
 #endif /* EXCEL_IMPORTER */
 
-static void time_series_setup (const char *s, DATAINFO *newinfo, int pd,
-			       int *text_cols, int *time_series, 
-			       int *label_strings, BookFlag flags)
-{
-    if (flags & FIRST_COL_DATE_FORMAT) {
-	int d0 = atoi(s);
-
-	MS_excel_date_string(newinfo->stobs, d0, pd, flags & DATE_BASE_1904);
-    } else {
-	if (*s == '"' || *s == '\'') s++;
-	strcpy(newinfo->stobs, s);
-	colonize_obs(newinfo->stobs);
-    }
-
-    newinfo->pd = pd;
-    newinfo->structure = TIME_SERIES;
-
-    fprintf(stderr, "stobs='%s'\n", newinfo->stobs);
-    newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
-    fprintf(stderr, "sd0=%g\n", newinfo->sd0);
-
-    if (text_cols != NULL) {
-	*text_cols = 1;
-    }
-
-    *time_series = 1;
-    *label_strings = 0;
-}
-
 static void invalid_varname (PRN *prn)
 {
     pputs(prn, get_gretl_errmsg());
@@ -150,7 +121,7 @@ calendar_missing_obs (int diff, int pd, double d1, BookFlag flags)
 	char dstr[12];
 	int wday;
 
-	MS_excel_date_string(dstr, d1, 0, flags & DATE_BASE_1904);
+	MS_excel_date_string(dstr, d1, 0, flags & BOOK_DATE_BASE_1904);
 	wday = get_day_of_week(dstr);
 
 	if (wday == 1) {
@@ -189,7 +160,7 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
     /* look at first date */
     test = cell_val(tstart, col_offset);
     if (sscanf(test, "%lf", &x1)) {
-	MS_excel_date_string(dstr, (int) x1, 0, book->flags & DATE_BASE_1904);
+	MS_excel_date_string(dstr, (int) x1, 0, book_base_1904(book));
 	fprintf(stderr, "numeric date on row %d = %g (%s)\n", tstart, 
 		x1, dstr);
     } else {
@@ -200,7 +171,7 @@ static int pd_from_numeric_dates (int nrows, int row_offset, int col_offset,
     /* look at last date */
     test = cell_val(nrows - 1, col_offset);
     if (sscanf(test, "%lf", &x2)) {
-	MS_excel_date_string(dstr, (int) x2, 0, book->flags & DATE_BASE_1904);
+	MS_excel_date_string(dstr, (int) x2, 0, book_base_1904(book));
 	fprintf(stderr, "numeric date on row %d = %g (%s)\n", nrows - 1, 
 		x2, dstr);
     } else {
@@ -396,7 +367,6 @@ static void wbook_init (wbook *book)
     book->sheetnames = NULL;
     book->byte_offsets = NULL;
     book->selected = 0;
-    book->debug = 0;
     book->flags = 0;
     book->xf_list = NULL;
     book->totmiss = 0;
@@ -441,8 +411,11 @@ void debug_callback (GtkWidget *w, wbook *book)
 {
     static int done;
 
-    book->debug = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
-    if (book->debug && !done) {
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	book_set_debug(book);
+    }
+
+    if (book_debugging(book) && !done) {
 	gchar *msg;
 
 # ifdef WIN32

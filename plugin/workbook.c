@@ -567,7 +567,7 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 
 		fprintf(stderr, "%d\n", (int) val);
 		if (val) {
-		    book->flags |= DATE_BASE_1904;
+		    book_set_base_1904(book);
 		}
 	    } else {
 		fputs("unknown\n", stderr);
