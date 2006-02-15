@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.4.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-14 21:29-0500\n"
-"PO-Revision-Date: 2006-02-07 12:28+0100\n"
+"PO-Revision-Date: 2006-02-15 09:03+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1238,9 +1238,8 @@ msgstr ""
 "Osservazioni insufficienti per il correlogramma"
 
 #: lib/src/describe.c:1426
-#, fuzzy
 msgid "Residual autocorrelation function"
-msgstr "Funzione di autocorrelazione per %s"
+msgstr "Funzione di autocorrelazione dei residui"
 
 #: lib/src/describe.c:1428
 #, c-format
@@ -1278,18 +1277,16 @@ msgid "5% critical value"
 msgstr "Valori critici al 5%"
 
 #: lib/src/describe.c:1540
-#, fuzzy
 msgid "Residual ACF"
-msgstr "Residuo"
+msgstr "ACF dei residui"
 
 #: lib/src/describe.c:1542
 msgid "ACF for"
 msgstr "ACF di"
 
 #: lib/src/describe.c:1559
-#, fuzzy
 msgid "Residual PACF"
-msgstr "Residuo"
+msgstr "PACF dei residui"
 
 #: lib/src/describe.c:1561
 msgid "PACF for"
@@ -1346,9 +1343,8 @@ msgstr "Frequenza scalata"
 #  I prossimi messaggi sono le spiegazioni dei nomi riservati, che vengono inseriti
 #  nel messaggio precedente; inserire anche gli articoli!
 #: lib/src/describe.c:2005
-#, fuzzy
 msgid "Residual spectrum"
-msgstr "il vettore dei residui"
+msgstr "Spettro dei residui"
 
 #: lib/src/describe.c:2007
 #, c-format
@@ -1361,9 +1357,8 @@ msgid "Bartlett window, length %d"
 msgstr "Finestra di Bartlett, lunghezza %d"
 
 #: lib/src/describe.c:2027
-#, fuzzy
 msgid "Residual periodogram"
-msgstr "gretl: periodogramma"
+msgstr "Periodogramma dei residui"
 
 #: lib/src/describe.c:2029
 #, c-format
@@ -3497,9 +3492,8 @@ msgid "Omitted due to exact collinearity:"
 msgstr "Omesse per perfetta collinearità:"
 
 #: lib/src/modelprint.c:803
-#, fuzzy
 msgid "Redundant instruments:"
-msgstr "Aggiungi lista degli strumenti"
+msgstr "Strumenti ridondanti:"
 
 #: lib/src/modelprint.c:851 lib/src/modelprint.c:853
 msgid "Breusch-Godfrey test for"
@@ -9260,14 +9254,14 @@ msgid "/Model data/Add to data set/degrees of freedom"
 msgstr "/Dati modello/Aggiungi al dataset/Gradi di libertà"
 
 #: gui2/gui_utils.c:3188
-#, fuzzy, c-format
+#, c-format
 msgid "%s/correlogram"
-msgstr "Correlogramma"
+msgstr "%s/correlogramma"
 
 #: gui2/gui_utils.c:3192
-#, fuzzy, c-format
+#, c-format
 msgid "%s/spectrum"
-msgstr "Spettro"
+msgstr "%s/spettro"
 
 #: gui2/gui_utils.c:3200
 #, c-format
@@ -10853,9 +10847,8 @@ msgid "specific lags"
 msgstr "ritardi specifici"
 
 #: gui2/selector.c:3836
-#, fuzzy
 msgid "Lags of dependent variable"
-msgstr "Media della variabile dipendente"
+msgstr "Ritardi della variabile dipendente"
 
 #: gui2/series_view.c:385
 msgid "Variable to sort by"
