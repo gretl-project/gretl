@@ -1335,6 +1335,10 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 
 static void print_ll (const MODEL *pmod, PRN *prn)
 {
+    if (na(pmod->lnL)) {
+	return;
+    }
+
     if (plain_format(prn)) {
 	pprintf(prn, "  %s = %.*g\n", _("Log-likelihood"), GRETL_DIGITS,
 		pmod->lnL);

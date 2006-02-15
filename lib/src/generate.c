@@ -489,7 +489,7 @@ int get_generated_value (const char *rhs, double *val,
     sprintf(genline, "genr x___=%s", rhs);
 
 #if GENR_DEBUG
-    fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
+    fprintf(stderr, "get_generated_value: trying '%s' (t=%d)\n", genline, t);
 #endif
 
     err = generate(genline, pZ, pdinfo, OPT_P | OPT_D, NULL);
@@ -3497,7 +3497,7 @@ static void genr_deposit_result (GENERATOR *genr)
 	if (genr->err) {
 	    generated_x = NADBL;
 	} else {
-	    generated_x = genr->xvec[0];
+	    generated_x = genr->xvec[genr->pdinfo->t1];
 	}
 	generated_m = NULL;
     }	
