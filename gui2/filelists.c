@@ -433,7 +433,7 @@ static void copy_sys_filename (char *targ, const char *src)
 {
     strcpy(targ, src);
     /* check this: very confusing! */
-#if !defined(OLDGTK) && !defined(G_OS_WIN32)
+#if !defined(OLD_GTK) && !defined(G_OS_WIN32)
     my_filename_from_utf8(targ);
 #endif
 }    
