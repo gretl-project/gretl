@@ -5860,6 +5860,25 @@
             salvataggio di dati su file in formato CSV.
 	  </para>
 	</li>
+	<li>	
+	<para><lit>bhhh_maxiter</lit>: un intero. Imposta il massimo numero di
+          iterazioni per la routine BHHH, che è usata dai comandi
+	    <cmd>arma</cmd> e <cmd>tobit</cmd>. Se non viene raggiunta la
+            convergenza dopo <lit>bhhh_maxiter</lit>, il programma segnala un
+            errore. Il valore predefinito è 250.
+	  </para>
+	  </li>	  
+	<li>	  
+	  <para><lit>bhhh_toler</lit>: un valore a virgola mobile, oppure la
+            stringa <lit>default</lit>. Viene usato dalla routine BHHH di gretl
+            per controllare se viene raggiunta la convergenza. L'algoritmo di
+            calcolo ferma le iterazioni non appena l'incremento nella
+            log-verosimiglianza tra le iterazioni è minore di <lit>bhhh_toler</lit>.
+            I valori predefiniti sono 1.0E&minus;06 per il comando <cmd>arma</cmd>
+            e 1.0E&minus;10 per <cmd>tobit</cmd>; questi valori possono essere reimpostati
+            usando la stringa <lit>default</lit> invece di un valore numerico.
+	    </para>
+	    </li>
       </ilist>
 
     </description>
