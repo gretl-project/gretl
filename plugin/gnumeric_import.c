@@ -308,21 +308,6 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    err = 1;
 		}
 
-#if 0
-		/* check the top-left cell */
-		if (!err && i_real == 0 && t_real == 0) {
-		    if (VTYPE_IS_NUMERIC(vtype)) {
-			pputs(prn, _("Expected to find a variable name"));
-			err = 1;
-		    }
-		} else if (!err && i_real >= 1 && t_real == 0 && 
-			   !(vtype == VALUE_STRING)) {
-		    /* ought to be a varname here */
-		    pputs(prn, _("Expected to find a variable name"));
-		    err = 1;
-		}
-#endif
-
 		if (!err && (tmp = (char *) xmlNodeGetContent(p))) {
 		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
 			if (i_real == 0) {
