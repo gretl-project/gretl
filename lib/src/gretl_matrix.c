@@ -1850,35 +1850,37 @@ gretl_matrix *gretl_matrix_dot_multiply (const gretl_matrix *a,
 					 int *err)
 {
     gretl_matrix *c = NULL;
-    int i, j, k, n;
+    int m = a->rows;
+    int n = a->cols;
+    int p = b->rows;
+    int q = b->cols;
+    int i, j, k, nv;
 
-    if (a->rows == b->rows && a->cols == b->cols) {
+    if (m == p && n == q) {
 	c = gretl_matrix_copy(b);
 	if (c != NULL) {
-	    n = c->rows * c->cols;
-	    for (i=0; i<n; i++) {
+	    nv = m * n;
+	    for (i=0; i<nv; i++) {
 		c->val[i] *= a->val[i];
 	    }
 	}	    
-    } else if ((a->rows == 1 && a->cols == b->cols) || 
-	       (a->cols == 1 && a->rows == b->rows)) {
-	c = gretl_matrix_copy(b);
+    } else if ((m == 1 && n == q) || (n == 1 && m == p)) {
+	c = gretl_matrix_alloc(p, q);
 	if (c != NULL) {
 	    for (i=0; i<c->rows; i++) {
 		for (j=0; j<c->cols; j++) {
-		    k = (a->rows == 1)? j : i;
-		    c->val[mdx(c,i,j)] *= a->val[k];
+		    k = (m == 1)? j : i;
+		    c->val[mdx(c,i,j)] = a->val[k] * b->val[mdx(b,i,j)];
 		}
 	    }
 	}
-    } else if ((b->rows == 1 && b->cols == a->cols) || 
-	       (b->cols == 1 && b->rows == a->cols)) {
-	c = gretl_matrix_copy(a);
+    } else if ((p == 1 && n == q) || (q == 1 && m == p)) {
+	c = gretl_matrix_alloc(m, n);
 	if (c != NULL) {
 	    for (i=0; i<c->rows; i++) {
 		for (j=0; j<c->cols; j++) {
-		    k = (b->rows == 1)? j : i;
-		    c->val[mdx(c,i,j)] *= b->val[k];
+		    k = (p == 1)? j : i;
+		    c->val[mdx(c,i,j)] = a->val[mdx(a,i,j)] * b->val[k];
 		}
 	    }
 	}
@@ -1911,16 +1913,40 @@ gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a,
 				       int *err)
 {
     gretl_matrix *c = NULL;
-    int i, n;
+    int m = a->rows;
+    int n = a->cols;
+    int p = b->rows;
+    int q = b->cols;
+    int i, j, k, nv;
 
-    if (a->rows == b->rows && a->cols == b->cols) {
+    if (m == p && n == q) {
 	c = gretl_matrix_copy(a);
 	if (c != NULL) {
-	    n = c->rows * c->cols;
-	    for (i=0; i<n; i++) {
+	    nv = m * n;
+	    for (i=0; i<nv; i++) {
 		c->val[i] /= b->val[i];
 	    }
 	}	    
+    } else if ((m == 1 && n == q) || (n == 1 && m == p)) {
+	c = gretl_matrix_alloc(p, q);
+	if (c != NULL) {
+	    for (i=0; i<c->rows; i++) {
+		for (j=0; j<c->cols; j++) {
+		    k = (m == 1)? j : i;
+		    c->val[mdx(c,i,j)] = a->val[k] / b->val[mdx(b,i,j)];
+		}
+	    }
+	}
+    } else if ((p == 1 && n == q) || (q == 1 && m == p)) {
+	c = gretl_matrix_alloc(m, n);
+	if (c != NULL) {
+	    for (i=0; i<c->rows; i++) {
+		for (j=0; j<c->cols; j++) {
+		    k = (p == 1)? j : i;
+		    c->val[mdx(c,i,j)] = a->val[mdx(a,i,j)] / b->val[k];
+		}
+	    }
+	}
     } else {
 	fputs("gretl_matrix_dot_divide: matrices not conformable\n", stderr);
 	*err = E_NONCONF;

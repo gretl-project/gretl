@@ -133,7 +133,7 @@ an $m \times n$ matrix and let $B$ be $p \times q$.
   \times b_{ij}$.  This is technically known as the \emph{Hadamard
     product}.
 \item Otherwise, if $m=1$ and $n=q$, or $n=1$ and $m=p$, then $C$ is
-  $p\times q$ with $c_{ij} = b_{ij} \times a_k$, where $k=j$ if $m=1$
+  $p\times q$ with $c_{ij} = a_k \times b_{ij}$, where $k=j$ if $m=1$
   else $k=i$.
 \item Otherwise, if $p=1$ and $n=q$, or $q=1$ and $m=p$, then $C$ is
   $m\times n$ with $c_{ij} = a_{ij} \times b_k$, where $k=j$ if $p=1$
@@ -142,14 +142,9 @@ an $m \times n$ matrix and let $B$ be $p \times q$.
   undefined and an error is flagged.
 \end{itemize}
 
-With element-wise division, the two matrix operands must be of the
-same dimensions.  Given
-%
-\begin{code}
-matrix C = A ./ B
-\end{code}
-% 
-the result is a matrix $C$ such that $c_{ij} = a_{ij}/b_{ij}$.
+Element-wise division works in a manner exactly analogous to
+element-wise multiplication, simply replacing $\times$ by $\div$ in
+the account given for multiplication.
 
 Element-wise exponentiation, as in 
 %

@@ -20,8 +20,8 @@
 #ifndef GENSTACK_H
 #define GENSTACK_H
 
-#define GENR_DEBUG 0
-#define GEN_MATRIX_DEBUG 0
+#define GENR_DEBUG 1
+#define GEN_MATRIX_DEBUG 1
 
 #if (GENR_DEBUG || GEN_MATRIX_DEBUG)
 void dprintf (const char *format, ...);
