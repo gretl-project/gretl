@@ -476,12 +476,7 @@ gretlopt get_gretl_options (char *line, int *err)
 	line[n-1] = '\0';
     }
 
-    /* some commands do not take a "flag", and "-%c" may have
-       some other meaning */
     get_cmdword(line, cmdword);
-
-    if (!strcmp(cmdword, "genr") || !strcmp(cmdword, "sim") ||
-	!strcmp(cmdword, "label")) return oflags;
 
     if (strstr(line, "end nls")) {
 	ci = NLS;
@@ -491,7 +486,9 @@ gretlopt get_gretl_options (char *line, int *err)
 	ci = gretl_command_number(cmdword);
     }
 
-    if (ci == 0) {
+    /* some commands do not take a "flag", and "-%c" may have
+       some other meaning */
+    if (ci == 0 || ci == GENR || ci == LABEL) {
 	return oflags;
     }
 

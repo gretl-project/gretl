@@ -154,6 +154,16 @@ static struct gretl_cmd gretl_cmds[] = {
     { NC,       NULL}
 }; 
 
+static struct gretl_cmd gretl_cmd_aliases[] = {
+    { GENR, "eval" },   
+    { GENR, "series" },   
+    { GENR, "scalar" },   
+    { LOOP, "for" },   
+    { LOOP, "foreach" },
+    { LOOP, "while" },
+    { NC,   NULL }
+};
+
 const char *gretl_command_word (int i)
 {
     if (i >= 0 && i < NC) {
@@ -174,6 +184,11 @@ static void gretl_command_hash_init (void)
     for (i=0; gretl_cmds[i].cword != NULL; i++) {
 	g_hash_table_insert(ht, (gpointer) gretl_cmds[i].cword, 
 			    GINT_TO_POINTER(gretl_cmds[i].cnum));
+    }
+
+    for (i=0; gretl_cmd_aliases[i].cword != NULL; i++) {
+	g_hash_table_insert(ht, (gpointer) gretl_cmd_aliases[i].cword, 
+			    GINT_TO_POINTER(gretl_cmd_aliases[i].cnum));
     }
 }
 

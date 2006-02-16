@@ -164,10 +164,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->opt = OPT_F;
     } else if (!strcmp(s, "sample")) {
 	cmd->ci = SMPL;
-    } else if (!strcmp(s, "eval") ||
-	       !strcmp(s, "series") ||
-	       !strcmp(s, "scalar")) { 
-	cmd->ci = GENR;
     } else if (!strcmp(s, "list")) {
 	cmd->ci = REMEMBER;
 	cmd->opt = OPT_L;

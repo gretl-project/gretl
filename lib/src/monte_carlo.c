@@ -1051,12 +1051,6 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	line++;
     }
 
-    if (strncmp(line, "loop", 4)) {
-	printf("parse_loopline: line didn't begin with 'loop': '%s'\n", line);
-	strcpy(gretl_errmsg, _("No valid loop condition was given."));
-	return NULL;
-    }
-
     if (ploop == NULL) {
 	/* starting from scratch */
 #if LOOP_DEBUG
@@ -1088,9 +1082,11 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	loop = ploop;
     }
 
-    line += 4; /* "loop" */
-    while (isspace((unsigned char) *line)) {
-	line++;
+    if (!strncmp(line, "loop", 4)) {
+	line += 4;
+	while (isspace((unsigned char) *line)) {
+	    line++;
+	}
     }
 
 #if LOOP_DEBUG

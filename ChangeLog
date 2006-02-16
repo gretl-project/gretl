@@ -38,6 +38,10 @@ version 1.5.1, in progress
   names
 - XLS and Gnumeric importers: supply automatic varnames if no
   variable names are present 
+- Alter presentation of ARMA parameter estimates (call them
+  "phi" and "theta")
+- Automatically Use X-12-ARIMA for seasonal ARMA until further 
+  notice
 
 12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series

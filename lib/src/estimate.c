@@ -3197,9 +3197,11 @@ MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
+#ifdef HAVE_X12A
     if (arma_has_seasonals(list)) {
 	opt |= OPT_X;
     }
+#endif
 
     if (opt & OPT_X) {
 	arma_func = get_plugin_function("arma_x12_model", &handle);
