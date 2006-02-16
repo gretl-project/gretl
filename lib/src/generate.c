@@ -2198,6 +2198,7 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
 	return 1;
     }
 
+#if 0
     /* FIXME this is dodgy */
     if (isalpha(*s) && 
 	(strstr(s, "$coeff") ||
@@ -2206,6 +2207,7 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
 	 strstr(s, "$rho"))) {
 	return 1;
     }
+#endif
 
     if (genr_is_matrix(genr)) {
 	if (!strncmp(s, "uniform", 7) ||
@@ -2340,9 +2342,9 @@ static int token_is_function (char *s, GENERATOR *genr, int level)
 
     if (ret) {
 	DPRINTF((" yes, token is function...\n"));
+	/* FIXME compound matrix arg? */
 	if (string_arg_function_word(s, genr) || 
 	    (matrix_scalar_function_word(s) && !genr_is_matrix(genr))) {
-	    /* FIXME compound matrix arg? */
 	    return ret;
 	} else {
 	    char subtok[TOKLEN];

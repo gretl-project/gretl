@@ -68,7 +68,7 @@ struct atomset_ {
                                f == T_VARNUM || f == T_SERIES || \
                                f == T_ISLIST || f == T_NELEM || \
                                f == T_RESAMPLE || f == T_HPFILT || \
-                               f == T_BKFILT || f == T_DSORT)
+                               f == T_BKFILT || f == T_DSORT || f == T_SQRT)
 
 #define atom_is_scalar(a) ((a->atype & ATOM_SCALAR) || (a->atype & ATOM_TMP))
 
