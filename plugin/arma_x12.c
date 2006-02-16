@@ -482,6 +482,8 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
 	return;
     }
 
+    pmod->full_n = pdinfo->n;
+
     for (t=0; t<pdinfo->n; t++) {
 	pmod->uhat[t] = pmod->yhat[t] = NADBL;
     }

@@ -3164,7 +3164,8 @@ static void add_model_tex_items (windata_t *vwin)
 				     vwin, 1);
     }  
 
-    model_tex_equation_state(vwin->ifac, !pmod->errcode && pmod->ci != NLS);
+    model_tex_equation_state(vwin->ifac, !pmod->errcode && 
+			     command_ok_for_model(EQNPRINT, pmod->ci));
 }
 
 static void add_vars_to_plot_menu (windata_t *vwin)

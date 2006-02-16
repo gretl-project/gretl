@@ -52,6 +52,7 @@ struct _selector {
     GtkWidget *add_button;
     GtkWidget *lags_button;
     GtkWidget *extra[N_EXTRA];
+    GtkWidget *x12a_check;
     int code;
     int active_var;
     int error;
@@ -116,6 +117,12 @@ static int vartrend;
 static int lags_hidden;
 static int y_x_lags_enabled;
 static int y_w_lags_enabled;
+static int arma_p = 1;
+static int arma_P = 0;
+static int arma_q = 1;
+static int arma_Q = 0;
+static int garch_p = 1;
+static int garch_q = 1;
 
 static int *xlist;
 static int *instlist;
@@ -137,6 +144,7 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static int list_show_var (int v, int code, int show_lags);
 static int selector_get_depvar_number(selector *sr);
+static int spinner_get_int (GtkWidget *w);
 
 #include "lagpref.c"
 
@@ -199,6 +207,14 @@ void clear_selector (void)
     default_var = 0;
     default_order = 0;
     vartrend = 0;
+
+    arma_p = 1;
+    arma_q = 1;
+    arma_P = 0;
+    arma_Q = 0;
+
+    garch_p = 1;
+    garch_q = 1;
 
     free(xlist);
     xlist = NULL;
@@ -1194,6 +1210,18 @@ static void add_pq_vals_to_cmdlist (selector *sr)
 	if (i == 1 || i == 3) {
 	    add_to_cmdlist(sr, "; ");
 	}
+    }
+
+    if (sr->code == ARMA) {
+	arma_p = vals[0];
+	arma_q = vals[1];
+	if (sr->extra[2] != NULL) {
+	    arma_P = vals[2];
+	    arma_Q = vals[3];
+	}
+    } else {
+	garch_p = vals[0];
+	garch_q = vals[1];
     }
 }
 
@@ -2401,6 +2429,24 @@ static GtkWidget *spinner_label (int i, int code)
     return lbl;
 }
 
+static void sarma_check (GtkWidget *w, selector *sr)
+{
+#if HAVE_X12A
+    int P = spinner_get_int(sr->extra[2]);
+    int Q = spinner_get_int(sr->extra[3]);
+    static gboolean tstate;
+
+    if (P > 0 || Q > 0) {
+	tstate = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sr->x12a_check));
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->x12a_check), TRUE);
+	gtk_widget_set_sensitive(sr->x12a_check, FALSE);
+    } else {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->x12a_check), tstate);
+	gtk_widget_set_sensitive(sr->x12a_check, TRUE);
+    }
+#endif
+}
+
 static void build_pq_spinners (selector *sr)
 {
     GtkWidget *hbox, *tmp;
@@ -2429,11 +2475,22 @@ static void build_pq_spinners (selector *sr)
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
 	gtk_widget_show(tmp);
 
-	val = (i < 2)? 1 : 0;
+	if (sr->code == ARMA) {
+	    val = (i==0)? arma_p : (i==1)? arma_q : (i==2)? arma_P : arma_Q;
+	} else {
+	    val = (i==0)? garch_p : garch_q;
+	}
+
 	adj = gtk_adjustment_new(val, 0, 4, 1, 1, 1);
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
 	gtk_widget_show(sr->extra[i]);
+
+	if (i > 1) {
+	    /* ARMA seasonals */
+	    g_signal_connect(G_OBJECT(sr->extra[i]), "value-changed",
+			     G_CALLBACK(sarma_check), sr);
+	}
     }
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
@@ -2553,6 +2610,7 @@ static void build_selector_switches (selector *sr)
     if (sr->code == ARMA) {
 	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_X);
+	sr->x12a_check = tmp;
     }	
 #endif
 } 

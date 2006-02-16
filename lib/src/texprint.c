@@ -217,16 +217,34 @@ static void tex_arma_coeff_name (char *targ, const char *src,
 				 int inmath)
 {
     char vname[VNAMELEN], vnesc[32], texname[32];
-    int lag;
+    int i;
 
-    if (sscanf(src, "%15[^(](-%d)", vname, &lag) == 2) {
-	if (!strcmp(vname, "e")) {
-	    if (!inmath) {
-		strcpy(texname, "$\\varepsilon$");
-	    } else {
-		strcpy(texname, "\\varepsilon");
-	    }
-	} else if (!strcmp(vname, "y")) {
+    if (sscanf(src, "phi_%d", &i)) {
+	if (!inmath) {
+	    sprintf(targ, "$\\phi_{%d}$", i);
+	} else {
+	    sprintf(targ, "\\phi_{%d}", i);
+	}
+    } else if (sscanf(src, "Phi_%d", &i)) {
+	if (!inmath) {
+	    sprintf(targ, "$\\Phi_{%d}$", i);
+	} else {
+	    sprintf(targ, "\\Phi_{%d}", i);
+	}
+    } else if (sscanf(src, "theta_%d", &i)) {
+	if (!inmath) {
+	    sprintf(targ, "$\\theta_{%d}$", i);
+	} else {
+	    sprintf(targ, "\\theta_{%d}", i);
+	}
+    } else if (sscanf(src, "Theta_%d", &i)) {
+	if (!inmath) {
+	    sprintf(targ, "$\\Theta_{%d}$", i);
+	} else {
+	    sprintf(targ, "\\Theta_{%d}", i);
+	}
+    } else if (sscanf(src, "%15[^(](-%d)", vname, &i) == 2) {
+	if (!strcmp(vname, "y")) {
 	    strcpy(texname, "y");
 	} else {
 	    tex_escape(vnesc, vname);
@@ -237,9 +255,9 @@ static void tex_arma_coeff_name (char *targ, const char *src,
 	    }
 	}
 	if (!inmath) {
-	    sprintf(targ, "%s$_{t-%d}$", texname, lag);
+	    sprintf(targ, "%s$_{t-%d}$", texname, i);
 	} else {
-	    sprintf(targ, "%s_{t-%d}", texname, lag);
+	    sprintf(targ, "%s_{t-%d}", texname, i);
 	}
     } else {
 	tex_escape(vnesc, src);

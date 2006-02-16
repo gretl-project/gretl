@@ -2027,6 +2027,12 @@ static int copy_model (MODEL *targ, const MODEL *src)
     /* monolithic copy of structure */
     *targ = *src;
 
+    /* temporarily zero various count members just in case
+       copying of allocated info fails */
+    targ->ntests = 0;
+    targ->nparams = 0;
+    targ->n_data_items = 0;
+
     /* now work on pointer members */
     gretl_model_init_pointers(targ);
 
@@ -2060,13 +2066,11 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	return 1;
     }
 
-    if (src->xpx != NULL && 
-	(targ->xpx = copyvec(src->xpx, m)) == NULL) {
+    if (src->xpx != NULL && (targ->xpx = copyvec(src->xpx, m)) == NULL) {
 	return 1;
     }
 
-    if (src->vcv != NULL && 
-	(targ->vcv = copyvec(src->vcv, m)) == NULL) {
+    if (src->vcv != NULL && (targ->vcv = copyvec(src->vcv, m)) == NULL) {
 	return 1;
     }
 
@@ -2080,6 +2084,7 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	if (targ->tests == NULL) {
 	    return 1;
 	}
+	targ->ntests = src->ntests;
     }
 
     if (src->nparams > 0 && src->params != NULL) {
@@ -2087,6 +2092,7 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	if (targ->params == NULL) {
 	    return 1;
 	}
+	targ->nparams = src->nparams;
     }    
 
     if (src->n_data_items > 0) {
@@ -2094,6 +2100,7 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	if (targ->data_items == NULL) {
 	    return 1;
 	}
+	targ->n_data_items = src->n_data_items;
     }
 
     if (src->list != NULL && 
@@ -2238,20 +2245,24 @@ int command_ok_for_model (int test_ci, int model_ci)
     case OMIT:
     case OMITFROM:
 	if (model_ci == NLS || model_ci == ARMA || 
-	    model_ci == GARCH) ok = 0;
+	    model_ci == GARCH) {
+	    ok = 0;
+	}
 	break;
 
     case COEFFSUM:
     case VIF:
 	if (model_ci == NLS || model_ci == TSLS ||
-	    model_ci == ARMA || model_ci == GARCH) ok = 0;
+	    model_ci == ARMA || model_ci == GARCH) {
+	    ok = 0;
+	}
 	break;
 
-#if 0
     case EQNPRINT:
-	if (model_ci != OLS) ok = 0; /* FIXME: unduly restrictive? */
+	if (model_ci == ARMA || model_ci == NLS) {
+	    ok = 0; 
+	}
 	break;
-#endif
 
     case LMTEST:
 	if (model_ci != OLS && model_ci != POOLED) ok = 0;
@@ -2425,14 +2436,9 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				   int yno, int p, int q, int P, int Q, 
 				   int r)
 {
-    int ptot = p + P;
-    int qtot = q + Q;
-    int np = ptot + qtot + r + pmod->ifc + 1;
+    int np = p + P + q + Q + r + pmod->ifc + 1;
     int xstart;
-    int i, j, s;
-
-    const char *depvar;
-    size_t n;
+    int i, j;
 
     pmod->params = malloc(np * sizeof pmod->params);
     if (pmod->params == NULL) {
@@ -2465,30 +2471,21 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	j = 1;
     }
 
-    depvar = pmod->params[0];
-    n = strlen(depvar);
-
-    for (i=0; i<ptot; i++) {
-	if (i < p) {
-	    s = i + 1;
-	} else {
-	    s = (i - p + 1) * pdinfo->pd;
-	}
-	if (n < VNAMELEN - 4) {
-	    sprintf(pmod->params[j++], "%s(-%d)", depvar, s);
-	} else {
-	    sprintf(pmod->params[j++], "y(-%d)", s);
-	}
+    for (i=0; i<p; i++) {
+	sprintf(pmod->params[j++], "phi_%d", i + 1);
     }
 
-    for (i=0; i<qtot; i++) {
-	if (i < q) {
-	    s = i + 1;
-	} else {
-	    s = (i - q + 1) * pdinfo->pd;
-	}    
-	sprintf(pmod->params[j++], "e(-%d)", s);
+    for (i=0; i<P; i++) {
+	sprintf(pmod->params[j++], "Phi_%d", i + 1);
+    }   
+
+    for (i=0; i<q; i++) {
+	sprintf(pmod->params[j++], "theta_%d", i + 1);
     }
+
+    for (i=0; i<Q; i++) {
+	sprintf(pmod->params[j++], "Theta_%d", i + 1);
+    }       
 
     xstart = (P || Q)? 8 : 5;
 

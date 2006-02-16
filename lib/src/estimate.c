@@ -3169,6 +3169,8 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
     return lad_model;
 }
 
+#define arma_has_seasonals(l) (l[0] > 5 && l[3] == LISTSEP && l[6] == LISTSEP)
+
 /**
  * arma:
  * @list: dependent variable, AR and MA orders, and any exogenous
@@ -3194,6 +3196,10 @@ MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo,
 			 gretlopt, PRN *);
 
     *gretl_errmsg = '\0';
+
+    if (arma_has_seasonals(list)) {
+	opt |= OPT_X;
+    }
 
     if (opt & OPT_X) {
 	arma_func = get_plugin_function("arma_x12_model", &handle);
