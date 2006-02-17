@@ -508,7 +508,17 @@ static int ar_init_by_ols (const int *list, double *coeff,
     int offset, xstart;
     int i, j, t, err = 0;
 
-    gretl_model_init(&armod);  
+    gretl_model_init(&armod); 
+
+#if 0 /* FIXME overlap of non-seasonal and seasonal lag orders */
+    if (ainfo->p >= pdinfo->pd && ainfo->P > 0) {
+	/* overlap of non-seasonal and seasonal coeffs */
+	for (i=0; i<ainfo->nc; i++) {
+	    coeff[i] = 0.1;
+	}
+	return 0;
+    }
+#endif
 
     alist = gretl_list_new(av);
     if (alist == NULL) {
@@ -534,7 +544,9 @@ static int ar_init_by_ols (const int *list, double *coeff,
    }
 
     for (i=0; i<ainfo->r; i++) {
-	alist[i + offset + ainfo->p + ainfo->P] = i + ainfo->p + ainfo->P + 2;
+	int totp = ainfo->p + ainfo->P;
+
+	alist[i + offset + totp] = i + totp + 2;
     }
 
     adinfo = create_new_dataset(&aZ, av, an, 0);
@@ -723,7 +735,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
        MA at 0 */
     err = ar_init_by_ols(alist, coeff, Z, pdinfo, &ainfo);
     if (err) {
-	armod.errcode = E_ALLOC;
+	armod.errcode = err;
 	goto bailout;
     }	
 
