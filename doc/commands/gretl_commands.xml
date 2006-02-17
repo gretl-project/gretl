@@ -1774,9 +1774,9 @@
 
     <description>
       <para>
-	Opens a block of statements in which a function is defined.  This block must
-	be closed with <lit>end function</lit>.  Please see 
-      <guideref targ="functions"/> for details.
+	Opens a block of statements in which a function is defined.  This
+	block must be closed with <lit>end function</lit>.  Please see
+	<guideref targ="functions"/> for details.
       </para>
     </description>
 
@@ -1866,6 +1866,13 @@
 	command.
       </para>
 
+      <para context="gui">
+	The estimated conditional variance, along with the residuals and
+	various other model statistics, can be accessed and added to the
+	dataset using the <quote>Model data</quote> menu in the window
+	where the model is displayed.
+      </para>
+
       <para context="cli">
 	By default, the estimates of the variance parameters are
 	initialized using the unconditional error variance from
@@ -1878,6 +1885,15 @@
 	<book>Time Series Analysis</book>.  In some cases this may 
 	improve the chances of convergence.
       </para>
+
+      <para context="cli">
+	The GARCH residuals and estimated conditional variance can be
+	retrieved as <lit>$uhat</lit> and <lit>$h</lit> respectively.  For
+	example, to get the conditional variance:  
+      </para>
+      <code context="cli">
+	genr ht = $h
+      </code>
 
     </description>
 
@@ -2253,6 +2269,8 @@
 
       <para>The internal series <lit>$uhat</lit> and <lit>$yhat</lit> hold,
 	respectively, the residuals and fitted values from the last regression.
+	For GARCH models, the conditional variance is held in the internal variable 
+	<lit>$h</lit>.
       </para>
 
       <para>
