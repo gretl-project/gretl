@@ -493,8 +493,10 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 {
 #if ARMA_DEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+    gretlopt opt = OPT_V;
 #else
     PRN *prn = NULL;
+    gretlopt opt = OPT_NONE;
 #endif
     char fnstr[MAXLINE]; /* FIXME? */
     char term[32];
@@ -587,20 +589,17 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     }
 
     if (!err) {
-	*amod = model_from_nls_spec(spec, pZ, pdinfo, OPT_NONE, prn);
+	*amod = model_from_nls_spec(spec, pZ, pdinfo, opt, prn);
 	err = amod->errcode;
 #if ARMA_DEBUG
 	if (!err) {
 	    printmodel(amod, pdinfo, OPT_NONE, prn);
 	}
+	gretl_print_destroy(prn);
 #endif
     }
 
     bailout:
-
-#if ARMA_DEBUG
-    gretl_print_destroy(prn);
-#endif
 
     nls_spec_destroy(spec);
     free(plist);
