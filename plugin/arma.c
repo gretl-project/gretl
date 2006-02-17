@@ -86,11 +86,6 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *ma_coeff,
 
     temp[0] = 1.0;
 
-    /* FIXME: is this right, with seasonal MA?  Should we be 
-       calculating distinct seasonal and non-seasonal
-       roots?? 
-    */
-
     /* initialize to non-seasonal MA or zero */
     for (i=0; i<qmax; i++) {
         if (i < ainfo->q) {
@@ -107,7 +102,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *ma_coeff,
 	for (j=0; j<ainfo->q; j++) {
 	    int m = k + j + 1;
 
-	    temp[m] -= sma_coeff[i] * ma_coeff[j];
+	    temp[m] += sma_coeff[i] * ma_coeff[j];
 	}
     }
 
@@ -150,7 +145,7 @@ static void do_MA_partials (double *drv,
 	drv[t] -= sma_coeff[i] * drv[s];
 	for (j=0; j<ainfo->q; j++) {
 	    p = s - (j + 1);
-	    drv[t] += sma_coeff[i] * ma_coeff[j] * drv[p];
+	    drv[t] -= sma_coeff[i] * ma_coeff[j] * drv[p];
 	}
     }
 }
@@ -255,7 +250,7 @@ static int arma_ll (double *coeff,
 		for (j=0; j<ainfo->q; j++) {
 		    p = s - (j + 1);
 		    if (p >= t1) {
-			e[t] += sma_coeff[i] * ma_coeff[j] * e[p];
+			e[t] -= sma_coeff[i] * ma_coeff[j] * e[p];
 		    }
 		}
 	    }
@@ -329,7 +324,7 @@ static int arma_ll (double *coeff,
 		    for (i=0; i<ainfo->Q; i++) {
 			xlag = lag + ainfo->pd * (i + 1);
 			if (t >= xlag) {
-			    de_m[j][t] += sma_coeff[i] * e[t-xlag];
+			    de_m[j][t] -= sma_coeff[i] * e[t-xlag];
 			}
 		    }
 		    do_MA_partials(de_m[j], ainfo, ma_coeff, sma_coeff, t);
@@ -345,7 +340,7 @@ static int arma_ll (double *coeff,
 		    for (i=0; i<ainfo->q; i++) {
 			xlag = lag + (i + 1);
 			if (t >= xlag) {
-			    de_sm[j][t] += ma_coeff[i] * e[t-xlag];
+			    de_sm[j][t] -= ma_coeff[i] * e[t-xlag];
 			}
 		    }
 		    do_MA_partials(de_sm[j], ainfo, ma_coeff, sma_coeff, t);
@@ -492,33 +487,148 @@ make_armax_X (int *list, struct arma_info *ainfo, const double **Z)
     return X;
 }
 
-/* Run an initial OLS to get initial values for the AR coefficients */
+static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
+			       const int *alist, int axstart,
+			       double ***pZ, DATAINFO *pdinfo) 
+{
+#if ARMA_DEBUG
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+#else
+    PRN *prn = NULL;
+#endif
+    char fnstr[MAXLINE]; /* FIXME? */
+    char term[32];
+    nls_spec *spec;
+    int *plist = NULL;
+    int v = pdinfo->v;
+    int nparam;
+    int i, j, k, err = 0;
 
-static int ar_init_by_ols (const int *list, double *coeff,
-			   const double **Z, const DATAINFO *pdinfo,
-			   struct arma_info *ainfo)
+    spec = nls_spec_new(NLS, pdinfo);
+    if (spec == NULL) {
+	return E_ALLOC;
+    }
+
+    nparam = ainfo->ifc + ainfo->p + ainfo->P + ainfo->r;
+
+    plist = gretl_list_new(nparam);
+    if (plist == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    err = dataset_add_scalars(nparam, pZ, pdinfo); 
+    if (err) {
+	goto bailout;
+    }
+
+    strcpy(fnstr, "y=");
+    k = 1;
+
+    if (ainfo->ifc) {
+	double ybar = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
+
+	strcat(fnstr, "b0+");
+	strcpy(pdinfo->varname[v], "b0");
+	(*pZ)[v][0] = ybar;
+	plist[k++] = v++;
+    }
+
+    if (!ainfo->ifc) {
+	(*pZ)[v][0] = 1.0; /* FIXME arbitrary */
+    }    
+
+    for (i=1; i<=ainfo->p; i++) {
+	if (i > 1) {
+	    strcat(fnstr, "+");
+	}
+	sprintf(term, "phi_%d*y_%d", i, i);
+	strcat(fnstr, term);
+	sprintf(pdinfo->varname[v], "phi_%d", i);
+	plist[k++] = v++;
+    }
+
+    if (ainfo->p > 0) {
+	strcat(fnstr, "+");
+    } else if (!ainfo->ifc) {
+	(*pZ)[v][0] = 1.0; /* FIXME arbitrary */
+    }      
+
+    for (i=1; i<=ainfo->P; i++) {
+	if (i > 1) {
+	    strcat(fnstr, "+");
+	}
+	sprintf(term, "Phi_%d*y_%d", i, i * ainfo->pd);
+	strcat(fnstr, term);
+	sprintf(pdinfo->varname[v], "Phi_%d", i);
+	plist[k++] = v++;
+    }
+
+    for (i=1; i<=ainfo->P; i++) {
+	for (j=1; j<=ainfo->p; j++) {
+	    sprintf(term, "-phi_%d*Phi_%d*y_%d", j, i, i * ainfo->pd + j);
+	    strcat(fnstr, term);
+	}
+    }  
+
+    for (i=0; i<ainfo->r; i++) {
+	j = alist[axstart + i];
+	sprintf(term, "+b_%d*%s", i + 1, pdinfo->varname[j]);
+	strcat(fnstr, term);
+	sprintf(pdinfo->varname[v], "b%d", i + 1);
+	plist[k++] = v++;
+    }	
+
+    err = nls_spec_set_regression_function(spec, fnstr, pdinfo);
+
+    if (!err) {
+	err = nls_spec_add_param_list(spec, plist, (const double **) *pZ,
+				      pdinfo);
+    }
+
+    if (!err) {
+	*amod = model_from_nls_spec(spec, pZ, pdinfo, OPT_NONE, prn);
+	err = amod->errcode;
+#if ARMA_DEBUG
+	if (!err) {
+	    printmodel(amod, pdinfo, OPT_NONE, prn);
+	}
+#endif
+    }
+
+    bailout:
+
+#if ARMA_DEBUG
+    gretl_print_destroy(prn);
+#endif
+
+    nls_spec_destroy(spec);
+    free(plist);
+
+    return err;
+}
+
+/* Run a least squares model to get initial values for the AR
+   coefficients */
+
+static int ar_init_by_ls (const int *list, double *coeff,
+			  const double **Z, const DATAINFO *pdinfo,
+			  struct arma_info *ainfo)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
-    int av = ainfo->p + ainfo->P + ainfo->r + 2;
     int np = ainfo->p, nq = ainfo->q;
+    int nmixed = ainfo->p * ainfo->P;
+    int ptotal = ainfo->p + ainfo->P + nmixed;
+    int av = ptotal + ainfo->r + 2;
     double **aZ = NULL;
     DATAINFO *adinfo = NULL;
     int *alist = NULL;
     MODEL armod;
-    int offset, xstart;
+    int xstart, axstart;
+    int lag, offset;
     int i, j, t, err = 0;
 
     gretl_model_init(&armod); 
-
-#if 0 /* FIXME overlap of non-seasonal and seasonal lag orders */
-    if (ainfo->p >= pdinfo->pd && ainfo->P > 0) {
-	/* overlap of non-seasonal and seasonal coeffs */
-	for (i=0; i<ainfo->nc; i++) {
-	    coeff[i] = 0.1;
-	}
-	return 0;
-    }
-#endif
 
     alist = gretl_list_new(av);
     if (alist == NULL) {
@@ -536,17 +646,23 @@ static int ar_init_by_ols (const int *list, double *coeff,
     }
 
     for (i=0; i<ainfo->p; i++) {
-	alist[i + offset] = i + 2;
+	alist[i + offset] = 2 + i;
     }
 
     for (i=0; i<ainfo->P; i++) {
-	alist[i + offset + ainfo->p] = i + ainfo->p + 2;
-   }
+	alist[i + offset + ainfo->p] = ainfo->p + 2 + i;
+    }
 
+    for (i=0; i<ainfo->P; i++) {
+	for (j=0; j<ainfo->p; j++) {
+	    alist[i + offset + ainfo->p + ainfo->P] = 
+		ainfo->p + ainfo->P + 2 + i;
+	}
+    }
+
+    axstart = offset + ptotal;
     for (i=0; i<ainfo->r; i++) {
-	int totp = ainfo->p + ainfo->P;
-
-	alist[i + offset + totp] = i + totp + 2;
+	alist[axstart + i] = ptotal + 2 + i;
     }
 
     adinfo = create_new_dataset(&aZ, av, an, 0);
@@ -563,25 +679,38 @@ static int ar_init_by_ols (const int *list, double *coeff,
 
 	s = t + ainfo->t1;
 	aZ[1][t] = Z[ainfo->yno][s];
+	strcpy(adinfo->varname[1], "y");
 
 	for (i=0; i<ainfo->p; i++) {
-	    s = t + ainfo->t1 - (i + 1);
-	    k = i + 2;
+	    lag = i + 1;
+	    s = t + ainfo->t1 - lag;
+	    k = 2 + i;
 	    aZ[k][t] = Z[ainfo->yno][s];
+	    sprintf(adinfo->varname[k], "y_%d", lag);
 	}
 
 	for (i=0; i<ainfo->P; i++) {
-	    s = t + ainfo->t1 - ainfo->pd * (i + 1);
-	    k = i + ainfo->p + 2;
+	    lag = ainfo->pd * (i + 1);
+	    s = t + ainfo->t1 - lag;
+	    k = ainfo->p + 2 + i;
 	    aZ[k][t] = Z[ainfo->yno][s];
+	    sprintf(adinfo->varname[k], "y_%d", lag);
+	    for (j=0; j<ainfo->p; j++) {
+		lag = ainfo->pd * (i + 1) + (j + 1);
+		s = t + ainfo->t1 - lag;
+		k = ainfo->p + ainfo->P + 2 + j;
+		aZ[k][t] = Z[ainfo->yno][s];
+		sprintf(adinfo->varname[k], "y_%d", lag);
+	    }
 	}
 
 	s = t + ainfo->t1;
 
 	for (i=0; i<ainfo->r; i++) {
-	    k = i + ainfo->p + ainfo->P + 2;
+	    k = ptotal + 2 + i;
 	    j = list[xstart + i];
 	    aZ[k][t] = Z[j][s];
+	    strcpy(adinfo->varname[k], pdinfo->varname[j]);
 	}
     }
 
@@ -591,7 +720,7 @@ static int ar_init_by_ols (const int *list, double *coeff,
     }
 
 #if ARMA_DEBUG
-    printlist(alist, "'alist' in ar_init_by_ols");
+    printlist(alist, "'alist' in ar_init_by_ls");
 #endif
 
     if (alist[0] == 1) {
@@ -603,9 +732,15 @@ static int ar_init_by_ols (const int *list, double *coeff,
 	goto exit_init;
     }
 
-    /* run the OLS */
-    armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z, 0.0);
-    err = armod.errcode;
+    if (nmixed > 0) {
+	/* mixed: need to use nonlinear least squares */
+	err = arma_get_nls_model(&armod, ainfo, alist, axstart, &aZ, adinfo);
+    } else {
+	/* just use OLS */
+	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z, 0.0);
+	err = armod.errcode;
+    }
+
     if (!err) {
 	j = 0;
 	for (i=0; i<armod.ncoeff; i++) {
@@ -622,13 +757,13 @@ static int ar_init_by_ols (const int *list, double *coeff,
 
 #if ARMA_DEBUG
     if (!err) {
-	fprintf(stderr, "OLS init: ncoeff = %d, nobs = %d\n", 
+	fprintf(stderr, "LS init: ncoeff = %d, nobs = %d\n", 
 		armod.ncoeff, armod.nobs);
 	for (i=0; i<armod.ncoeff; i++) {
 	    fprintf(stderr, " coeff[%d] = %g\n", i, armod.coeff[i]);
 	}
     } else {
-	fprintf(stderr, "OLS init: armod.errcode = %d\n", err);
+	fprintf(stderr, "LS init: armod.errcode = %d\n", err);
     }
 #endif
 
@@ -731,9 +866,9 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* initialize the coefficients: AR and regression part by OLS, 
-       MA at 0 */
-    err = ar_init_by_ols(alist, coeff, Z, pdinfo, &ainfo);
+    /* initialize the coefficients: AR and regression part by least
+       squares, MA at 0 */
+    err = ar_init_by_ls(alist, coeff, Z, pdinfo, &ainfo);
     if (err) {
 	armod.errcode = err;
 	goto bailout;

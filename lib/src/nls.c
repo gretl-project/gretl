@@ -428,43 +428,49 @@ get_params_from_nlfunc (nls_spec *spec, const double **Z,
     return err;
 }
 
-/* For case where analytical derivatives are not given, the user
-   may supply a line like:
-
-     params b0 b1 b2 b3
-
-   specifying the paramters to be estimated.  Here we parse
-   such a list and add the parameter info to spec.  The terms
-   in the list must be pre-existing scalar variables.
-*/
-
-static int 
-nls_spec_add_param_list (nls_spec *spec, const char *s,
-			 const double **Z, const DATAINFO *pdinfo)
+static int nls_spec_allocate_params (nls_spec *spec, int np)
 {
-    int i, nf = count_fields(s);
-    const char *p = s;
-    int err = 0;
-
-    if (spec->params != NULL) {
-	return E_DATA;
-    }
-
-    if (nf == 0) {
-	return E_DATA;
-    }
-
-    spec->params = malloc(nf * sizeof *spec->params);
+    spec->params = malloc(np * sizeof *spec->params);
     if (spec->params == NULL) {
 	return E_ALLOC;
     }
 
-    spec->coeff = malloc(nf * sizeof *spec->coeff);
+    spec->coeff = malloc(np * sizeof *spec->coeff);
     if (spec->coeff == NULL) {
 	free(spec->params);
 	spec->params = NULL;
 	return E_ALLOC;
     }    
+
+    return 0;
+}
+
+/* For case where analytical derivatives are not given, the user
+   may supply a line like:
+
+     params b0 b1 b2 b3
+
+   specifying the parameters to be estimated.  Here we parse
+   such a list and add the parameter info to spec.  The terms
+   in the list must be pre-existing scalar variables.
+*/
+
+static int 
+nls_spec_add_params_from_line (nls_spec *spec, const char *s,
+			       const double **Z, const DATAINFO *pdinfo)
+{
+    int i, nf = count_fields(s);
+    const char *p = s;
+    int err = 0;
+
+    if (spec->params != NULL || nf == 0) {
+	return E_DATA;
+    }
+
+    err = nls_spec_allocate_params(spec, nf);
+    if (err) {
+	return err;
+    }
 
     for (i=0; i<nf && !err; i++) {
 	char *pname = gretl_word_strdup(p, &p);
@@ -498,6 +504,61 @@ nls_spec_add_param_list (nls_spec *spec, const char *s,
 	spec->nparam = 0;
     } else {
 	spec->nparam = nf;
+    }
+
+    return err;
+}
+
+/**
+ * nls_spec_add_param_list:
+ * @spec: nls specification.
+ * @list: list of variables by ID number.
+ * @Z: data array.
+ * @pdinfo: information on dataset.
+ *
+ * Adds to @spec a list of (scalar) parameters to be estimated, as
+ * given in @list.
+ *
+ * Returns: 0 on success, non-zero error code on error.
+ */
+
+int nls_spec_add_param_list (nls_spec *spec, const int *list,
+			     const double **Z, const DATAINFO *pdinfo)
+{
+    int i, np = list[0];
+    int err = 0;
+
+    if (spec->params != NULL || np == 0) {
+	return E_DATA;
+    }
+
+    err = nls_spec_allocate_params(spec, np);
+    if (err) {
+	return err;
+    }
+
+    for (i=0; i<np && !err; i++) {
+	int v = list[i+1];
+
+	if (v >= pdinfo->v || pdinfo->vector[v]) {
+	    err = E_DATA;
+	} else {
+	    spec->params[i].varnum = v;
+	    spec->params[i].dernum = 0;
+	    strcpy(spec->params[i].name, pdinfo->varname[v]);
+	    spec->params[i].deriv = NULL;
+	    spec->coeff[i] = Z[v][0];
+	}
+    }
+
+    if (err) {
+	free(spec->params);
+	spec->params = NULL;
+	free(spec->coeff);
+	spec->coeff = NULL;
+	spec->nparam = 0;
+    } else {
+	spec->nparam = np;
     }
 
     return err;
@@ -1967,7 +2028,7 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 	    } else {
 		/* "params" */
 		if (pspec->mode != ANALYTIC_DERIVS) {
-		    err = nls_spec_add_param_list(pspec, line + 6, Z, pdinfo);
+		    err = nls_spec_add_params_from_line(pspec, line + 6, Z, pdinfo);
 		} else {
 		    pprintf(prn, _("Analytical derivatives supplied: "
 				   "\"params\" line will be ignored"));

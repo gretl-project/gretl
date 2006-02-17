@@ -224,7 +224,7 @@ struct genr_func funcs[] = {
 #endif
 
 #define MAXTERMS  64
-#define TOKLEN   128
+#define TOKLEN  1024
 #define ARGLEN   128
 
 #define genr_is_matrix(g) ((g)->flags & GENR_MATRIX)

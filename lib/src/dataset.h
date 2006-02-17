@@ -206,6 +206,8 @@ int dataset_add_series (int newvars, double ***pZ, DATAINFO *pdinfo);
 int dataset_add_allocated_series (double *x, double ***pZ, 
 				  DATAINFO *pdinfo);
 
+int dataset_add_scalars (int n, double ***pZ, DATAINFO *pdinfo);
+
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_scalar_as (const char *numstr, const char *newname,

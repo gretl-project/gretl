@@ -32,6 +32,9 @@ nls_spec_add_param_with_deriv (nls_spec *spec,
 			       const double **Z, 
 			       const DATAINFO *pdinfo);
 
+int nls_spec_add_param_list (nls_spec *spec, const int *list,
+			     const double **Z, const DATAINFO *pdinfo);
+
 int 
 nls_spec_set_regression_function (nls_spec *spec, 
 				  const char *fnstr, 

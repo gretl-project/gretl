@@ -1021,22 +1021,24 @@ dataset_add_allocated_series (double *x, double ***pZ, DATAINFO *pdinfo)
 }
 
 /**
- * dataset_add_scalar:
+ * dataset_add_scalars:
+ * @n: number of scalars to add.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
  *
- * Allocates space for a new scalar member of the dataset.
+ * Allocates space for @n new scalar members of the dataset.
+ * The added variables are initialized to zero.
  *
  * Returns: 0 on success, %E_ALLOC on error.
  */
 
-int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
+int dataset_add_scalars (int n, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
-    int n = pdinfo->n, v = pdinfo->v; 
-    int err = 0;
+    int v = pdinfo->v;
+    int i, err = 0;
 
-    newZ = realloc(*pZ, (v + 1) * sizeof *newZ);  
+    newZ = realloc(*pZ, (v + n) * sizeof *newZ);  
 
     if (newZ == NULL) {
 	err = E_ALLOC;
@@ -1045,21 +1047,46 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     }
 
     if (!err) {
-	newZ[v] = malloc(n * sizeof **newZ);
-	if (newZ[v] == NULL) {
-	    err = E_ALLOC;
+	for (i=0; i<n; i++) {
+	    newZ[v+i] = NULL;
+	}
+	for (i=0; i<n; i++) {
+	    newZ[v+i] = malloc(sizeof **newZ);
+	    if (newZ[v+i] == NULL) {
+		err = E_ALLOC;
+		break;
+	    }
+	    newZ[v+i][0] = 0.0;
 	}
     }
 
     if (!err) {
-	err = dataset_expand_varinfo(1, pdinfo);
+	err = dataset_expand_varinfo(n, pdinfo);
     }
 
     if (!err) {
-	pdinfo->vector[v] = 0;
+	for (i=0; i<n; i++) {
+	    pdinfo->vector[v+i] = 0;
+	}
     }
 
     return err;
+}
+
+/**
+ * dataset_add_scalar:
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Allocates space for a new scalar member of the dataset.
+ * The added variable is initialized to zero.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
+{
+    return dataset_add_scalars(1, pZ, pdinfo);
 }
 
 /**
