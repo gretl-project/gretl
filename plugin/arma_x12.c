@@ -392,6 +392,8 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 	}
     }
 
+    /* FIXME seasonal case!! */
+
     if (!err) {
 	double narfac = 1.0;
 	double sarfac = 1.0;

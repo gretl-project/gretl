@@ -820,7 +820,11 @@ int write_tx_data (char *fname, int varnum,
 	strcpy(errmsg, _("TRAMO can't handle more than 600 observations.\n"
 			 "Please select a smaller sample."));
 	return 1;
-    }
+    } else if (request.code == X12A && (pdinfo->t2 - pdinfo->t1) > 719) {
+	strcpy(errmsg, _("X-12-ARIMA can't handle more than 720 observations.\n"
+			 "Please select a smaller sample."));
+	return 1;
+    }	
 
     request.pd = pdinfo->pd;
 

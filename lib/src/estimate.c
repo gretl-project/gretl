@@ -3169,8 +3169,6 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
     return lad_model;
 }
 
-#define arma_has_seasonals(l) (l[0] > 5 && l[3] == LISTSEP && l[6] == LISTSEP)
-
 /**
  * arma:
  * @list: dependent variable, AR and MA orders, and any exogenous
@@ -3193,15 +3191,16 @@ MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo,
     MODEL armod;
     void *handle;
     MODEL (*arma_func) (const int *, const double **, const DATAINFO *, 
-			 gretlopt, PRN *);
+			gretlopt, PRN *);
 
     *gretl_errmsg = '\0';
 
-#ifdef HAVE_X12A
-    if (arma_has_seasonals(list)) {
-	opt |= OPT_X;
-    }
-#endif
+    if (opt & OPT_X && (pdinfo->t2 - pdinfo->t1) > 719) {
+	strcpy(gretl_errmsg, _("X-12-ARIMA can't handle more than 720 observations.\n"
+			       "Please select a smaller sample."));
+	armod.errcode = E_DATA;
+	return armod;
+    }	
 
     if (opt & OPT_X) {
 	arma_func = get_plugin_function("arma_x12_model", &handle);

@@ -86,19 +86,18 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *ma_coeff,
 
     temp[0] = 1.0;
 
-    /* Is this right, with seasonal MA?  Should we be 
+    /* FIXME: is this right, with seasonal MA?  Should we be 
        calculating distinct seasonal and non-seasonal
        roots?? 
     */
-    
 
     /* initialize to non-seasonal MA or zero */
     for (i=0; i<qmax; i++) {
-	if (i < ainfo->q) {
-	    temp[i+1] = ma_coeff[i];
-	} else {
-	    temp[i+1] = 0.0;
-	}
+        if (i < ainfo->q) {
+            temp[i+1] = ma_coeff[i];
+        } else {
+            temp[i+1] = 0.0;
+        }
     }
 
     /* add seasonal MA and interaction */
@@ -108,7 +107,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *ma_coeff,
 	for (j=0; j<ainfo->q; j++) {
 	    int m = k + j + 1;
 
-	    temp[m] += sma_coeff[i] * ma_coeff[j];
+	    temp[m] -= sma_coeff[i] * ma_coeff[j];
 	}
     }
 
@@ -151,7 +150,7 @@ static void do_MA_partials (double *drv,
 	drv[t] -= sma_coeff[i] * drv[s];
 	for (j=0; j<ainfo->q; j++) {
 	    p = s - (j + 1);
-	    drv[t] -= sma_coeff[i] * ma_coeff[j] * drv[p];
+	    drv[t] += sma_coeff[i] * ma_coeff[j] * drv[p];
 	}
     }
 }
@@ -236,7 +235,7 @@ static int arma_ll (double *coeff,
 	    e[t] -= sar_coeff[i] * y[s];
 	    for (j=0; j<ainfo->p; j++) {
 		p = s - (j + 1);
-		e[t] -= sar_coeff[i] * ar_coeff[j] * y[p];
+		e[t] += sar_coeff[i] * ar_coeff[j] * y[p];
 	    }
 	}
 
@@ -256,7 +255,7 @@ static int arma_ll (double *coeff,
 		for (j=0; j<ainfo->q; j++) {
 		    p = s - (j + 1);
 		    if (p >= t1) {
-			e[t] -= sma_coeff[i] * ma_coeff[j] * e[p];
+			e[t] += sma_coeff[i] * ma_coeff[j] * e[p];
 		    }
 		}
 	    }
@@ -298,7 +297,7 @@ static int arma_ll (double *coeff,
 		    for (i=0; i<ainfo->P; i++) {
 			xlag = lag + ainfo->pd * (i + 1);
 			if (t >= xlag) {
-			    de_a[j][t] -= sar_coeff[i] * y[t-xlag];
+			    de_a[j][t] += sar_coeff[i] * y[t-xlag];
 			}
 		    }
 		    do_MA_partials(de_a[j], ainfo, ma_coeff, sma_coeff, t);
@@ -314,7 +313,7 @@ static int arma_ll (double *coeff,
 		    for (i=0; i<ainfo->p; i++) {
 			xlag = lag + (i + 1);
 			if (t >= xlag) {
-			    de_sa[j][t] -= ar_coeff[i] * y[t-xlag];
+			    de_sa[j][t] += ar_coeff[i] * y[t-xlag];
 			}
 		    }
 		    do_MA_partials(de_sa[j], ainfo, ma_coeff, sma_coeff, t);
@@ -330,7 +329,7 @@ static int arma_ll (double *coeff,
 		    for (i=0; i<ainfo->Q; i++) {
 			xlag = lag + ainfo->pd * (i + 1);
 			if (t >= xlag) {
-			    de_m[j][t] -= sma_coeff[i] * e[t-xlag];
+			    de_m[j][t] += sma_coeff[i] * e[t-xlag];
 			}
 		    }
 		    do_MA_partials(de_m[j], ainfo, ma_coeff, sma_coeff, t);
@@ -346,7 +345,7 @@ static int arma_ll (double *coeff,
 		    for (i=0; i<ainfo->q; i++) {
 			xlag = lag + (i + 1);
 			if (t >= xlag) {
-			    de_sm[j][t] -= ma_coeff[i] * e[t-xlag];
+			    de_sm[j][t] += ma_coeff[i] * e[t-xlag];
 			}
 		    }
 		    do_MA_partials(de_sm[j], ainfo, ma_coeff, sma_coeff, t);

@@ -636,8 +636,8 @@ int bhhh_max (LL_FUNC loglik,
     }
 
     if (crit > minfo->tol || err != 0) {
-	fprintf(stderr, "bhhh_max: crit = %g, tol = %g, err = %d\n",
-		crit, minfo->tol, err);
+	fprintf(stderr, "bhhh_max: iters = %d, crit = %g, tol = %g, err = %d\n",
+		iters, crit, minfo->tol, err);
 	err = E_NOCONV;
     }
 

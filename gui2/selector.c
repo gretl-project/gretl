@@ -52,7 +52,6 @@ struct _selector {
     GtkWidget *add_button;
     GtkWidget *lags_button;
     GtkWidget *extra[N_EXTRA];
-    GtkWidget *x12a_check;
     int code;
     int active_var;
     int error;
@@ -2429,24 +2428,6 @@ static GtkWidget *spinner_label (int i, int code)
     return lbl;
 }
 
-static void sarma_check (GtkWidget *w, selector *sr)
-{
-#if HAVE_X12A
-    int P = spinner_get_int(sr->extra[2]);
-    int Q = spinner_get_int(sr->extra[3]);
-    static gboolean tstate;
-
-    if (P > 0 || Q > 0) {
-	tstate = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(sr->x12a_check));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->x12a_check), TRUE);
-	gtk_widget_set_sensitive(sr->x12a_check, FALSE);
-    } else {
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->x12a_check), tstate);
-	gtk_widget_set_sensitive(sr->x12a_check, TRUE);
-    }
-#endif
-}
-
 static void build_pq_spinners (selector *sr)
 {
     GtkWidget *hbox, *tmp;
@@ -2485,12 +2466,6 @@ static void build_pq_spinners (selector *sr)
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
 	gtk_widget_show(sr->extra[i]);
-
-	if (i > 1) {
-	    /* ARMA seasonals */
-	    g_signal_connect(G_OBJECT(sr->extra[i]), "value-changed",
-			     G_CALLBACK(sarma_check), sr);
-	}
     }
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
@@ -2610,7 +2585,6 @@ static void build_selector_switches (selector *sr)
     if (sr->code == ARMA) {
 	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_X);
-	sr->x12a_check = tmp;
     }	
 #endif
 } 

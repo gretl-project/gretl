@@ -5920,7 +5920,7 @@
 	    for gretl's internal BHHH routine, which is used in the
 	    <cmd>arma</cmd> and <cmd>tobit</cmd> commands. If convergence is not
 	    achieved after <lit>bhhh_maxiter</lit>, the program returns an
-	    error. The default is set at 250.
+	    error. The default is set at 500.
 	  </para>
 	  </li>	  
 	<li>	  

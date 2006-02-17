@@ -132,7 +132,7 @@ static void bkbp_opts_copy (struct bkbp_opts *opts)
 static void bhhh_opts_init (struct bhhh_opts *opts)
 {
     opts->tolerance = NADBL;
-    opts->maxiter = 250;
+    opts->maxiter = 500;
 }
 
 static void bhhh_opts_copy (struct bhhh_opts *opts)
