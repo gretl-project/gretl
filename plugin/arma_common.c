@@ -1,4 +1,5 @@
 #define MAX_ARMA_ORDER 6
+#define MAX_ARIMA_DIFF 2
 
 enum {
     ARMA_NATIVE,
@@ -12,6 +13,8 @@ struct arma_info {
     int q;        /* non-seasonal MA order */
     int P;        /* seasonal AR order */
     int Q;        /* seasonal MA order */
+    int d;        /* non-seasonal differences */
+    int D;        /* seasonal differences */
     int maxlag;   /* longest lag in model */
     int r;        /* number of other regressors (ARMAX) */
     int ifc;      /* 1 for intercept included, otherwise 0 */
@@ -20,18 +23,21 @@ struct arma_info {
     int t2;       /* ending observation */
     int seasonal; /* 1 if any seasonal terms, otherwise 0 */
     int pd;       /* periodicity of data */
+    int T;        /* full length of data series */
+    double *dx;   /* differenced dependent variable */
 };
 
 /* write the various statistics from ARMA estimation into
    a gretl MODEL struct */
 
 static void write_arma_model_stats (MODEL *pmod, model_info *arma,
-				    const int *list, const double *y, 
+				    const int *list, const double **Z, 
 				    const double *theta, 
 				    struct arma_info *ainfo)
 {
     double **series = NULL;
     const double *e = NULL;
+    const double *y = NULL;
     double mean_error;
     int i, t;
 
@@ -56,6 +62,12 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 
     free(pmod->list);
     pmod->list = gretl_list_copy(list);
+
+    if (ainfo->dx != NULL) {
+	y = ainfo->dx;
+    } else {
+	y = Z[ainfo->yno];
+    }
 
     pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
@@ -128,13 +140,22 @@ static void calc_max_lag (struct arma_info *ainfo)
 {
     int pmax = ainfo->p;
     int qmax = ainfo->q;
+    int dmax = ainfo->d;
 
     if (ainfo->seasonal) {
 	pmax += ainfo->P * ainfo->pd;
 	qmax += ainfo->Q * ainfo->pd;
+	dmax += ainfo->D * ainfo->pd;
     }
 
-    ainfo->maxlag = (pmax > qmax)? pmax : qmax;
+    ainfo->maxlag = pmax;
+
+    if (qmax > ainfo->maxlag) {
+	ainfo->maxlag = qmax;
+    }
+    if (dmax > ainfo->maxlag) {
+	ainfo->maxlag = dmax;
+    }    
 }
 
 static int 
@@ -145,7 +166,11 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     int an, i, v, t, t1min = 0;
     int vstart, pmax, anymiss;
 
-    vstart = (ainfo->seasonal)? 7 : 4;
+    if (ainfo->d > 0 || ainfo->D > 0) {
+	vstart = (ainfo->seasonal)? 9 : 5;
+    } else {
+	vstart = (ainfo->seasonal)? 7 : 4;
+    }
 
     pmax = ainfo->p;
     if (ainfo->P > 0) {
@@ -223,13 +248,17 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 
 /* remove the intercept from list of regressors */
 
-static int remove_const (int *list, int seasonal, const double **Z,
-			 const DATAINFO *pdinfo)
+static int arma_remove_const (int *list, int seasonal, int diffs,
+			      const double **Z, const DATAINFO *pdinfo)
 {
     int xstart, ret = 0;
     int i, j;
 
-    xstart = (seasonal)? 8 : 5;
+    if (diffs) {
+	xstart = (seasonal)? 10 : 6;
+    } else {
+	xstart = (seasonal)? 8 : 5;
+    }
 
     for (i=xstart; i<=list[0]; i++) {
 	if (list[i] == 0 || true_const(list[i], Z, pdinfo)) {
@@ -245,7 +274,7 @@ static int remove_const (int *list, int seasonal, const double **Z,
     return ret;
 }
 
-#define has_seasonals(l) (l[0] > 5 && l[3] == LISTSEP && l[6] == LISTSEP)
+#define arma_has_seasonals(l) (l[0] > 5 && l[3] == LISTSEP && l[6] == LISTSEP)
 
 static int check_arma_list (int *list, gretlopt opt, 
 			    const double **Z, const DATAINFO *pdinfo,
@@ -255,12 +284,11 @@ static int check_arma_list (int *list, gretlopt opt,
     int hadconst = 0;
     int err = 0;
 
-    /* FIXME need more checks for seasonal case, e.g. non-
-       seasonal order must be less than pd */
+    ainfo->seasonal = arma_has_seasonals(list);
 
-    ainfo->seasonal = has_seasonals(list);
     ainfo->p = ainfo->q = 0;
     ainfo->P = ainfo->Q = 0;
+    ainfo->d = ainfo->D = 0;
     ainfo->r = ainfo->nc = 0;
 
     if (ainfo->seasonal) {
@@ -311,7 +339,8 @@ static int check_arma_list (int *list, gretlopt opt,
 
     if (!err) {
 	if (armax) {
-	    hadconst = remove_const(list, ainfo->seasonal, Z, pdinfo);
+	    hadconst = arma_remove_const(list, ainfo->seasonal, 0, 
+					 Z, pdinfo);
 	}
 	if ((opt & OPT_S) || (armax && !hadconst)) {
 	    ainfo->ifc = 0;
@@ -331,3 +360,94 @@ static int check_arma_list (int *list, gretlopt opt,
     return err;
 }
 
+#define arima_has_seasonals(l) (l[0] > 7 && l[4] == LISTSEP && l[8] == LISTSEP)
+
+static int check_arima_list (int *list, gretlopt opt, 
+			     const double **Z, const DATAINFO *pdinfo,
+			     struct arma_info *ainfo)
+{
+    int armax = 0;
+    int hadconst = 0;
+    int err = 0;
+
+    ainfo->seasonal = arima_has_seasonals(list);
+
+    ainfo->p = ainfo->q = 0;
+    ainfo->P = ainfo->Q = 0;
+    ainfo->d = ainfo->D = 0;
+    ainfo->r = ainfo->nc = 0;
+
+    if (ainfo->seasonal) {
+	armax = (list[0] > 8);
+    } else {
+	armax = (list[0] > 5);
+    }
+
+    if (list[0] < 5) {
+	err = 1;
+    } else if (list[1] < 0 || list[1] > MAX_ARMA_ORDER) {
+	err = 1;
+    } else if (list[2] < 0 || list[2] > MAX_ARIMA_DIFF) {
+	err = 1;
+    } else if (list[3] < 0 || list[3] > MAX_ARMA_ORDER) {
+	err = 1;
+    } else if (list[1] + list[3] == 0 && !ainfo->seasonal) {
+	err = 1;
+    }
+
+    if (!err) {
+	ainfo->p = list[1];
+	ainfo->d = list[2];
+	ainfo->q = list[3];
+    }
+
+    if (!err && ainfo->seasonal) {
+	if (list[0] < 9) {
+	    err = 1;
+	} else if (list[5] < 0 || list[5] > MAX_ARMA_ORDER) {
+	    err = 1;
+	} else if (list[6] < 0 || list[6] > MAX_ARIMA_DIFF) {
+	    err = 1;
+	} else if (list[7] < 0 || list[7] > MAX_ARMA_ORDER) {
+	    err = 1;
+	} else if (list[5] + list[7] == 0) {
+	    err = 1;
+	}
+    }
+
+    if (!err && ainfo->seasonal) {
+	ainfo->P = list[5];
+	ainfo->D = list[6];
+	ainfo->Q = list[7];
+    }
+
+    /* If there's an explicit constant in the list here, we'll remove
+       it, since it is added implicitly later.  But if we're supplied
+       with OPT_S (meaning: suppress the intercept) we'll flag this by
+       setting ifc = 0.  Also, if the user gave an armax list
+       (specifying regressors) we'll respect the absence of a constant
+       from that list by setting ifc = 0.
+    */
+
+    if (!err) {
+	if (armax) {
+	    hadconst = arma_remove_const(list, ainfo->seasonal, 1,
+					 Z, pdinfo);
+	}
+	if ((opt & OPT_S) || (armax && !hadconst)) {
+	    ainfo->ifc = 0;
+	} else {
+	    ainfo->ifc = 1;
+	}
+    }
+
+    if (err) {
+	gretl_errmsg_set(_("Error in arma command"));
+    } else {
+	ainfo->r = list[0] - ((ainfo->seasonal)? 9 : 5);
+	ainfo->nc = ainfo->p + ainfo->q + ainfo->P + ainfo->Q
+	    + ainfo->r + ainfo->ifc;
+    }
+
+    return err;
+}

@@ -2258,20 +2258,18 @@ static void selector_init (selector *sr, guint code, const char *title,
 			   gpointer p, int (*callback)())
 {
     GtkWidget *base, *hsep;
-    double hx;
     int i, dlgheight = 340;
+    double hx;
     
-    if (MODEL_CODE(code) && datainfo->v > 10) {
+    if (MODEL_CODE(code) && datainfo->v > 9) {
 	dlgheight += 80;
-    } else if (code == WLS || code == POISSON || code == AR) {
-	dlgheight += 30;
     } 
 
-    if (code == TSLS) {
+    if (code == WLS || code == POISSON || code == AR) {
+	dlgheight += 30;
+    } else if (code == TSLS) {
 	dlgheight += 40;
-    }
-
-    if (VEC_CODE(code)) {
+    } else if (VEC_CODE(code)) {
 	dlgheight = 450;
 	if (code == VAR || code == VECM) {
 	    dlgheight += 90;
@@ -2289,7 +2287,15 @@ static void selector_init (selector *sr, guint code, const char *title,
     }
 
     if (code == ARMA && datainfo->pd > 1) {
+	/* seasonal spinners */
 	dlgheight += 60;
+    }
+
+    if (dataset_is_time_series(datainfo)) {
+	if (MODEL_CODE(code) && code != ARMA) {
+	    /* lag selector button at foot */
+	    dlgheight += 30;
+	}
     }
 
     sr->lvars = NULL;

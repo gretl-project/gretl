@@ -467,7 +467,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 
 static void 
 populate_arma_model (MODEL *pmod, const int *list, const char *path, 
-		     const double *y, const DATAINFO *pdinfo, 
+		     const double **Z, const DATAINFO *pdinfo, 
 		     struct arma_info *ainfo)
 {
     char fname[MAXLEN];
@@ -520,7 +520,7 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
 	fprintf(stderr, "problem getting model info\n");
 	pmod->errcode = E_FOPEN;
     } else {
-	write_arma_model_stats(pmod, NULL, list, y, NULL, ainfo);
+	write_arma_model_stats(pmod, NULL, list, Z, NULL, ainfo);
 	gretl_model_add_arma_varnames(pmod, pdinfo, ainfo->yno,
 				      ainfo->p, ainfo->q, 
 				      ainfo->P, ainfo->Q,
@@ -677,6 +677,9 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     } 
 
     ainfo.atype = ARMA_X12A;
+    ainfo.dx = NULL;
+    ainfo.T = pdinfo->n;
+    ainfo.pd = pdinfo->pd;
 
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
@@ -687,17 +690,24 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (check_arma_list(alist, opt, Z, pdinfo, &ainfo)) {
-	armod.errcode = E_UNSPEC;
+    if (opt & OPT_I) {
+	err = check_arima_list(alist, opt, Z, pdinfo, &ainfo);
+    } else {
+	err = check_arma_list(alist, opt, Z, pdinfo, &ainfo);
+    }
+
+    if (err) {
+	armod.errcode = err;
 	goto bailout;
     }
 
     /* dependent variable */
-    ainfo.yno = (ainfo.seasonal)? alist[7] : alist[4];
+    if (opt & OPT_I) {
+	ainfo.yno = (ainfo.seasonal)? alist[9] : alist[5];
+    } else {
+	ainfo.yno = (ainfo.seasonal)? alist[7] : alist[4];
+    }
 
-    /* periodicity of data */
-    ainfo.pd = pdinfo->pd;
-    
     /* calculate maximum lag */
     calc_max_lag(&ainfo);
 
@@ -731,7 +741,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	armod.t1 = ainfo.t1;
 	armod.t2 = ainfo.t2;
 	armod.nobs = armod.t2 - armod.t1 + 1;
-	populate_arma_model(&armod, alist, path, Z[ainfo.yno], pdinfo, &ainfo);
+	populate_arma_model(&armod, alist, path, Z, pdinfo, &ainfo);
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, aprn);
 	}

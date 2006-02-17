@@ -454,6 +454,40 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
     return roots;
 }
 
+static double *
+arima_difference (const double *x, struct arma_info *ainfo)
+{
+    double *dx;
+    int lag, maxlag = ainfo->d + ainfo->D * ainfo->pd;
+    int i, j, t;
+
+    dx = malloc(ainfo->T * sizeof *dx);
+    if (dx == NULL) {
+	return NULL;
+    }
+
+    for (t=0; t<maxlag; t++) {
+	dx[t] = NADBL;
+    }
+
+    for (t=maxlag; t<ainfo->T; t++) {
+	dx[t] = x[t];
+	for (i=1; i<=ainfo->d; i++) {
+	    dx[t] -= x[t-i];
+	}
+	for (i=1; i<=ainfo->D; i++) {
+	    lag = i * ainfo->pd;
+	    dx[t] -= x[t-lag];
+	    for (j=1; j<=ainfo->d; j++) {
+		lag = i * ainfo->pd + j;
+		dx[t] += x[t-lag];
+	    }
+	}
+    }
+
+    return dx;
+}
+
 /* construct a "virtual dataset" in the form of a set of pointers into
    the main dataset: this will be passed to the bhhh_max function.
    The dependent variable is put in position 0; following this are the
@@ -467,7 +501,12 @@ make_armax_X (int *list, struct arma_info *ainfo, const double **Z)
     int offset, nv;
     int v, i;
 
-    offset = (ainfo->seasonal)? 7 : 4;
+    if (ainfo->d > 0 || ainfo->D > 0) {
+	offset = (ainfo->seasonal)? 9 : 5;
+    } else {
+	offset = (ainfo->seasonal)? 7 : 4;
+    }
+
     nv = list[0] - offset;
 
     X = malloc((nv + 1) * sizeof *X);
@@ -476,7 +515,11 @@ make_armax_X (int *list, struct arma_info *ainfo, const double **Z)
     }
 
     /* the dependent variable */
-    X[0] = Z[list[offset]];
+    if (ainfo->dx != NULL) {
+	X[0] = ainfo->dx;
+    } else {
+	X[0] = Z[list[offset]];
+    }
 
     /* the independent variables */
     for (i=1; i<=nv; i++) {
@@ -619,6 +662,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
     int nmixed = ainfo->p * ainfo->P;
     int ptotal = ainfo->p + ainfo->P + nmixed;
     int av = ptotal + ainfo->r + 2;
+    const double *x;
     double **aZ = NULL;
     DATAINFO *adinfo = NULL;
     int *alist = NULL;
@@ -670,21 +714,31 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	return 1;
     }
 
-    xstart = (ainfo->seasonal)? 8 : 5;
+    if (ainfo->d > 0 || ainfo->D > 0) {
+	xstart = (ainfo->seasonal)? 10 : 6;
+    } else {
+	xstart = (ainfo->seasonal)? 8 : 5;
+    }
+
+    if (ainfo->dx != NULL) {
+	x = ainfo->dx;
+    } else {
+	x = Z[ainfo->yno];
+    }
 
     /* build temporary dataset including lagged vars */
     for (t=0; t<an; t++) {
 	int k, s;
 
 	s = t + ainfo->t1;
-	aZ[1][t] = Z[ainfo->yno][s];
+	aZ[1][t] = x[s];
 	strcpy(adinfo->varname[1], "y");
 
 	for (i=0; i<ainfo->p; i++) {
 	    lag = i + 1;
 	    s = t + ainfo->t1 - lag;
 	    k = 2 + i;
-	    aZ[k][t] = Z[ainfo->yno][s];
+	    aZ[k][t] = x[s];
 	    sprintf(adinfo->varname[k], "y_%d", lag);
 	}
 
@@ -692,13 +746,13 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	    lag = ainfo->pd * (i + 1);
 	    s = t + ainfo->t1 - lag;
 	    k = ainfo->p + 2 + i;
-	    aZ[k][t] = Z[ainfo->yno][s];
+	    aZ[k][t] = x[s];
 	    sprintf(adinfo->varname[k], "y_%d", lag);
 	    for (j=0; j<ainfo->p; j++) {
 		lag = ainfo->pd * (i + 1) + (j + 1);
 		s = t + ainfo->t1 - lag;
 		k = ainfo->p + ainfo->P + 2 + j;
-		aZ[k][t] = Z[ainfo->yno][s];
+		aZ[k][t] = x[s];
 		sprintf(adinfo->varname[k], "y_%d", lag);
 	    }
 	}
@@ -821,6 +875,9 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     ainfo.atype = ARMA_NATIVE;
+    ainfo.dx = NULL;
+    ainfo.T = pdinfo->n;
+    ainfo.pd = pdinfo->pd;
 
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
@@ -831,16 +888,23 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (check_arma_list(alist, opt, Z, pdinfo, &ainfo)) {
-	armod.errcode = E_UNSPEC;
-	goto bailout;
+    if (opt & OPT_I) {
+	err = check_arima_list(alist, opt, Z, pdinfo, &ainfo);
+    } else {
+	err = check_arma_list(alist, opt, Z, pdinfo, &ainfo);
     }
 
-    /* dependent variable */
-    ainfo.yno = (ainfo.seasonal)? alist[7] : alist[4];
+    if (err) {
+	armod.errcode = err;
+	goto bailout;
+    } 
 
-    /* periodicity of data */
-    ainfo.pd = pdinfo->pd;
+    /* dependent variable */
+    if (opt & OPT_I) {
+	ainfo.yno = (ainfo.seasonal)? alist[9] : alist[5];
+    } else {
+	ainfo.yno = (ainfo.seasonal)? alist[7] : alist[4];
+    }
 
     /* calculate maximum lag */
     calc_max_lag(&ainfo);
@@ -863,6 +927,11 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (arma == NULL) {
 	armod.errcode = E_ALLOC;
 	goto bailout;
+    }
+
+    /* create differenced series if needed */
+    if (opt & OPT_I) {
+	ainfo.dx = arima_difference(Z[ainfo.yno], &ainfo);
     }
 
     /* initialize the coefficients: AR and regression part by least
@@ -891,8 +960,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	double *theta = model_info_get_theta(arma);
 	cmplx *roots;
 
-	write_arma_model_stats(pmod, arma, alist, Z[ainfo.yno], 
-			       theta, &ainfo);
+	write_arma_model_stats(pmod, arma, alist, Z, theta, &ainfo);
 
 	/* compute and save polynomial roots */
 	roots = arma_roots(&ainfo, theta);
@@ -913,6 +981,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(alist);
     free(coeff);
     free(X);
+    free(ainfo.dx);
     model_info_free(arma);
 
     errprn = NULL;
