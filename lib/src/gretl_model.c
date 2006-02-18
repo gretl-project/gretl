@@ -726,18 +726,31 @@ const double *gretl_arma_model_get_x_coeffs (const MODEL *pmod)
     return xc;
 }
 
-static int is_seasonal_arma (const MODEL *pmod)
+static int arma_depvar_pos (const MODEL *pmod)
 {
-    int ret = 0;
+    int seasonal = 0;
+    int arima = 0;
+    int dvpos;
 
     if (gretl_model_get_int(pmod, "arma_P") ||
 	gretl_model_get_int(pmod, "arma_Q")) {
-	ret = 1;
+	seasonal = 1;
     }
 
-    return ret;
-}
+    if (gretl_model_get_int(pmod, "arima_d") ||
+	gretl_model_get_int(pmod, "arima_D")) {
+	arima = 1;
+    }
 
+    if (arima) {
+	dvpos = (seasonal)? 9 : 5;
+    } else {
+	dvpos = (seasonal)? 7 : 4;
+    }
+
+    return dvpos;
+}
+    
 /**
  * gretl_model_get_depvar:
  * @pmod: pointer to gretl model.
@@ -753,11 +766,7 @@ int gretl_model_get_depvar (const MODEL *pmod)
 	if (pmod->ci == GARCH) {
 	    dv = pmod->list[4];
 	} else if (pmod->ci == ARMA) {
-	    if (is_seasonal_arma(pmod)) {
-		dv = pmod->list[7];
-	    } else {
-		dv = pmod->list[4];
-	    }
+	    dv = pmod->list[arma_depvar_pos(pmod)];
 	} else {
 	    dv = pmod->list[1];
 	}
@@ -780,7 +789,7 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     int i, nx;
 
     if (pmod->ci == ARMA) {
-	int start = (is_seasonal_arma(pmod))? 7 : 4;
+	int start = arma_depvar_pos(pmod);
 
 	nx = pmod->list[0] - start + pmod->ifc;
 	if (nx > 0) {

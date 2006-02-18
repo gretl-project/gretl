@@ -887,6 +887,10 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	l = l0 - 1;
 	nxpx = l * (l + 1) / 2;
 
+	if (nxpx == 0) {
+	    fprintf(stderr, "problem: nxpx = 0 (l0 = %d)\n", l0);
+	}
+
 	xpy = malloc((l0 + 1) * sizeof *xpy);
 	mdl.xpx = malloc(nxpx * sizeof *mdl.xpx);
 	mdl.coeff = malloc(mdl.ncoeff * sizeof *mdl.coeff);

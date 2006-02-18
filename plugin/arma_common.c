@@ -131,6 +131,11 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 	gretl_model_set_int(pmod, "arma_pd", ainfo->pd);	
     }
 
+    if (ainfo->d > 0 || ainfo->D > 0) {
+	gretl_model_set_int(pmod, "arima_d", ainfo->d);
+	gretl_model_set_int(pmod, "arima_D", ainfo->D);
+    }	
+
     if (ainfo->r > 0) {
 	gretl_model_set_int(pmod, "armax", 1);
     }
@@ -148,14 +153,8 @@ static void calc_max_lag (struct arma_info *ainfo)
 	dmax += ainfo->D * ainfo->pd;
     }
 
-    ainfo->maxlag = pmax;
-
-    if (qmax > ainfo->maxlag) {
-	ainfo->maxlag = qmax;
-    }
-    if (dmax > ainfo->maxlag) {
-	ainfo->maxlag = dmax;
-    }    
+    ainfo->maxlag = (pmax > qmax)? pmax : qmax;
+    ainfo->maxlag += dmax;
 }
 
 static int 
@@ -193,10 +192,14 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
+#if 1
+    t1min += ainfo->maxlag;
+#else
     if (ainfo->atype == ARMA_NATIVE) {
 	/* is this right for X-12-ARIMA? */
 	t1min += ainfo->maxlag;
     }
+#endif
 
     if (t1 < t1min) {
 	t1 = t1min;
@@ -355,6 +358,7 @@ static int check_arma_list (int *list, gretlopt opt,
 	ainfo->r = list[0] - ((ainfo->seasonal)? 7 : 4);
 	ainfo->nc = ainfo->p + ainfo->q + ainfo->P + ainfo->Q
 	    + ainfo->r + ainfo->ifc;
+	ainfo->yno = (ainfo->seasonal)? list[7] : list[4];
     }
 
     return err;
@@ -378,7 +382,7 @@ static int check_arima_list (int *list, gretlopt opt,
     ainfo->r = ainfo->nc = 0;
 
     if (ainfo->seasonal) {
-	armax = (list[0] > 8);
+	armax = (list[0] > 9);
     } else {
 	armax = (list[0] > 5);
     }
@@ -447,6 +451,7 @@ static int check_arima_list (int *list, gretlopt opt,
 	ainfo->r = list[0] - ((ainfo->seasonal)? 9 : 5);
 	ainfo->nc = ainfo->p + ainfo->q + ainfo->P + ainfo->Q
 	    + ainfo->r + ainfo->ifc;
+	ainfo->yno = (ainfo->seasonal)? list[9] : list[5];
     }
 
     return err;

@@ -253,6 +253,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == VIF)
 
 #define USES_LISTSEP(c) (c == AR || \
+                         c == ARIMA || \
                          c == ARMA || \
                          c == EQUATION || \
                          c == GARCH || \
@@ -262,6 +263,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == TSLS)
 
 #define NEEDS_LISTSEP(c) (c == AR || \
+                          c == ARIMA || \
                           c == ARMA || \
                           c == GARCH || \
                           c == SCATTERS || \
@@ -1648,7 +1650,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	return cmd->errcode;
     }
 
-    if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
+    if (cmd->ci == AR || cmd->ci == ARIMA || 
+	cmd->ci == ARMA || cmd->ci == GARCH) {
 	/* flag acceptance of lag orders in list */
 	read_lags = 1;
     }
@@ -2311,13 +2314,13 @@ static int n_separators (const int *list)
     return nsep;
 }
 
-#define listsep_switch(c) (c == AR || c == GARCH || c == ARMA || \
-                           c == MPOLS)
+#define listsep_switch(c) (c == AR || c == GARCH || c == ARIMA || \
+                           c == ARMA || c == MPOLS)
 
-#define hold_param(c) (c == TSLS || c == AR || c == ARMA || c == CORRGM || \
-                       c == MPOLS || c == SCATTERS || c == GNUPLOT || \
-                       c == LOGISTIC || c == GARCH || c == EQUATION || \
-		       c == POISSON)
+#define hold_param(c) (c == TSLS || c == AR || c == ARIMA || c == ARMA || \
+                       c == CORRGM || c == MPOLS || c == SCATTERS || \
+                       c == GNUPLOT || c == LOGISTIC || c == GARCH || \
+                       c == EQUATION || c == POISSON)
 
 #define TESTLEN 62
 #define LINELEN 78
@@ -2333,7 +2336,8 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 
     nsep = n_separators(cmd->list);
 
-    if (cmd->ci == AR || cmd->ci == GARCH || cmd->ci == ARMA) {
+    if (cmd->ci == AR || cmd->ci == GARCH || 
+	cmd->ci == ARIMA || cmd->ci == ARMA) {
 	use_varnames = 0;	
     }
 

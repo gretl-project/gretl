@@ -701,13 +701,6 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* dependent variable */
-    if (opt & OPT_I) {
-	ainfo.yno = (ainfo.seasonal)? alist[9] : alist[5];
-    } else {
-	ainfo.yno = (ainfo.seasonal)? alist[7] : alist[4];
-    }
-
     /* calculate maximum lag */
     calc_max_lag(&ainfo);
 

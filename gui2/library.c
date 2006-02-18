@@ -6265,8 +6265,12 @@ int gui_exec_line (char *line,
 	clear_model(models[1]);
 	break;
 
+    case ARIMA:
     case ARMA:
 	clear_model(models[0]);
+	if (cmd.ci == ARIMA) {
+	    cmd.opt |= OPT_I;
+	}
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo,
 			  cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 

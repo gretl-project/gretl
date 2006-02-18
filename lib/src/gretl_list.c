@@ -1394,7 +1394,7 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci)
 
     if (ci == ARCH) {
 	start = 3;
-    } else if (ci == ARMA) {
+    } else if (ci == ARMA || ci == ARIMA) {
 	for (i=list[0]-1; i>2; i--) {
 	    if (list[i] == LISTSEP) {
 		start = i+1;

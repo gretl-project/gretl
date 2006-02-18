@@ -39,6 +39,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { APPEND,   "append" },
     { AR,       "ar" },       
     { ARCH,     "arch" },
+    { ARIMA,    "arima" },
     { ARMA,     "arma" },
     { BREAK,    "break" },
     { BXPLOT,   "boxplot" },

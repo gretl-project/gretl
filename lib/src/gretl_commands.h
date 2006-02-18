@@ -29,6 +29,7 @@ typedef enum {
     APPEND,
     AR,      
     ARCH,
+    ARIMA,
     ARMA,
     BREAK,
     BXPLOT,

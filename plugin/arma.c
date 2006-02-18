@@ -458,8 +458,16 @@ static double *
 arima_difference (const double *x, struct arma_info *ainfo)
 {
     double *dx;
-    int lag, maxlag = ainfo->d + ainfo->D * ainfo->pd;
-    int i, j, t;
+    int s = ainfo->pd;
+    int maxlag = ainfo->d + ainfo->D * s;
+    int t;
+
+#if ARMA_DEBUG
+    fprintf(stderr, "doing arima_difference: d = %d, D = %d\n",
+	    ainfo->d, ainfo->D);
+#endif
+
+    /* FIXME t1 and missing values */
 
     dx = malloc(ainfo->T * sizeof *dx);
     if (dx == NULL) {
@@ -472,15 +480,36 @@ arima_difference (const double *x, struct arma_info *ainfo)
 
     for (t=maxlag; t<ainfo->T; t++) {
 	dx[t] = x[t];
-	for (i=1; i<=ainfo->d; i++) {
-	    dx[t] -= x[t-i];
+	if (ainfo->d > 0) {
+	    dx[t] -= x[t-1];
+	} 
+	if (ainfo->d > 1) {
+	    dx[t] -= x[t-1];
+	    dx[t] += x[t-2];
 	}
-	for (i=1; i<=ainfo->D; i++) {
-	    lag = i * ainfo->pd;
-	    dx[t] -= x[t-lag];
-	    for (j=1; j<=ainfo->d; j++) {
-		lag = i * ainfo->pd + j;
-		dx[t] += x[t-lag];
+	if (ainfo->D > 0) {
+	    dx[t] -= x[t - s];
+	    if (ainfo->d > 0) {
+		dx[t] += x[t - (s+1)];
+	    }
+	    if (ainfo->d > 1) {
+		dx[t] += x[t - (s+1)];
+		dx[t] -= x[t - 2*s];
+	    }	    
+	} 
+	if (ainfo->D > 1) {
+	    dx[t] -= x[t - s];
+	    dx[t] += x[t - 2*s];
+	    if (ainfo->d > 0) {
+		dx[t] -= x[t - s];
+		dx[t] += x[t - (s+1)];
+		dx[t] -= x[t - (2*s+1)];
+	    }
+	    if (ainfo->d > 1) {
+		dx[t] += 2 * x[t - (s+1)];
+		dx[t] -= 2 * x[t - (s+2)];
+		dx[t] -= x[t - (2*s+1)];
+		dx[t] += x[t - (2*s+2)];
 	    }
 	}
     }
@@ -498,18 +527,23 @@ static const double **
 make_armax_X (int *list, struct arma_info *ainfo, const double **Z)
 {
     const double **X;
-    int offset, nv;
+    int ypos, nx;
     int v, i;
 
     if (ainfo->d > 0 || ainfo->D > 0) {
-	offset = (ainfo->seasonal)? 9 : 5;
+	ypos = (ainfo->seasonal)? 9 : 5;
     } else {
-	offset = (ainfo->seasonal)? 7 : 4;
+	ypos = (ainfo->seasonal)? 7 : 4;
     }
 
-    nv = list[0] - offset;
+    nx = list[0] - ypos;
 
-    X = malloc((nv + 1) * sizeof *X);
+#if ARMA_DEBUG
+    fprintf(stderr, "make_armax_X: allocating %d series pointers\n",
+	    nx + 1);
+#endif    
+
+    X = malloc((nx + 1) * sizeof *X);
     if (X == NULL) {
 	return NULL;
     }
@@ -518,12 +552,12 @@ make_armax_X (int *list, struct arma_info *ainfo, const double **Z)
     if (ainfo->dx != NULL) {
 	X[0] = ainfo->dx;
     } else {
-	X[0] = Z[list[offset]];
+	X[0] = Z[list[ypos]];
     }
 
     /* the independent variables */
-    for (i=1; i<=nv; i++) {
-	v = list[i + offset];
+    for (i=1; i<=nx; i++) {
+	v = list[i + ypos];
 	X[i] = Z[v];
     }
 
@@ -899,13 +933,6 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     } 
 
-    /* dependent variable */
-    if (opt & OPT_I) {
-	ainfo.yno = (ainfo.seasonal)? alist[9] : alist[5];
-    } else {
-	ainfo.yno = (ainfo.seasonal)? alist[7] : alist[4];
-    }
-
     /* calculate maximum lag */
     calc_max_lag(&ainfo);
 
@@ -981,6 +1008,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(alist);
     free(coeff);
     free(X);
+
     free(ainfo.dx);
     model_info_free(arma);
 

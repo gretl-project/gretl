@@ -21,7 +21,7 @@
 #include "libset.h"
 #include "bhhh_max.h"
 
-#undef BHHH_DEBUG
+#define BHHH_DEBUG 0
 
 struct _model_info {
 
@@ -331,16 +331,15 @@ static int *make_opg_list (int k)
     int *list;
     int i;
 
-    list = malloc((k + 2) * sizeof *list);
+    list = gretl_list_new(k + 1);
     if (list == NULL) return NULL;
 
-    list[0] = k + 1;
     list[1] = 0;  /* dep var is the constant */
     for (i=0; i<k; i++) {
 	list[i+2] = i + 1; 
     }
 
-#ifdef BHHH_DEBUG
+#if BHHH_DEBUG
     printlist(list, "OPG regression list");
 #endif
 
@@ -544,7 +543,7 @@ int bhhh_max (LL_FUNC loglik,
 
     /* zero the dataset */
     for (i=1; i<=k; i++) {
-#ifdef BHHH_DEBUG
+#if BHHH_DEBUG
 	sprintf(tinfo->varname[i], "tZ%d", i);
 #endif
 	for (t=0; t<minfo->n; t++) {
@@ -568,24 +567,24 @@ int bhhh_max (LL_FUNC loglik,
 	    break;
 	}
 
-#ifdef BHHH_DEBUG
+#if BHHH_DEBUG
 	pprintf(prn, "Top of loop: ll = %g\n", minfo->ll);
+	pprintf(prn, "Dataset for OPG regression:\n");
+	printdata(blist, (const double **) tZ, tinfo, OPT_O, prn);
 #endif
 
 	/* BHHH via OPG regression */
 	*bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A, 0.0);
 	if (bmod->errcode) {
+	    fprintf(stderr, "BHHH model error code = %d\n", bmod->errcode);
 	    err = E_NOCONV;
 	    break;
 	}
 
-#ifdef BHHH_DEBUG
-	pprintf(prn, "Dataset for OPG regression:\n");
-	printdata(blist, (const double **) tZ, tinfo, OPT_O, prn);
+#if BHHH_DEBUG
 	pprintf(prn, "OLS model, OPG regression:\n");
 	printmodel(bmod, tinfo, 0, prn);
 #endif
-
 	for (i=0; i<k; i++) {
 	    delta[i] = bmod->coeff[i] * stepsize;
 	    ctemp[i] = minfo->theta[i] + delta[i];
@@ -596,7 +595,7 @@ int bhhh_max (LL_FUNC loglik,
 	/* see if we've gone up... (0 means "don't compute score") */
 	err = loglik(ctemp, X, tZ, minfo, 0); 
 
-#ifdef BHHH_DEBUG
+#if BHHH_DEBUG
 	pprintf(prn, "bhhh loop: initial ll2 = %g\n", minfo->ll2);
 #endif
 
@@ -612,7 +611,7 @@ int bhhh_max (LL_FUNC loglik,
 		ctemp[i] = minfo->theta[i] + delta[i];
 	    }
 	    err = loglik(ctemp, X, tZ, minfo, 0);
-#ifdef BHHH_DEBUG
+#if BHHH_DEBUG
 	    pprintf(prn, "bhhh loop: modified ll2 = %g\n", minfo->ll2);
 #endif
 	}
