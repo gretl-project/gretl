@@ -1842,6 +1842,13 @@
         informazione, o lo stimatore di Bollerslev&ndash;Wooldridge) possono
         essere specificate con il comando <cmdref targ="set"/>.
       </para>
+
+      <para context="gui">La varianza condizionale stimata, insieme ai residui e
+        ad altre statistiche del modello, può essere richiamata ed aggiunta al
+        dataset usando il menù <quote>Dati modello</quote> presente nella
+        finestra del modello.
+      </para>
+
       
       <para context="cli">
 	In modalità predefinita, le stime dei parametri di varianza sono
@@ -1854,6 +1861,15 @@
         e ARMA mostrata nel capitolo 21 di <book>Time Series Analysis</book> di Hamilton.
         In alcuni casi, questo metodo può aumentare le probabilità di convergenza.
       </para>
+
+      <para context="cli">
+        I residui GARCH e la varianza condizionale stimata sono memorizzate
+        rispettivamente nelle variabili <lit>$uhat</lit> e <lit>$h</lit>. Ad
+        esempio, per ottenere la varianza condizionale è possibile scrivere: 
+        </para>
+      <code context="cli">
+        genr ht = $h
+      </code>
 
     </description>
 
@@ -2198,7 +2214,9 @@
 
       <para>Le serie interne <lit>uhat</lit> e <lit>yhat</lit>
 	contengono rispettivamente i residui e i valori stimati dell'ultima
-        regressione.</para>
+        regressione. Per i modelli GARCH, la varianza condizionale è memorizzata
+        nella variabile interna <lit>$h</lit>.
+      </para>
 
       <para>
 	Sono disponibili tre variabili dataset <quote>interne</quote>:
@@ -5865,7 +5883,7 @@
           iterazioni per la routine BHHH, che è usata dai comandi
 	    <cmd>arma</cmd> e <cmd>tobit</cmd>. Se non viene raggiunta la
             convergenza dopo <lit>bhhh_maxiter</lit>, il programma segnala un
-            errore. Il valore predefinito è 250.
+            errore. Il valore predefinito è 500.
 	  </para>
 	  </li>	  
 	<li>	  
