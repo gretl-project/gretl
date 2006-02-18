@@ -1357,7 +1357,9 @@ static void print_ll (const MODEL *pmod, PRN *prn)
  * printmodel:
  * @pmod: pointer to gretl model.
  * @pdinfo: data information struct.
- * @opt: may contain OPT_O to print covariance matrix.
+ * @opt: may contain %OPT_O to print covariance matrix, %OPT_S
+ * to get a "simple" print (just coefficients and standard
+ * errors).
  * @prn: gretl printing struct.
  *
  * Print to @prn the estimates in @pmod plus associated statistics.
@@ -1493,7 +1495,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (!pmod->ifc && pmod->ci != NLS && pmod->aux != AUX_VAR
 	&& pmod->aux != AUX_JOHANSEN && pmod->aux != AUX_VECM
-	&& pmod->ci != MLE && plain_format(prn)) {
+	&& pmod->ci != ARMA && pmod->ci != MLE 
+	&& plain_format(prn)) {
 	noconst(pmod, prn);
     }
     

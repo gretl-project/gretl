@@ -192,11 +192,11 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
-#if 1
+#if 0
     t1min += ainfo->maxlag;
 #else
     if (ainfo->atype == ARMA_NATIVE) {
-	/* is this right for X-12-ARIMA? */
+	/* not required for X-12-ARIMA? */
 	t1min += ainfo->maxlag;
     }
 #endif
@@ -334,7 +334,7 @@ static int check_arma_list (int *list, gretlopt opt,
 
     /* If there's an explicit constant in the list here, we'll remove
        it, since it is added implicitly later.  But if we're supplied
-       with OPT_S (meaning: suppress the intercept) we'll flag this by
+       with OPT_N (meaning: no intercept) we'll flag this by
        setting ifc = 0.  Also, if the user gave an armax list
        (specifying regressors) we'll respect the absence of a constant
        from that list by setting ifc = 0.
@@ -345,7 +345,7 @@ static int check_arma_list (int *list, gretlopt opt,
 	    hadconst = arma_remove_const(list, ainfo->seasonal, 0, 
 					 Z, pdinfo);
 	}
-	if ((opt & OPT_S) || (armax && !hadconst)) {
+	if ((opt & OPT_N) || (armax && !hadconst)) {
 	    ainfo->ifc = 0;
 	} else {
 	    ainfo->ifc = 1;
@@ -427,7 +427,7 @@ static int check_arima_list (int *list, gretlopt opt,
 
     /* If there's an explicit constant in the list here, we'll remove
        it, since it is added implicitly later.  But if we're supplied
-       with OPT_S (meaning: suppress the intercept) we'll flag this by
+       with OPT_N (meaning: no intercept) we'll flag this by
        setting ifc = 0.  Also, if the user gave an armax list
        (specifying regressors) we'll respect the absence of a constant
        from that list by setting ifc = 0.
@@ -438,7 +438,7 @@ static int check_arima_list (int *list, gretlopt opt,
 	    hadconst = arma_remove_const(list, ainfo->seasonal, 1,
 					 Z, pdinfo);
 	}
-	if ((opt & OPT_S) || (armax && !hadconst)) {
+	if ((opt & OPT_N) || (armax && !hadconst)) {
 	    ainfo->ifc = 0;
 	} else {
 	    ainfo->ifc = 1;
