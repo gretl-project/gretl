@@ -160,13 +160,20 @@ static int print_iterations (const char *path, PRN *prn)
 
 static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
 {
-    char date[12];
+    char date[12] = {0};
 
-    *date = 0;
-    strncat(date, s, 4);
     if (pdinfo->pd > 1) {
-	strcat(date, ":");
-	strncat(date, s + 4, 4);
+	if (strlen(s) <= 4) {
+	    strncat(date, s, 2);
+	    strcat(date, ":");
+	    strncat(date, s + 2, 4);
+	} else {
+	    strncat(date, s, 4);
+	    strcat(date, ":");
+	    strncat(date, s + 4, 4);
+	}
+    } else {
+	strncat(date, s, 4);
     }
 
     return dateton(date, pdinfo);
@@ -391,8 +398,6 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 	    break;
 	}
     }
-
-    /* FIXME seasonal case!! */
 
     if (!err) {
 	double narfac = 1.0;
@@ -635,10 +640,12 @@ static int write_spc_file (const char *fname,
 
     /* arima specification */
     if (ainfo->P > 0 || ainfo->Q > 0) {
-	fprintf(fp, "arima {\n model = (%d 0 %d)(%d 0 %d)\n}\n", 
-		ainfo->p, ainfo->q, ainfo->P, ainfo->Q);
+	fprintf(fp, "arima {\n model = (%d %d %d)(%d %d %d)\n}\n", 
+		ainfo->p, ainfo->d, ainfo->q, 
+		ainfo->P, ainfo->D, ainfo->Q);
     } else {
-	fprintf(fp, "arima {\n model = (%d 0 %d)\n}\n", ainfo->p, ainfo->q); 
+	fprintf(fp, "arima {\n model = (%d %d %d)\n}\n", 
+		ainfo->p, ainfo->d, ainfo->q); 
     }
 
     if (verbose) {

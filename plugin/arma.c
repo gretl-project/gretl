@@ -459,7 +459,7 @@ arima_difference (const double *x, struct arma_info *ainfo)
 {
     double *dx;
     int s = ainfo->pd;
-    int maxlag = ainfo->d + ainfo->D * s;
+    int start = 0;
     int t;
 
 #if ARMA_DEBUG
@@ -467,18 +467,26 @@ arima_difference (const double *x, struct arma_info *ainfo)
 	    ainfo->d, ainfo->D);
 #endif
 
-    /* FIXME t1 and missing values */
+    for (t=0; t<ainfo->T; t++) {
+	if (na(x[t])) {
+	    start++;
+	} else {
+	    break;
+	}
+    }
+
+    start += ainfo->d + ainfo->D * s;
 
     dx = malloc(ainfo->T * sizeof *dx);
     if (dx == NULL) {
 	return NULL;
     }
 
-    for (t=0; t<maxlag; t++) {
+    for (t=0; t<start; t++) {
 	dx[t] = NADBL;
     }
 
-    for (t=maxlag; t<ainfo->T; t++) {
+    for (t=start; t<ainfo->T; t++) {
 	dx[t] = x[t];
 	if (ainfo->d > 0) {
 	    dx[t] -= x[t-1];
