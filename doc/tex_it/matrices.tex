@@ -131,7 +131,7 @@ $m \times n$ e $B$ è una matrice $p \times q$.
   \times b_{ij}$. Questo tipo di prodotto è tecnicamente noto come
   \emph{prodotto di Hadamard}.
 \item Se $m=1$ e $n=q$, oppure $n=1$ e $m=p$, $C$ sarà una matrice
-  $p\times q$ con $c_{ij} = b_{ij} \times a_k$, dove $k=j$ se $m=1$,
+  $p\times q$ with $c_{ij} = a_k \times b_{ij}$, where $k=j$ if $m=1$,
   altrimenti $k=i$.
 \item Se $p=1$ e $n=q$, oppure $q=1$ e $m=p$, $C$ sarà una matrice
   $m\times n$ con $c_{ij} = a_{ij} \times b_k$, dove $k=j$ se $p=1$,
@@ -140,14 +140,8 @@ $m \times n$ e $B$ è una matrice $p \times q$.
   definito e viene segnalato un errore.
 \end{itemize}
 
-Nella divisione per elementi, le due matrici devono essere delle stesse
-dimensioni. Data
-%
-\begin{code}
-matrix C = A ./ B
-\end{code}
-% 
-il risultato è la matrice $C$ tale che $c_{ij} = a_{ij}/b_{ij}$.
+La divisione per elementi funziona in modo simile alla moltiplicazione per elementi,
+sostituendo $\times$ con $\div$ nella spiegazione precedente.
 
 L'elevamento a potenza per elementi, come in
 %
