@@ -1911,10 +1911,8 @@ nls_spec_set_regression_function (nls_spec *spec, const char *fnstr,
 
     if (equation_get_lhs_and_rhs(p, &vname, &rhs)) { 
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), fnstr);
-	err = E_PARSE;
-    }
-
-    if (!err) {
+	err =  E_PARSE;
+    } else {
 	spec->depvar = varindex(pdinfo, vname);
 	if (spec->depvar == pdinfo->v) {
 	    if (spec->ci == NLS) {
@@ -1927,20 +1925,23 @@ nls_spec_set_regression_function (nls_spec *spec, const char *fnstr,
 	}
     }
 
-    if (spec->ci == MLE) {
-	flen = strlen(rhs) + 4;
-    } else {
-	flen = strlen(vname) + strlen(rhs) + 6;
-    }
-
-    spec->nlfunc = malloc(flen);
-    if (spec->nlfunc == NULL) {
-	err = E_ALLOC;
-    } else {
+    if (!err) {
 	if (spec->ci == MLE) {
-	    sprintf(spec->nlfunc, "-(%s)", rhs);
+	    flen = strlen(rhs) + 4;
 	} else {
-	    sprintf(spec->nlfunc, "%s - (%s)", vname, rhs);
+	    flen = strlen(vname) + strlen(rhs) + 6;
+	}
+
+	spec->nlfunc = malloc(flen);
+
+	if (spec->nlfunc == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    if (spec->ci == MLE) {
+		sprintf(spec->nlfunc, "-(%s)", rhs);
+	    } else {
+		sprintf(spec->nlfunc, "%s - (%s)", vname, rhs);
+	    }
 	}
     }
 

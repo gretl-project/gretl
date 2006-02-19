@@ -1084,6 +1084,9 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 void gui_errmsg (const int errcode)
 {
     const char *msg = get_gretl_errmsg();
+    char errtext[MAXLEN];
+
+    *errtext = 0;
 
     if (*msg != '\0') {
 	errbox(msg);
@@ -1827,9 +1830,7 @@ void do_vif (gpointer data, guint u, GtkWidget *w)
 static int reject_scalar (int vnum)
 {
     if (!datainfo->vector[vnum]) {
-	sprintf(errtext, _("variable %s is a scalar"), 
-		datainfo->varname[vnum]);
-	errbox(errtext);
+	errbox(_("variable %s is a scalar"), datainfo->varname[vnum]);
 	return 1;
     }
 
@@ -2162,6 +2163,7 @@ int do_mp_ols (selector *sr)
     int action = selector_code(sr);
 
     PRN *prn;
+    char errtext[MAXLEN];
     char estimator[9];
     void *handle;
     mp_results *mpvals = NULL;
@@ -2192,6 +2194,8 @@ int do_mp_ols (selector *sr)
 	errbox(_("Out of memory!"));
 	return 0;
     }
+
+    *errtext = 0;
 
     err = (*mplsq)(cmd.list, NULL, &Z, datainfo, prn, errtext, mpvals);
 
@@ -2494,6 +2498,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 {
     gchar *buf = edit_dialog_special_get_text(dlg);
     gretlopt opt = edit_dialog_get_opt(dlg);
+    char realline[MAXLINE];
     char bufline[MAXLINE];
     char title[26];
     int err = 0, started = 0;
@@ -2515,45 +2520,67 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
     }
 
     bufgets_init(buf);
+    *realline = 0;
 
     while (bufgets(bufline, MAXLINE-1, buf) && !err) {
+	int len, cont = 0;
+
 	if (string_is_blank(bufline)) {
+	    *realline = 0;
 	    continue;
 	}
 
-	top_n_tail(bufline);
+	cont = top_n_tail(bufline);
 
-	if (started && !strncmp(bufline, endstr, 7)) {
+	len = strlen(bufline) + strlen(realline);
+	if (len > MAXLINE - 1) {
+	    errbox("command line is too long (maximum is %d characters)", 
+		   MAXLINE - 1);
+	    err = 1;
 	    break;
 	}
 
-	if (!started && is_genr_line(bufline)) {
-	    gretl_command_strcpy(bufline);
-	    err = do_nls_genr();
+	strcat(realline, bufline);
+
+	if (cont) {
 	    continue;
 	}
 
-	if (!started && strncmp(bufline, cstr, 3)) {
+	if (started && !strncmp(realline, endstr, 7)) {
+	    break;
+	}
+
+	if (!started && is_genr_line(realline)) {
+	    gretl_command_strcpy(realline);
+	    err = do_nls_genr();
+	    *realline = 0;
+	    continue;
+	}
+
+	if (!started && strncmp(realline, cstr, 3)) {
 	    char tmp[MAXLINE];
 	    
-	    strcpy(tmp, bufline);
-	    strcpy(bufline, cstr);
-	    strcat(bufline, " ");
-	    strcat(bufline, tmp);
+	    strcpy(tmp, realline);
+	    strcpy(realline, cstr);
+	    strcat(realline, " ");
+	    strcat(realline, tmp);
 	} 
 
-	err = nls_parse_line(ci, bufline, (const double **) Z, datainfo, NULL);
+	err = nls_parse_line(ci, realline, (const double **) Z, datainfo, NULL);
 	started = 1;
 
 	if (err) {
 	    gui_errmsg(err);
 	} else {
-	    gretl_command_strcpy(bufline);
+	    gretl_command_strcpy(realline);
 	    err = lib_cmd_init();
 	}
+
+	*realline = 0;
     }
 
     g_free(buf);
+
     if (err) {
 	return;
     }
@@ -2602,18 +2629,15 @@ void do_mle_model (GtkWidget *widget, dialog_t *dlg)
 
 static void arma_maybe_suppress_const (void)
 {
-    int offset, nsep = 0;
-    int i, got0 = 0;
+    int i, got0 = 0, pos = 0;
 
     for (i=2; i<cmd.list[0]; i++) {
 	if (cmd.list[i] == LISTSEP) {
-	    nsep++;
+	    pos = i;
 	}
     }
 
-    offset = (nsep > 1)? 7 : 4;
-
-    for (i=offset; i<=cmd.list[0]; i++) {
+    for (i=pos+1; i<=cmd.list[0]; i++) {
 	if (cmd.list[i] == 0) {
 	    got0 = 1;
 	    break;
@@ -2621,7 +2645,7 @@ static void arma_maybe_suppress_const (void)
     }
 
     if (!got0) {
-	cmd.opt |= OPT_S;
+	cmd.opt |= OPT_N;
     }
 }
 
@@ -2761,7 +2785,7 @@ int do_model (selector *sr)
     case ARMA:
 	arma_maybe_suppress_const();
 	*pmod = arma(cmd.list, (const double **) Z, datainfo,
-		     cmd.opt, prn);
+		     cmd.opt | OPT_I, prn);
 	err = model_output(pmod, prn);
 	break;
 
@@ -3199,8 +3223,7 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *dlg)
     close_dialog(dlg);
 
     if (count) {
-	sprintf(errtext, _("Set %d values to \"missing\""), count);
-	infobox(errtext);
+	infobox(_("Set %d values to \"missing\""), count);
 	mark_dataset_as_modified();
     } else {
 	errbox(_("Didn't find any matching observations"));
@@ -3233,8 +3256,7 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg)
     close_dialog(dlg);
 
     if (count) {
-	sprintf(errtext, _("Set %d observations to \"missing\""), count);
-	infobox(errtext);
+	infobox(_("Set %d observations to \"missing\""), count);
 	mark_dataset_as_modified();
     } else {
 	errbox(_("Didn't find any matching observations"));
@@ -3433,6 +3455,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 			  const char *, const char *, char *);
     PRN *prn;
     char fname[MAXLEN] = {0};
+    char errtext[MAXLEN];
     char *prog = NULL, *workdir = NULL;
 
     if (opt == TRAMO) {
@@ -3469,6 +3492,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     if (write_tx_data == NULL) {
 	return;
     }
+
+    *errtext = 0;
 
     err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
 			 &graph, prog, workdir, errtext);
@@ -4538,9 +4563,8 @@ void delete_selected_vars (int id)
 	testlist[1] = id;
 
 	if (maybe_prune_delete_list(testlist)) {
-	    sprintf(errtext, _("Cannot delete %s; variable is in use"), 
-		    datainfo->varname[id]);
-	    errbox(errtext);
+	    errbox(_("Cannot delete %s; variable is in use"), 
+		   datainfo->varname[id]);
 	    return;
 	} else {
 	    msg = g_strdup_printf(_("Really delete %s?"), datainfo->varname[id]);
@@ -5140,8 +5164,7 @@ void do_open_script (void)
     /* is this a "session" file? */
     ret = saved_objects(scriptfile);
     if (ret == -1) {
-	sprintf(errtext, _("Couldn't open %s"), tryscript);
-	errbox(errtext);
+	errbox(_("Couldn't open %s"), tryscript);
 	delete_from_filelist(FILE_LIST_SESSION, tryscript);
 	delete_from_filelist(FILE_LIST_SCRIPT, tryscript);
 	return;
@@ -5425,9 +5448,7 @@ int do_store (char *savename, gretlopt opt, int overwrite)
 		goto store_get_out;
 	    }
 	} else {
-	    sprintf(errtext, _("Write of data file failed\n%s"),
-		    get_gretl_errmsg());
-	    errbox(errtext);
+	    errbox(_("Write of data file failed\n%s"), get_gretl_errmsg());
 	    err = 1;
 	    goto store_get_out;
 	} 
@@ -5596,8 +5617,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 
     fprn = gretl_print_new_with_filename(texfile);
     if (fprn == NULL) {
-	sprintf(errtext, _("Couldn't write to %s"), texfile);
-	errbox(errtext);
+	errbox(_("Couldn't write to %s"), texfile);
 	return;
     }
 
@@ -6007,7 +6027,7 @@ int gui_exec_line (char *line,
 		   const char *myname) 
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
-    int dbdata = 0, do_arch = 0, do_nls = 0, do_mle = 0;
+    int dbdata = 0, alt_model = 0;
     int renumber, fncall = 0;
     int script_code = exec_code;
     int loopstack = *plstack, looprun = *plrun;
@@ -6259,18 +6279,14 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	}
 	if ((models[1])->ci == ARCH) {
-	    do_arch = 1;
+	    alt_model = 1;
 	    swap_models(&models[0], &models[1]);
 	}
 	clear_model(models[1]);
 	break;
 
-    case ARIMA:
     case ARMA:
 	clear_model(models[0]);
-	if (cmd.ci == ARIMA) {
-	    cmd.opt |= OPT_I;
-	}
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo,
 			  cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
@@ -6386,11 +6402,7 @@ int gui_exec_line (char *line,
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
 	    } else {
-		if (!strcmp(cmd.param, "nls")) {
-		    do_nls = 1;
-		} else if (!strcmp(cmd.param, "mle")) {
-		    do_mle = 1;
-		}
+		alt_model = 1;
 		printmodel(models[0], datainfo, cmd.opt, outprn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
@@ -6977,10 +6989,12 @@ int gui_exec_line (char *line,
 	outprn = NULL;
     }
 
-    if (!err && (is_model_cmd(cmd.word) || do_nls || do_mle || do_arch)
+    if (!err && (is_model_cmd(cmd.word) || alt_model)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) {
-	stack_script_modelspec(models[0]);
-	if (exec_code != REBUILD_EXEC && !do_arch) {
+	if (is_model_cmd(cmd.word)) {
+	    stack_script_modelspec(models[0]);
+	}
+	if (exec_code != REBUILD_EXEC) {
 	    maybe_save_model(&cmd, models[0], prn);
 	}
     }

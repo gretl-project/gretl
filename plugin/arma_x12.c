@@ -330,11 +330,11 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 static int 
 get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 {
-    double *ar_coeff = pmod->coeff + ainfo->ifc;
+    double *ar_coeff = pmod->coeff + arma_has_const(ainfo);
     double *ma_coeff = ar_coeff + ainfo->p + ainfo->P;
     double *x_coeff = ma_coeff + ainfo->q + ainfo->Q;
 
-    double *ar_sderr = pmod->sderr + ainfo->ifc;
+    double *ar_sderr = pmod->sderr + arma_has_const(ainfo);
     double *ma_sderr = ar_sderr + ainfo->p + ainfo->P;
     double *x_sderr = ma_sderr + ainfo->q + ainfo->Q;
 
@@ -555,7 +555,7 @@ static int *
 arma_info_get_x_list (struct arma_info *ainfo, const int *alist)
 {
     int *xlist = NULL;
-    int start = (ainfo->seasonal)? 7 : 4;
+    int start = arma_list_y_position(ainfo);
     int i;
 
     xlist = gretl_list_new(ainfo->r);
@@ -624,7 +624,7 @@ static int write_spc_file (const char *fname,
 
     /* regression specification */
     fputs("Regression {\n", fp);
-    if (ainfo->ifc) {
+    if (arma_has_const(ainfo)) {
 	fputs(" variables = (const)\n", fp);
     }
     if (ainfo->r > 0) {
@@ -683,11 +683,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	aprn = prn;
     } 
 
-    ainfo.atype = ARMA_X12A;
-    ainfo.dx = NULL;
-    ainfo.T = pdinfo->n;
-    ainfo.pd = pdinfo->pd;
-
+    arma_info_init(&ainfo, ARMA_X12A, pdinfo);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
@@ -697,12 +693,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (opt & OPT_I) {
-	err = check_arima_list(alist, opt, Z, pdinfo, &ainfo);
-    } else {
-	err = check_arma_list(alist, opt, Z, pdinfo, &ainfo);
-    }
-
+    err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
     if (err) {
 	armod.errcode = err;
 	goto bailout;

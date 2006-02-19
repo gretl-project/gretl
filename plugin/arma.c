@@ -67,7 +67,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *ma_coeff,
 	return 0;
     }
 
-    if (ainfo->seasonal) {
+    if (arma_has_seasonal(ainfo)) {
 	qmax += ainfo->Q * ainfo->pd;
     }    
 
@@ -182,14 +182,14 @@ static int arma_ll (double *coeff,
     ainfo = model_info_get_extra_info(arma);
 
     /* pointers to blocks of coefficients */
-    ar_coeff = coeff + ainfo->ifc;
+    ar_coeff = coeff + arma_has_const(ainfo);
     sar_coeff = ar_coeff + ainfo->p;
     ma_coeff = sar_coeff + ainfo->P;
     sma_coeff = ma_coeff + ainfo->q;
     reg_coeff = sma_coeff + ainfo->Q;
 
     /* pointers to blocks of derivatives */
-    de_a = de + ainfo->ifc;
+    de_a = de + arma_has_const(ainfo);
     de_sa = de_a + ainfo->p;
     de_m = de_sa + ainfo->P;
     de_sm = de_m + ainfo->q;
@@ -214,7 +214,7 @@ static int arma_ll (double *coeff,
 	e[t] = y[t];
 
 	/* intercept */
-	if (ainfo->ifc) {
+	if (arma_has_const(ainfo)) {
 	    e[t] -= coeff[0];
 	} 
 
@@ -278,7 +278,7 @@ static int arma_ll (double *coeff,
 	for (t=t1; t<=t2; t++) {
 
 	    /* the constant term (de_0) */
-	    if (ainfo->ifc) {
+	    if (arma_has_const(ainfo)) {
 		de[0][t] = -1.0;
 		do_MA_partials(de[0], ainfo, ma_coeff, sma_coeff, t);
 	    }
@@ -384,7 +384,7 @@ static int arma_ll (double *coeff,
 
 static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff) 
 {
-    const double *ar_coeff = coeff + ainfo->ifc;
+    const double *ar_coeff = coeff + arma_has_const(ainfo);
     const double *sar_coeff = ar_coeff + ainfo->p;
     const double *ma_coeff = sar_coeff + ainfo->P;
     const double *sma_coeff = ma_coeff + ainfo->q;
@@ -538,12 +538,7 @@ make_armax_X (int *list, struct arma_info *ainfo, const double **Z)
     int ypos, nx;
     int v, i;
 
-    if (ainfo->d > 0 || ainfo->D > 0) {
-	ypos = (ainfo->seasonal)? 9 : 5;
-    } else {
-	ypos = (ainfo->seasonal)? 7 : 4;
-    }
-
+    ypos = arma_list_y_position(ainfo);
     nx = list[0] - ypos;
 
 #if ARMA_DEBUG
@@ -596,7 +591,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	return E_ALLOC;
     }
 
-    nparam = ainfo->ifc + ainfo->p + ainfo->P + ainfo->r;
+    nparam = arma_has_const(ainfo) + ainfo->p + ainfo->P + ainfo->r;
 
     plist = gretl_list_new(nparam);
     if (plist == NULL) {
@@ -612,7 +607,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     strcpy(fnstr, "y=");
     k = 1;
 
-    if (ainfo->ifc) {
+    if (arma_has_const(ainfo)) {
 	double ybar = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
 
 	strcat(fnstr, "b0+");
@@ -621,7 +616,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	plist[k++] = v++;
     }
 
-    if (!ainfo->ifc) {
+    if (!arma_has_const(ainfo)) {
 	(*pZ)[v][0] = 1.0; /* FIXME arbitrary */
     }    
 
@@ -637,7 +632,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 
     if (ainfo->p > 0) {
 	strcat(fnstr, "+");
-    } else if (!ainfo->ifc) {
+    } else if (!arma_has_const(ainfo)) {
 	(*pZ)[v][0] = 1.0; /* FIXME arbitrary */
     }      
 
@@ -704,6 +699,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
     int nmixed = ainfo->p * ainfo->P;
     int ptotal = ainfo->p + ainfo->P + nmixed;
     int av = ptotal + ainfo->r + 2;
+    int ifc = arma_has_const(ainfo);
     const double *x;
     double **aZ = NULL;
     DATAINFO *adinfo = NULL;
@@ -722,7 +718,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
 
     alist[1] = 1;
 
-    if (ainfo->ifc) {
+    if (ifc) {
 	alist[2] = 0;
 	offset = 3;
     } else {
@@ -757,9 +753,9 @@ static int ar_init_by_ls (const int *list, double *coeff,
     }
 
     if (ainfo->d > 0 || ainfo->D > 0) {
-	xstart = (ainfo->seasonal)? 10 : 6;
+	xstart = (arma_has_seasonal(ainfo))? 10 : 6;
     } else {
-	xstart = (ainfo->seasonal)? 8 : 5;
+	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
     }
 
     if (ainfo->dx != NULL) {
@@ -809,7 +805,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	}
     }
 
-    if (ainfo->seasonal) {
+    if (arma_has_seasonal(ainfo)) {
 	np += ainfo->P;
 	nq += ainfo->Q;
     }
@@ -822,7 +818,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	/* arma 0, q model */
 	for (i=0; i<nq; i++) {
 	    /* insert zeros for MA coeffs */
-	    coeff[i + np + ainfo->ifc] = 0.0;
+	    coeff[i + np + ifc] = 0.0;
 	} 
 	goto exit_init;
     }
@@ -839,14 +835,14 @@ static int ar_init_by_ls (const int *list, double *coeff,
     if (!err) {
 	j = 0;
 	for (i=0; i<armod.ncoeff; i++) {
-	    if (i == np + ainfo->ifc) {
+	    if (i == np + ifc) {
 		j += nq; /* reserve space for MA coeffs */
 	    }
 	    coeff[j++] = armod.coeff[i];
 	}
 	for (i=0; i<nq; i++) {
 	    /* insert zeros for MA coeffs */
-	    coeff[i + np + ainfo->ifc] = 0.0;
+	    coeff[i + np + ifc] = 0.0;
 	} 
     }
 
@@ -916,11 +912,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	errprn = NULL;
     }
 
-    ainfo.atype = ARMA_NATIVE;
-    ainfo.dx = NULL;
-    ainfo.T = pdinfo->n;
-    ainfo.pd = pdinfo->pd;
-
+    arma_info_init(&ainfo, 0, pdinfo);
     gretl_model_init(&armod); 
     gretl_model_smpl_init(&armod, pdinfo);
 
@@ -930,12 +922,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (opt & OPT_I) {
-	err = check_arima_list(alist, opt, Z, pdinfo, &ainfo);
-    } else {
-	err = check_arma_list(alist, opt, Z, pdinfo, &ainfo);
-    }
-
+    err = arma_check_list(alist, opt, Z, pdinfo, &ainfo);
     if (err) {
 	armod.errcode = err;
 	goto bailout;
@@ -965,7 +952,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     /* create differenced series if needed */
-    if (opt & OPT_I) {
+    if (ainfo.d > 0 || ainfo.D > 0) {
 	ainfo.dx = arima_difference(Z[ainfo.yno], &ainfo);
     }
 

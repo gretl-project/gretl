@@ -1061,9 +1061,8 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     for (i=0, j=0; i<plotgrp->nplots; i++, j++) {
 	n = ztox(list[i+1], x, (const double **) *pZ, pdinfo);
 	if (n < 2) {
-	    sprintf(errtext, _("Dropping %s: insufficient observations"),
-		    pdinfo->varname[list[i+1]]);
-	    errbox(errtext);
+	    errbox(_("Dropping %s: insufficient observations"),
+		   pdinfo->varname[list[i+1]]);
 	    gretl_list_delete_at_pos(list, i+1);
 	    if (list[0] == 0) {
 		free(plotgrp->plots);
@@ -1750,21 +1749,18 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		v = atoi(tok);
 		if (v < origv) list[++i] = v;
 		else {
-		    sprintf(errtext, _("got invalid variable number %d"), v);
-		    errbox(errtext);
+		    errbox(_("got invalid variable number %d"), v);
 		    err = 1;
 		}
 	    } else if (isalpha(tok[0])) {
 		v = varindex(pdinfo, tok);
 		if (v < origv) list[++i] = v;
 		else {
-		    sprintf(errtext, _("got invalid varname '%s'"), tok);
-		    errbox(errtext);
+		    errbox(_("got invalid varname '%s'"), tok);
 		    err = 1;
 		}
 	    } else {
-		sprintf(errtext, _("got invalid field '%s'"), tok);
-		errbox(errtext);
+		errbox(_("got invalid field '%s'"), tok);
 		err = 1; 
 	    }
 	}

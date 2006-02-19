@@ -22,7 +22,6 @@
 /* model commands plus ADD and OMIT */
 #define vcv_opt_ok(c) (c == ADD || \
                        c == AR || \
-                       c == ARIMA || \
                        c == ARMA || \
                        c == CORC || \
                        c == GARCH || \
@@ -75,9 +74,6 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_T, "ct" }, 
     { ADF,      OPT_V, "verbose" },
     { ADF,      OPT_Q, "quiet" },
-    { ARIMA,    OPT_N, "nc" },    
-    { ARIMA,    OPT_V, "verbose" },
-    { ARIMA,    OPT_X, "x-12-arima" },
     { ARMA,     OPT_N, "nc" },    
     { ARMA,     OPT_V, "verbose" },
     { ARMA,     OPT_X, "x-12-arima" },

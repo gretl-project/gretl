@@ -349,8 +349,7 @@ static void filesel_save_prn_buffer (PRN *prn, const char *fname)
     FILE *fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
-	sprintf(errtext, _("Couldn't write to %s"), fname);
-	errbox(errtext);
+	errbox(_("Couldn't write to %s"), fname);
     } else {
 	const char *buf = gretl_print_get_buffer(prn);
 
@@ -482,8 +481,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	FILE *fp = gretl_fopen(fname, "r");
 
 	if (fp == NULL) {
-	    sprintf(errtext, _("Couldn't open %s"), fname);
-	    errbox(errtext);
+	    errbox(_("Couldn't open %s"), fname);
 	    return;
 	} else {
 	    fclose(fp);

@@ -20,6 +20,8 @@
 #ifndef DIALOGS_H
 #define DIALOGS_H
 
+#include <stdarg.h>
+
 enum {
     GRETL_YES,
     GRETL_NO,
@@ -33,9 +35,9 @@ typedef struct dialog_t_ dialog_t;
 void copy_format_dialog (windata_t *vwin, int multicopy, int action);
 #endif
 
-void errbox (const char *msg);
+void errbox (const char *template, ...);
 
-void infobox (const char *msg);
+void infobox (const char *template, ...);
 
 gint yes_no_dialog (char *title, char *msg, int cancel);
 

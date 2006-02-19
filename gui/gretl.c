@@ -93,7 +93,6 @@ static const struct poptOption options[] = {
 
 windata_t *mdata;
 DATAINFO *datainfo;
-char *errtext;
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
 PATHS paths;                /* useful paths */
@@ -615,9 +614,6 @@ int main (int argc, char *argv[])
 #ifdef ENABLE_NLS
     nls_init();
 #endif       
-
-    if ((errtext = malloc(MAXLEN)) == NULL) 
-	noalloc(_("startup"));
 
     *tryscript = '\0';
     *scriptfile = '\0';
@@ -1301,8 +1297,7 @@ int gretl_fork (const char *prog, const char *arg)
     sleep(1);
 
     if (fork_err) {
-	sprintf(errtext, "%s: %s", _("Command failed"), prog);
-	errbox(errtext);
+	errbox("%s: %s", _("Command failed"), prog);
     }
 
     return fork_err;

@@ -2397,8 +2397,7 @@ static int validate_dir (const char *dirname)
     if (!dir_exists(dirname, NULL)) {
 	err = mkdir(dirname, 0755);
 	if (err) {
-	    sprintf(errtext, _("Couldn't create directory '%s'"), dirname);
-	    errbox(errtext);
+	    errbox(_("Couldn't create directory '%s'"), dirname);
 	} else {
 	    infobox(_("Working directory created OK"));
 	}

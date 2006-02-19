@@ -645,8 +645,7 @@ static int real_helpfile_init (int gui, int en)
     err = get_helpfile_structure(&heads, gui, helpfile);
 
     if (err) {
-	sprintf(errtext, _("help file %s is not accessible\n"), helpfile);
-	errbox(errtext);
+	errbox(_("help file %s is not accessible\n"), helpfile);
     } else {
 	if (gui) {
 	    if (en) {
@@ -1801,6 +1800,7 @@ static int maybe_grab_pdf (int uguide, int i, char *fullpath)
 	"gretl-ref-es.pdf"  
     };
     const char *fname;
+    char errtext[MAXLEN];
     FILE *fp;
     int err = 0;
 

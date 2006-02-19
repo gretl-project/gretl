@@ -102,7 +102,6 @@ static const struct poptOption options[] = {
 
 windata_t *mdata;
 DATAINFO *datainfo;
-char *errtext;
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
 PATHS paths;                /* useful paths */
@@ -754,10 +753,6 @@ int main (int argc, char *argv[])
     putenv("PANGO_WIN32_NO_UNISCRIBE=a");
     putenv("G_FILENAME_ENCODING=@locale");
 #endif     
-
-    if ((errtext = malloc(MAXLEN)) == NULL) {
-	noalloc(_("startup"));
-    }
 
     *tryscript = '\0';
     *scriptfile = '\0';
@@ -1484,8 +1479,7 @@ int gretl_fork (const char *prog, const char *arg)
 			NULL, NULL, NULL, NULL);
 
     if (!run) {
-	sprintf(errtext, "%s: %s", _("Command failed"), prog);
-	errbox(errtext);
+	errbox("%s: %s", _("Command failed"), prog);
     }
 
     g_free(argv[0]);

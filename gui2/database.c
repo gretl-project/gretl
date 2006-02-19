@@ -2145,8 +2145,7 @@ gint populate_dbfilelist (windata_t *vwin)
     dir = opendir(dbdir);
 
     if (dir == NULL) {
-	sprintf(errtext, _("Can't open folder %s"), dbdir);
-	errbox(errtext);
+	errbox(_("Can't open folder %s"), dbdir);
 	return 1;
     }
 

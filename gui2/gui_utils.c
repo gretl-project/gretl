@@ -462,14 +462,12 @@ int copyfile (const char *src, const char *dest)
     if (!strcmp(src, dest)) return 1;
    
     if ((srcfd = gretl_fopen(src, "rb")) == NULL) {
-	sprintf(errtext, _("Couldn't open %s"), src);
-	errbox(errtext);
+	errbox(_("Couldn't open %s"), src);
 	return 1; 
     }
 
     if ((destfd = gretl_fopen(dest, "wb")) == NULL) {
-	sprintf(errtext, _("Couldn't write to %s"), dest);
-	errbox(errtext);
+	errbox(_("Couldn't write to %s"), dest);
 	fclose(srcfd);
 	return 1;
     }
@@ -993,8 +991,7 @@ int get_worksheet_data (char *fname, int datatype, int append,
     
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
-	sprintf(errtext, _("Couldn't open %s"), fname);
-	errbox(errtext);
+	errbox(_("Couldn't open %s"), fname);
 	return 1;
     } else {
 	fclose(fp);
@@ -1303,8 +1300,7 @@ void save_session (char *fname)
     /* get ready to save "session" */
     fp = gretl_fopen(fname, "a");
     if (fp == NULL) {
-	sprintf(errtext, _("Couldn't open session file %s"), fname);
-	errbox(errtext);
+	errbox(_("Couldn't open session file %s"), fname);
 	return;
     }
 
@@ -2311,8 +2307,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     /* first check that we can open the specified file */
     fp = gretl_fopen(filename, "r");
     if (fp == NULL) {
-	sprintf(errtext, _("Can't open %s for reading"), filename);
-	errbox(errtext);
+	errbox(_("Can't open %s for reading"), filename);
 	return NULL;
     } else {
 	fclose(fp);
@@ -4071,34 +4066,33 @@ int validate_varname (const char *varname)
     int i, n = strlen(varname);
     char namebit[VNAMELEN];
     unsigned char c;
+    int err = 0;
 
     *namebit = 0;
     
     if (n > VNAMELEN - 1) {
 	strncat(namebit, varname, VNAMELEN - 1);
-	sprintf(errtext, _("Variable name %s... is too long\n"
-	       "(the max is %d characters)"), namebit,
-		VNAMELEN - 1);
-	errbox(errtext);
-	return 1;
-    }
-    if (!(isalpha(*varname))) {
-	sprintf(errtext, _("First char of name ('%c') is bad\n"
-	       "(first must be alphabetical)"), *varname);
-	errbox(errtext);
-	return 1;
-    }
-    for (i=1; i<n; i++) {
-	c = (unsigned char) varname[i];
+	errbox(_("Variable name %s... is too long\n"
+		 "(the max is %d characters)"), namebit,
+	       VNAMELEN - 1);
+	err = 1;
+    } else if (!(isalpha(*varname))) {
+	errbox(_("First char of name ('%c') is bad\n"
+		 "(first must be alphabetical)"), *varname);
+	err = 1;
+    } else {
+	for (i=1; i<n && !err; i++) {
+	    c = (unsigned char) varname[i];
 	
-	if ((!(isalpha(c)) && !(isdigit(c)) && c != '_') || c > 127) {
-	    sprintf(errtext, _("Name contains an illegal char (in place %d)\n"
-		    "Use only unaccented letters, digits and underscore"), i + 1);
-	    errbox(errtext);
-	    return 1;
+	    if ((!(isalpha(c)) && !(isdigit(c)) && c != '_') || c > 127) {
+		errbox(_("Name contains an illegal char (in place %d)\n"
+			 "Use only unaccented letters, digits and underscore"), i + 1);
+		err = 1;
+	    }
 	}
     }
-    return 0;
+
+    return err;
 }
 
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
@@ -4302,6 +4296,7 @@ real_locale_from_utf8 (const gchar *src, int force)
 			  (cset != NULL)? cset : "NULL");
     infobox(msg);
     g_free(msg);
+
     if (!force && u) {
 	return g_strdup(src);
     }
@@ -4317,13 +4312,10 @@ real_locale_from_utf8 (const gchar *src, int force)
 
     if (err != NULL) {
 	if (cset != NULL) {
-	    sprintf(errtext, "g_locale_from_utf8 failed for charset '%s'",
-		    cset);
+	    errbox("g_locale_from_utf8 failed for charset '%s'", cset);
 	} else {
-	    strcpy(errtext, "g_locale_from_utf8 failed; "
-		   "so did g_get_charset");
+	    errbox("g_locale_from_utf8 failed; so did g_get_charset");
 	}
-	errbox(errtext);
 	g_error_free(err);
     }
 
@@ -4392,13 +4384,10 @@ gchar *my_locale_to_utf8 (const gchar *src)
 
 	g_get_charset(&cset);
 	if (cset != NULL) {
-	    sprintf(errtext, "g_locale_to_utf8 failed for charset '%s'",
-		    cset);
+	    errbox("g_locale_to_utf8 failed for charset '%s'", cset);
 	} else {
-	    strcpy(errtext, "g_locale_to_utf8 failed; "
-		   "so did g_get_charset");
+	    errbox("g_locale_to_utf8 failed; so did g_get_charset");
 	}
-	errbox(errtext);
 	g_error_free(err);
     }
 

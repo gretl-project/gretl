@@ -104,7 +104,7 @@ static GtkItemFactoryEntry time_series_model_items[] = {
     { N_("/Model/Time series/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL, GNULL },
     { N_("/Model/Time series/_Prais-Winsten..."), NULL, model_callback, PWE, NULL, GNULL },
     { N_("/Model/Time series/_Autoregressive estimation..."), NULL, model_callback, AR, NULL, GNULL },
-    { N_("/Model/Time series/AR_MA..."), NULL, model_callback, ARMA, NULL, GNULL },
+    { N_("/Model/Time series/ARI_MA..."), NULL, model_callback, ARMA, NULL, GNULL },
     { N_("/Model/Time series/_GARCH..."), NULL, model_callback, GARCH, NULL, GNULL },
     { N_("/Model/Time series/_Vector Autoregression..."), NULL, selector_callback, VAR, NULL, GNULL },
     { N_("/Model/Time series/VAR lag selection..."), NULL, selector_callback, VLAGSEL, NULL, GNULL },
@@ -123,7 +123,7 @@ static GtkItemFactoryEntry time_series_model_items[] = {
     { N_("/Model/Time series/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
     { N_("/Model/Time series/_Prais-Winsten..."), NULL, model_callback, PWE, NULL },
     { N_("/Model/Time series/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
-    { N_("/Model/Time series/AR_MA..."), NULL, model_callback, ARMA, NULL },
+    { N_("/Model/Time series/ARI_MA..."), NULL, model_callback, ARMA, NULL },
     { N_("/Model/Time series/_GARCH..."), NULL, model_callback, GARCH, NULL },
     { N_("/Model/Time series/_Vector Autoregression..."), NULL, selector_callback, VAR, NULL },
     { N_("/Model/Time series/VAR lag selection..."), NULL, selector_callback, VLAGSEL, NULL },
@@ -293,7 +293,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	do_pergm(NULL, 0, NULL);
     else if (!strcmp(item, _("Spectrum (Bartlett)"))) 
 	do_pergm(NULL, 1, NULL);
-    else if (!strcmp(item, _("ARMA model"))) 
+    else if (!strcmp(item, _("ARIMA model"))) 
 	model_callback(GINT_TO_POINTER(mdata->active_var), ARMA, NULL);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
 	unit_root_test(NULL, ADF, NULL);
@@ -330,7 +330,7 @@ GtkWidget *build_var_popup (void)
 	N_("Correlogram"),
 	N_("Spectrum"),
 	N_("Spectrum (Bartlett)"),
-	N_("ARMA model"),
+	N_("ARIMA model"),
 	N_("Dickey-Fuller test"),
 	N_("KPSS test"),
 	N_("Runs test"),

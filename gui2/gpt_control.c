@@ -245,11 +245,10 @@ static FILE *open_gp_file (const char *fname, const char *mode)
 
     if (fp == NULL) {
 	if (*mode == 'w') {
-	    sprintf(errtext, _("Couldn't write to %s"), fname);
+	    errbox(_("Couldn't write to %s"), fname);
 	} else {
-	    sprintf(errtext, _("Couldn't open %s"), fname);
+	    errbox(_("Couldn't open %s"), fname);
 	}
-        errbox(errtext);
     }
 
     return fp;
@@ -386,8 +385,7 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
     *fpp = gretl_fopen(spec->fname, "w");
 
     if (*fpp == NULL) {
-	sprintf(errtext, _("Couldn't write to %s"), spec->fname);
-	errbox(errtext);
+	errbox(_("Couldn't write to %s"), spec->fname);
 	return 1;
     }
 
@@ -2395,12 +2393,7 @@ static int test_file_open (const char *fname)
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	char *errstr = strerror(errno);
-
-	sprintf(errtext, _("Couldn't open %s"), fname);
-	strcat(errtext, ": ");
-	strcat(errtext, errstr);
-	errbox(errtext);
+	errbox(_("Couldn't open %s: %s"), fname, strerror(errno));
 	err = 1;
     } else {
 	fclose(fp);
@@ -3148,9 +3141,8 @@ static int get_png_bounds_info (png_bounds *bounds)
 
     if (png_sig_cmp(header, 0, PNG_CHECK_BYTES)) {
 	fclose(fp);
-	sprintf(errtext, "Bad PNG header: Got bytes %x %x %x %x", 
-		header[0],header[1],header[2],header[3]);
-	errbox(errtext);
+	errbox("Bad PNG header: Got bytes %x %x %x %x", 
+	       header[0],header[1],header[2],header[3]);
 	return GRETL_PNG_NOT_PNG;
     }
 

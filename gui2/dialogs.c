@@ -2801,13 +2801,27 @@ static void msgbox (const char *msg, int err)
 
 #endif /* msgbox variants */
 
-void errbox (const char *msg) 
+void errbox (const char *template, ...)
 {
+    char msg[MAXLEN];
+    va_list args;
+
+    va_start(args, template);
+    vsprintf(msg, template, args);
+    va_end(args);
+
     msgbox(msg, 1);
 }
 
-void infobox (const char *msg) 
+void infobox (const char *template, ...)
 {
+    char msg[MAXLEN];
+    va_list args;
+
+    va_start(args, template);
+    vsprintf(msg, template, args);
+    va_end(args);
+
     msgbox(msg, 0);
 }
 
@@ -2904,10 +2918,9 @@ static int panel_possible (void)
 
     if (least_factor(datainfo->n) == 1) {
 	ok = 0;
-	sprintf(errtext, _("Panel datasets must be balanced, but\n"
-		"the number of observations (%d) is a prime number."),
-		datainfo->n);
-	errbox(errtext);
+	errbox(_("Panel datasets must be balanced, but\n"
+		 "the number of observations (%d) is a prime number."),
+	       datainfo->n);
     } 
 
     return ok;
@@ -2918,11 +2931,10 @@ static int test_for_unbalanced (const DATAINFO *dwinfo)
     int err = 0;
 
     if (datainfo->n % dwinfo->t1 != 0) {
-	sprintf(errtext, _("Panel datasets must be balanced.\n"
-			   "The number of observations (%d) is not a multiple\n"
-			   "of the number of %s (%d)."), datainfo->n,
-		_("units"), dwinfo->t1);
-	errbox(errtext);
+	errbox(_("Panel datasets must be balanced.\n"
+		 "The number of observations (%d) is not a multiple\n"
+		 "of the number of %s (%d)."), datainfo->n,
+	       _("units"), dwinfo->t1);
 	err = 1;
     }
 
@@ -3791,8 +3803,7 @@ static void lmax_opt_finalize (GtkWidget *w, struct lmax_opt *opt)
     x = strtod(numstr, &test);
 
     if (*test != 0 || x <= opt->ymax) {
-	sprintf(errtext, _("The maximum must be greater than %g"), opt->ymax);
-	errbox(errtext);
+	errbox(_("The maximum must be greater than %g"), opt->ymax);
 	*opt->lmax = NADBL;
     } else {
 	*opt->lmax = x;

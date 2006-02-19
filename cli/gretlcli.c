@@ -750,7 +750,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     LOOPSET *loop = *ploop;
     GRETL_VAR *var = NULL;
     int chk, nulldata_n, renumber;
-    int dbdata = 0, do_arch = 0, do_nls = 0;
+    int alt_model = 0;
+    int dbdata = 0;
     unsigned char echo_flags;
     char s1[12], s2[12];
     int fncall = 0;
@@ -783,7 +784,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     chk = saved_object_action(line, prn);
     if (chk == 1) return 0;   /* action was OK */
     if (chk == -1) return 1;  /* action was faulty */
-    
+
     /* are we ready for this? */
     if (!data_status && !cmd.ignore && 
 	!ready_for_command(line)) {
@@ -997,18 +998,14 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    errmsg(err, prn);
 	}
 	if (models[1]->ci == ARCH) {
-	    do_arch = 1;
+	    alt_model = 1;
 	    swap_models(&models[0], &models[1]); 
 	}
 	clear_model(models[1]);
 	break;
 
-    case ARIMA:
     case ARMA:
 	clear_model(models[0]);
-	if (cmd.ci == ARIMA) {
-	    cmd.opt |= OPT_I;
-	}
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo,
 			  cmd.opt, prn);
 	if ((err = (models[0])->errcode)) { 
@@ -1098,9 +1095,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    if ((err = models[0]->errcode)) {
 		errmsg(err, prn);
 	    } else {
-		if (!strcmp(cmd.param, "nls")) {
-		    do_nls = 1;
-		}
+		alt_model = 1;
 		printmodel(models[0], datainfo, cmd.opt, prn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
@@ -1669,14 +1664,16 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	gretl_function_stop_on_error(&Z, &datainfo, prn);
     }
 
-    if (!err && (is_model_cmd(cmd.word) || do_nls || do_arch)
+    if (!err && (is_model_cmd(cmd.word) || alt_model)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
 	attach_subsample_to_model(models[0], datainfo);
 #ifdef MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
 		(models[0])->ID, get_model_count());
 #endif
-	err = modelspec_save(models[0], &modelspec);
+	if (is_model_cmd(cmd.word)) {
+	    err = modelspec_save(models[0], &modelspec);
+	}
 	maybe_stack_model(models[0], &cmd, prn);
     }
 

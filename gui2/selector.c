@@ -38,7 +38,7 @@ enum {
     SR_EXTRA
 };
 
-#define N_EXTRA 4
+#define N_EXTRA 6
 
 struct _selector {
     GtkWidget *dlg;
@@ -118,6 +118,8 @@ static int y_x_lags_enabled;
 static int y_w_lags_enabled;
 static int arma_p = 1;
 static int arma_P = 0;
+static int arima_d = 0;
+static int arima_D = 0;
 static int arma_q = 1;
 static int arma_Q = 0;
 static int garch_p = 1;
@@ -208,8 +210,10 @@ void clear_selector (void)
     vartrend = 0;
 
     arma_p = 1;
+    arima_d = 0;
     arma_q = 1;
     arma_P = 0;
+    arima_D = 0;
     arma_Q = 0;
 
     garch_p = 1;
@@ -1187,40 +1191,34 @@ static int add_to_cmdlist (selector *sr, const char *add)
     return err;
 }
 
-static void add_pq_vals_to_cmdlist (selector *sr)
+static void add_pdq_vals_to_cmdlist (selector *sr)
 {
-    GtkAdjustment *adj;
-    int vals[N_EXTRA] = {0};
-    char s[8];
-    int i, imax = 2;
+    char s[32];
 
-    for (i=0; i < N_EXTRA && sr->extra[i] != NULL; i++) {
-	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra[i]));
-	vals[i] = (int) adj->value;
-    }
-
-    if (vals[2] != 0 || vals[3] != 0) {
-	imax = 4;
-    }
-
-    for (i=0; i<imax; i++) {
-	sprintf(s, "%d ", vals[i]);
+    if (sr->code == GARCH) {
+	garch_p = spinner_get_int(sr->extra[0]);
+	garch_q = spinner_get_int(sr->extra[1]);
+	sprintf(s, "%d %d ; ", garch_p, garch_q);
 	add_to_cmdlist(sr, s);
-	if (i == 1 || i == 3) {
-	    add_to_cmdlist(sr, "; ");
-	}
+	return;
     }
 
-    if (sr->code == ARMA) {
-	arma_p = vals[0];
-	arma_q = vals[1];
-	if (sr->extra[2] != NULL) {
-	    arma_P = vals[2];
-	    arma_Q = vals[3];
+    arma_p = spinner_get_int(sr->extra[0]);
+    arima_d = spinner_get_int(sr->extra[1]);
+    arma_q = spinner_get_int(sr->extra[2]);
+
+    sprintf(s, "%d %d %d ; ", arma_p, arima_d, arma_q);
+    add_to_cmdlist(sr, s);
+
+    if (sr->extra[3] != NULL) {
+	arma_P = spinner_get_int(sr->extra[3]);
+	arima_D = spinner_get_int(sr->extra[4]);
+	arma_Q = spinner_get_int(sr->extra[5]);
+
+	if (arma_P > 0 || arima_D > 0 || arma_Q > 0) {
+	    sprintf(s, "%d %d %d ; ", arma_P, arima_D, arma_Q);
+	    add_to_cmdlist(sr, s);
 	}
-    } else {
-	garch_p = vals[0];
-	garch_q = vals[1];
     }
 }
 
@@ -1654,7 +1652,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
     /* deal with content of "extra" widgets */
     if (sr->code == ARMA || sr->code == GARCH) {
-	add_pq_vals_to_cmdlist(sr);
+	add_pdq_vals_to_cmdlist(sr);
     } else if (VEC_CODE(sr->code)) {
 	vec_get_spinner_data(sr, &order);
     } else {
@@ -1816,7 +1814,7 @@ static char *est_str (int cmdnum)
     case AR:
 	return N_("Autoregressive");
     case ARMA:
-	return N_("ARMA");
+	return N_("ARIMA");
     case GARCH:
 	return N_("GARCH");
     case VAR:
@@ -2417,6 +2415,7 @@ static GtkWidget *spinner_label (int i, int code)
 {
     const char *arma_strs[] = {
 	N_("AR order:"),
+	N_("Difference:"),
 	N_("MA order:")
     };
     const char *arch_strs[] = {
@@ -2426,7 +2425,7 @@ static GtkWidget *spinner_label (int i, int code)
     GtkWidget *lbl = NULL;
 
     if (code == ARMA) {
-	lbl = gtk_label_new(_(arma_strs[i % 2]));
+	lbl = gtk_label_new(_(arma_strs[i % 3]));
     } else {
 	lbl = gtk_label_new(_(arch_strs[i]));
     }
@@ -2434,48 +2433,68 @@ static GtkWidget *spinner_label (int i, int code)
     return lbl;
 }
 
-static void build_pq_spinners (selector *sr)
+static void build_pdq_spinners (selector *sr)
 {
-    GtkWidget *hbox, *tmp;
+    GtkWidget *tmp, *hbox;
     GtkObject *adj;
-    gdouble val;
-    int i, imax = 2;
+    gdouble vmax, val;
+    int i;
 
-    if (sr->code == ARMA && datainfo->pd > 1) {
-	imax = 4;
+    if (sr->code == GARCH) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	for (i=0; i<2; i++) {
+	    tmp = spinner_label(i, GARCH);
+	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	    val = (i==0)? garch_p : garch_q;
+	    adj = gtk_adjustment_new(val, 0, 4, 1, 1, 1);
+	    sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
+	}
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+	gtk_widget_show_all(hbox);
+	return;
+    }
+
+    if (datainfo->pd > 1) {
+	tmp = spinner_aux_label(0);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
+	gtk_widget_show(tmp);
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
 
-    for (i=0; i<imax; i++) {
-	if (i == 2) {
-	    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-	    gtk_widget_show(hbox);
-	    hbox = gtk_hbox_new(FALSE, 5);
-	}
-	if (imax > 2 && i % 2 == 0) {
-	    tmp = spinner_aux_label(i);
-	    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-	    gtk_widget_show(tmp);
-	}	   
-	tmp = spinner_label(i, sr->code);
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-	gtk_widget_show(tmp);
-
-	if (sr->code == ARMA) {
-	    val = (i==0)? arma_p : (i==1)? arma_q : (i==2)? arma_P : arma_Q;
-	} else {
-	    val = (i==0)? garch_p : garch_q;
-	}
-
-	adj = gtk_adjustment_new(val, 0, 4, 1, 1, 1);
+    for (i=0; i<3; i++) {
+	tmp = spinner_label(i, ARMA);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+	val = (i==0)? arma_p : (i==1)? arima_d : arma_q;
+	vmax = (i == 1)? 2 : 4;
+	adj = gtk_adjustment_new(val, 0, vmax, 1, 1, 1);
 	sr->extra[i] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i], FALSE, FALSE, 5);
-	gtk_widget_show(sr->extra[i]);
     }
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
-    gtk_widget_show(hbox);
+    gtk_widget_show_all(hbox);
+
+    if (datainfo->pd > 1) {
+	tmp = spinner_aux_label(1);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
+	gtk_widget_show(tmp);
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	for (i=0; i<3; i++) {
+	    tmp = spinner_label(i, ARMA);
+	    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+	    val = (i==0)? arma_P : (i==1)? arima_D : arma_Q;
+	    vmax = (i == 1)? 2 : 4;
+	    adj = gtk_adjustment_new(val, 0, vmax, 1, 1, 1);
+	    sr->extra[i+3] = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	    gtk_box_pack_start(GTK_BOX(hbox), sr->extra[i+3], FALSE, FALSE, 5);
+	}
+
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 5);
+	gtk_widget_show_all(hbox);    
+    }
 }
 
 static void hc_config (GtkWidget *w, gpointer p)
@@ -2963,9 +2982,9 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
 
-    /* AR and MA spinners for ARMA; also GARCH */
+    /* AR, D, MA spinners for ARIMA; or P and Q for GARCH */
     if (sr->code == ARMA || sr->code == GARCH) {
-	build_pq_spinners(sr);
+	build_pdq_spinners(sr);
     }
 
     /* toggle switches for some cases */

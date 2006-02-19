@@ -39,8 +39,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { APPEND,   "append" },
     { AR,       "ar" },       
     { ARCH,     "arch" },
-    { ARIMA,    "arima" },
-    { ARMA,     "arma" },
+    { ARMA,     "arima" },
     { BREAK,    "break" },
     { BXPLOT,   "boxplot" },
     { CHOW,     "chow" },     
@@ -162,6 +161,7 @@ static struct gretl_cmd gretl_cmd_aliases[] = {
     { LOOP, "for" },   
     { LOOP, "foreach" },
     { LOOP, "while" },
+    { ARMA, "arma" },
     { NC,   NULL }
 };
 

@@ -104,16 +104,13 @@ static int printnum (char *dest, const char *s, int d)
 	if (data_status && (v = varindex(datainfo, s)) < datainfo->v) {
 	    xx = Z[v][0];
 	    if (na(xx)) {
-		sprintf(errtext, _("Data missing for variable '%s'"), s);
-		errbox(errtext);
+		errbox(_("Data missing for variable '%s'"), s);
 		return 1;
 	    }
 	    if (d) sprintf(numstr, "%f", xx);
 	    else sprintf(numstr, "%d", (int) xx);
 	} else {
-	    sprintf(errtext, 
-		    _("Unrecognized variable '%s' in p-value command"), s);
-	    errbox(errtext);
+	    errbox(_("Unrecognized variable '%s' in p-value command"), s);
 	    return 1;
 	}
     } else if (d != 0) {
@@ -1165,9 +1162,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     }
 
     if (n == 0) {		
-	sprintf(errtext, _("Data missing for variable '%s'"),
-		datainfo->varname[vx]);
-	errbox(errtext);
+	errbox(_("Data missing for variable '%s'"), datainfo->varname[vx]);
 	return;
     }
 

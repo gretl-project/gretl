@@ -552,7 +552,7 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
 	if (gretl_model_get_int(pmod, "armax")) {
 	    return N_("ARMAX");
 	} else {
-	    return N_("ARMA");
+	    return N_("ARIMA");
 	}
     } else if (pmod->ci == WLS) {
 	if (gretl_model_get_int(pmod, "iters")) {

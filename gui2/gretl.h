@@ -86,9 +86,6 @@ extern char scriptfile[MAXLEN];
 extern char trydatfile[MAXLEN];
 extern char tryscript[MAXLEN];
 
-/* global error string */
-extern char *errtext;
-
 /* global option-related vars */
 extern int expert;
 extern int updater;
