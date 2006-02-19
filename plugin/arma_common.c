@@ -338,7 +338,7 @@ static int check_arma_sep (int *list, int sep1, struct arma_info *ainfo)
 	}
     }
 
-    if (!err) {
+    if (!err && sep1 == 4) {
 	/* check for apparent but not "real" arima spec */
 	if (arma_has_seasonal(ainfo)) {
 	    if (list[2] == 0 && list[6] == 0) {
@@ -550,7 +550,9 @@ static int arma_check_list (int *list, gretlopt opt,
 	} 
     }
 
+#if 0
     printlist(list, "ar(i)ma list after checking");
+#endif
 
     return err;
 }

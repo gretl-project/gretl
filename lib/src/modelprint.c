@@ -551,8 +551,11 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
     if (pmod->ci == ARMA) {
 	if (gretl_model_get_int(pmod, "armax")) {
 	    return N_("ARMAX");
-	} else {
+	} else if (gretl_model_get_int(pmod, "arima_d") ||
+		   gretl_model_get_int(pmod, "arima_D")) {
 	    return N_("ARIMA");
+	} else {
+	    return N_("ARMA");
 	}
     } else if (pmod->ci == WLS) {
 	if (gretl_model_get_int(pmod, "iters")) {

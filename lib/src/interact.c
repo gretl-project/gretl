@@ -326,7 +326,9 @@ static int flow_control (const char *line, double ***pZ,
     return 1;
 }
 
-static void get_savename (char *s, CMD *cmd)
+static char cmd_savename[MAXSAVENAME];
+
+static void maybe_extract_savename (char *s, CMD *cmd)
 {
     *cmd->savename = 0;
 
@@ -346,6 +348,7 @@ static void get_savename (char *s, CMD *cmd)
 	if (cmd->savename[n-1] == '"') {
 	    cmd->savename[n-1] = 0;
 	}
+	strcpy(cmd_savename, cmd->savename);
 	shift_string_left(s, len + 3);
     }
 }
@@ -1393,7 +1396,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }    
 
     /* extract "savename" for storing an object? */
-    get_savename(line, cmd);
+    maybe_extract_savename(line, cmd);
 
     /* no command here? */
     if (sscanf(line, "%8s", cmd->word) != 1) {
@@ -3439,9 +3442,12 @@ void gretl_cmd_set_opt (CMD *cmd, gretlopt opt)
     cmd->opt = opt;
 }
 
-const char *gretl_cmd_get_savename (const CMD *cmd)
+char *gretl_cmd_get_savename (char *sname)
 {
-    return cmd->savename;
+    strcpy(sname, cmd_savename);
+    *cmd_savename = 0;
+
+    return sname;
 }
 
 

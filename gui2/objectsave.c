@@ -119,13 +119,14 @@ static int parse_object_request (const char *line,
 
 int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
 {
-    const char *savename = gretl_cmd_get_savename(cmd);
+    char mname[MAXSAVENAME];
     MODEL *cpy = NULL;
     int err = 0;
 
     set_as_last_model(pmod, EQUATION);
 
-    if (*savename == 0) {
+    gretl_cmd_get_savename(mname);
+    if (*mname == 0) {
 	return 0;
     }
 
@@ -135,7 +136,7 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
     }
 
     if (!err) {
-	err = stack_model_as(cpy, savename);
+	err = stack_model_as(cpy, mname);
     }
 
     if (!err) {
@@ -143,7 +144,7 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
     }
 
     if (!err) {
-	pprintf(prn, _("%s saved\n"), savename);
+	pprintf(prn, _("%s saved\n"), mname);
     }
 
     return err;
@@ -151,13 +152,14 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
 
 int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 {
-    const char *savename = gretl_cmd_get_savename(cmd);
+    char vname[MAXSAVENAME];
     GRETL_VAR *var;
     int err = 0;
 
     set_as_last_model(*pvar, VAR);
 
-    if (*savename == 0) {
+    gretl_cmd_get_savename(vname);
+    if (*vname == 0) {
 	*pvar = NULL;
 	return 0;
     }
@@ -165,12 +167,12 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
     var = *pvar;
     *pvar = NULL;
 
-    err = stack_VAR_as(var, savename);
+    err = stack_VAR_as(var, vname);
 
     if (!err) {
 	err = try_add_var_to_session(var);
 	if (!err) {
-	    pprintf(prn, _("%s saved\n"), savename);
+	    pprintf(prn, _("%s saved\n"), vname);
 	}
     }
 
@@ -179,19 +181,20 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
 
 int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn)
 {
-    const char *savename = gretl_cmd_get_savename(cmd);
+    char sname[MAXSAVENAME];
     int err;
 
-    if (*savename == 0) {
+    gretl_cmd_get_savename(sname);
+    if (*sname == 0) {
 	return 0;
     }
 
-    err = stack_system_as(sys, savename);
+    err = stack_system_as(sys, sname);
 
     if (!err) {
 	err = try_add_system_to_session(sys);
 	if (!err) {
-	    pprintf(prn, _("%s saved\n"), savename);
+	    pprintf(prn, _("%s saved\n"), sname);
 	} 
     }
 
@@ -201,16 +204,19 @@ int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn)
 int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 		      PRN *prn)
 {
-    const char *savename = gretl_cmd_get_savename(cmd);
+    char gname[MAXSAVENAME];
     char savedir[MAXLEN];
     gchar *tmp, *plotfile;
     int err = 0;
 
-    if (*savename == 0) return 0;
+    gretl_cmd_get_savename(gname);
+    if (*gname == 0) {
+	return 0;
+    }
 
     get_default_dir(savedir, SAVE_THIS_GRAPH);
 
-    tmp = g_strdup(savename);
+    tmp = g_strdup(gname);
     plotfile = g_strdup_printf("%ssession.%s", savedir, 
 			       space_to_score(tmp));
     g_free(tmp);
@@ -220,15 +226,15 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 	if (!err) {
 	    int ret;
 
-	    ret = real_add_graph_to_session(plotfile, savename, code);
+	    ret = real_add_graph_to_session(plotfile, gname, code);
 	    if (ret == ADD_OBJECT_FAIL) {
 		err = 1;
 	    } else {
 		remove(fname);
 		if (ret == ADD_OBJECT_REPLACE) {
-		    pprintf(prn, _("%s replaced\n"), savename);
+		    pprintf(prn, _("%s replaced\n"), gname);
 		} else {
-		    pprintf(prn, _("%s saved\n"), savename);
+		    pprintf(prn, _("%s saved\n"), gname);
 		}
 	    }
 	}

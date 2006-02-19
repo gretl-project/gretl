@@ -634,8 +634,10 @@ int stack_system (gretl_equation_system *sys, PRN *prn)
 
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
 {
-    const char *vname = gretl_cmd_get_savename(cmd);
+    char vname[MAXSAVENAME];
     int ret = 0;
+
+    gretl_cmd_get_savename(vname);
 
 #if ODEBUG
     fprintf(stderr, "\nmaybe_stack_var: initial refcount = %d\n", var->refcount);
@@ -672,9 +674,11 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
 
 int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
 {
-    const char *mname = gretl_cmd_get_savename(cmd);
+    char mname[MAXSAVENAME];
     MODEL *cpy = NULL;
     int err = 0;
+
+    gretl_cmd_get_savename(mname);
 
 #if ODEBUG
     fprintf(stderr, "\nmaybe_stack_model: initial refcount = %d\n", 
