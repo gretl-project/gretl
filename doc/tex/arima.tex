@@ -1,0 +1,118 @@
+\chapter{ARMA models}
+\label{arma-estimation}
+
+\section{Representation and syntax}
+\label{arma-repr}
+
+The \cmd{arma} command performs estimation of autoregressive-moving
+average (ARMA) models; the most general representation of a model
+estimable by \app{gretl} is as follows:
+\begin{equation}
+  \label{eq:general-arma}
+  A(L) B(L^s) y_t = x_t \beta + C(L) D(L^s) \epsilon_t ,
+\end{equation}
+where $L$ is the lag operator ($L^n x_t = x_{t-n}$), $s$ is the
+number of subperiods for seasonal time series (for example, 12 for
+monthly series), $x_t$ is a vector of exogenous variables and
+$\epsilon_t$ is a white noise process.
+
+The ``basic'' ARMA model is obtained when $x_t = 1$ and there are no
+seasonal operators. In this case, $B(L^s) = D(L^s) = 1$ and the model
+becomes
+\begin{equation}
+  \label{eq:plain-arma}
+  A(L) y_t = \mu + C(L) \epsilon_t ,
+\end{equation}
+where, in customary notation, the vector $\beta$ reduces to the
+intercept $\mu$. It is possible to write the above equation more
+explicitly as
+\[
+  y_t = \mu + \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q
+  \epsilon_{t-q} ;
+\]
+the corresponding \app{gretl} syntax is simply
+\begin{code}
+  gretl p q ; y
+\end{code}
+where \verb|p| and \verb|q| are the desired lag orders; these can be
+either numbers or pre-defined scalars. The parameter $\mu$ can be
+dropped if necessary by appending the option \cmd{--nc} to the command.
+
+If you want to estimate a model with explanatory variables, the above
+syntax must be extended to
+\begin{code}
+  gretl p q ; y const x1 x2
+\end{code}
+This command would estimate the following model:
+\[
+  y_t = \beta_0 + x_{1,t} \beta_1 + x_{2,t} \beta_2 + 
+  \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q} .
+\]
+What \app{gretl} estimates in this case is known as an ARMAX (ARMA +
+eXogenous variables) model, which is different from what some other packages
+call ``regression model with ARMA errors''. The difference is apparent
+by considering the model \app{gretl} estimates:
+\begin{equation}
+  \label{eq:armax}
+  A(L) y_t = x_t \beta + C(L) \epsilon_t ,
+\end{equation}
+and a regression model with ARMA errors, that would be
+\begin{eqnarray}
+  \label{eq:reg-arma}
+  y_t & = & x_t \beta + u_t \\
+  A(L) u_t & = & C(L) \epsilon_t ;
+\end{eqnarray}
+the latter would translate into
+\[
+  A(L) y_t = A(L) \left(x_t \beta \right) + C(L) \epsilon_t ;
+\]
+the ARMAX formulation has the advantage that the coefficient $\beta$
+can be immediately interpreted as the marginal effects of the $x_t$
+variables on the conditional mean of $y_t$.
+
+The structure of the \cmd{arma} command does not let you specify
+models with gaps in the lag structure\footnote{Actually, this
+  limitation can be circumvented for the autoregressive part by
+  including lags of the dependent variable in the exogenous list.
+  This, however, despite leading to correct estimation, would break
+  the existing mechanism for forecasting.}. A more flexible lag
+structure is especially desirable when analyzing time series that
+display strong seasonal patterns. In these cases, the full model
+(\ref{eq:general-arma}) can be used. For example, the syntax
+\begin{code}
+  arma 1 1 ; 1 1 ; y
+\end{code}
+would be used to estimate a model with four parameters:
+\[
+  ( 1 - \phi L )  ( 1 - \Phi L^s ) y_t = \mu + ( 1 + \theta L ) ( 1 + \Theta L^s ) \epsilon_t;
+\]
+assuming that $y_t$ is a quarterly series (and therefore $s=4$), the
+above equation can be written more explicitly as
+\[
+  y_t = \mu + \phi y_{t-1} + \Phi y_{t-4} - (\phi \cdot \Phi) y_{t-5} + 
+  \epsilon_t + \theta \epsilon_{t-1} + \Theta \epsilon_{t-4} +
+  (\theta \cdot \Theta) \epsilon_{t-5} .
+\]
+
+\section{Estimation}
+\label{arma-est}
+
+The algorithm \app{gretl} uses to estimate the parameters of an ARMA
+model is conditional maximum likelihood, also known as ``conditional
+sum of squares'' (see Hamilton, 1994, page 132). This method was
+exemplified in the script \ref{jack-arma}, and only a brief
+description will be given here.
+
+\ldots
+
+\section{Forecasting}
+\label{arma-fcast}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+
