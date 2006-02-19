@@ -2259,8 +2259,12 @@ static void selector_init (selector *sr, guint code, const char *title,
     int i, dlgheight = 340;
     double hx;
     
-    if (MODEL_CODE(code) && datainfo->v > 9) {
-	dlgheight += 80;
+    if (MODEL_CODE(code)) {
+	if (datainfo->v > 9) {
+	    dlgheight += 80;
+	} else if (code == ARMA) {
+	    dlgheight += 40;
+	}
     } 
 
     if (code == WLS || code == POISSON || code == AR) {
