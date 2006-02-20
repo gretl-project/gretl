@@ -1,0 +1,116 @@
+\chapter{Modelli ARMA}
+\label{arma-estimation}
+
+\section{Rappresentazione e sintassi}
+\label{arma-repr}
+
+Il comando \cmd{arma} effettua la stima di modelli autoregressivi a media mobile
+(ARMA); la rappresentazione più generale di un modello stimabile con \app{gretl}
+è la seguente:
+\begin{equation}
+  \label{eq:general-arma}
+  A(L) B(L^s) y_t = x_t \beta + C(L) D(L^s) \epsilon_t ,
+\end{equation}
+dove $L$ è l'operatore di ritardo ($L^n x_t = x_{t-n}$), $s$ è il numero di
+sotto-periodi per le serie stagionali (ad esempio, 12 per serie mensili),
+$x_t$ è un vettore di variabili esogene, e $\epsilon_t$ è un processo a
+rumore bianco.
+
+Il modello ARMA ``basilare'' si ottiene quando vale $x_t = 1$ e non ci sono
+operatori stagionali. In questo caso, $B(L^s) = D(L^s) = 1$ e il modello diventa
+\begin{equation}
+  \label{eq:plain-arma}
+  A(L) y_t = \mu + C(L) \epsilon_t ,
+\end{equation}
+dove, nella solita notazione, il vettore $\beta$ si riduce all'intercetta $\mu$.
+È possibile scrivere l'equazione precedente in modo più esplicito come
+\[
+  y_t = \mu + \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q
+  \epsilon_{t-q} ;
+\]
+la sintassi corrispondente in \app{gretl} è semplicemente
+\begin{code}
+  gretl p q ; y
+\end{code}
+dove \verb|p| e \verb|q| sono gli ordini di ritardo desiderati; questi possono
+essere sia numeri, sia scalari pre-definiti. Il parametro $\mu$ può essere
+omesso se necessario, aggiungendo l'opzione \cmd{--nc} al comando.
+
+Se si vuole stimare un modello con variabili esplicative, la sintassi vista
+sopra può essere estesa in questo modo
+\begin{code}
+  gretl p q ; y const x1 x2
+\end{code}
+Questo comando stimerebbe il seguente modello:
+\[
+  y_t = \beta_0 + x_{1,t} \beta_1 + x_{2,t} \beta_2 + 
+  \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q} .
+\]
+Quello che \app{gretl} stima in questo caso è un modello ARMAX (ARMA +
+variabili esogene), che è diverso da ciò che alcuni altri programmi chiamano
+``modello di regressione con errori ARMA''. La differenza è evidente
+considerando il modello stimato da \app{gretl}
+\begin{equation}
+  \label{eq:armax}
+  A(L) y_t = x_t \beta + C(L) \epsilon_t ,
+\end{equation}
+e un modello di regressione con errori ARMA, ossia
+\begin{eqnarray}
+  \label{eq:reg-arma}
+  y_t & = & x_t \beta + u_t \\
+  A(L) u_t & = & C(L) \epsilon_t ;
+\end{eqnarray}
+l'ultimo si tradurrebbe nell'espressione seguente
+\[
+  A(L) y_t = A(L) \left(x_t \beta \right) + C(L) \epsilon_t ;
+\]
+la formulazione ARMAX ha il vantaggio che il coefficiente $\beta$
+può essere interpretato immediatamente come l'effetto marginale delle
+variabili $x_t$ sulla media condizionale di $y_t$.
+
+La struttura del comando \cmd{arma} non permette di specificare modelli con
+buchi nella struttura dei ritardi\footnote{In realtà questa limitazione può
+essere aggirata per quanto riguarda la parte autoregressiva, includendo ritardi
+della variabile dipendente nella lista delle variabili esogene. In questo modo
+però, anche se si ottengono stime corrette, rende inutilizzabile la funzionalità
+di previsione attualmente disponibile.}. Una struttura di ritardi più flessibile
+può essere necessaria quando si analizzano serie che mostrano un marcato
+andamento stagionale. In questo caso è possibile usare il modello completo
+(\ref{eq:general-arma}). Ad esempio, la sintassi
+\begin{code}
+  arma 1 1 ; 1 1 ; y
+\end{code}
+permette di stimare un modello con quattro parametri:
+\[
+  ( 1 - \phi L )  ( 1 - \Phi L^s ) y_t = \mu + ( 1 + \theta L ) ( 1 + \Theta L^s ) \epsilon_t;
+\]
+assumendo che $y_t$ è una serie trimestrale (e quindi $s=4$), l'equazione
+precedente può essere scritta in modo più esplicito come
+\[
+  y_t = \mu + \phi y_{t-1} + \Phi y_{t-4} - (\phi \cdot \Phi) y_{t-5} + 
+  \epsilon_t + \theta \epsilon_{t-1} + \Theta \epsilon_{t-4} +
+  (\theta \cdot \Theta) \epsilon_{t-5} .
+\]
+
+\section{Stima}
+\label{arma-est}
+
+L'algoritmo usato da \app{gretl} per stimare i parametri di un modello ARMA
+è quello della massima verosimiglianza condizionale, noto anche come ``somma
+dei quadrati condizionale'' (si veda Hamilton, 1994, pagina 132).
+Questo metodo è esemplificato nello script \ref{jack-arma}, quindi ne verrà
+data solo una breve descrizione qui.
+
+\ldots
+
+\section{Previsione}
+\label{arma-fcast}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
+
