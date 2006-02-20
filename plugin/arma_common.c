@@ -24,7 +24,7 @@ struct arma_info {
     int t2;       /* ending observation */
     int pd;       /* periodicity of data */
     int T;        /* full length of data series */
-    double *dx;   /* differenced dependent variable */
+    double *dy;   /* differenced dependent variable */
 };
 
 #define arma_has_const(a)         ((a)->flags & ARMA_IFC)
@@ -59,7 +59,7 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
     ainfo->pd = pdinfo->pd;
     ainfo->T = pdinfo->n;
 
-    ainfo->dx = NULL;
+    ainfo->dy = NULL;
 }
 
 static int arma_list_y_position (struct arma_info *ainfo)
@@ -74,6 +74,46 @@ static int arma_list_y_position (struct arma_info *ainfo)
 
     return ypos;
 }
+
+#if 0
+
+static void arma_R2_and_F (MODEL *pmod, const double *y)
+{
+    int t;
+
+    pmod->tss = 0.0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
+    }
+
+    if (!pmod->ifc) {
+	double syh2 = 0.0;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    syh2 += pmod->yhat[t] * pmod->yhat[t];
+	}
+	pmod->fstt = pmod->dfd * syh2 / (pmod->dfn * pmod->ess);
+    } else if (pmod->tss > pmod->ess) {
+	pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
+    } 
+
+    if (!pmod->ifc) {
+	double r2 = gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
+
+	pmod->rsq = r2;
+	pmod->adjrsq = 1.0 - ((1.0 - r2) * (pmod->nobs - 1.0) / pmod->dfd);
+    } else if (pmod->tss > 0) {
+	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+	if (pmod->dfd > 0) {
+	    double den = pmod->tss * pmod->dfd;
+
+	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
+	}
+    }
+}
+
+#endif
 
 /* write the various statistics from ARMA estimation into
    a gretl MODEL struct */
@@ -111,8 +151,8 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     free(pmod->list);
     pmod->list = gretl_list_copy(list);
 
-    if (ainfo->dx != NULL) {
-	y = ainfo->dx;
+    if (ainfo->dy != NULL) {
+	y = ainfo->dy;
     } else {
 	y = Z[ainfo->yno];
     }
@@ -121,53 +161,32 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
 
     mean_error = pmod->ess = 0.0;
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (e != NULL) {
 	    pmod->uhat[t] = e[t];
 	}
-	pmod->yhat[t] = y[t] - pmod->uhat[t];
-	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-	mean_error += pmod->uhat[t];
+	if (!na(y[t])) {
+	    pmod->yhat[t] = y[t] - pmod->uhat[t];
+	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+	    mean_error += pmod->uhat[t];
+	}
     }
 
     mean_error /= pmod->nobs;
     gretl_model_set_double(pmod, "mean_error", mean_error);
 
-    pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+    if (arma != NULL) {
+	/* in X12A case we read this from file */
+	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
+    } 
 
-    pmod->tss = 0.0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
-    }
+    pmod->rsq = pmod->adjrsq = pmod->fstt = NADBL;
+    pmod->tss = NADBL;
 
-    if (!pmod->ifc) {
-	double syh2 = 0.0;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    syh2 += pmod->yhat[t] * pmod->yhat[t];
-	}
-	pmod->fstt = pmod->dfd * syh2 / (pmod->dfn * pmod->ess);
-    } else if (pmod->tss > pmod->ess) {
-	pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
-    } else {
-	pmod->fstt = NADBL;
-    }
-
-    pmod->rsq = pmod->adjrsq = NADBL;
-
-    if (!pmod->ifc) {
-	double r2 = gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
-
-	pmod->rsq = r2;
-	pmod->adjrsq = 1.0 - ((1.0 - r2) * (pmod->nobs - 1.0) / pmod->dfd);
-    } else if (pmod->tss > 0) {
-	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
-	if (pmod->dfd > 0) {
-	    double den = pmod->tss * pmod->dfd;
-
-	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
-	}
-    }
+#if 0
+    arma_R2_and_F(pmod, y);
+#endif
 
     if (arma != NULL) {
 	mle_criteria(pmod, 1);
@@ -182,7 +201,13 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     if (ainfo->d > 0 || ainfo->D > 0) {
 	gretl_model_set_int(pmod, "arima_d", ainfo->d);
 	gretl_model_set_int(pmod, "arima_D", ainfo->D);
-    }	
+    }
+
+    if (ainfo->dy != NULL) {
+	gretl_model_set_data(pmod, "arima_dy", ainfo->dy, 
+			     ainfo->T * sizeof *ainfo->dy);
+	ainfo->dy = NULL;
+    }
 
     if (ainfo->r > 0) {
 	gretl_model_set_int(pmod, "armax", 1);
@@ -293,6 +318,8 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     return 0;
 }
 
+#define ARIMA_DEBUG 0
+
 /* remove the intercept from list of regressors */
 
 static int arma_remove_const (int *list, int seasonal, int diffs,
@@ -354,6 +381,10 @@ static int check_arma_sep (int *list, int sep1, struct arma_info *ainfo)
 	}
     }
 
+#if ARIMA_DEBUG
+    fprintf(stderr, "check_arma_sep: returning %d\n", err);
+#endif
+
     return err;
 }
 
@@ -375,9 +406,7 @@ static int check_arma_list (int *list, gretlopt opt,
 	err = 1;
     } else if (list[2] < 0 || list[2] > MAX_ARMA_ORDER) {
 	err = 1;
-    } else if (list[1] + list[2] == 0 && !arma_has_seasonal(ainfo)) {
-	err = 1;
-    }
+    } 
 
     if (!err) {
 	ainfo->p = list[1];
@@ -391,9 +420,7 @@ static int check_arma_list (int *list, gretlopt opt,
 	    err = 1;
 	} else if (list[5] < 0 || list[5] > MAX_ARMA_ORDER) {
 	    err = 1;
-	} else if (list[4] + list[5] == 0) {
-	    err = 1;
-	}
+	} 
     }
 
     if (!err && arma_has_seasonal(ainfo)) {
@@ -441,6 +468,10 @@ static int check_arima_list (int *list, gretlopt opt,
     int hadconst = 0;
     int err = 0;
 
+#if ARIMA_DEBUG
+    printlist(list, "check_arima_list");
+#endif
+
     if (arma_has_seasonal(ainfo)) {
 	armax = (list[0] > 9);
     } else {
@@ -453,9 +484,7 @@ static int check_arima_list (int *list, gretlopt opt,
 	err = 1;
     } else if (list[3] < 0 || list[3] > MAX_ARMA_ORDER) {
 	err = 1;
-    } else if (list[1] + list[3] == 0 && !arma_has_seasonal(ainfo)) {
-	err = 1;
-    }
+    } 
 
     if (!err) {
 	ainfo->p = list[1];
@@ -472,9 +501,7 @@ static int check_arima_list (int *list, gretlopt opt,
 	    err = 1;
 	} else if (list[7] < 0 || list[7] > MAX_ARMA_ORDER) {
 	    err = 1;
-	} else if (list[5] + list[7] == 0) {
-	    err = 1;
-	}
+	} 
     }
 
     if (!err && arma_has_seasonal(ainfo)) {
@@ -522,6 +549,11 @@ static int arma_check_list (int *list, gretlopt opt,
     int sep1 = gretl_list_separator_position(list);
     int err = 0;
 
+#if ARIMA_DEBUG
+    fprintf(stderr, "arma_check_list: sep1 = %d\n", sep1);
+    printlist(list, "incoming list");
+#endif
+
     if (sep1 == 3) {
 	if (list[0] < 4) {
 	    err = E_PARSE;
@@ -550,9 +582,81 @@ static int arma_check_list (int *list, gretlopt opt,
 	} 
     }
 
-#if 0
+#if ARIMA_DEBUG
     printlist(list, "ar(i)ma list after checking");
+    fprintf(stderr, "err = %d\n", err);
 #endif
 
     return err;
 }
+
+static double *
+arima_difference (const double *x, struct arma_info *ainfo)
+{
+    double *dx;
+    int s = ainfo->pd;
+    int t, t1 = 0;
+
+#if ARMA_DEBUG
+    fprintf(stderr, "doing arima_difference: d = %d, D = %d\n",
+	    ainfo->d, ainfo->D);
+#endif
+
+    dx = malloc(ainfo->T * sizeof *dx);
+    if (dx == NULL) {
+	return NULL;
+    }
+
+    for (t=0; t<ainfo->T; t++) {
+	if (na(x[t])) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+
+    t1 += ainfo->d + ainfo->D * s;
+
+    for (t=0; t<t1; t++) {
+	dx[t] = NADBL;
+    }
+
+    for (t=t1; t<ainfo->T; t++) {
+	dx[t] = x[t];
+	if (ainfo->d > 0) {
+	    dx[t] -= x[t-1];
+	} 
+	if (ainfo->d > 1) {
+	    dx[t] -= x[t-1];
+	    dx[t] += x[t-2];
+	}
+	if (ainfo->D > 0) {
+	    dx[t] -= x[t - s];
+	    if (ainfo->d > 0) {
+		dx[t] += x[t - (s+1)];
+	    }
+	    if (ainfo->d > 1) {
+		dx[t] += x[t - (s+1)];
+		dx[t] -= x[t - 2*s];
+	    }	    
+	} 
+	if (ainfo->D > 1) {
+	    dx[t] -= x[t - s];
+	    dx[t] += x[t - 2*s];
+	    if (ainfo->d > 0) {
+		dx[t] -= x[t - s];
+		dx[t] += x[t - (s+1)];
+		dx[t] -= x[t - (2*s+1)];
+	    }
+	    if (ainfo->d > 1) {
+		dx[t] += 2 * x[t - (s+1)];
+		dx[t] -= 2 * x[t - (s+2)];
+		dx[t] -= x[t - (2*s+1)];
+		dx[t] += x[t - (2*s+2)];
+	    }
+	}
+    }
+
+    return dx;
+}
+

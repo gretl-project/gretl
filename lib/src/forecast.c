@@ -42,6 +42,7 @@ typedef struct Forecast_ Forecast;
 
 struct Forecast_ {
     int method;       /* static, dynamic or auto */
+    int n;            /* length of series below */
     double *yhat;     /* array of forecast values */
     double *sderr;    /* array of forecast standard errors */
     double *eps;      /* array of estimated forecast errors */
@@ -243,8 +244,7 @@ static int *model_xlist (MODEL *pmod)
     if (xlist == NULL) {
 	xlist = gretl_model_get_x_list(pmod);
 	if (xlist != NULL) {
-	    gretl_model_set_data(pmod, "xlist", (void *) xlist,  
-				 (xlist[0] + 1) * sizeof *xlist);
+	    gretl_model_set_list_as_data(pmod, "xlist", xlist);
 	} 
     }
 
@@ -259,7 +259,7 @@ static int
 has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int *xlist;
-    char xname[9], tmp[9];  
+    char xname[VNAMELEN], tmp[VNAMELEN];  
     const char *label;
     const char *yname;
     int i, lag;
@@ -274,8 +274,8 @@ has_depvar_lags (MODEL *pmod, const DATAINFO *pdinfo)
 
     for (i=1; i<=xlist[0]; i++) {
 	label = VARLABEL(pdinfo, xlist[i]);
-	if ((sscanf(label, "= %8[^(](t - %d)", xname, &lag) == 2 ||
-	     sscanf(label, "%8[^=]=%8[^(](-%d)", tmp, xname, &lag) == 3) &&
+	if ((sscanf(label, "= %15[^(](t - %d)", xname, &lag) == 2 ||
+	     sscanf(label, "%15[^=]=%15[^(](-%d)", tmp, xname, &lag) == 3) &&
 	    !strcmp(xname, yname)) {
 	    ret = 1;
 	    break;
@@ -316,7 +316,7 @@ static int process_lagged_depvar (MODEL *pmod,
     if (dvlags == NULL) {
 	err = 1;
     } else {
-	char xname[9], tmp[9];
+	char xname[VNAMELEN], tmp[VNAMELEN];
 	const char *label;
 	const char *yname;
 	int i, lag;
@@ -325,8 +325,8 @@ static int process_lagged_depvar (MODEL *pmod,
 
 	for (i=0; i<xlist[0]; i++) {
 	    label = VARLABEL(pdinfo, xlist[i+1]);
-	    if ((sscanf(label, "= %8[^(](t - %d)", xname, &lag) == 2 ||
-		 sscanf(label, "%8[^=]=%8[^(](-%d)", tmp, xname, &lag) == 3) &&
+	    if ((sscanf(label, "= %15[^(](t - %d)", xname, &lag) == 2 ||
+		 sscanf(label, "%15[^=]=%15[^(](-%d)", tmp, xname, &lag) == 3) &&
 		!strcmp(xname, yname)) {
 		dvlags[i] = lag;
 	    } else {
@@ -989,6 +989,119 @@ arma_variance_machine (const double *phi, int p,
     return *ss_psi;
 }
 
+static int arima_integrate (double *x, const double *x0,
+			    int T, int d, int D, int s)
+{
+    double *ix;
+    int t, t1 = 0;
+
+    fprintf(stderr, "arima_integrate: T=%d, d=%d, D=%d, s=%d\n",
+	    T, d, D, s);
+
+    ix = malloc(T * sizeof *ix);
+    if (ix == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<T; t++) {
+	if (na(x[t])) {
+	    t1++;
+	} else {
+	    break;
+	}
+    }
+
+    t1 += d + D * s;
+
+    if (x0 != NULL) {
+	for (t=0; t<t1; t++) {
+	    ix[t] = x0[t];
+	}
+    }
+
+    for (t=t1; t<T; t++) {
+	ix[t] = (x0 == NULL)? 0.0 : x0[t];
+	if (d > 0) {
+	    ix[t] += x[t-1];
+	} 
+	if (d > 1) {
+	    ix[t] += x[t-1];
+	    ix[t] -= x[t-2];
+	}
+	if (D > 0) {
+	    ix[t] += x[t - s];
+	    if (d > 0) {
+		ix[t] -= x[t - (s+1)];
+	    }
+	    if (d > 1) {
+		ix[t] -= x[t - (s+1)];
+		ix[t] += x[t - 2*s];
+	    }	    
+	} 
+	if (D > 1) {
+	    ix[t] += x[t - s];
+	    ix[t] -= x[t - 2*s];
+	    if (d > 0) {
+		ix[t] += x[t - s];
+		ix[t] -= x[t - (s+1)];
+		ix[t] += x[t - (2*s+1)];
+	    }
+	    if (d > 1) {
+		ix[t] -= 2 * x[t - (s+1)];
+		ix[t] += 2 * x[t - (s+2)];
+		ix[t] += x[t - (2*s+1)];
+		ix[t] -= x[t - (2*s+2)];
+	    }
+	}
+    }
+
+#if 1
+    for (t=0; t<T; t++) {
+	if (x0 != NULL) {
+	    fprintf(stderr, "%2d: %8g %8g %8g\n",
+		    t, x[t], ix[t], x0[t]);
+	} else {
+	    fprintf(stderr, "%2d: %8g %8g\n",
+		    t, x[t], ix[t]);
+	}
+    }
+#endif
+
+    /* transcribe results back into x */
+    for (t=0; t<T; t++) {
+	if (t < t1) {
+	    x[t] = NADBL;
+	} else {
+	    x[t] = ix[t];
+	}
+    }
+
+    free(ix);
+
+    return 0;
+}
+
+static int 
+maybe_arima_integrate (Forecast *fc, MODEL *pmod, const double **Z, 
+		       const DATAINFO *pdinfo)
+{
+    int d = gretl_model_get_int(pmod, "arima_d");
+    int D = gretl_model_get_int(pmod, "arima_D");
+    int err = 0;
+
+    if (d > 0 || D > 0) {
+	int s = gretl_model_get_int(pmod, "arma_pd");
+	int yno = gretl_model_get_depvar(pmod);
+
+	err = arima_integrate(fc->yhat, Z[yno], fc->n, d, D, s);
+	if (!err && fc->sderr != NULL) {
+	    err = arima_integrate(fc->sderr, NULL, fc->n, d, D, s);
+	}
+    }
+
+    return err;
+}
+
 /* generate forecasts for ARMA (or ARMAX) models, including
    forecast standard errors if we're doing out-of-sample
    forecasting
@@ -1000,6 +1113,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     double *phi = NULL;
     double *theta = NULL;
     const double *beta;
+    const double *y;
 
     double *psi = NULL;
     double ss_psi = 0.0;
@@ -1073,6 +1187,12 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     DPRINTF(("ar_smax = %d, ma_smax = %d\n", ar_smax, ma_smax));
 
+    /* dependent variable */
+    y = gretl_model_get_data(pmod, "arima_dy");
+    if (y == NULL) {
+	y = Z[yno];
+    }
+
     /* do real forecast */
     for (t=tstart; t<=fc->t2 && !err; t++) {
 	int miss = 0;
@@ -1108,7 +1228,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    if (s < 0) {
 		yval = NADBL;
 	    } else if (s <= ar_smax) {
-		yval = Z[yno][s];
+		yval = y[s];
 		DPRINTF(("  AR: lag %d, y[%d] = %g\n", lag, s, yval));
 	    } else {
 		yval = fc->yhat[s - fc->offset];
@@ -1150,7 +1270,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	if (fc->eps != NULL && !miss) {
 	    /* form estimated error in case of static forecast */
-	    fc->eps[tt] = Z[yno][t] - fc->yhat[tt];
+	    fc->eps[tt] = y[t] - fc->yhat[tt];
 	}
 
 	/* forecast error variance */
@@ -1167,6 +1287,11 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    err = 1;
 	}
 #endif
+    }
+
+    /* if ARIMA, the forecasts now need to be integrated */
+    if (!err) {
+	err = maybe_arima_integrate(fc, pmod, Z, pdinfo);
     }
 
  bailout:
@@ -1591,8 +1716,11 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     fc.t1 = fr->t1;
     fc.t2 = fr->t2;
     fc.offset = fr->t1;
+    fc.n = fr->nobs - fr->pre_n;
     fc.model_t2 = pmod->t2;
     fc.eps = NULL;
+
+    fprintf(stderr, "fc.n = %d - %d = %d\n", fr->nobs, fr->pre_n, fc.n);
 
     get_forecast_method(&fc, pmod, pdinfo, opt);
 
@@ -1637,7 +1765,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     if (pmod->ci == ARMA && fc.method == FC_STATIC) {
-	fc.eps = malloc((fr->nobs - fr->pre_n) * sizeof *fc.eps);
+	fc.eps = malloc(fc.n * sizeof *fc.eps);
     }
 
     if (DM_errs) {
@@ -1835,7 +1963,7 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
     }
 
     /* the varname should either be in the 2nd or 4th position */
-    if (sscanf(str, "%*s %8s %8s %15s", t1str, t2str, varname) != 3) {
+    if (sscanf(str, "%*s %10s %10s %15s", t1str, t2str, varname) != 3) {
 	if (sscanf(str, "%*s" "%15s", varname) != 1) {
 	    return E_PARSE;
 	}
@@ -1875,6 +2003,7 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	fc.yhat = (*pZ)[vi];
 	fc.sderr = NULL;
 	fc.eps = NULL;
+	fc.n = pdinfo->n;
 	fc.t1 = t1;
 	fc.t2 = t2;
 	fc.offset = 0;

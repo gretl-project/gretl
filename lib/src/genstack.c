@@ -175,6 +175,9 @@ static int real_stack_eat_children (genatom *parent,
     return ndel;
 }
 
+/* question: should we stop the search below as soon as one child is
+   found? */
+
 static void real_stack_set_parentage (genatom **atoms, int n)
 {
     int i, j, level;
@@ -183,7 +186,7 @@ static void real_stack_set_parentage (genatom **atoms, int n)
 	DPRINTF(("checking for children: looking at atom %d\n", i));
 	if (must_know_children(atoms[i]->func)) {
 	    level = atoms[i]->level;
-	    DPRINTF((" got candidate (atom %d, level %d)...\n", i, level));
+	    DPRINTF((" candidate for child search (atom %d, level %d)...\n", i, level));
 	    for (j=i-1; j>=0; j--) {
 		DPRINTF(("  looking at atom %d\n", j));
 		if (atoms[j]->level > level) {
@@ -196,7 +199,9 @@ static void real_stack_set_parentage (genatom **atoms, int n)
 		    break;
 		}
 	    }
+#if 0 /* modified 2006/2/20 */
 	    i = j;
+#endif
 	}
     }
 }

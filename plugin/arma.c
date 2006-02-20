@@ -399,6 +399,10 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
     qmax = (ainfo->q > ainfo->Q)? ainfo->q : ainfo->Q;
     lmax = (pmax > qmax)? pmax : qmax;
 
+    if (pmax == 0 && qmax == 0) {
+	return NULL;
+    }
+
     temp  = malloc((lmax + 1) * sizeof *temp);
     temp2 = malloc((lmax + 1) * sizeof *temp2);
     roots = malloc(nr * sizeof *roots);
@@ -454,77 +458,6 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
     return roots;
 }
 
-static double *
-arima_difference (const double *x, struct arma_info *ainfo)
-{
-    double *dx;
-    int s = ainfo->pd;
-    int start = 0;
-    int t;
-
-#if ARMA_DEBUG
-    fprintf(stderr, "doing arima_difference: d = %d, D = %d\n",
-	    ainfo->d, ainfo->D);
-#endif
-
-    for (t=0; t<ainfo->T; t++) {
-	if (na(x[t])) {
-	    start++;
-	} else {
-	    break;
-	}
-    }
-
-    start += ainfo->d + ainfo->D * s;
-
-    dx = malloc(ainfo->T * sizeof *dx);
-    if (dx == NULL) {
-	return NULL;
-    }
-
-    for (t=0; t<start; t++) {
-	dx[t] = NADBL;
-    }
-
-    for (t=start; t<ainfo->T; t++) {
-	dx[t] = x[t];
-	if (ainfo->d > 0) {
-	    dx[t] -= x[t-1];
-	} 
-	if (ainfo->d > 1) {
-	    dx[t] -= x[t-1];
-	    dx[t] += x[t-2];
-	}
-	if (ainfo->D > 0) {
-	    dx[t] -= x[t - s];
-	    if (ainfo->d > 0) {
-		dx[t] += x[t - (s+1)];
-	    }
-	    if (ainfo->d > 1) {
-		dx[t] += x[t - (s+1)];
-		dx[t] -= x[t - 2*s];
-	    }	    
-	} 
-	if (ainfo->D > 1) {
-	    dx[t] -= x[t - s];
-	    dx[t] += x[t - 2*s];
-	    if (ainfo->d > 0) {
-		dx[t] -= x[t - s];
-		dx[t] += x[t - (s+1)];
-		dx[t] -= x[t - (2*s+1)];
-	    }
-	    if (ainfo->d > 1) {
-		dx[t] += 2 * x[t - (s+1)];
-		dx[t] -= 2 * x[t - (s+2)];
-		dx[t] -= x[t - (2*s+1)];
-		dx[t] += x[t - (2*s+2)];
-	    }
-	}
-    }
-
-    return dx;
-}
-
 /* construct a "virtual dataset" in the form of a set of pointers into
    the main dataset: this will be passed to the bhhh_max function.
    The dependent variable is put in position 0; following this are the
@@ -552,8 +485,8 @@ make_armax_X (int *list, struct arma_info *ainfo, const double **Z)
     }
 
     /* the dependent variable */
-    if (ainfo->dx != NULL) {
-	X[0] = ainfo->dx;
+    if (ainfo->dy != NULL) {
+	X[0] = ainfo->dy;
     } else {
 	X[0] = Z[list[ypos]];
     }
@@ -700,7 +633,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
     int ptotal = ainfo->p + ainfo->P + nmixed;
     int av = ptotal + ainfo->r + 2;
     int ifc = arma_has_const(ainfo);
-    const double *x;
+    const double *y;
     double **aZ = NULL;
     DATAINFO *adinfo = NULL;
     int *alist = NULL;
@@ -758,10 +691,10 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
     }
 
-    if (ainfo->dx != NULL) {
-	x = ainfo->dx;
+    if (ainfo->dy != NULL) {
+	y = ainfo->dy;
     } else {
-	x = Z[ainfo->yno];
+	y = Z[ainfo->yno];
     }
 
     /* build temporary dataset including lagged vars */
@@ -769,14 +702,14 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	int k, s;
 
 	s = t + ainfo->t1;
-	aZ[1][t] = x[s];
+	aZ[1][t] = y[s];
 	strcpy(adinfo->varname[1], "y");
 
 	for (i=0; i<ainfo->p; i++) {
 	    lag = i + 1;
 	    s = t + ainfo->t1 - lag;
 	    k = 2 + i;
-	    aZ[k][t] = x[s];
+	    aZ[k][t] = y[s];
 	    sprintf(adinfo->varname[k], "y_%d", lag);
 	}
 
@@ -784,13 +717,13 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	    lag = ainfo->pd * (i + 1);
 	    s = t + ainfo->t1 - lag;
 	    k = ainfo->p + 2 + i;
-	    aZ[k][t] = x[s];
+	    aZ[k][t] = y[s];
 	    sprintf(adinfo->varname[k], "y_%d", lag);
 	    for (j=0; j<ainfo->p; j++) {
 		lag = ainfo->pd * (i + 1) + (j + 1);
 		s = t + ainfo->t1 - lag;
 		k = ainfo->p + ainfo->P + 2 + j;
-		aZ[k][t] = x[s];
+		aZ[k][t] = y[s];
 		sprintf(adinfo->varname[k], "y_%d", lag);
 	    }
 	}
@@ -953,7 +886,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* create differenced series if needed */
     if (ainfo.d > 0 || ainfo.D > 0) {
-	ainfo.dx = arima_difference(Z[ainfo.yno], &ainfo);
+	ainfo.dy = arima_difference(Z[ainfo.yno], &ainfo);
     }
 
     /* initialize the coefficients: AR and regression part by least
@@ -1004,7 +937,6 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(coeff);
     free(X);
 
-    free(ainfo.dx);
     model_info_free(arma);
 
     errprn = NULL;

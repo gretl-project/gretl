@@ -1442,7 +1442,10 @@ static double *eval_compound_arg (GENERATOR *genr,
     t1 = genr->pdinfo->t1, t2 = genr->pdinfo->t2;
 #endif
 
+    DPRINTF(("eval_compound arg, atom->func = %d\n", this_atom->func));
+
     if (peek_child_atom(this_atom) == NULL) {
+	DPRINTF((" error: no child found\n"));
 	genr->err = E_SYNTAX;
 	return NULL;
     }

@@ -815,6 +815,59 @@ static void print_tsls_droplist (const MODEL *pmod,
     pputc(prn, '\n');
 }
 
+static void print_arma_depvar (const MODEL *pmod,
+			       const DATAINFO *pdinfo,
+			       PRN *prn)
+{
+    int tex = tex_format(prn);
+    int utf = plain_format(prn);
+    int yno = gretl_model_get_depvar(pmod);
+    int d = gretl_model_get_int(pmod, "arima_d");
+    int D = gretl_model_get_int(pmod, "arima_D");
+    char vname[64];
+
+    *vname = 0;
+
+    if (tex) {
+	char tmp[32];
+
+	if (d > 0 || D > 0) {
+	    strcat(vname, "$");
+	}
+	if (d == 1) {
+	    strcat(vname, "(1-L)");
+	} else if (d == 2) {
+	    strcat(vname, "(1-L)^2");
+	}
+	if (D == 1) {
+	    strcat(vname, "(1-L^s)");
+	} else if (d == 2) {
+	    strcat(vname, "(1-L^s)^2");
+	}
+	if (d > 0 || D > 0) {
+	    strcat(vname, "$");
+	}
+	tex_escape(tmp, pdinfo->varname[yno]);
+	strcat(vname, tmp);
+    } else {
+	if (d == 1) {
+	    strcat(vname, "(1-L)");
+	} else if (d == 2) {
+	    strcat(vname, "(1-L)^2");
+	}
+	if (D == 1) {
+	    strcat(vname, "(1-Ls)");
+	} else if (d == 2) {
+	    strcat(vname, "(1-Ls)^2");
+	}	
+	strcat(vname, pdinfo->varname[yno]);
+    }
+
+    pprintf(prn, "%s: %s", 
+	    (utf)? _("Dependent variable") : I_("Dependent variable"),
+	    vname);
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
@@ -965,6 +1018,8 @@ static void print_model_heading (const MODEL *pmod,
 	} else {
 	    pputs(prn, pmod->params[0]);
 	}
+    } else if (pmod->ci == ARMA) {
+	print_arma_depvar(pmod, pdinfo, prn);
     } else { 
 	int v = gretl_model_get_depvar(pmod);
 
@@ -1509,14 +1564,23 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
+    if (pmod->ci == ARMA) {
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	print_arma_stats(pmod, prn);
+	print_middle_table_end(prn);
+	print_arma_roots(pmod, prn);
+	goto close_format;
+    }
+
     if (pmod->ci == LOGISTIC) {
 	original_stats_message(prn);
-    }
+    }    
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS 
 	|| pmod->ci == POOLED || pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
-	|| pmod->ci == ARMA || pmod->ci == LOGISTIC || pmod->ci == TOBIT
+	|| pmod->ci == LOGISTIC || pmod->ci == TOBIT
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 	print_middle_table_start(prn);
 	if (pmod->ci != VAR) {
@@ -1548,9 +1612,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	    }
 	}
 
-	if (pmod->ci == ARMA) {
-	    print_arma_stats(pmod, prn);
-	} else if (pmod->aux != AUX_VECM) {
+	if (pmod->aux != AUX_VECM) {
 	    if (pmod->ci == OLS) {
 		print_ll(pmod, prn);
 	    }
@@ -1558,10 +1620,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
 
 	print_middle_table_end(prn);
-
-	if (pmod->ci == ARMA) {
-	    print_arma_roots(pmod, prn);
-	}
 
 	if (pmod->ci == TSLS && plain_format(prn)) {
 	    r_squared_message(prn);
@@ -1972,8 +2030,8 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
     cmplx *roots = gretl_model_get_data(pmod, "roots");
 
     if (roots != NULL) {
-	int p = pmod->list[1];
-	int q = pmod->list[2];
+	int p = gretl_arma_model_get_nonseasonal_AR_order(pmod);
+	int q = gretl_arma_model_get_nonseasonal_MA_order(pmod);
 	int P = gretl_model_get_int(pmod, "arma_P");
 	int Q = gretl_model_get_int(pmod, "arma_Q");
 	int i, k, hline;
@@ -2153,11 +2211,15 @@ static void print_poisson_stats (const MODEL *pmod, PRN *prn)
 static void print_arma_stats (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) {
+	pprintf(prn, "  %s = %.*g\n", _("Error variance"), GRETL_DIGITS,
+		pmod->sigma * pmod->sigma);
 	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
 	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[C_AIC]);
 	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[C_BIC]);
 	pprintf(prn, "  %s = %.3f\n", _("HQC"), pmod->criterion[C_HQC]);
     } else if (rtf_format(prn)) {
+	pprintf(prn, "  %s = %.*g\n", I_("Error variance"), GRETL_DIGITS,
+		pmod->sigma * pmod->sigma);
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("AIC"), pmod->criterion[C_AIC]);
 	pprintf(prn, RTFTAB "%s = %.3f\n", I_("BIC"), pmod->criterion[C_BIC]);
@@ -2165,6 +2227,8 @@ static void print_arma_stats (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {
 	char xstr[32];
 
+	tex_dcolumn_double(pmod->sigma * pmod->sigma, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Error variance"), xstr);
 	tex_dcolumn_double(pmod->lnL, xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
 	tex_dcolumn_double(pmod->criterion[C_AIC], xstr);

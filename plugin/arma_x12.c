@@ -193,11 +193,14 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 	return 1;
     }
 
+    pmod->sigma = NADBL;
+
     gretl_push_c_numeric_locale();
 
     while (fgets(line, sizeof line, fp)) {
 	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
 	    if (!strcmp(statname, "nobs")) pmod->nobs = (int) x;
+	    else if (!strcmp(statname, "var")) pmod->sigma = sqrt(x);
 	    else if (!strcmp(statname, "lnlkhd")) pmod->lnL = x;
 	    else if (!strcmp(statname, "aic")) pmod->criterion[C_AIC] = x;
 	    else if (!strcmp(statname, "bic")) pmod->criterion[C_BIC] = x;
@@ -223,6 +226,9 @@ static int get_roots (const char *fname, MODEL *pmod,
     cmplx *roots;
 
     nr = ainfo->p + ainfo->q + ainfo->P + ainfo->Q;
+    if (nr == 0) {
+	return 0;
+    }
 
     roots = malloc(nr * sizeof *roots);
     if (roots == NULL) {
@@ -706,7 +712,12 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (arma_adjust_sample(pdinfo, Z, alist, &ainfo)) {
         armod.errcode = E_DATA;
 	goto bailout;
-    }	
+    }
+
+    /* create differenced series if needed */
+    if (ainfo.d > 0 || ainfo.D > 0) {
+	ainfo.dy = arima_difference(Z[ainfo.yno], &ainfo);
+    }    
 
     sprintf(yname, pdinfo->varname[ainfo.yno]);
 

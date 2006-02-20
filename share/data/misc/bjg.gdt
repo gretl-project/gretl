@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="bjg" frequency="12" startobs="49:01" endobs="60:12" type="time-series">
+<description>Monthly data on international airline passengers.
+
+Used (in log form) by Box and Jenkins in their Time Series Analysis
+Forecasting and Control to illustrate multiplicative seasonal MA 
+(&quot;Series G&quot;).
+
+See also:
+
+http://www.stanford.edu/~clint/bench/
+http://www.itl.nist.gov/div898/handbook/pmc/section4/pmc44a.htm
+</description>
+<variables count="1">
+<variable name="g"
+ label="international airline passengers"
+ displayname="passengers"
+/>
+</variables>
+<observations count="144" labels="false">
+<obs>112 </obs>
+<obs>118 </obs>
+<obs>132 </obs>
+<obs>129 </obs>
+<obs>121 </obs>
+<obs>135 </obs>
+<obs>148 </obs>
+<obs>148 </obs>
+<obs>136 </obs>
+<obs>119 </obs>
+<obs>104 </obs>
+<obs>118 </obs>
+<obs>115 </obs>
+<obs>126 </obs>
+<obs>141 </obs>
+<obs>135 </obs>
+<obs>125 </obs>
+<obs>149 </obs>
+<obs>170 </obs>
+<obs>170 </obs>
+<obs>158 </obs>
+<obs>133 </obs>
+<obs>114 </obs>
+<obs>140 </obs>
+<obs>145 </obs>
+<obs>150 </obs>
+<obs>178 </obs>
+<obs>163 </obs>
+<obs>172 </obs>
+<obs>178 </obs>
+<obs>199 </obs>
+<obs>199 </obs>
+<obs>184 </obs>
+<obs>162 </obs>
+<obs>146 </obs>
+<obs>166 </obs>
+<obs>171 </obs>
+<obs>180 </obs>
+<obs>193 </obs>
+<obs>181 </obs>
+<obs>183 </obs>
+<obs>218 </obs>
+<obs>230 </obs>
+<obs>242 </obs>
+<obs>209 </obs>
+<obs>191 </obs>
+<obs>172 </obs>
+<obs>194 </obs>
+<obs>196 </obs>
+<obs>196 </obs>
+<obs>236 </obs>
+<obs>235 </obs>
+<obs>229 </obs>
+<obs>243 </obs>
+<obs>264 </obs>
+<obs>272 </obs>
+<obs>237 </obs>
+<obs>211 </obs>
+<obs>180 </obs>
+<obs>201 </obs>
+<obs>204 </obs>
+<obs>188 </obs>
+<obs>235 </obs>
+<obs>227 </obs>
+<obs>234 </obs>
+<obs>264 </obs>
+<obs>302 </obs>
+<obs>293 </obs>
+<obs>259 </obs>
+<obs>229 </obs>
+<obs>203 </obs>
+<obs>229 </obs>
+<obs>242 </obs>
+<obs>233 </obs>
+<obs>267 </obs>
+<obs>269 </obs>
+<obs>270 </obs>
+<obs>315 </obs>
+<obs>364 </obs>
+<obs>347 </obs>
+<obs>312 </obs>
+<obs>274 </obs>
+<obs>237 </obs>
+<obs>278 </obs>
+<obs>284 </obs>
+<obs>277 </obs>
+<obs>317 </obs>
+<obs>313 </obs>
+<obs>318 </obs>
+<obs>374 </obs>
+<obs>413 </obs>
+<obs>405 </obs>
+<obs>355 </obs>
+<obs>306 </obs>
+<obs>271 </obs>
+<obs>306 </obs>
+<obs>315 </obs>
+<obs>301 </obs>
+<obs>356 </obs>
+<obs>348 </obs>
+<obs>355 </obs>
+<obs>422 </obs>
+<obs>465 </obs>
+<obs>467 </obs>
+<obs>404 </obs>
+<obs>347 </obs>
+<obs>305 </obs>
+<obs>336 </obs>
+<obs>340 </obs>
+<obs>318 </obs>
+<obs>362 </obs>
+<obs>348 </obs>
+<obs>363 </obs>
+<obs>435 </obs>
+<obs>491 </obs>
+<obs>505 </obs>
+<obs>404 </obs>
+<obs>359 </obs>
+<obs>310 </obs>
+<obs>337 </obs>
+<obs>360 </obs>
+<obs>342 </obs>
+<obs>406 </obs>
+<obs>396 </obs>
+<obs>420 </obs>
+<obs>472 </obs>
+<obs>548 </obs>
+<obs>559 </obs>
+<obs>463 </obs>
+<obs>407 </obs>
+<obs>362 </obs>
+<obs>405 </obs>
+<obs>417 </obs>
+<obs>391 </obs>
+<obs>419 </obs>
+<obs>461 </obs>
+<obs>472 </obs>
+<obs>535 </obs>
+<obs>622 </obs>
+<obs>606 </obs>
+<obs>508 </obs>
+<obs>461 </obs>
+<obs>390 </obs>
+<obs>432 </obs>
+</observations>
+</gretldata>

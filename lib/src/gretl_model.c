@@ -496,6 +496,14 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
     return cf;
 }
 
+static int gretl_is_arima_model (const MODEL *pmod)
+{
+    int d = (int) gretl_model_get_data(pmod, "arima_d");
+    int D = (int) gretl_model_get_data(pmod, "arima_D");
+
+    return (d > 0 || D > 0);
+}
+
 /**
  * gretl_arma_model_get_nonseasonal_AR_order:
  * @pmod: pointer to gretl model.
@@ -528,7 +536,11 @@ int gretl_arma_model_get_nonseasonal_MA_order (const MODEL *pmod)
     int q = 0;
 
     if (pmod->ci == ARMA) {
-	q = pmod->list[2];
+	if (gretl_is_arima_model(pmod)) {
+	    q = pmod->list[3];
+	} else {
+	    q = pmod->list[2];
+	}
     }
 
     return q;
@@ -733,6 +745,7 @@ static int arma_depvar_pos (const MODEL *pmod)
     int dvpos;
 
     if (gretl_model_get_int(pmod, "arma_P") ||
+	gretl_model_get_int(pmod, "arima_D") ||
 	gretl_model_get_int(pmod, "arma_Q")) {
 	seasonal = 1;
     }
@@ -2208,6 +2221,7 @@ int is_model_cmd (const char *s)
 	    !strncmp(s, "logistic", 8) ||
 	    !strncmp(s, "end nls", 7) ||
 	    !strncmp(s, "arma", 4) ||
+	    !strncmp(s, "arima", 5) ||
 	    !strncmp(s, "ar ", 3) ||
 	    !strcmp(s, "ar")) {
 	    ret = 1;
