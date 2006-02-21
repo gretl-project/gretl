@@ -351,13 +351,13 @@ void printlist (const int *list, const char *msg)
 
 /* Compute model selection criteria */
 
-int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
+int gretl_calculate_criteria (double ess, int nobs, int k,
 			      double *ll, double *aic, double *bic,
 			      double *hqc)
 {
     int err = 0;
 
-    if (na(ess) || ess <= 0.0 || ncoeff < 1 || nobs <= ncoeff) {
+    if (na(ess) || ess <= 0.0 || k < 1 || nobs <= k) {
 	*ll = NADBL;
 	*aic = NADBL;
 	*bic = NADBL;
@@ -375,11 +375,12 @@ int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
 	    *aic = NADBL;
 	    *bic = NADBL;
 	    *hqc = NADBL;
+	    err = 1;
 	} else {
 	    *ll += -.5 * nobs * (ln2pi1 - log((double) nobs));
-	    *aic = -2.0 * *ll + 2 * ncoeff;
-	    *bic = -2.0 * *ll + ncoeff * log(nobs);
-	    *hqc = -2.0 * *ll + 2 * ncoeff * log(log(nobs));
+	    *aic = -2.0 * *ll + 2 * k;
+	    *bic = -2.0 * *ll + k * log(nobs);
+	    *hqc = -2.0 * *ll + 2 * k * log(log(nobs));
 	}
     }
 
@@ -390,6 +391,8 @@ int ls_criteria (MODEL *pmod)
 {
     double ll, aic, bic, hqc;
     int err;
+
+    /* should this be ncoeff + 1 below? (1 for variance) */
 
     err = gretl_calculate_criteria(pmod->ess, pmod->nobs, pmod->ncoeff,
 				   &ll, &aic, &bic, &hqc);

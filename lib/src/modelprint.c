@@ -2214,9 +2214,12 @@ static void print_arma_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "  %s = %.*g\n", _("Error variance"), GRETL_DIGITS,
 		pmod->sigma * pmod->sigma);
 	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
-	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[C_AIC]);
-	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[C_BIC]);
-	pprintf(prn, "  %s = %.3f\n", _("HQC"), pmod->criterion[C_HQC]);
+	pprintf(prn, "  %s (%s) = %.*g\n", _(aic_str), _(aic_abbrev),
+		GRETL_DIGITS, pmod->criterion[C_AIC]);
+	pprintf(prn, "  %s (%s) = %.*g\n", _(bic_str), _(bic_abbrev),
+		GRETL_DIGITS, pmod->criterion[C_BIC]);
+	pprintf(prn, "  %s (%s) = %.*g\n", _(hqc_str), _(hqc_abbrev),
+		GRETL_DIGITS, pmod->criterion[C_HQC]);
     } else if (rtf_format(prn)) {
 	pprintf(prn, "  %s = %.*g\n", I_("Error variance"), GRETL_DIGITS,
 		pmod->sigma * pmod->sigma);
