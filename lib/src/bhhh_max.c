@@ -658,8 +658,8 @@ int bhhh_max (LL_FUNC loglik,
 	    minfo->theta[i] = ctemp[i];
 	}	
 
-	/* double the steplength? */
-	if (stepsize < 4.0) {
+	/* double the steplength? (was < 4.0 below) */
+	if (stepsize < 1.0) {
 	    stepsize *= 2.0;
 	}
 
