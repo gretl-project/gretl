@@ -226,8 +226,13 @@ static void calc_max_lag (struct arma_info *ainfo)
 	dmax += ainfo->D * ainfo->pd;
     }
 
+#if 0
     ainfo->maxlag = (pmax > qmax)? pmax : qmax;
     ainfo->maxlag += dmax;
+#else
+    ainfo->maxlag = pmax;
+    ainfo->maxlag += dmax;
+#endif
 }
 
 static int 
