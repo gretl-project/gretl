@@ -1431,23 +1431,31 @@ static void get_rlvars_data (selector *sr, int rows, int context)
 
 #ifndef OLD_GTK
 
-static void get_ruvars_data (selector *sr, int rows, int context)
+static int get_ruvars_data (selector *sr, int rows, int context)
 {
     GtkTreeModel *model;
     GtkTreeIter iter;
-    gint exog, lag;
+    gint exog, lag, ynum;
     int *reclist;
     gchar *tmp;
     int i, j = 1;
+    int err = 0;
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars));
     gtk_tree_model_get_iter_first(model, &iter);
 
     reclist = (sr->code == TSLS)? instlist : vecxlist;
+    ynum = selector_get_depvar_number(sr);
 
     for (i=0; i<rows; i++) {
 
 	gtk_tree_model_get(model, &iter, 0, &exog, 1, &lag, -1);
+
+	if (sr->code == TSLS && exog == ynum && lag == 0) {
+	    errbox("You can't use the dependent variable as an instrument");
+	    err = 1;
+	    break;
+	}
 		
 	if (is_lag_dummy(exog, lag, context)) {
 	    gtk_tree_model_iter_next(model, &iter);
@@ -1469,20 +1477,24 @@ static void get_ruvars_data (selector *sr, int rows, int context)
 
 	gtk_tree_model_iter_next(model, &iter);
     }
+
+    return err;
 } 
 
 #else
 
-static void get_ruvars_data (selector *sr, int rows, int context)
+static int get_ruvars_data (selector *sr, int rows, int context)
 {
     gchar *tmp;
     gchar *exog;
     gchar *lstr;
     int *reclist;
-    int lag;
+    int lag, ynum, xnum;
     int i, j = 1;
+    int err = 0;
 
     reclist = (sr->code == TSLS)? instlist : vecxlist;
+    ynum = selector_get_depvar_number(sr);
 
     for (i=0; i<rows; i++) {
 	lstr = NULL;
@@ -1495,12 +1507,19 @@ static void get_ruvars_data (selector *sr, int rows, int context)
 	    lag = atoi(lstr);
 	}
 
-	if (is_lag_dummy(atoi(exog), lag, context)) {
+	xnum = atoi(exog);
+	if (sr->code == TSLS && xnum == ynum && lag == 0) {
+	    errbox("You can't use the dependent variable as an instrument");
+	    err = 1;
+	    break;
+	}	    
+
+	if (is_lag_dummy(xnum, lag, context)) {
 	    continue;
 	}
 
 	if (context) {
-	    tmp = get_lagpref_string(atoi(exog), context);
+	    tmp = get_lagpref_string(xnum, context);
 	    add_to_cmdlist(sr, tmp);
 	    free(tmp);
 	} else {
@@ -1509,10 +1528,11 @@ static void get_ruvars_data (selector *sr, int rows, int context)
 	}
 
 	if (reclist != NULL) {
-	    reclist[j++] = atoi(exog);
+	    reclist[j++] = xnum;
 	}
     }
 
+    return err;
 }
 
 #endif
@@ -1634,7 +1654,7 @@ static void parse_special_graph_data (selector *sr)
     }
 }
 
-static void construct_cmdlist (GtkWidget *w, selector *sr)
+static void construct_cmdlist (selector *sr)
 {
     gint rows = 0, realrows = 0;
     gchar endbit[12] = {0};
@@ -1713,7 +1733,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 	    add_to_cmdlist(sr, " ;");
 
-	    get_ruvars_data(sr, rows, context);
+	    sr->error = get_ruvars_data(sr, rows, context);
 	} else if (sr->code == TSLS) {
 	    errbox(_("You must specify a set of instrumental variables"));
 	    sr->error = 1;
@@ -1721,17 +1741,19 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     /* deal with any trailing strings */
-    if (endbit[0] != '\0') {
-	add_to_cmdlist(sr, endbit);
-    } else if (dvlags != NULL) {
-	add_to_cmdlist(sr, dvlags);
-	free(dvlags);
-    } else if (idvlags != NULL) {
-	add_to_cmdlist(sr, idvlags);
-	free(idvlags);
+    if (!sr->error) {
+	if (endbit[0] != '\0') {
+	    add_to_cmdlist(sr, endbit);
+	} else if (dvlags != NULL) {
+	    add_to_cmdlist(sr, dvlags);
+	    free(dvlags);
+	} else if (idvlags != NULL) {
+	    add_to_cmdlist(sr, idvlags);
+	    free(idvlags);
+	}
     }
 
-    if (sr->code == SCATTERS) {
+    if (sr->code == SCATTERS && !sr->error) {
 	int xstate;
 
 #ifndef OLD_GTK	
@@ -2719,9 +2741,9 @@ static void lag_selector_button (selector *sr)
 
 static void selector_doit (GtkWidget *w, selector *sr)
 {
-    construct_cmdlist(NULL, sr);
+    construct_cmdlist(sr);
 
-    if (!sr->error) {
+    if (sr->error == 0) {
 	int err = sr->callback(sr);
 
 	if (!err && open_selector != NULL) {

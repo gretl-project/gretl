@@ -49,7 +49,6 @@ static void print_discrete_statistics (const MODEL *pmod,
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
-static void print_poisson_stats (const MODEL *pmod, PRN *prn);
 static void print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, 
 				  PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
@@ -109,55 +108,32 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
 
 static int essline (const MODEL *pmod, PRN *prn, int wt)
 {
+    double ess = (wt)? pmod->ess_wt : pmod->ess;
+    double sigma = (wt)? pmod->sigma_wt : pmod->sigma;
+
+    if (ess < 0) {
+	if (plain_format(prn)) {
+	    pprintf(prn, _("Error sum of squares (%g) is not > 0"), ess);
+	    pputs(prn, "\n\n");
+	}
+	return 1;
+    }
+
     if (plain_format(prn)) {    
-	if ((wt && pmod->ess_wt < 0) || (!wt && pmod->ess < 0)) {
-	    char tmp[128];
-
-	    sprintf(tmp, _("Error sum of squares (%g) is not > 0"), 
-		    (wt)? pmod->ess_wt : pmod->ess), 
-		pprintf(prn, "%s\n\n", tmp);
-	    return 1;
-	}
-
-	if (pmod->ci == ARMA) {
-	    pprintf(prn, "  %s = %.*g\n", _("Mean of residuals"), 
-		    GRETL_DIGITS, gretl_model_get_double(pmod, "mean_error"));
-	}
-
 	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
-		GRETL_DIGITS, wt? pmod->ess_wt : pmod->ess);
+		GRETL_DIGITS, ess);
 	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
-		GRETL_DIGITS, wt? pmod->sigma_wt : pmod->sigma);
+		GRETL_DIGITS, sigma);
     } else if (rtf_format(prn)) {
-	if ((wt && pmod->ess_wt < 0) || (!wt && pmod->ess < 0)) {
-	    char tmp[128];
-
-	    sprintf(tmp, I_("Error sum of squares (%g) is not > 0"), 
-		    (wt)? pmod->ess_wt : pmod->ess); 
-	    pprintf(prn, "\\par \\ql %s\\par\n\n", tmp);
-	    return 1;
-	}
-
-	if (pmod->ci == ARMA) {
-	    pprintf(prn, RTFTAB "%s = %g\n", I_("Mean of residuals"), 
-		    gretl_model_get_double(pmod, "mean_error"));
-	}
-
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
-		wt? pmod->ess_wt : pmod->ess);
+		ess);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard error of residuals"), 
-		wt? pmod->sigma_wt : pmod->sigma);
+		sigma);
     } else if (tex_format(prn)) {
 	char x1str[32], x2str[32];
 
-	if (pmod->ci == ARMA) {
-	    tex_dcolumn_double(gretl_model_get_double(pmod, "mean_error"), x1str);
-	    pprintf(prn, "%s & %s \\\\\n", I_("Mean of residuals"), 
-		    x1str);
-	}
-
-	tex_dcolumn_double(pmod->ess, x1str);
-	tex_dcolumn_double(pmod->sigma, x2str);
+	tex_dcolumn_double(ess, x1str);
+	tex_dcolumn_double(sigma, x2str);
 	pprintf(prn, "%s & %s \\\\\n%s ($\\hat{\\sigma}$) & %s \\\\\n",
 		I_("Sum of squared residuals"), x1str,
 		I_("Standard error of residuals"), x2str);
@@ -168,19 +144,19 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 
 static void rsqline (const MODEL *pmod, PRN *prn)
 {
+    if (na(pmod->rsq)) {
+	return;
+    }
+
     if (plain_format(prn)) { 
-	if (!na(pmod->rsq)) {
-	    pprintf(prn, "  %s = %.*g\n", _("Unadjusted R-squared"), 
-		    GRETL_DIGITS, pmod->rsq);
-	}
+	pprintf(prn, "  %s = %.*g\n", _("Unadjusted R-squared"), 
+		GRETL_DIGITS, pmod->rsq);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, "  %s = %.*g\n", _("Adjusted R-squared"),  
 		    GRETL_DIGITS, pmod->adjrsq);
 	}
     } else if (rtf_format(prn)) {
-	if (!na(pmod->rsq)) {
-	    pprintf(prn, RTFTAB "%s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
-	}
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("Adjusted R{\\super 2}"),  
 		    pmod->adjrsq);
@@ -188,10 +164,8 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     } else if (tex_format(prn)) {  
 	char r2[32];
 
-	if (!na(pmod->rsq)) {
-	    tex_dcolumn_double(pmod->rsq, r2);
-	    pprintf(prn, "%s & %s \\\\\n", I_("Unadjusted $R^2$"), r2);
-	}
+	tex_dcolumn_double(pmod->rsq, r2);
+	pprintf(prn, "%s & %s \\\\\n", I_("Unadjusted $R^2$"), r2);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    tex_dcolumn_double(pmod->adjrsq, r2);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
@@ -1486,7 +1460,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (pmod->ci == POISSON) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
-	print_poisson_stats(pmod, prn);
+	print_ll(pmod, prn);
 	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
@@ -1496,6 +1470,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	print_tobit_stats(pmod, prn);
+	print_ll(pmod, prn);
 	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
@@ -1513,7 +1488,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	garch_variance_line(pmod, prn);
-	print_arma_stats(pmod, prn);
+	print_ll(pmod, prn);
+	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
     }    
@@ -1568,6 +1544,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	print_arma_stats(pmod, prn);
+	print_ll(pmod, prn);
+	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
 	print_arma_roots(pmod, prn);
 	goto close_format;
@@ -2152,11 +2130,9 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn)
     if (plain_format(prn)) {
 	pprintf(prn, "  %s: %d (%.1f%%)\n", _("Censored observations"), cenc, cenpc);
 	pprintf(prn, "  %s = %.*g\n", _("sigma"), GRETL_DIGITS, pmod->sigma);
-	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s: %d (%.1f%%)\n", I_("Censored observations"), cenc, cenpc);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("sigma"), pmod->sigma);
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
     } else if (tex_format(prn)) {
 	char xstr[32];
 
@@ -2164,8 +2140,6 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn)
 		I_("Censored observations"), cenpc);
 	tex_dcolumn_double(pmod->sigma, xstr);
 	pprintf(prn, "$\\hat{\\sigma}$ & %s \\\\\n", xstr);
-	tex_dcolumn_double(pmod->lnL, xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
     }
 }
 
@@ -2193,53 +2167,26 @@ print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-static void print_poisson_stats (const MODEL *pmod, PRN *prn)
-{
-
-    if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
-    } else if (rtf_format(prn)) {
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
-    } else if (tex_format(prn)) {
-	char xstr[32];
-
-	tex_dcolumn_double(pmod->lnL, xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
-    }
-}
-
 static void print_arma_stats (const MODEL *pmod, PRN *prn)
 {
+    double mu = gretl_model_get_double(pmod, "mean_error");
+    double var = pmod->sigma * pmod->sigma;
+
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", _("Error variance"), GRETL_DIGITS,
-		pmod->sigma * pmod->sigma);
-	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
-	pprintf(prn, "  %s (%s) = %.*g\n", _(aic_str), _(aic_abbrev),
-		GRETL_DIGITS, pmod->criterion[C_AIC]);
-	pprintf(prn, "  %s (%s) = %.*g\n", _(bic_str), _(bic_abbrev),
-		GRETL_DIGITS, pmod->criterion[C_BIC]);
-	pprintf(prn, "  %s (%s) = %.*g\n", _(hqc_str), _(hqc_abbrev),
-		GRETL_DIGITS, pmod->criterion[C_HQC]);
+	pprintf(prn, "  %s = %.*g\n", _("Mean of innovations"), 
+		GRETL_DIGITS, mu);
+	pprintf(prn, "  %s = %.*g\n", _("Variance of innovations"), 
+		GRETL_DIGITS, var);
     } else if (rtf_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", I_("Error variance"), GRETL_DIGITS,
-		pmod->sigma * pmod->sigma);
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("AIC"), pmod->criterion[C_AIC]);
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("BIC"), pmod->criterion[C_BIC]);
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("HQC"), pmod->criterion[C_HQC]);
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Mean of innovations"), mu);
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Variance of innovations"), var);
     } else if (tex_format(prn)) {
 	char xstr[32];
 
-	tex_dcolumn_double(pmod->sigma * pmod->sigma, xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Error variance"), xstr);
-	tex_dcolumn_double(pmod->lnL, xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
-	tex_dcolumn_double(pmod->criterion[C_AIC], xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("AIC"), xstr);
-	tex_dcolumn_double(pmod->criterion[C_BIC], xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("BIC"), xstr);
-	tex_dcolumn_double(pmod->criterion[C_HQC], xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("HQC"), xstr);
+	tex_dcolumn_double(mu, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Mean of innovations"), xstr);
+	tex_dcolumn_double(var, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Variance of innovations"), xstr);
     }
 }
 

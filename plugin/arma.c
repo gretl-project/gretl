@@ -813,7 +813,7 @@ set_up_arma_model_info (struct arma_info *ainfo)
 	tol = 1.0e-6;
     }
 
-    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, tol);
+    arma = model_info_new(ainfo->nc, ainfo->t1, ainfo->t2, ainfo->T, tol);
 
     if (arma == NULL) return NULL;
 

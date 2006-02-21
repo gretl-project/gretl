@@ -32,7 +32,7 @@ typedef int (*LL_FUNC) (double *,
 
 void model_info_free (model_info *minfo);
 
-model_info *model_info_new (int k, int t1, int t2, double tol);
+model_info *model_info_new (int k, int t1, int t2, int bign, double tol);
 
 MODEL *model_info_capture_OPG_model (model_info *minfo);
 

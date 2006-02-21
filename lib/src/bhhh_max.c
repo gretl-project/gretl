@@ -30,6 +30,7 @@ struct _model_info {
 
     int k;              /* number of parameters */
     int t1, t2;         /* starting and ending point of sample */
+    int bign;           /* total observations in current real dataset */
     int n_series;       /* number of additional series needed in the
                            likelihood and/or score calculations */
     double tol;         /* tolerance for convergence */
@@ -392,6 +393,7 @@ static int model_info_init (model_info *minfo, const double *init_coeff)
  * @k: number of parameters to be estimated.
  * @t1: starting observation of estimation range.
  * @t2: ending observation of estimation range.
+ * @bign: total obserations in current dataset.
  * @tol: tolerance for assessing convergence.
  *
  * Creates the basic information structure required by
@@ -404,7 +406,7 @@ static int model_info_init (model_info *minfo, const double *init_coeff)
  * on failure.
  */
  
-model_info *model_info_new (int k, int t1, int t2, double tol)
+model_info *model_info_new (int k, int t1, int t2, int bign, double tol)
 {
     model_info *mi;
 
@@ -421,10 +423,43 @@ model_info *model_info_new (int k, int t1, int t2, double tol)
 	mi->t1 = t1;
 	mi->t2 = t2;
 	mi->n = t2 + 1;
+	mi->bign = bign;
 	mi->tol = tol;
     }
 
     return mi;
+}
+
+static int expand_model_series (MODEL *pmod, model_info *minfo)
+{
+    double *x;
+    int t;
+
+    x = realloc(pmod->uhat, minfo->bign * sizeof *x);
+    if (x == NULL) {
+	pmod->errcode = E_ALLOC;
+    } else {
+	pmod->uhat = x;
+	for (t=minfo->t2; t<minfo->bign; t++) {
+	    pmod->uhat[t] = NADBL;
+	}
+    }
+
+    x = realloc(pmod->yhat, minfo->bign * sizeof *x);
+    if (x == NULL) {
+	pmod->errcode = E_ALLOC;
+    } else {
+	pmod->yhat = x;
+	for (t=minfo->t2; t<minfo->bign; t++) {
+	    pmod->yhat[t] = NADBL;
+	}
+    }
+
+    if (pmod->errcode == 0) {
+	pmod->full_n = minfo->bign;
+    }
+
+    return 0;
 }
 
 static int bhhh_iter_info (int iter, double *theta, int m, double ll,
@@ -662,6 +697,9 @@ int bhhh_max (LL_FUNC loglik,
 	    set_use_qr(qr_bak);
 	    minfo->pmod = bmod;
 	    gretl_model_set_int(bmod, "iters", iters);
+	    if (minfo->bign > minfo->t2) {
+		expand_model_series(bmod, minfo);
+	    }
 	} 
 	minfo->iters = iters;
     }

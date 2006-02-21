@@ -870,6 +870,11 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     instlist[0] = ninst;
     for (i=1; i<=instlist[0]; i++) {
 	instlist[i] = list[i + pos];
+	if (instlist[i] == list[1]) {
+	    strcpy(gretl_errmsg, "You can't use the dependent variable as an instrument");
+	    tsls.errcode = E_DATA;
+	    goto bailout;
+	}
     }	
 
     /* drop any vars that are all zero, and reshuffle the constant

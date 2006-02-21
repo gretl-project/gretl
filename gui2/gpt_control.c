@@ -1362,7 +1362,7 @@ static int get_data_xy (png_plot *plot, int x, int y,
     double ymin, ymax;
     double dx = NADBL;
     double dy = NADBL;
-    int err = 0;
+    int ok = 1;
 
     if (plot_is_zoomed(plot)) {
 	xmin = plot->zoom_xmin;
@@ -1403,7 +1403,7 @@ static int get_data_xy (png_plot *plot, int x, int y,
     }
 
     if (na(dx) || na(dx)) {
-	err = 1;
+	ok = 0;
     } else if (plot_is_polar(plot)) {
 	double px = atan2(dy, dx);
 	double py = sqrt(dx * dx + dy * dy);
@@ -1415,7 +1415,7 @@ static int get_data_xy (png_plot *plot, int x, int y,
     *data_x = dx;
     *data_y = dy;
 
-    return err;
+    return ok;
 }
 
 static void x_to_date (double x, int pd, char *str)
@@ -1708,12 +1708,11 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 }
 
 static gint
-motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
-		     png_plot *plot)
+motion_notify_event (GtkWidget *widget, GdkEventMotion *event, png_plot *plot)
 {
-    int x, y;
     GdkModifierType state;
     gchar label[32], label_y[16];
+    int x, y;
 
     if (plot->err) {
 	return TRUE;

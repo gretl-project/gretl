@@ -27,15 +27,15 @@ struct arma_info {
     double *dy;   /* differenced dependent variable */
 };
 
-#define arma_has_const(a)         ((a)->flags & ARMA_IFC)
-#define arma_has_seasonal(a)      ((a)->flags & ARMA_SEAS)
-#define arma_list_has_diffspec(a) ((a)->flags & ARMA_DSPEC)
-#define arma_by_x12a(a)           ((a)->flags & ARMA_X12A)
+#define arma_has_const(a)      ((a)->flags & ARMA_IFC)
+#define arma_has_seasonal(a)   ((a)->flags & ARMA_SEAS)
+#define arma_is_arima(a)       ((a)->flags & ARMA_DSPEC)
+#define arma_by_x12a(a)        ((a)->flags & ARMA_X12A)
 
-#define set_arma_has_const(a)          ((a)->flags |= ARMA_IFC)
-#define set_arma_has_seasonal(a)       ((a)->flags |= ARMA_SEAS)
-#define set_arma_list_has_diffspec(a)  ((a)->flags |= ARMA_DSPEC)
-#define unset_arma_list_has_diffspec(a) ((a)->flags &= ~ARMA_DSPEC)
+#define set_arma_has_const(a)     ((a)->flags |= ARMA_IFC)
+#define set_arma_has_seasonal(a)  ((a)->flags |= ARMA_SEAS)
+#define set_arma_is_arima(a)      ((a)->flags |= ARMA_DSPEC)
+#define unset_arma_is_arima(a)    ((a)->flags &= ~ARMA_DSPEC)
 
 static void 
 arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
@@ -66,7 +66,7 @@ static int arma_list_y_position (struct arma_info *ainfo)
 {
     int ypos;
 
-    if (arma_list_has_diffspec(ainfo)) {
+    if (arma_is_arima(ainfo)) {
 	ypos = (arma_has_seasonal(ainfo))? 9 : 5;
     } else {
 	ypos = (arma_has_seasonal(ainfo))? 7 : 4;
@@ -114,6 +114,90 @@ static void arma_R2_and_F (MODEL *pmod, const double *y)
 }
 
 #endif
+
+#define INT_DEBUG 1
+
+static int arima_integrate (double *x, const double *x0,
+			    int t1, int t2, int d, int D, int s)
+{
+    double *ix;
+    int tstart = t1 + d + D * s;
+    int t;
+
+#if INT_DEBUG
+    fprintf(stderr, "arima_integrate: t1=%d, t2=%d, d=%d, D=%d, s=%d\n",
+	    t1, t2, d, D, s);
+#endif
+
+    ix = malloc((t2 + 1) * sizeof *ix);
+    if (ix == NULL) {
+	return E_ALLOC;
+    }
+
+    ix[tstart - 1] = x0[tstart - 1];
+
+#if INT_DEBUG
+    fprintf(stderr, "arima_integrate: tstart=%d\n", tstart);
+#endif
+
+    for (t=tstart; t<=t2; t++) {
+	ix[t] = ix[t-1];
+	if (d > 0) {
+	    ix[t] += x[t-1];
+	} 
+	if (d > 1) {
+	    ix[t] += x[t-1];
+	    ix[t] -= x[t-2];
+	}
+	if (D > 0) {
+	    ix[t] += x[t - s];
+	    if (d > 0) {
+		ix[t] -= x[t - (s+1)];
+	    }
+	    if (d > 1) {
+		ix[t] -= x[t - (s+1)];
+		ix[t] += x[t - 2*s];
+	    }	    
+	} 
+	if (D > 1) {
+	    ix[t] += x[t - s];
+	    ix[t] -= x[t - 2*s];
+	    if (d > 0) {
+		ix[t] += x[t - s];
+		ix[t] -= x[t - (s+1)];
+		ix[t] += x[t - (2*s+1)];
+	    }
+	    if (d > 1) {
+		ix[t] -= 2 * x[t - (s+1)];
+		ix[t] += 2 * x[t - (s+2)];
+		ix[t] += x[t - (2*s+1)];
+		ix[t] -= x[t - (2*s+2)];
+	    }
+	}
+    }
+
+#if INT_DEBUG
+    for (t=0; t<=t2; t++) {
+	fprintf(stderr, "%2d: %8g %8g %8g\n",
+		t, x[t], ix[t], x0[t]);
+    }
+#endif
+
+    /* transcribe results back into x */
+    for (t=0; t<=t2; t++) {
+	if (t < t1) {
+	    x[t] = NADBL;
+	} else {
+	    x[t] = ix[t];
+	}
+    }
+
+    free(ix);
+
+    fprintf(stderr, "done arima_integrate\n");
+
+    return 0;
+}
 
 /* write the various statistics from ARMA estimation into
    a gretl MODEL struct */
@@ -165,12 +249,19 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (e != NULL) {
 	    pmod->uhat[t] = e[t];
+	    fprintf(stderr, "pmod->uhat[%d] = e[%d] = %g\n", t, t, pmod->uhat[t]);
 	}
 	if (!na(y[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    mean_error += pmod->uhat[t];
 	}
+    }
+
+    if (arma_is_arima(ainfo)) {
+	arima_integrate(pmod->yhat, Z[ainfo->yno], 
+			pmod->t1, pmod->t2,
+			ainfo->d, ainfo->D, ainfo->pd);
     }
 
     mean_error /= pmod->nobs;
@@ -217,22 +308,14 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 static void calc_max_lag (struct arma_info *ainfo)
 {
     int pmax = ainfo->p;
-    int qmax = ainfo->q;
     int dmax = ainfo->d;
 
     if (arma_has_seasonal(ainfo)) {
 	pmax += ainfo->P * ainfo->pd;
-	qmax += ainfo->Q * ainfo->pd;
 	dmax += ainfo->D * ainfo->pd;
     }
 
-#if 0
-    ainfo->maxlag = (pmax > qmax)? pmax : qmax;
-    ainfo->maxlag += dmax;
-#else
-    ainfo->maxlag = pmax;
-    ainfo->maxlag += dmax;
-#endif
+    ainfo->maxlag = pmax + dmax;
 }
 
 static int 
@@ -376,12 +459,12 @@ static int check_arma_sep (int *list, int sep1, struct arma_info *ainfo)
 	    if (list[2] == 0 && list[6] == 0) {
 		gretl_list_delete_at_pos(list, 2);
 		gretl_list_delete_at_pos(list, 5);
-		unset_arma_list_has_diffspec(ainfo);
+		unset_arma_is_arima(ainfo);
 	    }
 	} else {
 	    if (list[2] == 0) {
 		gretl_list_delete_at_pos(list, 2);
-		unset_arma_list_has_diffspec(ainfo);
+		unset_arma_is_arima(ainfo);
 	    }
 	}
     }
@@ -567,7 +650,7 @@ static int arma_check_list (int *list, gretlopt opt,
 	if (list[0] < 5) {
 	    err = E_PARSE;
 	} else {
-	    set_arma_list_has_diffspec(ainfo);
+	    set_arma_is_arima(ainfo);
 	}
     } else {
 	err = E_PARSE;
@@ -578,13 +661,18 @@ static int arma_check_list (int *list, gretlopt opt,
     }
 
     if (!err) {
-	if (arma_list_has_diffspec(ainfo)) {
+	if (arma_is_arima(ainfo)) {
 	    /* check for arima spec */
 	    err = check_arima_list(list, opt, Z, pdinfo, ainfo);
 	} else {	    
 	    /* check for simple arma spec */
 	    err = check_arma_list(list, opt, Z, pdinfo, ainfo);
 	} 
+    }
+
+    /* catch null model */
+    if (ainfo->nc == 0) {
+	err = E_ARGS;
     }
 
 #if ARIMA_DEBUG

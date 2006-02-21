@@ -792,8 +792,10 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     gretl_vector *b = NULL;
     gretl_vector *br = NULL;
     gretl_matrix *Rv = NULL;
-    double F, pval;
+    double test_stat, pval;
     int err, robust, freeRv = 1;
+
+    int asym = ASYMPTOTIC_MODEL(rset->pmod->ci);
 
     *gretl_errmsg = '\0';
 
@@ -874,24 +876,31 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 	goto bailout;
     }
     
-    F = gretl_scalar_b_X_b(br, GRETL_MOD_TRANSPOSE, Rv, &err);
+    test_stat = gretl_scalar_b_X_b(br, GRETL_MOD_TRANSPOSE, Rv, &err);
     if (err) {
-	pputs(prn, _("Failed to compute F statistic for test\n"));
+	pputs(prn, _("Failed to compute test statistic\n"));
 	goto bailout;
     }
 
-    F /= rset->k;
-    pval = fdist(F, rset->k, rset->pmod->dfd);
-
     robust = gretl_model_get_int(rset->pmod, "robust");
 
-    pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
-	    (robust)? _("Robust F"): "F",
-	    rset->k, rset->pmod->dfd, F);
+    if (asym) {
+	pval = chisq(test_stat, rset->k);
+	pprintf(prn, "\n%s: %s(%d) = %g, ", _("Test statistic"), 
+		(robust)? _("Robust chi^2"): "chi^2",
+		rset->k, test_stat);
+    } else {
+	test_stat /= rset->k;
+	pval = fdist(test_stat, rset->k, rset->pmod->dfd);
+	pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		(robust)? _("Robust F"): "F",
+		rset->k, rset->pmod->dfd, test_stat);
+    }
+
     pprintf(prn, _("with p-value = %g\n"), pval);
     pputc(prn, '\n');
 
-    record_test_result(F, pval, _("restriction"));
+    record_test_result(test_stat, pval, _("restriction"));
 
  bailout:
 

@@ -309,7 +309,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 }
 
 static model_info *
-tobit_model_info_init (int nobs, int k, int n_series)
+tobit_model_info_init (int model_obs, int bign, int k, int n_series)
 {
     double tol = get_bhhh_toler();
     model_info *tobit;
@@ -318,7 +318,7 @@ tobit_model_info_init (int nobs, int k, int n_series)
 	tol = TOBIT_TOL;
     }
 
-    tobit = model_info_new(k, 0, nobs - 1, tol);
+    tobit = model_info_new(k, 0, model_obs - 1, bign, tol);
 
     if (tobit != NULL) {
 	model_info_set_opts(tobit, FULL_VCV_MATRIX);
@@ -367,7 +367,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     /* initialization of variance */
     pmod->coeff[k-1] = 1.0;
 
-    tobit = tobit_model_info_init(pmod->nobs, k, n_series);
+    tobit = tobit_model_info_init(pmod->nobs, pdinfo->n, k, n_series);
     if (tobit == NULL) {
 	err = E_ALLOC;
 	goto bailout;

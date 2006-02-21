@@ -634,8 +634,8 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 	const double *phi = NULL, *Phi = NULL;
 	const double *theta = NULL, *Theta = NULL;
 
-	int p = pmod->list[1];
-	int q = pmod->list[2];
+	int p = gretl_arma_model_get_nonseasonal_AR_order(pmod);
+	int q = gretl_arma_model_get_nonseasonal_MA_order(pmod);
 	int P = gretl_model_get_int(pmod, "arma_P");
 	int Q = gretl_model_get_int(pmod, "arma_Q");
 	int pd = gretl_model_get_int(pmod, "arma_pd");

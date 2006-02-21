@@ -100,6 +100,15 @@ struct CoeffIntervals_ {
                       c == PWE || \
                       c == WLS)
 
+#define ASYMPTOTIC_MODEL(c) (c == ARMA || \
+                             c == GARCH || \
+                             c == LOGIT || \
+                             c == MLE || \
+                             c == POISSON || \
+                             c == PROBIT || \
+                             c == TOBIT || \
+                             c == TSLS)
+
 #define is_model_ref_cmd(c) (c == ADD || \
 	                     c == ARCH || \
 	                     c == CHOW || \

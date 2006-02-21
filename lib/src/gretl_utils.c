@@ -493,6 +493,47 @@ static int get_stobs_maj_min (char *stobs, int *maj, int *min)
     return err;
 }
 
+static int 
+catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
+{
+    int err = 0;
+
+    if (pd == 1) {
+	if (min > 0) {
+	    strcpy(gretl_errmsg, _("no ':' allowed in starting obs with "
+				   "frequency 1"));
+	    err = 1;
+	} else if (opt == OPT_S || opt == OPT_C) {
+	    strcpy(gretl_errmsg, _("panel data must have frequency > 1"));
+	    err = 1;
+	}
+    } else {
+	if (min == 0) {
+	    strcpy(gretl_errmsg, _("starting obs must contain a ':' with "
+				   "frequency > 1"));
+	    err = 1;
+	} else if (min > pd) {
+	    sprintf(gretl_errmsg, 
+		    _("starting obs '%s' is incompatible with frequency"), 
+		    stobs);
+	    err = 1;
+	} else if (opt == OPT_X) {
+	    strcpy(gretl_errmsg, _("cross-sectional data: frequency must be 1"));
+	    err = 1;
+	} else if (n % pd != 0) {
+	    if (opt == OPT_S || opt == OPT_C) {
+		sprintf(gretl_errmsg, _("Panel datasets must be balanced.\n"
+					"The number of observations (%d) is not a multiple\n"
+					"of the number of %s (%d)."), 
+			n, ((opt == OPT_S)? _("periods") : _("units")), pd);
+		err = 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
 #define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
 
 /**
@@ -587,51 +628,9 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	    && min == 0 && opt != OPT_X && opt != OPT_S && opt != OPT_C) {
 	    pdinfo->structure = TIME_SERIES;
 	} else {
-	    int balanced = 1;
-	    int err = 0;
-
-	    /* various pathologies */
-
-	    if (pd == 1) {
-		if (min > 0) {
-		    strcpy(gretl_errmsg, _("no ':' allowed in starting obs with "
-					   "frequency 1"));
-		    err = 1;
-		} else if (opt == OPT_S || opt == OPT_C) {
-		    strcpy(gretl_errmsg, _("panel data must have frequency > 1"));
-		    err = 1;
-		}
-	    } else {
-		if (min == 0) {
-		    strcpy(gretl_errmsg, _("starting obs must contain a ':' with "
-					   "frequency > 1"));
-		    err = 1;
-		} else if (min > pd) {
-		    sprintf(gretl_errmsg, 
-			    _("starting obs '%s' is incompatible with frequency"), 
-			    stobs);
-		    err = 1;
-		} else if (opt == OPT_X) {
-		    strcpy(gretl_errmsg, _("cross-sectional data: frequency must be 1"));
-		    err = 1;
-		} else if (pdinfo->n % pd != 0) {
-		    balanced = 0;
-		    if (opt == OPT_S || opt == OPT_C) {
-			sprintf(gretl_errmsg, _("Panel datasets must be balanced.\n"
-						"The number of observations (%d) is not a multiple\n"
-						"of the number of %s (%d)."), 
-				pdinfo->n, ((opt == OPT_S)? _("periods") : _("units")), pd);
-			err = 1;
-		    }
-		}
-	    }
-
-	    if (err) {
+	    if (catch_setobs_errors(stobs, pd, pdinfo->n, min, opt)) {
 		return 1;
 	    }
-
-	    /* OK? */
-		
 	    if (pd == 1) {
 		sprintf(stobs, "%d", maj);
 		if (structure == STRUCTURE_UNKNOWN) {
@@ -643,14 +642,9 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 		}
 	    } else {
 		real_format_obs(stobs, maj, min, pd, '.');
-		if (structure == STRUCTURE_UNKNOWN) {
-		    if (maj > 1500 && recognized_ts_frequency(pd)) {
-			structure = TIME_SERIES;
-		    } else if (balanced) {
-			structure = STACKED_TIME_SERIES; /* panel? */
-		    } else {
-			structure = TIME_SERIES; /* ?? */
-		    }
+		if (structure == STRUCTURE_UNKNOWN && 
+		    recognized_ts_frequency(pd)) {
+		    structure = TIME_SERIES;
 		}
 	    }
 	}

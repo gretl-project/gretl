@@ -990,13 +990,16 @@ arma_variance_machine (const double *phi, int p,
 }
 
 static int arima_integrate (double *x, const double *x0,
-			    int T, int d, int D, int s)
+			    int t1, int T, int d, int D, 
+			    int s)
 {
     double *ix;
-    int t, t1 = 0;
+    int t, t0 = 0;
 
-    fprintf(stderr, "arima_integrate: T=%d, d=%d, D=%d, s=%d\n",
-	    T, d, D, s);
+#if ARF_DEBUG
+    fprintf(stderr, "arima_integrate: t1=%d, T=%d, d=%d, D=%d, s=%d\n",
+	    t1, T, d, D, s);
+#endif
 
     ix = malloc(T * sizeof *ix);
     if (ix == NULL) {
@@ -1005,13 +1008,16 @@ static int arima_integrate (double *x, const double *x0,
 
     for (t=0; t<T; t++) {
 	if (na(x[t])) {
-	    t1++;
+	    t0++;
 	} else {
 	    break;
 	}
     }
 
-    t1 += d + D * s;
+    t0 += d + D * s;
+    if (t0 > t1) {
+	t1 = t0;
+    }
 
     if (x0 != NULL) {
 	for (t=0; t<t1; t++) {
@@ -1020,7 +1026,7 @@ static int arima_integrate (double *x, const double *x0,
     }
 
     for (t=t1; t<T; t++) {
-	ix[t] = (x0 == NULL)? 0.0 : x0[t];
+	ix[t] = (x0 == NULL)? 0.0 : x0[t]; /* ?? */
 	if (d > 0) {
 	    ix[t] += x[t-1];
 	} 
@@ -1055,7 +1061,7 @@ static int arima_integrate (double *x, const double *x0,
 	}
     }
 
-#if 1
+#if ARF_DEBUG
     for (t=0; t<T; t++) {
 	if (x0 != NULL) {
 	    fprintf(stderr, "%2d: %8g %8g %8g\n",
@@ -1067,13 +1073,9 @@ static int arima_integrate (double *x, const double *x0,
     }
 #endif
 
-    /* transcribe results back into x */
-    for (t=0; t<T; t++) {
-	if (t < t1) {
-	    x[t] = NADBL;
-	} else {
-	    x[t] = ix[t];
-	}
+    /* transcribe integrated results back into x */
+    for (t=t1; t<T; t++) {
+	x[t] = ix[t];
     }
 
     free(ix);
@@ -1082,8 +1084,8 @@ static int arima_integrate (double *x, const double *x0,
 }
 
 static int 
-maybe_arima_integrate (Forecast *fc, MODEL *pmod, const double **Z, 
-		       const DATAINFO *pdinfo)
+maybe_arima_integrate (Forecast *fc, int tstart, MODEL *pmod, 
+		       const double **Z, const DATAINFO *pdinfo)
 {
     int d = gretl_model_get_int(pmod, "arima_d");
     int D = gretl_model_get_int(pmod, "arima_D");
@@ -1093,9 +1095,11 @@ maybe_arima_integrate (Forecast *fc, MODEL *pmod, const double **Z,
 	int s = gretl_model_get_int(pmod, "arma_pd");
 	int yno = gretl_model_get_depvar(pmod);
 
-	err = arima_integrate(fc->yhat, Z[yno], fc->n, d, D, s);
+	fprintf(stderr, "fc->offset = %d\n", fc->offset);
+
+	err = arima_integrate(fc->yhat, Z[yno], tstart, fc->n, d, D, s);
 	if (!err && fc->sderr != NULL) {
-	    err = arima_integrate(fc->sderr, NULL, fc->n, d, D, s);
+	    err = arima_integrate(fc->sderr, NULL, tstart, fc->n, d, D, s);
 	}
     }
 
@@ -1269,7 +1273,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	}
 
 	if (fc->eps != NULL && !miss) {
-	    /* form estimated error in case of static forecast */
+	    /* form estimated error */
 	    fc->eps[tt] = y[t] - fc->yhat[tt];
 	}
 
@@ -1289,9 +1293,9 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 #endif
     }
 
-    /* if ARIMA, the forecasts now need to be integrated */
+    /* if ARIMA, the forecast now needs to be integrated */
     if (!err) {
-	err = maybe_arima_integrate(fc, pmod, Z, pdinfo);
+	err = maybe_arima_integrate(fc, tstart, pmod, Z, pdinfo);
     }
 
  bailout:
@@ -1694,6 +1698,11 @@ static int get_forecast_method (Forecast *fc,
 	fc->method = FC_AUTO;
     }
 
+#if 1
+    fprintf(stderr, "get_forecast_method: pmod->ci = %d, method = %d\n",
+	    pmod->ci, fc->method);
+#endif
+
     return err;
 }
 
@@ -1719,8 +1728,6 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     fc.n = fr->nobs - fr->pre_n;
     fc.model_t2 = pmod->t2;
     fc.eps = NULL;
-
-    fprintf(stderr, "fc.n = %d - %d = %d\n", fr->nobs, fr->pre_n, fc.n);
 
     get_forecast_method(&fc, pmod, pdinfo, opt);
 
@@ -1764,7 +1771,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	fc.sderr = NULL;
     }
 
-    if (pmod->ci == ARMA && fc.method == FC_STATIC) {
+    if (pmod->ci == ARMA) {
 	fc.eps = malloc(fc.n * sizeof *fc.eps);
     }
 
@@ -2011,7 +2018,7 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 
 	get_forecast_method(&fc, pmod, pdinfo, opt);
 
-	if (pmod->ci == ARMA && fc.method == FC_STATIC) {
+	if (pmod->ci == ARMA) {
 	    fc.eps = malloc(pdinfo->n * sizeof *fc.eps);
 	}
 
