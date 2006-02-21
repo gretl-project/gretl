@@ -351,38 +351,44 @@ void printlist (const int *list, const char *msg)
 
 /* Compute model selection criteria */
 
-int gretl_calculate_criteria (double ess, int nobs, int k,
-			      double *ll, double *aic, double *bic,
+int gretl_calculate_criteria (double ess, int n, int k,
+			      double *pll, double *aic, double *bic,
 			      double *hqc)
 {
+    double ll;
+    double c[3];
     int err = 0;
 
-    if (na(ess) || ess <= 0.0 || k < 1 || nobs <= k) {
-	*ll = NADBL;
-	*aic = NADBL;
-	*bic = NADBL;
-	*hqc = NADBL;
+    if (na(ess) || ess <= 0.0 || k < 1 || n <= k) {
 	err = 1;
     } else {
 	const double ln2pi1 = 2.837877066409345;
 
 	errno = 0;
 
-	*ll = -.5 * nobs * log(ess);
+	ll = -.5 * n * log(ess);
 
 	if (errno == EDOM || errno == ERANGE) {
-	    *ll = NADBL;
-	    *aic = NADBL;
-	    *bic = NADBL;
-	    *hqc = NADBL;
 	    err = 1;
 	} else {
-	    *ll += -.5 * nobs * (ln2pi1 - log((double) nobs));
-	    *aic = -2.0 * *ll + 2 * k;
-	    *bic = -2.0 * *ll + k * log(nobs);
-	    *hqc = -2.0 * *ll + 2 * k * log(log(nobs));
+	    ll += -.5 * n * (ln2pi1 - log((double) n));
+	    c[0] = -2.0 * ll + 2 * k;
+	    c[1] = -2.0 * ll + k * log(n);
+	    c[2] = -2.0 * ll + 2 * k * log(log(n));
 	}
     }
+
+    if (err) {
+	*pll = NADBL;
+	*aic = NADBL;
+	*bic = NADBL;
+	*hqc = NADBL;
+    } else {
+	*pll = ll;
+	*aic = c[0];
+	*bic = c[1];
+	*hqc = c[2];
+    }	
 
     return err;
 }
