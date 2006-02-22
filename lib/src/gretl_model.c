@@ -2579,6 +2579,8 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 	mdinfo = pdinfo;
     }
 
+    gretl_push_c_numeric_locale();
+
     if (pmod->ci == LOGISTIC) {
 	if (pmod->ifc && pmod->ncoeff == 2 && xvar == pmod->list[3]) {
 	    double lmax = gretl_model_get_double(pmod, "lmax");
@@ -2605,6 +2607,8 @@ char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 				  pmod->coeff[2]);
 	}
     }
+
+    gretl_pop_c_numeric_locale();
 	
     return ret;
 }

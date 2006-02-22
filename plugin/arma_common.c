@@ -119,7 +119,7 @@ static void arma_R2_and_F (MODEL *pmod, const double *y)
 
 #define INT_DEBUG 1
 
-static int arima_integrate (double *dx, const double *xp,
+static int arima_integrate (double *dx, const double *xprior,
 			    int t1, int t2, int d, int D, int s)
 {
     double *x;
@@ -138,7 +138,7 @@ static int arima_integrate (double *dx, const double *xp,
     /* prior to estimation period for model: fill in
        actual data values */
     for (t=0; t<t1; t++) {
-	x[t] = xp[t];
+	x[t] = xprior[t];
     }    
 
     for (t=t1; t<=t2; t++) {
@@ -251,7 +251,7 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 	}
 	if (!na(y[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
-#if 0
+#if 0 /* ?? */
 	    if (arma_is_arima(ainfo)) {
 		pmod->yhat[t] += ainfo->dybar;
 	    }
