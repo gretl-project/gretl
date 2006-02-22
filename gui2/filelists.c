@@ -117,6 +117,29 @@ void save_file_lists (GConfClient *client)
     printfilelist(FILE_LIST_SCRIPT, client);
 }
 
+void read_file_lists (GConfClient *client)
+{
+    GSList *flist = NULL;
+    char key[MAXSTR];
+    int i, j;
+
+    initialize_file_lists();
+
+    for (i=0; i<3; i++) {
+	sprintf(key, "/apps/gretl/%s", file_sections[i]);
+	flist = gconf_client_get_list(client, key,
+				      GCONF_VALUE_STRING, NULL);
+	if (flist != NULL) {
+	    for (j=0; j<MAXRECENT; j++) {
+		write_filename_to_list(i, j, flist->data);
+		flist = flist->next;
+	    }
+	    g_slist_free(flist);
+	    flist = NULL;
+	}
+    }
+}
+
 #elif defined(USE_GNOME)
 
 static void printfilelist (int filetype)
@@ -142,6 +165,28 @@ void save_file_lists (void)
     printfilelist(FILE_LIST_SESSION);
     printfilelist(FILE_LIST_SCRIPT);
 }
+
+void read_file_lists (void)
+{
+    char key[MAXSTR];
+    gchar *value;
+    int i, j;
+
+    initialize_file_lists();
+
+    for (i=0; i<3; i++) {
+	for (j=0; j<MAXRECENT; j++) {
+	    sprintf(key, "/gretl/%s/%d", file_sections[i], j);
+	    value = gnome_config_get_string(key);
+	    if (value != NULL) {
+		write_filename_to_list(i, j, value);
+		g_free(value);
+	    } else {
+		break;
+	    }
+	}
+    }
+}  
 
 #elif defined(G_OS_WIN32)
 
@@ -171,6 +216,25 @@ void save_file_lists (void)
     printfilelist(FILE_LIST_SCRIPT);
 }
 
+void read_file_lists (void)
+{
+    char rpath[MAXSTR], value[MAXSTR];
+    int i, j;
+
+    initialize_file_lists();
+
+    for (i=0; i<3; i++) {
+	for (j=0; j<MAXRECENT; j++) {
+	    sprintf(rpath, "%s\\%d", file_sections[i], j);
+	    if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) { 
+		write_filename_to_list(i, j, value);
+	    } else {
+		break;
+	    }
+	}
+    } 
+}
+
 #else /* "plain" version follows */
 
 static void printfilelist (int filetype, FILE *fp)
@@ -183,14 +247,10 @@ static void printfilelist (int filetype, FILE *fp)
 	return;
     }
 
-    fprintf(fp, "%s:\n", file_sections[filetype]);
-
     for (i=0; i<MAXRECENT; i++) {
-	if (*filep[i] != '\0') {
-	    fprintf(fp, "%s\n", filep[i]);
-	} else {
-	    break;
-	}
+	if (filep[i] != NULL && *filep[i] != 0) {
+	    fprintf(fp, "%s%d %s\n", file_sections[filetype], i, filep[i]);
+	} 
     }
 }
 
@@ -200,6 +260,39 @@ void save_file_lists (FILE *fp)
     printfilelist(FILE_LIST_SESSION, fp);
     printfilelist(FILE_LIST_SCRIPT, fp);
 }    
+
+void read_file_lists (FILE *fp, char *prev)
+{
+    char line[MAXLEN];
+    int i, j, len;
+
+    initialize_file_lists();
+
+    strcpy(line, prev);
+    while (strncmp(line, "recent", 6)) {
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    return;
+	}
+    }
+
+    j = 0;
+    for (i=0; i<3; ) {
+	len = strlen(file_sections[i]);
+	if (!strncmp(line, file_sections[i], len)) {
+	    chopstr(line);
+	    if (*line != '\0') {
+		write_filename_to_list(i, j++, line + len + 2);
+	    }
+	}
+	if (fgets(line, sizeof line, fp) == NULL) {
+	    break;
+	}
+	if (strstr(line, file_sections[i+1])) {
+	    i++;
+	    j = 0;
+	}
+    }	    
+}
 
 #endif 
 

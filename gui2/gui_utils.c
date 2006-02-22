@@ -3581,7 +3581,9 @@ static void VAR_forecast_callback (gpointer p, guint i, GtkWidget *w)
 	opt = OPT_S;
     }
 
-    fr = get_VAR_forecast(var, i, t1 - pre_n, t2, pre_n, (const double **) Z, 
+    /* FIXME dating here */
+
+    fr = get_VAR_forecast(var, i, t1 - pre_n, t1, t2, (const double **) Z, 
 			  datainfo, opt);
 
     if (fr == NULL) {

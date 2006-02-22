@@ -1339,7 +1339,8 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    fr = get_forecast(pmod, t1, t2, pre_n, &Z, datainfo, opt);
+    /* FIXME pre_n ?? */
+    fr = get_forecast(pmod, t1, t1 + pre_n, t2, &Z, datainfo, opt);
 
     if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));

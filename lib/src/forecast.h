@@ -37,10 +37,8 @@ struct FITRESID_ {
     double tval;
     int pmax;
     int df;
-    int t1, t2;
-    int pre_n;
+    int t0, t1, t2;
     int nobs;
-    int real_nobs;
     int err;
     char depvar[VNAMELEN];
 };

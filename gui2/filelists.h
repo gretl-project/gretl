@@ -18,11 +18,13 @@ void add_files_to_menus (void);
 #if defined(USE_GNOME) && !defined(OLD_GTK)
 # include <gconf/gconf-client.h>
 void save_file_lists (GConfClient *client);
+void read_file_lists (GConfClient *client);
 #elif defined(USE_GNOME) || defined(G_OS_WIN32)
 void save_file_lists (void);
+void read_file_lists (void);
 #else
 void save_file_lists (FILE *fp);
+void read_file_lists (FILE *fp, char *prev);
 #endif
-
 
 #endif /* FILELISTS_H */

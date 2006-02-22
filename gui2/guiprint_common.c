@@ -547,8 +547,6 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     pputs(prn, I_("Model estimation range:"));
     pprintf(prn, " %s--%s", date1, date2);
 
-    pprintf(prn, " ($n$ = %d)\\\\\n", fr->real_nobs); 
-
     pprintf(prn, I_("Standard error of residuals = %g"), fr->sigma);
     pputs(prn, "\n\\end{raggedright}\n");
 }
@@ -565,7 +563,7 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
     pputs(prn, I_("Model estimation range:")); 
-    pprintf(prn, " %s - %s (n = %d)\\par\n", date1, date2, fr->real_nobs);
+    pprintf(prn, " %s - %s\\par\n", date1, date2);
 
     sprintf(tmp, I_("Standard error of residuals = %g"), 
 	    fr->sigma);
@@ -609,8 +607,8 @@ static void texprint_fit_resid (const FITRESID *fr,
 	    "   \\multicolumn{1}{c}{%s}\\\\\n",
 	    vname, I_("fitted"), I_("residual"));
 
-    for (t=0; t<fr->nobs; t++) {
-	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
+    for (t=fr->t1; t<=fr->t2; t++) {
+	tex_print_obs_marker(t, pdinfo, prn);
 	pputs(prn, " & ");
 
 	if (na(fr->actual[t])) {
@@ -665,8 +663,8 @@ static void rtfprint_fit_resid (const FITRESID *fr,
 	    " \\intbl \\row\n",
 	    fr->depvar, I_("fitted"), I_("residual"));
 
-    for (t=0; t<fr->nobs; t++) {
-	rtf_print_obs_marker(t + fr->t1, pdinfo, prn);
+    for (t=fr->t1; t<=fr->t2; t++) {
+	rtf_print_obs_marker(t, pdinfo, prn);
 	if (na(fr->actual[t])) {
 	    pputs(prn, "\\qc \\cell \\qc \\cell \\qc \\cell \\ql \\cell"
 		  " \\intbl \\row\n"); 
@@ -744,10 +742,10 @@ static void texprint_fcast_without_errs (const FITRESID *fr,
     pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s} \\\\ [4pt] \n",
 	    I_("Obs"), vname, I_("prediction"));
 
-    for (t=fr->pre_n; t<fr->nobs; t++) {
+    for (t=fr->t1; t<=fr->t2; t++) {
 	texprint_fcast_x(fr->actual[t], fr->pmax, actual);
 	texprint_fcast_x(fr->fitted[t], fr->pmax, fitted);
-	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
+	tex_print_obs_marker(t, pdinfo, prn);
 	pprintf(prn, " & %s & %s \\\\\n",
 		actual, fitted);
     }
@@ -807,7 +805,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	errpmax = pmax + 1;
     }
 
-    for (t=fr->pre_n; t<fr->nobs; t++) {
+    for (t=fr->t1; t<=fr->t2; t++) {
 	double xlo, xhi;
 
 	if (na(fr->sderr[t])) {
@@ -822,7 +820,7 @@ static void texprint_fcast_with_errs (const FITRESID *fr,
 	texprint_fcast_x(fr->sderr[t], errpmax, sderr);
 	texprint_fcast_x(xlo, pmax, lo);
 	texprint_fcast_x(xhi, pmax, hi);
-	tex_print_obs_marker(t + fr->t1, pdinfo, prn);
+	tex_print_obs_marker(t, pdinfo, prn);
 	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
 		actual, fitted, sderr, lo, hi);
     }
@@ -854,8 +852,8 @@ static void rtfprint_fcast_without_errs (const FITRESID *fr,
 	    " \\intbl \\row\n", 
 	    I_("Obs"), fr->depvar, I_("prediction")); 
 
-    for (t=fr->pre_n; t<fr->nobs; t++) {
-	rtf_print_obs_marker(t + fr->t1, pdinfo, prn);
+    for (t=fr->t1; t<=fr->t2; t++) {
+	rtf_print_obs_marker(t, pdinfo, prn);
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);
     }
@@ -893,8 +891,8 @@ static void rtfprint_fcast_with_errs (const FITRESID *fr,
 	    /* xgettext:no-c-format */
 	    I_("95% confidence interval"));
 
-    for (t=fr->pre_n; t<fr->nobs; t++) {
-	rtf_print_obs_marker(t + fr->t1, pdinfo, prn);
+    for (t=fr->t1; t<=fr->t2; t++) {
+	rtf_print_obs_marker(t, pdinfo, prn);
 	maxerr = fr->tval * fr->sderr[t];
 	printfrtf(fr->actual[t], prn, 0);
 	printfrtf(fr->fitted[t], prn, 0);

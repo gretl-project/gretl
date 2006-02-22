@@ -1372,16 +1372,10 @@ static void read_rc (void)
 {
     GConfClient *client;
     GError *error = NULL;
-    GSList *flist = NULL;
     gboolean bval;
     int ival;
     gchar *strval;
     char key[MAXSTR];
-    const char *file_sections[] = {
-	"recent_data_files",
-	"recent_session_files",
-	"recent_script_files"
-    };	
     int i;
 
     client = gconf_client_get_default();
@@ -1421,23 +1415,7 @@ static void read_rc (void)
 	}
     }
 
-    initialize_file_lists();
-
-    for (i=0; i<3; i++) {
-	int j;
-
-	sprintf(key, "/apps/gretl/%s", file_sections[i]);
-	flist = gconf_client_get_list(client, key,
-				      GCONF_VALUE_STRING, NULL);
-	if (flist != NULL) {
-	    for (j=0; j<MAXRECENT; j++) {
-		write_filename_to_list(i, j, flist->data);
-		flist = flist->next;
-	    }
-	    g_slist_free(flist);
-	    flist = NULL;
-	}
-    }
+    read_file_lists(client);
 
     g_object_unref(G_OBJECT(client));
 
@@ -1477,19 +1455,14 @@ void write_rc (void)
 static void read_rc (void) 
 {
     gchar *value = NULL;
-    char gpath[MAXSTR];
+    char key[MAXSTR];
     char *strvar;
-    const char *file_sections[] = {
-	"recent data files",
-	"recent session files",
-	"recent script files"
-    };	
     int i, j;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
-	sprintf(gpath, "/gretl/%s/%s", rc_vars[i].description, 
+	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, 
 		rc_vars[i].key);
-	value = gnome_config_get_string(gpath);
+	value = gnome_config_get_string(key);
 	if (value != NULL && *value != '\0') {
 	    if (rc_vars[i].flags & BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
@@ -1504,20 +1477,7 @@ static void read_rc (void)
 	}
     }
 
-    initialize_file_lists();
-
-    /* get recent file lists */
-    for (j=0; j<3; j++) {
-	for (i=0; i<MAXRECENT; i++) {
-	    sprintf(gpath, "/gretl/%s/%d", file_sections[j], i);
-	    if ((value = gnome_config_get_string(gpath)) != NULL) { 
-		write_filename_to_list(j, i, value);
-		g_free(value);
-	    } else {
-		break;
-	    }
-	}
-    }  
+    read_file_lists();
 
     common_read_rc_setup();
 }
@@ -1627,11 +1587,6 @@ void read_rc (void)
 {
     char rpath[MAXSTR], value[MAXSTR];
     char *strvar;
-    const char *file_sections[] = {
-	"recent data files",
-	"recent session files",
-	"recent script files"
-    };
     int i, j;
 
     if (get_network_settings() && *paths.userdir != '\0') {
@@ -1678,19 +1633,7 @@ void read_rc (void)
 	}
     }
 
-    initialize_file_lists();
-
-    /* get recent file lists */
-    for (j=0; j<3; j++) {
-	for (i=0; i<MAXRECENT; i++) {
-	    sprintf(rpath, "%s\\%d", file_sections[j], i);
-	    if (read_reg_val(HKEY_CURRENT_USER, "gretl", rpath, value) == 0) { 
-		write_filename_to_list(j, i, value);
-	    } else {
-		break;
-	    }
-	}
-    } 
+    read_file_lists();
 
     common_read_rc_setup();
 
@@ -1739,12 +1682,6 @@ static void read_rc (void)
     FILE *fp;
     char line[MAXLEN], key[32], linevar[MAXLEN];
     char *strvar;
-    const char *file_sections[] = {
-	"recent data files:",
-	"recent session files:",
-	"recent script files:"
-    };
-    int gotrecent = 0;
     int i, j;
 
     fp = fopen(rcfile, "r");
@@ -1758,8 +1695,7 @@ static void read_rc (void)
 	if (line[0] == '#') {
 	    continue;
 	}
-	if (!strncmp(line, "recent ", 7)) {
-	    gotrecent = 1;
+	if (!strncmp(line, "recent", 6)) {
 	    break;
 	}
 	if (sscanf(line, "%s", key) == 1) {
@@ -1783,44 +1719,7 @@ static void read_rc (void)
 	i++;
     }
 
-    initialize_file_lists();
-
-    if (gotrecent || (fgets(line, MAXLEN, fp) != NULL && 
-		      strncmp(line, file_sections[0], 18) == 0)) {
-	i = 0;
-	while (fgets(line, MAXLEN, fp) && i<MAXRECENT) {
-	    if (strncmp(line, file_sections[1], 21) == 0) {
-		break;
-	    }
-	    chopstr(line);
-	    if (*line != '\0') {
-		write_filename_to_list(FILE_LIST_DATA, i++, line);
-	    }
-	}
-    }
-
-    if (strncmp(line, file_sections[1], 21) == 0) {
-	i = 0;
-	while (fgets(line, MAXLEN, fp) && i<MAXRECENT) {
-	    if (strncmp(line, file_sections[2], 20) == 0) {
-		break;
-	    }
-	    chopstr(line);
-	    if (*line != '\0') {
-		write_filename_to_list(FILE_LIST_SESSION, i++, line);
-	    }
-	}
-    }
-
-    if (strncmp(line, file_sections[2], 20) == 0) {
-	i = 0;
-	while (fgets(line, MAXLEN, fp) && i<MAXRECENT) {
-	    chopstr(line);
-	    if (*line != '\0') {
-		write_filename_to_list(FILE_LIST_SCRIPT, i++, line);
-	    }
-	}
-    }
+    read_file_lists(fp, line);
 
     fclose(fp);
 

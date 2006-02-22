@@ -191,7 +191,7 @@ int hurstplot (const int *list, const double **Z, DATAINFO *pdinfo,
 int 
 gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo);
 
-int plot_fcast_errs (int n, const double *obs, 
+int plot_fcast_errs (int t1, int t2, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
 		     int time_series);

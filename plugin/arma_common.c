@@ -25,7 +25,6 @@ struct arma_info {
     int pd;       /* periodicity of data */
     int T;        /* full length of data series */
     double *dy;   /* differenced dependent variable */
-    double dybar; /* mean of differenced dep var */
 };
 
 #define arma_has_const(a)      ((a)->flags & ARMA_IFC)
@@ -61,7 +60,6 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
     ainfo->T = pdinfo->n;
 
     ainfo->dy = NULL;
-    ainfo->dybar = 0.0;
 }
 
 static int arma_list_y_position (struct arma_info *ainfo)
@@ -117,7 +115,7 @@ static void arma_R2_and_F (MODEL *pmod, const double *y)
 
 #endif
 
-#define INT_DEBUG 1
+#define INT_DEBUG 0
 
 static int arima_integrate (double *dx, const double *x,
 			    int t1, int t2, int d, int D, int s)
@@ -249,11 +247,6 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 	}
 	if (!na(y[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
-#if 0 /* ?? */
-	    if (arma_is_arima(ainfo)) {
-		pmod->yhat[t] += ainfo->dybar;
-	    }
-#endif
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    mean_error += pmod->uhat[t];
 	}
@@ -687,7 +680,6 @@ static int
 arima_difference (const double *y, struct arma_info *ainfo)
 {
     double *dy;
-    double mdy = 0.0;
     int s = ainfo->pd;
     int t, t1 = 0;
 
@@ -749,20 +741,9 @@ arima_difference (const double *y, struct arma_info *ainfo)
 		dy[t] += y[t-2*s-2];
 	    }
 	}
-	mdy += dy[t];
     }
-
-    mdy /= (ainfo->T - t1);
-
-#if 0
-    fprintf(stderr, "mean of ainfo->dy = %g\n", mdy);
-    for (t=t1; t<ainfo->T; t++) {
-	dy[t] -= mdy;
-    }
-#endif
 
     ainfo->dy = dy;
-    ainfo->dybar = mdy;
 
     return 0;
 }

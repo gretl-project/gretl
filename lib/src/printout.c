@@ -784,7 +784,6 @@ static void fit_resid_head (const FITRESID *fr,
     ntodate(mdate2, fr->t2, pdinfo);
 
     pprintf(prn, _("Model estimation range: %s - %s"), mdate1, mdate2);
-    pprintf(prn, " (n = %d)\n", fr->real_nobs);
 
     if (!na(fr->sigma)) {
 	pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
@@ -1672,8 +1671,8 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
     obs_marker_init(pdinfo);
 
-    for (t=0; t<fr->nobs; t++) {
-	print_obs_marker(t + fr->t1, pdinfo, prn);
+    for (t=fr->t1; t<=fr->t2; t++) {
+	print_obs_marker(t, pdinfo, prn);
 
 	if (na(fr->actual[t])) {
 	    pputc(prn, '\n');
@@ -1770,7 +1769,7 @@ int text_print_forecast (const FITRESID *fr,
     pputc(prn, '\n');
 
     if (do_errs) {
-	for (t=0; t<fr->pre_n; t++) {
+	for (t=0; t<fr->t1; t++) {
 	    maxerr[t] = NADBL;
 	}
 	if (pmax < 4) {
@@ -1780,8 +1779,8 @@ int text_print_forecast (const FITRESID *fr,
 
     obs_marker_init(pdinfo);
 
-    for (t=fr->pre_n; t<fr->nobs; t++) {
-	print_obs_marker(t + fr->t1, pdinfo, prn);
+    for (t=fr->t0; t<=fr->t2; t++) {
+	print_obs_marker(t, pdinfo, prn);
 	fcast_print_x(fr->actual[t], 15, pmax, prn);
 
 	if (na(fr->fitted[t])) {
@@ -1837,7 +1836,7 @@ int text_print_forecast (const FITRESID *fr,
 	if (pv < 0) {
 	    err = 1;
 	} else {
-	    err = plot_fcast_errs(fr->nobs, &(*pZ)[pv][fr->t1], 
+	    err = plot_fcast_errs(fr->t1, fr->t2, (*pZ)[pv], 
 				  fr->actual, fr->fitted, maxerr, 
 				  fr->depvar, 
 				  (time_series)? pdinfo->pd : 0);

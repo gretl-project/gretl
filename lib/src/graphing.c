@@ -2081,7 +2081,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     return gnuplot_make_graph();
 }
 
-int plot_fcast_errs (int n, const double *obs, 
+int plot_fcast_errs (int t1, int t2, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
 		     int time_series)
@@ -2090,28 +2090,30 @@ int plot_fcast_errs (int n, const double *obs,
     double xmin, xmax, xrange;
     int depvar_present = 0;
     int do_errs = (maxerr != NULL);
-    int t, err;
-
-    if ((err = gnuplot_init(PLOT_FORECAST, &fp))) {
-	return err;
-    }
+    int t, n, err;
 
     /* don't graph empty portion of forecast */
-    for (t=n-1; t>0; t--) {
+    for (t=t2; t>=t1; t--) {
 	if (na(depvar[t]) && na(yhat[t])) {
-	    n--;
+	    t2--;
 	} else {
 	    break;
 	}
     }
+
+    n = t2 - t1 + 1;
 
     if (n < 3) {
 	/* won't draw a graph for 2 datapoints or less */
 	return 1;
     }
 
+    if ((err = gnuplot_init(PLOT_FORECAST, &fp))) {
+	return err;
+    }    
+
     /* check that we have any values for the actual var */
-    for (t=0; t<n; t++) {
+    for (t=t1; t<=t2; t++) {
 	if (!na(depvar[t])) {
 	    depvar_present = 1;
 	    break;
@@ -2120,7 +2122,7 @@ int plot_fcast_errs (int n, const double *obs,
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
 
-    gretl_minmax(0, n - 1, obs, &xmin, &xmax);
+    gretl_minmax(t1, t2, obs, &xmin, &xmax);
     xrange = xmax - xmin;
     xmin -= xrange * .025;
     xmax += xrange * .025;
@@ -2156,7 +2158,7 @@ int plot_fcast_errs (int n, const double *obs,
     gretl_push_c_numeric_locale();
 
     if (depvar_present) {
-	for (t=0; t<n; t++) {
+	for (t=t1; t<=t2; t++) {
 	    if (na(depvar[t])) {
 		fprintf(fp, "%.8g ?\n", obs[t]);
 	    } else {
@@ -2166,7 +2168,7 @@ int plot_fcast_errs (int n, const double *obs,
 	fputs("e\n", fp);
     }
 
-    for (t=0; t<n; t++) {
+    for (t=t1; t<=t2; t++) {
 	if (na(yhat[t])) {
 	    fprintf(fp, "%.8g ?\n", obs[t]);
 	} else {
@@ -2176,7 +2178,7 @@ int plot_fcast_errs (int n, const double *obs,
     fputs("e\n", fp);
 
     if (do_errs) {
-	for (t=0; t<n; t++) {
+	for (t=t1; t<=t2; t++) {
 	    if (na(yhat[t]) || na(maxerr[t])) {
 		fprintf(fp, "%.8g ? ?\n", obs[t]);
 	    } else {

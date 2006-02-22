@@ -333,14 +333,14 @@ static int add_VAR_fcast_variance (GRETL_VAR *var, gretl_matrix *F,
 }
 
 static int
-gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
+gretl_VAR_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 			const double **Z, const DATAINFO *pdinfo, 
 			gretlopt opt)
 {
     const MODEL *pmod;
     gretl_matrix *F;
     double fti, xti;
-    int nf = t2 - t1 + 1;
+    int nf = t2 - t0 + 1;
     int staticfc = (opt & OPT_S);
     int i, j, k, s, t;
     int ns, lag, vj, m;
@@ -361,10 +361,9 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 
     ns = var->order * var->neqns;
 
-    for (t=t1; t<=t2; t++) {
+    for (t=t0, s=0; t<=t2; t++, s++) {
 	int miss = 0;
 
-	s = t - t1;
 	for (i=0; i<var->neqns; i++) {
 	    pmod = var->models[i];
 	    fti = 0.0;
@@ -374,7 +373,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 		vj = pmod->list[j + 2];
 		if (j < ns + pmod->ifc && vj > 0) {
 		    /* stochastic var */
-		    if (s < pre_obs || staticfc || s - lag < 0) {
+		    if (t < t1 || staticfc || s - lag < 0) {
 			/* pre-forecast value */
 			m = (j - pmod->ifc) / var->order;
 			vj = var->models[m]->list[1];
@@ -414,10 +413,10 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 
     /* now get variances, if not static */
     if (!staticfc) {
-	add_VAR_fcast_variance(var, F, nf, pre_obs);
+	add_VAR_fcast_variance(var, F, nf, t1 - t0);
     }
 
-    gretl_matrix_set_int(F, t1);
+    gretl_matrix_set_int(F, t0);
     var->F = F;
 
 #if 0
@@ -428,7 +427,7 @@ gretl_VAR_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 }
 
 static int
-gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
+gretl_VECM_add_forecast (GRETL_VAR *var, int t0, int t1, int t2,
 			 const double **Z, DATAINFO *pdinfo, 
 			 gretlopt opt)
 {
@@ -438,7 +437,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
     int order = var->order + 1;
     int nexo = (var->jinfo->exolist != NULL)? var->jinfo->exolist[0] : 0;
     int nseas = var->jinfo->seasonals;
-    int nf = t2 - t1 + 1;
+    int nf = t2 - t0 + 1;
     int staticfc = (opt & OPT_S);
     int i, j, k, vj, s, t;
     int fcols, d0 = 0;
@@ -465,9 +464,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 
     gretl_matrix_zero(F);
 
-    for (t=t1; t<=t2; t++) {
-
-	s = t - t1;
+    for (t=t0, s=0; t<=t2; t++, s++) {
 
 	for (i=0; i<var->neqns; i++) {
 	    double y, bij, fti = 0.0;
@@ -489,7 +486,7 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 		    }			
 		    bij = gretl_matrix_get(B, i, col++);
 		    ft = s - k - 1;
-		    if (s >= pre_obs && ft >= 0 && !staticfc) {
+		    if (t >= t1 && ft >= 0 && !staticfc) {
 			/* use prior forecast if available */
 			y = gretl_matrix_get(F, ft, j);
 		    } else {
@@ -551,10 +548,10 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 
     /* now get variances, if not static */
     if (!staticfc) {
-	add_VAR_fcast_variance(var, F, nf, pre_obs);
+	add_VAR_fcast_variance(var, F, nf, t1 - t0);
     }
 
-    gretl_matrix_set_int(F, t1);
+    gretl_matrix_set_int(F, t0);
     var->F = F;
 
 #if 0
@@ -565,12 +562,12 @@ gretl_VECM_add_forecast (GRETL_VAR *var, int t1, int t2, int pre_obs,
 }
 
 const gretl_matrix *
-gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, int pre_obs,
+gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t0, int t1, int t2,
 			       const double **Z, DATAINFO *pdinfo, 
 			       gretlopt opt)
 {
     if (var->F != NULL) {
-	int ncols, nf = t2 - t1 + 1;
+	int ncols, nf = t2 - t0 + 1;
 	int ft1 = gretl_matrix_get_int(var->F);
 
 	ncols = (opt & OPT_S)? var->neqns: 2 * var->neqns;
@@ -586,9 +583,9 @@ gretl_VAR_get_forecast_matrix (GRETL_VAR *var, int t1, int t2, int pre_obs,
 
     if (var->F == NULL) {
 	if (var->ecm) {
-	    gretl_VECM_add_forecast(var, t1, t2, pre_obs, Z, pdinfo, opt);
+	    gretl_VECM_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
 	} else {
-	    gretl_VAR_add_forecast(var, t1, t2, pre_obs, Z, pdinfo, opt);
+	    gretl_VAR_add_forecast(var, t0, t1, t2, Z, pdinfo, opt);
 	}
     }
 
