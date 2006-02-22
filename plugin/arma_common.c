@@ -25,6 +25,7 @@ struct arma_info {
     int pd;       /* periodicity of data */
     int T;        /* full length of data series */
     double *dy;   /* differenced dependent variable */
+    double dybar; /* mean of differenced dep var */
 };
 
 #define arma_has_const(a)      ((a)->flags & ARMA_IFC)
@@ -60,6 +61,7 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
     ainfo->T = pdinfo->n;
 
     ainfo->dy = NULL;
+    ainfo->dybar = 0.0;
 }
 
 static int arma_list_y_position (struct arma_info *ainfo)
@@ -117,7 +119,7 @@ static void arma_R2_and_F (MODEL *pmod, const double *y)
 
 #define INT_DEBUG 1
 
-static int arima_integrate (double *dx, const double *dxreal, double x0,
+static int arima_integrate (double *dx, const double *xp,
 			    int t1, int t2, int d, int D, int s)
 {
     double *x;
@@ -133,56 +135,52 @@ static int arima_integrate (double *dx, const double *dxreal, double x0,
 	return E_ALLOC;
     }
 
-    for (t=0; t<=t2; t++) {
-	x[t] = 0.0;
-    }    
-
+#if 1
     for (t=0; t<t1; t++) {
-	dx[t] = dxreal[t];
-    }
-
-    x[t1 - 1] = x0;
+	x[t] = xp[t];
+    }    
+#endif
 
     for (t=t1; t<=t2; t++) {
-	x[t] = x[t-1];
+	x[t] = dx[t];
 	if (d > 0) {
-	    x[t] += dx[t];
+	    x[t] += x[t-1];
 	} 
 	if (d > 1) {
-	    x[t] += dx[t];
-	    x[t] -= dx[t-1];
+	    x[t] += x[t-1];
+	    x[t] -= x[t-2];
 	}
 	if (D > 0) {
-	    x[t] += dx[t - s + 1];
+	    x[t] += x[t-s];
 	    if (d > 0) {
-		x[t] -= dx[t - s];
+		x[t] -= x[t-s-1];
 	    }
 	    if (d > 1) {
-		x[t] -= dx[t - s + 1];
-		x[t] += dx[t - 2*s + 1];
+		x[t] -= x[t-s-1];
+		x[t] += x[t-2*s];
 	    }	    
 	} 
 	if (D > 1) {
-	    x[t] += dx[t - s];
-	    x[t] -= dx[t - 2*s + 1];
+	    x[t] += x[t-s];
+	    x[t] -= x[t-2*s];
 	    if (d > 0) {
-		x[t] += dx[t - s + 1];
-		x[t] -= dx[t - s];
-		x[t] += dx[t - 2*s];
+		x[t] += x[t-s];
+		x[t] -= x[t-s-1];
+		x[t] += x[t-2*s-1];
 	    }
 	    if (d > 1) {
-		x[t] -= 2 * dx[t - s];
-		x[t] += 2 * dx[t - (s+1)];
-		x[t] += dx[t - 2*s];
-		x[t] -= dx[t - (2*s+1)];
+		x[t] -= 2 * x[t-s-1];
+		x[t] += 2 * x[t-s-2];
+		x[t] += x[t-2*s-1];
+		x[t] -= x[t-2*s-2];
 	    }
 	}
     }
 
 #if INT_DEBUG
     for (t=0; t<=t2; t++) {
-	fprintf(stderr, "%2d: %12.5g %12.5g %12.5g\n",
-		t, dx[t], x[t], dxreal[t]);
+	fprintf(stderr, "%2d: %12.5g %12.5g\n",
+		t, dx[t], x[t]);
     }
 #endif
 
@@ -253,32 +251,19 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 	}
 	if (!na(y[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
+#if 1
+	    if (arma_is_arima(ainfo)) {
+		pmod->yhat[t] += ainfo->dybar;
+	    }
+#endif
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    mean_error += pmod->uhat[t];
 	}
     }
 
     if (arma_is_arima(ainfo)) {
-	int maxlag = ainfo->d + ainfo->D * ainfo->pd;
-	int t1 = pmod->t1;
-	int t1d = 0;
-
-	for (t=0; t<t1; t++) {
-	    if (na(ainfo->dy[t])) {
-		t1d++;
-	    } else {
-		break;
-	    }
-	}
-#if INT_DEBUG
-	fprintf(stderr, "pmod->t1=%d, t1d=%d, maxlag=%d\n", 
-		pmod->t1, t1d, maxlag);
-#endif
-	if (t1d + maxlag > t1) {
-	    t1  = t1d + maxlag;
-	}
-	arima_integrate(pmod->yhat, ainfo->dy, Z[ainfo->yno][t1 - 1], 
-			t1, pmod->t2, ainfo->d, ainfo->D, ainfo->pd);
+	arima_integrate(pmod->yhat, Z[ainfo->yno], pmod->t1, pmod->t2, 
+			ainfo->d, ainfo->D, ainfo->pd);
     }
 
     mean_error /= pmod->nobs;
@@ -700,10 +685,11 @@ static int arma_check_list (int *list, gretlopt opt,
     return err;
 }
 
-static double *
-arima_difference (const double *x, struct arma_info *ainfo)
+static int
+arima_difference (const double *y, struct arma_info *ainfo)
 {
-    double *dx;
+    double *dy;
+    double mdy = 0.0;
     int s = ainfo->pd;
     int t, t1 = 0;
 
@@ -712,13 +698,13 @@ arima_difference (const double *x, struct arma_info *ainfo)
 	    ainfo->d, ainfo->D);
 #endif
 
-    dx = malloc(ainfo->T * sizeof *dx);
-    if (dx == NULL) {
-	return NULL;
+    dy = malloc(ainfo->T * sizeof *dy);
+    if (dy == NULL) {
+	return E_ALLOC;
     }
 
     for (t=0; t<ainfo->T; t++) {
-	if (na(x[t])) {
+	if (na(y[t])) {
 	    t1++;
 	} else {
 	    break;
@@ -728,45 +714,58 @@ arima_difference (const double *x, struct arma_info *ainfo)
     t1 += ainfo->d + ainfo->D * s;
 
     for (t=0; t<t1; t++) {
-	dx[t] = NADBL;
+	dy[t] = NADBL;
     }
 
     for (t=t1; t<ainfo->T; t++) {
-	dx[t] = x[t];
+	dy[t] = y[t];
 	if (ainfo->d > 0) {
-	    dx[t] -= x[t-1];
+	    dy[t] -= y[t-1];
 	} 
 	if (ainfo->d > 1) {
-	    dx[t] -= x[t-1];
-	    dx[t] += x[t-2];
+	    dy[t] -= y[t-1];
+	    dy[t] += y[t-2];
 	}
 	if (ainfo->D > 0) {
-	    dx[t] -= x[t - s];
+	    dy[t] -= y[t-s];
 	    if (ainfo->d > 0) {
-		dx[t] += x[t - (s+1)];
+		dy[t] += y[t-s-1];
 	    }
 	    if (ainfo->d > 1) {
-		dx[t] += x[t - (s+1)];
-		dx[t] -= x[t - 2*s];
+		dy[t] += y[t-s-1];
+		dy[t] -= y[t-2*s];
 	    }	    
 	} 
 	if (ainfo->D > 1) {
-	    dx[t] -= x[t - s];
-	    dx[t] += x[t - 2*s];
+	    dy[t] -= y[t-s];
+	    dy[t] += y[t-2*s];
 	    if (ainfo->d > 0) {
-		dx[t] -= x[t - s];
-		dx[t] += x[t - (s+1)];
-		dx[t] -= x[t - (2*s+1)];
+		dy[t] -= y[t-s];
+		dy[t] += y[t-s-1];
+		dy[t] -= y[t-2*s-1];
 	    }
 	    if (ainfo->d > 1) {
-		dx[t] += 2 * x[t - (s+1)];
-		dx[t] -= 2 * x[t - (s+2)];
-		dx[t] -= x[t - (2*s+1)];
-		dx[t] += x[t - (2*s+2)];
+		dy[t] += 2 * y[t-s-1];
+		dy[t] -= 2 * y[t-s-2];
+		dy[t] -= y[t-2*s-1];
+		dy[t] += y[t-2*s-2];
 	    }
 	}
+	mdy += dy[t];
     }
 
-    return dx;
+    mdy /= (ainfo->T - t1);
+
+#if 0
+    fprintf(stderr, "mean of ainfo->dy = %g\n", mdy);
+    for (t=t1; t<ainfo->T; t++) {
+	dy[t] -= mdy;
+    }
+#endif
+
+    ainfo->dy = dy;
+    ainfo->dybar = mdy;
+
+    return 0;
 }
 

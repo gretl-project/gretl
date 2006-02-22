@@ -985,10 +985,9 @@ arma_variance_machine (const double *phi, int p,
     return *ss_psi;
 }
 
-static int arima_integrate (double *dx, const double *dxreal, double x0,
+static int arima_integrate (double *dx, const double *xprior,
 			    int t1, int t2, int d, int D, int s)
 {
-    double *savex = NULL;
     double *x = NULL;
     int t;
 
@@ -1001,60 +1000,49 @@ static int arima_integrate (double *dx, const double *dxreal, double x0,
     if (x == NULL) {
 	return E_ALLOC;
     }
-    
-    if (dxreal != NULL) {
-	savex = malloc(t1 * sizeof *x);
-	if (savex == NULL) {
-	    free(x);
-	    return E_ALLOC;
-	}
-    }
 
-    for (t=0; t<=t2; t++) {
-	x[t] = 0.0;
-    }    
-
-    if (dxreal != NULL) {
+    if (xprior != NULL) {
 	for (t=0; t<t1; t++) {
-	    savex[t] = dx[t];
-	    dx[t] = dxreal[t];
+	    x[t] = xprior[t];
 	}
-    }
-
-    x[t1 - 1] = x0;
+    } else {
+	for (t=0; t<t1; t++) {
+	    x[t] = 0.0;
+	}
+    }	
 
     for (t=t1; t<=t2; t++) {
-	x[t] = x[t-1];
+	x[t] = dx[t];
 	if (d > 0) {
-	    x[t] += dx[t];
+	    x[t] += x[t-1];
 	} 
 	if (d > 1) {
-	    x[t] += dx[t];
-	    x[t] -= dx[t-1];
+	    x[t] += x[t-1];
+	    x[t] -= x[t-2];
 	}
 	if (D > 0) {
-	    x[t] += dx[t - s + 1];
+	    x[t] += x[t - s];
 	    if (d > 0) {
-		x[t] -= dx[t - s];
+		x[t] -= x[t - (s+1)];
 	    }
 	    if (d > 1) {
-		x[t] -= dx[t - s + 1];
-		x[t] += dx[t - 2*s + 1];
+		x[t] -= x[t - (s+1)];
+		x[t] += x[t - 2*s];
 	    }	    
 	} 
 	if (D > 1) {
-	    x[t] += dx[t - s];
-	    x[t] -= dx[t - 2*s + 1];
+	    x[t] += x[t - s];
+	    x[t] -= x[t - 2*s];
 	    if (d > 0) {
-		x[t] += dx[t - s + 1];
-		x[t] -= dx[t - s];
-		x[t] += dx[t - 2*s];
+		x[t] += x[t - s];
+		x[t] -= x[t - (s+1)];
+		x[t] += x[t - (2*s+1)];
 	    }
 	    if (d > 1) {
-		x[t] -= 2 * dx[t - s];
-		x[t] += 2 * dx[t - (s+1)];
-		x[t] += dx[t - 2*s];
-		x[t] -= dx[t - (2*s+1)];
+		x[t] -= 2 * x[t - (s+1)];
+		x[t] += 2 * x[t - (s+2)];
+		x[t] += x[t - (2*s+1)];
+		x[t] -= x[t - (2*s+2)];
 	    }
 	}
     }
@@ -1067,16 +1055,11 @@ static int arima_integrate (double *dx, const double *dxreal, double x0,
 #endif
 
     /* transcribe integrated result back into "dx" */
-    for (t=0; t<=t2; t++) {
-	if (savex != NULL && t < t1) {
-	    dx[t] = savex[t];
-	} else {
-	    dx[t] = x[t];
-	}
+    for (t=t1; t<=t2; t++) {
+	dx[t] = x[t];
     }
 
     free(x);
-    free(savex);
 
     return 0;
 }
@@ -1092,15 +1075,14 @@ maybe_arima_integrate (Forecast *fc, int t1, MODEL *pmod,
     if (d > 0 || D > 0) {
 	int s = gretl_model_get_int(pmod, "arma_pd");
 	int yno = gretl_model_get_depvar(pmod);
-	double *dy = gretl_model_get_data(pmod, "arima_dy");
 
 	/* FIXME fc->offset */
 
-	err = arima_integrate(fc->yhat, dy, Z[yno][t1-1], t1, fc->t2, 
+	err = arima_integrate(fc->yhat, Z[yno], t1, fc->t2, 
 			      d, D, s);
 	if (!err && fc->sderr != NULL && 0) {
 	    /* not ready */
-	    err = arima_integrate(fc->sderr, NULL, 0, t1, fc->t2, 
+	    err = arima_integrate(fc->sderr, NULL, t1, fc->t2, 
 				  d, D, s);
 	}
     }
