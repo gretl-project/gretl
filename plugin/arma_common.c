@@ -119,10 +119,10 @@ static void arma_R2_and_F (MODEL *pmod, const double *y)
 
 #define INT_DEBUG 1
 
-static int arima_integrate (double *dx, const double *xprior,
+static int arima_integrate (double *dx, const double *x,
 			    int t1, int t2, int d, int D, int s)
 {
-    double *x;
+    double *ix;
     int t;
 
 #if INT_DEBUG
@@ -130,57 +130,55 @@ static int arima_integrate (double *dx, const double *xprior,
 	    t1, t2, d, D, s);
 #endif
 
-    x = malloc((t2 + 1) * sizeof *x);
-    if (x == NULL) {
+    ix = malloc((t2 + 1) * sizeof *ix);
+    if (ix == NULL) {
 	return E_ALLOC;
     }
 
-    /* prior to estimation period for model: fill in
-       actual data values */
     for (t=0; t<t1; t++) {
-	x[t] = xprior[t];
-    }    
+	ix[t] = 0.0;
+    }
 
     for (t=t1; t<=t2; t++) {
-	x[t] = dx[t];
+	ix[t] = dx[t];
 	if (d > 0) {
-	    x[t] += x[t-1];
+	    ix[t] += x[t-1];
 	} 
 	if (d > 1) {
-	    x[t] += x[t-1];
-	    x[t] -= x[t-2];
+	    ix[t] += x[t-1];
+	    ix[t] -= x[t-2];
 	}
 	if (D > 0) {
-	    x[t] += x[t-s];
+	    ix[t] += x[t-s];
 	    if (d > 0) {
-		x[t] -= x[t-s-1];
+		ix[t] -= x[t-s-1];
 	    }
 	    if (d > 1) {
-		x[t] -= x[t-s-1];
-		x[t] += x[t-2*s];
+		ix[t] -= x[t-s-1];
+		ix[t] += x[t-2*s];
 	    }	    
 	} 
 	if (D > 1) {
-	    x[t] += x[t-s];
-	    x[t] -= x[t-2*s];
+	    ix[t] += x[t-s];
+	    ix[t] -= x[t-2*s];
 	    if (d > 0) {
-		x[t] += x[t-s];
-		x[t] -= x[t-s-1];
-		x[t] += x[t-2*s-1];
+		ix[t] += x[t-s];
+		ix[t] -= x[t-s-1];
+		ix[t] += x[t-2*s-1];
 	    }
 	    if (d > 1) {
-		x[t] -= 2 * x[t-s-1];
-		x[t] += 2 * x[t-s-2];
-		x[t] += x[t-2*s-1];
-		x[t] -= x[t-2*s-2];
+		ix[t] -= 2 * x[t-s-1];
+		ix[t] += 2 * x[t-s-2];
+		ix[t] += x[t-2*s-1];
+		ix[t] -= x[t-2*s-2];
 	    }
 	}
     }
 
 #if INT_DEBUG
     for (t=0; t<=t2; t++) {
-	fprintf(stderr, "%2d: %12.5g %12.5g\n",
-		t, dx[t], x[t]);
+	fprintf(stderr, "%2d: %12.5g %12.5g %12.5g\n",
+		t, x[t], dx[t], ix[t]);
     }
 #endif
 
@@ -189,11 +187,11 @@ static int arima_integrate (double *dx, const double *xprior,
 	if (t < t1) {
 	    dx[t] = NADBL;
 	} else {
-	    dx[t] = x[t];
+	    dx[t] = ix[t];
 	}
     }
 
-    free(x);
+    free(ix);
 
     return 0;
 }
