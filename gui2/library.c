@@ -1281,6 +1281,9 @@ void do_forecast (gpointer data, guint u, GtkWidget *w)
     forecast_options_for_model(pmod, (const double **) Z, datainfo, &dyn_ok, 
 			       &add_obs_ok, &dt2, &st2);
 
+    fprintf(stderr, "forecast_options_for_model: got dyn_ok=%d, dt2=%d, st2=%d\n",
+	    dyn_ok, dt2, st2);
+
     if (dyn_ok) {
 	t2 = dt2;
     } else {

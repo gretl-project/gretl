@@ -117,11 +117,10 @@ static void arma_R2_and_F (MODEL *pmod, const double *y)
 
 #define INT_DEBUG 1
 
-static int arima_integrate (double *x, const double *x0,
+static int arima_integrate (double *dx, const double *dxreal, double x0,
 			    int t1, int t2, int d, int D, int s)
 {
-    double *ix;
-    int tstart = t1 + d + D * s;
+    double *x;
     int t;
 
 #if INT_DEBUG
@@ -129,72 +128,74 @@ static int arima_integrate (double *x, const double *x0,
 	    t1, t2, d, D, s);
 #endif
 
-    ix = malloc((t2 + 1) * sizeof *ix);
-    if (ix == NULL) {
+    x = malloc((t2 + 1) * sizeof *x);
+    if (x == NULL) {
 	return E_ALLOC;
     }
 
-    ix[tstart - 1] = x0[tstart - 1];
+    for (t=0; t<=t2; t++) {
+	x[t] = 0.0;
+    }    
 
-#if INT_DEBUG
-    fprintf(stderr, "arima_integrate: tstart=%d\n", tstart);
-#endif
+    for (t=0; t<t1; t++) {
+	dx[t] = dxreal[t];
+    }
 
-    for (t=tstart; t<=t2; t++) {
-	ix[t] = ix[t-1];
+    x[t1 - 1] = x0;
+
+    for (t=t1; t<=t2; t++) {
+	x[t] = x[t-1];
 	if (d > 0) {
-	    ix[t] += x[t-1];
+	    x[t] += dx[t];
 	} 
 	if (d > 1) {
-	    ix[t] += x[t-1];
-	    ix[t] -= x[t-2];
+	    x[t] += dx[t];
+	    x[t] -= dx[t-1];
 	}
 	if (D > 0) {
-	    ix[t] += x[t - s];
+	    x[t] += dx[t - s + 1];
 	    if (d > 0) {
-		ix[t] -= x[t - (s+1)];
+		x[t] -= dx[t - s];
 	    }
 	    if (d > 1) {
-		ix[t] -= x[t - (s+1)];
-		ix[t] += x[t - 2*s];
+		x[t] -= dx[t - s + 1];
+		x[t] += dx[t - 2*s + 1];
 	    }	    
 	} 
 	if (D > 1) {
-	    ix[t] += x[t - s];
-	    ix[t] -= x[t - 2*s];
+	    x[t] += dx[t - s];
+	    x[t] -= dx[t - 2*s + 1];
 	    if (d > 0) {
-		ix[t] += x[t - s];
-		ix[t] -= x[t - (s+1)];
-		ix[t] += x[t - (2*s+1)];
+		x[t] += dx[t - s + 1];
+		x[t] -= dx[t - s];
+		x[t] += dx[t - 2*s];
 	    }
 	    if (d > 1) {
-		ix[t] -= 2 * x[t - (s+1)];
-		ix[t] += 2 * x[t - (s+2)];
-		ix[t] += x[t - (2*s+1)];
-		ix[t] -= x[t - (2*s+2)];
+		x[t] -= 2 * dx[t - s];
+		x[t] += 2 * dx[t - (s+1)];
+		x[t] += dx[t - 2*s];
+		x[t] -= dx[t - (2*s+1)];
 	    }
 	}
     }
 
 #if INT_DEBUG
     for (t=0; t<=t2; t++) {
-	fprintf(stderr, "%2d: %8g %8g %8g\n",
-		t, x[t], ix[t], x0[t]);
+	fprintf(stderr, "%2d: %12.5g %12.5g %12.5g\n",
+		t, dx[t], x[t], dxreal[t]);
     }
 #endif
 
-    /* transcribe results back into x */
+    /* transcribe integrated result back into "dx" */
     for (t=0; t<=t2; t++) {
 	if (t < t1) {
-	    x[t] = NADBL;
+	    dx[t] = NADBL;
 	} else {
-	    x[t] = ix[t];
+	    dx[t] = x[t];
 	}
     }
 
-    free(ix);
-
-    fprintf(stderr, "done arima_integrate\n");
+    free(x);
 
     return 0;
 }
@@ -235,7 +236,7 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     free(pmod->list);
     pmod->list = gretl_list_copy(list);
 
-    if (ainfo->dy != NULL) {
+    if (arma_is_arima(ainfo)) {
 	y = ainfo->dy;
     } else {
 	y = Z[ainfo->yno];
@@ -249,7 +250,6 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (e != NULL) {
 	    pmod->uhat[t] = e[t];
-	    fprintf(stderr, "pmod->uhat[%d] = e[%d] = %g\n", t, t, pmod->uhat[t]);
 	}
 	if (!na(y[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
@@ -259,9 +259,26 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     }
 
     if (arma_is_arima(ainfo)) {
-	arima_integrate(pmod->yhat, Z[ainfo->yno], 
-			pmod->t1, pmod->t2,
-			ainfo->d, ainfo->D, ainfo->pd);
+	int maxlag = ainfo->d + ainfo->D * ainfo->pd;
+	int t1 = pmod->t1;
+	int t1d = 0;
+
+	for (t=0; t<t1; t++) {
+	    if (na(ainfo->dy[t])) {
+		t1d++;
+	    } else {
+		break;
+	    }
+	}
+#if INT_DEBUG
+	fprintf(stderr, "pmod->t1=%d, t1d=%d, maxlag=%d\n", 
+		pmod->t1, t1d, maxlag);
+#endif
+	if (t1d + maxlag > t1) {
+	    t1  = t1d + maxlag;
+	}
+	arima_integrate(pmod->yhat, ainfo->dy, Z[ainfo->yno][t1 - 1], 
+			t1, pmod->t2, ainfo->d, ainfo->D, ainfo->pd);
     }
 
     mean_error /= pmod->nobs;

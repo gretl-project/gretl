@@ -21,6 +21,8 @@
 #include "forecast.h"
 #include "var.h"
 
+#define ARF_DEBUG 0
+
 #ifdef max
 # undef max
 #endif
@@ -368,11 +370,7 @@ has_real_exog_regressors (MODEL *pmod, const int *dvlags,
 		}
 	    }
 	}
-    } else {
-	/* should not happen */
-	fprintf(stderr, "xlist is NULL\n");
-	ret = 1;
-    }
+    } 
 
     return ret;
 }
@@ -594,8 +592,6 @@ static int nls_fcast (Forecast *fc, const MODEL *pmod,
 
     return err;
 }
-
-#define ARF_DEBUG 0
 
 #if ARF_DEBUG
 # include <stdarg.h>
@@ -989,102 +985,104 @@ arma_variance_machine (const double *phi, int p,
     return *ss_psi;
 }
 
-static int arima_integrate (double *x, const double *x0,
-			    int t1, int T, int d, int D, 
-			    int s)
+static int arima_integrate (double *dx, const double *dxreal, double x0,
+			    int t1, int t2, int d, int D, int s)
 {
-    double *ix;
-    int t, t0 = 0;
+    double *savex = NULL;
+    double *x = NULL;
+    int t;
 
 #if ARF_DEBUG
-    fprintf(stderr, "arima_integrate: t1=%d, T=%d, d=%d, D=%d, s=%d\n",
-	    t1, T, d, D, s);
+    fprintf(stderr, "arima_integrate: t1=%d, t2=%d, d=%d, D=%d, s=%d\n",
+	    t1, t2, d, D, s);
 #endif
 
-    ix = malloc(T * sizeof *ix);
-    if (ix == NULL) {
+    x = malloc((t2 + 1) * sizeof *x);
+    if (x == NULL) {
 	return E_ALLOC;
     }
-
-    for (t=0; t<T; t++) {
-	if (na(x[t])) {
-	    t0++;
-	} else {
-	    break;
+    
+    if (dxreal != NULL) {
+	savex = malloc(t1 * sizeof *x);
+	if (savex == NULL) {
+	    free(x);
+	    return E_ALLOC;
 	}
     }
 
-    t0 += d + D * s;
-    if (t0 > t1) {
-	t1 = t0;
-    }
+    for (t=0; t<=t2; t++) {
+	x[t] = 0.0;
+    }    
 
-    if (x0 != NULL) {
+    if (dxreal != NULL) {
 	for (t=0; t<t1; t++) {
-	    ix[t] = x0[t];
+	    savex[t] = dx[t];
+	    dx[t] = dxreal[t];
 	}
     }
 
-    for (t=t1; t<T; t++) {
-	ix[t] = (x0 == NULL)? 0.0 : x0[t]; /* ?? */
+    x[t1 - 1] = x0;
+
+    for (t=t1; t<=t2; t++) {
+	x[t] = x[t-1];
 	if (d > 0) {
-	    ix[t] += x[t-1];
+	    x[t] += dx[t];
 	} 
 	if (d > 1) {
-	    ix[t] += x[t-1];
-	    ix[t] -= x[t-2];
+	    x[t] += dx[t];
+	    x[t] -= dx[t-1];
 	}
 	if (D > 0) {
-	    ix[t] += x[t - s];
+	    x[t] += dx[t - s + 1];
 	    if (d > 0) {
-		ix[t] -= x[t - (s+1)];
+		x[t] -= dx[t - s];
 	    }
 	    if (d > 1) {
-		ix[t] -= x[t - (s+1)];
-		ix[t] += x[t - 2*s];
+		x[t] -= dx[t - s + 1];
+		x[t] += dx[t - 2*s + 1];
 	    }	    
 	} 
 	if (D > 1) {
-	    ix[t] += x[t - s];
-	    ix[t] -= x[t - 2*s];
+	    x[t] += dx[t - s];
+	    x[t] -= dx[t - 2*s + 1];
 	    if (d > 0) {
-		ix[t] += x[t - s];
-		ix[t] -= x[t - (s+1)];
-		ix[t] += x[t - (2*s+1)];
+		x[t] += dx[t - s + 1];
+		x[t] -= dx[t - s];
+		x[t] += dx[t - 2*s];
 	    }
 	    if (d > 1) {
-		ix[t] -= 2 * x[t - (s+1)];
-		ix[t] += 2 * x[t - (s+2)];
-		ix[t] += x[t - (2*s+1)];
-		ix[t] -= x[t - (2*s+2)];
+		x[t] -= 2 * dx[t - s];
+		x[t] += 2 * dx[t - (s+1)];
+		x[t] += dx[t - 2*s];
+		x[t] -= dx[t - (2*s+1)];
 	    }
 	}
     }
 
 #if ARF_DEBUG
-    for (t=0; t<T; t++) {
-	if (x0 != NULL) {
-	    fprintf(stderr, "%2d: %8g %8g %8g\n",
-		    t, x[t], ix[t], x0[t]);
-	} else {
-	    fprintf(stderr, "%2d: %8g %8g\n",
-		    t, x[t], ix[t]);
-	}
+    for (t=0; t<=t2; t++) {
+	fprintf(stderr, "%2d: %8g %8g\n",
+		t, dx[t], x[t]);
     }
 #endif
 
-    /* transcribe integrated results back into x */
-    for (t=t1; t<T; t++) {
-	x[t] = ix[t];
+    /* transcribe integrated result back into "dx" */
+    for (t=0; t<=t2; t++) {
+	if (savex != NULL && t < t1) {
+	    dx[t] = savex[t];
+	} else {
+	    dx[t] = x[t];
+	}
     }
 
-    free(ix);
+    free(x);
+    free(savex);
 
     return 0;
 }
 
 static int 
-maybe_arima_integrate (Forecast *fc, int tstart, MODEL *pmod, 
+maybe_arima_integrate (Forecast *fc, int t1, MODEL *pmod, 
 		       const double **Z, const DATAINFO *pdinfo)
 {
     int d = gretl_model_get_int(pmod, "arima_d");
@@ -1094,12 +1092,16 @@ maybe_arima_integrate (Forecast *fc, int tstart, MODEL *pmod,
     if (d > 0 || D > 0) {
 	int s = gretl_model_get_int(pmod, "arma_pd");
 	int yno = gretl_model_get_depvar(pmod);
+	double *dy = gretl_model_get_data(pmod, "arima_dy");
 
-	fprintf(stderr, "fc->offset = %d\n", fc->offset);
+	/* FIXME fc->offset */
 
-	err = arima_integrate(fc->yhat, Z[yno], tstart, fc->n, d, D, s);
-	if (!err && fc->sderr != NULL) {
-	    err = arima_integrate(fc->sderr, NULL, tstart, fc->n, d, D, s);
+	err = arima_integrate(fc->yhat, dy, Z[yno][t1-1], t1, fc->t2, 
+			      d, D, s);
+	if (!err && fc->sderr != NULL && 0) {
+	    /* not ready */
+	    err = arima_integrate(fc->sderr, NULL, 0, t1, fc->t2, 
+				  d, D, s);
 	}
     }
 
@@ -1149,8 +1151,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	tstart = pmod->t2 + 1;
     }
 
-    p = gretl_arma_model_get_max_AR_lag(pmod);
-    q = gretl_arma_model_get_max_MA_lag(pmod);
+    p = gretl_arma_model_max_AR_lag(pmod);
+    q = gretl_arma_model_max_MA_lag(pmod);
 
     xlist = model_xlist(pmod);
     yno = gretl_model_get_depvar(pmod);
@@ -1239,7 +1241,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", lag, s - fc->offset, yval));
 	    }
 	    if (na(yval)) {
-		DPRINTF(("  AR: lag %d, s =%d, missing value\n", lag, s));
+		DPRINTF(("  AR: lag %d, s=%d, missing value\n", lag, s));
 		miss = 1;
 	    } else {
 		DPRINTF(("  AR: lag %d, s=%d, using coeff %g\n", lag, s, phi[i]));
@@ -1253,14 +1255,16 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	for (i=0; i<q && !miss; i++) {
 	    lag = i + 1;
 	    s = t - lag;
-	    if (s >= pmod->t1 && s <= ma_smax) {
-		DPRINTF(("  MA: lag %d, e[%d] = %g, coeff %g\n", lag, s, 
-			 pmod->uhat[s], theta[i]));
-		yh += theta[i] * pmod->uhat[s];
-	    } else if (fc->eps != NULL) {
-		DPRINTF(("  MA: lag %d, ehat[%d] = %g, coeff %g\n", lag, s, 
-			 fc->eps[s - fc->offset], theta[i]));
-		yh += theta[i] * fc->eps[s - fc->offset];
+	    if (theta[i] != 0.0) {
+		if (s >= pmod->t1 && s <= ma_smax) {
+		    DPRINTF(("  MA: lag %d, e[%d] = %g, theta[%d] = %g\n", lag, s, 
+			     pmod->uhat[s], i, theta[i]));
+		    yh += theta[i] * pmod->uhat[s];
+		} else if (fc->eps != NULL) {
+		    DPRINTF(("  MA: lag %d, ehat[%d] = %g, theta[%d] = %g\n", lag, s, 
+			     fc->eps[s - fc->offset], i, theta[i]));
+		    yh += theta[i] * fc->eps[s - fc->offset];
+		}
 	    }
 	}
 
@@ -2122,7 +2126,9 @@ fcast_get_t2max (const int *list, const int *dvlags, const MODEL *pmod,
     int i, vi, t;
 
     if (pmod->ci == ARMA && ftype == FC_STATIC) {
-	ay = Z[gretl_model_get_depvar(pmod)];
+	int yno = gretl_model_get_depvar(pmod);
+
+	ay = Z[yno];
     }
 
     for (t=pmod->t2; t<pdinfo->n; t++) {

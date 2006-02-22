@@ -505,14 +505,14 @@ static int gretl_is_arima_model (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_get_nonseasonal_AR_order:
+ * gretl_arma_model_nonseasonal_AR_order:
  * @pmod: pointer to gretl model.
  *
  * Returns: the non-seasonal autoregressive order of @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_get_nonseasonal_AR_order (const MODEL *pmod)
+int gretl_arma_model_nonseasonal_AR_order (const MODEL *pmod)
 {
     int p = 0;
 
@@ -524,14 +524,14 @@ int gretl_arma_model_get_nonseasonal_AR_order (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_get_nonseasonal_MA_order:
+ * gretl_arma_model_nonseasonal_MA_order:
  * @pmod: pointer to gretl model.
  *
  * Returns: the non-seasonal moving-average order of @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_get_nonseasonal_MA_order (const MODEL *pmod)
+int gretl_arma_model_nonseasonal_MA_order (const MODEL *pmod)
 {
     int q = 0;
 
@@ -547,21 +547,21 @@ int gretl_arma_model_get_nonseasonal_MA_order (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_get_max_AR_lag:
+ * gretl_arma_model_max_AR_lag:
  * @pmod: pointer to gretl model.
  *
  * Returns: the maximum autoregressive lag in @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_get_max_AR_lag (const MODEL *pmod)
+int gretl_arma_model_max_AR_lag (const MODEL *pmod)
 {
     int pmax = 0;
 
     if (pmod->ci == ARMA) {
 	int p, P, pd;
 
-	p = pmod->list[1];
+	p = gretl_arma_model_nonseasonal_AR_order(pmod);
 	P = gretl_model_get_int(pmod, "arma_P");
 
 	if (P == 0) {
@@ -576,21 +576,21 @@ int gretl_arma_model_get_max_AR_lag (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_get_max_MA_lag:
+ * gretl_arma_model_max_MA_lag:
  * @pmod: pointer to gretl model.
  *
  * Returns: the maximum moving-average lag in @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_get_max_MA_lag (const MODEL *pmod)
+int gretl_arma_model_max_MA_lag (const MODEL *pmod)
 {
     int qmax = 0;
 
     if (pmod->ci == ARMA) {
 	int q, Q, pd;
 
-	q = pmod->list[2];
+	q = gretl_arma_model_nonseasonal_MA_order(pmod);
 	Q = gretl_model_get_int(pmod, "arma_Q");
 	
 	if (Q == 0) {
@@ -634,8 +634,8 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 	const double *phi = NULL, *Phi = NULL;
 	const double *theta = NULL, *Theta = NULL;
 
-	int p = gretl_arma_model_get_nonseasonal_AR_order(pmod);
-	int q = gretl_arma_model_get_nonseasonal_MA_order(pmod);
+	int p = gretl_arma_model_nonseasonal_AR_order(pmod);
+	int q = gretl_arma_model_nonseasonal_MA_order(pmod);
 	int P = gretl_model_get_int(pmod, "arma_P");
 	int Q = gretl_model_get_int(pmod, "arma_Q");
 	int pd = gretl_model_get_int(pmod, "arma_pd");
@@ -691,7 +691,7 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 		mc[i] = theta[i];
 	    }	    
 	    if (Q > 0) {
-		for (i=p; i<qmax; i++) {
+		for (i=q; i<qmax; i++) {
 		    mc[i] = 0.0;
 		}
 		for (i=0; i<Q; i++) {
@@ -729,8 +729,8 @@ const double *gretl_arma_model_get_x_coeffs (const MODEL *pmod)
     if (pmod->ci == ARMA && gretl_model_get_int(pmod, "armax")) {
 	xc = pmod->coeff;
 	xc += pmod->ifc;
-	xc += pmod->list[1];
-	xc += pmod->list[2];
+	xc += gretl_arma_model_nonseasonal_AR_order(pmod);
+	xc += gretl_arma_model_nonseasonal_MA_order(pmod);
 	xc += gretl_model_get_int(pmod, "arma_P");
 	xc += gretl_model_get_int(pmod, "arma_Q");
     }
