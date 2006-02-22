@@ -135,11 +135,11 @@ static int arima_integrate (double *dx, const double *xp,
 	return E_ALLOC;
     }
 
-#if 1
+    /* prior to estimation period for model: fill in
+       actual data values */
     for (t=0; t<t1; t++) {
 	x[t] = xp[t];
     }    
-#endif
 
     for (t=t1; t<=t2; t++) {
 	x[t] = dx[t];
@@ -251,7 +251,7 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 	}
 	if (!na(y[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
-#if 1
+#if 0
 	    if (arma_is_arima(ainfo)) {
 		pmod->yhat[t] += ainfo->dybar;
 	    }
