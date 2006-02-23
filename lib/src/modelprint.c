@@ -842,6 +842,18 @@ static void print_arma_depvar (const MODEL *pmod,
 	    vname);
 }
 
+static void arma_x12a_info (const MODEL *pmod, PRN *prn)
+{
+    int xcode = gretl_model_get_int(pmod, "arma_by_x12a");
+
+    if (xcode > 0) {
+	pputs(prn, _("Estimated using X-12-ARIMA"));
+	pputs(prn, " (");
+	pputs(prn, (xcode == 1)? _("exact ML") : _("conditional ML"));
+	pputs(prn, ")\n");
+    } 
+}
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 gretlopt opt, 
@@ -966,6 +978,10 @@ static void print_model_heading (const MODEL *pmod,
 
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
 	gretl_prn_newline(prn);
+    }
+
+    if (pmod->ci == ARMA && plain_format(prn)) {
+	arma_x12a_info(pmod, prn);
     }
 
     /* special formulations for dependent variable in various cases */

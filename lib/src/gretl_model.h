@@ -45,7 +45,8 @@ typedef enum {
     M_COEFF,      /* parameter estimates */
     M_SE,         /* parameter standard errors */
     M_VCV,        /* parameter covariance matrix */
-    M_RHO         /* autoregressive coefficients */
+    M_RHO,        /* autoregressive coefficients */
+    M_MAX         /* sentinel */
 } ModelDataIndex;
 
 #define model_data_is_scalar(i) (i > 0 && i < M_SCALAR_MAX)
@@ -280,12 +281,14 @@ const char *gretl_model_get_name (const MODEL *pmod);
 
 int gretl_model_data_index (const char *s);
 
-double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err);
+double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
+			       int *err);
 
 double *
 gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo, 
-			int idx, int *err);
+			ModelDataIndex idx, int *err);
 
-gretl_matrix *gretl_model_get_matrix (MODEL *pmod, int idx, int *err);
+gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx, 
+				      int *err);
 
 #endif /* GRETL_MODEL_H */

@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Ramu Ramanathan and Allin Cottrell
+ *  Copyright (c) by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -2422,19 +2422,12 @@ int mle_criteria (MODEL *pmod, int addk)
     return err;
 }
 
-/* As of 2005-02-19, not ready for this yet: need to adjust
-   the text in the model printout.
-*/
-
 double coeff_pval (const MODEL *pmod, double x, int df)
 {
-    if (pmod->ci == MLE) {
-	return normal_pvalue_2(x);
-    } else if (0 && ML_ESTIMATOR(pmod->ci)) {
-	/* not ready */
-	return normal_pvalue_2(x);
+    if (ASYMPTOTIC_MODEL(pmod->ci)) {
+        return normal_pvalue_2(x);
     } else {
-	return t_pvalue_2(x, df);
+        return t_pvalue_2(x, df);
     }
 }
 
@@ -2699,7 +2692,21 @@ int gretl_model_data_index (const char *s)
     return 0;
 }
 
-double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
+/**
+ * gretl_model_get_scalar:
+ * @pmod: pointer to target model.
+ * @idx: index for the scalar value that is wanted.
+ * @err: location to receive error code (required).
+ * 
+ * Retrieves a specified scalar statistic from @pmod:
+ * @idx must be less than %M_SCALAR_MAX.
+ * 
+ * Returns: the requested statistic, or #NADBL on failure,
+ * in which case @err will contain a non-zero error code.
+ */
+
+double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
+			       int *err)
 {
     double x = NADBL;
 
@@ -2756,9 +2763,23 @@ double gretl_model_get_scalar (const MODEL *pmod, int idx, int *err)
     return x;
 }
 
+/**
+ * gretl_model_get_series:
+ * @pmod: pointer to target model.
+ * @idx: index for the series that is wanted.
+ * @err: location to receive error code (required).
+ * 
+ * Retrieves from @pmod a copy of a specified series (for
+ * example, regression residuals); @idx must be greater than
+ * %M_ELEM_MAX and less than %M_SERIES_MAX.
+ * 
+ * Returns: the allocated series, or %NULL on failure,
+ * in which case @err will contain a non-zero error code.
+ */
+
 double *
 gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo, 
-			int idx, int *err)
+			ModelDataIndex idx, int *err)
 {
     double *x = NULL;
     double *garch_h = NULL;
@@ -2917,7 +2938,22 @@ static gretl_matrix *model_get_rhovec (const MODEL *pmod, int *err)
     return r;
 }
 
-gretl_matrix *gretl_model_get_matrix (MODEL *pmod, int idx, int *err)
+/**
+ * gretl_model_get_matrix:
+ * @pmod: pointer to target model.
+ * @idx: index for the matrix that is wanted.
+ * @err: location to receive error code (required).
+ * 
+ * Retrieves from @pmod a copy of a specified matrix (for
+ * example, regression residuals); @idx must be greater than
+ * %M_ELEM_MAX and less than %M_MAX.
+ * 
+ * Returns: the allocated matrix, or %NULL on failure,
+ * in which case @err will contain a non-zero error code.
+ */
+
+gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx, 
+				      int *err)
 {
     gretl_matrix *M = NULL;
 

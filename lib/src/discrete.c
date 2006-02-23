@@ -321,7 +321,7 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
  * errors and covariance matrix.
  *
  * Computes estimates of the discrete model specified by @list,
- * using an estimator determined by the value of @opt.  Uses the
+ * using an estimator determined by the value of @ci.  Uses the
  * BRMR auxiliary regression; see Davidson and MacKinnon.
  * 
  * Returns: a #MODEL struct, containing the estimates.

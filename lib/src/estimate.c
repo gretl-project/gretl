@@ -687,12 +687,12 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
  *   %OPT_C force use of Cholesky decomp;
  *   %OPT_A treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
- *   %OPT_P use Prais-Winsten for first obs.
+ *   %OPT_P use Prais-Winsten for first obs;
  *   %OPT_N don't use degrees of freedom correction for standard
- *      error of regression
- *   %OPT_M reject missing observations within sample range
+ *      error of regression;
+ *   %OPT_M reject missing observations within sample range;
  *   %OPT_Z (internal use) suppress the automatic elimination of 
- *      perfectly collinear variables
+ *      perfectly collinear variables.
  * @rho: coefficient for rho-differencing the data (0.0 for no
  * differencing)
  *
@@ -1493,10 +1493,10 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
  * makevcv:
  * @pmod: pointer to model.
  *
- * Inverts the Cholesky-decomposed X'X and computes the 
+ * Inverts the Cholesky-decomposed X'X matrix and computes the 
  * coefficient covariance matrix.
  * 
- * Returns: 0 on successful completion, error code on error.
+ * Returns: 0 on successful completion, non-zero code on error.
  */
 
 int makevcv (MODEL *pmod)
@@ -1580,9 +1580,16 @@ int makevcv (MODEL *pmod)
     return 0;
 }
 
-/*  dwstat: computes Durbin-Watson statistic
-    order is the order of autoregression, 0 for OLS.
-*/
+/**
+ * dwstat:
+ * @order: order of autoregression, 0 for OLS.
+ * @pmod: pointer to model.
+ * @Z: data array.
+ *
+ * Computes the Durbin-Watson statistic for @pmod.
+ * 
+ * Returns: the D-W value, or #NADBL on error.
+ */
 
 double dwstat (int order, MODEL *pmod, const double **Z)
 {
@@ -1650,9 +1657,18 @@ static double altrho (int order, int t1, int t2, const double *uhat)
     return rho;
 }
 
-/*  rhohat: computes first order serial correlation coefficient
-    order is the order of autoregression, 0 for OLS.
-*/
+/**
+ * rhohat:
+ * @order: order of autoregression, 0 for OLS residuals.
+ * @t1: start of sample range.
+ * @t2: end of sample range.
+ * @uhat: array of regression residuals.
+ *
+ * Computes the first order serial correlation coefficient
+ * for @uhat, over the range @t1 to @t2.
+ * 
+ * Returns: the \hat{rho} value, or #NADBL on error.
+ */
 
 double rhohat (int order, int t1, int t2, const double *uhat)
 {
@@ -1815,7 +1831,7 @@ static double autores (MODEL *pmod, const double **Z, int ci)
  * handling first-order serial correlation.  Print a trace of the
  * search for rho.
  * 
- * Returns: rho estimate on successful completion, %NADBL on error.
+ * Returns: rho estimate on successful completion, #NADBL on error.
  */
 
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
@@ -2022,11 +2038,22 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
     return rho;
 }
 
-/* Given an original regression list, augment it by adding the squares
-   (and cross-products, if wanted) or logs of the original independent
-   variables.  Generate these variables if need be.  Return the
-   augmented list, or NULL on failure.
-*/
+/**
+ * augment_regression_list:
+ * @orig: list giving original regression specification.
+ * @aux: either %AUX_SQ, %AUX_LOG or %AUX_WHITE.
+ * @pZ: pointer to data array.
+ * @pdinfo: information on the data set.
+ *
+ * Augment the regression list @orig with auxiliary terms.  If @aux 
+ * is %AUX_SQ add the squares of the original regressors; if @aux
+ * is %AUX_WHITE add squares and cross-products, or if @aux is
+ * %AUX_LOG add the natural logs of the original regressors.
+ * If theye are not already present, these variables are added
+ * to the data array.
+ * 
+ * Returns: the augmented list, or NULL on failure.
+ */
 
 int *augment_regression_list (const int *orig, int aux, 
 			      double ***pZ, DATAINFO *pdinfo)
@@ -2178,7 +2205,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 /**
  * hsk_func:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  *
  * Estimate the model given in @list using a correction for
@@ -2412,8 +2439,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
  * @opt: if flags include %OPT_S, save results to model.
  * @prn: gretl printing struct.
  *
- * Runs White's test for heteroskedasticity on the given model,
- * putting the results into @test.
+ * Runs White's test for heteroskedasticity on the given model.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
@@ -3132,7 +3158,7 @@ MODEL arch_model (const int *list, int order, double ***pZ, DATAINFO *pdinfo,
 /**
  * lad:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  *
  * Estimate the model given in @list using the method of Least
@@ -3180,7 +3206,8 @@ MODEL lad (const int *list, double ***pZ, DATAINFO *pdinfo)
  * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: options: may include %OPT_S to suppress intercept, %OPT_V
- * for verbose results, %OPT_X to use X-12-ARIMA.
+ * for verbose results, %OPT_X to use X-12-ARIMA, %OPT_C to put
+ * X-12-ARIMA into conditional maximum-likelihood mode.
  * @PRN: for printing details of iterations (or %NULL). 
  *
  * Calculate ARMA estimates, using either native gretl code or
@@ -3230,12 +3257,12 @@ MODEL arma (const int *list, const double **Z, const DATAINFO *pdinfo,
 /**
  * tobit_model:
  * @list: dependent variable plus list of regressors.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
- * @prn: printing struct for iteration info (or NULL is this is not
+ * @prn: printing struct for iteration info (or %NULL is this is not
  * wanted).
  *
- * Estimate the model given in @list using Tobit.
+ * Produce Tobit estimates of the model given in @list.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
@@ -3282,7 +3309,7 @@ static int get_offset_var (int *list)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @prn: printing struct for iteration info (or NULL is this is not
+ * @prn: printing struct for iteration info (or %NULL is this is not
  * wanted).
  *
  * Estimate the Poisson regression model given in @list using ML.
@@ -3341,7 +3368,7 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 /**
  * garch:
  * @list: dependent variable plus arch and garch orders.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  * @opt: can specify robust standard errors and VCV.
  * @prn: for printing details of iterations (or %NULL).
@@ -3434,7 +3461,7 @@ MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
 /**
  * groupwise_hetero_test:
  * @pmod: pooled OLS model to be tested.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: information on the (panel) data set.
  * @prn: for printing details of iterations (or %NULL).
  *

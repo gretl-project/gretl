@@ -1,6 +1,7 @@
 # Gretl: various sample scripts
-"arma.inp","ARMA modeling","artificial data"
-"armaloop.inp","ARMA using command loop","artifical data"
+"arma","ARMA modeling","artificial data"
+"armaloop","ARMA using command loop","artificial data"
+"bjg","Mixed ARIMA (Box and Jenkins)","airline passengers"
 "ects_nls","Nonlinear least squares (Davidson)","artificial data"
 "garch","GARCH (Bollerslev and Ghysels, 1996)","exchange rate"
 "jgm-1996","Unit root tests (MacKinnon, 1996)","interest & inflation"

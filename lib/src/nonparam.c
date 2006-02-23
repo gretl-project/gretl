@@ -221,7 +221,7 @@ static int spearman_rho (const double *x, const double *y, int n,
 /**
  * spearman:
  * @list: list of (two) variables to process.
- * @Z: data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @opt: if includes %OPT_V, print both the "raw" and the ranked data.
  * @prn: gretl printing struct.
@@ -367,14 +367,22 @@ static double *locke_shuffle (const double *x, int *n, int code)
 
 #define NREPEAT 100
 
-/* Charles Locke's nonparametric test for whether an empirical
-   distribution is gamma.  See C. Locke, "A Test for the Composite
-   Hypothesis that a Population has a Gamma Distribution,"
-   Commun. Statis.-Theor. Meth. A5(4), 351-364 (1976).
-
-   See also Shapiro and Chen, Journal of Quality Technology 33(1),
-   Jan 2001.
-*/
+/**
+ * lockes_test:
+ * @x: data series.
+ * @t1: start of sample range.
+ * @t2: end of sample range.
+ *
+ * Performs Charles Locke's nonparametric test for whether an
+ * empirical distribution (namely, that of @x over the range
+ * @t1 to @t2) is gamma.  See C. Locke, "A Test for the Composite
+ * Hypothesis that a Population has a Gamma Distribution,"
+ * Commun. Statis.-Theor. Meth. A5(4), 351-364 (1976).  Also
+ * see Shapiro and Chen, Journal of Quality Technology 33(1),
+ * Jan 2001.
+ * 
+ * Returns: the z value for test, or #NADBL on error.
+ */
 
 double lockes_test (const double *x, int t1, int t2)
 {

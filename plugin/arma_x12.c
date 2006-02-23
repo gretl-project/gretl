@@ -755,9 +755,13 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, aprn);
 	}
-	if (!armod.errcode && gretl_in_gui_mode()) {
-	    add_unique_output_file(&armod, path);
-	    gretl_model_set_int(&armod, "arma_by_x12a", 1);
+	if (!armod.errcode) {
+	    int xcode = (opt & OPT_C)? 2 : 1;
+
+	    if (gretl_in_gui_mode()) {
+		add_unique_output_file(&armod, path);
+	    }
+	    gretl_model_set_int(&armod, "arma_by_x12a", xcode);
 	}	
     } else {
 	armod.errcode = E_UNSPEC;
