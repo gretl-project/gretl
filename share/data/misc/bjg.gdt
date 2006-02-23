@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata name="bjg" frequency="12" startobs="49:01" endobs="60:12" type="time-series">
+<gretldata name="bjg" frequency="12" startobs="1949:01" endobs="1960:12" type="time-series">
 <description>Monthly data on international airline passengers.
 
 Used (in log form) by Box and Jenkins in their Time Series Analysis

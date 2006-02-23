@@ -39,6 +39,7 @@ enum {
 };
 
 #define N_EXTRA 6
+#define N_RADIOS 2
 
 struct _selector {
     GtkWidget *dlg;
@@ -52,6 +53,7 @@ struct _selector {
     GtkWidget *add_button;
     GtkWidget *lags_button;
     GtkWidget *extra[N_EXTRA];
+    GtkWidget *radios[N_RADIOS];
     int code;
     int active_var;
     int error;
@@ -103,7 +105,7 @@ struct _selector {
                          c == VLAGSEL || \
                          c == WLS)
 
-#define WANT_RADIOS(c) (c == COINT2 || c == VECM)
+#define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA)
 
 #define select_lags_upper(c) (c == VAR || c == VECM || c == VLAGSEL || c == TSLS)
 #define select_lags_lower(c) (MODEL_CODE(c)) 
@@ -124,6 +126,8 @@ static int arma_q = 1;
 static int arma_Q = 0;
 static int garch_p = 1;
 static int garch_q = 1;
+static int arma_const = 1;
+static int arma_x12 = 0;
 
 static int *xlist;
 static int *instlist;
@@ -215,6 +219,7 @@ void clear_selector (void)
     arma_P = 0;
     arima_D = 0;
     arma_Q = 0;
+    arma_const = 1;
 
     garch_p = 1;
     garch_q = 1;
@@ -1065,7 +1070,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	}
     }
 
-    if (MODEL_CODE(sr->code)) {
+    if (MODEL_CODE(sr->code) && sr->code != ARMA) {
 	/* insert default const in regressors box */
 	varlist_insert_const(sr->rlvars);
     }
@@ -1349,6 +1354,7 @@ static void get_rlvars_data (selector *sr, int rows, int context)
     GtkTreeIter iter;
     gint rvar, lag;
     gchar *rvstr;
+    int added = 0;
     int i, j = 1;
 	
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
@@ -1375,6 +1381,7 @@ static void get_rlvars_data (selector *sr, int rows, int context)
 	} else {
 	    add_to_cmdlist(sr, rvstr);
 	    g_free(rvstr);
+	    added++;
 	}
 
 	/* save for future reference */
@@ -1386,6 +1393,11 @@ static void get_rlvars_data (selector *sr, int rows, int context)
 
 	gtk_tree_model_iter_next(model, &iter);
     }
+
+    if (sr->code == ARMA && added && !(sr->opts & OPT_N)) {
+	/* add const explicitly */
+	add_to_cmdlist(sr, " 0");
+    }
 }
 
 #else
@@ -1394,6 +1406,7 @@ static void get_rlvars_data (selector *sr, int rows, int context)
 {
     gchar *rvstr, *lagstr;
     int lag;
+    int added = 0;
     int i, j = 1;
 
     for (i=0; i<rows; i++) {
@@ -1414,9 +1427,11 @@ static void get_rlvars_data (selector *sr, int rows, int context)
 	    lagstr = get_lagpref_string(atoi(rvstr), context);
 	    add_to_cmdlist(sr, lagstr);
 	    free(lagstr);
+	    added++;
 	} else {
 	    add_to_cmdlist(sr, " ");
 	    add_to_cmdlist(sr, rvstr);
+	    added++;
 	}
 
 	if (MODEL_CODE(sr->code) && xlist != NULL) { 
@@ -1424,6 +1439,11 @@ static void get_rlvars_data (selector *sr, int rows, int context)
 	} else if (VEC_CODE(sr->code) && veclist != NULL) {
 	    veclist[j++] = atoi(rvstr);
 	}
+    }
+
+    if (sr->code == ARMA && added && !(sr->opts & OPT_N)) {
+	/* add const explicitly */
+	add_to_cmdlist(sr, " 0");
     }
 }
 
@@ -1777,6 +1797,14 @@ static void construct_cmdlist (selector *sr)
 	}
 	if ((sr->code == VAR || sr->code == VLAGSEL) && (sr->opts & OPT_T)) {
 	    vartrend = 1;
+	}
+	if (sr->code == ARMA) {
+	    if (sr->opts & OPT_N) {
+		arma_const = 0;
+	    } 
+	    if (sr->opts & OPT_X) {
+		arma_x12 = 1;
+	    }
 	}
     }
 }
@@ -2334,6 +2362,10 @@ static void selector_init (selector *sr, guint code, const char *title,
 	sr->extra[i] = NULL;
     }
 
+    for (i=0; i<N_RADIOS; i++) {
+	sr->radios[i] = NULL;
+    }    
+
     sr->cmdlist = NULL;
     sr->data = p;
     sr->callback = callback;
@@ -2529,10 +2561,11 @@ static void hc_config (GtkWidget *w, gpointer p)
 }
 
 static void pack_switch (GtkWidget *b, selector *sr,
-			 gboolean dflt, gboolean reversed, 
-			 gretlopt opt)
+			 gboolean checked, gboolean reversed, 
+			 gretlopt opt, int child)
 {
     GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+    gint offset = (child)? 15 : 0;
     gint i = opt;
 
     g_object_set_data(G_OBJECT(b), "opt", GINT_TO_POINTER(i));
@@ -2540,19 +2573,42 @@ static void pack_switch (GtkWidget *b, selector *sr,
     if (reversed) {
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(reverse_option_callback), sr);
+	if (checked) {
+	    sr->opts &= ~opt;
+	} else {
+	    sr->opts |= opt;
+	}
     } else {
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(option_callback), sr);
+	if (checked) {
+	    sr->opts |= opt;
+	} else {
+	    sr->opts &= ~opt;
+	}
     }
 
-    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, offset);
     gtk_widget_show(b);
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);
 
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), dflt);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
+
+#ifdef HAVE_X12A
+static void enable_x12a_radios (GtkWidget *w, selector *sr)
+{
+    gboolean active = 
+	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+
+    if (sr->radios[0] != NULL && sr->radios[1] != NULL) {
+	gtk_widget_set_sensitive(sr->radios[0], active);
+	gtk_widget_set_sensitive(sr->radios[1], active);
+    }
+}
+#endif
 
 #define robust_conf(c) (c != LOGIT && c != PROBIT)
 
@@ -2602,40 +2658,45 @@ static void build_selector_switches (selector *sr)
     }
 
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
+	if (sr->code == ARMA) {
+	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
+	    pack_switch(tmp, sr, arma_const, TRUE, OPT_N, 0);
+	}
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
-	pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_V, 0);
     } else if (sr->code == COINT2 || sr->code == VECM || 
 	       sr->code == VAR || sr->code == VLAGSEL) {
 	if (sr->code == VAR || sr->code == VLAGSEL) {
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
-	    pack_switch(tmp, sr, TRUE, TRUE, OPT_N);
+	    pack_switch(tmp, sr, TRUE, TRUE, OPT_N, 0);
 	    tmp = gtk_check_button_new_with_label(_("Include a trend"));
-	    pack_switch(tmp, sr, vartrend, FALSE, OPT_T);
+	    pack_switch(tmp, sr, vartrend, FALSE, OPT_T, 0);
 	} else {
 	    tmp = gtk_check_button_new_with_label(_("Show details of regressions"));
-	    pack_switch(tmp, sr, FALSE, FALSE, OPT_V);
+	    pack_switch(tmp, sr, FALSE, FALSE, OPT_V, 0);
 	}
 	tmp = gtk_check_button_new_with_label(_("Include seasonal dummies"));
 	pack_switch(tmp, sr, 
 		    want_seasonals && (datainfo->pd == 4 || datainfo->pd == 12),
-		    FALSE,
-		    OPT_D);
+		    FALSE, OPT_D, 0);
 	if (datainfo->pd != 4 && datainfo->pd != 12) {
 	    gtk_widget_set_sensitive(tmp, FALSE);
 	}
     } else if (sr->code == HILU) {
 	tmp = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
-	pack_switch(tmp, sr, TRUE, TRUE, OPT_B);
+	pack_switch(tmp, sr, TRUE, TRUE, OPT_B, 0);
     } else if (sr->code == COINT) {
 	tmp = gtk_check_button_new_with_label
 	    (_("Cointegrating regression includes a constant"));
-	pack_switch(tmp, sr, TRUE, TRUE, OPT_N);
+	pack_switch(tmp, sr, TRUE, TRUE, OPT_N, 0);
     }
 
 #ifdef HAVE_X12A    
     if (sr->code == ARMA) {
 	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
-	pack_switch(tmp, sr, FALSE, FALSE, OPT_X);
+	pack_switch(tmp, sr, arma_x12, FALSE, OPT_X, 0);
+	g_signal_connect(G_OBJECT(tmp), "toggled", 
+			 G_CALLBACK(enable_x12a_radios), sr);
     }	
 #endif
 } 
@@ -2683,7 +2744,25 @@ static void unhide_lags_switch (selector *sr)
     gtk_widget_show_all(hbox);
 } 
 
-static void build_selector_radios (selector *sr)
+static void build_arma_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Exact Maximum Likelihood"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
+    gtk_widget_set_sensitive(b1, arma_x12);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Conditional Maximum Likelihood"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_C, 1);
+    gtk_widget_set_sensitive(b2, arma_x12);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
+static void build_vec_radios (selector *sr)
 {
     GtkWidget *tmp;
     GtkWidget *button = NULL;
@@ -2716,7 +2795,20 @@ static void build_selector_radios (selector *sr)
 	    group = NULL;
 	}
 	button = gtk_radio_button_new_with_label(group, _(opt_strs[i]));
-	pack_switch(button, sr, (opts[i] == deflt), FALSE, opts[i]);
+	pack_switch(button, sr, (opts[i] == deflt), FALSE, opts[i], 0);
+    }
+}
+
+static void build_selector_radios (selector *sr)
+{
+    if (sr->code == ARMA) {
+#ifdef HAVE_X12A
+	build_arma_radios(sr);
+#else
+	return;
+#endif
+    } else {
+	build_vec_radios(sr);
     }
 }
 
@@ -2796,7 +2888,7 @@ static int list_show_var (int v, int code, int show_lags)
 
     lags_hidden = 0;
 
-    if (v == 0 && !MODEL_CODE(code)) {
+    if (v == 0 && (!MODEL_CODE(code) || code == ARMA)) {
 	ret = 0;
     } else if (is_hidden_variable(v, datainfo)) {
 	ret = 0;
@@ -2968,8 +3060,10 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 #endif
 
 	if (MODEL_CODE(cmdcode)) {
-	    /* stick the constant in by default */
-	    list_append_var(store, &iter, 0, sr, SR_RLVARS);
+	    if (cmdcode != ARMA) {
+		/* stick the constant in by default */
+		list_append_var(store, &iter, 0, sr, SR_RLVARS);
+	    }
 	    if (xlist != NULL) {
 		int nx = 0;
 

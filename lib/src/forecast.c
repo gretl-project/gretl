@@ -1907,6 +1907,45 @@ FITRESID *get_forecast (MODEL *pmod, int t0, int t1, int t2,
     return fr;
 }
 
+static int organize_fcast_vars (const char *yhname, const char *sdname,
+				int *vi, int *vj, double ***pZ,
+				DATAINFO *pdinfo)
+{
+    int nadd = 0;
+    int err = 0;
+
+    *vi = *vj = 0;
+
+    if (check_varname(yhname)) {
+	return 1;
+    }
+
+    if (*sdname && check_varname(sdname)) {
+	return 1;
+    }
+
+    *vi = varindex(pdinfo, yhname);
+    if (*vi == pdinfo->v) {
+	nadd++;
+    }
+
+    if (*sdname) {
+	*vj = varindex(pdinfo, sdname);
+	if (*vj == pdinfo->v) {
+	    if (nadd > 0) {
+		*vj += 1;
+	    }
+	    nadd++;
+	}
+    }
+
+    if (nadd > 0) {
+	err = dataset_add_series(nadd, pZ, pdinfo);
+    }
+
+    return err;
+}
+
 /**
  * add_forecast:
  * @str: command string, giving a starting observation, ending
@@ -1935,10 +1974,11 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 		  DATAINFO *pdinfo, gretlopt opt)
 {
     int oldv = pdinfo->v;
-    int t, t1, t2, vi;
-    char t1str[OBSLEN], t2str[OBSLEN], varname[VNAMELEN];
-    int nf = 0;
-    int err = 0;
+    int t, t1, t2, vi, vj;
+    char t1str[OBSLEN], t2str[OBSLEN];
+    char yhname[VNAMELEN];
+    char sdname[VNAMELEN];
+    int nf, err = 0;
 
     *t1str = '\0'; *t2str = '\0';
 
@@ -1948,9 +1988,14 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	return E_DATA;
     }
 
-    /* the varname should either be in the 2nd or 4th position */
-    if (sscanf(str, "%*s %10s %10s %15s", t1str, t2str, varname) != 3) {
-	if (sscanf(str, "%*s" "%15s", varname) != 1) {
+    *yhname = *sdname = 0;
+
+    /* the name for forecast values should either be in the 2nd or 4th
+       position; it may be followed by a name for the standard errors
+    */
+    nf = sscanf(str, "%*s %10s %10s %15s %15s", t1str, t2str, yhname, sdname);
+    if (nf < 3) {
+	if (sscanf(str, "%*s" "%15s %15s", yhname, sdname) < 1) {
 	    return E_PARSE;
 	}
     }
@@ -1966,28 +2011,39 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	t2 = pdinfo->t2;
     }
 
-    if (check_varname(varname)) {
-	return 1;
+    err = organize_fcast_vars(yhname, sdname, &vi, &vj, pZ, pdinfo);
+    if (err) {
+	return err;
     }
 
-    vi = varindex(pdinfo, varname);
-    if (vi == pdinfo->v) {
-	err = dataset_add_series(1, pZ, pdinfo);
-    }
+    nf = 0;
 
     if (!err) {
 	const double **Z = (const double **) *pZ;
 	Forecast fc;
 
-	strcpy(pdinfo->varname[vi], varname);
+	strcpy(pdinfo->varname[vi], yhname);
 	strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
 
-	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[vi][t] = NADBL;
+	if (vj > 0) {
+	    strcpy(pdinfo->varname[vj], sdname);
+	    strcpy(VARLABEL(pdinfo, vj), _("forecast standard errors"));
 	}
 
 	fc.yhat = (*pZ)[vi];
-	fc.sderr = NULL;
+	if (vj > 0) {
+	    fc.sderr = (*pZ)[vj];
+	} else {
+	    fc.sderr = NULL;
+	}
+
+	for (t=0; t<pdinfo->n; t++) {
+	    fc.yhat[t] = NADBL;
+	    if (fc.sderr != NULL) {
+		fc.sderr[t] = NADBL;
+	    }	
+	}
+
 	fc.eps = NULL;
 	fc.t1 = t1;
 	fc.t2 = t2;
@@ -1999,10 +2055,7 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	    fc.eps = malloc(pdinfo->n * sizeof *fc.eps);
 	}
 
-	/* write forecast values into the newly added variable: note
-	   that in this case we're not interested in computing
-	   forecast standard errors
-	*/
+	/* write forecast values into the newly added variable(s) */
 	if (pmod->ci == NLS) {
 	    nls_fcast(&fc, pmod, pZ, pdinfo);
 	} else if (SIMPLE_AR_MODEL(pmod->ci)) {
@@ -2021,11 +2074,11 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	if (fc.eps != NULL) {
 	    free(fc.eps);
 	}
-    }
 
-    for (t=0; t<pdinfo->n; t++) {
-	if (!na((*pZ)[vi][t])) {
-	    nf++;
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!na(fc.yhat[t])) {
+		nf++;
+	    }
 	}
     }
 

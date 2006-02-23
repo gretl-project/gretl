@@ -245,7 +245,7 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 	if (e != NULL) {
 	    pmod->uhat[t] = e[t];
 	}
-	if (!na(y[t])) {
+	if (!na(y[t]) && !na(pmod->uhat[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 	    mean_error += pmod->uhat[t];

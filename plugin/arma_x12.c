@@ -575,6 +575,30 @@ arma_info_get_x_list (struct arma_info *ainfo, const int *alist)
     return xlist;
 }
 
+static void 
+make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
+{
+    double dx = date(t, pdinfo->pd, pdinfo->sd0);
+    int yr = (int) dx;
+    int subper = 0;
+    char *s;
+
+    sprintf(str, "%g", dx);
+    s = strchr(str, '.');
+
+    if (s != NULL) {
+	subper = atoi(s + 1);
+    } else if (pdinfo->pd > 1) {
+	subper = 1;
+    } 
+
+    if (subper > 0) {
+	sprintf(str, "%d.%d", yr, subper);
+    } else {
+	sprintf(str, "%d", yr);
+    }    
+}
+
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo,
 			   struct arma_info *ainfo, const int *alist,
@@ -582,10 +606,9 @@ static int write_spc_file (const char *fname,
 {
     int ylist[2];
     int *xlist = NULL;
-    double dx;
     FILE *fp;
-    int startyr, startper;
-    char *s, tmp[8];
+    char datestr[12];
+    int tmax;
     int i;
 
     if (ainfo->r > 0) {
@@ -603,29 +626,28 @@ static int write_spc_file (const char *fname,
 
     gretl_push_c_numeric_locale();
 
-    dx = date(ainfo->t1, pdinfo->pd, pdinfo->sd0);
-    startyr = (int) dx;
-    sprintf(tmp, "%g", dx);
-    s = strchr(tmp, '.');
-    if (s != NULL) {
-	startper = atoi(s + 1);
-    } else if (pdinfo->pd > 1) {
-	startper = 1;
-    } else {
-	startper = 0;
-    }
+    make_x12a_date_string(ainfo->t1, pdinfo, datestr);
 
     fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
 	    pdinfo->varname[ainfo->yno]);
-    if (startper > 0) {
-	fprintf(fp, " start = %d.%d\n", startyr, startper);
-    } else {
-	fprintf(fp, " start = %d\n", startyr);
-    }
+    fprintf(fp, " start = %s\n", datestr);
 
     ylist[0] = 1;
     ylist[1] = ainfo->yno;
-    output_series_to_spc(ylist, Z, ainfo->t1, ainfo->t2, fp);
+
+    if ((opt & OPT_F) && ainfo->t2 < pdinfo->n - 1) {
+	tmax = pdinfo->n - 1;
+    } else {
+	tmax = ainfo->t2;
+    }
+
+    output_series_to_spc(ylist, Z, ainfo->t1, tmax, fp);
+
+    if (tmax > ainfo->t2) {
+	make_x12a_date_string(ainfo->t2, pdinfo, datestr);
+	fprintf(fp, " span = ( , %s)\n", datestr);
+    }
+
     fputs("}\n", fp);
 
     /* regression specification */
@@ -639,7 +661,7 @@ static int write_spc_file (const char *fname,
 	    fprintf(fp, "%s ", pdinfo->varname[xlist[i]]);
 	}
 	fputs(")\n", fp);
-	output_series_to_spc(xlist, Z, ainfo->t1, ainfo->t2, fp);
+	output_series_to_spc(xlist, Z, ainfo->t1, tmax, fp);
 	free(xlist);
     }
     fputs("\n}\n", fp);
@@ -670,6 +692,11 @@ static int write_spc_file (const char *fname,
 
     fputs("}\n", fp);
 
+    if (opt & OPT_F) {
+	fputs("forecast {\n save = (ftr fct)\n", fp);
+	fprintf(fp, " maxlead = %d\n}\n", tmax - ainfo->t2);
+    }
+
     gretl_pop_c_numeric_locale();
 
     fclose(fp);
@@ -696,6 +723,11 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (verbose) {
 	aprn = prn;
     } 
+
+    if (pdinfo->t2 < pdinfo->n - 1) {
+	/* FIXME this is temporary */
+	opt |= OPT_F;
+    }
 
     arma_info_init(&ainfo, ARMA_X12A, pdinfo);
     gretl_model_init(&armod); 

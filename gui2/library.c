@@ -58,7 +58,7 @@
 #include "cmdstack.h"
 #include "filelists.h"
 
-#undef CMD_DEBUG
+#define CMD_DEBUG 0
 
 #ifdef HAVE_TRAMO
 extern char tramo[];
@@ -415,10 +415,11 @@ static int cmd_init (char *s)
        check_specific_command() has been called on the 
        command string */
 
-#ifdef CMD_DEBUG
+#if CMD_DEBUG
     fprintf(stderr, "cmd_init: got cmdstr: '%s'\n", s);
     fprintf(stderr, "cmd.word: '%s'\n", cmd.word);
     fprintf(stderr, "cmd.param: '%s'\n", cmd.param);
+    fprintf(stderr, "cmd.opt: %d\n", (int) cmd.opt);
 #endif
 
     if (cmd.ci == OPEN || cmd.ci == RUN) {
@@ -433,6 +434,9 @@ static int cmd_init (char *s)
 
 	echo_cmd(&cmd, datainfo, s, 0, echo);
 	buf = gretl_print_get_buffer(echo);
+#if CMD_DEBUG
+	fprintf(stderr, "from echo_cmd: buf='%s'\n", buf);
+#endif
 	err = add_command_to_stack(buf);
 	gretl_print_destroy(echo);
     }
@@ -451,6 +455,10 @@ static int lib_cmd_init (void)
 int check_specific_command (char *s)
 {
     int err;
+
+#if CMD_DEBUG
+    fprintf(stderr, "check_specific_command: s = '%s'\n", s);
+#endif
 
     /* "cmd" is global */
     err = parse_command_line(s, &cmd, &Z, datainfo); 
@@ -2627,28 +2635,6 @@ void do_mle_model (GtkWidget *widget, dialog_t *dlg)
     real_do_nonlinear_model(dlg, MLE);
 }
 
-static void arma_maybe_suppress_const (void)
-{
-    int i, got0 = 0, pos = 0;
-
-    for (i=2; i<cmd.list[0]; i++) {
-	if (cmd.list[i] == LISTSEP) {
-	    pos = i;
-	}
-    }
-
-    for (i=pos+1; i<=cmd.list[0]; i++) {
-	if (cmd.list[i] == 0) {
-	    got0 = 1;
-	    break;
-	}
-    }
-
-    if (!got0) {
-	cmd.opt |= OPT_N;
-    }
-}
-
 static int logistic_model_get_lmax (CMD *cmd)
 {
     double ymax, lmax;
@@ -2705,11 +2691,7 @@ int do_model (selector *sr)
     fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
 #endif
 
-    if (check_model_cmd()) {
-	return 1;
-    }
-
-    if (bufopen(&prn)) {
+    if (check_model_cmd() || bufopen(&prn)) {
 	return 1;
     }
 
@@ -2784,9 +2766,8 @@ int do_model (selector *sr)
 	break;
 
     case ARMA:
-	arma_maybe_suppress_const();
 	*pmod = arma(cmd.list, (const double **) Z, datainfo,
-		     cmd.opt | OPT_I, prn);
+		     cmd.opt, prn);
 	err = model_output(pmod, prn);
 	break;
 
@@ -2831,7 +2812,7 @@ int do_model (selector *sr)
 	return err;
     }
 
-    if (check_lib_command() || lib_cmd_init()) {
+    if (lib_cmd_init()) {
 	errbox(_("Error saving model information"));
 	return 0;
     }
@@ -2880,11 +2861,7 @@ int do_vector_model (selector *sr)
     fprintf(stderr, "do_vector_model: cmdline = '%s'\n", cmdline);
 #endif
 
-    if (check_model_cmd()) {
-	return 1;
-    }
-
-    if (bufopen(&prn)) {
+    if (check_model_cmd() || bufopen(&prn)) {
 	return 1;
     }
 
@@ -2966,7 +2943,7 @@ void do_graph_model (GPT_SPEC *spec)
 	return;
     }
 
-    if (check_lib_command() || lib_cmd_init()) {
+    if (lib_cmd_init()) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -6044,7 +6021,7 @@ int gui_exec_line (char *line,
     LOOPSET *loop = *plp;
     PRN *outprn = NULL;
 
-#ifdef CMD_DEBUG
+#if CMD_DEBUG
     fprintf(stderr, "gui_exec_line: exec_code = %d\n",
 	    exec_code);
 #endif
@@ -6079,7 +6056,7 @@ int gui_exec_line (char *line,
 	return 1;
     }
 
-#ifdef CMD_DEBUG
+#if CMD_DEBUG
     fprintf(stderr, "gui_exec_line: '%s'\n", line);
 #endif
 
@@ -6589,7 +6566,7 @@ int gui_exec_line (char *line,
 	    errbox(_("'open' command is malformed"));
 	    break;
 	}
-#ifdef CMD_DEBUG
+#if CMD_DEBUG
 	fprintf(stderr, "OPEN in gui_exec_line, datfile='%s'\n", datfile);
 #endif
 	chk = detect_filetype(datfile, &paths, prn);

@@ -394,30 +394,24 @@
 
   </command>
 
-  <command name="arma" section="Estimation" label="ARMA model">
+  <command name="arima" section="Estimation" label="ARMA/ARIMA model">
 
     <usage>
       <arguments>
 	<argblock>
 	  <argument>p</argument>
+	  <argument>d</argument>
 	  <argument>q</argument>
 	</argblock>
 	<argblock separated="true" optional="true">
 	  <argument>P</argument>
+	  <argument>D</argument>
 	  <argument>Q</argument>
 	</argblock>
 	<argument separated="true">depvar</argument>
 	<argument optional="true">indepvars</argument>
       </arguments>
       <options>
-        <option>
-	  <flag>--native</flag>
-	  <effect>Use native plugin (default)</effect>
-        </option>
-        <option>
-	  <flag>--x-12-arima</flag>
-	  <effect>use X-12-ARIMA for estimation</effect>
-        </option>
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
@@ -430,25 +424,42 @@
 	  <flag>--nc</flag>
 	  <effect>do not include a constant</effect>
         </option>
+        <option>
+	  <flag>--x-12-arima</flag>
+	  <effect>use X-12-ARIMA for estimation</effect>
+        </option>
+        <option>
+	  <flag>--conditional</flag>
+	  <effect>X-12-ARIMA: use conditional Maximum Likelihood</effect>
+        </option>
       </options>
       <examples>
-        <example>arma 1 2 ; y</example>
-	<example>arma 2 2 ; y 0 x1 x2 --verbose</example>
-	<example>arma 1 1 ; 1 0 ; y 0 x1 x2</example>
+        <example>arima 1 0 2 ; y</example>
+	<example>arima 2 0 2 ; y 0 x1 x2 --verbose</example>
+	<example>arima 0 1 1 ; 0 1 1 ; y --nc</example>
       </examples>
     </usage>
 
     <description>
       <para context="cli">
-	If no <repl>indepvars</repl> list is given, estimates a
-	univariate ARMA (Autoregressive, Moving Average) model.  The
-	integer values <repl>p</repl> and <repl>q</repl> represent the
-	AR and MA orders respectively.  The optional integer values
-	<repl>P</repl> and <repl>Q</repl> represent seasonal AR and MA
-	orders; these are relevant only if the data have a frequency
-	greater than 1 (for example, quarterly or monthly data).
-	The respective orders can be given in numerical form, or as
-	the names of pre-existing scalar variables.
+	If no <repl>indepvars</repl> list is given, estimates a univariate
+	ARIMA (Autoregressive, Intgrated, Moving Average) model.  The
+	integer values <repl>p</repl>, <repl>d</repl> and <repl>q</repl>
+	represent the autoregressive (AR) order, the differencing order,
+	and the moving average (MA) order respectively.  These values may be
+	given in numerical form, or as the names of pre-existing scalar
+	variables.  A <repl>d</repl> value of 1, for instance, means that
+	the first difference of the dependent variable should be taken before
+	estimating the ARMA parameters.
+      </para>
+
+      <para context="cli">
+	The optional integer values <repl>P</repl>, <repl>D</repl> and
+	<repl>Q</repl> represent the seasonal AR, order for seasonal
+	differencing and seasonal MA order respectively.  These are
+	applicable only if the data have a frequency greater than 1 (for
+	example, quarterly or monthly data).  Again these orders can be
+	given in numerical form or as variables.
       </para>
 
       <para context="cli">
@@ -459,25 +470,40 @@
 	in the second example above).
       </para>
 
+      <para context="cli">
+	Al alternative form of syntax is available for this command: if
+	you do not want to apply differencing (either seasonal or
+	non-seasonal), you may omit the <repl>d</repl> and <repl>D</repl>
+	fields altogether, rather than explicitly entering 0.  In
+	addition, <lit>arma</lit> is a synonym or alias for
+	<lit>arima</lit>.  Thus for example the following command is a
+	valid way to specify an ARMA(2, 1) model:
+      </para>
+      <code context="cli">
+	arma 2 1 ; y
+      </code>
+
       <para context="gui">
-	When chosen from the Variable menu, estimates a univariate
-	ARMA (Autoregressive, Moving Average) model.  When chosen from
-	the Model menu (<quote>ARMAX</quote>), estimates an ARMAX
-	model, with additional exogenous regressors.
+	Estimates an ARMA model, with or without exogenous regressors. If
+	the order of differencing is greater than zero the model becomes
+	ARIMA.  If the data have a frequency greater than 1 the option of
+	including a seasonal component is presented.
       </para>
 
-      <para>The default is to use the <quote>native</quote> gretl ARMA
-	function; in the case of a univariate ARMA model
-	<program>X-12-ARIMA</program> may be used instead (if the
-	<program>X-12-ARIMA</program> package for gretl is installed).
+      <para>
+	The default is to use the <quote>native</quote> gretl ARMA
+	function, but there is also the option of using
+	<program>X-12-ARIMA</program> (if the
+	<program>X-12-ARIMA</program> package for gretl is installed). In
+	the latter case there is the further option of using exact or
+	conditional maximum likelihood.  The default with
+	<program>X-12-ARIMA</program> is exact ML, but the conditional
+	variant will produce estimates more closely comparable with native
+	gretl ARMA.  The covariance matrix is not effective when
+	estimation is by <program>X-12-ARIMA</program>.
       </para>
 
-      <para context="cli">The options given above may be combined,
-	except that the covariance matrix is not available when
-	estimation is by <program>X-12-ARIMA</program>.</para>
-
-      <para>The native gretl ARMA algorithm is largely due to Riccardo
-	<quote>Jack</quote> Lucchetti.  It uses a conditional maximum
+      <para>The native gretl ARMA algorithm uses a conditional maximum
 	likelihood procedure, implemented via iterated least squares
 	estimation of the outer product of the gradient (OPG)
 	regression.  See <guideref targ="jack-arma"/> for the logic of
@@ -486,7 +512,7 @@
 	auto-regression, and the MA coefficients are initialized at
 	zero.</para>
 
-      <para>The AIC value given in connection with ARMA models is
+      <para>The AIC value given in connection with ARIMA models is
 	calculated according to the definition used in
 	<program>X-12-ARIMA</program>, namely
 	  <equation status="display" 
@@ -497,7 +523,13 @@
 	  tex="$\ell$" ascii="L"
 	  graphic="ell"/> is the
 	log-likelihood and <mathvar>k</mathvar> is the total number of
-	parameters estimated. The <quote>frequency</quote> figure
+	parameters estimated.  Note that <program>X-12-ARIMA</program>
+	does not produce information criteria such as AIC when estimation
+	is by conditional ML.
+      </para>
+
+      <para>
+	The <quote>frequency</quote> figure
 	printed in connection with AR and MA roots is the &lgr; value
 	that solves
 	  <equation status="display" 
@@ -509,7 +541,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/ARMA model, /Model/Time series/ARMAX</menu-path>
+      <menu-path>/Model/Time series/ARIMA</menu-path>
       <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
