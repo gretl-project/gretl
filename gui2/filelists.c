@@ -287,7 +287,7 @@ void read_file_lists (FILE *fp, char *prev)
 	if (fgets(line, sizeof line, fp) == NULL) {
 	    break;
 	}
-	if (strstr(line, file_sections[i+1])) {
+	if (i < 2 && strstr(line, file_sections[i+1])) {
 	    i++;
 	    j = 0;
 	}
