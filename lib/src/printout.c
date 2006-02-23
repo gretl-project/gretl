@@ -1836,7 +1836,7 @@ int text_print_forecast (const FITRESID *fr,
 	if (pv < 0) {
 	    err = 1;
 	} else {
-	    err = plot_fcast_errs(fr->t1, fr->t2, (*pZ)[pv], 
+	    err = plot_fcast_errs(fr->t0, fr->t2, (*pZ)[pv], 
 				  fr->actual, fr->fitted, maxerr, 
 				  fr->depvar, 
 				  (time_series)? pdinfo->pd : 0);

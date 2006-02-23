@@ -1090,7 +1090,7 @@ maybe_arima_integrate (Forecast *fc, int t1, MODEL *pmod,
 	err = arima_integrate(fc->yhat, Z[yno], 
 			      t1, fc->t2, d, D, s);
 	if (!err && fc->sderr != NULL) {
-	    /* not ready */
+	    /* not really ready, needs fixing */
 	    err = arima_integrate(fc->sderr, NULL, 
 				  t1, fc->t2, d, D, s);
 	}
@@ -1686,11 +1686,6 @@ static int get_forecast_method (Forecast *fc,
 	/* do dynamic f'cast out of sample */
 	fc->method = FC_AUTO;
     }
-
-#if 1
-    fprintf(stderr, "get_forecast_method: pmod->ci = %d, method = %d\n",
-	    pmod->ci, fc->method);
-#endif
 
     return err;
 }

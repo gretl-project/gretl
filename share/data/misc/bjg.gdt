@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
 <gretldata name="bjg" frequency="12" startobs="49:01" endobs="60:12" type="time-series">
@@ -13,156 +13,159 @@ See also:
 http://www.stanford.edu/~clint/bench/
 http://www.itl.nist.gov/div898/handbook/pmc/section4/pmc44a.htm
 </description>
-<variables count="1">
+<variables count="2">
 <variable name="g"
  label="international airline passengers"
  displayname="passengers"
 />
+<variable name="lg"
+ label="natural logarithm of g"
+/>
 </variables>
 <observations count="144" labels="false">
-<obs>112 </obs>
-<obs>118 </obs>
-<obs>132 </obs>
-<obs>129 </obs>
-<obs>121 </obs>
-<obs>135 </obs>
-<obs>148 </obs>
-<obs>148 </obs>
-<obs>136 </obs>
-<obs>119 </obs>
-<obs>104 </obs>
-<obs>118 </obs>
-<obs>115 </obs>
-<obs>126 </obs>
-<obs>141 </obs>
-<obs>135 </obs>
-<obs>125 </obs>
-<obs>149 </obs>
-<obs>170 </obs>
-<obs>170 </obs>
-<obs>158 </obs>
-<obs>133 </obs>
-<obs>114 </obs>
-<obs>140 </obs>
-<obs>145 </obs>
-<obs>150 </obs>
-<obs>178 </obs>
-<obs>163 </obs>
-<obs>172 </obs>
-<obs>178 </obs>
-<obs>199 </obs>
-<obs>199 </obs>
-<obs>184 </obs>
-<obs>162 </obs>
-<obs>146 </obs>
-<obs>166 </obs>
-<obs>171 </obs>
-<obs>180 </obs>
-<obs>193 </obs>
-<obs>181 </obs>
-<obs>183 </obs>
-<obs>218 </obs>
-<obs>230 </obs>
-<obs>242 </obs>
-<obs>209 </obs>
-<obs>191 </obs>
-<obs>172 </obs>
-<obs>194 </obs>
-<obs>196 </obs>
-<obs>196 </obs>
-<obs>236 </obs>
-<obs>235 </obs>
-<obs>229 </obs>
-<obs>243 </obs>
-<obs>264 </obs>
-<obs>272 </obs>
-<obs>237 </obs>
-<obs>211 </obs>
-<obs>180 </obs>
-<obs>201 </obs>
-<obs>204 </obs>
-<obs>188 </obs>
-<obs>235 </obs>
-<obs>227 </obs>
-<obs>234 </obs>
-<obs>264 </obs>
-<obs>302 </obs>
-<obs>293 </obs>
-<obs>259 </obs>
-<obs>229 </obs>
-<obs>203 </obs>
-<obs>229 </obs>
-<obs>242 </obs>
-<obs>233 </obs>
-<obs>267 </obs>
-<obs>269 </obs>
-<obs>270 </obs>
-<obs>315 </obs>
-<obs>364 </obs>
-<obs>347 </obs>
-<obs>312 </obs>
-<obs>274 </obs>
-<obs>237 </obs>
-<obs>278 </obs>
-<obs>284 </obs>
-<obs>277 </obs>
-<obs>317 </obs>
-<obs>313 </obs>
-<obs>318 </obs>
-<obs>374 </obs>
-<obs>413 </obs>
-<obs>405 </obs>
-<obs>355 </obs>
-<obs>306 </obs>
-<obs>271 </obs>
-<obs>306 </obs>
-<obs>315 </obs>
-<obs>301 </obs>
-<obs>356 </obs>
-<obs>348 </obs>
-<obs>355 </obs>
-<obs>422 </obs>
-<obs>465 </obs>
-<obs>467 </obs>
-<obs>404 </obs>
-<obs>347 </obs>
-<obs>305 </obs>
-<obs>336 </obs>
-<obs>340 </obs>
-<obs>318 </obs>
-<obs>362 </obs>
-<obs>348 </obs>
-<obs>363 </obs>
-<obs>435 </obs>
-<obs>491 </obs>
-<obs>505 </obs>
-<obs>404 </obs>
-<obs>359 </obs>
-<obs>310 </obs>
-<obs>337 </obs>
-<obs>360 </obs>
-<obs>342 </obs>
-<obs>406 </obs>
-<obs>396 </obs>
-<obs>420 </obs>
-<obs>472 </obs>
-<obs>548 </obs>
-<obs>559 </obs>
-<obs>463 </obs>
-<obs>407 </obs>
-<obs>362 </obs>
-<obs>405 </obs>
-<obs>417 </obs>
-<obs>391 </obs>
-<obs>419 </obs>
-<obs>461 </obs>
-<obs>472 </obs>
-<obs>535 </obs>
-<obs>622 </obs>
-<obs>606 </obs>
-<obs>508 </obs>
-<obs>461 </obs>
-<obs>390 </obs>
-<obs>432 </obs>
+<obs>112 4.7184988713 </obs>
+<obs>118 4.7706846245 </obs>
+<obs>132 4.8828019226 </obs>
+<obs>129 4.8598124044 </obs>
+<obs>121 4.7957905456 </obs>
+<obs>135 4.9052747784 </obs>
+<obs>148 4.9972122738 </obs>
+<obs>148 4.9972122738 </obs>
+<obs>136 4.9126548857 </obs>
+<obs>119 4.7791234931 </obs>
+<obs>104 4.6443908991 </obs>
+<obs>118 4.7706846245 </obs>
+<obs>115 4.7449321284 </obs>
+<obs>126 4.8362819070 </obs>
+<obs>141 4.9487598904 </obs>
+<obs>135 4.9052747784 </obs>
+<obs>125 4.8283137373 </obs>
+<obs>149 5.0039463059 </obs>
+<obs>170 5.1357984371 </obs>
+<obs>170 5.1357984371 </obs>
+<obs>158 5.0625950330 </obs>
+<obs>133 4.8903491282 </obs>
+<obs>114 4.7361984484 </obs>
+<obs>140 4.9416424226 </obs>
+<obs>145 4.9767337424 </obs>
+<obs>150 5.0106352941 </obs>
+<obs>178 5.1817835503 </obs>
+<obs>163 5.0937502008 </obs>
+<obs>172 5.1474944768 </obs>
+<obs>178 5.1817835503 </obs>
+<obs>199 5.2933048247 </obs>
+<obs>199 5.2933048247 </obs>
+<obs>184 5.2149357576 </obs>
+<obs>162 5.0875963352 </obs>
+<obs>146 4.9836066217 </obs>
+<obs>166 5.1119877884 </obs>
+<obs>171 5.1416635565 </obs>
+<obs>180 5.1929568509 </obs>
+<obs>193 5.2626901889 </obs>
+<obs>181 5.1984970313 </obs>
+<obs>183 5.2094861528 </obs>
+<obs>218 5.3844950628 </obs>
+<obs>230 5.4380793089 </obs>
+<obs>242 5.4889377262 </obs>
+<obs>209 5.3423342520 </obs>
+<obs>191 5.2522734280 </obs>
+<obs>172 5.1474944768 </obs>
+<obs>194 5.2678581591 </obs>
+<obs>196 5.2781146592 </obs>
+<obs>196 5.2781146592 </obs>
+<obs>236 5.4638318050 </obs>
+<obs>235 5.4595855141 </obs>
+<obs>229 5.4337220036 </obs>
+<obs>243 5.4930614433 </obs>
+<obs>264 5.5759491031 </obs>
+<obs>272 5.6058020663 </obs>
+<obs>237 5.4680601411 </obs>
+<obs>211 5.3518581335 </obs>
+<obs>180 5.1929568509 </obs>
+<obs>201 5.3033049081 </obs>
+<obs>204 5.3181199938 </obs>
+<obs>188 5.2364419628 </obs>
+<obs>235 5.4595855141 </obs>
+<obs>227 5.4249500175 </obs>
+<obs>234 5.4553211154 </obs>
+<obs>264 5.5759491031 </obs>
+<obs>302 5.7104270174 </obs>
+<obs>293 5.6801726090 </obs>
+<obs>259 5.5568280617 </obs>
+<obs>229 5.4337220036 </obs>
+<obs>203 5.3132059790 </obs>
+<obs>229 5.4337220036 </obs>
+<obs>242 5.4889377262 </obs>
+<obs>233 5.4510384536 </obs>
+<obs>267 5.5872486584 </obs>
+<obs>269 5.5947113796 </obs>
+<obs>270 5.5984219590 </obs>
+<obs>315 5.7525726388 </obs>
+<obs>364 5.8971538676 </obs>
+<obs>347 5.8493247799 </obs>
+<obs>312 5.7430031878 </obs>
+<obs>274 5.6131281064 </obs>
+<obs>237 5.4680601411 </obs>
+<obs>278 5.6276211137 </obs>
+<obs>284 5.6489742382 </obs>
+<obs>277 5.6240175062 </obs>
+<obs>317 5.7589017739 </obs>
+<obs>313 5.7462031905 </obs>
+<obs>318 5.7620513828 </obs>
+<obs>374 5.9242557974 </obs>
+<obs>413 6.0234475930 </obs>
+<obs>405 6.0038870671 </obs>
+<obs>355 5.8721177895 </obs>
+<obs>306 5.7235851020 </obs>
+<obs>271 5.6021188209 </obs>
+<obs>306 5.7235851020 </obs>
+<obs>315 5.7525726388 </obs>
+<obs>301 5.7071102647 </obs>
+<obs>356 5.8749307309 </obs>
+<obs>348 5.8522024798 </obs>
+<obs>355 5.8721177895 </obs>
+<obs>422 6.0450053140 </obs>
+<obs>465 6.1420374056 </obs>
+<obs>467 6.1463292577 </obs>
+<obs>404 6.0014148780 </obs>
+<obs>347 5.8493247799 </obs>
+<obs>305 5.7203117766 </obs>
+<obs>336 5.8171111600 </obs>
+<obs>340 5.8289456176 </obs>
+<obs>318 5.7620513828 </obs>
+<obs>362 5.8916442118 </obs>
+<obs>348 5.8522024798 </obs>
+<obs>363 5.8944028343 </obs>
+<obs>435 6.0753460311 </obs>
+<obs>491 6.1964441278 </obs>
+<obs>505 6.2245584293 </obs>
+<obs>404 6.0014148780 </obs>
+<obs>359 5.8833223885 </obs>
+<obs>310 5.7365722975 </obs>
+<obs>337 5.8200829304 </obs>
+<obs>360 5.8861040315 </obs>
+<obs>342 5.8348107371 </obs>
+<obs>406 6.0063531596 </obs>
+<obs>396 5.9814142113 </obs>
+<obs>420 6.0402547113 </obs>
+<obs>472 6.1569789856 </obs>
+<obs>548 6.3062752869 </obs>
+<obs>559 6.3261494732 </obs>
+<obs>463 6.1377270541 </obs>
+<obs>407 6.0088131854 </obs>
+<obs>362 5.8916442118 </obs>
+<obs>405 6.0038870671 </obs>
+<obs>417 6.0330862218 </obs>
+<obs>391 5.9687075600 </obs>
+<obs>419 6.0378709199 </obs>
+<obs>461 6.1333980430 </obs>
+<obs>472 6.1569789856 </obs>
+<obs>535 6.2822667469 </obs>
+<obs>622 6.4329400927 </obs>
+<obs>606 6.4068799861 </obs>
+<obs>508 6.2304814476 </obs>
+<obs>461 6.1333980430 </obs>
+<obs>390 5.9661467391 </obs>
+<obs>432 6.0684255882 </obs>
 </observations>
 </gretldata>
