@@ -74,6 +74,7 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_T, "ct" }, 
     { ADF,      OPT_V, "verbose" },
     { ADF,      OPT_Q, "quiet" },
+    { ARMA,     OPT_C, "conditional" },
     { ARMA,     OPT_N, "nc" },    
     { ARMA,     OPT_V, "verbose" },
     { ARMA,     OPT_X, "x-12-arima" },

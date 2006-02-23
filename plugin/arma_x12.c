@@ -578,7 +578,7 @@ arma_info_get_x_list (struct arma_info *ainfo, const int *alist)
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo,
 			   struct arma_info *ainfo, const int *alist,
-			   int verbose)
+			   gretlopt opt)
 {
     int ylist[2];
     int *xlist = NULL;
@@ -654,13 +654,21 @@ static int write_spc_file (const char *fname,
 		ainfo->p, ainfo->d, ainfo->q); 
     }
 
-    if (verbose) {
-	fputs("estimate {\n print = (acm itr lkf lks mdl est rts rcm)\n", fp);
+    fputs("estimate {\n", fp);
+
+    if (opt & OPT_V) {
+	fputs(" print = (acm itr lkf lks mdl est rts rcm)\n", fp);
     } else {
-	fputs("estimate {\n print = (acm lkf lks mdl est rts rcm)\n", fp);
+	fputs(" print = (acm lkf lks mdl est rts rcm)\n", fp);
+    }
+    
+    fputs(" save = (rsd est lks acm rts rcm)\n", fp);
+
+    if (opt & OPT_C) {
+	fputs(" exact = none\n", fp);
     }
 
-    fputs(" save = (rsd est lks acm rts rcm)\n}\n", fp);
+    fputs("}\n", fp);
 
     gretl_pop_c_numeric_locale();
 
@@ -723,7 +731,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);
-    write_spc_file(path, Z, pdinfo, &ainfo, alist, verbose);
+    write_spc_file(path, Z, pdinfo, &ainfo, alist, opt);
 
     /* run the program */
 #if defined(WIN32)
