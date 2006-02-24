@@ -968,12 +968,12 @@ arma_variance_machine (const double *phi, int p,
 
     /* add AR-derived psi[h] components */
     for (i=1; i<=p && i<s; i++) {
-	psi[h] += phi[i-1] * psi[h-i];
+	psi[h] += phi[i] * psi[h-i];
     }
 
     /* add MA-derived psi[h] components */
     if (s > 1 && s <= q+1) {
-	psi[h] += theta[s-2];
+	psi[h] += theta[s-1];
     }
 
     /* increment running sum of psi squared terms */
@@ -1078,6 +1078,10 @@ maybe_arima_integrate (Forecast *fc, int t1, MODEL *pmod,
     int d = gretl_model_get_int(pmod, "arima_d");
     int D = gretl_model_get_int(pmod, "arima_D");
     int err = 0;
+
+#if NEWBJ
+    return 0;
+#endif
 
     if (d > 0 || D > 0) {
 	int s = gretl_model_get_int(pmod, "arma_pd");
@@ -1193,7 +1197,6 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     for (t=tstart; t<=fc->t2 && !err; t++) {
 	int miss = 0;
 	double yh = 0.0;
-	int lag;
 
 	DPRINTF(("\n *** Doing forecast for obs %d\n", t));
 
@@ -1216,23 +1219,22 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	DPRINTF((" x contribution = %g\n", yh));
 
 	/* AR contribution */
-	for (i=0; i<p && !miss; i++) {
-	    lag = i + 1;
-	    s = t - lag;
+	for (i=1; i<=p && !miss; i++) {
+	    s = t - i;
 	    if (s < 0) {
 		yval = NADBL;
 	    } else if (s <= ar_smax) {
 		yval = y[s];
-		DPRINTF(("  AR: lag %d, y[%d] = %g\n", lag, s, yval));
+		DPRINTF(("  AR: lag %d, y[%d] = %g\n", i, s, yval));
 	    } else {
 		yval = fc->yhat[s];
-		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", lag, s, yval));
+		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", i, s, yval));
 	    }
 	    if (na(yval)) {
-		DPRINTF(("  AR: lag %d, missing value\n", lag));
+		DPRINTF(("  AR: lag %d, missing value\n", i));
 		miss = 1;
 	    } else {
-		DPRINTF(("  AR: lag %d, using coeff %g\n", lag, phi[i]));
+		DPRINTF(("  AR: lag %d, using coeff %g\n", i, phi[i]));
 		yh += phi[i] * yval;
 	    }
 	}
@@ -1240,19 +1242,19 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	DPRINTF((" with AR contribution: %g\n", yh));
 
 	/* MA contribution */
-	for (i=0; i<q && !miss; i++) {
-	    lag = i + 1;
-	    s = t - lag;
-	    if (theta[i] != 0.0) {
-		if (s >= pmod->t1 && s <= ma_smax) {
-		    DPRINTF(("  MA: lag %d, e[%d] = %g, theta[%d] = %g\n", lag, s, 
-			     pmod->uhat[s], i, theta[i]));
-		    yh += theta[i] * pmod->uhat[s];
-		} else if (fc->eps != NULL) {
-		    DPRINTF(("  MA: lag %d, ehat[%d] = %g, theta[%d] = %g\n", lag, s, 
-			     fc->eps[s], i, theta[i]));
-		    yh += theta[i] * fc->eps[s];
-		}
+	for (i=1; i<=q && !miss; i++) {
+	    if (theta[i] == 0.0) {
+		continue;
+	    }
+	    s = t - i;
+	    if (s >= pmod->t1 && s <= ma_smax) {
+		DPRINTF(("  MA: lag %d, e[%d] = %g, theta[%d] = %g\n", i, s, 
+			 pmod->uhat[s], i, theta[i]));
+		yh += theta[i] * pmod->uhat[s];
+	    } else if (fc->eps != NULL) {
+		DPRINTF(("  MA: lag %d, ehat[%d] = %g, theta[%d] = %g\n", i, s, 
+			 fc->eps[s], i, theta[i]));
+		yh += theta[i] * fc->eps[s];
 	    }
 	}
 
