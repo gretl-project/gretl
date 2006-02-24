@@ -24,6 +24,7 @@
 #include "glib.h"
 
 #define MDEBUG 0
+#define NEWBJ 1
 
 struct model_data_item_ {
     char *key;
@@ -615,11 +616,6 @@ static int coeff_integrate (double *c0, int d, int D, int s, int pmax)
     double *c1;
     int i, j, pp;
 
-    fprintf(stderr, "coeff_integrate: in\n");
-    for (j=0; j<=pmax; j++) {
-	fprintf(stderr, "ac[%d] = %g\n", j, c0[j]);
-    }
-
     c1 = malloc((pstar + 1) * sizeof *c1);
     if (c1 == NULL) {
 	return E_ALLOC;
@@ -647,8 +643,6 @@ static int coeff_integrate (double *c0, int d, int D, int s, int pmax)
 	} 
     }
 
-    pp = pmax;
-
     for (i=0; d>0 && i<d; i++) {
 	for (j=0; j<=pstar; j++) {
 	    if (j < 1) {
@@ -666,11 +660,6 @@ static int coeff_integrate (double *c0, int d, int D, int s, int pmax)
     }
 
     free(c1);
-
-    fprintf(stderr, "coeff_integrate: out\n");
-    for (j=0; j<=pstar; j++) {
-	fprintf(stderr, "ac[%d] = %g\n", j, c0[j]);
-    }
 
     return 0;
 }
@@ -772,9 +761,6 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 		    mc[k] -= x * y;
 		}
 	    }
-	    for (i=0; i<=qmax; i++) {
-		fprintf(stderr, "mc[%d] = %g\n", i, mc[i]);
-	    }	    
 	}
     }
 

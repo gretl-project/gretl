@@ -22,6 +22,7 @@
 #include "var.h"
 
 #define ARF_DEBUG 0
+#define NEWBJ 1
 
 #ifdef max
 # undef max
@@ -1188,10 +1189,14 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     DPRINTF(("ar_smax = %d, ma_smax = %d\n", ar_smax, ma_smax));
 
     /* dependent variable */
+#if NEWBJ
+    y = Z[yno];
+#else
     y = gretl_model_get_data(pmod, "arima_dy");
     if (y == NULL) {
 	y = Z[yno];
     }
+#endif
 
     /* do real forecast */
     for (t=tstart; t<=fc->t2 && !err; t++) {
@@ -1220,6 +1225,9 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	/* AR contribution */
 	for (i=1; i<=p && !miss; i++) {
+	    if (phi[i] == 0.0) {
+		continue;
+	    }
 	    s = t - i;
 	    if (s < 0) {
 		yval = NADBL;
@@ -1280,13 +1288,6 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 				  &ss_psi);
 	    fc->sderr[t] = pmod->sigma * sqrt(ss_psi);
 	}
-
-#if 0
-	if (miss && t >= p) {
-	    DPRINTF(("aborting with NA at t=%d (p=%d)\n", t, p));
-	    err = 1;
-	}
-#endif
     }
 
     /* if ARIMA, the forecast now needs to be integrated */
