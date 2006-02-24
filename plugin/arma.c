@@ -137,7 +137,9 @@ static void do_MA_partials (double *drv,
 
     for (i=0; i<ainfo->q; i++) {
 	s = t - (i + 1);
-	drv[t] -= ma_coeff[i] * drv[s];
+	if (s >= 0) {
+	    drv[t] -= ma_coeff[i] * drv[s];
+	}
     }
 
     for (i=0; i<ainfo->Q; i++) {

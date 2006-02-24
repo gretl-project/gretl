@@ -1090,7 +1090,7 @@ maybe_arima_integrate (Forecast *fc, int t1, MODEL *pmod,
 	err = arima_integrate(fc->yhat, Z[yno], 
 			      t1, fc->t2, d, D, s);
 	if (!err && fc->sderr != NULL) {
-	    /* not really ready, needs fixing */
+	    /* not ready, needs fixing */
 	    err = arima_integrate(fc->sderr, NULL, 
 				  t1, fc->t2, d, D, s);
 	}
@@ -1229,10 +1229,10 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		DPRINTF(("  AR: lag %d, yhat[%d] = %g\n", lag, s, yval));
 	    }
 	    if (na(yval)) {
-		DPRINTF(("  AR: lag %d, s=%d, missing value\n", lag, s));
+		DPRINTF(("  AR: lag %d, missing value\n", lag));
 		miss = 1;
 	    } else {
-		DPRINTF(("  AR: lag %d, s=%d, using coeff %g\n", lag, s, phi[i]));
+		DPRINTF(("  AR: lag %d, using coeff %g\n", lag, phi[i]));
 		yh += phi[i] * yval;
 	    }
 	}
@@ -1262,11 +1262,13 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    fc->yhat[t] = NADBL;
 	} else {
 	    fc->yhat[t] = yh;
-	}
-
-	if (fc->eps != NULL && !miss) {
-	    /* form estimated error */
-	    fc->eps[t] = y[t] - fc->yhat[t];
+	    if (fc->eps != NULL) {
+		/* form estimated error: we do this only in
+		   the case of a "static" forecast */
+		fc->eps[t] = y[t] - yh;
+		DPRINTF(("\n setting ehat[%d] = %g - %g = %g\n", t, 
+			 y[t], yh, fc->eps[t]));
+	    }
 	}
 
 	/* forecast error variance */
@@ -1690,6 +1692,48 @@ static int get_forecast_method (Forecast *fc,
     return err;
 }
 
+static void forecast_init (Forecast *fc)
+{
+    fc->method = FC_AUTO;
+
+    fc->t1 = 0;
+    fc->t2 = 0;
+    fc->model_t2 = 0;
+
+    fc->yhat = NULL;
+    fc->sderr = NULL;
+    fc->eps = NULL;
+    fc->dvlags = NULL;
+}
+
+static void forecast_free (Forecast *fc)
+{
+    if (fc->dvlags != NULL) {
+	free(fc->dvlags);
+    }
+
+    if (fc->eps != NULL) {
+	free(fc->eps);
+    }
+} 
+
+static int fc_add_eps (Forecast *fc, int n)
+{
+    int t, err = 0;
+
+    fc->eps = malloc(n * sizeof *fc->eps);
+
+    if (fc->eps == NULL) {
+	err = E_ALLOC;
+    } else {
+	for (t=0; t<n; t++) {
+	    fc->eps[t] = 0.0;
+	}
+    }
+
+    return err;
+}
+
 /* driver for various functions that compute forecasts
    for different sorts of models */
 
@@ -1706,10 +1750,11 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     int nf = 0;
     int t, err = 0;
 
+    forecast_init(&fc);
+
     fc.t1 = fr->t1;
     fc.t2 = fr->t2;
     fc.model_t2 = pmod->t2;
-    fc.eps = NULL;
 
     get_forecast_method(&fc, pmod, pdinfo, opt);
 
@@ -1747,15 +1792,10 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
     }
 
     fc.yhat = fr->fitted;
+    fc.sderr = fr->sderr;
 
-    if (fr->sderr != NULL) {
-	fc.sderr = fr->sderr;
-    } else {
-	fc.sderr = NULL;
-    }
-
-    if (pmod->ci == ARMA) {
-	fc.eps = malloc(pdinfo->n * sizeof *fc.eps);
+    if (pmod->ci == ARMA && fc.method == FC_STATIC) {
+	fc_add_eps(&fc, pdinfo->n);
     }
 
     if (DM_errs) {
@@ -1772,12 +1812,7 @@ static int real_get_fcast (FITRESID *fr, MODEL *pmod,
 	err = linear_fcast(&fc, pmod, Z, pdinfo);
     }
 
-    if (fc.dvlags != NULL) {
-	free(fc.dvlags);
-    }
-    if (fc.eps != NULL) {
-	free(fc.eps);
-    }
+    forecast_free(&fc);
 
     if (dummy_AR) {
 	free(pmod->arinfo->arlist);
@@ -2022,6 +2057,8 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	const double **Z = (const double **) *pZ;
 	Forecast fc;
 
+	forecast_init(&fc);
+
 	strcpy(pdinfo->varname[vi], yhname);
 	strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
 
@@ -2033,9 +2070,7 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	fc.yhat = (*pZ)[vi];
 	if (vj > 0) {
 	    fc.sderr = (*pZ)[vj];
-	} else {
-	    fc.sderr = NULL;
-	}
+	} 
 
 	for (t=0; t<pdinfo->n; t++) {
 	    fc.yhat[t] = NADBL;
@@ -2044,15 +2079,14 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	    }	
 	}
 
-	fc.eps = NULL;
 	fc.t1 = t1;
 	fc.t2 = t2;
 	fc.model_t2 = pmod->t2;
 
 	get_forecast_method(&fc, pmod, pdinfo, opt);
 
-	if (pmod->ci == ARMA) {
-	    fc.eps = malloc(pdinfo->n * sizeof *fc.eps);
+	if (pmod->ci == ARMA && fc.method == FC_STATIC) {
+	    fc_add_eps(&fc, pdinfo->n);
 	}
 
 	/* write forecast values into the newly added variable(s) */
@@ -2068,12 +2102,7 @@ int add_forecast (const char *str, MODEL *pmod, double ***pZ,
 	    linear_fcast(&fc, pmod, Z, pdinfo);
 	}
 
-	if (fc.dvlags != NULL) {
-	    free(fc.dvlags);
-	}
-	if (fc.eps != NULL) {
-	    free(fc.eps);
-	}
+	forecast_free(&fc);
 
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!na(fc.yhat[t])) {
