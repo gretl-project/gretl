@@ -287,12 +287,6 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 	gretl_model_set_int(pmod, "arima_D", ainfo->D);
     }
 
-    if (ainfo->dy != NULL) {
-	gretl_model_set_data(pmod, "arima_dy", ainfo->dy, 
-			     ainfo->T * sizeof *ainfo->dy);
-	ainfo->dy = NULL;
-    }
-
     if (ainfo->r > 0) {
 	gretl_model_set_int(pmod, "armax", 1);
     }

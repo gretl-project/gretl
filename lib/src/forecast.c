@@ -22,7 +22,6 @@
 #include "var.h"
 
 #define ARF_DEBUG 0
-#define NEWBJ 1
 
 #ifdef max
 # undef max
@@ -937,174 +936,42 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 }
 
 /* Compute ARMA forecast error variance (ignoring parameter
-   uncertainty, as is common), via recursion. 
+   uncertainty, as is common), via recursion.  Cf. Box and Jenkins,
+   1976, p. 508, "Program 4", V(l) algorithm (with the sign of theta
+   changed).
 */
 
-static double 
-arma_variance_machine (const double *phi, int p, 
-		       const double *theta, int q,
-		       double *psi, int s, double *ss_psi)
+static double arma_variance (const double *phi, int p, 
+			     const double *theta, int q,
+			     double *psi, int l)
 {
-    int i, h = s - 1;
+    double vl = 0.0;
+    int i, j;
 
-    /* s = number of steps ahead of forecast baseline
-       h = index into "psi" array of infinite-order MA
-           coefficients
-    */
-
-    if (h > p) {
-	/* we don't retain more that (AR order + 1) 
-	   psi values (the last one being used as
-           workspace) */
-	h = p;
-    }
-
-    if (s == 1) {
-	/* one step ahead: initialize to unity */
-	psi[h] = 1.0;
-    } else {
-	/* init to zero prior to adding components */
-	psi[h] = 0.0;
-    }
-
-    /* add AR-derived psi[h] components */
-    for (i=1; i<=p && i<s; i++) {
-	psi[h] += phi[i] * psi[h-i];
-    }
-
-    /* add MA-derived psi[h] components */
-    if (s > 1 && s <= q+1) {
-	psi[h] += theta[s-1];
-    }
-
-    /* increment running sum of psi squared terms */
-    *ss_psi += psi[h] * psi[h];
-    
-    if (s > p) {
-	/* drop the oldest psi and make space for a new one */
-	for (i=0; i<p; i++) {
-	    psi[i] = psi[i+1];
-	}
-    }
-
-    return *ss_psi;
-}
-
-static int arima_integrate (double *dx, const double *x,
-			    int t1, int t2, int d, int D, int s)
-{
-    double *ix = NULL;
-    int t;
-
-#if ARF_DEBUG
-    fprintf(stderr, "arima_integrate: t1=%d, t2=%d, d=%d, D=%d, s=%d\n",
-	    t1, t2, d, D, s);
-#endif
-
-    ix = malloc((t2 + 1) * sizeof *ix);
-    if (ix == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<=t2; t++) {
-	ix[t] = 0.0;
-    }
-
-    if (x == NULL) {
-	x = ix;
-    } 
-
-    for (t=t1; t<=t2; t++) {
-	ix[t] = dx[t];
-	if (d > 0) {
-	    ix[t] += x[t-1];
-	} 
-	if (d > 1) {
-	    ix[t] += x[t-1];
-	    ix[t] -= x[t-2];
-	}
-	if (D > 0) {
-	    ix[t] += x[t - s];
-	    if (d > 0) {
-		ix[t] -= x[t - (s+1)];
-	    }
-	    if (d > 1) {
-		ix[t] -= x[t - (s+1)];
-		ix[t] += x[t - 2*s];
-	    }	    
-	} 
-	if (D > 1) {
-	    ix[t] += x[t - s];
-	    ix[t] -= x[t - 2*s];
-	    if (d > 0) {
-		ix[t] += x[t - s];
-		ix[t] -= x[t - (s+1)];
-		ix[t] += x[t - (2*s+1)];
-	    }
-	    if (d > 1) {
-		ix[t] -= 2 * x[t - (s+1)];
-		ix[t] += 2 * x[t - (s+2)];
-		ix[t] += x[t - (2*s+1)];
-		ix[t] -= x[t - (2*s+2)];
-	    }
-	}
-    }
-
-#if ARF_DEBUG
-    for (t=0; t<=t2; t++) {
-	if (x != NULL) {
-	    fprintf(stderr, "%2d: %13.6g %13.6g %13.6g\n",
-		    t, x[t], dx[t], ix[t]);
+    for (j=0; j<l; j++) {
+	if (j == 0) {
+	    psi[j] = 1.0;
 	} else {
-	    fprintf(stderr, "%2d: %13.6g %13.6g\n",
-		    t, dx[t], ix[t]);
+	    psi[j] = 0.0;
+	    for (i=1; i<=j; i++) {
+		if (i <= p) {
+		    psi[j] += phi[i] * psi[j-i];
+		}
+		if (j <= q && theta != NULL) {
+		    psi[j] += theta[j];
+		}
+	    }
 	}
-    }
-#endif
+    }    
 
-    /* transcribe integrated result back into "dx" */
-    for (t=t1; t<=t2; t++) {
-	dx[t] = ix[t];
+    for (j=0; j<l; j++) {
+	vl += psi[j] * psi[j];
     }
 
-    free(ix);
-
-    return 0;
+    return vl;
 }
 
-static int 
-maybe_arima_integrate (Forecast *fc, int t1, MODEL *pmod, 
-		       const double **Z, const DATAINFO *pdinfo)
-{
-    int d = gretl_model_get_int(pmod, "arima_d");
-    int D = gretl_model_get_int(pmod, "arima_D");
-    int err = 0;
-
-#if NEWBJ
-    return 0;
-#endif
-
-    if (d > 0 || D > 0) {
-	int s = gretl_model_get_int(pmod, "arma_pd");
-	int yno = gretl_model_get_depvar(pmod);
-
-#if ARF_DEBUG
-	fprintf(stderr, "t1 = %d, fc->t2 = %d\n", t1, fc->t2);
-#endif
-
-	err = arima_integrate(fc->yhat, Z[yno], 
-			      t1, fc->t2, d, D, s);
-	if (!err && fc->sderr != NULL) {
-	    /* not ready, needs fixing */
-	    err = arima_integrate(fc->sderr, NULL, 
-				  t1, fc->t2, d, D, s);
-	}
-    }
-
-    return err;
-}
-
-/* generate forecasts for ARMA (or ARMAX) models, including
+/* generate forecasts for AR(I)MA (or ARMAX) models, including
    forecast standard errors if we're doing out-of-sample
    forecasting
 */
@@ -1118,12 +985,11 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     const double *y;
 
     double *psi = NULL;
-    double ss_psi = 0.0;
-    double xval, yval;
+    double xval, yval, vl;
     int xvars, yno;
     int *xlist = NULL;
     int p, q;
-    int tstart = fc->t1;
+    int t1 = fc->t1;
     int ar_smax, ma_smax;
     int i, s, t;
     int err = 0;
@@ -1143,7 +1009,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    /* no "real" forecasts were called for, we're done */
 	    return 0;
 	}
-	tstart = pmod->t2 + 1;
+	t1 = pmod->t2 + 1;
     }
 
     p = gretl_arma_model_max_AR_lag(pmod);
@@ -1170,7 +1036,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     /* setup for forecast error variance */
     if (fc->sderr != NULL) {
-	psi = malloc((p + 1) * sizeof *psi);
+	psi = malloc((fc->t2 - t1 + 1) * sizeof *psi);
     }
 
     /* cut-off points for using actual rather than forecast
@@ -1189,17 +1055,10 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     DPRINTF(("ar_smax = %d, ma_smax = %d\n", ar_smax, ma_smax));
 
     /* dependent variable */
-#if NEWBJ
     y = Z[yno];
-#else
-    y = gretl_model_get_data(pmod, "arima_dy");
-    if (y == NULL) {
-	y = Z[yno];
-    }
-#endif
 
     /* do real forecast */
-    for (t=tstart; t<=fc->t2 && !err; t++) {
+    for (t=t1; t<=fc->t2 && !err; t++) {
 	int miss = 0;
 	double yh = 0.0;
 
@@ -1223,7 +1082,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	DPRINTF((" x contribution = %g\n", yh));
 
-	/* AR contribution */
+	/* AR contribution (incorporating any differencing) */
 	for (i=1; i<=p && !miss; i++) {
 	    if (phi[i] == 0.0) {
 		continue;
@@ -1283,16 +1142,9 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	/* forecast error variance */
 	if (psi != NULL) {
-	    arma_variance_machine(phi, p, theta, q,
-				  psi, t - tstart + 1, 
-				  &ss_psi);
-	    fc->sderr[t] = pmod->sigma * sqrt(ss_psi);
+	    vl = arma_variance(phi, p, theta, q, psi, t - t1 + 1);
+	    fc->sderr[t] = pmod->sigma * sqrt(vl);
 	}
-    }
-
-    /* if ARIMA, the forecast now needs to be integrated */
-    if (!err) {
-	err = maybe_arima_integrate(fc, tstart, pmod, Z, pdinfo);
     }
 
  bailout:
@@ -1310,26 +1162,26 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     return err;
 }
 
-/* construct the "phi" array of AR coefficients, based on the
-   ARINFO that was added to the model at estimation time.
-   The latter's rho member may be a compacted array, with
-   zero elements omitted, but here we need a full-length
-   array with zeros inserted as required */
+/* construct the "phi" array of AR coefficients, based on the ARINFO
+   that was added to the model at estimation time.  The latter's rho
+   member may be a compacted array, with zero elements omitted, but
+   here we need a full-length array with zeros inserted as required.
+*/
 
 static double *make_phi_from_arinfo (const ARINFO *arinfo, int pmax)
 {
-    double *phi = malloc(pmax * sizeof *phi);
+    double *phi = malloc((pmax + 1) * sizeof *phi);
 
     if (phi != NULL) {
 	int i, lag;
 
-	for (i=0; i<pmax; i++) {
+	for (i=0; i<=pmax; i++) {
 	    phi[i] = 0.0;
 	}
 
 	for (i=1; i<=arinfo->arlist[0]; i++) {
 	    lag = arinfo->arlist[i];
-	    phi[lag-1] = arinfo->rho[i-1];
+	    phi[lag] = arinfo->rho[i-1];
 	}
     }
 
@@ -1364,27 +1216,35 @@ static int max_ar_lag (Forecast *fc, const MODEL *pmod, int p)
    is quite right yet.
 */
 
-static void set_up_ar_fcast_variance (const MODEL *pmod, int pmax,
-				      double **phi, double **psi,
-				      double **errphi)
+static int
+set_up_ar_fcast_variance (Forecast *fc, const MODEL *pmod, 
+			  int pmax, double **phi, double **psi,
+			  double **errphi)
 {
-    *errphi = make_phi_from_arinfo(pmod->arinfo, pmax);
+    int psilen = fc->t2 - fc->t1 + 1;
 
-    if (*errphi != NULL) {
-	*psi = malloc((pmax + 1) * sizeof **psi);
-	if (*psi == NULL) {
-	    free(*errphi);
-	    *errphi = NULL;
-	} else {
-	    *phi = malloc(pmax * sizeof **phi);
-	    if (*phi == NULL) {
-		free(*errphi);
-		*errphi = NULL;
-		free(*psi);
-		*psi = NULL;
-	    }
-	}
-    } 
+    *errphi = make_phi_from_arinfo(pmod->arinfo, pmax);
+    if (*errphi == NULL) {
+	return E_ALLOC;
+    }
+
+    *psi = malloc(psilen * sizeof **psi);
+    if (*psi == NULL) {
+	free(*errphi);
+	*errphi = NULL;
+	return E_ALLOC;
+    }
+
+    *phi = malloc((pmax + 1) * sizeof **phi);
+    if (*phi == NULL) {
+	free(*errphi);
+	*errphi = NULL;
+	free(*psi);
+	*psi = NULL;
+	return E_ALLOC;
+    }
+
+    return 0;
 }
 
 /* 
@@ -1422,8 +1282,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
     double *phi = NULL;
     double *psi = NULL;
     double *errphi = NULL;
-    double ss_psi = 0.0;
-    double xval, yh;
+    double xval, yh, vl;
     double rk, ylag, xlag;
     int miss, yno;
     int i, k, v, t, tk;
@@ -1439,10 +1298,10 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
     p = arlist[arlist[0]]; /* AR order of error term */
 
     if (fc->t2 > pmod->t2 && fc->sderr != NULL) {
-	/* we compute variance only if we're forecasting
-	   out of sample */
+	/* we'll compute variance only if we're forecasting out of
+	   sample */
 	pmax = max_ar_lag(fc, pmod, p);
-	set_up_ar_fcast_variance(pmod, pmax, &phi, &psi, &errphi);
+	set_up_ar_fcast_variance(fc, pmod, pmax, &phi, &psi, &errphi);
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
@@ -1466,7 +1325,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	if (phi != NULL) {
 	    /* initialize the phi's based on the AR error process
 	       alone */
-	    for (i=0; i<pmax; i++) {
+	    for (i=1; i<=pmax; i++) {
 		phi[i] = errphi[i];
 	    }
 	}
@@ -1496,7 +1355,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	    } else {
 		if (dvlag > 0 && phi != NULL) {
 		    /* augment phi for computation of variance */
-		    phi[dvlag - 1] += pmod->coeff[i];
+		    phi[dvlag] += pmod->coeff[i];
 		}
 		for (k=1; k<=arlist[0]; k++) {
 		    rk = pmod->arinfo->rho[k-1];
@@ -1523,10 +1382,8 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	/* forecast error variance */
 	if (phi != NULL && pmod->ci != GARCH) {
 	    if (t > pmod->t2) {
-		arma_variance_machine(phi, pmax, NULL, 0,
-				      psi, t - pmod->t2, 
-				      &ss_psi);
-		fc->sderr[t] = pmod->sigma * sqrt(ss_psi);
+		vl = arma_variance(phi, pmax, NULL, 0, psi, t - pmod->t2); 
+		fc->sderr[t] = pmod->sigma * sqrt(vl);
 	    } else {
 		fc->sderr[t] = NADBL;
 	    }

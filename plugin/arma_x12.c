@@ -693,7 +693,7 @@ static int write_spc_file (const char *fname,
     fputs("}\n", fp);
 
     if (opt & OPT_F) {
-	fputs("forecast {\n save = (ftr fct)\n", fp);
+	fputs("forecast {\n save = (ftr)\n", fp);
 	fprintf(fp, " maxlead = %d\n}\n", tmax - ainfo->t2);
     }
 
@@ -803,6 +803,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
  bailout:
 
     free(alist);
+    free(ainfo.dy);
 
     return armod;
 }

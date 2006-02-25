@@ -24,7 +24,6 @@
 #include "glib.h"
 
 #define MDEBUG 0
-#define NEWBJ 1
 
 struct model_data_item_ {
     char *key;
@@ -552,7 +551,9 @@ int gretl_arma_model_nonseasonal_MA_order (const MODEL *pmod)
  * @pmod: pointer to gretl model.
  *
  * Returns: the maximum autoregressive lag in @pmod, or 0 if
- * @pmod is not an ARMA model.
+ * @pmod is not an ARMA model. The maximum AR lag takes into
+ * account any differencing (seasonal and/or non-seasonal) in
+ * an ARIMA model.
  */
 
 int gretl_arma_model_max_AR_lag (const MODEL *pmod)
@@ -563,15 +564,11 @@ int gretl_arma_model_max_AR_lag (const MODEL *pmod)
 	int p = gretl_arma_model_nonseasonal_AR_order(pmod);
 	int P = gretl_model_get_int(pmod, "arma_P");
 	int s = gretl_model_get_int(pmod, "arma_pd");
-#if NEWBJ
 	int d = gretl_model_get_int(pmod, "arima_d");
 	int D = gretl_model_get_int(pmod, "arima_D");
-#endif
 
 	pmax = p + s * P;
-#if NEWBJ
 	pmax += d + s * D;
-#endif
     }
 
     return pmax;
@@ -606,9 +603,11 @@ int gretl_arma_model_max_MA_lag (const MODEL *pmod)
     return qmax;
 }
 
-#if NEWBJ
-
-/* from Box and Jenkins, 1976, pp 506-7, "Program 4" */
+/* From Box and Jenkins, 1976, pp 506-7, "Program 4": a clever
+   algorithm for "unscrambling the coefficients", or in effect
+   producing reduced-form coefficients that take into account any
+   differencing.
+*/
 
 static int coeff_integrate (double *c0, int d, int D, int s, int pmax)
 {
@@ -771,96 +770,6 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 
     return err;
 }
-
-#else /* variant approaches to ARMA forecasting */
-
-int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
-				       double **arvec,
-				       double **mavec)
-{
-    double *ac = NULL;
-    double *mc = NULL;
-    int err = 0;
-
-    if (pmod->ci != ARMA) {
-	err = 1;
-    } else {
-	const double *phi = NULL, *Phi = NULL;
-	const double *theta = NULL, *Theta = NULL;
-	double x, y;
-
-	int p = gretl_arma_model_nonseasonal_AR_order(pmod);
-	int q = gretl_arma_model_nonseasonal_MA_order(pmod);
-	int P = gretl_model_get_int(pmod, "arma_P");
-	int Q = gretl_model_get_int(pmod, "arma_Q");
-	int s = gretl_model_get_int(pmod, "arma_pd");
-	int pmax, qmax;
-	int i, j, k;
-
-	pmax = p + s * P;
-	qmax = q + s * Q;
-	
-	if (pmax > 0) {
-	    ac = malloc((pmax + 1) * sizeof *ac);
-	    if (ac == NULL) {
-		err = E_ALLOC;
-	    }
-	}
-
-	if (!err && qmax > 0) {
-	    mc = malloc((qmax + 1) * sizeof *ac);
-	    if (mc == NULL) {
-		free(ac);
-		ac = NULL;
-		err = E_ALLOC;
-	    }
-	}
-
-	if (!err) {
-	    phi = pmod->coeff + pmod->ifc; /* non-seasonal AR coeffs */
-	    Phi = phi + p;                 /* seasonal AR coeffs */
-	    theta = Phi + P;               /* non-seasonal MA coeffs */
-	    Theta = theta + q;             /* seasonal MA coeffs */
-	}
-
-	if (ac != NULL) {
-	    for (i=0; i<=pmax; i++) {
-		ac[i] = 0.0;
-	    }
-	    for (i=0; i<=P; i++) {
-		x = (i == 0)? -1 : Phi[i-1];
-		for (j=0; j<=p; j++) {
-		    y = (j == 0)? -1 : phi[j-1];
-		    k = j + s * i;
-		    ac[k] -= x * y;
-		}
-	    }
-	}	
-
-	if (mc != NULL) {
-	    for (i=0; i<=qmax; i++) {
-		mc[i] = 0.0;
-	    }
-	    for (i=0; i<=Q; i++) {
-		x = (i == 0)? -1 : Theta[i-1];
-		for (j=0; j<=q; j++) {
-		    y = (j == 0)? -1 : theta[j-1];
-		    k = j + s * i;
-		    mc[k] -= x * y;
-		}
-	    }
-	}
-    }
-
-    if (!err) {
-	*arvec = ac;
-	*mavec = mc;
-    }
-
-    return err;
-}
-
-#endif /* !NEWBJ */
 
 /**
  * gretl_arma_model_get_x_coeffs:

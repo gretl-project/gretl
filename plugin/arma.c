@@ -942,6 +942,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(alist);
     free(coeff);
     free(X);
+    free(ainfo.dy);
 
     model_info_free(arma);
 
