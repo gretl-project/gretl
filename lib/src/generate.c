@@ -1407,7 +1407,11 @@ static int add_model_series_to_genr (GENERATOR *genr, genatom *atom)
 	return 1;
     }
 
+    DPRINTF(("add_model_series_to_genr: oname=%s, key='%s'\n",
+	     (oname)? oname : "none", key));
+
     x = saved_object_get_series(oname, key, genr->pdinfo, &err);
+    DPRINTF((" x=%p, err=%d\n", (void *) x, err)); 
 
     free(oname);
 
@@ -1808,7 +1812,8 @@ static int evaluate_genr (GENERATOR *genr)
 
     while ((atom = pop_atom(genr)) && !genr->err) {
 
-	DPRINTF((" looking at atom %d\n", n_atoms));
+	DPRINTF((" looking at atom %d (atype = %s)\n", n_atoms, 
+		 ATOM_TYPE_STRING(atom->atype)));
 	n_atoms++;
 
 	if (mseries && n_atoms > 0) {

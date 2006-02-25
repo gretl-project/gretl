@@ -3032,6 +3032,49 @@ const int *gretl_VECM_list (const GRETL_VAR *vecm)
     return NULL;
 }
 
+double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo, 
+			      int idx, const char *key, int *err)
+{
+    double *x = NULL;
+    const char *msel;
+    int t, col = 0;
+
+    if (var == NULL || idx != M_UHAT) { /* FIXME generalize this */
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    msel = strchr(key, '[');
+    if (msel == NULL || sscanf(msel, "[,%d]", &col) != 1) {
+	*err = E_PARSE;
+    } else if (col <= 0 || col > var->neqns) {
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	x = malloc(pdinfo->n * sizeof *x);
+	if (x == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	const MODEL *pmod = var->models[col-1];
+
+	if (pmod == NULL || pmod->full_n != pdinfo->n) {
+	    *err = E_DATA;
+	    free(x);
+	    x = NULL;
+	} else {
+	    for (t=0; t<pdinfo->n; t++) {
+		x[t] = pmod->uhat[t];
+	    }
+	}
+    }
+
+    return x;    
+}
+
 gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
 				    int *err)
 {

@@ -106,6 +106,9 @@ int gretl_VECM_rank (const GRETL_VAR *vecm);
 
 const int *gretl_VECM_list (const GRETL_VAR *vecm);
 
+double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo, 
+			      int idx, const char *key, int *err);
+
 gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
 				    int *err);
 

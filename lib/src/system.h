@@ -156,6 +156,11 @@ system_normality_test (const gretl_equation_system *sys, PRN *prn);
 int gretl_system_add_resids_to_dataset (const char *sysname, int eqnum,
 					double ***pZ, DATAINFO *pdinfo);
 
+double *
+gretl_equation_system_get_series (const gretl_equation_system *sys, 
+				  const DATAINFO *pdinfo,
+				  int idx, const char *key, int *err);
+
 gretl_matrix *
 gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx, 
 				  int *err);

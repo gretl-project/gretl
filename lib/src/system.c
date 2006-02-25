@@ -1806,6 +1806,56 @@ system_set_restriction_matrices (gretl_equation_system *sys,
     sys->flags |= GRETL_SYS_RESTRICT;
 }
 
+double *
+gretl_equation_system_get_series (const gretl_equation_system *sys, 
+				  const DATAINFO *pdinfo,
+				  int idx, const char *key, int *err)
+{
+    double *x = NULL;
+    const char *msel;
+    int t, col = 0;
+
+    if (sys == NULL || idx != M_UHAT) { /* FIXME generalize this */
+	*err = E_BADSTAT;
+	return NULL;
+    }
+
+    msel = strchr(key, '[');
+    if (msel == NULL || sscanf(msel, "[,%d]", &col) != 1) {
+	*err = E_PARSE;
+    } else if (col <= 0 || col > sys->n_equations) {
+	*err = E_DATA;
+    }
+
+    if (!*err) {
+	x = malloc(pdinfo->n * sizeof *x);
+	if (x == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    if (!*err) {
+	if (sys->uhat == NULL) {
+	    *err = E_DATA;
+	    free(x);
+	    x = NULL;
+	} else {
+	    int s = 0;
+
+	    col--;
+	    for (t=0; t<pdinfo->n; t++) {
+		if (t < sys->t1 || t > sys->t2) {
+		    x[t] = NADBL;
+		} else {
+		    x[t] = gretl_matrix_get(sys->uhat, s++, col);
+		}
+	    }
+	}
+    }
+
+    return x;
+}
+
 gretl_matrix *
 gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx, 
 				  int *err)

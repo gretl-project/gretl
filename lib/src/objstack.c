@@ -786,9 +786,9 @@ real_get_obj_scalar_element (void *p, int type, int idx, const char *key,
     return x;
 }
 
-static double *real_get_obj_series (void *p, int type, int idx, 
-				    const DATAINFO *pdinfo,
-				    int *err)
+static double *
+real_get_obj_series (void *p, int type, int idx, const char *key, 
+		     const DATAINFO *pdinfo, int *err)
 {
     double *x = NULL;
 
@@ -801,6 +801,14 @@ static double *real_get_obj_series (void *p, int type, int idx,
 	MODEL *pmod = (MODEL *) p;
 
 	x = gretl_model_get_series(pmod, pdinfo, idx, err);
+    } else if (type == SYSTEM) {
+	gretl_equation_system *sys = (gretl_equation_system *) p;
+
+	x = gretl_equation_system_get_series(sys, pdinfo, idx, key, err);
+    } else if (type == VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) p;
+
+	x = gretl_VAR_get_series(var, pdinfo, idx, key, err);
     }
 
     return x;
@@ -909,7 +917,7 @@ double *saved_object_get_series (const char *oname, const char *key,
     if (smatch != NULL) {
 	idx = gretl_model_data_index(key);
 	x = real_get_obj_series(smatch->ptr, smatch->type, idx, 
-				pdinfo, err);
+				key, pdinfo, err);
     }
 
     if (x == NULL && !*err) {

@@ -33,6 +33,15 @@ void dprintf (const char *format, ...);
 # define DPRINTF(x)
 #endif
 
+#if GENR_DEBUG
+# define ATOM_TYPE_STRING(t) ((t==0)?      "ATOM_SERIES" : \
+                              (t==(1<<0))? "ATOM_SCALAR" : \
+                              (t==(1<<1))? "ATOM_MATRIX" : \
+                              (t==(1<<2))? "ATOM_MODELDAT" : \
+                              (t==(1<<3))? "ATOM_TMP" : \
+                              "ATOM_UNKNOWN")
+#endif
+
 #if GEN_MATRIX_DEBUG
 # define MPRINTF(x) dprintf x
 #else 
