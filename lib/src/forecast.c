@@ -1216,29 +1216,39 @@ set_up_ar_fcast_variance (Forecast *fc, const MODEL *pmod,
 			  double **errphi)
 {
     int psilen = fc->t2 - fc->t1 + 1;
+    int err = 0;
+    
+    *errphi = NULL;
+    *psi = NULL;
+    *phi = NULL;
 
     *errphi = make_phi_from_arinfo(pmod->arinfo, pmax);
     if (*errphi == NULL) {
-	return E_ALLOC;
+	err = E_ALLOC;
     }
 
-    *psi = malloc(psilen * sizeof **psi);
-    if (*psi == NULL) {
-	free(*errphi);
-	*errphi = NULL;
-	return E_ALLOC;
+    if (!err) {
+	*psi = malloc(psilen * sizeof **psi);
+	if (*psi == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    *phi = malloc((pmax + 1) * sizeof **phi);
-    if (*phi == NULL) {
+    if (!err) {
+	*phi = malloc((pmax + 1) * sizeof **phi);
+	if (*phi == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (err) {
 	free(*errphi);
 	*errphi = NULL;
 	free(*psi);
 	*psi = NULL;
-	return E_ALLOC;
     }
 
-    return 0;
+    return err;
 }
 
 /* 
