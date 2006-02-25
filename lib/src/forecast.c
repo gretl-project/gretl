@@ -979,12 +979,12 @@ static double arma_variance (const double *phi, int p,
 static int arma_fcast (Forecast *fc, MODEL *pmod, 
 		       const double **Z, const DATAINFO *pdinfo)
 {
+    double *psi = NULL;
     double *phi = NULL;
     double *theta = NULL;
     const double *beta;
     const double *y;
 
-    double *psi = NULL;
     double xval, yval, vl;
     int xvars, yno;
     int *xlist = NULL;
@@ -1149,15 +1149,9 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
  bailout:
 
-    if (psi != NULL) {
-	free(psi);
-    }
-    if (phi != NULL) {
-	free(phi);
-    }
-    if (theta != NULL) {
-	free(theta);
-    }
+    free(psi);
+    free(phi);
+    free(theta);
 
     return err;
 }

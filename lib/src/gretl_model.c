@@ -605,11 +605,11 @@ int gretl_arma_model_max_MA_lag (const MODEL *pmod)
 
 /* From Box and Jenkins, 1976, pp 506-7, "Program 4": a clever
    algorithm for "unscrambling the coefficients", or in effect
-   producing reduced-form coefficients that take into account any
+   producing reduced-form AR coefficients that take into account any
    differencing.
 */
 
-static int coeff_integrate (double *c0, int d, int D, int s, int pmax)
+static int ar_coeff_integrate (double *c0, int d, int D, int s, int pmax)
 {
     int pstar = pmax + d + s * D;
     double *c1;
@@ -744,7 +744,7 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 		}
 	    }
 	    if (D > 0 || d > 0) {
-		coeff_integrate(ac, d, D, s, pmax);
+		ar_coeff_integrate(ac, d, D, s, pmax);
 	    }
 	}	
 
