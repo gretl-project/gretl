@@ -1700,7 +1700,7 @@ int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     if (!strncmp(line, "matrix ", 7)) line += 7;
     while (isspace(*line)) line++;
 
-    if (!sscanf(line, "%47s", name)) {
+    if (!sscanf(line, "%47[^ =]", name)) {
 	return 1;
     } 
 

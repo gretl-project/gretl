@@ -943,15 +943,15 @@ static int garch_fcast (Forecast *fc, MODEL *pmod,
 
 static double arma_variance (const double *phi, int p, 
 			     const double *theta, int q,
-			     double *psi, int l)
+			     double *psi, int npsi, int l)
 {
-    double vl = 0.0;
+    static double sspsi;
     int i, j;
 
-    for (j=0; j<l; j++) {
-	if (j == 0) {
-	    psi[j] = 1.0;
-	} else {
+    if (l == 1) {
+	sspsi = 0.0;
+	psi[0] = 1.0;
+	for (j=1; j<npsi; j++) {
 	    psi[j] = 0.0;
 	    for (i=1; i<=j; i++) {
 		if (i <= p) {
@@ -962,13 +962,11 @@ static double arma_variance (const double *phi, int p,
 		}
 	    }
 	}
-    }    
+    } 
 
-    for (j=0; j<l; j++) {
-	vl += psi[j] * psi[j];
-    }
+    sspsi += psi[l-1] * psi[l-1];
 
-    return vl;
+    return sspsi;
 }
 
 /* generate forecasts for AR(I)MA (or ARMAX) models, including
@@ -988,7 +986,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     double xval, yval, vl;
     int xvars, yno;
     int *xlist = NULL;
-    int p, q;
+    int p, q, npsi = 0;
     int t1 = fc->t1;
     int ar_smax, ma_smax;
     int i, s, t;
@@ -1036,7 +1034,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     /* setup for forecast error variance */
     if (fc->sderr != NULL) {
-	psi = malloc((fc->t2 - t1 + 1) * sizeof *psi);
+	npsi = fc->t2 - t1 + 1;
+	psi = malloc(npsi * sizeof *psi);
     }
 
     /* cut-off points for using actual rather than forecast
@@ -1142,7 +1141,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
 	/* forecast error variance */
 	if (psi != NULL) {
-	    vl = arma_variance(phi, p, theta, q, psi, t - t1 + 1);
+	    vl = arma_variance(phi, p, theta, q, psi, npsi, t - t1 + 1);
 	    fc->sderr[t] = pmod->sigma * sqrt(vl);
 	}
     }
@@ -1212,10 +1211,9 @@ static int max_ar_lag (Forecast *fc, const MODEL *pmod, int p)
 
 static int
 set_up_ar_fcast_variance (Forecast *fc, const MODEL *pmod, 
-			  int pmax, double **phi, double **psi,
+			  int pmax, int npsi, double **phi, double **psi,
 			  double **errphi)
 {
-    int psilen = fc->t2 - fc->t1 + 1;
     int err = 0;
     
     *errphi = NULL;
@@ -1228,7 +1226,7 @@ set_up_ar_fcast_variance (Forecast *fc, const MODEL *pmod,
     }
 
     if (!err) {
-	*psi = malloc(psilen * sizeof **psi);
+	*psi = malloc(npsi * sizeof **psi);
 	if (*psi == NULL) {
 	    err = E_ALLOC;
 	}
@@ -1291,6 +1289,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
     int miss, yno;
     int i, k, v, t, tk;
     int p, dvlag, pmax = 0;
+    int npsi = 0;
     int err = 0;
 
 #if AR_DEBUG
@@ -1305,7 +1304,8 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	/* we'll compute variance only if we're forecasting out of
 	   sample */
 	pmax = max_ar_lag(fc, pmod, p);
-	set_up_ar_fcast_variance(fc, pmod, pmax, &phi, &psi, &errphi);
+	npsi = fc->t2 - fc->t1 + 1;
+	set_up_ar_fcast_variance(fc, pmod, pmax, npsi, &phi, &psi, &errphi);
     }
 
     for (t=fc->t1; t<=fc->t2; t++) {
@@ -1386,7 +1386,7 @@ static int ar_fcast (Forecast *fc, MODEL *pmod,
 	/* forecast error variance */
 	if (phi != NULL && pmod->ci != GARCH) {
 	    if (t > pmod->t2) {
-		vl = arma_variance(phi, pmax, NULL, 0, psi, t - pmod->t2); 
+		vl = arma_variance(phi, pmax, NULL, 0, psi, npsi, t - pmod->t2); 
 		fc->sderr[t] = pmod->sigma * sqrt(vl);
 	    } else {
 		fc->sderr[t] = NADBL;
