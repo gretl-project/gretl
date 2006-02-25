@@ -120,12 +120,16 @@ modify_lpref (lagpref *lpref, char spectype, int lmin, int lmax, int *laglist)
     }
 
     if (mod == 0) {
+#if LDEBUG
 	fprintf(stderr, "modify_lpref: no changes made\n");
+#endif
 	return mod;
     }
 
+#if LDEBUG
     fprintf(stderr, "modify_lpref: lmin=%d, lmax=%d, laglist=%p\n",
 	    lmin, lmax, (void *) laglist);
+#endif
 
     if (lpref->spectype == LAGS_LIST) {
 	free(lpref->lspec.laglist);

@@ -1238,11 +1238,11 @@ static void sort_varlist (gpointer p, guint col, GtkWidget *w)
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
 
-    gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(model), 0,
+    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
 				     compare_var_ids, NULL, NULL);
-    gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(model), 1,
+    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 1,
 				     compare_varnames, NULL, NULL);
-    gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(model), 
+    gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model), 
 					  col, GTK_SORT_ASCENDING);
 }
 

@@ -30,6 +30,8 @@
 # include "treeutils.h"
 #endif
 
+#define VLDEBUG 0
+
 enum {
     SR_LVARS = 1,
     SR_RLVARS,
@@ -277,20 +279,27 @@ real_varlist_set_var (int v, int lag, GtkListStore *store, GtkTreeIter *iter)
 static int 
 varlist_remove_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter)
 {
+    GtkTreeIter *last = iter;
     int row = -1, ok = 1;
     int tv, i = 0;
 
-    fprintf(stderr, "\nremove: looking for var %d (%s)\n", v,
+#if VLDEBUG
+    fprintf(stderr, "\nvarlist_remove_var_full: looking for var %d (%s)\n", v,
 	    datainfo->varname[v]);
+#endif
 
     if (gtk_tree_model_get_iter_first(mod, iter)) {
+	last = iter;
 	while (1) {
 	    gtk_tree_model_get(mod, iter, 0, &tv, -1);
+#if VLDEBUG
 	    fprintf(stderr, "row %d: checking against %d\n", i, tv);
+#endif
 	    if (tv == v) {
-		fprintf(stderr, "row %d: removing\n", i);
 		ok = gtk_list_store_remove(GTK_LIST_STORE(mod), iter);
-		fprintf(stderr, "after removal, ok = %d\n", ok);
+#if VLDEBUG
+		fprintf(stderr, "removed at row %d, now ok = %d\n", i, ok);
+#endif
 		if (row < 0) {
 		    row = i;
 		}
@@ -300,11 +309,16 @@ varlist_remove_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter)
 		    break;
 		}
 	    }
-	    i++;
 	    if (!gtk_tree_model_iter_next(mod, iter)) {
+		/* iter is now invalid */
+		iter = last;
 		break;
 	    }
+	    last = iter;
+	    i++;
 	} 
+    } else {
+	iter = last;
     }
 
     return row;
@@ -315,6 +329,10 @@ varlist_insert_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter,
 			 selector *sr, int locus)
 {
     int lcontext = 0;
+
+#if VLDEBUG
+    fprintf(stderr, "varlist_insert_var_full: starting var %d\n", v);
+#endif
 
     if (v > 0 && dataset_is_time_series(datainfo)) {
 	lcontext = sr_get_lag_context(sr, locus);
@@ -331,16 +349,19 @@ varlist_insert_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter,
 		append = 1;
 	    }
 
-	    fprintf(stderr, "done prior removal, row=%d, append=%d\n",
+#if VLDEBUG
+	    fprintf(stderr, "got laglist, done prior removal, row=%d, append=%d\n",
 		    row, append);
-	    
+#endif
 	    for (i=1; i<=laglist[0]; i++) {
 		if (append) {
 		    gtk_list_store_append(GTK_LIST_STORE(mod), iter);
 		} else {
 		    gtk_list_store_insert(GTK_LIST_STORE(mod), iter, row++);
 		}
+#if VLDEBUG
 		fprintf(stderr, "adding var %d, lag %d\n", v, laglist[i]);
+#endif
 		real_varlist_set_var(v, laglist[i], GTK_LIST_STORE(mod), iter);
 	    }
 	    free(laglist);
@@ -350,6 +371,7 @@ varlist_insert_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter,
     }
 
     if (lcontext == 0) {
+	gtk_list_store_append(GTK_LIST_STORE(mod), iter);
 	real_varlist_set_var(v, 0, GTK_LIST_STORE(mod), iter);
     }
 }
@@ -623,7 +645,9 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
 	    } else {
 		gtk_list_store_insert(GTK_LIST_STORE(mod), &iter, row++);
 	    }
+#if VLDEBUG
 	    fprintf(stderr, "depvar_lags: adding var %d, lag %d\n", v, laglist[i]);
+#endif
 	    real_varlist_set_var(v, laglist[i], GTK_LIST_STORE(mod), &iter);
 	}    
 
@@ -831,8 +855,8 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
     }
 
     if (!already_there && !at_max) {
-	gtk_list_store_append(GTK_LIST_STORE(model), &iter);
 	if (vname != NULL) {
+	    gtk_list_store_append(GTK_LIST_STORE(model), &iter);
 	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 			       0, v, 1, 0, 2, vname, -1);
 	    g_free(vname);
@@ -1086,6 +1110,8 @@ static void clear_vars (GtkWidget *w, selector *sr)
     if (sr->lags_button != NULL) {
 	gtk_widget_set_sensitive(sr->lags_button, FALSE);
     }
+
+    destroy_lag_preferences();
 }
 
 static gint varlist_row_count (selector *sr, int locus, int *realrows)
@@ -4364,7 +4390,9 @@ static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
 {
     int locus = 0;
 
+#if VLDEBUG
     fprintf(stderr, "maybe_revise_var_string: v = %d\n", vlinfo->v);
+#endif
 
     if (vlinfo->context == LAG_X) {
 	locus = (sr->code == VAR || 
@@ -4373,7 +4401,9 @@ static void maybe_revise_var_string (var_lag_info *vlinfo, selector *sr)
     } else if (vlinfo->context == LAG_W) {
 	locus = SR_RUVARS;
     } else if (depvar_row(vlinfo->context)) { 
+#if VLDEBUG
 	fprintf(stderr, " calling maybe_revise_depvar_lags\n");
+#endif
 	maybe_revise_depvar_lags(sr, vlinfo->v, vlinfo->context);
     }
 
