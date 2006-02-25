@@ -1111,7 +1111,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	gtk_widget_set_sensitive(sr->lags_button, FALSE);
     }
 
-    destroy_lag_preferences();
+    clear_selector();
 }
 
 static gint varlist_row_count (selector *sr, int locus, int *realrows)
