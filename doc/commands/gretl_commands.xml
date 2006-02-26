@@ -443,7 +443,7 @@
     <description>
       <para context="cli">
 	If no <repl>indepvars</repl> list is given, estimates a univariate
-	ARIMA (Autoregressive, Intgrated, Moving Average) model.  The
+	ARIMA (Autoregressive, Integrated, Moving Average) model.  The
 	integer values <repl>p</repl>, <repl>d</repl> and <repl>q</repl>
 	represent the autoregressive (AR) order, the differencing order,
 	and the moving average (MA) order respectively.  These values may be
@@ -471,7 +471,7 @@
       </para>
 
       <para context="cli">
-	Al alternative form of syntax is available for this command: if
+	An alternative form of syntax is available for this command: if
 	you do not want to apply differencing (either seasonal or
 	non-seasonal), you may omit the <repl>d</repl> and <repl>D</repl>
 	fields altogether, rather than explicitly entering 0.  In
