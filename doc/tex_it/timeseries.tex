@@ -1,0 +1,339 @@
+\chapter{Modelli per serie storiche}
+\label{chap:timeser}
+
+\section{Modelli ARMA}
+\label{arma-estimation}
+
+\subsection{Rappresentazione e sintassi}
+\label{arma-repr}
+
+Il comando \cmd{arma} effettua la stima di modelli autoregressivi a media mobile
+(ARMA); la rappresentazione più generale di un modello stimabile con \app{gretl}
+è la seguente:
+\begin{equation}
+  \label{eq:general-arma}
+  A(L) B(L^s) y_t = x_t \beta + C(L) D(L^s) \epsilon_t ,
+\end{equation}
+dove $L$ è l'operatore di ritardo ($L^n x_t = x_{t-n}$), $s$ è il numero di
+sotto-periodi per le serie stagionali (ad esempio, 12 per serie mensili),
+$x_t$ è un vettore di variabili esogene, e $\epsilon_t$ è un processo a
+rumore bianco.
+
+Il modello ARMA ``basilare'' si ottiene quando vale $x_t = 1$ e non ci sono
+operatori stagionali. In questo caso, $B(L^s) = D(L^s) = 1$ e il modello diventa
+\begin{equation}
+  \label{eq:plain-arma}
+  A(L) y_t = \mu + C(L) \epsilon_t ,
+\end{equation}
+dove, nella solita notazione, il vettore $\beta$ si riduce all'intercetta $\mu$.
+È possibile scrivere l'equazione precedente in modo più esplicito come
+\[
+  y_t = \mu + \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q
+  \epsilon_{t-q} ;
+\]
+la sintassi corrispondente in \app{gretl} è semplicemente
+\begin{code}
+  gretl p q ; y
+\end{code}
+dove \verb|p| e \verb|q| sono gli ordini di ritardo desiderati; questi possono
+essere sia numeri, sia scalari pre-definiti. Il parametro $\mu$ può essere
+omesso se necessario, aggiungendo l'opzione \cmd{--nc} al comando.
+
+Se si vuole stimare un modello con variabili esplicative, la sintassi vista
+sopra può essere estesa in questo modo
+\begin{code}
+  gretl p q ; y const x1 x2
+\end{code}
+Questo comando stimerebbe il seguente modello:
+\[
+  y_t = \beta_0 + x_{1,t} \beta_1 + x_{2,t} \beta_2 + 
+  \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q} .
+\]
+Quello che \app{gretl} stima in questo caso è un modello ARMAX (ARMA +
+variabili esogene), che è diverso da ciò che alcuni altri programmi chiamano
+``modello di regressione con errori ARMA''. La differenza è evidente
+considerando il modello stimato da \app{gretl}
+\begin{equation}
+  \label{eq:armax}
+  A(L) y_t = x_t \beta + C(L) \epsilon_t ,
+\end{equation}
+e un modello di regressione con errori ARMA, ossia
+\begin{eqnarray}
+  \label{eq:reg-arma}
+  y_t & = & x_t \beta + u_t \\
+  A(L) u_t & = & C(L) \epsilon_t ;
+\end{eqnarray}
+l'ultimo si tradurrebbe nell'espressione seguente
+\[
+  A(L) y_t = A(L) \left(x_t \beta \right) + C(L) \epsilon_t ;
+\]
+la formulazione ARMAX ha il vantaggio che il coefficiente $\beta$
+può essere interpretato immediatamente come l'effetto marginale delle
+variabili $x_t$ sulla media condizionale di $y_t$.
+
+La struttura del comando \cmd{arma} non permette di specificare modelli con
+buchi nella struttura dei ritardi\footnote{In realtà questa limitazione può
+essere aggirata per quanto riguarda la parte autoregressiva, includendo ritardi
+della variabile dipendente nella lista delle variabili esogene. In questo modo
+però, anche se si ottengono stime corrette, rende inutilizzabile la funzionalità
+di previsione attualmente disponibile.}. Una struttura di ritardi più flessibile
+può essere necessaria quando si analizzano serie che mostrano un marcato
+andamento stagionale. In questo caso è possibile usare il modello completo
+(\ref{eq:general-arma}). Ad esempio, la sintassi
+\begin{code}
+  arma 1 1 ; 1 1 ; y
+\end{code}
+permette di stimare un modello con quattro parametri:
+\[
+  ( 1 - \phi L )  ( 1 - \Phi L^s ) y_t = \mu + ( 1 + \theta L ) ( 1 + \Theta L^s ) \epsilon_t;
+\]
+assumendo che $y_t$ è una serie trimestrale (e quindi $s=4$), l'equazione
+precedente può essere scritta in modo più esplicito come
+\[
+  y_t = \mu + \phi y_{t-1} + \Phi y_{t-4} - (\phi \cdot \Phi) y_{t-5} + 
+  \epsilon_t + \theta \epsilon_{t-1} + \Theta \epsilon_{t-4} +
+  (\theta \cdot \Theta) \epsilon_{t-5} .
+\]
+
+\subsection{Stima}
+\label{arma-est}
+
+L'algoritmo usato da \app{gretl} per stimare i parametri di un modello ARMA è
+quello della massima verosimiglianza condizionale (CML), noto anche come ``somma
+dei quadrati condizionale'' (si veda Hamilton, \emph{Time Series Analysis} 1994,
+pagina 132).  Questo metodo è esemplificato nello script \ref{jack-arma}, quindi
+ne verrà data solo una breve descrizione qui: dato un campione di ampiezza
+$T$, il metodo CML minimizza la somma dei quadrati degli errori delle previsioni
+generate dal modello per l'osservazione successiva, sull'intervallo $t_0,
+\ldots, T$. Il punto di partenza $t_0$ dipende dall'ordine dei polinomi nel
+modello ARMA.
+
+Questo metodo è quasi equivalente a quello della massima verosimiglianza in
+ipotesi di normalità; la sola differenza sta nel fatto che le prime $(t_0 - 1)$
+osservazioni sono considerate fisse ed entrano nella funzione di verosimiglianza
+solo come variabili condizionanti. Di conseguenza, i due metodi sono
+asintoticamente equivalenti sotto le consuete ipotesi.
+
+La stima di massima verosimiglianza vera e propria (in ipotesi di normalità) è
+disponibile in \app{gretl} attraverso il plugin \verb|x-12|, che viene usato
+automaticamente se si aggiunge l'opzione \verb|--x-12-arima| al comando
+\cmd{arma}. Ad esempio, il codice seguente
+\begin{code}
+  open data10-1
+  arma 1 1 ; r
+  arma 1 1 ; r --x-12-arima
+\end{code}
+produce queste stime:
+\begin{center}
+  \begin{tabular}{crrrr}
+    \hline
+    Parametro & \multicolumn{2}{c}{\textrm{CML}} &
+    \multicolumn{2}{c}{\textrm{ML (x-12 plugin)}} \\
+    \hline 
+    $\mu$ & 1.07074 & 0.488426 &  1.00232 & 0.133002 \\
+    $\phi$ & 0.853026 & 0.0450016 & 0.855373  & 0.0496304 \\
+    $\theta$ & 0.591348 & 0.0456837 & 0.587986 & 0.0799962 \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\subsection{Previsione}
+\label{arma-fcast}
+
+To be written
+
+\section{Unit root tests}
+\label{sec:uroot}
+
+To be written yet.
+
+\subsection{The ADF test}
+\label{sec:ADFtest}
+\begin{equation}
+  \label{eq:ADFtest}
+  \Delta y_t = \mu_t + \varphi y_{t-1} + \sum_{i=1}^p \gamma_i \Delta
+  y_{t-i} + \epsilon_t
+\end{equation}
+
+\subsection{The KPSS test}
+\label{sec:KPSStest}
+
+\begin{equation}
+  \label{eq:KPSStest}
+  \eta = \frac{\sum_{i=1}^T S_t^2 }{ T^2 \bar{\sigma}^2 }
+\end{equation}
+where $S_t = \sum_{s=1}^t y_t - \bar{y}$ and $\bar{\sigma}^2$ is an
+estimate of the long-run variance of $(y_t - \bar{y})$.
+
+\section{ARCH and GARCH}
+\label{sec:arch}
+
+Heteroskedasticity means a non-constant variance of the error term in
+a regression model.  Autoregressive Conditional Heteroskedasticity
+(ARCH) is a phenomenon specific to time series models, whereby the
+variance of the error displays autoregressive behavior --- for
+instance, the time series exhibits periods where the error variance is
+relatively large, for several observations, and periods where it is
+relatively small.
+
+To be continued...
+
+\section{Cointegrazione e modelli vettoriali a correzione d'errore}
+\label{vecm-explanation}
+
+\subsection{Il test di cointegrazione di Johansen}
+\label{johansen-test}
+
+Il test di Johansen per la cointegrazione deve tenere conto di quali
+ipotesi vengono fatte a proposito dei termini deterministici, per cui
+si possono individuare i ben noti ``cinque casi''. Una presentazione
+approfondita dei cinque casi richiede una certa quantità di algebra
+matriciale, ma è possibile dare un'intuizione del problema per mezzo
+di un semplice esempio.
+    
+Si consideri una serie $x_t$ che si comporta nel modo seguente
+%      
+\[ x_t = m + x_{t-1} + \varepsilon_t \]
+%
+dove $m$ è un numero reale e $\varepsilon_t$ è un processo ``white
+noise''.  Come si può facilmente mostrare, $x_t$ è un ``random walk''
+che fluttua intorno a un trend deterministico con pendenza $m$. Nel
+caso particolare in cui $m$ = 0, il trend deterministico scompare e
+$x_t$ è un puro random walk.
+    
+Si consideri ora un altro processo $y_t$, definito da
+%      
+\[ y_t = k + x_t + u_t \]
+%
+dove, ancora, $k$ è un numero reale e $u_t$ è un processo white noise.
+Poiché $u_t$ è stazionario per definizione, $x_t$ e $y_t$ sono
+cointegrate, ossia la loro differenza
+%      
+\[ z_t = y_t - x_t = k + u_t \]
+%	
+è un processo stazionario. Per $k$ = 0, $z_t$ è un semplice white
+noise a media zero, mentre per $k$ $\ne$ 0 il processo $z_t$ è white
+noise con media diversa da zero.
+  
+Dopo alcune semplici sostituzioni, le due equazioni precedenti possono
+essere rappresentate congiuntamente come un sistema VAR(1)
+%      
+\[ \left[ \begin{array}{c} y_t \\ x_t \end{array} \right] = \left[
+  \begin{array}{c} k + m \\ m \end{array} \right] + \left[
+  \begin{array}{rr} 0 & 1 \\ 0 & 1 \end{array} \right] \left[
+  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \left[
+  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array}
+\right] \]
+%	
+o in forma VECM
+%      
+\begin{eqnarray*}
+  \left[  \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]  & = & 
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{rr} -1 & 1 \\ 0 & 0 \end{array} \right] 
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = & 
+  \left[  \begin{array}{c} k + m \\ m \end{array} \right] +
+  \left[  \begin{array}{r} -1 \\ 0 \end{array} \right]
+  \left[  \begin{array}{rr} 1 & -1 \end{array} \right] 
+  \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + 
+  \left[  \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t \end{array} \right] = \\
+  & = &
+  \mu_0 + \alpha \beta^{\prime} \left[  \begin{array}{c} y_{t-1} \\ x_{t-1} \end{array} \right] + \eta_t = 
+  \mu_0 + \alpha z_{t-1} + \eta_t ,
+\end{eqnarray*}
+%	
+dove $\beta$ è il vettore di cointegrazione e $\alpha$ è il vettore
+dei ``loading'' o ``aggiustamenti''.
+     
+Possiamo ora considerare tre casi possibili:
+    
+\begin{enumerate}
+\item $m \ne 0$: In questo caso $x_t$ ha un trend, come abbiamo appena
+  visto; ne consegue che anche $y_t$ segue un trend lineare perché in
+  media si mantiene a una distanza di $k$ da $x_t$.  Il vettore
+  $\mu_0$ non ha restrizioni. Questo è il caso predefinito per il
+  comando \cmd{vecm} di gretl.
+	
+\item $m = 0$ e $k \ne 0$: In questo caso, $x_t$ non ha un trend, e di
+  conseguenza neanche $y_t$.  Tuttavia, la distanza media tra $y_t$ e
+  $x_t$ è diversa da zero. Il vettore $\mu_0$ è dato da
+%	  
+  \[
+  \mu_0 = \left[ \begin{array}{c} k \\ 0 \end{array} \right]
+  \]
+%	    
+  che è non nullo, quindi il VECM mostrato sopra ha un termine
+  costante.  La costante, tuttavia è soggetta alla restrizione che il
+  suo secondo elemento deve essere pari a 0. Più in generale,
+  $\mu$\ensuremath{_{0}} è un multiplo del vettore $\alpha$. Si noti
+  che il VECM potrebbe essere scritto anche come
+%	  
+  \[
+  \left[ \begin{array}{c} \Delta y_t \\ \Delta x_t \end{array} \right]
+  = \left[ \begin{array}{r} -1 \\ 0 \end{array} \right] \left[
+    \begin{array}{rrr} 1 & -1 & -k \end{array} \right] \left[
+    \begin{array}{c} y_{t-1} \\ x_{t-1} \\ 1 \end{array} \right] +
+  \left[ \begin{array}{c} u_t + \varepsilon_t \\ \varepsilon_t
+    \end{array} \right]
+  \]
+%	   
+  che incorpora l'intercetta nel vettore di cointegrazione. Questo è
+  il caso di ``costante vincolata''; può essere specificato nel
+  comando \cmd{vecm} di gretl usando l'opzione \verb+--rc+.
+	
+\item $m = 0$ e $k = 0$: Questo caso è il più vincolante: chiaramente,
+  né $x_t$ né $y_t$ hanno un trend, e la loro distanza media è zero.
+  Anche il vettore $\mu_0$ vale 0, quindi questo caso può essere
+  chiamato ``senza costante''.  Questo caso è specificato usando
+  l'opzione \verb+--nc+ con \cmd{vecm}.
+	
+\end{enumerate}
+
+
+Nella maggior parte dei casi, la scelta tra le tre possibilità si basa
+su un misto di osservazione empirica e di ragionamento economico. Se
+le variabili in esame sembrano seguire un trend lineare, è opportuno
+non imporre alcun vincolo all'intercetta. Altrimenti occorre chiedersi
+se ha senso specificare una relazione di cointegrazione che includa
+un'intercetta diversa da zero. Un esempio appropriato potrebbe essere
+la relazione tra due tassi di interesse: in generale questi non hanno
+un trend, ma il VAR potrebbe comunque avere un'intercetta perché la
+differenza tra i due (lo ``spread'' sui tassi d'interesse) potrebbe
+essere stazionaria attorno a una media diversa da zero (ad esempio per
+un premio di liquidità o di rischio).
+    
+L'esempio precedente può essere generalizzato in tre direzioni:
+    
+\begin{enumerate}
+\item Se si considera un VAR di ordine maggiore di 1, l'algebra si
+  complica, ma le conclusioni sono identiche.
+\item Se il VAR include più di due variabili endogene, il rango di
+  cointegrazione $r$ può essere maggiore di 1. In questo caso $\alpha$
+  è una matrice con $r$ colonne e il caso con la costante vincolata
+  comporta che $\mu_0$ sia una combinazione lineare delle colonne di
+  $\alpha$.
+\item Se si include un trend lineare nel modello, la parte
+  deterministica del VAR diventa $\mu_0$ + $\mu_1$. Il ragionamento è
+  praticamente quello visto sopra, tranne per il fatto che
+  l'attenzione è ora posta su $\mu_1$ invece che su $\mu_0$. La
+  controparte del caso con ``costante vincolata'' discusso sopra è un
+  caso con ``trend vincolato'', così che le relazioni di
+  cointegrazione includono un trend, ma la differenza prima delle
+  variabili in questione no. Nel caso di un trend non vincolato, il
+  trend appare sia nelle relazioni di cointegrazione sia nelle
+  differenze prime, il che corrisponde alla presenza di un trend
+  quadratico nelle variabili (espresse in livelli). Questi due casi
+  sono specificati rispettivamente con le opzioni \verb+--crt+ e
+  \verb+--ct+ del comando \cmd{vecm}.
+\end{enumerate}
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide-it"
+%%% End: 
+
