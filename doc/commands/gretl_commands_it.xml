@@ -387,24 +387,24 @@
 
   </command>
 
-  <command name="arma" section="Estimation" label="Stima ARMA">
+  <command name="arima" section="Estimation" label="Stima ARMA/ARIMA">
 
     <usage>
       <arguments>
-        <argument>p</argument>
-	<argument>q</argument>
+        <argblock>
+          <argument>p</argument>
+          <argument>d</argument>
+          <argument>q</argument>
+        </argblock>
+ 	<argblock separated="true" optional="true">
+ 	  <argument>P</argument>
+	  <argument>D</argument>
+ 	  <argument>Q</argument>
+ 	</argblock>
 	<argument separated="true">variabile-dipendente</argument>
 	<argument optional="true">variabili-indipendenti</argument>
       </arguments>
       <options>
-        <option>
-	  <flag>--native</flag>
-	  <effect>usa il plugin interno (predefinito)</effect>
-        </option>
-        <option>
-	  <flag>--x-12-arima</flag>
-	  <effect>usa X-12-ARIMA per la stima</effect>
-        </option>
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
@@ -417,26 +417,46 @@
          <flag>--nc</flag>
          <effect>non include l'intercetta</effect>
         </option>
+        <option>
+	  <flag>--x-12-arima</flag>
+	  <effect>usa X-12-ARIMA per la stima</effect>
+        </option>
+        <option>
+	  <flag>--conditional</flag>
+	  <effect>X-12-ARIMA: usa la massima verosimiglianza condizionale per la stima</effect>
+        </option>
       </options>
       <examples>
-        <example>arma 1 2 ; y</example>
-	<example>arma 2 2 ; y 0 x1 x2 --verbose</example>
-        <example>arma 1 1 ; 1 0 ; y 0 x1 x2</example>
+        <example>arima 1 0 2 ; y</example>
+	<example>arima 2 0 2 ; y 0 x1 x2 --verbose</example>
+	<example>arima 0 1 1 ; 0 1 1 ; y --nc</example>
       </examples>
     </usage>
 
     <description>
       <para context="cli">
 	Se non viene fornita una lista di <repl>variabili-indipendenti</repl>,
-        stima un modello autoregressivo a media mobile (ARMA: Autoregressive,
-        Moving Average) univariato.  I valori interi <repl>p</repl> e
-        <repl>q</repl> rappresentano rispettivamente gli ordini AR e MA.
-        I valori interi opzionali <repl>P</repl> e <repl>Q</repl> rappresentano
-        gli ordini AR e MA stagionali; essi sono rilevanti solo la frequenza dei
-        dati è superiore a 1 (ad esempio, dati trimestrali o mensili).
-        I valori possono essere indicati in forma numerica o con i nomi di
+        stima un modello autoregressivo integrato a media mobile (ARIMA: Autoregressive,
+        Integrated, Moving Average) univariato.  I valori interi <repl>p</repl>,
+        <repl>d</repl> e <repl>q</repl> rappresentano rispettivamente gli ordini
+        dei termini autoregressivi (AR), l'ordine di differenziazione, e quello dei termini
+        a media mobile (MA).  Questi valori possono essere indicati in forma
+        numerica o con i nomi di variabili scalari preesistenti. Ad esempio, un
+        valore <repl>d</repl> pari a 1 significa che prima di stimare i
+        parametri ARMA occorre prendere la differenza della variabile
+        dipendente.
+      </para>
+        
+      <para context="cli">
+        I valori interi opzionali <repl>P</repl>, <repl>D</repl> e
+        <repl>Q</repl> rappresentano rispettivamente, l'ordine dei termini AR
+        stagionali, l'ordine di differenziazione stagionale e l'ordine dei
+        termini MA stagionali. Essi sono rilevanti solo la frequenza dei dati è
+        superiore a 1 (ad esempio, dati trimestrali o mensili). Anche questi
+        valori possono essere indicati in forma numerica o con i nomi di
         variabili scalari preesistenti.
       </para>
+      
       <para context="cli">
         Nel caso univariato la scelta predefinita include un'intercetta nel
         modello, ma questa può essere soppressa con l'opzione
@@ -445,26 +465,41 @@
         questo caso occorre indicare esplicitamente la costante se si
         desidera un'intercetta (come nel secondo degli esempi proposti).
       </para>
-
+      
+      <para context="cli">
+        È disponibile una sintassi alternativa per questo comando: se non si
+        intende applicare alcuna operazione di differenziazione (stagionale o
+        non stagionale), è possibile omettere totalmente i termini
+        <repl>d</repl> e <repl>D</repl>, invece che impostarli esplicitamente
+        pari a 0. Inoltre, <lit>arma</lit> è un sinonimo di <lit>arima</lit>,
+        quindi ad esempio il comando seguente è un modo valido per specificare
+        un modello ARMA(2,1):
+      </para>
+      <code context="cli">
+	arma 2 1 ; y
+      </code>
+      
       <para context="gui">
-	Se è selezionato dal menù Variabile, stima un modello autoregressivo a media
-	mobile univariato (ARMA: Autoregressive, Moving Average).  Se è selezionato
-	dal menù Modello (<quote>ARMAX</quote>), stima un modello ARMAX, che
-	contiene in più dei regressori esogeni.
+	Stima un modello ARMA, con o senza regressori esogeni. Se l'ordine di
+        differenziazione è maggiore di zero, il modello diventa un ARIMA. Se i
+        dati hanno una frequenza superiore a 1, viene offerta la possibilità di
+        includere termini stagionali.
       </para>
 
       <para>Il funzionamento predefinito utilizza la funzione ARMA 
-	<quote>interna</quote> di gretl; nel caso di un modello ARMA
-	univariato, è anche possibile usare <program>X-12-ARIMA</program>
-	(se è stato installato il pacchetto <program>X-12-ARIMA</program> per gretl).
+        <quote>interna</quote> di gretl, ma è anche possibile usare
+        <program>X-12-ARIMA</program> (se è stato installato il pacchetto
+        <program>X-12-ARIMA</program> per gretl). In quest'ultimo caso, c'è
+        l'ulteriore opzione di scegliere come metodo di stima quello della
+        massima verosimiglianza esatta o condizionale. Il metodo predefinito
+        usato da <program>X-12-ARIMA</program> è quello della massima
+        verosimiglianza, mentre il metodo della massima verosimiglianza
+        condizionale produrrà stime più vicine a quelle ottenute usando la
+        funzione interna ARMA di gretl. La matrice di covarianza non è
+        disponibile quando la stima utilizza <program>X-12-ARIMA</program>.
       </para>
 
-      <para context="cli">Le opzioni mostrate in precedenza possono anche
-	essere combinate, tenendo conto che la matrice di covarianza non è
-	disponibile se si usa <program>X-12-ARIMA</program> per la stima.</para>
-
-      <para>L'algoritmo interno di gretl per ARMA è in gran parte dovuto
-	a Riccardo <quote>Jack</quote> Lucchetti: utilizza una procedura di
+      <para>L'algoritmo interno di gretl per ARMA utilizza una procedura di
 	massima verosimiglianza condizionale, implementata attraverso la stima 
 	iterata	con minimi quadrati della regressione del prodotto esterno del
 	gradiente (OPG). Si veda la <guideref targ="jack-arma"/> per la logica della
@@ -472,7 +507,7 @@
 	aggiuntivi) sono inizializzati usando una auto-regressione OLS, mentre
 	i coefficienti MA sono inizializzati a zero.</para>
 
-      <para>Il valore AIC mostrato nei modelli ARMA è calcolato secondo la
+      <para>Il valore AIC mostrato nei modelli ARIMA è calcolato secondo la
 	definizione usata in <program>X-12-ARIMA</program>, ossia
 	  <equation status="display" 
 	  tex="\[\mbox{AIC}=-2\ell+2k\]"
@@ -482,7 +517,12 @@
 	  tex="$\ell$" ascii="L"
 	  graphic="ell"/>
         è la log-verosimiglianza e <mathvar>k</mathvar> è il numero totale di
-        parametri stimati.
+        parametri stimati. Si noti che <program>X-12-ARIMA</program> non produce
+        criteri di informazione come l'AIC quando la stima è effettuata col
+        metodo della massima verosimiglianza condizionale.
+      </para> 
+
+      <para> 
 	Il valore di <quote>frequenza</quote> mostrato insieme alle radici
 	AR e MA è il valore di &lgr; che risolve
 	  <equation status="display" 
@@ -494,7 +534,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variabile/Modello ARMA, /Modello/Serie Storiche/ARMAX</menu-path>
+      <menu-path>/Modello/Serie Storiche/ARIMA</menu-path>
       <other-access>Menù pop-up nella finestra principale (selezione singola)</other-access>
     </gui-access>
 
