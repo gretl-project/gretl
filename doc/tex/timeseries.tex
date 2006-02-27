@@ -73,7 +73,10 @@ the latter would translate into
 \]
 the ARMAX formulation has the advantage that $\beta$ can be
 immediately interpreted as the vector of marginal effects of the $x_t$
-variables on the conditional mean of $y_t$.
+variables on the conditional mean of $y_t$.  Note, however, that
+regression models with purely autoregressive errors can be estimated
+(albeit not with maximum-likelihood techniques) by other \app{gretl}
+commands such as \cmd{corc} and \cmd{pwe}. 
 
 The \cmd{arma} command can be therefore used also for estimating
 \emph{Transfer Function Models}, a type of generalization of
@@ -121,9 +124,10 @@ forecasting.
 
 The above discussion presupposes that the time series $y_t$ has
 already been subjected to all the transformations deemed necessary for
-ensuring stationarity. Differencing is the most common of these
-transformations, and \app{gretl} provides a mechanism to include this
-step into the \cmd{arma} command: the syntax
+ensuring stationarity (see also section \ref{sec:uroot}). Differencing
+is the most common of these transformations, and \app{gretl} provides
+a mechanism to include this step into the \cmd{arma} command: the
+syntax
 \begin{code}
   arma p d q ; y 
 \end{code}
@@ -185,19 +189,24 @@ example, the following code
   arma 1 1 ; r
   arma 1 1 ; r --x-12-arima
 \end{code}
-produces the estimates below:
+produces the estimates shown in Table~\ref{tab:cml-ml}.
+
+\begin{table}[htbp]
+\caption{CML and ML estimates}
+\label{tab:cml-ml}
 \begin{center}
   \begin{tabular}{crrrr}
     \hline
-    Parameter & \multicolumn{2}{c}{\textrm{CML}} &
-    \multicolumn{2}{c}{\textrm{ML (x-12 plugin)}} \\
+    Parameter & \multicolumn{2}{c}{CML} &
+    \multicolumn{2}{c}{ML (\app{X-12-ARIMA} plugin)} \\
     \hline 
-    $\mu$ & 1.07322 & 0.488661 &  1.00232 & 0.133002 \\
-    $\phi$ & 0.852772 & 0.0450252 & 0.855373  & 0.0496304 \\
-    $\theta$ & 0.591838 & 0.0456662 & 0.587986 & 0.0799962 \\
+    $\mu$ & 1.07322 & (0.488661) &  1.00232 & (0.133002) \\
+    $\phi$ & 0.852772 & (0.0450252) & 0.855373  & (0.0496304) \\
+    $\theta$ & 0.591838 & (0.0456662) & 0.587986 & (0.0799962) \\
     \hline
   \end{tabular}
 \end{center}
+\end{table}
 
 For comparability with \app{gretl}'s own estimates, you can instruct
 \app{X-12-ARIMA} to produce CML estimates by appending the option
@@ -221,22 +230,64 @@ The ADF (Augmented Dickey-Fuller) test is, as implemented in
 \begin{equation}
   \label{eq:ADFtest}
   \Delta y_t = \mu_t + \varphi y_{t-1} + \sum_{i=1}^p \gamma_i \Delta
-  y_{t-i} + \epsilon_t
+  y_{t-i} + \epsilon_t .
 \end{equation}
-\begin{itemize}
-\item $H_0$: $y_t$ is I(1);
-\item one-sided test: $H_0$ is rejected if $t_{\varphi}$ is ``small'';
-\item nonstandard distribution, also depends on the contents of
-  $\mu_t$ --- p-values by MacKinnon.
-\end{itemize}
-Syntax:
+
+This test statistic is probably the best-known and most widely used
+unit root test. It is a one-sided test whose null hypothesis is
+$\varphi = 0$ versus the alternative $\varphi < 0$. Under the null,
+$y_t$ must be differenced at least once to achieve stationarity;
+under the alternative, $y_t$ is already stationary and no differencing
+is required. Hence, large negative values of the test statistic lead
+to the rejection of the null.
+
+One peculiar aspect of this test is that its limit distribution is
+non-standard under the null hypothesis: moreover, the shape of the
+distribution, and consequently the critical values for the test,
+depends on the form of the $\mu_t$ term.  A full analysis of the
+various cases is inappropriate here: Hamilton (1994) contains an
+excellent discussion, but any recent time series textbook covers
+this topic. Suffice it to say that \app{gretl} allows the user to
+choose the specification for $\mu_t$ among four different
+alternatives:
+
+\begin{center}
+  \begin{tabular}{cc}
+    \hline
+    $\mu_t$ & command option \\
+    \hline
+    0 & \verb|--nc| \\
+    $\mu_0$ &  \verb|--c| \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
+    $\mu_0 + \mu_1 t + \mu_1 t^2$ &  \verb|--ctt| \\
+    \hline
+  \end{tabular}
+\end{center}
+
+These options are not mutually exclusive and can be used together; in
+this case, the statistic will be reported separately for each case.
+By default, \app{gretl} uses by default the combination
+\verb|--c --ct --ctt|. For each case, approximate p-values are
+calculated by means of the algorithm developed in MacKinnon (1996).
+
+The \app{gretl} command used to perform the test is \cmd{adf}; for example
 \begin{code}
-  adf n x1
+  adf 4 x1 --c --ct
 \end{code}
-\begin{itemize}
-\item Determinstic kernel options;
-\item auto-selection of $p$ via negative \verb|n|.
-\end{itemize}
+would compute the test statistic as the t-statistic for $\varphi$ in
+equation \ref{eq:ADFtest} with $p=4$ in the two cases $\mu_t = \mu_0$
+and $\mu_t = \mu_0 + \mu_1 t$.
+
+The number of lags ($p$ in equation \ref{eq:ADFtest}) should be chosen
+as to ensure that (\ref{eq:ADFtest}) is a parametrization flexible
+enough to represent adequately the short-run persistence of $\Delta
+y_t$. Setting $p$ too low results in size distortions in the test,
+whereas setting $p$ too high would lead to low power. As a convenience
+to the user, the parameter $p$ can be automatically determined.
+Setting $p$ to a negative number triggers a sequential procedure that
+starts with $p$ lags and decrements $p$ until the $t$-statistic for
+the parameter $\gamma_p$ exceeds 1.645 in absolute value.
+
 \subsection{The KPSS test}
 \label{sec:KPSStest}
 
@@ -282,13 +333,23 @@ cointegration.
 
 The rank of $\Pi$ is investigated by computing the eigenvalues of a
 closely related matrix (call it $M$) whose rank is the same as $\Pi$:
-tests on the rank of $\Pi$ can therefore be carried out by testing how
-many eigenvalues of $M$ are 0. The two Johansen tests are the
-``$\lambda$-max'' test, for hypotheses on individual eigenvalues, and
-the ``trace'' test, for joint hypotheses.
+however, $M$ is by construction symmetric and positive semidefinite.
+As a consequence, all its eigenvalues are real and non-negative; tests
+on the rank of $\Pi$ can therefore be carried out by testing how many
+eigenvalues of $M$ are 0.
 
-The \app{gretl} command \cmd{coint2} performs these two tests.
-Example:
+If all the eigenvalues are significantly different from 0, then all the
+processes are stationary. If, on the contrary, there is at least one
+zero eigenvalue, then the $y_t$ process is integrated. On the other
+extreme, if no eigenvalues are significantly different from 0, then not
+only the process $y_t$ is non-stationary, but the same holds for any
+linear combination $\beta'y_t$; in other words, no cointegration
+occurs.
+
+The two Johansen tests are the ``$\lambda$-max'' test, for hypotheses
+on individual eigenvalues, and the ``trace'' test, for joint
+hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
+tests.  Example:
 \begin{code}
   coint2 n x1 x2 x3
 \end{code}
@@ -296,11 +357,15 @@ sets $p$ in equation (\ref{eq:Joh-tests}) to $(n-1)$ and prints a table
 with the two test batteries for the three series \verb|x1|, \verb|x2|
 and \verb|x3|.
  
-\ldots Options for the deterministic kernel \ldots
-More on this in section \ref{sec:johansen-test}
+\begin{itemize}
+\item Options for the deterministic kernel (more on this in section
+  \ref{sec:johansen-test})
+\item Critical values by Doornik
+\end{itemize}
+
 
 \section{ARCH and GARCH}
-\label{sec:arch}
+\label{sec:arch-garch}
 
 Heteroskedasticity means a non-constant variance of the error term in
 a regression model.  Autoregressive Conditional Heteroskedasticity
@@ -322,7 +387,7 @@ where the $\varepsilon_t$s are independently and identically
 distributed (iid) with mean zero and variance 1, and where $\sigma_t$
 is taken to be the positive square root of $\sigma^2_t$.
 $\Omega_{t-1}$ denotes the information set as of time $t-1$ and
-$\sigma^2_t$is known as the conditional variance: that is, the
+$\sigma^2_t$ is the conditional variance: that is, the
 variance conditional on information dated $t-1$ and earlier.
 
 It is important to notice the difference between ARCH and an ordinary
@@ -395,25 +460,24 @@ of equations:
   u_t &  = & \sigma_t \varepsilon_t \\
   \label{eq:garch-vareq}
   \sigma^2_t & = & \alpha_0 + \sum_{i=1}^q \alpha_i u^2_{t-i} +
-	  \sum_{j=1}^p \beta_i \sigma^2_{t-j}
+	  \sum_{j=1}^p \delta_i \sigma^2_{t-j}
 \end{eqnarray}
 As above, $\varepsilon_t$ is an iid sequence with unit variance.
 $X_t$ is a matrix of regressors (or in the simplest case,
 just a vector of 1s allowing for a non-zero mean of $y_t$).  Note that
 if $p=0$, GARCH collapses to ARCH($q$): the generalization is embodied
-in the $\beta_i$ terms that multiply previous values of the error
+in the $\delta_i$ terms that multiply previous values of the error
 variance.
 
 In principle the underlying innovation, $\varepsilon_t$, could follow
 any suitable probability distribution, and besides the obvious
 candidate of the normal or Gaussian distribution the $t$ distribution
 has been used in this context.  Currently \app{gretl} only handles the
-case where $\varepsilon_t$ is assumed to be Gaussian.  However, the
-\verb|--robust| option to the \cmd{garch} command computes the
-covariance matrix of the parameters via the Bollerslev--Wooldridge
-``sandwich'' estimator, so that the estimator \app{gretl} uses can be
-considered Quasi-Maximum Likelihood (QML) even with non-normal
-disturbances.
+case where $\varepsilon_t$ is assumed to be Gaussian.  However, when
+the \verb|--robust| option to the \cmd{garch} command is given, the
+estimator \app{gretl} uses for the covariance matrix can be considered
+Quasi-Maximum Likelihood even with non-normal disturbances.  See below
+for more on the options regarding the GARCH covariance matrix.
 
 Example:
 \begin{code}
@@ -428,19 +492,46 @@ scalar variables.
 \label{subsec:garch-est}
 
 Estimation of the parameters of a GARCH model is by no means a
-straightforward task.  In \app{gretl}, this is done using the specific
-Maximum Likelihood method proposed by Fiorentini, Calzolari and
-Panattoni (1996).\footnote{The algorithm is based on Fortran code
-  deposited in the archive of the \textit{Journal of Applied
-    Econometrics} by the authors, and is used by kind permission of
-  Professor Fiorentini.}  This method was adopted as a benchmark in
-the study of GARCH results by McCullough and Renfro (1998).  It
-employs analytical first and second derivatives of the log-likelihood,
-and uses a mixed-gradient algorithm, exploiting the information matrix
-in the early iterations and then switching to the Hessian in the
-neighborhood of the maximum likelihood.  (This progress can be
-observed if you append the \verb|--verbose| option to \app{gretl}'s
-\cmd{garch} command.)
+straightforward task.  (Consider equation~\ref{eq:garch-vareq}: the
+conditional variance at any point in time, $\sigma^2_t$, depends on
+the conditional variance in earlier periods, but $\sigma^2_t$ is not
+observed, and must be inferred by some sort of Maximum Likelihood
+procedure.)  \app{Gretl} uses the method proposed by Fiorentini,
+Calzolari and Panattoni (1996),\footnote{The algorithm is based on
+  Fortran code deposited in the archive of the \textit{Journal of
+    Applied Econometrics} by the authors, and is used by kind
+  permission of Professor Fiorentini.}  which was adopted as a
+benchmark in the study of GARCH results by McCullough and Renfro
+(1998).  It employs analytical first and second derivatives of the
+log-likelihood, and uses a mixed-gradient algorithm, exploiting the
+information matrix in the early iterations and then switching to the
+Hessian in the neighborhood of the maximum likelihood.  (This progress
+can be observed if you append the \verb|--verbose| option to
+\app{gretl}'s \cmd{garch} command.)
+
+Several options are available for computing the covariance matrix of
+the parameter estimates in connection with the \cmd{garch} command.
+At a first level, one can choose between a ``standard'' and a
+``robust'' estimator.  By default, the Hessian is used unless the
+\verb|--robust| option is given, in which case the QML estimator is
+used.  A finer choice is available via the \cmd{set} command, as
+shown in Table~\ref{tab:garch-vcv}.
+
+\begin{table}[htbp]
+\caption{Options for the GARCH covariance matrix}
+\label{tab:garch-vcv}
+\begin{center}
+\begin{tabular}{ll}
+\multicolumn{1}{c}{\textit{command}} &
+\multicolumn{1}{c}{\textit{effect}} \\ [4pt]
+\texttt{set garch\_vcv hessian} & Use the Hessian \\
+\texttt{set garch\_vcv im} & Use the Information Matrix \\
+\texttt{set garch\_vcv op} & Use the Outer Product of the Gradient \\
+\texttt{set garch\_vcv qml} & QML estimator \\
+\texttt{set garch\_vcv bw} & Bollerslev--Wooldridge ``sandwich'' estimator
+\end{tabular}
+\end{center}
+\end{table}
 
 It is not uncommon, when one estimates a GARCH model for an arbitrary
 time series, to find that the iterative calculation of the estimates
@@ -454,29 +545,29 @@ simplest (and much the most common) instance of the GARCH model, where
 $p = q = 1$.  In the GARCH(1, 1) model the conditional variance is
 \begin{equation}
 \label{eq:condvar}
-\sigma^2_t = \alpha_0 + \alpha_1 u^2_{t-1} + \beta_1 \sigma^2_{t-1}
+\sigma^2_t = \alpha_0 + \alpha_1 u^2_{t-1} + \delta_1 \sigma^2_{t-1}
 \end{equation}
 Taking the unconditional expectation of (\ref{eq:condvar}) we get
 \[
-\sigma^2 = \alpha_0 + \alpha_1 \sigma^2 + \beta_1 \sigma^2
+\sigma^2 = \alpha_0 + \alpha_1 \sigma^2 + \delta_1 \sigma^2
 \]
 so that
 \[
-\sigma^2 = \frac{\alpha_0}{1 - \alpha_1 - \beta_1}
+\sigma^2 = \frac{\alpha_0}{1 - \alpha_1 - \delta_1}
 \]
 For this unconditional variance to exist, we require that $\alpha_1 +
-\beta_1 < 1$, and for it to be positive we require that $\alpha_0 > 0$.
+\delta_1 < 1$, and for it to be positive we require that $\alpha_0 > 0$.
 
 A common reason for non-convergence of GARCH estimates (that is, a
-common reason for the non-existence of $\alpha_i$ and $\beta_i$ values
+common reason for the non-existence of $\alpha_i$ and $\delta_i$ values
 that satisfy the above requirements and at the same time maximize the
 likelihood of the data) is misspecification of the model.  It is
 important to realize that GARCH, in itself, allows \textit{only} for
 time-varying volatility in the data.  If the \textit{mean} of the
 series in question is not constant, or if the error process is not
 only heteroskedastic but also autoregressive, it is necessary to take
-this into account when formulating a suitable model.  For example, it
-may be necessary to take the first difference of the variable in
+this into account when formulating an appropriate model.  For example,
+it may be necessary to take the first difference of the variable in
 question and/or to add suitable regressors, $X_t$, as in
 (\ref{eq:garch-meaneq}).
 
