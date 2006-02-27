@@ -1307,6 +1307,8 @@ fill_matrix_from_scalars (gretl_matrix *M, const char *s,
     int i, j;
     int err = 0;
 
+    gretl_push_c_numeric_locale();
+
     if (transp) {
 	for (j=0; j<c && !err; j++) {
 	    for (i=0; i<r && !err; i++) {
@@ -1336,6 +1338,8 @@ fill_matrix_from_scalars (gretl_matrix *M, const char *s,
 	    }
 	}
     }
+
+    gretl_pop_c_numeric_locale();
 
     return err;
 }
