@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-14 21:29-0500\n"
-"PO-Revision-Date: 2006-02-20 00:28+0100\n"
+"PO-Revision-Date: 2006-02-28 00:32+0100\n"
 "Last-Translator: Sven Schreiber <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -248,7 +248,7 @@ msgstr "Tobit"
 #: lib/src/compare.c:248
 #: lib/src/compare.c:267
 msgid "add"
-msgstr ""
+msgstr "hinzufügen"
 
 #: lib/src/compare.c:262
 #: lib/src/gretl_model.c:1846
@@ -398,7 +398,7 @@ msgstr "CUSUM-Test auf Parameterstabilität"
 #: lib/src/compare.c:1499
 #, c-format
 msgid "mean of scaled residuals = %g\n"
-msgstr ""
+msgstr "Mittel der skalierten Residuen = %g\n"
 
 #: lib/src/compare.c:1508
 #, c-format
@@ -1673,7 +1673,7 @@ msgstr "Korrelationskoeffizienten"
 #: gui2/guiprint_common.c:360
 #, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
-msgstr ""
+msgstr "5%% kritischer Wert (zweiseitig) = %.4f für n = %d"
 
 #: lib/src/describe.c:2682
 #: lib/src/describe.c:2768
@@ -4632,7 +4632,7 @@ msgstr "Für 95%%-Konfidenzintervalle, t(%d, .025) = %.3f\n"
 #: gui2/guiprint_common.c:855
 #: gui2/guiprint_common.c:891
 msgid "prediction"
-msgstr ""
+msgstr "Prognose"
 
 #: lib/src/printout.c:1764
 msgid " std. error"
@@ -6055,22 +6055,22 @@ msgstr "/_Daten"
 #: gui/gretl.c:300
 #: gui2/gretl.c:356
 msgid "/Data/_Display values"
-msgstr "/Daten/Zeige Werte"
+msgstr "/Daten/_Zeige Werte"
 
 #: gui/gretl.c:301
 #: gui2/gretl.c:357
 msgid "/Data/Display values/_all variables"
-msgstr "/Daten/Zeige Werte/alle Variablen"
+msgstr "/Daten/Zeige Werte/_alle Variablen"
 
 #: gui/gretl.c:302
 #: gui2/gretl.c:358
 msgid "/Data/Display values/_selected variables..."
-msgstr "/Daten/Zeige Werte/ausgewählte Variablen..."
+msgstr "/Daten/Zeige Werte/ge_wählte Variablen..."
 
 #: gui/gretl.c:304
 #: gui2/gretl.c:360
 msgid "/Data/_Edit values"
-msgstr "/Daten/B_earbeite Werte"
+msgstr "/Daten/_Bearbeite Werte"
 
 #: gui/gretl.c:306
 #: gui2/gretl.c:362
@@ -6090,7 +6090,7 @@ msgstr "/Daten/Sortiere Variablen/nach Name"
 #: gui/gretl.c:310
 #: gui2/gretl.c:366
 msgid "/Data/_Graph specified vars"
-msgstr "/Daten/Plotte Variablen"
+msgstr "/Daten/_Plotte Variablen"
 
 #: gui/gretl.c:311
 #: gui2/gretl.c:367
@@ -6135,12 +6135,12 @@ msgstr "/Daten/_Mehrfache Streudiagramme..."
 #: gui/gretl.c:328
 #: gui2/gretl.c:384
 msgid "/Data/_Read info"
-msgstr "/Daten/Lese Info"
+msgstr "/Daten/_Lese Info"
 
 #: gui/gretl.c:329
 #: gui2/gretl.c:385
 msgid "/Data/Edit _info"
-msgstr "/Daten/Bearbeite Info"
+msgstr "/Daten/Bearbeite _Info"
 
 #: gui/gretl.c:330
 #: gui2/gretl.c:386
@@ -6150,22 +6150,22 @@ msgstr "/Daten/Drucke Beschreibung"
 #: gui/gretl.c:333
 #: gui2/gretl.c:388
 msgid "/Data/_Summary statistics"
-msgstr "/Daten/Grundlegende Statistiken"
+msgstr "/Daten/_Grundlegende Statistiken"
 
 #: gui/gretl.c:334
 #: gui2/gretl.c:389
 msgid "/Data/_Summary statistics/_all variables"
-msgstr "/Daten/Grundlegende Statistiken/Alle Variablen"
+msgstr "/Daten/Grundlegende Statistiken/_Alle Variablen"
 
 #: gui/gretl.c:336
 #: gui2/gretl.c:391
 msgid "/Data/_Summary statistics/_selected variables"
-msgstr "/Daten/Grundlegende Statistiken/Gewählte Variablen"
+msgstr "/Daten/Grundlegende Statistiken/ge_wählte Variablen"
 
 #: gui/gretl.c:339
 #: gui2/gretl.c:393
 msgid "/Data/_Correlation matrix"
-msgstr "/Daten/Korrelationsmatrix"
+msgstr "/Daten/_Korrelationsmatrix"
 
 #: gui/gretl.c:340
 #: gui2/gretl.c:394
@@ -6175,12 +6175,12 @@ msgstr "/Daten/Korrelationsmatrix/_alle Variablen"
 #: gui/gretl.c:342
 #: gui2/gretl.c:396
 msgid "/Data/_Correlation matrix/_selected variables"
-msgstr "/Daten/Korrelationsmatrix/ausgewählte Variablen"
+msgstr "/Daten/Korrelationsmatrix/ge_wählte Variablen"
 
 #: gui/gretl.c:345
 #: gui2/gretl.c:398
 msgid "/Data/_Principal components"
-msgstr "/Daten/Hauptkomponenten"
+msgstr "/Daten/_Hauptkomponenten"
 
 #: gui/gretl.c:346
 #: gui2/gretl.c:399
@@ -6190,102 +6190,102 @@ msgstr "/Daten/_Mahalanobis-Distanzen"
 #: gui/gretl.c:349
 #: gui2/gretl.c:401
 msgid "/Data/Difference of means"
-msgstr "/Daten/Gleichheit der Mittel"
+msgstr "/Daten/Gleichheit der Mi_ttel"
 
 #: gui/gretl.c:350
 #: gui2/gretl.c:402
 msgid "/Data/Difference of means/assuming equal variances..."
-msgstr "/Daten/Gleichheit der Mittel/Bei Annahme gleicher Varianzen..."
+msgstr "/Daten/Gleichheit der Mittel/Bei Annahme _gleicher Varianzen..."
 
 #: gui/gretl.c:352
 #: gui2/gretl.c:404
 msgid "/Data/Difference of means/assuming unequal variances..."
-msgstr "/Daten/Gleichheit der Mittel/Bei ungleichen Varianzen..."
+msgstr "/Daten/Gleichheit der Mittel/Bei _ungleichen Varianzen..."
 
 #: gui/gretl.c:354
 #: gui2/gretl.c:406
 msgid "/Data/Difference of variances..."
-msgstr "/Daten/Gleichheit der Varianzen..."
+msgstr "/Daten/Gleichheit der _Varianzen..."
 
 #: gui/gretl.c:356
 #: gui2/gretl.c:409
 msgid "/Data/Add variables"
-msgstr "/Daten/Variablen hinzufügen"
+msgstr "/Daten/Variablen hin_zufügen"
 
 #: gui/gretl.c:357
 #: gui2/gretl.c:410
 msgid "/Data/Add variables/time trend"
-msgstr "/Daten/Variablen hinzufügen/Zeittrend"
+msgstr "/Daten/Variablen hinzufügen/Zeit_trend"
 
 #: gui/gretl.c:358
 #: gui2/gretl.c:411
 msgid "/Data/Add variables/index variable"
-msgstr "/Daten/Variablen hinzufügen/Indexvariable"
+msgstr "/Daten/Variablen hinzufügen/Inde_xvariable"
 
 #: gui/gretl.c:359
 #: gui2/gretl.c:412
 msgid "/Data/Add variables/logs of selected variables"
-msgstr "/Daten/Variablen hinzufügen/Logs der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/_Logs der ausgewählten Variablen"
 
 #: gui/gretl.c:361
 #: gui2/gretl.c:414
 msgid "/Data/Add variables/lags of selected variables"
-msgstr "/Daten/Variablen hinzufügen/Lags der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/L_ags der ausgewählten Variablen"
 
 #: gui/gretl.c:363
 #: gui2/gretl.c:416
 msgid "/Data/Add variables/squares of selected variables"
-msgstr "/Daten/Variablen hinzufügen/Quadrate der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/_Quadrate der ausgewählten Variablen"
 
 #: gui/gretl.c:365
 #: gui2/gretl.c:418
 msgid "/Data/Add variables/first differences of selected variables"
-msgstr "/Daten/Variablen hinzufügen/Erste Differenzen der ausgewählten Variablen"
+msgstr "/Daten/Variablen hinzufügen/_Erste Differenzen der ausgewählten Variablen"
 
 #: gui/gretl.c:367
 #: gui2/gretl.c:420
 msgid "/Data/Add variables/log differences of selected variables"
-msgstr "/Daten/Variablen hinzufügen/Log-Differenzen"
+msgstr "/Daten/Variablen hinzufügen/Lo_g-Differenzen"
 
 #: gui/gretl.c:369
 #: gui2/gretl.c:422
 msgid "/Data/Add variables/seasonal differences of selected variables"
-msgstr "/Daten/Variablen hinzufügen/Saison-Differenzen"
+msgstr "/Daten/Variablen hinzufügen/_Saison-Differenzen"
 
 #: gui/gretl.c:371
 #: gui2/gretl.c:424
 msgid "/Data/Add variables/periodic dummies"
-msgstr "/Daten/Variablen hinzufügen/Perioden-Dummies"
+msgstr "/Daten/Variablen hinzufügen/_Perioden-Dummies"
 
 #: gui/gretl.c:372
 #: gui2/gretl.c:425
 msgid "/Data/Add variables/unit dummies"
-msgstr "/Daten/Variablen hinzufügen/Einheits-Dummies"
+msgstr "/Daten/Variablen hinzufügen/Einheits-_Dummies"
 
 #: gui/gretl.c:373
 #: gui2/gretl.c:426
 msgid "/Data/Add variables/panel dummies"
-msgstr "/Daten/Variablen hinzufügen/Panel-Dummies"
+msgstr "/Daten/Variablen hinzufügen/Pa_nel-Dummies"
 
 #: gui/gretl.c:375
 #: gui2/gretl.c:428
 msgid "/Data/Add variables/random normal..."
-msgstr "/Daten/Variablen hinzufügen/normalverteilte Zufallszahlen..."
+msgstr "/Daten/Variablen hinzufügen/normalverteilte _Zufallszahlen..."
 
 #: gui/gretl.c:377
 #: gui2/gretl.c:430
 msgid "/Data/Add variables/random uniform..."
-msgstr "/Daten/Variablen hinzufügen/gleichverteilte Zufallszahlen..."
+msgstr "/Daten/Variablen hinzufügen/gleich_verteilte Zufallszahlen..."
 
 #: gui/gretl.c:379
 #: gui2/gretl.c:432
 msgid "/Data/Add variables/seed generator..."
-msgstr "/Daten/Variablen hinzufügen/Generator-Initialisierung..."
+msgstr "/Daten/Variablen hinzufügen/Generator-_Initialisierung..."
 
 #: gui/gretl.c:382
 #: gui2/gretl.c:435
 msgid "/Data/Add variables/Define _new variable..."
-msgstr "/Daten/Variablen hinzufügen/Definiere _neue Variable..."
+msgstr "/Daten/Variablen hinzufügen/De_finiere neue Variable..."
 
 #: gui/gretl.c:383
 #: gui2/gretl.c:437
@@ -6612,17 +6612,17 @@ msgstr "/_Hilfe"
 #: gui/gretl.c:480
 #: gui2/gretl.c:538
 msgid "/Help/_Command reference"
-msgstr "/Hilfe/Befehlsdokumentation"
+msgstr "/Hilfe/Befehls_dokumentation"
 
 #: gui/gretl.c:481
 #: gui2/gretl.c:539
 msgid "/Help/Command reference/plain text"
-msgstr "/Hilfe/Befehlsdokumentation/Textformat"
+msgstr "/Hilfe/Befehlsdokumentation/_Textformat"
 
 #: gui/gretl.c:482
 #: gui2/gretl.c:541
 msgid "/Help/Command reference/PDF"
-msgstr "/Hilfe/Befehlsdokumentation/PDF"
+msgstr "/Hilfe/Befehlsdokumentation/_PDF"
 
 #: gui/gretl.c:483
 #: gui2/gretl.c:543
@@ -6638,7 +6638,7 @@ msgstr "/Hilfe/Nach _Updates suchen"
 #: gui2/gretl.c:550
 #: gui2/gretl.c:552
 msgid "/Help/_About gretl"
-msgstr "/Hilfe/Über gretl"
+msgstr "/Hilfe/Über _gretl"
 
 #: gui/gretl.c:493
 #: gui2/gretl.c:559
@@ -6782,22 +6782,22 @@ msgstr "Graphengenerierung schlug fehl"
 #: gui/ssheet.c:55
 #: gui2/ssheet.c:71
 msgid "/_Observation"
-msgstr ""
+msgstr "/_Beobachtung"
 
 #: gui/ssheet.c:56
 #: gui2/ssheet.c:72
 msgid "/Observation/_Append obs"
-msgstr ""
+msgstr "/Observation/Beob. _anhängen"
 
 #: gui/ssheet.c:57
 #: gui2/ssheet.c:74
 msgid "/Observation/_Insert obs"
-msgstr ""
+msgstr "/Observation/Beob. _einfügen"
 
 #: gui/ssheet.c:59
 #: gui2/ssheet.c:77
 msgid "/Variable/_Add"
-msgstr ""
+msgstr "/Variable/_Hinzufügen"
 
 #: gui/ssheet.c:60
 msgid "/_Clear"
@@ -7144,7 +7144,7 @@ msgstr ""
 
 #: gui2/calculator.c:96
 msgid "Incomplete entry for p-value"
-msgstr ""
+msgstr "Unvollständige Eingabe für p-Wert"
 
 #: gui2/calculator.c:107
 #: gui2/calculator.c:1168
@@ -7159,7 +7159,7 @@ msgstr ""
 
 #: gui2/calculator.c:137
 msgid "Incomplete entry"
-msgstr ""
+msgstr "Unvollständige Eingabe"
 
 #: gui2/calculator.c:146
 #: gui2/calculator.c:301
@@ -7169,7 +7169,7 @@ msgstr ""
 
 #: gui2/calculator.c:163
 msgid "Incomplete entry for hypothesis test"
-msgstr ""
+msgstr "Unvollständige Eingabe für Hypothesentest"
 
 #: gui2/calculator.c:171
 msgid "Invalid entry for hypothesis test"
@@ -7453,6 +7453,8 @@ msgid ""
 "Critical values for\n"
 "standard normal distribution"
 msgstr ""
+"Kritische Werte für\n"
+"Standardnormalverteilung"
 
 #: gui2/calculator.c:896
 #: gui2/calculator.c:900
@@ -7466,12 +7468,12 @@ msgstr ""
 #: gui2/calculator.c:904
 #: gui2/calculator.c:970
 msgid "dfn"
-msgstr ""
+msgstr "Zähler-df"
 
 #: gui2/calculator.c:905
 #: gui2/calculator.c:971
 msgid "dfd"
-msgstr ""
+msgstr "Nenner-df"
 
 #: gui2/calculator.c:909
 #: gui2/model_table.c:532
@@ -7500,13 +7502,13 @@ msgstr ""
 #: plugin/range-mean.c:68
 #: plugin/range-mean.c:156
 msgid "mean"
-msgstr ""
+msgstr "Mittel"
 
 #: gui2/calculator.c:951
 #: gui2/calculator.c:960
 #: gui2/calculator.c:1474
 msgid "std. deviation"
-msgstr ""
+msgstr "Standardfehler"
 
 #: gui2/calculator.c:966
 #: gui2/calculator.c:978
@@ -7521,7 +7523,7 @@ msgstr ""
 #: gui2/calculator.c:977
 #: gui2/calculator.c:1428
 msgid "variance"
-msgstr ""
+msgstr "Varianz"
 
 #: gui2/calculator.c:982
 msgid "Prob"
@@ -7563,11 +7565,11 @@ msgstr "Stichprobengröße"
 
 #: gui2/calculator.c:1476
 msgid "H0: mean ="
-msgstr ""
+msgstr "H0: Mittel ="
 
 #: gui2/calculator.c:1477
 msgid "Assume standard deviation is population value"
-msgstr ""
+msgstr "Annahme, dass Stand'abw. aus Grundgesamtheit"
 
 #: gui2/calculator.c:1482
 msgid "sample variance"
@@ -7575,7 +7577,7 @@ msgstr "Stichprobenvarianz"
 
 #: gui2/calculator.c:1484
 msgid "H0: variance ="
-msgstr ""
+msgstr "H0: Varianz ="
 
 #: gui2/calculator.c:1488
 msgid "sample proportion"
@@ -7619,7 +7621,7 @@ msgstr "H0: Differenz der Mittel ="
 
 #: gui2/calculator.c:1505
 msgid "Assume common population standard deviation"
-msgstr ""
+msgstr "Nehme gleiche Stand'abw. der Grundgesamtheiten an"
 
 #: gui2/calculator.c:1510
 msgid "variance of sample 1"
@@ -7643,7 +7645,7 @@ msgstr ""
 
 #: gui2/calculator.c:1528
 msgid "H0: Difference of proportions = 0"
-msgstr ""
+msgstr "H0: Differenz der Proportionen = 0"
 
 #: gui2/calculator.c:1538
 msgid "Show graph of sampling distribution"
@@ -7835,7 +7837,7 @@ msgstr "gretl: Code für Fehlwert"
 #: gui2/callbacks.c:497
 #: gui2/callbacks.c:502
 msgid "Enter value to be read as \"missing\":"
-msgstr "Wert, der beim Einlesen für \"missing\" steht:"
+msgstr "Wert, der für \"missing\" steht:"
 
 #: gui2/callbacks.c:508
 msgid "Specify variables to plot:"
@@ -8051,17 +8053,17 @@ msgstr ""
 #: gui2/database.c:610
 #: gui2/database.c:621
 msgid "/_Series/_Display"
-msgstr ""
+msgstr "/_Daten/_Anzeige"
 
 #: gui2/database.c:611
 #: gui2/database.c:622
 msgid "/_Series/_Graph"
-msgstr ""
+msgstr "/_Daten/_Graph"
 
 #: gui2/database.c:612
 #: gui2/database.c:623
 msgid "/_Series/_Import"
-msgstr ""
+msgstr "/_Daten/_Import"
 
 #: gui2/database.c:613
 #: gui2/database.c:624
@@ -8202,7 +8204,7 @@ msgstr "gretl: Datenbanken auf Server"
 
 #: gui2/datafiles.c:881
 msgid "Get series listing"
-msgstr ""
+msgstr "Hole Daten-Liste"
 
 #: gui2/datafiles.c:894
 msgid "Install"
@@ -10423,7 +10425,7 @@ msgstr ""
 #: gui2/helpfiles.c:86
 #: gui2/helpfiles.c:827
 msgid "/_Topics"
-msgstr ""
+msgstr "/_Kategorien"
 
 #: gui2/helpfiles.c:138
 msgid "Dataset"
@@ -10439,7 +10441,7 @@ msgstr "Graphen"
 
 #: gui2/helpfiles.c:141
 msgid "Prediction"
-msgstr ""
+msgstr "Prognose"
 
 #: gui2/helpfiles.c:142
 msgid "Printing"
@@ -10474,7 +10476,7 @@ msgstr "zeige (englische?) Hilfe"
 #: gui2/helpfiles.c:846
 #: gui2/textbuf.c:830
 msgid "Index"
-msgstr ""
+msgstr "Index"
 
 #: gui2/helpfiles.c:1283
 #: gui2/helpfiles.c:1360
@@ -10593,7 +10595,7 @@ msgstr "Heruntertesten von maximaler Lagordnung"
 
 #: gui2/library.c:887
 msgid "include a trend"
-msgstr "inklusive Trend"
+msgstr "Trend aufnehmen"
 
 #: gui2/library.c:891
 msgid "gretl: ADF test"
@@ -11623,11 +11625,11 @@ msgstr "Wählen->"
 
 #: gui2/selector.c:1970
 msgid "Choose ->"
-msgstr ""
+msgstr "Auswählen ->"
 
 #: gui2/selector.c:1999
 msgid "Set as default"
-msgstr ""
+msgstr "als Voreinstellung"
 
 #: gui2/selector.c:2030
 msgid "cointegration rank:"
@@ -11648,13 +11650,13 @@ msgstr ""
 #: gui2/selector.c:2113
 #: gui2/selector.c:2856
 msgid "Add ->"
-msgstr ""
+msgstr "Hinzufügen ->"
 
 #: gui2/selector.c:2118
 #: gui2/selector.c:2861
 #: gui2/selector.c:3300
 msgid "<- Remove"
-msgstr ""
+msgstr "<- Entfernen"
 
 #: gui2/selector.c:2122
 #: gui2/selector.c:2644
@@ -11694,15 +11696,15 @@ msgstr ""
 
 #: gui2/selector.c:2489
 msgid "Robust standard errors"
-msgstr ""
+msgstr "Robuste Standardfehler"
 
 #: gui2/selector.c:2505
 msgid "configure"
-msgstr ""
+msgstr "bearbeiten"
 
 #: gui2/selector.c:2527
 msgid "Include a constant"
-msgstr "Eine Konstante aufnehmen"
+msgstr "Konstante aufnehmen"
 
 #: gui2/selector.c:2529
 msgid "Include a trend"
@@ -11710,7 +11712,7 @@ msgstr "Trend aufnehmen"
 
 #: gui2/selector.c:2532
 msgid "Show details of regressions"
-msgstr ""
+msgstr "Zeige Regressionsdetails"
 
 #: gui2/selector.c:2535
 msgid "Include seasonal dummies"
@@ -11722,7 +11724,7 @@ msgstr "Feintuning durch Cochrane-Orcutt"
 
 #: gui2/selector.c:2548
 msgid "Cointegrating regression includes a constant"
-msgstr ""
+msgstr "Kointegrationsregression mit Konstante"
 
 #: gui2/selector.c:2554
 msgid "Use X-12-ARIMA"
@@ -11754,23 +11756,23 @@ msgstr "Unrestringierter Trend"
 
 #: gui2/selector.c:2739
 msgid "plot with impulses"
-msgstr ""
+msgstr "plotte mit Impulsen"
 
 #: gui2/selector.c:2741
 msgid "3D plot"
-msgstr ""
+msgstr "3D Graph"
 
 #: gui2/selector.c:2743
 msgid "multiple scatterplots"
-msgstr ""
+msgstr "mehrere Streudiagramme"
 
 #: gui2/selector.c:2745
 msgid "factorized plot"
-msgstr ""
+msgstr "faktorisierter Graph"
 
 #: gui2/selector.c:2837
 msgid "Variables to test"
-msgstr ""
+msgstr "Zu testende Variablen"
 
 #: gui2/selector.c:2839
 msgid "Endogenous variables"
@@ -11778,7 +11780,7 @@ msgstr "Endogene Variablen"
 
 #: gui2/selector.c:2841
 msgid "Independent variables"
-msgstr ""
+msgstr "Unabhängige Variablen"
 
 #: gui2/selector.c:2964
 msgid "Select variables for logging"
@@ -12057,11 +12059,11 @@ msgstr "aktuelle Sitzung"
 
 #: gui2/settings.c:179
 msgid "Main gretl directory"
-msgstr ""
+msgstr "gretl-Hauptverzeichnis"
 
 #: gui2/settings.c:181
 msgid "User's gretl directory"
-msgstr ""
+msgstr "gretl Benutzerverzeichnis"
 
 #: gui2/settings.c:183
 msgid "Expert mode (no warnings)"
@@ -12085,35 +12087,35 @@ msgstr "Lokale Einstellungen für den Dezimalpunkt verwenden"
 
 #: gui2/settings.c:198
 msgid "Emulate Windows look"
-msgstr ""
+msgstr "Emuliere Windows-Aussehen"
 
 #: gui2/settings.c:201
 msgid "Web browser"
-msgstr ""
+msgstr "Web-Browser"
 
 #: gui2/settings.c:204
 msgid "Allow shell commands"
-msgstr ""
+msgstr "Shell-Befehle zulassen"
 
 #: gui2/settings.c:206
 msgid "Command to launch gnuplot"
-msgstr ""
+msgstr "Befehl zum Starten von gnuplot"
 
 #: gui2/settings.c:208
 msgid "Command to launch GNU R"
-msgstr ""
+msgstr "Befehl zum Starten von GNU R"
 
 #: gui2/settings.c:210
 msgid "Command to compile TeX files"
-msgstr ""
+msgstr "Befehl zum Kompilieren von TeX-Dateien"
 
 #: gui2/settings.c:212
 msgid "Command to view DVI files"
-msgstr ""
+msgstr "Befehl zum Betrachten von dvi-Dateien"
 
 #: gui2/settings.c:215
 msgid "Command to view postscript files"
-msgstr ""
+msgstr "Befehl zum Betrachten von Postscript-Dateien"
 
 #: gui2/settings.c:217
 msgid "Command to view PDF files"
@@ -12121,7 +12123,7 @@ msgstr "Befehl zum Betrachten von PDF-Dateien"
 
 #: gui2/settings.c:221
 msgid "Program to play MIDI files"
-msgstr ""
+msgstr "Programm zum Abspielen von MIDI-Dateien"
 
 #: gui2/settings.c:224
 msgid "Calculator"
@@ -12129,19 +12131,19 @@ msgstr "Rechner"
 
 #: gui2/settings.c:227
 msgid "path to x12arima"
-msgstr ""
+msgstr "Pfad von X12arima"
 
 #: gui2/settings.c:231
 msgid "path to tramo"
-msgstr ""
+msgstr "Pfad von Tramo"
 
 #: gui2/settings.c:234
 msgid "X-12-ARIMA working directory"
-msgstr ""
+msgstr "X-12-ARIMA Arbeitsverzeichnis"
 
 #: gui2/settings.c:238
 msgid "TRAMO working directory"
-msgstr ""
+msgstr "TRAMO Arbeitsverzeichnis"
 
 #: gui2/settings.c:241
 msgid "gretl database directory"
@@ -12157,7 +12159,7 @@ msgstr "Datenbankservername"
 
 #: gui2/settings.c:247
 msgid "HTTP proxy (ipnumber:port)"
-msgstr ""
+msgstr "HTTP proxy (ipnummer:port)"
 
 #: gui2/settings.c:249
 msgid "Use HTTP proxy"
@@ -12169,15 +12171,15 @@ msgstr "Verwende aktuelles Arbeitsverzeichnis als Standard"
 
 #: gui2/settings.c:252
 msgid "Use gretl user directory as default"
-msgstr ""
+msgstr "gretl Benutzerverzeichnis als Voreinstellung"
 
 #: gui2/settings.c:254
 msgid "Use \".dat\" as default datafile suffix"
-msgstr ""
+msgstr "\".dat\" als Voreinstellung für Datendatei"
 
 #: gui2/settings.c:255
 msgid "Use \".gdt\" as default datafile suffix"
-msgstr ""
+msgstr "\".gdt\" als Voreinstellung für Datendatei"
 
 #: gui2/settings.c:257
 msgid "Use QR decomposition"
@@ -12217,7 +12219,7 @@ msgstr "Für Zeitreihendaten"
 
 #: gui2/settings.c:287
 msgid "For GARCH estimation"
-msgstr ""
+msgstr "Für GARCH-Schätzung"
 
 #: gui2/settings.c:289
 msgid "PDF manual preference"
@@ -12237,24 +12239,24 @@ msgstr "Diese Änderungen werden erst nach einem Neustart von gretl wirksam"
 
 #: gui2/settings.c:834
 msgid "English (US letter paper)"
-msgstr ""
+msgstr "Englisch (Papierformat US letter)"
 
 #: gui2/settings.c:835
 msgid "English (A4 paper)"
-msgstr ""
+msgstr "Englisch (Papierformat A4)"
 
 #: gui2/settings.c:836
 msgid "Italian"
-msgstr ""
+msgstr "Italienisch"
 
 #: gui2/settings.c:837
 msgid "Spanish"
-msgstr ""
+msgstr "Spanisch"
 
 #: gui2/settings.c:906
 #: plugin/tramo_options.c:360
 msgid "General"
-msgstr ""
+msgstr "Allgemein"
 
 #: gui2/settings.c:908
 msgid "Databases"
