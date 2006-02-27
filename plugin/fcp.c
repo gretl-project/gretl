@@ -1243,8 +1243,10 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    for (i = 0; i < nparam; ++i) {
 		for (j = 0; j < nparam; ++j) {
 #ifdef FDEBUG
-		    if (t<5) fprintf(stderr, "t=%d: setting H(%d,%d,%d) to H(%d,%d,%d)=%g\n",
-				     t,i,j,lag-k,i,j,lag-k-1, H[i][j][lag-k-1]);
+		    if (t<5) {
+			fprintf(stderr, "t=%d: setting H(%d,%d,%d) to H(%d,%d,%d)=%g\n",
+				t,i,j,lag-k,i,j,lag-k-1, H[i][j][lag-k-1]);
+		    }
 #endif
 		    H[i][j][lag-k] = H[i][j][lag-k-1];
 		}
