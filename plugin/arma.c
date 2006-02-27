@@ -594,7 +594,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 
     for (i=0; i<ainfo->r; i++) {
 	j = alist[axstart + i];
-	sprintf(term, "+b_%d*%s", i + 1, pdinfo->varname[j]);
+	sprintf(term, "+b%d*%s", i + 1, pdinfo->varname[j]);
 	strcat(fnstr, term);
 	sprintf(pdinfo->varname[v], "b%d", i + 1);
 	plist[k++] = v++;

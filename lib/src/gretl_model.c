@@ -2561,7 +2561,7 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 	sprintf(pmod->params[j++], "Theta_%d", i + 1);
     }       
 
-    xstart = (P || Q)? 8 : 5;
+    xstart = arma_depvar_pos(pmod) + 1;
 
     for (i=0; i<r; i++) {
 	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[xstart+i]]); 

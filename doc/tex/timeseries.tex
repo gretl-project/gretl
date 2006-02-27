@@ -1,7 +1,7 @@
 \chapter{Time series models}
 \label{chap:timeser}
 
-\section{ARMA models}
+\section{ARIMA models}
 \label{arma-estimation}
 
 \subsection{Representation and syntax}
@@ -75,12 +75,17 @@ the ARMAX formulation has the advantage that $\beta$ can be
 immediately interpreted as the vector of marginal effects of the $x_t$
 variables on the conditional mean of $y_t$.
 
+The \cmd{arma} command can be therefore used also for estimating \emph{Transfer Function
+  Models}, a type of generalization of autoregressive-moving average
+(ARMA) models adding the effects of exogenous variable distributed
+along time, as in:
+\begin{equation}
+  \label{eq:tfunc-model}
+  \phi (L) \cdot \Phi (L^s) y_t = \sum_{i=1}^kv_{i}(L)x_{it} + \theta (L)\cdot \Theta (L^s) \epsilon_t ,
+\end{equation}
+
 The structure of the \cmd{arma} command does not let you specify
-models with gaps in the lag structure\footnote{Actually, this
-  limitation can be circumvented for the autoregressive part by
-  including lags of the dependent variable in the exogenous list.
-  This, however, despite leading to correct estimation, would break
-  the existing mechanism for forecasting.}. A more flexible lag
+models with gaps in the lag structure. A more flexible lag
 structure is especially desirable when analyzing time series that
 display strong seasonal patterns. In these cases, the full model
 (\ref{eq:general-arma}) can be used. For example, the syntax
@@ -98,6 +103,55 @@ above equation can be written more explicitly as
   \epsilon_t + \theta \epsilon_{t-1} + \Theta \epsilon_{t-4} +
   (\theta \cdot \Theta) \epsilon_{t-5} .
 \]
+Such a model is known as a ``multiplicative seasonal ARMA model''.
+
+For more general models, this limitation can be circumvented for the
+autoregressive part by including lags of the dependent variable in the
+exogenous list. As an example, the following command 
+\begin{code}
+  arma 0 0 ; 0 1 ; y const y(-2)
+\end{code}
+on a quarterly series would estimate the parameters of the model
+\[
+  y_t = \mu + \phi y_{t-2} + \epsilon_t + \Theta \epsilon_{t-4}.
+\]
+However, this workaround is not recommended: although this would
+deliver correct estimates, it would break the existing mechanism for
+forecasting.
+
+The above discussion presupposes that the time series $y_t$ has
+already been subjected to all the transformations deemed necessary for
+ensuring stationarity. Differencing is the most common of these
+transformations, and \app{gretl} provides a mechanism to include this
+step into the \cmd{arma} command: the syntax
+\begin{code}
+  arma p d q ; y 
+\end{code}
+would estimate and ARMA(p,q) model on $\Delta^d y_t$, and is
+functionally equivalent to 
+\begin{code}
+  series tmp = y
+  loop for i=1..d
+    tmp = diff(tmp)
+  end loop
+  arma p q ; tmp 
+\end{code}
+Such a model is known as an ARIMA (AutoRegressive Integrated
+Moving-Average) model; for this reason, \app{gretl} provides the
+\cmd{arima} command as an alias for \cmd{arma}. Seasonal differencing
+is handled similarly, with the syntax
+\begin{code}
+  arma p d q ; P D Q ; y 
+\end{code}
+Thus, the command 
+\begin{code}
+  arma 1 0 0 ; 1 1 1 ; y 
+\end{code}
+would produce the same results as
+\begin{code}
+  genr dsy = sdiff(y)
+  arma 1 0 ; 1 1 ; dsy 
+\end{code}
 
 \subsection{Estimation}
 \label{arma-est}
@@ -113,12 +167,16 @@ the observations $t_0, \ldots, T$. The starting point $t_0$ depends by
 the orders of the polynomials in the ARMA model.
 
 This method is nearly equivalent to maximum likelihood under the
-hypotheses of normality; the only difference is that the first $(t_0 -
+hypothesis of normality; the only difference is that the first $(t_0 -
 1)$ observations are considered fixed and only enter the likelihood
 function as conditioning variables. As a consequence, the two methods
 are asymptotically equivalent under standard conditions.
 
-Full ML estimation (under normality) is available in \app{gretl} via
+The numerical method used for maximizing the log-likelihood is BHHH.
+The covariance matrix for the parameters (hence the standard errors)
+are computed via the OPG (Outer Product of Gradient) method.
+
+Full ML estimation under normality is available in \app{gretl} via
 the \verb|x-12| plugin, which is automatically used if the option
 \verb|--x-12-arima| is appendend to the \cmd{arma} command. For
 example, the following code
@@ -134,9 +192,9 @@ produces the estimates below:
     Parameter & \multicolumn{2}{c}{\textrm{CML}} &
     \multicolumn{2}{c}{\textrm{ML (x-12 plugin)}} \\
     \hline 
-    $\mu$ & 1.07074 & 0.488426 &  1.00232 & 0.133002 \\
-    $\phi$ & 0.853026 & 0.0450016 & 0.855373  & 0.0496304 \\
-    $\theta$ & 0.591348 & 0.0456837 & 0.587986 & 0.0799962 \\
+    $\mu$ & 1.07322 & 0.488661 &  1.00232 & 0.133002 \\
+    $\phi$ & 0.852772 & 0.0450252 & 0.855373  & 0.0496304 \\
+    $\theta$ & 0.591838 & 0.0456662 & 0.587986 & 0.0799962 \\
     \hline
   \end{tabular}
 \end{center}
@@ -149,16 +207,32 @@ To be written
 \section{Unit root tests}
 \label{sec:uroot}
 
-To be written yet.
+To be completed
 
 \subsection{The ADF test}
 \label{sec:ADFtest}
+
+The ADF (Augmented Dickey-Fuller) test is, as implemented in
+\app{gretl}, the $t$-statistic on $\varphi$ in the following regression:
 \begin{equation}
   \label{eq:ADFtest}
   \Delta y_t = \mu_t + \varphi y_{t-1} + \sum_{i=1}^p \gamma_i \Delta
   y_{t-i} + \epsilon_t
 \end{equation}
-
+\begin{itemize}
+\item $H_0$: $y_t$ is I(1);
+\item one-sided test: $H_0$ is rejected if $t_{\varphi}$ is ``small'';
+\item nonstandard distribution, also depends on the contents of
+  $\mu_t$ --- p-values by MacKinnon.
+\end{itemize}
+Syntax:
+\begin{code}
+  adf n x1
+\end{code}
+\begin{itemize}
+\item Determinstic kernel options;
+\item auto-selection of $p$ via negative \verb|n|.
+\end{itemize}
 \subsection{The KPSS test}
 \label{sec:KPSStest}
 
@@ -166,8 +240,60 @@ To be written yet.
   \label{eq:KPSStest}
   \eta = \frac{\sum_{i=1}^T S_t^2 }{ T^2 \bar{\sigma}^2 }
 \end{equation}
-where $S_t = \sum_{s=1}^t y_t - \bar{y}$ and $\bar{\sigma}^2$ is an
-estimate of the long-run variance of $(y_t - \bar{y})$.
+where $S_t = \sum_{s=1}^t e_s$ and $\bar{\sigma}^2$ is an
+estimate of the long-run variance of $e_t = (y_t - \bar{y})$.
+\begin{itemize}
+\item $H_0$: $y_t$ is I(0);
+\item one-sided test: $H_0$ is rejected if $\eta$ is ``big'';
+\item extension to deterministic trend ($e_t$ are the residuals from
+  an OLS regression of $y_t$ on a constant and a linear trend);
+\item nonstandard distribution --- we provide 90\%, 95\%, 97.5\% and
+  99\% quantiles.
+\end{itemize}
+Syntax:
+\begin{code}
+  kpss n x1
+\end{code}
+\begin{itemize}
+\item \verb|--trend| option;
+\item \verb|n| is used for estimating $\bar{\sigma}^2$; in the GUI,
+  default is the integer part of $4 \left( \frac{T}{100}
+  \right)^{1/4}$.
+\end{itemize}
+
+\subsection{The Johansen tests}
+\label{sec:Joh-test}
+
+Strictly speaking, these are tests for cointegration. However, they
+can be used as multivariate unit-root tests since they are the
+multivariate generalization of the ADF test.
+\begin{equation}
+  \label{eq:Joh-tests}
+  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^p \Gamma_i \Delta
+  y_{t-i} + \epsilon_t
+\end{equation}
+If the rank of $\Pi$ is 0, the processes are all I(1); If the rank of
+$\Pi$ is full, the processes are all I(0); in between, you have
+cointegration.
+
+The rank of $\Pi$ is investigated by computing the eigenvalues of a
+closely related matrix (call it $M$) whose rank is the same as $\Pi$:
+tests on the rank of $\Pi$ can therefore be carried out by testing how
+many eigenvalues of $M$ are 0. The two Johansen tests are the
+``$\lambda$-max'' test, for hypotheses on individual eigenvalues, and
+the ``trace'' test, for joint hypotheses.
+
+The \app{gretl} command \cmd{coint2} performs these two tests.
+Example:
+\begin{code}
+  coint2 n x1 x2 x3
+\end{code}
+sets $p$ in equation (\ref{eq:Joh-tests}) to $(n-1)$ and prints a table
+with the two test batteries for the three series \verb|x1|, \verb|x2|
+and \verb|x3|.
+ 
+\ldots Options for the deterministic kernel \ldots
+More on this in section \ref{sec:johansen-test}
 
 \section{ARCH and GARCH}
 \label{sec:arch}
@@ -180,13 +306,34 @@ instance, the time series exhibits periods where the error variance is
 relatively large, for several observations, and periods where it is
 relatively small.
 
-To be continued...
+A GARCH model can be briefly described by the following equations:
+\begin{eqnarray}
+  \label{eq:garch-meaneq}
+  y_t &  = & x_t \beta + \epsilon_t \\
+  \label{eq:garch-epseq}
+  \epsilon_t &  = & u_t \sigma_t \\
+  \label{eq:garch-vareq}
+  A(L) \sigma^2_t &  = & \omega + B(L) \epsilon_{t-1}^2 ,
+\end{eqnarray}
+where $u_t$ is an iid sequence with unit variance. Currently
+\app{gretl} only handles models where $u_t$ is assumed to be a
+Gaussian white noise. However, the \verb|--robust| option computes the
+covariance matrix of the parameters via the Bollerslev-Wooldridge
+``sandwich'' estimator, so that the estimator \app{gretl} uses can be
+considered QML estimators even with non-normal disturbances.
+
+Example:
+\begin{code}
+  garch p q ; y const x
+\end{code}
+where \verb|p| is the (non-negative) degree of $A(L)$ and \verb|q| is
+the (strictly positive) degree of $B(L)$.
 
 \section{Cointegration and Vector Error Correction Models}
 \label{vecm-explanation}
 
 \subsection{The Johansen cointegration test}
-\label{johansen-test}
+\label{sec:johansen-test}
 
 The Johansen test for cointegration has to take into account what
 hypotheses one is willing to make on the deterministic terms, which
