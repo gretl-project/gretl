@@ -1,7 +1,7 @@
 \chapter{Modelli per serie storiche}
 \label{chap:timeser}
 
-\section{Modelli ARMA}
+\section{Modelli ARIMA}
 \label{arma-estimation}
 
 \subsection{Rappresentazione e sintassi}
@@ -73,12 +73,17 @@ la formulazione ARMAX ha il vantaggio che il coefficiente $\beta$
 può essere interpretato immediatamente come l'effetto marginale delle
 variabili $x_t$ sulla media condizionale di $y_t$.
 
+Il comando \cmd{arma} può quindi essere usato anche per stimare \emph{Modelli a
+funzione di trasferimento}, un tipo di generalizzazione dei modelli autoregressivi
+a media mobile (ARMA) che aggiunge l'effetto di variabili esogene distribuite
+nel tempo, come in questo esempio:
+\begin{equation}
+  \label{eq:tfunc-model}
+  \phi (L) \cdot \Phi (L^s) y_t = \sum_{i=1}^kv_{i}(L)x_{it} + \theta (L)\cdot \Theta (L^s) \epsilon_t ,
+\end{equation}
+
 La struttura del comando \cmd{arma} non permette di specificare modelli con
-buchi nella struttura dei ritardi\footnote{In realtà questa limitazione può
-essere aggirata per quanto riguarda la parte autoregressiva, includendo ritardi
-della variabile dipendente nella lista delle variabili esogene. In questo modo
-però, anche se si ottengono stime corrette, rende inutilizzabile la funzionalità
-di previsione attualmente disponibile.}. Una struttura di ritardi più flessibile
+buchi nella struttura dei ritardi. Una struttura di ritardi più flessibile
 può essere necessaria quando si analizzano serie che mostrano un marcato
 andamento stagionale. In questo caso è possibile usare il modello completo
 (\ref{eq:general-arma}). Ad esempio, la sintassi
@@ -96,6 +101,57 @@ precedente può essere scritta in modo più esplicito come
   \epsilon_t + \theta \epsilon_{t-1} + \Theta \epsilon_{t-4} +
   (\theta \cdot \Theta) \epsilon_{t-5} .
 \]
+
+Un tale modello è di solito chiamato un ``modello ARMA stagionale
+moltiplicativo''.
+
+Per modelli più generali questa limitazione può essere aggirata per quanto
+riguarda la parte autoregressiva, includendo ritardi della variabile dipendente
+nella lista delle variabili esogene.
+
+Ad esempio, il comando seguente
+\begin{code}
+  arma 0 0 ; 0 1 ; y const y(-2)
+\end{code}
+su una serie trimestrale stimerebbe i parametri del modello
+\[
+  y_t = \mu + \phi y_{t-2} + \epsilon_t + \Theta \epsilon_{t-4}.
+\]
+Questo modo di procedere però non è consigliato: anche se si ottengono stime
+corrette, la funzionalità di previsione risulterà inutilizzabile.
+
+La discussione svolta presuppone che la serie storica $y_t$ sia già stata
+soggetta a tutte le trasformazioni necessarie per assicurarne la stazionarietà.
+La trasformazione più usata in questi casi è la differenziazione, quindi
+\app{gretl} fornisce un meccanismo per includere questo passo nel comando
+\cmd{arma}: la sintassi
+\begin{code}
+  arma p d q ; y 
+\end{code}
+stimerebbe un modello ARMA(p,q) su $\Delta^d y_t$ ed è equivalente a
+\begin{code}
+  series tmp = y
+  loop for i=1..d
+    tmp = diff(tmp)
+  end loop
+  arma p q ; tmp 
+\end{code}
+Un tale modello è noto come ARIMA (autoregressivo integrato a media mobile); per
+questo motivo \app{gretl} fornisce anche il comando \cmd{arima} come sinonimo di
+\cmd{arma}. L'operazione di differenziazione stagionale viene gestita in modo
+simile, con la sintassi
+\begin{code}
+  arma p d q ; P D Q ; y 
+\end{code}
+Così, il comando
+\begin{code}
+  arma 1 0 0 ; 1 1 1 ; y 
+\end{code}
+produce gli stessi risultati di
+\begin{code}
+  genr dsy = sdiff(y)
+  arma 1 0 ; 1 1 ; dsy 
+\end{code}
 
 \subsection{Stima}
 \label{arma-est}
@@ -116,7 +172,12 @@ osservazioni sono considerate fisse ed entrano nella funzione di verosimiglianza
 solo come variabili condizionanti. Di conseguenza, i due metodi sono
 asintoticamente equivalenti sotto le consuete ipotesi.
 
-La stima di massima verosimiglianza vera e propria (in ipotesi di normalità) è
+Il metodo numerico usato per massimizzare la log-verosimiglianza è quello BHHH.
+La matrice di covarianza per i parametri (e quindi gli errori standard) sono
+calcolati col metodo del prodotto esterno del gradiente (OPG, Outer Product of
+Gradient).
+
+La stima di massima verosimiglianza vera e propria in ipotesi di normalità è
 disponibile in \app{gretl} attraverso il plugin \verb|x-12|, che viene usato
 automaticamente se si aggiunge l'opzione \verb|--x-12-arima| al comando
 \cmd{arma}. Ad esempio, il codice seguente
@@ -132,9 +193,9 @@ produce queste stime:
     Parametro & \multicolumn{2}{c}{\textrm{CML}} &
     \multicolumn{2}{c}{\textrm{ML (x-12 plugin)}} \\
     \hline 
-    $\mu$ & 1.07074 & 0.488426 &  1.00232 & 0.133002 \\
-    $\phi$ & 0.853026 & 0.0450016 & 0.855373  & 0.0496304 \\
-    $\theta$ & 0.591348 & 0.0456837 & 0.587986 & 0.0799962 \\
+    $\mu$ & 1.07322 & 0.488661 &  1.00232 & 0.133002 \\
+    $\phi$ & 0.852772 & 0.0450252 & 0.855373  & 0.0496304 \\
+    $\theta$ & 0.591838 & 0.0456662 & 0.587986 & 0.0799962 \\
     \hline
   \end{tabular}
 \end{center}
@@ -147,16 +208,32 @@ To be written
 \section{Unit root tests}
 \label{sec:uroot}
 
-To be written yet.
+To be completed
 
 \subsection{The ADF test}
 \label{sec:ADFtest}
+
+Il test ADF (Augmented Dickey-Fuller) è implementanto in \app{gretl} sotto forma
+della statistica $t$ su $\varphi$ nella regressione seguente:
 \begin{equation}
   \label{eq:ADFtest}
   \Delta y_t = \mu_t + \varphi y_{t-1} + \sum_{i=1}^p \gamma_i \Delta
   y_{t-i} + \epsilon_t
 \end{equation}
-
+\begin{itemize}
+\item $H_0$: $y_t$ is I(1);
+\item one-sided test: $H_0$ is rejected if $t_{\varphi}$ is ``small'';
+\item nonstandard distribution, also depends on the contents of
+  $\mu_t$ --- p-values by MacKinnon.
+\end{itemize}
+Syntax:
+\begin{code}
+  adf n x1
+\end{code}
+\begin{itemize}
+\item Determinstic kernel options;
+\item auto-selection of $p$ via negative \verb|n|.
+\end{itemize}
 \subsection{The KPSS test}
 \label{sec:KPSStest}
 
@@ -164,27 +241,98 @@ To be written yet.
   \label{eq:KPSStest}
   \eta = \frac{\sum_{i=1}^T S_t^2 }{ T^2 \bar{\sigma}^2 }
 \end{equation}
-where $S_t = \sum_{s=1}^t y_t - \bar{y}$ and $\bar{\sigma}^2$ is an
-estimate of the long-run variance of $(y_t - \bar{y})$.
+where $S_t = \sum_{s=1}^t e_s$ and $\bar{\sigma}^2$ is an
+estimate of the long-run variance of $e_t = (y_t - \bar{y})$.
+\begin{itemize}
+\item $H_0$: $y_t$ is I(0);
+\item one-sided test: $H_0$ is rejected if $\eta$ is ``big'';
+\item extension to deterministic trend ($e_t$ are the residuals from
+  an OLS regression of $y_t$ on a constant and a linear trend);
+\item nonstandard distribution --- we provide 90\%, 95\%, 97.5\% and
+  99\% quantiles.
+\end{itemize}
+Syntax:
+\begin{code}
+  kpss n x1
+\end{code}
+\begin{itemize}
+\item \verb|--trend| option;
+\item \verb|n| is used for estimating $\bar{\sigma}^2$; in the GUI,
+  default is the integer part of $4 \left( \frac{T}{100}
+  \right)^{1/4}$.
+\end{itemize}
 
-\section{ARCH and GARCH}
+\subsection{I test di Johansen}
+\label{sec:Joh-test}
+
+In senso stretto, questi sono test per la cointegrazione, ma possono essere
+usati anche come test multivariati per radici unitarie, visto che sono la
+generalizzazione multivariata del test ADF.
+\begin{equation}
+  \label{eq:Joh-tests}
+  \Delta y_t = \mu_t + \Pi y_{t-1} + \sum_{i=1}^p \Gamma_i \Delta
+  y_{t-i} + \epsilon_t
+\end{equation}
+Se il rango di $\Pi$ è 0, i processi sono tutti I(1); se il rango di
+$\Pi$ è pieno, i processi sono tutti I(0); nei casi intermedi, si ha
+cointegrazione.
+
+Il rango di $\Pi$ viene analizzato calcolando gli autovalori di una matrice ad
+essa strettamente legata (chiamata $M$) che ha rango pari a quello di $\Pi$:
+i test sul rango di $\Pi$ possono quindi essere condotti verificando quanti
+autovalori di $M$ sono pari a 0. I due test di Johansen sono i test
+``$\lambda$-max'', per le ipotesi sui singoli autovalori, e il test
+``trace'', per le ipotesi congiunte.
+
+Il comando \cmd{coint2} di \app{gretl} esegue questi due test.
+Esempio:
+\begin{code}
+  coint2 n x1 x2 x3
+\end{code}
+imposta $p$ nell'equazione (\ref{eq:Joh-tests}) a $(n-1)$ e mostra una tabella
+con le due batterie di test per le tre serie \verb|x1|, \verb|x2| e \verb|x3|.
+ 
+\ldots Options for the deterministic kernel \ldots
+More on this in section \ref{sec:johansen-test}
+
+\section{ARCH e GARCH}
 \label{sec:arch}
 
-Heteroskedasticity means a non-constant variance of the error term in
-a regression model.  Autoregressive Conditional Heteroskedasticity
-(ARCH) is a phenomenon specific to time series models, whereby the
-variance of the error displays autoregressive behavior --- for
-instance, the time series exhibits periods where the error variance is
-relatively large, for several observations, and periods where it is
-relatively small.
+Il fenomeno dell'eteroschedasticità rappresenta la varianza non costante del
+termine di errore in un modello di regressione. L'eteroschedasticità
+condizionale autoregressiva (ARCH) è un fenomeno specifico dei modelli per serie
+storiche, in cui la varianza del termine di errore presenta un comportamento
+autoregressivo, ad esempio, la serie presenta periodi in cui la varianza
+dell'errore è relativamente ampia e periodi in cui è relativamente piccola.
 
-To be continued...
+Un modello GARCH può essere descritto brevemente dalle equazioni seguenti:
+\begin{eqnarray}
+  \label{eq:garch-meaneq}
+  y_t &  = & x_t \beta + \epsilon_t \\
+  \label{eq:garch-epseq}
+  \epsilon_t &  = & u_t \sigma_t \\
+  \label{eq:garch-vareq}
+  A(L) \sigma^2_t &  = & \omega + B(L) \epsilon_{t-1}^2 ,
+\end{eqnarray}
+dove $u_t$ è una sequenza iid con varianza unitaria. Al momento
+\app{gretl} gestisce solo modelli in cui $u_t$ è ipotizzato essere un
+rumore bianco gaussiano. In ogni caso, l'opzione \verb|--robust| calcola la
+matrice di covarianza dei parametri usando lo stimatore
+``sandwich'' di Bollerslev-Wooldridge, quindi le stime prodotte da
+\app{gretl} possono essere considerate QML anche con disturbi non normali.
+
+Esempio:
+\begin{code}
+  garch p q ; y const x
+\end{code}
+dove \verb|p| è il grado (non negativo) di $A(L)$ e \verb|q| è il grado
+(strettamente positivo) di $B(L)$.
 
 \section{Cointegrazione e modelli vettoriali a correzione d'errore}
 \label{vecm-explanation}
 
 \subsection{Il test di cointegrazione di Johansen}
-\label{johansen-test}
+\label{sec:johansen-test}
 
 Il test di Johansen per la cointegrazione deve tenere conto di quali
 ipotesi vengono fatte a proposito dei termini deterministici, per cui
