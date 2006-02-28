@@ -1119,7 +1119,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case EQUATION:
 	err = gretl_equation_system_append(sys, cmd.list);
 	if (err) {
-	    gretl_equation_system_destroy(sys);
 	    sys = NULL;
 	    errmsg(err, prn);
 	}

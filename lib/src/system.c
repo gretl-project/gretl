@@ -350,13 +350,10 @@ int gretl_equation_system_append (gretl_equation_system *sys,
     sys->lists = realloc(sys->lists, (neq + 1) * sizeof *sys->lists);
     if (sys->lists == NULL) return E_ALLOC;
 
-    sys->lists[neq] = malloc((list[0] + 1) * sizeof *list);
+    sys->lists[neq] = gretl_list_new(list[0]);
+
     if (sys->lists[neq] == NULL) {
-	for (i=0; i<neq; i++) {
-	    free(sys->lists[i]);
-	}
-	free(sys->lists);
-	sys->lists = NULL;
+	gretl_equation_system_destroy(sys);
 	return E_ALLOC;
     }
 

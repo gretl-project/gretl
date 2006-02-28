@@ -2430,20 +2430,32 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 	    if (my_sys == NULL) {
 		fprintf(stderr, "do_eqn_system: sys is NULL\n");
  		err = 1;
-		gui_errmsg(err);
 	    }
+	}
+
+	if (err) {
+	    gui_errmsg(err);
+	    break;
 	}
 
 	if (!strncmp(bufline, "equation", 8)) {
 	    slist = command_list_from_string(bufline);
-	    err = gretl_equation_system_append(my_sys, slist);
-	    free(slist);
-	    if (err) {
-		gui_errmsg(err);
+	    if (slist == NULL) {
+		/* error message should be emitted by selector in this
+		   case? */
+		err = 1;
+	    } else {
+		err = gretl_equation_system_append(my_sys, slist);
+		free(slist);
+		if (err) {
+		    /* note: sys is destroyed on error */
+		    gui_errmsg(err);
+		} 
 	    }
 	} else {
 	    err = system_parse_line(my_sys, bufline, datainfo);
 	    if (err) {
+		/* sys is destroyed on error */
 		gui_errmsg(err);
 	    }
 	} 
@@ -2456,7 +2468,10 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 
     close_dialog(dlg);
 
-    if (bufopen(&prn)) return; 
+    if (bufopen(&prn)) {
+	g_free(buf);
+	return; 
+    }
 
     err = gretl_equation_system_finalize(my_sys, &Z, datainfo, prn);
     if (err) {
@@ -6405,7 +6420,6 @@ int gui_exec_line (char *line,
 	/* one equation within a system */
 	err = gretl_equation_system_append(sys, cmd.list);
 	if (err) {
-	    gretl_equation_system_destroy(sys);
 	    sys = NULL;
 	    errmsg(err, prn);
 	}
