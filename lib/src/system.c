@@ -335,6 +335,17 @@ static void sur_rearrange_lists (gretl_equation_system *sys,
     }
 }
 
+/**
+ * gretl_equation_system_append:
+ * @sys: initialized equation system.
+ * @list: list containing dependent variable and regressors.
+ * 
+ * Adds an equation (as represented by @list) to @sys.
+ * 
+ * Returns: 0 on success, non-zero on failure, in which case
+ * @sys is destroyed.
+ */
+
 int gretl_equation_system_append (gretl_equation_system *sys, 
 				  const int *list)
 {
@@ -474,15 +485,20 @@ system_set_save_flags (gretl_equation_system *sys, const char *s)
     }
 }
 
-/* Start compiling an equation system in response to gretl's "system"
-   command: the command must specify a "method" (estimation method)
-   and/or a name for the system.  If a method is given, the system
-   will be estimated as soon as its definition is complete.  If a name
-   is given, the system definition is saved on a stack, and it can
-   subsequently be estimated via various methods (the "estimate"
-   command).  If both a name and an estimation method are given, the
-   system is both estimated and saved.
-*/
+/**
+ * system_start:
+ * @line: command line.
+ * 
+ * Start compiling an equation system: @line must specify a "method" 
+ * (estimation method) and/or a name for the system.  If a method is
+ * given, the system will be estimated as soon as its definition is 
+ * complete.  If a name is given, the system definition is saved on a 
+ * stack, and it can subsequently be estimated via various methods
+ * If both a name and an estimation method are given, the system 
+ * is both estimated and saved.
+ * 
+ * Returns: pointer to a new equation system, or %NULL on error.
+ */
 
 gretl_equation_system *system_start (const char *line)
 {
@@ -716,7 +732,19 @@ static int estimate_with_test (gretl_equation_system *sys,
     return err;
 }
 
-/* driver function for the routines in the "sysest" plugin */
+/**
+ * gretl_equation_system_estimate:
+ * @sys: pre-defined equation system.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt: may include %OPT_Q for relatively quiet operation.
+ * @prn: printing struct.
+ * 
+ * Estimate a pre-defined equation system and print the results
+ * to @prn.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int 
 gretl_equation_system_estimate (gretl_equation_system *sys, 
@@ -774,11 +802,21 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     return err;
 }
 
-/* Finalize an equation system in response to "end system".  If the
-   system has a specified name, we save it on a stack of defined
-   systems.  If it has a specified estimation method, we go ahead
-   and estimate it.  If it has both, we do both.
-*/
+/**
+ * gretl_equation_system_finalize:
+ * @sys: pre-defined equation system.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @prn: printing struct.
+ * 
+ * Finalize an equation system, e.g. in response to "end system".
+ * If the system has a specified name, we save it on a stack of 
+ * defined systems.  If it has a specified estimation method, 
+ * we go ahead and estimate it.  If it has both, we do both.
+ * 
+ * Returns: 0 on success, non-zero on error.  If the system is
+ * mal-formed, it is destroyed.
+ */
 
 int gretl_equation_system_finalize (gretl_equation_system *sys, 
 				    double ***pZ, DATAINFO *pdinfo,
@@ -1650,6 +1688,22 @@ add_aux_list_to_sys (gretl_equation_system *sys, const char *line,
 
     return 0;
 }
+
+/**
+ * system_parse_line:
+ * @sys: initialized equation system.
+ * @line: command line.
+ * @pdinfo: dataset information.
+ * 
+ * Modifies @sys according to the command supplied in @line,
+ * which must start with "identity" (and supply an identity
+ * to be added to the system, or "endog" (and supply a list
+ * of endogenous variables), or "instr" (and supply a list of
+ * instrumental variables).
+ * 
+ * Returns: 0 on success, non-zero on failure, in which case
+ * @sys is destroyed.
+ */
 
 int 
 system_parse_line (gretl_equation_system *sys, const char *line,
