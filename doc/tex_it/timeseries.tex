@@ -8,7 +8,7 @@
 \label{arma-repr}
 
 Il comando \cmd{arma} effettua la stima di modelli autoregressivi a media mobile
-(ARMA); la rappresentazione più generale di un modello stimabile con \app{gretl}
+(ARMA); la rappresentazione più generale di un modello ARMA stimabile con \app{gretl}
 è la seguente:
 \begin{equation}
   \label{eq:general-arma}
@@ -30,9 +30,9 @@ dove, nella solita notazione, il vettore $\beta$ si riduce all'intercetta $\mu$.
 \[
   y_t = \mu + \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
   \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q
-  \epsilon_{t-q} ;
+  \epsilon_{t-q}
 \]
-la sintassi corrispondente in \app{gretl} è semplicemente
+La sintassi corrispondente in \app{gretl} è semplicemente
 \begin{code}
   gretl p q ; y
 \end{code}
@@ -71,7 +71,10 @@ l'ultimo si tradurrebbe nell'espressione seguente
 \]
 la formulazione ARMAX ha il vantaggio che il coefficiente $\beta$
 può essere interpretato immediatamente come l'effetto marginale delle
-variabili $x_t$ sulla media condizionale di $y_t$.
+variabili $x_t$ sulla media condizionale di $y_t$. Si noti comunque, che
+i modelli di regressione che contengono errori puramente autoregressivi
+possono essere stimati (sebbene non con tecniche di massima verosimiglianza) con
+altri comandi di \app{gretl}, come \cmd{corc} e \cmd{pwe}.
 
 Il comando \cmd{arma} può quindi essere usato anche per stimare \emph{Modelli a
 funzione di trasferimento}, un tipo di generalizzazione dei modelli autoregressivi
@@ -121,10 +124,10 @@ Questo modo di procedere però non è consigliato: anche se si ottengono stime
 corrette, la funzionalità di previsione risulterà inutilizzabile.
 
 La discussione svolta presuppone che la serie storica $y_t$ sia già stata
-soggetta a tutte le trasformazioni necessarie per assicurarne la stazionarietà.
-La trasformazione più usata in questi casi è la differenziazione, quindi
-\app{gretl} fornisce un meccanismo per includere questo passo nel comando
-\cmd{arma}: la sintassi
+soggetta a tutte le trasformazioni necessarie per assicurarne la stazionarietà
+(si veda anche il capitolo \ref{sec:uroot}).  La trasformazione più usata in
+questi casi è la differenziazione, quindi \app{gretl} fornisce un meccanismo per
+includere questo passo nel comando \cmd{arma}: la sintassi
 \begin{code}
   arma p d q ; y 
 \end{code}
@@ -158,24 +161,24 @@ produce gli stessi risultati di
 
 L'algoritmo usato da \app{gretl} per stimare i parametri di un modello ARMA è
 quello della massima verosimiglianza condizionale (CML), noto anche come ``somma
-dei quadrati condizionale'' (si veda Hamilton, \emph{Time Series Analysis} 1994,
+dei quadrati condizionale'' (si veda Hamilton 1994,
 pagina 132).  Questo metodo è esemplificato nello script \ref{jack-arma}, quindi
 ne verrà data solo una breve descrizione qui: dato un campione di ampiezza
 $T$, il metodo CML minimizza la somma dei quadrati degli errori delle previsioni
 generate dal modello per l'osservazione successiva, sull'intervallo $t_0,
-\ldots, T$. Il punto di partenza $t_0$ dipende dall'ordine dei polinomi nel
-modello ARMA.
+\ldots, T$. Il punto di partenza $t_0$ dipende dall'ordine dei polinomi AR del
+modello.
 
 Questo metodo è quasi equivalente a quello della massima verosimiglianza in
-ipotesi di normalità; la sola differenza sta nel fatto che le prime $(t_0 - 1)$
+ipotesi di normalità; la differenza sta nel fatto che le prime $(t_0 - 1)$
 osservazioni sono considerate fisse ed entrano nella funzione di verosimiglianza
 solo come variabili condizionanti. Di conseguenza, i due metodi sono
 asintoticamente equivalenti sotto le consuete ipotesi.
 
 Il metodo numerico usato per massimizzare la log-verosimiglianza è quello BHHH.
 La matrice di covarianza per i parametri (e quindi gli errori standard) sono
-calcolati col metodo del prodotto esterno del gradiente (OPG, Outer Product of
-Gradient).
+calcolati col metodo del prodotto esterno dei gradienti (OPG, Outer Product of
+the Gradients).
 
 La stima di massima verosimiglianza vera e propria in ipotesi di normalità è
 disponibile in \app{gretl} attraverso il plugin \verb|x-12|, che viene usato
@@ -186,19 +189,28 @@ automaticamente se si aggiunge l'opzione \verb|--x-12-arima| al comando
   arma 1 1 ; r
   arma 1 1 ; r --x-12-arima
 \end{code}
-produce queste stime:
+produce le stime mostrate nella tabella~\ref{tab:cml-ml}.
+
+\begin{table}[htbp]
+\caption{Stime CML e ML}
+\label{tab:cml-ml}
 \begin{center}
   \begin{tabular}{crrrr}
     \hline
-    Parametro & \multicolumn{2}{c}{\textrm{CML}} &
-    \multicolumn{2}{c}{\textrm{ML (x-12 plugin)}} \\
+    Parametro & \multicolumn{2}{c}{CML} &
+    \multicolumn{2}{c}{ML (\app{X-12-ARIMA} plugin)} \\
     \hline 
-    $\mu$ & 1.07322 & 0.488661 &  1.00232 & 0.133002 \\
-    $\phi$ & 0.852772 & 0.0450252 & 0.855373  & 0.0496304 \\
-    $\theta$ & 0.591838 & 0.0456662 & 0.587986 & 0.0799962 \\
+    $\mu$ & 1.07322 & (0.488661) &  1.00232 & (0.133002) \\
+    $\phi$ & 0.852772 & (0.0450252) & 0.855373  & (0.0496304) \\
+    $\theta$ & 0.591838 & (0.0456662) & 0.587986 & (0.0799962) \\
     \hline
   \end{tabular}
 \end{center}
+\end{table}
+
+Per confrontabilità con le stime di \app{gretl}, è possibile impostare
+\app{X-12-ARIMA} per produrre le stime CML aggiungendo l'opzione
+\verb|--conditional| oltre a \verb|--x-12-arima|.
 
 \subsection{Previsione}
 \label{arma-fcast}
@@ -218,22 +230,62 @@ della statistica $t$ su $\varphi$ nella regressione seguente:
 \begin{equation}
   \label{eq:ADFtest}
   \Delta y_t = \mu_t + \varphi y_{t-1} + \sum_{i=1}^p \gamma_i \Delta
-  y_{t-i} + \epsilon_t
+  y_{t-i} + \epsilon_t .
 \end{equation}
-\begin{itemize}
-\item $H_0$: $y_t$ is I(1);
-\item one-sided test: $H_0$ is rejected if $t_{\varphi}$ is ``small'';
-\item nonstandard distribution, also depends on the contents of
-  $\mu_t$ --- p-values by MacKinnon.
-\end{itemize}
-Syntax:
+
+Questa statistica test è probabilmente il più famoso e utilizzato test per
+radici unitarie. È un test a una coda la cui ipotesi nulla è
+$\varphi = 0$, mentre quella alternativa è $\varphi < 0$. Sotto l'ipotesi nulla,
+$y_t$ deve essere differenziata almeno una volta per raggiungere la
+stazionarietà. Sotto l'ipotesi alternativa, $y_t$ è già stazionaria e non
+richiede differenziazione. Quindi, grandi valori negativi della statistica test
+portano a rifiutare l'ipotesi nulla.
+
+Un aspetto peculiare di questo test è che la sua distribuzion limite non è
+standard sotto l'ipotesi nulla: inoltre, la forma della distribuzione, e quindi
+i valori critici per il test, dipendono dalla forma del termine
+$\mu_t$. Un'eccellente analisi di tutti i casi possibili è contenuta in
+Hamilton (1994), ma il soggetto è trattato anche in qualsiasi testo recente
+sulle serie storiche. Per quanto riguarda \app{gretl}, esso permette all'utente
+di scegliere la specificazione di $\mu_t$ tra quanttro alternative:
+
+\begin{center}
+  \begin{tabular}{cc}
+    \hline
+    $\mu_t$ & Opzione del comando \\
+    \hline
+    0 & \verb|--nc| \\
+    $\mu_0$ &  \verb|--c| \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
+    $\mu_0 + \mu_1 t + \mu_1 t^2$ &  \verb|--ctt| \\
+    \hline
+  \end{tabular}
+\end{center}
+
+Queste opzioni non sono mutualmente esclusive e possono essere usate insieme; in
+questo caso, la statistica verrà calcolata separatamente per ognuno dei casi.
+La scelta predefinita in \app{gretl} è quella di usare la combinazione
+\verb|--c --ct --ctt|. Per ognuno dei casi, vengono calcolati p-value
+approssimativi usando l'algoritmo descritto in MacKinnon 1996.
+
+Il comando di \app{gretl} da usare per eseguire il test è \cmd{adf}; ad esempio
 \begin{code}
-  adf n x1
+  adf 4 x1 --c --ct
 \end{code}
-\begin{itemize}
-\item Determinstic kernel options;
-\item auto-selection of $p$ via negative \verb|n|.
-\end{itemize}
+calcola la statistica test come statistica-t per $\varphi$ nell'equazione
+\ref{eq:ADFtest} con $p=4$ nei due casi $\mu_t = \mu_0$ e
+$\mu_t = \mu_0 + \mu_1 t$.
+
+Il numero di ritardi ($p$ nell'equazione \ref{eq:ADFtest}) deve essere scelto
+per assicurarsi che (\ref{eq:ADFtest}) sia una parametrizzazione abbastanza
+flessibile per rappresentare adeguatamente la persistenza di breve termine di
+$\Delta y_t$. Scegliere un $p$ troppo basso può portare a distorsioni di
+dimensione nel test, mentre sceglierlo troppo alto porta a una perdita di
+potenza del test. Per comodità dell'utente, il parametro $p$ può essere
+determinato automaticamente. Impostando $p$ a un numero negativo viene attivata
+una procedura sequenziale che parte da $p$ ritardi e decrementa $p$ fino a quando la statistica $t$
+per il parametro $\gamma_p$ supera 1.645 in valore assoluto.
+
 \subsection{The KPSS test}
 \label{sec:KPSStest}
 
