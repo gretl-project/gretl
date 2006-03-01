@@ -652,7 +652,7 @@ static double get_mle_ll (const double *b)
 	pspec->ll -= (*nZ)[v][t];
     }
 
-    return -pspec->ll;
+    return pspec->ll;
 }
 
 /* used in the context of BFGS */
@@ -674,7 +674,7 @@ static int get_mle_gradient (double *b, double *g)
 		return 1;
 	    }
 	    for (t=pspec->t1; t<=pspec->t2; t++) {
-		val1 += (*nZ)[pspec->uhatnum][t];
+		val1 -= (*nZ)[pspec->uhatnum][t];
 	    }
 	    b[i] += 2.0 * eps;
 	    update_nls_param_values(b);
@@ -682,7 +682,7 @@ static int get_mle_gradient (double *b, double *g)
 		return 1;
 	    }
 	    for (t=pspec->t1; t<=pspec->t2; t++) {
-		val2 += (*nZ)[pspec->uhatnum][t];
+		val2 -= (*nZ)[pspec->uhatnum][t];
 	    }
 	    b[i] -= eps;
 	    g[i] = (val2 - val1) / (2.0 * eps);
@@ -701,19 +701,18 @@ static int get_mle_gradient (double *b, double *g)
 	v = pspec->params[i].dernum;
 
 	g[i] = 0.0;
-
-	/* derivative may be vector or scalar */
 	if (ndinfo->vector[v]) {
+	    /* derivative may be vector or scalar */
 	    for (t=pspec->t1; t<=pspec->t2; t++) {
 		if (na((*nZ)[v][t])) {
 		    fprintf(stderr, "NA in gradient calculation\n");
 		    err = 1;
 		} else {
-		    g[i] -= (*nZ)[v][t];
+		    g[i] += (*nZ)[v][t];
 		}
 	    }
 	} else {
-	    g[i] -= (*nZ)[v][0];
+	    g[i] += (*nZ)[v][0];
 	}
 #if NLS_DEBUG > 1
 	fprintf(stderr, "g[%d] = %g, based on nZ[%d]\n", i, g[i], v);
@@ -731,7 +730,7 @@ print_mle_iter_stats (double ll, int nparam, const double *b, const double *g,
 {
     int i;
 
-    pprintf(prn, "Iteration %d; log likelihood = %.8g", iter, -ll);	
+    pprintf(prn, "Iteration %d; log likelihood = %.8g", iter, ll);	
     if (iter > 1) {
 	pprintf(prn, " (steplength = %.8g)", sl);
     }	
@@ -2369,6 +2368,19 @@ static void free_Lmatrix (double **m, int n)
 #define acctol		0.0001 
 #define reltest		10.0
 
+/* FIXME: it would be nice to trash this, but that depends on
+   switching all the signs correctly below, which (to me!) is
+   more difficult than it looks -- AC */
+
+static void reverse_gradient (double *g, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	g[i] = -g[i];
+    }
+}
+
 /*  BFGS variable-metric method, based on Pascal code in J. C. Nash,
     "Compact Numerical Methods for Computers," 2nd edition, converted
     by p2c then re-crafted by B. D. Ripley.  Revised for gretl by
@@ -2383,7 +2395,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
     int accpoint, enough;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **B = NULL;
     int count, funcount, gradcount;
-    double llmax, ll, gradproj;
+    double fmax, f, gradproj;
     int i, j, ilast, iter = 0;
     double s, steplength = 0.0;
     double D1, D2;
@@ -2400,23 +2412,24 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	goto bailout;
     }
 
-    ll = get_ll(b);
+    f = get_ll(b);
 
-    if (na(ll)) {
-	fprintf(stderr, "initial value of ll is not finite\n");
+    if (na(f)) {
+	fprintf(stderr, "initial value of f is not finite\n");
 	err = E_DATA;
 	goto bailout;
     }
 
-    llmax = ll;
+    fmax = f;
     funcount = gradcount = 1;
     get_gradient(b, g);
+    reverse_gradient(g, n);
     iter++;
     ilast = gradcount;
 
     do {
 	if (opt & OPT_V) {
-	    print_mle_iter_stats(ll, n, b, g, iter, steplength, prn);
+	    print_mle_iter_stats(f, n, b, g, iter, steplength, prn);
 	}
 	if (ilast == gradcount) {
 	    for (i=0; i<n; i++) {
@@ -2444,7 +2457,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	}
 
 	if (gradproj < 0.0) {	
-	    /* search direction is downhill */
+	    /* search direction is uphill */
 	    steplength = 1.0;
 	    accpoint = 0;
 	    do {
@@ -2457,35 +2470,36 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		    }
 		}
 		if (count < n) {
-		    ll = get_ll(b);
+		    f = get_ll(b);
 		    funcount++;
-		    accpoint = !na(ll) &&
-			(ll <= llmax + gradproj * steplength * acctol);
+		    accpoint = !na(f) &&
+			(f >= fmax + gradproj * steplength * acctol);
 		    if (!accpoint) {
 			steplength *= stepredn;
 		    }
 		}
 	    } while (!(count == n || accpoint));
 
-	    enough = fabs(ll - llmax) > reltol * (fabs(llmax) + reltol);
+	    enough = fabs(fmax - f) > reltol * (fabs(fmax) + reltol);
 #if BFGS_DEBUG
-	    fprintf(stderr, "enough = %d: ll=%g, "
-		    "fabs(ll - llmax) = %g,\n reltol * "
-		    "(fabs(llmax) + reltol) = %g\n",
-		    enough, ll, fabs(ll - llmax), 
-		    reltol * (fabs(llmax) + reltol));
+	    fprintf(stderr, "enough = %d: f=%g, "
+		    "fabs(fmax - f) = %g,\n reltol * "
+		    "(fabs(fmax) + reltol) = %g\n",
+		    enough, f, fabs(fmax - f), 
+		    reltol * (fabs(fmax) + reltol));
 #endif
 
 	    /* stop if value is small or if relative change is low */
 	    if (!enough) {
 		count = n;
-		llmax = ll;
+		fmax = f;
 	    }
 
 	    if (count < n) {
 		/* making progress */
-		llmax = ll;
+		fmax = f;
 		get_gradient(b, g);
+		reverse_gradient(g, n);
 		gradcount++;
 		iter++;
 		D1 = 0.0;
@@ -2526,7 +2540,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		}
 	    }
 	} else {
-	    /* uphill search */
+	    /* downhill search */
 	    count = 0;
 	    if (ilast == gradcount) {
 		count = n;
@@ -2558,7 +2572,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 
     if (opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	
-	print_mle_iter_stats(ll, n, b, g, iter, steplength, prn);
+	print_mle_iter_stats(f, n, b, g, iter, steplength, prn);
 	pputs(nprn, "\n\n");	
     }
 

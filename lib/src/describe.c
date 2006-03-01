@@ -1904,14 +1904,19 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
 int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
 		 PRN *prn, gretlopt opt)
 {
-    double *autocov, *omega, *hhat, *savexx = NULL;
-    double xx, yy, varx, w;
-    int err = 0, k, xmax, L, nT; 
-    int nobs, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    double *autocov = NULL;
+    double *omega = NULL;
+    double *hhat = NULL;
+    double *savexx = NULL;
+    double *stdy = NULL;
+    double xx, yy, varx, stdx, w;
+    int k, xmax, L, nT, nobs; 
+    int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
     int do_graph = !(opt & OPT_N);
     int window = (opt & OPT_O);
     FILE *fq = NULL;
+    int err = 0;
 
     *gretl_errmsg = 0;
 
@@ -1955,19 +1960,29 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     autocov = malloc((L + 1) * sizeof *autocov);
     omega = malloc(nT * sizeof *omega);
     hhat = malloc(nT * sizeof *hhat);
+    stdy = malloc(nobs * sizeof *stdy);
 
-    if (autocov == NULL || omega == NULL || hhat == NULL) {
+    if (autocov == NULL || omega == NULL || hhat == NULL || stdy == NULL) {
+	free(autocov);
+	free(omega);
+	free(hhat);
+	free(stdy);
 	return E_ALLOC;
     }
 
     xx = gretl_mean(t1, t2, (*pZ)[varno]);
+    varx = gretl_variance(t1, t2, &(*pZ)[varno][0]);
+    varx *= (double) (nobs - 1) / nobs;
+    stdx = sqrt(varx);
+    for (t=t1; t<=t2; t++) {
+	stdy[t-t1] = ((*pZ)[varno][t] - xx) / stdx;
+    }
 
     /* find autocovariances */
     for (k=1; k<=L; k++) {
-	autocov[k] = 0;
-	for (t=t1+k; t<=t2; t++) {
-	    autocov[k] += 
-		((*pZ)[varno][t] - xx) * ((*pZ)[varno][t-k] - xx);
+	autocov[k] = 0.0;
+	for (t=k; t<nobs; t++) {
+	    autocov[k] += stdy[t] * stdy[t-k];
 	}
 	autocov[k] /= nobs;
     }
@@ -2007,6 +2022,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	    sprintf(titlestr, I_("Spectrum of %s"), pdinfo->varname[varno]);
 	}
 	fprintf(fq, "set title '%s", titlestr);
+
 	if (window) {
 	    sprintf(titlestr, I_("Bartlett window, length %d"), L);
 	    fprintf(fq, " (%s)'\n", titlestr);
@@ -2044,12 +2060,9 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	}
     }
 
-    varx = gretl_variance(t1, t2, &(*pZ)[varno][0]);
-    varx *= (double) (nobs - 1) / nobs;
-
     for (t=1; t<=nobs/2; t++) {
 	yy = 2 * M_PI * t / (double) nobs;
-	xx = varx; 
+	xx = 1.0; 
 	for (k=1; k<=L; k++) {
 	    if (window) {
 		w = 1 - (double) k/(L + 1);
@@ -2058,7 +2071,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	    }
 	    xx += 2.0 * w * autocov[k] * cos(yy * k);
 	}
-	xx /= 2 * M_PI;
+	xx *= varx /(2 * M_PI);
 	pprintf(prn, " %.4f%9d%16.2f%16.5f\n", yy, t, 
 		(double) nobs / t, xx);
 	if (savexx != NULL) {
@@ -2076,7 +2089,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	gretl_push_c_numeric_locale();
 
 	for (t=1; t<=nobs/2; t++) {
-	    fprintf(fq, "%d %f\n", t, savexx[t]);
+	    fprintf(fq, "%d %g\n", t, savexx[t]);
 	}
 
 	gretl_pop_c_numeric_locale();
@@ -2098,6 +2111,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     free(autocov);
     free(omega);
     free(hhat);
+    free(stdy);
 
     return err;
 }

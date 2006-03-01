@@ -143,6 +143,7 @@ LIBSRC = adf_kpss.c \
 	gretl_win32.c \
 	gretl_xml.c \
 	interact.c \
+	kalman.c \
 	libset.c \
 	missing.c \
 	modelprint.c \
