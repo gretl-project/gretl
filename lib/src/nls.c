@@ -727,27 +727,27 @@ static int get_mle_gradient (double *b, double *g)
 
 static void 
 print_mle_iter_stats (double ll, int nparam, const double *b, const double *g, 
-		      int iter, double sl)
+		      int iter, double sl, PRN *prn)
 {
     int i;
 
-    pprintf(nprn, "Iteration %d; log likelihood = %.8g", iter, -ll);	
+    pprintf(prn, "Iteration %d; log likelihood = %.8g", iter, -ll);	
     if (iter > 1) {
-	pprintf(nprn, " (steplength = %.8g)", sl);
+	pprintf(prn, " (steplength = %.8g)", sl);
     }	
-    pputc(nprn, '\n');
+    pputc(prn, '\n');
 	
-    pputs(nprn, "Parameters: ");
+    pputs(prn, "Parameters: ");
     for (i=0; i<nparam; i++) {
-	pprintf(nprn, "%#12.5g", b[i]);
+	pprintf(prn, "%#12.5g", b[i]);
     }
-    pputc(nprn, '\n');
+    pputc(prn, '\n');
 
-    pputs(nprn, "Gradients:  ");
+    pputs(prn, "Gradients:  ");
     for (i=0; i<nparam; i++) {
-	pprintf(nprn, "%#12.5g", -g[i]);
+	pprintf(prn, "%#12.5g", -g[i]);
     }
-    pputs(nprn, "\n\n");
+    pputs(prn, "\n\n");
 }
 
 /* this function is used in the context of the minpack callback, and
@@ -1554,10 +1554,10 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     }
 
     if (!err) {
-	err = BFGS_min(n, spec->coeff, maxit, pspec->tol, 
+	err = BFGS_max(n, spec->coeff, maxit, pspec->tol, 
 		       &spec->fncount, &spec->grcount,
 		       get_mle_ll, get_mle_gradient,
-		       pspec->opt);
+		       pspec->opt, nprn);
     }
 
     return err;    
@@ -2375,14 +2375,15 @@ static void free_Lmatrix (double **m, int n)
     Allin Cottrell.
 */
 
-int BFGS_min (int n, double *b, int maxit, double reltol,
+int BFGS_max (int n, double *b, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_LL_FUNC get_ll,
-	      BFGS_GRAD_FUNC get_gradient, gretlopt opt)
+	      BFGS_GRAD_FUNC get_gradient, gretlopt opt,
+	      PRN *prn)
 {
     int accpoint, enough;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **B = NULL;
     int count, funcount, gradcount;
-    double Fmin, f, gradproj;
+    double llmax, ll, gradproj;
     int i, j, ilast, iter = 0;
     double s, steplength = 0.0;
     double D1, D2;
@@ -2399,15 +2400,15 @@ int BFGS_min (int n, double *b, int maxit, double reltol,
 	goto bailout;
     }
 
-    f = get_ll(b);
+    ll = get_ll(b);
 
-    if (na(f)) {
+    if (na(ll)) {
 	fprintf(stderr, "initial value of ll is not finite\n");
 	err = E_DATA;
 	goto bailout;
     }
 
-    Fmin = f;
+    llmax = ll;
     funcount = gradcount = 1;
     get_gradient(b, g);
     iter++;
@@ -2415,7 +2416,7 @@ int BFGS_min (int n, double *b, int maxit, double reltol,
 
     do {
 	if (opt & OPT_V) {
-	    print_mle_iter_stats(f, n, b, g, iter, steplength);
+	    print_mle_iter_stats(ll, n, b, g, iter, steplength, prn);
 	}
 	if (ilast == gradcount) {
 	    for (i=0; i<n; i++) {
@@ -2456,34 +2457,34 @@ int BFGS_min (int n, double *b, int maxit, double reltol,
 		    }
 		}
 		if (count < n) {
-		    f = get_ll(b);
+		    ll = get_ll(b);
 		    funcount++;
-		    accpoint = !na(f) &&
-			(f <= Fmin + gradproj * steplength * acctol);
+		    accpoint = !na(ll) &&
+			(ll <= llmax + gradproj * steplength * acctol);
 		    if (!accpoint) {
 			steplength *= stepredn;
 		    }
 		}
 	    } while (!(count == n || accpoint));
 
-	    enough = fabs(f - Fmin) > reltol * (fabs(Fmin) + reltol);
+	    enough = fabs(ll - llmax) > reltol * (fabs(llmax) + reltol);
 #if BFGS_DEBUG
-	    fprintf(stderr, "enough = %d: f=%g, "
-		    "fabs(f - Fmin) = %g,\n reltol * "
-		    "(fabs(Fmin) + reltol) = %g\n",
-		    enough, f, fabs(f - Fmin), 
-		    reltol * (fabs(Fmin) + reltol));
+	    fprintf(stderr, "enough = %d: ll=%g, "
+		    "fabs(ll - llmax) = %g,\n reltol * "
+		    "(fabs(llmax) + reltol) = %g\n",
+		    enough, ll, fabs(ll - llmax), 
+		    reltol * (fabs(llmax) + reltol));
 #endif
 
 	    /* stop if value is small or if relative change is low */
 	    if (!enough) {
 		count = n;
-		Fmin = f;
+		llmax = ll;
 	    }
 
 	    if (count < n) {
 		/* making progress */
-		Fmin = f;
+		llmax = ll;
 		get_gradient(b, g);
 		gradcount++;
 		iter++;
@@ -2557,7 +2558,7 @@ int BFGS_min (int n, double *b, int maxit, double reltol,
 
     if (opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	
-	print_mle_iter_stats(f, n, b, g, iter, steplength);
+	print_mle_iter_stats(ll, n, b, g, iter, steplength, prn);
 	pputs(nprn, "\n\n");	
     }
 

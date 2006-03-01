@@ -56,8 +56,9 @@ MODEL model_from_nls_spec (nls_spec *spec, double ***pZ,
 
 double get_default_nls_toler (void);
 
-int BFGS_min (int n, double *b, int maxit, double reltol,
+int BFGS_max (int n, double *b, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_LL_FUNC get_ll,
-	      BFGS_GRAD_FUNC get_gradient, gretlopt opt);
+	      BFGS_GRAD_FUNC get_gradient, gretlopt opt,
+	      PRN *prn);
 
 #endif /* GRETL_NLS_H */

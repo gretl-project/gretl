@@ -1457,7 +1457,7 @@ static void read_rc (void)
     gchar *value = NULL;
     char key[MAXSTR];
     char *strvar;
-    int i, j;
+    int i;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, 
