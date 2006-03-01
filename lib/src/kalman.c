@@ -349,8 +349,8 @@ static void kalman_print_state (kalman *K, int i, double y)
     fprintf(stderr, "Iteration %d:\n", i);
 
     for (j=0; j<K->n; j++) {
-	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", j, 
-		gretl_matrix_get(y, t, j), 
+	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", 
+		j, gretl_matrix_get(y, t, j), 
 		j, gretl_vector_get(K->E, j));
     }
 

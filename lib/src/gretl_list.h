@@ -61,6 +61,8 @@ int gretl_list_add_list (int **targ, const int *src);
 
 int gretl_list_insert_list (int **targ, const int *src, int pos);
 
+int gretl_list_insert_list_minus (int **targ, const int *src, int pos);
+
 int reglist_check_for_const (int *list, const double **Z,
 			     const DATAINFO *pdinfo);
 

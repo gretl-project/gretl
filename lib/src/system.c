@@ -1623,7 +1623,7 @@ add_aux_list_to_sys (gretl_equation_system *sys, const char *line,
     const char *p;
     char vname[VNAMELEN];
     int *list;
-    int i, v, nf, len, cplen;
+    int i, j, v, nf, len, cplen;
     int err = 0;
 
     if (which == ENDOG_LIST) {
@@ -1635,7 +1635,8 @@ add_aux_list_to_sys (gretl_equation_system *sys, const char *line,
 	if (sys->instr_vars != NULL) {
 	    strcpy(gretl_errmsg, "Only one list of instruments may be given");
 	    return 1;
-	} else if (sys->method != SYS_3SLS && sys->method != SYS_TSLS) {
+	} else if (0 && sys->method != SYS_3SLS && sys->method != SYS_TSLS) {
+	    /* FIXME ?? */
 	    strcpy(gretl_errmsg, "Instruments may be specified only "
 		   "for 3SLS or TSLS");
 	    return 1;
@@ -1645,14 +1646,17 @@ add_aux_list_to_sys (gretl_equation_system *sys, const char *line,
     }
 
     nf = count_fields(line);
-    if (nf < 1) return 1;
+    if (nf < 1) {
+	return 1;
+    }
 
-    list = malloc((nf + 1) * sizeof *list);
-    if (list == NULL) return E_ALLOC;
+    list = gretl_list_new(nf);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
 
-    list[0] = nf;
-    
     p = line;
+    j = 1;
     for (i=1; i<=nf && !err; i++) {
 	while (isspace(*p)) p++;
 	*vname = '\0';
@@ -1667,10 +1671,20 @@ add_aux_list_to_sys (gretl_equation_system *sys, const char *line,
 	    v = varindex(pdinfo, vname);
 	}
 	if (v < 0 || v >= pdinfo->v) {
-	    sprintf(gretl_errmsg, "Undefined variable '%s'.", vname);
-	    err = 1;
+	    /* maybe a named list */
+	    int *sublist = get_list_by_name(vname);
+
+	    if (sublist == NULL) {
+		sprintf(gretl_errmsg, "Undefined variable '%s'.", vname);
+		err = 1;
+	    } else {
+		err = gretl_list_insert_list_minus(&list, sublist, j);
+		if (!err) {
+		    j += sublist[0];
+		}
+	    }
 	} else {
-	    list[i] = v;
+	    list[j++] = v;
 	}
 	p += len;
     }

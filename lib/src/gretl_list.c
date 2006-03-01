@@ -1193,6 +1193,49 @@ int gretl_list_insert_list (int **targ, const int *src, int pos)
 }
 
 /**
+ * gretl_list_insert_list_minus:
+ * @targ: location of list into which @src should be inserted.
+ * @src: list to be inserted.
+ * @pos: zero-based position at which @src should be inserted.
+ *
+ * Inserts @src into @targ at @pos.  The length of @targ becomes the
+ * sum of the lengths of the two original lists minus one.  This
+ * can be useful if we were expecting to insert a single variable
+ * but found we had to insert a list instead.  Insertion of @src
+ * overwrites any entries in @targ beyond @pos (the expectation is
+ * that this function will be called in the process of assembling
+ * @targ, in left-to-right mode).
+ *
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gretl_list_insert_list_minus (int **targ, const int *src, int pos)
+{
+    int *big;
+    int n1 = (*targ)[0];
+    int n2 = src[0];
+    int bign = n1 - 1 + n2;
+    int i, err = 0;
+
+    if (pos > n1 + 1) {
+	return 1;
+    }
+
+    big = realloc(*targ, (bign + 1) * sizeof *big);
+    if (big == NULL) {
+	err = E_ALLOC;
+    } else {
+	big[0] = bign;
+	for (i=1; i<=src[0]; i++) {
+	    big[pos+i-1] = src[i];
+	}
+	*targ = big;
+    }
+
+    return err;
+}
+
+/**
  * list_members_replaced:
  * @list: an array of integer variable ID numbers, the first element
  * of which holds a count of the number of elements following.
