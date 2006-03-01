@@ -344,8 +344,15 @@ static int kalman_iter_2 (kalman *K)
 #if KDEBUG
 static void kalman_print_state (kalman *K, int i, double y)
 {
-    fprintf(stderr, "Iteration %d: y[t] = %g, err[t] = %g\n", i, y,
-	    gretl_matrix_get(K->E, 0, 0));
+    int j;
+
+    fprintf(stderr, "Iteration %d:\n", i);
+
+    for (j=0; j<K->n; j++) {
+	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", j, 
+		gretl_matrix_get(y, t, j), 
+		j, gretl_vector_get(K->E, j));
+    }
 
     gretl_matrix_print(K->S0, "K->S0");
     gretl_matrix_print(K->P0, "K->P0");
@@ -430,8 +437,7 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
 		     gretl_matrix *E)
 {
     int T = gretl_matrix_rows(y);
-    double yt, llt = 0.0;
-    double ldet;
+    double ldet, llt = 0.0;
     int t, err = 0;
 
 #if KDEBUG
@@ -456,9 +462,8 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
     }
 
     for (t=0; t<T && !err; t++) {
-	yt = gretl_vector_get(y, t);
 #if KDEBUG
-	kalman_print_state(K, t, yt);
+	kalman_print_state(K, y, t);
 #endif
 	/* intial matrix calculations */
 	gretl_matrix_multiply(K->P0, K->H, K->PH);
