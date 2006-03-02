@@ -1612,7 +1612,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case SYSTEM:
 	/* system of equations */
 	if (sys == NULL) {
-	    sys = system_start(line);
+	    sys = system_start(line, cmd.opt);
 	    if (sys == NULL) {
 		err = 1;
 		errmsg(err, prn);

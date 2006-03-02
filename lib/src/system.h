@@ -33,7 +33,7 @@ typedef enum {
     SYS_MAX
 } gretl_system_methods;
 
-gretl_equation_system *system_start (const char *line);
+gretl_equation_system *system_start (const char *line, gretlopt opt);
 
 char *get_system_name_from_line (const char *s);
 

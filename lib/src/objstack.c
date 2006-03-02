@@ -118,8 +118,9 @@ static int gretl_object_get_refcount (stacker *s)
 	rc = var->refcount;
     } else if (s->type == SYSTEM) {
 	gretl_equation_system *sys = (gretl_equation_system *) s->ptr;
-        fprintf(stderr, "getting refcount on %p\n", (void *) s->ptr);
-	fflush(stderr);
+#if ODEBUG
+        fprintf(stderr, "getting refcount on type SYSTEM at %p\n", (void *) s->ptr);
+#endif
 	rc = sys->refcount;
     }
 

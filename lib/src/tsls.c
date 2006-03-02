@@ -60,8 +60,8 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *instlist,
     double **X = NULL;
     char *endog = NULL;
     int i, j, v, err = 0;
-    size_t esize, Xsize;
-    size_t es_old, xs_old;
+    size_t Xsize, esize;
+    size_t xs_old, es_old;
     int recycle_X = 0;
     int recycle_e = 0;
 
@@ -71,32 +71,41 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *instlist,
     /* re-use old pointers if applicable */
 
     X = gretl_model_get_data_and_size(pmod, "tslsX", &xs_old);
-    if (X == NULL) {
+    if (X != NULL) {
+	if (Xsize == xs_old) {
+	    recycle_X = 1;
+	} else {
+	    tsls_free_data(pmod);
+	    gretl_model_detach_data_item(pmod, "tslsX");
+	    free(X);
+	    X = NULL;
+	} 
+    }
+
+    if (!recycle_X && Xsize > 0) {
 	X = malloc(Xsize);
-    } else if (Xsize != xs_old) {
-	tsls_free_data(pmod);
-	gretl_model_detach_data_item(pmod, "tslsX");
-	free(X);
-	X = malloc(Xsize);
-    } else {
-	recycle_X = 1;
+	if (X == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     endog = gretl_model_get_data_and_size(pmod, "endog", &es_old);
-    if (endog == NULL) {
-	endog = malloc(esize);
-    } else if (esize != es_old) {
-	gretl_model_detach_data_item(pmod, "endog");
-	free(endog);
-	endog = malloc(esize);
-    } else {
-	recycle_e = 1;
+    if (endog != NULL) {
+	if (esize == es_old) {
+	    recycle_e = 1;
+	} else {
+	    gretl_model_detach_data_item(pmod, "endog");
+	    free(endog);
+	    endog = NULL;
+	}
     }
 
-    if (X == NULL || endog == NULL) {
-	free(X);
-	free(endog);
-	return E_ALLOC;
+    if (!recycle_e && esize > 0) {
+	endog = malloc(esize);
+	if (endog == NULL) {
+	    free(X);
+	    return E_ALLOC;
+	}
     }
 
     /* steal the appropriate columns from Z */
@@ -130,17 +139,20 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *instlist,
 
 double *tsls_get_Xi (const MODEL *pmod, double **Z, int i)
 {
-    const char *endog;
+    const char *endog = gretl_model_get_data(pmod, "endog");
     double **X;
     double *ret;
 
-    endog = gretl_model_get_data(pmod, "endog");
-    X = gretl_model_get_data(pmod, "tslsX");
+    if (endog == NULL) {
+	return NULL;
+    }
 
-    if (endog == NULL || X == NULL) return NULL;
+    X = gretl_model_get_data(pmod, "tslsX");
 
     if (!endog[i]) {
 	ret = Z[pmod->list[i+2]];
+    } else if (X == NULL) {
+	ret = NULL;
     } else {
 	int j, k = 0;
 
@@ -478,7 +490,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 
     HT_list = gretl_list_add(reglist, hatlist, &err);
     if (err) {
-	fprintf(stderr, "gretl_add_list: %d\n", err);
+	fprintf(stderr, "tsls_hausman_test: gretl_list_add: err = %d\n", err);
 	goto bailout;
     } 
 
@@ -889,7 +901,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     */
     tsls_make_hatlist(reglist, instlist, hatlist);
 
-    Q = tsls_Q(instlist, reglist, (ci == TSLS)? &droplist : NULL, 
+    Q = tsls_Q(instlist, reglist, (ci == TSLS)? &droplist : NULL,
 	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
 	       &missmask, &tsls.errcode);
     if (tsls.errcode) {

@@ -361,7 +361,6 @@ calculate_sys_coefficients (gretl_equation_system *sys,
 
     /* are we saving the coefficient vector and covariance matrix
        (e.g. as the basis for testing restrictions)? */
-
     if (system_save_vcv(sys)) {
 	gretl_matrix *b = gretl_matrix_copy(y);
 
@@ -776,11 +775,9 @@ augment_X_with_restrictions (gretl_matrix *X, int mk,
     nc = sys->R->cols;
 
     /* place the R matrix */
-
     kronecker_place(X, sys->R, mk, 0, 1.0);
 
     /* place R-transpose */
-
     for (i=0; i<nr; i++) {
 	for (j=0; j<nc; j++) {
 	    rij = gretl_matrix_get(sys->R, i, j);
@@ -789,7 +786,6 @@ augment_X_with_restrictions (gretl_matrix *X, int mk,
     }
 
     /* zero the bottom right-hand block */
-
     for (i=mk; i<mk+nr; i++) {
 	for (j=mk; j<mk+nr; j++) {
 	    gretl_matrix_set(X, i, j, 0.0);
@@ -843,7 +839,6 @@ static int converged (gretl_equation_system *sys,
 #if SDEBUG
 	printf("SUR iteration %d, ll = %.8g\n", sys->iters, ll);
 #endif
-
 	if (crit <= tol) {
 	    met = 1;
 	} else if (sys->iters < SYS_MAX_ITER) {
@@ -856,7 +851,6 @@ static int converged (gretl_equation_system *sys,
 #if SDEBUG
 	printf("3SLS iteration %d, crit = %.8g\n", sys->iters, crit);
 #endif
-
 	if (crit <= tol) {
 	    met = 1;
 	} 
@@ -988,6 +982,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    break;
 	}
 
+	/* FIXME: should we try to handle the case of redundant instruments
+	   in this context? */
+
 	if (method == SYS_SUR || method == SYS_OLS || method == SYS_WLS) {
 	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	} else if (method == SYS_3SLS || method == SYS_FIML || 
@@ -1002,10 +999,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if ((err = pmod->errcode)) {
-	    fprintf(stderr, "model failed on lists[%d], code=%d\n",
-		    i, err);
+	    fprintf(stderr, "system_estimate: failed to estimate equation %d: "
+		    "err = %d\n", i+1, err);
 	    break;
-	}
+	} 
 
 	pmod->ID = i;
 	pmod->aux = AUX_SYS;

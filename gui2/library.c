@@ -2426,7 +2426,7 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 	if (my_sys == NULL) {
 	    startline = g_strdup_printf("system method=%s", 
 					system_method_short_string(method));
-	    my_sys = system_start(startline);
+	    my_sys = system_start(startline, OPT_NONE); /* FIXME */
 	    if (my_sys == NULL) {
 		fprintf(stderr, "do_eqn_system: sys is NULL\n");
  		err = 1;
@@ -6901,7 +6901,7 @@ int gui_exec_line (char *line,
     case SYSTEM:
 	/* system of equations */
 	if (sys == NULL) {
-	    sys = system_start(line);
+	    sys = system_start(line, cmd.opt);
 	    if (sys == NULL) {
 		err = 1;
 		errmsg(err, prn);

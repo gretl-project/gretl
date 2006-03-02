@@ -467,8 +467,12 @@ static int get_estimation_method_from_line (const char *s)
 }
 
 static void 
-system_set_save_flags (gretl_equation_system *sys, const char *s)
+system_set_flags (gretl_equation_system *sys, const char *s, gretlopt opt)
 {
+    if (opt & OPT_T) {
+	sys->flags |= GRETL_SYS_ITERATE;
+    }
+
     s = strstr(s, " save");
 
     if (s != NULL) {
@@ -488,6 +492,8 @@ system_set_save_flags (gretl_equation_system *sys, const char *s)
 /**
  * system_start:
  * @line: command line.
+ * @opt: may include %OPT_T for iterative estimation, if the
+ * estimation method supports this.
  * 
  * Start compiling an equation system: @line must specify a "method" 
  * (estimation method) and/or a name for the system.  If a method is
@@ -500,7 +506,7 @@ system_set_save_flags (gretl_equation_system *sys, const char *s)
  * Returns: pointer to a new equation system, or %NULL on error.
  */
 
-gretl_equation_system *system_start (const char *line)
+gretl_equation_system *system_start (const char *line, gretlopt opt)
 {
     gretl_equation_system *sys = NULL;
     char *sysname = NULL;
@@ -527,7 +533,7 @@ gretl_equation_system *system_start (const char *line)
 	return NULL;
     }
 
-    system_set_save_flags(sys, line);
+    system_set_flags(sys, line, opt);
 
     if (sysname != NULL) {
 	free(sysname);
@@ -844,12 +850,10 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	return 1;
     }    
 
-#if 1 /* for cli program */
     if (sys->name != NULL) {
 	/* save the system for subsequent estimation */
 	err = stack_system_as(sys, sys->name);
     }
-#endif
 
     if (!err && sys->method >= 0) {
 	err = gretl_equation_system_estimate(sys, pZ, pdinfo, opt, prn);

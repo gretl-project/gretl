@@ -605,7 +605,7 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 		}
 		pprintf(prn, "%s ", vname);
 		ccount += strlen(vname) + 1;
-		if (ccount >= 76) {
+		if (ccount >= 64) {
 		    if (tex) {
 			pputs(prn, "\\\\\n");
 		    } else if (rtf_format(prn)) {
