@@ -40,7 +40,6 @@ static int writelbl (const char *lblfile, const int *list,
 		     const DATAINFO *pdinfo);
 static int writehdr (const char *hdrfile, const int *list, 
 		     const DATAINFO *pdinfo, int opt);
-static double obs_float (const DATAINFO *pdinfo, int end);
 static int xmlfile (const char *fname);
 static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn);
 
@@ -1102,6 +1101,35 @@ format_from_opt_or_name (gretlopt opt, const char *fname)
     return fmt;
 }
 
+static void date_maj_min (const char *s, int *maj, int *min)
+{
+    *maj = atoi(s);
+    s = strchr(s, ':');
+    if (s != NULL && strlen(s) > 1) {
+	*min = atoi(s + 1);
+    } else {
+	*min = 1;
+    }
+}
+
+static double obs_float (const char *s, int pd)
+{
+    double xx, xx2 = 0.0;
+    int i, x1, x2 = 0;
+
+    xx = obs_str_to_double(s);
+    if ((i = haschar(':', s)) > 0) {
+	x2 = atoi(s + i + 1) - 1;
+    }
+
+    x1 = (int) xx;
+    if (x2 > 0) {
+	xx2 = (double) x2 / pd;
+    }
+    
+    return (double) x1 + xx2;
+}
+
 /**
  * write_data:
  * @fname: name of file to write.
@@ -1400,7 +1428,8 @@ int write_data (const char *fname, const int *list,
 	    fputc(')', fp);
 	    if (pdinfo->structure == TIME_SERIES) { 
 		fprintf(fp, ",\n.Tsp = c(%f, %f, %d), class = \"ts\"",
-			obs_float(pdinfo, 0), obs_float(pdinfo, 1), 
+			obs_float(pdinfo->stobs, pdinfo->pd), 
+			obs_float(pdinfo->endobs, pdinfo->pd), 
 			pdinfo->pd);
 	    }
 	    fprintf(fp, ")\n");
@@ -1431,12 +1460,12 @@ int write_data (const char *fname, const int *list,
 	    fprintf(fp, ">%s ", pdinfo->varname[list[i]]);
 	    if (pdinfo->structure == TIME_SERIES &&
 		(pd == 1 || pd == 4 || pd == 12)) {
-		double ts = obs_float(pdinfo, 0);
-		double te = obs_float(pdinfo, 1);
-			   
-		fprintf(fp, "%d %d %d %d %d\n",
-			(int) (floor(ts)), (int) (ts - floor(ts)) * pd + 1,
-			(int) (floor(te)), (int) (te - floor(te)) * pd + 1, pd);
+		int maj, min;
+
+		date_maj_min(pdinfo->stobs, &maj, &min);
+		fprintf(fp, "%d %d ", maj, min);
+		date_maj_min(pdinfo->endobs, &maj, &min);
+		fprintf(fp, "%d %d %d", maj, min, pd);
 	    } else {
 		fprintf(fp, "%d 1 %d 1 1", pdinfo->t1, pdinfo->t2);
 	    }
@@ -1567,31 +1596,6 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     }
 
     return 0;
-}
-
-static double obs_float (const DATAINFO *pdinfo, int end)
-{
-    double xx, xx2 = 0.0;
-    int i, x1, x2 = 0;
-
-    if (end) {
-	xx = obs_str_to_double(pdinfo->endobs);
-	if ((i = haschar(':', pdinfo->endobs)) > 0) {
-	   x2 = atoi(pdinfo->endobs + i + 1) - 1;
-	}
-    } else {
-	xx = obs_str_to_double(pdinfo->stobs);
-	if ((i = haschar(':', pdinfo->stobs)) > 0) {
-	   x2 = atoi(pdinfo->stobs + i + 1) - 1;
-	}
-    }
-
-    x1 = (int) xx;
-    if (x2 > 0) {
-	xx2 = (double) x2 / pdinfo->pd;
-    }
-    
-    return (double) x1 + xx2;
 }
 
 /* read data "labels" from file */
