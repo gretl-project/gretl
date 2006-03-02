@@ -102,7 +102,7 @@ static int gretl_object_get_refcount (stacker *s)
     int rc = -1;
 
 #if ODEBUG
-    fprintf(stderr, "gretl_object_get_refcount: s = %p, s->ptr = %p\n", 
+    fprintf(stderr, "gretl_object_get_refcount: s = %p, got s->ptr = %p\n", 
 	    (void *) s, (void *) s->ptr);
 #endif   
 
@@ -118,16 +118,19 @@ static int gretl_object_get_refcount (stacker *s)
 	rc = var->refcount;
     } else if (s->type == SYSTEM) {
 	gretl_equation_system *sys = (gretl_equation_system *) s->ptr;
-#if ODEBUG
-        fprintf(stderr, "getting refcount on type SYSTEM at %p\n", (void *) s->ptr);
-#endif
 	rc = sys->refcount;
     }
+
+#if ODEBUG
+    fprintf(stderr, " s->type = %d, got refcount = %d\n", s->type, rc);
+#endif
 
     return rc;
 }
 
-static MODEL *protected_models[4] = {
+#define NPROT 4
+
+static MODEL *protected_models[NPROT] = {
     NULL, NULL, NULL, NULL
 };
 
@@ -135,11 +138,12 @@ void gretl_model_protect (MODEL *pmod)
 {
     int i;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<NPROT; i++) {
 	if (protected_models[i] == NULL) {
 	    protected_models[i] = pmod;
 #if ODEBUG
-	    fprintf(stderr, "model at %p: setting as protected\n", (void *) pmod);
+	    fprintf(stderr, "gretl_model_protect: protecting model at %p\n", 
+		    (void *) pmod);
 #endif
 	    break;
 	}
@@ -150,7 +154,7 @@ static int model_is_protected (MODEL *pmod)
 {
     int i;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<NPROT; i++) {
 	if (pmod == protected_models[i]) {
 #if ODEBUG
 	    fprintf(stderr, "model_is_protected: returning 1 for pmod = %p\n", 
@@ -179,8 +183,8 @@ static int saved_object_free (stacker *s, FreeCode code)
     }
 
 #if ODEBUG
-    fprintf(stderr, "saved_object_free: ptr=%p, refcount=%d\n", 
-	    (void *) s->ptr, rc);    
+    fprintf(stderr, "saved_object_free: s=%p, s->ptr=%p, refcount=%d\n", 
+	    (void *) s, (void *) s->ptr, rc);    
 #endif
 
     if (s->type == EQUATION) {
@@ -216,7 +220,7 @@ void *get_last_model (int *type)
 void set_as_last_model (void *ptr, int type)
 {
 #if ODEBUG
-    fprintf(stderr, "set_as_last_model: ptr=%p, type=%d; old ptr=%p\n",
+    fprintf(stderr, "set_as_last_model: ptr=%p, type=%d; 'old' ptr=%p\n",
 	    ptr, type, last_model.ptr);
 #endif
 

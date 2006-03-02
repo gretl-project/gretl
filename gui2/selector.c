@@ -3641,7 +3641,6 @@ static const char *data_save_title (int code)
     case EXPORT_CSV:
 	return _("Save CSV data file");
     case EXPORT_R:
-    case EXPORT_R_ALT:
 	return _("Save R data file");
     case EXPORT_OCTAVE:
 	return _("Save octave data file");

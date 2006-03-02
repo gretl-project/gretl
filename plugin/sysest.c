@@ -129,7 +129,7 @@ make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
 	    Xi = Z[pmod->list[i+2]];
 	}
 	if (Xi == NULL) {
-	    return 1;
+	    return E_DATA;
 	}
 	for (t=0; t<X->rows; t++) {
 	    gretl_matrix_set(X, t, i, Xi[t+t1]);
@@ -885,6 +885,35 @@ static void clean_up_models (gretl_equation_system *sys)
     sys->ess = ess;
 }
 
+static int drop_redundant_instruments (gretl_equation_system *sys,
+				       const int *droplist, int i)
+{
+    int j, k, pos, err = 0;
+
+    for (j=1; j<=droplist[0]; j++) {
+	pos = gretl_list_position(droplist[j], sys->instr_vars);
+	if (pos > 0) {
+	    gretl_list_delete_at_pos(sys->instr_vars, pos);
+	} else {
+	    err = 1;
+	}
+    }
+
+    pos = gretl_list_separator_position(sys->lists[i]);
+    if (pos > 0) {
+	for (j=1; j<=droplist[0]; j++) {
+	    for (k=pos+1; k<=sys->lists[i][0]; k++) {
+		if (sys->lists[i][k] == droplist[j]) {
+		    gretl_list_delete_at_pos(sys->lists[i], k);
+		    break;
+		}
+	    }
+	}
+    }
+
+    return err;
+}
+
 /* general function that forms the basis for all specific system
    estimators */
 
@@ -975,6 +1004,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     for (i=0; i<m; i++) {
 	int freeit = 0;
 	int *list = system_model_list(sys, i, &freeit);
+	const int *droplist = NULL;
 	MODEL *pmod = models[i];
 
 	if (list == NULL) {
@@ -1004,6 +1034,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    break;
 	} 
 
+	droplist = gretl_model_get_data(pmod, "inst_droplist");
+	if (droplist != NULL) {
+	    drop_redundant_instruments(sys, droplist, i);
+	}
+
 	pmod->ID = i;
 	pmod->aux = AUX_SYS;
 	gretl_model_set_int(pmod, "method", method);
@@ -1020,7 +1055,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (err) goto cleanup;
+    if (err) {
+	fprintf(stderr, "system_estimate: after initial tsls, err = %d", err);
+	goto cleanup;
+    }
 
     if (method == SYS_LIML) {
 	/* compute the minimum eigenvalues and generate the
@@ -1124,7 +1162,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	krow += models[i]->ncoeff;
     }
 
-    if (err) goto cleanup;
+    if (err) {
+	fprintf(stderr, "after trying to make X matrix: err = %d\n", err);
+	goto cleanup;
+    }
 
     if (nr > 0) {
 	/* there are cross-equation restrictions to be imposed */

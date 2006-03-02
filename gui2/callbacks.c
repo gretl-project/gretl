@@ -296,7 +296,6 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	delimiter_dialog(&opt);
 	p = GINT_TO_POINTER(opt);
     case EXPORT_R:
-    case EXPORT_R_ALT:
     case EXPORT_OCTAVE:
     case EXPORT_DAT:
 	data_save_selection_wrapper(file_code, p);

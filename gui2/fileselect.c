@@ -74,7 +74,6 @@
 
 #define EXPORT_ACTION(a,s) ((a == EXPORT_OCTAVE || \
                              a == EXPORT_R || \
-                             a == EXPORT_R_ALT || \
                              a == EXPORT_CSV || \
                              a == EXPORT_DAT) && s != FSEL_DATA_PRN)
 
@@ -103,7 +102,6 @@ static struct extmap action_map[] = {
     { SAVE_BOXPLOT_XPM,  ".xpm" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
-    { EXPORT_R_ALT,      ".R" },
     { OPEN_OCTAVE,       ".m" },
     { APPEND_OCTAVE,     ".m" },
     { EXPORT_OCTAVE,     ".m" },
@@ -142,7 +140,6 @@ static gretlopt save_action_to_opt (int action, gpointer p)
     case SAVE_DBDATA:   opt = OPT_D; break;
     case EXPORT_OCTAVE: opt = OPT_M; break;
     case EXPORT_R:      opt = OPT_R; break;
-    case EXPORT_R_ALT:  opt = OPT_A; break;
     case EXPORT_CSV:    opt = OPT_C; break;
     case EXPORT_DAT:    opt = OPT_G; break; /* PcGive */
     default: break;
@@ -434,7 +431,6 @@ static char *suggested_exportname (const char *fname, int action)
 	    test = ".m";
 	    break;
 	case EXPORT_R:
-	case EXPORT_R_ALT:
 	    test = ".R";
 	    break;
 	case EXPORT_CSV:
@@ -636,7 +632,6 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SAVE_GP_CMDS, { N_("gnuplot files (*.plt)"), "*.plt" }},
 	{EXPORT_CSV,   { N_("CSV files (*.csv)"), "*.csv" }},
 	{EXPORT_R,     { N_("GNU R files (*.R)"), "*.R" }},
-	{EXPORT_R_ALT, { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
 	{OPEN_OCTAVE,  { N_("GNU Octave files (*.m)"), "*.m" }},
 	{APPEND_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},

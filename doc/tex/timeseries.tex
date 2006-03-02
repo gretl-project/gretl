@@ -291,30 +291,63 @@ the parameter $\gamma_p$ exceeds 1.645 in absolute value.
 \subsection{The KPSS test}
 \label{sec:KPSStest}
 
+The KPSS test (Kwiatkowski, Phillips, Schmidt and Shin, 1992) is a
+unit root test in which the null hypothesis is opposite to that in the
+ADF test: under the null, the series in question is stationary; the
+alternative is that the series is $I(1)$.
+
+The basic intuition behind this test statistic is very simple: if
+$y_t$ can be written as $y_t = \mu + u_t$, where $u_t$ is some
+zero-mean stationary process, then not only does the sample average of
+the $y_t$'s provide a consistent estimator of $\mu$, but the long-run
+variance of $u_t$ is a well-defined, finite number. Neither of these
+properties hold under the alternative.
+
+The test itself is based on the following statistic:
 \begin{equation}
   \label{eq:KPSStest}
   \eta = \frac{\sum_{i=1}^T S_t^2 }{ T^2 \bar{\sigma}^2 }
 \end{equation}
-where $S_t = \sum_{s=1}^t e_s$ and $\bar{\sigma}^2$ is an
-estimate of the long-run variance of $e_t = (y_t - \bar{y})$.
-\begin{itemize}
-\item $H_0$: $y_t$ is I(0);
-\item one-sided test: $H_0$ is rejected if $\eta$ is ``big'';
-\item extension to deterministic trend ($e_t$ are the residuals from
-  an OLS regression of $y_t$ on a constant and a linear trend);
-\item nonstandard distribution --- we provide 90\%, 95\%, 97.5\% and
-  99\% quantiles.
-\end{itemize}
-Syntax:
+where $S_t = \sum_{s=1}^t e_s$ and $\bar{\sigma}^2$ is an estimate of
+the long-run variance of $e_t = (y_t - \bar{y})$. Under the null, this
+statistic has a well-defined (nonstandard) asymptotic distribution,
+which is free of nuisance parameters and has been tabulated by
+simulation. Under the alternative, the statistic diverges.
+
+As a consequence, it is possible to construct a one-sided test based
+on $\eta$, where $H_0$ is rejected if $\eta$ is bigger than the
+appropriate critical value; \app{gretl} provides the 90\%, 95\%,
+97.5\% and 99\% quantiles.
+
+Usage example:
 \begin{code}
-  kpss n x1
+  kpss m y
 \end{code}
-\begin{itemize}
-\item \verb|--trend| option;
-\item \verb|n| is used for estimating $\bar{\sigma}^2$; in the GUI,
-  default is the integer part of $4 \left( \frac{T}{100}
-  \right)^{1/4}$.
-\end{itemize}
+where \verb|m| is an integer representing the bandwidth or window
+size used in the formula for estimating the long run variance:
+\[
+  \bar{\sigma}^2 = \sum_{i=-m}^m \left( 1 - \frac{|i|}{m+1} \right) \hat{\gamma}_i
+\]
+The $\hat{\gamma}_i$ terms denote the empirical autocovariances of
+$e_t$ from order $-m$ through $m$.  For this estimator to be
+consistent, $m$ must be large enough to accommodate the short-run
+persistence of $e_t$, but not too large compared to the sample size
+$T$.  In the GUI interface of \app{gretl}, this value defaults to the
+integer part of $4 \left( \frac{T}{100} \right)^{1/4}$.
+
+The above concept can be generalized to the case where $y_t$ is
+thought to be stationary around a deterministic trend. In this case,
+formula (\ref{eq:KPSStest}) remains unchanged, but the series $e_t$ is
+defined as the residuals from an OLS regression of $y_t$ on a constant
+and a linear trend. This second form of the test is obtaining by
+appending the \verb|--trend| option to the \cmd{kpss} command:
+\begin{code}
+  kpss n y --trend
+\end{code}
+Note that in this case the asymptotic distribution of the test is
+different and the critical values reported by \app{gretl} differ
+accordingly.
+
 
 \subsection{The Johansen tests}
 \label{sec:Joh-test}
@@ -328,8 +361,8 @@ multivariate generalization of the ADF test.
   y_{t-i} + \epsilon_t
 \end{equation}
 If the rank of $\Pi$ is 0, the processes are all I(1); If the rank of
-$\Pi$ is full, the processes are all I(0); in between, you have
-cointegration.
+$\Pi$ is full, the processes are all I(0); in between, $\Pi$ can be
+written as $\alpha \beta'$ and you have cointegration.
 
 The rank of $\Pi$ is investigated by computing the eigenvalues of a
 closely related matrix (call it $M$) whose rank is the same as $\Pi$:
@@ -349,20 +382,64 @@ occurs.
 The two Johansen tests are the ``$\lambda$-max'' test, for hypotheses
 on individual eigenvalues, and the ``trace'' test, for joint
 hypotheses.  The \app{gretl} command \cmd{coint2} performs these two
-tests.  Example:
-\begin{code}
-  coint2 n x1 x2 x3
-\end{code}
-sets $p$ in equation (\ref{eq:Joh-tests}) to $(n-1)$ and prints a table
-with the two test batteries for the three series \verb|x1|, \verb|x2|
-and \verb|x3|.
- 
-\begin{itemize}
-\item Options for the deterministic kernel (more on this in section
-  \ref{sec:johansen-test})
-\item Critical values by Doornik
-\end{itemize}
+tests.  
 
+As in the ADF test, the asymptotic distribution of the tests varies
+with the deterministic kernel $\mu_t$ one includes in the VAR.
+\app{gretl} provides the following options (for a short discussion of
+the meaning of the five options, see section \ref{sec:johansen-test} below):
+\begin{center}
+  \begin{tabular}{cc}
+    \hline
+    $\mu_t$ & command option \\
+    \hline
+    0 & \verb|--nc| \\
+    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
+    $\mu_0$ &  default \\
+    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
+    \hline
+  \end{tabular}
+\end{center}
+Note that for this command the above options are mutually exclusive.
+In addition, you have the option of using the \verb|--seasonal|
+options, for augmenting $\mu_t$ with centered seasonal dummies.  In
+each case, p-values are computed via the approximations by Doornik
+(1998).
+
+The following code uses the \cmd{denmark} database, supplied with
+\app{gretl}, to replicate Johansen's example found in his 1995 book.
+\begin{code}
+  open denmark
+  coint2 2 LRM LRY IBO IDE --rc --seasonal
+\end{code}
+In this case, the vector $y_t$ in equation (\ref{eq:Joh-tests})
+comprises the four variables \cmd{LRM}, \cmd{LRY}, \cmd{IBO},
+\cmd{IDE}. The number of lags equals $p$ in (\ref{eq:Joh-tests}) plus
+one. Part of the output is reported below:
+\begin{center}
+\begin{code}
+Johansen test:
+Number of equations = 4
+Lag order = 2
+Estimation period: 1974:3 - 1987:3 (T = 53)
+
+Case 2: Restricted constant
+Rank Eigenvalue Trace test p-value   Lmax test  p-value
+   0    0.43317     49.144 [0.1284]     30.087 [0.0286]
+   1    0.17758     19.057 [0.7833]     10.362 [0.8017]
+   2    0.11279     8.6950 [0.7645]     6.3427 [0.7483]
+   3   0.043411     2.3522 [0.7088]     2.3522 [0.7076]
+
+eigenvalue     0.43317      0.17758      0.11279     0.043411 
+\end{code}
+\end{center}
+Since both the trace and $\lambda$-max accept the null hypothesis that
+the smallest eigenvalue is in fact 0, we may conclude that the series
+are in fact non-stationary. However, some linear combination may be
+$I(0)$, as indicated by the rejection of the $\lambda$-max of the
+hypothesis that the rank of $\Pi$ is 0 (the trace test gives less
+clear-cut evidence for this).
 
 \section{ARCH and GARCH}
 \label{sec:arch-garch}

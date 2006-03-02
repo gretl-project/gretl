@@ -1244,6 +1244,7 @@ static MODEL *real_gretl_model_new (int protected)
 
 #if MDEBUG
     fprintf(stderr, "real_gretl_model_new: model at %p\n", (void *) pmod);
+    if (pmod != NULL) fprintf(stderr, " calling gretl_model_init\n");
 #endif
 
     if (pmod != NULL) {
@@ -1510,6 +1511,9 @@ void gretl_model_free (MODEL *pmod)
 
 void gretl_model_free_on_exit (MODEL *pmod)
 {
+#if MDEBUG
+    fprintf(stderr, "gretl_model_free_on_exit: pmod at %p\n", (void *) pmod);
+#endif
     if (pmod != NULL) {
 	remove_model_from_stack(pmod);
 	clear_model(pmod);
@@ -2071,7 +2075,7 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
     }
 
     if (err) {
-	for (i=0; i<targ->n_data_items; i++) {
+	for (i=0; i<src->n_data_items; i++) {
 	    free(targ->data_items[i]);
 	}
 	free(targ->data_items);

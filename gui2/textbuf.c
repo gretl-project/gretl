@@ -468,9 +468,9 @@ void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn)
 	} 
 
 	if (thiscolor == BLUE_TEXT) {
-	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
-						      readbuf, -1,
-						      "bluetext", NULL);
+	    gtk_text_buffer_insert_with_tags_by_name(tbuf, &iter,
+						     readbuf, -1,
+						     "bluetext", NULL);
 	} else {
 	    gtk_text_buffer_insert(tbuf, &iter, readbuf, -1);
 	}

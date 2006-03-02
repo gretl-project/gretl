@@ -54,7 +54,7 @@ void tsls_free_data (const MODEL *pmod)
 }
 
 static int 
-tsls_save_data (MODEL *pmod, const int *hatlist, const int *instlist,
+tsls_save_data (MODEL *pmod, const int *hatlist, const int *exolist,
 		double **Z, DATAINFO *pdinfo)
 {
     double **X = NULL;
@@ -118,8 +118,8 @@ tsls_save_data (MODEL *pmod, const int *hatlist, const int *instlist,
     for (i=0; i<pmod->ncoeff; i++) {
 	v = pmod->list[i+2];
 	endog[i] = 1;
-	for (j=1; j<=instlist[0]; j++) {
-	    if (instlist[j] == v) {
+	for (j=1; j<=exolist[0]; j++) {
+	    if (exolist[j] == v) {
 		endog[i] = 0;
 		break;
 	    }
@@ -528,10 +528,9 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 /* form matrix of instruments and perform QR decomposition
    of this matrix; return Q */
 
-static gretl_matrix * 
-tsls_Q (int *instlist, int *reglist, int **pdlist,
-	const double **Z, int t1, int t2, char **pmask,
-	int *err)
+static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
+			     const double **Z, int t1, int t2, char **pmask,
+			     int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
@@ -540,9 +539,6 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
     int *droplist = NULL;
     double test;
     int i, k, v;
-#if 0
-    int pos;
-#endif
 
     Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
     if (Q == NULL) {
@@ -567,12 +563,7 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
     if (*err) {
 	goto bailout;
     } else if (rank < k) {
-	fprintf(stderr, "k = %d, rank = %d\n", k, rank);
-	if (pdlist == NULL) {
-	    /* disallowing dropping of redundant vars */
-	    *err = E_SINGULAR;
-	    goto bailout;
-	}
+	fprintf(stderr, "tsls_Q: k = %d, rank = %d\n", k, rank);
 	ndrop = k - rank;
     }
 
@@ -590,14 +581,8 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 		    droplist[0] += 1;
 		    droplist[droplist[0]] = v;
 		}	    
-		fprintf(stderr, "Dropping redundant instrument %d\n", v);
+		fprintf(stderr, "tsls_Q: dropping redundant instrument %d\n", v);
 		gretl_list_delete_at_pos(instlist, i+1);
-#if 0
-		/* drop as regressor too: this is not always right? */
-		if ((pos = in_gretl_list(reglist, v))) {
-		    gretl_list_delete_at_pos(reglist, pos);
-		}
-#endif
 	    }
 	}
 
@@ -615,13 +600,12 @@ tsls_Q (int *instlist, int *reglist, int **pdlist,
 
     if (*err) {
 	free(mask);
+	free(droplist);
 	gretl_matrix_free(Q);
 	Q = NULL;
     } else {
 	*pmask = mask;
-	if (pdlist != NULL) {
-	    *pdlist = droplist;
-	}
+	*pdlist = droplist;
     }
 
     return Q;
@@ -818,6 +802,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
     int *reglist = NULL, *instlist = NULL;
     int *hatlist = NULL, *s2list = NULL;
+    int *exolist = NULL;
     int *droplist = NULL;
     int pos, orig_nvar = pdinfo->v;
     int rlen, ninst;
@@ -889,6 +874,11 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	}
     }	
 
+    /* in case we drop any instruments as redundant */
+    if (ci == SYSTEM) {
+	exolist = gretl_list_copy(instlist);
+    }
+
     /* drop any vars that are all zero, and reshuffle the constant
        into first position among the independent vars 
     */
@@ -901,7 +891,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     */
     tsls_make_hatlist(reglist, instlist, hatlist);
 
-    Q = tsls_Q(instlist, reglist, (ci == TSLS)? &droplist : NULL,
+    Q = tsls_Q(instlist, reglist, &droplist,
 	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
 	       &missmask, &tsls.errcode);
     if (tsls.errcode) {
@@ -1006,7 +996,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     tsls_recreate_full_list(&tsls, reglist, instlist);
 
     if (droplist != NULL) {
-	gretl_model_set_list_as_data(&tsls, "tsls_droplist", droplist); 
+	gretl_model_set_list_as_data(&tsls, "inst_droplist", droplist); 
     }
 
  bailout:
@@ -1016,7 +1006,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
     /* save first-stage fitted values, if wanted */
     if (ci == SYSTEM && tsls.errcode == 0) {
-	tsls_save_data(&tsls, hatlist, instlist, *pZ, pdinfo);
+	tsls_save_data(&tsls, hatlist, exolist, *pZ, pdinfo);
     }
 
     /* delete first-stage fitted values from dataset */
@@ -1025,6 +1015,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     free(hatlist);
     free(reglist); 
     free(instlist);
+    free(exolist);
     free(s2list);
 
     if (tsls.errcode) {

@@ -114,7 +114,6 @@ enum file_ops {
     SAVE_BIN2,
     EXPORT_OCTAVE,
     EXPORT_R,
-    EXPORT_R_ALT,
     EXPORT_CSV,
     EXPORT_DAT,
     COPY_CSV,

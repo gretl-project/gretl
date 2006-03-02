@@ -105,31 +105,19 @@ add_file ${TOPDIR}/gui2/gnuplot.lang \
 add_file ${TOPDIR}/share/gretlgui.hlp gretl/gretlgui_hlp.txt
 add_file ${TOPDIR}/share/gretlcmd.hlp gretl/gretlcmd_hlp.txt
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt
-for lang in es it ; do
-   $RECODE l1..utf-8 < ${TOPDIR}/share/gretlgui.hlp.$lang \
-       > ${TOPDIR}/share/gretlgui_hlp_${lang}.txt
-   add_file ${TOPDIR}/share/gretlgui_hlp_${lang}.txt \
-       gretl/gretlgui_hlp_${lang}.txt
-   $RECODE l1..utf-8 < ${TOPDIR}/share/gretlcmd.hlp.$lang \
-       > ${TOPDIR}/share/gretlcmd_hlp_${lang}.txt
-   add_file ${TOPDIR}/share/gretlcmd_hlp_${lang}.txt \
-       gretl/gretlcmd_hlp_${lang}.txt
-   # FIXME encoding
-   $RECODE l1..utf-8 < ${TOPDIR}/share/gretlcli.hlp.$lang \
-       > ${TOPDIR}/share/gretlcli_hlp_${lang}.txt
-   add_file ${TOPDIR}/share/gretlcli_hlp_${lang}.txt \
-       gretl/gretlcli_hlp_${lang}.txt
-done
 for f in ${TOPDIR}/share/texfigs/*.png ; do
    add_file $f gretl/helpfigs/`basename $f`
 done
+for lang in es it ; do
+   add_file ${TOPDIR}/share/gretlgui.hlp.${lang} \
+       gretl/gretlgui_hlp_${lang}.txt
+   add_file ${TOPDIR}/share/gretlcmd.hlp.${lang} \
+       gretl/gretlcmd_hlp_${lang}.txt
+   add_file ${TOPDIR}/share/gretlcli.hlp.${lang} \
+       gretl/gretlcli_hlp_${lang}.txt
+done
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
-
-# As of Nov 2005: don't add .chm files, use PDF instead
-# add_file ${TOPDIR}/doc/manual.chm/gretl.chm gretl/gretl.chm
-# add_file ${TOPDIR}/doc/manual_it.chm/gretl_it.chm gretl/gretl_it.chm
-# add_file /home/cottrell/stats/esl/es/gretl_es.chm gretl/gretl_es.chm
 add_file ${TOPDIR}/doc/tex/gretl-guide.pdf gretl/doc/gretl-guide.pdf
 add_file ${TOPDIR}/doc/tex/gretl-ref.pdf gretl/doc/gretl-ref.pdf
 

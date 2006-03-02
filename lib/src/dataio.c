@@ -1112,24 +1112,6 @@ static void date_maj_min (const char *s, int *maj, int *min)
     }
 }
 
-static double obs_float (const char *s, int pd)
-{
-    double xx, xx2 = 0.0;
-    int i, x1, x2 = 0;
-
-    xx = obs_str_to_double(s);
-    if ((i = haschar(':', s)) > 0) {
-	x2 = atoi(s + i + 1) - 1;
-    }
-
-    x1 = (int) xx;
-    if (x2 > 0) {
-	xx2 = (double) x2 / pd;
-    }
-    
-    return (double) x1 + xx2;
-}
-
 /**
  * write_data:
  * @fname: name of file to write.
@@ -1188,7 +1170,7 @@ int write_data (const char *fname, const int *list,
     strcpy(datfile, fname);
 
     if (fmt == GRETL_DATA_R && pdinfo->structure == TIME_SERIES) {
-	fmt = GRETL_DATA_R_ALT;
+	fmt = GRETL_DATA_R_TS;
     }
 
     if (fmt == GRETL_DATA_CSV && (opt & OPT_X)) {
@@ -1197,7 +1179,7 @@ int write_data (const char *fname, const int *list,
     }
 
     /* write header and label files if not exporting to other formats */
-    if (fmt != GRETL_DATA_R && fmt != GRETL_DATA_R_ALT && 
+    if (fmt != GRETL_DATA_R && fmt != GRETL_DATA_R_TS && 
 	fmt != GRETL_DATA_CSV && fmt != GRETL_DATA_OCTAVE &&
 	fmt != GRETL_DATA_DAT) {
 	if (!has_suffix(datfile, ".gz")) {
@@ -1360,8 +1342,7 @@ int write_data (const char *fname, const int *list,
 	    }
 	}
 	fputc('\n', fp);
-    } else if (fmt == GRETL_DATA_R_ALT && pdinfo->structure == TIME_SERIES) {
-	/* October, 2003: attempt at improved R time-series structure */
+    } else if (fmt == GRETL_DATA_R_TS) {
 	char *p, datestr[OBSLEN];
 	int subper = 1;
 
@@ -1404,35 +1385,6 @@ int write_data (const char *fname, const int *list,
 	    } else {
 		fputs(")\n", fp);
 	    }
-	}
-    } else if (fmt == GRETL_DATA_R_ALT) { 
-	/* export GNU R (structure) */
-	for (i=1; i<=l0; i++) {
-	    v = list[i];
-	    fprintf(fp, "\"%s\" <-\n", pdinfo->varname[v]);
-	    fprintf(fp, "structure(c(");
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
-		if (na(xx)) {
-		    fprintf(fp, "NA");
-		} else {
-		    fprintf(fp, "%g", xx);
-		}
-		if (t < pdinfo->t2) {
-		    fprintf(fp, ", "); 
-		}
-		if (t > pdinfo->t1 && (t - pdinfo->t1) % 8 == 0 && t < pdinfo->t2) {
-		    fputc('\n', fp);
-		}
-	    }
-	    fputc(')', fp);
-	    if (pdinfo->structure == TIME_SERIES) { 
-		fprintf(fp, ",\n.Tsp = c(%f, %f, %d), class = \"ts\"",
-			obs_float(pdinfo->stobs, pdinfo->pd), 
-			obs_float(pdinfo->endobs, pdinfo->pd), 
-			pdinfo->pd);
-	    }
-	    fprintf(fp, ")\n");
 	}
     } else if (fmt == GRETL_DATA_OCTAVE) { 
 	/* GNU Octave: write out data as a matrix */

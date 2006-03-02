@@ -98,8 +98,8 @@ void clear_model_table (PRN *prn)
 
 int add_to_model_table (const MODEL *pmod, int add_mode, PRN *prn)
 {
-    MODEL *mcpy;
     int gui = (add_mode != MODEL_ADD_BY_CMD);
+    MODEL *mcpy;
 
     /* FIXME update restrictions here (garch, mle?) */
 
@@ -124,13 +124,11 @@ int add_to_model_table (const MODEL *pmod, int add_mode, PRN *prn)
 	return 1;
     }    
 
-    /* is the list is started or not? */
+    /* is the list started or not? */
     if (n_models == 0) {
-
 	table_models = mymalloc(sizeof *table_models);
 	if (table_models == NULL) return 1;
 	n_models = 1;
-
     } else {
 	MODEL **mods;
 
@@ -327,6 +325,7 @@ static const char *short_estimator_string (int ci, PRN *prn)
     if (ci == HSK) return N_("HSK");
     else if (ci == CORC) return N_("CORC");
     else if (ci == HILU) return N_("HILU");
+    else if (ci == PWE) return N_("PWE");
     else if (ci == ARCH) return N_("ARCH");
     else if (ci == POOLED) return N_("OLS");
     else return estimator_string(ci, prn);
@@ -736,8 +735,8 @@ int display_model_table (int gui)
 						prn)));
 		print_centered(est, 12, prn);
 	    }
-	    pputc(prn, '\n');
 	}
+	pputc(prn, '\n');
     }
 
     pputc(prn, '\n'); 

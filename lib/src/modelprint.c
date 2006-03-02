@@ -774,7 +774,7 @@ static void print_tsls_droplist (const MODEL *pmod,
 				 const DATAINFO *pdinfo,
 				 PRN *prn)
 {
-    const int *dlist = gretl_model_get_data(pmod, "tsls_droplist");
+    const int *dlist = gretl_model_get_data(pmod, "inst_droplist");
     int i, v;
 
     pputs(prn, _("Redundant instruments:"));
@@ -1092,7 +1092,7 @@ static void print_model_heading (const MODEL *pmod,
 
     /* TSLS: message about redundant instruments */
     if (plain_format(prn) && pmod->ci == TSLS &&
-	gretl_model_get_data(pmod, "tsls_droplist") != NULL) {
+	gretl_model_get_data(pmod, "inst_droplist") != NULL) {
 	print_tsls_droplist(pmod, pdinfo, prn);
     }  
 
