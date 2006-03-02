@@ -1352,6 +1352,16 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	return NADBL;
     }
 
+    if (a->rows == 1) {
+	if (a->val[0] > 0) {
+	    return log(a->val[0]);
+	} else {
+	    fputs("gretl_matrix_log_determinant: determinant is <= 0\n", stderr);
+	    *err = 1;
+	    return NADBL;
+	}
+    }
+
     ipiv = malloc(n * sizeof *ipiv);
     if (ipiv == NULL) {
 	*err = E_ALLOC;
@@ -1383,6 +1393,7 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 
 	    if (aii == 0.0) {
 		fputs("gretl_matrix_log_determinant: determinant = 0\n", stderr);
+		*err = 1;
 		det = NADBL;
 		break;
 	    }
