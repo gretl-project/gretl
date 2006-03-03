@@ -2185,6 +2185,8 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	return 1;
     } 
 
+    /* src->dataset?? */
+
     return 0;
 }
 

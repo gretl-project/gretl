@@ -276,6 +276,8 @@ static int session_VAR_do_irf (GRETL_VAR *var, char *cmdstr)
     } else {
 	register_graph();
     }
+
+    return err;
 }
 
 static int session_VAR_omit (GRETL_VAR *orig, char *cmdstr, PRN *prn)
