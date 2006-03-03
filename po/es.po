@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: es\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-14 21:29-0500\n"
-"PO-Revision-Date: 2006-03-03 12:59+0100\n"
+"PO-Revision-Date: 2006-03-03 13:42+0100\n"
 "Last-Translator: Ignacio Díaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1977,7 +1977,7 @@ msgstr "residuos del modelo %d"
 #: lib/src/genrfuncs.c:1178
 #, c-format
 msgid "fitted value from model %d"
-msgstr "valores ajustados mediante el modelo %d"
+msgstr "valores estimados mediante el modelo %d"
 
 #: lib/src/genrfuncs.c:1185
 #, c-format
@@ -2021,13 +2021,13 @@ msgstr "izquierda"
 
 #: lib/src/graphing.c:1521 lib/src/graphing.c:1527
 msgid "actual"
-msgstr "actual"
+msgstr "observada"
 
 #: lib/src/graphing.c:1522 lib/src/graphing.c:1525 lib/src/graphing.c:2148
 #: lib/src/printout.c:797 gui2/guiprint_common.c:610
 #: gui2/guiprint_common.c:666
 msgid "fitted"
-msgstr "ajustado"
+msgstr "estimada"
 
 #: lib/src/graphing.c:1975
 msgid "Test statistic for normality"
@@ -3117,7 +3117,7 @@ msgstr ""
 "El estadístico F se calcula como en la sección 4.4 del libro 'Introductory "
 "Econometrics' de Ramanathan.\n"
 "El R-cuadrado es el cuadrado de la correlación entre los valores observado y "
-"ajustado\n"
+"estimado\n"
 "de la variable dependiente.\n"
 "\n"
 
@@ -3612,7 +3612,7 @@ msgid ""
 msgstr ""
 "El R-cuadrado se calcula como el cuadrado de la correlación entre los "
 "valores\n"
-"observado y ajustado de la variable dependiente."
+"observado y estimado de la variable dependiente."
 
 #: lib/src/modelprint.c:1274 lib/src/modelprint.c:1277
 #: lib/src/modelprint.c:1280
@@ -4704,12 +4704,12 @@ msgstr "Residuo MC3E, ecuación %d"
 #: lib/src/system.c:1107
 #, c-format
 msgid "SUR fitted value, equation %d"
-msgstr "Valores ajustados en el modelo SUR, ecuación %d"
+msgstr "Valores estimados en el modelo SUR, ecuación %d"
 
 #: lib/src/system.c:1109
 #, c-format
 msgid "3SLS fitted value, equation %d"
-msgstr "Valor ajustado mediante MC3E, ecuación %d"
+msgstr "Valor estimado mediante MC3E, ecuación %d"
 
 #: lib/src/system.c:1151
 #, c-format
@@ -5161,7 +5161,7 @@ msgstr "Modelo impreso en %s\n"
 
 #: cli/gretlcli.c:1157 gui2/library.c:6452
 msgid "Retrieved fitted values as \"autofit\"\n"
-msgstr "Se han recuperado los valores ajustados como \"autofit\"\n"
+msgstr "Se han recuperado los valores estimados como \"autofit\"\n"
 
 #: cli/gretlcli.c:1190
 msgid ""
@@ -9173,7 +9173,7 @@ msgstr "Fallo al repasar el estado de \"%s\"\n"
 
 #: gui2/gui_utils.c:3009 gui2/gui_utils.c:3059
 msgid "/Model data/Add to data set/fitted values"
-msgstr "/Datos del modelo/Añadir al conjunto de datos/valores ajustados"
+msgstr "/Datos del modelo/Añadir al conjunto de datos/valores estimados"
 
 #: gui2/gui_utils.c:3011 gui2/gui_utils.c:3061
 msgid "/Model data/Add to data set/residuals"
@@ -9692,7 +9692,7 @@ msgstr ""
 
 #: gui2/library.c:1342 gui2/library.c:4475
 msgid "Failed to generate fitted values"
-msgstr "Fallo al generar los valores ajustados"
+msgstr "Fallo al generar los valores estimados"
 
 #: gui2/library.c:1448 gui2/library.c:2810 gui2/library.c:2945
 msgid "Error saving model information"
