@@ -22,6 +22,14 @@
 
 #include "system.h"
 
+typedef enum {
+    GRETL_OBJ_NONE,
+    GRETL_OBJ_EQN,
+    GRETL_OBJ_SYS,
+    GRETL_OBJ_VAR,
+    GRETL_OBJ_MAX
+} GretlObjType;
+
 enum {
     OBJ_ACTION_NONE,
     OBJ_ACTION_INVALID,
@@ -49,11 +57,9 @@ enum {
                             a == OBJ_ACTION_SYS_FREE || \
                             a == OBJ_ACTION_FREE)
 
-void *get_last_model (int *type);
+#define GRETL_OBJ_PROTECTED 666
 
-void set_as_last_model (void *ptr, int type);
-
-void set_as_last_model_if_unnamed (void *ptr, int type);
+void set_as_last_model (void *ptr, GretlObjType type);
 
 void maybe_swap_into_last_model (MODEL *new, MODEL *old);
 
@@ -69,7 +75,8 @@ gretl_equation_system *get_equation_system_by_name (const char *sname);
 
 void *gretl_get_object_by_name (const char *name);
 
-int gretl_get_object_and_type (const char *name, void **pp, int *type);
+int gretl_get_object_and_type (const char *name, void **pp, 
+			       GretlObjType *type);
 
 int stack_model (MODEL *pmod);
 
@@ -89,7 +96,9 @@ int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn);
 
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd);
 
-void gretl_object_ref (void *ptr, int type);
+void gretl_object_ref (void *ptr, GretlObjType type);
+
+void gretl_object_unref (void *ptr, GretlObjType type);
 
 double saved_object_get_scalar (const char *oname, const char *key, int *err);
 
@@ -107,8 +116,6 @@ saved_object_get_matrix (const char *oname, const char *key,
 			 int *err);
 
 void gretl_rename_saved_object (void *p, const char *name);
-
-void gretl_delete_saved_object (void *p);
 
 int parse_object_command (const char *s, char *name, char **cmd);
 

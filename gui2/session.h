@@ -22,7 +22,7 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#include "system.h"
+#include "objstack.h"
 
 enum {
     SCHEDULE_FOR_DELETION,
@@ -41,22 +41,21 @@ enum {
     ADD_OBJECT_FAIL
 };
 
+/* slot in on tp of the enum in objstack.h */
+
 typedef enum {
-    OBJ_UNKNOWN,
-    OBJ_DATASET,
-    OBJ_INFO,
-    OBJ_STATS,
-    OBJ_CORR,
-    OBJ_SCRIPT,
-    OBJ_NOTES,
-    OBJ_MODTAB,
-    OBJ_GPAGE,
-    OBJ_MODEL,
-    OBJ_GRAPH,
-    OBJ_PLOT,
-    OBJ_VAR,
-    OBJ_SYS,
-    OBJ_TEXT
+    GRETL_OBJ_DATASET = GRETL_OBJ_MAX + 1,
+    GRETL_OBJ_INFO,
+    GRETL_OBJ_STATS,
+    GRETL_OBJ_CORR,
+    GRETL_OBJ_SCRIPT,
+    GRETL_OBJ_NOTES,
+    GRETL_OBJ_MODTAB,
+    GRETL_OBJ_GPAGE,
+    GRETL_OBJ_GRAPH,
+    GRETL_OBJ_PLOT,
+    GRETL_OBJ_TEXT,
+    GRETL_OBJ_UNKNOWN
 } SessionObjType;
 
 int session_is_saved (void);
@@ -86,19 +85,11 @@ int try_add_var_to_session (GRETL_VAR *var);
 
 int try_add_system_to_session (gretl_equation_system *sys);
 
-int display_saved_model (const char *modname);
-
 int display_saved_equation_system (const char *sysname);
 
 int display_saved_VAR (const char *varname);
 
 void session_VAR_do_irf (const char *varname, const char *line);
-
-int delete_model_from_session (const char *modname);
-
-int delete_system_from_session (const char *sysname);
-
-int delete_VAR_from_session (const char *varname);
 
 void *get_session_object_by_name (const char *name, int *which);
 

@@ -1562,9 +1562,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (vwin->role == VIEW_SERIES) {
 	    free_series_view(vwin->data);
 	} else if (vwin->role == VIEW_MODEL) {
-	    gretl_model_free(vwin->data);
+	    gretl_object_unref(vwin->data, GRETL_OBJ_EQN);
 	} else if (vwin->role == VAR || vwin->role == VECM) { 
-	    gretl_VAR_free(vwin->data);
+	    gretl_object_unref(vwin->data, GRETL_OBJ_VAR);
 	} else if (vwin->role == LEVERAGE) {
 	    gretl_matrix_free(vwin->data);
 	} else if (vwin->role == MAHAL) {
@@ -1572,7 +1572,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	} else if (vwin->role == COINT2) {
 	    gretl_VAR_free(vwin->data);
 	} else if (vwin->role == SYSTEM) {
-	    gretl_equation_system_destroy(vwin->data);
+	    gretl_object_unref(vwin->data, GRETL_OBJ_SYS);
 	} else if (vwin->role == PRINT && vwin->data != NULL) {
 	    free_multi_series_view(vwin->data);
 	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_EN) {
@@ -2222,11 +2222,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
 	if (role == SYSTEM) {
-	    gretl_object_ref(data, SYSTEM);
+	    gretl_object_ref(data, GRETL_OBJ_SYS);
 	    add_SYS_menu_items(vwin);
 	} else {
-	    gretl_object_ref(data, VAR);
-	    set_as_last_model_if_unnamed(data, VAR);
+	    gretl_object_ref(data, GRETL_OBJ_VAR);
 	    add_VAR_menu_items(vwin, role == VECM);
 	}
     } else if (role != IMPORT) {
@@ -2708,16 +2707,8 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	return 1;
     }
 
-    /* If we're viewing an unnamed (hence, not already saved) model,
-       set it as the "last model" (target for genr, etc.).  If we're
-       viewing a named (saved) model, increment its refcount so it's
-       not destroyed when we close this window.
-    */
-    if (pmod->name == NULL) {
-	set_as_last_model(pmod, EQUATION);
-    } else {
-	gretl_object_ref(pmod, EQUATION);
-    }
+    /* Take responsibility for one reference to this model */
+    gretl_object_ref(pmod, GRETL_OBJ_EQN);
 
 #ifdef OLD_GTK
     create_text(vwin, hsize, vsize, FALSE);

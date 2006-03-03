@@ -339,7 +339,7 @@ The above concept can be generalized to the case where $y_t$ is
 thought to be stationary around a deterministic trend. In this case,
 formula (\ref{eq:KPSStest}) remains unchanged, but the series $e_t$ is
 defined as the residuals from an OLS regression of $y_t$ on a constant
-and a linear trend. This second form of the test is obtaining by
+and a linear trend. This second form of the test is obtained by
 appending the \verb|--trend| option to the \cmd{kpss} command:
 \begin{code}
   kpss n y --trend
@@ -373,7 +373,8 @@ eigenvalues of $M$ are 0.
 
 If all the eigenvalues are significantly different from 0, then all the
 processes are stationary. If, on the contrary, there is at least one
-zero eigenvalue, then the $y_t$ process is integrated. On the other
+zero eigenvalue, then the $y_t$ process is integrated, although some
+linear combination $\beta'y_t$ might be stationary. On the other
 extreme, if no eigenvalues are significantly different from 0, then not
 only the process $y_t$ is non-stationary, but the same holds for any
 linear combination $\beta'y_t$; in other words, no cointegration

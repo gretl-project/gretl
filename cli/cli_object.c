@@ -21,9 +21,9 @@
 
 #include "varprint.h"
 
-static int cli_match_object_command (const char *s, int sort)
+static int cli_match_object_command (const char *s, GretlObjType sort)
 {
-    if (sort == EQUATION) {
+    if (sort == GRETL_OBJ_EQN) {
 	if (*s == 0) return OBJ_ACTION_MODEL_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_MODEL_SHOW;
 	if (strncmp(s, "add", 3) == 0) return OBJ_ACTION_MODEL_ADD;
@@ -32,7 +32,7 @@ static int cli_match_object_command (const char *s, int sort)
 	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     }
 
-    if (sort == VAR) {
+    if (sort == GRETL_OBJ_VAR) {
 	if (*s == 0) return OBJ_ACTION_VAR_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_VAR_SHOW;
 	if (strcmp(s, "irf") == 0)  return OBJ_ACTION_VAR_IRF;
@@ -41,7 +41,7 @@ static int cli_match_object_command (const char *s, int sort)
 	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     }
 
-    if (sort == SYSTEM) {
+    if (sort == GRETL_OBJ_SYS) {
 	if (*s == 0) return OBJ_ACTION_SYS_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_SYS_SHOW;
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
@@ -56,8 +56,8 @@ static int parse_object_request (const char *line,
 				 void **pptr, PRN *prn)
 {
     char word[MAXSAVENAME] = {0};
-    int action, sort = 0;
-    int err = 0;
+    GretlObjType sort;
+    int action, err = 0;
 
     /* get object name (if any) and dot param */
     parse_object_command(line, word, param);
@@ -210,7 +210,7 @@ static int saved_object_action (const char *line, PRN *prn)
     } else if (code == OBJ_ACTION_SHOW_STAT) {
 	err = saved_object_print_scalar(objname, param, prn);
     } else if (code == OBJ_ACTION_FREE) {
-	gretl_delete_saved_object(ptr);
+	gretl_object_unref(ptr, GRETL_OBJ_NONE); /* FIXME */
     } else if (code == OBJ_ACTION_MODEL_ADD || code == OBJ_ACTION_MODEL_OMIT) {
 	err = object_model_add_or_omit((MODEL *) ptr, code, param, prn);
     } else if (code == OBJ_ACTION_VAR_OMIT) {

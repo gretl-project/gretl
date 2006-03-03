@@ -1449,7 +1449,7 @@ int do_add_omit (selector *sr)
     if (err) {
         gui_errmsg(err);
         gretl_print_destroy(prn);
-        clear_model(pmod); 
+	gretl_model_free(pmod);
         return err;
     }
 
@@ -1462,6 +1462,8 @@ int do_add_omit (selector *sr)
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
+
+    gretl_object_ref(pmod, GRETL_OBJ_EQN);
 
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title);
@@ -2636,6 +2638,8 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
+
+    gretl_object_ref(pmod, GRETL_OBJ_EQN);
     
     view_model(prn, pmod, 78, 420, title); 
 }
@@ -2834,6 +2838,8 @@ int do_model (selector *sr)
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);
+
+    gretl_object_ref(pmod, GRETL_OBJ_EQN);
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title); 
@@ -2964,6 +2970,8 @@ void do_graph_model (GPT_SPEC *spec)
     }
 
     attach_subsample_to_model(pmod, datainfo);
+
+    gretl_object_ref(pmod, GRETL_OBJ_EQN);
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title);     

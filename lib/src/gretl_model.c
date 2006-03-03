@@ -1198,7 +1198,7 @@ void gretl_model_init (MODEL *pmod)
 #endif
 
     pmod->ID = 0;
-    pmod->refcount = 1;
+    pmod->refcount = 0;
     pmod->full_n = 0;
 
     pmod->ntests = 0;
@@ -1238,7 +1238,7 @@ void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->smpl.t2 = pdinfo->t2;
 }
 
-static MODEL *real_gretl_model_new (int protected)
+static MODEL *real_gretl_model_new (int protect)
 {
     MODEL *pmod = malloc(sizeof *pmod);
 
@@ -1251,11 +1251,11 @@ static MODEL *real_gretl_model_new (int protected)
 	gretl_model_init(pmod);
     }
 
-    if (protected) {
+    if (protect) {
 #if MDEBUG
 	fprintf(stderr, " protecting this model\n");
 #endif
-	gretl_model_protect(pmod);
+	pmod->refcount = GRETL_OBJ_PROTECTED;
     }
 
     return pmod;
@@ -1489,15 +1489,8 @@ void clear_model (MODEL *pmod)
 void gretl_model_free (MODEL *pmod)
 {
     if (pmod != NULL) {
-#if MDEBUG
-	fprintf(stderr, "gretl_model_free: pmod at %p, incoming refcount = %d\n",
-		(void *) pmod, pmod->refcount);
-#endif
-	pmod->refcount -= 1;
-	if (pmod->refcount <= 0) {
-	    clear_model(pmod);
-	    free(pmod);
-	}
+	clear_model(pmod);
+	free(pmod);
     }
 }
 

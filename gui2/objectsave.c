@@ -31,7 +31,7 @@
 
 static int gui_match_object_command (const char *s, int sort)
 {
-    if (sort == OBJ_MODEL) {
+    if (sort == GRETL_OBJ_EQN) {
 	if (*s == 0) return OBJ_ACTION_MODEL_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_MODEL_SHOW;
 	if (strncmp(s, "add", 3) == 0) return OBJ_ACTION_MODEL_ADD;
@@ -40,7 +40,7 @@ static int gui_match_object_command (const char *s, int sort)
 	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     }
 
-    if (sort == OBJ_VAR) {
+    if (sort == GRETL_OBJ_VAR) {
 	if (*s == 0) return OBJ_ACTION_VAR_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_VAR_SHOW;
 	if (strcmp(s, "irf") == 0)  return OBJ_ACTION_VAR_IRF;
@@ -49,20 +49,20 @@ static int gui_match_object_command (const char *s, int sort)
 	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     }
 
-    if (sort == OBJ_SYS) {
+    if (sort == GRETL_OBJ_SYS) {
 	if (*s == 0) return OBJ_ACTION_SYS_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_SYS_SHOW;
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_SYS_FREE; 
 	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
     } 
 
-    if (sort == OBJ_GRAPH) {
+    if (sort == GRETL_OBJ_GRAPH) {
 	if (*s == 0) return OBJ_ACTION_GRAPH_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_GRAPH_SHOW;
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_GRAPH_FREE; 
     } 
 
-    if (sort == OBJ_TEXT) {
+    if (sort == GRETL_OBJ_TEXT) {
 	if (*s == 0) return OBJ_ACTION_TEXT_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_ACTION_TEXT_SHOW;
 	if (strcmp(s, "free") == 0) return OBJ_ACTION_TEXT_FREE; 
@@ -123,7 +123,7 @@ int maybe_save_model (const CMD *cmd, MODEL *pmod, PRN *prn)
     MODEL *cpy = NULL;
     int err = 0;
 
-    set_as_last_model(pmod, EQUATION);
+    set_as_last_model(pmod, GRETL_OBJ_EQN);
 
     gretl_cmd_get_savename(mname);
     if (*mname == 0) {
@@ -156,7 +156,7 @@ int maybe_save_var (const CMD *cmd, GRETL_VAR **pvar, PRN *prn)
     GRETL_VAR *var;
     int err = 0;
 
-    set_as_last_model(*pvar, VAR);
+    set_as_last_model(*pvar, GRETL_OBJ_VAR);
 
     gretl_cmd_get_savename(vname);
     if (*vname == 0) {
@@ -352,6 +352,12 @@ static int session_VAR_omit (const char *objname, char *cmdstr, PRN *prn)
     return err;    
 }
 
+static int show_model_by_name (const char *name)
+{
+    errbox("Temporarily broken");
+    return 0;
+}
+
 int saved_object_action (const char *line, PRN *prn)
 {
     char objname[MAXSAVENAME] = {0};
@@ -377,16 +383,15 @@ int saved_object_action (const char *line, PRN *prn)
     }
 
     if (code == OBJ_ACTION_MODEL_SHOW) {
-	display_saved_model(objname);
+	show_model_by_name(objname);
     } else if (code == OBJ_ACTION_MODEL_FREE) {
-	err = delete_model_from_session(objname);
+	gretl_object_unref(ptr, GRETL_OBJ_EQN);
     } else if (code == OBJ_ACTION_VAR_SHOW) {
 	display_saved_VAR(objname);
     } else if (code == OBJ_ACTION_VAR_IRF) {
 	session_VAR_do_irf(objname, line);
     } else if (code == OBJ_ACTION_VAR_FREE) {
-	err = delete_VAR_from_session(objname);
-	if (!err) pprintf(prn, _("Freed %s\n"), objname);
+	gretl_object_unref(ptr, GRETL_OBJ_VAR);
     } else if (code == OBJ_ACTION_GRAPH_SHOW) {
 	GRAPHT *graph = (GRAPHT *) ptr;
 
@@ -402,7 +407,7 @@ int saved_object_action (const char *line, PRN *prn)
     } else if (code == OBJ_ACTION_SYS_SHOW) {
 	display_saved_equation_system(objname);
     } else if (code == OBJ_ACTION_SYS_FREE) {
-	err = delete_system_from_session(objname);
+	gretl_object_unref(ptr, GRETL_OBJ_SYS);
     } else if (code == OBJ_ACTION_SHOW_STAT) {
 	err = saved_object_print_scalar(objname, param, prn);
     } else if (code == OBJ_ACTION_MODEL_ADD || code == OBJ_ACTION_MODEL_OMIT) {

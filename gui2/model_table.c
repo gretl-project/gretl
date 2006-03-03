@@ -67,7 +67,7 @@ static int model_already_in_table (const MODEL *pmod)
     int i;
 
     for (i=0; i<n_models; i++) {
-	if (table_models[i] != NULL && pmod->ID == table_models[i]->ID) {
+	if (pmod == table_models[i]) {
 	    return 1;
 	}
     }
@@ -80,7 +80,7 @@ void clear_model_table (PRN *prn)
     int i;
 
     for (i=0; i<n_models; i++) {
-	gretl_model_free(table_models[i]);
+	gretl_object_unref(table_models[i], GRETL_OBJ_EQN);
     }
 
     free(table_models);
@@ -96,10 +96,9 @@ void clear_model_table (PRN *prn)
     }
 }
 
-int add_to_model_table (const MODEL *pmod, int add_mode, PRN *prn)
+int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
 {
     int gui = (add_mode != MODEL_ADD_BY_CMD);
-    MODEL *mcpy;
 
     /* FIXME update restrictions here (garch, mle?) */
 
@@ -160,14 +159,9 @@ int add_to_model_table (const MODEL *pmod, int add_mode, PRN *prn)
 	table_models = mods;
     }
 
-    mcpy = gretl_model_copy(pmod);
-    if (mcpy == NULL) {
-	clear_model_table(NULL);
-	return E_ALLOC;
-    }
+    table_models[n_models - 1] = pmod;
+    gretl_object_ref(pmod, GRETL_OBJ_EQN);
 
-    table_models[n_models - 1] = mcpy;
-    
     if (add_mode == MODEL_ADD_FROM_MENU) {
 	infobox(_("Model added to table"));
     } else if (add_mode == MODEL_ADD_BY_CMD) {
@@ -962,7 +956,7 @@ int special_print_model_table (PRN *prn)
     }
 }
 
-int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn)
+int modeltab_parse_line (const char *line, MODEL *pmod, PRN *prn)
 {
     char cmdword[8];
     int err = 0;
