@@ -588,17 +588,14 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	if (loop->init.vnum == 0) {
 	    loop->init.val = nstart;
 	} 
-
 	if (loop->right.vnum == 0) {
 	    loop->right.val = nend;
 	} 
-
 	if (dated) {
 	    loop->type = DATED_LOOP;
 	} else {
 	    loop->type = INDEX_LOOP;
 	}
-
 	loop->ichar = ichar;
     }
 
@@ -731,8 +728,8 @@ test_forloop_element (const char *s, LOOPSET *loop,
 	    } 
 	}
 	
-	/* examine operator(s) */
 	if (!err) {
+	    /* examine operator(s) */
 	    if (i == 1) {
 		loop->ineq = opstr_to_op(opstr);
 		if (loop->ineq == LOOP_VAL_BAD) {
@@ -796,7 +793,6 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
 	err = allocate_each_strings(loop, list[0]);
     }
 
-#if 1 
     /* when cashing out list-members, use varnames rather than numbers */
     if (!err) {
 	int i, li;
@@ -813,25 +809,6 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
 	    }
 	}
     }
-#else
-    if (!err) {
-	char numstr[16];
-	int i, li;
-
-	for (i=1; i<=list[0] && !err; i++) {
-	    li = list[i];
-	    if (abs(li) > 9999999) {
-		err = 1;
-	    } else {
-		sprintf(numstr, "%d", li);
-		loop->eachstrs[i-1] = gretl_strdup(numstr);
-		if (loop->eachstrs[i-1] == NULL) {
-		    err = 1;
-		}
-	    }
-	}
-    }
-#endif
 
     if (err && loop->eachstrs != NULL) {
 	destroy_each_strings(loop, list[0]);
@@ -1097,33 +1074,21 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 
     if (sscanf(line, "while %15[^ <>=]%15[ <>=] %15s", lvar, op, rvar) == 3) {
 	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
-    }
-
-    else if (sscanf(line, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
+    } else if (sscanf(line, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
 				    ichar, NULL, op, rvar);
-    }	
-
-    else if (sscanf(line, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
+    } else if (sscanf(line, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
 				    0, lvar, op, rvar);
-    }
-
-    else if (!strncmp(line, "foreach", 7)) {
+    } else if (!strncmp(line, "foreach", 7)) {
 	err = parse_as_each_loop(loop, pdinfo, line + 7);
-    }    
-
-    else if (!strncmp(line, "for", 3)) {
+    } else if (!strncmp(line, "for", 3)) {
 	err = parse_as_for_loop(loop, pdinfo, pZ, line + 3);
-    }
-
-    else if (sscanf(line, "%15s", lvar) == 1) {
+    } else if (sscanf(line, "%15s", lvar) == 1) {
 	err = parse_as_count_loop(loop, pdinfo, (const double **) *pZ, 
 				  lvar);
-    }
-
-    /* out of options, complain */
-    else {
+    } else {
+	/* out of options, complain */
 	printf("parse_loopline: failed on '%s'\n", line);
 	strcpy(gretl_errmsg, _("No valid loop condition was given."));
 	err = 1;
@@ -1182,7 +1147,7 @@ static int loop_count_too_high (LOOPSET *loop)
     int nt = loop->iter + 1;
 
     if (loop->type == FOR_LOOP) {
-	/* FIXME */
+	/* FIXME? */
 	if (nt >= MAX_FOR_TIMES) {
 	    sprintf(gretl_errmsg, _("Reached maximum interations, %d"),
 		    MAX_FOR_TIMES);
@@ -1395,7 +1360,7 @@ void gretl_loop_destroy (LOOPSET *loop)
 
     if (loop->models != NULL) {
 	for (i=0; i<loop->nmod; i++) {
-	    gretl_model_free(loop->models[i]);
+	    gretl_object_unref(loop->models[i], GRETL_OBJ_EQN);
 	}
 	free(loop->models);
     } 
@@ -2666,20 +2631,20 @@ int loop_exec (LOOPSET *loop, char *line,
 			err = 1;
 			break;
 		    }
-		    set_as_last_model(models[0], EQUATION);
+		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		} else if (cmd.opt & OPT_P) {
 		    /* deferred printing of model results */
 		    m = get_modnum_by_cmdnum(loop, j);
 		    swap_models(&models[0], &loop->models[m]); /* direction? */
 		    loop->models[m]->ID = j;
 		    lastmod = loop->models[m];
-		    set_as_last_model(loop->models[m], EQUATION); /* FIXME? */
+		    set_as_last_model(loop->models[m], GRETL_OBJ_EQN); /* FIXME? */
 		    model_count_minus();
 		} else {
 		    models[0]->ID = ++modnum; /* FIXME? */
 		    printmodel(models[0], *ppdinfo, cmd.opt, prn);
 		    lastmod = models[0];
-		    set_as_last_model(models[0], EQUATION);
+		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		}
 		break;
 
@@ -2705,7 +2670,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		} else {
 		    swap_models(&models[0], &models[1]);
 		    lastmod = models[0];
-		    set_as_last_model(models[0], EQUATION);
+		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		    clear_model(models[1]);
 		}
 		break;	
@@ -2734,7 +2699,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    } else {
 			printmodel(models[0], *ppdinfo, cmd.opt, prn);
 			lastmod = models[0];
-			set_as_last_model(models[0], EQUATION);
+			set_as_last_model(models[0], GRETL_OBJ_EQN);
 		    }
 		} else {
 		    err = 1;
@@ -2813,7 +2778,7 @@ int loop_exec (LOOPSET *loop, char *line,
 			       pZ, *ppdinfo, cmd.opt, prn, &err);
 		}
 		if (var != NULL) {
-		    set_as_last_model(var, VAR);
+		    set_as_last_model(var, GRETL_OBJ_VAR);
 		}
 		break;
 

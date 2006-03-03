@@ -165,4 +165,7 @@ gretl_matrix *
 gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx, 
 				  int *err);
 
+int highest_numbered_var_in_system (const gretl_equation_system *sys, 
+				    const DATAINFO *pdinfo);
+
 #endif /* GRETL_EQUATION_SYSTEM_H */

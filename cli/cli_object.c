@@ -21,42 +21,12 @@
 
 #include "varprint.h"
 
-static int cli_match_object_command (const char *s, GretlObjType sort)
-{
-    if (sort == GRETL_OBJ_EQN) {
-	if (*s == 0) return OBJ_ACTION_MODEL_SHOW; /* default */
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_MODEL_SHOW;
-	if (strncmp(s, "add", 3) == 0) return OBJ_ACTION_MODEL_ADD;
-	if (strncmp(s, "omit", 4) == 0) return OBJ_ACTION_MODEL_OMIT;
-	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
-	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
-    }
-
-    if (sort == GRETL_OBJ_VAR) {
-	if (*s == 0) return OBJ_ACTION_VAR_SHOW; /* default */
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_VAR_SHOW;
-	if (strcmp(s, "irf") == 0)  return OBJ_ACTION_VAR_IRF;
-	if (strncmp(s, "omit", 4) == 0)  return OBJ_ACTION_VAR_OMIT;
-	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
-	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
-    }
-
-    if (sort == GRETL_OBJ_SYS) {
-	if (*s == 0) return OBJ_ACTION_SYS_SHOW; /* default */
-	if (strcmp(s, "show") == 0) return OBJ_ACTION_SYS_SHOW;
-	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
-	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
-    }  
-
-    return OBJ_ACTION_INVALID;
-}
-
-static int parse_object_request (const char *line, 
-				 char *objname, char **param,
-				 void **pptr, PRN *prn)
+static int cli_parse_object_request (const char *line, 
+				     char *objname, char **param,
+				     void **pptr, GretlObjType *type,
+				     PRN *prn)
 {
     char word[MAXSAVENAME] = {0};
-    GretlObjType sort;
     int action, err = 0;
 
     /* get object name (if any) and dot param */
@@ -73,7 +43,7 @@ static int parse_object_request (const char *line,
     }    
 
     /* see if there's an object associated with the name */
-    err = gretl_get_object_and_type(word, pptr, &sort);
+    err = gretl_get_object_and_type(word, pptr, type);
 
     if (err) {
 	/* no matching object */
@@ -83,7 +53,7 @@ static int parse_object_request (const char *line,
 	return OBJ_ACTION_NULL;
     }
 
-    action = cli_match_object_command(*param, sort);
+    action = match_object_command(*param, *type);
 
     if (action == OBJ_ACTION_INVALID) {
 	pprintf(prn, _("command '%s' not recognized"), *param);
@@ -116,7 +86,7 @@ static int object_command_setup (CMD *pcmd, char *cmdstr)
 }
 
 static int 
-object_model_add_or_omit (MODEL *pmod, int code, char *cmdstr, PRN *prn)
+object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, PRN *prn)
 {
     CMD mycmd;
     int err;
@@ -127,7 +97,7 @@ object_model_add_or_omit (MODEL *pmod, int code, char *cmdstr, PRN *prn)
     }
 
     clear_model(models[1]);
-    if (code == OBJ_ACTION_MODEL_ADD) {
+    if (action == OBJ_ACTION_ADD) {
 	err = add_test(mycmd.list, pmod, models[1], 
 		       &Z, datainfo, mycmd.opt, prn);
     } else {
@@ -178,46 +148,53 @@ static int saved_object_action (const char *line, PRN *prn)
     char objname[MAXSAVENAME] = {0};
     char *param = NULL;
     void *ptr = NULL;
-    int code, err = 0;
+    GretlObjType type;
+    int action, err = 0;
 
     if (*line == '!' || *line == '#') { 
 	/* shell command or comment */
 	return 0;
     }
 
-    code = parse_object_request(line, objname, &param, &ptr, prn);
+    action = cli_parse_object_request(line, objname, &param, &ptr, &type, prn);
 
-    if (code == OBJ_ACTION_NONE) {
+    if (action == OBJ_ACTION_NONE) {
 	free(param);
 	return 0;
     }
 
-    if (code == OBJ_ACTION_NULL || code == OBJ_ACTION_INVALID) {
+    if (action == OBJ_ACTION_NULL || action == OBJ_ACTION_INVALID) {
 	free(param);
 	return -1;
     }
 
-    if (code == OBJ_ACTION_MODEL_SHOW) {
-	printmodel((MODEL *) ptr, datainfo, OPT_NONE, prn);
-    } else if (code == OBJ_ACTION_VAR_SHOW) {
-	gretl_VAR_print((GRETL_VAR *) ptr, datainfo, OPT_NONE, prn);
-    } else if (code == OBJ_ACTION_VAR_IRF) {
+    if (action == OBJ_ACTION_SHOW) {
+	if (type == GRETL_OBJ_EQN) {
+	    printmodel((MODEL *) ptr, datainfo, OPT_NONE, prn);
+	} else if (type == GRETL_OBJ_VAR) {
+	    gretl_VAR_print((GRETL_VAR *) ptr, datainfo, OPT_NONE, prn);
+	} else if (type == GRETL_OBJ_SYS) {
+	    err = estimate_saved_equation_system((gretl_equation_system *) ptr, 
+						 &Z, datainfo, prn);
+	} 
+    } else if (action == OBJ_ACTION_SHOW_STAT) {
+	err = saved_object_print_scalar(objname, param, prn);
+    } else if (action == OBJ_ACTION_IRF) {
 	err = gretl_VAR_do_irf((GRETL_VAR *) ptr, line, 
 			       (const double **) Z, datainfo);
-    } else if (code == OBJ_ACTION_SYS_SHOW) {
-	err = estimate_saved_equation_system((gretl_equation_system *) ptr, 
-					     &Z, datainfo, prn);
-    } else if (code == OBJ_ACTION_SHOW_STAT) {
-	err = saved_object_print_scalar(objname, param, prn);
-    } else if (code == OBJ_ACTION_FREE) {
-	gretl_object_unref(ptr, GRETL_OBJ_NONE); /* FIXME */
-    } else if (code == OBJ_ACTION_MODEL_ADD || code == OBJ_ACTION_MODEL_OMIT) {
-	err = object_model_add_or_omit((MODEL *) ptr, code, param, prn);
-    } else if (code == OBJ_ACTION_VAR_OMIT) {
-	err = object_VAR_omit((GRETL_VAR *) ptr, param, prn);
+    } else if (action == OBJ_ACTION_FREE) {
+	gretl_object_unref(ptr, GRETL_OBJ_ANY);
+    } else if (action == OBJ_ACTION_ADD) {
+	err = object_model_add_or_omit((MODEL *) ptr, action, param, prn);
+    } else if (action == OBJ_ACTION_OMIT) {
+	if (type == GRETL_OBJ_EQN) {
+	    err = object_model_add_or_omit((MODEL *) ptr, action, param, prn);
+	} else if (type == GRETL_OBJ_VAR) {
+	    err = object_VAR_omit((GRETL_VAR *) ptr, param, prn);
+	}
     }
 
-    if (obj_action_free(code) && !err) {
+    if (action == OBJ_ACTION_FREE && !err) {
 	pprintf(prn, _("Freed %s\n"), objname);
     }
 

@@ -2206,17 +2206,6 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
 	return 1;
     }
 
-#if 0
-    /* FIXME this is dodgy */
-    if (isalpha(*s) && 
-	(strstr(s, "$coeff") ||
-	 strstr(s, "$stderr") ||
-	 strstr(s, "$vcv") ||
-	 strstr(s, "$rho"))) {
-	return 1;
-    }
-#endif
-
     if (genr_is_matrix(genr)) {
 	if (!strncmp(s, "uniform", 7) ||
 	    !strncmp(s, "normal", 6) ||

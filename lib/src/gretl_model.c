@@ -1255,7 +1255,7 @@ static MODEL *real_gretl_model_new (int protect)
 #if MDEBUG
 	fprintf(stderr, " protecting this model\n");
 #endif
-	pmod->refcount = GRETL_OBJ_PROTECTED;
+	gretl_model_protect(pmod);
     }
 
     return pmod;

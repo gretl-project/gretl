@@ -41,23 +41,6 @@ enum {
     ADD_OBJECT_FAIL
 };
 
-/* slot in on tp of the enum in objstack.h */
-
-typedef enum {
-    GRETL_OBJ_DATASET = GRETL_OBJ_MAX + 1,
-    GRETL_OBJ_INFO,
-    GRETL_OBJ_STATS,
-    GRETL_OBJ_CORR,
-    GRETL_OBJ_SCRIPT,
-    GRETL_OBJ_NOTES,
-    GRETL_OBJ_MODTAB,
-    GRETL_OBJ_GPAGE,
-    GRETL_OBJ_GRAPH,
-    GRETL_OBJ_PLOT,
-    GRETL_OBJ_TEXT,
-    GRETL_OBJ_UNKNOWN
-} SessionObjType;
-
 int session_is_saved (void);
 
 void set_session_saved (int val);
@@ -71,27 +54,15 @@ int real_add_text_to_session (PRN *prn, const char *tname);
 
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
 
-void remember_model (gpointer data, guint close, GtkWidget *widget);
+void model_add_as_icon (gpointer p, guint type, GtkWidget *w);
 
-void remember_var (gpointer data, guint close, GtkWidget *widget);
+void model_add_as_icon_and_close (gpointer p, guint type, GtkWidget *w);
 
-void remember_sys (gpointer data, guint close, GtkWidget *widget);
+int maybe_add_model_to_session (void *ptr, GretlObjType type);
 
-int model_already_saved (const char *modname);
+void session_model_callback (void *ptr, int action);
 
-int try_add_model_to_session (MODEL *pmod);
-
-int try_add_var_to_session (GRETL_VAR *var);
-
-int try_add_system_to_session (gretl_equation_system *sys);
-
-int display_saved_equation_system (const char *sysname);
-
-int display_saved_VAR (const char *varname);
-
-void session_VAR_do_irf (const char *varname, const char *line);
-
-void *get_session_object_by_name (const char *name, int *which);
+void *get_session_object_by_name (const char *name, GretlObjType *type);
 
 void delete_text_from_session (void *p);
 

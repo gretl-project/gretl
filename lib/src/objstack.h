@@ -23,10 +23,22 @@
 #include "system.h"
 
 typedef enum {
-    GRETL_OBJ_NONE,
+    GRETL_OBJ_ANY,
     GRETL_OBJ_EQN,
     GRETL_OBJ_SYS,
     GRETL_OBJ_VAR,
+    GRETL_OBJ_DSET,
+    GRETL_OBJ_INFO,
+    GRETL_OBJ_STATS,
+    GRETL_OBJ_CORR,
+    GRETL_OBJ_SCRIPT,
+    GRETL_OBJ_NOTES,
+    GRETL_OBJ_MODTAB,
+    GRETL_OBJ_GPAGE,
+    GRETL_OBJ_GRAPH,
+    GRETL_OBJ_PLOT,
+    GRETL_OBJ_TEXT,
+    GRETL_OBJ_UNKNOWN,
     GRETL_OBJ_MAX
 } GretlObjType;
 
@@ -34,36 +46,19 @@ enum {
     OBJ_ACTION_NONE,
     OBJ_ACTION_INVALID,
     OBJ_ACTION_NULL,
+    OBJ_ACTION_SHOW,
     OBJ_ACTION_FREE,
-    OBJ_ACTION_MODEL_SHOW,
-    OBJ_ACTION_MODEL_FREE,
-    OBJ_ACTION_VAR_SHOW,
-    OBJ_ACTION_VAR_IRF,
-    OBJ_ACTION_VAR_FREE,
-    OBJ_ACTION_GRAPH_SHOW,
-    OBJ_ACTION_GRAPH_FREE,
-    OBJ_ACTION_TEXT_SHOW,
-    OBJ_ACTION_TEXT_FREE,
-    OBJ_ACTION_SYS_SHOW,
-    OBJ_ACTION_SYS_FREE,
     OBJ_ACTION_SHOW_STAT,
-    OBJ_ACTION_MODEL_ADD,
-    OBJ_ACTION_MODEL_OMIT,
-    OBJ_ACTION_VAR_OMIT
+    OBJ_ACTION_ADD,
+    OBJ_ACTION_OMIT,
+    OBJ_ACTION_IRF
 };
-
-#define obj_action_free(a) (a == OBJ_ACTION_MODEL_FREE || \
-                            a == OBJ_ACTION_VAR_FREE || \
-                            a == OBJ_ACTION_SYS_FREE || \
-                            a == OBJ_ACTION_FREE)
-
-#define GRETL_OBJ_PROTECTED 666
 
 void set_as_last_model (void *ptr, GretlObjType type);
 
-void maybe_swap_into_last_model (MODEL *new, MODEL *old);
-
 void gretl_model_protect (MODEL *pmod);
+
+void maybe_swap_into_last_model (MODEL *new, MODEL *old);
 
 MODEL *get_model_by_name (const char *mname);
 
@@ -78,19 +73,11 @@ void *gretl_get_object_by_name (const char *name);
 int gretl_get_object_and_type (const char *name, void **pp, 
 			       GretlObjType *type);
 
-int stack_model (MODEL *pmod);
+int gretl_stack_object (void *ptr, GretlObjType type);
 
-int stack_model_as (MODEL *pmod, const char *mname);
+int gretl_stack_object_as (void *ptr, GretlObjType type, const char *name);
 
 void remove_model_from_stack (MODEL *pmod);
-
-int stack_system (gretl_equation_system *sys, PRN *prn);
-
-int stack_system_as (gretl_equation_system *sys, const char *sname);
-
-int stack_VAR (GRETL_VAR *var);
-
-int stack_VAR_as (GRETL_VAR *var, const char *vname);
 
 int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn);
 
@@ -115,9 +102,15 @@ saved_object_get_matrix (const char *oname, const char *key,
 			 const double **Z, const DATAINFO *pdinfo,
 			 int *err);
 
-void gretl_rename_saved_object (void *p, const char *name);
+int gretl_object_rename (void *p, GretlObjType type, const char *oname);
+
+int gretl_object_compose_name (void *p, GretlObjType type);
+
+const char *gretl_object_get_name (void *p, GretlObjType type);
 
 int parse_object_command (const char *s, char *name, char **cmd);
+
+int match_object_command (const char *s, GretlObjType type);
 
 void gretl_saved_objects_cleanup (void);
 

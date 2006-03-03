@@ -226,8 +226,10 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
-    { N_("/File/Save to session as icon"), NULL, remember_model, 0, NULL, GNULL },
-    { N_("/File/Save as icon and close"), NULL, remember_model, 1, NULL, GNULL },
+    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+      GRETL_OBJ_EQN, NULL, GNULL },
+    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+      GRETL_OBJ_EQN, NULL, GNULL },
 # if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 # endif
@@ -278,8 +280,10 @@ static GtkItemFactoryEntry model_items[] = {
 static GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, NULL },
-    { N_("/File/Save to session as icon"), NULL, remember_model, 0, NULL },
-    { N_("/File/Save as icon and close"), NULL, remember_model, 1, NULL },
+    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+      GRETL_OBJ_EQN, NULL },
+    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+      GRETL_OBJ_EQN, NULL },
 # if defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 # endif
@@ -359,8 +363,10 @@ static GtkItemFactoryEntry VAR_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, "<StockItem>", 
       GTK_STOCK_SAVE_AS },
-    { N_("/File/Save to session as icon"), NULL, remember_var, 0, NULL, GNULL },
-    { N_("/File/Save as icon and close"), NULL, remember_var, 1, NULL, GNULL },
+    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+      GRETL_OBJ_VAR, NULL, GNULL },
+    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+      GRETL_OBJ_VAR, NULL, GNULL },
 # if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 # endif
@@ -371,8 +377,10 @@ static GtkItemFactoryEntry VAR_items[] = {
 
 static GtkItemFactoryEntry SYS_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Save to session as icon"), NULL, remember_sys, 0, NULL, GNULL },
-    { N_("/File/Save as icon and close"), NULL, remember_sys, 1, NULL, GNULL },
+    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+      GRETL_OBJ_SYS, NULL, GNULL },
+    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+      GRETL_OBJ_SYS, NULL, GNULL },
 # if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 # endif
@@ -414,8 +422,10 @@ static GtkItemFactoryEntry VAR_tex_items[] = {
 static GtkItemFactoryEntry VAR_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, NULL },
-    { N_("/File/Save to session as icon"), NULL, remember_var, 0, NULL },
-    { N_("/File/Save as icon and close"), NULL, remember_var, 1, NULL },
+    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+      GRETL_OBJ_VAR, NULL },
+    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+      GRETL_OBJ_VAR, NULL },
 # if defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 # endif
@@ -426,8 +436,10 @@ static GtkItemFactoryEntry VAR_items[] = {
 
 static GtkItemFactoryEntry SYS_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Save to session as icon"), NULL, remember_sys, 0, NULL },
-    { N_("/File/Save as icon and close"), NULL, remember_sys, 1, NULL },
+    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+      GRETL_OBJ_SYS, NULL },
+    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+      GRETL_OBJ_SYS, NULL },
 # if defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 # endif
@@ -830,7 +842,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (key->keyval == GDK_q) { 
         gtk_widget_destroy(w);
     } else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
-	remember_model(vwin, 1, NULL);
+	model_add_as_icon_and_close(vwin, GRETL_OBJ_EQN, NULL);
     } else if (key->keyval == GDK_w) {
 	GdkModifierType mods;
 

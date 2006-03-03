@@ -852,7 +852,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 
     if (sys->name != NULL) {
 	/* save the system for subsequent estimation */
-	err = stack_system_as(sys, sys->name);
+	err = gretl_stack_object_as(sys, GRETL_OBJ_SYS, sys->name);
     }
 
     if (!err && sys->method >= 0) {
@@ -1953,4 +1953,25 @@ gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx,
     }
 
     return M;
+}
+
+int highest_numbered_var_in_system (const gretl_equation_system *sys, 
+				    const DATAINFO *pdinfo)
+{
+    int i, j, v, vmax = 0;
+
+    for (i=0; i<sys->n_equations; i++) {
+	for (j=1; j<=sys->lists[i][0]; j++) {
+	    v = sys->lists[i][j];
+	    if (v == LISTSEP || v >= pdinfo->v) {
+		/* temporary variables, already gone? */
+		continue;
+	    }
+	    if (v > vmax) {
+		vmax = v;
+	    }
+	}
+    }
+
+    return vmax;
 }

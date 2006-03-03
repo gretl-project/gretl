@@ -80,6 +80,7 @@ void clear_model_table (PRN *prn)
     int i;
 
     for (i=0; i<n_models; i++) {
+	/* reduce refcount on the model pointers */
 	gretl_object_unref(table_models[i], GRETL_OBJ_EQN);
     }
 
@@ -160,6 +161,8 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
     }
 
     table_models[n_models - 1] = pmod;
+
+    /* augment refcount so model won't get deleted */
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
 
     if (add_mode == MODEL_ADD_FROM_MENU) {

@@ -35,21 +35,21 @@ struct stacker_ {
     void *ptr;
 };
 
-static stacker *obj_stack;
+static stacker *ostack;
 static int n_obj;
 static int n_sys;
 static int n_vars;
 
 static stacker last_model;
 
-static stacker *get_stacked_obj_by_ptr (void *ptr)
+static stacker *get_stacked_obj_by_data (void *ptr)
 {
     stacker *s = NULL;
     int i;
 
     for (i=0; i<n_obj; i++) {
-	if (obj_stack[i].ptr == ptr) {
-	    s = &obj_stack[i];
+	if (ostack[i].ptr == ptr) {
+	    s = &ostack[i];
 	    break;
 	}
     }
@@ -104,11 +104,11 @@ static void gretl_object_unstack (stacker *s)
     int i, pos = -1;
 
 #if ODEBUG
-    fprintf(stderr, "gretl_object_unstack: got %p\n", p);
+    fprintf(stderr, "gretl_object_unstack: got stacker at %p\n", s);
 #endif
 
     for (i=0; i<n_obj; i++) {
-	if (s->ptr == obj_stack[i].ptr) {
+	if (s->ptr == ostack[i].ptr) {
 	    pos = i;
 	    break;
 	}
@@ -118,14 +118,14 @@ static void gretl_object_unstack (stacker *s)
 	stacker *new_stack;
 
 	for (i=pos; i<n_obj-1; i++) {
-	    obj_stack[i] = obj_stack[i+1];
+	    ostack[i] = ostack[i+1];
 	}
 
 	n_obj--;
 
-	new_stack = realloc(obj_stack, (n_obj - 1) * sizeof *new_stack);
+	new_stack = realloc(ostack, (n_obj - 1) * sizeof *new_stack);
 	if (new_stack != NULL) {
-	    obj_stack = new_stack;
+	    ostack = new_stack;
 	}
     }
 }
@@ -143,6 +143,79 @@ static void gretl_object_destroy (stacker *s)
     }
 }
 
+#if ODEBUG
+static int gretl_object_get_refcount (stacker *s)
+{
+    int rc = -999;
+
+    if (s->type == GRETL_OBJ_EQN) {
+	MODEL *pmod = (MODEL *) s->ptr;
+
+	if (pmod != NULL) {
+	    rc = pmod->refcount;
+	}
+	rc = pmod->refcount;
+    } else if (s->type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) s->ptr;
+
+	if (var != NULL) {
+	    rc = var->refcount;
+	}
+    } else if (s->type == GRETL_OBJ_SYS) {
+	gretl_equation_system *sys = (gretl_equation_system *) s->ptr;
+
+	if (sys != NULL) {
+	    rc = sys->refcount;
+	}
+    }
+
+    return rc;
+}    
+#endif
+
+/* The stuff below: Note that we can't "protect" a model (against
+   deletion) simply by setting its refcount to some special value,
+   when models are neing reused, since the refcount will go to 0 every
+   time the model is assigned to.  Hence we need to set up this
+   "protected species" list.
+*/
+
+static MODEL *protected_models[4] = {
+    NULL, NULL, NULL, NULL
+};
+
+void gretl_model_protect (MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<4; i++) {
+	if (protected_models[i] == NULL) {
+	    protected_models[i] = pmod;
+#if ODEBUG
+	    fprintf(stderr, "model at %p: setting as protected\n", (void *) pmod);
+#endif
+	    break;
+	}
+    }
+}
+
+static int model_is_protected (MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<4; i++) {
+	if (pmod == protected_models[i]) {
+#if ODEBUG
+	    fprintf(stderr, "model_is_protected: returning 1 for pmod = %p\n", 
+		    (void *) pmod);
+#endif
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static void real_gretl_object_decrement_refcount (stacker *s)
 {
     int rc = 1;
@@ -151,12 +224,11 @@ static void real_gretl_object_decrement_refcount (stacker *s)
 	MODEL *pmod = (MODEL *) s->ptr;
 
 	if (pmod != NULL) {
-	    if (pmod->refcount != GRETL_OBJ_PROTECTED) {
-		pmod->refcount -= 1;
+	    if (model_is_protected(pmod)) {
+		return; /* note */
 	    }
 	    rc = pmod->refcount;
 	}
-	rc = pmod->refcount;
     } else if (s->type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) s->ptr;
 
@@ -192,8 +264,8 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 {
     stacker s, *ps;
 
-    if (type == GRETL_OBJ_NONE) {
-	ps = get_stacked_obj_by_ptr(ptr);
+    if (type == GRETL_OBJ_ANY) {
+	ps = get_stacked_obj_by_data(ptr);
     } else {
 	s.ptr = ptr;
 	s.type = type;
@@ -202,6 +274,15 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 
     real_gretl_object_decrement_refcount(ps);
 }
+
+/**
+ * set_as_last_model:
+ * @ptr: pointer to gretl obejct (e.g. #MODEL).
+ * @type: type of object.
+ *
+ * Puts @ptr in place as the "last model" (which will be
+ * accessed by default via accessors such as "$uhat").
+ */
 
 void set_as_last_model (void *ptr, GretlObjType type)
 {
@@ -215,13 +296,18 @@ void set_as_last_model (void *ptr, GretlObjType type)
 	if (last_model.ptr) {
 	    fprintf(stderr, " kicking old object at %p (type %d) off the stack\n",
 		    last_model.ptr, last_model.type);
+	    gretl_object_unref(last_model.ptr, last_model.type);
 	}
 #endif
-	gretl_object_destroy(&last_model);
 	last_model.ptr = ptr;
 	last_model.type = type;
 	gretl_object_ref(ptr, type);
     }
+
+    if (type == GRETL_OBJ_EQN) {
+	MODEL *pmod = (MODEL *) ptr;
+	pmod->refcount = 2;
+    } 
 
 #if ODEBUG
     fprintf(stderr, " refcount on \"last_model\" = %d\n",
@@ -243,7 +329,8 @@ void maybe_swap_into_last_model (MODEL *new, MODEL *old)
 #endif
     if (last_model.ptr == old) {
 #if ODEBUG
-	fprintf(stderr, " doing swap 1\n");
+	fprintf(stderr, " doing swap 1: new->refcount = %d\n",
+		new->refcount);
 #endif
 	last_model.ptr = new;
 	if (new->refcount < 2) {
@@ -259,16 +346,28 @@ void maybe_swap_into_last_model (MODEL *new, MODEL *old)
     }
 }
 
-static const char *saved_object_get_name (stacker *s)
+/**
+ * gretl_object_get_name:
+ * @ptr: pointer to gretl object (e.g. #MODEL).
+ * @type: type of object.
+ *
+ * Returns: the name of the object of type @type with
+ * location @ptr, or %NULL if the object is not found.
+ */
+
+const char *gretl_object_get_name (void *p, GretlObjType type)
 {
-    if (s->type == GRETL_OBJ_EQN) {
-	MODEL *pmod = s->ptr;
+    if (type == GRETL_OBJ_EQN) {
+	MODEL *pmod = p;
+
 	return pmod->name;
-    } else if (s->type == GRETL_OBJ_VAR) {
-	GRETL_VAR *var = s->ptr;
+    } else if (type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = p;
+
 	return var->name;
-    } else if (s->type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = s->ptr;
+    } else if (type == GRETL_OBJ_SYS) {
+	gretl_equation_system *sys = p;
+
 	return sys->name;
     }
 
@@ -287,13 +386,13 @@ get_object_by_name (const char *oname, GretlObjType type, int *onum)
     }
 
     for (i=0; i<n_obj; i++) {
-	if (type == GRETL_OBJ_NONE || type == obj_stack[i].type) {
-	    test = saved_object_get_name(&obj_stack[i]);
+	if (type == GRETL_OBJ_ANY || type == ostack[i].type) {
+	    test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
 	    if (!strcmp(oname, test)) {
 		if (onum != NULL) {
 		    *onum = i;
 		}
-		ptr = obj_stack[i].ptr;
+		ptr = ostack[i].ptr;
 		break;
 	    }
 	}
@@ -309,7 +408,7 @@ get_object_by_name (const char *oname, GretlObjType type, int *onum)
 
 void *gretl_get_object_by_name (const char *name)
 {
-    return get_object_by_name(name, GRETL_OBJ_NONE, NULL);
+    return get_object_by_name(name, GRETL_OBJ_ANY, NULL);
 }
 
 int 
@@ -326,10 +425,10 @@ gretl_get_object_and_type (const char *name, void **pp, GretlObjType *type)
     }
 
     for (i=0; i<n_obj; i++) {
-	test = saved_object_get_name(&obj_stack[i]);
+	test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
 	if (!strcmp(name, test)) {
-	    *pp = obj_stack[i].ptr;
-	    *type = obj_stack[i].type;
+	    *pp = ostack[i].ptr;
+	    *type = ostack[i].type;
 	    err = 0;
 	    break;
 	}
@@ -364,7 +463,7 @@ gretl_equation_system *get_equation_system_by_name (const char *sname)
     return get_object_by_name(sname, GRETL_OBJ_SYS, NULL);
 }
 
-static int gretl_object_auto_assign_name (void *p, GretlObjType type)
+int gretl_object_compose_name (void *p, GretlObjType type)
 {
     char name[32];
     int err = 0;
@@ -395,8 +494,7 @@ static int gretl_object_auto_assign_name (void *p, GretlObjType type)
     return err;
 }
 
-static int 
-gretl_object_set_name (void *p, GretlObjType type, const char *oname)
+int gretl_object_rename (void *p, GretlObjType type, const char *oname)
 {
     int err = 0;
 
@@ -413,26 +511,16 @@ gretl_object_set_name (void *p, GretlObjType type, const char *oname)
     return err;
 }
 
-void gretl_rename_saved_object (void *p, const char *name)
-{
-    int i;
-
-    for (i=0; i<n_obj; i++) {
-	if (p == obj_stack[i].ptr) {
-	    gretl_object_set_name(p, obj_stack[i].type, name);
-	    break;
-	}
-    }
-}
+/* safety measure prior to freeing models on exit */
 
 void remove_model_from_stack (MODEL *pmod)
 {
     int i;
 
     for (i=0; i<n_obj; i++) {
-	if (pmod == obj_stack[i].ptr) {
-	    obj_stack[i].ptr = NULL;
-	    obj_stack[i].type = 0;
+	if (pmod == ostack[i].ptr) {
+	    ostack[i].ptr = NULL;
+	    ostack[i].type = 0;
 	    break;
 	}
     }
@@ -448,7 +536,7 @@ static int object_on_stack (void *p)
     int i, ret = -1;
 
     for (i=0; i<n_obj; i++) {
-	if (p == obj_stack[i].ptr) {
+	if (p == ostack[i].ptr) {
 	    ret = i;
 	    break;
 	}
@@ -464,7 +552,8 @@ static int object_on_stack (void *p)
     return ret;
 }
 
-static int stack_object (void *p, GretlObjType type, const char *oname, PRN *prn)
+static int 
+real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 {
     stacker *orig;
     int onum, err = 0;
@@ -477,17 +566,17 @@ static int stack_object (void *p, GretlObjType type, const char *oname, PRN *prn
 	return 0;
     }
 
-    if (oname == NULL) {
-	err = gretl_object_auto_assign_name(p, type);
+    if (name == NULL) {
+	err = gretl_object_compose_name(p, type);
     } else {
-	err = gretl_object_set_name(p, type, oname);
+	err = gretl_object_rename(p, type, name);
     }
 
     if (err) {
 	return err;
     }
 
-    orig = get_object_by_name(oname, type, &onum);
+    orig = get_object_by_name(name, type, &onum);
 
     if (orig != NULL) {
 	/* replace existing object of same name */
@@ -495,62 +584,42 @@ static int stack_object (void *p, GretlObjType type, const char *oname, PRN *prn
 	fprintf(stderr, "stack_object: calling gretl_object_destroy\n");
 #endif
 	gretl_object_destroy(orig);
-	obj_stack[onum].ptr = p;
-	obj_stack[onum].type = type;
-	pprintf(prn, "Replaced object '%s'\n", oname);
-	real_gretl_object_augment_refcount(&obj_stack[onum]);
+	ostack[onum].ptr = p;
+	ostack[onum].type = type;
+	pprintf(prn, "Replaced object '%s'\n", name);
+	real_gretl_object_augment_refcount(&ostack[onum]);
     } else {
-	stacker *ostack;
+	stacker *tmp;
 
-	ostack = realloc(obj_stack, (n_obj + 1) * sizeof *ostack);
-	if (ostack == NULL) {
+	tmp = realloc(ostack, (n_obj + 1) * sizeof *ostack);
+	if (tmp == NULL) {
 	    return E_ALLOC;
 	}
-	obj_stack = ostack;
-	obj_stack[n_obj].ptr = p;
-	obj_stack[n_obj].type = type;
-	real_gretl_object_augment_refcount(&obj_stack[n_obj]);
+	ostack = tmp;
+	ostack[n_obj].ptr = p;
+	ostack[n_obj].type = type;
+	real_gretl_object_augment_refcount(&ostack[n_obj]);
 	n_obj++;
-	pprintf(prn, "Added object '%s'\n", oname);
+	pprintf(prn, "Added object '%s'\n", name);
 
     }
 
 #if ODEBUG
     fprintf(stderr, "stack_object: name='%s', type=%d, ptr=%p (n_obj=%d)\n",
-	    oname, type, (void *) p, n_obj);
+	    name, type, (void *) p, n_obj);
 #endif  
 
     return 0;
 }
 
-int stack_model (MODEL *pmod)
+int gretl_stack_object (void *ptr, GretlObjType type)
 {
-    return stack_object(pmod, GRETL_OBJ_EQN, NULL, NULL);
+    return real_stack_object(ptr, type, NULL, NULL);
 }
 
-int stack_model_as (MODEL *pmod, const char *mname)
+int gretl_stack_object_as (void *ptr, GretlObjType type, const char *name)
 {
-    return stack_object(pmod, GRETL_OBJ_EQN, mname, NULL);
-}
-
-int stack_VAR (GRETL_VAR *var)
-{
-    return stack_object(var, GRETL_OBJ_VAR, NULL, NULL);
-}
-
-int stack_VAR_as (GRETL_VAR *var, const char *vname)
-{
-    return stack_object(var, GRETL_OBJ_VAR, vname, NULL);
-}
-
-int stack_system_as (gretl_equation_system *sys, const char *sname)
-{
-    return stack_object(sys, GRETL_OBJ_SYS, sname, NULL);
-}
-
-int stack_system (gretl_equation_system *sys, PRN *prn)
-{
-    return stack_object(sys, GRETL_OBJ_SYS, NULL, prn);
+    return real_stack_object(ptr, type, name, NULL);
 }
 
 int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
@@ -572,7 +641,7 @@ int maybe_stack_var (GRETL_VAR *var, const CMD *cmd)
 #endif
 
     if (*vname) {
-	ret = stack_object(var, GRETL_OBJ_VAR, vname, NULL);
+	ret = real_stack_object(var, GRETL_OBJ_VAR, vname, NULL);
     } 
 
     return ret;
@@ -623,7 +692,7 @@ int maybe_stack_model (MODEL *pmod, const CMD *cmd, PRN *prn)
     }
 
     if (!err) {
-	err = stack_model_as(cpy, mname);
+	err = real_stack_object(cpy, GRETL_OBJ_EQN, mname, NULL);
     }
 
     if (!err) {
@@ -774,9 +843,9 @@ static stacker *find_smatch (const char *oname)
 	int i;
 	
 	for (i=0; i<n_obj; i++) {
-	    test = saved_object_get_name(&obj_stack[i]);
+	    test = gretl_object_get_name(ostack[i].ptr, ostack[i].type);
 	    if (!strcmp(oname, test)) {
-		smatch = &obj_stack[i];
+		smatch = &ostack[i];
 		break;
 	    }
 	}
@@ -968,24 +1037,77 @@ int parse_object_command (const char *s, char *name, char **cmd)
     return err;
 }
 
+int match_object_command (const char *s, GretlObjType type)
+{
+    if (type == GRETL_OBJ_EQN) {
+	if (*s == 0) return OBJ_ACTION_SHOW; /* default */
+	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
+	if (strncmp(s, "add", 3) == 0) return OBJ_ACTION_ADD;
+	if (strncmp(s, "omit", 4) == 0) return OBJ_ACTION_OMIT;
+	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE;
+	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
+    } 
+
+    if (type == GRETL_OBJ_VAR) {
+	if (*s == 0) return OBJ_ACTION_SHOW;
+	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
+	if (strcmp(s, "irf") == 0)  return OBJ_ACTION_IRF;
+	if (strncmp(s, "omit", 4) == 0) return OBJ_ACTION_OMIT;
+	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
+	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
+    }
+
+    if (type == GRETL_OBJ_SYS) {
+	if (*s == 0) return OBJ_ACTION_SHOW;
+	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
+	if (strcmp(s, "free") == 0) return OBJ_ACTION_FREE; 
+	if (*s == '$') return OBJ_ACTION_SHOW_STAT;
+    } 
+
+    if (type == GRETL_OBJ_GRAPH) {
+	if (*s == 0) return OBJ_ACTION_SHOW;
+	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
+    } 
+
+    if (type == GRETL_OBJ_TEXT) {
+	if (*s == 0) return OBJ_ACTION_SHOW;
+	if (strcmp(s, "show") == 0) return OBJ_ACTION_SHOW;
+    }  
+
+    return OBJ_ACTION_INVALID;
+}
+
+static void saved_object_free (stacker *s)
+{
+    if (s->type == GRETL_OBJ_EQN) {
+	if (!model_is_protected(s->ptr)) {
+	    gretl_model_free(s->ptr);
+	}
+    } else if (s->type == GRETL_OBJ_VAR) {
+	gretl_VAR_free(s->ptr);
+    } else if (s->type == GRETL_OBJ_SYS) {
+	gretl_equation_system_destroy(s->ptr);
+    }
+}
+
 void gretl_saved_objects_cleanup (void)
 {
     int i;
 
     for (i=0; i<n_obj; i++) {
-	if (obj_stack[i].ptr == last_model.ptr) {
+	if (ostack[i].ptr == last_model.ptr) {
 	    /* don't double-free! */
 	    last_model.ptr = NULL;
 	}
 #if ODEBUG
 	fprintf(stderr, "gretl_saved_objects_cleanup:\n"
-		" calling gretl_object_destroy on obj_stack[%d]\n", i);
+		" calling gretl_object_destroy on ostack[%d]\n", i);
 #endif
-	gretl_object_destroy(&obj_stack[i]);
+	saved_object_free(&ostack[i]);
     }
 
-    free(obj_stack);
-    obj_stack = NULL;
+    free(ostack);
+    ostack = NULL;
 
     n_obj = 0;
     n_sys = 0;

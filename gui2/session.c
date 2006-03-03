@@ -76,9 +76,6 @@ typedef struct SESSION_TEXT_ SESSION_TEXT;
 typedef struct SESSION_MODEL_ SESSION_MODEL;
 typedef struct gui_obj_ gui_obj;
 
-static int n_sys;
-static int n_vars;
-
 struct SESSION_ {
     char name[MAXLEN];
     int nmodels;
@@ -425,50 +422,6 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     real_add_graph_to_session(pltname, grname, code);
 }
 
-int model_already_saved (const char *modname)
-{
-    int i;
-
-    if (modname == NULL || *modname == 0) {
-	return 0;
-    }    
-
-    for (i=0; i<session.nmodels; i++) {
-	if (!strcmp(session.models[i]->name, modname)) {
-	    return 1;
-	}
-    }
-    return 0;
-}
-
-static void model_compose_name (SESSION_MODEL *mod)
-{
-    char name[32] = {0};
-
-    if (mod->type == GRETL_OBJ_EQN) {
-	MODEL *pmod = (MODEL *) mod->ptr;
-
-	sprintf(name, "%s %d", _("Model"), pmod->ID);
-	gretl_model_set_name(pmod, name);
-    } else if (mod->type == GRETL_OBJ_VAR) {
-	GRETL_VAR *var = (GRETL_VAR *) mod->ptr;
-
-	if (var->ci == VAR) {
-	    sprintf(name, "%s %d", _("VAR"), ++n_vars);
-	} else {
-	    sprintf(name, "%s %d", _("VECM"), gretl_VECM_id(var));
-	}
-	gretl_VAR_set_name(var, name);
-    } else if (mod->type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) mod->ptr;
-
-	sprintf(name, "%s %d", _("System"), ++n_sys);
-	gretl_system_set_name(sys, name);
-    } 
-
-    mod->name = g_strdup(name);
-}
-
 static SESSION_MODEL *
 session_model_new (void *ptr, const char *name, GretlObjType type)
 {
@@ -478,10 +431,10 @@ session_model_new (void *ptr, const char *name, GretlObjType type)
 	mod->ptr = ptr;
 	mod->type = type;
 	if (name == NULL) {
-	    model_compose_name(mod);
-	} else {
-	    mod->name = g_strdup(name);
-	}
+	    gretl_object_compose_name(ptr, type);
+	    name = gretl_object_get_name(ptr, type);
+	} 
+	mod->name = g_strdup(name);
     }
 
     return mod;
@@ -509,6 +462,7 @@ static int real_add_model_to_session (void *ptr, const char *name,
     session.models[nm] = newmod;
     session.nmodels += 1;
 
+    /* note: augment refcount for this model */
     gretl_object_ref(ptr, type);
 
     /* add model icon to session display */
@@ -564,27 +518,27 @@ int real_add_text_to_session (PRN *prn, const char *tname)
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
 }
 
-void *get_session_object_by_name (const char *name, int *which)
+void *get_session_object_by_name (const char *name, GretlObjType *type)
 {
     int i;
 
     for (i=0; i<session.nmodels; i++) {
 	if (!strcmp(name, session.models[i]->name)) {
-	    *which = session.models[i]->type;
-	    return session.models[i]->name;
+	    *type = session.models[i]->type;
+	    return session.models[i]->ptr;
 	}
     }
 
     for (i=0; i<session.ngraphs; i++) {
 	if (!strcmp(name, session.graphs[i]->name)) {
-	    *which = GRETL_OBJ_GRAPH;
+	    *type = GRETL_OBJ_GRAPH;
 	    return session.graphs[i];
 	}
     }
 
     for (i=0; i<session.ntexts; i++) {
 	if (!strcmp(name, session.texts[i]->name)) {
-	    *which = GRETL_OBJ_TEXT;
+	    *type = GRETL_OBJ_TEXT;
 	    return session.texts[i];
 	}
     }
@@ -592,118 +546,60 @@ void *get_session_object_by_name (const char *name, int *which)
     return NULL;
 }
 
-int try_add_model_to_session (MODEL *pmod)
+static SESSION_MODEL *get_session_model_by_data (void *ptr)
 {
-    const char *modname = gretl_model_get_name(pmod);
+    int i;
 
-    if (model_already_saved(modname)) {
+    for (i=0; i<session.nmodels; i++) {
+	if (ptr == session.models[i]->ptr) {
+	    return session.models[i];
+	}
+    }
+
+    return NULL;
+}
+
+int maybe_add_model_to_session (void *ptr, GretlObjType type)
+{
+    const char *name;
+
+    if (get_session_model_by_data(ptr)) {
 	return 1;
     }
 
-    return real_add_model_to_session(pmod, modname, GRETL_OBJ_EQN);
+    name = gretl_object_get_name(ptr, type);
+
+    return real_add_model_to_session(ptr, name, type);
 }
 
-int try_add_system_to_session (gretl_equation_system *sys)
+void model_add_as_icon (gpointer p, guint type, GtkWidget *w)
 {
-    const char *sysname = gretl_system_get_name(sys);
+    windata_t *vwin = (windata_t *) p;
+    void *ptr = vwin->data;
 
-    if (model_already_saved(sysname)) {
-	return 1;
+    if (ptr == NULL) {
+	return;
     }
 
-    return real_add_model_to_session(sys, sysname, GRETL_OBJ_SYS);
-}
-
-int try_add_var_to_session (GRETL_VAR *var)
-{
-    const char *varname = gretl_VAR_get_name(var);
-
-    if (model_already_saved(varname)) {
-	return 1;
-    }
-
-    return real_add_model_to_session(var, varname, GRETL_OBJ_VAR);
-}
-
-/* called from model window */
-
-void remember_model (gpointer data, guint close, GtkWidget *widget)
-{
-    windata_t *vwin = (windata_t *) data;
-    MODEL *pmod = (MODEL *) vwin->data;
-    const char *modname;
-
-    if (pmod == NULL) return;
-
-    modname = gretl_model_get_name(pmod);
-    if (modname != NULL) {
+    if (get_session_model_by_data(ptr)) {
 	infobox(_("Model is already saved"));
 	return;
     }
 
-    fprintf(stderr, "remember_model: pmod=%p\n", (void *) pmod);
-
-    if (real_add_model_to_session(pmod, NULL, GRETL_OBJ_EQN)) {
+    if (real_add_model_to_session(ptr, NULL, type)) {
 	return;
     }
 
     session_changed(1);
-
-    if (close && !window_is_busy(vwin)) {
-	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
-    } 
 }
 
-/* called from system window */
-
-void remember_sys (gpointer data, guint close, GtkWidget *widget)
+void model_add_as_icon_and_close (gpointer p, guint type, GtkWidget *w)
 {
-    windata_t *vwin = (windata_t *) data;
-    gretl_equation_system *sys = (gretl_equation_system *) vwin->data;
-    const char *sysname;
+    windata_t *vwin = (windata_t *) p;
 
-    if (sys == NULL) return;
+    model_add_as_icon(p, type, w);
 
-    sysname = gretl_system_get_name(sys);
-    if (sysname != NULL) {
-	infobox(_("Model is already saved"));
-	return;
-    }
-
-    if (real_add_model_to_session(sys, NULL, GRETL_OBJ_SYS)) {
-	return;
-    }
-
-    session_changed(1);
-
-    if (close && !window_is_busy(vwin)) {
-	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
-    } 
-}
-
-/* called from VAR window */
-
-void remember_var (gpointer data, guint close, GtkWidget *widget)
-{
-    windata_t *vwin = (windata_t *) data;
-    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-    const char *varname;
-
-    if (var == NULL) return;
-
-    varname = gretl_VAR_get_name(var);
-    if (varname != NULL) {
-	infobox(_("VAR is already saved"));
-	return;
-    }
-	
-    if (real_add_model_to_session(var, NULL, GRETL_OBJ_VAR)) {
-	return;
-    }
-
-    session_changed(1);
-
-    if (close && !window_is_busy(vwin)) {
+    if (!window_is_busy(vwin)) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(vwin->w)));
     } 
 }
@@ -887,6 +783,8 @@ void verify_clear_data (void)
 
 static void free_session_model (SESSION_MODEL *mod)
 {
+    /* remove a reference to this model */
+    gretl_object_unref(mod->ptr, mod->type);
     free(mod->name);
     free(mod);
 }
@@ -932,12 +830,13 @@ int highest_numbered_variable_in_session (void)
 {
     MODEL *pmod;
     GRETL_VAR *var;
+    gretl_equation_system *sys;
     int i, mvm, vmax = 0;
 
     if (session.models) {
 	for (i=0; i<session.nmodels; i++) {
 	    if (session.models[i]->type == GRETL_OBJ_EQN) {
-		pmod = get_model_by_name(session.models[i]->name);
+		pmod = session.models[i]->ptr;
 		if (pmod != NULL) {
 		    mvm = highest_numbered_var_in_model(pmod, datainfo);
 		    if (mvm > vmax) {
@@ -945,13 +844,21 @@ int highest_numbered_variable_in_session (void)
 		    }
 		}
 	    } else if (session.models[i]->type == GRETL_OBJ_VAR) {
-		var = get_VAR_by_name(session.models[i]->name);
+		var = session.models[i]->ptr;
 		if (var != NULL) {
 		    mvm = gretl_VAR_get_highest_variable(var, datainfo);
 		    if (mvm > vmax) {
 			vmax = mvm;
 		    }
 		}		
+	    } else if (session.models[i]->type == GRETL_OBJ_SYS) {
+		sys = session.models[i]->ptr;
+		if (sys != NULL) {
+		    mvm = highest_numbered_var_in_system(sys, datainfo);
+		    if (mvm > vmax) {
+			vmax = mvm;
+		    }
+		}
 	    }
 	}
     }
@@ -987,9 +894,6 @@ void close_session (void)
 
     plot_count = 0;
     zero_boxplot_count();
-    
-    n_sys = 0;
-    n_vars = 0;
 }
 
 /* see if there are saved objects from a previous session */
@@ -1442,99 +1346,58 @@ static int maybe_raise_object_window (gpointer p)
 
 static int display_session_model (SESSION_MODEL *sm)
 { 
-    MODEL *pmod = (MODEL *) sm->ptr;
-    PRN *prn;
-
-    if (pmod == NULL) {
-	fprintf(stderr, "No saved model of name '%s'\n", sm->name);
-	return 1;
-    }
-
-    if (maybe_raise_object_window(pmod)) {
-	return 0;
-    }    
-
-    if (bufopen(&prn)) {
-	return 1;
-    }
-
-    printmodel(pmod, datainfo, OPT_NONE, prn);
-    view_model(prn, pmod, 78, 400, pmod->name);
-
-    return 0;
-}
-
-int display_saved_VAR (const char *varname)
-{ 
-    GRETL_VAR *var = get_VAR_by_name(varname);
-    PRN *prn;
-
-    if (var == NULL) {
-	fprintf(stderr, "No saved VAR of name '%s'\n", varname);
-	return 1;
-    }
-
-    if (maybe_raise_object_window(var)) {
-	return 0;
-    }  
-
-    if (bufopen(&prn)) {
-	return 1;
-    }
-
-    gretl_VAR_print(var, datainfo, OPT_NONE, prn);
-    view_buffer(prn, 78, 450, varname, var->ci, var);
-
-    return 0;
-}
-
-int display_saved_equation_system (const char *sysname)
-{
-    gretl_equation_system *sys = get_equation_system_by_name(sysname);
     PRN *prn;
     int err = 0;
 
-    /* FIXME choice of estimator */
-
-    if (sys == NULL) {
-	fprintf(stderr, "No saved system of name '%s'\n", sysname);
-	return 1;
-    }   
-
-    if (maybe_raise_object_window(sys)) {
+    if (maybe_raise_object_window(sm->ptr)) {
 	return 0;
     }  
 
     if (bufopen(&prn)) {
 	return 1;
-    }
+    }    
 
-    err = estimate_saved_equation_system(sys, &Z, datainfo, prn);
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	view_buffer(prn, 78, 450, sysname, SYSTEM, sys);
+    if (sm->type == GRETL_OBJ_EQN) {
+	MODEL *pmod = (MODEL *) sm->ptr;
+
+	printmodel(pmod, datainfo, OPT_NONE, prn);
+	view_model(prn, pmod, 78, 400, sm->name);
+    } else if (sm->type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) sm->ptr;
+
+	gretl_VAR_print(var, datainfo, OPT_NONE, prn);
+	view_buffer(prn, 78, 450, sm->name, var->ci, var);
+    } else if (sm->type == GRETL_OBJ_SYS) {
+	gretl_equation_system *sys = (gretl_equation_system *) sm->ptr;
+
+	err = estimate_saved_equation_system(sys, &Z, datainfo, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	} else {
+	    view_buffer(prn, 78, 450, sm->name, SYSTEM, sys);
+	}
     }
 
     return err;
 }
 
-void session_VAR_do_irf (const char *varname, const char *line)
-{
-    GRETL_VAR *var = get_VAR_by_name(varname);
-    int err;
+/* callback used in objectsave.c */
 
-    if (var == NULL) {
+void session_model_callback (void *ptr, int action)
+{
+    SESSION_MODEL *mod = get_session_model_by_data(ptr);
+
+    if (mod == NULL) {
 	return;
     }
-
-    err = gretl_VAR_do_irf(var, line, (const double **) Z, datainfo);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	register_graph();
-    }
+    
+    if (action == OBJ_ACTION_SHOW) {
+	display_session_model(mod);
+    } else if (action == OBJ_ACTION_FREE) {
+	/* FIXME not sure here: should we trash the icon too */
+	gretl_object_unref(ptr, mod->type);
+    } 
 }	
 
 static void open_boxplot (gui_obj *gobj)
@@ -1587,35 +1450,39 @@ void session_file_manager (int action, const char *fname)
 static int 
 real_delete_model_from_session (SESSION_MODEL *model)
 {
+#if 0
     GretlObjType type = model->type;
     void *ptr = model->ptr;
+#endif
 
     if (session.nmodels == 1) {
 	free_session_model(session.models[0]);
     } else {
-	SESSION_MODEL **models;
+	SESSION_MODEL **mods;
 	int i, j;
 
-	models = mymalloc((session.nmodels - 1) * sizeof *models);
-	if (session.nmodels > 1 && models == NULL) {
+	mods = mymalloc((session.nmodels - 1) * sizeof *mods);
+	if (session.nmodels > 1 && mods == NULL) {
 	    return 1;
 	}
 	j = 0;
 	for (i=0; i<session.nmodels; i++) {
-	    if (strcmp(session.models[i]->name, model->name)) {
-		models[j++] = session.models[i];
+	    if (session.models[i]->ptr != model->ptr) {
+		mods[j++] = session.models[i];
 	    } else {
 		free_session_model(session.models[i]);
 	    }
 	}
 	free(session.models);
-	session.models = models;
+	session.models = mods;
     }
 
     session.nmodels -= 1;
     session_changed(1);
 
-    gretl_object_unref(ptr, type);
+#if 0
+    gretl_object_unref(ptr, type); /* done in free_session_model */
+#endif
 
     return 0;
 }
@@ -1715,7 +1582,9 @@ static void maybe_delete_session_object (gui_obj *obj)
 
     if (obj->sort == GRETL_OBJ_EQN ||
 	obj->sort == GRETL_OBJ_SYS || obj->sort == GRETL_OBJ_VAR) {
-	p = gretl_get_object_by_name(obj->name);
+	SESSION_MODEL *mod = obj->data;
+
+	p = mod->ptr;
     } else {
 	p = obj->data;
     }
@@ -1753,9 +1622,9 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 {
     if (obj->sort == GRETL_OBJ_EQN || obj->sort == GRETL_OBJ_SYS || 
 	obj->sort == GRETL_OBJ_VAR) { 
-	void *ptr = gretl_get_object_by_name(obj->name);
+	SESSION_MODEL *sm = obj->data;
 
-	gretl_rename_saved_object(ptr, newname);
+	gretl_object_rename(sm->ptr, sm->type, newname);
     } else if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) { 
 	rename_session_graph(obj->data, newname);
     }
@@ -1993,12 +1862,12 @@ static void add_all_icons (void)
     active_object = NULL;
 
     if (data_status) {
-	session_add_icon(NULL, GRETL_OBJ_INFO,    ICON_ADD_BATCH);  /* data info */
-	session_add_icon(NULL, GRETL_OBJ_DATASET, ICON_ADD_BATCH);  /* data file */
-	session_add_icon(NULL, GRETL_OBJ_NOTES,   ICON_ADD_BATCH);  /* session notes */
-	session_add_icon(NULL, GRETL_OBJ_STATS,   ICON_ADD_BATCH);  /* summary stats */
-	session_add_icon(NULL, GRETL_OBJ_CORR,    ICON_ADD_BATCH);  /* correlation matrix */
-	session_add_icon(NULL, GRETL_OBJ_MODTAB,  ICON_ADD_BATCH);  /* model table */
+	session_add_icon(NULL, GRETL_OBJ_INFO,   ICON_ADD_BATCH);  /* data info */
+	session_add_icon(NULL, GRETL_OBJ_DSET,   ICON_ADD_BATCH);  /* data file */
+	session_add_icon(NULL, GRETL_OBJ_NOTES,  ICON_ADD_BATCH);  /* session notes */
+	session_add_icon(NULL, GRETL_OBJ_STATS,  ICON_ADD_BATCH);  /* summary stats */
+	session_add_icon(NULL, GRETL_OBJ_CORR,   ICON_ADD_BATCH);  /* correlation matrix */
+	session_add_icon(NULL, GRETL_OBJ_MODTAB, ICON_ADD_BATCH);  /* model table */
 	if (show_graph_page) {
 	    session_add_icon(NULL, GRETL_OBJ_GPAGE, ICON_ADD_BATCH); /* graph page */
 	}
@@ -2087,7 +1956,7 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
     case GRETL_OBJ_PLOT: 
 	w = boxplot_popup; 
 	break;
-    case GRETL_OBJ_DATASET: 
+    case GRETL_OBJ_DSET: 
 	w = data_popup; 
 	break;
     case GRETL_OBJ_INFO: 
@@ -2136,7 +2005,8 @@ static gboolean session_icon_click (GtkWidget *widget,
 
     gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
 
-    if (data == NULL) { /* click on window background */
+    if (data == NULL) { 
+	/* click on window background */
 	if (mods & GDK_BUTTON3_MASK) {
 	    gtk_menu_popup(GTK_MENU(global_popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
@@ -2149,18 +2019,16 @@ static gboolean session_icon_click (GtkWidget *widget,
     if (event->type == GDK_2BUTTON_PRESS) {
 	switch (gobj->sort) {
 	case GRETL_OBJ_EQN:
-	    display_session_model(gobj->data); break;
 	case GRETL_OBJ_VAR:
-	    display_saved_VAR(gobj->name); break;
 	case GRETL_OBJ_SYS:
-	    display_saved_equation_system(gobj->name); break;
+	    display_session_model(gobj->data); break;
 	case GRETL_OBJ_PLOT:
 	    open_boxplot(gobj); break;
 	case GRETL_OBJ_GRAPH:
 	    open_gui_graph(gobj); break;
 	case GRETL_OBJ_TEXT:
 	    open_gui_text(gobj); break;
-	case GRETL_OBJ_DATASET:
+	case GRETL_OBJ_DSET:
 	    show_spreadsheet(SHEET_EDIT_DATASET); break;
 	case GRETL_OBJ_INFO:
 	    open_info(NULL, 0, NULL); break;
@@ -2182,7 +2050,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 
     if (mods & GDK_BUTTON3_MASK) {
 	if (gobj->sort == GRETL_OBJ_EQN    || gobj->sort == GRETL_OBJ_GRAPH || 
-	    gobj->sort == GRETL_OBJ_TEXT   || gobj->sort == GRETL_OBJ_DATASET || 
+	    gobj->sort == GRETL_OBJ_TEXT   || gobj->sort == GRETL_OBJ_DSET || 
 	    gobj->sort == GRETL_OBJ_INFO   || gobj->sort == GRETL_OBJ_GPAGE ||
 	    gobj->sort == GRETL_OBJ_SCRIPT || gobj->sort == GRETL_OBJ_PLOT || 
 	    gobj->sort == GRETL_OBJ_MODTAB || gobj->sort == GRETL_OBJ_VAR ||
@@ -2247,12 +2115,10 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     obj = active_object;
 
     if (strcmp(item, _("Display")) == 0) {
-	if (obj->sort == GRETL_OBJ_EQN) {
+	if (obj->sort == GRETL_OBJ_EQN ||
+	    obj->sort == GRETL_OBJ_VAR ||
+	    obj->sort == GRETL_OBJ_SYS) {
 	    display_session_model(obj->data);
-	} else if (obj->sort == GRETL_OBJ_VAR) {
-	    display_saved_VAR(obj->name);
-	} else if (obj->sort == GRETL_OBJ_SYS) {
-	    display_saved_equation_system(obj->name);
 	} else if (obj->sort == GRETL_OBJ_TEXT) {
 	    open_gui_text(obj);
 	} else if (obj->sort == GRETL_OBJ_MODTAB) {
@@ -2402,6 +2268,10 @@ static void model_drag_connect (GtkWidget *w, SESSION_MODEL *mod)
                      G_CALLBACK(drag_model), mod);
 }
 
+#define WANT_TOOLTIP(t) (t == GRETL_OBJ_EQN || \
+	                 t == GRETL_OBJ_GRAPH || \
+                         t == GRETL_OBJ_PLOT)
+
 static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 {
     gui_obj *gobj;
@@ -2427,7 +2297,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 	text = (SESSION_TEXT *) data;
 	name = g_strdup(text->name);
 	break;
-    case GRETL_OBJ_DATASET:
+    case GRETL_OBJ_DSET:
 	name = g_strdup(_("Data set"));
 	break;
     case GRETL_OBJ_INFO:
@@ -2457,47 +2327,49 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 
     gobj = gui_object_new(name, sort);
 
+    /* full-length object name as tooltip */
     if (strlen(name) > SHOWNAMELEN) {
 	gretl_tooltips_add(GTK_WIDGET(gobj->icon), name);
 	icon_named = 1;
     }
 
-    if (sort == GRETL_OBJ_EQN || sort == GRETL_OBJ_GRAPH || sort == GRETL_OBJ_PLOT) {
-	if (sort == GRETL_OBJ_EQN) {
-	    gobj->data = mod;
-	    model_drag_connect(gobj->icon, gobj->data);
-	} else {
-	    gobj->data = graph;
-	    if (sort == GRETL_OBJ_GRAPH) {
-		graph_drag_connect(gobj->icon, gobj->data);
-	    }
-	} 
+    /* attach specific data items */
+    if (sort == GRETL_OBJ_EQN || sort == GRETL_OBJ_VAR || sort == GRETL_OBJ_SYS) {
+	gobj->data = mod;
+    } else if (sort == GRETL_OBJ_GRAPH || sort == GRETL_OBJ_PLOT) {
+	gobj->data = graph;
+    }
 
-	if (!icon_named) {
-	    char *str = NULL;
+    /* set up for drag and drop */
+    if (sort == GRETL_OBJ_EQN) {
+	model_drag_connect(gobj->icon, gobj->data);
+    } else if (sort == GRETL_OBJ_GRAPH) {
+	graph_drag_connect(gobj->icon, gobj->data);
+    }
+
+    /* second try at adding a tooltip */
+    if (WANT_TOOLTIP(sort) && !icon_named) {
+	char *str = NULL;
 	    
-	    if (sort == GRETL_OBJ_EQN) {
-		MODEL *pmod = (MODEL *) mod->ptr;
+	if (sort == GRETL_OBJ_EQN) {
+	    MODEL *pmod = (MODEL *) mod->ptr;
 
-		str = model_cmd_str(pmod);
-	    } else if (sort == GRETL_OBJ_GRAPH) {
-		str = graph_str(graph);
-	    } else if (sort == GRETL_OBJ_PLOT) {
-		str = boxplot_str(graph);
-	    }
-	    if (str != NULL) {
-		gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
-		free(str);
-	    }
+	    str = model_cmd_str(pmod);
+	} else if (sort == GRETL_OBJ_GRAPH) {
+	    str = graph_str(graph);
+	} else if (sort == GRETL_OBJ_PLOT) {
+	    str = boxplot_str(graph);
 	}
-    }	    
+	if (str != NULL) {
+	    gretl_tooltips_add(GTK_WIDGET(gobj->icon), str);
+	    free(str);
+	}
+    }
 
-    else if (sort == GRETL_OBJ_VAR)     gobj->data = NULL;
-    else if (sort == GRETL_OBJ_SYS)     gobj->data = NULL;
-    else if (sort == GRETL_OBJ_TEXT)    gobj->data = text;
-    else if (sort == GRETL_OBJ_DATASET) gobj->data = paths.datfile;
-    else if (sort == GRETL_OBJ_SCRIPT)  gobj->data = cmdfile;
-    else if (sort == GRETL_OBJ_MODTAB)  gobj->data = NULL;
+    if      (sort == GRETL_OBJ_TEXT)   gobj->data = text;
+    else if (sort == GRETL_OBJ_DSET)   gobj->data = paths.datfile;
+    else if (sort == GRETL_OBJ_SCRIPT) gobj->data = cmdfile;
+    else if (sort == GRETL_OBJ_MODTAB) gobj->data = NULL;
 
     if (mode == ICON_ADD_SINGLE) {
 	pack_single_icon(gobj);
@@ -2535,11 +2407,8 @@ static int silent_remember (MODEL **ppmod, DATAINFO *pdinfo)
 	return 1;
     }
 
-#if 0
-    stack_model_as(pmod, name); /* FIXME?? */
-#else
-    gretl_object_ref(pmod, GRETL_OBJ_EQN);
-#endif
+    /* note: augments refcount on pmod */
+    gretl_stack_object_as(pmod, GRETL_OBJ_EQN, name);
 
     session.models = models;
     session.models[session.nmodels] = addmod;
@@ -2589,7 +2458,7 @@ int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, int rebuilding)
 	clear_model(*ppmod);
     } else {
 	/* no rebuild, no need to save 
-	   FIXME crash here
+	   FIXME crash here?
 	*/
 	clear_model(*ppmod);
     }
@@ -3065,20 +2934,20 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     gobj->data = NULL;
 
     switch (sort) {
-    case GRETL_OBJ_EQN:     xpm = model_xpm;       break;
-    case GRETL_OBJ_VAR:     xpm = model_xpm;       break;
-    case GRETL_OBJ_SYS:     xpm = model_xpm;       break;
-    case GRETL_OBJ_PLOT:    xpm = boxplot_xpm;     break;
-    case GRETL_OBJ_GRAPH:   xpm = gnuplot_xpm;     break;
-    case GRETL_OBJ_DATASET: xpm = dot_sc_xpm;      break;
-    case GRETL_OBJ_INFO:    xpm = xfm_info_xpm;    break;
-    case GRETL_OBJ_SCRIPT:  xpm = xfm_make_xpm;    break;
-    case GRETL_OBJ_NOTES:   xpm = text_xpm;        break;
-    case GRETL_OBJ_CORR:    xpm = rhohat_xpm;      break;
-    case GRETL_OBJ_STATS:   xpm = summary_xpm;     break;
-    case GRETL_OBJ_MODTAB:  xpm = model_table_xpm; break;
-    case GRETL_OBJ_GPAGE:   xpm = graph_page_xpm;  break;
-    case GRETL_OBJ_TEXT:    xpm = text_xpm;        break;
+    case GRETL_OBJ_EQN:
+    case GRETL_OBJ_VAR:
+    case GRETL_OBJ_SYS:    xpm = model_xpm;       break;
+    case GRETL_OBJ_PLOT:   xpm = boxplot_xpm;     break;
+    case GRETL_OBJ_GRAPH:  xpm = gnuplot_xpm;     break;
+    case GRETL_OBJ_DSET:   xpm = dot_sc_xpm;      break;
+    case GRETL_OBJ_INFO:   xpm = xfm_info_xpm;    break;
+    case GRETL_OBJ_SCRIPT: xpm = xfm_make_xpm;    break;
+    case GRETL_OBJ_TEXT:
+    case GRETL_OBJ_NOTES:  xpm = text_xpm;        break;
+    case GRETL_OBJ_CORR:   xpm = rhohat_xpm;      break;
+    case GRETL_OBJ_STATS:  xpm = summary_xpm;     break;
+    case GRETL_OBJ_MODTAB: xpm = model_table_xpm; break;
+    case GRETL_OBJ_GPAGE:  xpm = graph_page_xpm;  break;
     default: break;
     }
 
