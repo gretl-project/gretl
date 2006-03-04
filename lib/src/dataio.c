@@ -3725,7 +3725,7 @@ static char *unspace (char *s)
  * import_box:
  * @pZ: pointer to data set.
  * @ppdinfo: pointer to data information struct.
- * @fname: name of CSV file.
+ * @fname: name of BOX1 file.
  * @prn: gretl printing struct.
  * 
  * Open a BOX1 data file (as produced by the US Census Bureau's
@@ -3733,7 +3733,6 @@ static char *unspace (char *s)
  * the current work space.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
- *
  */
 
 int import_box (double ***pZ, DATAINFO **ppdinfo, 
@@ -3945,13 +3944,77 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 
     if (*pZ == NULL) {
 	*pZ = boxZ;
-	if (*ppdinfo != NULL) free(*ppdinfo);
+	if (*ppdinfo != NULL) {
+	    free(*ppdinfo);
+	}
 	*ppdinfo = boxinfo;
     }
 
  box_bailout:
 
     console_off();
+
+    return err;
+}
+
+/**
+ * import_other:
+ * @pZ: pointer to data set.
+ * @ppdinfo: pointer to data information struct.
+ * @ftype: type of data file.
+ * @fname: name of file.
+ * @prn: gretl printing struct.
+ * 
+ * Open a ...
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ */
+
+int import_other (double ***pZ, DATAINFO **ppdinfo, 
+		  int ftype, const char *fname, PRN *prn)
+{
+    void *handle;
+    FILE *fp;
+    int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
+    int err = 0;
+
+    check_for_console(prn);
+
+    if (ftype == GRETL_GNUMERIC || ftype == GRETL_EXCEL) {
+	pputs(prn, "At present Gnumeric and Excel files can only be opened "
+	      "via the GUI menus.\n");
+	return E_DATA;
+    }
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	pprintf(prn, M_("Couldn't open %s\n"), fname);
+	return E_FOPEN;
+    }
+
+    fclose(fp);
+
+    /* FIXME Gnumeric and XLS */
+    if (ftype == GRETL_GNUMERIC) {
+	sheet_get_data = get_plugin_function("wbook_get_data", &handle);
+    } else if (ftype == GRETL_EXCEL) {
+	sheet_get_data = get_plugin_function("excel_get_data", &handle);
+    } else if (ftype == GRETL_WF1) {
+	sheet_get_data = get_plugin_function("wf1_get_data", &handle);
+    } else if (ftype == GRETL_DTA) {
+	sheet_get_data = get_plugin_function("dta_get_data", &handle);
+    } else {
+	pprintf(prn, M_("Unrecognized data type"));
+	pputc(prn, '\n');
+	return E_DATA;
+    }
+
+    if (sheet_get_data == NULL) {
+        return 1;
+    }
+
+    err = (*sheet_get_data)(fname, pZ, *ppdinfo, prn);
+    close_plugin(handle);
 
     return err;
 }
@@ -3980,10 +4043,9 @@ static int xmlfile (const char *fname)
  * @prn: gretl printing struct.
  * 
  * Attempt to determine the type of a file to be opened in gretl:
- * data file (native, CSV or BOX), or command script.
+ * data file (of various formats), or command script.
  * 
  * Returns: integer code indicating the type of file.
- *
  */
 
 GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)

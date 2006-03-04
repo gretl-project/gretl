@@ -60,6 +60,8 @@ void gretl_model_protect (MODEL *pmod);
 
 void maybe_swap_into_last_model (MODEL *new, MODEL *old);
 
+void *get_last_model (GretlObjType *type);
+
 MODEL *get_model_by_name (const char *mname);
 
 GRETL_VAR *get_VAR_by_name (const char *vname);

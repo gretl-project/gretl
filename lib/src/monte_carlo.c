@@ -1359,8 +1359,12 @@ void gretl_loop_destroy (LOOPSET *loop)
     }    
 
     if (loop->models != NULL) {
+	MODEL *lastmod = get_last_model(NULL);
+
 	for (i=0; i<loop->nmod; i++) {
-	    gretl_object_unref(loop->models[i], GRETL_OBJ_EQN);
+	    if (loop->models[i] != lastmod) {
+		gretl_object_unref(loop->models[i], GRETL_OBJ_EQN);
+	    }
 	}
 	free(loop->models);
     } 
@@ -2448,7 +2452,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	       MODEL **models, PRN *prn)
 {
     CMD cmd;
-    MODEL *lastmod = models[0];
     GRETL_VAR *var;
     char errline[MAXLINE];
     char linecpy[MAXLINE];
@@ -2637,13 +2640,11 @@ int loop_exec (LOOPSET *loop, char *line,
 		    m = get_modnum_by_cmdnum(loop, j);
 		    swap_models(&models[0], &loop->models[m]); /* direction? */
 		    loop->models[m]->ID = j;
-		    lastmod = loop->models[m];
 		    set_as_last_model(loop->models[m], GRETL_OBJ_EQN); /* FIXME? */
 		    model_count_minus();
 		} else {
 		    models[0]->ID = ++modnum; /* FIXME? */
 		    printmodel(models[0], *ppdinfo, cmd.opt, prn);
-		    lastmod = models[0];
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		}
 		break;
@@ -2669,7 +2670,6 @@ int loop_exec (LOOPSET *loop, char *line,
 		    clear_model(models[1]);
 		} else {
 		    swap_models(&models[0], &models[1]);
-		    lastmod = models[0];
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		    clear_model(models[1]);
 		}
@@ -2698,7 +2698,6 @@ int loop_exec (LOOPSET *loop, char *line,
 			errmsg(err, prn);
 		    } else {
 			printmodel(models[0], *ppdinfo, cmd.opt, prn);
-			lastmod = models[0];
 			set_as_last_model(models[0], GRETL_OBJ_EQN);
 		    }
 		} else {
@@ -2816,13 +2815,6 @@ int loop_exec (LOOPSET *loop, char *line,
 
     if (!err && loop->iter > 0) {
 	print_loop_results(loop, *ppdinfo, prn); 
-    }
-
-    if (lastmod != models[0]) {
-	/* to get commands that reference models[0], after the loop
-	   has finished, to come out right
-	*/
-	swap_models(&models[0], &loop->models[m]);
     }
 
     gretl_cmd_free(&cmd);

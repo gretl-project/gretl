@@ -69,6 +69,8 @@ typedef enum {
     VARNAME_BADCHAR       /* illegal character in second or subsequent place */
 } GretlVarnameError;
 
+#define WORKSHEET_IMPORT(f) (f == GRETL_GNUMERIC || f == GRETL_EXCEL || \
+                             f == GRETL_WF1 || f == GRETL_DTA)
 
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
                             } while (0);
@@ -121,6 +123,9 @@ int import_octave (double ***pZ, DATAINFO **ppdinfo,
 
 int import_box (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PRN *prn);
+
+int import_other (double ***pZ, DATAINFO **ppdinfo, 
+		  int ftype, const char *fname, PRN *prn);
 
 int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname);
 

@@ -522,40 +522,58 @@ int main (int argc, char *argv[])
 
     if (!cli_get_data) {
 	char given_file[MAXLEN];
+	int ftype;
 
 	strcpy(given_file, filearg);
 	strcpy(paths.datfile, filearg);
 
-	err = detect_filetype(paths.datfile, &paths, prn);
+	ftype = detect_filetype(paths.datfile, &paths, prn);
 
-	if (err == GRETL_UNRECOGNIZED || err == GRETL_NATIVE_DB ||
-	    err == GRETL_RATS_DB) { 
+	switch (ftype) {
+	case GRETL_UNRECOGNIZED:
+	case GRETL_NATIVE_DB:
+	case GRETL_RATS_DB:
 	    exit(EXIT_FAILURE);
-	}
-
-	if (err == GRETL_NATIVE_DATA) {
+	    break;
+	case GRETL_NATIVE_DATA:
 	    err = gretl_get_data(&Z, &datainfo, paths.datfile, &paths, 
 				 DATA_NONE, prn);
-	} else if (err == GRETL_XML_DATA) {
+	    break;
+	case GRETL_XML_DATA:
 	    err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, 
 				 DATA_NONE, prn, 0);
-	} else if (err == GRETL_CSV_DATA) {
+	    break;
+	case GRETL_CSV_DATA:
 	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
-	} else if (err == GRETL_OCTAVE) {
+	    break;
+	case GRETL_OCTAVE:
 	    err = import_octave(&Z, &datainfo, paths.datfile, prn);
-	} else if (err == GRETL_BOX_DATA) {
+	    break;
+	case GRETL_BOX_DATA:
 	    err = import_box(&Z, &datainfo, paths.datfile, prn);
-	} else if (err == GRETL_SCRIPT) { /* maybe it's a script file? */
+	    break;
+	case GRETL_GNUMERIC:
+	case GRETL_EXCEL:
+	case GRETL_WF1:
+	case GRETL_DTA:
+	    err = import_other(&Z, &datainfo, ftype, paths.datfile, prn);
+	    break;
+	case GRETL_SCRIPT:
 	    runit = 1;
 	    strcpy(runfile, paths.datfile); 
 	    clear(paths.datfile, MAXLEN);
 	    cli_get_data = 1;
+	    break;
+	default:
+	    break;
 	}
 
 	if (!cli_get_data) {
 	    if (err) {
 		errmsg(err, prn);
-		if (err == E_FOPEN) show_paths(&paths);
+		if (err == E_FOPEN) {
+		    show_paths(&paths);
+		}
 		return EXIT_FAILURE;
 	    }
 	    data_status = 1;
@@ -750,6 +768,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     LOOPSET *loop = *ploop;
     GRETL_VAR *var = NULL;
     int chk, nulldata_n, renumber;
+    int old_runit = runit;
     int alt_model = 0;
     int dbdata = 0;
     unsigned char echo_flags;
@@ -868,7 +887,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if (batch || runit) {
 	    echo_flags |= CMD_BATCH_MODE;
 	}
-	echo_cmd(&cmd, datainfo, line, echo_flags, cmdprn);
+	echo_cmd(&cmd, datainfo, line, echo_flags, NULL);
     }
 
     check_for_loop_only_options(cmd.ci, cmd.opt, prn);
@@ -1286,6 +1305,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = import_octave(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
+	} else if (WORKSHEET_IMPORT(chk)) {
+	    err = import_other(&Z, &datainfo, chk, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {
 	    err = gretl_read_gdt(&Z, &datainfo, datfile, &paths, 
 				 data_status, prn, 0);
@@ -1674,6 +1695,11 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = modelspec_save(models[0], &modelspec);
 	}
 	maybe_stack_model(models[0], &cmd, prn);
+    }
+
+    if (!err && gretl_echo_on() && !batch && !old_runit) {
+	/* record a successful interactive command */
+	echo_cmd(&cmd, datainfo, line, 0, cmdprn);
     }
 
     return err;

@@ -6606,6 +6606,8 @@ int gui_exec_line (char *line,
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {
 	    err = gretl_read_gdt(&Z, &datainfo, datfile, &paths, data_status, prn, 1);
+	} else if (WORKSHEET_IMPORT(chk)) {
+	    err = import_other(&Z, &datainfo, chk, datfile, prn);
 	} else if (dbdata) {
 	    err = set_db_name(datfile, chk, &paths, prn);
 	} else {
