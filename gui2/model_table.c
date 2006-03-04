@@ -378,7 +378,7 @@ static void print_model_table_coeffs (int nwidth, PRN *prn)
 {
     int i, j, k;
     const MODEL *pmod;
-    char tmp[16];
+    char tmp[32];
     int tex = tex_format(prn);
     int rtf = rtf_format(prn);
 
@@ -752,7 +752,7 @@ int display_model_table (int gui)
     bufspace(namelen + 4, prn);
 
     for (j=0; j<n_models; j++) {
-	char modhd[16];
+	char modhd[32];
 
 	if (table_models[j] != NULL) {
 	    sprintf(modhd, _("Model %d"), table_models[j]->ID);
@@ -855,7 +855,7 @@ static int tex_print_model_table (PRN *prn)
     pputs(prn, "\\\\ ");
     
     if (ci == 0) {
-	char est[12];
+	char est[32];
 
 	pputc(prn, '\n');
 
@@ -1005,7 +1005,7 @@ int special_print_model_table (PRN *prn)
 
 int modeltab_parse_line (const char *line, MODEL *pmod, PRN *prn)
 {
-    char cmdword[8];
+    char cmdword[9];
     int err = 0;
 
     if (sscanf(line, "%*s %8s", cmdword) != 1) {
