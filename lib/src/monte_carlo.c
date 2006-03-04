@@ -1359,12 +1359,8 @@ void gretl_loop_destroy (LOOPSET *loop)
     }    
 
     if (loop->models != NULL) {
-	MODEL *lastmod = get_last_model(NULL);
-
 	for (i=0; i<loop->nmod; i++) {
-	    if (loop->models[i] != lastmod) {
-		gretl_object_unref(loop->models[i], GRETL_OBJ_EQN);
-	    }
+	    gretl_object_unref(loop->models[i], GRETL_OBJ_EQN);
 	}
 	free(loop->models);
     } 
@@ -2623,6 +2619,8 @@ int loop_exec (LOOPSET *loop, char *line,
 		    break;
 		} 
 
+		gretl_object_ref(models[0], GRETL_OBJ_EQN);
+
 		if (loop_is_progressive(loop)) {
 		    if (loop->iter == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
 							   models[0], j)) { 
@@ -2699,6 +2697,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    } else {
 			printmodel(models[0], *ppdinfo, cmd.opt, prn);
 			set_as_last_model(models[0], GRETL_OBJ_EQN);
+			gretl_object_ref(models[0], GRETL_OBJ_EQN);
 		    }
 		} else {
 		    err = 1;

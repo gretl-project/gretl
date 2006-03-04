@@ -169,7 +169,9 @@ static int gretl_object_get_refcount (void *ptr, GretlObjType type)
    "protected species" list.
 */
 
-static MODEL *protected_models[4] = {
+#define NPROT 4
+
+static MODEL *protected_models[NPROT] = {
     NULL, NULL, NULL, NULL
 };
 
@@ -177,7 +179,7 @@ void gretl_model_protect (MODEL *pmod)
 {
     int i;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<NPROT; i++) {
 	if (protected_models[i] == NULL) {
 	    protected_models[i] = pmod;
 	    break;
@@ -189,11 +191,10 @@ static int model_is_protected (MODEL *pmod)
 {
     int i;
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<NPROT; i++) {
 	if (pmod == protected_models[i]) {
 #if ODEBUG
-	    fprintf(stderr, "model_is_protected: returning 1 for pmod = %p\n", 
-		    (void *) pmod);
+	    fprintf(stderr, "model at %p is protected\n", (void *) pmod);
 #endif
 	    return 1;
 	}
@@ -539,8 +540,8 @@ static int object_on_stack (void *p)
 
 #if ODEBUG
     if (ret >= 0) {
-	fprintf(stderr, "object_on_stack: object at %p already stacked at pos %d\n",
-		p, ret);
+	fprintf(stderr, "object_on_stack: object at %p already stacked "
+		"at pos %d\n", p, ret);
     }
 #endif
 
@@ -576,9 +577,9 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
     if (orig != NULL) {
 	/* replace existing object of same name */
 #if ODEBUG
-	fprintf(stderr, "stack_object: calling gretl_object_destroy\n");
+	fprintf(stderr, "stack_object: replacing at %p\n", orig->ptr);
 #endif
-	gretl_object_destroy(orig->ptr, orig->type);
+	gretl_object_unref(orig->ptr, orig->type);
 	ostack[onum].ptr = p;
 	ostack[onum].type = type;
 	pprintf(prn, "Replaced object '%s'\n", name);
