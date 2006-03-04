@@ -593,8 +593,9 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
 int dta_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		  PRN *prn)
 {
-    int namelen;
-    int nvar, nobs, nvread;
+    int namelen = 0;
+    int nvar = 0, nobs = 0;
+    int nvread = 0;
     FILE *fp;
     double **newZ = NULL;
     DATAINFO *newinfo = NULL;

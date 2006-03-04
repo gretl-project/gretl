@@ -122,7 +122,7 @@ static void md5contextTo64 (MD5_CTX *context, char *encodedDigest)
 void md5digest (FILE *infile, char *digest)
 {
     MD5_CTX context;
-    char buf[1000];
+    unsigned char buf[1000];
     long length = 0;
     int nbytes;
     

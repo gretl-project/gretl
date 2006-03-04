@@ -85,8 +85,6 @@ struct set_vars_ {
 /* global state */
 set_vars *state;
 
-#define check_for_state() (state != NULL || libset_init())
-
 static void robust_opts_init (struct robust_opts *opts)
 {
     opts->auto_lag = AUTO_LAG_STOCK_WATSON;
@@ -150,6 +148,13 @@ static void sample_info_init (struct sample_info *sinfo)
 }
 
 #define sinfo_is_set(s) (s.t1 != UNSET_INT && s.t2 != UNSET_INT)
+
+static void check_for_state (void) 
+{
+    if (state != NULL) {
+	libset_init();
+    }
+}
 
 static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
 {
