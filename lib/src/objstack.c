@@ -291,40 +291,6 @@ void set_as_last_model (void *ptr, GretlObjType type)
 #endif
 }
 
-/* Response to swap_models() in gretl_model.c.  This is done (only)
-   when we're swapping the content of the pointer models[0] with
-   something else, so that models[0] will continue to point to
-   the model most recently estimated.
-*/
-
-void maybe_swap_into_last_model (MODEL *new, MODEL *old)
-{
-#if ODEBUG
-    fprintf(stderr, "\nmaybe_swap_into_last_model: new=%p, old=%p\n",
-	    (void *) new, (void *) old);
-#endif
-    if (last_model.ptr == old) {
-#if ODEBUG
-	fprintf(stderr, " doing swap 1: new->refcount = %d\n",
-		new->refcount);
-#endif
-	last_model.ptr = new;
-	if (new->refcount < 2) {
-	    new->refcount = 2;
-	}
-    } else if (last_model.ptr == new) {
-#if ODEBUG
-	fprintf(stderr, " doing swap 2\n");
-#endif
-	last_model.ptr = old;
-    } else {
-	; /* no-op */
-#if ODEBUG
-	fprintf(stderr, " maybe_swap_into_last_model: no swap done\n");
-#endif
-    }
-}
-
 /**
  * get_last_model:
  * @type: location to receive type of last model, or %NULL.
