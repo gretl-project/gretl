@@ -1628,7 +1628,7 @@ static int fract_int_GPH (int n, double *hhat, double *omega, PRN *prn)
     list[2] = 0;
     list[3] = 2;
 
-    tmp = lsq(list, &tmpZ, tmpdinfo, OLS, OPT_A, 0);
+    tmp = lsq(list, &tmpZ, tmpdinfo, OLS, OPT_A);
 
     if (!tmp.errcode) {
 	tstat = -tmp.coeff[1] / tmp.sderr[1];

@@ -23,7 +23,10 @@
 #define ESTIMATE_H
 
 MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
-	   GretlCmdIndex ci, gretlopt opt, double rho);
+	   GretlCmdIndex ci, gretlopt opt);
+
+MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
+	    GretlCmdIndex ci, gretlopt opt, double rho);
 
 double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 		     GretlCmdIndex ci, int *err, gretlopt opt, PRN *prn);

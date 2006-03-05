@@ -629,7 +629,7 @@ build_VECM_models (GRETL_VAR *vecm, double ***pZ, DATAINFO *pdinfo, int iter)
 #if JDEBUG
 	printlist(biglist, "build_VECM_models: biglist");
 #endif
-	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, lsqopt, 0.0);
+	*vecm->models[i] = lsq(biglist, pZ, pdinfo, OLS, lsqopt);
 	err = vecm->models[i]->errcode;
 	if (!err) {
 	    vecm->models[i]->ID = i + 1;

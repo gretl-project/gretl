@@ -709,7 +709,7 @@ MODEL garch_model (const int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 
     /* run initial OLS */
     if (!err) {
-	model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+	model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M);
 	if (model.errcode) {
 	    err = model.errcode;
 	}

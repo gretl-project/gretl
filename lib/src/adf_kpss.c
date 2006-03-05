@@ -189,7 +189,7 @@ static int auto_adjust_order (int *list, int order_max,
 	    pos++;
 	}
 
-	kmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	kmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 
 	if (kmod.errcode) {
 	    clear_model(&kmod);
@@ -417,7 +417,7 @@ static int real_adf_test (int varno, int order, int niv,
 	    }
 	}
 
-	dfmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	dfmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 	if (dfmod.errcode) {
 	    fprintf(stderr, "adf_test: dfmod.errcode = %d\n", 
 		    dfmod.errcode);
@@ -549,7 +549,7 @@ int kpss_test (int order, int varno, double ***pZ,
     }
 
     /* OPT_M: reject missing values within sample range */
-    KPSSmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+    KPSSmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
     if (KPSSmod.errcode) {
 	clear_model(&KPSSmod);
 	return KPSSmod.errcode;
@@ -704,7 +704,7 @@ int coint (int order, const int *list, double ***pZ,
 
     pprintf(prn, _("Step %d: cointegrating regression\n"), l0 + 1);
     
-    cmod = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE, 0.0); 
+    cmod = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE); 
     cmod.aux = AUX_COINT;
     printmodel(&cmod, pdinfo, OPT_NONE, prn);
 

@@ -47,7 +47,7 @@ static double get_vif (const MODEL *pmod, double ***pZ,
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
 
-    tmpmod = lsq(vlist, pZ, pdinfo, OLS, OPT_A, 0.0); 
+    tmpmod = lsq(vlist, pZ, pdinfo, OLS, OPT_A); 
 
     if (tmpmod.errcode == 0 && !na(tmpmod.rsq) && tmpmod.rsq != 1.0) {
 	x = 1.0 / (1.0 - tmpmod.rsq);

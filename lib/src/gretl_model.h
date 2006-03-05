@@ -222,7 +222,7 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo);
 
 MODEL *gretl_model_copy (const MODEL *pmod);
 
-int swap_models (MODEL **targ, MODEL **src);
+void swap_models (MODEL *targ, MODEL *src);
 
 int is_model_cmd (const char *line);
 

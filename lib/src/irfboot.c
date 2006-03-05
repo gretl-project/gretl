@@ -362,7 +362,7 @@ static int re_estimate_VAR (irfboot *boot, int targ, int shock, int iter)
     int i, err = 0;
 
     for (i=0; i<boot->neqns && !err; i++) {
-	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, lsqopt, 0.0);
+	var_model = lsq(boot->lists[i], &boot->Z, boot->dinfo, VAR, lsqopt);
 	err = var_model.errcode;
 	if (!err) {
 	    irf_record_VAR_data(boot, &var_model, i);

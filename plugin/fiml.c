@@ -197,7 +197,7 @@ over_identification_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
 
     for (i=0; i<fsys->g; i++) {
 	list[1] = enlist[i + 1];
-	umod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	umod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 	if (umod.errcode) {
 	    err = umod.errcode;
 	    goto bailout;

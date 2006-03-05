@@ -1192,7 +1192,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     print_GNR_dataset(glist, gZ, gdinfo);
 #endif
 
-    gnr = lsq(glist, &gZ, gdinfo, OLS, OPT_A, 0.0);
+    gnr = lsq(glist, &gZ, gdinfo, OLS, OPT_A);
 
 #if NLS_DEBUG
     gnr.name = gretl_strdup("GNR for NLS");

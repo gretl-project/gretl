@@ -767,7 +767,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	err = arma_get_nls_model(&armod, ainfo, alist, axstart, &aZ, adinfo);
     } else {
 	/* just use OLS */
-	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z, 0.0);
+	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
 	err = armod.errcode;
     }
 

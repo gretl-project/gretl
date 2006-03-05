@@ -243,7 +243,7 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
     strcpy(hinfo->varname[1], "RSavg");
     strcpy(hinfo->varname[2], "size");
 
-    hmod = lsq(hlist, &hZ, hinfo, OLS, OPT_A, 0.0);
+    hmod = lsq(hlist, &hZ, hinfo, OLS, OPT_A);
 
     if ((err = hmod.errcode)) {
 	pputs(prn, _("Error estimating Hurst exponent model\n"));

@@ -2731,7 +2731,7 @@ int do_model (selector *sr)
 	    gui_errmsg(err);
 	    break;
 	}
-	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_NONE, rho);
+	*pmod = ar1_lsq(cmd.list, &Z, datainfo, action, OPT_NONE, rho);
 	err = model_output(pmod, prn);
 	if (action == HILU) {
 	    register_graph();
@@ -2741,7 +2741,7 @@ int do_model (selector *sr)
     case OLS:
     case WLS:
     case HCCM:
-	*pmod = lsq(cmd.list, &Z, datainfo, action, cmd.opt, 0.0);
+	*pmod = lsq(cmd.list, &Z, datainfo, action, cmd.opt);
 	err = model_output(pmod, prn);
 	break;
 
@@ -2956,7 +2956,7 @@ void do_graph_model (GPT_SPEC *spec)
 	return;
     }
 
-    *pmod = lsq(cmd.list, &Z, datainfo, OLS, cmd.opt, 0.0);
+    *pmod = lsq(cmd.list, &Z, datainfo, OLS, cmd.opt);
     err = model_output(pmod, prn);
 
     if (err) {
@@ -6221,7 +6221,7 @@ int gui_exec_line (char *line,
 	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
 	    if (!(cmd.opt & OPT_Q)) {
-		swap_models(&models[0], &models[1]);
+		swap_models(models[0], models[1]);
 	    }
 	    clear_model(models[1]);
 	}
@@ -6257,7 +6257,7 @@ int gui_exec_line (char *line,
 	    break;
 	} else {
 	    if (!(cmd.opt & OPT_Q)) {
-		swap_models(&models[0], &models[1]);
+		swap_models(models[0], models[1]);
 	    }
 	    clear_model(models[1]);
 	}
@@ -6281,7 +6281,7 @@ int gui_exec_line (char *line,
 	}
 	if ((models[1])->ci == ARCH) {
 	    alt_model = 1;
-	    swap_models(&models[0], &models[1]);
+	    swap_models(models[0], models[1]);
 	}
 	clear_model(models[1]);
 	break;
@@ -6346,7 +6346,7 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
+	*models[0] = ar1_lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	} else {
@@ -6769,7 +6769,7 @@ int gui_exec_line (char *line,
 	if (cmd.ci == POOLED) {
 	    *models[0] = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
 	} else {
-	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
+	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn); 

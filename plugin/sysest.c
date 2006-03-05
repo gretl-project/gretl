@@ -1016,7 +1016,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	   in this context? */
 
 	if (method == SYS_SUR || method == SYS_OLS || method == SYS_WLS) {
-	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
 	} else if (method == SYS_3SLS || method == SYS_FIML || 
 		   method == SYS_TSLS) {
 	    *pmod = tsls_func(list, SYSTEM, pZ, pdinfo, OPT_NONE);

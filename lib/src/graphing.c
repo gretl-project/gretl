@@ -954,7 +954,7 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
     olslist[2] = 0;
     olslist[3] = list[2];
 	
-    plotmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A, 0.0);
+    plotmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
     err = plotmod.errcode;
 
     if (!err) {
@@ -1746,7 +1746,7 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_minmax(pdinfo->t1, pdinfo->t2, (*pZ)[list[2]], &umin, &umax);
     gretl_minmax(pdinfo->t1, pdinfo->t2, (*pZ)[list[1]], &vmin, &vmax);
 
-    smod = lsq(olslist, pZ, pdinfo, OLS, OPT_A, 0.0);
+    smod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
 
     if (!smod.errcode && !na(smod.fstt) &&
 	(fdist(smod.fstt, smod.dfn, smod.dfd) < .10 || flags & GP_FA)) {

@@ -104,7 +104,6 @@ int main (void)
 		 datainfo, /* data information */
 		 OLS,      /* use Ordinary Least Squares */
 		 OPT_NONE, /* no special options */
-		 0.0       /* no rho-differencing of data */
 		 );
 
     /* Handle case where lsq bombed */

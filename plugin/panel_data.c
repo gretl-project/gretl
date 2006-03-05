@@ -352,7 +352,7 @@ group_means_variance (diagnostics_t *diag, double ***gZ, DATAINFO *ginfo)
 	}
     }
 
-    gmmod = lsq(gmlist, gZ, ginfo, OLS, OPT_A | OPT_Z, 0.0);
+    gmmod = lsq(gmlist, gZ, ginfo, OLS, OPT_A | OPT_Z);
 
     if (gmmod.errcode == 0) {
 	diag->gm_var = gmmod.sigma * gmmod.sigma;
@@ -589,7 +589,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 
 	/* OPT_Z: do _not_ automatically eliminate perfectly
 	   collinear variables */
-	lsdv = lsq(felist, &wZ, winfo, OLS, OPT_A | OPT_Z, 0.0);
+	lsdv = lsq(felist, &wZ, winfo, OLS, OPT_A | OPT_Z);
 
 	if (lsdv.errcode) {
 	    ; /* pass on */
@@ -666,7 +666,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	    felist[diag->vlist[0] + i + 1] = oldv + i;
 	}
 
-	lsdv = lsq(felist, pZ, pdinfo, OLS, OPT_A | OPT_Z, 0.0);
+	lsdv = lsq(felist, pZ, pdinfo, OLS, OPT_A | OPT_Z);
 
 #if PDEBUG
 	if (lsdv.errcode == 0) {
@@ -890,7 +890,7 @@ static int random_effects (diagnostics_t *diag,
 	}
     }
 
-    remod = lsq(relist, &reZ, reinfo, OLS, OPT_A | OPT_Z, 0.0);
+    remod = lsq(relist, &reZ, reinfo, OLS, OPT_A | OPT_Z);
 
     if ((err = remod.errcode)) {
 	pputs(prn, _("Error estimating random effects model\n"));
@@ -1490,7 +1490,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mdl;
     }    
     
-    mdl = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    mdl = lsq(list, pZ, pdinfo, OLS, OPT_A);
     if (mdl.errcode) {
 	goto bailout;
     }
@@ -1580,7 +1580,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	clear_model(&mdl);
 
-	mdl = lsq(wlist, pZ, pdinfo, WLS, wlsopt, 0.0);
+	mdl = lsq(wlist, pZ, pdinfo, WLS, wlsopt);
 
 	if (mdl.errcode || iter > WLS_MAX) {
 	    mdl.errcode = E_NOCONV;
@@ -1779,7 +1779,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     }
 
     if (!err) {
-	aux = lsq(aclist, &tmpZ, tmpinfo, OLS, OPT_A, 0.0);
+	aux = lsq(aclist, &tmpZ, tmpinfo, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);

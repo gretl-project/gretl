@@ -609,7 +609,7 @@ int bhhh_max (LL_FUNC loglik,
 #endif
 
 	/* BHHH via OPG regression */
-	*bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A, 0.0);
+	*bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A);
 	if (bmod->errcode) {
 	    fprintf(stderr, "BHHH model error code = %d\n", bmod->errcode);
 	    err = E_NOCONV;
@@ -693,7 +693,7 @@ int bhhh_max (LL_FUNC loglik,
 
 	    /* run OPG once more using QR, to get packed VCV */
 	    set_use_qr(1);
-	    *bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A, 0.0);
+	    *bmod = lsq(blist, &tZ, tinfo, OLS, OPT_A);
 	    set_use_qr(qr_bak);
 	    minfo->pmod = bmod;
 	    gretl_model_set_int(bmod, "iters", iters);

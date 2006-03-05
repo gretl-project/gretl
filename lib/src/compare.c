@@ -491,7 +491,11 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	if (gretl_model_get_int(orig, "hc_version") == 4) {
 	    repci = HCCM;
 	}
-	rep = lsq(list, pZ, pdinfo, repci, lsqopt, rho);
+	if (rho != 0.0) {
+	    rep = ar1_lsq(list, pZ, pdinfo, repci, lsqopt, rho);
+	} else {
+	    rep = lsq(list, pZ, pdinfo, repci, lsqopt);
+	}
 	break;
     }
 
@@ -542,7 +546,7 @@ real_nonlinearity_test (MODEL *pmod, int *list,
     /* replace the dependent var */
     list[1] = pdinfo->v - 1;
 
-    aux = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    aux = lsq(list, pZ, pdinfo, OLS, OPT_A);
     if (aux.errcode) {
 	err = aux.errcode;
 	fprintf(stderr, "auxiliary regression failed\n");
@@ -1027,7 +1031,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A, 0.0);
+	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -1172,7 +1176,7 @@ int autocorr_test (MODEL *pmod, int order,
     if (!err) {
 	newlist[1] = v;
 	/* printlist(newlist); */
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A, 0.0);
+	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -1327,7 +1331,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    chowlist[pmod->list[0] + 1 + i] = v + i;
 	}
 
-	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A, 0.0);
+	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A);
 
 	if (chow_mod.errcode) {
 	    err = chow_mod.errcode;
@@ -1459,7 +1463,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	for (j=0; j<n_est && !err; j++) {
-	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, cmodopt, 0.0);
+	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, cmodopt);
 	    err = cum_mod.errcode;
 	    if (err) {
 		errmsg(err, prn);

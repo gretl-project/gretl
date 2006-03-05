@@ -397,7 +397,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
     varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
 			  (const double **) *pZ);
 
-    dmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
+    dmod = lsq(list, pZ, pdinfo, OLS, OPT_A);
     if (dmod.list[0] != list[0]) {
 	dmod.errcode = E_DATA;
 	goto bailout;
@@ -475,7 +475,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	llbak = dmod.lnL;
 	clear_model(&dmod);
-	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A, 0);
+	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A);
 	if (dmod.errcode) {
 	    fprintf(stderr, "logit_probit: dmod errcode = %d\n", dmod.errcode);
 	    if (iters > 0) {
@@ -946,7 +946,7 @@ MODEL logistic_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     llist[1] = pdinfo->v - 1;
 
-    lmod = lsq(llist, pZ, pdinfo, OLS, OPT_A, 0.0);
+    lmod = lsq(llist, pZ, pdinfo, OLS, OPT_A);
     if (!lmod.errcode) {
 	rewrite_logistic_stats((const double **) *pZ, pdinfo, &lmod,
 			       dv, lmax);

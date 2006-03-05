@@ -446,7 +446,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 	OT_list[i] = instlist[i-1];
     }
 
-    smod = lsq(OT_list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    smod = lsq(OT_list, pZ, pdinfo, OLS, OPT_A);
     if (smod.errcode) {
 	err = smod.errcode;
     } else {
@@ -479,7 +479,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     MODEL hmod;
     int *HT_list = NULL;
 
-    hmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A, 0.0);
+    hmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A);
     if (hmod.errcode) {
 	err = hmod.errcode;
 	goto bailout;
@@ -494,7 +494,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 	goto bailout;
     } 
 
-    hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A);
 
     if (hmod.errcode) {
 	err = hmod.errcode;
@@ -952,7 +952,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* second-stage regression */
-    tsls = lsq(s2list, pZ, pdinfo, OLS, (ci == TSLS)? OPT_NONE : OPT_Z, 0.0);
+    tsls = lsq(s2list, pZ, pdinfo, OLS, (ci == TSLS)? OPT_NONE : OPT_Z);
     if (tsls.errcode) {
 	goto bailout;
     }

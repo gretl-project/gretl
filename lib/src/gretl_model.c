@@ -2225,30 +2225,22 @@ MODEL *gretl_model_copy (const MODEL *pmod)
 
 /**
  * swap_models:
- * @targ: pointer to pointer to #MODEL.
- * @src: pointer to pointer to #MODEL.
+ * @targ: pointer to target #MODEL.
+ * @src: pointer to source #MODEL.
  *
- * Swaps the model pointers.
- *
- * Returns: 0 on success.
+ * Swaps the content of the two model pointers.
  */
 
-int swap_models (MODEL **targ, MODEL **src)
+void swap_models (MODEL *targ, MODEL *src)
 {
-    MODEL *tmp = *targ;
+    MODEL tmp = *targ;
 
 #if MDEBUG
-    fprintf(stderr, "swap_models: %p <-> %p\n", *targ, *src);
+    fprintf(stderr, "swap_models: %p <-> %p\n", targ, src);
 #endif
 
     *targ = *src;
     *src = tmp;
-
-    /* handle the case where we have a model that is currently
-       defined as the "last model" (objstack.c) */
-    maybe_swap_into_last_model(*targ, tmp);
-
-    return 0;
 }
 
 int is_model_cmd (const char *s)

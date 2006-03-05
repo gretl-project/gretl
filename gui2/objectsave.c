@@ -255,7 +255,7 @@ session_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, PRN *prn)
 	clear_model(models[1]);
     } else {
 	if (!(mycmd.opt & OPT_Q)) {
-	    swap_models(&models[0], &models[1]);
+	    swap_models(models[0], models[1]);
 	} 
 	clear_model(models[1]);
     }

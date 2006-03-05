@@ -483,7 +483,7 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
     int t;
 
     /* run initial OLS: OPT_M bans missing obs */
-    model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+    model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
     if (model.errcode) {
 	return model;
     }
@@ -495,7 +495,7 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    (*pZ)[model.list[1]][t] *= scale;
 	}
 	clear_model(&model);
-	model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+	model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
     }
 
 #ifdef TDEBUG

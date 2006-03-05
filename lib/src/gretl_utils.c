@@ -809,7 +809,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	rho = estimate_rho(cmd.list, pZ, pdinfo, cmd.ci, 
 			   &err, cmd.opt, NULL);
 	if (!err) {
-	    *tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);
+	    *tmpmod = ar1_lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);
 	}
 	break;
     case HSK:
@@ -829,7 +829,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case WLS:
     case HCCM:
     case POOLED:
-	*tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt, 0.0);
+	*tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt);
 	break;
     case TSLS:
 	break;

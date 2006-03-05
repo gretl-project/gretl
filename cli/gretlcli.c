@@ -962,7 +962,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    /* for command-line use, we keep a "stack" of 
 	       two models, and recycle the places */
 	    if (!(cmd.opt & OPT_Q)) {
-		swap_models(&models[0], &models[1]);
+		swap_models(models[0], models[1]);
 	    } 
 	    clear_model(models[1]);
 	}
@@ -994,7 +994,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    break;
 	} else {
 	    if (!(cmd.opt & OPT_Q)) {
-		swap_models(&models[0], &models[1]);
+		swap_models(models[0], models[1]);
 	    }
 	    clear_model(models[1]);
 	}
@@ -1018,7 +1018,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	if (models[1]->ci == ARCH) {
 	    alt_model = 1;
-	    swap_models(&models[0], &models[1]); 
+	    swap_models(models[0], models[1]); 
 	}
 	clear_model(models[1]);
 	break;
@@ -1066,7 +1066,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    break;
 	}
 	clear_model(models[0]);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
+	*models[0] = ar1_lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	} else {
@@ -1461,7 +1461,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if (cmd.ci == POOLED) {
 	    *models[0] = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
 	} else {
-	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
+	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
 	}
 	if ((err = models[0]->errcode)) {
 	    errmsg(err, prn);

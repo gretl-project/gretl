@@ -80,7 +80,7 @@ static int resids_to_E (gretl_matrix *E, MODEL *lmod, int *reglist,
 
 	/* regress the given endogenous var on the specified
 	   set of exogenous vars */
-	*lmod = lsq(reglist, pZ, pdinfo, OLS, OPT_NONE, 0.0);
+	*lmod = lsq(reglist, pZ, pdinfo, OLS, OPT_NONE);
 	if ((err = lmod->errcode)) {
 	    clear_model(lmod);
 	    break;

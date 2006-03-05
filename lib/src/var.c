@@ -1497,7 +1497,7 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 	for (i=0; i<var->neqns && !err; i++) {
 	    depvar = vl->stochvars[i + 1];
 	    compose_varlist(vl, depvar, j, 0, 0, pdinfo);
-	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A);
 	    err = testmod.errcode;
 	    if (!err) {
 		/* record residuals for equation i, order j */
@@ -1605,7 +1605,7 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
 		err = 1;
 	    }
 	} else {
-	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A);
 	    err = testmod.errcode;
 	    if (!err) {
 		F = ((testmod.ess - varmod->ess) / var->order) / 
@@ -1626,7 +1626,7 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
 
 	compose_varlist(vl, depvar, var->order - 1, 0, 0, pdinfo);	
 
-	testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	testmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A);
 	err = testmod.errcode;
 
 	if (!err) {
@@ -1790,7 +1790,7 @@ static GRETL_VAR *real_var (int order, const int *inlist,
 
 	compose_varlist(vl, vl->stochvars[i + 1], order, 0, 0, pdinfo);
 
-	*pmod = lsq(vl->reglist, pZ, pdinfo, VAR, lsqopt, 0.0);
+	*pmod = lsq(vl->reglist, pZ, pdinfo, VAR, lsqopt);
 
 	if (pmod->errcode) {
 	    *err = pmod->errcode;
@@ -2292,7 +2292,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
 				    jvar->jinfo->u, i, jvar->t1);
 	} else {
-	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
+	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z);
 	    if ((err = jmod.errcode)) {
 		fprintf(stderr, "*** johansen_VAR: VAR in differences, eqn %d, "
 			"lsq err %d\n", i+1, err);
@@ -2318,7 +2318,7 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
 				    jvar->jinfo->v, i, jvar->t1);
 	} else {
-	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z, 0.0);
+	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A | OPT_Z);
 	    if ((err = jmod.errcode)) {
 		fprintf(stderr, "johansen_VAR: y_{t-1} regression, eqn %d, lsq err %d\n",
 			i+1, err);
@@ -2351,10 +2351,10 @@ static int johansen_VAR (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    transcribe_data_as_uhat(vl->reglist[1], (const double **) *pZ,
 				    jvar->jinfo->v, i, jvar->t1);
 	} else {	    
-	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    jmod = lsq(vl->reglist, pZ, pdinfo, VAR, OPT_A);
 	    if ((err = jmod.errcode)) {
-		fprintf(stderr, "johansen_VAR: restriction regression, eqn %d, lsq err %d\n",
-			i+1, err);
+		fprintf(stderr, "johansen_VAR: restriction regression, "
+			"eqn %d, lsq err %d\n", i+1, err);
 		goto var_bailout;
 	    }
 	    if (opt & OPT_V) {
