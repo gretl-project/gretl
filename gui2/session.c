@@ -251,6 +251,41 @@ static void print_session (const char *msg)
 }
 #endif
 
+#if 0
+static char *print_session_xml (void)
+{
+    PRN *prn;
+    int i;
+
+    /* open the prn */
+
+    pputs(prn, "<gui-session>\n");
+    pprintf(prn, " <models number=\"%d\">\n", session.nmodels);
+    for (i=0; i<session.nmodels; i++) {
+	pprintf(prn, "  <session-model name=\"%s\" addr=\"%d\"/>\n", 
+		session.models[i]->name, session.models[i]->ptr);
+    }
+    pputs(prn, " </models>\n");
+    pprintf(prn, " <graphs number=\"%d\">\n", session.ngraphs);
+    for (i=0; i<session.ngraphs; i++) {
+	pprintf(prn, "  <session-graph name=\"%s\" fname=\"%s\"/>\n", 
+		session.graphs[i]->name, session.graphs[i]->fname);
+    } 
+    pputs(prn, " </graphs>\n");
+    pprintf(prn, " <texts number=\"%d\">\n", session.ntexts);
+    for (i=0; i<session.ntexts; i++) {
+	pprintf(prn, "  <session-text name=\"%s\">\n", session.texts[i]->name);
+	/* XML encoding? */
+	pputs(prn, session.texts[i]->buf);
+	pputs(prn, "  </session-text>\n");
+    }    
+    pputs(prn, " </texts>\n");
+    pputs(prn, "</gui-session>\n");
+
+    /* close prn and return buf */
+}
+#endif
+
 static int session_saved;
 
 int session_is_saved (void)
@@ -2142,8 +2177,9 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	maybe_delete_session_object(obj);
     } else if (strcmp(item, _("Add to model table")) == 0) {
 	if (obj->sort == GRETL_OBJ_EQN) {
-	    MODEL *pmod = (MODEL *) obj->data;
-	    add_to_model_table(pmod, MODEL_ADD_FROM_MENU, NULL);
+	    SESSION_MODEL *mod = (SESSION_MODEL *) obj->data;
+
+	    add_to_model_table(mod->ptr, MODEL_ADD_FROM_MENU, NULL);
 	}
     } else if (strcmp(item, _("Clear")) == 0) {
 	if (obj->sort == GRETL_OBJ_MODTAB) {
