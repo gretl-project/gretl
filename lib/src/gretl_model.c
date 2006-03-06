@@ -606,7 +606,7 @@ int gretl_arma_model_max_MA_lag (const MODEL *pmod)
 /* From Box and Jenkins, 1976, pp 506-7, "Program 4": a clever
    algorithm for "unscrambling the coefficients", or in effect
    producing reduced-form AR coefficients that take into account any
-   differencing.
+   differencing, seasonal and/or non-seasonal.
 */
 
 static int ar_coeff_integrate (double *c0, int d, int D, int s, int pmax)
@@ -1482,8 +1482,7 @@ void clear_model (MODEL *pmod)
  * gretl_model_free:
  * @pmod: pointer to #MODEL.
  *
- * Free allocated content of @pmod then the pointer itself,
- * if the model's reference count has reached zero.
+ * Free allocated content of @pmod then the pointer itself.
  */
 
 void gretl_model_free (MODEL *pmod)
