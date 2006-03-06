@@ -255,6 +255,7 @@ static void print_session (const char *msg)
 static char *print_session_xml (void)
 {
     PRN *prn;
+    char *buf;
     int i;
 
     /* open the prn */
