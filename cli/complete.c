@@ -36,16 +36,18 @@ char *dupstr (const char *s)
 {
     char *r = xmalloc(strlen(s) + 1);
 
-    strcpy(r, s);
+    if (r != NULL) {
+	strcpy(r, s);
+    }
+
     return r;
 }
 
-/* ........................................................... */
-
-static char *command_generator (char *text, int state)
 /* Generator function for command completion.  STATE lets us know whether
    to start from scratch; without any state (i.e. STATE == 0), then we
    start at the top of the list. */
+
+static char *command_generator (char *text, int state)
 {
     static int list_index;
     const char *cword;
@@ -64,14 +66,13 @@ static char *command_generator (char *text, int state)
     return NULL;
 }
 
-/* ........................................................... */
-
-static char **gretl_completion (char *text, int start, int end)
 /* Attempt to complete on the contents of TEXT.  START and END bound the
    region of rl_line_buffer that contains the word to complete.  TEXT is
    the word to complete.  We can use the entire contents of rl_line_buffer
    in case we want to do some simple parsing.  Return the array of matches,
    or NULL if there aren't any. */
+
+static char **gretl_completion (char *text, int start, int end)
 {
     char **matches = NULL;
 
@@ -93,14 +94,13 @@ static char **gretl_completion (char *text, int start, int end)
     return matches;
 }
 
-/* ........................................................... */
+/* Read a string, and return a pointer to it.  Returns NULL on EOF. */
 
 char *rl_gets (char **line_read, const char *prompt)
-     /* Read a string, and return a pointer to it.  Returns NULL on EOF. */
 {
     /* If the buffer has already been allocated, return the memory
        to the free pool. */
-    if (*line_read) {
+    if (*line_read != NULL) {
 	free(*line_read);
 	*line_read = NULL;
     }
@@ -109,19 +109,18 @@ char *rl_gets (char **line_read, const char *prompt)
     *line_read = readline(prompt);
 
     /* If the line has any text in it, save it on the history. */
-    if (*line_read && **line_read) {
+    if (*line_read != NULL && **line_read != '\0') {
 	add_history(*line_read);
     }
      
     return *line_read;
 }
 
-/* ........................................................... */
-
-void initialize_readline (void) 
 /* Tell the GNU Readline library how to complete.  We want to try to complete
    on command names if this is the first word in the line, or on variable
    names if not. */
+
+void initialize_readline (void) 
 {
     /* Allow conditional parsing of the ~/.inputrc file. */
     rl_readline_name = "gretl";

@@ -31,6 +31,7 @@ lib/src/gretl_win32.c
 lib/src/gretl_xml.c
 lib/src/interact.c
 lib/src/irfboot.c
+lib/src/kalman.c
 lib/src/laginfo.c
 lib/src/libset.c
 lib/src/missing.c
@@ -62,9 +63,9 @@ cli/complete.c
 cli/gretlcli.c
 gui/gretl.c
 gui/guiprint.c
-gui/obsbutton.c
 gui/plotps.c
 gui/ssheet.c
+gui/obsbutton.c
 gui/textbuf.c
 gui/selector-gtk1.c
 gui2/about.c

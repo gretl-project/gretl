@@ -323,6 +323,20 @@ static int clear_data (void)
     return err;
 }
 
+static void get_a_filename (char *fname)
+{
+    *fname = 0;
+
+#if 0
+    rl_gets(&line_read, "");
+    if (line_read != NULL) {
+	strcpy(fname, line_read);
+    }
+#else
+    fgets(fname, MAXLEN - 1, stdin);
+#endif
+}
+
 static int get_an_input_line (void)
 {
     int err = 0;
@@ -1518,14 +1532,16 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	printf(_("commands saved as %s\n"), cmdfile);
 	gretl_print_destroy(cmdprn);
 
-	if (cmd.opt & OPT_X) break;
+	if (cmd.opt & OPT_X) {
+	    break;
+	}
 
 	printf(_("type a filename to store output (enter to quit): "));
-	*outfile = '\0';
-	fgets(outfile, MAXLEN-1, stdin); 
+	get_a_filename(outfile);
 	top_n_tail(outfile);
 
-	if (*outfile != '\n' && *outfile != '\r' && strcmp(outfile, "q")) {
+	if (*outfile != 0 && *outfile != '\n' && *outfile != '\r' 
+	    && strcmp(outfile, "q")) {
 	    const char *udir = gretl_user_dir();
 
 	    printf(_("writing session output to %s%s\n"), udir, outfile);
@@ -1697,7 +1713,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	maybe_stack_model(models[0], &cmd, prn);
     }
 
-    if (!err && gretl_echo_on() && !batch && !old_runit) {
+    if (!err && cmd.ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
 	/* record a successful interactive command */
 	echo_cmd(&cmd, datainfo, line, 0, cmdprn);
     }

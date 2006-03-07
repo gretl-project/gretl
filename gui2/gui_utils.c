@@ -1366,8 +1366,6 @@ void save_session (char *fname)
     return;
 }
 
-/* ........................................................... */
-
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
 #ifndef OLD_GTK
@@ -1381,8 +1379,6 @@ static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 
     set_window_help_active(vwin);
 }
-
-/* ........................................................... */
 
 static void buf_edit_save (GtkWidget *widget, gpointer data)
 {

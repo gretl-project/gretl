@@ -1486,11 +1486,6 @@ void session_file_manager (int action, const char *fname)
 static int 
 real_delete_model_from_session (SESSION_MODEL *model)
 {
-#if 0
-    GretlObjType type = model->type;
-    void *ptr = model->ptr;
-#endif
-
     if (session.nmodels == 1) {
 	free_session_model(session.models[0]);
     } else {
@@ -1515,10 +1510,6 @@ real_delete_model_from_session (SESSION_MODEL *model)
 
     session.nmodels -= 1;
     session_changed(1);
-
-#if 0
-    gretl_object_unref(ptr, type); /* done in free_session_model */
-#endif
 
     return 0;
 }
@@ -2524,7 +2515,7 @@ void print_saved_object_specs (const char *session_base, FILE *fp)
 
     for (i=0; i<session.nmodels; i++) {
 	if (session.models[i]->type == GRETL_OBJ_EQN) {
-	    pmod = get_model_by_name(session.models[i]->name);
+	    pmod = session.models[i]->ptr;
 	    fprintf(fp, "model %d \"%s\"\n", pmod->ID, pmod->name);
 	}
     }
