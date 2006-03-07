@@ -327,14 +327,7 @@ static void get_a_filename (char *fname)
 {
     *fname = 0;
 
-#if 0
-    rl_gets(&line_read, "");
-    if (line_read != NULL) {
-	strcpy(fname, line_read);
-    }
-#else
     fgets(fname, MAXLEN - 1, stdin);
-#endif
 }
 
 static int get_an_input_line (void)
