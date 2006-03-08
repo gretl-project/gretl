@@ -60,11 +60,11 @@ static void gpage_filenames_init (const char *base)
 	if (has_suffix(gpage_base, ".tex")) {
 	    gpage_base[strlen(gpage_base) - 4] = '\0';
 	}
-	p = strrchr(base, SLASH);
+	p = strrchr(gpage_base, SLASH);
 	if (p != NULL) {
 	    strcpy(gpage_tex_base, p + 1);
 	} else {
-	    strcpy(gpage_tex_base, base);
+	    strcpy(gpage_tex_base, gpage_base);
 	}
     }
 }
@@ -372,7 +372,7 @@ static int spawn_dvips (char *texsrc)
     GError *error = NULL;
     gchar *sout = NULL;
     gchar *argv[5];
-    char outfile[32];
+    char outfile[MAXLEN]; 
     int ok, status;
     int ret = 0;
 

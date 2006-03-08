@@ -89,6 +89,8 @@ gchar *textview_get_text (GtkTextView *view)
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
 
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
+
     tbuf = gtk_text_view_get_buffer(view);
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);

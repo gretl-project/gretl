@@ -518,12 +518,14 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	return;
     }
 
-    if (src == FSEL_DATA_PRN) {
-	if (action == SAVE_TEX) {
+    if (action == SAVE_TEX) {
+	if (src == FSEL_DATA_PRN) {
 	    save_latex((PRN *) data, fname);
 	} else {
-	    filesel_save_prn_buffer((PRN *) data, fname);
+	    save_latex(NULL, fname);
 	}
+    } else if (src == FSEL_DATA_PRN) {
+	filesel_save_prn_buffer((PRN *) data, fname);
     } else if (SAVE_DATA_ACTION(action)) {
 	int overwrite = 0;
 
