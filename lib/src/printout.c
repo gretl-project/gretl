@@ -2198,9 +2198,6 @@ static int real_do_printf (const char *line, double ***pZ,
 	} else {
 	    int v = varindex(pdinfo, argv);
 
-#if PRINTF_DEBUG
-	    fprintf(stderr, "looked up '%s' as variable: not found\n", argv);
-#endif
 	    if (v < pdinfo->v) {
 #if PRINTF_DEBUG
 		fprintf(stderr, "'%s' is variable #%d (vector = %d)\n",
@@ -2213,6 +2210,9 @@ static int real_do_printf (const char *line, double ***pZ,
 		    xvals[i] = (*pZ)[v][0];
 		}
 	    } else {
+#if PRINTF_DEBUG
+		fprintf(stderr, "looked up '%s' as variable: not found\n", argv);
+#endif
 		err = get_generated_value(argv, &xvals[i], pZ, pdinfo, t);
 	    }
 	}

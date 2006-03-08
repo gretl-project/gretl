@@ -27,6 +27,7 @@
 #include "cmd_private.h"
 #include "var.h"
 #include "objstack.h"
+#include "gretl_func.h"
 
 #include <time.h>
 #include <unistd.h>
@@ -250,6 +251,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 
     if (ci == GENR ||
 	ci == LOOP ||
+	ci == FUNC || 
 	ci == MATRIX ||
 	ci == STORE ||
 	ci == PRINT ||
@@ -287,6 +289,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	     ci == SPEARMAN || 
 	     ci == SQUARE || 
 	     ci == SUMMARY ||
+	     ci == VARLIST ||
 	     ci == VARTEST) {
 	ok = 1;
     }
@@ -300,6 +303,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	     ci == HSK ||
 	     ci == LAD ||
 	     ci == OLS ||
+	     ci == TSLS ||
 	     ci == PWE ||
 	     ci == WLS) {
 	return 1;
@@ -1945,6 +1949,66 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
     return NULL;
 }
 
+/**
+ * add_user_func_to_loop:
+ * @line: command line.
+ * @loop: #LOOPSET to which command should be added
+ *
+ * Add line with user-defined function to accumulated loop buffer.
+ *
+ * Returns: pointer to loop struct on success, %NULL on failure.
+ */
+
+LOOPSET *add_user_func_to_loop (char *line, LOOPSET *loop)
+{
+    LOOPSET *lret = loop;
+
+    *gretl_errmsg = '\0';
+
+#if LOOP_DEBUG
+    fprintf(stderr, "add_user_func_to_loop: loop = %p, line = '%s'\n", 
+	    (void *) loop, line);
+#endif
+
+    if (loop != NULL) {
+	int nc = loop->ncmds;
+
+	if ((nc + 1) % LOOP_BLOCK == 0) {
+	    if (add_more_loop_lines(loop)) {
+		gretl_errmsg_set(_("Out of memory!"));
+		goto bailout;
+	    }
+	}
+
+	loop->lines[nc] = malloc(MAXLEN);
+	if (loop->lines[nc] == NULL) {
+	    gretl_errmsg_set(_("Out of memory!"));
+	    goto bailout;
+	}
+
+	top_n_tail(line);
+	strcpy(loop->lines[nc], line);
+
+	loop->ci[nc] = FUNC; /* FIXME? */
+	loop->ncmds += 1;
+
+#if LOOP_DEBUG
+	fprintf(stderr, "loop: ncmds=%d, line[%d] = '%s'\n",
+		loop->ncmds, nc, loop->lines[nc]);
+#endif
+    }
+
+    return lret;
+
+ bailout:
+    
+    if (loop != NULL) {
+	gretl_loop_destroy(loop);
+    }
+
+    return NULL;
+}
+
 /* FIXME: additional model info such as robust std errs method */
 
 static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
@@ -2435,6 +2499,34 @@ make_dollar_substitutions (char *str, const LOOPSET *loop,
     return err;
 }
 
+static int next_command (char *targ, LOOPSET *loop, double ***pZ,
+			 DATAINFO **ppdinfo, int *err, int *j)
+{
+    int ret = 1;
+
+    /* the following needs more thought: we might currently be working
+       on a loop _inside_ a function, not a function inside a loop.
+    */
+    if (0 && gretl_executing_function()) {
+	char cmdword[9] = {0};
+
+	gretl_function_get_line(targ, MAXLINE, pZ, ppdinfo, err);
+	sscanf(targ, "%8s", cmdword);
+	if (!strcmp(cmdword, "loop")) {
+	    strcpy(gretl_errmsg, "Sorry, you can't (yet) have loops inside "
+		   "functions inside loops");
+	    *err = E_PARSE;
+	}
+    } else if (*j < loop->ncmds) {
+	strcpy(targ, loop->lines[*j]);
+	*j += 1;
+    } else {
+	ret = 0;
+    }
+
+    return ret;
+}
+
 /* Below, in loop_exec, as of October 29, 2005, the handling of the
    multiple models is probably not right yet -- needs more work in
    light of the new object naming/saving mechanism in gretl.
@@ -2487,23 +2579,32 @@ int loop_exec (LOOPSET *loop, char *line,
 	    print_loop_progress(loop, *ppdinfo, prn);
 	}
 
-	for (j=0; !err && j<loop->ncmds; j++) {
+	j = 0;
+	while (!err && next_command(linecpy, loop, pZ, ppdinfo, &err, &j)) {
+
 #if LOOP_DEBUG
-	    fprintf(stderr, "loop->lines[%d] = '%s'\n", j, loop->lines[j]);
+	    fprintf(stderr, " j=%d, linecpy='%s'\n", j, linecpy);
 #endif
-	    strcpy(linecpy, loop->lines[j]);
-	    strcpy(errline, loop->lines[j]);
+	    strcpy(errline, linecpy);
 
-	    err = make_dollar_substitutions(linecpy, loop, 
-					    (const double **) *pZ,
-					    *ppdinfo);
-	    if (err) break;
+	    if (!err) {
+		err = make_dollar_substitutions(linecpy, loop, 
+						(const double **) *pZ,
+						*ppdinfo);
+	    }
 
-	    /* We already have the "ci" index recorded, but this line
-	       will do some checking that hasn't been done earlier.
-	    */
+	    if (err) {
+		break;
+	    }
 
-	    err = parse_command_line(linecpy, &cmd, pZ, *ppdinfo);
+	    if (gretl_is_user_function(linecpy)) {
+		err = gretl_function_start_exec(linecpy, pZ, *ppdinfo);
+		continue;
+	    } else {
+		/* We already have the "ci" index recorded, but this line
+		   will do some checking that hasn't been done earlier. */
+		err = parse_command_line(linecpy, &cmd, pZ, *ppdinfo);
+	    }
 
 	    if (cmd.ci < 0) {
 		continue;
@@ -2544,6 +2645,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case SPEARMAN: 
 	    case SQUARE: 
 	    case SUMMARY:
+	    case VARLIST:
 	    case VARTEST: 
 		err = simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
 		break;
@@ -2574,6 +2676,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case HSK:
 	    case LAD:
 	    case OLS:
+	    case TSLS:
 	    case PWE:
 	    case WLS:
 		/* if this is the first time round, allocate space
@@ -2601,6 +2704,8 @@ int loop_exec (LOOPSET *loop, char *line,
 		} else if (cmd.ci == ARMA) {
 		    *models[0] = arma(cmd.list, (const double **) *pZ, *ppdinfo, 
 				      cmd.opt, prn);
+		} else if (cmd.ci == TSLS) {
+		    *models[0] = tsls_func(cmd.list, TSLS, pZ, *ppdinfo, cmd.opt);
 		} else if (cmd.ci == GARCH) {
 		    *models[0] = garch(cmd.list, pZ, *ppdinfo, cmd.opt, prn);
 		} else if (cmd.ci == CORC || cmd.ci == HILU || cmd.ci == PWE) {

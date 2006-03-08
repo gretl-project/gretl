@@ -630,7 +630,8 @@ static char *function_name_from_line (const char *line, char *name)
 	    *q = 0;
 	}
 #if FN_DEBUG
-	fprintf(stderr, "function_name_from_line: got '%s'\n", name);
+	fprintf(stderr, "function_name_from_line: line='%s', got '%s'\n", 
+		line, name);
 #endif
     }
 
@@ -1499,8 +1500,8 @@ static int check_and_allocate_function_args (ufunc *fun,
 
     for (i=0; i<argc && !err; i++) {
 #if FN_DEBUG
-	fprintf(stderr, "fn args: argv[%d]='%s', parm[%d]='%s' ptype[%d]=%d\n", 
-		i, argv[i], i, fun->params[i], i, fun->ptype[i]);
+	fprintf(stderr, "fn argv[%d]: arg='%s', fun->param='%s' fun->ptype=%d\n", 
+		i, argv[i], fun->params[i], fun->ptype[i]);
 #endif
 	if (fun->ptype[i] == ARG_SCALAR) {
 	    if (numeric_string(argv[i])) {

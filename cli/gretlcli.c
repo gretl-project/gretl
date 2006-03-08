@@ -724,27 +724,6 @@ static void printf_strip (char *s, int loopstack)
     }
 }
 
-static int handle_user_defined_function (char *line, int *fncall,
-					 PRN *prn)
-{
-    int ufunc = gretl_is_user_function(line);
-    int err = 0;
-
-    /* allow for nested function calls */
-    if (ufunc && gretl_compiling_function()) {
-	return 0;
-    }
-
-    /* an actual function call */
-    else if (ufunc) {
-	echo_function_call(line, CMD_ECHO_TO_STDOUT, prn);
-	err = gretl_function_start_exec(line, &Z, datainfo);
-	*fncall = 1;
-    } 
-
-    return err;
-}
-
 static int do_autofit_plot (PRN *prn)
 {
     int *plotlist;
@@ -770,6 +749,44 @@ static int do_autofit_plot (PRN *prn)
     return err;
 }
 
+static int 
+handle_user_defined_function (char *line, int *err, LOOPSET **ploop, PRN *prn)
+{
+    int ufunc = gretl_is_user_function(line);
+    int fcomp = gretl_compiling_function();
+    int done = 0;
+
+    if (fcomp) {
+	/* compiling function: add a line */
+	*err = gretl_function_append_line(line);
+	done = 1;
+    } else if (ufunc) {
+	/* got an actual function call? */
+	if (loopstack) {
+	    /* defer evaluation, just add to loop */
+	    echo_function_call(line, CMD_ECHO_TO_STDOUT | CMD_STACKING, prn);
+	    *ploop = add_user_func_to_loop(line, *ploop);
+	    if (*ploop == NULL) {
+		loopstack = 0;
+		set_errfatal(ERRFATAL_FORCE);
+		print_gretl_errmsg(prn);
+		*err = 1;
+	    } 
+	} else {
+	    /* start exec'ing the function now */
+	    echo_function_call(line, CMD_ECHO_TO_STDOUT, prn);
+	    *err = gretl_function_start_exec(line, &Z, datainfo);
+	}
+	done = 1;
+    } 
+
+    if (*err) {
+	errmsg(*err, prn);
+    }    
+
+    return done;
+}
+
 static int exec_line (char *line, LOOPSET **ploop, PRN *prn) 
 {
     LOOPSET *loop = *ploop;
@@ -780,7 +797,6 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     int dbdata = 0;
     unsigned char echo_flags;
     char s1[12], s2[12];
-    int fncall = 0;
     double rho;
     int err = 0;
 
@@ -788,22 +804,9 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	return 0;
     }
 
-    /* catch any user-defined functions */
-    err = handle_user_defined_function(line, &fncall, prn);
-    if (err) {
-	errmsg(err, prn);
+    if (handle_user_defined_function(line, &err, ploop, prn)) {
 	return err;
-    } else if (fncall) {
-	return 0;
     }
-
-    if (gretl_compiling_function()) {
-	err = gretl_function_append_line(line);
-	if (err) {
-	    errmsg(err, prn);
-	}
-	return err;
-    }  
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */

@@ -32,6 +32,8 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 		      DATAINFO *pdinfo, double ***pZ,
 		      LOOPSET *loop, int *loopstack, int *looprun);
 
+LOOPSET *add_user_func_to_loop (char *line, LOOPSET *loop);
+
 void gretl_loop_destroy (LOOPSET *loop);
 
 int loop_exec (LOOPSET *loop, char *line,
