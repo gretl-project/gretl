@@ -541,7 +541,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
     fprintf(fp, "%g %g\n", x, spike);
     fputs("e\n", fp);
 
-    gretl_push_c_numeric_locale();
+    gretl_pop_c_numeric_locale();
 
     fclose(fp);
 
@@ -1703,7 +1703,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 			 G_CALLBACK(context_help), 
 			 GINT_TO_POINTER(HTEST));
 	gtk_widget_show(tempwid);
-    }	
+    }
 
     gtk_widget_show(dialog->win);
 }

@@ -5977,25 +5977,6 @@ static gnuplot_flags gp_flags (int batch, gretlopt opt)
     return flags;
 }
 
-static int handle_user_defined_function (char *line, int *fncall)
-{
-    int ufunc = gretl_is_user_function(line);
-    int err = 0;
-
-    /* allow for nested function calls */
-    if (ufunc && gretl_compiling_function()) {
-	return 0;
-    }
-
-    /* an actual function call */
-    else if (ufunc) {
-	err = gretl_function_start_exec(line, &Z, datainfo);
-	*fncall = 1;
-    } 
-
-    return err;
-}
-
 static void do_autofit_plot (PRN *prn)
 {
     int lines[1];
@@ -6022,6 +6003,47 @@ static void do_autofit_plot (PRN *prn)
     }
 }
 
+static int 
+handle_user_defined_function (char *line, int *err, LOOPSET **ploop,
+			      int loopstack)
+{
+    int ufunc = gretl_is_user_function(line);
+    int fcomp = gretl_compiling_function();
+    int done = 0;
+
+    if (fcomp) {
+	/* compiling function: add a line */
+	*err = gretl_function_append_line(line);
+	done = 1;
+    } else if (ufunc) {
+	/* got an actual function call? */
+	if (loopstack) {
+#if 1
+	    gretl_errmsg_clear();
+	    gretl_errmsg_set("Sorry, user functions cannot yet be used "
+			     "inside loops");
+	    *err = 1;
+#else
+	    /* later? defer evaluation, just add to loop */
+	    echo_function_call(line, CMD_ECHO_TO_STDOUT | CMD_STACKING, prn);
+	    *ploop = add_user_func_to_loop(line, *ploop);
+	    if (*ploop == NULL) {
+		loopstack = 0;
+		set_errfatal(ERRFATAL_FORCE);
+		print_gretl_errmsg(prn);
+		*err = 1;
+	    } 
+#endif
+	} else {
+	    /* start exec'ing the function now */
+	    *err = gretl_function_start_exec(line, &Z, datainfo);
+	}
+	done = 1;
+    } 
+
+    return done;
+}
+
 int gui_exec_line (char *line, 
 		   LOOPSET **plp, int *plstack, int *plrun, 
 		   PRN *prn, int exec_code, 
@@ -6029,7 +6051,7 @@ int gui_exec_line (char *line,
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
     int dbdata = 0, alt_model = 0;
-    int renumber, fncall = 0;
+    int renumber;
     int script_code = exec_code;
     int loopstack = *plstack, looprun = *plrun;
     int rebuild = (exec_code == REBUILD_EXEC);
@@ -6053,20 +6075,12 @@ int gui_exec_line (char *line,
 	return 0;
     }
 
-    /* catch any user-defined functions */
-    err = handle_user_defined_function(line, &fncall);
-    if (err) {
-	errmsg(err, prn);
+    if (handle_user_defined_function(line, &err, plp, loopstack)) {
+	if (err) {
+	    errmsg(err, prn);
+	}
 	return err;
-    } else if (fncall) {
-	return 0;
-    } 
-
-    if (gretl_compiling_function()) {
-	err = gretl_function_append_line(line);
-	if (err) errmsg(err, prn);
-	return err;
-    }  	 
+    }
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */

@@ -358,8 +358,11 @@ static void console_exec (void)
         /* put results into console window */
 #ifndef OLD_GTK
 	if (!g_utf8_validate(cbuf, -1, NULL)) {
-	    fprintf(stderr, "text did not validate as utf8:\n'%s'\n", 
-		    cbuf);
+	    gchar *trbuf = my_locale_to_utf8(cbuf);
+
+	    fprintf(stderr, "console text did not validate as utf8\n");
+	    gtk_text_buffer_insert(buf, &start, trbuf, strlen(trbuf));
+	    g_free(trbuf);
 	} else {
 	    gtk_text_buffer_insert(buf, &start, cbuf, strlen(cbuf));
 	}

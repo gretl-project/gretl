@@ -763,7 +763,13 @@ handle_user_defined_function (char *line, int *err, LOOPSET **ploop, PRN *prn)
     } else if (ufunc) {
 	/* got an actual function call? */
 	if (loopstack) {
-	    /* defer evaluation, just add to loop */
+#if 1
+	    gretl_errmsg_clear();
+	    gretl_errmsg_set("Sorry, user functions cannot yet be used "
+			     "inside loops");
+	    *err = 1;
+#else
+	    /* later? defer evaluation, just add to loop */
 	    echo_function_call(line, CMD_ECHO_TO_STDOUT | CMD_STACKING, prn);
 	    *ploop = add_user_func_to_loop(line, *ploop);
 	    if (*ploop == NULL) {
@@ -772,6 +778,7 @@ handle_user_defined_function (char *line, int *err, LOOPSET **ploop, PRN *prn)
 		print_gretl_errmsg(prn);
 		*err = 1;
 	    } 
+#endif
 	} else {
 	    /* start exec'ing the function now */
 	    echo_function_call(line, CMD_ECHO_TO_STDOUT, prn);

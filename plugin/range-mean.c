@@ -67,12 +67,13 @@ do_range_mean_plot (int n, const double **Z, double a, double b,
     fprintf(fp, "set xlabel '%s'\nset ylabel '%s'\n",
 	    I_("mean"), I_("range"));
     fputs("plot \\\n", fp);
+
+    gretl_push_c_numeric_locale();
+
     if (fitline) {
 	fprintf(fp, "%g+%g*x notitle w lines lt 2 ,\\\n", a, b);
     }
     fputs("'-' using 1:2 w points lt 1\n", fp);
-
-    gretl_push_c_numeric_locale();
 
     for (t=0; t<n; t++) {
 	fprintf(fp, "%g %g\n", Z[2][t], Z[1][t]);
