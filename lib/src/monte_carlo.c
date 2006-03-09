@@ -34,7 +34,9 @@
 
 #define LOOP_DEBUG 0
 
-#undef ENABLE_GMP
+#if LOOP_DEBUG
+# undef ENABLE_GMP
+#endif
 
 #if defined(ENABLE_GMP)
 # include <gmp.h>
