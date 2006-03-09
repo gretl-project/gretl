@@ -296,7 +296,11 @@ varlist_remove_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter)
 	    fprintf(stderr, "row %d: checking against %d\n", i, tv);
 #endif
 	    if (tv == v) {
+#if (GTK_MINOR_VERSION >= 2) 
 		ok = gtk_list_store_remove(GTK_LIST_STORE(mod), iter);
+#else
+		gtk_list_store_remove(GTK_LIST_STORE(mod), iter);
+#endif
 #if VLDEBUG
 		fprintf(stderr, "removed at row %d, now ok = %d\n", i, ok);
 #endif

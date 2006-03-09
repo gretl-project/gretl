@@ -32,7 +32,7 @@ static int all_done;
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax,
-				  GtkObject **padj);
+				  gpointer p);
 static void set_radio_opt (GtkWidget *w, int *opt);
 
 void menu_exit_check (GtkWidget *w, gpointer data)
@@ -1744,7 +1744,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       tmp, TRUE, TRUE, 0);
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = option_spinbox(p, _(pre_txt), pmin, pmax, (GtkObject **) &rset->p);
+    tmp = option_spinbox(p, _(pre_txt), pmin, pmax, &rset->p);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 		       hbox, TRUE, TRUE, 5);
@@ -2573,7 +2573,7 @@ static void option_spin_set (GtkWidget *w, int *ivar)
 
 static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 				  int spinmin, int spinmax,
-				  GtkObject **padj)
+				  gpointer p)
 {
     GtkWidget *hbox;
     GtkWidget *label;
@@ -2598,8 +2598,10 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 		       GTK_SIGNAL_FUNC(option_spin_set), spinvar);
 #endif
 
-    if (padj != NULL) {
-	*padj = adj;
+    if (p != NULL) {
+	GtkObject **pobj = (GtkObject **) p;
+
+	*pobj = adj;
     }
 
     return hbox;
