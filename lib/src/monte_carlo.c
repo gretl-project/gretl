@@ -34,6 +34,8 @@
 
 #define LOOP_DEBUG 0
 
+#undef ENABLE_GMP
+
 #if defined(ENABLE_GMP)
 # include <gmp.h>
 typedef mpf_t bigval;
@@ -130,8 +132,6 @@ struct LOOPSET_ {
     int nprn;
     int nstore;
 
-    int next_model;
-    int next_print;
     char **lines;
     int *ci;
     char **eachstrs;
@@ -1297,9 +1297,6 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->nprn = 0;
     loop->nstore = 0;
 
-    loop->next_model = 0;
-    loop->next_print = 0;
-
     loop->lines = NULL;
     loop->ci = NULL;
 
@@ -1419,12 +1416,23 @@ void gretl_loop_destroy (LOOPSET *loop)
 static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
 			    int id)
 {
-    int i, nc = pmod->ncoeff;
+    int i, nc;
+
+    fprintf(stderr, "init: copying model at %p\n", (void *) pmod);
+    fflush(stderr);
+
+    nc = pmod->ncoeff;
+
+    fprintf(stderr, "model->ncoeff = %d\n", nc);
+    fflush(stderr);
 
     lmod->model0 = gretl_model_copy(pmod);
     if (lmod->model0 == NULL) {
 	return E_ALLOC;
     }
+
+    fprintf(stderr, "copied to model0\n");
+    fflush(stderr);
 
     lmod->sum_coeff = malloc(nc * sizeof *lmod->sum_coeff);
     if (lmod->sum_coeff == NULL) return E_ALLOC;
@@ -1451,6 +1459,9 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
     }
 
     lmod->ID = id;
+
+    fprintf(stderr, "copied, returning 0\n");
+    fflush(stderr);
 
     return 0;
 
@@ -1628,6 +1639,12 @@ static int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
 
     lmod = &loop->lmodels[i];
 
+#if LOOP_DEBUG
+    fprintf(stderr, "update_loop_model: cmdnum=%d, i=%d\n",
+	    cmdnum, i);
+    fprintf(stderr, "pmod = %p, lmod = %p\n", (void *) pmod, (void *) lmod);
+#endif
+
     for (j=0; j<pmod->ncoeff; j++) {
 #ifdef ENABLE_GMP
 	mpf_set_d(m, pmod->coeff[j]);
@@ -1649,6 +1666,11 @@ static int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
 
 #ifdef ENABLE_GMP
     mpf_clear(m);
+#endif
+
+#if LOOP_DEBUG
+    fprintf(stderr, "update_loop_model: returning 0\n");
+    fflush(stderr);
 #endif
 
     return 0;
@@ -1739,11 +1761,14 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 				PRN *prn)
 {
     char linecpy[MAXLINE];
-    int i;
+    int i, j, k;
 
     if (loop->type != COUNT_LOOP && !(loop_is_quiet(loop))) {
 	pprintf(prn, _("\nNumber of iterations: %d\n\n"), loop->iter);
     }
+
+    j = 0;
+    k = 0;
 
     for (i=0; i<loop->ncmds; i++) {
 #if LOOP_DEBUG
@@ -1758,25 +1783,23 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	    
 	    if (opt & OPT_P) {
 		/* deferred printing of model was requested */
-		MODEL *pmod = loop->models[loop->next_model];
+		MODEL *pmod = loop->models[j++];
 
 		set_model_id(pmod);
 		printmodel(pmod, pdinfo, opt, prn);
-		loop->next_model += 1;
 	    }	    
 	}
 
 	if (loop_is_progressive(loop)) {
+	    /* FIXME scope here */
 	    if (loop->ci[i] == OLS || loop->ci[i] == LAD ||
 		loop->ci[i] == HSK || loop->ci[i] == HCCM || 
 		loop->ci[i] == WLS) {
-		print_loop_model(&loop->lmodels[loop->next_model], 
+		print_loop_model(&loop->lmodels[j++], 
 				 loop->itermax, pdinfo, prn);
-		loop->next_model += 1;
 	    } else if (loop->ci[i] == PRINT) {
-		print_loop_prn(&loop->prns[loop->next_print], 
+		print_loop_prn(&loop->prns[k++], 
 			       loop->itermax, pdinfo, prn);
-		loop->next_print += 1;
 	    } else if (loop->ci[i] == STORE) {
 		print_loop_store(loop, prn);
 	    }
@@ -2269,7 +2292,7 @@ static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
 	}
     } else {
 	for (i=0; i<loop->nmod; i++) {
-	    if ((loop->models[i])->ID == cmdnum) {
+	    if (loop->models[i]->ID == cmdnum) {
 		return i;
 	    }
 	}
@@ -2453,6 +2476,9 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 	set_active_loop(loop);
     }
 
+    /* FIXME: for progressive loops, need to initialize any loop models
+       here? */
+
     return err;
 }
 
@@ -2499,15 +2525,18 @@ make_dollar_substitutions (char *str, const LOOPSET *loop,
     return err;
 }
 
+#if 0 /* not ready */
 static int next_command (char *targ, LOOPSET *loop, double ***pZ,
 			 DATAINFO **ppdinfo, int *err, int *j)
 {
     int ret = 1;
 
-    /* the following needs more thought: we might currently be working
+    /* The following needs more thought: we might currently be working
        on a loop _inside_ a function, not a function inside a loop.
+       Plus the "j" stuff is out of whack in relation to other uses
+       of "j" within the loop.
     */
-    if (0 && gretl_executing_function()) {
+    if (gretl_executing_function()) {
 	char cmdword[9] = {0};
 
 	gretl_function_get_line(targ, MAXLINE, pZ, ppdinfo, err);
@@ -2526,6 +2555,7 @@ static int next_command (char *targ, LOOPSET *loop, double ***pZ,
 
     return ret;
 }
+#endif
 
 /* Below, in loop_exec, as of October 29, 2005, the handling of the
    multiple models is probably not right yet -- needs more work in
@@ -2579,9 +2609,14 @@ int loop_exec (LOOPSET *loop, char *line,
 	    print_loop_progress(loop, *ppdinfo, prn);
 	}
 
+	/*
 	j = 0;
-	while (!err && next_command(linecpy, loop, pZ, ppdinfo, &err, &j)) {
+	while (!err && next_command(linecpy, loop, pZ, ppdinfo, &err, &j))
+	*/
 
+	for (j=0; j<loop->ncmds && !err; j++) {
+
+	    strcpy(linecpy, loop->lines[j]);
 #if LOOP_DEBUG
 	    fprintf(stderr, " j=%d, linecpy='%s'\n", j, linecpy);
 #endif
@@ -2597,7 +2632,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    if (gretl_is_user_function(linecpy)) {
+	    if (0 && gretl_is_user_function(linecpy)) {
 		err = gretl_function_start_exec(linecpy, pZ, *ppdinfo);
 		continue;
 	    } else {
@@ -2722,11 +2757,13 @@ int loop_exec (LOOPSET *loop, char *line,
 		} 
 
 		if (loop_is_progressive(loop)) {
-		    if (loop->iter == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
+		    if (loop->iter == 0) {
+			if (loop_model_init(&loop->lmodels[loop->nmod - 1], 
 							   models[0], j)) { 
-			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
-			err = 1;
-			break;
+			    gretl_errmsg_set(_("Failed to initialize model for loop\n"));
+			    err = 1;
+			    break;
+			}
 		    } else if (update_loop_model(loop, j, models[0])) {
 			gretl_errmsg_set(_("Failed to add results to loop model\n"));
 			err = 1;
