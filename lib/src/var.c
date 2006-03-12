@@ -1423,13 +1423,13 @@ static void gretl_VAR_print_lagsel (gretl_matrix *lltab,
 	  "BIC = Schwartz Bayesian criterion and HQC = Hannan-Quinn criterion."));
     pputs(prn, "\n\n");
 
-    pputs(prn, _("lags      loglik    p(LR)       AIC          BIC          HQC"));
+    pputs(prn, _("lags        loglik    p(LR)       AIC          BIC          HQC"));
     pputs(prn, "\n\n");
 
     for (i=0; i<maxlag; i++) {
 	pprintf(prn, "%4d", i + 1);
 	x = gretl_matrix_get(lltab, i, 0);
-	pprintf(prn, "%12.6f", x);
+	pprintf(prn, "%14.5f", x);
 	if (i > 0) {
 	    x = gretl_matrix_get(lltab, i, 1);
 	    pprintf(prn, "%9.5f", x);

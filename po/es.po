@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-03-07 08:37-0500\n"
-"PO-Revision-Date: 2006-03-08 10:19+0100\n"
+"PO-Revision-Date: 2006-03-10 13:43+0100\n"
 "Last-Translator: Ignacio Díaz-Emparanza <ignacio.diaz-emparanza@ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1975,7 +1975,7 @@ msgstr "residuos del modelo %d"
 #: lib/src/genrfuncs.c:1178
 #, c-format
 msgid "fitted value from model %d"
-msgstr "valores ajustados mediante el modelo %d"
+msgstr "valores estimados mediante el modelo %d"
 
 #: lib/src/genrfuncs.c:1185
 #, c-format
@@ -1995,17 +1995,17 @@ msgstr "%s con respecto a %s (con ajuste mínimo-cuadrático)"
 #: lib/src/graphing.c:825
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
-msgstr "Residuos de la regresión (= %s observada - ajustada)"
+msgstr "Residuos de la regresión (= %s observada - estimada)"
 
 #: lib/src/graphing.c:830 lib/src/graphing.c:834
 #, c-format
 msgid "Actual and fitted %s"
-msgstr "%s observada y ajustada"
+msgstr "%s observada y estimada"
 
 #: lib/src/graphing.c:836
 #, c-format
 msgid "Actual and fitted %s versus %s"
-msgstr "%s con respecto a %s, observada y ajustada"
+msgstr "%s con respecto a %s, observada y estimada"
 
 #: lib/src/graphing.c:1509 lib/src/graphing.c:2627 lib/src/pvalues.c:386
 #: lib/src/pvalues.c:400 gui2/gpt_dialog.c:559
@@ -2025,7 +2025,7 @@ msgstr "actual"
 #: lib/src/printout.c:796 gui2/guiprint_common.c:608
 #: gui2/guiprint_common.c:664
 msgid "fitted"
-msgstr "ajustado"
+msgstr "estimada"
 
 #: lib/src/graphing.c:1975
 msgid "Test statistic for normality"
@@ -3109,7 +3109,7 @@ msgid ""
 msgstr ""
 "El modelo no tiene término constante.\n"
 "El estadístico F se calcula como en la sección 4.4 del libro 'Introductory Econometrics' de Ramanathan.\n"
-"El R-cuadrado es el cuadrado de la correlación entre los valores observado y ajustado\n"
+"El R-cuadrado es el cuadrado de la correlación entre los valores observado y estimado\n"
 "de la variable dependiente.\n"
 "\n"
 
@@ -3607,7 +3607,7 @@ msgid ""
 "fitted values of the dependent variable"
 msgstr ""
 "El R-cuadrado se calcula como el cuadrado de la correlación entre los valores\n"
-"observado y ajustado de la variable dependiente."
+"observado y estimado de la variable dependiente."
 
 #: lib/src/modelprint.c:1322 lib/src/modelprint.c:1325
 #: lib/src/modelprint.c:1328
@@ -4687,12 +4687,12 @@ msgstr "Residuo MC3E, ecuación %d"
 #: lib/src/system.c:1146
 #, c-format
 msgid "SUR fitted value, equation %d"
-msgstr "Valores ajustados en el modelo SUR, ecuación %d"
+msgstr "Valores estimados en el modelo SUR, ecuación %d"
 
 #: lib/src/system.c:1148
 #, c-format
 msgid "3SLS fitted value, equation %d"
-msgstr "Valor ajustado mediante MC3E, ecuación %d"
+msgstr "Valor estimado mediante MC3E, ecuación %d"
 
 #: lib/src/system.c:1190
 #, c-format
@@ -5140,7 +5140,7 @@ msgstr "Modelo impreso en %s\n"
 
 #: cli/gretlcli.c:1174 gui2/library.c:6468
 msgid "Retrieved fitted values as \"autofit\"\n"
-msgstr "Se han recuperado los valores ajustados como \"autofit\"\n"
+msgstr "Se han recuperado los valores estimados como \"autofit\"\n"
 
 #: cli/gretlcli.c:1207
 msgid ""
@@ -7728,11 +7728,11 @@ msgstr "Vd está añadiendo una serie %s a un conjunto de datos %s"
 
 #: gui2/dialogs.c:2153
 msgid "a quarterly"
-msgstr "una trimestral"
+msgstr "trimestral"
 
 #: gui2/dialogs.c:2153
 msgid "an annual"
-msgstr "una anual"
+msgstr "anual"
 
 #: gui2/dialogs.c:2158
 msgid "Compact quarterly data to annual"
@@ -8835,7 +8835,7 @@ msgstr "/Gráficos/Gráfico de residuos"
 
 #: gui2/gui_utils.c:262 gui2/gui_utils.c:317 gui2/gui_utils.c:3175
 msgid "/Graphs/fitted, actual plot"
-msgstr "/Gráficos/gráfico de ajustada-observada"
+msgstr "/Gráficos/gráfico de variable estimada y observada"
 
 #: gui2/gui_utils.c:263 gui2/gui_utils.c:318 gui2/gui_utils.c:3728
 #: gui2/gui_utils.c:3979
@@ -8844,7 +8844,7 @@ msgstr "/Datos del _Modelo"
 
 #: gui2/gui_utils.c:264 gui2/gui_utils.c:319
 msgid "/Model data/Display actual, fitted, residual"
-msgstr "/Datos del modelo/Mostrar observada, ajustada, residuos"
+msgstr "/Datos del modelo/Mostrar variable observada, estimada, residuos"
 
 #: gui2/gui_utils.c:266 gui2/gui_utils.c:321
 msgid "/Model data/Forecasts..."
@@ -9123,7 +9123,7 @@ msgstr "Fallo al repasar el estado de \"%s\"\n"
 
 #: gui2/gui_utils.c:3007 gui2/gui_utils.c:3057
 msgid "/Model data/Add to data set/fitted values"
-msgstr "/Datos del modelo/Añadir al conjunto de datos/valores ajustados"
+msgstr "/Datos del modelo/Añadir al conjunto de datos/valores estimados"
 
 #: gui2/gui_utils.c:3009 gui2/gui_utils.c:3059
 msgid "/Model data/Add to data set/residuals"
@@ -9632,7 +9632,7 @@ msgstr ""
 
 #: gui2/library.c:1353 gui2/library.c:4501
 msgid "Failed to generate fitted values"
-msgstr "Fallo al generar los valores ajustados"
+msgstr "Fallo al generar los valores estimados"
 
 #: gui2/library.c:1459 gui2/library.c:2835 gui2/library.c:2968
 msgid "Error saving model information"
@@ -11567,7 +11567,7 @@ msgstr "ancho de banda = %g"
 #: plugin/kernel.c:135
 #, c-format
 msgid "Estimated density of %s"
-msgstr "Densiadad estimada de %s"
+msgstr "Densidad estimada de %s"
 
 #: plugin/kernel.c:238
 msgid "Insufficient observations for density estimation"

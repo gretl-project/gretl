@@ -921,6 +921,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case DATA:
     case DIFF: 
     case ESTIMATE:
+    case FNCALL:
     case FUNC:
     case FUNCERR:
     case GRAPH:

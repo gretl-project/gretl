@@ -1076,11 +1076,14 @@ void gretl_saved_objects_cleanup (void)
     n_vars = 0;
 
     if (last_model.ptr != NULL) {
+	if (last_model.type != GRETL_OBJ_EQN || !
+	    model_is_protected(last_model.ptr)) {
 #if ODEBUG
-	fprintf(stderr, "gretl_saved_objects_cleanup:\n"
-		" calling gretl_object_destroy on last_model\n");
+	    fprintf(stderr, "gretl_saved_objects_cleanup:\n"
+		    " calling gretl_object_destroy on last_model\n");
 #endif
-	gretl_object_destroy(last_model.ptr, last_model.type);
+	    gretl_object_destroy(last_model.ptr, last_model.type);
+	}
 	last_model.ptr = NULL;
 	last_model.type = 0;
     }

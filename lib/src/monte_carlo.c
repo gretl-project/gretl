@@ -82,6 +82,7 @@ typedef struct {
 
 typedef struct {
     int ID;                 /* ID number for model */
+    int nc;                 /* number of coefficients */
     MODEL *model0;          /* copy of initial model */
     bigval *sum_coeff;      /* sums of coefficient estimates */
     bigval *ssq_coeff;      /* sums of squares of coeff estimates */
@@ -130,8 +131,9 @@ struct LOOPSET_ {
 
     /* numbers of various subsidiary objects */
     int ncmds;
-    int nmod;
-    int nprn;
+    int n_models;
+    int n_loop_models;
+    int n_prints;
     int nstore;
 
     char **lines;
@@ -167,13 +169,48 @@ static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *lmod,
 static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn);
 static int print_loop_store (LOOPSET *loop, PRN *prn);
-static int get_prnnum_by_id (LOOPSET *loop, int id);
-static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum);
 static void set_active_loop (LOOPSET *loop);
 static int loop_scalar_index (int c, int opt, int put);
 
 #define LOOP_BLOCK 32
 #define N_LOOP_INDICES 5
+
+#if 0 /* not ready yet */
+/* record of state, and communication of state with outside world */
+
+static int loop_compiling;
+static int loop_executing;
+
+int gretl_compiling_loop (void)
+{
+    return loop_compiling;
+}
+
+static void set_loop_compiling_on (void)
+{
+    loop_compiling = 1;
+}
+
+static void set_loop_compiling_off (void)
+{
+    loop_compiling = 0;
+}
+
+int gretl_executing_loop (void)
+{
+    return loop_executing;
+}
+
+static void set_loop_executing_on (void)
+{
+    loop_executing++;
+}
+
+static void set_loop_executing_off (void)
+{
+    loop_executing--;
+}
+#endif /* stuff that's not ready */
 
 static double 
 loop_controller_get_value (controller *clr, const double **Z)
@@ -238,6 +275,11 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
     }
 }
 
+#define OK_LOOP_MODEL(c) (c == ARMA || c == CORC || c == GARCH || \
+                          c == HCCM || c == HILU || c == HSK || \
+                          c == LAD || c == OLS || c == TSLS || \
+                          c == PWE || c == WLS)
+
 /**
  * ok_in_loop:
  * @ci: command index.
@@ -253,7 +295,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 
     if (ci == GENR ||
 	ci == LOOP ||
-	ci == FUNC || 
+	ci == FNCALL || 
 	ci == MATRIX ||
 	ci == STORE ||
 	ci == PRINT ||
@@ -297,17 +339,7 @@ int ok_in_loop (int ci, const LOOPSET *loop)
     }
 
     /* modeling commands */
-    else if (ci == ARMA ||
-	     ci == CORC ||
-	     ci == GARCH ||
-	     ci == HCCM ||
-	     ci == HILU ||
-	     ci == HSK ||
-	     ci == LAD ||
-	     ci == OLS ||
-	     ci == TSLS ||
-	     ci == PWE ||
-	     ci == WLS) {
+    else if (OK_LOOP_MODEL(ci)) {
 	return 1;
     }
 
@@ -1295,8 +1327,9 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->ineq = 0;
 
     loop->ncmds = 0;
-    loop->nmod = 0;
-    loop->nprn = 0;
+    loop->n_models = 0;
+    loop->n_loop_models = 0;
+    loop->n_prints = 0;
     loop->nstore = 0;
 
     loop->lines = NULL;
@@ -1366,14 +1399,17 @@ void gretl_loop_destroy (LOOPSET *loop)
     } 
 
     if (loop->lmodels != NULL) {
-	for (i=0; i<loop->nmod; i++) {
+	for (i=0; i<loop->n_loop_models; i++) {
+#if LOOP_DEBUG
+	    fprintf(stderr, "freeing loop_lmodels[%d]\n", i);
+#endif
 	    free_loop_model(&loop->lmodels[i]);
 	}
 	free(loop->lmodels);
     }
 
     if (loop->prns != NULL) {
-	for (i=0; i<loop->nprn; i++) { 
+	for (i=0; i<loop->n_prints; i++) { 
 	    free_loop_print(&loop->prns[i]);
 	}
 	free(loop->prns);
@@ -1404,6 +1440,23 @@ void gretl_loop_destroy (LOOPSET *loop)
     free(loop);
 }
 
+static void loop_model_zero (LOOP_MODEL *lmod)
+{
+    int i;
+
+    for (i=0; i<lmod->nc; i++) {
+#ifdef ENABLE_GMP
+	mpf_init(lmod->sum_coeff[i]);
+	mpf_init(lmod->ssq_coeff[i]);
+	mpf_init(lmod->sum_sderr[i]);
+	mpf_init(lmod->ssq_sderr[i]);
+#else
+	lmod->sum_coeff[i] = lmod->ssq_coeff[i] = 0.0;
+	lmod->sum_sderr[i] = lmod->ssq_sderr[i] = 0.0;
+#endif
+    }
+}
+
 /**
  * loop_model_init:
  * @lmod: pointer to struct to initialize.
@@ -1415,26 +1468,21 @@ void gretl_loop_destroy (LOOPSET *loop)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
-			    int id)
+static int 
+loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod, int id)
 {
-    int i, nc;
+    int nc;
 
+#if LOOP_DEBUG
     fprintf(stderr, "init: copying model at %p\n", (void *) pmod);
-    fflush(stderr);
+#endif
 
-    nc = pmod->ncoeff;
-
-    fprintf(stderr, "model->ncoeff = %d\n", nc);
-    fflush(stderr);
+    lmod->nc = nc = pmod->ncoeff;
 
     lmod->model0 = gretl_model_copy(pmod);
     if (lmod->model0 == NULL) {
 	return E_ALLOC;
     }
-
-    fprintf(stderr, "copied to model0\n");
-    fflush(stderr);
 
     lmod->sum_coeff = malloc(nc * sizeof *lmod->sum_coeff);
     if (lmod->sum_coeff == NULL) return E_ALLOC;
@@ -1448,22 +1496,14 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
     lmod->ssq_sderr = malloc(nc * sizeof *lmod->ssq_sderr);
     if (lmod->ssq_sderr == NULL) goto cleanup;
 
-    for (i=0; i<nc; i++) {
-#ifdef ENABLE_GMP
-	mpf_init(lmod->sum_coeff[i]);
-	mpf_init(lmod->ssq_coeff[i]);
-	mpf_init(lmod->sum_sderr[i]);
-	mpf_init(lmod->ssq_sderr[i]);
-#else
-	lmod->sum_coeff[i] = lmod->ssq_coeff[i] = 0.0;
-	lmod->sum_sderr[i] = lmod->ssq_sderr[i] = 0.0;
-#endif
-    }
+    loop_model_zero(lmod);
 
     lmod->ID = id;
 
-    fprintf(stderr, "copied, returning 0\n");
-    fflush(stderr);
+#if LOOP_DEBUG
+    fprintf(stderr, " model copied to %p, returning 0\n", 
+	    (void *) lmod->model0);
+#endif
 
     return 0;
 
@@ -1473,6 +1513,20 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
     free(lmod->ssq_sderr);
 
     return E_ALLOC;
+}
+
+static void loop_print_zero (LOOP_PRINT *lprn)
+{
+    int i;
+
+    for (i=0; i<lprn->list[0]; i++) { 
+#ifdef ENABLE_GMP
+	mpf_init(lprn->sum[i]);
+	mpf_init(lprn->ssq[i]);
+#else
+	lprn->sum[i] = lprn->ssq[i] = 0.0;
+#endif
+    }
 }
 
 /**
@@ -1488,8 +1542,6 @@ static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
 
 static int loop_print_init (LOOP_PRINT *lprn, const int *list, int id)
 {
-    int i;
-
     lprn->list = gretl_list_copy(list);
     if (lprn->list == NULL) return 1;
 
@@ -1499,14 +1551,7 @@ static int loop_print_init (LOOP_PRINT *lprn, const int *list, int id)
     lprn->ssq = malloc(list[0] * sizeof *lprn->ssq);
     if (lprn->ssq == NULL) goto cleanup;
 
-    for (i=0; i<list[0]; i++) { 
-#ifdef ENABLE_GMP
-	mpf_init(lprn->sum[i]);
-	mpf_init(lprn->ssq[i]);
-#else
-	lprn->sum[i] = lprn->ssq[i] = 0.0;
-#endif
-    }
+    loop_print_zero(lprn);
 
     lprn->ID = id;
 
@@ -1576,27 +1621,27 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
     return 1;
 }
 
-static int add_loop_model_record (LOOPSET *loop, int cmdnum)
+static int add_model_record (LOOPSET *loop, int cmdnum)
 {
-    MODEL **lmods;
+    MODEL **models;
+    int nm = loop->n_models;
     int err = 0;
-    int nm = loop->nmod + 1;
 
-    lmods = realloc(loop->models, nm * sizeof *lmods);
-    if (lmods == NULL) {
+    models = realloc(loop->models, (nm + 1) * sizeof *models);
+    if (models == NULL) {
 	err = 1;
     } else {
-	loop->models = lmods;
-	loop->models[loop->nmod] = gretl_model_new();
-	if (loop->models[loop->nmod] == NULL) {
+	loop->models = models;
+	loop->models[nm] = gretl_model_new();
+	if (loop->models[nm] == NULL) {
 	    err = 1;
 	} else {
-	    (loop->models[loop->nmod])->ID = cmdnum;
+	    loop->models[nm]->ID = cmdnum;
 	}
     }
 
     if (!err) {
-	loop->nmod += 1;
+	loop->n_models += 1;
     }
 
     return err;
@@ -1604,14 +1649,19 @@ static int add_loop_model_record (LOOPSET *loop, int cmdnum)
 
 static int add_loop_model (LOOPSET *loop)
 {
-    int nm = loop->nmod + 1;
+    int nlm = loop->n_loop_models;
     int err = 0;
 
-    loop->lmodels = realloc(loop->lmodels, nm * sizeof *loop->lmodels);
+#if LOOP_DEBUG
+    fprintf(stderr, "add_loop_model: loop->n_loop_models = %d\n",
+	    loop->n_loop_models);
+#endif
+
+    loop->lmodels = realloc(loop->lmodels, (nlm + 1) * sizeof *loop->lmodels);
     if (loop->lmodels == NULL) {
 	err = 1;
     } else {
-	loop->nmod += 1;
+	loop->n_loop_models += 1;
     }
 
     return err;
@@ -1620,7 +1670,7 @@ static int add_loop_model (LOOPSET *loop)
 /**
  * update_loop_model:
  * @loop: pointer to loop struct.
- * @cmdnum: sequential index number of the command within @loop.
+ * @i: index number of the #LOOP_MODEL within @loop.
  * @pmod: contains estimates from the current iteration.
  *
  * Update a #LOOP_MODEL belonging to @loop, based on the results
@@ -1629,10 +1679,10 @@ static int add_loop_model (LOOPSET *loop)
  * Returns: 0 on successful completion.
  */
 
-static int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
+static int update_loop_model (LOOPSET *loop, int i, MODEL *pmod)
 {
-    int j, i = get_modnum_by_cmdnum(loop, cmdnum);
     LOOP_MODEL *lmod;
+    int j;
 #ifdef ENABLE_GMP
     mpf_t m;
 
@@ -1642,8 +1692,7 @@ static int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
     lmod = &loop->lmodels[i];
 
 #if LOOP_DEBUG
-    fprintf(stderr, "update_loop_model: cmdnum=%d, i=%d\n",
-	    cmdnum, i);
+    fprintf(stderr, "update_loop_model: i=%d\n", i);
     fprintf(stderr, "pmod = %p, lmod = %p\n", (void *) pmod, (void *) lmod);
 #endif
 
@@ -1681,23 +1730,23 @@ static int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
 static int add_loop_print (LOOPSET *loop, const int *list, int cmdnum)
 {
     LOOP_PRINT *prns;
-    int np = loop->nprn + 1;
+    int np = loop->n_prints;
     int err = 0;
 
-    prns = realloc(loop->prns, np * sizeof *prns);
+    prns = realloc(loop->prns, (np + 1) * sizeof *prns);
     if (prns == NULL) {
 	return 1;
     }
 
     loop->prns = prns;
 
-    if (loop_print_init(&loop->prns[loop->nprn], list, cmdnum)) { 
+    if (loop_print_init(&loop->prns[np], list, cmdnum)) { 
 	strcpy(gretl_errmsg, _("Failed to initalize print struct for loop\n"));
 	err = 1;
     }
 
     if (!err) {
-	loop->nprn += 1;
+	loop->n_prints += 1;
     }
 
     return err;
@@ -1717,12 +1766,12 @@ static int add_loop_print (LOOPSET *loop, const int *list, int cmdnum)
  * Returns: 0 on successful completion.
  */
 
-static int update_loop_print (LOOPSET *loop, int cmdnum, 
+static int update_loop_print (LOOPSET *loop, int i, 
 			      const int *list, double ***pZ, 
 			      const DATAINFO *pdinfo)
 {
-    int j, t, i = get_prnnum_by_id(loop, cmdnum);
     LOOP_PRINT *lprn = &loop->prns[i];
+    int j, t;
 #ifdef ENABLE_GMP
     mpf_t m;
 
@@ -1793,15 +1842,16 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	}
 
 	if (loop_is_progressive(loop)) {
-	    /* FIXME scope here */
-	    if (loop->ci[i] == OLS || loop->ci[i] == LAD ||
-		loop->ci[i] == HSK || loop->ci[i] == HCCM || 
-		loop->ci[i] == WLS) {
-		print_loop_model(&loop->lmodels[j++], 
+	    if (OK_LOOP_MODEL(loop->ci[i])) {
+		print_loop_model(&loop->lmodels[j], 
 				 loop->itermax, pdinfo, prn);
+		loop_model_zero(&loop->lmodels[j]);
+		j++;
 	    } else if (loop->ci[i] == PRINT) {
-		print_loop_prn(&loop->prns[k++], 
+		print_loop_prn(&loop->prns[k], 
 			       loop->itermax, pdinfo, prn);
+		loop_print_zero(&loop->prns[k]);
+		k++;
 	    } else if (loop->ci[i] == STORE) {
 		print_loop_store(loop, prn);
 	    }
@@ -1811,6 +1861,11 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 
 static void free_loop_model (LOOP_MODEL *lmod)
 {
+#if LOOP_DEBUG
+    fprintf(stderr, "free_loop_model: lmod at %p, model0 at %p\n",
+	    (void *) lmod, (void *) lmod->model0);
+#endif
+
 #ifdef ENABLE_GMP
     int i;
 
@@ -2014,7 +2069,7 @@ LOOPSET *add_user_func_to_loop (char *line, LOOPSET *loop)
 	top_n_tail(line);
 	strcpy(loop->lines[nc], line);
 
-	loop->ci[nc] = FUNC; /* FIXME? */
+	loop->ci[nc] = FNCALL;
 	loop->ncmds += 1;
 
 #if LOOP_DEBUG
@@ -2262,47 +2317,6 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
     return 0;
 }
 
-static int get_prnnum_by_id (LOOPSET *loop, int id)
-{
-    int i;
-
-    for (i=0; i<loop->nprn; i++) {
-	if (loop->prns[i].ID == id) return i;
-    }
-    return -1;
-}
-
-/**
- * get_modnum_by_cmdnum:
- * @loop: pointer to loop struct.
- * @cmdnum: sequential index of command within @loop.
- *
- * Determine the ID number of a model within a "while" loop construct.
- *
- * Returns: model ID number, or -1 in case of no match.
- */
-
-static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
-{
-    int i;
-
-    if (loop_is_progressive(loop)) {
-	for (i=0; i<loop->nmod; i++) {
-	    if (loop->lmodels[i].ID == cmdnum) {
-		return i;
-	    }
-	}
-    } else {
-	for (i=0; i<loop->nmod; i++) {
-	    if (loop->models[i]->ID == cmdnum) {
-		return i;
-	    }
-	}
-    }
-
-    return -1;
-}
-
 static int 
 substitute_dollar_targ (char *str, const LOOPSET *loop,
 			const double **Z, const DATAINFO *pdinfo)
@@ -2475,11 +2489,20 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 	    loop_scalar_index(loop->ichar, LOOP_SCALAR_PUT, 
 			      (int) loop->init.val);
 	}
+	if (loop_is_progressive(loop)) {
+	    int i;
+
+	    for (i=0; i<loop->n_loop_models; i++) {
+		free_loop_model(&loop->lmodels[i]);
+	    }
+	    loop->n_loop_models = 0;
+	    for (i=0; i<loop->n_prints; i++) { 
+		free_loop_print(&loop->prns[i]);
+	    }
+	    loop->n_prints = 0;
+	}
 	set_active_loop(loop);
     }
-
-    /* FIXME: for progressive loops, need to initialize any loop models
-       here? */
 
     return err;
 }
@@ -2572,8 +2595,7 @@ int loop_exec (LOOPSET *loop, char *line,
     GRETL_VAR *var;
     char errline[MAXLINE];
     char linecpy[MAXLINE];
-    int m = -1;
-    int modnum = 0;
+    int mod_id = 0;
     int err = 0;
 
     if (loop == NULL) {
@@ -2600,6 +2622,9 @@ int loop_exec (LOOPSET *loop, char *line,
     err = top_of_loop(loop, *pZ, *ppdinfo);
 
     while (!err && loop_condition(loop, *pZ, *ppdinfo)) {
+	int modnum = 0;
+	int lmodnum = 0;
+	int printnum = 0;
 	int childnum = 0;
 	int j;
 
@@ -2722,7 +2747,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    if (loop_is_progressive(loop)) {
 			err = add_loop_model(loop);
 		    } else if (cmd.opt & OPT_P) {
-			err = add_loop_model_record(loop, j);
+			err = add_model_record(loop, j);
 		    }
 		    if (err) {
 			break;
@@ -2759,14 +2784,15 @@ int loop_exec (LOOPSET *loop, char *line,
 		} 
 
 		if (loop_is_progressive(loop)) {
+		    int m = lmodnum++;
+
 		    if (loop->iter == 0) {
-			if (loop_model_init(&loop->lmodels[loop->nmod - 1], 
-							   models[0], j)) { 
+			if (loop_model_init(&loop->lmodels[m], models[0], j)) { 
 			    gretl_errmsg_set(_("Failed to initialize model for loop\n"));
 			    err = 1;
 			    break;
 			}
-		    } else if (update_loop_model(loop, j, models[0])) {
+		    } else if (update_loop_model(loop, m, models[0])) {
 			gretl_errmsg_set(_("Failed to add results to loop model\n"));
 			err = 1;
 			break;
@@ -2774,13 +2800,14 @@ int loop_exec (LOOPSET *loop, char *line,
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		} else if (cmd.opt & OPT_P) {
 		    /* deferred printing of model results */
-		    m = get_modnum_by_cmdnum(loop, j);
+		    int m = modnum++;
+
 		    swap_models(models[0], loop->models[m]);
 		    loop->models[m]->ID = j;
 		    set_as_last_model(loop->models[m], GRETL_OBJ_EQN);
 		    model_count_minus();
 		} else {
-		    models[0]->ID = ++modnum;
+		    models[0]->ID = ++mod_id;
 		    printmodel(models[0], *ppdinfo, cmd.opt, prn);
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		}
@@ -2846,12 +2873,14 @@ int loop_exec (LOOPSET *loop, char *line,
 		if (cmd.param[0] != '\0') {
 		    err = simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
 		} else if (loop_is_progressive(loop)) {
+		    int p = printnum++;
+
 		    if (loop->iter == 0) {
 			if ((err = add_loop_print(loop, cmd.list, j))) {
 			    break;
 			}
 		    }
-		    if (update_loop_print(loop, j, cmd.list, pZ, *ppdinfo)) {
+		    if (update_loop_print(loop, p, cmd.list, pZ, *ppdinfo)) {
 			gretl_errmsg_set(_("Failed to add values to print loop\n"));
 			err = 1;
 		    }
@@ -2954,13 +2983,13 @@ int loop_exec (LOOPSET *loop, char *line,
 	print_loop_results(loop, *ppdinfo, prn); 
     }
 
-    if (m >= 0) {
-	/* need to update models[0]? */
+    if (loop->n_models > 0) {
+	/* need to update models[0] */
 	GretlObjType type;
 	void *ptr = get_last_model(&type);
 
 	if (type == GRETL_OBJ_EQN && models[0] != ptr) {
-	    swap_models(models[0], loop->models[m]);
+	    swap_models(models[0], loop->models[loop->n_models - 1]);
 	    set_as_last_model(models[0], GRETL_OBJ_EQN);
 	}
     }

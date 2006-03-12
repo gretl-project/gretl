@@ -657,6 +657,28 @@ int gretl_is_user_function (const char *line)
     return ret;
 }
 
+int gretl_get_user_function (const char *line, char **fnname)
+{
+    int ret = 0;
+
+    if (n_ufuns > 0 && !string_is_blank(line)) {
+	char name[FN_NAMELEN];
+
+#if FN_DEBUG > 1
+	fprintf(stderr, "gretl_is_user_function: testing '%s'\n", line);
+#endif
+	function_name_from_line(line, name);
+	if (get_ufunc_by_name(name) != NULL) {
+	    *fnname = gretl_strdup(name);
+	    if (*fnname != NULL) {
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 static void delete_ufunc_from_list (ufunc *fun)
 {
     if (n_ufuns == 0 || fun == NULL) {

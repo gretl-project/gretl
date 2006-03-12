@@ -24,8 +24,6 @@
 
 typedef struct LOOPSET_ LOOPSET;
 
-/* functions follow */
-
 int ok_in_loop (int ci, const LOOPSET *loop);
 
 LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,

@@ -291,7 +291,6 @@ void clear_data (void)
     free_modelspec(modelspec);
     modelspec = NULL;
 
-    /* FIXME re-running script */
     gretl_saved_objects_cleanup();
 
     reset_model_count();
@@ -6175,6 +6174,7 @@ int gui_exec_line (char *line,
     case DATA:
     case DIFF: 
     case ESTIMATE:
+    case FNCALL:
     case FUNC:
     case FUNCERR:
     case GRAPH: 

@@ -540,6 +540,11 @@ const char *print_flags (gretlopt oflags, int ci)
 	return flagstr;
     }
 
+    if (ci == FNCALL) {
+	/* no options for user-defined functions, yet */
+	return flagstr;
+    }
+
     if (ci == QUIT || ci == GENR) {
 	/* any option flags are "hidden" */
 	return flagstr;

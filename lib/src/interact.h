@@ -50,7 +50,8 @@ typedef enum {
     BASQUE
 } ForcedLangs;
 
-#define HIDDEN_COMMAND(c) (c == FUNCERR || \
+#define HIDDEN_COMMAND(c) (c == FNCALL || \
+                           c == FUNCERR || \
                            c == REMEMBER)
     
 /* functions follow */

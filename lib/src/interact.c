@@ -214,6 +214,7 @@ static int catch_command_alias (char *line, CMD *cmd)
 	               c == FCAST || \
 	               c == FCASTERR || \
 	               c == FIT || \
+                       c == FNCALL || \
                        c == FUNC || \
                        c == FUNCERR || \
 	               c == GENR || \
@@ -1438,8 +1439,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == 0) {
 	cmd->ci = gretl_command_number(cmd->word);
 	if (cmd->ci == 0) {
-	    /* trap bogus commands */
-	    if (!plausible_genr_start(line, cmd, pdinfo)) {
+	    /* call of user-defined function? */
+	    if (gretl_get_user_function(line, &cmd->param)) {
+		cmd->ci = FNCALL;
+	    } else if (!plausible_genr_start(line, cmd, pdinfo)) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 			cmd->word);
@@ -2960,6 +2963,12 @@ int simple_commands (CMD *cmd, const char *line,
 	err = estimate_named_system(line, pZ, pdinfo, cmd->opt, prn);
 	break;
 
+    case FNCALL:
+	err = gretl_function_start_exec(line, pZ, pdinfo);
+	if (err) {
+	    errmsg(err, prn);
+	}	
+
     case FUNC:
 	err = gretl_start_compiling_function(line, prn);
 	if (err) {
@@ -3291,11 +3300,16 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 #if CMD_DEBUG
 	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
 #endif
-	if (cmd->ci == 0 && !plausible_genr_start(line, cmd, pdinfo)) {
-	    cmd->errcode = 1;
-	    sprintf(gretl_errmsg, _("command '%s' not recognized"), 
-		    cmd->word);
-	    return 1;
+	if (cmd->ci == 0) {
+	    if (gretl_is_user_function(line)) {
+		cmd->nolist = 1;
+		cmd->ci = FNCALL;
+	    } else if (!plausible_genr_start(line, cmd, pdinfo)) {
+		cmd->errcode = 1;
+		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
+			cmd->word);
+		return 1;
+	    }
 	}
     }	
 
