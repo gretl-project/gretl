@@ -26,20 +26,16 @@ typedef struct LOOPSET_ LOOPSET;
 
 int gretl_compiling_loop (void);
 
-int gretl_executing_loop (void);
+int gretl_execute_loop (void);
 
 int ok_in_loop (int ci);
 
-LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
-		      DATAINFO *pdinfo, double ***pZ,
-		      LOOPSET *loop);
-
-LOOPSET *add_user_func_to_loop (char *line, LOOPSET *loop);
+int gretl_loop_append_line (char *line, int ci, gretlopt opt,
+			    double ***pZ, DATAINFO *pdinfo);
 
 void gretl_loop_destroy (LOOPSET *loop);
 
-int loop_exec (LOOPSET *loop, char *line,
-	       double ***pZ, DATAINFO **ppdinfo, 
-	       MODEL **models, PRN *prn);
+int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo, 
+		     MODEL **models, PRN *prn);
 
 #endif /* MONTE_CARLO_H */

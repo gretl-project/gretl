@@ -89,7 +89,7 @@ char *line_read;
 gretl_equation_system *sys;
 gretl_restriction_set *rset;
 
-static int exec_line (char *line, LOOPSET **ploop, PRN *prn); 
+static int exec_line (char *line, PRN *prn); 
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
 static int saved_object_action (const char *line, PRN *prn);
@@ -354,7 +354,7 @@ static int get_an_input_line (void)
 #else
 	printf("%s", (compiling)? "> " : "? ");
 	fflush(stdout);
-	file_get_line(); /* "file" = stdin here */
+	file_get_line(); /* note: "file" = stdin here */
 #endif
     }
 
@@ -427,7 +427,6 @@ int main (int argc, char *argv[])
     int cmd_overflow = 0;
     char filearg[MAXLEN];
     char tmp[MAXLINE];
-    LOOPSET *loop = NULL;
     PRN *prn;
     int err = 0;
 
@@ -638,7 +637,7 @@ int main (int argc, char *argv[])
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
 	sprintf(line, "run %s", runfile);
-	exec_line(line, &loop, prn);
+	exec_line(line, prn);
     }
 
     /* should we stop immediately on error, in batch mode? */
@@ -652,12 +651,10 @@ int main (int argc, char *argv[])
 	    gretl_abort(linecopy);
 	}
 
-	if (gretl_executing_loop()) { 
-	    if (loop_exec(loop, line, &Z, &datainfo, models, prn)) {
+	if (gretl_execute_loop()) { 
+	    if (gretl_loop_exec(line, &Z, &datainfo, models, prn)) {
 		return 1;
 	    }
-	    gretl_loop_destroy(loop);
-	    loop = NULL;
 	    set_errfatal(ERRFATAL_AUTO);
 	} else {
 	    err = get_an_input_line();
@@ -674,7 +671,7 @@ int main (int argc, char *argv[])
 	    break;
 	} else {
 	    strcpy(linecopy, line);
-	    err = exec_line(line, &loop, prn);
+	    err = exec_line(line, prn);
 	}
     } /* end of get commands loop */
 
@@ -749,52 +746,24 @@ static int do_autofit_plot (PRN *prn)
 }
 
 static int 
-handle_user_defined_function (char *line, int *err, LOOPSET **ploop, PRN *prn)
+handle_user_defined_function (char *line, int *err, PRN *prn)
 {
-    int ufunc = gretl_is_user_function(line);
-    int fcomp = gretl_compiling_function();
     int done = 0;
 
-    if (fcomp) {
+    if (gretl_compiling_function()) {
 	/* compiling function: add a line */
 	*err = gretl_function_append_line(line);
-	done = 1;
-    } else if (ufunc) {
-	/* got an actual function call? */
-	if (gretl_compiling_loop()) {
-#if 1
-	    gretl_errmsg_clear();
-	    gretl_errmsg_set("Sorry, user functions cannot yet be used "
-			     "inside loops");
-	    *err = 1;
-#else
-	    /* later? defer evaluation, just add to loop */
-	    echo_function_call(line, CMD_ECHO_TO_STDOUT | CMD_STACKING, prn);
-	    *ploop = add_user_func_to_loop(line, *ploop);
-	    if (*ploop == NULL) {
-		set_errfatal(ERRFATAL_FORCE);
-		print_gretl_errmsg(prn);
-		*err = 1;
-	    } 
-#endif
-	} else {
-	    /* start exec'ing the function now */
-	    echo_function_call(line, CMD_ECHO_TO_STDOUT, prn);
-	    *err = gretl_function_start_exec(line, &Z, datainfo);
-	}
+	if (*err) {
+	    errmsg(*err, prn);
+	}    
 	done = 1;
     } 
-
-    if (*err) {
-	errmsg(*err, prn);
-    }    
 
     return done;
 }
 
-static int exec_line (char *line, LOOPSET **ploop, PRN *prn) 
+static int exec_line (char *line, PRN *prn) 
 {
-    LOOPSET *loop = *ploop;
     GRETL_VAR *var = NULL;
     int chk, nulldata_n, renumber;
     int old_runit = runit;
@@ -809,7 +778,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	return 0;
     }
 
-    if (handle_user_defined_function(line, &err, ploop, prn)) {
+    if (handle_user_defined_function(line, &err, prn)) {
 	return err;
     }
 
@@ -883,13 +852,11 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		}
 		echo_cmd(&cmd, datainfo, line, echo_flags, cmdprn);
 	    }
-	    loop = add_to_loop(line, cmd.ci, cmd.opt, datainfo, &Z, loop);
-	    if (loop == NULL) {
+	    err = gretl_loop_append_line(line, cmd.ci, cmd.opt, &Z, datainfo);
+	    if (err) {
 		set_errfatal(ERRFATAL_FORCE);
 		print_gretl_errmsg(prn);
-		err = 1;
 	    } 
-	    *ploop = loop;
 	}
 	return err;
     }

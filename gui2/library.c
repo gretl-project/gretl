@@ -3015,7 +3015,6 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *buf = edit_dialog_get_text(dlg);
     int oldv = datainfo->v;
-    LOOPSET *loop = NULL;
     int err;
 
     if (buf == NULL) return;
@@ -3028,7 +3027,7 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
 
     console_record_sample(datainfo);
 
-    err = gui_exec_line(cmdline, &loop, NULL, CONSOLE_EXEC, NULL);
+    err = gui_exec_line(cmdline, NULL, CONSOLE_EXEC, NULL);
     if (err) {
 	gui_errmsg(err);
     }
@@ -5777,7 +5776,6 @@ int execute_script (const char *runfile, const char *buf,
     char tmp[MAXLINE] = {0};
     int including = (exec_code & INCLUDE_EXEC);
     int exec_err = 0;
-    LOOPSET *loop = NULL;
 
 #if 0
     debug_print_model_info(models[0], "Start of execute_script, models[0]");
@@ -5811,10 +5809,8 @@ int execute_script (const char *runfile, const char *buf,
     *cmd.word = '\0';
 
     while (strcmp(cmd.word, "quit")) {
-	if (gretl_executing_loop()) { 
-	    exec_err = loop_exec(loop, line, &Z, &datainfo, models, prn);
-	    gretl_loop_destroy(loop);
-	    loop = NULL;
+	if (gretl_execute_loop()) { 
+	    exec_err = gretl_loop_exec(line, &Z, &datainfo, models, prn);
 	    if (exec_err) {
 		goto endwhile;
 	    }
@@ -5870,7 +5866,7 @@ int execute_script (const char *runfile, const char *buf,
 		    output_line(line, prn);
 		}
 		strcpy(tmp, line);
-		exec_err = gui_exec_line(line, &loop, prn, exec_code, runfile);
+		exec_err = gui_exec_line(line, prn, exec_code, runfile);
 	    }
 
 	    if (exec_err) {
@@ -5997,47 +5993,20 @@ static void do_autofit_plot (PRN *prn)
 }
 
 static int 
-handle_user_defined_function (char *line, int *err, LOOPSET **ploop)
+handle_user_defined_function (char *line, int *err)
 {
-    int ufunc = gretl_is_user_function(line);
-    int fcomp = gretl_compiling_function();
     int done = 0;
 
-    if (fcomp) {
+    if (gretl_compiling_function()) {
 	/* compiling function: add a line */
 	*err = gretl_function_append_line(line);
-	done = 1;
-    } else if (ufunc) {
-	/* got an actual function call? */
-	if (gretl_compiling_loop()) {
-#if 1
-	    gretl_errmsg_clear();
-	    gretl_errmsg_set("Sorry, user functions cannot yet be used "
-			     "inside loops");
-	    *err = 1;
-#else
-	    /* later? defer evaluation, just add to loop */
-	    echo_function_call(line, CMD_ECHO_TO_STDOUT | CMD_STACKING, prn);
-	    *ploop = add_user_func_to_loop(line, *ploop);
-	    if (*ploop == NULL) {
-		set_errfatal(ERRFATAL_FORCE);
-		print_gretl_errmsg(prn);
-		*err = 1;
-	    } 
-#endif
-	} else {
-	    /* start exec'ing the function now */
-	    *err = gretl_function_start_exec(line, &Z, datainfo);
-	}
 	done = 1;
     } 
 
     return done;
 }
 
-int gui_exec_line (char *line, LOOPSET **plp,
-		   PRN *prn, int exec_code, 
-		   const char *myname) 
+int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname) 
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
     int dbdata = 0, alt_model = 0;
@@ -6052,7 +6021,6 @@ int gui_exec_line (char *line, LOOPSET **plp,
     gretlopt testopt = OPT_NONE;
     MODEL tmpmod;
     GRETL_VAR *var = NULL;
-    LOOPSET *loop = *plp;
     PRN *outprn = NULL;
 
 #if CMD_DEBUG
@@ -6064,7 +6032,7 @@ int gui_exec_line (char *line, LOOPSET **plp,
 	return 0;
     }
 
-    if (handle_user_defined_function(line, &err, plp)) {
+    if (handle_user_defined_function(line, &err)) {
 	if (err) {
 	    errmsg(err, prn);
 	}
@@ -6125,12 +6093,11 @@ int gui_exec_line (char *line, LOOPSET **plp,
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         }
-	loop = add_to_loop(line, cmd.ci, cmd.opt, datainfo, &Z, loop);
-	if (loop == NULL) {
+	err = gretl_loop_append_line(line, cmd.ci, cmd.opt, &Z, datainfo);
+	if (err) {
 	    print_gretl_errmsg(prn);
 	    return 1;
 	} 
-	*plp = loop;
 	return 0;
     } 
 
@@ -7002,8 +6969,6 @@ int gui_exec_line (char *line, LOOPSET **plp,
 	    maybe_save_model(&cmd, models[0], prn);
 	}
     }
-
-    *plp = loop;
 
     return (err != 0);
 }

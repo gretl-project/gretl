@@ -2964,10 +2964,11 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case FNCALL:
-	err = gretl_function_start_exec(line, pZ, pdinfo);
+	err = gretl_function_start_exec(line, cmd->param, pZ, pdinfo);
 	if (err) {
 	    errmsg(err, prn);
-	}	
+	}
+	break;
 
     case FUNC:
 	err = gretl_start_compiling_function(line, prn);
@@ -3258,7 +3259,7 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     fprintf(stderr, "get_command_index: line='%s'\n", line);
 #endif
 
-    if (*line == '#' || *line == '(') {
+    if (*line == '#' || (*line == '(' && *(line+1) == '*')) {
 	cmd->nolist = 1;
 	cmd->ci = CMD_COMMENT;
 	return 0;
@@ -3322,6 +3323,10 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
     if (!strcmp(line, "end loop")) {
 	cmd->ci = ENDLOOP;
     }
+
+#if CMD_DEBUG
+    fprintf(stderr, " cmd->ci set to %d\n", cmd->ci);
+#endif
 
     return 0;
 }

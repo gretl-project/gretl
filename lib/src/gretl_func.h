@@ -32,8 +32,8 @@ int gretl_is_user_function (const char *s);
 
 int gretl_get_user_function (const char *line, char **fnname);
 
-int gretl_function_start_exec (const char *line, double ***pZ,
-			       DATAINFO *pdinfo);
+int gretl_function_start_exec (const char *line, const char *fname,
+			       double ***pZ, DATAINFO *pdinfo);
 
 char *gretl_function_get_line (char *line, int len,
 			       double ***pZ, DATAINFO **ppdinfo,

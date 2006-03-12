@@ -669,6 +669,7 @@ int gretl_get_user_function (const char *line, char **fnname)
 #endif
 	function_name_from_line(line, name);
 	if (get_ufunc_by_name(name) != NULL) {
+	    free(*fnname);
 	    *fnname = gretl_strdup(name);
 	    if (*fnname != NULL) {
 		ret = 1;
@@ -1642,20 +1643,23 @@ static int check_function_assignments (ufunc *fun, int *asslist,
     return err;
 }
 
-int gretl_function_start_exec (const char *line, double ***pZ,
-			       DATAINFO *pdinfo)
+int gretl_function_start_exec (const char *line, const char *fname, 
+			       double ***pZ, DATAINFO *pdinfo)
 {
     char **argv = NULL;
     char **assv = NULL;
     char *asstypes = NULL;
     int *asslist = NULL;
-    char fname[FN_NAMELEN];
     ufunc *fun;
     fncall *call = NULL;
     int argc = 0;
     int err = 0;
 
-    function_name_from_line(line, fname);
+#if FN_DEBUG
+    fprintf(stderr, "gretl_function_start_exec: line='%s'\n"
+	    " fname='%s'\n", line, fname);
+#endif
+
     fun = get_ufunc_by_name(fname);
 
     if (fun == NULL) {
@@ -1693,6 +1697,10 @@ int gretl_function_start_exec (const char *line, double ***pZ,
     if (err) {
 	free_fncall(call);
     }
+
+#if FN_DEBUG
+    fprintf(stderr, "gretl_function_start_exec: returning err = %d\n", err);
+#endif
 
     return err;
 }

@@ -35,8 +35,6 @@ static gchar *cbuf;
 static char **cmd_history;
 static int hl, hlmax, hlines;
 
-static LOOPSET *loop;
-
 static int gretl_console_init (void)
 {
     char *hstr;
@@ -66,8 +64,6 @@ static int gretl_console_init (void)
     hl = -1;
 
     cbuf = NULL;
-
-    loop = NULL;
 
     set_gretl_echo(1);
 
@@ -244,16 +240,16 @@ int console_sample_changed (const DATAINFO *pdinfo)
 
 static int console_function_exec (char *execline)
 {
-    char *gotline;
+    char *gotline = NULL;
     int err = 0;
 
-    while (!gretl_executing_loop()) {
+    while (!gretl_execute_loop()) {
 	gotline = gretl_function_get_line(execline, MAXLINE, &Z, &datainfo, &err);
 	if (gotline == NULL || *gotline == '\0') {
 	    break;
 	}
 	if (!err) {
-	    err = gui_exec_line(execline, &loop, console_prn, SCRIPT_EXEC, NULL);
+	    err = gui_exec_line(execline, console_prn, SCRIPT_EXEC, NULL);
 	}
     }
 
@@ -310,24 +306,22 @@ static void console_exec (void)
     push_history_line(execline); 
 
     /* actually execute the command line */
-    gui_exec_line(execline, &loop, console_prn, CONSOLE_EXEC, NULL);
+    gui_exec_line(execline, console_prn, CONSOLE_EXEC, NULL);
 
     /* the control structure below is rather weird and needs more
        testing/thought.  The issue is the nesting of loops inside
        functions or vice versa. */
 
-    if (gretl_executing_loop()) { 
+    if (gretl_execute_loop()) { 
     fn_run_loop:
-	loop_exec(loop, execline, &Z, &datainfo, models, console_prn);
-	gretl_loop_destroy(loop);
-	loop = NULL;
+	gretl_loop_exec(execline, &Z, &datainfo, models, console_prn);
 	if (gretl_executing_function()) {
 	    console_function_exec(execline);
 	}
     } else if (gretl_executing_function()) {
     fn_run_fn:
 	console_function_exec(execline);
-	if (gretl_executing_loop()) {
+	if (gretl_execute_loop()) {
 	    /* the function we are exec'ing includes a loop */ 
 	    goto fn_run_loop;
 	} else if (gretl_executing_function()) {
