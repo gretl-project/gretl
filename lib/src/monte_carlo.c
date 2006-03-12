@@ -175,11 +175,9 @@ static int loop_scalar_index (int c, int opt, int put);
 #define LOOP_BLOCK 32
 #define N_LOOP_INDICES 5
 
-#if 0 /* not ready yet */
 /* record of state, and communication of state with outside world */
 
 static int loop_compiling;
-static int loop_executing;
 
 int gretl_compiling_loop (void)
 {
@@ -188,13 +186,15 @@ int gretl_compiling_loop (void)
 
 static void set_loop_compiling_on (void)
 {
-    loop_compiling = 1;
+    loop_compiling++;
 }
 
 static void set_loop_compiling_off (void)
 {
-    loop_compiling = 0;
+    loop_compiling--;
 }
+
+static int loop_executing;
 
 int gretl_executing_loop (void)
 {
@@ -203,14 +203,13 @@ int gretl_executing_loop (void)
 
 static void set_loop_executing_on (void)
 {
-    loop_executing++;
+    loop_executing = 1;
 }
 
 static void set_loop_executing_off (void)
 {
-    loop_executing--;
+    loop_executing = 0;
 }
-#endif /* stuff that's not ready */
 
 static double 
 loop_controller_get_value (controller *clr, const double **Z)
@@ -283,13 +282,12 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 /**
  * ok_in_loop:
  * @ci: command index.
- * @loop: pointer to loop structure
  *
  * Returns: 1 if the given command is acceptable inside the loop construct,
  * 0 otherwise.
  */
 
-int ok_in_loop (int ci, const LOOPSET *loop)
+int ok_in_loop (int ci)
 {
     int ok = 0;
 
@@ -386,7 +384,7 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
     return 0;
 }
 
-static LOOPSET *gretl_loop_new (LOOPSET *parent, int loopstack)
+static LOOPSET *gretl_loop_new (LOOPSET *parent)
 {
     LOOPSET *loop;
 
@@ -1036,7 +1034,6 @@ parse_as_for_loop (LOOPSET *loop,
  * parse_loopline:
  * @line: command line.
  * @ploop: current loop struct pointer, or %NULL.
- * @loopstack: stacking level for the loop.
  * @pdinfo: data information struct.
  * @pZ: pointer to data array.
  *
@@ -1046,20 +1043,21 @@ parse_as_for_loop (LOOPSET *loop,
  */
 
 static LOOPSET *
-parse_loopline (char *line, LOOPSET *ploop, int loopstack,
+parse_loopline (char *line, LOOPSET *ploop, 
 		DATAINFO *pdinfo, double ***pZ)
 {
     LOOPSET *loop;
     char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
     gretlopt opt = OPT_NONE;
+    int llevel = gretl_compiling_loop();
     char ichar;
     int err = 0;
 
     *gretl_errmsg = '\0';
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_loopline: ploop = %p, loopstack = %d\n"
-	    " line: '%s'\n", (void *) ploop, loopstack, line);
+    fprintf(stderr, "parse_loopline: ploop = %p,\n"
+	    " line: '%s'\n", (void *) ploop, line);
 #endif
 
     while (isspace((unsigned char) *line)) {
@@ -1071,17 +1069,17 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 #if LOOP_DEBUG
 	fprintf(stderr, "parse_loopline: starting from scratch\n");
 #endif
-	loop = gretl_loop_new(NULL, 0);
+	loop = gretl_loop_new(NULL);
 	if (loop == NULL) {
 	    gretl_errmsg_set(_("Out of memory!"));
 	    return NULL;
 	}
-    } else if (loopstack > ploop->level) {
+    } else if (llevel > ploop->level) {
 	/* have to nest this loop */
 #if LOOP_DEBUG
 	fprintf(stderr, "parse_loopline: adding child\n");
 #endif
-	loop = gretl_loop_new(ploop, loopstack);
+	loop = gretl_loop_new(ploop);
 	if (loop == NULL) {
 	    gretl_errmsg_set(_("Out of memory!"));
 	    return NULL;
@@ -1928,8 +1926,6 @@ static int add_more_loop_lines (LOOPSET *loop)
  * @pdinfo: dataset information.
  * @pZ: pointer to data matrix.
  * @loop: #LOOPSET to which command should be added
- * @loopstack: pointer to integer stacking level.
- * @looprun: pointer to integer switch for running loop.
  *
  * Add line and command index to accumulated loop buffer.
  *
@@ -1938,20 +1934,20 @@ static int add_more_loop_lines (LOOPSET *loop)
 
 LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 		      DATAINFO *pdinfo, double ***pZ,
-		      LOOPSET *loop, int *loopstack, int *looprun)
+		      LOOPSET *loop)
 {
     LOOPSET *lret = loop;
 
     *gretl_errmsg = '\0';
 
 #if LOOP_DEBUG
-    fprintf(stderr, "add_to_loop: loop = %p, loopstack = %d, line = '%s'\n", 
-	    (void *) loop, *loopstack, line);
+    fprintf(stderr, "add_to_loop: loop = %p, line = '%s'\n", 
+	    (void *) loop, line);
 #endif
 
     if (ci == LOOP) {
 	/* starting a new loop, possibly inside another */
-	lret = parse_loopline(line, loop, *loopstack, pdinfo, pZ);
+	lret = parse_loopline(line, loop, pdinfo, pZ);
 	if (lret == NULL) {
 	    if (*gretl_errmsg == '\0') {
 		gretl_errmsg_set(_("No valid loop condition was given."));
@@ -1960,12 +1956,12 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 	    goto bailout;
 	} else {
 	    set_loop_opts(lret, opt);
-	    *loopstack += 1;
+	    set_loop_compiling_on();
 	}
     } else if (ci == ENDLOOP) {
-	*loopstack -= 1;
-	if (*loopstack == 0) {
-	    *looprun = 1;
+	set_loop_compiling_off();
+	if (gretl_compiling_loop() == 0) {
+	    set_loop_executing_on();
 	} else {
 	    lret = loop->parent;
 	}
@@ -2024,6 +2020,7 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
     
     if (loop != NULL) {
 	gretl_loop_destroy(loop);
+	set_loop_compiling_off();
     }
 
     return NULL;
@@ -3002,6 +2999,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
     set_active_loop(loop->parent);
     set_loop_off();
+    set_loop_executing_off();
 
     if (get_halt_on_error()) {
 	return err;

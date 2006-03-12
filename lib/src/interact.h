@@ -103,7 +103,7 @@ int call_pca_plugin (VMatrix *corrmat, double ***pZ,
 
 int ready_for_command (const char *line);
 
-void safe_print_line (const char *line, int loopstack, PRN *prn);
+void safe_print_line (const char *line, PRN *prn);
 
 #endif /* INTERACT_H */
 

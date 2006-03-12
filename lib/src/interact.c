@@ -2186,7 +2186,7 @@ static void trim_to_length (char *s, int oklen)
 
 static void 
 real_safe_print_line (const char *line, int cli, int batch, 
-		      int script, int loopstack, PRN *prn)
+		      int script, PRN *prn)
 {
     char tmp[SAFELEN];
     const char *split = " \\";
@@ -2197,7 +2197,7 @@ real_safe_print_line (const char *line, int cli, int batch,
 
     if (!cli && batch) return;
 
-    if (loopstack) {
+    if (gretl_compiling_loop()) {
 	leader = leaders[1];
     } else {
 	leader = leaders[0];
@@ -2230,9 +2230,9 @@ real_safe_print_line (const char *line, int cli, int batch,
     }
 }
 
-void safe_print_line (const char *line, int loopstack, PRN *prn)
+void safe_print_line (const char *line, PRN *prn)
 {
-    real_safe_print_line(line, 0, 0, 1, loopstack, prn);
+    real_safe_print_line(line, 0, 0, 1, prn);
 }
 
 static int
@@ -2558,7 +2558,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 		       &stdlen, &prnlen, prn);
     } else if ((cmd->ci == GENR || cmd->ci == SMPL) && 
 	       strlen(line) > SAFELEN - 2) {
-	real_safe_print_line(line, echo_stdout, batch, 0, 
+	real_safe_print_line(line, echo_stdout, batch,  
 			     (flags & CMD_STACKING), prn);
     } else if (strcmp(cmd->word, "quit")) {
 	if (echo_stdout) {

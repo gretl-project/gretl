@@ -36,7 +36,6 @@ static char **cmd_history;
 static int hl, hlmax, hlines;
 
 static LOOPSET *loop;
-static int loopstack, looprun;
 
 static int gretl_console_init (void)
 {
@@ -69,7 +68,6 @@ static int gretl_console_init (void)
     cbuf = NULL;
 
     loop = NULL;
-    loopstack = looprun = 0;
 
     set_gretl_echo(1);
 
@@ -249,14 +247,13 @@ static int console_function_exec (char *execline)
     char *gotline;
     int err = 0;
 
-    while (!looprun) {
+    while (!gretl_executing_loop()) {
 	gotline = gretl_function_get_line(execline, MAXLINE, &Z, &datainfo, &err);
 	if (gotline == NULL || *gotline == '\0') {
 	    break;
 	}
 	if (!err) {
-	    err = gui_exec_line(execline, &loop, &loopstack, &looprun, 
-				console_prn, SCRIPT_EXEC, NULL);
+	    err = gui_exec_line(execline, &loop, console_prn, SCRIPT_EXEC, NULL);
 	}
     }
 
@@ -313,26 +310,24 @@ static void console_exec (void)
     push_history_line(execline); 
 
     /* actually execute the command line */
-    gui_exec_line(execline, &loop, &loopstack, &looprun, console_prn, 
-		  CONSOLE_EXEC, NULL);
+    gui_exec_line(execline, &loop, console_prn, CONSOLE_EXEC, NULL);
 
     /* the control structure below is rather weird and needs more
        testing/thought.  The issue is the nesting of loops inside
        functions or vice versa. */
 
-    if (looprun) { 
+    if (gretl_executing_loop()) { 
     fn_run_loop:
 	loop_exec(loop, execline, &Z, &datainfo, models, console_prn);
 	gretl_loop_destroy(loop);
 	loop = NULL;
-	looprun = 0;
 	if (gretl_executing_function()) {
 	    console_function_exec(execline);
 	}
     } else if (gretl_executing_function()) {
     fn_run_fn:
 	console_function_exec(execline);
-	if (looprun) {
+	if (gretl_executing_loop()) {
 	    /* the function we are exec'ing includes a loop */ 
 	    goto fn_run_loop;
 	} else if (gretl_executing_function()) {
@@ -378,11 +373,11 @@ static void console_exec (void)
 
 #ifndef OLD_GTK
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
-					     (loopstack)? "\n> " : "\n? ", 3,
-					     "redtext", NULL);
+					     (gretl_compiling_loop())? "\n> " : "\n? ", 
+					     3, "redtext", NULL);
 #else
     gtk_text_insert(GTK_TEXT(console_view), fixed_font,
-		    &red, NULL, (loopstack)? "\n> " : "\n? ", 3);
+		    &red, NULL, (gretl_compiling_loop())? "\n> " : "\n? ", 3);
     gtk_text_thaw(GTK_TEXT(console_view));
 #endif
 

@@ -3016,7 +3016,6 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
     const gchar *buf = edit_dialog_get_text(dlg);
     int oldv = datainfo->v;
     LOOPSET *loop = NULL;
-    int lstack = 0, lrun = 0;
     int err;
 
     if (buf == NULL) return;
@@ -3029,8 +3028,7 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
 
     console_record_sample(datainfo);
 
-    err = gui_exec_line(cmdline, &loop, &lstack, &lrun, NULL, 
-			CONSOLE_EXEC, NULL);
+    err = gui_exec_line(cmdline, &loop, NULL, CONSOLE_EXEC, NULL);
     if (err) {
 	gui_errmsg(err);
     }
@@ -5751,7 +5749,7 @@ static int ok_script_file (const char *runfile)
     return 1;
 }
 
-static void output_line (const char *line, int loopstack, PRN *prn) 
+static void output_line (const char *line, PRN *prn) 
 {
     int n = strlen(line);
 
@@ -5759,13 +5757,13 @@ static void output_line (const char *line, int loopstack, PRN *prn)
 	(line[n-1] == ')' && line[n-2] == '*')) {
 	pprintf(prn, "\n%s\n", line);
     } else if (line[0] == '#') {
-	if (loopstack) {
+	if (gretl_compiling_loop()) {
 	    pprintf(prn, "> %s\n", line);;
 	} else {
 	    pprintf(prn, "%s\n", line);
 	}
     } else if (!string_is_blank(line)) {
-	safe_print_line(line, loopstack, prn);
+	safe_print_line(line, prn);
     }
 }
 
@@ -5777,7 +5775,6 @@ int execute_script (const char *runfile, const char *buf,
     FILE *fb = NULL;
     char line[MAXLINE] = {0};
     char tmp[MAXLINE] = {0};
-    int loopstack = 0, looprun = 0;
     int including = (exec_code & INCLUDE_EXEC);
     int exec_err = 0;
     LOOPSET *loop = NULL;
@@ -5814,11 +5811,10 @@ int execute_script (const char *runfile, const char *buf,
     *cmd.word = '\0';
 
     while (strcmp(cmd.word, "quit")) {
-	if (looprun) { 
+	if (gretl_executing_loop()) { 
 	    exec_err = loop_exec(loop, line, &Z, &datainfo, models, prn);
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
-	    looprun = 0;
 	    if (exec_err) {
 		goto endwhile;
 	    }
@@ -5871,12 +5867,10 @@ int execute_script (const char *runfile, const char *buf,
 		} else if (!strncmp(line, "(* saved objects:", 17)) { 
 		    strcpy(line, "quit"); 
 		} else if (gretl_echo_on() && !including) {
-		    output_line(line, loopstack, prn);
+		    output_line(line, prn);
 		}
 		strcpy(tmp, line);
-		exec_err = gui_exec_line(line, &loop, &loopstack, 
-					 &looprun, prn, exec_code, 
-					 runfile);
+		exec_err = gui_exec_line(line, &loop, prn, exec_code, runfile);
 	    }
 
 	    if (exec_err) {
@@ -6003,8 +5997,7 @@ static void do_autofit_plot (PRN *prn)
 }
 
 static int 
-handle_user_defined_function (char *line, int *err, LOOPSET **ploop,
-			      int loopstack)
+handle_user_defined_function (char *line, int *err, LOOPSET **ploop)
 {
     int ufunc = gretl_is_user_function(line);
     int fcomp = gretl_compiling_function();
@@ -6016,7 +6009,7 @@ handle_user_defined_function (char *line, int *err, LOOPSET **ploop,
 	done = 1;
     } else if (ufunc) {
 	/* got an actual function call? */
-	if (loopstack) {
+	if (gretl_compiling_loop()) {
 #if 1
 	    gretl_errmsg_clear();
 	    gretl_errmsg_set("Sorry, user functions cannot yet be used "
@@ -6027,7 +6020,6 @@ handle_user_defined_function (char *line, int *err, LOOPSET **ploop,
 	    echo_function_call(line, CMD_ECHO_TO_STDOUT | CMD_STACKING, prn);
 	    *ploop = add_user_func_to_loop(line, *ploop);
 	    if (*ploop == NULL) {
-		loopstack = 0;
 		set_errfatal(ERRFATAL_FORCE);
 		print_gretl_errmsg(prn);
 		*err = 1;
@@ -6043,8 +6035,7 @@ handle_user_defined_function (char *line, int *err, LOOPSET **ploop,
     return done;
 }
 
-int gui_exec_line (char *line, 
-		   LOOPSET **plp, int *plstack, int *plrun, 
+int gui_exec_line (char *line, LOOPSET **plp,
 		   PRN *prn, int exec_code, 
 		   const char *myname) 
 {
@@ -6052,7 +6043,6 @@ int gui_exec_line (char *line,
     int dbdata = 0, alt_model = 0;
     int renumber;
     int script_code = exec_code;
-    int loopstack = *plstack, looprun = *plrun;
     int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
@@ -6074,7 +6064,7 @@ int gui_exec_line (char *line,
 	return 0;
     }
 
-    if (handle_user_defined_function(line, &err, plp, loopstack)) {
+    if (handle_user_defined_function(line, &err, plp)) {
 	if (err) {
 	    errmsg(err, prn);
 	}
@@ -6100,7 +6090,7 @@ int gui_exec_line (char *line,
     strncat(linecopy, line, sizeof linecopy - 1);
 
     /* if we're stacking commands for a loop, parse "lightly" */
-    if (loopstack) { 
+    if (gretl_compiling_loop()) { 
 	err = get_command_index(line, &cmd, datainfo);
     } else {
 	err = parse_command_line(line, &cmd, &Z, datainfo);
@@ -6129,15 +6119,13 @@ int gui_exec_line (char *line,
 		     "Type 'endloop' to get out\n"));
     }
 
-    if (loopstack || cmd.ci == LOOP) {  
+    if (cmd.ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(cmd.ci, loop)) {
+	if (!ok_in_loop(cmd.ci)) {
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         }
-	loop = add_to_loop(line, cmd.ci, cmd.opt,
-			   datainfo, &Z, loop, 
-			   plstack, plrun);
+	loop = add_to_loop(line, cmd.ci, cmd.opt, datainfo, &Z, loop);
 	if (loop == NULL) {
 	    print_gretl_errmsg(prn);
 	    return 1;
@@ -7015,8 +7003,6 @@ int gui_exec_line (char *line,
 	}
     }
 
-    *plstack = loopstack;
-    *plrun = looprun;
     *plp = loop;
 
     return (err != 0);

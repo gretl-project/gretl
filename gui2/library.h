@@ -282,8 +282,7 @@ void do_save_text (char *fname, MODEL *pmod);
 int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code);
 
-int gui_exec_line (char *line, 
-		   LOOPSET **plp, int *plstack, int *plrun, 
+int gui_exec_line (char *line, LOOPSET **plp, 
 		   PRN *prn, int exec_code, 
 		   const char *myname); 
 

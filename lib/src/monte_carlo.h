@@ -24,11 +24,15 @@
 
 typedef struct LOOPSET_ LOOPSET;
 
-int ok_in_loop (int ci, const LOOPSET *loop);
+int gretl_compiling_loop (void);
+
+int gretl_executing_loop (void);
+
+int ok_in_loop (int ci);
 
 LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 		      DATAINFO *pdinfo, double ***pZ,
-		      LOOPSET *loop, int *loopstack, int *looprun);
+		      LOOPSET *loop);
 
 LOOPSET *add_user_func_to_loop (char *line, LOOPSET *loop);
 

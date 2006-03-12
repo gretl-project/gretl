@@ -75,7 +75,7 @@ MODELSPEC *modelspec;
 MODEL tmpmod;
 FILE *dat, *fb;
 int i, j, dot, opt, errfatal, batch;
-int runit, loopstack, looprun;
+int runit;
 int data_status;
 int plot_count;             /* graphs via gnuplot */
 int order;                  /* VAR lag order */
@@ -332,6 +332,8 @@ static void get_a_filename (char *fname)
 
 static int get_an_input_line (void)
 {
+    int compiling = gretl_compiling_function() || 
+	gretl_compiling_loop();
     int err = 0;
 
     if (gretl_executing_function()) {
@@ -343,16 +345,14 @@ static int get_an_input_line (void)
     } else {
 	/* normal interactive use */
 #ifdef HAVE_READLINE
-	rl_gets(&line_read, (loopstack || gretl_compiling_function())? 
-		"> " : "? ");
+	rl_gets(&line_read, (compiling)? "> " : "? ");
 	if (line_read == NULL) {
 	    strcpy(line, "quit");
 	} else {
 	    strcpy(line, line_read);
 	}
 #else
-	printf("%s", (loopstack || gretl_compiling_function())? 
-	       "> " : "? ");
+	printf("%s", (compiling)? "> " : "? ");
 	fflush(stdout);
 	file_get_line(); /* "file" = stdin here */
 #endif
@@ -652,13 +652,12 @@ int main (int argc, char *argv[])
 	    gretl_abort(linecopy);
 	}
 
-	if (looprun) { 
+	if (gretl_executing_loop()) { 
 	    if (loop_exec(loop, line, &Z, &datainfo, models, prn)) {
 		return 1;
 	    }
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
-	    looprun = 0;
 	    set_errfatal(ERRFATAL_AUTO);
 	} else {
 	    err = get_an_input_line();
@@ -704,7 +703,7 @@ int main (int argc, char *argv[])
     return 0;
 }
 
-static void printf_strip (char *s, int loopstack)
+static void printf_strip (char *s)
 {
     int i, n;
 
@@ -717,7 +716,7 @@ static void printf_strip (char *s, int loopstack)
 	else break;
     }
 
-    if (loopstack) {
+    if (gretl_compiling_loop()) {
 	printf("> %s\n", s);
     } else {
 	printf("%s\n", s);
@@ -762,7 +761,7 @@ handle_user_defined_function (char *line, int *err, LOOPSET **ploop, PRN *prn)
 	done = 1;
     } else if (ufunc) {
 	/* got an actual function call? */
-	if (loopstack) {
+	if (gretl_compiling_loop()) {
 #if 1
 	    gretl_errmsg_clear();
 	    gretl_errmsg_set("Sorry, user functions cannot yet be used "
@@ -773,7 +772,6 @@ handle_user_defined_function (char *line, int *err, LOOPSET **ploop, PRN *prn)
 	    echo_function_call(line, CMD_ECHO_TO_STDOUT | CMD_STACKING, prn);
 	    *ploop = add_user_func_to_loop(line, *ploop);
 	    if (*ploop == NULL) {
-		loopstack = 0;
 		set_errfatal(ERRFATAL_FORCE);
 		print_gretl_errmsg(prn);
 		*err = 1;
@@ -832,7 +830,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
     gretl_set_batch_mode(batch);
 
     /* if we're stacking commands for a loop, parse "lightly" */
-    if (loopstack) {
+    if (gretl_compiling_loop()) {
 	err = get_command_index(line, &cmd, datainfo);
     } else {
 	err = parse_command_line(line, &cmd, &Z, datainfo);
@@ -848,7 +846,7 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     /* if in batch mode, echo comments from input */
     if (batch && cmd.ci == CMD_COMMENT && gretl_echo_on()) {
-	printf_strip(linebak, loopstack);
+	printf_strip(linebak);
     }
 
     if (cmd.ci < 0) {
@@ -870,14 +868,14 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		     "Type 'endloop' to get out\n"));
     }
    
-    if (loopstack || cmd.ci == LOOP) {  
+    if (cmd.ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(cmd.ci, loop)) {
+	if (!ok_in_loop(cmd.ci)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	} else {
 	    if (gretl_echo_on()) {
 		echo_flags = CMD_ECHO_TO_STDOUT;
-		if (loopstack) {
+		if (gretl_compiling_loop()) {
 		    echo_flags |= CMD_STACKING;
 		}
 		if (batch || runit) {
@@ -885,11 +883,8 @@ static int exec_line (char *line, LOOPSET **ploop, PRN *prn)
 		}
 		echo_cmd(&cmd, datainfo, line, echo_flags, cmdprn);
 	    }
-	    loop = add_to_loop(line, cmd.ci, cmd.opt,
-			       datainfo, &Z, loop, 
-			       &loopstack, &looprun);
+	    loop = add_to_loop(line, cmd.ci, cmd.opt, datainfo, &Z, loop);
 	    if (loop == NULL) {
-		loopstack = 0;
 		set_errfatal(ERRFATAL_FORCE);
 		print_gretl_errmsg(prn);
 		err = 1;
