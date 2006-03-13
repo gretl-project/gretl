@@ -108,6 +108,7 @@ enum transformations {
     T_MISSZERO,
     T_CORR,
     T_VAR,
+    T_LRVAR,
     T_SST,
     T_COV,
     T_MEDIAN,

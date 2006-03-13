@@ -22,8 +22,6 @@
 #ifndef MONTE_CARLO_H
 #define MONTE_CARLO_H
 
-typedef struct LOOPSET_ LOOPSET;
-
 int gretl_compiling_loop (void);
 
 int gretl_execute_loop (void);
@@ -32,8 +30,6 @@ int ok_in_loop (int ci);
 
 int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 			    double ***pZ, DATAINFO *pdinfo);
-
-void gretl_loop_destroy (LOOPSET *loop);
 
 int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo, 
 		     MODEL **models, PRN *prn);

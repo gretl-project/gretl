@@ -543,7 +543,9 @@ int array_adjust_t1t2 (const double *x, int *t1, int *t2)
     }
 
     for (t=t1min; t<=t2max; t++) {
-	if (na(x[t])) return t;
+	if (na(x[t])) {
+	    return t;
+	}
     }
 
     *t1 = t1min; *t2 = t2max;

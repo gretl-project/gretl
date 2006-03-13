@@ -82,6 +82,8 @@ double gretl_restricted_stddev (int t1, int t2, const double *x,
 				const double *y, GretlOp yop,
 				double yval);
 
+double gretl_long_run_variance (int t1, int t2, const double *x, int m);
+
 double gretl_covar (int t1, int t2, const double *x, const double *y);
 
 double gretl_corr (int t1, int t2, const double *x, const double *y,

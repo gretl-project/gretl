@@ -464,6 +464,128 @@ double gretl_restricted_stddev (int t1, int t2, const double *x,
 }
 
 /**
+* gretl_long_run_variance:
+* @t1: starting observation.
+* @t2: ending observation.
+* @x: data series.
+* @m: bandwidth.
+*
+* Returns: the long-run variance of the series @x from obs
+* @t1 to obs @t2, using Bartlett kernel weights, or #NADBL 
+* on failure (which includes encountering missing values). 
+*/
+
+double gretl_long_run_variance (int t1, int t2, const double *x, int m)
+{
+#if 0
+    double dw, xbar, xt, xlaglead;
+    double *z = NULL;
+    double *w = NULL;
+    double sumsq = 0.0;
+    int i, t, n;
+
+    if (array_adjust_t1t2(x, &t1, &t2)) {
+	return E_MISSDATA;
+    }
+
+    n = t2 - t1 + 1;
+
+    if (n <= 0) {
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+    if (na(xbar)) {
+	return NADBL;
+    }
+
+    z = malloc(n * sizeof *z);
+    w = malloc((m + 1) * sizeof *w);
+
+    if (z == NULL || w == NULL) {
+	free(z);
+	free(w);
+	return NADBL;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	z[t] = x[t] - xbar;
+    }
+
+    w[0] = 1.0;
+    dw = 1.0 / (m + 1.0);
+    for (i=1; i<=m; i++) {
+	w[i] = w[i-1] - dw;
+    }
+
+    for (t=t1+m; t<=t2-m; t++) {
+	xt = z[t];
+	sumsq += xt * xt;
+	for (i=1; i<=m; i++) {
+	    xlaglead = z[t-i] + z[t+i];
+	    sumsq += w[i] * xt * xlaglead;
+	}
+    }
+
+    sumsq /= (n - 2.0 * m);
+
+    free(w);
+    free(z);
+
+    return sumsq;
+#else
+    double zt, xbar, s2 = 0.0;
+    double *autocov;
+    int i, t, n;
+
+    if (array_adjust_t1t2(x, &t1, &t2)) {
+	return E_MISSDATA;
+    }
+
+    n = t2 - t1 + 1;
+
+    if (n <= 0) {
+	return NADBL;
+    }
+
+    xbar = gretl_mean(t1, t2, x);
+
+    autocov = malloc(m * sizeof *autocov);
+    if (autocov == NULL) {
+	return E_ALLOC;
+    }
+  
+    for (i=0; i<m; i++) {
+	autocov[i] = 0.0;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	zt = x[t] - xbar;
+	s2 += zt * zt;
+	for (i=0; i<m; i++) {
+	    int s = i + 1;
+
+	    if (t - s >= t1) {
+		autocov[i] += zt * (x[t - s] - xbar);
+	    }
+	}
+    }
+
+    for (i=0; i<m; i++) {
+	double wt = 1.0 - ((double) (i + 1)) / (m + 1.0);
+
+	s2 += 2.0 * wt * autocov[i];
+    }
+
+    s2 /= n;
+
+    free(autocov);
+
+    return s2;
+#endif
+}
+
+/**
  * gretl_covar:
  * @t1: starting observation.
  * @t2: ending observation.

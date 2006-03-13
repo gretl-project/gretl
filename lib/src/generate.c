@@ -134,6 +134,7 @@ struct genr_func funcs[] = {
     { T_MISSZERO, "misszero" },
     { T_CORR,     "corr" },
     { T_VAR,      "var" },
+    { T_LRVAR,    "lrvar" },
     { T_SST,      "sst" },
     { T_COV,      "cov" },
     { T_MEDIAN,   "median" },
@@ -194,7 +195,7 @@ struct genr_func funcs[] = {
                             t == T_SST || t == T_MAX || t == T_NOBS || \
                             t == T_T1 || t == T_T2 || t == T_VARNUM || \
                             t == T_SERIES || t == T_ISLIST || t == T_NELEM || \
-                            t == T_GINI)
+                            t == T_GINI || t == T_LRVAR)
 
 #define BIVARIATE_STAT(t) (t == T_CORR || t == T_COV)
 
@@ -4054,6 +4055,10 @@ static double evaluate_statistic (double *z, GENERATOR *genr, int fn)
 	x = gretl_stddev(0, i, tmp);
     } else if (fn == T_VAR) {
 	x = gretl_variance(0, i, tmp);
+    } else if (fn == T_LRVAR) {
+	int pd = genr->pdinfo->pd;
+
+	x = gretl_long_run_variance(0, i, tmp, 2 * pd);
     } else if (fn == T_SST) {
 	x = gretl_sst(0, i, tmp);
     } else if (fn == T_MEDIAN) {

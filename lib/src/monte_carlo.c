@@ -103,6 +103,8 @@ struct controller_ {
 
 typedef struct controller_ controller;
 
+typedef struct LOOPSET_ LOOPSET;
+
 struct LOOPSET_ {
     /* basic characteristics */
     char type;
@@ -386,6 +388,78 @@ static LOOPSET *gretl_loop_new (LOOPSET *parent)
     }
 	
     return loop;
+}
+
+static void gretl_loop_destroy (LOOPSET *loop)
+{
+    int i;
+
+    for (i=0; i<loop->n_children; i++) {
+	gretl_loop_destroy(loop->children[i]);
+    }
+
+    if (loop->lines != NULL) {
+	for (i=0; i<loop->ncmds; i++) {
+	    free(loop->lines[i]);
+	}
+	free(loop->lines);
+    }
+
+    if (loop->ci != NULL) { 
+	free(loop->ci);
+    }
+
+    if (loop->eachstrs != NULL) {
+	for (i=0; i<loop->itermax; i++) {
+	    free(loop->eachstrs[i]);
+	}
+	free(loop->eachstrs);
+    }    
+
+    if (loop->models != NULL) {
+	free(loop->models);
+    } 
+
+    if (loop->lmodels != NULL) {
+	for (i=0; i<loop->n_loop_models; i++) {
+#if LOOP_DEBUG
+	    fprintf(stderr, "freeing loop_lmodels[%d]\n", i);
+#endif
+	    free_loop_model(&loop->lmodels[i]);
+	}
+	free(loop->lmodels);
+    }
+
+    if (loop->prns != NULL) {
+	for (i=0; i<loop->n_prints; i++) { 
+	    free_loop_print(&loop->prns[i]);
+	}
+	free(loop->prns);
+    }
+
+    if (loop->storename != NULL) {
+	for (i=0; i<loop->nstore; i++) {
+	    free(loop->storename[i]);
+	}
+	free(loop->storename);
+    }
+
+    if (loop->storelbl != NULL) {
+	for (i=0; i<loop->nstore; i++) {
+	    free(loop->storelbl[i]);
+	}
+	free(loop->storelbl);
+    }
+
+    if (loop->storeval != NULL) { 
+	free(loop->storeval);
+    }
+
+    if (loop->children != NULL) {
+	free(loop->children);
+    }
+
+    free(loop);
 }
 
 int opstr_to_op (const char *s)
@@ -1036,8 +1110,8 @@ parse_loopline (char *line, LOOPSET *loop,
     *gretl_errmsg = '\0';
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_loopline: loop = %p,\n"
-	    " line: '%s'\n", (void *) loop, line);
+    fprintf(stderr, "parse_loopline: loop = %p,\n line: '%s'\n", 
+	    (void *) loop, line);
 #endif
 
     while (isspace((unsigned char) *line)) {
@@ -1346,78 +1420,6 @@ static int prepare_loop_for_action (LOOPSET *loop)
     return 0;
 }
 
-void gretl_loop_destroy (LOOPSET *loop)
-{
-    int i;
-
-    for (i=0; i<loop->n_children; i++) {
-	gretl_loop_destroy(loop->children[i]);
-    }
-
-    if (loop->lines != NULL) {
-	for (i=0; i<loop->ncmds; i++) {
-	    free(loop->lines[i]);
-	}
-	free(loop->lines);
-    }
-
-    if (loop->ci != NULL) { 
-	free(loop->ci);
-    }
-
-    if (loop->eachstrs != NULL) {
-	for (i=0; i<loop->itermax; i++) {
-	    free(loop->eachstrs[i]);
-	}
-	free(loop->eachstrs);
-    }    
-
-    if (loop->models != NULL) {
-	free(loop->models);
-    } 
-
-    if (loop->lmodels != NULL) {
-	for (i=0; i<loop->n_loop_models; i++) {
-#if LOOP_DEBUG
-	    fprintf(stderr, "freeing loop_lmodels[%d]\n", i);
-#endif
-	    free_loop_model(&loop->lmodels[i]);
-	}
-	free(loop->lmodels);
-    }
-
-    if (loop->prns != NULL) {
-	for (i=0; i<loop->n_prints; i++) { 
-	    free_loop_print(&loop->prns[i]);
-	}
-	free(loop->prns);
-    }
-
-    if (loop->storename != NULL) {
-	for (i=0; i<loop->nstore; i++) {
-	    free(loop->storename[i]);
-	}
-	free(loop->storename);
-    }
-
-    if (loop->storelbl != NULL) {
-	for (i=0; i<loop->nstore; i++) {
-	    free(loop->storelbl[i]);
-	}
-	free(loop->storelbl);
-    }
-
-    if (loop->storeval != NULL) { 
-	free(loop->storeval);
-    }
-
-    if (loop->children != NULL) {
-	free(loop->children);
-    }
-
-    free(loop);
-}
-
 static void loop_model_zero (LOOP_MODEL *lmod)
 {
     int i;
@@ -1646,11 +1648,9 @@ static int add_loop_model (LOOPSET *loop)
  *
  * Update a #LOOP_MODEL belonging to @loop, based on the results
  * in @pmod.
- *
- * Returns: 0 on successful completion.
  */
 
-static int update_loop_model (LOOPSET *loop, int i, MODEL *pmod)
+static void update_loop_model (LOOPSET *loop, int i, MODEL *pmod)
 {
     LOOP_MODEL *lmod;
     int j;
@@ -1692,10 +1692,7 @@ static int update_loop_model (LOOPSET *loop, int i, MODEL *pmod)
 
 #if LOOP_DEBUG
     fprintf(stderr, "update_loop_model: returning 0\n");
-    fflush(stderr);
 #endif
-
-    return 0;
 }
 
 static int add_loop_print (LOOPSET *loop, const int *list)
@@ -1733,13 +1730,11 @@ static int add_loop_print (LOOPSET *loop, const int *list)
  *
  * Update a #LOOP_PRINT belonging to @loop, based on the current
  * data values.
- *
- * Returns: 0 on successful completion.
  */
 
-static int update_loop_print (LOOPSET *loop, int i, 
-			      const int *list, double ***pZ, 
-			      const DATAINFO *pdinfo)
+static void update_loop_print (LOOPSET *loop, int i, 
+			       const int *list, double ***pZ, 
+			       const DATAINFO *pdinfo)
 {
     LOOP_PRINT *lprn = &loop->prns[i];
     int j, t;
@@ -1766,8 +1761,6 @@ static int update_loop_print (LOOPSET *loop, int i,
 #ifdef ENABLE_GMP
     mpf_clear(m);
 #endif
-
-    return 0;
 }
 
 /**
@@ -2780,10 +2773,8 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
 			err = 1;
 			break;
-		    } else if (update_loop_model(loop, m, models[0])) {
-			gretl_errmsg_set(_("Failed to add results to loop model\n"));
-			err = 1;
-			break;
+		    } else {
+			update_loop_model(loop, m, models[0]);
 		    }
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		} else if (cmd.opt & OPT_P) {
@@ -2868,10 +2859,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 			    break;
 			}
 		    }
-		    if (update_loop_print(loop, p, cmd.list, pZ, pdinfo)) {
-			gretl_errmsg_set(_("Failed to add values to print loop\n"));
-			err = 1;
-		    }
+		    update_loop_print(loop, p, cmd.list, pZ, pdinfo);
 		} else {
 		    err = printdata(cmd.list, (const double **) *pZ, pdinfo, 
 				    cmd.opt, prn);
