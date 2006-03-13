@@ -477,74 +477,17 @@ double gretl_restricted_stddev (int t1, int t2, const double *x,
 
 double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 {
-#if 0
-    double dw, xbar, xt, xlaglead;
-    double *z = NULL;
-    double *w = NULL;
-    double sumsq = 0.0;
-    int i, t, n;
-
-    if (array_adjust_t1t2(x, &t1, &t2)) {
-	return E_MISSDATA;
-    }
-
-    n = t2 - t1 + 1;
-
-    if (n <= 0) {
-	return NADBL;
-    }
-
-    xbar = gretl_mean(t1, t2, x);
-    if (na(xbar)) {
-	return NADBL;
-    }
-
-    z = malloc(n * sizeof *z);
-    w = malloc((m + 1) * sizeof *w);
-
-    if (z == NULL || w == NULL) {
-	free(z);
-	free(w);
-	return NADBL;
-    }
-
-    for (t=t1; t<=t2; t++) {
-	z[t] = x[t] - xbar;
-    }
-
-    w[0] = 1.0;
-    dw = 1.0 / (m + 1.0);
-    for (i=1; i<=m; i++) {
-	w[i] = w[i-1] - dw;
-    }
-
-    for (t=t1+m; t<=t2-m; t++) {
-	xt = z[t];
-	sumsq += xt * xt;
-	for (i=1; i<=m; i++) {
-	    xlaglead = z[t-i] + z[t+i];
-	    sumsq += w[i] * xt * xlaglead;
-	}
-    }
-
-    sumsq /= (n - 2.0 * m);
-
-    free(w);
-    free(z);
-
-    return sumsq;
-#else
-    double zt, xbar, s2 = 0.0;
+    double zt, wt, xbar, s2 = 0.0;
     double *autocov;
     int i, t, n;
 
     if (array_adjust_t1t2(x, &t1, &t2)) {
-	return E_MISSDATA;
+	return NADBL;
     }
 
     n = t2 - t1 + 1;
 
-    if (n <= 0) {
+    if (n < 2) {
 	return NADBL;
     }
 
@@ -552,7 +495,7 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
 
     autocov = malloc(m * sizeof *autocov);
     if (autocov == NULL) {
-	return E_ALLOC;
+	return NADBL;
     }
   
     for (i=0; i<m; i++) {
@@ -572,8 +515,7 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
     }
 
     for (i=0; i<m; i++) {
-	double wt = 1.0 - ((double) (i + 1)) / (m + 1.0);
-
+	wt = 1.0 - ((double) (i + 1)) / (m + 1.0);
 	s2 += 2.0 * wt * autocov[i];
     }
 
@@ -582,7 +524,6 @@ double gretl_long_run_variance (int t1, int t2, const double *x, int m)
     free(autocov);
 
     return s2;
-#endif
 }
 
 /**
