@@ -5992,25 +5992,10 @@ static void do_autofit_plot (PRN *prn)
     }
 }
 
-static int 
-handle_user_defined_function (char *line, int *err)
-{
-    int done = 0;
-
-    if (gretl_compiling_function()) {
-	/* compiling function: add a line */
-	*err = gretl_function_append_line(line);
-	done = 1;
-    } 
-
-    return done;
-}
-
 int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname) 
 {
-    int i, err = 0, chk = 0, order, nulldata_n, lines[1];
+    int lines[1];
     int dbdata = 0, alt_model = 0;
-    int renumber;
     int script_code = exec_code;
     int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
@@ -6022,6 +6007,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     MODEL tmpmod;
     GRETL_VAR *var = NULL;
     PRN *outprn = NULL;
+    int k, err = 0;
 
 #if CMD_DEBUG
     fprintf(stderr, "gui_exec_line: exec_code = %d\n",
@@ -6032,18 +6018,19 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	return 0;
     }
 
-    if (handle_user_defined_function(line, &err)) {
+    if (gretl_compiling_function()) {
+	err = gretl_function_append_line(line);
 	if (err) {
 	    errmsg(err, prn);
 	}
 	return err;
-    }
+    }     
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
-    chk = saved_object_action(line, prn);
-    if (chk == 1) return 0;   /* action was OK */
-    if (chk == -1) return 1;  /* action was faulty */
+    k = saved_object_action(line, prn);
+    if (k == 1) return 0;   /* action was OK */
+    if (k == -1) return 1;  /* action was faulty */
 	
     if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, _("You must open a data file first\n"));
@@ -6198,21 +6185,21 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case ADDTO:
     case OMITFROM:
-	i = atoi(cmd.param);
-	if ((err = script_model_test(cmd.ci, i, prn))) {
+	k = atoi(cmd.param);
+	if ((err = script_model_test(cmd.ci, k, prn))) {
 	    break;
 	}
-	if (i == (models[0])->ID) {
+	if (k == (models[0])->ID) {
 	    goto plain_add_omit;
 	}
-	err = re_estimate(modelspec_get_command_by_id(modelspec, i), 
+	err = re_estimate(modelspec_get_command_by_id(modelspec, k), 
 			  &tmpmod, &Z, datainfo);
 	if (err) {
-	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
+	    pprintf(prn, _("Failed to reconstruct model %d\n"), k);
 	    break;
 	} 
 	clear_model(models[1]);
-	tmpmod.ID = i;
+	tmpmod.ID = k;
 	if (cmd.ci == ADDTO) {
 	    err = add_test(cmd.list, &tmpmod, models[1], 
 			   &Z, datainfo, cmd.opt, outprn);
@@ -6324,8 +6311,8 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case CORRGM:
-	order = atoi(cmd.param);
-	err = corrgram(cmd.list[1], order, &Z, datainfo, outprn, OPT_A);
+	k = atoi(cmd.param);
+	err = corrgram(cmd.list[1], k, &Z, datainfo, outprn, OPT_A);
 	if (err) {
 	    pprintf(prn, _("Failed to generate correlogram\n"));
 	}
@@ -6344,13 +6331,12 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	if (cmd.list[0] == 0) {
 	    err = 1;
 	} else {
-	    err = dataset_drop_listed_variables(cmd.list, &Z, datainfo,
-						&renumber);
+	    err = dataset_drop_listed_variables(cmd.list, &Z, datainfo, &k);
 	}
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
 	} else {
-	    if (renumber) {
+	    if (k) {
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
 	    }
@@ -6560,25 +6546,25 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 #if CMD_DEBUG
 	fprintf(stderr, "OPEN in gui_exec_line, datfile='%s'\n", datfile);
 #endif
-	chk = detect_filetype(datfile, &paths, prn);
-	dbdata = (chk == GRETL_NATIVE_DB || chk == GRETL_RATS_DB);
+	k = detect_filetype(datfile, &paths, prn);
+	dbdata = (k == GRETL_NATIVE_DB || k == GRETL_RATS_DB);
 
 	if (cmd.ci == OPEN && (data_status & HAVE_DATA) && !dbdata) {
 	    close_session();
 	}
 
-	if (chk == GRETL_CSV_DATA) {
+	if (k == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, datfile, prn);
-	} else if (chk == GRETL_OCTAVE) {
+	} else if (k == GRETL_OCTAVE) {
 	    err = import_octave(&Z, &datainfo, datfile, prn);
-	} else if (chk == GRETL_BOX_DATA) {
+	} else if (k == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
-	} else if (chk == GRETL_XML_DATA) {
+	} else if (k == GRETL_XML_DATA) {
 	    err = gretl_read_gdt(&Z, &datainfo, datfile, &paths, data_status, prn, 1);
-	} else if (WORKSHEET_IMPORT(chk)) {
-	    err = import_other(&Z, &datainfo, chk, datfile, prn);
+	} else if (WORKSHEET_IMPORT(k)) {
+	    err = import_other(&Z, &datainfo, k, datfile, prn);
 	} else if (dbdata) {
-	    err = set_db_name(datfile, chk, &paths, prn);
+	    err = set_db_name(datfile, k, &paths, prn);
 	} else {
 	    err = gretl_get_data(&Z, &datainfo, datfile, &paths, data_status, prn);
 	}
@@ -6589,7 +6575,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	if (!dbdata && cmd.ci != APPEND) {
 	    strncpy(paths.datfile, datfile, MAXLEN-1);
 	}
-	if (chk == GRETL_CSV_DATA || chk == GRETL_BOX_DATA || dbdata) {
+	if (k == GRETL_CSV_DATA || k == GRETL_BOX_DATA || dbdata) {
 	    data_status |= IMPORT_DATA;
 	    maybe_display_string_table();
 	}
@@ -6708,13 +6694,13 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	if (dataset_locked()) {
 	    break;
 	}
-	nulldata_n = atoi(cmd.param);
-	if (nulldata_n < 2) {
+	k = atoi(cmd.param);
+	if (k < 2) {
 	    pprintf(prn, _("Data series length count missing or invalid\n"));
 	    err = 1;
 	    break;
 	}
-	if (nulldata_n > 1000000) {
+	if (k > 1000000) {
 	    pprintf(prn, _("Data series too long\n"));
 	    err = 1;
 	    break;
@@ -6722,7 +6708,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	if (data_status & HAVE_DATA) {
 	    close_session();
 	}
-	err = open_nulldata(&Z, datainfo, data_status, nulldata_n, prn);
+	err = open_nulldata(&Z, datainfo, data_status, k, prn);
 	if (err) { 
 	    pprintf(prn, _("Failed to create empty data set\n"));
 	} else {
@@ -6831,9 +6817,10 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
         break;
 
     case SMPL:
+	k = 0;
 	if (cmd.opt == OPT_F) {
 	    gui_restore_sample();
-	    chk = 1;
+	    k = 1;
 	} else if (cmd.opt) {
 	    err = restrict_sample(line, cmd.list, &Z, &datainfo, 
 				  cmd.opt, prn);
@@ -6850,7 +6837,9 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	    } else {
 		set_sample_label(datainfo);
 	    }
-	    if (!chk) restore_sample_state(TRUE);
+	    if (!k) {
+		restore_sample_state(TRUE);
+	    }
 	}
 	break;
 

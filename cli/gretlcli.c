@@ -58,7 +58,6 @@ extern char *rl_gets (char **line_read, const char *prompt);
 extern void initialize_readline (void);
 #endif /* HAVE_READLINE */
 
-char prefix[MAXLEN];
 char runfile[MAXLEN];
 char cmdfile[MAXLEN];
 char datfile[MAXLEN];
@@ -73,12 +72,11 @@ PATHS paths;                  /* useful paths */
 PRN *cmdprn;
 MODELSPEC *modelspec;
 MODEL tmpmod;
-FILE *dat, *fb;
-int i, j, dot, opt, errfatal, batch;
+FILE *fb;
+int errfatal, batch;
 int runit;
 int data_status;
 int plot_count;             /* graphs via gnuplot */
-int order;                  /* VAR lag order */
 int lines[1];               /* for gnuplot command */
 char *line;                 /* non-Readline command line */
 char texfile[MAXLEN];
@@ -609,10 +607,11 @@ int main (int argc, char *argv[])
 
     /* check for help file */
     if (!batch) {
-	dat = fopen(paths.helpfile, "r");
-	if (dat != NULL) { 
+	FILE *fp = fopen(paths.helpfile, "r");
+
+	if (fp != NULL) { 
 	    printf(_("\n\"help\" gives a list of commands\n"));
-	    fclose(dat);
+	    fclose(fp);
 	} else {
 	    printf(_("help file %s is not accessible\n"), 
 		   paths.helpfile);
@@ -745,48 +744,34 @@ static int do_autofit_plot (PRN *prn)
     return err;
 }
 
-static int 
-handle_user_defined_function (char *line, int *err, PRN *prn)
-{
-    int done = 0;
-
-    if (gretl_compiling_function()) {
-	/* compiling function: add a line */
-	*err = gretl_function_append_line(line);
-	if (*err) {
-	    errmsg(*err, prn);
-	}    
-	done = 1;
-    } 
-
-    return done;
-}
-
 static int exec_line (char *line, PRN *prn) 
 {
     GRETL_VAR *var = NULL;
-    int chk, nulldata_n, renumber;
     int old_runit = runit;
     int alt_model = 0;
     int dbdata = 0;
     unsigned char echo_flags;
     char s1[12], s2[12];
     double rho;
-    int err = 0;
+    int k, err = 0;
 
     if (string_is_blank(line)) {
 	return 0;
     }
 
-    if (handle_user_defined_function(line, &err, prn)) {
+    if (gretl_compiling_function()) {
+	err = gretl_function_append_line(line);
+	if (err) {
+	    errmsg(err, prn);
+	}    
 	return err;
-    }
+    } 
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
-    chk = saved_object_action(line, prn);
-    if (chk == 1) return 0;   /* action was OK */
-    if (chk == -1) return 1;  /* action was faulty */
+    k = saved_object_action(line, prn);
+    if (k == 1) return 0;   /* action was OK */
+    if (k == -1) return 1;  /* action was faulty */
 
     /* are we ready for this? */
     if (!data_status && !cmd.ignore && 
@@ -950,17 +935,17 @@ static int exec_line (char *line, PRN *prn)
 
     case ADDTO:
     case OMITFROM:
-	i = atoi(cmd.param);
-	if ((err = model_test_start(cmd.ci, i, prn))) break;
-	if (i == models[0]->ID) goto plain_add_omit;
-	err = re_estimate(modelspec_get_command_by_id(modelspec, i), 
+	k = atoi(cmd.param);
+	if ((err = model_test_start(cmd.ci, k, prn))) break;
+	if (k == models[0]->ID) goto plain_add_omit;
+	err = re_estimate(modelspec_get_command_by_id(modelspec, k), 
 			  &tmpmod, &Z, datainfo);
 	if (err) {
-	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
+	    pprintf(prn, _("Failed to reconstruct model %d\n"), k);
 	    break;
 	} 
 	clear_model(models[1]);
-	tmpmod.ID = i;
+	tmpmod.ID = k;
 	if (cmd.ci == ADDTO) {
 	    err = add_test(cmd.list, &tmpmod, models[1], 
 			   &Z, datainfo, cmd.opt, prn);
@@ -1055,8 +1040,8 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case CORRGM:
-	order = atoi(cmd.param);
-	err = corrgram(cmd.list[1], order, &Z, datainfo, prn, OPT_A);
+	k = atoi(cmd.param);
+	err = corrgram(cmd.list[1], k, &Z, datainfo, prn, OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}
@@ -1068,12 +1053,11 @@ static int exec_line (char *line, PRN *prn)
 			 " mode\n"));
 	    break;
 	}	
-	err = dataset_drop_listed_variables(cmd.list, &Z, datainfo, 
-					    &renumber);
+	err = dataset_drop_listed_variables(cmd.list, &Z, datainfo, &k);
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
 	} else {
-	    if (renumber) {
+	    if (k) {
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
 	    }
@@ -1260,8 +1244,8 @@ static int exec_line (char *line, PRN *prn)
 	    break;
 	}
 
-	chk = detect_filetype(datfile, &paths, prn);
-	dbdata = (chk == GRETL_NATIVE_DB || chk == GRETL_RATS_DB);
+	k = detect_filetype(datfile, &paths, prn);
+	dbdata = (k == GRETL_NATIVE_DB || k == GRETL_RATS_DB);
 
 	if (data_status && !batch && !dbdata && cmd.ci != APPEND &&
 	    strcmp(datfile, paths.datfile)) {
@@ -1279,19 +1263,19 @@ static int exec_line (char *line, PRN *prn)
 	    clear_data();
 	}
 
-	if (chk == GRETL_CSV_DATA) {
+	if (k == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, datfile, prn);
-	} else if (chk == GRETL_OCTAVE) {
+	} else if (k == GRETL_OCTAVE) {
 	    err = import_octave(&Z, &datainfo, datfile, prn);
-	} else if (chk == GRETL_BOX_DATA) {
+	} else if (k == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
-	} else if (WORKSHEET_IMPORT(chk)) {
-	    err = import_other(&Z, &datainfo, chk, datfile, prn);
-	} else if (chk == GRETL_XML_DATA) {
+	} else if (WORKSHEET_IMPORT(k)) {
+	    err = import_other(&Z, &datainfo, k, datfile, prn);
+	} else if (k == GRETL_XML_DATA) {
 	    err = gretl_read_gdt(&Z, &datainfo, datfile, &paths, 
 				 data_status, prn, 0);
 	} else if (dbdata) {
-	    err = set_db_name(datfile, chk, &paths, prn);
+	    err = set_db_name(datfile, k, &paths, prn);
 	} else {
 	    err = gretl_get_data(&Z, &datainfo, datfile, &paths, 
 				 data_status, prn);
@@ -1410,13 +1394,13 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case NULLDATA:
-	nulldata_n = atoi(cmd.param);
-	if (nulldata_n < 2) {
+	k = atoi(cmd.param);
+	if (k < 2) {
 	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    err = 1;
 	    break;
 	}
-	if (nulldata_n > 1000000) {
+	if (k > 1000000) {
 	    pputs(prn, _("Data series too long\n"));
 	    err = 1;
 	    break;
@@ -1424,8 +1408,7 @@ static int exec_line (char *line, PRN *prn)
 	if (data_status) {
 	    clear_data();
 	}	
-	err = open_nulldata(&Z, datainfo, data_status, 
-			    nulldata_n, prn);
+	err = open_nulldata(&Z, datainfo, data_status, k, prn);
 	if (err) { 
 	    pputs(prn, _("Failed to create empty data set\n"));
 	} else {
