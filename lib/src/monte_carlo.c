@@ -130,11 +130,11 @@ struct LOOPSET_ {
     int incrsgn;
 
     /* numbers of various subsidiary objects */
-    int ncmds;
+    int n_cmds;
     int n_models;
     int n_loop_models;
     int n_prints;
-    int nstore;
+    int n_storevars;
 
     char **lines;
     int *ci;
@@ -162,13 +162,14 @@ static void gretl_loop_init (LOOPSET *loop);
 static int prepare_loop_for_action (LOOPSET *loop);
 static void free_loop_model (LOOP_MODEL *lmod);
 static void free_loop_print (LOOP_PRINT *lprn);
+static void loop_store_free (LOOPSET *loop);
 static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn);
 static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *lmod, 
 			      int c, int n, PRN *prn);
 static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn);
-static int print_loop_store (LOOPSET *loop, PRN *prn);
+static int save_loop_store (LOOPSET *loop, PRN *prn);
 static void set_active_loop (LOOPSET *loop);
 static int loop_scalar_index (int c, int opt, int put);
 
@@ -399,7 +400,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
     }
 
     if (loop->lines != NULL) {
-	for (i=0; i<loop->ncmds; i++) {
+	for (i=0; i<loop->n_cmds; i++) {
 	    free(loop->lines[i]);
 	}
 	free(loop->lines);
@@ -423,7 +424,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
     if (loop->lmodels != NULL) {
 	for (i=0; i<loop->n_loop_models; i++) {
 #if LOOP_DEBUG
-	    fprintf(stderr, "freeing loop_lmodels[%d]\n", i);
+	    fprintf(stderr, "freeing loop->lmodels[%d]\n", i);
 #endif
 	    free_loop_model(&loop->lmodels[i]);
 	}
@@ -437,23 +438,7 @@ static void gretl_loop_destroy (LOOPSET *loop)
 	free(loop->prns);
     }
 
-    if (loop->storename != NULL) {
-	for (i=0; i<loop->nstore; i++) {
-	    free(loop->storename[i]);
-	}
-	free(loop->storename);
-    }
-
-    if (loop->storelbl != NULL) {
-	for (i=0; i<loop->nstore; i++) {
-	    free(loop->storelbl[i]);
-	}
-	free(loop->storelbl);
-    }
-
-    if (loop->storeval != NULL) { 
-	free(loop->storeval);
-    }
+    loop_store_free(loop);
 
     if (loop->children != NULL) {
 	free(loop->children);
@@ -1378,11 +1363,11 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->incrsgn = 1;
     loop->ineq = 0;
 
-    loop->ncmds = 0;
+    loop->n_cmds = 0;
     loop->n_models = 0;
     loop->n_loop_models = 0;
     loop->n_prints = 0;
-    loop->nstore = 0;
+    loop->n_storevars = 0;
 
     loop->lines = NULL;
     loop->ci = NULL;
@@ -1444,7 +1429,7 @@ static void loop_model_zero (LOOP_MODEL *lmod)
  *
  * Initialize a #LOOP_MODEL struct, based on @pmod.
  *
- * Returns: 0 on successful completion, 1 on error.
+ * Returns: 0 on successful completion, %E_ALLOC on error.
  */
 
 static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod)
@@ -1538,6 +1523,34 @@ static int loop_print_init (LOOP_PRINT *lprn, const int *list)
     return 1;
 }
 
+static void loop_store_free (LOOPSET *loop)
+{
+    int i;
+
+    if (loop->storename != NULL) {
+	for (i=0; i<loop->n_storevars; i++) {
+	    free(loop->storename[i]);
+	}
+	free(loop->storename);
+	loop->storename = NULL;
+    }
+
+    if (loop->storelbl != NULL) {
+	for (i=0; i<loop->n_storevars; i++) {
+	    free(loop->storelbl[i]);
+	}
+	free(loop->storelbl);
+	loop->storelbl = NULL;
+    }
+
+    if (loop->storeval != NULL) { 
+	free(loop->storeval);
+	loop->storeval = NULL;
+    }
+
+    loop->n_storevars = 0;
+}
+
 /**
  * loop_store_init:
  * @loop: pointer to loop struct.
@@ -1547,7 +1560,7 @@ static int loop_print_init (LOOP_PRINT *lprn, const int *list)
  *
  * Set up @loop for saving a set of variables.
  *
- * Returns: 0 on successful completion, 1 on error.
+ * Returns: 0 on successful completion, non-zero on error.
  */
 
 static int loop_store_init (LOOPSET *loop, const char *fname, 
@@ -1555,11 +1568,23 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 {
     int i, tot = list[0] * loop->itermax;
 
+    if (loop->n_storevars > 0) {
+	strcpy(gretl_errmsg, "Only one 'store' command is allowed in a "
+	       "progressive loop");
+	return E_DATA;
+    }
+
+    loop->n_storevars = list[0];
+
+    loop->storename = NULL;
+    loop->storelbl = NULL;
+    loop->storeval = NULL;
+
     loop->storefile[0] = '\0';
     strncat(loop->storefile, fname, MAXLEN - 1);
 
     loop->storename = malloc(list[0] * sizeof *loop->storename);
-    if (loop->storename == NULL) return 1;
+    if (loop->storename == NULL) return E_ALLOC;
 
     loop->storelbl = malloc(list[0] * sizeof *loop->storelbl);
     if (loop->storelbl == NULL) goto cleanup;
@@ -1567,7 +1592,12 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
     loop->storeval = malloc(tot * sizeof *loop->storeval);
     if (loop->storeval == NULL) goto cleanup;
 
-    for (i=0; i<list[0]; i++) {
+    for (i=0; i<loop->n_storevars; i++) {
+	loop->storename[i] = NULL;
+	loop->storelbl[i] = NULL;
+    }
+
+    for (i=0; i<loop->n_storevars; i++) {
 	char *p;
 
 	loop->storename[i] = malloc(VNAMELEN);
@@ -1587,11 +1617,10 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
     return 0;
 
  cleanup:
-    free(loop->storename);
-    free(loop->storelbl);
-    free(loop->storeval);
 
-    return 1;
+    loop_store_free(loop);
+
+    return E_ALLOC;
 }
 
 static int add_model_record (LOOPSET *loop)
@@ -1785,7 +1814,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
     j = 0;
     k = 0;
 
-    for (i=0; i<loop->ncmds; i++) {
+    for (i=0; i<loop->n_cmds; i++) {
 #if LOOP_DEBUG
 	fprintf(stderr, "print_loop_results: loop command %d (i=%d): %s\n", 
 		i+1, i, loop->lines[i]);
@@ -1817,7 +1846,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 		loop_print_zero(&loop->prns[k]);
 		k++;
 	    } else if (loop->ci[i] == STORE) {
-		print_loop_store(loop, prn);
+		save_loop_store(loop, prn);
 	    }
 	}
     }
@@ -1867,7 +1896,7 @@ static void free_loop_print (LOOP_PRINT *lprn)
 
 static int add_more_loop_lines (LOOPSET *loop)
 {
-    int nb = 1 + (loop->ncmds + 1) / LOOP_BLOCK;
+    int nb = 1 + (loop->n_cmds + 1) / LOOP_BLOCK;
     char **lines;
     int *ci;
     
@@ -1936,7 +1965,7 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
     } 
 
     if (loop != NULL) {
-	int nc = loop->ncmds;
+	int nc = loop->n_cmds;
 
 	if ((nc + 1) % LOOP_BLOCK == 0) {
 	    if (add_more_loop_lines(loop)) {
@@ -1974,11 +2003,11 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 	    strcpy(loop->lines[nc], line);
 	}
 
-	loop->ncmds += 1;
+	loop->n_cmds += 1;
 
 #if LOOP_DEBUG
-	fprintf(stderr, "loop: ncmds=%d, line[%d] = '%s'\n",
-		loop->ncmds, nc, loop->lines[nc]);
+	fprintf(stderr, "loop: n_cmds=%d, line[%d] = '%s'\n",
+		loop->n_cmds, nc, loop->lines[nc]);
 #endif
     }
 
@@ -1995,8 +2024,6 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 
     return err;
 }
-
-/* FIXME: additional model info such as robust std errs method */
 
 static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn)
@@ -2139,13 +2166,13 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
     pputc(prn, '\n');
 }
 
-static int print_loop_store (LOOPSET *loop, PRN *prn)
+static int save_loop_store (LOOPSET *loop, PRN *prn)
 {
-    int i, t;
     FILE *fp;
     char gdtfile[MAXLEN], infobuf[1024];
     char *xmlbuf = NULL;
     time_t writetime;
+    int i, t;
 
     /* organize filename */
     if (loop->storefile[0] == '\0') {
@@ -2159,7 +2186,9 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
     }
 
     fp = gretl_fopen(gdtfile, "w");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
 
     writetime = time(NULL);
 
@@ -2183,9 +2212,9 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
     gretl_push_c_numeric_locale();
 
     /* print info on variables */
-    fprintf(fp, "<variables count=\"%d\">\n", loop->nstore);
+    fprintf(fp, "<variables count=\"%d\">\n", loop->n_storevars);
 
-    for (i=0; i<loop->nstore; i++) {
+    for (i=0; i<loop->n_storevars; i++) {
 	xmlbuf = gretl_xml_encode(loop->storename[i]);
 	fprintf(fp, "<variable name=\"%s\"", xmlbuf);
 	free(xmlbuf);
@@ -2196,7 +2225,6 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
 
     fputs("</variables>\n", fp);
 
-    /* print actual data */
     fprintf(fp, "<observations count=\"%d\" labels=\"false\">\n",
 	    loop->itermax);
 
@@ -2204,7 +2232,7 @@ static int print_loop_store (LOOPSET *loop, PRN *prn)
 	double x;
 
 	fputs("<obs>", fp);
-	for (i=0; i<loop->nstore; i++) {
+	for (i=0; i<loop->n_storevars; i++) {
 	    x = loop->storeval[loop->itermax * i + t];
 	    if (na(x)) {
 		fputs("NA ", fp);
@@ -2295,9 +2323,8 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
     return err;
 }
 
-static void 
-loop_add_storevals (const int *list, LOOPSET *loop,
-		    const double **Z, DATAINFO *pdinfo)
+static void update_loop_store (const int *list, LOOPSET *loop,
+			       const double **Z, DATAINFO *pdinfo)
 {
     int i, sv;
 
@@ -2356,6 +2383,25 @@ connect_loop_control_vars (LOOPSET *loop, const DATAINFO *pdinfo)
     return err;
 }
 
+static int progressive_loop_zero (LOOPSET *loop)
+{
+    int i;
+
+    for (i=0; i<loop->n_loop_models; i++) {
+	free_loop_model(&loop->lmodels[i]);
+    }
+
+    loop->n_loop_models = 0;
+
+    for (i=0; i<loop->n_prints; i++) { 
+	free_loop_print(&loop->prns[i]);
+    }
+
+    loop->n_prints = 0;
+
+    loop_store_free(loop);
+}
+
 static int 
 top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 {
@@ -2397,18 +2443,11 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 			      (int) loop->init.val);
 	}
 
+	/* initialization in case this loop is being run more than
+	   once (i.e. it's embedded in an outer loop) */
+
 	if (loop_is_progressive(loop)) {
-	    int i;
-
-	    for (i=0; i<loop->n_loop_models; i++) {
-		free_loop_model(&loop->lmodels[i]);
-	    }
-	    loop->n_loop_models = 0;
-
-	    for (i=0; i<loop->n_prints; i++) { 
-		free_loop_print(&loop->prns[i]);
-	    }
-	    loop->n_prints = 0;
+	    progressive_loop_zero(loop);
 	} else {
 	    free(loop->models);
 	    loop->models = NULL;
@@ -2510,9 +2549,9 @@ static int get_cmd_src (void)
     return srcstack[0];
 }
 
-/* get the next command for a loop: either by pulling a line off
-   the stack of loop commands or, if we're executing a function,
-   by getting the appropriate line from the function.
+/* get the next command for a loop: either by pulling a line off the
+   stack of loop commands or, if we're executing a user-defined
+   function, by pulling the appropriate line from the function.
 */
 
 static int next_command (char *targ, LOOPSET *loop, double ***pZ,
@@ -2531,7 +2570,7 @@ static int next_command (char *targ, LOOPSET *loop, double ***pZ,
 	}
     }
 
-    if (*j < loop->ncmds) {
+    if (*j < loop->n_cmds) {
 	strcpy(targ, loop->lines[*j]);
 	*j += 1;
     } else {
@@ -2546,10 +2585,10 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 {
     LOOPSET *loop = currloop;
     DATAINFO *pdinfo = *ppdinfo;
-    CMD cmd;
-    GRETL_VAR *var;
+    GRETL_VAR *var = NULL;
     char errline[MAXLINE];
     char linecpy[MAXLINE];
+    CMD cmd;
     int mod_id = 0;
     int err = 0;
 
@@ -2562,7 +2601,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	return 1;
     }
 
-    if (loop->ncmds == 0) {
+    if (loop->n_cmds == 0) {
 	pputs(prn, _("No commands in loop\n"));
 	return 0;
     }
@@ -2769,13 +2808,14 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		if (loop_is_progressive(loop)) {
 		    int m = lmodnum++;
 
-		    if (loop->iter == 0 && loop_model_init(&loop->lmodels[m], models[0])) { 
-			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
-			err = 1;
-			break;
-		    } else {
-			update_loop_model(loop, m, models[0]);
+		    if (loop->iter == 0) {
+			err = loop_model_init(&loop->lmodels[m], models[0]);
+			if (err) {
+			    gretl_errmsg_set(_("Failed to initialize model for loop\n"));
+			    break;
+			}
 		    }
+		    update_loop_model(loop, m, models[0]);
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		} else if (cmd.opt & OPT_P) {
 		    /* deferred printing of model results */
@@ -2855,7 +2895,8 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    int p = printnum++;
 
 		    if (loop->iter == 0) {
-			if ((err = add_loop_print(loop, cmd.list))) {
+			err = add_loop_print(loop, cmd.list);
+			if (err) {
 			    break;
 			}
 		    }
@@ -2891,16 +2932,13 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case STORE:
 		if (loop_is_progressive(loop)) {
 		    if (loop->iter == 0) {
-			loop->nstore = cmd.list[0];
-			if (loop_store_init(loop, cmd.param, cmd.list, pdinfo)) {
-			    err = 1;
+			err = loop_store_init(loop, cmd.param, cmd.list, pdinfo);
+			if (err) {
+			    break;
 			}
 		    }
-		    if (!err) {
-			loop_add_storevals(cmd.list, loop, 
-					   (const double **) *pZ, 
-					   pdinfo);
-		    }
+		    update_loop_store(cmd.list, loop, (const double **) *pZ, 
+				      pdinfo);
 		} else {
 		    simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
 		}
