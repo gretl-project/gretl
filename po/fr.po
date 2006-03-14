@@ -20,7 +20,7 @@ msgstr "test sans constante"
 
 #: lib/src/adf_kpss.c:123
 msgid "test with constant"
-msgstr "test avec une constante"
+msgstr "test avec constante"
 
 #: lib/src/adf_kpss.c:124 gui2/library.c:888
 msgid "with constant and trend"
@@ -65,7 +65,7 @@ msgid ""
 "Dickey-Fuller tests for %s\n"
 msgstr ""
 "\n"
-"Tests Dickey-Fuller sur %s\n"
+"Tests de Dickey-Fuller sur %s\n"
 
 #: lib/src/adf_kpss.c:147
 #, c-format
@@ -79,7 +79,7 @@ msgstr "hypothèse nulle de racine unitaire: a = 1"
 #: lib/src/adf_kpss.c:155
 #, fuzzy
 msgid "plus seasonal dummies"
-msgstr "Incluer des variables auxiliaires saisonnières"
+msgstr "Inclure des variables auxiliaires saisonnières"
 
 #: lib/src/adf_kpss.c:160
 msgid "model"
@@ -104,7 +104,7 @@ msgstr "Valeurs de P basées sur MacKinnon (JAE, 1996)\n"
 
 #: lib/src/adf_kpss.c:607
 msgid "Robust estimate of variance"
-msgstr "Estimé robuste de la variance"
+msgstr "Estimation robuste de la variance"
 
 #: lib/src/adf_kpss.c:608
 msgid "Sum of squares of cumulated residuals"
@@ -171,10 +171,10 @@ msgid ""
 "    cointegrating regression.\n"
 msgstr ""
 "\n"
-"Il y a preuve d'une relation de cointégration si:\n"
-"(a) l'hypothèse d'une racine unitaire n'est pas rejetée pour les variables \n"
+"Une relation de cointégration est prouvée si :\n"
+"(a) l'hypothèse de racine unitaire n'est pas rejetée pour les variables \n"
 "    individuelles.\n"
-"(b) l'hypothèse d'une racine unitaire est rejetée pour les résidus (uhat) \n"
+"(b) l'hypothèse de racine unitaire est rejetée pour les résidus (uhat) \n"
 "    à partir de la régression de cointégration.\n"
 
 #: lib/src/bhhh_max.c:470 plugin/panel_data.c:1554 plugin/poisson.c:283
@@ -197,7 +197,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"  Hypothèse nulle: les paramètres de régression sont zéros pour les "
+"  Hypothèse nulle : les paramètres de régression sont nuls pour les "
 "variables\n"
 "\n"
 
@@ -222,7 +222,7 @@ msgstr "dfd"
 
 #: lib/src/compare.c:262 lib/src/gretl_model.c:1922
 msgid "Asymptotic test statistic"
-msgstr "test statistique asymptotique"
+msgstr "Statistique de test asymptotique"
 
 #: lib/src/compare.c:264 lib/src/compare.c:1202 lib/src/compare.c:1205
 #: lib/src/gretl_model.c:1843 lib/src/gretl_model.c:1851
@@ -318,7 +318,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Test de Chow pour rupture structurel à l'observation %s:\n"
+"Test de Chow pour rupture structurelle à l'observation %s:\n"
 "  F(%d, %d) = %f avec valeur de P %f\n"
 "\n"
 
@@ -383,7 +383,7 @@ msgid ""
 "You need to have the same number of observations\n"
 "for each cross-sectional unit"
 msgstr ""
-"Désolé, on ne peut faire ce test sur un panel non équilibré.\n"
+"Désolé, ce test ne peut être réalisé sur un panel non équilibré.\n"
 "Vous avez besoin d'avoir le même nombre d'observations\n"
 "pour chaque unité de coupe transversale"
 
@@ -433,7 +433,7 @@ msgstr "Erreur standard"
 
 #: lib/src/compare.c:2071
 msgid "sum"
-msgstr ""
+msgstr "somme"
 
 #: lib/src/compat.c:220
 #, c-format
@@ -521,7 +521,7 @@ msgid ""
 "Varname contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Le nom de variable contient un caractère illégale « %c »\n"
+"Le nom de variable contient un caractère illégal « %c »\n"
 "Utilisez seulement des lettres, des chiffres ou des soulignés"
 
 #: lib/src/dataio.c:397
@@ -564,22 +564,22 @@ msgstr "Échec de stockage des commentaires des données\n"
 #: lib/src/dataio.c:582
 #, c-format
 msgid "Bad character '%c' in date string"
-msgstr "Caractère erroné « %c » dans la chaîne de la date"
+msgstr "Caractère erroné « %c » dans la chaîne de date"
 
 #: lib/src/dataio.c:585
 #, c-format
 msgid "Bad character %d in date string"
-msgstr "Caractère erroné %d dans la chaîne de la date"
+msgstr "Caractère erroné %d dans la chaîne de date"
 
 #: lib/src/dataio.c:723
 #, c-format
 msgid "Date strings inconsistent"
-msgstr "Chaînes de dates inconsistentes"
+msgstr "Chaînes de dates inconsistantes"
 
 #: lib/src/dataio.c:751 lib/src/genrfuncs.c:1357
 #, c-format
 msgid "Observation number out of bounds"
-msgstr "Nombre d'observations hors limite"
+msgstr "Nombre d'observations hors limites"
 
 #: lib/src/dataio.c:869
 msgid "space for comments"
@@ -645,7 +645,7 @@ msgstr "Coupe transversale empilée"
 
 #: lib/src/dataio.c:1468
 msgid "undated"
-msgstr "sans date"
+msgstr "non daté"
 
 #: lib/src/dataio.c:1475
 msgid "special"
@@ -8158,7 +8158,7 @@ msgstr "Ajouter un dérivatif"
 
 #: gui2/dlgutils.c:522
 msgid "Add identity"
-msgstr "Ajouter une une identité"
+msgstr "Ajouter une identité"
 
 #: gui2/dlgutils.c:523
 msgid "Add list of endogenous variables"
@@ -10107,11 +10107,11 @@ msgstr "Ne peut détruire %s; la variable est utilisée"
 #: gui2/library.c:4571 gui2/library.c:4579 gui2/session.c:1633
 #, c-format
 msgid "Really delete %s?"
-msgstr "Réellement suprimer %s?"
+msgstr "Réellement supprimer %s?"
 
 #: gui2/library.c:4582 gui2/session.c:1634
 msgid "gretl: delete"
-msgstr "gretl: suprimer"
+msgstr "gretl: supprimer"
 
 #: gui2/library.c:4608
 msgid "Cannot delete the specified variables"
@@ -10409,7 +10409,7 @@ msgstr "Éditer les attributs"
 #: gui2/menustate.c:412 gui2/session.c:140 gui2/session.c:159
 #: gui2/session.c:165 gui2/session.c:2177
 msgid "Delete"
-msgstr "Suprimer"
+msgstr "Supprimer"
 
 #: gui2/menustate.c:312 gui2/menustate.c:341
 msgid "Define new variable..."
@@ -13145,7 +13145,7 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 #~ msgstr "lancer l'éditeur"
 
 #~ msgid "gretl: set data frequency"
-#~ msgstr "gretl: initialiser la fréquence des données"
+#~ msgstr "gretl : initialiser la fréquence des données"
 
 #~ msgid ""
 #~ "Enter integer frequency and\n"
@@ -13214,7 +13214,7 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 #~ "and name of first var to add:"
 #~ msgstr ""
 #~ "Entrer les observations de départ et de fin du nouveau\n"
-#~ "jeu de données et nommer la première variable à ajouter:"
+#~ "jeu de données et nommer la première variable à ajouter :"
 
 #~ msgid "gretl: create panel data set"
 #~ msgstr "gretl: créer le jeu de données du panel"
@@ -13242,17 +13242,17 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 #~ "as a valid time-series frequency"
 #~ msgstr ""
 #~ "La fréquence des données courantes, %d n'est pas reconnue\n"
-#~ "comme un fréquence valide de série temporelle"
+#~ "comme une fréquence valide de série temporelle"
 
 #~ msgid "Set data frequency to %d, starting obs to %s"
 #~ msgstr ""
-#~ "Initialiser la fréquence de données à %d, débutant les observations à %s"
+#~ "Initialiser la fréquence de données à %d, début des observations à %s"
 
 #~ msgid "%s redefined OK"
 #~ msgstr "%s redéfinition complétée"
 
 #~ msgid "Warning: session file is corrupted"
-#~ msgstr "AVERTISSEMENT: fichier de session corrompu"
+#~ msgstr "AVERTISSEMENT : fichier de session corrompu"
 
 #~ msgid "Editor"
 #~ msgstr "Éditeur"
@@ -13277,19 +13277,19 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 #~ "Étendue complète des données: %s - %s (n = %d)\n"
 
 #~ msgid "Full data range:"
-#~ msgstr "Étendue complète des données:"
+#~ msgstr "Étendue complète des données :"
 
 #~ msgid "significance level unknown"
 #~ msgstr "seuil significatif inconnu"
 
 #~ msgid "significant at the 2.5 percent level"
-#~ msgstr "significatif au seuil de 2.5 pourcent"
+#~ msgstr "significatif au seuil de 2.5%"
 
 #~ msgid "significant at the 5 percent level"
-#~ msgstr "significatif au seuil de 5 pourcent"
+#~ msgstr "significatif au seuil de 5%"
 
 #~ msgid "significant at the 10 percent level"
-#~ msgstr "significatif au seuil de 10 pourcent"
+#~ msgstr "significatif au seuil de 10%"
 
 #~ msgid ""
 #~ "\n"
@@ -13304,10 +13304,10 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 #~ "\n"
 #~ "Test de Dickey-Fuller avec constante\n"
 #~ "\n"
-#~ "   modèle: (1 - L)%s = m + g * %s(-1) + e\n"
-#~ "   hypothèse nulle d'unité racine: g = 0\n"
-#~ "   valeur estimée de g: %f\n"
-#~ "   test statistique: t = %f, avec taille d'échantillon %d\n"
+#~ "   modèle : (1 - L)%s = m + g * %s(-1) + e\n"
+#~ "   hypothèse nulle d'unité racine : g = 0\n"
+#~ "   valeur estimée de g : %f\n"
+#~ "   test statistique : t = %f, avec taille d'échantillon %d\n"
 #~ "   %s\n"
 
 #~ msgid "unknown pvalue"
@@ -13363,7 +13363,7 @@ msgstr "Erreur inattendue durant la lecture du fichier\n"
 #~ msgstr "liste de commandes"
 
 #~ msgid "Error in command loop: aborting\n"
-#~ msgstr "Erreur dans la commande de boucle: abandon\n"
+#~ msgstr "Erreur dans la commande de boucle : abandon\n"
 
 #~ msgid "Failed to add command to loop stack\n"
 #~ msgstr "Échec d'ajout de commande à la pile de la boucle\n"
