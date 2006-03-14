@@ -1,14 +1,14 @@
 # Polish translation for gretl-1.5.1
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>
-# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005,2006
+# Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005, 2006
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-03-07 08:37-0500\n"
-"PO-Revision-Date: 2006-03-08 22:00+0100\n"
+"PO-Revision-Date: 2006-03-12 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1559,7 +1559,7 @@ msgstr ""
 
 #: lib/src/describe.c:2744
 msgid "difference of means"
-msgstr "Test równoœci dwóch œrednich"
+msgstr "Test równo¶ci dwóch ¶rednich"
 
 #: lib/src/describe.c:2810
 msgid ""
@@ -1619,7 +1619,7 @@ msgstr "Odleg³o¶ci zapisano jako '%s'"
 
 #: lib/src/describe.c:3080
 msgid "illegal negative value"
-msgstr "Niew³aœciwa ujemna wartoœæ"
+msgstr "Niew³a¶ciwa ujemna warto¶æ"
 
 #: lib/src/describe.c:3160
 msgid "Lorenz curve"
@@ -3142,7 +3142,7 @@ msgstr "Wsp. determinacji R-kwadrat"
 
 #: lib/src/modelprint.c:155 lib/src/modelprint.c:2372
 msgid "Adjusted R-squared"
-msgstr "Skorygowany R-kwadrat"
+msgstr "Skorygowany  wsp. R-kwadrat"
 
 #: lib/src/modelprint.c:159
 msgid "Unadjusted R{\\super 2}"
@@ -3471,7 +3471,7 @@ msgstr "Wykorzystaj X-12-ARIMA"
 
 #: lib/src/modelprint.c:852
 msgid "exact ML"
-msgstr "w³aœciwa ML"
+msgstr "w³a¶ciwa ML"
 
 #: lib/src/modelprint.c:852
 msgid "conditional ML"
@@ -3555,7 +3555,7 @@ msgid ""
 "      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr ""
-"      Parametr     Ocena parametru   B³±d stand.   Statystyka t   Warto¶æ p\n"
+"      Parametr     Ocena parametru   B³±d stand.  Statystyka t  Warto¶æ p\n"
 "\n"
 
 #: lib/src/modelprint.c:1165
@@ -3563,7 +3563,7 @@ msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr ""
-"      Zmienna      Wspó³czynnik     B³±d stand.   Statystyka t    Nachylenie\n"
+"      Zmienna      Wspó³czynnik     B³±d stand.   Statystyka t  Warto¶æ p\n"
 "\n"
 
 #: lib/src/modelprint.c:1173
@@ -4772,7 +4772,7 @@ msgstr ""
 #: lib/src/usermat.c:1647 lib/src/usermat.c:1678
 #, c-format
 msgid "'%s': no such matrix\n"
-msgstr "%s: nie jest macierz¹\n"
+msgstr "%s: nie jest macierz±\n"
 
 #: lib/src/usermat.c:1983
 msgid "Matrix inversion failed"
@@ -4780,7 +4780,7 @@ msgstr "B³±d odwracania macierzy"
 
 #: lib/src/usermat.c:2004 lib/src/usermat.c:2046
 msgid "Matrix decomposition failed"
-msgstr "B³¹d dekompozycji macierzy"
+msgstr "B³±d dekompozycji macierzy"
 
 #: lib/src/var.c:1418
 #, c-format
@@ -4789,7 +4789,8 @@ msgstr "System VAR, maksymalny rz±d opó¼nienia %d"
 
 #: lib/src/var.c:1426
 msgid "lags      loglik    p(LR)       AIC          BIC          HQC"
-msgstr "opóŸnienia`loglik   p(LR)       AIC          BIC          HQC"
+msgstr "opó¼nienia loglik   p(LR)       AIC          BIC          HQC"
+
 
 #: lib/src/var.c:1740
 msgid "Not much point in a zero-order \"VAR\" surely?\n"
@@ -7017,7 +7018,7 @@ msgstr "gretl: VECM"
 
 #: gui2/callbacks.c:414 gui2/library.c:2907
 msgid "gretl: VAR lag selection"
-msgstr "gretl: Wybór opóŸnienia dla modelu VAR"
+msgstr "gretl: Wybór opó¼nienia dla modelu VAR"
 
 #: gui2/callbacks.c:436 gui2/callbacks.c:446
 msgid "gretl: define graph"
@@ -8239,7 +8240,7 @@ msgstr "Drukuj"
 
 #: gui2/gpt_control.c:1884
 msgid "VAR roots (real, imaginary, modulus, frequency)"
-msgstr "Pierwiastki VAR (rzeczywiste, urojone, modu³, czêstoœæ)"
+msgstr "Pierwiastki VAR (rzeczywiste, urojone, modu³, czêsto¶æ)"
 
 #: gui2/gpt_control.c:1921
 msgid "VAR roots"
@@ -8284,7 +8285,7 @@ msgstr "Estymacji KMNK"
 
 #: gui2/gpt_control.c:1981 gui2/gpt_control.c:2049
 msgid "Numerical values"
-msgstr "Numeryczna wartoœæ"
+msgstr "Numeryczna warto¶æ"
 
 #: gui2/gpt_control.c:1983 gui2/gpt_control.c:2050 gui2/session.c:169
 #: gui2/session.c:177 gui2/session.c:2128 gui2/session.c:2136
@@ -10156,7 +10157,7 @@ msgstr "/Model/Szeregi czasowe/model _wektorowej autoregresji (VAR)..."
 
 #: gui2/menustate.c:110 gui2/menustate.c:129
 msgid "/Model/Time series/VAR lag selection..."
-msgstr "/Model/Szeregi czasowe/wybór rzêdu opóŸnienia dla modelu VAR..."
+msgstr "/Model/Szeregi czasowe/wybór rzêdu opó¼nienia dla modelu VAR..."
 
 #: gui2/menustate.c:111 gui2/menustate.c:130
 msgid "/Model/Time series/VECM..."
@@ -10468,7 +10469,7 @@ msgstr "Autoregresja"
 
 #: gui2/selector.c:1899
 msgid "VAR lag selection"
-msgstr "Wybór rzêdu opóŸnienia modelu VAR"
+msgstr "Wybór rzêdu opó¼nienia modelu VAR"
 
 #: gui2/selector.c:1906
 msgid "Cointegration"
@@ -10616,7 +10617,7 @@ msgstr "Poka¿ opó¼nienia zmiennych"
 
 #: gui2/selector.c:2778
 msgid "Exact Maximum Likelihood"
-msgstr "W³aœciwa metoda najwiêkszej wiarygodno¶ci"
+msgstr "W³a¶ciwa metoda najwiêkszej wiarygodno¶ci"
 
 #: gui2/selector.c:2783
 msgid "Conditional Maximum Likelihood"
@@ -10772,11 +10773,11 @@ msgstr "lub"
 
 #: gui2/selector.c:4027
 msgid "specific lags"
-msgstr "wybrane opóŸnienia"
+msgstr "wybrane opó¼nienia"
 
 #: gui2/selector.c:4038
 msgid "Lags of dependent variable"
-msgstr "OpóŸnienia dla zmiennej zale¿nej"
+msgstr "Opó¼nienia dla zmiennej zale¿nej"
 
 #: gui2/series_view.c:385
 msgid "Variable to sort by"
@@ -12245,3 +12246,5 @@ msgstr "To nie jest plik 'OLE' -- prawdopodobnie zbyt stara wersja pliku dla gre
 #: plugin/workbook.c:637
 msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany b³±d czytania pliku\n"
+
+

@@ -3089,6 +3089,9 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     case M_UHAT:
 	M = gretl_matrix_copy(var->E);
 	break;
+    case M_COEFF:
+	M = gretl_matrix_copy(var->A);
+	break;
     case M_VCV:
 	M = gretl_matrix_copy(var->S);
 	break;

@@ -409,11 +409,12 @@ grabs the coefficient vector from model \texttt{m1}; and the third
 following section) grabs a portion of the covariance matrix from model
 \texttt{m1}.
 
-If the ``model'' in question is actually a system (a VAR
-or VECM, or system of simultaneous equations), \texttt{\$uhat}
-retrieves the matrix of residuals (one column per equation) and
-\texttt{\$vcv} gets the cross-equation covariance matrix.  At present
-the other accessors are not available for equation systems.
+If the ``model'' in question is actually a system (a VAR or VECM, or
+system of simultaneous equations), \texttt{\$uhat} retrieves the
+matrix of residuals (one column per equation) and \texttt{\$vcv} gets
+the cross-equation covariance matrix; in the special case of a VAR or
+a VECM, \texttt{\$coeff} returns the companion matrix. At present the
+other accessors are not available for equation systems.
 
 
 \section{Selecting sub-matrices}
