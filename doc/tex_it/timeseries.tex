@@ -222,10 +222,10 @@ To be written
 
 To be completed
 
-\subsection{The ADF test}
+\subsection{Il test ADF}
 \label{sec:ADFtest}
 
-Il test ADF (Augmented Dickey-Fuller) è implementanto in \app{gretl} sotto forma
+Il test ADF (Augmented Dickey-Fuller) è implementato in \app{gretl} sotto forma
 della statistica $t$ su $\varphi$ nella regressione seguente:
 \begin{equation}
   \label{eq:ADFtest}
@@ -241,13 +241,13 @@ stazionarietà. Sotto l'ipotesi alternativa, $y_t$ è già stazionaria e non
 richiede differenziazione. Quindi, grandi valori negativi della statistica test
 portano a rifiutare l'ipotesi nulla.
 
-Un aspetto peculiare di questo test è che la sua distribuzion limite non è
+Un aspetto peculiare di questo test è che la sua distribuzione limite non è
 standard sotto l'ipotesi nulla: inoltre, la forma della distribuzione, e quindi
 i valori critici per il test, dipendono dalla forma del termine
 $\mu_t$. Un'eccellente analisi di tutti i casi possibili è contenuta in
 Hamilton (1994), ma il soggetto è trattato anche in qualsiasi testo recente
 sulle serie storiche. Per quanto riguarda \app{gretl}, esso permette all'utente
-di scegliere la specificazione di $\mu_t$ tra quanttro alternative:
+di scegliere la specificazione di $\mu_t$ tra quattro alternative:
 
 \begin{center}
   \begin{tabular}{cc}
@@ -286,33 +286,65 @@ determinato automaticamente. Impostando $p$ a un numero negativo viene attivata
 una procedura sequenziale che parte da $p$ ritardi e decrementa $p$ fino a quando la statistica $t$
 per il parametro $\gamma_p$ supera 1.645 in valore assoluto.
 
-\subsection{The KPSS test}
+\subsection{Il test KPSS}
 \label{sec:KPSStest}
+
+Il test KPSS (Kwiatkowski, Phillips, Schmidt e Shin, 1992) è un test per radici
+unitarie in cui l'ipotesi nulla è l'opposto di quella del test ADF: l'ipotesi
+nulla è che la serie sia stazionaria, mentre l'ipotesi alternativa è che la serie
+sia $I(1)$.
+ 
+L'intuizione alla base di questa statistica test è molto semplice: se $y_t$ può
+essere scritta come $y_t = \mu + u_t$, dove $u_t$ è un qualche processo
+stazionario a media nulla, non solo la media campionaria di $y_t$ fornisce uno
+stimatore consistente di $\mu$, ma la varianza di lungo periodo di $u_t$ è un
+numero finito. Nessuna di queste proprietà è valida nel caso dell'ipotesi
+alternativa.
+ 
+Il test si basa sulla seguente statistica:
 
 \begin{equation}
   \label{eq:KPSStest}
   \eta = \frac{\sum_{i=1}^T S_t^2 }{ T^2 \bar{\sigma}^2 }
 \end{equation}
-where $S_t = \sum_{s=1}^t e_s$ and $\bar{\sigma}^2$ is an
-estimate of the long-run variance of $e_t = (y_t - \bar{y})$.
-\begin{itemize}
-\item $H_0$: $y_t$ is I(0);
-\item one-sided test: $H_0$ is rejected if $\eta$ is ``big'';
-\item extension to deterministic trend ($e_t$ are the residuals from
-  an OLS regression of $y_t$ on a constant and a linear trend);
-\item nonstandard distribution --- we provide 90\%, 95\%, 97.5\% and
-  99\% quantiles.
-\end{itemize}
-Syntax:
+dove $S_t = \sum_{s=1}^t e_s$ e $\bar{\sigma}^2$ è una stima della varianza di
+lungo periodo di $e_t = (y_t - \bar{y})$. Sotto l'ipotesi nulla, questa
+statistica ha una distribuzione asintotica ben definita (non standard), che non
+dipende da parametri di disturbo ed è stata tabulata con metodi di simulazione.
+Sotto l'ipotesi alternativa, la statistica diverge.
+
+Di conseguenza, è possibile costruire un test a una coda basato su
+$\eta$, dove $H_0$ è rifiutata se $\eta$ è maggiore del valore critico
+desiderato; \app{gretl} fornisce i quantili del 90\%, 95\%,
+97.5\% e 99\%.
+
+Esempio di uso:
 \begin{code}
-  kpss n x1
+  kpss m y
 \end{code}
-\begin{itemize}
-\item \verb|--trend| option;
-\item \verb|n| is used for estimating $\bar{\sigma}^2$; in the GUI,
-  default is the integer part of $4 \left( \frac{T}{100}
-  \right)^{1/4}$.
-\end{itemize}
+dove \verb|m| è un intero che rappresenta la larghezza di banda, o la dimensione
+della finestra usata nella formula per stimare la varianza di lungo periodo:
+\[
+  \bar{\sigma}^2 = \sum_{i=-m}^m \left( 1 - \frac{|i|}{m+1} \right) \hat{\gamma}_i
+\]
+I termini $\hat{\gamma}_i$ denotano le autocovarianze empiriche di $e_t$
+dall'ordine $-m$ fino al $m$.  Affinché questo stimatore sia consistente, $m$
+deve essere abbastanza grande da accomodare la persistenza di breve periodo di
+$e_t$, ma non troppo grande se paragonato all'ampiezza campionaria $T$.
+Nell'interfaccia grafica di \app{gretl}, il valore predefinito è pari alla parte
+intera di $4 \left( \frac{T}{100} \right)^{1/4}$.
+
+Il concetto visto sopra può essere generalizzato al caso in cui $y_t$ è
+stazionario attorno a un trend deterministico. In questo caso, la
+formula (\ref{eq:KPSStest}) rimane invariata, ma la serie $e_t$ è definita come
+residui della regressione OLS di $y_t$ su una costante e un trend lineare.
+Questa seconda forma del test si ottiene aggiungendo l'opzione
+\verb|--trend| al comando \cmd{kpss}:
+\begin{code}
+  kpss n y --trend
+\end{code}
+Si noti che in questo caso la distribuzione asintotica del test è diversa, e i
+valori critici riportati da \app{gretl} sono corretti di conseguenza.
 
 \subsection{I test di Johansen}
 \label{sec:Joh-test}
@@ -326,29 +358,85 @@ generalizzazione multivariata del test ADF.
   y_{t-i} + \epsilon_t
 \end{equation}
 Se il rango di $\Pi$ è 0, i processi sono tutti I(1); se il rango di
-$\Pi$ è pieno, i processi sono tutti I(0); nei casi intermedi, si ha
-cointegrazione.
+$\Pi$ è pieno, i processi sono tutti I(0); nei casi intermedi, $\Pi$ può essere
+scritto come $alpha \beta'$ e si ha cointegrazione.
 
 Il rango di $\Pi$ viene analizzato calcolando gli autovalori di una matrice ad
 essa strettamente legata (chiamata $M$) che ha rango pari a quello di $\Pi$:
-i test sul rango di $\Pi$ possono quindi essere condotti verificando quanti
-autovalori di $M$ sono pari a 0. I due test di Johansen sono i test
-``$\lambda$-max'', per le ipotesi sui singoli autovalori, e il test
-``trace'', per le ipotesi congiunte.
+per costruzione, $M$ è simmetrica e semidefinita positiva, quindi tutti i suoi
+autovalori sono reali e non negativi e i test sul rango di $\Pi$ possono quindi
+essere condotti verificando quanti autovalori di $M$ sono pari a 0.
 
-Il comando \cmd{coint2} di \app{gretl} esegue questi due test.
-Esempio:
-\begin{code}
-  coint2 n x1 x2 x3
-\end{code}
-imposta $p$ nell'equazione (\ref{eq:Joh-tests}) a $(n-1)$ e mostra una tabella
-con le due batterie di test per le tre serie \verb|x1|, \verb|x2| e \verb|x3|.
+Se tutti gli autovalori sono significativamente diversi da 0, tutti i processi
+sono stazionari. Se, al contrario, c'è almeno un autovalore pari a 0, allora
+il processo $y_t$ è integrato, anche se qualche combinazione lineare $\beta'y_t$
+potrebbe essere stazionaria. All'estremo opposto, se non ci sono autovalori
+significativamente diversi da 0, non solo il processo $y_t$ è non-stazionario,
+ma vale lo stesso per qualsiasi combinazione lineare $\beta'y_t$; in altre
+parole non c'è alcuna cointegrazione.
+
+I due test di Johansen sono i test ``$\lambda$-max'', per le ipotesi sui singoli
+autovalori, e il test ``trace'', per le ipotesi congiunte.  Il comando
+\cmd{coint2} di \app{gretl} esegue questi due test. 
  
-\ldots Options for the deterministic kernel \ldots
-More on this in section \ref{sec:johansen-test}
+Come nel test ADF, la distribuzione asintotica dei test varia a seconda
+dell'elemento deterministico $\mu_t$ incluso nel VAR. \app{gretl} fornisce le
+opzioni seguenti (per una breve discussione del significato delle cinque
+opzioni, si veda la sezione \ref{sec:johansen-test}):
+\begin{center}
+  \begin{tabular}{cc}
+    \hline
+    $\mu_t$ & Opzione del comando \\
+    \hline
+    0 & \verb|--nc| \\
+    $\mu_0, \alpha_{\perp}'\mu_0 = 0 $ &  \verb|--rc| \\
+    $\mu_0$ &  predefinito \\
+    $\mu_0 + \mu_1 t , \alpha_{\perp}'\mu_1 = 0$ &  \verb|--crt| \\
+    $\mu_0 + \mu_1 t$ &  \verb|--ct| \\
+    \hline
+  \end{tabular}
+\end{center}
+Si noti che per questo comando le opzioni presentate sopra sono mutualmente
+esclusive. Inoltre, si può usare l'opzione \verb|--seasonal| per aggiungere a
+$\mu_t$ delle variabili dummy stagionali centrate. In ognuno dei casi, i p-value
+sono calcolati con le approssimazioni di Doornik (1998).
+ 
+Il codice seguente usa il database \cmd{denmark}, fornito con \app{gretl}, per
+replicare l'esempio di Johansen contenuto nel suo libro del 1995.
+\begin{code}
+  open denmark
+  coint2 2 LRM LRY IBO IDE --rc --seasonal
+\end{code}
+
+In questo caso, il vettore $y_t$ nell'equazione (\ref{eq:Joh-tests}) comprende
+le quattro variabili \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. Il numero dei ritardi
+è pari a $p$ in (\ref{eq:Joh-tests}) più uno. Di seguito è riportata parte
+dell'output:
+\begin{center}
+\begin{code}
+Test di Johansen:
+Numero di equazioni = 4
+Ordine dei ritardi = 2
+Periodo di stima: 1974:3 - 1987:3 (T = 53)
+
+Caso 2: costante vincolata
+Rango Autovalore Test traccia p-value   Test Lmax  p-value
+   0    0,43317     49,144 [0,1284]     30,087 [0,0286]
+   1    0,17758     19,057 [0,7833]     10,362 [0,8017]
+   2    0,11279     8,6950 [0,7645]     6,3427 [0,7483]
+   3   0,043411     2,3522 [0,7088]     2,3522 [0,7076]
+
+autovalore     0.43317      0.17758      0.11279     0.043411 
+\end{code}
+\end{center}
+Visto che sia la traccia, sia $\lambda$-max portano ad accettare l'ipotesi nulla
+che il più piccolo autovalore vale 0, possiamo concludere che le serie non sono
+stazionarie. Tuttavia, qualche loro combinazione lineare potrebbe essere $I(0)$,
+come indicato dal rifiuto del $\lambda$-max dell'ipotesi che il rango di
+$\Pi$ sia 0 (il test traccia dà un'indicazione meno netta in questo senso).
 
 \section{ARCH e GARCH}
-\label{sec:arch}
+\label{sec:arch-garch}
 
 Il fenomeno dell'eteroschedasticità rappresenta la varianza non costante del
 termine di errore in un modello di regressione. L'eteroschedasticità
@@ -356,29 +444,193 @@ condizionale autoregressiva (ARCH) è un fenomeno specifico dei modelli per serie
 storiche, in cui la varianza del termine di errore presenta un comportamento
 autoregressivo, ad esempio, la serie presenta periodi in cui la varianza
 dell'errore è relativamente ampia e periodi in cui è relativamente piccola.
+Questo tipo di comportamento si verifica spesso sui mercati finanziari: una
+notizia inaspettata può provocare periodi di maggior volatilità del mercato.
 
-Un modello GARCH può essere descritto brevemente dalle equazioni seguenti:
+Un processo di errore ARCH di ordine $q$ può essere rappresentato come
+\[
+u_t = \sigma_t \varepsilon_t; \qquad
+\sigma^2_t \equiv {\rm E}(u^2_t|\Omega_{t-1}) = 
+\alpha_0 + \sum_{i=1}^q \alpha_i u^2_{t-i}
+\]
+dove le $\varepsilon_t$ sono indipendenti e identicamente distribuite (iid)
+con media zero e varianza uno, e dove $\sigma_t$ è la radice quadrata di
+$\sigma^2_t$. $\Omega_{t-1}$ denota il set informativo al tempo $t-1$ e
+$\sigma^2_t$ è la varianza condizionale: ossia, la varianza condizionata
+all'informazione che risale al tempo $t-1$ e precedente.
+
+È importante notare la differenza tra un processo ARCH e un normale processo di
+errore autoregressivo. Quest'ultimo, nel caso più semplice (del primo ordine),
+può essere scritto come
+\[
+u_t = \rho u_{t-1} + \varepsilon_t; \qquad -1 < \rho < 1
+\]
+dove le $\varepsilon_t$ sono iid con media zero e varianza costante $\sigma^2$.
+Con un errore AR(1), se $\rho$ è positivo un valore positivo di $u_t$ tenderà ad
+essere seguito, con probabilità maggiore di 0.5, da un valore positivo
+$u_{t+1}$.  Con un processo di errore ARCH, un errore $u_t$ dal valore assoluto
+elevato tenderà ad essere seguito da valori a loro volta elevati, ma senza
+assumere che i valori successivi siano dello stesso segno. La presenza di
+processi ARCH nelle serie finanziarie è un ``fatto stilizzato'' ed è coerente
+con l'ipotesi di efficienza dei mercati; d'altra parte, un comportamento
+autoregressivo dei prezzi dei titoli violerebbe l'efficienza del mercato.
+
+È possibile testare per l'esistenza di un ARCH di ordine $q$ nel modo seguente:
+\begin{enumerate}
+\item Stimare il modello in esame con OLS e salvare i quadrati dei residui,
+  $\hat{u}^2_t$.
+\item Eseguire una regressione ausiliaria in cui i quadrati dei residui sono
+  regrediti su una costante e su $q$ ritardi propri.
+\item Trovare il valore $TR^2$ (ampiezza campionaria moltiplicata per $R^2$ non
+  corretto) per la regressione ausiliaria.
+\item Confrontare il valore $TR^2$ con la distribuzione $\chi^2$ con $q$ gradi
+  di libertà, e se il p-value è ``abbastanza piccolo'' rifiutare l'ipotesi nulla
+  di omoschedasticità, in favore dell'ipotesi alternativa dell'esistenza di un
+  processo of ARCH($q$).
+\end{enumerate}
+
+Questo test è implementato in \app{gretl} con il comando \cmd{arch}. Questo
+comando può essere eseguito dopo la stima OLS di un modello di serie storiche, o
+selezionandolo dal menù ``Test'' della finestra del modello (sempre dopo una
+stima OLS). Verrà mostrato il risultato del test, e, se il valore
+$TR^2$ dalla regressione ausiliaria ha un p-value minore di 0.10,
+vengono mostrate anche le stime ARCH. Queste stime sono sotto forma di minimi
+quadrati generalizzati (Generalized Least Squares, GLS), in particolare di
+minimi quadrati ponderati, dove i pesi sono inversamente proporzionali alle
+deviazioni standard stimate degli errori, $\hat{\sigma}_t$, derivate dalla
+regressione ausiliaria.
+
+Inoltre, il test ARCH è disponibile dopo aver stimato un'autoregressione
+vettoriale (VAR). In questo caso però non viene eseguita la stima GLS.
++
+\subsection{GARCH}
+\label{subsec:garch}
+
+Il semplice processo ARCH($q$) è utile per introdurre il concetto generale di
+eteroschedasticità condizionale nelle serie storiche, ma si è rivelato
+insufficiente per il lavoro empirico. La dinamica della varianza dell'errore
+consentita dal modello ARCH($q$) non è abbastanza ricca per rappresentare
+l'andamento tipico dei dati finanziari. Oggi è di uso più comune il modello ARCH
+generalizzato, o GARCH.
+
+La rappresentazione della varianza di un processo nel modello GARCH è abbastanza
+(ma non esattamente) simile alla rappresentazione ARMA del livello di una serie
+storica. La varianza al tempo $t$ può dipendere sia dai valori passati della
+varianza, sia dai valori passati dei quadrati degli errori, come mostra il
+seguente sistema di equazioni:
 \begin{eqnarray}
   \label{eq:garch-meaneq}
-  y_t &  = & x_t \beta + \epsilon_t \\
+  y_t &  = & X_t \beta + u_t \\
   \label{eq:garch-epseq}
-  \epsilon_t &  = & u_t \sigma_t \\
+  u_t &  = & \sigma_t \varepsilon_t \\
   \label{eq:garch-vareq}
-  A(L) \sigma^2_t &  = & \omega + B(L) \epsilon_{t-1}^2 ,
+  \sigma^2_t & = & \alpha_0 + \sum_{i=1}^q \alpha_i u^2_{t-i} +
+	  \sum_{j=1}^p \delta_i \sigma^2_{t-j}
 \end{eqnarray}
-dove $u_t$ è una sequenza iid con varianza unitaria. Al momento
-\app{gretl} gestisce solo modelli in cui $u_t$ è ipotizzato essere un
-rumore bianco gaussiano. In ogni caso, l'opzione \verb|--robust| calcola la
-matrice di covarianza dei parametri usando lo stimatore
-``sandwich'' di Bollerslev-Wooldridge, quindi le stime prodotte da
-\app{gretl} possono essere considerate QML anche con disturbi non normali.
+
+Come nel caso precedente, $\varepsilon_t$ è una variabile iid con varianza unitaria.
+$X_t$ è una matrice di regressori (o nel caso più semplice un vettore con
+elementi pari a 1, che consente una media di $y_t$ diversa da zero). Si noti che
+se $p=0$, il GARCH si riduce a un ARCH($q$): la generalizzazione è incorporata
+nei termini $\delta_i$ che moltiplicano i valori precedenti della varianza
+dell'errore.
+
+In linea di principio, l'innovazione sottostante, $\varepsilon_t$, potrebbe
+seguire una qualsiasi distribuzione di probabilità, e oltre all'ovvia candidata
+rappresentata dalla normale, o Gaussiana, anche la distribuzione $t$ è stata
+usata in questo contesto. Al momento \app{gretl} gestisce solo il caso in cui
+$\varepsilon_t$ viene ipotizzata Gaussiana. Però se si usa l'opzione
+\verb|--robust| del comando \cmd{garch}, lo stimatore usato da \app{gretl} per
+la matrice di covarianza può essere considerato uno stimatore di quasi massima
+verosimiglianza anche con disturbi non normali. Si veda oltre per le altre
+opzioni che riguardano la matrice di covarianza GARCH.
 
 Esempio:
 \begin{code}
   garch p q ; y const x
 \end{code}
-dove \verb|p| è il grado (non negativo) di $A(L)$ e \verb|q| è il grado
-(strettamente positivo) di $B(L)$.
+dove \verb|p| $\ge 0$ e \verb|q| $>0$ denotano i rispettivi ordini di ritardo
+come mostrati nell'equazione (\ref{eq:garch-vareq}).  Questi valori possono
+essere forniti in forma numerica o come nomi di variabili scalari preesistenti.
+
+\subsection{Stima GARCH}
+\label{subsec:garch-est}
+
+La stima dei parametri di un modello GARCH non è per nulla un compito semplice.
+Si consideri l'equazione~\ref{eq:garch-vareq}: la varianza condizionale in ogni
+periodo, $\sigma^2_t$, dipende dalla varianza condizionale nei periodi
+precedenti, ma $\sigma^2_t$ non è osservata e deve essere stimata con qualche
+tipo di procedura di massima verosimiglianza. \app{Gretl} usa il metodo proposto
+da Fiorentini, Calzolari e Panattoni (1996)\footnote{L'algoritmo si basa sul
+codice Fortran rilasciato dagli autori nell'archivio del \textit{Journal of
+Applied Econometrics} ed è usato per gentile concessione del Professor
+Fiorentini.} che è stato adottato come metro di paragone nello studio dei
+risultati GARCH di McCullough e Renfro (1998). Esso usa le derivate analitiche
+prime e seconde della log-verosimiglianza, adotta un algoritmo del gradiente
+misto, sfruttando la matrice informativa nelle prime iterazioni, e quindi passa
+all'Hessiano in prossimità della massima verosimiglianza (questo andamento può
+essere verificato usando l'opzione \verb|--verbose| del comando \cmd{garch} di
+\app{gretl}).
+
+Sono disponibili varie opzioni per il calcolo della matrice di covarianza delle
+stime dei parametri ottenute con il comando \cmd{garch}. Per prima cosa, è
+possibile scegliere tra uno stimatore ``standard'' e uno ``robusto''.
+La scelta predefinita è quella dell'Hessiano, a meno che non si usi l'opzione
+\verb|--robust|, nel cui caso viene usato lo stimatore QML. Una scelta più
+dettagliata è disponibile usando il comando \cmd{set}, come mostrato nella
+tabella~\ref{tab:garch-vcv}.
+
+\begin{table}[htbp]
+\caption{Opzioni per la matrice di covarianza GARCH}
+\label{tab:garch-vcv}
+\begin{center}
+\begin{tabular}{ll}
+\multicolumn{1}{c}{\textit{command}} &
+\multicolumn{1}{c}{\textit{effect}} \\ [4pt]
+\texttt{set garch\_vcv hessian} & Usa l'Hessiano \\
+\texttt{set garch\_vcv im} & Usa la matrice di informazione \\
+\texttt{set garch\_vcv op} & Usa il prodotto esterno del gradiente \\
+\texttt{set garch\_vcv qml} & Stimatore QML \\
+\texttt{set garch\_vcv bw} & Stimatore ``sandwich'' di Bollerslev--Wooldridge
+\end{tabular}
+\end{center}
+\end{table}
+
+Non è infrequente, nella stima di un modello GARCH, che il calcolo iterativo
+delle stime fallisca nel raggiungere la convergenza. Affinché un modello GARCH
+abbia senso, sono necessari vincoli stringenti sui valori ammissibili dei
+parametri, e non sempre esiste un insieme di valori all'interno dello spazio dei
+parametri per cui la verosimiglianza viene massimizzata.
+
+I vincoli in questione possono essere spiegati riferendosi al più semplice (e
+più comune) modello GARCH, dove $p = q = 1$. Nel modello GARCH(1, 1), la varianza
+condizionale è
+\begin{equation}
+\label{eq:condvar}
+\sigma^2_t = \alpha_0 + \alpha_1 u^2_{t-1} + \delta_1 \sigma^2_{t-1}
+\end{equation}
+Prendendo il valore atteso non condizionale di (\ref{eq:condvar}) si ottiene
+\[
+\sigma^2 = \alpha_0 + \alpha_1 \sigma^2 + \delta_1 \sigma^2
+\]
+così che
+\[
+\sigma^2 = \frac{\alpha_0}{1 - \alpha_1 - \delta_1}
+\]
+Affinché esista questa varianza non condizionale, occorre che
+$\alpha_1 + \delta_1 < 1$, e quindi occorre richiedere che $\alpha_0 > 0$.
+
+Un motivo comune per la non convergenza delle stime GARCH (ossia, un motivo
+comune per la non esistenza di valori $\alpha_i$ e $\delta_i$ che soddisfano le
+condizioni precedenti e nello stesso tempo massimizzano la verosimiglianza dei
+dati) è la cattiva specificazione del modello. È importante rendersi conto che
+il modello GARCH in sé prevede una volatilità dei dati che dipende \textit{solo}
+dal tempo. Se la \textit{media} della serie in questione non è costante, o se il
+processo di errore non è solo eteroschedastico ma è anche autoregressivo, è
+necessario tener conto di questi fatti per formulare un modello appropriato. Ad
+esempio, può essere necessario dover prendere la differenza prima della
+variabile in questione e/o aggiungere opportuni regressori $X_t$ al modello,
+come mostrato in (\ref{eq:garch-meaneq}).
 
 \section{Cointegrazione e modelli vettoriali a correzione d'errore}
 \label{vecm-explanation}
