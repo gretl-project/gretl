@@ -2383,7 +2383,7 @@ connect_loop_control_vars (LOOPSET *loop, const DATAINFO *pdinfo)
     return err;
 }
 
-static int progressive_loop_zero (LOOPSET *loop)
+static void progressive_loop_zero (LOOPSET *loop)
 {
     int i;
 

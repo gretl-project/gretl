@@ -222,6 +222,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 				    gpointer data);
 static void free_session_text (SESSION_TEXT *text);
 static void free_session_model (SESSION_MODEL *mod);
+static int real_delete_model_from_session (SESSION_MODEL *model);
 #ifndef OLD_GTK
 static void rename_session_object (gui_obj *obj, const char *newname);
 #endif
@@ -595,8 +596,22 @@ static SESSION_MODEL *get_session_model_by_data (void *ptr)
     return NULL;
 }
 
+static SESSION_MODEL *get_session_model_by_name (const char *name)
+{
+    int i;
+
+    for (i=0; i<session.nmodels; i++) {
+	if (!strcmp(name, session.models[i]->name)) {
+	    return session.models[i];
+	}
+    }
+
+    return NULL;
+}
+
 int maybe_add_model_to_session (void *ptr, GretlObjType type)
 {
+    SESSION_MODEL *oldmod;
     const char *name;
 
     if (get_session_model_by_data(ptr)) {
@@ -604,6 +619,14 @@ int maybe_add_model_to_session (void *ptr, GretlObjType type)
     }
 
     name = gretl_object_get_name(ptr, type);
+
+    /* check to see if there's already a model with
+       the same name: if so, delete it
+    */
+    oldmod = get_session_model_by_name(name);
+    if (oldmod != NULL) {
+	real_delete_model_from_session(oldmod);
+    }
 
     return real_add_model_to_session(ptr, name, type);
 }
@@ -1483,8 +1506,7 @@ void session_file_manager (int action, const char *fname)
     }	     
 }
 
-static int 
-real_delete_model_from_session (SESSION_MODEL *model)
+static int real_delete_model_from_session (SESSION_MODEL *model)
 {
     if (session.nmodels == 1) {
 	free_session_model(session.models[0]);
