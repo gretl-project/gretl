@@ -4125,9 +4125,21 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);
 
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show_all(hbox);
+    if (list[0] > 10) {
+	GtkWidget *scroller = gtk_scrolled_window_new(NULL, NULL);
 
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				       GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
+					      hbox);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), scroller, TRUE, TRUE, 5);
+	gtk_widget_show_all(scroller);
+	gtk_widget_set_size_request(scroller, -1, 360);
+    } else {
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+	gtk_widget_show_all(hbox);
+    }
+	
     /* Create the "OK" button */
     tmp = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
