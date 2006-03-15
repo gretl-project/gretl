@@ -222,7 +222,7 @@ msgstr "dfd"
 
 #: lib/src/compare.c:262 lib/src/gretl_model.c:1922
 msgid "Asymptotic test statistic"
-msgstr "Statistique de test asymptotique"
+msgstr "Statistique asymptotique de test "
 
 #: lib/src/compare.c:264 lib/src/compare.c:1202 lib/src/compare.c:1205
 #: lib/src/gretl_model.c:1843 lib/src/gretl_model.c:1851
@@ -8154,7 +8154,7 @@ msgstr "Ajouter une équation"
 
 #: gui2/dlgutils.c:521
 msgid "Add derivative"
-msgstr "Ajouter un dérivatif"
+msgstr "Ajouter une dérivée"
 
 #: gui2/dlgutils.c:522
 msgid "Add identity"
@@ -8190,7 +8190,7 @@ msgstr "(SVP se référer à l'aide pour être guidé)"
 
 #: gui2/filelists.c:337 gui2/filelists.c:569
 msgid "/File/Open data"
-msgstr "/Fichier/Oouvrir les données"
+msgstr "/Fichier/Ouvrir les données"
 
 #: gui2/filelists.c:338 gui2/filelists.c:570
 msgid "/Session"
@@ -8435,7 +8435,7 @@ msgstr "Afficher..."
 
 #: gui2/gpt_control.c:1979 gui2/gpt_control.c:2048
 msgid "OLS estimates"
-msgstr "Estimés MCO"
+msgstr "Estimateurs des MCO"
 
 #: gui2/gpt_control.c:1981 gui2/gpt_control.c:2049
 #, fuzzy
@@ -8744,7 +8744,7 @@ msgstr "afficher le graphe gretl"
 #: gui2/guiprint_common.c:120
 #, c-format
 msgid "Summary Statistics, using the observations %s - %s"
-msgstr "Sommaire des statistiques, utilisant les observations %s - %s"
+msgstr "Statistiques descriptives, utilisant les observations %s - %s"
 
 #: gui2/guiprint_common.c:126 gui2/guiprint_common.c:220
 #, c-format
@@ -8758,7 +8758,7 @@ msgstr "Écart-type"
 #: gui2/guiprint_common.c:213
 #, c-format
 msgid "Summary Statistics, using the observations %s--%s"
-msgstr "Sommaire des statistiques, utilisant les observations %s - %s"
+msgstr "Statistiques descriptives, utilisant les observations %s - %s"
 
 #: gui2/guiprint_common.c:265
 msgid "Std.\\ Dev."
@@ -8766,7 +8766,7 @@ msgstr "Écart-type\\"
 
 #: gui2/guiprint_common.c:265
 msgid "Ex.\\ kurtosis"
-msgstr "Aplastissement\\"
+msgstr "Aplatissement\\"
 
 #: gui2/guiprint_common.c:354
 #, c-format
@@ -8780,7 +8780,7 @@ msgstr "Matrice de covariance des coefficients"
 #: gui2/guiprint_common.c:447
 #, c-format
 msgid "Correlation coefficients, using the observations %s--%s"
-msgstr "Coef. de corrélation, utilisant les observations %s--%s"
+msgstr "Coeff. de corrélation, utilisant les observations %s--%s"
 
 #: gui2/guiprint_common.c:454
 #, c-format
@@ -8789,7 +8789,7 @@ msgstr "5\\%% valeur critique (bilatéral) = %.4f pour n = %d"
 
 #: gui2/guiprint_common.c:547 gui2/guiprint_common.c:565
 msgid "Model estimation range:"
-msgstr "Modèle de l'estimation de l'étendue:"
+msgstr "Modèle de l'estimation de l'étendue :"
 
 #: gui2/guiprint_common.c:550 gui2/guiprint_common.c:568
 #, c-format
@@ -8801,12 +8801,12 @@ msgid ""
 "\\textit{Note}: * denotes a residual in excess of 2.5 standard errors\n"
 "\n"
 msgstr ""
-"\\textit{Note}: * indique un résidu en excès de 2.5 de l'erreur standard\n"
+"\\textit{Note}: * indique un résidu supérieur à 2.5 fois l'erreur standard\n"
 "\n"
 
 #: gui2/guiprint_common.c:694
 msgid "Note: * denotes a residual in excess of 2.5 standard errors"
-msgstr "Note: * indique un résidu en excès de 2.5 de l'erreur standard"
+msgstr "Note: * indique un résidu supérieur à 2.5 fois l'erreur standard"
 
 #: gui2/guiprint_common.c:770
 #, c-format
@@ -8993,7 +8993,7 @@ msgstr "/_Données du modèle"
 
 #: gui2/gui_utils.c:264 gui2/gui_utils.c:319
 msgid "/Model data/Display actual, fitted, residual"
-msgstr "/Données du modèle/Afficher l'actuel, ajusté et résiduel"
+msgstr "/Données du modèle/Valeurs observées et ajustées, résidus"
 
 #: gui2/gui_utils.c:266 gui2/gui_utils.c:321
 msgid "/Model data/Forecasts..."
@@ -9001,7 +9001,7 @@ msgstr "/Données du modèle/Prévisions..."
 
 #: gui2/gui_utils.c:268 gui2/gui_utils.c:323
 msgid "/Model data/Confidence intervals for coefficients"
-msgstr "/Données du modèle/Intervalles de confiance pour les coefficients"
+msgstr "/Données du modèle/Intervalles de confiance des coefficients"
 
 #: gui2/gui_utils.c:270 gui2/gui_utils.c:325
 msgid "/Model data/Confidence ellipse..."
