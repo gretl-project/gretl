@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-03-07 08:37-0500\n"
-"PO-Revision-Date: 2006-03-12 23:00+0100\n"
+"PO-Revision-Date: 2006-03-13 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4158,7 +4158,7 @@ msgstr ""
 
 #: lib/src/printout.c:280
 msgid "Test for null hypothesis of normal distribution"
-msgstr "Test Jarque-Bera, hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny, "
+msgstr "Test Jarque'a-Bera, hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny, "
 
 #: lib/src/printout.c:287
 msgid "Test for null hypothesis of gamma distribution"
@@ -4790,7 +4790,6 @@ msgstr "System VAR, maksymalny rz±d opó¼nienia %d"
 #: lib/src/var.c:1426
 msgid "lags      loglik    p(LR)       AIC          BIC          HQC"
 msgstr "opó¼nienia loglik   p(LR)       AIC          BIC          HQC"
-
 
 #: lib/src/var.c:1740
 msgid "Not much point in a zero-order \"VAR\" surely?\n"
@@ -12246,5 +12245,3 @@ msgstr "To nie jest plik 'OLE' -- prawdopodobnie zbyt stara wersja pliku dla gre
 #: plugin/workbook.c:637
 msgid "Unexpected error reading the file\n"
 msgstr "Nieoczekiwany b³±d czytania pliku\n"
-
-
