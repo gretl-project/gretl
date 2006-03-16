@@ -1128,7 +1128,9 @@ token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 		M = user_matrix_get_slice(s, (const double **) *genr->pZ,
 					  genr->pdinfo, &genr->err);
 		if (M == NULL) {
-		    DPRINTF(("dead end at get_obs_value, s='%s'\n", s));
+		    if (genr->err == E_UNKVAR) {
+			undefined_var_message(s);
+		    }
 		} else {
 		    atom_set_matrix(atom, M, s);
 		}
@@ -1710,7 +1712,8 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 
     reset_atom_stack(genr);
 
-    MPRINTF(("\n*** starting evaluate_matrix_genr\n"));
+    MPRINTF(("\n*** starting evaluate_matrix_genr on\n"
+	     "'%s'\n", genr->orig_s));
 
     while ((atom = pop_atom(genr)) && !genr->err) {
 	gretl_matrix *Apop = NULL;
@@ -2519,7 +2522,7 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
     *prev = 0;
     strncat(prev, s, TOKLEN - 1);
 
-    while (*p) {
+    while (*p && !genr->err) {
 	DPRINTF(("math_tokenize: inner loop '%s'\n", p));
 
 	if (*p == '(') inparen++;
@@ -2559,7 +2562,7 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
 
  atomic_case:
 	
-    if (*q) {
+    if (*q && !genr->err) {
 	if (strlen(q) > TOKLEN - 1) {
 	    fprintf(stderr, "genr error: remainder too long: '%s'\n", q);
 	    return 1;
@@ -3382,7 +3385,7 @@ static int genr_write_matrix (GENERATOR *genr)
 					 genr->pZ, genr->pdinfo);
 
 	if (R != NULL) {
-	    /* avoid double-freeing replaced R */
+	    /* avoid double-freeing replaced matrix R */
 	    atom_stack_nullify_matrix(R, genr);
 	}
 

@@ -628,6 +628,9 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    }
 	} else if (numeric_string(start)) {
 	    nstart = atoi(start);
+#if LOOP_DEBUG
+	    fprintf(stderr, "numeric string: nstart = %d\n", nstart);
+#endif
 	} else {
 	    err = controller_set_var(&loop->init, loop, pdinfo, start);
 	}
@@ -645,6 +648,9 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    }
 	} else if (numeric_string(end)) {
 	    nend = atoi(end);
+#if LOOP_DEBUG
+	    fprintf(stderr, "numeric string: nend = %d\n", nend);
+#endif
 	} else {
 	    err = controller_set_var(&loop->right, loop, pdinfo, end);
 	}
@@ -1946,8 +1952,8 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 	if (newloop == NULL) {
 	    if (*gretl_errmsg == '\0') {
 		gretl_errmsg_set(_("No valid loop condition was given."));
-		gretl_errno = E_PARSE;
 	    }
+	    err = gretl_errno = E_PARSE;
 	    goto bailout;
 	} else {
 	    set_loop_opts(newloop, opt);

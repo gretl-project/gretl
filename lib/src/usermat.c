@@ -614,6 +614,10 @@ static int *slice_from_scalar (const char *s, int *err)
     if (v < gdinfo->v && !gdinfo->vector[v] && !na(gZ[v][0])) {
 	slice = gretl_list_new(1);
 	slice[1] = gZ[v][0];
+#if MDEBUG
+	fprintf(stderr, "slice_from_scalar: '%s' = var %d, "
+		"and gZ[%d][0] = %g\n", s, v, v, gZ[v][0]);
+#endif
     } else {
 	*err = E_DATA;
     }
@@ -744,7 +748,7 @@ static int get_slice_string (const char *s, char *spec, int i)
     }
 
 #if MDEBUG
-    fprintf(stderr, "get_get_slice_string: spec = '%s', err = %d\n",
+    fprintf(stderr, "get_slice_string: spec = '%s', err = %d\n",
 	    spec, err);
 #endif
 
@@ -836,6 +840,10 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
     int n = gretl_matrix_cols(M);
     int nr, nc;
 
+    if (!strncmp(s, "at[", 3)) {
+	fprintf(stderr, "matrix_get_submatrix: s = '%s'\n", s);
+    }
+
     /* the selection string should end with ']' */
     p = strrchr(s, ']');
     if (p == NULL || *(p+1) != '\0') {
@@ -872,13 +880,20 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
 	double x;
 
 	k = 0;
-	for (i=0; i<nr; i++) {
+	for (i=0; i<nr && !*err; i++) {
 	    mi = (rslice == NULL)? k++ : rslice[i+1] - 1;
+	    if (mi < 0) {
+		*err = 1;
+	    }
 	    l = 0;
-	    for (j=0; j<nc; j++) {
+	    for (j=0; j<nc && !*err; j++) {
 		mj = (cslice == NULL)? l++ : cslice[j+1] - 1;
-		x = gretl_matrix_get(M, mi, mj);
-		gretl_matrix_set(S, i, j, x);
+		if (mj < 0) {
+		    *err = 1;
+		} else {
+		    x = gretl_matrix_get(M, mi, mj);
+		    gretl_matrix_set(S, i, j, x);
+		}
 	    }
 	}
     }
@@ -887,6 +902,11 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
 
     free(rslice);
     free(cslice);
+
+    if (*err) {
+	gretl_matrix_free(S);
+	S = NULL;
+    }
 	
     return S;
 }
@@ -921,6 +941,8 @@ gretl_matrix *user_matrix_get_slice (const char *s,
 	M = get_matrix_by_name(test, pdinfo);
 	if (M != NULL) {
 	    S = matrix_get_submatrix(M, s, Z, pdinfo, err);
+	} else {
+	    *err = E_UNKVAR;
 	}
     }
 

@@ -45,7 +45,7 @@ static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
 double gretl_matrix_get (const gretl_matrix *m, int i, int j)
 {
-    if (m == NULL || m->val == NULL ||
+    if (m == NULL || m->val == NULL || i < 0 || j < 0 ||
 	i >= m->rows || j >= m->cols) {
 	return NADBL;
     }
@@ -66,7 +66,7 @@ double gretl_matrix_get (const gretl_matrix *m, int i, int j)
 
 double gretl_vector_get (const gretl_vector *v, int i)
 {
-    if (v == NULL || v->val == NULL ||
+    if (v == NULL || v->val == NULL || i < 0 || 
 	(i >= v->rows && i >= v->cols)) {
 	return NADBL;
     }
@@ -90,7 +90,7 @@ double gretl_vector_get (const gretl_vector *v, int i)
 
 int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
 {
-    if (m == NULL || m->val == NULL ||
+    if (m == NULL || m->val == NULL || i < 0 || j < 0 ||
 	i >= m->rows || j >= m->cols) {
 	return 1;
     }
@@ -114,7 +114,7 @@ int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
 
 int gretl_vector_set (gretl_vector *v, int i, double x)
 {
-    if (v == NULL || v->val == NULL ||
+    if (v == NULL || v->val == NULL || i < 0 ||
 	(i >= v->rows && i >= v->cols)) {
 	return 1;
     }
@@ -136,8 +136,13 @@ int gretl_vector_set (gretl_vector *v, int i, double x)
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 {
-    gretl_matrix *m = malloc(sizeof *m);
+    gretl_matrix *m;
 
+    if (rows <= 0 || cols <= 0) {
+	return NULL;
+    }
+
+    m = malloc(sizeof *m);
     if (m == NULL) {
 	return m;
     }
@@ -238,6 +243,10 @@ static int gretl_matrix_get_structure (const gretl_matrix *m)
 
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols)
 {
+    if (rows <= 0 || cols <= 0) {
+	return NULL;
+    }
+
     m->rows = rows;
     m->cols = cols;
 
@@ -256,6 +265,10 @@ gretl_matrix *gretl_identity_matrix_new (int n)
 {
     gretl_matrix *m;
     int i, j;
+
+    if (n <= 0) {
+	return NULL;
+    }
 
     m = gretl_matrix_alloc(n, n);
 
@@ -288,6 +301,10 @@ gretl_matrix *gretl_zero_matrix_new (int r, int c)
     gretl_matrix *m;
     int i, n = r * c;
 
+    if (r <= 0 || c <= 0) {
+	return NULL;
+    }
+
     m = gretl_matrix_alloc(r, c);
 
     if (m != NULL) {
@@ -312,6 +329,10 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c)
 {
     gretl_matrix *m;
     int i, n = r * c;
+
+    if (r <= 0 || c <= 0) {
+	return NULL;
+    }    
 
     m = gretl_matrix_alloc(r, c);
 
