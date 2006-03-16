@@ -485,14 +485,25 @@ int get_generated_value (const char *rhs, double *val,
 			 int t)
 {
     char genline[MAXLINE];
-    int err = 0;
+    int v, err = 0;
+
+    if (numeric_string(rhs)) {
+	*val = dot_atof(rhs);
+	return 0;
+    }
+
+    if (t < pdinfo->n) {
+	v = varindex(pdinfo, rhs);
+	if (v < pdinfo->v) {
+	    *val = (*pZ)[v][t];
+	    return 0;
+	}
+    }
 
     sprintf(genline, "genr x___=%s", rhs);
-
 #if GENR_DEBUG
     fprintf(stderr, "get_generated_value: trying '%s' (t=%d)\n", genline, t);
 #endif
-
     err = generate(genline, pZ, pdinfo, OPT_P | OPT_D, NULL);
     if (!err) {
 	err = genr_retrieve_result(val, NULL);
@@ -713,8 +724,8 @@ get_var_from_matrix (const char *s, GENERATOR *genr, genatom *atom)
 	len = 1;
     }
 
-    genr->err = named_matrix_get_variable(s, (const double **) *genr->pZ,
-					  genr->pdinfo, &x, &len);
+    genr->err = named_matrix_get_variable(s, genr->pZ, genr->pdinfo, 
+					  &x, &len);
 
     if (!genr->err) {
 	if (len == 1) {
@@ -1017,8 +1028,7 @@ atom_get_dollar_var (const char *s, GENERATOR *genr, genatom *atom)
 		}
 	    } else if (model_data_is_matrix(idx)) {
 		M = saved_object_get_matrix(oname, key, 
-					    (const double **) *genr->pZ,
-					    genr->pdinfo,
+					    genr->pZ, genr->pdinfo,
 					    &genr->err);
 		if (!genr->err) {
 		    atom_set_matrix(atom, M, s);
@@ -1125,8 +1135,8 @@ token_make_atom (const char *s, char op, GENERATOR *genr, int level)
 		    atom->atype = ATOM_SCALAR;
 		}
 	    } else if (genr_is_matrix(genr)) {
-		M = user_matrix_get_slice(s, (const double **) *genr->pZ,
-					  genr->pdinfo, &genr->err);
+		M = user_matrix_get_slice(s, genr->pZ, genr->pdinfo, 
+					  &genr->err);
 		if (M == NULL) {
 		    if (genr->err == E_UNKVAR) {
 			undefined_var_message(s);
@@ -2806,8 +2816,7 @@ int gretl_reserved_word (const char *str)
 	       !strcmp(str, "months") ||
 	       !strcmp(str, "hours")) {
 	ret = 2;
-    } else if (!strcmp(str, "i") ||
-	       !strcmp(str, "obs") ||
+    } else if (!strcmp(str, "obs") ||
 	       !strcmp(str, "series")) {
 	ret = 3;
     } else if (genr_function_from_string(str)) {

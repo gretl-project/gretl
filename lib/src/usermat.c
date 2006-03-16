@@ -49,18 +49,19 @@ static int
 make_slices (const char *s, int m, int n, int **rslice, int **cslice);
 static int delete_matrix_by_name (const char *name);
 
-static const double **gZ;
-static const DATAINFO *gdinfo;
+static double ***gZ;
+static DATAINFO *gdinfo;
 
 static void 
-usermat_publish_dataset (const double **Z, const DATAINFO *pdinfo)
+usermat_publish_dataset (double ***pZ, DATAINFO *pdinfo)
 {
-    gZ = Z;
+    gZ = pZ;
     gdinfo = pdinfo;
 }
 
-static void usermat_unpublish_dataset (void)
+static void usermat_unpublish_dataset (double ***pZ)
 {
+    *pZ = *gZ;
     gZ = NULL;
     gdinfo = NULL;
 }
@@ -504,7 +505,7 @@ int user_matrix_set_name_and_level (const gretl_matrix *M, char *name,
  */
 
 int named_matrix_get_variable (const char *mspec, 
-			       const double **Z, const DATAINFO *pdinfo,
+			       double ***pZ, DATAINFO *pdinfo,
 			       double **px, int *plen)
 {
     double *x = NULL;
@@ -515,7 +516,7 @@ int named_matrix_get_variable (const char *mspec,
     int err = 0;
 
     if (strchr(mspec, '[')) {
-	S = user_matrix_get_slice(mspec, Z, pdinfo, &err);
+	S = user_matrix_get_slice(mspec, pZ, pdinfo, &err);
 	if (!err) {
 	    M = S;
 	}
@@ -602,24 +603,27 @@ static int *slice_from_index_vector (const gretl_matrix *v, int *err)
 static int *slice_from_scalar (const char *s, int *err)
 {
     int *slice = NULL;
-    int v;
+    double x = NADBL;
 
     if (gZ == NULL || gdinfo == NULL) {
 	*err = E_DATA;
 	return NULL;
     }
 
-    v = varindex(gdinfo, s);
+    *err = get_generated_value(s, &x, gZ, gdinfo, 0);
 
-    if (v < gdinfo->v && !gdinfo->vector[v] && !na(gZ[v][0])) {
-	slice = gretl_list_new(1);
-	slice[1] = gZ[v][0];
 #if MDEBUG
-	fprintf(stderr, "slice_from_scalar: '%s' = var %d, "
-		"and gZ[%d][0] = %g\n", s, v, v, gZ[v][0]);
+    fprintf(stderr, "slice_from_scalar: tried s='%s', got err = %d\n", 
+	    s, *err);
 #endif
-    } else {
+
+    if (!*err && (na(x) || x < 0)) {
 	*err = E_DATA;
+    }
+
+    if (!*err) {
+	slice = gretl_list_new(1);
+	slice[1] = x;
     }
 
     return slice;
@@ -642,8 +646,8 @@ static int *parse_slice_spec (const char *s, int n, int *err)
 	return NULL;
     }
 
-    if (isalpha(*s)) {
-	/* is it an index matrix? */
+    if (isalpha(*s) && strchr(s, ':') == NULL) {
+	/* could be the name of an index matrix? */
 	gretl_matrix *v = get_matrix_by_name(s, gdinfo);
 
 #if MDEBUG
@@ -652,31 +656,40 @@ static int *parse_slice_spec (const char *s, int n, int *err)
 	if (v != NULL) {
 	    slice = slice_from_index_vector(v, err);
 	} else {
+	    /* scalar var or formula? */
 	    slice = slice_from_scalar(s, err);
 	}
-	if (*err) {
-	    sprintf(gretl_errmsg, "'%s' is not an index matrix or scalar", s);
-	    *err = E_DATA;
-	}
-    } else {
-	/* numerical specification, either p:q or plain p */
-	int idx[2];
+    }
 
-	if (strchr(s, ':')) {
-	    if (sscanf(s, "%d:%d", &idx[0], &idx[1]) != 2) {
-		*err = 1;
-	    } else if (idx[0] < 1 || idx[1] < 1 || idx[1] < idx[0]) {
-		*err = 1;
-	    } else {
-		sn = idx[1] - idx[0] + 1;
+    if (slice == NULL && !*err) {
+	/* not found yet: keep trying, for p:q or plain p */
+	char f1[32], f2[32]; /* arbitrary? */
+	double x[2];
+
+	if (sscanf(s, "%31[^:]:%31s", f1, f2) == 2) {
+	    *err = get_generated_value(f1, &x[0], gZ, gdinfo, 0);
+	    if (!*err) {
+		*err = get_generated_value(f2, &x[1], gZ, gdinfo, 0);
 	    }
-	} else if (sscanf(s, "%d", &idx[0]) != 1) {
-	    *err = 1;
-	} else if (idx[0] < 1) {
-	    *err = 1;
+	    if (*err && (na(x[0]) || na(x[1]))) {
+		*err = 1;
+	    }
+	    if (!*err && (x[0] < 1 || x[1] < 1 || x[1] < x[0])) {
+		*err = 1;
+	    }
+	    if (!*err) {
+		sn = x[1] - x[0] + 1;
+	    }
+	} else if (sscanf(s, "%31s", f1) == 1) {
+	    *err = get_generated_value(f1, &x[0], gZ, gdinfo, 0);
+	    if (!*err && (na(x[0]) || x[0] < 1)) {
+		*err = 1;
+	    }
+	    if (!*err) {
+		sn = 1;
+	    }
 	} else {
-	    idx[1] = idx[0];
-	    sn = 1;
+	    *err = 1;
 	}
 
 	if (!*err) {
@@ -685,7 +698,7 @@ static int *parse_slice_spec (const char *s, int n, int *err)
 		*err = E_ALLOC;
 	    } else {
 		for (i=0; i<sn; i++) {
-		    slice[i+1] = idx[0] + i;
+		    slice[i+1] = x[0] + i;
 		}
 	    }
 	}
@@ -829,7 +842,7 @@ try_diagonal (const gretl_matrix *M, const char *s, int *err)
 
 gretl_matrix *
 matrix_get_submatrix (const gretl_matrix *M, const char *s, 
-		      const double **Z, const DATAINFO *pdinfo,
+		      double ***pZ, DATAINFO *pdinfo, 
 		      int *err)
 {
     gretl_matrix *S;
@@ -839,10 +852,6 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
     int m = gretl_matrix_rows(M);
     int n = gretl_matrix_cols(M);
     int nr, nc;
-
-    if (!strncmp(s, "at[", 3)) {
-	fprintf(stderr, "matrix_get_submatrix: s = '%s'\n", s);
-    }
 
     /* the selection string should end with ']' */
     p = strrchr(s, ']');
@@ -859,7 +868,7 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
 	}
     }
 
-    usermat_publish_dataset(Z, pdinfo);
+    usermat_publish_dataset(pZ, pdinfo);
 
     *err = make_slices(s, m, n, &rslice, &cslice);
     if (*err) {
@@ -898,7 +907,7 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
 	}
     }
 
-    usermat_unpublish_dataset();
+    usermat_unpublish_dataset(pZ);
 
     free(rslice);
     free(cslice);
@@ -926,8 +935,8 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
  */
 
 gretl_matrix *user_matrix_get_slice (const char *s, 
-				     const double **Z, 
-				     const DATAINFO *pdinfo,
+				     double ***pZ, 
+				     DATAINFO *pdinfo,
 				     int *err)
 {
     gretl_matrix *M = NULL;
@@ -940,7 +949,7 @@ gretl_matrix *user_matrix_get_slice (const char *s,
 	strncat(test, s, len);
 	M = get_matrix_by_name(test, pdinfo);
 	if (M != NULL) {
-	    S = matrix_get_submatrix(M, s, Z, pdinfo, err);
+	    S = matrix_get_submatrix(M, s, pZ, pdinfo, err);
 	} else {
 	    *err = E_UNKVAR;
 	}
@@ -978,10 +987,10 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 
     if (u != NULL) {
 	if (pZ != NULL && pdinfo != NULL) {
-	    usermat_publish_dataset((const double **) *pZ, pdinfo);
+	    usermat_publish_dataset(pZ, pdinfo);
 	}
 	err = replace_user_matrix(u, M, R, mask);
-	usermat_unpublish_dataset();
+	usermat_unpublish_dataset(pZ);
     } else {
 	int v;
 
@@ -1650,7 +1659,7 @@ static int create_matrix (const char *name, const char *mask,
 
 static int 
 print_matrix_by_name (const char *name, const char *mask, 
-		      const double **Z, const DATAINFO *pdinfo,
+		      double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn)
 {
     gretl_matrix *M;
@@ -1670,7 +1679,7 @@ print_matrix_by_name (const char *name, const char *mask,
 	err = 1;
     } else {
 	if (*mask != '\0') {
-	    S = matrix_get_submatrix(M, mask, Z, pdinfo, &err);
+	    S = matrix_get_submatrix(M, mask, pZ, pdinfo, &err);
 	    if (!err) {
 		char mspec[96];
 
@@ -1750,10 +1759,7 @@ int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	*word = '\0';
 	sscanf(line, "%8s", word);
 	if (*word == '\0' || !strcmp(word, "print")) {
-	    err = print_matrix_by_name(name, mask, 
-				       (const double **) *pZ, 
-				       pdinfo, 
-				       prn);
+	    err = print_matrix_by_name(name, mask, pZ, pdinfo, prn);
 	} else if (!strcmp(word, "delete")) {
 	    err = delete_matrix_by_name(name);
 	} else if (!strcmp(word, "address")) {

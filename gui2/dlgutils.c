@@ -98,19 +98,38 @@ static void opt_invalid (GtkWidget *w, int *opt)
     *opt = -1;
 }
 
+#ifndef OLD_GTK
+static void maybe_opt_invalid (GtkDialog *d, int resp, int *opt)
+{
+    if (resp == GTK_RESPONSE_NONE || resp == GTK_RESPONSE_DELETE_EVENT) {
+	*opt = -1;
+    }
+}
+#endif
+
 GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
 				  int *opt)
 {
-    GtkWidget *w;
+    GtkWidget *w = standard_button(GTK_STOCK_CANCEL);
 
-    w = standard_button(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+
     if (opt != NULL) {
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(opt_invalid), 
 			 opt);
+#ifdef OLD_GTK
+	g_signal_connect(G_OBJECT(targ), "delete_event", 
+			 G_CALLBACK(opt_invalid), 
+			 opt);
+#else
+	g_signal_connect(GTK_DIALOG(targ), "response", 
+			 G_CALLBACK(maybe_opt_invalid), 
+			 opt);
+#endif
     }
+
     g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     targ);

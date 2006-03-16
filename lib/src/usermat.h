@@ -29,7 +29,7 @@ gretl_matrix *
 get_matrix_transpose_by_name (const char *name, const DATAINFO *pdinfo);
 
 int named_matrix_get_variable (const char *mspec, 
-			       const double **Z, const DATAINFO *pdinfo,
+			       double ***Z, DATAINFO *pdinfo,
 			       double **px, int *plen);
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
@@ -48,8 +48,7 @@ int destroy_user_matrices_at_level (int level);
 int is_user_matrix (const gretl_matrix *m);
 
 gretl_matrix *user_matrix_get_slice (const char *s, 
-				     const double **Z, 
-				     const DATAINFO *pdinfo,
+				     double ***pZ, DATAINFO *pdinfo,
 				     int *err);
 
 int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn);
@@ -83,7 +82,7 @@ user_matrix_get_sorted_vector (const gretl_matrix *m, int s, int *err);
 
 gretl_matrix *
 matrix_get_submatrix (const gretl_matrix *M, const char *s, 
-		      const double **Z, const DATAINFO *pdinfo,
+		      double ***pZ, DATAINFO *pdinfo,
 		      int *err);
 
 int reposition_transpose_symbol (char *s);

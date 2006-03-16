@@ -99,6 +99,7 @@ struct controller_ {
     int vnum;
     char vname[VNAMELEN];
     int vsign;
+    char *expr;
 };
 
 typedef struct controller_ controller;
@@ -119,15 +120,12 @@ struct LOOPSET_ {
 
     /* control variables */
     char ichar;
-    char ineq;
     char brk;
 
-    controller left;
-    controller right;
     controller init;
-    controller incr;
-
-    int incrsgn;
+    controller test;
+    controller delta;
+    controller final;
 
     /* numbers of various subsidiary objects */
     int n_cmds;
@@ -163,6 +161,7 @@ static int prepare_loop_for_action (LOOPSET *loop);
 static void free_loop_model (LOOP_MODEL *lmod);
 static void free_loop_print (LOOP_PRINT *lprn);
 static void loop_store_free (LOOPSET *loop);
+static void controller_free (controller *clr);
 static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn);
 static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *lmod, 
@@ -195,13 +194,66 @@ int gretl_execute_loop (void)
 
 /* --------------------------------------------------*/
 
+static double controller_evaluate_expr (const char *expr, 
+					const char *vname,
+					int vnum,
+					double ***pZ,
+					DATAINFO *pdinfo)
+{
+    double x = NADBL;
+    int v, err;
+
+    *gretl_errmsg = '\0';
+
+    err = generate(expr, pZ, pdinfo, OPT_P, NULL);
+
+#if LOOP_DEBUG
+    fprintf(stderr, "controller_evaluate_expr: expr = '%s', genr->err = %d\n", 
+	    expr, err);
+#endif
+
+    if (!err) {
+	if (vnum > 0) {
+	    v = vnum;
+	} else {
+	    v = varindex(pdinfo, vname);
+	}
+	if (v < pdinfo->v) {
+	    x = (*pZ)[v][0];
+	    if (na(x)) {
+		err = 1;
+	    }
+	    if (!strcmp(vname, "iftest")) {
+		dataset_drop_last_variables(1, pZ, pdinfo);
+	    }
+	} else {
+	    err = 1;
+	}
+    }
+
+    if (err && *gretl_errmsg == '\0') {
+	strcpy(gretl_errmsg, _("error evaluating loop condition"));
+    }
+
+    return x;
+}
+
+/* get a value from a loop controller element, either via a
+   "genr"-type expression, or from a specified scalar variable, or
+   from a numeric constant */
+
 static double 
-loop_controller_get_value (controller *clr, const double **Z)
+loop_controller_get_value (controller *clr, double ***pZ, DATAINFO *pdinfo)
 {
     double ret = NADBL;
 
-    if (clr->vnum > 0) {
-	ret = Z[clr->vnum][0] * clr->vsign;
+    if (clr->expr != NULL) {
+	ret = controller_evaluate_expr(clr->expr, clr->vname, clr->vnum,
+				       pZ, pdinfo);
+	clr->val = ret;
+    } else if (clr->vnum > 0) {
+	ret = (*pZ)[clr->vnum][0] * clr->vsign;
+	clr->val = ret;
     } else {
 	ret = clr->val;
     } 
@@ -214,29 +266,33 @@ loop_controller_get_value (controller *clr, const double **Z)
     return ret;
 }
 
-static double loop_lval (LOOPSET *loop, const double **Z)
+static double loop_initval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 {
 #if LOOP_DEBUG
-    fprintf(stderr, "getting loop_lval...\n");
+    fprintf(stderr, "getting loop_initval...\n");
 #endif
-    return loop_controller_get_value(&loop->left, Z);
+    return loop_controller_get_value(&loop->init, pZ, pdinfo);
 }
 
-static double loop_rval (LOOPSET *loop, const double **Z)
+static double loop_finalval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 {
 #if LOOP_DEBUG
-    fprintf(stderr, "getting loop_rval...\n");
+    fprintf(stderr, "getting loop_finalval...\n");
 #endif
-    return loop_controller_get_value(&loop->right, Z);
+    return loop_controller_get_value(&loop->final, pZ, pdinfo);
 }
 
-static double loop_incrval (LOOPSET *loop, const double **Z)
+static double loop_testval (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 {
-    double x = loop_controller_get_value(&loop->incr, Z);
+#if LOOP_DEBUG
+    fprintf(stderr, "getting loop_testval...\n");
+#endif
+    return loop_controller_get_value(&loop->test, pZ, pdinfo);
+}
 
-    if (!na(x)) {
-	x *= loop->incrsgn;
-    }
+static double loop_delta (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
+{
+    double x = loop_controller_get_value(&loop->delta, pZ, pdinfo);
 
 #if LOOP_DEBUG
     fprintf(stderr, "loop_incrval, returning %g\n", x);
@@ -399,6 +455,11 @@ static void gretl_loop_destroy (LOOPSET *loop)
 	gretl_loop_destroy(loop->children[i]);
     }
 
+    controller_free(&loop->init);
+    controller_free(&loop->test);
+    controller_free(&loop->delta);
+    controller_free(&loop->final);
+
     if (loop->lines != NULL) {
 	for (i=0; i<loop->n_cmds; i++) {
 	    free(loop->lines[i]);
@@ -445,23 +506,6 @@ static void gretl_loop_destroy (LOOPSET *loop)
     }
 
     free(loop);
-}
-
-int opstr_to_op (const char *s)
-{
-    int op = LOOP_VAL_BAD;
-
-    if (strstr(s, ">=")) {
-	op = OP_GTE;
-    } else if (strstr(s, ">")) {
-	op = OP_GT;
-    } else if (strstr(s, "<=")) {
-	op = OP_LTE;
-    } else if (strstr(s, "<")) {
-	op = OP_LT;
-    } 
-    
-    return op;
 }
 
 static int 
@@ -523,38 +567,31 @@ controller_set_var (controller *clr, LOOPSET *loop, const DATAINFO *pdinfo,
 }
 
 static int parse_as_while_loop (LOOPSET *loop,
-				const DATAINFO *pdinfo,
-				char *lvar, char *rvar, 
-				char *opstr)
+				double ***pZ, DATAINFO *pdinfo,
+				const char *s)
 {
+    char *expr = NULL;
+    double x = NADBL;
     int err = 0;
 
-    loop->ineq = opstr_to_op(opstr);
+    expr = malloc(strlen(s) + 12);
+    sprintf(expr, "__iftest=(%s)", s);
+    x = controller_evaluate_expr(expr, "iftest", 0, pZ, pdinfo);
 
-    if (loop->ineq == LOOP_VAL_BAD) {
+    if (na(x)) {
 	err = 1;
+	free(expr);
     }
 
     if (!err) {
-	err = controller_set_var(&loop->left, loop, pdinfo, lvar);
-    }
-
-    if (!err) {
-	if (numeric_string(rvar)) {
-	    loop->right.val = dot_atof(rvar);
-	} else {
-	    err = controller_set_var(&loop->right, loop, pdinfo, rvar);
-	}
-    }
-
-    if (!err) {
+	loop->test.expr = expr;
+	strcpy(loop->test.vname, "iftest");
 	loop->type = WHILE_LOOP;
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_as_while_loop: left.var=%d, right.var=%d, right.val=%g\n", 
-	    loop->left.vnum, loop->right.vnum, loop->right.val);
-    fprintf(stderr, " (lvar='%s', rvar='%s')\n", lvar, rvar);
+    fprintf(stderr, "parse_as_while_loop: cond = '%s', x = %g, err = %d\n", 
+	    s, x, err);
 #endif
 
     return err;
@@ -590,8 +627,8 @@ static int bad_ichar (char c)
 #define maybe_date(s) (strchr(s, ':') || strchr(s, '/'))
 
 static int parse_as_indexed_loop (LOOPSET *loop,
-				  const DATAINFO *pdinfo,
 				  const double **Z,
+				  const DATAINFO *pdinfo,
 				  char ichar,
 				  const char *lvar, 
 				  const char *start,
@@ -652,7 +689,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    fprintf(stderr, "numeric string: nend = %d\n", nend);
 #endif
 	} else {
-	    err = controller_set_var(&loop->right, loop, pdinfo, end);
+	    err = controller_set_var(&loop->final, loop, pdinfo, end);
 	}
     }
 
@@ -660,7 +697,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
        range right now */
 
     if (!err && loop->init.vnum == 0 && 
-	loop->right.vnum == 0 && nend <= nstart) {
+	loop->final.vnum == 0 && nend <= nstart) {
 	strcpy(gretl_errmsg, _("Ending value for loop index must be greater "
 			       "than starting value."));
 	err = 1;
@@ -670,8 +707,8 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	if (loop->init.vnum == 0) {
 	    loop->init.val = nstart;
 	} 
-	if (loop->right.vnum == 0) {
-	    loop->right.val = nend;
+	if (loop->final.vnum == 0) {
+	    loop->final.val = nend;
 	} 
 	if (dated) {
 	    loop->type = DATED_LOOP;
@@ -682,17 +719,17 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_as_indexed_loop: init.val=%g, right.val=%g, "
-	    "right.vnum=%d\n", loop->init.val, loop->right.val,
-	    loop->right.vnum);
+    fprintf(stderr, "parse_as_indexed_loop: init.val=%g, final.val=%g, "
+	    "final.vnum=%d\n", loop->init.val, loop->final.val,
+	    loop->final.vnum);
 #endif
 
     return err;
 }
 
 static int parse_as_count_loop (LOOPSET *loop, 
-				const DATAINFO *pdinfo,
 				const double **Z,
+				const DATAINFO *pdinfo,
 				const char *count)
 {
     int nt = -1;
@@ -703,130 +740,143 @@ static int parse_as_count_loop (LOOPSET *loop,
     if (numeric_string(count)) {
 	nt = atoi(count); 
     } else { 
-	err = controller_set_var(&loop->right, loop, pdinfo, count);
+	err = controller_set_var(&loop->final, loop, pdinfo, count);
     }
 
-    if (!err && loop->right.vnum == 0 && nt <= 0) {
+    if (!err && loop->final.vnum == 0 && nt <= 0) {
 	strcpy(gretl_errmsg, _("Loop count must be positive."));
 	err = 1;
     }
 
     if (!err) {
 	loop->init.val = 1;
-	if (loop->right.vnum == 0) {
-	    loop->right.val = nt;
+	if (loop->final.vnum == 0) {
+	    loop->final.val = nt;
 	}
 	loop->type = COUNT_LOOP;
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_as_count_loop: init.val=%g, right.val=%g, "
-	    "right.vnum=%d\n", loop->init.val, loop->right.val,
-	    loop->right.vnum);
+    fprintf(stderr, "parse_as_count_loop: init.val=%g, final.val=%g, "
+	    "final.vnum=%d\n", loop->init.val, loop->final.val,
+	    loop->final.vnum);
 #endif
 
     return err;
 }
 
+/* before testing the "delta" element in a putative "for" loop, save
+   the state of the variable in question so we can restore it after
+   running the test */
+
+static double *save_delta_state (int v, double **Z, DATAINFO *pdinfo)
+{
+    double *x0;
+    int i, n;
+
+    n = (pdinfo->vector[v])? pdinfo->n : 1;
+
+    x0 = malloc(n * sizeof *x0);
+    if (x0 != NULL) {
+	for (i=0; i<n; i++) {
+	    x0[i] = Z[v][i];
+	}
+    }
+
+    return x0;
+}
+
+static void 
+restore_delta_state (int v, double *x0, double **Z, DATAINFO *pdinfo)
+{
+    int i, n;
+
+    n = (pdinfo->vector[v])? pdinfo->n : 1;
+
+    for (i=0; i<n; i++) {
+	Z[v][i] = x0[i];
+    }
+
+    free(x0);
+}
+
 static int 
-test_forloop_element (const char *s, LOOPSET *loop,
-		      DATAINFO *pdinfo, double ***pZ,
+test_forloop_element (char *s, LOOPSET *loop,
+		      double ***pZ, DATAINFO *pdinfo,
 		      int i)
 {
-    char lhs[VNAMELEN];
-    char rhs[VNAMELEN];
-    char opstr[3];
-    int ngot = 0;
-    int err = 0;
+    char vname[VNAMELEN] = {0};
+    char *expr = NULL;
+    double x = NADBL;
+    int len, err = 0;
 
-    if (s == NULL) return 1;
-
-    if (i == 0) {
-	ngot = sscanf(s, "%15[^=]=%15s", lhs, rhs) + 1;
-	strcpy(opstr, "=");
-    } else {
-	ngot = sscanf(s, "%15[^-+*/=<>]%2[-+*/=<>]%15[^-+*/=<>]", 
-		      lhs, opstr, rhs);
+    if (s == NULL) {
+	/* FIXME: allow empty "for" fields? */
+	return 1;
     }
 
-    if (i == 2 && ngot == 2) {
-	if (!strcmp(opstr, "++") || !strcmp(opstr, "--")) {
-	    strcpy(opstr, (*opstr == '+')? "+=" : "-=");
-	    strcpy(rhs, "1");
-	    ngot = 3;
-	} 
-    }
-
-#if LOOP_DEBUG
-    fprintf(stderr, "read forloop element, i=%d: '%s'\n", i, s);
-    fprintf(stderr, " got lhs='%s', opstr='%s', rhs='%s'\n",
-	    lhs, opstr, rhs);
-#endif
-
-    if (ngot != 3) {
-	err = E_PARSE;
+    if (i == 1) {
+	/* middle term: Boolean test */
+	expr = malloc(strlen(s) + 12);
+	sprintf(expr, "__iftest=(%s)", s);
+	strcpy(vname, "iftest");
+	x = controller_evaluate_expr(expr, vname, 0, pZ, pdinfo);
     } else {
-	int v = varindex(pdinfo, lhs);
+	/* treat as regular "genr" expression */
+	len = gretl_varchar_spn(s);
+	if (len < VNAMELEN) {
+	    strncat(vname, s, len);
+	    if (i == 2) {
+		/* "increment" expression: we'll have to undo whatever
+		   the test evaluation does */
+		int v = varindex(pdinfo, vname);
 
-#if LOOP_DEBUG
-	fprintf(stderr, " lhs: varindex = %d (pdinfo->v = %d)\n", v, pdinfo->v);
-#endif
-	/* examine the LHS */
-	if (i == 0) {
-	    if (v == pdinfo->v) {
-		err = dataset_add_scalar(pZ, pdinfo);
-		if (err) {
-		    strcpy(gretl_errmsg, _("Out of memory!"));
+		if (v < pdinfo->v) {
+		    double *x0 = save_delta_state(v, *pZ, pdinfo);
+
+		    if (x0 == NULL) {
+			err = 1;
+		    } else {
+			x = controller_evaluate_expr(s, vname, v, pZ, pdinfo);
+			restore_delta_state(v, x0, *pZ, pdinfo);
+		    }
 		} else {
-		    strcpy(pdinfo->varname[v], lhs);
-		    (*pZ)[v][0] = 0.0;
-		    loop->left.vnum = v;
+		    err = 1;
 		}
 	    } else {
-		loop->left.vnum = ok_loop_var(loop, pdinfo, lhs);
-		if (loop->left.vnum == LOOP_VAL_BAD) {
-		    err = 1;
-		} 
-	    }
-	} else if (v != loop->left.vnum) {
-	    /* the LHS var must be the same in all three "for" fields */
-	    printf("error in test_forloop_element: i=%d, lhs='%s', v=%d\n", 
-                   i, lhs, v);
-	    strcpy(gretl_errmsg, _("No valid loop condition was given."));
+		x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
+	    }	
+	} else {
 	    err = 1;
 	}
-	    
-	if (!err) {
-	    /* examine the RHS */
-	    controller *clr;
+    }
 
-	    clr = (i == 0)? &loop->init :
-		(i == 1)? &loop->right : &loop->incr;
+#if LOOP_DEBUG
+    fprintf(stderr, "test_forloop_element: i=%d: '%s', x = %g\n", i, s, x);
+#endif
 
-	    if (numeric_string(rhs)) {
-		clr->val = dot_atof(rhs);
+    if (na(x)) {
+	err = 1;
+	free(expr);
+    }
+
+    if (!err) {
+	controller *clr = (i == 0)? &loop->init :
+	    (i == 1)? &loop->test : &loop->delta;
+
+	if (i == 1) {
+	    /* middle test term: leave vnum = 0 */
+	    clr->expr = expr;
+	} else {
+	    clr->expr = gretl_strdup(s);
+	    if (clr->expr == NULL) {
+		err = 1;
 	    } else {
-		err = controller_set_var(clr, loop, pdinfo, rhs);
-	    } 
-	}
-	
-	if (!err) {
-	    /* examine operator(s) */
-	    if (i == 1) {
-		loop->ineq = opstr_to_op(opstr);
-		if (loop->ineq == LOOP_VAL_BAD) {
-		    err = 1;
-		}
-	    } else if (i == 2) {
-		if (!strcmp(opstr, "-=")) {
-		    loop->incrsgn = -1;
-		} else if (strcmp(opstr, "+=")) {
-		    sprintf(gretl_errmsg, "Invalid operator '%s'", opstr);
-		    err = 1;
-		}
+		clr->vnum = varindex(pdinfo, vname);
 	    }
 	}
-    }
+	strcpy(clr->vname, vname);
+    }	
 
     return err;
 }
@@ -1017,35 +1067,32 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     if (!err) {
 	loop->type = EACH_LOOP;
 	loop->init.val = 1;
-	loop->right.val = nf;
+	loop->final.val = nf;
     }   
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_as_each_loop: right.val=%g\n", loop->right.val);
+    fprintf(stderr, "parse_as_each_loop: final.val=%g\n", loop->final.val);
 #endif 
 
     return err;
 }
 
 static int 
-parse_as_for_loop (LOOPSET *loop, DATAINFO *pdinfo, double ***pZ,
-		   char *s)
+parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
 {
+    char *forstr = NULL;
+    char *forbits[3];
     char *p = strchr(s, '(');
-    int err = 0;
+    int i, len, err = 0;
 
     if (p == NULL) {
 	err = 1;
     } else {
-	char *forstr = NULL;
-	int len = strcspn(p, ")");
-
-	if (len < 4 || (forstr = malloc(len)) == NULL) {
+	len = strcspn(p, ")");
+	if (len < 4 || (forstr = malloc(len + 1)) == NULL) {
 	    err = 1;
 	} else {
-	    char *forbits[3];
-	    int i = 0;
-
+	    i = 0;
 	    /* make compressed copy of string */
 	    p++;
 	    while (*p) {
@@ -1061,7 +1108,7 @@ parse_as_for_loop (LOOPSET *loop, DATAINFO *pdinfo, double ***pZ,
 	    for (i=0; i<3 && !err; i++) {
 		forbits[i] = strtok((i == 0)? forstr : NULL, ";");
 		err = test_forloop_element(forbits[i], loop, 
-					   pdinfo, pZ, i);
+					   pZ, pdinfo, i);
 	    }
 
 	    free(forstr);
@@ -1153,21 +1200,21 @@ parse_loopline (char *line, LOOPSET *loop,
 
     /* try parsing the loop line in various ways */
 
-    if (sscanf(line, "while %15[^ <>=]%15[ <>=] %15s", lvar, op, rvar) == 3) {
-	err = parse_as_while_loop(newloop, pdinfo, lvar, rvar, op);
-    } else if (sscanf(line, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(newloop, pdinfo, (const double **) *pZ, 
+
+    if (sscanf(line, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
+	err = parse_as_indexed_loop(newloop, (const double **) *pZ, pdinfo,
 				    ichar, NULL, op, rvar);
     } else if (sscanf(line, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(newloop, pdinfo, (const double **) *pZ, 
+	err = parse_as_indexed_loop(newloop, (const double **) *pZ, pdinfo, 
 				    0, lvar, op, rvar);
     } else if (!strncmp(line, "foreach", 7)) {
 	err = parse_as_each_loop(newloop, pdinfo, line + 7);
     } else if (!strncmp(line, "for", 3)) {
-	err = parse_as_for_loop(newloop, pdinfo, pZ, line + 3);
+	err = parse_as_for_loop(newloop, pZ, pdinfo, line + 3);
+    } else if (!strncmp(line, "while", 5)) {
+	err = parse_as_while_loop(newloop, pZ, pdinfo, line + 6);
     } else if (sscanf(line, "%15s", lvar) == 1) {
-	err = parse_as_count_loop(newloop, pdinfo, (const double **) *pZ, 
-				  lvar);
+	err = parse_as_count_loop(newloop, (const double **) *pZ, pdinfo, lvar);
     } else {
 	/* out of options, complain */
 	printf("parse_loopline: failed on '%s'\n", line);
@@ -1175,8 +1222,8 @@ parse_loopline (char *line, LOOPSET *loop,
 	err = 1;
     }
 
-    if (!err && !na(newloop->init.val) && !na(newloop->right.val)) {
-	int nt = newloop->right.val - newloop->init.val;
+    if (!err && !na(newloop->init.val) && !na(newloop->final.val)) {
+	int nt = newloop->final.val - newloop->init.val;
 
 	if (newloop->type != FOR_LOOP && nt <= 0) {
 	    strcpy(gretl_errmsg, _("Loop count missing or invalid\n"));
@@ -1249,40 +1296,10 @@ static int loop_count_too_high (LOOPSET *loop)
     return loop->err;
 }
 
-static int 
-eval_numeric_condition (int op, double xl, double xr)
-{
-    int cont = 0;
-
-#if LOOP_DEBUG
-    char opstr[4];
-
-    if (op == OP_GT) strcpy(opstr, "GT");
-    else if (op == OP_GTE) strcpy(opstr, "GTE");
-    else if (op == OP_LTE) strcpy(opstr, "LTE");
-    else if (op == OP_LT) strcpy(opstr, "LT");
-    else strcpy(opstr, "??");
-    fprintf(stderr, "** eval_numeric_condition: xl=%g, xr=%g, "
-	    "op=%s\n", xl, xr, opstr);
-#endif
-
-    if (op == OP_GT) {
-	cont = (xl > xr);
-    } else if (op == OP_GTE) {
-	cont = (xl >= xr);
-    } else if (op == OP_LTE) {
-	cont = (xl <= xr);
-    } else if (op == OP_LT) {
-	cont = (xl < xr);
-    }
-
-    return cont;
-}
-
 /**
  * loop_condition:
  * @loop: pointer to loop commands struct.
- * @Z: data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  *
  * Check whether a looping condition is still satisfied.
@@ -1291,7 +1308,7 @@ eval_numeric_condition (int op, double xl, double xr)
  */
 
 static int 
-loop_condition (LOOPSET *loop, double **Z, DATAINFO *pdinfo)
+loop_condition (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 {
     int ok = 0;
 
@@ -1313,17 +1330,13 @@ loop_condition (LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 	if (loop_count_too_high(loop)) {
 	    /* safeguard against infinite loops */
 	    ok = 0;
-	} else {
-	    double lval, rval = loop_rval(loop, (const double **) Z);
-
-	    if (loop->type == FOR_LOOP && loop->iter > 0) {
-		Z[loop->left.vnum][0] += loop_incrval(loop, (const double **) Z);
-		lval = Z[loop->left.vnum][0];
-	    } else {
-		lval = loop_lval(loop, (const double **) Z);
+	} else if (loop->type == FOR_LOOP) {
+	    if (loop->iter > 0) {
+		loop_delta(loop, pZ, pdinfo);
 	    }
-
-	    ok = eval_numeric_condition(loop->ineq, lval, rval);
+	    ok = loop_testval(loop, pZ, pdinfo);
+	} else if (loop->type == WHILE_LOOP) {
+	    ok = loop_testval(loop, pZ, pdinfo);
 	}
     }
 
@@ -1344,6 +1357,15 @@ static void controller_init (controller *clr)
     clr->vnum = 0;
     clr->vname[0] = 0;
     clr->vsign = 1;
+    clr->expr = NULL;
+}
+
+static void controller_free (controller *clr)
+{
+    if (clr->expr != NULL) {
+	free(clr->expr);
+	clr->expr = NULL;
+    }
 }
 
 static void gretl_loop_init (LOOPSET *loop)
@@ -1361,13 +1383,10 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->ichar = 0;
     loop->brk = 0;
 
-    controller_init(&loop->left);
-    controller_init(&loop->right);
     controller_init(&loop->init);
-    controller_init(&loop->incr);
-
-    loop->incrsgn = 1;
-    loop->ineq = 0;
+    controller_init(&loop->test);
+    controller_init(&loop->delta);
+    controller_init(&loop->final);
 
     loop->n_cmds = 0;
     loop->n_models = 0;
@@ -2273,7 +2292,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 #endif
 
     if (loop->type == FOR_LOOP) {
-	sprintf(targ, "$%s", pdinfo->varname[loop->left.vnum]);
+	sprintf(targ, "$%s", pdinfo->varname[loop->init.vnum]);
 	targlen = strlen(targ);
     } else if (indexed_loop(loop)) {
 	targ[0] = '$';
@@ -2298,7 +2317,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	strcpy(q, p + targlen);
 
 	if (loop->type == FOR_LOOP) {
-	    sprintf(ins, "%g", Z[loop->left.vnum][0]); /* scalar */
+	    sprintf(ins, "%g", Z[loop->init.vnum][0]); /* scalar */
 
 	    if (p - str > 0 && *(p - 1) == '[' && *(p + targlen) == ']') {
 		/* got an obs-type string, on the pattern [$lvar] */
@@ -2370,20 +2389,20 @@ connect_loop_control_vars (LOOPSET *loop, const DATAINFO *pdinfo)
 {
     int err = 0;
 
-    if (loop->left.vnum == LOOP_VAL_UNDEF) {
-	err = clr_attach_var(&loop->left, pdinfo);
-    }
-
-    if (!err && loop->right.vnum == LOOP_VAL_UNDEF) {
-	err = clr_attach_var(&loop->right, pdinfo);
-    }
-
-    if (!err && loop->init.vnum == LOOP_VAL_UNDEF) {
+    if (loop->init.vnum == LOOP_VAL_UNDEF) {
 	err = clr_attach_var(&loop->init, pdinfo);
     }
 
-    if (!err && loop->incr.vnum == LOOP_VAL_UNDEF) {
-	err = clr_attach_var(&loop->incr, pdinfo);
+    if (!err && loop->test.vnum == LOOP_VAL_UNDEF) {
+	err = clr_attach_var(&loop->test, pdinfo);
+    }
+
+    if (!err && loop->delta.vnum == LOOP_VAL_UNDEF) {
+	err = clr_attach_var(&loop->delta, pdinfo);
+    }
+
+    if (!err && loop->final.vnum == LOOP_VAL_UNDEF) {
+	err = clr_attach_var(&loop->final, pdinfo);
     }
 
     return err;
@@ -2409,7 +2428,7 @@ static void progressive_loop_zero (LOOPSET *loop)
 }
 
 static int 
-top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
+top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 {
     int err;
 
@@ -2419,16 +2438,11 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 
     if (!err) {
 	if (loop->init.vnum > 0) {
-	    loop->init.val = 
-		loop_controller_get_value(&loop->init, (const double **) Z);
+	    loop_initval(loop, pZ, pdinfo);
 	} 
 
-	if (loop->type == FOR_LOOP) {
-	    Z[loop->left.vnum][0] = loop->init.val;
-	}
-
 	if (loop->type == COUNT_LOOP || indexed_loop(loop)) {
-	    double maxval = loop_rval(loop, (const double **) Z);
+	    double maxval = loop_finalval(loop, pZ, pdinfo);
 
 	    if (na(loop->init.val) || na(maxval)) {
 		err = 1;
@@ -2438,7 +2452,6 @@ top_of_loop (LOOPSET *loop, double **Z, const DATAINFO *pdinfo)
 		fprintf(stderr, "*** itermax = %g - %g + 1 = %d\n",
 			maxval, loop->init.val, loop->itermax);
 #endif
-
 	    }
 	}
     } 
@@ -2623,13 +2636,13 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
     fprintf(stderr, "loop_exec: loop = %p\n", (void *) loop);
 #endif
 
-    err = top_of_loop(loop, *pZ, pdinfo);
+    err = top_of_loop(loop, pZ, pdinfo);
     
     if (!err) {
 	push_cmd_src(SRC_LOOP, "starting loop");
     }
 
-    while (!err && loop_condition(loop, *pZ, pdinfo)) {
+    while (!err && loop_condition(loop, pZ, pdinfo)) {
 	int modnum = 0;
 	int lmodnum = 0;
 	int printnum = 0;

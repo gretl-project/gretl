@@ -99,7 +99,7 @@ double *saved_object_get_series (const char *oname, const char *key,
 
 gretl_matrix *
 saved_object_get_matrix (const char *oname, const char *key,
-			 const double **Z, const DATAINFO *pdinfo,
+			 double ***pZ, DATAINFO *pdinfo,
 			 int *err);
 
 int gretl_object_rename (void *p, GretlObjType type, const char *oname);

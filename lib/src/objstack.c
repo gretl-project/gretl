@@ -883,7 +883,7 @@ double *saved_object_get_series (const char *oname, const char *key,
 
 gretl_matrix *
 saved_object_get_matrix (const char *oname, const char *key,
-			 const double **Z, const DATAINFO *pdinfo,
+			 double ***pZ, DATAINFO *pdinfo,
 			 int *err)
 {
     gretl_matrix *M = NULL;
@@ -900,7 +900,7 @@ saved_object_get_matrix (const char *oname, const char *key,
     }
 
     if (M != NULL && mspec != NULL) {
-	gretl_matrix *S = matrix_get_submatrix(M, mspec, Z, pdinfo, err);
+	gretl_matrix *S = matrix_get_submatrix(M, mspec, pZ, pdinfo, err);
 	
 	gretl_matrix_free(M);
 	M = S;
