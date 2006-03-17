@@ -725,13 +725,20 @@ static int do_autofit_plot (PRN *prn)
     int pv, err = 0;
 
     pv = plotvar(&Z, datainfo);
+    if (pv < 0) {
+	return 1;
+    }
 
     plotlist = gretl_list_new(3);
+    if (plotlist == NULL) {
+	return 1;
+    }
+
     plotlist[1] = gretl_model_get_depvar(models[0]);
     plotlist[2] = varindex(datainfo, "autofit");
     plotlist[3] = pv;
-    lines[0] = 1;
 
+    lines[0] = 1;
     err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
 		  &plot_count, gp_flags(batch, 0));
 
@@ -1176,7 +1183,7 @@ static int exec_line (char *line, PRN *prn)
 	    err = gnuplot(cmd.list, NULL, cmd.param, &Z, datainfo,
 			  &plot_count, gp_flags(batch, cmd.opt));
 	} else {
-	    lines[0] = (cmd.opt != 0);
+	    lines[0] = (cmd.opt & OPT_O)? 1 : 0;
 	    err = gnuplot(cmd.list, lines, cmd.param, 
 			  &Z, datainfo, &plot_count, 
 			  gp_flags(batch, 0));

@@ -712,11 +712,8 @@ int top_n_tail (char *str)
 
     if (*str != 0) {
 	/* drop any leading spaces, also possible questionmark */
-	i = 0;
-	while (isspace((unsigned char) str[i]) || str[i] == '?') {
-	    i++;
-	}
-	if (i) {
+	i = strspn(str, " \t?");
+	if (i > 0) {
 	    shift_string_left(str, i);
 	}
 

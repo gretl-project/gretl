@@ -5973,18 +5973,25 @@ static void do_autofit_plot (PRN *prn)
     int pv, err;
 
     pv = plotvar(&Z, datainfo);
-    plotlist = gretl_list_new(3);
-    if (models[0]->ci == ARMA) {
-	plotlist[1] = models[0]->list[4];
-    } else {
-	plotlist[1] = models[0]->list[1];
+    if (pv < 0) {
+	return;
     }
+
+    plotlist = gretl_list_new(3);
+    if (plotlist == NULL) {
+	return;
+    }
+
+    plotlist[1] = gretl_model_get_depvar(models[0]);
     plotlist[2] = varindex(datainfo, "autofit");
     plotlist[3] = pv;
-    lines[0] = (cmd.opt != 0); 
+
+    lines[0] = 1; 
     err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
 		  &plot_count, 0); 
+
     free(plotlist);
+
     if (err < 0) {
 	pprintf(prn, _("gnuplot command failed\n"));
     } else {
