@@ -201,9 +201,9 @@ void gretl_transforms_cleanup (void)
 static int get_lag (int v, int lag, double *lagvec, 
 		    const double **Z, const DATAINFO *pdinfo)
 {
+    int t1 = lag;
+    int t2 = pdinfo->n - 1;
     int t, t1, lt;
-
-    t1 = (lag > pdinfo->t1)? lag : pdinfo->t1;
 
     for (t=0; t<pdinfo->n; t++) {
 	lagvec[t] = NADBL;
@@ -211,7 +211,7 @@ static int get_lag (int v, int lag, double *lagvec,
 
     if (pdinfo->structure == STACKED_CROSS_SECTION) {
 	/* needs rather special handling */
-	for (t=t1; t<=pdinfo->t2; t++) { 
+	for (t=t1; t<=t2; t++) { 
 	    lt = t - lag * pdinfo->pd;
 	    if (lt < 0 || lt >= pdinfo->n) {
 		continue;
@@ -219,7 +219,7 @@ static int get_lag (int v, int lag, double *lagvec,
 	    lagvec[t] = Z[v][lt];
 	}
     } else if (dated_daily_data(pdinfo)) {
-	for (t=t1; t<=pdinfo->t2; t++) {
+	for (t=t1; t<=t2; t++) {
 	    lt = t - lag;
 	    while (lt >= 0 && na(Z[v][lt])) {
 		lt--;
@@ -228,7 +228,7 @@ static int get_lag (int v, int lag, double *lagvec,
 	}
     } else { 
 	/* the "standard" time-series case */
-	for (t=t1; t<=pdinfo->t2; t++) {
+	for (t=t1; t<=t2; t++) {
 	    lt = t - lag;
 	    if (lt < 0 || lt >= pdinfo->n) {
 		continue;
@@ -242,7 +242,7 @@ static int get_lag (int v, int lag, double *lagvec,
 	char *p, obs[OBSLEN];
 	int j;
 
-	for (t=t1; t<=pdinfo->t2; t++) {
+	for (t=t1; t<=t2; t++) {
 	    ntodate(obs, t, pdinfo);
 	    p = strchr(obs, ':');
 	    j = atoi(p + 1);
