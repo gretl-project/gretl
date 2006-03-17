@@ -201,7 +201,7 @@ void gretl_transforms_cleanup (void)
 static int get_lag (int v, int lag, double *lagvec, 
 		    const double **Z, const DATAINFO *pdinfo)
 {
-    int t1 = lag;
+    int t1 = (lag > 0)? lag : 0;
     int t2 = pdinfo->n - 1;
     int t, lt;
 
