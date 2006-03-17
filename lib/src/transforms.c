@@ -203,7 +203,7 @@ static int get_lag (int v, int lag, double *lagvec,
 {
     int t1 = lag;
     int t2 = pdinfo->n - 1;
-    int t, t1, lt;
+    int t, lt;
 
     for (t=0; t<pdinfo->n; t++) {
 	lagvec[t] = NADBL;
