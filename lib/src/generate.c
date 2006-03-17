@@ -2255,11 +2255,18 @@ static int is_varname_or_model_data_selector (const char *s)
     if (*s != '$') {
 	s += gretl_varchar_spn(s);
 	if (*s == '\0') {
-	    /* got a varname */
+	    /* got a possible varname */
 	    return 1;
 	}
 	if (!strncmp(s, ".$", 2)) {
 	    s++;
+	} else if (*s == '[') {
+	    /* matrix slice? */
+	    if (s[strlen(s) - 1] == ']') {
+		return 1;
+	    } else {
+		return 0;
+	    }
 	} else {
 	    return 0;
 	}
@@ -2316,7 +2323,7 @@ static int token_is_atomic (const char *s, GENERATOR *genr)
 	    s++;
 	}
 	if (count == 0) {
-	   atomic = 1;
+	    atomic = 1;
 	} 
     }
 
@@ -2520,7 +2527,7 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
 #if 0
 	/* This needs thought, work: generating an error here causes
 	   failure in some instances where, if we let computation
-	   proceed, we get OK results.  Specifically, this breaks the
+	   proceed, we get OK results!  Specifically, this breaks the
 	   computation of derivatives in some of the NIST nls test
 	   cases (big, ugly formulae, e.g. Hahn1).  AC 2005/11/04.
 	*/
@@ -2535,8 +2542,9 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
     while (*p && !genr->err) {
 	DPRINTF(("math_tokenize: inner loop '%s'\n", p));
 
-	if (*p == '(') inparen++;
-	else if (*p == ')') inparen--;
+	/* 2006/3/16: added '[' and ']' here */
+	if (*p == '(' || *p == '[') inparen++;
+	else if (*p == ')' || *p == ']') inparen--;
 
 	if (inparen < 0) {
 	    DPRINTF(("error: inparen < 0: '%s'\n", s));
@@ -2629,7 +2637,12 @@ static int paren_state (char c, int *state, char lr)
 {
     int s = *state;
 
-    if (c == '(') {
+    /* modification 2006/3/16: make '[' and ']' count as
+       parens: this may cause trouble, though it solves
+       an immediate problem with matrix selections
+    */
+
+    if (c == '(' || c == '[') {
 	if (lr == 'L') {
 	    if (s > 0) {
 		s--;
@@ -2637,7 +2650,7 @@ static int paren_state (char c, int *state, char lr)
 	} else {
 	    s++;
 	}
-    } else if (c == ')') {
+    } else if (c == ')' || c == ']') {
 	if (lr == 'R') {
 	    if (s > 0) {
 		s--;
@@ -2876,7 +2889,7 @@ static void excise_bracketed_term (char *s)
 static int split_genr_formula (char *s, GENERATOR *genr)
 {
     char *p;
-    int err = 0;
+    int len, err = 0;
 
     if (genr->obs >= 0 || *genr->label != '\0') {
 	/* obs number or matrix slice on left */
@@ -2894,8 +2907,7 @@ static int split_genr_formula (char *s, GENERATOR *genr)
 	    /* got "equals", but no rhs */
 	    err = E_SYNTAX;
 	} else {
-	    int len = strlen(s);
-
+	    len = strlen(s);
 	    if (len > 1) {
 		int l = op_level(s[len - 1]);
 		
@@ -2918,6 +2930,18 @@ static int split_genr_formula (char *s, GENERATOR *genr)
 
 	if (!err && op != 0) {
 	    err = expand_operator_abbrev(s, genr->lhs, op);
+	}
+    } else {
+	/* no '=' sign: maybe "foo++" or "baz--"? */
+	len = strlen(s);
+	if (len < VNAMELEN + 1 && gretl_varchar_spn(s) == len - 2) {
+	    if (strstr(s, "++")) {
+		strncat(genr->lhs, s, len - 2);
+		sprintf(s, "%s+1", genr->lhs);
+	    } else if (strstr(s, "--")) {
+		strncat(genr->lhs, s, len - 2);
+		sprintf(s, "%s-1", genr->lhs);
+	    }
 	}
     }
 

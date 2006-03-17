@@ -201,18 +201,24 @@ static double controller_evaluate_expr (const char *expr,
 					DATAINFO *pdinfo)
 {
     double x = NADBL;
+    int iftest = 0;
     int v, err;
 
     *gretl_errmsg = '\0';
 
-    err = generate(expr, pZ, pdinfo, OPT_P, NULL);
+    if (!strcmp(vname, "iftest")) {
+	iftest = 1;
+	err = get_generated_value(expr, &x, pZ, pdinfo, 0);
+    } else {
+	err = generate(expr, pZ, pdinfo, OPT_P, NULL);
+    }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "controller_evaluate_expr: expr = '%s', genr->err = %d\n", 
+    fprintf(stderr, "controller_evaluate_expr: expr = '%s', genr err = %d\n", 
 	    expr, err);
 #endif
 
-    if (!err) {
+    if (!err && !iftest) {
 	if (vnum > 0) {
 	    v = vnum;
 	} else {
@@ -222,9 +228,6 @@ static double controller_evaluate_expr (const char *expr,
 	    x = (*pZ)[v][0];
 	    if (na(x)) {
 		err = 1;
-	    }
-	    if (!strcmp(vname, "iftest")) {
-		dataset_drop_last_variables(1, pZ, pdinfo);
 	    }
 	} else {
 	    err = 1;
@@ -574,8 +577,7 @@ static int parse_as_while_loop (LOOPSET *loop,
     double x = NADBL;
     int err = 0;
 
-    expr = malloc(strlen(s) + 12);
-    sprintf(expr, "__iftest=(%s)", s);
+    expr = gretl_strdup(s);
     x = controller_evaluate_expr(expr, "iftest", 0, pZ, pdinfo);
 
     if (na(x)) {
@@ -806,7 +808,6 @@ test_forloop_element (char *s, LOOPSET *loop,
 		      int i)
 {
     char vname[VNAMELEN] = {0};
-    char *expr = NULL;
     double x = NADBL;
     int len, err = 0;
 
@@ -817,10 +818,8 @@ test_forloop_element (char *s, LOOPSET *loop,
 
     if (i == 1) {
 	/* middle term: Boolean test */
-	expr = malloc(strlen(s) + 12);
-	sprintf(expr, "__iftest=(%s)", s);
 	strcpy(vname, "iftest");
-	x = controller_evaluate_expr(expr, vname, 0, pZ, pdinfo);
+	x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
     } else {
 	/* treat as regular "genr" expression */
 	len = gretl_varchar_spn(s);
@@ -857,25 +856,21 @@ test_forloop_element (char *s, LOOPSET *loop,
 
     if (na(x)) {
 	err = 1;
-	free(expr);
     }
 
     if (!err) {
 	controller *clr = (i == 0)? &loop->init :
 	    (i == 1)? &loop->test : &loop->delta;
 
-	if (i == 1) {
-	    /* middle test term: leave vnum = 0 */
-	    clr->expr = expr;
+	clr->expr = gretl_strdup(s);
+	if (clr->expr == NULL) {
+	    err = 1;
 	} else {
-	    clr->expr = gretl_strdup(s);
-	    if (clr->expr == NULL) {
-		err = 1;
-	    } else {
+	    strcpy(clr->vname, vname);
+	    if (i != 1) {
 		clr->vnum = varindex(pdinfo, vname);
 	    }
-	}
-	strcpy(clr->vname, vname);
+	}	
     }	
 
     return err;
@@ -3140,7 +3135,7 @@ int is_active_index_loop_char (int c)
 
 int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 {
-    char formula[MAXLEN];
+    double val = NADBL;
     int err, ret = -1;
 
 #if IFDEBUG
@@ -3154,28 +3149,20 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 	line += 4;
     }
 
-    sprintf(formula, "__iftest=%s", line);
+    while (*line == ' ') line++;
 
-    err = generate(formula, pZ, pdinfo, OPT_P, NULL);
+    err = get_generated_value(line, &val, pZ, pdinfo, 0);
+
 #if IFDEBUG
     fprintf(stderr, "if_eval: generate returned %d\n", err);
 #endif
 
     if (err) {
 	strcpy(gretl_errmsg, _("error evaluating 'if'"));
+    } else if (na(val)) {
+	strcpy(gretl_errmsg, _("indeterminate condition for 'if'"));
     } else {
-	int v = varindex(pdinfo, "iftest");
-
-	if (v < pdinfo->v) {
-	    double val = (*pZ)[v][0];
-
-	    if (na(val)) {
-		strcpy(gretl_errmsg, _("indeterminate condition for 'if'"));
-	    } else {
-		ret = (int) val;
-	    }
-	    dataset_drop_last_variables(1, pZ, pdinfo);
-	}
+	ret = (int) val;
     }
 
 #if IFDEBUG

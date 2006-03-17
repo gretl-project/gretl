@@ -1000,17 +1000,17 @@ static void accommodate_obsolete_commands (char *line, CMD *cmd)
 /* look for a line with an "implicit genr", such as
    y = 3*x, x += 10, etc. */
 
-static int plausible_genr_start (const char *line, CMD *cmd, 
+static int plausible_genr_start (const char *s, CMD *cmd, 
 				 const DATAINFO *pdinfo)
 {
-    if (strchr(line, '=') != NULL) {
+    if (strchr(s, '=') || strstr(s, "++") || strstr(s, "--")) {
 	const char *ok = "+-*/=[";
 	char word[VNAMELEN];
 
-	if (sscanf(line, "%15[^[ +-*/=]", word)) {
-	    line += strlen(word);
-	    while (*line == ' ') line++;
-	    if (strspn(line, ok) && check_varname(word) == 0) {
+	if (sscanf(s, "%15[^[ +-*/=]", word)) {
+	    s += strlen(word);
+	    while (*s == ' ') s++;
+	    if (strspn(s, ok) && check_varname(word) == 0) {
 		cmd->ci = GENR;
 		if (get_matrix_by_name(word, pdinfo)) {
 		    cmd->opt = OPT_M;
