@@ -722,14 +722,14 @@ static void printf_strip (char *s)
 static int do_autofit_plot (PRN *prn)
 {
     int *plotlist;
-    int err = 0;
+    int pv, err = 0;
 
-    plotvar(&Z, datainfo, "time");
+    pv = plotvar(&Z, datainfo);
 
     plotlist = gretl_list_new(3);
     plotlist[1] = gretl_model_get_depvar(models[0]);
     plotlist[2] = varindex(datainfo, "autofit");
-    plotlist[3] = varindex(datainfo, "time");
+    plotlist[3] = pv;
     lines[0] = 1;
 
     err = gnuplot(plotlist, lines, NULL, &Z, datainfo,

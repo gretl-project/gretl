@@ -234,37 +234,6 @@ static int printvars (FILE *fp, int t, const int *list, const double **Z,
     return miss;
 }
 
-/**
- * get_timevar_name:
- * @pdinfo: information on dataset.
- *
- * Based on the properties and frequency of the dataset, 
- * figure out the appropriate (internal) name for the variable 
- * to be used on the x-axis in a time-series plot.
- *
- * Returns: the name.
- */
-
-const char *get_timevar_name (DATAINFO *pdinfo)
-{
-    if (!dataset_is_time_series(pdinfo)) {
-	return "index";
-    } else if (pdinfo->pd == 1) {
-	return "annual";
-    } else if (pdinfo->pd == 4) {
-	return "qtrs";
-    } else if (pdinfo->pd == 12) {
-	return "months";
-    } else if (pdinfo->pd == 24) {
-	return "hrs";
-    } else if (calendar_data(pdinfo) || 
-	       dataset_is_decennial(pdinfo)) {
-	return "decdate";
-    } else {
-	return "time";
-    }
-}
-
 static int factorized_vars (struct gnuplot_info *gpinfo,
 			    const double **Z, int ynum, int dum)
 {
@@ -1359,7 +1328,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
     if (!strcmp(pdinfo->varname[list[gpinfo.lo]], "time")) {
 	int pv;
 
-	pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
+	pv = plotvar(pZ, pdinfo);
 	if (pv > 0) {
 	    list[gpinfo.lo] = pv;
 	} else {
@@ -2212,7 +2181,7 @@ int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	return err;
     }
 
-    pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
+    pv = plotvar(pZ, pdinfo);
     if (pv > 0) {
 	obs = (*pZ)[pv];
     } else {
@@ -3162,7 +3131,7 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
 	}
     }
 
-    pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
+    pv = plotvar(pZ, pdinfo);
 	
     gretl_push_c_numeric_locale();
 

@@ -822,7 +822,7 @@ make_panel_time_var (double *x, const DATAINFO *pdinfo)
  * otherwise just an index of observations.
  *
  * Generates (and adds to the dataset, if it's not already
- * present) a time-trend or index variable.  The function
+ * present) a time-trend or index variable.  This function
  * is panel-data aware: if the dataset is a panel and
  * @tm is non-zero, the trend will not simply run
  * consecutively over the entire range of the data, but
@@ -865,123 +865,210 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
 
 static int plotvar_is_full_size (int v, int n, const double *x)
 {
-    int t, ret = 1;
+    int t;
 
     for (t=0; t<n; t++) {
 	if (na(x[t])) {
-	    ret = 0;
-	    break;
+	    return 0;
 	}
     }
 
-    return ret;
+    return 1;
+}
+
+typedef enum {
+    PLOTVAR_INDEX,
+    PLOTVAR_TIME,
+    PLOTVAR_ANNUAL,
+    PLOTVAR_QUARTERS,
+    PLOTVAR_MONTHS,
+    PLOTVAR_CALENDAR,
+    PLOTVAR_DECADES,
+    PLOTVAR_HOURLY,
+    PLOTVAR_MAX
+} plotvar_type; 
+
+struct plotvar {
+    int ptype;
+    char *pname;
+};
+
+static struct plotvar pvars[] = {
+    { PLOTVAR_INDEX,    "index" },
+    { PLOTVAR_TIME,     "time" },
+    { PLOTVAR_ANNUAL,   "annual" },
+    { PLOTVAR_QUARTERS, "qtrs" },
+    { PLOTVAR_MONTHS,   "months" },
+    { PLOTVAR_CALENDAR, "caldate" },
+    { PLOTVAR_DECADES,  "decades" },
+    { PLOTVAR_HOURLY,   "hrs" }
+};
+
+static int ptype_from_name (const char *pname)
+{
+    int i;
+
+    for (i=0; i<PLOTVAR_MAX; i++) {
+	if (!strcmp(pvars[i].pname, pname)) {
+	    return pvars[i].ptype;
+	}
+    }
+
+    return -1;
+}
+
+int plotvar_code (const DATAINFO *pdinfo)
+{
+    if (!dataset_is_time_series(pdinfo)) {
+	return PLOTVAR_INDEX;
+    } else if (pdinfo->pd == 1) {
+	return PLOTVAR_ANNUAL;
+    } else if (pdinfo->pd == 4) {
+	return PLOTVAR_QUARTERS;
+    } else if (pdinfo->pd == 12) {
+	return PLOTVAR_MONTHS;
+    } else if (pdinfo->pd == 24) {
+	return PLOTVAR_HOURLY;
+    } else if ((dated_daily_data(pdinfo) && pdinfo->n > 365) ||
+	    (dated_weekly_data(pdinfo) && pdinfo->n > 52)) {
+	return PLOTVAR_CALENDAR;
+    } else if (dataset_is_decennial(pdinfo)) {
+	return PLOTVAR_DECADES;
+    } else {
+	return PLOTVAR_TIME;
+    }
 }
 
 /**
- * plotvar:
+ * plotvar_from_varname:
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @period: string to identify periodicity: "annual", "qtrs",
- * "months", "decdate" (calendar data), "time" or "index".
+ * @vname: name for the plotting variable.
  *
- * Adds to the data set a special dummy variable for use in plotting.
+ * Adds to the dataset a special dummy variable named @vname,
+ * for use on the x-axis in plotting, or simply retrieves the 
+ * ID number of the variable if it already exists.  
  *
- * Returns: the ID number of the variable (> 0) or -1 on failure
+ * Returns: the ID number of the variable (> 0) or -1 on failure.
  */
 
-int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
+int plotvar_from_varname (double ***pZ, DATAINFO *pdinfo, const char *vname)
 {
-    int t, vi, y1, n = pdinfo->n;
+    int t, v, y1, n = pdinfo->n;
+    const char *pname;
+    int ptype;
     float rm;
 
-    vi = varindex(pdinfo, period);
+    if (vname != NULL) {
+	pname = vname;
+	ptype = ptype_from_name(pname);
+	if (ptype < 0) {
+	    return -1;
+	}
+    } else {
+	ptype = plotvar_code(pdinfo);
+	pname = pvars[ptype].pname;
+    }
 
-    if (vi < pdinfo->v) {
-	if (plotvar_is_full_size(vi, pdinfo->n, (*pZ)[vi])) {
-	    return vi;
+    v = varindex(pdinfo, pname);
+
+    if (v < pdinfo->v) {
+	if (plotvar_is_full_size(v, pdinfo->n, (*pZ)[v])) {
+	    return v;
 	} 
     } else if (dataset_add_series(1, pZ, pdinfo)) {
 	return -1;
     }
 
-    strcpy(pdinfo->varname[vi], period);
+    strcpy(pdinfo->varname[v], pname);
 
     y1 = (int) pdinfo->sd0;
     rm = pdinfo->sd0 - y1;
 
-    switch (period[0]) {
-    case 'a':
-	strcpy(VARLABEL(pdinfo, vi), _("annual plotting variable")); 
+    switch (ptype) {
+    case PLOTVAR_ANNUAL: 
+	strcpy(VARLABEL(pdinfo, v), _("annual plotting variable")); 
 	for (t=0; t<n; t++) {
-	    (*pZ)[vi][t] = (double) (t + atoi(pdinfo->stobs));
+	    (*pZ)[v][t] = (double) (t + atoi(pdinfo->stobs));
 	}
 	break;
-    case 'q':
-	strcpy(VARLABEL(pdinfo, vi), _("quarterly plotting variable"));
-	(*pZ)[vi][0] = y1 + (10.0 * rm - 1.0) / 4.0;
+    case PLOTVAR_QUARTERS:
+	strcpy(VARLABEL(pdinfo, v), _("quarterly plotting variable"));
+	(*pZ)[v][0] = y1 + (10.0 * rm - 1.0) / 4.0;
 	for (t=1; t<n; t++) {
-	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + .25;
+	    (*pZ)[v][t] = (*pZ)[v][t-1] + .25;
 	}
 	break;
-    case 'm':
-	strcpy(VARLABEL(pdinfo, vi), _("monthly plotting variable"));
-	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0) / 12.0;
+    case PLOTVAR_MONTHS:
+	strcpy(VARLABEL(pdinfo, v), _("monthly plotting variable"));
+	(*pZ)[v][0] = y1 + (100.0 * rm - 1.0) / 12.0;
 	for (t=1; t<n; t++) {
-	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0 / 12.0);
+	    (*pZ)[v][t] = (*pZ)[v][t-1] + (1.0 / 12.0);
 	}
 	break;
-    case 'h':
-	strcpy(VARLABEL(pdinfo, vi), _("hourly plotting variable"));
-	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0) / 24.0;
+    case PLOTVAR_HOURLY:
+	strcpy(VARLABEL(pdinfo, v), _("hourly plotting variable"));
+	(*pZ)[v][0] = y1 + (100.0 * rm - 1.0) / 24.0;
 	for (t=1; t<n; t++) {
-	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0 / 24.0);
+	    (*pZ)[v][t] = (*pZ)[v][t-1] + (1.0 / 24.0);
 	}
 	break;
-    case 'd':
-	if ((dated_daily_data(pdinfo) && pdinfo->n > 365) ||
-	    (dated_weekly_data(pdinfo) && pdinfo->n > 52)) {
-	    strcpy(VARLABEL(pdinfo, vi), _("daily plotting variable"));
-	    for (t=0; t<n; t++) {
-		if (pdinfo->S != NULL) {
-		    (*pZ)[vi][t] = get_dec_date(pdinfo->S[t]);
-		} else {
-		    char datestr[OBSLEN];
+    case PLOTVAR_CALENDAR:
+	strcpy(VARLABEL(pdinfo, v), _("daily plotting variable"));
+	for (t=0; t<n; t++) {
+	    if (pdinfo->S != NULL) {
+		(*pZ)[v][t] = get_dec_date(pdinfo->S[t]);
+	    } else {
+		char datestr[OBSLEN];
 		    
-		    calendar_date_string(datestr, t, pdinfo);
-		    (*pZ)[vi][t] = get_dec_date(datestr);
-		}
-	    } 
-	} else if (dataset_is_decennial(pdinfo)) {
-	    strcpy(pdinfo->varname[vi], "time");
-	    strcpy(VARLABEL(pdinfo, vi), _("time trend variable"));
-	    for (t=0; t<n; t++) {
-		(*pZ)[vi][t] = pdinfo->sd0 + 10 * t;
-	    }	    
-	} else {
-	    strcpy(pdinfo->varname[vi], "time");
-	    strcpy(VARLABEL(pdinfo, vi), _("time trend variable"));
-	    for (t=0; t<n; t++) {
-		(*pZ)[vi][t] = (double) (t + 1);
+		calendar_date_string(datestr, t, pdinfo);
+		(*pZ)[v][t] = get_dec_date(datestr);
 	    }
 	}
-	break; 
-    case 'i':
-	strcpy(VARLABEL(pdinfo, vi), _("index variable"));
+	break;
+    case PLOTVAR_DECADES:
+	strcpy(pdinfo->varname[v], "time");
+	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
 	for (t=0; t<n; t++) {
-	    (*pZ)[vi][t] = (double) (t + 1);
+	    (*pZ)[v][t] = pdinfo->sd0 + 10 * t;
 	}
 	break;
-    case 't':
-	strcpy(VARLABEL(pdinfo, vi), _("time trend variable"));
+    case PLOTVAR_INDEX:
+	strcpy(VARLABEL(pdinfo, v), _("index variable"));
 	for (t=0; t<n; t++) {
-	    (*pZ)[vi][t] = (double) (t + 1);
+	    (*pZ)[v][t] = (double) (t + 1);
+	}
+	break;
+    case PLOTVAR_TIME:
+	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
+	for (t=0; t<n; t++) {
+	    (*pZ)[v][t] = (double) (t + 1);
 	}
 	break;
     default:
 	break;
     }
 
-    return vi;
+    return v;
+}
+
+/**
+ * plotvar:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Adds to the dataset a special dummy variable for use on the
+ * x-axis in plotting, or simple retrieves the ID number of the
+ * plotting variable if it already exists.  The name of the variable 
+ * is assigned automatically based on the characteristics of the 
+ * dataset.
+ *
+ * Returns: the ID number of the variable (> 0) or -1 on failure.
+ */
+
+int plotvar (double ***pZ, DATAINFO *pdinfo)
+{
+    return plotvar_from_varname(pZ, pdinfo, NULL);
 }
 
 static int varnames_from_arg (const char *s, char *v1str, char *v2str)

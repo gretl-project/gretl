@@ -242,6 +242,8 @@ matrix are:
 
 \begin{center}
 \begin{tabular}{ll}
+\texttt{sumc()} & sum by column \\
+\texttt{sumr()} & sum by row \\
 \texttt{inv()} & inverse \\
 \texttt{cholesky()} & Cholesky decomposition \\
 \texttt{diag()} & extract principal diagonal \\
@@ -253,6 +255,10 @@ matrix are:
 As with the previous set of functions, the argument may be given as
 the name of an existing matrix or as an expression that evaluates to a
 single matrix.
+
+For a matrix $A$ with $m$ rows and $n$ columns, \texttt{sumc(A)}
+returns a row vector with the $n$ column sums; \texttt{sumr(A)}
+returns a column vector with the $m$ row sums.
 
 The \texttt{cholesky} function computes the Cholesky decomposition $L$
 of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower

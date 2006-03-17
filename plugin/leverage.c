@@ -215,11 +215,8 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	return E_FOPEN;
     }
 
-    if (dataset_is_time_series(pdinfo) && 
-	(pdinfo->pd == 1 || pdinfo->pd == 4 || pdinfo->pd == 12)) {
-	xvar = plotvar(pZ, pdinfo, 
-		       (pdinfo->pd == 1)? "annual" :
-		       (pdinfo->pd == 4)? "qtrs" : "months");
+    if (dataset_is_time_series(pdinfo)) { 
+	xvar = plotvar(pZ, pdinfo);
 	if (xvar < 0) {
 	    if (fp != NULL) {
 		fclose(fp);

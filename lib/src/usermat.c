@@ -2035,28 +2035,6 @@ gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m)
     return R;
 }
 
-gretl_matrix *user_matrix_get_row_sum (const gretl_matrix *m)
-{
-    gretl_matrix *s = NULL;
-
-    if (m != NULL) {
-	s = gretl_matrix_row_sum(m);
-    }
-
-    return s;
-}
-
-gretl_matrix *user_matrix_get_column_sum (const gretl_matrix *m)
-{
-    gretl_matrix *s = NULL;
-
-    if (m != NULL) {
-	s = gretl_matrix_column_sum(m);
-    }
-
-    return s;
-}
-
 gretl_matrix *user_matrix_column_demean (const gretl_matrix *m)
 {
     gretl_matrix *R = NULL;

@@ -1809,30 +1809,7 @@ int text_print_forecast (const FITRESID *fr,
     /* do we really want a plot for non-time series? */
 
     if (plot && fr->nobs > 0) {
-	if (time_series) {
-	    switch (pdinfo->pd) {
-	    case 1:
-		pv = plotvar(pZ, pdinfo, "annual");
-		break;
-	    case 4:
-		pv = plotvar(pZ, pdinfo, "qtrs");
-		break;
-	    case 12:
-		pv = plotvar(pZ, pdinfo, "months");
-		break;
-	    case 24:
-		pv = plotvar(pZ, pdinfo, "hrs");
-		break;
-	    case 10:
-		pv = plotvar(pZ, pdinfo, "decdate");
-		break;
-	    default:
-		pv = plotvar(pZ, pdinfo, "time");
-	    }
-	} else {
-	    pv = plotvar(pZ, pdinfo, "index");
-	}
-
+	pv = plotvar(pZ, pdinfo);
 	if (pv < 0) {
 	    err = 1;
 	} else {

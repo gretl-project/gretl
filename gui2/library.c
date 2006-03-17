@@ -4229,7 +4229,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	/* plot against obs index or time */
 	int pv;
 
-	pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
+	pv = plotvar(gZ, ginfo);
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
 	    dataset_drop_last_variables(1, gZ, ginfo);
@@ -4323,7 +4323,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     } else { 
 	/* plot against obs */
 	int ts = dataset_is_time_series(ginfo);
-	int pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
+	int pv = plotvar(gZ, ginfo);
 
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
@@ -5970,9 +5970,9 @@ static void do_autofit_plot (PRN *prn)
 {
     int lines[1];
     int *plotlist;
-    int err;
+    int pv, err;
 
-    plotvar(&Z, datainfo, "time");
+    pv = plotvar(&Z, datainfo);
     plotlist = gretl_list_new(3);
     if (models[0]->ci == ARMA) {
 	plotlist[1] = models[0]->list[4];
@@ -5980,7 +5980,7 @@ static void do_autofit_plot (PRN *prn)
 	plotlist[1] = models[0]->list[1];
     }
     plotlist[2] = varindex(datainfo, "autofit");
-    plotlist[3] = varindex(datainfo, "time");
+    plotlist[3] = pv;
     lines[0] = (cmd.opt != 0); 
     err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
 		  &plot_count, 0); 

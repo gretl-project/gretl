@@ -69,7 +69,9 @@ int panel_unit_dummies (double ***pZ, DATAINFO *pdinfo);
 
 int paneldum (double ***pZ, DATAINFO *pdinfo);
 
-int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period);
+int plotvar (double ***pZ, DATAINFO *pdinfo);
+
+int plotvar_from_varname (double ***pZ, DATAINFO *pdinfo, const char *vname);
 
 int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
 

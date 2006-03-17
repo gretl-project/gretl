@@ -148,8 +148,6 @@ const char *get_gretl_png_term_line (PlotType ptype);
 
 const char *get_gretl_emf_term_line (PlotType ptype, int color);
 
-const char *get_timevar_name (DATAINFO *pdinfo);
-
 const char *gp_justification_string (int j);
 
 int gnuplot_init (PlotType ptype, FILE **fpp);

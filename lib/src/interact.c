@@ -776,7 +776,7 @@ static int plot_var_ok (const char *s, int *lnum,
 	return 0;
     }
 
-    pnum = plotvar(pZ, pdinfo, s);
+    pnum = plotvar_from_varname(pZ, pdinfo, s);
 
     if (pnum < 0) {
 	cmd->errcode = 1;

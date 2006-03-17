@@ -230,7 +230,7 @@ static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
 static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 {
     int err, lines[1], list[3];
-    char pd[7];
+    int pv;
 
     if (dbdinfo->structure == CROSS_SECTION) {
 	list[0] = 1; list[1] = 1;
@@ -241,18 +241,14 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 	return;
     }
 
-    if (dbdinfo->pd == 12) {
-	strcpy(pd, "months");
-    } else if (dbdinfo->pd == 4) {
-	strcpy(pd, "qtrs");
-    } else {
-	strcpy(pd, "time");
+    pv = plotvar(dbZ, dbdinfo);
+    if (pv < 0) {
+	errbox(_("gnuplot command failed"));
+	return;
     }
 
-    plotvar(dbZ, dbdinfo, pd);
-
     lines[0] = 1;
-    list[0] = 2; list[1] = 1; list[2] = 2;
+    list[0] = 2; list[1] = 1; list[2] = pv;
 
     err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
 		  &plot_count, GP_GUI);

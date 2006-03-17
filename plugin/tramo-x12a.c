@@ -710,18 +710,6 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-static int make_x_axis_var (double ***pZ, DATAINFO *pdinfo)
-{
-    switch (pdinfo->pd) {
-    case 4:
-	return plotvar(pZ, pdinfo, "qtrs");
-    case 12:
-	return plotvar(pZ, pdinfo, "months");
-    default:
-	return plotvar(pZ, pdinfo, "time");
-    }
-}
-
 #if defined(WIN32)
 
 static int helper_spawn (const char *prog, const char *vname,
@@ -925,10 +913,11 @@ int write_tx_data (char *fname, int varnum,
 	    }
 
 	    if (request.opt[TRIGRAPH].save) {
-		int pv = make_x_axis_var(&tmpZ, tmpinfo);
+		int pv = plotvar(&tmpZ, tmpinfo);
 
-		if (pv < 0) err = 1;
-		if (!err) {
+		if (pv < 0) {
+		    err = 1;
+		} else {
 		    err = graph_series(tmpZ, tmpinfo, request.code);
 		    if (err) {
 			fprintf(stderr, "graph_series() failed\n");

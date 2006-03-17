@@ -1322,9 +1322,9 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	} else if (atom->func == T_CHOL) {
 	    R = user_matrix_cholesky_decomp(M);
 	} else if (atom->func == T_SUMC) {
-	    R = user_matrix_get_column_sum(M);
+	    R = gretl_matrix_column_sum(M);
 	} else if (atom->func == T_SUMR) {
-	    R = user_matrix_get_row_sum(M);
+	    R = gretl_matrix_row_sum(M);
 	} else if (atom->func == T_CDMEAN) {
 	    R = user_matrix_column_demean(M);
 	} else if (atom->func == T_QR) {
