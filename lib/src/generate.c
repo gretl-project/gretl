@@ -167,6 +167,8 @@ struct genr_func funcs[] = {
     { T_EIGGEN,   "eigengen" },
     { T_LDET,     "ldet" },
     { T_TRACE,    "tr" },
+    { T_SUMR,     "sumr" },
+    { T_SUMC,     "sumc" },
     { T_1NORM,    "onenorm" },
     { T_RCOND,    "rcond" },
     { T_ROWS,     "rows" },
@@ -210,7 +212,8 @@ struct genr_func funcs[] = {
 
 #define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG || f == T_CDMEAN || \
                                f == T_INV || f == T_CHOL || f == T_QR || \
-                               f == T_EIGSYM || f == T_EIGGEN)
+                               f == T_SUMR || f == T_SUMC || f == T_EIGSYM || \
+			       f == T_EIGGEN)
 
 #define MULTI_MATRIX_FUNC(f) (f == T_QR || f == T_EIGSYM || f == T_EIGGEN)
 
@@ -1318,6 +1321,10 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	    R = user_matrix_get_inverse(M);
 	} else if (atom->func == T_CHOL) {
 	    R = user_matrix_cholesky_decomp(M);
+	} else if (atom->func == T_SUMC) {
+	    R = user_matrix_get_column_sum(M);
+	} else if (atom->func == T_SUMR) {
+	    R = user_matrix_get_row_sum(M);
 	} else if (atom->func == T_CDMEAN) {
 	    R = user_matrix_column_demean(M);
 	} else if (atom->func == T_QR) {

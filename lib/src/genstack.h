@@ -139,6 +139,8 @@ enum transformations {
     T_EIGGEN,
     T_LDET,
     T_TRACE,
+    T_SUMR,
+    T_SUMC,
     T_1NORM,
     T_RCOND,
     T_ROWS,

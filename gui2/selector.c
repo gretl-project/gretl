@@ -109,6 +109,11 @@ struct _selector {
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA)
 
+#define dataset_lags_ok(d) ((d)->structure == TIME_SERIES || \
+			    (d)->structure == SPECIAL_TIME_SERIES || \
+                            (d)->structure == STACKED_TIME_SERIES || \
+                            (d)->structure == STACKED_CROSS_SECTION)
+
 #define select_lags_upper(c) (c == VAR || c == VECM || c == VLAGSEL || c == TSLS)
 #define select_lags_lower(c) (MODEL_CODE(c)) 
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA) 
@@ -170,7 +175,7 @@ static int sr_get_lag_context (selector *sr, int locus)
 {
     int c = 0;
 
-    if (sr == NULL || !dataset_is_time_series(datainfo)) {
+    if (sr == NULL || !dataset_lags_ok(datainfo)) {
 	return 0;
     }
 
@@ -338,7 +343,7 @@ varlist_insert_var_full (int v, GtkTreeModel *mod, GtkTreeIter *iter,
     fprintf(stderr, "varlist_insert_var_full: starting var %d\n", v);
 #endif
 
-    if (v > 0 && dataset_is_time_series(datainfo)) {
+    if (v > 0 && dataset_lags_ok(datainfo)) {
 	lcontext = sr_get_lag_context(sr, locus);
     }
 
@@ -419,7 +424,7 @@ static void list_append_var (GtkListStore *store, GtkTreeIter *iter,
 {
     int i, lcontext = 0;
 
-    if (v > 0 && dataset_is_time_series(datainfo)) {
+    if (v > 0 && dataset_lags_ok(datainfo)) {
 	lcontext = sr_get_lag_context(sr, locus);
     }
 
@@ -1670,7 +1675,7 @@ static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 	    sprintf(numstr, "%d", ynum);
 	    add_to_cmdlist(sr, numstr);
 	}
-	if (dataset_is_time_series(datainfo) && 
+	if (dataset_lags_ok(datainfo) && 
 	    select_lags_depvar(sr->code)) {
 	    *dvlags = get_lagpref_string(ynum, LAG_Y_X);
 	    if (sr->code == TSLS) {
@@ -2373,7 +2378,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 	dlgheight += 60;
     }
 
-    if (dataset_is_time_series(datainfo)) {
+    if (dataset_lags_ok(datainfo)) {
 	if (MODEL_CODE(code) && code != ARMA) {
 	    /* lag selector button at foot */
 	    dlgheight += 30;
@@ -3148,7 +3153,7 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
     }
 
     /* and lag selection stuff, if relevant */
-    if (dataset_is_time_series(datainfo)) {
+    if (dataset_lags_ok(datainfo)) {
 	if (MODEL_CODE(sr->code) && sr->code != ARMA) {
 	    lag_selector_button(sr);
 	} 

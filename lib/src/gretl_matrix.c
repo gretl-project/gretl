@@ -1992,6 +1992,96 @@ gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a,
     return c;
 }
 
+/* return sum of elements in row i */
+
+static double row_sum (const gretl_matrix *m, int i)
+{
+    double x = 0.0;
+    int j;
+
+    if (i < 0 || i >= m->rows) {
+	return NADBL;
+    }
+
+    for (j=0; j<m->cols; j++) {
+	x += m->val[mdx(m, i, j)];
+    }
+
+    return x;
+}
+
+/* return sum of elements in column j */
+
+static double col_sum (const gretl_matrix *m, int j)
+{
+    double x = 0.0;
+    int i;
+
+    if (j < 0 || j >= m->cols) {
+	return NADBL;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	x += m->val[mdx(m, i, j)];
+    }
+
+    return x;
+}
+
+/* return col vector containing row sums, or row vector containing
+   column sums */
+
+static gretl_matrix *gretl_matrix_sum (const gretl_matrix *m, int bycol)
+{
+
+    gretl_matrix *s = NULL;
+    int dim, i;
+    double x;
+
+    if (bycol) {
+	dim = m->cols;
+	s = gretl_matrix_alloc(1, dim);
+    } else {
+	dim = m->rows;
+	s = gretl_matrix_alloc(dim, 1);
+    }
+
+    if (s != NULL) {
+	for (i=0; i<dim; i++) {
+	    x = (bycol)? col_sum(m, i) : row_sum(m, i);
+	    gretl_vector_set(s, i, x);
+	}
+    }
+
+    return s;
+}
+
+/**
+ * gretl_matrix_row_sum:
+ * @m: source matrix.
+ *
+ * Returns: a column vector containing the sums of
+ * the rows of @m, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m)
+{
+    return gretl_matrix_sum(m, 0);
+}
+
+/**
+ * gretl_matrix_column_sum:
+ * @m: source matrix.
+ *
+ * Returns: a row vector containing the sums of
+ * the columns of @m, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m)
+{
+    return gretl_matrix_sum(m, 1);
+}
+
 /**
  * gretl_matrix_row_mean:
  * @m: source matrix.
@@ -2003,18 +2093,13 @@ gretl_matrix *gretl_matrix_dot_divide (const gretl_matrix *a,
 
 double gretl_matrix_row_mean (const gretl_matrix *m, int row)
 {
-    double sum = 0.0;
-    int j;
+    double x = row_sum(m, row);
 
-    if (row >= m->rows) {
-	return NADBL;
+    if (!na(x)) {
+	x /= (double) m->cols;
     }
 
-    for (j=0; j<m->cols; j++) {
-	sum += m->val[mdx(m, row, j)];
-    }
-
-    return sum / (double) m->cols;
+    return x;
 }
 
 /**
@@ -2028,18 +2113,13 @@ double gretl_matrix_row_mean (const gretl_matrix *m, int row)
 
 double gretl_matrix_column_mean (const gretl_matrix *m, int col)
 {
-    double sum = 0.0;
-    int i;
+    double x = col_sum(m, col);
 
-    if (col >= m->cols) {
-	return NADBL;
-    }
+    if (!na(x)) {
+	x /= (double) m->rows;
+    }    
 
-    for (i=0; i<m->rows; i++) {
-	sum += m->val[mdx(m, i, col)];
-    }
-
-    return sum / (double) m->rows;
+    return x;
 }
 
 /**

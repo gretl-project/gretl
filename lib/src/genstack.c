@@ -65,6 +65,7 @@ struct atomset_ {
                                f == T_CHOL || f == T_QR || f == T_1NORM || \
                                f == T_LDET || f == T_TRACE || f == T_DIAG || \
                                f == T_ROWS || f == T_COLS || f == T_TRANSP || \
+                               f == T_SUMC || f == T_SUMR || \
                                f == T_VARNUM || f == T_SERIES || \
                                f == T_ISLIST || f == T_NELEM || \
                                f == T_RESAMPLE || f == T_HPFILT || f == T_LRVAR || \

@@ -64,6 +64,10 @@ gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m);
 
 gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m);
 
+gretl_matrix *user_matrix_get_row_sum (const gretl_matrix *m);
+
+gretl_matrix *user_matrix_get_column_sum (const gretl_matrix *m);
+
 gretl_matrix *user_matrix_column_demean (const gretl_matrix *m);
 
 gretl_matrix *
