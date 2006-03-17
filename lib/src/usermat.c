@@ -1528,6 +1528,49 @@ static int name_is_series (const char *name, const DATAINFO *pdinfo)
     return ret;
 }
 
+/* temporary bodge to allow "matrix A = userfun(args)" */
+
+static int 
+get_user_matrix_fn (const char *name, const char *mask, const char *s, 
+		    double ***pZ, DATAINFO *pdinfo, int *err)
+{
+    char fword[32];
+    const char *p = s;
+    int len, ufun = 0;
+
+    if (mask != NULL && *mask != 0) {
+	/* can't handle this (sub-matrix) case yet */
+	return 0;
+    }
+
+    p += strspn(s, " =");
+    len = gretl_varchar_spn(p);
+    *fword = 0;
+
+    if (len < 32) {
+	strncat(fword, p, len);
+	if (is_user_matrix_function(fword)) {
+	    ufun = 1;
+	}
+    }
+
+    if (ufun) {
+	len = strlen(s) + strlen(name);
+	if (len > 63) {
+	    ufun = 0;
+	}
+    }
+
+    if (ufun) {
+	char line[64];
+
+	sprintf(line, "%s%s", name, s);
+	*err = gretl_function_start_exec(line, fword, pZ, pdinfo);
+    }
+
+    return ufun;
+}
+
 /* Currently we can create a user matrix in any one of four ways (but
    we can't mix these in a single matrix specification).
 
@@ -1541,6 +1584,15 @@ static int name_is_series (const char *name, const DATAINFO *pdinfo)
    4. Use of a "genr"-type expression referring to existing matrices
       and/or the matrix-from-scratch functions such as I(n), which 
       generates an n x n identity matrix.
+
+   In fact, we (sort of) allow a fifth case too, where we have an
+   expression that fills or creates a matrix via a user-defined
+   function with the appropriate return type.  The limitations on
+   this are that (a) there must be just a single function on the
+   right-hand side, and (b) that the assignment on the left is to
+   a full matrix, with a matrix selection not allowed.  E.g.
+
+      matrix A = userfun(args)
 
    If the name supplied for a matrix is already taken by an "ordinary"
    series variable, the attempt to create a matrix of the same name
@@ -1565,10 +1617,17 @@ static int create_matrix (const char *name, const char *mask,
     }
 
     p = strchr(s, '{');
+
     if (p == NULL) {
-	err = matrix_genr(name, mask, s, pZ, pdinfo, prn);
+	if (get_user_matrix_fn(name, mask, s, pZ, pdinfo, &err)) {
+	    /* FIXME should really be rolled into matrix_genr() */
+	    ;
+	} else {
+	    err = matrix_genr(name, mask, s, pZ, pdinfo, prn);
+	}
 	goto finalize;
     }
+
     s = p + 1;
 
     if (!err) {

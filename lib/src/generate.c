@@ -885,8 +885,21 @@ matrix_gen_function (const char *s, GENERATOR *genr, genatom *atom)
 static void
 atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 {
-    DPRINTF(("recognized function #%d (%s)\n", atom->func, 
-	     get_genr_func_word(atom->func)));
+#if GENR_DEBUG
+    if (atom->func == T_UFUNC) {
+	fprintf(stderr, "recognized user function from %s\n", s);
+    } else {
+	fprintf(stderr, "recognized function #%d (%s)\n", atom->func, 
+		get_genr_func_word(atom->func));
+    }
+#endif
+
+    if (atom->func == T_UFUNC) {
+	sprintf(gretl_errmsg, "Sorry, user-defined functions not yet supported in this "
+		"context");
+	genr->err = 1;
+	return;
+    }
 
     if (MP_MATH(atom->func) || atom->func == T_PVALUE || 
 	atom->func == T_CRIT || atom->func == T_FRACDIFF ||
@@ -2354,7 +2367,7 @@ static int token_is_function (char *s, GENERATOR *genr, int level)
 
     while (*p) {
 	if (!op_level(*p) && *p != '(') {
-	    wlen++; /* might be a problem */
+	    wlen++; /* might be a problem? */
 	} else {
 	    break;
 	}
@@ -2801,6 +2814,11 @@ int genr_function_from_string (const char *s)
     /* aliases */
     if (!strcmp(word, "ln")) {
 	return T_LOG;
+    }
+
+    /* user-defined functions */
+    if (gretl_is_user_function(s)) {
+	return T_UFUNC;
     }
 
     return 0;

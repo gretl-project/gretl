@@ -149,7 +149,8 @@ enum transformations {
     T_IMAT,
     T_ZEROS,
     T_ONES,
-    T_IDENTITY
+    T_IDENTITY,
+    T_UFUNC
 };
 
 #define VALSTACK_SIZE 32

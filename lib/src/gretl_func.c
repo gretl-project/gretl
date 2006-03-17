@@ -657,6 +657,18 @@ int gretl_is_user_function (const char *line)
     return ret;
 }
 
+int is_user_matrix_function (const char *word)
+{
+    ufunc *fun = get_ufunc_by_name(word);
+    if (fun != NULL) {
+	if (fun->n_returns == 1 && fun->rtype[0] == ARG_MATRIX) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 int gretl_get_user_function (const char *line, char **fnname)
 {
     int ret = 0;
@@ -1510,7 +1522,8 @@ static int check_and_allocate_function_args (ufunc *fun,
 					     double ***pZ,
 					     DATAINFO *pdinfo)
 {
-    int *outlist = NULL, *inlist = NULL;
+    int *outlist = NULL;
+    int *inlist = NULL;
     int i, v, err = 0;
 
     if (argc != fun->n_params) {
@@ -1582,8 +1595,12 @@ static int check_and_allocate_function_args (ufunc *fun,
 	}
     }
 
-    free(outlist);
-    free(inlist);
+    if (inlist != NULL) {
+	free(inlist);
+    }
+    if (outlist != NULL) {
+	free(outlist);
+    }
 
     return err;
 }
@@ -1671,9 +1688,7 @@ int gretl_function_start_exec (const char *line, const char *fname,
 	return err;
     }
 
-    if (argc > 0) {
-	err = check_and_allocate_function_args(fun, argc, argv, pZ, pdinfo);
-    }
+    err = check_and_allocate_function_args(fun, argc, argv, pZ, pdinfo);
     
     if (!err && asslist[0] > 0) {
 	err = check_function_assignments(fun, asslist, assv, asstypes, pdinfo);

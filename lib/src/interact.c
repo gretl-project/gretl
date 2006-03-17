@@ -2965,16 +2965,10 @@ int simple_commands (CMD *cmd, const char *line,
 
     case FNCALL:
 	err = gretl_function_start_exec(line, cmd->param, pZ, pdinfo);
-	if (err) {
-	    errmsg(err, prn);
-	}
 	break;
 
     case FUNC:
 	err = gretl_start_compiling_function(line, prn);
-	if (err) {
-	    errmsg(err, prn);
-	}
 	break;
 
     case FUNCERR:
