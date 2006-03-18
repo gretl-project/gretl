@@ -234,6 +234,8 @@ matrice sono:
 
 \begin{center}
 \begin{tabular}{ll}
+\texttt{sumc()} & somma per colonna \\
+\texttt{sumr()} & somma per riga \\
 \texttt{inv()} & inversa \\
 \texttt{cholesky()} & scomposizione di Cholesky \\
 \texttt{diag()} & diagonale principale \\
@@ -244,6 +246,10 @@ matrice sono:
 
 Come per il gruppo precedente di funzioni, l'argomento deve essere il nome di
 una matrice esistente o un'espressione che si risolve in una matrice.
+
+Per una matrice $A$ con $m$ righe e $n$ colonne, \texttt{sumc(A)}
+produce un vettore riga con le $n$ somme per colonna; \texttt{sumr(A)}
+produce un vettore colonna con le $m$ somme per riga.
 
 La funzione \texttt{cholesky} calcola la scomposizione di Cholesky
 $L$ di una matrice simmetrica definita positiva $A$: $A = LL'$; $L$ è
