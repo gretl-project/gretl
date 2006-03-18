@@ -123,11 +123,9 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
 	return 1;
     }
 
-    /* FIXME update restrictions here (garch, mle?) */
-
-    /* NLS models won't work */
-    if (pmod->ci == NLS) {
-	mtable_errmsg(_("Sorry, NLS models can't be put in the model table"),
+    /* NLS and MLE models won't work */
+    if (pmod->ci == NLS || pmod->ci == MLE) {
+	mtable_errmsg(_("Sorry, this model can't be put in the model table"),
 		      gui);
 	return 1;
     }
