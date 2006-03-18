@@ -38,10 +38,20 @@ version 1.5.1, in progress
   names
 - XLS and Gnumeric importers: supply automatic varnames if no
   variable names are present 
-- Alter presentation of ARMA parameter estimates (call them
-  "phi" and "theta")
-- Automatically Use X-12-ARIMA for seasonal ARMA until further 
-  notice
+- ARMA: Alter presentation of parameter estimates (call them
+  "phi" and "theta"); provide native multiplicative seasonal
+  models
+- Fix issue with spectrum plot when the order of magnitude
+  of the series is very low
+- Introduce "set" parameters for tweaking the BHHH algorithm
+  convergence criteria
+- Add GUI lag selector
+- VARs: add numerical output to VAR roots plot
+- Allow commands like var and arma to be specified with a scalar
+  variable as order
+- Add "dsort" command for reverse sorting
+- Enhance and robustify script capabilities
+
 
 12/15/2005 version 1.5.0
 - Add VECM (Vector Error Correction Models) for time-series
