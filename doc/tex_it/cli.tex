@@ -20,11 +20,11 @@ comandi già eseguiti, inoltre è disponibile il completamento
 automatico dei comandi. Per muoversi nella lista dei comandi già
 eseguiti è possibile usare i tasti Freccia Su/Giù, mentre per muoversi
 sulla riga di comando è possibile usare i tasti Freccia a
-destra/sinistra e le scorciatoie in stile Emacs.\footnote{In realtà
-  quelli mostrati sono i valori predefiniti, ma possono essere
-  modificati: si veda il
+destra/sinistra e le scorciatoie in stile Emacs\footnote{Questi sono i valori
+  predefiniti per le scorciatoie da tastiera, che possono essere modificate
+  seguendo le istruzioni contenute nel
   \href{http://cnswww.cns.cwru.edu/~chet/readline/readline.html}{manuale
-    di readline}.} Le scorciatoie più usate sono:
+    di readline}.}. Le scorciatoie più usate sono:
 %    
 \begin{center}
   \begin{tabular}{ll}
@@ -47,20 +47,19 @@ completare le lettere inserite, verrà inserito il comando
 corrispondente, altrimenti premendo Tab una seconda volta verrà
 visualizzata una lista delle alternative possibili.
     
-\section{Differenze con ESL di Ramanathan}
+\section{Gretl e ESL di Ramanathan}
 \label{cli-syntax}
 
 \app{gretlcli} ha ereditato la sintassi di base dei comandi dal
 programma \app{ESL} di Ramu Ramanathan e gli script di comandi
 sviluppati per \app{ESL} dovrebbero essere utilizzabili con con pochi
-cambiamenti: le uniche cose a cui stare attenti sono i comandi
+cambiamenti: le uniche cose a cui prestare attenzione sono i comandi
 multilinea e il comando \cmd{freq}.
     
 \begin{itemize}
 \item In \app{ESL} viene usato un punto e virgola come terminatore per
-  molti comandi.  In \app{gretlcli} ho deciso di rimuovere questa
-  caratteristica: il carattere punto e virgola è semplicemente
-  ignorato, a parte in alcuni casi speciali in cui ha un significato
+  molti comandi.  In \app{gretlcli} il carattere punto e virgola è semplicemente
+  ignorato, a parte in alcuni casi speciali in cui esso ha un significato
   particolare: come separatore per due liste nei comandi \cmd{ar} e
   \cmd{tsls}, e come segnaposto per l'osservazione iniziale o finale
   immutata nel comando \cmd{smpl}. In \app{ESL} il punto e virgola dà
