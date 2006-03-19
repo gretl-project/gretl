@@ -74,7 +74,7 @@ msgstr "taille de l'échantillon %d\n"
 
 #: lib/src/adf_kpss.c:148
 msgid "unit-root null hypothesis: a = 1"
-msgstr "hypothèse nulle de racine unitaire: a = 1"
+msgstr "hypothèse nulle de racine unitaire : a = 1"
 
 #: lib/src/adf_kpss.c:155
 #, fuzzy
@@ -87,7 +87,7 @@ msgstr "modèle"
 
 #: lib/src/adf_kpss.c:163 gui2/selector.c:2130
 msgid "lag order:"
-msgstr "ordre de délai:"
+msgstr "ordre du retard :"
 
 #: lib/src/adf_kpss.c:170
 msgid "estimated value of (a - 1)"
@@ -150,17 +150,17 @@ msgstr "Valeurs critiques"
 #: lib/src/adf_kpss.c:680
 #, c-format
 msgid "Step %d: testing for a unit root in %s\n"
-msgstr "Étape %d: test d'une racine unitaire dans %s\n"
+msgstr "Étape %d : test d'une racine unitaire dans %s\n"
 
 #: lib/src/adf_kpss.c:705
 #, c-format
 msgid "Step %d: cointegrating regression\n"
-msgstr "Pas %d: cointégration\n"
+msgstr "Étape %d : cointégration\n"
 
 #: lib/src/adf_kpss.c:731
 #, c-format
 msgid "Step %d: Dickey-Fuller test on residuals\n"
-msgstr "Pas %d: Régression de Dickey-Fuller\n"
+msgstr "Étape %d : Régression de Dickey-Fuller\n"
 
 #: lib/src/adf_kpss.c:737
 msgid ""
@@ -188,7 +188,7 @@ msgstr "longueur du pas"
 #: lib/src/compare.c:228
 #, c-format
 msgid "Comparison of Model %d and Model %d:\n"
-msgstr "Comparaison du modèle %d et du modèle %d:\n"
+msgstr "Comparaison du modèle %d et du modèle %d :\n"
 
 #: lib/src/compare.c:233 lib/src/varomit.c:110
 msgid ""
@@ -203,7 +203,7 @@ msgstr ""
 
 #: lib/src/compare.c:244 lib/src/gretl_restrict.c:896
 msgid "Robust F"
-msgstr "F robust"
+msgstr "F robuste"
 
 #: lib/src/compare.c:246 lib/src/compare.c:2070 lib/src/gretl_restrict.c:900
 #, c-format
@@ -318,7 +318,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Test de Chow pour rupture structurelle à l'observation %s:\n"
+"Test de Chow pour rupture structurelle à l'observation %s :\n"
 "  F(%d, %d) = %f avec valeur de P %f\n"
 "\n"
 
@@ -486,25 +486,25 @@ msgstr "= différence de rho %s"
 #: lib/src/dataio.c:275
 #, c-format
 msgid "WARNING: binary data read error at var %d"
-msgstr "AVERTISSEMENT: erreur de lecture des données binaires à la variable %d"
+msgstr "AVERTISSEMENT : erreur de lecture des données binaires à la variable %d"
 
 #: lib/src/dataio.c:193 lib/src/dataio.c:233 lib/src/dataio.c:324
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
 msgstr ""
-"AVERTISSEMENT: erreur de lecture de données ascii à la variable %d, "
+"AVERTISSEMENT : erreur de lecture de données ascii à la variable %d, "
 "observation %d"
 
 #: lib/src/dataio.c:296
 #, c-format
 msgid "WARNING: ascii data read error at obs %d"
-msgstr "AVERTISSEMENT: erreur de lecture de données ascii à l'observation %d"
+msgstr "AVERTISSEMENT : erreur de lecture de données ascii à l'observation %d"
 
 #: lib/src/dataio.c:312
 #, c-format
 msgid "WARNING: failed to read case marker for obs %d"
 msgstr ""
-"AVERTISSEMENT: échec de lecture du marqueur de cas pour l'observation %d"
+"AVERTISSEMENT : échec de lecture du marqueur de cas pour l'observation %d"
 
 #: lib/src/dataio.c:387
 #, c-format
@@ -739,8 +739,8 @@ msgid ""
 "periodicity: %d, maxobs: %d,\n"
 "observations range: %s-%s\n"
 msgstr ""
-"périodicité: %d, obs. max: %d,\n"
-"étendue des observations: %s-%s\n"
+"périodicité : %d, obs. max : %d,\n"
+"étendue des observations : %s-%s\n"
 
 #: lib/src/dataio.c:1837
 msgid ""
@@ -769,12 +769,12 @@ msgstr "variable index"
 #: lib/src/dataio.c:2292
 #, c-format
 msgid "   %s: probably a year... "
-msgstr "   %s: probablement une année... "
+msgstr "   %s : probablement une année... "
 
 #: lib/src/dataio.c:2294
 #, c-format
 msgid "   %s: out of bounds for a year?\n"
-msgstr "   %s: hors limite pour une année?\n"
+msgstr "   %s : hors limite pour une année?\n"
 
 #: lib/src/dataio.c:2298
 msgid "   but I can't make sense of the extra bit\n"
@@ -852,7 +852,7 @@ msgstr "Le fichier de données contient des virgules en suffixe\n"
 #: lib/src/dataio.c:2789
 #, c-format
 msgid "   first field: '%s'\n"
-msgstr "   premier champ: « %s »\n"
+msgstr "   premier champ : « %s »\n"
 
 #: lib/src/dataio.c:2794
 msgid "   seems to be observation label\n"
@@ -863,19 +863,19 @@ msgstr "   semble être une étiquette d'observation\n"
 msgid ""
 "   the cell for variable %d, obs %d is empty: treating as missing value\n"
 msgstr ""
-"   la cellule de la variable %d, observation %d est vide: sera traité comme "
+"   la cellule de la variable %d, observation %d est vide : sera traité comme "
 "valeur manquante\n"
 
 #: lib/src/dataio.c:2823
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr ""
-"   AVERTISSEMENT: valeur manquante pour la variable %d, observation %d\n"
+"   AVERTISSEMENT : valeur manquante pour la variable %d, observation %d\n"
 
 #: lib/src/dataio.c:2923
 #, c-format
 msgid "At variable %d, observation %d:\n"
-msgstr "De la variable %d, observations %d:\n"
+msgstr "De la variable %d, observations %d :\n"
 
 #: lib/src/dataio.c:3015
 msgid ""
@@ -891,7 +891,7 @@ msgstr ""
 "SVP noter que:\n"
 "- La première rangée du fichier CSV doit contenir le nom des variables.\n"
 "- La première colonne peut optionnellement contenir une date ou un autre "
-"marquer:\n"
+"marquer :\n"
 "  dans ce cas, l'entrée de la rangée 1 doit être vide ou doit contenir 'obs' "
 "ou 'date'.\n"
 "- Le reste du fichier doit être un tableau ou une matrice rectangulaire de "
@@ -970,7 +970,7 @@ msgstr "recherche des étiquettes de rangée et des données...\n"
 #: lib/src/dataio.c:3276
 #, c-format
 msgid "warning: truncating data at row %d, column %d\n"
-msgstr "AVERTISSEMENT: troncation de données à la rangée %d, colonne %d\n"
+msgstr "AVERTISSEMENT : troncation de données à la rangée %d, colonne %d\n"
 
 #: lib/src/dataio.c:3319
 msgid ""
@@ -991,7 +991,7 @@ msgstr ""
 #: lib/src/dataio.c:3349 plugin/eviews_import.c:333 plugin/excel_import.c:1513
 #: plugin/gnumeric_import.c:792 plugin/stata_import.c:655
 msgid "warning: some variable names were duplicated\n"
-msgstr "Avertissement: quelques noms de variable ont été dupliqués\n"
+msgstr "Avertissement : quelques noms de variable ont été dupliqués\n"
 
 #: lib/src/dataio.c:3576
 #, c-format
@@ -1001,18 +1001,18 @@ msgstr "   Matrice '%s' repérée, avec %d rangées, %d colonnes\n"
 #: lib/src/dataio.c:3617
 #, c-format
 msgid "   number of observations: %d\n"
-msgstr "   nombre d'observations: %d\n"
+msgstr "   nombre d'observations : %d\n"
 
 #: lib/src/dataio.c:3618
 #, c-format
 msgid "   number of data blocks: %d\n"
-msgstr "   blocs de données: %d\n"
+msgstr "   blocs de données : %d\n"
 
 #: lib/src/dataio.c:3776
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid BOX1 file\n"
 msgstr ""
-"Données binaires (%d) rencontrées: cela n'est pas valide dans un fichier "
+"Données binaires (%d) rencontrées : cela n'est pas valide dans un fichier "
 "BOX1\n"
 
 #: lib/src/dataio.c:3810
@@ -1045,7 +1045,7 @@ msgstr "lecture de l'information de la variable...\n"
 #: lib/src/dataio.c:3864
 #, c-format
 msgid " variable %d: '%s'\n"
-msgstr " variable %d: « %s »\n"
+msgstr " variable %d : « %s »\n"
 
 #: lib/src/dataio.c:3868
 #, c-format
@@ -1065,12 +1065,12 @@ msgstr "nombre de décimales %d\n"
 #: lib/src/dataio.c:3881
 #, c-format
 msgid "   Warning: coded variable (format '%s' in BOX file)\n"
-msgstr "   AVERTISSEMENT: variable codée (format « %s » dans le fichier BOX)\n"
+msgstr "   AVERTISSEMENT : variable codée (format « %s » dans le fichier BOX)\n"
 
 #: lib/src/dataio.c:3887
 #, c-format
 msgid "   definition: '%s'\n"
-msgstr "   définition: « %s »\n"
+msgstr "   définition : « %s »\n"
 
 #: lib/src/dataio.c:3930
 msgid "done reading data\n"
@@ -1079,7 +1079,7 @@ msgstr "lecture des données complétée\n"
 #: lib/src/dataio.c:3941
 #, c-format
 msgid "Warning: discarded %d non-numeric variable(s)\n"
-msgstr "AVERTISSEMENT: %d variable(s) non numérique(s) écartée(s)\n"
+msgstr "AVERTISSEMENT : %d variable(s) non numérique(s) écartée(s)\n"
 
 #: lib/src/dataio.c:4007 gui2/gui_utils.c:1025
 msgid "Unrecognized data type"
@@ -1190,7 +1190,7 @@ msgstr ""
 #: lib/src/dbread.c:1333
 #, c-format
 msgid "%s: you must specify a compaction method"
-msgstr "%s: vous devez spécifier une méthode de compactage"
+msgstr "%s : vous devez spécifier une méthode de compactage"
 
 #: lib/src/dbread.c:2055 lib/src/dbread.c:2249
 msgid "Compacted dataset would be empty"
@@ -1272,7 +1272,7 @@ msgstr "Corrélogramme"
 
 #: lib/src/describe.c:1466 lib/src/describe.c:1532
 msgid "lag"
-msgstr "délai"
+msgstr "retard"
 
 #: lib/src/describe.c:1493
 msgid "Partial autocorrelations"
@@ -1370,7 +1370,7 @@ msgstr "Fenêtre de Bartlett, longueur %d"
 #: lib/src/describe.c:2043
 #, fuzzy
 msgid "Residual periodogram"
-msgstr "gretl: périodigramme"
+msgstr "gretl : périodigramme"
 
 #: lib/src/describe.c:2045
 #, c-format
@@ -1512,14 +1512,14 @@ msgstr ""
 #, c-format
 msgid "Dropping %s: sample range contains no valid observations\n"
 msgstr ""
-"Abandon de %s: l'étendue de l'échantillon ne contient pas d'observations "
+"Abandon de %s : l'étendue de l'échantillon ne contient pas d'observations "
 "valides\n"
 
 #: lib/src/describe.c:2444
 #, c-format
 msgid "Dropping %s: sample range has only one obs, namely %g\n"
 msgstr ""
-"Abandon de %s: l'étendue de l'échantillon contient une seule observation, "
+"Abandon de %s : l'étendue de l'échantillon contient une seule observation, "
 "soit %g\n"
 
 #: lib/src/describe.c:2617
@@ -1566,7 +1566,7 @@ msgstr "   Différence entre les moyennes des échantillons = %g - %g = %g\n"
 #: lib/src/describe.c:2737
 msgid "   Null hypothesis: The two population means are the same.\n"
 msgstr ""
-"   Hypothèse nulle: les deux moyennes des populations sont identiques.\n"
+"   Hypothèse nulle : les deux moyennes des populations sont identiques.\n"
 
 #: lib/src/describe.c:2738
 #, c-format
@@ -1576,7 +1576,7 @@ msgstr "   Erreur standard estimée = %g\n"
 #: lib/src/describe.c:2739
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
-msgstr "   Test statistique: t(%d) = %g\n"
+msgstr "   Test statistique : t(%d) = %g\n"
 
 #: lib/src/describe.c:2740 lib/src/describe.c:2819
 #, c-format
@@ -1650,7 +1650,7 @@ msgstr "Distances de Mahalanobis du centroide"
 
 #: lib/src/describe.c:2975
 msgid "using the variables:"
-msgstr "utilisant les variables:"
+msgstr "utilisant les variables :"
 
 #: lib/src/describe.c:3012
 #, c-format
@@ -1685,7 +1685,7 @@ msgstr "La variable dépendante « %s » n'est pas une variable 0/1.\n"
 
 #: lib/src/discrete.c:553
 msgid "Failed to construct Hessian matrix"
-msgstr "Échec de la construction de la matrice d'Hessian"
+msgstr "Échec de la construction de la matrice hessienne"
 
 #: lib/src/discrete.c:778
 msgid "Illegal non-positive value of the dependent variable"
@@ -1709,12 +1709,12 @@ msgstr "Valeur manquante rencontrée pour la variable %d, observation %d"
 #: lib/src/estimate.c:1285 lib/src/modelprint.c:116
 #, c-format
 msgid "Error sum of squares (%g) is not > 0"
-msgstr "Erreur: la somme des carré (%g) n'est pas > 0"
+msgstr "Erreur : la somme des carré (%g) n'est pas > 0"
 
 #: lib/src/estimate.c:1405
 msgid "Warning: data matrix close to singularity!"
 msgstr ""
-"AVERTISSEMENT: la matrice des données est proche d'une matrice singuliaire!"
+"AVERTISSEMENT : la matrice des données est proche d'une matrice singuliaire!"
 
 #: lib/src/estimate.c:1762 lib/src/estimate.c:1895
 msgid "ESS"
@@ -1888,7 +1888,7 @@ msgstr "L'initialisation de \"toler\" doit être numérique"
 #: lib/src/generate.c:3056
 #, c-format
 msgid "Replaced after model %d: "
-msgstr "Remplacé après le modèle %d:"
+msgstr "Remplacé après le modèle %d :"
 
 #: lib/src/generate.c:3114
 msgid "Periodic dummy variables generated.\n"
@@ -2302,7 +2302,7 @@ msgstr "La statistique demandée n'est pas disponible"
 #: lib/src/gretl_errors.c:74
 msgid "Missing sub-sample information; can't merge data"
 msgstr ""
-"Information manquante du sous-échantillon; ne peut faire la fusion des "
+"Information manquante du sous-échantillon ; ne peut faire la fusion des "
 "données"
 
 #: lib/src/gretl_errors.c:75
@@ -2381,7 +2381,7 @@ msgstr "Test LM d'autocorrélation jusqu'à l'ordre de %s"
 #: lib/src/gretl_model.c:1690
 #, c-format
 msgid "Chow test for structural break at observation %s"
-msgstr "Test de Chow pour rupture structurel à l'observation %s"
+msgstr "Test de Chow pour rupture structurelle à l'observation %s"
 
 #: lib/src/gretl_model.c:1691
 msgid "CUSUM test for parameter stability"
@@ -2389,7 +2389,7 @@ msgstr "Test de CUSUM pour la stabilité des paramètres"
 
 #: lib/src/gretl_model.c:1692
 msgid "Likelihood ratio test for groupwise heteroskedasticity"
-msgstr "Test LR pour la hétéroscédasticité"
+msgstr "Test LR pour l'hétéroscédasticité"
 
 #: lib/src/gretl_model.c:1693
 msgid "Non-linearity test (logs)"
@@ -2413,7 +2413,7 @@ msgstr "Test de non linéarité (carrés)"
 
 #: lib/src/gretl_model.c:1698 lib/src/modelprint.c:467
 msgid "White's test for heteroskedasticity"
-msgstr "Test de White pour la hétéroscédasticité"
+msgstr "Test de White pour l'hétéroscédasticité"
 
 #: lib/src/gretl_model.c:1699
 msgid "Sargan over-identification test"
@@ -2453,7 +2453,7 @@ msgstr "la relation est linéraire"
 
 #: lib/src/gretl_model.c:1780
 msgid "error is normally distributed"
-msgstr "erreur est normalement distribué"
+msgstr "l'erreur est normalement distribué"
 
 #: lib/src/gretl_model.c:1782
 msgid "specification is adequate"
@@ -2461,7 +2461,7 @@ msgstr "la spécification est adéquate"
 
 #: lib/src/gretl_model.c:1784
 msgid "heteroskedasticity not present"
-msgstr "hétéroscédasticité non présent"
+msgstr "hétéroscédasticité non présente"
 
 #: lib/src/gretl_model.c:1785
 msgid "all instruments are valid"
@@ -2474,15 +2474,15 @@ msgstr "Estimés MCO sont "
 
 #: lib/src/gretl_model.c:2840
 msgid "Can't retrieve uhat: data set has changed"
-msgstr "Ne peut récupérer 'uhat': le jeu de données a changé"
+msgstr "Ne peut récupérer 'uhat' : le jeu de données a changé"
 
 #: lib/src/gretl_model.c:2842
 msgid "Can't retrieve yhat: data set has changed"
-msgstr "Ne peut récupérer 'yhat': jeu de données a changé"
+msgstr "Ne peut récupérer 'yhat' : jeu de données a changé"
 
 #: lib/src/gretl_model.c:2843
 msgid "Can't retrieve ht: data set has changed"
-msgstr "Ne peut récupérer ht: jeu de données a changé"
+msgstr "Ne peut récupérer ht : jeu de données a changé"
 
 #: lib/src/gretl_model.c:2857
 msgid "Can't retrieve error variance"
@@ -2491,7 +2491,7 @@ msgstr "Ne peut récupérer la variance des erreurs"
 #: lib/src/gretl_paths.c:695
 #, c-format
 msgid "gretl: using these basic search paths:\n"
-msgstr "gretl: utilise les chemins suivants de recherche:\n"
+msgstr "gretl : utilise les chemins suivants de recherche:\n"
 
 #: lib/src/gretl_paths.c:754
 msgid "gretlgui_hlp.txt"
@@ -2521,17 +2521,17 @@ msgstr "gretlcmd.hlp"
 #: lib/src/gretl_prn.c:78 lib/src/gretl_prn.c:116
 #, c-format
 msgid "gretl_prn_new: out of memory\n"
-msgstr "gretl_prn_new: mémoire épuisée\n"
+msgstr "gretl_prn_new : mémoire épuisée\n"
 
 #: lib/src/gretl_prn.c:97
 #, c-format
 msgid "gretl_prn_new: couldn't open %s\n"
-msgstr "gretl_prn_new: ne peut ouvrir %s\n"
+msgstr "gretl_prn_new : ne peut ouvrir %s\n"
 
 #: lib/src/gretl_prn.c:174
 #, c-format
 msgid "gretl_prn_new: Must supply a filename\n"
-msgstr "gretl_prn_new: vous devez fournir un nom de fichier\n"
+msgstr "gretl_prn_new : vous devez fournir un nom de fichier\n"
 
 #: lib/src/gretl_restrict.c:307 lib/src/gretl_restrict.c:701
 #: lib/src/gretl_restrict.c:724 lib/src/gretl_restrict.c:777
@@ -2596,7 +2596,7 @@ msgstr "Restriction"
 #: lib/src/gretl_string_table.c:172
 #, c-format
 msgid "variable %d: translating from strings to code numbers\n"
-msgstr "variable %d: traduction à partir des chaînes en codes numériques\n"
+msgstr "variable %d : traduction à partir des chaînes en codes numériques\n"
 
 #: lib/src/gretl_string_table.c:238
 msgid ""
@@ -2609,7 +2609,7 @@ msgstr ""
 #: lib/src/gretl_string_table.c:245 lib/src/gretl_string_table.c:248
 #, c-format
 msgid "String code table for variable %d (%s):\n"
-msgstr "Table des chaînes de codes pour les variables %d (%s):\n"
+msgstr "Table des chaînes de codes pour les variables %d (%s) :\n"
 
 #: lib/src/gretl_string_table.c:261
 #, c-format
@@ -2773,7 +2773,7 @@ msgstr "La variable %d n'a pas de nom"
 #: lib/src/gretl_xml.c:546
 #, c-format
 msgid "Number of variables does not match declaration"
-msgstr "Le nombre de variable ne concorde pas avec la déclaration"
+msgstr "Le nombre de variables ne concorde pas avec la déclaration"
 
 #: lib/src/gretl_xml.c:592
 #, c-format
@@ -2799,7 +2799,7 @@ msgstr "Aucune observation obtenue\n"
 #: lib/src/gretl_xml.c:691
 #, c-format
 msgid "Case marker missing at obs %d"
-msgstr "Marqueur du cas manquant pour l'observation %d"
+msgstr "Marqueur de cas manquant pour l'observation %d"
 
 #: lib/src/gretl_xml.c:705
 #, c-format
@@ -2864,7 +2864,7 @@ msgstr "échec de xmlParseFile sur %s"
 #: plugin/gnumeric_import.c:407 plugin/gnumeric_import.c:513
 #, c-format
 msgid "%s: empty document"
-msgstr "%s: document vide"
+msgstr "%s : document vide"
 
 #: lib/src/gretl_xml.c:951 lib/src/gretl_xml.c:1108
 #, c-format
@@ -2908,7 +2908,7 @@ msgstr "Numéro de variable %d est hors limite"
 #: lib/src/interact.c:856
 #, c-format
 msgid "'%s': there is already a variable of this name"
-msgstr "« %s »: il y a déjà une variable portant ce nom"
+msgstr "« %s » : il y a déjà une variable portant ce nom"
 
 #: lib/src/interact.c:1067
 #, c-format
@@ -2917,12 +2917,12 @@ msgstr "commande « end %s » non reconnue"
 
 #: lib/src/interact.c:1072
 msgid "end: nothing to end"
-msgstr "end: déclaration n'a rien à terminer"
+msgstr "end : rien à terminer"
 
 #: lib/src/interact.c:1129
 #, c-format
 msgid "%s: required parameter is missing"
-msgstr "%s: le paramètre requis est manquant"
+msgstr "%s : le paramètre requis est manquant"
 
 #: lib/src/interact.c:1444 lib/src/interact.c:3296 cli/cli_object.c:59
 #: gui2/objectsave.c:67
@@ -2961,7 +2961,7 @@ msgid ""
 "Valid gretl commands are:\n"
 msgstr ""
 "\n"
-"Les commandes valides gretl sont:\n"
+"Les commandes valides gretl sont :\n"
 
 #: lib/src/interact.c:1933
 msgid ""
@@ -2971,7 +2971,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Pour de l'aide concernant une commande spécifique, taper: help "
+"Pour de l'aide concernant une commande spécifique, taper : help "
 "nom_de_commande"
 
 #: lib/src/interact.c:1934
@@ -2991,19 +2991,19 @@ msgstr "Incapable d'accéder au fichier %s.\n"
 #: lib/src/interact.c:1971
 #, c-format
 msgid "%s: sorry, no help available.\n"
-msgstr "%s: désolé, aucune aide disponible.\n"
+msgstr "%s : désolé, aucune aide disponible.\n"
 
 #: lib/src/interact.c:2000
 msgid "ess: negative value is out of bounds.\n"
-msgstr "ess: valeur négative est hors limite.\n"
+msgstr "ess : valeur négative est hors limite.\n"
 
 #: lib/src/interact.c:2014
 msgid "T: negative value is out of bounds.\n"
-msgstr "T: valeur négative est hors limite.\n"
+msgstr "T : valeur négative est hors limite.\n"
 
 #: lib/src/interact.c:2028
 msgid "k: negative value is out of bounds.\n"
-msgstr "k: valeur négative est hors limite.\n"
+msgstr "k : valeur négative est hors limite.\n"
 
 #: lib/src/interact.c:2160
 msgid "Try again later"
@@ -3013,7 +3013,7 @@ msgstr "Ré-essayer plus tard"
 #: lib/src/nls.c:1918 lib/src/pvalues.c:319 lib/src/usermat.c:1234
 #, c-format
 msgid "Unknown variable '%s'"
-msgstr "variable inconnue: « %s »"
+msgstr "variable inconnue : « %s »"
 
 #: lib/src/interact.c:2767
 msgid "Listing labels for variables:\n"
