@@ -7,7 +7,7 @@
 A partire dalla versione 1.4.0, \app{gretl} contiene un nuovo
 meccanismo per definire funzioni all'interno di uno script.
 \footnote{Si noti che il nuovo modo di definire le funzioni presenta
-  aspetti non compatibili con la versione 1.3.3 del programma.}
+  aspetti non compatibili con quello incluso nella versione 1.3.3 del programma.}
     
 \section{Definizione di una funzione}
 \label{func-define}
@@ -31,7 +31,7 @@ ridefinire una funzione utente), basta far precedere la definizione
 della funzione da:
     
 \begin{code}
-      function nome-funzioneclear
+      function nome-funzione clear
 \end{code}
 
 I \textsl{parametri} di una funzione (se esistono) vanno indicati
@@ -74,7 +74,7 @@ funzione all'interno di un'altra funzione.
 Le funzioni possono essere chiamate, ma non definite, all'interno di
 un loop (si veda il capitolo~\ref{looping}).
 
-\section{Chiamare una funzione}
+\section{Chiamata di una funzione}
 \label{func-call}
 
 Una funzione utente viene chiamata, o invocata, usando il suo nome,
@@ -100,14 +100,14 @@ funzione che rispetta la definizione della funzione stessa.
 La chiamata della funzione contiene due argomenti: il primo è una
 serie di dati specificata per nome, e il secondo è una lista di
 regressori. Si noti che la funzione produce la variabile \verb+myess+
-come risultato, ma in questo esempio esso è ignorato.  (Una nota a
+come risultato, ma in questo esempio esso è ignorato. Una nota a
 margine: se si desidera che una funzione calcoli alcuni valori che
 hanno a che fare con una regressione, ma non si è interessati ai
 risultati completi della regressione, è possibile usare l'opzione
-\verb+--quiet+ con il comando di stima, come visto sopra.)
+\verb+--quiet+ con il comando di stima, come visto sopra.
     
 Un secondo esempio mostra una chiamata di funzione che assegna i
-valori prodotti dalla funzione a variabili:
+valori prodotti dalla funzione ad alcune variabili:
     
 \begin{code}
       # Definizione di funzione
@@ -134,16 +134,16 @@ funzione, e vengono distrutte quando la funzione termina la sua
 esecuzione, a meno che esse siano rese disponibili come valori di
 ritorno, e che questi siano ``raccolti'' o assegnati nella chiamata
 della funzione.
-    
-Le funzioni non hanno accesso alle variabili nell'``ambito esterno''
+
+Le funzioni non hanno accesso alle variabili dell'``ambiente esterno''
 (ossia le variabili che esistono nello script da cui la funzione è
 chiamata), a meno che queste siano passate esplicitamente alla
 funzione come argomenti. Anche in questo caso, quello che viene
 passato alla funzione è una copia delle variabili in questione, quindi
-le variabili nell'ambito esterno non vengono mai modificate da una
+le variabili nell'ambiente esterno non vengono mai modificate da una
 funzione, a meno che non vengano assegnate come valore prodotto da una
 funzione.
-    
+
 
 \section{Valori di uscita}
 \label{func-return}
