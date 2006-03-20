@@ -97,7 +97,7 @@ selezionare le variabili indipendenti, fare clic su di esse nella
 lista di sinistra e premere il pulsante ``Aggiungi'' (o fare clic col
 pulsante destro del mouse). È possibile selezionare più variabili
 contigue trascinando il mouse; se le variabili da selezionare non sono
-contigue, occorre fare clic tenendo prenuto il tasto \verb+Ctrl+.  Per
+contigue, occorre fare clic tenendo premuto il tasto \verb+Ctrl+.  Per
 eseguire una regressione con il consumo come variabile dipendente e il
 reddito come variabile indipendente, fare clic su \verb+Ct+ nel
 riquadro della variabile dipendente e aggiungere \verb+Yt+ alla lista
@@ -152,7 +152,7 @@ Si noti che sono richiesti i pacchetti \verb+amsmath+ e
 Per importare i risultati di \app{gretl} in un word processor, è
 possibile fare copia e incolla da una finestra dei risultati usando il
 menù \textsf{Modifica} (o il pulsante Copia, in alcuni contesti) nel
-programma di arrivo.  Molte (non tutte) finestre di \app{gretl}
+programma di arrivo.  Molte finestre di \app{gretl} (non tutte)
 offrono l'opzione di copiare in formato RTF (il ``Rich Text Format''
 di Microsoft) o come {\LaTeX}. Se si deve incollare in un word
 processor, RTF può essere una buona opzione, visto che il formato
@@ -165,9 +165,9 @@ tabulare dei risultati viene preservato\footnote{Si noti che quando si
   (ad es. MS Word) non è stata avviata prima di copiare il materiale
   in questione.}.  In alternativa, è possibile salvare i risultati
 come file di testo semplice e importare successivamente il file nel
-programma di arrivo: quando si conclude una sessione di \app{gretl} si
-ha l'opportunità di salvare tutti i risultati della sessione in un
-unico file.
+programma di elaborazione testi: quando si conclude una sessione di \app{gretl}
+si ha l'opportunità di salvare tutti i risultati della sessione in un unico
+file.
 
 Si noti che nel desktop \app{gnome} e in MS Windows, il menù
 \textsf{File} contiene un comando per inviare i risultati direttamente
@@ -198,7 +198,7 @@ Variabile, Modello e Aiuto.
   \item \textsf{Apri dati}: apre un file di dati in formato interno di
     \app{gretl} o lo importa da altri formati. Si veda il
     capitolo~\ref{datafiles}.
-  \item \textsf{Aggiungi dati}: Aggiunge dati al dataset in uso, da un
+  \item \textsf{Aggiungi dati}: aggiunge dati al dataset in uso, da un
     file di dati di \app{gretl}, un file con dati separati da virgole,
     o un foglio elettronico.
   \item \textsf{Salva dati}: salva il file di dati \app{gretl} in uso.
@@ -209,17 +209,18 @@ Variabile, Modello e Aiuto.
     (valori separati da virgole), o nei formati di GNU R o GNU Octave.
     Si veda il capitolo~\ref{datafiles} e anche
     l'appendice~\ref{app-advanced}.
+  \item \textsf{Invia a}: invia il dataset come allegato in un'e-mail.
   \item \textsf{Abbandona dataset}: cancella dalla memoria il dataset
     in uso. Di solito questa operazione non è necessaria (visto che
     aprendo un nuovo file di dati, quello in uso viene sostituito), ma
     ci sono casi in cui è utile.
-  \item \textsf{Consulta database}: Si veda la sezione~\ref{dbase}.
-  \item \textsf{Crea dataset}: Apre il foglio elettronico integrato
+  \item \textsf{Consulta database}: si veda la sezione~\ref{dbase}.
+  \item \textsf{Crea dataset}: apre il foglio elettronico integrato
     per inserire dati manualmente.  Si veda la sezione~\ref{scratch}.
-  \item \textsf{Visualizza log comandi}: Apre una finestra che
+  \item \textsf{Visualizza log comandi}: apre una finestra che
     contiene la registrazione dei comandi eseguiti finora.
   \item \textsf{Apri file comandi}: apre un file di comandi di
-    \app{gretl} creato dall'utente o uno dei file di esempio forntiti
+    \app{gretl} creato dall'utente o uno dei file di esempio forniti
     con il programma. Se si intende creare un file di comandi da zero,
     occorre usare il comando successivo, \textsf{Nuovo file comandi}.
   \item \textsf{Preferenze}: imposta i percorsi per vari file a cui
@@ -255,7 +256,7 @@ Variabile, Modello e Aiuto.
     ``terminale'' in cui è possibile digitare dei comandi, come se si
     stesse usando la versione a riga di comando \app{gretlcli}, invece
     di quella con interfaccia grafica.
-  \item \textsf{Avvia Gnu R}: Avvia \app{R} (se è presente sul
+  \item \textsf{Avvia Gnu R}: avvia \app{R} (se è presente sul
     sistema) e vi carica una copia del dataset in uso in \app{gretl}.
     Si veda l'appendice~\ref{app-advanced}.
   \item \textsf{Test NIST}: controlla l'accuratezza numerica di
@@ -329,20 +330,20 @@ Variabile, Modello e Aiuto.
     standard per le variabili (logaritmi, ritardi, quadrati, ecc) che
     è possibile aggiungere al dataset. Dà anche l'opzione di
     aggiungere variabili casuali e (per i dataset di serie storiche)
-    variabili dummy stagionali (ad es. variabily dummy trimestrali per
+    variabili dummy stagionali (ad es. variabili dummy trimestrali per
     dati trimestrali). Include la possibilità di impostare il seme del
     generatore di numeri pseudo-casuali.
+  \item \textsf{Aggiungi osservazioni}: mostra una finestra di dialogo
+    in cui è possibile scegliere un numero di osservazioni da
+    aggiungere alla fine del dataset attuale; da usare per le
+    previsioni.
+  \item \textsf{Rimuove le osservazioni in più}: attivo solo se
+    sono state aggiunte automaticamente delle osservazioni durante la
+    procedura di previsione; cancella queste osservazioni aggiuntive.
   \item \textsf{Aggiorna finestra}: a volte i comandi di \app{gretl}
     generano nuove variabili. Questo comando sincronizza l'elenco
     delle variabili visualizzato nella finestra principale con
     l'elenco mantenuto internamente dal programma.
-  \item \textsf{Aggiungi osservazioni}: Mostra una finestra di dialogo
-    in cui è possibile scegliere un numero di osservazioni da
-    aggiungere alla fine del dataset attuale; da usare per le
-    previsioni.
-  \item \textsf{Rimuove le osservazioni aggiuntive}: attivo solo se
-    sono state aggiunte automaticamente delle osservazioni durante la
-    procedura di previsione; cancella queste osservazioni aggiuntive.
   \end{itemize}
 
 \item \textsf{Menù campione}
@@ -360,6 +361,8 @@ Variabile, Modello e Aiuto.
     superiore a quella annuale, permette di diminuire la frequenza dei
     dati, usando uno dei quattro metodi di compattamento disponibili
     (media, somma, inizio del periodo, fine del periodo).
+  \item \textsf{Espandi dati}: per serie storiche, permette di aumentare la
+    frequenza dei dati.
   \item \textsf{Imposta in base a dummy}: data una variabile dummy
     (indicatore) con valori 0 o 1, vengono scartate dal campione tutte
     le osservazioni per cui la variabile dummy vale 0.
@@ -370,6 +373,7 @@ Variabile, Modello e Aiuto.
     che soddisfano la condizione. Si veda la voce \cmd{genr} nella \GCR\
     per maggiori dettagli sugli operatori Booleani che possono essere
     usati.
+  \item \textsf{Sotto-campione casuale}: estrae un campione casuale dal dataset.
   \item \textsf{Scarta valori mancanti}: scarta dal campione corrente
     tutte le osservazioni per cui almeno una variabile ha un valore
     mancante (si veda la sezione~\ref{missing-data}).
@@ -398,7 +402,7 @@ Variabile, Modello e Aiuto.
   \end{itemize}
 
 \item \textsf{Menù variabile}: la maggior parte di questi comandi
-  operano su una sola variabile alla volta. La variabile ``attiva''
+  opera su una sola variabile alla volta. La variabile ``attiva''
   viene impostata facendo clic sulla riga che la contiene nella
   finestra principale. La maggior parte delle opzioni si spiegano da
   sole.  Si noti che è possibile rinominare una variabile e modificare
@@ -417,7 +421,7 @@ Variabile, Modello e Aiuto.
   esistenti \verb+x1+ e \verb+x2+.  In queste formule, le variabili
   devono essere indicate per nome, non per numero identificativo.
 \item \textsf{Menù modello}: per i dettagli sui vari stimatori offerti
-  in questo menù, si consulti la \GCR\ oppure il capitolo ``Stima'' della
+  da questo menù, si consulti la \GCR\ oppure il capitolo ``Stima'' della
   guida in linea. Si veda anche il capitolo~\ref{chap-nls} a proposito
   della stima di modelli non lineari.
 \item \textsf{Menù Aiuto}: usatelo!  Fornisce dettagli sulla sintassi
@@ -467,7 +471,7 @@ Le icone sulla barra hanno il seguente significato, nell'ordine:
   di usare velocemente una calcolatrice mentre si lavora in
   \app{gretl}. Il programma avviato in modo predefinito è
   \verb+calc.exe+ in MS Windows, o \verb+xcalc+ nel sistema X window.
-  È possibile cambiare il programma nel menà \textsf{File, Preferenze,
+  È possibile cambiare il programma nel menù \textsf{File, Preferenze,
     Generali}, sezione ``Programmi''.
 \item Inizia un nuovo script. Apre una finestra in cui è possibile
   digitare una serie di comandi da eseguire in modalità batch.
