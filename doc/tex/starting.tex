@@ -198,6 +198,7 @@ menus.
     Separated Values (CSV) format, or the formats of GNU R or GNU
     Octave. See Chapter~\ref{datafiles} and also
     Appendix~\ref{app-advanced}.
+  \item \textsf{Send to}: Send the current data set as an e-mail attachment.
   \item \textsf{Clear data set}: Clear the current data set out of
     memory.  Generally you don't have to do this (since opening a new
     data file automatically clears the old one) but sometimes it's
@@ -344,6 +345,8 @@ menus.
     annual frequency, gives you the option of compacting the data to a
     lower frequency, using one of four compaction methods (average,
     sum, start of period or end of period).
+  \item \textsf{Expand data}: For time-series data, gives you the option of expanding
+    the data to a higher frequency.
   \item \textsf{Define, based on dummy}: Given a dummy (indicator)
     variable with values 0 or 1, this drops from the current sample
     all observations for which the dummy variable has value 0.
@@ -353,6 +356,7 @@ menus.
     sample is restricted to observations satisfying that condition.
     See the entry for \cmd{genr} in the \GCR
     for details on the Boolean operators that can be used.
+  \item \textsf{Random sub-sample}: Draw a random sample from the full dataset.
   \item \textsf{Drop all obs with missing values}: Drop from the
     current sample all observations for which at least one variable
     has a missing value (see Section~\ref{missing-data}).
