@@ -1135,6 +1135,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     double xx, xmin, xmax;
     double skew, kurt;
     double range, binwidth;
+    int discrete;
     int nbins;
     int t, k, n;
 
@@ -1168,8 +1169,10 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
 	free_freq(freq);
 	return NULL;
-    }    
-    
+    } 
+
+    discrete = gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x);
+
     gretl_moments(pdinfo->t1, pdinfo->t2, x, 
 		  &freq->xbar, &freq->sdx, 
 		  &skew, &kurt, params);
@@ -1197,73 +1200,139 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return freq;
     }
     
-    if (n < 16) {
-	nbins = 5; 
-    } else if (n < 50) {
-	nbins = 7;
-    } else if (n > 850) {
-	nbins = 29;
-    } else {
-	nbins = (int) sqrt((double) n);
-	if (nbins % 2 == 0) {
-	    nbins++;
+    if (discrete) {
+	double *sorted = NULL;
+	int *ifreq = NULL, *ivals = NULL;
+	int i;
+
+	sorted = malloc(n * sizeof *sorted);
+	ifreq = malloc(n * sizeof *ifreq);
+	ivals = malloc(n * sizeof *ivals);
+
+	if (sorted == NULL || ifreq == NULL || ivals == NULL) {
+	    free(sorted);
+	    free(ifreq);
+	    free(ivals);
+	    free_freq(freq);
+	    return NULL;
 	}
-    }
-
-    freq->numbins = nbins;
-    binwidth = range / (nbins - 1);
-
-    freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
-    freq->midpt = malloc(nbins * sizeof *freq->midpt);
-    freq->f = malloc(nbins * sizeof *freq->f);
-
-    if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
-	gretl_errno = E_ALLOC;
-	strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
-	return freq;
-    }
-    
-    freq->endpt[0] = xmin - .5 * binwidth;
-
-    if (xmin > 0.0 && freq->endpt[0] < 0.0) {
-	double rshift;
-
-	freq->endpt[0] = 0.0;
-	rshift = 1.0 - xmin / binwidth;
-	freq->endpt[freq->numbins] = xmax + rshift * binwidth;
-    } else {
-	freq->endpt[freq->numbins] = xmax + .5 * binwidth;
-    }
-    
-    for (k=0; k<freq->numbins; k++) {
-	freq->f[k] = 0;
-	if (k > 0) {
-	    freq->endpt[k] = freq->endpt[k-1] + binwidth;
-	}
-	freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
-    }
-
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xx = x[t];
-	if (na(xx)) {
-	    continue;
-	}
-	if (xx < freq->endpt[1]) {
-	    freq->f[0] += 1;
-	    continue;
-	}
-	if (xx >= freq->endpt[freq->numbins]) {
-	    freq->f[freq->numbins-1] += 1;
-	    continue;
-	}
-	for (k=1; k<freq->numbins; k++) {
-	    if (freq->endpt[k] <= xx && xx < freq->endpt[k+1]) {
-		freq->f[k] += 1;
-		break;
+	
+	i = 0;
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    if (!na(x[t])) {
+		sorted[i++] = x[t];
 	    }
 	}
-    }
+	
+	qsort(sorted, n, sizeof *sorted, gretl_compare_doubles); 
+	nbins = 1;
+	xx = sorted[0];
+	ifreq[0] = 1;
+	ivals[0] = floor(xx);
+	
+	for (t=1; t<n; t++) {
+	    if (sorted[t] != xx) {
+		xx = sorted[t];
+		ifreq[nbins] = 1;
+		ivals[nbins++] = floor(xx);
+	    } else {
+		ifreq[nbins-1] += 1;
+	    }
+	}
+	freq->numbins = nbins;
+	
+	freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
+	freq->midpt = malloc(nbins * sizeof *freq->midpt);
+	freq->f = malloc(nbins * sizeof *freq->f);
+	
+	if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
+	    gretl_errno = E_ALLOC;
+	    strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
+	    return freq;
+	}
+	
+	for (k=0; k<nbins; k++) {
+	    freq->endpt[k] = ivals[k];
+	    freq->midpt[k] = ivals[k];
+	    freq->f[k] = ifreq[k];
+	}
+	
+	freq->endpt[nbins] = xmax;
 
+	free(ifreq);
+	free(ivals);
+	free(sorted);
+    } else {
+	/* not discrete (integer) data */
+	if (n < 16) {
+	    nbins = 5; 
+	} else if (n < 50) {
+	    nbins = 7;
+	} else if (n > 850) {
+	    nbins = 29;
+	} else {
+	    nbins = (int) sqrt((double) n);
+	    if (nbins % 2 == 0) {
+		nbins++;
+	    }
+	}
+	
+	freq->numbins = nbins;
+	binwidth = range / (nbins - 1);
+	
+	freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
+	freq->midpt = malloc(nbins * sizeof *freq->midpt);
+	freq->f = malloc(nbins * sizeof *freq->f);
+	
+	if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
+	    gretl_errno = E_ALLOC;
+	    strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
+	    return freq;
+	}
+	
+	freq->endpt[0] = xmin - .5 * binwidth;
+	
+	if (xmin > 0.0 && freq->endpt[0] < 0.0) {
+	    double rshift;
+	    
+	    freq->endpt[0] = 0.0;
+	    rshift = 1.0 - xmin / binwidth;
+	    freq->endpt[freq->numbins] = xmax + rshift * binwidth;
+	} else {
+	    freq->endpt[freq->numbins] = xmax + .5 * binwidth;
+	}
+	
+	for (k=0; k<freq->numbins; k++) {
+	    freq->f[k] = 0;
+	    if (k > 0) {
+		freq->endpt[k] = freq->endpt[k-1] + binwidth;
+	    }
+	    freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
+	}
+	
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    xx = x[t];
+	    if (na(xx)) {
+		continue;
+	    }
+	    if (xx < freq->endpt[1]) {
+		freq->f[0] += 1;
+		continue;
+	    }
+	    if (xx >= freq->endpt[freq->numbins]) {
+		freq->f[freq->numbins-1] += 1;
+		continue;
+	    }
+	    for (k=1; k<freq->numbins; k++) {
+		if (freq->endpt[k] <= xx && xx < freq->endpt[k+1]) {
+		    freq->f[k] += 1;
+		    break;
+		}
+	    }
+	}
+	
+    }
+	
     return freq;
 }
 

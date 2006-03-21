@@ -260,6 +260,31 @@ int gretl_isunits (int t1, int t2, const double *x)
     return ret;
 }
 
+ /**
+ * gretl_isdiscrete:
+ * @x: data series to examine.
+ * @t1: starting observation.
+ * @t2: ending observation. 
+ *
+ * Returns: 1 if @x contains only values whose decimal part is 
+ * zero in the given sample range and 0 otherwise (missing 
+ * values are skipped).
+ */
+
+int gretl_isdiscrete (int t1, int t2, const double *x)
+{
+    int t, ret = 1;
+
+    for (t=t1; t<=t2; t++) {
+	if (!na(x[t]) && x[t] != floor(x[t])) {
+	    ret = 0;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * true_const:
  * @v: index number of variable to test.

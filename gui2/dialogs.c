@@ -2304,7 +2304,7 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
     int show_pd_buttons = 0;
     gchar *labelstr = NULL;
 
-    d = gretl_dialog_new(_("gretl: compact data"), w, GRETL_DLG_BLOCK);
+    d = gretl_dialog_new(_("gretl: expand data"), w, GRETL_DLG_BLOCK);
 
     if (*target_pd != 0) {
 	/* importing series from database */
