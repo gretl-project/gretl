@@ -911,7 +911,20 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
     gtk_dialog_set_default_response(GTK_DIALOG(filesel), GTK_RESPONSE_ACCEPT);
 
     filter = get_file_filter(action, data);
+    if (action == OPEN_ASCII || action == APPEND_ASCII) {
+	gtk_file_filter_set_name(filter, _("ASCII files (*.txt)"));
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+    }
+
     gtk_file_chooser_set_filter(GTK_FILE_CHOOSER(filesel), filter);
+
+    if (action == OPEN_ASCII || action == APPEND_ASCII) {
+	filter = gtk_file_filter_new();
+	gtk_file_filter_set_name(filter, _("all files (*.*)"));
+	gtk_file_filter_add_pattern(filter, "*.*");
+	gtk_file_chooser_add_filter(GTK_FILE_CHOOSER(filesel), filter);
+    }
+
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), startdir);
 
     /* special cases */

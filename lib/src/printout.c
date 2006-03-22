@@ -302,21 +302,25 @@ static void print_freq_test (const FreqDist *freq, PRN *prn)
  * @prn: gretl printing struct.
  *
  * Print frequency distribution to @prn.
- * 
  */
 
 void print_freq (const FreqDist *freq, PRN *prn)
 {
-    int i, k, nlw, K = freq->numbins - 1;
+    int i, k, nlw, K;
+    int total, valid, missing;
     char word[64];
+    double f, cumf = 0;
 
     if (freq == NULL) {
 	return;
     }
 
-    pprintf(prn, _("\nFrequency distribution for %s, obs %d-%d "
-		   "(%d valid observations)\n"),
-	    freq->varname, freq->t1 + 1, freq->t2 + 1, freq->n);
+    K = freq->numbins - 1;
+    valid = freq->n;
+    total = freq->t2 - freq->t1 + 1;
+
+    pprintf(prn, _("\nFrequency distribution for %s, obs %d-%d\n"),
+	    freq->varname, freq->t1 + 1, freq->t2 + 1);
 
     if (freq->numbins == 0) {
 	if (!na(freq->test)) {
@@ -325,41 +329,61 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	return;
     } 
 
-    pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
-	    freq->numbins, freq->xbar, freq->sdx);
+    if (!freq->discrete) {
+	pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
+		freq->numbins, freq->xbar, freq->sdx);
 
-    pputs(prn, _("\n       interval          midpt      frequency\n\n"));
+	pputs(prn, 
+	      _("\n       interval          midpt   frequency    rel.     cum.\n\n"));
+    } else {
+	pputs(prn, _("\n          frequency    rel.     cum.\n\n"));
+    }
 
     for (k=0; k<=K; k++) {
 	*word = '\0';
-	if (k == 0) {
-	    pputs(prn, "          <  ");
-	} else if (k == K) {
-	    pputs(prn, "          >= ");
+	if (freq->discrete) {
+	    sprintf(word, "%4.0f", freq->midpt[k]);
 	} else {
-	    pprintf(prn, "%10g - ", freq->endpt[k]);
-	}
-	if (k == K) {
-	    sprintf(word, "%g", freq->endpt[k]);
-	} else {
-	    sprintf(word, "%g", freq->endpt[k+1]);
-	}
-	pprintf(prn, "%s", word);
+	    if (k == 0) {
+		pputs(prn, "          <  ");
+	    } else if (k == K) {
+		pputs(prn, "          >= ");
+	    } else {
+		pprintf(prn, "%10g - ", freq->endpt[k]);
+	    }
+	    if (k == K) {
+		sprintf(word, "%g", freq->endpt[k]);
+	    } else {
+		sprintf(word, "%g", freq->endpt[k+1]);
+	    }
 
-	nlw = 10 - strlen(word);
-	bufspace(nlw, prn);
+	    pprintf(prn, "%s", word);
+	    nlw = 10 - strlen(word);
+	    bufspace(nlw, prn);
+	    sprintf(word, " %g", freq->midpt[k]);
+	}
 
-	sprintf(word, " %g", freq->midpt[k]);
 	pputs(prn, word);
-
 	nlw = 10 - strlen(word);
 	bufspace(nlw, prn);
 
 	pprintf(prn, "%6d  ", freq->f[k]);
-	i = 36.0 * freq->f[k]/freq->n;
+	f = 100.0 * freq->f[k] / valid;
+	cumf += f;
+	pprintf(prn, "  %6.2f%% %7.2f%% ", f, cumf);
+	i = 0.36 * f;
 	while (i--) {
 	    pputc(prn, '*');
 	}
+	pputc(prn, '\n');
+    }
+
+    missing = total - valid;
+
+    if (missing > 0) {
+	pputc(prn, '\n');
+	pprintf(prn, _("Invalid cases = %d (%5.2f%%)"), missing, 
+		100 * (double) missing / total);
 	pputc(prn, '\n');
     }
 

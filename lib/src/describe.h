@@ -40,6 +40,7 @@ struct Summary_ {
 
 struct FreqDist_ {
     char varname[VNAMELEN];  /* for ID purposes */
+    int discrete;            /* 1 if variable contains integers */
     int dist;                /* code for theoretical distribution */
     int numbins;             /* number of bins or intervals */
     double xbar, sdx;        /* mean and std dev of variable */

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-03-07 08:37-0500\n"
-"PO-Revision-Date: 2006-03-17 13:00+0100\n"
+"PO-Revision-Date: 2006-03-19 22:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1952,23 +1952,23 @@ msgstr "zmienna - indeks obserwacji"
 
 #: lib/src/genrfuncs.c:914
 msgid "annual plotting variable"
-msgstr "Wykres rocznej zmiennej"
+msgstr "Datowana roczna zmienna czasowa"
 
 #: lib/src/genrfuncs.c:920
 msgid "quarterly plotting variable"
-msgstr "Wykres kwartalnej zmiennej"
+msgstr "Datowana kwartalna zmienna czasowa"
 
 #: lib/src/genrfuncs.c:927
 msgid "monthly plotting variable"
-msgstr "Wykres miesiêcznej zmiennej"
+msgstr "Datowana miesiêczna zmienna czasowa"
 
 #: lib/src/genrfuncs.c:934
 msgid "hourly plotting variable"
-msgstr "Wykres godzinowej zmiennej"
+msgstr "Datowana godzinowa zmienna czasowa"
 
 #: lib/src/genrfuncs.c:943
 msgid "daily plotting variable"
-msgstr "Wykres dziennej zmiennej"
+msgstr "Datowana dzienna zmienna czasowa"
 
 #: lib/src/genrfuncs.c:1172
 #, c-format

@@ -355,7 +355,7 @@ rtfprint_vmatrix (const VMatrix *vmat, const DATAINFO *pdinfo, PRN *prn)
 			"%s - %s"), date1, date2);
 	pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
 	if (vmat->missing) {
-	    pprintf(prn, "(%s)\\par\n", I_("(missing values were skipped)"));
+	    pprintf(prn, "%s\\par\n", I_("(missing values were skipped)"));
 	}
 	sprintf(tmp, I_("5%% critical value (two-tailed) = %.4f for n = %d"), 
 		rhocrit95(n), n);

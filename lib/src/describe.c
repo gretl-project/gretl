@@ -1112,6 +1112,24 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     return err;
 }
 
+static freq_add_arrays (FreqDist *freq, int nbins)
+{
+    int err = 0;
+	
+    freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
+    freq->midpt = malloc(nbins * sizeof *freq->midpt);
+    freq->f = malloc(nbins * sizeof *freq->f);
+	
+    if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
+	err = E_ALLOC;
+	strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
+    } else {
+	freq->numbins = nbins;
+    }
+
+    return err;
+}
+
 /**
  * get_freq:
  * @varno: ID number of variable to process.
@@ -1135,7 +1153,6 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     double xx, xmin, xmax;
     double skew, kurt;
     double range, binwidth;
-    int discrete;
     int nbins;
     int t, k, n;
 
@@ -1171,7 +1188,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     } 
 
-    discrete = gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x);
+    freq->discrete = gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x);
 
     gretl_moments(pdinfo->t1, pdinfo->t2, x, 
 		  &freq->xbar, &freq->sdx, 
@@ -1200,7 +1217,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return freq;
     }
     
-    if (discrete) {
+    if (freq->discrete) {
 	double *sorted = NULL;
 	int *ifreq = NULL, *ivals = NULL;
 	int i;
@@ -1239,13 +1256,8 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 		ifreq[nbins-1] += 1;
 	    }
 	}
-	freq->numbins = nbins;
-	
-	freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
-	freq->midpt = malloc(nbins * sizeof *freq->midpt);
-	freq->f = malloc(nbins * sizeof *freq->f);
-	
-	if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
+
+	if (freq_add_arrays(freq, nbins)) {
 	    gretl_errno = E_ALLOC;
 	    strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
 	    return freq;
@@ -1277,18 +1289,13 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	    }
 	}
 	
-	freq->numbins = nbins;
-	binwidth = range / (nbins - 1);
-	
-	freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
-	freq->midpt = malloc(nbins * sizeof *freq->midpt);
-	freq->f = malloc(nbins * sizeof *freq->f);
-	
-	if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
+	if (freq_add_arrays(freq, nbins)) {
 	    gretl_errno = E_ALLOC;
 	    strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
 	    return freq;
 	}
+
+	binwidth = range / (nbins - 1);
 	
 	freq->endpt[0] = xmin - .5 * binwidth;
 	
@@ -1330,7 +1337,6 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 		}
 	    }
 	}
-	
     }
 	
     return freq;
