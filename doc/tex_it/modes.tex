@@ -4,15 +4,15 @@
 \section{Script di comandi}
 \label{scripts}
 
-I comandi eseguiti in \app{gretl} usando le finestre di dialogo
-dell'interfaccia grafica vengono registrati sotto forma di un file
-``script'' o ``batch''. Questi file possono essere modificati e
+I comandi \app{gretl} eseguiti utilizzando le finestre di dialogo
+dell'interfaccia grafica vengono registrati sotto forma di file
+``script'' o ``log''. Questi file possono essere modificati e
 ri-eseguiti, usando \app{gretl} o l'applicazione a riga di comando
 \app{gretlcli}.
 
-Per visualizzare lo stato attuale dello script durante una sessione di
+Per visualizzare lo stato del log dei comandi durante una sessione di
 \app{gretl}, basta scegliere \textsf{Visualizza log comandi} dal menù
-File. Questo file di log si chiama \verb+session.inp+ e viene
+File. Questo file di log è chiamato \verb+session.inp+ e viene
 sovrascritto ogni volta che si inizia una nuova sessione: per
 conservarlo, basta salvarlo con un nome diverso. I file di comandi
 vengono visualizzati più facilmente nella finestra di selezione dei
@@ -43,21 +43,21 @@ testo; (8) Annulla l'ultimo comando Incolla o Sostituisci; (9) Aiuto
 di domanda si ottiene aiuto su quel comando); (10) Chiudi la finestra.
 
 Facendo clic sull'icona Esegui o scegliendo \textsf{File, Esegui} dal
-menù, i risultati sono diretti in un'unica finestra, dove possono
+menù, i risultati dei comandi compariranno in un'unica finestra, dove possono
 essere modificati, salvati, o copiati negli appunti.  Per conoscere
 meglio le possibilità fornite dagli script, è possibile usare il
-comando del menù \textsf{Aiuto, Comandi testuali}, o eseguire la
+comando del menù \textsf{Aiuto, Comandi testuali}, oppure eseguire la
 versione a riga di comando del programma \app{gretlcli} e consultare
-il suo aiuto, oppure consultare la \GCR.  
+il suo aiuto, oppure ancora consultare la \GCR.  
 
 In aggiunta, il pacchetto \app{gretl} contiene più di 70 script ``di
-esempio'': la maggior parte di essi sono relativi a Ramanathan (2002),
-ma possono essere usati in modo autonomo anche come introduzione alle
-possibilità di script offerte da \app{gretl} e ad alcuni aspetti di
+esempio'': la maggior parte di essi è relativa a Ramanathan (2002),
+ma essi possono essere utili anche per studiare le possibilità di
+scripting offerte da \app{gretl}, oltre ad alcuni aspetti della
 teoria econometrica. È possibile esplorare i file di esempio dal menù
 \textsf{File, Apri file comandi, File di esempio}: si troverà un
 elenco dei file, insieme a una breve descrizione dei problemi
-illustrati e dei dati utilizzati.  Basta aprire un file ed eseguirlo
+illustrati nello script e dei dati utilizzati.  Basta aprire un file ed eseguirlo
 per vederne i risultati.  Si noti che in uno script i comandi lunghi
 possono essere suddivisi in due o più righe, usando una barra inversa
 come carattere di continuazione della riga.
@@ -90,8 +90,8 @@ dei due approcci. Ecco alcuni suggerimenti:
 \label{sect-script-objects}
 
 Se si stima un modello usando l'interfaccia grafica, i risultati
-vengono mostrati in una finestra separata, che comprende menù da cui è
-possibile effettuare test, disegnare grafici, salvare dati dal
+vengono mostrati in una finestra separata, che comprende alcuni menù da cui è
+possibile effettuare test, disegnare grafici, salvare dati del
 modello, e così via. Se invece si stima un modello usando uno script,
 si ottiene un tabulato non interattivo dei risultati, ma è possibile
 ``catturare'' i modelli stimati in uno script, in modo da esaminarli
@@ -101,7 +101,7 @@ interattivamente dopo l'esecuzione dello script. Ecco un esempio:
       Modello1 <- ols Ct 0 Yt
 \end{code}
 
-Ossia: viene indicato un nome con cui verrà salvato il modello,
+Ossia: si indica un nome con cui verrà salvato il modello,
 seguito da una ``freccia di assegnazione'' rivolta all'indietro e dal
 comando di stima del modello. È possibile usare spazi nei nomi dei
 modelli, ma occorre racchiudere il nome tra virgolette doppie:
@@ -111,10 +111,9 @@ modelli, ma occorre racchiudere il nome tra virgolette doppie:
 \end{code}
 
 I modelli salvati in questo modo appariranno come icone nella finestra
-di sessione di \app{gretl} session window (si veda la
-sezione~\ref{session}) dopo l'esecuzione dello script. Inoltre, è
-possibile fare in modo che un modello venga mostrato in una finestra
-in modo automatico, usando:
+di sessione di \app{gretl} (si veda la sezione~\ref{session}) dopo l'esecuzione
+dello script. Inoltre, è possibile fare in modo che un modello venga mostrato in
+una finestra in modo automatico, usando:
 \begin{code}
       Modello1.show
 \end{code}
@@ -137,7 +136,7 @@ sessione) e lo mostra automaticamente:
 testuali identificati da un nome (anche questi appariranno nella
 finestra della sessione, da cui sarà possibile aprirli in seguito). Ad
 esempio, questo comando invia i risultati di un test Dickey--Fuller
-aumentato a un ``oggetto testo'' chiamato \verb+ADF1+ e li mostra in
+aumentato a un ``oggetto testuale'' chiamato \verb+ADF1+ e li mostra in
 una finestra:
 \begin{code}
       ADF1 <- adf 2 x1
@@ -146,7 +145,7 @@ una finestra:
 
 Gli oggetti salvati in questo modo (siano essi modelli, grafici o
 parti di testo) possono essere eliminati usando il comando
-\verb+.free+ aggiunto al nome dell'oggetto, ad esempio con
+\verb+.free+ aggiunto al nome dell'oggetto, ad esempio
 \verb+ADF1.free+.
 
 \section{Il terminale di gretl}
@@ -198,7 +197,7 @@ alle statistiche descrittive di riepilogo (\textsf{Statistiche}).
 Tutte queste funzioni sono attivate facendo doppio clic sull'icona
 relativa. L'icona \textsf{Dataset} è un po' più complessa: un doppio
 clic apre i dati nel foglio di lavoro integrato, mentre facendo clic
-col tasto destro del mouse si ottiene un menù con altre azioni
+col tasto destro del mouse si ottiene un menù con le altre azioni
 possibili.
 
 Per aggiungere un modello alla finestra di sessione, occorre per prima
@@ -222,8 +221,8 @@ modificarlo, se si tratta di un grafico.
 \subsection{La tabella modelli}
 \label{model-table}
 
-Nella ricerca econometrica è prassi comune stimare vari modelli con
-una variabile dipendente comune, mentre i modelli differiscono tra
+Nella ricerca econometrica è prassi comune stimare, per una stessa
+variabile dipendente, vari modelli che differiscono tra
 loro per le variabili indipendenti o per lo stimatore usato.  In
 questa situazione è comodo poter rappresentare i risultati delle
 regressioni sotto forma di una tabella dove ogni colonna contiene i
@@ -245,7 +244,7 @@ di costruire una tabella simile (e di esportarla in testo semplice,
 \item Ripetere il punto 1 per gli altri modelli da includere nella
   tabella (fino a un massimo di sei modelli).
 \item Completata la stima dei modelli, aprire l'icona della sessione
-  di gretl (selezionando \textsf{Visualizza Icone} nel menù Sessione
+  di gretl, selezionando \textsf{Visualizza Icone} nel menù Sessione
   della finestra principale di gretl, o facendo clic su \textsf{Icone
     di sessione} sulla barra degli strumenti di gretl.
 \item La finestra delle icone di sessione contiene un'icona chiamata
@@ -267,7 +266,7 @@ di costruire una tabella simile (e di esportarla in testo semplice,
   selezionare \textsf{Pulisci}, quindi tornare al punto 4.
 \end{enumerate}
 
-Un semplice esempio di tabella modelli di \app{gretl} è mostrato in
+Un semplice esempio di tabella modelli di \app{gretl} è mostrato nella
 figura~\ref{fig-model-table}.
 
 \begin{figure}[htbp]
