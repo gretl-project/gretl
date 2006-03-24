@@ -1,0 +1,240 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+  <title>Dados para o gretl</title>
+  <link rel="STYLESHEET" type="text/css" href="css-gretl.htm">
+</head>
+<body>
+<p>[<a href="./gretl_portugues.html">página
+principal</a>]</p>
+<center>
+<h1>Dados para o gretl</h1>
+</center>
+<table cellspacing="8">
+  <tbody>
+    <tr>
+      <td><img alt="gretl image"
+ src="gretl_data_it_files/gretl-image.png"></td>
+      <td align="left"> <font face="sans-serif" size="-1"> </font>
+      <p><font face="sans-serif" size="-1"><a href="#db">Bases de Dados
+para o gretl</a> </font></p>
+      <p><font face="sans-serif" size="-1"><a href="#jw">Conjuntos de
+Dados de livros de texto</a> </font></p>
+      <p><font face="sans-serif" size="-1"><a href="#df">Grandes
+Conjuntos de Dados</a> </font></p>
+      <p><font face="sans-serif" size="-1"><a href="#custom">Colecções
+de Dados de utilizadores</a> </font></p>
+      <p><font face="sans-serif" size="-1"><a href="#perl">Utilitários
+para tratamento de Dados</a> </font> </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h2>Terminologia</h2>
+<p>Na linguagem corrente do gretl, uma <b>database</b> (base de dados)
+é uma colecção de séries temporais (normalmente grande) que podem ser
+um misto de frequências e intervalos de observações. Os dados estão
+guardados em formato binário, como sendo de vírgula flutuante (float)
+de precisão singular [<a href="#float">Nota</a>]. Acede-se as esses
+ficheiros por meio do menu <kbd>Ficheiro/Procura bases_de_dados</kbd>,
+que
+permite seleccionar as séries e importar para o espaço de trabalho do
+gretl.&nbsp; As bases de dados do gretl têm uma extensão <kbd>.bin</kbd>
+e são acompanhadas por um ficheiro de índice (extensão <kbd>.idx</kbd>)
+que contém informação sobre a série.<br>
+</p>
+<p>Por outro lado, um ficheiro de dados (<b>datafile</b>), é uma
+colecção de séries que é homogénea no que diz respeito à frequência e
+intervalo de dados (embora possam haver valores omissos para algumas
+variáveis em algumas observações). Este tipo de ficheiro pode ser lido
+directamente para o espaço de trabalho do gretl. Tipicamente estes
+ficheiros têm uma extensão <kbd>.gdt</kbd>; estão em formato XML, e de
+acordo com o standard "Document Type Definition" (DTD) dado em <a
+ href="./gretldata.dtd">gretldata.dtd</a>.</p>
+<p>Para mais detalhes, consultar o <a
+ href="http://gretl.sourceforge.net/manual.pdf">manual do gretl</a>.</p>
+<h2><a name="db">1. Bases de Dados para o gretl</a></h2>
+<p>A distribuição de gretl contém uma base de dados de exemplos; uma
+colecção de séries temporais de informação macro-económica da Reserva
+Federal de St. Louis nos E.U.A.. <a
+ href="http://ricardo.ecn.wfu.edu/gretl/cgi-bin/gretldata.cgi?opt=SHOW_DBS">Outras
+bases de dados</a> estão disponíveis para download ou acesso on-line. A
+partir da versão 0.40 do gretl, é possível aceder a estas bases de
+dados adicionais a partir do menu <kbd>Ficheiro/Procura
+bases_de_dados/em servidor de bases_de_dados </kbd>(desde que se
+esteja ligado à Internet).</p>
+<h2><a name="jw">2. Conjuntos de Dados de livros de texto<br>
+</a></h2>
+<p>Com o pacote base do gretl vêm fornecidos os conjuntos de dados e
+scripts sobre o livro <a
+ href="http://econ.ucsd.edu/%7Erramanat/embook5.htm"><i>Introductory
+Econometrics
+with Applications</i></a> de Ramu Ramanathan, e também, uma selecção de
+dados do livro <a
+ href="http://pages.stern.nyu.edu/%7Ewgreene/Text/econometricanalysis.htm"><i>Econometric
+Analysis</i></a> de William Greene. Indicam-se outros conjuntos de
+dados adicionais que estão disponíveis:</p>
+<p><i>Wooldridge</i>: gretl fornece suporte aos conjuntos de dados
+utilizados no livro de texto de Jeffrey Wooldridge <a
+ href="http://www.swcollege.com/bef/wooldridge/wooldridge2e/wooldridge2e.html"><i>Introductory
+Econometrics: A Modern Approach</i></a>.
+O conjunto de dados está disponível como ficheiro auto-executável em
+Windows
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.exe">wooldridge_data.exe</a>,
+ou como arquivo comprimido <a
+ href="ftp://ricardo.ecn.wfu.edu/pub/gretl/wooldridge_data.tar.gz">wooldridge_data.tar.gz</a>.</p>
+<p><i>Gujarati</i>: gretl suporta os conjuntos de dados do livro <a
+ href="http://www.mhhe.com/economics/gujarati4/">Basic Econometrics</a>
+de Damodar Gujarati. Ver <a
+ href="http://gretl.sourceforge.net/gujarati/index.html">nesta página</a>
+mais detalhes.<br>
+</p>
+<p><i>Stock and Watson</i>: gretl suporta os conjuntos de dados do
+livro <a href="http://wps.aw.com/aw_stockwatsn_economtrcs_1"><i>Introduction
+to
+Econometrics</i></a> de James Stock e Mark Watson. Também são
+fornecidos os scripts de replicação dos exemplos. O pacote está
+disponível como um ficheiro auto-instalável em Windows,
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.exe">stock_watson.exe</a>,
+ou como arquivo comprimido, <a
+ href="ftp://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.tar.gz">stock_watson.tar.gz</a>.</p>
+<p><i>Davidson and MacKinnon</i>: gretl suporta os conjuntos de dados
+do livro deles, <a href="http://www.econ.queensu.ca/ETM/">Econometric
+Theory and Methods</a>.
+Os conjuntos de dados encontram-se num ficheiro auto-instalável em
+Windows, <a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.exe">ETM_data.exe</a>,
+ou em arquivo comprimido <a
+ href="ftp://ricardo.ecn.wfu.edu/pub/gretl/ETM_data.tar.gz">ETM_data.tar.gz</a>.</p>
+<p>No que diz respeito aos ficheiros auto-instaláveis em Windows, fazer
+download deles para o Ambiente de Trabalho e fazer duplo-click no
+ícone. (Uma vez instalados, pode-se apagar os instaladores).<br>
+</p>
+<p>Os arquivos comprimidos com gzip devem ser descomprimidos na pasta
+"share" do gretl.
+Por exemplo, se gretl está instalado em <kbd>/usr</kbd>, para instalar
+os dados e script de Stock e Watson basta proceder como abaixo se
+indica (com acesso root):</p>
+<pre>cd /usr/share/gretl<br>wget ftp://ricardo.ecn.wfu.edu/pub/gretl/stock_watson.tar.gz<br>tar xvfz stock_watson.tar.gz<br>rm stock_watson.tar.gz<br></pre>
+<h2><a name="df">3. Grandes Conjuntos de Dados</a></h2>
+<p>Os pacotes seguintes contêm um ou mais ficheiros de dados do gretl,
+com os respectivos ficheiros de cabeçalhos e marcadores. Para os usar,
+basta os descompactar para a directoria gretl do utilizador (que está
+definida por omissão em <kbd>$HOME/gretl</kbd>
+num sistema do tipo Unix, ou <kbd>c:\userdata\gretl\user</kbd> em MS
+Windows).</p>
+<table border="0" cellpadding="4" cellspacing="4" width="90%">
+  <tbody>
+    <tr>
+      <th align="left">Fonte (com a lista das séries)</th>
+      <th align="left">Descrição</th>
+      <th align="left">Ficheiro zip (FTP)</th>
+      <th align="left">Dimensão (byte)</th>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td>
+      <p><a href="http://pwt.econ.upenn.edu/">U. Penn</a></p>
+      </td>
+      <td>
+      <p>Penn World Table, PWT56 (dados de painel macro-económico de
+várias nações)</p>
+      </td>
+      <td>
+      <p> <a
+ href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/pwt56.tar.gz">pwt56.tar.gz</a></p>
+      </td>
+      <td align="right">
+      <p>566100&nbsp;</p>
+      </td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td>
+      <p><a
+ href="http://www.nber.org/databases/jones-obstfeld/index.html">NBER</a></p>
+      </td>
+      <td>
+      <p>Jones-Obstfeld: dados sobre Poupança e Investimento em 13
+países
+(painel histórico)</p>
+      </td>
+      <td>
+      <p> <a
+ href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/jones_obst.zip">jones_obst.zip</a></p>
+      </td>
+      <td align="right">
+      <p>42895&nbsp;</p>
+      </td>
+    </tr>
+    <tr bgcolor="#e0e0e0">
+      <td>
+      <p><a href="http://www.nber.org/nberprod/">NBER</a></p>
+      </td>
+      <td>
+      <p>NBER-CES/Census Manufacturing Industry Productivity Data
+11/25/98 (cobre cerca de 17.000 indústrias)</p>
+      </td>
+      <td>
+      <p><a href="ftp://ricardo.ecn.wfu.edu/pub/gretldata/nberpr87.zip">nberpr87.zip</a></p>
+      </td>
+      <td align="right">
+      <p>899962&nbsp;</p>
+      </td>
+    </tr>
+    <tr>
+      <td>&nbsp;</td>
+    </tr>
+  </tbody>
+</table>
+<p>Para obter detalhes completos sobre os conjuntos de dados, deve-se
+consultar as ligações na primeira coluna. Posteriores notas sobre os
+dados, serão colocadas aqui; mas por agora apenas estão para a Penn
+World Table.</p>
+<h3>Penn World Table</h3>
+<p>PWT56 é um rico painel de dados do tipo macro-económico, que abranje
+152 países ao longo dos anos 1950 a 1992. O pacote do gretl contém três
+ficheiros de dados principais:</p>
+<ul>
+  <li>
+    <p><kbd>pwt56.gdt</kbd>: O pwt56 completo. Este conjunto de dados
+contém muitos valores omissos.</p>
+  </li>
+  <li>
+    <p><kbd>pwt56_60_89.gdt</kbd>: Um painel de dados com 120 países
+sobre 30 anos que vão de 1960 a 1989, contém 20 variáveis. Este
+conjunto de dados não tem valores omissos.</p>
+  </li>
+  <li>
+    <p><kbd>pwt56_1985.gdt</kbd>: Dado que em 1985 estão disponíveis
+mais dados que para outros anos, construí este conjunto de dados que
+contém dados sobre várias secções de todos os 152 países. Este conjunto
+de dados tem alguns valores omissos, mas será mais fácil lidar com eles
+do que no conjunto completo.<br>
+    </p>
+  </li>
+</ul>
+<p>Este pacote inclui a documentação completa e exemplos de scripts
+para analisar os dados.<br>
+</p>
+<p>Para obter mais informação em como lidar com dados de painel,
+recomendo consultar o <a href="http://gretl.sourceforge.net/manual.pdf">manual
+do gretl</a>.</p>
+<h2><a name="custom">4. Colecções de Dados de utilizadores</a></h2>
+<p>Se usa o gretl no ensino, poderá ser útil preparar colecções de
+dados (ou scripts) para os estudantes acederem. Ver <a
+ href="http://gretl.sourceforge.net/collections_pt.html">nesta página</a>
+instruções detalhadas em como o fazer.</p>
+<h2><a name="perl">5. Utilitários para tratamento de Dados</a></h2>
+<p>Para além de oferecer bases de dados pré-preparadas, o gretl vem com
+alguns scripts que podem ser utilizados para criar bases de dados a
+partir de dados disponíveis na Internet. Estes podem ser encontrados na
+subdirectoria <kbd>utils</kbd>
+do pacote de código-fonte do gretl (ver <a
+ href="http://gretl.sourceforge.net/gretl_portugues.html">página
+principal</a>
+do gretl). Para executar os scripts tem que ter instalado o perl no
+computador e estar conectado à Internet.</p>
+<hr noshade="noshade">
+<address>Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
+<!-- hhmts start -->
+<!-- hhmts end -->
+</body>
+</html>

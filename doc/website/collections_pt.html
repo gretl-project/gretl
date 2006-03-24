@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+  <title>Dados para o gretl</title>
+  <link rel="STYLESHEET" type="text/css" href="./css-gretl.html">
+</head>
+<body>
+<p>[<a href="./gretl_portugues.html">página principal</a>]</p>
+<center>
+<h1>Colecções de Dados e Scripts</h1>
+</center>
+<p>Se utiliza o gretl num contexto de ensino, você pode estar
+interessado em preparar uma colecção de dados e scripts que estejam
+relacionados com o seu curso, numa forma em que os alunos os possam
+observar e aceder a eles com facilidade. Isto é possível fazer a partir
+da versão 1.2.1 e superiores.<br>
+</p>
+<p>As matérias podem ser arranjadas de modo que um ficheiro de dados
+personalizado apareça nas opções quando um utilizador selecciona
+"Ficheiro, Abrir Dados, ficheiro de amostras", ou clica no ícone
+"Pasta" na barra de ferramentas do gretl.<br>
+</p>
+<p>De modo semelhante, você pode preparar uma colecção de scripts de
+modo a que apareça quando o utilizador selecciona no menu, "Ficheiro,
+Abrir ficheiro de comandos, ficheiro de prática".<br>
+</p>
+<p>Quando se acede a um dos items de menu mencionado acima, o gretl
+procura por ficheiros de colecções válidos nestas localizações: a
+directoria de dados do gretl "system", a directoria de sistema de
+scripts do gretl, a directoria do utilizador de gretl, e todas as
+subdirectorias do primeiro nível destas. Para referência, os valores
+usuais para estas directorias são:</p>
+<center>
+<table>
+  <tbody>
+    <tr>
+      <th>localização</th>
+      <th>Linux por omissão</th>
+      <th>Windows por omissão<br>
+      </th>
+    </tr>
+    <tr>
+      <td>
+      <p>system data dir</p>
+      </td>
+      <td><kbd>/usr/share/gretl/data</kbd></td>
+      <td><kbd>c:\userdata\gretl\data</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p>system script dir</p>
+      </td>
+      <td><kbd>/usr/share/gretl/scripts</kbd></td>
+      <td><kbd>c:\userdata\gretl\scripts</kbd></td>
+    </tr>
+    <tr>
+      <td>
+      <p>user d<kbd>/home/me/gretl</kbd></td>
+      <td><kbd>c:\userdata\gretl\user</kbd></td>
+    </tr>
+  </tbody>
+</table>
+</center>
+<p> Todas as colecções válidas serão adicionadas à janela de selecção.
+Então o que constitui um ficheiro de uma colecção válida? Comporta
+tanto um conjunto de dados no formato XML do gretl (com a extensão <kbd>.gdt</kbd>)
+como um conjunto de ficheiros script contendo comandos do gretl (com a
+extensão <kbd>.inp</kbd>), e em ambos os casos, acompanhados por um
+"ficheiro mestre" ou catálogo. A distribuição corrente do gretl contém
+vários exemplos de catálogos, por exemplo o ficheiro <kbd>descriptions</kbd>
+na subdirectoria "misc" na directoria dos dados do gretl e
+<kbd>ps_descriptions</kbd> na subdirectoria "misc" da directoria de
+scripts do gretl.</p>
+<p>Recomendo que se estiver a adicionar a sua própria colecção, que os
+catálogos de dados se chamem "descriptions" e os catálogos de script
+com o nome "ps_descriptions". Em ambos os casos este ficheiros devem
+ser colocados (juntamente com os de dados ou scripts) numa
+subdirectoria própria para eles (por exemplo <kbd>/usr/share/gretl/data/osmeusdados</kbd>
+ou
+<kbd>c:\userdata\gretl\data\osmeusdados</kbd>).</p>
+<p>A sintaxe dos ficheiros de descrição (em texto simples) é muito
+simples. Eis, por exemplo, algumas das primeiras linhas do ficheiro de
+catálogo de dados do gretl, "misc":</p>
+<pre> # Gretl: vários exemplos ilustrativos de ficheiros de dados<br> "arma","dados artificiais para o exemplo de script ARMA (autoregressão com média móvel)"<br> "ects_nls","Exemplo de Mínimos Quadrados Não-Lineares"<br> "hamilton","Preços e taxa de câmbio, E.U.A. e Itália"<br></pre>
+<p> A primeira linha, que tem que iniciar com o símbolo cardinal,
+contém um pequeno nome, neste caso "Gretl", que aparecerá como o nome
+desta colecção no separador da janela de selecção de dados, seguido de
+um símbolo dois pontos, e seguido por uma breve e opcional descrição da
+colecção.</p>
+<p>As linhas subse
+vírgula e entre aspas. O primeiro é o nome do ficheiro de dados (sem a
+extensão .gdt) e o segundo uma curta descrição do conteúdo desse
+ficheiro de dados. Deve existir uma dessas linhas para cada ficheiro de
+dados na colecção.<br>
+</p>
+<p>Um ficheiro de catálogo para uma colecção de scripts, parece muito
+semelhante, excepto que existem três campos nas linhas dos ficheiros:
+um nome de ficheiro (sem a extensão <kbd>.inp</kbd>), uma breve
+descrição do assunto de econometria ilustrado no exemplo, e uma pequena
+indicação da natureza dos dados utilizados. Mais uma vez, eis algumas
+das primeiras linhas do catálogo de scripts de "misc" do gretl:</p>
+<pre> # Gretl: vários scripts de exemplos<br> "arma.inp","modelação ARMA","dados artificiais"<br> "ects_nls","Mínimos Quadrados Não-Lineares (Davidson)","dados artificiais"<br> "leverage","Observações Influenciadoras", "dados artificiais"<br>&nbsp;"longley","Multicolinearidade","emprego E.U.A."<br></pre>
+<p> Estes são os passos para colocar a sua própria colecção de dados
+disponível no gretl:</p>
+<ol>
+  <li>
+    <p>Reunir os dados, em qualquer formato que seja conveniente.</p>
+  </li>
+  <li>
+    <p>Converter os dados para o formato do gretl e guardar como
+ficheiros .gdt. Provavelmente é mais fácil converter os dados
+importando-os para o gretl a partir de texto simples, CSV (Valores
+Separados por Dois Pontos) ou em formato de folha de cálculo (MS Excel
+ou Gnumeric) e depois gravar como gdt. Poderá pretender acrescentar
+descrições das variáveis individuais (a função no menu, "Variável,
+Editar atributos"), e acrescentar informação sobre a origem dos dados
+(a função "Dados, Editar informação").</p>
+  </li>
+  <li>
+    <p>Escrever um ficheiro de descrições ("descriptions") para a
+colecção usando um editor de texto.</p>
+  </li>
+  <li>
+    <p>Colocar os ficheiros de dados e o de descrições numa
+subdirectoria da directoria de dados do gretl (ou directoria do
+utilizador). </p>
+  </li>
+</ol>
+<p>Seem proprietários,
+gostava de sugerir que fornecesse a colecção para ficar disponível como
+um pacote opcional do gretl ("optional extra").</p>
+<address>Allin Cottrell <a href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
+<br>
+Julho, 2004
+</body>
+</html>
