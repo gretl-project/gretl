@@ -4,16 +4,15 @@
 \section{Formato interno}
 \label{native-format}
 
-\app{gretl} ha un formato nativo per i file di dati. La maggior parte
+\app{gretl} utilizza un suo formato interno per i file di dati. La maggior parte
 degli utenti probabilmente non è interessata a leggere o scrivere
-questi file con altri programmi che non siano \app{gretl}, ma in
-alcune occasioni potrebbe essere utile farlo: per ulteriori dettagli
-si veda l'appendice~\ref{app-datafile}.
+questi file con altri programmi, ma in alcune occasioni potrebbe essere utile
+farlo: per ulteriori dettagli si veda l'appendice~\ref{app-datafile}.
 
 \section{Altri formati dei file di dati}
 \label{other-formats}
 
-\app{gretl} legge anche file in altri formati:
+\app{gretl} legge anche file di dati in altri formati:
     
 \begin{itemize}
 \item File di testo semplice (ASCII). Possono essere importati in
@@ -31,8 +30,8 @@ si veda l'appendice~\ref{app-datafile}.
   dati, Importa''.  La sezione~\ref{scratch} descrive i requisiti per
   questo tipo di file.
 \item File di dati di \app{Stata} (\texttt{.dta}).
-\item File di lavoro di \app{Eviews} (\texttt{.wf1}).\footnote{Questo supporto
-  è sperimentale. Si veda \url{http://www.ecn.wfu.edu/eviews_format/}.}
+\item File di lavoro di \app{Eviews} (\texttt{.wf1}).\footnote{Il supporto per
+  questo tipo di file è sperimentale. Si veda \url{http://www.ecn.wfu.edu/eviews_format/}.}
 \end{itemize}
 
 Quando vengono importati file in formato ASCII o CSV, \app{gretl}
@@ -90,7 +89,7 @@ legge correttamente.
   \href{http://gretl.sourceforge.net/gretl_data_it.html}{pagina dei
     dati} di \app{gretl}.}
 
-\section{Creare un file di dati da zero}
+\section{Creazione di un file di dati}
 \label{scratch}
 
 Ci sono cinque modi per compiere questa operazione.
@@ -196,8 +195,8 @@ si sceglie ``Apri dati'', il dataset corrente verrà chiuso.
 
 È possibile creare un dataset con il comando ``File, Crea dataset'',
 scegliendo il tipo di dati (ad es. serie storiche trimestrali, dati
-cross-section), le date (o numero di osservazioni) iniziale e finale e
-il nome della prima variabile da creare nel dataset. Dopo aver
+cross-section), la data iniziale e quella finale (o il numero di osservazioni),
+e il nome della prima variabile da creare nel dataset. Dopo aver
 effettuato queste scelte, viene presentato un semplice foglio
 elettronico in cui è possibile iniziare a inserire i valori. Facendo
 clic col tasto destro nella finestra del foglio elettronico, comparirà
@@ -237,7 +236,7 @@ selezionare la finestra Database e inserire il percorso completo dei
 propri file RATS.
 
 Se il proprio computer è connesso a internet è possibile accedere a
-vari database (alla Wake Forest University) scegliendo ``sul server di
+vari database presenti alla Wake Forest University scegliendo ``sul server di
 database''. È possibile consultare questi database da remoto, oppure
 installarli sul proprio computer. La finestra dei database ha una
 colonna che mostra, per ogni file, lo stato di installazione e lo
@@ -257,7 +256,7 @@ l'approccio migliore può essere quello di creare un file di dati in
 uno dei formati interni di \app{gretl}, usando un editor di testo o
 altri programmi come \app{awk}, \app{sed} o \app{perl}. Ovviamente
 occorrerà studiare i formati di dati di \app{gretl} (il formato XML o
-quello ``tradizionale'') descritti nel appendice~\ref{app-datafile}.
+quello ``tradizionale'') descritti nell'appendice~\ref{app-datafile}.
 
 \subsection{Nota aggiuntiva}
 
@@ -301,7 +300,7 @@ analisi statistiche, \app{gretl} si comporta nel modo seguente:
 \item Nel calcolo delle regressioni, \app{gretl} per prima cosa
   corregge l'inizio e la fine del campione, troncandolo dove occorre.
   Ad esempio, possono esserci dei valori mancanti all'inizio del
-  campione perchè la regressione comprende serie differenziate,
+  campione perché la regressione comprende serie differenziate,
   ritardate e così via. Oppure i valori mancanti possono trovarsi alla
   fine del campione, a causa della compresenza di serie con diverso
   livello di aggiornamento, o di serie anticipate.
@@ -371,7 +370,7 @@ Quando un utente seleziona uno dei comandi visti sopra:
   sistema'' dei file di dati, la directory di sistema dei file di
   comandi, la directory utente e tutte le loro sotto-directory di
   primo livello. Valori tipici per i nomi di queste directory sono
-  mostrati nella tabella~\ref{tab-colls}.)
+  mostrati nella tabella~\ref{tab-colls}.
 \end{itemize}
 
 \begin{table}[htbp]
@@ -397,7 +396,7 @@ Quando un utente seleziona uno dei comandi visti sopra:
   Le raccolte trovate verranno aggiunte all'elenco dei file
   disponibili. In che formato deve essere una raccolta per essere
   riconosciuta come tale? Una raccolta può essere costituita da un
-  gruppo di file di dati di \app{gretl} in fromato XML (con
+  gruppo di file di dati di \app{gretl} in formato XML (con
   l'estensione \verb+.gdt+) o da un gruppo di file di comandi (con
   l'estensione \verb+.inp+), in entrambi i casi accompagnati da un
   ``file principale'' o catalogo.  La distribuzione di \app{gretl}
