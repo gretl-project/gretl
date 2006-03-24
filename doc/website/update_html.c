@@ -428,6 +428,7 @@ int process_templates (char *verstr)
 	{ "osx_pat_it.html",          "osx_it.html" },
 	{ "gretl_portugues_pat.html", "gretl_portugues.html" },
 	{ "win32_pat_pt.html",        "win32/index_pt.html" },
+	{ "osx_pat_pt.html",          "osx_pt.html" },
 	{ NULL, NULL }
     };
     struct from_to *ptr = templates;

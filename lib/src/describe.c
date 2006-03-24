@@ -3323,7 +3323,7 @@ static int lorenz_graph (const char *vname, double *lz, int n)
 /**
  * gini:
  * @vnum: ID number of variable to examine.
- * @Z: data matrix.
+ * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @opt: not used yet.
  * @prn: gretl printing struct.

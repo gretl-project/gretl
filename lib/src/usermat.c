@@ -923,7 +923,7 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
 /**
  * user_matrix_get_slice:
  * @s: string specifying a sub-matrix.
- * @Z: data array.
+ * @pZ: pointer to data array.
  * @pdinfo: dataset information.
  * @err: location to receive error code.
  *
@@ -1775,10 +1775,13 @@ print_matrix_address_by_name (const char *name, const DATAINFO *pdinfo, PRN *prn
 
 /**
  * matrix_command:
- * @s: string that specifies matrix command.
+ * @line: string that specifies matrix command.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information struct.
  * @prn: pointer to printing struct.
  *
- * To be written.
+ * Creates, deletes or prints a user-defined matrix, depending
+ * on the content of @line.
  * 
  * Returns: 0 on success, non-zero code on failure.
  */

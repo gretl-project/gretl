@@ -310,11 +310,11 @@ void *get_last_model (GretlObjType *type)
 
 /**
  * gretl_object_get_name:
- * @ptr: pointer to gretl object (e.g. #MODEL).
+ * @p: pointer to gretl object (e.g. #MODEL).
  * @type: type of object.
  *
  * Returns: the name of the object of type @type with
- * location @ptr, or %NULL if the object is not found.
+ * location @p, or %NULL if the object is not found.
  */
 
 const char *gretl_object_get_name (void *p, GretlObjType type)

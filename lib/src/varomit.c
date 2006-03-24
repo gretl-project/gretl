@@ -125,7 +125,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
 /**
  * gretl_VAR_omit_test:
  * @omitvars: list of variables to omit from original model.
- * @var: pointer to original VAR.
+ * @orig: pointer to original VAR.
  * @pZ: pointer to data array.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.

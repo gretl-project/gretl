@@ -48,11 +48,11 @@ void free_fit_resid (FITRESID *fr);
 FITRESID *get_fit_resid (const MODEL *pmod, const double **Z, 
 			 const DATAINFO *pdinfo);
 
-FITRESID *get_forecast (MODEL *pmod, int t1, int t2, int pre_n,
+FITRESID *get_forecast (MODEL *pmod, int t0, int t1, int t2,
 			double ***pZ, DATAINFO *pdinfo,
 			gretlopt opt);
 
-FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t1, int t2, int pre_n,
+FITRESID *get_VAR_forecast (GRETL_VAR *var, int i, int t0, int t1, int t2,
 			    const double **Z, DATAINFO *pdinfo,
 			    gretlopt opt);
 

@@ -290,7 +290,7 @@ gretl_matrix *gretl_identity_matrix_new (int n)
 /**
  * gretl_zero_matrix_new:
  * @r: desired number of rows in the matrix.
- * @r: desired number of columns in the matrix.
+ * @c: desired number of columns in the matrix.
  *
  * Returns: pointer to a newly allocated zero matrix, or %NULL
  * on failure.
@@ -319,7 +319,7 @@ gretl_matrix *gretl_zero_matrix_new (int r, int c)
 /**
  * gretl_unit_matrix_new:
  * @r: desired number of rows in the matrix.
- * @r: desired number of columns in the matrix.
+ * @c: desired number of columns in the matrix.
  *
  * Returns: pointer to a newly allocated matrix, all
  * of whose elements equal 1, or %NULL on failure.

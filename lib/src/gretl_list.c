@@ -507,7 +507,7 @@ int *gretl_list_sort (int *list)
 /**
  * gretl_list_cmp:
  * @list1: gretl list.
- * @list1: gretl list.
+ * @list2: gretl list.
  * 
  * Returns: 0 if @list1 and @list2 have identical content,
  * otherwise 1.

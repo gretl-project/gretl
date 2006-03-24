@@ -687,15 +687,14 @@ static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
 
 /**
  * list_laggenr:
- * @plist: pointer to list of variables to process.  On exit
+ * @plist: on entry, pointer to list of variables to process.  On exit
  * the list holds the ID numbers of the lag variables.
  * @order: number of lags to generate (or 0 for automatic).
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
+ * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  *
  * Generates and adds to the data set @order lagged values of the 
- * variables given in @list.
+ * variables given in the list pointed to by @plist.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
