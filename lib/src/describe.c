@@ -1112,7 +1112,7 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     return err;
 }
 
-static freq_add_arrays (FreqDist *freq, int nbins)
+static int freq_add_arrays (FreqDist *freq, int nbins)
 {
     int err = 0;
 	

@@ -249,19 +249,31 @@ amounts of data already in machine readable form. You will, of course,
 need to study the \app{gretl} data formats (XML format or
 ``traditional'' format) as described in Appendix~\ref{app-datafile}.
 
-\subsection{Further note}
+\subsection{Data frequency}
 
 \app{gretl} has no problem compacting data series of relatively high
 frequency (e.g.\ monthly) to a lower frequency (e.g.\ quarterly): you
 are given a choice of method (average, sum, start of period, or end of
-period).  But it has no way of converting lower frequency data to
-higher.  Therefore if you want to import series of various different
-frequencies from a database into \app{gretl} \emph{you must start by
-  importing a series of the lowest frequency you intend to use.} This
-will initialize your \app{gretl} dataset to the low frequency, and
-higher frequency data can be imported subsequently (they will be
-compacted automatically).  If you start with a high frequency series
-you will not be able to import any series of lower frequency.
+period).  If you want to import series of various different
+frequencies from a database into \app{gretl}, the recommended
+procedure is to \emph{start by importing a series of the lowest
+  frequency you intend to use.} This will initialize your \app{gretl}
+dataset to the low frequency, and higher frequency data can be
+imported subsequently.
+
+If you wish to add to a dataset a series that is of lower frequency,
+it is necessary to ``expand'' the new series first.  This option is
+available, for annual or quarterly time series only, under the
+``Sample'' menu, but it should be considered an expert option: you
+need to know what you are doing.  What \app{gretl} does is simply
+replicate the values of the lower-frequency series as many times as
+required. For example, suppose we have a quarterly series with the
+value 35.5 in 1990:1, the first quarter of 1990.  On expansion to
+monthly, the value 35.5 will be assigned to the observations for
+January, February and March of 1990. The expanded variable is
+therefore useless for fine-grained time-series analysis, outside of
+the special case where you know that the variable in question does in
+fact remain constant over the sub-periods.
 
 \section{Missing data values}
 \label{missing-data}
