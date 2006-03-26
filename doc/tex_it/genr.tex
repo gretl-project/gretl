@@ -14,12 +14,11 @@ particolarità del comando.
 \section{Filtri per serie storiche}
 \label{genr-filter}
 
-Un tipo di funzione specializzata di \verb+genr+ è il filtro per le
-serie storiche. Ne esistono di due tipi al momento: il filtro di
-Hodrick--Prescott e quello passa banda di Baxter--King.  Sono
-utilizzabili rispettivamente con le funzioni \verb+hpfilt()+ e
-\verb+bkfilt()+, che richiedono come argomento il nome della variabile
-da processare.
+Un tipo di funzioni speciali di \verb+genr+ consente il filtraggio delle serie
+storiche. Al momento sono disponibili due filtri: il filtro di Hodrick--Prescott
+e quello passa banda di Baxter--King.  Sono forniti rispettivamente dalle
+funzioni \verb+hpfilt()+ e \verb+bkfilt()+, che richiedono come argomento il
+nome della variabile da processare.
     
 \subsection{Il filtro di Hodrick--Prescott}
 \label{hodrick-prescott}
@@ -47,7 +46,7 @@ maggiore è il valore di $\lambda$, maggiore sarà la penalizzazione, e quindi più
 regolare sarà la serie di trend.
 
 Si noti che la funzione \cmd{hpfilt} in \app{gretl} produce la componente di
-ciclo, $c_t$, della serie originale. Se si vuole il trend depurato, si può
+ciclo, $c_t$, della serie originale. Se si vuole il trend depurato, basta
 sottrarre il ciclo dalla serie originale:
 
 \begin{code}
@@ -91,10 +90,10 @@ dove $A(L)$ è definito come
 I coefficienti $a_i$ sono scelti in modo che $F(\omega) =
 A(e^{i\omega})A(e^{-i\omega})$ sia la migliore approssimazione di
 $F^*(\omega)$ per un dato $k$. Chiaramente, maggiore è $k$, migliore è
-l'approssimazione, ma poiché occorre scartare $2k$ osservazioni, di
+l'approssimazione, ma poiché ciò implica scartare $2k$ osservazioni, di
 solito si cerca un compromesso.  Inoltre, il filtro ha altre proprietà
 teoriche interessanti, tra cui quella che $a(1) = 0$, quindi una serie
-con una sola radice unitaria è resa stazionaria con l'applicazione del
+con una sola radice unitaria è resa stazionaria dall'applicazione del
 filtro.
 
 In pratica, il filtro è usato di solito con dati mensili o trimestrali
@@ -145,7 +144,7 @@ coefficiente e l'errore standard segua veramente una distribuzione $t(40)$. In
 questo caso, potremmo derivare un valore bootstrap per il p-value come mostrato
 nell'esempio~\ref{resampling-loop}.  
 
-Sotto l'ipotesi nulla che la pandenza rispetto a $x$ sia pari a zero,
+Sotto l'ipotesi nulla che la pendenza rispetto a $x$ sia pari a zero,
 $y$ è uguale alla sua media più un termine di errore. Simuliamo $y$
 ricampionando i residui del modello OLS iniziale e ri-stimiamo il modello.
 Ripetiamo questa procedura un gran numero di volte e registriamo il numero di
@@ -242,8 +241,8 @@ questo modo sono i seguenti: \cmd{add} (test congiunto per la
 significatività di variabili aggiunte a un modello); \cmd{adf} (test
 di Dickey--Fuller aumentato, si veda oltre); \cmd{arch} (test per
 ARCH); \cmd{chow} (test Chow per break strutturale); \cmd{coeffsum}
-(test per la somma dei coefficienti specificati); \cmd{cusum} (la
-statistica \emph{t} di Harvey--Collier); \cmd{kpss} (il test di
+(test per la somma dei coefficienti specificati); \cmd{cusum}
+(statistica \emph{t} di Harvey--Collier); \cmd{kpss} (test di
 stazionarietà KPSS, p-value non disponibile); \cmd{lmtest} (si veda
 oltre); \cmd{meantest} (test per la differenza delle medie);
 \cmd{omit} (test congiunto per la significatività delle variabili
@@ -261,8 +260,8 @@ ogni volta che viene eseguito uno dei test elencati sopra. Se si
 intende referenziare questi valori durante una sequenza di comandi
 \app{gretl}, occorre farlo nel momento giusto.
     
-Una questione correlata è che alcuni dei comandi di test generano di
-solito più di una statistica test e più di un p-value: in questi casi
+Un'altra questione è data dal fatto che alcuni dei comandi di test di
+solito generano più di una statistica test e più di un p-value: in questi casi
 vengono salvati solo gli ultimi valori. Per controllare in modo
 preciso quali valori vengono recuperati da \verb+$test+ e
 \verb+$pvalue+ occorre formulare il comando di test in modo che il
@@ -286,7 +285,7 @@ comandi \verb+adf+ e \verb+lmtest+.
   o \verb+--white+.
 \end{itemize}
 
-Un aiuto all'uso dei valori immagazzinati in \verb+$test+ e
+Un aspetto comodo per l'uso dei valori immagazzinati in \verb+$test+ e
 \verb+$pvalue+ è dato dal fatto che il tipo di test a cui si
 riferiscono questi valori viene scritto nell'etichetta descrittiva
 della variabile generata. Per controllare di aver recuperato il valore

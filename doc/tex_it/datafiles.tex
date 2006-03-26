@@ -258,21 +258,30 @@ altri programmi come \app{awk}, \app{sed} o \app{perl}. Ovviamente
 occorrerà studiare i formati di dati di \app{gretl} (il formato XML o
 quello ``tradizionale'') descritti nell'appendice~\ref{app-datafile}.
 
-\subsection{Nota aggiuntiva}
+\subsection{Frequenza dei dati}
 
 \app{gretl} non ha problemi a compattare serie di dati ad alta
 frequenza (ad es. mensile) trasformandole in una frequenza più bassa
 (ad es. trimestrale) utilizzando uno dei 4 metodi supportati (media
 dei dati nel periodo, somma dei dati nel periodo, dato di inizio
-periodo, dato di fine periodo).  Tuttavia, non c'è modo di convertire
-dati a bassa frequenza in alta frequenza, quindi se si intende
-importare serie con frequenza diversa da un database \emph{occorre
-  iniziare ad importare le serie con la frequenza minore}. In questo
+periodo, dato di fine periodo). Se si intende importare serie con frequenza
+diversa da un database, la procedura consigliabile consiste nel \emph{cominciare
+ad importare le serie con la frequenza minore}. In questo
 modo, il dataset di \app{gretl} verrà inizializzato con la frequenza
 più bassa e i dati a frequenza maggiore potranno essere importati in
-seguito (verranno compattati automaticamente). Se invece si inizia ad
-importare dati ad alta frequenza, non sarà possibile importare serie a
-frequenza più bassa in seguito.
+seguito.
+
+Se si desidera aggiungere a un dataset una serie di frequenza inferiore, occorre
+per prima cosa ``espandere'' la nuova serie. Questa operazione è disponibile
+solo per le serie annuali e trimestrali, a partire dal menù ``Campione'', ma è
+da utilizzare con cautela, tenendo bene presente il suo funzionamento, che
+consiste nel replicare i valori della serie a frequenza minore per quante volte
+è richiesto dalla nuova frequenza. Ad esempio, ipotizzando di avere una serie
+trimestrale che vale 35.5 in 1990:1, il primo trimestre del 1990. Dopo
+l'espansione alla frequenza mensile, il valore 35.5 verrà assegnato alle
+osservazioni per i mesi di gennaio, febbraio e marzo del 1990. La variabile espansa
+non sarà quindi adatta per analisi temporali ``fini'', a meno che non si abbia
+buona ragione di ipotizzare che il suo valore rimanga costante nei sotto-periodi.
 
 \section{Valori mancanti nei dati}
 \label{missing-data}
