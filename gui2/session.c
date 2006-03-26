@@ -257,6 +257,7 @@ static int print_session_xml (void)
     }
 
     fputs("<gretl-session>\n", fp);
+    fprintf(fp, " <sample t1=%d t2=%d/>\n", datainfo->t1, datainfo->t2);
     fprintf(fp, " <models count=\"%d\">\n", session.nmodels);
     for (i=0; i<session.nmodels; i++) {
 	fprintf(fp, "  <session-model name=\"%s\" addr=\"%p\"/>\n", 
@@ -792,6 +793,7 @@ void do_open_session (GtkWidget *w, gpointer data)
     char fname[MAXLEN];
     dialog_t *d = NULL;
     windata_t *fwin = NULL;
+    int t1 = 0, t2 = 0;
     FILE *fp;
     int status, err = 0;
 
@@ -840,7 +842,7 @@ void do_open_session (GtkWidget *w, gpointer data)
     strcpy(session.dirname, dirname);
     strcpy(session.name, dirname);
 
-    err = read_session_xml(fname);
+    err = read_session_xml(fname, &t1, &t2);
 
     if (err) {
 	return;
@@ -852,6 +854,9 @@ void do_open_session (GtkWidget *w, gpointer data)
     if (err) {
 	return;
     }
+
+    datainfo->t1 = t1;
+    datainfo->t2 = t2;
 
     register_data(paths.datfile, NULL, 0);
 
@@ -1119,13 +1124,18 @@ int save_session (char *fname)
     char tmpname[MAXLEN];
     void *handle;
     int (*gretl_make_zipfile)(const char *, const char *, GError **);
-    int len, err = 0;
+    int i, len, err = 0;
     int t1 = datainfo->t1;
     int t2 = datainfo->t2;
     GError *gerr = NULL;
 
     if (session_overwrite_check(fname)) {
 	return 0;
+    }
+
+    if (!session_dir_ok()) {
+	errbox("Couldn't make session directory");
+	return 1;
     }
 
     /* organize directory and file names */
@@ -1162,6 +1172,24 @@ int save_session (char *fname)
     sprintf(tmpname, "%s%cnotes", dirname, SLASH);
     if (print_session_notes(tmpname)) {
 	errbox(_("Couldn't write session notes file"));
+    }
+
+    /* write out session models, if any */
+    for (i=0; i<session.nmodels; i++) {
+	if (session.models[i]->type == GRETL_OBJ_EQN) {
+	    FILE *fp;
+
+	    sprintf(tmpname, "%s%cmodel.%d", dirname, SLASH, i+1);
+	    fp = fopen(tmpname, "w");
+	    if (fp == NULL) {
+		err = 1;
+	    } else {
+		gretl_model_serialize(session.models[i]->ptr, fp);
+		fclose(fp);
+	    }
+	} else {
+	    fprintf(stderr, "FIXME other model type\n");
+	}
     }
 
     gretl_make_zipfile = gui_get_plugin_function("gretl_make_zipfile", 

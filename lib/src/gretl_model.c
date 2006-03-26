@@ -1549,6 +1549,43 @@ static int copy_model_tests (MODEL *targ, const MODEL *src)
     return 0;
 }
 
+static void serialize_test (const ModelTest *src, FILE *fp)
+{
+    fprintf(fp, "<test type=\"%d\" ", src->type);
+    
+    if (src->param != NULL) {
+	fprintf(fp, "param=\"%s\" ", src->param);
+    }
+
+    fprintf(fp, "teststat=\"%d\" ", src->teststat);
+    fprintf(fp, "dfn=\"%d\" ", src->dfn);
+    fprintf(fp, "dfd=\"%d\" ", src->dfd);
+    fprintf(fp, "order=\"%d\" ", src->order);
+    fprintf(fp, "value=\"%.15g\" ", src->value);
+    fprintf(fp, "pvalue=\"%.15g\" ", src->pvalue);
+
+    fputs("</test>\n", fp);
+}
+
+static int serialize_model_tests (const MODEL *pmod, FILE *fp)
+{
+    int i, n = pmod->ntests;
+
+    if (n <= 0 || pmod->tests == NULL) {
+	return 0;
+    }
+
+    fprintf(fp, "<tests count=\"%d\">\n", pmod->ntests);
+
+    for (i=0; i<n; i++) {
+	serialize_test(&pmod->tests[i], fp);
+    }
+
+    fputs("</tests>\n", fp);
+
+    return 0;
+}
+
 static void gretl_test_init (ModelTest *test, ModelTestType ttype)
 {
     test->type = ttype;
@@ -2187,6 +2224,179 @@ static int copy_model (MODEL *targ, const MODEL *src)
     /* src->dataset?? */
 
     return 0;
+}
+
+static char *model_double_string (char *tmp, double x)
+{
+    if (na(x)) {
+	strcpy(tmp, "NA");
+    } else {
+	sprintf(tmp, "%.15g", x);
+    }
+
+    return tmp;
+}
+
+int gretl_model_serialize (const MODEL *pmod, FILE *fp)
+{
+    char tmp[48];
+    int i, k = pmod->ncoeff;
+    int m = k * (k + 1) / 2;
+    int err = 0;
+
+    fprintf(fp, "<model ID=\"%d\" t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
+	    pmod->ID, pmod->t1, pmod->t2, pmod->nobs);
+    fprintf(fp, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ", 
+	    pmod->full_n, pmod->ncoeff, pmod->dfn, pmod->dfd);
+    fprintf(fp, "ifc=\"%d\" ci=\"%d\" nwt=\"%d\" order=\"%d\" aux=\"%d\" ", 
+	    pmod->ifc, pmod->ci, pmod->nwt, pmod->order, pmod->aux);
+
+    gretl_push_c_numeric_locale();
+
+    fprintf(fp, "ess=\"%s\" ", model_double_string(tmp, pmod->ess));
+    fprintf(fp, "tss=\"%s\" ", model_double_string(tmp, pmod->tss));
+    fprintf(fp, "sigma=\"%s\" ", model_double_string(tmp, pmod->sigma));
+    fprintf(fp, "ess_wt=\"%s\" ", model_double_string(tmp, pmod->ess_wt));
+    fprintf(fp, "sigma_wt=\"%s\" ", model_double_string(tmp, pmod->sigma_wt));
+    fprintf(fp, "rsq=\"%s\" ", model_double_string(tmp, pmod->rsq));
+    fprintf(fp, "adjrsq=\"%s\" ", model_double_string(tmp, pmod->adjrsq));
+    fprintf(fp, "fstt=\"%s\" ", model_double_string(tmp, pmod->fstt));
+    fprintf(fp, "lnL=\"%s\" ", model_double_string(tmp, pmod->lnL));
+    fprintf(fp, "ybar=\"%s\" ", model_double_string(tmp, pmod->ybar));
+    fprintf(fp, "sdy=\"%s\" ", model_double_string(tmp, pmod->sdy));
+
+    fputc('\n', fp);
+
+    /* 
+       smpl
+       double criterion[3];
+       double dw, rho;
+       char *name;
+       void *data;
+       DATASET *dataset;
+       int n_data_items;
+       model_data_item **data_items;
+    */
+
+    gretl_push_c_numeric_locale();
+
+    fprintf(fp, "<coeff count=\"%d\">\n", k);
+    for (i=0; i<k; i++) {
+	fprintf(fp, "%.15g ", pmod->coeff[i]);
+    }
+    fputs("</coeff>\n", fp);
+
+    fprintf(fp, "<sderr count=\"%d\">\n", k);
+    for (i=0; i<k; i++) {
+	fprintf(fp, "%.15g ", pmod->sderr[i]);
+    }
+    fputs("</sderr>\n", fp);
+
+    if (pmod->uhat != NULL) {
+	fprintf(fp, "<uhat count=\"%d\">\n", pmod->full_n);
+	for (i=0; i<pmod->full_n; i++) {
+	    if (na(pmod->uhat[i])) {
+		fputs("NA ", fp);
+	    } else {
+		fprintf(fp, "%.15g ", pmod->uhat[i]);
+	    }
+	}
+	fputs("</uhat>\n", fp);
+    }
+
+    if (pmod->yhat != NULL) {
+	fprintf(fp, "<yhat count=\"%d\">\n", pmod->full_n);
+	for (i=0; i<pmod->full_n; i++) {
+	    if (na(pmod->yhat[i])) {
+		fputs("NA ", fp);
+	    } else {
+		fprintf(fp, "%.15g ", pmod->yhat[i]);
+	    }
+	}
+	fputs("</yhat>\n", fp);
+    }
+
+#if 0
+    if (src->submask != NULL && 
+	(targ->submask = copy_subsample_mask(src->submask)) == NULL) { 
+	return 1;
+    }
+
+    if (src->missmask != NULL && 
+	(targ->missmask = copy_missmask(src)) == NULL) { 
+	return 1;
+    }
+#endif
+
+    if (pmod->xpx != NULL) {
+	fprintf(fp, "<xpx count=\"%d\">\n", m);
+	for (i=0; i<m; i++) {
+	    if (na(pmod->xpx[i])) {
+		fputs("NA ", fp);
+	    } else {
+		fprintf(fp, "%.15g ", pmod->xpx[i]);
+	    }
+	}
+	fputs("</xpx>\n", fp); 
+    }
+
+    if (pmod->vcv != NULL) {
+	fprintf(fp, "<vcv count=\"%d\">\n", m);
+	for (i=0; i<m; i++) {
+	    if (na(pmod->vcv[i])) {
+		fputs("NA ", fp);
+	    } else {
+		fprintf(fp, "%.15g ", pmod->vcv[i]);
+	    }
+	}
+	fputs("</vcv>\n", fp); 
+    }
+
+#if 0
+    if (pmod->arinfo != NULL && 
+	(targ->arinfo = copy_ar_info(src->arinfo)) == NULL) {
+	return 1; 
+    }
+#endif
+
+    if (pmod->ntests > 0 && pmod->tests != NULL) {
+	serialize_model_tests(pmod, fp);
+    }
+
+    if (pmod->nparams > 0 && pmod->params != NULL) {
+	fprintf(fp, "<params count=\"%d\">\n", pmod->nparams);
+	for (i=0; i<pmod->nparams; i++) {
+	    fprintf(fp, "%s ", pmod->params[i]);
+	}
+	fputs("</params>\n", fp); 	
+    }    
+
+#if 0
+    if (pmod->n_data_items > 0) {
+	copy_model_data_items(targ, src);
+	if (targ->data_items == NULL) {
+	    return 1;
+	}
+	targ->n_data_items = src->n_data_items;
+    }
+#endif
+
+    if (pmod->list != NULL) {
+	char *listbuf = gretl_list_to_string(pmod->list);
+
+	if (listbuf != NULL) {
+	    fprintf(fp, "<list>%s</list>\n", listbuf);
+	    free(listbuf);
+	} else {
+	    err = 1;
+	}
+    }
+
+    fputs("</model>\n", fp);
+
+    gretl_pop_c_numeric_locale();
+
+    return err;
 }
 
 /**

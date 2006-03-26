@@ -291,4 +291,6 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx, 
 				      int *err);
 
+int gretl_model_serialize (const MODEL *pmod, FILE *fp);
+
 #endif /* GRETL_MODEL_H */
