@@ -483,23 +483,6 @@ static void set_tramo_x12a_dirs (void)
 
 # else /* not G_OS_WIN32 */
 
-static int my_mkdir (const char *dirname)
-{
-    int err = 0;
-    extern int errno;
-
-    errno = 0;
-
-    if (mkdir(dirname, 0755)) {
-	if (errno != EEXIST) { 
-	    fprintf(stderr, "%s: %s\n", dirname, strerror(errno));
-	    err = 1;
-	}
-    }
-
-    return err;
-}
-
 static void set_tramo_x12a_dirs (void)
 {
     char dirname[MAXLEN];
@@ -526,24 +509,24 @@ static void set_tramo_x12a_dirs (void)
 	closedir(test);
     }
 #  ifdef HAVE_X12A
-    my_mkdir(paths.x12adir);
+    gretl_mkdir(paths.x12adir);
 #  endif
 #  ifdef HAVE_TRAMO
-    if (my_mkdir(tramodir)) return;
+    if (gretl_mkdir(tramodir)) return;
     sprintf(dirname, "%s/output", tramodir);
-    my_mkdir(dirname);
+    gretl_mkdir(dirname);
     sprintf(dirname, "%s/graph", tramodir);
-    if (my_mkdir(dirname)) return;
+    if (gretl_mkdir(dirname)) return;
     sprintf(dirname, "%s/graph/acf", tramodir);
-    my_mkdir(dirname);
+    gretl_mkdir(dirname);
     sprintf(dirname, "%s/graph/filters", tramodir);
-    my_mkdir(dirname);
+    gretl_mkdir(dirname);
     sprintf(dirname, "%s/graph/forecast", tramodir);
-    my_mkdir(dirname);
+    gretl_mkdir(dirname);
     sprintf(dirname, "%s/graph/series", tramodir);
-    my_mkdir(dirname);
+    gretl_mkdir(dirname);
     sprintf(dirname, "%s/graph/spectra", tramodir);
-    my_mkdir(dirname);
+    gretl_mkdir(dirname);
 #  endif /* HAVE_TRAMO */
 }
 

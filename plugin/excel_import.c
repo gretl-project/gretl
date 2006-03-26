@@ -645,8 +645,7 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
     result = ms_ole_stream_open(&stream, file, "/", "workbook", 'r');
 
     if (result != MS_OLE_ERR_OK) {
-	ms_ole_stream_close (&stream);
-
+	ms_ole_stream_close(&stream);
 	result = ms_ole_stream_open(&stream, file, "/", "book", 'r');
 	if (result != MS_OLE_ERR_OK) {
 	    ms_ole_stream_close(&stream);

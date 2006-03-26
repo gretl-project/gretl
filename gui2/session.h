@@ -41,11 +41,15 @@ enum {
     ADD_OBJECT_FAIL
 };
 
+int save_session (char *fname);
+
 int session_is_saved (void);
 
 void set_session_saved (int val);
 
 void session_menu_state (gboolean s);
+
+const char *get_session_dirname (void);
 
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code);
@@ -82,11 +86,7 @@ void free_session (void);
 
 int highest_numbered_variable_in_session (void);
 
-int saved_objects (const char *fname);
-
-int parse_savefile (const char *fname);
-
-int recreate_session (const char *fname);
+int is_session_file (const char *fname);
 
 void view_session (void);
 
@@ -97,10 +97,6 @@ void session_file_manager (int action, const char *fname);
 int session_file_is_open (void);
 
 int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, int rebuild);
-
-void print_saved_object_specs (const char *session_base, FILE *fp);
-
-int print_session_notes (const char *fname);
 
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 

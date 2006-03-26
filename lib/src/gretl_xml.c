@@ -133,10 +133,19 @@ static const char *data_structure_string (int s)
     }
 }
 
+static int savenum (const int *list, int i)
+{
+    if (list != NULL) {
+	return list[i];
+    } else {
+	return i;
+    }
+}
+
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
- * @list: list of variables to write.
+ * @list: list of variables to write (or %NULL to write all).
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @fmt: if %GRETL_DATA_GZIPPED write gzipped data, else uncompressed.
@@ -164,7 +173,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     void *handle = NULL;
     int (*show_progress) (long, long, int) = NULL;
     long sz = 0L;
-    int i, t;
+    int i, t, v, nvars;
     int err = 0;
 
 #ifdef USE_GTK2
@@ -190,14 +199,20 @@ int gretl_write_gdt (const char *fname, const int *list,
 	return 1;
     }
 
-    pmax = malloc(list[0] * sizeof *pmax);
+    if (list != NULL) {
+	nvars = list[0];
+    } else {
+	nvars = pdinfo->v - 1;
+    }
+
+    pmax = malloc(nvars * sizeof *pmax);
     if (pmax == NULL) {
 	sprintf(gretl_errmsg, _("Out of memory"));
 	err = 1;
 	goto cleanup;
     } 
 
-    sz = (tsamp * pdinfo->v * sizeof(double));
+    sz = (tsamp * nvars * sizeof(double));
     if (sz > 100000) {
 	fprintf(stderr, I_("Writing %ld Kbytes of data\n"), sz / 1024);
 	if (ppaths == NULL) {
@@ -216,9 +231,10 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     if (sz) (*show_progress)(0, sz, SP_SAVE_INIT); 
 
-    for (i=1; i<=list[0]; i++) {
-	if (pdinfo->vector[list[i]]) {
-	    pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp, 10);
+    for (i=1; i<=nvars; i++) {
+	v = savenum(list, i);
+	if (pdinfo->vector[v]) {
+	    pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
 	} else {
 	    pmax[i-1] = GRETL_SCALAR_DIGITS;
 	}
@@ -287,13 +303,14 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     /* then listing of variable names and labels */
     if (gz) {
-	gzprintf(fz, "<variables count=\"%d\">\n", list[0]);
+	gzprintf(fz, "<variables count=\"%d\">\n", nvars);
     } else {
-	fprintf(fp, "<variables count=\"%d\">\n", list[0]);
+	fprintf(fp, "<variables count=\"%d\">\n", nvars);
     }
 
-    for (i=1; i<=list[0]; i++) {
-	xmlbuf = gretl_xml_encode(pdinfo->varname[list[i]]);
+    for (i=1; i<=nvars; i++) {
+	v = savenum(list, i);
+	xmlbuf = gretl_xml_encode(pdinfo->varname[v]);
 
 	if (xmlbuf == NULL) {
 	    err = 1;
@@ -307,19 +324,19 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    free(xmlbuf);
 	}
 
-	if (!pdinfo->vector[list[i]] && !na(Z[list[i]][0])) {
+	if (!pdinfo->vector[v] && !na(Z[v][0])) {
 	    if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		sprintf(numstr, "\n role=\"scalar\" value=\"%.12g\"",
-			Z[list[i]][0]);
+			Z[v][0]);
 	    } else {
 		sprintf(numstr, "\n role=\"scalar\" value=\"%.*f\"",
-			pmax[i-1], Z[list[i]][0]);
+			pmax[i-1], Z[v][0]);
 	    }
 	    alt_puts(numstr, fp, fz);
 	}
 
-	if (*VARLABEL(pdinfo, list[i])) {
-	    xmlbuf = gretl_xml_encode(VARLABEL(pdinfo, list[i]));
+	if (*VARLABEL(pdinfo, v)) {
+	    xmlbuf = gretl_xml_encode(VARLABEL(pdinfo, v));
 	    if (xmlbuf == NULL) {
 		err = 1;
 		goto cleanup;
@@ -333,8 +350,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 
-	if (*DISPLAYNAME(pdinfo, list[i])) {
-	    xmlbuf = gretl_xml_encode(DISPLAYNAME(pdinfo, list[i]));
+	if (*DISPLAYNAME(pdinfo, v)) {
+	    xmlbuf = gretl_xml_encode(DISPLAYNAME(pdinfo, v));
 	    if (xmlbuf == NULL) {
 		err = 1;
 		goto cleanup;
@@ -348,8 +365,8 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 
-	if (COMPACT_METHOD(pdinfo, list[i]) != COMPACT_NONE) {
-	    const char *meth = compact_method_to_string(COMPACT_METHOD(pdinfo, list[i]));
+	if (COMPACT_METHOD(pdinfo, v) != COMPACT_NONE) {
+	    const char *meth = compact_method_to_string(COMPACT_METHOD(pdinfo, v));
 
 	    if (gz) {
 		gzprintf(fz, "\n compact-method=\"%s\"", meth);
@@ -382,16 +399,17 @@ int gretl_write_gdt (const char *fname, const int *list,
 	} else {
 	    alt_puts("<obs>", fp, fz);
 	}
-	for (i=1; i<=list[0]; i++) {
-	    if (!pdinfo->vector[list[i]]) {
+	for (i=1; i<=nvars; i++) {
+	    v = savenum(list, i);
+	    if (!pdinfo->vector[v]) {
 		continue;
 	    }
-	    if (na(Z[list[i]][t])) {
+	    if (na(Z[v][t])) {
 		strcpy(numstr, "NA ");
 	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
-		sprintf(numstr, "%.12g ", Z[list[i]][t]);
+		sprintf(numstr, "%.12g ", Z[v][t]);
 	    } else {
-		sprintf(numstr, "%.*f ", pmax[i-1], Z[list[i]][t]);
+		sprintf(numstr, "%.*f ", pmax[i-1], Z[v][t]);
 	    }
 	    alt_puts(numstr, fp, fz);
 	}

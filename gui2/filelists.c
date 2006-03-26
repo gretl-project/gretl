@@ -544,7 +544,7 @@ static void set_data_from_filelist (gpointer data, guint i,
 static void set_session_from_filelist (gpointer data, guint i, 
 				       GtkWidget *widget)
 {
-    copy_sys_filename(tryscript, sessionp[i]);
+    copy_sys_filename(trysession, sessionp[i]);
     verify_open_session(NULL);
 }
 

@@ -83,8 +83,10 @@ extern float gui_scale;
 /* global filenames */
 extern char cmdfile[MAXLEN];
 extern char scriptfile[MAXLEN];
+extern char sessionfile[MAXLEN];
 extern char trydatfile[MAXLEN];
 extern char tryscript[MAXLEN];
+extern char trysession[MAXLEN];
 
 /* global option-related vars */
 extern int expert;

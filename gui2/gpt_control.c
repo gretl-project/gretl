@@ -398,24 +398,27 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 /* take saved plot source file and make PNG from it, then display
    the PNG */
 
-void display_session_graph_png (char *fname) 
+void display_session_graph_png (const char *pltname) 
 {
-    char *myfname = fname;
+    const char *sdir = get_session_dirname();
+    char fullname[MAXLEN];
     gchar *plotcmd;
     int err = 0;
 
-    if (add_png_term_to_plotfile(myfname)) {
+    sprintf(fullname, "%s%s%c%s", paths.userdir, sdir, SLASH, pltname);
+
+    if (add_png_term_to_plotfile(fullname)) {
 	return;
     }
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, myfname);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, fullname);
     err = gretl_spawn(plotcmd);
     g_free(plotcmd);
 
     if (err) {
 	errbox(_("Gnuplot error creating graph"));
     } else {
-	gnuplot_show_png(myfname, NULL, 1);
+	gnuplot_show_png(fullname, NULL, 1);
     }
 }
 

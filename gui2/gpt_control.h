@@ -28,7 +28,7 @@ int remove_png_term_from_plotfile (const char *fname, GPT_SPEC *spec);
 
 void save_this_graph (GPT_SPEC *spec, const char *fname);
 
-void display_session_graph_png (char *fname);
+void display_session_graph_png (const char *pltname);
 
 int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved);
 

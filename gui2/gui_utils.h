@@ -66,6 +66,8 @@ gchar *menu_translate (const gchar *path, gpointer p);
 
 void flip (GtkItemFactory *ifac, const char *path, gboolean s);
 
+int gretl_mkdir (const char *path);
+
 int copyfile (const char *src, const char *dest);
 
 int isdir (const char *path);
@@ -86,8 +88,6 @@ void do_open_data (GtkWidget *w, gpointer data, int code);
 void verify_open_data (gpointer userdata, int code);
 
 void verify_open_session (gpointer userdata);
-
-void save_session (char *fname);
 
 void close_window (gpointer data, guint win_code, GtkWidget *widget);
 

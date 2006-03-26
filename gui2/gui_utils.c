@@ -27,6 +27,7 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "model_table.h"
 #include "series_view.h"
@@ -500,6 +501,27 @@ int isdir (const char *path)
 
     return (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)); 
 }
+
+#ifndef G_OS_WIN32
+
+int gretl_mkdir (const char *path)
+{
+    int err = 0;
+    extern int errno;
+
+    errno = 0;
+
+    if (mkdir(path, 0755)) {
+	if (errno != EEXIST) { 
+	    fprintf(stderr, "%s: %s\n", path, strerror(errno));
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
+#endif
 
 /* ........................................................... */
 
@@ -1250,120 +1272,6 @@ void verify_open_session (gpointer userdata)
     }
 
     do_open_session(NULL, userdata);
-}
-
-static int session_overwrite_check (const char *fname)
-{
-    int ret = 0;
-
-    if (strcmp(fname, scriptfile)) {
-	FILE *fp = fopen(fname, "r");
-
-	if (fp != NULL) {
-	    int resp;
-
-	    fclose(fp);
-	    resp = yes_no_dialog("gretl", _("There is already a session file of this name.\n"
-					    "OK to overwrite it?"), 0);
-	    if (resp == GRETL_NO) {
-		ret = 1;
-	    }
-	}
-    } 
-
-    return ret;
-}
-
-void save_session (char *fname) 
-{
-    char msg[MAXLEN], savedir[MAXLEN], fname2[MAXLEN];
-    char session_base[MAXLEN];
-    int spos;
-    FILE *fp;
-    PRN *prn;
-
-    if (session_overwrite_check(fname)) {
-	return;
-    }
-
-    *savedir = '\0';
-
-    spos = slashpos(fname);
-    if (spos) {
-	safecpy(savedir, fname, spos);
-    } 
-
-#ifdef CMD_DEBUG
-    dump_command_stack("stderr", 0);
-#endif
-
-    /* append ".gretl" to session filename? */
-    if (haschar('.', fname) < 0) {
-	strcat(fname, ".gretl");
-    }
-
-    /* save commands, by dumping the command stack */
-    if (dump_command_stack(fname, 1)) {
-	return;
-    }
-
-    get_base(session_base, fname, '.');
-
-    /* get ready to save "session" */
-    fp = gretl_fopen(fname, "a");
-    if (fp == NULL) {
-	errbox(_("Couldn't open session file %s"), fname);
-	return;
-    }
-
-    print_saved_object_specs(session_base, fp);
-
-    fclose(fp);
-
-    /* delete any extraneous graph files */
-    session_file_manager(REALLY_DELETE_ALL, NULL);
-
-    switch_ext(fname2, fname, "Notes");
-    if (print_session_notes(fname2)) {
-	errbox(_("Couldn't write session notes file"));
-    }
-
-    /* save output */
-    switch_ext(fname2, fname, "txt");
-    prn = gretl_print_new_with_filename(fname2);
-    if (prn == NULL) {
-	errbox(_("Couldn't open output file for writing"));
-	return;
-    }
-
-    /* preamble */
-    gui_logo(prn);
-    session_time(prn);
-    pprintf(prn, _("Output from %s\n"), fname);
-
-    /* actual commands output */
-    execute_script(fname, NULL, prn, SAVE_SESSION_EXEC); 
-
-    gretl_print_destroy(prn);
-
-    /* output may need re-encoding, UTF-8 to locale? */
-#ifndef OLD_GTK
-    maybe_recode_file(fname2);
-#endif
-    
-    sprintf(msg, _("session saved to %s -\n"), savedir);
-    strcat(msg, _("commands: "));
-    strcat(msg, (spos)? fname + spos + 1 : fname);
-    strcat(msg, _("\noutput: "));
-    spos = slashpos(fname2);
-    strcat(msg, (spos)? fname2 + spos + 1 : fname2);
-    infobox(msg);
-
-    mkfilelist(FILE_LIST_SESSION, fname);
-    set_session_saved(1);
-    session_changed(0);
-
-    return;
 }
 
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)

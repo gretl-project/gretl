@@ -5154,23 +5154,21 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
 void do_open_script (void)
 {
-    int ret, n = strlen(paths.scriptdir);
+    int n = strlen(paths.scriptdir);
+    FILE *fp;
 
-    strcpy(scriptfile, tryscript); /* might cause problems? */
-
-    /* is this a "session" file? */
-    ret = saved_objects(scriptfile);
-    if (ret == -1) {
+    fp = fopen(tryscript, "r");
+    if (fp == NULL) {
 	errbox(_("Couldn't open %s"), tryscript);
 	delete_from_filelist(FILE_LIST_SESSION, tryscript);
 	delete_from_filelist(FILE_LIST_SCRIPT, tryscript);
 	return;
-    } else if (ret > 0) {
-	verify_open_session(NULL);
-	return;
+    } else {
+	fclose(fp);
     }
+	
+    strcpy(scriptfile, tryscript);
 
-    /* or just an "ordinary" script */
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
     if (strncmp(scriptfile, paths.scriptdir, n)) { 
@@ -5705,7 +5703,6 @@ static const char *exec_string (int i)
     case CONSOLE_EXEC: return "CONSOLE_EXEC";
     case SCRIPT_EXEC: return "SCRIPT_EXEC";
     case SESSION_EXEC: return "SESSION_EXEC";
-    case REBUILD_EXEC: return "REBUILD_EXEC";
     case SAVE_SESSION_EXEC: return "SAVE_SESSION_EXEC";
     default: return "Unknown";
     }
@@ -5796,9 +5793,8 @@ int execute_script (const char *runfile, const char *buf,
 	bufgets_init(buf);
     }
 
-    /* reset model count to 0 if starting/saving session */
-    if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
-	exec_code == SAVE_SESSION_EXEC) {
+    /* reset model count to 0 if starting/saving session (?) */
+    if (exec_code == SESSION_EXEC) {
 	reset_model_count();
     }
 
@@ -5881,11 +5877,6 @@ int execute_script (const char *runfile, const char *buf,
 
     if (fb != NULL) {
 	fclose(fb);
-    }
-
-    if (exec_code == REBUILD_EXEC) {
-	/* recreating a gretl session */
-	clear_or_save_model(&models[0], datainfo, 1);
     }
 
     refresh_data();
@@ -6004,7 +5995,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     int lines[1];
     int dbdata = 0, alt_model = 0;
     int script_code = exec_code;
-    int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
     char linecopy[1024];
@@ -6094,13 +6084,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	} 
 	return 0;
     } 
-
-    /* if rebuilding a session, add tests back to models, 
-       also put the commands onto the stack */
-    if (rebuild) {
-	testopt |= OPT_S;
-	cmd_init(line);
-    }
 
     /* Attach outprn to a specific buffer, if wanted */
     if (*cmd.savename != '\0' && TEXTSAVE_OK(cmd.ci)) {
@@ -6228,7 +6211,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case AR:
-	clear_or_save_model(&models[0], datainfo, rebuild);
+	clear_model(models[0]);
 	*models[0] = ar_func(cmd.list, &Z, datainfo, cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
@@ -6261,8 +6244,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case BXPLOT:
-	if (exec_code == REBUILD_EXEC || exec_code == SAVE_SESSION_EXEC) 
-	    break;
 	if (cmd.nolist) { 
 	    err = boolean_boxplots(line, &Z, datainfo, (cmd.opt != 0));
 	} else {
@@ -6308,7 +6289,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	    errmsg(err, prn);
 	    break;
 	}
-	clear_or_save_model(&models[0], datainfo, rebuild);
+	clear_model(models[0]);
 	*models[0] = ar1_lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
@@ -6360,7 +6341,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	    }
 	    sys = NULL;
 	} else if (!strcmp(cmd.param, "mle") || !strcmp(cmd.param, "nls")) {
-	    clear_or_save_model(&models[0], datainfo, rebuild);
+	    clear_model(models[0]);
 	    *models[0] = nls(&Z, datainfo, cmd.opt, outprn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
@@ -6464,10 +6445,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case GNUPLOT:
     case SCATTERS:
-	if (exec_code == SAVE_SESSION_EXEC || exec_code == REBUILD_EXEC)
-	    break;
 	plotflags = gp_flags((exec_code == SCRIPT_EXEC), cmd.opt);
-	
 	if (cmd.ci == GNUPLOT) {
 	    if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
 		err = gnuplot(cmd.list, NULL, cmd.param, &Z, datainfo,
@@ -6509,7 +6487,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case IMPORT:
-	if (dataset_locked() || exec_code == SAVE_SESSION_EXEC) {
+	if (dataset_locked()) {
 	    break;
 	}
         err = getopenfile(line, datfile, &paths, 0, 0);
@@ -6530,7 +6508,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
         if (!err) { 
 	    maybe_display_string_table();
 	    data_status |= IMPORT_DATA;
-	    register_data(datfile, NULL, (exec_code != REBUILD_EXEC));
+	    register_data(datfile, NULL, 1);
             print_smpl(datainfo, 0, prn);
             varlist(datainfo, prn);
             pprintf(prn, _("You should now use the \"print\" command "
@@ -6542,7 +6520,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case OPEN:
     case APPEND:
-	if (dataset_locked() || exec_code == SAVE_SESSION_EXEC) {
+	if (dataset_locked()) {
 	    break;
 	}
 	err = getopenfile(line, datfile, &paths, 0, 0);
@@ -6649,7 +6627,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case PROBIT:
     case TOBIT:
     case TSLS:
-	clear_or_save_model(&models[0], datainfo, rebuild);
+	clear_model(models[0]);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
 	} else if (cmd.ci == LOGISTIC) {
@@ -6727,7 +6705,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case WLS:
     case HCCM:
     case POOLED:
-	clear_or_save_model(&models[0], datainfo, rebuild);
+	clear_model(models[0]);
 	if (cmd.ci == POOLED) {
 	    *models[0] = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
 	} else {
@@ -6905,9 +6883,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 			    (models[0])->ncoeff, OPT_NONE);
 	    dataset_drop_last_variables(1, &Z, datainfo);
 	    if (!(err = freq_error(freq, prn))) {
-		if (rebuild) {
-		    normal_test(models[0], freq);
-		}
 		print_freq(freq, outprn); 
 		free_freq(freq);
 	    }
@@ -6961,9 +6936,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	if (is_model_cmd(cmd.word)) {
 	    stack_script_modelspec(models[0]);
 	}
-	if (exec_code != REBUILD_EXEC) {
-	    maybe_save_model(&cmd, models[0], prn);
-	}
+	maybe_save_model(&cmd, models[0], prn);
     }
 
     return (err != 0);

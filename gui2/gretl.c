@@ -102,8 +102,11 @@ static const struct poptOption options[] = {
 
 windata_t *mdata;
 DATAINFO *datainfo;
+
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
+char sessionfile[MAXLEN], trysession[MAXLEN];
+
 PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
@@ -994,6 +997,7 @@ int main (int argc, char *argv[])
 
     /* opening a script from the command line? */
     if (tryscript[0] != '\0') { 
+	/* FIXME session files? */
 	do_open_script();
     }
 
@@ -1553,12 +1557,14 @@ drag_data_received  (GtkWidget *widget,
 #endif
 
     suff = strrchr(tmp, '.');
-    if (suff && (!strncmp(suff, ".gretl", 6) || 
-		 !strncmp(suff, ".inp", 4) ||
-		 !strncmp(suff, ".GRE", 4) ||
-		 !strncmp(suff, ".INP", 4))) {
-	strcpy(tryscript, tmp);
-	verify_open_session(NULL);
+    if (suff != NULL) {
+	if (!strncmp(suff, ".gretl", 6) || !strncmp(suff, ".GRE", 4)) {
+	    strcpy(trysession, tmp);
+	    verify_open_session(NULL);
+	} else if (!strncmp(suff, ".inp", 4) || !strncmp(suff, ".INP", 4)) {
+	    strcpy(tryscript, tmp);
+	    verify_open_session(NULL);
+	}
     } else {
 	strcpy(trydatfile, tmp);
 	verify_open_data(NULL, 0);

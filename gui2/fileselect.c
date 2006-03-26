@@ -374,15 +374,17 @@ static void filesel_open_script (const char *fname)
 
 static void filesel_open_session (const char *fname)
 {
-    int pub = !strncmp(tryscript, paths.scriptdir, strlen(paths.scriptdir));
-
-    strcpy(tryscript, fname);
-
-    if (saved_objects(tryscript)) {
+    if (is_session_file(fname)) {
+	strcpy(trysession, fname);
 	verify_open_session(NULL);
-    } else if (view_file(tryscript, 1, 0, 78, 370, 
-			 pub ? VIEW_SCRIPT : EDIT_SCRIPT)) {
-	strcpy(scriptfile, tryscript);
+    } else {
+	int pub;
+
+	strcpy(tryscript, fname);
+	pub = !strncmp(tryscript, paths.scriptdir, strlen(paths.scriptdir));
+	if (view_file(tryscript, 1, 0, 78, 370, (pub)? VIEW_SCRIPT : EDIT_SCRIPT)) {
+	    strcpy(scriptfile, tryscript);
+	}
     }
 }
 

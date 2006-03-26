@@ -166,9 +166,7 @@ enum exec_codes {
     CONSOLE_EXEC      = 1 << 0,
     SCRIPT_EXEC       = 1 << 1,
     SESSION_EXEC      = 1 << 2,
-    REBUILD_EXEC      = 1 << 3,
-    SAVE_SESSION_EXEC = 1 << 4,
-    INCLUDE_EXEC      = 1 << 5
+    INCLUDE_EXEC      = 1 << 3
 };
 
 enum clipstuff {

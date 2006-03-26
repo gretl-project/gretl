@@ -52,7 +52,8 @@ enum {
     P_POISSON,
     P_MAILER,
     P_EVIEWS_IMPORT,
-    P_STATA_IMPORT
+    P_STATA_IMPORT,
+    P_ZIPFILE
 } plugin_codes;
 
 struct plugin_info {
@@ -94,6 +95,7 @@ struct plugin_info plugins[] = {
     { P_MAILER,          "mailer" },
     { P_EVIEWS_IMPORT,   "eviews_import" },
     { P_STATA_IMPORT,    "stata_import" },
+    { P_ZIPFILE,         "gretlzip" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -177,6 +179,11 @@ struct plugin_function plugin_functions[] = {
 
     /* Send email */
     { "email_file",    P_MAILER },
+
+    /* zip and unzip */
+    { "gretl_make_zipfile", P_ZIPFILE},
+    { "gretl_unzip_file",   P_ZIPFILE},
+    { "gretl_is_zipfile",   P_ZIPFILE},
 
     /* sentinel */
     { NULL, 0 }
