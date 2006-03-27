@@ -47,6 +47,15 @@ enum {
 
 void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting);
 
+typedef struct GError_ GError;
+
+struct GError_ {
+    int code;
+    char *message;
+};
+
+void g_error_free (GError *err);
+
 #else
 
 # define standard_button(s) gtk_button_new_from_stock(s)

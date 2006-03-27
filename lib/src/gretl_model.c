@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "objstack.h"
 #include "modelspec.h"
+#include "gretl_xml.h"
 
 #include "glib.h"
 
@@ -2226,26 +2227,17 @@ static int copy_model (MODEL *targ, const MODEL *src)
     return 0;
 }
 
-static char *model_double_string (char *tmp, double x)
-{
-    if (na(x)) {
-	strcpy(tmp, "NA");
-    } else {
-	sprintf(tmp, "%.15g", x);
-    }
-
-    return tmp;
-}
-
 int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 {
-    char tmp[48];
-    int i, k = pmod->ncoeff;
+    int k = pmod->ncoeff;
     int m = k * (k + 1) / 2;
     int err = 0;
 
-    fprintf(fp, "<model ID=\"%d\" t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
-	    pmod->ID, pmod->t1, pmod->t2, pmod->nobs);
+    fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" ", 
+	    pmod->ID, (pmod->name == NULL)? "none" : pmod->name);
+
+    fprintf(fp, "t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
+	    pmod->t1, pmod->t2, pmod->nobs);
     fprintf(fp, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ", 
 	    pmod->full_n, pmod->ncoeff, pmod->dfn, pmod->dfd);
     fprintf(fp, "ifc=\"%d\" ci=\"%d\" nwt=\"%d\" order=\"%d\" aux=\"%d\" ", 
@@ -2253,19 +2245,19 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "ess=\"%s\" ", model_double_string(tmp, pmod->ess));
-    fprintf(fp, "tss=\"%s\" ", model_double_string(tmp, pmod->tss));
-    fprintf(fp, "sigma=\"%s\" ", model_double_string(tmp, pmod->sigma));
-    fprintf(fp, "ess_wt=\"%s\" ", model_double_string(tmp, pmod->ess_wt));
-    fprintf(fp, "sigma_wt=\"%s\" ", model_double_string(tmp, pmod->sigma_wt));
-    fprintf(fp, "rsq=\"%s\" ", model_double_string(tmp, pmod->rsq));
-    fprintf(fp, "adjrsq=\"%s\" ", model_double_string(tmp, pmod->adjrsq));
-    fprintf(fp, "fstt=\"%s\" ", model_double_string(tmp, pmod->fstt));
-    fprintf(fp, "lnL=\"%s\" ", model_double_string(tmp, pmod->lnL));
-    fprintf(fp, "ybar=\"%s\" ", model_double_string(tmp, pmod->ybar));
-    fprintf(fp, "sdy=\"%s\" ", model_double_string(tmp, pmod->sdy));
+    gretl_xml_put_double("ess", pmod->ess, fp);
+    gretl_xml_put_double("tss", pmod->tss, fp);
+    gretl_xml_put_double("sigma", pmod->sigma, fp);
+    gretl_xml_put_double("ess_wt", pmod->ess_wt, fp);
+    gretl_xml_put_double("sigma_wt", pmod->sigma_wt, fp);
+    gretl_xml_put_double("rsq", pmod->rsq, fp);
+    gretl_xml_put_double("adjrsq", pmod->adjrsq, fp);
+    gretl_xml_put_double("fstt", pmod->fstt, fp);
+    gretl_xml_put_double("lnL", pmod->lnL, fp);
+    gretl_xml_put_double("ybar", pmod->ybar, fp);
+    gretl_xml_put_double("sdy", pmod->sdy, fp);
 
-    fputc('\n', fp);
+    fputs(">\n", fp);
 
     /* 
        smpl
@@ -2280,40 +2272,15 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 
     gretl_push_c_numeric_locale();
 
-    fprintf(fp, "<coeff count=\"%d\">\n", k);
-    for (i=0; i<k; i++) {
-	fprintf(fp, "%.15g ", pmod->coeff[i]);
-    }
-    fputs("</coeff>\n", fp);
-
-    fprintf(fp, "<sderr count=\"%d\">\n", k);
-    for (i=0; i<k; i++) {
-	fprintf(fp, "%.15g ", pmod->sderr[i]);
-    }
-    fputs("</sderr>\n", fp);
+    gretl_xml_put_double_array("coeff", pmod->coeff, k, fp);
+    gretl_xml_put_double_array("sderr", pmod->coeff, k, fp);
 
     if (pmod->uhat != NULL) {
-	fprintf(fp, "<uhat count=\"%d\">\n", pmod->full_n);
-	for (i=0; i<pmod->full_n; i++) {
-	    if (na(pmod->uhat[i])) {
-		fputs("NA ", fp);
-	    } else {
-		fprintf(fp, "%.15g ", pmod->uhat[i]);
-	    }
-	}
-	fputs("</uhat>\n", fp);
+	gretl_xml_put_double_array("uhat", pmod->uhat, pmod->full_n, fp);
     }
 
     if (pmod->yhat != NULL) {
-	fprintf(fp, "<yhat count=\"%d\">\n", pmod->full_n);
-	for (i=0; i<pmod->full_n; i++) {
-	    if (na(pmod->yhat[i])) {
-		fputs("NA ", fp);
-	    } else {
-		fprintf(fp, "%.15g ", pmod->yhat[i]);
-	    }
-	}
-	fputs("</yhat>\n", fp);
+	gretl_xml_put_double_array("yhat", pmod->yhat, pmod->full_n, fp);
     }
 
 #if 0
@@ -2329,27 +2296,11 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 #endif
 
     if (pmod->xpx != NULL) {
-	fprintf(fp, "<xpx count=\"%d\">\n", m);
-	for (i=0; i<m; i++) {
-	    if (na(pmod->xpx[i])) {
-		fputs("NA ", fp);
-	    } else {
-		fprintf(fp, "%.15g ", pmod->xpx[i]);
-	    }
-	}
-	fputs("</xpx>\n", fp); 
+	gretl_xml_put_double_array("xpx", pmod->xpx, m, fp);
     }
 
     if (pmod->vcv != NULL) {
-	fprintf(fp, "<vcv count=\"%d\">\n", m);
-	for (i=0; i<m; i++) {
-	    if (na(pmod->vcv[i])) {
-		fputs("NA ", fp);
-	    } else {
-		fprintf(fp, "%.15g ", pmod->vcv[i]);
-	    }
-	}
-	fputs("</vcv>\n", fp); 
+	gretl_xml_put_double_array("vcv", pmod->vcv, m, fp);
     }
 
 #if 0
@@ -2364,11 +2315,9 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
     }
 
     if (pmod->nparams > 0 && pmod->params != NULL) {
-	fprintf(fp, "<params count=\"%d\">\n", pmod->nparams);
-	for (i=0; i<pmod->nparams; i++) {
-	    fprintf(fp, "%s ", pmod->params[i]);
-	}
-	fputs("</params>\n", fp); 	
+	gretl_xml_put_strings_array("params", 
+				    (const char **) pmod->params, 
+				    pmod->nparams, fp);
     }    
 
 #if 0
@@ -2382,17 +2331,10 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 #endif
 
     if (pmod->list != NULL) {
-	char *listbuf = gretl_list_to_string(pmod->list);
-
-	if (listbuf != NULL) {
-	    fprintf(fp, "<list>%s</list>\n", listbuf);
-	    free(listbuf);
-	} else {
-	    err = 1;
-	}
+	gretl_xml_put_list("list", pmod->list, fp);
     }
 
-    fputs("</model>\n", fp);
+    fputs("</gretl-model>\n", fp);
 
     gretl_pop_c_numeric_locale();
 

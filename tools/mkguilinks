@@ -36,7 +36,7 @@ for f in \
   objectsave.c objectsave.h \
   selector.c selector.h \
   series_view.c series_view.h \
-  session.c session.h \
+  session.c session.h session_xml.c \
   settings.c settings.h \
   textutil.c textutil.h \
   toolbar.c toolbar.h \

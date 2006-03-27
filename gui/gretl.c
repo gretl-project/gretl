@@ -95,6 +95,7 @@ windata_t *mdata;
 DATAINFO *datainfo;
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
+char sessionfile[MAXLEN], trysession[MAXLEN];
 PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */

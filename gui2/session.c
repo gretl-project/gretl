@@ -244,8 +244,9 @@ static void print_session (const char *msg)
 static int print_session_xml (void)
 {
     char fname[MAXLEN];
-    FILE *fp;
-    int i;
+    char tmpname[MAXLEN];
+    FILE *fp, *fq;
+    int i, err = 0;
 
     chdir(paths.userdir);
 
@@ -253,23 +254,48 @@ static int print_session_xml (void)
     fp = gretl_fopen(fname, "w");
 
     if (fp == NULL) {
+	errbox("Couldn't write session file");
 	return E_FOPEN;
     }
 
     fputs("<gretl-session>\n", fp);
-    fprintf(fp, " <sample t1=%d t2=%d/>\n", datainfo->t1, datainfo->t2);
+    fprintf(fp, " <sample t1=\"%d\" t2=\"%d\"/>\n", datainfo->t1, datainfo->t2);
+
     fprintf(fp, " <models count=\"%d\">\n", session.nmodels);
-    for (i=0; i<session.nmodels; i++) {
-	fprintf(fp, "  <session-model name=\"%s\" addr=\"%p\"/>\n", 
-		session.models[i]->name, session.models[i]->ptr);
+    for (i=0; i<session.nmodels && !err; i++) {
+	if (session.models[i]->type == GRETL_OBJ_EQN) {
+	    sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
+	    fq = fopen(tmpname, "w");
+	    if (fq == NULL) {
+		errbox("Couldn't write session model file");
+		err = E_FOPEN;
+	    } else {
+		sprintf(tmpname, "model.%d", i+1);
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" addr=\"%p\"/>\n", 
+			session.models[i]->name, tmpname, session.models[i]->ptr);
+		gretl_model_serialize(session.models[i]->ptr, fq);
+		fclose(fq);
+	    }
+	} else {
+	    fprintf(stderr, "FIXME models other than single-equation ones\n");
+	}
     }
+
+    if (err) {
+	fclose(fp);
+	remove(fname);
+	return err;
+    }
+
     fputs(" </models>\n", fp);
+
     fprintf(fp, " <graphs count=\"%d\">\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
 	fprintf(fp, "  <session-graph name=\"%s\" fname=\"%s\"/>\n", 
 		session.graphs[i]->name, session.graphs[i]->fname);
     } 
     fputs(" </graphs>\n", fp);
+
     fprintf(fp, " <texts count=\"%d\">\n", session.ntexts);
     for (i=0; i<session.ntexts; i++) {
 	fprintf(fp, "  <session-text name=\"%s\">\n", session.texts[i]->name);
@@ -278,6 +304,7 @@ static int print_session_xml (void)
 	fputs("  </session-text>\n", fp);
     }    
     fputs(" </texts>\n", fp);
+
     fputs("</gretl-session>\n", fp);
 
     fclose(fp);
@@ -1124,7 +1151,7 @@ int save_session (char *fname)
     char tmpname[MAXLEN];
     void *handle;
     int (*gretl_make_zipfile)(const char *, const char *, GError **);
-    int i, len, err = 0;
+    int len, err = 0;
     int t1 = datainfo->t1;
     int t2 = datainfo->t2;
     GError *gerr = NULL;
@@ -1172,24 +1199,6 @@ int save_session (char *fname)
     sprintf(tmpname, "%s%cnotes", dirname, SLASH);
     if (print_session_notes(tmpname)) {
 	errbox(_("Couldn't write session notes file"));
-    }
-
-    /* write out session models, if any */
-    for (i=0; i<session.nmodels; i++) {
-	if (session.models[i]->type == GRETL_OBJ_EQN) {
-	    FILE *fp;
-
-	    sprintf(tmpname, "%s%cmodel.%d", dirname, SLASH, i+1);
-	    fp = fopen(tmpname, "w");
-	    if (fp == NULL) {
-		err = 1;
-	    } else {
-		gretl_model_serialize(session.models[i]->ptr, fp);
-		fclose(fp);
-	    }
-	} else {
-	    fprintf(stderr, "FIXME other model type\n");
-	}
     }
 
     gretl_make_zipfile = gui_get_plugin_function("gretl_make_zipfile", 

@@ -24,16 +24,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
-
-#define UTF const xmlChar *
-
 #undef XML_DEBUG
 
 #ifdef WIN32
 # include <glib.h>
-static xmlDocPtr gretl_xmlParseFile (const char *fname)
+xmlDocPtr gretl_xmlParseFile (const char *fname)
 {
     xmlDocPtr ptr = NULL;
     FILE *fp = fopen(fname, "r");
@@ -59,6 +54,50 @@ static xmlDocPtr gretl_xmlParseFile (const char *fname)
 #else
 # define gretl_xmlParseFile(f) xmlParseFile(f)
 #endif
+
+int gretl_xml_open_doc_root (const char *fname,
+			     const char *rootname,
+			     xmlDocPtr *pdoc, 
+			     xmlNodePtr *pnode)
+{
+    xmlDocPtr doc;
+    xmlNodePtr node;
+    int err = 0;
+
+    *pdoc = NULL;
+    *pnode = NULL;
+
+    doc = gretl_xmlParseFile(fname);
+    if (doc == NULL) {
+	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
+	err = 1;
+    }
+
+    if (!err) {
+	node = xmlDocGetRootElement(doc);
+	if (node == NULL) {
+	    sprintf(gretl_errmsg, _("%s: empty document"), fname);
+	    xmlFreeDoc(doc);
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	if (xmlStrcmp(node->name, (XUC) rootname)) {
+	    sprintf(gretl_errmsg, _("File of the wrong type, root node not %s"),
+		    rootname);
+	    xmlFreeDoc(doc);
+	    err = 1;
+	}
+    }    
+
+    if (!err) {
+	*pdoc = doc;
+	*pnode = node;
+    }
+
+    return err;
+}
 
 static char *compact_method_to_string (int method)
 {
@@ -140,6 +179,245 @@ static int savenum (const int *list, int i)
     } else {
 	return i;
     }
+}
+
+/**
+ * gretl_xml_put_double:
+ * @tag: name to give value.
+ * @x: value to put.
+ * @fp: file to which to write.
+ * 
+ * Writes to @fp a string of the form "%s=%.15g" if the value of
+ * @x is valid, otherwise "%s=NA".
+ */
+
+void gretl_xml_put_double (const char *tag, double x, FILE *fp)
+{
+    if (na(x)) {
+	fprintf(fp, "%s=\"NA\" ", tag);
+    } else {
+	fprintf(fp, "%s=\"%.15g\" ", tag, x);
+    }
+}
+
+/**
+ * gretl_xml_put_double_array:
+ * @tag: name to give array.
+ * @x: values to put.
+ * @n: number of values in @x.
+ * @fp: file to which to write.
+ * 
+ */
+
+void gretl_xml_put_double_array (const char *tag, double *x, int n,
+				 FILE *fp)
+{
+    int i;
+
+    fprintf(fp, "<%s count=\"%d\">\n", tag, n);
+    for (i=0; i<n; i++) {
+	if (na(x[i])) {
+	    fputs("NA ", fp);
+	} else {
+	    fprintf(fp, "%.15g ", x[i]);
+	}
+    }
+    fprintf(fp, "</%s>\n", tag);    
+}
+
+/**
+ * gretl_xml_put_strings_array:
+ * @tag: name to give array.
+ * @strs: array of strings to put.
+ * @n: number of strings in @strs.
+ * @fp: file to which to write.
+ * 
+ */
+
+void gretl_xml_put_strings_array (const char *tag, const char **strs, int n,
+				  FILE *fp)
+{
+    int i;
+
+    fprintf(fp, "<%s count=\"%d\">\n", tag, n);
+    for (i=0; i<n; i++) {
+	fprintf(fp, "%s ", strs[i]);
+    }
+    fprintf(fp, "</%s>\n", tag); 
+}
+
+/**
+ * gretl_xml_put_list:
+ * @tag: name to give list.
+ * @list: list of integers to be written.
+ * @fp: file to which to write.
+ * 
+ */
+
+void gretl_xml_put_list (const char *tag, const int *list, FILE *fp)
+{
+    int i;
+
+    fprintf(fp, "<%s>\n", tag);
+    for (i=0; i<=list[0]; i++) {
+	fprintf(fp, "%d ", list[i]);
+    }
+    fprintf(fp, "</%s>\n", tag); 
+}
+
+/**
+ * gretl_xml_get_prop_as_int:
+ * @node: XML node pointer.
+ * @tag: name by which integer property is known.
+ * @targ: location to write int value.
+ * 
+ * Returns: 1 if an int is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
+			       int *targ)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
+
+    if (tmp != NULL) {
+	*targ = atoi((const char *) tmp);
+	free(tmp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_get_prop_as_double:
+ * @node: XML node pointer.
+ * @tag: name by which floating-point property is known.
+ * @targ: location to write double value.
+ * 
+ * Returns: 1 if a double is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
+				  double *targ)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
+
+    if (tmp != NULL) {
+	*targ = atof((const char *) tmp);
+	free(tmp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_node_get_list:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @err: location to receive error code.
+ * 
+ * Returns: allocated list read from @node, or %NULL on
+ * failure.
+ */
+
+int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
+{
+    xmlChar *tmp;
+    const char *p;
+    int *list = NULL;
+    int i, n;
+
+    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    if (tmp == NULL) {
+	*err = E_DATA;
+    } else {
+	p = (const char *) tmp;
+	if (sscanf(p, "%d", &n) != 1) {
+	    *err = E_DATA;
+	} else if (n <= 0) {
+	    *err = E_DATA;
+	} else {
+	    p += strcspn(p, " \r\n");
+	    list = gretl_list_new(n);
+	    if (list == NULL) {
+		*err = E_ALLOC;
+	    }
+	}
+	if (list != NULL && !*err) {
+	    for (i=1; i<=n && !*err; i++) {
+		if (sscanf(p, "%d", &list[i]) != 1) {
+		    *err = E_DATA;
+		}
+		p += strcspn(p, " \r\n");
+	    }
+	}
+	free(tmp);
+    }
+
+    if (list != NULL && *err) {
+	free(list);
+	list = NULL;
+    }
+
+    return list;
+}
+
+/**
+ * gretl_xml_get_doubles_array:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @err: location to receive error code.
+ * 
+ * Returns: allocated array of doubles read from @node, or %NULL on
+ * failure.
+ */
+
+double *gretl_xml_get_doubles_array (xmlNodePtr node, xmlDocPtr doc,
+				     int *err)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) "count");
+    const char *p;
+    double *x = NULL;
+    int i, n;
+
+    if (tmp != NULL) {
+	n = atoi((const char *) tmp);
+	free(tmp);
+	if (n > 0) {
+	    x = malloc(n * sizeof *x);
+	    if (x == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+		if (tmp == NULL) {
+		    *err = E_DATA;
+		} else {
+		    p = (const char *) tmp;
+		    for (i=0; i<n && !*err; i++) {
+			if (sscanf(p, "%lf", &x[i]) != 1) {
+			    *err = E_DATA;
+			}
+			/* skip to end of number */
+			p += strcspn(p, " \r\n");
+		    }
+		    free(tmp);
+		}
+	    }
+	}
+    }
+
+    if (x != NULL && *err) {
+	free(x);
+	x = NULL;
+    }
+
+    return x;
 }
 
 /**
@@ -468,7 +746,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 			    int to_iso_latin)
 {
     xmlNodePtr cur;
-    xmlChar *tmp = xmlGetProp(node, (UTF) "count");
+    xmlChar *tmp = xmlGetProp(node, (XUC) "count");
     int i, err = 0;
 
     if (tmp != NULL) {
@@ -512,8 +790,8 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 
     i = 1;
     while (cur != NULL) {
-        if (!xmlStrcmp(cur->name, (UTF) "variable")) {
-	    tmp = xmlGetProp(cur, (UTF) "name");
+        if (!xmlStrcmp(cur->name, (XUC) "variable")) {
+	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
 		transcribe_string(pdinfo->varname[i], (char *) tmp, VNAMELEN,
 				  to_iso_latin); 
@@ -522,27 +800,27 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 		sprintf(gretl_errmsg, _("Variable %d has no name"), i);
 		return 1;
 	    }
-	    tmp = xmlGetProp(cur, (UTF) "label");
+	    tmp = xmlGetProp(cur, (XUC) "label");
 	    if (tmp != NULL) {
 		transcribe_string(VARLABEL(pdinfo, i), (char *) tmp, MAXLABEL,
 				  to_iso_latin);
 		free(tmp);
 	    }
-	    tmp = xmlGetProp(cur, (UTF) "displayname");
+	    tmp = xmlGetProp(cur, (XUC) "displayname");
 	    if (tmp != NULL) {
 		transcribe_string(DISPLAYNAME(pdinfo, i), (char *) tmp, MAXDISP,
 				  to_iso_latin);
 		free(tmp);
 	    }
-	    tmp = xmlGetProp(cur, (UTF) "compact-method");
+	    tmp = xmlGetProp(cur, (XUC) "compact-method");
 	    if (tmp != NULL) {
 		COMPACT_METHOD(pdinfo, i) = compact_string_to_int((char *) tmp);
 		free(tmp);
 	    }
-	    tmp = xmlGetProp(cur, (UTF) "role");
+	    tmp = xmlGetProp(cur, (XUC) "role");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "scalar")) {
-		    char *val = (char *) xmlGetProp(cur, (UTF) "value");
+		    char *val = (char *) xmlGetProp(cur, (XUC) "value");
 		    
 		    if (val) {
 			double xx = atof(val);
@@ -623,7 +901,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
 
-    tmp = xmlGetProp(node, (UTF) "count");
+    tmp = xmlGetProp(node, (XUC) "count");
     if (tmp == NULL) {
 	return 1;
     } 
@@ -644,7 +922,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	}
     }
 
-    tmp = xmlGetProp(node, (UTF) "labels");
+    tmp = xmlGetProp(node, (XUC) "labels");
     if (tmp) {
 	if (!strcmp((char *) tmp, "true")) {
 	    if (dataset_allocate_obs_markers(pdinfo)) {
@@ -698,9 +976,9 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 
     t = 0;
     while (cur != NULL) {
-        if (!xmlStrcmp(cur->name, (UTF) "obs")) {
+        if (!xmlStrcmp(cur->name, (XUC) "obs")) {
 	    if (pdinfo->markers) {
-		tmp = xmlGetProp(cur, (UTF) "label");
+		tmp = xmlGetProp(cur, (XUC) "label");
 		if (tmp) {
 		    transcribe_string(pdinfo->S[t], (char *) tmp, OBSLEN,
 				      to_iso_latin); 
@@ -756,7 +1034,7 @@ static long get_filesize (const char *fname)
 
 static int xml_get_data_structure (xmlNodePtr node, int *dtype)
 {
-    xmlChar *tmp = xmlGetProp(node, (UTF) "type");
+    xmlChar *tmp = xmlGetProp(node, (XUC) "type");
     int err = 0;
 
     if (tmp == NULL) {
@@ -784,7 +1062,7 @@ static int xml_get_data_structure (xmlNodePtr node, int *dtype)
 
 static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dtype)
 {
-    xmlChar *tmp = xmlGetProp(node, (UTF) "frequency");
+    xmlChar *tmp = xmlGetProp(node, (XUC) "frequency");
     int err = 0;
 
     *pd = 1;
@@ -810,7 +1088,7 @@ static int xml_get_data_frequency (xmlNodePtr node, int *pd, int *dtype)
 static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 			     int caldata)
 {
-    xmlChar *tmp = xmlGetProp(node, (UTF) "startobs");
+    xmlChar *tmp = xmlGetProp(node, (XUC) "startobs");
     int err = 0;
 
     if (tmp != NULL) {
@@ -854,7 +1132,7 @@ static int xml_get_startobs (xmlNodePtr node, double *sd0, char *stobs,
 
 static int xml_get_endobs (xmlNodePtr node, char *endobs, int caldata)
 {
-    xmlChar *tmp = xmlGetProp(node, (UTF) "endobs");
+    xmlChar *tmp = xmlGetProp(node, (XUC) "endobs");
     int err = 0;
 
     if (tmp != NULL) {
@@ -965,7 +1243,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	goto bailout;
     }
 
-    if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
+    if (xmlStrcmp(cur->name, (XUC) "gretldata")) {
         sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
 	err = 1;
 	goto bailout;
@@ -1006,16 +1284,16 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (UTF) "description")) {
+        if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    tmpdinfo->descrip = (char *) 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-        } else if (!xmlStrcmp(cur->name, (UTF) "variables")) {
+        } else if (!xmlStrcmp(cur->name, (XUC) "variables")) {
 	    if (process_varlist(cur, tmpdinfo, &tmpZ, to_iso_latin)) {
 		err = 1;
 	    } else {
 		gotvars = 1;
 	    }
-	} else if (!xmlStrcmp(cur->name, (UTF) "observations")) {
+	} else if (!xmlStrcmp(cur->name, (XUC) "observations")) {
 	    if (!gotvars) {
 		sprintf(gretl_errmsg, _("Variables information is missing"));
 		err = 1;
@@ -1122,7 +1400,7 @@ char *gretl_get_gdt_description (const char *fname)
 	return NULL;
     }
 
-    if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
+    if (xmlStrcmp(cur->name, (XUC) "gretldata")) {
         sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
 	xmlFreeDoc(doc);
 	return NULL;
@@ -1130,7 +1408,7 @@ char *gretl_get_gdt_description (const char *fname)
 
     cur = cur->xmlChildrenNode;
     while (cur != NULL) {
-        if (!xmlStrcmp(cur->name, (UTF) "description")) {
+        if (!xmlStrcmp(cur->name, (XUC) "description")) {
 	    buf = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    break;
         }

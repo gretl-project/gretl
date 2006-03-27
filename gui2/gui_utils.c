@@ -2355,6 +2355,12 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
 #ifdef OLD_GTK
 
+void g_error_free (GError *err)
+{
+    free(err->message);
+    free(err);
+}
+
 static int g_file_get_contents (const char *fname, char **pbuf, void *v1, void *v2)
 {
     char *buf = NULL;
