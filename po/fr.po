@@ -6093,7 +6093,7 @@ msgstr "/Modèle/Moindres carrés _ordinaire..."
 
 #: gui/gretl.c:454 gui2/gretl.c:510
 msgid "/Model/_Weighted Least Squares..."
-msgstr "/Modèle/Moindres carrée _Pondérés..."
+msgstr "/Modèle/Moindres carrés _Pondérés..."
 
 #: gui/gretl.c:456 gui2/gretl.c:512
 msgid "/Model/H_eteroskedasticity corrected..."
