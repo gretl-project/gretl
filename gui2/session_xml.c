@@ -177,7 +177,10 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
     got += gretl_xml_get_prop_as_double(node, "crit1", &pmod->criterion[1]);
     got += gretl_xml_get_prop_as_double(node, "crit2", &pmod->criterion[2]);
 
-    if (got < 14) {
+    got += gretl_xml_get_prop_as_double(node, "dw", &pmod->dw);
+    got += gretl_xml_get_prop_as_double(node, "rho", &pmod->rho);
+
+    if (got < 16) {
 	*err = E_DATA;
 	gretl_pop_c_numeric_locale();
 	goto bailout;
@@ -204,7 +207,7 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
 	cur = cur->next;
     }
 
-    /* FIXME some other elements not accounted for */
+    /* FIXME some other elements not accounted for, e.g. tests */
 
     gretl_pop_c_numeric_locale();
 

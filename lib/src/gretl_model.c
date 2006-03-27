@@ -2261,12 +2261,13 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
     gretl_xml_put_double("crit1", pmod->criterion[1], fp);
     gretl_xml_put_double("crit2", pmod->criterion[2], fp);
 
+    gretl_xml_put_double("dw", pmod->dw, fp);
+    gretl_xml_put_double("rho", pmod->rho, fp);
+
     fputs(">\n", fp);
 
     /* 
        smpl
-       double criterion[3];
-       double dw, rho;
        char *name;
        void *data;
        DATASET *dataset;

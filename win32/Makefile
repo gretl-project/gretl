@@ -42,6 +42,7 @@ vpath %.c $(guidir)
 vpath %.c $(extradir)
 vpath %.c $(plugindir)
 vpath %.c $(plugindir)/libole2
+vpath %.c $(plugindir)/zipunzip
 vpath %.c $(topsrc)/tests
 vpath %.h $(libsrcdir):$(topsrc)/cli:$(guidir):$(extradir):$(plugindir):.
 vpath %.h $(topsrc)/cephes:..
@@ -80,7 +81,8 @@ PLUGINSRC = \
 	fcp.c \
 	garch.c \
         audio.c \
-	urcdist.c 
+	urcdist.c \
+	gretlzip.c 
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -109,7 +111,8 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/garch.dll \
         plugins/audio.dll \
 	plugins/vif.dll \
-	plugins/urcdist.dll
+	plugins/urcdist.dll \
+	plugins/gretlzip.dll
 
 LIBSRC = adf_kpss.c \
 	bhhh_max.c \
@@ -372,6 +375,11 @@ plugins/garch.dll: garch.o fcp.o dllinit.o
 plugins/audio.dll: audio.o midi_utils.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) -lole32 -lsapi
+
+plugins/gretlzip.dll: gretlzip.o zfileio.o zipfile.o zipmain.o zipwork.o \
+	zsystem.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) -lz
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
