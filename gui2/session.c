@@ -420,7 +420,7 @@ static int session_dir_ok (void)
 
 void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
 {
-    char pltname[32];
+    char pltname[OBJNAMLEN];
     char targname[MAXLEN];
     char grname[OBJNAMLEN];
     int boxplot_count;
@@ -516,14 +516,12 @@ int real_add_text_to_session (PRN *prn, const char *tname)
 	SESSION_TEXT **texts;
 
 	nt = session.ntexts;
-
 	texts = myrealloc(session.texts, (nt + 1) * sizeof *texts);
 	if (texts == NULL) {
 	    return ADD_OBJECT_FAIL;
 	}
 
 	session.texts = texts;
-
 	session.texts[nt] = session_text_new(tname);
 	if (session.texts[nt] == NULL) {
 	    return ADD_OBJECT_FAIL;
