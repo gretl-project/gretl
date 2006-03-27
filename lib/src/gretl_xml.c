@@ -338,6 +338,7 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 	*err = E_DATA;
     } else {
 	p = (const char *) tmp;
+	p += strspn(p, " \r\n");
 	if (sscanf(p, "%d", &n) != 1) {
 	    *err = E_DATA;
 	} else if (n <= 0) {
@@ -354,6 +355,7 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 		if (sscanf(p, "%d", &list[i]) != 1) {
 		    *err = E_DATA;
 		}
+		p += strspn(p, " \r\n");
 		p += strcspn(p, " \r\n");
 	    }
 	}
@@ -399,11 +401,13 @@ double *gretl_xml_get_doubles_array (xmlNodePtr node, xmlDocPtr doc,
 		    *err = E_DATA;
 		} else {
 		    p = (const char *) tmp;
+		    p += strspn(p, " \r\n");
 		    for (i=0; i<n && !*err; i++) {
 			if (sscanf(p, "%lf", &x[i]) != 1) {
 			    *err = E_DATA;
 			}
 			/* skip to end of number */
+			p += strspn(p, " \r\n");
 			p += strcspn(p, " \r\n");
 		    }
 		    free(tmp);

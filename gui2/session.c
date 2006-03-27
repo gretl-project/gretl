@@ -229,11 +229,13 @@ static void print_session (const char *msg)
     for (i=0; i<session.nmodels; i++) {
 	fprintf(stderr, " model '%s'\n", session.models[i]->name);
     }
+
     fprintf(stderr, "Session contains %d graphs\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
 	fprintf(stderr, " graph: %s (%s)\n", session.graphs[i]->name,
 		session.graphs[i]->fname);
     }
+
     fprintf(stderr, "Session contains %d texts\n", session.ntexts);
     for (i=0; i<session.ntexts; i++) {
 	fprintf(stderr, " text: '%s'\n", session.texts[i]->name);

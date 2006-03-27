@@ -121,6 +121,9 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
     xmlNodePtr cur;
     int got;
 
+    fprintf(stderr, "rebuild_session_model: trying to open '%s'\n",
+	    fname);
+
     *err = gretl_xml_open_doc_root(fname, "gretl-model", &doc, &node);
     if (*err) {
 	return NULL;
@@ -131,6 +134,9 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
 	*err = E_ALLOC;
 	return NULL;
     }
+
+    fprintf(stderr, "rebuild_session_model: allocated model at %p\n",
+	    (void *) pmod);
 
     got = 0;
     got += gretl_xml_get_prop_as_int(node, "ID", &pmod->ID);
@@ -167,7 +173,11 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
     got += gretl_xml_get_prop_as_double(node, "ybar", &pmod->ybar);
     got += gretl_xml_get_prop_as_double(node, "sdy", &pmod->sdy);
 
-    if (got < 11) {
+    got += gretl_xml_get_prop_as_double(node, "crit0", &pmod->criterion[0]);
+    got += gretl_xml_get_prop_as_double(node, "crit1", &pmod->criterion[1]);
+    got += gretl_xml_get_prop_as_double(node, "crit2", &pmod->criterion[2]);
+
+    if (got < 14) {
 	*err = E_DATA;
 	gretl_pop_c_numeric_locale();
 	goto bailout;
@@ -201,6 +211,9 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
  bailout:
 
     xmlFreeDoc(doc);
+
+    fprintf(stderr, "rebuild_session_model: returning with err = %d\n",
+	    *err);
     
     /* need to clean up on error here */
 
@@ -212,15 +225,17 @@ static int restore_session_models (xmlDocPtr doc, xmlNodePtr node)
     char fname[MAXLEN];
     xmlNodePtr cur;
     xmlChar *tmp;
-    int i = 0;
-    int err = 0;
+    int i, err = 0;
 
     session.models = mymalloc(session.nmodels * sizeof *session.models);
     if (session.models == NULL) {
 	return E_ALLOC;
     }
 
+    fprintf(stderr, "rebuilding: session.nmodels = %d\n", session.nmodels);
+
     cur = node->xmlChildrenNode;
+    i = 0;
 
     while (cur != NULL && !err) {
 	MODEL *pmod = NULL;
@@ -244,14 +259,19 @@ static int restore_session_models (xmlDocPtr doc, xmlNodePtr node)
 	    return E_ALLOC;
 	}
 
+	fprintf(stderr, "allocated session.models[%d]\n", i);
+
 	session.models[i]->name[0] = 0;
 	session.models[i]->type = GRETL_OBJ_EQN;
-	session.models[i]->ptr = pmod;	
+	session.models[i]->ptr = pmod;
+
+	fprintf(stderr, "allocated session.models[%d]->ptr = %p\n", 
+		i, (void *) pmod);
 
 	tmp = xmlGetProp(cur, (XUC) "name");
 	if (tmp != NULL) {
-	    strncat(session.models[i]->name, (const char *) tmp, OBJNAMLEN - 1);
-	    free(tmp);
+	    fprintf(stderr, "got model name = '%s'\n", tmp);
+	    session.models[i]->name = (char *) tmp;
 	} else {
 	    err = 1;
 	}
@@ -259,6 +279,8 @@ static int restore_session_models (xmlDocPtr doc, xmlNodePtr node)
 	cur = cur->next;
 	i++;
     }
+
+    fprintf(stderr, "restore_session_models: returning %d\n", err);
 
     /* FIXME clean up on error */
 

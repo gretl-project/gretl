@@ -2257,6 +2257,10 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
     gretl_xml_put_double("ybar", pmod->ybar, fp);
     gretl_xml_put_double("sdy", pmod->sdy, fp);
 
+    gretl_xml_put_double("crit0", pmod->criterion[0], fp);
+    gretl_xml_put_double("crit1", pmod->criterion[1], fp);
+    gretl_xml_put_double("crit2", pmod->criterion[2], fp);
+
     fputs(">\n", fp);
 
     /* 
@@ -2273,7 +2277,7 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
     gretl_push_c_numeric_locale();
 
     gretl_xml_put_double_array("coeff", pmod->coeff, k, fp);
-    gretl_xml_put_double_array("sderr", pmod->coeff, k, fp);
+    gretl_xml_put_double_array("sderr", pmod->sderr, k, fp);
 
     if (pmod->uhat != NULL) {
 	gretl_xml_put_double_array("uhat", pmod->uhat, pmod->full_n, fp);
