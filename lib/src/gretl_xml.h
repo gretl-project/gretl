@@ -22,10 +22,9 @@
 
 #ifndef GRETLCLI
 
-#include <libxml/xmlmemory.h>
-#include <libxml/parser.h>
-
 #define XUC const xmlChar *
+
+void gretl_xml_header (FILE *fp);
 
 int gretl_xml_open_doc_root (const char *fname,
 			     const char *rootname,
@@ -45,8 +44,13 @@ void gretl_xml_put_list (const char *tag, const int *list, FILE *fp);
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 			       int *targ);
 
+int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
+				 unsigned char *targ);
+
 int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
 				  double *targ);
+
+char *gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag);
 
 int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err);
 

@@ -1568,9 +1568,9 @@ static int get_network_settings (void)
 
 void read_rc (void) 
 {
-    char rpath[MAXSTR], value[MAXSTR];
+    char value[MAXSTR];
     char *strvar;
-    int i, j;
+    int i;
 
     if (get_network_settings() && *paths.userdir != '\0') {
 	win32_make_user_dirs();

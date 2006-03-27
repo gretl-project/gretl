@@ -534,8 +534,8 @@ static void copy_sys_filename (char *targ, const char *src)
 static void set_data_from_filelist (gpointer data, guint i, 
 				    GtkWidget *widget)
 {
-    copy_sys_filename(trydatfile, datap[i]);
-    if (strstr(trydatfile, ".csv")) {
+    copy_sys_filename(tryfile, datap[i]);
+    if (strstr(tryfile, ".csv")) {
 	delimiter_dialog(NULL);
     }
     verify_open_data(NULL, 0);
@@ -544,14 +544,14 @@ static void set_data_from_filelist (gpointer data, guint i,
 static void set_session_from_filelist (gpointer data, guint i, 
 				       GtkWidget *widget)
 {
-    copy_sys_filename(trysession, sessionp[i]);
-    verify_open_session(NULL);
+    copy_sys_filename(tryfile, sessionp[i]);
+    verify_open_session();
 }
 
 static void set_script_from_filelist (gpointer data, guint i, 
 				      GtkWidget *widget)
 {
-    copy_sys_filename(tryscript, scriptp[i]);
+    copy_sys_filename(tryfile, scriptp[i]);
     do_open_script();
 }
 

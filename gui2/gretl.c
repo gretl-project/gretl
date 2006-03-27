@@ -103,9 +103,10 @@ static const struct poptOption options[] = {
 windata_t *mdata;
 DATAINFO *datainfo;
 
-char cmdfile[MAXLEN], scriptfile[MAXLEN];
-char trydatfile[MAXLEN], tryscript[MAXLEN];
-char sessionfile[MAXLEN], trysession[MAXLEN];
+char cmdfile[MAXLEN];
+char scriptfile[MAXLEN];
+char sessionfile[MAXLEN];
+char tryfile[MAXLEN];
 
 PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
@@ -576,21 +577,21 @@ static void get_runfile (char *fname)
 {
     int i;
 
-    *tryscript = '\0';
+    *tryfile = '\0';
 #ifdef G_OS_WIN32
-    if (unmangle(fname, tryscript)) return;
+    if (unmangle(fname, tryfile)) return;
 #else
-    strncat(tryscript, fname, MAXLEN-1);
+    strncat(tryfile, fname, MAXLEN-1);
 #endif
-    if (addpath(tryscript, &paths, 1) == NULL) {
-	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryscript);
+    if (addpath(tryfile, &paths, 1) == NULL) {
+	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryfile);
 	exit(EXIT_FAILURE);
     } else {
-	fprintf(stderr, I_("%s found\n"), tryscript);
-	i = slashpos(tryscript);
+	fprintf(stderr, I_("%s found\n"), tryfile);
+	i = slashpos(tryfile);
 	if (i) {
 	    paths.currdir[0] = '\0';
-	    strncat(paths.currdir, tryscript, i);
+	    strncat(paths.currdir, tryfile, i);
 	}
 	strcat(paths.currdir, SLASHSTR);
     }
@@ -757,7 +758,7 @@ int main (int argc, char *argv[])
     putenv("G_FILENAME_ENCODING=@locale");
 #endif     
 
-    *tryscript = '\0';
+    *tryfile = '\0';
     *scriptfile = '\0';
     *paths.datfile = '\0';
     *dbname = '\0';
@@ -893,7 +894,7 @@ int main (int argc, char *argv[])
 #endif
 
 	/* keep a copy of input filename */
-	strcpy(trydatfile, paths.datfile);
+	strcpy(tryfile, paths.datfile);
 
 	ftype = detect_filetype(paths.datfile, &paths, prn);
 
@@ -990,13 +991,13 @@ int main (int argc, char *argv[])
 #endif
 
     if (!gui_get_data) {
-	register_data(paths.datfile, trydatfile, 1);
+	register_data(paths.datfile, tryfile, 1);
 	maybe_display_string_table();
-	*trydatfile = 0;
+	*tryfile = 0;
     }
 
     /* opening a script from the command line? */
-    if (tryscript[0] != '\0') { 
+    if (tryfile[0] != '\0') { 
 	/* FIXME session files? */
 	do_open_script();
     }
@@ -1517,7 +1518,7 @@ drag_data_received  (GtkWidget *widget,
 		     gpointer p)
 {
     gchar *dfname;
-    char *suff = NULL, tmp[MAXLEN];
+    char tmp[MAXLEN];
     int pos, skip = 5;
 
     /* handle drag of pointer from database window */
@@ -1556,35 +1557,13 @@ drag_data_received  (GtkWidget *widget,
     my_filename_to_utf8(tmp);
 #endif
 
-    suff = strrchr(tmp, '.');
-    if (suff != NULL) {
-	if (!strncmp(suff, ".gretl", 6) || !strncmp(suff, ".GRE", 4)) {
-	    strcpy(trysession, tmp);
-	    verify_open_session(NULL);
-	} else if (!strncmp(suff, ".inp", 4) || !strncmp(suff, ".INP", 4)) {
-	    strcpy(tryscript, tmp);
-	    verify_open_session(NULL);
-	}
+    strcpy(tryfile, tmp);
+
+    if (probably_script_file(tmp) || probably_session_file(tmp)) {
+	verify_open_session(); /* FIXME */
     } else {
-	strcpy(trydatfile, tmp);
 	verify_open_data(NULL, 0);
-    }	
-}
-
-static int native_datafile (void)
-{
-    int n = strlen(paths.datfile);
-    
-    if (n > 4) {
-	if (!strcmp(paths.datfile + n - 4, ".gdt")) {
-	    return 1;
-	}
-	if (using_olddat() && !strcmp(paths.datfile + n - 4, ".dat")) {
-	    return 1;
-	}
     }
-
-    return 0;
 }
 
 static void auto_store (void)
@@ -1597,7 +1576,8 @@ static void auto_store (void)
 	oflag = OPT_Z;
     }
 
-    if ((data_status & USER_DATA) && native_datafile()) {
+    if ((data_status & USER_DATA) && 
+	probably_native_datafile(paths.datfile)) {
 	do_store(paths.datfile, oflag, 1);
     } else {
 	file_selector(_("Save data file"), SAVE_DATA, FSEL_DATA_NONE, NULL);

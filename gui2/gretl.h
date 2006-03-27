@@ -58,6 +58,10 @@
 #include "settings.h"
 #include "helpfiles.h"
 
+#if GTK_MAJOR_VERSION >= 2
+# include "gui_recode.h"
+#endif
+
 #ifdef ENABLE_NLS
 # include "locale.h"
 #endif
@@ -84,9 +88,7 @@ extern float gui_scale;
 extern char cmdfile[MAXLEN];
 extern char scriptfile[MAXLEN];
 extern char sessionfile[MAXLEN];
-extern char trydatfile[MAXLEN];
-extern char tryscript[MAXLEN];
-extern char trysession[MAXLEN];
+extern char tryfile[MAXLEN];
 
 /* global option-related vars */
 extern int expert;

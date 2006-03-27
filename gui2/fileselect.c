@@ -359,10 +359,10 @@ static void filesel_open_script (const char *fname)
 {
     int spos;
 
-    strcpy(tryscript, fname);
+    strcpy(tryfile, fname);
 
-    if (view_file(tryscript, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
-	strcpy(scriptfile, tryscript);
+    if (view_file(tryfile, 1, 0, 78, 370, EDIT_SCRIPT) != NULL) {
+	strcpy(scriptfile, tryfile);
 	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	spos = slashpos(scriptfile);
 	if (spos) {
@@ -375,15 +375,15 @@ static void filesel_open_script (const char *fname)
 static void filesel_open_session (const char *fname)
 {
     if (is_session_file(fname)) {
-	strcpy(trysession, fname);
-	verify_open_session(NULL);
+	strcpy(tryfile, fname);
+	verify_open_session();
     } else {
 	int pub;
 
-	strcpy(tryscript, fname);
-	pub = !strncmp(tryscript, paths.scriptdir, strlen(paths.scriptdir));
-	if (view_file(tryscript, 1, 0, 78, 370, (pub)? VIEW_SCRIPT : EDIT_SCRIPT)) {
-	    strcpy(scriptfile, tryscript);
+	strcpy(tryfile, fname);
+	pub = !strncmp(tryfile, paths.scriptdir, strlen(paths.scriptdir));
+	if (view_file(tryfile, 1, 0, 78, 370, (pub)? VIEW_SCRIPT : EDIT_SCRIPT)) {
+	    strcpy(scriptfile, tryfile);
 	}
     }
 }
@@ -493,10 +493,10 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 #endif
 
     if (OPEN_DATA_ACTION(action)) {
-	strcpy(trydatfile, fname);
+	strcpy(tryfile, fname);
 	verify_open_data(NULL, action);
     } else if (APPEND_DATA_ACTION(action)) {
-	strcpy(trydatfile, fname);
+	strcpy(tryfile, fname);
 	do_open_data(NULL, NULL, action);
     } else if (action == OPEN_SCRIPT) {
 	filesel_open_script(fname);

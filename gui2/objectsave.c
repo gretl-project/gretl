@@ -148,7 +148,8 @@ int maybe_save_system (const CMD *cmd, gretl_equation_system *sys, PRN *prn)
     return err;
 }
 
-int maybe_save_graph (const CMD *cmd, const char *fname, int code, PRN *prn)
+int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type, 
+		      PRN *prn)
 {
     char gname[MAXSAVENAME];
     char savedir[MAXLEN];
@@ -167,12 +168,12 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code, PRN *prn)
 			       space_to_score(tmp));
     g_free(tmp);
 
-    if (code == GRETL_GNUPLOT_GRAPH) {
+    if (type == GRETL_OBJ_GRAPH) {
 	err = copyfile(fname, plotfile);
 	if (!err) {
 	    int ret;
 
-	    ret = real_add_graph_to_session(plotfile, gname, code);
+	    ret = real_add_graph_to_session(plotfile, gname, type);
 	    if (ret == ADD_OBJECT_FAIL) {
 		err = 1;
 	    } else {
@@ -339,9 +340,7 @@ int saved_object_action (const char *line, PRN *prn)
 	} else if (type == GRETL_OBJ_TEXT) {
 	    display_saved_text(ptr);
 	} else if (type == GRETL_OBJ_GRAPH) {
-	    GRAPHT *graph = (GRAPHT *) ptr;
-
-	    display_session_graph_png(graph->fname);
+	    display_session_graph_by_data(ptr);
 	}
     } else if (action == OBJ_ACTION_FREE) {
 	if (type == GRETL_OBJ_EQN || 

@@ -398,14 +398,13 @@ static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 /* take saved plot source file and make PNG from it, then display
    the PNG */
 
-void display_session_graph_png (const char *pltname) 
+void display_session_graph_png (const char *fname) 
 {
-    const char *sdir = get_session_dirname();
     char fullname[MAXLEN];
     gchar *plotcmd;
     int err = 0;
 
-    sprintf(fullname, "%s%s%c%s", paths.userdir, sdir, SLASH, pltname);
+    sprintf(fullname, "%s%s", paths.userdir, fname);
 
     if (add_png_term_to_plotfile(fullname)) {
 	return;
@@ -1947,7 +1946,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
         file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      FSEL_DATA_MISC, plot->spec);
     } else if (!strcmp(item, _("Save to session as icon"))) { 
-	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
+	add_graph_to_session(plot->spec, GRETL_OBJ_GRAPH, NULL);
     } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(RMPLOT));
     } else if (plot_is_hurst(plot) && !strcmp(item, _("Help"))) { 
@@ -2345,7 +2344,7 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, png_plot *plot)
 	break;
     case GDK_s:
     case GDK_S:
-	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
+	add_graph_to_session(plot->spec, GRETL_OBJ_GRAPH, NULL);
 	break;
 #ifdef G_OS_WIN32
     case GDK_c:

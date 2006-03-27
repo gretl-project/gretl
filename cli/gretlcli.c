@@ -25,6 +25,8 @@
 #include <math.h>
 #include <dirent.h>
 
+#define GRETLCLI
+
 #include "libgretl.h"
 #include "var.h"
 #include "system.h"
@@ -35,8 +37,6 @@
 #include "forecast.h"
 #include "cmd_private.h"
 #include "objstack.h"
-
-#define GRETLCLI
 #include "gretl_xml.h"
 
 #ifdef WIN32

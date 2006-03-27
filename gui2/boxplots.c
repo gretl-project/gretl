@@ -176,7 +176,7 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     }
     else if (!strcmp(item, _("Save to session as icon"))) {
         if (dump_boxplot(grp) == 0) {
-	    add_graph_to_session(NULL, GRETL_BOXPLOT, NULL);
+	    add_graph_to_session(NULL, GRETL_OBJ_PLOT, NULL);
 	    grp->saved = 1;
 	}
     }

@@ -105,10 +105,6 @@ static void buf_edit_save (GtkWidget *widget, gpointer data);
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w);
 static void panel_heteroskedasticity_menu (windata_t *vwin);
 
-#ifndef OLD_GTK
-static int maybe_recode_file (const char *fname);
-#endif
-
 enum {
     SAVE_ITEM = 1,
     SAVE_AS_ITEM,
@@ -522,6 +518,54 @@ int gretl_mkdir (const char *path)
 }
 
 #endif
+
+int probably_native_datafile (const char *fname)
+{
+    char test[5];
+    int len = strlen(fname);
+    int ret = 0;
+
+    if (len >= 5) {
+	*test = 0;
+	strncat(test, fname + len - 4, 4);
+	lower(test);
+	if (!strcmp(test, ".gdt")) {
+	    ret = 1;
+	} else if (using_olddat() && !strcmp(test, ".dat")) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+int probably_script_file (const char *fname)
+{
+    char test[5];
+    int len = strlen(fname);
+
+    if (len < 5) return 0;
+
+    *test = 0;
+    strncat(test, fname + len - 4, 4);
+    lower(test);
+
+    return !strcmp(test, ".inp");
+}
+
+int probably_session_file (const char *fname)
+{
+    char test[7];
+    int len = strlen(fname);
+
+    if (len < 7) return 0;
+
+    *test = 0;
+    strncat(test, fname + len - 6, 6);
+    lower(test);
+
+    return !strcmp(test, ".gretl");
+}
 
 /* ........................................................... */
 
@@ -1170,7 +1214,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	PRN *prn;	
 
 	if (bufopen(&prn)) return;
-	datatype = detect_filetype(trydatfile, &paths, prn);
+	datatype = detect_filetype(tryfile, &paths, prn);
 	gretl_print_destroy(prn);
     }
 
@@ -1181,16 +1225,16 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL ||
 	datatype == GRETL_WF1 || datatype == GRETL_DTA) {
-	get_worksheet_data(trydatfile, datatype, append, NULL);
+	get_worksheet_data(tryfile, datatype, append, NULL);
 	return;
     } else if (datatype == GRETL_CSV_DATA) {
-	do_open_csv_box(trydatfile, OPEN_CSV, append);
+	do_open_csv_box(tryfile, OPEN_CSV, append);
 	return;
     } else if (datatype == GRETL_OCTAVE) {
-	do_open_csv_box(trydatfile, OPEN_OCTAVE, append);
+	do_open_csv_box(tryfile, OPEN_OCTAVE, append);
 	return;
     } else if (datatype == GRETL_BOX_DATA) {
-	do_open_csv_box(trydatfile, OPEN_BOX, 0);
+	do_open_csv_box(tryfile, OPEN_BOX, 0);
 	return;
     } else { /* native data */
 	int clear_code = DATA_NONE;
@@ -1205,10 +1249,10 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	}
 
 	if (datatype == GRETL_XML_DATA) {
-	    err = gretl_read_gdt(&Z, &datainfo, trydatfile, &paths, 
+	    err = gretl_read_gdt(&Z, &datainfo, tryfile, &paths, 
 				 clear_code, errprn, 1);
 	} else {
-	    err = gretl_get_data(&Z, &datainfo, trydatfile, &paths, 
+	    err = gretl_get_data(&Z, &datainfo, tryfile, &paths, 
 				 clear_code, errprn);
 	}
 
@@ -1217,7 +1261,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     if (err) {
 	gui_errmsg(err);
-	delete_from_filelist(FILE_LIST_DATA, trydatfile);
+	delete_from_filelist(FILE_LIST_DATA, tryfile);
 	return;
     }	
 
@@ -1229,7 +1273,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     if (append) {
 	register_data(NULL, NULL, 0);
     } else {
-	copy_utf8_filename(paths.datfile, trydatfile);
+	copy_utf8_filename(paths.datfile, tryfile);
 	register_data(paths.datfile, NULL, 1);
     } 
 }
@@ -1259,7 +1303,7 @@ void verify_open_data (gpointer userdata, int code)
 /* give user choice of not opening session file, if there's already a
    datafile open and we're not in "expert" mode */
 
-void verify_open_session (gpointer userdata)
+void verify_open_session (void)
 {
     if (data_status && !expert) {
 	int resp = 
@@ -1271,7 +1315,7 @@ void verify_open_session (gpointer userdata)
 	if (resp != GRETL_YES) return;
     }
 
-    do_open_session(NULL, userdata);
+    do_open_session();
 }
 
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
@@ -4078,238 +4122,6 @@ char *double_underscores (char *targ, const char *src)
 
     return targ;
 }
-
-#ifndef OLD_GTK
-
-static int seven_bit_string (const unsigned char *s)
-{
-    while (*s) {
-	if (*s > 127) return 0;
-	s++;
-    }
-    return 1;
-}
-
-static int seven_bit_file (const char *fname)
-{
-    FILE *fp;
-    char line[256];
-    int ascii = 1;
-    
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	return 1;
-    }
-
-    while (fgets(line, sizeof line, fp)) {
-	if (!seven_bit_string((unsigned char *) line)) {
-	    ascii = 0;
-	    break;
-	}
-    }
-
-    fclose(fp);
-
-    return ascii;
-}
-
-static int maybe_recode_file (const char *fname)
-{
-    const gchar *charset;
-
-    if (g_get_charset(&charset)) {
-	/* locale uses UTF-8 */
-	return 0;
-    }
-
-    if (seven_bit_file(fname)) {
-	return 0;
-    } else {
-	FILE *fin, *fout;
-	char trname[MAXLEN];
-	char line[128];
-	gchar *trbuf;
-	int err = 0;
-
-	fin = gretl_fopen(fname, "r");
-	if (fin == NULL) {
-	    return 1;
-	}
-
-	sprintf(trname, "%s.tr", fname);
-
-	fout = gretl_fopen(trname, "w");
-	if (fout == NULL) {
-	    fclose(fin);
-	    return 1;
-	}	
-
-	while (fgets(line, sizeof line, fin) && !err) {
-	    trbuf = my_locale_from_utf8(line);
-	    if (trbuf != NULL) {
-		fputs(trbuf, fout);
-		g_free(trbuf);
-	    } else {
-		err = 1;
-	    }
-	}
-
-	fclose(fin);
-	fclose(fout);
-
-	if (!err) {
-	    err = copyfile(trname, fname);
-	    remove(trname);
-	}
-
-	return err;
-    }
-
-    return 0;
-}
-
-gchar *my_filename_from_utf8 (char *fname)
-{
-    gchar *trfname = NULL;
-    GError *err = NULL;
-    gsize bytes;
-
-    if (seven_bit_string((unsigned char *) fname)) {
-	return fname;
-    }
-
-    trfname = g_filename_from_utf8(fname, -1, NULL, &bytes, &err);
-
-    if (err != NULL) {
-	errbox(err->message);
-	g_error_free(err);
-    } else {
-	strcpy(fname, trfname);
-    }
-
-    g_free(trfname);
-
-    return fname;
-}
-
-#define TR_DEBUG 0
-
-static gchar *
-real_locale_from_utf8 (const gchar *src, int force)
-{
-    gchar *trstr;
-    gsize bytes;
-    GError *err = NULL;
-    const gchar *cset = NULL;
-
-#if TR_DEBUG
-    gchar *msg;
-    int u = g_get_charset(&cset);
-    msg = g_strdup_printf("real_locale_from_utf8: force=%d, "
-			  "g_get_charset returned %d and gave "
-			  "'%s'\n", force, u, 
-			  (cset != NULL)? cset : "NULL");
-    infobox(msg);
-    g_free(msg);
-
-    if (!force && u) {
-	return g_strdup(src);
-    }
-#else
-    if (!force && g_get_charset(&cset)) {
-	/* According to the glib manual, g_get_charset returns TRUE if 
-	   the returned charset is UTF-8 */ 
-	return g_strdup(src);
-    }
-#endif
-
-    trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
-
-    if (err != NULL) {
-	if (cset != NULL) {
-	    errbox("g_locale_from_utf8 failed for charset '%s'", cset);
-	} else {
-	    errbox("g_locale_from_utf8 failed; so did g_get_charset");
-	}
-	g_error_free(err);
-    }
-
-    return trstr;
-}
-
-gchar *my_locale_from_utf8 (const gchar *src)
-{
-    return real_locale_from_utf8(src, 0);
-}
-
-gchar *force_locale_from_utf8 (const gchar *src)
-{
-    return real_locale_from_utf8(src, 1);
-}
-
-#define FNAME_DEBUG 0
-
-gchar *my_filename_to_utf8 (char *fname)
-{
-    gchar *trfname = NULL;
-    GError *err = NULL;
-    gsize bytes;
-
-#if FNAME_DEBUG
-    fprintf(stderr, "my_filename_to_utf8: fname='%s'\n", fname);
-    fflush(stderr);
-#endif
-
-    if (g_utf8_validate(fname, -1, NULL)) {
-#if FNAME_DEBUG
-	fprintf(stderr, " validates as utf8, returning fname\n");
-	fflush(stderr);
-#endif
-	return fname;
-    }
-
-    trfname = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
-
-    if (err != NULL) {
-	errbox("g_filename_to_utf8 failed");
-	g_error_free(err);
-    } else {
-	strcpy(fname, trfname);
-#if FNAME_DEBUG
-	fprintf(stderr, " converted fname='%s'\n", fname);
-	fflush(stderr);
-#endif
-    }
-
-    g_free(trfname);
-
-    return fname;
-}
-
-gchar *my_locale_to_utf8 (const gchar *src)
-{
-    gchar *trstr;
-    gsize bytes;
-    GError *err = NULL;
-
-    trstr = g_locale_to_utf8(src, -1, NULL, &bytes, &err);
-
-    if (err != NULL) {
-	const gchar *cset = NULL;
-
-	g_get_charset(&cset);
-	if (cset != NULL) {
-	    errbox("g_locale_to_utf8 failed for charset '%s'", cset);
-	} else {
-	    errbox("g_locale_to_utf8 failed; so did g_get_charset");
-	}
-	g_error_free(err);
-    }
-
-    return trstr;
-}
-
-#endif /* ! OLD_GTK */
 
 #ifndef G_OS_WIN32
 

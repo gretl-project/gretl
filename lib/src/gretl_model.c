@@ -1550,6 +1550,53 @@ static int copy_model_tests (MODEL *targ, const MODEL *src)
     return 0;
 }
 
+static int real_add_test_to_model (MODEL *pmod, ModelTest *test)
+{
+    ModelTest *tests = NULL;
+    int nt = pmod->ntests;
+    int err = 0;
+
+    tests = realloc(pmod->tests, (nt + 1) * sizeof *tests);
+
+    if (tests == NULL) {
+	err = E_ALLOC;
+    } else {
+	pmod->tests = tests;
+	pmod->ntests += 1;
+	copy_test(&pmod->tests[nt], test);
+    }
+
+    return err;
+}
+
+int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
+{
+    ModelTest test;
+    xmlNodePtr cur = node->xmlChildrenNode;
+    int got, err = 0;
+
+    while (cur != NULL && !err) {
+	got = 0;
+	got += gretl_xml_get_prop_as_int(cur, "type", &test.type);
+	got += gretl_xml_get_prop_as_uchar(cur, "teststat", &test.teststat);
+	got += gretl_xml_get_prop_as_int(cur, "dfn", &test.dfn);
+	got += gretl_xml_get_prop_as_int(cur, "dfd", &test.dfd);
+	got += gretl_xml_get_prop_as_int(cur, "order", &test.order);
+	got += gretl_xml_get_prop_as_double(cur, "value", &test.value);
+	got += gretl_xml_get_prop_as_double(cur, "pvalue", &test.pvalue);
+	test.param = gretl_xml_get_prop_as_string(cur, "param");
+	if (got < 7) {
+	    err = E_DATA;
+	} else {
+	    err = real_add_test_to_model(pmod, &test);
+	}
+	free(test.param);
+	cur = cur->next;
+    }
+
+    return err;
+}
+
 static void serialize_test (const ModelTest *src, FILE *fp)
 {
     fprintf(fp, "<test type=\"%d\" ", src->type);
@@ -1558,14 +1605,14 @@ static void serialize_test (const ModelTest *src, FILE *fp)
 	fprintf(fp, "param=\"%s\" ", src->param);
     }
 
-    fprintf(fp, "teststat=\"%d\" ", src->teststat);
+    fprintf(fp, "teststat=\"%d\" ", (int) src->teststat);
     fprintf(fp, "dfn=\"%d\" ", src->dfn);
     fprintf(fp, "dfd=\"%d\" ", src->dfd);
     fprintf(fp, "order=\"%d\" ", src->order);
     fprintf(fp, "value=\"%.15g\" ", src->value);
     fprintf(fp, "pvalue=\"%.15g\" ", src->pvalue);
 
-    fputs("</test>\n", fp);
+    fputs("/>\n", fp);
 }
 
 static int serialize_model_tests (const MODEL *pmod, FILE *fp)
@@ -2233,6 +2280,7 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
     int m = k * (k + 1) / 2;
     int err = 0;
 
+    gretl_xml_header(fp);
     fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" ", 
 	    pmod->ID, (pmod->name == NULL)? "none" : pmod->name);
 

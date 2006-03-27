@@ -198,11 +198,6 @@ enum file_lists {
     FILE_LIST_SCRIPT,
 };
 
-enum graph_types {
-    GRETL_GNUPLOT_GRAPH,
-    GRETL_BOXPLOT
-};
-
 enum varclick_actions {
     VARCLICK_NONE,
     VARCLICK_INSERT_ID,

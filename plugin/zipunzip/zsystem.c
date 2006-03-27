@@ -42,7 +42,7 @@ int wanted_namecmp (const char *fname, const char *zname)
 
     for (i=0; tmp[i] != 0; i++) {
 	if (tmp[i] == '/') {
-	    tmp[i] == '\\';
+	    tmp[i] = '\\';
 	}
     }
 

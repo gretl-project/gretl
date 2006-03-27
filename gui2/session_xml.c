@@ -1,4 +1,7 @@
 
+/* addendum to session.c, for handling the saving of session info to
+   an XML file, and the re-building of a session from same.
+*/
 
 static int check_graph_file (const char *fname)
 {
@@ -6,8 +9,7 @@ static int check_graph_file (const char *fname)
     FILE *fp;
     int err = 0;
 
-    sprintf(fullname, "%s%c%s", session.dirname, SLASH, fname);
-
+    session_file_make_path(fullname, fname);
     fp = gretl_fopen(fullname, "r");
     if (fp == NULL) {
 	errbox(_("Warning: couldn't open graph file %s"), fname);
@@ -22,7 +24,6 @@ static int check_graph_file (const char *fname)
 static int restore_session_graphs (xmlNodePtr node)
 {
     xmlNodePtr cur;
-    xmlChar *tmp;
     int i = 0;
     int err = 0;
 
@@ -34,31 +35,42 @@ static int restore_session_graphs (xmlNodePtr node)
     cur = node->xmlChildrenNode;
 
     while (cur != NULL && !err) {
-	
-	session.graphs[i] = mymalloc(sizeof **session.graphs);
-	if (session.graphs[i] == NULL) {
-	    return E_ALLOC;
-	}
+	xmlChar *name = NULL;
+	xmlChar *fname = NULL;
+	int type, ID;
 
-	session.graphs[i]->name[0] = 0;
-	session.graphs[i]->fname[0] = 0;
-
-	tmp = xmlGetProp(cur, (XUC) "name");
-	if (tmp != NULL) {
-	    strncat(session.graphs[i]->name, (const char *) tmp, 31);
-	    free(tmp);
-	} else {
+	name = xmlGetProp(cur, (XUC) "name");
+	if (name == NULL) {
 	    err = 1;
 	}
 
-	tmp = xmlGetProp(cur, (XUC) "fname");
-	if (tmp != NULL) {
-	    strncat(session.graphs[i]->fname, (const char *) tmp, MAXLEN - 1);
-	    free(tmp);
-	    err = check_graph_file(session.graphs[i]->fname);
-	} else {
+	if (!err) {
+	    fname = xmlGetProp(cur, (XUC) "fname");
+	    if (fname == NULL) {
+		err = 1;
+	    } else {
+		err = check_graph_file(session.graphs[i]->fname);
+	    } 
+	}
+
+	if (!err && (!gretl_xml_get_prop_as_int(cur, "ID", &ID) ||
+	    !gretl_xml_get_prop_as_int(cur, "type", &type))) {
 	    err = 1;
 	}
+
+	if (!err) {
+	    session.graphs[i] = session_graph_new((const char *) name, 
+						  (const char *) fname, 
+						  type);
+	    if (session.graphs[i] == NULL) {
+		err = 1;
+	    } else {
+		session.graphs[i]->ID = ID;
+	    }
+	}
+
+	free(name);
+	free(fname);
 
 	cur = cur->next;
 	i++;
@@ -70,8 +82,6 @@ static int restore_session_graphs (xmlNodePtr node)
 static int restore_session_texts (xmlDocPtr doc, xmlNodePtr node)
 {
     xmlNodePtr cur;
-    xmlChar *tmp;
-    char *buf;
     int i = 0;
     int err = 0;
 
@@ -83,28 +93,29 @@ static int restore_session_texts (xmlDocPtr doc, xmlNodePtr node)
     cur = node->xmlChildrenNode;
 
     while (cur != NULL && !err) {
+	xmlChar *name = NULL;
+	xmlChar *buf = NULL;
 
-	session.texts[i] = mymalloc(sizeof **session.texts);
-	if (session.texts[i] == NULL) {
-	    return E_ALLOC;
+	name = xmlGetProp(cur, (XUC) "name");
+	if (name == NULL) {
+	    err = 1;
+	} else {
+	    session.texts[i] = session_text_new((const char *) name);
+	    if (session.texts[i] == NULL) {
+		err = 1;
+	    }
 	}
 
-	session.texts[i]->name[0] = 0;
-	session.texts[i]->buf = NULL;	
-
-	tmp = xmlGetProp(cur, (XUC) "name");
-	if (tmp != NULL) {
-	    strncat(session.texts[i]->name, (const char *) tmp, OBJNAMLEN - 1);
-	    free(tmp);
-	    buf = (char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	if (!err) {
+	    buf = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    if (buf != NULL) {
-		session.texts[i]->buf = buf;
+		session.texts[i]->buf = (char *) buf;
 	    } else {
 		err = 1;
 	    }
-	} else {
-	    err = 1;
 	}
+
+	free(name);
 
 	cur = cur->next;
 	i++;
@@ -121,8 +132,10 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
     xmlNodePtr cur;
     int got;
 
+#if SESSION_DEBUG
     fprintf(stderr, "rebuild_session_model: trying to open '%s'\n",
 	    fname);
+#endif
 
     *err = gretl_xml_open_doc_root(fname, "gretl-model", &doc, &node);
     if (*err) {
@@ -135,8 +148,10 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
 	return NULL;
     }
 
+#if SESSION_DEBUG
     fprintf(stderr, "rebuild_session_model: allocated model at %p\n",
 	    (void *) pmod);
+#endif
 
     got = 0;
     got += gretl_xml_get_prop_as_int(node, "ID", &pmod->ID);
@@ -203,11 +218,11 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
 	    pmod->vcv = gretl_xml_get_doubles_array(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "list")) {
 	    pmod->list = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "tests")) {
+	    *err = attach_model_tests_from_xml(pmod, cur);
 	}
 	cur = cur->next;
     }
-
-    /* FIXME some other elements not accounted for, e.g. tests */
 
     gretl_pop_c_numeric_locale();
 
@@ -215,19 +230,29 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
 
     xmlFreeDoc(doc);
 
+    if (*err) {
+	if (pmod != NULL) {
+	    gretl_model_free(pmod);
+	    pmod = NULL;
+	}
+    } else {
+	gretl_object_ref(pmod, GRETL_OBJ_EQN);
+    }
+
+#if SESSION_DEBUG
     fprintf(stderr, "rebuild_session_model: returning with err = %d\n",
 	    *err);
+#endif
     
-    /* need to clean up on error here */
+    /* need to clean up on error here (also: clean up XML parser?) */
 
     return pmod;
 }
 
 static int restore_session_models (xmlDocPtr doc, xmlNodePtr node)
 {
-    char fname[MAXLEN];
+    char fullname[MAXLEN];
     xmlNodePtr cur;
-    xmlChar *tmp;
     int i, err = 0;
 
     session.models = mymalloc(session.nmodels * sizeof *session.models);
@@ -235,62 +260,97 @@ static int restore_session_models (xmlDocPtr doc, xmlNodePtr node)
 	return E_ALLOC;
     }
 
+#if SESSION_DEBUG
     fprintf(stderr, "rebuilding: session.nmodels = %d\n", session.nmodels);
+#endif
 
     cur = node->xmlChildrenNode;
     i = 0;
 
     while (cur != NULL && !err) {
+	xmlChar *fname = NULL;
+	xmlChar *name = NULL;
 	MODEL *pmod = NULL;
 
-	tmp = xmlGetProp(cur, (XUC) "fname");
-	if (tmp == NULL) {
-	    err = E_DATA;
-	} else {
-	    sprintf(fname, "%s%c%s", session.dirname, SLASH, 
-		    (const char *) tmp);
-	    pmod = rebuild_session_model(fname, &err);
-	    free(tmp);
-	}
-
-	if (err) {
-	    break;
-	}
-
-	session.models[i] = mymalloc(sizeof **session.models);
-	if (session.models[i] == NULL) {
-	    return E_ALLOC;
-	}
-
-	fprintf(stderr, "allocated session.models[%d]\n", i);
-
-	session.models[i]->name[0] = 0;
-	session.models[i]->type = GRETL_OBJ_EQN;
-	session.models[i]->ptr = pmod;
-
-	fprintf(stderr, "allocated session.models[%d]->ptr = %p\n", 
-		i, (void *) pmod);
-
-	tmp = xmlGetProp(cur, (XUC) "name");
-	if (tmp != NULL) {
-	    fprintf(stderr, "got model name = '%s'\n", tmp);
-	    session.models[i]->name = (char *) tmp;
-	} else {
+	fname = xmlGetProp(cur, (XUC) "fname");
+	if (fname == NULL) {
 	    err = 1;
+	} else {
+	    session_file_make_path(fullname, (const char *) fname);
+	    pmod = rebuild_session_model(fullname, &err);
 	}
+
+	if (!err) {
+	    name = xmlGetProp(cur, (XUC) "name");
+	}
+
+	if (name == NULL) {
+	    err = 1;
+	} else {
+	    session.models[i] = session_model_new(pmod, (const char *) name, 
+						  GRETL_OBJ_EQN);
+	    if (session.models[i] == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+
+	free(fname);
+	free(name);
 
 	cur = cur->next;
 	i++;
     }
 
+#if SESSION_DEBUG
     fprintf(stderr, "restore_session_models: returning %d\n", err);
+#endif
 
     /* FIXME clean up on error */
 
     return err;
 }
 
-static int read_session_xml (const char *fname, int *t1, int *t2) 
+static int get_data_submask (xmlDocPtr doc, xmlNodePtr cur,
+			     struct sample_info *sinfo)
+{
+    int i, len, err = 0;
+
+    if (!gretl_xml_get_prop_as_int(cur, "length", &len)) {
+	return 1;
+    }
+
+    if (!gretl_xml_get_prop_as_int(cur, "mode", &sinfo->mode)) {
+	return 1;
+    }    
+
+    sinfo->mask = calloc(len, 1);
+    if (sinfo->mask == NULL) {
+	err = 1;
+    } else {
+	xmlChar *tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	if (tmp == NULL) {
+	    err = 1;
+	} else {
+	    const char *s = (const char *) tmp;
+	    int si;
+
+	    for (i=0; i<len; i++) {
+		sscanf(s, "%d", &si);
+		s += strspn(s, " ");
+		s += strcspn(s, " ");
+		if (si != 0) {
+		    sinfo->mask[i] = si;
+		}
+	    }
+	    free(tmp);
+	}
+    }
+
+    return err;
+}
+
+static int 
+read_session_xml (const char *fname, struct sample_info *sinfo) 
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
@@ -298,7 +358,6 @@ static int read_session_xml (const char *fname, int *t1, int *t2)
     int err = 0;
     int to_iso_latin = 0;
 
-    /* COMPAT: Do not generate nodes for formatting spaces */
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
 
@@ -321,18 +380,20 @@ static int read_session_xml (const char *fname, int *t1, int *t2)
         if (!xmlStrcmp(cur->name, (XUC) "sample")) {
 	    tmp = xmlGetProp(cur, (XUC) "t1");
 	    if (tmp != NULL) {
-		*t1 = atoi((const char *) tmp);
+		sinfo->t1 = atoi((const char *) tmp);
 		free(tmp);
 	    } else {
 		err = 1;
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "t2");
 	    if (tmp != NULL) {
-		*t2 = atoi((const char *) tmp);
+		sinfo->t2 = atoi((const char *) tmp);
 		free(tmp);
 	    } else {
 		err = 1;
 	    }
+	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
+	    err = get_data_submask(doc, cur, sinfo);
 	} else if (!xmlStrcmp(cur->name, (XUC) "models")) {
 	    tmp = xmlGetProp(cur, (XUC) "count");
 	    if (tmp != NULL) {
@@ -360,6 +421,11 @@ static int read_session_xml (const char *fname, int *t1, int *t2)
 		    err = restore_session_texts(doc, cur);
 		}		
 	    }
+	} else if (!xmlStrcmp(cur->name, (XUC) "notes")) {
+	    session.notes = (char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    if (session.notes == NULL) {
+		err = 1;
+	    }
 	}
 	if (!err) {
 	    cur = cur->next;
@@ -372,4 +438,85 @@ static int read_session_xml (const char *fname, int *t1, int *t2)
     }
 
     return err;
+}
+
+static int write_session_xml (void)
+{
+    char fname[MAXLEN];
+    char tmpname[MAXLEN];
+    FILE *fp, *fq;
+    int i, err = 0;
+
+    chdir(paths.userdir);
+
+    sprintf(fname, "%s%csession.xml", session.dirname, SLASH);
+    fp = gretl_fopen(fname, "w");
+
+    if (fp == NULL) {
+	errbox("Couldn't write session file");
+	return E_FOPEN;
+    }
+
+    gretl_xml_header(fp);
+    fputs("<gretl-session>\n", fp);
+    fprintf(fp, " <sample t1=\"%d\" t2=\"%d\"/>\n", datainfo->t1, datainfo->t2);
+    write_datainfo_submask(datainfo, fp);
+
+    fprintf(fp, " <models count=\"%d\">\n", session.nmodels);
+    for (i=0; i<session.nmodels && !err; i++) {
+	if (session.models[i]->type == GRETL_OBJ_EQN) {
+	    sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
+	    fq = fopen(tmpname, "w");
+	    if (fq == NULL) {
+		errbox("Couldn't write session model file");
+		err = E_FOPEN;
+	    } else {
+		sprintf(tmpname, "model.%d", i+1);
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" addr=\"%p\"/>\n", 
+			session.models[i]->name, tmpname, session.models[i]->ptr);
+		gretl_model_serialize(session.models[i]->ptr, fq);
+		fclose(fq);
+	    }
+	} else {
+	    fprintf(stderr, "FIXME models other than single-equation ones\n");
+	}
+    }
+
+    if (err) {
+	fclose(fp);
+	remove(fname);
+	return err;
+    }
+
+    fputs(" </models>\n", fp);
+
+    fprintf(fp, " <graphs count=\"%d\">\n", session.ngraphs);
+    for (i=0; i<session.ngraphs; i++) {
+	fprintf(fp, "  <session-graph name=\"%s\" fname=\"%s\" "
+		"ID=\"%d\" type=\"%d\"/>\n", 
+		session.graphs[i]->name, session.graphs[i]->fname,
+		session.graphs[i]->ID, session.graphs[i]->type);
+    } 
+    fputs(" </graphs>\n", fp);
+
+    fprintf(fp, " <texts count=\"%d\">\n", session.ntexts);
+    for (i=0; i<session.ntexts; i++) {
+	fprintf(fp, "  <session-text name=\"%s\">", session.texts[i]->name);
+	/* XML encoding? */
+	fputs(session.texts[i]->buf, fp);
+	fputs("</session-text>\n", fp);
+    }    
+    fputs(" </texts>\n", fp);
+
+    if (session.notes != NULL) {
+	fputs(" <notes>", fp);
+	fputs(session.notes, fp);
+	fputs("</notes>\n", fp);
+    }	
+
+    fputs("</gretl-session>\n", fp);
+
+    fclose(fp);
+
+    return 0;
 }

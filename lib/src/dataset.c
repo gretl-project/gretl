@@ -1343,12 +1343,6 @@ static int real_dataset_drop_listed_vars (const int *list, double ***pZ,
     return shrink_dataset_to_size(pZ, pdinfo, oldv - ndel, drop);
 }
 
-/* in subsample.c */
-
-extern double ***fetch_full_Z (void);
-extern void reset_full_Z (double ***pZ);
-extern DATAINFO *fetch_full_datainfo (void);
-
 /**
  * dataset_drop_listed_variables:
  * @list: list of variable to drop, by ID number.

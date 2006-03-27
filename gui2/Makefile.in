@@ -118,6 +118,7 @@ SRCS = about.c \
 	gpt_dialog.c \
 	gretl.c \
 	guiprint.c \
+	gui_recode.c \
 	gui_utils.c \
 	helpfiles.c \
 	library.c \

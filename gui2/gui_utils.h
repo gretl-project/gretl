@@ -60,11 +60,6 @@ void g_error_free (GError *err);
 
 # define standard_button(s) gtk_button_new_from_stock(s)
 
-gchar *my_filename_from_utf8 (char *fname);
-gchar *my_locale_from_utf8 (const gchar *src);
-gchar *force_locale_from_utf8 (const gchar *src);
-gchar *my_filename_to_utf8 (char *fname);
-gchar *my_locale_to_utf8 (const gchar *src);
 void gretl_stock_icons_init (void);
 
 #endif /* OLD_GTK */
@@ -72,6 +67,12 @@ void gretl_stock_icons_init (void);
 #ifdef ENABLE_NLS
 gchar *menu_translate (const gchar *path, gpointer p);
 #endif
+
+int probably_native_datafile (const char *fname);
+
+int probably_script_file (const char *fname);
+
+int probably_session_file (const char *fname);
 
 void flip (GtkItemFactory *ifac, const char *path, gboolean s);
 
@@ -96,7 +97,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code);
 
 void verify_open_data (gpointer userdata, int code);
 
-void verify_open_session (gpointer userdata);
+void verify_open_session (void);
 
 void close_window (gpointer data, guint win_code, GtkWidget *widget);
 

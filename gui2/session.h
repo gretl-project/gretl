@@ -49,10 +49,8 @@ void set_session_saved (int val);
 
 void session_menu_state (gboolean s);
 
-const char *get_session_dirname (void);
-
 int real_add_graph_to_session (const char *fname, const char *grname,
-			       int code);
+			       GretlObjType type);
 
 int real_add_text_to_session (PRN *prn, const char *tname);
 
@@ -76,7 +74,7 @@ int session_changed (int set);
 
 void session_init (void);
 
-void do_open_session (GtkWidget *w, gpointer data);
+void do_open_session (void);
 
 void verify_clear_data (void);
 
@@ -92,8 +90,6 @@ void view_session (void);
 
 void save_session_callback (GtkWidget *w, guint i, gpointer data);
 
-void session_file_manager (int action, const char *fname);
-
 int session_file_is_open (void);
 
 int clear_or_save_model (MODEL **ppmod, DATAINFO *pdinfo, int rebuild);
@@ -103,5 +99,7 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 void save_plot_commands_callback (GtkWidget *w, gpointer p);
 
 void disable_graph_page (void);
+
+void display_session_graph_by_data (void *p);
 
 #endif /* SESSION_H */

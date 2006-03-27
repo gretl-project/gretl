@@ -653,7 +653,7 @@ void browser_open_data (GtkWidget *w, gpointer data)
     coll = gtk_object_get_data(GTK_OBJECT(vwin->listbox), "coll");
 #endif
 
-    build_path(coll->path, datname, trydatfile, ".gdt");
+    build_path(coll->path, datname, tryfile, ".gdt");
 
 #ifndef OLD_GTK
     g_free(datname);

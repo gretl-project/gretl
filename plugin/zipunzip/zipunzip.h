@@ -9,6 +9,8 @@
 #ifndef ZIPUNZIP_H_
 #define ZIPUNZIP_H_
 
+#include <time.h>
+
 /* remedial treatment for glib 1.2 */
 
 #include <glib.h>

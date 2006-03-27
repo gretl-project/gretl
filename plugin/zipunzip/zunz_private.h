@@ -9,8 +9,6 @@
 #ifndef ZUNZ_PRIVATE_H_
 #define ZUNZ_PRIVATE_H_
 
-#include "config.h"
-
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>

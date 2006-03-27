@@ -28,6 +28,11 @@
 
 #include <zlib.h>
 
+#ifndef GRETLCLI
+# include <libxml/xmlmemory.h>
+# include <libxml/parser.h>
+#endif
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -202,7 +207,6 @@ typedef struct VMatrix_ VMatrix;
 typedef struct SAMPLE_ SAMPLE;
 typedef struct ARINFO_ ARINFO;
 typedef struct MODEL_ MODEL;
-typedef struct GRAPHT_ GRAPHT;
 typedef struct PRN_ PRN;
 typedef struct FITRESID_ FITRESID;
 typedef struct DATASET_ DATASET;
@@ -345,13 +349,6 @@ struct MODEL_ {
     int n_data_items;            /* number of extra data items */
     model_data_item **data_items; /* pointer to additional data */
 };
-
-struct GRAPHT_ {
-    int ID;
-    int sort;
-    char name[32];
-    char fname[MAXLEN];
-}; 
 
 struct mp_results_ {
     int ncoeff;

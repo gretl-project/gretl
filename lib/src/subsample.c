@@ -50,7 +50,7 @@ static const DATAINFO *peerinfo;
 
 #define SUBMASK_SENTINEL 127
 
-/* special functions shared with dataset.c */
+/* accessors for full dataset, when sub-sampled */
 
 double ***fetch_full_Z (void)
 {
@@ -66,8 +66,6 @@ DATAINFO *fetch_full_datainfo (void)
 {
     return fullinfo;
 }
-
-/* end specials */
 
 static int full_data_length (const DATAINFO *pdinfo)
 {
@@ -118,6 +116,24 @@ char *copy_datainfo_submask (const DATAINFO *pdinfo)
     }
 
     return mask;
+}
+
+int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp)
+{
+    int ret = 0;
+
+    if (complex_subsampled()) {
+	int i, n = get_submask_length(pdinfo->submask);
+
+	fprintf(fp, "<submask length=\"%d\" mode=\"%d\">", n, pdinfo->submode);
+	for (i=0; i<n; i++) {
+	    fprintf(fp, "%d ", (int) pdinfo->submask[i]);
+	}
+	fputs("</submask>\n", fp);
+	ret = 1;
+    }
+
+    return ret;
 }
 
 int submask_cmp (const char *m1, const char *m2)

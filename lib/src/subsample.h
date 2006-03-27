@@ -31,9 +31,17 @@ typedef enum {
     SUBSAMPLE_UNKNOWN
 } SubsampleMode;
 
+double ***fetch_full_Z (void);
+
+void reset_full_Z (double ***pZ);
+
+DATAINFO *fetch_full_datainfo (void);
+
 char *copy_subsample_mask (const char *src);
 
 char *copy_datainfo_submask (const DATAINFO *pdinfo);
+
+int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp);
 
 int submask_cmp (const char *m1, const char *m2);
 

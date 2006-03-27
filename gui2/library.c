@@ -249,7 +249,7 @@ static void launch_gnuplot_interactive (void)
 
 #endif
 
-static void set_sample_label_special (void)
+void set_sample_label_special (void)
 {
     char labeltxt[80];
 
@@ -5157,17 +5157,17 @@ void do_open_script (void)
     int n = strlen(paths.scriptdir);
     FILE *fp;
 
-    fp = fopen(tryscript, "r");
+    fp = fopen(tryfile, "r");
     if (fp == NULL) {
-	errbox(_("Couldn't open %s"), tryscript);
-	delete_from_filelist(FILE_LIST_SESSION, tryscript);
-	delete_from_filelist(FILE_LIST_SCRIPT, tryscript);
+	errbox(_("Couldn't open %s"), tryfile);
+	delete_from_filelist(FILE_LIST_SESSION, tryfile);
+	delete_from_filelist(FILE_LIST_SCRIPT, tryfile);
 	return;
     } else {
 	fclose(fp);
     }
 	
-    strcpy(scriptfile, tryscript);
+    strcpy(scriptfile, tryfile);
 
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
@@ -6471,7 +6471,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 		pprintf(prn, _("wrote %s\n"), gretl_plotfile());
 	    }
 	    err = maybe_save_graph(&cmd, gretl_plotfile(),
-				   GRETL_GNUPLOT_GRAPH, prn);
+				   GRETL_OBJ_GRAPH, prn);
 	}
 	break;
 

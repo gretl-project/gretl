@@ -291,6 +291,31 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 }
 
 /**
+ * gretl_xml_get_prop_as_uchar:
+ * @node: XML node pointer.
+ * @tag: name by which unsigned character property is known.
+ * @targ: location to write value.
+ * 
+ * Returns: 1 if an unsigned char is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
+				 unsigned char *targ)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
+
+    if (tmp != NULL) {
+	*targ = (unsigned char) atoi((const char *) tmp);
+	free(tmp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
  * gretl_xml_get_prop_as_double:
  * @node: XML node pointer.
  * @tag: name by which floating-point property is known.
@@ -313,6 +338,21 @@ int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
     }
 
     return ret;
+}
+
+/**
+ * gretl_xml_get_prop_as_string:
+ * @node: XML node pointer.
+ * @tag: name by which string property is known.
+ * 
+ * Returns: allocated string, if found, else %NULL.
+ */
+
+char *gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+
+    return (char *) tmp;
 }
 
 /**
@@ -424,6 +464,28 @@ double *gretl_xml_get_doubles_array (xmlNodePtr node, xmlDocPtr doc,
     return x;
 }
 
+static const char *get_gretl_encoding (void)
+{
+#ifdef USE_GTK2
+    const char *enc = "UTF-8";
+#else
+    const char *enc = get_gretl_charset();
+
+    if (enc == NULL) {
+	enc = "ISO-8859-1";
+    }
+#endif
+
+    return enc;
+}
+
+void gretl_xml_header (FILE *fp)
+{
+    const char *enc = get_gretl_encoding();
+
+    fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", enc);
+}
+
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -445,6 +507,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 {
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
+    const char *enc;
     int gz = (fmt == GRETL_DATA_GZIPPED);
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int *pmax = NULL;
@@ -457,16 +520,6 @@ int gretl_write_gdt (const char *fname, const int *list,
     long sz = 0L;
     int i, t, v, nvars;
     int err = 0;
-
-#ifdef USE_GTK2
-    const char *enc = "UTF-8";
-#else
-    const char *enc = get_gretl_charset();
-
-    if (enc == NULL) {
-	enc = "ISO-8859-1";
-    }
-#endif
 
     if (gz) {
 	fz = gretl_gzopen(fname, "wb");
@@ -537,6 +590,8 @@ int gretl_write_gdt (const char *fname, const int *list,
     } else {
 	sprintf(freqstr, "%d", pdinfo->pd);
     }
+
+    enc = get_gretl_encoding();
 
     if (gz) {
 	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"

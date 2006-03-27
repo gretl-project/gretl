@@ -141,6 +141,10 @@ typedef enum {
     GRETL_TEST_MAX
 } ModelTestType;
 
+#ifndef GRETLCLI
+int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node);
+#endif
+
 MODEL *gretl_model_new (void);
 
 MODEL *gretl_model_new_protected (void);
