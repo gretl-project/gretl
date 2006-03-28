@@ -96,7 +96,7 @@ DATAINFO *datainfo;
 
 char cmdfile[MAXLEN];
 char scriptfile[MAXLEN];
-char sessionfile[MAXLEN]
+char sessionfile[MAXLEN];
 char tryfile[MAXLEN];
 
 PATHS paths;                /* useful paths */
@@ -1358,7 +1358,7 @@ drag_data_received  (GtkWidget *widget,
 
     if (probably_script_file(tmp) || probably_session_file(tmp)) {
 	/* FIXME */
-	verify_open_session(NULL);
+	verify_open_session();
     } else {
 	verify_open_data(NULL, 0);
     }	

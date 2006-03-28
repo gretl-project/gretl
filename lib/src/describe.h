@@ -22,6 +22,7 @@
 
 typedef struct Summary_ Summary;
 typedef struct FreqDist_ FreqDist;
+typedef struct Xtab_ Xtab;
 typedef struct MahalDist_ MahalDist;
 
 struct Summary_ {
@@ -50,6 +51,17 @@ struct FreqDist_ {
     double test;             /* either Chi-squared statistic for testing
                                 for a Gaussian distribution, or z statistic
 			        for testing for Gamma dist. */
+    int n;
+    int t1, t2;
+};
+
+struct Xtab_ {
+    char rvarname[VNAMELEN]; 
+    char cvarname[VNAMELEN]; 
+    int rows, cols;
+    int *rval, *cval;
+    int *rtotal, *ctotal;
+    int **f;
     int n;
     int t1, t2;
 };
@@ -102,7 +114,11 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 		    int params, gretlopt opt);
 
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
-	      int graph, PRN *prn, gretlopt opt);
+	      int graph, gretlopt opt, PRN *prn);
+
+int crosstab (const int *list, const double **Z, 
+	      const DATAINFO *pdinfo, gretlopt opt,
+	      PRN *prn);
 
 int model_error_dist (const MODEL *pmod, double ***pZ,
 		      DATAINFO *pdinfo, PRN *prn);
@@ -114,11 +130,11 @@ int corrgram (int varno, int order,
 	      PRN *prn, gretlopt opt);
 
 int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
-		 PRN *prn, gretlopt opt);
+		 gretlopt opt, PRN *prn);
 
 Summary *summary (const int *list, const double **Z, 
-		       const DATAINFO *pdinfo,
-		       PRN *prn);
+		  const DATAINFO *pdinfo,
+		  PRN *prn);
 
 void print_summary (const Summary *summ,
 		    const DATAINFO *pdinfo,

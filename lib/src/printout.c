@@ -393,6 +393,72 @@ void print_freq (const FreqDist *freq, PRN *prn)
 }
 
 /**
+ * print_xtab:
+ * @tab: gretl cross-tabulation struct.
+ * @prn: gretl printing struct.
+ *
+ * Print crosstab to @prn.
+ */
+
+void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
+{
+    int i, j, r, c;
+    r = tab->rows;
+    c = tab->cols;
+    double x;
+
+    pprintf(prn,"\n       ");
+    for (j=0; j<c; j++) {
+	pprintf(prn, "[%4d]", (tab->cval)[j]);
+    } 
+
+    pprintf(prn,"  TOT.\n\n");
+
+    for (i=0; i<r; i++) {
+	if(tab->rtotal[i]) {
+	    pprintf(prn,"[%4d] ",(tab->rval)[i]);
+	    for (j=0; j<c; j++) {
+		if (tab->ctotal[j]) {
+		    if ((tab->f)[i][j]) {
+			if (opt & (OPT_C | OPT_R)) {
+			    if (opt & OPT_C) {
+				x = 100.0 * (tab->f)[i][j] / tab->ctotal[j];
+			    } else {
+				x = 100.0 * (tab->f)[i][j] / tab->rtotal[i];
+			    }
+			    pprintf(prn, "%5.1f%%", x);
+			} else {
+			    pprintf(prn, "%5d ",(tab->f)[i][j]);
+			}
+		    } else {
+			pputs(prn,"      ");
+		    }
+		} 
+	    }
+	    if (opt & OPT_C) {
+		x = 100.0 * tab->rtotal[i] / tab->n;
+		pprintf(prn, "%5.1f%%\n", x);
+	    } else {
+		pprintf(prn, "%6d\n", tab->rtotal[i]);
+	    }
+	}
+    }
+
+    pputs(prn,_("\nTOTAL  "));
+
+    for (j=0; j<c; j++) {
+	if (opt & OPT_R) {
+	    x = 100.0 * tab->ctotal[j] / tab->n;
+	    pprintf(prn, "%5.1f%%", x);
+	} else {
+	    pprintf(prn, "%5d ", tab->ctotal[j]);
+	}
+    }
+    
+    pprintf(prn, "%6d\n", tab->n);
+}
+
+/**
  * print_smpl:
  * @pdinfo: data information struct
  * @fulln: full length of data series.

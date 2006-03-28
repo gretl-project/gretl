@@ -152,6 +152,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { VECM,     "vecm" },
     { VIF,      "vif" },
     { WLS,      "wls" },
+    { XTAB,     "xtab" },
     { NC,       NULL}
 }; 
 

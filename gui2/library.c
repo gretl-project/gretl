@@ -758,7 +758,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     case FREQ:
 	err = freqdist(cmd.list[1], (const double **) Z, datainfo,
-		       0, prn, OPT_NONE);
+		       0, OPT_NONE, prn);
 	break;
 
     case RUNS:
@@ -3707,13 +3707,13 @@ real_do_pergm (guint bartlett, double ***pZ, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = periodogram(cmd.list[1], pZ, pdinfo, prn, cmd.opt);
+	err = periodogram(cmd.list[1], pZ, pdinfo, cmd.opt, prn);
     } else {
 	gretlopt opt = OPT_R;
 	if (bartlett) {
 	    opt |= OPT_O;
 	}
-	err = periodogram(pdinfo->v - 1, pZ, pdinfo, prn, opt);
+	err = periodogram(pdinfo->v - 1, pZ, pdinfo, opt, prn);
     }
 
     if (err) {
@@ -6140,6 +6140,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case TRANSPOSE:
     case VARLIST:
     case VARTEST: 
+    case XTAB:
 	err = simple_commands(&cmd, line, &Z, datainfo, outprn);
 	if (err) {
 	    errmsg(err, prn);
@@ -6430,7 +6431,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case FREQ:
 	err = freqdist(cmd.list[1], (const double **) Z, 
 		       datainfo, (exec_code == CONSOLE_EXEC),
-		       prn, cmd.opt);
+		       cmd.opt, prn);
 	if (!err && exec_code == CONSOLE_EXEC) {
 	    register_graph();
 	}
@@ -6729,7 +6730,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case PERGM:
-	err = periodogram(cmd.list[1], &Z, datainfo, outprn, cmd.opt | OPT_N);
+	err = periodogram(cmd.list[1], &Z, datainfo, cmd.opt | OPT_N, outprn);
 	if (err) pprintf(prn, _("Failed to generate periodogram\n"));
 	break;
 

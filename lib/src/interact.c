@@ -3136,6 +3136,11 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	break; 
 
+    case XTAB:
+	err = crosstab(cmd->list, (const double **) *pZ, 
+		       pdinfo, cmd->opt, prn);
+	break;
+
     case MAHAL:
 	err = mahalanobis_distance(cmd->list, pZ, pdinfo, 
 				   cmd->opt, prn);

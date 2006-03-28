@@ -803,9 +803,14 @@ int gretl_moments (int t1, int t2, const double *x,
 
 void free_freq (FreqDist *freq)
 {
+    if (freq == NULL) {
+	return;
+    }
+
     free(freq->midpt);
     free(freq->endpt);
     free(freq->f);
+
     free(freq);
 }
 
@@ -1343,7 +1348,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 }
 
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
-	      int graph, PRN *prn, gretlopt opt)
+	      int graph, gretlopt opt, PRN *prn)
 {
     FreqDist *freq;
 
@@ -1365,6 +1370,285 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 
     return 0;
 }
+
+/**
+ * free_xtab:
+ * @xtab: gretl crosstab struct
+ *
+ * Frees all malloced elements of the struct, and then
+ * the pointer itself.
+ */
+
+void free_xtab (Xtab *tab)
+{
+    int i;
+
+    free(tab->rtotal);
+    free(tab->ctotal);
+    free(tab->rval);
+    free(tab->cval);
+
+    for (i=0; i<tab->rows; i++) {
+	free(tab->f[i]);
+    }
+    free(tab->f);
+
+    free(tab);
+}
+
+static Xtab *xtab_new (int n, int t1, int t2)
+{
+    Xtab *tab = malloc(sizeof *tab);
+
+    if (tab == NULL) return NULL;
+
+    tab->rtotal = NULL;
+    tab->ctotal = NULL;
+    tab->rval = NULL;
+    tab->cval = NULL;
+    tab->f = NULL;
+
+    tab->n = n;
+    tab->t1 = t1;
+    tab->t2 = t2;
+
+    return tab;
+}
+
+static int xtab_allocate_arrays (Xtab *tab, int rows, int cols)
+{
+    int i, j;
+
+    tab->rows = rows;
+    tab->cols = cols;
+
+    tab->rval = malloc(rows * sizeof tab->rval);
+    tab->rtotal = malloc(rows * sizeof tab->rtotal);
+
+    tab->cval = malloc(cols * sizeof tab->cval);
+    tab->ctotal = malloc(cols * sizeof tab->ctotal);
+
+    tab->f = malloc(rows * sizeof tab->f);
+
+    if (tab->rval == NULL || tab->rtotal == NULL ||
+	tab->cval == NULL || tab->ctotal == NULL ||
+	tab->f == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<rows; i++) {
+	tab->f[i] = NULL;
+    }
+
+    for (i=0; i<rows; i++) {
+	tab->f[i] = malloc(cols * sizeof tab->f[i]);
+	if (tab->f[i] == NULL) {
+	    return E_ALLOC;
+	} else {
+	    for (j=0; j<cols; j++) {
+		tab->f[i][j] = 0;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+int compare_xtab_rows (const void *a, const void *b) 
+{
+    const int **da = (const int **) a;
+    const int **db = (const int **) b;
+    int ret;
+    
+    ret = (da[0][0] > db[0][0]) - (da[0][0] < db[0][0]);
+
+    if (!ret) {
+	ret = (da[0][1] > db[0][1]) - (da[0][1] < db[0][1]);
+    }
+    
+    return ret;
+}
+
+/**
+  crosstab struct creation function
+*/
+
+Xtab *get_xtab (int rvarno, int cvarno, const double **Z, 
+		const DATAINFO *pdinfo)
+{
+    Xtab *tab = NULL;
+    int **X = NULL;
+    int rx, cx;
+    int rows, cols;
+
+    int t, i, j, nr, nc;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    int n = 0;
+
+    /* check if both variables are discrete */
+
+    if (!gretl_isdiscrete(t1, t2, Z[rvarno]) ||
+	!gretl_isdiscrete(t1, t2, Z[cvarno])) {
+	fprintf(stderr, "One of the variables is not discrete!\n");
+	return NULL;
+    }
+
+    /* count non-missing values */
+
+    for (t=t1; t<=t2; t++) {
+	if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) {
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	fprintf(stderr, "All values invalid!\n");
+	return NULL;
+    }
+
+    /* Put in some info we already know */
+
+    tab = xtab_new(n, t1, t2);
+    if (tab == NULL) {
+	return NULL;
+    }
+
+    strcpy(tab->rvarname, pdinfo->varname[rvarno]);
+    strcpy(tab->cvarname, pdinfo->varname[cvarno]);
+
+    /* 
+       start allocating stuff; we use temporary FreqDists for rows 
+       and columns to retrieve values with non-zero frequencies
+       and get dimensions for the cross table
+     */
+
+    FreqDist *rowfreq, *colfreq;
+    rowfreq = get_freq(rvarno, Z, pdinfo, 0, OPT_NONE); 
+    colfreq = get_freq(cvarno, Z, pdinfo, 0, OPT_NONE); 
+    X = malloc(n * sizeof *X);
+
+    if (rowfreq == NULL || colfreq == NULL || X == NULL) {
+	free_freq(rowfreq);
+	free_freq(colfreq);
+	free(X);
+	return NULL;
+    }
+
+    rows = rowfreq->numbins;
+    cols = colfreq->numbins;
+
+    if (xtab_allocate_arrays(xtab, rows, cols)) {
+	free_xtab(xtab);
+	return NULL;
+    }
+
+    for (i=0; i<rows; i++) {
+	tab->rval[i] = rowfreq->midpt[i];
+	tab->rtotal[i] = 0;
+    }
+
+    for (i=0; i<cols; i++) {
+	tab->cval[i] = colfreq->midpt[i];
+	tab->ctotal[i] = 0;
+    }
+
+    /* done with FreqDists */
+    free_freq(rowfreq);
+    free_freq(colfreq);
+
+    /* 
+       build the matrix X holding the values to be sorted
+    */
+
+    i = 0;
+    for (t=t1; t<=t2 && i<n; t++) {
+	X[i] = malloc(2 * sizeof **X);
+	if (X[i] == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    /* problem below here: can't run "na()" test on ints */
+	    rx = (int) Z[rvarno][t];
+	    cx = (int) Z[cvarno][t];
+	    if (!(na(rx) || na(cx))) { /* typo? */
+		X[i][0] = rx;
+		X[i][1] = cx;
+		i++;
+	    }
+	}
+    }
+
+    qsort(X, n, sizeof *X, compare_xtab_rows);
+
+    rx = cx = 0;
+    nr = tab->rval[0];
+    nc = tab->cval[0];
+
+    /* compute frequencies by going through sorted X */
+
+    for (i=0; i<n; i++) {
+	while (X[i][0] > nr) { /* skip row */
+	    nr = tab->rval[++rx];
+	    cx = 0;
+	    nc = tab->cval[0];
+	}
+	while (X[i][1] > nc) { /* skip column */
+	    nc = tab->cval[++cx];
+	}
+#if XTAB_DEBUG
+	fprintf(stderr,"%d: (%d,%d) [%d,%d] %d,%d\n",
+		i, rx, cx, nr, nc, X[i][0], X[i][1]);
+#endif
+	tab->f[rx][cx] += 1;
+	tab->rtotal[rx] += 1;
+	tab->ctotal[cx] += 1;
+    }
+
+    /* we're done; free stuff and quit */
+
+    for (i=0; i<n; i++) {
+	free(X[i]);
+    }
+    free(X);
+
+    return tab;
+}
+
+int crosstab (const int *list, const double **Z, 
+	      const DATAINFO *pdinfo, gretlopt opt, 
+	      PRN *prn)
+{
+    Xtab *tab;
+    int rowvar;
+    int colvar;
+
+    if (list[0] != 2) {
+	return E_PARSE;
+    }
+
+    rowvar = list[1];
+    colvar = list[2];
+
+    if (rowvar >= pdinfo->v || colvar >= pdinfo->v ||
+	!pdinfo->vector[rowvar] || !pdinfo->vector[colvar]) {
+	/* paranoia */
+	return E_DATA;
+    }
+
+    tab = get_xtab(rowvar, colvar, Z, pdinfo); 
+
+    if (tab == NULL) {
+	return E_ALLOC;
+    }
+
+    print_xtab(tab, opt, prn); 
+
+    free_xtab(tab);
+
+    return 0;
+}
+
+/* ---------- end crosstab stuff -------------------- */
 
 int model_error_dist (const MODEL *pmod, double ***pZ,
 		      DATAINFO *pdinfo, PRN *prn)
@@ -2027,10 +2311,10 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
  * @varno: ID number of variable to process.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @prn: gretl printing struct.
  * @opt: if includes %OPT_O, use Bartlett lag window for periodogram;
  * if includes %OPT_N, don't display gnuplot graph; if includes
  * %OPT_R, the variable is a model residual.
+ * @prn: gretl printing struct.
  *
  * Computes and displays the periodogram for the variable specified 
  * by @varno.
@@ -2040,7 +2324,7 @@ int fract_int_LWE (const double **Z, int varno, int t1, int t2,
  */
 
 int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo, 
-		 PRN *prn, gretlopt opt)
+		 gretlopt opt, PRN *prn)
 {
     double *autocov = NULL;
     double *omega = NULL;

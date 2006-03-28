@@ -42,6 +42,8 @@ void print_freq (const FreqDist *freq, PRN *prn);
 
 void printcorr (const VMatrix *corrmat, PRN *prn);
 
+void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn);
+
 void print_smpl (const DATAINFO *pdinfo, 
 		 int fulln, PRN *prn); 
 

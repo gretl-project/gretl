@@ -911,6 +911,7 @@ static int exec_line (char *line, PRN *prn)
     case TRANSPOSE:
     case VARLIST:
     case VARTEST: 
+    case XTAB:
 	err = simple_commands(&cmd, line, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
@@ -1163,7 +1164,7 @@ static int exec_line (char *line, PRN *prn)
 
     case FREQ:
 	err = freqdist(cmd.list[1], (const double **) Z, 
-		       datainfo, !batch, prn, cmd.opt);
+		       datainfo, !batch, cmd.opt, prn);
 	break;
 
     case GENR:
@@ -1457,7 +1458,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case PERGM:
-	err = periodogram(cmd.list[1], &Z, datainfo, prn, cmd.opt | OPT_N);
+	err = periodogram(cmd.list[1], &Z, datainfo, cmd.opt | OPT_N, prn);
 	if (err) {
 	    pputs(prn, _("Failed to generate periodogram\n"));
 	}
