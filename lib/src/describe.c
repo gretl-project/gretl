@@ -1460,10 +1460,10 @@ int compare_xtab_rows (const void *a, const void *b)
     const int **db = (const int **) b;
     int ret;
     
-    ret = (da[0][0] > db[0][0]) - (da[0][0] < db[0][0]);
+    ret = da[0][0] - db[0][0];
 
-    if (!ret) {
-	ret = (da[0][1] > db[0][1]) - (da[0][1] < db[0][1]);
+    if (ret == 0) {
+	ret = da[0][1] - db[0][1];
     }
     
     return ret;
@@ -1481,10 +1481,11 @@ Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     int rx, cx;
     int rows, cols;
 
-    int t, i, j, nr, nc;
+    int t, i, nr, nc;
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
     int n = 0;
+    int err = 0;
 
     /* check if both variables are discrete */
 
@@ -1538,8 +1539,8 @@ Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     rows = rowfreq->numbins;
     cols = colfreq->numbins;
 
-    if (xtab_allocate_arrays(xtab, rows, cols)) {
-	free_xtab(xtab);
+    if (xtab_allocate_arrays(tab, rows, cols)) {
+	free_xtab(tab);
 	return NULL;
     }
 
@@ -2760,15 +2761,7 @@ void print_summary (const Summary *summ,
 void free_summary (Summary *summ)
 {
     free(summ->list);
-
-    free(summ->mean);
-    free(summ->median);
-    free(summ->sd);
-    free(summ->skew);
-    free(summ->xkurt);
-    free(summ->low);
-    free(summ->high); 
-    free(summ->cv);
+    free(summ->stats);
 
     free(summ);
 }
@@ -2792,26 +2785,20 @@ static Summary *summary_new (const int *list)
     summ->n = 0;
     summ->missing = 0;
 
-    summ->mean = summ->median = summ->sd = NULL;
-    summ->skew = summ->xkurt = NULL;
-    summ->low = summ->high = summ->cv = NULL;
-
-    summ->mean = malloc(nv * sizeof *summ->mean);
-    summ->median = malloc(nv * sizeof *summ->median);
-    summ->sd = malloc(nv * sizeof *summ->sd);
-    summ->skew = malloc(nv * sizeof *summ->skew);
-    summ->xkurt = malloc(nv * sizeof *summ->xkurt);
-    summ->low = malloc(nv * sizeof *summ->low);
-    summ->high = malloc(nv * sizeof *summ->high);
-    summ->cv = malloc(nv * sizeof *summ->cv);
-
-    if (summ->mean == NULL || summ->median == NULL ||
-	summ->sd == NULL || summ->skew == NULL ||
-	summ->xkurt == NULL || summ->low == NULL ||
-	summ->high == NULL || summ->cv == NULL) {
+    summ->stats = malloc(8 * nv * sizeof *summ->stats);
+    if (summ->stats == NULL) {
 	free_summary(summ);
 	return NULL;
     }
+
+    summ->mean = summ->stats;
+    summ->median = summ->mean + nv;
+    summ->sd = summ->median + nv;
+    summ->skew = summ->sd + nv;
+    summ->xkurt = summ->skew + nv;
+    summ->low = summ->xkurt + nv;
+    summ->high = summ->low + nv;
+    summ->cv = summ->high + nv;
 
     return summ;
 }

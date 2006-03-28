@@ -29,6 +29,7 @@ struct Summary_ {
     int n;
     int missing;
     int *list;
+    double *stats;
     double *mean;
     double *median;
     double *sd;
