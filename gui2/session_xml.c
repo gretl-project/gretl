@@ -49,7 +49,7 @@ static int restore_session_graphs (xmlNodePtr node)
 	    if (fname == NULL) {
 		err = 1;
 	    } else {
-		err = check_graph_file(session.graphs[i]->fname);
+		err = check_graph_file((const char *) fname);
 	    } 
 	}
 

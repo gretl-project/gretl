@@ -47,6 +47,7 @@ typedef enum {
     GRETL_WF1,            /* Eviews workfile data */
     GRETL_DTA,            /* Stata .dta data */
     GRETL_SCRIPT,         /* file containing gretl commands */
+    GRETL_SESSION,        /* zipped session file */
     GRETL_NATIVE_DB,      /* gretl database */
     GRETL_RATS_DB,        /* RATS 4.0 database */
     GRETL_UNRECOGNIZED    /* none of the above */

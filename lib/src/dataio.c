@@ -4033,8 +4033,26 @@ static int xmlfile (const char *fname)
 	} 
 	gzclose(fz);
     } 
+
     return ret;
 } 
+
+static int pkfile (const char *fname)
+{
+    FILE *fp;
+    char test[3] = {0};
+    int ret = 0;
+
+    fp = gretl_fopen(fname, "rb");
+    if (fp != NULL) {
+	if (fread(test, 1, 2, fp) == 2) {
+	    if (!strcmp(test, "PK")) ret = 1;
+	} 
+	fclose(fp);
+    } 
+
+    return ret;
+}
 
 /**
  * detect_filetype:
@@ -4055,11 +4073,15 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     FILE *fp;
 
     /* might be a script file? (watch out for DOS-mangled names) */
-    if (has_suffix(fname, ".inp") ||
-	has_suffix(fname, ".gre"))
+    if (has_suffix(fname, ".inp")) 
 	return GRETL_SCRIPT;
-    if (has_suffix(fname, ".gretl"))
-	return GRETL_SCRIPT; 
+    if (has_suffix(fname, ".gretl")) {
+	if (pkfile(fname)) {
+	    return GRETL_SESSION;
+	} else {
+	    return GRETL_SCRIPT;
+	}
+    }
     if (has_suffix(fname, ".gnumeric"))
 	return GRETL_GNUMERIC;
     if (has_suffix(fname, ".xls"))

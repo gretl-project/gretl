@@ -581,7 +581,7 @@ static void get_runfile (char *fname)
 #ifdef G_OS_WIN32
     if (unmangle(fname, tryfile)) return;
 #else
-    strncat(tryfile, fname, MAXLEN-1);
+    strncat(tryfile, fname, MAXLEN - 1);
 #endif
     if (addpath(tryfile, &paths, 1) == NULL) {
 	fprintf(stderr, I_("Couldn't find script '%s'\n"), tryfile);
@@ -739,6 +739,7 @@ static void record_filearg (char *targ, const char *src)
 int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
+    int ftype = 0;
     char dbname[MAXLEN];
     char filearg[MAXLEN];
 #ifdef USE_GNOME
@@ -876,7 +877,6 @@ int main (int argc, char *argv[])
 
     /* get the data file, if specified on the command line */
     if (!gui_get_data) {
-	int ftype;
 	PRN *prn; 
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR);
@@ -923,6 +923,7 @@ int main (int argc, char *argv[])
 	    err = get_worksheet_data(paths.datfile, ftype, 0, &gui_get_data);
 	    break;
 	case GRETL_SCRIPT:
+	case GRETL_SESSION:
 	    gui_get_data = 1;
 	    get_runfile(paths.datfile);
 	    *paths.datfile = '\0';
@@ -998,8 +999,11 @@ int main (int argc, char *argv[])
 
     /* opening a script from the command line? */
     if (tryfile[0] != '\0') { 
-	/* FIXME session files? */
-	do_open_script();
+	if (ftype == GRETL_SESSION) {
+	    do_open_session();
+	} else {
+	    do_open_script();
+	}
     }
 
     /* check for program updates? */

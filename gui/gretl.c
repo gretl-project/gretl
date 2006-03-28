@@ -612,6 +612,7 @@ static void force_language (int f)
 int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
+    int ftype = 0;
     char filearg[MAXLEN];
     char dbname[MAXLEN];
 
@@ -719,7 +720,6 @@ int main (int argc, char *argv[])
 
     /* get the data file, if specified on the command line */
     if (!(gui_get_data)) {
-	int ftype;
 	PRN *prn; 
 
 	prn = gretl_print_new(GRETL_PRINT_STDERR);
@@ -759,6 +759,7 @@ int main (int argc, char *argv[])
 	    err = get_worksheet_data(paths.datfile, ftype, 0, &gui_get_data);
 	    break;
 	case GRETL_SCRIPT:
+	case GRETL_SESSION:
 	    gui_get_data = 1;
 	    get_runfile(paths.datfile);
 	    paths.datfile[0] = '\0';
@@ -827,7 +828,11 @@ int main (int argc, char *argv[])
 
     /* opening a script from the command line? */
     if (tryfile[0] != '\0') { 
-	do_open_script();
+	if (fype == GRETL_SESSION) {
+	    do_open_session();
+	} else {
+	    do_open_script();
+	}
     }
 
     /* check for program updates? */

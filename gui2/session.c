@@ -374,7 +374,7 @@ int real_add_graph_to_session (const char *fname, const char *grname,
 
 	session.graphs = graphs;
 
-	session.graphs[ng] = session_graph_new(fname, grname, type);
+	session.graphs[ng] = session_graph_new(grname, fname, type);
 	if (session.graphs[ng] == NULL) {
 	    return ADD_OBJECT_FAIL;
 	}
