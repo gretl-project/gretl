@@ -1,4 +1,4 @@
-\chapter{Creare dei sotto-campioni}
+\chapter{Modifica del campione}
 \label{sampling}
 
 \section{Introduzione}
@@ -16,8 +16,8 @@ e ``restrizione'' del campione.
 
 Per ``impostazione'' del campione, si intende la definizione di un
 campione ottenuta indicando il punto iniziale e/o quello finale
-dell'intervallo attuale del campione. Questa modalità è usata
-tipicamente con serie storiche; ad esempio se si hanno dati
+dell'intervallo del campione. Questa modalità è usata
+tipicamente con le serie storiche; ad esempio se si hanno dati
 trimestrali per l'intervallo da 1960:1 a 2003:4 e si vuole stimare una
 regressione usando solo i dati degli anni '70, un comando adeguato è
 
@@ -38,8 +38,8 @@ l'osservazione iniziale'' (e potrebbe essere usato in modo analogo al
 posto del secondo parametro, indicando di mantenere inalterata
 l'osservazione finale). Per ``inalterata'' in questo caso si intende
 inalterata relativamente all'ultima impostazione eseguita con
-\verb+smpl+, o relativamente all'intero dataset, se non è ancora stato
-definito alcun sotto-campione in precedenza.  Ad esempio, dopo
+\verb+smpl+, o relativamente all'intero dataset, se in precedenza non è ancora
+stato definito alcun sotto-campione.  Ad esempio, dopo
 
 \begin{code}
     smpl 1970:1 2003:4
@@ -51,7 +51,7 @@ l'intervallo del campione sarà da 1970:1 a 2000:4.
 È possibile anche impostare l'intervallo del campione in modo incrementale o
 relativo: in questo caso occorre indicare per il punto iniziale e finale uno
 spostamento relativo, sotto forma di numero preceduto dal segno più o dal segno
-meno (o da un punto e virgola per indicare nessuna variazione). Ad esempio
+meno (o un punto e virgola per indicare nessuna variazione). Ad esempio
 
 \begin{code}
     smpl +1 ;
@@ -162,7 +162,7 @@ semplice dataset di tipo cross-section non datato.\footnote{Con una
 
 Se si vuole re-imporre un'interpretazione di tipo ``serie storiche'' o
 ``panel'' al dataset ridotto, occorre usare il comando \cmd{setobs}, o
-il comando dal menù ``Campione, Struttura dataset'', se appropriato).
+il comando dal menù ``Campione, Struttura dataset'', se appropriato.
 
 Il fatto che una ``restrizione'' del campione comporti la creazione di
 una copia ridotta del dataset originale può creare problemi quando il
@@ -175,7 +175,7 @@ questo modo:
 \begin{enumerate}
 \item Aprire il dataset completo e imporre la restrizione sul
   campione.
-\item Salvare una copia del dataset ridotto su disco.
+\item Salvare su disco una copia del dataset ridotto.
 \item Chiudere il dataset completo e aprire quello ridotto.
 \item Procedere con l'analisi.
 \end{enumerate}
@@ -210,7 +210,7 @@ se si usa il comando ``Campione, Imposta in base a condizione...'' e
 sul dataset è già stato impostato un sotto-campione, viene data la
 possibilità di preservare la restrizione già attiva o di sostituirla
 (in modo analogo a quanto avviene invocando l'opzione \verb+replace+
-descritta nella parte~\ref{sample-restrict}.
+descritta nella sezione~\ref{sample-restrict}).
     
 %%% Local Variables: 
 %%% mode: latex

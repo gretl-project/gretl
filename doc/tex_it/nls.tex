@@ -51,10 +51,10 @@ matrice di covarianza delle stime dei parametri.
 \section{Inizializzazione dei parametri}
 \label{nls-param}
 
-Occorre definire dei valori iniziali per i parametri della funzione di
-regressione prima di eseguire il comando \cmd{nls}. Per farlo, è
+Prima di eseguire il comando \cmd{nls}, occorre definire dei valori iniziali per
+i parametri della funzione di regressione. Per farlo, è
 possibile usare il comando \cmd{genr} (o, nella versione grafica del
-programma, con il comando \textsf{Definisci nuova variabile}).  
+programma, il comando \textsf{Definisci nuova variabile}).  
 
 In alcuni casi, in cui la funzione non lineare è una generalizzazione
 di un modello lineare (o di una sua forma ristretta), può essere
@@ -80,7 +80,7 @@ E in relazione al secondo esempio si userebbe:
 \section{Finestra di dialogo NLS}
 \label{nls-gui}
 
-Proabilmente il modo più comodo di formulare i comandi per una stima
+Probabilmente il modo più comodo di formulare i comandi per una stima
 NLS consiste nell'usare uno script per \app{gretl}, ma è possibile
 anche procedere interattivamente, selezionando il comando
 \textsf{Minimi quadrati non lineari} dal menù Modello. In questo modo,
@@ -119,7 +119,7 @@ causato da derivate scorrette, ma può anche essere dovuto a un alto
 grado di collinearità tra le derivate.
 
 Si noti che non è possibile mischiare derivate numeriche e analitiche:
-se si indicano espressioni analitiche per le derivate, occorre farlo
+se si indicano espressioni analitiche per una derivata, occorre farlo
 per tutte.
 
 \section{Arresto della procedura}
@@ -131,14 +131,14 @@ criterio di convergenza, o si supera il massimo numero di iterazioni
 impostato.
 
 Se $k$ denota il numero di parametri da stimare, il numero massimo di iterazioni
-è $100 \times (k+1)$ quando si indicano le derivate analitiche, mentre $200
+è $100 \times (k+1)$ quando si indicano le derivate analitiche, mentre è $200
 \times (k+1)$ quando si usano le derivate numeriche.
 
 Preso un numero $\epsilon$ piccolo a piacere, la convergenza si ritiene
 raggiunta se è soddisfatta una delle due condizioni seguenti:
 
 \begin{itemize}
-\item Entrambe le riduzioni effettiva o prevista della somma dei quadrati
+\item Entrambe le riduzioni, effettiva o prevista, della somma dei quadrati
   degli errori sono minori di $\epsilon$.
 \item L'errore relativo tra due iterazioni consecutive è minore di
   $\epsilon$.
@@ -176,7 +176,7 @@ sono usate le seguenti funzioni \app{minpack}:
     Calcolo del Jacobiano approssimato finale se si usano le derivate 
     numeriche \\
     \verb+dpmpar+ & 
-    Determinazioen della precisione della macchina \\
+    Determinazione della precisione della macchina \\
   \end{tabular}
 \end{center}
 
@@ -203,10 +203,10 @@ lineare.\footnote{Per una discussione dell'accuratezza di \app{gretl}
 indicano due valori iniziali per i parametri, quindi il test completo
 riporta 54 stime. Sono stati eseguiti due test completi, uno usando
 derivate analitiche e uno usando approssimazioni numeriche; in
-entrambi casi si è usata la tolleranza predefinita.\footnote{I dati
-  mostrati nella tabella derivano da una versione di \app{gretl}
-  1.0.9, compilata con \app{gcc} 3.3, collegata a \app{glibc} 2.3.2 ed
-  eseguita in Linux su un PC i686 (IBM ThinkPad A21m).}
+entrambi i casi si è usata la tolleranza predefinita.\footnote{I dati
+  mostrati nella tabella derivano dalla versione 1.0.9 di \app{gretl},
+  compilato con \app{gcc} 3.3, collegato a \app{glibc} 2.3.2 ed
+  eseguito in Linux su un PC i686 (IBM ThinkPad A21m).}
 
 Sulle 54 stime, \app{gretl} non riesce a produrre una soluzione in 4
 casi, se vengono usate le derivate analitiche, e in 5 casi se vengono
@@ -256,7 +256,7 @@ modo predefinito nei risultati delle regressioni di \app{gretl}.
     \begin{tabular}{lcc}
         & \textit{Derivate analitiche} 
         & \textit{Derivate numeriche} \\ [4pt]
-        Falimenti in 54 test & 4 & 5\\
+        Fallimenti in 54 test & 4 & 5\\
         Iterazioni medie & 32 & 127\\
         Media del "numero minimo di cifre corrette", & 8.120 & 6.980\\
         stima dei parametri \\
