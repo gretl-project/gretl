@@ -61,12 +61,10 @@ static int restore_session_graphs (xmlNodePtr node)
 	if (!err) {
 	    session.graphs[i] = session_graph_new((const char *) name, 
 						  (const char *) fname, 
-						  type);
+						  ID, type);
 	    if (session.graphs[i] == NULL) {
 		err = 1;
-	    } else {
-		session.graphs[i]->ID = ID;
-	    }
+	    } 
 	}
 
 	free(name);
@@ -79,7 +77,7 @@ static int restore_session_graphs (xmlNodePtr node)
     return err;
 }
 
-static int restore_session_texts (xmlDocPtr doc, xmlNodePtr node)
+static int restore_session_texts (xmlNodePtr node, xmlDocPtr doc)
 {
     xmlNodePtr cur;
     int i = 0;
@@ -100,18 +98,15 @@ static int restore_session_texts (xmlDocPtr doc, xmlNodePtr node)
 	if (name == NULL) {
 	    err = 1;
 	} else {
-	    session.texts[i] = session_text_new((const char *) name);
-	    if (session.texts[i] == NULL) {
-		err = 1;
-	    }
-	}
-
-	if (!err) {
 	    buf = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-	    if (buf != NULL) {
-		session.texts[i]->buf = (char *) buf;
-	    } else {
+	    if (buf == NULL) {
 		err = 1;
+	    } else {
+		session.texts[i] = session_text_new((const char *) name,
+						    (char *) buf);
+		if (session.texts[i] == NULL) {
+		    err = 1;
+		}
 	    }
 	}
 
@@ -119,6 +114,165 @@ static int restore_session_texts (xmlDocPtr doc, xmlNodePtr node)
 
 	cur = cur->next;
 	i++;
+    }
+
+    return err;
+}
+
+static int get_data_submask (xmlNodePtr node, xmlDocPtr doc,
+			     char **pmask, int *pmode)
+{
+    char *mask = NULL;
+    int i, len, mode = 0;
+    int err = 0;
+
+    if (!gretl_xml_get_prop_as_int(node, "length", &len)) {
+	return 1;
+    }
+
+    gretl_xml_get_prop_as_int(node, "mode", &mode);
+
+    mask = calloc(len, 1);
+    if (mask == NULL) {
+	err = 1;
+    } else {
+	xmlChar *tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+	if (tmp == NULL) {
+	    err = 1;
+	} else {
+	    const char *s = (const char *) tmp;
+	    int si;
+
+	    for (i=0; i<len; i++) {
+		sscanf(s, "%d", &si);
+		s += strspn(s, " ");
+		s += strcspn(s, " ");
+		if (si != 0) {
+		    mask[i] = si;
+		}
+	    }
+	    free(tmp);
+	}
+    }
+
+    if (!err) {
+	*pmask = mask;
+	if (pmode != NULL) {
+	    *pmode = mode;
+	}
+    }
+
+    return err;
+}
+
+static int model_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
+				   MODEL *pmod)
+{
+    char *mask;
+    int err;
+
+    err = get_data_submask(node, doc, &mask, NULL);
+    if (!err) {
+	pmod->submask = mask;
+    }
+
+    return err;
+}
+
+static int data_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
+				  struct sample_info *sinfo)
+{
+    char *mask;
+    int mode, err;
+
+    err = get_data_submask(node, doc, &mask, &mode);
+    if (!err) {
+	sinfo->mask = mask;
+	sinfo->mode = mode;
+    }
+
+    return err;
+}
+
+#if 0 /* not ready */
+
+static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
+				      MODEL *pmod)
+{
+    xmlNodePtr cur;
+    int n_items;
+    int err = 0;
+
+    if (!gretl_xml_get_prop_as_int(node, "count", &n_items)) {
+	return 1;
+    }
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !err) {
+	char *key;
+	int type;
+	int nelem;
+
+	if (!gretl_xml_get_prop_as_int(cur, "type", &type) ||
+	    (key = gretl_xml_get_prop_as_string(cur, "key")) == NULL) {
+	    err = 1;
+	    break;
+	}
+
+	if (type == MODEL_DATA_INT) {
+	    int ival;
+
+	    /* get node content as int */
+	    err = gretl_model_set_int(pmod, key, ival);
+	} else if (type == MODEL_DATA_DOUBLE) {
+	    double xval;
+
+	    /* get node content as double */
+	    err = gretl_model_set_double(pmod, key, xval);
+	} else if (type == MODEL_DATA_LIST) {
+	    int *list;
+
+	    list = gretl_xml_node_get_list(cur, doc, &err);
+	    if (!err) {
+		err = gretl_model_set_list_as_data(pmod, key, list);
+	    }
+	} else if (type == MODEL_DATA_STRING) {
+	    
+	    ;
+	}
+
+	/* others not done yet */
+
+	cur = cur->next;
+    }
+
+    return err;
+}
+
+#endif
+
+static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
+			    MODEL *pmod)
+{
+    xmlNodePtr cur;
+    int err = 0;
+
+    if (gretl_model_add_arinfo(pmod, 0)) {
+	return 1;
+    }
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (XUC) "arlist")) {
+	    pmod->arinfo->arlist = gretl_xml_node_get_list(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "rho")) {
+	    pmod->arinfo->rho = gretl_xml_get_doubles_array(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {
+	    pmod->arinfo->sderr = gretl_xml_get_doubles_array(cur, doc, &err);
+	}
+	cur = cur->next;
     }
 
     return err;
@@ -220,7 +374,18 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
 	    pmod->list = gretl_xml_node_get_list(cur, doc, err);
 	} else if (!xmlStrcmp(cur->name, (XUC) "tests")) {
 	    *err = attach_model_tests_from_xml(pmod, cur);
+	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
+	    *err = model_submask_from_xml(cur, doc, pmod);
+	} else if (!xmlStrcmp(cur->name, (XUC) "missmask")) {
+	    pmod->missmask = 
+		(char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    if (pmod->missmask == NULL) {
+		*err = 1;
+	    }
+	} else if (!xmlStrcmp(cur->name, (XUC) "arinfo")) {
+	    *err = arinfo_from_xml(cur, doc, pmod);
 	}
+	
 	cur = cur->next;
     }
 
@@ -249,7 +414,7 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
     return pmod;
 }
 
-static int restore_session_models (xmlDocPtr doc, xmlNodePtr node)
+static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 {
     char fullname[MAXLEN];
     xmlNodePtr cur;
@@ -310,45 +475,6 @@ static int restore_session_models (xmlDocPtr doc, xmlNodePtr node)
     return err;
 }
 
-static int get_data_submask (xmlDocPtr doc, xmlNodePtr cur,
-			     struct sample_info *sinfo)
-{
-    int i, len, err = 0;
-
-    if (!gretl_xml_get_prop_as_int(cur, "length", &len)) {
-	return 1;
-    }
-
-    if (!gretl_xml_get_prop_as_int(cur, "mode", &sinfo->mode)) {
-	return 1;
-    }    
-
-    sinfo->mask = calloc(len, 1);
-    if (sinfo->mask == NULL) {
-	err = 1;
-    } else {
-	xmlChar *tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-	if (tmp == NULL) {
-	    err = 1;
-	} else {
-	    const char *s = (const char *) tmp;
-	    int si;
-
-	    for (i=0; i<len; i++) {
-		sscanf(s, "%d", &si);
-		s += strspn(s, " ");
-		s += strcspn(s, " ");
-		if (si != 0) {
-		    sinfo->mask[i] = si;
-		}
-	    }
-	    free(tmp);
-	}
-    }
-
-    return err;
-}
-
 static int 
 read_session_xml (const char *fname, struct sample_info *sinfo) 
 {
@@ -356,7 +482,9 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     xmlNodePtr cur = NULL;
     xmlChar *tmp;
     int err = 0;
+#ifndef USE_GTK2 /* FIXME? */
     int to_iso_latin = 0;
+#endif
 
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
@@ -393,14 +521,14 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		err = 1;
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
-	    err = get_data_submask(doc, cur, sinfo);
+	    err = data_submask_from_xml(cur, doc, sinfo);
 	} else if (!xmlStrcmp(cur->name, (XUC) "models")) {
 	    tmp = xmlGetProp(cur, (XUC) "count");
 	    if (tmp != NULL) {
 		session.nmodels = atoi((const char *) tmp);
 		free(tmp);
 		if (session.nmodels > 0) {
-		    err = restore_session_models(doc, cur);
+		    err = restore_session_models(cur, doc);
 		}		
 	    }
         } else if (!xmlStrcmp(cur->name, (XUC) "graphs")) {
@@ -418,11 +546,12 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 		session.ntexts = atoi((const char *) tmp);
 		free(tmp);
 		if (session.ntexts > 0) {
-		    err = restore_session_texts(doc, cur);
+		    err = restore_session_texts(cur, doc);
 		}		
 	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "notes")) {
-	    session.notes = (char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    session.notes = 
+		(char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	    if (session.notes == NULL) {
 		err = 1;
 	    }

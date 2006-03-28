@@ -127,7 +127,7 @@ static int add_unique_output_file (MODEL *pmod, const char *path)
     err = rename(fname, unique);
     if (!err) {
 	gretl_model_set_data(pmod, "x12a_output", g_strdup(unique),
-			     strlen(fname) + 1);
+			     MODEL_DATA_STRING, strlen(fname) + 1);
     } 
 
     return err;
@@ -268,7 +268,8 @@ static int get_roots (const char *fname, MODEL *pmod,
     }
 
     if (roots != NULL) {
-	gretl_model_set_data(pmod, "roots", roots, nr * sizeof *roots);
+	gretl_model_set_data(pmod, "roots", roots, MODEL_DATA_CMPLX_ARRAY,
+			     nr * sizeof *roots);
     }
 
     return err;

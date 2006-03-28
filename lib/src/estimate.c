@@ -130,50 +130,6 @@ static void model_depvar_stats (MODEL *pmod, const double **Z)
     pmod->sdy = (sum >= 0)? sqrt(sum) : NADBL;
 }
 
-/* initial setup for structure to hold info on autoregressive
-   coefficients 
-*/
-
-static int ar_info_init (MODEL *pmod, int nterms)
-{
-    int i;
-
-    pmod->arinfo = malloc(sizeof *pmod->arinfo);
-    if (pmod->arinfo == NULL) {
-	return 1;
-    }
-
-    pmod->arinfo->arlist = gretl_list_new(nterms);
-    if (pmod->arinfo->arlist == NULL) {
-	free(pmod->arinfo);
-	pmod->arinfo = NULL;
-	return 1; 
-    }
-
-    pmod->arinfo->rho = malloc(nterms * sizeof *pmod->arinfo->rho);
-    if (pmod->arinfo->rho == NULL) {
-	free(pmod->arinfo->arlist);
-	free(pmod->arinfo);
-	pmod->arinfo = NULL;
-	return 1; 
-    }
-
-    pmod->arinfo->sderr = malloc(nterms * sizeof *pmod->arinfo->sderr);
-    if (pmod->arinfo->sderr == NULL) {
-	free(pmod->arinfo->arlist);
-	free(pmod->arinfo->rho);
-	free(pmod->arinfo);
-	pmod->arinfo = NULL;
-	return 1; 
-    }
-
-    for (i=0; i<nterms; i++) {
-	pmod->arinfo->sderr[i] = pmod->arinfo->rho[i] = NADBL;
-    }
-
-    return 0;
-}
-
 /* determine the degrees of freedom for a model */
 
 static int get_model_df (MODEL *pmod)
@@ -360,7 +316,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     int i, t, yno = pmod->list[1];
     double x, pw1 = 0.0;
 
-    if (ar_info_init(pmod, 1)) {
+    if (gretl_model_add_arinfo(pmod, 1)) {
 	pmod->errcode = E_ALLOC;
 	return 1;
     }
@@ -2773,7 +2729,7 @@ MODEL ar_func (const int *list, double ***pZ,
 
     dataset_drop_last_variables(arlist[0] + 1 + reglist[0], pZ, pdinfo);
 
-    if (ar_info_init(&ar, maxlag)) {
+    if (gretl_model_add_arinfo(&ar, maxlag)) {
 	ar.errcode = E_ALLOC;
     } else {
 	for (i=0; i<=arlist[0]; i++) { 

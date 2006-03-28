@@ -28,7 +28,7 @@
 
 #ifdef WIN32
 # include <glib.h>
-xmlDocPtr gretl_xmlParseFile (const char *fname)
+static xmlDocPtr gretl_xmlParseFile (const char *fname)
 {
     xmlDocPtr ptr = NULL;
     FILE *fp = fopen(fname, "r");

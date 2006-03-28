@@ -118,6 +118,24 @@ char *copy_datainfo_submask (const DATAINFO *pdinfo)
     return mask;
 }
 
+int write_model_submask (const MODEL *pmod, FILE *fp)
+{
+    int ret = 0;
+
+    if (pmod->submask != NULL) {
+	int i, n = get_submask_length(pmod->submask);
+
+	fprintf(fp, "<submask length=\"%d\">", n);
+	for (i=0; i<n; i++) {
+	    fprintf(fp, "%d ", (int) pmod->submask[i]);
+	}
+	fputs("</submask>\n", fp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
 int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp)
 {
     int ret = 0;

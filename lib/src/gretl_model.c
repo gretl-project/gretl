@@ -29,6 +29,7 @@
 struct model_data_item_ {
     char *key;
     void *ptr;
+    int type;
     size_t size;
     void (*destructor) (void *);
 };
@@ -54,7 +55,8 @@ static void free_model_data_item (model_data_item *item)
     free(item);
 }
 
-static model_data_item *create_data_item (const char *key, void *ptr, size_t size,
+static model_data_item *create_data_item (const char *key, void *ptr, 
+					  ModelDataType type, size_t size,
 					  void (*destructor) (void *))
 {
     model_data_item *item;
@@ -67,6 +69,7 @@ static model_data_item *create_data_item (const char *key, void *ptr, size_t siz
 	    item = NULL;
 	} else {
 	    item->ptr = ptr;
+	    item->type = type;
 	    item->size = size;
 	    item->destructor = destructor;
 	}
@@ -80,6 +83,7 @@ static model_data_item *create_data_item (const char *key, void *ptr, size_t siz
  * @pmod: pointer to #MODEL.
  * @key: key string for data, used in retrieval.
  * @ptr: data-pointer to be attached to model.
+ * @type: type of data to set.
  * @size: size of data in bytes.
  * @destructor: pointer to function that should be used to free
  * the data-pointer in question.
@@ -102,7 +106,8 @@ static model_data_item *create_data_item (const char *key, void *ptr, size_t siz
  */
 
 int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *ptr, 
-					  size_t size, void (*destructor) (void *))
+					  ModelDataType type, size_t size, 
+					  void (*destructor) (void *))
 {
     model_data_item **items;
     model_data_item *item;
@@ -113,7 +118,7 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
 
     pmod->data_items = items;
 
-    item = create_data_item(key, ptr, size, destructor);
+    item = create_data_item(key, ptr, type, size, destructor);
     if (item == NULL) return 1;
 
     pmod->data_items[n_items - 1] = item;
@@ -127,6 +132,7 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
  * @pmod: pointer to #MODEL.
  * @key: key string for data, used in retrieval.
  * @ptr: data-pointer to be attached to model.
+ * @type: type of the data to set.
  * @size: size of data in bytes.
  *
  * Attaches data to @pmod: the data can be retrieved later using
@@ -146,9 +152,11 @@ int gretl_model_set_data_with_destructor (MODEL *pmod, const char *key, void *pt
  * Returns: 0 on success, 1 on failure.
  */
 
-int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
+int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, 
+			  ModelDataType type, size_t size)
 {
-    return gretl_model_set_data_with_destructor(pmod, key, ptr, size, NULL);
+    return gretl_model_set_data_with_destructor(pmod, key, ptr, type, 
+						size, NULL);
 }
 
 /**
@@ -168,7 +176,8 @@ int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list)
     size_t size = (list[0] + 1) * sizeof *list;
 
     return gretl_model_set_data_with_destructor(pmod, key, (void *) list, 
-						size, NULL);
+						MODEL_DATA_LIST, size, 
+						NULL);
 }
 
 
@@ -201,7 +210,8 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
 
     *valp = val;
 
-    err = gretl_model_set_data(pmod, key, valp, sizeof(int));
+    err = gretl_model_set_data(pmod, key, valp, MODEL_DATA_INT, 
+			       sizeof(int));
     if (err) free(valp);
 
     return err;
@@ -237,7 +247,8 @@ int gretl_model_set_double (MODEL *pmod, const char *key, double val)
 
     *valp = val;
 
-    err = gretl_model_set_data(pmod, key, valp, sizeof(double));
+    err = gretl_model_set_data(pmod, key, valp, MODEL_DATA_DOUBLE,
+			       sizeof(double));
     if (err) free(valp);
 
     return err;
@@ -296,8 +307,11 @@ int gretl_model_get_int (const MODEL *pmod, const char *key)
     int i;
 
     for (i=0; i<pmod->n_data_items; i++) {
-	if (!strcmp(key, (pmod->data_items[i])->key)) {
-	    valp = (int *) (pmod->data_items[i])->ptr;
+	if (pmod->data_items[i]->type != MODEL_DATA_INT) {
+	    continue;
+	}
+	if (!strcmp(key, pmod->data_items[i]->key)) {
+	    valp = (int *) pmod->data_items[i]->ptr;
 	    return *valp;
 	}
     }
@@ -320,8 +334,11 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     int i;
 
     for (i=0; i<pmod->n_data_items; i++) {
-	if (!strcmp(key, (pmod->data_items[i])->key)) {
-	    valp = (double *) (pmod->data_items[i])->ptr;
+	if (pmod->data_items[i]->type != MODEL_DATA_DOUBLE) {
+	    continue;
+	}
+	if (!strcmp(key, pmod->data_items[i]->key)) {
+	    valp = (double *) pmod->data_items[i]->ptr;
 	    return *valp;
 	}
     }
@@ -1157,6 +1174,64 @@ void gretl_model_set_auxiliary (MODEL *pmod, ModelAuxCode aux)
     pmod->aux = aux;
 }
 
+/**
+ * gretl_model_add_arinfo:
+ * @pmod: pointer to model.
+ * @nterms: number of autoregressive coefficients.
+ *
+ * Performs initial setup for structure to hold info 
+ * on autoregressive coefficients.
+ * 
+ * Returns: 0 on success, 1 on error.
+ */
+
+int gretl_model_add_arinfo (MODEL *pmod, int nterms)
+{
+    int i;
+
+    pmod->arinfo = malloc(sizeof *pmod->arinfo);
+    if (pmod->arinfo == NULL) {
+	return 1;
+    }
+
+    if (nterms == 0) {
+	pmod->arinfo->arlist = NULL;
+	pmod->arinfo->rho = NULL;
+	pmod->arinfo->sderr = NULL;
+	return 0;
+    }
+
+    pmod->arinfo->arlist = gretl_list_new(nterms);
+    if (pmod->arinfo->arlist == NULL) {
+	free(pmod->arinfo);
+	pmod->arinfo = NULL;
+	return 1; 
+    }
+
+    pmod->arinfo->rho = malloc(nterms * sizeof *pmod->arinfo->rho);
+    if (pmod->arinfo->rho == NULL) {
+	free(pmod->arinfo->arlist);
+	free(pmod->arinfo);
+	pmod->arinfo = NULL;
+	return 1; 
+    }
+
+    pmod->arinfo->sderr = malloc(nterms * sizeof *pmod->arinfo->sderr);
+    if (pmod->arinfo->sderr == NULL) {
+	free(pmod->arinfo->arlist);
+	free(pmod->arinfo->rho);
+	free(pmod->arinfo);
+	pmod->arinfo = NULL;
+	return 1; 
+    }
+
+    for (i=0; i<nterms; i++) {
+	pmod->arinfo->sderr[i] = pmod->arinfo->rho[i] = NADBL;
+    }
+
+    return 0;
+}
+
 static void gretl_model_init_pointers (MODEL *pmod)
 {
     pmod->list = NULL;
@@ -1208,6 +1283,7 @@ void gretl_model_init (MODEL *pmod)
     pmod->ci = 0;
     pmod->ifc = 0;
     pmod->aux = AUX_NONE;
+    pmod->order = 0; /* remove this variable? */
 
     for (i=0; i<C_MAX; i++) {
 	pmod->criterion[i] = NADBL;
@@ -2109,6 +2185,82 @@ static int copy_model_params (MODEL *targ, const MODEL *src)
     return 0;
 }
 
+#ifndef cmplx
+typedef struct _cmplx cmplx;
+struct _cmplx {
+    double r;
+    double i;
+};
+#endif
+
+static void print_model_data_items (const MODEL *pmod, FILE *fp)
+{
+    model_data_item *item;
+    int i, j, nelem;
+
+    fprintf(fp, "<data-items count=\"%d\">\n", pmod->n_data_items);
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	item = pmod->data_items[i];
+	nelem = 0;
+
+	fprintf(fp, "<data-item key=\"%s\" type=\"%d\"", 
+		item->key, item->type);
+
+	if (item->type == MODEL_DATA_INT_ARRAY) {
+	    nelem = item->size / sizeof(int);
+	} else if (item->type == MODEL_DATA_DOUBLE_ARRAY) {
+	    nelem = item->size / sizeof(double);
+	} else if (item->type == MODEL_DATA_CMPLX_ARRAY) {
+	    nelem = item->size / sizeof(cmplx);
+	}
+
+	if (nelem > 0) {
+	    fprintf(fp, " count=\"%d\">\n", nelem);
+	} else {
+	    fputs(">\n", fp);
+	}
+
+	if (item->type == MODEL_DATA_INT) {
+	    fprintf(fp, "%d", *(int *) item->ptr);
+	} else if (item->type == MODEL_DATA_DOUBLE) {
+	    fprintf(fp, "%.15g", *(double *) item->ptr);
+	} else if (item->type == MODEL_DATA_INT_ARRAY) {
+	    int *vals = (int *) item->ptr;
+
+	    for (j=0; j<nelem; j++) {
+		fprintf(fp, "%d ", vals[i]);
+	    }
+	} else if (item->type == MODEL_DATA_DOUBLE_ARRAY) {
+	    double *vals = (double *) item->ptr;
+
+	    for (j=0; j<nelem; j++) {
+		fprintf(fp, "%.15g ", vals[i]);
+	    }	    
+	} else if (item->type == MODEL_DATA_CMPLX_ARRAY) {
+	    cmplx *vals = (cmplx *) item->ptr;
+	    
+	    for (j=0; j<nelem; j++) {
+		fprintf(fp, "%.15g %.15g ", vals[i].r, vals[i].i);
+	    }	    
+	} else if (item->type == MODEL_DATA_LIST) {
+	    int *list = (int *) item->ptr;
+
+	    for (j=0; j<=list[0]; j++) {
+		fprintf(fp, "%d ", list[i]);
+	    }
+	} else if (item->type == MODEL_DATA_STRING) {
+	    fprintf(fp, "%s", (char *) item->ptr);
+	} else {
+	    ; /* no-op: not handled */
+	}
+
+	fputs("</data-item>\n", fp);
+    }    
+
+    fputs("</data-items>\n", fp);
+}
+
 static int copy_model_data_items (MODEL *targ, const MODEL *src)
 {
     int i, n = src->n_data_items;
@@ -2314,14 +2466,8 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 
     fputs(">\n", fp);
 
-    /* 
-       smpl
-       char *name;
-       void *data;
-       DATASET *dataset;
-       int n_data_items;
-       model_data_item **data_items;
-    */
+    fprintf(fp, "<sample t1=\"%d\" t2=\"%d\"/>\n",
+	    pmod->smpl.t1, pmod->smpl.t2);
 
     gretl_push_c_numeric_locale();
 
@@ -2336,18 +2482,16 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 	gretl_xml_put_double_array("yhat", pmod->yhat, pmod->full_n, fp);
     }
 
-#if 0
-    if (src->submask != NULL && 
-	(targ->submask = copy_subsample_mask(src->submask)) == NULL) { 
-	return 1;
+    if (pmod->submask != NULL) {
+	write_model_submask(pmod, fp);
     }
 
-    if (src->missmask != NULL && 
-	(targ->missmask = copy_missmask(src)) == NULL) { 
-	return 1;
+    if (pmod->missmask != NULL) {
+	fputs("<missmask>", fp);
+	fputs(pmod->missmask, fp);
+	fputs("</missmask>\n", fp);
     }
-#endif
-
+	
     if (pmod->xpx != NULL) {
 	gretl_xml_put_double_array("xpx", pmod->xpx, m, fp);
     }
@@ -2356,12 +2500,15 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 	gretl_xml_put_double_array("vcv", pmod->vcv, m, fp);
     }
 
-#if 0
-    if (pmod->arinfo != NULL && 
-	(targ->arinfo = copy_ar_info(src->arinfo)) == NULL) {
-	return 1; 
+    if (pmod->arinfo != NULL && pmod->arinfo->arlist != NULL) {
+	int r = pmod->arinfo->arlist[0];
+
+	fputs("<arinfo>\n", fp);
+	gretl_xml_put_list("arlist", pmod->arinfo->arlist, fp);
+	gretl_xml_put_double_array("rho", pmod->arinfo->rho, r, fp);
+	gretl_xml_put_double_array("sderr", pmod->arinfo->sderr, r, fp);
+	fputs("</arinfo>\n", fp);
     }
-#endif
 
     if (pmod->ntests > 0 && pmod->tests != NULL) {
 	serialize_model_tests(pmod, fp);
@@ -2371,23 +2518,23 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 	gretl_xml_put_strings_array("params", 
 				    (const char **) pmod->params, 
 				    pmod->nparams, fp);
-    }    
-
-#if 0
-    if (pmod->n_data_items > 0) {
-	copy_model_data_items(targ, src);
-	if (targ->data_items == NULL) {
-	    return 1;
-	}
-	targ->n_data_items = src->n_data_items;
-    }
-#endif
+    } 
 
     if (pmod->list != NULL) {
 	gretl_xml_put_list("list", pmod->list, fp);
     }
 
+    if (pmod->n_data_items > 0) {
+	print_model_data_items(pmod, fp);
+    }
+
     fputs("</gretl-model>\n", fp);
+
+    /* 
+       elements of MODEL struct not handled here:
+       void *data;
+       DATASET *dataset;
+    */
 
     gretl_pop_c_numeric_locale();
 

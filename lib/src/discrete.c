@@ -127,7 +127,9 @@ static int add_slopes_to_model (MODEL *pmod, double fbx)
 	slopes[i] = pmod->coeff[i] * fbx;
     }
 
-    if (gretl_model_set_data(pmod, "slopes", slopes, ssize)) {
+    if (gretl_model_set_data(pmod, "slopes", slopes, 
+			     MODEL_DATA_DOUBLE_ARRAY,
+			     ssize)) {
 	free(slopes);
 	return 1;
     }
@@ -637,6 +639,7 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (act_pred != NULL) {
 	gretl_model_set_data(&dmod, "discrete_act_pred", act_pred, 
+			     MODEL_DATA_INT_ARRAY, 
 			     4 * sizeof *act_pred);
     }
 

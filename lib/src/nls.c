@@ -1075,6 +1075,7 @@ static int transcribe_nls_function (MODEL *pmod, const char *s)
     formula = gretl_strdup(s);
     if (s != NULL) {
 	gretl_model_set_data(pmod, "nl_regfunc", formula, 
+			     MODEL_DATA_STRING,
 			     strlen(formula) + 1);
     } else {
 	err = E_ALLOC;

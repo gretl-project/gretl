@@ -43,6 +43,8 @@ char *copy_datainfo_submask (const DATAINFO *pdinfo);
 
 int write_datainfo_submask (const DATAINFO *pdinfo, FILE *fp);
 
+int write_model_submask (const MODEL *pmod, FILE *fp);
+
 int submask_cmp (const char *m1, const char *m2);
 
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);

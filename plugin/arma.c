@@ -926,7 +926,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	/* compute and save polynomial roots */
 	roots = arma_roots(&ainfo, theta);
 	if (roots != NULL) {
-	    gretl_model_set_data(pmod, "roots", roots,
+	    gretl_model_set_data(pmod, "roots", roots, MODEL_DATA_CMPLX_ARRAY,
 				 (ainfo.p + ainfo.q) * sizeof *roots);
 	}
 

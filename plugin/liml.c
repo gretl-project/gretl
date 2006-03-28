@@ -171,13 +171,12 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
 {
     double *Xi = NULL;
     double *ymod = NULL;
-    int ysize = n * sizeof *ymod;
     double yt, xit, eit;
     int m = list[0] - 1;
     int i, j, t;
     int err = 0;
 
-    ymod = malloc(ysize);
+    ymod = malloc(n * sizeof *ymod);
     if (ymod == NULL) {
 	return 1;
     }
@@ -208,7 +207,9 @@ liml_set_model_data (MODEL *pmod, const gretl_matrix *E,
     }
 
     if (!err) {
-	err = gretl_model_set_data(pmod, "liml_y", ymod, ysize);
+	err = gretl_model_set_data(pmod, "liml_y", ymod, 
+				   MODEL_DATA_DOUBLE_ARRAY,
+				   n * sizeof *ymod);
     }
 
     if (err) {

@@ -223,8 +223,6 @@ static void open_boxplot (gui_obj *gobj);
 static gboolean session_icon_click (GtkWidget *widget, 
 				    GdkEventButton *event,
 				    gpointer data);
-static void free_session_text (SESSION_TEXT *text);
-static void free_session_model (SESSION_MODEL *mod);
 static int real_delete_model_from_session (SESSION_MODEL *model);
 #ifndef OLD_GTK
 static void rename_session_object (gui_obj *obj, const char *newname);
@@ -242,7 +240,15 @@ void set_session_saved (int val)
     session_saved = val;
 }
 
-static SESSION_TEXT *session_text_new (const char *name)
+/* constructors and destructors for session data-objects */
+
+static void free_session_text (SESSION_TEXT *text)
+{
+    free(text->buf);
+    free(text);
+}
+
+static SESSION_TEXT *session_text_new (const char *name, char *buf)
 {
     SESSION_TEXT *text = mymalloc(sizeof *text);
     
@@ -251,10 +257,17 @@ static SESSION_TEXT *session_text_new (const char *name)
 	if (name != NULL) {
 	    strncat(text->name, name, OBJNAMLEN - 1);
 	}
-	text->buf = NULL;
+	text->buf = buf;
     }
 
     return text;
+}
+
+static void free_session_model (SESSION_MODEL *mod)
+{
+    /* note: remove a reference to this model */
+    gretl_object_unref(mod->ptr, mod->type);
+    free(mod);
 }
 
 static SESSION_MODEL *session_model_new (void *ptr, const char *name, 
@@ -271,13 +284,22 @@ static SESSION_MODEL *session_model_new (void *ptr, const char *name,
 	} 
 	*mod->name = 0;
 	strncat(mod->name, name, OBJNAMLEN - 1);
+
+	/* note: take care of adding a refence to model */
+	gretl_object_ref(ptr, type);
     }
 
     return mod;
 }
 
+static void free_session_graph (SESSION_GRAPH *graph)
+{
+    /* no allocated members at present */
+    free(graph);
+}
+
 static SESSION_GRAPH *session_graph_new (const char *name, const char *fname, 
-					 GretlObjType type)
+					 int ID, GretlObjType type)
 {
     SESSION_GRAPH *graph = mymalloc(sizeof *graph);
     
@@ -290,11 +312,65 @@ static SESSION_GRAPH *session_graph_new (const char *name, const char *fname,
 	if (fname != NULL) {
 	    strncat(graph->fname, fname, MAXLEN - 1);
 	}	
-	graph->ID = 0;
+	graph->ID = ID;
 	graph->type = type;
     }
 
     return graph;
+}
+
+static int session_append_text (SESSION_TEXT *txt)
+{
+    SESSION_TEXT **texts;
+    int nt = session.ntexts;
+
+    texts = myrealloc(session.texts, (nt + 1) * sizeof *texts);
+    if (texts == NULL) {
+	free_session_text(txt);
+	return 1;
+    }
+
+    session.texts = texts;
+    session.texts[nt] = txt;
+    session.ntexts += 1;
+
+    return 0;
+}
+
+static int session_append_model (SESSION_MODEL *mod)
+{
+    SESSION_MODEL **models;
+    int nm = session.nmodels;
+
+    models = myrealloc(session.models, (nm + 1) * sizeof *models);
+    if (models == NULL) {
+	free_session_model(mod);
+	return 1;
+    }
+
+    session.models = models;
+    session.models[nm] = mod;
+    session.nmodels += 1;
+
+    return 0;
+}
+
+static int session_append_graph (SESSION_GRAPH *graph)
+{
+    SESSION_GRAPH **graphs;
+    int ng = session.ngraphs;
+
+    graphs = myrealloc(session.graphs, (ng + 1) * sizeof *graphs);
+    if (graphs == NULL) {
+	free_session_graph(graph);
+	return 1;
+    }
+
+    session.graphs = graphs;
+    session.graphs[ng] = graph;
+    session.ngraphs += 1;
+
+    return 0;
 }
 
 /* first arg should be a MAXLEN string */
@@ -327,66 +403,112 @@ static void edit_session_notes (void)
     }
 }
 
-static int look_up_graph_by_name (const char *grname)
+static SESSION_MODEL *get_session_model_by_name (const char *name)
+{
+    int i;
+
+    for (i=0; i<session.nmodels; i++) {
+	if (!strcmp(name, session.models[i]->name)) {
+	    return session.models[i];
+	}
+    }
+
+    return NULL;
+}
+
+static SESSION_GRAPH *get_session_graph_by_name (const char *name)
 {
     int i;
 
     for (i=0; i<session.ngraphs; i++) {
-	if (!strcmp(grname, session.graphs[i]->name)) {
-	    return i;
+	if (!strcmp(name, session.graphs[i]->name)) {
+	    return session.graphs[i];
 	}
     }
-    return -1;
+
+    return NULL;
 }
 
-static int look_up_text_by_name (const char *tname)
+static SESSION_TEXT *get_session_text_by_name (const char *name)
 {
     int i;
 
     for (i=0; i<session.ntexts; i++) {
-	if (!strcmp(tname, session.texts[i]->name)) {
-	    return i;
+	if (!strcmp(name, session.texts[i]->name)) {
+	    return session.texts[i];
 	}
     }
-    return -1;
+
+    return NULL;
 }
 
-int real_add_graph_to_session (const char *fname, const char *grname,
-			       GretlObjType type)
+int real_add_text_to_session (PRN *prn, const char *tname)
 {
-    int ng = look_up_graph_by_name(grname);
+    SESSION_TEXT *text = get_session_text_by_name(tname);
+    char *buf = g_strdup(gretl_print_get_buffer(prn));
     int replace = 0;
 
-    if (ng >= 0) {
+    if (text != NULL) {
+	free(text->buf);
+	text->buf = buf;
 	replace = 1;
-	session.graphs[ng]->type = type;
-	strcpy(session.graphs[ng]->fname, fname);	
-	session.graphs[ng]->ID = plot_count++;
     } else {
-	SESSION_GRAPH **graphs;
-
-	ng = session.ngraphs;
-
-	graphs = myrealloc(session.graphs, (ng + 1) * sizeof *graphs);
-	if (graphs == NULL) {
+	text = session_text_new(tname, buf);
+	if (text == NULL || session_append_text(text)) {
 	    return ADD_OBJECT_FAIL;
 	}
-
-	session.graphs = graphs;
-
-	session.graphs[ng] = session_graph_new(grname, fname, type);
-	if (session.graphs[ng] == NULL) {
-	    return ADD_OBJECT_FAIL;
-	}
-
-	session.graphs[ng]->ID = plot_count++;
-	session.ngraphs += 1;
     }
     
     session_changed(1);
 
     if (icon_list != NULL && !replace) {
-	session_add_icon(session.graphs[ng], type, ICON_ADD_SINGLE);
+	session_add_icon(text, GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
+    }
+
+    return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
+}
+
+
+static int real_add_model_to_session (void *ptr, const char *name,
+				      GretlObjType type)
+{
+    SESSION_MODEL *mod;
+
+    mod = session_model_new(ptr, name, type);
+    if (mod == NULL || session_append_model(mod)) {
+	return 1;
+    } 
+
+    if (icon_list != NULL) {
+	session_add_icon(mod, type, ICON_ADD_SINGLE);
+    }
+
+    return 0;
+}
+
+int real_add_graph_to_session (const char *fname, const char *grname,
+			       GretlObjType type)
+{
+    SESSION_GRAPH *graph = get_session_graph_by_name(grname);
+    int replace = 0;
+
+    if (graph != NULL) {
+	graph->type = type;
+	strcpy(graph->fname, fname);	
+	graph->ID = plot_count++;
+	replace = 1;
+    } else {
+	graph = session_graph_new(grname, fname, plot_count++, 
+				  type);
+	if (graph == NULL || session_append_graph(graph)) {
+	    return ADD_OBJECT_FAIL;
+	}
+    }
+    
+    session_changed(1);
+
+    if (icon_list != NULL && !replace) {
+	session_add_icon(graph, type, ICON_ADD_SINGLE);
     }
 
     return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
@@ -420,9 +542,9 @@ static int session_dir_ok (void)
 
 void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
 {
-    char pltname[OBJNAMLEN];
-    char targname[MAXLEN];
+    char fname[OBJNAMLEN];
     char grname[OBJNAMLEN];
+    char grpath[MAXLEN];
     int boxplot_count;
     
     errno = 0;
@@ -437,26 +559,26 @@ void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
     if (type == GRETL_OBJ_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
-	sprintf(pltname, "graph.%d", plot_count + 1);
-	session_file_make_path(targname, pltname);
+	sprintf(fname, "graph.%d", plot_count + 1);
+	session_file_make_path(grpath, fname);
 	sprintf(grname, "%s %d", _("Graph"), plot_count + 1);
 	/* move temporary plot file to permanent */
-	if (copyfile(plot->fname, targname)) {
+	if (copyfile(plot->fname, grpath)) {
 	    return;
 	} 
-	if (remove_png_term_from_plotfile(targname, plot)) {
+	if (remove_png_term_from_plotfile(grpath, plot)) {
 	    errbox(_("Failed to copy graph file"));
 	    return;
 	}
 	remove(plot->fname);
-	strcpy(plot->fname, pltname);
+	strcpy(plot->fname, fname);
 	mark_plot_as_saved(plot);	
     } else if (type == GRETL_OBJ_PLOT) {
 	boxplot_count = augment_boxplot_count();
-	sprintf(pltname, "plot.%d", boxplot_count);
-	session_file_make_path(targname, pltname);
+	sprintf(fname, "plot.%d", boxplot_count);
+	session_file_make_path(grpath, fname);
 	sprintf(grname, "%s %d", _("Boxplot"), boxplot_count);
-	if (copyfile(boxplottmp, targname)) {
+	if (copyfile(boxplottmp, grpath)) {
 	    return;
 	} 
 	remove(boxplottmp);
@@ -465,81 +587,7 @@ void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
 	return;
     }
 
-    real_add_graph_to_session(pltname, grname, type);
-}
-
-static int real_add_model_to_session (void *ptr, const char *name,
-				      GretlObjType type)
-{
-    SESSION_MODEL **models;
-    SESSION_MODEL *newmod;
-    int nm = session.nmodels; 
-
-    newmod = session_model_new(ptr, name, type);
-    if (newmod == NULL) {
-	return 1;
-    }    
-
-    models = myrealloc(session.models, (nm + 1) * sizeof *models);
-    if (models == NULL) {
-	free_session_model(newmod);
-	return 1;
-    }
-
-    session.models = models;
-    session.models[nm] = newmod;
-    session.nmodels += 1;
-
-    /* note: augment refcount for this model */
-    gretl_object_ref(ptr, type);
-
-    /* add model icon to session display */
-    if (icon_list != NULL) {
-	session_add_icon(session.models[nm], type, ICON_ADD_SINGLE);
-    }
-
-    return 0;
-}
-
-int real_add_text_to_session (PRN *prn, const char *tname)
-{
-    const char *pbuf;
-    int nt = look_up_text_by_name(tname);
-    int replace = 0;
-
-    if (nt >= 0) {
-	pbuf = gretl_print_get_buffer(prn);
-	free(session.texts[nt]->buf);
-	session.texts[nt]->buf = g_strdup(pbuf);
-	replace = 1;
-    } else {
-	SESSION_TEXT **texts;
-
-	nt = session.ntexts;
-	texts = myrealloc(session.texts, (nt + 1) * sizeof *texts);
-	if (texts == NULL) {
-	    return ADD_OBJECT_FAIL;
-	}
-
-	session.texts = texts;
-	session.texts[nt] = session_text_new(tname);
-	if (session.texts[nt] == NULL) {
-	    return ADD_OBJECT_FAIL;
-	}
-
-	pbuf = gretl_print_get_buffer(prn);
-	session.texts[nt]->buf = g_strdup(pbuf);
-
-	session.ntexts += 1;
-    }
-    
-    session_changed(1);
-
-    if (icon_list != NULL && !replace) {
-	session_add_icon(session.texts[nt], GRETL_OBJ_TEXT, ICON_ADD_SINGLE);
-    }
-
-    return (replace)? ADD_OBJECT_REPLACE : ADD_OBJECT_OK;
+    real_add_graph_to_session(fname, grname, type);
 }
 
 void *get_session_object_by_name (const char *name, GretlObjType *type)
@@ -583,33 +631,20 @@ static SESSION_MODEL *get_session_model_by_data (void *ptr)
     return NULL;
 }
 
-static SESSION_MODEL *get_session_model_by_name (const char *name)
-{
-    int i;
-
-    for (i=0; i<session.nmodels; i++) {
-	if (!strcmp(name, session.models[i]->name)) {
-	    return session.models[i];
-	}
-    }
-
-    return NULL;
-}
-
 int maybe_add_model_to_session (void *ptr, GretlObjType type)
 {
     SESSION_MODEL *oldmod;
     const char *name;
 
     if (get_session_model_by_data(ptr)) {
+	/* model already present */
 	return 1;
     }
 
-    name = gretl_object_get_name(ptr, type);
-
-    /* check to see if there's already a model with
-       the same name: if so, delete it
+    /* check to see if there's already a model with the same name: if
+       so, delete it
     */
+    name = gretl_object_get_name(ptr, type);
     oldmod = get_session_model_by_name(name);
     if (oldmod != NULL) {
 	real_delete_model_from_session(oldmod);
@@ -868,13 +903,6 @@ void verify_clear_data (void)
     close_session();
 }
 
-static void free_session_model (SESSION_MODEL *mod)
-{
-    /* remove a reference to this model */
-    gretl_object_unref(mod->ptr, mod->type);
-    free(mod);
-}
-
 static const char *readd (DIR *d)
 {
     struct dirent *e = readdir(d);
@@ -916,6 +944,9 @@ void free_session (void)
     }
 
     if (session.graphs) {
+	for (i=0; i<session.ngraphs; i++) {
+	    free_session_graph(session.graphs[i]);
+	}
 	free(session.graphs);
 	session.graphs = NULL;
     }
@@ -1059,8 +1090,6 @@ static int save_session_dataset (void)
     DATAINFO *dinfo = NULL;
     int t1, t2;
     int err = 0;
-
-    /* FIXME submask */
 
     /* dump current dataset into session dir */
     if (complex_subsampled()) {
@@ -1373,12 +1402,6 @@ static int real_delete_model_from_session (SESSION_MODEL *model)
     session_changed(1);
 
     return 0;
-}
-
-static void free_session_text (SESSION_TEXT *text)
-{
-    free(text->buf);
-    free(text);
 }
 
 static int real_delete_text_from_session (SESSION_TEXT *junk)
