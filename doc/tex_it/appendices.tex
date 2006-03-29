@@ -1,18 +1,17 @@
 \chapter{Dettagli sui file di dati}
 \label{app-datafile}
 
-
-\section{Formato interno di base}
+\section{Formato interno di gretl}
 \label{native}
 
-Nel formato dati interno di \app{Gretl} un dataset è immagazzinato in
-XML (extensible mark-up language).  I file di dati sono conformi al
+Il formato dati usato internamente da \app{Gretl} per i dataset è
+basato su XML (extensible mark-up language).  I file di dati sono conformi al
 semplice DTD (document type definition) contenuto nel file
 \verb+gretldata.dtd+, fornito con la distribuzione di \app{Gretl} e
 installato nella directory dei dati di sistema (ad es.
 \verb+/usr/share/gretl/data+ su Linux). I file di dati possono essere
 non compressi o compressi con gzip; oltre ai valori dei dati,
-contengono altre informazioni aggiuntive, come i nomi e le descrizioni
+essi contengono altre informazioni aggiuntive, come i nomi e le descrizioni
 delle variabili, la frequenza dei dati e così via.
 
 La maggior parte degli utenti probabilmente non avrà bisogno di
@@ -26,16 +25,16 @@ invece contiene anche delle etichette per le osservazioni.
 \label{traddata}
 
 Per compatibilità all'indietro, \app{Gretl} può elaborare anche file
-di dati nel formato ``tradizionale'' ereditato dal programma \app{ESL}
+di dati nel formato ``tradizionale'' usato dal programma \app{ESL}
 di Ramanathan.  In questo formato (che era quello predefinito nelle
 versioni di \app{Gretl} precedenti alla 0.98) un dataset è
 rappresentato da due file: uno contiene i dati veri e propri, l'altro
 contiene la descrizione dei dati e le modalità per la loro lettura.
-Per essere più specifici:
+In particolare:
 
 \begin{enumerate}
 \item \emph{Dati veri e propri}: una matrice rettangolare di numeri
-  separati da spazio vuoto. Ogni colonna rappresenta una variabile,
+  separati da spazi vuoti. Ogni colonna rappresenta una variabile,
   ogni riga un'osservazione per ognuna delle variabili (come in un
   foglio elettronico). Le colonne dei dati possono essere separate da
   spazi o caratteri tab. Il nome del file deve avere l'estensione
@@ -151,10 +150,10 @@ veri e propri. Ecco due esempi di voci contenute in un file
 
 Il primo campo è il nome della serie, il secondo è una descrizione
 della serie (al massimo di 128 caratteri). Sulla seconda riga, il
-primo campo è un codice di frequenza: \verb+M+ per mensile, \verb+Q+
-per trimestrale, \verb+A+ per annuale, \verb+B+ per
+primo campo è un codice di frequenza: \verb+M+ per dati mensili, \verb+Q+
+per dati trimestrali, \verb+A+ per dati annuali, \verb+B+ per dati
 giornalieri-lavorativi (giornalieri con cinque giorni a settimana) e
-\verb+D+ per giornalieri (sette giorni a settimana). Al momento non
+\verb+D+ per dati giornalieri (sette giorni a settimana). Al momento non
 vengono accettati altri codici di frequenza. Quindi segue la data
 iniziale (con due cifre che seguono il punto nei dati mensili, una per
 i dati trimestrali, nessuna per quelli annuali), uno spazio, un
@@ -286,7 +285,7 @@ seguenti modifiche.
   con la regressione sono mostrate con 6 cifre significative.
 \item I test eseguiti dai recensori indicavano che l'accuratezza
   numerica di \app{Gretl} su MS Windows era minore che su Linux.
-  Ad esempio, i dati Longley (un dataset notoriamente ``mal-condizionato'' usato
+  Ad esempio, sui dati Longley (un dataset notoriamente ``mal-condizionato'' usato
   spesso per testare i programmi econometrici) la versione Windows di Gretl
   produceva alcuni coefficienti con la settima cifra errata, mentre gli stessi
   coefficienti risultavano corretti su Linux. Questa anomalia è stata corretta
@@ -345,8 +344,8 @@ esiste un file di questo tipo, viene letto da R all'avvio). Se la
 directory contiene una versione personale di \verb+.Rprofile+, il file
 originale viene rinominato temporaneamente come
 \verb+.Rprofile.gretltmp+ e viene ripristinato all'uscita da
-\app{Gretl} (se qualcuno ha un'idea migliore per questa operazione, mi
-farebbe piacere ascoltarla).
+\app{Gretl} (se qualcuno ha un'idea migliore per questa operazione, è
+pregato di segnalarla).
   
 Inoltre, il modo esatto in cui R viene avviato dipende dalla variabile
 interna \verb+Rcommand+ di \app{Gretl}, il cui valore deve essere
