@@ -406,7 +406,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     r = tab->rows;
     c = tab->cols;
     double x, y;
-    double pearson;
+    double pearson = 0.0;
 
     pprintf(prn,"\n       ");
     for (j=0; j<c; j++) {
@@ -441,7 +441,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 		if (opt & OPT_T) {
 		    y = (double) (tab->rtotal[i] * tab->ctotal[j]) / tab->n;
 		    x = (double) (tab->f)[i][j] - y;
-		    pearson_chisq += x * x / y;
+		    pearson += x * x / y;
 		}
 	    }
 
@@ -466,6 +466,17 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     }
     
     pprintf(prn, "%6d\n", tab->n);
+
+    if(tab->missing) {
+	pprintf(prn, "\n%d missing values\n", tab->missing);
+    }
+
+    if (opt & OPT_T) {
+	int df = (r - 1) * (c - 1);
+
+	pprintf(prn, "\nPearson chi-square test = %g (%d df, p-value = %g)\n", 
+		pearson, df, chisq(pearson, df));
+    }
 }
 
 /**
