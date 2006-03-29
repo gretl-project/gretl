@@ -22,11 +22,11 @@
    to Allin Cottrell; thanks also to Stephen Moshier for cephes.
 */
 
+#include "../cephes/polrt.c"
+
 #include "libgretl.h"
 #include "bhhh_max.h"
 #include "libset.h"
-
-#include "../cephes/polrt.c"
 
 #define ARMA_DEBUG 0
 

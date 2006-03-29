@@ -17,11 +17,11 @@
  *
  */
 
+#include "../cephes/mconf.h"
+
 #include "libgretl.h"
 #include "bhhh_max.h"
 #include "libset.h"
-
-#include "../cephes/mconf.h"
 
 #include <glib.h>
 

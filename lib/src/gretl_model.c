@@ -180,6 +180,27 @@ int gretl_model_set_list_as_data (MODEL *pmod, const char *key, int *list)
 						NULL);
 }
 
+/**
+ * gretl_model_set_string_as_data:
+ * @pmod: pointer to #MODEL.
+ * @key: key string, used in retrieval.
+ * @str: string to attach.
+ *
+ * Attaches @str to @pmod as data, recoverable via the key @key 
+ * using gretl_model_get_data().
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
+int gretl_model_set_string_as_data (MODEL *pmod, const char *key, char *str)
+{
+    size_t size = strlen(str) + 1;
+
+    return gretl_model_set_data_with_destructor(pmod, key, (void *) str, 
+						MODEL_DATA_STRING, size, 
+						NULL);
+}
+
 
 /**
  * gretl_model_set_int:
@@ -1660,13 +1681,13 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 	got += gretl_xml_get_prop_as_int(cur, "order", &test.order);
 	got += gretl_xml_get_prop_as_double(cur, "value", &test.value);
 	got += gretl_xml_get_prop_as_double(cur, "pvalue", &test.pvalue);
-	test.param = gretl_xml_get_prop_as_string(cur, "param");
+	got += gretl_xml_get_prop_as_string(cur, "param", &test.param);
 	if (got < 7) {
 	    err = E_DATA;
 	} else {
 	    err = real_add_test_to_model(pmod, &test);
 	}
-	free(test.param);
+	free(test.param); /* ?? */
 	cur = cur->next;
     }
 
@@ -2184,14 +2205,6 @@ static int copy_model_params (MODEL *targ, const MODEL *src)
 
     return 0;
 }
-
-#ifndef cmplx
-typedef struct _cmplx cmplx;
-struct _cmplx {
-    double r;
-    double i;
-};
-#endif
 
 static void print_model_data_items (const MODEL *pmod, FILE *fp)
 {

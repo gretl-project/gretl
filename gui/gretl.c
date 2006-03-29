@@ -828,7 +828,7 @@ int main (int argc, char *argv[])
 
     /* opening a script from the command line? */
     if (tryfile[0] != '\0') { 
-	if (fype == GRETL_SESSION) {
+	if (ftype == GRETL_SESSION) {
 	    do_open_session();
 	} else {
 	    do_open_script();

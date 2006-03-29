@@ -198,6 +198,14 @@ typedef enum {
     T_MATHMAX
 } GretlMathFunc;
 
+#ifndef CMPLX
+typedef struct _cmplx cmplx;
+struct _cmplx {
+    double r;
+    double i;
+};
+#endif
+
 typedef unsigned long gretlopt;
 
 typedef struct VARINFO_ VARINFO;

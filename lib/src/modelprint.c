@@ -23,14 +23,6 @@
 #include "libset.h"
 #include "system.h"
 
-#ifndef cmplx
-typedef struct _cmplx cmplx;
-struct _cmplx {
-    double r;
-    double i;
-};
-#endif
-
 #define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || a == AUX_AR)
 
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 

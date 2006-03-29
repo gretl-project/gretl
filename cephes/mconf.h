@@ -101,6 +101,8 @@ typedef struct {
     double i;
 } cmplx;
 
+#define CMPLX
+
 #ifdef HAVE_LONG_DOUBLE
 /* Long double complex numeral.  */
 typedef struct {

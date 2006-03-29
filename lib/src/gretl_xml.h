@@ -42,20 +42,32 @@ void gretl_xml_put_strings_array (const char *tag, const char **strs, int n,
 void gretl_xml_put_list (const char *tag, const int *list, FILE *fp);
 
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
-			       int *targ);
+			       int *i);
 
 int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
-				 unsigned char *targ);
+				 unsigned char *u);
 
 int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
-				  double *targ);
+				  double *x);
 
-char *gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag);
+int gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag,
+				  char **pstr);
+
+int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i);
+
+int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc, 
+			       double *x);
 
 int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err);
 
-double *gretl_xml_get_doubles_array (xmlNodePtr node, xmlDocPtr doc,
-				     int *err);
+int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc, 
+			       char **pstr);
+
+double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
+				    int *err);
+
+cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
+				  int *err);
 
 #endif /* !GRETLCLI */
 

@@ -269,20 +269,20 @@ void gretl_xml_put_list (const char *tag, const int *list, FILE *fp)
  * gretl_xml_get_prop_as_int:
  * @node: XML node pointer.
  * @tag: name by which integer property is known.
- * @targ: location to write int value.
+ * @i: location to write int value.
  * 
  * Returns: 1 if an int is found and read successfully, 0
  * otherwise.
  */
 
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
-			       int *targ)
+			       int *i)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) tag);
     int ret = 0;
 
     if (tmp != NULL) {
-	*targ = atoi((const char *) tmp);
+	*i = atoi((const char *) tmp);
 	free(tmp);
 	ret = 1;
     }
@@ -294,20 +294,20 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
  * gretl_xml_get_prop_as_uchar:
  * @node: XML node pointer.
  * @tag: name by which unsigned character property is known.
- * @targ: location to write value.
+ * @u: location to write value.
  * 
  * Returns: 1 if an unsigned char is found and read successfully, 0
  * otherwise.
  */
 
 int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
-				 unsigned char *targ)
+				 unsigned char *u)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) tag);
     int ret = 0;
 
     if (tmp != NULL) {
-	*targ = (unsigned char) atoi((const char *) tmp);
+	*u = (unsigned char) atoi((const char *) tmp);
 	free(tmp);
 	ret = 1;
     }
@@ -319,20 +319,20 @@ int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
  * gretl_xml_get_prop_as_double:
  * @node: XML node pointer.
  * @tag: name by which floating-point property is known.
- * @targ: location to write double value.
+ * @x: location to write double value.
  * 
  * Returns: 1 if a double is found and read successfully, 0
  * otherwise.
  */
 
 int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
-				  double *targ)
+				  double *x)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) tag);
     int ret = 0;
 
     if (tmp != NULL) {
-	*targ = atof((const char *) tmp);
+	*x = atof((const char *) tmp);
 	free(tmp);
 	ret = 1;
     }
@@ -344,15 +344,103 @@ int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
  * gretl_xml_get_prop_as_string:
  * @node: XML node pointer.
  * @tag: name by which string property is known.
+ * @pstr: location to write string.
  * 
- * Returns: allocated string, if found, else %NULL.
+ * Returns: 1 if a string is found and read successfully, 0
+ * otherwise.
  */
 
-char *gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag)
+int gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag,
+				  char **pstr)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
 
-    return (char *) tmp;
+    if (tmp != NULL) {
+	*pstr = (char *) tmp;
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_node_get_int:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @i: location to receive integer.
+ * 
+ * Returns: 1 if an int is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i)
+{
+    xmlChar *tmp;
+    int ret = 0;
+
+    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    if (tmp != NULL) {
+	*i = atoi((const char *) tmp);
+	free(tmp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_node_get_double:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @x: location to receive double.
+ * 
+ * Returns: 1 if a double is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc, 
+			       double *x)
+{
+    xmlChar *tmp;
+    int ret = 0;
+
+    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    if (tmp != NULL) {
+	*x = atof((const char *) tmp);
+	free(tmp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
+ * gretl_xml_node_get_string:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @pstr: location to receive string.
+ * 
+ * Returns: 1 if a string is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc, 
+			       char **pstr)
+{
+    xmlChar *tmp;
+    int ret = 0;
+
+    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    if (tmp != NULL) {
+	*pstr = (char *) tmp;
+	ret = 1;
+    }
+
+    return ret;
 }
 
 /**
@@ -411,7 +499,7 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
 }
 
 /**
- * gretl_xml_get_doubles_array:
+ * gretl_xml_get_double_array:
  * @node: XML node pointer.
  * @doc: XML document pointer.
  * @err: location to receive error code.
@@ -420,8 +508,8 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
  * failure.
  */
 
-double *gretl_xml_get_doubles_array (xmlNodePtr node, xmlDocPtr doc,
-				     int *err)
+double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
+				    int *err)
 {
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
     const char *p;
@@ -462,6 +550,60 @@ double *gretl_xml_get_doubles_array (xmlNodePtr node, xmlDocPtr doc,
     }
 
     return x;
+}
+
+/**
+ * gretl_xml_get_cmplx_array:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @err: location to receive error code.
+ * 
+ * Returns: allocated array of cmplx (complex numbers) read from 
+ * @node, or %NULL on failure.
+ */
+
+cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
+				  int *err)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) "count");
+    const char *p;
+    cmplx *cx = NULL;
+    int i, n;
+
+    if (tmp != NULL) {
+	n = atoi((const char *) tmp);
+	free(tmp);
+	if (n > 0) {
+	    cx = malloc(n * sizeof *cx);
+	    if (cx == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+		if (tmp == NULL) {
+		    *err = E_DATA;
+		} else {
+		    p = (const char *) tmp;
+		    p += strspn(p, " \r\n");
+		    for (i=0; i<n && !*err; i++) {
+			if (sscanf(p, "%lf %lf", &cx[i].r, &cx[i].i) != 2) {
+			    *err = E_DATA;
+			}
+			/* skip to end of number */
+			p += strspn(p, " \r\n");
+			p += strcspn(p, " \r\n");
+		    }
+		    free(tmp);
+		}
+	    }
+	}
+    }
+
+    if (cx != NULL && *err) {
+	free(cx);
+	cx = NULL;
+    }
+
+    return cx;
 }
 
 static const char *get_gretl_encoding (void)
