@@ -498,10 +498,100 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
     return list;
 }
 
+static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
+				  ModelDataType type,
+				  int *nelem, int *err)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) "count");
+    const char *p;
+    int *ivals = NULL;
+    double *xvals = NULL;
+    cmplx *cvals = NULL;
+    void *ptr = NULL;
+    int i, n = 0;
+
+    if (tmp != NULL) {
+	n = atoi((const char *) tmp);
+	free(tmp);
+	if (n > 0) {
+	    if (type == MODEL_DATA_INT_ARRAY) {
+		ivals = malloc(n * sizeof *ivals);
+		ptr = ivals;
+	    } else if (type == MODEL_DATA_DOUBLE_ARRAY) {
+		xvals = malloc(n * sizeof *xvals);
+		ptr = xvals;
+	    } else if (type == MODEL_DATA_CMPLX_ARRAY) {
+		cvals = malloc(n * sizeof *cvals);
+		ptr = cvals;
+	    }
+	    if (ptr == NULL) {
+		*err = E_ALLOC;
+	    } else {
+		tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+		if (tmp == NULL) {
+		    *err = E_DATA;
+		} else {
+		    p = (const char *) tmp;
+		    p += strspn(p, " \r\n");
+		    for (i=0; i<n && !*err; i++) {
+			if (type == MODEL_DATA_INT_ARRAY) {
+			    if (sscanf(p, "%d", &ivals[i]) != 1) {
+				*err = E_DATA;
+			    }
+			} else if (type == MODEL_DATA_DOUBLE_ARRAY) {
+			    if (sscanf(p, "%lf", &xvals[i]) != 1) {
+				*err = E_DATA;
+			    }
+			} else if (type == MODEL_DATA_CMPLX_ARRAY) {
+			    if (sscanf(p, "%lf %lf", &cvals[i].r, &cvals[i].i) != 2) {
+				*err = E_DATA;
+			    }
+			}			    
+			/* skip to end of number */
+			p += strspn(p, " \r\n");
+			p += strcspn(p, " \r\n");
+		    }
+		    free(tmp);
+		}
+	    }
+	}
+    }
+
+    if (ptr != NULL && *err) {
+	free(ptr);
+	ptr = NULL;
+    }
+
+    if (!*err) {
+	*nelem = n;
+    }
+
+    return ptr;
+}
+
+/**
+ * gretl_xml_get_int_array:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @nelem: location to receive number of elements in array.
+ * @err: location to receive error code.
+ * 
+ * Returns: allocated array of integers read from @node, or %NULL on
+ * failure.
+ */
+
+int *gretl_xml_get_int_array (xmlNodePtr node, xmlDocPtr doc,
+			      int *nelem, int *err)
+{
+    return gretl_xml_get_array(node, doc, MODEL_DATA_INT_ARRAY,
+			       nelem, err);
+}
+
 /**
  * gretl_xml_get_double_array:
  * @node: XML node pointer.
  * @doc: XML document pointer.
+ * @nelem: location to receive number of elements in array.
  * @err: location to receive error code.
  * 
  * Returns: allocated array of doubles read from @node, or %NULL on
@@ -509,53 +599,17 @@ int *gretl_xml_node_get_list (xmlNodePtr node, xmlDocPtr doc, int *err)
  */
 
 double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
-				    int *err)
+				    int *nelem, int *err)
 {
-    xmlChar *tmp = xmlGetProp(node, (XUC) "count");
-    const char *p;
-    double *x = NULL;
-    int i, n;
-
-    if (tmp != NULL) {
-	n = atoi((const char *) tmp);
-	free(tmp);
-	if (n > 0) {
-	    x = malloc(n * sizeof *x);
-	    if (x == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-		if (tmp == NULL) {
-		    *err = E_DATA;
-		} else {
-		    p = (const char *) tmp;
-		    p += strspn(p, " \r\n");
-		    for (i=0; i<n && !*err; i++) {
-			if (sscanf(p, "%lf", &x[i]) != 1) {
-			    *err = E_DATA;
-			}
-			/* skip to end of number */
-			p += strspn(p, " \r\n");
-			p += strcspn(p, " \r\n");
-		    }
-		    free(tmp);
-		}
-	    }
-	}
-    }
-
-    if (x != NULL && *err) {
-	free(x);
-	x = NULL;
-    }
-
-    return x;
+    return gretl_xml_get_array(node, doc, MODEL_DATA_DOUBLE_ARRAY,
+			       nelem, err);
 }
 
 /**
  * gretl_xml_get_cmplx_array:
  * @node: XML node pointer.
  * @doc: XML document pointer.
+ * @nelem: location to receive number of elements in array.
  * @err: location to receive error code.
  * 
  * Returns: allocated array of cmplx (complex numbers) read from 
@@ -563,47 +617,10 @@ double *gretl_xml_get_double_array (xmlNodePtr node, xmlDocPtr doc,
  */
 
 cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
-				  int *err)
+				  int *nelem, int *err)
 {
-    xmlChar *tmp = xmlGetProp(node, (XUC) "count");
-    const char *p;
-    cmplx *cx = NULL;
-    int i, n;
-
-    if (tmp != NULL) {
-	n = atoi((const char *) tmp);
-	free(tmp);
-	if (n > 0) {
-	    cx = malloc(n * sizeof *cx);
-	    if (cx == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-		if (tmp == NULL) {
-		    *err = E_DATA;
-		} else {
-		    p = (const char *) tmp;
-		    p += strspn(p, " \r\n");
-		    for (i=0; i<n && !*err; i++) {
-			if (sscanf(p, "%lf %lf", &cx[i].r, &cx[i].i) != 2) {
-			    *err = E_DATA;
-			}
-			/* skip to end of number */
-			p += strspn(p, " \r\n");
-			p += strcspn(p, " \r\n");
-		    }
-		    free(tmp);
-		}
-	    }
-	}
-    }
-
-    if (cx != NULL && *err) {
-	free(cx);
-	cx = NULL;
-    }
-
-    return cx;
+    return gretl_xml_get_array(node, doc, MODEL_DATA_CMPLX_ARRAY,
+			       nelem, err);
 }
 
 static const char *get_gretl_encoding (void)

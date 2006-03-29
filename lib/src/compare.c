@@ -413,6 +413,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     int *list = *plist;
     int mc = get_model_count();
     int repci = orig->ci;
+    int order = 0;
 
     gretl_model_init(&rep);
 
@@ -450,7 +451,8 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	rep = ar_func(list, pZ, pdinfo, lsqopt, prn);
 	break;
     case ARCH:
-	rep = arch_model(list, orig->order, pZ, pdinfo, lsqopt, prn);
+	order = gretl_model_get_int(orig, "arch_order");
+	rep = arch_model(list, order, pZ, pdinfo, lsqopt, prn);
 	break;
     case LOGIT:
     case PROBIT:
@@ -871,7 +873,7 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     if (orig->ci == AR) { 
 	maxlag = orig->arinfo->arlist[orig->arinfo->arlist[0]];
     } else if (orig->ci == ARCH) {
-	maxlag = orig->order;
+	maxlag = gretl_model_get_int(orig, "arch_order");
     }
 
     pdinfo->t1 = orig->t1 - maxlag; /* FIXME: problem? */
@@ -1132,7 +1134,9 @@ int autocorr_test (MODEL *pmod, int order,
 
     gretl_model_init(&aux);
 
-    if (order <= 0) order = pdinfo->pd;
+    if (order <= 0) {
+	order = pdinfo->pd;
+    }
 
     if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1) {
 	return E_DF;
@@ -1185,7 +1189,7 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (!err) {
 	aux.aux = AUX_AR;
-	aux.order = order;
+	gretl_model_set_int(&aux, "BG_order", order);
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
 	    (aux.nobs - pmod->ncoeff - order)/order; 

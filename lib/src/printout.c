@@ -405,7 +405,8 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     int i, j, r, c;
     r = tab->rows;
     c = tab->cols;
-    double x;
+    double x, y;
+    double pearson;
 
     pprintf(prn,"\n       ");
     for (j=0; j<c; j++) {
@@ -415,11 +416,13 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     pprintf(prn,"  TOT.\n\n");
 
     for (i=0; i<r; i++) {
-	if(tab->rtotal[i]) {
+
+	if (tab->rtotal[i]) {
 	    pprintf(prn,"[%4d] ",(tab->rval)[i]);
+
 	    for (j=0; j<c; j++) {
 		if (tab->ctotal[j]) {
-		    if ((tab->f)[i][j]) {
+		    if ((tab->f)[i][j] || (opt & OPT_Z)) {
 			if (opt & (OPT_C | OPT_R)) {
 			    if (opt & OPT_C) {
 				x = 100.0 * (tab->f)[i][j] / tab->ctotal[j];
@@ -428,13 +431,20 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 			    }
 			    pprintf(prn, "%5.1f%%", x);
 			} else {
-			    pprintf(prn, "%5d ",(tab->f)[i][j]);
+			    pprintf(prn, "%5d ", (tab->f)[i][j]);
 			}
 		    } else {
 			pputs(prn,"      ");
 		    }
 		} 
+
+		if (opt & OPT_T) {
+		    y = (double) (tab->rtotal[i] * tab->ctotal[j]) / tab->n;
+		    x = (double) (tab->f)[i][j] - y;
+		    pearson_chisq += x * x / y;
+		}
 	    }
+
 	    if (opt & OPT_C) {
 		x = 100.0 * tab->rtotal[i] / tab->n;
 		pprintf(prn, "%5.1f%%\n", x);

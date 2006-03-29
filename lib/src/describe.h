@@ -63,7 +63,7 @@ struct Xtab_ {
     int *rval, *cval;
     int *rtotal, *ctotal;
     int **f;
-    int n;
+    int n, missing;
     int t1, t2;
 };
 

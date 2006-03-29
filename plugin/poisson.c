@@ -86,7 +86,7 @@ static int
 transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y, 
 			    int iter, int offvar)
 {
-    double sigma = src->sigma_wt;
+    double sigma = src->sigma;
     double sigma2 = sigma * sigma;
     int i, j, t;
     int err = 0;

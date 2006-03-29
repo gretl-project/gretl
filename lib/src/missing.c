@@ -22,10 +22,12 @@
 #include "libgretl.h"
 #include "missing_private.h"
 
-typedef struct {
+typedef struct MISSOBS_ MISSOBS;
+
+struct MISSOBS_ {
     int misscount;
     char *missvec;
-} MISSOBS;
+};
 
 static char *model_missmask (const int *list, int t1, int t2,
 			     int n, const double **Z, int dwt,
@@ -42,9 +44,8 @@ static char *model_missmask (const int *list, int t1, int t2,
    observations had been temporarily purged.
 */
 
-static int reorganize_uhat_yhat (MODEL *pmod) 
+static int reorganize_uhat_yhat (MODEL *pmod, MISSOBS *mobs) 
 {
-    MISSOBS *mobs = (MISSOBS *) pmod->data;
     double *tmp;
     int t, g;
 
@@ -112,13 +113,15 @@ int undo_daily_repack (MODEL *pmod, double **Z,
     if (!gretl_model_get_int(pmod, "daily_repack")) {
 	return 1;
     }
-    
-    if (pmod->data == NULL) {
+
+    mobs = (MISSOBS *) gretl_model_get_data(pmod, "missobs");
+    if (mobs == NULL) {
 	return E_DATA;
     }
-			   
-    mobs = (MISSOBS *) pmod->data;
 
+    /* take charge of MISSOBS pointer */
+    gretl_model_detach_data_item(pmod, "missobs");
+			   
     tmpmiss = malloc(mobs->misscount * sizeof *tmpmiss);
     if (tmpmiss == NULL) {
 	err = E_ALLOC;
@@ -161,7 +164,7 @@ int undo_daily_repack (MODEL *pmod, double **Z,
     free(tmpgood);
 
     if (!err) {
-	err = reorganize_uhat_yhat(pmod); 
+	err = reorganize_uhat_yhat(pmod, mobs); 
     }  
 
     /* undo temporary shrinkage of pmod->t2 */
@@ -171,7 +174,6 @@ int undo_daily_repack (MODEL *pmod, double **Z,
        for future use (e.g. in forecasting) */
     free(mobs->missvec);
     free(mobs);
-    pmod->data = NULL;
 
     pmod->errcode = err;
 
@@ -282,7 +284,9 @@ int repack_missing_daily_obs (MODEL *pmod, double **Z,
 	pmod->t2 -= misscount;
 	mobs->missvec = missvec;
 	mobs->misscount = misscount;
-	pmod->data = mobs;
+	err = gretl_model_set_data(pmod, "missobs", mobs, 
+				   MODEL_DATA_STRUCT,
+				   sizeof *mobs);
     }
 
     return err;

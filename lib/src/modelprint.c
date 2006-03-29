@@ -30,10 +30,6 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			    int i, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
-static int essline (const MODEL *pmod, PRN *prn, int wt);
-static void rsqline (const MODEL *pmod, PRN *prn);
-static void Fline (const MODEL *pmod, PRN *prn);
-static void dwline (const MODEL *pmod, PRN *prn);
 static void print_rho_terms (const MODEL *pmod, PRN *prn);
 static void print_discrete_statistics (const MODEL *pmod, 
 				       const DATAINFO *pdinfo,
@@ -98,11 +94,8 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
     }
 }
 
-static int essline (const MODEL *pmod, PRN *prn, int wt)
+static int real_essline (double ess, double sigma, PRN *prn)
 {
-    double ess = (wt)? pmod->ess_wt : pmod->ess;
-    double sigma = (wt)? pmod->sigma_wt : pmod->sigma;
-
     if (ess < 0) {
 	if (plain_format(prn)) {
 	    pprintf(prn, _("Error sum of squares (%g) is not > 0"), ess);
@@ -132,6 +125,23 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
     }
 
     return 0;
+}
+
+static int essline (const MODEL *pmod, PRN *prn)
+{
+    return real_essline(pmod->ess, pmod->sigma, prn);
+}
+
+static int essline_original (const MODEL *pmod, PRN *prn)
+{
+    double ess = gretl_model_get_double(pmod, "ess_orig");
+    double sigma = gretl_model_get_double(pmod, "sigma_orig");
+
+    if (na(ess) || na(sigma)) {
+	return 1;
+    }
+    
+    return real_essline(ess, sigma, prn);
 }
 
 static void rsqline (const MODEL *pmod, PRN *prn)
@@ -626,13 +636,7 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 
 static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 {
-    int lag;
-
-    if (pmod->aux == AUX_SCR) {
-	lag = pmod->order;
-    } else {
-	lag = gretl_model_get_int(pmod, "hac_lag");
-    }
+    int lag = gretl_model_get_int(pmod, "hac_lag");
 
     if (plain_format(prn)) {
 	pprintf(prn, _("Serial correlation-robust standard errors, "
@@ -731,7 +735,7 @@ static void tex_vecm_depvar_name (char *s, const char *vname)
 
 void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 {
-    if (pmod->aux == AUX_SCR || gretl_model_get_int(pmod, "hac_lag")) {
+    if (gretl_model_get_int(pmod, "hac_lag")) {
 	hac_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "hc")) {
 	hc_vcv_line(pmod, prn);
@@ -855,6 +859,7 @@ static void print_model_heading (const MODEL *pmod,
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = tex_format(prn);
     int utf = plain_format(prn);
+    int order = 0;
 
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
 	ntodate(startdate, t1, pdinfo);
@@ -881,25 +886,27 @@ static void print_model_heading (const MODEL *pmod,
 	}
 	break;
     case AUX_AR:
+	order = gretl_model_get_int(pmod, "BG_order");
 	if (utf) { 	
 	    pprintf(prn, "\n%s ", _("Breusch-Godfrey test for"));
 	} else {
 	    pprintf(prn, "\n%s ", I_("Breusch-Godfrey test for"));
 	} 
-	if (pmod->order > 1) {
+	if (order > 1) {
 	    pprintf(prn, "%s %d\n", (utf)? _("autocorrelation up to order") :
 		    I_("autocorrelation up to order"), 
-		    pmod->order);
+		    order);
 	} else {
 	    pprintf(prn, "%s\n", (utf)? _("first-order autocorrelation") :
 		    I_("first-order autocorrelation"));
 	}
 	break;	
     case AUX_ARCH:
+	order = gretl_model_get_int(pmod, "arch_order");
 	pprintf(prn, "\n%s %d\n", 
 		(utf)? _("Test for ARCH of order") : 
 		I_("Test for ARCH of order"), 
-		pmod->order);
+		order);
 	break;	
     case AUX_SYS:
 	pprintf(prn, "%s %d: ", 
@@ -1455,8 +1462,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     print_coeff_table_end(prn);
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF || 
-	pmod->aux == AUX_RESET || pmod->aux == AUX_SCR ||
-	pmod->aux == AUX_DF || pmod->aux == AUX_KPSS) {
+	pmod->aux == AUX_RESET || pmod->aux == AUX_DF || 
+	pmod->aux == AUX_KPSS) {
 	goto close_format;
     }
 
@@ -1505,7 +1512,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (pmod->aux == AUX_SYS) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
-	essline(pmod, prn, 0);
+	essline(pmod, prn);
 	if (gretl_model_get_int(pmod, "method") == SYS_LIML) {
 	    print_liml_equation_data(pmod, prn);
 	}
@@ -1572,7 +1579,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	if (pmod->ci != VAR) {
 	    depvarstats(pmod, prn);
 	}
-	if (essline(pmod, prn, 0)) {
+	if (essline(pmod, prn)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
 	}
@@ -1634,7 +1641,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	weighted_stats_message(prn);
 	print_middle_table_start(prn);
 
-	if (essline(pmod, prn, 1)) {
+	if (essline(pmod, prn)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
 	}
@@ -1654,7 +1661,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 
-	if (essline(pmod, prn, 0)) {
+	if (essline_original(pmod, prn)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
 	}
@@ -1668,7 +1675,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	rho_differenced_stats_message(prn);
 
 	print_middle_table_start(prn);
-	if (essline(pmod, prn, 0)) {
+	if (essline(pmod, prn)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
 	}

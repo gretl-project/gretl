@@ -1791,7 +1791,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
 	double pval;
 
 	aux.aux = AUX_AR;
-	aux.order = order;
+	gretl_model_set_int(&aux, "BG_order", order);
 	printmodel(&aux, tmpinfo, OPT_NONE, prn);
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order; 

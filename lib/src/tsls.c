@@ -711,8 +711,8 @@ static void tsls_extra_stats (MODEL *pmod, const double **Z)
 
     if (pmod->missmask == NULL) {
 	/* no missing obs within sample range */
-	pmod->rho = rhohat(0, pmod->t1, pmod->t2, pmod->uhat);
-	pmod->dw = dwstat(0, pmod, Z);
+	pmod->rho = rhohat(1, pmod->t1, pmod->t2, pmod->uhat);
+	pmod->dw = dwstat(1, pmod, Z);
     } else {
 	pmod->rho = pmod->dw = NADBL;
     }

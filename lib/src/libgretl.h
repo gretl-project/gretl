@@ -322,20 +322,17 @@ struct MODEL_ {
 				    else = 0 */
     int ci;                      /* "command index" -- depends on 
 				    estimation method */
-    int nwt;                     /* ID of the weight variable (WLS) */
-    int order;                   /* lag order (e.g. for ARCH) */
+    int nwt;                     /* ID number of the weight variable (WLS) */
     int aux;                     /* code representing the sort of
 				    auxiliary regression this is (or not) */
     double *coeff;               /* array of coefficient estimates */
     double *sderr;               /* array of estimated std. errors */
     double *uhat;                /* regression residuals */
     double *yhat;                /* fitted values from regression */
-    double *xpx;
-    double *vcv;                 /* VCV matrix for coeff. estimates */
+    double *xpx;                 /* X'X matrix, in packed form */
+    double *vcv;                 /* VCV matrix for coefficient estimates */
     double ess, tss;             /* Error and Total Sums of Squares */
     double sigma;                /* Standard error of regression */
-    double ess_wt;               /* ESS using weighted data (WLS) */
-    double sigma_wt;             /* same thing for std. error */
     double rsq, adjrsq;          /* Unadjusted and adjusted R^2 */     
     double fstt;                 /* F-statistic */
     double lnL;                  /* log-likelihood */
@@ -346,12 +343,11 @@ struct MODEL_ {
     ARINFO *arinfo;              /* pointer to struct to hold special info for 
 				    autoregressive model */ 
     int errcode;                 /* Error code in case of failure */
-    char *name;
+    char *name;                  /* for use in GUI */
     int nparams;                 /* number of named model parameters */
     char **params;               /* for named model parameters */
-    int ntests;
-    ModelTest *tests;
-    void *data;                  /* pointer for use in re. missing data */
+    int ntests;                  /* number of attached test results */
+    ModelTest *tests;            /* attached hypothesis test results */
     DATASET *dataset;            /* for handling models estimated on a
 				    sub-sampled portion of the dataset */
     int n_data_items;            /* number of extra data items */

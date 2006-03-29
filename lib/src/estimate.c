@@ -408,9 +408,9 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 	    }
 	}
     } else {
-	pmod->ess_wt = pmod->ess;
-	pmod->sigma_wt = pmod->sigma;
-	pmod->ess = 0.0;
+	double ess_orig = 0.0;
+	double sigma_orig;
+
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (model_missing(pmod, t)) {
 		continue;
@@ -421,10 +421,13 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 	    } else {
 		pmod->yhat[t] /= Z[pmod->nwt][t];
 		pmod->uhat[t] /= Z[pmod->nwt][t];
-		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+		ess_orig += pmod->uhat[t] * pmod->uhat[t];
 	    }
 	}
-	pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+
+	sigma_orig = sqrt(ess_orig / pmod->dfd);
+	gretl_model_set_double(pmod, "ess_orig", ess_orig);
+	gretl_model_set_double(pmod, "sigma_orig", sigma_orig);
     }
 }
 
@@ -442,8 +445,8 @@ static void dropwt (int *list)
 
 static void model_stats_init (MODEL *pmod)
 {
-    pmod->ess = pmod->ess_wt = NADBL;
-    pmod->sigma = pmod->sigma_wt = NADBL;
+    pmod->ess = NADBL;
+    pmod->sigma = NADBL;
     pmod->fstt = pmod->lnL = NADBL;
     pmod->rsq = pmod->adjrsq = NADBL;
 }
@@ -900,15 +903,17 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    /* weighted least squares: fix fitted values, ESS, sigma */
+    /* weighted least squares: fix yhat and uhat; add calculation of
+       ESS and sigma based on unweighted data
+    */
     if (ci == WLS) {
 	get_wls_stats(&mdl, (const double **) *pZ);
 	fix_wls_values(&mdl, *pZ);
     }
 
     if ((opt & OPT_T) && mdl.missmask == NULL) {
-	mdl.rho = rhohat(0, mdl.t1, mdl.t2, mdl.uhat);
-	mdl.dw = dwstat(0, &mdl, (const double **) *pZ);
+	mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
+	mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
     } else {
 	mdl.rho = mdl.dw = NADBL;
     }
@@ -920,8 +925,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Generate model selection statistics */
-    gretl_calculate_criteria((mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
-			     mdl.nobs, mdl.ncoeff, &mdl.lnL, 
+    gretl_calculate_criteria(mdl.ess, mdl.nobs, mdl.ncoeff, &mdl.lnL, 
 			     &mdl.criterion[C_AIC],
 			     &mdl.criterion[C_BIC],
 			     &mdl.criterion[C_HQC]);
@@ -1531,14 +1535,8 @@ int makevcv (MODEL *pmod)
     /* some estimators need special treatment */
 
     if (pmod->ci != HCCM && pmod->ci != LOGIT && pmod->ci != PROBIT) {
-	double sigma = pmod->sigma;
-
-	if ((pmod->ci == WLS && !(gretl_model_get_int(pmod, "wt_dummy"))) || 
-	    pmod->ci == ARCH || pmod->ci == HSK) {
-	    sigma = pmod->sigma_wt;
-	} 
 	for (k=0; k<nxpx; k++) {
-	    pmod->vcv[k] *= sigma * sigma;
+	    pmod->vcv[k] *= pmod->sigma * pmod->sigma;
 	}
     }
 
@@ -1547,7 +1545,7 @@ int makevcv (MODEL *pmod)
 
 /**
  * dwstat:
- * @order: order of autoregression, 0 for OLS.
+ * @order: order of autoregression (usually 1).
  * @pmod: pointer to model.
  * @Z: data array.
  *
@@ -1558,46 +1556,58 @@ int makevcv (MODEL *pmod)
 
 double dwstat (int order, MODEL *pmod, const double **Z)
 {
-    double diff, ut, ut1;
-    double diffsq = 0.0;
-    int t;
-
-    if (order) order--;
+    double ut, u1;
+    double num = 0.0;
+    double den = 0.0;
+    int t, t1;
 
     if (pmod->ess <= 0.0) {
 	return NADBL;
     }
 
-    for (t=pmod->t1+1+order; t<=pmod->t2; t++)  {
-        ut = pmod->uhat[t];
-        ut1 = pmod->uhat[t-1];
-        if (na(ut) || na(ut1) ||
-	    (pmod->nwt && (floateq(Z[pmod->nwt][t], 0.0) || 
-			   floateq(Z[pmod->nwt][t-1], 0.0)))) { 
-	    continue;
+    t1 = pmod->t1 + order;
+
+    if (pmod->nwt) {
+	ut = pmod->uhat[t1 - 1];
+	if (!na(ut)) {
+	    den += ut * ut;
 	}
-        diff = ut - ut1;
-        diffsq += diff * diff;
+    } else {
+	den = pmod->ess;
     }
 
-    return diffsq / pmod->ess;
+    for (t=t1; t<=pmod->t2; t++)  {
+        ut = pmod->uhat[t];
+        u1 = pmod->uhat[t-1];
+        if (na(ut) || na(u1) ||
+	    (pmod->nwt && (Z[pmod->nwt][t] == 0.0 || 
+			   Z[pmod->nwt][t-1] == 0.0))) { 
+	    continue;
+	}
+        num += (ut - u1) * (ut - u1);
+	if (pmod->nwt) {
+	    den += ut * ut;
+	}
+    }
+
+    return num / den;
 }
 
 /* altrho: alternative calculation of rho */
 
 static double altrho (int order, int t1, int t2, const double *uhat)
 {
-    double *ut, *ut1;    
+    double *ut, *u1;    
     int t, n, len = t2 - (t1 + order) + 1;
-    double uh, uh1, rho;
+    double uht, uh1, rho;
 
     ut = malloc(len * sizeof *ut);
     if (ut == NULL) {
 	return NADBL;
     }
 
-    ut1 = malloc(len * sizeof *ut1);
-    if (ut1 == NULL) {
+    u1 = malloc(len * sizeof *u1);
+    if (u1 == NULL) {
 	free(ut);
 	return NADBL;
     }
@@ -1605,26 +1615,26 @@ static double altrho (int order, int t1, int t2, const double *uhat)
     n = 0;
 
     for (t=t1+order; t<=t2; t++) { 
-        uh = uhat[t];
+        uht = uhat[t];
 	uh1 = (t > 0)? uhat[t-1] : NADBL;
-        if (!na(uh) && !na(uh1)) {
-	    ut[n] = uh;
-	    ut1[n] = uh1;
+        if (!na(uht) && !na(uh1)) {
+	    ut[n] = uht;
+	    u1[n] = uh1;
 	    n++;
 	}
     }
 
-    rho = gretl_corr(0, n - 1, ut, ut1, NULL);
+    rho = gretl_corr(0, n - 1, ut, u1, NULL);
 
     free(ut);
-    free(ut1);
+    free(u1);
 
     return rho;
 }
 
 /**
  * rhohat:
- * @order: order of autoregression, 0 for OLS residuals.
+ * @order: order of autoregression, usually 1.
  * @t1: start of sample range.
  * @t2: end of sample range.
  * @uhat: array of regression residuals.
@@ -1637,22 +1647,18 @@ static double altrho (int order, int t1, int t2, const double *uhat)
 
 double rhohat (int order, int t1, int t2, const double *uhat)
 {
-    double ut, ut1, uu = 0.0, xx = 0.0;
+    double ut, u1, uu = 0.0, xx = 0.0;
     double rho;
     int t;
 
-    if (order) {
-	order--;
-    }
-
-    for (t=t1+order+1; t<=t2; t++) { 
+    for (t=t1+order; t<=t2; t++) { 
         ut = uhat[t];
-        ut1 = uhat[t-1];
-        if (na(ut) || na(ut1)) {
+        u1 = uhat[t-1];
+        if (na(ut) || na(u1)) {
 	    continue;
 	}
-        uu += ut * ut1;
-        xx += ut1 * ut1;
+        uu += ut * u1;
+        xx += u1 * u1;
     }
 
     if (floateq(xx, 0.0)) {
@@ -1737,8 +1743,6 @@ static int hilu_plot (double *ssr, double *rho, int n)
     return 0;
 }
 
-#undef USE_DW /* base rho-hat on the D-W statistic? */
-
 static double autores (MODEL *pmod, const double **Z, int ci)
 {
     int t, v, t1 = pmod->t1;
@@ -1756,22 +1760,12 @@ static double autores (MODEL *pmod, const double **Z, int ci)
 	}
 	pmod->uhat[t] = x;
 	if (t > t1) {
-#ifdef USE_DW
-	    x = pmod->uhat[t] - pmod->uhat[t-1];
-	    num += x * x;
-#else
 	    num += pmod->uhat[t] * pmod->uhat[t-1];
-#endif
 	    den += pmod->uhat[t-1] * pmod->uhat[t-1];
 	}
     } 
 
-#ifdef USE_DW
-    den += pmod->uhat[pmod->t2] * pmod->uhat[pmod->t2];
-    rhohat = 1.0 - num / (den * 2.0);
-#else
     rhohat = num / den;
-#endif
 
     return rhohat;
 }
@@ -1924,11 +1918,7 @@ double estimate_rho (const int *list, double ***pZ, DATAINFO *pdinfo,
 	    clear_model(&corc_model);
 	    goto bailout;
 	}
-#ifdef USE_DW
-	rho0 = rho = 1.0 - (corc_model.dw / 2.0);
-#else
 	rho0 = rho = corc_model.rho;
-#endif
     }
 
     if (na(rho)) {
@@ -2955,7 +2945,7 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	archmod.aux = AUX_ARCH;
-	archmod.order = order;
+	gretl_model_set_int(&archmod, "arch_order", order);
 	LM = archmod.nobs * archmod.rsq;
 	xx = chisq(LM, order);
 
@@ -3018,7 +3008,7 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE);
 
 		archmod.ci = ARCH;
-		archmod.order = order;
+		gretl_model_set_int(&archmod, "arch_order", order);
 		printmodel(&archmod, pdinfo, opt, prn);
 	    }
 	}

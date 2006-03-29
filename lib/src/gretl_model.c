@@ -1268,7 +1268,6 @@ static void gretl_model_init_pointers (MODEL *pmod)
     pmod->name = NULL;
     pmod->params = NULL;
     pmod->tests = NULL;
-    pmod->data = NULL;
     pmod->dataset = NULL;
     pmod->data_items = NULL;
 }
@@ -1304,7 +1303,6 @@ void gretl_model_init (MODEL *pmod)
     pmod->ci = 0;
     pmod->ifc = 0;
     pmod->aux = AUX_NONE;
-    pmod->order = 0; /* remove this variable? */
 
     for (i=0; i<C_MAX; i++) {
 	pmod->criterion[i] = NADBL;
@@ -1479,8 +1477,8 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->name = %p\n"
 	    " pmod->params = %p\n"
 	    " pmod->arinfo = %p\n"
-	    " pmod->tests = %p\n"
-	    " pmod->data = %p\n", msg,
+	    " pmod->tests = %p\n" 
+	    " pmod->data_items = %p\n", msg,
 	    (void *) pmod, (void *) pmod->list, 
 	    (void *) pmod->submask, (void *) pmod->missmask, 
 	    (void *) pmod->coeff, (void *) pmod->sderr, 
@@ -1488,7 +1486,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    (void *) pmod->xpx, (void *) pmod->vcv, 
 	    (void *) pmod->name, (void *) pmod->params, 
 	    (void *) pmod->arinfo, (void *) pmod->tests, 
-	    (void *) pmod->data);
+	    (void *) pmod->data_items);
 }
 
 #endif /* MDEBUG */
@@ -2434,7 +2432,7 @@ static int copy_model (MODEL *targ, const MODEL *src)
 	return 1;
     } 
 
-    /* src->dataset?? */
+    /* src->dataset? */
 
     return 0;
 }
@@ -2453,16 +2451,14 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 	    pmod->t1, pmod->t2, pmod->nobs);
     fprintf(fp, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ", 
 	    pmod->full_n, pmod->ncoeff, pmod->dfn, pmod->dfd);
-    fprintf(fp, "ifc=\"%d\" ci=\"%d\" nwt=\"%d\" order=\"%d\" aux=\"%d\" ", 
-	    pmod->ifc, pmod->ci, pmod->nwt, pmod->order, pmod->aux);
+    fprintf(fp, "ifc=\"%d\" ci=\"%d\" nwt=\"%d\" aux=\"%d\" ", 
+	    pmod->ifc, pmod->ci, pmod->nwt, pmod->aux);
 
     gretl_push_c_numeric_locale();
 
     gretl_xml_put_double("ess", pmod->ess, fp);
     gretl_xml_put_double("tss", pmod->tss, fp);
     gretl_xml_put_double("sigma", pmod->sigma, fp);
-    gretl_xml_put_double("ess_wt", pmod->ess_wt, fp);
-    gretl_xml_put_double("sigma_wt", pmod->sigma_wt, fp);
     gretl_xml_put_double("rsq", pmod->rsq, fp);
     gretl_xml_put_double("adjrsq", pmod->adjrsq, fp);
     gretl_xml_put_double("fstt", pmod->fstt, fp);
@@ -2543,11 +2539,8 @@ int gretl_model_serialize (const MODEL *pmod, FILE *fp)
 
     fputs("</gretl-model>\n", fp);
 
-    /* 
-       elements of MODEL struct not handled here:
-       void *data;
-       DATASET *dataset;
-    */
+    /* note: the DATASET element of pmod is not
+       handled here */
 
     gretl_pop_c_numeric_locale();
 
@@ -3148,8 +3141,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
 	x = pmod->criterion[C_HQC];
 	break;
     case M_SIGMA:
-	if (pmod->nwt) x = pmod->sigma_wt;
-	else x = pmod->sigma;
+	x = pmod->sigma;
 	break;
     case M_TRSQ:
 	if (!na(pmod->rsq)) {

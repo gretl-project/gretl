@@ -1515,6 +1515,7 @@ Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	return NULL;
     }
 
+    tab->missing = (t2 - t1 + 1) - n;
     strcpy(tab->rvarname, pdinfo->varname[rvarno]);
     strcpy(tab->cvarname, pdinfo->varname[cvarno]);
 
@@ -1568,13 +1569,10 @@ Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	if (X[i] == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    /* problem below here: can't run "na()" test on ints */
-	    rx = (int) Z[rvarno][t];
-	    cx = (int) Z[cvarno][t];
-	    if (!(na(rx) || na(cx))) { /* typo? */
-		X[i][0] = rx;
-		X[i][1] = cx;
-		i++;
+	    if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) { 
+		X[i][0] = (int) Z[rvarno][t];
+		X[i][1] = (int) Z[cvarno][t];
+ 		i++;
 	    }
 	}
     }

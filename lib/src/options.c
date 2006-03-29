@@ -210,6 +210,7 @@ struct gretl_option gretl_opts[] = {
     { WLS,      OPT_Q, "quiet" },
     { XTAB,     OPT_C, "column" },
     { XTAB,     OPT_R, "row" },
+    { XTAB,     OPT_Z, "zeros" },
     { 0,        0L,    NULL }
 };
 
