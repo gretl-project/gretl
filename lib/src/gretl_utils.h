@@ -30,11 +30,14 @@ typedef enum {
 } model_selection_criteria;
 
 #include <float.h>
+#include <limits.h>
 
 #define floateq(x, y)  (fabs((x) - (y)) < DBL_EPSILON)
 #define floatneq(x, y) (fabs((x) - (y)) > DBL_EPSILON)
 #define floatgt(x, y)  ((x) - (y) > DBL_EPSILON)
 #define floatlt(x, y)  ((y) - (x) > DBL_EPSILON)
+
+#define ok_int(x) (x <= (double) INT_MAX && x >= (double) INT_MIN)
 
 /* functions follow */
 

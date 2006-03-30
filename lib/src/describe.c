@@ -1135,6 +1135,25 @@ static int freq_add_arrays (FreqDist *freq, int nbins)
     return err;
 }
 
+static int count_distinct_vals (int *x, int n)
+{
+    int i, c = 1;
+
+    for (i=1; i<n; i++) {
+	if (x[i] != x[i-1]) c++;
+    }
+
+    return c;
+}
+
+static int compare_ints (const void *a, const void *b)
+{
+    const int *ia = (const int *) a;
+    const int *ib = (const int *) b;
+     
+    return *ia - *ib;
+}
+
 /**
  * get_freq:
  * @varno: ID number of variable to process.
@@ -1146,8 +1165,7 @@ static int freq_add_arrays (FreqDist *freq, int nbins)
  *
  * Calculates the frequency distribution for the specified variable.
  *
- * Returns: struct containing the distribution.
- *
+ * Returns: pointer to struct containing the distribution.
  */
 
 FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
@@ -1223,62 +1241,68 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     }
     
     if (freq->discrete) {
-	double *sorted = NULL;
 	int *ifreq = NULL, *ivals = NULL;
-	int i;
+	int *sorted = NULL;
+	int i, last, err = 0;
 
 	sorted = malloc(n * sizeof *sorted);
-	ifreq = malloc(n * sizeof *ifreq);
-	ivals = malloc(n * sizeof *ivals);
-
-	if (sorted == NULL || ifreq == NULL || ivals == NULL) {
-	    free(sorted);
-	    free(ifreq);
-	    free(ivals);
+	if (sorted == NULL) {
 	    free_freq(freq);
 	    return NULL;
 	}
 	
-	i = 0;
+	n = 0;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (!na(x[t])) {
-		sorted[i++] = x[t];
+		sorted[n++] = (int) x[t];
 	    }
 	}
 	
-	qsort(sorted, n, sizeof *sorted, gretl_compare_doubles); 
-	nbins = 1;
-	xx = sorted[0];
-	ifreq[0] = 1;
-	ivals[0] = floor(xx);
-	
+	qsort(sorted, n, sizeof *sorted, compare_ints); 
+	nbins = count_distinct_vals(sorted, n);
+
+	ifreq = malloc(nbins * sizeof *ifreq);
+	ivals = malloc(nbins * sizeof *ivals);
+	if (ifreq == NULL || ivals == NULL) {
+	    err = E_ALLOC;
+	    goto discrete_end;
+	}
+
+	ivals[0] = last = sorted[0];
+	ifreq[0] = i = 1;
+
 	for (t=1; t<n; t++) {
-	    if (sorted[t] != xx) {
-		xx = sorted[t];
-		ifreq[nbins] = 1;
-		ivals[nbins++] = floor(xx);
+	    if (sorted[t] != last) {
+		last = sorted[t];
+		ifreq[i] = 1;
+		ivals[i++] = last;
 	    } else {
-		ifreq[nbins-1] += 1;
+		ifreq[i-1] += 1;
 	    }
 	}
 
 	if (freq_add_arrays(freq, nbins)) {
+	    err = E_ALLOC;
+	} else {
+	    for (k=0; k<nbins; k++) {
+		freq->endpt[k] = freq->midpt[k] = ivals[k];
+		freq->f[k] = ifreq[k];
+	    }
+	    freq->endpt[nbins] = xmax;
+	}
+
+    discrete_end:
+
+	free(sorted);
+	free(ivals);
+	free(ifreq);
+	
+	if (err) {
 	    gretl_errno = E_ALLOC;
 	    strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
-	    return freq;
+	    free_freq(freq);
+	    freq = NULL;
 	}
-	
-	for (k=0; k<nbins; k++) {
-	    freq->endpt[k] = ivals[k];
-	    freq->midpt[k] = ivals[k];
-	    freq->f[k] = ifreq[k];
-	}
-	
-	freq->endpt[nbins] = xmax;
-
-	free(ifreq);
-	free(ivals);
-	free(sorted);
     } else {
 	/* not discrete (integer) data */
 	if (n < 16) {
@@ -1481,6 +1505,8 @@ Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     int rx, cx;
     int rows, cols;
 
+    FreqDist *rowfreq, *colfreq;
+
     int t, i, nr, nc;
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
@@ -1525,7 +1551,6 @@ Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
        and get dimensions for the cross table
      */
 
-    FreqDist *rowfreq, *colfreq;
     rowfreq = get_freq(rvarno, Z, pdinfo, 0, OPT_NONE); 
     colfreq = get_freq(cvarno, Z, pdinfo, 0, OPT_NONE); 
     X = malloc(n * sizeof *X);
