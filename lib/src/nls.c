@@ -730,7 +730,11 @@ print_mle_iter_stats (double ll, int nparam, const double *b, const double *g,
 {
     int i;
 
-    pprintf(prn, "Iteration %d; log likelihood = %.8g", iter, ll);	
+    if (na(ll)) {
+	pprintf(prn, "Iteration %d: log likelihood = NA", iter);	
+    } else {
+	pprintf(prn, "Iteration %d: log likelihood = %.8g", iter, ll);
+    }
     if (iter > 1) {
 	pprintf(prn, " (steplength = %.8g)", sl);
     }	

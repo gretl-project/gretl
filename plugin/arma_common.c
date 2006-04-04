@@ -365,7 +365,12 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
-    for (t=t1-pmax; t<t2; t++) {
+    t1min = t1 - pmax;
+    if (t1min < 0) {
+	t1min = 0;
+    }
+
+    for (t=t1min; t<t2; t++) {
 	for (i=vstart; i<=list[0]; i++) {
 	    if (t < t1 && i > vstart) {
 		continue;

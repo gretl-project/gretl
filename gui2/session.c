@@ -808,6 +808,8 @@ void do_open_session (void)
     status = unzip_session_file(sessionfile);
 
     if (status == SAVEFILE_ERROR) {
+	/* FIXME more explicit error message */
+	errbox(_("Couldn't open %s"), sessionfile);
 	return;
     } else if (status == SAVEFILE_SCRIPT) {
 	strcpy(scriptfile, sessionfile);
@@ -824,6 +826,8 @@ void do_open_session (void)
     err = read_session_xml(fname, &sinfo);
 
     if (err) {
+	/* FIXME more explicit error message */
+	errbox(_("Couldn't open %s"), "session.xml");
 	return;
     }
 
@@ -831,6 +835,8 @@ void do_open_session (void)
     err = gretl_read_gdt(&Z, &datainfo, paths.datfile, &paths, DATA_NONE, 
 			 NULL, 1);
     if (err) {
+	/* FIXME more explicit error message */
+	errbox(_("Couldn't open %s"), "data.gdt");
 	return;
     }
 
@@ -839,7 +845,8 @@ void do_open_session (void)
     }
 
     if (err) {
-	/* respond! */
+	errbox(_("Couldn't set sample"));
+	return;
     }
 
     datainfo->t1 = sinfo.t1;

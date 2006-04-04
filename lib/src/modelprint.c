@@ -811,7 +811,7 @@ static void print_arma_depvar (const MODEL *pmod,
 	}
 	if (D == 1) {
 	    strcat(vname, "(1-L^s)");
-	} else if (d == 2) {
+	} else if (D == 2) {
 	    strcat(vname, "(1-L^s)^2");
 	}
 	if (d > 0 || D > 0) {
@@ -827,9 +827,12 @@ static void print_arma_depvar (const MODEL *pmod,
 	}
 	if (D == 1) {
 	    strcat(vname, "(1-Ls)");
-	} else if (d == 2) {
+	} else if (D == 2) {
 	    strcat(vname, "(1-Ls)^2");
-	}	
+	}
+	if (d > 0 || D > 0) {
+	    strcat(vname, " ");
+	}
 	strcat(vname, pdinfo->varname[yno]);
     }
 

@@ -27,10 +27,8 @@ static int restore_session_graphs (xmlNodePtr node)
     int i = 0;
     int err = 0;
 
-    session.graphs = mymalloc(session.ngraphs * sizeof *session.graphs);
-    if (session.graphs == NULL) {
-	return E_ALLOC;
-    }
+    /* reset prior to parsing */
+    session.ngraphs = 0;
 
     cur = node->xmlChildrenNode;
 
@@ -59,12 +57,16 @@ static int restore_session_graphs (xmlNodePtr node)
 	}
 
 	if (!err) {
-	    session.graphs[i] = session_graph_new((const char *) name, 
-						  (const char *) fname, 
-						  ID, type);
-	    if (session.graphs[i] == NULL) {
+	    SESSION_GRAPH *graph;
+	    
+	    graph = session_graph_new((const char *) name, 
+				      (const char *) fname, 
+				      ID, type);
+	    if (graph == NULL) {
 		err = 1;
-	    } 
+	    } else {
+		err = session_append_graph(graph);
+	    }
 	}
 
 	free(name);
@@ -83,10 +85,7 @@ static int restore_session_texts (xmlNodePtr node, xmlDocPtr doc)
     int i = 0;
     int err = 0;
 
-    session.texts = mymalloc(session.ntexts * sizeof *session.texts);
-    if (session.texts == NULL) {
-	return E_ALLOC;
-    }
+    session.ntexts = 0;
 
     cur = node->xmlChildrenNode;
 
@@ -102,10 +101,14 @@ static int restore_session_texts (xmlNodePtr node, xmlDocPtr doc)
 	    if (buf == NULL) {
 		err = 1;
 	    } else {
-		session.texts[i] = session_text_new((const char *) name,
-						    (char *) buf);
-		if (session.texts[i] == NULL) {
+		SESSION_TEXT *text;
+
+		text = session_text_new((const char *) name,
+					(char *) buf);
+		if (text == NULL) {
 		    err = 1;
+		} else {
+		    err = session_append_text(text);
 		}
 	    }
 	}
@@ -448,10 +451,8 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
     xmlNodePtr cur;
     int i, err = 0;
 
-    session.models = mymalloc(session.nmodels * sizeof *session.models);
-    if (session.models == NULL) {
-	return E_ALLOC;
-    }
+    /* reset prior to parsing */
+    session.nmodels = 0;
 
 #if SESSION_DEBUG
     fprintf(stderr, "rebuilding: session.nmodels = %d\n", session.nmodels);
@@ -480,10 +481,14 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	if (name == NULL) {
 	    err = 1;
 	} else {
-	    session.models[i] = session_model_new(pmod, (const char *) name, 
-						  GRETL_OBJ_EQN);
-	    if (session.models[i] == NULL) {
+	    SESSION_MODEL *smod;
+
+	    smod = session_model_new(pmod, (const char *) name, 
+				     GRETL_OBJ_EQN);
+	    if (smod == NULL) {
 		err = E_ALLOC;
+	    } else {
+		err = session_append_model(smod);
 	    }
 	}
 
@@ -497,8 +502,6 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 #if SESSION_DEBUG
     fprintf(stderr, "restore_session_models: returning %d\n", err);
 #endif
-
-    /* FIXME clean up on error */
 
     return err;
 }

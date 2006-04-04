@@ -44,6 +44,16 @@ struct ModelTest_ {
     double pvalue;
 };
 
+static void gretl_test_init (ModelTest *test, ModelTestType ttype)
+{
+    test->type = ttype;
+    test->order = 0;
+    test->param = NULL;
+    test->teststat = GRETL_STAT_NONE;
+    test->dfn = test->dfd = 0;
+    test->value = test->pvalue = NADBL;
+}
+
 static void free_model_data_item (model_data_item *item)
 {
     if (item->destructor != NULL) {
@@ -1670,6 +1680,8 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
     xmlNodePtr cur = node->xmlChildrenNode;
     int got, err = 0;
 
+    gretl_test_init(&test, 0);
+
     while (cur != NULL && !err) {
 	got = 0;
 	got += gretl_xml_get_prop_as_int(cur, "type", &test.type);
@@ -1685,7 +1697,7 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 	} else {
 	    err = real_add_test_to_model(pmod, &test);
 	}
-	free(test.param); /* ?? */
+	free(test.param);
 	cur = cur->next;
     }
 
@@ -1727,16 +1739,6 @@ static int serialize_model_tests (const MODEL *pmod, FILE *fp)
     fputs("</tests>\n", fp);
 
     return 0;
-}
-
-static void gretl_test_init (ModelTest *test, ModelTestType ttype)
-{
-    test->type = ttype;
-    test->order = 0;
-    test->param = NULL;
-    test->teststat = GRETL_STAT_NONE;
-    test->dfn = test->dfd = 0;
-    test->value = test->pvalue = NADBL;
 }
 
 static int model_tests_differ (ModelTest *mt1, ModelTest *mt2)
@@ -1783,7 +1785,8 @@ ModelTest *model_test_new (ModelTestType ttype)
  * @test: model test to be added.
  *
  * Adds a #ModelTest to @pmod, if the test in question has
- * not already been performed and recorded.
+ * not already been performed and recorded.  Note that this
+ * function takes care of freeing @test.
  *
  * Returns: 1 if the test was added, otherwise 0.
  */

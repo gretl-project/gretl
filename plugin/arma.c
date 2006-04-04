@@ -29,6 +29,11 @@
 #include "libset.h"
 
 #define ARMA_DEBUG 0
+#define TRY_KALMAN 0
+
+#if TRY_KALMAN
+# include "kalman.h"
+#endif
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -463,6 +468,304 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
 
     return roots;
 }
+
+#if TRY_KALMAN
+
+static kalman *K = NULL;
+static gretl_matrix *S = NULL;
+static gretl_matrix *P = NULL;
+static gretl_matrix *F = NULL;
+static gretl_matrix *A = NULL;
+static gretl_matrix *H = NULL;
+static gretl_matrix *Q = NULL;
+static gretl_matrix *R = NULL;
+static struct arma_info *kainfo;
+
+static int rewrite_kalman_arma_matrices (kalman *K, const double *b)
+{
+    /* arma(1,1) param vector */
+    double phi   = b[0];
+    double theta = b[1];
+    double mu    = b[2];
+    double s2    = b[3];
+    double phi2  = phi * phi;
+
+    gretl_matrix_zero(S);
+    gretl_matrix_zero(F);
+    gretl_matrix_zero(Q);
+    gretl_matrix_zero(R);
+
+    gretl_matrix_set(F, 0, 0, phi);
+    gretl_matrix_set(F, 1, 0, 1.0);
+
+    gretl_matrix_set(A, 0, 0, mu);
+    
+    gretl_matrix_set(H, 0, 0, 1.0);
+    gretl_matrix_set(H, 1, 0, theta);
+
+    gretl_matrix_set(Q, 0, 0, s2);
+
+    gretl_matrix_set(P, 0, 0, s2 / (1.0 - phi2));
+    gretl_matrix_set(P, 0, 1, phi * s2 / (1.0 - phi2));
+    gretl_matrix_set(P, 1, 0, phi * s2 / (1.0 - phi2));
+    gretl_matrix_set(P, 1, 1, s2 / (1.0 - phi2));
+
+    kalman_set_initial_state_vector(K, S);
+    kalman_set_initial_MSE_matrix(K, P);
+
+    return 0;
+}
+
+static int arma_OPG_stderrs (kalman *K, double *b, int k, int T)
+{
+    gretl_matrix *E = NULL;
+    gretl_matrix *G = NULL;
+    gretl_matrix *V = NULL;
+    double *sderr = NULL;
+    const double eps = 1e-8;
+    double g0, g1;
+    double x = 0.0;
+    int i, t, err = 0;
+
+    E = gretl_matrix_alloc(T, 1);
+    G = gretl_matrix_alloc(k, T);
+    V = gretl_matrix_alloc(k, k);
+    if (E == NULL || G == NULL || V == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    sderr = malloc(k * sizeof *sderr);
+    if (sderr == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    } 
+
+    /* construct approximation to G matrix based
+       on finite differences */
+    for (i=0; i<k; i++) {
+	b[i] -= eps;
+	rewrite_kalman_arma_matrices(K, b);
+	err = kalman_forecast(K, NULL, E);
+	for (t=0; t<T; t++) {
+	    g0 = gretl_vector_get(E, t);
+	    gretl_matrix_set(G, i, t, g0);
+	}
+	b[i] += 2.0 * eps;
+	rewrite_kalman_arma_matrices(K, b);
+	err = kalman_forecast(K, NULL, E);
+	for (t=0; t<T; t++) {
+	    g1 = gretl_vector_get(E, t);
+	    g0 = gretl_matrix_get(G, i, t);
+	    gretl_matrix_set(G, i, t, (g1 - g0) / (2.0 * eps));
+	}
+	b[i] -= eps;
+    }
+
+    gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
+			      G, GRETL_MOD_TRANSPOSE,
+			      V);
+
+    err = gretl_invert_symmetric_matrix(V);
+
+    if (!err) {
+	for (i=0; i<k; i++) {
+	    x = gretl_matrix_get(V, i, i);
+	    sderr[i] = sqrt(x);
+	    fprintf(stderr, "sderr[%d] = %.8g\n", i, sderr[i]);
+	}
+    }
+
+ bailout:
+
+    gretl_matrix_free(E);
+    gretl_matrix_free(G);
+    gretl_matrix_free(V);
+    
+    free(sderr);
+
+    return err;
+}
+
+static double get_arma_ll (const double *b)
+{
+    /* FIXME */
+    if (ma_out_of_bounds(kainfo, b + 1, NULL)) {
+	pputs(errprn, "arma: MA estimate(s) out of bounds\n");
+	fputs("arma: MA estimate(s) out of bounds\n", stderr);
+	return NADBL;
+    }
+
+    rewrite_kalman_arma_matrices(K, b);
+    kalman_forecast(K, NULL, NULL);
+    return kalman_get_loglik(K);
+}
+
+static int get_arma_gradient (double *b, double *g)
+{
+    const double eps = 1.0e-8;
+    double ll1, ll2;
+    int i, err = 0;
+
+    for (i=0; i<4 && !err; i++) {
+	ll1 = ll2 = 0.0;
+	b[i] -= eps;
+	rewrite_kalman_arma_matrices(K, b);
+	err = kalman_forecast(K, NULL, NULL);
+	ll1 = kalman_get_loglik(K);
+	if (err) {
+	    break;
+	}
+	b[i] += 2.0 * eps;
+	rewrite_kalman_arma_matrices(K, b);
+	err = kalman_forecast(K, NULL, NULL);
+	ll2 = kalman_get_loglik(K);
+	if (err) {
+	    break;
+	}
+	b[i] -= eps; /* reset to original value */
+	g[i] = (ll2 - ll1) / (2.0 * eps); /* sign? */
+    }
+
+    return err;
+}
+
+static gretl_matrix *form_arma_y_vector (const int *alist, 
+					 const double **Z,
+					 struct arma_info *ainfo)
+{
+    gretl_matrix *y;
+    int s, t;
+
+    y = gretl_column_vector_alloc(ainfo->T);
+    if (y == NULL) {
+	return NULL;
+    }
+
+    /* FIXME */
+    ainfo->t1 = 0;
+    ainfo->t2 = 63;
+
+    s = 0;
+    for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	gretl_vector_set(y, s, Z[ainfo->yno][t]);
+	fprintf(stderr, "read Z[%d][%d] = %g = y[%d]\n", ainfo->yno, t,
+		Z[ainfo->yno][t], s);
+	s++;
+    }
+
+    gretl_matrix_print(y, "y");
+    
+    return y;
+}
+
+static int kalman_arma_1_1 (const int *alist, double *coeff,
+			    const double **Z, const DATAINFO *pdinfo,
+			    struct arma_info *ainfo,
+			    PRN *prn)
+{
+    gretl_matrix *y = NULL;
+    double phi, phi2;
+    double theta;
+    double mu;
+    double s2;
+
+    int r = 2;
+    int n = 1;
+    int k = 1;
+
+    /* BFGS */
+    int ncoeff = ainfo->nc + 1;
+    int maxit = 200;
+    double reltol = 1.0e-12;
+    int fncount = 0;
+    int grcount = 0;
+
+    double *b = NULL;
+    int T, err = 0;
+
+    b = malloc(ncoeff * sizeof *b);
+    if (b == NULL) {
+	return E_ALLOC;
+    }
+
+    /* just for testing */
+    phi   = b[0] = .1;
+    theta = b[1] = .1;
+    mu    = b[2] = 2000;
+    s2    = b[3] = 50000;
+    phi2 = phi * phi;
+
+    y = form_arma_y_vector(alist, Z, ainfo);
+    if (y == NULL) {
+	return E_ALLOC;
+    }
+
+    T = gretl_matrix_rows(y);
+
+    S = gretl_matrix_alloc(r, 1);
+    P = gretl_matrix_alloc(r, r);
+    F = gretl_matrix_alloc(r, r);
+    A = gretl_matrix_alloc(k, n);
+    H = gretl_matrix_alloc(r, n);
+    Q = gretl_matrix_alloc(r, r);
+    R = NULL; /* not needed in this case */
+
+    if (S == NULL || P == NULL || F == NULL || A == NULL ||
+	H == NULL || Q == NULL) {
+	gretl_matrix_free(y);
+	return E_ALLOC;
+    }
+
+    gretl_matrix_zero(S);
+    gretl_matrix_zero(P);
+    gretl_matrix_zero(F);
+    gretl_matrix_zero(Q);
+
+    gretl_matrix_set(F, 0, 0, phi);
+    gretl_matrix_set(F, 1, 0, 1.0);
+
+    gretl_matrix_set(Q, 0, 0, s2);
+
+    gretl_matrix_set(A, 0, 0, mu);
+    
+    gretl_matrix_set(H, 0, 0, 1.0);
+    gretl_matrix_set(H, 1, 0, theta);
+
+    gretl_matrix_set(P, 0, 0, s2 / (1.0 - phi2));
+    gretl_matrix_set(P, 0, 1, phi * s2 / (1.0 - phi2));
+    gretl_matrix_set(P, 1, 0, phi * s2 / (1.0 - phi2));
+    gretl_matrix_set(P, 1, 1, s2 / (1.0 - phi2));
+
+    K = kalman_new(S, P, F, A, H, Q, R, y, &err);
+
+    if (!err) {
+	kainfo = ainfo; /* bodge */
+	err = BFGS_max(ncoeff, b, maxit, reltol, &fncount, &grcount,
+		       get_arma_ll, get_arma_gradient, OPT_V, prn);
+    }
+
+    fprintf(stderr, "BFGS_max returned %d\n", err);
+
+    if (!err) {
+	err = arma_OPG_stderrs(K, b, ncoeff - 1, T);
+	fprintf(stderr, "arma_OPG_stderrs returned %d\n", err);
+    }
+
+    kalman_free(K);
+
+    gretl_matrix_free(S);
+    gretl_matrix_free(P);
+    gretl_matrix_free(F);
+    gretl_matrix_free(A);
+    gretl_matrix_free(H);
+    gretl_matrix_free(Q);
+    gretl_matrix_free(y);
+
+    return err;
+}
+
+#endif /* TRY_KALMAN */
 
 /* construct a "virtual dataset" in the form of a set of pointers into
    the main dataset: this will be passed to the bhhh_max function.
@@ -901,7 +1204,17 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (err) {
 	armod.errcode = err;
 	goto bailout;
-    }	
+    }
+
+#if TRY_KALMAN
+    if (!(opt & OPT_C) && ainfo.p == 1 && ainfo.q == 1 &&
+	ainfo.P == 0 && ainfo.Q == 0) {
+	/* FIXME ainfo dates !! */
+	kalman_arma_1_1(alist, coeff, Z, pdinfo, &ainfo, prn);
+	armod.errcode = 1;
+	goto bailout;
+    }
+#endif
 
     /* construct virtual dataset for dep var, real regressors */
     X = make_armax_X(alist, &ainfo, Z);

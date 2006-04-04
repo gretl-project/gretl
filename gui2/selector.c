@@ -2592,7 +2592,7 @@ static void build_pdq_spinners (selector *sr)
 
 static void hc_config (GtkWidget *w, gpointer p)
 {
-    options_dialog(p, 4, NULL);
+    options_dialog(4);
 }
 
 static void pack_switch (GtkWidget *b, selector *sr,

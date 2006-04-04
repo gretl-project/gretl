@@ -2118,31 +2118,34 @@ gint populate_dbfilelist (windata_t *vwin)
     GtkTreeIter iter;
 #endif
     gchar *dbdir;
-    DIR *dir;
+    DIR *dir = NULL;
+    int tries = 0;
     int ndb = 0;
 
-    if (vwin->role == RATS_DB) {
-	dbdir = paths.ratsbase;
-    } else {
-	dbdir = paths.binbase;
-    }
-
+    while (dir == NULL) {
+	if (vwin->role == RATS_DB) {
+	    dbdir = paths.ratsbase;
+	} else {
+	    dbdir = paths.binbase;
+	}
 #ifdef G_OS_WIN32 
-    /* opendir doesn't work on e.g. c:\foo\ !! */
-    if (strlen(dbdir) > 3 && dbdir[strlen(dbdir) - 1] == '\\') {
-	dbdir[strlen(dbdir) - 1] = '\0';
-    }
-    /* but neither does it work on e.g. f: */
-    if (dbdir[strlen(dbdir) - 1] == ':') {
-	strcat(dbdir, "\\");
-    }
+	/* opendir doesn't work on e.g. c:\foo\ !! */
+	if (strlen(dbdir) > 3 && dbdir[strlen(dbdir) - 1] == '\\') {
+	    dbdir[strlen(dbdir) - 1] = '\0';
+	}
+	/* but neither does it work on e.g. f: */
+	if (dbdir[strlen(dbdir) - 1] == ':') {
+	    strcat(dbdir, "\\");
+	}
 #endif
-
-    dir = opendir(dbdir);
-
-    if (dir == NULL) {
-	errbox(_("Can't open folder %s"), dbdir);
-	return 1;
+	dir = opendir(dbdir);
+	if (dir == NULL) {
+	    errbox(_("Can't open folder %s"), dbdir);
+	    if (++tries == 2 || options_dialog(1)) {
+		/* canceled */
+		return 1;
+	    }
+	}
     }
 
 #ifndef OLD_GTK

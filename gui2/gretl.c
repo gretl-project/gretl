@@ -312,7 +312,7 @@ GtkItemFactoryEntry data_items[] = {
 
     /* File, preferences */
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Preferences/_General..."), NULL, options_dialog, 0, 
+    { N_("/File/_Preferences/_General..."), NULL, options_dialog_callback, 0, 
       "<StockItem>", GTK_STOCK_PREFERENCES },
     { N_("/File/Preferences/_Fixed font..."), NULL, font_selector, 
       FIXED_FONT_SELECTION, "<StockItem>", GTK_STOCK_SELECT_FONT },
@@ -1563,8 +1563,10 @@ drag_data_received  (GtkWidget *widget,
 
     strcpy(tryfile, tmp);
 
-    if (probably_script_file(tmp) || probably_session_file(tmp)) {
-	verify_open_session(); /* FIXME */
+    if (probably_script_file(tmp)) {
+	do_open_script();
+    } else if (probably_session_file(tmp)) {
+	verify_open_session();
     } else {
 	verify_open_data(NULL, 0);
     }

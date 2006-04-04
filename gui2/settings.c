@@ -690,11 +690,17 @@ void set_rcfile (void)
 }
 #endif
 
-void options_dialog (gpointer p, guint page, GtkWidget *w) 
+static void option_dialog_canceled (GtkWidget *w, int *c)
+{
+    *c = 1;
+}
+
+int options_dialog (int page) 
 {
     GtkWidget *dialog;
     GtkWidget *notebook;
     GtkWidget *button;
+    int canceled = 0;
 
     dialog = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: options"));
@@ -709,6 +715,10 @@ void options_dialog (gpointer p, guint page, GtkWidget *w)
     g_signal_connect(G_OBJECT(dialog), "delete_event", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
+
+    g_signal_connect(G_OBJECT(dialog), "destroy", 
+		     G_CALLBACK(gtk_main_quit), 
+		     NULL);
 
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), notebook, 
@@ -740,6 +750,9 @@ void options_dialog (gpointer p, guint page, GtkWidget *w)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 		       button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(option_dialog_canceled), 
+		     &canceled);
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
     gtk_widget_show(button);
@@ -759,6 +772,16 @@ void options_dialog (gpointer p, guint page, GtkWidget *w)
     }
 
     gtk_widget_show(dialog);
+
+    /* block */
+    gtk_main();
+
+    return canceled;
+}
+
+void options_dialog_callback (gpointer p, guint u, GtkWidget *w)
+{
+    options_dialog(u);
 }
 
 static void flip_sensitive (GtkWidget *w, gpointer data)

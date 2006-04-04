@@ -396,6 +396,8 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		unsigned char flags = *ptr;
 		int csize = (flags & 0x01)? 2 : 1;
 
+		dprintf("BIFF_CONTINUE: slop = %d, csize = %d\n", (int) slop,
+			(int) csize);
 		ptr += 1 + csize * slop;
 	    }
 	    for (k=sstnext; k<sstsize; k++) {
@@ -403,7 +405,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		if (remlen <= 0) {
 		    break;
 		}
-		dprintf("Working on sst[%d]\n", k);
+		dprintf("Working on sst[%d], remlen = %d\n", k, remlen);
 		sst[k] = copy_unicode_string(ptr, remlen, &skip, &slop);
 		ptr += skip;
 	    }
@@ -440,6 +442,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    } else if (sst[sidx] != NULL) {
 		check_copy_string(prow, i, j, sidx, sst[sidx]);
 	    } else {
+		dprintf("sst[%d] seems to be NULL, leaving string blank\n", (int) sidx);
 		prow->cells[j] = malloc(2);
 		if (prow->cells[j] != NULL) {
 		    prow->cells[j][0] = '\0';
