@@ -40,13 +40,13 @@ non viene alterata dal fatto di considerare il logaritmo della verosimiglianza
 \[
   \LogLik(\theta) = \log  f(\mathbf{Y}; \theta) .
 \] 
-Le funzionidi log-verosimiglianza gestite da gretl sono quelle in cui
-$\LogLik(\theta)$ può essere scritto come
+Le funzioni di log-verosimiglianza gestite da gretl sono quelle in cui
+$\LogLik(\theta)$ può essere scritta come
 \[
   \LogLik(\theta) = \sum_{t=1}^T \ell_t(\theta) ,
 \] 
 che è vero nella maggior parte dei casi di interesse. Le funzioni
-$\ell_t(\theta)$ vengono chiamati contributi di log-verosimiglianza.
+$\ell_t(\theta)$ vengono chiamate contributi di log-verosimiglianza.
 
 Inoltre, la posizione del massimo è ovviamente determinata dai dati
 $\mathbf{Y}$. Ciò significa che il valore
@@ -178,7 +178,7 @@ $m$ e dalla varianza $V$: visto che si può dimostrare che
 \[
   E(x_t) = p/\alpha \qquad  V(x_t) = p/\alpha^2 ,
 \]
-segue che gli stimatori seguenti
+segue che gli stimatori
 \begin{eqnarray*}
   \bar{\alpha} & = &  m/V \\
   \bar{p} & = & m \cdot \bar{\alpha} 
@@ -270,7 +270,7 @@ cosa lo stimatore OLS per l'intercetta $c$ non è consistente, perché il termine
 di disturbo ha media diversa da zero; in secondo luogo, gli stimatori OLS per
 gli altri parametri sono consistenti, ma inefficienti, a causa della
 non-normalità di $\varepsilon_i$. Entrambi i problemi possono essere risolti
-stimando (\ref{eq:CobbDouglasFrontier}) con la massima verosimiglianza.
+stimando la (\ref{eq:CobbDouglasFrontier}) con la massima verosimiglianza.
 Tuttavia, la stima OLS è un modo veloce e comodo per ricavare dei valori
 iniziali per l'algoritmo di massima verosimiglianza.
 

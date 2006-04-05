@@ -4,7 +4,7 @@
 \section{Introduzione}
 \label{matrix-intro}
 
-Dalla versione 1.5.1, gretl offre la possibilità di creare e manipolare matrici
+A partire dalla versione 1.5.1, gretl offre la possibilità di creare e manipolare matrici
 definite dall'utente. Questa funzionalità è ancora sperimentale.
 
 \section{Creazione di matrici}
@@ -17,7 +17,7 @@ definite dall'utente. Questa funzionalità è ancora sperimentale.
   in forma numerica o per riferimento a variabili scalari preesistenti, o in un
   modo misto;
 \item fornendo una lista di serie di dati;
-\item fornendo una \textit{lista personalizzata} di serie:
+\item fornendo una \textit{lista personalizzata} di serie;
 \item usando una formula simile a quelle usate con il comando
   \texttt{genr}, in cui una nuova matrice viene definita in termini di matrici
   e/o scalari esistenti, oppure attraverso funzioni speciali.
@@ -60,7 +60,7 @@ contengono valori mancanti.
 
 Invece di fornire una lista esplicita di variabili, è possibile fornire il
 \textit{nome di una lista personalizzata} (si veda il capitolo~\ref{persist}),
-come nell'esempio
+come nell'esempio seguente:
 %
 \begin{code}
 list xlist = x1 x2 x3
@@ -131,12 +131,12 @@ $m \times n$ e $B$ è una matrice $p \times q$.
   \times b_{ij}$. Questo tipo di prodotto è tecnicamente noto come
   \emph{prodotto di Hadamard}.
 \item Se $m=1$ e $n=q$, oppure $n=1$ e $m=p$, $C$ sarà una matrice
-  $p\times q$ with $c_{ij} = a_k \times b_{ij}$, where $k=j$ if $m=1$,
+  $p\times q$ con $c_{ij} = a_k \times b_{ij}$, dove $k=j$ se $m=1$,
   altrimenti $k=i$.
 \item Se $p=1$ e $n=q$, oppure $q=1$ e $m=p$, $C$ sarà una matrice
   $m\times n$ con $c_{ij} = a_{ij} \times b_k$, dove $k=j$ se $p=1$,
   altrimenti $k=i$.
-\item Se non è soddisfatta alcuna delle condizioni viste, il prodotto non è
+\item Se non è soddisfatta alcuna delle condizioni precedenti, il prodotto non è
   definito e viene segnalato un errore.
 \end{itemize}
 
@@ -191,10 +191,10 @@ Infine, ci sono funzioni dedicate in modo specifico alle matrici, che è
 possibile suddividere in quattro categorie:
 %
 \begin{enumerate}
-\item Quelle che richiedono come argomento una sola matrice e restituiscono uno scalare.
-\item Quelle che richiedono come argomento una sola matrice e restituiscono una matrice.
-\item Quelle che richiedono come argomento uno o due valori e restituiscono una matrice.
-\item Quelle che richiedono come argomento una o due matrici e restituiscono una o due matrici.
+\item Quelle che richiedono come argomento una sola matrice e producono uno scalare.
+\item Quelle che richiedono come argomento una sola matrice e producono una matrice.
+\item Quelle che richiedono come argomento uno o due valori e producono una matrice.
+\item Quelle che richiedono come argomento una o due matrici e producono una o due matrici.
 \end{enumerate}
 %
 Questi gruppi di funzioni vengono presentati nell'ordine.
@@ -202,7 +202,7 @@ Questi gruppi di funzioni vengono presentati nell'ordine.
 \subsection{Funzioni da matrice a scalare}
 \label{matrix-to-scalar}
 
-Le funzioni che richiedono come argomento una sola matrice e restituiscono uno
+Le funzioni che richiedono come argomento una sola matrice e producono uno
 scalare sono:
 
 \begin{center}
@@ -229,7 +229,7 @@ numero di condizione per una matrice simmetrica definita positiva.
 \subsection{Funzioni da matrice a matrice}
 \label{matrix-to-matrix}
 
-Le funzioni che richiedono come argomento una sola matrice e restituiscono una
+Le funzioni che richiedono come argomento una sola matrice e producono una
 matrice sono:
 
 \begin{center}
@@ -266,7 +266,7 @@ restituisce una matrice $B$ $m \times n$ tale che $b_{ij} = a_{ij} -
 \subsection{Funzioni da scalare a matrice}
 \label{matrix-fill}
 
-Le funzioni che richiedono come argomento uno o due valori e restituiscono una
+Le funzioni che richiedono come argomento uno o due valori e producono una
 matrice sono:
 
 \begin{center}
@@ -299,18 +299,18 @@ distribuzione normale standard.
 \subsection{Funzioni da matrici a matrici}
 \label{matrix-multiples}
 
-Le funzioni che richiedono come argomento una o due matrici e restituiscono una
+Le funzioni che richiedono come argomento una o due matrici e producono una
 o due matrici sono:
 
 \begin{center}
 \begin{tabular}{ll}
-\texttt{qrdecomp()} & Scomposizione QR \\
-\texttt{eigensym()} & Auto-analisi di una matrice simmetrica \\
-\texttt{eigengen()} & Auto-analisi di una matrice generica
+\texttt{qrdecomp()} & scomposizione QR \\
+\texttt{eigensym()} & auto-analisi di una matrice simmetrica \\
+\texttt{eigengen()} & auto-analisi di una matrice generica
 \end{tabular}
 \end{center}
 
-La sintassi per queste funzioni è della forma
+La sintassi per queste funzioni segue la forma
 %
 \begin{textcode}
 matrix B = func(\textsl{A}, \textsl{C})

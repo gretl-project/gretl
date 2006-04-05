@@ -71,7 +71,7 @@ l'ultimo si tradurrebbe nell'espressione seguente
 \]
 la formulazione ARMAX ha il vantaggio che il coefficiente $\beta$
 può essere interpretato immediatamente come l'effetto marginale delle
-variabili $x_t$ sulla media condizionale di $y_t$. Si noti comunque, che
+variabili $x_t$ sulla media condizionale di $y_t$. Si noti comunque che
 i modelli di regressione che contengono errori puramente autoregressivi
 possono essere stimati (sebbene non con tecniche di massima verosimiglianza) con
 altri comandi di \app{gretl}, come \cmd{corc} e \cmd{pwe}.
@@ -97,7 +97,7 @@ permette di stimare un modello con quattro parametri:
 \[
   ( 1 - \phi L )  ( 1 - \Phi L^s ) y_t = \mu + ( 1 + \theta L ) ( 1 + \Theta L^s ) \epsilon_t;
 \]
-assumendo che $y_t$ è una serie trimestrale (e quindi $s=4$), l'equazione
+assumendo che $y_t$ sia una serie trimestrale (e quindi $s=4$), l'equazione
 precedente può essere scritta in modo più esplicito come
 \[
   y_t = \mu + \phi y_{t-1} + \Phi y_{t-4} - (\phi \cdot \Phi) y_{t-5} + 
@@ -215,12 +215,12 @@ Per confrontabilità con le stime di \app{gretl}, è possibile impostare
 \subsection{Previsione}
 \label{arma-fcast}
 
-To be written
+(da scrivere)
 
-\section{Unit root tests}
+\section{Test per radici unitarie}
 \label{sec:uroot}
 
-To be completed
+(da completare)
 
 \subsection{Il test ADF}
 \label{sec:ADFtest}
@@ -277,7 +277,7 @@ calcola la statistica test come statistica-t per $\varphi$ nell'equazione
 $\mu_t = \mu_0 + \mu_1 t$.
 
 Il numero di ritardi ($p$ nell'equazione \ref{eq:ADFtest}) deve essere scelto
-per assicurarsi che (\ref{eq:ADFtest}) sia una parametrizzazione abbastanza
+per assicurarsi che la (\ref{eq:ADFtest}) sia una parametrizzazione abbastanza
 flessibile per rappresentare adeguatamente la persistenza di breve termine di
 $\Delta y_t$. Scegliere un $p$ troppo basso può portare a distorsioni di
 dimensione nel test, mentre sceglierlo troppo alto porta a una perdita di
@@ -359,7 +359,7 @@ generalizzazione multivariata del test ADF.
 \end{equation}
 Se il rango di $\Pi$ è 0, i processi sono tutti I(1); se il rango di
 $\Pi$ è pieno, i processi sono tutti I(0); nei casi intermedi, $\Pi$ può essere
-scritto come $alpha \beta'$ e si ha cointegrazione.
+scritto come $\alpha \beta'$ e si ha cointegrazione.
 
 Il rango di $\Pi$ viene analizzato calcolando gli autovalori di una matrice ad
 essa strettamente legata (chiamata $M$) che ha rango pari a quello di $\Pi$:
@@ -410,7 +410,7 @@ replicare l'esempio di Johansen contenuto nel suo libro del 1995.
 
 In questo caso, il vettore $y_t$ nell'equazione (\ref{eq:Joh-tests}) comprende
 le quattro variabili \cmd{LRM}, \cmd{LRY}, \cmd{IBO}, \cmd{IDE}. Il numero dei ritardi
-è pari a $p$ in (\ref{eq:Joh-tests}) più uno. Di seguito è riportata parte
+è pari a $p$ nella (\ref{eq:Joh-tests}) più uno. Di seguito è riportata parte
 dell'output:
 \begin{center}
 \begin{code}
@@ -486,7 +486,7 @@ autoregressivo dei prezzi dei titoli violerebbe l'efficienza del mercato.
 \item Confrontare il valore $TR^2$ con la distribuzione $\chi^2$ con $q$ gradi
   di libertà, e se il p-value è ``abbastanza piccolo'' rifiutare l'ipotesi nulla
   di omoschedasticità, in favore dell'ipotesi alternativa dell'esistenza di un
-  processo of ARCH($q$).
+  processo ARCH($q$).
 \end{enumerate}
 
 Questo test è implementato in \app{gretl} con il comando \cmd{arch}. Questo
@@ -502,7 +502,7 @@ regressione ausiliaria.
 
 Inoltre, il test ARCH è disponibile dopo aver stimato un'autoregressione
 vettoriale (VAR). In questo caso però non viene eseguita la stima GLS.
-+
+
 \subsection{GARCH}
 \label{subsec:garch}
 
@@ -585,8 +585,8 @@ tabella~\ref{tab:garch-vcv}.
 \label{tab:garch-vcv}
 \begin{center}
 \begin{tabular}{ll}
-\multicolumn{1}{c}{\textit{command}} &
-\multicolumn{1}{c}{\textit{effect}} \\ [4pt]
+\multicolumn{1}{c}{\textit{Commando}} &
+\multicolumn{1}{c}{\textit{Effetto}} \\ [4pt]
 \texttt{set garch\_vcv hessian} & Usa l'Hessiano \\
 \texttt{set garch\_vcv im} & Usa la matrice di informazione \\
 \texttt{set garch\_vcv op} & Usa il prodotto esterno del gradiente \\
@@ -609,7 +609,7 @@ condizionale è
 \label{eq:condvar}
 \sigma^2_t = \alpha_0 + \alpha_1 u^2_{t-1} + \delta_1 \sigma^2_{t-1}
 \end{equation}
-Prendendo il valore atteso non condizionale di (\ref{eq:condvar}) si ottiene
+Prendendo il valore atteso non condizionale della (\ref{eq:condvar}) si ottiene
 \[
 \sigma^2 = \alpha_0 + \alpha_1 \sigma^2 + \delta_1 \sigma^2
 \]
@@ -617,20 +617,20 @@ così che
 \[
 \sigma^2 = \frac{\alpha_0}{1 - \alpha_1 - \delta_1}
 \]
-Affinché esista questa varianza non condizionale, occorre che
-$\alpha_1 + \delta_1 < 1$, e quindi occorre richiedere che $\alpha_0 > 0$.
+Affinché questa varianza non condizionale esista, occorre che
+$\alpha_1 + \delta_1 < 1$, e quindi occorre richiedere $\alpha_0 > 0$.
 
 Un motivo comune per la non convergenza delle stime GARCH (ossia, un motivo
 comune per la non esistenza di valori $\alpha_i$ e $\delta_i$ che soddisfano le
 condizioni precedenti e nello stesso tempo massimizzano la verosimiglianza dei
 dati) è la cattiva specificazione del modello. È importante rendersi conto che
-il modello GARCH in sé prevede una volatilità dei dati che dipende \textit{solo}
+il modello GARCH in sé prevede \textit{solamente} che la volatilità dei dati dipende 
 dal tempo. Se la \textit{media} della serie in questione non è costante, o se il
 processo di errore non è solo eteroschedastico ma è anche autoregressivo, è
 necessario tener conto di questi fatti per formulare un modello appropriato. Ad
 esempio, può essere necessario dover prendere la differenza prima della
 variabile in questione e/o aggiungere opportuni regressori $X_t$ al modello,
-come mostrato in (\ref{eq:garch-meaneq}).
+come mostrato nella (\ref{eq:garch-meaneq}).
 
 \section{Cointegrazione e modelli vettoriali a correzione d'errore}
 \label{vecm-explanation}
@@ -704,13 +704,13 @@ dei ``loading'' o ``aggiustamenti''.
 Possiamo ora considerare tre casi possibili:
     
 \begin{enumerate}
-\item $m \ne 0$: In questo caso $x_t$ ha un trend, come abbiamo appena
+\item $m \ne 0$: in questo caso $x_t$ ha un trend, come abbiamo appena
   visto; ne consegue che anche $y_t$ segue un trend lineare perché in
   media si mantiene a una distanza di $k$ da $x_t$.  Il vettore
   $\mu_0$ non ha restrizioni. Questo è il caso predefinito per il
   comando \cmd{vecm} di gretl.
 	
-\item $m = 0$ e $k \ne 0$: In questo caso, $x_t$ non ha un trend, e di
+\item $m = 0$ e $k \ne 0$: in questo caso, $x_t$ non ha un trend, e di
   conseguenza neanche $y_t$.  Tuttavia, la distanza media tra $y_t$ e
   $x_t$ è diversa da zero. Il vettore $\mu_0$ è dato da
 %	  
@@ -737,7 +737,7 @@ Possiamo ora considerare tre casi possibili:
   il caso di ``costante vincolata''; può essere specificato nel
   comando \cmd{vecm} di gretl usando l'opzione \verb+--rc+.
 	
-\item $m = 0$ e $k = 0$: Questo caso è il più vincolante: chiaramente,
+\item $m = 0$ e $k = 0$: questo caso è il più vincolante: chiaramente,
   né $x_t$ né $y_t$ hanno un trend, e la loro distanza media è zero.
   Anche il vettore $\mu_0$ vale 0, quindi questo caso può essere
   chiamato ``senza costante''.  Questo caso è specificato usando
