@@ -479,6 +479,7 @@ static gretl_matrix *A = NULL;
 static gretl_matrix *H = NULL;
 static gretl_matrix *Q = NULL;
 static gretl_matrix *R = NULL;
+static gretl_matrix *y = NULL;
 static struct arma_info *kainfo;
 
 static int rewrite_kalman_arma_matrices (kalman *K, const double *b)
@@ -546,14 +547,14 @@ static int arma_OPG_stderrs (kalman *K, double *b, int k, int T)
     for (i=0; i<k; i++) {
 	b[i] -= eps;
 	rewrite_kalman_arma_matrices(K, b);
-	err = kalman_forecast(K, NULL, E);
+	err = kalman_forecast(K, y, NULL, E);
 	for (t=0; t<T; t++) {
 	    g0 = gretl_vector_get(E, t);
 	    gretl_matrix_set(G, i, t, g0);
 	}
 	b[i] += 2.0 * eps;
 	rewrite_kalman_arma_matrices(K, b);
-	err = kalman_forecast(K, NULL, E);
+	err = kalman_forecast(K, y, NULL, E);
 	for (t=0; t<T; t++) {
 	    g1 = gretl_vector_get(E, t);
 	    g0 = gretl_matrix_get(G, i, t);
@@ -597,7 +598,7 @@ static double get_arma_ll (const double *b)
     }
 
     rewrite_kalman_arma_matrices(K, b);
-    kalman_forecast(K, NULL, NULL);
+    kalman_forecast(K, y, NULL, NULL);
     return kalman_get_loglik(K);
 }
 
@@ -611,14 +612,14 @@ static int get_arma_gradient (double *b, double *g)
 	ll1 = ll2 = 0.0;
 	b[i] -= eps;
 	rewrite_kalman_arma_matrices(K, b);
-	err = kalman_forecast(K, NULL, NULL);
+	err = kalman_forecast(K, y, NULL, NULL);
 	ll1 = kalman_get_loglik(K);
 	if (err) {
 	    break;
 	}
 	b[i] += 2.0 * eps;
 	rewrite_kalman_arma_matrices(K, b);
-	err = kalman_forecast(K, NULL, NULL);
+	err = kalman_forecast(K, y, NULL, NULL);
 	ll2 = kalman_get_loglik(K);
 	if (err) {
 	    break;
@@ -664,7 +665,6 @@ static int kalman_arma_1_1 (const int *alist, double *coeff,
 			    struct arma_info *ainfo,
 			    PRN *prn)
 {
-    gretl_matrix *y = NULL;
     double phi, phi2;
     double theta;
     double mu;
@@ -676,7 +676,7 @@ static int kalman_arma_1_1 (const int *alist, double *coeff,
 
     /* BFGS */
     int ncoeff = ainfo->nc + 1;
-    int maxit = 200;
+    int maxit = 500;
     double reltol = 1.0e-12;
     int fncount = 0;
     int grcount = 0;
@@ -737,7 +737,7 @@ static int kalman_arma_1_1 (const int *alist, double *coeff,
     gretl_matrix_set(P, 1, 0, phi * s2 / (1.0 - phi2));
     gretl_matrix_set(P, 1, 1, s2 / (1.0 - phi2));
 
-    K = kalman_new(S, P, F, A, H, Q, R, y, &err);
+    K = kalman_new(S, P, F, A, H, Q, R, &err);
 
     if (!err) {
 	kainfo = ainfo; /* bodge */

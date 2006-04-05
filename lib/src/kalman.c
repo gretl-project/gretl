@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "kalman.h"
 
-#define KDEBUG 1
+#define KDEBUG 0
 
 struct kalman_ {
     int r; /* rows of S */
@@ -42,7 +42,6 @@ struct kalman_ {
     const gretl_matrix *H; /* coeffs on state variables, observation eqn */
     const gretl_matrix *Q; /* contemp covariance matrix, state eqn */
     const gretl_matrix *R; /* contemp covariance matrix, obs eqn */
-    const gretl_matrix *y; /* observations on dependent variable */
 
     /* workspace matrices (may be able to economize on these?) */
     gretl_matrix *PH;
@@ -148,7 +147,6 @@ kalman_check_dimensions (kalman *K,
  * equation.
  * @R: contemporaneous covariance matrix for the errors in the 
  * observation equation (or %NULL if this is not applicable).
- * @y: matrix holding the dependent variable.
  * @err: location to receive error code.
  *
  * Allocates and initializes a Kalman struct, which can subsequently
@@ -164,8 +162,7 @@ kalman_check_dimensions (kalman *K,
 kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 		    const gretl_matrix *F, const gretl_matrix *A,
 		    const gretl_matrix *H, const gretl_matrix *Q,
-		    const gretl_matrix *R, const gretl_matrix *y,
-		    int *err)
+		    const gretl_matrix *R, int *err)
 {
     kalman *K;
 
@@ -218,7 +215,6 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->H = H;
     K->Q = Q;
     K->R = R;
-    K->y = y;
 
     /* will hold P*H */
     K->PH = gretl_matrix_alloc(K->r, K->n);
@@ -279,16 +275,12 @@ static int kalman_iter_1 (kalman *K, double *llt)
     err += gretl_matrix_multiply(K->F, K->S0, K->S1);
 
     /* form E = y - A'x - H'S */
-    gretl_matrix_print(K->E, "K->E");
-    gretl_matrix_print(K->Ax, "K->Ax");
     err += gretl_matrix_subtract_from(K->E, K->Ax);
-    gretl_matrix_print(K->E, "K->E");
     err += gretl_matrix_multiply_mod(K->H, GRETL_MOD_TRANSPOSE,
 				     K->S0, GRETL_MOD_NONE,
 				     K->Tmpnn);
     err += gretl_matrix_subtract_from(K->E, K->Tmpnn);
-    gretl_matrix_print(K->E, "K->E");
-    
+
     /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "VE" */
     err += gretl_matrix_multiply(K->V, K->E, K->VE);
 
@@ -349,16 +341,16 @@ static int kalman_iter_2 (kalman *K)
     return err;
 }
 
-#if KDEBUG > 1
-static void kalman_print_state (kalman *K, const gretl_matrix *y, int t)
+#if KDEBUG
+static void kalman_print_state (kalman *K, int i, double y)
 {
     int j;
 
-    fprintf(stderr, "Iteration %d:\n", t);
+    fprintf(stderr, "Iteration %d:\n", i);
 
     for (j=0; j<K->n; j++) {
-	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", 
-		j, gretl_matrix_get(y, t, j), 
+	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", j, 
+		gretl_matrix_get(y, t, j), 
 		j, gretl_vector_get(K->E, j));
     }
 
@@ -378,12 +370,10 @@ static void kalman_set_Ax (kalman *K, const gretl_matrix *x, int t)
 
     for (i=0; i<K->n; i++) {
 	axi = 0.0;
-	if (x != NULL && K->A != NULL) {
-	    for (j=0; j<K->k; j++) {
-		aji = gretl_matrix_get(K->A, j, i);
-		xj = gretl_matrix_get(x, t, j);
-		axi += aji * xj;
-	    }
+	for (j=0; j<K->k; j++) {
+	    aji = gretl_matrix_get(K->A, j, i);
+	    xj = gretl_matrix_get(x, t, j);
+	    axi += aji * xj;
 	}
 	gretl_vector_set(K->Ax, i, axi);
     }
@@ -395,14 +385,14 @@ static void kalman_set_Ax (kalman *K, const gretl_matrix *x, int t)
 */
 
 static void
-kalman_initialize_error (kalman *K, int t)
+kalman_initialize_error (kalman *K, const gretl_matrix *y, int t)
 {
     double yti;
     int i;
 
     for (i=0; i<K->n; i++) {
-	yti = gretl_matrix_get(K->y, t, i);
-	gretl_vector_set(K->E, i, yti); 
+	yti = gretl_matrix_get(y, t, i);
+	gretl_vector_set(K->E, i, yti);    
     }
 }
 
@@ -425,14 +415,14 @@ kalman_record_error (gretl_matrix *E, kalman *K, int t)
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct: see kalman_new().
+ * @y: T x n matrix of dependent variable(s).
  * @x: T x k matrix of exogenous variable(s).  May be %NULL if there
  * are no exogenous variables, or if there's only a constant.
  * @E: T x n matrix to hold one-step ahead forecast errors (or %NULL
  * if these do not have to be recorded).
  *
- * Generates a series of one-step ahead forecasts for the y member
- * of the Kalman struct, based on information entered initially 
- * using kalman_new(), and possibly
+ * Generates a series of one-step ahead forecasts for @y, based on
+ * information entered initially using kalman_new(), and possibly
  * modified using kalman_set_initial_state_vector() and/or
  * kalman_set_initial_MSE_matrix().  The log-likelihood is
  * calculated for the sequence of forecast errors on the assumption
@@ -443,9 +433,11 @@ kalman_record_error (gretl_matrix *E, kalman *K, int t)
  * Returns: 0 on success, non-zero on error.
  */
 
-int kalman_forecast (kalman *K, const gretl_matrix *x, gretl_matrix *E)
+int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
+		     gretl_matrix *E)
 {
-    int T = gretl_matrix_rows(K->y);
+    int T = gretl_matrix_rows(y);
+    double ldet, llt = 0.0;
     int t, err = 0;
 
 #if KDEBUG
@@ -470,10 +462,8 @@ int kalman_forecast (kalman *K, const gretl_matrix *x, gretl_matrix *E)
     }
 
     for (t=0; t<T && !err; t++) {
-	double ldet, llt = 0.0;
-
-#if KDEBUG > 1
-	kalman_print_state(K, t);
+#if KDEBUG
+	kalman_print_state(K, y, t);
 #endif
 	/* intial matrix calculations */
 	gretl_matrix_multiply(K->P0, K->H, K->PH);
@@ -490,7 +480,7 @@ int kalman_forecast (kalman *K, const gretl_matrix *x, gretl_matrix *E)
 	    K->loglik = llt = NADBL;
 	    break;
 	} else {
-	    llt -= (K->n / 2.0) * LN_2_PI - .5 * ldet;
+	    llt = -(K->n / 2.0) * LN_2_PI - .5 * ldet;
 	}
 
 	err = gretl_invert_symmetric_matrix(K->V);
@@ -499,10 +489,11 @@ int kalman_forecast (kalman *K, const gretl_matrix *x, gretl_matrix *E)
 	}
 
 	/* read slice from y */
-	kalman_initialize_error(K, t);
-
-	/* and form (or zero) x as applicable */
-	kalman_set_Ax(K, x, t);
+	kalman_initialize_error(K, y, t);
+	/* and from x if applicable */
+	if (x != NULL) {
+	    kalman_set_Ax(K, x, t);
+	}
 
 	/* first stage of dual interation */
 	err = kalman_iter_1(K, &llt);
@@ -535,7 +526,7 @@ int kalman_forecast (kalman *K, const gretl_matrix *x, gretl_matrix *E)
 
     if (isnan(K->loglik)) {
 	K->loglik = NADBL;
-    } 
+    }    
 
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: err = %d, ll = %.10g\n", err, 
