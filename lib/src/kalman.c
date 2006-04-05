@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "kalman.h"
 
-#define KDEBUG 0
+#define KDEBUG 1
 
 struct kalman_ {
     int r; /* rows of S */
@@ -341,8 +341,9 @@ static int kalman_iter_2 (kalman *K)
     return err;
 }
 
-#if KDEBUG
-static void kalman_print_state (kalman *K, int i, double y)
+#if KDEBUG > 1
+static void kalman_print_state (kalman *K, const gretl_matrix *y,
+				int t)
 {
     int j;
 
@@ -438,6 +439,7 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
 {
     int T = gretl_matrix_rows(y);
     double ldet, llt = 0.0;
+    double s2 = 0.0;
     int t, err = 0;
 
 #if KDEBUG
@@ -462,7 +464,9 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
     }
 
     for (t=0; t<T && !err; t++) {
-#if KDEBUG
+	double et;
+
+#if KDEBUG > 1
 	kalman_print_state(K, y, t);
 #endif
 	/* intial matrix calculations */
@@ -490,6 +494,7 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
 
 	/* read slice from y */
 	kalman_initialize_error(K, y, t);
+
 	/* and from x if applicable */
 	if (x != NULL) {
 	    kalman_set_Ax(K, x, t);
@@ -512,6 +517,10 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
 	    kalman_record_error(E, K, t);
 	}
 
+	/* testing */
+	et = gretl_matrix_get(K->E, 0, 0);
+	s2 += et * et;
+
 	if (!err) {
 	    /* second stage of dual interation */
 	    err = kalman_iter_2(K);
@@ -531,6 +540,9 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: err = %d, ll = %.10g\n", err, 
 	    K->loglik);
+    s2 /= T;
+    fprintf(stderr, "s2 = %g, P0(1,1) = %g\n", s2,
+	    gretl_matrix_get(K->P0, 0, 0));
 #endif
 
     return err;

@@ -5,7 +5,8 @@ enum {
     ARMA_IFC   = 1 << 0, /* specification includes a constant */
     ARMA_SEAS  = 1 << 1, /* includes seasonal component */
     ARMA_DSPEC = 1 << 2, /* input list includes differences */
-    ARMA_X12A  = 1 << 3  /* using X-12-ARIMA to generate estimates */
+    ARMA_X12A  = 1 << 3, /* using X-12-ARIMA to generate estimates */
+    ARMA_EXACT = 1 << 4  /* using exact ML */
 } ArmaFlags;
 
 struct arma_info {
@@ -31,6 +32,7 @@ struct arma_info {
 #define arma_has_seasonal(a)   ((a)->flags & ARMA_SEAS)
 #define arma_is_arima(a)       ((a)->flags & ARMA_DSPEC)
 #define arma_by_x12a(a)        ((a)->flags & ARMA_X12A)
+#define arma_exact_ml(a)       ((a)->flags & ARMA_EXACT)
 
 #define set_arma_has_const(a)     ((a)->flags |= ARMA_IFC)
 #define set_arma_has_seasonal(a)  ((a)->flags |= ARMA_SEAS)
@@ -336,14 +338,12 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
-#if 0
-    t1min += ainfo->maxlag;
-#else
-    if (!arma_by_x12a(ainfo)) {
-	/* not required for X-12-ARIMA? */
+    if (arma_by_x12a(ainfo) || arma_exact_ml(ainfo)) {
+	/* FIXME x12a in conditional mode? */
+	;
+    } else {
 	t1min += ainfo->maxlag;
     }
-#endif
 
     if (t1 < t1min) {
 	t1 = t1min;

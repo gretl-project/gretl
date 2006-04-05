@@ -600,6 +600,9 @@ make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
     }    
 }
 
+#define MAXOBS 720
+#define MAXFCAST 60
+
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo,
 			   struct arma_info *ainfo, const int *alist,
@@ -609,6 +612,7 @@ static int write_spc_file (const char *fname,
     int *xlist = NULL;
     FILE *fp;
     char datestr[12];
+    int nfcast = 0;
     int tmax;
     int i;
 
@@ -636,11 +640,22 @@ static int write_spc_file (const char *fname,
     ylist[0] = 1;
     ylist[1] = ainfo->yno;
 
+    tmax = ainfo->t2;
+
     if ((opt & OPT_F) && ainfo->t2 < pdinfo->n - 1) {
+	int nobs;
+
 	tmax = pdinfo->n - 1;
-    } else {
-	tmax = ainfo->t2;
-    }
+	nobs = tmax - ainfo->t1 + 1;
+	if (nobs > MAXOBS) {
+	    tmax -= nobs - MAXOBS;
+	}
+	nfcast = tmax - ainfo->t2;
+	if (nfcast > MAXFCAST) {
+	    tmax -= nfcast - MAXFCAST;
+	    nfcast -= nfcast - MAXFCAST;
+	}
+    } 
 
     output_series_to_spc(ylist, Z, ainfo->t1, tmax, fp);
 
@@ -665,7 +680,7 @@ static int write_spc_file (const char *fname,
 	output_series_to_spc(xlist, Z, ainfo->t1, tmax, fp);
 	free(xlist);
     }
-    fputs("\n}\n", fp);
+    fputs("}\n", fp);
 
     /* arima specification */
     if (ainfo->P > 0 || ainfo->Q > 0) {
@@ -693,9 +708,9 @@ static int write_spc_file (const char *fname,
 
     fputs("}\n", fp);
 
-    if (opt & OPT_F) {
+    if (nfcast > 0) {
 	fputs("forecast {\n save = (ftr)\n", fp);
-	fprintf(fp, " maxlead = %d\n}\n", tmax - ainfo->t2);
+	fprintf(fp, " maxlead = %d\n}\n", nfcast);
     }
 
     gretl_pop_c_numeric_locale();
@@ -703,6 +718,23 @@ static int write_spc_file (const char *fname,
     fclose(fp);
 
     return 0;
+}
+
+static void delete_old_files (const char *path)
+{
+    const char *exts[] = {
+	"acm", "itr", "lkf", "lks", "mdl", "est", "rts",
+	"rcm", "rsd", "ftr", "err", "log", NULL
+    };
+    char old[MAXLEN];
+    int i, n = strlen(path);
+
+    for (i=0; exts[i] != NULL; i++) {
+	*old = '\0';
+	strncat(old, path, n - 3);
+	strcat(old, exts[i]);
+	remove(old);
+    }
 }
 
 MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
@@ -726,7 +758,7 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     } 
 
     if (pdinfo->t2 < pdinfo->n - 1) {
-	/* FIXME this is temporary */
+	/* FIXME this is temporary (OPT_F -> generate forecast) */
 	opt |= OPT_F;
     }
 
@@ -765,6 +797,9 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, yname);
     write_spc_file(path, Z, pdinfo, &ainfo, alist, opt);
+
+    /* remove any files from on old run, in case of error */
+    delete_old_files(path);
 
     /* run the program */
 #if defined(WIN32)
