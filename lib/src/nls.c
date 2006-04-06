@@ -633,7 +633,7 @@ static int nls_missval_check (nls_spec *spec)
 
 /* this function is used in the context of BFGS */
 
-static double get_mle_ll (const double *b)
+static double get_mle_ll (const double *b, void *unused)
 {
     int t, v = pspec->uhatnum;
 
@@ -657,7 +657,7 @@ static double get_mle_ll (const double *b)
 
 /* used in the context of BFGS */
 
-static int get_mle_gradient (double *b, double *g)
+static int get_mle_gradient (double *b, double *g, void *unused)
 {
     int i, t, v;
     int err = 0;
@@ -1558,7 +1558,7 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     if (!err) {
 	err = BFGS_max(n, spec->coeff, maxit, pspec->tol, 
 		       &spec->fncount, &spec->grcount,
-		       get_mle_ll, get_mle_gradient,
+		       get_mle_ll, get_mle_gradient, NULL,
 		       pspec->opt, nprn);
     }
 
@@ -2384,16 +2384,38 @@ static void reverse_gradient (double *g, int n)
     }
 }
 
-/*  BFGS variable-metric method, based on Pascal code in J. C. Nash,
-    "Compact Numerical Methods for Computers," 2nd edition, converted
-    by p2c then re-crafted by B. D. Ripley.  Revised for gretl by
-    Allin Cottrell.
-*/
+/**
+ * BFGS_max:
+ * @n: number elements in array @b.
+ * @b: array of adjustable coefficients.
+ * @maxit: the maximum number of iterations to allow.
+ * @reltol: relative tolerance for terminating iteration.
+ * @fncount: location to receive count of function evaluations.
+ * @grcount: location to receive count of gradient evaluations.
+ * @get_ll: pointer to function used to calculate log
+ * likelihood.
+ * @get_gradient: pointer to function used to calculate the 
+ * gradient.
+ * @callback_data: pointer that will be passed as the last
+ * parameter to the callback functions @get_ll and @get_gradient.
+ * @opt: may contain %OPT_V for verbose operation.
+ * @prn: printing struct (or %NULL).
+ *
+ * Obtains the set of values for @b which jointly maximize the
+ * log-likelihood as calculated by @get_ll.  Uses the BFGS
+ * variable-metric method.  Based on Pascal code in J. C. Nash,
+ * "Compact Numerical Methods for Computers," 2nd edition, converted
+ * by p2c then re-crafted by B. D. Ripley for gnu R.  Revised for 
+ * gretl by Allin Cottrell.
+ * 
+ * Returns: 0 on successful completion, non-zero error code
+ * on error.
+ */
 
 int BFGS_max (int n, double *b, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_LL_FUNC get_ll,
-	      BFGS_GRAD_FUNC get_gradient, gretlopt opt,
-	      PRN *prn)
+	      BFGS_GRAD_FUNC get_gradient, void *callback_data,
+	      gretlopt opt, PRN *prn)
 {
     int accpoint, enough;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **B = NULL;
@@ -2415,7 +2437,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	goto bailout;
     }
 
-    f = get_ll(b);
+    f = get_ll(b, callback_data);
 
     if (na(f)) {
 	fprintf(stderr, "initial value of f is not finite\n");
@@ -2425,7 +2447,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 
     fmax = f;
     funcount = gradcount = 1;
-    get_gradient(b, g);
+    get_gradient(b, g, callback_data);
     reverse_gradient(g, n);
     iter++;
     ilast = gradcount;
@@ -2473,7 +2495,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		    }
 		}
 		if (count < n) {
-		    f = get_ll(b);
+		    f = get_ll(b, callback_data);
 		    funcount++;
 		    accpoint = !na(f) &&
 			(f >= fmax + gradproj * steplength * acctol);
@@ -2501,7 +2523,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    if (count < n) {
 		/* making progress */
 		fmax = f;
-		get_gradient(b, g);
+		get_gradient(b, g, callback_data);
 		reverse_gradient(g, n);
 		gradcount++;
 		iter++;

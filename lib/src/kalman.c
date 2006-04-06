@@ -26,7 +26,10 @@ struct kalman_ {
     int r; /* rows of S */
     int n; /* rows of y_t */
     int k; /* rows of x_t */
+    int T; /* number of observations */
 
+    int ncoeff;    /* number of adjustable coefficients */
+    int ifc;       /* include a constant (1) or not (0) */
     double loglik; /* log-likelihood */
 
     /* continuously updated matrices */
@@ -42,6 +45,9 @@ struct kalman_ {
     const gretl_matrix *H; /* coeffs on state variables, observation eqn */
     const gretl_matrix *Q; /* contemp covariance matrix, state eqn */
     const gretl_matrix *R; /* contemp covariance matrix, obs eqn */
+
+    const gretl_matrix *y; /* dependent variable matrix */
+    const gretl_matrix *x; /* independent variables matrix */
 
     /* workspace matrices (may be able to economize on these?) */
     gretl_matrix *PH;
@@ -84,11 +90,13 @@ kalman_check_dimensions (kalman *K,
 			 const gretl_matrix *S, const gretl_matrix *P,
 			 const gretl_matrix *F, const gretl_matrix *A,
 			 const gretl_matrix *H, const gretl_matrix *Q,
-			 const gretl_matrix *R)
+			 const gretl_matrix *R, const gretl_matrix *y,
+			 const gretl_matrix *x)
 {
     K->r = gretl_matrix_rows(S);
     K->k = gretl_matrix_rows(A);
     K->n = gretl_matrix_cols(H);
+    K->T = gretl_matrix_rows(y);
 
     /* S should be r x 1 */
     if (gretl_matrix_cols(S) != 1) {
@@ -131,6 +139,14 @@ kalman_check_dimensions (kalman *K,
 	}
     }
 
+    /* x should be T x k, if present */
+    if (x != NULL) {
+	if (gretl_matrix_rows(x) != K->T ||
+	    gretl_matrix_cols(x) != K->k) {
+	    return 1;
+	}
+    }
+
     return 0;
 }
 
@@ -147,6 +163,11 @@ kalman_check_dimensions (kalman *K,
  * equation.
  * @R: contemporaneous covariance matrix for the errors in the 
  * observation equation (or %NULL if this is not applicable).
+ * @y: T x n matrix of dependent variable(s).
+ * @x: T x k matrix of exogenous variable(s).  May be %NULL if there
+ * are no exogenous variables, or if there's only a constant.
+ * @ncoeff: number of adjustable coefficients (used when the
+ * Kalman filter is employed for estimation purposes).
  * @err: location to receive error code.
  *
  * Allocates and initializes a Kalman struct, which can subsequently
@@ -162,7 +183,9 @@ kalman_check_dimensions (kalman *K,
 kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 		    const gretl_matrix *F, const gretl_matrix *A,
 		    const gretl_matrix *H, const gretl_matrix *Q,
-		    const gretl_matrix *R, int *err)
+		    const gretl_matrix *R, const gretl_matrix *y,
+		    const gretl_matrix *x, int ncoeff, int ifc,
+		    int *err)
 {
     kalman *K;
 
@@ -174,12 +197,14 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	return NULL;
     }
 
-    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R)) {
+    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R, y, x)) {
 	*err = E_NONCONF;
 	free(K);
 	return NULL;
     }
 
+    K->ncoeff = ncoeff;
+    K->ifc = ifc;
     K->loglik = NADBL;
 
     K->S0 = NULL;
@@ -215,6 +240,9 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->H = H;
     K->Q = Q;
     K->R = R;
+
+    K->y = y;
+    K->x = x;
 
     /* will hold P*H */
     K->PH = gretl_matrix_alloc(K->r, K->n);
@@ -342,8 +370,7 @@ static int kalman_iter_2 (kalman *K)
 }
 
 #if KDEBUG > 1
-static void kalman_print_state (kalman *K, const gretl_matrix *y,
-				int t)
+static void kalman_print_state (kalman *K, int t)
 {
     int j;
 
@@ -351,7 +378,7 @@ static void kalman_print_state (kalman *K, const gretl_matrix *y,
 
     for (j=0; j<K->n; j++) {
 	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", j, 
-		gretl_matrix_get(y, t, j), 
+		gretl_matrix_get(K->y, t, j), 
 		j, gretl_vector_get(K->E, j));
     }
 
@@ -360,25 +387,31 @@ static void kalman_print_state (kalman *K, const gretl_matrix *y,
 }
 #endif
 
-/* read from the appropriate row of x (T x k) and multiply by
-   A' to form A'x_t.
+/* read from the appropriate row of x (T x k) and multiply by A' to
+   form A'x_t.  Note: if there's a constant as well as other exogenous
+   vars present, the constant does _not_ have a column of 1s in the x
+   matrix, though it does have a coefficient entry in the A matrix.
 */
 
-static void kalman_set_Ax (kalman *K, const gretl_matrix *x, int t)
+static void kalman_set_Ax (kalman *K, int t)
 {
-    double aji, xj, axi;
-    int i, j;
+    double aji, xjt, axi;
+    int i, j, jx;
 
     for (i=0; i<K->n; i++) {
 	axi = 0.0;
 	for (j=0; j<K->k; j++) {
 	    aji = gretl_matrix_get(K->A, j, i);
-	    xj = gretl_matrix_get(x, t, j);
-	    axi += aji * xj;
+	    if (K->ifc && j == 0) {
+		xjt = 1.0;
+	    } else {
+		jx = (K->ifc)? j - 1 : j;
+		xjt = gretl_matrix_get(K->x, t, jx);
+	    }
+	    axi += aji * xjt;
 	}
 	gretl_vector_set(K->Ax, i, axi);
     }
-
 }
 
 /* read from the appropriate row of y (T x n) and transcribe to
@@ -386,13 +419,13 @@ static void kalman_set_Ax (kalman *K, const gretl_matrix *x, int t)
 */
 
 static void
-kalman_initialize_error (kalman *K, const gretl_matrix *y, int t)
+kalman_initialize_error (kalman *K, int t)
 {
     double yti;
     int i;
 
     for (i=0; i<K->n; i++) {
-	yti = gretl_matrix_get(y, t, i);
+	yti = gretl_matrix_get(K->y, t, i);
 	gretl_vector_set(K->E, i, yti);    
     }
 }
@@ -416,9 +449,6 @@ kalman_record_error (gretl_matrix *E, kalman *K, int t)
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct: see kalman_new().
- * @y: T x n matrix of dependent variable(s).
- * @x: T x k matrix of exogenous variable(s).  May be %NULL if there
- * are no exogenous variables, or if there's only a constant.
  * @E: T x n matrix to hold one-step ahead forecast errors (or %NULL
  * if these do not have to be recorded).
  *
@@ -434,40 +464,35 @@ kalman_record_error (gretl_matrix *E, kalman *K, int t)
  * Returns: 0 on success, non-zero on error.
  */
 
-int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
-		     gretl_matrix *E)
+int kalman_forecast (kalman *K, gretl_matrix *E)
 {
-    int T = gretl_matrix_rows(y);
     double ldet, llt = 0.0;
     double s2 = 0.0;
     int t, err = 0;
 
 #if KDEBUG
-    fprintf(stderr, "kalman_forecast: T = %d\n", T);
+    fprintf(stderr, "kalman_forecast: T = %d\n", K->T);
 #endif  
 
     K->loglik = 0.0;
 
-    if (x == NULL) {
+    if (K->x == NULL) {
 	/* no exogenous vars */
 	gretl_matrix_copy_values(K->Ax, K->A);
-    } else if (gretl_matrix_rows(x) != T ||
-	       gretl_matrix_cols(x) != K->k) {
-	return E_NONCONF;
-    }
+    } 
 
     if (E != NULL) {
-	if (gretl_matrix_rows(E) != T || 
+	if (gretl_matrix_rows(E) != K->T || 
 	    gretl_matrix_cols(E) != K->n) {
 	    return E_NONCONF;
 	}
     }
 
-    for (t=0; t<T && !err; t++) {
+    for (t=0; t<K->T && !err; t++) {
 	double et;
 
 #if KDEBUG > 1
-	kalman_print_state(K, y, t);
+	kalman_print_state(K, t);
 #endif
 	/* intial matrix calculations */
 	gretl_matrix_multiply(K->P0, K->H, K->PH);
@@ -493,11 +518,11 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
 	}
 
 	/* read slice from y */
-	kalman_initialize_error(K, y, t);
+	kalman_initialize_error(K, t);
 
 	/* and from x if applicable */
-	if (x != NULL) {
-	    kalman_set_Ax(K, x, t);
+	if (K->x != NULL) {
+	    kalman_set_Ax(K, t);
 	}
 
 	/* first stage of dual interation */
@@ -540,7 +565,7 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: err = %d, ll = %.10g\n", err, 
 	    K->loglik);
-    s2 /= T;
+    s2 /= K->T;
     fprintf(stderr, "s2 = %g, P0(1,1) = %g\n", s2,
 	    gretl_matrix_get(K->P0, 0, 0));
 #endif
@@ -561,6 +586,19 @@ int kalman_forecast (kalman *K, const gretl_matrix *y, const gretl_matrix *x,
 double kalman_get_loglik (const kalman *K)
 {
     return K->loglik;
+}
+
+/**
+ * kalman_get_ncoeff:
+ * @K: pointer to Kalman struct.
+ * 
+ * Returns: the number of adjustable coefficients
+ * associated with the Kalman filter. 
+ */
+
+int kalman_get_ncoeff (const kalman *K)
+{
+    return K->ncoeff;
 }
 
 /**

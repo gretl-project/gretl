@@ -136,6 +136,8 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c);
 
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 
+int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n);
+
 gretl_matrix *gretl_matrix_copy_transpose (const gretl_matrix *m);
 
 gretl_vector *gretl_column_vector_from_array (const double *x, 
@@ -188,11 +190,19 @@ int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
 int 
 gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src);
 
+int gretl_matrix_I_minus (gretl_matrix *m);
+
 int gretl_matrix_transpose (gretl_matrix *targ, const gretl_matrix *src);
 
 int gretl_square_matrix_transpose (gretl_matrix *m);
 
 int gretl_matrix_add_self_transpose (gretl_matrix *m);
+
+int 
+gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src);
+
+int 
+gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src);
 
 int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
@@ -201,8 +211,13 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 			   gretl_matrix *c);
 
+int
+gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
+				gretl_matrix *K);
+
 gretl_matrix *
-gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B);
+gretl_matrix_kronecker_product_new (const gretl_matrix *A, 
+				    const gretl_matrix *B);
 
 double gretl_matrix_dot_product (const gretl_matrix *a, GretlMatrixMod amod,
 				 const gretl_matrix *b, GretlMatrixMod bmod,

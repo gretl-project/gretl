@@ -891,7 +891,7 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix_print(HSH, "HSH = subset(Svv)");
 #endif
 
-    varbeta = gretl_matrix_kronecker_product(aOa, HSH);
+    varbeta = gretl_matrix_kronecker_product_new(aOa, HSH);
     if (varbeta == NULL) {
 	err = E_ALLOC;
 	goto bailout;

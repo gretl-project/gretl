@@ -20,6 +20,8 @@ GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 GTK_EXTRA_CFLAGS = @GTK_EXTRA_CFLAGS@
 GTK_EXTRA_LIBS = @GTK_EXTRA_LIBS@
+XML_CFLAGS = @XML_CFLAGS@
+XML_LIBS = @XML_LIBS@
 PNG_CFLAGS = @PNG_CFLAGS@
 PNG_LIBS = @PNG_LIBS@
 GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
@@ -60,9 +62,9 @@ ifeq ($(USE_NLS),yes)
   DEFS = -DLOCALEDIR=\"$(localedir)\"
 endif
 
-override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) \
-	$(GDK_PIXBUF_CFLAGS) $(DEFS)
-override LIBS += $(PNG_LIBS) $(GDK_PIXBUF_LIBS)
+override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) $(XML_CFLAGS) \
+	$(PNG_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
+override LIBS += $(XML_LIBS) $(PNG_LIBS) $(GDK_PIXBUF_LIBS)
 
 # Directories
 bindir	= $(prefix)/bin

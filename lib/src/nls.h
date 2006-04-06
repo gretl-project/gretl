@@ -22,8 +22,8 @@
 
 typedef struct _nls_spec nls_spec;
 
-typedef double (*BFGS_LL_FUNC) (const double *);
-typedef int (*BFGS_GRAD_FUNC) (double *, double *);
+typedef double (*BFGS_LL_FUNC) (const double *, void *);
+typedef int (*BFGS_GRAD_FUNC) (double *, double *, void *);
 
 nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo);
 
@@ -58,7 +58,7 @@ double get_default_nls_toler (void);
 
 int BFGS_max (int n, double *b, int maxit, double reltol,
 	      int *fncount, int *grcount, BFGS_LL_FUNC get_ll,
-	      BFGS_GRAD_FUNC get_gradient, gretlopt opt,
-	      PRN *prn);
+	      BFGS_GRAD_FUNC get_gradient, void *data,
+	      gretlopt opt, PRN *prn);
 
 #endif /* GRETL_NLS_H */

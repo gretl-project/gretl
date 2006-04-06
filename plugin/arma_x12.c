@@ -337,11 +337,11 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 static int 
 get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 {
-    double *ar_coeff = pmod->coeff + arma_has_const(ainfo);
+    double *ar_coeff = pmod->coeff + ainfo->ifc;
     double *ma_coeff = ar_coeff + ainfo->p + ainfo->P;
     double *x_coeff = ma_coeff + ainfo->q + ainfo->Q;
 
-    double *ar_sderr = pmod->sderr + arma_has_const(ainfo);
+    double *ar_sderr = pmod->sderr + ainfo->ifc;
     double *ma_sderr = ar_sderr + ainfo->p + ainfo->P;
     double *x_sderr = ma_sderr + ainfo->q + ainfo->Q;
 
@@ -424,7 +424,7 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 	pmod->coeff[0] *= arfac;
 	pmod->sderr[0] *= arfac;
 
-	for (i=0; i<ainfo->r; i++) {
+	for (i=0; i<ainfo->nexo; i++) {
 	    x_coeff[i] *= arfac;
 	    x_sderr[i] *= arfac;
 	}
@@ -536,7 +536,7 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
 	gretl_model_add_arma_varnames(pmod, pdinfo, ainfo->yno,
 				      ainfo->p, ainfo->q, 
 				      ainfo->P, ainfo->Q,
-				      ainfo->r);
+				      ainfo->nexo);
     }
 }
 
@@ -565,7 +565,7 @@ arma_info_get_x_list (struct arma_info *ainfo, const int *alist)
     int start = arma_list_y_position(ainfo);
     int i;
 
-    xlist = gretl_list_new(ainfo->r);
+    xlist = gretl_list_new(ainfo->nexo);
 
     if (xlist != NULL) {
 	for (i=1; i<=xlist[0]; i++) {
@@ -616,7 +616,7 @@ static int write_spc_file (const char *fname,
     int tmax;
     int i;
 
-    if (ainfo->r > 0) {
+    if (ainfo->nexo > 0) {
 	xlist = arma_info_get_x_list(ainfo, alist);
 	if (xlist == NULL) {
 	    return E_ALLOC;
@@ -668,10 +668,10 @@ static int write_spc_file (const char *fname,
 
     /* regression specification */
     fputs("Regression {\n", fp);
-    if (arma_has_const(ainfo)) {
+    if (ainfo->ifc) {
 	fputs(" variables = (const)\n", fp);
     }
-    if (ainfo->r > 0) {
+    if (ainfo->nexo > 0) {
 	fputs(" user = ( ", fp);
 	for (i=1; i<=xlist[0]; i++) {
 	    fprintf(fp, "%s ", pdinfo->varname[xlist[i]]);

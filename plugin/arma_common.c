@@ -2,16 +2,16 @@
 #define MAX_ARIMA_DIFF 2
 
 enum {
-    ARMA_IFC   = 1 << 0, /* specification includes a constant */
-    ARMA_SEAS  = 1 << 1, /* includes seasonal component */
-    ARMA_DSPEC = 1 << 2, /* input list includes differences */
-    ARMA_X12A  = 1 << 3, /* using X-12-ARIMA to generate estimates */
-    ARMA_EXACT = 1 << 4  /* using exact ML */
+    ARMA_SEAS  = 1 << 0, /* includes seasonal component */
+    ARMA_DSPEC = 1 << 1, /* input list includes differences */
+    ARMA_X12A  = 1 << 2, /* using X-12-ARIMA to generate estimates */
+    ARMA_EXACT = 1 << 3  /* using exact ML */
 } ArmaFlags;
 
 struct arma_info {
     int yno;      /* ID of dependent variable */
     char flags;   /* from ArmaFlags */
+    int ifc;      /* specification includes a constant? */
     int p;        /* non-seasonal AR order */
     int d;        /* non-seasonal difference */
     int q;        /* non-seasonal MA order */
@@ -19,7 +19,7 @@ struct arma_info {
     int D;        /* seasonal difference */
     int Q;        /* seasonal MA order */
     int maxlag;   /* longest lag in model */
-    int r;        /* number of other regressors (ARMAX) */
+    int nexo;     /* number of other regressors (ARMAX) */
     int nc;       /* total number of coefficients */
     int t1;       /* starting observation */
     int t2;       /* ending observation */
@@ -28,13 +28,11 @@ struct arma_info {
     double *dy;   /* differenced dependent variable */
 };
 
-#define arma_has_const(a)      ((a)->flags & ARMA_IFC)
 #define arma_has_seasonal(a)   ((a)->flags & ARMA_SEAS)
 #define arma_is_arima(a)       ((a)->flags & ARMA_DSPEC)
 #define arma_by_x12a(a)        ((a)->flags & ARMA_X12A)
 #define arma_exact_ml(a)       ((a)->flags & ARMA_EXACT)
 
-#define set_arma_has_const(a)     ((a)->flags |= ARMA_IFC)
 #define set_arma_has_seasonal(a)  ((a)->flags |= ARMA_SEAS)
 #define set_arma_is_arima(a)      ((a)->flags |= ARMA_DSPEC)
 #define unset_arma_is_arima(a)    ((a)->flags &= ~ARMA_DSPEC)
@@ -53,7 +51,8 @@ arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)
     ainfo->Q = 0; 
 
     ainfo->maxlag = 0;
-    ainfo->r = 0;
+    ainfo->ifc = 0;
+    ainfo->nexo = 0;
     ainfo->nc = 0;
 
     ainfo->t1 = pdinfo->t1;
@@ -217,7 +216,7 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     }
 
     pmod->ci = ARMA;
-    pmod->ifc = arma_has_const(ainfo);
+    pmod->ifc = ainfo->ifc;
 
     pmod->dfn = ainfo->nc - pmod->ifc;
     pmod->dfd = pmod->nobs - pmod->dfn;
@@ -289,7 +288,7 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
 	gretl_model_set_int(pmod, "arima_D", ainfo->D);
     }
 
-    if (ainfo->r > 0) {
+    if (ainfo->nexo > 0) {
 	gretl_model_set_int(pmod, "armax", 1);
     }
 }
@@ -524,16 +523,16 @@ static int check_arma_list (int *list, gretlopt opt,
 	if ((opt & OPT_N) || (armax && !hadconst)) {
 	    ;
 	} else {
-	    set_arma_has_const(ainfo);
+	    ainfo->ifc = 1;
 	}
     }
 
     if (err) {
 	gretl_errmsg_set(_("Error in arma command"));
     } else {
-	ainfo->r = list[0] - ((arma_has_seasonal(ainfo))? 7 : 4);
+	ainfo->nexo = list[0] - ((arma_has_seasonal(ainfo))? 7 : 4);
 	ainfo->nc = ainfo->p + ainfo->q + ainfo->P + ainfo->Q
-	    + ainfo->r + arma_has_const(ainfo);
+	    + ainfo->nexo + ainfo->ifc;
 	ainfo->yno = (arma_has_seasonal(ainfo))? list[7] : list[4];
     }
 
@@ -606,16 +605,16 @@ static int check_arima_list (int *list, gretlopt opt,
 	if ((opt & OPT_N) || (armax && !hadconst)) {
 	    ;
 	} else {
-	    set_arma_has_const(ainfo);
+	    ainfo->ifc = 1;
 	}
     }
 
     if (err) {
 	gretl_errmsg_set(_("Error in arma command"));
     } else {
-	ainfo->r = list[0] - ((arma_has_seasonal(ainfo))? 9 : 5);
+	ainfo->nexo = list[0] - ((arma_has_seasonal(ainfo))? 9 : 5);
 	ainfo->nc = ainfo->p + ainfo->q + ainfo->P + ainfo->Q
-	    + ainfo->r + arma_has_const(ainfo);
+	    + ainfo->nexo + ainfo->ifc;
 	ainfo->yno = (arma_has_seasonal(ainfo))? list[9] : list[5];
     }
 

@@ -1015,6 +1015,84 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
 }
 
 /**
+ * gretl_matrix_I_minus:
+ * @m: original square matrix, n x n.
+ *
+ * Rewrites @m as (I - m), where I is the n x n identity
+ * matrix.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if @m is
+ * not square.
+ */
+
+int gretl_matrix_I_minus (gretl_matrix *m)
+{
+    double x;
+    int i, j, k;
+
+    if (m->rows != m->cols) {
+	return E_NONCONF;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    k = mdx(m, i, j);
+	    x = m->val[k];
+	    if (i == j) {
+		m->val[k] = 1.0 - x;
+	    } else if (x != 0.0) {
+		m->val[k] = -x;
+	    }
+	}
+    }
+    
+    return 0;
+}
+
+/**
+ * gretl_matrix_inscribe_I:
+ * @m: original matrix.
+ * @row: top row for insertion.
+ * @col: leftmost row for insertion.
+ * @n: dimension (rows and columns) of identity matrix.
+ * 
+ * Writes an n x n identity matrix into matrix @m, the top left-hand
+ * corner of the insertion being given by @row and @col (which are
+ * 0-based).
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if an identity
+ * matrix of the specified size cannot be fitted into @m at the
+ * specified location.
+ */
+
+int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n)
+{
+    int i, j, mi, mj;
+
+    if (n <= 0) {
+	return E_NONCONF;
+    }
+
+    if (row < 0 || row + n > m->rows) {
+	return E_NONCONF;
+    }
+
+    if (col < 0 || col + n > m->cols) {
+	return E_NONCONF;
+    }
+
+    for (i=0; i<n; i++) {
+	mi = row + i;
+	for (j=0; j<n; j++) {
+	    mj = col + j;
+	    m->val[mdx(m, mi, mj)] = (i == j)? 1.0 : 0.0;
+	}
+    }
+    
+    return 0;
+}
+
+/**
  * gretl_matrix_transpose:
  * @targ: target matrix.
  * @src: source matrix.
@@ -1107,6 +1185,69 @@ int gretl_matrix_add_self_transpose (gretl_matrix *m)
 		m->val[mdx(m, i, j)] = 
 		    m->val[mdx(m, j, i)] = x1 + x2;
 	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_vectorize:
+ * @targ: target vector, (m * n) x 1.
+ * @src: source matrix, m x n.
+ *
+ * Writes into @targ vec(@src), that is, a column vector
+ * formed by stacking the columns of @src.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if
+ * @targ is not correctly dimensioned.
+ */
+
+int 
+gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src)
+{
+    int i, j, n = src->rows * src->cols;
+
+    if (targ->cols != 1 || targ->rows != n) {
+	return E_NONCONF;
+    }
+
+    n = 0;
+    for (j=0; j<src->cols; j++) {
+	for (i=0; i<src->rows; i++) {
+	    targ->val[n++] = src->val[mdx(src, i, j)];
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_unvectorize:
+ * @targ: target matrix, m x n.
+ * @src: source vector, (m * n) x 1.
+ *
+ * Writes successive blocks of length m from @src into 
+ * the successive columns of @targ (that is, performs the
+ * inverse of the vec() operation).
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if
+ * @targ is not correctly dimensioned.
+ */
+
+int 
+gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
+{
+    int i, j, n = targ->rows * targ->cols;
+
+    if (src->cols != 1 || src->rows != n) {
+	return E_NONCONF;
+    }
+
+    n = 0;
+    for (j=0; j<targ->cols; j++) {
+	for (i=0; i<targ->rows; i++) {
+	    targ->val[mdx(targ, i, j)] = src->val[n++];
 	}
     }
 
@@ -1742,17 +1883,20 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 
 /**
  * gretl_matrix_kronecker_product:
- * @A: left-hand matrix.
- * @B: right-hand matrix.
- * 
- * Returns: A newly allocated matrix which is the Kronecker 
- * product of matrices @a and @b, or %NULL on failure.
+ * @A: left-hand matrix, p x q.
+ * @B: right-hand matrix, r x s.
+ * @K: target matrix, (p * r) x (q * s).
+ *
+ * Writes the Kronecker product of @A and @B into @K.
+ *
+ * Returns: 0 on success, %E_NONCONF if matrix @K is
+ * not correctly dimensioned for the operation.
  */
 
-gretl_matrix *
-gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B)
+int
+gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B,
+				gretl_matrix *K)
 {
-    gretl_matrix *K;
     double aij, bkl;
     int p = A->rows;
     int q = A->cols;
@@ -1761,26 +1905,55 @@ gretl_matrix_kronecker_product (const gretl_matrix *A, const gretl_matrix *B)
     int i, j, k, l;
     int ioff, joff;
     int Ki, Kj;
+
+    if (K->rows != p * r || K->cols != q * s) {
+	return E_NONCONF;
+    }
+    
+    for (i=0; i<p; i++) {
+	ioff = i * r;
+	for (j=0; j<q; j++) {
+	    /* block ij is an r * s matrix, a_{ij} * B */
+	    aij = A->val[mdx(A, i, j)];
+	    joff = j * s;
+	    for (k=0; k<r; k++) {
+		Ki = ioff + k;
+		for (l=0; l<s; l++) {
+		    bkl = B->val[mdx(B, k, l)];
+		    Kj = joff + l;
+		    K->val[mdx(K, Ki, Kj)] = aij * bkl;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_kronecker_product_new:
+ * @A: left-hand matrix, p x q.
+ * @B: right-hand matrix, r x s.
+ * 
+ * Returns: A newly allocated (p * r) x (q * s) matrix which 
+ * is the Kronecker product of matrices @A and @B, or %NULL 
+ * on failure.
+ */
+
+gretl_matrix *
+gretl_matrix_kronecker_product_new (const gretl_matrix *A, 
+				    const gretl_matrix *B)
+{
+    gretl_matrix *K;
+    int p = A->rows;
+    int q = A->cols;
+    int r = B->rows;
+    int s = B->cols;
     
     K = gretl_matrix_alloc(p * r, q * s);
 
     if (K != NULL) {
-	for (i=0; i<p; i++) {
-	    ioff = i * r;
-	    for (j=0; j<q; j++) {
-		/* block ij is an r * s matrix, a_{ij} * B */
-		aij = A->val[mdx(A, i, j)];
-		joff = j * s;
-		for (k=0; k<r; k++) {
-		    Ki = ioff + k;
-		    for (l=0; l<s; l++) {
-			bkl = B->val[mdx(B, k, l)];
-			Kj = joff + l;
-			K->val[mdx(K, Ki, Kj)] = aij * bkl;
-		    }
-		}
-	    }
-	}
+	gretl_matrix_kronecker_product(A, B, K);
     }
 
     return K;

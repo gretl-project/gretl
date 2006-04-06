@@ -2006,7 +2006,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	break;
     case OP_KRON:
 	/* Kronecker product */
-	C = gretl_matrix_kronecker_product(A, B);
+	C = gretl_matrix_kronecker_product_new(A, B);
 	if (C == NULL) {
 	    *err = E_ALLOC;
 	}
