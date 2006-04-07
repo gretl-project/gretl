@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: GNU gretl-1.3.1\n"
+"Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-03-07 08:37-0500\n"
-"PO-Revision-Date: 2006-04-07 17:57+0100\n"
+"PO-Revision-Date: 2006-04-07 18:22+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -31,7 +31,7 @@ msgstr "avec constante et tendance temporelle"
 
 #: lib/src/adf_kpss.c:125
 msgid "with constant and quadratic trend"
-msgstr "avec constante, tendance, et tendance carrée"
+msgstr "avec constante et tendance quadratique"
 
 #: lib/src/adf_kpss.c:133
 #: lib/src/adf_kpss.c:136
@@ -367,7 +367,7 @@ msgstr "résidu"
 #: lib/src/compare.c:1168
 #, c-format
 msgid "lagging uhat failed"
-msgstr "échec du délai de uhat"
+msgstr "échec de la génération de uhat retardé"
 
 #: lib/src/compare.c:1200
 #: plugin/panel_data.c:1805
@@ -381,7 +381,7 @@ msgstr "autocorrélation"
 
 #: lib/src/compare.c:1311
 msgid "dummy variable for Chow test"
-msgstr "variable auxiliaire pour le test Chow"
+msgstr "variable muette pour le test de Chow"
 
 #: lib/src/compare.c:1347
 #, c-format
@@ -403,7 +403,7 @@ msgstr "Test de CUSUM pour la stabilité des paramètres"
 #: lib/src/compare.c:1503
 #, c-format
 msgid "mean of scaled residuals = %g\n"
-msgstr "moyenne des résidus échelonnés = %g\n"
+msgstr "moyenne des résidus normalisés = %g\n"
 
 #: lib/src/compare.c:1512
 #, c-format
@@ -416,7 +416,7 @@ msgstr ""
 
 #: lib/src/compare.c:1517
 msgid "Cumulated sum of scaled residuals"
-msgstr "Somme cumulée des résidus échelonnés"
+msgstr "Somme cumulée des résidus normalisés"
 
 #: lib/src/compare.c:1520
 #, no-c-format
@@ -445,7 +445,7 @@ msgstr "Traçé CUSUM avec un intervalle de confiance de 95%"
 
 #: lib/src/compare.c:1613
 msgid "This test is only relevant for pooled models\n"
-msgstr "Ce test est significatif que pour les modèles en commun\n"
+msgstr "Ce test est significatif que pour les modèles en pooling\n"
 
 #: lib/src/compare.c:1618
 msgid "This test requires that the model contains a constant\n"
@@ -507,7 +507,7 @@ msgstr "Échec d'analyse de la commande mp_ols\n"
 #: plugin/vif.c:33
 #: plugin/vif.c:100
 msgid "Out of memory!"
-msgstr "Mémoire épuisée!"
+msgstr "Mémoire insuffisante !"
 
 #: lib/src/compare.c:2010
 #: lib/src/compare.c:2033
@@ -540,7 +540,7 @@ msgid ""
 "\n"
 "%9s, %s\n"
 msgstr ""
-"%7co vaut pour %s et x vaut pour %s (+ signifie qu'ils sont égaux)\n"
+"%7co correspond à %s et x à %s (+ signifie qu'ils sont égaux)\n"
 "\n"
 "%9s, %s\n"
 
@@ -551,7 +551,7 @@ msgid ""
 "\n"
 "%8c"
 msgstr ""
-"%25cNOTE: o tient pour %s\n"
+"%25cNOTE : o correspond à %s\n"
 "\n"
 "%8c"
 
@@ -561,7 +561,7 @@ msgid ""
 "%17cNOTE: o stands for %s,   x stands for %s\n"
 "%17c+ means %s and %s are equal when scaled\n"
 msgstr ""
-"%17cNOTE: o tient pour %s,   x tient pour %s\n"
+"%17cNOTE : o correspond à %s,   x à %s\n"
 "%17c+ signifie %s et %s sont égaux lorsqu'à l'échelle\n"
 
 #: lib/src/compat.c:403
@@ -586,14 +586,14 @@ msgstr "= différence de rho %s"
 #: lib/src/dataio.c:275
 #, c-format
 msgid "WARNING: binary data read error at var %d"
-msgstr "AVERTISSEMENT : erreur de lecture des données binaires à la variable %d"
+msgstr "AVERTISSEMENT : erreur de lecture des données binaires pour la variable %d"
 
 #: lib/src/dataio.c:193
 #: lib/src/dataio.c:233
 #: lib/src/dataio.c:324
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr "AVERTISSEMENT : erreur de lecture de données ascii à la variable %d, observation %d"
+msgstr "AVERTISSEMENT : erreur de lecture de données ascii pour la variable %d, observation %d"
 
 #: lib/src/dataio.c:296
 #, c-format
@@ -2543,19 +2543,16 @@ msgid "Missing values encountered"
 msgstr "Valeur manquante rencontrée"
 
 #: lib/src/gretl_errors.c:78
-#, fuzzy
 msgid "Not a Number in calculation"
-msgstr "Nombre d'équations"
+msgstr "Un argument du calcul n'est pas un nombre"
 
 #: lib/src/gretl_errors.c:79
-#, fuzzy
 msgid "Matrices not conformable for operation"
-msgstr "Nouvelles données non compatibles pour un ajout\n"
+msgstr "Matrice non conforme pour l'opération"
 
 #: lib/src/gretl_errors.c:80
-#, fuzzy
 msgid "Data types not conformable for operation"
-msgstr "Nouvelles données non compatibles pour un ajout\n"
+msgstr "Types de données non conforme pour l'opération"
 
 #: lib/src/gretl_func.c:1493
 #, c-format
@@ -5286,7 +5283,7 @@ msgid "Matrix decomposition failed"
 msgstr "Échec de la décomposition de la matrice"
 
 #: lib/src/var.c:1418
-#, fuzzy, c-format
+#, c-format
 msgid "VAR system, maximum lag order %d"
 msgstr "Système VAR, ordre maximal des retards %d"
 
@@ -7283,7 +7280,7 @@ msgstr "Échec de verrouillage des données DIB"
 
 #: gui2/boxplots.c:1256
 msgid "Cannot open the Clipboard!"
-msgstr "Ne peut ouvrir le presse-papier!"
+msgstr "Ne peut ouvrir le presse-papier !"
 
 #: gui2/boxplots.c:1260
 msgid "Cannot empty the Clipboard"
@@ -7326,7 +7323,7 @@ msgid ""
 "boxplots: generation of dummy variable failed\n"
 "%s"
 msgstr ""
-"boxplots: échec de génération de la variable auxiliaire\n"
+"boxplots : échec de génération de la variable muette\n"
 "%s"
 
 #: gui2/calculator.c:96
@@ -7380,7 +7377,7 @@ msgstr "gretl: table statistique"
 #: gui2/calculator.c:308
 #, c-format
 msgid "Binomial distribution: p = %g, %d trials"
-msgstr "Distribution binomiale: p = %g, %d épreuves"
+msgstr "Distribution binomiale : p = %g, %d épreuves"
 
 #: gui2/calculator.c:310
 msgid "x = number of 'successes'"
@@ -7451,7 +7448,7 @@ msgstr "échec de la commande GnuPlot"
 #: gui2/calculator.c:585
 #, c-format
 msgid "Null hypothesis: population mean = %g\n"
-msgstr "Hypothèse nulle: moyenne de la population = %g\n"
+msgstr "Hypothèse nulle : moyenne de la population = %g\n"
 
 #: gui2/calculator.c:586
 #: gui2/calculator.c:615
@@ -7470,13 +7467,13 @@ msgstr "Moyenne de l'échantillon = %g, écart-type = %g\n"
 #: gui2/calculator.c:738
 #, c-format
 msgid "Test statistic: z = (%g - %g)/%g = %g\n"
-msgstr "Test statistique: z = (%g - %g)/%g = %g\n"
+msgstr "Test statistique : z = (%g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:596
 #: gui2/calculator.c:721
 #, c-format
 msgid "Test statistic: t(%d) = (%g - %g)/%g = %g\n"
-msgstr "Test statistique: t(%d) = (%g - %g)/%g = %g\n"
+msgstr "Test statistique : t(%d) = (%g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:614
 #, c-format
@@ -10385,9 +10382,8 @@ msgstr "/Données du modèle/Ajouter au jeu de données/critère d'information bayes
 
 #: gui2/gui_utils.c:3039
 #: gui2/gui_utils.c:3091
-#, fuzzy
 msgid "/Model data/Add to data set/Hannan-Quinn Information Criterion"
-msgstr "/Données du modèle/Ajouter au jeu de données/critère d'information bayesien"
+msgstr "/Données du modèle/Ajouter au jeu de données/critère d'information d'Hannan-Quinn"
 
 #: gui2/gui_utils.c:3044
 #: gui2/gui_utils.c:3096
@@ -13210,7 +13206,7 @@ msgstr ""
 
 #: plugin/panel_data.c:1328
 msgid "Distribution free Wald test for heteroskedasticity"
-msgstr "Test de distribution libre de Wald pour la hétéroscédasticité"
+msgstr "Test de distribution libre de Wald pour l'hétéroscédasticité"
 
 #: plugin/panel_data.c:1329
 msgid "based on the FGLS residuals"
@@ -13219,7 +13215,7 @@ msgstr "basés sur les résidus FGLS"
 #: plugin/panel_data.c:1503
 msgid "Can't produce ML estimates: some units have only one observation"
 msgstr ""
-"Ne peut produire les estimés ML: quelques unités ont une seule\n"
+"Ne peut produire les estimations ML : quelques unités ont une seule\n"
 "observation"
 
 #: plugin/pca.c:144
@@ -13473,7 +13469,7 @@ msgstr "Sortie réduite"
 
 #: plugin/tramo_options.c:514
 msgid "Save to data set:"
-msgstr "Sauvegarder au jeu de données:"
+msgstr "Sauvegarder dans le jeu de données :"
 
 #: plugin/tramo_options.c:520
 #: plugin/tramo-x12a.c:204
@@ -13511,7 +13507,7 @@ msgstr "Automatique"
 
 #: plugin/tramo_options.c:659
 msgid "Mean correction"
-msgstr "corrélation moyenne"
+msgstr "Correction de la moyenne"
 
 #: plugin/tramo_options.c:682
 msgid "No mean correction"
@@ -13519,7 +13515,7 @@ msgstr "Sans corrélation moyenne"
 
 #: plugin/tramo_options.c:731
 msgid "Outliers"
-msgstr "Valeurs hors bornes"
+msgstr "Points abérants"
 
 #: plugin/tramo_options.c:734
 msgid "Detect and correct for outliers"
@@ -13527,7 +13523,7 @@ msgstr "Détecter et corriger pour les valeurs hors bornes"
 
 #: plugin/tramo_options.c:757
 msgid "Besides additive outliers, allow for:"
-msgstr "En plus des valeurs hors bornes additives, détection de:"
+msgstr "En dehors des points abérants, permettre :"
 
 #: plugin/tramo_options.c:764
 msgid "transitory changes"
@@ -13543,31 +13539,31 @@ msgstr "valeurs hors bornes innovatives"
 
 #: plugin/tramo_options.c:822
 msgid "Critical value for outliers:"
-msgstr "Valeur critique pour les valeurs hors bornes:"
+msgstr "Valeur critique pour les points abérants :"
 
 #: plugin/tramo_options.c:959
 msgid "Non-seasonal differences:"
-msgstr "Différences non saisonnières:"
+msgstr "Différences non saisonnières :"
 
 #: plugin/tramo_options.c:966
 msgid "Seasonal differences:"
-msgstr "Différences saisonnières:"
+msgstr "Différences saisonnières :"
 
 #: plugin/tramo_options.c:982
 msgid "Non-seasonal AR terms:"
-msgstr "Termes AR non saisonniers:"
+msgstr "Termes AR non saisonniers :"
 
 #: plugin/tramo_options.c:989
 msgid "Seasonal AR terms:"
-msgstr "Termes AR saisonniers:"
+msgstr "Termes AR saisonniers :"
 
 #: plugin/tramo_options.c:1005
 msgid "Non-seasonal MA terms:"
-msgstr "Termes MA non saisonniers:"
+msgstr "Termes MA non saisonniers :"
 
 #: plugin/tramo_options.c:1012
 msgid "Seasonal MA terms:"
-msgstr "Termes MA saisonniers:"
+msgstr "Termes MA saisonniers :"
 
 #: plugin/tramo-x12a.c:52
 #, c-format
@@ -13643,7 +13639,7 @@ msgstr "La protection des carnets de travail protégés par mot de passe n'est pas
 
 #: plugin/workbook.c:635
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
-msgstr "Ce fichier n'est pas un fichier 'OLE' -- il peut être trop vieux pour être lu par gretl\n"
+msgstr "Ce fichier n'est pas un fichier 'OLE' -- il est peut être trop ancien pour être lu par gretl\n"
 
 #: plugin/workbook.c:637
 msgid "Unexpected error reading the file\n"
