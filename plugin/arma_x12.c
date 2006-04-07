@@ -406,28 +406,8 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 	}
     }
 
-    if (!err) {
-	double narfac = 1.0;
-	double sarfac = 1.0;
-	double arfac;
-
-	for (i=1; i<=ainfo->p; i++) {
-	    narfac -= pmod->coeff[i];
-	}
-
-	for (i=1; i<=ainfo->P; i++) {
-	    sarfac -= pmod->coeff[i+ainfo->p];
-	}
-
-	arfac = narfac * sarfac;
-
-	pmod->coeff[0] *= arfac;
-	pmod->sderr[0] *= arfac;
-
-	for (i=0; i<ainfo->nexo; i++) {
-	    x_coeff[i] *= arfac;
-	    x_sderr[i] *= arfac;
-	}
+    if (!err && (ainfo->ifc || ainfo->nexo > 0)) {
+	revise_mean_coeffs(pmod, ainfo);
     }
 
     return err;
@@ -532,11 +512,7 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
 	fprintf(stderr, "problem getting model info\n");
 	pmod->errcode = E_FOPEN;
     } else {
-	write_arma_model_stats(pmod, NULL, list, Z, NULL, ainfo);
-	gretl_model_add_arma_varnames(pmod, pdinfo, ainfo->yno,
-				      ainfo->p, ainfo->q, 
-				      ainfo->P, ainfo->Q,
-				      ainfo->nexo);
+	write_arma_model_stats(pmod, list, ainfo, Z, pdinfo);
     }
 }
 
@@ -824,12 +800,15 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    print_iterations(path, aprn);
 	}
 	if (!armod.errcode) {
-	    int xcode = (opt & OPT_C)? 2 : 1;
+	    int acode = ARMA_X12A;
 
 	    if (gretl_in_gui_mode()) {
 		add_unique_output_file(&armod, path);
 	    }
-	    gretl_model_set_int(&armod, "arma_by_x12a", xcode);
+	    if (!(opt & OPT_C)) {
+		acode |= ARMA_EXACT;
+	    }
+	    gretl_model_set_int(&armod, "arma_flags", acode);
 	}	
     } else {
 	armod.errcode = E_UNSPEC;

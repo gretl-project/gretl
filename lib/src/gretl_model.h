@@ -67,6 +67,13 @@ typedef enum {
     MODEL_DATA_STRUCT
 } ModelDataType;
 
+typedef enum {
+    ARMA_SEAS  = 1 << 0, /* includes seasonal component */
+    ARMA_DSPEC = 1 << 1, /* input list includes differences */
+    ARMA_X12A  = 1 << 2, /* using X-12-ARIMA to generate estimates */
+    ARMA_EXACT = 1 << 3  /* using exact ML */
+} ArmaFlags;
+
 typedef struct CoeffIntervals_ CoeffIntervals;
 
 struct CoeffIntervals_ {

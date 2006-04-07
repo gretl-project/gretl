@@ -64,6 +64,10 @@ struct kalman_ {
 
 void kalman_free (kalman *K)
 {
+    if (K == NULL) {
+	return;
+    }
+
     gretl_matrix_free(K->S0);
     gretl_matrix_free(K->S1);
     gretl_matrix_free(K->P0);
@@ -100,34 +104,40 @@ kalman_check_dimensions (kalman *K,
 
     /* S should be r x 1 */
     if (gretl_matrix_cols(S) != 1) {
+	fprintf(stderr, "kalman: matrix S should have 1 column\n");
 	return 1;
     }
 
     /* P should be r x r */
     if (gretl_matrix_rows(P) != K->r ||
 	gretl_matrix_cols(P) != K->r) {
+	fprintf(stderr, "kalman: matrix P should be %d x %d\n", K->r, K->r);
 	return 1;
     }
 
     /* F should be r x r */
     if (gretl_matrix_rows(F) != K->r ||
 	gretl_matrix_cols(F) != K->r) {
+	fprintf(stderr, "kalman: matrix F should be %d x %d\n", K->r, K->r);
 	return 1;
     }
 
     /* A should be k x n */
     if (gretl_matrix_cols(A) != K->n) {
+	fprintf(stderr, "kalman: matrix A should have %d cols\n", K->n);
 	return 1;
     }    
 
     /* H should be r x n */
     if (gretl_matrix_rows(H) != K->r) {
+	fprintf(stderr, "kalman: matrix H should have %d rows\n", K->r);
 	return 1;
     }    
 
     /* Q should be r x r */
     if (gretl_matrix_rows(Q) != K->r ||
 	gretl_matrix_cols(Q) != K->r) {
+	fprintf(stderr, "kalman: matrix Q should be %d x %d\n", K->r, K->r);
 	return 1;
     }
 
@@ -135,14 +145,18 @@ kalman_check_dimensions (kalman *K,
     if (R != NULL) {
 	if (gretl_matrix_rows(R) != K->n ||
 	    gretl_matrix_cols(R) != K->n) {
+	    fprintf(stderr, "kalman: matrix R should be %d x %d\n", 
+		    K->n, K->n);
 	    return 1;
 	}
     }
 
-    /* x should be T x k, if present */
+    /* x should be T x (k - 1), if present (const is implicit) */
     if (x != NULL) {
 	if (gretl_matrix_rows(x) != K->T ||
-	    gretl_matrix_cols(x) != K->k) {
+	    gretl_matrix_cols(x) != K->k - 1) {
+	    fprintf(stderr, "kalman: matrix x should be %d x %d\n", 
+		    K->T, K->k - 1);
 	    return 1;
 	}
     }
@@ -197,16 +211,6 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	return NULL;
     }
 
-    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R, y, x)) {
-	*err = E_NONCONF;
-	free(K);
-	return NULL;
-    }
-
-    K->ncoeff = ncoeff;
-    K->ifc = ifc;
-    K->loglik = NADBL;
-
     K->S0 = NULL;
     K->S1 = NULL;
     K->P0 = NULL;
@@ -225,6 +229,17 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->Tmpnn = NULL;
     K->Tmprr = NULL;
 
+    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R, y, x)) {
+	fprintf(stderr, "failed on kalman_check_dimensions\n");
+	*err = E_NONCONF;
+	free(K);
+	return NULL;
+    }
+
+    K->ncoeff = ncoeff;
+    K->ifc = ifc;
+    K->loglik = NADBL;
+
     K->S0 = gretl_matrix_copy(S);
     K->S1 = gretl_matrix_copy(S);
 
@@ -240,7 +255,6 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->H = H;
     K->Q = Q;
     K->R = R;
-
     K->y = y;
     K->x = x;
 
@@ -467,7 +481,6 @@ kalman_record_error (gretl_matrix *E, kalman *K, int t)
 int kalman_forecast (kalman *K, gretl_matrix *E)
 {
     double ldet, llt = 0.0;
-    double s2 = 0.0;
     int t, err = 0;
 
 #if KDEBUG
@@ -489,8 +502,6 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
     }
 
     for (t=0; t<K->T && !err; t++) {
-	double et;
-
 #if KDEBUG > 1
 	kalman_print_state(K, t);
 #endif
@@ -542,10 +553,6 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	    kalman_record_error(E, K, t);
 	}
 
-	/* testing */
-	et = gretl_matrix_get(K->E, 0, 0);
-	s2 += et * et;
-
 	if (!err) {
 	    /* second stage of dual interation */
 	    err = kalman_iter_2(K);
@@ -565,9 +572,6 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: err = %d, ll = %.10g\n", err, 
 	    K->loglik);
-    s2 /= K->T;
-    fprintf(stderr, "s2 = %g, P0(1,1) = %g\n", s2,
-	    gretl_matrix_get(K->P0, 0, 0));
 #endif
 
     return err;

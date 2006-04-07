@@ -1,31 +1,24 @@
 #define MAX_ARMA_ORDER 6
 #define MAX_ARIMA_DIFF 2
 
-enum {
-    ARMA_SEAS  = 1 << 0, /* includes seasonal component */
-    ARMA_DSPEC = 1 << 1, /* input list includes differences */
-    ARMA_X12A  = 1 << 2, /* using X-12-ARIMA to generate estimates */
-    ARMA_EXACT = 1 << 3  /* using exact ML */
-} ArmaFlags;
-
 struct arma_info {
-    int yno;      /* ID of dependent variable */
-    char flags;   /* from ArmaFlags */
-    int ifc;      /* specification includes a constant? */
-    int p;        /* non-seasonal AR order */
-    int d;        /* non-seasonal difference */
-    int q;        /* non-seasonal MA order */
-    int P;        /* seasonal AR order */
-    int D;        /* seasonal difference */
-    int Q;        /* seasonal MA order */
-    int maxlag;   /* longest lag in model */
-    int nexo;     /* number of other regressors (ARMAX) */
-    int nc;       /* total number of coefficients */
-    int t1;       /* starting observation */
-    int t2;       /* ending observation */
-    int pd;       /* periodicity of data */
-    int T;        /* full length of data series */
-    double *dy;   /* differenced dependent variable */
+    int yno;         /* ID of dependent variable */
+    ArmaFlags flags; /* specification flags */
+    int ifc;         /* specification includes a constant? */
+    int p;           /* non-seasonal AR order */
+    int d;           /* non-seasonal difference */
+    int q;           /* non-seasonal MA order */
+    int P;           /* seasonal AR order */
+    int D;           /* seasonal difference */
+    int Q;           /* seasonal MA order */
+    int maxlag;      /* longest lag in model */
+    int nexo;        /* number of other regressors (ARMAX) */
+    int nc;          /* total number of coefficients */
+    int t1;          /* starting observation */
+    int t2;          /* ending observation */
+    int pd;          /* periodicity of data */
+    int T;           /* full length of data series */
+    double *dy;      /* differenced dependent variable */
 };
 
 #define arma_has_seasonal(a)   ((a)->flags & ARMA_SEAS)
@@ -75,46 +68,6 @@ static int arma_list_y_position (struct arma_info *ainfo)
 
     return ypos;
 }
-
-#if 0
-
-static void arma_R2_and_F (MODEL *pmod, const double *y)
-{
-    int t;
-
-    pmod->tss = 0.0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
-    }
-
-    if (!pmod->ifc) {
-	double syh2 = 0.0;
-
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    syh2 += pmod->yhat[t] * pmod->yhat[t];
-	}
-	pmod->fstt = pmod->dfd * syh2 / (pmod->dfn * pmod->ess);
-    } else if (pmod->tss > pmod->ess) {
-	pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
-    } 
-
-    if (!pmod->ifc) {
-	double r2 = gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
-
-	pmod->rsq = r2;
-	pmod->adjrsq = 1.0 - ((1.0 - r2) * (pmod->nobs - 1.0) / pmod->dfd);
-    } else if (pmod->tss > 0) {
-	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
-	if (pmod->dfd > 0) {
-	    double den = pmod->tss * pmod->dfd;
-
-	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
-	}
-    }
-}
-
-#endif
 
 #define INT_DEBUG 0
 
@@ -195,38 +148,83 @@ static int arima_integrate (double *dx, const double *x,
     return 0;
 }
 
-/* write the various statistics from ARMA estimation into
-   a gretl MODEL struct */
+/* translate coffs and standard errors for the constant and any
+   exogenous variables, in case X12A or native exact ML is used
+*/
 
-static void write_arma_model_stats (MODEL *pmod, model_info *arma,
-				    const int *list, const double **Z, 
-				    const double *theta, 
-				    struct arma_info *ainfo)
+static void revise_mean_coeffs (MODEL *pmod, struct arma_info *ainfo)
 {
-    double **series = NULL;
-    const double *e = NULL;
-    const double *y = NULL;
-    double mean_error;
-    int i, t;
+    int xoff = ainfo->ifc + ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
 
-    if (arma != NULL) {
-	series = model_info_get_series(arma);
-	e = series[0];
-	pmod->lnL = model_info_get_ll(arma);
+    const double *phi = pmod->coeff + ainfo->ifc;
+    const double *Phi = phi + ainfo->p;
+    double *beta = pmod->coeff + xoff;
+    double *bse = pmod->sderr + xoff;
+
+    double narfac = 1.0;
+    double sarfac = 1.0;
+    double arfac;
+    int i;
+
+    for (i=0; i<ainfo->p; i++) {
+	narfac -= phi[i];
     }
 
-    pmod->ci = ARMA;
-    pmod->ifc = ainfo->ifc;
+    for (i=0; i<ainfo->P; i++) {
+	sarfac -= Phi[i];
+    }
 
+    arfac = narfac * sarfac;
+
+    if (ainfo->ifc) {
+	pmod->coeff[0] *= arfac;
+	pmod->sderr[0] *= arfac;
+    }
+
+    for (i=0; i<ainfo->nexo; i++) {
+	beta[i] *= arfac;
+	bse[i] *= arfac;
+    }
+}
+
+static void ainfo_data_to_model (struct arma_info *ainfo, MODEL *pmod)
+{
+    pmod->ifc = ainfo->ifc;
     pmod->dfn = ainfo->nc - pmod->ifc;
     pmod->dfd = pmod->nobs - pmod->dfn;
     pmod->ncoeff = ainfo->nc;
 
-    if (theta != NULL) {
-	for (i=0; i<pmod->ncoeff; i++) {
-	    pmod->coeff[i] = theta[i];
-	}
+    if (arma_has_seasonal(ainfo)) {
+	gretl_model_set_int(pmod, "arma_P", ainfo->P);
+	gretl_model_set_int(pmod, "arma_Q", ainfo->Q);
+	gretl_model_set_int(pmod, "arma_pd", ainfo->pd);	
     }
+
+    if (ainfo->d > 0 || ainfo->D > 0) {
+	gretl_model_set_int(pmod, "arima_d", ainfo->d);
+	gretl_model_set_int(pmod, "arima_D", ainfo->D);
+    }
+
+    if (ainfo->nexo > 0) {
+	gretl_model_set_int(pmod, "armax", 1);
+    }
+}
+
+/* write the various statistics from ARMA estimation into
+   a gretl MODEL struct */
+
+static void write_arma_model_stats (MODEL *pmod, const int *list, 
+				    struct arma_info *ainfo,
+				    const double **Z, 
+				    const DATAINFO *pdinfo)
+{
+    const double *y = NULL;
+    double mean_error;
+    int t;
+
+    pmod->ci = ARMA;
+
+    ainfo_data_to_model(ainfo, pmod);
 
     free(pmod->list);
     pmod->list = gretl_list_copy(list);
@@ -243,9 +241,6 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     mean_error = pmod->ess = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (e != NULL) {
-	    pmod->uhat[t] = e[t];
-	}
 	if (!na(y[t]) && !na(pmod->uhat[t])) {
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
@@ -261,36 +256,22 @@ static void write_arma_model_stats (MODEL *pmod, model_info *arma,
     mean_error /= pmod->nobs;
     gretl_model_set_double(pmod, "mean_error", mean_error);
 
-    if (arma != NULL) {
-	/* in X12A case we read this from file */
+    if (na(pmod->sigma)) {
+	/* in X12A or native exact cases this is already done */
 	pmod->sigma = sqrt(pmod->ess / pmod->nobs);
     } 
 
     pmod->rsq = pmod->adjrsq = pmod->fstt = NADBL;
     pmod->tss = NADBL;
 
-#if 0
-    arma_R2_and_F(pmod, y);
-#endif
-
-    if (arma != NULL) {
+    if (!arma_by_x12a(ainfo)) {
 	mle_criteria(pmod, 1);
     }
 
-    if (arma_has_seasonal(ainfo)) {
-	gretl_model_set_int(pmod, "arma_P", ainfo->P);
-	gretl_model_set_int(pmod, "arma_Q", ainfo->Q);
-	gretl_model_set_int(pmod, "arma_pd", ainfo->pd);	
-    }
-
-    if (ainfo->d > 0 || ainfo->D > 0) {
-	gretl_model_set_int(pmod, "arima_d", ainfo->d);
-	gretl_model_set_int(pmod, "arima_D", ainfo->D);
-    }
-
-    if (ainfo->nexo > 0) {
-	gretl_model_set_int(pmod, "armax", 1);
-    }
+    gretl_model_add_arma_varnames(pmod, pdinfo, ainfo->yno,
+				  ainfo->p, ainfo->q, 
+				  ainfo->P, ainfo->Q,
+				  ainfo->nexo);
 }
 
 static void calc_max_lag (struct arma_info *ainfo)

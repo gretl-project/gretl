@@ -188,8 +188,12 @@ static int arma_by_x12a (const MODEL *pmod)
 {
     int ret = 0;
 
-    if (pmod->ci == ARMA && gretl_model_get_int(pmod, "arma_by_x12a")) {
-	ret = 1;
+    if (pmod->ci == ARMA) {
+	int acode = gretl_model_get_int(pmod, "arma_flags");
+
+	if (acode & ARMA_X12A) {
+	    ret = 1;
+	}
     }
 
     return ret;

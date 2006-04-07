@@ -841,16 +841,26 @@ static void print_arma_depvar (const MODEL *pmod,
 	    vname);
 }
 
-static void arma_x12a_info (const MODEL *pmod, PRN *prn)
+static void arma_extra_info (const MODEL *pmod, PRN *prn)
 {
-    int xcode = gretl_model_get_int(pmod, "arma_by_x12a");
+    int acode = gretl_model_get_int(pmod, "arma_flags");
 
-    if (xcode > 0) {
+    if (acode & ARMA_X12A) {
 	pputs(prn, _("Estimated using X-12-ARIMA"));
 	pputs(prn, " (");
-	pputs(prn, (xcode == 1)? _("exact ML") : _("conditional ML"));
+	pputs(prn, (acode & ARMA_EXACT)? _("exact ML") : _("conditional ML"));
 	pputs(prn, ")\n");
-    } 
+    } else if (acode & ARMA_EXACT) {
+	pputs(prn, _("Estimated using Kalman filter"));
+	pputs(prn, " (");
+	pputs(prn, _("exact ML"));
+	pputs(prn, ")\n");
+    } else {
+	pputs(prn, _("Estimated using BHHH method"));
+	pputs(prn, " (");
+	pputs(prn, _("conditional ML"));
+	pputs(prn, ")\n");
+    }	
 }
 
 static void print_model_heading (const MODEL *pmod, 
@@ -983,7 +993,7 @@ static void print_model_heading (const MODEL *pmod,
     }
 
     if (pmod->ci == ARMA && plain_format(prn)) {
-	arma_x12a_info(pmod, prn);
+	arma_extra_info(pmod, prn);
     }
 
     /* special formulations for dependent variable in various cases */
@@ -1390,8 +1400,7 @@ static void print_ll (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", _("Log-likelihood"), GRETL_DIGITS,
-		pmod->lnL);
+	pprintf(prn, "  %s = %.*g\n", _("Log-likelihood"), 8, pmod->lnL);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %.*g\n", I_("Log-likelihood"), GRETL_DIGITS,
 		pmod->lnL);
