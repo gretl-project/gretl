@@ -27,13 +27,10 @@
 #include "libgretl.h"
 #include "bhhh_max.h"
 #include "libset.h"
+#include "kalman.h"
 
 #define ARMA_DEBUG 0
 #define TRY_KALMAN 0
-
-#if TRY_KALMAN
-# include "kalman.h"
-#endif
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -387,8 +384,8 @@ static int arma_ll (double *coeff,
   ainfo: gives various pieces of information on the ARMA model,
   including seasonal and non-seasonal AR and MA orders.
 
-  coeff: p+q+P+Q+ifc vector of coefficients (if an intercept is present
-  it is element 0 and is ignored)
+  coeff: p + q + P + Q + ifc vector of coefficients (if an intercept
+  is present it is element 0 and is ignored)
 
   returns: the p + P + q + Q roots (AR part first)
 */
@@ -469,7 +466,7 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
     return roots;
 }
 
-#if TRY_KALMAN
+/* exact ML using Kalman filter apparatus */
 
 static gretl_matrix *S = NULL;
 static gretl_matrix *P = NULL;
@@ -487,8 +484,6 @@ static double *ac;
 static double *mc;
 
 static struct arma_info *kainfo;    
-
-static int allocate_ac_mc ()
 
 static int ainfo_get_r (struct arma_info *ainfo)
 {
@@ -536,6 +531,10 @@ static void write_big_phi (const double *phi,
     double x, y;
     int i, j, k;
 
+    for (i=0; i<=pmax; i++) {
+	ac[i] = 0.0;
+    }
+
     for (i=0; i<=ainfo->P; i++) {
 	x = (i == 0)? -1 : Phi[i-1];
 	for (j=0; j<=ainfo->p; j++) {
@@ -548,7 +547,7 @@ static void write_big_phi (const double *phi,
     /* test and FIXME */
 
     for (i=0; i<pmax; i++) {
-	gretl_matrix_set(F, 0, i, ac[i]);
+	gretl_matrix_set(F, 0, i, -ac[i+1]);
     }
 }
 
@@ -560,6 +559,10 @@ static void write_big_theta (const double *theta,
     int qmax = ainfo->q + ainfo->pd * ainfo->Q;
     double x, y;
     int i, j, k;
+
+    for (i=0; i<=qmax; i++) {
+	mc[i] = 0.0;
+    }
 
     for (i=0; i<=ainfo->Q; i++) {
 	x = (i == 0)? -1 : Theta[i-1];
@@ -573,7 +576,7 @@ static void write_big_theta (const double *theta,
     /* test and FIXME */
 
     for (i=0; i<qmax; i++) {
-	gretl_matrix_set(H, i + 1, 0, mc[i]);
+	gretl_matrix_set(H, i + 1, 0, -mc[i+1]);
     }    
 }
 
@@ -602,7 +605,7 @@ static void write_kalman_matrices (const double *b)
 
     /* form the F matrix using phi and/or Phi */
     if (kainfo->P > 0) {
-	write_big_phi(phi, Phi, ainfo, F);
+	write_big_phi(phi, Phi, kainfo, F);
     } else {
 	for (i=0; i<kainfo->p; i++) {
 	    gretl_matrix_set(F, 0, i, phi[i]);
@@ -613,7 +616,7 @@ static void write_kalman_matrices (const double *b)
     /* form the H matrix using theta and/or Theta */
     gretl_matrix_set(H, 0, 0, 1.0);
     if (kainfo->Q > 0) {
-	err = write_big_theta(theta, Theta, ainfo, F);
+	write_big_theta(theta, Theta, kainfo, F);
     } else {
 	for (i=0; i<kainfo->q; i++) {
 	    gretl_matrix_set(H, i + 1, 0, theta[i]);
@@ -645,16 +648,15 @@ static int rewrite_kalman_matrices (kalman *K, const double *b)
     return 0;
 }
 
-static int arma_OPG_stderrs (kalman *K, double *b, int m, int T)
+static int arma_OPG_stderrs (MODEL *armod, kalman *K, double *b, 
+			     int k, int T)
 {
     gretl_matrix *E = NULL;
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
-    double *sderr = NULL;
     const double eps = 1.0e-8;
     double g0, g1;
     double x = 0.0;
-    int k = m - 1;
     int i, t, err = 0;
 
     E = gretl_matrix_alloc(T, 1);
@@ -664,12 +666,6 @@ static int arma_OPG_stderrs (kalman *K, double *b, int m, int T)
 	err = E_ALLOC;
 	goto bailout;
     }
-
-    sderr = malloc(k * sizeof *sderr);
-    if (sderr == NULL) {
-	err = E_ALLOC;
-	goto bailout;
-    } 
 
     /* construct approximation to G matrix based
        on finite differences */
@@ -700,9 +696,8 @@ static int arma_OPG_stderrs (kalman *K, double *b, int m, int T)
 
     if (!err) {
 	for (i=0; i<k; i++) {
-	    x = b[k] * gretl_matrix_get(V, i, i);
-	    sderr[i] = sqrt(x);
-	    fprintf(stderr, "sderr[%d] = %.8g\n", i, sderr[i]);
+	    x = armod->sigma * gretl_matrix_get(V, i, i);
+	    armod->sderr[i] = sqrt(x);
 	}
     }
 
@@ -712,9 +707,37 @@ static int arma_OPG_stderrs (kalman *K, double *b, int m, int T)
     gretl_matrix_free(G);
     gretl_matrix_free(V);
     
-    free(sderr);
-
     return err;
+}
+
+static int kalman_arma_finish (MODEL *pmod, const double **Z,
+			       const DATAINFO *pdinfo, kalman *K, 
+			       double *b, int m, int T)
+{
+    cmplx *roots;
+    int i, k = m - 1;
+
+    /* FIXME uhat and yhat, etc. */
+    /* cf. write_arma_model_stats() */
+
+    for (i=0; i<k; i++) {
+	pmod->coeff[i] = b[i];
+    }
+
+    roots = arma_roots(kainfo, b);
+    if (roots != NULL) {
+	gretl_model_set_data(pmod, "roots", roots, MODEL_DATA_CMPLX_ARRAY,
+			     (kainfo->p + kainfo->q) * sizeof *roots);
+    }
+
+    gretl_model_add_arma_varnames(pmod, pdinfo, kainfo->yno, kainfo->p,
+				  kainfo->q, kainfo->P, kainfo->Q, 
+				  kainfo->nexo);
+
+    pmod->sigma = sqrt(b[m-1]);
+    pmod->errcode = arma_OPG_stderrs(pmod, K, b, m - 1, T);
+
+    return pmod->errcode;
 }
 
 static double kalman_arma_ll (const double *b, void *p)
@@ -748,13 +771,6 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
     for (i=0; i<k && !err; i++) {
 	ll1 = ll2 = 0.0;
 	bi0 = b[i];
-#if 0
-	/* messing with eps: was const at 1.0e-8 */
-	eps = fabs(bi0) * 1.0e-6;
-	if (eps < 1.0e-8) {
-	    eps = 1.0e-8;
-	}
-#endif
 	b[i] -= eps;
 	rewrite_kalman_matrices(K, b);
 	err = kalman_forecast(K, NULL);
@@ -763,7 +779,7 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
 	    b[i] = bi0;
 	    break;
 	}
-	b[i] += 2.0 * eps;
+	b[i] = bi0 + eps;
 	rewrite_kalman_matrices(K, b);
 	err = kalman_forecast(K, NULL);
 	ll2 = kalman_get_loglik(K);
@@ -857,7 +873,7 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
 
 static int kalman_arma (const int *alist, double *coeff, double s2,
 			const double **Z, const DATAINFO *pdinfo,
-			struct arma_info *ainfo,
+			struct arma_info *ainfo, MODEL *armod,
 			PRN *prn)
 {
     kalman *K = NULL;
@@ -954,10 +970,11 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
 
     fprintf(stderr, "BFGS_max returned %d\n", err);
 
-    if (!err) {
-	err = arma_OPG_stderrs(K, b, ncoeff, T);
-	fprintf(stderr, "arma_OPG_stderrs returned %d\n", err);
-    }
+    if (err) {
+	armod->errcode = err;
+    } else {
+	kalman_arma_finish(armod, Z, pdinfo, K, b, ncoeff, T);
+    } 
 
     kalman_free(K);
 
@@ -984,7 +1001,7 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     return err;
 }
 
-#endif /* TRY_KALMAN */
+/* end Kalman-specific material */
 
 /* construct a "virtual dataset" in the form of a set of pointers into
    the main dataset: this will be passed to the bhhh_max function.
@@ -1428,15 +1445,11 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-#if TRY_KALMAN
     if (flags & ARMA_EXACT) {
-	kalman_arma(alist, coeff, s2, Z, pdinfo, &ainfo, prn);
+	kalman_arma(alist, coeff, s2, Z, pdinfo, &ainfo, &armod, prn);
 	armod.errcode = 1;
 	goto bailout;
-    }
-#endif
-
-    if (!(flags & ARMA_EXACT)) {
+    } else {
 	/* construct virtual dataset for dep var, real regressors */
 	X = make_armax_X(alist, &ainfo, Z);
 	if (X == NULL) {
