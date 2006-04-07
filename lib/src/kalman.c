@@ -211,10 +211,13 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	return NULL;
     }
 
-    K->S0 = NULL;
-    K->S1 = NULL;
-    K->P0 = NULL;
-    K->P1 = NULL;
+    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R, y, x)) {
+	fprintf(stderr, "failed on kalman_check_dimensions\n");
+	*err = E_NONCONF;
+	free(K);
+	return NULL;
+    }
+
     K->E = NULL;
 
     K->PH = NULL;
@@ -228,13 +231,6 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->Tmprn = NULL;
     K->Tmpnn = NULL;
     K->Tmprr = NULL;
-
-    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R, y, x)) {
-	fprintf(stderr, "failed on kalman_check_dimensions\n");
-	*err = E_NONCONF;
-	free(K);
-	return NULL;
-    }
 
     K->ncoeff = ncoeff;
     K->ifc = ifc;
@@ -466,7 +462,7 @@ kalman_record_error (gretl_matrix *E, kalman *K, int t)
  * @E: T x n matrix to hold one-step ahead forecast errors (or %NULL
  * if these do not have to be recorded).
  *
- * Generates a series of one-step ahead forecasts for @y, based on
+ * Generates a series of one-step ahead forecasts for y, based on
  * information entered initially using kalman_new(), and possibly
  * modified using kalman_set_initial_state_vector() and/or
  * kalman_set_initial_MSE_matrix().  The log-likelihood is
@@ -536,7 +532,7 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	    kalman_set_Ax(K, t);
 	}
 
-	/* first stage of dual interation */
+	/* first stage of dual iteration */
 	err = kalman_iter_1(K, &llt);
 	if (na(llt)) {
 	    K->loglik = NADBL;
@@ -554,7 +550,7 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	}
 
 	if (!err) {
-	    /* second stage of dual interation */
+	    /* second stage of dual iteration */
 	    err = kalman_iter_2(K);
 	}
 

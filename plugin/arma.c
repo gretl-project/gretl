@@ -652,6 +652,10 @@ static void write_kalman_matrices (const double *b)
 	gretl_matrix_set(A, i + 1, 0, beta[i]);
     }
 
+#if ARMA_DEBUG
+    gretl_matrix_print(A, "A");
+#endif
+
     /* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378.
        Is there a cheaper way of doing this?
     */
