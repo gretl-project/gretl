@@ -377,9 +377,12 @@ static int arma_ll (double *coeff,
 }
 
 /*
-  Given an ARMA process $A(L)B(L) y_t = C(L)D(L) \epsilon_t$, returns the 
+  Given an ARMA process $A(L)B(L) y_t = C(L)D(L) \epsilon_t$, finds the 
   roots of the four polynomials -- or just two polynomials if seasonal
-  AR and MA effects, B(L) and D(L) are not present.
+  AR and MA effects, B(L) and D(L) are not present -- and attaches
+  this information to the ARMA model.
+
+  pmod: MODEL pointer to which the roots info should be attached.
 
   ainfo: gives various pieces of information on the ARMA model,
   including seasonal and non-seasonal AR and MA orders.
@@ -390,7 +393,8 @@ static int arma_ll (double *coeff,
   returns: the p + P + q + Q roots (AR part first)
 */
 
-static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff) 
+static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
+				 const double *coeff)
 {
     const double *phi = coeff + ainfo->ifc;
     const double *Phi = phi + ainfo->p;
@@ -408,7 +412,7 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
     lmax = (pmax > qmax)? pmax : qmax;
 
     if (pmax == 0 && qmax == 0) {
-	return NULL;
+	return 0;
     }
 
     temp  = malloc((lmax + 1) * sizeof *temp);
@@ -419,7 +423,7 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
 	free(temp);
 	free(temp2);
 	free(roots);
-	return NULL;
+	return E_ALLOC;
     }
 
     temp[0] = 1.0;
@@ -463,7 +467,10 @@ static cmplx *arma_roots (struct arma_info *ainfo, const double *coeff)
     free(temp);
     free(temp2);
 
-    return roots;
+    gretl_model_set_data(pmod, "roots", roots, MODEL_DATA_CMPLX_ARRAY,
+			 nr * sizeof *roots);
+
+    return 0;
 }
 
 /* exact ML using Kalman filter apparatus */
@@ -714,7 +721,6 @@ static int kalman_arma_finish (MODEL *pmod, const double **Z,
 			       const DATAINFO *pdinfo, kalman *K, 
 			       double *b, int m, int T)
 {
-    cmplx *roots;
     int i, k = m - 1;
 
     /* FIXME uhat and yhat, etc. */
@@ -724,11 +730,7 @@ static int kalman_arma_finish (MODEL *pmod, const double **Z,
 	pmod->coeff[i] = b[i];
     }
 
-    roots = arma_roots(kainfo, b);
-    if (roots != NULL) {
-	gretl_model_set_data(pmod, "roots", roots, MODEL_DATA_CMPLX_ARRAY,
-			     (kainfo->p + kainfo->q) * sizeof *roots);
-    }
+    arma_model_add_roots(pmod, kainfo, b);
 
     gretl_model_add_arma_varnames(pmod, pdinfo, kainfo->yno, kainfo->p,
 				  kainfo->q, kainfo->P, kainfo->Q, 
@@ -1377,10 +1379,8 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 		  gretlopt opt, PRN *prn)
 {
     double *coeff = NULL;
-    const double **X = NULL;
     int *alist = NULL;
     PRN *aprn = NULL;
-    model_info *arma = NULL;
     MODEL armod;
     double s2 = 0.0;
     struct arma_info ainfo;
@@ -1450,6 +1450,9 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	armod.errcode = 1;
 	goto bailout;
     } else {
+	model_info *arma = NULL;
+	const double **X = NULL;
+
 	/* construct virtual dataset for dep var, real regressors */
 	X = make_armax_X(alist, &ainfo, Z);
 	if (X == NULL) {
@@ -1461,6 +1464,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	arma = set_up_arma_model_info(&ainfo);
 	if (arma == NULL) {
 	    armod.errcode = E_ALLOC;
+	    free(X);
 	    goto bailout;
 	}
 
@@ -1473,31 +1477,25 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	} else {
 	    MODEL *pmod = model_info_capture_OPG_model(arma);
 	    double *theta = model_info_get_theta(arma);
-	    cmplx *roots;
 
 	    write_arma_model_stats(pmod, arma, alist, Z, theta, &ainfo);
-	    
-	    roots = arma_roots(&ainfo, theta);
-	    if (roots != NULL) {
-		gretl_model_set_data(pmod, "roots", roots, MODEL_DATA_CMPLX_ARRAY,
-				     (ainfo.p + ainfo.q) * sizeof *roots);
-	    }
+	    arma_model_add_roots(pmod, &ainfo, theta);
 	    gretl_model_add_arma_varnames(pmod, pdinfo, ainfo.yno, ainfo.p,
 					  ainfo.q, ainfo.P, ainfo.Q, 
 					  ainfo.nexo);
 	    armod = *pmod;
 	    free(pmod);
-	}	    
+	}
+
+	free(X);
+	model_info_free(arma);
     }
 
  bailout:
 
     free(alist);
     free(coeff);
-    free(X);
     free(ainfo.dy);
-
-    model_info_free(arma);
 
     errprn = NULL;
 
