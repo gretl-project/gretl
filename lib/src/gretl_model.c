@@ -1307,6 +1307,7 @@ void gretl_model_init (MODEL *pmod)
     pmod->refcount = 0;
     pmod->full_n = 0;
 
+    pmod->ncoeff = 0;
     pmod->ntests = 0;
     pmod->nparams = 0;
     pmod->errcode = 0;

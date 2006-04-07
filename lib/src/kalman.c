@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "kalman.h"
 
-#define KDEBUG 1
+#define KDEBUG 0
 
 struct kalman_ {
     int r; /* rows of S */

@@ -726,9 +726,35 @@ static int kalman_arma_finish (MODEL *pmod, const double **Z,
     /* FIXME uhat and yhat, etc. */
     /* cf. write_arma_model_stats() */
 
+    pmod->coeff = malloc(k * sizeof *pmod->coeff);
+    if (pmod->coeff == NULL) {
+	pmod->errcode = E_ALLOC;
+	return pmod->errcode;
+    }
+
+    pmod->sderr = malloc(k * sizeof *pmod->sderr);
+    if (pmod->sderr == NULL) {
+	pmod->errcode = E_ALLOC;
+	return pmod->errcode;
+    }
+
+    pmod->ncoeff = k;
+
+    fprintf(stderr, "pmod->ncoeff = %d, k = %d\n",
+	    pmod->ncoeff, k);
+
     for (i=0; i<k; i++) {
 	pmod->coeff[i] = b[i];
     }
+
+    pmod->ifc = kainfo->ifc;
+
+    gretl_model_set_int(pmod, "arma_p", kainfo->p);
+    gretl_model_set_int(pmod, "arma_q", kainfo->q);
+    gretl_model_set_int(pmod, "arma_P", kainfo->P);
+    gretl_model_set_int(pmod, "arma_Q", kainfo->Q);
+    gretl_model_set_int(pmod, "arima_d", kainfo->d);
+    gretl_model_set_int(pmod, "arima_D", kainfo->D);
 
     arma_model_add_roots(pmod, kainfo, b);
 
@@ -875,7 +901,7 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
 
 static int kalman_arma (const int *alist, double *coeff, double s2,
 			const double **Z, const DATAINFO *pdinfo,
-			struct arma_info *ainfo, MODEL *armod,
+			struct arma_info *ainfo, MODEL *pmod,
 			PRN *prn)
 {
     kalman *K = NULL;
@@ -973,9 +999,9 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     fprintf(stderr, "BFGS_max returned %d\n", err);
 
     if (err) {
-	armod->errcode = err;
+	pmod->errcode = err;
     } else {
-	kalman_arma_finish(armod, Z, pdinfo, K, b, ncoeff, T);
+	kalman_arma_finish(pmod, Z, pdinfo, K, b, ncoeff, T);
     } 
 
     kalman_free(K);
@@ -1249,28 +1275,48 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 
 	s = t + ainfo->t1;
 	aZ[1][t] = y[s];
-	strcpy(adinfo->varname[1], "y");
+	if (t == 0) {
+	    strcpy(adinfo->varname[1], "y");
+	}
 
 	for (i=0; i<ainfo->p; i++) {
 	    lag = i + 1;
 	    s = t + ainfo->t1 - lag;
 	    k = 2 + i;
-	    aZ[k][t] = y[s];
-	    sprintf(adinfo->varname[k], "y_%d", lag);
+	    if (s >= 0) {
+		aZ[k][t] = y[s];
+	    } else {
+		aZ[k][t] = NADBL;
+	    }
+	    if (t == 0) {
+		sprintf(adinfo->varname[k], "y_%d", lag);
+	    }
 	}
 
 	for (i=0; i<ainfo->P; i++) {
 	    lag = ainfo->pd * (i + 1);
 	    s = t + ainfo->t1 - lag;
 	    k = ainfo->p + 2 + i;
-	    aZ[k][t] = y[s];
-	    sprintf(adinfo->varname[k], "y_%d", lag);
+	    if (s >= 0) {
+		aZ[k][t] = y[s];
+	    } else {
+		aZ[k][t] = NADBL;
+	    }
+	    if (t == 0) {
+		sprintf(adinfo->varname[k], "y_%d", lag);
+	    }
 	    for (j=0; j<ainfo->p; j++) {
 		lag = ainfo->pd * (i + 1) + (j + 1);
 		s = t + ainfo->t1 - lag;
 		k = ainfo->p + ainfo->P + 2 + j;
-		aZ[k][t] = y[s];
-		sprintf(adinfo->varname[k], "y_%d", lag);
+		if (s >= 0) {
+		    aZ[k][t] = y[s];
+		} else {
+		    aZ[k][t] = NADBL;
+		}
+		if (t == 0) {
+		    sprintf(adinfo->varname[k], "y_%d", lag);
+		}
 	    }
 	}
 
@@ -1280,7 +1326,9 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	    k = ptotal + 2 + i;
 	    j = list[xstart + i];
 	    aZ[k][t] = Z[j][s];
-	    strcpy(adinfo->varname[k], pdinfo->varname[j]);
+	    if (t == 0) {
+		strcpy(adinfo->varname[k], pdinfo->varname[j]);
+	    }
 	}
     }
 
@@ -1447,8 +1495,6 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     if (flags & ARMA_EXACT) {
 	kalman_arma(alist, coeff, s2, Z, pdinfo, &ainfo, &armod, prn);
-	armod.errcode = 1;
-	goto bailout;
     } else {
 	model_info *arma = NULL;
 	const double **X = NULL;
