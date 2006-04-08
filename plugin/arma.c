@@ -30,7 +30,7 @@
 #include "kalman.h"
 
 #define ARMA_DEBUG 0
-#define TRY_KALMAN 1 /* still under testing, but presently enabled */
+#define TRY_KALMAN 0 /* still under testing */
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -566,7 +566,7 @@ static void write_big_phi (const double *phi,
     /* test and FIXME */
 
     for (i=0; i<pmax; i++) {
-	gretl_matrix_set(F, 0, i, -ac[i+1]);
+	gretl_matrix_set(F, 0, i, ac[i+1]);
     }
 }
 
@@ -595,7 +595,7 @@ static void write_big_theta (const double *theta,
     /* test and FIXME */
 
     for (i=0; i<qmax; i++) {
-	gretl_matrix_set(H, i + 1, 0, -mc[i+1]);
+	gretl_matrix_set(H, i + 1, 0, mc[i+1]);
     }    
 }
 
@@ -634,15 +634,23 @@ static void write_kalman_matrices (const double *b)
     } 
     gretl_matrix_inscribe_I(F, 1, 0, r - 1);
 
+#if ARMA_DEBUG
+    gretl_matrix_print(F, "F");
+#endif
+
     /* form the H matrix using theta and/or Theta */
     gretl_matrix_set(H, 0, 0, 1.0);
     if (kainfo->Q > 0) {
-	write_big_theta(theta, Theta, kainfo, F);
+	write_big_theta(theta, Theta, kainfo, H);
     } else {
 	for (i=0; i<kainfo->q; i++) {
 	    gretl_matrix_set(H, i + 1, 0, theta[i]);
 	}
     }
+
+#if ARMA_DEBUG
+    gretl_matrix_print(H, "H");
+#endif
 
     gretl_matrix_set(Q, 0, 0, s2); /* FIXME? */
     gretl_matrix_vectorize(vecQ, Q);
@@ -841,6 +849,17 @@ static double kalman_arma_ll (const double *b, void *p)
     const double *Theta = theta + kainfo->q;
     kalman *K;
 
+#if ARMA_DEBUG
+    int i;
+    fprintf(stderr, "kalman_arma_ll():\n");
+    for (i=0; i<kainfo->q; i++) {
+	fprintf(stderr, "theta[%d] = %g\n", i, theta[i]);
+    }
+    for (i=0; i<kainfo->Q; i++) {
+	fprintf(stderr, "Theta[%d] = %g\n", i, Theta[i]);
+    }    
+#endif
+
     if (ma_out_of_bounds(kainfo, theta, Theta)) {
 	pputs(errprn, "arma: MA estimate(s) out of bounds\n");
 	fputs("arma: MA estimate(s) out of bounds\n", stderr);
@@ -859,6 +878,10 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
     double eps = 1.0e-8;
     double bi0, ll1, ll2;
     int i, k, err = 0;
+
+#if ARMA_DEBUG
+    fprintf(stderr, "kalman_gradient_ll():\n");
+#endif
 
     k = kalman_get_ncoeff(K);
 
