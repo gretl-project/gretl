@@ -30,7 +30,7 @@
 #include "kalman.h"
 
 #define ARMA_DEBUG 0
-#define TRY_KALMAN 0
+#define TRY_KALMAN 1 /* still under testing, but presently enabled */
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -485,7 +485,7 @@ static int arma_model_add_roots (MODEL *pmod, struct arma_info *ainfo,
     return 0;
 }
 
-/* exact ML using Kalman filter apparatus */
+/* below: exact ML using Kalman filter apparatus */
 
 static gretl_matrix *S = NULL;
 static gretl_matrix *P = NULL;
@@ -1110,7 +1110,7 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     return err;
 }
 
-/* end Kalman-specific material */
+/* end of Kalman-specific material */
 
 /* construct a "virtual dataset" in the form of a set of pointers into
    the main dataset: this will be passed to the bhhh_max function.
@@ -1658,7 +1658,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(coeff);
     free(ainfo.dy);
 
-    /* cleanup in roots checker */
+    /* cleanup in MA roots checker */
     ma_out_of_bounds(NULL, NULL, NULL);
 
     errprn = NULL;

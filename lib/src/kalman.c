@@ -397,27 +397,29 @@ static void kalman_print_state (kalman *K, int t)
 }
 #endif
 
-/* read from the appropriate row of x (T x k) and multiply by A' to
-   form A'x_t.  Note: if there's a constant as well as other exogenous
-   vars present, the constant does _not_ have a column of 1s in the x
-   matrix, though it does have a coefficient entry in the A matrix.
+/* Read from the appropriate row of x (T x k) and multiply by A' to
+   form A'x_t.  Note this complication: if there's a constant as well
+   as other exogenous vars present, the constant does _not_ have a
+   column of 1s in the x matrix (the column of 1s is implicit), though
+   it _does_ have a coefficient entry in the A matrix.
 */
 
 static void kalman_set_Ax (kalman *K, int t)
 {
     double aji, xjt, axi;
-    int i, j, jx;
+    int i, j;
+
+    /* note: in all existing applications, K->n = 1 */
 
     for (i=0; i<K->n; i++) {
 	axi = 0.0;
-	for (j=0; j<K->k; j++) {
+	/* case j == 0 */
+	if (K->ifc) {
+	    axi += gretl_matrix_get(K->A, 0, i); /* \times 1.0, implicitly */
+	}
+	for (j=1; j<K->k; j++) {
 	    aji = gretl_matrix_get(K->A, j, i);
-	    if (K->ifc && j == 0) {
-		xjt = 1.0;
-	    } else {
-		jx = (K->ifc)? j - 1 : j;
-		xjt = gretl_matrix_get(K->x, t, jx);
-	    }
+	    xjt = gretl_matrix_get(K->x, t, j - 1);
 	    axi += aji * xjt;
 	}
 	gretl_vector_set(K->Ax, i, axi);
@@ -561,7 +563,7 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	}
     }
 
-    if (isnan(K->loglik)) {
+    if (isnan(K->loglik) || isinf(K->loglik)) {
 	K->loglik = NADBL;
     }    
 
