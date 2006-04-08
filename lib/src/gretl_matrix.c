@@ -17,7 +17,7 @@
  *
  */
 
-/* LAPACK-related matrix routines for gretl */
+/* Matrix routines for gretl, several of which are LAPACK-related */
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
@@ -826,7 +826,6 @@ static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
  * Sets the elements of @m outside of the lower triangle to zero.
  * 
  * Returns: 0 on success, non-zero error code otherwise.
- * 
  */
 
 int gretl_matrix_zero_upper (gretl_matrix *m)
@@ -1262,7 +1261,6 @@ gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
  * %NULL data pointer.
  * 
  * Returns: a pointer to the "stolen" data.
- * 
  */
 
 double *gretl_matrix_steal_data (gretl_matrix *m)
@@ -3921,14 +3919,13 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
  * @uhat: vector to hold the regression residuals, or %NULL if 
  * these are not needed.
  * @s2: pointer to receive residual variance, or %NULL.  Note:
- * if @s2 is %NULL, the vcv estimate will be plain (X'X)^{-1}.
+ * if @s2 is %NULL, the "vcv" estimate will be plain (X'X)^{-1}.
  *
  * Computes OLS estimates using LU factorization, and puts the
  * coefficient estimates in @b.  Optionally, calculates the
  * covariance matrix in @vcv and the residuals in @uhat.
  * 
  * Returns: 0 on success, non-zero error code on failure.
- * 
  */
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
@@ -4011,7 +4008,6 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
  * covariance matrix in @vcv.
  * 
  * Returns: 0 on success, non-zero error code on failure.
- * 
  */
 
 int 
@@ -4318,7 +4314,6 @@ static int count_selection (const char *s, int n)
  * desired rows (and columns), and zero elements otherwise.
  * 
  * Returns: the covariance matrix, or %NULL on error.
- * 
  */
 
 gretl_matrix *

@@ -1471,7 +1471,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 
  exit_init:
 
-    /* clear everything up */
+    /* clean up */
     free(alist);
     destroy_dataset(aZ, adinfo);
     clear_model(&armod);
