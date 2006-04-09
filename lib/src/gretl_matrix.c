@@ -124,6 +124,51 @@ int gretl_vector_set (gretl_vector *v, int i, double x)
     return 0;
 }
 
+/* Trying for an efficient means of allocating temporary storage for
+   lapack operations: this should be used _only_ for temporary
+   allocations that would ordinarily be freed before returning from
+   the function in question.  In this mode we keep the chunk around
+   for future use, expanding it as needed.
+*/
+
+static void *lapack_mem_chunk;
+static size_t lapack_mem_sz;
+
+static void *lapack_malloc (size_t sz)
+{
+    void *mem = NULL;
+
+    if (sz > lapack_mem_sz) {
+	void *chunk = realloc(lapack_mem_chunk, sz);
+
+	if (chunk != NULL) {
+	    lapack_mem_chunk = mem = chunk;
+	    lapack_mem_sz = sz;
+	}
+    } else {
+	mem = lapack_mem_chunk;
+    }
+
+    return mem;
+}
+
+static void *lapack_realloc (void *p, size_t sz)
+{
+    return lapack_malloc(sz);
+}
+
+void lapack_mem_free (void)
+{
+    free(lapack_mem_chunk);
+    lapack_mem_chunk = NULL;
+    lapack_mem_sz = 0;
+}
+
+void lapack_free (void *p)
+{
+    return;
+}
+
 /**
  * gretl_matrix_alloc:
  * @rows: desired number of rows in matrix.
@@ -2640,7 +2685,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 
     /* dim of tau is min (m, n) */
     tau = malloc(n * sizeof *tau);
-    work = malloc(sizeof *work);
+    work = lapack_malloc(sizeof *work);
     iwork = malloc(n * sizeof *iwork);
 
     if (tau == NULL || work == NULL || iwork == NULL) {
@@ -2658,7 +2703,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 
     /* optimally sized work array */
     lwork = (integer) work[0];
-    work2 = realloc(work, (size_t) lwork * sizeof *work);
+    work2 = lapack_realloc(work, (size_t) lwork * sizeof *work);
     if (work2 == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -2697,7 +2742,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
  bailout:
 
     free(tau);
-    free(work);
+    lapack_free(work);
     free(iwork);
 
     return err;
@@ -2737,7 +2782,7 @@ int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
 
     *errp = 0;
 
-    work = malloc(3 * n * sizeof *work);
+    work = lapack_malloc(3 * n * sizeof *work);
     iwork = malloc(n * sizeof *iwork);
 
     if (work == NULL || iwork == NULL) {
@@ -2783,7 +2828,7 @@ int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
 
  bailout:
 
-    free(work);
+    lapack_free(work);
     free(iwork);
 
     return rank;
@@ -2820,7 +2865,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 	return E_ALLOC;
     }
 
-    work = malloc(sizeof *work);
+    work = lapack_malloc(sizeof *work);
     if (work == NULL) {
 	free(ipiv);
 	return E_ALLOC;
@@ -2848,7 +2893,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     printf("dgetri: workspace = %d\n", (int) lwork);
 #endif
 
-    work = realloc(work, lwork * sizeof *work);
+    work = lapack_realloc(work, lwork * sizeof *work);
     if (work == NULL) {
 	free(ipiv);
 	return E_ALLOC;
@@ -2860,7 +2905,7 @@ int gretl_invert_general_matrix (gretl_matrix *a)
     printf("dgetri: info = %d\n", (int) info);
 #endif
 
-    free(work);
+    lapack_free(work);
     free(ipiv);
 
     if (info) {
@@ -3167,7 +3212,7 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-    work = malloc(sizeof *work);
+    work = lapack_malloc(sizeof *work);
     if (work == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -3208,7 +3253,7 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     lwork = (integer) work[0];
 
-    work2 = realloc(work, lwork * sizeof *work);
+    work2 = lapack_realloc(work, lwork * sizeof *work);
     if (work2 == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -3229,12 +3274,13 @@ gretl_general_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	m->val = vr;
     }
 
-    free(work);
+    lapack_free(work);
 
     return wr;
 
  bailout:
-    free(work);
+
+    lapack_free(work);
     free(wr);
     free(vr);
 
@@ -3275,7 +3321,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	return NULL;
     }
 
-    work = malloc(sizeof *work);
+    work = lapack_malloc(sizeof *work);
     if (work == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -3299,7 +3345,7 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 
     lwork = (integer) work[0];
 
-    work2 = realloc(work, lwork * sizeof *work);
+    work2 = lapack_realloc(work, lwork * sizeof *work);
     if (work2 == NULL) {
 	*err = E_ALLOC;
 	goto bailout;
@@ -3315,13 +3361,13 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs, int *err)
 	goto bailout;
     }
 
-    free(work);
+    lapack_free(work);
 
     return w;
 
  bailout:
 
-    free(work);
+    lapack_free(work);
     free(w);
 
     return NULL;
@@ -3743,7 +3789,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 	goto bailout;
     }
 
-    work = malloc(sizeof *work);
+    work = lapack_malloc(sizeof *work);
     if (work == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
@@ -3760,7 +3806,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 
     lwork = (integer) work[0];
 
-    work2 = realloc(work, lwork * sizeof *work);
+    work2 = lapack_realloc(work, lwork * sizeof *work);
     if (work2 == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
@@ -3800,7 +3846,7 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 
     gretl_matrix_free(A);
     gretl_matrix_free(B);
-    free(work);
+    lapack_free(work);
     free(s);
 
     return err;
@@ -3844,7 +3890,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
     s = malloc(n * sizeof *s);
     u = gretl_matrix_alloc(n, n);
     vt = gretl_matrix_alloc(n, n);
-    work = malloc(sizeof *work);
+    work = lapack_malloc(sizeof *work);
 
     if (s == NULL || u == NULL || vt == NULL || work == NULL) {
 	err = E_ALLOC; 
@@ -3862,7 +3908,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
 
     lwork = (integer) work[0];
 
-    work2 = realloc(work, lwork * sizeof *work);
+    work2 = lapack_realloc(work, lwork * sizeof *work);
     if (work2 == NULL) {
 	err = E_ALLOC; 
 	goto bailout;
@@ -3902,7 +3948,7 @@ int gretl_SVD_invert_matrix (gretl_matrix *a)
  bailout:
     
     free(s);
-    free(work);
+    lapack_free(work);
     gretl_matrix_free(u);
     gretl_matrix_free(vt);
 

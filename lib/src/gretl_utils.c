@@ -1213,6 +1213,7 @@ void libgretl_cleanup (void)
     gretl_lists_cleanup();
     gretl_command_hash_cleanup();
     destroy_user_matrices();
+    lapack_mem_free();
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

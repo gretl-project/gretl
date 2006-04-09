@@ -30,7 +30,7 @@
 #include "kalman.h"
 
 #define ARMA_DEBUG 0
-#define TRY_KALMAN 0 /* still under testing */
+#define TRY_KALMAN 1 /* still under testing */
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -563,8 +563,6 @@ static void write_big_phi (const double *phi,
 	}
     }
 
-    /* test and FIXME */
-
     for (i=0; i<pmax; i++) {
 	gretl_matrix_set(F, 0, i, ac[i+1]);
     }
@@ -592,14 +590,12 @@ static void write_big_theta (const double *theta,
 	}
     }
 
-    /* test and FIXME */
-
-    for (i=0; i<qmax; i++) {
-	gretl_matrix_set(H, i + 1, 0, mc[i+1]);
+    for (i=1; i<=qmax; i++) {
+	gretl_matrix_set(H, i, 0, mc[i]);
     }    
 }
 
-static void write_kalman_matrices (const double *b)
+static int write_kalman_matrices (const double *b)
 {
     const double *phi = b + kainfo->ifc;
     const double *Phi = phi + kainfo->p;
@@ -608,7 +604,7 @@ static void write_kalman_matrices (const double *b)
     const double *beta = Theta + kainfo->Q;
     double s2 = *(beta + kainfo->nexo);
     double mu = (kainfo->ifc)? b[0] : 0.0;
-    int i, r;
+    int i, r, err = 0;
 
     gretl_matrix_zero(S);
     gretl_matrix_zero(P);
@@ -652,8 +648,12 @@ static void write_kalman_matrices (const double *b)
     gretl_matrix_print(H, "H");
 #endif
 
-    gretl_matrix_set(Q, 0, 0, s2); /* FIXME? */
+    gretl_matrix_set(Q, 0, 0, s2);
     gretl_matrix_vectorize(vecQ, Q);
+
+#if ARMA_DEBUG
+    gretl_matrix_print(Q, "Q");
+#endif
 
     gretl_matrix_set(A, 0, 0, mu);
     for (i=0; i<kainfo->nexo; i++) {
@@ -669,18 +669,38 @@ static void write_kalman_matrices (const double *b)
     */
     gretl_matrix_kronecker_product(F, F, Tmp);
     gretl_matrix_I_minus(Tmp);
-    gretl_invert_general_matrix(Tmp);
-    gretl_matrix_multiply(Tmp, vecQ, vecP);
-    gretl_matrix_unvectorize(P, vecP);  
+    err = gretl_invert_general_matrix(Tmp);
+    if (!err) {
+	gretl_matrix_multiply(Tmp, vecQ, vecP);
+	gretl_matrix_unvectorize(P, vecP);
+    }  
+
+#if ARMA_DEBUG
+    gretl_matrix_print(P, "P");
+#endif
+
+    return err;
 }
 
 static int rewrite_kalman_matrices (kalman *K, const double *b)
 {
-    write_kalman_matrices(b);
-    kalman_set_initial_state_vector(K, S);
-    kalman_set_initial_MSE_matrix(K, P);
+    int err = write_kalman_matrices(b);
 
-    return 0;
+    if (!err) {
+#if 0 /* Should we take into account the estimated mean of the
+	 innovations?  If so, how, exactly? */
+	int i, r = gretl_matrix_rows(S);
+	double ebar = kalman_get_ebar(K);
+
+	for (i=0; i<r; i++) {
+	    gretl_matrix_set(S, i, 0, ebar);
+	}
+#endif
+	kalman_set_initial_state_vector(K, S);
+	kalman_set_initial_MSE_matrix(K, P);
+    }
+
+    return err;
 }
 
 /* add innovations based on Kalman forecast, and also covariance
@@ -847,7 +867,9 @@ static double kalman_arma_ll (const double *b, void *p)
     int offset = kainfo->ifc + kainfo->p + kainfo->P;
     const double *theta = b + offset;
     const double *Theta = theta + kainfo->q;
+    double ll = NADBL;
     kalman *K;
+    int err = 0;
 
 #if ARMA_DEBUG
     int i;
@@ -867,9 +889,17 @@ static double kalman_arma_ll (const double *b, void *p)
     }
 
     K = (kalman *) p;
-    rewrite_kalman_matrices(K, b);
-    kalman_forecast(K, NULL);
-    return kalman_get_loglik(K);
+    err = rewrite_kalman_matrices(K, b);
+    if (!err) {
+	err = kalman_forecast(K, NULL);
+	ll = kalman_get_loglik(K);
+    }
+
+#if ARMA_DEBUG
+    fprintf(stderr, "loglik = %g\n", ll);
+#endif
+
+    return ll;
 }
 
 static int kalman_arma_gradient (double *b, double *g, void *p)
@@ -880,7 +910,7 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
     int i, k, err = 0;
 
 #if ARMA_DEBUG
-    fprintf(stderr, "kalman_gradient_ll():\n");
+    fprintf(stderr, "kalman_gradient_ll():\n\n");
 #endif
 
     k = kalman_get_ncoeff(K);
@@ -889,23 +919,37 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
 	ll1 = ll2 = 0.0;
 	bi0 = b[i];
 	b[i] -= eps;
-	rewrite_kalman_matrices(K, b);
-	err = kalman_forecast(K, NULL);
-	ll1 = kalman_get_loglik(K);
+#if ARMA_DEBUG
+	fprintf(stderr, "trying b[%d] = %.15g\n", i, b[i]);
+#endif
+	err = rewrite_kalman_matrices(K, b);
+	if (!err) {
+	    err = kalman_forecast(K, NULL);
+	    ll1 = kalman_get_loglik(K);
+	}
 	if (err) {
 	    b[i] = bi0;
 	    break;
 	}
 	b[i] = bi0 + eps;
-	rewrite_kalman_matrices(K, b);
-	err = kalman_forecast(K, NULL);
-	ll2 = kalman_get_loglik(K);
+#if ARMA_DEBUG
+	fprintf(stderr, "trying b[%d] = %.15g\n", i, b[i]);
+#endif
+	err = rewrite_kalman_matrices(K, b);
+	if (!err) {
+	    err = kalman_forecast(K, NULL);
+	    ll2 = kalman_get_loglik(K);
+	}
 	if (err) {
 	    b[i] = bi0;
 	    break;
 	}
 	b[i] = bi0; /* reset to original value */
 	g[i] = (ll2 - ll1) / (2.0 * eps); /* sign? */
+#if ARMA_DEBUG
+	fprintf(stderr, "ll2 = %g, ll1 = %g, ll2 - ll1 = %g, g[%d] = %.8g\n", 
+		ll2, ll1, ll2 - ll1, i, g[i]);
+#endif
     }
 
     return err;
@@ -967,8 +1011,6 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
 	xlist[i - xstart + 1] = alist[i];
     }
 
-    /* test and FIXME */
-
 #if ARMA_DEBUG
     printlist(alist, "alist (arma list)");
     printlist(xlist, "xlist (exog vars)");
@@ -988,6 +1030,41 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
     free(xlist);
     
     return x;
+}
+
+/* Given coefficients (for the constant, and any exogenous variables)
+   from an initial least-squares regression, convert them into the
+   form wanted for initializing the Kalman filter 
+*/
+
+static void revise_kalman_coeffs (double *b, struct arma_info *ainfo)
+{
+    int xoff = ainfo->ifc + ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
+    const double *phi = b + ainfo->ifc;
+    const double *Phi = phi + ainfo->p;
+    double *beta = b + xoff;
+    double narfac = 1.0;
+    double sarfac = 1.0;
+    double arfac;
+    int i;
+
+    for (i=0; i<ainfo->p; i++) {
+	narfac -= phi[i];
+    }
+
+    for (i=0; i<ainfo->P; i++) {
+	sarfac -= Phi[i];
+    }
+
+    arfac = narfac * sarfac;
+
+    if (ainfo->ifc) {
+	b[0] /= arfac;
+    }
+
+    for (i=0; i<ainfo->nexo; i++) {
+	beta[i] /= arfac;
+    }
 }
 
 static int kalman_arma (const int *alist, double *coeff, double s2,
@@ -1022,6 +1099,8 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
 	b[i] = coeff[i];
     }
     b[ainfo->nc] = s2;
+
+    revise_kalman_coeffs(b, ainfo);
 
 #if ARMA_DEBUG
     for (i=0; i<ncoeff; i++) {
@@ -1087,7 +1166,9 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     /* publish ainfo */
     kainfo = ainfo;
 
+#if 0
     write_kalman_matrices(b); /* redundant? */
+#endif
 
     K = kalman_new(S, P, F, A, H, Q, R, y, x, ncoeff, ainfo->ifc, 
 		   &err);
@@ -1449,7 +1530,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	/* arma 0, q model */
 	for (i=0; i<nq; i++) {
 	    /* insert zeros for MA coeffs */
-	    coeff[i + np + ainfo->ifc] = 0.0;
+	    coeff[i + np + ainfo->ifc] = 0.0; 
 	} 
 	goto exit_init;
     }
