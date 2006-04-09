@@ -1561,7 +1561,9 @@ static double gretl_LU_determinant (gretl_matrix *a, int logdet, int absval,
 	if (a->val[0] > 0) {
 	    return log(a->val[0]);
 	} else {
+#if 0
 	    fputs("gretl_matrix_log_determinant: determinant is <= 0\n", stderr);
+#endif
 	    *err = 1;
 	    return NADBL;
 	}

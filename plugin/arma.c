@@ -132,7 +132,6 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	rt = re * re + im * im;
 	if (rt > DBL_EPSILON && rt <= 1.0) {
 	    pprintf(errprn, "MA root %d = %g\n", i, rt);
-	    fprintf(stderr, "MA root %d = %g\n", i, rt);
 	    err = 1;
 	    break;
 	}
