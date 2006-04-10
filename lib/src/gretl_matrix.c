@@ -3060,16 +3060,16 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 	return E_NONCONF;
     }
 
-    if (!matrix_is_symmetric(a)) {
-	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
-	return 1;
-    }
-
     n = a->cols;
 
     if (n == 1) {
 	a->val[0] = 1.0 / a->val[0];
 	return 0;
+    }
+
+    if (!matrix_is_symmetric(a)) {
+	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
+	return 1;
     }
 
 #if 0

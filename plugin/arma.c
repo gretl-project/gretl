@@ -492,7 +492,6 @@ static gretl_matrix *F = NULL;
 static gretl_matrix *A = NULL;
 static gretl_matrix *H = NULL;
 static gretl_matrix *Q = NULL;
-static gretl_matrix *R = NULL;
 
 static gretl_matrix *Tmp;
 static gretl_matrix *vecP;
@@ -590,7 +589,7 @@ static void write_big_theta (const double *theta,
     }
 
     for (i=1; i<=qmax; i++) {
-	gretl_matrix_set(H, i, 0, mc[i]);
+	gretl_vector_set(H, i, mc[i]);
     }    
 }
 
@@ -611,10 +610,6 @@ static int write_kalman_matrices (const double *b)
     gretl_matrix_zero(H);
     gretl_matrix_zero(Q);
 
-    if (R != NULL) {
-	gretl_matrix_zero(R);
-    }
-
     /* See Hamilton, Time Series Analysis, ch 13, p. 375 */
 
     r = gretl_matrix_rows(F);
@@ -633,13 +628,13 @@ static int write_kalman_matrices (const double *b)
     gretl_matrix_print(F, "F");
 #endif
 
-    /* form the H matrix using theta and/or Theta */
-    gretl_matrix_set(H, 0, 0, 1.0);
+    /* form the H vector using theta and/or Theta */
+    gretl_vector_set(H, 0, 1.0);
     if (kainfo->Q > 0) {
 	write_big_theta(theta, Theta, kainfo, H);
     } else {
 	for (i=0; i<kainfo->q; i++) {
-	    gretl_matrix_set(H, i + 1, 0, theta[i]);
+	    gretl_vector_set(H, i + 1, theta[i]);
 	}
     }
 
@@ -654,9 +649,9 @@ static int write_kalman_matrices (const double *b)
     gretl_matrix_print(Q, "Q");
 #endif
 
-    gretl_matrix_set(A, 0, 0, mu);
+    gretl_vector_set(A, 0, mu);
     for (i=0; i<kainfo->nexo; i++) {
-	gretl_matrix_set(A, i + 1, 0, beta[i]);
+	gretl_vector_set(A, i + 1, beta[i]);
     }
 
 #if ARMA_DEBUG
@@ -686,15 +681,6 @@ static int rewrite_kalman_matrices (kalman *K, const double *b)
     int err = write_kalman_matrices(b);
 
     if (!err) {
-#if 0 /* Should we take into account the estimated mean of the
-	 innovations?  If so, how, exactly? */
-	int i, r = gretl_matrix_rows(S);
-	double ebar = kalman_get_ebar(K);
-
-	for (i=0; i<r; i++) {
-	    gretl_matrix_set(S, i, 0, ebar);
-	}
-#endif
 	kalman_set_initial_state_vector(K, S);
 	kalman_set_initial_MSE_matrix(K, P);
     }
@@ -718,7 +704,7 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b, int m, int T)
     int i, j, s, t;
     int err = 0;
 
-    E = gretl_matrix_alloc(T, 1);
+    E = gretl_column_vector_alloc(T);
     G = gretl_matrix_alloc(k, T);
     V = gretl_matrix_alloc(k, k);
     if (E == NULL || G == NULL || V == NULL) {
@@ -1075,7 +1061,6 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     gretl_matrix *y = NULL;
     gretl_matrix *x = NULL;
 
-    int n = 1; /* dimension of dependent vector (= 1 for arma) */
     int k = 1 + ainfo->nexo; /* number of exog vars plus space for const */
     int r;
 
@@ -1132,17 +1117,16 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     r = ainfo_get_r(ainfo);
     T = gretl_matrix_rows(y);
 
-    S = gretl_matrix_alloc(r, 1);
+    S = gretl_column_vector_alloc(r);
     P = gretl_matrix_alloc(r, r);
     F = gretl_matrix_alloc(r, r);
-    A = gretl_matrix_alloc(k, n);
-    H = gretl_matrix_alloc(r, n);
+    A = gretl_column_vector_alloc(k);
+    H = gretl_column_vector_alloc(r);
     Q = gretl_matrix_alloc(r, r);
-    R = NULL; /* not needed */
 
     Tmp = gretl_matrix_alloc(r * r, r * r);
-    vecQ = gretl_matrix_alloc(r * r, 1);
-    vecP = gretl_matrix_alloc(r * r, 1);
+    vecQ = gretl_column_vector_alloc(r * r);
+    vecP = gretl_column_vector_alloc(r * r);
 
     if (S == NULL || P == NULL || F == NULL || A == NULL ||
 	H == NULL || Q == NULL || Tmp == NULL || 
@@ -1165,12 +1149,7 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     /* publish ainfo */
     kainfo = ainfo;
 
-#if 0
-    write_kalman_matrices(b); /* redundant? */
-#endif
-
-    K = kalman_new(S, P, F, A, H, Q, R, y, x, ncoeff, ainfo->ifc, 
-		   &err);
+    K = kalman_new(S, P, F, A, H, Q, NULL, y, x, ncoeff, ainfo->ifc, &err);
 
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);

@@ -31,7 +31,6 @@ struct kalman_ {
     int ncoeff;    /* number of adjustable coefficients */
     int ifc;       /* include a constant (1) or not (0) */
     double loglik; /* log-likelihood */
-    double ebar;   /* mean of innovations */
 
     /* continuously updated matrices */
     gretl_matrix *S0; /* state vector, before updating */
@@ -236,7 +235,6 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->ncoeff = ncoeff;
     K->ifc = ifc;
     K->loglik = NADBL;
-    K->ebar = 0.0;
 
     K->S0 = gretl_matrix_copy(S);
     K->S1 = gretl_matrix_copy(S);
@@ -488,7 +486,6 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 #endif  
 
     K->loglik = 0.0;
-    K->ebar = 0.0;
 
     if (K->x == NULL) {
 	/* no exogenous vars */
@@ -554,8 +551,6 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	    kalman_record_error(E, K, t);
 	}
 
-	K->ebar += gretl_matrix_get(K->E, 0, 0);
-
 	if (!err) {
 	    /* second stage of dual iteration */
 	    err = kalman_iter_2(K);
@@ -570,14 +565,11 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 
     if (isnan(K->loglik) || isinf(K->loglik)) {
 	K->loglik = NADBL;
-	K->ebar = NADBL;
-    } else {
-	K->ebar /= (double) K->T;
-    }
+    } 
 
 #if KDEBUG
-    fprintf(stderr, "kalman_forecast: err=%d, ll=%.10g ebar=%g\n", err, 
-	    K->loglik, K->ebar);
+    fprintf(stderr, "kalman_forecast: err=%d, ll=%.10g\n", err, 
+	    K->loglik);
 #endif
 
     return err;
@@ -596,21 +588,6 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 double kalman_get_loglik (const kalman *K)
 {
     return K->loglik;
-}
-
-/**
- * kalman_get_ebar:
- * @K: pointer to Kalman struct.
- * 
- * Retrieves the mean of the estimated innovations calculated 
- * via a run of kalman_forecast().
- * 
- * Returns: mean value, or #NADBL on failure.
- */
-
-double kalman_get_ebar (const kalman *K)
-{
-    return K->ebar;
 }
 
 /**

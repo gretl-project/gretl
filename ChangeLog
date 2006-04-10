@@ -1,3 +1,13 @@
+version 1.5.2, in progress
+- Revamp mechanism for saving sessions in gui program (we
+  now save sessions as zipfiles containing XML representations
+  of any models that have been estimated)
+- Add "native" exact ML estimation of ARMA models using the
+  Kalman filter
+- Add functionality for analysis of discrete variables (new
+  behavior of frequency distribution, plus cross-tabulation
+  command, "xtab")
+
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality
 - Fix translation bug for VAR menus
