@@ -266,6 +266,30 @@ void gretl_xml_put_list (const char *tag, const int *list, FILE *fp)
 }
 
 /**
+ * gretl_xml_put_matrix:
+ * @m: matrix to be written.
+ * @name: name for matrix.
+ * @fp: file to which to write.
+ * 
+ */
+
+void gretl_xml_put_matrix (const gretl_matrix *m, const char *name, 
+			   FILE *fp)
+{
+    int i, j;
+
+    fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\">\n", 
+	    name, m->rows, m->cols);
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    fprintf(fp, "%.15g ", gretl_matrix_get(m, i, j));
+	}
+	fputc('\n', fp);
+    }
+    fputs("</gretl-matrix>\n", fp); 
+}
+
+/**
  * gretl_xml_get_prop_as_int:
  * @node: XML node pointer.
  * @tag: name by which integer property is known.
@@ -621,6 +645,97 @@ cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
 {
     return gretl_xml_get_array(node, doc, MODEL_DATA_CMPLX_ARRAY,
 			       nelem, err);
+}
+
+/**
+ * gretl_xml_get_matrix:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @err: location to receive error code.
+ * 
+ * Returns: allocated gretl matrix read from @node, or %NULL 
+ * on failure.
+ */
+
+gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, int *err)
+{
+    gretl_matrix *m = NULL;
+    xmlChar *tmp;
+    const char *p;
+    double x;
+    int rows, cols;
+    int i, j;
+
+    tmp = xmlGetProp(node, (XUC) "rows");
+    if (tmp == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (sscanf(tmp, "%d", &rows) != 1) {
+	free(tmp);
+	*err = E_DATA;
+	return NULL;
+    }
+
+    free(tmp);
+
+    tmp = xmlGetProp(node, (XUC) "cols");
+    if (tmp == NULL) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (sscanf(tmp, "%d", &cols) != 1) {
+	free(tmp);
+	*err = E_DATA;
+	return NULL;
+    }
+
+    free(tmp);
+
+    if (rows <= 0 || cols <= 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    m = gretl_matrix_alloc(rows, cols);
+    if (m == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+    if (tmp == NULL) {
+	gretl_matrix_free(m);
+	*err = E_DATA;
+	return NULL;
+    }
+
+    p = (const char *) tmp;
+    p += strspn(p, " \r\n");
+
+    for (i=0; i<rows && !*err; i++) {
+	for (j=0; j<cols && !*err; j++) {
+	    if (sscanf(p, "%lf", &x) != 1) {
+		*err = E_DATA;
+		break;
+	    } else {
+		gretl_matrix_set(m, i, j, x);
+		p += strspn(p, " \r\n");
+		p += strcspn(p, " \r\n");
+	    }
+	}
+    }
+
+    free(tmp);
+
+    if (*err) {
+	gretl_matrix_free(m);
+	m = NULL;
+    }
+
+    return m;
 }
 
 static const char *get_gretl_encoding (void)
