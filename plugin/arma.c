@@ -942,17 +942,12 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
 
 static gretl_matrix *form_arma_y_vector (const int *alist, 
 					 const double **Z,
-					 struct arma_info *ainfo)
+					 struct arma_info *ainfo,
+					 int *err)
 {
     gretl_matrix *yvec;
     const double *y;
-    int T = ainfo->t2 - ainfo->t1 + 1;
-    int s, t;
-
-    yvec = gretl_column_vector_alloc(T);
-    if (yvec == NULL) {
-	return NULL;
-    }
+    int s, t, T;
 
 #if ARMA_DEBUG
     fprintf(stderr, "ainfo->t1 = %d, ainfo->t2 = %d\n",
@@ -961,12 +956,35 @@ static gretl_matrix *form_arma_y_vector (const int *alist,
 
     if (ainfo->dy != NULL) {
 	y = ainfo->dy;
+	/* should be handled earlier? */
+	for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	    if (na(y[t])) {
+		ainfo->t1 += 1;
+	    } else {
+		break;
+	    }
+	}
     } else {
 	y = Z[ainfo->yno];
     }
 
+    T = ainfo->t2 - ainfo->t1 + 1;
+    if (T == 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    yvec = gretl_column_vector_alloc(T);
+    if (yvec == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }    
+
     s = 0;
     for (t=ainfo->t1; t<=ainfo->t2; t++) {
+	if (na(y[t])) {
+	    *err = E_DATA;
+	}
 	gretl_vector_set(yvec, s++, y[t]);
     }
 
@@ -974,6 +992,11 @@ static gretl_matrix *form_arma_y_vector (const int *alist,
     gretl_matrix_print(yvec, "y");
     fprintf(stderr, "y has %d rows\n", gretl_matrix_rows(yvec));
 #endif
+
+    if (*err) {
+	gretl_matrix_free(yvec);
+	yvec = NULL;
+    }
     
     return yvec;
 }
@@ -1084,7 +1107,9 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     }
     b[ainfo->nc] = s2;
 
-    revise_kalman_coeffs(b, ainfo);
+    if (ainfo->p > 0 || ainfo->P > 0) {
+	revise_kalman_coeffs(b, ainfo);
+    }
 
 #if ARMA_DEBUG
     for (i=0; i<ncoeff; i++) {
@@ -1092,10 +1117,10 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     }
 #endif
 
-    y = form_arma_y_vector(alist, Z, ainfo);
+    y = form_arma_y_vector(alist, Z, ainfo, &err);
     if (y == NULL) {
 	free(b);
-	return E_ALLOC;
+	return err;
     }
 
     if (ainfo->nexo > 0) {
@@ -1510,6 +1535,9 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	    /* insert zeros for MA coeffs */
 	    coeff[i + np + ainfo->ifc] = 0.0; 
 	} 
+	if (s2 != NULL) {
+	    *s2 = gretl_variance(ainfo->t1, ainfo->t2, y);
+	}
 	goto exit_init;
     }
 

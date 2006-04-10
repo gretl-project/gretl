@@ -1395,12 +1395,14 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 
 static void print_ll (const MODEL *pmod, PRN *prn)
 {
+    int lldig = (pmod->ci == ARMA)? 8 : GRETL_DIGITS;
+
     if (na(pmod->lnL)) {
 	return;
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %.*g\n", _("Log-likelihood"), 8, pmod->lnL);
+	pprintf(prn, "  %s = %.*g\n", _("Log-likelihood"), lldig, pmod->lnL);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %.*g\n", I_("Log-likelihood"), GRETL_DIGITS,
 		pmod->lnL);

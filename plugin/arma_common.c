@@ -292,16 +292,15 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 		    struct arma_info *ainfo)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int an, i, v, t, t1min = 0;
+    int an, i, v, t, t1min;
     int vstart, pmax, anymiss;
 
     vstart = arma_list_y_position(ainfo);
 
-    pmax = ainfo->p;
-    if (ainfo->P > 0) {
-	pmax += ainfo->P * ainfo->pd;
-    }   
+    pmax = ainfo->p + ainfo->P * ainfo->pd;
 
+    /* determine starting point for valid data, t1min */
+    t1min = 0;
     for (t=0; t<=pdinfo->t2; t++) {
 	anymiss = 0;
 	for (i=vstart; i<=list[0]; i++) {
@@ -325,10 +324,15 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	t1min += ainfo->maxlag;
     }
 
+    /* if the notional starting point is before the start of
+       valid data, advance it */
     if (t1 < t1min) {
 	t1 = t1min;
     }
 
+    /* trim any missing obs from the end of the specified sample
+       range 
+    */
     for (t=pdinfo->t2; t>=t1; t--) {
 	anymiss = 0;
 	for (i=vstart; i<=list[0]; i++) {
@@ -345,11 +349,17 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 	}
     }
 
-    t1min = t1 - pmax;
-    if (t1min < 0) {
-	t1min = 0;
+    if (arma_by_x12a(ainfo) || arma_exact_ml(ainfo)) {
+	/* FIXME x12a in conditional mode? */
+	t1min = t1;
+    } else {    
+	t1min = t1 - pmax; /* wrong? */
+	if (t1min < 0) {
+	    t1min = 0;
+	}
     }
 
+    /* check for missing obs within the sample range */
     for (t=t1min; t<t2; t++) {
 	for (i=vstart; i<=list[0]; i++) {
 	    if (t < t1 && i > vstart) {

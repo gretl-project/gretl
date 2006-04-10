@@ -2632,19 +2632,6 @@ static void pack_switch (GtkWidget *b, selector *sr,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
 
-#ifdef HAVE_X12A
-static void enable_x12a_radios (GtkWidget *w, selector *sr)
-{
-    gboolean active = 
-	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
-
-    if (sr->radios[0] != NULL && sr->radios[1] != NULL) {
-	gtk_widget_set_sensitive(sr->radios[0], active);
-	gtk_widget_set_sensitive(sr->radios[1], active);
-    }
-}
-#endif
-
 #define robust_conf(c) (c != LOGIT && c != PROBIT)
 
 static void build_selector_switches (selector *sr) 
@@ -2730,8 +2717,6 @@ static void build_selector_switches (selector *sr)
     if (sr->code == ARMA) {
 	tmp = gtk_check_button_new_with_label(_("Use X-12-ARIMA"));
 	pack_switch(tmp, sr, arma_x12, FALSE, OPT_X, 0);
-	g_signal_connect(G_OBJECT(tmp), "toggled", 
-			 G_CALLBACK(enable_x12a_radios), sr);
     }	
 #endif
 } 
@@ -2786,12 +2771,10 @@ static void build_arma_radios (selector *sr)
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Exact Maximum Likelihood"));
     pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
-    gtk_widget_set_sensitive(b1, arma_x12);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Conditional Maximum Likelihood"));
     pack_switch(b2, sr, FALSE, FALSE, OPT_C, 1);
-    gtk_widget_set_sensitive(b2, arma_x12);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
@@ -2837,11 +2820,7 @@ static void build_vec_radios (selector *sr)
 static void build_selector_radios (selector *sr)
 {
     if (sr->code == ARMA) {
-#ifdef HAVE_X12A
 	build_arma_radios(sr);
-#else
-	return;
-#endif
     } else {
 	build_vec_radios(sr);
     }
