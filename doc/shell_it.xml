@@ -3,7 +3,7 @@
 "/usr/share/sgml/docbook-xml-4.3/docbookx.dtd" [
 <!ENTITY % mathextra SYSTEM "mathextra.inc">
 <!ENTITY version "1.0.10">
-<!ENTITY GUG "<citetitle>Gretl User's Guide</citetitle>">
+<!ENTITY GUG "<citetitle>Guida ai comandi di gretl</citetitle>">
 <!ENTITY latex "{\LaTeX}">
 <!ENTITY tex "{\TeX}">
 <!ENTITY alpha "$\alpha$">
@@ -35,7 +35,7 @@
      below the specific chapters to be converted.  -->
 
 <book id="index" lang="it">
-  <title>Gretl Command Reference</title>
+  <title>Guida ai comandi di gretl</title>
 
   &cmdref;
   &optarg;
