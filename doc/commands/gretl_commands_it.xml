@@ -894,40 +894,6 @@
     </description>
   </command>
 
-  <command name="corc" section="Estimation" label="Stima Cochrane-Orcutt">
-
-    <usage>
-      <arguments>
-        <argument>variabile-dipendente</argument>
-        <argument>variabili-indipendenti</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
-	</option>
-      </options>
-      <examples>
-        <example>corc 1 0 2 4 6 7</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>
-	Calcola le stime dei parametri usando la procedura iterativa di
-        Cochrane&ndash;Orcutt (si veda il Capitolo 9.4 di Ramanathan).
-        La procedura si ferma quando le stime consecutive del coefficiente
-        di autocorrelazione differiscono per meno di 0.001, oppure dopo
-        20 iterazioni.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modello/Serie storiche/Cochrane-Orcutt</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="copy-formats" section="Utilities" context="gui"
     label="Formati di copia">
 
@@ -960,6 +926,40 @@
       </para>
 
     </description>
+
+  </command>
+
+  <command name="corc" section="Estimation" label="Stima Cochrane-Orcutt">
+
+    <usage>
+      <arguments>
+        <argument>variabile-dipendente</argument>
+        <argument>variabili-indipendenti</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+      </options>
+      <examples>
+        <example>corc 1 0 2 4 6 7</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Calcola le stime dei parametri usando la procedura iterativa di
+        Cochrane&ndash;Orcutt (si veda il Capitolo 9.4 di Ramanathan).
+        La procedura si ferma quando le stime consecutive del coefficiente
+        di autocorrelazione differiscono per meno di 0.001, oppure dopo
+        20 iterazioni.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modello/Serie storiche/Cochrane-Orcutt</menu-path>
+    </gui-access>
 
   </command>
 
@@ -1799,14 +1799,8 @@
 
     <usage>
       <arguments>
-        <argblock>
-          <argument>p</argument>
-          <argument>q</argument>
-        </argblock>
-        <argblock separated="true" optional="true">
-          <argument>P</argument>
-          <argument>Q</argument>
-        </argblock>
+        <argument>p</argument>
+	<argument>q</argument>
 	<argument separated="true">variabile-dipendente</argument>
 	<argument optional="true">variabili-indipendenti</argument>
       </arguments>
@@ -5167,6 +5161,8 @@
 	<lit>t</lit> per la <mathvar>t</mathvar> di Student, <lit>X</lit>
 	per la chi-quadro, <lit>F</lit> per la <mathvar>F</mathvar>,
 	<lit>G</lit> per la gamma e <lit>B</lit> per la binomiale).
+      </para>
+      <para>
         Per le distribuzioni <mathvar>t</mathvar> e chi-quadro vanno indicati i
         gradi di libertà; per la <mathvar>F</mathvar> sono richiesti i gradi di
         libertà al numeratore e al denominatore; per la gamma sono richieste la
@@ -6419,8 +6415,7 @@
 	<altform><lit>system name=</lit><repl>nome_sistema</repl></altform>
       </altforms>
       <arguments>
-        <argument>tipo</argument>
-        <argument>salva-variabili</argument>
+        <argument>variabili-salvate</argument>
       </arguments>
       <examples>
 	<example>system name="Klein Model 1"</example>
