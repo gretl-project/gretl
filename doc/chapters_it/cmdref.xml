@@ -123,6 +123,11 @@
 	      (Cochrane&ndash;Orcutt generalizzato)</entry>
 	  </row>
 	  <row>
+	    <entry>ARMAX
+	      (<command>arma</command>)</entry>
+	    <entry>Modelli di serie storiche con errori ARMA</entry>
+	  </row>
+	  <row>
 	    <entry>Autoregressione vettoriale
 	      (<command>var</command>)</entry>
 	    <entry>Sistemi di equazioni di serie storiche</entry>
@@ -153,6 +158,16 @@
 	      (<command>probit</command>)</entry>
 	    <entry>Variabile dipendente binaria (distribuzione
 	      normale)</entry>
+	  </row>
+	  <row>
+	    <entry>Tobit
+	      (<command>tobit</command>)</entry>
+	    <entry>Variabile dipendente troncata</entry>
+	  </row>
+	  <row>
+	    <entry>Logistica
+	      (<command>logistic</command>)</entry>
+	    <entry>OLS con trasformazione logistica della variabile dipendente</entry>
 	  </row>
 	  <row>
 	    <entry>Minime deviazioni assolute
@@ -197,6 +212,10 @@
 	  <row>
 	    <entry>Variabili aggiunte (test <emphasis>F</emphasis> con OLS)</entry>
 	    <entry><command>add</command></entry>
+	  </row>
+	  <row>
+	    <entry>Somma dei coefficienti (test <emphasis>t</emphasis> con OLS)</entry>
+	    <entry><command>coeffsum</command></entry>
 	  </row>
 	  <row>
 	    <entry>Nonlinearità (quadrati)</entry>
