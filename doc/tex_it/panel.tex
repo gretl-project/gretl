@@ -1,8 +1,6 @@
 \chapter{Dati panel}
 \label{chap-panel}
 
-
-
 \section{Struttura panel}
 \label{panel-structure}
 
@@ -12,11 +10,13 @@ rappresentarli in un file testuale (e anche per poterli manipolare),
 queste tre dimensioni devono in qualche modo essere riportate a due.
 Questa procedura di ``appiattimento'' richiede di prendere degli
 ``strati'' di dati che apparterrebbero alla terza dimensione e di
-impilarli nella dimensione verticale del file. \app{Gretl} si aspetta
-sempre di trovare dati organizzati ``per osservazione'', ossia in modo
-che ogni riga rappresenti un'osservazione (e che ogni variabile occupi
-esattamente una colonna). Alla luce di questo fatto, l'appiattimento
-dei dati panel può essere realizzato in due modi:
+impilarli nella dimensione verticale del file.
+
+\app{Gretl} si aspetta sempre di trovare dati organizzati ``per
+osservazione'', ossia in modo che ogni riga rappresenti un'osservazione
+(e che ogni variabile occupi esattamente una colonna). Alla luce di
+questo fatto, l'appiattimento dei dati panel può essere realizzato in
+due modi:
 \begin{itemize}
 \item Pila di dati cross section: ognuno dei blocchi di dati disposti
   verticalmente contiene i valori per tutte le unità cross-section
@@ -29,12 +29,13 @@ dei dati panel può essere realizzato in due modi:
 È possibile usare entrambi i metodi. Il menù \textsf{Campione} di
 \app{gretl} contiene il comando ``Ristruttura panel'', che permette di
 passare dalla disposizione "pila di dati cross-section" a quella "pila
-di serie storiche" e viceversa.Quando si importano dati panel in
-\app{gretl} da un foglio di calcolo o da un file con valori separati
-da virgole, la struttura panel non verrà riconosciuta automaticamente
-(molto probabilmente i dati verranno trattati come ``non datati'').
-Per imporre un'interpretazione panel ai dati, è possibile procedere in
-due modi.
+di serie storiche" e viceversa.
+
+Quando si importano dati panel in \app{gretl} da un foglio di calcolo o
+da un file con valori separati da virgole, la struttura panel non verrà
+riconosciuta automaticamente (molto probabilmente i dati verranno
+trattati come ``non datati'').  Per imporre un'interpretazione panel ai
+dati, è possibile procedere in due modi.
     
 \begin{enumerate}
 \item Usando il comando dell'interfaccia grafica ``Campione, Struttura
@@ -164,9 +165,12 @@ ciascuna delle unità cross-section, o (b) dummy che identificano
 ciascuna delle unità temporali. Il primo tipo può essere usato per
 permettere all'intercetta della regressione di variare tra le unità
 cross-section, il secondo per permettere all'intercetta di variare tra
-i periodi.Per creare questo tipo di dummy, è possibile usare le tre
-funzioni speciali del menù \textsf{Dati, Aggiungi variabile}, o del
-comando testuale \cmd{genr}.
+i periodi.
+
+Per creare questo tipo di dummy, è possibile usare le tre funzioni
+speciali del menù \textsf{Dati, Aggiungi variabile}, o del comando
+testuale \cmd{genr}.
+
 \begin{enumerate}
 \item ``Dummy periodiche'' (comando testuale \cmd{genr dummy}). Questo
   comando crea un insieme di variabili dummy che identificano i
@@ -210,17 +214,15 @@ basta eseguire
 
 Se i periodi temporali sono distanziati in modo uniforme, è possibile
 usare valori ritardati delle variabili in una regressione panel, come
-anche costruire differenze prime delle variabili. Se un dataset è identificato
-correttamente come panel,  \app{gretl} gestirà correttamente la generazione di
-questo tipo di variabili. Ad esempio, il comando
-\begin{code}
-    genr x1_1 = x1(-1)
-\end{code}
-creerà una variabile che contiene il primo ritardo di \verb+x1+,
-laddove è disponibile, e il codice di valore mancante, laddove il
-ritardo non è disponibile.  Quanto si esegue una regressione che
-include questo tipo di variabili, il programma escluderà
-automaticamente le osservazioni mancanti.
+anche costruire differenze prime delle variabili.
+
+Se un dataset è identificato correttamente come panel,  \app{gretl}
+gestirà correttamente la generazione di questo tipo di variabili. Ad
+esempio, il comando \verb+genr x1_1 = x1(-1)+ creerà una variabile che
+contiene il primo ritardo di \verb+x1+, laddove è disponibile, e il
+codice di valore mancante, laddove il ritardo non è disponibile.  Quanto
+si esegue una regressione che include questo tipo di variabili, il
+programma escluderà automaticamente le osservazioni mancanti.
 
 \section{Stima pooled}
 \label{pooled-est}

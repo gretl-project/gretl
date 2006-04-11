@@ -167,16 +167,21 @@ sono usate le seguenti funzioni \app{minpack}:
 \begin{center}
   \begin{tabular}{ll}
     \verb+lmder+ & 
-    Algoritmo Levenberg--Marquandt con derivate analitiche \\
+    Algoritmo Levenberg--Marquandt con derivate analitiche
+    \\
     \verb+chkder+ & 
-    Controllo delle derivate analitiche fornite \\
+    Controllo delle derivate analitiche fornite
+    \\
     \verb+lmdif+ & 
-    Algoritmo Levenberg--Marquandt con derivate numeriche \\
+    Algoritmo Levenberg--Marquandt con derivate numeriche
+    \\
     \verb+fdjac2+ & 
     Calcolo del Jacobiano approssimato finale se si usano le derivate 
-    numeriche \\
+    numeriche
+    \\
     \verb+dpmpar+ & 
-    Determinazione della precisione della macchina \\
+    Determinazione della precisione della macchina
+    \\
   \end{tabular}
 \end{center}
 
@@ -225,16 +230,17 @@ massimo numero di iterazioni raggiunto).
 La tabella mostra informazioni su vari aspetti dei test: numero di
 fallimenti, numero medio di iterazioni richieste per produrre una
 soluzione, e due tipi di misura dell'accuratezza dei risultati per i
-parametri e per i loro errori standard.  Per ognuno dei 54 test
-eseguiti in ogni modalità, se è stata prodotta una soluzione, sono
-state confrontate le stime dei parametri ottenute da \app{gretl} con i
-valori certificati dal NIST. È stata definita la variabile ``numero
-minimo di cifre corrette'' per una data stima come il numero di cifre
-significative per cui la \emph{meno accurata} delle stime di
-\app{gretl} coincide con il valore certificato. La tabella mostra i
-valori medio e minimo di questa variabile, calcolati sulle stime che
-hanno prodotto una soluzione; la stessa informazione è fornita per gli
-errori standard stimati.\footnote{Per gli errori standard, dalle
+parametri e per i loro errori standard.
+
+Per ognuno dei 54 test eseguiti in ogni modalità, se è stata prodotta
+una soluzione, sono state confrontate le stime dei parametri ottenute da
+\app{gretl} con i valori certificati dal NIST. È stata definita la
+variabile ``numero minimo di cifre corrette'' per una data stima come il
+numero di cifre significative per cui la \emph{meno accurata} delle
+stime di \app{gretl} coincide con il valore certificato. La tabella
+mostra i valori medio e minimo di questa variabile, calcolati sulle
+stime che hanno prodotto una soluzione; la stessa informazione è fornita
+per gli errori standard stimati.\footnote{Per gli errori standard, dalle
   statistiche mostrate nella tabella, è stato escluso l'outlier
   costituito da \verb+Lanczos1+, che rappresenta un caso strano,
   composto da dati generati con un adattamento quasi esatto; gli
