@@ -831,7 +831,7 @@ double saved_object_get_scalar (const char *oname, const char *key,
     }
 
     if (ret == INVALID_STAT) {
-	*err = 1;
+	*err = E_BADSTAT;
     }
 
     return ret;

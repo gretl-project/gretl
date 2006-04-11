@@ -20,6 +20,8 @@
 #ifndef GRETL_MODEL_H
 #define GRETL_MODEL_H
 
+#include "objstack.h"
+
 typedef enum {
     M_ESS = 1,    /* error sum of squares */
     M_T,          /* observations used */
@@ -320,6 +322,7 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx, 
 				      int *err);
 
-int gretl_model_serialize (const MODEL *pmod, FILE *fp);
+int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
+			   FILE *fp);
 
 #endif /* GRETL_MODEL_H */

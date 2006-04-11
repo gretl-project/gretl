@@ -20,6 +20,10 @@
 #ifndef USERMAT_H_
 #define USERMAT_H_
 
+int n_user_matrices (void);
+
+gretl_matrix *user_matrix_by_index (int i, const char **name);
+
 gretl_matrix *get_matrix_by_name (const char *name, const DATAINFO *pdinfo);
 
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level,
@@ -31,6 +35,8 @@ get_matrix_transpose_by_name (const char *name, const DATAINFO *pdinfo);
 int named_matrix_get_variable (const char *mspec, 
 			       double ***Z, DATAINFO *pdinfo,
 			       double **px, int *plen);
+
+int add_user_matrix (gretl_matrix *M, const char *name);
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 				const char *mask, gretl_matrix **R,

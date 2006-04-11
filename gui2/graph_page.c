@@ -278,6 +278,19 @@ int graph_page_add_file (const char *fname)
     return 0;
 }
 
+int in_graph_page (const char *fname)
+{
+    int i;
+
+    for (i=0; i<gpage.ngraphs; i++) {
+	if (!strcmp(fname, gpage.fnames[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static int gnuplot_compile (const char *fname)
 {
     char plotcmd[MAXLEN];

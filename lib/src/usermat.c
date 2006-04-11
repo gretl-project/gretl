@@ -52,6 +52,22 @@ static int delete_matrix_by_name (const char *name);
 static double ***gZ;
 static DATAINFO *gdinfo;
 
+int n_user_matrices (void)
+{
+    return n_matrices;
+}
+
+gretl_matrix *user_matrix_by_index (int i, const char **name)
+{
+    if (i >= 0 && i < n_matrices) {
+	*name = matrices[i]->name;
+	return matrices[i]->M;
+    } else {
+	*name = NULL;
+	return NULL;
+    }
+}
+
 static void 
 usermat_publish_dataset (double ***pZ, DATAINFO *pdinfo)
 {
@@ -83,7 +99,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
     return u;
 }
 
-static int add_user_matrix (gretl_matrix *M, const char *name)
+int add_user_matrix (gretl_matrix *M, const char *name)
 {
     user_matrix **tmp;
 

@@ -65,7 +65,7 @@ static int model_table_too_many (int gui)
     return 0;
 }
 
-static int model_already_in_table (const MODEL *pmod)
+int in_model_table (const MODEL *pmod)
 {
     int i;
 
@@ -76,6 +76,20 @@ static int model_already_in_table (const MODEL *pmod)
     }
 
     return 0;
+}
+
+int model_table_n_models (void)
+{
+    return n_models;
+}
+
+MODEL *model_table_model_by_index (int i)
+{
+    if (i >= 0 && i < n_models) {
+	return table_models[i];
+    } else {
+	return NULL;
+    }
 }
 
 void clear_model_table (PRN *prn)
@@ -163,7 +177,7 @@ int add_to_model_table (MODEL *pmod, int add_mode, PRN *prn)
 	}
 
 	/* check that model is not already on the list */
-	if (model_already_in_table(pmod)) {
+	if (in_model_table(pmod)) {
 	    mtable_errmsg(_("Model is already included in the table"), 0);
 	    return 1;
 	}

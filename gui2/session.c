@@ -618,7 +618,7 @@ void *get_session_object_by_name (const char *name, GretlObjType *type)
     return NULL;
 }
 
-static SESSION_MODEL *get_session_model_by_data (void *ptr)
+static SESSION_MODEL *get_session_model_by_data (const void *ptr)
 {
     int i;
 
@@ -839,6 +839,9 @@ void do_open_session (void)
 	errbox(_("Couldn't open %s"), "data.gdt");
 	return;
     }
+
+    session_file_make_path(fname, "matrices.xml");
+    err = read_matrix_file(fname);
 
     if (sinfo.mask != NULL) {
 	err = restrict_sample_from_mask(sinfo.mask, sinfo.mode, &Z, &datainfo);

@@ -3,6 +3,8 @@
    an XML file, and the re-building of a session from same.
 */
 
+#include "usermat.h"
+
 static int check_graph_file (const char *fname)
 {
     char fullname[MAXLEN];
@@ -25,6 +27,7 @@ static int restore_session_graphs (xmlNodePtr node)
 {
     xmlNodePtr cur;
     int i = 0;
+    int inpage = 0;
     int err = 0;
 
     /* reset prior to parsing */
@@ -66,6 +69,12 @@ static int restore_session_graphs (xmlNodePtr node)
 		err = 1;
 	    } else {
 		err = session_append_graph(graph);
+	    }
+	}
+
+	if (!err) {
+	    if (gretl_xml_get_prop_as_int(cur, "inpage", &inpage)) {
+		graph_page_add_file(fname); /* FIXME path? */
 	    }
 	}
 
@@ -310,7 +319,9 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-static MODEL *rebuild_session_model (const char *fname, int *err)
+static MODEL *rebuild_session_model (const char *fname, 
+				     SavedObjectFlags *flags,
+				     int *err)
 {
     MODEL *pmod;
     xmlDocPtr doc;
@@ -356,6 +367,10 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
     if (got < 12) {
 	*err = E_DATA;
 	goto bailout;
+    }
+
+    if (!gretl_xml_get_prop_as_int(node, "saveflags", (int *) flags)) {
+	*flags = IN_GUI_SESSION;
     }
 
     gretl_push_c_numeric_locale();
@@ -432,7 +447,7 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
 	    pmod = NULL;
 	}
     } else {
-	gretl_object_ref(pmod, GRETL_OBJ_EQN);
+	gretl_object_ref(pmod, GRETL_OBJ_EQN); /* FIXME do this later? */
     }
 
 #if SESSION_DEBUG
@@ -443,6 +458,37 @@ static MODEL *rebuild_session_model (const char *fname, int *err)
     /* need to clean up on error here (also: clean up XML parser?) */
 
     return pmod;
+}
+
+static int 
+reattach_model (MODEL *pmod, const char *name, SavedObjectFlags flags)
+{
+    int err = 0;
+
+    if (flags & IN_GUI_SESSION) {
+	SESSION_MODEL *smod;
+
+	smod = session_model_new(pmod, name, GRETL_OBJ_EQN);
+	if (smod == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    err = session_append_model(smod);
+	}
+    }
+
+    if (!err && (flags & IN_MODEL_TABLE)) {
+	err = add_to_model_table(pmod, MODEL_ADD_BY_CMD, NULL);
+    }
+
+    if (!err && (flags & IN_NAMED_STACK)) {
+	err = gretl_stack_object(pmod, GRETL_OBJ_EQN);
+    } 
+
+    if (!err && (flags & IS_LAST_MODEL)) {
+	set_as_last_model(pmod, GRETL_OBJ_EQN);
+    }     
+
+    return err;
 }
 
 static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
@@ -462,6 +508,7 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
     i = 0;
 
     while (cur != NULL && !err) {
+	SavedObjectFlags flags;
 	xmlChar *fname = NULL;
 	xmlChar *name = NULL;
 	MODEL *pmod = NULL;
@@ -471,7 +518,7 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	    err = 1;
 	} else {
 	    session_file_make_path(fullname, (const char *) fname);
-	    pmod = rebuild_session_model(fullname, &err);
+	    pmod = rebuild_session_model(fullname, &flags, &err);
 	}
 
 	if (!err) {
@@ -481,15 +528,7 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	if (name == NULL) {
 	    err = 1;
 	} else {
-	    SESSION_MODEL *smod;
-
-	    smod = session_model_new(pmod, (const char *) name, 
-				     GRETL_OBJ_EQN);
-	    if (smod == NULL) {
-		err = E_ALLOC;
-	    } else {
-		err = session_append_model(smod);
-	    }
+	    err = reattach_model(pmod, (const char *) name, flags);
 	}
 
 	free(fname);
@@ -600,11 +639,142 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     return err;
 }
 
+static int read_matrix_file (const char *fname) 
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    gretl_matrix *m;
+    char *name;
+    FILE *fp;
+    int err = 0;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	return 0;
+    }
+
+    fclose(fp);
+    xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-matrices", &doc, &cur);
+
+    if (err) {
+	gui_errmsg(err);
+	return 1;
+    }
+
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-matrix")) {
+	    name = (char *) xmlGetProp(cur, (XUC) "name");
+	    if (name == NULL) {
+		err = 1;
+	    } else {
+		m = gretl_xml_get_matrix(cur, doc, &err);
+		if (m != NULL) {
+		    err = add_user_matrix(m, name);
+		}
+		free(name);
+	    }
+	}
+	cur = cur->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return err;
+}
+
+static int model_in_session (const MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<session.nmodels; i++) {
+	if (session.models[i]->ptr == pmod) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static SavedObjectFlags model_save_flags (const MODEL *pmod)
+{
+    SavedObjectFlags flags = 0;
+
+    if (model_in_session(pmod)) {
+	flags |= IN_GUI_SESSION;
+    }
+    if (in_model_table(pmod)) {
+	flags |= IN_MODEL_TABLE;
+    }
+    if (get_model_by_name(pmod->name) != NULL) {
+	flags |= IN_NAMED_STACK;
+    }
+    if (get_last_model(NULL) == pmod) {
+	flags |= IS_LAST_MODEL;
+    }
+
+    return flags;
+}
+
+static int maybe_write_matrix_file (void)
+{
+    int i, nmatrices = n_user_matrices();
+    gretl_matrix *m;
+    char fullname[MAXLEN];
+    const char *name;
+    FILE *fp;
+    int err = 0;
+
+    if (nmatrices == 0) {
+	return 0;
+    }
+
+    session_file_make_path(fullname, "matrices.xml");
+    fp = gretl_fopen(fullname, "w");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    gretl_xml_header(fp);
+    fprintf(fp, "<gretl-matrices count=\"%d\">\n", nmatrices);
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<nmatrices && !err; i++) {
+	m = user_matrix_by_index(i, &name);
+	if (m != NULL) {
+	    gretl_xml_put_matrix(m, name, fp);
+	} else {
+	    err = E_DATA;
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fputs("</gretl-matrices>\n", fp);
+
+    fclose(fp);
+
+    if (err) {
+	remove(fullname);
+    }
+
+    return err;
+}
+
 static int write_session_xml (void)
 {
+    const MODEL *pmod;
     char fname[MAXLEN];
     char tmpname[MAXLEN];
     FILE *fp, *fq;
+    int nmodels;
+    int tabmodels;
     int i, err = 0;
 
     chdir(paths.userdir);
@@ -622,9 +792,21 @@ static int write_session_xml (void)
     fprintf(fp, " <sample t1=\"%d\" t2=\"%d\"/>\n", datainfo->t1, datainfo->t2);
     write_datainfo_submask(datainfo, fp);
 
-    fprintf(fp, " <models count=\"%d\">\n", session.nmodels);
+    nmodels = session.nmodels;
+    tabmodels = model_table_n_models();
+
+    for (i=0; i<tabmodels; i++) {
+	pmod = model_table_model_by_index(i);
+	if (!model_in_session(pmod)) {
+	    nmodels++;
+	}
+    }
+
+    fprintf(fp, " <models count=\"%d\">\n", nmodels);
+
     for (i=0; i<session.nmodels && !err; i++) {
 	if (session.models[i]->type == GRETL_OBJ_EQN) {
+	    pmod = session.models[i]->ptr;
 	    sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
 	    fq = fopen(tmpname, "w");
 	    if (fq == NULL) {
@@ -633,12 +815,30 @@ static int write_session_xml (void)
 	    } else {
 		sprintf(tmpname, "model.%d", i+1);
 		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" addr=\"%p\"/>\n", 
-			session.models[i]->name, tmpname, session.models[i]->ptr);
-		gretl_model_serialize(session.models[i]->ptr, fq);
+			session.models[i]->name, tmpname, pmod);
+		gretl_model_serialize(pmod, model_save_flags(pmod), fq);
 		fclose(fq);
 	    }
 	} else {
 	    fprintf(stderr, "FIXME models other than single-equation ones\n");
+	}
+    }
+
+    for (i=0; i<tabmodels && !err; i++) {
+	pmod = model_table_model_by_index(i);
+	if (!model_in_session(pmod)) {
+	    sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
+	    fq = fopen(tmpname, "w");
+	    if (fq == NULL) {
+		errbox("Couldn't write session model file");
+		err = E_FOPEN;
+	    } else {
+		sprintf(tmpname, "model.%d", i+1);
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" addr=\"%p\"/>\n", 
+			(pmod->name != NULL)? pmod->name : "none", tmpname, pmod);
+		gretl_model_serialize(pmod, model_save_flags(pmod), fq);
+		fclose(fq);
+	    }
 	}
     }
 
@@ -653,9 +853,14 @@ static int write_session_xml (void)
     fprintf(fp, " <graphs count=\"%d\">\n", session.ngraphs);
     for (i=0; i<session.ngraphs; i++) {
 	fprintf(fp, "  <session-graph name=\"%s\" fname=\"%s\" "
-		"ID=\"%d\" type=\"%d\"/>\n", 
+		"ID=\"%d\" type=\"%d\"", 
 		session.graphs[i]->name, session.graphs[i]->fname,
 		session.graphs[i]->ID, session.graphs[i]->type);
+	if (in_graph_page(session.graphs[i]->fname)) {
+	    fputs(" inpage=\"1\"/>\n", fp);
+	} else {
+	    fputs("/>\n", fp);
+	}
     } 
     fputs(" </graphs>\n", fp);
 
@@ -677,6 +882,8 @@ static int write_session_xml (void)
     fputs("</gretl-session>\n", fp);
 
     fclose(fp);
+
+    maybe_write_matrix_file();
 
     return 0;
 }

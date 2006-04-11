@@ -38,4 +38,10 @@ int modeltab_parse_line (const char *line, MODEL *pmod, PRN *prn);
 
 void model_table_dialog (void);
 
+int in_model_table (const MODEL *pmod);
+
+int model_table_n_models (void);
+
+MODEL *model_table_model_by_index (int i);
+
 #endif /* MODEL_TABLE_H */

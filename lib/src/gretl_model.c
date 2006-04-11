@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "objstack.h"
 #include "modelspec.h"
 #include "gretl_xml.h"
 
@@ -2441,15 +2440,17 @@ static int copy_model (MODEL *targ, const MODEL *src)
     return 0;
 }
 
-int gretl_model_serialize (const MODEL *pmod, FILE *fp)
+int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
+			   FILE *fp)
 {
     int k = pmod->ncoeff;
     int m = k * (k + 1) / 2;
     int err = 0;
 
     gretl_xml_header(fp);
-    fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" ", 
-	    pmod->ID, (pmod->name == NULL)? "none" : pmod->name);
+    fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" saveflags=\"%d\" ", 
+	    pmod->ID, (pmod->name == NULL)? "none" : pmod->name,
+	    (int) flags);
 
     fprintf(fp, "t1=\"%d\" t2=\"%d\" nobs=\"%d\" ",
 	    pmod->t1, pmod->t2, pmod->nobs);

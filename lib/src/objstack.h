@@ -42,6 +42,14 @@ typedef enum {
     GRETL_OBJ_MAX
 } GretlObjType;
 
+typedef enum {
+    IN_GUI_SESSION = 1 << 0,
+    IN_NAMED_STACK = 1 << 1,
+    IN_MODEL_TABLE = 1 << 2,
+    IS_LAST_MODEL  = 1 << 3,
+    IN_GRAPH_PAGE  = 1 << 4
+} SavedObjectFlags;
+
 enum {
     OBJ_ACTION_NONE,
     OBJ_ACTION_INVALID,
