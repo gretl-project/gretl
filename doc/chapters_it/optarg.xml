@@ -26,9 +26,9 @@
     <para>
       &mdash; Avvia il programma caricando nello spazio di lavoro il file di
       dati indicato. Il file può essere nel formato interno di
-      <application>gretl</application>, in formato CSV, o BOX1 (si veda il
-      YYY). Il programma cercherà di riconoscere
-      il formato del file e di trattarlo in modo appropriato. Si veda anche
+      <application>gretl</application>, in formato CSV, o BOX1 (si veda la
+      &GUG;). Il programma cercherà di riconoscere
+      il formato del file e di trattarlo in modo appropriato. Si veda anche la
       <xref linkend="path-search"/> per quanto riguarda la ricerca dei percorsi.
     </para>
 
@@ -46,7 +46,7 @@
     </para>
 
     <para>
-      &mdash; Mostra informazioni sulla versione del programma ed esce.
+      &mdash; Mostra le informazioni sulla versione del programma ed esce.
     </para>
 
     <para>
@@ -64,7 +64,7 @@
 	-r</command> <replaceable>file</replaceable>)</para>
 
     <para>&mdash; Avvia il programma e apre una finestra che mostra il file di
-	comandi indicato, pronto per essere eseguito. Si veda <xref
+	comandi indicato, pronto per essere eseguito. Si veda la <xref
 	  linkend="path-search"/> per quanto riguarda la ricerca dei
 	percorsi.</para>
 
@@ -126,7 +126,7 @@
 	    <application>gretl</application> è compilato per il desktop
 	    <application>gnome</application>, visto che la scelta dei caratteri
 	    è gestita in modo centralizzato da
-	    <application>gnome</application>.)
+	    <application>gnome</application>).
 	  </para></listitem>
     </itemizedlist>
 
@@ -203,7 +203,7 @@
 	dati indicato. Il file può essere nel formato interno di
 	<application>gretl</application>, in formato CSV, o BOX1 (si veda la
 	&GUG;). Il programma cercherà di riconoscere il formato del file e di
-	trattarlo in modo appropriato. Si veda anche
+	trattarlo in modo appropriato. Si veda anche la
       <xref linkend="path-search"/> per quanto riguarda la ricerca dei percorsi.
     </para>
     
@@ -241,7 +241,7 @@
 	-r</command> <replaceable>file</replaceable>)</para>
 
     <para>&mdash; Esegue i comandi contenuti nel <replaceable>file</replaceable>
-      e aspetta ulteriore input dalla riga di comando.  Si veda <xref
+      e aspetta ulteriore input dalla riga di comando.  Si veda la <xref
       linkend="path-search"/> per quanto riguarda la ricerca dei
       percorsi.</para>
 
@@ -251,7 +251,7 @@
 
     <para>&mdash; Esegue i comandi contenuti nel <replaceable>file</replaceable>
       ed esce; tipicamente questa opzione viene usata redirigendo i risultati del
-      comando a un file.  Si veda <xref
+      comando a un file.  Si veda la <xref
       linkend="path-search"/> per quanto riguarda la ricerca dei
       percorsi.</para>
 
@@ -284,9 +284,9 @@
 	  un file di comandi, la ricerca continua nella directory principale dei
 	  file di comandi. Si veda la <xref
 	      linkend="tab-path"/> per i valori predefiniti.
-	  (<filename>PREFISSO</filename> indica la directory base scelta al
+	  <filename>PREFISSO</filename> indica la directory base scelta al
 	  momento dell'installazione di
-	  <application>gretl</application>.)</para>
+	  <application>gretl</application>.</para>
 	</listitem>
 	<listitem><para>Nel caso dei file di dati, la ricerca continua in tutte
 	    le directory immediatamente contenute nella directory principale dei

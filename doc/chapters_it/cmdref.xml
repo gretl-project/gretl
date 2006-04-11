@@ -9,18 +9,17 @@
     <para>
       I comandi descritti in questa guida possono essere eseguiti nella
       versione a riga di comando del programma, ma anche in quella con
-      con interfaccia grafica (GUI): possono essere inseriti in un file
+      con interfaccia grafica (GUI), inserendoli in un file
       <quote>script</quote> da eseguire o nel <quote>terminale di gretl</quote>.
       Nella maggior parte dei casi, la sintassi presentata nella guida è 
       valida anche per inserire i comandi nei campi testuali delle finestre di
       dialogo dell'interfaccia grafica (si veda anche l'aiuto online di
-      <application>gretl</application>), ricordandosi che in quest'ultimo
-      caso <emphasis>non</emphasis> occorre inserire anche il nome del
+      <application>gretl</application>). In quest'ultimo caso però
+      <emphasis>non</emphasis> occorre inserire anche il nome del
       comando nella finestra di dialogo: esso è già sottointeso dal
-      contesto.  Un'altra differenza è che le opzioni di alcuni comandi
-      non possono essere inserite nei campi delle finestre di dialogo: di
-      solito, comunque, sono disponibili delle voci di menù che ne replicano
-      l'effetto.
+      contesto; inoltre, le opzioni di alcuni comandi non possono essere
+      inserite nei campi delle finestre di dialogo: di solito, comunque, sono
+      disponibili delle voci di menù che ne replicano l'effetto.
     </para>
 
     <para>
@@ -74,7 +73,7 @@
     <para>La <xref linkend="tab-estim"/> mostra gli stimatori disponibili
       nel menù Modello nella finestra principale di
       <application>gretl</application>. I corrispondenti comandi (se
-      esistono) sono mostrati tra parentesi; per i dettagli, consultare
+      esistono) sono mostrati tra parentesi; per i dettagli, consultare la
       <xref linkend="cmd-cmd"/>.</para>
 
     <table id="tab-estim" frame="none">
