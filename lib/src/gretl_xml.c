@@ -247,6 +247,81 @@ void gretl_xml_put_strings_array (const char *tag, const char **strs, int n,
 }
 
 /**
+ * gretl_xml_put_tagged_string:
+ * @tag: name to give string.
+ * @str: string to put.
+ * @fp: file to which to write.
+ * 
+ * Write @str to @fp, enclosed in simple starting and ending 
+ * tags specified by @tag.  If @str needs to have XML-special
+ * characters escaped, this will be done automatically.
+ * If @str is NULL, this is considered a no-op.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int gretl_xml_put_tagged_string (const char *tag, const char *str, 
+				 FILE *fp)
+{
+    int err = 0;
+
+    if (str == NULL) {
+	return 0;
+    }
+
+    if (gretl_xml_validate(str)) {
+	fprintf(fp, "<%s>%s</%s>\n", tag, str, tag);
+    } else {
+	char *xstr = gretl_xml_encode(str);
+
+	if (xstr != NULL) {
+	    fprintf(fp, "<%s>%s</%s>\n", tag, xstr, tag);
+	    free(xstr);
+	} else {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
+/**
+ * gretl_xml_put_raw_string:
+ * @str: string to put.
+ * @fp: file to which to write.
+ * 
+ * Write @str to @fp.  If @str needs to have XML-special
+ * characters escaped, this will be done automatically.
+ * If @str is NULL, this is considered a no-op.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int gretl_xml_put_raw_string (const char *str, FILE *fp)
+{
+    int err = 0;
+
+    if (str == NULL) {
+	return 0;
+    }    
+
+    if (gretl_xml_validate(str)) {
+	fputs(str, fp);
+    } else {
+	char *xstr = gretl_xml_encode(str);
+
+	if (xstr != NULL) {
+	    fputs(xstr, fp);
+	    free(xstr);
+	} else {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
+}
+
+/**
  * gretl_xml_put_list:
  * @tag: name to give list.
  * @list: list of integers to be written.

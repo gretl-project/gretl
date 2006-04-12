@@ -6762,11 +6762,17 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	    pprintf(prn, _("Run command failed\n"));
 	    break;
 	}
+	if (cmd.ci == INCLUDE && gretl_is_xml_file(runfile)) {
+	    err = read_user_function_file(runfile);
+	    if (err) {
+		pputs(prn, _("Error reading function definitions\n"));
+	    }
+	    break;
+	}
 	if (myname != NULL && strcmp(runfile, myname) == 0) { 
 	    pprintf(prn, _("Infinite loop detected in script\n"));
 	    return 1;
 	}
-	/* was SESSION_EXEC below */
 	if (exec_code == CONSOLE_EXEC) {
 	    script_code = SCRIPT_EXEC;
 	}

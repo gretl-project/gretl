@@ -102,6 +102,8 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn);
 
 int is_gzipped (const char *fname);
 
+int gretl_is_pkzip_file (const char *fname);
+
 void gz_switch_ext (char *targ, char *src, char *ext);
 
 int merge_data (double ***pZ, DATAINFO *pdinfo,

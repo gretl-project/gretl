@@ -40,7 +40,6 @@ static int writelbl (const char *lblfile, const int *list,
 		     const DATAINFO *pdinfo);
 static int writehdr (const char *hdrfile, const int *list, 
 		     const DATAINFO *pdinfo, int opt);
-static int xmlfile (const char *fname);
 static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn);
 
 static char STARTCOMMENT[3] = "(*";
@@ -1768,7 +1767,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     }
 
     /* catch XML files that have strayed in here? */
-    if (add_gdt && xmlfile(datfile)) {
+    if (add_gdt && gretl_is_xml_file(datfile)) {
 	return gretl_read_gdt(pZ, ppdinfo, datfile, ppaths, 
 			      code, prn, 0);
     }
@@ -4019,25 +4018,7 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
     return err;
 }
 
-static int xmlfile (const char *fname)
-{
-    gzFile fz;
-    char test[6];
-    int ret = 0;
-
-    fz = gretl_gzopen(fname, "rb");
-    if (fz != Z_NULL) {
-	if (gzread(fz, test, 5)) {
-	    test[5] = '\0';
-	    if (!strcmp(test, "<?xml")) ret = 1;
-	} 
-	gzclose(fz);
-    } 
-
-    return ret;
-} 
-
-static int pkfile (const char *fname)
+int gretl_is_pkzip_file (const char *fname)
 {
     FILE *fp;
     char test[3] = {0};
@@ -4076,7 +4057,7 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     if (has_suffix(fname, ".inp")) 
 	return GRETL_SCRIPT;
     if (has_suffix(fname, ".gretl")) {
-	if (pkfile(fname)) {
+	if (gretl_is_pkzip_file(fname)) {
 	    return GRETL_SESSION;
 	} else {
 	    return GRETL_SCRIPT;
@@ -4103,7 +4084,7 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 
     addpath(fname, ppaths, 0); 
 
-    if (xmlfile(fname)) {
+    if (gretl_is_xml_file(fname)) {
 	return GRETL_XML_DATA;  
     } 
 

@@ -115,7 +115,9 @@ void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn);
 
 const char *print_time (const time_t *timep);
 
-char *gretl_xml_encode (char *buf);
+int gretl_xml_validate (const char *s);
+
+char *gretl_xml_encode (const char *str);
 
 void unescape_url (char *url);
 

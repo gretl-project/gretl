@@ -657,7 +657,6 @@ static int read_matrix_file (const char *fname)
     xmlKeepBlanksDefault(0);
 
     err = gretl_xml_open_doc_root(fname, "gretl-matrices", &doc, &cur);
-
     if (err) {
 	gui_errmsg(err);
 	return 1;
@@ -765,6 +764,14 @@ static int maybe_write_matrix_file (void)
     }
 
     return err;
+}
+
+static int maybe_write_function_file (void)
+{
+    char fullname[MAXLEN];
+
+    session_file_make_path(fullname, "functions.xml");
+    return write_user_function_file(fullname);
 }
 
 static int write_session_xml (void)
@@ -884,6 +891,7 @@ static int write_session_xml (void)
     fclose(fp);
 
     maybe_write_matrix_file();
+    maybe_write_function_file();
 
     return 0;
 }

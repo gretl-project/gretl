@@ -30,6 +30,8 @@ FILE *gretl_fopen (const char *filename, const char *mode);
 
 gzFile gretl_gzopen (const char *filename, const char *mode);
 
+int gretl_is_xml_file (const char *fname);
+
 char *addpath (char *fname, PATHS *ppaths, int script);
 
 int getopenfile (const char *line, char *fname, PATHS *ppaths,

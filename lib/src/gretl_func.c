@@ -21,6 +21,7 @@
 #include "gretl_func.h"
 #include "libset.h"
 #include "usermat.h"
+#include "gretl_xml.h"
 
 #define CALLSTACK_DEPTH 8
 
@@ -39,8 +40,17 @@ enum {
     ARG_MATRIX
 };
 
+enum {
+    FN_PARAMS,
+    FN_RETURNS
+};
+
 struct ufunc_ {
     char name[FN_NAMELEN];
+    char *author;
+    char *version;
+    char *date;
+    char *description;
     int n_lines;
     char **lines;
     int n_returns;
@@ -66,6 +76,8 @@ static ufunc **ufuns;
 static fncall **callstack;
 
 static void free_fncall (fncall *call);
+static int allocate_parmv_ptype (char ***pparmv, char **pptype, int n);
+static int real_add_fn_line (ufunc *fun, const char *s);
 
 /* record of state, and communication of state with outside world */
 
@@ -482,7 +494,7 @@ static fncall *current_call (void)
     }
 }
 
-/* constructors */
+/* constructors and destructors */
 
 static ufunc *ufunc_new (void)
 {
@@ -493,6 +505,11 @@ static ufunc *ufunc_new (void)
     }
 
     func->name[0] = '\0';
+
+    func->author = NULL;
+    func->version = NULL;
+    func->date = NULL;
+    func->description = NULL;
 
     func->n_lines = 0;
     func->lines = NULL;
@@ -506,6 +523,22 @@ static ufunc *ufunc_new (void)
     func->ptype = NULL;
 
     return func;
+}
+
+static void free_ufunc (ufunc *fun)
+{
+    free(fun->author);
+    free(fun->version);
+    free(fun->date);
+    free(fun->description);
+
+    free_strings_array(fun->lines, fun->n_lines);
+    free_strings_array(fun->returns, fun->n_returns);
+    free_strings_array(fun->params, fun->n_params);
+    free(fun->ptype);
+    free(fun->rtype);
+
+    free(fun);
 }
 
 static fncall *fncall_new (ufunc *fun, int argc, char **argv,
@@ -532,38 +565,36 @@ static fncall *fncall_new (ufunc *fun, int argc, char **argv,
     return call;
 }
 
-static ufunc *add_ufunc (void)
+static int add_allocated_ufunc (ufunc *fun)
 {
     int nf = n_ufuns;
     ufunc **myfuns;
 
     myfuns = realloc(ufuns, (nf + 1) * sizeof *myfuns);
+
     if (myfuns == NULL) {
-	return NULL;
+	return E_ALLOC;
     }
+
     ufuns = myfuns;
-
-    ufuns[nf] = ufunc_new();
-    if (ufuns[nf] == NULL) {
-	return NULL;
-    }
-
+    ufuns[nf] = fun;
     n_ufuns++;
 
-    return ufuns[nf];
+    return 0;
 }
 
-/* destructors */
-
-static void free_ufunc (ufunc *fun)
+static ufunc *add_ufunc (void)
 {
-    free_strings_array(fun->lines, fun->n_lines);
-    free_strings_array(fun->returns, fun->n_returns);
-    free_strings_array(fun->params, fun->n_params);
-    free(fun->ptype);
-    free(fun->rtype);
+    ufunc *fun = ufunc_new();
 
-    free(fun);
+    if (fun != NULL) {
+	if (add_allocated_ufunc(fun)) {
+	    free_ufunc(fun);
+	    fun = NULL;
+	}
+    }
+
+    return fun;
 }
 
 static void ufuncs_destroy (void)
@@ -577,6 +608,292 @@ static void ufuncs_destroy (void)
 
     ufuns = NULL;
     n_ufuns = 0;
+}
+
+/* XML handling */
+
+static int func_read_params_or_returns (xmlNodePtr node, ufunc *fun,
+					int code)
+{
+    xmlNodePtr cur;
+    const char *targ;
+    char ***pnames;
+    char **ptypes;
+    int *nvals;
+    int n, err = 0;
+
+    if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
+	return E_DATA;
+    }  
+
+    if (n == 0) {
+	return 0;
+    }
+
+    if (code == FN_PARAMS) {
+	nvals = &fun->n_params;
+	pnames = &fun->params;
+	ptypes = &fun->ptype;
+	targ = "param";
+    } else {
+	nvals = &fun->n_returns;
+	pnames = &fun->returns;
+	ptypes = &fun->rtype;
+	targ = "return";
+    }
+
+    err = allocate_parmv_ptype(pnames, ptypes, n);
+    if (err) {
+	return err;
+    }
+
+    *nvals = n;
+    cur = node->xmlChildrenNode;
+
+    n = 0;
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (XUC) targ)) {
+	    if (!gretl_xml_get_prop_as_string(cur, "name", &((*pnames)[n]))) {
+		err = E_DATA;
+	    } else if (!gretl_xml_get_prop_as_uchar(cur, "type", &((*ptypes)[n]))) {
+		err = E_DATA;
+	    }
+	    n++;
+	}
+	cur = cur->next;
+    }
+
+    if (!err && n != *nvals) {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
+{
+    char line[MAXLINE];
+    char *buf, *s;
+    int err = 0;
+
+    buf = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+    if (buf == NULL) {
+	return 1;
+    }
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf) && !err) {
+	s = line;
+	while (isspace(*s)) s++;
+	err = real_add_fn_line(fun, s);
+    }
+
+    free(buf);
+
+    return err;
+}
+
+int add_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc)
+{
+    ufunc *fun = ufunc_new();
+    xmlNodePtr cur;
+    char *fname;
+    int err = 0;
+
+    if (fun == NULL) {
+	return E_ALLOC;
+    }
+
+    if (!gretl_xml_get_prop_as_string(node, "name", &fname)) {
+	free_ufunc(fun);
+	return E_DATA;
+    }
+
+    strncat(fun->name, fname, FN_NAMELEN - 1);
+    free(fname);
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (XUC) "author")) {
+	    gretl_xml_node_get_string(cur, doc, &fun->author);
+	} else if (!xmlStrcmp(cur->name, (XUC) "version")) {
+	    gretl_xml_node_get_string(cur, doc, &fun->version);
+	} else if (!xmlStrcmp(cur->name, (XUC) "date")) {
+	    gretl_xml_node_get_string(cur, doc, &fun->date);
+	} else if (!xmlStrcmp(cur->name, (XUC) "description")) {
+	    gretl_xml_node_get_string(cur, doc, &fun->description);
+	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
+	    err = func_read_params_or_returns(cur, fun, FN_PARAMS);
+	} else if (!xmlStrcmp(cur->name, (XUC) "returns")) {
+	    err = func_read_params_or_returns(cur, fun, FN_RETURNS);
+	} else if (!xmlStrcmp(cur->name, (XUC) "code")) {
+	    err = func_read_code(cur, doc, fun);
+	}
+	cur = cur->next;
+    }
+
+    if (!err) {
+	err = add_allocated_ufunc(fun);
+    }
+
+    if (err) {
+	free_ufunc(fun);
+    } 
+
+#if FN_DEBUG
+    if (err) {
+	fprintf(stderr, "error reading function spec\n");
+    } 
+#endif
+
+    return err;
+}
+
+static void adjust_indent (const char *line, int *this_indent,
+			   int *next_indent)
+{
+    int ti = *next_indent;
+    int ni = *next_indent;
+
+    if (!strncmp(line, "loop", 4)) {
+	ni++;
+    } else if (!strncmp(line, "if", 2)) {
+	ni++;
+    } else if (!strncmp(line, "nls", 3)) {
+	ni++;
+    } else if (!strncmp(line, "mle", 3)) {
+	ni++;
+    } else if (!strncmp(line, "end", 3)) {
+	ti--;
+	ni--;
+    } else if (!strncmp(line, "else", 4)) {
+	ni = ti;
+	ti--;
+    } 
+
+    *this_indent = ti;
+    *next_indent = ni;
+}
+
+static int write_function_xml (const ufunc *fun, FILE *fp)
+{
+    int this_indent = 0;
+    int next_indent = 0;
+    int i, j;
+
+    fprintf(fp, "<gretl-function name=\"%s\">\n", fun->name);
+
+    if (fun->author != NULL) {
+	gretl_xml_put_tagged_string("author", fun->author, fp);
+    }
+    if (fun->version != NULL) {
+	gretl_xml_put_tagged_string("version", fun->version, fp);
+    }
+    if (fun->date != NULL) {
+	gretl_xml_put_tagged_string("date", fun->date, fp);
+    }
+    if (fun->description != NULL) {
+	gretl_xml_put_tagged_string("description", fun->description, fp);
+    }
+
+    if (fun->n_params > 0) {
+	fprintf(fp, " <params count=\"%d\">\n", fun->n_params);
+	for (i=0; i<fun->n_params; i++) {
+	    fprintf(fp, "  <param name=\"%s\" type=\"%d\"/>\n",
+		    fun->params[i], (int) fun->ptype[i]);
+	}
+	fputs(" </params>\n", fp);
+    }
+
+    if (fun->n_returns > 0) {
+	fprintf(fp, " <returns count=\"%d\">\n", fun->n_returns);
+	for (i=0; i<fun->n_returns; i++) {
+	    fprintf(fp, "  <return name=\"%s\" type=\"%d\"/>\n",
+		    fun->returns[i], (int) fun->rtype[i]);
+	}
+	fputs(" </returns>\n", fp);
+    }
+
+    fputs("<code>\n", fp);
+    for (i=0; i<fun->n_lines; i++) {
+	adjust_indent(fun->lines[i], &this_indent, &next_indent);
+	for (j=0; j<this_indent; j++) {
+	    fputs("  ", fp);
+	}
+	gretl_xml_put_raw_string(fun->lines[i], fp);
+	fputc('\n', fp);
+    }
+    fputs("</code>\n", fp);
+
+    fputs("</gretl-function>\n", fp);
+    
+    return 0;
+}
+
+int write_user_function_file (const char *fname)
+{
+    FILE *fp;
+    int i;
+
+    if (n_ufuns == 0) {
+	return 0;
+    }
+
+    fp = gretl_fopen(fname, "w");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    gretl_xml_header(fp);    
+
+    fputs("<gretl-functions>\n", fp);
+    for (i=0; i<n_ufuns; i++) {
+	write_function_xml(ufuns[i], fp);
+    }
+    fputs("</gretl-functions>\n", fp);
+
+    fclose(fp);
+
+    return 0;
+}
+
+int read_user_function_file (const char *fname)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    FILE *fp;
+    int err = 0;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	/* nothing to be read */
+	return 0;
+    }
+
+    fclose(fp);
+    xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &cur);
+    if (err) {
+	return err;
+    }
+
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
+	    err = add_ufunc_from_xml(cur, doc);
+	}
+	cur = cur->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return err;
 }
 
 static void free_fncall (fncall *call)
@@ -1065,11 +1382,6 @@ static int allocate_parmv_ptype (char ***pparmv, char **pptype, int n)
 
     return err;
 }
-
-enum {
-    FN_PARAMS,
-    FN_RETURNS
-};
 
 static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
 			     int which)
@@ -1803,3 +2115,65 @@ int gretl_function_flagged_error (const char *s, PRN *prn)
 
     return 1;
 }
+
+static const char *argtype_string (int type)
+{
+    if (type == ARG_SCALAR) {
+	return _("scalar");
+    } else if (ARG_SERIES) {
+	return _("series");
+    } else if (ARG_LIST) {
+	return _("list");
+    } else if (ARG_MATRIX) {
+	return _("matrix");
+    } else {
+	return _("unknown");
+    }
+}
+
+int user_function_help (const char *fnname, PRN *prn)
+{
+    ufunc *fun = get_ufunc_by_name(fnname);
+    int i, err = 0;
+
+    if (fun == NULL) {
+	pprintf(prn, _("\"%s\" is not defined.\n"), fnname);
+	err = 1;
+    } else if (fun->author == NULL && fun->version == NULL &&
+	       fun->date == NULL && fun->description == NULL &&
+	       fun->n_params == 0 && fun->n_returns == 0) {
+	pprintf(prn, _("%s: sorry, no help available.\n"), fnname);
+	err = 1;
+    } else {
+	pprintf(prn, "%s:\n", fnname);
+	if (fun->author != NULL) {
+	    pprintf(prn, "Author: %s\n", fun->author);
+	}
+	if (fun->version != NULL) {
+	    pprintf(prn, "Version: %s\n", fun->version);
+	}
+	if (fun->date != NULL) {
+	    pprintf(prn, "Date: %s\n\n", fun->date);
+	}
+	if (fun->n_params > 0) {
+	    pprintf(prn, "Parameters:\n");
+	    for (i=0; i<fun->n_params; i++) {
+		pprintf(prn, " %s: (%s)\n", 
+		fun->params[i], argtype_string(fun->ptype[i]));
+	    }
+	}
+	if (fun->n_returns > 0) {
+	    pprintf(prn, "Return values:\n");
+	    for (i=0; i<fun->n_returns; i++) {
+		pprintf(prn, " %s: (%s)\n", 
+		fun->returns[i], argtype_string(fun->rtype[i]));
+	    }
+	}	
+	if (fun->description != NULL) {
+	    pprintf(prn, "Description:\n%s\n\n", fun->description);
+	}
+    }
+
+    return err;
+}
+

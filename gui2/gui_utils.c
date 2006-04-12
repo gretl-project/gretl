@@ -1304,29 +1304,12 @@ void verify_open_data (gpointer userdata, int code)
     do_open_data(NULL, userdata, code);
 }
 
-static int pkfile (const char *fname)
-{
-    FILE *fp;
-    char test[3] = {0};
-    int ret = 0;
-
-    fp = gretl_fopen(fname, "rb");
-    if (fp != NULL) {
-	if (fread(test, 1, 2, fp) == 2) {
-	    if (!strcmp(test, "PK")) ret = 1;
-	} 
-	fclose(fp);
-    } 
-
-    return ret;
-}
-
 /* give user choice of not opening session file, if there's already a
    datafile open and we're not in "expert" mode */
 
 void verify_open_session (void)
 {
-    if (!pkfile(tryfile)) {
+    if (!gretl_is_pkzip_file(tryfile)) {
 	/* not a new-style zipped session file */
 	do_open_script();
 	return;

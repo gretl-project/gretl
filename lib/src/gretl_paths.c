@@ -109,6 +109,24 @@ gzFile gretl_gzopen (const char *filename, const char *mode)
     return fz;
 }
 
+int gretl_is_xml_file (const char *fname)
+{
+    gzFile fz;
+    char test[6];
+    int ret = 0;
+
+    fz = gretl_gzopen(fname, "rb");
+    if (fz != Z_NULL) {
+	if (gzread(fz, test, 5)) {
+	    test[5] = '\0';
+	    if (!strcmp(test, "<?xml")) ret = 1;
+	} 
+	gzclose(fz);
+    } 
+
+    return ret;
+} 
+
 int gretl_path_prepend (char *file, const char *path)
 {
     char temp[MAXLEN];

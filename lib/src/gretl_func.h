@@ -47,6 +47,12 @@ void gretl_function_stop_on_error (double ***pZ, DATAINFO **ppdinfo, PRN *prn);
 
 int gretl_function_flagged_error (const char *s, PRN *prn);
 
+int write_user_function_file (const char *fname);
+
+int read_user_function_file (const char *fname);
+
+int user_function_help (const char *fnname, PRN *prn);
+
 void gretl_functions_cleanup (void);
 
 #endif /* GRETL_FUNC_H */

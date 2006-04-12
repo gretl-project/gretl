@@ -103,7 +103,7 @@ int main (void)
 		 &Z,       /* data matrix */
 		 datainfo, /* data information */
 		 OLS,      /* use Ordinary Least Squares */
-		 OPT_NONE, /* no special options */
+		 OPT_NONE  /* no special options */
 		 );
 
     /* Handle case where lsq bombed */

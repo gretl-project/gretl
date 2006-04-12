@@ -41,6 +41,11 @@ void gretl_xml_put_strings_array (const char *tag, const char **strs, int n,
 
 void gretl_xml_put_list (const char *tag, const int *list, FILE *fp);
 
+int gretl_xml_put_tagged_string (const char *tag, const char *str, 
+				 FILE *fp);
+
+int gretl_xml_put_raw_string (const char *str, FILE *fp);
+
 void gretl_xml_put_matrix (const gretl_matrix *m, const char *name, 
 			   FILE *fp);
 

@@ -1126,7 +1126,16 @@ void csv_obs_to_prn (int t, const DATAINFO *pdinfo, PRN *prn)
 	    }
 	}
     }
-}	
+}
+	
+/**
+ * print_time:
+ * @timep: time to print.
+ *
+ * Returns: pointer to a static string containing a locale-dependent
+ * representation of @timep.  In English, this will be in the format
+ * Y/m/d H:M.
+ */
 
 const char *print_time (const time_t *timep)
 {
@@ -1140,59 +1149,93 @@ const char *print_time (const time_t *timep)
     return timestr;
 }
 
-char *gretl_xml_encode (char *buf)
+/**
+ * gretl_xml_validate:
+ * @s: string to be tested.
+ *
+ * Returns: 1 if @s is acceptable for insertion into an XML file
+ * as is, 0 if it contains special characters that need to be 
+ * escaped.  See also gretl_xml_encode().
+ */
+
+int gretl_xml_validate (const char *s)
 {
-    char *xmlbuf, *p;
-    size_t sz = strlen(buf) + 1;
+    while (*s) {
+	if (*s == '&' || *s == '<' || *s == '>' || *s == '"') {
+	    return 0;
+	}
+	s++;
+    }
+
+    return 1;
+}
+
+/**
+ * gretl_xml_encode:
+ * @buf: NUL-terminated source string.
+ *
+ * Returns: an allocated re-write of @buf, with characters that are
+ * special in XML encoded as character entities.  See also
+ * gretl_xml_validate().
+ */
+
+char *gretl_xml_encode (const char *str)
+{
+    char *xmlstr, *p;
+    const char *s = str;
+    size_t sz = strlen(str) + 1;
 
 #ifdef XML_DEBUG
     fprintf(stderr, "gretl_xml_encode: original buffer size=%d\n", sz);
 #endif
 
-    p = buf;
-    while (*buf) {
-	if (*buf == '&') sz += 4;
-	else if (*buf == '<') sz += 3;
-	else if (*buf == '>') sz += 3;
-	else if (*buf == '"') sz += 5;
-	buf++;
+    while (*s) {
+	if (*s == '&') sz += 4;
+	else if (*s == '<') sz += 3;
+	else if (*s == '>') sz += 3;
+	else if (*s == '"') sz += 5;
+	s++;
     }
-    buf = p;
 
-    xmlbuf = malloc(sz);
-    if (xmlbuf == NULL) {
+    xmlstr = malloc(sz);
+    if (xmlstr == NULL) {
 	sprintf(gretl_errmsg, _("out of memory in XML encoding"));
 	return NULL;
     }
+
 #ifdef XML_DEBUG
-    fprintf(stderr, "gretl_xml_encode: malloc'd xmlbuf at size %d\n", sz);
+    fprintf(stderr, "gretl_xml_encode: malloc'd xmlstr at size %d\n", sz);
 #endif
-    p = xmlbuf;
-    while (*buf) {
-	if (*buf == '&') {
+
+    s = str;
+    p = xmlstr;
+    
+    while (*s) {
+	if (*s == '&') {
 	    strcpy(p, "&amp;");
 	    p += 5;
-	} else if (*buf == '<') {
+	} else if (*s == '<') {
 	    strcpy(p, "&lt;");
 	    p += 4;
-	} else if (*buf == '>') {
+	} else if (*s == '>') {
 	    strcpy(p, "&gt;");
 	    p += 4;
-	} else if (*buf == '"') {
+	} else if (*s == '"') {
 	    strcpy(p, "&quot;");
 	    p += 6;
 	} else {
-	    *p++ = *buf;
+	    *p++ = *s;
 	}
-	buf++;
+	s++;
     }
-    xmlbuf[sz-1] = '\0';
+
+    xmlstr[sz-1] = '\0';
 
 #ifdef XML_DEBUG
-    fprintf(stderr, "done gretl_xml_encode: xmlbuf='%s'\n", xmlbuf);
+    fprintf(stderr, "done gretl_xml_encode: xmlstr='%s'\n", xmlstr);
 #endif
 
-    return xmlbuf;
+    return xmlstr;
 }
 
 static char x2c (char *s) 
