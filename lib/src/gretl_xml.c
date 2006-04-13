@@ -543,6 +543,55 @@ int gretl_xml_node_get_string (xmlNodePtr node, xmlDocPtr doc,
 }
 
 /**
+ * gretl_xml_node_get_trimmed_string:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @pstr: location to receive string.
+ * 
+ * Reads a string from @node and trims both leading and trailing
+ * whit space.
+ * 
+ * Returns: 1 if a string is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_node_get_trimmed_string (xmlNodePtr node, xmlDocPtr doc, 
+				       char **pstr)
+{
+    char *tmp;
+    char *s;
+    int i, len, ret = 0;
+
+    tmp = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    if (tmp != NULL) {
+	s = tmp;
+	s += strspn(s, " \t\n\r");
+	len = strlen(s);
+	for (i=len-1; i>=0; i--) {
+	    if (s[i] == ' ' || s[i] == '\t' || 
+		s[i] == '\r' || s[i] == '\n') {
+		len--;
+	    } else {
+		break;
+	    }
+	}
+	if (len == strlen(tmp)) {
+	    *pstr = tmp;
+	    ret = 1;
+	} else if (len > 0) {
+	    *pstr = gretl_strndup(s, len);
+	    if (*pstr != NULL) {
+		ret = 1;
+	    }
+	    free(tmp);
+	}
+    }
+
+    return ret;
+}
+
+/**
  * gretl_xml_node_get_list:
  * @node: XML node pointer.
  * @doc: XML document pointer.

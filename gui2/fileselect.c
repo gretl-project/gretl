@@ -77,10 +77,6 @@
                              a == EXPORT_CSV || \
                              a == EXPORT_DAT) && s != FSEL_DATA_PRN)
 
-#ifdef REMEMBER_DIR
-static char remember_dir[MAXLEN];
-#endif
-
 struct extmap {
     int action;
     char *ext;
@@ -100,6 +96,7 @@ static struct extmap action_map[] = {
     { SAVE_BOXPLOT_EPS,  ".eps" },
     { SAVE_BOXPLOT_PS,   ".ps" },
     { SAVE_BOXPLOT_XPM,  ".xpm" },
+    { SAVE_FUNCTIONS,    ".gfn" },
     { EXPORT_CSV,        ".csv" },
     { EXPORT_R,          ".R" },
     { OPEN_OCTAVE,       ".m" },
@@ -324,15 +321,7 @@ static void save_editable_content (int action, const char *fname,
 
 static void set_startdir (char *startdir, int action)
 {
-#ifdef REMEMBER_DIR
-    if (*remember_dir != '\0') {
-	strcpy(startdir, remember_dir);
-    } else {
-	get_default_dir(startdir, action);
-    }
-#else
     get_default_dir(startdir, action);
-#endif
 
 #ifndef G_OS_WIN32
     if (startdir[strlen(startdir) - 1] != '/') {
@@ -454,17 +443,7 @@ static char *suggested_exportname (const char *fname, int action)
     return s;
 }
 
-#ifdef REMEMBER_DIR
-static void remember_this_dir (const char *fname)
-{
-    int spos = slashpos(fname);
-    
-    if (spos > 0 && spos < sizeof remember_dir) {
-	*remember_dir = '\0';
-	strncat(remember_dir, fname, spos);
-    }
-}
-#endif
+extern void save_user_functions (const char *fname);
 
 static void
 file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
@@ -485,12 +464,6 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	    fclose(fp);
 	}
     } 
-
-#ifdef REMEMBER_DIR
-    if (action != SET_PATH) {
-	remember_this_dir(fname);
-    }
-#endif
 
     if (OPEN_DATA_ACTION(action)) {
 	strcpy(tryfile, fname);
@@ -558,6 +531,8 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	}
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
+    } else if (action == SAVE_FUNCTIONS) {
+	save_user_functions(fname);
     } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
@@ -634,6 +609,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SAVE_BOXPLOT_EPS, { N_("postscript files (*.eps)"), "*.eps" }},
 	{SAVE_BOXPLOT_PS,  { N_("postscript files (*.ps)"), "*.ps" }},
 	{SAVE_GP_CMDS, { N_("gnuplot files (*.plt)"), "*.plt" }},
+	{SAVE_FUNCTIONS,   { N_("gretl function files (*.gfn)"), "*.gfn" }},
 	{EXPORT_CSV,   { N_("CSV files (*.csv)"), "*.csv" }},
 	{EXPORT_R,     { N_("GNU R files (*.R)"), "*.R" }},
 	{EXPORT_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},

@@ -54,6 +54,9 @@ static void doubleclick_action (windata_t *win)
     case PS_FILES:
 	browser_open_ps(NULL, win);
 	break;
+    case FUNC_FILES:
+	browser_load_func(NULL, win);
+	break;
     case NATIVE_DB:
     case RATS_DB:	    
 	open_db_list(NULL, win); 
@@ -290,6 +293,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_BIN1:
     case SAVE_BIN2:
     case SAVE_DBDATA:
+    case SAVE_FUNCTIONS:
 	data_save_selection_wrapper(file_code, NULL);
 	break;
     case EXPORT_CSV:

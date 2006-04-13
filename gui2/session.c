@@ -842,10 +842,10 @@ void do_open_session (void)
     }
 
     session_file_make_path(fname, "matrices.xml");
-    err = read_matrix_file(fname);
+    err = maybe_read_matrix_file(fname);
 
     session_file_make_path(fname, "functions.xml");
-    err = read_user_function_file(fname);
+    err = maybe_read_functions_file(fname);
 
     if (sinfo.mask != NULL) {
 	err = restrict_sample_from_mask(sinfo.mask, sinfo.mode, &Z, &datainfo);

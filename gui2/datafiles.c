@@ -28,6 +28,7 @@
 #include "webget.h"
 #include "menustate.h"
 #include "gretl_xml.h"
+#include "gretl_func.h"
 
 #if !GLIB_CHECK_VERSION(2,0,0)
 # define OLD_GTK
@@ -695,9 +696,37 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 } 
 
-void browser_load_func (GtkWidget *w, gpointer data)
+static void gui_load_user_functions (const char *fname)
 {
-    windata_t *vwin = (windata_t *) data;
+    int err;
+
+    err = load_user_function_file(fname);
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	infobox("Functions loaded OK");
+    }    
+}
+
+static void gui_show_functions_info (const char *fname)
+{
+    PRN *prn;
+    int err;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    err = get_function_file_info(fname, prn);
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	view_buffer(prn, 78, 350, _("gretl: user functions"), PRINT, NULL);
+    }    
+}
+
+static void browser_functions_handler (windata_t *vwin, int load)
+{
     char fnfile[FILENAME_MAX];
     gchar *fname;
     gchar *dir;
@@ -714,16 +743,36 @@ void browser_load_func (GtkWidget *w, gpointer data)
 		       2, &dir); /* wrong */
 #endif
 
-    build_path(dir, fname, fnfile, NULL);
+    build_path(dir, fname, fnfile, ".gfn");
 
-    fprintf(stderr, "fnfile: '%s'\n", fnfile);
+    if (load) {
+	gui_load_user_functions(fnfile);
+    } else {
+	gui_show_functions_info(fnfile);
+    }
 
 #ifndef OLD_GTK
     g_free(fname);
     g_free(dir);
 #endif
 
-    gtk_widget_destroy(GTK_WIDGET(vwin->w));
+    if (load) {
+	gtk_widget_destroy(GTK_WIDGET(vwin->w));
+    }
+}
+
+void browser_load_func (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, 1);
+} 
+
+static void display_function_info (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, 0);
 } 
 
 static void set_browser_status (windata_t *vwin, int status)
@@ -854,7 +903,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     if (code == TEXTBOOK_DATA) { 
 	file_collection *coll;
 
-	/* crate popup menu */
+	/* create popup menu */
 	build_datafiles_popup(vwin);
 
 	while ((coll = pop_data_collection())) {
@@ -889,16 +938,18 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 			 G_CALLBACK(delete_widget), vwin->w); 
     }
 
-    if (code == TEXTBOOK_DATA || code == REMOTE_DB) {
+    if (code == TEXTBOOK_DATA || code == REMOTE_DB || code == FUNC_FILES) {
 	button = gtk_button_new_with_label 
 	    ((code == REMOTE_DB)? _("Install") : _("Info"));
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 (code == REMOTE_DB)?
 			 G_CALLBACK(grab_remote_db) :
+			 (code == FUNC_FILES)? 
+			 G_CALLBACK(display_function_info) :
 			 G_CALLBACK(display_datafile_info), vwin);
 	button = gtk_button_new_with_label(_("Find"));
-	gtk_box_pack_start(GTK_BOX (button_box), button, FALSE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(datafile_find), vwin);
     }
@@ -929,26 +980,16 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 static char *get_func_description (const char *fname, const char *fndir)
 {
     char fullname[FILENAME_MAX];
-    char line[128];
-    FILE *fp;
+    char *descrip = NULL;
+    int err = 0;
 
     build_path(fndir, fname, fullname, NULL);
-    
-    fp = fopen(fullname, "r");
-    if (fp == NULL) {
-	return NULL;
-    }
-    
-    while (fgets(line, sizeof line, fp)) {
-	if (*line != '#') {
-	    break;
-	}
-	printf("%s", line + 2);
+    descrip = get_function_file_header(fullname, &err);
+    if (err) {
+	gui_errmsg(err);
     }
 
-    fclose(fp);
-
-    return g_strdup("Not ready yet");
+    return descrip;
 }
 
 #ifndef OLD_GTK
@@ -958,23 +999,28 @@ read_fn_files_in_dir (DIR *dir, const char *fndir,
 		      GtkListStore *store, GtkTreeIter *iter)
 {
     struct dirent *dirent;
-    const char *fname;
+    char *fname;
     char *descrip;
     int n, nfn = 0;
 
     while ((dirent = readdir(dir)) != NULL) {
-	fname = dirent->d_name;
+	fname = g_strdup(dirent->d_name);
+	if (fname == NULL) {
+	    break;
+	}
 	n = strlen(fname);
-	if (!g_ascii_strcasecmp(fname + n - 4, ".inp")) {
+	if (!g_ascii_strcasecmp(fname + n - 4, ".gfn")) {
 	    descrip = get_func_description(fname, fndir);
 	    if (descrip != NULL) {
+		fname[n - 4] = '\0';
 		gtk_list_store_append(store, iter);
 		gtk_list_store_set(store, iter, 0, fname, 1, descrip,
 				   2, fndir, -1);
 		g_free(descrip);
 		nfn++;
 	    }
-	} 
+	}
+	g_free(fname);
     }
 
     return nfn;
@@ -992,11 +1038,15 @@ read_fn_files_in_dir (DIR *dir, char *fndir, windata_t *vwin, int nfn)
     int n, i;
 
     while ((dirent = readdir(dir)) != NULL) {
-	fname = dirent->d_name;
+	fname = g_strdup(dirent->d_name);
+	if (fname == NULL) {
+	    break;
+	}	
 	n = strlen(fname);
-	if (!g_strcasecmp(fname + n - 4, ".inp")) {
+	if (!g_strcasecmp(fname + n - 4, ".gfn")) {
 	    descrip = get_func_description(fname, fndir);
 	    if (descrip != NULL) {
+		fname[n - 4] = '\0';
 		row[0] = fname;
 		row[1] = descrip;
 		i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
@@ -1008,6 +1058,7 @@ read_fn_files_in_dir (DIR *dir, char *fndir, windata_t *vwin, int nfn)
 		}
 	    } 
 	}
+	g_free(fname);
     }
 
     return nfn;

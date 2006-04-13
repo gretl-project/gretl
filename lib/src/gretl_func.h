@@ -20,6 +20,10 @@
 #ifndef GRETL_FUNC_H
 #define GRETL_FUNC_H
 
+int n_user_functions (void);
+
+const char *user_function_name_by_index (int i);
+
 int gretl_compiling_function (void);
 
 int gretl_executing_function (void);
@@ -28,7 +32,9 @@ int gretl_start_compiling_function (const char *line, PRN *prn);
 
 int gretl_function_append_line (const char *line);
 
-int gretl_is_user_function (const char *s);
+int gretl_is_user_function (const char *line);
+
+int gretl_is_public_user_function (const char *name);
 
 int gretl_get_user_function (const char *line, char **fnname);
 
@@ -47,9 +53,24 @@ void gretl_function_stop_on_error (double ***pZ, DATAINFO **ppdinfo, PRN *prn);
 
 int gretl_function_flagged_error (const char *s, PRN *prn);
 
+int gretl_function_set_info (int i, 
+			     const char *author,
+			     const char *version,
+			     const char *date,
+			     const char *description);
+
+void gretl_function_set_private (int i);
+
+int write_selected_user_functions (const int *list, const char *descrip,
+				   const char *fname);
+
 int write_user_function_file (const char *fname);
 
-int read_user_function_file (const char *fname);
+int load_user_function_file (const char *fname);
+
+int get_function_file_info (const char *fname, PRN *prn);
+
+char *get_function_file_header (const char *fname, int *err);
 
 int user_function_help (const char *fnname, PRN *prn);
 

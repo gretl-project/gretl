@@ -26,6 +26,8 @@ void browser_open_data (GtkWidget *w, gpointer data);
 
 void browser_open_ps (GtkWidget *w, gpointer data);
 
+void browser_load_func (GtkWidget *w, gpointer data);
+
 void destroy_file_collections (void);
 
 void display_files (gpointer p, guint code, GtkWidget *w);

@@ -639,7 +639,7 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     return err;
 }
 
-static int read_matrix_file (const char *fname) 
+static int maybe_read_matrix_file (const char *fname) 
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
@@ -650,6 +650,7 @@ static int read_matrix_file (const char *fname)
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
+	/* nothing to be read */
 	return 0;
     }
 
@@ -685,6 +686,21 @@ static int read_matrix_file (const char *fname)
     }
 
     return err;
+}
+
+static int maybe_read_functions_file (const char *fname) 
+{
+    FILE *fp;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	/* nothing to be read */
+	return 0;
+    }
+
+    fclose(fp);
+
+    return load_user_function_file(fname);
 }
 
 static int model_in_session (const MODEL *pmod)

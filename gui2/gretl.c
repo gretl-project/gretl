@@ -303,12 +303,19 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Open command file/practice file..."), "", display_files, PS_FILES, 
       "<StockItem>", GTK_STOCK_OPEN },
+    { N_("/File/Open command file/function file..."), "", display_files, FUNC_FILES, 
+      "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/New command file"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/New command file/regular script"), NULL, do_new_script, 0, 
       "<StockItem>", GTK_STOCK_NEW },
     { N_("/File/New command file/Monte Carlo loop"), "", do_new_script, 1, 
       "<StockItem>", GTK_STOCK_NEW },
     { "/File/sep3", NULL, NULL, 0, "<Separator>", GNULL },
+
+    /* File, save user-defined functions */
+    { N_("/File/Save functions..."), "", file_save, SAVE_FUNCTIONS, 
+      "<StockItem>", GTK_STOCK_SAVE },
+    { "/File/sep4", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, preferences */
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -332,10 +339,6 @@ GtkItemFactoryEntry data_items[] = {
     { "/Utilities/sep", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },
     { "/Utilities/sep2", NULL, NULL, 0, "<Separator>", GNULL },
-#if 0
-    { N_("/Utilities/Additional functions..."), NULL, display_files, FUNC_FILES, NULL, GNULL },
-    { "/Utilities/sep3", NULL, NULL, 0, "<Separator>", GNULL },
-#endif
     { N_("/Utilities/Start GNU R"), NULL, startRcallback, 0, NULL, GNULL },
     { "/Utilities/sep4", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/NIST test suite"), NULL, NULL, 0, "<Branch>", GNULL },

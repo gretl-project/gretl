@@ -1526,7 +1526,7 @@ static int exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (cmd.ci == INCLUDE && gretl_is_xml_file(runfile)) {
-	    err = read_user_function_file(runfile);
+	    err = load_user_function_file(runfile);
 	    if (err) {
 		pputs(prn, _("Error reading function definitions\n"));
 	    }

@@ -191,6 +191,7 @@ GUISRC = about.c \
 	dlgutils.c \
 	filelists.c \
 	fileselect.c \
+	fnsave.c \
 	gpt_control.c \
 	gpt_dialog.c \
 	graph_page.c \

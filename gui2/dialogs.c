@@ -2614,8 +2614,6 @@ static void set_checks_opt (GtkWidget *w, int *active)
     active[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 }
 
-
-
 /* general purpose dialog offering check-button options and/or
    a spinner with numerical values */
 

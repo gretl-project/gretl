@@ -25,6 +25,7 @@
 #include "menustate.h"
 #include "fileselect.h"
 #include "var.h"
+#include "gretl_func.h"
 
 #ifndef OLD_GTK
 # include "treeutils.h"
@@ -1854,7 +1855,7 @@ static void cancel_selector (GtkWidget *widget, selector *sr)
 static void destroy_selector (GtkWidget *w, selector *sr) 
 {
 #ifndef OLD_GTK
-    if (SAVE_DATA_ACTION(sr->code)) {
+    if (SAVE_DATA_ACTION(sr->code) || sr->code == SAVE_FUNCTIONS) {
 	gtk_main_quit();
     }
 #endif
@@ -2885,7 +2886,8 @@ build_selector_buttons (selector *sr)
 		     G_CALLBACK(cancel_selector), sr);
     gtk_widget_show(tmp);
 
-    if (sr->code != PRINT && !SAVE_DATA_ACTION(sr->code)) {
+    if (sr->code != PRINT && sr->code != SAVE_FUNCTIONS &&
+	!SAVE_DATA_ACTION(sr->code)) {
 	tmp = standard_button(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
@@ -3274,6 +3276,28 @@ static int add_omit_list (gpointer p, selector *sr)
     return nvars;
 }
 
+static int functions_list (selector *sr)
+{
+    const char *fnname;
+    gchar *row[3] = { NULL, NULL, NULL };
+    gchar id[5];
+    int i, nfn;
+
+    nfn = n_user_functions();
+
+    for (i=0; i<nfn; i++) {
+	fnname = user_function_name_by_index(i);
+	sprintf(id, "%d", i);
+	row[0] = id;
+	row[2] = fnname;
+	gtk_clist_append(GTK_CLIST(sr->lvars), row);
+    }
+    g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
+		      GINT_TO_POINTER(1));
+
+    return nfn;
+}
+
 #else
 
 static int add_omit_list (gpointer p, selector *sr)
@@ -3363,6 +3387,32 @@ static int add_omit_list (gpointer p, selector *sr)
     return nvars;
 }
 
+static int functions_list (selector *sr)
+{
+    GtkListStore *store;
+    GtkTreeIter iter;
+    const char *fnname;
+    int i, nfn;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+
+    nfn = n_user_functions();
+
+    for (i=0; i<nfn; i++) {
+	fnname = user_function_name_by_index(i);
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter,
+			   0, i, 1, 0,
+			   2, fnname, -1);
+    }
+    g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
+		      GINT_TO_POINTER(1));
+
+    return nfn;
+}
+
 #endif
 
 static GtkWidget *simple_selection_top_label (int code)
@@ -3385,7 +3435,7 @@ static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
     return FALSE;
 }
 
-void simple_selection (const char *title, int (*callback)(), guint cmdcode,
+void simple_selection (const char *title, int (*callback)(), guint ci,
 		       gpointer p) 
 {
 #ifndef OLD_GTK
@@ -3398,6 +3448,7 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
     GtkWidget *left_vbox, *button_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *remove_button;
     selector *sr;
+    int fnsave = (ci == SAVE_FUNCTIONS);
     int nleft = 0;
     int i;
 
@@ -3411,9 +3462,9 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
 	return;
     }
 
-    selector_init(sr, cmdcode, title, p, callback);
+    selector_init(sr, ci, title, p, callback);
 
-    tmp = simple_selection_top_label(cmdcode);
+    tmp = simple_selection_top_label(ci);
     if (tmp != NULL) {
 	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
@@ -3423,7 +3474,7 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
     top_hbox = gtk_hbox_new(FALSE, 0); 
     gtk_box_set_homogeneous(GTK_BOX(top_hbox), TRUE);
 
-    tmp = gtk_label_new(_("Available vars"));
+    tmp = gtk_label_new(fnsave? _("Available functions") : _("Available vars"));
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
@@ -3431,7 +3482,7 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
-    tmp = gtk_label_new(_("Selected vars"));
+    tmp = gtk_label_new(fnsave? _("Selected functions") : _("Selected vars"));
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
@@ -3453,8 +3504,10 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
     store = sr->lvars;
 #endif
 
-    if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM ||
-	cmdcode == ELLIPSE || cmdcode == VAROMIT) {
+    if (ci == SAVE_FUNCTIONS) {
+	nleft = functions_list(sr);
+    } else if (ci == OMIT || ci == ADD || ci == COEFFSUM ||
+	ci == ELLIPSE || ci == VAROMIT) {
         nleft = add_omit_list(p, sr);
 	g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
 			 G_CALLBACK(remove_busy_signal), 
@@ -3462,7 +3515,7 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
     } else {
 	nleft = 0;
 	for (i=1; i<datainfo->v; i++) {
-	    if (list_show_var(i, cmdcode, 0)) {
+	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
 		nleft++;
 	    }
@@ -3529,7 +3582,7 @@ void simple_selection (const char *title, int (*callback)(), guint cmdcode,
 
     gtk_widget_show(sr->dlg);
 
-    if (SAVE_DATA_ACTION(sr->code)) {
+    if (SAVE_DATA_ACTION(sr->code) || sr->code == SAVE_FUNCTIONS) {
 	gretl_set_window_modal(sr->dlg);
     }
 }
@@ -3632,6 +3685,8 @@ static const char *data_save_title (int code)
 	return _("Save R data file");
     case EXPORT_OCTAVE:
 	return _("Save octave data file");
+    case SAVE_FUNCTIONS:
+	return _("Save functions");
     default:
 	return _("Save data file");
     }

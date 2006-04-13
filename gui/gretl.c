@@ -256,13 +256,19 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open command file/user file..."), NULL, open_script, 
       OPEN_SCRIPT, NULL },
-    { N_("/File/Open command file/practice file..."), NULL, 
-      display_files, PS_FILES, NULL },
+    { N_("/File/Open command file/practice file..."), NULL, display_files, 
+      PS_FILES, NULL },
+    { N_("/File/Open command file/function file..."), NULL, display_files, 
+      FUNC_FILES, NULL },
     { N_("/File/New command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/New command file/regular script"), NULL, do_new_script, 0, NULL },
     { N_("/File/New command file/Monte Carlo loop"), NULL, 
       do_new_script, 1, NULL },
     { "/File/sep3", NULL, NULL, 0, "<Separator>" },
+
+    /* File, save user-defined functions */
+    { N_("/File/Save functions..."), NULL, file_save, SAVE_FUNCTIONS, NULL },
+    { "/File/sep4", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, preferences */
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>" },

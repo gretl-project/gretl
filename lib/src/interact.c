@@ -1942,7 +1942,7 @@ int help (const char *cmdword, const char *helpfile, PRN *prn)
     ok = gretl_command_number(cmdword) > 0;
 
     if (!ok) {
-	if (gretl_is_user_function(cmdword)) {
+	if (gretl_is_public_user_function(cmdword)) {
 	    return user_function_help(cmdword, prn);
 	} else {
 	    pprintf(prn, _("\"%s\" is not a gretl command.\n"), cmdword);

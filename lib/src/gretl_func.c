@@ -51,6 +51,7 @@ struct ufunc_ {
     char *version;
     char *date;
     char *description;
+    int private;
     int n_lines;
     char **lines;
     int n_returns;
@@ -78,6 +79,7 @@ static fncall **callstack;
 static void free_fncall (fncall *call);
 static int allocate_parmv_ptype (char ***pparmv, char **pptype, int n);
 static int real_add_fn_line (ufunc *fun, const char *s);
+static int real_user_function_help (ufunc *fun, PRN *prn);
 
 /* record of state, and communication of state with outside world */
 
@@ -120,6 +122,22 @@ static void set_executing_off (fncall *call)
     fprintf(stderr, "set_executing_off: fun=%s, fn_executing=%d\n",
 	    call->fun->name, fn_executing);
 #endif
+}
+
+/* general info accessors */
+
+int n_user_functions (void)
+{
+    return n_ufuns;
+}
+
+const char *user_function_name_by_index (int i)
+{
+    if (i >= 0 && i < n_ufuns) {
+	return ufuns[i]->name;
+    } else {
+	return NULL;
+    }
 }
 
 /* function call stack mechanism */
@@ -505,6 +523,7 @@ static ufunc *ufunc_new (void)
     }
 
     func->name[0] = '\0';
+    func->private = 0;
 
     func->author = NULL;
     func->version = NULL;
@@ -684,6 +703,9 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf) && !err) {
+	if (string_is_blank(line)) {
+	    continue;
+	}
 	s = line;
 	while (isspace(*s)) s++;
 	err = real_add_fn_line(fun, s);
@@ -694,11 +716,12 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     return err;
 }
 
-int add_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc)
+int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, PRN *prn)
 {
     ufunc *fun = ufunc_new();
     xmlNodePtr cur;
     char *fname;
+    int read_full = (prn == NULL);
     int err = 0;
 
     if (fun == NULL) {
@@ -712,6 +735,8 @@ int add_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc)
 
     strncat(fun->name, fname, FN_NAMELEN - 1);
     free(fname);
+
+    gretl_xml_get_prop_as_int(node, "private", &fun->private);
 
     cur = node->xmlChildrenNode;
 
@@ -728,17 +753,23 @@ int add_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc)
 	    err = func_read_params_or_returns(cur, fun, FN_PARAMS);
 	} else if (!xmlStrcmp(cur->name, (XUC) "returns")) {
 	    err = func_read_params_or_returns(cur, fun, FN_RETURNS);
-	} else if (!xmlStrcmp(cur->name, (XUC) "code")) {
+	} else if (read_full && !xmlStrcmp(cur->name, (XUC) "code")) {
 	    err = func_read_code(cur, doc, fun);
 	}
 	cur = cur->next;
     }
 
-    if (!err) {
-	err = add_allocated_ufunc(fun);
-    }
-
-    if (err) {
+    if (read_full) {
+	if (!err) {
+	   err = add_allocated_ufunc(fun);
+	}
+	if (err) {
+	    free_ufunc(fun);
+	}
+    } else {
+	if (!fun->private) {
+	    real_user_function_help(fun, prn);
+	}
 	free_ufunc(fun);
     } 
 
@@ -783,7 +814,8 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     int next_indent = 0;
     int i, j;
 
-    fprintf(fp, "<gretl-function name=\"%s\">\n", fun->name);
+    fprintf(fp, "<gretl-function name=\"%s\" private=\"%d\">\n", 
+	    fun->name, fun->private);
 
     if (fun->author != NULL) {
 	gretl_xml_put_tagged_string("author", fun->author, fp);
@@ -832,10 +864,43 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     return 0;
 }
 
-int write_user_function_file (const char *fname)
+int gretl_function_set_info (int i, 
+			     const char *author,
+			     const char *version,
+			     const char *date,
+			     const char *description)
+{
+    int err = 0;
+
+    if (i >= 0 && i < n_ufuns) {
+	free(ufuns[i]->author);
+	ufuns[i]->author = gretl_strdup(author);
+	free(ufuns[i]->version);
+	ufuns[i]->version = gretl_strdup(version);
+	free(ufuns[i]->date);
+	ufuns[i]->date = gretl_strdup(date);
+	free(ufuns[i]->description);
+	ufuns[i]->description = gretl_strdup(description);
+	ufuns[i]->private = 0;
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
+void gretl_function_set_private (int i)
+{
+    if (i >= 0 && i < n_ufuns) {
+	ufuns[i]->private = 1;
+    }
+}
+
+int write_selected_user_functions (const int *list, const char *descrip,
+				   const char *fname)
 {
     FILE *fp;
-    int i;
+    int i, fi;
 
     if (n_ufuns == 0) {
 	return 0;
@@ -849,9 +914,24 @@ int write_user_function_file (const char *fname)
     gretl_xml_header(fp);    
 
     fputs("<gretl-functions>\n", fp);
-    for (i=0; i<n_ufuns; i++) {
-	write_function_xml(ufuns[i], fp);
+
+    if (descrip != NULL) {
+	gretl_xml_put_tagged_string("description", descrip, fp);
     }
+
+    if (list != NULL) {
+	for (i=1; i<=list[0]; i++) {
+	    fi = list[i];
+	    if (fi >= 0 && fi < n_ufuns) {
+		write_function_xml(ufuns[fi], fp);
+	    }
+	}
+    } else {
+	for (i=0; i<n_ufuns; i++) {
+	    write_function_xml(ufuns[i], fp);
+	}
+    }
+
     fputs("</gretl-functions>\n", fp);
 
     fclose(fp);
@@ -859,20 +939,18 @@ int write_user_function_file (const char *fname)
     return 0;
 }
 
-int read_user_function_file (const char *fname)
+int write_user_function_file (const char *fname)
+{
+    return write_selected_user_functions(NULL, NULL, fname);
+}
+
+static int real_load_user_function_file (const char *fname, PRN *prn)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr cur = NULL;
-    FILE *fp;
+    char *descrip = NULL;
     int err = 0;
 
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) {
-	/* nothing to be read */
-	return 0;
-    }
-
-    fclose(fp);
     xmlKeepBlanksDefault(0);
 
     err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &cur);
@@ -881,9 +959,29 @@ int read_user_function_file (const char *fname)
     }
 
     cur = cur->xmlChildrenNode;
+
+    if (prn != NULL) {
+	/* printing info on this functions file */
+	if (!xmlStrcmp(cur->name, (XUC) "description")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &descrip);
+	}
+	if (descrip != NULL) {
+	    pprintf(prn, "%s:\n", fname);
+	    pputs(prn, descrip);
+	    pputs(prn, "\n\n");
+	    pputs(prn, "Public functions defined in this file:\n");
+	    free(descrip);
+	} else {
+	    pprintf(prn, "Public functions defined in %s:\n", fname);
+	}
+    }
+
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (XUC) "gretl-function")) {
-	    err = add_ufunc_from_xml(cur, doc);
+	    if (prn != NULL) {
+		pputc(prn, '\n');
+	    }
+	    err = read_ufunc_from_xml(cur, doc, prn);
 	}
 	cur = cur->next;
     }
@@ -894,6 +992,55 @@ int read_user_function_file (const char *fname)
     }
 
     return err;
+}
+
+/* read functions from file into gretl's workspace */
+
+int load_user_function_file (const char *fname)
+{
+    return real_load_user_function_file(fname, NULL);
+}
+
+/* read specific function info from file, but do not
+   load into workspace */
+
+int get_function_file_info (const char *fname, PRN *prn)
+{
+    return real_load_user_function_file(fname, prn);
+}
+
+char *get_function_file_header (const char *fname, int *err)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr cur = NULL;
+    char *descrip = NULL;
+
+    xmlKeepBlanksDefault(0);
+
+    *err = gretl_xml_open_doc_root(fname, "gretl-functions", &doc, &cur);
+    if (*err) {
+	return NULL;
+    }
+
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL) {
+	if (!xmlStrcmp(cur->name, (XUC) "description")) {
+	    gretl_xml_node_get_trimmed_string(cur, doc, &descrip);
+	    break;
+	}
+	cur = cur->next;
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    if (descrip == NULL) {
+	descrip = gretl_strdup(_("No description available"));
+    }
+
+    return descrip;
 }
 
 static void free_fncall (fncall *call)
@@ -974,9 +1121,21 @@ int gretl_is_user_function (const char *line)
     return ret;
 }
 
+int gretl_is_public_user_function (const char *name)
+{
+    ufunc *fun = get_ufunc_by_name(name);
+
+    if (fun != NULL && !fun->private) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 int is_user_matrix_function (const char *word)
 {
     ufunc *fun = get_ufunc_by_name(word);
+
     if (fun != NULL) {
 	if (fun->n_returns == 1 && fun->rtype[0] == ARG_MATRIX) {
 	    return 1;
@@ -2131,21 +2290,17 @@ static const char *argtype_string (int type)
     }
 }
 
-int user_function_help (const char *fnname, PRN *prn)
+static int real_user_function_help (ufunc *fun, PRN *prn)
 {
-    ufunc *fun = get_ufunc_by_name(fnname);
     int i, err = 0;
 
-    if (fun == NULL) {
-	pprintf(prn, _("\"%s\" is not defined.\n"), fnname);
-	err = 1;
-    } else if (fun->author == NULL && fun->version == NULL &&
+    if (fun->author == NULL && fun->version == NULL &&
 	       fun->date == NULL && fun->description == NULL &&
 	       fun->n_params == 0 && fun->n_returns == 0) {
-	pprintf(prn, _("%s: sorry, no help available.\n"), fnname);
+	pprintf(prn, _("%s: sorry, no help available.\n"), fun->name);
 	err = 1;
     } else {
-	pprintf(prn, "%s:\n", fnname);
+	pprintf(prn, "%s:\n", fun->name);
 	if (fun->author != NULL) {
 	    pprintf(prn, "Author: %s\n", fun->author);
 	}
@@ -2161,6 +2316,7 @@ int user_function_help (const char *fnname, PRN *prn)
 		pprintf(prn, " %s: (%s)\n", 
 		fun->params[i], argtype_string(fun->ptype[i]));
 	    }
+	    pputc(prn, '\n');
 	}
 	if (fun->n_returns > 0) {
 	    pprintf(prn, "Return values:\n");
@@ -2168,10 +2324,26 @@ int user_function_help (const char *fnname, PRN *prn)
 		pprintf(prn, " %s: (%s)\n", 
 		fun->returns[i], argtype_string(fun->rtype[i]));
 	    }
+	    pputc(prn, '\n');
 	}	
 	if (fun->description != NULL) {
 	    pprintf(prn, "Description:\n%s\n\n", fun->description);
 	}
+    }
+
+    return err;
+}
+
+int user_function_help (const char *fnname, PRN *prn)
+{
+    ufunc *fun = get_ufunc_by_name(fnname);
+    int err = 0;
+
+    if (fun == NULL) {
+	pprintf(prn, _("\"%s\" is not defined.\n"), fnname);
+	err = 1;
+    } else {
+	err = real_user_function_help(fun, prn);
     }
 
     return err;
