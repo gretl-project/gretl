@@ -1516,6 +1516,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	
 	rset->combo = gtk_combo_new();
 	gtk_combo_set_popdown_strings(GTK_COMBO(rset->combo), dumlist); 
+	g_list_free(dumlist);
 	if (thisdum) {
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), 
 			       datainfo->varname[mdata->active_var]);

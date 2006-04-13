@@ -170,9 +170,9 @@ static void finfo_dialog (const int *list, struct function_info *finfo)
 
     /* drop-down selection of primary (public) function */
     for (i=1; i<=list[0]; i++) {
-	char *fnname = user_function_name_by_index(list[i]);
+	const char *fnname = user_function_name_by_index(list[i]);
 
-	fn_list = g_list_append(fn_list, fnname);
+	fn_list = g_list_append(fn_list, (gpointer) fnname);
     }
 
     finfo->combo = gtk_combo_new();
@@ -181,6 +181,7 @@ static void finfo_dialog (const int *list, struct function_info *finfo)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox), 
 		       finfo->combo, FALSE, FALSE, 0);
     gtk_widget_show(finfo->combo);
+    g_list_free(fn_list);
 
     /* long-form description */
     tempwid = gtk_label_new("Description:");
