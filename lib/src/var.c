@@ -24,9 +24,12 @@
 #include "varprint.h"
 #include "libset.h"
 #include "transforms.h"
+#include "gretl_xml.h"
 
 #define VAR_DEBUG 0
 #define BDEBUG    0  /* for debugging bootstrap IRFs */
+
+#define N_IVALS 3
 
 static gretl_matrix *irf_bootstrap (const GRETL_VAR *var, 
 				    int targ, int shock, int periods,
@@ -93,7 +96,7 @@ static int gretl_VAR_add_models (GRETL_VAR *var)
     return err;
 }
 
-static int gretl_VAR_add_A_matrix (GRETL_VAR *var)
+static int VAR_add_companion_matrix (GRETL_VAR *var)
 {
     int n = var->neqns * (var->order + var->ecm);
     int i, j, err = 0;
@@ -103,6 +106,7 @@ static int gretl_VAR_add_A_matrix (GRETL_VAR *var)
     }
 
     var->A = gretl_matrix_alloc(n, n);
+
     if (var->A == NULL) {
 	err = E_ALLOC;
     } else {
@@ -116,7 +120,7 @@ static int gretl_VAR_add_A_matrix (GRETL_VAR *var)
     return err;
 }
 
-static int gretl_VAR_add_C_matrix (GRETL_VAR *var)
+static int VAR_add_cholesky_matrix (GRETL_VAR *var)
 {
     int n = var->neqns * (var->order + var->ecm);
     int err = 0;
@@ -135,7 +139,7 @@ static int gretl_VAR_add_C_matrix (GRETL_VAR *var)
     return err;
 }
 
-static int gretl_VAR_add_E_matrix (GRETL_VAR *var)
+static int VAR_add_residuals_matrix (GRETL_VAR *var)
 {
     int err = 0;
 
@@ -199,10 +203,10 @@ static GRETL_VAR *gretl_VAR_new (int ci, int neqns, int order)
     gretl_VAR_zero(var);
     var->jinfo = NULL;
 
-    err = gretl_VAR_add_A_matrix(var);
+    err = VAR_add_companion_matrix(var);
 
     if (!err) {
-	err = gretl_VAR_add_C_matrix(var);
+	err = VAR_add_cholesky_matrix(var);
     }
 
     if (!err) {
@@ -219,7 +223,7 @@ static GRETL_VAR *gretl_VAR_new (int ci, int neqns, int order)
     }
 
     if (!err) {
-	var->Ivals = malloc(3  * sizeof *var->Ivals);
+	var->Ivals = malloc(N_IVALS  * sizeof *var->Ivals);
 	if (var->Ivals == NULL) {
 	    err = 1;
 	}
@@ -1260,7 +1264,7 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
 	/* first equation: set up storage for residuals */
 	var->ifc = pmod->ifc;
 	var->T = pmod->t2 - pmod->t1 + 1;
-	err = gretl_VAR_add_E_matrix(var);
+	err = VAR_add_residuals_matrix(var);
     }
 
     /* save residuals */
@@ -1287,7 +1291,7 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
     return err;
 }
 
-static int gretl_VAR_add_roots (GRETL_VAR *var)
+static int VAR_add_roots (GRETL_VAR *var)
 {
     gretl_matrix *CompForm = NULL;
     double *eigA = NULL;
@@ -1344,7 +1348,7 @@ const gretl_matrix *gretl_VAR_get_roots (GRETL_VAR *var)
 {
     if (var->lambda == NULL) {
 	/* roots not computed yet */
-	gretl_VAR_add_roots(var);
+	VAR_add_roots(var);
     }
 
     return var->lambda;
@@ -1436,7 +1440,7 @@ static void gretl_VAR_print_lagsel (gretl_matrix *lltab,
 	} else {
 	    pputs(prn, "         ");
 	}
-	for (j=0; j<3; j++) {
+	for (j=0; j<N_IVALS; j++) {
 	    x = gretl_matrix_get(crittab, i, j);
 	    pprintf(prn, "%12.6f", x);
 	    if (i == best_row[j]) {
@@ -1458,11 +1462,11 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
     MODEL testmod;
 
     /* initialize the "best" at the longest lag */
-    double best[3] = { var->AIC, var->BIC, var->HQC };
+    double best[N_IVALS] = { var->AIC, var->BIC, var->HQC };
     int r = var->order - 1;
-    int best_row[3] = { r, r, r };
+    int best_row[N_IVALS] = { r, r, r };
 
-    double crit[3];
+    double crit[N_IVALS];
     double LRtest;
     int T = var->T;
     int g = var->neqns;
@@ -1486,7 +1490,7 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 	return E_ALLOC;
     }
 
-    crittab = gretl_matrix_alloc(var->order, 3);
+    crittab = gretl_matrix_alloc(var->order, N_IVALS);
     lltab = gretl_matrix_alloc(var->order, 2);
     if (crittab == NULL || lltab == NULL) {
 	err = E_ALLOC;
@@ -1530,7 +1534,7 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 		gretl_matrix_set(lltab, m, 1, chisq(LRtest, g * g));
 	    }	
 	    
-	    for (c=0; c<3; c++) {
+	    for (c=0; c<N_IVALS; c++) {
 		gretl_matrix_set(crittab, m, c, crit[c]);
 		if (crit[c] < best[c]) {
 		    best[c] = crit[c];
@@ -1666,13 +1670,13 @@ static int VAR_compute_tests (MODEL *varmod, GRETL_VAR *var,
     return err;
 }
 
-static int VAR_add_stats (GRETL_VAR *var)
+static int VAR_add_variance_matrix (GRETL_VAR *var)
 {
     int err = 0;
 
     var->S = gretl_matrix_alloc(var->neqns, var->neqns);
     if (var->S == NULL) {
-	err = 1;
+	err = E_ALLOC;
     }
 
     if (!err) {
@@ -1681,6 +1685,15 @@ static int VAR_add_stats (GRETL_VAR *var)
 				  var->S);
 	gretl_matrix_divide_by_scalar(var->S, var->T);
     }
+
+    return err;
+}
+
+static int VAR_add_stats (GRETL_VAR *var)
+{
+    int err;
+
+    err = VAR_add_variance_matrix(var);
 
     if (!err) {
 	var->ldet = gretl_vcv_log_determinant(var->S);
@@ -2705,13 +2718,13 @@ johansen_driver (GRETL_VAR *jvar, double ***pZ, DATAINFO *pdinfo,
 	    /* estimating VECM, not just doing cointegration test */
 	    jvar->err = gretl_VAR_add_models(jvar);
 	    if (!jvar->err) {
-		jvar->err = gretl_VAR_add_A_matrix(jvar);
+		jvar->err = VAR_add_companion_matrix(jvar);
 	    }
 	    if (!jvar->err) {
-		jvar->err = gretl_VAR_add_C_matrix(jvar);
+		jvar->err = VAR_add_cholesky_matrix(jvar);
 	    }
 	    if (!jvar->err) {
-		jvar->err = gretl_VAR_add_E_matrix(jvar);
+		jvar->err = VAR_add_residuals_matrix(jvar);
 	    }	    
 	}
 
@@ -3105,6 +3118,231 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
     }
 
     return M;
+}
+
+static GRETL_VAR *gretl_VAR_rebuilder_new (void)
+{
+    GRETL_VAR *var = malloc(sizeof *var);
+
+    if (var == NULL) {
+	return NULL;
+    }
+
+    var->ci = 0;
+    var->refcount = 0;
+    var->neqns = 0;
+    var->order = 0;
+    var->ecm = 0;
+
+    gretl_VAR_zero(var);
+
+    var->jinfo = NULL;
+
+    return var;
+}
+
+static int VAR_retrieve_equations (xmlNodePtr node, xmlDocPtr doc,
+				   MODEL **models, int neqns)
+{
+    xmlNodePtr cur = node->xmlChildrenNode;
+    int i = 0, err = 0;
+
+    while (cur != NULL && !err) {
+	MODEL *pmod;
+
+	if (!xmlStrcmp(cur->name, (XUC) "gretl-model")) {
+	    pmod = gretl_model_from_XML(cur, doc, &err);
+	    if (pmod != NULL) {
+		models[i++] = pmod;
+	    }
+	}
+	cur = cur->next;
+    }
+
+    fprintf(stderr, "VAR_retrieve_equations: got %d models (neqns = %d), err = %d\n", 
+	    i, neqns, err);
+
+    return err;
+}
+
+GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
+{
+    GRETL_VAR *var;
+    MODEL *pmod;
+    xmlNodePtr cur;
+    int start, rowmax;
+    int i, j, k;
+    int n, got = 0;
+
+    var = gretl_VAR_rebuilder_new();
+    if (var == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    got += gretl_xml_get_prop_as_int(node, "ci", &var->ci);
+    got += gretl_xml_get_prop_as_int(node, "neqns", &var->neqns);
+    got += gretl_xml_get_prop_as_int(node, "order", &var->order);
+    got += gretl_xml_get_prop_as_int(node, "ecm", &var->ecm);
+
+    if (got < 4) {
+	*err = E_DATA;
+	goto bailout;
+    } 
+
+    var->models = malloc(var->neqns * sizeof *var->models);
+    if (var->models == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+    
+    for (i=0; i<var->neqns; i++) {
+	var->models[i] = NULL;
+    }    
+
+    gretl_push_c_numeric_locale();
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !*err) {
+	if (!xmlStrcmp(cur->name, (XUC) "Fvals")) {
+	    var->Fvals = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "Ivals")) {
+	    var->Ivals = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "equations")) {
+	    *err = VAR_retrieve_equations(cur, doc, var->models, var->neqns);
+	}
+	cur = cur->next;
+    } 
+
+    gretl_pop_c_numeric_locale();
+
+    if (*err) {
+	goto bailout;
+    }
+
+    pmod = var->models[0];
+
+    var->ncoeff = pmod->ncoeff;
+    var->ifc = pmod->ifc;
+    var->t1 = pmod->t1;
+    var->t2 = pmod->t2;
+    var->T = var->t2 - var->t1 + 1;
+
+    start = pmod->ifc;
+    rowmax = var->neqns * var->order + start;
+
+    /* set up storage for residuals */
+    *err = VAR_add_residuals_matrix(var);
+
+    /* set up storage for coefficients */
+    if (!*err) {
+	*err = VAR_add_companion_matrix(var);
+    }    
+
+    for (k=0; k<var->neqns && !*err; k++) {
+	int v = 0, lag = 0;
+
+	pmod = var->models[k];
+
+	/* store residuals in var->E */
+	for (i=0; i<var->T; i++) {
+	    gretl_matrix_set(var->E, i, k, pmod->uhat[pmod->t1 + i]);
+	}
+
+	/* store coefficients in var->A */
+	for (i=start; i<rowmax; i++) {
+	    if ((i - start) % var->order == 0) {
+		v++;
+		lag = 1;
+	    } else {
+		lag++;
+	    }
+	    j = (lag - 1) * var->neqns + v - 1;
+	    gretl_matrix_set(var->A, k, j, pmod->coeff[i]);
+	}
+    }
+
+    if (!*err) {
+	/* covariance matrix and related things */
+	*err = VAR_add_stats(var);
+    }
+
+ bailout:
+
+    if (*err) {
+	gretl_VAR_free(var);
+	var = NULL;
+    } 
+
+    return var;
+}
+
+static void johansen_serialize (JohansenInfo *jinfo, FILE *fp)
+{
+    fprintf(fp, "<gretl-johansen ID=\"%d\" code=\"%d\" rank=\"%d\" ", 
+	    jinfo->ID, jinfo->code, jinfo->rank);
+    fprintf(fp, "seasonals=\"%d\" nexo=\"%d\">\n", jinfo->seasonals,
+	    jinfo->nexo);
+
+    gretl_xml_put_tagged_list("list", jinfo->list, fp);
+    gretl_xml_put_tagged_list("difflist", jinfo->difflist, fp);
+    gretl_xml_put_tagged_list("biglist", jinfo->biglist, fp);
+    gretl_xml_put_tagged_list("exolist", jinfo->exolist, fp);
+    gretl_xml_put_tagged_list("levels_list", jinfo->levels_list, fp);
+    gretl_xml_put_tagged_list("varlist", jinfo->varlist, fp);
+
+    gretl_xml_put_matrix(jinfo->u, "u", fp);
+    gretl_xml_put_matrix(jinfo->v, "v", fp);
+    gretl_xml_put_matrix(jinfo->Suu, "Suu", fp);
+    gretl_xml_put_matrix(jinfo->Suv, "Suv", fp);
+    gretl_xml_put_matrix(jinfo->Beta, "Beta", fp);
+    gretl_xml_put_matrix(jinfo->Alpha, "Alpha", fp);
+    gretl_xml_put_matrix(jinfo->Bse, "Bse", fp);
+    gretl_xml_put_matrix(jinfo->D, "D", fp);
+
+    fputs("</gretl-johansen>\n", fp);
+}
+
+int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
+			 FILE *fp)
+{
+    int g = var->neqns;
+    int m = g * g + g;
+    int i, err = 0;
+
+    fprintf(fp, "<gretl-VAR name=\"%s\" saveflags=\"%d\" ", 
+	    (var->name == NULL)? "none" : var->name, (int) flags);
+
+    fprintf(fp, "ci=\"%d\" neqns=\"%d\" order=\"%d\" ecm=\"%d\">\n",
+	    var->ci, var->neqns, var->order, var->ecm);
+
+    gretl_push_c_numeric_locale();
+
+    if (var->Fvals != NULL) {
+	gretl_xml_put_double_array("Fvals", var->Fvals, m, fp);
+    }
+    if (var->Ivals != NULL) {
+	gretl_xml_put_double_array("Ivals", var->Ivals, N_IVALS, fp);
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fputs("<equations>\n", fp);
+
+    for (i=0; i<var->neqns; i++) {
+	gretl_model_serialize(var->models[i], 0, fp);
+    }
+
+    fputs("</equations>\n", fp);
+
+    if (var->jinfo != NULL) {
+	johansen_serialize(var->jinfo, fp);
+    }
+
+    fputs("</gretl-VAR>\n", fp);
+
+    return err;
 }
 
 #include "irfboot.c"

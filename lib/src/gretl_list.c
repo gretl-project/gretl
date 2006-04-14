@@ -21,6 +21,7 @@
 #include "gretl_list.h"
 #include "gretl_func.h"
 #include "libset.h"
+#include "gretl_xml.h"
 
 #define LDEBUG 0
 
@@ -64,8 +65,10 @@ static saved_list *saved_list_new (const int *list, const char *name)
 
 static void free_saved_list (saved_list *sl)
 {
-    free(sl->list);
-    free(sl);
+    if (sl != NULL) {
+	free(sl->list);
+	free(sl);
+    }
 }
 
 static saved_list *get_saved_list_by_name (const char *name)
@@ -1569,3 +1572,116 @@ int gretl_list_is_consecutive (const int *list)
     return ret;
 }
 
+int load_user_lists_file (const char *fname)
+{
+    xmlDocPtr doc = NULL;
+    xmlNodePtr node = NULL;
+    int i, nl, err = 0;
+
+    xmlKeepBlanksDefault(0);
+
+    err = gretl_xml_open_doc_root(fname, "gretl-lists", &doc, &node);
+    if (err) {
+	return err;
+    }
+
+    if (!gretl_xml_get_prop_as_int(node, "count", &nl)) {
+	err = E_DATA;
+    } else if (nl <= 0) {
+	err = E_DATA;
+    }
+
+    if (!err) {
+	list_stack = malloc(nl * sizeof *list_stack);
+	if (list_stack == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    n_lists = nl;
+	    for (i=0; i<nl; i++) {
+		list_stack[i] = NULL;
+	    }
+	    for (i=0; i<nl && !err; i++) {
+		list_stack[i] = malloc(sizeof **list_stack);
+		if (list_stack[i] == NULL) {
+		    err = E_ALLOC;
+		} else {
+		    list_stack[i]->name[0] = '\0';
+		    list_stack[i]->list = NULL;
+		    list_stack[i]->level = 0;
+		}
+	    }
+	}
+    }
+
+    if (!err) {
+	xmlNodePtr cur = node->xmlChildrenNode;
+	char *lname;
+
+	i = 0;
+	while (cur != NULL && !err) {
+	    if (!xmlStrcmp(cur->name, (XUC) "list")) {
+		if (!gretl_xml_get_prop_as_string(cur, "name", &lname)) {
+		    err = E_DATA;
+		} else {
+		    strncat(list_stack[i]->name, lname, VNAMELEN - 1);
+		    free(lname);
+		    list_stack[i]->list = 
+			gretl_xml_node_get_list(cur, doc, &err);
+		    i++;
+		}
+	    }
+	    cur = cur->next;
+	}
+    }
+
+    if (err && list_stack != NULL) {
+	gretl_lists_cleanup();
+    }
+
+    if (doc != NULL) {
+	xmlFreeDoc(doc);
+	xmlCleanupParser();
+    }
+
+    return err;
+}
+
+/**
+ * gretl_serialize_lists:
+ * @fname: name of file to which output should be written.
+ *
+ * Prints an XML representation of the current saved lists,
+ * if any.
+ *
+ * Returns: 0 on success, or if there are no saved lists, 
+ * non-zero code on error.
+ */
+
+int gretl_serialize_lists (const char *fname)
+{
+    FILE *fp;
+    int i;
+
+    if (n_lists == 0) {
+	return 0;
+    }
+
+    fp = gretl_fopen(fname, "w");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    gretl_xml_header(fp); 
+
+    fprintf(fp, "<gretl-lists count=\"%d\">\n", n_lists);
+
+    for (i=0; i<n_lists; i++) {
+	gretl_xml_put_named_list(list_stack[i]->name, 
+				 list_stack[i]->list, 
+				 fp);
+    }
+
+    fputs("</gretl-lists>\n", fp);
+
+    fclose(fp);
+}

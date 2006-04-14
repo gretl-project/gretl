@@ -112,5 +112,14 @@ double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo,
 gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
 				    int *err);
 
+int gretl_VAR_serialize (const GRETL_VAR *var, SavedObjectFlags flags,
+			 FILE *fp);
+
+#ifndef GRETLCLI
+
+GRETL_VAR *gretl_VAR_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
+
+#endif
+
 #endif /* VAR_H_ */
 

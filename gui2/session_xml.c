@@ -131,73 +131,13 @@ static int restore_session_texts (xmlNodePtr node, xmlDocPtr doc)
     return err;
 }
 
-static int get_data_submask (xmlNodePtr node, xmlDocPtr doc,
-			     char **pmask, int *pmode)
-{
-    char *mask = NULL;
-    int i, len, mode = 0;
-    int err = 0;
-
-    if (!gretl_xml_get_prop_as_int(node, "length", &len)) {
-	return 1;
-    }
-
-    gretl_xml_get_prop_as_int(node, "mode", &mode);
-
-    mask = calloc(len, 1);
-    if (mask == NULL) {
-	err = 1;
-    } else {
-	xmlChar *tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-	if (tmp == NULL) {
-	    err = 1;
-	} else {
-	    const char *s = (const char *) tmp;
-	    int si;
-
-	    for (i=0; i<len; i++) {
-		sscanf(s, "%d", &si);
-		s += strspn(s, " ");
-		s += strcspn(s, " ");
-		if (si != 0) {
-		    mask[i] = si;
-		}
-	    }
-	    free(tmp);
-	}
-    }
-
-    if (!err) {
-	*pmask = mask;
-	if (pmode != NULL) {
-	    *pmode = mode;
-	}
-    }
-
-    return err;
-}
-
-static int model_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
-				   MODEL *pmod)
-{
-    char *mask;
-    int err;
-
-    err = get_data_submask(node, doc, &mask, NULL);
-    if (!err) {
-	pmod->submask = mask;
-    }
-
-    return err;
-}
-
 static int data_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
 				  struct sample_info *sinfo)
 {
     char *mask;
     int mode, err;
 
-    err = get_data_submask(node, doc, &mask, &mode);
+    err = gretl_xml_get_submask(node, doc, &mask, &mode);
     if (!err) {
 	sinfo->mask = mask;
 	sinfo->mode = mode;
@@ -206,269 +146,56 @@ static int data_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
-				      MODEL *pmod)
+static gpointer rebuild_session_model (const char *fname, 
+				       GretlObjType type,
+				       SavedObjectFlags *flags,
+				       int *err)
 {
-    xmlNodePtr cur;
-    int n_items;
-    int err = 0;
-
-    if (!gretl_xml_get_prop_as_int(node, "count", &n_items)) {
-	return 1;
-    }
-
-    cur = node->xmlChildrenNode;
-
-    while (cur != NULL && !err) {
-	char *key;
-	int type;
-	int nelem = 0;
-
-	if (!gretl_xml_get_prop_as_int(cur, "type", &type) ||
-	    !gretl_xml_get_prop_as_string(cur, "key", &key)) {
-	    err = 1;
-	    break;
-	}
-
-	if (type == MODEL_DATA_INT) {
-	    int ival;
-
-	    if (!gretl_xml_node_get_int(cur, doc, &ival)) {
-		err = 1;
-	    } else {
-		err = gretl_model_set_int(pmod, key, ival);
-	    }
-	} else if (type == MODEL_DATA_DOUBLE) {
-	    double xval;
-
-	    if (!gretl_xml_node_get_double(cur, doc, &xval)) {
-		err = 1;
-	    } else {
-		err = gretl_model_set_double(pmod, key, xval);
-	    }
-	} else if (type == MODEL_DATA_LIST) {
-	    int *list;
-
-	    list = gretl_xml_node_get_list(cur, doc, &err);
-	    if (!err) {
-		err = gretl_model_set_list_as_data(pmod, key, list);
-	    }
-	} else if (type == MODEL_DATA_STRING) {
-	    char *s;
-
-	    if (!gretl_xml_node_get_string(cur, doc, &s)) {
-		err = 1;
-	    } else {
-		err = gretl_model_set_string_as_data(pmod, key, s);
-	    }
-	} else if (type == MODEL_DATA_INT_ARRAY) {
-	    int *ivals = gretl_xml_get_int_array(cur, doc, &nelem, &err);
-
-	    if (nelem > 0) {
-		err = gretl_model_set_data(pmod, key, ivals, 
-					   MODEL_DATA_INT_ARRAY,
-					   nelem * sizeof *ivals);
-	    }
-	} else if (type == MODEL_DATA_DOUBLE_ARRAY) {
-	    double *xvals = gretl_xml_get_double_array(cur, doc, &nelem, &err);
-
-	    if (nelem > 0) {
-		err = gretl_model_set_data(pmod, key, xvals, 
-					   MODEL_DATA_DOUBLE_ARRAY,
-					   nelem * sizeof *xvals);
-	    }
-	} else if (type == MODEL_DATA_CMPLX_ARRAY) {
-	    cmplx *cvals = gretl_xml_get_cmplx_array(cur, doc, &nelem, &err);
-
-	    if (nelem > 0) {
-		err = gretl_model_set_data(pmod, key, cvals,
-					   MODEL_DATA_CMPLX_ARRAY,
-					   nelem * sizeof *cvals);
-	    }	    
-	}
-
-	cur = cur->next;
-    }
-
-    return err;
-}
-
-static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
-			    MODEL *pmod)
-{
-    xmlNodePtr cur;
-    int n, err = 0;
-
-    if (gretl_model_add_arinfo(pmod, 0)) {
-	return 1;
-    }
-
-    cur = node->xmlChildrenNode;
-
-    while (cur != NULL && !err) {
-	if (!xmlStrcmp(cur->name, (XUC) "arlist")) {
-	    pmod->arinfo->arlist = gretl_xml_node_get_list(cur, doc, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "rho")) {
-	    pmod->arinfo->rho = gretl_xml_get_double_array(cur, doc, &n, &err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {
-	    pmod->arinfo->sderr = gretl_xml_get_double_array(cur, doc, &n, &err);
-	}
-	cur = cur->next;
-    }
-
-    return err;
-}
-
-static MODEL *rebuild_session_model (const char *fname, 
-				     SavedObjectFlags *flags,
-				     int *err)
-{
-    MODEL *pmod;
+    gpointer ptr = NULL;
     xmlDocPtr doc;
     xmlNodePtr node;
-    xmlNodePtr cur;
-    int got;
 
-#if SESSION_DEBUG
-    fprintf(stderr, "rebuild_session_model: trying to open '%s'\n",
-	    fname);
-#endif
-
-    *err = gretl_xml_open_doc_root(fname, "gretl-model", &doc, &node);
+    *err = gretl_xml_open_doc_root(fname, 
+				   (type == GRETL_OBJ_EQN)? "gretl-model" :
+				   (type == GRETL_OBJ_VAR)? "gretl-VAR" :
+				   "gretl-equation-system", &doc, &node);
     if (*err) {
 	return NULL;
-    }
-
-    pmod = gretl_model_new();
-    if (pmod == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-#if SESSION_DEBUG
-    fprintf(stderr, "rebuild_session_model: allocated model at %p\n",
-	    (void *) pmod);
-#endif
-
-    got = 0;
-    got += gretl_xml_get_prop_as_int(node, "ID", &pmod->ID);
-    got += gretl_xml_get_prop_as_int(node, "t1", &pmod->t1);
-    got += gretl_xml_get_prop_as_int(node, "t2", &pmod->t2);
-    got += gretl_xml_get_prop_as_int(node, "nobs", &pmod->nobs);
-    got += gretl_xml_get_prop_as_int(node, "full_n", &pmod->full_n);
-    got += gretl_xml_get_prop_as_int(node, "ncoeff", &pmod->ncoeff);
-    got += gretl_xml_get_prop_as_int(node, "dfn", &pmod->dfn);
-    got += gretl_xml_get_prop_as_int(node, "dfd", &pmod->dfd);
-    got += gretl_xml_get_prop_as_int(node, "ifc", &pmod->ifc);
-    got += gretl_xml_get_prop_as_int(node, "ci", &pmod->ci);
-    got += gretl_xml_get_prop_as_int(node, "nwt", &pmod->nwt);
-    got += gretl_xml_get_prop_as_int(node, "aux", &pmod->aux);
-
-    if (got < 12) {
-	*err = E_DATA;
-	goto bailout;
     }
 
     if (!gretl_xml_get_prop_as_int(node, "saveflags", (int *) flags)) {
 	*flags = IN_GUI_SESSION;
+    }    
+
+    if (type == GRETL_OBJ_EQN) {
+	ptr = gretl_model_from_XML(node, doc, err);
+    } else if (type == GRETL_OBJ_VAR) {
+	ptr = gretl_VAR_from_XML(node, doc, err);
+    } else {
+	ptr = gretl_system_from_XML(node, doc, err);
     }
-
-    gretl_push_c_numeric_locale();
-
-    got = 0;
-    got += gretl_xml_get_prop_as_double(node, "ess", &pmod->ess);
-    got += gretl_xml_get_prop_as_double(node, "tss", &pmod->tss);
-    got += gretl_xml_get_prop_as_double(node, "sigma", &pmod->sigma);
-    got += gretl_xml_get_prop_as_double(node, "rsq", &pmod->rsq);
-    got += gretl_xml_get_prop_as_double(node, "adjrsq", &pmod->adjrsq);
-    got += gretl_xml_get_prop_as_double(node, "fstt", &pmod->fstt);
-    got += gretl_xml_get_prop_as_double(node, "lnL", &pmod->lnL);
-    got += gretl_xml_get_prop_as_double(node, "ybar", &pmod->ybar);
-    got += gretl_xml_get_prop_as_double(node, "sdy", &pmod->sdy);
-
-    got += gretl_xml_get_prop_as_double(node, "crit0", &pmod->criterion[0]);
-    got += gretl_xml_get_prop_as_double(node, "crit1", &pmod->criterion[1]);
-    got += gretl_xml_get_prop_as_double(node, "crit2", &pmod->criterion[2]);
-
-    got += gretl_xml_get_prop_as_double(node, "dw", &pmod->dw);
-    got += gretl_xml_get_prop_as_double(node, "rho", &pmod->rho);
-
-    if (got < 14) {
-	*err = E_DATA;
-	gretl_pop_c_numeric_locale();
-	goto bailout;
-    }
-
-    cur = node->xmlChildrenNode;
-
-    while (cur != NULL && !*err) {
-	int n;
-
-	if (!xmlStrcmp(cur->name, (XUC) "coeff")) {
-	    pmod->coeff = gretl_xml_get_double_array(cur, doc, &n, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {
-	    pmod->sderr = gretl_xml_get_double_array(cur, doc, &n, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "uhat")) {
-	    pmod->uhat = gretl_xml_get_double_array(cur, doc, &n, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "yhat")) {
-	    pmod->yhat = gretl_xml_get_double_array(cur, doc, &n, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "xpx")) {
-	    pmod->xpx = gretl_xml_get_double_array(cur, doc, &n, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "vcv")) {
-	    pmod->vcv = gretl_xml_get_double_array(cur, doc, &n, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "list")) {
-	    pmod->list = gretl_xml_node_get_list(cur, doc, err);
-	} else if (!xmlStrcmp(cur->name, (XUC) "tests")) {
-	    *err = attach_model_tests_from_xml(pmod, cur);
-	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
-	    *err = model_submask_from_xml(cur, doc, pmod);
-	} else if (!xmlStrcmp(cur->name, (XUC) "missmask")) {
-	    if (!gretl_xml_node_get_string(cur, doc, &pmod->missmask)) {
-		*err = 1;
-	    }
-	} else if (!xmlStrcmp(cur->name, (XUC) "arinfo")) {
-	    *err = arinfo_from_xml(cur, doc, pmod);
-	} else if (!xmlStrcmp(cur->name, (XUC) "data-items")) {
-	    *err = model_data_items_from_xml(cur, doc, pmod);
-	}
-	
-	cur = cur->next;
-    }
-
-    gretl_pop_c_numeric_locale();
-
- bailout:
 
     xmlFreeDoc(doc);
 
-    if (*err) {
-	if (pmod != NULL) {
-	    gretl_model_free(pmod);
-	    pmod = NULL;
-	}
-    } else {
-	gretl_object_ref(pmod, GRETL_OBJ_EQN); /* FIXME do this later? */
+    if (ptr != NULL) {
+	gretl_object_ref(ptr, type); /* FIXME do this later? */
     }
 
-#if SESSION_DEBUG
-    fprintf(stderr, "rebuild_session_model: returning with err = %d\n",
-	    *err);
-#endif
-    
     /* need to clean up on error here (also: clean up XML parser?) */
 
-    return pmod;
+    return ptr;
 }
 
 static int 
-reattach_model (MODEL *pmod, const char *name, SavedObjectFlags flags)
+reattach_model (void *ptr, GretlObjType type, const char *name, 
+		SavedObjectFlags flags)
 {
     int err = 0;
 
     if (flags & IN_GUI_SESSION) {
 	SESSION_MODEL *smod;
 
-	smod = session_model_new(pmod, name, GRETL_OBJ_EQN);
+	smod = session_model_new(ptr, name, type);
 	if (smod == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -477,15 +204,15 @@ reattach_model (MODEL *pmod, const char *name, SavedObjectFlags flags)
     }
 
     if (!err && (flags & IN_MODEL_TABLE)) {
-	err = add_to_model_table(pmod, MODEL_ADD_BY_CMD, NULL);
+	err = add_to_model_table(ptr, MODEL_ADD_BY_CMD, NULL);
     }
 
     if (!err && (flags & IN_NAMED_STACK)) {
-	err = gretl_stack_object(pmod, GRETL_OBJ_EQN);
+	err = gretl_stack_object(ptr, type);
     } 
 
     if (!err && (flags & IS_LAST_MODEL)) {
-	set_as_last_model(pmod, GRETL_OBJ_EQN);
+	set_as_last_model(ptr, type);
     }     
 
     return err;
@@ -500,10 +227,6 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
     /* reset prior to parsing */
     session.nmodels = 0;
 
-#if SESSION_DEBUG
-    fprintf(stderr, "rebuilding: session.nmodels = %d\n", session.nmodels);
-#endif
-
     cur = node->xmlChildrenNode;
     i = 0;
 
@@ -511,24 +234,29 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	SavedObjectFlags flags;
 	xmlChar *fname = NULL;
 	xmlChar *name = NULL;
-	MODEL *pmod = NULL;
+	gpointer ptr;
+	int type = GRETL_OBJ_EQN;
 
 	fname = xmlGetProp(cur, (XUC) "fname");
 	if (fname == NULL) {
 	    err = 1;
 	} else {
-	    session_file_make_path(fullname, (const char *) fname);
-	    pmod = rebuild_session_model(fullname, &flags, &err);
+	    name = xmlGetProp(cur, (XUC) "name");
+	    if (name == NULL) {
+		err = 1;
+	    }
 	}
 
 	if (!err) {
-	    name = xmlGetProp(cur, (XUC) "name");
+	    session_file_make_path(fullname, (const char *) fname);
+	    gretl_xml_get_prop_as_int(cur, "type", &type);
+	    fprintf(stderr, "model file: fname='%s', type=%d\n", fullname, type);
+	    ptr = rebuild_session_model(fullname, type, &flags, &err);
 	}
 
-	if (name == NULL) {
-	    err = 1;
-	} else {
-	    err = reattach_model(pmod, (const char *) name, flags);
+	if (!err) {
+	    fprintf(stderr, "reattaching model to session\n");
+	    err = reattach_model(ptr, type, (const char *) name, flags);
 	}
 
 	free(fname);
@@ -703,12 +431,27 @@ static int maybe_read_functions_file (const char *fname)
     return load_user_function_file(fname);
 }
 
-static int model_in_session (const MODEL *pmod)
+static int maybe_read_lists_file (const char *fname) 
+{
+    FILE *fp;
+
+    fp = gretl_fopen(fname, "r");
+    if (fp == NULL) {
+	/* nothing to be read */
+	return 0;
+    }
+
+    fclose(fp);
+
+    return load_user_lists_file(fname);
+}
+
+static int model_in_session (const void *ptr)
 {
     int i;
 
     for (i=0; i<session.nmodels; i++) {
-	if (session.models[i]->ptr == pmod) {
+	if (session.models[i]->ptr == ptr) {
 	    return 1;
 	}
     }
@@ -716,21 +459,25 @@ static int model_in_session (const MODEL *pmod)
     return 0;
 }
 
-static SavedObjectFlags model_save_flags (const MODEL *pmod)
+static SavedObjectFlags model_save_flags (const void *ptr, 
+					  GretlObjType type)
 {
     SavedObjectFlags flags = 0;
 
-    if (model_in_session(pmod)) {
+    if (model_in_session(ptr)) {
 	flags |= IN_GUI_SESSION;
     }
-    if (in_model_table(pmod)) {
-	flags |= IN_MODEL_TABLE;
-    }
-    if (get_model_by_name(pmod->name) != NULL) {
+
+    if (object_is_on_stack(ptr)) {
 	flags |= IN_NAMED_STACK;
     }
-    if (get_last_model(NULL) == pmod) {
+
+    if (get_last_model(NULL) == ptr) {
 	flags |= IS_LAST_MODEL;
+    }
+
+    if (type == GRETL_OBJ_EQN && in_model_table(ptr)) {
+	flags |= IN_MODEL_TABLE;
     }
 
     return flags;
@@ -790,9 +537,17 @@ static int maybe_write_function_file (void)
     return write_user_function_file(fullname);
 }
 
+static int maybe_write_lists_file (void)
+{
+    char fullname[MAXLEN];
+
+    session_file_make_path(fullname, "lists.xml");
+    return gretl_serialize_lists(fullname);
+}
+
 static int write_session_xml (void)
 {
-    const MODEL *pmod;
+    MODEL *pmod;
     char fname[MAXLEN];
     char tmpname[MAXLEN];
     FILE *fp, *fq;
@@ -828,22 +583,30 @@ static int write_session_xml (void)
     fprintf(fp, " <models count=\"%d\">\n", nmodels);
 
     for (i=0; i<session.nmodels && !err; i++) {
-	if (session.models[i]->type == GRETL_OBJ_EQN) {
-	    pmod = session.models[i]->ptr;
-	    sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
-	    fq = fopen(tmpname, "w");
-	    if (fq == NULL) {
-		errbox("Couldn't write session model file");
-		err = E_FOPEN;
-	    } else {
-		sprintf(tmpname, "model.%d", i+1);
-		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" addr=\"%p\"/>\n", 
-			session.models[i]->name, tmpname, pmod);
-		gretl_model_serialize(pmod, model_save_flags(pmod), fq);
-		fclose(fq);
-	    }
+	int type = session.models[i]->type;
+	void *ptr = session.models[i]->ptr;
+	SavedObjectFlags sflags;
+
+	sprintf(tmpname, "%s%cmodel.%d", session.dirname, SLASH, i+1);
+	fq = fopen(tmpname, "w");
+
+	if (fq == NULL) {
+	    errbox("Couldn't write session model file");
+	    err = E_FOPEN;
 	} else {
-	    fprintf(stderr, "FIXME models other than single-equation ones\n");
+	    sprintf(tmpname, "model.%d", i + 1);
+	    fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n", 
+		    session.models[i]->name, tmpname, type);
+	    gretl_xml_header(fq);
+	    sflags = model_save_flags(ptr, type);
+	    if (type == GRETL_OBJ_EQN) {
+		gretl_model_serialize(ptr, sflags, fq);
+	    } else if (type == GRETL_OBJ_VAR) {
+		gretl_VAR_serialize(ptr, sflags, fq);
+	    } else if (type == GRETL_OBJ_SYS) {
+		gretl_system_serialize(ptr, sflags, fq);
+	    }
+	    fclose(fq);
 	}
     }
 
@@ -857,9 +620,12 @@ static int write_session_xml (void)
 		err = E_FOPEN;
 	    } else {
 		sprintf(tmpname, "model.%d", i+1);
-		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" addr=\"%p\"/>\n", 
-			(pmod->name != NULL)? pmod->name : "none", tmpname, pmod);
-		gretl_model_serialize(pmod, model_save_flags(pmod), fq);
+		fprintf(fp, "  <session-model name=\"%s\" fname=\"%s\" type=\"%d\"/>\n", 
+			(pmod->name != NULL)? pmod->name : "none", tmpname, 
+			GRETL_OBJ_EQN);
+		gretl_xml_header(fq);
+		gretl_model_serialize(pmod, model_save_flags(pmod, GRETL_OBJ_EQN), 
+				      fq);
 		fclose(fq);
 	    }
 	}
@@ -908,6 +674,7 @@ static int write_session_xml (void)
 
     maybe_write_matrix_file();
     maybe_write_function_file();
+    maybe_write_lists_file();
 
     return 0;
 }

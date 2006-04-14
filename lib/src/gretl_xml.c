@@ -322,16 +322,43 @@ int gretl_xml_put_raw_string (const char *str, FILE *fp)
 }
 
 /**
- * gretl_xml_put_list:
- * @tag: name to give list.
+ * gretl_xml_put_named_list:
+ * @name: name to give list.
  * @list: list of integers to be written.
  * @fp: file to which to write.
  * 
  */
 
-void gretl_xml_put_list (const char *tag, const int *list, FILE *fp)
+void gretl_xml_put_named_list (const char *name, const int *list, FILE *fp)
 {
     int i;
+
+    if (list == NULL) {
+	return;
+    }
+
+    fprintf(fp, "<list name=\"%s\">\n", name);
+    for (i=0; i<=list[0]; i++) {
+	fprintf(fp, "%d ", list[i]);
+    }
+    fputs("</list>\n", fp); 
+}
+
+/**
+ * gretl_xml_put_tagged_list:
+ * @name: tag in which list should be wrapped.
+ * @list: list of integers to be written.
+ * @fp: file to which to write.
+ * 
+ */
+
+void gretl_xml_put_tagged_list (const char *tag, const int *list, FILE *fp)
+{
+    int i;
+
+    if (list == NULL) {
+	return;
+    }
 
     fprintf(fp, "<%s>\n", tag);
     for (i=0; i<=list[0]; i++) {
@@ -352,6 +379,10 @@ void gretl_xml_put_matrix (const gretl_matrix *m, const char *name,
 			   FILE *fp)
 {
     int i, j;
+
+    if (m == NULL) {
+	return;
+    }
 
     fprintf(fp, "<gretl-matrix name=\"%s\" rows=\"%d\" cols=\"%d\">\n", 
 	    name, m->rows, m->cols);
@@ -427,12 +458,18 @@ int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
 int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
 				  double *x)
 {
-    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    char *p, *s = (char *) xmlGetProp(node, (XUC) tag);
     int ret = 0;
 
-    if (tmp != NULL) {
-	*x = atof((const char *) tmp);
-	free(tmp);
+    if (s != NULL) {
+	p = s;
+	p += strspn(p, " \r\n");
+	if (!strncmp(p, "NA", 2)) {
+	    *x = NADBL;
+	} else {
+	    *x = atof(p);
+	}
+	free(s);
 	ret = 1;
     }
 
@@ -502,14 +539,20 @@ int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i)
 int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc, 
 			       double *x)
 {
-    xmlChar *tmp;
+    char *s, *p;
     int ret = 0;
 
-    tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+    s = (char *) xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
 
-    if (tmp != NULL) {
-	*x = atof((const char *) tmp);
-	free(tmp);
+    if (s != NULL) {
+	p = s;
+	p += strspn(p, " \r\n");
+	if (!strncmp(p, "NA", 2)) {
+	    *x = NADBL;
+	} else {
+	    *x = atof(p);
+	}
+	free(s);
 	ret = 1;
     }
 
@@ -687,7 +730,9 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 				*err = E_DATA;
 			    }
 			} else if (type == MODEL_DATA_DOUBLE_ARRAY) {
-			    if (sscanf(p, "%lf", &xvals[i]) != 1) {
+			    if (!strncmp(p, "NA", 2)) {
+				xvals[i] = NADBL;
+			    } else if (sscanf(p, "%lf", &xvals[i]) != 1) {
 				*err = E_DATA;
 			    }
 			} else if (type == MODEL_DATA_CMPLX_ARRAY) {
@@ -695,9 +740,10 @@ static void *gretl_xml_get_array (xmlNodePtr node, xmlDocPtr doc,
 				*err = E_DATA;
 			    }
 			}			    
-			/* skip to end of number */
+			/* skip to next number */
 			p += strspn(p, " \r\n");
 			p += strcspn(p, " \r\n");
+			p += strspn(p, " \r\n");
 		    }
 		    free(tmp);
 		}
@@ -860,6 +906,62 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, int *err)
     }
 
     return m;
+}
+
+/**
+ * gretl_xml_get_submask:
+ * @node: XML node pointer.
+ * @doc: XML document pointer.
+ * @pmask: location to receive allocated mask.
+ * @pmode: location to receive sub-sampling mode (or %NULL).
+ * 
+ * Returns: 0 on success, non-zero on failure.
+ */
+
+int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc,
+			   char **pmask, int *pmode)
+{
+    char *mask = NULL;
+    int i, len, mode = 0;
+    int err = 0;
+
+    if (!gretl_xml_get_prop_as_int(node, "length", &len)) {
+	return 1;
+    }
+
+    gretl_xml_get_prop_as_int(node, "mode", &mode);
+
+    mask = calloc(len, 1);
+    if (mask == NULL) {
+	err = 1;
+    } else {
+	xmlChar *tmp = xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+	if (tmp == NULL) {
+	    err = 1;
+	} else {
+	    const char *s = (const char *) tmp;
+	    int si;
+
+	    for (i=0; i<len; i++) {
+		sscanf(s, "%d", &si);
+		s += strspn(s, " ");
+		s += strcspn(s, " ");
+		if (si != 0) {
+		    mask[i] = si;
+		}
+	    }
+	    free(tmp);
+	}
+    }
+
+    if (!err) {
+	*pmask = mask;
+	if (pmode != NULL) {
+	    *pmode = mode;
+	}
+    }
+
+    return err;
 }
 
 static const char *get_gretl_encoding (void)

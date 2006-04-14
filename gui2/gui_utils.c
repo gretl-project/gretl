@@ -24,6 +24,7 @@
 #include "forecast.h"
 #include "objstack.h"
 #include "gretl_xml.h"
+#include "system.h"
 
 #include <sys/stat.h>
 #include <unistd.h>

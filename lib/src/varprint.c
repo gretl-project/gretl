@@ -24,11 +24,13 @@
 
 /**
  * gretl_VAR_print_VCV:
- * @var:
- * @prn:
+ * @var: pointer to gretl VAR structure.
+ * @prn: printing object.
  *
+ * Prints to @prn the contemporaneous (cross-equation) variance
+ * matrix for @var.
  *
- * Returns:
+ * Returns: 0 on success, 1 on failure.
  */
 
 int gretl_VAR_print_VCV (const GRETL_VAR *var, PRN *prn)
@@ -240,13 +242,19 @@ static int varprint_namelen (const GRETL_VAR *var, const DATAINFO *pdinfo,
 /**
  * gretl_VAR_print_impulse_response:
  * @var: pointer to VAR struct.
- * @shock:
+ * @shock: index number of the "shock" variable.
  * @periods: number of periods over which to print response.
  * @pdinfo: dataset information.
  * @pause: if non-zero, pause between sections of output.
- * @prn: gretl printing struct.
+ * @prn: gretl printing object.
  *
- *
+ * Prints to @prn the estimated responses of the endogenous
+ * variables in @var to a one-standard deviation shock in
+ * the specified variable: @shock is a zero-based index into
+ * the equations of the VAR so for example if @shock = 1,
+ * the responses are to a shock in the second endogenous
+ * variable in the VAR specification.
+ * 
  * Returns: 0 on success, non-zero code on error.
  */
 

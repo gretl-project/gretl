@@ -98,4 +98,8 @@ int destroy_saved_lists_at_level (int level);
 
 void gretl_lists_cleanup (void);
 
+int load_user_lists_file (const char *fname);
+
+int gretl_serialize_lists (const char *fname);
+
 #endif /* GRETL_LIST_H */

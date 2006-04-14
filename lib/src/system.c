@@ -23,6 +23,7 @@
 #include "system.h"
 #include "system_private.h"
 #include "objstack.h"
+#include "gretl_xml.h"
 
 enum {
     OP_PLUS,
@@ -89,22 +90,22 @@ const char *nosystem = N_("No system of equations has been defined");
 const char *badsystem = N_("Unrecognized equation system type");
 const char *toofew = N_("An equation system must have at least two equations");
 
-static void destroy_ident (identity *pident);
+static void destroy_ident (identity *ident);
 static int make_instrument_list (gretl_equation_system *sys);
 
 static void 
-print_system_identity (const identity *pident, const DATAINFO *pdinfo, 
+print_system_identity (const identity *ident, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
     int i;
 
     pprintf(prn, "Identity: %s = %s ", 
-	    pdinfo->varname[pident->depvar],
-	    pdinfo->varname[pident->atoms[0].varnum]);
+	    pdinfo->varname[ident->depvar],
+	    pdinfo->varname[ident->atoms[0].varnum]);
 
-    for (i=1; i<pident->n_atoms; i++) {
-	pprintf(prn, "%c %s ", (pident->atoms[i].op == OP_PLUS)? '+' : '-',
-		pdinfo->varname[pident->atoms[i].varnum]);
+    for (i=1; i<ident->n_atoms; i++) {
+	pprintf(prn, "%c %s ", (ident->atoms[i].op == OP_PLUS)? '+' : '-',
+		pdinfo->varname[ident->atoms[i].varnum]);
     }
 
     pputc(prn, '\n');
@@ -1501,33 +1502,33 @@ int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
     return 0;
 }
 
-static void destroy_ident (identity *pident)
+static void destroy_ident (identity *ident)
 {
-    free(pident->atoms);
-    free(pident);
+    free(ident->atoms);
+    free(ident);
 }
 
 static identity *ident_new (int nv)
 {
-    identity *pident;
+    identity *ident;
 
-    pident = malloc(sizeof *pident);
-    if (pident == NULL) return NULL;
+    ident = malloc(sizeof *ident);
+    if (ident == NULL) return NULL;
 
-    pident->n_atoms = nv;
-    pident->atoms = malloc(nv * sizeof *pident->atoms);
-    if (pident->atoms == NULL) {
-	free(pident);
-	pident = NULL;
+    ident->n_atoms = nv;
+    ident->atoms = malloc(nv * sizeof *ident->atoms);
+    if (ident->atoms == NULL) {
+	free(ident);
+	ident = NULL;
     }
 
-    return pident;
+    return ident;
 }
 
 static identity *
 parse_identity (const char *str, const DATAINFO *pdinfo, int *err)
 {
-    identity *pident;
+    identity *ident;
     const char *p;
     char f1[24], f2[16];
     char op, vname1[VNAMELEN], vname2[VNAMELEN];
@@ -1548,23 +1549,23 @@ parse_identity (const char *str, const DATAINFO *pdinfo, int *err)
 	p++;
     }
 
-    pident = ident_new(nv);
-    if (pident == NULL) {
+    ident = ident_new(nv);
+    if (ident == NULL) {
 	*err = E_ALLOC;
 	return NULL;
     }
 
-    pident->depvar = varindex(pdinfo, vname1);
-    if (pident->depvar == pdinfo->v) {
-	destroy_ident(pident);
+    ident->depvar = varindex(pdinfo, vname1);
+    if (ident->depvar == pdinfo->v) {
+	destroy_ident(ident);
 	*err = E_UNKVAR;
 	return NULL;
     }
 
-    pident->atoms[0].op = OP_PLUS;
-    pident->atoms[0].varnum = varindex(pdinfo, vname2);
-    if (pident->atoms[0].varnum == pdinfo->v) {
-	destroy_ident(pident);
+    ident->atoms[0].op = OP_PLUS;
+    ident->atoms[0].varnum = varindex(pdinfo, vname2);
+    if (ident->atoms[0].varnum == pdinfo->v) {
+	destroy_ident(ident);
 	*err = E_UNKVAR;
 	return NULL;
     }
@@ -1577,9 +1578,9 @@ parse_identity (const char *str, const DATAINFO *pdinfo, int *err)
 	else if (op == '-') op = OP_MINUS;
 	else *err = E_PARSE;
 	if (!*err) {
-	    pident->atoms[i].op = op;
-	    pident->atoms[i].varnum = varindex(pdinfo, vname1);
-	    if (pident->atoms[i].varnum == pdinfo->v) {
+	    ident->atoms[i].op = op;
+	    ident->atoms[i].varnum = varindex(pdinfo, vname1);
+	    if (ident->atoms[i].varnum == pdinfo->v) {
 		*err = E_UNKVAR;
 	    }
 	}
@@ -1587,34 +1588,34 @@ parse_identity (const char *str, const DATAINFO *pdinfo, int *err)
     }
 
     if (*err) {
-	destroy_ident(pident);
-	pident = NULL;
+	destroy_ident(ident);
+	ident = NULL;
     }
        
-    return pident;
+    return ident;
 }
 
 static int 
 add_identity_to_sys (gretl_equation_system *sys, const char *line,
 		     const DATAINFO *pdinfo)
 {
-    identity **ppident;
-    identity *pident;
+    identity **pident;
+    identity *ident;
     int ni = sys->n_identities;
     int err = 0;
 
-    pident = parse_identity(line, pdinfo, &err);
-    if (pident == NULL) return err;
+    ident = parse_identity(line, pdinfo, &err);
+    if (ident == NULL) return err;
 
     /* connect the identity to the equation system */
-    ppident = realloc(sys->idents, (ni + 1) * sizeof *sys->idents);
-    if (ppident == NULL) {
-	destroy_ident(pident);
+    pident = realloc(sys->idents, (ni + 1) * sizeof *sys->idents);
+    if (pident == NULL) {
+	destroy_ident(ident);
 	return E_ALLOC;
     }
 
-    sys->idents = ppident;
-    sys->idents[ni] = pident;
+    sys->idents = pident;
+    sys->idents[ni] = ident;
     sys->n_identities += 1;
 
     return 0;
@@ -1974,4 +1975,176 @@ int highest_numbered_var_in_system (const gretl_equation_system *sys,
     }
 
     return vmax;
+}
+
+static identity *
+sys_retrieve_identity (xmlNodePtr node, xmlDocPtr doc, int *err)
+{
+    identity *ident;
+    xmlNodePtr cur;
+    int n_atoms, depvar;
+    int i, got = 0;
+
+    got += gretl_xml_get_prop_as_int(node, "n_atoms", &n_atoms);
+    got += gretl_xml_get_prop_as_int(node, "depvar", &depvar);
+    if (got < 2) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    ident = ident_new(n_atoms);
+    if (ident == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    ident->depvar = depvar;
+
+    cur = node->xmlChildrenNode;
+
+    i = 0;
+    while (cur != NULL && !*err) {
+	if (!xmlStrcmp(cur->name, (XUC) "id_atom")) {
+	    got = gretl_xml_get_prop_as_int(cur, "op", &ident->atoms[i].op);
+	    got += gretl_xml_get_prop_as_int(cur, "varnum", &ident->atoms[i].varnum);
+	    if (got < 2) {
+		*err = E_DATA;
+	    } else {
+		i++;
+	    }
+	}
+	cur = cur->next;
+    }
+
+    if (!*err && i != n_atoms) {
+	*err = E_DATA;
+    }
+
+    if (*err) {
+	destroy_ident(ident);
+	ident = NULL;
+    }
+
+    return ident;
+}
+
+gretl_equation_system *
+gretl_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
+{
+    gretl_equation_system *sys;
+    xmlNodePtr cur;
+    char *name;
+    int method = 0;
+    int i, j, got = 0;
+
+    got += gretl_xml_get_prop_as_string(node, "name", &name);
+    got += gretl_xml_get_prop_as_int(node, "method", &method);
+
+    if (got < 2) {
+	*err = E_DATA;
+	return NULL;
+    }     
+
+    sys = gretl_equation_system_new(method, name);
+    if (sys == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    got = 0;
+    got += gretl_xml_get_prop_as_int(node, "n_equations", &sys->n_equations);
+    got += gretl_xml_get_prop_as_int(node, "n_identities", &sys->n_identities);
+    got += gretl_xml_get_prop_as_uchar(node, "flags", &sys->flags);
+
+    if (got < 3) {
+	*err = E_DATA;
+	goto bailout;
+    } 
+
+    sys->lists = malloc(sys->n_equations * sizeof sys->lists);
+    if (sys->lists == NULL) {
+	*err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (sys->n_identities > 0) {
+	sys->idents = malloc(sys->n_identities * sizeof sys->idents);
+	if (sys->idents == NULL) {
+	    *err = E_ALLOC;
+	    goto bailout;
+	}
+    }
+
+    cur = node->xmlChildrenNode;
+
+    i = j = 0;
+    while (cur != NULL && !*err) {
+	if (!xmlStrcmp(cur->name, (XUC) "eqnlist")) {
+	    sys->lists[i++] = gretl_xml_node_get_list(cur, doc, err); 
+	} else if (!xmlStrcmp(cur->name, (XUC) "endog_vars")) {
+	    sys->endog_vars = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "instr_vars")) {
+	    sys->instr_vars = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "identity")) {
+	    sys->idents[j++] = sys_retrieve_identity(cur, doc, err); 
+	} else if (!xmlStrcmp(cur->name, (XUC) "R")) {
+	    sys->R = gretl_xml_get_matrix(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "q")) {
+	    sys->q = gretl_xml_get_matrix(cur, doc, err);
+	}
+	cur = cur->next;
+    } 
+
+    if (!*err && (i != sys->n_equations || j != sys->n_identities)) {
+	*err = E_DATA;
+	gretl_equation_system_destroy(sys);
+	sys = NULL;
+    }
+
+ bailout:
+
+    return sys;
+}
+
+static void xml_print_identity (identity *ident, FILE *fp)
+{
+    int i;
+
+    fprintf(fp, "<identity n_atoms=\"%d\" depvar=\"%d\">\n",
+	    ident->n_atoms, ident->depvar);
+    for (i=0; i<ident->n_atoms; i++) {
+	fprintf(fp, " <id_atom op=\"%d\" varnum=\"%d\"/>\n",
+		ident->atoms[i].op, ident->atoms[i].varnum);
+    }
+    fputs("</identity>\n", fp);
+}
+
+int gretl_system_serialize (gretl_equation_system *sys, SavedObjectFlags flags,
+			    FILE *fp)
+{
+    int i, err = 0;
+
+    fprintf(fp, "<gretl-equation-system name=\"%s\" saveflags=\"%d\" method=\"%d\" ",  
+	    (sys->name != NULL)? sys->name : "none", flags, sys->method);
+
+    fprintf(fp, "n_equations=\"%d\" n_identities=\"%d\" flags=\"%d\">\n",
+	    sys->n_equations, sys->n_identities, (int) sys->flags);
+
+    for (i=0; i<sys->n_equations; i++) {
+	gretl_xml_put_tagged_list("eqnlist", sys->lists[i], fp);
+    }
+
+    gretl_xml_put_tagged_list("endog_vars", sys->endog_vars, fp);
+    gretl_xml_put_tagged_list("instr_vars", sys->instr_vars, fp);
+
+    for (i=0; i<sys->n_identities; i++) {
+	xml_print_identity(sys->idents[i], fp);
+    }    
+
+    gretl_xml_put_matrix(sys->R, "R", fp);
+    gretl_xml_put_matrix(sys->q, "q", fp);
+
+    fputs("</gretl-equation-system>\n", fp);
+
+    return err;
 }

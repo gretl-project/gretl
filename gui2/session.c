@@ -847,6 +847,9 @@ void do_open_session (void)
     session_file_make_path(fname, "functions.xml");
     err = maybe_read_functions_file(fname);
 
+    session_file_make_path(fname, "lists.xml");
+    err = maybe_read_lists_file(fname);
+
     if (sinfo.mask != NULL) {
 	err = restrict_sample_from_mask(sinfo.mask, sinfo.mode, &Z, &datainfo);
     }

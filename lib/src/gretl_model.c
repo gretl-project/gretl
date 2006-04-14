@@ -2447,7 +2447,6 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     int m = k * (k + 1) / 2;
     int err = 0;
 
-    gretl_xml_header(fp);
     fprintf(fp, "<gretl-model ID=\"%d\" name=\"%s\" saveflags=\"%d\" ", 
 	    pmod->ID, (pmod->name == NULL)? "none" : pmod->name,
 	    (int) flags);
@@ -2518,7 +2517,7 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 	int r = pmod->arinfo->arlist[0];
 
 	fputs("<arinfo>\n", fp);
-	gretl_xml_put_list("arlist", pmod->arinfo->arlist, fp);
+	gretl_xml_put_tagged_list("arlist", pmod->arinfo->arlist, fp);
 	gretl_xml_put_double_array("rho", pmod->arinfo->rho, r, fp);
 	gretl_xml_put_double_array("sderr", pmod->arinfo->sderr, r, fp);
 	fputs("</arinfo>\n", fp);
@@ -2535,7 +2534,7 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     } 
 
     if (pmod->list != NULL) {
-	gretl_xml_put_list("list", pmod->list, fp);
+	gretl_xml_put_tagged_list("list", pmod->list, fp);
     }
 
     if (pmod->n_data_items > 0) {
@@ -2550,6 +2549,254 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
     gretl_pop_c_numeric_locale();
 
     return err;
+}
+
+/* next block: functions for reconstituting a model from
+   its XML representation */
+
+static int model_submask_from_xml (xmlNodePtr node, xmlDocPtr doc,
+				   MODEL *pmod)
+{
+    char *mask;
+    int err;
+
+    err = gretl_xml_get_submask(node, doc, &mask, NULL);
+    if (!err) {
+	pmod->submask = mask;
+    }
+
+    return err;
+}
+
+static int model_data_items_from_xml (xmlNodePtr node, xmlDocPtr doc,
+				      MODEL *pmod)
+{
+    xmlNodePtr cur;
+    int n_items;
+    int err = 0;
+
+    if (!gretl_xml_get_prop_as_int(node, "count", &n_items)) {
+	return 1;
+    }
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !err) {
+	char *key;
+	int type;
+	int nelem = 0;
+
+	if (!gretl_xml_get_prop_as_int(cur, "type", &type) ||
+	    !gretl_xml_get_prop_as_string(cur, "key", &key)) {
+	    err = 1;
+	    break;
+	}
+
+	if (type == MODEL_DATA_INT) {
+	    int ival;
+
+	    if (!gretl_xml_node_get_int(cur, doc, &ival)) {
+		err = 1;
+	    } else {
+		err = gretl_model_set_int(pmod, key, ival);
+	    }
+	} else if (type == MODEL_DATA_DOUBLE) {
+	    double xval;
+
+	    if (!gretl_xml_node_get_double(cur, doc, &xval)) {
+		err = 1;
+	    } else {
+		err = gretl_model_set_double(pmod, key, xval);
+	    }
+	} else if (type == MODEL_DATA_LIST) {
+	    int *list;
+
+	    list = gretl_xml_node_get_list(cur, doc, &err);
+	    if (!err) {
+		err = gretl_model_set_list_as_data(pmod, key, list);
+	    }
+	} else if (type == MODEL_DATA_STRING) {
+	    char *s;
+
+	    if (!gretl_xml_node_get_string(cur, doc, &s)) {
+		err = 1;
+	    } else {
+		err = gretl_model_set_string_as_data(pmod, key, s);
+	    }
+	} else if (type == MODEL_DATA_INT_ARRAY) {
+	    int *ivals = gretl_xml_get_int_array(cur, doc, &nelem, &err);
+
+	    if (nelem > 0) {
+		err = gretl_model_set_data(pmod, key, ivals, 
+					   MODEL_DATA_INT_ARRAY,
+					   nelem * sizeof *ivals);
+	    }
+	} else if (type == MODEL_DATA_DOUBLE_ARRAY) {
+	    double *xvals = gretl_xml_get_double_array(cur, doc, &nelem, &err);
+
+	    if (nelem > 0) {
+		err = gretl_model_set_data(pmod, key, xvals, 
+					   MODEL_DATA_DOUBLE_ARRAY,
+					   nelem * sizeof *xvals);
+	    }
+	} else if (type == MODEL_DATA_CMPLX_ARRAY) {
+	    cmplx *cvals = gretl_xml_get_cmplx_array(cur, doc, &nelem, &err);
+
+	    if (nelem > 0) {
+		err = gretl_model_set_data(pmod, key, cvals,
+					   MODEL_DATA_CMPLX_ARRAY,
+					   nelem * sizeof *cvals);
+	    }	    
+	}
+
+	cur = cur->next;
+    }
+
+    return err;
+}
+
+static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
+			    MODEL *pmod)
+{
+    xmlNodePtr cur;
+    int n, err = 0;
+
+    if (gretl_model_add_arinfo(pmod, 0)) {
+	return 1;
+    }
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (XUC) "arlist")) {
+	    pmod->arinfo->arlist = gretl_xml_node_get_list(cur, doc, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "rho")) {
+	    pmod->arinfo->rho = gretl_xml_get_double_array(cur, doc, &n, &err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {
+	    pmod->arinfo->sderr = gretl_xml_get_double_array(cur, doc, &n, &err);
+	}
+	cur = cur->next;
+    }
+
+    return err;
+}
+
+/**
+ * gretl_model_from_XML:
+ * @node: XML node from which to read.
+ * @doc: pointer to XML document.
+ * @err: location to receive error code.
+ *
+ * Reads info on a gretl model from the given XML node
+ * and doc, and reconstitutes the model in memory.
+ *
+ * Returns: allocated model, or %NULL on failure.
+ */
+
+MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
+{
+    MODEL *pmod;
+    xmlNodePtr cur;
+    int n, got = 0;
+
+    pmod = gretl_model_new();
+    if (pmod == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    got += gretl_xml_get_prop_as_int(node, "ID", &pmod->ID);
+    got += gretl_xml_get_prop_as_int(node, "t1", &pmod->t1);
+    got += gretl_xml_get_prop_as_int(node, "t2", &pmod->t2);
+    got += gretl_xml_get_prop_as_int(node, "nobs", &pmod->nobs);
+    got += gretl_xml_get_prop_as_int(node, "full_n", &pmod->full_n);
+    got += gretl_xml_get_prop_as_int(node, "ncoeff", &pmod->ncoeff);
+    got += gretl_xml_get_prop_as_int(node, "dfn", &pmod->dfn);
+    got += gretl_xml_get_prop_as_int(node, "dfd", &pmod->dfd);
+    got += gretl_xml_get_prop_as_int(node, "ifc", &pmod->ifc);
+    got += gretl_xml_get_prop_as_int(node, "ci", &pmod->ci);
+    got += gretl_xml_get_prop_as_int(node, "nwt", &pmod->nwt);
+    got += gretl_xml_get_prop_as_int(node, "aux", &pmod->aux);
+
+    if (got < 12) {
+	*err = E_DATA;
+	goto bailout;
+    }
+
+    gretl_push_c_numeric_locale();
+
+    got = 0;
+    got += gretl_xml_get_prop_as_double(node, "ess", &pmod->ess);
+    got += gretl_xml_get_prop_as_double(node, "tss", &pmod->tss);
+    got += gretl_xml_get_prop_as_double(node, "sigma", &pmod->sigma);
+    got += gretl_xml_get_prop_as_double(node, "rsq", &pmod->rsq);
+    got += gretl_xml_get_prop_as_double(node, "adjrsq", &pmod->adjrsq);
+    got += gretl_xml_get_prop_as_double(node, "fstt", &pmod->fstt);
+    got += gretl_xml_get_prop_as_double(node, "lnL", &pmod->lnL);
+    got += gretl_xml_get_prop_as_double(node, "ybar", &pmod->ybar);
+    got += gretl_xml_get_prop_as_double(node, "sdy", &pmod->sdy);
+
+    got += gretl_xml_get_prop_as_double(node, "crit0", &pmod->criterion[0]);
+    got += gretl_xml_get_prop_as_double(node, "crit1", &pmod->criterion[1]);
+    got += gretl_xml_get_prop_as_double(node, "crit2", &pmod->criterion[2]);
+
+    got += gretl_xml_get_prop_as_double(node, "dw", &pmod->dw);
+    got += gretl_xml_get_prop_as_double(node, "rho", &pmod->rho);
+
+    if (got < 14) {
+	*err = E_DATA;
+	gretl_pop_c_numeric_locale();
+	goto bailout;
+    }
+
+    cur = node->xmlChildrenNode;
+
+    while (cur != NULL && !*err) {
+	if (!xmlStrcmp(cur->name, (XUC) "sample")) {
+	    gretl_xml_get_prop_as_int(cur, "t1", &pmod->smpl.t1);
+	    gretl_xml_get_prop_as_int(cur, "t2", &pmod->smpl.t2);
+	} else if (!xmlStrcmp(cur->name, (XUC) "coeff")) {
+	    pmod->coeff = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "sderr")) {
+	    pmod->sderr = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "uhat")) {
+	    pmod->uhat = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "yhat")) {
+	    pmod->yhat = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "xpx")) {
+	    pmod->xpx = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "vcv")) {
+	    pmod->vcv = gretl_xml_get_double_array(cur, doc, &n, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "list")) {
+	    pmod->list = gretl_xml_node_get_list(cur, doc, err);
+	} else if (!xmlStrcmp(cur->name, (XUC) "tests")) {
+	    *err = attach_model_tests_from_xml(pmod, cur);
+	} else if (!xmlStrcmp(cur->name, (XUC) "submask")) {
+	    *err = model_submask_from_xml(cur, doc, pmod);
+	} else if (!xmlStrcmp(cur->name, (XUC) "missmask")) {
+	    if (!gretl_xml_node_get_string(cur, doc, &pmod->missmask)) {
+		*err = 1;
+	    }
+	} else if (!xmlStrcmp(cur->name, (XUC) "arinfo")) {
+	    *err = arinfo_from_xml(cur, doc, pmod);
+	} else if (!xmlStrcmp(cur->name, (XUC) "data-items")) {
+	    *err = model_data_items_from_xml(cur, doc, pmod);
+	}
+	cur = cur->next;
+    }
+
+    gretl_pop_c_numeric_locale();
+
+ bailout:
+
+    if (*err) {
+	if (pmod != NULL) {
+	    gretl_model_free(pmod);
+	    pmod = NULL;
+	}
+    }
+
+    return pmod;
 }
 
 /**

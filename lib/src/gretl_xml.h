@@ -39,7 +39,9 @@ void gretl_xml_put_double_array (const char *tag, double *x, int n,
 void gretl_xml_put_strings_array (const char *tag, const char **strs, int n,
 				  FILE *fp);
 
-void gretl_xml_put_list (const char *tag, const int *list, FILE *fp);
+void gretl_xml_put_named_list (const char *tag, const int *list, FILE *fp);
+
+void gretl_xml_put_tagged_list (const char *tag, const int *list, FILE *fp);
 
 int gretl_xml_put_tagged_string (const char *tag, const char *str, 
 				 FILE *fp);
@@ -85,6 +87,9 @@ cmplx *gretl_xml_get_cmplx_array (xmlNodePtr node, xmlDocPtr doc,
 
 gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, 
 				    int *err);
+
+int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc,
+			   char **pmask, int *pmode);
 
 #endif /* !GRETLCLI */
 

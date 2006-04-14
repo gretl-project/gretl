@@ -325,4 +325,10 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 			   FILE *fp);
 
+#ifndef GRETLCLI
+
+MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
+
+#endif
+
 #endif /* GRETL_MODEL_H */

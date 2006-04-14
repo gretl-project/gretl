@@ -20,8 +20,6 @@
 #ifndef GRETL_EQUATION_SYSTEM_H
 #define GRETL_EQUATION_SYSTEM_H
 
-typedef struct _gretl_equation_system gretl_equation_system;
-
 typedef enum {
     SYS_SUR = 0,
     SYS_3SLS,
@@ -167,5 +165,17 @@ gretl_equation_system_get_matrix (const gretl_equation_system *sys, int idx,
 
 int highest_numbered_var_in_system (const gretl_equation_system *sys, 
 				    const DATAINFO *pdinfo);
+
+int gretl_system_serialize (gretl_equation_system *sys, 
+			    SavedObjectFlags flags,
+			    FILE *fp);
+
+#ifndef GRETLCLI
+
+gretl_equation_system *
+gretl_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err);
+
+#endif
+
 
 #endif /* GRETL_EQUATION_SYSTEM_H */

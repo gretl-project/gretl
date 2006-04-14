@@ -493,7 +493,7 @@ void remove_model_from_stack (MODEL *pmod)
     }
 }
 
-static int object_on_stack (void *p)
+static int object_stack_index (const void *p)
 {
     int i, ret = -1;
 
@@ -514,6 +514,11 @@ static int object_on_stack (void *p)
     return ret;
 }
 
+int object_is_on_stack (const void *ptr)
+{
+    return (object_stack_index(ptr) >= 0);
+}
+
 static int 
 real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 {
@@ -524,7 +529,7 @@ real_stack_object (void *p, GretlObjType type, const char *name, PRN *prn)
 	return 1;
     }
 
-    if (object_on_stack(p) >= 0) {
+    if (object_stack_index(p) >= 0) {
 	return 0;
     }
 

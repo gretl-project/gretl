@@ -20,8 +20,6 @@
 #ifndef OBJSTACK_H
 #define OBJSTACK_H
 
-#include "system.h"
-
 typedef enum {
     GRETL_OBJ_ANY,
     GRETL_OBJ_EQN,
@@ -80,6 +78,8 @@ void *gretl_get_object_by_name (const char *name);
 
 int gretl_get_object_and_type (const char *name, void **pp, 
 			       GretlObjType *type);
+
+int object_is_on_stack (const void *ptr);
 
 int gretl_stack_object (void *ptr, GretlObjType type);
 
