@@ -1163,41 +1163,42 @@ void correct_line_color (windata_t *vwin)
 
 #endif /* not USE_GTKSOURCEVIEW */
 
-void create_text (windata_t *vwin, GtkTextBuffer **buf, 
-		  int hsize, int vsize, gboolean editable)
+GtkWidget *create_text (GtkWidget *dlg, GtkTextBuffer **buf, 
+			int hsize, int vsize, gboolean editable)
 {
     GtkTextBuffer *tbuf = gretl_text_buf_new();
+    GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
 
-    vwin->w = gtk_text_view_new_with_buffer(tbuf);
     *buf = tbuf;
 
-    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vwin->w), GTK_WRAP_WORD);
-    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(vwin->w), 4);
-    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(vwin->w), 4);
+    gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
+    gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);
+    gtk_text_view_set_right_margin(GTK_TEXT_VIEW(w), 4);
 
-    gtk_widget_modify_font(GTK_WIDGET(vwin->w), fixed_font);
+    gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
 
-    hsize *= get_char_width(vwin->w);
+    hsize *= get_char_width(w);
     hsize += 48;
 
-    gtk_window_set_default_size(GTK_WINDOW(vwin->dialog), hsize, vsize); 
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
+    gtk_window_set_default_size(GTK_WINDOW(dlg), hsize, vsize); 
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
+
+    return w;
 }
 
-void text_table_setup (windata_t *vwin)
+void text_table_setup (GtkWidget *vbox, GtkWidget *w)
 {
     GtkWidget *sw;
 
     sw = gtk_scrolled_window_new(NULL, NULL);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
-		       sw, TRUE, TRUE, FALSE);
+    gtk_box_pack_start(GTK_BOX(vbox), sw, TRUE, TRUE, FALSE);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sw),
 				   GTK_POLICY_AUTOMATIC,
 				   GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(sw),
 					GTK_SHADOW_IN);
-    gtk_container_add(GTK_CONTAINER(sw), vwin->w); 
-    gtk_widget_show(vwin->w);
+    gtk_container_add(GTK_CONTAINER(sw), w); 
+    gtk_widget_show(w);
     gtk_widget_show(sw);
 }

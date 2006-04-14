@@ -796,7 +796,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, int *err)
 	return NULL;
     }
 
-    if (sscanf(tmp, "%d", &rows) != 1) {
+    if (sscanf((const char *) tmp, "%d", &rows) != 1) {
 	free(tmp);
 	*err = E_DATA;
 	return NULL;
@@ -810,7 +810,7 @@ gretl_matrix *gretl_xml_get_matrix (xmlNodePtr node, xmlDocPtr doc, int *err)
 	return NULL;
     }
 
-    if (sscanf(tmp, "%d", &cols) != 1) {
+    if (sscanf((const char *) tmp, "%d", &cols) != 1) {
 	free(tmp);
 	*err = E_DATA;
 	return NULL;

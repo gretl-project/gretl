@@ -62,39 +62,44 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
     }
 }
 
-void create_text (windata_t *vwin, int hsize, int vsize, 
-		  gboolean editable)
+GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize, 
+			gboolean editable)
 {
-    vwin->w = gtk_text_new(NULL, NULL);
-    gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
-    gtk_text_set_editable(GTK_TEXT(vwin->w), editable);
+    GtkWidget *w = gtk_text_new(NULL, NULL);
+
+    gtk_text_set_word_wrap(GTK_TEXT(w), TRUE);
+    gtk_text_set_editable(GTK_TEXT(w), editable);
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
-    gtk_widget_set_usize (vwin->dialog, hsize, vsize);
+
+    gtk_widget_set_usize(dlg, hsize, vsize);
+
+    return w;
 }
 
-void text_table_setup (windata_t *vwin)
+GtkWidget *text_table_setup (GtkWidget *vbox, GtkWidget *w)
 {
     GtkWidget *table, *vscroll;
 
     table = gtk_table_new(1, 2, FALSE);
     gtk_widget_set_usize(table, 500, 400);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
-		       table, TRUE, TRUE, FALSE);
+    gtk_box_pack_start(GTK_BOX(vbox), table, TRUE, TRUE, FALSE);
 
-    gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
-		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
-		     GTK_SHRINK, 0, 0);
-    gtk_widget_show(vwin->w);
+    gtk_table_attach(GTK_TABLE(table), w, 0, 1, 0, 1,
+		     GTK_FILL | GTK_EXPAND, 
+		     GTK_FILL | GTK_EXPAND | GTK_SHRINK, 
+		     0, 0);
+    gtk_widget_show(w);
 
-    vscroll = gtk_vscrollbar_new(GTK_TEXT(vwin->w)->vadj);
-    gtk_table_attach(GTK_TABLE (table), 
-		     vscroll, 1, 2, 0, 1,
+    vscroll = gtk_vscrollbar_new(GTK_TEXT(w)->vadj);
+    gtk_table_attach(GTK_TABLE(table), vscroll, 1, 2, 0, 1,
 		     GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
-    gtk_widget_show(vscroll);
 
+    gtk_widget_show(vscroll);
     gtk_widget_show(table);
+
+    return table;
 }
 
 void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)

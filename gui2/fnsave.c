@@ -19,10 +19,10 @@
 
 #include "gretl.h"
 #include "dlgutils.h"
-#include "gretl_func.h"
+#include "textbuf.h"
+#include "fileselect.h"
 
-#define GTK_ENABLE_BROKEN /* FIXME use textbuffer */
-#include <gtk/gtktext.h>
+#include "gretl_func.h"
 
 #define NENTRIES 4
 
@@ -36,20 +36,19 @@ struct function_info {
     char *date;
     char *shortdesc;
     char *descrip;
-    const int *list;
+    int *list;
     int primary;
     int canceled;
 };
 
-static void finfo_init (struct function_info *finfo, const int *list)
+static void finfo_init (struct function_info *finfo)
 {
     finfo->author = NULL;
     finfo->version = NULL;
     finfo->date = NULL;
     finfo->descrip = NULL;
 
-    finfo->list = list;
-    finfo->primary = list[1];
+    finfo->primary = finfo->list[1];
     finfo->canceled = 0;
 }
 
@@ -59,6 +58,9 @@ static void finfo_free (struct function_info *finfo)
     free(finfo->version);
     free(finfo->date);
     free(finfo->descrip);
+    free(finfo->list);
+
+    free(finfo);
 }
 
 static char *trim_text (const char *s)
@@ -94,20 +96,13 @@ static void finfo_ok (GtkWidget *w, struct function_info *finfo)
 	}
     }
 
+#ifndef OLD_GTK
+    tmp = textview_get_text(GTK_TEXT_VIEW(finfo->text));
+#else
     tmp = gtk_editable_get_chars(GTK_EDITABLE(finfo->text), 0, -1);
+#endif
     finfo->descrip = trim_text(tmp);
     free(tmp);
-
-    txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(finfo->combo)->entry));
-    for (i=1; i<=finfo->list[0]; i++) {
-	const char *fnname = user_function_name_by_index(finfo->list[i]);
-
-	if (!strcmp(txt, fnname)) {
-	    finfo->primary = finfo->list[i];
-	    fprintf(stderr, "%s is primary\n", fnname);
-	    break;
-	}
-    }
 
     gtk_widget_destroy(finfo->dlg);
 }
@@ -118,9 +113,64 @@ static void finfo_cancel (GtkWidget *w, struct function_info *finfo)
     gtk_widget_destroy(finfo->dlg);
 }
 
-static void finfo_dialog (const int *list, struct function_info *finfo)
+static void insert_description (GtkWidget *w, const char *s)
 {
-    GtkWidget *tempwid, *hbox;
+#ifndef OLD_GTK
+    GtkTextBuffer *tbuf;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
+    gtk_text_buffer_set_text(tbuf, s, -1);
+#else
+    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+		    NULL, NULL, s, strlen(s));
+#endif
+}
+
+static gboolean update_primary (GtkEditable *entry, 
+				struct function_info *finfo)
+{
+    const char *fname;
+    int idx;
+
+    fname = gtk_entry_get_text(GTK_ENTRY(entry));
+    if (*fname != '\0') {
+	idx = user_function_index_by_name(fname);
+	if (idx >= 0) {
+	    const char *author;
+	    const char *version;
+	    const char *date;
+	    const char *descrip;
+	    int priv;
+
+	    gretl_function_get_info(idx, &author,
+				    &version, &date,
+				    &descrip, &priv);
+	    if (author != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(finfo->entries[0]), author);
+	    }
+	    if (version != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(finfo->entries[1]), version);
+	    }
+	    if (date != NULL) {
+		gtk_entry_set_text(GTK_ENTRY(finfo->entries[2]), date);
+	    }
+	    if (descrip != NULL) {
+		insert_description(finfo->text, descrip);
+	    }
+	    finfo->primary = idx;
+	}
+    }
+
+    return FALSE;
+}
+
+static void finfo_dialog (struct function_info *finfo)
+{
+#ifndef OLD_GTK
+    GtkTextBuffer *tbuf;
+#endif
+    GtkWidget *button, *label;
+    GtkWidget *tbl;
     const char *entry_labels[] = {
 	N_("Author"),
 	N_("Version"),
@@ -133,17 +183,20 @@ static void finfo_dialog (const int *list, struct function_info *finfo)
     GList *fn_list = NULL;
     int i;
 
-    finfo_init(finfo, list);
+    finfo_init(finfo);
     finfo->dlg = gretl_dialog_new(_("gretl: function information"), NULL, 
 				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
+
+    tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
+		       tbl, FALSE, FALSE, 5);
 
     for (i=0; i<NENTRIES; i++) {
 	GtkWidget *entry;
 
-	hbox = gtk_hbox_new(FALSE, 5);
-	tempwid = gtk_label_new(_(entry_labels[i]));
-	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
-	gtk_widget_show(tempwid);
+	label = gtk_label_new(_(entry_labels[i]));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, i, i+1);
+	gtk_widget_show(label);
 
 #ifdef OLD_GTK
 	entry = gtk_entry_new_with_max_length(entry_lengths[i]);
@@ -151,100 +204,122 @@ static void finfo_dialog (const int *list, struct function_info *finfo)
 	entry = gtk_entry_new();
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), entry_lengths[i] + 4);
 #endif
-	gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 0);
 	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
 	gtk_widget_show(entry); 
-	gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
-
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 0);
-	gtk_widget_show(hbox); 
 
 	finfo->entries[i] = entry;
     }
 
-    tempwid = gtk_label_new("Primary (public) function:");
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox), 
-		       tempwid, FALSE, FALSE, 0);
-    gtk_widget_show(tempwid);
+    label = gtk_label_new("Primary (public) function:");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, 
+			      NENTRIES, NENTRIES + 1);
+    gtk_widget_show(label);
 
     /* drop-down selection of primary (public) function */
-    for (i=1; i<=list[0]; i++) {
-	const char *fnname = user_function_name_by_index(list[i]);
+    for (i=1; i<=finfo->list[0]; i++) {
+	const char *fnname = user_function_name_by_index(finfo->list[i]);
 
 	fn_list = g_list_append(fn_list, (gpointer) fnname);
     }
-
     finfo->combo = gtk_combo_new();
     gtk_combo_set_popdown_strings(GTK_COMBO(finfo->combo), fn_list); 
     gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(finfo->combo)->entry), FALSE);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox), 
-		       finfo->combo, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), finfo->combo, 1, 2, 
+			      NENTRIES, NENTRIES + 1);
+    g_signal_connect(G_OBJECT(GTK_COMBO(finfo->combo)->entry), "changed",
+		     G_CALLBACK(update_primary), finfo);
     gtk_widget_show(finfo->combo);
     g_list_free(fn_list);
 
-    /* long-form description */
-    tempwid = gtk_label_new("Description:");
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox), 
-		       tempwid, FALSE, FALSE, 0);
-    gtk_widget_show(tempwid);
+    gtk_widget_show(tbl);
 
-    finfo->text = gtk_text_new(NULL, NULL);
+    /* long-form description */
+    label = gtk_label_new("Description:");
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox), 
-		       finfo->text, FALSE, FALSE, 0);
-    gtk_widget_show(finfo->text);
-    gtk_text_set_editable(GTK_TEXT(finfo->text), TRUE);
+		       label, FALSE, FALSE, 0);
+    gtk_widget_show(label);
+
+#ifdef OLD_GTK
+    finfo->text = create_text(finfo->dlg, 78, 300, TRUE);
+    tbl = text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
+    gtk_widget_set_usize(tbl, 500, 300);
+#else
+    finfo->text = create_text(finfo->dlg, &tbuf, 78, 300, TRUE);
+    text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
+#endif
 
     /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG(finfo->dlg)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
+    button = ok_button(GTK_DIALOG(finfo->dlg)->action_area);
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(finfo_ok), finfo);
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    gtk_widget_grab_default(button);
+    gtk_widget_show(button);
 
     /* And a Cancel button */
-    tempwid = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    button = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT (tempwid), "clicked", 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT (button), "clicked", 
 		     G_CALLBACK(finfo_cancel), finfo);
-    gtk_widget_show(tempwid);
+    gtk_widget_show(button);
 
     gtk_widget_show(finfo->dlg);
 }
 
-void save_user_functions (const char *fname)
+void save_user_functions (const char *fname, gpointer p)
 {
-    struct function_info finfo;
-    int *list = NULL;
-    int i, err = 0;
+    struct function_info *finfo = p;
+    int i, err;
+		
+    gretl_function_set_info(finfo->primary, finfo->author,
+			    finfo->version, finfo->date,
+			    finfo->descrip);
 
-    if (storelist != NULL) {
-	list = gretl_list_from_string(storelist);
-	if (list == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    finfo_dialog(list, &finfo);
-	    if (!finfo.canceled) {
-		gretl_function_set_info(finfo.primary, finfo.author,
-					finfo.version, finfo.date,
-					finfo.descrip);
-		for (i=1; i<=list[0]; i++) {
-		    if (list[i] != finfo.primary) {
-			gretl_function_set_private(list[i]);
-		    }			
-		}
-		err = write_selected_user_functions(list, 
-						    finfo.shortdesc, 
-						    fname);
-	    }
-	    finfo_free(&finfo);
-	    free(list);
-	}
+    for (i=1; i<=finfo->list[0]; i++) {
+	if (finfo->list[i] != finfo->primary) {
+	    gretl_function_set_private(finfo->list[i]);
+	}			
     }
+
+    err = write_selected_user_functions(finfo->list, 
+					finfo->shortdesc, 
+					fname);
+
+    finfo_free(finfo);    
 
     if (err) {
 	gui_errmsg(err);
     }
 }
+
+void prepare_functions_save (void)
+{
+    struct function_info *finfo;
+    int *list = NULL;
+
+    if (storelist == NULL) {
+	return;
+    }
+
+    finfo = mymalloc(sizeof *finfo);
+    if (finfo == NULL) {
+	return;
+    }
+
+    list = gretl_list_from_string(storelist);
+    if (list == NULL) {
+	errbox(_("Out of memory!"));
+	free(finfo);
+    } else {
+	finfo->list = list;
+	finfo_dialog(finfo);
+	if (!finfo->canceled) {
+	    file_selector(_("Save functions"), SAVE_FUNCTIONS, 
+			  FSEL_DATA_MISC, finfo);
+	}
+    }
+}
+
+

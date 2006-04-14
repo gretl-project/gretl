@@ -268,7 +268,7 @@ GtkItemFactoryEntry data_items[] = {
 
     /* File, save user-defined functions */
     { N_("/File/Save functions..."), NULL, file_save, SAVE_FUNCTIONS, NULL },
-    { "/File/sep4", NULL, NULL, 0, "<Separator>", GNULL },
+    { "/File/sep4", NULL, NULL, 0, "<Separator>" },
 
     /* File, preferences */
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>" },

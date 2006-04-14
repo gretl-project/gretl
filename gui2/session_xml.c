@@ -74,7 +74,7 @@ static int restore_session_graphs (xmlNodePtr node)
 
 	if (!err) {
 	    if (gretl_xml_get_prop_as_int(cur, "inpage", &inpage)) {
-		graph_page_add_file(fname); /* FIXME path? */
+		graph_page_add_file((const char *) fname); /* FIXME path? */
 	    }
 	}
 

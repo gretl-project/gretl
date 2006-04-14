@@ -29,10 +29,10 @@ void text_paste (windata_t *mydata, guint u, GtkWidget *widget);
 
 void text_undo (windata_t *mydata, guint u, GtkWidget *widget);
 
-void create_text (windata_t *vwin, int hsize, int vsize, 
-		  gboolean editable);
+GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize, 
+			gboolean editable);
 
-void text_table_setup (windata_t *vwin);
+GtkWidget *text_table_setup (GtkWidget *vbox, GtkWidget *w);
 
 void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn);
 

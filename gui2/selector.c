@@ -24,6 +24,8 @@
 #include "dlgutils.h"
 #include "menustate.h"
 #include "fileselect.h"
+#include "fnsave.h"
+
 #include "var.h"
 #include "gretl_func.h"
 
@@ -3289,7 +3291,7 @@ static int functions_list (selector *sr)
 	fnname = user_function_name_by_index(i);
 	sprintf(id, "%d", i);
 	row[0] = id;
-	row[2] = fnname;
+	row[2] = (char *) fnname;
 	gtk_clist_append(GTK_CLIST(sr->lvars), row);
     }
     g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
@@ -3582,7 +3584,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 
     gtk_widget_show(sr->dlg);
 
-    if (SAVE_DATA_ACTION(sr->code) || sr->code == SAVE_FUNCTIONS) {
+    if (SAVE_DATA_ACTION(sr->code)) {
 	gretl_set_window_modal(sr->dlg);
     }
 }
@@ -3685,8 +3687,6 @@ static const char *data_save_title (int code)
 	return _("Save R data file");
     case EXPORT_OCTAVE:
 	return _("Save octave data file");
-    case SAVE_FUNCTIONS:
-	return _("Save functions");
     default:
 	return _("Save data file");
     }
@@ -3710,7 +3710,9 @@ static int data_save_selection_callback (selector *sr)
     storelist = g_strdup(sr->cmdlist);
     gtk_widget_destroy(sr->dlg);
 
-    if (code != COPY_CSV) {
+    if (code == SAVE_FUNCTIONS) {
+	prepare_functions_save();
+    } else if (code != COPY_CSV) {
 	file_selector(data_save_title(code), code, FSEL_DATA_MISC, data);
     }
 

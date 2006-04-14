@@ -46,10 +46,10 @@ struct kalman_ {
     const gretl_matrix *Q; /* contemp covariance matrix, state eqn */
     const gretl_matrix *R; /* contemp covariance matrix, obs eqn */
 
-    const gretl_matrix *y; /* dependent variable matrix */
+    const gretl_matrix *y; /* dependent variable vector (or matrix) */
     const gretl_matrix *x; /* independent variables matrix */
 
-    /* workspace matrices (may be able to economize on these?) */
+    /* workspace matrices */
     gretl_matrix *PH;
     gretl_matrix *HPH;
     gretl_matrix *FPH;

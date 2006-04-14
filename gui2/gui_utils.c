@@ -2180,7 +2180,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     if (vwin == NULL) return NULL;
 
 #ifdef OLD_GTK
-    create_text(vwin, hsize, vsize, FALSE);
+    vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
 #endif
 
     viewer_box_config(vwin);
@@ -2203,10 +2203,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     }
 
 #ifndef OLD_GTK
-    create_text(vwin, &tbuf, hsize, vsize, FALSE);
+    vwin->w = create_text(vwin->dialog, &tbuf, hsize, vsize, FALSE);
 #endif
     
-    text_table_setup(vwin);
+    text_table_setup(vwin->vbox, vwin->w);
 
     /* arrange for clean-up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
@@ -2292,7 +2292,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     strcpy(vwin->fname, filename);
 
 #ifdef OLD_GTK
-    create_text(vwin, hsize, vsize, editable);
+    vwin->w = create_text(vwin->dialog, hsize, vsize, editable);
 #endif
 
     viewer_box_config(vwin);
@@ -2305,14 +2305,14 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	tbuf = GTK_TEXT_BUFFER(sbuf);
 	vwin->sbuf = sbuf;
     } else {
-	create_text(vwin, &tbuf, hsize, vsize, editable);
+	vwin->w = create_text(vwin->dialog, &tbuf, hsize, vsize, editable);
     }
 # else
-    create_text(vwin, &tbuf, hsize, vsize, editable);
+    vwin->w = create_text(vwin->dialog, &tbuf, hsize, vsize, editable);
 # endif
 #endif
 
-    text_table_setup(vwin);
+    text_table_setup(vwin->vbox, vwin->w);
 
 #ifdef OLD_GTK
     set_file_view_style(GTK_WIDGET(vwin->w));
@@ -2469,7 +2469,7 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     strcpy(vwin->fname, filename);
 
 #ifdef OLD_GTK
-    create_text(vwin, hsize, vsize, FALSE);
+    vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
 #endif
 
     viewer_box_config(vwin);
@@ -2478,10 +2478,10 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     gtk_widget_show(vwin->mbar);
 
 #ifndef OLD_GTK
-    create_text(vwin, &tbuf, hsize, vsize, FALSE);
+    vwin->w = create_text(vwin->dialog, &tbuf, hsize, vsize, FALSE);
 #endif
 
-    text_table_setup(vwin);
+    text_table_setup(vwin->vbox, vwin->w);
 
 #ifdef OLD_GTK
     set_file_view_style(GTK_WIDGET(vwin->w));
@@ -2584,7 +2584,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     }
 
 #ifdef OLD_GTK
-    create_text(vwin, hsize, vsize, TRUE);
+    vwin->w = create_text(vwin->dialog, hsize, vsize, TRUE);
 #endif
 
     viewer_box_config(vwin); 
@@ -2593,10 +2593,10 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     make_viewbar(vwin, 0);
 
 #ifndef OLD_GTK
-    create_text(vwin, &tbuf, hsize, vsize, TRUE);
+    vwin->w = create_text(vwin->dialog, &tbuf, hsize, vsize, TRUE);
 #endif
 
-    text_table_setup(vwin);
+    text_table_setup(vwin->vbox, vwin->w);
     
     /* insert the buffer text */
 #ifndef OLD_GTK
@@ -2687,7 +2687,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
 
 #ifdef OLD_GTK
-    create_text(vwin, hsize, vsize, FALSE);
+    vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
 #endif
 
     viewer_box_config(vwin);
@@ -2714,10 +2714,10 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_widget_show(vwin->mbar);
 
 #ifndef OLD_GTK
-    create_text(vwin, &tbuf, hsize, vsize, FALSE);
+    vwin->w = create_text(vwin->dialog, &tbuf, hsize, vsize, FALSE);
 #endif
 
-    text_table_setup(vwin);
+    text_table_setup(vwin->vbox, vwin->w);
 
     /* close button */
     close = gtk_button_new_with_label(_("Close"));

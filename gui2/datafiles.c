@@ -739,8 +739,8 @@ static void browser_functions_handler (windata_t *vwin, int load)
 #else
     gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
 		       0, &fname);
-    gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
-		       2, &dir); /* wrong */
+    dir = gtk_clist_get_row_data(GTK_CLIST(vwin->listbox), 
+				 vwin->active_var);
 #endif
 
     build_path(dir, fname, fnfile, ".gfn");
@@ -1050,7 +1050,8 @@ read_fn_files_in_dir (DIR *dir, char *fndir, windata_t *vwin, int nfn)
 		row[0] = fname;
 		row[1] = descrip;
 		i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
-		gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, fndir);
+		gtk_clist_set_row_data_full(GTK_CLIST(vwin->listbox), i, 
+					    g_strdup(fndir), g_free);
 		g_free(descrip);
 		nfn++;
 		if (nfn % 2) {

@@ -140,6 +140,19 @@ const char *user_function_name_by_index (int i)
     }
 }
 
+int user_function_index_by_name (const char *name)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (!strcmp(name, ufuns[i]->name)) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
 /* function call stack mechanism */
 
 static int callstack_init (void)
@@ -882,6 +895,28 @@ int gretl_function_set_info (int i,
 	free(ufuns[i]->description);
 	ufuns[i]->description = gretl_strdup(description);
 	ufuns[i]->private = 0;
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
+int gretl_function_get_info (int i, 
+			     char const **author,
+			     char const **version,
+			     char const **date,
+			     char const **description,
+			     int *priv)
+{
+    int err = 0;
+
+    if (i >= 0 && i < n_ufuns) {
+	*author = ufuns[i]->author;
+	*version = ufuns[i]->version;
+	*date = ufuns[i]->date;
+	*description = ufuns[i]->description;
+	*priv = ufuns[i]->private;
     } else {
 	err = 1;
     }

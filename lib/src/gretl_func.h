@@ -24,6 +24,8 @@ int n_user_functions (void);
 
 const char *user_function_name_by_index (int i);
 
+int user_function_index_by_name (const char *name);
+
 int gretl_compiling_function (void);
 
 int gretl_executing_function (void);
@@ -58,6 +60,13 @@ int gretl_function_set_info (int i,
 			     const char *version,
 			     const char *date,
 			     const char *description);
+
+int gretl_function_get_info (int i, 
+			     char const **author,
+			     char const **version,
+			     char const **date,
+			     char const **description,
+			     int *priv);
 
 void gretl_function_set_private (int i);
 

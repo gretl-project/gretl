@@ -44,10 +44,10 @@ void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn);
 void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, 
 			      int role);
 
-void create_text (windata_t *vwin, GtkTextBuffer **buf, 
-		  int hsize, int vsize, gboolean editable);
+GtkWidget *create_text (GtkWidget *dlg, GtkTextBuffer **buf, 
+			int hsize, int vsize, gboolean editable);
 
-void text_table_setup (windata_t *vwin);
+void text_table_setup (GtkWidget *vbox, GtkWidget *w);
 
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
 

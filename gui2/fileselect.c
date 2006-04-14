@@ -28,6 +28,7 @@
 #include "textutil.h"
 #include "filelists.h"
 #include "fileselect.h"
+#include "fnsave.h"
 
 #if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION >= 4)
 # ifndef G_OS_WIN32
@@ -443,8 +444,6 @@ static char *suggested_exportname (const char *fname, int action)
     return s;
 }
 
-extern void save_user_functions (const char *fname);
-
 static void
 file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 			      gpointer data)
@@ -532,7 +531,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (action == SAVE_SESSION) {
 	save_session(fname);
     } else if (action == SAVE_FUNCTIONS) {
-	save_user_functions(fname);
+	save_user_functions(fname, data);
     } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
