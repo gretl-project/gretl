@@ -21,6 +21,7 @@
 #include "dlgutils.h"
 #include "textbuf.h"
 #include "fileselect.h"
+#include "fnsave.h"
 
 #include "gretl_func.h"
 
