@@ -122,7 +122,7 @@ static void insert_description (GtkWidget *w, const char *s)
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
     gtk_text_buffer_set_text(tbuf, s, -1);
 #else
-    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+    gtk_text_insert(GTK_TEXT(w), fixed_font, 
 		    NULL, NULL, s, strlen(s));
 #endif
 }

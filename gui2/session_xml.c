@@ -234,7 +234,7 @@ static int restore_session_models (xmlNodePtr node, xmlDocPtr doc)
 	SavedObjectFlags flags;
 	xmlChar *fname = NULL;
 	xmlChar *name = NULL;
-	gpointer ptr;
+	gpointer ptr = NULL;
 	int type = GRETL_OBJ_EQN;
 
 	fname = xmlGetProp(cur, (XUC) "fname");

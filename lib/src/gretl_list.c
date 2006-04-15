@@ -1684,4 +1684,6 @@ int gretl_serialize_lists (const char *fname)
     fputs("</gretl-lists>\n", fp);
 
     fclose(fp);
+
+    return 0;
 }
