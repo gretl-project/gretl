@@ -20,6 +20,7 @@
 /* menustate.c: status of menus etc. */
 
 #include "gretl.h"
+#include "gretl_func.h"
 #include "console.h"
 #include "guiprint.h"
 

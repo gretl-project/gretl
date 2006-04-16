@@ -35,22 +35,31 @@ struct function_info {
     char *author;
     char *version;
     char *date;
-    char *shortdesc;
-    char *descrip;
-    int *list;
-    int primary;
+    char *pkgdesc;
+    char **help;
+    int *publist;
+    int *privlist;
+    int n_public;
     int canceled;
 };
 
-static void finfo_init (struct function_info *finfo)
+static int finfo_init (struct function_info *finfo)
 {
     finfo->author = NULL;
     finfo->version = NULL;
     finfo->date = NULL;
-    finfo->descrip = NULL;
-
-    finfo->primary = finfo->list[1];
+    finfo->pkgdesc = NULL;
     finfo->canceled = 0;
+
+    finfo->n_public = finfo->publist[0];
+    finfo->help = create_strings_array(finfo->n_public);
+    if (finfo->help == NULL) {
+	errbox(_("Out of memory!"));
+	finfo->canceled = 1;
+	return E_ALLOC;
+    }
+
+    return 0;
 }
 
 static void finfo_free (struct function_info *finfo)
@@ -58,8 +67,11 @@ static void finfo_free (struct function_info *finfo)
     free(finfo->author);
     free(finfo->version);
     free(finfo->date);
-    free(finfo->descrip);
-    free(finfo->list);
+    free(finfo->pkgdesc);
+    free(finfo->publist);
+    free(finfo->privlist);
+
+    free_strings_array(finfo->help, finfo->n_public);
 
     free(finfo);
 }
@@ -67,25 +79,45 @@ static void finfo_free (struct function_info *finfo)
 static char *trim_text (const char *s)
 {
     char *ret = NULL;
-    int i;
+    int i, len;
 
     while (isspace(*s)) s++;
     if (*s == '\0') return NULL;
 
-    ret = g_strdup(s);
-    for (i=strlen(ret)-1; i>0; i--) {
-	if (!isspace(ret[i])) break;
-	ret[i] = '\0';
+    len = strlen(s);
+    for (i=len-1; i>0; i--) {
+	if (!isspace(s[i])) break;
+	len--;
+    }
+
+    if (len > 0) {
+	ret = g_strndup(s, len);
     }
 
     return ret;
 }
 
+static int help_text_index (struct function_info *finfo)
+{
+    const char *fname;
+    int i, idx;
+
+    fname = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(finfo->combo)->entry));
+    idx = user_function_index_by_name(fname);
+
+    for (i=0; i<finfo->n_public; i++) {
+	if (idx == finfo->publist[i+1]) {
+	    return i;
+	}
+    }
+
+    return -1;
+}
+
 static void finfo_ok (GtkWidget *w, struct function_info *finfo)
 {
     const gchar *txt;
-    char *tmp;
-    int i;
+    int i, hidx = 0;
 
     for (i=0; i<NENTRIES; i++) {
 	txt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
@@ -93,17 +125,25 @@ static void finfo_ok (GtkWidget *w, struct function_info *finfo)
 	    if (i == 0) finfo->author = trim_text(txt);
 	    else if (i == 1) finfo->version = trim_text(txt);
 	    else if (i == 2) finfo->date = trim_text(txt);
-	    else if (i == 3) finfo->shortdesc = trim_text(txt);
+	    else if (i == 3) finfo->pkgdesc = trim_text(txt);
 	}
     }
 
+    if (finfo->n_public > 1) {
+	hidx = help_text_index(finfo);
+    } 
+
+    if (hidx >= 0) {
+	char *tmp;
+
 #ifndef OLD_GTK
-    tmp = textview_get_text(GTK_TEXT_VIEW(finfo->text));
+	tmp = textview_get_text(GTK_TEXT_VIEW(finfo->text));
 #else
-    tmp = gtk_editable_get_chars(GTK_EDITABLE(finfo->text), 0, -1);
+	tmp = gtk_editable_get_chars(GTK_EDITABLE(finfo->text), 0, -1);
 #endif
-    finfo->descrip = trim_text(tmp);
-    free(tmp);
+	finfo->help[hidx] = trim_text(tmp);
+	free(tmp);
+    }
 
     gtk_widget_destroy(finfo->dlg);
 }
@@ -114,51 +154,89 @@ static void finfo_cancel (GtkWidget *w, struct function_info *finfo)
     gtk_widget_destroy(finfo->dlg);
 }
 
-static void insert_description (GtkWidget *w, const char *s)
-{
-#ifndef OLD_GTK
-    GtkTextBuffer *tbuf;
+enum {
+    HIDX_INIT,
+    HIDX_SWITCH
+};
 
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-    gtk_text_buffer_set_text(tbuf, s, -1);
+static void set_dialog_info_from_fn (struct function_info *finfo, int idx,
+				     int code)
+{
+    const char *author = NULL;
+    const char *version = NULL;
+    const char *date = NULL;
+    const char *pkgdesc = NULL;
+    const char *help = NULL;
+    const char *etxt;
+
+    static int old_hidx;
+    int new_hidx;
+
+    if (code == HIDX_INIT) {
+	old_hidx = new_hidx = 0;
+    } else {
+	new_hidx = help_text_index(finfo);
+    }
+
+    gretl_function_get_info(idx, &author, &version, &date, &pkgdesc, &help);
+
+    if (author != NULL) {
+	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[0]));
+	if (*etxt == '\0') {
+	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[0]), author);
+	}
+    }
+
+    if (version != NULL) {
+	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[1]));
+	if (*etxt == '\0') {
+	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[1]), version);
+	}
+    }
+
+    if (date != NULL) {
+	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[2]));
+	if (*etxt == '\0') {
+	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[2]), date);
+	}
+    }
+
+    if (pkgdesc != NULL) {
+	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[3]));
+	if (*etxt == '\0') {
+	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[3]), pkgdesc);
+	}
+    }
+
+    /* FIXME swap in new help text, and save the old */
+
+    if (help != NULL) {
+#ifndef OLD_GTK
+	GtkTextBuffer *tbuf;
+
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(finfo->text));
+	gtk_text_buffer_set_text(tbuf, help, -1);
 #else
-    gtk_text_insert(GTK_TEXT(w), fixed_font, 
-		    NULL, NULL, s, strlen(s));
+	gtk_text_insert(GTK_TEXT(finfo->text), fixed_font, 
+			NULL, NULL, help, strlen(help));
 #endif
+    }
+
+    old_hidx = new_hidx;
 }
 
-static gboolean update_primary (GtkEditable *entry, 
-				struct function_info *finfo)
+static gboolean update_public (GtkEditable *entry, 
+			       struct function_info *finfo)
 {
-    const char *fname;
+    const char *fnname;
     int idx;
 
-    fname = gtk_entry_get_text(GTK_ENTRY(entry));
-    if (*fname != '\0') {
-	idx = user_function_index_by_name(fname);
-	if (idx >= 0) {
-	    const char *author;
-	    const char *version;
-	    const char *date;
-	    const char *descrip;
-	    int priv;
+    fnname = gtk_entry_get_text(GTK_ENTRY(entry));
 
-	    gretl_function_get_info(idx, &author,
-				    &version, &date,
-				    &descrip, &priv);
-	    if (author != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(finfo->entries[0]), author);
-	    }
-	    if (version != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(finfo->entries[1]), version);
-	    }
-	    if (date != NULL) {
-		gtk_entry_set_text(GTK_ENTRY(finfo->entries[2]), date);
-	    }
-	    if (descrip != NULL) {
-		insert_description(finfo->text, descrip);
-	    }
-	    finfo->primary = idx;
+    if (fnname != NULL && *fnname != '\0') {
+	idx = user_function_index_by_name(fnname);
+	if (idx >= 0) {
+	    set_dialog_info_from_fn(finfo, idx, HIDX_SWITCH);
 	}
     }
 
@@ -171,24 +249,27 @@ static void finfo_dialog (struct function_info *finfo)
     GtkTextBuffer *tbuf;
 #endif
     GtkWidget *button, *label;
-    GtkWidget *tbl;
+    GtkWidget *tbl, *hbox;
     const char *entry_labels[] = {
 	N_("Author"),
 	N_("Version"),
 	N_("Date"),
-	N_("Short description")
+	N_("Package description")
     };
+    const char *fnname;
     int entry_lengths[] = {
 	32, 8, 16, 32
     };
-    GList *fn_list = NULL;
     int i;
 
-    finfo_init(finfo);
-    finfo->dlg = gretl_dialog_new(_("gretl: function information"), NULL, 
+    if (finfo_init(finfo)) {
+	return;
+    }
+
+    finfo->dlg = gretl_dialog_new(_("gretl: function package"), NULL, 
 				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
-    tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
+    tbl = gtk_table_new(NENTRIES, 2, FALSE);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
 		       tbl, FALSE, FALSE, 5);
 
@@ -203,7 +284,7 @@ static void finfo_dialog (struct function_info *finfo)
 	entry = gtk_entry_new_with_max_length(entry_lengths[i]);
 #else
 	entry = gtk_entry_new();
-	gtk_entry_set_width_chars(GTK_ENTRY(entry), entry_lengths[i] + 4);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), entry_lengths[i] + 4); /* ? */
 #endif
 	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
@@ -212,34 +293,45 @@ static void finfo_dialog (struct function_info *finfo)
 	finfo->entries[i] = entry;
     }
 
-    label = gtk_label_new("Primary (public) function:");
-    gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, 
-			      NENTRIES, NENTRIES + 1);
-    gtk_widget_show(label);
-
-    /* drop-down selection of primary (public) function */
-    for (i=1; i<=finfo->list[0]; i++) {
-	const char *fnname = user_function_name_by_index(finfo->list[i]);
-
-	fn_list = g_list_append(fn_list, (gpointer) fnname);
-    }
-    finfo->combo = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(finfo->combo), fn_list); 
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(finfo->combo)->entry), FALSE);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), finfo->combo, 1, 2, 
-			      NENTRIES, NENTRIES + 1);
-    g_signal_connect(G_OBJECT(GTK_COMBO(finfo->combo)->entry), "changed",
-		     G_CALLBACK(update_primary), finfo);
-    gtk_widget_show(finfo->combo);
-    g_list_free(fn_list);
-
     gtk_widget_show(tbl);
 
-    /* long-form description */
-    label = gtk_label_new("Description:");
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox), 
-		       label, FALSE, FALSE, 0);
-    gtk_widget_show(label);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
+		       hbox, FALSE, FALSE, 5);
+    
+    if (finfo->n_public > 1) {
+	GList *fn_list = NULL;
+
+	label = gtk_label_new("Help text for");
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	gtk_widget_show(label);
+
+	/* drop-down selection of public functions */
+	for (i=1; i<=finfo->publist[0]; i++) {
+	    fnname = user_function_name_by_index(finfo->publist[i]);
+	    fn_list = g_list_append(fn_list, (gpointer) fnname);
+	}
+	finfo->combo = gtk_combo_new();
+	gtk_combo_set_popdown_strings(GTK_COMBO(finfo->combo), fn_list); 
+	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(finfo->combo)->entry), FALSE);
+	gtk_box_pack_start(GTK_BOX(hbox), finfo->combo, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(GTK_COMBO(finfo->combo)->entry), "changed",
+			 G_CALLBACK(update_public), finfo);
+	gtk_widget_show(finfo->combo);
+	g_list_free(fn_list);
+    } else {
+	/* only one public interface */
+	gchar *ltxt;
+
+	fnname = user_function_name_by_index(finfo->publist[1]);
+	ltxt = g_strdup_printf("Help text for %s:", fnname);
+	label = gtk_label_new(ltxt);
+	g_free(ltxt);
+	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+	gtk_widget_show(label);
+    }
+
+    gtk_widget_show(hbox);
 
 #ifdef OLD_GTK
     finfo->text = create_text(finfo->dlg, 78, 300, TRUE);
@@ -249,6 +341,8 @@ static void finfo_dialog (struct function_info *finfo)
     finfo->text = create_text(finfo->dlg, &tbuf, 78, 300, TRUE);
     text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
 #endif
+
+    set_dialog_info_from_fn(finfo, finfo->publist[1], HIDX_INIT);
 
     /* Create the "OK" button */
     button = ok_button(GTK_DIALOG(finfo->dlg)->action_area);
@@ -273,19 +367,23 @@ void save_user_functions (const char *fname, gpointer p)
 {
     struct function_info *finfo = p;
     int i, err;
-		
-    gretl_function_set_info(finfo->primary, finfo->author,
-			    finfo->version, finfo->date,
-			    finfo->descrip);
 
-    for (i=1; i<=finfo->list[0]; i++) {
-	if (finfo->list[i] != finfo->primary) {
-	    gretl_function_set_private(finfo->list[i]);
-	}			
+    if (finfo->privlist != NULL) {
+	for (i=1; i<=finfo->privlist[0]; i++) {
+	    gretl_function_set_private(finfo->privlist[i]);
+	}
     }
 
-    err = write_selected_user_functions(finfo->list, 
-					finfo->shortdesc, 
+    for (i=1; i<=finfo->publist[0]; i++) {
+	gretl_function_set_info(finfo->publist[i], finfo->help[i-1]);
+    }
+		
+    err = write_selected_user_functions(finfo->privlist, 
+					finfo->publist,
+					finfo->author,
+					finfo->version,
+					finfo->date,
+					finfo->pkgdesc, 
 					fname);
 
     finfo_free(finfo);    
@@ -313,13 +411,30 @@ void prepare_functions_save (void)
     if (list == NULL) {
 	errbox(_("Out of memory!"));
 	free(finfo);
-    } else {
-	finfo->list = list;
-	finfo_dialog(finfo);
-	if (!finfo->canceled) {
-	    file_selector(_("Save functions"), SAVE_FUNCTIONS, 
-			  FSEL_DATA_MISC, finfo);
+	return;
+    }
+
+    if (gretl_list_has_separator(list)) {
+	if (gretl_list_split_on_separator(list, &finfo->privlist, 
+					  &finfo->publist)) {
+	    errbox(_("Out of memory!"));
+	    free(finfo);
+	    free(list);
+	    return;
+	} else {
+	    free(list);
 	}
+    } else {
+	finfo->publist = list;
+	finfo->privlist = NULL;
+    }
+
+    finfo_dialog(finfo);
+    if (finfo->canceled) {
+	finfo_free(finfo);
+    } else {
+	file_selector(_("Save functions"), SAVE_FUNCTIONS, 
+		      FSEL_DATA_MISC, finfo);
     }
 }
 

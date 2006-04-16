@@ -112,6 +112,8 @@ struct _selector {
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA)
 
+#define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
+
 #define dataset_lags_ok(d) ((d)->structure == TIME_SERIES || \
 			    (d)->structure == SPECIAL_TIME_SERIES || \
                             (d)->structure == STACKED_TIME_SERIES || \
@@ -160,6 +162,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr);
 static int list_show_var (int v, int code, int show_lags);
 static int selector_get_depvar_number(selector *sr);
 static int spinner_get_int (GtkWidget *w);
+static int functions_list (selector *sr);
 
 #include "lagpref.c"
 
@@ -1182,7 +1185,6 @@ static void topslot_empty (int code)
     }
 }
 
-
 static void reverse_list (char *list)
 {
     char *tmp, *p;
@@ -1369,17 +1371,20 @@ static int maybe_resize_recorder_lists (selector *sr, int n)
 
 static int maybe_resize_exog_recorder_lists (selector *sr, int n)
 {
-    int *newlist;
     int err = 0;
 
-    if (sr->code == TSLS) {
-	newlist = gretl_list_resize(&instlist, n);
-    } else {
-	newlist = gretl_list_resize(&vecxlist, n);
-    }
-    if (newlist == NULL) {
-	err = E_ALLOC;
-    }
+    if (sr->code == TSLS || USE_VECXLIST(sr->code)) {
+	int *newlist;
+
+	if (sr->code == TSLS) {
+	    newlist = gretl_list_resize(&instlist, n);
+	} else {
+	    newlist = gretl_list_resize(&vecxlist, n);
+	}
+	if (newlist == NULL) {
+	    err = E_ALLOC;
+	}
+    } 
 
     return err;
 }
@@ -1494,7 +1499,7 @@ static int get_ruvars_data (selector *sr, int rows, int context)
     GtkTreeModel *model;
     GtkTreeIter iter;
     gint exog, lag, ynum;
-    int *reclist;
+    int *reclist = NULL;
     gchar *tmp;
     int i, j = 1;
     int err = 0;
@@ -1502,7 +1507,12 @@ static int get_ruvars_data (selector *sr, int rows, int context)
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars));
     gtk_tree_model_get_iter_first(model, &iter);
 
-    reclist = (sr->code == TSLS)? instlist : vecxlist;
+    if (sr->code == TSLS) {
+	reclist = instlist;
+    } else if (USE_VECXLIST(sr->code)) {
+	reclist = vecxlist;
+    }
+
     ynum = selector_get_depvar_number(sr);
 
     for (i=0; i<rows; i++) {
@@ -1546,12 +1556,17 @@ static int get_ruvars_data (selector *sr, int rows, int context)
     gchar *tmp;
     gchar *exog;
     gchar *lstr;
-    int *reclist;
+    int *reclist = NULL;
     int lag, ynum, xnum;
     int i, j = 1;
     int err = 0;
 
-    reclist = (sr->code == TSLS)? instlist : vecxlist;
+    if (sr->code == TSLS) {
+	reclist = instlist;
+    } else if (USE_VECXLIST(sr->code)) {
+	reclist = vecxlist;
+    }
+
     ynum = selector_get_depvar_number(sr);
 
     for (i=0; i<rows; i++) {
@@ -1773,9 +1788,9 @@ static void construct_cmdlist (selector *sr)
     context = sr_get_lag_context(sr, SR_RLVARS);
     get_rlvars_data(sr, rows, context);
 
-    /* and the ancillary varlist on the upper right? */
-    if (sr->code == TSLS || sr->code == VAR || 
-	sr->code == VLAGSEL || sr->code == VECM) {
+    /* and the "extra" list box on the upper right? */
+    if (sr->code == TSLS || sr->code == SAVE_FUNCTIONS || 
+	USE_VECXLIST(sr->code)) {
 	rows = varlist_row_count(sr, SR_RUVARS, &realrows);
 	if (rows > 0) {
 	    if (realrows > 0) {
@@ -1789,13 +1804,18 @@ static void construct_cmdlist (selector *sr)
 		dvlags = NULL;
 	    }
 
-	    add_to_cmdlist(sr, " ;");
+	    if (*sr->cmdlist != '\0') {
+		add_to_cmdlist(sr, " ;");
+	    }
 
 	    sr->error = get_ruvars_data(sr, rows, context);
 	} else if (sr->code == TSLS) {
 	    errbox(_("You must specify a set of instrumental variables"));
 	    sr->error = 1;
-	}
+	} else if (sr->code == SAVE_FUNCTIONS) {
+	    errbox(_("You must specify a public interface"));
+	    sr->error = 1;
+	}	    
     }
 
     /* deal with any trailing strings */
@@ -1939,6 +1959,8 @@ static char *extra_string (int cmdnum)
     case GR_DUMMY:
     case GR_3D:
 	return N_("Y-axis variable");
+    case SAVE_FUNCTIONS:
+	return N_("Public interfaces");
     default:
 	return NULL;
     }
@@ -2268,7 +2290,7 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
 			       sr->code == VECM)) {
 	    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 	}
-    } else if (!VEC_CODE(sr->code)) {
+    } else if (!VEC_CODE(sr->code) && sr->code != SAVE_FUNCTIONS) {
 	list_append_var(store, &iter, 0, sr, SR_RUVARS);
     }
 
@@ -2295,7 +2317,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     if (sr->code == WLS || sr->code == POISSON ||
 	sr->code == GR_DUMMY || sr->code == GR_3D) { 
 	extra_var_box(sr, right_vbox);
-    } else if (sr->code == TSLS) {
+    } else if (sr->code == TSLS || sr->code == SAVE_FUNCTIONS) {
 	auxiliary_varlist_box(sr, right_vbox);
     } else if (sr->code == AR) {
 	sr->extra[0] = gtk_entry_new();
@@ -2920,29 +2942,31 @@ static int list_show_var (int v, int code, int show_lags)
     return ret;
 }
 
-static GtkWidget *selection_dialog_top_label (int cmdcode)
+static GtkWidget *selection_dialog_top_label (int ci)
 {
     gchar *s;
 
-    if (MODEL_CODE(cmdcode) || VEC_CODE(cmdcode))
-	s = _(est_str(cmdcode));
-    else if (cmdcode == GR_XY)
+    if (MODEL_CODE(ci) || VEC_CODE(ci))
+	s = _(est_str(ci));
+    else if (ci == GR_XY)
 	s = _("XY scatterplot");
-    else if (cmdcode == GR_IMP)
+    else if (ci == GR_IMP)
 	s = _("plot with impulses");
-    else if (cmdcode == GR_3D)
+    else if (ci == GR_3D)
 	s = _("3D plot");
-    else if (cmdcode == SCATTERS)
+    else if (ci == SCATTERS)
 	s = _("multiple scatterplots");
-    else if (cmdcode == GR_DUMMY)
+    else if (ci == GR_DUMMY)
 	s = _("factorized plot");
+    else if (ci == SAVE_FUNCTIONS) 
+	s = _("functions to package");
     else
 	s = "fixme need string";
 
     return gtk_label_new(s);
 }
 
-void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
+void selection_dialog (const char *title, int (*callback)(), guint ci,
 		       int preselect) 
 {
 #ifndef OLD_GTK
@@ -2967,16 +2991,16 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
     sr = mymalloc(sizeof *sr);
     if (sr == NULL) return;
 
-    selector_init(sr, cmdcode, title, NULL, callback);
+    selector_init(sr, ci, title, NULL, callback);
 
-    tmp = selection_dialog_top_label(cmdcode);
+    tmp = selection_dialog_top_label(ci);
     gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
     /* the following encloses LHS lvars, depvar and indepvar stuff */
     big_hbox = gtk_hbox_new(FALSE, 5); 
 
-    /* LHS: list of vars to choose from */
+    /* LHS: list of elements to choose from */
     sr->lvars = var_list_box_new(GTK_BOX(big_hbox), sr, SR_LVARS);
 #ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
@@ -2985,10 +3009,14 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 #else
     store = sr->lvars;
 #endif
-    
-    for (i=0; i<datainfo->v; i++) {
-	if (list_show_var(i, cmdcode, 0)) {
-	    list_append_var_simple(store, &iter, i);
+
+    if (ci == SAVE_FUNCTIONS) {
+	functions_list(sr);
+    } else {
+	for (i=0; i<datainfo->v; i++) {
+	    if (list_show_var(i, ci, 0)) {
+		list_append_var_simple(store, &iter, i);
+	    }
 	}
     }
 
@@ -2999,26 +3027,26 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
     gtk_widget_show(tmp);
 
-    if (MODEL_CODE(cmdcode)) { 
+    if (MODEL_CODE(ci)) { 
 	/* models: top right -> dependent variable */
 	yvar = build_depvar_section(sr, right_vbox, preselect);
-    } else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
-	       || cmdcode == SCATTERS || cmdcode == GR_3D) {
+    } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY
+	       || ci == SCATTERS || ci == GR_3D) {
 	/* graphs: top right -> x-axis variable */
 	build_x_axis_section(sr, right_vbox);
     }
 
     /* middle right: used for some estimators and factored plot */
-    if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
-	VEC_CODE(cmdcode) || cmdcode == POISSON || 
-	cmdcode == GR_DUMMY || cmdcode == GR_3D) {
+    if (ci == WLS || ci == AR || ci == TSLS || 
+	VEC_CODE(ci) || ci == POISSON || ci == SAVE_FUNCTIONS ||
+	ci == GR_DUMMY || ci == GR_3D) {
 	build_mid_section(sr, right_vbox);
     }
     
-    if (cmdcode == GR_DUMMY) {
+    if (ci == GR_DUMMY) {
 	/* special case: choose dummy var for factorized plot */
 	dummy_box(sr, right_vbox);
-    } else if (cmdcode == GR_3D) {
+    } else if (ci == GR_3D) {
 	/* special case: choose Z axis variable */
 	zvar_box(sr, right_vbox);
     } else { 
@@ -3026,16 +3054,18 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 	GtkWidget *remove;
 	GtkWidget *indepvar_hbox;
 
-	if (COINT_CODE(cmdcode)) {
+	if (COINT_CODE(ci)) {
 	    tmp = gtk_label_new(_("Variables to test"));
-	} else if (VEC_CODE(cmdcode)) {
+	} else if (VEC_CODE(ci)) {
 	    tmp = gtk_label_new(_("Endogenous variables"));
-	} else if (MODEL_CODE(cmdcode)) {
+	} else if (MODEL_CODE(ci)) {
 	    tmp = gtk_label_new(_("Independent variables"));
-	} else if (cmdcode == GR_XY || cmdcode == GR_IMP) {
+	} else if (ci == GR_XY || ci == GR_IMP) {
 	    tmp = gtk_label_new(_("Y-axis variables"));
-	} else if (cmdcode == SCATTERS) {
+	} else if (ci == SCATTERS) {
 	    scatters_label = tmp = gtk_label_new(_("X-axis variables"));
+	} else if (ci == SAVE_FUNCTIONS) {
+	    tmp = gtk_label_new(_("Helper functions"));
 	}
     
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
@@ -3077,8 +3107,8 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 	store = sr->rlvars;
 #endif
 
-	if (MODEL_CODE(cmdcode)) {
-	    if (cmdcode != ARMA) {
+	if (MODEL_CODE(ci)) {
+	    if (ci != ARMA) {
 		/* stick the constant in by default */
 		list_append_var(store, &iter, 0, sr, SR_RLVARS);
 	    }
@@ -3096,7 +3126,7 @@ void selection_dialog (const char *title, int (*callback)(), guint cmdcode,
 		    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 		}
 	    }
-	} else if (VEC_CODE(cmdcode) && veclist != NULL) {
+	} else if (VEC_CODE(ci) && veclist != NULL) {
 	    for (i=1; i<=veclist[0]; i++) {
 		list_append_var(store, &iter, veclist[i], sr, SR_RLVARS);
 	    }
@@ -3450,7 +3480,6 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     GtkWidget *left_vbox, *button_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *remove_button;
     selector *sr;
-    int fnsave = (ci == SAVE_FUNCTIONS);
     int nleft = 0;
     int i;
 
@@ -3476,7 +3505,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     top_hbox = gtk_hbox_new(FALSE, 0); 
     gtk_box_set_homogeneous(GTK_BOX(top_hbox), TRUE);
 
-    tmp = gtk_label_new(fnsave? _("Available functions") : _("Available vars"));
+    tmp = gtk_label_new(_("Available vars"));
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
@@ -3484,17 +3513,17 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
-    tmp = gtk_label_new(fnsave? _("Selected functions") : _("Selected vars"));
+    tmp = gtk_label_new(_("Selected vars"));
     gtk_box_pack_start(GTK_BOX(top_hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
 
     gtk_box_pack_start(GTK_BOX(sr->vbox), top_hbox, FALSE, FALSE, 5);
     gtk_widget_show(top_hbox);
 
-    /* the following encloses 3 vboxes */
+    /* the following will enclose 3 or more vboxes */
     big_hbox = gtk_hbox_new(FALSE, 5); 
 
-    /* holds available var list */
+    /* holds list of elements available for selection */
     left_vbox = gtk_vbox_new(FALSE, 5);
 
     sr->lvars = var_list_box_new(GTK_BOX(left_vbox), sr, SR_LVARS);
@@ -3506,9 +3535,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     store = sr->lvars;
 #endif
 
-    if (ci == SAVE_FUNCTIONS) {
-	nleft = functions_list(sr);
-    } else if (ci == OMIT || ci == ADD || ci == COEFFSUM ||
+    if (ci == OMIT || ci == ADD || ci == COEFFSUM ||
 	ci == ELLIPSE || ci == VAROMIT) {
         nleft = add_omit_list(p, sr);
 	g_signal_connect(G_OBJECT(sr->dlg), "destroy", 
@@ -3558,7 +3585,7 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     gtk_box_pack_start(GTK_BOX(big_hbox), right_vbox, TRUE, TRUE, 0);
     gtk_widget_show(right_vbox);
 
-    /* connect var removal signal */
+    /* connect removal from right signal */
     g_signal_connect(G_OBJECT(remove_button), "clicked", 
 		     G_CALLBACK(remove_from_right_callback), 
 		     sr->rlvars);
@@ -3721,10 +3748,16 @@ static int data_save_selection_callback (selector *sr)
 
 void data_save_selection_wrapper (int file_code, gpointer p)
 {
-    simple_selection((file_code == COPY_CSV)? 
-		     _("Copy data") : _("Save data"), 
-		     data_save_selection_callback, file_code, 
-		     p);
+    if (file_code == SAVE_FUNCTIONS) {
+	selection_dialog(_("Save functions"), 
+			 data_save_selection_callback, file_code, 0);
+    } else {
+	simple_selection((file_code == COPY_CSV)? 
+			 _("Copy data") : _("Save data"), 
+			 data_save_selection_callback, file_code, 
+			 p);
+    }
+
 #ifndef OLD_GTK
     gtk_main(); /* the corresponding gtk_main_quit() is in
 		   the function destroy_selector() */

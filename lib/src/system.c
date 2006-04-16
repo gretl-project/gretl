@@ -2054,7 +2054,7 @@ gretl_system_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     got = 0;
     got += gretl_xml_get_prop_as_int(node, "n_equations", &sys->n_equations);
     got += gretl_xml_get_prop_as_int(node, "n_identities", &sys->n_identities);
-    got += gretl_xml_get_prop_as_uchar(node, "flags", &sys->flags);
+    got += gretl_xml_get_prop_as_char(node, "flags", &sys->flags);
 
     if (got < 3) {
 	*err = E_DATA;

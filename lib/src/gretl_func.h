@@ -55,22 +55,23 @@ void gretl_function_stop_on_error (double ***pZ, DATAINFO **ppdinfo, PRN *prn);
 
 int gretl_function_flagged_error (const char *s, PRN *prn);
 
-int gretl_function_set_info (int i, 
-			     const char *author,
-			     const char *version,
-			     const char *date,
-			     const char *description);
+int gretl_function_set_info (int i, const char *help);
 
 int gretl_function_get_info (int i, 
 			     char const **author,
 			     char const **version,
 			     char const **date,
-			     char const **description,
-			     int *priv);
+			     char const **pkgdesc,
+			     char const **help);
 
 void gretl_function_set_private (int i);
 
-int write_selected_user_functions (const int *list, const char *descrip,
+int write_selected_user_functions (const int *privlist, 
+				   const int *publist, 
+				   const char *author,
+				   const char *version,
+				   const char *date,
+				   const char *descrip,
 				   const char *fname);
 
 int write_user_function_file (const char *fname);

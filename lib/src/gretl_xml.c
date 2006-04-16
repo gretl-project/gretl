@@ -421,6 +421,31 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 }
 
 /**
+ * gretl_xml_get_prop_as_char:
+ * @node: XML node pointer.
+ * @tag: name by which character property is known.
+ * @u: location to write value.
+ * 
+ * Returns: 1 if a char is found and read successfully, 0
+ * otherwise.
+ */
+
+int gretl_xml_get_prop_as_char (xmlNodePtr node, const char *tag,
+				char *c)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
+
+    if (tmp != NULL) {
+	*c = (char) atoi((const char *) tmp);
+	free(tmp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+/**
  * gretl_xml_get_prop_as_uchar:
  * @node: XML node pointer.
  * @tag: name by which unsigned character property is known.

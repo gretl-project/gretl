@@ -54,6 +54,9 @@ void gretl_xml_put_matrix (const gretl_matrix *m, const char *name,
 int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
 			       int *i);
 
+int gretl_xml_get_prop_as_char (xmlNodePtr node, const char *tag,
+				char *c);
+
 int gretl_xml_get_prop_as_uchar (xmlNodePtr node, const char *tag,
 				 unsigned char *u);
 

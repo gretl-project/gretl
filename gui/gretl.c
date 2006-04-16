@@ -266,10 +266,6 @@ GtkItemFactoryEntry data_items[] = {
       do_new_script, 1, NULL },
     { "/File/sep3", NULL, NULL, 0, "<Separator>" },
 
-    /* File, save user-defined functions */
-    { N_("/File/Save functions..."), NULL, file_save, SAVE_FUNCTIONS, NULL },
-    { "/File/sep4", NULL, NULL, 0, "<Separator>" },
-
     /* File, preferences */
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/_Preferences/_General..."), NULL, options_dialog_callback, 0, NULL },
@@ -285,10 +281,8 @@ GtkItemFactoryEntry data_items[] = {
     { "/Utilities/sep", NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL },
     { "/Utilities/sep2", NULL, NULL, 0, "<Separator>" },
-#if 0
-    { N_("/Utilities/Additional functions..."), NULL, display_files, FUNC_FILES, NULL },
+    { N_("/Utilities/Function packager"), NULL, file_save, SAVE_FUNCTIONS, NULL },
     { "/Utilities/sep3", NULL, NULL, 0, "<Separator>" },
-#endif
     { N_("/Utilities/Start GNU R"), NULL, startRcallback, 0, NULL },
     { N_("/Utilities/NIST test suite"), NULL, NULL, 0, "<Branch>" },
     { N_("/Utilities/NIST test suite/basic"), NULL, do_nistcheck, 0, NULL },
@@ -1231,6 +1225,17 @@ static GtkWidget *make_main_window (int gui_get_data)
     return main_vbox;
 }
 
+static gboolean check_function_save_state (void)
+{
+    if (mdata->ifac != NULL) {
+	gboolean s = n_user_functions() > 0;
+
+	flip(mdata->ifac, "/Utilities/Function packager", s);
+    }
+
+    return FALSE;
+}
+
 static void set_up_main_menu (void)
 {
     GtkAccelGroup *main_accel;
@@ -1246,6 +1251,9 @@ static void set_up_main_menu (void)
     gtk_item_factory_create_items (mdata->ifac, n_items, data_items, NULL);
     mdata->mbar = gtk_item_factory_get_widget (mdata->ifac, "<main>");
     gtk_accel_group_attach(main_accel, GTK_OBJECT (mdata->w));
+
+    g_signal_connect(G_OBJECT(mdata->mbar), "button_press_event", 
+		     G_CALLBACK(check_function_save_state), NULL);
 }
 
 int gui_restore_sample (void)

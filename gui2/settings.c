@@ -419,9 +419,33 @@ static void slash_terminate (char *path)
     }
 }
 
+static void get_functions_dir (char *dirname)
+{
+    int err;
+
+    sprintf(dirname, "%sfunctions", paths.gretldir);
+    err = gretl_mkdir(dirname);
+    if (err) {
+	sprintf(dirname, "%sfunctions", paths.userdir);
+	err = gretl_mkdir(dirname);
+    }
+
+    if (err) {
+	*dirname = '\0';
+    }
+}
+
 void get_default_dir (char *s, int action)
 {
     *s = '\0';
+
+    if (action == SAVE_FUNCTIONS) {
+	get_functions_dir(s);
+	if (*s != '\0') {
+	    slash_terminate(s);
+	    return;
+	}
+    }
 
     if (usecwd && action != SAVE_DBDATA) {
 	char *test = getcwd(s, MAXLEN);

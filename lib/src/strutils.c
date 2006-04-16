@@ -933,6 +933,10 @@ char **create_strings_array (int nstrs)
     char **s;
     int i;
 
+    if (nstrs <= 0) {
+	return NULL;
+    }
+
     s = malloc(nstrs * sizeof *s);
     if (s != NULL) {
 	for (i=0; i<nstrs; i++) {

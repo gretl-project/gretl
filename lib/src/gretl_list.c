@@ -615,7 +615,11 @@ int *gretl_list_from_string (const char *liststr)
     while (*s) {
 	s += strspn(s, " ,()");
 	if (*s && sscanf(s, "%7[^ ,()]", numstr)) {
-	    list[n++] = atoi(numstr);
+	    if (*numstr == ';') {
+		list[n++] = LISTSEP;
+	    } else {
+		list[n++] = atoi(numstr);
+	    }
 	    s += strlen(numstr);
 
 	}
