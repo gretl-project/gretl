@@ -59,7 +59,7 @@ int gretl_function_set_info (int i, const char *help);
 
 int gretl_function_get_info (int i, const char *key, char const **value);
 
-void gretl_function_set_private (int i);
+void gretl_function_set_private (int i, int priv);
 
 int write_selected_user_functions (const int *privlist, 
 				   const int *publist, 
@@ -74,6 +74,8 @@ int write_user_function_file (const char *fname);
 int load_user_function_file (const char *fname);
 
 int get_function_file_info (const char *fname, PRN *prn);
+
+int get_function_file_code (const char *fname, PRN *prn);
 
 char *get_function_file_header (const char *fname, int *err);
 

@@ -102,13 +102,12 @@ GtkWidget *text_table_setup (GtkWidget *vbox, GtkWidget *w)
     return table;
 }
 
-void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)
+void textview_set_text_colorized (GtkWidget *view, const char *buf)
 {
     void *colptr = NULL, *nextcolor = NULL;
-    const char *buf;
     char readbuf[MAXSTR];
 
-    buf = gretl_print_get_buffer(prn);
+    g_return_if_fail(GTK_IS_TEXT(view));
 
     bufgets_init(buf);
 
@@ -124,18 +123,18 @@ void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)
 	    colptr = &blue;
 	} 
 
-	gtk_text_insert(GTK_TEXT(w), fixed_font, 
+	gtk_text_insert(GTK_TEXT(view), fixed_font, 
 			colptr, NULL, readbuf, strlen(readbuf));
 
 	/* bufgets strips newlines */
-	gtk_text_insert(GTK_TEXT(w), fixed_font, 
+	gtk_text_insert(GTK_TEXT(view), fixed_font, 
 			NULL, NULL, "\n", 1);
 
 	colptr = nextcolor;
     }
 }
 
-int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
+int textview_insert_file (windata_t *vwin, const char *filename)
 {
     void *colptr = NULL, *nextcolor = NULL;
     char buf[MAXSTR];
@@ -148,18 +147,18 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 
     while (fgets(buf, sizeof buf, fp)) {
 
-	if (help_role(role) && *buf == '@') continue;
+	if (help_role(vwin->role) && *buf == '@') continue;
 
 	nextcolor = NULL;
 
-	if (role == SCRIPT_OUT && ends_with_backslash(buf)) {
+	if (vwin->role == SCRIPT_OUT && ends_with_backslash(buf)) {
 	    nextcolor = &blue;
 	}	
 
 	if (*buf == '?') {
-	    colptr = (role == CONSOLE)? &red : &blue;
+	    colptr = (vwin->role == CONSOLE)? &red : &blue;
 	} else if (*buf == '#') {
-	    if (help_role(role)) {
+	    if (help_role(vwin->role)) {
 		*buf = ' ';
 		nextcolor = &red;
 	    } else {
@@ -167,9 +166,8 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 	    }
 	} 
 
-	gtk_text_insert(GTK_TEXT(w), fixed_font, 
-			colptr, NULL, buf, 
-			strlen(buf));
+	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+			colptr, NULL, buf, strlen(buf));
 
 	colptr = nextcolor;
 	memset(buf, 0, sizeof buf);
@@ -249,19 +247,20 @@ gchar *textview_get_text (GtkWidget *view)
     return gtk_editable_get_chars(GTK_EDITABLE(view), 0, -1);
 }
 
-int textview_insert_text (GtkWidget *view, const gchar *text)
+int textview_set_text (GtkWidget *view, const gchar *text)
 {
     g_return_val_if_fail(GTK_IS_TEXT(view), 1);
+    
+    gtk_text_freeze(GTK_TEXT(view));
+
+    gtk_editable_delete_text(GTK_EDITABLE(view), 0, -1);
 
     if (text != NULL) {
 	gtk_text_insert(GTK_TEXT(view), fixed_font, 
 			NULL, NULL, text, strlen(text));
-    } else {
-	int len = gtk_text_get_length(GTK_TEXT(view));
+    } 
 
-	gtk_text_set_point(GTK_TEXT(view), 0);
-	gtk_text_forward_delete(GTK_TEXT(view), len);
-    }
+    gtk_text_thaw(GTK_TEXT(view));
 
     return 0;
 }

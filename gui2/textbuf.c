@@ -98,7 +98,7 @@ gchar *textview_get_text (GtkWidget *view)
     return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
 }
 
-int textview_insert_text (GtkWidget *view, const gchar *text)
+int textview_set_text (GtkWidget *view, const gchar *text)
 {
     GtkTextBuffer *tbuf;
 
@@ -126,16 +126,16 @@ int viewer_char_count (windata_t *vwin)
 
 void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
 {
+    gchar *undo_buf = textview_get_text(vwin->w);
     gchar *old;
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-    gchar *undo_buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
 
     old = g_object_get_data(G_OBJECT(vwin->w), "undo");
     g_free(old);
 
     g_object_set_data(G_OBJECT(vwin->w), "undo", undo_buf);
 
-    gtk_text_buffer_paste_clipboard(buf, gtk_clipboard_get(GDK_NONE),
+    gtk_text_buffer_paste_clipboard(gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w)),
+				    gtk_clipboard_get(GDK_NONE),
 				    NULL, TRUE);
 }
 
@@ -242,15 +242,14 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
     return 0;
 }
 
-void source_buffer_insert_file (GtkSourceBuffer *sbuf, const char *filename,
-				int role)
+void sourceview_insert_file (windata_t *vwin, const char *filename)
 {
     GtkSourceLanguagesManager *manager;    
     GtkSourceLanguage *language = NULL;
 		
-    manager = g_object_get_data(G_OBJECT (sbuf), "languages-manager");
+    manager = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
 
-    if (role == GR_PLOT) {
+    if (vwin->role == GR_PLOT) {
 	language = 
 	    gtk_source_languages_manager_get_language_from_mime_type 
 	    (manager, "application/x-gnuplot");
@@ -261,17 +260,17 @@ void source_buffer_insert_file (GtkSourceBuffer *sbuf, const char *filename,
     }
 
     if (language == NULL) {
-	g_object_set(G_OBJECT(sbuf), "highlight", FALSE, NULL);
+	g_object_set(G_OBJECT(vwin->sbuf), "highlight", FALSE, NULL);
     } else {
-	g_object_set(G_OBJECT(sbuf), "highlight", TRUE, NULL);
-	gtk_source_buffer_set_language(sbuf, language);
+	g_object_set(G_OBJECT(vwin->sbuf), "highlight", TRUE, NULL);
+	gtk_source_buffer_set_language(vwin->sbuf, language);
     }
 
-    gtk_source_buffer_load_file(sbuf, filename);
+    gtk_source_buffer_load_file(vwin->sbuf, filename);
 }
 
-void create_source (windata_t *vwin, GtkSourceBuffer **buf, 
-		    int hsize, int vsize, gboolean editable)
+void create_source (windata_t *vwin, int hsize, int vsize, 
+		    gboolean editable)
 {
     GtkSourceLanguagesManager *lm;
     GtkSourceBuffer *sbuf;
@@ -281,29 +280,29 @@ void create_source (windata_t *vwin, GtkSourceBuffer **buf,
 
     /* set up paren-matching in blue */
 
-    cmap = gdk_colormap_get_system ();
-    gdk_color_parse ("blue", &blue);
-    gdk_colormap_alloc_color (cmap, &blue, FALSE, TRUE);
+    cmap = gdk_colormap_get_system();
+    gdk_color_parse("blue", &blue);
+    gdk_colormap_alloc_color(cmap, &blue, FALSE, TRUE);
 
-    lm = gtk_source_languages_manager_new ();
-    tagstyle = gtk_source_tag_style_new ();
+    lm = gtk_source_languages_manager_new();
+    tagstyle = gtk_source_tag_style_new();
     
     sbuf = GTK_SOURCE_BUFFER(gtk_source_buffer_new(NULL));
-    g_object_ref (lm);
-    g_object_set_data_full (G_OBJECT (sbuf), "languages-manager",
-			    lm, (GDestroyNotify) g_object_unref); 
-    g_object_unref (lm); 
+    g_object_ref(lm);
+    g_object_set_data_full(G_OBJECT(sbuf), "languages-manager",
+			   lm, (GDestroyNotify) g_object_unref); 
+    g_object_unref(lm); 
 
     tagstyle->mask = GTK_SOURCE_TAG_STYLE_USE_FOREGROUND;
     tagstyle->foreground = blue;
-    g_object_set_data_full (G_OBJECT (sbuf), "tag-style",
-			    tagstyle, 
-			    (GDestroyNotify) gtk_source_tag_style_free); 
+    g_object_set_data_full(G_OBJECT(sbuf), "tag-style",
+			   tagstyle, 
+			   (GDestroyNotify) gtk_source_tag_style_free); 
     gtk_source_buffer_set_bracket_match_style(sbuf, tagstyle);
     gtk_source_buffer_set_check_brackets(sbuf, TRUE);
 
     vwin->w = gtk_source_view_new_with_buffer(sbuf);
-    *buf = sbuf;
+    vwin->sbuf = sbuf;
 
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(vwin->w), GTK_WRAP_WORD);
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(vwin->w), 4);
@@ -462,20 +461,22 @@ static GtkTextBuffer *gretl_text_buf_new (void)
     return tbuf;
 }
 
-void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn)
+void textview_set_text_colorized (GtkWidget *view, const char *buf)
 {
+    GtkTextBuffer *tbuf;
     GtkTextIter iter;    
     int thiscolor, nextcolor;
-    const char *pbuf;
     char readbuf[MAXSTR];
 
-    pbuf = gretl_print_get_buffer(prn);
+    g_return_if_fail(GTK_IS_TEXT_VIEW(view));
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 
     thiscolor = PLAIN_TEXT;
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
-    bufgets_init(pbuf);
+    bufgets_init(buf);
 
-    while (bufgets(readbuf, sizeof readbuf, pbuf)) {
+    while (bufgets(readbuf, sizeof readbuf, buf)) {
 
 	if (ends_with_backslash(readbuf)) {
 	    nextcolor = BLUE_TEXT;
@@ -502,19 +503,22 @@ void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn)
     }
 }
 
-void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, 
-			      int role)
+void textview_insert_file (windata_t *vwin, const char *fname)
 {
     FILE *fp;
+    GtkTextBuffer *tbuf;
     GtkTextIter iter;    
     int thiscolor, nextcolor;
     char readbuf[MAXSTR], *chunk;
+
+    g_return_if_fail(GTK_IS_TEXT_VIEW(vwin->w));
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) return;
 
     thiscolor = nextcolor = PLAIN_TEXT;
 
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
     gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
 
     memset(readbuf, 0, sizeof readbuf);
@@ -528,12 +532,12 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 
 	nextcolor = PLAIN_TEXT;
 	
-	if (role == SCRIPT_OUT && ends_with_backslash(chunk)) {
+	if (vwin->role == SCRIPT_OUT && ends_with_backslash(chunk)) {
 	    nextcolor = BLUE_TEXT;
 	}
 
 	if (*chunk == '?') {
-	    thiscolor = (role == CONSOLE)? RED_TEXT : BLUE_TEXT;
+	    thiscolor = (vwin->role == CONSOLE)? RED_TEXT : BLUE_TEXT;
 	} else if (*chunk == '#') {
 	    thiscolor = BLUE_TEXT;
 	} 
@@ -1181,13 +1185,11 @@ void correct_line_color (windata_t *vwin)
 
 #endif /* not USE_GTKSOURCEVIEW */
 
-GtkWidget *create_text (GtkWidget *dlg, GtkTextBuffer **buf, 
-			int hsize, int vsize, gboolean editable)
+GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize, 
+			gboolean editable)
 {
     GtkTextBuffer *tbuf = gretl_text_buf_new();
     GtkWidget *w = gtk_text_view_new_with_buffer(tbuf);
-
-    *buf = tbuf;
 
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(w), GTK_WRAP_WORD);
     gtk_text_view_set_left_margin(GTK_TEXT_VIEW(w), 4);

@@ -186,18 +186,10 @@ static void set_dialog_border_widths (GtkWidget *dlg)
 {
     int w1 = 10, w2 = 5;
 
-#ifdef OLD_GTK
-    gtk_container_border_width(GTK_CONTAINER 
-			       (GTK_DIALOG(dlg)->vbox), w1);
-    gtk_container_border_width(GTK_CONTAINER 
-			       (GTK_DIALOG(dlg)->action_area), w2);
-#else
     gtk_container_set_border_width(GTK_CONTAINER 
 				   (GTK_DIALOG(dlg)->vbox), w1);
     gtk_container_set_border_width(GTK_CONTAINER 
 				   (GTK_DIALOG(dlg)->action_area), w2);
-#endif
-
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
 }
 

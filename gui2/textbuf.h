@@ -33,7 +33,7 @@ gint get_char_width (GtkWidget *widget);
 
 gchar *textview_get_text (GtkWidget *view);
 
-int textview_insert_text (GtkWidget *view, const gchar *text);
+int textview_set_text (GtkWidget *view, const gchar *text);
 
 int viewer_char_count (windata_t *vwin);
 
@@ -41,13 +41,12 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget);
 
 void text_undo (windata_t *vwin, guint u, GtkWidget *widget);
 
-void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn);
+void textview_set_text_colorized (GtkWidget *view, const char *buf);
 
-void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, 
-			      int role);
+void textview_insert_file (windata_t *vwin, const char *fname);
 
-GtkWidget *create_text (GtkWidget *dlg, GtkTextBuffer **buf, 
-			int hsize, int vsize, gboolean editable);
+GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize, 
+			gboolean editable);
 
 void text_table_setup (GtkWidget *vbox, GtkWidget *w);
 
@@ -58,11 +57,11 @@ gboolean help_popup_handler (GtkWidget *w, GdkEventButton *event,
 
 #ifdef USE_GTKSOURCEVIEW
 
-void create_source (windata_t *vwin, GtkSourceBuffer **buf, 
-		    int hsize, int vsize, gboolean editable);
+void create_source (windata_t *vwin, int hsize, int vsize, 
+		    gboolean editable);
 
-void source_buffer_insert_file (GtkSourceBuffer *sbuf, const char *filename,
-				int role);
+void sourceview_insert_file (windata_t *vwin, const char *filename);
+
 #else
 
 void correct_line_color (windata_t *vwin);

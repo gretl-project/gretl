@@ -21,6 +21,9 @@
 
 #include "gretl.h"
 #include "version.h"
+#include "gretl_func.h"
+#include "gretl_xml.h"
+
 #include "treeutils.h"
 #include "ssheet.h"
 #include "console.h"
@@ -33,7 +36,6 @@
 #include "toolbar.h"
 #include "menustate.h"
 #include "fileselect.h"
-#include "gretl_xml.h"
 
 #include <dirent.h>
 

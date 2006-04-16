@@ -656,17 +656,16 @@ static int write_session_xml (void)
     fprintf(fp, " <texts count=\"%d\">\n", session.ntexts);
     for (i=0; i<session.ntexts; i++) {
 	fprintf(fp, "  <session-text name=\"%s\">", session.texts[i]->name);
-	/* XML encoding? */
-	fputs(session.texts[i]->buf, fp);
+	gretl_xml_put_raw_string(session.texts[i]->buf, fp);
 	fputs("</session-text>\n", fp);
     }    
     fputs(" </texts>\n", fp);
 
     if (session.notes != NULL) {
-	fputs(" <notes>", fp);
-	fputs(session.notes, fp);
+	fputs("<notes>", fp);
+	gretl_xml_put_raw_string(session.notes, fp);
 	fputs("</notes>\n", fp);
-    }	
+    } 
 
     fputs("</gretl-session>\n", fp);
 

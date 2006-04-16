@@ -134,13 +134,8 @@ static void finfo_finalize (GtkWidget *w, struct function_info *finfo)
     } 
 
     if (hidx >= 0) {
-	char *tmp;
+	char *tmp = textview_get_text(finfo->text);
 
-#ifndef OLD_GTK
-	tmp = textview_get_text(GTK_TEXT_VIEW(finfo->text));
-#else
-	tmp = gtk_editable_get_chars(GTK_EDITABLE(finfo->text), 0, -1);
-#endif
 	finfo->help[hidx] = trim_text(tmp);
 	free(tmp);
     }
@@ -204,7 +199,7 @@ static void set_dialog_info_from_fn (struct function_info *finfo, int idx,
 	const char *new_help;
 
 	gretl_function_get_info(idx, "help", &new_help);
-	textview_insert_text(finfo->text, new_help);
+	textview_set_text(finfo->text, new_help);
     }
 
     old_hidx = new_hidx;
@@ -230,9 +225,6 @@ static gboolean update_public (GtkEditable *entry,
 
 static void finfo_dialog (struct function_info *finfo)
 {
-#ifndef OLD_GTK
-    GtkTextBuffer *tbuf;
-#endif
     GtkWidget *button, *label;
     GtkWidget *tbl, *hbox;
     const char *entry_labels[] = {
@@ -242,9 +234,6 @@ static void finfo_dialog (struct function_info *finfo)
 	N_("Package description")
     };
     const char *fnname;
-    int entry_lengths[] = {
-	32, 8, 16, 32
-    };
     int i;
 
     if (finfo_init(finfo)) {
@@ -265,11 +254,9 @@ static void finfo_dialog (struct function_info *finfo)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, i, i+1);
 	gtk_widget_show(label);
 
-#ifdef OLD_GTK
-	entry = gtk_entry_new_with_max_length(entry_lengths[i]);
-#else
 	entry = gtk_entry_new();
-	gtk_entry_set_width_chars(GTK_ENTRY(entry), entry_lengths[i] + 4); /* ? */
+#ifndef OLD_GTK
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 48);
 #endif
 	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
@@ -317,13 +304,12 @@ static void finfo_dialog (struct function_info *finfo)
     }
 
     gtk_widget_show(hbox);
-
-#ifdef OLD_GTK
+    
     finfo->text = create_text(finfo->dlg, 78, 300, TRUE);
+#ifdef OLD_GTK
     tbl = text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
     gtk_widget_set_usize(tbl, 500, 300);
 #else
-    finfo->text = create_text(finfo->dlg, &tbuf, 78, 300, TRUE);
     text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
 #endif
 
@@ -355,12 +341,13 @@ void save_user_functions (const char *fname, gpointer p)
 
     if (finfo->privlist != NULL) {
 	for (i=1; i<=finfo->privlist[0]; i++) {
-	    gretl_function_set_private(finfo->privlist[i]);
+	    gretl_function_set_private(finfo->privlist[i], TRUE);
 	}
     }
 
     for (i=1; i<=finfo->publist[0]; i++) {
 	gretl_function_set_info(finfo->publist[i], finfo->help[i-1]);
+	gretl_function_set_private(finfo->publist[i], FALSE);
     }
 		
     err = write_selected_user_functions(finfo->privlist, 

@@ -2719,7 +2719,7 @@ static void msgbox (const char *msg, int err)
 
     w = gtk_window_new(GTK_WINDOW_DIALOG);
 
-    gtk_container_border_width(GTK_CONTAINER(w), 5);
+    gtk_container_set_border_width(GTK_CONTAINER(w), 5);
     gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
     gtk_window_set_title (GTK_WINDOW (w), (err)? _("gretl error") : 
 			  _("gretl info")); 

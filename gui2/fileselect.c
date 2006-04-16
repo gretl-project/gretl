@@ -258,6 +258,7 @@ static void script_window_update (windata_t *vwin, const char *fname)
     g_free(title);
 
     if (vwin->role == VIEW_LOG || vwin->role == VIEW_SCRIPT) {
+	/* change role of window for editing */
 	vwin->role = EDIT_SCRIPT;
     }
 
@@ -273,8 +274,8 @@ static void script_window_update (windata_t *vwin, const char *fname)
 #endif
 }
 
-static void save_editable_content (int action, const char *fname,
-				   windata_t *vwin)
+static void 
+save_editable_content (int action, const char *fname, windata_t *vwin)
 {
     FILE *fp;
     gchar *buf;

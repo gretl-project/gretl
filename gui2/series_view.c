@@ -23,6 +23,7 @@
 #include "textutil.h"
 #include "dlgutils.h"
 #include "menustate.h"
+#include "textbuf.h"
 #include "series_view.h"
 
 #ifdef G_OS_WIN32
@@ -151,22 +152,6 @@ static void mview_fill_points (multi_series_view *mview)
     }
 }
 
-static void replace_window_text (windata_t *vwin, const char *pbuf)
-{
-#ifndef OLD_GTK
-    GtkTextBuffer *tbuf;
-
-    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-    gtk_text_buffer_set_text(tbuf, pbuf, -1);
-#else
-    gtk_text_freeze(GTK_TEXT(vwin->w));
-    gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
-    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-		    NULL, NULL, pbuf, strlen(pbuf));
-    gtk_text_thaw(GTK_TEXT(vwin->w));
-#endif
-}
-
 static PRN *series_view_print_csv (windata_t *vwin)
 {
     series_view *sview = (series_view *) vwin->data;
@@ -241,7 +226,7 @@ static void series_view_print (windata_t *vwin)
     }
 
     pbuf = gretl_print_get_buffer(prn);
-    replace_window_text(vwin, pbuf);
+    textview_set_text(vwin->w, pbuf);
 
     gretl_print_destroy(prn);
 }
@@ -286,7 +271,7 @@ static void multi_series_view_print_sorted (windata_t *vwin)
 	gui_errmsg(err);
     } else {
 	pbuf = gretl_print_get_buffer(prn);
-	replace_window_text(vwin, pbuf);
+	textview_set_text(vwin->w, pbuf);
     }
 
     free(obsvec);

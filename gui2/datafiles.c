@@ -696,6 +696,12 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 } 
 
+enum {
+    FUNCS_INFO,
+    FUNCS_LOAD,
+    FUNCS_CODE
+};
+
 static void gui_load_user_functions (const char *fname)
 {
     int err;
@@ -725,7 +731,24 @@ static void gui_show_functions_info (const char *fname)
     }    
 }
 
-static void browser_functions_handler (windata_t *vwin, int load)
+static void gui_show_functions_code (const char *fname)
+{
+    PRN *prn;
+    int err;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    err = get_function_file_code(fname, prn);
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	view_buffer(prn, 78, 350, _("gretl: user functions"), PRINT, NULL);
+    }    
+}
+
+static void browser_functions_handler (windata_t *vwin, int task)
 {
     char fnfile[FILENAME_MAX];
     gchar *fname;
@@ -745,10 +768,12 @@ static void browser_functions_handler (windata_t *vwin, int load)
 
     build_path(dir, fname, fnfile, ".gfn");
 
-    if (load) {
+    if (task == FUNCS_LOAD) {
 	gui_load_user_functions(fnfile);
-    } else {
+    } else if (task == FUNCS_INFO) {
 	gui_show_functions_info(fnfile);
+    } else {
+	gui_show_functions_code(fnfile);
     }
 
 #ifndef OLD_GTK
@@ -756,7 +781,7 @@ static void browser_functions_handler (windata_t *vwin, int load)
     g_free(dir);
 #endif
 
-    if (load) {
+    if (task == FUNCS_LOAD) {
 	gtk_widget_destroy(GTK_WIDGET(vwin->w));
     }
 }
@@ -765,14 +790,21 @@ void browser_load_func (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    browser_functions_handler(vwin, 1);
+    browser_functions_handler(vwin, FUNCS_LOAD);
 } 
 
 static void display_function_info (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    browser_functions_handler(vwin, 0);
+    browser_functions_handler(vwin, FUNCS_INFO);
+} 
+
+static void display_function_code (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, FUNCS_CODE);
 } 
 
 static void set_browser_status (windata_t *vwin, int status)
@@ -805,7 +837,6 @@ static void build_datafiles_popup (windata_t *vwin)
 	add_popup_item(_("Info"), vwin->popup, 
 		       G_CALLBACK(display_datafile_info), 
 		       vwin);
-
 	add_popup_item(_("Open"), vwin->popup, 
 		       G_CALLBACK(browser_open_data), 
 		       vwin);
@@ -948,6 +979,12 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 			 (code == FUNC_FILES)? 
 			 G_CALLBACK(display_function_info) :
 			 G_CALLBACK(display_datafile_info), vwin);
+	if (code == FUNC_FILES) {
+	    button = gtk_button_new_with_label(_("Code"));
+	    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(display_function_code), vwin);
+	}
 	button = gtk_button_new_with_label(_("Find"));
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",

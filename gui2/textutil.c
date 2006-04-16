@@ -544,7 +544,7 @@ static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
     gchar *cpybuf = NULL;
 
     if (!select) {
-	cpybuf = textview_get_text(GTK_TEXT_VIEW(vwin->w)); 
+	cpybuf = textview_get_text(vwin->w); 
     } else if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
 	GtkTextIter selstart, selend;
 
@@ -641,11 +641,11 @@ void window_print (windata_t *vwin, guint u, GtkWidget *widget)
     char *buf, *selbuf = NULL;
 
 # ifndef OLD_GTK
-    GtkTextView *tedit = GTK_TEXT_VIEW(vwin->w);
-    GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tedit);
+    GtkTextBuffer *tbuf;
     GtkTextIter start, end;
 
-    buf = textview_get_text(tedit);
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    buf = textview_get_text(vwin->w);
 
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	selbuf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);

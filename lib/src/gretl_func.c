@@ -649,6 +649,12 @@ static void ufuncs_destroy (void)
 
 /* handling of XML function packages */
 
+enum {
+    FUNCS_INFO,
+    FUNCS_LOAD,
+    FUNCS_CODE
+};
+
 static int func_read_params_or_returns (xmlNodePtr node, ufunc *fun,
 					int code)
 {
@@ -707,7 +713,8 @@ static int func_read_params_or_returns (xmlNodePtr node, ufunc *fun,
     return err;
 }
 
-static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
+static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun,
+			   PRN *prn)
 {
     char line[MAXLINE];
     char *buf, *s;
@@ -721,12 +728,17 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf) && !err) {
-	if (string_is_blank(line)) {
-	    continue;
+	if (prn != NULL) {
+	    pprintf(prn, "%s\n", line);
+	} else {
+	    if (string_is_blank(line)) {
+		/* ?? */
+		continue;
+	    }
+	    s = line;
+	    while (isspace(*s)) s++;
+	    err = real_add_fn_line(fun, s);
 	}
-	s = line;
-	while (isspace(*s)) s++;
-	err = real_add_fn_line(fun, s);
     }
 
     free(buf);
@@ -734,12 +746,12 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun)
     return err;
 }
 
-int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg, PRN *prn)
+static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg, 
+				int task, PRN *prn)
 {
     ufunc *fun = ufunc_new();
     xmlNodePtr cur;
     char *fname;
-    int read_full = (prn == NULL);
     int err = 0;
 
     if (fun == NULL) {
@@ -768,13 +780,14 @@ int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg, PRN *prn)
 	    err = func_read_params_or_returns(cur, fun, FN_PARAMS);
 	} else if (!xmlStrcmp(cur->name, (XUC) "returns")) {
 	    err = func_read_params_or_returns(cur, fun, FN_RETURNS);
-	} else if (read_full && !xmlStrcmp(cur->name, (XUC) "code")) {
-	    err = func_read_code(cur, doc, fun);
+	} else if (task != FUNCS_INFO && 
+		   !xmlStrcmp(cur->name, (XUC) "code")) {
+	    err = func_read_code(cur, doc, fun, prn);
 	}
 	cur = cur->next;
     }
 
-    if (read_full) {
+    if (task == FUNCS_LOAD) {
 	if (!err) {
 	   err = add_allocated_ufunc(fun);
 	}
@@ -783,7 +796,7 @@ int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg, PRN *prn)
 	}
     } else {
 	/* reading for display purposes */
-	if (!fun->private) {
+	if (!fun->private && task == FUNCS_INFO) {
 	    real_user_function_help(fun, NULL, prn);
 	}
 	free_ufunc(fun);
@@ -929,10 +942,10 @@ int gretl_function_get_info (int i, const char *key, char const **value)
     return 0;
 }
 
-void gretl_function_set_private (int i)
+void gretl_function_set_private (int i, int priv)
 {
     if (i >= 0 && i < n_ufuns) {
-	ufuns[i]->private = 1;
+	ufuns[i]->private = (priv != 0);
     }
 }
 
@@ -1138,7 +1151,7 @@ static void packages_destroy (void)
 
 static int 
 read_user_function_package (xmlDocPtr doc, xmlNodePtr node, 
-			    const char *fname, PRN *prn)
+			    const char *fname, int task, PRN *prn)
 {
     xmlNodePtr cur;
     fnpkg *pkg;
@@ -1164,7 +1177,7 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	cur = cur->next;
     }
 
-    if (prn != NULL) {
+    if (task == FUNCS_INFO) {
 	pprintf(prn, "Package file: %s\n", fname);
 	pprintf(prn, "Author: %s\n", (pkg->author)? pkg->author : "unknown");
 	pprintf(prn, "Version: %s\n", (pkg->version)? pkg->version : "unknown");
@@ -1179,7 +1192,7 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	    if (prn != NULL) {
 		pputc(prn, '\n');
 	    }
-	    err = read_ufunc_from_xml(cur, doc, pkg, prn);
+	    err = read_ufunc_from_xml(cur, doc, pkg, task, prn);
 	}
 	cur = cur->next;
     }
@@ -1196,7 +1209,7 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 /* if prn is non-NULL, we're just reading the contents
    of this file in order to display them */
 
-static int real_load_user_function_file (const char *fname, PRN *prn)
+static int real_read_user_function_file (const char *fname, int task, PRN *prn)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -1214,7 +1227,7 @@ static int real_load_user_function_file (const char *fname, PRN *prn)
     cur = node->xmlChildrenNode;
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    read_user_function_package(doc, cur, fname, prn);
+	    read_user_function_package(doc, cur, fname, task, prn);
 	} 
 	cur = cur->next;
     }
@@ -1226,7 +1239,7 @@ static int real_load_user_function_file (const char *fname, PRN *prn)
 	    if (prn != NULL) {
 		pputc(prn, '\n');
 	    }
-	    err = read_ufunc_from_xml(cur, doc, NULL, prn);
+	    err = read_ufunc_from_xml(cur, doc, NULL, task, prn);
 	}
 	cur = cur->next;
     }
@@ -1243,7 +1256,7 @@ static int real_load_user_function_file (const char *fname, PRN *prn)
 
 int load_user_function_file (const char *fname)
 {
-    return real_load_user_function_file(fname, NULL);
+    return real_read_user_function_file(fname, FUNCS_LOAD, NULL);
 }
 
 /* read specific function info from file, but do not
@@ -1251,7 +1264,12 @@ int load_user_function_file (const char *fname)
 
 int get_function_file_info (const char *fname, PRN *prn)
 {
-    return real_load_user_function_file(fname, prn);
+    return real_read_user_function_file(fname, FUNCS_INFO, prn);
+}
+
+int get_function_file_code (const char *fname, PRN *prn)
+{
+    return real_read_user_function_file(fname, FUNCS_CODE, prn);
 }
 
 char *get_function_file_header (const char *fname, int *err)

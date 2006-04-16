@@ -34,15 +34,15 @@ GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize,
 
 GtkWidget *text_table_setup (GtkWidget *vbox, GtkWidget *w);
 
-void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn);
+void textview_set_text_colorized (GtkWidget *view, const char *buf);
 
-int text_buffer_insert_file (GtkWidget *w, const char *filename, int role);
+int textview_insert_file (windata_t *vwin, const char *filename);
 
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
 
 gchar *textview_get_text (GtkWidget *view);
 
-int textview_insert_text (GtkWidget *view, const gchar *text);
+int textview_set_text (GtkWidget *view, const gchar *text);
 
 int viewer_char_count (windata_t *vwin);
 
