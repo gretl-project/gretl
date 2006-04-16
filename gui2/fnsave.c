@@ -114,7 +114,7 @@ static int help_text_index (struct function_info *finfo)
     return -1;
 }
 
-static void finfo_ok (GtkWidget *w, struct function_info *finfo)
+static void finfo_finalize (GtkWidget *w, struct function_info *finfo)
 {
     const gchar *txt;
     int i, hidx = 0;
@@ -162,15 +162,17 @@ enum {
 static void set_dialog_info_from_fn (struct function_info *finfo, int idx,
 				     int code)
 {
-    const char *author = NULL;
-    const char *version = NULL;
-    const char *date = NULL;
-    const char *pkgdesc = NULL;
-    const char *help = NULL;
+    const char *attrib = NULL;
+    const char *keys[] = {
+	"author",
+	"version",
+	"date",
+	"pkgdesc"
+    };
     const char *etxt;
 
     static int old_hidx;
-    int new_hidx;
+    int i, new_hidx;
 
     if (code == HIDX_INIT) {
 	old_hidx = new_hidx = 0;
@@ -178,48 +180,31 @@ static void set_dialog_info_from_fn (struct function_info *finfo, int idx,
 	new_hidx = help_text_index(finfo);
     }
 
-    gretl_function_get_info(idx, &author, &version, &date, &pkgdesc, &help);
-
-    if (author != NULL) {
-	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[0]));
-	if (*etxt == '\0') {
-	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[0]), author);
+    for (i=0; i<NENTRIES; i++) {
+	gretl_function_get_info(idx, keys[i], &attrib);
+	if (attrib != NULL) {
+	    etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
+	    if (*etxt == '\0') {
+		gtk_entry_set_text(GTK_ENTRY(finfo->entries[i]), attrib);
+	    }
 	}
     }
 
-    if (version != NULL) {
-	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[1]));
-	if (*etxt == '\0') {
-	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[1]), version);
-	}
+    if (new_hidx != old_hidx) {
+	/* we're switching the "active" interface, so save the old
+	   help text */
+	char *old_help = textview_get_text(finfo->text);
+
+	free(finfo->help[old_hidx]);
+	finfo->help[old_hidx] = old_help;
     }
 
-    if (date != NULL) {
-	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[2]));
-	if (*etxt == '\0') {
-	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[2]), date);
-	}
-    }
+    if (code == HIDX_INIT || new_hidx != old_hidx) {
+	/* initializing or switching: insert new help text */
+	const char *new_help;
 
-    if (pkgdesc != NULL) {
-	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[3]));
-	if (*etxt == '\0') {
-	    gtk_entry_set_text(GTK_ENTRY(finfo->entries[3]), pkgdesc);
-	}
-    }
-
-    /* FIXME swap in new help text, and save the old */
-
-    if (help != NULL) {
-#ifndef OLD_GTK
-	GtkTextBuffer *tbuf;
-
-	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(finfo->text));
-	gtk_text_buffer_set_text(tbuf, help, -1);
-#else
-	gtk_text_insert(GTK_TEXT(finfo->text), fixed_font, 
-			NULL, NULL, help, strlen(help));
-#endif
+	gretl_function_get_info(idx, "help", &new_help);
+	textview_insert_text(finfo->text, new_help);
     }
 
     old_hidx = new_hidx;
@@ -347,7 +332,7 @@ static void finfo_dialog (struct function_info *finfo)
     /* Create the "OK" button */
     button = ok_button(GTK_DIALOG(finfo->dlg)->action_area);
     g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(finfo_ok), finfo);
+		     G_CALLBACK(finfo_finalize), finfo);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 

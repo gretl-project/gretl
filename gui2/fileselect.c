@@ -282,12 +282,7 @@ static void save_editable_content (int action, const char *fname,
     gchar *trbuf;
 #endif
 
-#ifndef OLD_GTK
-    buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
-#else
-    buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-#endif
-
+    buf = textview_get_text(vwin->w);
     if (buf == NULL) {
 	errbox("Couldn't retrieve buffer");
 	return;

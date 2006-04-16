@@ -5098,11 +5098,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	windata_t *vwin = (windata_t *) data;
 	gchar *buf;
 
-#ifdef OLD_GTK
-	buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-#else
-	buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
-#endif
+	buf = textview_get_text(vwin->w);
 
 	if (buf == NULL || *buf == '\0') {
 	    errbox("No commands to execute");

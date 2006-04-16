@@ -2724,7 +2724,7 @@ static void auto_save_gp (windata_t *vwin)
     gchar *trbuf;
 # endif
 
-    buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
+    buf = textview_get_text(vwin->w);
     if (buf == NULL) return;
 
     if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {

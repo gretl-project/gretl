@@ -57,12 +57,7 @@ int gretl_function_flagged_error (const char *s, PRN *prn);
 
 int gretl_function_set_info (int i, const char *help);
 
-int gretl_function_get_info (int i, 
-			     char const **author,
-			     char const **version,
-			     char const **date,
-			     char const **pkgdesc,
-			     char const **help);
+int gretl_function_get_info (int i, const char *key, char const **value);
 
 void gretl_function_set_private (int i);
 

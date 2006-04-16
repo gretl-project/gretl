@@ -242,6 +242,30 @@ void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en)
     hwin->active_var = hcode;
 }
 
+gchar *textview_get_text (GtkWidget *view)
+{
+    g_return_val_if_fail(GTK_IS_EDITABLE(view), NULL);
+
+    return gtk_editable_get_chars(GTK_EDITABLE(view), 0, -1);
+}
+
+int textview_insert_text (GtkWidget *view, const gchar *text)
+{
+    g_return_val_if_fail(GTK_IS_TEXT(view), 1);
+
+    if (text != NULL) {
+	gtk_text_insert(GTK_TEXT(view), fixed_font, 
+			NULL, NULL, text, strlen(text));
+    } else {
+	int len = gtk_text_get_length(GTK_TEXT(view));
+
+	gtk_text_set_point(GTK_TEXT(view), 0);
+	gtk_text_forward_delete(GTK_TEXT(view), len);
+    }
+
+    return 0;
+}
+
 int viewer_char_count (windata_t *vwin)
 {
     int ret = 0;

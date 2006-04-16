@@ -349,11 +349,7 @@ gchar *edit_dialog_special_get_text (dialog_t *dlg)
 {
     gchar *buf;
 
-#ifdef OLD_GTK
-    buf = gtk_editable_get_chars(GTK_EDITABLE(dlg->edit), 0, -1);
-#else
-    buf = textview_get_text(GTK_TEXT_VIEW(dlg->edit));
-#endif
+    buf = textview_get_text(dlg->edit);
 
     if (buf != NULL && *buf == '\0') {
 	g_free(buf);
@@ -476,11 +472,7 @@ static int edit_has_list (GtkWidget *w, int i)
     gchar *buf;
     int ret = 0;
 
-#ifdef OLD_GTK
-    buf = gtk_editable_get_chars(GTK_EDITABLE(w), 0, -1);
-#else
-    buf = textview_get_text(GTK_TEXT_VIEW(w));
-#endif
+    buf = textview_get_text(w);
 
     if (buf != NULL) {
 	if (i == ADD_ENDO_LIST) {

@@ -40,6 +40,10 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role);
 
 void set_help_topic_buffer (windata_t *hwin, int hcode, int pos, int en);
 
+gchar *textview_get_text (GtkWidget *view);
+
+int textview_insert_text (GtkWidget *view, const gchar *text);
+
 int viewer_char_count (windata_t *vwin);
 
 #endif /* TEXTBUF_H */

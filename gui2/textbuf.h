@@ -31,7 +31,9 @@ void cursor_to_top (windata_t *vwin);
 
 gint get_char_width (GtkWidget *widget);
 
-gchar *textview_get_text (GtkTextView *view);
+gchar *textview_get_text (GtkWidget *view);
+
+int textview_insert_text (GtkWidget *view, const gchar *text);
 
 int viewer_char_count (windata_t *vwin);
 

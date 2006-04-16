@@ -902,27 +902,28 @@ static fnpkg *ufunc_get_parent_package (const ufunc *fun)
     return NULL;
 }
 
-int gretl_function_get_info (int i, 
-			     char const **author,
-			     char const **version,
-			     char const **date,
-			     char const **pkgdesc,
-			     char const **help)
+int gretl_function_get_info (int i, const char *key, char const **value)
 {
-    fnpkg *pkg;
-
     if (i < 0 || i >= n_ufuns) {
 	return E_DATA;
     }
 
-    *help = ufuns[i]->help;
+    if (!strcmp(key, "help")) {
+	*value = ufuns[i]->help;
+    } else {
+	fnpkg *pkg = ufunc_get_parent_package(ufuns[i]);
 
-    pkg = ufunc_get_parent_package(ufuns[i]);
-    if (pkg != NULL) {
-	*author = pkg->author;
-	*version = pkg->version;
-	*date = pkg->date;
-	*pkgdesc = pkg->descrip;
+	if (pkg == NULL) {
+	    *value = NULL;
+	} else if (!strcmp(key, "author")) {
+	    *value = pkg->author;
+	} else if (!strcmp(key, "version")) {
+	    *value = pkg->version;
+	} else if (!strcmp(key, "date")) {
+	    *value = pkg->date;
+	} else if (!strcmp(key, "pkgdesc")) {
+	    *value = pkg->descrip;
+	}
     }
 
     return 0;

@@ -1349,11 +1349,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     gchar *text;
     char **pbuf = (char **) vwin->data;
 
-#ifndef OLD_GTK
-    text = textview_get_text(GTK_TEXT_VIEW(vwin->w));
-#else
-    text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-#endif
+    text = textview_get_text(vwin->w);
 
     if (text == NULL || *text == '\0') {
 	errbox(_("Buffer is empty"));
@@ -1390,11 +1386,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	    errbox(_("Can't open file for writing"));
 	    return;
 	} else {
-#ifndef OLD_GTK
-	    text = textview_get_text(GTK_TEXT_VIEW(vwin->w));
-#else
-	    text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-#endif
+	    text = textview_get_text(vwin->w);
 	    system_print_buf(text, fp);
 	    fclose(fp);
 	    g_free(text);
@@ -2790,11 +2782,7 @@ static void auto_save_script (windata_t *vwin)
 	return;
     }
 
-#ifndef OLD_GTK
-    savestuff = textview_get_text(GTK_TEXT_VIEW(vwin->w));
-#else
-    savestuff = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-#endif
+    savestuff = textview_get_text(vwin->w);
     fprintf(fp, "%s", savestuff);
     g_free(savestuff); 
     fclose(fp);

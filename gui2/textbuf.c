@@ -84,18 +84,36 @@ gint get_char_width (GtkWidget *widget)
     return width;
 }
 
-gchar *textview_get_text (GtkTextView *view)
+gchar *textview_get_text (GtkWidget *view)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
 
     g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), NULL);
 
-    tbuf = gtk_text_view_get_buffer(view);
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);
 
     return gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
+}
+
+int textview_insert_text (GtkWidget *view, const gchar *text)
+{
+    GtkTextBuffer *tbuf;
+
+    g_return_val_if_fail(GTK_IS_TEXT_VIEW(view), 1);
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
+    g_return_val_if_fail(tbuf != NULL, 1);
+
+    if (text != NULL) {
+	gtk_text_buffer_set_text(tbuf, text, -1);
+    } else {
+	gtk_text_buffer_set_text(tbuf, "", -1);
+    }
+
+    return 0;
 }
 
 int viewer_char_count (windata_t *vwin)
