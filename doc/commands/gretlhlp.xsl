@@ -30,6 +30,26 @@
   </xsl:choose>  
 </xsl:template>
 
+<xsl:template name="gettext-nospace">
+  <xsl:param name="key"/>
+  <xsl:variable name="itext"
+    select="normalize-space($intl/localization[@language=$lang]/gentext[@key=$key]/@text)"/>
+  <xsl:choose>
+    <xsl:when test="$itext">
+      <xsl:value-of select="$itext"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:message terminate="yes">
+        <xsl:text>** Error: no phrase with key = '</xsl:text>
+        <xsl:value-of select="$key"/>
+        <xsl:text>' found for lang '</xsl:text>
+        <xsl:value-of select="$lang"/>
+        <xsl:text>'.</xsl:text>
+      </xsl:message>
+    </xsl:otherwise>
+  </xsl:choose>  
+</xsl:template>
+
 <xsl:template match="commandlist">
   <xsl:text>headings </xsl:text>
   <xsl:value-of select="count(command[not(@section = preceding-sibling::command/@section)])"/>
@@ -329,7 +349,7 @@
 
 <xsl:template match="guideref">
   <xsl:text>&lt;@pdf="</xsl:text>
-  <xsl:call-template name="gettext">
+  <xsl:call-template name="gettext-nospace">
     <xsl:with-param name="key" select="'guidebook'"/>
   </xsl:call-template>
   <xsl:text>"&gt;</xsl:text>

@@ -819,6 +819,27 @@ static void select_singleton (selector *sr)
 		       0, v, 1, 0, 2, datainfo->varname[v], -1);
 }
 
+static int lvar_present_on_right (gint lnum, GtkWidget *list)
+{
+    GtkTreeIter iter;
+    GtkTreeModel *rmod;
+    gint rnum;
+
+    g_return_val_if_fail(GTK_IS_TREE_VIEW(list), 0);
+
+    rmod = gtk_tree_view_get_model(GTK_TREE_VIEW(list));
+    if (gtk_tree_model_get_iter_first(rmod, &iter)) {
+	do {
+	    gtk_tree_model_get(rmod, &iter, 0, &rnum, -1);
+	    if (rnum == lnum) {
+		return 1;
+	    }
+	} while (gtk_tree_model_iter_next(rmod, &iter));
+    }
+
+    return 0;
+}
+
 static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter, 
 			      selector *sr, int locus)
 {
@@ -851,6 +872,11 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	gtk_tree_model_get(srcmodel, srciter, 0, &v, 2, &vname, -1);
     } else {
 	gtk_tree_model_get(srcmodel, srciter, 0, &v, -1);
+    }
+
+    if (sr->code == SAVE_FUNCTIONS && 
+	lvar_present_on_right(v, sr->rlvars)) {
+	return;
     }
 
     nvars = 0;
@@ -904,6 +930,17 @@ static void add_to_rlvars (GtkTreeModel *model, GtkTreePath *path,
 	}
     }
 
+    /* function selector: don't add an interface to both
+       rlvars and ruvars */
+    if (sr->code == SAVE_FUNCTIONS) {
+	gint lnum;
+
+	gtk_tree_model_get(model, iter, 0, &lnum, -1);
+	if (lvar_present_on_right(lnum, sr->ruvars)) {
+	    return;
+	}
+    }
+
     real_add_generic(model, iter, sr, SR_RLVARS);
 }
 
@@ -917,11 +954,11 @@ static void add_to_ruvars_callback (GtkWidget *w, selector *sr)
 {
     GtkTreeSelection *selection;
 
-    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(sr->lvars));
-    gtk_tree_selection_selected_foreach (selection, 
-					 (GtkTreeSelectionForeachFunc) 
-					 add_to_ruvars,
-					 sr);
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->lvars));
+    gtk_tree_selection_selected_foreach(selection, 
+					(GtkTreeSelectionForeachFunc) 
+					add_to_ruvars,
+					sr);
 }
 
 static void add_all_to_rlvars_callback (GtkWidget *w, selector *sr)
@@ -1017,11 +1054,17 @@ static gint
 dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, selector *sr) 
 {
     if (event != NULL && event->type == GDK_2BUTTON_PRESS) { 
-	set_dependent_var_from_active(sr);
-	if (sr->default_check != NULL) 
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
-					 TRUE);
+	if (sr->code == SAVE_FUNCTIONS) {
+	    add_to_ruvars_callback(NULL, sr);
+	} else {
+	    set_dependent_var_from_active(sr);
+	    if (sr->default_check != NULL) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
+					     TRUE);
+	    }
+	}
     }
+
     return FALSE;
 }
 

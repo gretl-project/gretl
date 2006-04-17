@@ -744,7 +744,7 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun,
 
     while (bufgets(line, sizeof line, buf) && !err) {
 	if (prn != NULL) {
-	    pprintf(prn, "%s\n", line);
+	    pprintf(prn, "  %s\n", line);
 	} else {
 	    if (string_is_blank(line)) {
 		continue;
@@ -788,7 +788,7 @@ static void print_function_end (ufunc *fun, PRN *prn)
 
     for (i=0; i<fun->n_returns; i++) {
 	if (i == 0) {
-	    pputs(prn, "return ");
+	    pputs(prn, "  return ");
 	}
 	typestr = arg_type_string(fun->rtype[i]);
 	pprintf(prn, "%s %s", typestr, fun->returns[i]);
