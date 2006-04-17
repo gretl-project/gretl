@@ -59,10 +59,10 @@ static void doubleclick_action (windata_t *win)
 	break;
     case NATIVE_DB:
     case RATS_DB:	    
-	open_db_list(NULL, win); 
+	open_db_index(NULL, win); 
 	break;
     case REMOTE_DB:
-	open_remote_db_list(NULL, win);
+	open_remote_db_index(NULL, win);
 	break;
     case NATIVE_SERIES:
     case RATS_SERIES:

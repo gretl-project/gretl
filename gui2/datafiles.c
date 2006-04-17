@@ -89,6 +89,8 @@ enum {
     COLL_PS
 };
 
+#define REMOTE_ACTION(c) (c == REMOTE_DB || c == REMOTE_FUNC_FILES)
+
 static char *full_path (char *s1, const char *s2)
 {
     static char fpath[FILENAME_MAX];
@@ -881,6 +883,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     GtkWidget *filebox, *button;
     GtkWidget *main_vbox, *button_box;
     windata_t *vwin;
+    const gchar *label;
     void (*browse_func)() = NULL;
     int err = 0;
 
@@ -912,7 +915,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	break;
     case FUNC_FILES:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
-			     _("gretl: function files"));
+			     _("gretl: function packages"));
 	browse_func = browser_load_func;
 	break;
     case TEXTBOOK_DATA:
@@ -924,13 +927,19 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     case RATS_DB:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: database files"));
-	browse_func = open_db_list;
+	browse_func = open_db_index;
 	break;
     case REMOTE_DB:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: databases on server"));
-	browse_func = open_remote_db_list;
+	browse_func = open_remote_db_index;
 	gtk_widget_set_usize(vwin->w, 640, 480);
+	break;
+    case REMOTE_FUNC_FILES:
+	gtk_window_set_title(GTK_WINDOW(vwin->w), 
+			     _("gretl: function packages on server"));
+	gtk_widget_set_usize(vwin->w, 640, 480);
+	browse_func = dummy_call; /* open_remote_function_index; */
 	break;
     }
 
@@ -959,7 +968,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 			     vwin->popup);
 	}
 	reset_data_stack();
-    } else if (code == REMOTE_DB) {
+    } else if (REMOTE_ACTION(code)) {
 	GtkWidget *hbox;
 
 	hbox = gtk_hbox_new(FALSE, 0);
@@ -967,14 +976,17 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	vwin->status = gtk_label_new(_("Network status: OK"));
 	gtk_label_set_justify(GTK_LABEL(vwin->status), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(hbox), vwin->status, FALSE, FALSE, 0);
-    }
+    } 
 
     button_box = gtk_hbox_new(FALSE, 5);
     gtk_box_set_homogeneous(GTK_BOX(button_box), TRUE);
     gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
 
-    button = gtk_button_new_with_label 
-	((code == REMOTE_DB)? _("Get series listing") : _("Open"));
+    label = (code == REMOTE_DB)? N_("Get series listing") :
+	(code == REMOTE_FUNC_FILES)? N_("Get fuction info") :
+	N_("Open");
+
+    button = gtk_button_new_with_label(_(label));
     gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -985,13 +997,15 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 			 G_CALLBACK(delete_widget), vwin->w); 
     }
 
-    if (code == TEXTBOOK_DATA || code == REMOTE_DB || code == FUNC_FILES) {
-	button = gtk_button_new_with_label 
-	    ((code == REMOTE_DB)? _("Install") : _("Info"));
+    if (code == TEXTBOOK_DATA || code == FUNC_FILES || REMOTE_ACTION(code)) {
+	label = (REMOTE_ACTION(code))? N_("Install") : N_("Info");
+	button = gtk_button_new_with_label(_(label));
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 (code == REMOTE_DB)?
 			 G_CALLBACK(grab_remote_db) :
+			 (code == REMOTE_FUNC_FILES)? 
+			 G_CALLBACK(dummy_call) :
 			 (code == FUNC_FILES)? 
 			 G_CALLBACK(display_function_info) :
 			 G_CALLBACK(display_datafile_info), vwin);
@@ -1178,8 +1192,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 {
     if (vwin->role == NATIVE_DB || vwin->role == RATS_DB) {
 	return populate_dbfilelist(vwin);
-    } else if (vwin->role == REMOTE_DB) {
-	return populate_remote_db_list(vwin);
+    } else if (REMOTE_ACTION(vwin->role)) {
+	return populate_remote_object_list(vwin);
     } else if (vwin->role == FUNC_FILES) {
 	return populate_func_list(vwin);
     } else {

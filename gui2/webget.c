@@ -1502,6 +1502,12 @@ static char *print_option (int opt)
 	return "GRAB_FILE";
     case QUERY:
 	return "QUERY";
+    case LIST_FUNCS:
+	return "LIST_FUNCS";
+    case GRAB_FUNC_INFO:
+	return "GRAB_FUNC_INFO";
+    case GRAB_FUNC:
+	return "GRAB_FUNC";
     default:
 	break;
     }
@@ -1851,8 +1857,7 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
 	fnlen = strlen(fname);
     }
 
-    if (opt == GRAB_FILE) cgi = updatecgi;
-    else cgi = datacgi;
+    cgi = (opt == GRAB_FILE)? updatecgi : datacgi;
 
     u = newurl();
     if (u == NULL) {
@@ -1879,8 +1884,8 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
     u->saveopt = saveopt;
 
-    if (fnlen) {
-	if (opt == GRAB_FILE) {
+    if (fnlen > 0) {
+	if (opt == GRAB_FILE || opt == GRAB_FUNC_INFO || opt == GRAB_FUNC) {
 	    strcat(u->path, "&fname=");
 	} else {
 	    strcat(u->path, "&dbase=");
@@ -2014,7 +2019,7 @@ static long GetRegKey (HKEY key, char *subkey, char *retdata)
     return err;
 }
 
-# ifdef UPDATER
+# ifdef UPDATER /* standalone program for Windows */
 
 int read_reg_val (HKEY tree, char *keyname, char *keyval)
 {
@@ -2118,11 +2123,25 @@ int list_remote_dbs (char **getbuf, char *errbuf)
 			 NULL, getbuf, errbuf);
 }
 
-int retrieve_remote_db_list (const char *dbname, 
-			     char **getbuf, 
-			     char *errbuf)
+int list_remote_function_packages (char **getbuf, char *errbuf)
+{
+    return retrieve_url (LIST_FUNCS, NULL, NULL, SAVE_TO_BUFFER, 
+			 NULL, getbuf, errbuf);
+}
+
+int retrieve_remote_db_index (const char *dbname, 
+			      char **getbuf, 
+			      char *errbuf)
 {
     return retrieve_url (GRAB_IDX, dbname, NULL, SAVE_TO_BUFFER, 
+			 NULL, getbuf, errbuf);
+}
+
+int retrieve_remote_function_info (const char *pkgname, 
+				   char **getbuf, 
+				   char *errbuf)
+{
+    return retrieve_url (GRAB_FUNC_INFO, pkgname, NULL, SAVE_TO_BUFFER, 
 			 NULL, getbuf, errbuf);
 }
 
@@ -2132,6 +2151,14 @@ int retrieve_remote_db (const char *dbname,
 			int opt)
 {
     return retrieve_url (opt, dbname, NULL, SAVE_TO_FILE, 
+			 localname, NULL, errbuf);
+}
+
+int retrieve_remote_function_package (const char *pkgname, 
+				      const char *localname,
+				      char *errbuf)
+{
+    return retrieve_url (GRAB_FUNC, pkgname, NULL, SAVE_TO_FILE, 
 			 localname, NULL, errbuf);
 }
 

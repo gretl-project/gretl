@@ -1012,9 +1012,9 @@ int main (int argc, char *argv[])
 
     /* try opening specified database */
     if (gui_get_data == OPT_DBOPEN) {
-	open_named_db_list(dbname);
+	open_named_db_index(dbname);
     } else if (gui_get_data == OPT_WEBDB) {
-	open_named_remote_db_list(dbname);
+	open_named_remote_db_index(dbname);
     }
 
     /* Enter the event loop */

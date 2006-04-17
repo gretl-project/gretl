@@ -142,6 +142,7 @@ enum browser_codes {
     TEXTBOOK_DATA = FILE_OP_MAX + 1, /* don't collide with file_ops enum */
     PS_FILES,
     FUNC_FILES,
+    REMOTE_FUNC_FILES,
     NATIVE_DB,
     RATS_DB,
     REMOTE_DB,

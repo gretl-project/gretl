@@ -1162,7 +1162,7 @@ static fnpkg *function_package_new (const char *fname)
 	return NULL;
     }
 
-    pkg->ID = n_pkgs + 1;
+    pkg->ID = n_pkgs + 1; /* FIXME? */
     pkg->author = NULL;
     pkg->version = NULL;
     pkg->date = NULL;
@@ -1619,7 +1619,6 @@ static int arg_type_from_string (const char *s)
 
     return ret;
 }
-
 
 /* Parse line and return an allocated array of strings consisting of
    the space- or comma-separated fields in line, each one truncated if

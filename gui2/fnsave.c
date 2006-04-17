@@ -52,6 +52,7 @@ static int finfo_init (struct function_info *finfo)
     finfo->canceled = 0;
 
     finfo->n_public = finfo->publist[0];
+
     finfo->help = create_strings_array(finfo->n_public);
     if (finfo->help == NULL) {
 	errbox(_("Out of memory!"));
@@ -186,8 +187,8 @@ static void set_dialog_info_from_fn (struct function_info *finfo, int idx,
     }
 
     if (new_hidx != old_hidx) {
-	/* we're switching the "active" interface, so save the old
-	   help text */
+	/* we're switching the "active" interface, so save the 
+	   help text for the previous interface */
 	char *old_help = textview_get_text(finfo->text);
 
 	free(finfo->help[old_hidx]);
@@ -369,6 +370,10 @@ void save_user_functions (const char *fname, gpointer p)
     }
 }
 
+/* called from function selection dialog: a set of functions has been
+   selected and now we need to add info on author, version, etc.
+*/
+
 void prepare_functions_save (void)
 {
     struct function_info *finfo;
@@ -406,6 +411,7 @@ void prepare_functions_save (void)
     }
 
     finfo_dialog(finfo);
+
     if (finfo->canceled) {
 	finfo_free(finfo);
     } else {
