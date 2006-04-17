@@ -1199,8 +1199,10 @@ GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize,
 
     gtk_widget_modify_font(GTK_WIDGET(w), fixed_font);
 
-    hsize *= get_char_width(w);
-    hsize += 48;
+    if (hsize > 0) {
+	hsize *= get_char_width(w);
+	hsize += 48;
+    }
 
     gtk_window_set_default_size(GTK_WINDOW(dlg), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);

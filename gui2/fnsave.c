@@ -240,8 +240,10 @@ static void finfo_dialog (struct function_info *finfo)
 	return;
     }
 
-    finfo->dlg = gretl_dialog_new(_("gretl: function package"), NULL, 
+    finfo->dlg = gretl_dialog_new(_("gretl: function packager"), NULL, 
 				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
+
+    /* FIXME want label at top of dialog? */
 
     tbl = gtk_table_new(NENTRIES, 2, FALSE);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
@@ -256,7 +258,7 @@ static void finfo_dialog (struct function_info *finfo)
 
 	entry = gtk_entry_new();
 #ifndef OLD_GTK
-	gtk_entry_set_width_chars(GTK_ENTRY(entry), 48);
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 40);
 #endif
 	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
@@ -272,17 +274,18 @@ static void finfo_dialog (struct function_info *finfo)
 		       hbox, FALSE, FALSE, 5);
     
     if (finfo->n_public > 1) {
+	/* drop-down selector for public inrerfaces */
 	GList *fn_list = NULL;
 
 	label = gtk_label_new("Help text for");
 	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
 	gtk_widget_show(label);
 
-	/* drop-down selection of public functions */
 	for (i=1; i<=finfo->publist[0]; i++) {
 	    fnname = user_function_name_by_index(finfo->publist[i]);
 	    fn_list = g_list_append(fn_list, (gpointer) fnname);
 	}
+
 	finfo->combo = gtk_combo_new();
 	gtk_combo_set_popdown_strings(GTK_COMBO(finfo->combo), fn_list); 
 	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(finfo->combo)->entry), FALSE);
@@ -305,12 +308,13 @@ static void finfo_dialog (struct function_info *finfo)
 
     gtk_widget_show(hbox);
     
-    finfo->text = create_text(finfo->dlg, 78, 300, TRUE);
+    finfo->text = create_text(finfo->dlg, -1, -1, TRUE);
 #ifdef OLD_GTK
     tbl = text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
-    gtk_widget_set_usize(tbl, 500, 300);
+    gtk_widget_set_usize(tbl, 500, 300); /* ?? */
 #else
     text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
+    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 560, 410); /* ?? */
 #endif
 
     set_dialog_info_from_fn(finfo, finfo->publist[1], HIDX_INIT);
