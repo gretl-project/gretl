@@ -84,6 +84,8 @@ int copyfile (const char *src, const char *dest);
 
 int isdir (const char *path);
 
+FILE *gretl_tempfile_open (char *fname);
+
 void delete_widget (GtkWidget *widget, gpointer data);
 
 void *mymalloc (size_t size); 

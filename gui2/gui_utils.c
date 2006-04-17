@@ -524,6 +524,25 @@ int gretl_mkdir (const char *path)
 
 #endif
 
+FILE *gretl_tempfile_open (char *fname)
+{
+    FILE *fp = NULL;
+    int fd;
+
+    strcat(fname, ".XXXXXX");
+    fd = mkstemp(fname);
+    if (fd != -1) {
+	fp = fdopen(fd, "w+");
+	if (fp == NULL) {
+	    errbox(_("Couldn't open %s"), fname);
+	    close(fd);
+	    remove(fname);
+	}
+    }
+
+    return fp;
+}
+
 int probably_native_datafile (const char *fname)
 {
     char test[5];

@@ -6,12 +6,9 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     char cmd[MAXLEN], temp[MAXLEN], fline[MAXLEN];
     GdkPixbuf *pbuf = NULL;
 
-    sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
-    if (mktemp(temp) == NULL) {
-	return NULL;
-    }
+    sprintf(temp, "%sgpttmp", paths.userdir);
 
-    ftmp = gretl_fopen(temp, "w");
+    ftmp = gretl_tempfile_open(temp);
     if (ftmp == NULL) {
 	return NULL;
     }

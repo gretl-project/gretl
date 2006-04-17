@@ -655,8 +655,23 @@ enum {
     FUNCS_CODE
 };
 
-static int func_read_params_or_returns (xmlNodePtr node, ufunc *fun,
-					int code)
+static const char *arg_type_string (int type)
+{
+    if (type == ARG_SCALAR) {
+	return _("scalar");
+    } else if (type == ARG_SERIES) {
+	return _("series");
+    } else if (type == ARG_LIST) {
+	return _("list");
+    } else if (type == ARG_MATRIX) {
+	return _("matrix");
+    } else {
+	return _("unknown");
+    }
+}
+
+static int 
+func_read_params_or_returns (xmlNodePtr node, ufunc *fun, int code)
 {
     xmlNodePtr cur;
     const char *targ;
@@ -746,6 +761,27 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun,
     return err;
 }
 
+static void print_function_start (ufunc *fun, PRN *prn)
+{
+    const char *typestr;
+    int i;
+
+    pprintf(prn, "function %s ", fun->name);
+    for (i=0; i<fun->n_params; i++) {
+	if (i == 0) {
+	    pputc(prn, '(');
+	}
+	typestr = arg_type_string(fun->ptype[i]);
+	pprintf(prn, "%s %s", typestr, fun->params[i]);
+	if (i == fun->n_params - 1) {
+	    pputc(prn, ')');
+	} else {
+	    pputs(prn, ", ");
+	}
+    }
+    pputc(prn, '\n');
+}
+
 static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg, 
 				int task, PRN *prn)
 {
@@ -782,6 +818,9 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	    err = func_read_params_or_returns(cur, fun, FN_RETURNS);
 	} else if (task != FUNCS_INFO && 
 		   !xmlStrcmp(cur->name, (XUC) "code")) {
+	    if (task == FUNCS_CODE) {
+		print_function_start(fun, prn);
+	    }
 	    err = func_read_code(cur, doc, fun, prn);
 	}
 	cur = cur->next;
@@ -794,13 +833,15 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	if (err) {
 	    free_ufunc(fun);
 	}
-    } else {
-	/* reading for display purposes */
-	if (!fun->private && task == FUNCS_INFO) {
+    } else if (task == FUNCS_INFO) {
+	if (!fun->private) {
 	    real_user_function_help(fun, NULL, prn);
 	}
 	free_ufunc(fun);
-    } 
+    } else if (task == FUNCS_CODE) {
+	pputs(prn, "end function\n");
+	free_ufunc(fun);
+    }
 
 #if FN_DEBUG
     if (err) {
@@ -1542,20 +1583,23 @@ static char *get_next_arg (char **parg, char *s, int maxlen)
     return s;
 }
 
-static int is_type_name (const char *s)
+static int arg_type_from_string (const char *s)
 {
-    int ret = ARG_NONE;
+    int ret = 0;
 
     if (!strcmp(s, "scalar")) {
 	ret = ARG_SCALAR;
     } else if (!strcmp(s, "series")) {
 	ret = ARG_SERIES;
+    } else if (!strcmp(s, "list")) {
+	ret = ARG_LIST;
     } else if (!strcmp(s, "matrix")) {
 	ret = ARG_MATRIX;
     }
 
     return ret;
 }
+
 
 /* Parse line and return an allocated array of strings consisting of
    the space- or comma-separated fields in line, each one truncated if
@@ -1623,7 +1667,7 @@ get_separated_fields (const char *line, int *nfields, int maxlen,
 		s = get_next_arg(&fields[j], s, maxlen);
 		if (fields[j] == NULL) {
 		    *err = E_ALLOC;
-		} else if ((atype = is_type_name(fields[j]))) {
+		} else if ((atype = arg_type_from_string(fields[j]))) {
 		    if (asstypes == NULL || i == nf - 1) {
 			*err = E_PARSE;
 		    } else {
@@ -1757,23 +1801,6 @@ static int maybe_delete_function (const char *fname)
     return err;
 }
 
-static int get_param_type (const char *s)
-{
-    int ret = 0;
-
-    if (!strcmp(s, "scalar")) {
-	ret = ARG_SCALAR;
-    } else if (!strcmp(s, "series")) {
-	ret = ARG_SERIES;
-    } else if (!strcmp(s, "list")) {
-	ret = ARG_LIST;
-    } else if (!strcmp(s, "matrix")) {
-	ret = ARG_MATRIX;
-    }
-
-    return ret;
-}
-
 static int comma_count (const char *s)
 {
     int nc = 0;
@@ -1829,7 +1856,7 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
     }
 
     strncat(tstr, s, n);
-    ptype[i] = get_param_type(tstr);
+    ptype[i] = arg_type_from_string(tstr);
     if (ptype[i] == 0) {
 	sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
 	err = E_PARSE;
@@ -2547,21 +2574,6 @@ int gretl_function_flagged_error (const char *s, PRN *prn)
     return 1;
 }
 
-static const char *argtype_string (int type)
-{
-    if (type == ARG_SCALAR) {
-	return _("scalar");
-    } else if (ARG_SERIES) {
-	return _("series");
-    } else if (ARG_LIST) {
-	return _("list");
-    } else if (ARG_MATRIX) {
-	return _("matrix");
-    } else {
-	return _("unknown");
-    }
-}
-
 static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn)
 {
     int i;
@@ -2582,7 +2594,7 @@ static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn)
 	pprintf(prn, "Parameters:\n");
 	for (i=0; i<fun->n_params; i++) {
 	    pprintf(prn, " %s (%s)\n", 
-		    fun->params[i], argtype_string(fun->ptype[i]));
+		    fun->params[i], arg_type_string(fun->ptype[i]));
 	}
 	pputc(prn, '\n');
     } else {
@@ -2593,7 +2605,7 @@ static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn)
 	pprintf(prn, "Return values:\n");
 	for (i=0; i<fun->n_returns; i++) {
 	    pprintf(prn, " %s (%s)\n", 
-		    fun->returns[i], argtype_string(fun->rtype[i]));
+		    fun->returns[i], arg_type_string(fun->rtype[i]));
 	}
 	pputc(prn, '\n');
     } else {

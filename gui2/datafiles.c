@@ -725,10 +725,11 @@ static void gui_show_functions_info (const char *fname)
 
     err = get_function_file_info(fname, prn);
     if (err) {
+	gretl_print_destroy(prn);
 	gui_errmsg(err);
     } else {
 	view_buffer(prn, 78, 350, _("gretl: user functions"), PRINT, NULL);
-    }    
+    }
 }
 
 static void gui_show_functions_code (const char *fname)
@@ -741,11 +742,26 @@ static void gui_show_functions_code (const char *fname)
     }
 
     err = get_function_file_code(fname, prn);
+
+    if (!err) {
+	const char *buf = gretl_print_get_buffer(prn);
+	char temp[MAXLEN];
+	FILE *fp;
+
+	sprintf(temp, "%sscript_tmp", paths.userdir);
+	fp = gretl_tempfile_open(temp);
+	if (fp != NULL) {
+	    fputs(buf, fp);
+	    fclose(fp);
+	    view_file(temp, 1, 1, 78, 370, VIEW_SCRIPT);
+	}
+    }
+
     if (err) {
 	gui_errmsg(err);
-    } else {
-	view_buffer(prn, 78, 350, _("gretl: user functions"), PRINT, NULL);
-    }    
+    }
+
+    gretl_print_destroy(prn);
 }
 
 static void browser_functions_handler (windata_t *vwin, int task)

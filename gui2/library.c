@@ -5174,23 +5174,20 @@ void do_open_script (void)
     }
 }
 
-void do_new_script (gpointer data, guint loop, GtkWidget *widget) 
+void do_new_script (gpointer data, guint u, GtkWidget *widget) 
 {
-    char fname[MAXLEN];
-    PRN *prn;
+    char temp[MAXLEN];
+    FILE *fp;
 
-    if (user_fopen("script_tmp", fname, &prn)) {
+    sprintf(temp, "%sscript_tmp", paths.userdir);
+    fp = gretl_tempfile_open(temp);
+    if (fp == NULL) {
 	return;
     }
 
-    if (loop) {
-	pprintf(prn, "loop 1000\n\nendloop\n");
-    }
-
-    gretl_print_destroy(prn);
-    strcpy(scriptfile, fname);
-
-    view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
+    fclose(fp);
+    strcpy(scriptfile, temp); /* ?? */
+    view_file(scriptfile, 1, 1, 78, 370, EDIT_SCRIPT);
 }
 
 void maybe_display_string_table (void)

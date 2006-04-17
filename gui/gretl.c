@@ -262,10 +262,7 @@ GtkItemFactoryEntry data_items[] = {
       PS_FILES, NULL },
     { N_("/File/Open command file/function file..."), NULL, display_files, 
       FUNC_FILES, NULL },
-    { N_("/File/New command file"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/New command file/regular script"), NULL, do_new_script, 0, NULL },
-    { N_("/File/New command file/Monte Carlo loop"), NULL, 
-      do_new_script, 1, NULL },
+    { N_("/File/New command file"), NULL, do_new_script, 0, NULL },
     { "/File/sep3", NULL, NULL, 0, "<Separator>" },
 
     /* File, preferences */

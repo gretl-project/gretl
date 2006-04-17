@@ -277,11 +277,11 @@ add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
     int l2 = 0;
 #endif
 
-    sprintf(temp, "%sgpttmp.XXXXXX", paths.userdir);
-    if (mktemp(temp) == NULL) return 1;
-
-    ftmp = open_gp_file(temp, "w");
-    if (ftmp == NULL) return 1;
+    sprintf(temp, "%sgpttmp", paths.userdir);
+    ftmp = gretl_tempfile_open(temp);
+    if (ftmp == NULL) {
+	return 1;
+    }
 
     fsrc = open_gp_file(fname, "r");
     if (fsrc == NULL) {

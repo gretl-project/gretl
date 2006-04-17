@@ -307,11 +307,7 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Open command file/function file..."), "", display_files, FUNC_FILES, 
       "<StockItem>", GTK_STOCK_OPEN },
-    { N_("/File/New command file"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/New command file/regular script"), NULL, do_new_script, 0, 
-      "<StockItem>", GTK_STOCK_NEW },
-    { N_("/File/New command file/Monte Carlo loop"), "", do_new_script, 1, 
-      "<StockItem>", GTK_STOCK_NEW },
+    { N_("/File/New command file"), "", do_new_script, 0, "<StockItem>", GTK_STOCK_NEW },
     { "/File/sep3", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* File, preferences */
