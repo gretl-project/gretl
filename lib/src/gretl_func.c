@@ -25,7 +25,7 @@
 
 #define CALLSTACK_DEPTH 8
 
-#define FN_DEBUG 0
+#define FN_DEBUG 1
 
 typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;
@@ -747,7 +747,6 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun,
 	    pprintf(prn, "%s\n", line);
 	} else {
 	    if (string_is_blank(line)) {
-		/* ?? */
 		continue;
 	    }
 	    s = line;
@@ -780,6 +779,27 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	}
     }
     pputc(prn, '\n');
+}
+
+static void print_function_end (ufunc *fun, PRN *prn)
+{
+    const char *typestr;
+    int i;
+
+    for (i=0; i<fun->n_returns; i++) {
+	if (i == 0) {
+	    pputs(prn, "return ");
+	}
+	typestr = arg_type_string(fun->rtype[i]);
+	pprintf(prn, "%s %s", typestr, fun->returns[i]);
+	if (i < fun->n_returns - 1) {
+	    pputs(prn, ", ");
+	} else {
+	    pputc(prn, '\n');
+	}
+    }
+
+    pputs(prn, "end function\n");
 }
 
 static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg, 
@@ -839,7 +859,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	}
 	free_ufunc(fun);
     } else if (task == FUNCS_CODE) {
-	pputs(prn, "end function\n");
+	print_function_end(fun, prn);
 	free_ufunc(fun);
     }
 
@@ -909,7 +929,7 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 	fputs(" </returns>\n", fp);
     }
 
-    fputs("<code>\n", fp);
+    fputs("<code>", fp);
     for (i=0; i<fun->n_lines; i++) {
 	adjust_indent(fun->lines[i], &this_indent, &next_indent);
 	for (j=0; j<this_indent; j++) {
