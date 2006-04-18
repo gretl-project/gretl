@@ -1999,6 +1999,14 @@ static int read_remote_filetime (char *line, char *fname, time_t *date)
     };
     int i;
 
+    /* We're expecting a string of the form:
+
+       "<bytes> Foo <mon> <mday> 00:00:00 <year> <filename>"
+
+       where <mon> is 3-letter month, <day> is 2 digits,
+       and <year> is 4-digit year.
+    */
+
     if (sscanf(line, "%*s%*s%3s%2d%8s%4d%16s", 
 	       mon, &day, hrs, &yr, fname) != 5) {
 	return 1;
