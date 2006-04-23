@@ -270,6 +270,12 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Browse databases/on database _server"), NULL, display_files, REMOTE_DB, 
       "<StockItem>", GTK_STOCK_NETWORK },
 
+    /* File, Browse function packages */
+    { N_("/File/_Browse functions"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/File/Browse functions/on local machine"), NULL, display_files, FUNC_FILES, NULL, GNULL },
+    { N_("/File/Browse functions/on server"), NULL, display_files, REMOTE_FUNC_FILES, 
+      "<StockItem>", GTK_STOCK_NETWORK },
+
     /* File, Create dataset */
     { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/Create data set/time-series"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -304,8 +310,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open command file/user file..."), "", open_script, OPEN_SCRIPT, 
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Open command file/practice file..."), "", display_files, PS_FILES, 
-      "<StockItem>", GTK_STOCK_OPEN },
-    { N_("/File/Open command file/function file..."), "", display_files, FUNC_FILES, 
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/New command file"), "", do_new_script, 0, "<StockItem>", GTK_STOCK_NEW },
     { "/File/sep3", NULL, NULL, 0, "<Separator>", GNULL },

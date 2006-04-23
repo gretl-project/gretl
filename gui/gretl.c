@@ -225,6 +225,11 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Browse databases/on database _server"), NULL, display_files, 
       REMOTE_DB, NULL },
 
+    /* File, Browse function packages */
+    { N_("/File/_Browse functions"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Browse functions/on local machine"), NULL, display_files, FUNC_FILES, NULL },
+    { N_("/File/Browse functions/on server"), NULL, display_files, REMOTE_FUNC_FILES, NULL },
+
     /* File, Create dataset */
     { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Create data set/time-series"), NULL, NULL, 0, "<Branch>" },
@@ -260,8 +265,6 @@ GtkItemFactoryEntry data_items[] = {
       OPEN_SCRIPT, NULL },
     { N_("/File/Open command file/practice file..."), NULL, display_files, 
       PS_FILES, NULL },
-    { N_("/File/Open command file/function file..."), NULL, display_files, 
-      FUNC_FILES, NULL },
     { N_("/File/New command file"), NULL, do_new_script, 0, NULL },
     { "/File/sep3", NULL, NULL, 0, "<Separator>" },
 
