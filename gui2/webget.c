@@ -1035,20 +1035,20 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
 	/* Try getting content-type */
 	if (!type) {
-	    if (header_process (hdr, "Content-Type", http_process_type, &type))
+	    if (header_process(hdr, "Content-Type", http_process_type, &type))
 		goto done_header;
 	}
 
 	/* Try getting location */
 	if (!hs->newloc) {
-	    if (header_process (hdr, "Location", header_strdup, &hs->newloc))
+	    if (header_process(hdr, "Location", header_strdup, &hs->newloc))
 		goto done_header;
 	}
 
 	/* Try getting last-modified */
 	if (!hs->remote_time) {
-	    if (header_process (hdr, "Last-Modified", header_strdup,
-				&hs->remote_time))
+	    if (header_process(hdr, "Last-Modified", header_strdup,
+			       &hs->remote_time))
 		goto done_header;
 	}
 
@@ -1069,6 +1069,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	/* Try getting content-range */
 	if (contrange == -1) {
 	    struct http_process_range_closure closure;
+
 	    if (header_process(hdr, "Content-Range", 
 			       http_process_range, &closure)) {
 		contrange = closure.first_byte_pos;
@@ -1686,7 +1687,7 @@ static int real_update_query (int queryopt)
     struct stat fbuf;
     time_t filedate = (time_t) 0;
 
-    build_path(paths.gretldir, "gretl.stamp", testfile, NULL);
+    build_path(testfile, paths.gretldir, "gretl.stamp", NULL);
 
     if (stat(testfile, &fbuf)) {
 	fprintf(stderr, "update_query: couldn't stat testfile '%s'\n", 
@@ -1698,7 +1699,7 @@ static int real_update_query (int queryopt)
 	*hometest = '\0';
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
-	    build_path(paths.userdir, "gretl.stamp", hometest, NULL);
+	    build_path(hometest, paths.userdir, "gretl.stamp", NULL);
 	    if (!stat(hometest, &fbuf)) {
 		filedate = get_time_from_stamp_file(hometest);
 	    }

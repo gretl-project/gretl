@@ -36,8 +36,9 @@
 #endif
 
 enum windata_flags {
-    VWIN_HELP_ACTIVE = 1 << 0,
-    VWIN_BUSY        = 1 << 1
+    VWIN_HELP_ACTIVE  = 1 << 0,
+    VWIN_BUSY         = 1 << 1,
+    VWIN_DELETE_FNAME = 1 << 2,
 };
 
 typedef struct _windata_t windata_t;
@@ -72,5 +73,9 @@ struct _windata_t {
 #define window_help_is_active(w)    (w->flags & VWIN_HELP_ACTIVE)
 #define set_window_help_active(w)   (w->flags |= VWIN_HELP_ACTIVE)
 #define unset_window_help_active(w) (w->flags &= ~VWIN_HELP_ACTIVE)
+
+#define window_delete_filename(w)       (w->flags & VWIN_DELETE_FNAME)
+#define set_window_delete_filename(w)   (w->flags |= VWIN_DELETE_FNAME)
+#define unset_window_delete_filename(w) (w->flags &= ~VWIN_DELETE_FNAME)
 
 #endif /* GRETLTYPES_H */

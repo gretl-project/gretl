@@ -82,7 +82,6 @@ double dot_atof (const char *s)
  * Returns: the integer position of the last "." within @str,
  * or strlen(@str) in case a dot is not found, or the string
  * ends with a (backward or forward) slash.
- *
  */
 
 int dotpos (const char *str)
@@ -183,7 +182,6 @@ char *gretl_delete (char *str, int idx, int count)
  *
  * Returns: the first position of @c in @s, or -1 if @c is not
  * found.
- *
  */
 
 int haschar (char c, const char *s)
@@ -206,7 +204,6 @@ int haschar (char c, const char *s)
  * @s: the string to examine.
  *
  * Returns: 1 if @c is the last character in @s, 0 otherwise
- *
  */
 
 int lastchar (char c, const char *s)
@@ -282,7 +279,6 @@ int has_suffix (const char *str, const char *sfx)
  * @str: the string to examine.
  *
  * Returns: 1 if the given @str is numeric, otherwise 0.
- *
  */
 
 int numeric_string (const char *str)
@@ -319,7 +315,6 @@ int numeric_string (const char *str)
  *
  * Returns: 1 if the last non-space character in @s is a backslash,
  * otherwise 0.
- *
  */
 
 int ends_with_backslash (const char *s)
@@ -518,7 +513,6 @@ int gretl_varchar_spn (const char *s)
  * @len: the length of the string to be cleared.
  *
  * Sets all bytes in @str to 0.
- *
  */
 
 void clear (char *str, int len)
@@ -628,8 +622,7 @@ char *chopstr (char *str)
  * For processing filenames: copies @src to @targ, minus any existing
  * filename extension, and adds to @targ the specified extension.
  *
- * Returns: the output string.
- *
+ * Returns: the output string, @targ.
  */
 
 char *switch_ext (char *targ, const char *src, char *ext)
@@ -657,7 +650,6 @@ char *switch_ext (char *targ, const char *src, char *ext)
  * including the last occurrence of @c within @src.
  *
  * Returns: 1 if @c is found in @str, otherwise 0.
- *
  */
 
 int get_base (char *targ, const char *src, char c)
@@ -688,7 +680,6 @@ int get_base (char *targ, const char *src, char c)
  * then replace a trailing backslash (if any) with a space.
  * 
  * Returns: 1 if a trailing backslash was found, otherwise 0.
- *
  */
 
 int top_n_tail (char *str)
@@ -908,7 +899,6 @@ char *space_to_score (char *s)
  * @targ[@n] is a NUL byte.
  * 
  * Returns: the output string.
- *
  */
 
 char *safecpy (char *targ, const char *src, int n)
@@ -1252,6 +1242,12 @@ static char x2c (char *s)
     return digit;
 }
 
+/**
+ * unescape_url:
+ * @url: string representing a URL.
+ *
+ */
+
 void unescape_url (char *url) 
 {
     register int x, y;
@@ -1349,37 +1345,53 @@ char *append_dir (char *fname, const char *dir)
     return fname;
 }
 
-int build_path (const char *dir, const char *fname, char *path, 
-		const char *ext)
+/**
+ * build_path:
+ * @targ: target string to write to (must be pre-allocated).
+ * @dirname: first part of path.
+ * @fname: filename.
+ * @ext: filename extension to be appended (or %NULL).
+ *
+ * Writes to @targ a full path composed of @dirname,
+ * @fname and (optionally) @ext.  This function ensures
+ * that an appropriate separator is inserted between 
+ * @dirname and @fname, if @dirname is not already
+ * terminated with such a separator.
+ *
+ * Returns: the target string, @targ.
+ */
+
+char *build_path (char *targ, const char *dirname, const char *fname, 
+		  const char *ext)
 {
     size_t len;
 
-    if (dir == NULL || fname == NULL || path == NULL) {
+    if (dirname == NULL || fname == NULL || targ == NULL) {
 	return 1;
     }
 
-    *path = '\0';
-    strcat(path, dir);
-    len = strlen(path);
+    *targ = '\0';
+    strcat(targ, dirname);
+    len = strlen(targ);
     if (len == 0) return 1;
 
     /* strip a trailing single dot */
-    if (len > 1 && path[len-1] == '.' && 
-	(path[len-2] == '/' || path[len-2] == '\\')) {
-	    path[len-1] = '\0';
+    if (len > 1 && targ[len-1] == '.' && 
+	(targ[len-2] == '/' || targ[len-2] == '\\')) {
+	    targ[len-1] = '\0';
     }
 
-    if (path[len-1] == '/' || path[len-1] == '\\') {
-        /* dir is already properly terminated */
-        strcat(path, fname);
+    if (targ[len-1] == '/' || targ[len-1] == '\\') {
+        /* dirname is already properly terminated */
+        strcat(targ, fname);
     } else {
         /* otherwise put a separator in */
-        strcat(path, SLASHSTR);
-        strcat(path, fname);
+        strcat(targ, SLASHSTR);
+        strcat(targ, fname);
     }
 
     if (ext != NULL) {
-	strcat(path, ext);
+	strcat(targ, ext);
     }
 
     return 0;

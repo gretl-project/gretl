@@ -180,18 +180,12 @@ void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
 
 #ifdef USE_GTKSOURCEVIEW
 
-static int 
-gtk_source_buffer_load_file (GtkSourceBuffer *sbuf, 
-			     const char *fname)
+static int source_buffer_load_file (GtkSourceBuffer *sbuf, FILE *fp)
 {
-    FILE *fp;
-    GtkTextIter iter;    
     char readbuf[MAXSTR], *chunk = NULL;
+    GtkTextIter iter;   
 
-    fp = gretl_fopen(fname, "rb");
-    if (fp == NULL) return 1;
-
-    gtk_source_buffer_begin_not_undoable_action (sbuf);
+    gtk_source_buffer_begin_not_undoable_action(sbuf);
 
     gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", 0);
     gtk_text_buffer_get_iter_at_offset(GTK_TEXT_BUFFER(sbuf), &iter, 0);
@@ -229,10 +223,7 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
 	}
     }
 
-    fclose(fp);
-	
     gtk_source_buffer_end_not_undoable_action(sbuf);
-
     gtk_text_buffer_set_modified(GTK_TEXT_BUFFER(sbuf), FALSE);
 
     /* move cursor to the beginning */
@@ -242,10 +233,46 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
     return 0;
 }
 
-void sourceview_insert_file (windata_t *vwin, const char *filename)
+static int source_buffer_load_buf (GtkSourceBuffer *sbuf, const char *buf)
+{
+    char line[MAXLINE];
+    GtkTextIter iter;   
+
+    gtk_source_buffer_begin_not_undoable_action(sbuf);
+    gtk_text_buffer_set_text(GTK_TEXT_BUFFER(sbuf), "", 0);
+    gtk_text_buffer_get_iter_at_offset(GTK_TEXT_BUFFER(sbuf), &iter, 0);
+
+    bufgets_init(buf);
+
+    while (bufgets(line, sizeof line, buf)) {
+	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, line, -1);
+	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, "\n", 1);
+    }
+
+    gtk_source_buffer_end_not_undoable_action(sbuf);
+    gtk_text_buffer_set_modified(GTK_TEXT_BUFFER(sbuf), FALSE);
+
+    /* move cursor to the beginning */
+    gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(sbuf), &iter);
+    gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(sbuf), &iter);
+
+    return 0;
+}
+
+static void 
+real_sourceview_insert (windata_t *vwin, const char *fname, const char *buf)
 {
     GtkSourceLanguagesManager *manager;    
     GtkSourceLanguage *language = NULL;
+    FILE *fp = NULL;
+
+    if (fname != NULL) {
+	fp = gretl_fopen(fname, "rb");
+	if (fp == NULL) {
+	    errbox(_("Couldn't open %s"), fname);
+	    return;
+	}
+    }
 		
     manager = g_object_get_data(G_OBJECT(vwin->sbuf), "languages-manager");
 
@@ -266,7 +293,22 @@ void sourceview_insert_file (windata_t *vwin, const char *filename)
 	gtk_source_buffer_set_language(vwin->sbuf, language);
     }
 
-    gtk_source_buffer_load_file(vwin->sbuf, filename);
+    if (fp != NULL) {
+	source_buffer_load_file(vwin->sbuf, fp);
+	fclose(fp);
+    } else {
+	source_buffer_load_buf(vwin->sbuf, buf);
+    }
+}
+
+void sourceview_insert_file (windata_t *vwin, const char *fname)
+{
+    real_sourceview_insert(vwin, fname, NULL);
+}
+
+void sourceview_insert_buffer (windata_t *vwin, const char *buf)
+{
+    real_sourceview_insert(vwin, NULL, buf);
 }
 
 void create_source (windata_t *vwin, int hsize, int vsize, 

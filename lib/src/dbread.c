@@ -1015,11 +1015,11 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
 	/* try looking a bit more */
 	if (filetype == GRETL_NATIVE_DB && 
 	    strstr(db_name, ppaths->binbase) == NULL) {
-	    build_path(ppaths->binbase, fname, db_name, NULL);
+	    build_path(db_name, ppaths->binbase, fname, NULL);
 	}
 	else if (filetype == GRETL_RATS_DB && 
 		 strstr(db_name, ppaths->ratsbase) == NULL) {
-	    build_path(ppaths->ratsbase, fname, db_name, NULL);
+	    build_path(db_name, ppaths->ratsbase, fname, NULL);
 	}
 	fp = gretl_fopen(db_name, "rb");
     }

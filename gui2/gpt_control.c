@@ -2204,7 +2204,7 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 	    return 1;
 	}
 
-	build_path(paths.userdir, "zoomplot.gp", zoomname, NULL);
+	build_path(zoomname, paths.userdir, "zoomplot.gp", NULL);
 	fpout = gretl_fopen(zoomname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
@@ -2414,7 +2414,7 @@ static void render_pngfile (png_plot *plot, int view)
     GError *error = NULL;
 #endif
 
-    build_path(paths.userdir, "gretltmp.png", pngname, NULL);
+    build_path(pngname, paths.userdir, "gretltmp.png", NULL);
 
 #ifdef OLD_GTK
     if (test_file_open(pngname)) {
@@ -2577,8 +2577,8 @@ static int get_dumb_plot_yrange (png_plot *plot)
 	return 1;
     }
 
-    build_path(paths.userdir, "dumbplot.gp", dumbgp, NULL);
-    build_path(paths.userdir, "gptdumb.txt", dumbtxt, NULL);
+    build_path(dumbgp, paths.userdir, "dumbplot.gp", NULL);
+    build_path(dumbtxt, paths.userdir, "gptdumb.txt", NULL);
     fpout = gretl_fopen(dumbgp, "w");
     if (fpout == NULL) {
 	fclose(fpin);
@@ -3131,7 +3131,7 @@ static int get_png_bounds_info (png_bounds *bounds)
     int i, num_text;
     volatile int ret = GRETL_PNG_OK;
 
-    build_path(paths.userdir, "gretltmp.png", pngname, NULL); 
+    build_path(pngname, paths.userdir, "gretltmp.png", NULL); 
 
     fp = gretl_fopen(pngname, "rb");
     if (fp == NULL) {

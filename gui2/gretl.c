@@ -271,10 +271,11 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_NETWORK },
 
     /* File, Browse function packages */
-    { N_("/File/_Browse functions"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Browse functions/on local machine"), NULL, display_files, FUNC_FILES, NULL, GNULL },
-    { N_("/File/Browse functions/on server"), NULL, display_files, REMOTE_FUNC_FILES, 
-      "<StockItem>", GTK_STOCK_NETWORK },
+    { N_("/File/Additional functions"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/File/Additional functions/on local machine"), NULL, display_files, 
+      FUNC_FILES, NULL, GNULL },
+    { N_("/File/Additional functions/on server"), NULL, display_files, 
+      REMOTE_FUNC_FILES, "<StockItem>", GTK_STOCK_NETWORK },
 
     /* File, Create dataset */
     { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -614,7 +615,7 @@ static void fix_dbname (char *db)
 	char tmp[MAXLEN];
 
 	strcpy(tmp, db);
-	build_path(paths.binbase, tmp, db, NULL);
+	build_path(db, paths.binbase, tmp, NULL);
     }
 
     if (fp != NULL) fclose(fp);
@@ -638,7 +639,7 @@ static void real_nls_init (void)
 	return;
     }
 
-    build_path(gretldir, "locale", localedir, NULL);
+    build_path(localedir, gretldir, "locale", NULL);
     loc = setlocale(LC_ALL, "");
     set_gretl_charset(loc);
     bindtextdomain(PACKAGE, localedir);

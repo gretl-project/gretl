@@ -43,6 +43,8 @@ enum extra_cmds {
     VIEW_SCRIPT,
     VIEW_CODEBOOK,
     VIEW_MODELTABLE,
+    VIEW_FUNC_INFO,
+    VIEW_FUNC_CODE,
     VIEW_FILE,
     DATA_REPORT,
     SCRIPT_OUT,
@@ -79,6 +81,7 @@ enum extra_cmds {
     MINIBUF,
     VLAGSEL,
     VAROMIT,
+    LOAD_FUNC_CODE,
     GUI_CMD_MAX
 };
 

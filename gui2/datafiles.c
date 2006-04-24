@@ -507,7 +507,7 @@ char *strip_extension (char *s)
     
     if (p != NULL && 
 	(!strcmp(p, ".gdt") || !strcmp(p, ".inp") ||
-	 !strcmp(p, ".bin"))) {
+	 !strcmp(p, ".bin") || !strcmp(p, ".gfn"))) {
 	*p = '\0';
     }
 
@@ -623,7 +623,7 @@ static void display_datafile_info (GtkWidget *w, gpointer data)
     coll = gtk_object_get_data(GTK_OBJECT(vwin->listbox), "coll");
 #endif
 
-    build_path(coll->path, fname, hdrname, ".gdt");
+    build_path(hdrname, coll->path, fname, ".gdt");
 
 #ifndef OLD_GTK
     g_free(fname);
@@ -656,7 +656,7 @@ void browser_open_data (GtkWidget *w, gpointer data)
     coll = gtk_object_get_data(GTK_OBJECT(vwin->listbox), "coll");
 #endif
 
-    build_path(coll->path, datname, tryfile, ".gdt");
+    build_path(tryfile, coll->path, datname, ".gdt");
 
 #ifndef OLD_GTK
     g_free(datname);
@@ -683,7 +683,7 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     coll = gtk_object_get_data(GTK_OBJECT(vwin->listbox), "coll");
 #endif
 
-    build_path(coll->path, fname, scriptfile, ".inp");
+    build_path(scriptfile, coll->path, fname, ".inp");
 
 #ifndef OLD_GTK
     g_free(fname);
@@ -698,12 +698,6 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 } 
 
-enum {
-    FUNCS_INFO,
-    FUNCS_LOAD,
-    FUNCS_CODE
-};
-
 static void gui_load_user_functions (const char *fname)
 {
     int err;
@@ -716,54 +710,39 @@ static void gui_load_user_functions (const char *fname)
     }    
 }
 
-static void gui_show_functions_info (const char *fname)
+windata_t *gui_show_function_info (const char *fname, int role)
 {
+    char *pkgname = NULL;
+    windata_t *vwin = NULL;
     PRN *prn;
     int err;
 
     if (bufopen(&prn)) {
-	return;
+	return NULL;
     }
 
-    err = get_function_file_info(fname, prn);
+    if (role == VIEW_FUNC_INFO) {
+	err = get_function_file_info(fname, prn, &pkgname);
+    } else {
+	err = get_function_file_code(fname, prn, &pkgname);
+    }
+	
     if (err) {
 	gretl_print_destroy(prn);
 	gui_errmsg(err);
     } else {
-	view_buffer(prn, 78, 350, _("gretl: user functions"), PRINT, NULL);
-    }
-}
-
-static void gui_show_functions_code (const char *fname)
-{
-    PRN *prn;
-    int err;
-
-    if (bufopen(&prn)) {
-	return;
+	gchar *title;
+	
+	title = g_strdup_printf("gretl: %s", (pkgname)? 
+				pkgname : _("function code"));
+	vwin = view_buffer(prn, 78, 350, title, role, NULL);
+	strcpy(vwin->fname, fname);
+	g_free(title);
     }
 
-    err = get_function_file_code(fname, prn);
+    free(pkgname);
 
-    if (!err) {
-	const char *buf = gretl_print_get_buffer(prn);
-	char temp[MAXLEN];
-	FILE *fp;
-
-	sprintf(temp, "%sscript_tmp", paths.userdir);
-	fp = gretl_tempfile_open(temp);
-	if (fp != NULL) {
-	    fputs(buf, fp);
-	    fclose(fp);
-	    view_file(temp, 1, 1, 78, 370, VIEW_SCRIPT);
-	}
-    }
-
-    if (err) {
-	gui_errmsg(err);
-    }
-
-    gretl_print_destroy(prn);
+    return vwin;
 }
 
 static void browser_functions_handler (windata_t *vwin, int task)
@@ -784,14 +763,12 @@ static void browser_functions_handler (windata_t *vwin, int task)
 				 vwin->active_var);
 #endif
 
-    build_path(dir, fname, fnfile, ".gfn");
+    build_path(fnfile, dir, fname, ".gfn");
 
-    if (task == FUNCS_LOAD) {
+    if (task == LOAD_FUNC_CODE) {
 	gui_load_user_functions(fnfile);
-    } else if (task == FUNCS_INFO) {
-	gui_show_functions_info(fnfile);
     } else {
-	gui_show_functions_code(fnfile);
+	gui_show_function_info(fnfile, task);
     }
 
 #ifndef OLD_GTK
@@ -799,7 +776,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     g_free(dir);
 #endif
 
-    if (task == FUNCS_LOAD) {
+    if (task == LOAD_FUNC_CODE) {
 	gtk_widget_destroy(GTK_WIDGET(vwin->w));
     }
 }
@@ -808,21 +785,14 @@ void browser_load_func (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    browser_functions_handler(vwin, FUNCS_LOAD);
+    browser_functions_handler(vwin, LOAD_FUNC_CODE);
 } 
 
 static void display_function_info (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    browser_functions_handler(vwin, FUNCS_INFO);
-} 
-
-static void display_function_code (GtkWidget *w, gpointer data)
-{
-    windata_t *vwin = (windata_t *) data;
-
-    browser_functions_handler(vwin, FUNCS_CODE);
+    browser_functions_handler(vwin, VIEW_FUNC_INFO);
 } 
 
 static void set_browser_status (windata_t *vwin, int status)
@@ -938,8 +908,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     case REMOTE_FUNC_FILES:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: function packages on server"));
-	gtk_widget_set_usize(vwin->w, 640, 480);
-	browse_func = dummy_call; /* open_remote_function_index; */
+	browse_func = file_info_from_server;
 	break;
     }
 
@@ -983,7 +952,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
 
     label = (code == REMOTE_DB)? N_("Get series listing") :
-	(code == REMOTE_FUNC_FILES)? N_("Get fuction info") :
+	(code == REMOTE_FUNC_FILES)? N_("Info") :
 	N_("Open");
 
     button = gtk_button_new_with_label(_(label));
@@ -992,7 +961,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(browse_func), vwin);
 
-    if (code != NATIVE_DB && code != RATS_DB && code != REMOTE_DB) {
+    if (code != NATIVE_DB && code != RATS_DB && !REMOTE_ACTION(code)) {
        	g_signal_connect(G_OBJECT(button), "clicked", 
 			 G_CALLBACK(delete_widget), vwin->w); 
     }
@@ -1002,19 +971,11 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	button = gtk_button_new_with_label(_(label));
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
-			 (code == REMOTE_DB)?
-			 G_CALLBACK(grab_remote_db) :
-			 (code == REMOTE_FUNC_FILES)? 
-			 G_CALLBACK(dummy_call) :
+			 (REMOTE_ACTION(code))?
+			 G_CALLBACK(install_file_from_server) :
 			 (code == FUNC_FILES)? 
 			 G_CALLBACK(display_function_info) :
 			 G_CALLBACK(display_datafile_info), vwin);
-	if (code == FUNC_FILES) {
-	    button = gtk_button_new_with_label(_("Code"));
-	    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
-	    g_signal_connect(G_OBJECT(button), "clicked",
-			     G_CALLBACK(display_function_code), vwin);
-	}
 	button = gtk_button_new_with_label(_("Find"));
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
@@ -1034,10 +995,6 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     }
 
     if (err) {
-	if (0) {
-	    /* FIXME? */
-	    errbox(_("Couldn't open database"));
-	}
 	gtk_widget_destroy(vwin->w);
     } else {
 	gtk_widget_show_all(vwin->w); 
@@ -1050,7 +1007,7 @@ static char *get_func_description (const char *fname, const char *fndir)
     char *descrip = NULL;
     int err = 0;
 
-    build_path(fndir, fname, fullname, NULL);
+    build_path(fullname, fndir, fname, NULL);
     descrip = get_function_file_header(fullname, &err);
     if (err) {
 	gui_errmsg(err);
@@ -1218,9 +1175,14 @@ static GtkWidget *files_window (windata_t *vwin)
 	_("Database"), 
 	_("Source")
     };
-    const char *remote_titles[] = {
+    const char *remote_db_titles[] = {
 	_("Database"), 
 	_("Source"), 
+	_("Local status")
+    };
+    const char *remote_func_titles[] = {
+	_("Package"), 
+	_("Description"), 
 	_("Local status")
     };
 
@@ -1238,7 +1200,7 @@ static GtkWidget *files_window (windata_t *vwin)
 	hidden_col = 1;
 	break;
     case REMOTE_DB:
-	titles = remote_titles;
+	titles = remote_db_titles;
 	cols = 3;
 	full_width = 560;
 	break;
@@ -1255,6 +1217,10 @@ static GtkWidget *files_window (windata_t *vwin)
 	break;
     case FUNC_FILES:
 	hidden_col = 1;
+	break;
+    case REMOTE_FUNC_FILES:
+	titles = remote_func_titles;
+	cols = 3;
 	break;
     default:
 	break;

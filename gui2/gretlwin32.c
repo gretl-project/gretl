@@ -91,7 +91,7 @@ void startR (const char *Rcommand)
 	return;
     }
 
-    build_path(paths.userdir, "gretl.Rprofile", Rprofile, NULL);
+    build_path(Rprofile, paths.userdir, "gretl.Rprofile", NULL);
     fp = gretl_fopen(Rprofile, "w");
     if (fp == NULL) {
 	errbox(_("Couldn't write R startup file"));
@@ -105,7 +105,7 @@ void startR (const char *Rcommand)
 	return;
     } 	
 
-    build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
+    build_path(Rdata, paths.userdir, "Rdata.tmp", NULL);
 
     sprintf(Rline, "store \"%s\" -r", Rdata);
     list = command_list_from_string(Rline);
@@ -129,13 +129,14 @@ void startR (const char *Rcommand)
 	char Rtmp[MAXLEN];
 	FILE *fq;
 
-	build_path(paths.userdir, "Rtmp", Rtmp, NULL);
+	build_path(Rtmp, paths.userdir, "Rtmp", NULL);
 	fq = gretl_fopen(Rtmp, "w");
-	fprintf(fq, "gretldata <- read.table(\"%s\")\n", 
-		slash_convert(Rdata, FROM_BACKSLASH));
-	fprintf(fq, "attach(gretldata)\n");
-	fclose(fq);
-
+	if (fq != NULL) {
+	    fprintf(fq, "gretldata <- read.table(\"%s\")\n", 
+		    slash_convert(Rdata, FROM_BACKSLASH));
+	    fprintf(fq, "attach(gretldata)\n");
+	    fclose(fq);
+	}
 	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
 		slash_convert(Rtmp, FROM_BACKSLASH));
     }
@@ -466,10 +467,10 @@ void win32_make_user_dirs (void)
 	return;
     }
 
-    build_path(paths.userdir, "x12arima", paths.x12adir, NULL);
+    build_path(paths.x12adir, paths.userdir, "x12arima", NULL);
     gretl_mkdir(paths.x12adir);
 
-    build_path(paths.userdir, "tramo", tramodir, NULL);
+    build_path(tramodir, paths.userdir, "tramo", NULL);
     if (gretl_mkdir(tramodir)) return;
 
     sprintf(dirname, "%s\\output", tramodir);

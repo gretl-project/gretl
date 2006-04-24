@@ -120,7 +120,7 @@ static GtkWidget *open_logo (const char *pngname)
     GError *error = NULL;
     GtkWidget *image;
 
-    build_path(paths.gretldir, pngname, fullname, NULL);
+    build_path(fullname, paths.gretldir, pngname, NULL);
     pbuf = gdk_pixbuf_new_from_file(fullname, &error);
 
     if (pbuf == NULL) {

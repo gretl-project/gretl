@@ -127,8 +127,8 @@ int fix_varname_duplicates (DATAINFO *pdinfo);
 
 char *append_dir (char *fname, const char *dir);
 
-int build_path (const char *dir, const char *fname, char *path, 
-		const char *ext);
+char *build_path (char *targ, const char *dirname, const char *fname, 
+		  const char *ext);
 
 #if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);

@@ -73,9 +73,9 @@ int write_user_function_file (const char *fname);
 
 int load_user_function_file (const char *fname);
 
-int get_function_file_info (const char *fname, PRN *prn);
+int get_function_file_info (const char *fname, PRN *prn, char **pname);
 
-int get_function_file_code (const char *fname, PRN *prn);
+int get_function_file_code (const char *fname, PRN *prn, char **pname);
 
 char *get_function_file_header (const char *fname, int *err);
 

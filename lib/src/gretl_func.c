@@ -1010,6 +1010,29 @@ void gretl_function_set_private (int i, int priv)
     }
 }
 
+static char *make_pkgname (const char *fname)
+{
+    char *p = strrchr(fname, SLASH);
+    char *ret;
+
+    if (p != NULL) {
+	ret = gretl_strdup(p + 1);
+    } else {
+	ret = gretl_strdup(fname);
+    }
+
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    p = strstr(ret, ".gfn");
+    if (p != NULL) {
+	*p = 0;
+    }
+
+    return ret;
+}
+
 int write_selected_user_functions (const int *privlist, 
 				   const int *publist,
 				   const char *author,
@@ -1018,6 +1041,7 @@ int write_selected_user_functions (const int *privlist,
 				   const char *descrip,
 				   const char *fname)
 {
+    char *pkgname;
     FILE *fp;
     int i, fi;
 
@@ -1032,7 +1056,14 @@ int write_selected_user_functions (const int *privlist,
 
     gretl_xml_header(fp);    
     fputs("<gretl-functions>\n", fp);
-    fputs("<gretl-function-package>\n", fp);
+
+    pkgname = make_pkgname(fname);
+    if (pkgname != NULL) {
+	fprintf(fp, "<gretl-function-package name=\"%s\">\n", pkgname);
+	free(pkgname);
+    } else {
+	fputs("<gretl-function-package>\n", fp);
+    }
 
     if (author != NULL) {
 	gretl_xml_put_tagged_string("author", author, fp);
@@ -1212,7 +1243,8 @@ static void packages_destroy (void)
 
 static int 
 read_user_function_package (xmlDocPtr doc, xmlNodePtr node, 
-			    const char *fname, int task, PRN *prn)
+			    const char *fname, int task, 
+			    PRN *prn, char **pname)
 {
     xmlNodePtr cur;
     fnpkg *pkg;
@@ -1221,6 +1253,10 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
     pkg = function_package_new(fname);
     if (pkg == NULL) {
 	return E_ALLOC;
+    }
+
+    if (pname != NULL) {
+	gretl_xml_get_prop_as_string(node, "name", pname);
     }
 
     /* first get general package information */
@@ -1239,7 +1275,11 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (task == FUNCS_INFO) {
-	pprintf(prn, "Package file: %s\n", fname);
+	if (pname != NULL && *pname != NULL) {
+	    pprintf(prn, "Package: %s\n", *pname);
+	} else {
+	    pprintf(prn, "Package: %s\n", fname);
+	}
 	pprintf(prn, "Author: %s\n", (pkg->author)? pkg->author : "unknown");
 	pprintf(prn, "Version: %s\n", (pkg->version)? pkg->version : "unknown");
 	pprintf(prn, "Date: %s\n", (pkg->date)? pkg->date : "unknown");
@@ -1270,7 +1310,8 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 /* if prn is non-NULL, we're just reading the contents
    of this file in order to display them */
 
-static int real_read_user_function_file (const char *fname, int task, PRN *prn)
+static int real_read_user_function_file (const char *fname, int task, PRN *prn,
+					 char **pname)
 {
     xmlDocPtr doc = NULL;
     xmlNodePtr node = NULL;
@@ -1288,7 +1329,7 @@ static int real_read_user_function_file (const char *fname, int task, PRN *prn)
     cur = node->xmlChildrenNode;
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    read_user_function_package(doc, cur, fname, task, prn);
+	    read_user_function_package(doc, cur, fname, task, prn, pname);
 	} 
 	cur = cur->next;
     }
@@ -1317,20 +1358,20 @@ static int real_read_user_function_file (const char *fname, int task, PRN *prn)
 
 int load_user_function_file (const char *fname)
 {
-    return real_read_user_function_file(fname, FUNCS_LOAD, NULL);
+    return real_read_user_function_file(fname, FUNCS_LOAD, NULL, NULL);
 }
 
 /* read specific function info from file, but do not
    load into workspace */
 
-int get_function_file_info (const char *fname, PRN *prn)
+int get_function_file_info (const char *fname, PRN *prn, char **pname)
 {
-    return real_read_user_function_file(fname, FUNCS_INFO, prn);
+    return real_read_user_function_file(fname, FUNCS_INFO, prn, pname);
 }
 
-int get_function_file_code (const char *fname, PRN *prn)
+int get_function_file_code (const char *fname, PRN *prn, char **pname)
 {
-    return real_read_user_function_file(fname, FUNCS_CODE, prn);
+    return real_read_user_function_file(fname, FUNCS_CODE, prn, pname);
 }
 
 char *get_function_file_header (const char *fname, int *err)

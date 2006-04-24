@@ -545,7 +545,7 @@ static void fix_dbname (char *db)
 	char tmp[MAXLEN];
 
 	strcpy(tmp, db);
-	build_path(paths.binbase, tmp, db, NULL);
+	build_path(db, paths.binbase, tmp, NULL);
     }
 
     if (fp != NULL) fclose(fp);

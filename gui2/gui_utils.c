@@ -41,6 +41,7 @@
 #include "menustate.h"
 #include "dlgutils.h"
 #include "ssheet.h"
+#include "datafiles.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -67,6 +68,7 @@ char *storelist = NULL;
 #include "../pixmaps/stock_close_16.xpm"
 #include "../pixmaps/stock_sort_16.xpm"
 #include "../pixmaps/stock_convert_16.xpm"
+#include "../pixmaps/stock_properties_16.xpm"
 # if defined(USE_GNOME)
 #  include "../pixmaps/stock_print_16.xpm"
 # endif
@@ -120,7 +122,8 @@ enum {
     HELP_ITEM,
     SORT_ITEM,
     SORT_BY_ITEM,
-    FORMAT_ITEM
+    FORMAT_ITEM,
+    CODE_ITEM
 } viewbar_flags;
 
 static GtkWidget *get_toolbar_button_by_flag (GtkToolbar *tb, int flag)
@@ -530,7 +533,11 @@ FILE *gretl_tempfile_open (char *fname)
     int fd;
 
     strcat(fname, ".XXXXXX");
+#ifdef G_OS_WIN32
+    fd = g_mkstemp(fname);
+#else
     fd = mkstemp(fname);
+#endif
     if (fd != -1) {
 	fp = fdopen(fd, "w+");
 	if (fp == NULL) {
@@ -1733,6 +1740,16 @@ static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)
     copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role), W_SAVE);
 }
 
+static void view_code_callback (GtkWidget *w, windata_t *vwin)
+{
+    windata_t *child = 
+	gui_show_function_info(vwin->fname, VIEW_FUNC_CODE);
+
+    if (child != NULL) {
+	vwin_add_child(vwin, child);
+    }
+}
+
 struct viewbar_item {
     const char *str;
 #ifndef OLD_GTK
@@ -1757,6 +1774,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Copy"), GTK_STOCK_COPY, text_copy_callback, COPY_ITEM }, 
     { N_("Paste"), GTK_STOCK_PASTE, text_paste_callback, EDIT_ITEM },
     { N_("Find..."), GTK_STOCK_FIND, text_find_callback, 0 },
+    { N_("View code"), GTK_STOCK_PROPERTIES, view_code_callback, CODE_ITEM },
     { N_("Replace..."), GTK_STOCK_FIND_AND_REPLACE, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Sort"), GTK_STOCK_SORT_ASCENDING, series_view_sort, SORT_ITEM },    
@@ -1784,6 +1802,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Copy"), stock_copy_16_xpm, text_copy_callback, COPY_ITEM }, 
     { N_("Paste"), stock_paste_16_xpm, text_paste_callback, EDIT_ITEM },
     { N_("Find..."), stock_search_16_xpm, text_find_callback, 0 },
+    { N_("View code"), stock_properties_16_xpm, view_code_callback, CODE_ITEM },
     { N_("Replace..."), stock_search_replace_16_xpm, text_replace_callback, EDIT_ITEM },
     { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
     { N_("Sort"), stock_sort_16, series_view_sort, SORT_ITEM },  
@@ -1909,6 +1928,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	}
 
 	if (vwin->role == VIEW_SCALAR && viewbar_items[i].flag == 0) {
+	    continue;
+	}
+
+	if (vwin->role != VIEW_FUNC_INFO && viewbar_items[i].flag == CODE_ITEM) {
 	    continue;
 	}
 
@@ -2155,6 +2178,13 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
 {
     const char *buf = gretl_print_get_buffer(prn);
 
+#ifdef USE_GTKSOURCEVIEW
+    if (vwin->role == VIEW_FUNC_CODE) {
+	sourceview_insert_buffer(vwin, buf);
+	return;
+    }
+#endif
+
     if (vwin->role == SCRIPT_OUT) {
 	textview_set_text_colorized(vwin->w, buf);
     } else {
@@ -2209,7 +2239,16 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	make_viewbar(vwin, 1);
     }
 
+#ifdef USE_GTKSOURCEVIEW
+    if (role == VIEW_FUNC_CODE) {
+	create_source(vwin, hsize, vsize, FALSE);
+    } else {
+	vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
+    }
+#else
     vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
+#endif
+
     text_table_setup(vwin->vbox, vwin->w);
 
     /* arrange for clean-up when dialog is destroyed */
@@ -4053,7 +4092,7 @@ void startR (const char *Rcommand)
 	return;
     }
 
-    build_path(paths.userdir, "gretl.Rprofile", Rprofile, NULL);
+    build_path(Rprofile, paths.userdir, "gretl.Rprofile", NULL);
     fp = fopen(Rprofile, "w");
     if (fp == NULL) {
 	errbox(_("Couldn't write R startup file"));
@@ -4067,7 +4106,7 @@ void startR (const char *Rcommand)
 	return;
     } 	
 
-    build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
+    build_path(Rdata, paths.userdir, "Rdata.tmp", NULL);
 
     sprintf(Rline, "store \"%s\" -r", Rdata);
     list = command_list_from_string(Rline);
@@ -4090,12 +4129,13 @@ void startR (const char *Rcommand)
 	char Rtmp[MAXLEN];
 	FILE *fq;
 
-	build_path(paths.userdir, "Rtmp", Rtmp, NULL);
+	build_path(Rtmp, paths.userdir, "Rtmp", NULL);
 	fq = fopen(Rtmp, "w");
-	fprintf(fq, "gretldata <- read.table(\"%s\")\n", Rdata);
-	fprintf(fq, "attach(gretldata)\n");
-	fclose(fq);
-
+	if (fq != NULL) {
+	    fprintf(fq, "gretldata <- read.table(\"%s\")\n", Rdata);
+	    fprintf(fq, "attach(gretldata)\n");
+	    fclose(fq);
+	}
 	fprintf(fp, "source(\"%s\", echo=TRUE)\n", Rtmp);
     }
 

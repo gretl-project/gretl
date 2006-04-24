@@ -515,13 +515,13 @@ static void set_tramo_x12a_dirs (void)
 #  ifdef HAVE_TRAMO 
     set_tramo_ok(check_for_prog(tramo));
     if (*tramodir == '\0') {
-	build_path(paths.userdir, "tramo", tramodir, NULL);
+	build_path(tramodir, paths.userdir, "tramo", NULL);
     }
 #  endif
 #  ifdef HAVE_X12A
     set_x12a_ok(check_for_prog(paths.x12a));
     if (*paths.x12adir == '\0') {
-	build_path(paths.userdir, "x12arima", paths.x12adir, NULL);
+	build_path(paths.x12adir, paths.userdir, "x12arima", NULL);
     }
 #  endif
 

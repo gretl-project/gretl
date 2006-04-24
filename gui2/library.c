@@ -5203,7 +5203,7 @@ void maybe_display_string_table (void)
 	} 
 
 	s_table_waiting = 0;
-	build_path(paths.userdir, "string_table.txt", stname, NULL);
+	build_path(stname, paths.userdir, "string_table.txt", NULL);
 	view_file(stname, 0, 0, 78, 350, VIEW_FILE);
     }
 }

@@ -1409,7 +1409,7 @@ void open_db_index (GtkWidget *w, gpointer data)
 				   vwin->active_var);
 #endif
 
-    build_path(dbdir, fname, dbfile, NULL);
+    build_path(dbfile, dbdir, fname, NULL);
     
 #ifndef OLD_GTK
     g_free(fname);
@@ -1664,46 +1664,61 @@ static int ggz_extract (char *errbuf, char *ggzname)
     return err;
 }
 
-void grab_remote_db (GtkWidget *w, gpointer data)
+enum {
+    REAL_INSTALL,
+    TMP_INSTALL
+};
+
+static int real_install_file_from_server (windata_t *vwin, int op)
 {
-    gchar *dbname;
-    windata_t *vwin = (windata_t *) data;
-    char *ggzname, errbuf[80];
+    gchar *objname;
+    char fndir[MAXLEN];
+    char *target, errbuf[80];
     FILE *fp;
-    int err;
+    int err = 0;
 
 #ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
-			 vwin->active_var, 0, &dbname);
+			 vwin->active_var, 0, &objname);
 #else
     gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
-		       vwin->active_var, 0, &dbname);
+		       vwin->active_var, 0, &objname);
 #endif
     
-    fprintf(stderr, "grab_remote_db(): dbname = '%s'\n", dbname);
-
-    ggzname = mymalloc(MAXLEN);
-    if (ggzname == NULL) {
-	return;
+    target = mymalloc(MAXLEN);
+    if (target == NULL) {
+	return 1;
     }
 
-    build_path(paths.binbase, dbname, ggzname, ".ggz");
+    /* FIXME creating directory in case of function files? */
 
-    /* test write to gzipped file */
-    errno = 0;
-    fp = gretl_fopen(ggzname, "w");
-    if (fp == NULL) {
-	if (errno == EACCES) { /* write to user dir instead */
-	    build_path(paths.userdir, dbname, ggzname, ".ggz");
+    if (vwin->role == REMOTE_FUNC_FILES) {
+	if (op == TMP_INSTALL) {
+	    build_path(target, paths.userdir, "dltmp.gfn", NULL);
 	} else {
-	    gchar *msg;
+	    build_path(fndir, paths.gretldir, "functions", NULL);
+	    build_path(target, fndir, objname, ".gfn");
+	}
+    } else {
+	build_path(target, paths.binbase, objname, ".ggz");
+    }
 
-	    msg = g_strdup_printf(_("Couldn't open %s for writing"), 
-				  ggzname);
-	    errbox(msg);
-	    g_free(msg);
-	    free(ggzname);
-	    return;
+    /* try test write to target file */
+    errno = 0;
+    fp = gretl_fopen(target, "w");
+    if (fp == NULL) {
+	if (errno == EACCES && op != TMP_INSTALL) { 
+	    /* write to user dir instead */
+	    if (vwin->role == REMOTE_FUNC_FILES) {
+		build_path(fndir, paths.userdir, "functions", NULL);
+		build_path(target, fndir, objname, ".gfn");
+	    } else {
+		build_path(target, paths.userdir, objname, ".ggz");
+	    }
+	} else {
+	    errbox(_("Couldn't open %s for writing"), target);
+	    free(target);
+	    return 1;
 	}
     } else {
 	fclose(fp);
@@ -1711,49 +1726,74 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 
     *errbuf = '\0';
 
+    if (vwin->role == REMOTE_FUNC_FILES) {
+	err = retrieve_remote_function_package(objname, target, errbuf);
+    } else {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-    err = retrieve_remote_db(dbname, ggzname, errbuf, GRAB_NBO_DATA);
+	err = retrieve_remote_db(objname, target, errbuf, GRAB_NBO_DATA);
 #else
-    err = retrieve_remote_db(dbname, ggzname, errbuf, GRAB_DATA);
+	err = retrieve_remote_db(objname, target, errbuf, GRAB_DATA);
 #endif
+    }
 
     if (err) {
 	show_network_error(NULL, errbuf);
 #ifndef OLD_GTK
-	free(dbname);
+	free(objname);
 #endif
-	free(ggzname);
-	return;
+	free(target);
+	return err;
     } 
 
-    err = ggz_extract(errbuf, ggzname);
-
-    if (err) {
-	if (*errbuf != '\0') {
-	    errbox(errbuf);
+    if (vwin->role == REMOTE_FUNC_FILES) {
+	if (op == REAL_INSTALL) {
+	    infobox(_("Function package installed"));
 	} else {
-	    errbox(_("Error unzipping compressed data"));
+	    gui_show_function_info(target, VIEW_FUNC_INFO);
 	}
     } else {
-	/* installed OK: give option of opening database now */
-        int resp = yes_no_dialog ("gretl",                      
-                                  _("Database installed.\n"
-                                    "Open it now?"), 0);
+	err = ggz_extract(errbuf, target);
+	if (err) {
+	    if (*errbuf == '\0') {
+		strcpy(errbuf, _("Error unzipping compressed data"));
+	    }
+	    errbox(errbuf);
+	} else {
+	    int resp = yes_no_dialog ("gretl",                      
+				      _("Database installed.\n"
+					"Open it now?"), 0);
 
-        if (resp == GRETL_YES) { 
-	    char dbpath[MAXLEN];
+	    if (resp == GRETL_YES) { 
+		char dbpath[MAXLEN];
 	    
-	    strcpy(dbpath, ggzname);
-	    strcpy(strrchr(dbpath, '.'), ".bin");
-	    open_named_db_index(dbpath);
-        }
-	populate_filelist(vwin, NULL);
+		strcpy(dbpath, target);
+		strcpy(strrchr(dbpath, '.'), ".bin");
+		open_named_db_index(dbpath);
+	    }
+	    populate_filelist(vwin, NULL);
+	}
     }
 
 #ifndef OLD_GTK
-    free(dbname);
+    free(objname);
 #endif
-    free(ggzname);
+    free(target);
+
+    return 0;
+}
+
+void install_file_from_server (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    real_install_file_from_server(vwin, REAL_INSTALL);
+}
+
+void file_info_from_server (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    real_install_file_from_server(vwin, TMP_INSTALL);
 }
 
 static gchar *
@@ -1765,7 +1805,7 @@ real_get_db_description (const char *fullname, const char *binname,
     char *p, *descrip = NULL;
     
     if (fullname == NULL) {
-	build_path(dbdir, binname, idxname, NULL);
+	build_path(idxname, dbdir, binname, NULL);
     } else {
 	strcpy(idxname, fullname);
     }
@@ -1948,14 +1988,16 @@ read_db_files_in_dir (DIR *dir, char *dbdir, windata_t *vwin, int ndb)
 static void get_local_object_status (char *fname, int role, char *status, 
 				     time_t remtime)
 {
+    char fndir[MAXLEN];
     char fullname[MAXLEN];
     struct stat fbuf;
     int err;
 
     if (role == REMOTE_DB) {
-	build_path(paths.binbase, fname, fullname, NULL);
+	build_path(fullname, paths.binbase, fname, NULL);
     } else {
-	sprintf(fullname, "%sfunctions/%s", paths.gretldir, fname);
+	build_path(fndir, paths.gretldir, "functions", NULL);
+	build_path(fullname, fndir, fname, NULL);
     }
 
     if ((err = stat(fullname, &fbuf)) == -1) {
@@ -1963,11 +2005,12 @@ static void get_local_object_status (char *fname, int role, char *status,
 #ifdef G_OS_WIN32
 	    strcpy(status, _("Not installed"));
 #else
-	    /* try user dir too if not on Windows */
+	    /* try user dir too, if not on Windows */
 	    if (role == REMOTE_DB) {
-		build_path(paths.userdir, fname, fullname, NULL);
+		build_path(fullname, paths.userdir, fname, NULL);
 	    } else {
-		sprintf(fullname, "%sfunctions/%s", paths.userdir, fname);
+		build_path(fndir, paths.userdir, "functions", NULL);
+		build_path(fullname, fndir, fname, NULL);
 	    }
 	    if ((err = stat(fullname, &fbuf)) == -1) {
 		strcpy(status, _("Not installed"));
@@ -1990,7 +2033,7 @@ static void get_local_object_status (char *fname, int role, char *status,
 static int read_remote_filetime (char *line, char *fname, time_t *date)
 {
     char mon[4], hrs[9];
-    int day, yr;
+    int mday, yr;
     struct tm mytime;
     const char *months[] = {
 	"Jan", "Feb", "Mar", "Apr",
@@ -2001,14 +2044,14 @@ static int read_remote_filetime (char *line, char *fname, time_t *date)
 
     /* We're expecting a string of the form:
 
-       "<bytes> Foo <mon> <mday> 00:00:00 <year> <filename>"
+       "<bytes> <day> <mon> <mday> 00:00:00 <year> <filename>"
 
-       where <mon> is 3-letter month, <day> is 2 digits,
-       and <year> is 4-digit year.
+       where <mon> is 3-letter month, <mday> is 2 digits,
+       and <year> is 4-digit year; <day> is not used.
     */
 
     if (sscanf(line, "%*s%*s%3s%2d%8s%4d%16s", 
-	       mon, &day, hrs, &yr, fname) != 5) {
+	       mon, &mday, hrs, &yr, fname) != 5) {
 	return 1;
     }
 
@@ -2021,7 +2064,7 @@ static int read_remote_filetime (char *line, char *fname, time_t *date)
     mytime.tm_isdst = -1; 
     mytime.tm_hour = atoi(hrs);
     mytime.tm_year = yr - 1900;
-    mytime.tm_mday = day;
+    mytime.tm_mday = mday;
     mytime.tm_mon = 0;
 
     for (i=0; i<12; i++) {
@@ -2034,6 +2077,9 @@ static int read_remote_filetime (char *line, char *fname, time_t *date)
 
     return 0;
 }
+
+/* fill a list box with names and short descriptions of either
+   databases or function packages, retrieved from server */
 
 gint populate_remote_object_list (windata_t *vwin)
 {
@@ -2104,8 +2150,8 @@ gint populate_remote_object_list (windata_t *vwin)
 	row[2] = status;
 #ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
-			    2, row[2], -1);
+	gtk_list_store_set(store, &iter, 0, row[0], 1, row[1],
+			   2, row[2], -1);
 #else
 	gtk_clist_append(GTK_CLIST(vwin->listbox), row);
 	if (i % 2) {
