@@ -1,5 +1,5 @@
 /* XPM */
-static char *stock_properties_16[] = {
+static char *stock_properties_16_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "16 16 65 1",
 "  c black",

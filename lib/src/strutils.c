@@ -1367,13 +1367,15 @@ char *build_path (char *targ, const char *dirname, const char *fname,
     size_t len;
 
     if (dirname == NULL || fname == NULL || targ == NULL) {
-	return 1;
+	return NULL;
     }
 
     *targ = '\0';
     strcat(targ, dirname);
     len = strlen(targ);
-    if (len == 0) return 1;
+    if (len == 0) {
+	return NULL;
+    }
 
     /* strip a trailing single dot */
     if (len > 1 && targ[len-1] == '.' && 
@@ -1394,7 +1396,7 @@ char *build_path (char *targ, const char *dirname, const char *fname,
 	strcat(targ, ext);
     }
 
-    return 0;
+    return targ;
 }
 
 #if defined(USE_GTK2)
