@@ -759,7 +759,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &fname);
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
-			 2, &dir);
+			 3, &dir);
 #else
     gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
 		       0, &fname);
@@ -778,11 +778,10 @@ static void browser_functions_handler (windata_t *vwin, int task)
 #ifndef OLD_GTK
     g_free(fname);
     g_free(dir);
+#else
+    gtk_clist_set_text(GTK_CLIST(vwin->listbox), vwin->active_var,
+		       2, _("Yes"));
 #endif
-
-    if (task == LOAD_FUNC_CODE) {
-	gtk_widget_destroy(GTK_WIDGET(vwin->w));
-    }
 }
 
 void browser_load_func (GtkWidget *w, gpointer data)
@@ -890,7 +889,11 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     case FUNC_FILES:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: function packages"));
+#ifdef OLD_GTK
 	browse_func = browser_load_func;
+#else
+	browse_func = NULL;
+#endif
 	break;
     case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
@@ -955,19 +958,22 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     gtk_box_set_homogeneous(GTK_BOX(button_box), TRUE);
     gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
 
-    label = (code == REMOTE_DB)? N_("Get series listing") :
-	(code == REMOTE_FUNC_FILES)? N_("Info") :
-	N_("Open");
+    if (browse_func != NULL) {
+	label = (code == REMOTE_DB)? N_("Get series listing") :
+	    (code == REMOTE_FUNC_FILES)? N_("Info") :
+	    N_("Open");
 
-    button = gtk_button_new_with_label(_(label));
-    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
+	button = gtk_button_new_with_label(_(label));
+	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(browse_func), vwin);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(browse_func), vwin);
 
-    if (code != NATIVE_DB && code != RATS_DB && !REMOTE_ACTION(code)) {
-       	g_signal_connect(G_OBJECT(button), "clicked", 
-			 G_CALLBACK(delete_widget), vwin->w); 
+	if (code != NATIVE_DB && code != RATS_DB && 
+	    code != FUNC_FILES && !REMOTE_ACTION(code)) {
+	    g_signal_connect(G_OBJECT(button), "clicked", 
+			     G_CALLBACK(delete_widget), vwin->w); 
+	}
     }
 
     if (code == TEXTBOOK_DATA || code == FUNC_FILES || REMOTE_ACTION(code)) {
@@ -1027,6 +1033,8 @@ read_fn_files_in_dir (DIR *dir, const char *fndir,
 		      GtkListStore *store, GtkTreeIter *iter)
 {
     struct dirent *dirent;
+    char fullname[MAXLEN];
+    gboolean loaded;
     char *fname;
     char *descrip;
     int n, nfn = 0;
@@ -1040,10 +1048,12 @@ read_fn_files_in_dir (DIR *dir, const char *fndir,
 	if (!g_ascii_strcasecmp(fname + n - 4, ".gfn")) {
 	    descrip = get_func_description(fname, fndir);
 	    if (descrip != NULL) {
+		build_path(fullname, fndir, fname, NULL);
 		fname[n - 4] = '\0';
 		gtk_list_store_append(store, iter);
+		loaded = user_function_file_is_loaded(fullname);
 		gtk_list_store_set(store, iter, 0, fname, 1, descrip,
-				   2, fndir, -1);
+				   2, loaded, 3, fndir, -1);
 		g_free(descrip);
 		nfn++;
 	    }
@@ -1060,9 +1070,10 @@ static int
 read_fn_files_in_dir (DIR *dir, char *fndir, windata_t *vwin, int nfn)
 {
     struct dirent *dirent;
+    char fullname[MAXLEN];
     char *fname;
     char *descrip;
-    gchar *row[2];
+    gchar *row[3];
     int n, i;
 
     while ((dirent = readdir(dir)) != NULL) {
@@ -1074,9 +1085,15 @@ read_fn_files_in_dir (DIR *dir, char *fndir, windata_t *vwin, int nfn)
 	if (!g_strcasecmp(fname + n - 4, ".gfn")) {
 	    descrip = get_func_description(fname, fndir);
 	    if (descrip != NULL) {
+		build_path(fullname, fndir, fname, NULL);
 		fname[n - 4] = '\0';
 		row[0] = fname;
 		row[1] = descrip;
+		if (user_function_file_is_loaded(fullname)) {
+		    row[2] = _("Yes");
+		} else {
+		    row[2] = _("No");
+		}
 		i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
 		gtk_clist_set_row_data_full(GTK_CLIST(vwin->listbox), i, 
 					    g_strdup(fndir), g_free);
@@ -1111,7 +1128,7 @@ gint populate_func_list (windata_t *vwin)
 #endif
 
     /* pick up any function files in system dir */
-    sprintf(fndir, "%sfunctions", paths.gretldir);
+    build_path(fndir, paths.gretldir, "functions", NULL);
     dir = opendir(fndir);
 
     if (dir != NULL) {
@@ -1124,7 +1141,7 @@ gint populate_func_list (windata_t *vwin)
     }
 
     /* pick up any function files in the user's personal dir */
-    sprintf(fndir, "%sfunctions", paths.userdir);
+    build_path(fndir, paths.userdir, "functions", NULL);
     dir = opendir(fndir);
 
     if (dir != NULL) {
@@ -1167,30 +1184,52 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 static GtkWidget *files_window (windata_t *vwin) 
 {
     const char *data_titles[] = {
-	_("File"), 
-	_("Summary")
+	N_("File"), 
+	N_("Summary")
     };
     const char *ps_titles[] = {
-	_("Script"), 
-	_("Topic"), 
-	_("Data")
+	N_("Script"), 
+	N_("Topic"), 
+	N_("Data")
     };
     const char *db_titles[] = {
-	_("Database"), 
-	_("Source")
+	N_("Database"), 
+	N_("Source")
     };
     const char *remote_db_titles[] = {
-	_("Database"), 
-	_("Source"), 
-	_("Local status")
+	N_("Database"), 
+	N_("Source"), 
+	N_("Local status")
+    };
+    const char *func_titles[] = {
+	N_("Package"), 
+	N_("Summary"), 
+	N_("Loaded?")
     };
     const char *remote_func_titles[] = {
-	_("Package"), 
-	_("Description"), 
-	_("Local status")
+	N_("Package"), 
+	N_("Summary"), 
+	N_("Local status")
+    };
+
+    GType types_2[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING
+    };
+    GType types_3[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING
+    };
+    GType types_4[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_BOOLEAN,
+	G_TYPE_STRING
     };
 
     const char **titles = data_titles;
+    GType *types = types_2;
 
     int full_width = 500, file_height = 260;
     int hidden_col = 0;
@@ -1201,7 +1240,8 @@ static GtkWidget *files_window (windata_t *vwin)
     switch (vwin->role) {
     case NATIVE_DB:
 	titles = db_titles;
-	hidden_col = 1;
+	cols = 3;
+	hidden_col = TRUE;
 	break;
     case REMOTE_DB:
 	titles = remote_db_titles;
@@ -1210,9 +1250,9 @@ static GtkWidget *files_window (windata_t *vwin)
 	break;
     case RATS_DB:
 	titles = db_titles;
-	cols = 1;
+	cols = 2;
+	hidden_col = TRUE;
 	full_width = 240;
-	hidden_col = 1;
 	break;
     case PS_FILES:
 	titles = ps_titles;
@@ -1220,7 +1260,10 @@ static GtkWidget *files_window (windata_t *vwin)
 	full_width = 480;
 	break;
     case FUNC_FILES:
-	hidden_col = 1;
+	titles = func_titles;
+	cols = 4;
+	types = types_4;
+	hidden_col = TRUE;
 	break;
     case REMOTE_FUNC_FILES:
 	titles = remote_func_titles;
@@ -1230,15 +1273,17 @@ static GtkWidget *files_window (windata_t *vwin)
 	break;
     }
 
+    if (cols == 3) {
+	types = types_3;
+    }
+
     full_width *= gui_scale;
     file_height *= gui_scale;
 
     box = gtk_vbox_new(FALSE, 0);
     gtk_widget_set_size_request(box, full_width, file_height);
-
-    vwin->listbox = list_box_create(vwin, GTK_BOX(box), cols, 
-				    hidden_col, titles);
-
+    vwin_add_list_box(vwin, GTK_BOX(box), cols, hidden_col, 
+		      types, titles);
     gtk_widget_show(box);
 
     return box;
@@ -1261,20 +1306,31 @@ static GtkWidget *files_window (windata_t *fdata)
 	_("Database"), 
 	_("Source")
     };
-    char *remote_titles[] = {
+    char *remote_db_titles[] = {
 	_("Database"), 
 	_("Source"), 
 	_("Local status")
     };
-
+    char *func_titles[] = {
+	_("Package"), 
+	_("Summary"), 
+	_("Loaded?")
+    };
+    char *remote_func_titles[] = {
+	_("Package"), 
+	_("Summary"), 
+	_("Local status")
+    };
     char **titles = data_titles;
 
     int data_col_width[] = {128, 256}; 
     int ps_col_width[] = {68, 180, 160};
     int db_col_width[] = {80, 304};
+    int fn_col_width[] = {80, 256, 40};
     int remote_col_width[] = {80, 256, 180};
-    int *col_width = data_col_width;
     int full_width = 500, file_height = 260;
+
+    int *col_width = data_col_width;
 
     GtkWidget *box, *scroller;
     int i, cols = 2;
@@ -1285,7 +1341,7 @@ static GtkWidget *files_window (windata_t *fdata)
 	col_width = db_col_width;
 	break;
     case REMOTE_DB:
-	titles = remote_titles;
+	titles = remote_db_titles;
 	cols = 3;
 	col_width = remote_col_width;
 	full_width = 560;
@@ -1303,42 +1359,54 @@ static GtkWidget *files_window (windata_t *fdata)
 	col_width = ps_col_width;
 	full_width = 480;
 	break;
+    case FUNC_FILES:
+	titles = func_titles;
+	col_width = fn_col_width;
+	cols = 3;
+	break;
+    case REMOTE_FUNC_FILES:
+	titles = remote_func_titles;
+	col_width = fn_col_width;
+	cols = 3;
+	break;
     default:
 	break;
     }
 
     fdata->active_var = 1; 
 
-    box = gtk_vbox_new (FALSE, 0);
+    box = gtk_vbox_new(FALSE, 0);
 
     full_width *= gui_scale;
     file_height *= gui_scale;
 
     gtk_widget_set_usize(box, full_width, file_height);
    
-    scroller = gtk_scrolled_window_new (NULL, NULL);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
-				    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    scroller = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
     fdata->listbox = gtk_clist_new_with_titles(cols, titles);
     gtk_clist_column_titles_passive(GTK_CLIST(fdata->listbox));
-    gtk_container_add (GTK_CONTAINER (scroller), fdata->listbox);
-    gtk_clist_set_selection_mode (GTK_CLIST (fdata->listbox), 
-				  GTK_SELECTION_BROWSE);
+    gtk_container_add(GTK_CONTAINER(scroller), fdata->listbox);
+    gtk_clist_set_selection_mode(GTK_CLIST(fdata->listbox), 
+				 GTK_SELECTION_BROWSE);
+
     for (i=0; i<cols; i++) {
 	col_width[i] *= gui_scale;
-	gtk_clist_set_column_width (GTK_CLIST (fdata->listbox), i,
-				    col_width[i]);
-	gtk_clist_set_column_justification (GTK_CLIST (fdata->listbox), i, 
-					    GTK_JUSTIFY_LEFT);
+	gtk_clist_set_column_width(GTK_CLIST(fdata->listbox), i,
+				   col_width[i]);
+	gtk_clist_set_column_justification(GTK_CLIST(fdata->listbox), i, 
+					   GTK_JUSTIFY_LEFT);
     }
 
-    gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
-    gtk_signal_connect_after (GTK_OBJECT (fdata->listbox), "select_row", 
-			      GTK_SIGNAL_FUNC (selectrow), fdata);
-    gtk_widget_show (fdata->listbox);
-    gtk_widget_show (scroller);
+    gtk_box_pack_start(GTK_BOX(box), scroller, TRUE, TRUE, TRUE);
+    gtk_signal_connect_after(GTK_OBJECT(fdata->listbox), "select_row", 
+			     GTK_SIGNAL_FUNC(selectrow), fdata);
+    gtk_widget_show(fdata->listbox);
+    gtk_widget_show(scroller);
 
-    gtk_widget_show (box);
+    gtk_widget_show(box);
 
     return box;
 }

@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "treeutils.h"
+#include "datafiles.h"
 
 /* these live in dialogs.c */
 extern GtkWidget *active_edit_id; 
@@ -29,12 +30,45 @@ extern GtkWidget *active_edit_text;
 
 static gint list_alpha_compare (GtkTreeModel *model, 
 				GtkTreeIter *a, GtkTreeIter *b,
-				gpointer p);
+				gpointer p)
+{
+    gchar *vname_a, *vname_b;
+    gint ret;
+
+    gtk_tree_model_get(model, a, 1, &vname_a, -1);
+    gtk_tree_model_get(model, b, 1, &vname_b, -1);
+
+    if (strcmp(vname_a, "const") == 0) {
+	ret = 0;
+    } else if (strcmp(vname_b, "const") == 0) {
+	ret = 1;
+    } else {
+	ret = strcmp(vname_a, vname_b);
+    }
+
+    g_free(vname_a);
+    g_free(vname_b);
+    
+    return ret;
+}
+
 static gint list_id_compare (GtkTreeModel *model, 
 			     GtkTreeIter *a, GtkTreeIter *b,
-			     gpointer p);
+			     gpointer p)
+{
+    gchar *vnum_a, *vnum_b;
+    gint ret;
 
-/* ......................................................... */
+    gtk_tree_model_get(model, a, 0, &vnum_a, -1);
+    gtk_tree_model_get(model, b, 0, &vnum_b, -1);
+
+    ret = strcmp(vnum_a, vnum_b);
+
+    g_free(vnum_a);
+    g_free(vnum_b);
+    
+    return ret;
+}
 
 static gboolean no_select_row_zero (GtkTreeSelection *selection,
 				    GtkTreeModel *model,
@@ -42,11 +76,12 @@ static gboolean no_select_row_zero (GtkTreeSelection *selection,
 				    gboolean path_currently_selected,
 				    gpointer data)
 {
-    if (tree_path_get_row_number(path) == 0) return FALSE;
+    if (tree_path_get_row_number(path) == 0) {
+	return FALSE;
+    }
+
     return TRUE;
 }
-
-/* ......................................................... */
 
 static void my_gtk_entry_append_text (GtkEntry *entry, gchar *add)
 {
@@ -58,12 +93,11 @@ static void my_gtk_entry_append_text (GtkEntry *entry, gchar *add)
     g_free(new);
 }
 
-/* ......................................................... */
-
 static void update_dialogs_from_varclick (int active_var)
 {
+    const gchar *edttext;
+
     if (active_edit_id != NULL) {
-	const gchar *edttext;
 	gchar addvar[9];
 
 	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_id));
@@ -74,8 +108,6 @@ static void update_dialogs_from_varclick (int active_var)
 	}
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_id), addvar);
     } else if (active_edit_name != NULL) {
-	const gchar *edttext;
-
 	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_name));
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), 
 				 datainfo->varname[active_var]);
@@ -91,8 +123,6 @@ static void update_dialogs_from_varclick (int active_var)
 	}
     }  
 }
-
-/* .................................................................. */
 
 gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 			windata_t *win)
@@ -124,121 +154,150 @@ gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
     return (row == 0);
 }
 
-/* .................................................................. */
+static void
+bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
+{
+    GtkTreeView *treeview = GTK_TREE_VIEW(vwin->listbox);
+    GtkTreeModel *model = gtk_tree_view_get_model(treeview);
+    GtkTreePath *path = gtk_tree_path_new_from_string(path_str);
+    GtkTreeIter iter;
+    gboolean val;
+    gint col;
 
-GtkWidget *list_box_create (windata_t *win, GtkBox *box, 
-			    gint ncols, int hidden_col, 
-			    const char *titles[]) 
+    col = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model), "boolcol"));
+    gtk_tree_model_get_iter(model, &iter, path);
+    gtk_tree_model_get(model, &iter, col, &val, -1);
+
+    if (val) {
+	return;
+    }
+
+    if (vwin->role == FUNC_FILES) {
+	browser_load_func(NULL, vwin);
+    }
+
+    gtk_list_store_set(GTK_LIST_STORE(model), &iter, col, TRUE, -1);
+    gtk_tree_path_free(path);
+}
+
+void vwin_add_list_box (windata_t *vwin, GtkBox *box, 
+			int ncols, gboolean hidden_col,
+			GType *types, const char **titles) 
 {
     GtkListStore *store; 
     GtkWidget *view, *scroller;
     GtkCellRenderer *renderer;
+    GtkCellRenderer *bool_renderer = NULL;
     GtkTreeViewColumn *column;
     GtkTreeSelection *select;
-    GType *types;
-    gint i, totcols = ncols;
+    int i, viscols = ncols;
 
-    if (hidden_col) totcols++;
+    if (hidden_col) viscols--;
 
-    types = mymalloc(totcols * sizeof *types);
-    if (types == NULL) return NULL;
+    store = gtk_list_store_newv(ncols, types);
 
-    for (i=0; i<ncols; i++) types[i] = G_TYPE_STRING;
-    if (hidden_col) {
-	types[ncols] = G_TYPE_STRING;
-    }
+    vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    g_object_unref(G_OBJECT(store));
 
-    store = gtk_list_store_newv (totcols, types);
-    free(types);
+    gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), TRUE);
 
-    view = gtk_tree_view_new_with_model (GTK_TREE_MODEL(store));
-    g_object_unref (G_OBJECT(store));
+    renderer = gtk_cell_renderer_text_new();
+    g_object_set(renderer, "ypad", 0, NULL);
 
-    gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(view), TRUE);
-
-    renderer = gtk_cell_renderer_text_new ();
-    g_object_set (renderer, "ypad", 0, NULL);
-
-    for (i=0; i<ncols; i++) {
-	column = gtk_tree_view_column_new_with_attributes (titles[i],
-							   renderer,
-							   "text", i, 
-							   NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
-	if (win != mdata) {
-	    g_object_set (G_OBJECT (column), "resizable", TRUE, NULL);
+    for (i=0; i<viscols; i++) {
+	if (types[i] == G_TYPE_BOOLEAN) {
+	    bool_renderer = gtk_cell_renderer_toggle_new();
+	    g_object_set_data(G_OBJECT(store), "boolcol", GINT_TO_POINTER(i));
+	    g_signal_connect(bool_renderer, "toggled",
+			     G_CALLBACK(bool_col_toggled), vwin);
+	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
+							      bool_renderer,
+							      "active", i,
+							      NULL);
+#if 1
+	    gtk_tree_view_column_set_sizing(GTK_TREE_VIEW_COLUMN(column),
+					    GTK_TREE_VIEW_COLUMN_FIXED);
+	    gtk_tree_view_column_set_fixed_width(GTK_TREE_VIEW_COLUMN(column), 50);
+#endif
+	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+	} else {
+	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
+							      renderer,
+							      "text", i, 
+							      NULL);
+	    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+	    if (vwin != mdata) {
+		g_object_set(G_OBJECT(column), "resizable", TRUE, NULL);
+	    }
 	}	
     }
 
     if (hidden_col) {
-	column = gtk_tree_view_column_new_with_attributes (NULL,
-							   renderer,
-							   "text", i, 
-							   NULL);
-	gtk_tree_view_append_column (GTK_TREE_VIEW(view), column);
+	column = gtk_tree_view_column_new_with_attributes(NULL,
+							  renderer,
+							  "text", i, 
+							  NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	gtk_tree_view_column_set_visible(column, FALSE);
     }
 
     /* set the selection properties on the tree view */
-    select = gtk_tree_view_get_selection (GTK_TREE_VIEW(view));
+    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(view));
 
-    if (win == mdata) { /* main window */
-	gtk_tree_selection_set_mode (select, GTK_SELECTION_EXTENDED);
-	gtk_tree_selection_set_select_function (select, 
-						(GtkTreeSelectionFunc)
-						no_select_row_zero,
-						NULL, NULL);
+    if (vwin == mdata) { 
+	/* gretl main window */
+	gtk_tree_selection_set_mode(select, GTK_SELECTION_EXTENDED);
+	gtk_tree_selection_set_select_function(select, 
+					       (GtkTreeSelectionFunc)
+					       no_select_row_zero,
+					       NULL, NULL);
 
-	gtk_widget_set_events (view, GDK_POINTER_MOTION_MASK 
-			       | GDK_POINTER_MOTION_HINT_MASK);
+	gtk_widget_set_events(view, GDK_POINTER_MOTION_MASK 
+			      | GDK_POINTER_MOTION_HINT_MASK);
 
-        g_signal_connect (G_OBJECT(view), "motion_notify_event",
-                          G_CALLBACK(listbox_drag), NULL);
+        g_signal_connect(G_OBJECT(view), "motion_notify_event",
+			 G_CALLBACK(listbox_drag), NULL);
 
     } else {
-	gtk_tree_selection_set_mode (select, GTK_SELECTION_SINGLE);
-	g_signal_connect (G_OBJECT(select), "changed",
-			  G_CALLBACK(listbox_select_row),
-			  win);
+	gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
+	g_signal_connect(G_OBJECT(select), "changed",
+			 G_CALLBACK(listbox_select_row),
+			 vwin);
     }
 
-    g_signal_connect (G_OBJECT(view), "key_press_event",
-		      G_CALLBACK(catch_listbox_key),
-		      win);
+    g_signal_connect(G_OBJECT(view), "key_press_event",
+		     G_CALLBACK(catch_listbox_key),
+		     vwin);
 
-    g_signal_connect (G_OBJECT(view), "button_press_event",
-		      G_CALLBACK(listbox_double_click),
-		      win);
+    g_signal_connect(G_OBJECT(view), "button_press_event",
+		     G_CALLBACK(listbox_double_click),
+		     vwin);
 
     /* set sort properties on the tree model */
-    gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(store), 0, 
-				     (GtkTreeIterCompareFunc) 
-				     list_id_compare,
-				     NULL, NULL);
+    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(store), 0, 
+				    (GtkTreeIterCompareFunc) 
+				    list_id_compare,
+				    NULL, NULL);
 
-    gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(store), 1, 
-				     (GtkTreeIterCompareFunc) 
-				     list_alpha_compare,
-				     NULL, NULL);
+    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(store), 1, 
+				    (GtkTreeIterCompareFunc) 
+				    list_alpha_compare,
+				    NULL, NULL);
 
-    scroller = gtk_scrolled_window_new (NULL, NULL);
+    scroller = gtk_scrolled_window_new(NULL, NULL);
 
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
-				    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (scroller),
-                                         GTK_SHADOW_IN);    
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scroller),
+					GTK_SHADOW_IN);    
 
-    gtk_container_add (GTK_CONTAINER(scroller), view);
+    gtk_container_add(GTK_CONTAINER(scroller), view);
 
-    gtk_box_pack_start (box, scroller, TRUE, TRUE, TRUE);
+    gtk_box_pack_start(box, scroller, TRUE, TRUE, TRUE);
 
     gtk_widget_show(view);
     gtk_widget_show(scroller);
-
-    return view;
 }
-
-/* .................................................................. */
 
 void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val)
 {
@@ -246,58 +305,16 @@ void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val)
     GtkTreeIter iter;
     gchar *path;
 
-    model = gtk_tree_view_get_model (view);
+    model = gtk_tree_view_get_model(view);
     path = g_strdup_printf("%d", row);
-    gtk_tree_model_get_iter_from_string (model, &iter, path);
-    gtk_tree_model_get (model, &iter, col, val, -1);
+    gtk_tree_model_get_iter_from_string(model, &iter, path);
+    gtk_tree_model_get(model, &iter, col, val, -1);
     g_free(path);
 }
-
-/* .................................................................. */
 
 int tree_path_get_row_number (GtkTreePath *path)
 {
     return gtk_tree_path_get_indices(path)[0];
 }
 
-/* .................................................................. */
 
-static gint list_alpha_compare (GtkTreeModel *model, 
-				GtkTreeIter *a, GtkTreeIter *b,
-				gpointer p)
-{
-    gchar *vname_a, *vname_b;
-    gint ret;
-
-    gtk_tree_model_get (model, a, 1, &vname_a, -1);
-    gtk_tree_model_get (model, b, 1, &vname_b, -1);
-
-    if (strcmp(vname_a, "const") == 0) ret = 0;
-    else if (strcmp(vname_b, "const") == 0) ret = 1;
-    else ret = strcmp(vname_a, vname_b);
-
-    g_free(vname_a);
-    g_free(vname_b);
-    
-    return ret;
-}
-
-/* .................................................................. */
-
-static gint list_id_compare (GtkTreeModel *model, 
-			     GtkTreeIter *a, GtkTreeIter *b,
-			     gpointer p)
-{
-    gchar *vnum_a, *vnum_b;
-    gint ret;
-
-    gtk_tree_model_get (model, a, 0, &vnum_a, -1);
-    gtk_tree_model_get (model, b, 0, &vnum_b, -1);
-
-    ret = strcmp(vnum_a, vnum_b);
-
-    g_free(vnum_a);
-    g_free(vnum_b);
-    
-    return ret;
-}

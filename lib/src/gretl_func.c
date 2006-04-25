@@ -1354,6 +1354,19 @@ static int real_read_user_function_file (const char *fname, int task, PRN *prn,
     return err;
 }
 
+int user_function_file_is_loaded (const char *fname)
+{
+    int i;
+
+    for (i=0; i<n_pkgs; i++) {
+	if (!strcmp(fname, pkgs[i]->fname)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /* read functions from file into gretl's workspace */
 
 int load_user_function_file (const char *fname)

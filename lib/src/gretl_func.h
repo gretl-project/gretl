@@ -71,6 +71,8 @@ int write_selected_user_functions (const int *privlist,
 
 int write_user_function_file (const char *fname);
 
+int user_function_file_is_loaded (const char *fname);
+
 int load_user_function_file (const char *fname);
 
 int get_function_file_info (const char *fname, PRN *prn, char **pname);

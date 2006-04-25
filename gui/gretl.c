@@ -226,9 +226,9 @@ GtkItemFactoryEntry data_items[] = {
       REMOTE_DB, NULL },
 
     /* File, Browse function packages */
-    { N_("/File/_Browse functions"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Browse functions/on local machine"), NULL, display_files, FUNC_FILES, NULL },
-    { N_("/File/Browse functions/on server"), NULL, display_files, REMOTE_FUNC_FILES, NULL },
+    { N_("/File/Additional functions"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Additional functions/on local machine"), NULL, display_files, FUNC_FILES, NULL },
+    { N_("/File/Additional functions/on server"), NULL, display_files, REMOTE_FUNC_FILES, NULL },
 
     /* File, Create dataset */
     { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>" },

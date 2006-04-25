@@ -1305,9 +1305,14 @@ static GtkWidget *make_main_window (int gui_get_data)
     GtkWidget *main_vbox;
     GtkWidget *box, *dlabel, *align;
     const char *titles[] = {
-	_("ID #"), 
-	_("Variable name"), 
-	_("Descriptive label")
+	N_("ID #"), 
+	N_("Variable name"), 
+	N_("Descriptive label")
+    };
+    GType types[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING
     };
 
     gui_scale = get_gui_scale();
@@ -1376,17 +1381,17 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_widget_show(align);
     gtk_container_add(GTK_CONTAINER(align), dlabel);
    
-    mdata->listbox = list_box_create(mdata, GTK_BOX(box), 3, 0, titles);
+    vwin_add_list_box(mdata, GTK_BOX(box), 3, FALSE, types, titles);
     gtk_widget_show(box);
 
-    gtk_drag_dest_set (mdata->listbox,
-		       GTK_DEST_DEFAULT_ALL,
-		       gretl_drag_targets, 2,
-		       GDK_ACTION_COPY);
+    gtk_drag_dest_set(mdata->listbox,
+		      GTK_DEST_DEFAULT_ALL,
+		      gretl_drag_targets, 2,
+		      GDK_ACTION_COPY);
 
-    g_signal_connect (G_OBJECT(mdata->listbox), "drag_data_received",
-		      G_CALLBACK(drag_data_received),
-		      NULL);
+    g_signal_connect(G_OBJECT(mdata->listbox), "drag_data_received",
+		     G_CALLBACK(drag_data_received),
+		     NULL);
 
     gtk_box_pack_start(GTK_BOX(main_vbox), box, TRUE, TRUE, 0);
 

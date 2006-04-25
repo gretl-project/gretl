@@ -1140,21 +1140,22 @@ static int make_rats_db_series_list (windata_t *vwin)
 static GtkWidget *database_window (windata_t *vwin) 
 {
     const char *titles[] = {
-	_("Name"), 
-	_("Description"), 
-	_("Observations")
+	N_("Name"), 
+	N_("Description"), 
+	N_("Observations")
+    };
+    GType types[] = {
+	G_TYPE_STRING,
+	G_TYPE_STRING,
+	G_TYPE_STRING
     };
     GtkWidget *box;
-    int cols = 3;
 
     box = gtk_vbox_new(FALSE, 0);
-
-    vwin->listbox = list_box_create(vwin, GTK_BOX(box), cols, 0, titles);
-
+    vwin_add_list_box(vwin, GTK_BOX(box), 3, FALSE, types, titles);
     g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
 		     G_CALLBACK(popup_menu_handler), 
 		     vwin->popup);
-
     gtk_widget_show(box);
 
     return box;
