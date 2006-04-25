@@ -1690,11 +1690,22 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	return 1;
     }
 
-    /* FIXME creating directory in case of function files? */
-
+    if (vwin->role == REMOTE_FUNC_FILES && op != TMP_INSTALL) {
+	build_path(fndir, paths.gretldir, "functions", NULL);
+	err = gretl_mkdir(fndir);
+	if (err) {
+	    build_path(fndir, paths.userdir, "functions", NULL);
+	    err = gretl_mkdir(fndir);
+	}
+    }
+	    
     if (vwin->role == REMOTE_FUNC_FILES) {
 	if (op == TMP_INSTALL) {
-	    build_path(target, paths.userdir, "dltmp.gfn", NULL);
+	    build_path(target, paths.userdir, "dltmp", NULL);
+	    err = gretl_tempname(target);
+	    if (err) {
+		return err;
+	    }
 	} else {
 	    build_path(fndir, paths.gretldir, "functions", NULL);
 	    build_path(target, fndir, objname, ".gfn");

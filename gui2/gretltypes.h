@@ -38,7 +38,7 @@
 enum windata_flags {
     VWIN_HELP_ACTIVE  = 1 << 0,
     VWIN_BUSY         = 1 << 1,
-    VWIN_DELETE_FNAME = 1 << 2,
+    VWIN_DELETE_FNAME = 1 << 2
 };
 
 typedef struct _windata_t windata_t;

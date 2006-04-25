@@ -148,6 +148,8 @@ static int arima_integrate (double *dx, const double *x,
     return 0;
 }
 
+#if 0
+
 /* translate coffs and standard errors for the constant and any
    exogenous variables, in case X12A or native exact ML is used
 */
@@ -186,6 +188,8 @@ static void revise_mean_coeffs (MODEL *pmod, struct arma_info *ainfo)
 	bse[i] *= arfac;
     }
 }
+
+#endif
 
 static void ainfo_data_to_model (struct arma_info *ainfo, MODEL *pmod)
 {

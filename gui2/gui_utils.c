@@ -92,7 +92,7 @@ char *storelist = NULL;
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
-static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
+static void view_window_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void auto_save_script (windata_t *vwin);
 static void add_model_dataset_items (windata_t *vwin);
@@ -550,6 +550,27 @@ FILE *gretl_tempfile_open (char *fname)
     return fp;
 }
 
+int gretl_tempname (char *fname)
+{
+    int fd, err = 0;
+
+    strcat(fname, ".XXXXXX");
+#ifdef G_OS_WIN32
+    fd = g_mkstemp(fname);
+#else
+    fd = mkstemp(fname);
+#endif
+    if (fd == -1) {
+	errbox(_("Couldn't open %s"), fname);
+	err = 1;
+    } else {
+	close(fd);
+	remove(fname);
+    }
+
+    return err;
+}
+
 int probably_native_datafile (const char *fname)
 {
     char test[5];
@@ -852,7 +873,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
 		buf_edit_save(NULL, vwin);
 	    } else {
-		file_viewer_save(NULL, vwin);
+		view_window_save(NULL, vwin);
 	    }
 	} else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
 	    if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
@@ -1397,7 +1418,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     }
 }
 
-static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
+static void view_window_save (GtkWidget *widget, windata_t *vwin)
 {
     if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
 	/* special case: a newly created script */
@@ -1490,6 +1511,19 @@ static void vwin_nullify_child (windata_t *parent, windata_t *child)
     }
 }
 
+static windata_t *vwin_first_child (windata_t *vwin)
+{
+    int i, n = vwin->n_gretl_children;
+
+    for (i=0; i<n; i++) {
+	if (vwin->gretl_children[i] != NULL) {
+	    return vwin->gretl_children[i];
+	}
+    }
+
+    return NULL;
+}
+
 void free_windata (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -1562,6 +1596,16 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_multi_series_view(vwin->data);
 	} else if (vwin->role == GUI_HELP || vwin->role == GUI_HELP_EN) {
 	    free(vwin->data); /* help file text */
+	}
+
+	if (window_delete_filename(vwin)) {
+	    if (vwin->gretl_parent == NULL) {
+		windata_t *child = vwin_first_child(vwin);
+
+		if (child == NULL) {
+		    remove(vwin->fname);
+		}
+	    }
 	}
 
 	if (vwin->dialog) {
@@ -1742,11 +1786,15 @@ static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)
 
 static void view_code_callback (GtkWidget *w, windata_t *vwin)
 {
-    windata_t *child = 
-	gui_show_function_info(vwin->fname, VIEW_FUNC_CODE);
+    windata_t *child = vwin_first_child(vwin);
 
     if (child != NULL) {
-	vwin_add_child(vwin, child);
+	gdk_window_raise(child->dialog->window);
+    } else {
+	child = gui_show_function_info(vwin->fname, VIEW_FUNC_CODE);
+	if (child != NULL) {
+	    vwin_add_child(vwin, child);
+	}
     }
 }
 
@@ -1764,7 +1812,7 @@ struct viewbar_item {
 #ifndef OLD_GTK
 
 static struct viewbar_item viewbar_items[] = {
-    { N_("Save"), GTK_STOCK_SAVE, file_viewer_save, SAVE_ITEM },
+    { N_("Save"), GTK_STOCK_SAVE, view_window_save, SAVE_ITEM },
     { N_("Save as..."), GTK_STOCK_SAVE_AS, file_save_callback, SAVE_AS_ITEM },
     { N_("Send to gnuplot"), GTK_STOCK_EXECUTE, gp_send_callback, GP_ITEM },
 # if defined(G_OS_WIN32) || defined(USE_GNOME)
@@ -1792,7 +1840,7 @@ static struct viewbar_item viewbar_items[] = {
 #else
 
 static struct viewbar_item viewbar_items[] = {
-    { N_("Save"), stock_save_16_xpm, file_viewer_save, SAVE_ITEM },
+    { N_("Save"), stock_save_16_xpm, view_window_save, SAVE_ITEM },
     { N_("Save as..."), stock_save_as_16_xpm, file_save_callback, SAVE_AS_ITEM },
     { N_("Send to gnuplot"), stock_exec_16_xpm, gp_send_callback, GP_ITEM },
 # ifdef USE_GNOME
@@ -2235,6 +2283,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	    gretl_object_ref(data, GRETL_OBJ_VAR);
 	    add_VAR_menu_items(vwin, role == VECM);
 	}
+    } else if (role == VIEW_FUNC_CODE) {
+	make_viewbar(vwin, 0);
     } else if (role != IMPORT) {
 	make_viewbar(vwin, 1);
     }
@@ -2513,7 +2563,7 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     return vwin;
 }
 
-void file_view_set_editable (windata_t *vwin)
+void view_window_set_editable (windata_t *vwin)
 {
 #ifndef OLD_GTK
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), TRUE);

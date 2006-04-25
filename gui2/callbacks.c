@@ -572,6 +572,7 @@ void file_save_callback (GtkWidget *w, gpointer data)
 	case EDIT_SCRIPT:
 	case VIEW_SCRIPT:
 	case VIEW_LOG:
+	case VIEW_FUNC_CODE:
 	    u = SAVE_SCRIPT;
 	    break;
 	case GR_PLOT:

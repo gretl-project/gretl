@@ -257,7 +257,8 @@ static void script_window_update (windata_t *vwin, const char *fname)
     strcpy(vwin->fname, fname);
     g_free(title);
 
-    if (vwin->role == VIEW_LOG || vwin->role == VIEW_SCRIPT) {
+    if (vwin->role == VIEW_LOG || vwin->role == VIEW_SCRIPT ||
+	vwin->role == VIEW_FUNC_CODE) {
 	/* change role of window for editing */
 	vwin->role = EDIT_SCRIPT;
     }
@@ -265,11 +266,11 @@ static void script_window_update (windata_t *vwin, const char *fname)
     /* make the window editable */
 #ifndef OLD_GTK
     if (!gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w))) {
-	file_view_set_editable(vwin);
+	view_window_set_editable(vwin);
     }
 #else
     if (vwin->role == EDIT_SCRIPT) {
-	file_view_set_editable(vwin);
+	view_window_set_editable(vwin);
     } 
 #endif
 }

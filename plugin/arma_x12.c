@@ -406,9 +406,11 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 	}
     }
 
+#if 0 /* wrong? */
     if (!err && (ainfo->ifc || ainfo->nexo > 0)) {
 	revise_mean_coeffs(pmod, ainfo);
     }
+#endif
 
     return err;
 }

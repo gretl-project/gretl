@@ -732,11 +732,15 @@ windata_t *gui_show_function_info (const char *fname, int role)
 	gui_errmsg(err);
     } else {
 	gchar *title;
-	
+
+	/* FIXME */
 	title = g_strdup_printf("gretl: %s", (pkgname)? 
 				pkgname : _("function code"));
 	vwin = view_buffer(prn, 78, 350, title, role, NULL);
 	strcpy(vwin->fname, fname);
+	if (strstr(fname, "dltmp")) {
+	    set_window_delete_filename(vwin);
+	}
 	g_free(title);
     }
 

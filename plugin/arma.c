@@ -833,9 +833,11 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     pmod->sigma = sqrt(b[k]);
     pmod->errcode = arma_OPG_stderrs(pmod, K, b, m, T);
 
+#if 0 /* seems this is wrong */
     if (ainfo->ifc || ainfo->nexo > 0) {
 	revise_mean_coeffs(pmod, ainfo);
     }
+#endif
 
     pmod->lnL = kalman_get_loglik(K);
 

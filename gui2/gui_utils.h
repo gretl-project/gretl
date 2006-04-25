@@ -86,6 +86,8 @@ int isdir (const char *path);
 
 FILE *gretl_tempfile_open (char *fname);
 
+int gretl_tempname (char *fname);
+
 void delete_widget (GtkWidget *widget, gpointer data);
 
 void *mymalloc (size_t size); 
@@ -135,7 +137,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
 int highest_numbered_variable_in_winstack (void);
 
-void file_view_set_editable (windata_t *vwin);
+void view_window_set_editable (windata_t *vwin);
 
 int validate_varname (const char *varname);
 
