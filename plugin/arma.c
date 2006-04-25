@@ -1274,11 +1274,12 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     PRN *prn = NULL;
     gretlopt opt = OPT_NONE;
 #endif
-    char fnstr[MAXLINE]; /* FIXME? */
+    char fnstr[MAXLINE];
     char term[32];
     nls_spec *spec;
     int *plist = NULL;
-    int v = pdinfo->v;
+    int v, oldv = pdinfo->v;
+    int true_armax = 0;
     int nparam;
     int i, j, k, err = 0;
 
@@ -1300,61 +1301,75 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	goto bailout;
     }
 
-    strcpy(fnstr, "y=");
+    /* construct names for the parameters, and param list */
+    v = oldv;
     k = 1;
+    if (ainfo->ifc) {
+	strcpy(pdinfo->varname[v], "b0");
+	plist[k++] = v++;
+    }
+    for (i=1; i<=ainfo->p; i++) {
+	sprintf(pdinfo->varname[v], "phi_%d", i);
+	plist[k++] = v++;
+    }
+    for (i=1; i<=ainfo->P; i++) {
+	sprintf(pdinfo->varname[v], "Phi_%d", i);
+	plist[k++] = v++;
+    }
+    for (i=1; i<=ainfo->nexo; i++) {
+	sprintf(pdinfo->varname[v], "b%d", i);
+	plist[k++] = v++;
+    }
+
+    strcpy(fnstr, "y=");
 
     if (ainfo->ifc) {
 	double ybar = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
 
-	strcat(fnstr, "b0+");
-	strcpy(pdinfo->varname[v], "b0");
-	(*pZ)[v][0] = ybar;
-	plist[k++] = v++;
-    }
-
-    if (!ainfo->ifc) {
-	(*pZ)[v][0] = 1.0; /* FIXME arbitrary */
+	strcat(fnstr, "b0");
+	(*pZ)[oldv][0] = ybar; /* ? */
+    } else {
+	strcat(fnstr, "0");
     }    
 
     for (i=1; i<=ainfo->p; i++) {
-	if (i > 1) {
-	    strcat(fnstr, "+");
-	}
-	sprintf(term, "phi_%d*y_%d", i, i);
+	sprintf(term, "+phi_%d*y_%d", i, i);
 	strcat(fnstr, term);
-	sprintf(pdinfo->varname[v], "phi_%d", i);
-	plist[k++] = v++;
+	if (true_armax) {
+	    for (j=1; j<=ainfo->nexo; j++) {
+		sprintf(term, "-phi_%d*x%d_%d", i, j, i);
+		strcat(fnstr, term);
+	    }
+	}
     }
 
-    if (ainfo->p > 0) {
-	strcat(fnstr, "+");
-    } else if (!ainfo->ifc) {
-	(*pZ)[v][0] = 1.0; /* FIXME arbitrary */
-    }      
-
     for (i=1; i<=ainfo->P; i++) {
-	if (i > 1) {
-	    strcat(fnstr, "+");
-	}
-	sprintf(term, "Phi_%d*y_%d", i, i * ainfo->pd);
+	sprintf(term, "+Phi_%d*y_%d", i, i * ainfo->pd);
 	strcat(fnstr, term);
-	sprintf(pdinfo->varname[v], "Phi_%d", i);
-	plist[k++] = v++;
+	if (true_armax) {
+	    for (j=1; j<=ainfo->nexo; j++) {
+		sprintf(term, "-Phi_%d*x%d_%d", i, j, i * ainfo->pd);
+		strcat(fnstr, term);
+	    }
+	}
     }
 
     for (i=1; i<=ainfo->P; i++) {
 	for (j=1; j<=ainfo->p; j++) {
 	    sprintf(term, "-phi_%d*Phi_%d*y_%d", j, i, i * ainfo->pd + j);
 	    strcat(fnstr, term);
+	    if (true_armax) {
+		for (k=1; k<=ainfo->nexo; k++) {
+		    sprintf(term, "+phi_%d*Phi_%d*x%d_%d", j, i, k, ainfo->pd + j);
+		    strcat(fnstr, term);
+		}
+	    }
 	}
     }  
 
-    for (i=0; i<ainfo->nexo; i++) {
-	j = alist[axstart + i];
-	sprintf(term, "+b%d*%s", i + 1, pdinfo->varname[j]);
+    for (i=1; i<=ainfo->nexo; i++) {
+	sprintf(term, "+b%d*x%d", i, i);
 	strcat(fnstr, term);
-	sprintf(pdinfo->varname[v], "b%d", i + 1);
-	plist[k++] = v++;
     }	
 
     err = nls_spec_set_regression_function(spec, fnstr, pdinfo);
@@ -1400,9 +1415,14 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     DATAINFO *adinfo = NULL;
     int *alist = NULL;
     MODEL armod;
+    int true_armax = 0;
     int xstart, axstart;
     int lag, offset;
     int i, j, t, err = 0;
+
+    if (true_armax) {
+	av += ainfo->nexo * ptotal;
+    }
 
     gretl_model_init(&armod); 
 
@@ -1517,9 +1537,11 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	    j = list[xstart + i];
 	    aZ[k][t] = Z[j][s];
 	    if (t == 0) {
-		strcpy(adinfo->varname[k], pdinfo->varname[j]);
+		sprintf(adinfo->varname[k], "x%d", i + 1);
 	    }
 	}
+
+	/* FIXME armax lagged variables */
     }
 
     if (arma_has_seasonal(ainfo)) {
