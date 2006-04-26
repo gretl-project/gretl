@@ -1264,7 +1264,6 @@ make_armax_X (const int *list, struct arma_info *ainfo, const double **Z)
 }
 
 static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
-			       const int *alist, int axstart,
 			       double ***pZ, DATAINFO *pdinfo) 
 {
 #if ARMA_DEBUG
@@ -1279,7 +1278,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     nls_spec *spec;
     int *plist = NULL;
     int v, oldv = pdinfo->v;
-    int true_armax = 0;
+    int narmax = 0;
     int nparam;
     int i, j, k, err = 0;
 
@@ -1321,6 +1320,8 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	plist[k++] = v++;
     }
 
+    /* construct NLS specification */
+
     strcpy(fnstr, "y=");
 
     if (ainfo->ifc) {
@@ -1330,12 +1331,44 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	(*pZ)[oldv][0] = ybar; /* ? */
     } else {
 	strcat(fnstr, "0");
-    }    
+    }  
+
+#if 0
+    for (i=0; i<=ainfo->p; i++) {
+	if (i > 0) {
+	    sprintf(term, "+phi_%d*y_%d", i, i);
+	    strcat(fnstr, term);
+	    for (k=1; k<=narmax; k++) {
+		sprintf(term, "-phi_%d*b%d*x%d_%d", i, k, k, i);
+		strcat(fnstr, term);
+	    }
+	}
+	for (j=0; j<=ainfo->P; j++) {
+	    if (i == 0 && j > 0) {
+		sprintf(term, "+Phi_%d*y_%d", j, j * pd);
+		strcat(fnstr, term);
+		for (k=1; k<=narmax; k++) {
+		    sprintf(term, "-Phi_%d*b%d*x%d_%d", j, k, k, j * ainfo->pd);
+		    strcat(fnstr, term);
+		}
+	    }
+	    if (i > 0 && j > 0) {
+		sprintf(term, "-phi_%d*Phi_%d*y_%d", i, j, j * ainfo->pd + i);
+		strcat(fnstr, term);
+		for (k=1; k<=narmax; k++) {
+		    sprintf(term, "+phi_%d*Phi_%d*b%d*x%d_%d", 
+			    i, j, k, k, j * ainfo->pd + 1);
+		    strcat(fnstr, term);
+		}
+	    }
+	}
+    } 
+#endif
 
     for (i=1; i<=ainfo->p; i++) {
 	sprintf(term, "+phi_%d*y_%d", i, i);
 	strcat(fnstr, term);
-	if (true_armax) {
+	if (narmax) {
 	    for (j=1; j<=ainfo->nexo; j++) {
 		sprintf(term, "-phi_%d*x%d_%d", i, j, i);
 		strcat(fnstr, term);
@@ -1346,7 +1379,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     for (i=1; i<=ainfo->P; i++) {
 	sprintf(term, "+Phi_%d*y_%d", i, i * ainfo->pd);
 	strcat(fnstr, term);
-	if (true_armax) {
+	if (narmax) {
 	    for (j=1; j<=ainfo->nexo; j++) {
 		sprintf(term, "-Phi_%d*x%d_%d", i, j, i * ainfo->pd);
 		strcat(fnstr, term);
@@ -1358,7 +1391,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	for (j=1; j<=ainfo->p; j++) {
 	    sprintf(term, "-phi_%d*Phi_%d*y_%d", j, i, i * ainfo->pd + j);
 	    strcat(fnstr, term);
-	    if (true_armax) {
+	    if (narmax) {
 		for (k=1; k<=ainfo->nexo; k++) {
 		    sprintf(term, "+phi_%d*Phi_%d*x%d_%d", j, i, k, ainfo->pd + j);
 		    strcat(fnstr, term);
@@ -1398,6 +1431,42 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     return err;
 }
 
+static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
+{
+    int * alist = gretl_list_new(av);
+    int i, offset;
+
+    if (alist == NULL) {
+	return NULL;
+    }
+
+    alist[1] = 1;
+
+    if (ainfo->ifc) {
+	alist[2] = 0;
+	offset = 2;
+    } else {
+	alist[0] -= 1;
+	offset = 1;
+    }
+
+    for (i=1; i<=ainfo->p; i++) {
+	alist[offset + i] = 1 + i;
+    }
+
+    for (i=1; i<=ainfo->P; i++) {
+	alist[offset + ainfo->p + i] = ainfo->p + 1 + i;
+    }
+
+    offset += ptotal;  
+
+    for (i=1; i<=ainfo->nexo; i++) {
+	alist[offset + i] = ptotal + 1 + i;
+    }
+
+    return alist;
+}
+
 /* Run a least squares model to get initial values for the AR
    coefficients */
 
@@ -1415,133 +1484,138 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     DATAINFO *adinfo = NULL;
     int *alist = NULL;
     MODEL armod;
-    int true_armax = 0;
-    int xstart, axstart;
-    int lag, offset;
-    int i, j, t, err = 0;
+    int nonlin = 0;
+    int narmax = 0; /* FIXME */
+    int xstart, lag;
+    int axi = 0, ayi = 0;
+    int i, j, k, t;
+    int err = 0;
 
-    if (true_armax) {
-	av += ainfo->nexo * ptotal;
-    }
-
-    gretl_model_init(&armod); 
-
-    alist = gretl_list_new(av);
-    if (alist == NULL) {
-	return 1;
-    }
-
-    alist[1] = 1;
-
-    if (ainfo->ifc) {
-	alist[2] = 0;
-	offset = 3;
-    } else {
-	alist[0] -= 1;
-	offset = 2;
-    }
-
-    for (i=0; i<ainfo->p; i++) {
-	alist[i + offset] = 2 + i;
-    }
-
-    for (i=0; i<ainfo->P; i++) {
-	alist[i + offset + ainfo->p] = ainfo->p + 2 + i;
-    }
-
-    for (i=0; i<ainfo->P; i++) {
-	for (j=0; j<ainfo->p; j++) {
-	    alist[i + offset + ainfo->p + ainfo->P] = 
-		ainfo->p + ainfo->P + 2 + i;
-	}
-    }
-
-    axstart = offset + ptotal;
-    for (i=0; i<ainfo->nexo; i++) {
-	alist[axstart + i] = ptotal + 2 + i;
-    }
-
-    adinfo = create_new_dataset(&aZ, av, an, 0);
-    if (adinfo == NULL) {
-	free(alist);
-	return 1;
-    }
-
-    if (ainfo->d > 0 || ainfo->D > 0) {
-	xstart = (arma_has_seasonal(ainfo))? 10 : 6;
-    } else {
-	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
-    }
-
+    /* dependent variable */
     if (ainfo->dy != NULL) {
 	y = ainfo->dy;
     } else {
 	y = Z[ainfo->yno];
     }
 
+    if (ptotal == 0 && ainfo->nexo == 0 && !ainfo->ifc) {
+	/* special case of pure MA model */
+	for (i=0; i<nq; i++) {
+	    coeff[i] = 0.0; 
+	} 
+	if (s2 != NULL) {
+	    *s2 = gretl_variance(ainfo->t1, ainfo->t2, y);
+	}
+	return 0;
+    }
+
+    if (narmax > 0) {
+	/* ARMAX-induced lags of exog vars */
+	av += ainfo->nexo * ptotal;
+    }
+
+    gretl_model_init(&armod); 
+
+    adinfo = create_new_dataset(&aZ, av, an, 0);
+    if (adinfo == NULL) {
+	return 1;
+    }
+
+    if (narmax > 0 || nmixed > 0) {
+	/* have to use NLS */
+	nonlin = 1;
+    } else {
+	/* OLS: need regression list */
+	alist = make_ar_ols_list(ainfo, av, ptotal);
+    }
+
+    /* starting position for reading exogeneous vars */
+    if (ainfo->d > 0 || ainfo->D > 0) {
+	xstart = (arma_has_seasonal(ainfo))? 10 : 6;
+    } else {
+	xstart = (arma_has_seasonal(ainfo))? 8 : 5;
+    }
+
+    /* construct the variable names */
+
+    strcpy(adinfo->varname[1], "y");
+
+    axi = ptotal + ainfo->nexo + 2;
+
+    for (i=1; i<=ainfo->p; i++) {
+	sprintf(adinfo->varname[i+1], "y_%d", i);
+	for (j=1; j<=narmax; j++) {
+	    sprintf(adinfo->varname[axi++], "x%d_%d", j, i);
+	}
+    }
+
+    ayi = ainfo->p + ainfo->P + 2;
+
+    for (i=1; i<=ainfo->P; i++) {
+	k = ainfo->p + 1 + i;
+	sprintf(adinfo->varname[k], "y_%d", ainfo->pd * i);
+	for (j=1; j<=narmax; j++) {
+	    sprintf(adinfo->varname[axi++], "x%d_%d", j, ainfo->pd * i);
+	}
+	for (j=1; j<=ainfo->p; j++) {
+	    sprintf(adinfo->varname[ayi++], "y_%d", ainfo->pd * i + j);
+	    for (k=1; k<=narmax; k++) {
+		sprintf(adinfo->varname[axi++], "x%d_%d", k, ainfo->pd * i + j);
+	    }
+	}
+    }
+
+    axi = ptotal + 2;
+
+    for (i=1; i<=ainfo->nexo; i++) {
+	sprintf(adinfo->varname[axi++], "x%d", i);
+    }
+
     /* build temporary dataset including lagged vars */
+
     for (t=0; t<an; t++) {
-	int k, s;
+	int s, m;
 
-	s = t + ainfo->t1;
-	aZ[1][t] = y[s];
-	if (t == 0) {
-	    strcpy(adinfo->varname[1], "y");
+	aZ[1][t] = y[t + ainfo->t1];
+
+	axi = ptotal + ainfo->nexo + 2;
+
+	for (i=1; i<=ainfo->p; i++) {
+	    s = t + ainfo->t1 - i;
+	    aZ[i+1][t] = (s >= 0)? y[s] : NADBL;
+#if 0
+	    for (j=1; j<=narmax; j++) {
+		m = list[xstart + j - 1];
+		aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
+	    }
+#endif
 	}
 
-	for (i=0; i<ainfo->p; i++) {
-	    lag = i + 1;
-	    s = t + ainfo->t1 - lag;
-	    k = 2 + i;
-	    if (s >= 0) {
-		aZ[k][t] = y[s];
-	    } else {
-		aZ[k][t] = NADBL;
-	    }
-	    if (t == 0) {
-		sprintf(adinfo->varname[k], "y_%d", lag);
-	    }
-	}
+	ayi = ainfo->p + ainfo->P + 2;
 
-	for (i=0; i<ainfo->P; i++) {
-	    lag = ainfo->pd * (i + 1);
+	for (i=1; i<=ainfo->P; i++) {
+	    lag = ainfo->pd * i;
 	    s = t + ainfo->t1 - lag;
-	    k = ainfo->p + 2 + i;
-	    if (s >= 0) {
-		aZ[k][t] = y[s];
-	    } else {
-		aZ[k][t] = NADBL;
-	    }
-	    if (t == 0) {
-		sprintf(adinfo->varname[k], "y_%d", lag);
-	    }
-	    for (j=0; j<ainfo->p; j++) {
-		lag = ainfo->pd * (i + 1) + (j + 1);
+	    k = ainfo->p + 1 + i;
+	    aZ[k][t] = (s >= 0)? y[s] : NADBL;
+	    for (j=1; j<=ainfo->p; j++) {
+		lag = ainfo->pd * i + j;
 		s = t + ainfo->t1 - lag;
-		k = ainfo->p + ainfo->P + 2 + j;
-		if (s >= 0) {
-		    aZ[k][t] = y[s];
-		} else {
-		    aZ[k][t] = NADBL;
-		}
-		if (t == 0) {
-		    sprintf(adinfo->varname[k], "y_%d", lag);
+		aZ[ayi++][t] = (s >= 0)? y[s] : NADBL;
+		for (k=1; k<=narmax; k++) {
+		    m = list[xstart + k - 1];
+		    aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
 		}
 	    }
 	}
 
 	s = t + ainfo->t1;
+	axi = ptotal + 2;
 
-	for (i=0; i<ainfo->nexo; i++) {
-	    k = ptotal + 2 + i;
-	    j = list[xstart + i];
-	    aZ[k][t] = Z[j][s];
-	    if (t == 0) {
-		sprintf(adinfo->varname[k], "x%d", i + 1);
-	    }
+	for (i=1; i<=ainfo->nexo; i++) {
+	    m = list[xstart + i - 1];
+	    aZ[axi++][t] = Z[m][s];
 	}
-
-	/* FIXME armax lagged variables */
     }
 
     if (arma_has_seasonal(ainfo)) {
@@ -1553,21 +1627,8 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     printlist(alist, "'alist' in ar_init_by_ls");
 #endif
 
-    if (alist[0] == 1) {
-	/* arma 0, q model */
-	for (i=0; i<nq; i++) {
-	    /* insert zeros for MA coeffs */
-	    coeff[i + np + ainfo->ifc] = 0.0; 
-	} 
-	if (s2 != NULL) {
-	    *s2 = gretl_variance(ainfo->t1, ainfo->t2, y);
-	}
-	goto exit_init;
-    }
-
-    if (nmixed > 0) {
-	/* mixed: need to use nonlinear least squares */
-	err = arma_get_nls_model(&armod, ainfo, alist, axstart, &aZ, adinfo);
+    if (nonlin) {
+	err = arma_get_nls_model(&armod, ainfo, &aZ, adinfo);
     } else {
 	/* just use OLS */
 	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
@@ -1602,8 +1663,6 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	fprintf(stderr, "LS init: armod.errcode = %d\n", err);
     }
 #endif
-
- exit_init:
 
     /* clean up */
     free(alist);
