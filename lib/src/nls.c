@@ -26,7 +26,6 @@
 #include "../../minpack/minpack.h"  
 
 #define NLS_DEBUG 0
-#define NEW_GENR 1
 
 enum {
     NUMERIC_DERIVS,
@@ -86,8 +85,6 @@ static integer one = 1;
 static int genr_err;
 
 static void update_nls_param_values (const double *x);
-
-#if NEW_GENR
 
 static void destroy_genrs_array (GENERATOR **genrs, int n)
 {
@@ -218,52 +215,6 @@ static int nls_auto_genr (int i)
 
     return genr_err;    
 }
-
-#else
-
-/* old-style: run genr from scratch every time */
-
-static int nls_auto_genr (int i)
-{
-    char formula[MAXLINE];
-    int j;
-
-    for (j=0; j<pspec->naux; j++) {
-#if NLS_DEBUG
-	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
-#endif
-	genr_err = generate(pspec->aux[j], nZ, ndinfo, OPT_P);
-    }
-
-    if (i == 0) {
-	/* note: $nl_y is the residual */
-	sprintf(formula, "$nl_y = %s", pspec->nlfunc);
-    } else {
-	/* derivatives: artificial independent variables */
-	sprintf(formula, "$nl_x%d = %s", i, pspec->params[i-1].deriv);
-    }
-
-    /* using "global" nZ and ndinfo pointers here */
-    genr_err = generate(formula, nZ, ndinfo, OPT_P);
-
-    if (i == 0 && pspec->uhatnum == 0) {
-	pspec->uhatnum = ndinfo->v - 1;
-    } else if (i > 0 && pspec->params[i-1].dernum == 0) {
-	pspec->params[i-1].dernum = ndinfo->v - 1;
-    }
-
-#if NLS_DEBUG
-    if (genr_err) {
-	errmsg(genr_err, nprn);
-    } else {
-	fprintf(stderr, "nls_auto_genr: i=%d, formula='%s'\n", i, formula);
-    }
-#endif
-
-    return genr_err;
-}
-
-#endif /* NEW_GENR */
 
 /* wrappers for the above to enhance comprehensibility below */
 

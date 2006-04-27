@@ -148,49 +148,6 @@ static int arima_integrate (double *dx, const double *x,
     return 0;
 }
 
-#if 0
-
-/* translate coffs and standard errors for the constant and any
-   exogenous variables, in case X12A or native exact ML is used
-*/
-
-static void revise_mean_coeffs (MODEL *pmod, struct arma_info *ainfo)
-{
-    int xoff = ainfo->ifc + ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
-
-    const double *phi = pmod->coeff + ainfo->ifc;
-    const double *Phi = phi + ainfo->p;
-    double *beta = pmod->coeff + xoff;
-    double *bse = pmod->sderr + xoff;
-
-    double narfac = 1.0;
-    double sarfac = 1.0;
-    double arfac;
-    int i;
-
-    for (i=0; i<ainfo->p; i++) {
-	narfac -= phi[i];
-    }
-
-    for (i=0; i<ainfo->P; i++) {
-	sarfac -= Phi[i];
-    }
-
-    arfac = narfac * sarfac;
-
-    if (ainfo->ifc) {
-	pmod->coeff[0] *= arfac;
-	pmod->sderr[0] *= arfac;
-    }
-
-    for (i=0; i<ainfo->nexo; i++) {
-	beta[i] *= arfac;
-	bse[i] *= arfac;
-    }
-}
-
-#endif
-
 static void ainfo_data_to_model (struct arma_info *ainfo, MODEL *pmod)
 {
     pmod->ifc = ainfo->ifc;

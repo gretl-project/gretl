@@ -30,7 +30,6 @@
 #include "kalman.h"
 
 #define ARMA_DEBUG 0
-#define TRY_KALMAN 1 /* still under testing */
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -833,12 +832,6 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     pmod->sigma = sqrt(b[k]);
     pmod->errcode = arma_OPG_stderrs(pmod, K, b, m, T);
 
-#if 0 /* seems this is wrong */
-    if (ainfo->ifc || ainfo->nexo > 0) {
-	revise_mean_coeffs(pmod, ainfo);
-    }
-#endif
-
     pmod->lnL = kalman_get_loglik(K);
 
     write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
@@ -1042,20 +1035,16 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
     return x;
 }
 
-/* Given coefficients (for the constant, and any exogenous variables)
-   from an initial least-squares regression, convert them into the
-   form wanted for initializing the Kalman filter 
+/* Given an estimate of the ARMA constant via OLS, convert to the form
+   wanted for initializing the Kalman filter
 */
 
-static void revise_kalman_coeffs (double *b, struct arma_info *ainfo)
+static void transform_arma_const (double *b, struct arma_info *ainfo)
 {
-    int xoff = ainfo->ifc + ainfo->p + ainfo->P + ainfo->q + ainfo->Q;
-    const double *phi = b + ainfo->ifc;
+    const double *phi = b + 1;
     const double *Phi = phi + ainfo->p;
-    double *beta = b + xoff;
     double narfac = 1.0;
     double sarfac = 1.0;
-    double arfac;
     int i;
 
     for (i=0; i<ainfo->p; i++) {
@@ -1066,15 +1055,7 @@ static void revise_kalman_coeffs (double *b, struct arma_info *ainfo)
 	sarfac -= Phi[i];
     }
 
-    arfac = narfac * sarfac;
-
-    if (ainfo->ifc) {
-	b[0] /= arfac;
-    }
-
-    for (i=0; i<ainfo->nexo; i++) {
-	beta[i] /= arfac;
-    }
+    b[0] /= (narfac * sarfac);
 }
 
 static int kalman_arma (const int *alist, double *coeff, double s2,
@@ -1108,10 +1089,6 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
 	b[i] = coeff[i];
     }
     b[ainfo->nc] = s2;
-
-    if (ainfo->p > 0 || ainfo->P > 0) {
-	revise_kalman_coeffs(b, ainfo);
-    }
 
 #if ARMA_DEBUG
     for (i=0; i<ncoeff; i++) {
@@ -1263,8 +1240,48 @@ make_armax_X (const int *list, struct arma_info *ainfo, const double **Z)
     return X;
 }
 
+static void y_Xb_at_lag (char *spec, struct arma_info *ainfo, 
+			 int narmax, int lag)
+{
+    char term[32];
+    int i, nt;
+
+    if (narmax == 0) {
+	sprintf(term, "y_%d", lag);
+	strcat(spec, term);
+	return;
+    }
+
+    nt = ainfo->ifc + narmax;
+
+    sprintf(term, "(y_%d-", lag);
+    strcat(spec, term);
+
+    if (nt > 1) {
+	strcat(spec, "(");
+    }
+
+    if (ainfo->ifc) {
+	strcat(spec, "b0");
+    }
+
+    for (i=1; i<=narmax; i++) {
+	if (ainfo->ifc || i > 1) {
+	    strcat(spec, "+");
+	} 
+	sprintf(term, "b%d*x%d_%d", i, i, lag);
+	strcat(spec, term);
+    }
+
+    if (nt > 1) {
+	strcat(spec, "))");
+    } else {
+	strcat(spec, ")");
+    }
+}
+
 static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
-			       double ***pZ, DATAINFO *pdinfo) 
+			       int narmax, double ***pZ, DATAINFO *pdinfo) 
 {
 #if ARMA_DEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
@@ -1278,7 +1295,6 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     nls_spec *spec;
     int *plist = NULL;
     int v, oldv = pdinfo->v;
-    int narmax = 0;
     int nparam;
     int i, j, k, err = 0;
 
@@ -1300,14 +1316,20 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	goto bailout;
     }
 
+    /* FIXME initialization of NLS parameters? */
+
     /* construct names for the parameters, and param list */
     v = oldv;
     k = 1;
     if (ainfo->ifc) {
+	(*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
 	strcpy(pdinfo->varname[v], "b0");
 	plist[k++] = v++;
     }
     for (i=1; i<=ainfo->p; i++) {
+	if (i == 1) {
+	    (*pZ)[v][0] = 0.1; /* ?? */
+	}
 	sprintf(pdinfo->varname[v], "phi_%d", i);
 	plist[k++] = v++;
     }
@@ -1325,80 +1347,30 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     strcpy(fnstr, "y=");
 
     if (ainfo->ifc) {
-	double ybar = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
-
 	strcat(fnstr, "b0");
-	(*pZ)[oldv][0] = ybar; /* ? */
     } else {
 	strcat(fnstr, "0");
-    }  
+    } 
 
-#if 0
     for (i=0; i<=ainfo->p; i++) {
 	if (i > 0) {
-	    sprintf(term, "+phi_%d*y_%d", i, i);
+	    sprintf(term, "+phi_%d*", i);
 	    strcat(fnstr, term);
-	    for (k=1; k<=narmax; k++) {
-		sprintf(term, "-phi_%d*b%d*x%d_%d", i, k, k, i);
-		strcat(fnstr, term);
-	    }
+	    y_Xb_at_lag(fnstr, ainfo, narmax, i);
 	}
 	for (j=0; j<=ainfo->P; j++) {
 	    if (i == 0 && j > 0) {
-		sprintf(term, "+Phi_%d*y_%d", j, j * pd);
+		sprintf(term, "+Phi_%d*", j);
 		strcat(fnstr, term);
-		for (k=1; k<=narmax; k++) {
-		    sprintf(term, "-Phi_%d*b%d*x%d_%d", j, k, k, j * ainfo->pd);
-		    strcat(fnstr, term);
-		}
+		y_Xb_at_lag(fnstr, ainfo, narmax, j * ainfo->pd);
 	    }
 	    if (i > 0 && j > 0) {
-		sprintf(term, "-phi_%d*Phi_%d*y_%d", i, j, j * ainfo->pd + i);
+		sprintf(term, "-phi_%d*Phi_%d*", i, j);
 		strcat(fnstr, term);
-		for (k=1; k<=narmax; k++) {
-		    sprintf(term, "+phi_%d*Phi_%d*b%d*x%d_%d", 
-			    i, j, k, k, j * ainfo->pd + 1);
-		    strcat(fnstr, term);
-		}
+		y_Xb_at_lag(fnstr, ainfo, narmax, j * ainfo->pd + i);
 	    }
 	}
     } 
-#endif
-
-    for (i=1; i<=ainfo->p; i++) {
-	sprintf(term, "+phi_%d*y_%d", i, i);
-	strcat(fnstr, term);
-	if (narmax) {
-	    for (j=1; j<=ainfo->nexo; j++) {
-		sprintf(term, "-phi_%d*x%d_%d", i, j, i);
-		strcat(fnstr, term);
-	    }
-	}
-    }
-
-    for (i=1; i<=ainfo->P; i++) {
-	sprintf(term, "+Phi_%d*y_%d", i, i * ainfo->pd);
-	strcat(fnstr, term);
-	if (narmax) {
-	    for (j=1; j<=ainfo->nexo; j++) {
-		sprintf(term, "-Phi_%d*x%d_%d", i, j, i * ainfo->pd);
-		strcat(fnstr, term);
-	    }
-	}
-    }
-
-    for (i=1; i<=ainfo->P; i++) {
-	for (j=1; j<=ainfo->p; j++) {
-	    sprintf(term, "-phi_%d*Phi_%d*y_%d", j, i, i * ainfo->pd + j);
-	    strcat(fnstr, term);
-	    if (narmax) {
-		for (k=1; k<=ainfo->nexo; k++) {
-		    sprintf(term, "+phi_%d*Phi_%d*x%d_%d", j, i, k, ainfo->pd + j);
-		    strcat(fnstr, term);
-		}
-	    }
-	}
-    }  
 
     for (i=1; i<=ainfo->nexo; i++) {
 	sprintf(term, "+b%d*x%d", i, i);
@@ -1485,7 +1457,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     int *alist = NULL;
     MODEL armod;
     int nonlin = 0;
-    int narmax = 0; /* FIXME */
+    int narmax = 0;
     int xstart, lag;
     int axi = 0, ayi = 0;
     int i, j, k, t;
@@ -1509,9 +1481,12 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	return 0;
     }
 
-    if (narmax > 0) {
-	/* ARMAX-induced lags of exog vars */
-	av += ainfo->nexo * ptotal;
+    if (arma_exact_ml(ainfo)) {
+	narmax = ainfo->nexo;
+	if (narmax > 0) {
+	    /* ARMAX-induced lags of exog vars */
+	    av += ainfo->nexo * ptotal;
+	}
     }
 
     gretl_model_init(&armod); 
@@ -1583,12 +1558,10 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	for (i=1; i<=ainfo->p; i++) {
 	    s = t + ainfo->t1 - i;
 	    aZ[i+1][t] = (s >= 0)? y[s] : NADBL;
-#if 0
 	    for (j=1; j<=narmax; j++) {
 		m = list[xstart + j - 1];
 		aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
 	    }
-#endif
 	}
 
 	ayi = ainfo->p + ainfo->P + 2;
@@ -1628,7 +1601,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 #endif
 
     if (nonlin) {
-	err = arma_get_nls_model(&armod, ainfo, &aZ, adinfo);
+	err = arma_get_nls_model(&armod, ainfo, narmax, &aZ, adinfo);
     } else {
 	/* just use OLS */
 	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
@@ -1649,6 +1622,12 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	} 
 	if (s2 != NULL) {
 	    *s2 = armod.sigma * armod.sigma;
+	}
+    }
+
+    if (!err && arma_exact_ml(ainfo) && ainfo->ifc) {
+	if (!nonlin || ainfo->nexo == 0) {
+	    transform_arma_const(coeff, ainfo);
 	}
     }
 
@@ -1779,13 +1758,9 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     char flags = 0;
     int err = 0;
 
-#if TRY_KALMAN
     if (!(opt & OPT_C)) {
 	flags = ARMA_EXACT;
     }
-#else
-    opt |= OPT_C; /* conditional */
-#endif
 
     if (opt & OPT_V) {
 	aprn = prn;
