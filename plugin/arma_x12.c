@@ -163,10 +163,12 @@ static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
     char date[12] = {0};
 
     if (pdinfo->pd > 1) {
-	if (strlen(s) <= 4) {
-	    strncat(date, s, 2);
+	int len = strlen(s);
+
+	if (len <= 4) {
+	    strncat(date, s, len - 2);
 	    strcat(date, ":");
-	    strncat(date, s + 2, 4);
+	    strcat(date, s + len - 2);
 	} else {
 	    strncat(date, s, 4);
 	    strcat(date, ":");
@@ -438,7 +440,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
 	    if (t >= 0 && t < pdinfo->n) {
 		pmod->uhat[t] = x;
 		nobs++;
-	    }
+	    } 
 	}
     }
 

@@ -1240,6 +1240,10 @@ make_armax_X (const int *list, struct arma_info *ainfo, const double **Z)
     return X;
 }
 
+/* for ARMAX: write the component of the NLS specification
+   that takes the form (y_{t-i} - X_{t-i} \beta)
+*/
+
 static void y_Xb_at_lag (char *spec, struct arma_info *ainfo, 
 			 int narmax, int lag)
 {
@@ -1316,25 +1320,27 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	goto bailout;
     }
 
-    /* FIXME initialization of NLS parameters? */
 
-    /* construct names for the parameters, and param list */
+    /* construct names for the parameters, and param list;
+       also do some initialization -- but FIXME in that regard
+    */
+
     v = oldv;
     k = 1;
     if (ainfo->ifc) {
-	(*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]);
+	(*pZ)[v][0] = gretl_mean(0, pdinfo->n - 1, (*pZ)[1]); /* ? */
 	strcpy(pdinfo->varname[v], "b0");
 	plist[k++] = v++;
     }
     for (i=1; i<=ainfo->p; i++) {
 	if (i == 1) {
-	    (*pZ)[v][0] = 0.1; /* ?? */
+	    (*pZ)[v][0] = 0.1; /* ? */
 	}
-	sprintf(pdinfo->varname[v], "phi_%d", i);
+	sprintf(pdinfo->varname[v], "phi%d", i);
 	plist[k++] = v++;
     }
     for (i=1; i<=ainfo->P; i++) {
-	sprintf(pdinfo->varname[v], "Phi_%d", i);
+	sprintf(pdinfo->varname[v], "Phi%d", i);
 	plist[k++] = v++;
     }
     for (i=1; i<=ainfo->nexo; i++) {
@@ -1354,18 +1360,18 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 
     for (i=0; i<=ainfo->p; i++) {
 	if (i > 0) {
-	    sprintf(term, "+phi_%d*", i);
+	    sprintf(term, "+phi%d*", i);
 	    strcat(fnstr, term);
 	    y_Xb_at_lag(fnstr, ainfo, narmax, i);
 	}
 	for (j=0; j<=ainfo->P; j++) {
 	    if (i == 0 && j > 0) {
-		sprintf(term, "+Phi_%d*", j);
+		sprintf(term, "+Phi%d*", j);
 		strcat(fnstr, term);
 		y_Xb_at_lag(fnstr, ainfo, narmax, j * ainfo->pd);
 	    }
 	    if (i > 0 && j > 0) {
-		sprintf(term, "-phi_%d*Phi_%d*", i, j);
+		sprintf(term, "-phi%d*Phi%d*", i, j);
 		strcat(fnstr, term);
 		y_Xb_at_lag(fnstr, ainfo, narmax, j * ainfo->pd + i);
 	    }
@@ -1402,6 +1408,10 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 
     return err;
 }
+
+/* compose the regression list for the case where we're initializing
+   ARMA via OLS (not NLS)
+*/
 
 static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
 {
@@ -1440,7 +1450,12 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
 }
 
 /* Run a least squares model to get initial values for the AR
-   coefficients */
+   coefficients, either OLS or NLS.  We use NLS if there is
+   nonlinearity due to either (a) the presence of both a seasonal and
+   a non-seasonal AR component or (b) the presence of exogenous
+   variables in the context of a non-zero AR order, where estimation
+   will be via exact ML.
+*/
 
 static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 			  const double **Z, const DATAINFO *pdinfo,
@@ -1476,7 +1491,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	    coeff[i] = 0.0; 
 	} 
 	if (s2 != NULL) {
-	    *s2 = gretl_variance(ainfo->t1, ainfo->t2, y);
+	    *s2 = gretl_variance(ainfo->t1, ainfo->t2, y); /* ? */
 	}
 	return 0;
     }
@@ -1546,7 +1561,10 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	sprintf(adinfo->varname[axi++], "x%d", i);
     }
 
-    /* build temporary dataset including lagged vars */
+    /* Build temporary dataset including lagged vars: if we're doing
+       exact ML on an ARMAX model we need lags of the exogenous
+       variables as well as lags of y_t.
+    */
 
     for (t=0; t<an; t++) {
 	int s, m;
@@ -1603,7 +1621,6 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     if (nonlin) {
 	err = arma_get_nls_model(&armod, ainfo, narmax, &aZ, adinfo);
     } else {
-	/* just use OLS */
 	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
 	err = armod.errcode;
     }
@@ -1627,6 +1644,10 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc) {
 	if (!nonlin || ainfo->nexo == 0) {
+	    /* handle the case where we need to translate from an
+	       estimate of the regression constant to the
+	       unconditional mean of y_t
+	    */
 	    transform_arma_const(coeff, ainfo);
 	}
     }

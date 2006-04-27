@@ -623,8 +623,7 @@ static int get_dot_pos (const char *s)
 #define DATES_DEBUG 0
 
 static int 
-real_dateton (const char *date, const DATAINFO *pdinfo,
-	      int nolimit)
+real_dateton (const char *date, const DATAINFO *pdinfo, int nolimit)
 {
     int t, n = -1;
 
