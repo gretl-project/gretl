@@ -2172,7 +2172,7 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 
     dataset_drop_last_variables(pdinfo->v - origv, pZ, pdinfo);
 
-    if (nlsmod.errcode == 0) {
+    if (nlsmod.errcode == 0 && !(opt & OPT_A)) {
 	set_model_id(&nlsmod);
     }
 
@@ -2204,7 +2204,8 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn)
  * @spec: nls specification.
  * @pZ: pointer to data array.
  * @pdinfo: information on dataset.
- * @opt: may include %OPT_V for verbose output.
+ * @opt: may include %OPT_V for verbose output, %OPT_A to
+ * treat as an auxiliary model.
  * @prn: printing struct.
  *
  * Computes estimates of the model specified in @spec, via nonlinear 
