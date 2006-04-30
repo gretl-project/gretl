@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-14 21:29-0500\n"
-"PO-Revision-Date: 2006-03-08 22:55+0100\n"
+"PO-Revision-Date: 2006-05-01 00:30+0100\n"
 "Last-Translator: Sven Schreiber <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -482,7 +482,7 @@ msgstr "Befehl ist fehlgeschlagen"
 
 #: lib/src/compare.c:1888
 msgid "Failed to parse mp_ols command\n"
-msgstr ""
+msgstr "Verarbeiten der mp_ols Befehle schlug fehl\n"
 
 #: lib/src/compare.c:1905
 #: lib/src/dbread.c:613
@@ -950,7 +950,7 @@ msgstr "Datendatei ist leer\n"
 
 #: lib/src/dataio.c:2688
 msgid "Data file has trailing commas\n"
-msgstr ""
+msgstr "Datendatei enthält Endkommata\n"
 
 #: lib/src/dataio.c:2789
 #, c-format
@@ -2014,7 +2014,7 @@ msgstr "Dieser Test ist nur für Paneldaten verfügbar"
 
 #: lib/src/forecast.c:1927
 msgid "predicted values"
-msgstr ""
+msgstr "geschätzte Werte"
 
 #: lib/src/forecast.c:1931
 msgid "forecast standard errors"
@@ -2063,7 +2063,7 @@ msgstr "Setze Toleranz zu %g"
 
 #: lib/src/generate.c:3028
 msgid "The setting for \"toler\" must be numeric"
-msgstr ""
+msgstr "Die Einstellung für \"toler\" muss numerisch sein"
 
 #: lib/src/generate.c:3056
 #, c-format
@@ -2104,7 +2104,7 @@ msgstr "(Skalar)"
 #: lib/src/generate.c:3792
 #, c-format
 msgid "Zero denominator for obs %d"
-msgstr ""
+msgstr "Nenner Null für Beob. %d"
 
 #: lib/src/generate.c:3806
 #, c-format
@@ -2228,7 +2228,7 @@ msgstr "angepasste Varianz aus Modell %d"
 #: lib/src/graphing.c:820
 #, c-format
 msgid "%s versus %s (with least squares fit)"
-msgstr ""
+msgstr "%s gegen %s (mit Kleinst-Quadrate-Anpassung)"
 
 #: lib/src/graphing.c:825
 #, c-format
@@ -2265,7 +2265,7 @@ msgstr "links"
 #: lib/src/graphing.c:1521
 #: lib/src/graphing.c:1527
 msgid "actual"
-msgstr ""
+msgstr "tatsächlich"
 
 #: lib/src/graphing.c:1522
 #: lib/src/graphing.c:1525
@@ -2971,7 +2971,7 @@ msgstr "Schreibe %ld KBytes an Daten\n"
 #: lib/src/gretl_xml.c:462
 #, c-format
 msgid "Failed to parse count of variables"
-msgstr ""
+msgstr "Verarbeitung der Variablenanzahl schlug fehl"
 
 #: lib/src/gretl_xml.c:466
 #: lib/src/gretl_xml.c:472
@@ -2998,12 +2998,12 @@ msgstr "Anzahl der Variablen passt nicht zur Deklaration"
 #: lib/src/gretl_xml.c:592
 #, c-format
 msgid "Failed to parse data values at obs %d"
-msgstr ""
+msgstr "Verarbeitung der Werte bei Beob. %d schlug fehl"
 
 #: lib/src/gretl_xml.c:617
 #, c-format
 msgid "Failed to parse number of observations"
-msgstr ""
+msgstr "Verarbeitung der Beobachtungszahl schlug fehl"
 
 #: lib/src/gretl_xml.c:637
 #, c-format
@@ -3046,11 +3046,11 @@ msgstr "Parsen der Datenfrequenz fehlgeschlagen"
 
 #: lib/src/gretl_xml.c:824
 msgid "Failed to parse startobs"
-msgstr ""
+msgstr "Verarbeitung der Startbeob. schlug fehl"
 
 #: lib/src/gretl_xml.c:856
 msgid "Failed to parse endobs"
-msgstr ""
+msgstr "Verarbeitung der Endbeob. schlug fehl"
 
 #: lib/src/gretl_xml.c:871
 #, c-format
@@ -3873,13 +3873,13 @@ msgstr "Modell"
 #: lib/src/modelprint.c:960
 #, c-format
 msgid "%s estimates using the %d observations %s%s%s"
-msgstr ""
+msgstr "%s-Schätzungen mit den %d Beobachtungen %s%s%s"
 
 #: lib/src/modelprint.c:949
 #: lib/src/modelprint.c:950
 #, c-format
 msgid "%s estimates using %d observations from %s%s%s"
-msgstr ""
+msgstr "%s-Schätzungen mit %d Beobachtungen von %s%s%s"
 
 #: lib/src/modelprint.c:955
 #: lib/src/modelprint.c:956
@@ -3890,7 +3890,7 @@ msgstr "Fehlende oder unvollständige Beobachtungen entfernt"
 #: lib/src/modelprint.c:969
 #, c-format
 msgid "%s estimates using %d observations"
-msgstr ""
+msgstr "%s-Schätzungen mit %d Beobachtungen"
 
 #: lib/src/modelprint.c:974
 #: lib/src/modelprint.c:975
@@ -3923,7 +3923,7 @@ msgstr "      VARIABLE       KOEFFIZIENT        STDFEHLER       T-STAT       STE
 
 #: lib/src/modelprint.c:1160
 msgid "(at mean)"
-msgstr ""
+msgstr "(beim Mittel)"
 
 #: lib/src/modelprint.c:1162
 msgid ""
@@ -4251,7 +4251,7 @@ msgstr ""
 #: lib/src/monte_carlo.c:1960
 #, c-format
 msgid "%s estimates using the %d observations %s-%s\n"
-msgstr ""
+msgstr "%s-Schätzungen mit den %d Beobachtungen %s-%s\n"
 
 #: lib/src/monte_carlo.c:1964
 #, c-format
@@ -6823,7 +6823,7 @@ msgstr ""
 #: gui2/guiprint.c:459
 #: gui2/guiprint.c:581
 msgid "gretl output"
-msgstr ""
+msgstr "gretl Output"
 
 #: gui/guiprint.c:126
 #: gui2/guiprint.c:192
@@ -7125,7 +7125,7 @@ msgstr "Fünf-Werte-Zsfssg. mit gebootstraptem Konfidenzintervall für den Median"
 #: gui2/boxplots.c:1000
 #, no-c-format
 msgid "(90% interval)"
-msgstr ""
+msgstr "(90%-Intervall)"
 
 #: gui2/boxplots.c:1024
 msgid "gretl: 5 numbers"
@@ -7158,42 +7158,42 @@ msgstr ""
 
 #: gui2/boxplots.c:1256
 msgid "Cannot open the Clipboard!"
-msgstr ""
+msgstr "Kann Zwischenablage nicht öffnen!"
 
 #: gui2/boxplots.c:1260
 msgid "Cannot empty the Clipboard"
-msgstr ""
+msgstr "Kann Zwischenablage nicht leeren"
 
 #: gui2/boxplots.c:1267
 msgid "Failed to set clipboard data"
-msgstr ""
+msgstr "Daten in Zwischenablage legen schlug fehl"
 
 #: gui2/boxplots.c:1270
 msgid "Failed to close Clipboard"
-msgstr ""
+msgstr "Schließen der Zwischenablage schlug fehl"
 
 #: gui2/boxplots.c:1294
 msgid "Couldn't open XPM file for writing"
-msgstr ""
+msgstr "Konnte XPM-Datei nicht zum Schreiben öffnen"
 
 #: gui2/boxplots.c:1628
 msgid "boxplot file is corrupt"
-msgstr ""
+msgstr "Boxplot-Datei ist beschädigt"
 
 #: gui2/boxplots.c:1752
 #, c-format
 msgid "got invalid variable number %d"
-msgstr ""
+msgstr "erhielt ungültige Variablenzahl %d"
 
 #: gui2/boxplots.c:1759
 #, c-format
 msgid "got invalid varname '%s'"
-msgstr ""
+msgstr "erhielt ungültigen Var'namen '%s'"
 
 #: gui2/boxplots.c:1763
 #, c-format
 msgid "got invalid field '%s'"
-msgstr ""
+msgstr "erhielt ungültiges Feld '%s'"
 
 #: gui2/boxplots.c:1787
 #, c-format
@@ -7201,6 +7201,8 @@ msgid ""
 "boxplots: generation of dummy variable failed\n"
 "%s"
 msgstr ""
+"Boxplots: Erzeugung der Dummyvariable schlug fehl\n"
+"%s"
 
 #: gui2/calculator.c:96
 msgid "Incomplete entry for p-value"
@@ -7377,12 +7379,12 @@ msgstr ""
 #: gui2/calculator.c:645
 #, c-format
 msgid "Null hypothesis: population proportion = %g\n"
-msgstr ""
+msgstr "Nullhypothese: Proportion in Grundgesamtheit = %g\n"
 
 #: gui2/calculator.c:647
 #, c-format
 msgid "Sample proportion = %g\n"
-msgstr ""
+msgstr "Stichprobenproportion = %g\n"
 
 #: gui2/calculator.c:676
 #, c-format
@@ -7435,7 +7437,7 @@ msgstr "Teststatistik: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:758
 msgid "Null hypothesis: The population variances are equal\n"
-msgstr ""
+msgstr "Nullhypothese: Gleiche Varianzen der Grundgesamtheiten\n"
 
 #: gui2/calculator.c:760
 #, c-format
@@ -7463,7 +7465,7 @@ msgstr "Teststatistik: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:791
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr ""
+msgstr "Nullhypothese: Gleiche Proportionen in Grundgesamtheiten\n"
 
 #: gui2/calculator.c:794
 #, c-format
@@ -7471,6 +7473,8 @@ msgid ""
 "Sample 1:\n"
 " n = %d, proportion = %g\n"
 msgstr ""
+"Stichprobe 1:\n"
+" n = %d, Proportion = %g\n"
 
 #: gui2/calculator.c:796
 #, c-format
@@ -7478,6 +7482,8 @@ msgid ""
 "Sample 2:\n"
 " n = %d, proportion = %g\n"
 msgstr ""
+"Stichprobe 2:\n"
+" n = %d, Proportion = %g\n"
 
 #: gui2/calculator.c:801
 #, c-format
@@ -7603,7 +7609,7 @@ msgstr "Benutze Variablen aus Datensatz"
 
 #: gui2/calculator.c:1424
 msgid "proportion"
-msgstr ""
+msgstr "Proportion"
 
 #: gui2/calculator.c:1425
 msgid "2 means"
@@ -7615,7 +7621,7 @@ msgstr "2 Varianzen"
 
 #: gui2/calculator.c:1427
 msgid "2 proportions"
-msgstr ""
+msgstr "2 Proportionen"
 
 #: gui2/calculator.c:1468
 msgid "sample mean"
@@ -7645,11 +7651,11 @@ msgstr "H0: Varianz ="
 
 #: gui2/calculator.c:1483
 msgid "sample proportion"
-msgstr ""
+msgstr "Stichprobenproportion"
 
 #: gui2/calculator.c:1485
 msgid "H0: proportion ="
-msgstr ""
+msgstr "H0: Proportion ="
 
 #: gui2/calculator.c:1489
 msgid "mean of sample 1"
@@ -7701,11 +7707,11 @@ msgstr "H0: Verhältnis der Varianzen = 1"
 
 #: gui2/calculator.c:1516
 msgid "proportion, sample 1"
-msgstr ""
+msgstr "Proportion, Stichprobe 1"
 
 #: gui2/calculator.c:1521
 msgid "proportion, sample 2"
-msgstr ""
+msgstr "Proportion, Stichprobe 2"
 
 #: gui2/calculator.c:1523
 msgid "H0: Difference of proportions = 0"
@@ -7794,7 +7800,7 @@ msgstr "Speichere gnuplot-Befehle"
 
 #: gui2/callbacks.c:316
 msgid "Sorry, this item not yet implemented!"
-msgstr ""
+msgstr "Leider ist dieser Eintrag noch nicht implementiert!"
 
 #: gui2/callbacks.c:327
 msgid "gretl: data summary"
@@ -7913,7 +7919,7 @@ msgstr "gretl: Maximum Likelihood"
 
 #: gui2/callbacks.c:514
 msgid "MLE: Specify function, and derivatives if possible:"
-msgstr ""
+msgstr "ML: Spezifizieren Sie Funktion und falls möglich Ableitungen:"
 
 #: gui2/callbacks.c:519
 msgid "gretl: nonlinear least squares"
@@ -7921,7 +7927,7 @@ msgstr "gretl: nichtlineare KQ-Methode"
 
 #: gui2/callbacks.c:520
 msgid "NLS: Specify function, and derivatives if possible:"
-msgstr ""
+msgstr "NLKQ: Spezifizieren Sie Funktion und falls möglich Ableitungen:"
 
 #: gui2/callbacks.c:525
 #: gui2/library.c:2488
@@ -7992,7 +7998,7 @@ msgstr ""
 
 #: gui2/cmdstack.c:378
 msgid "Couldn't open command file for writing"
-msgstr ""
+msgstr "Konnte Befehlsdatei nicht zum Schreiben öffnen"
 
 #: gui2/cmdstack.c:432
 msgid "The command log is empty"
@@ -8000,7 +8006,7 @@ msgstr "Der Befehlslog ist leer"
 
 #: gui2/console.c:95
 msgid "Closing redirected output file"
-msgstr ""
+msgstr "Schließe umgeleitete Output-Datei"
 
 #: gui2/console.c:416
 msgid ""
@@ -8018,12 +8024,12 @@ msgstr "Netzwerkstatus: %s"
 #: gui2/database.c:146
 #: gui2/database.c:148
 msgid "Error retrieving data from server"
-msgstr ""
+msgstr "Fehler beim Datei holen vom Server"
 
 #: gui2/database.c:174
 #: gui2/database.c:1487
 msgid "Retrieving data..."
-msgstr ""
+msgstr "Hole Daten..."
 
 #: gui2/database.c:226
 msgid "gretl: display database series"
@@ -8077,7 +8083,7 @@ msgstr "Zu wenig Speicher beim Versuch die Variable hinzuzufügen"
 
 #: gui2/database.c:459
 msgid "Couldn't access binary data"
-msgstr ""
+msgstr "Konnte auf Binärdaten nicht zugreifen"
 
 #: gui2/database.c:462
 #: gui2/database.c:534
@@ -8086,7 +8092,7 @@ msgstr "Warnung: Reihe hat fehlende Beobachtungen"
 
 #: gui2/database.c:536
 msgid "Couldn't access binary datafile"
-msgstr ""
+msgstr "Konnte auf Binärdatendatei nicht zugreifen"
 
 #: gui2/database.c:587
 #: gui2/session.c:138
@@ -8234,7 +8240,7 @@ msgstr ""
 
 #: gui2/datafiles.c:635
 msgid "Failed to retrieve description of data"
-msgstr ""
+msgstr "Holen der Datenbeschreibung schlug fehl"
 
 #: gui2/datafiles.c:636
 #, c-format
@@ -8306,7 +8312,7 @@ msgstr "Skript"
 #: gui2/datafiles.c:1095
 #: gui2/datafiles.c:1168
 msgid "Topic"
-msgstr ""
+msgstr "Thema"
 
 #: gui2/datafiles.c:1096
 #: gui2/datafiles.c:1169
@@ -8482,7 +8488,7 @@ msgstr "gretl: Wähle Bereich"
 
 #: gui2/dialogs.c:1511
 msgid "Name of dummy variable to use:"
-msgstr ""
+msgstr "Name der zu benutzenden Dummyvariable:"
 
 #: gui2/dialogs.c:1541
 #, c-format
@@ -8615,11 +8621,11 @@ msgstr "Sie fügen eine %s Reihe zu einem %s Datensatz hinzu"
 
 #: gui2/dialogs.c:2153
 msgid "a quarterly"
-msgstr ""
+msgstr "ein(e) quartalsweise"
 
 #: gui2/dialogs.c:2153
 msgid "an annual"
-msgstr ""
+msgstr "ein(e) jährliche"
 
 #: gui2/dialogs.c:2158
 msgid "Compact quarterly data to annual"
@@ -8942,7 +8948,7 @@ msgstr "Schätzer"
 
 #: gui2/dlgutils.c:766
 msgid "(Please refer to Help for guidance)"
-msgstr ""
+msgstr "(Bitte konsultieren Sie dafür die Hilfe)"
 
 #: gui2/filelists.c:337
 #: gui2/filelists.c:569
@@ -9153,7 +9159,7 @@ msgstr "Konnte Graphendatei nicht öffnen"
 
 #: gui2/gpt_control.c:1229
 msgid "Plot file is corrupted"
-msgstr ""
+msgstr "Graphendatei ist beschädigt"
 
 #: gui2/gpt_control.c:1841
 #: gui2/gpt_control.c:2001
@@ -9298,7 +9304,7 @@ msgstr ""
 
 #: gui2/gpt_dialog.c:604
 msgid "Main"
-msgstr ""
+msgstr "Allg."
 
 #: gui2/gpt_dialog.c:646
 msgid "key position"
@@ -9353,12 +9359,12 @@ msgstr "Speichern in Datei..."
 
 #: gui2/gpt_dialog.c:951
 msgid "Lines"
-msgstr ""
+msgstr "Linien"
 
 #: gui2/gpt_dialog.c:983
 #, c-format
 msgid "line %d: "
-msgstr ""
+msgstr "Linie %d:"
 
 #: gui2/gpt_dialog.c:990
 msgid "legend"
@@ -9366,7 +9372,7 @@ msgstr "Legende"
 
 #: gui2/gpt_dialog.c:1013
 msgid "type"
-msgstr ""
+msgstr "Art"
 
 #: gui2/gpt_dialog.c:1040
 msgid "scale"
@@ -9378,12 +9384,12 @@ msgstr "y-Achse"
 
 #: gui2/gpt_dialog.c:1104
 msgid "Labels"
-msgstr ""
+msgstr "Textfelder"
 
 #: gui2/gpt_dialog.c:1130
 #, c-format
 msgid "label %d: "
-msgstr ""
+msgstr "Feld %d:"
 
 #: gui2/gpt_dialog.c:1137
 msgid "text"
@@ -9395,7 +9401,7 @@ msgstr "Position (X Y)"
 
 #: gui2/gpt_dialog.c:1215
 msgid "justification"
-msgstr ""
+msgstr "Ausrichtung"
 
 #: gui2/gpt_dialog.c:1251
 msgid "X-axis"
@@ -9411,11 +9417,11 @@ msgstr "Y2-Achse"
 
 #: gui2/gpt_dialog.c:1311
 msgid "auto axis range"
-msgstr ""
+msgstr "Autom. Achsenspanne"
 
 #: gui2/gpt_dialog.c:1327
 msgid "manual range:"
-msgstr ""
+msgstr "manuelle Spanne:"
 
 #: gui2/gpt_dialog.c:1338
 msgid "minimum"
@@ -9430,6 +9436,8 @@ msgid ""
 "You can only have one plot controller open\n"
 "at any given time"
 msgstr ""
+"Es kann nur eine Graphen-Kontrolle zur gleichen\n"
+"Zeit geöffnet sein"
 
 #: gui2/gpt_dialog.c:1410
 msgid "gretl plot controls"
@@ -9444,7 +9452,7 @@ msgstr "Die Graphenseite ist voll"
 #: gui2/library.c:5562
 #: gui2/library.c:5642
 msgid "Failed to process TeX file"
-msgstr ""
+msgstr "TeX-Datei-Verarbeitung schlug fehl"
 
 #: gui2/graph_page.c:562
 #: gui2/session.c:2020
@@ -9462,12 +9470,12 @@ msgstr "Das Ökonometrie-Paket von GNOME 2.0"
 #: gui2/gretlwin32.c:97
 #: gui2/gui_utils.c:4428
 msgid "Couldn't write R startup file"
-msgstr ""
+msgstr "Konnte R Startdatei nicht schreiben"
 
 #: gui2/gretlwin32.c:103
 #: gui2/gui_utils.c:4434
 msgid "Couldn't set R_PROFILE environment variable"
-msgstr ""
+msgstr "Konnte R_PROFILE Umgebungsvariable nicht setzen"
 
 #: gui2/gretlwin32.c:116
 #: gui2/gui_utils.c:4447
@@ -9865,7 +9873,7 @@ msgstr "/Graphen/Residuenplot"
 #: gui2/gui_utils.c:317
 #: gui2/gui_utils.c:3175
 msgid "/Graphs/fitted, actual plot"
-msgstr ""
+msgstr "/Graphen/geschätzte vs tatsächl."
 
 #: gui2/gui_utils.c:263
 #: gui2/gui_utils.c:318
@@ -10291,7 +10299,7 @@ msgstr "%s/gegen Zeit"
 #: gui2/gui_utils.c:3201
 #, c-format
 msgid "%s/by observation number"
-msgstr ""
+msgstr "%s/gegen Beobachtungsindex"
 
 #: gui2/gui_utils.c:3223
 #, c-format
@@ -11180,7 +11188,7 @@ msgstr "Daten transponiert"
 
 #: gui2/library.c:5354
 msgid "OK to overwrite?"
-msgstr ""
+msgstr "Überschreiben OK?"
 
 #: gui2/library.c:5413
 msgid ""
@@ -11213,6 +11221,8 @@ msgid ""
 "\n"
 "Error executing script: halting\n"
 msgstr ""
+"\n"
+"Fehler bei Skriptausführung: Stopp\n"
 
 #: gui2/library.c:5911
 msgid ""
@@ -11235,7 +11245,7 @@ msgstr ""
 
 #: gui2/library.c:6588
 msgid "'open' command is malformed"
-msgstr ""
+msgstr "'open'-Befehl ist falsch"
 
 #: gui2/library.c:6811
 msgid "Please use the Close button to exit\n"
@@ -11256,7 +11266,7 @@ msgstr "Endlosschleife in Skript entdeckt\n"
 #: gui2/library.c:6969
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
-msgstr ""
+msgstr "Leider ist der %s-Befehl in libgretl noch nicht implementiert\n"
 
 #: gui2/menustate.c:103
 #: gui2/menustate.c:122
@@ -11561,7 +11571,7 @@ msgstr "** bezeichnet Signifikanz zum 5-Prozent-Niveau "
 
 #: gui2/model_table.c:794
 msgid "For logit and probit, R-squared is McFadden's pseudo-R-squared"
-msgstr ""
+msgstr "Bei Logit und Probit ist McFaddens Pseudo-R2 angegeben"
 
 #: gui2/model_table.c:802
 msgid "gretl: model table"
@@ -11569,11 +11579,11 @@ msgstr "gretl: Modelltabelle"
 
 #: gui2/model_table.c:894
 msgid "For logit and probit, $R^2$ is McFadden's pseudo-$R^2$"
-msgstr ""
+msgstr "Bei Logit und Probit ist $R^2$ McFaddens Pseudo-$R^2$"
 
 #: gui2/model_table.c:985
 msgid "For logit and probit, R{\\super 2} is McFadden's pseudo-R{\\super 2}"
-msgstr ""
+msgstr "Bei Logit und Probit ist R{\\super 2} McFaddens Pseudo-R{\\super 2}"
 
 #: gui2/model_table.c:1017
 msgid "No model is available"
@@ -11595,7 +11605,7 @@ msgstr "Wert"
 
 #: gui2/obsbutton.c:207
 msgid "Reads the current value, or sets a new value"
-msgstr ""
+msgstr "Liest den aktuellen Wert, oder setzt einen neuen Wert"
 
 #: gui2/selector.c:1163
 msgid "You must select an X-axis variable"
@@ -11635,7 +11645,7 @@ msgstr "Sie müssen Instrumentvariablen spezifizieren"
 
 #: gui2/selector.c:1865
 msgid "HCCM"
-msgstr ""
+msgstr "HKKM"
 
 #: gui2/selector.c:1867
 msgid "Heteroskedasticity corrected"
@@ -11745,7 +11755,7 @@ msgstr "Exogene Variablen"
 
 #: gui2/selector.c:2487
 msgid "Non-seasonal"
-msgstr ""
+msgstr "Nicht-saisonal"
 
 #: gui2/selector.c:2489
 #, fuzzy
@@ -11939,7 +11949,7 @@ msgstr "Alle ->"
 
 #: gui2/selector.c:3631
 msgid "Too many items were selected"
-msgstr ""
+msgstr "Zuviele Einträge wurden gewählt"
 
 #: gui2/selector.c:3642
 msgid "Save CSV data file"
@@ -12102,7 +12112,7 @@ msgstr "versus"
 
 #: gui2/session.c:1629
 msgid "Please close this object's window first"
-msgstr ""
+msgstr "Bitte schließen Sie zuerst das Fenster dieses Objekts"
 
 #: gui2/session.c:2338
 msgid "Data set"
@@ -12399,7 +12409,7 @@ msgstr ""
 
 #: gui2/ssheet.c:1326
 msgid "Sorry, can't edit more than 1600 rows"
-msgstr ""
+msgstr "Kann leider nicht mehr als 1600 Zeilen bearbeiten"
 
 #: gui2/textutil.c:67
 msgid "gretl: replace"
@@ -12420,7 +12430,7 @@ msgstr "Alles ersetzen"
 #: gui2/textutil.c:196
 #: gui2/textutil.c:326
 msgid "String to replace was not found"
-msgstr ""
+msgstr "Zu ersetzende Zeichenkette nicht gefunden"
 
 #: gui2/toolbar.c:189
 msgid "launch calculator"
@@ -12465,7 +12475,7 @@ msgstr "öffne Datensatz"
 #: gui2/webget.c:395
 #: gui2/webget.c:401
 msgid "Couldn't find usable socket driver\n"
-msgstr ""
+msgstr "Konnte keinen verwendbaren Socket-Treiber finden\n"
 
 #: gui2/webget.c:818
 msgid "Host not found"
@@ -12481,7 +12491,7 @@ msgstr "Keine Daten erhalten"
 
 #: gui2/webget.c:1006
 msgid "Malformed status line"
-msgstr ""
+msgstr "Falsche Statuszeile"
 
 #: gui2/webget.c:1012
 msgid "(no description)"
@@ -12516,11 +12526,14 @@ msgid ""
 "that new files are available from the gretl web site\n"
 "http://gretl.sourceforge.net/"
 msgstr ""
+"Bitte informieren Sie den Systemadministrator darüber,\n"
+"dass auf der gretl-Seite neue Dateien verfügbar sind.\n"
+"http://gretl.sourceforge.net/"
 
 #: gui2/webget.c:1743
 #, c-format
 msgid "This file is part of the gretl update notification system\n"
-msgstr ""
+msgstr "Diese Datei gehört zum gretl-System für Aktualisierungshinweise\n"
 
 #: gui2/webget.c:1750
 msgid "No new files"
@@ -12531,19 +12544,21 @@ msgid ""
 "Failed to parse HTTP proxy:\n"
 "format must be ipnumber:port"
 msgstr ""
+"Verarbeiten der HTTP Proxy-Info schlug fehl:\n"
+"Format muss ipnummer:port sein"
 
 #: gui2/webget.c:1791
 msgid "HTTP proxy: first field must be an IP number"
-msgstr ""
+msgstr "HTTP Proxy: erstes Feld muss eine IP-Nummer sein"
 
 #: plugin/arma_common.c:527
 #: plugin/arma_common.c:609
 msgid "Error in arma command"
-msgstr ""
+msgstr "Fehler im Arma-Befehl"
 
 #: plugin/arma_x12.c:800
 msgid "Failed to execute x12arima"
-msgstr ""
+msgstr "Ausführung von X12arima schlug fehl"
 
 #: plugin/eviews_import.c:196
 msgid "No variables were read\n"
@@ -12555,11 +12570,11 @@ msgstr "Fehler beim Lesen des Workfile-Headers\n"
 
 #: plugin/excel_import.c:83
 msgid "Perhaps you need to adjust the starting column or row?"
-msgstr ""
+msgstr "Vielleicht müssen Sie die Startspalte oder -zeile anpassen?"
 
 #: plugin/excel_import.c:438
 msgid "String index too large"
-msgstr ""
+msgstr "Zeichenkettenindex zu groß"
 
 #: plugin/excel_import.c:653
 #: plugin/workbook.c:445
@@ -12585,7 +12600,7 @@ msgstr "Keine Daten gefunden.\n"
 #: plugin/excel_import.c:1373
 #: plugin/gnumeric_import.c:665
 msgid "Failed to get workbook info"
-msgstr ""
+msgstr "Holen der Workbook-Info schlug fehl"
 
 #: plugin/excel_import.c:1376
 #: plugin/gnumeric_import.c:673
@@ -12594,17 +12609,17 @@ msgstr "Keine Arbeitsblätter gefunden"
 
 #: plugin/excel_import.c:1407
 msgid "Failed to process Excel file"
-msgstr ""
+msgstr "Verarbeitung der Exceldatei schlug fehl"
 
 #: plugin/excel_import.c:1421
 #: plugin/gnumeric_import.c:252
 msgid "Starting row is out of bounds.\n"
-msgstr ""
+msgstr "Startzeile ist außerhalb der Grenzen.\n"
 
 #: plugin/excel_import.c:1424
 #: plugin/gnumeric_import.c:257
 msgid "Starting column is out of bounds.\n"
-msgstr ""
+msgstr "Startspalte ist außerhalb der Grenzen.\n"
 
 #: plugin/excel_import.c:1440
 msgid "One or more variable names are missing.\n"
@@ -12616,14 +12631,16 @@ msgid ""
 "Expected numeric data, found string:\n"
 "%s\" at row %d, column %d\n"
 msgstr ""
+"Erwartete numerische Daten, fand Zeichenkette:\n"
+"%s\" bei Zeile %d, Spalte %d\n"
 
 #: plugin/fcp.c:217
 msgid " (using Hessian)"
-msgstr ""
+msgstr "(mit Hessematrix)"
 
 #: plugin/fiml.c:874
 msgid "Gradients at last iteration"
-msgstr ""
+msgstr "Gradienten bei letzter Iteration"
 
 #: plugin/fractals.c:40
 msgid "Rescaled-range plot for"
@@ -12648,7 +12665,7 @@ msgstr ""
 
 #: plugin/fractals.c:237
 msgid "(logs are to base 2)"
-msgstr ""
+msgstr "(logs sind zur Basis 2)"
 
 #: plugin/fractals.c:249
 msgid "Error estimating Hurst exponent model\n"
@@ -12665,7 +12682,7 @@ msgstr "Geschätzter Hurst-Exponent"
 #: plugin/garch.c:591
 #: plugin/garch.c:598
 msgid "Error in garch command"
-msgstr ""
+msgstr "Fehler im Garch-Befehl"
 
 #: plugin/gnumeric_import.c:305
 #, c-format
@@ -12773,7 +12790,7 @@ msgstr "Lmax-Test"
 
 #: plugin/johansen.c:1098
 msgid "Failed to find eigenvalues\n"
-msgstr ""
+msgstr "Finden der Eigenwerte schlug fehl\n"
 
 #: plugin/kernel.c:132
 #, c-format
@@ -12845,7 +12862,7 @@ msgstr "Nachricht"
 
 #: plugin/mailer.c:672
 msgid "Mail setup"
-msgstr ""
+msgstr "Mail-Einstellungen"
 
 #: plugin/mailer.c:680
 msgid "SMTP server:"
@@ -12902,7 +12919,7 @@ msgstr ""
 
 #: plugin/panel_data.c:726
 msgid "a_i = intercepts"
-msgstr ""
+msgstr "a_i = Achsenabschnitte"
 
 #: plugin/panel_data.c:771
 #, c-format
@@ -13035,11 +13052,11 @@ msgstr "basiert auf den FGLS-Residuen"
 
 #: plugin/panel_data.c:1503
 msgid "Can't produce ML estimates: some units have only one observation"
-msgstr ""
+msgstr "Kann ML-Schätzung nicht durchführen: einige Einheiten mit nur einer Beobachtung"
 
 #: plugin/pca.c:144
 msgid "Components with eigenvalues > 1.0"
-msgstr ""
+msgstr "Komponenten mit Eigenwerten > 1.0"
 
 #: plugin/pca.c:164
 msgid "All components"
@@ -13051,7 +13068,7 @@ msgstr "Hauptkomponentenanalyse"
 
 #: plugin/pca.c:236
 msgid "Eigenanalysis of the Correlation Matrix"
-msgstr ""
+msgstr "Eigenanalyse der Korrelationsmatrix"
 
 #: plugin/pca.c:238
 msgid "Component  Eigenvalue  Proportion   Cumulative\n"
@@ -13059,7 +13076,7 @@ msgstr ""
 
 #: plugin/pca.c:255
 msgid "Eigenvectors (component loadings)"
-msgstr ""
+msgstr "Eigenvektoren (Komponentenladungen)"
 
 #: plugin/poisson.c:336
 msgid "poisson: the dependent variable must be count data"
@@ -13143,7 +13160,7 @@ msgstr ""
 
 #: plugin/stata_import.c:606
 msgid "cannot read Stata .dta on this platform"
-msgstr ""
+msgstr "kann Stata .dta auf dieser Plattform nicht lesen"
 
 #: plugin/stata_import.c:616
 msgid "This file does not seem to be a valid Stata data file"
@@ -13446,7 +13463,7 @@ msgstr ""
 
 #: plugin/workbook.c:543
 msgid "Password protected workbooks are not supported yet."
-msgstr ""
+msgstr "Passwortgeschützte Workbooks werden noch nicht unterstützt"
 
 #: plugin/workbook.c:635
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
