@@ -993,7 +993,7 @@
 
     <usage>
       <arguments>
-        <argument>variable</argument>
+        <argument>variabile</argument>
         <argument optional="true">max-ritardo</argument>
       </arguments>
       <examples>
@@ -1104,7 +1104,7 @@
     <description>
       <para>Se la <repl>distribuzione</repl> è <lit>t</lit>, <lit>X</lit> o
 	<lit>F</lit>, mostra i valori critici per le distribuzioni
-        <mathvar>t</mathvar> di student, chi-quadro o <mathvar>F</mathvar>,
+        <mathvar>t</mathvar> di Student, chi-quadro o <mathvar>F</mathvar>,
 	per i valori di significatività usuali, con i gradi di libertà
 	specificati, dati da <repl>param1</repl> per la t e la chi-quadro,
         o <repl>param1</repl> e <repl>param2</repl> per la
@@ -2136,7 +2136,7 @@
       <ilist>
 	<li><para><cmd>genr time</cmd> crea una variabile trend temporale
 	    (1,2,3,&hellip;) chiamata <cmd>time</cmd>.
-            <cmd>genr index</cmd> fa la stessa cosa, ma chiamando la variable
+            <cmd>genr index</cmd> fa la stessa cosa, ma chiamando la variabile
 	    <lit>index</lit>.</para>
 	</li>
 	<li><para><cmd>genr dummy</cmd> crea una serie di variabili dummy a seconda
@@ -3343,7 +3343,7 @@
       <para>
         La riga denominata <quote>predefinito</quote> offre un modo veloce per
         impostare una specificazione di ritardi comune a tutte le variabili
-        indipendentei: i valori inseriti in questa riga vengono copiati in tutte
+        indipendenti: i valori inseriti in questa riga vengono copiati in tutte
         le righe successive (tranne quella della variabile dipendente, se
         esiste).
       </para>
@@ -3968,7 +3968,7 @@
       </para>
 
       <para>
-	Se non si era dichiarato in precedenza il parametro p, sarabbe stato
+	Se non si era dichiarato in precedenza il parametro p, sarebbe stato
         necessario premettere alle righe precedenti la riga:
       </para>
 
@@ -6679,11 +6679,11 @@
       
       <para>
 	L'output del comando comprende il test di Hausman e, se il modello è
-        sovra-identificato, il test di Sargano per la sovra-identificazione. Nel
+        sovra-identificato, il test di Sargan per la sovra-identificazione. Nel
         test di Hausman, l'ipotesi nulla è che le stime OLS siano consistenti, o
         in altre parole che non sia richiesta la stima per mezzo di variabili
         strumentali. Un modello di questo tipo è sovra-identificato se ci sono
-        pià strumenti di quelli strettamente necessari. Il test di Sargan è
+        più strumenti di quelli strettamente necessari. Il test di Sargan è
         basato su una regressione ausiliaria dei residui del modello minimi
         quadrati a due stadi sull'intera lista degli strumenti. L'ipotesi nulla
         è che tutti gli strumenti siano validi, cosa di cui si dovrebbe dubitare
@@ -6864,7 +6864,7 @@
         di un gruppo di variabili esogene.
       </para>
       <para>
-        Viene calcolato un test del rapporto di verosimiglianza sotto l'ipotesu
+        Viene calcolato un test del rapporto di verosimiglianza sotto l'ipotesi
         nulla che i coefficienti delle variabili indicate valgano zero in
         tutte le equazioni del VAR. Il test si basa sulla differenza tra il
         log-determinante della matrice di varianza per il modello non vincolato
