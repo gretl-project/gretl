@@ -24,6 +24,10 @@
 #include "webget.h"
 #include "fnsave.h"
 
+#ifdef G_OS_WIN32
+# include "gretlwin32.h"
+#endif
+
 #include "gretl_func.h"
 
 #define NENTRIES 4

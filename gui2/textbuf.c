@@ -613,8 +613,6 @@ static void insert_link (GtkTextBuffer *tbuf, GtkTextIter *iter,
 {
     GtkTextTag *ltag;
 
-    fprintf(stderr, "insert_link: text = '%s'\n", text);
-
     if (page == GUIDE_PAGE) {
 	ltag = gtk_text_buffer_create_tag(tbuf, NULL, "foreground", "blue", 
 					  "family", "sans", NULL);
