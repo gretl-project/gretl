@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-03-07 08:37-0500\n"
-"PO-Revision-Date: 2006-04-23 12:50+0100\n"
+"PO-Revision-Date: 2006-05-01 17:59+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -54,7 +54,7 @@ msgstr "avec constante et tendance quadratique"
 #: plugin/johansen.c:1017
 #: plugin/johansen.c:1018
 msgid "p-value"
-msgstr "valeur de P"
+msgstr "p. critique"
 
 #: lib/src/adf_kpss.c:133
 #: lib/src/dataio.c:1495
@@ -64,7 +64,7 @@ msgstr "inconnu"
 
 #: lib/src/adf_kpss.c:136
 msgid "asymptotic p-value"
-msgstr "valeur de P asymptotique"
+msgstr "p. critique asymptotique"
 
 #: lib/src/adf_kpss.c:142
 #, c-format
@@ -119,7 +119,7 @@ msgstr "test statistique"
 
 #: lib/src/adf_kpss.c:462
 msgid "P-values based on MacKinnon (JAE, 1996)\n"
-msgstr "Valeurs de P basées sur MacKinnon (JAE, 1996)\n"
+msgstr "P. critiques basées sur MacKinnon (JAE, 1996)\n"
 
 #: lib/src/adf_kpss.c:607
 msgid "Robust estimate of variance"
@@ -202,7 +202,7 @@ msgid ""
 "    cointegrating regression.\n"
 msgstr ""
 "\n"
-"Une relation de cointégration est prouvée si :\n"
+"Il existe bien une relation de cointégration est si :\n"
 "(a) l'hypothèse de racine unitaire n'est pas rejetée pour les variables \n"
 "    individuelles.\n"
 "(b) l'hypothèse de racine unitaire est rejetée pour les résidus (uhat) \n"
@@ -244,7 +244,7 @@ msgstr "F robuste"
 #: lib/src/gretl_restrict.c:900
 #, c-format
 msgid "with p-value = %g\n"
-msgstr "avec valeur de P = %g\n"
+msgstr "avec p. critique = %g\n"
 
 #: lib/src/compare.c:248
 #: lib/src/compare.c:267
@@ -292,7 +292,7 @@ msgstr "Khi-deux"
 msgid ""
 "with p-value = %g\n"
 "\n"
-msgstr "avec valeur de P = %g\n"
+msgstr "avec p. critique = %g\n"
 
 #: lib/src/compare.c:284
 #, c-format
@@ -317,7 +317,7 @@ msgid ""
 "with p-value = prob(Chi-square(%d) > %g) = %g\n"
 "\n"
 msgstr ""
-"avec valeur de P = prob(Khi-deux(%d) > %g) = %g\n"
+"avec p. critique = prob(Khi-deux(%d) > %g) = %g\n"
 "\n"
 
 #: lib/src/compare.c:579
@@ -349,7 +349,7 @@ msgstr "(non linéarité)"
 #: plugin/sysest.c:470
 #: plugin/sysest.c:483
 msgid "with p-value"
-msgstr "avec valeur de P"
+msgstr "avec p. critique"
 
 #: lib/src/compare.c:1161
 #: lib/src/graphing.c:1447
@@ -431,7 +431,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Test de Harvey-Collier(%d) = %g avec valeur de P %.4g\n"
+"Test de Harvey-Collier(%d) = %g avec p. critique %.4g\n"
 "\n"
 
 #: lib/src/compare.c:1560
@@ -1040,7 +1040,7 @@ msgstr "utilisant le délimiteur « %c »\n"
 #: lib/src/dataio.c:3535
 #, c-format
 msgid "   longest line: %d characters\n"
-msgstr "   ligne la plus longue: %d caractères\n"
+msgstr "   ligne la plus longue : %d caractères\n"
 
 #: lib/src/dataio.c:3121
 #, c-format
@@ -1056,12 +1056,12 @@ msgstr "   ...mais la rangée %d a %d champs: abandon\n"
 #: lib/src/dataio.c:3616
 #, c-format
 msgid "   number of variables: %d\n"
-msgstr "   nombre de variables: %d\n"
+msgstr "   nombre de variables : %d\n"
 
 #: lib/src/dataio.c:3137
 #, c-format
 msgid "   number of non-blank lines: %d\n"
-msgstr "   nombre de lignes non vides: %d\n"
+msgstr "   nombre de lignes non vides : %d\n"
 
 #: lib/src/dataio.c:3142
 #: lib/src/dataio.c:3593
@@ -1076,12 +1076,12 @@ msgstr "recherche des noms de variables...\n"
 #: lib/src/dataio.c:3179
 #, c-format
 msgid "   line: %s\n"
-msgstr "   ligne: %s\n"
+msgstr "   ligne : %s\n"
 
 #: lib/src/dataio.c:3202
 #, c-format
 msgid "   variable name %d is missing: aborting\n"
-msgstr "   le nom de variable %d est manquant: abandon\n"
+msgstr "   le nom de variable %d est manquant : abandon\n"
 
 #: lib/src/dataio.c:3225
 #: plugin/excel_import.c:1445
@@ -1220,7 +1220,7 @@ msgstr "Le fichier BOX semble être mal structuré\n"
 #: lib/src/usermat.c:1282
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
-msgstr "« %s » -- aucune conversion numérique exécutée!"
+msgstr "« %s » -- aucune conversion numérique effectuée !"
 
 #: lib/src/dataio.c:4153
 #: lib/src/usermat.c:1286
@@ -1238,12 +1238,12 @@ msgstr "Caractère superflu (0x%x) dans les données"
 #: lib/src/usermat.c:1292
 #, c-format
 msgid "'%s' -- number out of range!"
-msgstr "« %s » -- nombre hors limite!"
+msgstr "« %s » -- nombre hors limite !"
 
 #: lib/src/dataio.c:4190
 #: gui2/library.c:5325
 msgid "Dataset contains scalars, can't transpose"
-msgstr "Le jeu de données contient des scalaires, ne peut transposer."
+msgstr "Le jeu de données contient des scalaires, transposition impossible."
 
 #: lib/src/dataset.c:340
 msgid "auto-generated constant"
@@ -1329,7 +1329,7 @@ msgstr "Séries importées avec succès"
 #: gui2/database.c:358
 #: gui2/database.c:368
 msgid "Sorry, can't handle this conversion yet!"
-msgstr "Désolé, ne peut traiter cette conversion pour le moment!"
+msgstr "Désolé, ne peut traiter cette conversion pour le moment !"
 
 #: lib/src/dbread.c:1278
 msgid ""
@@ -1420,7 +1420,7 @@ msgid ""
 "Degrees of freedom = %d, p-value = %.4f\n"
 "\n"
 msgstr ""
-"Degrés de liberté = %d, valeur de P = %.4f\n"
+"Degrés de liberté = %d, p. critique = %.4f\n"
 "\n"
 
 #: lib/src/describe.c:1464
@@ -1664,7 +1664,7 @@ msgstr "Asymétrie"
 #: lib/src/describe.c:2187
 #: gui2/guiprint_common.c:167
 msgid "Ex. kurtosis"
-msgstr "Aplatissement"
+msgstr "Ex. aplatissement"
 
 #: lib/src/describe.c:2194
 #: lib/src/describe.c:2268
@@ -2081,7 +2081,7 @@ msgstr "fonction math"
 #: lib/src/generate.c:2814
 #, c-format
 msgid "'%s' refers to a %s and may not be used as a variable name"
-msgstr "« %s » réfère à %s et ne peut pas être utilisé comme nom de variable"
+msgstr "« %s » fait référence à %s et ne peut pas être utilisé comme nom de variable"
 
 #: lib/src/generate.c:3024
 #, c-format
@@ -2159,7 +2159,7 @@ msgstr "scalaire"
 #: lib/src/genrfuncs.c:431
 #, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
-msgstr "= 1 si le quart =%d, 0 autrement"
+msgstr "= 1 si le quart = %d, 0 autrement"
 
 #: lib/src/genrfuncs.c:437
 #, c-format
@@ -2270,12 +2270,12 @@ msgstr "Résidus de la régression (= observé - ajusté %s)"
 #: lib/src/graphing.c:834
 #, c-format
 msgid "Actual and fitted %s"
-msgstr "Actuel et ajusté %s"
+msgstr "Observé et ajusté %s"
 
 #: lib/src/graphing.c:836
 #, c-format
 msgid "Actual and fitted %s versus %s"
-msgstr "Actuel et ajusté %s versus %s"
+msgstr "Observé et ajusté %s versus %s"
 
 #: lib/src/graphing.c:1509
 #: lib/src/graphing.c:2627
@@ -2383,7 +2383,7 @@ msgstr "Erreur de donnée"
 
 #: lib/src/gretl_errors.c:33
 msgid "Exact or near collinearity encountered"
-msgstr "Colinéarité exacte ou proche rencontrée"
+msgstr "Colinéarité parfaite ou proche rencontrée"
 
 #: lib/src/gretl_errors.c:34
 #: gui2/library.c:2891
@@ -2396,7 +2396,7 @@ msgstr "Y-prime * Y égal zéro"
 
 #: lib/src/gretl_errors.c:36
 msgid "Dependent variable is all zeros, aborting regression"
-msgstr "Variable dépendante est zéro, abandon de la régression"
+msgstr "La variable dépendante est nulle, abandon de la régression"
 
 #: lib/src/gretl_errors.c:37
 msgid "Total sum of squares was not positive"
@@ -2404,7 +2404,7 @@ msgstr "La somme totale des carrés n'est pas positive"
 
 #: lib/src/gretl_errors.c:38
 msgid "Sum of squared residuals negative!"
-msgstr "La somme des carrés résidus est négative!"
+msgstr "La somme des carrés des résidus est négative !"
 
 #: lib/src/gretl_errors.c:39
 msgid "Unbalanced parentheses in genr command"
@@ -2419,7 +2419,7 @@ msgstr "Désolé, commande non disponible pour cet estimateur"
 
 #: lib/src/gretl_errors.c:41
 msgid "Unspecified error -- FIXME"
-msgstr "Erreur non spéficié -- CORRIGER MOI"
+msgstr "Erreur non spéficiée -- CORRIGEZ MOI"
 
 #: lib/src/gretl_errors.c:42
 msgid "Syntax error in genr formula"
@@ -2451,7 +2451,7 @@ msgstr "Cette commande est implantée seulement pour les modèles MCO"
 
 #: lib/src/gretl_errors.c:52
 msgid "Invalid argument for coeff, corr, stderr, rho, pvalue, critical or mpow"
-msgstr "Argument invalide pour coeff, corr, err.std, rho, valeur de P ou mpow"
+msgstr "Argument invalide pour coeff, corr, err.std, rho, p. critique ou mpow"
 
 #: lib/src/gretl_errors.c:54
 msgid "Invalid sample split for Chow test"
@@ -2471,7 +2471,7 @@ msgstr "Aucune variable indépendante n'a été omise"
 
 #: lib/src/gretl_errors.c:58
 msgid "Can't do this: some vars in original model have been redefined"
-msgstr "Vous ne pouvez faire cela: quelques variables dans le modèle original ont été redéfinies"
+msgstr "Vous ne pouvez faire cela : quelques variables dans le modèle original ont été redéfinies"
 
 #: lib/src/gretl_errors.c:60
 msgid "No new independent variables were added"
@@ -2487,11 +2487,11 @@ msgstr "Erreur lors de la génération des logarithmes"
 
 #: lib/src/gretl_errors.c:63
 msgid "Error generating squares"
-msgstr "Erreur lors de la génération des carrés."
+msgstr "Erreur lors de la génération des carrés"
 
 #: lib/src/gretl_errors.c:64
 msgid "Error generating lagged variables"
-msgstr "Erreur de génération de variables de délai"
+msgstr "Erreur lors de la génération des variables retardées"
 
 #: lib/src/gretl_errors.c:65
 msgid "Attempting to take square root of negative number"
@@ -2540,7 +2540,7 @@ msgstr "L'opération a été annulée"
 #: lib/src/gretl_errors.c:77
 #: lib/src/pvalues.c:313
 msgid "Missing values encountered"
-msgstr "Valeur manquante rencontrée"
+msgstr "Valeurs manquantes rencontrées"
 
 #: lib/src/gretl_errors.c:78
 msgid "Not a Number in calculation"
@@ -2896,7 +2896,7 @@ msgid ""
 "The number of observations (%d) is not a multiple\n"
 "of the number of %s (%d)."
 msgstr ""
-"La panel de jeux de données doit être balancés.\n"
+"Les jeux de données en panels doivent être cylindrés.\n"
 "Le nombre d'observations (%d) n'est pas un multiple\n"
 "du nombre de %s (%d)."
 
@@ -2922,7 +2922,7 @@ msgid ""
 "The current data frequency, 1, is not compatible with panel data.\n"
 "Please see the 'setobs' command.\n"
 msgstr ""
-"La fréquence des données courantes, 1, n'est pas compatible avec le panel de données.\n"
+"La fréquence des données courantes, 1, n'est pas compatible avec des données de panel.\n"
 "SVP voir la commande 'setobs'.\n"
 
 #: lib/src/gretl_utils.c:916
@@ -2987,7 +2987,7 @@ msgstr "%s test"
 #: lib/src/gretl_utils.c:1229
 #, c-format
 msgid "p-value for %s test"
-msgstr "valeur de P pour le %s test"
+msgstr "p. critique pour le %s test"
 
 #: lib/src/gretl_win32.c:45
 #, c-format
@@ -3346,7 +3346,7 @@ msgstr "Erreur dans le calcul du critère de sélection de modèle.\n"
 
 #: lib/src/interact.c:3008
 msgid "Error adding log differences of variables.\n"
-msgstr "Erreur d'ajout de différences logarithmique de variables.\n"
+msgstr "Erreur lors de l'ajout de différences logarithmique de variables.\n"
 
 #: lib/src/interact.c:3010
 msgid "Error adding first differences of variables.\n"
@@ -3354,11 +3354,11 @@ msgstr "Erreur lors de l'ajout des premières différences de variables.\n"
 
 #: lib/src/interact.c:3021
 msgid "Error adding lags of variables.\n"
-msgstr "Erreur d'ajout de valeur retardée des variables.\n"
+msgstr "Erreur lors de l'ajout de valeur retardée des variables.\n"
 
 #: lib/src/interact.c:3030
 msgid "Error adding logs of variables.\n"
-msgstr "Erreur d'ajout des logarithmes de variables.\n"
+msgstr "Erreur lors de l'ajout des logarithmes de variables.\n"
 
 #: lib/src/interact.c:3039
 msgid "Failed to generate squares\n"
@@ -3977,14 +3977,14 @@ msgid ""
 "      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr ""
-"      PARAMÈTRE    ESTIMATION         ERR. STD       T            p\n"
+"      PARAMÈTRE     ESTIMATION         ERR. STD            T       p. critique\n"
 "\n"
 
 #: lib/src/modelprint.c:1165
 msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE\n"
 "\n"
-msgstr "      VARIABLE       COEFFICIENT        ERR. STD       T        p\n"
+msgstr "      VARIABLE       COEFFICIENT        ERR. STD             T       p. critique\n"
 
 #: lib/src/modelprint.c:1173
 msgid "Parameter"
@@ -3992,7 +3992,7 @@ msgstr "Paramètre"
 
 #: lib/src/modelprint.c:1174
 msgid "Estimate"
-msgstr "Estimer"
+msgstr "Estimateur"
 
 #: lib/src/modelprint.c:1177
 #: gui2/guiprint_common.c:977
@@ -4298,7 +4298,7 @@ msgstr ""
 #: lib/src/monte_carlo.c:1960
 #, c-format
 msgid "%s estimates using the %d observations %s-%s\n"
-msgstr "%s estimés utilisant les %d observations %s-%s\n"
+msgstr "%s estimations utilisant les %d observations %s-%s\n"
 
 #: lib/src/monte_carlo.c:1964
 #, c-format
@@ -4383,7 +4383,7 @@ msgstr "Ajustement parfait obtenu\n"
 
 #: lib/src/nls.c:1205
 msgid "In Gauss-Newton Regression:\n"
-msgstr "Dans la régression de Gauss-Newton:\n"
+msgstr "Dans la régression de Gauss-Newton :\n"
 
 #: lib/src/nls.c:1211
 msgid "Failed to calculate Jacobian"
@@ -4429,7 +4429,7 @@ msgstr "Aucune fonction de régression n'a été spécifiée"
 
 #: lib/src/nls.c:2033
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
-msgstr "Dérivées analytiques présentés : \"params\" seront ignorés"
+msgstr "Dérivées analytiques fournies : \"params\" seront ignorés"
 
 #: lib/src/nls.c:2166
 msgid "Using numerical derivatives\n"
@@ -4470,7 +4470,7 @@ msgstr "Sous l'hypothèse nulle d'absence de corrélation, rho suit N(0, %f)\n"
 #: lib/src/nonparam.c:267
 #, c-format
 msgid "z-score = %f, with one-tailed p-value %f\n"
-msgstr "z = %f, avec une valeur de P unilatérale %f\n"
+msgstr "z = %f, avec une p. critique unilatérale %f\n"
 
 #: lib/src/nonparam.c:272
 #, c-format
@@ -4515,7 +4515,7 @@ msgid ""
 "Number of runs (R) in the variable '%s' = %d\n"
 msgstr ""
 "\n"
-"Nombre de passes (R) dans la variables « %s » =%d\n"
+"Nombre de passes (R) dans la variables « %s » = %d\n"
 
 #: lib/src/nonparam.c:507
 #, c-format
@@ -4525,7 +4525,7 @@ msgstr "Sous l'hypothèse nulle de distribution aléatoire, R suit N(%f, %f)\n"
 #: lib/src/nonparam.c:509
 #, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
-msgstr "z = %f, avec une valeur de P bilatérale %f\n"
+msgstr "z = %f, avec une p. critique bilatérale %f\n"
 
 #: lib/src/objstack.c:442
 #: gui2/selector.c:1897
@@ -4595,7 +4595,7 @@ msgstr "Copyright Ramu Ramanathan et Allin Cottrell."
 
 #: lib/src/printout.c:97
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
-msgstr "Ce logiciel est libre et NON GARANTI."
+msgstr "Ce logiciel est libre et SANS AUCUNE GARANTI."
 
 #: lib/src/printout.c:117
 #, c-format
@@ -4604,11 +4604,11 @@ msgstr "gretl : client d'interface graphique pour la version %s de gretl,\n"
 
 #: lib/src/printout.c:118
 msgid "copyright Allin Cottrell.\n"
-msgstr "Copyright Allin Cottrel.\n"
+msgstr "Copyright Allin Cottrell.\n"
 
 #: lib/src/printout.c:119
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
-msgstr "Ce logiciel est libre et NON GARANTI.\n"
+msgstr "Ce logiciel est libre et SANS AUCUNE GARANTI.\n"
 
 #: lib/src/printout.c:220
 #, no-c-format
@@ -4855,7 +4855,7 @@ msgid ""
 "pvalue: missing parameter\n"
 msgstr ""
 "\n"
-"valeur de p : paramètre manquant\n"
+"p. critique : paramètre manquant\n"
 
 #: lib/src/pvalues.c:558
 msgid ""
@@ -4881,7 +4881,7 @@ msgid ""
 msgstr ""
 "\n"
 "\n"
-"Choisir parmi l'une des distribution suivantes: \n"
+"Choisir l'une des distributions suivantes : \n"
 "\n"
 "\t1) Normale standard\t\t2) T de Student\n"
 "\t3) Khi-deux\t\t\t4) F\n"
@@ -5052,7 +5052,7 @@ msgstr "Commande de sous-échantillonnage a mystérieusement échoué"
 
 #: lib/src/subsample.c:943
 msgid "No observations would be left!"
-msgstr "Aucune observation ne peut être laissée !"
+msgstr "Aucune observation ne resterait !"
 
 #: lib/src/subsample.c:948
 msgid "No observations were dropped!"
@@ -5109,15 +5109,15 @@ msgstr "Seemingly Unrelated Regressions"
 
 #: lib/src/system.c:79
 msgid "Three-Stage Least Squares"
-msgstr "Moindres carrés en 3 étapes"
+msgstr "Triples moindres carrés"
 
 #: lib/src/system.c:80
 msgid "Full Information Maximum Likelihood"
-msgstr "Maximum de vraisemblance en information complète"
+msgstr "Maximum de vraisemblance avec information complète"
 
 #: lib/src/system.c:81
 msgid "Limited Information Maximum Likelihood"
-msgstr "Maximum de vraisemblance en information limitée"
+msgstr "Maximum de vraisemblance avec information limitée"
 
 #: lib/src/system.c:82
 msgid "Ordinary Least Squares"
@@ -5324,7 +5324,7 @@ msgstr ""
 
 #: lib/src/var.c:2692
 msgid "Johansen test"
-msgstr "test de Johansen"
+msgstr "Test de Johansen"
 
 #: lib/src/var.c:2693
 msgid "Number of equations"
@@ -5358,7 +5358,7 @@ msgstr "résidus du système VECM, équation %d"
 #: lib/src/varprint.c:132
 #, c-format
 msgid "Responses to a one-standard error shock in %s"
-msgstr "Réponses à un choc d'un écart-type dans %s"
+msgstr "Réponses à un choc d'un écart-type de %s"
 
 #: lib/src/varprint.c:104
 #: lib/src/varprint.c:120
@@ -5681,7 +5681,7 @@ msgstr "Vous ne pouvez terminer une boucle ici, vous n'en avez débuté aucune\n"
 #: cli/gretlcli.c:1156
 #: gui2/library.c:6450
 msgid "Couldn't open tex file for writing\n"
-msgstr "Ne peut ouvrir un fichier TeX en écriture\n"
+msgstr "Ne peut ouvrir le fichier TeX en écriture\n"
 
 #: cli/gretlcli.c:1158
 #: gui2/library.c:6452
@@ -6174,7 +6174,7 @@ msgstr "/Utilitaires/Calcul de test statistique"
 #: gui/gretl.c:276
 #: gui2/gretl.c:329
 msgid "/Utilities/Gretl console"
-msgstr "/Utilitaires/console Gretl"
+msgstr "/Utilitaires/Console Gretl"
 
 #: gui/gretl.c:279
 #: gui2/gretl.c:332
@@ -6184,27 +6184,27 @@ msgstr "/Utilitaires/Fonctions additionelles..."
 #: gui/gretl.c:282
 #: gui2/gretl.c:335
 msgid "/Utilities/Start GNU R"
-msgstr "/Utilitaires/lancer GNU R"
+msgstr "/Utilitaires/Lancer GNU R"
 
 #: gui/gretl.c:283
 #: gui2/gretl.c:337
 msgid "/Utilities/NIST test suite"
-msgstr "/Utilitaires/suite de test NIST"
+msgstr "/Utilitaires/Suite de test NIST"
 
 #: gui/gretl.c:284
 #: gui2/gretl.c:338
 msgid "/Utilities/NIST test suite/basic"
-msgstr "/Utilitaires/suite de tests NIST/basiques"
+msgstr "/Utilitaires/Suite de tests NIST/basiques"
 
 #: gui/gretl.c:285
 #: gui2/gretl.c:339
 msgid "/Utilities/NIST test suite/verbose"
-msgstr "/Utilitaires/suite de tests NIST/mode explicatif"
+msgstr "/Utilitaires/Suite de tests NIST/mode explicatif"
 
 #: gui/gretl.c:286
 #: gui2/gretl.c:340
 msgid "/Utilities/NIST test suite/very verbose"
-msgstr "/Utilitaires/suite de tests NIST/mode explicatif développé"
+msgstr "/Utilitaires/Suite de tests NIST/mode explicatif développé"
 
 #: gui/gretl.c:289
 #: gui2/gretl.c:343
@@ -6229,7 +6229,7 @@ msgstr "/Session/_Sauvegarder"
 #: gui/gretl.c:295
 #: gui2/gretl.c:350
 msgid "/Session/Save _as..."
-msgstr "/Session/Sauvegarder _tel que..."
+msgstr "/Session/Sauvegarder _comme..."
 
 #: gui/gretl.c:298
 #: gui2/gretl.c:354
@@ -6269,7 +6269,7 @@ msgstr "/Données/Trier les variables/par ID numérique"
 #: gui/gretl.c:307
 #: gui2/gretl.c:363
 msgid "/Data/Sort variables/by name"
-msgstr "/Données/Trier les variables/par le nom"
+msgstr "/Données/Trier les variables/par nom"
 
 #: gui/gretl.c:309
 #: gui2/gretl.c:365
@@ -6344,7 +6344,7 @@ msgstr "/Données/_Statistiques descriptives/_toutes les variables"
 #: gui/gretl.c:335
 #: gui2/gretl.c:390
 msgid "/Data/_Summary statistics/_selected variables"
-msgstr "/Données/_Statistiques descriptives/les variables _sélectionnées"
+msgstr "/Données/_Statistiques descriptives/variables _sélectionnées"
 
 #: gui/gretl.c:338
 #: gui2/gretl.c:392
@@ -6864,7 +6864,7 @@ msgstr "%s repéré\n"
 #: gui/gretl.c:587
 #: gui2/gretl.c:176
 msgid "You seem to be running gretl as root.  Do you really want to do this?"
-msgstr "Vous semblez exécuter gretl en etant root. Vouz voulez faire cela?"
+msgstr "Vous semblez exécuter gretl en root. Vouz voulez faire cela?"
 
 #: gui/gretl.c:702
 #: gui/gretl.c:709
@@ -6994,7 +6994,7 @@ msgstr "/_Effacer/_Toutes les données"
 #: gui2/callbacks.c:647
 #: gui2/ssheet.c:437
 msgid "gretl: name variable"
-msgstr "gretl: nom de variable"
+msgstr "gretl : nom de variable"
 
 #: gui/ssheet.c:184
 #: gui2/callbacks.c:648
@@ -7009,7 +7009,7 @@ msgstr ""
 #: gui/ssheet.c:192
 #: gui2/ssheet.c:446
 msgid "gretl: case marker"
-msgstr "gretl: marqueur de cas"
+msgstr "gretl : marqueur de cas"
 
 #: gui/ssheet.c:193
 #: gui2/ssheet.c:447
@@ -7062,7 +7062,7 @@ msgstr "Échec d'allocation de mémoire pour les nouvelles données"
 #: gui2/ssheet.c:749
 #: gui2/ssheet.c:1286
 msgid "Warning: there were missing observations"
-msgstr "AVERTISSEMENT: il y a des observations manquantes"
+msgstr "AVERTISSEMENT : il y a des observations manquantes"
 
 #: gui/ssheet.c:624
 #: gui2/dialogs.c:260
@@ -7232,7 +7232,7 @@ msgstr "Aide"
 #: gui2/boxplots.c:698
 #: gui2/callbacks.c:506
 msgid "gretl: boxplots"
-msgstr "gretl: traçage de BOX"
+msgstr "gretl : traçage de BOX"
 
 #: gui2/boxplots.c:970
 #: gui2/boxplots.c:998
@@ -7250,12 +7250,12 @@ msgstr "(intervalle de 90%)"
 
 #: gui2/boxplots.c:1024
 msgid "gretl: 5 numbers"
-msgstr "gretl: 5 nombres"
+msgstr "gretl : 5 nombres"
 
 #: gui2/boxplots.c:1064
 #, c-format
 msgid "Dropping %s: insufficient observations"
-msgstr "Abandon de %s: observations insuffisantes"
+msgstr "Abandon de %s : observations insuffisantes"
 
 #: gui2/boxplots.c:1088
 msgid "Couldn't obtain confidence interval"
@@ -7363,7 +7363,7 @@ msgstr "Entrée invalide pour le test d'hypothèse"
 #: gui2/calculator.c:384
 #: gui2/calculator.c:397
 msgid "Invalid degrees of freedom"
-msgstr "Degrés de liberté invalide"
+msgstr "Nombre de degrés de liberté invalide"
 
 #: gui2/calculator.c:229
 msgid "Invalid sample size"
@@ -7397,7 +7397,7 @@ msgid ""
 "Two-tailed p-value = %.4g\n"
 "(one-tailed = %.4g)\n"
 msgstr ""
-"Valeur de P bilatéral = %.4g\n"
+"P. critique bilatéral = %.4g\n"
 "(unilatéral = %.4g)\n"
 
 #: gui2/calculator.c:480
@@ -7487,7 +7487,7 @@ msgstr "Variance de l'échantillon = %g\n"
 #: gui2/calculator.c:617
 #, c-format
 msgid "Test statistic: chi-square(%d) = %d * %g/%g = %g\n"
-msgstr "Test statistique: Khi-deux(%d) = %d * %g/%g = %g\n"
+msgstr "Test statistique : Khi-deux(%d) = %d * %g/%g = %g\n"
 
 #: gui2/calculator.c:638
 msgid ""
@@ -7500,7 +7500,7 @@ msgstr ""
 #: gui2/calculator.c:645
 #, c-format
 msgid "Null hypothesis: population proportion = %g\n"
-msgstr "Hypothèse nulle: proportion de la population = %g\n"
+msgstr "Hypothèse nulle : proportion de la population = %g\n"
 
 #: gui2/calculator.c:647
 #, c-format
@@ -7510,7 +7510,7 @@ msgstr "Proportion de l'échantillon = %g\n"
 #: gui2/calculator.c:676
 #, c-format
 msgid "Null hypothesis: Difference of means = %g\n"
-msgstr "Hypothèse nulle: différence des moyennes = %g\n"
+msgstr "Hypothèse nulle : différence de moyennes = %g\n"
 
 #: gui2/calculator.c:679
 #, c-format
@@ -7518,7 +7518,7 @@ msgid ""
 "Sample 1:\n"
 " n = %d, mean = %g, s.d. = %g\n"
 msgstr ""
-"Échantillon 1:\n"
+"Échantillon 1 :\n"
 " n = %d, moyenne = %g, écart-type = %g\n"
 
 #: gui2/calculator.c:682
@@ -7531,7 +7531,7 @@ msgstr " erreur standard des résidus = %g\n"
 #: gui2/calculator.c:693
 #, c-format
 msgid " 95%% confidence interval for mean: %g to %g\n"
-msgstr " Intervalle de confiance 95%% pour le moyen: %g à %g\n"
+msgstr " Intervalle de confiance 95%% pour la moyenne : %g à %g\n"
 
 #: gui2/calculator.c:688
 #, c-format
@@ -7539,26 +7539,26 @@ msgid ""
 "Sample 2:\n"
 " n = %d, mean = %g, s.d. = %g\n"
 msgstr ""
-"Échantillon 2:\n"
+"Échantillon 2 :\n"
 " n = %d, moyenne = %g, écart-type = %g\n"
 
 #: gui2/calculator.c:719
 msgid "Small samples: assuming normality and common variance\n"
-msgstr "Petits échantillons: normalité et variance commune supposées\n"
+msgstr "Petits échantillons : normalité et variance commune supposées\n"
 
 #: gui2/calculator.c:732
 #, c-format
 msgid "Test statistic: z = (%g - %g - %g)/%g = %g\n"
-msgstr "Test statistique: z = (%g - %g - %g)/%g = %g\n"
+msgstr "Test statistique : z = (%g - %g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:735
 #, c-format
 msgid "Test statistic: z = [(%g - %g) - (%g)]/%g = %g\n"
-msgstr "Test statistique: z = [(%g - %g) - (%g)]/%g = %g\n"
+msgstr "Test statistique : z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:758
 msgid "Null hypothesis: The population variances are equal\n"
-msgstr "Hypothèse nulle: les variances des populations sont égales\n"
+msgstr "Hypothèse nulle : les variances des populations sont égales\n"
 
 #: gui2/calculator.c:760
 #, c-format
@@ -7566,7 +7566,7 @@ msgid ""
 "Sample 1:\n"
 " n = %d, variance = %g\n"
 msgstr ""
-"Échantillon 1:\n"
+"Échantillon 1 :\n"
 " n = %d, variance = %g\n"
 
 #: gui2/calculator.c:761
@@ -7575,18 +7575,18 @@ msgid ""
 "Sample 2:\n"
 " n = %d, variance = %g\n"
 msgstr ""
-"Échantillon 2:\n"
+"Échantillon 2 :\n"
 " n = %d, variance = %g\n"
 
 #: gui2/calculator.c:764
 #: gui2/calculator.c:769
 #, c-format
 msgid "Test statistic: F(%d, %d) = %g\n"
-msgstr "Test statistique: F(%d, %d) = %g\n"
+msgstr "Test statistique : F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:791
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr "Hypothèse nulle: les proportions de population sont égales\n"
+msgstr "Hypothèse nulle : les proportions de population sont égales\n"
 
 #: gui2/calculator.c:794
 #, c-format
@@ -7594,7 +7594,7 @@ msgid ""
 "Sample 1:\n"
 " n = %d, proportion = %g\n"
 msgstr ""
-"Échantillon 1:\n"
+"Échantillon 1 :\n"
 " n = %d, proportion = %g\n"
 
 #: gui2/calculator.c:796
@@ -7603,17 +7603,17 @@ msgid ""
 "Sample 2:\n"
 " n = %d, proportion = %g\n"
 msgstr ""
-"Échantillon 2:\n"
+"Échantillon 2 :\n"
 " n = %d, proportion = %g\n"
 
 #: gui2/calculator.c:801
 #, c-format
 msgid "Test statistic: z = (%g - %g) / %g = %g\n"
-msgstr "Test statistique: z = (%g - %g) / %g = %g\n"
+msgstr "Test statistique : z = (%g - %g) / %g = %g\n"
 
 #: gui2/calculator.c:812
 msgid "gretl: hypothesis test"
-msgstr "gretl: test de l'hypothèse"
+msgstr "gretl : test de l'hypothèse"
 
 #: gui2/calculator.c:859
 #: gui2/calculator.c:919
@@ -7756,7 +7756,7 @@ msgstr "taille de l'échantillon"
 
 #: gui2/calculator.c:1471
 msgid "H0: mean ="
-msgstr "H0: moyenne ="
+msgstr "H0 : moyenne ="
 
 #: gui2/calculator.c:1472
 msgid "Assume standard deviation is population value"
@@ -7836,7 +7836,7 @@ msgstr "proportion, échantillon 2"
 
 #: gui2/calculator.c:1523
 msgid "H0: Difference of proportions = 0"
-msgstr "H0: Différence des proportion = 0"
+msgstr "H0 : Différence des proportion = 0"
 
 #: gui2/calculator.c:1533
 msgid "Show graph of sampling distribution"
@@ -7844,7 +7844,7 @@ msgstr "Afficher le graphe de la distribution de l'échantillon"
 
 #: gui2/calculator.c:1600
 msgid "gretl: p-value finder"
-msgstr "gretl : recherche de la valeur de P"
+msgstr "gretl : recherche de la p. critique"
 
 #: gui2/calculator.c:1601
 msgid "gretl: statistical tables"
@@ -8012,7 +8012,7 @@ msgid ""
 "pseudo-random number generator:"
 msgstr ""
 "Entrer le germe entier pour\n"
-"le générateur de nombres pseudo-aléatoires:"
+"le générateur de nombres pseudo-aléatoires :"
 
 #: gui2/callbacks.c:483
 msgid "gretl: simulation data"
@@ -8063,7 +8063,7 @@ msgstr "Spécifiez les equations :"
 
 #: gui2/callbacks.c:531
 msgid "gretl: linear restrictions"
-msgstr "gretl: restrictions linéaires"
+msgstr "gretl : restrictions linéaires"
 
 #: gui2/callbacks.c:532
 msgid "Specify restrictions:"
