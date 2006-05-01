@@ -43,10 +43,6 @@
 
 static GtkWidget *toolbar_box;
 
-#ifndef G_OS_WIN32
-extern char Browser[MAXSTR];
-#endif
-
 /* callbacks for gretl toolbar icons */
 
 static void show_calc (void)

@@ -2123,31 +2123,10 @@ int upload_function_package (const char *login, const char *pass,
 #endif /* !UPDATER */
 
 #ifdef WIN32
+# ifdef UPDATER /* standalone program for Windows */
 
 #include <windows.h>
 #include <shellapi.h>
-
-static long GetRegKey (HKEY key, char *subkey, char *retdata)
-{
-    long err;
-    HKEY hkey;
-
-    err = RegOpenKeyEx(key, subkey, 0, KEY_QUERY_VALUE, &hkey);
-
-    if (err == ERROR_SUCCESS) {
-	long datasize = MAX_PATH;
-	char data[MAX_PATH];
-
-	RegQueryValue(hkey, NULL, (LPSTR)data, &datasize);
-
-	lstrcpy(retdata, data);
-	RegCloseKey(hkey);
-    }
-
-    return err;
-}
-
-# ifdef UPDATER /* standalone program for Windows */
 
 int read_reg_val (HKEY tree, char *keyname, char *keyval)
 {

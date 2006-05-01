@@ -391,7 +391,7 @@ static void finfo_dialog (struct function_info *finfo)
     gtk_widget_set_usize(tbl, 500, 300); /* ?? */
 #else
     text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
-    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 560, 410); /* ?? */
+    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 440);
 #endif
 
     set_dialog_info_from_fn(finfo, finfo->publist[1], HIDX_INIT);

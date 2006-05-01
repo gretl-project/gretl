@@ -735,7 +735,7 @@ static void gui_delete_fn_pkg (const char *fname, windata_t *vwin)
 	}
 	gtk_list_store_remove(GTK_LIST_STORE(mod), &iter);
 #else
-	gtk_clist_remove(GTK_CLIST(vwin->listbox), i);
+	gtk_clist_remove(GTK_CLIST(vwin->listbox), vwin->active_var);
 #endif
     }
 }

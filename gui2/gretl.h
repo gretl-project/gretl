@@ -98,15 +98,19 @@ extern int main_x;
 extern int main_y;
 extern int mainwin_width;
 extern int mainwin_height;
+
 #ifdef G_OS_WIN32
 extern int wimp;
 #else
 extern char viewps[MAXSTR];
 extern char viewpdf[MAXSTR];
+extern char Browser[MAXSTR];
 #endif
+
 extern char calculator[MAXSTR];
 extern char latex[MAXSTR];
 extern char viewdvi[MAXSTR];
+
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
 extern char midiplayer[MAXSTR];
 #endif

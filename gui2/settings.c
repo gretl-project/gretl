@@ -57,10 +57,6 @@
 char rcfile[MAXLEN];
 #endif
 
-#ifndef G_OS_WIN32
-extern char Browser[MAXSTR];
-#endif
-
 extern int want_toolbar;
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];

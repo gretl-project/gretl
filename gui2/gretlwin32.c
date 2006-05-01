@@ -804,6 +804,26 @@ void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     g_free(emfname);
 }
 
+static long GetRegKey (HKEY key, char *subkey, char *retdata)
+{
+    long err;
+    HKEY hkey;
+
+    err = RegOpenKeyEx(key, subkey, 0, KEY_QUERY_VALUE, &hkey);
+
+    if (err == ERROR_SUCCESS) {
+	long datasize = MAX_PATH;
+	char data[MAX_PATH];
+
+	RegQueryValue(hkey, NULL, (LPSTR) data, &datasize);
+
+	lstrcpy(retdata, data);
+	RegCloseKey(hkey);
+    }
+
+    return err;
+}
+
 int browser_open (const char *url)
 {
     char key[MAX_PATH + MAX_PATH];
