@@ -1,0 +1,54 @@
+<!--
+  Document Type Definition (DTD) for gretl function packages: a package
+  needs a name, author, version, date, and description.  It also needs
+  at least one gretl-function.  The latter must have a name and must
+  include function code; it may also have help text, one or more parameters
+  and one or more return values.
+ -->
+
+<!ELEMENT gretl-functions (gretl-function-package?)>
+
+<!ELEMENT gretl-function-package (author, version, date, description, gretl-function+)>
+<!ATTLIST gretl-function-package
+   name CDATA #REQUIRED
+>
+
+<!ELEMENT author      (#PCDATA)>
+<!ELEMENT version     (#PCDATA)>
+<!ELEMENT date        (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+
+<!ELEMENT gretl-function (help?, params?, returns?, code)>
+<!ATTLIST gretl-function
+   name CDATA #REQUIRED
+   private (0|1) '0'
+>
+
+<!ELEMENT help (#PCDATA)>
+
+<!ELEMENT params (param+)>
+<!ATTLIST params 
+   count CDATA #REQUIRED
+>
+
+<!ELEMENT returns (return+)>
+<!ATTLIST returns
+   count CDATA #REQUIRED
+>
+
+<!ELEMENT param EMPTY>
+<!ATTLIST param
+   name CDATA #REQUIRED
+   type CDATA #REQUIRED
+>
+
+<!ELEMENT return EMPTY>
+<!ATTLIST return
+   name CDATA #REQUIRED
+   type CDATA #REQUIRED
+>
+
+<!ELEMENT code (#PCDATA)>
+
+
+

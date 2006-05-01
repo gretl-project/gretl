@@ -53,7 +53,7 @@ $(AUTO_HELPFILES):
 help:
 	make -C ../doc/commands help-all
 
-install: installdirs install_datafiles install_scripts install_help \
+install: installdirs install_datafiles install_scripts install_functions install_help \
 	$(INSTALL_GUI_SCRIPT_HELP) $(INSTALL_HELP_FIGS)
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(gretldir)/gretl.stamp
 	make -C bcih install
@@ -77,6 +77,9 @@ install_scripts:
 	$(INSTALL_DATA) $$f $(gretldir)/scripts ; done
 	for f in $(sharesrc)/scripts/misc/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/scripts/misc ; done
+
+install_functions:
+	$(INSTALL_DATA) $(sharesrc)/functions/gretlfunc.dtd $(gretldir)/functions 
 
 install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
@@ -112,6 +115,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(gretldir)/db
+	$(tooldir)/mkinstalldirs $(gretldir)/functions
 
 clean:
 	make -C bcih clean

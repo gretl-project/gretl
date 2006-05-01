@@ -14,8 +14,8 @@ enum cgi_options {
     QUERY,
     /* elements added April 2006 */
     LIST_FUNCS,
-    GRAB_FUNC_INFO,
-    GRAB_FUNC
+    GRAB_FUNC,
+    UPLOAD
 };
 
 # ifndef UPDATER
@@ -27,10 +27,6 @@ int list_remote_function_packages (char **getbuf, char *errbuf);
 int retrieve_remote_db_index (const char *dbname, 
 			      char **getbuf, 
 			      char *errbuf);
-
-int retrieve_remote_function_info (const char *pkgname, 
-				   char **getbuf, 
-				   char *errbuf);
 
 int retrieve_remote_db (const char *dbname, 
 			const char *localname,
@@ -50,6 +46,9 @@ int retrieve_remote_db_data (const char *dbname,
 int retrieve_manfile (const char *fname, 
 		      const char *savefile, 
 		      char *errbuf);
+
+int upload_function_package (const char *login, const char *pass, 
+			     const char *fullname, char *errbuf);
 
 int update_query (void);
 

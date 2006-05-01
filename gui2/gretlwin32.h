@@ -60,4 +60,6 @@ int send_file (char *fullname);
 
 void win32_process_graph (GPT_SPEC *spec, int color, int dest);
 
+int browser_open (const char *url);
+
 #endif /* GRETLWIN32_H */

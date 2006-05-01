@@ -698,6 +698,12 @@ void browser_open_ps (GtkWidget *w, gpointer data)
     view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
 } 
 
+enum {
+    VIEW_FN_PKG,
+    LOAD_FN_PKG,
+    DELETE_FN_PKG
+};
+
 static void gui_load_user_functions (const char *fname)
 {
     int err;
@@ -705,9 +711,33 @@ static void gui_load_user_functions (const char *fname)
     err = load_user_function_file(fname);
     if (err) {
 	gui_errmsg(err);
+    } 
+}
+
+static void gui_delete_fn_pkg (const char *fname, windata_t *vwin)
+{
+    int err;
+
+    err = remove(fname);
+    if (err) {
+	errbox("Couldn't delete %s", fname);
     } else {
-	infobox("Functions loaded OK");
-    }    
+#ifndef OLD_GTK
+	GtkTreeModel *mod;
+	GtkTreeIter iter;
+	int i = 0;
+
+	mod = gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox));
+	gtk_tree_model_get_iter_first(mod, &iter);
+	while (i < vwin->active_var) {
+	    gtk_tree_model_iter_next(mod, &iter);
+	    i++;
+	}
+	gtk_list_store_remove(GTK_LIST_STORE(mod), &iter);
+#else
+	gtk_clist_remove(GTK_CLIST(vwin->listbox), i);
+#endif
+    }
 }
 
 windata_t *gui_show_function_info (const char *fname, int role)
@@ -769,10 +799,12 @@ static void browser_functions_handler (windata_t *vwin, int task)
 
     build_path(fnfile, dir, fname, ".gfn");
 
-    if (task == LOAD_FUNC_CODE) {
+    if (task == LOAD_FN_PKG) {
 	gui_load_user_functions(fnfile);
-    } else {
-	gui_show_function_info(fnfile, task);
+    } else if (task == DELETE_FN_PKG) {
+	gui_delete_fn_pkg(fnfile, vwin);
+    } else if (task == VIEW_FN_PKG) {
+	gui_show_function_info(fnfile, VIEW_FUNC_INFO);
     }
 
 #ifndef OLD_GTK
@@ -788,14 +820,21 @@ void browser_load_func (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    browser_functions_handler(vwin, LOAD_FUNC_CODE);
+    browser_functions_handler(vwin, LOAD_FN_PKG);
 } 
 
 static void display_function_info (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    browser_functions_handler(vwin, VIEW_FUNC_INFO);
+    browser_functions_handler(vwin, VIEW_FN_PKG);
+}
+
+static void browser_del_func (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, DELETE_FN_PKG);
 } 
 
 static void set_browser_status (windata_t *vwin, int status)
@@ -858,6 +897,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     windata_t *vwin;
     const gchar *label;
     void (*browse_func)() = NULL;
+    void (*delete_func)() = NULL;
     int err = 0;
 
     if (browser_busy(code)) {
@@ -894,6 +934,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 #else
 	browse_func = NULL;
 #endif
+	delete_func = browser_del_func;
 	break;
     case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
@@ -990,6 +1031,13 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(datafile_find), vwin);
+    }
+
+    if (delete_func != NULL) {
+	button = gtk_button_new_with_label(_("Delete"));
+	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(delete_func), vwin);
     }
 
     button = gtk_button_new_with_label(_("Close"));

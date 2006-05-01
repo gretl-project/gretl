@@ -3404,43 +3404,6 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
-static char *file_get_contents (const char *fname)
-{
-    char *buf, *p;
-    FILE *fp;
-    size_t i, alloced;
-    int c;
-
-    fp = gretl_fopen(fname, "r");
-    if (fp == NULL) return NULL;
-
-    buf = malloc(BUFSIZ);
-    if (buf == NULL) {
-	fclose(fp);
-	return NULL;
-    }
-    alloced = BUFSIZ;
-
-    i = 0;
-    while ((c = getc(fp)) != EOF) {
-	if (i + 2 == alloced) { /* allow for terminating 0 */
-	    p = realloc(buf, alloced + BUFSIZ);
-	    if (p == NULL) {
-		free(buf);
-		fclose(fp);
-		return NULL;
-	    }
-	    buf = p;
-	    alloced += BUFSIZ;
-	}
-	buf[i++] = c;
-    }
-    buf[i] = 0;
-
-    fclose(fp);
-    return buf;
-}
-
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
@@ -3510,7 +3473,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
 
-    databuf = file_get_contents(fname);
+    g_file_get_contents(fname, &databuf, NULL, NULL);
     if (databuf == NULL) {
 	errbox((opt == TRAMO)? _("TRAMO command failed") : 
 	       _("X-12-ARIMA command failed"));

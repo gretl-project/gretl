@@ -63,37 +63,11 @@ static void open_textbook_data (void)
     display_files(NULL, TEXTBOOK_DATA, NULL);
 }
 
-#ifndef G_OS_WIN32
-
-static void browser_open (const char *url)
-{
-# ifdef USE_GNOME
-#  ifndef OLD_GTK
-    gnome_url_show(url, NULL); 
-#  else
-    gnome_url_show(url); 
-#  endif  
-# else
-    int err;
-    char ns_cmd[256];
-
-    sprintf(ns_cmd, "%s -remote \"openURLNewWindow(%s)\"", Browser, url);
-    err = gretl_spawn(ns_cmd);
-    if (err) gretl_fork(Browser, url);
-# endif /* USE_GNOME */
-}
-
-#endif /* ! G_OS_WIN32 */
-
 static void gretl_website (void)
 {
-#ifdef G_OS_WIN32
-    if (goto_url("http://gretl.sourceforge.net/")) {
+    if (browser_open("http://gretl.sourceforge.net/")) {
 	errbox("Failed to open URL");
     }
-#else
-    browser_open("http://gretl.sourceforge.net/");
-#endif
 }
 
 void toolbar_users_guide (void)
@@ -104,7 +78,6 @@ void toolbar_users_guide (void)
 void toolbar_command_reference (void)
 {
     plain_text_cmdref(NULL, 0, NULL);
-    /* display_pdf_help(NULL, 0, NULL); */
 }
 
 static void xy_graph (void)

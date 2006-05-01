@@ -84,6 +84,7 @@ static int use_proxy;
 #endif /* UPDATER */
 
 enum {
+    SAVE_NONE,
     SAVE_TO_BUFFER,
     SAVE_TO_FILE
 } save_opts;
@@ -1505,10 +1506,10 @@ static char *print_option (int opt)
 	return "QUERY";
     case LIST_FUNCS:
 	return "LIST_FUNCS";
-    case GRAB_FUNC_INFO:
-	return "GRAB_FUNC_INFO";
     case GRAB_FUNC:
 	return "GRAB_FUNC";
+    case UPLOAD:
+	return "UPLOAD";
     default:
 	break;
     }
@@ -1886,7 +1887,7 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     u->saveopt = saveopt;
 
     if (fnlen > 0) {
-	if (opt == GRAB_FILE || opt == GRAB_FUNC_INFO || opt == GRAB_FUNC) {
+	if (opt == GRAB_FILE || opt == GRAB_FUNC) {
 	    strcat(u->path, "&fname=");
 	} else {
 	    strcat(u->path, "&dbase=");
@@ -1910,7 +1911,7 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     } else {
 	u->localfile = NULL;
 	u->savebuf = savebuf;
-    }
+    } 
 
     result = http_loop(u, &dt, proxy);
 
@@ -1989,6 +1990,132 @@ int retrieve_manfile (const char *fname, const char *savefile, char *errbuf)
     }
 
     freeurl(u, err);
+
+    return err;
+}
+
+#define url_reserved(c) (strchr(";/?:@&=+$,<>%#\t\r\n\v\0", c) != NULL)
+
+static int count_specials (const char *s)
+{
+    int n = 0;
+
+    while (*s) {
+	if (url_reserved(*s) || !isprint(*s)) {
+	    n++;
+	}
+	s++;
+    }
+
+    return n;
+}
+
+static char *url_encode_string (const char *s)
+{
+    char *encstr;
+    char encc[4];
+    int n;
+
+    if (s == NULL) {
+	return NULL;
+    }
+
+    n = count_specials(s);
+    if (n == 0) {
+	return gretl_strdup(s);
+    }
+
+    encstr = malloc(strlen(s) + n * 2 + 1);
+
+    if (encstr != NULL) {
+	*encstr = '\0';
+	while (*s) {
+	    if (*s == ' ') {
+		strcat(encstr, "+");
+	    } else if (url_reserved(*s) || !isprint(*s)) {
+		sprintf(encc, "%%%.2X", *s);
+		strcat(encstr, encc);
+	    } else {
+		strncat(encstr, s, 1);
+	    } 
+	    s++;
+	}
+    }
+
+    return encstr;
+}
+
+int upload_function_package (const char *login, const char *pass, 
+			     const char *fullname, char *errbuf)
+{
+    const char *cgi = "/gretl/cgi-bin/gretldata.cgi";
+    struct urlinfo *proxy = NULL; 
+    struct urlinfo *u;
+    char *ulogin = NULL;
+    char *upass = NULL;
+    char *ufname = NULL;
+    char *ubuf = NULL;
+    char *buf = NULL;
+    int dt, err = 0;
+    uerr_t result;
+
+    g_file_get_contents(fullname, &buf, NULL, NULL);
+    if (buf == NULL) {
+	return 1;
+    }
+
+    ulogin = url_encode_string(login);
+    upass = url_encode_string(pass);
+    ufname = url_encode_string(path_last_element(fullname));
+    ubuf = url_encode_string(buf);
+
+    if (ulogin == NULL || upass == NULL || ufname == NULL || ubuf == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    if (use_proxy) {
+	proxy = &gretlproxy;
+    }
+
+    u = newurl();
+    if (u == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    u->path = g_strdup_printf("%s?opt=UPLOAD&login=%s&pass=%s"
+			      "&fname=%s&content=%s",
+			      cgi, ulogin, upass, ufname, ubuf);
+    if (u->path == NULL) {
+	freeurl(u, 0);
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    err = get_host_ip(u->host, paths.dbhost);
+    if (err) {
+	freeurl(u, 0);
+	goto bailout;
+    }
+
+    result = http_loop(u, &dt, proxy);
+
+    if (result == RETROK) {
+	*errbuf = 0;
+    } else {
+	strcpy(errbuf, u->errbuf);
+	err = 1;
+    }
+
+    freeurl(u, err);
+
+ bailout:
+
+    free(ulogin);
+    free(upass);
+    free(ufname);
+    free(ubuf);
 
     return err;
 }
@@ -2075,43 +2202,6 @@ static void read_proxy_info (void)
 
 # endif /* UPDATER */
 
-int goto_url (const char *url)
-{
-    char key[MAX_PATH + MAX_PATH];
-    int err = 0;
-
-    if ((long) ShellExecute(NULL, "open", url, NULL, NULL, SW_SHOW) <= 32) {
-	/* if the above fails, get the .htm regkey and 
-	   look up the program */
-	if (GetRegKey(HKEY_CLASSES_ROOT, ".htm", key) == ERROR_SUCCESS) {
-	    lstrcat(key,"\\shell\\open\\command");
-	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
-		char *p;
-
-		p = strstr(key, "\"%1\"");
-		if (p == NULL) {    
-		    /* so check for %1 without the quotes */
-		    p = strstr(key, "%1");
-		    if (p == NULL) {
-			/* if no parameter */
-			p = key + lstrlen(key) - 1;
-		    } else {
-			*p = '\0';    /* remove the param */
-		    }
-		} else {
-		    *p = '\0';        /* remove the param */
-		}
-
-		lstrcat(p, " ");
-		lstrcat(p, url);
-		if (WinExec(key, SW_SHOW) < 32) err = 1;
-	    }
-	}
-    }
-
-    return err;
-}
-
 #endif /* WIN32 */
 
 /* public interfaces to some of the above */
@@ -2135,14 +2225,6 @@ int retrieve_remote_db_index (const char *dbname,
 			      char *errbuf)
 {
     return retrieve_url (GRAB_IDX, dbname, NULL, SAVE_TO_BUFFER, 
-			 NULL, getbuf, errbuf);
-}
-
-int retrieve_remote_function_info (const char *pkgname, 
-				   char **getbuf, 
-				   char *errbuf)
-{
-    return retrieve_url (GRAB_FUNC_INFO, pkgname, NULL, SAVE_TO_BUFFER, 
 			 NULL, getbuf, errbuf);
 }
 

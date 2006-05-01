@@ -1399,6 +1399,34 @@ char *build_path (char *targ, const char *dirname, const char *fname,
     return targ;
 }
 
+/**
+ * path_last_element:
+ * @path: path to work on.
+ *
+ * Returns: a pointer to the last element of @path, that is, 
+ * the element following the last path separator character, if any.
+ * If @path does not contain a separator, @path itself is returned.
+ * Note that the return value may be the empty string, if @path
+ * ends with a separator.
+ */
+
+const char *path_last_element (const char *path)
+{
+    const char *p = strrchr(path, SLASH);
+
+#ifdef WIN32
+    if (p == NULL) {
+	p = strrchr(path, '\\');
+    }
+#endif
+
+    if (p == NULL) {
+	p = path;
+    }
+
+    return p;
+}
+
 #if defined(USE_GTK2)
 
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)

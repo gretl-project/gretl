@@ -173,6 +173,7 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
     }
 
     if (vwin->role == FUNC_FILES) {
+	vwin->active_var = atoi(path_str);
 	browser_load_func(NULL, vwin);
     }
 

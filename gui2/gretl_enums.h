@@ -81,7 +81,6 @@ enum extra_cmds {
     MINIBUF,
     VLAGSEL,
     VAROMIT,
-    LOAD_FUNC_CODE,
     GUI_CMD_MAX
 };
 

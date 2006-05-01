@@ -2469,7 +2469,7 @@ void g_error_free (GError *err)
     free(err);
 }
 
-static int g_file_get_contents (const char *fname, char **pbuf, void *v1, void *v2)
+int g_file_get_contents (const char *fname, char **pbuf, void *v1, void *v2)
 {
     char *buf = NULL;
     FILE *fp = NULL;
@@ -4122,6 +4122,28 @@ char *double_underscores (char *targ, const char *src)
 }
 
 #ifndef G_OS_WIN32
+
+int browser_open (const char *url)
+{
+# ifdef USE_GNOME
+#  ifndef OLD_GTK
+    gnome_url_show(url, NULL); 
+#  else
+    gnome_url_show(url); 
+#  endif  
+# else
+    int err;
+    char ns_cmd[256];
+
+    sprintf(ns_cmd, "%s -remote \"openURLNewWindow(%s)\"", Browser, url);
+    err = gretl_spawn(ns_cmd);
+    if (err) {
+	gretl_fork(Browser, url);
+    }
+# endif /* USE_GNOME */
+
+    return 0;
+}
 
 #include <signal.h>
 

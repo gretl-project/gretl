@@ -58,6 +58,8 @@ struct GError_ {
 
 void g_error_free (GError *err);
 
+int g_file_get_contents (const char *fname, char **pbuf, void *v1, void *v2);
+
 #else
 
 # define standard_button(s) gtk_button_new_from_stock(s)
@@ -167,6 +169,7 @@ char *double_underscores (char *targ, const char *src);
 
 #ifndef G_OS_WIN32
 void startR (const char *Rcommand);
+int browser_open (const char *url);
 #endif
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)

@@ -803,3 +803,40 @@ void win32_process_graph (GPT_SPEC *spec, int color, int dest)
     remove(emfname);
     g_free(emfname);
 }
+
+int browser_open (const char *url)
+{
+    char key[MAX_PATH + MAX_PATH];
+    int err = 0;
+
+    if ((long) ShellExecute(NULL, "open", url, NULL, NULL, SW_SHOW) <= 32) {
+	/* if the above fails, get the .htm regkey and 
+	   look up the program */
+	if (GetRegKey(HKEY_CLASSES_ROOT, ".htm", key) == ERROR_SUCCESS) {
+	    lstrcat(key,"\\shell\\open\\command");
+	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
+		char *p;
+
+		p = strstr(key, "\"%1\"");
+		if (p == NULL) {    
+		    /* so check for %1 without the quotes */
+		    p = strstr(key, "%1");
+		    if (p == NULL) {
+			/* if no parameter */
+			p = key + lstrlen(key) - 1;
+		    } else {
+			*p = '\0';    /* remove the param */
+		    }
+		} else {
+		    *p = '\0';        /* remove the param */
+		}
+
+		lstrcat(p, " ");
+		lstrcat(p, url);
+		if (WinExec(key, SW_SHOW) < 32) err = 1;
+	    }
+	}
+    }
+
+    return err;
+}

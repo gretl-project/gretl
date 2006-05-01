@@ -21,6 +21,7 @@
 #include "dlgutils.h"
 #include "textbuf.h"
 #include "fileselect.h"
+#include "webget.h"
 #include "fnsave.h"
 
 #include "gretl_func.h"
@@ -32,6 +33,7 @@ struct function_info {
     GtkWidget *entries[NENTRIES];
     GtkWidget *text;
     GtkWidget *combo;
+    GtkWidget *check;
     char *author;
     char *version;
     char *date;
@@ -40,6 +42,16 @@ struct function_info {
     int *publist;
     int *privlist;
     int n_public;
+    int upload;
+    int canceled;
+};
+
+struct login_info {
+    GtkWidget *dlg;
+    GtkWidget *login_entry;
+    GtkWidget *pass_entry;
+    char *login;
+    char *pass;
     int canceled;
 };
 
@@ -49,6 +61,7 @@ static int finfo_init (struct function_info *finfo)
     finfo->version = NULL;
     finfo->date = NULL;
     finfo->pkgdesc = NULL;
+    finfo->upload = 0;
     finfo->canceled = 0;
 
     finfo->n_public = finfo->publist[0];
@@ -75,6 +88,37 @@ static void finfo_free (struct function_info *finfo)
     free_strings_array(finfo->help, finfo->n_public);
 
     free(finfo);
+}
+
+static void login_init_or_free (struct login_info *linfo, int freeit)
+{
+    static char *login;
+    static char *pass;
+
+    if (freeit) {
+	if (!linfo->canceled) {
+	    free(login);
+	    free(pass);
+	    login = g_strdup(linfo->login);
+	    pass = g_strdup(linfo->pass);
+	}
+	free(linfo->login);
+	free(linfo->pass);
+    } else {
+	linfo->login = (login == NULL)? NULL : g_strdup(login);
+	linfo->pass = (pass == NULL)? NULL : g_strdup(pass);
+	linfo->canceled = 0;
+    }
+}
+
+static void login_init (struct login_info *linfo)
+{
+    login_init_or_free(linfo, 0);
+}
+
+static void linfo_free (struct login_info *linfo)
+{
+    login_init_or_free(linfo, 1);
 }
 
 static char *trim_text (const char *s)
@@ -115,10 +159,30 @@ static int help_text_index (struct function_info *finfo)
     return -1;
 }
 
+static void login_finalize (GtkWidget *w, struct login_info *linfo)
+{
+    const gchar *txt;
+
+    txt = gtk_entry_get_text(GTK_ENTRY(linfo->login_entry));
+    if (txt != NULL && *txt != '\0') {
+	linfo->login = trim_text(txt);
+    }
+
+    txt = gtk_entry_get_text(GTK_ENTRY(linfo->pass_entry));
+    if (txt != NULL && *txt != '\0') {
+	linfo->pass = trim_text(txt);
+    }
+
+    gtk_widget_destroy(linfo->dlg);
+}
+
 static void finfo_finalize (GtkWidget *w, struct function_info *finfo)
 {
     const gchar *txt;
     int i, hidx = 0;
+
+    finfo->upload = 
+	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->check));
 
     for (i=0; i<NENTRIES; i++) {
 	txt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
@@ -142,6 +206,12 @@ static void finfo_finalize (GtkWidget *w, struct function_info *finfo)
     }
 
     gtk_widget_destroy(finfo->dlg);
+}
+
+static void login_cancel (GtkWidget *w, struct login_info *linfo)
+{
+    linfo->canceled = 1;
+    gtk_widget_destroy(linfo->dlg);
 }
 
 static void finfo_cancel (GtkWidget *w, struct function_info *finfo)
@@ -224,6 +294,20 @@ static gboolean update_public (GtkEditable *entry,
     return FALSE;
 }
 
+static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
+{
+    GtkWidget *hbox, *label;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
+
+    label = gtk_label_new(txt);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    gtk_widget_show(label);
+
+    return hbox;
+}
+
 static void finfo_dialog (struct function_info *finfo)
 {
     GtkWidget *button, *label;
@@ -270,17 +354,11 @@ static void finfo_dialog (struct function_info *finfo)
 
     gtk_widget_show(tbl);
 
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
-		       hbox, FALSE, FALSE, 5);
-    
     if (finfo->n_public > 1) {
-	/* drop-down selector for public inrerfaces */
+	/* drop-down selector for public interfaces */
 	GList *fn_list = NULL;
 
-	label = gtk_label_new("Help text for");
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-	gtk_widget_show(label);
+	hbox = label_hbox(GTK_DIALOG(finfo->dlg)->vbox, _("Help text for"));
 
 	for (i=1; i<=finfo->publist[0]; i++) {
 	    fnname = user_function_name_by_index(finfo->publist[i]);
@@ -295,20 +373,18 @@ static void finfo_dialog (struct function_info *finfo)
 			 G_CALLBACK(update_public), finfo);
 	gtk_widget_show(finfo->combo);
 	g_list_free(fn_list);
+	gtk_widget_show(hbox);
     } else {
 	/* only one public interface */
 	gchar *ltxt;
 
 	fnname = user_function_name_by_index(finfo->publist[1]);
 	ltxt = g_strdup_printf("Help text for %s:", fnname);
-	label = gtk_label_new(ltxt);
+	hbox = label_hbox(GTK_DIALOG(finfo->dlg)->vbox, ltxt);
+	gtk_widget_show(hbox);
 	g_free(ltxt);
-	gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-	gtk_widget_show(label);
     }
 
-    gtk_widget_show(hbox);
-    
     finfo->text = create_text(finfo->dlg, -1, -1, TRUE);
 #ifdef OLD_GTK
     tbl = text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
@@ -319,6 +395,15 @@ static void finfo_dialog (struct function_info *finfo)
 #endif
 
     set_dialog_info_from_fn(finfo, finfo->publist[1], HIDX_INIT);
+
+    /* check box for upload option */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
+		       hbox, FALSE, FALSE, 5);
+    finfo->check = gtk_check_button_new_with_label("Upload package to server");
+    gtk_box_pack_start(GTK_BOX(hbox), finfo->check, FALSE, FALSE, 5);
+    gtk_widget_show(finfo->check);
+    gtk_widget_show(hbox);
 
     /* Create the "OK" button */
     button = ok_button(GTK_DIALOG(finfo->dlg)->action_area);
@@ -337,6 +422,112 @@ static void finfo_dialog (struct function_info *finfo)
     gtk_widget_show(button);
 
     gtk_widget_show(finfo->dlg);
+}
+
+static void web_get_login (GtkWidget *w, gpointer p)
+{
+    browser_open("http://ricardo.ecn.wfu.edu/gretl/apply/");
+}
+
+static void login_dialog (struct login_info *linfo)
+{
+    GtkWidget *button, *label;
+    GtkWidget *tbl, *hbox;
+    int i;
+
+    login_init(linfo);
+
+    linfo->dlg = 
+	gretl_dialog_new(_("gretl: upload"), NULL, GRETL_DLG_BLOCK);
+
+    hbox = label_hbox(GTK_DIALOG(linfo->dlg)->vbox, _("Upload function package"));
+    gtk_widget_show(hbox);
+
+    tbl = gtk_table_new(2, 2, FALSE);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(linfo->dlg)->vbox), tbl, FALSE, FALSE, 5);
+
+    for (i=0; i<2; i++) {
+	char *src = (i == 0)? linfo->login : linfo->pass;
+	GtkWidget *entry;
+
+	label = gtk_label_new((i == 0)? _("Login") : _("Password"));
+	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i, i+1,
+			 GTK_EXPAND | GTK_FILL, GTK_EXPAND | GTK_FILL,
+			 5, 5);
+	gtk_widget_show(label);
+
+	entry = gtk_entry_new();
+#ifndef OLD_GTK
+	gtk_entry_set_width_chars(GTK_ENTRY(entry), 34);
+#endif
+	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
+	if (src != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), src);
+	}
+	gtk_widget_show(entry); 
+
+	if (i == 0) {
+	    linfo->login_entry = entry;
+	} else {
+	    gtk_entry_set_visibility(GTK_ENTRY(entry), FALSE);
+	    linfo->pass_entry = entry;
+	}
+    }
+
+    gtk_widget_show(tbl);
+
+    hbox = label_hbox(GTK_DIALOG(linfo->dlg)->vbox, 
+		      _("If you don't have a login to the gretl server\n"
+			"please see http://ricardo.ecn.wfu.edu/gretl/apply/.\n"
+			"The 'Website' button below should open this page\n"
+			"in your web browser."));
+    gtk_widget_show(hbox);
+
+
+    button = ok_button(GTK_DIALOG(linfo->dlg)->action_area);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(login_finalize), linfo);
+    gtk_widget_grab_default(button);
+    gtk_widget_show(button);
+
+    button = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(linfo->dlg)->action_area), 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(login_cancel), linfo);
+    gtk_widget_show(button);
+
+    button = gtk_button_new_with_label("Website");
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(linfo->dlg)->action_area), 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(web_get_login), NULL);
+    gtk_widget_show(button);
+
+    gtk_widget_show(linfo->dlg);
+}
+
+static void do_upload (const char *fname)
+{
+    struct login_info linfo;
+    char errbuf[128];
+
+    login_dialog(&linfo);
+
+    if (!linfo.canceled) {
+	int err = upload_function_package(linfo.login,
+					  linfo.pass,
+					  fname,
+					  errbuf);
+	if (err) {
+	    errbox(errbuf);
+	}
+    }
+
+    linfo_free(&linfo);
 }
 
 void save_user_functions (const char *fname, gpointer p)
@@ -363,11 +554,13 @@ void save_user_functions (const char *fname, gpointer p)
 					finfo->pkgdesc, 
 					fname);
 
-    finfo_free(finfo);    
-
     if (err) {
 	gui_errmsg(err);
+    } else if (finfo->upload) {
+	do_upload(fname);
     }
+
+    finfo_free(finfo);    
 }
 
 /* called from function selection dialog: a set of functions has been
