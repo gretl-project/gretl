@@ -1092,7 +1092,8 @@ static int exec_line (char *line, PRN *prn)
 		printmodel(models[0], datainfo, cmd.opt, prn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
-	    err = gretl_restriction_set_finalize(rset, datainfo, prn);
+	    err = gretl_restriction_set_finalize(rset, (const double **) Z, 
+						 datainfo, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    }

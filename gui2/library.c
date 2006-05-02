@@ -2337,7 +2337,8 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 
     if (bufopen(&prn)) return; 
 
-    err = gretl_restriction_set_finalize(my_rset, datainfo, prn);
+    err = gretl_restriction_set_finalize(my_rset, (const double **) Z, 
+					 datainfo, prn);
 
     if (err) {
 	errmsg(err, prn);
@@ -6307,7 +6308,8 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 		printmodel(models[0], datainfo, cmd.opt, outprn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
-	    err = gretl_restriction_set_finalize(rset, datainfo, prn);
+	    err = gretl_restriction_set_finalize(rset, (const double **) Z, 
+						 datainfo, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    }

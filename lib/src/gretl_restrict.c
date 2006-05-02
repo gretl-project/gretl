@@ -782,9 +782,84 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
     return rset;
 }
 
+#if 0
+
+static int 
+estimate_restricted_model (const MODEL *pmod, const char *mask,
+			   gretl_matrix *Rin, gretl_matrix *qin,
+			   const double **Z, const DATAINFO *pdinfo,
+			   PRN *prn)
+{
+    gretl_matrix *X = NULL;
+    gretl_matrix *y = NULL;
+    gretl_matrix *R = NULL;
+    gretl_matrix *q = NULL;
+    gretl_matrix *b = NULL;
+    gretl_matrix *S = NULL;
+    const int *list = pmod->list;
+    double s2 = 0.0;
+    int T = pmod->nobs;
+    int k = pmod->ncoeff;
+    int i, s, t;
+    int err = 0;
+
+    X = gretl_matrix_alloc(T, k);
+    y = gretl_matrix_alloc(T, 1);
+    b = gretl_matrix_alloc(k, 1);
+    S = gretl_matrix_alloc(k, k);
+
+    if (X == NULL || y == NULL || b == NULL || S == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    s = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->uhat[t])) {
+	    continue;
+	}
+	gretl_vector_set(y, s, Z[list[1]][t]);
+	for (i=0; i<k; i++) {
+	    gretl_matrix_set(X, s, i, Z[list[i+2]][t]);
+	}
+	s++;
+    }
+
+    gretl_matrix_print(R, "R");
+    gretl_matrix_print(q, "q");
+    
+
+    err = gretl_matrix_restricted_ols(y, X, R, q, b, S, &s2);
+
+    if (!err) {
+	pputs(prn, "Restricted estimates:\n\n");
+	for (i=0; i<k; i++) {
+	    pprintf(prn, "b[%d] = %10.5g (%10.5g)\n", 
+		    gretl_vector_get(b, i),
+		    sqrt(gretl_matrix_get(S, i, i)));
+	}
+    } else {
+	fprintf(stderr, "gretl_matrix_restricted_ols: err = %d\n", err);
+    }
+
+ bailout:
+    
+    gretl_matrix_free(X);
+    gretl_matrix_free(y);
+    gretl_matrix_free(b);
+    gretl_matrix_free(S);
+
+    return err;
+}
+
+#endif
+
 /* execute the test, for a single equation */
 
-static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
+static int test_restriction_set (gretl_restriction_set *rset, 
+				 const double **Z,
+				 const DATAINFO *pdinfo,
+				 PRN *prn)
 {
     gretl_matrix *R;
     gretl_vector *q;
@@ -902,6 +977,10 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 
     record_test_result(test_stat, pval, _("restriction"));
 
+#if 0
+    estimate_restricted_model(rset->pmod, R, q, Z, pdinfo, prn);
+#endif
+
  bailout:
 
     gretl_matrix_free(R);
@@ -910,7 +989,9 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     gretl_vector_free(b);
     gretl_vector_free(br);
     
-    if (freeRv) gretl_matrix_free(Rv);
+    if (freeRv) {
+	gretl_matrix_free(Rv);
+    }
 
     return err;
 }
@@ -923,6 +1004,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
 
 int
 gretl_restriction_set_finalize (gretl_restriction_set *rset, 
+				const double **Z,
 				const DATAINFO *pdinfo,
 				PRN *prn)
 {
@@ -966,7 +1048,7 @@ gretl_restriction_set_finalize (gretl_restriction_set *rset,
 	err = restriction_set_make_mask(rset);
 	if (!err) {
 	    print_restriction_set(rset, pdinfo, prn);
-	    test_restriction_set(rset, prn);
+	    test_restriction_set(rset, Z, pdinfo, prn);
 	    destroy_restriction_set(rset);
 	}
     }	

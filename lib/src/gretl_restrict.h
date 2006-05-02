@@ -36,7 +36,7 @@ restriction_set_parse_line (gretl_restriction_set *rset, const char *line);
 
 int
 gretl_restriction_set_finalize (gretl_restriction_set *rset, 
-				const DATAINFO *pdinfo,
+				const double **Z, const DATAINFO *pdinfo,
 				PRN *prn);
 
 #endif
