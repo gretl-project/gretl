@@ -4067,6 +4067,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     gretl_matrix *XTX = NULL;
     gretl_vector *V = NULL;
     gretl_matrix *W = NULL;
+    gretl_matrix *S = NULL;
     int k = X->cols;
     int nr = R->rows;
     int ldW = k + nr;
@@ -4074,6 +4075,7 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     int i, j;
 
     if (gretl_vector_get_length(b) != k) {
+	fprintf(stderr, "gretl_matrix_restricted_ols: b should be a %d-vector\n", k);
 	err = E_NONCONF;
     }
 
@@ -4133,10 +4135,13 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 		W->val[mdx(W,i,j+k)] = R->val[mdx(R,j,i)];
 	    }
 	}
-    }
+    } 
 
     if (!err && vcv != NULL) {
-	err = gretl_matrix_copy_values(vcv, W);
+	S = gretl_matrix_copy(W);
+	if (S == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
     if (!err) {
@@ -4149,8 +4154,16 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
 	for (i=0; i<k; i++) {
 	    b->val[i] = V->val[i];
 	}
-	if (vcv != NULL) {
-	    err = get_ols_vcv(y, X, b, vcv, s2);
+	if (S != NULL) {
+	    err = get_ols_vcv(y, X, b, S, s2);
+	    if (!err) {
+		for (i=0; i<k; i++) {
+		    for (j=0; j<k; j++) {
+			vcv->val[mdx(vcv,i,j)] = S->val[mdx(S,i,j)];
+		    }
+		}		
+	    }
+	    gretl_matrix_free(S);
 	}
     }
 
