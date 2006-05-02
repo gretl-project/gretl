@@ -24,7 +24,7 @@ pvalue X 1 LM2
 (* all values of predicted variance are positive *)
 print usqhat 
 (* compute weights for WLS *)
-genr wt=1/sqrt(usqhat)
+genr wt=1/usqhat
 (* estimate model by weighted least squares *)
 wls wt r const M1 M2 D1 D2  
 (* compare shortcut command *)

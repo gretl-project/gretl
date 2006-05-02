@@ -259,7 +259,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 		pmod->yhat[t] *= offset[t] / offmean;
 	    }
 	    depvar[t] = y[t] / pmod->yhat[t] - 1.0;
-	    wgt[t] = sqrt(pmod->yhat[t]);
+	    wgt[t] = pmod->yhat[t];
 	}
     }
 
@@ -296,7 +296,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    }
 	    pmod->yhat[t] *= exp(tmpmod.yhat[t]);
 	    depvar[t] = y[t] / pmod->yhat[t] - 1;
-	    wgt[t] = sqrt(pmod->yhat[t]);
+	    wgt[t] = pmod->yhat[t];
 	}
 
 	if (crit > POISSON_TOL) {

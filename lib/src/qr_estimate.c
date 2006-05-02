@@ -146,7 +146,9 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     int yvar = pmod->list[1];
     double u, y;
 
-    if (dwt) dwt = pmod->nwt;
+    if (dwt) {
+	dwt = pmod->nwt;
+    }
 
     pmod->ess = 0.0;
 
@@ -177,7 +179,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		    pmod->yhat[t] = NADBL;
 		} else {
 		    if (!dwt) {
-			y *= Z[pmod->nwt][t];
+			y *= sqrt(Z[pmod->nwt][t]);
 		    }
 		    pmod->yhat[t] = yhat->val[i];
 		    pmod->uhat[t] = y - yhat->val[i];
@@ -217,7 +219,7 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!model_missing(pmod, t)) {
 		if (pmod->nwt) {
-		    X->val[j++] = Z[pmod->nwt][t] * Z[pmod->list[i]][t];
+		    X->val[j++] = sqrt(Z[pmod->nwt][t]) * Z[pmod->list[i]][t];
 		} else {
 		    X->val[j++] = Z[pmod->list[i]][t];
 		}
@@ -230,7 +232,7 @@ get_data_X (gretl_matrix *X, const MODEL *pmod, const double **Z)
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!model_missing(pmod, t)) {
 		if (pmod->nwt) {
-		    X->val[j++] = Z[pmod->nwt][t];
+		    X->val[j++] = sqrt(Z[pmod->nwt][t]);
 		} else {
 		    X->val[j++] = 1.0;
 		}
@@ -499,7 +501,9 @@ static void get_model_data (MODEL *pmod, const double **Z,
 
     start = (pmod->ifc)? 3 : 2;
 
-    if (dwt) dwt = pmod->nwt;
+    if (dwt) {
+	dwt = pmod->nwt;
+    }
 
     /* copy independent vars into matrix Q */
     j = 0;
@@ -512,7 +516,7 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	    if (dwt) {
 		if (Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
-		x *= Z[pmod->nwt][t];
+		x *= sqrt(Z[pmod->nwt][t]);
 	    } else if (qdiff) {
 		if (pwe && t == pmod->t1) {
 		    x *= pw1;
@@ -537,7 +541,7 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	    if (dwt) {
 		if (Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
-		x = Z[pmod->nwt][t];
+		x = sqrt(Z[pmod->nwt][t]);
 	    } else if (qdiff) {
 		if (pwe && t == pmod->t1) {
 		    x = pw1;
@@ -559,7 +563,7 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	if (dwt) {
 	    if (Z[dwt][t] == 0.0) continue;
 	} else if (pmod->nwt) {
-	    x *= Z[pmod->nwt][t];
+	    x *= sqrt(Z[pmod->nwt][t]);
 	} else if (qdiff) {
 	    if (pwe && t == pmod->t1) {
 		x *= pw1;

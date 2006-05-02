@@ -1280,7 +1280,7 @@ write_uvar_to_dataset (double *uvar, int nunits, int T,
 	    if (uvar[i] <= 0.0) {
 		Z[uv][panel_index(i, t)] = 0.0;
 	    } else {
-		Z[uv][panel_index(i, t)] = 1.0 / sqrt(uvar[i]);
+		Z[uv][panel_index(i, t)] = 1.0 / uvar[i];
 	    }
 	}
     }
@@ -1528,12 +1528,11 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* allocate and construct WLS regression list */
-    wlist = malloc((mdl.list[0] + 2) * sizeof *wlist);
+    wlist = gretl_list_new(mdl.list[0] + 1);
     if (wlist == NULL) {
 	mdl.errcode = E_ALLOC;
 	goto bailout;
     }
-    wlist[0] = mdl.list[0] + 1;
     wlist[1] = pdinfo->v - 1; /* weight variable: the last var added */
     for (i=2; i<=wlist[0]; i++) {
 	wlist[i] = mdl.list[i-1];

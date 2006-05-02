@@ -59,20 +59,21 @@ enum gretl_error_codes {
     E_SQRT,        /* 32 */
     E_HIGH,        /* 33 */
     E_WTZERO,      /* 34 */
-    E_OBS,         /* 35 */
-    E_NOCONST,     /* 36 */
-    E_MISS,        /* 37 */
-    E_BADSTAT,     /* 38 */
-    E_NOMERGE,     /* 39 */
-    E_NOCONV,      /* 40 */
-    E_CANCEL,      /* 41 */
-    E_MISSDATA,    /* 42 */
-    E_NAN,         /* 43 */
-    E_NONCONF,     /* 44 */
-    E_TYPES,       /* 45 */
-    E_DB_DUP,      /* 46 : duplicate vars found when saving to database */
-    E_OK,          /* 47 : not really an error */
-    E_MAX          /* 48 */
+    E_WTNEG,       /* 35 */
+    E_OBS,         /* 36 */
+    E_NOCONST,     /* 37 */
+    E_MISS,        /* 38 */
+    E_BADSTAT,     /* 39 */
+    E_NOMERGE,     /* 40 */
+    E_NOCONV,      /* 41 */
+    E_CANCEL,      /* 42 */
+    E_MISSDATA,    /* 43 */
+    E_NAN,         /* 44 */
+    E_NONCONF,     /* 45 */
+    E_TYPES,       /* 46 */
+    E_DB_DUP,      /* 47 : duplicate vars found when saving to database */
+    E_OK,          /* 48 : not really an error */
+    E_MAX          /* 49 */
 }; 
 
 /* functions follow */

@@ -65,6 +65,7 @@ const char *gretl_error_messages[] = {
     N_("Attempting to take square root of negative number"),     /* E_SQRT */
     N_("Excessive exponent in genr formula"),                    /* E_HIGH */
     N_("Weight variable is all zeros, aborting regression"),     /* E_WTZERO */
+    N_("Weight variable contains negative values"),              /* E_WTNEG */
     N_("Need valid starting and ending observations"),           /* E_OBS */
     N_("You must include a constant in this sort of model"),     /* E_NOCONST */
     N_("There were missing observations for the added "

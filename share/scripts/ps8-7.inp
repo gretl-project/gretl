@@ -15,7 +15,7 @@ ols absuhat const YEARS YRS2
 genr absuhat1=absuhat-$uhat
 print absuhat1 
 (* luckily all estimated sigmas are positive and so apply WLS *)
-genr wt1=1/absuhat1
+genr wt1=1/(absuhat1^2)
 wls wt1 LNSALARY const YEARS YRS2 
 (* compute weights using the Breusch-Pagan test approach *)
 ols usq const YEARS YRS2 
@@ -31,7 +31,7 @@ genr d1=(usqhat1>0.0)
 genr usqhat2=(d1*usqhat1) + ((1-d1)*usq)
 print usqhat2 
 (* compute weights and use FGLS which is also WLS *)
-genr wt2=1/sqrt(usqhat2)
+genr wt2=1/usqhat2
 wls wt2 LNSALARY const YEARS YRS2 
 (* compute weights using the White's test approach *)
 ols usq const YEARS YRS2 YRS3 YRS4 
@@ -44,7 +44,7 @@ genr d2=(usqhat3>0.0)
 genr usqhat4=(d2*usqhat3) + ((1-d2)*usq)
 print usqhat4 
 (* compute weights and use FGLS which is also WLS *)
-genr wt3=1/sqrt(usqhat4)
+genr wt3=1/usqhat4
 wls wt3 LNSALARY const YEARS YRS2 
 (* compute weights using the Harvey-Godfrey test approach *)
 genr lnusq=ln(usq)
@@ -53,5 +53,5 @@ ols lnusq const YEARS YRS2
 genr lnusq1=lnusq-$uhat
 genr usqhat5=exp(lnusq1)
 (* compute weights and use FGLS which is also WLS *)
-genr wt4=1/sqrt(usqhat5)
+genr wt4=1/usqhat5
 wls wt4 LNSALARY const YEARS YRS2 

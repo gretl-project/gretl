@@ -23,7 +23,7 @@ print sigmahat
 # replace negative value with original sigmahat and get weights
 genr d1=(sigmahat>0.0)
 genr sigma2=(d1*sigmahat)+((1-d1)*absuhat)
-genr wt1=1/sigma2
+genr wt1=1/(sigma2^2)
 # Estimate model by FGLS which is the same as WLS
 wls wt1 y const x seniors 
 # Testing and estimation for the Breusch-Pagan approach
@@ -38,7 +38,7 @@ print usqhat1
 # replace negative values with original usqhat and get weights
 genr d2=(usqhat1>0.0)
 genr usqhat2=(d2*usqhat1)+((1-d2)*usq)
-genr wt2=1/sqrt(usqhat2)
+genr wt2=1/usqhat2
 # Estimate model by FGLS which is the same as WLS
 wls wt2 y const x seniors 
 # Testing and estimation for White's procedure
@@ -52,7 +52,7 @@ print usqhat3
 # replace negative values with original usqhat and get weights
 genr d3=(usqhat3>0.0)
 genr usqhat4=(d3*usqhat3)+((1-d3)*usq)
-genr wt3=1/sqrt(usqhat4)
+genr wt3=1/usqhat4
 # Estimate model by FGLS which is the same as WLS
 wls wt3 y const x seniors 
 # Test using the Harvey-Godfrey approach
@@ -71,5 +71,5 @@ pvalue X 2 LM5
 # since the p-value is acceptable, we reject homoscedasticity and
 # procede with WLS estimation
 genr usqhat5=exp(lnusqhat)
-genr wt4=1/sqrt(usqhat5)
+genr wt4=1/usqhat5
 wls wt4 y const x seniors 

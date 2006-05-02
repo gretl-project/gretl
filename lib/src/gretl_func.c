@@ -25,7 +25,7 @@
 
 #define CALLSTACK_DEPTH 8
 
-#define FN_DEBUG 1
+#define FN_DEBUG 0
 
 typedef struct ufunc_ ufunc;
 typedef struct fncall_ fncall;

@@ -364,7 +364,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 static void get_wls_stats (MODEL *pmod, const double **Z)
 {
     int t, wobs = pmod->nobs, yno = pmod->list[1];
-    double x, dy, w2, wmean = 0.0, wsum = 0.0;
+    double x, dy, wmean = 0.0, wsum = 0.0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) { 
 	if (model_missing(pmod, t)) {
@@ -374,9 +374,8 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
 	    wobs--;
 	    pmod->dfd -= 1;
 	} else {
-	    w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t];
-	    wmean += w2 * Z[yno][t];
-	    wsum += w2;
+	    wmean += Z[pmod->nwt][t] * Z[yno][t];
+	    wsum += Z[pmod->nwt][t];
 	}
     }
 
@@ -387,9 +386,8 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
 	if (model_missing(pmod, t) || Z[pmod->nwt][t] == 0.0) {
 	    continue;
 	}	
-	w2 = Z[pmod->nwt][t] * Z[pmod->nwt][t]; 
 	dy = Z[yno][t] - wmean;
-	x += w2 * dy * dy;
+	x += Z[pmod->nwt][t] * dy * dy;
     }
 
     pmod->fstt = ((x - pmod->ess) * pmod->dfd)/(pmod->dfn * pmod->ess);
@@ -409,7 +407,7 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 	}
     } else {
 	double ess_orig = 0.0;
-	double sigma_orig;
+	double sw, sigma_orig;
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (model_missing(pmod, t)) {
@@ -419,8 +417,9 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 		pmod->nobs -= 1;
 	    } else {
-		pmod->yhat[t] /= Z[pmod->nwt][t];
-		pmod->uhat[t] /= Z[pmod->nwt][t];
+		sw = sqrt(Z[pmod->nwt][t]);
+		pmod->yhat[t] /= sw;
+		pmod->uhat[t] /= sw;
 		ess_orig += pmod->uhat[t] * pmod->uhat[t];
 	    }
 	}
@@ -635,6 +634,32 @@ redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int **droplist)
     return ret;
 }
 
+static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
+{
+    int t;
+
+    if (gretl_iszero(pmod->t1, pmod->t2, w)) {
+	pmod->errcode = E_WTZERO;
+	return 1;
+    }
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (w[t] < 0.0) {
+	    pmod->errcode = E_WTNEG;
+	    return 1;
+	}
+    }
+
+    *effobs = gretl_isdummy(pmod->t1, pmod->t2, w);
+
+    if (*effobs) {
+	/* the weight var is a dummy, with effobs 1s */
+	gretl_model_set_int(pmod, "wt_dummy", 1);
+    }
+
+    return 0;
+}
+
 /* as lsq() below, except that we allow for a non-zero value
    of the first-order quasi-differencing coefficient, rho,
    and there's no PRN.
@@ -694,16 +719,11 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* Doing weighted least squares? */
     if (ci == WLS) { 
-	mdl.nwt = mdl.list[1];
-	if (gretl_iszero(mdl.t1, mdl.t2, (*pZ)[mdl.nwt])) {
-	    mdl.errcode = E_WTZERO;
+	check_weight_var(&mdl, (*pZ)[mdl.list[1]], &effobs);
+	if (mdl.errcode) {
 	    return mdl;
 	}
-	effobs = gretl_isdummy(mdl.t1, mdl.t2, (*pZ)[mdl.nwt]);
-	if (effobs) {
-	    /* the weight var is a dummy, with effobs 1s */
-	    gretl_model_set_int(&mdl, "wt_dummy", 1);
-	}
+	mdl.nwt = mdl.list[1];
     } else {
 	mdl.nwt = 0;
     }
@@ -1010,7 +1030,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     int i, j, t;
     int li, lj, m;
     int l0 = list[0], yno = list[1];
-    double x, z1, pw1;
+    double x, pw1;
     int qdiff = (rho != 0.0);
 
     /* Prais-Winsten term */
@@ -1035,7 +1055,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		x -= rho * Z[yno][t-1];
 	    }
 	} else if (nwt) {
-	    x *= Z[nwt][t];
+	    x *= sqrt(Z[nwt][t]);
 	}
         xpy[0] += x;
         xpy[l0] += x * x;
@@ -1087,8 +1107,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		x = 0.0;
 		for (t=t1; t<=t2; t++) {
 		    if (!missing_masked(mask, t)) {
-			z1 = Z[nwt][t];
-			x += z1 * z1 * Z[li][t] * Z[lj][t];
+			x += Z[nwt][t] * Z[li][t] * Z[lj][t];
 		    }
 		}
 		if (floateq(x, 0.0) && li == lj)  {
@@ -1099,8 +1118,7 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 	    x = 0.0;
 	    for (t=t1; t<=t2; t++) {
 		if (!missing_masked(mask, t)) {
-		    z1 = Z[nwt][t];
-		    x += z1 * z1 * Z[yno][t] * Z[li][t];
+		    x += Z[nwt][t] * Z[yno][t] * Z[li][t];
 		}
 	    }
 	    xpy[i-1] = x;
@@ -1156,7 +1174,7 @@ static int make_ess (MODEL *pmod, double **Z)
 	}
 	resid = Z[yno][t] - yhat;
 	if (nwt) {
-	    resid *= Z[nwt][t];
+	    resid *= sqrt(Z[nwt][t]);
 	}
 	pmod->ess += resid * resid;
     }
@@ -1695,13 +1713,13 @@ static int hatvar (MODEL *pmod, int n, double **Z)
             xno = pmod->list[i+2];
 	    x = Z[xno][t];
 	    if (pmod->nwt) {
-		x *= Z[pmod->nwt][t];
+		x *= sqrt(Z[pmod->nwt][t]);
 	    }
             pmod->yhat[t] += pmod->coeff[i] * x;
         }
 	x = Z[yno][t];
 	if (pmod->nwt) {
-	    x *= Z[pmod->nwt][t];
+	    x *= sqrt(Z[pmod->nwt][t]);
 	}
         pmod->uhat[t] = x - pmod->yhat[t];                
     }
@@ -2137,7 +2155,7 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 		(*pZ)[oldv][t] = NADBL;
 	    } else {
 		xx = aux.yhat[t];
-		(*pZ)[oldv][t] = 1.0 / sqrt(exp(xx));
+		(*pZ)[oldv][t] = 1.0 / exp(xx);
 	    }
 	}
 	shrink = pdinfo->v - oldv - 1;
@@ -2999,7 +3017,7 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 		    if (xx <= 0.0) {
 			xx = (*pZ)[nv][t];
 		    }
-		    (*pZ)[nwt][t] = 1.0 / sqrt(xx);
+		    (*pZ)[nwt][t] = 1.0 / xx;
 		}
 
 		strcpy(pdinfo->varname[nwt], "1/sigma");
