@@ -7154,23 +7154,42 @@
 
     <description>
       <para context="cli">
-	Computes weighted least squares estimates using
+	Computes weighted least squares (WLS) estimates using
 	<repl>wtvar</repl> as the weight, <repl>depvar</repl> as the
 	dependent variable, and <repl>indepvars</repl> as the list of
-	independent variables.  Specifically, an OLS regression is run
-	on <repl>wtvar</repl> <lit>*</lit> <repl>depvar</repl> against
-	<repl>wtvar</repl> <lit>*</lit> <repl>indepvars</repl>. If the
-	<repl>wtvar</repl> is a dummy variable, this is equivalent to
-	eliminating all observations with value zero for
+	independent variables.  Let <repl>w</repl> denote the positive
+	square root of <lit>wtvar</lit>; then WLS is basically equivalent
+	to an OLS regression of <repl>w</repl> <lit>*</lit>
+	<repl>depvar</repl> on <repl>w</repl> <lit>*</lit>
+	<repl>indepvars</repl>.  The <emphasis>R</emphasis>-squared,
+	however, is calculated in a special manner, namely as
+	<equation status="display"
+	  tex="\[R^2 = 1 - \frac{\rm ESS}{\rm WTSS}\]"
+	  ascii="R^2 = 1 - ESS / WTSS"
+	  graphic="wlsr2"/> where ESS is the error sum of squares (sum of
+	squared residuals) from the weighted regression and WTSS denotes
+	the <quote>weighted total sum of squares</quote>, which equals the
+	sum of squared residuals from a regression of the weighted
+	dependent variable on the weighted constant alone.
+      </para>
+
+      <para>
+	If <repl>wtvar</repl> is a dummy variable, WLS estimation is
+	equivalent to eliminating all observations with value zero for
 	<repl>wtvar</repl>.
       </para>
+
       <para context="gui">
-	Let "wtvar" denote the variable selected in the "Weight
-	variable" box.  An OLS regression is run, where the dependent
-	variable is the product of wtvar and the selected dependent
-	variable, and the independent variables are also multiplied by
-	wtvar.  If wtvar is a dummy variable, this is equivalent to
-	eliminating all observations with value zero for wtvar.</para>
+	Let "wtvar" denote the variable selected in the "Weight variable"
+	box.  An OLS regression is run, where the dependent variable is
+	the product of the positive square root of wtvar and the selected
+	dependent variable, and the independent variables are also
+	multiplied by the square root of wtvar. Statistics such as
+	<emphasis>R</emphasis>-squared are based on the weighted
+	data.  If wtvar is a dummy variable, weighted least squares
+	estimation is equivalent to eliminating all observations with
+	value zero for wtvar.
+      </para>
     </description>
 
     <gui-access>
