@@ -23,7 +23,8 @@
 typedef struct restriction_set_ gretl_restriction_set;
 
 gretl_restriction_set *
-restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo);
+restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo,
+		       gretlopt opt);
 
 gretl_restriction_set *
 cross_restriction_set_start (const char *line, gretl_equation_system *sys);

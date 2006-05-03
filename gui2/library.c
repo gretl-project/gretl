@@ -2310,7 +2310,8 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 
 	if (my_rset == NULL) {
 	    if (pmod != NULL) {
-		my_rset = restriction_set_start(bufline, pmod, datainfo);
+		my_rset = restriction_set_start(bufline, pmod, datainfo,
+						OPT_NONE);
 	    } else if (sys != NULL) {
 		my_rset = cross_restriction_set_start(bufline, sys);
 	    } else {
@@ -6800,7 +6801,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 		/* if param is non-blank, we're restricting a named system */
 		if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	    }	
-	    rset = restriction_set_start(line, models[0], datainfo);
+	    rset = restriction_set_start(line, models[0], datainfo, cmd.opt);
 	    if (rset == NULL) {
 		err = 1;
 		errmsg(err, prn);

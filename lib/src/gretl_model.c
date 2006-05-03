@@ -210,7 +210,6 @@ int gretl_model_set_string_as_data (MODEL *pmod, const char *key, char *str)
 						NULL);
 }
 
-
 /**
  * gretl_model_set_int:
  * @pmod: pointer to #MODEL.

@@ -5378,7 +5378,8 @@
 	targ="estimate"/> command.
       </para>
 
-      <para>Each restriction in the set should be expressed as an
+      <para>
+	Each restriction in the set should be expressed as an
 	equation, with a linear combination of parameters on the left
 	and a numeric value to the right of the equals sign. In the
 	single-equation case, parameters are referenced in the form
@@ -5421,14 +5422,20 @@
 	 b[3,4] + 2*b[3,5] = 1
 	end restrict</code>
 
-      <para>In the single-equation case the restrictions are evaluated
-	via a Wald <mathvar>F</mathvar>-test, using the coefficient
-	covariance matrix of the model in question.  In the system
-	case, the full results of estimating the system subject to the
-	restrictions are shown; the test statistic depends on the
-	estimator chosen (a Likelihood Ratio test if the system is
-	estimated using a Maximum Likelihood method, or an asymptotic
-	<mathvar>F</mathvar>-test otherwise.)
+      <para>
+	In the single-equation case the restrictions are evaluated via
+	a Wald <mathvar>F</mathvar>-test, using the coefficient covariance
+	matrix of the model in question.  By default, the restricted
+	coefficient estimates are printed; if you just want the test
+	statistic, you can append the <lit>--quiet</lit> option flag
+	to the initial <lit>restrict</lit> command.
+      </para>
+
+      <para>
+	In the system case, the test statistic depends on the estimator
+	chosen: a Likelihood Ratio test if the system is estimated using a
+	Maximum Likelihood method, or an asymptotic
+	<mathvar>F</mathvar>-test otherwise.
       </para>
 
     </description>

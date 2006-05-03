@@ -19,7 +19,13 @@ version 1.5.2, in progress
   better compatibility with other programs: the weight var is
   now defined as the series of diagonal elements of the weighting 
   matrix, so existing gretl scripts that use wls should square
-  the old weight variable  
+  the old weight variable
+- Don't print the "model has no constant" message, and do not
+  use special methods to calculate R^2 and F, if the set of
+  regressors "effectively" contains a constant (e.g. there's
+  no explicit const but a jointly exhaustive set of dummy
+  variables is included)
+ 
 
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality

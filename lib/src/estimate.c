@@ -56,8 +56,8 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 			double *xpx, double *xpy, const char *mask);
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, double rho);
-static int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
-		     int nv);
+static int cholbeta (double *xpx, double *xpy, double *coeff, int nv, 
+		     double *rss);
 static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 
 static int hatvar (MODEL *pmod, int n, double **Z);
@@ -390,7 +390,7 @@ static void get_wls_stats (MODEL *pmod, const double **Z)
 	x += Z[pmod->nwt][t] * dy * dy;
     }
 
-    pmod->fstt = ((x - pmod->ess) * pmod->dfd)/(pmod->dfn * pmod->ess);
+    pmod->fstt = ((x - pmod->ess) * pmod->dfd) / (pmod->dfn * pmod->ess);
     pmod->rsq = (1 - (pmod->ess / x));
     pmod->adjrsq = 1 - ((1 - pmod->rsq) * (pmod->nobs - 1)/pmod->dfd);
 }
@@ -533,6 +533,8 @@ lagged_depvar_check (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
     }
 }
 
+
+
 #define COLL_DEBUG 0
 
 int 
@@ -660,6 +662,88 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
     return 0;
 }
 
+static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+				   double rho, int pwe, gretlopt opt)
+{
+    double *xpy = NULL;
+    int *droplist = NULL;
+    int l0 = pmod->list[0];
+    int i, k, nxpx;
+
+ trim_var:
+
+    if (droplist != NULL) {
+	l0 = pmod->list[0];
+	free(pmod->xpx);
+	free(pmod->coeff);
+	free(pmod->sderr);
+	pmod->errcode = 0;
+    }
+ 
+    k = l0 - 1;
+    nxpx = k * (k + 1) / 2;
+
+    if (nxpx == 0) {
+	fprintf(stderr, "problem: nxpx = 0 (l0 = %d)\n", l0);
+	pmod->errcode = E_DATA;
+	return pmod->errcode;
+    }
+
+    xpy = malloc((l0 + 1) * sizeof *xpy);
+    pmod->xpx = malloc(nxpx * sizeof *pmod->xpx);
+    pmod->coeff = malloc(pmod->ncoeff * sizeof *pmod->coeff);
+    pmod->sderr = malloc(pmod->ncoeff * sizeof *pmod->sderr);
+
+    if (pmod->yhat == NULL) {
+	pmod->yhat = malloc(pdinfo->n * sizeof *pmod->yhat);
+    } 
+
+    if (pmod->uhat == NULL) {
+	pmod->uhat = malloc(pdinfo->n * sizeof *pmod->uhat);
+    }
+
+    if (xpy == NULL || pmod->xpx == NULL || pmod->coeff == NULL ||
+	pmod->sderr == NULL || pmod->yhat == NULL || pmod->uhat == NULL) {
+	pmod->errcode = E_ALLOC;
+	return pmod->errcode;
+    }
+
+    for (i=0; i<=l0; i++) {
+	xpy[i] = 0.0;
+    }
+    for (i=0; i<nxpx; i++) {
+	pmod->xpx[i] = 0.0;
+    }
+
+    /* calculate regression results, Cholesky style */
+    form_xpxxpy(pmod->list, pmod->t1, pmod->t2, (const double **) *pZ, 
+		pmod->nwt, rho, pwe, pmod->xpx, xpy, pmod->missmask);
+
+#ifdef XPX_DEBUG
+    for (i=0; i<=l0; i++) {
+	fprintf(stderr, "xpy[%d] = %g\n", i, xpy[i]);
+    }
+    for (i=0; i<nxpx; i++) {
+	fprintf(stderr, "xpx[%d] = %g\n", i, pmod->xpx[i]);
+    }
+    fputc('\n', stderr);
+#endif
+
+    regress(pmod, xpy, *pZ, pdinfo->n, rho);
+    free(xpy);
+
+    if (pmod->errcode == E_SINGULAR && !(opt & OPT_Z) &&
+	redundant_var(pmod, pZ, pdinfo, &droplist)) {
+	goto trim_var;
+    }
+
+    if (droplist != NULL) {
+	gretl_model_set_list_as_data(pmod, "droplist", droplist);
+    }
+
+    return pmod->errcode;
+}
+
 /* as lsq() below, except that we allow for a non-zero value
    of the first-order quasi-differencing coefficient, rho,
    and there's no PRN.
@@ -668,14 +752,13 @@ static int check_weight_var (MODEL *pmod, const double *w, int *effobs)
 MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo, 
 	       GretlCmdIndex ci, gretlopt opt, double rho)
 {
-    int l0, yno, i;
+    MODEL mdl;
     int effobs = 0;
     int missv = 0, misst = 0;
     int jackknife = 0;
     int use_qr = get_use_qr();
     int pwe = (ci == PWE || (opt & OPT_P));
-    double *xpy;
-    MODEL mdl;
+    int yno, i;
 
     *gretl_errmsg = '\0';
 
@@ -796,8 +879,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	mdl.t1 += 1;
     }
 
-    l0 = mdl.list[0];  /* holds 1 + number of coeffs */
-    mdl.ncoeff = l0 - 1; 
+    mdl.ncoeff = mdl.list[0] - 1; 
     if (effobs) {
 	mdl.nobs = effobs; /* FIXME? */
     } else {
@@ -829,76 +911,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, pZ, pdinfo, opt);
     } else {
-	int *droplist = NULL;
-	int l, nxpx;
-
-    trim_var:
-
-	if (droplist != NULL) {
-	    l0 = mdl.list[0];
-	    free(mdl.xpx);
-	    free(mdl.coeff);
-	    free(mdl.sderr);
-	    mdl.errcode = 0;
-	}
- 
-	l = l0 - 1;
-	nxpx = l * (l + 1) / 2;
-
-	if (nxpx == 0) {
-	    fprintf(stderr, "problem: nxpx = 0 (l0 = %d)\n", l0);
-	}
-
-	xpy = malloc((l0 + 1) * sizeof *xpy);
-	mdl.xpx = malloc(nxpx * sizeof *mdl.xpx);
-	mdl.coeff = malloc(mdl.ncoeff * sizeof *mdl.coeff);
-	mdl.sderr = malloc(mdl.ncoeff * sizeof *mdl.sderr);
-
-	if (mdl.yhat == NULL) {
-	    mdl.yhat = malloc(pdinfo->n * sizeof *mdl.yhat);
-	} 
-	if (mdl.uhat == NULL) {
-	    mdl.uhat = malloc(pdinfo->n * sizeof *mdl.uhat);
-	}
-
-	if (xpy == NULL || mdl.xpx == NULL || mdl.coeff == NULL ||
-	    mdl.sderr == NULL || mdl.yhat == NULL || mdl.uhat == NULL) {
-	    mdl.errcode = E_ALLOC;
-	    return mdl;
-	}
-
-	for (i=0; i<=l0; i++) {
-	    xpy[i] = 0.0;
-	}
-	for (i=0; i<nxpx; i++) {
-	    mdl.xpx[i] = 0.0;
-	}
-
-	/* calculate regression results, Cholesky style */
-	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, (const double **) *pZ, 
-		    mdl.nwt, rho, pwe, mdl.xpx, xpy, mdl.missmask);
-
-#ifdef XPX_DEBUG
-	for (i=0; i<=l0; i++) {
-	    fprintf(stderr, "xpy[%d] = %g\n", i, xpy[i]);
-	}
-	for (i=0; i<nxpx; i++) {
-	    fprintf(stderr, "xpx[%d] = %g\n", i, mdl.xpx[i]);
-	}
-	fputc('\n', stderr);
-#endif
-
-	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
-	free(xpy);
-
-	if (mdl.errcode == E_SINGULAR && !(opt & OPT_Z) &&
-	    redundant_var(&mdl, pZ, pdinfo, &droplist)) {
-	    goto trim_var;
-	}
-
-	if (droplist != NULL) {
-	    gretl_model_set_list_as_data(&mdl, "droplist", droplist);
-	}
+	gretl_choleski_regress(&mdl, pZ, pdinfo, rho, pwe, opt);
     }
 
     if (mdl.errcode) {
@@ -1013,11 +1026,10 @@ MODEL lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     Z[v][t] = observation t on variable v
     n = number of obs in data set
     t1, t2 = starting and ending observations
-    rho = first order serial correlation coefficent
+    rho = quasi-differencing coefficent
     nwt = ID number of variable used as weight
 
-    xpx = X'X matrix as a lower triangle
-          stacked by columns
+    xpx = X'X matrix as a lower triangle, stacked by columns
     xpy = X'y vector
     xpy[0] = sum of y
     xpy[list[0]] = y'y
@@ -1182,14 +1194,45 @@ static int make_ess (MODEL *pmod, double **Z)
     return 0;
 }
 
-static void compute_r_squared (MODEL *pmod, double *y)
+int check_for_effective_const (MODEL *pmod, const double *y)
+{
+    double x1 = 0.0, x2 = 0.0;
+    double reldiff;
+    int t, ret = 0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->yhat[t])) {
+	    x1 += pmod->yhat[t];
+	    x2 += y[t];
+	}
+    }
+
+    reldiff = fabs((x1 - x2) / x2);
+
+    if (floateq(reldiff, 0.0)) {
+	gretl_model_set_int(pmod, "effconst", 1);
+	pmod->dfn -= 1;
+	ret = 1;
+    } else if (gretl_model_get_int(pmod, "effconst")) {
+	gretl_model_set_int(pmod, "effconst", 0);
+	pmod->dfn += 1;
+    }
+
+    return ret;
+}
+
+static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
 {
     pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+
+    if (*ifc == 0) {
+	*ifc = check_for_effective_const(pmod, y);
+    }
 
     if (pmod->dfd > 0) {
 	double den = pmod->tss * pmod->dfd;
 
-	if (pmod->ifc) {
+	if (*ifc) {
 	    pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
 	} else {
 	    pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
@@ -1207,20 +1250,21 @@ static void compute_r_squared (MODEL *pmod, double *y)
   regress: takes xpx, the X'X matrix produced by form_xpxxpy(), and
   xpy (X'y), and computes ols estimates and associated statistics.
 
-  n = number of observations per series in data set
-  ifc = 1 if constant is present, else = 0
+  n = total number of observations per series in data set
+  ifc = 1 if constant is present in model, else = 0
 
   ess = error sum of squares
   sigma = standard error of regression
   fstt = F-statistic
-  coeff = vector of regression coefficients
-  sderr = vector of standard errors of regression coefficients
+  coeff = array of regression coefficients
+  sderr = corresponding array of standard errors
 */
 
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, double rho)
 {
     int v, yno = pmod->list[1];
+    int ifc = pmod->ifc;
     double ysum, ypy, zz, rss = 0.0;
     double sgmasq = 0.0;
     double *diag = NULL;
@@ -1232,19 +1276,11 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     ysum = xpy[0];
     ypy = xpy[pmod->ncoeff + 1];
-
-#ifdef NO_LHS_ZERO
-    if (floateq(ypy, 0.0)) { 
-        pmod->errcode = E_YPY;
-        return; 
-    }
-#endif
-
     zz = ysum * ysum / pmod->nobs;
     pmod->tss = ypy - zz;
 
     /*  Cholesky-decompose X'X and find the coefficients */
-    err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, pmod->ncoeff);
+    err = cholbeta(pmod->xpx, xpy, pmod->coeff, pmod->ncoeff, &rss);
     if (err) {
         pmod->errcode = err;
         return;
@@ -1257,7 +1293,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	rss = ypy - pmod->ess;
     }
 
-    if (pmod->ess < ESSZERO && pmod->ess > (-ESSZERO)) {
+    if (fabs(pmod->ess) < ESSZERO) {
 	pmod->ess = 0.0;
     } else if (pmod->ess < 0.0) { 
 	sprintf(gretl_errmsg, _("Error sum of squares (%g) is not > 0"),
@@ -1285,7 +1321,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     if (pmod->errcode) return;
 
     if (pmod->tss > 0.0) {
-	compute_r_squared(pmod, Z[yno]);
+	compute_r_squared(pmod, Z[yno], &ifc);
     }
 
 #if 0
@@ -1298,7 +1334,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     if (sgmasq <= 0.0 || pmod->dfd == 0 || pmod->dfn == 0) {
 	pmod->fstt = NADBL;
     } else {
-	pmod->fstt = (rss - zz * pmod->ifc) / (sgmasq * pmod->dfn);
+	pmod->fstt = (rss - zz * ifc) / (sgmasq * pmod->dfn);
 	if (pmod->fstt < 0.0) {
 	    pmod->fstt = 0.0;
 	}
@@ -1321,8 +1357,6 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     }
 
     free(diag); 
-    
-    return;  
 }
 
 /*
@@ -1334,15 +1368,15 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
   xpy = the X'y vector on input and Cholesky-transformed t
         vector on output 
   coeff = array of estimated coefficients 
-  rss = pointer to receive regression sum of squares
   nv = number of regression coefficients including the constant
+  rss = location to receive regression sum of squares
 
   The number of floating-point operations is basically 3.5 * nv^2
   plus (nv^3) / 3.
 */
 
 static int 
-cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
+cholbeta (double *xpx, double *xpy, double *coeff, int nv, double *rss)
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, d2, test, xx;
@@ -1373,9 +1407,6 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
         d2 = xpx[kk] - d;
 	test = d2 / xpx[kk];
         if (test < TINY) {
-#if 0
-	    fprintf(stderr, "cholbeta: test = %g\n", test);
-#endif
 	    *rss = -1.0;
 	    return E_SINGULAR;
         }
@@ -1401,7 +1432,7 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
 
     kk--;
 
-    /* regression sum of squares */
+    /* calculate regression sum of squares */
     d = 0.0;
     for (j=1; j<=nv; j++) {
 	d += xpy[j] * xpy[j];
@@ -1412,7 +1443,9 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
     for (j=0; j<nv-1; j++) {
 	coeff[j] = 0.0;
     }
+
     coeff[nv-1] = xpy[nv] * xpx[kk];
+
     for (j=nv-1; j>=1; j--) {
 	d = xpy[j];
 	for (i=nv-1; i>=j; i--) {
@@ -1422,6 +1455,7 @@ cholbeta (double *xpx, double *xpy, double *coeff, double *rss, int nv)
 	kk--;
 	coeff[j-1] = d * xpx[kk];
     }
+
     for (j=0; j<nv; j++) {
 	if (isnan(coeff[j])) {
 	    return E_NAN;
@@ -2373,7 +2407,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 	    }
 	    xx -= st[i] * st[j] / nobs;
 	    /* MacKinnon and White: "It is tempting to omit the factor
-	       (n - 1)/n from HC3" (1985, p. 309).  Here we leave it in
+	       (n - 1) / n from HC3" (1985, p. 309).  Here we leave it in
 	       place, as in their simulations.
 	    */
 	    xx *= (nobs - 1.0) / nobs;
@@ -2698,7 +2732,9 @@ MODEL ar_func (const int *list, double ***pZ,
 	ar.ifc = 1;
     }
     if (ar.ifc) {
-	ar.dfn -= 1;
+	if (!gretl_model_get_int(&ar, "effconst")) {
+	    ar.dfn -= 1;
+	}
     }
     ar.ci = AR;
 

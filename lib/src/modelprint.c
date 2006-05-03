@@ -43,13 +43,15 @@ static void print_ll (const MODEL *pmod, PRN *prn);
 
 static void noconst (const MODEL *pmod, PRN *prn)
 {
-    if (na(pmod->rsq)) return;
+    if (na(pmod->rsq) || gretl_model_get_int(pmod, "effconst")) {
+	return;
+    }
 
     pputs(prn, _("The model has no constant term.\n"  
 	    "F is calculated as in Sect. 4.4 of Ramanathan's Introductory "
 	    "Econometrics.\n"
 	    "R-squared is the square of the correlation between the "
-	    "observed and fitted\n values of the dependent variable.\n\n"));
+	    "observed and fitted\nvalues of the dependent variable.\n\n"));
 }
 
 #define RTFTAB "\\par \\ql \\tab "
@@ -1432,8 +1434,8 @@ static void print_ll (const MODEL *pmod, PRN *prn)
 int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt, 
 		PRN *prn)
 {
-    int gotnan = 0;
     int is_discrete = (pmod->ci == PROBIT || pmod->ci == LOGIT);
+    int gotnan = 0;
 
     if (prn == NULL || (opt & OPT_Q)) {
 	return 0;

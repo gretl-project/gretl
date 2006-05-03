@@ -3676,14 +3676,15 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
 	     double *s2)
 {
     if (gretl_invert_general_matrix(vcv)) {
-	gretl_matrix_print(vcv, "vcv: inversion failed");
+	gretl_matrix_print(vcv, "get_ols_vcv: inversion failed");
 	return 1;
     }
 
     if (s2 != NULL) {
 	double u, sigma2 = 0.0;
-	int k = X->cols;
-	int n = X->rows;
+	int k = X->cols;       /* number of regressors */
+	int n = X->rows;       /* number of observations */
+	int r = vcv->rows - k; /* number of restrictions */
 	int i, j;
 
 	for (i=0; i<n; i++) {
@@ -3694,7 +3695,7 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
 	    sigma2 += u * u;
 	}
 
-	sigma2 /= (n - k);
+	sigma2 /= (n - k + r);
 
 	gretl_matrix_multiply_by_scalar(vcv, sigma2);  
 
@@ -4075,7 +4076,8 @@ gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
     int i, j;
 
     if (gretl_vector_get_length(b) != k) {
-	fprintf(stderr, "gretl_matrix_restricted_ols: b should be a %d-vector\n", k);
+	fprintf(stderr, "gretl_matrix_restricted_ols: "
+		"b should be a %d-vector\n", k);
 	err = E_NONCONF;
     }
 

@@ -162,6 +162,7 @@ struct gretl_option gretl_opts[] = {
     { PRINT,    OPT_T, "ten" },
     { PROBIT,   OPT_R, "robust" },
     { QUIT,     OPT_X, "exit" },
+    { RESTRICT, OPT_Q, "quiet" },
     { SETOBS,   OPT_C, "stacked-cross-section" },
     { SETOBS,   OPT_S, "stacked-time-series" },
     { SETOBS,   OPT_T, "time-series" },

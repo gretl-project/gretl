@@ -44,6 +44,7 @@ struct restriction_set_ {
     gretl_equation_system *sys;
     GRETL_VAR *var;
     const DATAINFO *pdinfo;
+    gretlopt opt;
 };
 
 static void destroy_restriction_set (gretl_restriction_set *rset);
@@ -554,7 +555,7 @@ add_term_to_restriction (restriction *r, double mult, int eq, int bnum, int i)
 static gretl_restriction_set *
 real_restriction_set_start (MODEL *pmod, const DATAINFO *pdinfo,
 			    gretl_equation_system *sys,
-			    GRETL_VAR *var)
+			    GRETL_VAR *var, gretlopt opt)
 {
     gretl_restriction_set *rset;
 
@@ -565,6 +566,7 @@ real_restriction_set_start (MODEL *pmod, const DATAINFO *pdinfo,
     rset->pdinfo = pdinfo;
     rset->sys = sys;
     rset->var = var;
+    rset->opt = opt;
 
     rset->k = 0;
     rset->mask = NULL;
@@ -758,7 +760,7 @@ var_restriction_set_start (const char *line, GRETL_VAR *var)
 {
     gretl_restriction_set *rset;
 
-    rset = real_restriction_set_start(NULL, NULL, NULL, var);
+    rset = real_restriction_set_start(NULL, NULL, NULL, var, OPT_NONE);
     if (rset == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
@@ -784,7 +786,7 @@ cross_restriction_set_start (const char *line, gretl_equation_system *sys)
 {
     gretl_restriction_set *rset;
 
-    rset = real_restriction_set_start(NULL, NULL, sys, NULL);
+    rset = real_restriction_set_start(NULL, NULL, sys, NULL, OPT_NONE);
     if (rset == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
@@ -799,7 +801,8 @@ cross_restriction_set_start (const char *line, gretl_equation_system *sys)
 }
 
 gretl_restriction_set *
-restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
+restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo,
+		       gretlopt opt)
 {
     gretl_restriction_set *rset = NULL;
     char *sname = NULL;
@@ -819,14 +822,14 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
 
 	sys = get_equation_system_by_name(sname);
 	if (sys != NULL) {
-	    rset = real_restriction_set_start(NULL, NULL, sys, NULL);
+	    rset = real_restriction_set_start(NULL, NULL, sys, NULL, opt);
 	    if (rset == NULL) {
 		strcpy(gretl_errmsg, _("Out of memory!"));
 	    }	    
 	} else {
 	    var = get_VECM_by_name(sname);
 	    if (var != NULL) {
-		rset = real_restriction_set_start(NULL, NULL, NULL, var);
+		rset = real_restriction_set_start(NULL, NULL, NULL, var, opt);
 		if (rset == NULL) {
 		    strcpy(gretl_errmsg, _("Out of memory!"));
 		}
@@ -839,7 +842,7 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
 
 	free(sname);
     } else {
-	rset = real_restriction_set_start(pmod, pdinfo, NULL, NULL);
+	rset = real_restriction_set_start(pmod, pdinfo, NULL, NULL, opt);
 
 	if (rset == NULL) {
 	    strcpy(gretl_errmsg, _("Out of memory!"));
@@ -903,7 +906,7 @@ static int print_coeff (const MODEL *pmod, int i,
 
 	if (do_pval) {
 	    char pvalstr[16];
-	    int dfd = pmod->dfd - k;
+	    int dfd = pmod->dfd + k;
 
 	    pvalue = coeff_pval(pmod, t, dfd);
 	    print_pval_str(pvalue, pvalstr);
@@ -994,8 +997,10 @@ do_restricted_estimates (gretl_restriction_set *rset,
 	s++;
     }
 
+#if RDEBUG
     gretl_matrix_print(R, "R");
     gretl_matrix_print(q, "q");
+#endif
 
     err = gretl_matrix_restricted_ols(y, X, R, q, b, S, &s2);
 
@@ -1152,7 +1157,7 @@ static int test_restriction_set (gretl_restriction_set *rset,
 
     record_test_result(test_stat, pval, _("restriction"));
 
-    if (rset->pmod != NULL) {
+    if (rset->pmod != NULL && !(rset->opt & OPT_Q)) {
 	do_restricted_estimates(rset, Z, pdinfo, prn);
     }
 

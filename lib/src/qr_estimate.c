@@ -26,55 +26,54 @@
 #include "clapack_double.h"
 
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */
-#define ESSZERO      1e-22 /* SSR < this counts as zero */
+#define ESSZERO      1e-22 /* SSR less than this counts as zero */
 
-/* In fortran arrays, column entries are contiguous.
+/* General note: in fortran arrays, column entries are contiguous.
    Columns of data matrix X hold variables, rows hold observations.
-   So in a fortran array, entries for a given variable are
-   contiguous.
+   So in a fortran array, entries for a given variable are contiguous.
 */
 
-static double get_tss (const double *y, int n, int ifc)
+/* in estimate.c */
+extern int check_for_effective_const (MODEL *pmod, const double *y);
+
+static double qr_get_tss (MODEL *pmod, const double *y, int *ifc)
 {
     double ymean = 0.0;
     double x, tss = 0.0;
-    int i;
+    int t;
 
-    if (ifc) {
-	ymean = gretl_mean(0, n-1, y);
+    if (*ifc == 0) {
+	*ifc = check_for_effective_const(pmod, y);
     }
 
-    for (i=0; i<n; i++) {
-	x = y[i] - ymean;
-	tss += x * x;
+    if (*ifc) {
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (!na(pmod->yhat[t])) {
+		ymean += y[t];
+	    }
+	}
+	ymean /= pmod->nobs;
+    }
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (!na(pmod->yhat[t])) {
+	    x = y[t] - ymean;
+	    tss += x * x;
+	}
     }
 
     return tss;
 }
 
-static void qr_compute_f_stat (MODEL *pmod, gretlopt opts)
+static void qr_compute_stats (MODEL *pmod, const double *y, int n,
+			      gretlopt opt)
 {
-    if (pmod->ncoeff == 1 && pmod->ifc) {
-	pmod->fstt = NADBL;
-	return;
-    }
+    int ifc = pmod->ifc;
 
-    if (pmod->dfd > 0 && pmod->dfn > 0) {
-	if (opts & OPT_R) {
-	    pmod->fstt = robust_omit_F(NULL, pmod);
-	} else {
-	    pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd / 
-		(pmod->ess * pmod->dfn);
-	}
-    } else {
-	pmod->fstt = NADBL;
-    }
-}
+    pmod->tss = qr_get_tss(pmod, y, &ifc);
 
-static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
-{
     if (pmod->dfd > 0) {
-	if (pmod->ifc) {
+	if (ifc) {
 	    double den = pmod->tss * pmod->dfd;
 
 	    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
@@ -92,6 +91,22 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 	}
     } else {
 	pmod->rsq = 1.0;
+    }
+
+    if (pmod->ncoeff == 1 && pmod->ifc) {
+	pmod->fstt = NADBL;
+	return;
+    }
+
+    if (pmod->dfd > 0 && pmod->dfn > 0) {
+	if (opt & OPT_R) {
+	    pmod->fstt = robust_omit_F(NULL, pmod);
+	} else {
+	    pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd / 
+		(pmod->ess * pmod->dfn);
+	}
+    } else {
+	pmod->fstt = NADBL;
     }
 }
 
@@ -202,7 +217,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     }
 
     /* if SSR is small enough, treat it as zero */
-    if (pmod->ess < ESSZERO && pmod->ess > (-ESSZERO)) {
+    if (fabs(pmod->ess) < ESSZERO) {
 	pmod->ess = 0.0;
     } 
 }
@@ -573,9 +588,6 @@ static void get_model_data (MODEL *pmod, const double **Z,
 	}
 	y->val[j++] = x;
     }
-
-    /* fetch tss based on the (possibly transformed) y */
-    pmod->tss = get_tss(y->val, pmod->nobs, pmod->ifc);
 }
 
 static void save_coefficients (MODEL *pmod, gretl_matrix *b,
@@ -696,7 +708,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (err == E_SINGULAR && !(opts & OPT_Z) &&
 	redundant_var(pmod, pZ, pdinfo, &droplist)) {
-	/* FIXME this can be done more efficiently, using R */
+	/* FIXME: can't this be done more efficiently, using R? */
 	gretl_matrix_null(&Q);
 	gretl_matrix_null(&R);
 	gretl_matrix_null(&xpxinv);
@@ -765,8 +777,7 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get R^2, F */
-    qr_compute_r_squared(pmod, (*pZ)[pmod->list[1]], T);
-    qr_compute_f_stat(pmod, opts);
+    qr_compute_stats(pmod, (*pZ)[pmod->list[1]], T, opts);
 
  qr_cleanup:
 
