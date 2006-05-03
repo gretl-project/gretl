@@ -1285,7 +1285,6 @@ int write_data (const char *fname, const int *list,
 	    }
 	    fputc('\n', fp);
 	}
-	fputc('\n', fp);
     } else if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
 	char delim;
@@ -1339,7 +1338,6 @@ int write_data (const char *fname, const int *list,
 		}
 	    }
 	}
-	fputc('\n', fp);
     } else if (fmt == GRETL_DATA_R_TS) {
 	char *p, datestr[OBSLEN];
 	int subper = 1;
@@ -1401,7 +1399,6 @@ int write_data (const char *fname, const int *list,
 	    }
 	    fputc('\n', fp);
 	}
-	fputc('\n', fp);
     } else if (fmt == GRETL_DATA_DAT) { 
 	/* PcGive: data file with load info */
 	int pd = pdinfo->pd;
@@ -1436,7 +1433,6 @@ int write_data (const char *fname, const int *list,
 	    }
 	    fputc('\n', fp);
 	}
-	fputc('\n', fp);
     }
 
     gretl_pop_c_numeric_locale();

@@ -830,6 +830,96 @@ restriction_set_start (const char *line, MODEL *pmod, const DATAINFO *pdinfo)
     return rset;
 }
 
+static void print_pval_str (double pval, char *str)
+{
+    if (pval < .00001) {
+	sprintf(str, "<%.5f", 0.00001);
+    } else {
+	sprintf(str, "%.5f", pval);
+    }
+}
+
+static int print_coeff (const MODEL *pmod, int i,
+			double coeff, double sderr, int k,
+			const DATAINFO *pdinfo, 
+			PRN *prn)
+{
+    int do_pval = 1;
+    double t, pvalue = 999.0;
+    int gotnan = 0;
+    char varname[24];
+
+    gretl_model_get_param_name(pmod, pdinfo, i, varname);
+    pputs(prn, "  ");
+    print_centered(varname, 15, prn);
+    pputc(prn, ' ');
+    
+    if (isnan(coeff) || na(coeff)) {
+	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
+	gotnan = 1;
+    } else {
+	gretl_print_value(coeff, prn);
+    }
+
+    if (isnan(sderr) || na(sderr)) {
+	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
+	return 1;
+    }
+
+    gretl_print_value(sderr, prn); 
+
+    if (sderr > 0.0) {
+	t = coeff / sderr;
+	if (fabs(t) >= 1000.0) {
+	    char numstr[9];
+
+	    sprintf(numstr, "%#8.2G", t);
+	    pprintf(prn, " %8s", numstr);
+	} else {
+	    pprintf(prn, " %7.3f", t);
+	}
+
+	if (do_pval) {
+	    char pvalstr[16];
+	    int dfd = pmod->dfd - k;
+
+	    pvalue = coeff_pval(pmod, t, dfd);
+	    print_pval_str(pvalue, pvalstr);
+	    pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 10), pvalstr);
+	}
+    } else if (do_pval) { 
+	do_pval = 0;
+	pprintf(prn, "     %*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
+    }
+
+    if (do_pval) {
+	if (pvalue < 0.01) {
+	    pputs(prn, " ***");
+	} else if (pvalue < 0.05) {
+	    pputs(prn, " **");
+	} else if (pvalue < 0.10) {
+	    pputs(prn, " *");
+	}
+    } 
+
+    pputc(prn, '\n');
+
+    return gotnan;
+}
+
+static void coeff_header (const MODEL *pmod, PRN *prn)
+{
+    int use_param = pmod->ci == NLS || pmod->ci == MLE;
+
+    if (use_param) {
+	pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"
+		     "      T STAT   P-VALUE\n\n"));
+    } else {
+	pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
+		     "      T STAT   P-VALUE\n\n"));
+    }
+}
+
 static int 
 do_restricted_estimates (gretl_restriction_set *rset,
 			 const double **Z, const DATAINFO *pdinfo,
@@ -841,12 +931,12 @@ do_restricted_estimates (gretl_restriction_set *rset,
     gretl_matrix *q = NULL;
     gretl_matrix *b = NULL;
     gretl_matrix *S = NULL;
-    const int *list = rset->pmod->list;
+    int *xlist = NULL;
     double s2 = 0.0;
     int T = rset->pmod->nobs;
     int k = rset->pmod->ncoeff;
     int i, s, t;
-    int err = 0;
+    int yno, err = 0;
 
     X = gretl_matrix_alloc(T, k);
     y = gretl_matrix_alloc(T, 1);
@@ -863,14 +953,21 @@ do_restricted_estimates (gretl_restriction_set *rset,
 	goto bailout;
     }
 
+    yno = gretl_model_get_depvar(rset->pmod);
+    xlist = gretl_model_get_x_list(rset->pmod);
+    if (xlist == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
     s = 0;
     for (t=rset->pmod->t1; t<=rset->pmod->t2; t++) {
 	if (na(rset->pmod->uhat[t])) {
 	    continue;
 	}
-	gretl_vector_set(y, s, Z[list[1]][t]);
+	gretl_vector_set(y, s, Z[yno][t]);
 	for (i=0; i<k; i++) {
-	    gretl_matrix_set(X, s, i, Z[list[i+2]][t]);
+	    gretl_matrix_set(X, s, i, Z[xlist[i+1]][t]);
 	}
 	s++;
     }
@@ -878,17 +975,19 @@ do_restricted_estimates (gretl_restriction_set *rset,
     err = gretl_matrix_restricted_ols(y, X, R, q, b, S, &s2);
 
     if (!err) {
-	double v, se;
+	double v, coeff, se;
 
-	pprintf(prn, "Restricted coefficient estimates ");
-	pprintf(prn, "(standard errors in parentheses):\n\n");
+	pprintf(prn, "%s:\n\n", _("Restricted estimates"));
+	coeff_header(rset->pmod, prn);
 	for (i=0; i<k; i++) {
+	    coeff = gretl_vector_get(b, i);
 	    v = gretl_matrix_get(S, i, i);
 	    se = (v > 1.0e-16)? sqrt(v) : 0.0;
-	    pprintf(prn, "b[%d] = %#12.6g (%#12.6g)\n", 
-		    i, gretl_vector_get(b, i), se);
+	    print_coeff(rset->pmod, i, coeff, se, rset->k, pdinfo, prn);
 	}
-	pprintf(prn, "\nStandard error of residuals = %g\n\n", sqrt(s2));
+	pputc(prn, '\n');
+	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
+		GRETL_DIGITS, sqrt(s2));
     } 
 
  bailout:
@@ -899,6 +998,8 @@ do_restricted_estimates (gretl_restriction_set *rset,
     gretl_matrix_free(q);
     gretl_matrix_free(b);
     gretl_matrix_free(S);
+
+    free(xlist);
 
     return err;
 }

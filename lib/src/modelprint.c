@@ -1160,22 +1160,23 @@ static void model_format_start (PRN *prn)
                        "\\cellx5700\\cellx7100\n\\intbl"
 
 
-static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
+static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 {
+    int discrete = pmod->ci == PROBIT || pmod->ci == LOGIT;
     int use_param = pmod->ci == NLS || pmod->ci == MLE;
 
     if (plain_format(prn)) {
 	if (discrete) {
 	    pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
-			   "      T STAT       SLOPE\n"));
+			 "      T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
 		    "                 %s\n", _("(at mean)"));
 	} else if (use_param) {
 	    pputs(prn, _("      PARAMETER       ESTIMATE          STDERROR"
-			   "      T STAT   P-VALUE\n\n"));
+			 "      T STAT   P-VALUE\n\n"));
 	} else {
 	    pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
-			   "      T STAT   P-VALUE\n\n"));
+			 "      T STAT   P-VALUE\n\n"));
 	}
 	return;
     } else {
@@ -1463,7 +1464,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     print_model_heading(pmod, pdinfo, opt, prn);
 
-    print_coeff_table_start(pmod, prn, is_discrete);
+    print_coeff_table_start(pmod, prn);
 
     gotnan = print_coefficients(pmod, pdinfo, prn);
 
