@@ -316,6 +316,7 @@ static int parse_b_bit (const char *s, int *eq, int *bnum)
 	if (sscanf(s, "[%d,%d]", eq, bnum) == 2) {
 	    err = 0;
 	} else if (sscanf(s, "[%d]", bnum)) {
+	    *eq = 0;
 	    err = 0;
 	}	
     }
@@ -389,6 +390,7 @@ static void destroy_restriction_set (gretl_restriction_set *rset)
 static restriction *restriction_new (int n, int cross)
 {
     restriction *r;
+    int i;
 
     r = malloc(sizeof *r);
     if (r == NULL) return NULL;
@@ -402,6 +404,11 @@ static restriction *restriction_new (int n, int cross)
     if (r->mult == NULL || r->coeff == NULL) {
 	destroy_restriction(r);
 	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	r->mult[i] = 0.0;
+	r->coeff[i] = 0;
     }
 
     if (cross) {
@@ -425,12 +432,16 @@ augment_restriction_set (gretl_restriction_set *rset, int n_terms)
     int n = rset->k;
 
     rlist = realloc(rset->restrictions, (n + 1) * sizeof *rlist);
-    if (rlist == NULL) return NULL;
+    if (rlist == NULL) {
+	return NULL;
+    }
 
     rset->restrictions = rlist;
 
     rset->restrictions[n] = restriction_new(n_terms, rset->cross);
-    if (rset->restrictions[n] == NULL) return NULL;
+    if (rset->restrictions[n] == NULL) {
+	return NULL;
+    }
 
     rset->k += 1;
 
@@ -519,6 +530,17 @@ print_restriction_set (const gretl_restriction_set *rset,
 static int 
 add_term_to_restriction (restriction *r, double mult, int eq, int bnum, int i)
 {
+    int j;
+
+    for (j=0; j<i; j++) {
+	if (bnum == r->coeff[j] && (r->eq == NULL || eq == r->eq[j])) {
+	    /* additional reference to a previously referenced coeff */
+	    r->mult[j] += mult;
+	    r->nterms -= 1;
+	    return 0;
+	}
+    }
+
     r->mult[i] = mult;
     r->coeff[i] = bnum;
 
@@ -971,6 +993,9 @@ do_restricted_estimates (gretl_restriction_set *rset,
 	}
 	s++;
     }
+
+    gretl_matrix_print(R, "R");
+    gretl_matrix_print(q, "q");
 
     err = gretl_matrix_restricted_ols(y, X, R, q, b, S, &s2);
 
