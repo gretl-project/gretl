@@ -7,6 +7,19 @@ version 1.5.2, in progress
 - Add functionality for analysis of discrete variables (new
   behavior of frequency distribution, plus cross-tabulation
   command, "xtab")
+- Don't add an extra newline at the end of plain text data files
+  (e.g. CSV)
+- "restrict" command for single equations: add a printout of the
+   restricted coefficient estimates and standard errors
+- Add mechanism for packaging user-defined functions so as to
+  make these available for other users; also add a mechanism
+  for downloading such packages from a server, and for uploading
+  new packages to the server
+- Redefine the weight variable in gretl's "wls" command, for
+  better compatibility with other programs: the weight var is
+  now defined as the series of diagonal elements of the weighting 
+  matrix, so existing gretl scripts that use wls should square
+  the old weight variable  
 
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality
