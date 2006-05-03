@@ -337,7 +337,11 @@ GtkItemFactoryEntry data_items[] = {
     { "/Utilities/sep", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },
     { "/Utilities/sep2", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Utilities/Function packager"), NULL, file_save, SAVE_FUNCTIONS, NULL, GNULL },
+    { N_("/Utilities/Function package editor"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Utilities/Function package editor/existing package"), NULL, display_files, 
+      FUNC_EDIT, NULL, GNULL },
+    { N_("/Utilities/Function package editor/new package"), NULL, file_save, 
+      SAVE_FUNCTIONS, NULL, GNULL },
     { "/Utilities/sep3", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/Start GNU R"), NULL, startRcallback, 0, NULL, GNULL },
     { "/Utilities/sep4", NULL, NULL, 0, "<Separator>", GNULL },
@@ -1435,7 +1439,9 @@ static gboolean check_function_save_state (void)
     if (mdata->ifac != NULL) {
 	gboolean s = n_user_functions() > 0;
 
-	flip(mdata->ifac, "/Utilities/Function packager", s);
+#if 0
+	flip(mdata->ifac, "/Utilities/Function package editor", s);
+#endif
     }
 
     return FALSE;

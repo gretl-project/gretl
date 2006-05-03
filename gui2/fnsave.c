@@ -59,8 +59,15 @@ struct login_info {
     int canceled;
 };
 
-static int finfo_init (struct function_info *finfo)
+struct function_info *finfo_new (void)
 {
+    struct function_info *finfo;
+
+    finfo = mymalloc(sizeof *finfo);
+    if (finfo == NULL) {
+	return NULL;
+    }
+
     finfo->author = NULL;
     finfo->version = NULL;
     finfo->date = NULL;
@@ -68,6 +75,16 @@ static int finfo_init (struct function_info *finfo)
     finfo->upload = 0;
     finfo->canceled = 0;
 
+    finfo->n_public = 0;
+    finfo->help = NULL;
+    finfo->publist = NULL;
+    finfo->privlist = NULL;
+
+    return finfo;
+}
+
+static int finfo_init (struct function_info *finfo)
+{
     finfo->n_public = finfo->publist[0];
 
     finfo->help = create_strings_array(finfo->n_public);
@@ -580,7 +597,7 @@ void prepare_functions_save (void)
 	return;
     }
 
-    finfo = mymalloc(sizeof *finfo);
+    finfo = finfo_new();
     if (finfo == NULL) {
 	return;
     }
@@ -612,9 +629,50 @@ void prepare_functions_save (void)
     if (finfo->canceled) {
 	finfo_free(finfo);
     } else {
-	file_selector(_("Save functions"), SAVE_FUNCTIONS, 
+	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
 		      FSEL_DATA_MISC, finfo);
     }
+}
+
+void edit_function_package (const char *fname)
+{
+    struct function_info *finfo;
+    int err = 0;
+
+    if (!user_function_file_is_loaded(fname)) {
+	err = load_user_function_file(fname);
+	if (err) {
+	    errbox(_("Couldn't open %s"), fname);
+	    return;
+	}
+    }
+
+    finfo = finfo_new();
+    if (finfo == NULL) {
+	return;
+    }
+
+    err = function_package_get_info(fname,
+				    &finfo->privlist,
+				    &finfo->publist,
+				    &finfo->author,
+				    &finfo->version,
+				    &finfo->date,
+				    &finfo->pkgdesc);
+
+    if (err) {
+	errbox("Couldn't get function package information");
+    }
+
+    finfo_dialog(finfo);
+
+    if (finfo->canceled) {
+	finfo_free(finfo);
+    } else {
+	/* FIXME need to pass existing filename to selector */
+	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
+		      FSEL_DATA_MISC, finfo);
+    }    
 }
 
 

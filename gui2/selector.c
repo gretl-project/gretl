@@ -3797,8 +3797,7 @@ void data_save_selection_wrapper (int file_code, gpointer p)
     } else {
 	simple_selection((file_code == COPY_CSV)? 
 			 _("Copy data") : _("Save data"), 
-			 data_save_selection_callback, file_code, 
-			 p);
+			 data_save_selection_callback, file_code, p);
     }
 
 #ifndef OLD_GTK

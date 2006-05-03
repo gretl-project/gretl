@@ -1104,6 +1104,90 @@ int write_selected_user_functions (const int *privlist,
     return 0;
 }
 
+int function_package_get_info (const char *fname,
+			       int **privlist, 
+			       int **publist,
+			       char **author,
+			       char **version,
+			       char **date,
+			       char **descrip)
+{
+    fnpkg *pkg = NULL;
+    int npriv = 0, npub = 0;
+    int *list = NULL;
+    int i, j, err = 0;
+
+    if (n_pkgs == 0 || n_ufuns == 0) {
+	return 1;
+    }
+
+    for (i=0; i<n_pkgs; i++) {
+	if (!strcmp(fname, pkgs[i]->fname)) {
+	    pkg = pkgs[i];
+	    break;
+	}
+    }
+
+    if (pkg == NULL) {
+	return 1;
+    }
+
+    if (author != NULL) {
+	*author = gretl_strdup(pkg->author);
+    }
+    if (date != NULL) {
+	*date = gretl_strdup(pkg->date);
+    }
+    if (version != NULL) {
+	*version = gretl_strdup(pkg->version);
+    }
+    if (descrip != NULL) {
+	*descrip = gretl_strdup(pkg->descrip);
+    }
+
+    for (i=0; i<n_ufuns; i++) {
+	if (ufuns[i]->pkgID == pkg->ID) {
+	    if (ufuns[i]->private) {
+		npriv++;
+	    } else {
+		npub++;
+	    }
+	}
+    }
+
+    if (!err && privlist != NULL && npriv > 0) {
+	list = gretl_list_new(npriv);
+	if (list != NULL) {
+	    j = 1;
+	    for (i=0; i<n_ufuns; i++) {
+		if (ufuns[i]->pkgID == pkg->ID && ufuns[i]->private) {
+		    list[j++] = i;
+		}
+	    }	    
+	    *privlist = list;
+	} else {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && publist != NULL && npub > 0) {
+	list = gretl_list_new(npub);
+	if (list != NULL) {
+	    j = 1;
+	    for (i=0; i<n_ufuns; i++) {
+		if (ufuns[i]->pkgID == pkg->ID && !ufuns[i]->private) {
+		    list[j++] = i;
+		}
+	    }
+	    *publist = list;
+	} else {
+	    err = E_ALLOC;
+	}
+    }
+	    
+    return err;
+}
+
 static void print_function_package (fnpkg *pkg, FILE *fp)
 {
     int i;

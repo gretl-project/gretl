@@ -69,6 +69,14 @@ int write_selected_user_functions (const int *privlist,
 				   const char *descrip,
 				   const char *fname);
 
+int function_package_get_info (const char *fname,
+			       int **privlist, 
+			       int **publist,
+			       char **author,
+			       char **version,
+			       char **date,
+			       char **descrip);
+
 int write_user_function_file (const char *fname);
 
 int user_function_file_is_loaded (const char *fname);

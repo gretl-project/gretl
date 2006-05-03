@@ -27,6 +27,8 @@
 #include "filelists.h"
 #include "webget.h"
 #include "menustate.h"
+#include "fnsave.h"
+
 #include "gretl_xml.h"
 #include "gretl_func.h"
 
@@ -701,6 +703,7 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 enum {
     VIEW_FN_PKG,
     LOAD_FN_PKG,
+    EDIT_FN_PKG,
     DELETE_FN_PKG
 };
 
@@ -782,14 +785,19 @@ windata_t *gui_show_function_info (const char *fname, int role)
 static void browser_functions_handler (windata_t *vwin, int task)
 {
     char fnfile[FILENAME_MAX];
+    int dircol = 3;
     gchar *fname;
     gchar *dir;
+
+    if (vwin->role == FUNC_EDIT) {
+	dircol = 2;
+    }
 
 #ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &fname);
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
-			 3, &dir);
+			 dircol, &dir);
 #else
     gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
 		       0, &fname);
@@ -805,14 +813,18 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	gui_delete_fn_pkg(fnfile, vwin);
     } else if (task == VIEW_FN_PKG) {
 	gui_show_function_info(fnfile, VIEW_FUNC_INFO);
+    } else if (task == EDIT_FN_PKG) {
+	edit_function_package(fnfile);
     }
 
 #ifndef OLD_GTK
     g_free(fname);
     g_free(dir);
 #else
-    gtk_clist_set_text(GTK_CLIST(vwin->listbox), vwin->active_var,
-		       2, _("Yes"));
+    if (task == LOAD_FN_PKG) {
+	gtk_clist_set_text(GTK_CLIST(vwin->listbox), vwin->active_var,
+			   2, _("Yes"));
+    }
 #endif
 }
 
@@ -821,6 +833,13 @@ void browser_load_func (GtkWidget *w, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     browser_functions_handler(vwin, LOAD_FN_PKG);
+} 
+
+void browser_edit_func (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, EDIT_FN_PKG);
 } 
 
 static void display_function_info (GtkWidget *w, gpointer data)
@@ -927,12 +946,14 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	browse_func = browser_open_ps;
 	break;
     case FUNC_FILES:
+    case FUNC_EDIT:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: function packages"));
 #ifdef OLD_GTK
-	browse_func = browser_load_func;
+	browse_func = (code == FUNC_EDIT)? browser_edit_func :
+	    browser_load_func;
 #else
-	browse_func = NULL;
+	browse_func = (code == FUNC_EDIT)? browser_edit_func : NULL;
 #endif
 	delete_func = browser_del_func;
 	break;
@@ -1017,20 +1038,23 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	}
     }
 
-    if (code == TEXTBOOK_DATA || code == FUNC_FILES || REMOTE_ACTION(code)) {
+    if (code == TEXTBOOK_DATA || code == FUNC_FILES || code == FUNC_EDIT ||
+	REMOTE_ACTION(code)) {
 	label = (REMOTE_ACTION(code))? N_("Install") : N_("Info");
 	button = gtk_button_new_with_label(_(label));
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 (REMOTE_ACTION(code))?
 			 G_CALLBACK(install_file_from_server) :
-			 (code == FUNC_FILES)? 
+			 (code == FUNC_FILES || code == FUNC_EDIT)? 
 			 G_CALLBACK(display_function_info) :
 			 G_CALLBACK(display_datafile_info), vwin);
-	button = gtk_button_new_with_label(_("Find"));
-	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(datafile_find), vwin);
+	if (code != FUNC_EDIT) {
+	    button = gtk_button_new_with_label(_("Find"));
+	    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(datafile_find), vwin);
+	}
     }
 
     if (delete_func != NULL) {
@@ -1077,7 +1101,7 @@ static char *get_func_description (const char *fname, const char *fndir)
 #ifndef OLD_GTK
 
 static int
-read_fn_files_in_dir (DIR *dir, const char *fndir, 
+read_fn_files_in_dir (int role, DIR *dir, const char *fndir, 
 		      GtkListStore *store, GtkTreeIter *iter)
 {
     struct dirent *dirent;
@@ -1096,12 +1120,18 @@ read_fn_files_in_dir (DIR *dir, const char *fndir,
 	if (!g_ascii_strcasecmp(fname + n - 4, ".gfn")) {
 	    descrip = get_func_description(fname, fndir);
 	    if (descrip != NULL) {
-		build_path(fullname, fndir, fname, NULL);
-		fname[n - 4] = '\0';
 		gtk_list_store_append(store, iter);
-		loaded = user_function_file_is_loaded(fullname);
-		gtk_list_store_set(store, iter, 0, fname, 1, descrip,
-				   2, loaded, 3, fndir, -1);
+		if (role == FUNC_EDIT) {
+		    fname[n - 4] = '\0';
+		    gtk_list_store_set(store, iter, 0, fname, 1, descrip,
+				       2, fndir, -1);
+		} else {
+		    build_path(fullname, fndir, fname, NULL);
+		    fname[n - 4] = '\0';
+		    loaded = user_function_file_is_loaded(fullname);
+		    gtk_list_store_set(store, iter, 0, fname, 1, descrip,
+				       2, loaded, 3, fndir, -1);
+		}
 		g_free(descrip);
 		nfn++;
 	    }
@@ -1115,14 +1145,22 @@ read_fn_files_in_dir (DIR *dir, const char *fndir,
 #else
 
 static int
-read_fn_files_in_dir (DIR *dir, char *fndir, windata_t *vwin, int nfn)
+read_fn_files_in_dir (int role, DIR *dir, char *fndir, windata_t *vwin, int nfn)
 {
     struct dirent *dirent;
     char fullname[MAXLEN];
     char *fname;
     char *descrip;
-    gchar *row[3];
+    gchar *row2[2];
+    gchar *row3[3];
+    gchar **row;
     int n, i;
+
+    if (role == FUNC_EDIT) {
+	row = row2;
+    } else {
+	row = row3;
+    }
 
     while ((dirent = readdir(dir)) != NULL) {
 	fname = g_strdup(dirent->d_name);
@@ -1133,14 +1171,20 @@ read_fn_files_in_dir (DIR *dir, char *fndir, windata_t *vwin, int nfn)
 	if (!g_strcasecmp(fname + n - 4, ".gfn")) {
 	    descrip = get_func_description(fname, fndir);
 	    if (descrip != NULL) {
-		build_path(fullname, fndir, fname, NULL);
-		fname[n - 4] = '\0';
-		row[0] = fname;
-		row[1] = descrip;
-		if (user_function_file_is_loaded(fullname)) {
-		    row[2] = _("Yes");
+		if (role == FUNC_EDIT) {
+		    fname[n - 4] = '\0';
+		    row[0] = fname;
+		    row[1] = descrip;
 		} else {
-		    row[2] = _("No");
+		    build_path(fullname, fndir, fname, NULL);
+		    fname[n - 4] = '\0';
+		    row[0] = fname;
+		    row[1] = descrip;
+		    if (user_function_file_is_loaded(fullname)) {
+			row[2] = _("Yes");
+		    } else {
+			row[2] = _("No");
+		    }
 		}
 		i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
 		gtk_clist_set_row_data_full(GTK_CLIST(vwin->listbox), i, 
@@ -1181,9 +1225,9 @@ gint populate_func_list (windata_t *vwin)
 
     if (dir != NULL) {
 #ifndef OLD_GTK
-	nfn += read_fn_files_in_dir(dir, fndir, store, &iter);
+	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter);
 #else
-	nfn = read_fn_files_in_dir(dir, fndir, vwin, 0);
+	nfn = read_fn_files_in_dir(vwin->role, dir, fndir, vwin, 0);
 #endif
 	closedir(dir);
     }
@@ -1194,9 +1238,9 @@ gint populate_func_list (windata_t *vwin)
 
     if (dir != NULL) {
 #ifndef OLD_GTK
-	nfn += read_fn_files_in_dir(dir, fndir, store, &iter);
+	nfn += read_fn_files_in_dir(vwin->role, dir, fndir, store, &iter);
 #else
-	nfn = read_fn_files_in_dir(dir, fndir, vwin, nfn);
+	nfn = read_fn_files_in_dir(vwin->role, dir, fndir, vwin, nfn);
 #endif
 	closedir(dir);
     }
@@ -1220,7 +1264,8 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_dbfilelist(vwin);
     } else if (REMOTE_ACTION(vwin->role)) {
 	return populate_remote_object_list(vwin);
-    } else if (vwin->role == FUNC_FILES) {
+    } else if (vwin->role == FUNC_FILES || 
+	       vwin->role == FUNC_EDIT) {
 	return populate_func_list(vwin);
     } else {
 	return read_file_descriptions(vwin, p);
@@ -1258,6 +1303,10 @@ static GtkWidget *files_window (windata_t *vwin)
 	N_("Package"), 
 	N_("Summary"), 
 	N_("Local status")
+    };
+    const char *func_edit_titles[] = {
+	N_("Package"), 
+	N_("Summary") 
     };
 
     GType types_2[] = {
@@ -1317,6 +1366,11 @@ static GtkWidget *files_window (windata_t *vwin)
 	titles = remote_func_titles;
 	cols = 3;
 	break;
+    case FUNC_EDIT:
+	titles = func_edit_titles;
+	cols = 3;
+	hidden_col = TRUE;
+	break;	
     default:
 	break;
     }
@@ -1369,6 +1423,10 @@ static GtkWidget *files_window (windata_t *fdata)
 	_("Summary"), 
 	_("Local status")
     };
+    char *func_edit_titles[] = {
+	_("Package"), 
+	_("Summary") 
+    };
     char **titles = data_titles;
 
     int data_col_width[] = {128, 256}; 
@@ -1411,6 +1469,9 @@ static GtkWidget *files_window (windata_t *fdata)
 	titles = func_titles;
 	col_width = fn_col_width;
 	cols = 3;
+	break;
+    case FUNC_EDIT:
+	titles = func_edit_titles;
 	break;
     case REMOTE_FUNC_FILES:
 	titles = remote_func_titles;
