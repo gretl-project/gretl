@@ -2857,32 +2857,33 @@ int is_model_cmd (const char *s)
 
     /* FIXME mle? */
 
-    if (s != NULL && *s != '\0') {
-	if (!strncmp(s, "ols", 3)  ||
-	    !strncmp(s, "corc", 4) ||
-	    !strncmp(s, "hilu", 4) ||
-	    !strncmp(s, "wls", 3)  ||
-	    !strncmp(s, "pwe", 3)  ||
-	    !strncmp(s, "pooled", 6)  ||
-	    !strncmp(s, "hccm", 4) ||
-	    !strncmp(s, "hsk", 3)  ||
-	    !strncmp(s, "add ", 4)  ||
-	    !strncmp(s, "lad", 3)  ||
-	    !strncmp(s, "omit", 4) ||
-	    !strncmp(s, "tsls", 4) ||
-	    !strncmp(s, "logit", 5)  ||
-	    !strncmp(s, "probit", 6) ||
-	    !strncmp(s, "tobit", 5) ||
-	    !strncmp(s, "poisson", 7) ||
-	    !strncmp(s, "garch", 5) ||
-	    !strncmp(s, "logistic", 8) ||
-	    !strncmp(s, "end nls", 7) ||
-	    !strncmp(s, "arma", 4) ||
-	    !strncmp(s, "arima", 5) ||
-	    !strncmp(s, "ar ", 3) ||
-	    !strcmp(s, "ar")) {
-	    ret = 1;
-	}
+    if (s == NULL || *s == '\0') {
+	return 0;
+    }
+
+    if (!strcmp(s, "ols")  ||
+	!strcmp(s, "corc") ||
+	!strcmp(s, "hilu") ||
+	!strcmp(s, "wls")  ||
+	!strcmp(s, "pwe")  ||
+	!strcmp(s, "pooled")  ||
+	!strcmp(s, "hccm") ||
+	!strcmp(s, "hsk")  ||
+	!strcmp(s, "add")  ||
+	!strcmp(s, "lad")  ||
+	!strcmp(s, "omit") ||
+	!strcmp(s, "tsls") ||
+	!strcmp(s, "logit")  ||
+	!strcmp(s, "probit") ||
+	!strcmp(s, "tobit") ||
+	!strcmp(s, "poisson") ||
+	!strcmp(s, "garch") ||
+	!strcmp(s, "logistic") ||
+	!strcmp(s, "endnls") ||
+	!strcmp(s, "arma") ||
+	!strcmp(s, "arima") ||
+	!strcmp(s, "ar")) {
+	ret = 1;
     }
 
     return ret;

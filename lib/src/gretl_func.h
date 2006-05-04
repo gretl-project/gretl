@@ -59,15 +59,17 @@ int gretl_function_set_info (int i, const char *help);
 
 int gretl_function_get_info (int i, const char *key, char const **value);
 
+int gretl_function_print_code (int i, PRN *prn);
+
 void gretl_function_set_private (int i, int priv);
 
-int write_selected_user_functions (const int *privlist, 
-				   const int *publist, 
-				   const char *author,
-				   const char *version,
-				   const char *date,
-				   const char *descrip,
-				   const char *fname);
+int write_function_package (const char *fname,
+			    const int *privlist, 
+			    const int *publist, 
+			    const char *author,
+			    const char *version,
+			    const char *date,
+			    const char *descrip);
 
 int function_package_get_info (const char *fname,
 			       int **privlist, 
@@ -88,6 +90,8 @@ int get_function_file_info (const char *fname, PRN *prn, char **pname);
 int get_function_file_code (const char *fname, PRN *prn, char **pname);
 
 char *get_function_file_header (const char *fname, int *err);
+
+int update_function_from_script (const char *fname, int idx);
 
 int user_function_help (const char *fnname, PRN *prn);
 

@@ -152,7 +152,13 @@ static int real_remember_list (const int *list, const char *name,
 	    err = E_ALLOC;
 	} else {
 	    if (gretl_messages_on()) {
-		pprintf(prn, "Added list '%s'\n", name);
+		const char *realname = list_stack[n_lists]->name;
+
+		pprintf(prn, "Added list '%s'\n", realname);
+		if (strlen(realname) < strlen(name)) {
+		    pprintf(prn, "Warning: the name was truncated to %d characters\n", 
+			    VNAMELEN - 1);
+		}
 	    }
 	    n_lists++;
 	}

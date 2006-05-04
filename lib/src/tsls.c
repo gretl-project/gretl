@@ -787,7 +787,7 @@ static void compute_first_stage_F (MODEL *pmod, int v, int fitv,
     int ifc = pmod->ifc;
     double essr = 0.0, essu = 0.0;
     double x, F, ybar = 0.0;
-    int t, dfr, dfu;
+    int t, dfn, dfd;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	ybar += Z[v][t];
@@ -802,16 +802,18 @@ static void compute_first_stage_F (MODEL *pmod, int v, int fitv,
 	essu += x * x;
     }  
 
-    dfu = n - k;
-    dfr = k - ifc;
+    dfd = n - k;
+    dfn = k - ifc;
 
-    F = ((essr - essu) / dfr) / (essu / dfu);
+    F = ((essr - essu) / dfn) / (essu / dfd);
 
     /* FIXME: check, then enable output on printing TSLS model */
 
-    gretl_model_set_double(pmod, "first-stage-F", F);
-#if 1
-    fprintf(stderr, "first-stage F(%d, %d) = %g\n", dfr, dfu, F);
+    gretl_model_set_double(pmod, "stage1-F", F);
+    gretl_model_set_int(pmod, "stage1-dfn", dfn);
+    gretl_model_set_int(pmod, "stage1-dfd", dfd);
+#if 0
+    fprintf(stderr, "first-stage F(%d, %d) = %g\n", dfn, dfd, F);
 #endif
 }
 

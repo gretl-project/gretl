@@ -52,6 +52,7 @@ enum extra_cmds {
     EDIT_HEADER,
     EDIT_SCRIPT,
     EDIT_NOTES,
+    EDIT_FUNC_CODE,
     CLI_HELP,
     GUI_HELP,
     CLI_HELP_EN,

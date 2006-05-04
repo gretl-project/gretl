@@ -81,6 +81,7 @@ struct fnpkg_ {
 
 static int n_ufuns;
 static ufunc **ufuns;
+static ufunc *current_ufun;
 
 static int n_pkgs;
 static fnpkg **pkgs;
@@ -566,6 +567,27 @@ static ufunc *ufunc_new (void)
     return fun;
 }
 
+static void clear_ufunc_data (ufunc *fun)
+{
+    free(fun->help);
+    free_strings_array(fun->lines, fun->n_lines);
+    free_strings_array(fun->returns, fun->n_returns);
+    free_strings_array(fun->params, fun->n_params);
+    free(fun->ptype);
+    free(fun->rtype);
+
+    fun->help = NULL;
+    fun->lines = NULL;
+    fun->returns = NULL;
+    fun->params = NULL;
+    fun->ptype = NULL;
+    fun->rtype = NULL;
+
+    fun->n_lines = 0;
+    fun->n_returns = 0;
+    fun->n_params = 0;
+}
+
 static void free_ufunc (ufunc *fun)
 {
     free(fun->help);
@@ -743,12 +765,12 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun,
     bufgets_init(buf);
 
     while (bufgets(line, sizeof line, buf) && !err) {
+	if (string_is_blank(line)) {
+	    continue;
+	}
 	if (prn != NULL) {
 	    pprintf(prn, "  %s\n", line);
 	} else {
-	    if (string_is_blank(line)) {
-		continue;
-	    }
 	    s = line;
 	    while (isspace(*s)) s++;
 	    err = real_add_fn_line(fun, s);
@@ -945,6 +967,35 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     return 0;
 }
 
+int gretl_function_print_code (int i, PRN *prn)
+{
+    int this_indent = 0;
+    int next_indent = 0;
+    ufunc *fun;
+    int j;
+   
+    if (i < 0 || i >= n_ufuns) {
+	return 1;
+    }
+
+    fun = ufuns[i];
+
+    print_function_start(fun, prn);
+
+    for (i=0; i<fun->n_lines; i++) {
+	adjust_indent(fun->lines[i], &this_indent, &next_indent);
+	for (j=0; j<=this_indent; j++) {
+	    pputs(prn, "  ");
+	}
+	pputs(prn, fun->lines[i]);
+	pputc(prn, '\n');
+    }  
+
+    print_function_end(fun, prn);
+
+    return 0;
+}
+
 int gretl_function_set_info (int i, const char *help)
 {
     int err = 0;
@@ -1033,13 +1084,13 @@ void gretl_function_set_private (int i, int priv)
     }
 }
 
-int write_selected_user_functions (const int *privlist, 
-				   const int *publist,
-				   const char *author,
-				   const char *version,
-				   const char *date,
-				   const char *descrip,
-				   const char *fname)
+int write_function_package (const char *fname,
+			    const int *privlist, 
+			    const int *publist,
+			    const char *author,
+			    const char *version,
+			    const char *date,
+			    const char *descrip)
 {
     char *pkgname;
     FILE *fp;
@@ -1047,6 +1098,11 @@ int write_selected_user_functions (const int *privlist,
 
     if (n_ufuns == 0) {
 	return 0;
+    }
+
+    if (author == NULL || version == NULL || date == NULL || 
+	descrip == NULL || publist == NULL || publist[0] == 0) {
+	return 1;
     }
 
     fp = gretl_fopen(fname, "w");
@@ -1065,18 +1121,10 @@ int write_selected_user_functions (const int *privlist,
 	fputs("<gretl-function-package>\n", fp);
     }
 
-    if (author != NULL) {
-	gretl_xml_put_tagged_string("author", author, fp);
-    }
-    if (version != NULL) {
-	gretl_xml_put_tagged_string("version", version, fp);
-    }
-    if (date != NULL) {
-	gretl_xml_put_tagged_string("date", date, fp);
-    }
-    if (descrip != NULL) {
-	gretl_xml_put_tagged_string("description", descrip, fp);
-    }
+    gretl_xml_put_tagged_string("author", author, fp);
+    gretl_xml_put_tagged_string("version", version, fp);
+    gretl_xml_put_tagged_string("date", date, fp);
+    gretl_xml_put_tagged_string("description", descrip, fp);
 
     if (privlist != NULL) {
 	for (i=1; i<=privlist[0]; i++) {
@@ -1087,12 +1135,10 @@ int write_selected_user_functions (const int *privlist,
 	}
     }
 
-    if (publist != NULL) {
-	for (i=1; i<=publist[0]; i++) {
-	    fi = publist[i];
-	    if (fi >= 0 && fi < n_ufuns) {
-		write_function_xml(ufuns[fi], fp);
-	    }
+    for (i=1; i<=publist[0]; i++) {
+	fi = publist[i];
+	if (fi >= 0 && fi < n_ufuns) {
+	    write_function_xml(ufuns[fi], fp);
 	}
     }
 	    
@@ -1668,7 +1714,7 @@ static void delete_ufunc_from_list (ufunc *fun)
     }
 }
 
-static int check_func_name (const char *fname, PRN *prn)
+static int check_func_name (const char *fname, ufunc **pfun, PRN *prn)
 {
     int i, err = 0;
 
@@ -1683,7 +1729,12 @@ static int check_func_name (const char *fname, PRN *prn)
 	for (i=0; i<n_ufuns; i++) {
 	    if (!strcmp(fname, ufuns[i]->name)) {
 		pprintf(prn, "Redefining function '%s'\n", fname);
-		delete_ufunc_from_list(ufuns[i]);
+		if (pfun != NULL) {
+		    clear_ufunc_data(ufuns[i]);
+		    *pfun = ufuns[i];
+		} else {
+		    delete_ufunc_from_list(ufuns[i]);
+		}
 		break;
 	    }
 	}
@@ -2063,7 +2114,7 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
 static int 
 parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
 				char **pptype, const char *str,
-				PRN *prn)
+				ufunc **pfun, PRN *prn)
 {
     char **parmv = NULL;
     char *ptype = NULL;
@@ -2095,7 +2146,7 @@ parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
 	    }
 	}
 	if (!err) {
-	    err = check_func_name(fname, prn);
+	    err = check_func_name(fname, pfun, prn);
 	}
 	if (!err) {
 	    str += len;
@@ -2161,7 +2212,6 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     int err = 0;
 
     nf = sscanf(line, "function %31s %7s", fname, extra);
-
     if (nf <= 0) {
 	return E_PARSE;
     } 
@@ -2171,12 +2221,15 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	    maybe_delete_function(fname);
 	    return 0;
 	}
-    }
+    } 
+
+    /* the following takes care of replacing an existing function
+       of the same name, if any */
 
     err = parse_fn_definition_or_returns(fname, &params, &n_params, 
-					 &ptype, line + 8, prn);
+					 &ptype, line + 8, &fun, prn);
 
-    if (!err) {
+    if (!err && fun == NULL) {
 	fun = add_ufunc();
 	if (fun == NULL) {
 	    free_strings_array(params, n_params);
@@ -2190,19 +2243,13 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	fun->params = params;
 	fun->n_params = n_params;
 	fun->ptype = ptype;
+	current_ufun = fun;
 	set_compiling_on();
+    } else {
+	current_ufun = NULL;
     }
     
     return err;
-}
-
-static ufunc *get_latest_ufunc (void)
-{
-    if (n_ufuns > 0) {
-	return ufuns[n_ufuns - 1];
-    } else {
-	return NULL;
-    }
 }
 
 static int create_function_return_list (ufunc *fun, const char *line)
@@ -2219,6 +2266,7 @@ static int create_function_return_list (ufunc *fun, const char *line)
 					 &fun->n_returns, 
 					 &fun->rtype, 
 					 line,
+					 NULL,
 					 NULL);
 
     return err;
@@ -2269,7 +2317,7 @@ static int end_of_function (const char *s)
 
 int gretl_function_append_line (const char *line)
 {
-    ufunc *fun = get_latest_ufunc();
+    ufunc *fun = current_ufun;
     int err = 0;
 
 #if FN_DEBUG
@@ -2313,6 +2361,56 @@ int gretl_function_append_line (const char *line)
 	err = create_function_return_list(fun, line + 7);
     } else {    
 	err = real_add_fn_line(fun, line);
+    }
+
+    return err;
+}
+
+/* FIXME needs work below */
+
+int update_function_from_script (const char *fname, int idx)
+{
+    char line[MAXLINE];
+    char *s;
+    FILE *fp;
+    int gotfn = 0;
+    int err = 0;
+
+    if (idx < 0 || idx >= n_ufuns) {
+	return E_DATA;
+    }
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
+
+    while (fgets(line, sizeof line, fp) && !err) {
+	s = line;
+	while (*s == ' ') s++;
+	if (!strncmp(s, "function ", 9)) {
+	    if (gotfn) {
+		err = 1;
+	    } else {
+		gotfn = 1;
+		err = gretl_start_compiling_function(s, NULL);
+		strcpy(gretl_errmsg, "Error compiling function");
+	    }
+	} else {
+	    err = gretl_function_append_line(s);
+	    strcpy(gretl_errmsg, "Error compiling function");
+	}
+    }
+
+    fclose(fp);
+
+    if (!err && current_ufun != NULL) {
+	int ichk = user_function_index_by_name(current_ufun->name);
+
+	if (ichk != idx) {
+	    strcpy(gretl_errmsg, "Function name has been changed!");
+	    err = 1;
+	}
     }
 
     return err;

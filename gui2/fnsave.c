@@ -37,6 +37,7 @@ struct function_info {
     GtkWidget *entries[NENTRIES];
     GtkWidget *text;
     GtkWidget *combo;
+    GtkWidget *codesel;
     GtkWidget *check;
     char *author;
     char *version;
@@ -46,6 +47,7 @@ struct function_info {
     int *publist;
     int *privlist;
     int n_public;
+    int iface;
     int upload;
     int canceled;
 };
@@ -86,6 +88,7 @@ struct function_info *finfo_new (void)
     finfo->pkgdesc = NULL;
     finfo->upload = 0;
     finfo->canceled = 0;
+    finfo->iface = -1;
 
     finfo->n_public = 0;
     finfo->help = NULL;
@@ -211,21 +214,34 @@ static void login_finalize (GtkWidget *w, struct login_info *linfo)
 
 static void finfo_finalize (GtkWidget *w, struct function_info *finfo)
 {
+    char *fields[] = {
+	finfo->author,
+	finfo->version,
+	finfo->date,
+	finfo->pkgdesc
+    };
     const gchar *txt;
     int i, hidx = 0;
+    int err = 0;
+
+    for (i=0; i<NENTRIES && !err; i++) {
+	free(fields[i]);
+	fields[i] = NULL;
+	txt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
+	if (txt != NULL && *txt != '\0') {
+	    fields[i] = trim_text(txt);
+	} else {
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	errbox(_("Some required information is missing"));
+	return;
+    }
 
     finfo->upload = 
 	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->check));
-
-    for (i=0; i<NENTRIES; i++) {
-	txt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
-	if (txt != NULL && *txt != '\0') {
-	    if (i == 0) finfo->author = trim_text(txt);
-	    else if (i == 1) finfo->version = trim_text(txt);
-	    else if (i == 2) finfo->date = trim_text(txt);
-	    else if (i == 3) finfo->pkgdesc = trim_text(txt);
-	}
-    }
 
     if (finfo->n_public > 1) {
 	hidx = help_text_index(finfo);
@@ -251,6 +267,11 @@ static void finfo_cancel (GtkWidget *w, struct function_info *finfo)
 {
     finfo->canceled = 1;
     gtk_widget_destroy(finfo->dlg);
+}
+
+static void finfo_delete (GtkWidget *w, struct function_info *finfo)
+{
+    finfo->canceled = 1;
 }
 
 enum {
@@ -280,11 +301,11 @@ static void set_dialog_info_from_fn (struct function_info *finfo, int idx,
     }
 
     for (i=0; i<NENTRIES; i++) {
-	gretl_function_get_info(idx, keys[i], &attrib);
-	if (attrib != NULL) {
-	    etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
-	    if (*etxt == '\0') {
-		gtk_entry_set_text(GTK_ENTRY(finfo->entries[i]), attrib);
+	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
+	if (*etxt == '\0') {
+	    gretl_function_get_info(idx, keys[i], &attrib);
+	    if (attrib != NULL) {
+		etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
 	    }
 	}
     }
@@ -327,6 +348,52 @@ static gboolean update_public (GtkEditable *entry,
     return FALSE;
 }
 
+static gboolean update_iface (GtkEditable *entry, 
+			      struct function_info *finfo)
+{
+    const char *fnname;
+    int idx;
+
+    fnname = gtk_entry_get_text(GTK_ENTRY(entry));
+
+    if (fnname != NULL && *fnname != '\0') {
+	idx = user_function_index_by_name(fnname);
+	if (idx >= 0) {
+	    finfo->iface = idx;
+	}
+    }
+
+    return FALSE;
+}
+
+static void edit_code_callback (GtkWidget *w, struct function_info *finfo)
+{
+    
+    windata_t *vwin;
+    PRN *prn = NULL;
+
+    if (finfo->iface < 0) {
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    gretl_function_print_code(finfo->iface, prn);
+
+    vwin = view_buffer(prn, 78, 350, 
+		       user_function_name_by_index(finfo->iface),
+		       EDIT_FUNC_CODE, NULL);
+
+    if (vwin != NULL) {
+	build_path(vwin->fname, paths.userdir, "pkgedit", NULL);
+	gretl_tempname(vwin->fname);
+	g_object_set_data(G_OBJECT(vwin->w), "iface", 
+			  GINT_TO_POINTER(finfo->iface));
+    }
+}
+
 static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
 {
     GtkWidget *hbox, *label;
@@ -341,6 +408,72 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
     return hbox;
 }
 
+enum {
+    REGULAR_BUTTON,
+    CHECK_BUTTON
+};
+
+static GtkWidget *button_in_hbox (GtkWidget *w, int btype, const char *txt,
+				  GtkWidget **phbox)
+{
+    GtkWidget *hbox, *button;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
+    if (btype == CHECK_BUTTON) {
+	button = gtk_check_button_new_with_label(txt);
+    } else {
+	button = gtk_button_new_with_label(txt);
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+    gtk_widget_show(button);
+    gtk_widget_show(hbox);
+
+    if (phbox != NULL) {
+	*phbox = hbox;
+    }
+
+    return button;
+}
+
+enum {
+    IFACE_PUBLIC,
+    IFACE_ALL
+};
+
+static GtkWidget *interface_selector (struct function_info *finfo, int iface)
+{
+    GList *fn_list = NULL;
+    GtkWidget *combo;
+    const char *fnname;
+    int i;
+
+    if (iface == IFACE_ALL) {
+	if (finfo->privlist != NULL) {
+	    finfo->iface = finfo->privlist[1];
+	    for (i=1; i<=finfo->privlist[0]; i++) {
+		fnname = user_function_name_by_index(finfo->privlist[i]);
+		fn_list = g_list_append(fn_list, (gpointer) fnname);
+	    }
+	} else {
+	    finfo->iface = finfo->publist[1];
+	}
+    }	
+
+    for (i=1; i<=finfo->publist[0]; i++) {
+	fnname = user_function_name_by_index(finfo->publist[i]);
+	fn_list = g_list_append(fn_list, (gpointer) fnname);
+    }
+
+    combo = gtk_combo_new();
+    gtk_combo_set_popdown_strings(GTK_COMBO(combo), fn_list); 
+    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
+    gtk_widget_show(combo);
+    g_list_free(fn_list);
+
+    return combo;
+}
+
 static void finfo_dialog (struct function_info *finfo)
 {
     GtkWidget *button, *label;
@@ -350,6 +483,12 @@ static void finfo_dialog (struct function_info *finfo)
 	N_("Version"),
 	N_("Date"),
 	N_("Package description")
+    };
+    char *entry_texts[] = {
+	finfo->author,
+	finfo->version,
+	finfo->date,
+	finfo->pkgdesc
     };
     const char *fnname;
     int i;
@@ -362,6 +501,9 @@ static void finfo_dialog (struct function_info *finfo)
 				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
     /* FIXME want label at top of dialog? */
+
+    g_signal_connect(G_OBJECT(finfo->dlg), "delete_event",
+		     G_CALLBACK(finfo_delete), finfo);
 
     tbl = gtk_table_new(NENTRIES, 2, FALSE);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
@@ -383,29 +525,21 @@ static void finfo_dialog (struct function_info *finfo)
 	gtk_widget_show(entry); 
 
 	finfo->entries[i] = entry;
+
+	if (entry_texts[i] != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), entry_texts[i]);
+	}
     }
 
     gtk_widget_show(tbl);
 
     if (finfo->n_public > 1) {
 	/* drop-down selector for public interfaces */
-	GList *fn_list = NULL;
-
 	hbox = label_hbox(GTK_DIALOG(finfo->dlg)->vbox, _("Help text for"));
-
-	for (i=1; i<=finfo->publist[0]; i++) {
-	    fnname = user_function_name_by_index(finfo->publist[i]);
-	    fn_list = g_list_append(fn_list, (gpointer) fnname);
-	}
-
-	finfo->combo = gtk_combo_new();
-	gtk_combo_set_popdown_strings(GTK_COMBO(finfo->combo), fn_list); 
-	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(finfo->combo)->entry), FALSE);
+	finfo->combo = interface_selector(finfo, IFACE_PUBLIC);
 	gtk_box_pack_start(GTK_BOX(hbox), finfo->combo, FALSE, FALSE, 5);
 	g_signal_connect(G_OBJECT(GTK_COMBO(finfo->combo)->entry), "changed",
 			 G_CALLBACK(update_public), finfo);
-	gtk_widget_show(finfo->combo);
-	g_list_free(fn_list);
 	gtk_widget_show(hbox);
     } else {
 	/* only one public interface */
@@ -424,19 +558,31 @@ static void finfo_dialog (struct function_info *finfo)
     gtk_widget_set_usize(finfo->dlg, 640, 440);
 #else
     text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
-    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 440);
+    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 480);
 #endif
 
     set_dialog_info_from_fn(finfo, finfo->publist[1], HIDX_INIT);
 
+    /* button for editing the actual code */
+    button = button_in_hbox(GTK_DIALOG(finfo->dlg)->vbox,
+			    REGULAR_BUTTON, "Edit function code", &hbox);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(edit_code_callback), finfo);
+
+    /* with selector if there's more than one function in package */
+    if (finfo->publist[0] > 1 || finfo->privlist != NULL) {
+	finfo->codesel = interface_selector(finfo, IFACE_ALL);
+	gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(GTK_COMBO(finfo->codesel)->entry), "changed",
+			 G_CALLBACK(update_iface), finfo);
+    } else {
+	finfo->iface = finfo->publist[1];
+    }
+
     /* check box for upload option */
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
-		       hbox, FALSE, FALSE, 5);
-    finfo->check = gtk_check_button_new_with_label("Upload package to server");
-    gtk_box_pack_start(GTK_BOX(hbox), finfo->check, FALSE, FALSE, 5);
-    gtk_widget_show(finfo->check);
-    gtk_widget_show(hbox);
+    finfo->check = button_in_hbox(GTK_DIALOG(finfo->dlg)->vbox, CHECK_BUTTON, 
+				  "Upload package to server on save",
+				  NULL);
 
     /* Create the "OK" button */
     button = ok_button(GTK_DIALOG(finfo->dlg)->action_area);
@@ -579,13 +725,13 @@ void save_user_functions (const char *fname, gpointer p)
 	gretl_function_set_private(finfo->publist[i], FALSE);
     }
 		
-    err = write_selected_user_functions(finfo->privlist, 
-					finfo->publist,
-					finfo->author,
-					finfo->version,
-					finfo->date,
-					finfo->pkgdesc, 
-					fname);
+    err = write_function_package(fname,
+				 finfo->privlist, 
+				 finfo->publist,
+				 finfo->author,
+				 finfo->version,
+				 finfo->date,
+				 finfo->pkgdesc);
 
     if (err) {
 	gui_errmsg(err);
@@ -675,14 +821,17 @@ void edit_function_package (const char *fname)
 
     if (err) {
 	errbox("Couldn't get function package information");
+	finfo_free(finfo);
+	return;
     }
+
+    set_fnsave_filename(fname);
 
     finfo_dialog(finfo);
 
     if (finfo->canceled) {
 	finfo_free(finfo);
     } else {
-	set_fnsave_filename(fname);
 	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
 		      FSEL_DATA_MISC, finfo);
     }    

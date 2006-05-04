@@ -359,6 +359,7 @@ static int maybe_prepend_open_data (FILE *fp)
 int dump_command_stack (const char *fname, int insert_open_data)
 {
     model_stack *mstack;
+    char cmdword[9];
     char *cmd_drop;
     FILE *fp;
     int debugging = 0;
@@ -402,7 +403,14 @@ int dump_command_stack (const char *fname, int insert_open_data)
 
 	fprintf(fp, "%s", cmd_stack[i]);
 
-	if (is_model_cmd(cmd_stack[i])) {
+	if (!strncmp(cmd_stack[i], "end nls", 7)) {
+	    strcpy(cmdword, "endnls");
+	} else {
+	    *cmdword = 0;
+	    sscanf(cmd_stack[i], "%8s", cmdword);
+	}
+	
+	if (is_model_cmd(cmdword)) {
 #ifdef CMD_DEBUG
 	    fprintf(stderr, "cmd_stack[%d]: looking for model commands\n", i);
 #endif

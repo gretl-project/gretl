@@ -1417,6 +1417,37 @@ static void print_ll (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void maybe_print_first_stage_F (const MODEL *pmod, PRN *prn)
+{
+    double F = gretl_model_get_double(pmod, "stage1-F");
+    int dfn, dfd;
+
+    if (na(F)) {
+	return;
+    }
+
+    dfn = gretl_model_get_int(pmod, "stage1-dfn");
+    dfd = gretl_model_get_int(pmod, "stage1-dfd");
+
+    if (dfn <= 0 || dfd <= 0) {
+	return;
+    }
+
+    if (plain_format(prn)) {
+	pprintf(prn, "%s (%d, %d) = %.*g\n", _("First-stage F-statistic"),
+		dfn, dfd, GRETL_DIGITS, F);
+	pprintf(prn, "  %s\n", _("A value < 10 may indicate weak instruments"));
+    } else if (tex_format(prn)) {
+	char x1str[32];
+
+	tex_dcolumn_double(F, x1str);
+	pprintf(prn, "First-stage $F(%d, %d)$ & %s \\\\\n", dfn, dfd, x1str);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, "%s (%d, %d) = %g\n", I_("First-stage F-statistic"), 
+		dfn, dfd, F);
+    }
+}
+
 /**
  * printmodel:
  * @pmod: pointer to gretl model.
@@ -1716,6 +1747,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (pmod->ntests > 0) {
 	print_model_tests(pmod, prn);
+    }
+
+    if (pmod->ci == TSLS) {
+	maybe_print_first_stage_F(pmod, prn);
     }
 
     if (!plain_format(prn)) {

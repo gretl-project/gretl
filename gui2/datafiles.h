@@ -28,6 +28,8 @@ void browser_open_ps (GtkWidget *w, gpointer data);
 
 void browser_load_func (GtkWidget *w, gpointer data);
 
+void browser_edit_func (GtkWidget *w, gpointer data);
+
 windata_t *gui_show_function_info (const char *fname, int role);
 
 void destroy_file_collections (void);

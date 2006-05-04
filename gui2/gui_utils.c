@@ -24,6 +24,7 @@
 #include "forecast.h"
 #include "objstack.h"
 #include "gretl_xml.h"
+#include "gretl_func.h"
 #include "system.h"
 
 #include <sys/stat.h>
@@ -1418,6 +1419,20 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     }
 }
 
+static void update_func_code (windata_t *vwin)
+{
+    int iface, err = 0;
+
+    /* callback used when editing a function in the context of
+       the "function package editor" */
+	
+    iface = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->w), "inface"));
+    err = update_function_from_script(vwin->fname, iface);
+    if (err) {
+	gui_errmsg(err);
+    }
+}
+
 static void view_window_save (GtkWidget *widget, windata_t *vwin)
 {
     if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
@@ -1438,6 +1453,9 @@ static void view_window_save (GtkWidget *widget, windata_t *vwin)
 	    fclose(fp);
 	    g_free(text);
 	    mark_content_saved(vwin);
+	    if (vwin->role == EDIT_FUNC_CODE) {
+		update_func_code(vwin);
+	    }
 	}
     }
 }
@@ -1606,6 +1624,8 @@ void free_windata (GtkWidget *w, gpointer data)
 		    remove(vwin->fname);
 		}
 	    }
+	} else if (vwin->role == EDIT_FUNC_CODE) {
+	    remove(vwin->fname);
 	}
 
 	if (vwin->dialog) {
@@ -1887,6 +1907,7 @@ static void set_plot_icon (struct viewbar_item *vitem)
 #define editor_role(r) (r == EDIT_SCRIPT || \
                         r == EDIT_HEADER || \
                         r == EDIT_NOTES || \
+                        r == EDIT_FUNC_CODE || \
                         r == GR_PLOT)
 
 static void make_viewbar (windata_t *vwin, int text_out)
@@ -1906,11 +1927,13 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int edit_ok = (vwin->role == EDIT_SCRIPT ||
 		   vwin->role == EDIT_HEADER ||
 		   vwin->role == EDIT_NOTES ||
+		   vwin->role == EDIT_FUNC_CODE ||
 		   vwin->role == GR_PLOT || 
 		   vwin->role == GR_BOX ||
 		   vwin->role == SCRIPT_OUT);
     int save_as_ok = (vwin->role != EDIT_HEADER && 
 		      vwin->role != EDIT_NOTES &&
+		      vwin->role != EDIT_FUNC_CODE &&
                       vwin->role != VIEW_SCALAR);
     int help_ok = (vwin->role == LEVERAGE || 
 		   vwin->role == COINT2 ||
@@ -2227,7 +2250,7 @@ static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
     const char *buf = gretl_print_get_buffer(prn);
 
 #ifdef USE_GTKSOURCEVIEW
-    if (vwin->role == VIEW_FUNC_CODE) {
+    if (vwin->role == VIEW_FUNC_CODE || vwin->role == EDIT_FUNC_CODE) {
 	sourceview_insert_buffer(vwin, buf);
 	return;
     }
@@ -2283,7 +2306,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	    gretl_object_ref(data, GRETL_OBJ_VAR);
 	    add_VAR_menu_items(vwin, role == VECM);
 	}
-    } else if (role == VIEW_FUNC_CODE) {
+    } else if (role == VIEW_FUNC_CODE || role == EDIT_FUNC_CODE) {
 	make_viewbar(vwin, 0);
     } else if (role != IMPORT) {
 	make_viewbar(vwin, 1);
@@ -2292,11 +2315,14 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 #ifdef USE_GTKSOURCEVIEW
     if (role == VIEW_FUNC_CODE) {
 	create_source(vwin, hsize, vsize, FALSE);
+    } else if (role == EDIT_FUNC_CODE) {
+	create_source(vwin, hsize, vsize, TRUE);
     } else {
 	vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
     }
 #else
-    vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
+    vwin->w = create_text(vwin->dialog, hsize, vsize, 
+			  role == EDIT_FUNC_CODE);
 #endif
 
     text_table_setup(vwin->vbox, vwin->w);
@@ -2317,6 +2343,14 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
+
+    if (role == EDIT_FUNC_CODE) {
+	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
+	attach_content_changed_signal(vwin);
+	g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
+			 G_CALLBACK(query_save_text), vwin);
+	/* FIXME add callback for updating fn code */
+    }
 
 #ifndef OLD_GTK    
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 

@@ -766,7 +766,6 @@ windata_t *gui_show_function_info (const char *fname, int role)
     } else {
 	gchar *title;
 
-	/* FIXME */
 	title = g_strdup_printf("gretl: %s", (pkgname)? 
 				pkgname : _("function code"));
 	vwin = view_buffer(prn, 78, 350, title, role, NULL);
@@ -785,15 +784,12 @@ windata_t *gui_show_function_info (const char *fname, int role)
 static void browser_functions_handler (windata_t *vwin, int task)
 {
     char fnfile[FILENAME_MAX];
-    int dircol = 3;
     gchar *fname;
     gchar *dir;
 
-    if (vwin->role == FUNC_EDIT) {
-	dircol = 2;
-    }
-
 #ifndef OLD_GTK
+    int dircol = (vwin->role == FUNC_EDIT)? 2 : 3;
+
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &fname);
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
@@ -806,26 +802,25 @@ static void browser_functions_handler (windata_t *vwin, int task)
 #endif
 
     build_path(fnfile, dir, fname, ".gfn");
+#ifndef OLD_GTK
+    g_free(fname);
+    g_free(dir);
+#endif
 
     if (task == LOAD_FN_PKG) {
 	gui_load_user_functions(fnfile);
+#ifdef OLD_GTK
+	gtk_clist_set_text(GTK_CLIST(vwin->listbox), vwin->active_var,
+			   2, _("Yes"));
+#endif	
     } else if (task == DELETE_FN_PKG) {
 	gui_delete_fn_pkg(fnfile, vwin);
     } else if (task == VIEW_FN_PKG) {
 	gui_show_function_info(fnfile, VIEW_FUNC_INFO);
     } else if (task == EDIT_FN_PKG) {
+	gtk_widget_destroy(vwin->w);
 	edit_function_package(fnfile);
     }
-
-#ifndef OLD_GTK
-    g_free(fname);
-    g_free(dir);
-#else
-    if (task == LOAD_FN_PKG) {
-	gtk_clist_set_text(GTK_CLIST(vwin->listbox), vwin->active_var,
-			   2, _("Yes"));
-    }
-#endif
 }
 
 void browser_load_func (GtkWidget *w, gpointer data)
