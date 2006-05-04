@@ -807,14 +807,9 @@ static void compute_first_stage_F (MODEL *pmod, int v, int fitv,
 
     F = ((essr - essu) / dfn) / (essu / dfd);
 
-    /* FIXME: check, then enable output on printing TSLS model */
-
     gretl_model_set_double(pmod, "stage1-F", F);
     gretl_model_set_int(pmod, "stage1-dfn", dfn);
     gretl_model_set_int(pmod, "stage1-dfd", dfd);
-#if 0
-    fprintf(stderr, "first-stage F(%d, %d) = %g\n", dfn, dfd, F);
-#endif
 }
 
 /**
