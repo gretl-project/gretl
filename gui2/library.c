@@ -2758,7 +2758,6 @@ int do_model (selector *sr)
 
     case TSLS:
 	*pmod = tsls_func(cmd.list, TSLS, &Z, datainfo, cmd.opt);
-	fprintf(stderr, "pmod->errcode = %d\n", pmod->errcode);
 	err = model_output(pmod, prn);
 	break;
 

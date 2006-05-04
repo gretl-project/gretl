@@ -778,6 +778,43 @@ reglist_remove_redundant_vars (const MODEL *tmod, int *s2list, int *reglist)
     return 0;
 }
 
+static void compute_first_stage_F (MODEL *pmod, int v, int fitv, 
+				   gretl_matrix *Q, 
+				   double **Z, DATAINFO *pdinfo)
+{
+    int n = gretl_matrix_rows(Q);
+    int k = gretl_matrix_cols(Q);
+    int ifc = pmod->ifc;
+    double essr = 0.0, essu = 0.0;
+    double x, F, ybar = 0.0;
+    int t, dfr, dfu;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	ybar += Z[v][t];
+    }
+
+    ybar /= n;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	x = Z[v][t] - ybar;
+	essr += x * x;
+	x = Z[v][t] - Z[fitv][t];
+	essu += x * x;
+    }  
+
+    dfu = n - k;
+    dfr = k - ifc;
+
+    F = ((essr - essu) / dfr) / (essu / dfu);
+
+    /* FIXME: check, then enable output on printing TSLS model */
+
+    gretl_model_set_double(pmod, "first-stage-F", F);
+#if 1
+    fprintf(stderr, "first-stage F(%d, %d) = %g\n", dfr, dfu, F);
+#endif
+}
+
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
@@ -807,7 +844,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     int *exolist = NULL;
     int *droplist = NULL;
     int pos, orig_nvar = pdinfo->v;
-    int rlen, ninst;
+    int rlen, ninst, ev = 0;
     int OverIdRank = 0;
     int i;
 
@@ -931,6 +968,11 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
        into the data matrix Z.
     */
 
+    /* prepare for first-stage F-test, if only one endogenous regressor */
+    if (hatlist[0] == 1) {
+	ev = hatlist[1];
+    }    
+
     for (i=1; i<=hatlist[0]; i++) {
 	int orig = hatlist[i];
 	int newv = orig_nvar + i - 1;
@@ -958,6 +1000,10 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     if (tsls.errcode) {
 	goto bailout;
     }
+
+    if (hatlist[0] == 1) {
+	compute_first_stage_F(&tsls, ev, hatlist[1], Q, *pZ, pdinfo);
+    } 
 
     if (tsls.list[0] < s2list[0]) {
 	/* collinear regressors dropped? If so, adjustments are needed */

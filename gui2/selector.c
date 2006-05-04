@@ -3792,6 +3792,11 @@ static int data_save_selection_callback (selector *sr)
 void data_save_selection_wrapper (int file_code, gpointer p)
 {
     if (file_code == SAVE_FUNCTIONS) {
+	if (n_user_functions() == 0) {
+	    errbox("No user-defined functions are currently loaded.\n"
+		   "Please load or define some functions first.");
+	    return;
+	}
 	selection_dialog(_("Save functions"), 
 			 data_save_selection_callback, file_code, 0);
     } else {

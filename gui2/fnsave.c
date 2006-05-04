@@ -59,6 +59,18 @@ struct login_info {
     int canceled;
 };
 
+static const char *fnsave_filename;
+
+static void set_fnsave_filename (const char *fname)
+{
+    fnsave_filename = fname;
+}
+
+const char *get_fnsave_filename (void)
+{
+    return fnsave_filename;
+}
+
 struct function_info *finfo_new (void)
 {
     struct function_info *finfo;
@@ -409,7 +421,7 @@ static void finfo_dialog (struct function_info *finfo)
     finfo->text = create_text(finfo->dlg, -1, -1, TRUE);
 #ifdef OLD_GTK
     tbl = text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
-    gtk_widget_set_usize(tbl, 500, 300); /* ?? */
+    gtk_widget_set_usize(finfo->dlg, 640, 440);
 #else
     text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
     gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 440);
@@ -629,6 +641,7 @@ void prepare_functions_save (void)
     if (finfo->canceled) {
 	finfo_free(finfo);
     } else {
+	set_fnsave_filename(NULL);
 	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
 		      FSEL_DATA_MISC, finfo);
     }
@@ -669,7 +682,7 @@ void edit_function_package (const char *fname)
     if (finfo->canceled) {
 	finfo_free(finfo);
     } else {
-	/* FIXME need to pass existing filename to selector */
+	set_fnsave_filename(fname);
 	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
 		      FSEL_DATA_MISC, finfo);
     }    

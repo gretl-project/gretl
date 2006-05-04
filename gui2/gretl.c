@@ -1255,11 +1255,11 @@ static void sort_varlist (gpointer p, guint col, GtkWidget *w)
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
 
     gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 0,
-				     compare_var_ids, NULL, NULL);
+				    compare_var_ids, NULL, NULL);
     gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(model), 1,
-				     compare_varnames, NULL, NULL);
+				    compare_varnames, NULL, NULL);
     gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(model), 
-					  col, GTK_SORT_ASCENDING);
+					 col, GTK_SORT_ASCENDING);
 }
 
 void clear_varlist (GtkWidget *widget)
@@ -1434,19 +1434,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     return main_vbox;
 }
 
-static gboolean check_function_save_state (void)
-{
-    if (mdata->ifac != NULL) {
-	gboolean s = n_user_functions() > 0;
-
-#if 0
-	flip(mdata->ifac, "/Utilities/Function package editor", s);
-#endif
-    }
-
-    return FALSE;
-}
-
 static void set_up_main_menu (void)
 {
     GtkAccelGroup *accel_group;
@@ -1462,9 +1449,6 @@ static void set_up_main_menu (void)
 #endif    
     gtk_item_factory_create_items(mdata->ifac, n_items, data_items, NULL);
     mdata->mbar = gtk_item_factory_get_widget(mdata->ifac, "<main>");
-
-    g_signal_connect(G_OBJECT(mdata->mbar), "button_press_event", 
-		     G_CALLBACK(check_function_save_state), NULL);
 }
 
 int gui_restore_sample (void)
@@ -1527,8 +1511,10 @@ int gretl_fork (const char *prog, const char *arg)
 
 #endif	
 
-/* Icon handling for X */
+/* Icon handling for X11 */
+
 #ifndef G_OS_WIN32
+
 void set_wm_icon (GtkWidget *w, gpointer data)
 {
     GdkPixmap *icon;
@@ -1536,9 +1522,11 @@ void set_wm_icon (GtkWidget *w, gpointer data)
     icon = gdk_pixmap_create_from_xpm_d(w->window, NULL, NULL, gretl_xpm);
     gdk_window_set_icon(w->window, NULL, icon, NULL);
 }
+
 #endif
 
 /* Drag 'n' drop */
+
 static void  
 drag_data_received  (GtkWidget *widget,
 		     GdkDragContext *context,
@@ -1663,9 +1651,10 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
     GdkModifierType mods;
 
-    /* ignore all but right-clicks */
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
+
     if (mods & GDK_BUTTON3_MASK) {
+	/* ignore all but right-clicks */
 	int selcount = mdata_selection_count();
 
 	if (mdata->popup) {

@@ -283,7 +283,12 @@ GtkItemFactoryEntry data_items[] = {
     { "/Utilities/sep", NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL },
     { "/Utilities/sep2", NULL, NULL, 0, "<Separator>" },
-    { N_("/Utilities/Function packager"), NULL, file_save, SAVE_FUNCTIONS, NULL },
+
+    { N_("/Utilities/Function package editor"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Utilities/Function package editor/existing package"), NULL, display_files, 
+      FUNC_EDIT, NULL },
+    { N_("/Utilities/Function package editor/new package"), NULL, file_save, 
+      SAVE_FUNCTIONS, NULL },
     { "/Utilities/sep3", NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Start GNU R"), NULL, startRcallback, 0, NULL },
     { N_("/Utilities/NIST test suite"), NULL, NULL, 0, "<Branch>" },
@@ -1227,17 +1232,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     return main_vbox;
 }
 
-static gboolean check_function_save_state (void)
-{
-    if (mdata->ifac != NULL) {
-	gboolean s = n_user_functions() > 0;
-
-	flip(mdata->ifac, "/Utilities/Function packager", s);
-    }
-
-    return FALSE;
-}
-
 static void set_up_main_menu (void)
 {
     GtkAccelGroup *main_accel;
@@ -1250,12 +1244,9 @@ static void set_up_main_menu (void)
 #ifdef ENABLE_NLS
     gtk_item_factory_set_translate_func(mdata->ifac, menu_translate, NULL, NULL);
 #endif    
-    gtk_item_factory_create_items (mdata->ifac, n_items, data_items, NULL);
-    mdata->mbar = gtk_item_factory_get_widget (mdata->ifac, "<main>");
-    gtk_accel_group_attach(main_accel, GTK_OBJECT (mdata->w));
-
-    g_signal_connect(G_OBJECT(mdata->mbar), "button_press_event", 
-		     G_CALLBACK(check_function_save_state), NULL);
+    gtk_item_factory_create_items(mdata->ifac, n_items, data_items, NULL);
+    mdata->mbar = gtk_item_factory_get_widget(mdata->ifac, "<main>");
+    gtk_accel_group_attach(main_accel, GTK_OBJECT(mdata->w));
 }
 
 int gui_restore_sample (void)

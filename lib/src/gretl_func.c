@@ -976,6 +976,29 @@ static fnpkg *ufunc_get_parent_package (const ufunc *fun)
     return NULL;
 }
 
+static char *make_pkgname (const char *fname)
+{
+    char *p = strrchr(fname, SLASH);
+    char *ret;
+
+    if (p != NULL) {
+	ret = gretl_strdup(p + 1);
+    } else {
+	ret = gretl_strdup(fname);
+    }
+
+    if (ret == NULL) {
+	return NULL;
+    }
+
+    p = strstr(ret, ".gfn");
+    if (p != NULL) {
+	*p = 0;
+    }
+
+    return ret;
+}
+
 int gretl_function_get_info (int i, const char *key, char const **value)
 {
     if (i < 0 || i >= n_ufuns) {
@@ -1008,29 +1031,6 @@ void gretl_function_set_private (int i, int priv)
     if (i >= 0 && i < n_ufuns) {
 	ufuns[i]->private = (priv != 0);
     }
-}
-
-static char *make_pkgname (const char *fname)
-{
-    char *p = strrchr(fname, SLASH);
-    char *ret;
-
-    if (p != NULL) {
-	ret = gretl_strdup(p + 1);
-    } else {
-	ret = gretl_strdup(fname);
-    }
-
-    if (ret == NULL) {
-	return NULL;
-    }
-
-    p = strstr(ret, ".gfn");
-    if (p != NULL) {
-	*p = 0;
-    }
-
-    return ret;
 }
 
 int write_selected_user_functions (const int *privlist, 
