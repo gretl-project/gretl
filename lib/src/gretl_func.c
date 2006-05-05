@@ -2388,7 +2388,7 @@ int gretl_function_append_line (const char *line)
     return err;
 }
 
-/* FIXME needs work below */
+/* FIXME needs work below! */
 
 int update_function_from_script (const char *fname, int idx)
 {
@@ -2406,6 +2406,9 @@ int update_function_from_script (const char *fname, int idx)
     if (fp == NULL) {
 	return E_FOPEN;
     }
+
+    fprintf(stderr, "Going to update function id %d from %s\n",
+	    idx, fname);
 
     while (fgets(line, sizeof line, fp) && !err) {
 	s = line;
@@ -2431,6 +2434,8 @@ int update_function_from_script (const char *fname, int idx)
 
 	if (ichk != idx) {
 	    strcpy(gretl_errmsg, "Function name has been changed!");
+	    fprintf(stderr, "idx = %d, but user_function_index_by_name() "
+		    "gives %d for '%s'\n", idx, ichk, current_ufun->name);
 	    err = 1;
 	}
     }

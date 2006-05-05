@@ -1426,7 +1426,7 @@ static void update_func_code (windata_t *vwin)
     /* callback used when editing a function in the context of
        the "function package editor" */
 	
-    iface = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->w), "inface"));
+    iface = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->w), "iface"));
     err = update_function_from_script(vwin->fname, iface);
     if (err) {
 	gui_errmsg(err);

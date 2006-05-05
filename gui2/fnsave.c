@@ -200,17 +200,8 @@ static int help_text_index (function_info *finfo)
 
 static void login_finalize (GtkWidget *w, login_info *linfo)
 {
-    const gchar *txt;
-
-    txt = gtk_entry_get_text(GTK_ENTRY(linfo->login_entry));
-    if (txt != NULL && *txt != '\0') {
-	linfo->login = trim_text(txt);
-    }
-
-    txt = gtk_entry_get_text(GTK_ENTRY(linfo->pass_entry));
-    if (txt != NULL && *txt != '\0') {
-	linfo->pass = trim_text(txt);
-    }
+    linfo->login = entry_box_get_trimmed_text(linfo->login_entry);
+    linfo->pass = entry_box_get_trimmed_text(linfo->pass_entry);
 
     gtk_widget_destroy(linfo->dlg);
 }
@@ -223,17 +214,13 @@ static void finfo_finalize (GtkWidget *w, function_info *finfo)
 	finfo->date,
 	finfo->pkgdesc
     };
-    const gchar *txt;
     int i, hidx = 0;
     int err = 0;
 
     for (i=0; i<NENTRIES && !err; i++) {
 	free(fields[i]);
-	fields[i] = NULL;
-	txt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
-	if (txt != NULL && *txt != '\0') {
-	    fields[i] = trim_text(txt);
-	} else {
+	fields[i] = entry_box_get_trimmed_text(finfo->entries[i]);
+	if (fields[i] == NULL) {
 	    err = 1;
 	}
     }

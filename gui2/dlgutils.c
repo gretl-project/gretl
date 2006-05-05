@@ -855,4 +855,33 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     if (modal) {
 	gretl_set_window_modal(d->dialog);
     }
-} 
+}
+
+char *entry_box_get_trimmed_text (GtkWidget *w)
+{
+    const gchar *s = gtk_entry_get_text(GTK_ENTRY(w));
+    char *ret = NULL;
+    int i, len;
+
+    if (s == NULL || *s == '\0') {
+	return NULL;
+    }
+
+    while (isspace(*s)) s++;
+    if (*s == '\0') {
+	return NULL;
+    }
+
+    len = strlen(s);
+    for (i=len-1; i>0; i--) {
+	if (!isspace(s[i])) break;
+	len--;
+    }
+
+    if (len > 0) {
+	ret = g_strndup(s, len);
+    }
+
+    return ret;
+}
+

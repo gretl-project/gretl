@@ -129,41 +129,14 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt, int center)
     return hbox;
 }
 
-static char *trim_text (const char *s)
-{
-    char *ret = NULL;
-    int i, len;
-
-    while (isspace(*s)) s++;
-    if (*s == '\0') return NULL;
-
-    len = strlen(s);
-    for (i=len-1; i>0; i--) {
-	if (!isspace(s[i])) break;
-	len--;
-    }
-
-    if (len > 0) {
-	ret = g_strndup(s, len);
-    }
-
-    return ret;
-}
-
 static gboolean update_arg (GtkEditable *entry, 
 			    call_info *cinfo)
 {
     int i = 
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(entry), "argnum"));
-    const char *arg;
 
     free(cinfo->args[i]);
-    cinfo->args[i] = NULL;
-
-    arg = gtk_entry_get_text(GTK_ENTRY(entry));
-    if (arg != NULL && *arg != '\0') {
-	cinfo->args[i] = trim_text(arg);
-    }
+    cinfo->args[i] = entry_box_get_trimmed_text(GTK_WIDGET(entry));
 
     return FALSE;
 }
@@ -173,15 +146,9 @@ static gboolean update_return (GtkEditable *entry,
 {
     int i = 
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(entry), "retnum"));
-    const char *ret;
 
     free(cinfo->rets[i]);
-    cinfo->rets[i] = NULL;
-
-    ret = gtk_entry_get_text(GTK_ENTRY(entry));
-    if (ret != NULL && *ret != '\0') {
-	cinfo->rets[i] = trim_text(ret);
-    }
+    cinfo->rets[i] = entry_box_get_trimmed_text(GTK_WIDGET(entry));
 
     return FALSE;
 }
@@ -219,6 +186,26 @@ static GList *get_selection_list (int type)
     }
 
     return list;
+}
+
+static void fncall_help (GtkWidget *w, call_info *cinfo)
+{
+    const char *fnname = 
+	user_function_name_by_index(cinfo->iface);
+    PRN *prn;
+    int err;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+    
+    err = user_function_help(fnname, prn);
+    if (err) {
+	gretl_print_destroy(prn);
+	errbox("Couldn't get help");
+    } else {
+	view_buffer(prn, 80, 400, "help", PRINT, NULL);
+    }
 }
 
 static void function_call_dialog (call_info *cinfo)
@@ -304,6 +291,14 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(tbl);
     }
 
+    if (cinfo->n_params > 0 && cinfo->n_returns > 0) {
+	GtkWidget *hsep = gtk_hseparator_new();
+
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
+			   hsep, FALSE, FALSE, 5);
+	gtk_widget_show(hsep);
+    }
+
     /* function return(s) assignment */
 
     if (cinfo->n_returns > 0) {
@@ -321,7 +316,7 @@ static void function_call_dialog (call_info *cinfo)
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
 
-	label = gtk_label_new("selection");
+	label = gtk_label_new("selection (or new variable)");
 	gtk_table_attach(GTK_TABLE(tbl), label, 1, 2, 0, 1,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
@@ -365,6 +360,15 @@ static void function_call_dialog (call_info *cinfo)
 		     G_CALLBACK(fncall_cancel), cinfo);
     gtk_widget_show(button);
 
+    /* Help button */
+    button = standard_button(GTK_STOCK_HELP);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->action_area), 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT (button), "clicked", 
+		     G_CALLBACK(fncall_help), cinfo);
+    gtk_widget_show(button);    
+
     gtk_widget_show(cinfo->dlg);
 }
 
@@ -372,17 +376,13 @@ static int check_args_and_rets (call_info *cinfo)
 {
     int i;
 
-    /* FIXME error messages */
-
-    if (cinfo->n_params > 0 && cinfo->args == NULL) {
-	errbox("Out of memory!");
-	return 1;
-    }
-
-    for (i=0; i<cinfo->n_params; i++) {
-	if (cinfo->args[i] == NULL) {
-	    errbox("Argument %d is missing", i+1);
-	    return 1;
+    if (cinfo->args != NULL) {
+	for (i=0; i<cinfo->n_params; i++) {
+	    if (cinfo->args[i] == NULL) {
+		errbox("Argument %d (%s) is missing", i + 1,
+		       cinfo->param_names[i]);
+		return 1;
+	    }
 	}
     }
 
@@ -395,7 +395,7 @@ static int check_args_and_rets (call_info *cinfo)
 	    }
 	}
 	if (nr > 0 && nr < cinfo->n_returns) {
-	    errbox("One or more return value is not assigned");
+	    errbox("You should assign all return values, or none");
 	    return E_DATA;
 	}
     }    
@@ -488,7 +488,9 @@ void call_function_package (const char *fname)
 	return;
     }	
 
-    /* FIXME selecting an interface */
+    /* FIXME selection of interface, if there's more than one
+       available
+    */
     cinfo.iface = cinfo.publist[1];
 
     err = gretl_func_param_info_by_index(cinfo.iface,
@@ -497,7 +499,7 @@ void call_function_package (const char *fname)
 					 &cinfo.param_names);
 
     if (err) {
-	errbox("Error reading function info");
+	errbox("Couldn't get function package information");
 	return;
     }
 
@@ -506,7 +508,7 @@ void call_function_package (const char *fname)
 					  &cinfo.return_types);
 
     if (err) {
-	errbox("Error reading function info");
+	errbox("Couldn't get function package information");
 	return;
     }
 
