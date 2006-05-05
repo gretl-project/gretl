@@ -28,6 +28,7 @@
 #include "webget.h"
 #include "menustate.h"
 #include "fnsave.h"
+#include "fncall.h"
 
 #include "gretl_xml.h"
 #include "gretl_func.h"
@@ -704,7 +705,8 @@ enum {
     VIEW_FN_PKG,
     LOAD_FN_PKG,
     EDIT_FN_PKG,
-    DELETE_FN_PKG
+    DELETE_FN_PKG,
+    CALL_FN_PKG
 };
 
 static void gui_load_user_functions (const char *fname)
@@ -820,6 +822,9 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == EDIT_FN_PKG) {
 	gtk_widget_destroy(vwin->w);
 	edit_function_package(fnfile);
+    } else if (task == CALL_FN_PKG) {
+	gtk_widget_destroy(vwin->w);
+	call_function_package(fnfile);
     }
 }
 
@@ -835,7 +840,14 @@ void browser_edit_func (GtkWidget *w, gpointer data)
     windata_t *vwin = (windata_t *) data;
 
     browser_functions_handler(vwin, EDIT_FN_PKG);
-} 
+}
+
+void browser_call_func (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    browser_functions_handler(vwin, CALL_FN_PKG);
+}
 
 static void display_function_info (GtkWidget *w, gpointer data)
 {
@@ -912,6 +924,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     const gchar *label;
     void (*browse_func)() = NULL;
     void (*delete_func)() = NULL;
+    void (*call_func)() = NULL;
     int err = 0;
 
     if (browser_busy(code)) {
@@ -951,6 +964,9 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	browse_func = (code == FUNC_EDIT)? browser_edit_func : NULL;
 #endif
 	delete_func = browser_del_func;
+	if (code == FUNC_FILES) {
+	    call_func = browser_call_func;
+	}
 	break;
     case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
@@ -1050,6 +1066,13 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(datafile_find), vwin);
 	}
+    }
+
+    if (call_func != NULL) {
+	button = gtk_button_new_with_label(_("Call"));
+	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(call_func), vwin);
     }
 
     if (delete_func != NULL) {

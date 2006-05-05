@@ -68,6 +68,15 @@ gretl_matrix *user_matrix_by_index (int i, const char **name)
     }
 }
 
+const char *get_matrix_name_by_index (int idx)
+{
+    if (idx >= 0 && idx < n_matrices) {
+	return matrices[idx]->name;
+    } else {
+	return NULL;
+    }
+}
+
 static void 
 usermat_publish_dataset (double ***pZ, DATAINFO *pdinfo)
 {

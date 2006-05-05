@@ -93,6 +93,34 @@ static saved_list *get_saved_list_by_name (const char *name)
 }
 
 /**
+ * n_saved_lists:
+ *
+ * Returns: the number of saved (named) lists currently defined.
+ */
+
+int n_saved_lists (void)
+{
+    return n_lists;
+}
+
+/**
+ * get_list_name_by_index:
+ * @idx: 0-based index into array of saved lists.
+ *
+ * Returns: the name of the specified saved list, or %NULL if
+ * @idx is out of bounds.
+ */
+
+const char *get_list_name_by_index (int idx)
+{
+    if (idx >= 0 && idx < n_lists) {
+	return list_stack[idx]->name;
+    } else {
+	return NULL;
+    }
+}
+
+/**
  * get_list_by_name:
  * @name: the name of the list to be found.
  *

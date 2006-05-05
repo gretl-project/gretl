@@ -20,7 +20,24 @@
 #ifndef GRETL_FUNC_H
 #define GRETL_FUNC_H
 
+typedef enum {
+    ARG_NONE = 0,
+    ARG_SCALAR,
+    ARG_SERIES,
+    ARG_LIST,
+    ARG_MATRIX
+} FuncArgTypes;
+
 int n_user_functions (void);
+
+int gretl_func_param_info_by_index (int idx,
+				    int *n_params,
+				    char const **param_types,
+				    char const ***param_names);
+
+int gretl_func_return_info_by_index (int idx,
+				     int *n_returns,
+				     char const **return_types);
 
 const char *user_function_name_by_index (int i);
 

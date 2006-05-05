@@ -32,7 +32,10 @@
 
 #define NENTRIES 4
 
-struct function_info {
+typedef struct function_info_ function_info;
+typedef struct login_info_ login_info;
+
+struct function_info_ {
     GtkWidget *dlg;
     GtkWidget *entries[NENTRIES];
     GtkWidget *text;
@@ -52,7 +55,7 @@ struct function_info {
     int canceled;
 };
 
-struct login_info {
+struct login_info_ {
     GtkWidget *dlg;
     GtkWidget *login_entry;
     GtkWidget *pass_entry;
@@ -73,9 +76,9 @@ const char *get_fnsave_filename (void)
     return fnsave_filename;
 }
 
-struct function_info *finfo_new (void)
+function_info *finfo_new (void)
 {
-    struct function_info *finfo;
+    function_info *finfo;
 
     finfo = mymalloc(sizeof *finfo);
     if (finfo == NULL) {
@@ -98,7 +101,7 @@ struct function_info *finfo_new (void)
     return finfo;
 }
 
-static int finfo_init (struct function_info *finfo)
+static int finfo_init (function_info *finfo)
 {
     finfo->n_public = finfo->publist[0];
 
@@ -112,7 +115,7 @@ static int finfo_init (struct function_info *finfo)
     return 0;
 }
 
-static void finfo_free (struct function_info *finfo)
+static void finfo_free (function_info *finfo)
 {
     free(finfo->author);
     free(finfo->version);
@@ -126,7 +129,7 @@ static void finfo_free (struct function_info *finfo)
     free(finfo);
 }
 
-static void login_init_or_free (struct login_info *linfo, int freeit)
+static void login_init_or_free (login_info *linfo, int freeit)
 {
     static char *login;
     static char *pass;
@@ -147,12 +150,12 @@ static void login_init_or_free (struct login_info *linfo, int freeit)
     }
 }
 
-static void login_init (struct login_info *linfo)
+static void login_init (login_info *linfo)
 {
     login_init_or_free(linfo, 0);
 }
 
-static void linfo_free (struct login_info *linfo)
+static void linfo_free (login_info *linfo)
 {
     login_init_or_free(linfo, 1);
 }
@@ -178,7 +181,7 @@ static char *trim_text (const char *s)
     return ret;
 }
 
-static int help_text_index (struct function_info *finfo)
+static int help_text_index (function_info *finfo)
 {
     const char *fname;
     int i, idx;
@@ -195,7 +198,7 @@ static int help_text_index (struct function_info *finfo)
     return -1;
 }
 
-static void login_finalize (GtkWidget *w, struct login_info *linfo)
+static void login_finalize (GtkWidget *w, login_info *linfo)
 {
     const gchar *txt;
 
@@ -212,7 +215,7 @@ static void login_finalize (GtkWidget *w, struct login_info *linfo)
     gtk_widget_destroy(linfo->dlg);
 }
 
-static void finfo_finalize (GtkWidget *w, struct function_info *finfo)
+static void finfo_finalize (GtkWidget *w, function_info *finfo)
 {
     char *fields[] = {
 	finfo->author,
@@ -257,19 +260,19 @@ static void finfo_finalize (GtkWidget *w, struct function_info *finfo)
     gtk_widget_destroy(finfo->dlg);
 }
 
-static void login_cancel (GtkWidget *w, struct login_info *linfo)
+static void login_cancel (GtkWidget *w, login_info *linfo)
 {
     linfo->canceled = 1;
     gtk_widget_destroy(linfo->dlg);
 }
 
-static void finfo_cancel (GtkWidget *w, struct function_info *finfo)
+static void finfo_cancel (GtkWidget *w, function_info *finfo)
 {
     finfo->canceled = 1;
     gtk_widget_destroy(finfo->dlg);
 }
 
-static void finfo_delete (GtkWidget *w, struct function_info *finfo)
+static void finfo_delete (GtkWidget *w, function_info *finfo)
 {
     finfo->canceled = 1;
 }
@@ -279,8 +282,8 @@ enum {
     HIDX_SWITCH
 };
 
-static void set_dialog_info_from_fn (struct function_info *finfo, int idx,
-				     int code)
+static void 
+set_dialog_info_from_fn (function_info *finfo, int idx, int code)
 {
     const char *attrib = NULL;
     const char *keys[] = {
@@ -331,7 +334,7 @@ static void set_dialog_info_from_fn (struct function_info *finfo, int idx,
 }
 
 static gboolean update_public (GtkEditable *entry, 
-			       struct function_info *finfo)
+			       function_info *finfo)
 {
     const char *fnname;
     int idx;
@@ -349,7 +352,7 @@ static gboolean update_public (GtkEditable *entry,
 }
 
 static gboolean update_iface (GtkEditable *entry, 
-			      struct function_info *finfo)
+			      function_info *finfo)
 {
     const char *fnname;
     int idx;
@@ -366,7 +369,7 @@ static gboolean update_iface (GtkEditable *entry,
     return FALSE;
 }
 
-static void edit_code_callback (GtkWidget *w, struct function_info *finfo)
+static void edit_code_callback (GtkWidget *w, function_info *finfo)
 {
     
     windata_t *vwin;
@@ -441,7 +444,7 @@ enum {
     IFACE_ALL
 };
 
-static GtkWidget *interface_selector (struct function_info *finfo, int iface)
+static GtkWidget *interface_selector (function_info *finfo, int iface)
 {
     GList *fn_list = NULL;
     GtkWidget *combo;
@@ -474,7 +477,7 @@ static GtkWidget *interface_selector (struct function_info *finfo, int iface)
     return combo;
 }
 
-static void finfo_dialog (struct function_info *finfo)
+static void finfo_dialog (function_info *finfo)
 {
     GtkWidget *button, *label;
     GtkWidget *tbl, *hbox;
@@ -497,7 +500,7 @@ static void finfo_dialog (struct function_info *finfo)
 	return;
     }
 
-    finfo->dlg = gretl_dialog_new(_("gretl: function packager"), NULL, 
+    finfo->dlg = gretl_dialog_new(_("gretl: function package editor"), NULL, 
 				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
 
     /* FIXME want label at top of dialog? */
@@ -608,7 +611,7 @@ static void web_get_login (GtkWidget *w, gpointer p)
     browser_open("http://ricardo.ecn.wfu.edu/gretl/apply/");
 }
 
-static void login_dialog (struct login_info *linfo)
+static void login_dialog (login_info *linfo)
 {
     GtkWidget *button, *label;
     GtkWidget *tbl, *hbox;
@@ -691,7 +694,7 @@ static void login_dialog (struct login_info *linfo)
 
 static void do_upload (const char *fname)
 {
-    struct login_info linfo;
+    login_info linfo;
     char errbuf[128];
 
     login_dialog(&linfo);
@@ -711,7 +714,7 @@ static void do_upload (const char *fname)
 
 void save_user_functions (const char *fname, gpointer p)
 {
-    struct function_info *finfo = p;
+    function_info *finfo = p;
     int i, err;
 
     if (finfo->privlist != NULL) {
@@ -748,7 +751,7 @@ void save_user_functions (const char *fname, gpointer p)
 
 void prepare_functions_save (void)
 {
-    struct function_info *finfo;
+    function_info *finfo;
     int *list = NULL;
 
     if (storelist == NULL) {
@@ -795,7 +798,7 @@ void prepare_functions_save (void)
 
 void edit_function_package (const char *fname)
 {
-    struct function_info *finfo;
+    function_info *finfo;
     int err = 0;
 
     if (!user_function_file_is_loaded(fname)) {

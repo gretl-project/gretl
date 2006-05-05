@@ -86,6 +86,10 @@ int gretl_list_duplicates (const int *list, GretlCmdIndex ci);
 
 int *full_var_list (const DATAINFO *pdinfo, int *nvars);
 
+int n_saved_lists (void);
+
+const char *get_list_name_by_index (int idx);
+
 int *get_list_by_name (const char *name);
 
 int remember_list (const int *list, const char *name, PRN *prn);

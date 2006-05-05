@@ -24,6 +24,8 @@ int n_user_matrices (void);
 
 gretl_matrix *user_matrix_by_index (int i, const char **name);
 
+const char *get_matrix_name_by_index (int idx);
+
 gretl_matrix *get_matrix_by_name (const char *name, const DATAINFO *pdinfo);
 
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level,

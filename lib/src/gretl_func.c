@@ -34,14 +34,6 @@ typedef struct fnpkg_ fnpkg;
 #define FN_NAMELEN 32
 
 enum {
-    ARG_NONE = 0,
-    ARG_SCALAR,
-    ARG_SERIES,
-    ARG_LIST,
-    ARG_MATRIX
-};
-
-enum {
     FN_PARAMS,
     FN_RETURNS
 };
@@ -141,6 +133,36 @@ static void set_executing_off (fncall *call)
 int n_user_functions (void)
 {
     return n_ufuns;
+}
+
+int gretl_func_param_info_by_index (int idx,
+				    int *n_params,
+				    char const **param_types,
+				    char const ***param_names)
+{
+    if (idx < 0 || idx >= n_ufuns) {
+	return 1;
+    }
+
+    *n_params = ufuns[idx]->n_params;
+    *param_types = ufuns[idx]->ptype;
+    *param_names = (char const **) ufuns[idx]->params;
+
+    return 0;
+}
+
+int gretl_func_return_info_by_index (int idx,
+				     int *n_returns,
+				     char const **return_types)
+{
+    if (idx < 0 || idx >= n_ufuns) {
+	return 1;
+    }
+
+    *n_returns = ufuns[idx]->n_returns;
+    *return_types = ufuns[idx]->rtype;
+
+    return 0;
 }
 
 const char *user_function_name_by_index (int i)

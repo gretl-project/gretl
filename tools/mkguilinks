@@ -24,6 +24,7 @@ for f in \
   dlgutils.c dlgutils.h \
   filelists.c filelists.h \
   fileselect.c fileselect.h \
+  fncall.c fncall.h \
   fnsave.c fnsave.h \
   graph_page.c graph_page.h \
   gpt_control.c gpt_control.h \

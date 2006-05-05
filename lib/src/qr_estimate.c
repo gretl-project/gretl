@@ -21,6 +21,7 @@
 #include "qr_estimate.h"
 #include "gretl_matrix.h"
 #include "libset.h"
+#include "estim_private.h"
 
 #include "f2c.h"
 #include "clapack_double.h"
@@ -32,9 +33,6 @@
    Columns of data matrix X hold variables, rows hold observations.
    So in a fortran array, entries for a given variable are contiguous.
 */
-
-/* in estimate.c */
-extern int check_for_effective_const (MODEL *pmod, const double *y);
 
 static double qr_get_tss (MODEL *pmod, const double *y, int *ifc)
 {

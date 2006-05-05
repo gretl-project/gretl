@@ -5973,6 +5973,9 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     }
 
     if (gretl_compiling_function()) {
+#if CMD_DEBUG
+	fprintf(stderr, "gui_exec_line: compiling function\n");
+#endif
 	err = gretl_function_append_line(line);
 	if (err) {
 	    errmsg(err, prn);
@@ -5991,10 +5994,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	return 1;
     }
 
-#if CMD_DEBUG
-    fprintf(stderr, "gui_exec_line: '%s'\n", line);
-#endif
-
     *linecopy = 0;
     strncat(linecopy, line, sizeof linecopy - 1);
 
@@ -6004,6 +6003,10 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     } else {
 	err = parse_command_line(line, &cmd, &Z, datainfo);
     }
+
+#if CMD_DEBUG
+    fprintf(stderr, "gui_exec_line: '%s'\n cmd.ci = %d\n", line, cmd.ci);
+#endif
 
     if (err) {
         errmsg(err, prn);
