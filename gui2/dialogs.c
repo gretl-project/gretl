@@ -2809,6 +2809,11 @@ void errbox (const char *template, ...)
     char msg[MAXLEN];
     va_list args;
 
+    if (template == NULL) {
+	msgbox("Error", 1);
+	return;
+    }
+
     va_start(args, template);
     vsprintf(msg, template, args);
     va_end(args);

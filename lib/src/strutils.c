@@ -1422,6 +1422,8 @@ const char *path_last_element (const char *path)
 
     if (p == NULL) {
 	p = path;
+    } else {
+	p++;
     }
 
     return p;

@@ -823,8 +823,7 @@ static void browser_functions_handler (windata_t *vwin, int task)
 	gtk_widget_destroy(vwin->w);
 	edit_function_package(fnfile);
     } else if (task == CALL_FN_PKG) {
-	gtk_widget_destroy(vwin->w);
-	call_function_package(fnfile);
+	call_function_package(fnfile, vwin->w);
     }
 }
 
@@ -963,9 +962,10 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 #else
 	browse_func = (code == FUNC_EDIT)? browser_edit_func : NULL;
 #endif
-	delete_func = browser_del_func;
 	if (code == FUNC_FILES) {
 	    call_func = browser_call_func;
+	} else {
+	    delete_func = browser_del_func;
 	}
 	break;
     case TEXTBOOK_DATA:
@@ -1060,7 +1060,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 			 (code == FUNC_FILES || code == FUNC_EDIT)? 
 			 G_CALLBACK(display_function_info) :
 			 G_CALLBACK(display_datafile_info), vwin);
-	if (code != FUNC_EDIT) {
+	if (code != FUNC_EDIT && code != FUNC_FILES) {
 	    button = gtk_button_new_with_label(_("Find"));
 	    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	    g_signal_connect(G_OBJECT(button), "clicked",

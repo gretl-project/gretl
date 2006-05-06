@@ -682,18 +682,19 @@ static void login_dialog (login_info *linfo)
 static void do_upload (const char *fname)
 {
     login_info linfo;
-    char errbuf[128];
 
     login_dialog(&linfo);
 
     if (!linfo.canceled) {
+	char *errbuf = NULL;
 	int err = upload_function_package(linfo.login,
 					  linfo.pass,
 					  fname,
-					  errbuf);
+					  &errbuf);
 	if (err) {
 	    errbox(errbuf);
 	}
+	free(errbuf);
     }
 
     linfo_free(&linfo);

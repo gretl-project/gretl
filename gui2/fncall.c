@@ -464,7 +464,22 @@ static int fn_executor (char *fnline, PRN *prn)
     return err;
 } 
 
-void call_function_package (const char *fname)
+static int function_data_check (call_info *cinfo)
+{
+    int i;
+
+    if (datainfo == NULL || datainfo->v == 0) {
+	for (i=0; i<cinfo->n_params; i++) {
+	    if (cinfo->param_types[i] == ARG_SERIES) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+void call_function_package (const char *fname, GtkWidget *w)
 {
     char fnline[MAXLINE];
     const char *fnname;
@@ -493,7 +508,7 @@ void call_function_package (const char *fname)
 
     if (cinfo.publist == NULL || cinfo.publist[0] == 0) {
 	free(cinfo.publist);
-	errbox("error");
+	errbox("Function package is broken");
 	return;
     }	
 
@@ -509,6 +524,12 @@ void call_function_package (const char *fname)
 
     if (err) {
 	errbox("Couldn't get function package information");
+	return;
+    }
+
+    if (function_data_check(&cinfo)) {
+	errbox(_("Please open a data file first"));
+	cinfo_free(&cinfo);
 	return;
     }
 
@@ -530,6 +551,9 @@ void call_function_package (const char *fname)
 	cinfo_free(&cinfo);
 	return;
     }
+
+    /* kill the launcher window */
+    gtk_widget_destroy(w);
 
     fnname = user_function_name_by_index(cinfo.iface);
     *fnline = 0;

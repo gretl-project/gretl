@@ -48,7 +48,7 @@ int retrieve_manfile (const char *fname,
 		      char *errbuf);
 
 int upload_function_package (const char *login, const char *pass, 
-			     const char *fullname, char *errbuf);
+			     const char *fullname, char **errbuf);
 
 int update_query (void);
 

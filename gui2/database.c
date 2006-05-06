@@ -153,7 +153,8 @@ static void show_network_error (windata_t *vwin, char *buf)
 static int get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo, 
 			       double **Z)
 {
-    char *getbuf, errbuf[80];
+    char *getbuf = NULL;
+    char errbuf[80];
     char *dbbase = vwin->fname;
     int t, err, n = sinfo->nobs;
     dbnumber val;
@@ -164,12 +165,6 @@ static int get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo,
 
     *errbuf = '\0';
 
-    getbuf = mymalloc(GRETL_BUFSIZE);
-    if (getbuf == NULL) {
-	return DB_NOT_FOUND;
-    }
-
-    memset(getbuf, 0, GRETL_BUFSIZE);
     update_statusline(vwin, _("Retrieving data..."));
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -682,6 +677,10 @@ static int make_db_series_list (int action, char *fname, char *buf)
     int db_width = 700, db_height = 420;
     int cb = 0;
     int err = 0;
+
+    if (buf == NULL) {
+	return 1;
+    }
 
     vwin = mymalloc(sizeof *vwin);
     if (vwin == NULL) {
@@ -1428,24 +1427,17 @@ void open_db_index (GtkWidget *w, gpointer data)
 
 void open_named_remote_db_index (char *dbname)
 {
-    char *getbuf, errbuf[80];
+    char *getbuf = NULL;
+    char errbuf[80];
     int err;
 
     *errbuf = '\0';
-
-    getbuf = mymalloc(GRETL_BUFSIZE);
-
-    if (getbuf == NULL) {
-	return;
-    }
-
-    memset(getbuf, 0, GRETL_BUFSIZE);
 
     err = retrieve_remote_db_index(dbname, &getbuf, errbuf);
 
     if (err) {
 	show_network_error(NULL, errbuf);
-    } else if (strncmp(getbuf, "Couldn't open", 13) == 0) {
+    } else if (getbuf != NULL && !strncmp(getbuf, "Couldn't open", 13)) {
 	errbox(getbuf);
     } else {
 	make_db_series_list(REMOTE_SERIES, dbname, getbuf);
@@ -1457,19 +1449,13 @@ void open_named_remote_db_index (char *dbname)
 
 void open_remote_db_index (GtkWidget *w, gpointer data)
 {
+    char *getbuf = NULL;
+    char errbuf[80];
     gchar *fname;
     windata_t *vwin = (windata_t *) data;
-    char *getbuf, errbuf[80];
     int err;
 
     *errbuf = '\0';
-
-    getbuf = mymalloc(GRETL_BUFSIZE);
-    if (getbuf == NULL) {
-	return;
-    }
-
-    memset(getbuf, 0, GRETL_BUFSIZE);
 
 #ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
