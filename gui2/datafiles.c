@@ -721,7 +721,12 @@ static void gui_load_user_functions (const char *fname)
 
 static void gui_delete_fn_pkg (const char *fname, windata_t *vwin)
 {
+    char *msg = g_strdup_printf(_("Really delete %s?"), fname);
     int err;
+    
+    if (yes_no_dialog(_("gretl: delete"), msg, 0) != GRETL_YES) {
+        return;
+    }
 
     err = remove(fname);
     if (err) {
@@ -1034,6 +1039,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     if (browse_func != NULL) {
 	label = (code == REMOTE_DB)? N_("Get series listing") :
 	    (code == REMOTE_FUNC_FILES)? N_("Info") :
+	    (code == FUNC_EDIT)? N_("Edit") :
 	    N_("Open");
 
 	button = gtk_button_new_with_label(_(label));
@@ -1049,18 +1055,17 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	}
     }
 
-    if (code == TEXTBOOK_DATA || code == FUNC_FILES || code == FUNC_EDIT ||
-	REMOTE_ACTION(code)) {
+    if (code == TEXTBOOK_DATA || code == FUNC_FILES || REMOTE_ACTION(code)) {
 	label = (REMOTE_ACTION(code))? N_("Install") : N_("Info");
 	button = gtk_button_new_with_label(_(label));
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 (REMOTE_ACTION(code))?
 			 G_CALLBACK(install_file_from_server) :
-			 (code == FUNC_FILES || code == FUNC_EDIT)? 
+			 (code == FUNC_FILES)? 
 			 G_CALLBACK(display_function_info) :
 			 G_CALLBACK(display_datafile_info), vwin);
-	if (code != FUNC_EDIT && code != FUNC_FILES) {
+	if (code != FUNC_FILES) {
 	    button = gtk_button_new_with_label(_("Find"));
 	    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	    g_signal_connect(G_OBJECT(button), "clicked",

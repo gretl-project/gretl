@@ -255,7 +255,8 @@ static void update_list_selectors (call_info *cinfo)
 
 int do_make_list (selector *sr)
 {
-    call_info *cinfo = (call_info *) selector_get_data(sr);
+    GtkWidget *w = GTK_WIDGET(selector_get_data(sr));
+    call_info *cinfo = g_object_get_data(G_OBJECT(w), "cinfo");
     const char *buf = selector_list(sr);
     const char *lname = selector_entry_text(sr);
     const char *msg;
@@ -298,10 +299,10 @@ int do_make_list (selector *sr)
     return err;
 } 
 
-static void launch_list_maker (GtkWidget *w, call_info *cinfo)
+static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
 {
     simple_selection("Define list", do_make_list, DEFINE_LIST, 
-		     cinfo);
+		     entry);
 }
 
 static void function_call_dialog (call_info *cinfo)
@@ -373,6 +374,7 @@ static void function_call_dialog (call_info *cinfo)
 	    sel = gtk_combo_new();
 	    g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "argnum",
 			      GINT_TO_POINTER(i));
+	    g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "cinfo", cinfo);
 	    g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
 			     G_CALLBACK(update_arg), cinfo);
 	    sellist = get_selection_list(cinfo->param_types[i]);
@@ -392,7 +394,8 @@ static void function_call_dialog (call_info *cinfo)
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
 				 GTK_EXPAND, GTK_FILL, 5, 5);
 		g_signal_connect(G_OBJECT(button), "clicked", 
-				 G_CALLBACK(launch_list_maker), cinfo);
+				 G_CALLBACK(launch_list_maker), 
+				 GTK_COMBO(sel)->entry);
 		gtk_widget_show(button);
 	    }
 	}

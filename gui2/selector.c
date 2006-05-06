@@ -3514,16 +3514,53 @@ static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
     return FALSE;
 }
 
+static void maybe_set_listdef_vars (selector *sr)
+{
+    const char *lname = selector_entry_text(sr);
+
+    if (lname != NULL && *lname != 0) {
+	int *list = get_list_by_name(lname);
+
+	if (list != NULL) {
+	    GtkTreeModel *mod;
+	    GtkTreeIter iter;
+	    int i, v;
+
+	    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
+	    if (mod == NULL) {
+		return;
+	    }
+
+	    gtk_tree_model_get_iter_first(mod, &iter);
+	    for (i=1; i<=list[0]; i++) {
+		v = list[i];
+		gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
+		gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
+				   0, v, 1, 0, 2, datainfo->varname[v], -1);
+	    }
+	}
+    }
+}
+
 static void selector_add_top_entry (selector *sr)
 {
+    GtkWidget *src;
     GtkWidget *hbox;
     GtkWidget *label;
     GtkWidget *entry;
+    const char *lname;
+
+    src = GTK_WIDGET(sr->data);
+    lname = gtk_entry_get_text(GTK_ENTRY(src));
 
     hbox = gtk_hbox_new(FALSE, 0);
     label = gtk_label_new("Name for list:");
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
     entry = gtk_entry_new_with_max_length(31);
+    if (lname != NULL && *lname != 0) {
+	gtk_entry_set_text(GTK_ENTRY(entry), lname);
+	gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    }
     gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
 
@@ -3679,6 +3716,8 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 	set_vars_from_main(sr);
     } else if (nleft == 1) {
 	select_singleton(sr);
+    } else if (sr->code == DEFINE_LIST) {
+	maybe_set_listdef_vars(sr);
     }
 
     gtk_widget_show(sr->dlg);
