@@ -559,22 +559,11 @@ static int header_strdup (const char *header, void *closure)
     return 1;
 }
 
-static int skip_lws (const char *string)
-{
-    const char *p = string;
-
-    while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') {
-	++p;
-    }
-
-    return p - string;
-}
-
 static int header_process (const char *header, const char *name,
 			   int (*procfun) (const char *, void *),
 			   void *arg)
 {
-    while (*name && (tolower (*name) == tolower (*header))) {
+    while (*name && (tolower(*name) == tolower(*header))) {
 	++name, ++header;
     }
 
@@ -582,7 +571,7 @@ static int header_process (const char *header, const char *name,
 	return 0;
     }
 
-    header += skip_lws (header);
+    header += strspn(header, " \t\r\n");
 
     return ((*procfun) (header, arg));
 }
@@ -687,7 +676,7 @@ static int http_process_range (const char *hdr, void *arg)
 
     if (!strncasecmp (hdr, "bytes", 5)) {
 	hdr += 5;
-	hdr += skip_lws (hdr);
+	hdr += strspn(hdr, " \t\r\n");
 	if (!*hdr) {
 	    return 0;
 	}
@@ -1131,8 +1120,8 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	if (*dt & ACCEPTRANGES) {
 	    int nonep;
 
-	    if (header_process (hdr, "Accept-Ranges", 
-				http_process_none, &nonep)) {
+	    if (header_process(hdr, "Accept-Ranges", http_process_none, 
+			       &nonep)) {
 		if (nonep) {
 		    *dt &= ~ACCEPTRANGES;
 		}
@@ -1303,18 +1292,18 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 
 static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
 {
-    if (!rbuf->buffer_left) {
-	return 0;
-    } else {
-	size_t howmuch = MINVAL(rbuf->buffer_left, (unsigned) maxsize);
+    size_t cpd = 0;
 
+    if (!rbuf->buffer_left != 0) {
+	cpd = MINVAL(rbuf->buffer_left, (unsigned) maxsize);
 	if (where) {
-	    memcpy(where, rbuf->buffer_pos, howmuch);
+	    memcpy(where, rbuf->buffer_pos, cpd);
 	}
-	rbuf->buffer_left -= howmuch;
-	rbuf->buffer_pos += howmuch;
-	return howmuch;
+	rbuf->buffer_left -= cpd;
+	rbuf->buffer_pos += cpd;
     }
+
+    return cpd;
 }
 
 static void url_init (struct urlinfo *u)
