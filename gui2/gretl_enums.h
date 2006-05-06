@@ -82,6 +82,7 @@ enum extra_cmds {
     MINIBUF,
     VLAGSEL,
     VAROMIT,
+    DEFINE_LIST,
     GUI_CMD_MAX
 };
 

@@ -42,6 +42,8 @@ gpointer selector_get_data (const selector *sr);
 
 gretlopt selector_get_opts (const selector *sr);
 
+const char *selector_entry_text (const selector *sr);
+
 int selector_error (const selector *sr);
 
 void maybe_clear_selector (const int *dlist);

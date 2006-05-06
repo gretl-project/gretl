@@ -2413,6 +2413,7 @@ int update_function_from_script (const char *fname, int idx)
     while (fgets(line, sizeof line, fp) && !err) {
 	s = line;
 	while (*s == ' ') s++;
+	tailstrip(s);
 	if (!strncmp(s, "function ", 9)) {
 	    if (gotfn) {
 		err = 1;

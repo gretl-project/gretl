@@ -19,6 +19,7 @@
 
 #include "gretl.h"
 #include "dlgutils.h"
+#include "selector.h"
 #include "gretl_func.h"
 #include "usermat.h"
 
@@ -28,8 +29,10 @@ typedef struct call_info_ call_info;
 
 struct call_info_ {
     GtkWidget *dlg;
+    GList *lsels;
     int *publist;
     int iface;
+    int need_list;
     int n_params;
     char const *param_types;
     char const **param_names;
@@ -42,6 +45,7 @@ struct call_info_ {
 
 static void cinfo_init (call_info *cinfo)
 {
+    cinfo->lsels = NULL;
     cinfo->publist = NULL;
 
     cinfo->n_params = 0;
@@ -54,6 +58,7 @@ static void cinfo_init (call_info *cinfo)
     cinfo->args = NULL;
     cinfo->rets = NULL;
 
+    cinfo->need_list = 0;
     cinfo->canceled = 0;
 }
 
@@ -86,6 +91,7 @@ static void cinfo_free (call_info *cinfo)
     free(cinfo->publist);
     free_strings_array(cinfo->args, cinfo->n_params);
     free_strings_array(cinfo->rets, cinfo->n_returns);
+    g_list_free(cinfo->lsels);
 }
 
 static const char *arg_type_string (int type)
@@ -162,7 +168,7 @@ static GList *get_selection_list (int type)
     int i;
 
     if (type == ARG_SERIES || type == ARG_SCALAR) {
-	for (i=0; i<datainfo->v; i++) {
+	for (i=1; i<datainfo->v; i++) {
 	    if (is_hidden_variable(i, datainfo)) {
 		continue;
 	    }
@@ -170,6 +176,9 @@ static GList *get_selection_list (int type)
 		(type == ARG_SCALAR && !datainfo->vector[i])) {
 		list = g_list_append(list, (gpointer) datainfo->varname[i]);
 	    } 
+	}
+	if (type == ARG_SERIES) {
+	    list = g_list_append(list, (gpointer) datainfo->varname[0]);
 	}
     } else if (type == ARG_LIST) {
 	int nl = n_saved_lists();
@@ -210,6 +219,91 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
     }
 }
 
+static void update_list_selectors (call_info *cinfo)
+{
+    GList *slist = cinfo->lsels;
+    GList *llist = NULL;
+    GtkWidget *sel;
+    const char *lname;
+    const gchar *txt;
+    gchar *saved;
+    int i, nl = n_saved_lists();
+
+    for (i=0; i<nl; i++) {
+	lname = get_list_name_by_index(i);
+	llist = g_list_append(llist, (gpointer) lname);
+    }
+
+    while (slist != NULL) {
+	sel = GTK_WIDGET(slist->data);
+	saved = NULL;
+	txt = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(sel)->entry));
+	if (*txt != 0) {
+	    saved = g_strdup(txt);
+	}
+	gtk_combo_set_popdown_strings(GTK_COMBO(sel), llist);
+	if (saved != NULL) {
+	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(sel)->entry), 
+			       saved);
+	    free(saved);
+	}
+	slist = slist->next;
+    }
+
+    g_list_free(llist);
+}
+
+int do_make_list (selector *sr)
+{
+    call_info *cinfo = (call_info *) selector_get_data(sr);
+    const char *buf = selector_list(sr);
+    const char *lname = selector_entry_text(sr);
+    const char *msg;
+    PRN *prn;
+    int *list;
+    int err;
+
+    if (buf == NULL || *buf == 0) {
+	return 1;
+    }
+
+    if (lname == NULL || *lname == 0) {
+	errbox("No name was given for the list");
+	return 1;
+    }    
+
+    list = gretl_list_from_string(buf);
+    if (list == NULL) {
+	return 1;
+    }
+
+    if (bufopen(&prn)) {
+	free(list);
+	return 1;
+    }
+
+    err = remember_list(list, lname, prn);
+    msg = gretl_print_get_buffer(prn);
+
+    if (err) {
+	errbox(msg);
+    } else {
+	infobox(msg);
+	update_list_selectors(cinfo);
+    }
+
+    free(list);
+    gretl_print_destroy(prn);
+
+    return err;
+} 
+
+static void launch_list_maker (GtkWidget *w, call_info *cinfo)
+{
+    simple_selection("Define list", do_make_list, DEFINE_LIST, 
+		     cinfo);
+}
+
 static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
@@ -241,11 +335,12 @@ static void function_call_dialog (call_info *cinfo)
     /* function argument selection */
 
     if (cinfo->n_params > 0) {
+	int tcols = (cinfo->need_list)? 4 : 3;
 
 	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, "Required arguments:", 0);
 	gtk_widget_show(hbox);
 
-	tbl = gtk_table_new(cinfo->n_params + 1, 3, FALSE);
+	tbl = gtk_table_new(cinfo->n_params + 1, tcols, FALSE);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
 			   tbl, FALSE, FALSE, 5);
 
@@ -290,6 +385,16 @@ static void function_call_dialog (call_info *cinfo)
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(sel);
 	    g_list_free(sellist);
+
+	    if (cinfo->param_types[i] == ARG_LIST) {
+		cinfo->lsels = g_list_append(cinfo->lsels, sel);
+		button = gtk_button_new_with_label("More...");
+		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
+				 GTK_EXPAND, GTK_FILL, 5, 5);
+		g_signal_connect(G_OBJECT(button), "clicked", 
+				 G_CALLBACK(launch_list_maker), cinfo);
+		gtk_widget_show(button);
+	    }
 	}
 
 	gtk_widget_show(tbl);
@@ -466,17 +571,30 @@ static int fn_executor (char *fnline, PRN *prn)
 
 static int function_data_check (call_info *cinfo)
 {
-    int i;
+    int i, err = 0;
 
-    if (datainfo == NULL || datainfo->v == 0) {
-	for (i=0; i<cinfo->n_params; i++) {
-	    if (cinfo->param_types[i] == ARG_SERIES) {
-		return 1;
+    for (i=0; i<cinfo->n_params; i++) {
+	if (cinfo->param_types[i] == ARG_SERIES ||
+	    cinfo->param_types[i] == ARG_LIST) {
+	    if (datainfo == NULL || datainfo->v == 0) {
+		errbox(_("Please open a data file first"));
+		err = 1;
+		break;
+	    }
+	}
+	if (cinfo->param_types[i] == ARG_LIST) {
+	    cinfo->need_list = 1;
+	} else if (cinfo->param_types[i] == ARG_MATRIX) {
+	    if (n_user_matrices() == 0) {
+		errbox(_("This function takes a matrix argument\n"
+			 "but no matrices are currently defined"));
+		err = 1;
+		break;
 	    }
 	}
     }
 
-    return 0;
+    return err;
 }
 
 void call_function_package (const char *fname, GtkWidget *w)
@@ -528,7 +646,6 @@ void call_function_package (const char *fname, GtkWidget *w)
     }
 
     if (function_data_check(&cinfo)) {
-	errbox(_("Please open a data file first"));
 	cinfo_free(&cinfo);
 	return;
     }

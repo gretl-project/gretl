@@ -2954,7 +2954,7 @@ build_selector_buttons (selector *sr)
     gtk_widget_show(tmp);
 
     if (sr->code != PRINT && sr->code != SAVE_FUNCTIONS &&
-	!SAVE_DATA_ACTION(sr->code)) {
+	sr->code != DEFINE_LIST && !SAVE_DATA_ACTION(sr->code)) {
 	tmp = standard_button(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
@@ -2971,7 +2971,9 @@ static int list_show_var (int v, int code, int show_lags)
 
     lags_hidden = 0;
 
-    if (v == 0 && (!MODEL_CODE(code) || code == ARMA)) {
+    if (v == 0 && code == DEFINE_LIST) {
+	;
+    } else if (v == 0 && (!MODEL_CODE(code) || code == ARMA)) {
 	ret = 0;
     } else if (is_hidden_variable(v, datainfo)) {
 	ret = 0;
@@ -3266,6 +3268,8 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to save");
     case COPY_CSV:
 	return N_("Select variables to copy");
+    case DEFINE_LIST:
+	return N_("Define named list");
     default:
 	return "";
     }
@@ -3510,6 +3514,24 @@ static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
     return FALSE;
 }
 
+static void selector_add_top_entry (selector *sr)
+{
+    GtkWidget *hbox;
+    GtkWidget *label;
+    GtkWidget *entry;
+
+    hbox = gtk_hbox_new(FALSE, 0);
+    label = gtk_label_new("Name for list:");
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+    entry = gtk_entry_new_with_max_length(31);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+
+    sr->extra[0] = entry;
+
+    gtk_widget_show_all(hbox);
+}
+
 void simple_selection (const char *title, int (*callback)(), guint ci,
 		       gpointer p) 
 {
@@ -3542,7 +3564,12 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     if (tmp != NULL) {
 	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
-    }    
+    } 
+
+    /* entry field for some uses */
+    if (ci == DEFINE_LIST) {
+	selector_add_top_entry(sr);
+    }
 
     /* for titles */
     top_hbox = gtk_hbox_new(FALSE, 0); 
@@ -3585,8 +3612,10 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 			 G_CALLBACK(remove_busy_signal), 
 			 p);
     } else {
+	int start = (ci == DEFINE_LIST)? 0 : 1;
+
 	nleft = 0;
-	for (i=1; i<datainfo->v; i++) {
+	for (i=start; i<datainfo->v; i++) {
 	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
 		nleft++;
@@ -3845,6 +3874,13 @@ gpointer selector_get_data (const selector *sr)
 gretlopt selector_get_opts (const selector *sr)
 {
     return sr->opts;
+}
+
+const char *selector_entry_text (const selector *sr)
+{
+    g_return_val_if_fail(GTK_IS_ENTRY(sr->extra[0]), NULL);
+
+    return gtk_entry_get_text(GTK_ENTRY(sr->extra[0]));
 }
 
 int selector_error (const selector *sr)
