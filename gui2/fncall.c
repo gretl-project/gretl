@@ -22,6 +22,8 @@
 #include "gretl_func.h"
 #include "usermat.h"
 
+#define FCDEBUG 0
+
 typedef struct call_info_ call_info;
 
 struct call_info_ {
@@ -38,7 +40,7 @@ struct call_info_ {
     int canceled;
 };
 
-static int cinfo_init (call_info *cinfo)
+static void cinfo_init (call_info *cinfo)
 {
     cinfo->publist = NULL;
 
@@ -279,7 +281,9 @@ static void function_call_dialog (call_info *cinfo)
 	    g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
 			     G_CALLBACK(update_arg), cinfo);
 	    sellist = get_selection_list(cinfo->param_types[i]);
-	    gtk_combo_set_popdown_strings(GTK_COMBO(sel), sellist); 
+	    if (sellist != NULL) {
+		gtk_combo_set_popdown_strings(GTK_COMBO(sel), sellist);
+	    } 
 	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sel)->entry), 
 				      cinfo->param_types[i] == ARG_SCALAR);
 	    gtk_table_attach(GTK_TABLE(tbl), sel, 2, 3, i+1, i+2,
@@ -333,7 +337,9 @@ static void function_call_dialog (call_info *cinfo)
 	    g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
 			     G_CALLBACK(update_return), cinfo);
 	    sellist = get_selection_list(cinfo->return_types[i]);
-	    gtk_combo_set_popdown_strings(GTK_COMBO(sel), sellist); 
+	    if (sellist != NULL) {
+		gtk_combo_set_popdown_strings(GTK_COMBO(sel), sellist); 
+	    }
 	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sel)->entry), TRUE);
 	    gtk_table_attach(GTK_TABLE(tbl), sel, 1, 2, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
@@ -414,6 +420,9 @@ static int package_function_exec (char *fnline, PRN *prn)
 	    break;
 	}
 	if (!err) {
+#if FCDEBUG
+	    fprintf(stderr, "package_function_exec: '%s'\n", fnline); 
+#endif	    
 	    err = gui_exec_line(fnline, prn, SCRIPT_EXEC, NULL);
 	}
     }
@@ -556,6 +565,10 @@ void call_function_package (const char *fname)
     if (bufopen(&prn)) {
 	return;
     }
+
+#if FCDEBUG
+    fprintf(stderr, "fnline: '%s'\n", fnline);
+#endif
 
     err = gui_exec_line(fnline, prn, SCRIPT_EXEC, NULL);
     if (!err) {
