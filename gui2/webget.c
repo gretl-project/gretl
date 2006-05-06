@@ -1781,7 +1781,7 @@ static int open_local_file (struct urlinfo *u)
 #ifdef USE_G_FOPEN
 	u->fp = g_fopen(u->localfile, "wb");
 #else
-	u->fp = fopen(u->localfile, "wb");
+	u->fp = fopen(u->localfile, "wb"); /* FIXME? */
 #endif
 	if (u->fp == NULL) {
 	    fprintf(stderr, "Couldn't open local file '%s'\n", u->localfile);
@@ -1792,10 +1792,10 @@ static int open_local_file (struct urlinfo *u)
     return err;
 }
 
-/* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored to
-   a local file whose name is given by "savefile".  If saveopt = SAVE_TO_BUFFER
-   then "getbuf" is presumed to point to a char buffer to which the data
-   should be written.
+/* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored
+   to a local file whose name is given by "savefile".  If saveopt =
+   SAVE_TO_BUFFER then "getbuf" is presumed to point to a char buffer
+   to which the data should be written.
 */
 
 static int 
