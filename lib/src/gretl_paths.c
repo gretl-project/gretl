@@ -43,21 +43,20 @@ enum {
     CURRENT_DIR,
     DATA_SEARCH,
     SCRIPT_SEARCH,
+    FUNCS_SEARCH,
     USER_SEARCH
 };
 
 static void ensure_slash (char *str);
 
-static int add_gdt_suffix (char *fname)
+static int add_suffix (char *fname, const char *sfx)
 {
-    int added = 0;
-
     if (strrchr(fname, '.') == NULL) {
-	strcat(fname, ".gdt");
-	added = 1;
+	strcat(fname, sfx);
+	return 1;
     }
 
-    return added;
+    return 0;
 }
 
 FILE *gretl_fopen (const char *filename, const char *mode)
@@ -168,7 +167,7 @@ static int try_open_file (char *targ, const char *finddir,
 
     fp = gretl_fopen(tmp, "r");
     if (fp == NULL && code == DATA_SEARCH) {
-	if (add_gdt_suffix(tmp)) {
+	if (add_suffix(tmp, ".gdt")) {
 	    fp = gretl_fopen(tmp, "r");
 	}
     }
@@ -251,7 +250,7 @@ static int try_open_file (char *targ, const char *finddir,
 
     fp = gretl_fopen(tmp, "r");
     if (fp == NULL && code == DATA_SEARCH) {
-	if (add_gdt_suffix(tmp)) {
+	if (add_suffix(tmp, ".gdt")) {
 	    fp = gretl_fopen(tmp, "r");
 	}
     }
@@ -334,7 +333,13 @@ static char *search_dir (char *fname, const char *topdir, int code)
 	    fclose(test);
 	    return fname;
 	}
-	if (code == DATA_SEARCH && add_gdt_suffix(fname)) {
+	if (code == DATA_SEARCH && add_suffix(fname, ".gdt")) {
+	    test = gretl_fopen(fname, "r");
+	    if (test != NULL) {
+		fclose(test);
+		return fname;
+	    }
+	} else if (code == FUNCS_SEARCH && add_suffix(fname, ".gfn")) {
 	    test = gretl_fopen(fname, "r");
 	    if (test != NULL) {
 		fclose(test);
@@ -434,6 +439,15 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	/* for a script, try system script dir (and subdirs) */
 	if ((fname = search_dir(fname, ppaths->scriptdir, SCRIPT_SEARCH))) { 
 	    return fname;
+	} else {
+	    char fndir[MAXLEN];
+
+	    fname = tmp;
+	    strcpy(fname, orig);
+	    sprintf(fndir, "%sfunctions", ppaths->gretldir);
+	    if ((fname = search_dir(fname, fndir, FUNCS_SEARCH))) { 
+		return fname;
+	    }
 	}
     } else {
 	/* for a data file, try system data dir (and subdirs) */
