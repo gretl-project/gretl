@@ -3514,6 +3514,54 @@ static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
     return FALSE;
 }
 
+#ifdef OLD_GTK
+
+static void 
+add_to_rlvars_from_named_list (selector *sr, const int *list)
+{
+    gchar *row[3];
+    gchar id[8];
+    int i;
+    
+    if (!GTK_IS_CLIST(sr->rlvars)) {
+	return;
+    }
+
+    row[1] = NULL;
+
+    for (i=1; i<=list[0]; i++) {
+	sprintf(id, "%d", list[i]);
+	row[0] = id;
+	row[2] = datainfo->varname[list[i]];
+	gtk_clist_append(GTK_CLIST(sr->rlvars), row);
+    }
+}
+
+#else
+
+static void 
+add_to_rlvars_from_named_list (selector *sr, const int *list)
+{
+    GtkTreeModel *mod;
+    GtkTreeIter iter;
+    int i, v;
+
+    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
+    if (mod == NULL) {
+	return;
+    }
+
+    gtk_tree_model_get_iter_first(mod, &iter);
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
+	gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
+			   0, v, 1, 0, 2, datainfo->varname[v], -1);
+    }
+}
+
+#endif
+
 static void maybe_set_listdef_vars (selector *sr)
 {
     const char *lname = selector_entry_text(sr);
@@ -3522,22 +3570,7 @@ static void maybe_set_listdef_vars (selector *sr)
 	int *list = get_list_by_name(lname);
 
 	if (list != NULL) {
-	    GtkTreeModel *mod;
-	    GtkTreeIter iter;
-	    int i, v;
-
-	    mod = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
-	    if (mod == NULL) {
-		return;
-	    }
-
-	    gtk_tree_model_get_iter_first(mod, &iter);
-	    for (i=1; i<=list[0]; i++) {
-		v = list[i];
-		gtk_list_store_append(GTK_LIST_STORE(mod), &iter);
-		gtk_list_store_set(GTK_LIST_STORE(mod), &iter, 
-				   0, v, 1, 0, 2, datainfo->varname[v], -1);
-	    }
+	    add_to_rlvars_from_named_list(sr, list);
 	}
     }
 }
