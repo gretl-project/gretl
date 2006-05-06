@@ -1996,8 +1996,13 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	plotmax = freq->midpt[K-1] + barwidth;
 	fprintf(fp, "set xrange [%.7g:%.7g]\n", plotmin, plotmax);
 	fputs("set nokey\n", fp);
-	fprintf(fp, "set xlabel '%s %s'\n", 
-		I_("Frequency distribution for"), freq->varname);	
+    }
+
+    fprintf(fp, "set xlabel '%s'\n", freq->varname);
+    if (dist) {
+	fprintf(fp, "set ylabel '%s'\n", I_("Density"));
+    } else {
+	fprintf(fp, "set ylabel '%s'\n", I_("Relative frequency"));
     }
 
     if (isnan(lambda)) {
