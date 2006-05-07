@@ -24,15 +24,13 @@
 #include "gretl_xml.h"
 
 #define CALLSTACK_DEPTH 8
-
+#define FN_NAMELEN 32
 #define FN_DEBUG 0
 
 typedef struct fn_param_ fn_param;
 typedef struct fn_return_ fn_return;
 typedef struct fncall_ fncall;
 typedef struct fnpkg_ fnpkg;
-
-#define FN_NAMELEN 32
 
 enum {
     FN_PARAMS,
@@ -148,11 +146,7 @@ int n_user_functions (void)
 
 const ufunc *get_user_function_by_index (int idx)
 {
-    if (idx < 0 || idx >= n_ufuns) {
-	return NULL;
-    } else {
-	return ufuns[idx];
-    }
+    return (idx < 0 || idx >= n_ufuns)? NULL : ufuns[idx];
 }
 
 int fn_n_params (const ufunc *fun)
@@ -162,30 +156,33 @@ int fn_n_params (const ufunc *fun)
 
 int fn_param_type (const ufunc *fun, int i)
 {
-    if (i < 0 || i >= fun->n_params) {
-	return 0;
-    } else {
-	return fun->params[i].type;
-    }
+    return (i < 0 || i >= fun->n_params)? 0 :
+	fun->params[i].type;
 }
 
 const char *fn_param_name (const ufunc *fun, int i)
 {
-    if (i < 0 || i >= fun->n_params) {
-	return NULL;
-    } else {
-	return fun->params[i].name;
-    }
+    return (i < 0 || i >= fun->n_params)? NULL :
+	fun->params[i].name;
 }
 
 double fn_param_default (const ufunc *fun, int i)
 {
-    if (i < 0 || i >= fun->n_params) {
-	return NADBL;
-    } else {
-	return fun->params[i].deflt;
-    }
+    return (i < 0 || i >= fun->n_params)? NADBL :
+	fun->params[i].deflt;
 }    
+
+double fn_param_minval (const ufunc *fun, int i)
+{
+    return (i < 0 || i >= fun->n_params)? NADBL :
+	fun->params[i].min;
+}
+
+double fn_param_maxval (const ufunc *fun, int i)
+{
+    return (i < 0 || i >= fun->n_params)? NADBL :
+	fun->params[i].max;
+}
 
 int user_func_get_return_types (const ufunc *fun,
 				int *n_returns,
@@ -812,7 +809,7 @@ enum {
 static const char *arg_type_string (int type)
 {
     if (type == ARG_BOOL) {
-	return "boolean";
+	return "bool";
     } else if (type == ARG_INT) {
 	return "int";
     } else if (type == ARG_SCALAR) {
@@ -830,6 +827,10 @@ static const char *arg_type_string (int type)
 
 static int field_to_type (const char *s)
 {
+#if FN_DEBUG
+    fprintf(stderr, "field_to_type: looking at '%s'\n", s);
+#endif
+
     if (isdigit(*s)) {
 	return atoi(s);
     }
@@ -853,6 +854,7 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
     int n, err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
+	fprintf(stderr, "Couldn't read param count\n");
 	return E_DATA;
     }  
 
@@ -911,6 +913,7 @@ static int func_read_returns (xmlNodePtr node, ufunc *fun)
     int n, err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
+	fprintf(stderr, "Couldn't read return values count\n");
 	return E_DATA;
     }  
 
@@ -932,12 +935,14 @@ static int func_read_returns (xmlNodePtr node, ufunc *fun)
 	    if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
 		fun->returns[n].name = field;
 	    } else {
+		fprintf(stderr, "return %d: couldn't get name\n", n);
 		err = E_DATA;
 	    }
-	    if (!gretl_xml_get_prop_as_string(cur, "type", &field)) {
+	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
 		fun->returns[n].type = field_to_type(field);
 		free(field);
 	    } else {
+		fprintf(stderr, "return %d: couldn't get type\n", n);
 		err = E_DATA;
 	    }
 	    n++;
@@ -984,6 +989,36 @@ static int func_read_code (xmlNodePtr node, xmlDocPtr doc, ufunc *fun,
     return err;
 }
 
+static void print_deflt_min_max (fn_param *param, PRN *prn)
+{
+    double x = param->min;
+    double y = param->max;
+    double z = param->deflt;
+
+    if (na(x) && na(y) && na(z)) {
+	return; /* no-op */
+    } else if (na(x) && na(y) && !na(z)) {
+	pprintf(prn, "[%g]", z);
+	return;
+    }
+
+    pputc(prn, '[');
+    if (na(x)) {
+	pputc(prn, ':');
+    } else {
+	pprintf(prn, "%g:", x);
+    }
+    if (na(y)) {
+	pputc(prn, ':');
+    } else {
+	pprintf(prn, "%g:", y);
+    }  
+    if (!na(z)) {
+	pprintf(prn, "%g", z);
+    }   
+    pputc(prn, ']');
+}
+
 static void print_function_start (ufunc *fun, PRN *prn)
 {
     const char *typestr;
@@ -996,6 +1031,13 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	}
 	typestr = arg_type_string(fun->params[i].type);
 	pprintf(prn, "%s %s", typestr, fun->params[i].name);
+	if (fun->params[i].type == ARG_BOOL) {
+	    if (!na(fun->params[i].deflt)) {
+		pprintf(prn, "[%g]", fun->params[i].deflt);
+	    }
+	} else if (scalar_arg(fun->params[i].type)) {
+	    print_deflt_min_max(&fun->params[i], prn);
+	}
 	if (i == fun->n_params - 1) {
 	    pputc(prn, ')');
 	} else {
@@ -1043,6 +1085,12 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	return E_DATA;
     }
 
+#if FN_DEBUG
+    fprintf(stderr, "read_ufunc_from_xml: got function name '%s'\n",
+	    fname);
+#endif
+
+    *fun->name = 0;
     strncat(fun->name, fname, FN_NAMELEN - 1);
     free(fname);
 
@@ -1058,8 +1106,16 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	    gretl_xml_node_get_string(cur, doc, &fun->help);
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
 	    err = func_read_params(cur, fun);
+	    if (err) {
+		fprintf(stderr, "%s: error parsing function parameters\n",
+			fun->name);
+	    }
 	} else if (!xmlStrcmp(cur->name, (XUC) "returns")) {
 	    err = func_read_returns(cur, fun);
+	    if (err) {
+		fprintf(stderr, "%s: error parsing function return values\n",
+			fun->name);
+	    }
 	} else if (task != FUNCS_INFO && 
 		   !xmlStrcmp(cur->name, (XUC) "code")) {
 	    if (task == FUNCS_CODE) {
@@ -1089,7 +1145,7 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 
 #if FN_DEBUG
     if (err) {
-	fprintf(stderr, "error reading function spec\n");
+	fprintf(stderr, "read_ufunc_from_xml: error reading spec\n");
     } 
 #endif
 
@@ -1378,6 +1434,7 @@ int function_package_get_info (const char *fname,
     int i, j, err = 0;
 
     if (n_pkgs == 0 || n_ufuns == 0) {
+	fprintf(stderr, "function_package_get_info: no functions loaded\n");
 	return 1;
     }
 
@@ -1389,6 +1446,7 @@ int function_package_get_info (const char *fname,
     }
 
     if (pkg == NULL) {
+	fprintf(stderr, "No package associated with '%s'\n", fname);
 	return 1;
     }
 
@@ -1648,6 +1706,11 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	err = function_package_add(pkg);
     }
 
+#if FN_DEBUG
+    fprintf(stderr, "read_user_function_package:\n"
+	    " err = %d reading '%s'\n", err, fname);
+#endif
+
     return err;
 }
 
@@ -1671,9 +1734,9 @@ static int real_read_user_function_file (const char *fname, int task, PRN *prn,
 
     /* first get any function packages from this file */
     cur = node->xmlChildrenNode;
-    while (cur != NULL) {
+    while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "gretl-function-package")) {
-	    read_user_function_package(doc, cur, fname, task, prn, pname);
+	    err = read_user_function_package(doc, cur, fname, task, prn, pname);
 	} 
 	cur = cur->next;
     }
@@ -1694,6 +1757,11 @@ static int real_read_user_function_file (const char *fname, int task, PRN *prn,
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
     }
+
+#if FN_DEBUG
+    fprintf(stderr, "real_read_user_function_file:\n"
+	    " returning %d for '%s'\n", err, fname);
+#endif
 
     return err;
 }
@@ -2248,23 +2316,31 @@ static int read_deflt_min_max (char *s, fn_param *param,
     if (p != NULL) {
 	double x, y, z;
 
-	if (sscanf(p, "[%lf:%lf:%lf]", &x, &y, &z) == 3) {
-	    param->min = x;
-	    param->max = y;
-	    param->deflt = z;
-	} else if (sscanf(p, "[%lf::%lf]", &x, &y) == 2) {
-	    param->min = x;
-	    param->deflt = y;
-	} else if (sscanf(p, "[:%lf:%lf]", &x, &y) == 2) {
-	    param->max = x;
-	    param->deflt = y;
-	} else if (sscanf(p, "[%lf]", &x) == 1) {
-	    param->deflt = x;
+	if (param->type == ARG_BOOL) {
+	    if (sscanf(p, "[%lf]", &x) == 1) {
+		param->deflt = x;
+	    } else {
+		err = E_DATA;
+	    }
 	} else {
-	    err = E_DATA;
+	    if (sscanf(p, "[%lf:%lf:%lf]", &x, &y, &z) == 3) {
+		param->min = x;
+		param->max = y;
+		param->deflt = z;
+	    } else if (sscanf(p, "[%lf::%lf]", &x, &y) == 2) {
+		param->min = x;
+		param->deflt = y;
+	    } else if (sscanf(p, "[:%lf:%lf]", &x, &y) == 2) {
+		param->max = x;
+		param->deflt = y;
+	    } else if (sscanf(p, "[%lf]", &x) == 1) {
+		param->deflt = x;
+	    } else {
+		err = E_DATA;
+	    }
 	}
 	if (!err) {
-	    *namelen -= p - s;
+	    *namelen = p - s;
 	}
     }
 
@@ -2272,51 +2348,58 @@ static int read_deflt_min_max (char *s, fn_param *param,
 }
 
 static int 
-parse_fn_element (char *s, fn_param *param, fn_return *ret, int i)
+parse_function_element (char *s, fn_param *param, fn_return *ret, int i)
 {
     char tstr[8] = {0};
     char *name;
-    int type;
-    int n, len;
+    int type, len;
     int err = 0;
 
     while (isspace(*s)) s++;
 
+    /* get arg or return type */
     len = strcspn(s, " ");
-    n = (len < 7)? len : 7;
-    strncat(tstr, s, n);
-    type = arg_type_from_string(tstr);
-    if (type == 0) {
-	sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
+    if (len > 7) {
 	err = E_PARSE;
-    } else if (type == ARG_LIST && ret != NULL) {
-	strcpy(gretl_errmsg, "A function cannot return a list");
-	err = 1;
-    }
-
-    if (!err) {
-	s += len;
-	while (isspace(*s)) s++;
-	len = strcspn(s, " ");
-	if (len == 0) {
-	    if (param != NULL) {
-		sprintf(gretl_errmsg, "parameter %d: name is missing", i);
-	    } else {
-		sprintf(gretl_errmsg, "return value %d: name is missing", i);
-	    }
+    } else {
+	strncat(tstr, s, len);
+	type = arg_type_from_string(tstr);
+	if (type == 0) {
+	    sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
 	    err = E_PARSE;
+	} else if (type == ARG_LIST && ret != NULL) {
+	    strcpy(gretl_errmsg, "A function cannot return a list");
+	    err = E_DATA;
 	}
     }
 
-    n = (len < 31)? len : 31;
+    if (err) {
+	return err;
+    }
 
-    if (!err && param != NULL && scalar_arg(type)) {
+    s += len;
+    while (isspace(*s)) s++;
+    len = strcspn(s, " ");
+    if (len == 0) {
+	if (param != NULL) {
+	    sprintf(gretl_errmsg, "parameter %d: name is missing", i);
+	} else {
+	    sprintf(gretl_errmsg, "return value %d: name is missing", i);
+	}
+	err = E_PARSE;
+    }
+
+    if (err) {
+	return err;
+    }    
+
+    if (param != NULL && scalar_arg(type)) {
 	param->type = type;
-	err = read_deflt_min_max(s, param, &n);
+	err = read_deflt_min_max(s, param, &len);
     }
 
     if (!err) {
-	name = gretl_strndup(s, n);
+	name = gretl_strndup(s, len);
 	if (name == NULL) {
 	    err = E_ALLOC;
 	}
@@ -2337,6 +2420,10 @@ parse_fn_element (char *s, fn_param *param, fn_return *ret, int i)
 	fprintf(stderr, " %s[%d] = '%s', ptype = %d\n", 
 		(param != NULL)? "parm" : "ret",
 		i, name, type);
+	if (param != NULL) {
+	    fprintf(stderr, "min=%g, max=%g, deflt=%g\n", 
+		    param->min, param->max, param->deflt);
+	}
     }
 #endif
 
@@ -2364,7 +2451,7 @@ parse_fn_definition_or_returns (char *fname,
 	which = FN_RETURNS;
     }
 
-    while (isspace((unsigned char) *str)) str++;
+    while (isspace(*str)) str++;
 
     if (which == FN_PARAMS) {
 	char fmt[8] = "%31s";
@@ -2430,9 +2517,9 @@ parse_fn_definition_or_returns (char *fname,
 	p = s;
 	for (i=0; i<np && !err; i++) {
 	    if (params != NULL) {
-		err = parse_fn_element(p, &params[i], NULL, i);
+		err = parse_function_element(p, &params[i], NULL, i);
 	    } else {
-		err = parse_fn_element(p, NULL, &returns[i], i);
+		err = parse_function_element(p, NULL, &returns[i], i);
 	    }
 	    p += strlen(p) + 1;
 	}

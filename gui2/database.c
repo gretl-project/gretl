@@ -2085,31 +2085,25 @@ gint populate_remote_object_list (windata_t *vwin)
     GtkListStore *store;
     GtkTreeIter iter;  
 #endif  
-    char *buf;
-    char fname[16], line[128], errbuf[80], status[20];
+    char *getbuf = NULL;
+    char line[1024];
+    char fname[16], errbuf[80], status[20];
     gchar *row[3];
     gint i;
     time_t remtime;
     int err = 0;
 
-    buf = mymalloc(GRETL_BUFSIZE);
-    if (buf == NULL) {
-	return 1;
-    }
-
-    memset(buf, 0, GRETL_BUFSIZE);
-
     *errbuf = '\0';
 
     if (vwin->role == REMOTE_DB) {
-	err = list_remote_dbs(&buf, errbuf);
+	err = list_remote_dbs(&getbuf, errbuf);
     } else {
-	err = list_remote_function_packages(&buf, errbuf);
+	err = list_remote_function_packages(&getbuf, errbuf);
     }
 
     if (err) {
 	show_network_error(NULL, errbuf);
-	free(buf);
+	free(getbuf);
 	return err;
     }
 
@@ -2123,10 +2117,10 @@ gint populate_remote_object_list (windata_t *vwin)
     gtk_clist_freeze(GTK_CLIST(vwin->listbox));
 #endif
 
-    bufgets_init(buf);
+    bufgets_init(getbuf);
     i = 0;
 
-    while (bufgets(line, sizeof line, buf)) {
+    while (bufgets(line, sizeof line, getbuf)) {
 	if (strstr(line, "idx")) {
 	    continue;
 	}
@@ -2136,7 +2130,7 @@ gint populate_remote_object_list (windata_t *vwin)
 	get_local_object_status(fname, vwin->role, status, remtime);
 	row[0] = strip_extension(fname);
 
-	if (bufgets(line, sizeof line, buf)) {
+	if (bufgets(line, sizeof line, getbuf)) {
 #ifndef OLD_GTK
 	    validate_string(line);
 #endif
@@ -2163,7 +2157,7 @@ gint populate_remote_object_list (windata_t *vwin)
     gtk_clist_thaw(GTK_CLIST(vwin->listbox));
 #endif
 
-    free(buf);
+    free(getbuf);
 
     if (i == 0) {
 	if (vwin->role == REMOTE_DB) {

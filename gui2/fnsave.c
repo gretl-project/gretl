@@ -792,6 +792,7 @@ void edit_function_package (const char *fname)
     if (!user_function_file_is_loaded(fname)) {
 	err = load_user_function_file(fname);
 	if (err) {
+	    fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
 	    errbox(_("Couldn't open %s"), fname);
 	    return;
 	}
@@ -811,6 +812,7 @@ void edit_function_package (const char *fname)
 				    &finfo->pkgdesc);
 
     if (err) {
+	fprintf(stderr, "function_package_get_info: failed on %s\n", fname);
 	errbox("Couldn't get function package information");
 	finfo_free(finfo);
 	return;

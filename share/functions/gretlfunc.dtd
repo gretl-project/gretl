@@ -48,7 +48,7 @@
 <!ELEMENT return EMPTY>
 <!ATTLIST return
    name CDATA #REQUIRED
-   type (scalar|series|matrix) 
+   type (bool|boolean|int|scalar|series|matrix) 
 >
 
 <!ELEMENT code (#PCDATA)>

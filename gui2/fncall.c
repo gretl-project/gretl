@@ -138,6 +138,24 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt, int center)
     return hbox;
 }
 
+static gboolean update_int_arg (GtkWidget *w, call_info *cinfo)
+{
+#ifdef OLD_GTK
+    GtkAdjustment *adj = 
+	gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(w));
+    int val = (int) adj->value;
+#else
+    int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+#endif
+    int i = 
+	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
+
+    free(cinfo->args[i]);
+    cinfo->args[i] = g_strdup_printf("%d", val);
+
+    return FALSE;
+}
+
 static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
 {
     int i = 
@@ -321,11 +339,81 @@ static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
 		     entry);
 }
 
+static int spinner_arg (call_info *cinfo, int i)
+{
+    double x = fn_param_minval(cinfo->func, i);
+    double y = fn_param_maxval(cinfo->func, i);
+
+    return !na(x) && !na(y);
+}
+
+static GtkWidget *bool_arg_selector (call_info *cinfo, int i)
+{
+    double deflt = fn_param_default(cinfo->func, i);
+    int active = !na(deflt) && deflt != 0.0;
+    GtkWidget *button;
+
+    button = gtk_check_button_new();
+    g_object_set_data(G_OBJECT(button), "argnum", GINT_TO_POINTER(i));
+    g_object_set_data(G_OBJECT(button), "cinfo", cinfo);
+    g_signal_connect(G_OBJECT(button), "toggled",
+		     G_CALLBACK(update_bool_arg), cinfo);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), active);
+    cinfo->args[i] = g_strdup((active)? "1" : "0");
+
+    return button;
+}
+
+static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
+{
+    int minv = (int) fn_param_minval(cinfo->func, i);
+    int maxv = (int) fn_param_maxval(cinfo->func, i);
+    double deflt = fn_param_default(cinfo->func, i);
+    int initv = (na(deflt))? minv : (int) deflt;
+    GtkObject *adj;
+    GtkWidget *spin;
+
+    adj = gtk_adjustment_new(initv, minv, maxv, 1, 1, 1);
+    spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    g_object_set_data(G_OBJECT(spin), "argnum", GINT_TO_POINTER(i));
+    g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(adj), "value-changed", 
+		       GTK_SIGNAL_FUNC(update_int_arg), cinfo);
+#else
+    g_signal_connect(G_OBJECT(spin), "value-changed", 
+		     G_CALLBACK(update_int_arg), cinfo);
+#endif
+    cinfo->args[i] = g_strdup_printf("%d", (na(deflt))? minv : 
+				     (int) deflt);
+
+    return spin;
+}
+
+static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
+{
+    GList *list = NULL;
+    GtkWidget *combo;
+
+    combo = gtk_combo_new();
+    g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry), "argnum",
+		      GINT_TO_POINTER(i));
+    g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry), "cinfo", cinfo);
+    g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "changed",
+		     G_CALLBACK(update_arg), cinfo);
+    list = get_selection_list(ptype);
+    if (list != NULL) {
+	gtk_combo_set_popdown_strings(GTK_COMBO(combo), list);
+	g_list_free(list);
+    } 
+
+    return combo;
+}
+
 static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
     GtkWidget *tbl, *hbox;
-    GList *sellist = NULL;
     GtkWidget *sel;
     gchar *txt;
     const char *fnname;
@@ -377,49 +465,32 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(label);
 
 	for (i=0; i<cinfo->n_params; i++) {
-	    const char *param_name = fn_param_name(cinfo->func, i);
-	    int param_type = fn_param_type(cinfo->func, i);
+	    const char *pname = fn_param_name(cinfo->func, i);
+	    int ptype = fn_param_type(cinfo->func, i);
 	    
-	    label = gtk_label_new(param_name);
+	    label = gtk_label_new(pname);
 	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);
 
-	    label = gtk_label_new(arg_type_string(param_type));
+	    label = gtk_label_new(arg_type_string(ptype));
 	    gtk_table_attach(GTK_TABLE(tbl), label, 1, 2, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);
 
-	    if (param_type == ARG_BOOL) {
-		double deflt = fn_param_default(cinfo->func, i);
-		int active = !na(deflt) && deflt != 0.0;
-
-		sel = gtk_check_button_new();
-		g_object_set_data(G_OBJECT(sel), "argnum", GINT_TO_POINTER(i));
-		g_object_set_data(G_OBJECT(sel), "cinfo", cinfo);
-		g_signal_connect(G_OBJECT(sel), "toggled",
-				 G_CALLBACK(update_bool_arg), cinfo);
-		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sel), active);
-		cinfo->args[i] = g_strdup((active)? "1" : "0");
+	    if (ptype == ARG_BOOL) {
+		sel = bool_arg_selector(cinfo, i);
+	    } else if (ptype == ARG_INT && spinner_arg(cinfo, i)) {
+		sel = spin_arg_selector(cinfo, i);
 	    } else {
-		sel = gtk_combo_new();
-		g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "argnum",
-				  GINT_TO_POINTER(i));
-		g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "cinfo", cinfo);
-		g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
-				 G_CALLBACK(update_arg), cinfo);
-		sellist = get_selection_list(param_type);
-		if (sellist != NULL) {
-		    gtk_combo_set_popdown_strings(GTK_COMBO(sel), sellist);
-		} 
-		g_list_free(sellist);
+		sel = combo_arg_selector(cinfo, ptype, i);
 	    }
 
 	    gtk_table_attach(GTK_TABLE(tbl), sel, 2, 3, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(sel);
 
-	    if (param_type == ARG_LIST) {
+	    if (ptype == ARG_LIST) {
 		cinfo->lsels = g_list_append(cinfo->lsels, sel);
 		button = gtk_button_new_with_label("More...");
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
@@ -465,6 +536,8 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(label);
 
 	for (i=0; i<cinfo->n_returns; i++) {
+	    GList *list = NULL;
+
 	    label = gtk_label_new(arg_type_string(cinfo->return_types[i]));
 	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
@@ -475,15 +548,15 @@ static void function_call_dialog (call_info *cinfo)
 			      GINT_TO_POINTER(i));
 	    g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
 			     G_CALLBACK(update_return), cinfo);
-	    sellist = get_selection_list(cinfo->return_types[i]);
-	    if (sellist != NULL) {
-		gtk_combo_set_popdown_strings(GTK_COMBO(sel), sellist); 
+	    list = get_selection_list(cinfo->return_types[i]);
+	    if (list != NULL) {
+		gtk_combo_set_popdown_strings(GTK_COMBO(sel), list); 
+		g_list_free(list);
 	    }
 	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sel)->entry), TRUE);
 	    gtk_table_attach(GTK_TABLE(tbl), sel, 1, 2, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(sel);
-	    g_list_free(sellist);
 	}
 
 	gtk_widget_show(tbl);
@@ -643,6 +716,7 @@ void call_function_package (const char *fname, GtkWidget *w)
     if (!user_function_file_is_loaded(fname)) {
 	err = load_user_function_file(fname);
 	if (err) {
+	    fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
 	    errbox(_("Couldn't open %s"), fname);
 	    return;
 	}
@@ -672,6 +746,8 @@ void call_function_package (const char *fname, GtkWidget *w)
     cinfo.func = get_user_function_by_index(cinfo.iface);
 
     if (cinfo.func == NULL) {
+	fprintf(stderr, "get_user_function_by_index: got NULL for idx = %d\n", 
+		cinfo.iface);
 	errbox("Couldn't get function package information");
 	return;
     }
@@ -688,6 +764,8 @@ void call_function_package (const char *fname, GtkWidget *w)
 				     &cinfo.return_types);
 
     if (err) {
+	fprintf(stderr, "user_func_get_return_types: failed for idx = %d\n",
+		cinfo.iface);
 	errbox("Couldn't get function package information");
 	return;
     }

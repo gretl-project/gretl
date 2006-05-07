@@ -783,7 +783,7 @@ static char *herrmsg (int error)
     }
 }
 
-static int get_contents (int fd, struct urlinfo *u, long *len, 
+static int get_contents (int fd, FILE *fp, char **getbuf, long *len, 
 			 long expected, struct rbuf *rbuf)
 {
     int res = 0;
@@ -804,7 +804,6 @@ static int get_contents (int fd, struct urlinfo *u, long *len,
 	if (show_progress != NULL) show = 1;
     }
 #endif
-
     if (show) {
 	sp_ret = show_progress(res, expected, SP_LOAD_INIT);
     }
@@ -813,13 +812,13 @@ static int get_contents (int fd, struct urlinfo *u, long *len,
 
     if (rbuf && RBUF_FD(rbuf) == fd) {
 	while ((res = rbuf_flush(rbuf, cbuf, sizeof cbuf)) != 0) {
-	    if (u->fp != NULL) {
-		if (fwrite(cbuf, 1, res, u->fp) < (unsigned) res) {
+	    if (fp == NULL) {
+		memcpy(*getbuf, cbuf, res);
+	    } else {
+		if (fwrite(cbuf, 1, res, fp) < (unsigned) res) {
 		    return -2;
 		}
-	    } else if (u->getbuf != NULL) {
-		memcpy(u->getbuf, cbuf, res);
-	    } 
+	    }
 	    *len += res;
 	    if (show) {
 		sp_ret = show_progress(res, expected, SP_NONE);
@@ -827,9 +826,7 @@ static int get_contents (int fd, struct urlinfo *u, long *len,
 	}
     }
 
-    if (sp_ret == SP_RETURN_CANCELED) {
-	goto canceled;
-    }
+    if (sp_ret == SP_RETURN_CANCELED) goto canceled;
 
     /* Read from fd while there is available data. */
     nchunks = 1;
@@ -837,24 +834,21 @@ static int get_contents (int fd, struct urlinfo *u, long *len,
     do {
 	res = iread(fd, cbuf, sizeof cbuf);
 	if (res > 0) {
-	    if (u->fp != NULL) {
-		if (fwrite(cbuf, 1, res, u->fp) < (unsigned) res) {
-		    return -2;
-		}
-	    } else if (u->getbuf != NULL) {
+	    if (fp == NULL) {
 		if ((size_t) (*len + res) > allocated) {
-		    char *gbuf;
-
 		    nchunks *= 2;
-		    gbuf = myrealloc(u->getbuf, nchunks * GRETL_BUFSIZE);
-		    if (gbuf == NULL) {
+		    *getbuf = myrealloc(*getbuf, nchunks * GRETL_BUFSIZE);
+		    if (*getbuf == NULL) {
 			return -2;
 		    }
-		    u->getbuf = gbuf;
 		    allocated = nchunks * GRETL_BUFSIZE;
 		}
-		memcpy(u->getbuf + *len, cbuf, res);
-	    } 
+		memcpy(*getbuf + *len, cbuf, res);
+	    } else {
+		if (fwrite(cbuf, 1, res, fp) < (unsigned) res) {
+		    return -2;
+		}
+	    }
 	    *len += res;
 
 	    if (show) {
@@ -1189,11 +1183,12 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     }
 
     /* Get the contents of the document */
-    hs->res = get_contents(sock, u, &hs->len, (contlen != -1 ? contlen : 0), 
+    hs->res = get_contents(sock, u->fp, &u->getbuf, 
+			   &hs->len, (contlen != -1 ? contlen : 0), 
 			   &rbuf);
 
 #if WDEBUG
-    fprintf(stderr, "get_contents returned %d\n", hs->res);
+    fprintf(stderr, "gethttp: get_contents returned %d\n", hs->res);
 #endif
 
     free(all_headers);
@@ -1292,18 +1287,18 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 
 static size_t rbuf_flush (struct rbuf *rbuf, char *where, int maxsize)
 {
-    size_t cpd = 0;
+    if (!rbuf->buffer_left) {
+	return 0;
+    } else {
+	size_t howmuch = MINVAL(rbuf->buffer_left, (unsigned) maxsize);
 
-    if (!rbuf->buffer_left != 0) {
-	cpd = MINVAL(rbuf->buffer_left, (unsigned) maxsize);
 	if (where) {
-	    memcpy(where, rbuf->buffer_pos, cpd);
+	    memcpy(where, rbuf->buffer_pos, howmuch);
 	}
-	rbuf->buffer_left -= cpd;
-	rbuf->buffer_pos += cpd;
+	rbuf->buffer_left -= howmuch;
+	rbuf->buffer_pos += howmuch;
+	return howmuch;
     }
-
-    return cpd;
 }
 
 static void url_init (struct urlinfo *u)
@@ -1533,8 +1528,8 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
     result = http_loop(u, &dt, proxy); 
 
 #if WDEBUG
-    fprintf(stderr, "http_loop returned %d, u->errbuf='%s'\n",
-	    (int) result, u->errbuf);
+    fprintf(stderr, "http_loop returned %d (RETROK=%d), u->errbuf='%s'\n",
+	    (int) result, RETROK, u->errbuf);
 #endif
 
     if (result == RETROK) {
@@ -1869,7 +1864,7 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
 	u->localfile = g_strdup(savefile);
 	err = open_local_file(u);
     } else {
-	u->getbuf = mymalloc(GRETL_BUFSIZE);
+	u->getbuf = calloc(GRETL_BUFSIZE, 1);
 	if (u->getbuf == NULL) {
 	    err = 1;
 	}

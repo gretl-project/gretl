@@ -44,6 +44,10 @@ const char *fn_param_name (const ufunc *fun, int i);
 
 double fn_param_default (const ufunc *fun, int i);
 
+double fn_param_minval (const ufunc *fun, int i);
+
+double fn_param_maxval (const ufunc *fun, int i);
+
 int user_func_get_return_types (const ufunc *fun,
 				int *n_returns,
 				char **return_types);
