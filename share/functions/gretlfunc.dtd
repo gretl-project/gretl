@@ -39,7 +39,10 @@
 <!ELEMENT param EMPTY>
 <!ATTLIST param
    name CDATA #REQUIRED
-   type (bool|boolean|int|scalar|series|list|matrix) 
+   type (bool|boolean|int|scalar|series|list|matrix)
+   default CDATA #IMPLIED
+   min     CDATA #IMPLIED
+   max     CDATA #IMPLIED
 >
 
 <!ELEMENT return EMPTY>

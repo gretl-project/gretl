@@ -828,13 +828,28 @@ static const char *arg_type_string (int type)
     }
 }
 
-#define scalar_arg(f,i) (f->params[i].type == ARG_BOOL || \
-                         f->params[i].type == ARG_INT || \
-                         f->params[i].type == ARG_SCALAR)
+static int field_to_type (const char *s)
+{
+    if (isdigit(*s)) {
+	return atoi(s);
+    }
+
+    if (!strncmp(s, "bool", 4)) return ARG_BOOL;
+    if (!strcmp(s, "int"))      return ARG_INT;
+    if (!strcmp(s, "scalar"))   return ARG_SCALAR;
+    if (!strcmp(s, "series"))   return ARG_SERIES;
+    if (!strcmp(s, "list"))     return ARG_LIST;
+    if (!strcmp(s, "matrix"))   return ARG_MATRIX;
+
+    return 0;
+}    
+
+#define scalar_arg(t) (t == ARG_BOOL || t == ARG_INT || t == ARG_SCALAR)
 
 static int func_read_params (xmlNodePtr node, ufunc *fun)
 {
     xmlNodePtr cur;
+    char *field;
     int n, err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
@@ -856,9 +871,25 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
     n = 0;
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "param")) {
-	    if (!gretl_xml_get_prop_as_string(cur, "name", &fun->params[n].name)) {
+	    if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
+		fun->params[n].name = field;
+	    } else {
 		err = E_DATA;
-	    } else if (!gretl_xml_get_prop_as_char(cur, "type", &fun->params[n].type)) {
+	    }
+	    if (gretl_xml_get_prop_as_string(cur, "type", &field)) {
+		fun->params[n].type = field_to_type(field);
+		free(field);
+		if (scalar_arg(fun->params[n].type)) {
+		    gretl_xml_get_prop_as_double(cur, "default", 
+						 &fun->params[n].deflt);
+		}
+		if (fun->params[n].type == ARG_INT) {
+		    gretl_xml_get_prop_as_double(cur, "min", 
+						 &fun->params[n].min);
+		    gretl_xml_get_prop_as_double(cur, "max", 
+						 &fun->params[n].max);
+		}
+	    } else {
 		err = E_DATA;
 	    }
 	    n++;
@@ -876,6 +907,7 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
 static int func_read_returns (xmlNodePtr node, ufunc *fun)
 {
     xmlNodePtr cur;
+    char *field;
     int n, err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
@@ -897,9 +929,15 @@ static int func_read_returns (xmlNodePtr node, ufunc *fun)
     n = 0;
     while (cur != NULL && !err) {
 	if (!xmlStrcmp(cur->name, (XUC) "return")) {
-	    if (!gretl_xml_get_prop_as_string(cur, "name", &fun->returns[n].name)) {
+	    if (gretl_xml_get_prop_as_string(cur, "name", &field)) {
+		fun->returns[n].name = field;
+	    } else {
 		err = E_DATA;
-	    } else if (!gretl_xml_get_prop_as_char(cur, "type", &fun->returns[n].type)) {
+	    }
+	    if (!gretl_xml_get_prop_as_string(cur, "type", &field)) {
+		fun->returns[n].type = field_to_type(field);
+		free(field);
+	    } else {
 		err = E_DATA;
 	    }
 	    n++;
@@ -1100,8 +1138,19 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     if (fun->n_params > 0) {
 	fprintf(fp, " <params count=\"%d\">\n", fun->n_params);
 	for (i=0; i<fun->n_params; i++) {
-	    fprintf(fp, "  <param name=\"%s\" type=\"%d\"/>\n",
-		    fun->params[i].name, (int) fun->params[i].type);
+	    fprintf(fp, "  <param name=\"%s\" type=\"%s\"",
+		    fun->params[i].name, 
+		    arg_type_string(fun->params[i].type));
+	    if (!na(fun->params[i].min)) {
+		fprintf(fp, " min=\"%g\"", fun->params[i].min);
+	    }
+	    if (!na(fun->params[i].max)) {
+		fprintf(fp, " max=\"%g\"", fun->params[i].max);
+	    }
+	    if (!na(fun->params[i].deflt)) {
+		fprintf(fp, " default=\"%g\"", fun->params[i].deflt);
+	    }
+	    fputs("/>\n", fp);
 	}
 	fputs(" </params>\n", fp);
     }
@@ -1109,8 +1158,9 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     if (fun->n_returns > 0) {
 	fprintf(fp, " <returns count=\"%d\">\n", fun->n_returns);
 	for (i=0; i<fun->n_returns; i++) {
-	    fprintf(fp, "  <return name=\"%s\" type=\"%d\"/>\n",
-		    fun->returns[i].name, (int) fun->returns[i].type);
+	    fprintf(fp, "  <return name=\"%s\" type=\"%s\"/>\n",
+		    fun->returns[i].name, 
+		    arg_type_string(fun->returns[i].type));
 	}
 	fputs(" </returns>\n", fp);
     }
@@ -2189,8 +2239,40 @@ static int comma_count (const char *s)
     return nc;
 }
 
+static int read_deflt_min_max (char *s, fn_param *param,
+			       int *namelen)
+{
+    char *p = strchr(s, '[');
+    int err = 0;
+
+    if (p != NULL) {
+	double x, y, z;
+
+	if (sscanf(p, "[%lf:%lf:%lf]", &x, &y, &z) == 3) {
+	    param->min = x;
+	    param->max = y;
+	    param->deflt = z;
+	} else if (sscanf(p, "[%lf::%lf]", &x, &y) == 2) {
+	    param->min = x;
+	    param->deflt = y;
+	} else if (sscanf(p, "[:%lf:%lf]", &x, &y) == 2) {
+	    param->max = x;
+	    param->deflt = y;
+	} else if (sscanf(p, "[%lf]", &x) == 1) {
+	    param->deflt = x;
+	} else {
+	    err = E_DATA;
+	}
+	if (!err) {
+	    *namelen -= p - s;
+	}
+    }
+
+    return err;
+}
+
 static int 
-parse_fn_element (char *s, fn_param *params, fn_return *returns, int i)
+parse_fn_element (char *s, fn_param *param, fn_return *ret, int i)
 {
     char tstr[8] = {0};
     char *name;
@@ -2198,30 +2280,26 @@ parse_fn_element (char *s, fn_param *params, fn_return *returns, int i)
     int n, len;
     int err = 0;
 
-    while (isspace((unsigned char) *s)) s++;
-    len = strcspn(s, " ");
-    if (len < 7) {
-	n = len;
-    } else {
-	n = 7;
-    }
+    while (isspace(*s)) s++;
 
+    len = strcspn(s, " ");
+    n = (len < 7)? len : 7;
     strncat(tstr, s, n);
     type = arg_type_from_string(tstr);
     if (type == 0) {
 	sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
 	err = E_PARSE;
-    } else if (type == ARG_LIST && returns != NULL) {
+    } else if (type == ARG_LIST && ret != NULL) {
 	strcpy(gretl_errmsg, "A function cannot return a list");
 	err = 1;
     }
 
     if (!err) {
 	s += len;
-	while (isspace((unsigned char) *s)) s++;
+	while (isspace(*s)) s++;
 	len = strcspn(s, " ");
 	if (len == 0) {
-	    if (params != NULL) {
+	    if (param != NULL) {
 		sprintf(gretl_errmsg, "parameter %d: name is missing", i);
 	    } else {
 		sprintf(gretl_errmsg, "return value %d: name is missing", i);
@@ -2230,12 +2308,14 @@ parse_fn_element (char *s, fn_param *params, fn_return *returns, int i)
 	}
     }
 
+    n = (len < 31)? len : 31;
+
+    if (!err && param != NULL && scalar_arg(type)) {
+	param->type = type;
+	err = read_deflt_min_max(s, param, &n);
+    }
+
     if (!err) {
-	if (len < 31) {
-	    n = len;
-	} else {
-	    n = 31;
-	}
 	name = gretl_strndup(s, n);
 	if (name == NULL) {
 	    err = E_ALLOC;
@@ -2243,19 +2323,19 @@ parse_fn_element (char *s, fn_param *params, fn_return *returns, int i)
     }
 
     if (!err) {
-	if (params != NULL) {
-	    params[i].type = type;
-	    params[i].name = name;
+	if (param != NULL) {
+	    param->type = type;
+	    param->name = name;
 	} else {
-	    returns[i].type = type;
-	    returns[i].name = name;
+	    ret->type = type;
+	    ret->name = name;
 	}
     }
 
 #if FN_DEBUG
     if (!err) {
 	fprintf(stderr, " %s[%d] = '%s', ptype = %d\n", 
-		(params != NULL)? "parm" : "ret",
+		(param != NULL)? "parm" : "ret",
 		i, name, type);
     }
 #endif
@@ -2349,7 +2429,11 @@ parse_fn_definition_or_returns (char *fname,
     if (!err) {
 	p = s;
 	for (i=0; i<np && !err; i++) {
-	    err = parse_fn_element(p, params, returns, i);
+	    if (params != NULL) {
+		err = parse_fn_element(p, &params[i], NULL, i);
+	    } else {
+		err = parse_fn_element(p, NULL, &returns[i], i);
+	    }
 	    p += strlen(p) + 1;
 	}
     }
@@ -2731,7 +2815,7 @@ static int check_and_allocate_function_args (ufunc *fun,
 	fprintf(stderr, "fn argv[%d]: arg='%s', param.name='%s' param.type=%d\n", 
 		i, argv[i], fun->params[i].name, fun->params[i].type);
 #endif
-	if (scalar_arg(fun, i)) {
+	if (scalar_arg(fun->params[i].type)) {
 	    if (numeric_string(argv[i])) {
 		err = dataset_add_scalar_as(argv[i], fun->params[i].name, 
 					    pZ, pdinfo);
