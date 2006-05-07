@@ -25,19 +25,28 @@ typedef enum {
     ARG_SCALAR,
     ARG_SERIES,
     ARG_LIST,
-    ARG_MATRIX
+    ARG_MATRIX,
+    ARG_BOOL,
+    ARG_INT
 } FuncArgTypes;
+
+typedef struct ufunc_ ufunc;
 
 int n_user_functions (void);
 
-int gretl_func_param_info_by_index (int idx,
-				    int *n_params,
-				    char const **param_types,
-				    char const ***param_names);
+const ufunc *get_user_function_by_index (int idx);
 
-int gretl_func_return_info_by_index (int idx,
-				     int *n_returns,
-				     char const **return_types);
+int fn_n_params (const ufunc *fun);
+
+int fn_param_type (const ufunc *fun, int i);
+
+const char *fn_param_name (const ufunc *fun, int i);
+
+double fn_param_default (const ufunc *fun, int i);
+
+int user_func_get_return_types (const ufunc *fun,
+				int *n_returns,
+				char **return_types);
 
 const char *user_function_name_by_index (int i);
 

@@ -27,7 +27,8 @@
 
 #define FN_DEBUG 0
 
-typedef struct ufunc_ ufunc;
+typedef struct fn_param_ fn_param;
+typedef struct fn_return_ fn_return;
 typedef struct fncall_ fncall;
 typedef struct fnpkg_ fnpkg;
 
@@ -38,6 +39,19 @@ enum {
     FN_RETURNS
 };
 
+struct fn_param_ {
+    char *name;
+    char type;
+    double deflt;
+    double min;
+    double max;
+};
+
+struct fn_return_ {
+    char *name;
+    char type;
+};
+
 struct ufunc_ {
     char name[FN_NAMELEN];
     int pkgID;
@@ -45,12 +59,10 @@ struct ufunc_ {
     int private;
     int n_lines;
     char **lines;
-    int n_returns;
-    char **returns;
-    char *rtype;
     int n_params;
-    char **params;
-    char *ptype;
+    fn_param *params;
+    int n_returns;
+    fn_return *returns;
 };
 
 struct fncall_ {
@@ -81,7 +93,6 @@ static fnpkg **pkgs;
 static fncall **callstack;
 
 static void free_fncall (fncall *call);
-static int allocate_parmv_ptype (char ***pparmv, char **pptype, int n);
 static int real_add_fn_line (ufunc *fun, const char *s);
 static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn);
 
@@ -135,34 +146,77 @@ int n_user_functions (void)
     return n_ufuns;
 }
 
-int gretl_func_param_info_by_index (int idx,
-				    int *n_params,
-				    char const **param_types,
-				    char const ***param_names)
+const ufunc *get_user_function_by_index (int idx)
 {
     if (idx < 0 || idx >= n_ufuns) {
-	return 1;
+	return NULL;
+    } else {
+	return ufuns[idx];
     }
-
-    *n_params = ufuns[idx]->n_params;
-    *param_types = ufuns[idx]->ptype;
-    *param_names = (char const **) ufuns[idx]->params;
-
-    return 0;
 }
 
-int gretl_func_return_info_by_index (int idx,
-				     int *n_returns,
-				     char const **return_types)
+int fn_n_params (const ufunc *fun)
 {
-    if (idx < 0 || idx >= n_ufuns) {
-	return 1;
+    return fun->n_params;
+}
+
+int fn_param_type (const ufunc *fun, int i)
+{
+    if (i < 0 || i >= fun->n_params) {
+	return 0;
+    } else {
+	return fun->params[i].type;
+    }
+}
+
+const char *fn_param_name (const ufunc *fun, int i)
+{
+    if (i < 0 || i >= fun->n_params) {
+	return NULL;
+    } else {
+	return fun->params[i].name;
+    }
+}
+
+double fn_param_default (const ufunc *fun, int i)
+{
+    if (i < 0 || i >= fun->n_params) {
+	return NADBL;
+    } else {
+	return fun->params[i].deflt;
+    }
+}    
+
+int user_func_get_return_types (const ufunc *fun,
+				int *n_returns,
+				char **return_types)
+{
+    char *rtypes = NULL;
+    int i, nr = 0;
+    int err = 0;
+
+    if (fun == NULL) {
+	return E_DATA;
     }
 
-    *n_returns = ufuns[idx]->n_returns;
-    *return_types = ufuns[idx]->rtype;
+    nr = fun->n_returns;
+    *n_returns = nr;
 
-    return 0;
+    if (nr > 0) {
+	rtypes = malloc(nr);
+	if (rtypes == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0; i<nr; i++) {
+		rtypes[i] = fun->returns[i].type;
+	    }
+	    *return_types = rtypes;
+	}
+    } else {
+	*return_types = NULL;
+    }
+	
+    return err;
 }
 
 const char *user_function_name_by_index (int i)
@@ -287,6 +341,7 @@ static void copy_values_to_assignee (int targ, int src, double **Z,
 static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo, 
 			       int nc, int *locals)
 {
+    ufunc *cfun = call->fun;
     int i, j, src, targ;
     int err = 0;
 
@@ -304,10 +359,10 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 #if FN_DEBUG
     printlist(call->asslist, "call->asslist");
     fprintf(stderr, "number of assignments = %d, number of returns = %d\n",
-	    call->asslist[0], call->fun->n_returns);
+	    call->asslist[0], cfun->n_returns);
 #endif
 
-    if (call->fun->n_returns < call->asslist[0]) {
+    if (cfun->n_returns < call->asslist[0]) {
 	fprintf(stderr, "bad function call: assignments > returns\n");
 	return 1;
     }
@@ -318,7 +373,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 
 #if FN_DEBUG
 	fprintf(stderr, " assv[%d] = '%s'\n", i, call->assv[i]);
-	fprintf(stderr, " return[%d] = '%s'\n", i, call->fun->returns[i]);
+	fprintf(stderr, " return[%d] = '%s'\n", i, cfun->returns[i].name);
 #endif
 	if (call->assv[i] == NULL || *call->assv[i] == '\0') {
 	    fprintf(stderr, " got a null assignment\n");
@@ -330,7 +385,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 	    if (STACK_LEVEL(pdinfo, j) != nc) {
 		continue;
 	    }
-	    if (!strcmp(pdinfo->varname[j], call->fun->returns[i])) {
+	    if (!strcmp(pdinfo->varname[j], cfun->returns[i].name)) {
 #if FN_DEBUG
 		fprintf(stderr, " identified source as var %d (%s)\n",
 			j, pdinfo->varname[j]);
@@ -356,7 +411,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else {
 	    /* assigning a matrix, not a variable? */
-	    gretl_matrix *S = get_matrix_by_name(call->fun->returns[i],
+	    gretl_matrix *S = get_matrix_by_name(cfun->returns[i].name,
 						 pdinfo);
 
 
@@ -364,7 +419,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 		gretl_matrix *T;
 #if FN_DEBUG
 		fprintf(stderr, " identified source as matrix '%s' (%p)\n",
-			call->fun->returns[i], (void *) S);
+			cfun->returns[i].name, (void *) S);
 #endif
 		T = get_matrix_by_name_at_level(call->assv[i], nc - 1, pdinfo); 
 		if (T != NULL) {
@@ -377,7 +432,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 		} else {
 #if FN_DEBUG
 		    fprintf(stderr, " renaming matrix '%s' (%p) as '%s'\n",
-			    call->fun->returns[i], (void *) S, call->assv[i]);
+			    cfun->returns[i].name, (void *) S, call->assv[i]);
 #endif
 		    /* rename matrix as caller desired and mark as global */
 		    err = user_matrix_set_name_and_level(S, call->assv[i], nc - 1);
@@ -427,7 +482,7 @@ static int fn_offers_matrix (fncall *call)
     int i;
 
     for (i=0; i< call->fun->n_returns; i++) {
-	if (call->fun->rtype[i] == ARG_MATRIX) {
+	if (call->fun->returns[i].type == ARG_MATRIX) {
 	    return 1;
 	}
     }
@@ -561,6 +616,45 @@ static fncall *current_call (void)
 
 /* constructors and destructors */
 
+static fn_param *allocate_params (int n)
+{
+    fn_param *params;
+    int i;
+
+    params = malloc(n * sizeof *params);
+    if (params == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	params[i].name = NULL;
+	params[i].type = 0;
+	params[i].deflt = NADBL;
+	params[i].min = NADBL;
+	params[i].max = NADBL;
+    }
+
+    return params;
+}
+
+static fn_return *allocate_returns (int n)
+{
+    fn_return *returns;
+    int i;
+
+    returns = malloc(n * sizeof *returns);
+    if (returns == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	returns[i].name = NULL;
+	returns[i].type = 0;
+    }
+
+    return returns;
+}
+
 static ufunc *ufunc_new (void)
 {
     ufunc *fun = malloc(sizeof *fun);
@@ -578,32 +672,50 @@ static ufunc *ufunc_new (void)
     fun->n_lines = 0;
     fun->lines = NULL;
 
-    fun->n_returns = 0;
-    fun->returns = NULL;
-    fun->rtype = NULL;
-
     fun->n_params = 0;
     fun->params = NULL;
-    fun->ptype = NULL;
+
+    fun->n_returns = 0;
+    fun->returns = NULL;
 
     return fun;
+}
+
+static void free_params_array (fn_param *params, int n)
+{
+    int i;
+
+    if (params == NULL) return;
+
+    for (i=0; i<n; i++) {
+	free(params[i].name);
+    }
+    free(params);
+}
+
+static void free_returns_array (fn_return *returns, int n)
+{
+    int i;
+
+    if (returns == NULL) return;
+
+    for (i=0; i<n; i++) {
+	free(returns[i].name);
+    }
+    free(returns);
 }
 
 static void clear_ufunc_data (ufunc *fun)
 {
     free(fun->help);
     free_strings_array(fun->lines, fun->n_lines);
-    free_strings_array(fun->returns, fun->n_returns);
-    free_strings_array(fun->params, fun->n_params);
-    free(fun->ptype);
-    free(fun->rtype);
-
+    free_params_array(fun->params, fun->n_params);
+    free_returns_array(fun->returns, fun->n_returns);
+    
     fun->help = NULL;
     fun->lines = NULL;
-    fun->returns = NULL;
     fun->params = NULL;
-    fun->ptype = NULL;
-    fun->rtype = NULL;
+    fun->returns = NULL;
 
     fun->n_lines = 0;
     fun->n_returns = 0;
@@ -614,10 +726,8 @@ static void free_ufunc (ufunc *fun)
 {
     free(fun->help);
     free_strings_array(fun->lines, fun->n_lines);
-    free_strings_array(fun->returns, fun->n_returns);
-    free_strings_array(fun->params, fun->n_params);
-    free(fun->ptype);
-    free(fun->rtype);
+    free_params_array(fun->params, fun->n_params);
+    free_returns_array(fun->returns, fun->n_returns);
 
     free(fun);
 }
@@ -701,27 +811,30 @@ enum {
 
 static const char *arg_type_string (int type)
 {
-    if (type == ARG_SCALAR) {
-	return _("scalar");
+    if (type == ARG_BOOL) {
+	return "boolean";
+    } else if (type == ARG_INT) {
+	return "int";
+    } else if (type == ARG_SCALAR) {
+	return "scalar";
     } else if (type == ARG_SERIES) {
-	return _("series");
+	return "series";
     } else if (type == ARG_LIST) {
-	return _("list");
+	return "list";
     } else if (type == ARG_MATRIX) {
-	return _("matrix");
+	return "matrix";
     } else {
-	return _("unknown");
+	return "unknown";
     }
 }
 
-static int 
-func_read_params_or_returns (xmlNodePtr node, ufunc *fun, int code)
+#define scalar_arg(f,i) (f->params[i].type == ARG_BOOL || \
+                         f->params[i].type == ARG_INT || \
+                         f->params[i].type == ARG_SCALAR)
+
+static int func_read_params (xmlNodePtr node, ufunc *fun)
 {
     xmlNodePtr cur;
-    const char *targ;
-    char ***pnames;
-    char **ptypes;
-    int *nvals;
     int n, err = 0;
 
     if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
@@ -732,32 +845,61 @@ func_read_params_or_returns (xmlNodePtr node, ufunc *fun, int code)
 	return 0;
     }
 
-    if (code == FN_PARAMS) {
-	nvals = &fun->n_params;
-	pnames = &fun->params;
-	ptypes = &fun->ptype;
-	targ = "param";
-    } else {
-	nvals = &fun->n_returns;
-	pnames = &fun->returns;
-	ptypes = &fun->rtype;
-	targ = "return";
-    }
+    fun->params = allocate_params(n);
+    if (fun->params == NULL) {
+	return E_ALLOC;
+    } 
 
-    err = allocate_parmv_ptype(pnames, ptypes, n);
-    if (err) {
-	return err;
-    }
+    fun->n_params = n;
 
-    *nvals = n;
     cur = node->xmlChildrenNode;
-
     n = 0;
     while (cur != NULL && !err) {
-	if (!xmlStrcmp(cur->name, (XUC) targ)) {
-	    if (!gretl_xml_get_prop_as_string(cur, "name", &((*pnames)[n]))) {
+	if (!xmlStrcmp(cur->name, (XUC) "param")) {
+	    if (!gretl_xml_get_prop_as_string(cur, "name", &fun->params[n].name)) {
 		err = E_DATA;
-	    } else if (!gretl_xml_get_prop_as_char(cur, "type", &((*ptypes)[n]))) {
+	    } else if (!gretl_xml_get_prop_as_char(cur, "type", &fun->params[n].type)) {
+		err = E_DATA;
+	    }
+	    n++;
+	}	    
+	cur = cur->next;
+    }
+
+    if (!err && n != fun->n_params) {
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+static int func_read_returns (xmlNodePtr node, ufunc *fun)
+{
+    xmlNodePtr cur;
+    int n, err = 0;
+
+    if (!gretl_xml_get_prop_as_int(node, "count", &n) || n < 0) {
+	return E_DATA;
+    }  
+
+    if (n == 0) {
+	return 0;
+    }
+
+    fun->returns = allocate_returns(n);
+    if (fun->returns == NULL) {
+	return E_ALLOC;
+    } 
+
+    fun->n_returns = n;
+
+    cur = node->xmlChildrenNode;
+    n = 0;
+    while (cur != NULL && !err) {
+	if (!xmlStrcmp(cur->name, (XUC) "return")) {
+	    if (!gretl_xml_get_prop_as_string(cur, "name", &fun->returns[n].name)) {
+		err = E_DATA;
+	    } else if (!gretl_xml_get_prop_as_char(cur, "type", &fun->returns[n].type)) {
 		err = E_DATA;
 	    }
 	    n++;
@@ -765,7 +907,7 @@ func_read_params_or_returns (xmlNodePtr node, ufunc *fun, int code)
 	cur = cur->next;
     }
 
-    if (!err && n != *nvals) {
+    if (!err && n != fun->n_returns) {
 	err = E_DATA;
     }
 
@@ -814,8 +956,8 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	if (i == 0) {
 	    pputc(prn, '(');
 	}
-	typestr = arg_type_string(fun->ptype[i]);
-	pprintf(prn, "%s %s", typestr, fun->params[i]);
+	typestr = arg_type_string(fun->params[i].type);
+	pprintf(prn, "%s %s", typestr, fun->params[i].name);
 	if (i == fun->n_params - 1) {
 	    pputc(prn, ')');
 	} else {
@@ -834,8 +976,8 @@ static void print_function_end (ufunc *fun, PRN *prn)
 	if (i == 0) {
 	    pputs(prn, "  return ");
 	}
-	typestr = arg_type_string(fun->rtype[i]);
-	pprintf(prn, "%s %s", typestr, fun->returns[i]);
+	typestr = arg_type_string(fun->returns[i].type);
+	pprintf(prn, "%s %s", typestr, fun->returns[i].name);
 	if (i < fun->n_returns - 1) {
 	    pputs(prn, ", ");
 	} else {
@@ -877,9 +1019,9 @@ static int read_ufunc_from_xml (xmlNodePtr node, xmlDocPtr doc, fnpkg *pkg,
 	if (!xmlStrcmp(cur->name, (XUC) "help")) {
 	    gretl_xml_node_get_string(cur, doc, &fun->help);
 	} else if (!xmlStrcmp(cur->name, (XUC) "params")) {
-	    err = func_read_params_or_returns(cur, fun, FN_PARAMS);
+	    err = func_read_params(cur, fun);
 	} else if (!xmlStrcmp(cur->name, (XUC) "returns")) {
-	    err = func_read_params_or_returns(cur, fun, FN_RETURNS);
+	    err = func_read_returns(cur, fun);
 	} else if (task != FUNCS_INFO && 
 		   !xmlStrcmp(cur->name, (XUC) "code")) {
 	    if (task == FUNCS_CODE) {
@@ -959,7 +1101,7 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 	fprintf(fp, " <params count=\"%d\">\n", fun->n_params);
 	for (i=0; i<fun->n_params; i++) {
 	    fprintf(fp, "  <param name=\"%s\" type=\"%d\"/>\n",
-		    fun->params[i], (int) fun->ptype[i]);
+		    fun->params[i].name, (int) fun->params[i].type);
 	}
 	fputs(" </params>\n", fp);
     }
@@ -968,7 +1110,7 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 	fprintf(fp, " <returns count=\"%d\">\n", fun->n_returns);
 	for (i=0; i<fun->n_returns; i++) {
 	    fprintf(fp, "  <return name=\"%s\" type=\"%d\"/>\n",
-		    fun->returns[i], (int) fun->rtype[i]);
+		    fun->returns[i].name, (int) fun->returns[i].type);
 	}
 	fputs(" </returns>\n", fp);
     }
@@ -1675,7 +1817,7 @@ int is_user_matrix_function (const char *word)
     ufunc *fun = get_ufunc_by_name(word);
 
     if (fun != NULL) {
-	if (fun->n_returns == 1 && fun->rtype[0] == ARG_MATRIX) {
+	if (fun->n_returns == 1 && fun->returns[0].type == ARG_MATRIX) {
 	    return 1;
 	}
     }
@@ -1818,7 +1960,11 @@ static int arg_type_from_string (const char *s)
 {
     int ret = 0;
 
-    if (!strcmp(s, "scalar")) {
+    if (!strncmp(s, "bool", 4)) {
+	ret = ARG_BOOL;
+    } else if (!strcmp(s, "int")) {
+	ret = ARG_INT;
+    } else if (!strcmp(s, "scalar")) {
 	ret = ARG_SCALAR;
     } else if (!strcmp(s, "series")) {
 	ret = ARG_SERIES;
@@ -2043,37 +2189,12 @@ static int comma_count (const char *s)
     return nc;
 }
 
-static int allocate_parmv_ptype (char ***pparmv, char **pptype, int n)
-{
-    char **parmv;
-    char *ptype;
-    int err = 0;
-
-    parmv = create_strings_array(n);
-    if (parmv == NULL) {
-	err = E_ALLOC;
-    }
-
-    if (!err) {
-	ptype = malloc(n * sizeof *ptype);
-	if (ptype == NULL) {
-	    free(parmv);
-	    err = E_ALLOC;
-	}
-    }
-
-    if (!err) {
-	*pparmv = parmv;
-	*pptype = ptype;
-    }
-
-    return err;
-}
-
-static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
-			     int which)
+static int 
+parse_fn_element (char *s, fn_param *params, fn_return *returns, int i)
 {
     char tstr[8] = {0};
+    char *name;
+    int type;
     int n, len;
     int err = 0;
 
@@ -2086,12 +2207,11 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
     }
 
     strncat(tstr, s, n);
-    ptype[i] = arg_type_from_string(tstr);
-    if (ptype[i] == 0) {
+    type = arg_type_from_string(tstr);
+    if (type == 0) {
 	sprintf(gretl_errmsg, "Unrecognized data type '%s'", tstr);
 	err = E_PARSE;
-    } else if (ptype[i] == ARG_LIST && which == FN_RETURNS) {
-	/* FIXME? */
+    } else if (type == ARG_LIST && returns != NULL) {
 	strcpy(gretl_errmsg, "A function cannot return a list");
 	err = 1;
     }
@@ -2101,7 +2221,7 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
 	while (isspace((unsigned char) *s)) s++;
 	len = strcspn(s, " ");
 	if (len == 0) {
-	    if (which == FN_PARAMS) {
+	    if (params != NULL) {
 		sprintf(gretl_errmsg, "parameter %d: name is missing", i);
 	    } else {
 		sprintf(gretl_errmsg, "return value %d: name is missing", i);
@@ -2116,17 +2236,27 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
 	} else {
 	    n = 31;
 	}
-	parmv[i] = gretl_strndup(s, n);
-	if (parmv[i] == NULL) {
+	name = gretl_strndup(s, n);
+	if (name == NULL) {
 	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	if (params != NULL) {
+	    params[i].type = type;
+	    params[i].name = name;
+	} else {
+	    returns[i].type = type;
+	    returns[i].name = name;
 	}
     }
 
 #if FN_DEBUG
     if (!err) {
 	fprintf(stderr, " %s[%d] = '%s', ptype = %d\n", 
-		(which == FN_PARAMS)? "parm" : "ret",
-		i, parmv[i], ptype[i]);
+		(params != NULL)? "parm" : "ret",
+		i, name, type);
     }
 #endif
 
@@ -2134,12 +2264,16 @@ static int parse_fn_element (char *s, char **parmv, char *ptype, int i,
 }
 
 static int 
-parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
-				char **pptype, const char *str,
-				ufunc **pfun, PRN *prn)
+parse_fn_definition_or_returns (char *fname, 
+				fn_param **pparams,
+				fn_return **preturns,
+				int *pnp,
+				const char *str, 
+				ufunc **pfun, 
+				PRN *prn)
 {
-    char **parmv = NULL;
-    char *ptype = NULL;
+    fn_param *params = NULL;
+    fn_return *returns = NULL;
     char *p, *s = NULL;
     int i, len, np = 0;
     int which, err = 0;
@@ -2196,14 +2330,26 @@ parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
 	    s[len-1] = 0;
 	}
 	np = comma_count(s) + 1;
-	err = allocate_parmv_ptype(&parmv, &ptype, np);
-	charsub(s, ',', 0);
+	if (which == FN_PARAMS) {
+	    params = allocate_params(np);
+	    if (params == NULL) {
+		err = E_ALLOC;
+	    }
+	} else {
+	    returns = allocate_returns(np);
+	    if (returns == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (!err) {
+	    charsub(s, ',', 0);
+	}
     }
 
     if (!err) {
 	p = s;
 	for (i=0; i<np && !err; i++) {
-	    err = parse_fn_element(p, parmv, ptype, i, which);
+	    err = parse_fn_element(p, params, returns, i);
 	    p += strlen(p) + 1;
 	}
     }
@@ -2211,11 +2357,14 @@ parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
     free(s);
 
     if (err) {
-	free_strings_array(parmv, np);
-	free(ptype);
+	free_params_array(params, np);
+	free_returns_array(returns, np);
     } else {
-	*pparmv = parmv;
-	*pptype = ptype;
+	if (pparams != NULL) {
+	    *pparams = params;
+	} else if (preturns != NULL) {
+	    *preturns = returns;
+	}
 	*pnp = np;
     }
     
@@ -2224,13 +2373,11 @@ parse_fn_definition_or_returns (char *fname, char ***pparmv, int *pnp,
 
 int gretl_start_compiling_function (const char *line, PRN *prn)
 {
-    char **params = NULL;
-    char *ptype = NULL;
-    int n_params = 0;
+    ufunc *fun = NULL;
+    fn_param *params;
+    int nf, n_params = 0;
     char fname[FN_NAMELEN];
     char extra[8];
-    int nf;
-    ufunc *fun = NULL;
     int err = 0;
 
     nf = sscanf(line, "function %31s %7s", fname, extra);
@@ -2248,14 +2395,13 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
     /* the following takes care of replacing an existing function
        of the same name, if any */
 
-    err = parse_fn_definition_or_returns(fname, &params, &n_params, 
-					 &ptype, line + 8, &fun, prn);
+    err = parse_fn_definition_or_returns(fname, &params, NULL, &n_params,
+					 line + 8, &fun, prn);
 
     if (!err && fun == NULL) {
 	fun = add_ufunc();
 	if (fun == NULL) {
-	    free_strings_array(params, n_params);
-	    free(ptype);
+	    free_params_array(params, n_params);
 	    err = E_ALLOC;
 	}
     }
@@ -2264,7 +2410,6 @@ int gretl_start_compiling_function (const char *line, PRN *prn)
 	strcpy(fun->name, fname);
 	fun->params = params;
 	fun->n_params = n_params;
-	fun->ptype = ptype;
 	current_ufun = fun;
 	set_compiling_on();
     } else {
@@ -2284,12 +2429,9 @@ static int create_function_return_list (ufunc *fun, const char *line)
 	return 1;
     }
 
-    err = parse_fn_definition_or_returns(NULL, &fun->returns, 
-					 &fun->n_returns, 
-					 &fun->rtype, 
-					 line,
-					 NULL,
-					 NULL);
+    err = parse_fn_definition_or_returns(NULL, NULL, &fun->returns, 
+					 &fun->n_returns, line,
+					 NULL, NULL);
 
     return err;
 }
@@ -2387,8 +2529,6 @@ int gretl_function_append_line (const char *line)
 
     return err;
 }
-
-/* FIXME needs work below! */
 
 int update_function_from_script (const char *fname, int idx)
 {
@@ -2588,57 +2728,62 @@ static int check_and_allocate_function_args (ufunc *fun,
 
     for (i=0; i<argc && !err; i++) {
 #if FN_DEBUG
-	fprintf(stderr, "fn argv[%d]: arg='%s', fun->param='%s' fun->ptype=%d\n", 
-		i, argv[i], fun->params[i], fun->ptype[i]);
+	fprintf(stderr, "fn argv[%d]: arg='%s', param.name='%s' param.type=%d\n", 
+		i, argv[i], fun->params[i].name, fun->params[i].type);
 #endif
-	if (fun->ptype[i] == ARG_SCALAR) {
+	if (scalar_arg(fun, i)) {
 	    if (numeric_string(argv[i])) {
-		err = dataset_add_scalar_as(argv[i], fun->params[i], pZ, pdinfo);
+		err = dataset_add_scalar_as(argv[i], fun->params[i].name, 
+					    pZ, pdinfo);
 	    } else {
 		v = varindex(pdinfo, argv[i]);
 		if (v < pdinfo->v && !pdinfo->vector[v]) {
-		    err = dataset_copy_variable_as(v, fun->params[i], pZ, pdinfo);
+		    err = dataset_copy_variable_as(v, fun->params[i].name, 
+						   pZ, pdinfo);
 		    if (!err) {
 			err = grow_vars_mapping(v, pdinfo->v - 1, &outlist, &inlist);
 		    }
 		} else {
-		    sprintf(gretl_errmsg, "argument %d (%s): not a scalar", i+1, argv[i]);
+		    sprintf(gretl_errmsg, "argument %d (%s): not a scalar", 
+			    i+1, argv[i]);
 		    err = 1;
 		} 
 	    }
-	} else if (fun->ptype[i] == ARG_SERIES) {
+	} else if (fun->params[i].type == ARG_SERIES) {
 	    if (numeric_string(argv[i])) {
 		v = atoi(argv[i]);
 	    } else {
 		v = varindex(pdinfo, argv[i]);
 	    }
 	    if (v < pdinfo->v && pdinfo->vector[v]) {
-		err = dataset_copy_variable_as(v, fun->params[i], pZ, pdinfo);
+		err = dataset_copy_variable_as(v, fun->params[i].name, 
+					       pZ, pdinfo);
 		if (!err) {
 		    err = grow_vars_mapping(v, pdinfo->v - 1, &outlist, &inlist);
 		}
 	    } else {
-		sprintf(gretl_errmsg, "argument %d (%s): not a series", i+1, argv[i]);
+		sprintf(gretl_errmsg, "argument %d (%s): not a series", 
+			i+1, argv[i]);
 		err = 1;
 	    } 
-	} else if (fun->ptype[i] == ARG_LIST) {
+	} else if (fun->params[i].type == ARG_LIST) {
 	    if (get_list_by_name(argv[i]) != NULL || !strcmp(argv[i], "null")) {
 #ifdef LOCAL_COPY_LISTS
-		err = localize_list(argv[i], fun->params[i], pZ, pdinfo,
+		err = localize_list(argv[i], fun->params[i].name, pZ, pdinfo,
 				    &outlist, &inlist);
 #else
-		err = copy_named_list_as(argv[i], fun->params[i]);
+		err = copy_named_list_as(argv[i], fun->params[i].name);
 #endif
 	    } else {
 		sprintf(gretl_errmsg, "argument %d (%s): not a list", i+1, argv[i]);
 		err = 1;
 	    }
-	} else if (fun->ptype[i] == ARG_MATRIX) {
+	} else if (fun->params[i].type == ARG_MATRIX) {
 	    if (get_matrix_by_name(argv[i], pdinfo) != NULL) {
-		err = copy_named_matrix_as(argv[i], fun->params[i]);
+		err = copy_named_matrix_as(argv[i], fun->params[i].name);
 #if FN_DEBUG
 		fprintf(stderr, "done copy_named_matrix_as, '%s' -> '%s', err = %d\n", 
-			argv[i], fun->params[i], err);
+			argv[i], fun->params[i].name, err);
 #endif
 	    }
 	} else {
@@ -2684,22 +2829,22 @@ static int check_function_assignments (ufunc *fun, int *asslist,
 	    fprintf(stderr, " variable '%s' has ID %d, vector = %d\n", assv[i], 
 		    v, pdinfo->vector[v]);
 #endif
-	    if ((fun->rtype[i] == ARG_SCALAR && pdinfo->vector[v]) ||
-		(fun->rtype[i] == ARG_SERIES && !pdinfo->vector[v])) {
+	    if ((fun->returns[i].type == ARG_SCALAR && pdinfo->vector[v]) ||
+		(fun->returns[i].type == ARG_SERIES && !pdinfo->vector[v])) {
 		sprintf(gretl_errmsg, "%s: wrong type for assignment", assv[i]);
 		err = 1;
-	    } else if (fun->rtype[i] == ARG_MATRIX) {
+	    } else if (fun->returns[i].type == ARG_MATRIX) {
 		sprintf(gretl_errmsg, "%s: wrong type for assignment", assv[i]);
 		err = 1;
 	    } else {
 		asslist[i+1] = v;
 	    }
-	} else if (fun->rtype[i] == ARG_LIST) {
+	} else if (fun->returns[i].type == ARG_LIST) {
 	    fprintf(stderr, "requested return of list as '%s'\n", assv[i]);
 	    /* FIXME? */
 	} else {
 	    /* new variable */
-	    if (asstypes != NULL && asstypes[i] && asstypes[i] != fun->rtype[i]) {
+	    if (asstypes != NULL && asstypes[i] && asstypes[i] != fun->returns[i].type) {
 		sprintf(gretl_errmsg, "%s: wrong type for assignment", assv[i]);
 		err = 1;
 	    }
@@ -2877,7 +3022,7 @@ static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn)
 	pprintf(prn, "Parameters:\n");
 	for (i=0; i<fun->n_params; i++) {
 	    pprintf(prn, " %s (%s)\n", 
-		    fun->params[i], arg_type_string(fun->ptype[i]));
+		    fun->params[i].name, arg_type_string(fun->params[i].type));
 	}
 	pputc(prn, '\n');
     } else {
@@ -2888,7 +3033,7 @@ static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn)
 	pprintf(prn, "Return values:\n");
 	for (i=0; i<fun->n_returns; i++) {
 	    pprintf(prn, " %s (%s)\n", 
-		    fun->returns[i], arg_type_string(fun->rtype[i]));
+		    fun->returns[i].name, arg_type_string(fun->returns[i].type));
 	}
 	pputc(prn, '\n');
     } else {

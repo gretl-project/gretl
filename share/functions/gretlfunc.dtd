@@ -39,13 +39,13 @@
 <!ELEMENT param EMPTY>
 <!ATTLIST param
    name CDATA #REQUIRED
-   type CDATA #REQUIRED
+   type (bool|boolean|int|scalar|series|list|matrix) 
 >
 
 <!ELEMENT return EMPTY>
 <!ATTLIST return
    name CDATA #REQUIRED
-   type CDATA #REQUIRED
+   type (scalar|series|matrix) 
 >
 
 <!ELEMENT code (#PCDATA)>

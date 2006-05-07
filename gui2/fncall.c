@@ -33,11 +33,10 @@ struct call_info_ {
     int *publist;
     int iface;
     int need_list;
+    const ufunc *func;
     int n_params;
-    char const *param_types;
-    char const **param_names;
     int n_returns;
-    char const *return_types;
+    char *return_types;
     char **args;
     char **rets;
     int canceled;
@@ -48,9 +47,8 @@ static void cinfo_init (call_info *cinfo)
     cinfo->lsels = NULL;
     cinfo->publist = NULL;
 
+    cinfo->func = NULL;
     cinfo->n_params = 0;
-    cinfo->param_types = NULL;
-    cinfo->param_names = NULL;
 
     cinfo->n_returns = 0;
     cinfo->return_types = NULL;
@@ -89,6 +87,7 @@ static int cinfo_args_init (call_info *cinfo)
 static void cinfo_free (call_info *cinfo)
 {
     free(cinfo->publist);
+    free(cinfo->return_types);
     free_strings_array(cinfo->args, cinfo->n_params);
     free_strings_array(cinfo->rets, cinfo->n_returns);
     g_list_free(cinfo->lsels);
@@ -96,6 +95,8 @@ static void cinfo_free (call_info *cinfo)
 
 static const char *arg_type_string (int type)
 {
+    if (type == ARG_BOOL)   return "boolean";
+    if (type == ARG_INT)    return "int";
     if (type == ARG_SCALAR) return "scalar";
     if (type == ARG_SERIES) return "series";
     if (type == ARG_LIST)   return "list";
@@ -135,6 +136,21 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt, int center)
     gtk_widget_show(label);
 
     return hbox;
+}
+
+static gboolean update_bool_arg (GtkWidget *w, call_info *cinfo)
+{
+    int i = 
+	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
+
+    free(cinfo->args[i]);
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	cinfo->args[i] = g_strdup("1");
+    } else {
+	cinfo->args[i] = g_strdup("0");
+    }
+
+    return FALSE;
 }
 
 static gboolean update_arg (GtkEditable *entry, 
@@ -309,7 +325,7 @@ static void function_call_dialog (call_info *cinfo)
 {
     GtkWidget *button, *label;
     GtkWidget *tbl, *hbox;
-    GList *sellist;
+    GList *sellist = NULL;
     GtkWidget *sel;
     gchar *txt;
     const char *fnname;
@@ -361,34 +377,49 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(label);
 
 	for (i=0; i<cinfo->n_params; i++) {
-	    label = gtk_label_new(cinfo->param_names[i]);
+	    const char *param_name = fn_param_name(cinfo->func, i);
+	    int param_type = fn_param_type(cinfo->func, i);
+	    
+	    label = gtk_label_new(param_name);
 	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);
 
-	    label = gtk_label_new(arg_type_string(cinfo->param_types[i]));
+	    label = gtk_label_new(arg_type_string(param_type));
 	    gtk_table_attach(GTK_TABLE(tbl), label, 1, 2, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);
 
-	    sel = gtk_combo_new();
-	    g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "argnum",
-			      GINT_TO_POINTER(i));
-	    g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "cinfo", cinfo);
-	    g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
-			     G_CALLBACK(update_arg), cinfo);
-	    sellist = get_selection_list(cinfo->param_types[i]);
-	    if (sellist != NULL) {
-		gtk_combo_set_popdown_strings(GTK_COMBO(sel), sellist);
-	    } 
-	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sel)->entry), 
-				      cinfo->param_types[i] == ARG_SCALAR);
+	    if (param_type == ARG_BOOL) {
+		double deflt = fn_param_default(cinfo->func, i);
+		int active = !na(deflt) && deflt != 0.0;
+
+		sel = gtk_check_button_new();
+		g_object_set_data(G_OBJECT(sel), "argnum", GINT_TO_POINTER(i));
+		g_object_set_data(G_OBJECT(sel), "cinfo", cinfo);
+		g_signal_connect(G_OBJECT(sel), "toggled",
+				 G_CALLBACK(update_bool_arg), cinfo);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sel), active);
+		cinfo->args[i] = g_strdup((active)? "1" : "0");
+	    } else {
+		sel = gtk_combo_new();
+		g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "argnum",
+				  GINT_TO_POINTER(i));
+		g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "cinfo", cinfo);
+		g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
+				 G_CALLBACK(update_arg), cinfo);
+		sellist = get_selection_list(param_type);
+		if (sellist != NULL) {
+		    gtk_combo_set_popdown_strings(GTK_COMBO(sel), sellist);
+		} 
+		g_list_free(sellist);
+	    }
+
 	    gtk_table_attach(GTK_TABLE(tbl), sel, 2, 3, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(sel);
-	    g_list_free(sellist);
 
-	    if (cinfo->param_types[i] == ARG_LIST) {
+	    if (param_type == ARG_LIST) {
 		cinfo->lsels = g_list_append(cinfo->lsels, sel);
 		button = gtk_button_new_with_label("More...");
 		gtk_table_attach(GTK_TABLE(tbl), button, 3, 4, i+1, i+2,
@@ -494,7 +525,7 @@ static int check_args_and_rets (call_info *cinfo)
 	for (i=0; i<cinfo->n_params; i++) {
 	    if (cinfo->args[i] == NULL) {
 		errbox("Argument %d (%s) is missing", i + 1,
-		       cinfo->param_names[i]);
+		       fn_param_name(cinfo->func, i));
 		return 1;
 	    }
 	}
@@ -577,17 +608,18 @@ static int function_data_check (call_info *cinfo)
     int i, err = 0;
 
     for (i=0; i<cinfo->n_params; i++) {
-	if (cinfo->param_types[i] == ARG_SERIES ||
-	    cinfo->param_types[i] == ARG_LIST) {
+	int type = fn_param_type(cinfo->func, i);
+
+	if (type == ARG_SERIES || type == ARG_LIST) {
 	    if (datainfo == NULL || datainfo->v == 0) {
 		errbox(_("Please open a data file first"));
 		err = 1;
 		break;
 	    }
 	}
-	if (cinfo->param_types[i] == ARG_LIST) {
+	if (type == ARG_LIST) {
 	    cinfo->need_list = 1;
-	} else if (cinfo->param_types[i] == ARG_MATRIX) {
+	} else if (type == ARG_MATRIX) {
 	    if (n_user_matrices() == 0) {
 		errbox(_("This function takes a matrix argument\n"
 			 "but no matrices are currently defined"));
@@ -637,25 +669,23 @@ void call_function_package (const char *fname, GtkWidget *w)
        available
     */
     cinfo.iface = cinfo.publist[1];
+    cinfo.func = get_user_function_by_index(cinfo.iface);
 
-    err = gretl_func_param_info_by_index(cinfo.iface,
-					 &cinfo.n_params,
-					 &cinfo.param_types,
-					 &cinfo.param_names);
-
-    if (err) {
+    if (cinfo.func == NULL) {
 	errbox("Couldn't get function package information");
 	return;
     }
+
+    cinfo.n_params = fn_n_params(cinfo.func);
 
     if (function_data_check(&cinfo)) {
 	cinfo_free(&cinfo);
 	return;
     }
 
-    err = gretl_func_return_info_by_index(cinfo.iface,
-					  &cinfo.n_returns,
-					  &cinfo.return_types);
+    err = user_func_get_return_types(cinfo.func,
+				     &cinfo.n_returns,
+				     &cinfo.return_types);
 
     if (err) {
 	errbox("Couldn't get function package information");
