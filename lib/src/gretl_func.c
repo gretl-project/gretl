@@ -869,6 +869,8 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
 
     fun->n_params = n;
 
+    gretl_push_c_numeric_locale();
+
     cur = node->xmlChildrenNode;
     n = 0;
     while (cur != NULL && !err) {
@@ -898,6 +900,8 @@ static int func_read_params (xmlNodePtr node, ufunc *fun)
 	}	    
 	cur = cur->next;
     }
+
+    gretl_pop_c_numeric_locale();
 
     if (!err && n != fun->n_params) {
 	err = E_DATA;
@@ -1024,6 +1028,8 @@ static void print_function_start (ufunc *fun, PRN *prn)
     const char *typestr;
     int i;
 
+    gretl_push_c_numeric_locale();
+
     pprintf(prn, "function %s ", fun->name);
     for (i=0; i<fun->n_params; i++) {
 	if (i == 0) {
@@ -1045,6 +1051,8 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	}
     }
     pputc(prn, '\n');
+
+    gretl_pop_c_numeric_locale();
 }
 
 static void print_function_end (ufunc *fun, PRN *prn)
@@ -1192,6 +1200,9 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
     }
 
     if (fun->n_params > 0) {
+
+	gretl_push_c_numeric_locale();
+
 	fprintf(fp, " <params count=\"%d\">\n", fun->n_params);
 	for (i=0; i<fun->n_params; i++) {
 	    fprintf(fp, "  <param name=\"%s\" type=\"%s\"",
@@ -1209,6 +1220,8 @@ static int write_function_xml (const ufunc *fun, FILE *fp)
 	    fputs("/>\n", fp);
 	}
 	fputs(" </params>\n", fp);
+
+	gretl_pop_c_numeric_locale();
     }
 
     if (fun->n_returns > 0) {

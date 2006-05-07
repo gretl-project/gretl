@@ -36,16 +36,29 @@ a user function), preface the function definition with
 \end{code}
 
 The \textsl{parameters} for a function (if any) are given in the form
-of a comma-separated list.  Parameters can be of three types: ordinary
-variables (data series), scalar variables, or named lists of
-variables.  Each element in the listing of parameters is composed of
-two terms: first a type specifier (\verb+series+, \verb+scalar+ or
-\verb+list+) then the name by which the parameter shall be known
-within the function.  An example follows (the parentheses enclosing
-the list of parameters are optional):
+of a comma-separated list.  Parameters can be of any of the types
+shown below.
+
+\begin{center}
+\begin{tabular}{ll}
+\multicolumn{1}{c}{Type} & 
+\multicolumn{1}{c}{Description} \\ [4pt]
+\texttt{bool} & scalar variable acting as a Boolean switch \\
+\texttt{int}  & scalar variable acting as an integer  \\
+\texttt{scalar} & scalar variable \\
+\texttt{series} & data series \\
+\texttt{list}   & named list of series \\
+\texttt{matrix} & named matrix or vector 
+\end{tabular}
+\end{center}
+
+Each element in the listing of parameters is composed of two terms: a
+type specifier followed by the name by which the parameter shall be
+known within the function.  An example follows (the parentheses
+enclosing the list of parameters are optional):
     
 \begin{code}
-      function myfunc (series y, list xvars, scalar verbose)
+      function myfunc (series y, list xvars, bool verbose)
 \end{code}
 
 When a function is called, the parameters are instantiated by
@@ -145,8 +158,8 @@ the return values from the function.
 \section{Return values}
 \label{func-return}
 
-Functions can return zero or more values; these can be series or
-scalars (not lists).  Return values are specified via a statement
+Functions can return zero or more values; these can be scalars, series
+or matrices (not lists).  Return values are specified via a statement
 within the function body beginning with the keyword \verb+return+,
 followed by a comma-separated list, each element of which is composed
 of a type specifier and the name of a variable (as in the listing of
