@@ -407,6 +407,17 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 	g_list_free(list);
     } 
 
+    if (ptype == ARG_INT || ptype == ARG_SCALAR) {
+	double x = fn_param_default(cinfo->func, i);
+
+	if (!na(x)) {
+	    gchar *tmp = g_strdup_printf("%g", x);
+
+	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(combo)->entry), tmp);
+	    g_free(tmp);
+	}
+    }
+
     return combo;
 }
 
@@ -646,30 +657,11 @@ static int fn_executor (char *fnline, PRN *prn)
 {
     int err = 0;
 
-    if (gretl_execute_loop()) { 
-    fn_run_loop:
-	err = gretl_loop_exec(fnline, &Z, &datainfo, models, prn);
-	if (err) {
-	    return err;
-	}	
-	if (gretl_executing_function()) {
-	    err = package_function_exec(fnline, prn);
-	    if (err) {
-		return err;
-	    }
-	}
-    } else if (gretl_executing_function()) {
-    fn_run_fn:
-	err = package_function_exec(fnline, prn);
-	if (err) {
-	    return err;
-	}
-	if (gretl_execute_loop()) {
-	    /* the function we are exec'ing includes a loop */ 
-	    goto fn_run_loop;
+    while (!err && (gretl_execute_loop() || gretl_executing_function())) {
+	if (gretl_execute_loop()) { 
+	    err = gretl_loop_exec(fnline, &Z, &datainfo, models, prn);
 	} else if (gretl_executing_function()) {
-	    /* the function we are exec'ing includes a function */ 
-	    goto fn_run_fn;
+	    err = package_function_exec(fnline, prn);
 	}
     }
 

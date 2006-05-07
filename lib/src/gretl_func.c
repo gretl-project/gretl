@@ -1367,16 +1367,19 @@ int write_function_package (const char *fname,
     int i, fi;
 
     if (n_ufuns == 0) {
+	fprintf(stderr, "No functions are defined\n");
 	return 0;
     }
 
     if (author == NULL || version == NULL || date == NULL || 
 	descrip == NULL || publist == NULL || publist[0] == 0) {
-	return 1;
+	strcpy(gretl_errmsg, "Function information is incomplete");
+	return E_DATA;
     }
 
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
+	sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
 	return E_FOPEN;
     }
 

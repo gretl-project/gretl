@@ -258,16 +258,17 @@ static int console_function_exec (char *execline)
 
 static void console_exec (void)
 {
-    static int redirected;
-    int oldv = datainfo->v;
-    char execline[MAXLINE];
 #ifndef OLD_GTK
     GtkTextBuffer *buf;
     GtkTextIter start, end;
 #else
-    int len;
     extern GdkColor red;
+    int len;
 #endif
+    static int redirected;
+    int oldv = datainfo->v;
+    char execline[MAXLINE];
+    int err = 0;
 
 #ifndef OLD_GTK
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(console_view));
@@ -306,29 +307,15 @@ static void console_exec (void)
     push_history_line(execline); 
 
     /* actually execute the command line */
-    gui_exec_line(execline, console_prn, CONSOLE_EXEC, NULL);
+    err = gui_exec_line(execline, console_prn, CONSOLE_EXEC, NULL);
 
-    /* the control structure below is rather weird and needs more
-       testing/thought.  The issue is the nesting of loops inside
-       functions or vice versa. */
-
-    if (gretl_execute_loop()) { 
-    fn_run_loop:
-	gretl_loop_exec(execline, &Z, &datainfo, models, console_prn);
-	if (gretl_executing_function()) {
-	    console_function_exec(execline);
-	}
-    } else if (gretl_executing_function()) {
-    fn_run_fn:
-	console_function_exec(execline);
-	if (gretl_execute_loop()) {
-	    /* the function we are exec'ing includes a loop */ 
-	    goto fn_run_loop;
+    while (!err && (gretl_execute_loop() || gretl_executing_function())) {
+	if (gretl_execute_loop()) { 
+	    err = gretl_loop_exec(execline, &Z, &datainfo, models, console_prn);
 	} else if (gretl_executing_function()) {
-	    /* the function we are exec'ing includes a function */ 
-	    goto fn_run_fn;
-	}
-    } 
+	    err = console_function_exec(execline);
+	} 
+    }
 
     redirected = printing_is_redirected(console_prn);
 

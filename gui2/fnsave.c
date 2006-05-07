@@ -208,19 +208,19 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
 
 static void finfo_finalize (GtkWidget *w, function_info *finfo)
 {
-    char *fields[] = {
-	finfo->author,
-	finfo->version,
-	finfo->date,
-	finfo->pkgdesc
+    char **fields[] = {
+	&finfo->author,
+	&finfo->version,
+	&finfo->date,
+	&finfo->pkgdesc
     };
     int i, hidx = 0;
     int err = 0;
 
     for (i=0; i<NENTRIES && !err; i++) {
-	free(fields[i]);
-	fields[i] = entry_box_get_trimmed_text(finfo->entries[i]);
-	if (fields[i] == NULL) {
+	free(*fields[i]);
+	*fields[i] = entry_box_get_trimmed_text(finfo->entries[i]);
+	if (*fields[i] == NULL) {
 	    err = 1;
 	}
     }
@@ -653,7 +653,6 @@ static void login_dialog (login_info *linfo)
 			"in your web browser."));
     gtk_widget_show(hbox);
 
-
     button = ok_button(GTK_DIALOG(linfo->dlg)->action_area);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(login_finalize), linfo);
@@ -715,6 +714,15 @@ void save_user_functions (const char *fname, gpointer p)
 	gretl_function_set_info(finfo->publist[i], finfo->help[i-1]);
 	gretl_function_set_private(finfo->publist[i], FALSE);
     }
+
+#if 0
+    fprintf(stderr, "author='%s'\n", finfo->author);
+    fprintf(stderr, "version='%s'\n", finfo->version);
+    fprintf(stderr, "date='%s'\n", finfo->date);
+    fprintf(stderr, "pkgdesc='%s'\n", finfo->pkgdesc);
+    printlist(finfo->privlist, "finfo->privlist");
+    printlist(finfo->publist, "finfo->publist");
+#endif
 		
     err = write_function_package(fname,
 				 finfo->privlist, 
