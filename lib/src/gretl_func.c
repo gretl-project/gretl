@@ -2896,6 +2896,60 @@ static int localize_list (const char *oldname, const char *newname,
 
 #endif
 
+/* Check number of arguments to function.  If there are trailing
+   parameters that have specified default values, it's OK if the
+   argument count is short (the defaults will be used).  An excess
+   argument count is always an error.
+*/
+
+static int check_argc (int argc, ufunc *fun) 
+{
+    int err = 1;
+
+    if (argc == fun->n_params) {
+	err = 0;
+    } else if (argc < fun->n_params) {
+	int i, nreq = fun->n_params;
+
+	for (i=fun->n_params-1; i>=0; i--) {
+	    if (!na(fun->params[i].deflt)) {
+		nreq--;
+	    } else {
+		break;
+	    }
+	}
+
+	if (argc >= nreq) {
+	    err = 0;
+	}
+    }
+
+    return err;
+}
+
+/* Scalar function arguments only: if the arg is not supplied, use the
+   default that is contained in the function specification, if any.
+*/
+
+static int add_scalar_arg_default (fn_param *param, double ***pZ,
+				   DATAINFO *pdinfo)
+{
+    char defstr[32];
+
+    if (na(param->deflt)) {
+	/* should be impossible here, but... */
+	return E_DATA;
+    }
+
+    if (param->type == ARG_BOOL || param->type == ARG_INT) {
+	sprintf(defstr, "%g", floor(param->deflt));
+    } else {
+	sprintf(defstr, "%g", param->deflt);
+    }
+    
+    return dataset_add_scalar_as(defstr, param->name, pZ, pdinfo);
+}
+
 static int check_and_allocate_function_args (ufunc *fun,
 					     int argc, char **argv, 
 					     double ***pZ,
@@ -2903,23 +2957,26 @@ static int check_and_allocate_function_args (ufunc *fun,
 {
     int *outlist = NULL;
     int *inlist = NULL;
-    int i, v, err = 0;
+    int i, v, err;
 
-    if (argc != fun->n_params) {
+    err = check_argc(argc, fun);
+    if (err) {
 	sprintf(gretl_errmsg, _("Number of arguments (%d) does not "
 				"match the number of\nparameters for "
 				"function %s (%d)"),
 		argc, fun->name, fun->n_params);
-	err = 1;
+	return err;
     }
 
-    for (i=0; i<argc && !err; i++) {
+    for (i=0; i<fun->n_params && !err; i++) {
 #if FN_DEBUG
 	fprintf(stderr, "fn argv[%d]: arg='%s', param.name='%s' param.type=%d\n", 
 		i, argv[i], fun->params[i].name, fun->params[i].type);
 #endif
 	if (scalar_arg(fun->params[i].type)) {
-	    if (numeric_string(argv[i])) {
+	    if (i >= argc) {
+		err = add_scalar_arg_default(&fun->params[i], pZ, pdinfo);
+	    } else if (numeric_string(argv[i])) {
 		err = dataset_add_scalar_as(argv[i], fun->params[i].name, 
 					    pZ, pdinfo);
 	    } else {

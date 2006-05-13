@@ -1161,7 +1161,9 @@ static int compare_ints (const void *a, const void *b)
  * @pdinfo: information on the data set.
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
- * @opt: if & OPT_O, compare with gamma distribution, not normal
+ * @opt: if & OPT_O, compare with gamma distribution, not normal;
+ * if includes OPT_Q, do not show a histogram; if includes OPT_D,
+ * treat variable @varno as discrete.
  *
  * Calculates the frequency distribution for the specified variable.
  *
@@ -1211,7 +1213,26 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     } 
 
-    freq->discrete = gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x);
+    /* FIXME: the following (at present commented out) breaks
+       frequency distribution graphs for variables that "just happen
+       to be" discrete.  See for example the variable QNC in
+       Ramanathan data9-7.  It seems to me we need to supply an option
+       of some kind to specify that the distribution should be treated
+       as discrete, rather than just keying off whether the
+       observations have any fractional part.
+    */
+
+    if (opt & OPT_D) {
+	freq->discrete = gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x);
+	if (!freq->discrete) {
+	    gretl_errno = E_DATA;
+	    sprintf(gretl_errmsg, _("%s is not discrete"), freq->varname);
+	    free_freq(freq);
+	    return NULL;
+	}
+    } else {
+	freq->discrete = 0;
+    }
 
     gretl_moments(pdinfo->t1, pdinfo->t2, x, 
 		  &freq->xbar, &freq->sdx, 
@@ -1551,8 +1572,8 @@ Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
        and get dimensions for the cross table
      */
 
-    rowfreq = get_freq(rvarno, Z, pdinfo, 0, OPT_NONE); 
-    colfreq = get_freq(cvarno, Z, pdinfo, 0, OPT_NONE); 
+    rowfreq = get_freq(rvarno, Z, pdinfo, 0, OPT_D); 
+    colfreq = get_freq(cvarno, Z, pdinfo, 0, OPT_D); 
     X = malloc(n * sizeof *X);
 
     if (rowfreq == NULL || colfreq == NULL || X == NULL) {
