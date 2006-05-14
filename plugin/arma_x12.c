@@ -162,6 +162,11 @@ static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
 {
     char date[12] = {0};
 
+    if (dated_daily_data(pdinfo)) {
+	/* FIXME? */
+	return atoi(s);
+    }
+
     if (pdinfo->pd > 1) {
 	int len = strlen(s);
 
@@ -192,7 +197,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
-	return 1;
+	return E_FOPEN;
     }
 
     pmod->sigma = NADBL;
@@ -241,7 +246,7 @@ static int get_roots (const char *fname, MODEL *pmod,
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
 	free(roots);
-	return 1;
+	return E_FOPEN;
     }
 
     gretl_push_c_numeric_locale();
@@ -264,9 +269,10 @@ static int get_roots (const char *fname, MODEL *pmod,
     fclose(fp);
 
     if (i != nr) {
+	fprintf(stderr, "Error reading '%s'\n", fname);
 	free(roots);
 	roots = NULL;
-	err = 1;
+	err = E_DATA;
     }
 
     if (roots != NULL) {
@@ -357,7 +363,7 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't read from '%s'\n", fname);
-	return 1;
+	return E_FOPEN;
     }
 
     for (i=0; i<ainfo->nc; i++) {
@@ -403,7 +409,8 @@ get_estimates (const char *fname, MODEL *pmod, struct arma_info *ainfo)
 
     for (i=0; i<ainfo->nc; i++) {
 	if (na(pmod->coeff[i]) || na(pmod->sderr[i])) {
-	    err = 1;
+	    fprintf(stderr, "Error reading '%s'\n", fname);
+	    err = E_DATA;
 	    break;
 	}
     }
@@ -449,6 +456,7 @@ get_uhat (const char *fname, MODEL *pmod, const DATAINFO *pdinfo)
     fclose(fp);
 
     if (nobs == 0) {
+	fprintf(stderr, "Error reading '%s'\n", fname);
 	err = E_DATA;
     }
 
@@ -507,8 +515,8 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
 #endif
 
     if (err) {
-	fprintf(stderr, "problem getting model info\n");
-	pmod->errcode = E_FOPEN;
+	fprintf(stderr, "problem reading X-12-ARIMA model info\n");
+	pmod->errcode = err;
     } else {
 	write_arma_model_stats(pmod, list, ainfo, Z, pdinfo);
     }
@@ -524,7 +532,11 @@ output_series_to_spc (const int *list, const double **Z,
 
     for (t=t1; t<=t2; t++) {
 	for (i=1; i<=list[0]; i++) {
-	    fprintf(fp, "%g ", Z[list[i]][t]);
+	    if (na(Z[list[i]][t])) {
+		fputs("-9999.0 ", fp);
+	    } else {
+		fprintf(fp, "%g ", Z[list[i]][t]);
+	    }
 	}
 	fputc('\n', fp);
     }
@@ -553,10 +565,19 @@ arma_info_get_x_list (struct arma_info *ainfo, const int *alist)
 static void 
 make_x12a_date_string (int t, const DATAINFO *pdinfo, char *str)
 {
-    double dx = date(t, pdinfo->pd, pdinfo->sd0);
-    int yr = (int) dx;
-    int subper = 0;
+    double dx;
+    int yr, subper = 0;
     char *s;
+
+    /* daily data: for now we'll try just numbering the observations
+       consecutively */
+    if (dated_daily_data(pdinfo)) {
+	sprintf(str, "%d", t + 1);
+	return;
+    } 
+
+    dx = date(t, pdinfo->pd, pdinfo->sd0);
+    yr = (int) dx;
 
     sprintf(str, "%g", dx);
     s = strchr(str, '.');
@@ -607,8 +628,14 @@ static int write_spc_file (const char *fname,
 
     make_x12a_date_string(ainfo->t1, pdinfo, datestr);
 
-    fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
-	    pdinfo->varname[ainfo->yno]);
+    if (dated_daily_data(pdinfo)) {
+	/* FIXME? */
+	fprintf(fp, "series {\n period = 1\n title = \"%s\"\n",  
+		pdinfo->varname[ainfo->yno]);
+    } else {
+	fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
+		pdinfo->varname[ainfo->yno]);
+    }	
     fprintf(fp, " start = %s\n", datestr);
 
     ylist[0] = 1;
@@ -618,6 +645,8 @@ static int write_spc_file (const char *fname,
 
     if ((opt & OPT_F) && ainfo->t2 < pdinfo->n - 1) {
 	int nobs;
+
+	/* FIXME ensure we don't print any NAs */
 
 	tmax = pdinfo->n - 1;
 	nobs = tmax - ainfo->t1 + 1;
@@ -629,6 +658,8 @@ static int write_spc_file (const char *fname,
 	    tmax -= nfcast - MAXFCAST;
 	    nfcast -= nfcast - MAXFCAST;
 	}
+
+	fprintf(stderr, "x12a: doing forecast: nfcast = %d\n", nfcast);
     } 
 
     output_series_to_spc(ylist, Z, ainfo->t1, tmax, fp);

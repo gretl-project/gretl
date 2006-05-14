@@ -969,6 +969,48 @@ static double arma_variance (const double *phi, int p,
     return sspsi;
 }
 
+/* When forecasting based on an armax model estimated using X12A,
+   or via the Kalman filter, we need to form the series X\beta
+   so that we can subtract X\beta_{t-i} from y_{t-i} in
+   computing the AR portion of the forecast.
+*/
+
+static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
+				 const double *beta, int *xlist, 
+				 const double **Z)
+{
+    double *Xb;
+    double x;
+    int miss;
+    int i, j, t;
+
+    Xb = malloc((fc->t2 + 1) * sizeof *Xb);
+    if (Xb == NULL) {
+	return NULL;
+    }
+
+    for (t=0; t<=fc->t2; t++) {
+	Xb[t] = 0.0;
+	miss = 0;
+	for (i=1; i<=xlist[0] && !miss; i++) {
+	    j = 0;
+	    if (xlist[i] == 0) {
+		Xb[t] += pmod->coeff[0];
+	    } else {
+		x = Z[xlist[i]][t];
+		if (na(x)) {
+		    Xb[t] = NADBL;
+		    miss = 1;
+		} else {
+		    Xb[t] += beta[j++] * x;
+		}
+	    }
+	}
+    }
+
+    return Xb;
+}
+
 /* generate forecasts for AR(I)MA (or ARMAX) models, including
    forecast standard errors if we're doing out-of-sample
    forecasting
@@ -980,10 +1022,12 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     double *psi = NULL;
     double *phi = NULL;
     double *theta = NULL;
+    double *Xb = NULL;
     const double *beta;
     const double *y;
 
     double xval, yval, vl;
+    double mu = NADBL;
     int xvars, yno;
     int *xlist = NULL;
     int p, q, npsi = 0;
@@ -1019,11 +1063,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     DPRINTF(("forecasting variable %d (%s), obs %d to %d, with p=%d, q=%d\n", yno, 
 	     pdinfo->varname[yno], fc->t1, fc->t2, p, q));
 
-    if (xlist != NULL) {
-	xvars = xlist[0];
-    } else {
-	xvars = 0;
-    }
+    xvars = (xlist != NULL)? xlist[0] : 0;
 
     err = gretl_arma_model_get_AR_MA_coeffs(pmod, &phi, &theta);
     if (err) {
@@ -1031,6 +1071,24 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     }
 
     beta = gretl_arma_model_get_x_coeffs(pmod);
+
+    /* setup for case where Xb_{t-i} is needed */
+    if (xlist != NULL) {
+	int aflags = gretl_model_get_int(pmod, "arma_flags");
+
+	if ((aflags & ARMA_EXACT) || (aflags & ARMA_X12A)) {
+	    if (xlist[0] == 1 && xlist[1] == 0) {
+		/* just a const, no ARMAX */
+		mu = pmod->coeff[0];
+	    } else {
+		Xb = create_Xb_series(fc, pmod, beta, xlist, Z);
+		if (Xb == NULL) {
+		    err = E_ALLOC;
+		    goto bailout;
+		}
+	    }
+	}
+    }
 
     /* setup for forecast error variance */
     if (fc->sderr != NULL) {
@@ -1058,30 +1116,43 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     /* do real forecast */
     for (t=t1; t<=fc->t2 && !err; t++) {
-	int miss = 0;
 	double yh = 0.0;
+	int miss = 0;
 
 	DPRINTF(("\n *** Doing forecast for obs %d\n", t));
 
-	/* contribution of independent variables */
-	for (i=1; i<=xvars; i++) {
-	    int j = 0;
+	/* contribution of const and/or independent variables */
 
-	    if (xlist[i] == 0) {
-		yh += pmod->coeff[0];
-	    } else {
-		xval = Z[xlist[i]][t];
-		if (na(xval)) {
-		    miss = 1;
+	if (!na(mu)) {
+	    yh = mu;
+	} else if (Xb != NULL) {
+	    /* X\beta series is pre-computed */
+	    if (na(Xb[t])) {
+		miss = 1;
+	    } else { 
+		yh = Xb[t];
+	    }
+	} else {
+	    for (i=1; i<=xvars; i++) {
+		int j = 0;
+
+		if (xlist[i] == 0) {
+		    yh += pmod->coeff[0];
 		} else {
-		    yh += beta[j++] * xval;
+		    xval = Z[xlist[i]][t];
+		    if (na(xval)) {
+			miss = 1;
+		    } else {
+			yh += beta[j++] * xval;
+		    }
 		}
 	    }
 	}
 
-	DPRINTF((" x contribution = %g\n", yh));
+	DPRINTF((" Xb contribution = %g\n", yh));
 
 	/* AR contribution (incorporating any differencing) */
+
 	for (i=1; i<=p && !miss; i++) {
 	    if (phi[i] == 0.0) {
 		continue;
@@ -1101,13 +1172,24 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		miss = 1;
 	    } else {
 		DPRINTF(("  AR: lag %d, using coeff %g\n", i, phi[i]));
-		yh += phi[i] * yval;
+		if (Xb != NULL) {
+		    if (na(Xb[s])) {
+			miss = 1;
+		    } else {
+			yh += phi[i] * (yval - Xb[s]);
+		    }
+		} else if (!na(mu)) {
+		    yh += phi[i] * (yval - mu);
+		} else {
+		    yh += phi[i] * yval;
+		}
 	    }
 	}
 
 	DPRINTF((" with AR contribution: %g\n", yh));
 
 	/* MA contribution */
+
 	for (i=1; i<=q && !miss; i++) {
 	    if (theta[i] == 0.0) {
 		continue;
@@ -1151,6 +1233,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     free(psi);
     free(phi);
     free(theta);
+    free(Xb);
 
     return err;
 }

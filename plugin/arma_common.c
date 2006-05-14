@@ -248,6 +248,8 @@ static void calc_max_lag (struct arma_info *ainfo)
     ainfo->maxlag = pmax + dmax;
 }
 
+#define SAMPLE_DEBUG 0
+
 static int 
 arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
 		    struct arma_info *ainfo)
@@ -255,6 +257,11 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int an, i, v, t, t1min;
     int vstart, pmax, anymiss;
+
+#if SAMPLE_DEBUG
+    fprintf(stderr, "arma_adjust_sample: at start, t1=%d, t2=%d\n",
+	    t1, t2);
+#endif
 
     vstart = arma_list_y_position(ainfo);
 
@@ -342,6 +349,11 @@ arma_adjust_sample (const DATAINFO *pdinfo, const double **Z, const int *list,
     if (an <= ainfo->nc) {
 	return 1; 
     }
+
+#if SAMPLE_DEBUG
+    fprintf(stderr, "arma_adjust_sample: at end, t1=%d, t2=%d\n",
+	    t1, t2);
+#endif
 
     ainfo->t1 = t1;
     ainfo->t2 = t2;
