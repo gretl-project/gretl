@@ -83,6 +83,7 @@ enum extra_cmds {
     VLAGSEL,
     VAROMIT,
     DEFINE_LIST,
+    PANEL_WLS,
     GUI_CMD_MAX
 };
 

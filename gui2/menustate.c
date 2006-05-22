@@ -118,7 +118,8 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 
 static GtkItemFactoryEntry panel_model_items[] = {
     { N_("/Model/Panel/Pooled OLS..."), NULL, model_callback, POOLED, NULL, GNULL },
-    { N_("/Model/Panel/Fixed or random effects..."), NULL, model_callback, PANEL, NULL, GNULL }
+    { N_("/Model/Panel/Fixed or random effects..."), NULL, model_callback, PANEL, NULL, GNULL },
+    { N_("/Model/Panel/Weighted least squares..."), NULL, model_callback, PANEL_WLS, NULL, GNULL }
 };
 
 #else
@@ -142,7 +143,8 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 
 static GtkItemFactoryEntry panel_model_items[] = {
     { N_("/Model/Panel/Pooled OLS..."), NULL, model_callback, POOLED, NULL },
-    { N_("/Model/Panel/Fixed or random effects..."), NULL, model_callback, PANEL, NULL }
+    { N_("/Model/Panel/Fixed or random effects..."), NULL, model_callback, PANEL, NULL },
+    { N_("/Model/Panel/Weighted least squares..."), NULL, model_callback, PANEL_WLS, NULL }
 };
 
 #endif

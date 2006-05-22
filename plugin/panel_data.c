@@ -1722,7 +1722,11 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	mdl = lsq(wlist, pZ, pdinfo, WLS, wlsopt);
 
-	if (mdl.errcode || iter > WLS_MAX) {
+	if (mdl.errcode) {
+	    break;
+	}
+
+	if (iter > WLS_MAX) {
 	    mdl.errcode = E_NOCONV;
 	    break;
 	}

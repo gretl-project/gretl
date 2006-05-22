@@ -73,13 +73,15 @@ struct _selector {
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE || c == POISSON || c == PANEL)
+                       c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
+                       c == PANEL_WLS)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE || c == POISSON || c == PANEL)
+                       c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
+                       c == PANEL_WLS)
 #endif
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
@@ -102,6 +104,7 @@ struct _selector {
                          c == HILU || \
                          c == LOGIT || \
                          c == OLS || \
+                         c == PANEL_WLS || \
                          c == PROBIT || \
                          c == TOBIT || \
                          c == TSLS || \
@@ -1959,6 +1962,7 @@ static char *est_str (int cmdnum)
     case POOLED:
 	return N_("Pooled OLS");
     case PANEL:
+    case PANEL_WLS:
 	return N_("Panel model");
     case WLS:
 	return N_("Weighted least squares");
@@ -2413,6 +2417,9 @@ static void selector_init (selector *sr, guint code, const char *title,
     GtkWidget *base, *hsep;
     int i, dlgheight = 340;
     double hx;
+
+    sr->code = code;
+    sr->opts = (code == PANEL_WLS)? OPT_W : OPT_NONE;
     
     if (MODEL_CODE(code)) {
 	if (datainfo->v > 9) {
@@ -2477,9 +2484,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     sr->active_var = 0;
     sr->error = 0;
-    sr->opts = OPT_NONE;
 
-    sr->code = code;
     sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     open_selector = sr;
 
@@ -2781,6 +2786,10 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label
 	    (_("Cointegrating regression includes a constant"));
 	pack_switch(tmp, sr, TRUE, TRUE, OPT_N, 0);
+    } else if (sr->code == PANEL_WLS) {
+	tmp = gtk_check_button_new_with_label
+	    (_("Iterated weighted least squares"));
+	pack_switch(tmp, sr, FALSE, TRUE, OPT_T, 0);
     }
 
 #ifdef HAVE_X12A    
@@ -2854,6 +2863,11 @@ static void build_panel_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
     GSList *group;
+
+    if (sr->opts & OPT_W) {
+	/* panel weighted least squares */
+	return;
+    }
 
     b1 = gtk_radio_button_new_with_label(NULL, _("Fixed effects"));
     pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
@@ -3150,7 +3164,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 	remove = gtk_button_new_with_label (_("<- Remove"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), remove, TRUE, FALSE, 0);
 
-	if (sr->code == ARMA) {
+	if (ci == ARMA) {
 	    sr->lags_button = gtk_button_new_with_label(_("lags..."));
 	    gtk_box_pack_start(GTK_BOX(button_vbox), sr->lags_button, TRUE, FALSE, 0);
 	    g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
@@ -3188,7 +3202,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 			nx++;
 		    }
 		}
-		if (nx > 0 && sr->code == ARMA) {
+		if (nx > 0 && ci == ARMA) {
 		    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 		}
 	    }
@@ -3217,26 +3231,26 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     gtk_widget_show(big_hbox);
 
     /* AR, D, MA spinners for ARIMA; or P and Q for GARCH */
-    if (sr->code == ARMA || sr->code == GARCH) {
+    if (ci == ARMA || ci == GARCH) {
 	build_pdq_spinners(sr);
     }
 
     /* toggle switches for some cases */
-    if (WANT_TOGGLES(sr->code)) {
+    if (WANT_TOGGLES(ci)) {
 	build_selector_switches(sr);
     }
 
     /* and radio buttons for some */
-    if (WANT_RADIOS(sr->code)) {
+    if (WANT_RADIOS(ci)) {
 	build_selector_radios(sr);
     }
 
     /* and lag selection stuff, if relevant */
     if (dataset_lags_ok(datainfo)) {
-	if (MODEL_CODE(sr->code) && sr->code != ARMA) {
+	if (MODEL_CODE(ci) && ci != ARMA) {
 	    lag_selector_button(sr);
 	} 
-	if (select_lags_depvar(sr->code) && yvar > 0) {
+	if (select_lags_depvar(ci) && yvar > 0) {
 	    maybe_activate_depvar_lags(sr->depvar, sr);
 	    maybe_insert_depvar_lags(sr, yvar, 0);
 	}
@@ -3937,7 +3951,7 @@ void data_save_selection_wrapper (int file_code, gpointer p)
 
 int selector_code (const selector *sr)
 {
-    return sr->code;
+    return (sr->code == PANEL_WLS)? PANEL : sr->code;
 }
 
 const char *selector_list (const selector *sr)

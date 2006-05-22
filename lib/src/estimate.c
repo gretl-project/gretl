@@ -3446,8 +3446,8 @@ static int check_panel_options (gretlopt opt)
  * @opt: can include %OPT_Q (quiet estimation), %OPT_S
  * (silent estimation), %OPT_R (random effects model),
  * %OPT_W (weights based on the error variance for the
- * respective cross-sectional units), %OPT_T (iterate, must
- * be accompanied by %OPT_W).
+ * respective cross-sectional units), %OPT_T (iterate, only
+ * available in conjunction with %OPT_W).
  * @prn: for printing details of iterations (or %NULL).
  *
  * Calculate estimates for a panel dataset, using fixed
