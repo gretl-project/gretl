@@ -235,7 +235,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == NULLDATA || \
  	               c == OPEN || \
                        c == OUTFILE || \
-	               c == PANEL || \
+	               c == PANELDAT || \
                        c == PRINTF || \
 	               c == PVALUE || \
 	               c == QUIT || \

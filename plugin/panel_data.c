@@ -174,6 +174,22 @@ static void print_panel_coeff (const MODEL *pmod,
 	    pmod->coeff[i], errstr, pvstr);
 }
 
+static void print_theta (const diagnostics_t *diag, double theta,
+			 int balanced, PRN *prn)
+{
+    pputs(prn, "Variance estimators:\n");
+    pprintf(prn, "sigma_e = %14.5g, sigma_a = %14.5g \n", diag->gm_var, 
+	    diag->fe_var);
+
+    if (balanced) {
+	pprintf(prn, "theta used for pseudo-differencing = %14.5g\n", theta);
+    } else {
+	pputs(prn, "Panel is unbalanced: theta varies across units\n");
+    }
+    pputc(prn, '\n');
+
+}
+
 /* construct a version of the dataset from which the group means
    are subtracted */
 
@@ -683,6 +699,98 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
     return lsdv;
 }
 
+static int print_fe_results (diagnostics_t *diag, 
+			     MODEL *lsdv,
+			     int usedum, 
+			     DATAINFO *pdinfo,
+			     PRN *prn)
+{
+    int i, j, k;
+    int ndum;
+    double F;
+
+#if PDEBUG
+    fprintf(stderr, "f.e. variance, lsdv.ncoeff=%d, var=%g, "
+	    "list[0]=%d\n", lsdv->ncoeff, diag->fe_var, diag->vlist[0]);
+    fprintf(stderr, "haus->bdiff = %p, haus->sigma = %p\n",
+	    diag->bdiff, diag->sigma);
+#endif
+
+    ndum = lsdv->list[0] - diag->vlist[0];
+
+    pputs(prn, 
+	  _("Fixed effects estimator\n"
+	    "allows for differing intercepts by cross-sectional unit\n"
+	    "slope standard errors in parentheses, p-values in brackets\n"));
+
+    if (ndum > 0) {
+	pputs(prn, _("a_i = intercepts"));
+	pputs(prn, "\n\n");
+    } else {
+	pputc(prn, '\n');
+    }
+
+    /* print the slope coefficients, for varying regressors */
+
+    k = 0;
+    for (i=1; i<diag->vlist[0] - 1; i++) {
+	int vi = diag->vlist[i+2];
+
+	j = (usedum)? i : i - 1;
+	print_panel_coeff(lsdv, pdinfo->varname[vi], j, prn);
+    }
+
+    pputc(prn, '\n');   
+
+    /* if we used dummy variables, print the per-unit intercept 
+       estimates */
+
+    if (ndum > 0) {
+	j = 0;
+	for (i=0; i<diag->nunits; i++) {
+	    char dumstr[VNAMELEN];
+	    double b;
+
+	    if (diag->unit_obs[i] < MINOBS) {
+		continue;
+	    }
+
+	    if (j == ndum) {
+		b = lsdv->coeff[0];
+	    } else {
+		b = lsdv->coeff[j + diag->vlist[0] - 1] + lsdv->coeff[0];
+	    }
+	    sprintf(dumstr, "a_%d", i + 1);
+	    pprintf(prn, "%*s: %14.4g\n", VNAMELEN, dumstr, b);
+	    j++;
+	}
+    } else {
+	pprintf(prn, _("%d group means were subtracted from the data"), diag->effn);
+	pputc(prn, '\n');
+	ndum = diag->effn - 1;
+    }
+
+    pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
+	    lsdv->ess, lsdv->nobs, diag->vlist[0] - 1 + ndum, diag->fe_var);
+
+    if (usedum) {
+	pputs(prn, _("Joint significance of unit dummy variables:\n"));
+    } else {
+	pprintf(prn, _("Joint significance of differing group means:\n"));
+    }
+
+    F = (diag->pooled->ess - lsdv->ess) * lsdv->dfd / (lsdv->ess * ndum);
+
+    pprintf(prn, " F(%d, %d) = %g %s %g\n", ndum, lsdv->dfd, F, 
+	    _("with p-value"), fdist(F, ndum, lsdv->dfd));
+
+    pputs(prn, _("(A low p-value counts against the null hypothesis that "
+		 "the pooled OLS model\nis adequate, in favor of the fixed "
+		 "effects alternative.)\n\n"));
+
+    return 0;
+}
+
 /* drive the calculation of the fixed effects regression, print the
    results, and return the error variance */
 
@@ -703,97 +811,30 @@ fixed_effects_variance (diagnostics_t *diag,
 	err = lsdv.errcode;
     } else {
 	int i, j, k;
-	int ndum;
-	double F;
 
 	diag->fe_var = lsdv.sigma * lsdv.sigma;
 
-#if PDEBUG
-	fprintf(stderr, "f.e. variance, lsdv.ncoeff=%d, var=%g, "
-		"list[0]=%d\n", lsdv.ncoeff, diag->fe_var, diag->vlist[0]);
-	fprintf(stderr, "haus->bdiff = %p, haus->sigma = %p\n",
-		diag->bdiff, diag->sigma);
-#endif
-
-	ndum = lsdv.list[0] - diag->vlist[0];
-
-	pputs(prn, 
-	      _("Fixed effects estimator\n"
-		"allows for differing intercepts by cross-sectional unit\n"
-		"slope standard errors in parentheses, p-values in brackets\n"));
-
-	if (ndum > 0) {
-	    pputs(prn, _("a_i = intercepts"));
-	    pputs(prn, "\n\n");
-	} else {
-	    pputc(prn, '\n');
+	if (!(diag->opt & OPT_S)) {
+	    print_fe_results(diag, &lsdv, usedum, pdinfo, prn);
 	}
 
-	/* print and record the slope coefficients, for varying
-	   regressors */
-
-	k = 0;
-	for (i=1; i<diag->vlist[0] - 1; i++) {
-	    int vi = diag->vlist[i+2];
-
-	    j = (usedum)? i : i - 1;
-	    print_panel_coeff(&lsdv, pdinfo->varname[vi], j, prn);
-	    if (diag->bdiff != NULL) {
+	if (diag->bdiff != NULL) {
+	    /* record the slope coefficients for varying regressors */
+	    k = 0;
+	    for (i=1; i<diag->vlist[0] - 1; i++) {
+		j = (usedum)? i : i - 1;
 		diag->bdiff[k++] = lsdv.coeff[j];
 	    }
 	}
-
-	pputc(prn, '\n');   
-
-	/* if we used dummy variables, print the per-unit intercept 
-	   estimates */
-
-	if (ndum > 0) {
-	    j = 0;
-	    for (i=0; i<diag->nunits; i++) {
-		char dumstr[VNAMELEN];
-		double b;
-
-		if (diag->unit_obs[i] < MINOBS) {
-		    continue;
-		}
-
-		if (j == ndum) {
-		    b = lsdv.coeff[0];
-		} else {
-		    b = lsdv.coeff[j + diag->vlist[0] - 1] + lsdv.coeff[0];
-		}
-		sprintf(dumstr, "a_%d", i + 1);
-		pprintf(prn, "%*s: %14.4g\n", VNAMELEN, dumstr, b);
-		j++;
-	    }
-	} else {
-	    pprintf(prn, _("%d group means were subtracted from the data"), diag->effn);
-	    pputc(prn, '\n');
-	    ndum = diag->effn - 1;
-	}
-
-	pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
-		lsdv.ess, lsdv.nobs, diag->vlist[0] - 1 + ndum, diag->fe_var);
-
-	if (usedum) {
-	    pputs(prn, _("Joint significance of unit dummy variables:\n"));
-	} else {
-	    pprintf(prn, _("Joint significance of differing group means:\n"));
-	}
-
-	F = (diag->pooled->ess - lsdv.ess) * lsdv.dfd / (lsdv.ess * ndum);
-	pprintf(prn, " F(%d, %d) = %g %s %g\n", ndum, lsdv.dfd, F, 
-		_("with p-value"), fdist(F, ndum, lsdv.dfd));
-
-	pputs(prn, _("(A low p-value counts against the null hypothesis that "
-		     "the pooled OLS model\nis adequate, in favor of the fixed "
-		     "effects alternative.)\n\n"));
 
 	if (diag->sigma != NULL) {
 	    makevcv(&lsdv);
 	    diag->sigma_e = lsdv.sigma;
 	    vcv_slopes(diag, &lsdv, VCV_INIT);
+	}
+
+	if (diag->opt & OPT_S) {
+	    fprintf(stderr, "FIXME: should save content of lsdv model here\n");
 	}
     }
 
@@ -902,6 +943,8 @@ static int random_effects (diagnostics_t *diag,
 		"error term\n"
 		"           (standard errors in parentheses, p-values in brackets)\n\n"));
 
+	print_theta(diag, theta, balanced_panel(pdinfo), prn); /* ADDED 2006/05/22 */
+
 	k = 0;
 	for (i=0; i<remod.ncoeff; i++) {
 	    int vi = diag->pooled->list[i+2];
@@ -980,8 +1023,7 @@ breusch_pagan_LM (diagnostics_t *diag, const DATAINFO *pdinfo, PRN *prn)
 	    LM, LM, chisq(LM, 1));
 
     pputs(prn, _("(A low p-value counts against the null hypothesis that "
-		 "the pooled OLS model\nis adequate, in favor of the random "
-		 "effects alternative.)\n\n"));
+		 "the pooled OLS model\nis adequate.)\n\n"));
 
     return 0;
 }
@@ -1273,9 +1315,14 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL mod;
     diagnostics_t diag;
-    int unbal, xdf, err = 0;
+    gretlopt diag_opt;
+    int unbal;
+    int err = 0;
 
-    mod = lsq(list, pZ, pdinfo, POOLED, opt); /* does opt need FIXING? */
+    mod = lsq(list, pZ, pdinfo, OLS, OPT_NONE);
+    if (mod.errcode) {
+	return mod;
+    }
 
     unbal = gretl_model_get_int(&mod, "unbalanced");
 
@@ -1286,7 +1333,9 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mod;
     }
 
-    err = diagnostics_setup(&diag, &mod, pdinfo, opt);
+    diag_opt = (!(opt & OPT_R))? OPT_S : OPT_NONE;
+
+    err = diagnostics_setup(&diag, &mod, pdinfo, diag_opt);
     if (err) {
 	goto bailout;
     }   
@@ -1302,45 +1351,28 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     err = diag_set_varying(&diag, &mod);
     if (err) {
 	goto bailout;
-    }    
+    }  
 
-    /* degrees of freedom relative to # of x-sectional units */
-    xdf = diag.effn - mod.ncoeff;
+    if (opt & OPT_R) {
+	/* trying to do random effects */
+	int xdf = diag.effn - mod.ncoeff;
 
-#if PDEBUG
-    fprintf(stderr, "nunits=%d, T=%d, effn=%d, effT=%d, unbal=%d, xdf=%d\n",
-	    diag.nunits, diag.T, diag.effn, diag.effT, unbal, xdf);
-#endif
-
-    /* can we do the Hausman test or not? */
-    if (xdf > 0) {
-	err = hausman_allocate(&diag);
-	if (err) {
-	    goto bailout;
+	if (xdf <= 0) {
+	    mod.errcode = E_DF;
+	} else {
+	    err = hausman_allocate(&diag);
+	    if (err) {
+		goto bailout;
+	    }
 	}
     } 
-
-    if (!unbal) {
-	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
-		       "cross-sectional units\n "
-		       "                        observed over %d periods\n\n"), 
-		diag.effn, diag.effT);
-    }
 
     err = fixed_effects_variance(&diag, pZ, pdinfo, prn);
     if (err) {
 	goto bailout;
     }
 
-    breusch_pagan_LM(&diag, pdinfo, prn);
-
-    if (xdf <= 0) {
-	pprintf(prn, "Omitting group means regression: "
-		"insufficient degrees of freedom\n");
-	goto bailout;
-    }
-    
-    if (xdf > 0 && !na(diag.fe_var)) {
+    if ((opt & OPT_R) && !na(diag.fe_var)) {
 	double **gZ = NULL;
 	DATAINFO *ginfo;
 
@@ -1369,6 +1401,10 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
  bailout:
 
     diag_free(&diag);
+
+    if (err && mod.errcode == 0) {
+	mod.errcode = err;
+    }
 
     return mod;    
 }

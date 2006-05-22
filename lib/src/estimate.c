@@ -853,7 +853,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
             mdl.errcode = E_UNKVAR;
             goto lsq_abort;
         }
-    }       
+    } 
 
     /* check for zero dependent var */
     if (depvar_zero(mdl.t1, mdl.t2, yno, mdl.nwt, (const double **) *pZ)) {  
