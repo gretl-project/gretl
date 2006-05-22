@@ -1268,6 +1268,111 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+			gretlopt opt, PRN *prn)
+{
+    MODEL mod;
+    diagnostics_t diag;
+    int unbal, xdf, err = 0;
+
+    mod = lsq(list, pZ, pdinfo, POOLED, opt); /* does opt need FIXING? */
+
+    unbal = gretl_model_get_int(&mod, "unbalanced");
+
+    if (mod.ifc == 0) {
+	/* at many points in these functions we assume the base
+	   regression has an intercept included */
+	mod.errcode = E_DATA; /* FIXME */
+	return mod;
+    }
+
+    err = diagnostics_setup(&diag, &mod, pdinfo, opt);
+    if (err) {
+	goto bailout;
+    }   
+
+    /* figure out which of the original regressors are time-varying,
+       or unit-varying as the case may be 
+    */
+    err = varying_vars_list((const double **) *pZ, pdinfo, &diag);
+    if (err) {
+	goto bailout;
+    }
+
+    err = diag_set_varying(&diag, &mod);
+    if (err) {
+	goto bailout;
+    }    
+
+    /* degrees of freedom relative to # of x-sectional units */
+    xdf = diag.effn - mod.ncoeff;
+
+#if PDEBUG
+    fprintf(stderr, "nunits=%d, T=%d, effn=%d, effT=%d, unbal=%d, xdf=%d\n",
+	    diag.nunits, diag.T, diag.effn, diag.effT, unbal, xdf);
+#endif
+
+    /* can we do the Hausman test or not? */
+    if (xdf > 0) {
+	err = hausman_allocate(&diag);
+	if (err) {
+	    goto bailout;
+	}
+    } 
+
+    if (!unbal) {
+	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
+		       "cross-sectional units\n "
+		       "                        observed over %d periods\n\n"), 
+		diag.effn, diag.effT);
+    }
+
+    err = fixed_effects_variance(&diag, pZ, pdinfo, prn);
+    if (err) {
+	goto bailout;
+    }
+
+    breusch_pagan_LM(&diag, pdinfo, prn);
+
+    if (xdf <= 0) {
+	pprintf(prn, "Omitting group means regression: "
+		"insufficient degrees of freedom\n");
+	goto bailout;
+    }
+    
+    if (xdf > 0 && !na(diag.fe_var)) {
+	double **gZ = NULL;
+	DATAINFO *ginfo;
+
+	ginfo = group_means_dataset(&diag, (const double **) *pZ,
+				    pdinfo, &gZ);
+
+	if (ginfo != NULL) {
+	    err = group_means_variance(&diag, &gZ, ginfo);
+	}
+
+	if (err) { 
+	    pputs(prn, _("Couldn't estimate group means regression\n"));
+	} else {
+	    pprintf(prn, _("Residual variance for group means "
+			   "regression: %g\n\n"), diag.gm_var);    
+	    random_effects(&diag, (const double **) *pZ, pdinfo, 
+			   (const double **) gZ, prn);
+	    do_hausman_test(&diag, prn);
+	}
+
+	if (ginfo != NULL) {
+	    destroy_dataset(gZ, ginfo);
+	}
+    }
+
+ bailout:
+
+    diag_free(&diag);
+
+    return mod;    
+}
+
 static int 
 write_uvar_to_dataset (double *uvar, int nunits, int T,
 		       double **Z, DATAINFO *pdinfo)

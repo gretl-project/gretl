@@ -100,6 +100,7 @@ typedef enum {
     OPEN,
     OUTFILE,
     PANEL,
+    PANELDAT,
     PCA,
     PERGM,
     PLOT,    

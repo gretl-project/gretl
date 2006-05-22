@@ -116,6 +116,11 @@ static GtkItemFactoryEntry time_series_model_items[] = {
       selector_callback, COINT2, NULL, GNULL }
 };
 
+static GtkItemFactoryEntry panel_model_items[] = {
+    { N_("/Model/Panel/Pooled OLS..."), NULL, model_callback, POOLED, NULL, GNULL },
+    { N_("/Model/Panel/Fixed or random effects..."), NULL, model_callback, PANEL, NULL, GNULL }
+};
+
 #else
 
 static GtkItemFactoryEntry time_series_model_items[] = {
@@ -133,6 +138,11 @@ static GtkItemFactoryEntry time_series_model_items[] = {
       selector_callback, COINT, NULL },
     { N_("/Model/Time series/Cointegration test/Johansen..."), NULL, 
       selector_callback, COINT2, NULL }
+};
+
+static GtkItemFactoryEntry panel_model_items[] = {
+    { N_("/Model/Panel/Pooled OLS..."), NULL, model_callback, POOLED, NULL },
+    { N_("/Model/Panel/Fixed or random effects..."), NULL, model_callback, PANEL, NULL }
 };
 
 #endif
@@ -206,9 +216,25 @@ void time_series_menu_state (gboolean s)
 void panel_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Model/Pooled OLS (panel)...", s);
 	flip(mdata->ifac, "/Data/Add variables/unit dummies", s);
 	flip(mdata->ifac, "/Data/Add variables/panel dummies", s);
+    }
+
+    if (s) {
+	GtkWidget *w =  
+	    gtk_item_factory_get_widget(mdata->ifac, 
+					"/Model/Panel/Pooled OLS...");
+
+	if (w == NULL) {
+	    int i, n = sizeof panel_model_items / 
+		sizeof panel_model_items[0];
+
+	    for (i=0; i<n; i++) {
+		gtk_item_factory_create_item(mdata->ifac, 
+					     &panel_model_items[i], 
+					     mdata, 1);
+	    }
+	}
     }
 }
 

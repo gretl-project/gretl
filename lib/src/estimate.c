@@ -498,6 +498,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    pdinfo->n, Z, NULL);
 	if (pmod->ci == POOLED && pmod->missmask != NULL) {
+	    /* FIXME: is this really needed? */
 	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
 		gretl_model_set_int(pmod, "unbalanced", 1);
 	    } 
@@ -3421,6 +3422,83 @@ MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     return gmod;
 } 
 
+static int check_panel_options (gretlopt opt)
+{
+    int err = 0;
+
+    if ((opt & OPT_R) && (opt & OPT_W)) {
+	/* can't specify random effects + weighted least squares */
+	err = E_DATA;
+    } else if ((opt & OPT_T) && !(opt & OPT_W)) {
+	/* iterate option requires weighted least squares option */
+	err = E_DATA;
+    }
+
+    return err;
+}
+
+/**
+ * panel_model:
+ * @list: regression list (dependent variable plus independent 
+ * variables).
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the (panel) data set.
+ * @opt: can include %OPT_Q (quiet estimation), %OPT_S
+ * (silent estimation), %OPT_R (random effects model),
+ * %OPT_W (weights based on the error variance for the
+ * respective cross-sectional units), %OPT_T (iterate, must
+ * be accompanied by %OPT_W).
+ * @prn: for printing details of iterations (or %NULL).
+ *
+ * Calculate estimates for a panel dataset, using fixed
+ * effects (the default), random effects, or weighted
+ * least squares based on the respective variances for the
+ * cross-sectional units.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+		   gretlopt opt, PRN *prn)
+{
+    void *handle;
+    MODEL mod;
+
+    *gretl_errmsg = '\0';
+
+    if (check_panel_options(opt)) {
+	strcpy(gretl_errmsg, "panel model: inconsistent options");
+	gretl_model_init(&mod);
+	mod.errcode = E_DATA;
+    } else if (opt & OPT_W) {
+	MODEL (*panel_wls_by_unit) (const int *, double ***, DATAINFO *,
+				    gretlopt, PRN *);
+
+	panel_wls_by_unit = get_plugin_function("panel_wls_by_unit", &handle);
+	if (panel_wls_by_unit == NULL) {
+	    gretl_model_init(&mod);
+	    mod.errcode = E_FOPEN;
+	} else {
+	    mod = (*panel_wls_by_unit) (list, pZ, pdinfo, opt, prn);
+	    close_plugin(handle);
+	}
+    } else {
+	MODEL (*real_panel_model) (const int *, double ***, DATAINFO *,
+				   gretlopt, PRN *);
+
+	real_panel_model = get_plugin_function("real_panel_model", &handle);
+	if (real_panel_model == NULL) {
+	    gretl_model_init(&mod);
+	    mod.errcode = E_FOPEN;
+	} else {
+	    mod = (*real_panel_model) (list, pZ, pdinfo, opt, prn);
+	    close_plugin(handle);
+	}
+    }
+
+    return mod;
+}
+
 /**
  * pooled:
  * @list: regression list (dependent variable plus independent 
@@ -3445,21 +3523,7 @@ MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
     *gretl_errmsg = '\0';
 
     if (opt & OPT_W) {
-	void *handle;
-	MODEL (*panel_wls_by_unit) (const int *, double ***, DATAINFO *,
-				    gretlopt, PRN *);
-
-	panel_wls_by_unit = get_plugin_function("panel_wls_by_unit", &handle);
-
-	if (panel_wls_by_unit == NULL) {
-	    gretl_model_init(&wmod);
-	    wmod.errcode = E_FOPEN;
-	    return wmod;
-	}
-
-	wmod = (*panel_wls_by_unit) (list, pZ, pdinfo, opt, prn);
-
-	close_plugin(handle);
+	return panel_model(list, pZ, pdinfo, opt, prn);
     } else {
 	wmod = lsq(list, pZ, pdinfo, POOLED, opt);
     }

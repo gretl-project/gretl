@@ -35,6 +35,7 @@
                        c == OMIT || \
                        c == MLE || \
                        c == NLS || \
+                       c == PANEL || \
                        c == POISSON || \
                        c == POOLED || \
                        c == PROBIT || \
@@ -147,8 +148,13 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_A, "append" },
     { OUTFILE,  OPT_C, "close" },
     { OUTFILE,  OPT_W, "write" },
-    { PANEL,    OPT_C, "cross-section" },
-    { PANEL,    OPT_S, "time-series" },
+    { PANEL,    OPT_Q, "quiet" },
+    { PANEL,    OPT_R, "random-effects" },
+    { PANEL,    OPT_S, "silent" },
+    { PANEL,    OPT_T, "iterate" },
+    { PANEL,    OPT_W, "unit-weights" },
+    { PANELDAT, OPT_C, "cross-section" },
+    { PANELDAT, OPT_S, "time-series" },
     { POISSON,  OPT_V, "verbose" },
     { POOLED,   OPT_T, "iterate" },
     { POOLED,   OPT_V, "verbose" },

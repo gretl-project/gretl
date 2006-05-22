@@ -992,8 +992,8 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
     for (t=0; t<=fc->t2; t++) {
 	Xb[t] = 0.0;
 	miss = 0;
+	j = 0;
 	for (i=1; i<=xlist[0] && !miss; i++) {
-	    j = 0;
 	    if (xlist[i] == 0) {
 		Xb[t] += pmod->coeff[0];
 	    } else {
@@ -1133,9 +1133,9 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		yh = Xb[t];
 	    }
 	} else {
-	    for (i=1; i<=xvars; i++) {
-		int j = 0;
+	    int j = 0;
 
+	    for (i=1; i<=xvars; i++) {
 		if (xlist[i] == 0) {
 		    yh += pmod->coeff[0];
 		} else {

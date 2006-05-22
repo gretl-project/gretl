@@ -1430,9 +1430,12 @@ static int exec_line (char *line, PRN *prn)
     case OLS:
     case WLS:
     case HCCM:
+    case PANEL:
     case POOLED:
 	clear_model(models[0]);
-	if (cmd.ci == POOLED) {
+	if (cmd.ci == PANEL) {
+	    *models[0] = panel_model(cmd.list, &Z, datainfo, cmd.opt, prn);
+	} else if (cmd.ci == POOLED) {
 	    *models[0] = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
 	} else {
 	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
@@ -1454,7 +1457,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 #endif
 
-    case PANEL:	
+    case PANELDAT:	
 	err = set_panel_structure(cmd.opt, datainfo, prn);
 	break;
 

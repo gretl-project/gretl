@@ -131,6 +131,7 @@ struct plugin_function plugin_functions[] = {
     { "panel_autocorr_test",      P_PANEL_DATA },
     { "panel_diagnostics",        P_PANEL_DATA },
     { "switch_panel_orientation", P_PANEL_DATA },
+    { "real_panel_model",         P_PANEL_DATA },
     { "panel_wls_by_unit",        P_PANEL_DATA },
 
     /* principal components analysis */

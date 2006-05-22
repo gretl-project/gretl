@@ -73,13 +73,13 @@ struct _selector {
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE || c == POISSON)
+                       c == TOBIT || c == PWE || c == POISSON || c == PANEL)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE || c == POISSON)
+                       c == TOBIT || c == PWE || c == POISSON || c == PANEL)
 #endif
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)
@@ -110,7 +110,7 @@ struct _selector {
                          c == VLAGSEL || \
                          c == WLS)
 
-#define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA)
+#define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA || c == PANEL)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
@@ -1958,6 +1958,8 @@ static char *est_str (int cmdnum)
 	return N_("Poisson");
     case POOLED:
 	return N_("Pooled OLS");
+    case PANEL:
+	return N_("Panel model");
     case WLS:
 	return N_("Weighted least squares");
     case TSLS:
@@ -2438,7 +2440,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     }
 
     if (WANT_RADIOS(code)) {
-	dlgheight += 40;
+	dlgheight += 60;
     }
 
     if (code == ARMA && datainfo->pd > 1) {
@@ -2848,6 +2850,23 @@ static void build_arma_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void build_panel_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Fixed effects"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Random effects"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_R, 1);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
+
 static void build_vec_radios (selector *sr)
 {
     GtkWidget *tmp;
@@ -2889,6 +2908,8 @@ static void build_selector_radios (selector *sr)
 {
     if (sr->code == ARMA) {
 	build_arma_radios(sr);
+    } else if (sr->code == PANEL) {
+	build_panel_radios(sr);
     } else {
 	build_vec_radios(sr);
     }

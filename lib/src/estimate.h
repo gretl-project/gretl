@@ -45,6 +45,9 @@ MODEL poisson_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 	     PRN *prn);
 
+MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+		   gretlopt opt, PRN *prn);
+
 MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn);
 

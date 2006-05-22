@@ -110,6 +110,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { OPEN,     "open" },
     { OUTFILE,  "outfile" },
     { PANEL,    "panel" },
+    { PANELDAT, "paneldat" },
     { PCA,      "pca" },
     { PERGM,    "pergm" },
     { PLOT,     "plot" },    

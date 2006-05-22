@@ -2036,9 +2036,12 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     } else if (strcmp(item, _("Edit plot commands")) == 0) {
 	if (obj->sort == GRETL_OBJ_GRAPH || obj->sort == GRETL_OBJ_PLOT) {
 	    SESSION_GRAPH *graph = (SESSION_GRAPH *) obj->data;
+	    char fullname[MAXLEN];
 
-	    remove_png_term_from_plotfile(graph->fname, NULL);
-	    view_file(graph->fname, 1, 0, 78, 400, 
+	    chdir(paths.userdir);
+	    session_file_make_path(fullname, graph->fname);
+	    remove_png_term_from_plotfile(fullname, NULL);
+	    view_file(fullname, 1, 0, 78, 400, 
 		      (obj->sort == GRETL_OBJ_GRAPH)? GR_PLOT : GR_BOX);
 	}
     } else if (strcmp(item, _("Delete")) == 0) {

@@ -38,9 +38,9 @@ typedef struct {
 				      to year, month, day */
     short panel;                   /* 1 for panel set, 2 for intraday
 				      date set , 0 o.w. */
-#define LINEAR   0                 /* Single time direction */
-#define PANEL    1                 /* panel:period */    
-#define INTRADAY 2                 /* date:intraday period */
+#define LINEAR    0                /* Single time direction */
+#define RATSPANEL 1                /* panel:period */    
+#define INTRADAY  2                /* date:intraday period */
     long panelrecord;              /* Size of panel or 
 				      number of periods per day */
     short dclass;                  /* See definitions below */
