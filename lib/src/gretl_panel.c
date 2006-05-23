@@ -25,7 +25,7 @@
 #include "gretl_model.h"
 #include "gretl_panel.h"
 
-#define PDEBUG 2
+#define PDEBUG 0
 
 enum vcv_ops {
     VCV_INIT,
@@ -521,7 +521,7 @@ static void apply_panel_df_correction (MODEL *pmod, int ndf)
     int i, j, idx;
 
     pmod->dfd -= ndf;
-    pmod->dfn += ndf; 
+    pmod->dfn += ndf - 1; 
 
     pmod->sigma *= dfcorr;
 
@@ -797,8 +797,42 @@ static int print_fe_results (diagnostics_t *diag,
     return 0;
 }
 
+static void fix_within_stats (MODEL *targ, MODEL *src, diagnostics_t *diag)
+{
+    int i, nc;
+
+    targ->list[1] = src->list[1];
+    for (i=2; i<=targ->list[0]; i++) {
+	targ->list[i] = diag->vlist[i+1]; /* is this always right? */
+    }
+
+    targ->ybar = src->ybar;
+    targ->sdy = src->sdy;
+    targ->ifc = 1;
+
+    targ->rsq = 1.0 - (targ->ess / src->tss);
+
+    if (targ->dfd > 0) {
+	double den = targ->tss * targ->dfd;
+
+	targ->adjrsq = 1 - (targ->ess * (targ->nobs - 1) / den);
+    }
+
+    if (targ->rsq < 0.0) {
+	targ->rsq = 0.0;
+    } else {
+	targ->fstt = (targ->rsq / (1.0 - targ->rsq)) * ((double) targ->dfd / targ->dfn);
+    }
+
+    nc = targ->ncoeff;
+    targ->ncoeff = targ->dfn + 1;
+    ls_criteria(targ);
+    targ->ncoeff = nc;
+}
+
 /* drive the calculation of the fixed effects regression, print the
    results (if wanted), and compute the error variance */
+
 
 static int
 fixed_effects_variance (diagnostics_t *diag,
@@ -840,27 +874,90 @@ fixed_effects_variance (diagnostics_t *diag,
 	}
 
 	if (diag->opt & OPT_F) {
-	    fprintf(stderr, "FIXME: should save content of lsdv model here\n");
-	    for (i=0; i<lsdv.ncoeff; i++) {
-		fprintf(stderr, "lsdv.coeff[%d] = %g\n", i, lsdv.coeff[i]);
-	    }
-	    if (1) {
-		MODEL tmp;
+	    /* Swap content of fixed effects model into the MODEL
+	       struct attached to diag. 
+	    */
+	    MODEL tmp;
 		
-		tmp = *diag->pooled;
-		*diag->pooled = lsdv;
-		lsdv = tmp;
-		diag->pooled->ci = PANEL;
-		gretl_model_set_int(diag->pooled, "fixed-effects", 1);
-		gretl_model_add_panel_varnames(diag->pooled, pdinfo);
-		set_model_id(diag->pooled);
+	    tmp = *diag->pooled;
+	    *diag->pooled = lsdv;
+	    lsdv = tmp;
+	    diag->pooled->ci = PANEL;
+	    gretl_model_set_int(diag->pooled, "fixed-effects", 1);
+	    if (!usedum) {
+		fix_within_stats(diag->pooled, &lsdv, diag);
 	    }
+	    gretl_model_add_panel_varnames(diag->pooled, pdinfo);
+	    set_model_id(diag->pooled);
 	}
     }
 
     clear_model(&lsdv);
 
     return err;
+}
+
+static void fix_gls_stats (MODEL *targ, MODEL *src, diagnostics_t *diag,
+			   const double **Z)
+{
+    const double *y;
+    int i, t, nc;
+    double yht, xit;
+
+    targ->list[1] = src->list[1];
+    for (i=2; i<=targ->list[0]; i++) {
+	targ->list[i] = diag->vlist[i+1]; /* is this always right? */
+    }
+
+    targ->ybar = src->ybar;
+    targ->sdy = src->sdy;
+
+    y = Z[src->list[1]];
+
+#if 1 /* FIXME! The following is broken */
+    targ->ess = 0.0;
+    for (t=0; t<src->full_n; t++) {
+	if (na(y[t])) {
+	    targ->uhat[t] = NADBL;
+	    targ->yhat[t] = NADBL;
+	    continue;
+	}
+	yht = 0.0;
+	for (i=0; i<targ->ncoeff; i++) {
+	    xit = Z[src->list[i+2]][t]; /* vlist?? */
+	    if (na(xit)) {
+		yht = NADBL;
+		break;
+	    } else {
+		yht += targ->coeff[i] * xit;
+	    }
+	}
+	targ->yhat[t] = yht;
+	if (!na(yht)) {
+	    targ->uhat[t] = y[t] - yht;
+	    targ->ess += targ->uhat[t] * targ->uhat[t];
+	}
+    } 
+#endif
+
+    targ->rsq = 1.0 - (targ->ess / src->tss);
+
+    if (targ->dfd > 0) {
+	double den = targ->tss * targ->dfd;
+
+	targ->adjrsq = 1 - (targ->ess * (targ->nobs - 1) / den);
+    }
+
+    if (targ->rsq < 0.0) {
+	targ->rsq = 0.0;
+    } else {
+	targ->fstt = (targ->rsq / (1.0 - targ->rsq)) * ((double) targ->dfd / targ->dfn);
+    }
+
+    nc = targ->ncoeff;
+    targ->ncoeff = targ->dfn + 1;
+    ls_criteria(targ);
+    targ->ncoeff = nc;
 }
 
 /* calculate the random effects regression and print the results */
@@ -916,6 +1013,7 @@ static int random_effects (diagnostics_t *diag,
 	    k++;
 	    relist[j] = k;
 	    gm = gZ[k];
+	    strcpy(reinfo->varname[k], pdinfo->varname[diag->pooled->list[j]]);
 	}
 
 	for (i=0; i<diag->nunits; i++) {
@@ -957,25 +1055,47 @@ static int random_effects (diagnostics_t *diag,
 	pputs(prn, _("Error estimating random effects model\n"));
 	errmsg(err, prn);
     } else {
-	pputs(prn,
-	      _("                         Random effects estimator\n"
-		"           allows for a unit-specific component to the "
-		"error term\n"
-		"           (standard errors in parentheses, p-values in brackets)\n\n"));
+	if (diag->opt & OPT_V) {
+	    pputs(prn,
+		  _("                         Random effects estimator\n"
+		    "           allows for a unit-specific component to the "
+		    "error term\n"
+		    "           (standard errors in parentheses, p-values in brackets)\n\n"));
 
-	print_theta(diag, theta, balanced_panel(pdinfo), prn); /* ADDED 2006/05/22 */
+	    print_theta(diag, theta, balanced_panel(pdinfo), prn); /* ADDED 2006/05/22 */
+	}
 
 	k = 0;
 	for (i=0; i<remod.ncoeff; i++) {
 	    int vi = diag->pooled->list[i+2];
 
-	    print_panel_coeff(&remod, pdinfo->varname[vi], i, prn);
+	    if (diag->opt & OPT_V) {
+		print_panel_coeff(&remod, pdinfo->varname[vi], i, prn);
+	    }
 	    if (diag->bdiff != NULL && var_is_varying(diag->vlist, vi)) {
 		diag->bdiff[k++] -= remod.coeff[i];
 	    }
 	}
 	makevcv(&remod);
 	vcv_slopes(diag, &remod, VCV_SUBTRACT);
+    }
+
+    if (diag->opt & OPT_R) {
+	/* Swap content of random effects model into the MODEL
+	   struct attached to diag.  
+	*/
+	MODEL tmp;
+
+	printmodel(&remod, reinfo, OPT_NONE, prn);
+		
+	tmp = *diag->pooled;
+	*diag->pooled = remod;
+	remod = tmp;
+	diag->pooled->ci = PANEL;
+	gretl_model_set_int(diag->pooled, "random-effects", 1);
+	gretl_model_add_panel_varnames(diag->pooled, reinfo);
+	fix_gls_stats(diag->pooled, &remod, diag, Z);
+	set_model_id(diag->pooled);
     }
 
     clear_model(&remod);
@@ -1340,7 +1460,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     int unbal;
     int err = 0;
 
-    mod = lsq(list, pZ, pdinfo, OLS, OPT_NONE);
+    mod = lsq(list, pZ, pdinfo, OLS, OPT_A);
     if (mod.errcode) {
 	return mod;
     }
