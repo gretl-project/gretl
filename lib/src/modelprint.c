@@ -541,6 +541,12 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
 	} else {
 	    return N_("WLS");
 	}
+    } else if (pmod->ci == PANEL) {
+	if (gretl_model_get_int(pmod, "fixed-effects")) {
+	    return N_("Fixed-effects");
+	} else {
+	    return N_("Random-effects (GLS)");
+	}	
     } else {
 	return estimator_string(pmod->ci, prn);
     } 
@@ -1622,6 +1628,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	|| pmod->ci == POOLED || pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
 	|| pmod->ci == LOGISTIC || pmod->ci == TOBIT
+	|| pmod->ci == PANEL 
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 	print_middle_table_start(prn);
 	if (pmod->ci != VAR) {
@@ -1734,7 +1741,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_end(prn);
     }
 
-    if (plain_format(prn) && pmod->ci != MLE &&
+    if (plain_format(prn) && pmod->ci != MLE && pmod->ci != PANEL &&
 	pmod->ci != ARMA && pmod->ci != NLS && !pmod->aux) {
 	pval_max_line(pmod, pdinfo, prn);
     }

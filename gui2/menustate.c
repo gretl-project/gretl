@@ -220,6 +220,7 @@ void panel_menu_state (gboolean s)
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Data/Add variables/unit dummies", s);
 	flip(mdata->ifac, "/Data/Add variables/panel dummies", s);
+	flip(mdata->ifac, "/Model/Panel", s);
     }
 
     if (s) {

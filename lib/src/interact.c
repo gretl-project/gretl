@@ -94,7 +94,7 @@ static int filter_comments (char *line, CMD *cmd)
     }
     
     for (i=0; i<n; i++) {
-	if (line[i] == '(' && line [i+1] == '*') {
+	if (!strncmp(line + i, "(*", 2) || !strncmp(line + i, "/*", 2)) {
 	    cmd->ignore = 1;
 	    if (line[i+3] == '!') { /* special code for data file to open */
 		sscanf(line + 4, "%s", datfile);
@@ -102,7 +102,7 @@ static int filter_comments (char *line, CMD *cmd)
 		cmd->ignore = 0;  /* FIXME ? */
 		return 0;
 	    }
-	} else if (line[i] == '*' && line [i+1] == ')') {
+	} else if (!strncmp(line + i, "*)", 2) || !strncmp(line + i, "*/", 2)) {
 	    cmd->ignore = 0; 
 	    i += 2;
 	    while (isspace((unsigned char) line[i]) && i < n) {

@@ -528,7 +528,17 @@ static int is_data_file (const char *fname)
     int ret = 1;
 
     if (fname != NULL && strlen(fname) > 4) {
-	ret = !strcmp(fname + strlen(fname) - 4, ".gdt");
+	const char *ext = strrchr(fname, '.');
+
+	if (ext != NULL) {
+	    if (!strcmp(ext, ".inp")) {
+		ret = 0;
+	    } else if (!strcmp(ext, ".gfn")) {
+		ret = 0;
+	    } else if (!strcmp(ext, ".gretl")) {
+		ret = 0;
+	    }
+	}	    
     }
 
     return ret;

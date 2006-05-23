@@ -23,6 +23,11 @@ void output_lang_file (void)
     puts(" <end-regex>\\*\\)</end-regex>");
     puts("</block-comment>\n");
 
+    puts("<block-comment _name = \"C-style Block Comment\" style = \"Comment\">");
+    puts(" <start-regex>/\\*</start-regex>");
+    puts(" <end-regex>\\*/</end-regex>");
+    puts("</block-comment>\n");
+
     puts("<string _name = \"String\" style = \"String\" end-at-line-end = \"TRUE\">");
     puts(" <start-regex>&quot;</start-regex>");
     puts(" <end-regex>&quot;</end-regex>");

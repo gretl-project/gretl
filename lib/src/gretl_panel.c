@@ -50,7 +50,7 @@ struct diagnostics_t_ {
     double *sigma;        /* Hausman covariance matrix */
     double fe_var;        /* fixed-effects error variance */
     double gm_var;        /* group means error variance */
-    const MODEL *pooled;  /* reference model (pooled OLS) */
+    MODEL *pooled;        /* reference model (pooled OLS) */
 };
 
 struct {
@@ -78,7 +78,7 @@ varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 
 
 static void 
-diagnostics_init (diagnostics_t *diag, const MODEL *pmod, gretlopt opt)
+diagnostics_init (diagnostics_t *diag, MODEL *pmod, gretlopt opt)
 {
     diag->nunits = 0;
     diag->effn = 0;
@@ -571,14 +571,14 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
     ndum--;
 
 #if PDEBUG
-    fprintf(stderr, "ndum = %d, dvlen = diag->vlist[0] + ndum = %d+%d = %d\n", 
-	    ndum, diag->vlist[0], ndum, dvlen);
+    fprintf(stderr, "ndum = %d, dvlen = diag->vlist[0] + ndum = %d + %d = %d\n", 
+	    ndum + 1, diag->vlist[0], ndum, dvlen);
 #endif
 
     /* should we use a set of dummy variables, or subtract
        the group means? */
 
-    if (0 && (ndum <= 20 || ndum < diag->vlist[0])) {
+    if (ndum <= 20 || ndum < diag->vlist[0]) {
 #if PDEBUG
 	fprintf(stderr, " using dummy variables approach\n");
 #endif
@@ -798,7 +798,7 @@ static int print_fe_results (diagnostics_t *diag,
 }
 
 /* drive the calculation of the fixed effects regression, print the
-   results, and return the error variance */
+   results (if wanted), and compute the error variance */
 
 static int
 fixed_effects_variance (diagnostics_t *diag,
@@ -820,7 +820,7 @@ fixed_effects_variance (diagnostics_t *diag,
 
 	diag->fe_var = lsdv.sigma * lsdv.sigma;
 
-	if (!(diag->opt & OPT_S)) {
+	if (diag->opt & OPT_V) {
 	    print_fe_results(diag, &lsdv, usedum, pdinfo, prn);
 	}
 
@@ -839,10 +839,21 @@ fixed_effects_variance (diagnostics_t *diag,
 	    vcv_slopes(diag, &lsdv, VCV_INIT);
 	}
 
-	if (diag->opt & OPT_S) {
+	if (diag->opt & OPT_F) {
 	    fprintf(stderr, "FIXME: should save content of lsdv model here\n");
 	    for (i=0; i<lsdv.ncoeff; i++) {
 		fprintf(stderr, "lsdv.coeff[%d] = %g\n", i, lsdv.coeff[i]);
+	    }
+	    if (1) {
+		MODEL tmp;
+		
+		tmp = *diag->pooled;
+		*diag->pooled = lsdv;
+		lsdv = tmp;
+		diag->pooled->ci = PANEL;
+		gretl_model_set_int(diag->pooled, "fixed-effects", 1);
+		gretl_model_add_panel_varnames(diag->pooled, pdinfo);
+		set_model_id(diag->pooled);
 	    }
 	}
     }
@@ -1162,7 +1173,7 @@ static int diag_set_varying (diagnostics_t *diag, const MODEL *pmod)
 }
 
 static int 
-diagnostics_setup (diagnostics_t *diag, const MODEL *pmod,
+diagnostics_setup (diagnostics_t *diag, MODEL *pmod,
 		   const DATAINFO *pdinfo, gretlopt opt)
 {
     int err = 0;
@@ -1211,7 +1222,8 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    err = diagnostics_setup(&diag, pmod, pdinfo, opt);
+    /* add OPT_V to make the fixed and random effects functions verbose */
+    err = diagnostics_setup(&diag, pmod, pdinfo, opt | OPT_V);
     if (err) {
 	goto bailout;
     }   
@@ -1324,7 +1336,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 {
     MODEL mod;
     diagnostics_t diag;
-    gretlopt diag_opt;
+    gretlopt diag_opt = opt;
     int unbal;
     int err = 0;
 
@@ -1338,11 +1350,14 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (mod.ifc == 0) {
 	/* at many points in these functions we assume the base
 	   regression has an intercept included */
-	mod.errcode = E_DATA; /* FIXME */
+	mod.errcode = E_DATA; /* FIXME error reporting */
 	return mod;
     }
 
-    diag_opt = (!(opt & OPT_R))? OPT_S : OPT_NONE;
+    if (!(opt & OPT_R) && !(opt & OPT_W)) {
+	/* OPT_F: save the fixed effects model */
+	diag_opt |= OPT_F;
+    }
 
     err = diagnostics_setup(&diag, &mod, pdinfo, diag_opt);
     if (err) {

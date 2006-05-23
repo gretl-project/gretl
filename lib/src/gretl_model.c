@@ -432,11 +432,12 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
     *targ = '\0';
 
     if (pmod != NULL) {
-	/* special treatment for ARCH, ARMA, GARCH, NLS, MLE */
+	/* special treatment for ARCH, ARMA, GARCH, NLS, MLE, PANEL */
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == NLS || pmod->ci == MLE ||
-		   pmod->ci == ARMA || pmod->ci == GARCH) {
+		   pmod->ci == ARMA || pmod->ci == GARCH || 
+		   pmod->ci == PANEL) {
 	    strcpy(targ, pmod->params[i + 1]);
 	} else if (pmod->aux == AUX_VECM) {
 	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
@@ -3167,6 +3168,57 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     for (i=0; i<r; i++) {
 	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[xstart+i]]); 
     }   
+
+    return 0;
+}
+
+/**
+ * gretl_model_add_panel_varnames:
+ * @pmod: pointer to target model.
+ * @pdinfo: dataset information.
+ * 
+ * Composes a set of names to be given to the regressors in an
+ * panel model.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo)
+{
+    int np = pmod->list[0];
+    int i, j, v;
+
+    pmod->params = malloc(np * sizeof pmod->params);
+    if (pmod->params == NULL) {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }
+
+    pmod->nparams = np;
+
+    for (i=0; i<np; i++) {
+	pmod->params[i] = malloc(VNAMELEN);
+	if (pmod->params[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(pmod->params[j]);
+	    }
+	    free(pmod->params);
+	    pmod->params = NULL;
+	    pmod->nparams = 0;
+	    pmod->errcode = E_ALLOC;
+	    return 1;
+	}
+    }
+
+    j = 1;
+    for (i=1; i<=pmod->list[0]; i++) {
+	v = pmod->list[i];
+	if (v < pdinfo->v) {
+	    strcpy(pmod->params[i-1], pdinfo->varname[v]);
+	} else {
+	    sprintf(pmod->params[i-1], "unit_%d", j++);
+	}
+    }
 
     return 0;
 }
