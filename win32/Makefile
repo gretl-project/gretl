@@ -138,6 +138,7 @@ LIBSRC = adf_kpss.c \
 	gretl_list.c \
 	gretl_matrix.c \
 	gretl_model.c \
+	gretl_panel.c \
 	gretl_paths.c \
 	gretl_prn.c \
 	gretl_restrict.c \
@@ -156,7 +157,6 @@ LIBSRC = adf_kpss.c \
 	nonparam.c \
 	objstack.c \
 	options.c \
-	panel.c \
 	plugins.c \
 	printout.c \
 	pvalues.c \

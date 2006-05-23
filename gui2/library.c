@@ -39,7 +39,7 @@
 #include "libset.h"
 #include "objstack.h"
 #include "gretl_xml.h"
-#include "panel.h"
+#include "gretl_panel.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>

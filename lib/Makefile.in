@@ -84,6 +84,7 @@ PUBLIC_HDRS = \
 	gretl_list.h \
 	gretl_matrix.h \
 	gretl_model.h \
+	gretl_panel.h \
 	gretl_paths.h \
 	gretl_prn.h \
 	gretl_restrict.h \
@@ -103,7 +104,6 @@ PUBLIC_HDRS = \
 	nonparam.h \
 	objstack.h \
 	options.h \
-	panel.h \
 	plugins.h \
 	printout.h \
 	pvalues.h \
@@ -143,6 +143,7 @@ SRCS = adf_kpss.c \
 	gretl_list.c \
 	gretl_matrix.c \
 	gretl_model.c \
+	gretl_panel.c \
 	gretl_paths.c \
 	gretl_prn.c \
 	gretl_restrict.c \
@@ -160,7 +161,6 @@ SRCS = adf_kpss.c \
 	nonparam.c \
 	objstack.c \
 	options.c \
-	panel.c \
 	plugins.c \
 	printout.c \
 	pvalues.c \

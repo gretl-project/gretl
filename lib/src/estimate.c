@@ -21,7 +21,7 @@
 
 #include "libgretl.h"
 #include "qr_estimate.h"
-#include "panel.h"
+#include "gretl_panel.h"
 #include "libset.h"
 #include "compat.h"
 #include "missing_private.h"

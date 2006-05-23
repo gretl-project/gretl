@@ -23,6 +23,7 @@
 #include "f2c.h"
 #include "clapack_double.h"
 #include "gretl_model.h"
+#include "gretl_panel.h"
 
 #define PDEBUG 2
 

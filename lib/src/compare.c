@@ -23,7 +23,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
-#include "panel.h"
+#include "gretl_panel.h"
 #include "missing_private.h"
 
 #undef WDEBUG
