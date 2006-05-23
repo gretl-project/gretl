@@ -1,0 +1,13 @@
+#!/bin/sh
+
+PLUG=$1
+DEST=/opt/esl/lib/gretl-gtk2
+
+if [ "x$PLUG" = "x" ] ; then
+  echo "Supply the basename of a plugin to install"
+  exit 1;
+fi
+
+make ${PLUG}.la
+../libtool --mode=install /bin/install -c -m 755 ${PLUG}.la $DEST
+
