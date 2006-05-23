@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "qr_estimate.h"
+#include "panel.h"
 #include "libset.h"
 #include "compat.h"
 #include "missing_private.h"
@@ -3448,7 +3449,7 @@ static int check_panel_options (gretlopt opt)
  * %OPT_W (weights based on the error variance for the
  * respective cross-sectional units), %OPT_T (iterate, only
  * available in conjunction with %OPT_W).
- * @prn: for printing details of iterations (or %NULL).
+ * @prn: printing struct (or %NULL).
  *
  * Calculate estimates for a panel dataset, using fixed
  * effects (the default), random effects, or weighted
@@ -3461,7 +3462,6 @@ static int check_panel_options (gretlopt opt)
 MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn)
 {
-    void *handle;
     MODEL mod;
 
     *gretl_errmsg = '\0';
@@ -3471,29 +3471,9 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	gretl_model_init(&mod);
 	mod.errcode = E_DATA;
     } else if (opt & OPT_W) {
-	MODEL (*panel_wls_by_unit) (const int *, double ***, DATAINFO *,
-				    gretlopt, PRN *);
-
-	panel_wls_by_unit = get_plugin_function("panel_wls_by_unit", &handle);
-	if (panel_wls_by_unit == NULL) {
-	    gretl_model_init(&mod);
-	    mod.errcode = E_FOPEN;
-	} else {
-	    mod = (*panel_wls_by_unit) (list, pZ, pdinfo, opt, prn);
-	    close_plugin(handle);
-	}
+	mod = panel_wls_by_unit(list, pZ, pdinfo, opt, prn);
     } else {
-	MODEL (*real_panel_model) (const int *, double ***, DATAINFO *,
-				   gretlopt, PRN *);
-
-	real_panel_model = get_plugin_function("real_panel_model", &handle);
-	if (real_panel_model == NULL) {
-	    gretl_model_init(&mod);
-	    mod.errcode = E_FOPEN;
-	} else {
-	    mod = (*real_panel_model) (list, pZ, pdinfo, opt, prn);
-	    close_plugin(handle);
-	}
+	mod = real_panel_model(list, pZ, pdinfo, opt, prn);
     }
 
     return mod;

@@ -152,6 +152,7 @@ struct gretl_option gretl_opts[] = {
     { PANEL,    OPT_R, "random-effects" },
     { PANEL,    OPT_S, "silent" },
     { PANEL,    OPT_T, "iterate" },
+    { PANEL,    OPT_V, "verbose" },
     { PANEL,    OPT_W, "unit-weights" },
     { PANELDAT, OPT_C, "cross-section" },
     { PANELDAT, OPT_S, "time-series" },

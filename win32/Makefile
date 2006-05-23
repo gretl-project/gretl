@@ -63,7 +63,6 @@ PLUGINSRC = \
 	vif.c \
 	leverage.c \
 	mp_ols.c \
-	panel_data.c \
 	pca.c \
 	progress_bar.c \
 	range-mean.c \
@@ -89,7 +88,6 @@ PLUGINSRC = \
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
 PLUGINS = plugins/stats_tables.dll \
-	plugins/panel_data.dll \
 	plugins/progress_bar.dll \
 	plugins/gnumeric_import.dll \
 	plugins/eviews_import.dll \
@@ -158,6 +156,7 @@ LIBSRC = adf_kpss.c \
 	nonparam.c \
 	objstack.c \
 	options.c \
+	panel.c \
 	plugins.c \
 	printout.c \
 	pvalues.c \
@@ -307,10 +306,6 @@ plugins/vif.dll: vif.o dllinit.o
 plugins/urcdist.dll: urcdist.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -lz -lm -lintl $(GRETLLIB)
-
-plugins/panel_data.dll: panel_data.o dllinit.o
-	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(LAPACK_LIBS) $(GRETLLIB) $(GTKLIBS) 
 
 plugins/tramo-x12a.dll: tramo-x12a.o tramo_options.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

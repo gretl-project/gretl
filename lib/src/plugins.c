@@ -33,7 +33,6 @@ enum {
     P_VIF,
     P_LEVERAGE,
     P_MP_OLS,
-    P_PANEL_DATA,
     P_PCA,
     P_PROGRESS_BAR,
     P_RANGE_MEAN,
@@ -75,7 +74,6 @@ struct plugin_info plugins[] = {
     { P_VIF,             "vif" },
     { P_LEVERAGE,        "leverage" },
     { P_MP_OLS,          "mp_ols" },
-    { P_PANEL_DATA,      "panel_data" },
     { P_PCA,             "pca" },
     { P_PROGRESS_BAR,    "progress_bar" },
     { P_RANGE_MEAN,      "range-mean" },
@@ -126,13 +124,6 @@ struct plugin_function plugin_functions[] = {
 #ifdef HAVE_MPFR
     { "mp_vector_ln",             P_MP_OLS },
 #endif
-
-    /* panel data methods */
-    { "panel_autocorr_test",      P_PANEL_DATA },
-    { "panel_diagnostics",        P_PANEL_DATA },
-    { "switch_panel_orientation", P_PANEL_DATA },
-    { "real_panel_model",         P_PANEL_DATA },
-    { "panel_wls_by_unit",        P_PANEL_DATA },
 
     /* principal components analysis */
     { "pca_from_corrmat", P_PCA },

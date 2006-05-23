@@ -23,7 +23,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
-#include "gretl_matrix.h"
+#include "panel.h"
 #include "missing_private.h"
 
 #undef WDEBUG
@@ -1112,21 +1112,7 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     if (dataset_is_panel(pdinfo)) {
-	void *handle;
-	int (*panel_autocorr_test)(MODEL *, int, 
-				   double **, DATAINFO *, 
-				   PRN *, ModelTest *);
-
-	panel_autocorr_test = get_plugin_function("panel_autocorr_test", 
-						  &handle);
-	if (panel_autocorr_test == NULL) {
-	    return 1;
-	}
-
-	err = panel_autocorr_test(pmod, order, *pZ, pdinfo,
-				  prn, NULL);
-	close_plugin(handle);
-	return err;
+	return panel_autocorr_test(pmod, order, *pZ, pdinfo, opt, prn);
     }
 
     /* impose original sample range */
@@ -1629,17 +1615,9 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		"for each cross-sectional unit"));
 	return 1;
     } else {
-	void *handle;
-	void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, 
-				  gretlopt, PRN *);
-
-	panel_diagnostics = get_plugin_function("panel_diagnostics", &handle);
-	if (panel_diagnostics == NULL) {
-	    return 1;
-	}
-	(*panel_diagnostics) (pmod, pZ, pdinfo, opt, prn);
-	close_plugin(handle);
+	panel_diagnostics(pmod, pZ, pdinfo, opt, prn);
     }
+
     return 0;
 }
 

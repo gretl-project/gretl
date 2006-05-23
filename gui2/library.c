@@ -39,6 +39,7 @@
 #include "libset.h"
 #include "objstack.h"
 #include "gretl_xml.h"
+#include "panel.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -1676,28 +1677,15 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
-    void *handle;
-    int (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, 
-			     gretlopt, PRN *);
     PRN *prn;
     gretlopt opt = OPT_NONE;
     int err;
 
-    panel_diagnostics = gui_get_plugin_function("panel_diagnostics", 
-						&handle);
-    if (panel_diagnostics == NULL) {
-	return;
-    }
-
     if (bufopen(&prn)) {
-	close_plugin(handle);
 	return;
     }	
 	
-    err = (*panel_diagnostics)(pmod, &Z, datainfo, opt, prn);
-
-    close_plugin(handle);
-
+    err = panel_diagnostics(pmod, &Z, datainfo, opt, prn);
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
@@ -2027,21 +2015,8 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
     strcpy(title, _("gretl: LM test (autocorrelation)"));
 
     if (dataset_is_panel(datainfo)) {
-	void *handle;
-	int (*panel_autocorr_test)(MODEL *, int, 
-				   double **, DATAINFO *, 
-				   gretlopt, PRN *);
-
-	panel_autocorr_test = gui_get_plugin_function("panel_autocorr_test", 
-						      &handle);
-	if (panel_autocorr_test == NULL) {
-	    gretl_print_destroy(prn);
-	    err = 1;
-	} else {
-	    err = panel_autocorr_test(pmod, order, Z, datainfo,
-				      OPT_S, prn);
-	    close_plugin(handle);
-	}
+	err = panel_autocorr_test(pmod, order, Z, datainfo,
+				  OPT_S, prn);
     } else {
 	err = autocorr_test(pmod, order, &Z, datainfo, OPT_S, prn);
     }

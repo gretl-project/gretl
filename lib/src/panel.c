@@ -17,14 +17,14 @@
  *
  */
 
-/* panel data plugin for gretl */
+/* panel estimation and dataset handling for gretl */
 
 #include "libgretl.h"
 #include "f2c.h"
 #include "clapack_double.h"
 #include "gretl_model.h"
 
-#define PDEBUG 0
+#define PDEBUG 2
 
 enum vcv_ops {
     VCV_INIT,
@@ -331,11 +331,9 @@ group_means_dataset (diagnostics_t *diag,
 	    }
 
 	    (*gZ)[k][s] = xx / (double) Ti;
-
 #if PDEBUG > 1
 	    fprintf(stderr, "Set gZ[%d][%d] = %g\n", k, i, (*gZ)[k][s]);
 #endif
-
 	    s++;
 	}
 	k++;
@@ -447,6 +445,21 @@ vcv_slopes (diagnostics_t *diag, const MODEL *pmod, int op)
     }
 }
 
+static double *copy_array (double *x, int n)
+{
+    double *y;
+    int i;
+
+    y = malloc(n * sizeof *y);
+    if (y != NULL) {
+	for (i=0; i<n; i++) {
+	    y[i] = x[i];
+	}
+    }
+
+    return y;
+}
+
 /* calculate Hausman test statistic */
 
 static int bXb (diagnostics_t *diag)
@@ -462,20 +475,15 @@ static int bXb (diagnostics_t *diag)
 
     diag->H = NADBL;
 
-    /* make a copy of diag->bdiff first */
-    x = malloc(n * sizeof *x);
+    x = copy_array(diag->bdiff, diag->nbeta);
     if (x == NULL) {
 	return E_ALLOC;
     }
 
-    ipiv = malloc(n * sizeof *ipiv);
+    ipiv = malloc(diag->nbeta * sizeof *ipiv);
     if (ipiv == NULL) {
 	free(x);
 	return E_ALLOC;
-    }
-
-    for (i=0; i<diag->nbeta; i++) {
-	x[i] = diag->bdiff[i];
     }
 
     /* solve for X-inverse * b */
@@ -569,7 +577,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
     /* should we use a set of dummy variables, or subtract
        the group means? */
 
-    if (ndum <= 20 || ndum < diag->vlist[0]) {
+    if (0 && (ndum <= 20 || ndum < diag->vlist[0])) {
 #if PDEBUG
 	fprintf(stderr, " using dummy variables approach\n");
 #endif
@@ -585,7 +593,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	double **wZ = NULL;
 	DATAINFO *winfo;
 
-	felist = malloc((diag->vlist[0]) * sizeof *felist);
+	felist = gretl_list_new(diag->vlist[0] - 1);
 	if (felist == NULL) {
 	    lsdv.errcode = E_ALLOC;
 	    return lsdv;
@@ -598,7 +606,6 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	    return lsdv;
 	} 
 
-	felist[0] = diag->vlist[0] - 1;
 	for (i=1; i<=felist[0]; i++) {
 	    felist[i] = i;
 	}
@@ -634,7 +641,7 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	/* We can be assured there's an intercept in the original
 	   regression */
 
-	felist = malloc(dvlen * sizeof *felist);
+	felist = gretl_list_new(dvlen - 1);
 	if (felist == NULL) {
 	    lsdv.errcode = E_ALLOC;
 	    return lsdv;
@@ -671,8 +678,6 @@ fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	/* construct the regression list */
-
-	felist[0] = dvlen - 1;
 
 	for (i=1; i<=diag->vlist[0]; i++) {
 	    felist[i] = diag->vlist[i];
@@ -835,6 +840,9 @@ fixed_effects_variance (diagnostics_t *diag,
 
 	if (diag->opt & OPT_S) {
 	    fprintf(stderr, "FIXME: should save content of lsdv model here\n");
+	    for (i=0; i<lsdv.ncoeff; i++) {
+		fprintf(stderr, "lsdv.coeff[%d] = %g\n", i, lsdv.coeff[i]);
+	    }
 	}
     }
 
@@ -1733,7 +1741,7 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 	if (opt & OPT_T) {
 	    diff = max_coeff_diff(&mdl, bvec);
-	    if (opt & OPT_V && iter == 1) {
+	    if ((opt & OPT_V) && iter == 1) {
 		pprintf(prn, "\nFGLS pooled error variance = %g\n",
 			mdl.ess / mdl.nobs);
 	    }

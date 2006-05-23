@@ -2789,7 +2789,7 @@ static void build_selector_switches (selector *sr)
     } else if (sr->code == PANEL_WLS) {
 	tmp = gtk_check_button_new_with_label
 	    (_("Iterated weighted least squares"));
-	pack_switch(tmp, sr, FALSE, TRUE, OPT_T, 0);
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_T, 0);
     }
 
 #ifdef HAVE_X12A    

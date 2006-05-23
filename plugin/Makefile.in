@@ -74,7 +74,6 @@ SRCS = excel_import.c \
 	lad.c \
 	longname.c \
 	mp_ols.c \
-	panel_data.c \
 	pca.c \
 	progress_bar.c \
 	range-mean.c \
@@ -110,7 +109,6 @@ PLUGINS = arma.la \
 	kernel.la \
 	lad.la \
 	nistcheck.la \
-	panel_data.la \
 	range-mean.la \
 	stats_tables.la \
 	sysest.la \
@@ -187,9 +185,6 @@ all: .deps $(PLUGINS)
 
 stats_tables.la: stats_tables.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
-
-panel_data.la: panel_data.lo
-	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
 
 range-mean.la: range-mean.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
