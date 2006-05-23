@@ -1073,7 +1073,7 @@ static int do_hausman_test (diagnostics_t *diag, PRN *prn)
     return 0;
 }
 
-int get_maj_min (const DATAINFO *pdinfo, int *maj, int *min)
+static int get_maj_min (const DATAINFO *pdinfo, int *maj, int *min)
 {
     int startmaj, startmin;
     int endmaj, endmin;
@@ -1092,8 +1092,8 @@ int get_maj_min (const DATAINFO *pdinfo, int *maj, int *min)
     return 0;
 }
 
-int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
-		      int *unit_obs)
+static int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
+			     int *unit_obs)
 {
     int nmaj, nmin;
     int nunits, T;

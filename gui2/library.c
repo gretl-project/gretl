@@ -623,7 +623,7 @@ void add_fcast_data (windata_t *vwin)
     char stobs[OBSLEN], endobs[OBSLEN];
     FITRESID *fr = (FITRESID *) vwin->data;
     char vname[VNAMELEN];
-    int v, t, s;
+    int v, t;
 
     if (dataset_add_series(1, &Z, datainfo)) {
 	errbox(_("Out of memory attempting to add variable"));
@@ -645,13 +645,8 @@ void add_fcast_data (windata_t *vwin)
 	return;
     }
 
-    s = 0;
     for (t=0; t<datainfo->n; t++) {
-	if (t >= fr->t1 && t <= fr->t2) {
-	    Z[v][t] = fr->fitted[s++];
-	} else {
-	    Z[v][t] = NADBL;
-	}
+	Z[v][t] = fr->fitted[t];
     }
 
     ntodate(stobs, fr->t1, datainfo);
