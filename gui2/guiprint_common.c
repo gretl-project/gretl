@@ -1065,7 +1065,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     }
 
     for (i=1; i<=l0; i++) {
-	if (datainfo->vector[list[i]]) {
+	if (var_is_series(datainfo, list[i])) {
 	    pmax[i-1] = get_precision(&Z[list[i]][datainfo->t1], 
 				      tsamp, 8);
 	} else {
@@ -1092,7 +1092,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
 	csv_obs_to_prn(t, datainfo, prn);
 	for (i=1; i<=l0; i++) { 
-	    xx = (datainfo->vector[list[i]])? 
+	    xx = (var_is_series(datainfo, list[i]))? 
 		Z[list[i]][t] : Z[list[i]][0];
 	    if (na(xx)) {
 		pputs(prn, "NA");

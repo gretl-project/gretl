@@ -1093,7 +1093,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     for (i=1; i<=nvars; i++) {
 	v = savenum(list, i);
-	if (pdinfo->vector[v]) {
+	if (var_is_series(pdinfo, v)) {
 	    pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
 	} else {
 	    pmax[i-1] = GRETL_SCALAR_DIGITS;
@@ -1186,7 +1186,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    free(xmlbuf);
 	}
 
-	if (!pdinfo->vector[v] && !na(Z[v][0])) {
+	if (var_is_scalar(pdinfo, v) && !na(Z[v][0])) {
 	    if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		sprintf(numstr, "\n role=\"scalar\" value=\"%.12g\"",
 			Z[v][0]);
@@ -1237,6 +1237,10 @@ int gretl_write_gdt (const char *fname, const int *list,
 	    }
 	} 
 
+	if (var_is_discrete(pdinfo, v)) {
+	    alt_puts("\n discrete=\"true\"", fp, fz);
+	}	    
+
 	alt_puts("\n/>\n", fp, fz);
     }
 
@@ -1263,7 +1267,7 @@ int gretl_write_gdt (const char *fname, const int *list,
 	}
 	for (i=1; i<=nvars; i++) {
 	    v = savenum(list, i);
-	    if (!pdinfo->vector[v]) {
+	    if (var_is_scalar(pdinfo, v)) {
 		continue;
 	    }
 	    if (na(Z[v][t])) {
@@ -1401,6 +1405,13 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 		COMPACT_METHOD(pdinfo, i) = compact_string_to_int((char *) tmp);
 		free(tmp);
 	    }
+	    tmp = xmlGetProp(cur, (XUC) "discrete");
+	    if (tmp != NULL) {
+		if (!strcmp((char *) tmp, "true")) {
+		    set_var_discrete(pdinfo, i);
+		}
+		free(tmp);
+	    }
 	    tmp = xmlGetProp(cur, (XUC) "role");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "scalar")) {
@@ -1412,7 +1423,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 			free(val);
 			(*pZ)[i] = malloc(sizeof ***pZ);
 			(*pZ)[i][0] = xx;
-			pdinfo->vector[i] = 0;
+			set_var_scalar(pdinfo, i);
 		    }
 		}
 		free(tmp);
@@ -1439,7 +1450,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
     *gretl_errmsg = '\0';
 
     for (i=1; i<pdinfo->v && !err; i++) {
-	if (!pdinfo->vector[i]) {
+	if (var_is_scalar(pdinfo, i)) {
 	    continue;
 	}
 	s = strpbrk(s, "01234567890+-NA");
@@ -1530,7 +1541,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     pdinfo->t2 = pdinfo->n - 1;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (!pdinfo->vector[i]) {
+	if (var_is_scalar(pdinfo, i)) {
 	    continue;
 	}
 	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);

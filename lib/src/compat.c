@@ -743,7 +743,7 @@ int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
 		continue;
 	    }
 	    if (v) {
-		double yy = (pdinfo->vector[v])? 
+		double yy = (var_is_series(pdinfo, v))? 
 		    (*pZ)[v][t] : (*pZ)[v][0];
 
 		if (na(yy)) {

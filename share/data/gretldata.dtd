@@ -2,8 +2,6 @@
   Document Type Definition (DTD) for gretl data files
  -->
 
-<!ENTITY % Boolean    " true | T | TRUE | false | F | FALSE ">
-
 <!ELEMENT gretldata (description?, variables, observations)>
 <!ATTLIST gretldata
    name         NMTOKEN #IMPLIED
@@ -29,6 +27,7 @@
     label          CDATA   #IMPLIED
     displayname    CDATA   #IMPLIED
     compact-method CDATA   #IMPLIED
+    discrete       CDATA   #IMPLIED
     role           CDATA   #IMPLIED
     value          CDATA   #IMPLIED
 >

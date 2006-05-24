@@ -499,7 +499,7 @@ static int *make_db_save_list (const int *list, const double **Z,
 	int v = list[i];
 	int gotobs = 0;
 
-	if (!pdinfo->vector[v]) {
+	if (var_is_scalar(pdinfo, v)) {
 	    continue;
 	}
 
@@ -602,7 +602,7 @@ int write_db_data (const char *fname, const int *list, gretlopt opt,
     for (i=1; i<=mylist[0]; i++) {
 	int v = mylist[i];
 
-	if (pdinfo->vector[v]) {
+	if (var_is_series(pdinfo, v)) {
 	    output_db_var(v, Z, pdinfo, fidx, fbin);
 	}
     }

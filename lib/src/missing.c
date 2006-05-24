@@ -741,7 +741,7 @@ int set_miss (const int *list, const char *param, double **Z,
 	}
     } else {
 	for (i=1; i<=list[0]; i++) {
-	    if (!pdinfo->vector[list[i]]) {
+	    if (var_is_scalar(pdinfo, list[i])) {
 		pprintf(prn, _("The variable %s is a scalar\n"), 
 			pdinfo->varname[list[i]]);
 		continue;

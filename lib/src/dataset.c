@@ -132,10 +132,6 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	    free(pdinfo->descrip);
 	    pdinfo->descrip = NULL;
 	}
-	if (pdinfo->vector != NULL) {
-	    free(pdinfo->vector);
-	    pdinfo->vector = NULL;
-	}
 
 	maybe_free_full_dataset(pdinfo);
 
@@ -261,6 +257,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
 {
     vinfo->label[0] = '\0';
     vinfo->display_name[0] = '\0';
+    vinfo->flags = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->stack_level = 0;
     vinfo->sorted_markers = NULL;
@@ -298,13 +295,6 @@ int dataset_allocate_varnames (DATAINFO *pdinfo)
 	return E_ALLOC;
     }
 
-    pdinfo->vector = malloc(v * sizeof *pdinfo->vector);
-    if (pdinfo->vector == NULL) {
-	free(pdinfo->varname);
-	free(pdinfo->varinfo);
-	return E_ALLOC;
-    }
-
     for (i=0; i<v; i++) {
 	pdinfo->varname[i] = malloc(VNAMELEN);
 	if (pdinfo->varname[i] == NULL) {
@@ -331,17 +321,12 @@ int dataset_allocate_varnames (DATAINFO *pdinfo)
 	} else {
 	    gretl_varinfo_init(pdinfo->varinfo[i]);
 	}
-
-	pdinfo->vector[i] = 1;
     }
 
     if (!err) {
 	strcpy(pdinfo->varname[0], "const");
 	strcpy(VARLABEL(pdinfo, 0), _("auto-generated constant"));
-    } else {
-	free(pdinfo->vector);
-	pdinfo->vector = NULL;
-    }
+    } 
 
     return err;
 }
@@ -382,7 +367,6 @@ DATAINFO *datainfo_new (void)
 
     dinfo->S = NULL;
     dinfo->descrip = NULL;
-    dinfo->vector = NULL;
     dinfo->submask = NULL;
     dinfo->submode = 0;
 
@@ -804,7 +788,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
     bign = pdinfo->n + newobs;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (pdinfo->vector[i]) {
+	if (var_is_series(pdinfo, i)) {
 	    x = realloc((*pZ)[i], bign * sizeof *x);
 	    if (x == NULL) {
 		return E_ALLOC;
@@ -862,7 +846,7 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
     newn = pdinfo->n - n;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (pdinfo->vector[i]) {
+	if (var_is_series(pdinfo, i)) {
 	    x = realloc((*pZ)[i], newn * sizeof *x);
 	    if (x == NULL) {
 		return E_ALLOC;
@@ -893,7 +877,6 @@ static int
 dataset_expand_varinfo (int newvars, DATAINFO *pdinfo)
 {
     char **varname = NULL;
-    char *vector = NULL;
     VARINFO **varinfo = NULL;
     int v = pdinfo->v;
     int bigv = v + newvars;
@@ -928,17 +911,6 @@ dataset_expand_varinfo (int newvars, DATAINFO *pdinfo)
 	    }
 	    gretl_varinfo_init(pdinfo->varinfo[v+i]);
 	}
-    }
-
-    vector = realloc(pdinfo->vector, bigv);
-    if (vector == NULL) {
-	return E_ALLOC;
-    }
-
-    pdinfo->vector = vector;
-
-    for (i=0; i<newvars; i++) {
-	pdinfo->vector[v+i] = 1;
     }
 
     pdinfo->v += newvars;
@@ -1066,7 +1038,7 @@ int dataset_add_scalars (int n, double ***pZ, DATAINFO *pdinfo)
 
     if (!err) {
 	for (i=0; i<n; i++) {
-	    pdinfo->vector[v+i] = 0;
+	    set_var_scalar(pdinfo, v + i);
 	}
     }
 
@@ -1117,7 +1089,7 @@ int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo)
 	    tmp[t] = NADBL;
 	}
 	(*pZ)[v] = tmp;
-	pdinfo->vector[v] = 1;
+	unset_var_scalar(pdinfo, v);
     }
 
     return err;
@@ -1184,7 +1156,7 @@ int dataset_copy_variable_as (int v, const char *newname,
 {
     int t, err;
 
-    if (pdinfo->vector[v]) {
+    if (var_is_series(pdinfo, v)) {
 	err = real_dataset_add_series(1, NULL, pZ, pdinfo);
     } else {
 	err = dataset_add_scalar(pZ, pdinfo);
@@ -1193,7 +1165,7 @@ int dataset_copy_variable_as (int v, const char *newname,
     if (!err) {
 	int vnew = pdinfo->v - 1;
 
-	if (pdinfo->vector[v]) {
+	if (var_is_series(pdinfo, v)) {
 	    for (t=0; t<pdinfo->n; t++) {
 		(*pZ)[vnew][t] = (*pZ)[v][t];
 	    }
@@ -1226,7 +1198,6 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv, int drop)
 
     if (drop == DROP_NORMAL) {
 	char **varname;
-	char *vector;
 	VARINFO **varinfo;
     
 	varname = realloc(pdinfo->varname, nv * sizeof *varname);
@@ -1234,12 +1205,6 @@ shrink_dataset_to_size (double ***pZ, DATAINFO *pdinfo, int nv, int drop)
 	    return E_ALLOC;
 	}
 	pdinfo->varname = varname;
-
-	vector = realloc(pdinfo->vector, nv * sizeof *vector);
-	if (vector == NULL) {
-	    return E_ALLOC;
-	}
-	pdinfo->vector = vector;
 
 	varinfo = realloc(pdinfo->varinfo, nv * sizeof *varinfo);
 	if (varinfo == NULL) {
@@ -1329,7 +1294,6 @@ static int real_dataset_drop_listed_vars (const int *list, double ***pZ,
 			}
 			pdinfo->varname[i] = pdinfo->varname[i + gap];
 			pdinfo->varinfo[i] = pdinfo->varinfo[i + gap];
-			pdinfo->vector[i] = pdinfo->vector[i + gap];
 		    }
 		    Z[i] = Z[i + gap];
 		}		    
@@ -1723,7 +1687,7 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 
 	    j = (vnum == NULL)? i + v1 : vnum[i];
 
-	    if (pdinfo->vector[j]) {
+	    if (var_is_series(pdinfo, j)) {
 		ok = pdinfo->n - missing_tail((*pZ)[j], pdinfo->n);
 	    } else {
 		ok = 1;
@@ -1774,7 +1738,7 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 	}
 
 	for (t=offset; t<tmax; t++) {
-	    if (pdinfo->vector[j]) {
+	    if (var_is_series(pdinfo, j)) {
 		bigx[bigt] = (*pZ)[j][t];
 	    } else {
 		bigx[bigt] = (*pZ)[j][0];

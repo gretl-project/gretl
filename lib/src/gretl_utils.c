@@ -117,7 +117,7 @@ int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo)
     int t, m = 0;
     double xx;
 
-    if (!pdinfo->vector[i]) {
+    if (var_is_scalar(pdinfo, i)) {
 	px[0] = Z[i][0];
 	return 1;
     }
@@ -724,7 +724,7 @@ int gretl_int_from_string (const char *s, const double **Z,
 
 	if (v == pdinfo->v) {
 	    *err = E_UNKVAR;
-	} else if (pdinfo->vector[v]) {
+	} else if (var_is_series(pdinfo, v)) {
 	    *err = E_TYPES;
 	} else {
 	    x = Z[v][0];
@@ -975,7 +975,7 @@ int balanced_panel (const DATAINFO *pdinfo)
 
 double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
 {
-    if (pdinfo->vector[i]) {
+    if (var_is_series(pdinfo, i)) {
 	return Z[i][pdinfo->t1];
     } else {
 	return Z[i][0];

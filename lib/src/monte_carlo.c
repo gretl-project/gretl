@@ -526,7 +526,7 @@ ok_loop_var (const LOOPSET *loop, const DATAINFO *pdinfo, const char *vname)
 	       and will become available at runtime? */
 	    v = LOOP_VAL_UNDEF;
 	}
-    } else if (v == 0 || pdinfo->vector[v]) {
+    } else if (var_is_series(pdinfo, v)) {
 	strcpy(gretl_errmsg, _("The loop control variable "
 	       "must be a scalar"));
 	v = LOOP_VAL_BAD;
@@ -776,7 +776,7 @@ static double *save_delta_state (int v, double **Z, DATAINFO *pdinfo)
     double *x0;
     int i, n;
 
-    n = (pdinfo->vector[v])? pdinfo->n : 1;
+    n = (var_is_series(pdinfo, v))? pdinfo->n : 1;
 
     x0 = malloc(n * sizeof *x0);
     if (x0 != NULL) {
@@ -793,7 +793,7 @@ restore_delta_state (int v, double *x0, double **Z, DATAINFO *pdinfo)
 {
     int i, n;
 
-    n = (pdinfo->vector[v])? pdinfo->n : 1;
+    n = (var_is_series(pdinfo, v))? pdinfo->n : 1;
 
     for (i=0; i<n; i++) {
 	Z[v][i] = x0[i];
@@ -1794,8 +1794,11 @@ static void update_loop_print (LOOPSET *loop, int i,
 #endif
     
     for (j=1; j<=list[0]; j++) {
-	if (pdinfo->vector[list[j]]) t = pdinfo->t1;
-	else t = 0;
+	if (var_is_series(pdinfo, list[j])) {
+	    t = pdinfo->t1;
+	} else {
+	    t = 0;
+	}
 #ifdef ENABLE_GMP
 	mpf_set_d(m, (*pZ)[list[j]][t]); 
 	mpf_add(lprn->sum[j-1], lprn->sum[j-1], m);
@@ -2350,7 +2353,7 @@ static void update_loop_store (const int *list, LOOPSET *loop,
 
     for (i=0; i<list[0]; i++) {
 	sv = i * loop->itermax + loop->iter;
-	if (pdinfo->vector[list[i+1]]) { 
+	if (var_is_series(pdinfo, list[i+1])) { 
 	    loop->storeval[sv] = Z[list[i+1]][pdinfo->t1 + 1];
 	} else {
 	    loop->storeval[sv] = Z[list[i+1]][0];

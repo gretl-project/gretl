@@ -306,7 +306,7 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
 
     if (v < pdinfo->v) {
 	/* existing variable */
-	if (pdinfo->vector[v]) {
+	if (var_is_series(pdinfo, v)) {
 	    /* if term is not a scalar, skip it: only scalars can figure
 	       as regression parameters */
 	    return 0;
@@ -429,7 +429,7 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
 		pname[VNAMELEN - 1] = '\0';
 	    }
 	    v = varindex(pdinfo, pname);
-	    if (v >= pdinfo->v || pdinfo->vector[v]) {
+	    if (v >= pdinfo->v || var_is_series(pdinfo, v)) {
 		err = E_DATA;
 	    } else {
 		spec->params[i].varnum = v;
@@ -488,7 +488,7 @@ int nls_spec_add_param_list (nls_spec *spec, const int *list,
     for (i=0; i<np && !err; i++) {
 	int v = list[i+1];
 
-	if (v >= pdinfo->v || pdinfo->vector[v]) {
+	if (v >= pdinfo->v || var_is_series(pdinfo, v)) {
 	    err = E_DATA;
 	} else {
 	    spec->params[i].varnum = v;
@@ -652,7 +652,7 @@ static int get_mle_gradient (double *b, double *g, void *unused)
 	v = pspec->params[i].dernum;
 
 	g[i] = 0.0;
-	if (ndinfo->vector[v]) {
+	if (var_is_series(ndinfo, v)) {
 	    /* derivative may be vector or scalar */
 	    for (t=pspec->t1; t<=pspec->t2; t++) {
 		if (na((*nZ)[v][t])) {
@@ -769,7 +769,7 @@ static int get_nls_deriv (int i, double *deriv)
     }
 
     /* derivative may be vector or scalar */
-    vec = ndinfo->vector[v];
+    vec = var_is_series(ndinfo, v);
 
 #if NLS_DEBUG
     fprintf(stderr, " v = %d, vec = %d\n", v, vec);
@@ -872,11 +872,11 @@ static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
     } else {
 	for (i=0; i<k; i++) {
 	    v = spec->params[i].dernum;
-	    if (!ndinfo->vector[v]) {
+	    if (var_is_scalar(ndinfo, v)) {
 		x = (*nZ)[v][0];
 	    }
 	    for (t=0; t<T; t++) {
-		if (ndinfo->vector[v]) {
+		if (var_is_series(ndinfo, v)) {
 		    x = (*nZ)[v][t + spec->t1];
 		}
 		gretl_matrix_set(G, i, t, x);

@@ -213,7 +213,6 @@ static void sync_dataset_elements (const DATAINFO *pdinfo)
 {
     fullinfo->varname = pdinfo->varname;
     fullinfo->varinfo = pdinfo->varinfo;
-    fullinfo->vector = pdinfo->vector;
     fullinfo->descrip = pdinfo->descrip;
 }
 
@@ -256,7 +255,7 @@ update_full_data_values (const double **subZ, const DATAINFO *pdinfo)
     for (i=1; i<fullinfo->v; i++) {
 	int subt = 0;
 
-	if (!pdinfo->vector[i]) {
+	if (var_is_scalar(pdinfo, i)) {
 	    fullZ[i][0] = subZ[i][0];
 	} else {
 	    for (t=0; t<fullinfo->n; t++) {
@@ -321,7 +320,7 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     for (i=0; i<newvars && !err; i++) {
 	int vi = V + i;
 
-	if (pdinfo->vector[vi]) {
+	if (var_is_series(pdinfo, vi)) {
 	    fullZ[vi] = malloc(N * sizeof **newZ);
 	} else {
 	    fullZ[vi] = malloc(sizeof **newZ);
@@ -336,7 +335,7 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     }
     
     for (i=V; i<pdinfo->v; i++) {
-	if (!pdinfo->vector[i]) {
+	if (var_is_scalar(pdinfo, i)) {
 	   fullZ[i][0] = Z[i][0]; 
 	}
     }
@@ -346,14 +345,14 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     for (t=0; t<N; t++) {
 	if (pdinfo->submask[t]) {
 	    for (i=V; i<pdinfo->v; i++) {
-		if (pdinfo->vector[i]) {
+		if (var_is_series(pdinfo, i)) {
 		    fullZ[i][t] = Z[i][subt];
 		}
 	    }
 	    subt++;
 	} else {
 	    for (i=V; i<pdinfo->v; i++) { 
-		if (pdinfo->vector[i]) {
+		if (var_is_series(pdinfo, i)) {
 		    fullZ[i][t] = NADBL;
 		}
 	    }
@@ -494,7 +493,7 @@ make_missing_mask (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    mask[t] = 1;
 	    for (i=1; i<=list[0]; i++) {
 		vi = list[i];
-		if (pdinfo->vector[vi] && na(Z[vi][t])) {
+		if (var_is_series(pdinfo, vi) && na(Z[vi][t])) {
 		    mask[t] = 0;
 		    break;
 		}
@@ -505,7 +504,7 @@ make_missing_mask (const int *list, const double **Z, const DATAINFO *pdinfo,
 	for (t=0; t<pdinfo->n; t++) {
 	    mask[t] = 1;
 	    for (i=1; i<pdinfo->v; i++) {
-		if (pdinfo->vector[i] && na(Z[i][t])) {
+		if (var_is_series(pdinfo, i) && na(Z[i][t])) {
 		    mask[t] = 0;
 		    break;
 		}
@@ -886,7 +885,7 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
 
     /* copy data values */
     for (i=1; i<pdinfo->v; i++) {
-	if (pdinfo->vector[i]) {
+	if (var_is_series(pdinfo, i)) {
 	    st = 0;
 	    for (t=0; t<pdinfo->n; t++) {
 		if (mask == NULL || mask[t] == 1) {
@@ -1022,7 +1021,6 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
     subinfo->varname = (*ppdinfo)->varname;
     subinfo->varinfo = (*ppdinfo)->varinfo;
     subinfo->descrip = (*ppdinfo)->descrip;
-    subinfo->vector = (*ppdinfo)->vector;
 
     /* set up case markers? */
     if ((*ppdinfo)->markers) {
@@ -1258,7 +1256,7 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	tmiss = 0;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (is_hidden_variable(i, pdinfo) || !pdinfo->vector[i]) {
+	    if (is_hidden_variable(i, pdinfo) || var_is_scalar(pdinfo, i)) {
 		continue;
 	    }
 	    if (na((*pZ)[i][t])) {
@@ -1327,7 +1325,6 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src)
 	if (src->varinfo != NULL) {
 	    copy_varinfo(dest->varinfo[i], src->varinfo[i]);
 	}
-	dest->vector[i] = src->vector[i];	
     }
 }
 

@@ -1218,7 +1218,7 @@ int write_data (const char *fname, const int *list,
 		x = (float) Z[v][0];
 	    }
 	    for (t=0; t<n; t++) {
-		if (pdinfo->vector[v]) {
+		if (var_is_series(pdinfo, v)) {
 		    if (na(Z[v][0])) {
 			x = -999.0;
 		    } else {	
@@ -1232,7 +1232,7 @@ int write_data (const char *fname, const int *list,
 	/* double-precision binary */
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
-	    if (pdinfo->vector[v]) {
+	    if (var_is_series(pdinfo, v)) {
 		fwrite(&Z[v][0], sizeof(double), n, fp);
 	    } else {
 		for (t=0; t<n; t++) {
@@ -1252,7 +1252,7 @@ int write_data (const char *fname, const int *list,
 	}
 	for (i=1; i<=l0; i++) {
 	    v = list[i];
-	    if (pdinfo->vector[v]) {
+	    if (var_is_series(pdinfo, v)) {
 		pmax[i-1] = get_precision(&Z[v][pdinfo->t1], tsamp, 10);
 	    } else {
 		pmax[i-1] = GRETL_SCALAR_DIGITS;
@@ -1275,11 +1275,11 @@ int write_data (const char *fname, const int *list,
 		    fprintf(fp, "-999 ");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		    fprintf(fp, "%.12g ", 
-			    (pdinfo->vector[v])? 
+			    (var_is_series(pdinfo, v))? 
 			    Z[v][t] : Z[v][0]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], 
-			    (pdinfo->vector[v])? 
+			    (var_is_series(pdinfo, v))? 
 			    Z[v][t] : Z[v][0]);
 		}
 	    }
@@ -1323,7 +1323,7 @@ int write_data (const char *fname, const int *list,
 	    }
 	    for (i=1; i<=l0; i++) { 
 		v = list[i];
-		xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
+		xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
 		if (na(xx)) {
 		    fprintf(fp, "NA");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -1347,7 +1347,7 @@ int write_data (const char *fname, const int *list,
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=1; i<=l0; i++) {
 		v = list[i];
-		xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
+		xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
 		if (na(xx)) {
 		    fputs("NA", fp);
 		} else {
@@ -1393,7 +1393,7 @@ int write_data (const char *fname, const int *list,
 		    fprintf(fp, "%.12g ", Z[v][t]);
 		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], 
-			    (pdinfo->vector[v])? 
+			    (var_is_series(pdinfo, v))? 
 			    Z[v][t] : Z[v][0]);
 		}
 	    }
@@ -1421,7 +1421,7 @@ int write_data (const char *fname, const int *list,
 
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		v = list[i];
-		xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
+		xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
 		if (na(xx)) {
 		    fprintf(fp, "-9999.99");
 		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
@@ -2402,7 +2402,7 @@ static int count_add_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo)
     for (i=1; i<addinfo->v; i++) {
 	for (j=1; j<pdinfo->v; j++) {
 	    if (!strcmp(addinfo->varname[i], pdinfo->varname[j])) {
-		if (!pdinfo->vector[j]) {
+		if (var_is_scalar(pdinfo, j)) {
 		    addvars = -1;
 		} else {
 		    addvars--;
@@ -2557,7 +2557,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 	for (i=0; i<pdinfo->v && !err; i++) {
 	    double *x;
 
-	    if (!pdinfo->vector[i]) {
+	    if (var_is_scalar(pdinfo, i)) {
 		continue;
 	    }
 
@@ -2850,7 +2850,7 @@ static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
     int err = 0;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (pdinfo->vector[i]) {
+	if (var_is_series(pdinfo, i)) {
 	    double *tmp = realloc((*pZ)[i], (pdinfo->n + 1) * sizeof ***pZ);
 
 	    if (tmp != NULL) {
@@ -2866,7 +2866,7 @@ static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
     (*pZ)[0][pdinfo->n - 1] = 1.0;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (pdinfo->vector[i]) {
+	if (var_is_series(pdinfo, i)) {
 	    (*pZ)[i][pdinfo->n - 1] = NADBL;
 	}
     }
@@ -4184,7 +4184,7 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
     int i, t;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (!pdinfo->vector[i]) {
+	if (var_is_scalar(pdinfo, i)) {
 	    strcpy(gretl_errmsg, _("Dataset contains scalars, can't transpose"));
 	    return E_DATA;
 	}
@@ -4222,7 +4222,6 @@ int transpose_data (double ***pZ, DATAINFO *pdinfo)
 
     pdinfo->varname = tinfo->varname;
     pdinfo->varinfo = tinfo->varinfo;
-    pdinfo->vector = tinfo->vector;
 
     dataset_obs_info_default(pdinfo);
 

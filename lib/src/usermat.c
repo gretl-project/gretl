@@ -1023,7 +1023,7 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 	/* if we created a matrix with the same name as an existing
 	   scalar, delete the scalar */
 	v = varindex(pdinfo, name);
-	if (v < pdinfo->v && !pdinfo->vector[v]) {
+	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
 	    dataset_drop_variable(v, pZ, pdinfo);
 	}
     }
@@ -1196,7 +1196,7 @@ static int first_field_is_series (const char *s, const DATAINFO *pdinfo)
     *word = '\0';
     sscanf(s, "%15[^,;} ]", word);
     v = varindex(pdinfo, word);
-    if (v < pdinfo->v && pdinfo->vector[v]) {
+    if (v < pdinfo->v && var_is_series(pdinfo, v)) {
 	ret = 1;
     }
 
@@ -1312,7 +1312,7 @@ static double get_var_double (const char **s, const double **Z,
 	v = varindex(pdinfo, vname);
 	if (v == pdinfo->v) {
 	    *err = E_UNKVAR;
-	} else if (pdinfo->vector[v]) {
+	} else if (var_is_series(pdinfo, v)) {
 	    *err = E_DATA;
 	} else {
 	    x = Z[v][0];
@@ -1426,7 +1426,7 @@ static int fill_matrix_from_series (gretl_matrix *M, const char *s,
 		v = get_varnum(&s, pdinfo, &err);
 		if (!err) {
 		    for (t=0; t<T; t++) {
-			if (pdinfo->vector[v]) {
+			if (var_is_series(pdinfo, v)) {
 			    x = Z[v][t + pdinfo->t1];
 			} else {
 			    x = Z[v][0];
@@ -1449,7 +1449,7 @@ static int fill_matrix_from_series (gretl_matrix *M, const char *s,
 		v = get_varnum(&s, pdinfo, &err);
 		if (!err) {
 		    for (t=0; t<T; t++) {
-			if (pdinfo->vector[v]) {
+			if (var_is_series(pdinfo, v)) {
 			    x = Z[v][t + pdinfo->t1]; 
 			} else {
 			    x = Z[v][0];
@@ -1545,7 +1545,7 @@ static int name_is_series (const char *name, const DATAINFO *pdinfo)
     int v = varindex(pdinfo, name);
     int ret = 0;
 
-    if (v < pdinfo->v && pdinfo->vector[v]) {
+    if (v < pdinfo->v && var_is_series(pdinfo, v)) {
 	sprintf(gretl_errmsg, _("'%s' is the name of a data series"), name);
 	ret = 1;
     }

@@ -323,7 +323,7 @@ static int push_fncall (fncall *call, const DATAINFO *pdinfo)
 static void copy_values_to_assignee (int targ, int src, double **Z, 
 				     const DATAINFO *pdinfo)
 {
-    int t, n = (pdinfo->vector[targ])? pdinfo->n : 1;
+    int t, n = (var_is_series(pdinfo, targ))? pdinfo->n : 1;
 
 #if FN_DEBUG
     fprintf(stderr, "copy_values_to_assignee: copying from Z[%d] (%s) to Z[%d] (%s)\n",
@@ -2981,7 +2981,7 @@ static int check_and_allocate_function_args (ufunc *fun,
 					    pZ, pdinfo);
 	    } else {
 		v = varindex(pdinfo, argv[i]);
-		if (v < pdinfo->v && !pdinfo->vector[v]) {
+		if (var_is_scalar(pdinfo, v)) {
 		    err = dataset_copy_variable_as(v, fun->params[i].name, 
 						   pZ, pdinfo);
 		    if (!err) {
@@ -2999,7 +2999,7 @@ static int check_and_allocate_function_args (ufunc *fun,
 	    } else {
 		v = varindex(pdinfo, argv[i]);
 	    }
-	    if (v < pdinfo->v && pdinfo->vector[v]) {
+	    if (v < pdinfo->v && var_is_series(pdinfo, v)) {
 		err = dataset_copy_variable_as(v, fun->params[i].name, 
 					       pZ, pdinfo);
 		if (!err) {
@@ -3073,8 +3073,8 @@ static int check_function_assignments (ufunc *fun, int *asslist,
 	    fprintf(stderr, " variable '%s' has ID %d, vector = %d\n", assv[i], 
 		    v, pdinfo->vector[v]);
 #endif
-	    if ((fun->returns[i].type == ARG_SCALAR && pdinfo->vector[v]) ||
-		(fun->returns[i].type == ARG_SERIES && !pdinfo->vector[v])) {
+	    if ((fun->returns[i].type == ARG_SCALAR && var_is_series(pdinfo, v)) ||
+		(fun->returns[i].type == ARG_SERIES && var_is_scalar(pdinfo, v))) {
 		sprintf(gretl_errmsg, "%s: wrong type for assignment", assv[i]);
 		err = 1;
 	    } else if (fun->returns[i].type == ARG_MATRIX) {

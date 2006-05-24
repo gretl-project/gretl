@@ -92,7 +92,7 @@ static int series_view_allocate (series_view *sview)
     if (sview->npoints != 0) {
 	/* already allocated */
 	return 0;
-    } else if (!datainfo->vector[sview->varnum]) {
+    } else if (var_is_scalar(datainfo, sview->varnum)) {
 	sview->npoints = 1;
 	return 0;
     } else {
@@ -197,7 +197,7 @@ static void series_view_print (windata_t *vwin)
     } 
     
     /* print formatted data to buffer */
-    if (datainfo->vector[sview->varnum]) {
+    if (var_is_series(datainfo, sview->varnum)) {
 	pprintf(prn, "\n     Obs ");
 	pprintf(prn, "%*s\n\n", 13, datainfo->varname[sview->varnum]);
 	for (t=0; t<sview->npoints; t++) {
@@ -470,7 +470,7 @@ multi_series_view *multi_series_view_new (int *list)
 	err = 1;
     } else {
 	for (i=1; i<=list[0]; i++) {
-	    if (!datainfo->vector[list[i]]) {
+	    if (var_is_scalar(datainfo, list[i])) {
 		err = 1;
 		break;
 	    }

@@ -749,6 +749,7 @@ struct varinfo_settings {
     GtkWidget *label_entry;
     GtkWidget *display_name_entry;
     GtkWidget *compaction_menu;
+    GtkWidget *check;
     int varnum;
     int full;
 };
@@ -832,7 +833,8 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
     const char *edttext;
     char *newstr = NULL;
     int v = vset->varnum;
-    int changed = 0, gui_changed = 0, comp_changed = 0;
+    int changed = 0, gui_changed = 0;
+    int comp_changed = 0, disc_changed = 0;
     int comp_method;
 
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->name_entry));
@@ -897,6 +899,21 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
     }
 #endif
 
+    if (vset->check != NULL) {
+	int discrete = 
+	    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vset->check));
+	int old = (var_is_discrete(datainfo, v))? 1 : 0;
+
+	if (discrete != old) {
+	    if (discrete) {
+		set_var_discrete(datainfo, v);
+	    } else {
+		unset_var_discrete(datainfo, v);
+	    }
+	    disc_changed = 1;
+	}
+    }    
+
     if (vset->full) {
 	if (changed) {
 	    record_varlabel_change(v);
@@ -906,7 +923,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	    show_varinfo_changes(v);
 	}
 
-	if (changed || comp_changed || gui_changed) {
+	if (changed || comp_changed || gui_changed || disc_changed) {
 	    data_status |= MODIFIED_DATA;
 	    set_sample_label(datainfo);
 	}
@@ -958,6 +975,7 @@ void varinfo_dialog (int varnum, int full)
     vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
     vset->display_name_entry = NULL;
     vset->compaction_menu = NULL;
+    vset->check = NULL;
     vset->full = full;
 
     g_signal_connect(G_OBJECT(vset->dlg), "destroy", 
@@ -1090,6 +1108,21 @@ void varinfo_dialog (int varnum, int full)
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 0);
+	gtk_widget_show(hbox); 
+    }
+
+    /* mark variable as discrete or not? */
+    if (full && gretl_isdiscrete(0, datainfo->n - 1, Z[varnum])) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	vset->check = gtk_check_button_new_with_label("Treat this variable "
+						      "as discrete");
+	if (var_is_discrete(datainfo, varnum)) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->check), TRUE);
+	}
+	gtk_widget_show(vset->check);
+	gtk_box_pack_start(GTK_BOX(hbox), vset->check, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
 	gtk_widget_show(hbox); 
     }
 
@@ -1337,7 +1370,7 @@ static GList *get_dummy_list (int *thisdum)
     int i;
 
     for (i=1; i<datainfo->v; i++) {
-	if (!datainfo->vector[i]) {
+	if (var_is_scalar(datainfo, i)) {
 	    continue;
 	}
 	if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {

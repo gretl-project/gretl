@@ -229,6 +229,7 @@ typedef struct _gretl_equation_system gretl_equation_system;
 struct VARINFO_ {
     char label[MAXLABEL];
     char display_name[MAXDISP];
+    int flags;
     char compact_method;
     char stack_level;
     char **sorted_markers;
@@ -253,7 +254,6 @@ struct DATAINFO_ {
     char submode;       /* mode of sub-sampling in force, if any */
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
-    char *vector;       /* hold info on vars: vector versus scalar */
     char *submask;      /* subsampling mask */
     void *data;         /* all-purpose pointer */
 };

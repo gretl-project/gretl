@@ -1821,7 +1821,7 @@ void do_vif (gpointer data, guint u, GtkWidget *w)
 
 static int reject_scalar (int vnum)
 {
-    if (!datainfo->vector[vnum]) {
+    if (var_is_scalar(datainfo, vnum)) {
 	errbox(_("variable %s is a scalar"), datainfo->varname[vnum]);
 	return 1;
     }
@@ -3164,7 +3164,9 @@ static int real_do_setmiss (double missval, int varno)
     }
 
     for (i=start; i<end; i++) {
-	if (!datainfo->vector[i]) continue;
+	if (var_is_scalar(datainfo, i)) {
+	    continue;
+	}
 	for (t=0; t<datainfo->n; t++) {
 	    if (Z[i][t] == missval) {
 		Z[i][t] = NADBL;
@@ -3212,7 +3214,7 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg)
     buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
-    if (!datainfo->vector[mdata->active_var]) {
+    if (var_is_scalar(datainfo, mdata->active_var)) {
 	close_dialog(dlg);
 	errbox(_("This variable is a scalar"));
 	return;
@@ -3410,7 +3412,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 #endif
     }
 
-    if (!datainfo->vector[mdata->active_var]) {
+    if (var_is_scalar(datainfo, mdata->active_var)) {
 	errbox(_("Can't do this analysis on a scalar"));
 	return;
     }
@@ -4963,7 +4965,7 @@ void display_var (void)
     list[0] = 1;
     list[1] = mdata->active_var;
 
-    if (!datainfo->vector[list[1]]) {
+    if (var_is_scalar(datainfo, list[1])) {
 	vec = 0;
 	height = 140;
     }
@@ -5247,7 +5249,7 @@ void gui_transpose_data (gpointer p, guint u, GtkWidget *w)
     int i, resp;
 
     for (i=1; i<datainfo->v; i++) {
-	if (!datainfo->vector[i]) {
+	if (var_is_scalar(datainfo, i)) {
 	    errbox(_("Dataset contains scalars, can't transpose"));
 	    return;
 	}

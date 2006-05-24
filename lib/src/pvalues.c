@@ -285,7 +285,7 @@ static double get_number_or_val (const char *s,
     } else {
 	int v = varindex(pdinfo, s);
 
-	if (v > 0 && v < pdinfo->v && !pdinfo->vector[v]) {
+	if (v > 0 && v < pdinfo->v && var_is_scalar(pdinfo, v)) {
 	    return Z[v][0];
 	}
     } 
@@ -304,7 +304,7 @@ static int val_from_string (char *s, const double **Z,
 	int v = varindex(pdinfo, s);
 
 	if (v < pdinfo->v) {
-	    if (pdinfo->vector[v]) {
+	    if (var_is_series(pdinfo, v)) {
 		x = Z[v][pdinfo->t1];
 	    } else {
 		x = Z[v][0];

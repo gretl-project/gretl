@@ -88,7 +88,7 @@ static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
 {
     int ret = 0;
 
-    if (pdinfo->vector[i] == 0) {
+    if (var_is_scalar(pdinfo, i)) {
 	ret = 1;
     } else if (is_hidden_variable(i, pdinfo)) {
 	ret = 1;

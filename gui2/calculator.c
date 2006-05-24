@@ -1150,7 +1150,7 @@ static void populate_stats (GtkWidget *w, gpointer p)
     }
 
     /* scalars are not valid input in this context */
-    if (!datainfo->vector[vx] || (vy > 0 && !datainfo->vector[vy])) {
+    if (var_is_scalar(datainfo, vx) || (vy > 0 && var_is_scalar(datainfo, vy))) {
 	errbox(_("Invalid entry"));
 	return;
     }
@@ -1213,7 +1213,7 @@ static int var_is_ok (int i, int code)
 
     if (is_hidden_variable(i, datainfo)) {
 	ret = 0;
-    } else if (!datainfo->vector[i]) {
+    } else if (var_is_scalar(datainfo, i)) {
 	ret = 0;
     } else if ((code == ONE_PROPN || code == TWO_PROPNS) &&
 	       !gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
@@ -1387,7 +1387,7 @@ static int n_ok_series (void)
 
     if (datainfo != NULL) {
 	for (i=1; i<datainfo->v; i++) {
-	    if (datainfo->vector[i] && !is_hidden_variable(i, datainfo)) {
+	    if (var_is_series(datainfo, i) && !is_hidden_variable(i, datainfo)) {
 		nv++;
 	    }
 	}
@@ -1402,7 +1402,7 @@ static int n_ok_dummies (void)
 
     if (datainfo != NULL) {
 	for (i=1; i<datainfo->v; i++) {
-	    if (datainfo->vector[i] && 
+	    if (var_is_series(datainfo, i) && 
 		!is_hidden_variable(i, datainfo) &&
 		gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 		nv++;

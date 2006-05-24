@@ -26,6 +26,11 @@ typedef enum {
     DAILY_DATE_STRINGS
 } DatasetMarkerType;
 
+typedef enum {
+    VAR_DISCRETE = 1 << 0,
+    VAR_SCALAR   = 1 << 1
+} VarinfoFlags;
+
 /**
  * dataset_is_time_series:
  * @p: pointer to data information struct.
@@ -160,6 +165,72 @@ typedef enum {
  */
 #define dataset_is_panel(p) ((p)->structure == STACKED_TIME_SERIES || \
                              (p)->structure == STACKED_CROSS_SECTION)
+
+/**
+ * var_is_discrete:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Determine whether a variable should be treated as discrete
+ * or not.
+ */
+#define var_is_discrete(p, i) ((p)->varinfo[i]->flags & VAR_DISCRETE)
+
+/**
+ * var_is_scalar:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Determine whether or not a variable is a scalar.
+ */
+#define var_is_scalar(p, i) ((p)->varinfo[i]->flags & VAR_SCALAR)
+
+/**
+ * var_is_series:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Determine whether or not a variable is a series (as opposed
+ * to a scalar).
+ */
+#define var_is_series(p, i) (!((p)->varinfo[i]->flags & VAR_SCALAR))
+
+/**
+ * set_var_discrete:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Mark a variable as being discrete.
+ */
+#define set_var_discrete(p, i) ((p)->varinfo[i]->flags |= VAR_DISCRETE)
+
+/**
+ * unset_var_discrete:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Mark a variable as not being discrete.
+ */
+#define unset_var_discrete(p, i) ((p)->varinfo[i]->flags &= ~VAR_DISCRETE)
+
+/**
+ * set_var_scalar:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Mark a variable as being a scalar.
+ */
+#define set_var_scalar(p, i) ((p)->varinfo[i]->flags |= VAR_SCALAR)
+
+/**
+ * unset_var_scalar:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Mark a variable as being a series, not a scalar.
+ */
+#define unset_var_scalar(p, i) ((p)->varinfo[i]->flags &= ~VAR_SCALAR)
+
 
 void free_Z (double **Z, DATAINFO *pdinfo);
 

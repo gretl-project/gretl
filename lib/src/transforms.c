@@ -264,7 +264,7 @@ static int get_log (int v, double *logvec, const double **Z,
     int t, err = 0;
 
     for (t=pdinfo->t1; t<=pdinfo->t2 && !err; t++) {
-	xx = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
+	xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
 	if (na(xx)) {
 	    logvec[t] = NADBL;
 	} else if (xx <= 0.0) {
@@ -326,8 +326,8 @@ static int get_xpx (int vi, int vj, double *xvec, const double **Z,
     int t;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xit = (pdinfo->vector[vi])? Z[vi][t] : Z[vi][0];
-	xjt = (pdinfo->vector[vj])? Z[vj][t] : Z[vj][0];
+	xit = (var_is_series(pdinfo, vi))? Z[vi][t] : Z[vi][0];
+	xjt = (var_is_series(pdinfo, vj))? Z[vj][t] : Z[vj][0];
 	if (na(xit) || na(xjt)) {
 	    xvec[t] = NADBL;
 	} else {
@@ -493,7 +493,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 {
     int lno;
 
-    if (!pdinfo->vector[v] || lag > pdinfo->n) {
+    if (var_is_scalar(pdinfo, v) || lag > pdinfo->n) {
 	lno = -1;
     } else if (lag == 0) {
 	lno = v;
@@ -538,7 +538,7 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 
 int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo)
 {
-    if (!pdinfo->vector[v]) {
+    if (var_is_scalar(pdinfo, v)) {
 	return -1;
     }
 
@@ -653,7 +653,7 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
 
-	if (v == 0 || !pdinfo->vector[v]) {
+	if (v == 0 || var_is_scalar(pdinfo, v)) {
 	    continue; 
 	}
 	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[v])) {
@@ -677,7 +677,7 @@ static int *make_lags_list (int *list, int order, DATAINFO *pdinfo)
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	if (v > 0 && pdinfo->vector[v]) {
+	if (v > 0 && var_is_series(pdinfo, v)) {
 	    nl += order;
 	}
     }
@@ -726,7 +726,7 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
     for (i=1; i<=list[0]; i++) {
 	int lv, v = list[i];
 
-	if (v == 0 || !pdinfo->vector[v]) {
+	if (v == 0 || var_is_scalar(pdinfo, v)) {
 	    continue;
 	}
 
@@ -861,7 +861,7 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     for (i=1; i<=l0; i++) {
 	vi = list[i];
 
-	if (vi == 0 || !pdinfo->vector[vi]) {
+	if (vi == 0 || var_is_scalar(pdinfo, vi)) {
 	    continue; 
 	}
 	if (gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[vi])) {

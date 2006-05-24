@@ -2404,7 +2404,7 @@ static int screen_scalar (int i, int c)
 {
     if ((MODEL_CODE(c) || VEC_CODE(c) || GRAPH_CODE(c) || 
 	 c == LAGS || c == DIFF || c == LDIFF)
-	&& datainfo->vector[i] == 0) {
+	&& var_is_scalar(datainfo, i)) {
 	return 1;
     } else {
 	return 0;

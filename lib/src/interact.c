@@ -1825,7 +1825,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
 	/* check cmd->list for scalars */
 	if (!read_lags && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
-	    if (!pdinfo->vector[cmd->list[lnum-1]]) {
+	    if (var_is_scalar(pdinfo, cmd->list[lnum-1])) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("variable %s is a scalar"), field);
 		goto bailout;

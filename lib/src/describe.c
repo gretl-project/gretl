@@ -1675,7 +1675,8 @@ int crosstab (const int *list, const double **Z,
     colvar = list[2];
 
     if (rowvar >= pdinfo->v || colvar >= pdinfo->v ||
-	!pdinfo->vector[rowvar] || !pdinfo->vector[colvar]) {
+	var_is_scalar(pdinfo, rowvar) || 
+	var_is_scalar(pdinfo, colvar)) {
 	/* paranoia */
 	return E_DATA;
     }

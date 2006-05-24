@@ -1523,7 +1523,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
     for (j=1; j<=plist[0]; j++) {
 	int len, v = plist[j];
 
-	if (!pdinfo->vector[v]) {
+	if (var_is_scalar(pdinfo, v)) {
 	    print_scalar(Z[v][0], pdinfo->varname[v], opt, 0, prn);
 	    scalars = 1;
 	    gretl_list_delete_at_pos(plist, j);
@@ -1716,7 +1716,7 @@ int print_data_sorted (const int *list, const int *obsvec,
 
     /* ...with no scalars or bad variable numbers */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] >= pdinfo->v || !pdinfo->vector[list[i]]) {
+	if (list[i] >= pdinfo->v || var_is_scalar(pdinfo, list[i])) {
 	    return E_DATA;
 	}
     }
@@ -2300,10 +2300,10 @@ static int real_do_printf (const char *line, double ***pZ,
 	    if (v < pdinfo->v) {
 #if PRINTF_DEBUG
 		fprintf(stderr, "'%s' is variable #%d (vector = %d)\n",
-			argv, v, pdinfo->vector[v]);
+			argv, v, var_is_series(pdinfo, v));
 #endif
 		/* simple existent varname */
-		if (pdinfo->vector[v]) {
+		if (var_is_series(pdinfo, v)) {
 		    xvals[i] = (*pZ)[v][t];
 		} else {
 		    xvals[i] = (*pZ)[v][0];

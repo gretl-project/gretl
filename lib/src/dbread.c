@@ -1854,7 +1854,7 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, int
 
     for (i=1; i<pdinfo->v; i++) {
 	/* initialize all series, first obs */
-	if (pdinfo->vector[i]) {
+	if (var_is_series(pdinfo, i)) {
 	    mZ[i][0] = 0.0;
 	    den[i] = 0;
 	}
@@ -1874,7 +1874,7 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, int
 	if (monbak > 0 && mon != monbak) {
 	    /* new month: finalize the previous one */
 	    for (i=1; i<pdinfo->v; i++) {
-		if (pdinfo->vector[i]) {
+		if (var_is_series(pdinfo, i)) {
 #if WEEKLY_DEBUG
 		    fprintf(stderr, " finalizing monthly obs %d, var %d, den = %d\n", 
 			    t, i, den[i]);
@@ -1891,7 +1891,7 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, int
 		t++;
 		for (i=1; i<pdinfo->v; i++) {
 		    /* initialize all series, current obs */
-		    if (pdinfo->vector[i]) {
+		    if (var_is_series(pdinfo, i)) {
 			mZ[i][t] = 0.0;
 			den[i] = 0;
 		    }
@@ -1901,7 +1901,7 @@ weeks_to_months_exec (double **mZ, const double **Z, const DATAINFO *pdinfo, int
 
 	/* cumulate non-missing weekly observations */
 	for (i=1; i<pdinfo->v; i++) {
-	    if (pdinfo->vector[i]) {
+	    if (var_is_series(pdinfo, i)) {
 		if (!na(Z[i][s])) {
 		    mZ[i][t] += Z[i][s];
 		    den[i] += 1;
@@ -2005,7 +2005,7 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 
     /* handle scalars */
     for (i=1; i<pdinfo->v && !err; i++) {
-	if (!pdinfo->vector[i]) {
+	if (var_is_scalar(pdinfo, i)) {
 	    x = realloc(mZ[i], sizeof *x);
 	    if (x == NULL) {
 		err = E_ALLOC;
@@ -2059,7 +2059,7 @@ static int daily_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 	    CompactMethod method;
 	    double *x;
 
-	    if (i > 0 && !pdinfo->vector[i]) {
+	    if (i > 0 && var_is_scalar(pdinfo, i)) {
 		continue;
 	    }
 
@@ -2284,7 +2284,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 
     /* compact the individual data series */
     for (i=0; i<pdinfo->v && err == 0; i++) {
-	if (pdinfo->vector[i]) {
+	if (var_is_series(pdinfo, i)) {
 	    CompactMethod this_method = default_method;
 	    int startskip = min_startskip;
 	    double *x;
@@ -2364,7 +2364,7 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
     }
 
     for (i=1; i<pdinfo->v; i++) {
-	if (!pdinfo->vector[i]) {
+	if (var_is_scalar(pdinfo, i)) {
 	    continue;
 	}
 	for (t=0; t<oldn; t++) {

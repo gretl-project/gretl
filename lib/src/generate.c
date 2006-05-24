@@ -452,7 +452,7 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 	if (v >= genr->pdinfo->v) {
 	    DPRINTF(("get_lagvar: rejecting '%s'\n", s));
 	    v = m = 0;
-	} else if (v < genr->pdinfo->v && genr->pdinfo->vector[v] == 0) {
+	} else if (v < genr->pdinfo->v && var_is_scalar(genr->pdinfo, v)) {
 	    sprintf(gretl_errmsg, _("Variable %s is a scalar; "
 				    "can't do lags/leads"), 
 		    genr->pdinfo->varname[v]);
@@ -778,7 +778,7 @@ atom_get_variable_or_constant (const char *s, GENERATOR *genr,
 	} else {	
 	    /* try for a scalar? */
 	    v = varindex(genr->pdinfo, s);
-	    if (v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+	    if (v < genr->pdinfo->v && var_is_scalar(genr->pdinfo, v)) {
 		atom->val = (*genr->pZ)[v][0];
 		atom->atype = ATOM_SCALAR;
 	    } else {
@@ -810,7 +810,8 @@ atom_get_variable_or_constant (const char *s, GENERATOR *genr,
 
 	    atom->val = k;
 	    atom->atype = ATOM_SCALAR;
-	} else if (v >= 0 && v < genr->pdinfo->v && !genr->pdinfo->vector[v]) {
+	} else if (v >= 0 && v < genr->pdinfo->v && 
+		   var_is_scalar(genr->pdinfo, v)) {
 	    /* regular scalar variables are handled here */
 	    atom->varnum = v;
 	    atom->varobs = 0;
@@ -1628,8 +1629,11 @@ static double genr_get_child_status (GENERATOR *genr, genatom *atom)
     if (child != NULL) {
 	if (atom->func == T_VARNUM || atom->func == T_SERIES) {
 	    if (child->varnum >= 0 && child->varnum < genr->pdinfo->v) {
-		val = (atom->func == T_VARNUM)? child->varnum :
-		    genr->pdinfo->vector[child->varnum];
+		if (atom->func == T_VARNUM) {
+		    val = child->varnum;
+		} else {
+		    val = (var_is_series(genr->pdinfo, child->varnum))? 1 : 0;
+		}
 	    } 
 	} else if (atom->func == T_ISLIST || atom->func == T_NELEM) {
 	    int *list = get_list_by_name(child->str);
@@ -3223,7 +3227,7 @@ static void genr_type_check (GENERATOR *genr)
 {
     int v = genr->varnum;
 
-    if (genr->pdinfo->vector[v]) {
+    if (var_is_series(genr->pdinfo, v)) {
 	/* assigning to existing series variable */
 	if (genr_require_scalar(genr)) {
 	    sprintf(gretl_errmsg, _("'%s' is the name of a data series"), 
@@ -3312,7 +3316,7 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     if (!genr->err && genr->obs >= 0) {
 	if (genr->varnum >= pdinfo->v) {
 	    genr->err = E_UNKVAR;
-	} else if (!pdinfo->vector[genr->varnum]) {
+	} else if (var_is_scalar(pdinfo, genr->varnum)) {
 	    genr->err = E_DATA;
 	}
     }
@@ -3722,7 +3726,7 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
     /* generally we allow scalar -> series expansion for existing
        vars, but not if the dataset is subsampled */
     if (modifying && complex_subsampled() &&
-	genr_is_series(genr) && !pdinfo->vector[v]) {
+	genr_is_series(genr) && var_is_scalar(pdinfo, v)) {
 	strcpy(gretl_errmsg, _("You cannot turn a scalar into a vector "
 			       "when the dataset is subsampled."));
 	err = 1;
@@ -3733,7 +3737,7 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 	fprintf(stderr, "genr_write_var: err = %d\n", err);
     } else {
 	fprintf(stderr, "genr_write_var: adding %s '%s' (#%d, %s)\n",
-		(pdinfo->vector[v])? "vector" : "scalar",
+		(var_is_series(pdinfo, v))? "vector" : "scalar",
 		pdinfo->varname[v], v,
 		(modifying)? "replaced" : "newly created");
     }
@@ -3748,7 +3752,7 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 		(*pZ)[v][genr->obs] = genr->xvec[genr->obs];
 	    }
 	} else if (genr_is_scalar(genr)) {
-	    if (pdinfo->vector[v]) {
+	    if (var_is_series(pdinfo, v)) {
 		/* we never allow series -> scalar conversion for
 		   existing vars, so expand the result */
 		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -3764,7 +3768,7 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 	    }
 	} else {
 	    /* we generated, and will now transcribe, a series result */
-	    if (modifying && !pdinfo->vector[v]) {
+	    if (modifying && var_is_scalar(pdinfo, v)) {
 		err = dataset_scalar_to_vector(v, pZ, pdinfo);
 	    }
 
@@ -4543,7 +4547,7 @@ get_obs_value (const char *s, const double **Z, const DATAINFO *pdinfo,
     if (sscanf(s, "%15[^[][%10[^]]]", vname, obs) == 2) {
 	int t, i = varindex(pdinfo, vname);
 
-	if (i < pdinfo->v && pdinfo->vector[i]) {
+	if (i < pdinfo->v && var_is_series(pdinfo, i)) {
 	    t = get_t_from_obs_string(obs, Z, pdinfo);
 	    if (t >= 0 && t < pdinfo->n) {
 		*v = i;
@@ -4739,7 +4743,7 @@ static void compose_genr_msg (const GENERATOR *genr, int oldv)
     }
 
     if (genr->varnum < oldv) {
-	if (genr->pdinfo->vector[genr->varnum]) {
+	if (var_is_series(genr->pdinfo, genr->varnum)) {
 	    scalar = 0;
 	} else if (!scalar) {
 	    mutant = 1;

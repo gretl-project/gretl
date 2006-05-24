@@ -206,8 +206,8 @@ static GList *get_selection_list (int type)
 	    if (is_hidden_variable(i, datainfo)) {
 		continue;
 	    }
-	    if ((type == ARG_SERIES && datainfo->vector[i]) ||
-		(type == ARG_SCALAR && !datainfo->vector[i])) {
+	    if ((type == ARG_SERIES && var_is_series(datainfo, i)) ||
+		(type == ARG_SCALAR && var_is_scalar(datainfo, i))) {
 		list = g_list_append(list, (gpointer) datainfo->varname[i]);
 	    } 
 	}

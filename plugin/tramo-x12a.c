@@ -791,7 +791,7 @@ int write_tx_data (char *fname, int varnum,
     *errmsg = 0;
 
     /* sanity check */
-    if (!pdinfo->vector[varnum]) {
+    if (var_is_scalar(pdinfo, varnum)) {
 	sprintf(errmsg, "%s %s", pdinfo->varname[varnum], 
 		_("is a scalar"));
 	return 1;
