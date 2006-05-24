@@ -914,7 +914,7 @@ static void fix_gls_stats (MODEL *targ, MODEL *src, diagnostics_t *diag,
 
     y = Z[src->list[1]];
 
-#if 1 /* FIXME! The following is broken */
+#if 1 /* FIXME! The following is broken (isn't it?) */
     targ->ess = 0.0;
     for (t=0; t<src->full_n; t++) {
 	if (na(y[t])) {
@@ -1086,13 +1086,13 @@ static int random_effects (diagnostics_t *diag,
 	*/
 	MODEL tmp;
 
+#if 0
 	printmodel(&remod, reinfo, OPT_NONE, prn);
-		
+#endif		
 	tmp = *diag->pooled;
 	*diag->pooled = remod;
 	remod = tmp;
 	diag->pooled->ci = PANEL;
-	gretl_model_set_int(diag->pooled, "random-effects", 1);
 	gretl_model_add_panel_varnames(diag->pooled, reinfo);
 	fix_gls_stats(diag->pooled, &remod, diag, Z);
 	set_model_id(diag->pooled);
@@ -1534,7 +1534,9 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 			   "regression: %g\n\n"), diag.gm_var);    
 	    random_effects(&diag, (const double **) *pZ, pdinfo, 
 			   (const double **) gZ, prn);
+#if 0 /* should be printed after the model */
 	    do_hausman_test(&diag, prn);
+#endif
 	}
 
 	if (ginfo != NULL) {
