@@ -41,6 +41,8 @@ int kalman_set_initial_state_vector (kalman *K, const gretl_matrix *S);
 
 int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P);
 
+void kalman_set_nonshift (kalman *K, int n);
+
 #endif /* KALMAN_H_ */
 
 

@@ -25,7 +25,7 @@
 #include "gretl_model.h"
 #include "gretl_panel.h"
 
-#define PDEBUG 0
+#define PDEBUG 1
 
 enum vcv_ops {
     VCV_INIT,
@@ -579,15 +579,19 @@ fixed_effects_model (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo)
     /* should we use a set of dummy variables, or subtract
        the group means? */
 
-    if (ndum <= 20 || ndum < pan->vlist[0]) {
-#if PDEBUG
-	fprintf(stderr, " using dummy variables approach\n");
-#endif
-	pan->ndum = ndum;
+    if (getenv("NODUMMIES") != NULL) {
+	pan->ndum = 0;
     } else {
+	if (ndum <= 20 || ndum < pan->vlist[0]) {
 #if PDEBUG
-	fprintf(stderr, " subtracting group means\n");
+	    fprintf(stderr, " using dummy variables approach\n");
 #endif
+	    pan->ndum = ndum;
+	} else {
+#if PDEBUG
+	    fprintf(stderr, " subtracting group means\n");
+#endif
+	}
     }
 
     if (pan->ndum == 0) {
@@ -801,7 +805,7 @@ static void fix_panelmod_list (MODEL *targ, MODEL *src, panelmod_t *pan)
 {
     int i;
 
-#if 0
+#if 1
     printlist(targ->list, "targ->list");
     printlist(src->list, "src->list");
     printlist(pan->vlist, "pan->vlist");
@@ -811,13 +815,15 @@ static void fix_panelmod_list (MODEL *targ, MODEL *src, panelmod_t *pan)
     targ->list = src->list;
     src->list = NULL;
 
+    /* remove any non-varying variables */
+
     for (i=2; i<=targ->list[0]; i++) {
 	if (!in_gretl_list(pan->vlist, targ->list[i])) {
 	    gretl_list_delete_at_pos(targ->list, i--);
 	}
     }
 
-#if 0
+#if 1
     printlist(targ->list, "new targ->list");
 #endif
 
@@ -826,6 +832,8 @@ static void fix_panelmod_list (MODEL *targ, MODEL *src, panelmod_t *pan)
 static void fix_within_stats (MODEL *targ, MODEL *src, panelmod_t *pan)
 {
     int nc = targ->ncoeff;
+
+    /* FIXME reporting of const */
 
     fix_panelmod_list(targ, src, pan);
 
@@ -1997,6 +2005,47 @@ static void panel_lag (double **tmpZ, DATAINFO *tmpinfo,
     *VARLABEL(tmpinfo, v) = 0;
 }
 
+#if 0
+static double panel_dwstat (MODEL *pmod)
+{
+    double ut, u1;
+    double num = 0.0;
+    double den = 0.0;
+    int t, t1;
+
+    if (pmod->ess <= 0.0) {
+	return NADBL;
+    }
+
+    t1 = pmod->t1 + 1;
+
+    if (pmod->nwt) {
+	ut = pmod->uhat[t1 - 1];
+	if (!na(ut)) {
+	    den += ut * ut;
+	}
+    } else {
+	den = pmod->ess;
+    }
+
+    for (t=t1; t<=pmod->t2; t++)  {
+        ut = pmod->uhat[t];
+        u1 = pmod->uhat[t-1];
+        if (na(ut) || na(u1) ||
+	    (pmod->nwt && (Z[pmod->nwt][t] == 0.0 || 
+			   Z[pmod->nwt][t-1] == 0.0))) { 
+	    continue;
+	}
+        num += (ut - u1) * (ut - u1);
+	if (pmod->nwt) {
+	    den += ut * ut;
+	}
+    }
+
+    return num / den;
+}
+#endif
+
 /* - do some sanity checks
    - create a local copy of the required portion of the data set,
      skipping the obs that will be missing
@@ -2263,7 +2312,7 @@ varying_vars_list (const double **Z, const DATAINFO *pdinfo,
     int i, j, k, t;
     int bigt;
 
-    pan->vlist = malloc((pan->pooled->list[0] + 1) * sizeof *pan->vlist);
+    pan->vlist = gretl_list_new(pan->pooled->list[0]);
     if (pan->vlist == NULL) {
 	return E_ALLOC;
     }

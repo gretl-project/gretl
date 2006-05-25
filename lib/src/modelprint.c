@@ -1789,9 +1789,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     char varname[24];
 
     gretl_model_get_param_name(pmod, pdinfo, i, varname);
-    pputs(prn, "  ");
-    print_centered(varname, 15, prn);
-    pputc(prn, ' ');
+    pprintf(prn, "  %-15s ", varname);
     
     /* print coeff value if well-defined */
     if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
