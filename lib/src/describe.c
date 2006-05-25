@@ -1162,8 +1162,7 @@ static int compare_ints (const void *a, const void *b)
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
  * @opt: if & OPT_O, compare with gamma distribution, not normal;
- * if includes OPT_Q, do not show a histogram; if includes OPT_D,
- * treat variable @varno as discrete.
+ * if includes OPT_Q, do not show a histogram.
  *
  * Calculates the frequency distribution for the specified variable.
  *
@@ -1213,26 +1212,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	return NULL;
     } 
 
-    /* FIXME: the following (at present commented out) breaks
-       frequency distribution graphs for variables that "just happen
-       to be" discrete.  See for example the variable QNC in
-       Ramanathan data9-7.  It seems to me we need to supply an option
-       of some kind to specify that the distribution should be treated
-       as discrete, rather than just keying off whether the
-       observations have any fractional part.
-    */
-
-    if (opt & OPT_D) {
-	freq->discrete = gretl_isdiscrete(pdinfo->t1, pdinfo->t2, x);
-	if (!freq->discrete) {
-	    gretl_errno = E_DATA;
-	    sprintf(gretl_errmsg, _("%s is not discrete"), freq->varname);
-	    free_freq(freq);
-	    return NULL;
-	}
-    } else {
-	freq->discrete = 0;
-    }
+    freq->discrete = var_is_discrete(pdinfo, varno);
 
     gretl_moments(pdinfo->t1, pdinfo->t2, x, 
 		  &freq->xbar, &freq->sdx, 
@@ -1518,8 +1498,8 @@ int compare_xtab_rows (const void *a, const void *b)
   crosstab struct creation function
 */
 
-Xtab *get_xtab (int rvarno, int cvarno, const double **Z, 
-		const DATAINFO *pdinfo)
+static Xtab *get_xtab (int rvarno, int cvarno, const double **Z, 
+		       const DATAINFO *pdinfo)
 {
     Xtab *tab = NULL;
     int **X = NULL;
@@ -1534,16 +1514,7 @@ Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     int n = 0;
     int err = 0;
 
-    /* check if both variables are discrete */
-
-    if (!gretl_isdiscrete(t1, t2, Z[rvarno]) ||
-	!gretl_isdiscrete(t1, t2, Z[cvarno])) {
-	fprintf(stderr, "One of the variables is not discrete!\n");
-	return NULL;
-    }
-
     /* count non-missing values */
-
     for (t=t1; t<=t2; t++) {
 	if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) {
 	    n++;
@@ -1677,7 +1648,11 @@ int crosstab (const int *list, const double **Z,
     if (rowvar >= pdinfo->v || colvar >= pdinfo->v ||
 	var_is_scalar(pdinfo, rowvar) || 
 	var_is_scalar(pdinfo, colvar)) {
-	/* paranoia */
+	return E_DATA;
+    }
+
+    if (!var_is_discrete(pdinfo, rowvar) ||
+	!var_is_discrete(pdinfo, colvar)) {
 	return E_DATA;
     }
 

@@ -1038,7 +1038,7 @@ int dataset_add_scalars (int n, double ***pZ, DATAINFO *pdinfo)
 
     if (!err) {
 	for (i=0; i<n; i++) {
-	    set_var_scalar(pdinfo, v + i);
+	    set_var_scalar(pdinfo, v + i, 1);
 	}
     }
 
@@ -1089,7 +1089,7 @@ int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo)
 	    tmp[t] = NADBL;
 	}
 	(*pZ)[v] = tmp;
-	unset_var_scalar(pdinfo, v);
+	set_var_scalar(pdinfo, v, 0);
     }
 
     return err;
@@ -1810,5 +1810,43 @@ int is_hidden_variable (int i, const DATAINFO *pdinfo)
 	return 1;
     } else {
 	return 0;
+    }
+}
+
+/**
+ * set_var_discrete:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ * @s: non-zero to mark variable as discrete, zero to 
+ * mark as not discrete.
+ *
+ * Mark a variable as being discrete or not.
+ */
+
+void set_var_discrete (DATAINFO *pdinfo, int i, int s) 
+{
+    if (s) {
+	pdinfo->varinfo[i]->flags |= VAR_DISCRETE;
+    } else {
+	pdinfo->varinfo[i]->flags &= ~VAR_DISCRETE;
+    }
+}
+
+/**
+ * set_var_scalar:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ * @s: non-zero to mark variable as a scalar, zero to 
+ * mark as not scalar (i.e. a series).
+ *
+ * Mark a variable as being a scalar or not.
+ */
+
+void set_var_scalar (DATAINFO *pdinfo, int i, int s) 
+{
+    if (s) {
+	pdinfo->varinfo[i]->flags |= VAR_SCALAR;
+    } else {
+	pdinfo->varinfo[i]->flags &= ~VAR_SCALAR;
     }
 }

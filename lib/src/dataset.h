@@ -195,43 +195,6 @@ typedef enum {
  */
 #define var_is_series(p, i) (!((p)->varinfo[i]->flags & VAR_SCALAR))
 
-/**
- * set_var_discrete:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Mark a variable as being discrete.
- */
-#define set_var_discrete(p, i) ((p)->varinfo[i]->flags |= VAR_DISCRETE)
-
-/**
- * unset_var_discrete:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Mark a variable as not being discrete.
- */
-#define unset_var_discrete(p, i) ((p)->varinfo[i]->flags &= ~VAR_DISCRETE)
-
-/**
- * set_var_scalar:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Mark a variable as being a scalar.
- */
-#define set_var_scalar(p, i) ((p)->varinfo[i]->flags |= VAR_SCALAR)
-
-/**
- * unset_var_scalar:
- * @p: pointer to data information struct.
- * @i: index number of variable.
- *
- * Mark a variable as being a series, not a scalar.
- */
-#define unset_var_scalar(p, i) ((p)->varinfo[i]->flags &= ~VAR_SCALAR)
-
-
 void free_Z (double **Z, DATAINFO *pdinfo);
 
 DATAINFO *datainfo_new (void);
@@ -303,5 +266,8 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 
 int is_hidden_variable (int i, const DATAINFO *pdinfo);
 
+void set_var_discrete (DATAINFO *pdinfo, int i, int s);
+
+void set_var_scalar (DATAINFO *pdinfo, int i, int s);
 
 #endif /* DATASET_H */

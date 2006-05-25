@@ -1856,6 +1856,32 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
     gretl_push_c_numeric_locale();
 }
 
+/* Below: a fix for the case where the y-range is by default
+   degenerate, in which case gnuplot produces a graph OK, but
+   issues a warning and returns non-zero.
+*/
+
+static void maybe_set_yrange (FreqDist *freq, double lambda, FILE *fp)
+{
+    double ymin = 1.0e+20;
+    double ymax = -1.0e+20;
+    int i;
+
+    for (i=0; i<freq->numbins; i++) { 
+	if (freq->f[i] > ymax) {
+	    ymax = freq->f[i];
+	}
+	if (freq->f[i] < ymin) {
+	    ymin = freq->f[i];
+	}	
+    }
+
+    if (ymax == ymin) {
+	fprintf(fp, "set yrange [%g:%g]\n", ymax * lambda * 0.99, 
+		ymax * lambda * 1.01);
+    }
+}
+
 /**
  * plot_freq:
  * @freq: pointer to frequency distribution struct.
@@ -1990,11 +2016,12 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	fprintf(fp, "set xrange [%.7g:%.7g]\n", plotmin, plotmax);
 	fputs("set key right top\n", fp);
     } else { 
-	/* plain frequency plot */
+	/* plain frequency plot (no theoretical distribution shown) */
 	lambda = 1.0 / freq->n;
 	plotmin = freq->midpt[0] - barwidth;
 	plotmax = freq->midpt[K-1] + barwidth;
 	fprintf(fp, "set xrange [%.7g:%.7g]\n", plotmin, plotmax);
+	maybe_set_yrange(freq, lambda, fp);
 	fputs("set nokey\n", fp);
     }
 

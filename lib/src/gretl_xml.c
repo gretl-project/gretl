@@ -1408,7 +1408,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 	    tmp = xmlGetProp(cur, (XUC) "discrete");
 	    if (tmp != NULL) {
 		if (!strcmp((char *) tmp, "true")) {
-		    set_var_discrete(pdinfo, i);
+		    set_var_discrete(pdinfo, i, 1);
 		}
 		free(tmp);
 	    }
@@ -1423,7 +1423,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 			free(val);
 			(*pZ)[i] = malloc(sizeof ***pZ);
 			(*pZ)[i][0] = xx;
-			set_var_scalar(pdinfo, i);
+			set_var_scalar(pdinfo, i, 1);
 		    }
 		}
 		free(tmp);

@@ -797,14 +797,37 @@ static int print_fe_results (panelmod_t *pan,
     return 0;
 }
 
+static void fix_panelmod_list (MODEL *targ, MODEL *src, panelmod_t *pan)
+{
+    int i;
+
+#if 0
+    printlist(targ->list, "targ->list");
+    printlist(src->list, "src->list");
+    printlist(pan->vlist, "pan->vlist");
+#endif
+
+    free(targ->list);
+    targ->list = src->list;
+    src->list = NULL;
+
+    for (i=2; i<=targ->list[0]; i++) {
+	if (!in_gretl_list(pan->vlist, targ->list[i])) {
+	    gretl_list_delete_at_pos(targ->list, i--);
+	}
+    }
+
+#if 0
+    printlist(targ->list, "new targ->list");
+#endif
+
+}
+
 static void fix_within_stats (MODEL *targ, MODEL *src, panelmod_t *pan)
 {
-    int i, nc;
+    int nc = targ->ncoeff;
 
-    targ->list[1] = src->list[1];
-    for (i=2; i<=targ->list[0]; i++) {
-	targ->list[i] = pan->vlist[i+1]; /* is this always right? */
-    }
+    fix_panelmod_list(targ, src, pan);
 
     targ->ybar = src->ybar;
     targ->sdy = src->sdy;
@@ -824,7 +847,6 @@ static void fix_within_stats (MODEL *targ, MODEL *src, panelmod_t *pan)
 	targ->fstt = (targ->rsq / (1.0 - targ->rsq)) * ((double) targ->dfd / targ->dfn);
     }
 
-    nc = targ->ncoeff;
     targ->ncoeff = targ->dfn + 1;
     ls_criteria(targ);
     targ->ncoeff = nc;
@@ -909,27 +931,12 @@ static void fix_gls_stats (MODEL *targ, MODEL *src, panelmod_t *pan,
     int i, t, nc;
     double yht, xit;
 
-#if 0
-    /* can the list stuff here be simplified? */
-    printlist(targ->list, "targ->list");
-    printlist(src->list, "src->list");
-    printlist(pan->vlist, "pan->vlist");
-#endif
-
-    targ->list[0] -= 1;
-    targ->list[1] = src->list[1];
-    for (i=2; i<=targ->list[0]; i++) {
-	targ->list[i] = pan->vlist[i+1]; /* is this always right? */
-    }
-
-#if 0
-    printlist(targ->list, "new targ->list");
-#endif
+    fix_panelmod_list(targ, src, pan);
 
     targ->ybar = src->ybar;
     targ->sdy = src->sdy;
 
-    y = Z[src->list[1]];
+    y = Z[targ->list[1]];
 
 #if 1 /* FIXME! The following is broken (isn't it?) */
     targ->ess = 0.0;
@@ -941,7 +948,7 @@ static void fix_gls_stats (MODEL *targ, MODEL *src, panelmod_t *pan,
 	}
 	yht = 0.0;
 	for (i=0; i<targ->ncoeff; i++) {
-	    xit = Z[src->list[i+2]][t]; /* vlist?? */
+	    xit = Z[targ->list[i+2]][t]; /* vlist?? */
 	    if (na(xit)) {
 		yht = NADBL;
 		break;

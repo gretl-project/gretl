@@ -905,11 +905,7 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	int old = (var_is_discrete(datainfo, v))? 1 : 0;
 
 	if (discrete != old) {
-	    if (discrete) {
-		set_var_discrete(datainfo, v);
-	    } else {
-		unset_var_discrete(datainfo, v);
-	    }
+	    set_var_discrete(datainfo, v, discrete);
 	    disc_changed = 1;
 	}
     }    
