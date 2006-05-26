@@ -29,7 +29,7 @@
 #include "libset.h"
 #include "kalman.h"
 
-#define ARMA_DEBUG 1
+#define ARMA_DEBUG 0
 #define NEW_INIT 
 
 /* ln(sqrt(2*pi)) + 0.5 */

@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "kalman.h"
 
-#define KDEBUG 2
+#define KDEBUG 0
 #define FCOMPAN 1
 
 struct kalman_ {
@@ -669,14 +669,11 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
     fprintf(stderr, "kalman_forecast: T = %d\n", K->T);
 #endif  
 
-#if 1
     /* see if we have any state transitions that are just
        shifts? */
     if (K->nonshift == K->r) {
 	K->nonshift = count_nonshifts(K->F);
     }
-    fprintf(stderr, "K->nonshift = %d, K->r = %d\n", K->nonshift, K->r);
-#endif
 
     K->loglik = 0.0;
 
