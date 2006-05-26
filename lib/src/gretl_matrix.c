@@ -22,6 +22,8 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 
+#include <assert.h>
+
 #include "f2c.h"
 #include "clapack_double.h"
 #include "../../cephes/libprob.h"
@@ -1299,6 +1301,75 @@ gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
 }
 
 /**
+ * gretl_matrix_vectorize_h:
+ * @targ: target vector, (m * (m+1)/2) x 1.
+ * @src: source square matrix, m x m.
+ *
+ * Writes into @targ vech(@src), that is, a column vector
+ * containing the lower-triangular elements of @src.
+ * This is only useful for symmetric matrices, but for the 
+ * sake of performance we don't check for that.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if
+ * @targ is not correctly dimensioned.
+ */
+
+int 
+gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
+{
+    int n = src->rows, m = n * (n+1) / 2;
+    int i, j;
+
+    if (targ->cols != 1 || targ->rows != m) {
+	return E_NONCONF;
+    }
+
+    n = 0;
+    for (i=0; i<src->rows; i++) {
+	    for (j=0; j<=i; j++) {
+	    targ->val[n++] = src->val[mdx(src, i, j)];
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_unvectorize_h:
+ * @targ: target matrix, n x n.
+ * @src: source vector, m x 1.
+ *
+ * Rearranges successive blocks of increasing length from @src into 
+ * the successive columns of @targ (that is, performs the
+ * inverse of the vech() operation). @targ comes out symmetric.
+ * 
+ * Returns: 0 on successful completion, or %E_NONCONF if
+ * @targ is not correctly dimensioned.
+ */
+
+int 
+gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
+{
+    int n = targ->rows, m = src->rows;
+    int i, j;
+    double x;
+
+    if (src->cols != 1 || (n * (n + 1) != 2 * m)) {
+	return E_NONCONF;
+    }
+
+    m = 0;
+    for (j=0; j<n; j++) {
+	for (i=0; i<=j; i++) {
+	    x = src->val[m++];
+	    targ->val[mdx(targ, i, j)] = targ->val[mdx(targ, j, i)] = x;
+	}
+    }
+
+    return 0;
+}
+
+/**
  * gretl_matrix_steal_data:
  * @m: matrix to operate on.
  *
@@ -1879,6 +1950,10 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     const int btr = (bmod == GRETL_MOD_TRANSPOSE);
     int aidx, bidx;
     double targ;
+
+    assert(a != NULL);
+    assert(b != NULL);
+    assert(c != NULL);
 
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "

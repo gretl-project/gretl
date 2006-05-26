@@ -2893,7 +2893,7 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     } else if (n <= 0) {
 	err = E_PARSE;
     } else {
-	err = dataset_add_observations(n, pZ, pdinfo);
+	err = dataset_add_observations(n, pZ, pdinfo, OPT_A);
 	if (!err) {
 	    pprintf(prn, _("Dataset extended by %d observations"), n);
 	    pputc(prn, '\n');

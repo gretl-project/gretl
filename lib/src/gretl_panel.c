@@ -25,7 +25,7 @@
 #include "gretl_model.h"
 #include "gretl_panel.h"
 
-#define PDEBUG 1
+#define PDEBUG 0
 
 enum vcv_ops {
     VCV_INIT,
@@ -1365,7 +1365,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int xdf, err = 0;
 
 #if PDEBUG
-    fputs("\n*** Starting panel_pannostics ***\n", stderr);
+    fputs("\n*** Starting panel_diagnostics ***\n", stderr);
 #endif
 
     if (pmod->ifc == 0) {

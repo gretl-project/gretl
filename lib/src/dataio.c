@@ -2115,7 +2115,7 @@ pad_weekly_data (double ***pZ, DATAINFO *pdinfo, int add)
     int ttarg, offset = 0, skip = 0;
     int i, s, t, tc, err;
 
-    err = dataset_add_observations(add, pZ, pdinfo); 
+    err = dataset_add_observations(add, pZ, pdinfo, OPT_A); 
 
     if (!err) {
 	for (t=0; t<oldn; t++) {

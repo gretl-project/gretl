@@ -204,6 +204,12 @@ gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src);
 int 
 gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src);
 
+int 
+gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src);
+
+int 
+gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src);
+
 int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 			       const gretl_matrix *b, GretlMatrixMod bmod,
 			       gretl_matrix *c);

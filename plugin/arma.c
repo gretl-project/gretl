@@ -29,7 +29,8 @@
 #include "libset.h"
 #include "kalman.h"
 
-#define ARMA_DEBUG 0
+#define ARMA_DEBUG 1
+#define NEW_INIT 
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -657,6 +658,10 @@ static int write_kalman_matrices (const double *b)
     gretl_matrix_print(A, "A");
 #endif
 
+    /* FIXME use vech forms for Q and P, and construct
+       a pared-down version of (I - F \otimes F)
+    */
+
     /* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378.
        Is there a cheaper way of doing this?
     */
@@ -1036,6 +1041,8 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
     return x;
 }
 
+#ifndef NEW_INIT
+
 /* Given an estimate of the ARMA constant via OLS, convert to the form
    wanted for initializing the Kalman filter
 */
@@ -1058,6 +1065,8 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
 
     b[0] /= (narfac * sarfac);
 }
+
+#endif
 
 static int kalman_arma (const int *alist, double *coeff, double s2,
 			const double **Z, const DATAINFO *pdinfo,
@@ -1284,6 +1293,8 @@ static void y_Xb_at_lag (char *spec, struct arma_info *ainfo,
 	strcat(spec, ")");
     }
 }
+
+#ifndef NEW_INIT
 
 static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 			       int narmax, double ***pZ, DATAINFO *pdinfo) 
@@ -1673,6 +1684,8 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     return err;
 }
 
+#endif /* ! NEW_INIT */
+
 /* New-style initialisation via OLS; we do two passes. In the first
    pass, we run an OLS regression of y on the exogenous vars plus a
    certain (biggish) number of lags. In the second pass, we estimate
@@ -1797,14 +1810,6 @@ static int ar_init_new (const int *list, double *coeff, double *s2,
     for (t=0; t<an; t++) {
 	for (i=0, pos=pass1v; i<qtotal; i++) {
 	    s = t - malags[i];
-#if 0
-	    if (s >= 0) {
-		fprintf(stderr, "writing aZ[%d][%d] using uhat[%d] = %g\n",
-			pos, t, s, armod.uhat[s]);
-	    } else {
-		fprintf(stderr, "s = %d, skipping\n", s);
-	    }
-#endif
 	    aZ[pos++][t] = (s >= 0)? armod.uhat[s] : NADBL;
 	}
     }
@@ -1858,10 +1863,16 @@ static int ar_init_new (const int *list, double *coeff, double *s2,
 	err = armod.errcode;
     } else {
 	/* rearrange coefficients */
-	int pos2;
+	int pos2 = nexo + ainfo->ifc;
 
-	coeff[0] = armod.coeff[0];
-	for (i=0, pos=1, pos2=nexo+1; i<np; i++) { /* phi */
+	if (ainfo->ifc) {
+	    coeff[0] = armod.coeff[0];
+	    pos = 1;
+	} else {
+	    pos = 0;
+	}
+
+	for (i=0; i<np; i++) { /* phi */
 	    coeff[pos++] = armod.coeff[pos2++];
 	}
 	for (i=0; i<nP; i++) { /* Phi */
@@ -1878,8 +1889,18 @@ static int ar_init_new (const int *list, double *coeff, double *s2,
 	for (i=0; i<nexo; i++) { /* exog */
 	    coeff[pos++] = armod.coeff[i+1];
 	}
+
 	*s2 = armod.sigma * armod.sigma;
     }
+
+#if 0
+    for (i=0; i<armod.ncoeff; i++) {
+	fprintf(stderr, "armod.coeff[%d] = %g\n", i, armod.coeff[i]);
+    }
+    for (i=0; i<pos; i++) {
+	fprintf(stderr, "coeff[%d] = %g\n", i, coeff[i]);
+    }
+#endif
 
     /* clean up */
     free(pass1list);
@@ -2051,10 +2072,10 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* initialize the coefficients: AR and regression part by least
        squares, MA at 0 */
-#if 0
-    err = ar_init_by_ls(alist, coeff, &s2, Z, pdinfo, &ainfo);
-#else
+#ifdef NEW_INIT
     err = ar_init_new(alist, coeff, &s2, Z, pdinfo, &ainfo);
+#else
+    err = ar_init_by_ls(alist, coeff, &s2, Z, pdinfo, &ainfo);
 #endif
     if (err) {
 	armod.errcode = err;

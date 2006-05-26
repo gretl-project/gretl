@@ -767,17 +767,20 @@ maybe_extend_dummies (double **Z, const DATAINFO *pdinfo, int oldn)
  * @newobs: number of observations to add.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
+ * @opt: use %OPT_A to attempt to recognize and
+ * automatically extend simple deterministic variables such 
+ * as a time trend and periodic dummy variables.
  *
  * Extends all series in the dataset by the specified number of
  * extra observations.  The added values are initialized to
  * the missing value code, #NADBL, with the exception of
- * simple deterministic variables such as a time trend and
- * periodic dummy variables, which are extrapolated.
+ * simple deterministic variables when %OPT_A is given.
  *
  * Returns: 0 on success, %E_ALLOC on error.
  */
 
-int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
+int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
+			      gretlopt opt)
 {
     double *x;
     int oldn = pdinfo->n;
@@ -815,8 +818,10 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo)
 
     pdinfo->n = bign;
 
-    maybe_extend_trends(*pZ, pdinfo, oldn);
-    maybe_extend_dummies(*pZ, pdinfo, oldn);
+    if (opt & OPT_A) {
+	maybe_extend_trends(*pZ, pdinfo, oldn);
+	maybe_extend_dummies(*pZ, pdinfo, oldn);
+    }
 
     /* does daily data need special handling? */
     ntodate(pdinfo->endobs, bign - 1, pdinfo);
@@ -1716,7 +1721,7 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
     /* extend length of all series? */
     oldn = pdinfo->n;
     if (bign > oldn) {
-	err = dataset_add_observations(bign - oldn, pZ, pdinfo);
+	err = dataset_add_observations(bign - oldn, pZ, pdinfo, OPT_NONE);
 	if (err) {
 	    free(bigx);
 	    goto bailout;

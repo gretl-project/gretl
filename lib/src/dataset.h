@@ -231,7 +231,8 @@ int is_trend_variable (const double *x, int n);
 
 int is_periodic_dummy (const double *x, const DATAINFO *pdinfo);
 
-int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo);
+int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
+			      gretlopt opt);
 
 int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo);
 

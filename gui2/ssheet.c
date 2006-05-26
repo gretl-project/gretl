@@ -666,7 +666,7 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 
     if (newobs > 0) {
 	/* extend series length first, if needed */
-	if (dataset_add_observations(newobs, &Z, datainfo) ||
+	if (dataset_add_observations(newobs, &Z, datainfo, OPT_A) ||
 	    dataset_destroy_hidden_variables(&Z, datainfo)) {
 	    errbox(_("Failed to allocate memory for new data"));
 	    return;

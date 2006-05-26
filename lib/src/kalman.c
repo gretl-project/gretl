@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "kalman.h"
 
-#define KDEBUG 0
+#define KDEBUG 2
 #define FCOMPAN 1
 
 struct kalman_ {
@@ -193,14 +193,14 @@ static int ok_companion_row (const gretl_matrix *F, int row, int n)
     return ok;
 }
 
-/* count how many rows at the bottom of F are "companion" rows */
-
-static int count_shifts (const gretl_matrix *F)
+static int count_nonshifts (const gretl_matrix *F)
 {
     int r = gretl_matrix_rows(F);
-    int n = 0, xzero = 1;
+    int n = 0;
+    int xzero = 1;
     int i, j;
     double x;
+    int ret = r;
 
     /* examine bottom row */
     for (j=0; j<r; j++) {
@@ -211,7 +211,7 @@ static int count_shifts (const gretl_matrix *F)
 		n = j;
 		xzero = 1; /* ok, go ahead */
 	    } else {
-		break;
+		return r;
 	    }
 	}
     }
@@ -220,15 +220,16 @@ static int count_shifts (const gretl_matrix *F)
        the (r-n-1)-th */
 
     if (n > 0) {
+	ret = n;
 	for (i=r-n, j=0; i<r; i++) {
 	    if (!ok_companion_row(F, i, j++)) {
-		n = 0;
+		ret = r;
 		break;
 	    }
 	}
     }
 
-    return n;
+    return ret;
 }
 
 /**
@@ -400,7 +401,7 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 	if (postmult) {
 	    /* if post-multiplying by F', "top" actually means "left" */
 
-	    topF = gretl_matrix_reuse(K->Tmprr_2a, K->r,r1);
+	    topF = gretl_matrix_reuse(K->Tmprr_2a, K->r, r1);
 
 	    for (i=0; i<r1; i++) {
 		for (j=0; j<K->r; j++) {
@@ -540,7 +541,7 @@ static int kalman_iter_2 (kalman *K)
 
     /* pre-multiply by F, post-multiply by F' */
 #if FCOMPAN
-    err += multiply_by_F(K, K->P0, K->Tmprr,0);
+    err += multiply_by_F(K, K->P0, K->Tmprr, 0);
     err += multiply_by_F(K, K->Tmprr, K->P1, 1);
 #else
     err += gretl_matrix_multiply(K->F, K->P0, K->Tmprr);
@@ -562,7 +563,7 @@ static void kalman_print_state (kalman *K, int t)
 {
     int j;
 
-    fprintf(stderr, "Iteration %d:\n", i);
+    fprintf(stderr, "Iteration %d:\n", t);
 
     for (j=0; j<K->n; j++) {
 	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", j, 
@@ -668,11 +669,14 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
     fprintf(stderr, "kalman_forecast: T = %d\n", K->T);
 #endif  
 
+#if 1
     /* see if we have any state transitions that are just
        shifts? */
     if (K->nonshift == K->r) {
-	K->nonshift = count_shifts(K->F);
+	K->nonshift = count_nonshifts(K->F);
     }
+    fprintf(stderr, "K->nonshift = %d, K->r = %d\n", K->nonshift, K->r);
+#endif
 
     K->loglik = 0.0;
 

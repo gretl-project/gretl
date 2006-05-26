@@ -1245,7 +1245,7 @@ int out_of_sample_info (int add_ok, int *t2)
 	    err = 1;
 	} else if (n > 0) {
 	    set_original_n(datainfo->n);
-	    err = dataset_add_observations(n, &Z, datainfo);
+	    err = dataset_add_observations(n, &Z, datainfo, OPT_A);
 	    if (err) {
 		gui_errmsg(err);
 	    } else {
@@ -3811,7 +3811,7 @@ void do_add_obs (gpointer data, guint u, GtkWidget *widget)
     int err = 0;
 
     if (n > 0) {
-	err = dataset_add_observations(n, &Z, datainfo);
+	err = dataset_add_observations(n, &Z, datainfo, OPT_A);
 	if (err) {
 	    gui_errmsg(err);
 	} else {

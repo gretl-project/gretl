@@ -2117,7 +2117,7 @@ insert_missing_hidden_obs (double ***pZ, DATAINFO *pdinfo,
 	return E_ALLOC;
     }
 
-    err = dataset_add_observations(nmiss, pZ, pdinfo);
+    err = dataset_add_observations(nmiss, pZ, pdinfo, OPT_A);
     if (err) {
 	free(tmp);
 	return err;
@@ -2358,7 +2358,7 @@ int expand_data_set (double ***pZ, DATAINFO *pdinfo, int newpd)
     newn = mult * pdinfo->n;
     addobs = newn - oldn;
 
-    err = dataset_add_observations(addobs, pZ, pdinfo);
+    err = dataset_add_observations(addobs, pZ, pdinfo, OPT_NONE);
     if (err) {
 	goto bailout;
     }
