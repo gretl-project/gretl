@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-14 21:29-0500\n"
-"PO-Revision-Date: 2006-05-27 18:07+0100\n"
-"Last-Translator: Sven <svetosch@gmx.net>\n"
+"PO-Revision-Date: 2006-05-28 22:32+0100\n"
+"Last-Translator: Sven Schreiber <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=iso-8859-15\n"
@@ -793,7 +793,7 @@ msgid "decennial"
 msgstr "Dekadisch"
 
 #: lib/src/dataio.c:1521
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Data file %s\n"
 "as of"
@@ -835,9 +835,9 @@ msgid "Bad data label in %s"
 msgstr "Falscher Datenbezeichner in %s"
 
 #: lib/src/dataio.c:1585
-#, fuzzy, c-format
+#, c-format
 msgid "extraneous label for var '%s'\n"
-msgstr ""
+msgstr "seltsamer Bezeichner für Variable '%s'\n"
 
 #: lib/src/dataio.c:1797
 #, c-format
@@ -1228,13 +1228,13 @@ msgstr "'%s' -- keine Zahlenumwandlung ausgeführt!"
 #: lib/src/usermat.c:1286
 #, c-format
 msgid "Extraneous character '%c' in data"
-msgstr "Fremdes Zeichen '%c' in Daten"
+msgstr "Seltsames Zeichen '%c' in Daten"
 
 #: lib/src/dataio.c:4155
 #: lib/src/usermat.c:1288
 #, c-format
 msgid "Extraneous character (0x%x) in data"
-msgstr "Fremdes Zeichen (0x%x) in Daten"
+msgstr "Seltsames Zeichen (0x%x) in Daten"
 
 #: lib/src/dataio.c:4161
 #: lib/src/usermat.c:1292
@@ -1473,9 +1473,8 @@ msgid "Estimated degree of integration"
 msgstr "Geschätzter Integrationsgrad"
 
 #: lib/src/describe.c:1877
-#, fuzzy
 msgid "Local Whittle Estimator"
-msgstr ""
+msgstr "Lokaler Whittle-Schätzer"
 
 #: lib/src/describe.c:1930
 msgid "Missing values within sample -- can't do periodogram"
@@ -2093,9 +2092,9 @@ msgid "The setting for \"toler\" must be numeric"
 msgstr "Die Einstellung für \"toler\" muss numerisch sein"
 
 #: lib/src/generate.c:3056
-#, fuzzy, c-format
+#, c-format
 msgid "Replaced after model %d: "
-msgstr ""
+msgstr "Ersetzt nach Modell %d:"
 
 #: lib/src/generate.c:3114
 msgid "Periodic dummy variables generated.\n"
@@ -2215,29 +2214,24 @@ msgid "data index variable"
 msgstr "Datenindexvariable"
 
 #: lib/src/genrfuncs.c:914
-#, fuzzy
 msgid "annual plotting variable"
-msgstr ""
+msgstr "jährliche Darstellungsvariable"
 
 #: lib/src/genrfuncs.c:920
-#, fuzzy
 msgid "quarterly plotting variable"
-msgstr ""
+msgstr "quartalsweise Darstellungsvariable"
 
 #: lib/src/genrfuncs.c:927
-#, fuzzy
 msgid "monthly plotting variable"
-msgstr ""
+msgstr "monatliche Darstellungsvariable"
 
 #: lib/src/genrfuncs.c:934
-#, fuzzy
 msgid "hourly plotting variable"
-msgstr ""
+msgstr "stündliche Darstellungsvariable"
 
 #: lib/src/genrfuncs.c:943
-#, fuzzy
 msgid "daily plotting variable"
-msgstr ""
+msgstr "tägliche Darstellungsvariable"
 
 #: lib/src/genrfuncs.c:1172
 #, c-format
@@ -2848,16 +2842,18 @@ msgstr ""
 
 #: lib/src/gretl_string_table.c:245
 #: lib/src/gretl_string_table.c:248
-#, fuzzy, c-format
+#, c-format
 msgid "String code table for variable %d (%s):\n"
 msgstr "Zeichenketten / Code -Tabelle für Variable %d (%s):\n"
 
 #: lib/src/gretl_string_table.c:261
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "String code table written to\n"
 " %s\n"
 msgstr ""
+"Zeichenketten / Code -Tabelle gespeichert in\n"
+" %s\n"
 
 #: lib/src/gretl_utils.c:422
 msgid "Error calculating model selection criteria\n"
@@ -3824,7 +3820,7 @@ msgstr "Heteroskedastizitäts-robuste Standardfehler"
 #: lib/src/modelprint.c:667
 #: lib/src/modelprint.c:673
 msgid "variant"
-msgstr "Heteroskedastizität-robuste Standardfehler"
+msgstr "Variante"
 
 #: lib/src/modelprint.c:688
 msgid "Standard errors based on Hessian"
@@ -3836,7 +3832,7 @@ msgstr "Standardfehler basieren auf Informationsmatrix"
 
 #: lib/src/modelprint.c:694
 msgid "Standard errors based on Outer Products matrix"
-msgstr "Standardfehler basieren auf einer Matrix der äußeren Produkte"
+msgstr "Standardfehler basieren auf Matrix der äußeren Produkte"
 
 #: lib/src/modelprint.c:697
 #: lib/src/modelprint.c:717
@@ -4350,9 +4346,8 @@ msgid "Failed to initialize model for loop\n"
 msgstr "Schleifeninitialisierung des Modells schlug fehl\n"
 
 #: lib/src/monte_carlo.c:2626
-#, fuzzy
 msgid "Failed to add results to loop model\n"
-msgstr ""
+msgstr "Hinzufügen der Ergebnisse zu Schleifenmodell fehlgeschlagen\n"
 
 #: lib/src/monte_carlo.c:2711
 #, fuzzy
@@ -4685,9 +4680,8 @@ msgid "Current sample"
 msgstr "Aktuelle Stichprobe"
 
 #: lib/src/printout.c:545
-#, fuzzy
 msgid "Cross-equation VCV for residuals"
-msgstr "Gleichungsübergreifende Residuen-Var-Kov-Matrix"
+msgstr "Gleichungsübergreifende Residuen-Var-Kov-Mat"
 
 #: lib/src/printout.c:546
 msgid "correlations above the diagonal"
@@ -4716,7 +4710,7 @@ msgstr ""
 #: lib/src/printout.c:786
 #, c-format
 msgid "Model estimation range: %s - %s"
-msgstr "Modell-Schätzbereich: %s - %s"
+msgstr "Modell-Schätzbereich: %s - %s "
 
 #: lib/src/printout.c:789
 #, c-format
@@ -6917,9 +6911,8 @@ msgstr "Keine Datendatei geladen"
 #: gui/gretl.c:1283
 #: gui2/gui_utils.c:4490
 #: gui2/library.c:183
-#, fuzzy
 msgid "Couldn't fork"
-msgstr ""
+msgstr "Konnte nicht verzweigen"
 
 #: gui/gretl.c:1397
 #: gui2/cmdstack.c:343
@@ -6932,9 +6925,8 @@ msgstr "Datendatei speichern"
 #: gui/guiprint.c:56
 #: gui2/guiprint.c:47
 #: gui2/guiprint.c:49
-#, fuzzy
 msgid "for"
-msgstr ""
+msgstr "für"
 
 #: gui/guiprint.c:69
 #: gui/guiprint.c:73
@@ -7143,9 +7135,10 @@ msgstr "Ein Ökonometrieprogramm für den Gnome-Desktop, erschienen unter der GNU 
 #: gui2/about.c:278
 #: gui2/about.c:366
 #: gui2/about.c:367
-#, fuzzy
 msgid "translator_credits"
 msgstr ""
+"Übersetzt von Sven Schreiber <svetosch@gmx.net>, \n"
+"aufbauend auf die Pionierarbeit von Markus Hahn"
 
 #: gui2/about.c:156
 #: gui2/about.c:331
@@ -7271,19 +7264,16 @@ msgid "Failed to allocate DIB"
 msgstr ""
 
 #: gui2/boxplots.c:1195
-#, fuzzy
 msgid "Failed to lock DIB Header"
-msgstr ""
+msgstr "Sperren des DIB-Headers schlug fehl"
 
 #: gui2/boxplots.c:1216
-#, fuzzy
 msgid "Failed to lock DIB Palette"
-msgstr ""
+msgstr "Sperren der DIB-Palette schlug fehl"
 
 #: gui2/boxplots.c:1249
-#, fuzzy
 msgid "Failed to lock DIB Data"
-msgstr ""
+msgstr "Sperren der DIB-Daten schlug fehl"
 
 #: gui2/boxplots.c:1256
 msgid "Cannot open the Clipboard!"
@@ -7533,7 +7523,7 @@ msgstr ""
 #: gui2/calculator.c:691
 #, c-format
 msgid " standard error of mean = %g\n"
-msgstr "Standardfehler des Mittelwerts = %g\n"
+msgstr " Standardfehler des Mittels = %g\n"
 
 #: gui2/calculator.c:684
 #: gui2/calculator.c:693
@@ -7707,7 +7697,7 @@ msgstr "Mittel"
 #: gui2/calculator.c:957
 #: gui2/calculator.c:1469
 msgid "std. deviation"
-msgstr "Standardfehler"
+msgstr "Std'abweichung"
 
 #: gui2/calculator.c:963
 #: gui2/calculator.c:975
@@ -9642,9 +9632,8 @@ msgid "Cannot open the clipboard"
 msgstr "Kann die Zwischenablage nicht öffnen"
 
 #: gui2/gretlwin32.c:796
-#, fuzzy
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
-msgstr "Zum Einfügen..."
+msgstr "Zum Einfügen: Bearbeiten/Inhalte einfügen.../Erweiterte Metadatei "
 
 #: gui2/gtkfontselhack.c:85
 msgid "abcdefghijk ABCDEFGHIJK"
@@ -10344,9 +10333,9 @@ msgid "Save changes?"
 msgstr "Änderungen speichern?"
 
 #: gui2/gui_utils.c:2848
-#, fuzzy, c-format
+#, c-format
 msgid "Failed to flip state of \"%s\"\n"
-msgstr ""
+msgstr "Statusumkehrung von \"%s\" schlug fehl\n"
 
 #: gui2/gui_utils.c:3007
 #: gui2/gui_utils.c:3057
@@ -12748,9 +12737,9 @@ msgid "Reading file...\n"
 msgstr "Lese Datei...\n"
 
 #: plugin/excel_import.c:669
-#, fuzzy, c-format
+#, c-format
 msgid "%s: No BOF record found"
-msgstr ""
+msgstr "%s: Kein BOF-Eintrag gefunden"
 
 #: plugin/excel_import.c:1279
 #: plugin/excel_import.c:1314
@@ -12856,14 +12845,12 @@ msgstr ""
 "Vielleicht ist eine Formel im Blatt?"
 
 #: plugin/gnumeric_import.c:372
-#, fuzzy
 msgid "Found an extraneous row of text"
-msgstr ""
+msgstr "Seltsame Textzeile gefunden"
 
 #: plugin/gnumeric_import.c:377
-#, fuzzy
 msgid "Found an extraneous column of text"
-msgstr ""
+msgstr "Seltsame Textspalte gefunden"
 
 #: plugin/gnumeric_import.c:413
 #: plugin/gnumeric_import.c:519
@@ -13637,9 +13624,8 @@ msgid "The statistic you requested is not meaningful for this model"
 msgstr "Die angeforderte Statistik ist für dieses Modell nicht aussagekräftig"
 
 #: plugin/vif.c:130
-#, fuzzy
 msgid "Variance Inflation Factors"
-msgstr ""
+msgstr "Varianzerhöhungsfaktoren (VIF)"
 
 #: plugin/vif.c:132
 msgid "Minimum possible value = 1.0"
