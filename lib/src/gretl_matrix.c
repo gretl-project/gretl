@@ -1360,7 +1360,7 @@ gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
 
     m = 0;
     for (j=0; j<n; j++) {
-	for (i=0; i<=j; i++) {
+	for (i=j; i<n; i++) {
 	    x = src->val[m++];
 	    targ->val[mdx(targ, i, j)] = targ->val[mdx(targ, j, i)] = x;
 	}

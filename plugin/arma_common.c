@@ -25,10 +25,12 @@ struct arma_info {
 #define arma_is_arima(a)       ((a)->flags & ARMA_DSPEC)
 #define arma_by_x12a(a)        ((a)->flags & ARMA_X12A)
 #define arma_exact_ml(a)       ((a)->flags & ARMA_EXACT)
+#define arma_using_vech(a)     ((a)->flags & ARMA_VECH)
 
 #define set_arma_has_seasonal(a)  ((a)->flags |= ARMA_SEAS)
 #define set_arma_is_arima(a)      ((a)->flags |= ARMA_DSPEC)
 #define unset_arma_is_arima(a)    ((a)->flags &= ~ARMA_DSPEC)
+#define set_arma_use_vech(a)      ((a)->flags |= ARMA_VECH)
 
 static void 
 arma_info_init (struct arma_info *ainfo, char flags, const DATAINFO *pdinfo)

@@ -1,5 +1,5 @@
 /* gretl - The Gnu Regression, Econometrics and Time-series Library
- * Copyright (C) 1999-2000 Ramu Ramanathan and Allin Cottrell
+ * Copyright (C) 1999-2006 Allin Cottrell and Riccardo "Jack" Lucchetti
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License 
@@ -493,9 +493,9 @@ static gretl_matrix *A = NULL;
 static gretl_matrix *H = NULL;
 static gretl_matrix *Q = NULL;
 
-static gretl_matrix *Tmp;
-static gretl_matrix *vecP;
-static gretl_matrix *vecQ;
+static gretl_matrix *Svar;
+static gretl_matrix *Svar2;
+static gretl_matrix *vQ;
 
 static double *ac;
 static double *mc;
@@ -593,6 +593,45 @@ static void write_big_theta (const double *theta,
     }    
 }
 
+static void condense_row (gretl_matrix *targ,
+			  const gretl_matrix *src,
+			  int targrow, int srcrow,
+			  int n)
+{
+    double x;
+    int i, j, k, g;
+    int targcol = 0;
+
+    for (j=0; j<n; j++) {
+	for (i=j; i<n; i++) {
+	    k = j * n + i;
+	    g = (k % n) * n + k / n;
+	    x = gretl_matrix_get(src, srcrow, k);
+	    if (g != k) {
+		x += gretl_matrix_get(src, srcrow, g);
+	    } 
+	    gretl_matrix_set(targ, targrow, targcol++, x);
+	}
+    }
+}
+
+static void condense_state_vcv (gretl_matrix *targ, 
+				const gretl_matrix *src,
+				int n)
+{
+    int posr = 0, posc = 0;
+    int i, j;
+
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    if (j >= i) {
+		condense_row(targ, src, posr++, posc, n);
+	    }
+	    posc++;
+	}
+    }
+}
+
 static int write_kalman_matrices (const double *b)
 {
     const double *phi = b + kainfo->ifc;
@@ -602,7 +641,7 @@ static int write_kalman_matrices (const double *b)
     const double *beta = Theta + kainfo->Q;
     double s2 = *(beta + kainfo->nexo);
     double mu = (kainfo->ifc)? b[0] : 0.0;
-    int i, r, err = 0;
+    int i, r, m, err = 0;
 
     gretl_matrix_zero(S);
     gretl_matrix_zero(P);
@@ -613,6 +652,7 @@ static int write_kalman_matrices (const double *b)
     /* See Hamilton, Time Series Analysis, ch 13, p. 375 */
 
     r = gretl_matrix_rows(F);
+    m = r * (r + 1) / 2;
 
     /* form the F matrix using phi and/or Phi */
     if (kainfo->P > 0) {
@@ -643,7 +683,11 @@ static int write_kalman_matrices (const double *b)
 #endif
 
     gretl_matrix_set(Q, 0, 0, s2);
-    gretl_matrix_vectorize(vecQ, Q);
+    if (arma_using_vech(kainfo)) {
+	gretl_matrix_vectorize_h(vQ, Q);
+    } else {
+	gretl_matrix_vectorize(vQ, Q);
+    }
 
 #if ARMA_DEBUG
     gretl_matrix_print(Q, "Q");
@@ -658,20 +702,23 @@ static int write_kalman_matrices (const double *b)
     gretl_matrix_print(A, "A");
 #endif
 
-    /* FIXME use vech forms for Q and P, and construct
-       a pared-down version of (I - F \otimes F)
-    */
+    /* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378. */
 
-    /* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378.
-       Is there a cheaper way of doing this?
-    */
-    gretl_matrix_kronecker_product(F, F, Tmp);
-    gretl_matrix_I_minus(Tmp);
-    err = gretl_invert_general_matrix(Tmp);
-    if (!err) {
-	gretl_matrix_multiply(Tmp, vecQ, vecP);
-	gretl_matrix_unvectorize(P, vecP);
-    }  
+    gretl_matrix_kronecker_product(F, F, Svar);
+    gretl_matrix_I_minus(Svar);
+
+    if (arma_using_vech(kainfo)) {
+	condense_state_vcv(Svar2, Svar, r);
+	err = gretl_LU_solve(Svar2, vQ);
+	if (!err) {
+	    gretl_matrix_unvectorize_h(P, vQ);
+	}
+    } else {
+	err = gretl_LU_solve(Svar, vQ);
+	if (!err) {
+	    gretl_matrix_unvectorize(P, vQ);
+	}
+    }
 
 #if ARMA_DEBUG
     gretl_matrix_print(P, "P");
@@ -870,7 +917,6 @@ static double kalman_arma_ll (const double *b, void *p)
 
     if (ma_out_of_bounds(kainfo, theta, Theta)) {
 	pputs(errprn, "arma: MA estimate(s) out of bounds\n");
-	fputs("arma: MA estimate(s) out of bounds\n", stderr);
 	return NADBL;
     }
 
@@ -1078,7 +1124,7 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     gretl_matrix *x = NULL;
 
     int k = 1 + ainfo->nexo; /* number of exog vars plus space for const */
-    int r;
+    int r, r2, m;
 
     /* BFGS apparatus */
     int ncoeff = ainfo->nc + 1;
@@ -1129,7 +1175,14 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     }
 
     r = ainfo_get_r(ainfo);
+    r2 = r * r;
+    m = r * (r + 1) / 2;
     T = gretl_matrix_rows(y);
+
+    /* when should we use vech apparatus? */
+    if (r > 4) {
+	set_arma_use_vech(ainfo);
+    }
 
     S = gretl_column_vector_alloc(r);
     P = gretl_matrix_alloc(r, r);
@@ -1138,13 +1191,20 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     H = gretl_column_vector_alloc(r);
     Q = gretl_matrix_alloc(r, r);
 
-    Tmp = gretl_matrix_alloc(r * r, r * r);
-    vecQ = gretl_column_vector_alloc(r * r);
-    vecP = gretl_column_vector_alloc(r * r);
+    Svar = gretl_matrix_alloc(r2, r2);
 
-    if (S == NULL || P == NULL || F == NULL || A == NULL ||
-	H == NULL || Q == NULL || Tmp == NULL || 
-	vecP == NULL || vecQ == NULL) {
+    if (arma_using_vech(ainfo)) {
+	vQ = gretl_column_vector_alloc(m);
+	Svar2 = gretl_matrix_alloc(m, m);
+	if (Svar2 == NULL) {
+	    err = E_ALLOC;
+	}
+    } else {
+	vQ = gretl_column_vector_alloc(r * r);
+    }
+
+    if (err || S == NULL || P == NULL || F == NULL || A == NULL ||
+	H == NULL || Q == NULL || Svar == NULL || vQ == NULL) {
 	free(b);
 	gretl_matrix_free(y);
 	gretl_matrix_free(x);
@@ -1193,9 +1253,9 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     gretl_matrix_free(y);
     gretl_matrix_free(x);
 
-    gretl_matrix_free(Tmp);
-    gretl_matrix_free(vecP);
-    gretl_matrix_free(vecQ);
+    gretl_matrix_free(Svar);
+    gretl_matrix_free(Svar2);
+    gretl_matrix_free(vQ);
 
     free(b);
     free_ac_mc();
@@ -1250,6 +1310,8 @@ make_armax_X (const int *list, struct arma_info *ainfo, const double **Z)
     return X;
 }
 
+#ifndef NEW_INIT
+
 /* for ARMAX: write the component of the NLS specification
    that takes the form (y_{t-i} - X_{t-i} \beta)
 */
@@ -1293,8 +1355,6 @@ static void y_Xb_at_lag (char *spec, struct arma_info *ainfo,
 	strcat(spec, ")");
     }
 }
-
-#ifndef NEW_INIT
 
 static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 			       int narmax, double ***pZ, DATAINFO *pdinfo) 
