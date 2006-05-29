@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-14 21:29-0500\n"
-"PO-Revision-Date: 2006-05-28 22:32+0100\n"
+"PO-Revision-Date: 2006-05-29 21:13+0100\n"
 "Last-Translator: Sven Schreiber <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -890,9 +890,9 @@ msgid "   %s: probably a year... "
 msgstr "   %s: wahrscheinlich ein Jahr..."
 
 #: lib/src/dataio.c:2294
-#, fuzzy, c-format
+#, c-format
 msgid "   %s: out of bounds for a year?\n"
-msgstr "   %s: out of bounds for a year?\n"
+msgstr ""
 
 #: lib/src/dataio.c:2298
 msgid "   but I can't make sense of the extra bit\n"
@@ -1965,11 +1965,13 @@ msgid "                 ITER       RHO        ESS"
 msgstr "                 ITER       RHO        RQS"
 
 #: lib/src/estimate.c:2033
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "                final %11.5f\n"
 "\n"
 msgstr ""
+"       endgültig %11.5f\n"
+"\n"
 
 #: lib/src/estimate.c:2536
 msgid "White's"
@@ -4278,7 +4280,6 @@ msgid "Loop condition not satisfied at first round"
 msgstr "Schleifenbedingung im ersten Durchlauf nicht erfüllt"
 
 #: lib/src/monte_carlo.c:1667
-#, fuzzy
 msgid "Failed to initalize print struct for loop\n"
 msgstr ""
 
@@ -4350,7 +4351,6 @@ msgid "Failed to add results to loop model\n"
 msgstr "Hinzufügen der Ergebnisse zu Schleifenmodell fehlgeschlagen\n"
 
 #: lib/src/monte_carlo.c:2711
-#, fuzzy
 msgid "Failed to add values to print loop\n"
 msgstr ""
 
@@ -5496,9 +5496,9 @@ msgstr "%s: kein solches Objekt\n"
 
 #: cli/cli_object.c:198
 #: gui2/objectsave.c:367
-#, fuzzy, c-format
+#, c-format
 msgid "Freed %s\n"
-msgstr ""
+msgstr "%s freigegeben\n"
 
 #: cli/gretlcli.c:100
 #, c-format
@@ -7259,7 +7259,6 @@ msgid "Couldn't obtain confidence interval"
 msgstr "Konnte Konfidenzintervall nicht erhalten"
 
 #: gui2/boxplots.c:1172
-#, fuzzy
 msgid "Failed to allocate DIB"
 msgstr ""
 
@@ -8245,7 +8244,6 @@ msgid "Find..."
 msgstr "Suchen..."
 
 #: gui2/database.c:600
-#, fuzzy
 msgid "Codebook"
 msgstr ""
 
@@ -8278,7 +8276,6 @@ msgstr "/Suchen/Suchen in Fenster"
 
 #: gui2/database.c:615
 #: gui2/database.c:625
-#, fuzzy
 msgid "/_Codebook"
 msgstr ""
 
@@ -8836,9 +8833,8 @@ msgid "Days in week"
 msgstr "Tage pro Woche"
 
 #: gui2/dialogs.c:2852
-#, fuzzy
 msgid "Daily date to represent week:"
-msgstr "Welches Tagesdatum soll Woche darstellen:"
+msgstr "Welcher Tag soll für Woche stehen:"
 
 #: gui2/dialogs.c:2853
 msgid "Starting observation:"
@@ -9401,7 +9397,6 @@ msgid "Couldn't open %s: %s"
 msgstr "Konnte %s nicht öffnen: %s"
 
 #: gui2/gpt_control.c:2423
-#, fuzzy
 msgid "Failed to create pixbuf from file"
 msgstr ""
 
@@ -9504,7 +9499,6 @@ msgid "type"
 msgstr "Art"
 
 #: gui2/gpt_dialog.c:1040
-#, fuzzy
 msgid "scale"
 msgstr "Vergrößerung"
 
@@ -10447,7 +10441,7 @@ msgstr "/Graphs/dumsep"
 
 #: gui2/gui_utils.c:3262
 msgid "/Graphs/Separation"
-msgstr "/Graphs/Separation"
+msgstr "/Graphs/Separierung"
 
 #: gui2/gui_utils.c:3288
 #: gui2/gui_utils.c:3294
@@ -10461,9 +10455,9 @@ msgid "%s/none"
 msgstr "%s/keine"
 
 #: gui2/gui_utils.c:3313
-#, fuzzy, c-format
+#, c-format
 msgid "%s/by %s"
-msgstr ""
+msgstr "%s/gemäß %s"
 
 #: gui2/gui_utils.c:3359
 #: gui2/gui_utils.c:3454
@@ -10680,11 +10674,9 @@ msgstr "Transformationen"
 msgid "Utilities"
 msgstr "Dienstprogramme"
 
-# I guess the help system is only available in English, but I'm not sure, hence the question mark.
 #: gui2/helpfiles.c:817
-#, fuzzy
 msgid "Show English help"
-msgstr "zeige (englische?) Hilfe"
+msgstr ""
 
 #: gui2/helpfiles.c:845
 #: gui2/textbuf.c:830
@@ -10701,9 +10693,8 @@ msgstr "Zeichenkette wurde nicht gefunden."
 #: gui2/helpfiles.c:1342
 #: gui2/helpfiles.c:1446
 #: gui2/helpfiles.c:1486
-#, fuzzy
 msgid "Search wrapped"
-msgstr ""
+msgstr "Suche am Anfang fortgesetzt"
 
 #: gui2/helpfiles.c:1572
 msgid "gretl: find"
@@ -11130,13 +11121,10 @@ msgid "gretl: coefficient covariances"
 msgstr "gretl: Kovarianzen der Koeffizienten"
 
 #: gui2/library.c:3826
-#, fuzzy
 msgid ""
 "Data set is not recognized as a panel.\n"
 "Please use \"Sample/Set frequency, startobs\"."
 msgstr ""
-"Datensatz nicht als Panel erkannt.\n"
-"Bitte \"Stichprobe/..."
 
 #: gui2/library.c:3864
 msgid "Error generating time trend"
@@ -11464,17 +11452,17 @@ msgstr "/Modell/Zeitreihen/VECM..."
 #: gui2/menustate.c:112
 #: gui2/menustate.c:131
 msgid "/Model/Time series/Cointegration test"
-msgstr "/Modell/Zeitreihen/Kointegrationtest"
+msgstr "/Modell/Zeitreihen/Kointegrationstest"
 
 #: gui2/menustate.c:113
 #: gui2/menustate.c:132
 msgid "/Model/Time series/Cointegration test/Engle-Granger..."
-msgstr "/Modell/Zeitreihen/Kointegrationtest/Engle-Granger..."
+msgstr "/Modell/Zeitreihen/Kointegrationstest/Engle-Granger..."
 
 #: gui2/menustate.c:115
 #: gui2/menustate.c:134
 msgid "/Model/Time series/Cointegration test/Johansen..."
-msgstr "/Modell/Zeitreihen/Kointegrationtest/Johansen..."
+msgstr "/Modell/Zeitreihen/Kointegrationstest/Johansen..."
 
 #: gui2/menustate.c:276
 #: gui2/menustate.c:323
@@ -11653,9 +11641,8 @@ msgid "HILU"
 msgstr "HILU"
 
 #: gui2/model_table.c:356
-#, fuzzy
 msgid "PWE"
-msgstr ""
+msgstr "Prais-W."
 
 #: gui2/model_table.c:607
 msgid "Adj. R{\\super 2}"
@@ -11681,7 +11668,7 @@ msgstr "Die Modelltabelle ist leer"
 #: gui2/model_table.c:937
 #, c-format
 msgid "%s estimates"
-msgstr "%s schätzt"
+msgstr "%s-Schätzungen"
 
 #: gui2/model_table.c:748
 #, c-format
@@ -11829,9 +11816,8 @@ msgid "Weight variable"
 msgstr "Gewichtsvariable"
 
 #: gui2/selector.c:1922
-#, fuzzy
 msgid "Offset variable"
-msgstr "Variable"
+msgstr "'Offset'-Variable"
 
 #: gui2/selector.c:1926
 msgid "List of AR lags"
@@ -11907,9 +11893,8 @@ msgid "Non-seasonal"
 msgstr "Nicht-saisonal"
 
 #: gui2/selector.c:2489
-#, fuzzy
 msgid "Seasonal"
-msgstr "saison"
+msgstr "Saisonal"
 
 #: gui2/selector.c:2501
 msgid "AR order:"
@@ -12727,7 +12712,7 @@ msgstr "Zeichenkettenindex zu groß"
 
 #: plugin/excel_import.c:653
 #: plugin/workbook.c:445
-#, fuzzy, c-format
+#, c-format
 msgid "No book or workbook streams found."
 msgstr ""
 
@@ -12792,7 +12777,6 @@ msgid "Gradients at last iteration"
 msgstr "Gradienten bei letzter Iteration"
 
 #: plugin/fractals.c:40
-#, fuzzy
 msgid "Rescaled-range plot for"
 msgstr ""
 
@@ -12801,16 +12785,15 @@ msgid "log(sample size)"
 msgstr "log(Stichprobenumfang)"
 
 #: plugin/fractals.c:42
-#, fuzzy
 msgid "log(R/S)"
-msgstr "log(M/S)"
+msgstr ""
 
 #: plugin/fractals.c:224
 msgid "Sample is too small for Hurst exponent"
 msgstr "Stichprobe zu klein für Hurst-Exponenten"
 
 #: plugin/fractals.c:234
-#, fuzzy, c-format
+#, c-format
 msgid "Rescaled range figures for %s"
 msgstr ""
 
@@ -13403,9 +13386,8 @@ msgstr ""
 "\n"
 
 #: plugin/stats_tables.c:412
-#, fuzzy
 msgid "inf."
-msgstr ""
+msgstr "unendl."
 
 #: plugin/stats_tables.c:438
 msgid ""
@@ -13457,9 +13439,8 @@ msgid "Time-series model only"
 msgstr "Nur Zeitreihenmodell"
 
 #: plugin/tramo_options.c:363
-#, fuzzy
 msgid "Standard automatic analysis"
-msgstr "automatische Standardanalyse"
+msgstr "Normale automatische Analyse"
 
 #: plugin/tramo_options.c:449
 msgid "Output"
