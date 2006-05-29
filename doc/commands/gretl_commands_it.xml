@@ -2147,7 +2147,7 @@
 	</li>
 	<li><para><cmd>genr paneldum</cmd> crea una serie di variabili dummy
             da usare in un dataset di tipo panel &mdash; si veda
-	    <cmdref targ="panel"/>.</para>
+	    <cmdref targ="paneldat"/>.</para>
 	</li>
       </ilist>
 
@@ -2730,7 +2730,7 @@
     <description>
       <para>
 	Questo test è disponibile solo dopo aver stimato un modello con
-        il comando <cmdref targ="pooled"/> (si veda anche <cmd>panel</cmd>
+        il comando <cmdref targ="pooled"/> (si veda anche <cmd>paneldat</cmd>
         e <cmd>setobs</cmd>). Testa il semplice modello <quote>pooled</quote>
         (con tutte le osservazioni considerate indistintamente) contro 
         le principali alternative: il modello a effetti fissi e quello
@@ -4707,7 +4707,7 @@
 
   </command>
 
-  <command name="panel" section="Dataset" context="cli"
+  <command name="paneldat" section="Dataset" context="cli"
     label="Struttura dei dati panel">
 
     <usage>
