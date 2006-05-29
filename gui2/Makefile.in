@@ -26,6 +26,8 @@ PNG_CFLAGS = @PNG_CFLAGS@
 PNG_LIBS = @PNG_LIBS@
 GDK_PIXBUF_CFLAGS = @GDK_PIXBUF_CFLAGS@
 GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
+XML_CFLAGS = @XML_CFLAGS@
+XML_LIBS = @XML_LIBS@
 USE_NLS = @USE_NLS@
 INETLIB = @INETLIB@
 
@@ -158,8 +160,8 @@ $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<
 
 mklang: mklang.c
-	$(CC) -c -I.. -I$(libsrc) $<
-	$(LIBTOOL) --mode=link $(CC) -o $@ mklang.o ../lib/libgretl-1.0.la
+	$(CC) -c -I.. -I$(libsrc) $(XML_CFLAGS) $<
+	$(LIBTOOL) --mode=link $(CC) -o $@ mklang.o ../lib/libgretl-1.0.la $(XML_LIBS)
 
 gretl.lang: mklang
 	./mklang > $@

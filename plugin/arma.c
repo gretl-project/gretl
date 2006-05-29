@@ -1739,6 +1739,35 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     return err;
 }
 
+#define MINLAGS 16
+
+static int alt_ar_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
+{
+    int nobs = pdinfo->t2 - ainfo->t1 + 1; /* ?? */
+    int nlags = (ainfo->P + ainfo->Q) * pdinfo->pd;
+    int ncoeff, df;
+    int err = 0;
+
+    if (nlags < MINLAGS) {
+	nlags = MINLAGS;
+    }
+
+    ncoeff = nlags + ainfo->nexo + ainfo->ifc;
+    nobs -= nlags;
+    df = nobs - ncoeff;
+
+    if (df < 1) {
+	err = E_DF;
+    }
+
+#if ARMA_DEBUG
+    fprintf(stderr, "alt_ar_init_check: ncoeff=%d, nobs=%d, 'df'=%d\n", 
+	    ncoeff, nobs, df);
+#endif
+
+    return err;
+}
+
 /* Alternative initialization via two OLS passes. In the first pass
    we run an OLS regression of y on the exogenous vars plus a certain
    (biggish) number of lags. In the second we estimate the ARMA model
@@ -1772,7 +1801,9 @@ static int alt_ar_init (const int *list, double *coeff, double *s2,
     int err = 0;
 
     pass1lags = (nQ + nP) * pdinfo->pd;
-    pass1lags = (pass1lags < 15)? 15 : pass1lags;
+    if (pass1lags < MINLAGS) {
+	pass1lags = MINLAGS;
+    }
     pass1v = pass1lags + nexo + 2;
 
     /* dependent variable */
@@ -1792,9 +1823,17 @@ static int alt_ar_init (const int *list, double *coeff, double *s2,
 	    pass1v + qtotal, an);
 #endif
 
+    /* in case we bomb before estimating a model */
+    gretl_model_init(&armod);
+
     /* Start building stuff for pass 1 */
 
     pass1list = gretl_list_new(pass1v);
+    if (pass1list == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+	
     pass1list[1] = 1;
     pass1list[2] = 0;
     for (i=2; i<pass1v; i++) {
@@ -1810,7 +1849,7 @@ static int alt_ar_init (const int *list, double *coeff, double *s2,
     }
     for (i=1; i<=pass1lags; i++) { 
 	/* lags */
-	sprintf(adinfo->varname[i+1+nexo], "l_%d", i);
+	sprintf(adinfo->varname[i+1+nexo], "y_%d", i);
     }
 
      /* Fill the dataset with the data for pass 1 */
@@ -1831,52 +1870,81 @@ static int alt_ar_init (const int *list, double *coeff, double *s2,
 	}
 	for (i=1; i<=pass1lags; i++) {
 	    s = t + ainfo->t1 - i;
-	    aZ[pos++][t] = (s > 0)? y[s] : NADBL;
+	    aZ[pos++][t] = (s >= 0)? y[s] : NADBL;
 	}
     }
 
     /* pass 1 proper */
 
-    gretl_model_init(&armod); 
     armod = lsq(pass1list, &aZ, adinfo, OLS, OPT_A);
+    if (armod.errcode) {
+	err = armod.errcode;
+	goto bailout;
+    } 
 
-    /* start setting up pass2: get residuals from pass 1 */
+#if ARMA_DEBUG
+    fprintf(stderr, "pass1 model: t1=%d, t2=%d, nobs=%d, ncoeff=%d, dfd = %d\n", 
+	    armod.t1, armod.t2, armod.nobs, armod.ncoeff, armod.dfd);
+#endif
 
-    malags = malloc(qtotal * sizeof *malags);
+    /* allocations for pass 2 */
 
-    for (i=0, pos=0; i<nq; i++) {
-	malags[pos++] = i+1;
+    if (qtotal > 0) {
+	malags = malloc(qtotal * sizeof *malags);
+	if (malags == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0, pos=0; i<nq; i++) {
+		malags[pos++] = i+1;
+	    }
+	    for (i=0; i<nQ; i++) {
+		for (j=0; j<=nq; j++) {
+		    malags[pos++] = (i+1) * pdinfo->pd + j;
+		}
+	    }
+	}
     }
 
-    for (i=0; i<nQ; i++) {
-	for (j=0; j<=nq; j++) {
-	    malags[pos++] = (i+1) * pdinfo->pd + j;
+    if (ptotal > 0 && !err) {
+	arlags = malloc(ptotal * sizeof *arlags);
+	if (arlags == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (i=0, pos=0; i<np; i++) {
+		arlags[pos++] = i+1;
+	    }
+	    for (i=0; i<nP; i++) {
+		for (j=0; j<=np; j++) {
+		    arlags[pos++] = (i+1) * pdinfo->pd + j;
+		}
+	    }
 	}
+    }
+
+    if (!err) {
+	pass2list = gretl_list_new(2 + nexo + ptotal + qtotal);
+	if (pass2list == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    /* handle error in pass2 allocations */
+    if (err) {
+	goto bailout;
     }
 
     /* stick lagged residuals into temp dataset */
-
-    for (t=0; t<an; t++) {
-	for (i=0, pos=pass1v; i<qtotal; i++) {
+    pos = pass1v;
+    for (i=0; i<qtotal; i++) {
+	sprintf(adinfo->varname[pos], "e_%d", malags[i]);
+	for (t=0; t<an; t++) {
 	    s = t - malags[i];
-	    aZ[pos++][t] = (s >= 0)? armod.uhat[s] : NADBL;
+	    aZ[pos][t] = (s >= 0)? armod.uhat[s] : NADBL;
 	}
+	pos++;
     }
 
-    /* set up list for pass 2 */
-
-    arlags = malloc(ptotal * sizeof *arlags);
-
-    for (i=0, pos=0; i<np; i++) {
-	arlags[pos++] = i+1;
-    }
-    for (i=0; i<nP; i++) {
-	for (j=0; j<=np; j++) {
-	    arlags[pos++] = (i+1)*pdinfo->pd + j;
-	}
-    }
-
-    pass2list = gretl_list_new(2 + nexo + ptotal + qtotal);
+    /* compose pass 2 regression list */
     for (i=1, pos=1; i<=nexo+2; i++) {
 	pass2list[pos++] = pass1list[i];
     }
@@ -1888,9 +1956,7 @@ static int alt_ar_init (const int *list, double *coeff, double *s2,
     }
     
     /* now do pass2 */
-
     clear_model(&armod);
-
     armod = lsq(pass2list, &aZ, adinfo, OLS, OPT_A);
 
     if (armod.errcode) {
@@ -1906,28 +1972,50 @@ static int alt_ar_init (const int *list, double *coeff, double *s2,
 	    pos = 0;
 	}
 
+#if ARMA_DEBUG
+	PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+	printmodel(&armod, adinfo, OPT_S, prn);
+	gretl_print_destroy(prn);
+#endif
+
 	for (i=0; i<np; i++) { /* phi */
+#if ARMA_DEBUG
+	    fprintf(stderr, "phi[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
+#endif
 	    coeff[pos++] = armod.coeff[pos2++];
 	}
 	for (i=0; i<nP; i++) { /* Phi */
+#if ARMA_DEBUG
+	    fprintf(stderr, "Phi[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
+#endif
 	    coeff[pos++] = armod.coeff[pos2];
-	    pos2 += (np+1);
+	    pos2 += np + 1;
 	}
 	for (i=0; i<nq; i++) { /* theta */
+#if ARMA_DEBUG
+	    fprintf(stderr, "theta[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
+#endif
 	    coeff[pos++] = armod.coeff[pos2++];
 	}
 	for (i=0; i<nQ; i++) { /* Theta */
+#if ARMA_DEBUG
+	    fprintf(stderr, "Theta[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
+#endif
 	    coeff[pos++] = armod.coeff[pos2];
-	    pos2 += (nq+1);
+	    pos2 += nq + 1;
 	}
 	for (i=0; i<nexo; i++) { /* exog */
+#if ARMA_DEBUG
+	    fprintf(stderr, "beta[%d] = coeff[%d] = %g\n", i+1, i+1, armod.coeff[i+1]);
+#endif
 	    coeff[pos++] = armod.coeff[i+1];
 	}
 
 	*s2 = armod.sigma * armod.sigma;
     }
 
-    /* clean up */
+    bailout:
+
     free(pass1list);
     free(pass2list);
     free(arlags);
@@ -2081,8 +2169,6 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    /* FIXME check that we have enough data */
-
     /* allocate initial coefficient vector */
     coeff = malloc(ainfo.nc * sizeof *coeff);
     if (coeff == NULL) {
@@ -2097,7 +2183,11 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* initialize the coefficients */
     if (ainfo.q > 1 || ainfo.Q > 0) {
-	err = alt_ar_init(alist, coeff, &s2, Z, pdinfo, &ainfo);
+	/* FIXME: what's the optimal conditionality here? */
+	err = alt_ar_init_check(pdinfo, &ainfo);
+	if (!err) {
+	    err = alt_ar_init(alist, coeff, &s2, Z, pdinfo, &ainfo);
+	}
     } else {
 	err = ar_init_by_ls(alist, coeff, &s2, Z, pdinfo, &ainfo);
     }

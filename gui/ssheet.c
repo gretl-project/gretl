@@ -78,7 +78,7 @@ static int spreadsheet_hide (int i, const DATAINFO *pdinfo)
 {
     int ret = 0;
 
-    if (pdinfo->vector[i] == 0) {
+    if (var_is_scalar(pdinfo, i)) {
 	ret = 1;
     } else if (is_hidden_variable(i, pdinfo)) {
 	ret = 1;
@@ -462,7 +462,7 @@ static void get_data_from_sheet (void)
     }
 
     if (newobs > 0) {
-	if (dataset_add_observations(newobs, &Z, datainfo) ||
+	if (dataset_add_observations(newobs, &Z, datainfo, OPT_A) ||
 	    dataset_destroy_hidden_variables(&Z, datainfo)) {
 	    errbox(_("Failed to allocate memory for new data"));
 	    return;

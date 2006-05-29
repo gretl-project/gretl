@@ -1473,7 +1473,7 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
     int i, n = 0;
 
     for (i=1; i<pdinfo->v; i++) { 
-	if (pdinfo->vector[i] &&
+	if (var_is_series(pdinfo, i) &&
 	    fnmatch(pattern, pdinfo->varname[i], 0) == 0) {
 	    n++;
 	}
@@ -1486,7 +1486,7 @@ int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
 
 	    list[0] = n;
 	    for (i=1; i<pdinfo->v; i++) { 
-		if (pdinfo->vector[i] &&
+		if (var_is_series(pdinfo, i) &&
 		    fnmatch(pattern, pdinfo->varname[i], 0) == 0) {
 		    list[j++] = i;
 		}
