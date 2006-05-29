@@ -36,15 +36,28 @@ della funzione da:
 
 I \textsl{parametri} di una funzione (se esistono) vanno indicati
 sotto forma di lista separata da virgole. I parametri possono essere
-di tre tipi: variabili ordinarie (serie di dati), variabili scalari, o
-liste di variabili. Ogni elemento della lista di parametri è composto
-da due termini: per prima cosa un indicatore di tipo (\verb+series+,
-\verb+scalar+ o \verb+list+), quindi il nome con cui il parametro
-verrà riconosciuto all'interno della funzione. Ecco un esempio (le
-parentesi che racchiudono la lista dei parametri sono opzionali):
+di uno dei seguenti tipi:
+
+\begin{center}
+\begin{tabular}{ll}
+\multicolumn{1}{c}{Tipo} &
+\multicolumn{1}{c}{Descrizione} \\ [4pt]
+\texttt{bool} & variabile scalare usata come interruttore Booleano \\
+\texttt{int}  & variabile scalare usata come numero intero \\
+\texttt{scalar} & variabile scalare \\
+\texttt{series} & serie di dati \\
+\texttt{list}   & lista di serie \\
+\texttt{matrix} & matrice o vettore
+\end{tabular}
+\end{center}
+
+Ogni elemento della lista di parametri è composto da due termini: per prima
+cosa un indicatore di tipo, quindi il nome con cui il parametro verrà
+riconosciuto all'interno della funzione. Ecco un esempio (le parentesi che
+racchiudono la lista dei parametri sono opzionali):
     
 \begin{code}
-      function funzione (series y, list xvars, scalar verbose)
+      function funzione (series y, list xvars, bool verboso)
 \end{code}
 
 
@@ -149,7 +162,7 @@ funzione.
 \label{func-return}
 
 Le funzioni possono produrre zero o più valori di uscita: questi
-possono essere serie o scalari (non liste). I valori di uscita sono
+possono essere scalari, serie o matrici (non liste). I valori di uscita sono
 specificati con una dichiarazione all'interno del corpo della funzione
 che comincia con la parola chiave \verb+return+, seguita da una lista
 separata da virgole, ogni elemento della quale è composto da un
