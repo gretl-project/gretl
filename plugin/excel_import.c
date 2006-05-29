@@ -652,12 +652,12 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
 	result = ms_ole_stream_open(&stream, file, "/", "book", 'r');
 	if (result != MS_OLE_ERR_OK) {
 	    ms_ole_stream_close(&stream);
-	    fprintf(stderr, _("No book or workbook streams found."));
+	    fputs("No book or workbook streams found\n", stderr);
 	    return 1;
 	}
     }
 
-    fprintf(stderr, _("Reading file...\n"));
+    fputs("Reading file...\n", stderr);
     q = ms_biff_query_new(stream);
 
     while (!gotbof && ms_biff_query_next(q)) {

@@ -442,7 +442,7 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	result = ms_ole_stream_open (&stream, file, "/", "book", 'r');
 	if (result != MS_OLE_ERR_OK) {
 	    ms_ole_stream_close (&stream);
-	    fprintf (stderr, _("No book or workbook streams found."));
+	    fputs("No book or workbook streams found\n", stderr);
 	    return excel_version;
 	}
     }

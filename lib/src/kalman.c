@@ -21,7 +21,6 @@
 #include "kalman.h"
 
 #define KDEBUG 0
-#define FCOMPAN 1
 
 struct kalman_ {
     int r; /* rows of S */
@@ -33,11 +32,10 @@ struct kalman_ {
     int ifc;       /* include a constant (1) or not (0) */
     double loglik; /* log-likelihood */
 
-    int nonshift; /* used when F is a companion matrix (e.g. in arma)
-		     to indicate how many rows of F do something other
-		     than shifting down the elements of the state
-		     vector; these should be placed on top.  For
-		     univariate ARMA nonshift is usually 1. */
+    int nonshift; /* When F is a companion matrix (e.g. in arma), the
+		     number of rows of F that do something other than
+		     shifting down the elements of the state vector
+		  */
 
     /* continuously updated matrices */
     gretl_matrix *S0; /* state vector, before updating */
@@ -69,7 +67,6 @@ struct kalman_ {
     gretl_matrix *Tmprr;
     gretl_matrix *Tmprr_2a;
     gretl_matrix *Tmprr_2b;
-
 };
 
 void kalman_free (kalman *K)
@@ -176,55 +173,52 @@ kalman_check_dimensions (kalman *K,
     return 0;
 }
 
-/* checks if row has 0's everywhere but for position n */
+/* checks if row has a 1 in position n and 0s elsewhere */
 
-static int ok_companion_row (const gretl_matrix *F, int row, int n)
+static int ok_companion_row (const gretl_matrix *F, 
+			     int cols, int row, 
+			     int n) 
 {
-    int c = gretl_matrix_cols(F);
-    int i, ok = 1;
     double x;
+    int j;
 
-    for (i=0; i<c; i++) {
-	x = gretl_matrix_get(F, row, i);
-	ok = ((i == n)? (x == 1.0) : (x == 0.0));
-	if (!ok) break;
+    for (j=0; j<cols; j++) {
+	x = gretl_matrix_get(F, row, j);
+	if ((j == n && x != 1.0) || (j != n && x != 0.0)) {
+	    return 0;
+	}
     }
 
-    return ok;
+    return 1;
 }
 
 static int count_nonshifts (const gretl_matrix *F)
 {
-    int r = gretl_matrix_rows(F);
-    int n = 0;
-    int xzero = 1;
-    int i, j;
+    int rmax = gretl_matrix_rows(F);
     double x;
-    int ret = r;
+    int i, j, n = 0;
+    int ret = rmax;
 
     /* examine bottom row */
-    for (j=0; j<r; j++) {
-	x = gretl_matrix_get(F, r-1, j);
-	if (xzero) xzero = (x == 0.0);
-	if (!xzero && (n == 0)) {
-	    if (x == 1.0) {
+    for (j=0; j<rmax; j++) {
+	x = gretl_matrix_get(F, rmax - 1, j);
+	if (x != 0.0) {
+	    if (n == 0 && j > 0 && x == 1.0) {
 		n = j;
-		xzero = 1; /* ok, go ahead */
 	    } else {
-		return r;
+		return rmax;
 	    }
 	}
     }
 
     /* at this point n holds the candidate; now check n rows from 
-       the (r-n-1)-th */
-
+       the (r - n - 1)-th */
     if (n > 0) {
 	ret = n;
-	for (i=r-n, j=0; i<r; i++) {
-	    if (!ok_companion_row(F, i, j++)) {
-		ret = r;
-		break;
+	j = 0;
+	for (i=rmax-n; i<rmax; i++) {
+	    if (!ok_companion_row(F, rmax, i, j++)) {
+		return rmax;
 	    }
 	}
     }
@@ -324,9 +318,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->y = y;
     K->x = x;
 
-    /* initialize to default: there are no state transitions 
-       that are just "shifts" */
-    K->nonshift = K->r;
+    K->nonshift = -1;
 
     /* will hold P*H */
     K->PH = gretl_matrix_alloc(K->r, K->n);
@@ -430,9 +422,9 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 	    }
 
 	} else {
-	    /* premultiplying by F */
+	    /* pre-multiplying by F */
 
-	    topF = gretl_matrix_reuse(K->Tmprr_2a,r1,K->r);
+	    topF = gretl_matrix_reuse(K->Tmprr_2a, r1, K->r);
 
 	    for (i=0; i<r1; i++) {
 		for (j=0; j<K->r; j++) {
@@ -477,11 +469,7 @@ static int kalman_iter_1 (kalman *K, double *llt)
     int err = 0;
 
     /* write F*S into S+ */
-#if FCOMPAN
     err += multiply_by_F(K, K->S0, K->S1, 0);
-#else
-    err += gretl_matrix_multiply(K->F, K->S0, K->S1);
-#endif
 
     /* form E = y - A'x - H'S */
     err += gretl_matrix_subtract_from(K->E, K->Ax);
@@ -504,11 +492,7 @@ static int kalman_iter_1 (kalman *K, double *llt)
     *llt -= .5 * gretl_matrix_get(K->Tmpnn, 0, 0);
 
     /* form FPH */
-#if FCOMPAN
     err += multiply_by_F(K, K->PH, K->FPH, 0);
-#else
-    err += gretl_matrix_multiply(K->F, K->PH, K->FPH);
-#endif
 
     /* form FPH * (H'PH + R)^{-1} * (y - A'x - H'S) */
     err += gretl_matrix_multiply(K->FPH, K->VE, K->Tmprn);
@@ -540,15 +524,9 @@ static int kalman_iter_2 (kalman *K)
     gretl_matrix_subtract_from(K->P0, K->Tmprr);
 
     /* pre-multiply by F, post-multiply by F' */
-#if FCOMPAN
     err += multiply_by_F(K, K->P0, K->Tmprr, 0);
     err += multiply_by_F(K, K->Tmprr, K->P1, 1);
-#else
-    err += gretl_matrix_multiply(K->F, K->P0, K->Tmprr);
-    err += gretl_matrix_multiply_mod(K->Tmprr, GRETL_MOD_NONE,
-				     K->F, GRETL_MOD_TRANSPOSE,
-				     K->P1);
-#endif    
+
     /* add Q */
     err += gretl_matrix_add_to(K->P1, K->Q);
 
@@ -669,9 +647,7 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
     fprintf(stderr, "kalman_forecast: T = %d\n", K->T);
 #endif  
 
-    /* see if we have any state transitions that are just
-       shifts? */
-    if (K->nonshift == K->r) {
+    if (K->nonshift < 0) {
 	K->nonshift = count_nonshifts(K->F);
     }
 

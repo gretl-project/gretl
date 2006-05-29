@@ -1758,8 +1758,8 @@ static int add_loop_print (LOOPSET *loop, const int *list)
     loop->prns = prns;
 
     if (loop_print_init(&loop->prns[np], list)) { 
-	strcpy(gretl_errmsg, _("Failed to initalize print struct for loop\n"));
-	err = 1;
+	fprintf(stderr, "Failed to initialize print struct for loop\n");
+	err = E_ALLOC;
     }
 
     if (!err) {

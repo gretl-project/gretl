@@ -2422,7 +2422,8 @@ static void render_pngfile (png_plot *plot, int view)
     }
     pbuf = gdk_pixbuf_new_from_file(pngname);
     if (pbuf == NULL) {
-	errbox(_("Failed to create pixbuf from file"));
+	fputs("Failed in gdk_pixbuf_new_from_file()\n", stderr);
+	errbox(_("Malformed PNG file for graph"));
 	remove(pngname);
 	return;
     }

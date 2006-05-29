@@ -998,7 +998,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if (hatlist[0] == 1) {
+    if (ci == TSLS && hatlist[0] == 1) {
 	compute_first_stage_F(&tsls, ev, hatlist[1], Q, *pZ, pdinfo);
     } 
 

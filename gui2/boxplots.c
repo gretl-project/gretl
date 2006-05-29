@@ -1145,6 +1145,12 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 
 #ifdef G_OS_WIN32
 
+static void image_copy_err (const char *msg)
+{
+    fprintf(stderr, "%s\n", msg);
+    errbox(_("Failed to set clipboard data"));
+}
+
 static int cb_copy_image (gpointer data)
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
@@ -1169,7 +1175,7 @@ static int cb_copy_image (gpointer data)
 
     hDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, dibsize);
     if (hDIB == NULL) {
-	errbox (_("Failed to allocate DIB"));
+	image_copy_err("Failed to allocate DIB");
 	return FALSE;
     }
 
@@ -1192,7 +1198,7 @@ static int cb_copy_image (gpointer data)
 	GlobalUnlock(hDIB);
 	ret = TRUE;
     } else {
-	errbox(_("Failed to lock DIB Header"));
+	image_copy_err("Failed to lock DIB Header");
     }
 
     /* fill color map */
@@ -1213,7 +1219,7 @@ static int cb_copy_image (gpointer data)
 	    ret = TRUE;
 	    GlobalUnlock(hDIB);
 	} else {
-	    errbox (_("Failed to lock DIB Palette"));
+	    image_copy_err("Failed to lock DIB Palette");
 	}
     } 
   
@@ -1246,35 +1252,36 @@ static int cb_copy_image (gpointer data)
 	    ret = TRUE;
 	    GlobalUnlock (hDIB);
 	} else {
-	    errbox(_("Failed to lock DIB Data"));
+	    image_copy_err("Failed to lock DIB Data");
 	}
     } /* copy data to DIB */
   
     /* copy DIB to ClipBoard */
     if (ret) {      
 	if (!OpenClipboard (NULL)) {
-	    errbox (_("Cannot open the Clipboard!"));
+	    image_copy_err("Cannot open the Clipboard!");
 	    ret = FALSE;
 	} else {
 	    if (ret && !EmptyClipboard ()) {
-		errbox (_("Cannot empty the Clipboard"));
+		image_copy_err("Cannot empty the Clipboard");
 		ret = FALSE;
 	    }
 	    if (ret) {
-		if (NULL != SetClipboardData (CF_DIB, hDIB))
+		if (NULL != SetClipboardData(CF_DIB, hDIB)) {
 		    hDIB = NULL; /* data now owned by clipboard */
-		else
-		    errbox (_("Failed to set clipboard data"));
+		} else {
+		    errbox(_("Failed to set clipboard data"));
+		}
 	    }
-	    if (!CloseClipboard ()) {
-		errbox (_("Failed to close Clipboard"));
+	    if (!CloseClipboard()) {
+		errbox(_("Failed to close Clipboard"));
 	    }
 	}
     }
 
     if (hDIB) GlobalFree(hDIB);
   
-    g_object_unref (G_OBJECT(image));
+    g_object_unref(G_OBJECT(image));
   
     return ret;
 } 

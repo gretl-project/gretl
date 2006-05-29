@@ -658,8 +658,9 @@ static int write_spc_file (const char *fname,
 	    tmax -= nfcast - MAXFCAST;
 	    nfcast -= nfcast - MAXFCAST;
 	}
-
+#if 0
 	fprintf(stderr, "x12a: doing forecast: nfcast = %d\n", nfcast);
+#endif
     } 
 
     output_series_to_spc(ylist, Z, ainfo->t1, tmax, fp);

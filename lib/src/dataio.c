@@ -2285,7 +2285,7 @@ static int csv_time_series_check (DATAINFO *pdinfo, PRN *prn)
     if (try > 0 && try < 3000) {
 	pprintf(prn, M_("   %s: probably a year... "), year);
     } else {
-	pprintf(prn, M_("   %s: out of bounds for a year?\n"), year);
+	pprintf(prn, M_("   %s: probably not a year\n"), year);
     }
 
     if (len == 5) {

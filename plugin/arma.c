@@ -30,7 +30,6 @@
 #include "kalman.h"
 
 #define ARMA_DEBUG 0
-#define NEW_INIT 
 
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
@@ -1087,8 +1086,6 @@ static gretl_matrix *form_arma_x_matrix (const int *alist,
     return x;
 }
 
-#ifndef NEW_INIT
-
 /* Given an estimate of the ARMA constant via OLS, convert to the form
    wanted for initializing the Kalman filter
 */
@@ -1111,8 +1108,6 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
 
     b[0] /= (narfac * sarfac);
 }
-
-#endif
 
 static int kalman_arma (const int *alist, double *coeff, double s2,
 			const double **Z, const DATAINFO *pdinfo,
@@ -1231,7 +1226,9 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
 	err = BFGS_max(ncoeff, b, maxit, reltol, &fncount, &grcount,
 		       kalman_arma_ll, kalman_arma_gradient, K,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
-	fprintf(stderr, "BFGS_max returned %d\n", err);
+	if (err) {
+	    fprintf(stderr, "BFGS_max returned %d\n", err);
+	}
     }
 
     if (err) {
@@ -1309,8 +1306,6 @@ make_armax_X (const int *list, struct arma_info *ainfo, const double **Z)
 
     return X;
 }
-
-#ifndef NEW_INIT
 
 /* for ARMAX: write the component of the NLS specification
    that takes the form (y_{t-i} - X_{t-i} \beta)
@@ -1580,7 +1575,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 
     adinfo = create_new_dataset(&aZ, av, an, 0);
     if (adinfo == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
     if (narmax > 0 || nmixed > 0) {
@@ -1744,16 +1739,14 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     return err;
 }
 
-#endif /* ! NEW_INIT */
-
-/* New-style initialisation via OLS; we do two passes. In the first
-   pass, we run an OLS regression of y on the exogenous vars plus a
-   certain (biggish) number of lags. In the second pass, we estimate
-   the ARMA model by OLS substituting innovations and corresponding 
-   lags with the first-pass residuals.
+/* Alternative initialization via two OLS passes. In the first pass
+   we run an OLS regression of y on the exogenous vars plus a certain
+   (biggish) number of lags. In the second we estimate the ARMA model
+   by OLS substituting innovations and corresponding lags with the
+   first-pass residuals.
 */
 
-static int ar_init_new (const int *list, double *coeff, double *s2,
+static int alt_ar_init (const int *list, double *coeff, double *s2,
 			const double **Z, const DATAINFO *pdinfo,
 			struct arma_info *ainfo)
 {
@@ -1794,8 +1787,10 @@ static int ar_init_new (const int *list, double *coeff, double *s2,
 	return E_ALLOC;
     }
 
-    fprintf(stderr, "ar_init dataset allocated: %d vars, %d obs\n", 
+#if ARMA_DEBUG
+    fprintf(stderr, "alt_ar_init: dataset allocated: %d vars, %d obs\n", 
 	    pass1v + qtotal, an);
+#endif
 
     /* Start building stuff for pass 1 */
 
@@ -1859,12 +1854,6 @@ static int ar_init_new (const int *list, double *coeff, double *s2,
 	}
     }
 
-#if 0
-    for (i=0; i<qtotal; i++) {
-	fprintf(stderr, "MA lag %d = %d\n", i, malags[i]);
-    }
-#endif
-
     /* stick lagged residuals into temp dataset */
 
     for (t=0; t<an; t++) {
@@ -1902,21 +1891,6 @@ static int ar_init_new (const int *list, double *coeff, double *s2,
 
     clear_model(&armod);
 
-#if 0
-    printlist(pass2list, "Pass 2 list");
-
-    for (t=20; t<30; t++) {
-	s = t + ainfo->t1;
-
-	for (i=0; i<pass2list[0]; i++) {
-	    m = pass2list[i+1];
-	    fprintf(stderr,"%8.4f", aZ[m][s]);
-    	}
-
-	fputs("\n", stderr);
-    }
-#endif
-
     armod = lsq(pass2list, &aZ, adinfo, OLS, OPT_A);
 
     if (armod.errcode) {
@@ -1952,15 +1926,6 @@ static int ar_init_new (const int *list, double *coeff, double *s2,
 
 	*s2 = armod.sigma * armod.sigma;
     }
-
-#if 0
-    for (i=0; i<armod.ncoeff; i++) {
-	fprintf(stderr, "armod.coeff[%d] = %g\n", i, armod.coeff[i]);
-    }
-    for (i=0; i<pos; i++) {
-	fprintf(stderr, "coeff[%d] = %g\n", i, coeff[i]);
-    }
-#endif
 
     /* clean up */
     free(pass1list);
@@ -2130,13 +2095,13 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	err = arima_difference(Z[ainfo.yno], &ainfo);
     }
 
-    /* initialize the coefficients: AR and regression part by least
-       squares, MA at 0 */
-#ifdef NEW_INIT
-    err = ar_init_new(alist, coeff, &s2, Z, pdinfo, &ainfo);
-#else
-    err = ar_init_by_ls(alist, coeff, &s2, Z, pdinfo, &ainfo);
-#endif
+    /* initialize the coefficients */
+    if (ainfo.q > 1 || ainfo.Q > 0) {
+	err = alt_ar_init(alist, coeff, &s2, Z, pdinfo, &ainfo);
+    } else {
+	err = ar_init_by_ls(alist, coeff, &s2, Z, pdinfo, &ainfo);
+    }
+
     if (err) {
 	armod.errcode = err;
 	goto bailout;
