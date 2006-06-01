@@ -301,19 +301,20 @@ void main_menus_enable (gboolean s)
 static gint var_popup_click (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
+    int v = mdata_active_var();
 
     if (!strcmp(item, _("Display values"))) 
 	display_var();
     if (!strcmp(item, _("Descriptive statistics"))) 
 	do_menu_op(NULL, VAR_SUMMARY, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
-	do_graph_var(mdata->active_var);
+	do_graph_var(v);
     else if (!strcmp(item, _("Frequency distribution"))) 
 	do_menu_op(NULL, FREQ, NULL);
     else if (!strcmp(item, _("Frequency plot"))) 
 	do_freqplot(NULL, 0, NULL);
     else if (!strcmp(item, _("Boxplot")))
-	do_boxplot_var(mdata->active_var);
+	do_boxplot_var(v);
     else if (!strcmp(item, _("Gini coefficient")))
 	do_gini(NULL, 0, NULL);
     else if (!strcmp(item, _("Correlogram")))
@@ -323,7 +324,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Spectrum (Bartlett)"))) 
 	do_pergm(NULL, 1, NULL);
     else if (!strcmp(item, _("ARIMA model"))) 
-	model_callback(GINT_TO_POINTER(mdata->active_var), ARMA, NULL);
+	model_callback(GINT_TO_POINTER(v), ARMA, NULL);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
 	unit_root_test(NULL, ADF, NULL);
     else if (!strcmp(item, _("KPSS test"))) 
@@ -333,11 +334,11 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Hurst exponent"))) 
 	do_hurst(NULL, 0, NULL);
     else if (!strcmp(item, _("Edit attributes")))  
-	varinfo_dialog(mdata->active_var, 1);
+	varinfo_dialog(v, 1);
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
     else if (!strcmp(item, _("Delete"))) 
-	delete_selected_vars(mdata->active_var);
+	delete_selected_vars(v);
     else if (!strcmp(item, _("Define new variable..."))) 
 	gretl_callback(NULL, GENR, NULL);
 

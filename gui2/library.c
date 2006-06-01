@@ -661,7 +661,7 @@ void add_fcast_data (windata_t *vwin)
 
 static const char *selected_varname (void)
 {
-    return datainfo->varname[mdata->active_var];
+    return datainfo->varname[mdata_active_var()];
 }
 
 void do_menu_op (gpointer data, guint action, GtkWidget *widget)
@@ -901,6 +901,8 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     static int adf_active[] = { 0, 1, 1, 1, 0, 0, 0 };
     static int kpss_active[] = { 1, 0 };
     static int order = 1;
+    
+    int v = mdata_active_var();
 
     int okT, omax, err;
 
@@ -913,14 +915,14 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	spintext = adf_spintext;
 	opts = adf_opts;
 
-	okT = ok_obs_in_series(mdata->active_var);
+	okT = ok_obs_in_series(v);
 	omax = okT / 2;
     } else {
 	title = kpss_title;
 	spintext = kpss_spintext;
 	opts = kpss_opts;
 
-	okT = ok_obs_in_series(mdata->active_var);	
+	okT = ok_obs_in_series(v);	
 	omax = okT / 2;
 	order = 4.0 * pow(okT / 100.0, 0.25);
     }
@@ -1833,9 +1835,10 @@ void do_gini (gpointer data, guint u, GtkWidget *w)
 {
     gretlopt opt = OPT_NONE;
     PRN *prn;
+    int v = mdata_active_var();
     int err;
 
-    if (reject_scalar(mdata->active_var)) {
+    if (reject_scalar(v)) {
 	return;
     }
 
@@ -1843,7 +1846,7 @@ void do_gini (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    err = gini(mdata->active_var, &Z, datainfo, opt, prn);
+    err = gini(v, &Z, datainfo, opt, prn);
 
     if (err) {
 	gui_errmsg(err);
@@ -1864,13 +1867,14 @@ void do_kernel (gpointer data, guint u, GtkWidget *w)
 			   double, gretlopt);
     gretlopt opt = OPT_NONE;
     double bw = 1.0;
+    int v = mdata_active_var();
     int err;
 
-    if (reject_scalar(mdata->active_var)) {
+    if (reject_scalar(v)) {
 	return;
     }
 
-    err = density_dialog(mdata->active_var, &bw);
+    err = density_dialog(v, &bw);
     if (err < 0) {
 	return;
     }
@@ -1885,7 +1889,7 @@ void do_kernel (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    err = (*kernel_density)(mdata->active_var, (const double **) Z, 
+    err = (*kernel_density)(v, (const double **) Z, 
 			    datainfo, bw, opt);
     close_plugin(handle);
 
@@ -3209,12 +3213,13 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg)
 {
     const gchar *buf;
     double missval;
+    int v = mdata_active_var();
     int count, err;
 
     buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
-    if (var_is_scalar(datainfo, mdata->active_var)) {
+    if (var_is_scalar(datainfo, v)) {
 	close_dialog(dlg);
 	errbox(_("This variable is a scalar"));
 	return;
@@ -3226,7 +3231,7 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *dlg)
     }    
 
     missval = atof(buf);
-    count = real_do_setmiss(missval, mdata->active_var);
+    count = real_do_setmiss(missval, v);
 
     close_dialog(dlg);
 
@@ -3354,7 +3359,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 {
     FreqDist *freq;
     gretlopt opt = (dist == DIST_GAMMA)? OPT_O : OPT_NONE;
-    int v = mdata->active_var;
+    int v = mdata_active_var();
 
     gretl_command_sprintf("freq %s%s", datainfo->varname[v],
 			  (dist == DIST_GAMMA)? " --gamma" : "");
@@ -3385,6 +3390,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
+    int v = mdata_active_var();
     int graph = 0, oldv = datainfo->v;
     gchar *databuf;
     void *handle;
@@ -3412,7 +3418,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 #endif
     }
 
-    if (var_is_scalar(datainfo, mdata->active_var)) {
+    if (var_is_scalar(datainfo, v)) {
 	errbox(_("Can't do this analysis on a scalar"));
 	return;
     }
@@ -3433,7 +3439,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 
     *errtext = 0;
 
-    err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
+    err = write_tx_data (fname, v, &Z, datainfo, 
 			 &graph, prog, workdir, errtext);
     
     close_plugin(handle);
@@ -3481,12 +3487,13 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
+    int v = mdata_active_var();
     void *handle;
     int (*range_mean_graph) (int, const double **, 
 			     const DATAINFO *, PRN *);
     PRN *prn;
 
-    if (reject_scalar(mdata->active_var)) {
+    if (reject_scalar(v)) {
 	return;
     }
 
@@ -3501,7 +3508,7 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    err = range_mean_graph(mdata->active_var, (const double **) Z, 
+    err = range_mean_graph(v, (const double **) Z, 
 			   datainfo, prn);
 
     close_plugin(handle);
@@ -3517,12 +3524,13 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 void do_hurst (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
+    int v = mdata_active_var();
     void *handle;
     int (*hurst_exponent) (int, const double **, 
 			   const DATAINFO *, PRN *);
     PRN *prn;
 
-    if (reject_scalar(mdata->active_var)) {
+    if (reject_scalar(v)) {
 	return;
     }
 
@@ -3537,7 +3545,7 @@ void do_hurst (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    err = hurst_exponent(mdata->active_var, (const double **) Z,
+    err = hurst_exponent(v, (const double **) Z,
 			 datainfo, prn);
 
     close_plugin(handle);
@@ -4609,7 +4617,7 @@ void do_graph_var (int varnum)
 
 void ts_plot_var (gpointer data, guint opt, GtkWidget *widget)
 {
-    do_graph_var(mdata->active_var);
+    do_graph_var(mdata_active_var());
 }
 
 void do_boxplot_var (int varnum)
@@ -4963,7 +4971,7 @@ void display_var (void)
     int n = datainfo->t2 - datainfo->t1 + 1;
 
     list[0] = 1;
-    list[1] = mdata->active_var;
+    list[1] = mdata_active_var();
 
     if (var_is_scalar(datainfo, list[1])) {
 	vec = 0;

@@ -1363,6 +1363,7 @@ set_obs_from_dialog (GtkWidget *w, struct range_setting *rset)
 static GList *get_dummy_list (int *thisdum)
 {
     GList *dumlist = NULL;
+    int v = mdata_active_var();
     int i;
 
     for (i=1; i<datainfo->v; i++) {
@@ -1371,7 +1372,7 @@ static GList *get_dummy_list (int *thisdum)
 	}
 	if (gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
-	    if (i == mdata->active_var) *thisdum = 1;
+	    if (i == v) *thisdum = i;
 	}
     }
 
@@ -1546,9 +1547,9 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	rset->combo = gtk_combo_new();
 	gtk_combo_set_popdown_strings(GTK_COMBO(rset->combo), dumlist); 
 	g_list_free(dumlist);
-	if (thisdum) {
+	if (thisdum > 0) {
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), 
-			       datainfo->varname[mdata->active_var]);
+			       datainfo->varname[thisdum]);
 	}
 #ifndef OLD_GTK
 	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), 8);

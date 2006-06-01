@@ -897,6 +897,17 @@ int mdata_selection_count (void)
     return selcount;
 }
 
+int mdata_active_var (void)
+{
+    int selcount = mdata_selection_count();
+
+    if (selcount == 1) {
+	mdata->active_var = (GTK_CLIST(mdata->listbox))->focus_row;
+    }
+
+    return mdata->active_var;
+}
+
 gint main_varclick (GtkWidget *widget, GdkEventButton *event, 
 		    gpointer data)
 {

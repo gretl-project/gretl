@@ -1190,22 +1190,22 @@ void populate_varlist (void)
     }
 
     if (!check_connected) {
-	g_signal_connect (G_OBJECT(select), "changed",
-			  G_CALLBACK(check_varmenu_state),
-			  mdata);
+	g_signal_connect(G_OBJECT(select), "changed",
+			 G_CALLBACK(check_varmenu_state),
+			 mdata);
 	check_connected = 1;
     }
 
     if (!click_connected) {
-	g_signal_connect (G_OBJECT(mdata->listbox), "button_press_event",
-			  G_CALLBACK(main_varclick),
-			  mdata);
 	g_signal_connect(G_OBJECT(mdata->listbox), "button_press_event",
 			 G_CALLBACK(main_popup_handler), 
 			 mdata);
-	g_signal_connect (G_OBJECT(mdata->listbox), "key_press_event",
-			  G_CALLBACK(catch_mdata_key),
-			  mdata);
+	g_signal_connect(G_OBJECT(mdata->listbox), "button_press_event",
+			 G_CALLBACK(main_varclick),
+			 mdata);
+	g_signal_connect(G_OBJECT(mdata->listbox), "key_press_event",
+			 G_CALLBACK(catch_mdata_key),
+			 mdata);
 	click_connected = 1;
     }
 }
@@ -1647,6 +1647,26 @@ int mdata_selection_count (void)
 			   NULL);
 }
 
+int mdata_active_var (void)
+{
+    int selcount, row;
+
+    selcount = 
+	selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)),
+			&row);
+
+    if (selcount == 1 && row != 0) {
+	gchar *varnum;
+
+	tree_view_get_string(GTK_TREE_VIEW(mdata->listbox), row, 0, &varnum);
+	mdata->active_var = atoi(varnum);
+	g_free(varnum);    
+
+    }
+
+    return mdata->active_var;
+}
+
 static gboolean 
 main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 {
@@ -1677,7 +1697,7 @@ main_popup_handler (GtkWidget *w, GdkEventButton *event, gpointer data)
 			       &mdata->popup);
 	}
 
-	return (selcount > 1);
+	return TRUE;
     }
 
     return FALSE;

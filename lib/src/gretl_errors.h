@@ -71,9 +71,10 @@ enum gretl_error_codes {
     E_NAN,         /* 44 */
     E_NONCONF,     /* 45 */
     E_TYPES,       /* 46 */
-    E_DB_DUP,      /* 47 : duplicate vars found when saving to database */
-    E_OK,          /* 48 : not really an error */
-    E_MAX          /* 49 */
+    E_DATATYPE,    /* 47 */
+    E_DB_DUP,      /* 48 : duplicate vars found when saving to database */
+    E_OK,          /* 49 : not really an error */
+    E_MAX          /* 50 */
 }; 
 
 /* functions follow */

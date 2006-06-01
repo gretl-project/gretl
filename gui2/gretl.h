@@ -134,6 +134,7 @@ void set_wm_icon (GtkWidget *w, gpointer data);
 #endif
 
 int mdata_selection_count (void);
+int mdata_active_var (void);
 void populate_varlist (void);
 void clear_varlist (GtkWidget *widget);
 int gui_restore_sample (void);

@@ -1653,7 +1653,7 @@ int crosstab (const int *list, const double **Z,
 
     if (!var_is_discrete(pdinfo, rowvar) ||
 	!var_is_discrete(pdinfo, colvar)) {
-	return E_DATA;
+	return E_DATATYPE;
     }
 
     tab = get_xtab(rowvar, colvar, Z, pdinfo); 
