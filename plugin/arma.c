@@ -578,14 +578,25 @@ static void write_big_theta (const double *theta,
 	mc[i] = 0.0;
     }
 
+#if 0
     for (i=0; i<=ainfo->Q; i++) {
 	x = (i == 0)? -1 : Theta[i-1];
-	for (j=0; j<=ainfo->q; j++) {
+        for (j=0; j<=ainfo->q; j++) {
 	    y = (j == 0)? -1 : theta[j-1];
-	    k = j + ainfo->pd * i;
+            k = j + ainfo->pd * i;
 	    mc[k] -= x * y;
-	}
+        }
     }
+#else
+    for (i=0; i<=ainfo->Q; i++) {
+	x = (i == 0)? 1 : Theta[i-1];
+        for (j=0; j<=ainfo->q; j++) {
+	    y = (j == 0)? 1 : theta[j-1];
+            k = j + ainfo->pd * i;
+	    mc[k] = x * y;
+        }
+    }
+#endif
 
     for (i=1; i<=qmax; i++) {
 	gretl_vector_set(H, i, mc[i]);
@@ -1374,6 +1385,10 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	return E_ALLOC;
     }
 
+#if 1
+    nls_spec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1 + 1); /* ?? */
+#endif
+
     nparam = ainfo->ifc + ainfo->p + ainfo->P + ainfo->nexo;
 
     plist = gretl_list_new(nparam);
@@ -1386,7 +1401,6 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     if (err) {
 	goto bailout;
     }
-
 
     /* construct names for the parameters, and param list;
        also do some initialization -- but FIXME in that regard
@@ -1449,6 +1463,10 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	sprintf(term, "+b%d*x%d", i, i);
 	strcat(fnstr, term);
     }	
+
+#if ARMA_DEBUG
+    fprintf(stderr, "initting using NLS spec:\n %s\n", fnstr);
+#endif
 
     err = nls_spec_set_regression_function(spec, fnstr, pdinfo);
 
@@ -1545,6 +1563,12 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     int i, j, k, t;
     int err = 0;
 
+#if ARMA_DEBUG
+    fprintf(stderr, "ar_init_by_ls: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
+	    "ainfo->t1=%d, ainfo->t2=%d\n",
+	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
+#endif
+
     /* dependent variable */
     if (ainfo->dy != NULL) {
 	y = ainfo->dy;
@@ -1630,18 +1654,21 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 
     /* Build temporary dataset including lagged vars: if we're doing
        exact ML on an ARMAX model we need lags of the exogenous
-       variables as well as lags of y_t.
+       variables as well as lags of y_t.  Note that the auxiliary
+       dataset has "t = 0" at an offset of ainfo->t1 into the "real",
+       external dataset.
     */
 
     for (t=0; t<an; t++) {
+	int realt = t + ainfo->t1;
 	int s, m;
 
-	aZ[1][t] = y[t + ainfo->t1];
+	aZ[1][t] = y[realt];
 
 	axi = ptotal + ainfo->nexo + 2;
 
 	for (i=1; i<=ainfo->p; i++) {
-	    s = t + ainfo->t1 - i;
+	    s = realt - i;
 	    aZ[i+1][t] = (s >= 0)? y[s] : NADBL;
 	    for (j=1; j<=narmax; j++) {
 		m = list[xstart + j - 1];
@@ -1653,12 +1680,16 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 
 	for (i=1; i<=ainfo->P; i++) {
 	    lag = ainfo->pd * i;
-	    s = t + ainfo->t1 - lag;
+	    s = realt - lag;
 	    k = ainfo->p + 1 + i;
 	    aZ[k][t] = (s >= 0)? y[s] : NADBL;
+	    for (k=1; k<=narmax; k++) {
+		m = list[xstart + k - 1];
+		aZ[axi++][t] = (s >= 0)? Z[m][s] : NADBL;
+	    }
 	    for (j=1; j<=ainfo->p; j++) {
 		lag = ainfo->pd * i + j;
-		s = t + ainfo->t1 - lag;
+		s = realt - lag;
 		aZ[ayi++][t] = (s >= 0)? y[s] : NADBL;
 		for (k=1; k<=narmax; k++) {
 		    m = list[xstart + k - 1];
@@ -1667,12 +1698,11 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	    }
 	}
 
-	s = t + ainfo->t1;
 	axi = ptotal + 2;
 
 	for (i=1; i<=ainfo->nexo; i++) {
 	    m = list[xstart + i - 1];
-	    aZ[axi++][t] = Z[m][s];
+	    aZ[axi++][t] = Z[m][realt];
 	}
     }
 
@@ -1682,12 +1712,22 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
     }
 
 #if ARMA_DEBUG
-    printlist(alist, "'alist' in ar_init_by_ls");
+    fprintf(stderr, "arma init dataset:\n");
+    for (i=0; i<adinfo->v; i++) {
+	fprintf(stderr, "var %d '%s', obs[0] = %g\n", i, adinfo->varname[i], 
+		aZ[i][0]);
+    }
 #endif
 
     if (nonlin) {
+#if ARMA_DEBUG
+	fprintf(stderr, "ar_init_by_ls: doing NLS\n");
+#endif
 	err = arma_get_nls_model(&armod, ainfo, narmax, &aZ, adinfo);
     } else {
+#if ARMA_DEBUG
+	printlist(alist, "'alist' in ar_init_by_ls");
+#endif
 	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
 	err = armod.errcode;
     }
@@ -1771,7 +1811,7 @@ static int alt_ar_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
 /* Alternative initialization via two OLS passes. In the first pass
    we run an OLS regression of y on the exogenous vars plus a certain
    (biggish) number of lags. In the second we estimate the ARMA model
-   by OLS substituting innovations and corresponding lags with the
+   by OLS, substituting innovations and corresponding lags with the
    first-pass residuals.
 */
 
@@ -2130,6 +2170,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     MODEL armod;
     double s2 = 0.0;
     struct arma_info ainfo;
+    int init_done = 0;
     char flags = 0;
     int err = 0;
 
@@ -2182,13 +2223,19 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     /* initialize the coefficients */
-    if (ainfo.q > 1 || ainfo.Q > 0) {
+
+    if (ainfo.q > 0 || ainfo.Q > 0) {
 	/* FIXME: what's the optimal conditionality here? */
 	err = alt_ar_init_check(pdinfo, &ainfo);
 	if (!err) {
 	    err = alt_ar_init(alist, coeff, &s2, Z, pdinfo, &ainfo);
 	}
-    } else {
+	if (!err) {
+	    init_done = 1;
+	}
+    }
+
+    if (!init_done) {
 	err = ar_init_by_ls(alist, coeff, &s2, Z, pdinfo, &ainfo);
     }
 

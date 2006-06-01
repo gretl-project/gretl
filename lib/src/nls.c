@@ -536,6 +536,8 @@ static int nls_missval_check (nls_spec *spec)
 #if NLS_DEBUG
     fprintf(stderr, "nls_missval_check: checking var %d (%s)\n",
 	    v, ndinfo->varname[v]);
+    fprintf(stderr, " before trimming: spec->t1 = %d, spec->t2 = %d\n",
+	    spec->t1, spec->t2);
 #endif
 
     for (t=spec->t1; t<=spec->t2; t++) {
@@ -560,6 +562,8 @@ static int nls_missval_check (nls_spec *spec)
 
     for (t=t1; t<=t2; t++) {
 	if (na((*nZ)[v][t])) {
+	    fprintf(stderr, " nls_missval_check: after setting t1=%d, t2=%d, "
+		    "got NA for var %d at obs %d\n", t1, t2, v, t);
 	    miss = 1;
 	    break;
 	}
@@ -575,7 +579,7 @@ static int nls_missval_check (nls_spec *spec)
     spec->nobs = t2 - t1 + 1;
 
 #if NLS_DEBUG
-    fprintf(stderr, " spec->t1 = %d, spec->t2 = %d, spec->nobs = %d\n\n",
+    fprintf(stderr, " after: spec->t1 = %d, spec->t2 = %d, spec->nobs = %d\n\n",
 	    spec->t1, spec->t2, spec->nobs);
 #endif
 
@@ -728,6 +732,10 @@ static int get_nls_fvec (double *fvec)
 
     /* transcribe from dataset to fvec array */
     for (t=pspec->t1; t<=pspec->t2; t++) {
+	if (na((*nZ)[v][t])) {
+	    fprintf(stderr, "nls_calculate_fvec: produced NA at obs %d\n", t);
+	    return 1;
+	}
 	fvec[j] = (*nZ)[v][t];
 #if NLS_DEBUG > 1
 	fprintf(stderr, "fvec[%d] = nZ[%d][%d] = %g\n", j, v, t, fvec[j]);

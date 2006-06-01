@@ -1279,8 +1279,8 @@ eval_atom (genatom *atom, GENERATOR *genr, int t, double a)
 	/* regular variable or lagged term */
 	if (!atom->lag) {
 	    x = (*genr->pZ)[atom->varnum][t];
-	    DPRINTF(("eval_atom: got data obs (var %d) = %g\n", 
-		    atom->varnum, x));
+	    DPRINTF(("eval_atom: got data obs (var %d, '%s', obs %d) = %g\n", 
+		    atom->varnum, genr->pdinfo->varname[atom->varnum], t, x));
 	} else {
 	    x = get_lag_at_obs(atom->varnum, 0, atom->lag, genr, t);
 	    DPRINTF(("eval_atom: got lagged data obs (var %d, "
