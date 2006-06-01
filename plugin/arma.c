@@ -1385,9 +1385,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 	return E_ALLOC;
     }
 
-#if 1
-    nls_spec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1 + 1); /* ?? */
-#endif
+    nls_spec_set_t1_t2(spec, 0, ainfo->t2 - ainfo->t1); /* ?? */
 
     nparam = ainfo->ifc + ainfo->p + ainfo->P + ainfo->nexo;
 
@@ -1602,7 +1600,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	return E_ALLOC;
     }
 
-    if (narmax > 0 || nmixed > 0) {
+    if (ptotal > 0 && (narmax > 0 || nmixed > 0)) {
 	/* have to use NLS */
 	nonlin = 1;
     } else {
@@ -2224,7 +2222,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* initialize the coefficients */
 
-    if (ainfo.q > 0 || ainfo.Q > 0) {
+    if (ainfo.q > 1 || ainfo.Q > 0) {
 	/* FIXME: what's the optimal conditionality here? */
 	err = alt_ar_init_check(pdinfo, &ainfo);
 	if (!err) {

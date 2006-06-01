@@ -1101,6 +1101,11 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     /* transcribe sample info */
     gdinfo->t1 = spec->t1;
     gdinfo->t2 = spec->t2;
+
+#if 0
+    fprintf(stderr, "pdinfo->n = %d, gdinfo->t1 = %d, gdinfo->t2 = %d\n",
+	    pdinfo->n, gdinfo->t1, gdinfo->t2);
+#endif
     
     glist = gretl_list_new(spec->nparam + 1);
 
