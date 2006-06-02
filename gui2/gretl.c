@@ -60,7 +60,7 @@ static GtkWidget *make_main_window (int gui_get_data);
 
 static gboolean main_popup_handler (GtkWidget *w, GdkEventButton *event,
 				    gpointer data);
-static int selection_count (GtkTreeSelection *select, int *row);
+static int selection_count (GtkTreeSelection *select, int *vnum);
 static void set_up_main_menu (void);
 static void startRcallback (gpointer p, guint opt, GtkWidget *w);
 static void auto_store (void);
@@ -1110,19 +1110,14 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	|| key->keyval == GDK_e || key->keyval == GDK_F2 /* edit variable's info */
 	|| key->keyval == GDK_t                          /* graph variable */
 	) {
-	int selcount, row;
+	int selcount, vnum = 0;
 
 	selcount = 
 	    selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)),
-			    &row);
+			    &vnum);
 
-	if (selcount == 1 && row != 0) {
-	    gchar *varnum;
-
-	    tree_view_get_string(GTK_TREE_VIEW(mdata->listbox), row, 0, &varnum);
-	    mdata->active_var = atoi(varnum);
-	    g_free(varnum);
-
+	if (selcount == 1 && vnum != 0) {
+	    mdata->active_var = vnum;
 	    if (key->keyval == GDK_e || key->keyval == GDK_F2) {
 		varinfo_dialog(mdata->active_var, 1);
 	    } else if (key->keyval == GDK_t) {
@@ -1145,34 +1140,80 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
+static int lagvar_get_parent_iter (int pv, GtkTreeIter *parent)
+{
+    GtkTreeModel *model = 
+	gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
+    GtkTreeIter iter;
+    gchar *idstr;
+    int ret = 0;
+
+    if (!gtk_tree_model_get_iter_first(model, &iter)) {
+	return 0;
+    }
+    
+    while (1) {
+	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
+	if (atoi(idstr) == pv) {
+	    *parent = iter;
+	    ret = 1;
+	}
+	g_free(idstr);
+	if (ret || !gtk_tree_model_iter_next(model, &iter)) {
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 void populate_varlist (void)
 {
-    GtkListStore *store;
+    GtkTreeStore *store;
     GtkTreeSelection *select;
     GtkTreeIter iter;    
     char id[4];
-    gint i;
+    int i;
+
     static gint check_connected;
     static gint click_connected;
 
-    /* find and clear the existing list */
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
-    gtk_list_store_clear(store);
+    /* find and clear the existing tree */
+    store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
+    gtk_tree_store_clear(store);
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (i=0; i<datainfo->v; i++) {
-	if (is_hidden_variable(i, datainfo) ||
-	    is_standard_lag(i, datainfo)) {
+	int pv;
+
+	if (is_hidden_variable(i, datainfo)) {
 	    continue;
 	}
-	gtk_list_store_append(store, &iter);
+	if (i > 0 && is_standard_lag(i, datainfo, &pv)) {
+	    if (pv > 0) {
+		GtkTreeIter child_iter, parent_iter;
+
+		if (lagvar_get_parent_iter(pv, &parent_iter)) {
+		    gtk_tree_store_insert_before(store, &child_iter, 
+						 &parent_iter, NULL);
+		    sprintf(id, "%d", i);
+		    gtk_tree_store_set(store, &child_iter, 
+				       0, id, 
+				       1, datainfo->varname[i],
+				       2, VARLABEL(datainfo, i),
+				       -1);	
+		}	
+	    }
+	    continue;
+	}
+	gtk_tree_store_append(store, &iter, NULL);
 	sprintf(id, "%d", i);
-	gtk_list_store_set (store, &iter, 
-			    0, id, 
-			    1, datainfo->varname[i],
-			    2, VARLABEL(datainfo, i),
-			    -1);
+	gtk_tree_store_set(store, &iter, 
+			   0, id, 
+			   1, datainfo->varname[i],
+			   2, VARLABEL(datainfo, i),
+			   -1);
     } 
 
     mdata->active_var = 1;
@@ -1386,7 +1427,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_widget_show(align);
     gtk_container_add(GTK_CONTAINER(align), dlabel);
    
-    vwin_add_list_box(mdata, GTK_BOX(box), 3, FALSE, types, titles);
+    vwin_add_list_box(mdata, GTK_BOX(box), 3, FALSE, types, titles, 1);
     gtk_widget_show(box);
 
     gtk_drag_dest_set(mdata->listbox,
@@ -1607,11 +1648,14 @@ static void auto_store (void)
     }	
 }
 
-static void get_selection_row (GtkTreeModel *model, GtkTreePath *path,
-			       GtkTreeIter *iter, int *row)
+static void get_selected_varnum (GtkTreeModel *model, GtkTreePath *path,
+				 GtkTreeIter *iter, int *v)
 {
-    gint *indices = gtk_tree_path_get_indices(path);
-    *row = indices[0];
+    gchar *id;
+
+    gtk_tree_model_get(model, iter, 0, &id, -1);  
+    *v = atoi(id);
+    g_free(id);
 }
 
 static void count_selections (GtkTreeModel *model, GtkTreePath *path,
@@ -1620,22 +1664,22 @@ static void count_selections (GtkTreeModel *model, GtkTreePath *path,
     *selcount += 1;
 }
 
-static int selection_count (GtkTreeSelection *select, int *row)
+static int selection_count (GtkTreeSelection *select, int *vnum)
 {
     int selcount = 0;
 
     if (select != NULL) {
-	gtk_tree_selection_selected_foreach (select, 
-					     (GtkTreeSelectionForeachFunc) 
-					     count_selections,
-					     &selcount);
+	gtk_tree_selection_selected_foreach(select, 
+					    (GtkTreeSelectionForeachFunc) 
+					    count_selections,
+					    &selcount);
     }
     
-    if (row != NULL && selcount == 1) {
-	gtk_tree_selection_selected_foreach (select, 
-					     (GtkTreeSelectionForeachFunc) 
-					     get_selection_row,
-					     row);	
+    if (vnum != NULL && selcount == 1) {
+	gtk_tree_selection_selected_foreach(select, 
+					    (GtkTreeSelectionForeachFunc) 
+					    get_selected_varnum,
+					    vnum);	
     }
 
     return selcount;
@@ -1649,19 +1693,14 @@ int mdata_selection_count (void)
 
 int mdata_active_var (void)
 {
-    int selcount, row;
+    int selcount, v = 0;
 
     selcount = 
 	selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)),
-			&row);
+			&v);
 
-    if (selcount == 1 && row != 0) {
-	gchar *varnum;
-
-	tree_view_get_string(GTK_TREE_VIEW(mdata->listbox), row, 0, &varnum);
-	mdata->active_var = atoi(varnum);
-	g_free(varnum);    
-
+    if (selcount == 1 && v != 0) {
+	mdata->active_var = v;
     }
 
     return mdata->active_var;

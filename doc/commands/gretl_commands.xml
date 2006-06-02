@@ -2777,11 +2777,10 @@
 
     <description>
       <para>
-	This test is available only after estimating a model using the
-	<cmdref targ="pooled"/> command (see also <cmd>paneldat</cmd> and
-	<cmd>setobs</cmd>).  It tests the simple pooled model against
-	the principal alternatives, the fixed effects and random
-	effects models.</para>
+	This test is available only after estimating a pooled OLS model
+	(see also <cmd>paneldat</cmd> and <cmd>setobs</cmd>).  It tests
+	the simple pooled model against the principal alternatives, the
+	fixed effects and random effects models.</para>
 
       <para>
 	The fixed effects model adds a dummy variable for all but one
@@ -4780,6 +4779,60 @@
 
   </command>
 
+  <command name="panel" section="Estimation" context="cli"
+    label="Panel models">
+
+    <usage>
+      <options>
+        <option>
+	  <flag>--random-effects</flag>
+	  <effect>random rather than fixed effects</effect>
+        </option>
+        <option>
+	  <flag>--unit-weights</flag>
+	  <effect>weighted least squares</effect>
+        </option>
+        <option>
+	  <flag>--iterate</flag>
+	  <effect>iterative estimation</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>less verbose output</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>more verbose output</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Estimates a panel model, using either fixed effects or, if the
+	<lit>--random-effects</lit> flag is given, random effects.
+      </para>
+      <para>
+	Alternatively, if the <lit>--unit-weights</lit> flag is given, the
+	model is estimated via weighted least squares, with the weights
+	based on the residual variance for the respective cross-sectional
+	units in the sample.  In this case (only) the <lit>--iterate</lit>
+	flag may be added to produce iterative estimates: if the
+	iteration converges, the resulting estimates are Maximum
+	Likelihood.
+      </para>
+      <para>
+	FIXME add more detail here.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Panel</menu-path>
+    </gui-access>
+
+  </command>
+
+
   <command name="paneldat" section="Dataset" context="cli"
     label="Panel data structure">
 
@@ -4991,54 +5044,6 @@
 	appropriately.  See also <cmdref targ="gnuplot"/>.
       </para>
     </description>
-
-  </command>
-
-  <command name="pooled" section="Estimation"
-    label="Pooled OLS">
-
-    <usage>
-      <arguments>
-        <argument>depvar</argument>
-        <argument>indepvars</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--unit-weights</flag>
-	  <effect>feasible GLS</effect>
-	</option>
-	<option>
-	  <flag>--iterate</flag>
-	  <effect>iterate to Maximum Likelihood solution</effect>
-	</option>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>print covariance matrix</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>By default, estimates a model via OLS (see <cmdref
-	  targ="ols"/> for details on syntax), and flags it as a
-	pooled or panel model, so that the <cmdref targ="hausman"/>
-	test item becomes available.
-      </para>
-      <para>If the <lit>--unit-weights</lit> flag is given, estimation
-	is by feasible GLS, using weights constructed from the
-	specific error variances per cross-sectional unit.  This
-	offers a gain in efficiency over OLS if the error variance
-	differs across units.
-      </para>
-      <para>If, in addition, the <lit>--iterate</lit> flag is given,
-	the GLS estimator is iterated: if this procedure converges it
-	yields Maximum Likelihood estimates.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Model/Pooled OLS</menu-path>
-    </gui-access>
 
   </command>
 

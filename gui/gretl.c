@@ -1008,7 +1008,7 @@ void populate_varlist (void)
     j = 0;
     for (i=0; i<datainfo->v; i++) {
 	if (is_hidden_variable(i, datainfo) ||
-	    is_standard_lag(i, datainfo)) {
+	    is_standard_lag(i, datainfo, NULL)) {
 	    continue;
 	}
 	sprintf(id, "%d", i);

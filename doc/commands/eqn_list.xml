@@ -92,4 +92,7 @@ $p = 4 \times (T/100)^{2/9}$
 <texequation fileref="vif">
 \[\frac{1}{1-R_j^2}\]
 </texequation>
+<texequation fileref="wlsr2">
+\[R^2 = 1 - \frac{\rm ESS}{\rm WTSS}\]
+</texequation>
 </equation-set>

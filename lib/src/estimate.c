@@ -498,7 +498,8 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	/* we'll try to compensate for missing obs */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    pdinfo->n, Z, NULL);
-	if (pmod->ci == POOLED && pmod->missmask != NULL) {
+	if (pmod->ci == OLS && dataset_is_panel(pdinfo) && 
+	    pmod->missmask != NULL) {
 	    /* FIXME: is this really needed? */
 	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
 		gretl_model_set_int(pmod, "unbalanced", 1);
@@ -3480,38 +3481,6 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
- * pooled:
- * @list: regression list (dependent variable plus independent 
- * variables).
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the (panel) data set.
- * @opt: can include %OPT_W to do weighted least squares
- * using weights based on the error variance for the 
- * respective cross-sectional units.
- * @prn: for printing details of iterations (or %NULL).
- *
- * Calculate pooled OLS or WLS estimates for a panel dataset.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
-	      gretlopt opt, PRN *prn)
-{
-    MODEL wmod;
-
-    *gretl_errmsg = '\0';
-
-    if (opt & OPT_W) {
-	return panel_model(list, pZ, pdinfo, opt, prn);
-    } else {
-	wmod = lsq(list, pZ, pdinfo, POOLED, opt);
-    }
-
-    return wmod;
-}
-
-/**
  * groupwise_hetero_test:
  * @pmod: pooled OLS model to be tested.
  * @pZ: pointer to data array.
@@ -3537,7 +3506,7 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    wmod = pooled(pmod->list, pZ, pdinfo, OPT_W | OPT_T | OPT_A, prn);
+    wmod = panel_model(pmod->list, pZ, pdinfo, OPT_W | OPT_T | OPT_A, prn);
     err = wmod.errcode;
 
     if (!err) {

@@ -2867,7 +2867,6 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "hilu") ||
 	!strcmp(s, "wls")  ||
 	!strcmp(s, "pwe")  ||
-	!strcmp(s, "pooled")  ||
 	!strcmp(s, "hccm") ||
 	!strcmp(s, "hsk")  ||
 	!strcmp(s, "add")  ||
@@ -2948,7 +2947,7 @@ int command_ok_for_model (int test_ci, int model_ci)
 	break;
 
     case LMTEST:
-	if (model_ci != OLS && model_ci != POOLED) ok = 0;
+	if (model_ci != OLS) ok = 0;
 	break;
 
     case ARCH:
@@ -2960,7 +2959,7 @@ int command_ok_for_model (int test_ci, int model_ci)
 	break;
 
     case HAUSMAN:
-	if (model_ci != POOLED) ok = 0;
+	if (model_ci != OLS) ok = 0;
 	break;
 
     case RESTRICT:

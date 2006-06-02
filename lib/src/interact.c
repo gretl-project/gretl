@@ -159,6 +159,8 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = BXPLOT;
     } else if (!strcmp(s, "man")) {
 	cmd->ci = HELP;
+    } else if (!strcmp(s, "pooled")) {
+	cmd->ci = OLS;
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
 	cmd->opt = OPT_F;

@@ -25,7 +25,11 @@ version 1.5.2, in progress
   regressors "effectively" contains a constant (e.g. there's
   no explicit const but a jointly exhaustive set of dummy
   variables is included)
- 
+- Revamp panel data estimation: redefine the "panel" command for
+  fixed- or random-effects estimation, rename the old "panel"
+  command as "paneldat"
+- Lags in main window: make these visible "under" their parent
+  variable, via a "twisty" triangle
 
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality

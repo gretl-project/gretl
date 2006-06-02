@@ -37,7 +37,6 @@
                        c == NLS || \
                        c == PANEL || \
                        c == POISSON || \
-                       c == POOLED || \
                        c == PROBIT || \
                        c == PWE || \
                        c == TOBIT || \
@@ -157,9 +156,6 @@ struct gretl_option gretl_opts[] = {
     { PANELDAT, OPT_C, "cross-section" },
     { PANELDAT, OPT_S, "time-series" },
     { POISSON,  OPT_V, "verbose" },
-    { POOLED,   OPT_T, "iterate" },
-    { POOLED,   OPT_V, "verbose" },
-    { POOLED,   OPT_W, "unit-weights" },
     { PCA,      OPT_A, "save-all" },
     { PCA,      OPT_O, "save" },
     { PERGM,    OPT_O, "bartlett" },

@@ -1151,7 +1151,7 @@ static GtkWidget *database_window (windata_t *vwin)
     GtkWidget *box;
 
     box = gtk_vbox_new(FALSE, 0);
-    vwin_add_list_box(vwin, GTK_BOX(box), 3, FALSE, types, titles);
+    vwin_add_list_box(vwin, GTK_BOX(box), 3, FALSE, types, titles, 0);
     g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
 		     G_CALLBACK(popup_menu_handler), 
 		     vwin->popup);

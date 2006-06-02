@@ -504,7 +504,6 @@ const char *estimator_string (int ci, PRN *prn)
     else if (ci == LOGIT) return N_("Logit");
     else if (ci == TOBIT) return N_("Tobit");
     else if (ci == POISSON) return N_("Poisson");
-    else if (ci == POOLED) return N_("Pooled OLS");
     else if (ci == NLS) return N_("NLS");
     else if (ci == MLE) return N_("ML");
     else if (ci == LOGISTIC) return N_("Logistic");
@@ -1625,7 +1624,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }    
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS 
-	|| pmod->ci == POOLED || pmod->ci == NLS
+	|| pmod->ci == NLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
 	|| pmod->ci == LOGISTIC || pmod->ci == TOBIT
 	|| pmod->ci == PANEL 

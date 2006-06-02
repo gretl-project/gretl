@@ -428,7 +428,6 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     } else if (gretl_model_get_int(orig, "unit_weights")) {
 	/* panel model with per-unit weights */
 	lsqopt |= OPT_W;
-	repci = POOLED;
     } else if (orig->ci == WLS || orig->ci == AR || 
 	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
 	int *full_list = full_model_list(orig, list);
@@ -496,6 +495,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	if (rho != 0.0) {
 	    rep = ar1_lsq(list, pZ, pdinfo, repci, lsqopt, rho);
 	} else {
+	    /* FIXME panel WLS by unit? */
 	    rep = lsq(list, pZ, pdinfo, repci, lsqopt);
 	}
 	break;
@@ -1583,7 +1583,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
- * hausman_test:
+ * panel_hausman_test:
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
@@ -1593,13 +1593,13 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * Tests the given pooled model for fixed and random effects.
  * 
  * Returns: 0 on successful completion, error code on error.
- *
  */
 
-int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		  gretlopt opt, PRN *prn) 
+int panel_hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+			gretlopt opt, PRN *prn) 
 {
-    if (pmod->ci != POOLED) {
+    /* FIXME */
+    if (pmod->ci != OLS || dataset_is_panel(pdinfo)) {
 	pputs(prn, _("This test is only relevant for pooled models\n"));
 	return 1;
     }
@@ -1609,7 +1609,7 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    if (!balanced_panel(pdinfo)) {
+    if (!balanced_panel(pdinfo)) { /* ?? */
 	pputs(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
 		"You need to have the same number of observations\n"
 		"for each cross-sectional unit"));

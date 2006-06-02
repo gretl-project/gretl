@@ -115,7 +115,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { PERGM,    "pergm" },
     { PLOT,     "plot" },    
     { POISSON,  "poisson" },
-    { POOLED,   "pooled" },
     { PRINT,    "print" }, 
     { PRINTF,   "printf" },
     { PROBIT,   "probit" },

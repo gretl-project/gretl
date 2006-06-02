@@ -164,7 +164,7 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
     gboolean val;
     gint col;
 
-    col = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(model), "boolcol"));
+    col = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->w), "boolcol"));
     gtk_tree_model_get_iter(model, &iter, path);
     gtk_tree_model_get(model, &iter, col, &val, -1);
 
@@ -183,9 +183,11 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
 
 void vwin_add_list_box (windata_t *vwin, GtkBox *box, 
 			int ncols, gboolean hidden_col,
-			GType *types, const char **titles) 
+			GType *types, const char **titles,
+			int tree) 
 {
-    GtkListStore *store; 
+    GtkListStore *lstore = NULL;
+    GtkTreeStore *tstore = NULL;
     GtkWidget *view, *scroller;
     GtkCellRenderer *renderer;
     GtkCellRenderer *bool_renderer = NULL;
@@ -195,10 +197,15 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 
     if (hidden_col) viscols--;
 
-    store = gtk_list_store_newv(ncols, types);
-
-    vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
-    g_object_unref(G_OBJECT(store));
+    if (tree) {
+	tstore = gtk_tree_store_newv(ncols, types);
+	vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(tstore));
+	g_object_unref(G_OBJECT(tstore));
+    } else {
+	lstore = gtk_list_store_newv(ncols, types);
+	vwin->listbox = view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(lstore));
+	g_object_unref(G_OBJECT(lstore));
+    }
 
     gtk_tree_view_set_rules_hint(GTK_TREE_VIEW(view), TRUE);
 
@@ -208,7 +215,7 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     for (i=0; i<viscols; i++) {
 	if (types[i] == G_TYPE_BOOLEAN) {
 	    bool_renderer = gtk_cell_renderer_toggle_new();
-	    g_object_set_data(G_OBJECT(store), "boolcol", GINT_TO_POINTER(i));
+	    g_object_set_data(G_OBJECT(vwin->w), "boolcol", GINT_TO_POINTER(i));
 	    g_signal_connect(bool_renderer, "toggled",
 			     G_CALLBACK(bool_col_toggled), vwin);
 	    column = gtk_tree_view_column_new_with_attributes(_(titles[i]),
@@ -275,15 +282,17 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 		     vwin);
 
     /* set sort properties on the tree model */
-    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(store), 0, 
-				    (GtkTreeIterCompareFunc) 
-				    list_id_compare,
-				    NULL, NULL);
+    if (tstore != NULL) {
+	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 0, 
+					(GtkTreeIterCompareFunc) 
+					list_id_compare,
+					NULL, NULL);
 
-    gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(store), 1, 
-				    (GtkTreeIterCompareFunc) 
-				    list_alpha_compare,
-				    NULL, NULL);
+	gtk_tree_sortable_set_sort_func(GTK_TREE_SORTABLE(tstore), 1, 
+					(GtkTreeIterCompareFunc) 
+					list_alpha_compare,
+					NULL, NULL);
+    } 
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
 

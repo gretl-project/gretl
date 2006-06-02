@@ -1212,7 +1212,7 @@ static int exec_line (char *line, PRN *prn)
     case HAUSMAN:
 	err = model_test_start(cmd.ci, 0, prn);
 	if (!err) {
-	    err = hausman_test(models[0], &Z, datainfo, cmd.opt, prn);
+	    err = panel_hausman_test(models[0], &Z, datainfo, cmd.opt, prn);
 	}
 	break;
 
@@ -1431,12 +1431,9 @@ static int exec_line (char *line, PRN *prn)
     case WLS:
     case HCCM:
     case PANEL:
-    case POOLED:
 	clear_model(models[0]);
 	if (cmd.ci == PANEL) {
 	    *models[0] = panel_model(cmd.list, &Z, datainfo, cmd.opt, prn);
-	} else if (cmd.ci == POOLED) {
-	    *models[0] = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
 	} else {
 	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
 	}

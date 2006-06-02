@@ -70,14 +70,14 @@ struct _selector {
 
 #ifdef ENABLE_GMP
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
-                       c == POOLED || c == HCCM || c == HSK || c == ARMA || \
+                       c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == MPOLS || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
                        c == PANEL_WLS)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
-                       c == POOLED || c == HCCM || c == HSK || c == ARMA || \
+                       c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == LAD || c == LOGISTIC || \
                        c == TOBIT || c == PWE || c == POISSON || c == PANEL || \
@@ -1959,8 +1959,6 @@ static char *est_str (int cmdnum)
 	return N_("Logistic");
     case POISSON:
 	return N_("Poisson");
-    case POOLED:
-	return N_("Pooled OLS");
     case PANEL:
     case PANEL_WLS:
 	return N_("Panel model");
@@ -3014,7 +3012,7 @@ static int list_show_var (int v, int code, int show_lags)
 	ret = 0;
     } else if (screen_scalar(v, code)) {
 	ret = 0;
-    } else if (!show_lags && is_standard_lag(v, datainfo)) {
+    } else if (!show_lags && is_standard_lag(v, datainfo, NULL)) {
 	lags_hidden = 1;
 	ret = 0;
     }

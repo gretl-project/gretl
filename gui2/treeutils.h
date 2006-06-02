@@ -3,7 +3,8 @@
 
 void vwin_add_list_box (windata_t *vwin, GtkBox *box, 
 			int ncols, gboolean hidden_col,
-			GType *types, const char **titles);
+			GType *types, const char **titles,
+			int tree);
 
 void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val);
 

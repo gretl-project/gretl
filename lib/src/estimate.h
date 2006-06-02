@@ -48,9 +48,6 @@ MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn);
 
-MODEL pooled (const int *list, double ***pZ, DATAINFO *pdinfo,
-	      gretlopt opt, PRN *prn);
-
 int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			   PRN *prn);
 

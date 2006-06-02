@@ -2725,11 +2725,6 @@ int do_model (selector *sr)
 	err = model_output(pmod, prn);
 	break;
 
-    case POOLED:
-	*pmod = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
-	err = model_output(pmod, prn);
-	break;
-
     case HSK:
 	*pmod = hsk_func(cmd.list, &Z, datainfo);
 	err = model_output(pmod, prn);
@@ -6425,7 +6420,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case HAUSMAN:
 	err = script_model_test(cmd.ci, 0, prn);
 	if (!err) {
-	    err = hausman_test(models[0], &Z, datainfo, cmd.opt, outprn);
+	    err = panel_hausman_test(models[0], &Z, datainfo, cmd.opt, outprn);
 	}
 	break;
 
@@ -6652,12 +6647,9 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case WLS:
     case HCCM:
     case PANEL:
-    case POOLED:
 	clear_model(models[0]);
 	if (cmd.ci == PANEL) {
 	    *models[0] = panel_model(cmd.list, &Z, datainfo, cmd.opt, prn);
-	} else if (cmd.ci == POOLED) {
-	    *models[0] = pooled(cmd.list, &Z, datainfo, cmd.opt, prn);
 	} else {
 	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
 	}

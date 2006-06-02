@@ -367,7 +367,6 @@ static const char *short_estimator_string (int ci, PRN *prn)
     else if (ci == HILU) return N_("HILU");
     else if (ci == PWE) return N_("PWE");
     else if (ci == ARCH) return N_("ARCH");
-    else if (ci == POOLED) return N_("OLS");
     else return estimator_string(ci, prn);
 }
 

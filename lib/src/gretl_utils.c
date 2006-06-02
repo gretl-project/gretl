@@ -857,7 +857,6 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case OLS:
     case WLS:
     case HCCM:
-    case POOLED:
 	*tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt);
 	break;
     case TSLS:

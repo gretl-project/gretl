@@ -127,13 +127,18 @@ make_transform_label (char *label, const char *parent,
     return err;
 }
 
-int is_standard_lag (int v, const DATAINFO *pdinfo)
+int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
 {
     const char *test = VARLABEL(pdinfo, v);
     char pm, vname[VNAMELEN];
     int lag, ret = 0;
 
     if (sscanf(test, "= %15[^(](t %c %d)", vname, &pm, &lag) == 3) {
+	if (parent != NULL) {
+	    int pv = varindex(pdinfo, vname);
+
+	    *parent = (pv < pdinfo->v)? pv : 0;
+	}
 	ret = 1;
     }
 

@@ -1408,7 +1408,7 @@ static GtkWidget *files_window (windata_t *vwin)
     box = gtk_vbox_new(FALSE, 0);
     gtk_widget_set_size_request(box, full_width, file_height);
     vwin_add_list_box(vwin, GTK_BOX(box), cols, hidden_col, 
-		      types, titles);
+		      types, titles, 0);
     gtk_widget_show(box);
 
     return box;
