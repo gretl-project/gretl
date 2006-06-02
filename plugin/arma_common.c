@@ -248,6 +248,10 @@ static void calc_max_lag (struct arma_info *ainfo)
     }
 
     ainfo->maxlag = pmax + dmax;
+
+#if ARMA_DEBUG
+    fprintf(stderr, "calc_max_lag: ainfo->maxlag = %d\n", ainfo->maxlag);
+#endif
 }
 
 #define SAMPLE_DEBUG 0

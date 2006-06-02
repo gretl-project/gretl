@@ -1659,6 +1659,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 
     for (t=0; t<an; t++) {
 	int realt = t + ainfo->t1;
+	int miss = 0;
 	int s, m;
 
 	aZ[1][t] = y[realt];
@@ -1667,6 +1668,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 
 	for (i=1; i<=ainfo->p; i++) {
 	    s = realt - i;
+	    if (s < 0) miss = 1;
 	    aZ[i+1][t] = (s >= 0)? y[s] : NADBL;
 	    for (j=1; j<=narmax; j++) {
 		m = list[xstart + j - 1];
@@ -1679,6 +1681,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	for (i=1; i<=ainfo->P; i++) {
 	    lag = ainfo->pd * i;
 	    s = realt - lag;
+	    if (s < 0) miss = 1;
 	    k = ainfo->p + 1 + i;
 	    aZ[k][t] = (s >= 0)? y[s] : NADBL;
 	    for (k=1; k<=narmax; k++) {
@@ -1688,6 +1691,7 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	    for (j=1; j<=ainfo->p; j++) {
 		lag = ainfo->pd * i + j;
 		s = realt - lag;
+		if (s < 0) miss = 1;
 		aZ[ayi++][t] = (s >= 0)? y[s] : NADBL;
 		for (k=1; k<=narmax; k++) {
 		    m = list[xstart + k - 1];
@@ -1702,6 +1706,10 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	    m = list[xstart + i - 1];
 	    aZ[axi++][t] = Z[m][realt];
 	}
+
+	if (miss) {
+	    adinfo->t1 = t + 1;
+	}	
     }
 
     if (arma_has_seasonal(ainfo)) {
