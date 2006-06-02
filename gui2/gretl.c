@@ -1306,10 +1306,15 @@ static void sort_varlist (gpointer p, guint col, GtkWidget *w)
 
 void clear_varlist (GtkWidget *widget)
 {
-    GtkListStore *store;
+    GtkTreeModel *model;
 
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
-    gtk_list_store_clear(store);
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
+
+    if (GTK_IS_TREE_STORE(model)) {
+	gtk_tree_store_clear(GTK_TREE_STORE(model));
+    } else if (GTK_IS_LIST_STORE(model)) {
+	gtk_list_store_clear(GTK_LIST_STORE(model));
+    }
 }
 
 static float get_gui_scale (void)

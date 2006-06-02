@@ -161,6 +161,8 @@ static int catch_command_alias (char *line, CMD *cmd)
 	cmd->ci = HELP;
     } else if (!strcmp(s, "pooled")) {
 	cmd->ci = OLS;
+    } else if (!strcmp(s, "label")) {
+	cmd->ci = SETINFO;
     } else if (!strcmp(line, "smpl full")) {
 	strcpy(line, "smpl");
 	cmd->opt = OPT_F;
@@ -225,7 +227,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	               c == IMPORT || \
                        c == INCLUDE || \
     	               c == INFO || \
- 	               c == LABEL || \
  	               c == LABELS || \
                        c == LEVERAGE || \
                        c == LMTEST || \
@@ -246,6 +247,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == RESTRICT || \
 	               c == RUN || \
                        c == SET || \
+                       c == SETINFO || \
 	               c == SETOBS || \
 	               c == SHELL || \
                        c == SYSTEM || \
@@ -288,6 +290,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                                c == STORE)
 
 #define RETURNS_LIST(c) (c == DIFF || \
+                         c == DISCRETE || \
                          c == LDIFF || \
                          c == SDIFF || \
                          c == LAGS || \
@@ -2724,18 +2727,24 @@ static void get_optional_filename (const char *line, CMD *cmd)
     }    
 }
 
-static int make_var_label (const char *line, const DATAINFO *pdinfo, 
-			   PRN *prn)
+static int set_var_info (const char *line, gretlopt opt, 
+			 DATAINFO *pdinfo, PRN *prn)
 {
     char *p;
     char vname[VNAMELEN];
+    int cmdlen = 0;
     int v, setstuff = 0;
 
     if (pdinfo->varinfo == NULL) {
 	return 1;
     }
 
-    if (sscanf(line, "label %15s", vname) != 1) {
+    /* skip command word */
+    cmdlen = strcspn(line, " ");
+    line += cmdlen++;
+    line += strspn(line, " ");
+
+    if (sscanf(line, "%15s", vname) != 1) {
 	return E_PARSE;
     }
 
@@ -2745,7 +2754,13 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 	return E_UNKVAR;
     }
 
-    p = get_flag_field(line + 6, 'd');
+    if (opt & OPT_D) {
+	set_var_discrete(pdinfo, v, 1);
+    } else if (opt & OPT_C) {
+	set_var_discrete(pdinfo, v, 0);
+    }
+
+    p = get_flag_field(line + cmdlen, 'd');
     if (p != NULL) {
 	setstuff = 1;
 	*VARLABEL(pdinfo, v) = 0;
@@ -2753,17 +2768,13 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 	free(p);
     }
 
-    p = get_flag_field(line + 6, 'n');
+    p = get_flag_field(line + cmdlen, 'n');
     if (p != NULL) {
 	setstuff = 1;
 	*DISPLAYNAME(pdinfo, v) = 0;
 	strncat(DISPLAYNAME(pdinfo, v), p, MAXDISP - 1);
 	free(p);
     } 
-
-    if (!setstuff && *VARLABEL(pdinfo, v) != 0) {
-	pprintf(prn, "%s\n", VARLABEL(pdinfo, v));
-    }
 
     return 0;
 }
@@ -2965,6 +2976,10 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	break;
 
+    case DISCRETE:
+	err = list_makediscrete(genlist, pdinfo, cmd->opt);
+	break;
+
     case ESTIMATE:
 	err = estimate_named_system(line, pZ, pdinfo, cmd->opt, prn);
 	break;
@@ -3102,8 +3117,8 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	break;
 
-    case LABEL:
-	err = make_var_label(line, pdinfo, prn);
+    case SETINFO:
+	err = set_var_info(line, cmd->opt, pdinfo, prn);
 	break;
 
     case LABELS:

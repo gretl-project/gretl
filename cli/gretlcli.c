@@ -876,6 +876,7 @@ static int exec_line (char *line, PRN *prn)
     case CRITICAL: 
     case DATA:
     case DIFF: 
+    case DISCRETE:
     case ESTIMATE:
     case FNCALL:
     case FUNC:
@@ -885,7 +886,6 @@ static int exec_line (char *line, PRN *prn)
     case HURST:
     case INFO: 
     case KPSS:
-    case LABEL:
     case LABELS: 
     case LAGS: 
     case LDIFF: 
@@ -903,6 +903,7 @@ static int exec_line (char *line, PRN *prn)
     case RMPLOT: 
     case RUNS: 
     case SDIFF:
+    case SETINFO:
     case SHELL:
     case SPEARMAN:
     case SQUARE: 

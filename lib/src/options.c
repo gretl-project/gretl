@@ -86,6 +86,7 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_R, "rc" },
     { COINT2,   OPT_T, "ct" },
     { COINT2,   OPT_V, "verbose" },
+    { DISCRETE, OPT_R, "reverse" },
     { EQNPRINT, OPT_O, "complete" },
     { TABPRINT, OPT_O, "complete" },
     { ESTIMATE, OPT_M, "geomean" },
@@ -165,7 +166,9 @@ struct gretl_option gretl_opts[] = {
     { PRINT,    OPT_T, "ten" },
     { PROBIT,   OPT_R, "robust" },
     { QUIT,     OPT_X, "exit" },
-    { RESTRICT, OPT_Q, "quiet" },
+    { RESTRICT, OPT_V, "verbose" },
+    { SETINFO,  OPT_C, "continuous" },
+    { SETINFO,  OPT_D, "discrete" },
     { SETOBS,   OPT_C, "stacked-cross-section" },
     { SETOBS,   OPT_S, "stacked-time-series" },
     { SETOBS,   OPT_T, "time-series" },
@@ -214,6 +217,7 @@ struct gretl_option gretl_opts[] = {
     { WLS,      OPT_Q, "quiet" },
     { XTAB,     OPT_C, "column" },
     { XTAB,     OPT_R, "row" },
+    { XTAB,     OPT_X, "chi-square" },
     { XTAB,     OPT_Z, "zeros" },
     { 0,        0L,    NULL }
 };
@@ -497,14 +501,16 @@ gretlopt get_gretl_options (char *line, int *err)
 
     /* some commands do not take a "flag", and "-%c" may have
        some other meaning */
-    if (ci == 0 || ci == GENR || ci == LABEL) {
+    if (ci == 0 || ci == GENR) {
 	return oflags;
     }
 
-    /* try for short-form options (e.g. "-o") */
-    opt = get_short_opts(line, ci, &myerr);
-    if (!myerr && opt) {
-	oflags |= opt;
+    if (ci != SETINFO) {
+	/* try for short-form options (e.g. "-o") */
+	opt = get_short_opts(line, ci, &myerr);
+	if (!myerr && opt) {
+	    oflags |= opt;
+	}
     }
 
     /* try for long-form options (e.g. "--vcv") */

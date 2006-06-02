@@ -41,6 +41,8 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
 int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt);
 
+int list_makediscrete (int *list, DATAINFO *pdinfo, gretlopt opt);
+
 int gettrend (double ***pZ, DATAINFO *pdinfo, int square);
 
 void gretl_transforms_cleanup (void);

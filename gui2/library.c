@@ -6045,6 +6045,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case CRITICAL: 
     case DATA:
     case DIFF: 
+    case DISCRETE:
     case ESTIMATE:
     case FNCALL:
     case FUNC:
@@ -6054,7 +6055,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case HURST: 
     case INFO: 
     case KPSS:
-    case LABEL:
     case LABELS: 
     case LAGS: 
     case LDIFF: 
@@ -6072,6 +6072,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case RMPLOT: 
     case RUNS: 
     case SDIFF:
+    case SETINFO:
     case SHELL:
     case SPEARMAN: 
     case SQUARE: 

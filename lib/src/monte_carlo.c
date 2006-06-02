@@ -361,7 +361,6 @@ int ok_in_loop (int ci)
 	     ci == DIFF || 
 	     ci == HURST ||	
 	     ci == KPSS ||
-	     ci == LABEL ||
 	     ci == LAGS || 
 	     ci == LDIFF || 
 	     ci == LOGS ||
@@ -371,6 +370,7 @@ int ok_in_loop (int ci)
 	     ci == PCA ||
 	     ci == RHODIFF ||
 	     ci == RUNS || 
+             ci == SETINFO ||
 	     ci == SPEARMAN || 
 	     ci == SQUARE || 
 	     ci == SUMMARY ||
@@ -2718,7 +2718,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case DIFF: 
 	    case HURST:	
 	    case KPSS:
-	    case LABEL:
 	    case LAGS: 
 	    case LDIFF: 
 	    case LOGS:
@@ -2729,6 +2728,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case PCA:
 	    case RHODIFF:
 	    case RUNS: 
+	    case SETINFO:
 	    case SPEARMAN: 
 	    case SQUARE: 
 	    case SUMMARY:

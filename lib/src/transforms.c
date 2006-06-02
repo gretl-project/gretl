@@ -899,6 +899,35 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     return (xpxlist[0] > 0)? 0 : E_SQUARES;
 }
 
+/**
+ * list_makediscrete:
+ * @list: list of variables to process.
+ * @pdinfo: data information struct.
+ * @opt: if %OPT_R, reverse the operation.
+ *
+ * Sets the variables given in @list as discrete, unless
+ * opt is %OPT_R, in which case the variables are set as
+ * continuous.
+ *
+ * Returns: 0 on success, error code on error.
+ */
+
+int list_makediscrete (int *list, DATAINFO *pdinfo, gretlopt opt)
+{
+    int disc = !(opt & OPT_R);
+    int i, v, err = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (v == 0 || var_is_scalar(pdinfo, v)) {
+	    continue;
+	}
+	set_var_discrete(pdinfo, v, disc);
+    }
+
+    return err;
+}
+
 int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
 {
     int idx, t, v = pdinfo->v;

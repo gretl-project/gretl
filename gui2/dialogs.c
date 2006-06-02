@@ -1141,7 +1141,7 @@ void varinfo_dialog (int varnum, int full)
     /* And a Help button? */
     if (full) {
 	context_help_button(GTK_DIALOG(vset->dlg)->action_area,
-			    LABEL);
+			    SETINFO);
     }
 
     gtk_widget_show(vset->dlg);

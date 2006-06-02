@@ -3164,66 +3164,6 @@
 
   </command>
 
-  <command name="label" section="Dataset" label="Edit attributes of variable">
-
-    <usage>
-      <arguments>
-        <argument>varname</argument>
-        <argument flag="-d ">description</argument>
-        <argument flag="-n ">displayname</argument>
-      </arguments>
-      <examples>
-        <example>label x1 -d "Description of x1" -n "Graph name"</example>
-      </examples>
-    </usage>
-
-    <description context="cli">
-      <para>Sets the descriptive label for the given variable (if the
-	<lit>-d</lit> flag is given, followed by a string in double
-	quotes) and/or the <quote>display name</quote> for the
-	variable (if the <lit>-n</lit> flag is given, followed by a
-	quoted string).  If a variable has a display name, this is
-	used when generating graphs.
-      </para>
-      <para>
-	If neither flag is given, this command prints the current
-	descriptive label for the specified variable, if any.
-      </para>
-    </description>
-
-    <description context="gui">
-
-      <para>
-	In this dialog box you can:</para>
-
-      <para>* Rename a variable.</para>
-
-      <para>* Add or edit a description of the variable: this appears
-	next to the variable name in the gretl main window.</para>
-
-      <para>* Add or edit the "display name" for the variable.  This
-	string (maximum 19 characters) is shown in place of the
-	variable name when the variable is displayed in a graph.  This
-	for instance you can associate a more comprehensible string
-	such as "T-bill rate" with a cryptically named variable such
-	as "tb3".</para>
-
-      <para>* (In case of a time-series dataset) set the compaction
-	method for the variable.  This method will be used if you
-	decide to reduce the frequency of the dataset, or if you
-	update the variable by importing from a database where the
-	variable is at a higher frequency than in the working dataset.
-      </para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Variable/Edit attributes</menu-path>
-      <other-access>Main window pop-up menu</other-access>
-    </gui-access>
-
-  </command>
-
   <command name="kpss" section="Tests" label="KPSS test">
 
     <usage>
@@ -6001,6 +5941,101 @@
     </description>
   </command>
 
+  <command name="setinfo" section="Dataset" label="Edit attributes of variable">
+
+    <usage>
+      <arguments>
+        <argument>varname</argument>
+        <argument flag="-d ">description</argument>
+        <argument flag="-n ">displayname</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--discrete</flag>
+	  <effect>mark variable as discrete</effect>
+	</option>
+	<option>
+	  <flag>--continuous</flag>
+	  <effect>mark variable as continuous</effect>
+	</option>
+      </options>
+      <examples>
+        <example>setinfo x1 -d "Description of x1" -n "Graph name"</example>
+	<example>setinfo z --discrete</example>
+      </examples>
+    </usage>
+
+    <description context="cli">
+      <para>
+	Sets up to three attributes of the named variable, as follows.
+      </para>
+
+      <para>
+	If the <lit>-d</lit> flag is given followed by a string in double
+	quotes, that string is used to set the variable's descriptive
+	label. This label is shown in response to the <cmdref
+	  targ="labels"/> command, and is also shown in the main window of
+	the GUI program.
+      </para>
+
+      <para>
+	If the <lit>-n</lit> flag is given followed by a quoted string,
+	that string is used to set the variable's <quote>display
+	  name</quote>, which is then used in place of the variable's name
+	in graphs.
+      </para>
+
+      <para>
+	If one or other of the <lit>--discrete</lit> or
+	<lit>--continuous</lit> option flags is given, the variable's
+	numerical character is set accordingly.  The default is to treat
+	all variables as continuous; setting a variable as discrete
+	affects the way the variable is handled in frequency plots, and
+	also allows you to select the variable for the <cmdref
+	  targ="xtab"/> command (cross-tabulation). 
+      </para>
+
+    </description>
+
+    <description context="gui">
+
+      <para>
+	In this dialog box you can:</para>
+
+      <para>* Rename a variable.</para>
+
+      <para>* Add or edit a description of the variable: this appears
+	next to the variable name in the gretl main window.</para>
+
+      <para>* Add or edit the "display name" for the variable.  This
+	string (maximum 19 characters) is shown in place of the
+	variable name when the variable is displayed in a graph.  This
+	for instance you can associate a more comprehensible string
+	such as "T-bill rate" with a cryptically named variable such
+	as "tb3".</para>
+
+      <para>* (In case of a time-series dataset) set the compaction
+	method for the variable.  This method will be used if you
+	decide to reduce the frequency of the dataset, or if you
+	update the variable by importing from a database where the
+	variable is at a higher frequency than in the working dataset.
+      </para>
+
+      <para>* Mark a variable as discrete.  This affects the way the
+	variable is handled when you ask for a frequency plot, and also
+	allows you to select the variable for the <cmdref
+	  targ="xtab"/> command (cross-tabulation).
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Edit attributes</menu-path>
+      <other-access>Main window pop-up menu</other-access>
+    </gui-access>
+
+  </command>
+
   <command name="setobs" section="Dataset" context="cli"
     label="Frequency and starting observation">
 
@@ -7217,6 +7252,10 @@
         <argument>var1 var2</argument>
       </arguments>
       <options>
+	<option>
+	  <flag>--chi-square</flag>
+	  <effect>force display of chi-square test</effect>
+        </option>
         <option>
 	  <flag>--row</flag>
 	  <effect>display row percentages</effect>
@@ -7243,9 +7282,17 @@
 	The <lit>--row</lit> and <lit>--column</lit> options are
 	mutually exclusive, and instead of the frequency count yield
 	the percentages for each row or column, respectively. The
-	<lit>--zero</lit> option may be useful for importing the table
+	<lit>--zeros</lit> option may be useful for importing the table
 	into another program, e.g. a spreadsheet.
       </para>
+      <para>
+	Pearson's chi-square test for independence is automatically
+	displayed if the expected frequency under independence is 5 or
+	higher for at least 80 percent of the cells. The option
+	<lit>--chi-square</lit> causes the test to be displayed in all
+	cases.
+      </para>
+
     </description>
 
   </command>

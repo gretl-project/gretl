@@ -442,7 +442,10 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 		if (!na(pearson)) {
 		    y = (double) (tab->rtotal[i] * tab->ctotal[j]) / tab->n;
 		    x = (double) (tab->f)[i][j] - y;
-		    if (y < 1.0) {
+		    if (y < 1.0e-7) {
+			fprintf(stderr, "Error computing chi2 test: "
+				"expected n in cell (%d,%d) = %g\n",
+				i, j, y);
 			pearson = NADBL;
 		    } else {
 			pearson += x * x / y;
@@ -481,7 +484,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	double n5p = (double) n5 / (r * c);
 	int df;
 
-	if (n5p >= .80) {
+	if (n5p >= .80 || (opt & OPT_X)) {
 	    df = (r - 1) * (c - 1);
 	    pprintf(prn, "\nPearson chi-square test = %g (%d df, p-value = %g)\n", 
 		    pearson, df, chisq(pearson, df));
