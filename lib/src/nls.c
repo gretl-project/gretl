@@ -148,6 +148,20 @@ static int nls_genr_setup (void)
 	fprintf(stderr, "genrs[%d] = %p, err = %d\n", i, (void *) genrs[i], err);
 #endif
 
+	/* first pass calculating residual: ensure all parameters are
+	   non-zero so we can get a valid reading on possible missing
+	   values */
+	if (i == pspec->naux) {
+	    int k;
+
+	    for (k=0; k<pspec->nparam; k++) {
+		v = pspec->params[k].varnum;
+		if ((*nZ)[v][0] == 0.0) {
+		    (*nZ)[v][0] = 0.0001;
+		}
+	    }	    
+	}
+
 	if (!err) {
 	    err = execute_genr(genrs[i], ndinfo->v);
 	}
@@ -523,6 +537,10 @@ static int nls_missval_check (nls_spec *spec)
     int t, v, miss = 0;
     int t1 = spec->t1, t2 = spec->t2;
     int err = 0;
+
+#if NLS_DEBUG
+    fprintf(stderr, "nls_missval_check: calling nls_calculate_fvec\n");
+#endif
 
     /* generate the nls residual variable */
     err = nls_calculate_fvec();
