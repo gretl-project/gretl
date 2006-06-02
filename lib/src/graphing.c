@@ -1853,7 +1853,9 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
 		((dcomma)? ' ' : ','), y);
     }
 
+#ifdef ENABLE_NLS
     gretl_push_c_numeric_locale();
+#endif
 }
 
 /* Below: a fix for the case where the y-range is by default
@@ -1879,7 +1881,9 @@ static void maybe_set_yrange (FreqDist *freq, double lambda, FILE *fp)
     if (ymax == ymin) {
 	fprintf(fp, "set yrange [%g:%g]\n", ymax * lambda * 0.99, 
 		ymax * lambda * 1.01);
-    }
+    } else {
+	fprintf(fp, "set yrange [0.0:%g]\n", ymax * lambda * 1.1);
+    }	
 }
 
 /**
@@ -1935,23 +1939,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
     gretl_push_c_numeric_locale();
 
     if (dist) {
-	double propn;
-
-	/* find the endpts that straddle the mean... */
-	for (i=0; i<K ; i++) {
-	    if (freq->endpt[i] > freq->xbar) {
-		break;
-	    }
-	}
-
-	/* OK, they are k-1 and k: now find the proportion of the 
-	   theoretical distribution they enclose, and calculate a
-	   height adjustment factor for the impulses */
+	lambda = 1.0 / (freq->n * barwidth - barskip);
 
 	if (dist == DIST_NORMAL) {
-	    propn = normal_pvalue_1((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
-		normal_pvalue_1((freq->endpt[i] - freq->xbar)/freq->sdx);
-	    lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
 	    fputs("# literal lines = 4\n", fp);
 	    fprintf(fp, "sigma = %g\n", freq->sdx);
 	    fprintf(fp, "mu = %g\n", freq->xbar);
@@ -1975,19 +1965,13 @@ int plot_freq (FreqDist *freq, DistCode dist)
 			label, label_front());
 	    }	
 	} else if (dist == DIST_GAMMA) {
-	    double xx, height, var = freq->sdx * freq->sdx;
+	    double var = freq->sdx * freq->sdx;
 
 	    /* scale param = variance/mean */
 	    beta = var / freq->xbar;
 	    /* shape param = mean/scale */
 	    alpha = freq->xbar / beta;
 
-	    propn = gamma_dist(freq->xbar, var, freq->endpt[i], 2) -
-		gamma_dist(freq->xbar, var, freq->endpt[i-1], 2);
-	    xx = (freq->endpt[i] + freq->endpt[i-1])/2.0;
-	    height = pow(xx, alpha - 1.0) * exp(-xx / beta) /
-		(cephes_gamma(alpha) * pow(beta, alpha));
-	    lambda = height / (freq->n * propn);
 	    fputs("# literal lines = 4\n", fp);
 	    fprintf(fp, "beta = %g\n", beta);
 	    fprintf(fp, "alpha = %g\n", alpha);
@@ -2055,7 +2039,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title '%s' %s , \\\n"
-		"(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
+		"1.0/(sqrt(2.0*pi)*sigma)*exp(-.5*((x-mu)/sigma)**2) "
 		"title '%s' w lines\n",
 		freq->varname, withstr, label);
     } else if (dist == DIST_GAMMA) {

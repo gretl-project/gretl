@@ -3196,8 +3196,6 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 
 	varstart = (i == 0)? 1 : 2;
 
-	printlist(pmod->list, "RE model list in gui");
-
 	/* put the indep vars on the menu list */
 	for (j=varstart; j<=pmod->list[0]; j++) {
 	    if (pmod->list[j] == 0) continue;

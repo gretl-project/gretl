@@ -332,7 +332,6 @@ void print_freq (const FreqDist *freq, PRN *prn)
     if (!freq->discrete) {
 	pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
 		freq->numbins, freq->xbar, freq->sdx);
-
 	pputs(prn, 
 	      _("\n       interval          midpt   frequency    rel.     cum.\n\n"));
     } else {
@@ -349,18 +348,18 @@ void print_freq (const FreqDist *freq, PRN *prn)
 	    } else if (k == K) {
 		pputs(prn, "          >= ");
 	    } else {
-		pprintf(prn, "%10g - ", freq->endpt[k]);
+		pprintf(prn, "%#10.5g - ", freq->endpt[k]);
 	    }
 	    if (k == K) {
-		sprintf(word, "%g", freq->endpt[k]);
+		sprintf(word, "%#.5g", freq->endpt[k]);
 	    } else {
-		sprintf(word, "%g", freq->endpt[k+1]);
+		sprintf(word, "%#.5g", freq->endpt[k+1]);
 	    }
 
 	    pprintf(prn, "%s", word);
 	    nlw = 10 - strlen(word);
 	    bufspace(nlw, prn);
-	    sprintf(word, " %g", freq->midpt[k]);
+	    sprintf(word, " %#.5g", freq->midpt[k]);
 	}
 
 	pputs(prn, word);

@@ -166,7 +166,7 @@ struct gretl_option gretl_opts[] = {
     { PRINT,    OPT_T, "ten" },
     { PROBIT,   OPT_R, "robust" },
     { QUIT,     OPT_X, "exit" },
-    { RESTRICT, OPT_V, "verbose" },
+    { RESTRICT, OPT_Q, "quiet" },
     { SETINFO,  OPT_C, "continuous" },
     { SETINFO,  OPT_D, "discrete" },
     { SETOBS,   OPT_C, "stacked-cross-section" },
