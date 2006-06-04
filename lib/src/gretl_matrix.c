@@ -983,17 +983,14 @@ void gretl_matrix_dot_pow (gretl_matrix *m, double x)
 int gretl_matrix_copy_values (gretl_matrix *targ, 
 			      const gretl_matrix *src)
 {
-    int i, n;
+    int n;
 
     if (targ->rows != src->rows || targ->cols != src->cols) {
 	return E_NONCONF;
     }
 
     n = src->rows * src->cols;
-    
-    for (i=0; i<n; i++) {
-	targ->val[i] = src->val[i];
-    }
+    memcpy(targ->val, src->val, n * sizeof *targ->val);
 
     return 0;
 }
