@@ -270,6 +270,8 @@ int gretl_invert_general_matrix (gretl_matrix *a);
 
 int gretl_invert_symmetric_matrix (gretl_matrix *a);
 
+int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet);
+
 int gretl_invert_diagonal_matrix (gretl_matrix *a);
 
 int gretl_invert_matrix (gretl_matrix *a);

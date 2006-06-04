@@ -3176,6 +3176,84 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
 }
 
 /**
+ * gretl_invert_symmetric_matrix2:
+ * @a: matrix to invert.
+ * @ldet: location to recieve log determinant, or %NULL.
+ * 
+ * Computes the inverse of a symmetric positive definite matrix
+ * using Cholesky factorization, computing the log-determinant 
+ * in the process.  On exit @a is overwritten with the inverse 
+ * and if @ldet is not %NULL the log-determinant is written to 
+ * that location.  Uses the lapack functions %dpotrf and %dpotri.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
+{
+    integer n, info;
+    char uplo = 'U';
+    int i, err = 0;
+
+    if (a->cols != a->rows) {
+	fputs("gretl_invert_symmetric_matrix: input is not square\n",
+	      stderr);
+	return E_NONCONF;
+    }
+
+    n = a->cols;
+
+    if (n == 1) {
+	if (ldet != NULL) {
+	    *ldet = log(a->val[0]);
+	}
+	a->val[0] = 1.0 / a->val[0];
+	return 0;
+    }
+
+    if (!matrix_is_symmetric(a)) {
+	fputs("gretl_invert_symmetric_matrix: matrix is not symmetric\n", stderr);
+	return 1;
+    }
+
+#if 0
+    spd_matrix_check_scaling(a);
+#endif
+
+    dpotrf_(&uplo, &n, a->val, &n, &info);   
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		" dpotrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	if (info > 0) {
+	    fputs(" matrix is not positive definite\n", stderr);
+	}
+	return E_SINGULAR;
+    } 
+
+    if (ldet != NULL) {
+	double x = 0.0;
+
+	for (i=0; i<n; i++) {
+	    x += log(gretl_matrix_get(a,i,i));
+	}
+	*ldet = 2.0 * x;
+    }
+
+    dpotri_(&uplo, &n, a->val, &n, &info);
+
+    if (info != 0) {
+	err = E_SINGULAR;
+	fprintf(stderr, "gretl_invert_symmetric_matrix:\n"
+		" dpotri failed with info = %d\n", (int) info);
+    } else {
+	gretl_symmetric_matrix_expand(a, uplo);
+    }
+
+    return err;
+}
+
+/**
  * gretl_eigen_sort:
  * @evals: array of eigenvalues.
  * @evecs: matrix of eigenvectors.

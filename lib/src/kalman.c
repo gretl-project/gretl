@@ -724,21 +724,14 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	}
 	gretl_matrix_copy_values(K->V, K->HPH);
 
-	ldet = gretl_matrix_log_determinant(K->HPH, &err);
+	err = gretl_invert_symmetric_matrix2(K->V, &ldet);
 	if (err) {
 	    K->loglik = NADBL;
 	    break;
+	} else if (arma_ll(K)) {
+	    K->sumVt += ldet;
 	} else {
-	    if (arma_ll(K)) {
-		K->sumVt += ldet;
-	    } else {
-		llt = -(K->n / 2.0) * LN_2_PI - .5 * ldet;
-	    }
-	}
-
-	err = gretl_invert_symmetric_matrix(K->V);
-	if (err) {
-	    break;
+	    llt = -(K->n / 2.0) * LN_2_PI - .5 * ldet;
 	}
 
 	/* read slice from y */
@@ -792,7 +785,7 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
     if (arma_ll(K) && !na(K->loglik)) {
 	double k = -(K->T / 2.0) * LN_2_PI;
 
-	K->loglik = k - (K->T * K->n / 2.0) * (1.0 + log(K->SSRw / K->T))
+	K->loglik = k - (K->T / 2.0) * (1.0 + log(K->SSRw / K->T))
 	    - 0.5 * K->sumVt;
 	if (isnan(K->loglik) || isinf(K->loglik)) {
 	    K->loglik = NADBL;
