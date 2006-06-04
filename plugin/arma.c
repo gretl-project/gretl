@@ -649,7 +649,6 @@ static int write_kalman_matrices (const double *b)
     const double *theta = Phi + kainfo->P;
     const double *Theta = theta + kainfo->q;
     const double *beta = Theta + kainfo->Q;
-    double s2 = *(beta + kainfo->nexo);
     double mu = (kainfo->ifc)? b[0] : 0.0;
     int i, r, m, err = 0;
 
@@ -692,7 +691,7 @@ static int write_kalman_matrices (const double *b)
     gretl_matrix_print(H, "H");
 #endif
 
-    gretl_matrix_set(Q, 0, 0, s2);
+    gretl_matrix_set(Q, 0, 0, 1.0);
     if (arma_using_vech(kainfo)) {
 	gretl_matrix_vectorize_h(vQ, Q);
     } else {
@@ -754,7 +753,8 @@ static int rewrite_kalman_matrices (kalman *K, const double *b)
    matrix and standard errors based on Outer Product of the
    estimated innovations */
 
-static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b, int m, int T)
+static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b, 
+			     double s2, int k, int T)
 {
     gretl_matrix *E = NULL;
     gretl_matrix *G = NULL;
@@ -762,7 +762,6 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b, int m, int T)
     const double eps = 1.0e-8;
     double g0, g1;
     double x = 0.0;
-    int k = m - 1;
     int i, j, s, t;
     int err = 0;
 
@@ -776,6 +775,7 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b, int m, int T)
 
     /* get estimate of innovations */
     kalman_forecast(K, E);
+
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	pmod->uhat[t] = gretl_vector_get(E, s++);
@@ -814,7 +814,7 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b, int m, int T)
 	for (i=0; i<k; i++) {
 	    for (j=0; j<=i; j++) {
 		idx = ijton(i, j, k);
-		x = b[k] * gretl_matrix_get(V, i, j);
+		x = s2 * gretl_matrix_get(V, i, j);
 		pmod->vcv[idx] = x;
 		if (i == j) {
 		    pmod->sderr[i] = sqrt(x);
@@ -875,9 +875,10 @@ static int kalman_arma_model_allocate (MODEL *pmod, int k, int T)
 static int kalman_arma_finish (MODEL *pmod, const int *alist,
 			       struct arma_info *ainfo,
 			       const double **Z, const DATAINFO *pdinfo, 
-			       kalman *K, double *b, int m, int T)
+			       kalman *K, double *b, int k, int T)
 {
-    int i, k = m - 1;
+    double s2;
+    int i;
 
     pmod->t1 = ainfo->t1;
     pmod->t2 = ainfo->t2;
@@ -892,8 +893,10 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 	pmod->coeff[i] = b[i];
     }
 
-    pmod->sigma = sqrt(b[k]);
-    pmod->errcode = arma_OPG_stderrs(pmod, K, b, m, T);
+    s2 = kalman_get_arma_variance(K);
+    pmod->sigma = sqrt(s2);
+
+    pmod->errcode = arma_OPG_stderrs(pmod, K, b, s2, k, T);
 
     pmod->lnL = kalman_get_loglik(K);
 
@@ -1120,7 +1123,7 @@ static void transform_arma_const (double *b, struct arma_info *ainfo)
     b[0] /= (narfac * sarfac);
 }
 
-static int kalman_arma (const int *alist, double *coeff, double s2,
+static int kalman_arma (const int *alist, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			struct arma_info *ainfo, MODEL *pmod,
 			PRN *prn)
@@ -1133,7 +1136,6 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     int r, r2, m;
 
     /* BFGS apparatus */
-    int ncoeff = ainfo->nc + 1;
     int maxit = 1000;
     double reltol = 1.0e-12;
     int fncount = 0;
@@ -1142,7 +1144,7 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     double *b;
     int i, T, err = 0;
 
-    b = malloc(ncoeff * sizeof *b);
+    b = malloc(ainfo->nc * sizeof *b);
     if (b == NULL) {
 	return E_ALLOC;
     }
@@ -1150,10 +1152,9 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
     for (i=0; i<ainfo->nc; i++) {
 	b[i] = coeff[i];
     }
-    b[ainfo->nc] = s2;
 
 #if ARMA_DEBUG
-    for (i=0; i<ncoeff; i++) {
+    for (i=0; i<ainfo->nc; i++) {
 	fprintf(stderr, "initial b[%d] = %g\n", i, b[i]);
     }
 #endif
@@ -1223,18 +1224,19 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
 	    ainfo->p, ainfo->P, ainfo->q, ainfo->Q, ainfo->ifc, 
 	    ainfo->nexo, ainfo->t1, ainfo->t2);
     fprintf(stderr, "Kalman dims: r = %d, k = %d, T = %d, ncoeff=%d\n", 
-	    r, k, T, ncoeff);
+	    r, k, T, ainfo->nc);
 #endif
 
     /* publish ainfo */
     kainfo = ainfo;
 
-    K = kalman_new(S, P, F, A, H, Q, NULL, y, x, ncoeff, ainfo->ifc, &err);
+    K = kalman_new(S, P, F, A, H, Q, NULL, y, x, ainfo->nc, ainfo->ifc, &err);
 
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
     } else {
-	err = BFGS_max(ncoeff, b, maxit, reltol, &fncount, &grcount,
+	kalman_use_ARMA_ll(K);
+	err = BFGS_max(ainfo->nc, b, maxit, reltol, &fncount, &grcount,
 		       kalman_arma_ll, kalman_arma_gradient, K,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
 	if (err) {
@@ -1246,7 +1248,7 @@ static int kalman_arma (const int *alist, double *coeff, double s2,
 	pmod->errcode = err;
     } else {
 	kalman_arma_finish(pmod, alist, ainfo, Z, pdinfo, 
-			   K, b, ncoeff, T);
+			   K, b, ainfo->nc, T);
     } 
 
     kalman_free(K);
@@ -1540,7 +1542,7 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
    will be via exact ML.
 */
 
-static int ar_init_by_ls (const int *list, double *coeff, double *s2,
+static int ar_init_by_ls (const int *list, double *coeff, 
 			  const double **Z, const DATAINFO *pdinfo,
 			  struct arma_info *ainfo)
 {
@@ -1579,9 +1581,6 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	for (i=0; i<nq; i++) {
 	    coeff[i] = 0.0; 
 	} 
-	if (s2 != NULL) {
-	    *s2 = gretl_variance(ainfo->t1, ainfo->t2, y); /* ? */
-	}
 	return 0;
     }
 
@@ -1750,9 +1749,6 @@ static int ar_init_by_ls (const int *list, double *coeff, double *s2,
 	    /* insert zeros for MA coeffs */
 	    coeff[i + np + ainfo->ifc] = 0.0;
 	} 
-	if (s2 != NULL) {
-	    *s2 = armod.sigma * armod.sigma;
-	}
     }
 
     if (!err && arma_exact_ml(ainfo) && ainfo->ifc) {
@@ -1821,7 +1817,7 @@ static int alt_ar_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
    first-pass residuals.
 */
 
-static int alt_ar_init (const int *list, double *coeff, double *s2,
+static int alt_ar_init (const int *list, double *coeff, 
 			const double **Z, const DATAINFO *pdinfo,
 			struct arma_info *ainfo)
 {
@@ -2056,8 +2052,6 @@ static int alt_ar_init (const int *list, double *coeff, double *s2,
 #endif
 	    coeff[pos++] = armod.coeff[i+1];
 	}
-
-	*s2 = armod.sigma * armod.sigma;
     }
 
     bailout:
@@ -2174,7 +2168,6 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     int *alist = NULL;
     PRN *aprn = NULL;
     MODEL armod;
-    double s2 = 0.0;
     struct arma_info ainfo;
     int init_done = 0;
     char flags = 0;
@@ -2234,7 +2227,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	/* FIXME: what's the optimal conditionality here? */
 	err = alt_ar_init_check(pdinfo, &ainfo);
 	if (!err) {
-	    err = alt_ar_init(alist, coeff, &s2, Z, pdinfo, &ainfo);
+	    err = alt_ar_init(alist, coeff, Z, pdinfo, &ainfo);
 	}
 	if (!err) {
 	    init_done = 1;
@@ -2242,7 +2235,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (!init_done) {
-	err = ar_init_by_ls(alist, coeff, &s2, Z, pdinfo, &ainfo);
+	err = ar_init_by_ls(alist, coeff, Z, pdinfo, &ainfo);
     }
 
     if (err) {
@@ -2251,7 +2244,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (flags & ARMA_EXACT) {
-	kalman_arma(alist, coeff, s2, Z, pdinfo, &ainfo, &armod, aprn);
+	kalman_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, aprn);
     } else {
 	bhhh_arma(alist, coeff, Z, pdinfo, &ainfo, &armod, aprn);
     }

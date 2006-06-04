@@ -22,7 +22,13 @@
 
 #define KDEBUG 0
 
+enum {
+    KALMAN_ARMA_LL = 1 << 0
+};
+
 struct kalman_ {
+    int flags;  /* for recording any options */
+
     int r; /* rows of S */
     int n; /* rows of y_t */
     int k; /* rows of x_t */
@@ -30,6 +36,9 @@ struct kalman_ {
 
     int ncoeff;    /* number of adjustable coefficients */
     int ifc;       /* include a constant (1) or not (0) */
+
+    double SSRw;   /* \sigma_{t=1}^T e_t^{\prime} V_t^{-1} e_t */
+    double sumVt;  /* \sigma_{t=1}^T ln |V_t| */
     double loglik; /* log-likelihood */
 
     int nonshift; /* When F is a companion matrix (e.g. in arma), the
@@ -68,6 +77,8 @@ struct kalman_ {
     gretl_matrix *Tmprr_2a;
     gretl_matrix *Tmprr_2b;
 };
+
+#define arma_ll(K) (K->flags & KALMAN_ARMA_LL)
 
 void kalman_free (kalman *K)
 {
@@ -296,8 +307,12 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->Tmprr_2a = NULL;
     K->Tmprr_2b = NULL;
 
+    K->flags = 0;
     K->ncoeff = ncoeff;
     K->ifc = ifc;
+
+    K->SSRw = NADBL;
+    K->sumVt = NADBL;
     K->loglik = NADBL;
 
     K->S0 = gretl_matrix_copy(S);
@@ -481,15 +496,17 @@ static int kalman_iter_1 (kalman *K, double *llt)
     /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "VE" */
     err += gretl_matrix_multiply(K->V, K->E, K->VE);
 
-    /* form (y - Ax - H'S)' * (H'PH + R)^{-1} * (y - Ax - H'S) */
-    err += gretl_matrix_multiply_mod(K->E, GRETL_MOD_TRANSPOSE,
-				     K->VE, GRETL_MOD_NONE,
-				     K->Tmpnn);
+    if (llt != NULL) {
+	/* form (y - Ax - H'S)' * (H'PH + R)^{-1} * (y - Ax - H'S) */
+	err += gretl_matrix_multiply_mod(K->E, GRETL_MOD_TRANSPOSE,
+					 K->VE, GRETL_MOD_NONE,
+					 K->Tmpnn);
 
-    /* contribution to log-likelihood of the above -- see Hamilton
-       (1994) equation [13.4.1] page 385.
-    */
-    *llt -= .5 * gretl_matrix_get(K->Tmpnn, 0, 0);
+	/* contribution to log-likelihood of the above -- see Hamilton
+	   (1994) equation [13.4.1] page 385.
+	*/
+	*llt -= .5 * gretl_matrix_get(K->Tmpnn, 0, 0);
+    }
 
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
@@ -559,6 +576,11 @@ void kalman_set_nonshift (kalman *K, int n)
     K->nonshift = n;
 }
 
+void kalman_use_ARMA_ll (kalman *K)
+{
+    K->flags |= KALMAN_ARMA_LL;
+}
+
 /* Read from the appropriate row of x (T x k) and multiply by A' to
    form A'x_t.  Note this complication: if there's a constant as well
    as other exogenous vars present, the constant does _not_ have a
@@ -620,6 +642,22 @@ kalman_record_error (gretl_matrix *E, kalman *K, int t)
     }
 }
 
+/* increment the "weighted SSR": add e'_t V_t^{-1} e_t */
+
+static int kalman_incr_S (kalman *K)
+{
+    double x;
+    int err = 0;
+
+    x = gretl_scalar_b_X_b(K->E, GRETL_MOD_TRANSPOSE,
+			   K->V, &err);
+    if (!err) {
+	K->SSRw += x;
+    }
+
+    return err;
+}
+
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct: see kalman_new().
@@ -640,7 +678,7 @@ kalman_record_error (gretl_matrix *E, kalman *K, int t)
 
 int kalman_forecast (kalman *K, gretl_matrix *E)
 {
-    double ldet, llt = 0.0;
+    double ldet;
     int t, err = 0;
 
 #if KDEBUG
@@ -649,6 +687,11 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 
     if (K->nonshift < 0) {
 	K->nonshift = count_nonshifts(K->F);
+    }
+
+    if (arma_ll(K)) {
+	K->SSRw = 0.0;
+	K->sumVt = 0.0;
     }
 
     K->loglik = 0.0;
@@ -666,6 +709,8 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
     }
 
     for (t=0; t<K->T && !err; t++) {
+	double llt = 0.0;
+
 #if KDEBUG > 1
 	kalman_print_state(K, t);
 #endif
@@ -681,10 +726,14 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 
 	ldet = gretl_matrix_log_determinant(K->HPH, &err);
 	if (err) {
-	    K->loglik = llt = NADBL;
+	    K->loglik = NADBL;
 	    break;
 	} else {
-	    llt = -(K->n / 2.0) * LN_2_PI - .5 * ldet;
+	    if (arma_ll(K)) {
+		K->sumVt += ldet;
+	    } else {
+		llt = -(K->n / 2.0) * LN_2_PI - .5 * ldet;
+	    }
 	}
 
 	err = gretl_invert_symmetric_matrix(K->V);
@@ -701,19 +750,26 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	}
 
 	/* first stage of dual iteration */
-	err = kalman_iter_1(K, &llt);
-	if (na(llt)) {
-	    K->loglik = NADBL;
-	    err = 1;
+	if (arma_ll(K)) {
+	    err = kalman_iter_1(K, NULL);
+	    if (!err) {
+		err = kalman_incr_S(K);
+	    }
 	} else {
-	    K->loglik += llt;
-	    if (isnan(K->loglik)) {
+	    err = kalman_iter_1(K, &llt);
+	    if (na(llt)) {
+		K->loglik = NADBL;
 		err = 1;
+	    } else {
+		K->loglik += llt;
+		if (isnan(K->loglik)) {
+		    err = 1;
+		}
 	    }
 	}
-
+	
 	/* record forecast errors if wanted */
-	if (E != NULL) {
+	if (!err && E != NULL) {
 	    kalman_record_error(E, K, t);
 	}
 
@@ -732,6 +788,16 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
     if (isnan(K->loglik) || isinf(K->loglik)) {
 	K->loglik = NADBL;
     } 
+
+    if (arma_ll(K) && !na(K->loglik)) {
+	double k = -(K->T / 2.0) * LN_2_PI;
+
+	K->loglik = k - (K->T * K->n / 2.0) * (1.0 + log(K->SSRw / K->T))
+	    - 0.5 * K->sumVt;
+	if (isnan(K->loglik) || isinf(K->loglik)) {
+	    K->loglik = NADBL;
+	} 
+    }
 
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: err=%d, ll=%.10g\n", err, 
@@ -754,6 +820,25 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 double kalman_get_loglik (const kalman *K)
 {
     return K->loglik;
+}
+
+/**
+ * kalman_get_arma_variance:
+ * @K: pointer to Kalman struct.
+ * 
+ * Retrieves the estimated variance for an ARMA model
+ * estimated using the Kalman filter.
+ * 
+ * Returns: sigma-squared value, or #NADBL on failure.
+ */
+
+double kalman_get_arma_variance (const kalman *K)
+{
+    if (na(K->SSRw)) {
+	return NADBL;
+    } else {
+	return K->SSRw / K->T;
+    }
 }
 
 /**

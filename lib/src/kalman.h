@@ -37,11 +37,15 @@ int kalman_get_ncoeff (const kalman *K);
 
 double kalman_get_loglik (const kalman *K);
 
+double kalman_get_arma_variance (const kalman *K);
+
 int kalman_set_initial_state_vector (kalman *K, const gretl_matrix *S);
 
 int kalman_set_initial_MSE_matrix (kalman *K, const gretl_matrix *P);
 
 void kalman_set_nonshift (kalman *K, int n);
+
+void kalman_use_ARMA_ll (kalman *K);
 
 #endif /* KALMAN_H_ */
 
