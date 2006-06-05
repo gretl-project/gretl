@@ -381,6 +381,22 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
+static double 
+matrix_maxdiff (const gretl_matrix *a, const gretl_matrix *b)
+{
+    double diff, maxdiff = 0.0;
+    int i, n = a->rows * a->cols;
+
+    for (i=1; i<n; i++) {
+	diff = fabs(b->val[i] - a->val[i]);
+	if (diff > maxdiff) {
+	    maxdiff = diff;
+	}
+    }
+
+    return maxdiff;
+}
+
 /* matrix multiplication, a * b, with no checks */
 
 static void fast_multiply (const gretl_matrix *a, const gretl_matrix *b,
@@ -547,7 +563,6 @@ static int kalman_iter_1 (kalman *K, double *llt)
     err += gretl_matrix_subtract_from(K->E, K->Tmpnn);
 
     /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "VE" */
-    /* err += gretl_matrix_multiply(K->V, K->E, K->VE); */
     fast_multiply(K->V, K->E, K->VE);
 
     if (llt != NULL) {
@@ -729,6 +744,7 @@ static int kalman_incr_S (kalman *K)
 int kalman_forecast (kalman *K, gretl_matrix *E)
 {
     double ldet;
+    int update_P = 1;
     int t, err = 0;
 
 #if KDEBUG
@@ -814,15 +830,29 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	    kalman_record_error(E, K, t);
 	}
 
+	/* update state vector */
 	if (!err) {
+	    gretl_matrix_copy_values(K->S0, K->S1);
+	}
+
+	if (!err && update_P) {
 	    /* second stage of dual iteration */
 	    err = kalman_iter_2(K);
 	}
 
 	if (!err) {
-	    /* update state vector and MSE matrix */
-	    gretl_matrix_copy_values(K->S0, K->S1);
-	    gretl_matrix_copy_values(K->P0, K->P1);
+	    /* update MSE matrix, if needed */
+	    if (arma_ll(K) && update_P && t > 24) {
+		double x = matrix_maxdiff(K->P1, K->P0);
+
+		if (x == 0.0) {
+		    update_P = 0;
+		    K->P0->val[0] += 1.0;
+		}
+	    }
+	    if (update_P) {
+		gretl_matrix_copy_values(K->P0, K->P1);
+	    } 
 	}
     }
 
