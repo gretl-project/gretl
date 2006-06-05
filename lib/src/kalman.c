@@ -402,7 +402,7 @@ static void fast_multiply (const gretl_matrix *a, const gretl_matrix *b,
     }
 }
 
-/* matrix multiplication, a' * b,  with no checks */
+/* matrix multiplication, a' * b, with no checks */
 
 static void fast_A_prime_B (const gretl_matrix *a, const gretl_matrix *b,
 			    gretl_matrix *c)
