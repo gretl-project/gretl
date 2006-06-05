@@ -842,7 +842,7 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 
 	if (!err) {
 	    /* update MSE matrix, if needed */
-	    if (arma_ll(K) && update_P && t > 24) {
+	    if (arma_ll(K) && update_P && t > 20) {
 		double x = matrix_maxdiff(K->P1, K->P0);
 
 		if (x == 0.0) {
