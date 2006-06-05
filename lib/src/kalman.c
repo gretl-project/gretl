@@ -395,11 +395,12 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 					    K->F, GRETL_MOD_TRANSPOSE,
 					    B);
 	} else {
-	    ret = gretl_matrix_multiply(K->F, A, B);
+	    ret = gretl_matrix_multiply_mod(K->F, GRETL_MOD_NONE,
+					    A, GRETL_MOD_NONE,
+					    B);
 	}
     } else { 
 	int i, j, c;
-	double x;
 	int r1 = K->nonshift;
 	int r2 = K->r - r1;
 	gretl_matrix *top;
@@ -408,62 +409,102 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 	if (postmult) {
 	    /* if post-multiplying by F', "top" actually means "left" */
 
-	    topF = gretl_matrix_reuse(K->Tmprr_2a, K->r, r1);
+	    topF = K->Tmprr_2a;
+	    topF->rows = K->r;
+	    topF->cols = r1;
 
+	    /* copy from F to topF */
 	    for (i=0; i<r1; i++) {
 		for (j=0; j<K->r; j++) {
-		    x = gretl_matrix_get(K->F, i, j);
-		    gretl_matrix_set(topF, j, i, x);
+		    topF->val[mdx(topF, j, i)] = 
+			K->F->val[mdx(K->F, i, j)];
 		}
 	    }
 	    
-	    c = gretl_matrix_rows(A);
-	    top = gretl_matrix_reuse(K->Tmprr_2b, c, r1);
-	    
-	    gretl_matrix_multiply(A, topF, top);
-	    
-	    for (i=0; i<c; i++) {
-		for (j=0; j<r1; j++) {
-		    x = gretl_matrix_get(top, i, j);
-		    gretl_matrix_set(B, i, j, x);
+	    c = A->rows;
+
+	    if (gretl_is_zero_matrix(A)) {
+		for (i=0; i<c; i++) {
+		    for (j=0; j<r1; j++) {
+			B->val[mdx(B, i, j)] = 0.0;
+		    }
 		}
-	    }
+		for (i=0; i<c; i++) {
+		    for (j=0; j<r2; j++) {
+			B->val[mdx(B, i, j + r1)] = 0.0;
+		    }
+		}		
+	    } else {
+		top = K->Tmprr_2b;
+		top->rows = c;
+		top->cols = r1;
+
+		gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
+					  topF, GRETL_MOD_NONE,
+					  top);
+		for (i=0; i<c; i++) {
+		    for (j=0; j<r1; j++) {
+			B->val[mdx(B, i, j)] = 
+			    top->val[mdx(top, i, j)];
+		    }
+		}
 	    
-	    for (i=0; i<c; i++) {
-		for (j=0; j<r2; j++) {
-		    x = gretl_matrix_get(A, i, j);
-		    gretl_matrix_set(B, i, j + r1, x);
+		for (i=0; i<c; i++) {
+		    for (j=0; j<r2; j++) {
+			B->val[mdx(B, i, j + r1)] = 
+			    A->val[mdx(A, i, j)];
+		    }
 		}
 	    }
 
 	} else {
 	    /* pre-multiplying by F */
 
-	    topF = gretl_matrix_reuse(K->Tmprr_2a, r1, K->r);
+	    topF = K->Tmprr_2a;
+	    topF->rows = r1;
+	    topF->cols = K->r;
 
 	    for (i=0; i<r1; i++) {
 		for (j=0; j<K->r; j++) {
-		    x = gretl_matrix_get(K->F, i, j);
-		    gretl_matrix_set(topF, i, j, x);
+		    topF->val[mdx(topF, i, j)] = 
+			K->F->val[mdx(K->F, i, j)];
 		}
 	    }
 	    
-	    c = gretl_matrix_cols(A);
-	    top = gretl_matrix_reuse(K->Tmprr_2b, r1, c);
-	    
-	    gretl_matrix_multiply(topF, A, top);
-	    
-	    for (i=0; i<r1; i++) {
-		for (j=0; j<c; j++) {
-		    x = gretl_matrix_get(top, i, j);
-		    gretl_matrix_set(B, i, j, x);
+	    c = A->cols;
+
+	    if (gretl_is_zero_matrix(A)) {
+		for (i=0; i<r1; i++) {
+		    for (j=0; j<c; j++) {
+			B->val[mdx(B, i, j)] = 0.0;
+		    }
 		}
-	    }
+		for (i=0; i<r2; i++) {
+		    for (j=0; j<c; j++) {
+			B->val[mdx(B, i + r1, j)] = 0.0;
+		    }
+		}
+	    } else {
+		top = K->Tmprr_2b;
+		top->rows = r1;
+		top->cols = c;
+		
+		gretl_matrix_multiply_mod(topF, GRETL_MOD_NONE,
+					  A, GRETL_MOD_NONE,
+					  top);
 	    
-	    for (i=0; i<r2; i++) {
-		for (j=0; j<c; j++) {
-		    x = gretl_matrix_get(A, i, j);
-		    gretl_matrix_set(B, i + r1, j, x);
+		for (i=0; i<r1; i++) {
+		    for (j=0; j<c; j++) {
+			B->val[mdx(B, i, j)] =
+			    top->val[mdx(top, i, j)];
+		    }
+		}
+	    
+		for (i=0; i<r2; i++) {
+		    for (j=0; j<c; j++) {
+			B->val[mdx(B, i + r1, j)] =
+			    A->val[mdx(A, i, j)];
+		    }
 		}
 	    }
 	}
@@ -505,7 +546,7 @@ static int kalman_iter_1 (kalman *K, double *llt)
 	/* contribution to log-likelihood of the above -- see Hamilton
 	   (1994) equation [13.4.1] page 385.
 	*/
-	*llt -= .5 * gretl_matrix_get(K->Tmpnn, 0, 0);
+	*llt -= .5 * K->Tmpnn->val[0];
     }
 
     /* form FPH */
@@ -599,11 +640,11 @@ static void kalman_set_Ax (kalman *K, int t)
 	axi = 0.0;
 	/* case j == 0 */
 	if (K->ifc) {
-	    axi += gretl_matrix_get(K->A, 0, i); /* \times 1.0, implicitly */
+	    axi += K->A->val[mdx(K->A, 0, i)]; /* \times 1.0, implicitly */
 	}
 	for (j=1; j<K->k; j++) {
-	    aji = gretl_matrix_get(K->A, j, i);
-	    xjt = gretl_matrix_get(K->x, t, j - 1);
+	    aji = K->A->val[mdx(K->A, j, i)];
+	    xjt = K->x->val[mdx(K->x, t, j - 1)];
 	    axi += aji * xjt;
 	}
 	gretl_vector_set(K->Ax, i, axi);
@@ -617,12 +658,10 @@ static void kalman_set_Ax (kalman *K, int t)
 static void
 kalman_initialize_error (kalman *K, int t)
 {
-    double yti;
     int i;
 
     for (i=0; i<K->n; i++) {
-	yti = gretl_matrix_get(K->y, t, i);
-	gretl_vector_set(K->E, i, yti);    
+	K->E->val[i] = K->y->val[mdx(K->y, t, i)];
     }
 }
 
@@ -633,12 +672,10 @@ kalman_initialize_error (kalman *K, int t)
 static void
 kalman_record_error (gretl_matrix *E, kalman *K, int t)
 {
-    double eti;
     int i;
 
     for (i=0; i<K->n; i++) {
-	eti = gretl_vector_get(K->E, i);
-	gretl_matrix_set(E, t, i, eti);    
+	E->val[mdx(E, t, i)] = K->E->val[i]; /* K->E is a vector */
     }
 }
 

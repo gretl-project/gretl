@@ -1598,8 +1598,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 int panel_hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 			gretlopt opt, PRN *prn) 
 {
-    /* FIXME */
-    if (pmod->ci != OLS || dataset_is_panel(pdinfo)) {
+    if (pmod->ci != OLS || !dataset_is_panel(pdinfo)) {
 	pputs(prn, _("This test is only relevant for pooled models\n"));
 	return 1;
     }

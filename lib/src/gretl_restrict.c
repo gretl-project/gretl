@@ -1100,7 +1100,7 @@ static int test_restriction_set (gretl_restriction_set *rset,
     gretl_matrix_print(br, "br");
 #endif  
 
-    if (!gretl_is_zero_vector(q)) {
+    if (!gretl_is_zero_matrix(q)) {
 	err = gretl_matrix_subtract_from(br, q);
 	if (err) {
 	    fprintf(stderr, "Failed: gretl_matrix_subtract_from(br, q)\n");

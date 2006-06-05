@@ -1801,6 +1801,9 @@ static char *corrgm_crit_string (void)
  * corrgram:
  * @varno: ID number of variable to process.
  * @order: integer order for autocorrelation function.
+ * @nparam: number of estimated parameters (e.g. for the
+ * case of ARMA), used to correct the degrees of freedom 
+ * for Q test.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
@@ -1814,10 +1817,11 @@ static char *corrgm_crit_string (void)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int corrgram (int varno, int order, double ***pZ, 
+int corrgram (int varno, int order, int nparam, double ***pZ, 
 	      DATAINFO *pdinfo, PRN *prn, gretlopt opt)
 {
-    double *acf, box, pm;
+    double box, pm90, pm95, pm99;
+    double *acf = NULL;
     double *pacf = NULL;
     int k, l, acf_m, pacf_m, nobs; 
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -1865,34 +1869,6 @@ int corrgram (int varno, int order, double ***pZ,
 	acf[l-1] = gretl_acf(nobs, l, &(*pZ)[varno][t1]);
     }
 
-    if (opt & OPT_R) {
-	pprintf(prn, "\n%s\n\n", _("Residual autocorrelation function"));
-    } else {
-	sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
-		pdinfo->varname[varno]);
-	pprintf(prn, "\n%s\n\n", gretl_tmp_str);
-    }
-
-    /* add Ljung-Box statistic */
-    box = 0;
-    for (t=0; t<acf_m; t++) { 
-	box += acf[t] * acf[t] / (nobs - t + 1);
-    }
-    box *= nobs * (nobs + 2.0);
-
-    pprintf(prn, "Ljung-Box Q' = %.4f\n", box);
-    pprintf(prn, _("Degrees of freedom = %d, p-value = %.4f\n\n"),
-	    acf_m, chisq(box, acf_m));
-
-    /* print acf */
-    for (t=0; t<acf_m; t++) {
-	pprintf(prn, "%5d)%8.4f", t + 1, acf[t]);
-	if ((t + 1) % 5 == 0) {
-	    pputc(prn, '\n');
-	}
-    }
-    pputc(prn, '\n');
-
     if (opt & OPT_A) { 
 	/* use ASCII graphics, not gnuplot */
 	double *xl = malloc(acf_m * sizeof *xl);
@@ -1909,6 +1885,14 @@ int corrgram (int varno, int order, double ***pZ,
 		 _("lag"), NULL, 0, prn);
 	free(xl);
     } 
+
+    if (opt & OPT_R) {
+	pprintf(prn, "\n%s\n\n", _("Residual autocorrelation function"));
+    } else {
+	sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
+		pdinfo->varname[varno]);
+	pprintf(prn, "\n%s\n\n", gretl_tmp_str);
+    }
 
     /* determine lag order for pacf (may have to be shorter than acf_m) */
     if (acf_m > nobs / 2 - 1) {
@@ -1927,35 +1911,49 @@ int corrgram (int varno, int order, double ***pZ,
     }
 
     /* for confidence bands */
-    pm = 1.96 / sqrt((double) nobs);
+    pm90 = 1.65 / sqrt((double) nobs);
+    pm95 = 1.96 / sqrt((double) nobs);
+    pm99 = 2.58 / sqrt((double) nobs);
 
     err = pacf_err = get_pacf(pacf, acf, pacf_m);
 
-    if (!err) {
-	pacf[0] = acf[0];
-	pprintf(prn, "\n%s", _("Partial autocorrelations"));
-	if (pacf_m < acf_m) {
-	    pprintf(prn, " (%s %d):\n\n", _("to lag"), pacf_m);
+    box = 0;
+
+    pprintf(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
+	pputs(prn, "\n\n");
+
+    for (t=0; t<acf_m; t++) {
+	pprintf(prn, "%5d%9.4f ", t + 1, acf[t]);
+	if (fabs(acf[t]) > pm99) {
+	    pputs(prn, " ***");
+	} else if (fabs(acf[t]) > pm95) {
+	    pputs(prn, " ** ");
+	} else if (fabs(acf[t]) > pm90) {
+	    pputs(prn, " *  ");
 	} else {
-	    pputs(prn, ":\n\n");
+	    pputs(prn, "    ");
 	}
-	for (k=0; k<pacf_m; k++) {
-	    pprintf(prn, "%5d)%8.4f", k+1, pacf[k]);
-	    if ((k + 1) % 5 == 0) {
-		pputc(prn, '\n');
+
+	if (t < pacf_m) {
+	    pprintf(prn, "%9.4f", pacf[t]);
+	    if (fabs(pacf[t]) > pm99) {
+		pputs(prn, " ***");
+	    } else if (fabs(pacf[t]) > pm95) {
+		pputs(prn, " ** ");
+	    } else if (fabs(pacf[t]) > pm90) {
+		pputs(prn, " *  ");
+	    } else {
+		pputs(prn, "    ");
 	    }
 	}
-    }
-    pputc(prn, '\n');
-    if (pacf_m % 5 > 0) {
+
+	box += (nobs * (nobs + 2.0)) * acf[t] * acf[t] / (nobs - t + 1);
+	pprintf(prn, "%12.4f", box);
+	if (t > nparam) {
+	    pprintf(prn, "  [%5.3f]", chisq(box, t - nparam));
+	}
 	pputc(prn, '\n');
     }
-
-    pprintf(prn, "%s: %s = %g\n", 
-	    /* xgettext:no-c-format */
-	    _("5% critical value"),
-	    corrgm_crit_string(),
-	    pm);
 
     if (opt & OPT_A) {
 	goto acf_getout;
@@ -1989,7 +1987,7 @@ int corrgram (int varno, int order, double ***pZ,
     fprintf(fq, "plot \\\n"
 	    "'-' using 1:2 notitle w impulses, \\\n"
 	    "%g title '+- %s' lt 2, \\\n"
-	    "%g notitle lt 2\n", pm, corrgm_crit_string(), -pm);
+	    "%g notitle lt 2\n", pm95, corrgm_crit_string(), -pm95);
     for (k=0; k<acf_m; k++) {
 	fprintf(fq, "%d %g\n", k + 1, acf[k]);
     }
@@ -2008,7 +2006,7 @@ int corrgram (int varno, int order, double ***pZ,
 	fprintf(fq, "plot \\\n"
 		"'-' using 1:2 notitle w impulses, \\\n"
 		"%g title '+- %s' lt 2, \\\n"
-		"%g notitle lt 2\n", pm, corrgm_crit_string(), -pm);
+		"%g notitle lt 2\n", pm95, corrgm_crit_string(), -pm95);
 	for (k=0; k<pacf_m; k++) {
 	    fprintf(fq, "%d %g\n", k + 1, pacf[k]);
 	}

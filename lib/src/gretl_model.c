@@ -2878,6 +2878,7 @@ int is_model_cmd (const char *s)
 	!strcmp(s, "tobit") ||
 	!strcmp(s, "poisson") ||
 	!strcmp(s, "panel") ||
+	!strcmp(s, "pooled") ||
 	!strcmp(s, "garch") ||
 	!strcmp(s, "logistic") ||
 	!strcmp(s, "endnls") ||

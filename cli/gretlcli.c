@@ -151,6 +151,8 @@ void noalloc (const char *str)
     exit(EXIT_FAILURE);
 }
 
+#define MSPEC_DEBUG 0
+
 int model_test_start (int test_ci, int model_id, PRN *prn)
 {
     int m, err = 0;
@@ -161,7 +163,7 @@ int model_test_start (int test_ci, int model_id, PRN *prn)
 	m = modelspec_last_index(modelspec);
     }
 
-#ifdef MSPEC_DEBUG
+#if MSPEC_DEBUG
     fprintf(stderr, "model_test_start: test_ci=%d, model_id=%d, m=%d\n",
 	    test_ci, model_id, m);
 #endif
@@ -1052,7 +1054,7 @@ static int exec_line (char *line, PRN *prn)
 
     case CORRGM:
 	k = atoi(cmd.param);
-	err = corrgram(cmd.list[1], k, &Z, datainfo, prn, OPT_A);
+	err = corrgram(cmd.list[1], k, 0, &Z, datainfo, prn, OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}
@@ -1671,7 +1673,7 @@ static int exec_line (char *line, PRN *prn)
     if (!err && (is_model_cmd(cmd.word) || alt_model)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
 	attach_subsample_to_model(models[0], datainfo);
-#ifdef MSPEC_DEBUG
+#if MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
 		(models[0])->ID, get_model_count());
 #endif

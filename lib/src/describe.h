@@ -126,7 +126,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
 int auto_acf_order (int pd, int nobs);
 
-int corrgram (int varno, int order, 
+int corrgram (int varno, int order, int nparam,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn, gretlopt opt);
 

@@ -578,16 +578,6 @@ static void write_big_theta (const double *theta,
 	mc[i] = 0.0;
     }
 
-#if 0
-    for (i=0; i<=ainfo->Q; i++) {
-	x = (i == 0)? -1 : Theta[i-1];
-        for (j=0; j<=ainfo->q; j++) {
-	    y = (j == 0)? -1 : theta[j-1];
-            k = j + ainfo->pd * i;
-	    mc[k] -= x * y;
-        }
-    }
-#else
     for (i=0; i<=ainfo->Q; i++) {
 	x = (i == 0)? 1 : Theta[i-1];
         for (j=0; j<=ainfo->q; j++) {
@@ -596,7 +586,6 @@ static void write_big_theta (const double *theta,
 	    mc[k] = x * y;
         }
     }
-#endif
 
     for (i=1; i<=qmax; i++) {
 	gretl_vector_set(H, i, mc[i]);
@@ -2161,6 +2150,24 @@ static int bhhh_arma (const int *alist, double *coeff,
     return pmod->errcode;
 }
 
+static int prefer_alt_init (struct arma_info *ainfo)
+{
+    int ret = 0;
+
+    if (ainfo->q > 1 || ainfo->Q > 0) {
+	ret = 1;
+	if (arma_exact_ml(ainfo)) {
+	    if (ainfo->P > 0) {
+		ret = 0;
+	    } else if (ainfo->p + ainfo->P > 0 && ainfo->nexo > 0) {
+		ret = 0;
+	    }
+	}
+    }
+
+    return ret;
+}
+
 MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn)
 {
@@ -2223,8 +2230,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* initialize the coefficients */
 
-    if (ainfo.q > 1 || ainfo.Q > 0) {
-	/* FIXME: what's the optimal conditionality here? */
+    if (prefer_alt_init(&ainfo)) {
 	err = alt_ar_init_check(pdinfo, &ainfo);
 	if (!err) {
 	    err = alt_ar_init(alist, coeff, Z, pdinfo, &ainfo);

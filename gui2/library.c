@@ -3584,9 +3584,9 @@ static void real_do_corrgm (double ***pZ, DATAINFO *pdinfo, int code)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	err = corrgram(cmd.list[1], order, pZ, pdinfo, prn, OPT_NONE);
+	err = corrgram(cmd.list[1], order, 0, pZ, pdinfo, prn, OPT_NONE);
     } else {
-	err = corrgram(pdinfo->v - 1, order, pZ, pdinfo, prn, OPT_R);
+	err = corrgram(pdinfo->v - 1, order, 0, pZ, pdinfo, prn, OPT_R);
     }
 
     if (err) {
@@ -6242,7 +6242,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case CORRGM:
 	k = atoi(cmd.param);
-	err = corrgram(cmd.list[1], k, &Z, datainfo, outprn, OPT_A);
+	err = corrgram(cmd.list[1], k, 0, &Z, datainfo, outprn, OPT_A);
 	if (err) {
 	    pprintf(prn, _("Failed to generate correlogram\n"));
 	}

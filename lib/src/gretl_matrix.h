@@ -346,7 +346,7 @@ int gretl_matrix_get_int (const gretl_matrix *m);
 
 int gretl_is_identity_matrix (const gretl_matrix *m);
 
-int gretl_is_zero_vector (const gretl_vector *v);
+int gretl_is_zero_matrix (const gretl_matrix *m);
 
 int gretl_matrices_are_equal (const gretl_matrix *a, const gretl_matrix *b,
 			      int *err);

@@ -192,6 +192,7 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 {
     FILE *fp;
     char line[80], statname[12];
+    int nobs = 0, nefobs = 0;
     double x;
 
     fp = gretl_fopen(fname, "r");
@@ -206,7 +207,8 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 
     while (fgets(line, sizeof line, fp)) {
 	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
-	    if (!strcmp(statname, "nobs")) pmod->nobs = (int) x;
+	    if (!strcmp(statname, "nobs")) nobs = (int) x;
+	    else if (!strcmp(statname, "nefobs")) nefobs = (int) x;
 	    else if (!strcmp(statname, "var")) pmod->sigma = sqrt(x);
 	    else if (!strcmp(statname, "lnlkhd")) pmod->lnL = x;
 	    else if (!strcmp(statname, "aic")) pmod->criterion[C_AIC] = x;
@@ -218,6 +220,13 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
     gretl_pop_c_numeric_locale();
 
     fclose(fp);
+
+    if (nobs != nefobs && nefobs > 0) {
+	pmod->nobs = nefobs;
+	pmod->t1 += nobs - nefobs;
+    } else {
+	pmod->nobs = nobs;
+    }
 
     return 0;
 }
@@ -730,7 +739,7 @@ static void delete_old_files (const char *path)
 {
     const char *exts[] = {
 	"acm", "itr", "lkf", "lks", "mdl", "est", "rts",
-	"rcm", "rsd", "ftr", "err", "log", NULL
+	"rcm", "rsd", "ftr", "err", "log", "out", NULL
     };
     char old[MAXLEN];
     int i, n = strlen(path);

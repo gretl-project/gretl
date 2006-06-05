@@ -1948,9 +1948,11 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
     int aidx, bidx;
     double targ;
 
+#if 0
     assert(a != NULL);
     assert(b != NULL);
     assert(c != NULL);
+#endif
 
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "
@@ -4651,18 +4653,18 @@ int gretl_is_identity_matrix (const gretl_matrix *m)
 }
 
 /**
- * gretl_is_zero_vector:
- * @v: vector to examine.
+ * gretl_is_zero_matrix:
+ * @m: matrix to examine.
  *
- * Returns: 1 if @v is a zero vector, 0 otherwise.
+ * Returns: 1 if @m is a zero matrix, 0 otherwise.
  */
 
-int gretl_is_zero_vector (const gretl_vector *v)
+int gretl_is_zero_matrix (const gretl_matrix *m)
 {
-    int i, n = gretl_vector_get_length(v);
+    int i, n = m->rows * m->cols;
 
     for (i=0; i<n; i++) {
-	if (v->val[i] != 0.0) return 0;
+	if (m->val[i] != 0.0) return 0;
     }
 
     return 1;
