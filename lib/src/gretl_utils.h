@@ -120,14 +120,6 @@ int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn);
 
 int balanced_panel (const DATAINFO *pdinfo);
 
-/* multiple-precision utilities */
-
-void free_gretl_mp_results (mp_results *mpvals);
-
-mp_results *gretl_mp_results_new (int totvar);
-
-int allocate_mp_varnames (mp_results *mpvals);
-
 /* hypothesis tests mechanism */
 
 void record_test_result (double teststat, double pval, char *blurb);

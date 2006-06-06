@@ -597,13 +597,15 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 {
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, double ***, 
-                 DATAINFO *, PRN *, char *, mp_results *);
+                 DATAINFO *, char *, MODEL *);
     int *list = NULL, *polylist = NULL;
     char errbuf[MAXLEN];
     int i, err = 0;
-    int getvals = 1, realv = dinfo->v - npoly;
-    mp_results *gretlvals = NULL;
+    int realv = dinfo->v - npoly;
+    MODEL model;
     double diffmax = 0.0, diff = 0.0;
+
+    gretl_model_init(&model);
 
     /* create regression list */
     list = malloc((realv + 1) * sizeof *list);
@@ -636,8 +638,6 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 	}
     }
 
-    if (getvals) gretlvals = gretl_mp_results_new (certvals->ncoeff);
-
 #ifdef STANDALONE
     mplsq = get_mplsq(&handle);
 #else
@@ -649,101 +649,98 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     }
 
     if (!err) {
-        err = (*mplsq)(list, polylist, pZ, dinfo, prn, 
-                       errbuf, gretlvals); 
+        err = (*mplsq)(list, polylist, pZ, dinfo,  
+                       errbuf, &model); 
     }
 
     close_plugin(handle);
     free(list);
-    if (polylist) free(polylist);
+    free(polylist);
 
-    if (gretlvals != NULL) {
+    if (verbose) {
+	pprintf(prn, "\nChecking gretl multiple-precision results:\n\n"
+		"%44s%24s\n\n", "certified", "libgretl");
+    }
 
-	if (verbose) {
-	    pprintf(prn, "\nChecking gretl multiple-precision results:\n\n"
-		    "%44s%24s\n\n", "certified", "libgretl");
+    for (i=0; i<certvals->ncoeff; i++) {
+	char label[16];
+
+	if (verbose && !na(certvals->coeff[i])) {
+	    sprintf(label, "B[%d] estimate", i);
+	    pprintf(prn, " %-20s %#24.*g %#24.*g\n",
+		    label,
+		    MP_CHECK_DIGITS, certvals->coeff[i],
+		    MP_CHECK_DIGITS, model.coeff[i]);
 	}
 
-	for (i=0; i<certvals->ncoeff; i++) {
-	    char label[16];
-
-	    if (verbose && !na(certvals->coeff[i])) {
-		sprintf(label, "B[%d] estimate", i);
-		pprintf(prn, " %-20s %#24.*g %#24.*g\n",
-			label,
-			MP_CHECK_DIGITS, certvals->coeff[i],
-			MP_CHECK_DIGITS, gretlvals->coeff[i]);
-	    }
-
-	    if (mp_vals_differ(certvals->coeff[i], gretlvals->coeff[i],
-			       &diff, prn)) {
-		if (diff > diffmax) diffmax = diff;
-	    }
+	if (mp_vals_differ(certvals->coeff[i], model.coeff[i],
+			   &diff, prn)) {
+	    if (diff > diffmax) diffmax = diff;
+	}
 		
 
-	    if (verbose && !na(certvals->sderr[i])) {
-		pprintf(prn, " %-20s %#24.*g %#24.*g\n",
-			"(std. error)",
-			MP_CHECK_DIGITS, certvals->sderr[i],
-			MP_CHECK_DIGITS, gretlvals->sderr[i]);
-	    }
-
-	    if (mp_vals_differ(certvals->sderr[i], gretlvals->sderr[i],
-			       &diff, prn)) {
-		if (diff > diffmax) diffmax = diff;
-	    }
-
+	if (verbose && !na(certvals->sderr[i])) {
+	    pprintf(prn, " %-20s %#24.*g %#24.*g\n",
+		    "(std. error)",
+		    MP_CHECK_DIGITS, certvals->sderr[i],
+		    MP_CHECK_DIGITS, model.sderr[i]);
 	}
 
-	if (verbose) {
-	    pputc(prn, '\n');
-
-	    pprintf(prn, " %-20s %#24.*g %#24.*g\n"
-		    " %-20s %#24.*g %#24.*g\n"
-		    " %-20s %#24.*g %#24.*g\n"
-		    " %-20s %#24.*g %#24.*g\n", 
-		    "standard error", 
-		    MP_CHECK_DIGITS, certvals->sigma, 
-		    MP_CHECK_DIGITS, gretlvals->sigma,
-		    "error sum of squares", 
-		    MP_CHECK_DIGITS, certvals->ess, 
-		    MP_CHECK_DIGITS, gretlvals->ess,
-		    "R-squared", 
-		    MP_CHECK_DIGITS, certvals->rsq, 
-		    MP_CHECK_DIGITS, gretlvals->rsq,
-		    "F", 
-		    MP_CHECK_DIGITS, certvals->fstt, 
-		    MP_CHECK_DIGITS, gretlvals->fstt);
-	}
-
-	if (mp_vals_differ(certvals->sigma, gretlvals->sigma, &diff, prn)) {
-	    if (diff > diffmax) diffmax = diff;
-	}
-	if (mp_vals_differ(certvals->ess, gretlvals->ess, &diff, prn)) {
-	    if (diff > diffmax) diffmax = diff;
-	}
-	if (mp_vals_differ(certvals->rsq, gretlvals->rsq, &diff, prn)) {
-	    if (diff > diffmax) diffmax = diff;
-	}
-	if (mp_vals_differ(certvals->fstt, gretlvals->fstt, &diff, prn)) {
+	if (mp_vals_differ(certvals->sderr[i], model.sderr[i],
+			   &diff, prn)) {
 	    if (diff > diffmax) diffmax = diff;
 	}
 
-	if (verbose) pputc(prn, '\n');
-
-	if (diffmax > 0.0) {
-	    *mpfails += 1;
-	    pprintf(prn, "* Using gretl GMP plugin: errors found when using"
-		    " %d significant figures\n  (largest error = %g)\n",
-		    MP_CHECK_DIGITS, diffmax);
-	} else {
-	    pprintf(prn, "* Using gretl GMP plugin: results correct to"
-		    " at least %d digits\n",
-		    MP_CHECK_DIGITS);
-	}
-
-	free_gretl_mp_results (gretlvals);
     }
+
+    if (verbose) {
+	pputc(prn, '\n');
+
+	pprintf(prn, " %-20s %#24.*g %#24.*g\n"
+		" %-20s %#24.*g %#24.*g\n"
+		" %-20s %#24.*g %#24.*g\n"
+		" %-20s %#24.*g %#24.*g\n", 
+		"standard error", 
+		MP_CHECK_DIGITS, certvals->sigma, 
+		MP_CHECK_DIGITS, model.sigma,
+		"error sum of squares", 
+		MP_CHECK_DIGITS, certvals->ess, 
+		MP_CHECK_DIGITS, model.ess,
+		"R-squared", 
+		MP_CHECK_DIGITS, certvals->rsq, 
+		MP_CHECK_DIGITS, model.rsq,
+		"F", 
+		MP_CHECK_DIGITS, certvals->fstt, 
+		MP_CHECK_DIGITS, model.fstt);
+    }
+
+    if (mp_vals_differ(certvals->sigma, model.sigma, &diff, prn)) {
+	if (diff > diffmax) diffmax = diff;
+    }
+    if (mp_vals_differ(certvals->ess, model.ess, &diff, prn)) {
+	if (diff > diffmax) diffmax = diff;
+    }
+    if (mp_vals_differ(certvals->rsq, model.rsq, &diff, prn)) {
+	if (diff > diffmax) diffmax = diff;
+    }
+    if (mp_vals_differ(certvals->fstt, model.fstt, &diff, prn)) {
+	if (diff > diffmax) diffmax = diff;
+    }
+
+    if (verbose) pputc(prn, '\n');
+
+    if (diffmax > 0.0) {
+	*mpfails += 1;
+	pprintf(prn, "* Using gretl GMP plugin: errors found when using"
+		" %d significant figures\n  (largest error = %g)\n",
+		MP_CHECK_DIGITS, diffmax);
+    } else {
+	pprintf(prn, "* Using gretl GMP plugin: results correct to"
+		" at least %d digits\n",
+		MP_CHECK_DIGITS);
+    }
+
+    clear_model(&model);
 
     return err;
 }
