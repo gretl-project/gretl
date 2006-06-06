@@ -1651,12 +1651,12 @@ static int add_model_record (LOOPSET *loop)
 
     models = realloc(loop->models, (nm + 1) * sizeof *models);
     if (models == NULL) {
-	err = 1;
+	err = E_ALLOC;
     } else {
 	loop->models = models;
 	loop->models[nm] = gretl_model_new();
 	if (loop->models[nm] == NULL) {
-	    err = 1;
+	    err = E_ALLOC;
 	} else {
 	    loop->models[nm]->ID = nm + 1;
 	}
@@ -1667,6 +1667,23 @@ static int add_model_record (LOOPSET *loop)
     }
 
     return err;
+}
+
+int model_is_in_loop (const MODEL *pmod)
+{
+    LOOPSET *loop = currloop;
+    int i;
+
+    while (loop != NULL) {
+	for (i=0; i<loop->n_models; i++) {
+	    if (pmod == loop->models[i]) {
+		return 1;
+	    }
+	}
+	loop = loop->parent;
+    }
+
+    return 0;
 }
 
 static int add_loop_model (LOOPSET *loop)
@@ -3019,10 +3036,14 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	/* need to update models[0] */
 	GretlObjType type;
 	void *ptr = get_last_model(&type);
+	int i;
 
 	if (type == GRETL_OBJ_EQN && models[0] != ptr) {
 	    swap_models(models[0], loop->models[loop->n_models - 1]);
 	    set_as_last_model(models[0], GRETL_OBJ_EQN);
+	}
+	for (i=0; i<loop->n_models; i++) {
+	    gretl_model_free(loop->models[i]);
 	}
     }
 

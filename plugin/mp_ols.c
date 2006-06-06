@@ -36,7 +36,6 @@ static mpf_t MPF_ZERO;
 static mpf_t MPF_MINUS_ONE;
 static mpf_t MPF_TINY;
 
-/* struct to hold model results */
 typedef struct {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
@@ -50,7 +49,7 @@ typedef struct {
 				    else = 0 */
     mpf_t *coeff;                /* array of coefficient estimates */
     mpf_t *sderr;                /* array of estimated std. errors */
-    mpf_t *xpx;
+    mpf_t *xpx;                  /* X'X */
     mpf_t ess, tss;              /* Error and Total Sums of Squares */
     mpf_t sigma;                 /* Standard error of regression */
     mpf_t rsq, adjrsq;           /* Unadjusted and adjusted R^2 */     
@@ -124,7 +123,6 @@ static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
     int i, t, allzero;
 
     for (i=1; i<=list[0]; i++) {
-	/* no need to check the constant */
 	if (list[i] == 0) {
 	    continue; 
 	}
@@ -183,10 +181,10 @@ static void fill_mp_series (MPMODEL *pmod, double **Z, mpf_t **mpZ,
 #ifdef MP_DEBUG
 	    printf("setting mpZ[%d][%d] from '%s'\n", mpi, s, numstr);
 #endif
-	    mpf_init_set_str (mpZ[mpi][s], numstr, 10);
+	    mpf_init_set_str(mpZ[mpi][s], numstr, 10);
 	} else { 
 	    /* or do straight conversion */
-	    mpf_init_set_d (mpZ[mpi][s], Z[i][t]);
+	    mpf_init_set_d(mpZ[mpi][s], Z[i][t]);
 	}
 	s++;
     }
@@ -551,34 +549,39 @@ static void set_gretl_mpfr_bits (void)
 } 
 #endif
 
-static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
-			    mp_results *results)
+static int copy_mp_results (MPMODEL *mpmod, DATAINFO *pdinfo,
+			    MODEL *pmod)
 {
     int i, err = 0;
 
-    for (i=0; i<pmod->ncoeff; i++) {
-	results->coeff[i] = mpf_get_d(pmod->coeff[i]);
-	results->sderr[i] = mpf_get_d(pmod->sderr[i]);
+    /* fixme uhat, yhat */
+    /* fixme allocate storage in pmod */
+
+    for (i=0; i<mpmod->ncoeff; i++) {
+	pmod->coeff[i] = mpf_get_d(mpmod->coeff[i]);
+	pmod->sderr[i] = mpf_get_d(mpmod->sderr[i]);
     }
 
-    results->sigma = mpf_get_d(pmod->sigma);
-    results->ess = mpf_get_d(pmod->ess);
-    results->rsq = mpf_get_d(pmod->rsq);
-    results->fstt = mpf_get_d(pmod->fstt);
+    pmod->sigma = mpf_get_d(mpmod->sigma);
+    pmod->ess = mpf_get_d(mpmod->ess);
+    pmod->rsq = mpf_get_d(mpmod->rsq);
+    pmod->fstt = mpf_get_d(mpmod->fstt);
 
-    if (results->varnames != NULL) { 
+#if 0 /* FIXME */
+    if (pmod->varnames != NULL) { 
 	/* will use results for printing */
-	results->t1 = pmod->t1;
-	results->t2 = pmod->t2;
-	results->ifc = pmod->ifc;
-	results->dfn = pmod->dfn;
-	results->dfd = pmod->dfd;
-	results->adjrsq = mpf_get_d(pmod->adjrsq);
-	results->varlist = gretl_list_copy(pmod->varlist);
-	if (results->varlist == NULL) {
+	pmod->t1 = mpmod->t1;
+	pmod->t2 = mpmod->t2;
+	pmod->ifc = mpmod->ifc;
+	pmod->dfn = mpmod->dfn;
+	pmod->dfd = mpmod->dfd;
+	pmod->adjrsq = mpf_get_d(mpmod->adjrsq);
+	pmod->varlist = gretl_list_copy(mpmod->varlist);
+	if (pmod->varlist == NULL) {
 	    err = 1;
 	}
     }
+#endif
 
     return err;
 }
@@ -589,25 +592,24 @@ static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
  * @polylist: list of polynomial terms (or NULL).
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @prn: where to print results.
  * @errbuf: where to print any error message.
- * @results: pointer to struct to hold results (or NULL).
+ * @pmod: MODEL pointer to hold results.
  *
  * Computes multiple-precision OLS estimates of the model 
- * specified by @list.  If @results is NULL, prints the estimates
- * to @prn, otherwise puts them into @results.
+ * specified by @list, and stores them in @pmod.
  * 
  * Returns: 0 on success, error code on failure.
  */
 
 int mplsq (const int *list, const int *polylist,
-	   double ***pZ, DATAINFO *pdinfo, PRN *prn,
-	   char *errbuf, mp_results *results) 
+	   double ***pZ, DATAINFO *pdinfo, 
+	   char *errbuf, MODEL *pmod) 
 {
     int l0, i, ret = 0;
     mpf_t **mpZ = NULL;
+    char **varnames = NULL;
     MPXPXXPY xpxxpy;
-    MPMODEL model;
+    MPMODEL mpmod;
 
     *errbuf = 0;
 
@@ -618,64 +620,64 @@ int mplsq (const int *list, const int *polylist,
 
     set_gretl_mp_bits();
 
-    mp_model_init (&model, pdinfo);
+    mp_model_init(&mpmod, pdinfo);
 
     /* preserve a copy of the list supplied, for future reference */
     if (polylist == NULL) {
-	model.list = gretl_list_copy(list);
+	mpmod.list = gretl_list_copy(list);
     } else {
-	model.list = poly_copy_list(list, polylist);
+	mpmod.list = poly_copy_list(list, polylist);
     }
 
-    if (model.list == NULL) {
+    if (mpmod.list == NULL) {
 	return E_ALLOC;
     }
 
-    model.polylist = polylist; /* attached for convenience */
+    mpmod.polylist = polylist; /* attached for convenience */
 
-    if (polylist != NULL && poly_check(&model, list)) {
-	mp_model_free(&model);
+    if (polylist != NULL && poly_check(&mpmod, list)) {
+	mp_model_free(&mpmod);
 	return E_DATA;
     }
 
     /* check for missing obs in sample */
     if (data_problems(list, *pZ, pdinfo, errbuf)) {
-	mp_model_free(&model);
+	mp_model_free(&mpmod);
 	return E_DATA;
     }
 
     /* see if the regressor list contains a constant */
-    model.ifc = mp_rearrange(model.list);
+    mpmod.ifc = mp_rearrange(mpmod.list);
 
     /* construct multiple-precision data matrix */
-    mpZ = make_mpZ(&model, *pZ, pdinfo, results->varnames);
+    mpZ = make_mpZ(&mpmod, *pZ, pdinfo, varnames); /* FIXME */
 
     if (mpZ == NULL) {
-	mp_model_free(&model);
+	mp_model_free(&mpmod);
 	return E_ALLOC;
     }
 
     mpf_constants_init();
 
-    l0 = model.list[0];  
-    model.ncoeff = l0 - 1; 
-    model.nobs = model.t2 - model.t1 + 1;
+    l0 = mpmod.list[0];  
+    mpmod.ncoeff = l0 - 1; 
+    mpmod.nobs = mpmod.t2 - mpmod.t1 + 1;
 
     /* check degrees of freedom */
-    if (model.nobs < model.ncoeff) { 
+    if (mpmod.nobs < mpmod.ncoeff) { 
         sprintf(errbuf, _("No. of obs (%d) is less than no. "
-			  "of parameters (%d)"), model.nobs, model.ncoeff);
-	mp_model_free(&model);
-	free_mpZ(mpZ, l0, model.nobs);
+			  "of parameters (%d)"), mpmod.nobs, mpmod.ncoeff);
+	mp_model_free(&mpmod);
+	free_mpZ(mpZ, l0, mpmod.nobs);
 	mpf_constants_clear();
         return E_DF; 
     }
 
     /* calculate regression results */
-    xpxxpy = mp_xpxxpy_func(model.list, model.nobs, mpZ);
-    mpf_set(model.tss, xpxxpy.xpy[l0]);
+    xpxxpy = mp_xpxxpy_func(mpmod.list, mpmod.nobs, mpZ);
+    mpf_set(mpmod.tss, xpxxpy.xpy[l0]);
 
-    mp_regress(&model, xpxxpy, mpZ, model.nobs, errbuf);
+    mp_regress(&mpmod, xpxxpy, mpZ, mpmod.nobs, errbuf);
 
     for (i=0; i<=l0; i++) {
 	mpf_clear(xpxxpy.xpy[i]);
@@ -683,15 +685,15 @@ int mplsq (const int *list, const int *polylist,
     free(xpxxpy.xpy);
     xpxxpy.xpy = NULL;
 
-    ret = model.errcode;
+    ret = mpmod.errcode;
 
     if (ret == 0) {
-	copy_mp_results(&model, pdinfo, results);
+	ret = copy_mp_results(&mpmod, pdinfo, pmod);
     }
 
     /* free all the mpf stuff */
-    free_mpZ(mpZ, l0, model.nobs);
-    mp_model_free(&model);
+    free_mpZ(mpZ, l0, mpmod.nobs);
+    mp_model_free(&mpmod);
     mpf_constants_clear();
 
     return ret;

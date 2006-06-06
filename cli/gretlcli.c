@@ -1449,7 +1449,7 @@ static int exec_line (char *line, PRN *prn)
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(cmd.list, cmd.param, &Z, datainfo, prn);
+	err = mp_ols(cmd.list, &Z, datainfo, prn);
 	if (err) {
 	    pputs(prn, _("mpols command failed\n"));
 	    errmsg(err, prn);

@@ -1804,35 +1804,6 @@ int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return err;
 }
 
-int make_mp_lists (const int *list, const char *str,
-		   int **reglist, int **polylist)
-{
-    int i, pos;
-
-    pos = atoi(str);
-
-    *reglist = malloc(pos * sizeof **polylist);
-    *polylist = malloc((list[0] - pos + 2) * sizeof **reglist);
-
-    if (*reglist == NULL || *polylist == NULL) {
-	free(*reglist);
-	free(*polylist);
-	return 1;
-    }
-    
-    (*reglist)[0] = pos - 1;
-    for (i=1; i<pos; i++) {
-	(*reglist)[i] = list[i];
-    }
-
-    (*polylist)[0] = list[0] - pos;
-    for (i=1; i<=(*polylist)[0]; i++) {
-	(*polylist)[i] = list[i+pos];
-    }
-
-    return 0;
-}
-
 /**
  * mp_ols:
  * @list: specification of variables to use
@@ -1847,31 +1818,34 @@ int make_mp_lists (const int *list, const char *str,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int mp_ols (const int *list, const char *pos,
-	    double ***pZ, DATAINFO *pdinfo, 
+int mp_ols (const int *list, double ***pZ, DATAINFO *pdinfo, 
 	    PRN *prn) 
 {
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, double ***, 
-		 DATAINFO *, PRN *, char *, mp_results *);
+		 DATAINFO *, char *, MODEL *);
     const int *reglist = NULL;
-    int *polylist = NULL, *tmplist = NULL;
-    mp_results *mpvals = NULL;
-    int nc, err = 0;
+    int *polylist = NULL;
+    int *tmplist = NULL;
+    MODEL mpmod;
+    int pos, nc, err = 0;
 
     mplsq = get_plugin_function("mplsq", &handle);
-    if (mplsq == NULL) return 1;
+    if (mplsq == NULL) {
+	return 1;
+    }
 
-    if (!err && *pos) { 
+    pos = gretl_list_separator_position(list);
+
+    if (pos > 0) { 
 	/* got a list of polynomial terms? */
-	err = make_mp_lists(list, pos, &tmplist, &polylist);
+	err = gretl_list_split_on_separator(list, &tmplist, &polylist);
 	if (err) {
-	    pputs(prn, _("Failed to parse mp_ols command\n"));
-	}
+	    close_plugin(handle);
+	    return err;
+	} 
 	reglist = tmplist;
-    } 
-
-    if (!err && !*pos) {
+    } else {
 	reglist = list;
     }
 
@@ -1880,27 +1854,22 @@ int mp_ols (const int *list, const char *pos,
 	nc--;
     }
 
-    mpvals = gretl_mp_results_new(nc);
+    gretl_model_init(&mpmod);
 
-    if (mpvals == NULL || allocate_mp_varnames(mpvals)) {
-	pprintf(prn, "%s\n", _("Out of memory!"));
-	err = 1;
+    if (!err) {
+	err = (*mplsq)(reglist, polylist, pZ, pdinfo,  
+		       gretl_errmsg, &mpmod); 
     }
 
     if (!err) {
-	err = (*mplsq)(reglist, polylist, pZ, pdinfo, prn, 
-		       gretl_errmsg, mpvals); 
-    }
-
-    if (!err) {
-	print_mpols_results(mpvals, pdinfo, prn);
+	print_mpols_results(&mpmod, pdinfo, prn);
     }
 
     close_plugin(handle);
+    clear_model(&mpmod);
 
     free(polylist);
     free(tmplist);
-    free_gretl_mp_results(mpvals);
 
     return err;
 }

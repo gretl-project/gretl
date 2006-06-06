@@ -98,8 +98,7 @@ int leverage_test (MODEL *pmod,
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				    gretl_matrix *m, unsigned char flags);
 
-int mp_ols (const int *list, const char *pos,
-	    double ***pZ, DATAINFO *pdinfo, 
+int mp_ols (const int *list, double ***pZ, DATAINFO *pdinfo, 
 	    PRN *prn); 
 
 int sum_test (const int *sumvars, MODEL *pmod, 

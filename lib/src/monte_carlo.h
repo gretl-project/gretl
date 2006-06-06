@@ -34,4 +34,6 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo, 
 		     MODEL **models, PRN *prn);
 
+int model_is_in_loop (const MODEL *pmod);
+
 #endif /* MONTE_CARLO_H */

@@ -2149,9 +2149,9 @@ int do_mp_ols (selector *sr)
     char errtext[MAXLEN];
     char estimator[9];
     void *handle;
-    mp_results *mpvals = NULL;
+    MODEL mpmod;
     int (*mplsq)(const int *, const int *,
-		 double ***, DATAINFO *, PRN *, char *, mp_results *);
+		 double ***, DATAINFO *, char *, mp_results *);
     int err;
 
     if (buf == NULL) {
@@ -2171,16 +2171,11 @@ int do_mp_ols (selector *sr)
 	return 0;
     }
 
-    mpvals = gretl_mp_results_new(cmd.list[0] - 1);
-
-    if (mpvals == NULL || allocate_mp_varnames(mpvals)) {
-	errbox(_("Out of memory!"));
-	return 0;
-    }
+    gretl_model_init(&mpmod);
 
     *errtext = 0;
 
-    err = (*mplsq)(cmd.list, NULL, &Z, datainfo, prn, errtext, mpvals);
+    err = (*mplsq)(cmd.list, NULL, &Z, datainfo, errtext, &mpmod);
 
     close_plugin(handle);
 
@@ -2194,10 +2189,10 @@ int do_mp_ols (selector *sr)
 	return err;
     }
 
-    print_mpols_results(mpvals, datainfo, prn);
+    print_mpols_results(&mpmod, datainfo, prn);
 
     view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
-		MPOLS, mpvals);
+		MPOLS, &mpmod); /* FIXME on close of window */
 
     return 0;
 }
@@ -6663,7 +6658,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(cmd.list, cmd.param, &Z, datainfo, outprn);
+	err = mp_ols(cmd.list, &Z, datainfo, outprn);
 	break;
 #endif
 

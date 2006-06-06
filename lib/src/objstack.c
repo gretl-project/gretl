@@ -189,18 +189,26 @@ void gretl_model_protect (MODEL *pmod)
 
 static int model_is_protected (MODEL *pmod)
 {
-    int i;
+    int i, prot = 0;
 
     for (i=0; i<NPROT; i++) {
 	if (pmod == protected_models[i]) {
-#if ODEBUG
-	    fprintf(stderr, "model at %p is protected\n", (void *) pmod);
-#endif
-	    return 1;
+	    prot = 1;
+	    break;
 	}
     }
 
-    return 0;
+    if (!prot) {
+	prot = model_is_in_loop(pmod);
+    }
+
+#if ODEBUG
+    if (prot) {
+	fprintf(stderr, "model at %p is protected\n", (void *) pmod);
+    }
+#endif
+
+    return prot;
 }
 
 /**
