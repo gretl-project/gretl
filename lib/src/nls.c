@@ -1539,7 +1539,7 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 
     if (!err) {
 	err = BFGS_max(n, spec->coeff, maxit, pspec->tol, 
-		       &spec->fncount, &spec->grcount,
+		       &spec->fncount, &spec->grcount, NULL,
 		       get_mle_ll, get_mle_gradient, NULL,
 		       pspec->opt, nprn);
     }
@@ -2375,6 +2375,7 @@ static void reverse_gradient (double *g, int n)
  * @reltol: relative tolerance for terminating iteration.
  * @fncount: location to receive count of function evaluations.
  * @grcount: location to receive count of gradient evaluations.
+ * @iters: location to receive count of iterations.
  * @get_ll: pointer to function used to calculate log
  * likelihood.
  * @get_gradient: pointer to function used to calculate the 
@@ -2396,9 +2397,9 @@ static void reverse_gradient (double *g, int n)
  */
 
 int BFGS_max (int n, double *b, int maxit, double reltol,
-	      int *fncount, int *grcount, BFGS_LL_FUNC get_ll,
-	      BFGS_GRAD_FUNC get_gradient, void *callback_data,
-	      gretlopt opt, PRN *prn)
+	      int *fncount, int *grcount, int *iters, 
+	      BFGS_LL_FUNC get_ll, BFGS_GRAD_FUNC get_gradient, 
+	      void *callback_data, gretlopt opt, PRN *prn)
 {
     int accpoint, enough;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **B = NULL;
@@ -2575,8 +2576,15 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	err = E_NOCONV;
     }
 
-    *fncount = funcount;
-    *grcount = gradcount;
+    if (fncount != NULL) {
+	*fncount = funcount;
+    }
+    if (grcount != NULL) {
+	*grcount = gradcount;
+    }
+    if (iters != NULL) {
+	*iters = iter;
+    }
 
     if (opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	

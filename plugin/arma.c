@@ -1127,8 +1127,7 @@ static int kalman_arma (const int *alist, double *coeff,
     /* BFGS apparatus */
     int maxit = 1000;
     double reltol = 1.0e-12;
-    int fncount = 0;
-    int grcount = 0;
+    int iters = 0;
 
     double *b;
     int i, T, err = 0;
@@ -1225,7 +1224,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
     } else {
 	kalman_use_ARMA_ll(K);
-	err = BFGS_max(ainfo->nc, b, maxit, reltol, &fncount, &grcount,
+	err = BFGS_max(ainfo->nc, b, maxit, reltol, NULL, NULL, &iters,
 		       kalman_arma_ll, kalman_arma_gradient, K,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
 	if (err) {
@@ -1236,6 +1235,7 @@ static int kalman_arma (const int *alist, double *coeff,
     if (err) {
 	pmod->errcode = err;
     } else {
+	gretl_model_set_int(pmod, "iters", iters);
 	kalman_arma_finish(pmod, alist, ainfo, Z, pdinfo, 
 			   K, b, ainfo->nc, T);
     } 

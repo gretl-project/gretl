@@ -404,14 +404,17 @@ static void fast_multiply (const gretl_matrix *a, const gretl_matrix *b,
 {
     double x;
     int i, j, k;
-    int bidx;
+    int aidx, bidx;
 
     for (i=0; i<a->rows; i++) {
 	for (j=0; j<b->cols; j++) {
 	    x = 0.0;
+	    aidx = i;
 	    bidx = j * b->rows;
 	    for (k=0; k<a->cols; k++) {
-		x += a->val[mdx(a,i,k)] * b->val[bidx++];
+		x += a->val[aidx] * b->val[bidx];
+		aidx += a->rows;
+		bidx++;
 	    }
 	    c->val[mdx(c,i,j)] = x;
 	}
