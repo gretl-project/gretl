@@ -1481,22 +1481,19 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (!plain_format(prn)) {
 	model_format_start(prn);
-    } else if (pmod->ci == ARMA || pmod->ci == GARCH || 
-	       pmod->ci == TOBIT || pmod->ci == WLS ||
-	       pmod->ci == LOGIT || pmod->ci == PROBIT ||
-	       pmod->ci == POISSON) {
+    } else {
 	int iters = gretl_model_get_int(pmod, "iters");
 
 	if (iters > 0) {
 	    pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
-	}
-    } else if (pmod->ci == MLE) {
-	int fncount = gretl_model_get_int(pmod, "fncount");
-	int grcount = gretl_model_get_int(pmod, "grcount");
+	} else {
+	    int fncount = gretl_model_get_int(pmod, "fncount");
+	    int grcount = gretl_model_get_int(pmod, "grcount");
 
-	if (fncount > 0) {
-	    pprintf(prn, _("Function evaluations: %d\n"), fncount);
-	    pprintf(prn, _("Evaluations of gradient: %d\n"), grcount);
+	    if (fncount > 0) {
+		pprintf(prn, _("Function evaluations: %d\n"), fncount);
+		pprintf(prn, _("Evaluations of gradient: %d\n"), grcount);
+	    }
 	}
     }
 

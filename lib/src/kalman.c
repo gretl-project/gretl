@@ -370,7 +370,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	K->FPH == NULL || K->V == NULL || K->VE == NULL ||
 	K->PHV == NULL || K->Ax == NULL ||
 	K->Tmprn == NULL || K->Tmpnn == NULL ||
-	K->Tmprr == NULL) {
+	K->Tmprr == NULL || K->Tmprr_2a == NULL || K->Tmprr_2b == NULL) {
 	*err = E_ALLOC;
 	kalman_free(K);
 	K = NULL;
@@ -381,20 +381,37 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
-static double 
-matrix_maxdiff (const gretl_matrix *a, const gretl_matrix *b)
+static int is_unit_column_vector (const gretl_vector *v)
 {
-    double diff, maxdiff = 0.0;
-    int i, n = a->rows * a->cols;
+    int i;
 
-    for (i=1; i<n; i++) {
-	diff = fabs(b->val[i] - a->val[i]);
-	if (diff > maxdiff) {
-	    maxdiff = diff;
+    if (v->val[0] != 1.0) {
+	return 0;
+    }
+
+    for (i=1; i<v->rows; i++) {
+	if (v->val[i] != 0.0) {
+	    return 0;
 	}
     }
 
-    return maxdiff;
+    return 1;
+}
+
+static int 
+matrix_diff (const gretl_matrix *a, const gretl_matrix *b)
+{
+    int i, n = a->rows * a->cols;
+
+    /* note: we ignore the 0,0 element here */
+
+    for (i=1; i<n; i++) {
+	if (b->val[i] != a->val[i]) {
+	    return 1;
+	}
+    }
+
+    return 0;
 }
 
 /* matrix multiplication, a * b, with no checks */
@@ -405,6 +422,16 @@ static void fast_multiply (const gretl_matrix *a, const gretl_matrix *b,
     double x;
     int i, j, k;
     int aidx, bidx;
+
+#if 0
+    if (is_unit_column_vector(b)) {
+	aidx = 0;
+	for (j=0; j<c->rows; j++) {
+	    c->val[j] = a->val[aidx++];
+	}
+	return;
+    }
+#endif
 
     for (i=0; i<a->rows; i++) {
 	for (j=0; j<b->cols; j++) {
@@ -430,6 +457,17 @@ static void fast_A_prime_B (const gretl_matrix *a, const gretl_matrix *b,
     int i, j, k;
     int aidx, bidx;
 
+#if 0
+    if (is_unit_column_vector(a)) {
+	bidx = 0;
+	for (j=0; j<c->cols; j++) {
+	    c->val[j] = b->val[bidx];
+	    bidx += b->rows;
+	}
+	return;
+    }
+#endif
+
     for (i=0; i<a->cols; i++) {
 	for (j=0; j<b->cols; j++) {
 	    x = 0.0;
@@ -437,6 +475,28 @@ static void fast_A_prime_B (const gretl_matrix *a, const gretl_matrix *b,
 	    bidx = j * b->rows;
 	    for (k=0; k<a->rows; k++) {
 		x += a->val[aidx++] * b->val[bidx++];
+	    }
+	    c->val[mdx(c,i,j)] = x;
+	}
+    }
+}
+
+static void fast_A_B_prime (const gretl_matrix *a, const gretl_matrix *b,
+			    gretl_matrix *c)
+{
+    double x;
+    int i, j, k;
+    int aidx, bidx;
+
+    for (i=0; i<a->rows; i++) {
+	for (j=0; j<b->rows; j++) {
+	    x = 0.0;
+	    aidx = i;
+	    bidx = j;
+	    for (k=0; k<a->cols; k++) {
+		x += a->val[aidx] * b->val[bidx];
+		aidx += a->rows;
+		bidx += b->rows;
 	    }
 	    c->val[mdx(c,i,j)] = x;
 	}
@@ -459,9 +519,7 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
 	}
     } else if (K->nonshift == K->r) {
 	if (postmult) {
-	    ret = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
-					    K->F, GRETL_MOD_TRANSPOSE,
-					    B);
+	    fast_A_B_prime(A, K->F, B);
 	} else {
 	    fast_multiply(K->F, A, B);
 	}
@@ -783,7 +841,8 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 #if KDEBUG > 1
 	kalman_print_state(K, t);
 #endif
-	/* intial matrix calculations */
+
+	/* initial matrix calculations */
 	fast_multiply(K->P0, K->H, K->PH);
 	fast_A_prime_B(K->H, K->PH, K->HPH);
 	if (K->R != NULL) {
@@ -846,9 +905,7 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	if (!err) {
 	    /* update MSE matrix, if needed */
 	    if (arma_ll(K) && update_P && t > 20) {
-		double x = matrix_maxdiff(K->P1, K->P0);
-
-		if (x == 0.0) {
+		if (!matrix_diff(K->P1, K->P0)) {
 		    update_P = 0;
 		    K->P0->val[0] += 1.0;
 		}

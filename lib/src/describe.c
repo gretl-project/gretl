@@ -1823,7 +1823,8 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     double box, pm90, pm95, pm99;
     double *acf = NULL;
     double *pacf = NULL;
-    int k, l, acf_m, pacf_m, nobs; 
+    int k, l, acf_m, pacf_m; 
+    int nobs, dfQ;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
     FILE *fq = NULL;
@@ -1917,10 +1918,11 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 
     err = pacf_err = get_pacf(pacf, acf, pacf_m);
 
-    box = 0;
+    pputs(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
+    pputs(prn, "\n\n");
 
-    pprintf(prn, _("  LAG      ACF          PACF         Q-stat. [p-value]"));
-	pputs(prn, "\n\n");
+    box = 0.0;
+    dfQ = 1;
 
     for (t=0; t<acf_m; t++) {
 	pprintf(prn, "%5d%9.4f ", t + 1, acf[t]);
@@ -1949,8 +1951,8 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 
 	box += (nobs * (nobs + 2.0)) * acf[t] * acf[t] / (nobs - t + 1);
 	pprintf(prn, "%12.4f", box);
-	if (t > nparam) {
-	    pprintf(prn, "  [%5.3f]", chisq(box, t - nparam));
+	if (t >= nparam) {
+	    pprintf(prn, "  [%5.3f]", chisq(box, dfQ++));
 	}
 	pputc(prn, '\n');
     }

@@ -34,6 +34,8 @@
 /* ln(sqrt(2*pi)) + 0.5 */
 #define LN_SQRT_2_PI_P5 1.41893853320467274178
 
+#define KALMAN_ALL 999
+
 #include "arma_common.c"
 
 static PRN *errprn;
@@ -631,7 +633,26 @@ static void condense_state_vcv (gretl_matrix *targ,
     }
 }
 
-static int write_kalman_matrices (const double *b)
+static void kalman_matrices_init (struct arma_info *ainfo)
+{
+    int r = F->rows;
+
+    gretl_matrix_zero(A);
+    gretl_matrix_zero(P);
+
+    gretl_matrix_zero(F);
+    gretl_matrix_inscribe_I(F, 1, 0, r - 1);
+
+    gretl_matrix_zero(Q);
+    gretl_matrix_set(Q, 0, 0, 1.0);
+
+    gretl_matrix_zero(H);
+    gretl_vector_set(H, 0, 1.0);
+}
+
+#define ARMA_MDEBUG 0
+
+static int write_kalman_matrices (const double *b, int idx)
 {
     const double *phi = b + kainfo->ifc;
     const double *Phi = phi + kainfo->p;
@@ -639,100 +660,110 @@ static int write_kalman_matrices (const double *b)
     const double *Theta = theta + kainfo->q;
     const double *beta = Theta + kainfo->Q;
     double mu = (kainfo->ifc)? b[0] : 0.0;
-    int i, r, m, err = 0;
+    int i, err = 0;
+
+    int rewrite_A = 0;
+    int rewrite_F = 0;
+    int rewrite_H = 0;
 
     gretl_matrix_zero(S);
-    gretl_matrix_zero(P);
-    gretl_matrix_zero(F);
-    gretl_matrix_zero(H);
-    gretl_matrix_zero(Q);
+
+    if (idx == KALMAN_ALL) {
+	rewrite_A = rewrite_F = rewrite_H = 1;
+    } else {
+	int pmax = kainfo->ifc + kainfo->p + kainfo->P;
+	int tmax = pmax + kainfo->q + kainfo->Q;
+
+	if (kainfo->ifc && idx == 0) {
+	    rewrite_A = 1;
+	} else if (idx >= kainfo->ifc && idx < pmax) {
+	    rewrite_F = 1;
+	} else if (idx >= kainfo->ifc && idx < tmax) {
+	    rewrite_H = 1;
+	} else {
+	    rewrite_A = 1;
+	}
+    }
+
+#if ARMA_MDEBUG
+    fprintf(stderr, "\n*** write_kalman_matrices: before\n");
+    gretl_matrix_print(A, "A");
+    gretl_matrix_print(P, "P");
+    gretl_matrix_print(F, "F");
+    gretl_matrix_print(H, "H");
+#endif    
 
     /* See Hamilton, Time Series Analysis, ch 13, p. 375 */
 
-    r = gretl_matrix_rows(F);
-    m = r * (r + 1) / 2;
-
-    /* form the F matrix using phi and/or Phi */
-    if (kainfo->P > 0) {
-	write_big_phi(phi, Phi, kainfo, F);
-    } else {
-	for (i=0; i<kainfo->p; i++) {
-	    gretl_matrix_set(F, 0, i, phi[i]);
-	}
-    } 
-    gretl_matrix_inscribe_I(F, 1, 0, r - 1);
-
-#if ARMA_DEBUG
-    gretl_matrix_print(F, "F");
-#endif
-
-    /* form the H vector using theta and/or Theta */
-    gretl_vector_set(H, 0, 1.0);
-    if (kainfo->Q > 0) {
-	write_big_theta(theta, Theta, kainfo, H);
-    } else {
-	for (i=0; i<kainfo->q; i++) {
-	    gretl_vector_set(H, i + 1, theta[i]);
+    if (rewrite_A) {
+	/* const and coeffs on exogenous vars */
+	gretl_vector_set(A, 0, mu);
+	for (i=0; i<kainfo->nexo; i++) {
+	    gretl_vector_set(A, i + 1, beta[i]);
 	}
     }
 
-#if ARMA_DEBUG
-    gretl_matrix_print(H, "H");
-#endif
-
-    gretl_matrix_set(Q, 0, 0, 1.0);
-    if (arma_using_vech(kainfo)) {
-	gretl_matrix_vectorize_h(vQ, Q);
-    } else {
-	gretl_matrix_vectorize(vQ, Q);
+    if (rewrite_H) {
+	/* form the H vector using theta and/or Theta */
+	if (kainfo->Q > 0) {
+	    write_big_theta(theta, Theta, kainfo, H);
+	} else {
+	    for (i=0; i<kainfo->q; i++) {
+		gretl_vector_set(H, i + 1, theta[i]);
+	    }
+	}
     }
 
-#if ARMA_DEBUG
-    gretl_matrix_print(Q, "Q");
-#endif
+    if (rewrite_F) {
 
-    gretl_vector_set(A, 0, mu);
-    for (i=0; i<kainfo->nexo; i++) {
-	gretl_vector_set(A, i + 1, beta[i]);
+	/* form the F matrix using phi and/or Phi */
+	if (kainfo->P > 0) {
+	    write_big_phi(phi, Phi, kainfo, F);
+	} else {
+	    for (i=0; i<kainfo->p; i++) {
+		gretl_matrix_set(F, 0, i, phi[i]);
+	    }
+	} 
+
+	/* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378. */
+
+	gretl_matrix_kronecker_product(F, F, Svar);
+	gretl_matrix_I_minus(Svar);
+
+	if (arma_using_vech(kainfo)) {
+	    condense_state_vcv(Svar2, Svar, gretl_matrix_rows(F));
+	    gretl_matrix_vectorize_h(vQ, Q);
+	    err = gretl_LU_solve(Svar2, vQ);
+	    if (!err) {
+		gretl_matrix_unvectorize_h(P, vQ);
+	    }
+	} else {
+	    gretl_matrix_vectorize(vQ, Q);
+	    err = gretl_LU_solve(Svar, vQ);
+	    if (!err) {
+		gretl_matrix_unvectorize(P, vQ);
+	    }
+	}
     }
 
-#if ARMA_DEBUG
+#if ARMA_MDEBUG
+    fprintf(stderr, "\n*** after\n");
     gretl_matrix_print(A, "A");
-#endif
-
-    /* form $P_{1|0}$ (MSE) matrix, as per Hamilton, ch 13, p. 378. */
-
-    gretl_matrix_kronecker_product(F, F, Svar);
-    gretl_matrix_I_minus(Svar);
-
-    if (arma_using_vech(kainfo)) {
-	condense_state_vcv(Svar2, Svar, r);
-	err = gretl_LU_solve(Svar2, vQ);
-	if (!err) {
-	    gretl_matrix_unvectorize_h(P, vQ);
-	}
-    } else {
-	err = gretl_LU_solve(Svar, vQ);
-	if (!err) {
-	    gretl_matrix_unvectorize(P, vQ);
-	}
-    }
-
-#if ARMA_DEBUG
     gretl_matrix_print(P, "P");
-#endif
+    gretl_matrix_print(F, "F");
+    gretl_matrix_print(H, "H");
+#endif    
 
     return err;
 }
 
-static int rewrite_kalman_matrices (kalman *K, const double *b)
+static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
 {
-    int err = write_kalman_matrices(b);
+    int err = write_kalman_matrices(b, i);
 
     if (!err) {
 	kalman_set_initial_state_vector(K, S);
 	kalman_set_initial_MSE_matrix(K, P);
-	kalman_set_nonshift(K, 1);
     }
 
     return err;
@@ -774,14 +805,14 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b,
        on finite differences */
     for (i=0; i<k && !err; i++) {
 	b[i] -= eps;
-	rewrite_kalman_matrices(K, b);
+	rewrite_kalman_matrices(K, b, i);
 	err = kalman_forecast(K, E);
 	for (t=0; t<T; t++) {
 	    g0 = gretl_vector_get(E, t);
 	    gretl_matrix_set(G, i, t, g0);
 	}
 	b[i] += 2.0 * eps;
-	rewrite_kalman_matrices(K, b);
+	rewrite_kalman_matrices(K, b, i);
 	err = kalman_forecast(K, E);
 	for (t=0; t<T; t++) {
 	    g1 = gretl_vector_get(E, t);
@@ -923,7 +954,7 @@ static double kalman_arma_ll (const double *b, void *p)
     }
 
     K = (kalman *) p;
-    err = rewrite_kalman_matrices(K, b);
+    err = rewrite_kalman_matrices(K, b, KALMAN_ALL);
     if (!err) {
 	err = kalman_forecast(K, NULL);
 	ll = kalman_get_loglik(K);
@@ -956,7 +987,7 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
 #if ARMA_DEBUG
 	fprintf(stderr, "trying b[%d] = %.15g\n", i, b[i]);
 #endif
-	err = rewrite_kalman_matrices(K, b);
+	err = rewrite_kalman_matrices(K, b, i);
 	if (!err) {
 	    err = kalman_forecast(K, NULL);
 	    ll1 = kalman_get_loglik(K);
@@ -969,7 +1000,7 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
 #if ARMA_DEBUG
 	fprintf(stderr, "trying b[%d] = %.15g\n", i, b[i]);
 #endif
-	err = rewrite_kalman_matrices(K, b);
+	err = rewrite_kalman_matrices(K, b, i);
 	if (!err) {
 	    err = kalman_forecast(K, NULL);
 	    ll2 = kalman_get_loglik(K);
@@ -1127,7 +1158,8 @@ static int kalman_arma (const int *alist, double *coeff,
     /* BFGS apparatus */
     int maxit = 1000;
     double reltol = 1.0e-12;
-    int iters = 0;
+    int fncount = 0;
+    int grcount = 0;
 
     double *b;
     int i, T, err = 0;
@@ -1142,8 +1174,9 @@ static int kalman_arma (const int *alist, double *coeff,
     }
 
 #if ARMA_DEBUG
+    fputs("initial coefficients:\n", stderr);
     for (i=0; i<ainfo->nc; i++) {
-	fprintf(stderr, "initial b[%d] = %g\n", i, b[i]);
+	fprintf(stderr, " b[%d] = %g\n", i, b[i]);
     }
 #endif
 
@@ -1206,6 +1239,8 @@ static int kalman_arma (const int *alist, double *coeff,
 	return E_ALLOC;
     }
 
+    kalman_matrices_init(ainfo);
+
 #if ARMA_DEBUG
     fprintf(stderr, "ready to estimate: ainfo specs:\n"
 	    "p=%d, P=%d, q=%d, Q=%d, ifc=%d, nexo=%d, t1=%d, t2=%d\n", 
@@ -1223,8 +1258,13 @@ static int kalman_arma (const int *alist, double *coeff,
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
     } else {
+	if (r > 3) {
+	    kalman_set_nonshift(K, 1);
+	} else {
+	    kalman_set_nonshift(K, r);
+	}
 	kalman_use_ARMA_ll(K);
-	err = BFGS_max(ainfo->nc, b, maxit, reltol, NULL, NULL, &iters,
+	err = BFGS_max(ainfo->nc, b, maxit, reltol, &fncount, &grcount,
 		       kalman_arma_ll, kalman_arma_gradient, K,
 		       (prn != NULL)? OPT_V : OPT_NONE, prn);
 	if (err) {
@@ -1235,7 +1275,8 @@ static int kalman_arma (const int *alist, double *coeff,
     if (err) {
 	pmod->errcode = err;
     } else {
-	gretl_model_set_int(pmod, "iters", iters);
+	gretl_model_set_int(pmod, "fncount", fncount);
+	gretl_model_set_int(pmod, "grcount", grcount);
 	kalman_arma_finish(pmod, alist, ainfo, Z, pdinfo, 
 			   K, b, ainfo->nc, T);
     } 
