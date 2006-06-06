@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.5.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-02-14 21:29-0500\n"
-"PO-Revision-Date: 2006-05-29 21:13+0100\n"
+"PO-Revision-Date: 2006-06-06 22:47+0100\n"
 "Last-Translator: Sven Schreiber <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -4648,7 +4648,7 @@ msgstr ""
 #: lib/src/printout.c:328
 #, c-format
 msgid "number of bins = %d, mean = %g, sd = %g\n"
-msgstr "Zahl der Klassen = %d, Mittel = %g, StAb = %g\n"
+msgstr "Zahl der Klassen = %d, Mittel = %g, St'Abw. = %g\n"
 
 #: lib/src/printout.c:331
 msgid ""
@@ -7137,8 +7137,8 @@ msgstr "Ein Ökonometrieprogramm für den Gnome-Desktop, erschienen unter der GNU 
 #: gui2/about.c:367
 msgid "translator_credits"
 msgstr ""
-"Übersetzt von Sven Schreiber <svetosch@gmx.net>, \n"
-"aufbauend auf die Pionierarbeit von Markus Hahn"
+"Übersetzt von Sven Schreiber, \n"
+"aufbauend auf der Pionierarbeit von Markus Hahn"
 
 #: gui2/about.c:156
 #: gui2/about.c:331
@@ -7497,12 +7497,12 @@ msgstr ""
 #: gui2/calculator.c:645
 #, c-format
 msgid "Null hypothesis: population proportion = %g\n"
-msgstr "Nullhypothese: Proportion in Grundgesamtheit = %g\n"
+msgstr "Nullhypothese: Anteil in Grundgesamtheit = %g\n"
 
 #: gui2/calculator.c:647
 #, c-format
 msgid "Sample proportion = %g\n"
-msgstr "Stichprobenproportion = %g\n"
+msgstr "Geschätzter Anteil = %g\n"
 
 #: gui2/calculator.c:676
 #, c-format
@@ -7592,7 +7592,7 @@ msgid ""
 " n = %d, proportion = %g\n"
 msgstr ""
 "Stichprobe 1:\n"
-" n = %d, Proportion = %g\n"
+" n = %d, Anteil = %g\n"
 
 #: gui2/calculator.c:796
 #, c-format
@@ -7601,7 +7601,7 @@ msgid ""
 " n = %d, proportion = %g\n"
 msgstr ""
 "Stichprobe 2:\n"
-" n = %d, Proportion = %g\n"
+" n = %d, Anteil = %g\n"
 
 #: gui2/calculator.c:801
 #, c-format
@@ -7651,17 +7651,17 @@ msgstr ""
 #: plugin/stats_tables.c:410
 #: plugin/stats_tables.c:444
 msgid "df"
-msgstr "df"
+msgstr "FG"
 
 #: gui2/calculator.c:901
 #: gui2/calculator.c:967
 msgid "dfn"
-msgstr "Zähler-df"
+msgstr "Zähler-FG"
 
 #: gui2/calculator.c:902
 #: gui2/calculator.c:968
 msgid "dfd"
-msgstr "Nenner-df"
+msgstr "Nenner-FG"
 
 #: gui2/calculator.c:906
 #: gui2/model_table.c:569
@@ -7727,7 +7727,7 @@ msgstr "Benutze Variablen aus Datensatz"
 
 #: gui2/calculator.c:1424
 msgid "proportion"
-msgstr "Proportion"
+msgstr "Anteil"
 
 #: gui2/calculator.c:1425
 msgid "2 means"
@@ -7769,11 +7769,11 @@ msgstr "H0: Varianz ="
 
 #: gui2/calculator.c:1483
 msgid "sample proportion"
-msgstr "Stichprobenproportion"
+msgstr "Geschätzter Anteil"
 
 #: gui2/calculator.c:1485
 msgid "H0: proportion ="
-msgstr "H0: Proportion ="
+msgstr "H0: Anteil ="
 
 #: gui2/calculator.c:1489
 msgid "mean of sample 1"
@@ -7825,11 +7825,11 @@ msgstr "H0: Verhältnis der Varianzen = 1"
 
 #: gui2/calculator.c:1516
 msgid "proportion, sample 1"
-msgstr "Proportion, Stichprobe 1"
+msgstr "Anteil, Stichprobe 1"
 
 #: gui2/calculator.c:1521
 msgid "proportion, sample 2"
-msgstr "Proportion, Stichprobe 2"
+msgstr "Anteil, Stichprobe 2"
 
 #: gui2/calculator.c:1523
 msgid "H0: Difference of proportions = 0"
@@ -10702,7 +10702,7 @@ msgstr "gretl: Suchen"
 
 #: gui2/helpfiles.c:1576
 msgid " Find what:"
-msgstr " Finde was:"
+msgstr "Suchbegriff:"
 
 #: gui2/library.c:153
 #: gui2/library.c:4383
