@@ -1450,9 +1450,11 @@ static int exec_line (char *line, PRN *prn)
 #ifdef ENABLE_GMP
     case MPOLS:
 	clear_model(models[0]);
-	*models[0] = mp_ols(cmd.list, (const double **) Z, datainfo, prn);
+	*models[0] = mp_ols(cmd.list, (const double **) Z, datainfo);
 	if ((err = models[0]->errcode)) {
 	    errmsg(err, prn);
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
 	break;
 #endif

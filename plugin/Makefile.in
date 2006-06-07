@@ -21,6 +21,8 @@ LIBOLE2_CFLAGS = @LIBOLE2_CFLAGS@
 LIBOLE2_LIBS = @LIBOLE2_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
+MPFR_CFLAGS = @MPFR_CFLAGS@
+MPFR_LIBS = @MPFR_LIBS@
 LAPACK_LIBS = @LAPACK_LIBS@
 FLIB = @FLIB@
 HAVE_X12A = @HAVE_X12A@
@@ -169,8 +171,8 @@ endif
 
 URCDATA = $(topsrc)/plugin/data/urcdata.gz
 
-override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
-	$(LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) -I. $(GMPDEF)
+override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
+	$(XML_CFLAGS) $(LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) -I. $(GMPDEF)
 
 %.lo: %.c
 	$(COMPILE) $< 
@@ -226,7 +228,7 @@ excel_import.la: excel_import.lo workbook.lo $(query-ms-ole.lo)
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
 
 mp_ols.la: mp_ols.lo
-	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
+	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS) $(MPFR_LIBS)
 
 johansen.la: johansen.lo 
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)

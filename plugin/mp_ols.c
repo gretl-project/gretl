@@ -27,7 +27,7 @@
 #include <mpfr.h>
 #endif
 
-/* #define MP_DEBUG 1  */
+#define MP_DEBUG 0
 
 #define DEFAULT_GRETL_MP_BITS 256   /* min. bits of precision for GMP */
 
@@ -154,7 +154,7 @@ static void make_poly_series (MPMODEL *pmod, mpf_t **mpZ,
     int t, s = 0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-#ifdef MP_DEBUG
+#if MP_DEBUG
 	printf("generating mpZ[%d][%d] from mpZ[%d][%d],\n"
 	       "using power %lu taken from polylist[%d]\n", 
 	       mpi, s, ppos, s, pwr, pli);
@@ -178,7 +178,7 @@ static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
 	/* do trick with strings? */
 	if (digits != NULL && digits[i] != NULL) {
 	    sprintf(numstr, "%.*g", digits[i][t], Z[i][t]);
-#ifdef MP_DEBUG
+#if MP_DEBUG
 	    printf("setting mpZ[%d][%d] from '%s'\n", mpi, s, numstr);
 #endif
 	    mpf_init_set_str(mpZ[mpi][s], numstr, 10);
@@ -276,7 +276,7 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
 	if (mpmod->list[i] == mpmod->polyvar) {
 	    /* record position in mpZ of the var to be raised 
 	       to various powers, if applicable */
-#ifdef MP_DEBUG
+#if MP_DEBUG
 	    fprintf(stderr, "var to be raised to powers: it's "
 		   "at position %d in the regression list,\n"
 		   "and at slot %d in mpZ\n", i, nvars);
@@ -539,15 +539,297 @@ static void set_gretl_mpfr_bits (void)
     }
 } 
 
+/* compute log-likelihood etc. in multiple precision, using the
+   MPFR library
+*/
+
+static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
+{
+    double n = mpmod->nobs;
+    double k = mpmod->ncoeff;
+    mpfr_t mll, mln, ll2;
+    mpfr_t mx1, mx2;
+    mpfr_t ln2pi1, crit;
+
+    set_gretl_mpfr_bits();
+
+    mpfr_init(mll);
+    mpfr_init(mln);
+    mpfr_init(ll2);
+    mpfr_init(mx1);
+    mpfr_init(mx2);
+    mpfr_init(ln2pi1);
+    mpfr_init(crit);
+
+    mpfr_const_pi(ln2pi1, GMP_RNDN);          /* pi */
+    mpfr_set_d(mx1, 2.0, GMP_RNDN);           /* 2 */
+    mpfr_mul(ln2pi1, ln2pi1, mx1, GMP_RNDN);  /* 2 * pi */
+    mpfr_log(ln2pi1, ln2pi1, GMP_RNDN);       /* log(2*pi) */
+    mpfr_set_d(mx1, 1.0, GMP_RNDN);           /* 1 */
+    mpfr_add(ln2pi1, ln2pi1, mx1, GMP_RNDN);  /* log(2*pi) + 1 */
+
+    mpfr_set_f(mll, mpmod->ess, GMP_RNDN);
+    mpfr_set_d(mx1, -.5, GMP_RNDN);
+    mpfr_set_d(mx2, n, GMP_RNDN);
+
+    mpfr_log(mll, mll, GMP_RNDN);          /* log(ess) */
+    mpfr_log(mln, mx2, GMP_RNDN);          /* log(n) */
+
+    mpfr_mul(mll, mx2, mll, GMP_RNDN);     /* n * log(ess) */
+    mpfr_mul(mll, mx1, mll, GMP_RNDN);     /* -.5 * n * log(ess) */
+
+    mpfr_mul(mx1, mx1, mx2, GMP_RNDN);     /* -.5 * n */
+    mpfr_sub(mx2, ln2pi1, mln, GMP_RNDN);  /* log(2*pi) - log(n) */
+    mpfr_mul(mx2, mx1, mx2, GMP_RNDN);     /* -.5 * n * (log(2*pi) - log(n)) */
+
+    mpfr_add(mll, mll, mx2, GMP_RNDN);     /* now actual log-likelihood */  
+
+    pmod->lnL = mpfr_get_d(mll, GMP_RNDN);
+
+    mpfr_set_d(mx1, -2.0, GMP_RNDN);
+    mpfr_mul(ll2, mx1, mll, GMP_RNDN);    /* -2.0 * ll */
+
+    mpfr_set_d(mx1, 2.0, GMP_RNDN);
+    mpfr_set_d(mx2, k, GMP_RNDN);
+    mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k */
+
+    mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + 2 * k */
+    pmod->criterion[C_AIC] = mpfr_get_d(crit, GMP_RNDN);
+
+    mpfr_mul(mx1, mx2, mln, GMP_RNDN);    /* k * log(n) */
+    mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + k * log(n) */
+    pmod->criterion[C_BIC] = mpfr_get_d(crit, GMP_RNDN);
+
+    mpfr_set_d(mx1, 2.0, GMP_RNDN);
+    mpfr_set_d(mx2, (double) k, GMP_RNDN);
+    mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k, again */
+    mpfr_log(mx2, mln, GMP_RNDN);         /* log(log(n)) */
+    mpfr_mul(mx1, mx1, mx2, GMP_RNDN);    /* 2 * k * log(log(n) */
+    mpfr_add(crit, ll2, mx1, GMP_RNDN);   /* -2.0 * ll + 2 * k * log(log(n)) */
+    pmod->criterion[C_HQC] = mpfr_get_d(crit, GMP_RNDN);
+
+    mpfr_clear(mll);
+    mpfr_clear(mln);
+    mpfr_clear(ll2);
+    mpfr_clear(mx1);
+    mpfr_clear(mx2);
+    mpfr_clear(ln2pi1);
+    mpfr_clear(crit);
+}
+
+#else
+
+#include <errno.h>
+
+/* compute log-likelihood etc., based on the ESS from the
+   multiple-precision model but using ordinary double-precision
+   arithmetic: a fallback if the MPFR library is not available
+*/
+
+static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
+{
+    double ess = mpf_get_d(mpmod->ess);
+    int k = mpmod->ncoeff;
+    int n = mpmod->nobs;
+    double ll;
+    double c[3];
+    int err = 0;
+
+    fprintf(stderr, "mp_ll_stats: non-MPFR version\n");
+
+    if (na(ess) || ess <= 0.0) {
+	err = 1;
+    } else {
+	const double ln2pi1 = 2.837877066409345;
+
+	errno = 0;
+
+	ll = -.5 * n * log(ess);
+
+	if (errno == EDOM || errno == ERANGE) {
+	    err = 1;
+	} else {
+	    ll += -.5 * n * (ln2pi1 - log((double) n));
+	    c[0] = -2.0 * ll + 2 * k;
+	    c[1] = -2.0 * ll + k * log(n);
+	    c[2] = -2.0 * ll + 2 * k * log(log(n));
+	}
+    }
+
+    if (!err) {
+	pmod->lnL = ll;
+	pmod->criterion[C_AIC] = c[0];
+	pmod->criterion[C_BIC] = c[1];
+	pmod->criterion[C_HQC] = c[2];
+    }	
+}
+
 #endif
 
+/* compute coefficient covariance matrix in multiple precision */
+
+static int mp_makevcv (const MPMODEL *mpmod, MODEL *pmod)
+{
+    mpf_t *vcv;
+    int dec, mst, kk, i, j, kj, icnt, m, k, l = 0;
+    const int nv = mpmod->ncoeff;
+    const int nxpx = (nv * nv + nv) / 2; 
+    mpf_t d, x;
+
+    if (mpmod->xpx == NULL) {
+	return 1;
+    }
+
+    mpf_init(d);
+    mpf_init(x);
+
+    mst = nxpx;
+    kk = nxpx - 1;
+
+    vcv = malloc(nxpx * sizeof *vcv);
+    if (vcv == NULL) {
+	return E_ALLOC;
+    }
+
+    pmod->vcv = malloc(nxpx * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) {
+	free(vcv);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<nxpx; i++) {
+	mpf_init(vcv[i]);
+    }
+
+    for (i=0; i<nv; i++) {
+	mst -= i;
+	/* find diagonal element */
+	mpf_set(d, mpmod->xpx[kk]);
+	if (i > 0) {
+	    for (j=kk+1; j<=kk+i; j++) {
+		mpf_mul(x, mpmod->xpx[j], vcv[j]);
+		mpf_sub(d, d, x);
+	    }
+	}
+	mpf_mul(vcv[kk], d, mpmod->xpx[kk]);
+	/* find off-diagonal elements indexed by kj */
+	kj = kk;
+	kk = kk - i - 2;
+	if (i > nv - 2) {
+	    continue;
+	}
+	for (j=i+1; j<nv; j++) {
+	    icnt = i+1;
+	    kj -= j;
+	    mpf_set(d, MPF_ZERO);
+	    m = mst + 1;
+	    for (k=0; k<=j-1; k++) {
+		if (icnt > 0) {
+		    dec = 1;
+		    icnt--;
+		} else {
+		    dec = k;
+		}
+		m -= dec;
+		l = kj + i - k;
+		mpf_mul(x, vcv[m-1], mpmod->xpx[l]);
+		mpf_add(d, d, x);
+	    }
+	    mpf_mul(x, d, mpmod->xpx[l-1]);
+	    mpf_neg(vcv[kj], x);
+	}
+    }
+
+    for (i=0; i<nxpx; i++) {
+	mpf_mul(x, vcv[i], mpmod->sigma);
+	mpf_mul(x, x, mpmod->sigma);
+	pmod->vcv[i] = mpf_get_d(x);
+	mpf_clear(vcv[i]);
+    }
+
+    mpf_clear(d);
+    mpf_clear(x);
+    free(vcv);
+
+    return 0;
+}
+
+/* compute mean and s.d. of dependent variable in multiple precision */
+
+static void mp_depvarstats (const MPMODEL *mpmod, MODEL *pmod,
+			    mpf_t **mpZ)
+{
+    mpf_t xbar, ssx, diff, mn;
+    double xn = mpmod->nobs;
+    int yno = mpmod->list[1];
+    int t;
+    
+    mpf_init(xbar);
+    mpf_init(ssx);
+    mpf_init(diff);
+    mpf_init(mn);
+
+    mpf_set(xbar, MPF_ZERO);
+    mpf_set(ssx, MPF_ZERO);
+    mpf_set_d(mn, xn);
+
+    for (t=0; t<mpmod->nobs; t++) {
+	mpf_add(xbar, xbar, mpZ[yno][t]);
+    }
+
+    mpf_div(xbar, xbar, mn);
+    pmod->ybar = mpf_get_d(xbar);
+
+    for (t=0; t<mpmod->nobs; t++) {
+	mpf_sub(diff, mpZ[yno][t], xbar);
+	mpf_pow_ui(diff, diff, 2);
+	mpf_add(ssx, ssx, diff);
+    }
+
+    mpf_sub(mn, mn, MPF_ONE);
+    mpf_div(ssx, ssx, mn);
+    mpf_sqrt(ssx, ssx);     
+    pmod->sdy = mpf_get_d(ssx);
+
+    mpf_clear(xbar);
+    mpf_clear(ssx);
+    mpf_clear(diff);
+    mpf_clear(mn);
+}
+
+/* compute residuals and fitted values in multiple precision */
+
+static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
+			mpf_t **mpZ)
+{
+    mpf_t yht, uht, xbi;
+    int i, t;
+    
+    mpf_init(yht);
+    mpf_init(uht);
+    mpf_init(xbi);
+
+    for (t=0; t<mpmod->nobs; t++) {
+	mpf_set_d(yht, 0.0);
+	for (i=0; i<mpmod->ncoeff; i++) {
+	    mpf_mul(xbi, mpmod->coeff[i], mpZ[mpmod->list[i+2]][t]);
+	    mpf_add(yht, yht, xbi);
+	}
+	mpf_sub(uht, mpZ[mpmod->list[1]][t], yht);
+	pmod->yhat[t + mpmod->t1] = mpf_get_d(yht);
+	pmod->uhat[t + mpmod->t1] = mpf_get_d(uht);
+    }
+
+    mpf_clear(yht);
+    mpf_clear(uht);
+    mpf_clear(xbi);
+}
+
 static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
-			    const DATAINFO *pdinfo, char **xnames,
-			    gretlopt opt)
+			    const DATAINFO *pdinfo, mpf_t **mpZ,
+			    char **xnames, gretlopt opt)
 {
     int i, err = 0;
-
-    /* fixme uhat, yhat */
 
     pmod->ncoeff = mpmod->ncoeff;
     pmod->full_n = pdinfo->n;
@@ -587,6 +869,11 @@ static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
 	pmod->list = gretl_list_copy(mpmod->varlist);
 	if (pmod->list == NULL) {
 	    err = E_ALLOC;
+	} else {
+	    mp_depvarstats(mpmod, pmod, mpZ);
+	    mp_hatvars(mpmod, pmod, mpZ);
+	    mp_ll_stats(mpmod, pmod);
+	    mp_makevcv(mpmod, pmod);
 	}
     }
 
@@ -713,6 +1000,7 @@ int mplsq (const int *list, const int *polylist,
     }
 
     /* calculate regression results */
+
     xpxxpy = mp_xpxxpy_func(mpmod.list, mpmod.nobs, mpZ);
     mpf_set(mpmod.tss, xpxxpy.xpy[l0]);
 
@@ -722,12 +1010,10 @@ int mplsq (const int *list, const int *polylist,
 	mpf_clear(xpxxpy.xpy[i]);
     }
     free(xpxxpy.xpy);
-    xpxxpy.xpy = NULL;
 
     err = mpmod.errcode;
-
     if (!err) {
-	err = copy_mp_results(&mpmod, pmod, pdinfo, xnames, opt);
+	err = copy_mp_results(&mpmod, pmod, pdinfo, mpZ, xnames, opt);
     } 
 
     /* free all the mpf stuff */
@@ -811,7 +1097,7 @@ static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
             }
             mpf_set(xpxxpy.xpx[m++], xx);
         }
-        mpf_set (xx, MPF_ZERO);
+        mpf_set(xx, MPF_ZERO);
         for (t=0; t<n; t++) {
 	    mpf_mul(tmp, mpZ[yno][t], mpZ[li][t]);
 	    mpf_add(xx, xx, tmp);
@@ -1078,7 +1364,7 @@ static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
         /* off-diagonal elements */
         for (i=j+1; i<=nv; i++) {
             kk++;
-            mpf_set (d, MPF_ZERO);
+            mpf_set(d, MPF_ZERO);
             k = j - 1;
             for (l=1; l<=jm1; l++) {
 		mpf_mul(tmp, xpxxpy.xpx[k], xpxxpy.xpx[k-j+i]);

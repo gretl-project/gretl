@@ -31,6 +31,7 @@
                        c == LAD || \
                        c == LOGISTIC || \
                        c == LOGIT || \
+                       c == MPOLS || \
                        c == OLS || \
                        c == OMIT || \
                        c == MLE || \
@@ -131,6 +132,9 @@ struct gretl_option gretl_opts[] = {
     { MAHAL,    OPT_V, "vcv" },
     { MEANTEST, OPT_O, "unequal-vars" },
     { MLE,      OPT_V, "verbose" },
+    { MPOLS,    OPT_O, "vcv" },
+    { MPOLS,    OPT_Q, "quiet" },
+    { MPOLS,    OPT_S, "simple-print" },
     { NLS,      OPT_V, "verbose" },
     { OLS,      OPT_N, "no-df-corr" },
     { OLS,      OPT_O, "vcv" }, 

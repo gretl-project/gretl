@@ -29,6 +29,8 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 			int i, PRN *prn);
 static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			    int i, PRN *prn);
+static void print_mp_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
+			    int c, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
 static void print_rho_terms (const MODEL *pmod, PRN *prn);
 static void print_discrete_statistics (const MODEL *pmod, 
@@ -56,13 +58,15 @@ static void noconst (const MODEL *pmod, PRN *prn)
 
 #define RTFTAB "\\par \\ql \\tab "
 
+#define XDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : GRETL_DIGITS)
+
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) {
 	pprintf(prn, "  %s = %.*g\n", _("Mean of dependent variable"), 
-		GRETL_DIGITS, pmod->ybar);
+		XDIGITS(pmod), pmod->ybar);
 	pprintf(prn, "  %s = %.*g\n", _("Standard deviation of dep. var."), 
-		GRETL_DIGITS, pmod->sdy);
+		XDIGITS(pmod), pmod->sdy);
     } else if (tex_format(prn)) {
 	char x1str[32], x2str[32];
 
@@ -96,7 +100,8 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
     }
 }
 
-static int real_essline (double ess, double sigma, PRN *prn)
+static int 
+real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
 {
     if (ess < 0) {
 	if (plain_format(prn)) {
@@ -108,9 +113,9 @@ static int real_essline (double ess, double sigma, PRN *prn)
 
     if (plain_format(prn)) {    
 	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
-		GRETL_DIGITS, ess);
+		XDIGITS(pmod), ess);
 	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
-		GRETL_DIGITS, sigma);
+		XDIGITS(pmod), sigma);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
 		ess);
@@ -131,7 +136,7 @@ static int real_essline (double ess, double sigma, PRN *prn)
 
 static int essline (const MODEL *pmod, PRN *prn)
 {
-    return real_essline(pmod->ess, pmod->sigma, prn);
+    return real_essline(pmod, pmod->ess, pmod->sigma, prn);
 }
 
 static int essline_original (const MODEL *pmod, PRN *prn)
@@ -143,7 +148,7 @@ static int essline_original (const MODEL *pmod, PRN *prn)
 	return 1;
     }
     
-    return real_essline(ess, sigma, prn);
+    return real_essline(pmod, ess, sigma, prn);
 }
 
 static void rsqline (const MODEL *pmod, PRN *prn)
@@ -154,10 +159,10 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 
     if (plain_format(prn)) { 
 	pprintf(prn, "  %s = %.*g\n", _("Unadjusted R-squared"), 
-		GRETL_DIGITS, pmod->rsq);
+		XDIGITS(pmod), pmod->rsq);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, "  %s = %.*g\n", _("Adjusted R-squared"),  
-		    GRETL_DIGITS, pmod->adjrsq);
+		    XDIGITS(pmod), pmod->adjrsq);
 	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
@@ -202,11 +207,11 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 
     if (plain_format(prn)) { 
 	pprintf(prn, "  %s (%s) = %.*g\n", _(aic_str), _(aic_abbrev),
-		GRETL_DIGITS, crit[C_AIC]);
+		XDIGITS(pmod), crit[C_AIC]);
 	pprintf(prn, "  %s (%s) = %.*g\n", _(bic_str), _(bic_abbrev),
-		GRETL_DIGITS, crit[C_BIC]);
+		XDIGITS(pmod), crit[C_BIC]);
 	pprintf(prn, "  %s (%s) = %.*g\n", _(hqc_str), _(hqc_abbrev),
-		GRETL_DIGITS, crit[C_HQC]);
+		XDIGITS(pmod), crit[C_HQC]);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_(aic_str), crit[C_AIC]);
 	pprintf(prn, RTFTAB "%s = %g\n", I_(bic_str), crit[C_BIC]);
@@ -330,7 +335,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	if (na(pmod->fstt)) {
 	    pprintf(prn, "  %s %s\n", tmp, _("undefined"));
 	} else {
-	    pprintf(prn, "  %s = %.*g", tmp, GRETL_DIGITS, pmod->fstt);
+	    pprintf(prn, "  %s = %.*g", tmp, XDIGITS(pmod), pmod->fstt);
 	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     } else if (tex_format(prn)) {
@@ -500,6 +505,7 @@ const char *estimator_string (int ci, PRN *prn)
     else if (ci == HSK) return N_("Heteroskedasticity-corrected");
     else if (ci == AR) return N_("AR");
     else if (ci == LAD) return N_("LAD");
+    else if (ci == MPOLS) return N_("High-Precision OLS");
     else if (ci == PROBIT) return N_("Probit");
     else if (ci == LOGIT) return N_("Logit");
     else if (ci == TOBIT) return N_("Tobit");
@@ -1173,7 +1179,11 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
     int use_param = pmod->ci == NLS || pmod->ci == MLE;
 
     if (plain_format(prn)) {
-	if (discrete) {
+	if (pmod->ci == MPOLS) {
+	    pputs(prn, _("      VARIABLE            COEFFICIENT          "
+		       "        STDERROR\n"));
+	    pputc(prn, '\n');
+	} else if (discrete) {
 	    pputs(prn, _("      VARIABLE       COEFFICIENT        STDERROR"
 			 "      T STAT       SLOPE\n"));
 	    pprintf(prn, "                                                 "
@@ -1287,7 +1297,11 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	    if (i == gn) {
 		pputc(prn, '\n');
 	    }
-	    err = print_coeff(pdinfo, pmod, i, prn);
+	    if (pmod->ci == MPOLS) {
+		print_mp_coeff(pdinfo, pmod, i, prn);
+	    } else {
+		err = print_coeff(pdinfo, pmod, i, prn);
+	    }
 	} else if (tex_format(prn)) {
 	    if (i == gn) {
 		pputs(prn, "\\\\ \n");
@@ -1403,10 +1417,16 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 
 static void print_ll (const MODEL *pmod, PRN *prn)
 {
-    int lldig = (pmod->ci == ARMA)? 8 : GRETL_DIGITS;
+    int lldig;
 
     if (na(pmod->lnL)) {
 	return;
+    }
+
+    if (pmod->ci == ARMA) {
+	lldig = 8;
+    } else {
+	lldig = XDIGITS(pmod);
     }
 
     if (plain_format(prn)) {
@@ -1477,11 +1497,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
-    if (pmod->ci == MPOLS) {
-	print_mpols_results(pmod, pdinfo, prn);
-	return 0;
-    }
-
     /* FIXME utf vs iso-88* */
 
     if (!plain_format(prn)) {
@@ -1505,7 +1520,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     print_model_heading(pmod, pdinfo, opt, prn);
 
     print_coeff_table_start(pmod, prn);
-
     gotnan = print_coefficients(pmod, pdinfo, prn);
 
     if (pmod->ci == AR) {
@@ -1626,7 +1640,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }    
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS 
-	|| pmod->ci == NLS
+	|| pmod->ci == NLS || pmod->ci == MPOLS
 	|| (pmod->ci == AR && pmod->arinfo->arlist[0] == 1)
 	|| pmod->ci == LOGISTIC || pmod->ci == TOBIT
 	|| pmod->ci == PANEL 
@@ -1662,7 +1676,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
 
 	if (pmod->aux != AUX_VECM) {
-	    if (pmod->ci == OLS) {
+	    if (pmod->ci == OLS || pmod->ci == MPOLS) {
 		print_ll(pmod, prn);
 	    }
 	    info_stats_lines(pmod, prn);
@@ -2407,48 +2421,13 @@ static void print_discrete_statistics (const MODEL *pmod,
     }
 }
 
-static void mp_other_stats (const MODEL *pmod, PRN *prn)
-{
-    char fstr[16];
-    int len = 24;
-
-    if (doing_nls()) len = 36;
-    
-    pprintf(prn, "%-*s", len, _("Standard error"));
-    gretl_print_fullwidth_double(pmod->sigma, GRETL_MP_DIGITS, prn);
-    pputc(prn, '\n');
-
-    pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
-    gretl_print_fullwidth_double(pmod->ess, GRETL_MP_DIGITS, prn);
-    pputc(prn, '\n');
-
-    pprintf(prn, "%-*s", len, _("Unadjusted R-squared"));
-    gretl_print_fullwidth_double(pmod->rsq, GRETL_MP_DIGITS, prn);
-    pputc(prn, '\n');
-
-    pprintf(prn, "%-*s", len, _("Adjusted R-squared"));
-    gretl_print_fullwidth_double(pmod->adjrsq, GRETL_MP_DIGITS, prn);
-    pputc(prn, '\n');
-
-    sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
-    pprintf(prn, "%-*s", len, fstr);
-
-    if (na(pmod->fstt)) {
-	pprintf(prn, "            %s", _("undefined"));
-    } else {
-	gretl_print_fullwidth_double(pmod->fstt, GRETL_MP_DIGITS, prn);
-    }
-
-    pputs(prn, "\n\n");
-}
-
-static void print_mp_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
+static void print_mp_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 			    int c, PRN *prn)
 {
     char pname[VNAMELEN];
 
     gretl_model_get_param_name(pmod, pdinfo, c, pname);
-    pprintf(prn, " %*s ", VNAMELEN - 1, pname);
+    pprintf(prn, "  %-*s", VNAMELEN - 1, pname);
 
     gretl_print_fullwidth_double(pmod->coeff[c], 
 				 GRETL_MP_DIGITS, prn);
@@ -2458,37 +2437,3 @@ static void print_mp_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 }
 
-void print_mpols_results (const MODEL *pmod, const DATAINFO *pdinfo,
-			  PRN *prn)
-{
-    char startdate[OBSLEN], enddate[OBSLEN];
-    int i;
-
-    ntodate(startdate, pmod->t1, pdinfo);
-    ntodate(enddate, pmod->t2, pdinfo);
-
-    pputc(prn, '\n');
-
-    if (!plain_format(prn)) {
-	pputs(prn, "FIXME: this is still to be implemented!\n\n");
-    }
-
-    if (plain_format(prn)) {
-	pprintf(prn, _("Multiple-precision OLS estimates using "
-		       "the %d observations %s-%s\n"),
-		pmod->nobs, startdate, enddate);
-	pprintf(prn, "%s: %s\n\n", _("Dependent variable"),
-		pdinfo->varname[pmod->list[1]]);
-
-	bufspace(2, prn);
-	pputs(prn, _("      VARIABLE         COEFFICIENT          "
-		       "        STD. ERROR\n"));
-    }
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	print_mp_coeff(pmod, pdinfo, i, prn);
-    }
-    pputc(prn, '\n');
-
-    mp_other_stats(pmod, prn);
-}

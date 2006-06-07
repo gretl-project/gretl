@@ -541,7 +541,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/Maximum likelihood..."), NULL, gretl_callback, MLE, NULL, GNULL },
     { N_("/Model/Simultaneous equations..."), NULL, gretl_callback, SYSTEM, NULL, GNULL },
 #ifdef ENABLE_GMP
-    { N_("/Model/High precision OLS..."), NULL, mp_ols_callback, MPOLS, NULL, GNULL },
+    { N_("/Model/High precision OLS..."), NULL, model_callback, MPOLS, NULL, GNULL },
 #endif
 
     /* Help menu */

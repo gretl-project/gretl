@@ -381,27 +381,6 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
-#if 0
-
-static int is_unit_column_vector (const gretl_vector *v)
-{
-    int i;
-
-    if (v->val[0] != 1.0) {
-	return 0;
-    }
-
-    for (i=1; i<v->rows; i++) {
-	if (v->val[i] != 0.0) {
-	    return 0;
-	}
-    }
-
-    return 1;
-}
-
-#endif
-
 static int 
 matrix_diff (const gretl_matrix *a, const gretl_matrix *b)
 {
@@ -427,16 +406,6 @@ static void fast_multiply (const gretl_matrix *a, const gretl_matrix *b,
     int i, j, k;
     int aidx, bidx;
 
-#if 0
-    if (is_unit_column_vector(b)) {
-	aidx = 0;
-	for (j=0; j<c->rows; j++) {
-	    c->val[j] = a->val[aidx++];
-	}
-	return;
-    }
-#endif
-
     for (i=0; i<a->rows; i++) {
 	for (j=0; j<b->cols; j++) {
 	    x = 0.0;
@@ -461,17 +430,6 @@ static void fast_A_prime_B (const gretl_matrix *a, const gretl_matrix *b,
     int i, j, k;
     int aidx, bidx;
 
-#if 0
-    if (is_unit_column_vector(a)) {
-	bidx = 0;
-	for (j=0; j<c->cols; j++) {
-	    c->val[j] = b->val[bidx];
-	    bidx += b->rows;
-	}
-	return;
-    }
-#endif
-
     for (i=0; i<a->cols; i++) {
 	for (j=0; j<b->cols; j++) {
 	    x = 0.0;
@@ -484,6 +442,8 @@ static void fast_A_prime_B (const gretl_matrix *a, const gretl_matrix *b,
 	}
     }
 }
+
+/* matrix multiplication, a * b', with no checks */
 
 static void fast_A_B_prime (const gretl_matrix *a, const gretl_matrix *b,
 			    gretl_matrix *c)

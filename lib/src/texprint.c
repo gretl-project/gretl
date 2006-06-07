@@ -283,6 +283,26 @@ static void tex_panel_coeff_name (char *targ, const char *src,
     }
 }
 
+static void tex_mp_coeff_name (char *targ, const char *src,
+			       int inmath)
+{
+    char tmp[VNAMELEN];
+    char vnesc[32];
+    int i;
+
+    if (sscanf(src, "%15[^^]^%d", tmp, &i)) {
+	tex_escape(vnesc, tmp);
+	if (inmath) {
+	    sprintf(targ, "\\mbox{%s}^%d", vnesc, i);
+	} else {
+	    sprintf(targ, "%s$^{%d}$", vnesc, i);
+	}
+    } else {
+	tex_escape(vnesc, src);
+	strcpy(targ, vnesc);
+    }
+}
+
 static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
 {
     const char *lbl = VARLABEL(pdinfo, v);
@@ -370,6 +390,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	tex_lagname(tmp, pdinfo, pmod->list[i+2]);
     } else if (pmod->aux == AUX_VECM) {
 	tex_vecm_varname(tmp, pdinfo, pmod->list[i+2]);
+    } else if (pmod->ci == MPOLS && pmod->params != NULL) {
+	tex_mp_coeff_name(tmp, pmod->params[i], 0);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
     }
@@ -745,6 +767,10 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    } else if (pmod->ci == GARCH) {
 		cchars += strlen(pmod->params[i+1]);
 		tex_garch_coeff_name(tmp, pmod->params[i+1], 1);
+		pputs(prn, tmp);
+	    } else if (pmod->ci == MPOLS && pmod->params != NULL) {
+		cchars += strlen(pmod->params[i]);
+		tex_mp_coeff_name(tmp, pmod->params[i], 1);
 		pputs(prn, tmp);
 	    } else if (offvar > 0 && i == nc - 1) {
 		cchars += strlen(pdinfo->varname[offvar]);

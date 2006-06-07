@@ -42,6 +42,7 @@ have_gtksourceview="no"
 have_gnome="no"
 have_gtkextra="NA"
 have_gmp="no"
+have_mpfr="no"
 have_lapack="no"
 seek_inet_addr="no"
 png_comments="yes"
@@ -197,6 +198,16 @@ else
 fi,
 try_gmp=yes)
 
+AC_ARG_WITH(mpfr,
+[  --with-mpfr            Use MPFR library [[default=auto]]],
+if test "x${withval}" = "xno"
+then
+  try_mpfr=no
+else
+  try_mpfr=yes
+fi,
+try_mpfr=yes)
+
 AC_ARG_WITH(x-12-arima,
 [  --with-x-12-arima     include X-12-ARIMA support [[default=yes]]],
 if test "$withval" = "no"
@@ -325,6 +336,13 @@ dnl See if GMP lib is available
 dnl
 if test x"${try_gmp}" != xno ; then
   AM_PATH_GMP(4.0.1, have_gmp="yes" ; AC_DEFINE(ENABLE_GMP))
+fi
+
+dnl
+dnl See if MPFR is available
+dnl
+if test x"${try_mpfr}" != xno ; then
+  AM_PATH_MPFR(2.2.0, have_mpfr="yes" ; AC_DEFINE(HAVE_MPFR))
 fi
 
 dnl
@@ -474,6 +492,7 @@ AC_SUBST(build_gui)
 AC_SUBST(build_docs)
 AC_SUBST(have_gtk)
 AC_SUBST(have_gmp)
+AC_SUBST(have_mpfr)
 AC_SUBST(have_gtksourceview)
 AC_SUBST(use_gtksourceview)
 AC_SUBST(have_audio)
@@ -717,6 +736,7 @@ Configuration:
   Use PNG for gnuplot graphs:             ${gnuplot_png}
   Use LaTeX for typesetting output:       ${have_latex}
   Gnu Multiple Precision support:         ${have_gmp}
+  MPFR support:                           ${have_mpfr}
   LAPACK support:                         ${have_lapack}
   Build with GTK version:                 ${have_gtk}
   Script syntax highlighting:             ${use_gtksourceview}

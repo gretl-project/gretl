@@ -2138,49 +2138,6 @@ static gint check_model_cmd (void)
     return err;
 }
 
-#ifdef ENABLE_GMP
-
-int do_mp_ols (selector *sr)
-{
-    const char *buf = selector_list(sr);
-    MODEL *pmod;
-    PRN *prn;
-
-    if (buf == NULL) {
-	return 1;
-    }
-
-    gretl_command_sprintf("mpols %s", buf);
-
-    if (check_and_record_command() || bufopen(&prn)) {
-	return 1;
-    }
-
-    pmod = gretl_model_new();
-    if (pmod == NULL) {
-	errbox(_("Out of memory"));
-	gretl_print_destroy(prn);
-	return 0;
-    }
-
-    *pmod = mp_ols(cmd.list, (const double **) Z, datainfo, prn);
-
-    if (pmod->errcode) {
-        gui_errmsg(pmod->errcode);
-        gretl_print_destroy(prn);
-	gretl_model_free(pmod);
-        return pmod->errcode;
-    }
-
-    gretl_object_ref(pmod, GRETL_OBJ_EQN);
-
-    view_model(prn, pmod, 78, 420, _("gretl: high precision estimates"));
-
-    return 0;
-}
-
-#endif /* ENABLE_GMP */
-
 static int 
 record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 				int got_start, int got_end)
@@ -2761,6 +2718,11 @@ int do_model (selector *sr)
 
     case LAD:
 	*pmod = lad(cmd.list, &Z, datainfo);
+	err = model_output(pmod, prn);
+	break;	
+
+    case MPOLS:
+	*pmod = mp_ols(cmd.list, (const double **) Z, datainfo);
 	err = model_output(pmod, prn);
 	break;	
 
@@ -6641,10 +6603,12 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 #ifdef ENABLE_GMP
     case MPOLS:
 	clear_model(models[0]);
-	*models[0] = mp_ols(cmd.list, (const double **) Z, datainfo, outprn);
+	*models[0] = mp_ols(cmd.list, (const double **) Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn); 
-	}	
+	} else {
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
+	}
 	break;
 #endif
 

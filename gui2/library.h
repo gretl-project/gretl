@@ -159,10 +159,6 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
 
 int do_spearman (selector *sr);
 
-#ifdef ENABLE_GMP
-int do_mp_ols (selector *sr);
-#endif
-
 int out_of_sample_info (int add_ok, int *t2);
 
 /* variable-related functions */

@@ -30,6 +30,8 @@ version 1.5.2, in progress
   command as "paneldat"
 - Lags in main window: make these visible "under" their parent
   variable, via a "twisty" triangle
+- Revamp multiple-precision models: add more statistics, and make
+  them available for capture via genr
 
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality

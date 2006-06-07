@@ -320,7 +320,7 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
 #define OK_LOOP_MODEL(c) (c == ARMA || c == CORC || c == GARCH || \
                           c == HCCM || c == HILU || c == HSK || \
                           c == LAD || c == OLS || c == TSLS || \
-                          c == PWE || c == WLS)
+                          c == PWE || c == WLS || c == MPOLS)
 
 /**
  * ok_in_loop:
@@ -2793,6 +2793,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case HILU:
 	    case HSK:
 	    case LAD:
+	    case MPOLS:
 	    case OLS:
 	    case TSLS:
 	    case PWE:
@@ -2817,6 +2818,8 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    *models[0] = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt);
 		} else if (cmd.ci == LAD) {
 		    *models[0] = lad(cmd.list, pZ, pdinfo);
+		} else if (cmd.ci == MPOLS) {
+		    *models[0] = mp_ols(cmd.list, (const double **) *pZ, pdinfo);
 		} else if (cmd.ci == HSK) {
 		    *models[0] = hsk_func(cmd.list, pZ, pdinfo);
 		} else if (cmd.ci == ARMA) {

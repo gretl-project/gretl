@@ -384,13 +384,6 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget)
 		     presel);
 }
 
-#ifdef ENABLE_GMP
-void mp_ols_callback (gpointer data, guint model_code, GtkWidget *widget)
-{
-    selection_dialog(_("gretl: specify model"), do_mp_ols, model_code, 0);
-}
-#endif /* ENABLE_GMP */
-
 void model_genr_callback (gpointer data, guint u, GtkWidget *widget)
 {
     windata_t *mydata = (windata_t *) data;

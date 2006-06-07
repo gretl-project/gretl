@@ -3426,20 +3426,17 @@ MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 
 /**
  * mp_ols:
- * @list: specification of variables to use
- * @pos: string rep. of integer position in list at which
- * the regular list of variables ends and a list of polynomial
- * terms begins (or empty string in case of no polynomial terms)
- * @pZ: pointer to data matrix.
+ * @list: specification of variables to use.
+ * @Z: data array.
  * @pdinfo: information on the data set.
- * @prn: gretl printing struct.
+ *
+ * Estimate an OLS model using multiple-precision arithmetic
+ * via the GMP library.
  * 
- * 
- * Returns: 0 on successful completion, error code on error.
+ * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo, 
-	      PRN *prn) 
+MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 {
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, const double **, 
@@ -3480,13 +3477,11 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo,
     mpmod.errcode = (*mplsq)(reglist, polylist, Z, pdinfo,  
 			     gretl_errmsg, &mpmod, OPT_S); 
 
-    if (!mpmod.errcode) {
-	print_mpols_results(&mpmod, pdinfo, prn);
-    }
-
     close_plugin(handle);
     free(polylist);
     free(tmplist);
+
+    set_model_id(&mpmod);
 
     return mpmod;
 }

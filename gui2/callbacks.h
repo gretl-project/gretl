@@ -45,10 +45,6 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget);
 
 void model_callback (gpointer data, guint model_code, GtkWidget *widget);
 
-#ifdef ENABLE_GMP
-void mp_ols_callback (gpointer data, guint model_code, GtkWidget *widget);
-#endif
-
 void selector_callback (gpointer data, guint action, GtkWidget *widget);
 
 void gretl_callback (gpointer data, guint action, GtkWidget *widget);

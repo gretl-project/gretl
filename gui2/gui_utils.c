@@ -2737,7 +2737,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 	if (latex_is_ok() && !pmod->errcode) {
 	    add_model_tex_items(vwin);
 	}
-    } 
+    }	
 
     if (pmod->ci != ARMA && pmod->ci != GARCH && 
 	pmod->ci != NLS && pmod->ci != MLE) {
@@ -2870,7 +2870,7 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 {
     int i, cmd_ci, ok;
 
-    if (pmod->ci == MLE) {
+    if (pmod->ci == MLE || pmod->ci == MPOLS) { /* FIXME? */
 	flip(ifac, "/Tests", FALSE);
 	return;
     }
@@ -2934,7 +2934,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	flip(vwin->ifac, "/Graphs", FALSE);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
-    }
+    } 
 
     /* FIXME restrictions on confidence ellipse */
 
@@ -4011,7 +4011,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (pmod->ci == MLE) {
+    if (pmod->ci == MLE || pmod->ci == MPOLS) {
 	return FALSE;
     }
 
