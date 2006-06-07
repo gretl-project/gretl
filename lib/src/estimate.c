@@ -3441,11 +3441,7 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, const double **, 
 		 DATAINFO *, char *, MODEL *, gretlopt);
-    const int *reglist = NULL;
-    int *polylist = NULL;
-    int *tmplist = NULL;
     MODEL mpmod;
-    int pos, nc;
 
     gretl_model_init(&mpmod);
 
@@ -3455,31 +3451,10 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 	return mpmod;
     }
 
-    pos = gretl_list_separator_position(list);
-
-    if (pos > 0) { 
-	/* got a list of polynomial terms? */
-	mpmod.errcode = gretl_list_split_on_separator(list, &tmplist, &polylist);
-	if (mpmod.errcode) {
-	    close_plugin(handle);
-	    return mpmod;
-	} 
-	reglist = tmplist;
-    } else {
-	reglist = list;
-    }
-
-    nc = list[0] - 1;
-    if (polylist != NULL) {
-	nc--;
-    }
-
-    mpmod.errcode = (*mplsq)(reglist, polylist, Z, pdinfo,  
+    mpmod.errcode = (*mplsq)(list, NULL, Z, pdinfo,  
 			     gretl_errmsg, &mpmod, OPT_S); 
 
     close_plugin(handle);
-    free(polylist);
-    free(tmplist);
 
     set_model_id(&mpmod);
 

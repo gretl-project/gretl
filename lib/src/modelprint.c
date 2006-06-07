@@ -367,9 +367,9 @@ static void dwline (const MODEL *pmod, PRN *prn)
     if (plain_format(prn)) {
 	if (!na(pmod->dw)) {
 	    pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
-		    GRETL_DIGITS, pmod->dw);
+		    XDIGITS(pmod), pmod->dw);
 	    pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
-		    GRETL_DIGITS, pmod->rho);
+		    XDIGITS(pmod), pmod->rho);
 	} 
     } else if (tex_format(prn)) {
 	char x1str[32], x2str[32];
@@ -1661,7 +1661,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
 
 	if (dataset_is_time_series(pdinfo)) {
-	    if (pmod->ci == OLS || pmod->ci == VAR ||
+	    if (pmod->ci == OLS || pmod->ci == MPOLS || pmod->ci == VAR ||
 		(pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 		dwline(pmod, prn);
 		if (pmod->ci != VAR && pmod->aux != AUX_VECM &&

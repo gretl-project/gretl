@@ -261,7 +261,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == ARMA || \
                          c == EQUATION || \
                          c == GARCH || \
-                         c == MPOLS || \
                          c == POISSON || \
                          c == SCATTERS || \
                          c == TSLS)
@@ -1359,7 +1358,7 @@ static int get_sepcount (const char *s)
 int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo) 
 {
     int j, nf, linelen, pos, v, lnum;
-    int gotdata = 0, poly = 0;
+    int gotdata = 0;
     int sepcount = 0;
     int read_lags = 0;
     char *remainder = NULL;
@@ -1789,7 +1788,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	else if (isdigit(*field)) {
 	    /* could be the ID number of a variable */
 	    v = atoi(field);
-	    if (!read_lags && !poly && v > pdinfo->v - 1) {
+	    if (!read_lags && v > pdinfo->v - 1) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, 
                        _("%d is not a valid variable number"), v);
@@ -1807,9 +1806,6 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		if (read_lags && sepcount == 0) {
 		    /* turn off acceptance of AR lags etc */
 		    read_lags = 0;
-		}
-		if (cmd->ci == MPOLS) {
-		    poly = 1;
 		}
 		continue;
 	    } else if (cmd->ci == VAR || cmd->ci == VECM) {
@@ -1829,7 +1825,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	/* check cmd->list for scalars */
-	if (!read_lags && !poly && !(SCALARS_OK_IN_LIST(cmd->ci))) {
+	if (!read_lags && !(SCALARS_OK_IN_LIST(cmd->ci))) {
 	    if (var_is_scalar(pdinfo, cmd->list[lnum-1])) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("variable %s is a scalar"), field);
@@ -2328,11 +2324,10 @@ static int n_separators (const int *list)
     return nsep;
 }
 
-#define listsep_switch(c) (c == AR || c == GARCH || c == ARMA || \
-                           c == MPOLS)
+#define listsep_switch(c) (c == AR || c == GARCH || c == ARMA)
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARMA || \
-                       c == CORRGM || c == MPOLS || c == SCATTERS || \
+                       c == CORRGM || c == SCATTERS || \
                        c == GNUPLOT || c == LOGISTIC || c == GARCH || \
                        c == EQUATION || c == POISSON)
 

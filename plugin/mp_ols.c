@@ -211,13 +211,13 @@ static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
 */
 
 static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z, 
-			 const DATAINFO *pdinfo, char **xnames)
+			 const DATAINFO *pdinfo)
 {
     int i, s, t;
     int n = mpmod->t2 - mpmod->t1 + 1;
     int l0 = mpmod->list[0];
     int npoly, mp_poly_pos = 0;
-    int listpt, nvars = 0, v = 0;
+    int listpt, nvars = 0;
     mpf_t **mpZ = NULL;
     unsigned char **digits = (unsigned char **) pdinfo->data;
     int err = 0;
@@ -245,9 +245,6 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
 	s = 0;
 	for (t=mpmod->t1; t<=mpmod->t2; t++) {
 	    mpf_init_set_d(mpZ[0][s++], 1.0);
-	}
-	if (xnames != NULL) {
-	    strcpy(xnames[v++], pdinfo->varname[0]);
 	}
 	nvars++;
     } else {
@@ -286,10 +283,6 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
 	    
 	fill_mp_series(mpmod, Z, mpZ, digits, mpmod->list[i], nvars); 
 	mpmod->varlist[i] = mpmod->list[i];
-
-	if (xnames != NULL && i > 1) {
-	    strcpy(xnames[v++], pdinfo->varname[mpmod->list[i]]);
-	}
 	mpmod->list[i] = nvars;
 	nvars++;
     } /* end processing ordinary data */
@@ -307,13 +300,6 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
 
 	make_poly_series(mpmod, mpZ, i+1, mp_poly_pos, nvars);
 	mpmod->varlist[i+listpt] = mpmod->polyvar;
-
-	if (xnames != NULL) {
-	    sprintf(xnames[v++], "%s^%d", 
-		    pdinfo->varname[mpmod->polyvar],
-		    mpmod->polylist[i+1]);
-	}
-
 	mpmod->list[i+listpt] = nvars;
 	nvars++;
     }
@@ -666,6 +652,49 @@ static void mp_ll_stats (const MPMODEL *mpmod, MODEL *pmod)
 
 #endif
 
+static void mp_dwstat (const MPMODEL *mpmod, MODEL *pmod,
+		       mpf_t *uhat)
+{
+    mpf_t num, x;
+    mpf_t ut1, u11;
+    int t;
+
+    mpf_init(num);
+    mpf_init(x);
+    mpf_init(ut1);
+    mpf_init(u11);
+
+    for (t=1; t<mpmod->nobs; t++)  {
+	mpf_sub(x, uhat[t], uhat[t-1]);
+	mpf_pow_ui(x, x, 2);
+	mpf_add(num, num, x);
+	mpf_mul(x, uhat[t], uhat[t-1]);
+	mpf_add(ut1, x, x);
+	mpf_mul(x, uhat[t-1], uhat[t-1]);
+	mpf_add(u11, x, x);
+    }
+
+    mpf_div(x, num, mpmod->ess);
+    pmod->dw = mpf_get_d(x);
+
+    if (isnan(pmod->dw) || isinf(pmod->dw)) {
+	pmod->dw = NADBL;
+    }    
+
+    mpf_div(x, ut1, u11);
+    pmod->rho = mpf_get_d(x);
+
+    if (isnan(pmod->rho) || isinf(pmod->rho)) {
+	pmod->dw = NADBL;
+	pmod->rho = NADBL;
+    }
+
+    mpf_clear(num);
+    mpf_clear(x);
+    mpf_clear(ut1);
+    mpf_clear(u11);
+}
+
 /* compute coefficient covariance matrix in multiple precision */
 
 static int mp_makevcv (const MPMODEL *mpmod, MODEL *pmod)
@@ -800,10 +829,20 @@ static void mp_depvarstats (const MPMODEL *mpmod, MODEL *pmod,
 /* compute residuals and fitted values in multiple precision */
 
 static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
-			mpf_t **mpZ)
+			mpf_t **mpZ, int tseries)
 {
+    mpf_t *uhat = NULL;
     mpf_t yht, uht, xbi;
     int i, t;
+
+    if (tseries) {
+	uhat = malloc(mpmod->nobs * sizeof *uhat);
+	if (uhat != NULL) {
+	    for (t=0; t<mpmod->nobs; t++) {
+		mpf_init(uhat[t]);
+	    }
+	}
+    }
     
     mpf_init(yht);
     mpf_init(uht);
@@ -818,17 +857,29 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
 	mpf_sub(uht, mpZ[mpmod->list[1]][t], yht);
 	pmod->yhat[t + mpmod->t1] = mpf_get_d(yht);
 	pmod->uhat[t + mpmod->t1] = mpf_get_d(uht);
+	if (uhat != NULL) {
+	    mpf_set(uhat[t], uht);
+	}
     }
 
     mpf_clear(yht);
     mpf_clear(uht);
     mpf_clear(xbi);
+
+    if (uhat != NULL) {
+	mp_dwstat(mpmod, pmod, uhat);
+	for (t=0; t<mpmod->nobs; t++) {
+	    mpf_clear(uhat[t]);
+	}
+	free(uhat);
+    }
 }
 
 static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
 			    const DATAINFO *pdinfo, mpf_t **mpZ,
-			    char **xnames, gretlopt opt)
+			    gretlopt opt)
 {
+    int tseries = dataset_is_time_series(pdinfo);
     int i, err = 0;
 
     pmod->ncoeff = mpmod->ncoeff;
@@ -837,14 +888,7 @@ static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
 
     err = gretl_model_allocate_storage(pmod);
     if (err) {
-	if (xnames != NULL) {
-	    free_strings_array(xnames, pmod->ncoeff);
-	}
 	return err;
-    }
-
-    if (xnames != NULL) {
-	gretl_model_add_allocated_varnames(pmod, xnames);
     }
 
     for (i=0; i<mpmod->ncoeff; i++) {
@@ -871,34 +915,13 @@ static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
 	    err = E_ALLOC;
 	} else {
 	    mp_depvarstats(mpmod, pmod, mpZ);
-	    mp_hatvars(mpmod, pmod, mpZ);
+	    mp_hatvars(mpmod, pmod, mpZ, tseries);
 	    mp_ll_stats(mpmod, pmod);
 	    mp_makevcv(mpmod, pmod);
 	}
     }
 
     return err;
-}
-
-static char **allocate_xnames (const int *list)
-{
-    int i, n = list[0] - 1;
-    char **s = create_strings_array(n);
-
-    if (s == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<n; i++) {
-	s[i] = malloc(VNAMELEN + 6);
-	if (s[i] == NULL) {
-	    free_strings_array(s, n);
-	    return NULL;
-	}
-	s[i][0] = '\0';
-    }
-
-    return s;
 }
 
 /**
@@ -925,7 +948,6 @@ int mplsq (const int *list, const int *polylist,
 {
     int l0, i;
     mpf_t **mpZ = NULL;
-    char **xnames = NULL;
     MPXPXXPY xpxxpy;
     MPMODEL mpmod;
     int err = 0;
@@ -958,14 +980,6 @@ int mplsq (const int *list, const int *polylist,
 	return E_DATA;
     }
 
-    if (polylist != NULL && (opt & OPT_S)) {
-	xnames = allocate_xnames(mpmod.list);
-	if (xnames == NULL) {
-	    mp_model_free(&mpmod);
-	    return E_ALLOC;
-	}
-    }
-
     /* check for missing obs in sample */
     if (data_problems(list, Z, pdinfo, errbuf)) {
 	mp_model_free(&mpmod);
@@ -976,7 +990,7 @@ int mplsq (const int *list, const int *polylist,
     mpmod.ifc = mp_rearrange(mpmod.list);
 
     /* construct multiple-precision data matrix */
-    mpZ = make_mpZ(&mpmod, Z, pdinfo, xnames);
+    mpZ = make_mpZ(&mpmod, Z, pdinfo);
 
     if (mpZ == NULL) {
 	mp_model_free(&mpmod);
@@ -1013,7 +1027,7 @@ int mplsq (const int *list, const int *polylist,
 
     err = mpmod.errcode;
     if (!err) {
-	err = copy_mp_results(&mpmod, pmod, pdinfo, mpZ, xnames, opt);
+	err = copy_mp_results(&mpmod, pmod, pdinfo, mpZ, opt);
     } 
 
     /* free all the mpf stuff */
