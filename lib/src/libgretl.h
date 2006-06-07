@@ -220,7 +220,6 @@ typedef struct FITRESID_ FITRESID;
 typedef struct DATASET_ DATASET;
 typedef struct GRETL_VAR_ GRETL_VAR;
 
-typedef struct mp_results_ mp_results;
 typedef struct model_data_item_ model_data_item;
 typedef struct ModelTest_ ModelTest;
 typedef struct _gretl_equation_system gretl_equation_system;
@@ -353,20 +352,6 @@ struct MODEL_ {
 				    sub-sampled portion of the dataset */
     int n_data_items;            /* number of extra data items */
     model_data_item **data_items; /* pointer to additional data */
-};
-
-struct mp_results_ {
-    int ncoeff;
-    int t1, t2, ifc;
-    int dfn, dfd;
-    int *varlist;
-    char **varnames;
-    double *coeff;
-    double *sderr;
-    double sigma;
-    double ess;
-    double rsq, adjrsq;
-    double fstt;
 };
 
 #define VARLABEL(p,i)        ((p->varinfo[i])->label)

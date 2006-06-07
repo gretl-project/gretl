@@ -117,8 +117,8 @@ static void free_mpZ (mpf_t **mpZ, int v, int n)
 /* reject the incoming data (a) if any values are missing, (b) if any
    vars are all zero */
 
-static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
-			  char *errbuf)
+static int data_problems (const int *list, const double **Z, 
+			  const DATAINFO *pdinfo, char *errbuf)
 {
     int i, t, allzero;
 
@@ -167,7 +167,7 @@ static void make_poly_series (MPMODEL *pmod, mpf_t **mpZ,
     }
 }
 
-static void fill_mp_series (MPMODEL *pmod, double **Z, mpf_t **mpZ,
+static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
 			    unsigned char **digits,
 			    int i, int mpi)
 {
@@ -210,14 +210,14 @@ static void fill_mp_series (MPMODEL *pmod, double **Z, mpf_t **mpZ,
    powers of x is done in regular double precision, so we do it here.
 */
 
-static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
-			 char **varnames)
+static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z, 
+			 const DATAINFO *pdinfo, char **xnames)
 {
     int i, s, t;
-    int n = pmod->t2 - pmod->t1 + 1;
-    int l0 = pmod->list[0];
+    int n = mpmod->t2 - mpmod->t1 + 1;
+    int l0 = mpmod->list[0];
     int npoly, mp_poly_pos = 0;
-    int listpt, nvars = 0, vnames = 1;
+    int listpt, nvars = 0, v = 0;
     mpf_t **mpZ = NULL;
     unsigned char **digits = (unsigned char **) pdinfo->data;
     int err = 0;
@@ -226,12 +226,12 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 	return NULL;
     }
 
-    /* "varlist" holds the regression specification using
+    /* "varlist" holds the regression specification, using
        the numbering of variables from the original dataset 
     */
 
-    pmod->varlist = gretl_list_new(l0);
-    if (pmod->varlist == NULL) {
+    mpmod->varlist = gretl_list_new(l0);
+    if (mpmod->varlist == NULL) {
 	return NULL;
     }
 
@@ -240,14 +240,14 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 	return NULL;
     }
 
-    if (pmod->ifc) { 
+    if (mpmod->ifc) { 
 	mpZ[0] = malloc(n * sizeof **mpZ);
 	s = 0;
-	for (t=pmod->t1; t<=pmod->t2; t++) {
+	for (t=mpmod->t1; t<=mpmod->t2; t++) {
 	    mpf_init_set_d(mpZ[0][s++], 1.0);
 	}
-	if (varnames != NULL) {
-	    strcpy(varnames[vnames++], pdinfo->varname[0]);
+	if (xnames != NULL) {
+	    strcpy(xnames[v++], pdinfo->varname[0]);
 	}
 	nvars++;
     } else {
@@ -255,17 +255,17 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
     }
 
     /* number of polynomial terms to be generated */
-    if (pmod->polylist != NULL) {
-	npoly = pmod->polylist[0];
+    if (mpmod->polylist != NULL) {
+	npoly = mpmod->polylist[0];
     } else {
 	npoly = 0;
     }
 
     /* process the ordinary data */
     for (i=1; i<=l0-npoly; i++) {
-	if (pmod->list[i] == 0) {
+	if (mpmod->list[i] == 0) {
 	    /* the constant is already handled */	    
-	    pmod->varlist[i] = 0;
+	    mpmod->varlist[i] = 0;
 	    continue;
 	}
 	mpZ[nvars] = malloc(n * sizeof **mpZ);
@@ -273,7 +273,7 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 	    err = 1;
 	    break;
 	}
-	if (pmod->list[i] == pmod->polyvar) {
+	if (mpmod->list[i] == mpmod->polyvar) {
 	    /* record position in mpZ of the var to be raised 
 	       to various powers, if applicable */
 #ifdef MP_DEBUG
@@ -284,22 +284,13 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 	    mp_poly_pos = nvars;
 	}
 	    
-	fill_mp_series(pmod, Z, mpZ, digits, pmod->list[i], nvars); 
-	pmod->varlist[i] = pmod->list[i];
+	fill_mp_series(mpmod, Z, mpZ, digits, mpmod->list[i], nvars); 
+	mpmod->varlist[i] = mpmod->list[i];
 
-	if (varnames != NULL) {
-	    int targ = 0;
-
-	    if (i > 1) {
-		targ = vnames++;
-	    }
-#ifdef MP_DEBUG
-	    fprintf(stderr, "writing varnames[%d] = '%s'\n",
-		    targ, pdinfo->varname[pmod->list[i]]);
-#endif
-	    strcpy(varnames[targ], pdinfo->varname[pmod->list[i]]);
+	if (xnames != NULL && i > 1) {
+	    strcpy(xnames[v++], pdinfo->varname[mpmod->list[i]]);
 	}
-	pmod->list[i] = nvars;
+	mpmod->list[i] = nvars;
 	nvars++;
     } /* end processing ordinary data */
 
@@ -313,20 +304,17 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
 	    err = 1;
 	    break;
 	}
-	make_poly_series(pmod, mpZ, i+1, mp_poly_pos, nvars);
-	pmod->varlist[i+listpt] = pmod->polyvar;
 
-	if (varnames != NULL) {
-	    sprintf(varnames[vnames++], "%s^%d", 
-		    pdinfo->varname[pmod->polyvar],
-		    pmod->polylist[i+1]);
-#ifdef MP_DEBUG
-	    fprintf(stderr, "wrote varname[%d] = '%s'\n", 
-		    vnames-1, varnames[vnames-1]);
-#endif
+	make_poly_series(mpmod, mpZ, i+1, mp_poly_pos, nvars);
+	mpmod->varlist[i+listpt] = mpmod->polyvar;
+
+	if (xnames != NULL) {
+	    sprintf(xnames[v++], "%s^%d", 
+		    pdinfo->varname[mpmod->polyvar],
+		    mpmod->polylist[i+1]);
 	}
 
-	pmod->list[i+listpt] = nvars;
+	mpmod->list[i+listpt] = nvars;
 	nvars++;
     }
 
@@ -338,66 +326,66 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo,
     return mpZ;
 }
 
-static void mp_model_free (MPMODEL *pmod)
+static void mp_model_free (MPMODEL *mpmod)
 {
-    int i, nx = pmod->list[0] - 1;
+    int i, nx = mpmod->list[0] - 1;
     int nt = nx * (nx + 1) / 2;
 
-    free(pmod->list);
-    free(pmod->varlist);
+    free(mpmod->list);
+    free(mpmod->varlist);
 
-    if (pmod->coeff != NULL) {
-	for (i=0; i<pmod->ncoeff; i++) { 
-	    mpf_clear(pmod->coeff[i]);
+    if (mpmod->coeff != NULL) {
+	for (i=0; i<mpmod->ncoeff; i++) { 
+	    mpf_clear(mpmod->coeff[i]);
 	}
-	free(pmod->coeff);
+	free(mpmod->coeff);
     }
 
-    if (pmod->sderr != NULL) {    
-	for (i=0; i<pmod->ncoeff; i++) {
-	    mpf_clear(pmod->sderr[i]);
+    if (mpmod->sderr != NULL) {    
+	for (i=0; i<mpmod->ncoeff; i++) {
+	    mpf_clear(mpmod->sderr[i]);
 	}
-	free(pmod->sderr);
+	free(mpmod->sderr);
     }
 
-    if (pmod->xpx != NULL) {
+    if (mpmod->xpx != NULL) {
 	for (i=0; i<nt; i++) {
-	    mpf_clear(pmod->xpx[i]);
+	    mpf_clear(mpmod->xpx[i]);
 	}
-	free(pmod->xpx);
+	free(mpmod->xpx);
     }
 
-    mpf_clear(pmod->ess);
-    mpf_clear(pmod->tss);
-    mpf_clear(pmod->sigma);
-    mpf_clear(pmod->rsq);
-    mpf_clear(pmod->adjrsq);
-    mpf_clear(pmod->fstt); 
+    mpf_clear(mpmod->ess);
+    mpf_clear(mpmod->tss);
+    mpf_clear(mpmod->sigma);
+    mpf_clear(mpmod->rsq);
+    mpf_clear(mpmod->adjrsq);
+    mpf_clear(mpmod->fstt); 
 }
 
-static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
+static void mp_model_init (MPMODEL *mpmod, const DATAINFO *pdinfo)
 {
-    pmod->ID = 0;
-    pmod->t1 = pdinfo->t1;
-    pmod->t2 = pdinfo->t2;
+    mpmod->ID = 0;
+    mpmod->t1 = pdinfo->t1;
+    mpmod->t2 = pdinfo->t2;
 
-    pmod->list = NULL;
-    pmod->varlist = NULL;
-    pmod->polylist = NULL; /* don't free, the caller does that */
-    pmod->ifc = 1;
-    pmod->coeff = NULL;
-    pmod->sderr = NULL;
-    pmod->xpx = NULL;
+    mpmod->list = NULL;
+    mpmod->varlist = NULL;
+    mpmod->polylist = NULL; /* don't free, the caller does that */
+    mpmod->ifc = 1;
+    mpmod->coeff = NULL;
+    mpmod->sderr = NULL;
+    mpmod->xpx = NULL;
 
-    mpf_init(pmod->ess);
-    mpf_init(pmod->tss);
-    mpf_init(pmod->sigma);
-    mpf_init(pmod->rsq);
-    mpf_init(pmod->adjrsq);
-    mpf_init(pmod->fstt);
+    mpf_init(mpmod->ess);
+    mpf_init(mpmod->tss);
+    mpf_init(mpmod->sigma);
+    mpf_init(mpmod->rsq);
+    mpf_init(mpmod->adjrsq);
+    mpf_init(mpmod->fstt);
 
-    pmod->errcode = 0;
-    pmod->polyvar = 0;
+    mpmod->errcode = 0;
+    mpmod->polyvar = 0;
 }
 
 /**
@@ -439,6 +427,7 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
 }
 
 #ifdef HAVE_MPFR
+
 /**
  * mp_vector_ln:
  * @srcvec: source vector (doubles)
@@ -473,16 +462,17 @@ int mp_vector_ln (const double *srcvec, double *targvec, int n)
 
     return 0;
 }
+
 #endif
 
-static int poly_check (MPMODEL *pmod, const int *list)
+static int poly_check (MPMODEL *mpmod, const int *list)
 {
     int i;
 
     /* check that all powers are > 1 */
 
-    for (i=1; i<=pmod->polylist[0]; i++) {
-	if (pmod->polylist[i] < 2) {
+    for (i=1; i<=mpmod->polylist[0]; i++) {
+	if (mpmod->polylist[i] < 2) {
 	    return 1;
 	}
     }
@@ -492,12 +482,12 @@ static int poly_check (MPMODEL *pmod, const int *list)
 
     for (i=list[0]; i>1; i--) {
 	if (list[i] != 0) {
-	    pmod->polyvar = list[i];
+	    mpmod->polyvar = list[i];
 	    break;
 	}
     }
 
-    if (pmod->polyvar == 0) {
+    if (mpmod->polyvar == 0) {
 	return 1;
     }
 
@@ -537,6 +527,7 @@ static void set_gretl_mp_bits (void)
 }
 
 #ifdef HAVE_MPFR
+
 static void set_gretl_mpfr_bits (void)
 {
     char *user_bits = getenv("GRETL_MP_BITS");
@@ -547,15 +538,32 @@ static void set_gretl_mpfr_bits (void)
 	mpfr_set_default_prec((unsigned long) DEFAULT_GRETL_MP_BITS);
     }
 } 
+
 #endif
 
-static int copy_mp_results (MPMODEL *mpmod, DATAINFO *pdinfo,
-			    MODEL *pmod)
+static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
+			    const DATAINFO *pdinfo, char **xnames,
+			    gretlopt opt)
 {
     int i, err = 0;
 
     /* fixme uhat, yhat */
-    /* fixme allocate storage in pmod */
+
+    pmod->ncoeff = mpmod->ncoeff;
+    pmod->full_n = pdinfo->n;
+    pmod->ci = MPOLS;
+
+    err = gretl_model_allocate_storage(pmod);
+    if (err) {
+	if (xnames != NULL) {
+	    free_strings_array(xnames, pmod->ncoeff);
+	}
+	return err;
+    }
+
+    if (xnames != NULL) {
+	gretl_model_add_allocated_varnames(pmod, xnames);
+    }
 
     for (i=0; i<mpmod->ncoeff; i++) {
 	pmod->coeff[i] = mpf_get_d(mpmod->coeff[i]);
@@ -567,33 +575,56 @@ static int copy_mp_results (MPMODEL *mpmod, DATAINFO *pdinfo,
     pmod->rsq = mpf_get_d(mpmod->rsq);
     pmod->fstt = mpf_get_d(mpmod->fstt);
 
-#if 0 /* FIXME */
-    if (pmod->varnames != NULL) { 
-	/* will use results for printing */
+    if (opt & OPT_S) {
+	/* saving additional results */
 	pmod->t1 = mpmod->t1;
 	pmod->t2 = mpmod->t2;
+	pmod->nobs = mpmod->nobs;
 	pmod->ifc = mpmod->ifc;
 	pmod->dfn = mpmod->dfn;
 	pmod->dfd = mpmod->dfd;
 	pmod->adjrsq = mpf_get_d(mpmod->adjrsq);
-	pmod->varlist = gretl_list_copy(mpmod->varlist);
-	if (pmod->varlist == NULL) {
-	    err = 1;
+	pmod->list = gretl_list_copy(mpmod->varlist);
+	if (pmod->list == NULL) {
+	    err = E_ALLOC;
 	}
     }
-#endif
 
     return err;
+}
+
+static char **allocate_xnames (const int *list)
+{
+    int i, n = list[0] - 1;
+    char **s = create_strings_array(n);
+
+    if (s == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	s[i] = malloc(VNAMELEN + 6);
+	if (s[i] == NULL) {
+	    free_strings_array(s, n);
+	    return NULL;
+	}
+	s[i][0] = '\0';
+    }
+
+    return s;
 }
 
 /**
  * mplsq:
  * @list: dependent variable plus list of regressors.
  * @polylist: list of polynomial terms (or NULL).
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @errbuf: where to print any error message.
  * @pmod: MODEL pointer to hold results.
+ * @opt: if contains %OPT_S, save additional model
+ * information (including the names of parameters in 
+ * @pmod, if required).
  *
  * Computes multiple-precision OLS estimates of the model 
  * specified by @list, and stores them in @pmod.
@@ -602,18 +633,19 @@ static int copy_mp_results (MPMODEL *mpmod, DATAINFO *pdinfo,
  */
 
 int mplsq (const int *list, const int *polylist,
-	   double ***pZ, DATAINFO *pdinfo, 
-	   char *errbuf, MODEL *pmod) 
+	   const double **Z, const DATAINFO *pdinfo, 
+	   char *errbuf, MODEL *pmod, gretlopt opt) 
 {
-    int l0, i, ret = 0;
+    int l0, i;
     mpf_t **mpZ = NULL;
-    char **varnames = NULL;
+    char **xnames = NULL;
     MPXPXXPY xpxxpy;
     MPMODEL mpmod;
+    int err = 0;
 
     *errbuf = 0;
 
-    if (list == NULL || pZ == NULL || *pZ == NULL || pdinfo == NULL ||
+    if (list == NULL || Z == NULL || pdinfo == NULL ||
 	list[0] == 1 || pdinfo->v == 1) {
 	return E_DATA;
     }
@@ -622,7 +654,6 @@ int mplsq (const int *list, const int *polylist,
 
     mp_model_init(&mpmod, pdinfo);
 
-    /* preserve a copy of the list supplied, for future reference */
     if (polylist == NULL) {
 	mpmod.list = gretl_list_copy(list);
     } else {
@@ -640,8 +671,16 @@ int mplsq (const int *list, const int *polylist,
 	return E_DATA;
     }
 
+    if (polylist != NULL && (opt & OPT_S)) {
+	xnames = allocate_xnames(mpmod.list);
+	if (xnames == NULL) {
+	    mp_model_free(&mpmod);
+	    return E_ALLOC;
+	}
+    }
+
     /* check for missing obs in sample */
-    if (data_problems(list, *pZ, pdinfo, errbuf)) {
+    if (data_problems(list, Z, pdinfo, errbuf)) {
 	mp_model_free(&mpmod);
 	return E_DATA;
     }
@@ -650,7 +689,7 @@ int mplsq (const int *list, const int *polylist,
     mpmod.ifc = mp_rearrange(mpmod.list);
 
     /* construct multiple-precision data matrix */
-    mpZ = make_mpZ(&mpmod, *pZ, pdinfo, varnames); /* FIXME */
+    mpZ = make_mpZ(&mpmod, Z, pdinfo, xnames);
 
     if (mpZ == NULL) {
 	mp_model_free(&mpmod);
@@ -685,18 +724,18 @@ int mplsq (const int *list, const int *polylist,
     free(xpxxpy.xpy);
     xpxxpy.xpy = NULL;
 
-    ret = mpmod.errcode;
+    err = mpmod.errcode;
 
-    if (ret == 0) {
-	ret = copy_mp_results(&mpmod, pdinfo, pmod);
-    }
+    if (!err) {
+	err = copy_mp_results(&mpmod, pmod, pdinfo, xnames, opt);
+    } 
 
     /* free all the mpf stuff */
     free_mpZ(mpZ, l0, mpmod.nobs);
     mp_model_free(&mpmod);
     mpf_constants_clear();
 
-    return ret;
+    return err;
 }
 
 static void mp_xpxxpy_init (MPXPXXPY *m)

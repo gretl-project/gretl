@@ -1594,8 +1594,6 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_fit_resid(vwin->data);
 	} else if (vwin->role == COEFFINT) {
 	    free_coeff_intervals(vwin->data);
-	} else if (vwin->role == MPOLS) {
-	    gretl_object_unref(vwin->data, GRETL_OBJ_EQN); /* ?? */
 	} else if (vwin->role == VIEW_SERIES) {
 	    free_series_view(vwin->data);
 	} else if (vwin->role == VIEW_MODEL) {

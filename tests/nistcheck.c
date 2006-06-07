@@ -48,6 +48,62 @@ static int noint;
 
 static char datadir[FILENAME_MAX];
 
+typedef struct mp_results_ mp_results;
+
+struct mp_results_ {
+    int ncoeff;
+    double *coeff;
+    double *sderr;
+    double sigma;
+    double ess;
+    double rsq;
+    double fstt;
+};
+
+void free_mp_results (mp_results *mpvals)
+{
+    if (mpvals != NULL) {
+	free(mpvals->coeff);
+	free(mpvals->sderr);
+	free(mpvals);
+    }
+}
+
+mp_results *mp_results_new (int nc)
+{
+    mp_results *mpvals;
+    int i;
+
+    mpvals = malloc(sizeof *mpvals);
+    if (mpvals == NULL) {
+	return NULL;
+    }
+
+    mpvals->coeff = NULL;
+    mpvals->sderr = NULL;
+
+    mpvals->ncoeff = nc;
+
+    mpvals->coeff = malloc(nc * sizeof *mpvals->coeff);
+    mpvals->sderr = malloc(nc * sizeof *mpvals->sderr);
+
+    if (mpvals->coeff == NULL || 
+	mpvals->sderr == NULL) {
+	free_mp_results(mpvals);
+	return NULL;
+    }
+
+    for (i=0; i<nc; i++) {
+	mpvals->coeff[i] = NADBL;
+	mpvals->sderr[i] = NADBL;
+    }
+
+    mpvals->sigma = mpvals->ess = NADBL;
+    mpvals->rsq = mpvals->fstt = NADBL;
+
+    return mpvals;
+}
+
 /* special stuff:
 
 Noint1, NoInt2: no intercept, use alternative R^2 calculation   
@@ -311,7 +367,7 @@ int read_nist_file (const char *fname,
 	/* how many variables are there? */
 	if (nvar == 0 && (p = strstr(line, "Predictor")) != NULL) {
 	    if (sscanf(line, "%d Predictor Variable", &nvar) == 1) {
-		nvar++;
+		nvar++; 
 		if (verbose) pprintf(prn, " Number of variables: %d\n", nvar);
 	    }
 	}
@@ -325,10 +381,10 @@ int read_nist_file (const char *fname,
 
 	/* allocate results struct once we know its size */
 	if (nvar > 0 && nobs > 0 && certvals == NULL) {	
-	    int nc = nvar + npoly;
+	    int nc = nvar - 1 + npoly;
 	    
 	    if (!noint) nc++;
-	    certvals = gretl_mp_results_new(nc);
+	    certvals = mp_results_new(nc);
 	    if (certvals == NULL) {
 		fclose(fp);
 		return 1;
@@ -341,12 +397,12 @@ int read_nist_file (const char *fname,
 	    dinfo = create_new_dataset(&Z, nvar + 1 + npoly, 
 				       nobs, 0);
 	    if (dinfo == NULL) {
-		free_gretl_mp_results(certvals);
+		free_mp_results(certvals);
 		fclose(fp);
 		return 1;
 	    }
 	    if (allocate_data_digits(dinfo)) {
-		free_gretl_mp_results(certvals);
+		free_mp_results(certvals);
 		free_datainfo(dinfo);
 		fclose(fp);
 		return 1;
@@ -560,9 +616,10 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 static void *get_mplsq (void **handle); 
 # endif
 
+/* x is certified value, y is gretl MP value */
+
 static 
 int mp_vals_differ (double x, double y, double *diff, PRN *prn)
-     /* x is certified value, y is gretl MP value */
 {
     char xstr[32], ystr[32];
     int ret;
@@ -585,6 +642,7 @@ int mp_vals_differ (double x, double y, double *diff, PRN *prn)
     if (ret && verbose && strcmp(xstr, "inf") && strncmp(xstr, "-999", 4)) {
 	pprintf(prn, " ** using gretl GMP plugin: results differ by "
 		"%#.*g\n", MP_CHECK_DIGITS, *diff);
+	pprintf(prn, "(%#.13g versus %#.13g)\n", x, y);
     }
 
     return ret;
@@ -596,8 +654,8 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 			     int *mpfails, PRN *prn)
 {
     void *handle = NULL;
-    int (*mplsq)(const int *, const int *, double ***, 
-                 DATAINFO *, char *, MODEL *);
+    int (*mplsq)(const int *, const int *, const double **, 
+		 const DATAINFO *, char *, MODEL *, gretlopt);
     int *list = NULL, *polylist = NULL;
     char errbuf[MAXLEN];
     int i, err = 0;
@@ -649,8 +707,8 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     }
 
     if (!err) {
-        err = (*mplsq)(list, polylist, pZ, dinfo,  
-                       errbuf, &model); 
+        err = (*mplsq)(list, polylist, (const double **) *pZ, 
+		       dinfo, errbuf, &model, OPT_NONE); 
     }
 
     close_plugin(handle);
@@ -658,8 +716,8 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     free(polylist);
 
     if (verbose) {
-	pprintf(prn, "\nChecking gretl multiple-precision results:\n\n"
-		"%44s%24s\n\n", "certified", "libgretl");
+	pprintf(prn, "\nChecking gretl multiple-precision results (%d coefficients):\n\n"
+		"%44s%24s\n\n", certvals->ncoeff, "certified", "libgretl");
     }
 
     for (i=0; i<certvals->ncoeff; i++) {
@@ -911,7 +969,7 @@ int main (int argc, char *argv[])
 				     polyterms, &mpfails, prn);
 # endif
 
-	    free_gretl_mp_results(certvals);
+	    free_mp_results(certvals);
 	    certvals = NULL;
 	    free_data_digits(datainfo);
 	    destroy_dataset(Z, datainfo);
@@ -1005,7 +1063,7 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 				     polyterms, &mpfails, prn);
 # endif
 
-	    free_gretl_mp_results(certvals);
+	    free_mp_results(certvals);
 	    certvals = NULL;
 	    free_data_digits(datainfo);
 	    destroy_dataset(Z, datainfo);

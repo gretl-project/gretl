@@ -1477,6 +1477,11 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
+    if (pmod->ci == MPOLS) {
+	print_mpols_results(pmod, pdinfo, prn);
+	return 0;
+    }
+
     /* FIXME utf vs iso-88* */
 
     if (!plain_format(prn)) {
@@ -2437,12 +2442,12 @@ static void mp_other_stats (const MODEL *pmod, PRN *prn)
     pputs(prn, "\n\n");
 }
 
-static void print_mp_coeff (const MODEL *pmod, 
+static void print_mp_coeff (const MODEL *pmod, const DATAINFO *pdinfo,
 			    int c, PRN *prn)
 {
     char pname[VNAMELEN];
 
-    gretl_model_get_param_name(pmod, NULL, c, pname);
+    gretl_model_get_param_name(pmod, pdinfo, c, pname);
     pprintf(prn, " %*s ", VNAMELEN - 1, pname);
 
     gretl_print_fullwidth_double(pmod->coeff[c], 
@@ -2453,7 +2458,7 @@ static void print_mp_coeff (const MODEL *pmod,
     pputc(prn, '\n');
 }
 
-void print_mpols_results (const MODEL *pmod, DATAINFO *pdinfo,
+void print_mpols_results (const MODEL *pmod, const DATAINFO *pdinfo,
 			  PRN *prn)
 {
     char startdate[OBSLEN], enddate[OBSLEN];
@@ -2481,7 +2486,7 @@ void print_mpols_results (const MODEL *pmod, DATAINFO *pdinfo,
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
-	print_mp_coeff(pmod, i, prn);
+	print_mp_coeff(pmod, pdinfo, i, prn);
     }
     pputc(prn, '\n');
 

@@ -8,6 +8,8 @@ CFLAGS = @CFLAGS@
 have_gtk = @have_gtk@
 GMP_LIBS = @GMP_LIBS@
 FLIB = @FLIB@
+XML_CFLAGS = @XML_CFLAGS@
+XML_LIBS = @XML_LIBS@
 
 ifeq ($(CC),)
   CC = gcc
@@ -32,10 +34,11 @@ override CFLAGS += -I$(libsrc) $(DEFINES)
 
 all: nistcheck
 
-nistcheck: nistcheck.o
-	../libtool --mode=link $(CC) -o $@ $< $(LIBGRETL)
+nistcheck: nistcheck.o $(LIBGRETL)
+	../libtool --mode=link $(CC) -o $@ $< $(LIBGRETL) $(XML_LIBS)
 
-nistcheck.o: $(LIBGRETL)
+nistcheck.o: nistcheck.c
+	$(CC) $(CFLAGS) $(XML_CFLAGS) -c $<
 
 randcheck: diehard mtrand
 	if [ `pwd` != "$(topsrc)/tests" ] ; then \

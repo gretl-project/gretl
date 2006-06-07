@@ -2143,56 +2143,38 @@ static gint check_model_cmd (void)
 int do_mp_ols (selector *sr)
 {
     const char *buf = selector_list(sr);
-    int action = selector_code(sr);
-
+    MODEL *pmod;
     PRN *prn;
-    char errtext[MAXLEN];
-    char estimator[9];
-    void *handle;
-    MODEL mpmod;
-    int (*mplsq)(const int *, const int *,
-		 double ***, DATAINFO *, char *, mp_results *);
-    int err;
 
     if (buf == NULL) {
 	return 1;
     }
 
-    strcpy(estimator, gretl_command_word(action));
-
-    gretl_command_sprintf("%s %s", estimator, buf);
+    gretl_command_sprintf("mpols %s", buf);
 
     if (check_and_record_command() || bufopen(&prn)) {
 	return 1;
     }
 
-    mplsq = gui_get_plugin_function("mplsq", &handle);
-    if (mplsq == NULL) {
+    pmod = gretl_model_new();
+    if (pmod == NULL) {
+	errbox(_("Out of memory"));
+	gretl_print_destroy(prn);
 	return 0;
     }
 
-    gretl_model_init(&mpmod);
+    *pmod = mp_ols(cmd.list, (const double **) Z, datainfo, prn);
 
-    *errtext = 0;
-
-    err = (*mplsq)(cmd.list, NULL, &Z, datainfo, errtext, &mpmod);
-
-    close_plugin(handle);
-
-    if (err) {
-	if (*errtext != '\0') {
-	    errbox(errtext);
-	} else {
-	    errbox(get_errmsg(err, errtext, NULL));
-	}
-	gretl_print_destroy(prn);
-	return err;
+    if (pmod->errcode) {
+        gui_errmsg(pmod->errcode);
+        gretl_print_destroy(prn);
+	gretl_model_free(pmod);
+        return pmod->errcode;
     }
 
-    print_mpols_results(&mpmod, datainfo, prn);
+    gretl_object_ref(pmod, GRETL_OBJ_EQN);
 
-    view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
-		MPOLS, &mpmod); /* FIXME on close of window */
+    view_model(prn, pmod, 78, 420, _("gretl: high precision estimates"));
 
     return 0;
 }
@@ -6658,7 +6640,11 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(cmd.list, &Z, datainfo, outprn);
+	clear_model(models[0]);
+	*models[0] = mp_ols(cmd.list, (const double **) Z, datainfo, outprn);
+	if ((err = (models[0])->errcode)) {
+	    errmsg(err, prn); 
+	}	
 	break;
 #endif
 

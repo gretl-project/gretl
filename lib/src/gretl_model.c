@@ -432,15 +432,16 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
     *targ = '\0';
 
     if (pmod != NULL) {
-	/* special treatment for ARCH, ARMA, GARCH, NLS, MLE, PANEL */
 	if (pmod->aux == AUX_ARCH) {
 	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == NLS || pmod->ci == MLE ||
 		   pmod->ci == ARMA || pmod->ci == GARCH || 
-		   pmod->ci == PANEL || pmod->ci == MPOLS) {
+		   pmod->ci == PANEL) {
 	    strcpy(targ, pmod->params[i + 1]);
 	} else if (pmod->aux == AUX_VECM) {
 	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
+	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
+	    strcpy(targ, pmod->params[i]);
 	} else {
 	    strcpy(targ, pdinfo->varname[pmod->list[i + 2]]);
 	}
@@ -947,6 +948,53 @@ int *gretl_model_get_x_list (const MODEL *pmod)
     }
 
     return list;
+}
+
+/**
+ * gretl_model_allocate_storage:
+ * @pmod: pointer to model.
+ * 
+ * Allocates space for coefficients and standard errors,
+ * residuals and fitted values in @pmod. The sizes of
+ * the arrays are based on the %ncoeff and %full_n
+ * members of @pmod, which must be set first. The
+ * residuals and fitted values are initialized to
+ * gretl's missing value.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int gretl_model_allocate_storage (MODEL *pmod)
+{
+    int k = pmod->ncoeff;
+    int T = pmod->full_n;
+    int t;
+
+    pmod->coeff = malloc(k * sizeof *pmod->coeff);
+    if (pmod->coeff == NULL) {
+	return E_ALLOC;
+    }
+
+    pmod->sderr = malloc(k * sizeof *pmod->sderr);
+    if (pmod->sderr == NULL) {
+	return E_ALLOC;
+    }
+
+    pmod->uhat = malloc(T * sizeof *pmod->uhat);
+    if (pmod->uhat == NULL) {
+	return E_ALLOC;
+    }    
+
+    pmod->yhat = malloc(T * sizeof *pmod->yhat);
+    if (pmod->yhat == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<T; t++) {
+	pmod->uhat[t] = pmod->yhat[t] = NADBL;
+    }
+
+    return 0;
 }
 
 /**
@@ -3221,6 +3269,28 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo)
     }
 
     return 0;
+}
+
+/**
+ * gretl_model_add_allocated_varnames:
+ * @pmod: pointer to target model.
+ * @vnames: array of names of independent variables.
+ * 
+ * Attaches an allocated set of variable names to be used
+ * when printing model results, for use in special cases
+ * where we can't just reference names from the list of
+ * regressors attached to the model.  The number of strings
+ * must match the number of coefficients, given by the
+ * %ncoeff member of @pmod.
+ *
+ * Note that @pmod "takes charge" of the array @vnames:
+ * this will be freed when the model is destroyed.
+ */
+
+void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames)
+{
+    pmod->nparams = pmod->ncoeff;
+    pmod->params = vnames;
 }
 
 /* try to tell if an OLS model with two independent variables is

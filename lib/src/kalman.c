@@ -381,6 +381,8 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     return K;
 }
 
+#if 0
+
 static int is_unit_column_vector (const gretl_vector *v)
 {
     int i;
@@ -397,6 +399,8 @@ static int is_unit_column_vector (const gretl_vector *v)
 
     return 1;
 }
+
+#endif
 
 static int 
 matrix_diff (const gretl_matrix *a, const gretl_matrix *b)

@@ -176,6 +176,8 @@ MODEL *gretl_model_new_protected (void);
 
 void gretl_model_init (MODEL *pmod);
 
+int gretl_model_allocate_storage (MODEL *pmod);
+
 MODEL **gretl_model_array_new (int n);
 
 void gretl_model_array_destroy (MODEL **models, int n);
@@ -306,6 +308,8 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				   int r);
 
 int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo);
+
+void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames);
 
 char *gretl_model_get_fitted_formula (const MODEL *pmod, int xvar,
 				      const double **Z,

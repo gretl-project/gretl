@@ -436,11 +436,6 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 		printmodel(pmod, datainfo, OPT_NONE, prn);
 	    }
 	}
-    } else if (cmd == MPOLS) {
-	/* this is not actually ready -- see modelprint.c */
-	mp_results *mpvals = (mp_results *) vwin->data;
-
-	print_mpols_results(mpvals, datainfo, prn);
     } else if (cmd == VAR || cmd == VECM) {
 	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
 

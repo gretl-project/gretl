@@ -857,39 +857,18 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b,
 
 static int kalman_arma_model_allocate (MODEL *pmod, int k, int T)
 {
-    int t;
+    int err = 0;
 
     pmod->ncoeff = k;
+    pmod->full_n = T;
 
-    pmod->coeff = malloc(k * sizeof *pmod->coeff);
-    if (pmod->coeff == NULL) {
-	return E_ALLOC;
+    err = gretl_model_allocate_storage(pmod);
+
+    if (!err) {
+	err = gretl_model_new_vcv(pmod, NULL);
     }
 
-    pmod->sderr = malloc(k * sizeof *pmod->sderr);
-    if (pmod->sderr == NULL) {
-	return E_ALLOC;
-    }
-
-    if (gretl_model_new_vcv(pmod, NULL)) {
-	return E_ALLOC;
-    }
-
-    pmod->uhat = malloc(T * sizeof *pmod->uhat);
-    if (pmod->uhat == NULL) {
-	return E_ALLOC;
-    }    
-
-    pmod->yhat = malloc(T * sizeof *pmod->yhat);
-    if (pmod->yhat == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<T; t++) {
-	pmod->uhat[t] = pmod->yhat[t] = NADBL;
-    }
-
-    return 0;
+    return err;
 }
 
 static int kalman_arma_finish (MODEL *pmod, const int *alist,

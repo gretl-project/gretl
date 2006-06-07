@@ -3424,6 +3424,73 @@ MODEL garch (const int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
     return gmod;
 } 
 
+/**
+ * mp_ols:
+ * @list: specification of variables to use
+ * @pos: string rep. of integer position in list at which
+ * the regular list of variables ends and a list of polynomial
+ * terms begins (or empty string in case of no polynomial terms)
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * 
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo, 
+	      PRN *prn) 
+{
+    void *handle = NULL;
+    int (*mplsq)(const int *, const int *, const double **, 
+		 DATAINFO *, char *, MODEL *, gretlopt);
+    const int *reglist = NULL;
+    int *polylist = NULL;
+    int *tmplist = NULL;
+    MODEL mpmod;
+    int pos, nc;
+
+    gretl_model_init(&mpmod);
+
+    mplsq = get_plugin_function("mplsq", &handle);
+    if (mplsq == NULL) {
+	mpmod.errcode = 1;
+	return mpmod;
+    }
+
+    pos = gretl_list_separator_position(list);
+
+    if (pos > 0) { 
+	/* got a list of polynomial terms? */
+	mpmod.errcode = gretl_list_split_on_separator(list, &tmplist, &polylist);
+	if (mpmod.errcode) {
+	    close_plugin(handle);
+	    return mpmod;
+	} 
+	reglist = tmplist;
+    } else {
+	reglist = list;
+    }
+
+    nc = list[0] - 1;
+    if (polylist != NULL) {
+	nc--;
+    }
+
+    mpmod.errcode = (*mplsq)(reglist, polylist, Z, pdinfo,  
+			     gretl_errmsg, &mpmod, OPT_S); 
+
+    if (!mpmod.errcode) {
+	print_mpols_results(&mpmod, pdinfo, prn);
+    }
+
+    close_plugin(handle);
+    free(polylist);
+    free(tmplist);
+
+    return mpmod;
+}
+
 static int check_panel_options (gretlopt opt)
 {
     int err = 0;

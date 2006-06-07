@@ -1449,9 +1449,9 @@ static int exec_line (char *line, PRN *prn)
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(cmd.list, &Z, datainfo, prn);
-	if (err) {
-	    pputs(prn, _("mpols command failed\n"));
+	clear_model(models[0]);
+	*models[0] = mp_ols(cmd.list, (const double **) Z, datainfo, prn);
+	if ((err = models[0]->errcode)) {
 	    errmsg(err, prn);
 	}
 	break;
