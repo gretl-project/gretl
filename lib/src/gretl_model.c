@@ -2911,6 +2911,7 @@ int is_model_cmd (const char *s)
     }
 
     if (!strcmp(s, "ols")  ||
+	!strcmp(s, "mpols")  ||
 	!strcmp(s, "corc") ||
 	!strcmp(s, "hilu") ||
 	!strcmp(s, "wls")  ||
