@@ -669,9 +669,9 @@ static void mp_dwstat (const MPMODEL *mpmod, MODEL *pmod,
 	mpf_pow_ui(x, x, 2);
 	mpf_add(num, num, x);
 	mpf_mul(x, uhat[t], uhat[t-1]);
-	mpf_add(ut1, x, x);
+	mpf_add(ut1, ut1, x);
 	mpf_mul(x, uhat[t-1], uhat[t-1]);
-	mpf_add(u11, x, x);
+	mpf_add(u11, u11, x);
     }
 
     mpf_div(x, num, mpmod->ess);

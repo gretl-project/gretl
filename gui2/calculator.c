@@ -703,9 +703,9 @@ static void h_test (GtkWidget *w, gpointer data)
 	    j = 2;
 	}
 
-	if (j > 0) {
-	    ts = ((n1-1)*x[1]*x[1] + (n2-1)*x[3]*x[3])/(n1 + n2 - 2);
-	    sderr = sqrt(ts / n1 + ts /n2);
+	if (j != 0) {
+	    ts = ((n1-1) * x[1] * x[1] + (n2-1) * x[3] * x[3]) / (n1 + n2 - 2);
+	    sderr = sqrt(ts / n1 + ts / n2);
 	} else {
 	    double v1 = x[1] * x[1] / n1;
 	    double v2 = x[3] * x[3] / n2;
@@ -714,10 +714,11 @@ static void h_test (GtkWidget *w, gpointer data)
 	}
 
 	ts = (x[0] - x[2] - x[4]) / sderr;
-	if (j) {
-	    if (j == 2)
+	if (j > 0) {
+	    if (j == 2) {
 		pprintf(prn, _("Small samples: assuming normality and common "
 			       "variance\n"));
+	    }
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
 		    n1 + n2 - 2, x[0], x[2], sderr, ts);
 	    if (ts > 0) {
