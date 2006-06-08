@@ -46,6 +46,7 @@ typedef enum {
     DELEET,
     DIFF,
     DISCRETE,
+    DUMMIFY,
     ELSE,
     END,
     ENDIF,

@@ -289,7 +289,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                                c == STORE)
 
 #define RETURNS_LIST(c) (c == DIFF || \
-                         c == DISCRETE || \
+                         c == DUMMIFY || \
                          c == LDIFF || \
                          c == SDIFF || \
                          c == LAGS || \
@@ -690,9 +690,9 @@ static void parse_laglist_spec (const char *s, int *order, char **lname,
     }
 }
 
-int auto_transform_ok (const char *s, int *lnum,
-		       double ***pZ, DATAINFO *pdinfo,
-		       CMD *cmd)
+static int auto_transform_ok (const char *s, int *lnum,
+			      double ***pZ, DATAINFO *pdinfo,
+			      CMD *cmd)
 {
     char fword[9];
     int *genlist = NULL;
@@ -702,7 +702,7 @@ int auto_transform_ok (const char *s, int *lnum,
     int err = 0, ok = 1;
 
     if (sscanf(s, "%8[^(](", fword)) {
-	char *lname = NULL;
+	char *param = NULL;
 	int *gotlist;
 	int vnum = 0;
 
@@ -718,19 +718,30 @@ int auto_transform_ok (const char *s, int *lnum,
 
 	if (trans > 0) {
 	    s = strchr(s, '(') + 1;
+
 	    if (trans == LAGS) {
-		parse_laglist_spec(s, &order, &lname, &vnum,
+		parse_laglist_spec(s, &order, &param, &vnum,
 				   (const double **) *pZ, pdinfo);
 	    } else {
-		lname = gretl_word_strdup(s, NULL);
+		param = gretl_word_strdup(s, NULL);
 	    }
-	    if (lname != NULL) {
-		gotlist = get_list_by_name(lname);
+
+	    if (param != NULL) {
+		/* try for a named list */
+		gotlist = get_list_by_name(param);
 		if (gotlist != NULL) {
 		    genlist = gretl_list_copy(gotlist);
+		} else {
+		    vnum = varindex(pdinfo, param);
+		    if (vnum == pdinfo->v) {
+			vnum = 0;
+		    }
 		}
-		free(lname);
-	    } else if (vnum > 0) {
+		free(param);
+	    } 
+
+	    if (genlist == NULL && vnum > 0) {
+		/* try for a single variable */
 		genlist = gretl_list_new(1);
 		if (genlist != NULL) {
 		    genlist[1] = vnum;
@@ -752,6 +763,8 @@ int auto_transform_ok (const char *s, int *lnum,
 	err = list_xpxgenr(&genlist, pZ, pdinfo, opt);
     } else if (trans == LAGS) {
 	err = list_laggenr(&genlist, order, pZ, pdinfo);
+    } else if (trans == DUMMIFY) {
+	err = list_dumgenr(&genlist, pZ, pdinfo);
     }
 
     if (err) {
@@ -2922,11 +2935,12 @@ int simple_commands (CMD *cmd, const char *line,
     int err = 0, order = 0;
     VMatrix *corrmat;
     Summary *summ;
-    int *genlist = NULL;
+    int *listcpy = NULL;
 
     if (RETURNS_LIST(cmd->ci)) {
-	genlist = gretl_list_copy(cmd->list);
-	if (genlist == NULL) {
+	/* list is potentially modified -> make a copy */
+	listcpy = gretl_list_copy(cmd->list);
+	if (listcpy == NULL) {
 	    return E_ALLOC;
 	}
     }
@@ -2972,7 +2986,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case DISCRETE:
-	err = list_makediscrete(genlist, pdinfo, cmd->opt);
+	err = list_makediscrete(cmd->list, pdinfo, cmd->opt);
 	break;
 
     case ESTIMATE:
@@ -3022,7 +3036,7 @@ int simple_commands (CMD *cmd, const char *line,
     case DIFF:
     case LDIFF:
     case SDIFF:
-	err = list_diffgenr(genlist, cmd->ci, pZ, pdinfo);
+	err = list_diffgenr(listcpy, cmd->ci, pZ, pdinfo);
 	if (err) {
 	    if (cmd->ci == LDIFF) {
 		pputs(prn, _("Error adding log differences of variables.\n"));
@@ -3034,9 +3048,18 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	break;
 
+    case DUMMIFY:
+	err = list_dumgenr(&listcpy, pZ, pdinfo);
+	if (err) {
+	    pputs(prn, _("Error adding dummy variables.\n"));
+	} else {
+	    maybe_list_vars(pdinfo, prn);
+	}
+	break;
+
     case LAGS:
 	order = atoi(cmd->param);
-	err = list_laggenr(&genlist, order, pZ, pdinfo); 
+	err = list_laggenr(&listcpy, order, pZ, pdinfo); 
 	if (err) {
 	    pputs(prn, _("Error adding lags of variables.\n"));
 	} else {
@@ -3045,7 +3068,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case LOGS:
-	err = list_loggenr(genlist, pZ, pdinfo);
+	err = list_loggenr(listcpy, pZ, pdinfo);
 	if (err) {
 	    pputs(prn, _("Error adding logs of variables.\n"));
 	} else {
@@ -3054,7 +3077,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case SQUARE:
-	err = list_xpxgenr(&genlist, pZ, pdinfo, cmd->opt);
+	err = list_xpxgenr(&listcpy, pZ, pdinfo, cmd->opt);
 	if (err) {
 	    pputs(prn, _("Failed to generate squares\n"));
 	} else {
@@ -3234,8 +3257,8 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
     }
 
-    if (genlist != NULL) {
-	free(genlist);
+    if (listcpy != NULL) {
+	free(listcpy);
     }
 
     if (err == E_OK) {

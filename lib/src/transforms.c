@@ -61,60 +61,67 @@ static int check_vals (const double *x, const double *y, int n)
 }
 
 static int 
-make_transform_varname (char *vname, const char *orig, int cmd, 
-			int lag, int len)
+make_transform_varname (char *vname, const char *orig, int ci, 
+			int aux, int len)
 {
     *vname = '\0';
 
-    if (cmd == DIFF) {
+    if (ci == DIFF) {
 	strcpy(vname, "d_");
 	strncat(vname, orig, len - 2);
-    } else if (cmd == LDIFF) {
+    } else if (ci == LDIFF) {
 	strcpy(vname, "ld_");
 	strncat(vname, orig, len - 3);
-    } else if (cmd == SDIFF) {
+    } else if (ci == SDIFF) {
 	strcpy(vname, "sd_");
 	strncat(vname, orig, len - 3);
-    } else if (cmd == LOGS) {
+    } else if (ci == LOGS) {
 	strcpy(vname, "l_");
 	strncat(vname, orig, len - 2);
-    } else if (cmd == SQUARE) {
+    } else if (ci == SQUARE) {
 	strcpy(vname, "sq_");
 	strncat(vname, orig, len - 3);
-    } else if (cmd == LAGS) {
+    } else if (ci == LAGS) {
 	char ext[6];
 
-	if (lag >= 0) {
+	if (aux >= 0) {
 	    /* an actual lag */
-	    sprintf(ext, "_%d", lag);
+	    sprintf(ext, "_%d", aux);
 	} else {
 	    /* in fact a lead */
-	    sprintf(ext, "%d", -lag);
+	    sprintf(ext, "%d", -aux);
 	}
 	strncat(vname, orig, len - strlen(ext));
 	strcat(vname, ext);
-    }
+    } else if (ci == DUMMIFY) {
+	char ext[6];
+
+	sprintf(ext, "_%d", aux);
+	strcpy(vname, "D");
+	strncat(vname, orig, len - strlen(ext) - 1);
+	strcat(vname, ext);
+    }	
 
     return 0;
 }
 
 static int
 make_transform_label (char *label, const char *parent,
-		      int cmd, int lag)
+		      int ci, int lag)
 {
     int err = 0;
 
-    if (cmd == DIFF) {
+    if (ci == DIFF) {
 	sprintf(label, _("= first difference of %s"), parent);
-    } else if (cmd == LDIFF) {
+    } else if (ci == LDIFF) {
 	sprintf(label, _("= log difference of %s"), parent);
-    } else if (cmd == SDIFF) {
+    } else if (ci == SDIFF) {
 	sprintf(label, _("= seasonal difference of %s"), parent);
-    } else if (cmd == LOGS) {
+    } else if (ci == LOGS) {
 	sprintf(label, _("= log of %s"), parent);
-    } else if (cmd == SQUARE) {
+    } else if (ci == SQUARE) {
 	sprintf(label, _("= %s squared"), parent);
-    } else if (cmd == LAGS) {
+    } else if (ci == LAGS) {
 	if (lag >= 0) {
 	    sprintf(label, "= %s(t - %d)", parent, lag);
 	} else {
@@ -343,6 +350,26 @@ static int get_xpx (int vi, int vj, double *xvec, const double **Z,
     return 0;
 }
 
+/* write dummy for (v == value) into xvec */
+
+static int get_discdum (int v, double val, double *xvec, const double **Z, 
+			const DATAINFO *pdinfo)
+{
+    double xt;
+    int t;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xt = Z[v][t];
+	if (na(xt)) {
+	    xvec[t] = NADBL;
+	} else {
+	    xvec[t] = (xt == val)? 1.0 : 0.0;
+	}
+    }
+
+    return 0;
+}
+
 enum transform_results {
     VAR_ADDED_OK,
     VAR_EXISTS_OK,
@@ -417,7 +444,7 @@ check_add_transform (int vnum, const double *x,
    Return the ID number of the transformed var, or -1 on error.
 */
 
-static int get_transform (int ci, int v, int aux, 
+static int get_transform (int ci, int v, int aux, double x, 
 			  double ***pZ, DATAINFO *pdinfo,
 			  int startlen)
 {
@@ -441,6 +468,9 @@ static int get_transform (int ci, int v, int aux,
     } else if (ci == SQUARE) {
 	/* "aux" = second variable number */
 	err = get_xpx(v, aux, vx, (const double **) *pZ, pdinfo);
+    } else if (ci == DUMMIFY) {
+	/* "x" = value for dummy */
+	err = get_discdum(v, x, vx, (const double **) *pZ, pdinfo);
     }
 
     if (err) {
@@ -450,6 +480,8 @@ static int get_transform (int ci, int v, int aux,
     if (ci == SQUARE && v != aux) {
 	sprintf(label, _("= %s times %s"), pdinfo->varname[v], 
 		pdinfo->varname[aux]);
+    } else if (ci == DUMMIFY) {
+	sprintf(label, _("= dummy for %s = %g"), pdinfo->varname[v], x);
     } else {
 	make_transform_label(label, pdinfo->varname[v], ci, aux);
     }
@@ -503,7 +535,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
     } else if (lag == 0) {
 	lno = v;
     } else {
-	lno = get_transform(LAGS, v, lag, pZ, pdinfo, VNAMELEN - 3);
+	lno = get_transform(LAGS, v, lag, 0.0, pZ, pdinfo, VNAMELEN - 3);
     }
 
     return lno;
@@ -523,7 +555,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 
 int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 {
-    return get_transform(LOGS, v, 0, pZ, pdinfo, VNAMELEN - 3);
+    return get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, VNAMELEN - 3);
 }
 
 /**
@@ -555,7 +587,7 @@ int diffgenr (int v, int ci, double ***pZ, DATAINFO *pdinfo)
 	return -1;
     }
 
-    return get_transform(ci, v, 0, pZ, pdinfo, VNAMELEN - 3);
+    return get_transform(ci, v, 0, 0.0, pZ, pdinfo, VNAMELEN - 3);
 }
 
 /**
@@ -580,7 +612,7 @@ int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    return get_transform(SQUARE, vi, vj, pZ, pdinfo, VNAMELEN - 3);
+    return get_transform(SQUARE, vi, vj, 0.0, pZ, pdinfo, VNAMELEN - 3);
 }
 
 static int 
@@ -665,7 +697,7 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo)
 	    continue;
 	}
 
-	tnum = get_transform(LOGS, v, 0, pZ, pdinfo, startlen);
+	tnum = get_transform(LOGS, v, 0, 0.0, pZ, pdinfo, startlen);
 
 	if (tnum > 0) {
 	    n_ok++;
@@ -736,7 +768,7 @@ int list_laggenr (int **plist, int order, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	for (l=1; l<=order; l++) {
-	    lv = get_transform(LAGS, v, l, pZ, pdinfo, startlen);
+	    lv = get_transform(LAGS, v, l, 0.0, pZ, pdinfo, startlen);
 #if TRDEBUG > 1
 	    fprintf(stderr, "base var '%s', lag %d: lv = %d\n",
 		    pdinfo->varname[v], l, lv);
@@ -811,7 +843,7 @@ int list_diffgenr (int *list, int ci, double ***pZ, DATAINFO *pdinfo)
     
     for (i=1; i<=list[0] && !err; i++) {
 	v = list[i];
-	tnum = get_transform(ci, v, 0, pZ, pdinfo, startlen);
+	tnum = get_transform(ci, v, 0, 0.0, pZ, pdinfo, startlen);
 	if (tnum < 0) {
 	    err = 1;
 	} else {
@@ -873,7 +905,7 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
 	    continue;
 	}
 
-	tnum = get_transform(SQUARE, vi, vi, pZ, pdinfo, startlen);
+	tnum = get_transform(SQUARE, vi, vi, 0.0, pZ, pdinfo, startlen);
 	if (tnum > 0) {
 	    xpxlist[k++] = tnum;
 	    xpxlist[0] += 1;
@@ -899,6 +931,109 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
     return (xpxlist[0] > 0)? 0 : E_SQUARES;
 }
 
+#define DUMDEBUG 0
+
+/**
+ * list_dumgenr:
+ * @plist: pointer to list of variables to process; on exit
+ * the list holds the ID numbers of the generated dummies.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generates and adds to the data set dummy variables for the
+ * distinct values of the variables given in the list pointed to
+ * by @plist. The latter must have already been marked as discrete.
+ *
+ * Returns: 0 on success, error code on error.
+*/
+
+int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo)
+{
+    int *list = *plist;
+    int *tmplist = NULL;
+    double *x = NULL;
+    int i, j, t, n;
+    int startlen;
+    int err = 0;
+
+    tmplist = gretl_null_list();
+    if (tmplist == NULL) {
+	return E_ALLOC;
+    }
+    
+    x = malloc(pdinfo->n * sizeof *x);
+    if (x == NULL) {
+	free(tmplist);
+	return E_ALLOC;
+    }
+
+    startlen = get_starting_length(list, pdinfo, 3); /* ?? */
+
+    for (i=1; i<=list[0] && !err; i++) {
+	int vi = list[i];
+	int nuniq, tnum;
+	double xt;
+
+	if (vi == 0 || var_is_scalar(pdinfo, vi) || !var_is_discrete(pdinfo, vi)) {
+	    continue; 
+	}
+
+	n = 0;
+	for (t=0; t<pdinfo->n; t++) {
+	    xt = (*pZ)[vi][t];
+	    if (!na(xt)) {
+		x[n++] = xt;
+	    }
+	}
+
+	if (n == 0) {
+	    continue;
+	}
+
+	qsort(x, n, sizeof *x, gretl_compare_doubles);
+	nuniq = count_distinct_values(x, n);
+
+	if (nuniq == 1) {
+	    continue;
+	}
+
+	rearrange_id_array(x, nuniq, n);
+
+#if DUMDEBUG 
+	fprintf(stderr, "variable %d has %d distinct values:\n", vi, nuniq);
+#endif
+
+	for (j=0; j<nuniq && !err; j++) {
+	    tnum = get_transform(DUMMIFY, vi, j+1, x[j], pZ, pdinfo, startlen);
+#if DUMDEBUG   
+	    fprintf(stderr, "VALUE = %g, tnum = %d\n", x[j], tnum);
+#endif
+	    if (tnum > 0) {
+		tmplist = gretl_list_append_term(&tmplist, tnum);
+		if (tmplist == NULL) {
+		    err = E_ALLOC;
+		} 
+	    } else {
+		err = E_DATA;
+	    }
+	}
+    }
+
+    free(x);
+
+    if (!err) {
+	free(*plist);
+	*plist = tmplist;
+#if DUMDEBUG   
+	printlist(tmplist, "output list");
+#endif
+    } else {
+	free(tmplist);
+    }
+
+    return err;
+}
+
 /**
  * list_makediscrete:
  * @list: list of variables to process.
@@ -912,7 +1047,7 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
  * Returns: 0 on success, error code on error.
  */
 
-int list_makediscrete (int *list, DATAINFO *pdinfo, gretlopt opt)
+int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt)
 {
     int disc = !(opt & OPT_R);
     int i, v, err = 0;

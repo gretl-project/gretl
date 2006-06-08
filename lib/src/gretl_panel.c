@@ -448,21 +448,6 @@ vcv_slopes (panelmod_t *pan, const MODEL *pmod, int op)
     }
 }
 
-static double *copy_array (double *x, int n)
-{
-    double *y;
-    int i;
-
-    y = malloc(n * sizeof *y);
-    if (y != NULL) {
-	for (i=0; i<n; i++) {
-	    y[i] = x[i];
-	}
-    }
-
-    return y;
-}
-
 /* calculate Hausman test statistic */
 
 static int bXb (panelmod_t *pan)
@@ -478,7 +463,7 @@ static int bXb (panelmod_t *pan)
 
     pan->H = NADBL;
 
-    x = copy_array(pan->bdiff, pan->nbeta);
+    x = copyvec(pan->bdiff, pan->nbeta);
     if (x == NULL) {
 	return E_ALLOC;
     }
@@ -2399,5 +2384,403 @@ varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 
     return 0;
 }
+
+/* apparatus for setting panel structure by reading two variables,
+   indexing the cross-sectional unit and the time period
+   respectively
+*/
+
+typedef struct s_point_t s_point;
+typedef struct sorter_t sorter;
+
+struct s_point_t {
+    int obsnum;
+    double val1;
+    double val2;
+};  
+
+struct sorter_t {
+    int sortvar1;
+    int sortvar2;
+    s_point *points;
+};
+
+static void sorter_fill_points (sorter *s, const double **Z,
+				int n)
+{
+    int t;
+
+    for (t=0; t<n; t++) {
+	s->points[t].obsnum = t;
+	s->points[t].val1 = Z[s->sortvar1][t];
+	s->points[t].val2 = Z[s->sortvar2][t];
+    }
+}
+
+static int compare_obs (const void *a, const void *b)
+{
+    const s_point *pa = (const s_point *) a;
+    const s_point *pb = (const s_point *) b;
+    int ret;
+
+    ret = (pa->val1 > pb->val1) - (pa->val1 < pb->val1);
+    if (ret == 0) {
+	ret = (pa->val2 > pb->val2) - (pa->val2 < pb->val2);
+    }
+
+    return ret;
+}
+
+static int dataset_sort_by (double **Z, int n, int v,
+			    double *tmp, int v1, int v2)
+{
+    int i, t;
+    sorter s;
+
+    s.points = malloc(n * sizeof *s.points);
+    if (s.points == NULL) {
+	return E_ALLOC;
+    } 
+
+    s.sortvar1 = v1;
+    s.sortvar2 = v2;
+    
+    sorter_fill_points(&s, (const double **) Z, n);
+
+    qsort((void *) s.points, (size_t) n, sizeof s.points[0], 
+	  compare_obs);
+
+    for (i=1; i<v; i++) {
+	for (t=0; t<n; t++) {
+	    tmp[t] = Z[i][t];
+	}
+	for (t=0; t<n; t++) {
+	    Z[i][t] = tmp[s.points[t].obsnum];
+	}	
+    }
+
+    free(s.points);
+
+    return 0;
+}
+
+static void shift_data_forward (double **Z, DATAINFO *pdinfo,
+				int t, int unit, const double *tid,
+				int tmiss, int uv, int tv,
+				int shift)
+{
+    int i, s;
+
+    for (i=1; i<pdinfo->v; i++) {
+	for (s=pdinfo->n-1; s>=t+shift; s--) {
+	    Z[i][s] = Z[i][s - shift];
+	}
+	for (s=t; s<t+shift; s++) {
+	    if (i == uv) {
+		Z[i][s] = unit;
+	    } else if (i == tv) {
+		Z[i][s] = tid[tmiss++];
+	    } else {
+		Z[i][s] = NADBL;
+	    }
+	}
+    }
+}
+
+static int really_pad_dataset (const double *uid, int uv, int nunits,
+			       const double *tid, int tv, int nperiods, 
+			       const int *uobs, double **Z, 
+			       DATAINFO *pdinfo)
+{
+    int ni, shift;
+    int i, j, t = 0;
+
+    for (i=0; i<nunits; i++) {
+	if (uobs[i] == nperiods) {
+	    /* no missing obs for this unit */
+	    t += nperiods;
+	    continue;
+	}
+	ni = uobs[i];
+	for (j=0; j<nperiods; ) {
+	    if (j > ni || Z[tv][t] != tid[j]) {
+		if (j > ni) {
+		    shift = nperiods - ni;
+		} else {
+		    shift = 1; /* this is lame */
+		}
+		shift_data_forward(Z, pdinfo, t, uid[i], 
+				   tid, j, uv, tv, shift);
+		ni += shift;
+		j += shift;
+		t += shift;
+	    } else {
+		j++;
+		t++;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+static int maybe_pad_dataset (const double *uid, int uv, int nunits,
+			      const double *tid, int tv, int nperiods, 
+			      double ***pZ, DATAINFO *pdinfo)
+{
+    int *uobs;
+    int totmiss = 0;
+    int i, t;
+    int err = 0;
+
+    uobs = malloc(nunits * sizeof *uobs);
+    if (uobs == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<nunits; i++) {
+	uobs[i] = 0;
+	for (t=0; t<pdinfo->n; t++) {
+	    if ((*pZ)[uv][t] == uid[i]) {
+		uobs[i] += 1;
+	    }
+	}
+	totmiss += nperiods - uobs[i];
+    }
+
+    if (totmiss > 0) {
+	err = dataset_add_observations(totmiss, pZ, pdinfo, OPT_NONE);
+	if (!err) {
+	    really_pad_dataset(uid, uv, nunits,
+			       tid, tv, nperiods,
+			       uobs, *pZ, pdinfo);
+	}
+    }
+		
+    free(uobs);
+
+    return err;
+}
+
+static int is_positive (const double *x, int n)
+{
+    int i;
+
+    for (i=1; i<n; i++) {
+	if (x[i] <= 0.0) {
+	    return 0;
+	}
+    }    
+
+    return 1;
+}
+
+static int uv_tv_from_line (const char *line, DATAINFO *pdinfo,
+			    int *uv, int *tv)
+{
+    char uvname[VNAMELEN];
+    char tvname[VNAMELEN];
+    int err = 0;
+    
+    if (sscanf(line, "%15s %15s", uvname, tvname) != 2) {
+	return E_PARSE;
+    }
+
+    *uv = varindex(pdinfo, uvname);
+    if (*uv == pdinfo->v) {
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), uvname);
+	err = E_UNKVAR;
+    } else if (!var_is_series(pdinfo, *uv)) {
+	err = E_DATATYPE;
+    }
+
+    if (err) {
+	return err;
+    }
+
+    *tv = varindex(pdinfo, tvname);
+    if (*tv == pdinfo->v) {
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), tvname);
+	err = E_UNKVAR;
+    } else if (!var_is_series(pdinfo, *tv)) {
+	err = E_DATATYPE;
+    }
+
+    return err;
+}
+
+int set_panel_structure_from_vars (const char *line, 
+				   double ***pZ, 
+				   DATAINFO *pdinfo)
+{
+    int uv, tv;
+    double *uid = NULL;
+    double *tid = NULL;
+    int n = pdinfo->n;
+    int nunits = 0;
+    int nperiods = 0;
+    int err;
+
+    err = uv_tv_from_line(line, pdinfo, &uv, &tv);
+    if (err) {
+	return err;
+    }
+
+    if (!is_positive((*pZ)[uv], n) || !is_positive((*pZ)[tv], n)) {
+	return E_DATA;
+    }
+
+    uid = copyvec((*pZ)[uv], n);
+    tid = copyvec((*pZ)[tv], n);
+
+    if (uid == NULL || tid == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }  
+
+    qsort(uid, n, sizeof *uid, gretl_compare_doubles);
+    nunits = count_distinct_values(uid, pdinfo->n);
+
+    qsort(tid, n, sizeof *tid, gretl_compare_doubles);
+    nperiods = count_distinct_values(tid, pdinfo->n);
+
+    if (nunits == 1 || nperiods == 1 || 
+	nunits == n || nperiods == n) {
+	fprintf(stderr, "Dataset does not have a panel structure\n");
+	err = E_DATA;
+	goto bailout;
+    }
+
+#if 0
+    printf("Found %d units, %d periods\n", nunits, nperiods);
+    printf("Units: min %g, max %g\n", uid[0], uid[n - 1]);
+    printf("Periods: min %g, max %g\n", tid[0], tid[n - 1]);
+#endif
+
+    /* sort full dataset by unit and period: note that
+       uid is used as workspace here, and gets unsorted
+    */
+    err = dataset_sort_by(*pZ, pdinfo->n, pdinfo->v, uid, uv, tv);
+
+    if (!err) {
+	/* in case of unbalanced panel, pad out with missing
+	   values */
+	qsort(uid, n, sizeof *uid, gretl_compare_doubles);
+	rearrange_id_array(uid, nunits, n);
+	rearrange_id_array(tid, nperiods, n);
+	err = maybe_pad_dataset(uid, uv, nunits, 
+				tid, tv, nperiods, 
+				pZ, pdinfo);
+    }
+
+ bailout:
+
+    free(uid);
+    free(tid);
+
+    return err;
+}
+
+/* utility functions */
+
+int guess_panel_structure (double **Z, DATAINFO *pdinfo)
+{
+    int v, panel;
+
+    v = varindex(pdinfo, "year");
+
+    if (v == pdinfo->v) {
+	v = varindex(pdinfo, "Year");
+    }
+
+    if (v == pdinfo->v) {
+	panel = 0; /* can't guess */
+    } else {
+	if (floateq(Z[v][0], Z[v][1])) { /* "year" is same for first two obs */
+	    pdinfo->structure = STACKED_CROSS_SECTION; 
+	    panel = STACKED_CROSS_SECTION;
+	} else {
+	    pdinfo->structure = STACKED_TIME_SERIES; 
+	    panel = STACKED_TIME_SERIES;
+	}
+    }
+
+    return panel;
+}
+
+/* 
+   nunits = number of cross-sectional units
+   T = number pf time-periods per cross-sectional unit
+*/
+
+int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T)
+{
+    int err = 0;
+
+    if (pdinfo->structure == STACKED_TIME_SERIES) {
+        *nunits = pdinfo->n / pdinfo->pd;
+        *T = pdinfo->pd;
+    } else if (pdinfo->structure == STACKED_CROSS_SECTION) {
+	*nunits = pdinfo->pd;
+	*T = pdinfo->n / pdinfo->pd;
+    } else {
+	err = 1;
+    }
+
+    return err;
+}
+
+int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
+{
+    int nunits, T;
+    int old_ts = pdinfo->structure;
+
+    if (pdinfo->pd == 1) {
+	pputs(prn, _("The current data frequency, 1, is not "
+		"compatible with panel data.\nPlease see the 'setobs' "
+		"command.\n"));
+	return 1;
+    }
+
+    if (opt == OPT_C) {
+	pdinfo->structure = STACKED_CROSS_SECTION;
+    } else {
+	pdinfo->structure = STACKED_TIME_SERIES;
+    }
+
+    if (get_panel_structure(pdinfo, &nunits, &T)) {
+	pputs(prn, _("Failed to set panel structure\n"));
+	pdinfo->structure = old_ts;
+	return 1;
+    } else {
+	pprintf(prn, _("Panel structure set to %s\n"),
+		(pdinfo->structure == STACKED_CROSS_SECTION)? 
+		_("stacked cross sections") : _("stacked time series"));
+	pprintf(prn, _("(%d units observed in each of %d periods)\n"),
+		nunits, T);
+    }
+
+    return 0;
+}
+
+int balanced_panel (const DATAINFO *pdinfo)
+{
+    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int ret = 0;
+
+    if (n % pdinfo->pd == 0) {
+	char unit[OBSLEN], period[OBSLEN];
+
+	if (sscanf(pdinfo->endobs, "%[^:]:%s", unit, period) == 2) {
+	    if (atoi(period) == pdinfo->pd) {
+		ret = 1;
+	    }
+	}
+    }
+
+    return ret;
+}
+
+
 
 

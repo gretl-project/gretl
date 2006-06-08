@@ -844,7 +844,7 @@ maybe_reconstitute_time_series (const DATAINFO *pdinfo,
 
 	ntodate(stobs, t1, pdinfo);
 	sprintf(line, "setobs %d %s", pdinfo->pd, stobs);
-	set_obs(line, subinfo, OPT_NONE);
+	set_obs(line, NULL, subinfo, OPT_NONE);
     } 
 }
 
@@ -872,7 +872,7 @@ maybe_reconstitute_panel (const DATAINFO *pdinfo,
 	if (pdinfo->structure == STACKED_TIME_SERIES) {
 	    opt = OPT_S;
 	} 
-	set_obs(line, subinfo, opt);
+	set_obs(line, NULL, subinfo, opt);
     } 
 }
 

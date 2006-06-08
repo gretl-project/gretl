@@ -5985,6 +5985,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case DATA:
     case DIFF: 
     case DISCRETE:
+    case DUMMIFY:
     case ESTIMATE:
     case FNCALL:
     case FUNC:
@@ -6678,7 +6679,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case SETOBS:
-	err = set_obs(line, datainfo, cmd.opt);
+	err = set_obs(line, &Z, datainfo, cmd.opt);
 	if (err) {
 	    errmsg(err, prn);
 	} else {

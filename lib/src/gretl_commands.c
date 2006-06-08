@@ -56,6 +56,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { DELEET,   "delete" },
     { DIFF,     "diff" },
     { DISCRETE, "discrete" },
+    { DUMMIFY,  "dummify" },
     { ELSE,     "else" },
     { END,      "end" },
     { ENDIF,    "endif" },

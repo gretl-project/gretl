@@ -1135,7 +1135,7 @@ static int freq_add_arrays (FreqDist *freq, int nbins)
     return err;
 }
 
-static int count_distinct_vals (int *x, int n)
+static int count_distinct_int_values (int *x, int n)
 {
     int i, c = 1;
 
@@ -1144,14 +1144,6 @@ static int count_distinct_vals (int *x, int n)
     }
 
     return c;
-}
-
-static int compare_ints (const void *a, const void *b)
-{
-    const int *ia = (const int *) a;
-    const int *ib = (const int *) b;
-     
-    return *ia - *ib;
 }
 
 /**
@@ -1259,8 +1251,8 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	    }
 	}
 	
-	qsort(sorted, n, sizeof *sorted, compare_ints); 
-	nbins = count_distinct_vals(sorted, n);
+	qsort(sorted, n, sizeof *sorted, gretl_compare_ints); 
+	nbins = count_distinct_int_values(sorted, n);
 
 	ifreq = malloc(nbins * sizeof *ifreq);
 	ivals = malloc(nbins * sizeof *ivals);

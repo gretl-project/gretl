@@ -39,8 +39,6 @@ typedef enum {
 
 #define ok_int(x) (x <= (double) INT_MAX && x >= (double) INT_MIN)
 
-/* functions follow */
-
 void libgretl_init (void);
 
 void libgretl_cleanup (void);
@@ -65,9 +63,22 @@ int true_const (int v, const double **Z, const DATAINFO *pdinfo);
 
 char *format_obs (char *obs, int maj, int min, int pd);
 
-int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt);
+int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo, 
+	     gretlopt opt);
 
-/* other */
+/* sorting and comparison */
+
+int gretl_compare_doubles (const void *a, const void *b);
+
+int gretl_inverse_compare_doubles (const void *a, const void *b);
+
+int count_distinct_values (const double *x, int n);
+
+int rearrange_id_array (double *x, int m, int n);
+
+int gretl_compare_ints (const void *a, const void *b);
+
+/* miscellaneous */
 
 void printlist (const int *list, const char *msg);
 
@@ -78,7 +89,7 @@ int positive_int_from_string (const char *s);
 
 int varnum_from_string (const char *str, DATAINFO *pdinfo);
 
-int rename_var_by_id (const char *str, const char *vname, 
+int rename_var_by_id (const char *idstr, const char *vname, 
 		      DATAINFO *pdinfo);
 
 int re_estimate (char *model_spec, MODEL *tmpmod, 
@@ -91,10 +102,6 @@ int ijton (int i, int j, int nrows);
 int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);
 
 double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo);
-
-int gretl_compare_doubles (const void *a, const void *b);
-
-int gretl_inverse_compare_doubles (const void *a, const void *b);
 
 int gretl_copy_file (const char *src, const char *dest);
 
@@ -111,14 +118,6 @@ int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
 int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
 int ls_criteria (MODEL *pmod);
-
-/* panel data utilities */
-
-int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T);
-
-int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn); 
-
-int balanced_panel (const DATAINFO *pdinfo);
 
 /* hypothesis tests mechanism */
 

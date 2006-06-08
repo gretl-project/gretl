@@ -174,6 +174,7 @@ struct gretl_option gretl_opts[] = {
     { SETINFO,  OPT_C, "continuous" },
     { SETINFO,  OPT_D, "discrete" },
     { SETOBS,   OPT_C, "stacked-cross-section" },
+    { SETOBS,   OPT_P, "panel-vars" },
     { SETOBS,   OPT_S, "stacked-time-series" },
     { SETOBS,   OPT_T, "time-series" },
     { SETOBS,   OPT_X, "cross-section" },

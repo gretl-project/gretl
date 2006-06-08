@@ -23,6 +23,7 @@
 #include "cmd_private.h"
 #include "libset.h"
 #include "usermat.h"
+#include "gretl_panel.h"
 
 #include <errno.h>
 
@@ -349,6 +350,80 @@ int gretl_inverse_compare_doubles (const void *a, const void *b)
 }
 
 /**
+ * gretl_compare_ints:
+ * @a: pointer to first element to compare.
+ * @b: pointer to second element to compare.
+ *
+ * Comparison function for use with %qsort.  Sorts integers in
+ * ascending order.
+ * 
+ * Returns: appropriate value for %qsort.
+ */
+
+int gretl_compare_ints (const void *a, const void *b)
+{
+    const int *ia = (const int *) a;
+    const int *ib = (const int *) b;
+     
+    return *ia - *ib;
+}
+
+/**
+ * count_distinct_values:
+ * @x: sorted array of doubles.
+ * @n: number of elements in array.
+ *
+ * Returns: the number of distinct values in @x.
+ */
+
+int count_distinct_values (const double *x, int n)
+{
+    int i, c = 1;
+
+    for (i=1; i<n; i++) {
+	if (x[i] != x[i-1]) {
+	    c++;
+	}
+    }
+
+    return c;
+}
+
+/**
+ * rearrange_id_array:
+ * @x: sorted array of doubles.
+ * @n: number of elements in array.
+ * @m: number of distinct values in array.
+ *
+ * Rearranges the sorted array @x such that the first @m 
+ * elements contain the @m distinct values in sorted order.
+ *
+ * Returns: 0 on success, 1 on error (in case @m is greater
+ * than @n).
+ */
+
+int rearrange_id_array (double *x, int m, int n)
+{
+    int i, k = 1;
+
+    if (m > n) {
+	return 1;
+    }
+
+    if (m == n || m == 1) {
+	return 0;
+    }
+
+    for (i=1; i<n && k<m; i++) {
+	if (x[i] != x[i-1]) {
+	    x[k++] = x[i];
+	}
+    }
+
+    return 0;
+}
+
+/**
  * printlist:
  * @list: array of integers.
  * @msg: message to print along with @list (or NULL).
@@ -458,7 +533,8 @@ int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn)
     return err;
 }
 
-char *real_format_obs (char *obs, int maj, int min, int pd, char sep)
+static char *
+real_format_obs (char *obs, int maj, int min, int pd, char sep)
 {
     if (pd >= 10) {
 	int pdp = pd / 10, minlen = 2;
@@ -568,22 +644,30 @@ catch_setobs_errors (const char *stobs, int pd, int n, int min, gretlopt opt)
 /**
  * set_obs:
  * @line: command line.
+ * @pZ: pointer to data array.
  * @pdinfo: data information struct.
- * @opt: OPT_S for stacked time-series, OPT_C for stacked cross-section,
- * OPT_T for time series, OPT_X for cross section.
+ * @opt: %OPT_S for stacked time-series, %OPT_C for stacked cross-section,
+ * %OPT_T for time series, %OPT_X for cross section, %OPT_P to set
+ * panel structure via two variables representing unit and period
+ * respectively.
  * 
  * Set the frequency and initial observation for a dataset.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
+int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo, 
+	     gretlopt opt)
 {
     char stobs[OBSLEN];
     int structure = STRUCTURE_UNKNOWN;
     int pd, dated = 0;
 
     *gretl_errmsg = '\0';
+
+    if (opt & OPT_P) {
+	return set_panel_structure_from_vars(line, pZ, pdinfo);
+    }
 
     if (sscanf(line, "%*s %d %10s", &pd, stobs) != 2) {
 	strcpy(gretl_errmsg, _("Failed to parse line as frequency, startobs"));
@@ -739,6 +823,16 @@ int gretl_int_from_string (const char *s, const double **Z,
     return n;    
 }
 
+/**
+ * positive_int_from_string:
+ * @s: string to examine.
+ * 
+ * If @s is a valid string representation of a positive integer,
+ * return that integer, otherwise return -1.
+ *
+ * Returns: integer value.
+ */
+
 int positive_int_from_string (const char *s)
 {
     int ret = -1;
@@ -757,6 +851,14 @@ int positive_int_from_string (const char *s)
     return ret;
 }
 
+/**
+ * varnum_from_string:
+ * @str: string representation of an integer ID number.
+ * @pdinfo: dataset information.
+ * 
+ * Returns: integer ID number, or -1 on failure.
+ */
+
 int varnum_from_string (const char *str, DATAINFO *pdinfo)
 {
     int varno = positive_int_from_string(str);
@@ -768,12 +870,22 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
     return varno;
 }
 
-int rename_var_by_id (const char *str, const char *vname, 
+/**
+ * rename_var_by_id:
+ * @idstr: string representation of the ID number of the
+ * variable to be renamed.
+ * @vname: new name to give the variable.
+ * @pdinfo: dataset information.
+ * 
+ * Returns: 0 on sucess, %E_DATA on error.
+ */
+
+int rename_var_by_id (const char *idstr, const char *vname, 
 		      DATAINFO *pdinfo)
 {
-    int varno = varnum_from_string(str, pdinfo);
+    int v = varnum_from_string(idstr, pdinfo);
 
-    if (varno < 0) {
+    if (v < 0) {
 	return E_DATA;
     }
 
@@ -781,12 +893,19 @@ int rename_var_by_id (const char *str, const char *vname,
        non-duplication (see interact.c under RENAME)
     */
 
-    strcpy(pdinfo->varname[varno], vname);
+    strcpy(pdinfo->varname[v], vname);
 
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * copyvec:
+ * @src: array of doubles.
+ * @n: number of elements to copy.
+ * 
+ * Returns: an allocated copy of the first @n elements of
+ * array @src, or %NULL on failure.
+ */
 
 double *copyvec (const double *src, int n)
 {
@@ -873,103 +992,6 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     gretl_cmd_free(&cmd);
 
     return err;
-}
-
-int guess_panel_structure (double **Z, DATAINFO *pdinfo)
-{
-    int v, panel;
-
-    v = varindex(pdinfo, "year");
-
-    if (v == pdinfo->v) {
-	v = varindex(pdinfo, "Year");
-    }
-
-    if (v == pdinfo->v) {
-	panel = 0; /* can't guess */
-    } else {
-	if (floateq(Z[v][0], Z[v][1])) { /* "year" is same for first two obs */
-	    pdinfo->structure = STACKED_CROSS_SECTION; 
-	    panel = STACKED_CROSS_SECTION;
-	} else {
-	    pdinfo->structure = STACKED_TIME_SERIES; 
-	    panel = STACKED_TIME_SERIES;
-	}
-    }
-
-    return panel;
-}
-
-/* 
-   nunits = number of cross-sectional units
-   T = number pf time-periods per cross-sectional unit
-*/
-
-int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T)
-{
-    int err = 0;
-
-    if (pdinfo->structure == STACKED_TIME_SERIES) {
-        *nunits = pdinfo->n / pdinfo->pd;
-        *T = pdinfo->pd;
-    } else if (pdinfo->structure == STACKED_CROSS_SECTION) {
-	*nunits = pdinfo->pd;
-	*T = pdinfo->n / pdinfo->pd;
-    } else {
-	err = 1;
-    }
-
-    return err;
-}
-
-int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
-{
-    int nunits, T;
-    int old_ts = pdinfo->structure;
-
-    if (pdinfo->pd == 1) {
-	pputs(prn, _("The current data frequency, 1, is not "
-		"compatible with panel data.\nPlease see the 'setobs' "
-		"command.\n"));
-	return 1;
-    }
-
-    if (opt == OPT_C) {
-	pdinfo->structure = STACKED_CROSS_SECTION;
-    } else {
-	pdinfo->structure = STACKED_TIME_SERIES;
-    }
-
-    if (get_panel_structure(pdinfo, &nunits, &T)) {
-	pputs(prn, _("Failed to set panel structure\n"));
-	pdinfo->structure = old_ts;
-	return 1;
-    } else {
-	pprintf(prn, _("Panel structure set to %s\n"),
-		(pdinfo->structure == STACKED_CROSS_SECTION)? 
-		_("stacked cross sections") : _("stacked time series"));
-	pprintf(prn, _("(%d units observed in each of %d periods)\n"),
-		nunits, T);
-    }
-
-    return 0;
-}
-
-int balanced_panel (const DATAINFO *pdinfo)
-{
-    char unit[OBSLEN], period[OBSLEN];
-
-    if ((pdinfo->t2 - pdinfo->t1 + 1) % pdinfo->pd) {
-        return 0;
-    }
-
-    if (sscanf(pdinfo->endobs, "%[^:]:%s", unit, period) == 2) {
-        if (atoi(period) != pdinfo->pd) return 0;
-    } else {
-        return 0;
-    }
-
-    return 1;
 }
 
 double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)

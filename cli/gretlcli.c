@@ -38,6 +38,7 @@
 #include "cmd_private.h"
 #include "objstack.h"
 #include "gretl_xml.h"
+#include "gretl_panel.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -879,6 +880,7 @@ static int exec_line (char *line, PRN *prn)
     case DATA:
     case DIFF: 
     case DISCRETE:
+    case DUMMIFY:
     case ESTIMATE:
     case FNCALL:
     case FUNC:
@@ -1563,7 +1565,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case SETOBS:
-	err = set_obs(line, datainfo, cmd.opt);
+	err = set_obs(line, &Z, datainfo, cmd.opt);
 	if (err) {
 	    errmsg(err, prn);
 	} else {

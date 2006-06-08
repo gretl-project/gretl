@@ -3045,7 +3045,7 @@ datawiz_make_changes (DATAINFO *dwinfo)
     fprintf(stderr, "setline = '%s', opt = %ld\n", setline, opt);
 #endif
 
-    err = set_obs(setline, datainfo, opt);
+    err = set_obs(setline, NULL, datainfo, opt);
 
     if (err) {
 	errbox(get_gretl_errmsg());

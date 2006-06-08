@@ -17,8 +17,8 @@
  *
  */
 
-#ifndef PANEL_H_
-#define PANEL_H_
+#ifndef GRETL_PANEL_H_
+#define GRETL_PANEL_H_
 
 int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn);
@@ -33,4 +33,14 @@ int panel_autocorr_test (MODEL *pmod, int order,
 			 double **Z, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
-#endif /* PANEL_H_ */
+int set_panel_structure_from_vars (const char *line, 
+				   double ***pZ, 
+				   DATAINFO *pdinfo);
+
+int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T);
+
+int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn); 
+
+int balanced_panel (const DATAINFO *pdinfo);
+
+#endif /* GRETL_PANEL_H_ */
