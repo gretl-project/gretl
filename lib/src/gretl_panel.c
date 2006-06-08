@@ -134,36 +134,48 @@ static int var_is_varying (const int *list, int v)
     return ret;
 }
 
-#if 0
+/* Durbin-Watson statistic for fixed effects model on a 
+   balanced panel, stacked time series */
 
-static double panel_dwstat (MODEL *pmod, const double **Z)
+static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
 {
+    int T = pdinfo->pd;
     double ut, u1;
     double num = 0.0;
-    double den = 0.0;
-    int t, t1;
+    int i, t, s, n;
+
+    if (pdinfo->structure != STACKED_TIME_SERIES) {
+	return;
+    }
 
     if (pmod->ess <= 0.0) {
-	return NADBL;
+	return;
     }
 
-    t1 = pmod->t1 + order;
-
-    den = pmod->ess;
-
-    for (t=t1; t<=pmod->t2; t++)  {
-        ut = pmod->uhat[t];
-        u1 = pmod->uhat[t-1];
-        if (na(ut) || na(u1)) {
-	    continue;
-	}
-        num += (ut - u1) * (ut - u1);
+    if (pmod->nobs % T != 0) {
+	return;
     }
 
-    return num / den;
-}
+    n = pmod->nobs / T;
 
+    s = pmod->t1;
+    for (i=0; i<n; i++) {
+#if PDEBUG
+	fprintf(stderr, "panel_dwstat: skipping obs %d\n", s);
 #endif
+	s++;
+	for (t=1; t<T; t++) {
+	    ut = pmod->uhat[s];
+	    u1 = pmod->uhat[s-1];
+	    if (!na(ut) && !na(u1)) {
+		num += (ut - u1) * (ut - u1);
+	    }
+	    s++;
+	}
+    }
+
+    pmod->dw = num / pmod->ess;
+}
 
 static int hausman_allocate (panelmod_t *pan)
 {
@@ -594,21 +606,19 @@ fixed_effects_model (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo)
 
     /* should we use a set of dummy variables, or subtract
        the group means? */
-
     if (getenv("NODUMMIES") != NULL) {
 	pan->ndum = 0;
-    } else {
-	if (ndum <= 20 || ndum < pan->vlist[0]) {
-#if PDEBUG
-	    fprintf(stderr, " using dummy variables approach\n");
-#endif
-	    pan->ndum = ndum;
-	} else {
-#if PDEBUG
-	    fprintf(stderr, " subtracting group means\n");
-#endif
-	}
+    } else if (ndum <= 20 || ndum < pan->vlist[0]) {
+	pan->ndum = ndum;
     }
+
+#if PDEBUG
+    if (pan->ndum > 0) {
+	fprintf(stderr, " using dummy variables approach\n");
+    } else {
+	fprintf(stderr, " subtracting group means\n");
+    }
+#endif
 
     if (pan->ndum == 0) {
 	double **wZ = NULL;
@@ -649,10 +659,6 @@ fixed_effects_model (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo)
 	    printmodel(&lsdv, winfo, OPT_O, prn);
 #endif
 	}
-
-#if PDEBUG
-	gretl_print_destroy(prn);
-#endif
 
 	destroy_dataset(wZ, winfo);
 	    
@@ -711,15 +717,18 @@ fixed_effects_model (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo)
 	lsdv = lsq(felist, pZ, pdinfo, OLS, OPT_A | OPT_Z);
 
 #if PDEBUG
-	if (lsdv.errcode == 0) {
+	if (!lsdv.errcode) {
 	    printmodel(&lsdv, pdinfo, OPT_NONE, prn);
 	}
-	gretl_print_destroy(prn);
 #endif
 
 	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
 
     }
+
+#if PDEBUG
+    gretl_print_destroy(prn);
+#endif
 
     free(felist);
 
@@ -757,7 +766,6 @@ static int print_fe_results (panelmod_t *pan,
     }
 
     /* print the slope coefficients, for varying regressors */
-
     k = 0;
     for (i=1; i<pan->vlist[0] - 1; i++) {
 	int vi = pan->vlist[i+2];
@@ -821,7 +829,7 @@ static void fix_panelmod_list (MODEL *targ, MODEL *src, panelmod_t *pan)
 {
     int i;
 
-#if 1
+#if PDEBUG
     printlist(targ->list, "targ->list");
     printlist(src->list, "src->list");
     printlist(pan->vlist, "pan->vlist");
@@ -839,7 +847,7 @@ static void fix_panelmod_list (MODEL *targ, MODEL *src, panelmod_t *pan)
 	}
     }
 
-#if 1
+#if PDEBUG
     printlist(targ->list, "new targ->list");
 #endif
 
@@ -936,6 +944,7 @@ fixed_effects_variance (panelmod_t *pan,
 		pan->pooled->list[0] -= pan->ndum;
 	    }
 	    set_model_id(pan->pooled);
+	    panel_dwstat(pan->pooled, pdinfo);
 	}
     }
 

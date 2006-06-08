@@ -665,6 +665,11 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     *gretl_errmsg = '\0';
 
+    if (!strcmp(line, "setobs")) {
+	/* we'll just print current obs info */
+	return 0;
+    }
+
     if (opt & OPT_P) {
 	return set_panel_structure_from_vars(line, pZ, pdinfo);
     }

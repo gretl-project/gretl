@@ -368,8 +368,10 @@ static void dwline (const MODEL *pmod, PRN *prn)
 	if (!na(pmod->dw)) {
 	    pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
 		    XDIGITS(pmod), pmod->dw);
-	    pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
-		    XDIGITS(pmod), pmod->rho);
+	    if (pmod->ci != PANEL) {
+		pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
+			XDIGITS(pmod), pmod->rho);
+	    }
 	} 
     } else if (tex_format(prn)) {
 	char x1str[32], x2str[32];
@@ -1290,6 +1292,10 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     if (pmod->ci == GARCH) {
 	gn = pmod->list[0] - 4;
+    } else if (pmod->ci == PANEL) {
+	if (pmod->ncoeff > pmod->list[0] - 1) {
+	    gn = pmod->list[0] - 1;
+	}
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
@@ -1659,6 +1665,10 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
 	    Fline(pmod, prn);
 	}
+
+	if (pmod->ci == PANEL && pdinfo->structure == STACKED_TIME_SERIES) {
+	    dwline(pmod, prn);
+	} 
 
 	if (dataset_is_time_series(pdinfo)) {
 	    if (pmod->ci == OLS || pmod->ci == MPOLS || pmod->ci == VAR ||
