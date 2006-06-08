@@ -465,7 +465,9 @@ static void htest_graph (int dist, double x, int df1, int df2)
     double xx, prange, spike = 0.0;
     FILE *fp = NULL;
 
-    if (gnuplot_init(PLOT_SAMPLING_DIST, &fp)) return;
+    if (gnuplot_init(PLOT_SAMPLING_DIST, &fp)) {
+	return;
+    }
 
     fprintf(fp, "set key right top\n");
 
@@ -573,83 +575,125 @@ static void h_test (GtkWidget *w, gpointer data)
 	    /* get sample mean and std dev */
 	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j]));
 	    x[j] = getval(tmp, prn, (j==1)? 1 : 0);
-	    if (na(x[j])) return;
+	    if (na(x[j])) {
+		return;
+	    }
 	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
-	if ((n1 = getint(tmp, prn)) == -1) return;
+	if ((n1 = getint(tmp, prn)) == -1) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
 	x[2] = getval(tmp, prn, 0);
-	if (na(x[2])) return;
+	if (na(x[2])) {
+	    return;
+	}
+
 	sderr = x[1] / sqrt((double) n1);
 	ts = (x[0] - x[2])/sderr;
+
 	pprintf(prn, _("Null hypothesis: population mean = %g\n"), x[2]);
 	pprintf(prn, _("Sample size: n = %d\n"), n1);
 	pprintf(prn, _("Sample mean = %g, std. deviation = %g\n"), 
 		x[0], x[1]);
+
 	if (GTK_TOGGLE_BUTTON(test->check)->active) {
 	    pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
 		    x[0], x[2], sderr, ts);
 	    pv = normal_pvalue_2(ts);
 	    print_pv(prn, pv, pv / 2.0);
-	    if (grf) htest_graph(0, ts, 0, 0);
+	    if (grf) {
+		htest_graph(0, ts, 0, 0);
+	    }
 	} else {
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"), n1-1,
 		    x[0], x[2], sderr, ts);
 	    pv = t_pvalue_2(ts, n1 - 1);
 	    print_pv(prn, pv, 0.5 * pv);
-	    if (grf) htest_graph(1, ts, n1-1, 0);
+	    if (grf) {
+		htest_graph(1, ts, n1-1, 0);
+	    }
 	}
 	break;
 
     case ONE_VARIANCE:
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
 	x[0] = getval(tmp, prn, 1);
-	if (na(x[0])) return;
+	if (na(x[0])) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	if ((n1 = getint(tmp, prn)) == -1) return;
+	if ((n1 = getint(tmp, prn)) == -1) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	x[1] = getval(tmp, prn, 1);
-	if (na(x[1])) return;
+	if (na(x[1])) {
+	    return;
+	}
+
 	ts = (n1 - 1) * x[0] / x[1];
+
 	pprintf(prn, _("Null hypothesis: population variance = %g\n"), x[1]);
 	pprintf(prn, _("Sample size: n = %d\n"), n1);
 	pprintf(prn, _("Sample variance = %g\n"), x[0]);
 	pprintf(prn, _("Test statistic: chi-square(%d) = %d * %g/%g = %g\n"), 
 		n1-1, n1-1, x[0], x[1], ts);
+
 	if (x[0] > x[1]) {
 	    pv = chisq(ts, n1 - 1);
 	} else {
 	    pv = 1.0 - chisq(ts, n1 -1);
 	}
 	print_pv(prn, 2.0 * pv, pv);
-	if (grf) htest_graph(2, ts, n1 - 1, 0);
+	if (grf) {
+	    htest_graph(2, ts, n1 - 1, 0);
+	}
 	break;
 
     case ONE_PROPN: /* proportion */
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
 	x[0] = getval(tmp, prn, 1);
-	if (na(x[0])) return;
+	if (na(x[0])) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	if ((n1 = getint(tmp, prn)) == -1) return;
+	if ((n1 = getint(tmp, prn)) == -1) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	x[1] = getval(tmp, prn, 1);
-	if (na(x[1])) return;
+	if (na(x[1])) {
+	    return;
+	}
+
 	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
 	    infobox(_("The assumption of a normal sampling distribution\n"
 		      "is not justified here.  Abandoning the test."));
 	    gretl_print_destroy(prn);
 	    return;
 	}
+
 	sderr = sqrt(x[1] * (1.0 - x[1]) / n1);
 	ts = (x[0] - x[1]) / sderr;
+
 	pprintf(prn, _("Null hypothesis: population proportion = %g\n"), x[1]);
 	pprintf(prn, _("Sample size: n = %d\n"), n1);
 	pprintf(prn, _("Sample proportion = %g\n"), x[0]);
 	pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
 		x[0], x[1], sderr, ts);
+
 	pv = normal_pvalue_2(ts);
 	print_pv(prn, pv, pv / 2.0);
-	if (grf) htest_graph(0, ts, 0, 0);
+	if (grf) {
+	    htest_graph(0, ts, 0, 0);
+	}
 	break;
 
     case TWO_MEANS:
@@ -657,28 +701,44 @@ static void h_test (GtkWidget *w, gpointer data)
 	    /* mean and std dev, sample 1 */
 	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j]));
 	    x[j] = getval(tmp, prn, (j==1)? 1 : 0);
-	    if (na(x[j])) return;
+	    if (na(x[j])) {
+		return;
+	    }
 	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
-	if ((n1 = getint(tmp, prn)) == -1) return;
+	if ((n1 = getint(tmp, prn)) == -1) {
+	    return;
+	}
+
 	for (j=2; j<4; j++) {
 	    /* mean and std dev, sample 2 */
 	    tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[j+1]));
 	    x[j] = getval(tmp, prn, (j==3)? 1 : 0);
-	    if (na(x[j])) return;
+	    if (na(x[j])) {
+		return;
+	    }
 	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[5]));
-	if ((n2 = getint(tmp, prn)) == -1) return;
+	if ((n2 = getint(tmp, prn)) == -1) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[6]));
 	x[4] = getval(tmp, prn, 0);
-	if (na(x[4])) return;
+	if (na(x[4])) {
+	    return;
+	}
 
 	pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), x[4]);
 	pputc(prn, '\n');
 
 	pprintf(prn, _("Sample 1:\n n = %d, mean = %g, s.d. = %g\n"),
 		n1, x[0], x[1]);
+
 	z = x[1] / sqrt((double) n1);
+
 	pprintf(prn, _(" standard error of mean = %g\n"), z);
 	z *= tcrit95(n1 - 1);
 	pprintf(prn, _(" 95%% confidence interval for mean: %g to %g\n"), 
@@ -687,23 +747,26 @@ static void h_test (GtkWidget *w, gpointer data)
 
 	pprintf(prn, _("Sample 2:\n n = %d, mean = %g, s.d. = %g\n"),
 		n2, x[2], x[3]);
+
 	z = x[3] / sqrt((double) n2);
+
 	pprintf(prn, _(" standard error of mean = %g\n"), z);
 	z *= tcrit95(n2 - 1);
 	pprintf(prn, _(" 95%% confidence interval for mean: %g to %g\n"), 
 		x[2] - z, x[2] + z);
 	pputc(prn, '\n');
 
-	/* are we assuming a common variance? */
-	j = 0;
 	if (GTK_TOGGLE_BUTTON(test->check)->active) {
+	    /* the user specified a common variance */
 	    j = 1;
-	}
-	if (n1 < 30 || n2 < 30) {
+	} else if (n1 < 30 || n2 < 30) {
+	    /* flag for warning: unequal variances and small samples */
 	    j = 2;
+	} else {
+	    j = 0;
 	}
 
-	if (j != 0) {
+	if (j == 1) {
 	    ts = ((n1-1) * x[1] * x[1] + (n2-1) * x[3] * x[3]) / (n1 + n2 - 2);
 	    sderr = sqrt(ts / n1 + ts / n2);
 	} else {
@@ -714,11 +777,8 @@ static void h_test (GtkWidget *w, gpointer data)
 	}
 
 	ts = (x[0] - x[2] - x[4]) / sderr;
-	if (j > 0) {
-	    if (j == 2) {
-		pprintf(prn, _("Small samples: assuming normality and common "
-			       "variance\n"));
-	    }
+
+	if (j == 1) {
 	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
 		    n1 + n2 - 2, x[0], x[2], sderr, ts);
 	    if (ts > 0) {
@@ -727,7 +787,9 @@ static void h_test (GtkWidget *w, gpointer data)
 		pv = t_pvalue_2(-ts, n1 + n2 - 2);
 	    }
 	    print_pv(prn, pv, 0.5 * pv);
-	    if (grf) htest_graph(1, ts, n1 + n2 - 2, 0);
+	    if (grf) {
+		htest_graph(1, ts, n1 + n2 - 2, 0);
+	    }
 	} else {
 	    if (x[4] > 0.0) {
 		pprintf(prn, _("Test statistic: z = (%g - %g - %g)/%g = %g\n"),
@@ -741,25 +803,47 @@ static void h_test (GtkWidget *w, gpointer data)
 	    }
 	    pv = normal_pvalue_2(ts);
 	    print_pv(prn, pv, pv / 2.0);
-	    if (grf) htest_graph(0, ts, 0, 0);
+	    if (grf) {
+		htest_graph(0, ts, 0, 0);
+	    }
 	}
+	
+	if (j == 2) {
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Warning: with small samples, asymptotic "
+			   "approximation may be poor\n"));
+	}
+
 	break;
 
     case TWO_VARIANCES:
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
 	x[0] = getval(tmp, prn, 1);
-	if (na(x[0])) return;
+	if (na(x[0])) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	if ((n1 = getint(tmp, prn)) == -1) return;
+	if ((n1 = getint(tmp, prn)) == -1) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	x[1] = getval(tmp, prn, 1);
-	if (na(x[1])) return;
+	if (na(x[1])) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
-	if ((n2 = getint(tmp, prn)) == -1) return;
+	if ((n2 = getint(tmp, prn)) == -1) {
+	    return;
+	}
+
 	pprintf(prn, _("Null hypothesis: The population variances are "
 		       "equal\n"));
 	pprintf(prn, _("Sample 1:\n n = %d, variance = %g\n"), n1, x[0]);
 	pprintf(prn, _("Sample 2:\n n = %d, variance = %g\n"), n2, x[1]);
+
 	if (x[0] > x[1]) {
 	    ts = x[0] / x[1];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
@@ -771,23 +855,35 @@ static void h_test (GtkWidget *w, gpointer data)
 		    n2 - 1, n1 - 1, ts);
 	    pv = fdist(ts, n2 - 1, n1 - 1);
 	}
+
 	print_pv(prn, 2.0 * pv, pv);
-	if (grf) htest_graph(3, ts, n1 - 1, n2 - 1);
+	if (grf) {
+	    htest_graph(3, ts, n1 - 1, n2 - 1);
+	}
 	break;
 
     case TWO_PROPNS: /* two proportions */
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[0]));
 	x[0] = getval(tmp, prn, 1);
-	if (na(x[0])) return;
+	if (na(x[0])) {
+	    return;
+	}
 
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[1]));
-	if ((n1 = getint(tmp, prn)) == -1) return;
+	if ((n1 = getint(tmp, prn)) == -1) {
+	    return;
+	}
+
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[2]));
 	x[1] = getval(tmp, prn, 1);
-	if (na(x[1])) return;
+	if (na(x[1])) {
+	    return;
+	}
 
 	tmp = gtk_entry_get_text(GTK_ENTRY(test->entry[3]));
-	if ((n2 = getint(tmp, prn)) == -1) return;
+	if ((n2 = getint(tmp, prn)) == -1) {
+	    return;
+	}
 
 	pprintf(prn, _("Null hypothesis: the population proportions are "
 		       "equal\n"));
@@ -796,14 +892,19 @@ static void h_test (GtkWidget *w, gpointer data)
 	pputc(prn, '\n');
 	pprintf(prn, _("Sample 2:\n n = %d, proportion = %g\n"), n2, x[1]);
 	pputc(prn, '\n');
+
 	x[2] = (n1*x[0] + n2*x[1]) / (n1 + n2);
 	sderr = sqrt((x[2] * (1.0-x[2])) * (1.0/n1 + 1.0/n2));
 	ts = (x[0] - x[1]) / sderr;
+
 	pprintf(prn, _("Test statistic: z = (%g - %g) / %g = %g\n"),
 		x[0], x[1], sderr, ts);
+
 	pv = normal_pvalue_2(ts);
 	print_pv(prn, pv, pv / 2.0);
-	if (grf) htest_graph(0, ts, 0, 0);
+	if (grf) {
+	    htest_graph(0, ts, 0, 0);
+	}
 	break;
 
     default:
@@ -1369,13 +1470,15 @@ static void add_test_label (GtkWidget *tbl, gint *tbl_len,
 }
 
 static void add_test_check (GtkWidget *tbl, gint *tbl_len, 
-			    const gchar *label, test_t *test)
+			    const gchar *label, test_t *test,
+			    gboolean val)
 {
     GtkWidget *tempwid;
 
     *tbl_len += 1;
     gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
     tempwid = gtk_check_button_new_with_label(label);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tempwid), val);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tempwid, 0, 2, *tbl_len - 1, *tbl_len);
     gtk_widget_show(tempwid);
@@ -1471,7 +1574,7 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t *test)
 	add_test_entry(tbl, &tbl_len, _("sample size"), test, 2);
 	add_test_entry(tbl, &tbl_len, _("H0: mean ="), test, 3);
 	add_test_check(tbl, &tbl_len, _("Assume standard deviation is "
-		       "population value"), test);
+		       "population value"), test, FALSE);
 	break;
 
     case ONE_VARIANCE: 
@@ -1499,7 +1602,7 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t *test)
 	add_test_entry(tbl, &tbl_len, _("H0: Difference of means ="), test, 6);
 	gtk_entry_set_text(GTK_ENTRY(test->entry[6]), "0");
 	add_test_check(tbl, &tbl_len, _("Assume common population standard "
-		       "deviation"), test);
+		       "deviation"), test, TRUE);
 	break;
 
     case TWO_VARIANCES:

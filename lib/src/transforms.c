@@ -1019,6 +1019,10 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
+    if (!err && tmplist[0] == 0) {
+	err = E_DATA;
+    }
+
     free(x);
 
     if (!err) {
