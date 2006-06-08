@@ -184,6 +184,10 @@
 	  <flag>--verbose</flag>
 	  <effect>print regression results</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
+	</option>
       </options>
       <examples>
 	<example>adf 0 y</example>
@@ -1345,6 +1349,71 @@
     <gui-access>
       <menu-path>/Data/Add variables/first differences</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="discrete" section="Transformations" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--reverse</flag>
+	  <effect>mark variables as continuous</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Marks each variable in <repl>varlist</repl> as being discrete. By
+	default all variables are treated as continuous; marking a
+	variable as discrete affects the way the variable is handled in
+	frequency plots, and also allows you to select the variable for
+	the commands <cmdref targ="xtab"/> (cross-tabulation) 
+	and <cmdref targ="dummify"/>.
+      </para>
+      <para>
+	If the <lit>--reverse</lit> flag is given, the operation if reversed;
+	that is, the variables in <repl>varlist</repl> are marked as
+	being continuous.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="dummify" section="Transformations" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	For each variable in <repl>varlist</repl>, if it has previously
+	been marked as discrete, creates a set of dummy variables coding
+	for the distinct values of that variable.  Thus for example if a
+	discrete variable <lit>x</lit> has 5 distinct values, 5 dummy
+	variables will be added to the data set, with names
+	<lit>Dx_1</lit>, <lit>Dx_2</lit> and so on.  The first dummy
+	variable will have value 1 for observations where <lit>x</lit>
+	takes on its smallest value, 0 otherwise; the next dummy
+	will have value 1 when <lit>x</lit> takes on its second-smallest
+	value, and so on.  
+      </para>
+      <para>
+	This command can also be embedded in the context of a regression
+	specification.  For example, the following line specifies a model
+	where <lit>y</lit> is regressed on the set of dummy variables
+	coding for <lit>x</lit>.
+      </para>
+      <code>
+	ols y dummify(x)</code>
+    </description>
 
   </command>
 
@@ -3078,6 +3147,10 @@
       </arguments>
       <options>
         <option>
+	  <flag>--octave</flag>
+	  <effect>GNU octave data</effect>
+        </option>
+        <option>
 	  <flag>--box1</flag>
 	  <effect>BOX1 data</effect>
         </option>
@@ -3086,15 +3159,19 @@
 
     <description>
       <para>
-	Brings in data from a comma-separated values (CSV) format
-	file, such as can easily be written from a spreadsheet
-	program.  The file should have variable names on the first
-	line and a rectangular data matrix on the remaining lines.
-	Variables should be arranged <quote>by observation</quote>
-	(one column per variable; each row represents an observation).
-	See <guideref targ="datafiles"/> for details.
+	With no option flags specified, brings in data from a
+	comma-separated values (CSV) format file, such as can easily be
+	written from a spreadsheet program.  The file should have variable
+	names on the first line and a rectangular data matrix on the
+	remaining lines. Variables should be arranged <quote>by
+	  observation</quote> (one column per variable; each row
+	represents an observation). See <guideref targ="datafiles"/> for
+	details.
       </para>
-
+      <para>
+	With the <lit>--octave</lit> flag, reads a data file in 
+	the format of GNU octave.
+      </para>
       <para>
 	With the <lit>--box1</lit> flag, reads a data file in BOX1
 	format, which could at one time be obtained via the Data
@@ -3179,6 +3256,10 @@
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>print regression results</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
 	</option>
       </options>
       <examples>
@@ -3843,6 +3924,18 @@
     </description>
   </command>
 
+  <command name="matrix" section="Programming" context="cli">
+
+    <description>
+      <para>
+	The identifer <lit>matrix</lit> must precede all commands
+	that create, manipulate and print matrices.  Please see
+	<guideref targ="chap-matrices"/> for details.
+      </para>
+    </description>
+
+  </command>
+
   <command name="meantest" section="Tests"
     label="Difference of means">
 
@@ -4142,13 +4235,20 @@
         <argument>depvar</argument>
         <argument>indepvars</argument>
       </arguments>
+      <options>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
+        </option>
+	<option>
+	  <flag>--simple-print</flag>
+	  <effect>do not print auxiliary statistics</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
         </option>
+      </options>
     </usage>
 
     <description>
@@ -4221,6 +4321,10 @@
 	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
 	</option>
       </options>
     </usage>
@@ -4350,13 +4454,6 @@
 
   </command>
 
-  <command name="noecho" section="Obsolete" context="cli">
-    <description>
-      <para>Obsolete command.  See <cmdref targ="set"/>.
-      </para>
-    </description>
-  </command>
-
   <command name="nulldata" section="Dataset"
     label="Creating a blank dataset">
 
@@ -4405,6 +4502,10 @@
         <option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
+        </option>
+        <option>
+	  <flag>--simple-print</flag>
+	  <effect>do not print auxiliary statistics</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -5748,13 +5849,6 @@
 
   </command>
 
-  <command name="seed" section="Obsolete" context="cli">
-    <description>
-      <para>Obsolete command.  See <cmdref targ="set"/>.
-      </para>
-    </description>
-  </command>
-
   <command name="seed" section="Programming" context="gui"
     label="Random seed">
 
@@ -6038,10 +6132,10 @@
     label="Frequency and starting observation">
 
     <usage>
-      <arguments>
-        <argument>periodicity</argument>
-        <argument>startobs</argument>
-      </arguments>
+      <altforms>
+        <altform><repl>periodicity</repl> <repl>startobs</repl></altform>
+	<altform><repl>unitvar</repl> <repl>timevar</repl></altform>
+      </altforms>
       <options>
         <option>
 	  <flag>--cross-section</flag>
@@ -6059,12 +6153,17 @@
 	  <flag>--stacked-time-series</flag>
 	  <effect>interpret as panel data</effect>
         </option>
+        <option>
+	  <flag>--panel-vars</flag>
+	  <effect>use index variables (see below)</effect>
+        </option>
       </options>
       <examples>
         <example>setobs 4 1990:1 --time-series</example>
         <example>setobs 12 1978:03</example>
 	<example>setobs 1 1 --cross-section</example>
         <example>setobs 20 1:1 --stacked-time-series</example>
+	<example>setobs unit year --panel-vars</example>
       </examples>
     </usage>
 
@@ -6074,13 +6173,13 @@
 	a specified structure.  
       </para>
       <para>
-	The <repl>periodicity</repl>, which must be an integer,
-	represents frequency in the case of time-series data (1 =
-	annual; 4 = quarterly; 12 = monthly; 52 = weekly; 5, 6, or 7 =
-	daily; 24 = hourly).  In the case of panel data the
-	periodicity means the number of lines per data block: this
-	corresponds to the number of cross-sectional units in the case
-	of stacked cross-sections, or the number of time periods in
+	In the first form of the command the <repl>periodicity</repl>,
+	which must be an integer, represents frequency in the case of
+	time-series data (1 = annual; 4 = quarterly; 12 = monthly; 52 =
+	weekly; 5, 6, or 7 = daily; 24 = hourly).  In the case of panel
+	data the periodicity means the number of lines per data block:
+	this corresponds to the number of cross-sectional units in the
+	case of stacked cross-sections, or the number of time periods in
 	the case of stacked time series.  In the case of simple
 	cross-sectional data the periodicity should be set to 1.
       </para>
@@ -6095,11 +6194,18 @@
 	or YYYY/MM/DD (or simply as 1 for undated data).  
       </para>
       <para>
+	The second form of the command (which requires the
+	<lit>--panel-vars</lit> flag) may be used to impose a panel
+	interpretation when the data set contains variables that uniquely
+	identify the cross-sectional units and the time periods.  The data
+	set will be sorted as stacked time series, by ascending values of
+	the units variable, <repl>unitvar</repl>.
+      </para>
+      <para>
 	If no explicit option flag is given to indicate the structure
 	of the data the program will attempt to guess the structure
 	from the information given.
       </para>
-
     </description> 
 
     <gui-access>
@@ -7193,6 +7299,10 @@
 	<option>
 	  <flag>--robust</flag>
 	  <effect>robust standard errors</effect>
+        </option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
         </option>
       </options> 
     </usage>

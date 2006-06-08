@@ -534,6 +534,13 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
     } else {
 	pputc(prn, '\n');
     } 
+
+    if (dataset_is_panel(pdinfo)) {
+	pprintf(prn, "%s: %s\n", _("panel"),
+		(pdinfo->structure == STACKED_TIME_SERIES)?
+		_("stacked time series") :
+		_("stacked cross sections"));
+    }
 }
 
 /**

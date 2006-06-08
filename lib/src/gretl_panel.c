@@ -134,6 +134,37 @@ static int var_is_varying (const int *list, int v)
     return ret;
 }
 
+#if 0
+
+static double panel_dwstat (MODEL *pmod, const double **Z)
+{
+    double ut, u1;
+    double num = 0.0;
+    double den = 0.0;
+    int t, t1;
+
+    if (pmod->ess <= 0.0) {
+	return NADBL;
+    }
+
+    t1 = pmod->t1 + order;
+
+    den = pmod->ess;
+
+    for (t=t1; t<=pmod->t2; t++)  {
+        ut = pmod->uhat[t];
+        u1 = pmod->uhat[t-1];
+        if (na(ut) || na(u1)) {
+	    continue;
+	}
+        num += (ut - u1) * (ut - u1);
+    }
+
+    return num / den;
+}
+
+#endif
+
 static int hausman_allocate (panelmod_t *pan)
 {
     int nbeta = pan->vlist[0] - 2;
@@ -1990,47 +2021,6 @@ static void panel_lag (double **tmpZ, DATAINFO *tmpinfo,
     *VARLABEL(tmpinfo, v) = 0;
 }
 
-#if 0
-static double panel_dwstat (MODEL *pmod)
-{
-    double ut, u1;
-    double num = 0.0;
-    double den = 0.0;
-    int t, t1;
-
-    if (pmod->ess <= 0.0) {
-	return NADBL;
-    }
-
-    t1 = pmod->t1 + 1;
-
-    if (pmod->nwt) {
-	ut = pmod->uhat[t1 - 1];
-	if (!na(ut)) {
-	    den += ut * ut;
-	}
-    } else {
-	den = pmod->ess;
-    }
-
-    for (t=t1; t<=pmod->t2; t++)  {
-        ut = pmod->uhat[t];
-        u1 = pmod->uhat[t-1];
-        if (na(ut) || na(u1) ||
-	    (pmod->nwt && (Z[pmod->nwt][t] == 0.0 || 
-			   Z[pmod->nwt][t-1] == 0.0))) { 
-	    continue;
-	}
-        num += (ut - u1) * (ut - u1);
-	if (pmod->nwt) {
-	    den += ut * ut;
-	}
-    }
-
-    return num / den;
-}
-#endif
-
 /* - do some sanity checks
    - create a local copy of the required portion of the data set,
      skipping the obs that will be missing
@@ -2621,6 +2611,10 @@ int set_panel_structure_from_vars (const char *line,
     int nperiods = 0;
     int err;
 
+    if (!strncmp(line, "setobs", 6)) {
+	line += 7;
+    }
+
     err = uv_tv_from_line(line, pdinfo, &uv, &tv);
     if (err) {
 	return err;
@@ -2673,6 +2667,20 @@ int set_panel_structure_from_vars (const char *line,
 				pZ, pdinfo);
     }
 
+    if (!err) {
+	int pdp = nperiods;
+	int den = 10.0;
+
+	while ((pdp = pdp / 10)) {
+	    den *= 10;
+	}
+	pdinfo->structure = STACKED_TIME_SERIES;
+	pdinfo->pd = nperiods;
+	pdinfo->sd0 = 1.0 + 1.0 / den;
+	ntodate_full(pdinfo->stobs, 0, pdinfo); 
+	ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    }
+
  bailout:
 
     free(uid);
@@ -2685,27 +2693,23 @@ int set_panel_structure_from_vars (const char *line,
 
 int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 {
-    int v, panel;
-
-    v = varindex(pdinfo, "year");
+    int ret, v = varindex(pdinfo, "year");
 
     if (v == pdinfo->v) {
 	v = varindex(pdinfo, "Year");
     }
 
     if (v == pdinfo->v) {
-	panel = 0; /* can't guess */
+	ret = 0; /* can't guess */
+    } else if (floateq(Z[v][0], Z[v][1])) { /* "year" is same for first two obs */
+	pdinfo->structure = STACKED_CROSS_SECTION; 
+	ret = STACKED_CROSS_SECTION;
     } else {
-	if (floateq(Z[v][0], Z[v][1])) { /* "year" is same for first two obs */
-	    pdinfo->structure = STACKED_CROSS_SECTION; 
-	    panel = STACKED_CROSS_SECTION;
-	} else {
-	    pdinfo->structure = STACKED_TIME_SERIES; 
-	    panel = STACKED_TIME_SERIES;
-	}
+	pdinfo->structure = STACKED_TIME_SERIES; 
+	ret = STACKED_TIME_SERIES;
     }
 
-    return panel;
+    return ret;
 }
 
 /* 

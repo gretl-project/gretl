@@ -55,7 +55,7 @@ static command *command_new (void)
 }
 
 static void 
-process_option (xmlDocPtr doc, xmlNodePtr node, command *cmd, int i)
+process_option_flag (xmlDocPtr doc, xmlNodePtr node, command *cmd, int i)
 {
     xmlNodePtr cur;
 
@@ -83,7 +83,7 @@ process_option_list (xmlDocPtr doc, xmlNodePtr node, command *cmd)
 	    if (opts == NULL) return 1;
 	    cmd->opts = opts;
 	    cmd->nopts = nopts;
-	    process_option(doc, cur, cmd, nopts - 1);
+	    process_option_flag(doc, cur, cmd, nopts - 1);
 	}
 	cur = cur->next;
     }
@@ -333,6 +333,10 @@ static int check_commands (cmdlist *clist)
 
     /* NC is the sentinel value for the maximum gretl command index */
     for (i=1; i<NC; i++) {
+	if (HIDDEN_COMMAND(i)) {
+	    continue;
+	}
+
 	/* Get the string associated with each command index
 	   number, from libgretl */
 	cmdword = gretl_command_word(i);
