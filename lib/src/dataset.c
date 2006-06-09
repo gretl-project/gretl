@@ -260,8 +260,8 @@ int dataset_allocate_varnames (DATAINFO *pdinfo)
 {
     int i, j, v = pdinfo->v;
     int err = 0;
-    
-    pdinfo->varname = malloc(v * sizeof *pdinfo->varname);
+
+    pdinfo->varname = strings_array_new_with_length(v, VNAMELEN);
     if (pdinfo->varname == NULL) {
 	return E_ALLOC;
     }
@@ -273,19 +273,6 @@ int dataset_allocate_varnames (DATAINFO *pdinfo)
     }
 
     for (i=0; i<v; i++) {
-	pdinfo->varname[i] = malloc(VNAMELEN);
-	if (pdinfo->varname[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(pdinfo->varname[j]);
-	    }
-	    free(pdinfo->varname);
-	    pdinfo->varname = NULL;
-	    err = E_ALLOC;
-	    break;
-	} else {
-	    pdinfo->varname[i][0] = '\0';
-	}
-
 	pdinfo->varinfo[i] = malloc(sizeof **pdinfo->varinfo);
 	if (pdinfo->varinfo[i] == NULL) {
 	    for (j=0; j<i; j++) {

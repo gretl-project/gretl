@@ -677,6 +677,8 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return set_panel_structure_from_line(line, pZ, pdinfo);
     }
 
+    /* now we get down to business */
+
     if (sscanf(line, "%*s %d %10s", &pd, stobs) != 2) {
 	strcpy(gretl_errmsg, _("Failed to parse line as frequency, startobs"));
 	return 1;
