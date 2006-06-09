@@ -38,6 +38,10 @@ version 1.5.2, in progress
   variables)
 - Revamp test for differences of two means in the GUI hypothesis
   test calculator
+- Imposing panel structure on a data set: add the option of
+  defining the structure by reference to two index variables, one
+  for the unit and one for the period -- this is implemented in
+  the "setobs" command and the GUI data structure wizard  
 
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality

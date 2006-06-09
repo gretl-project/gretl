@@ -33,7 +33,11 @@ int panel_autocorr_test (MODEL *pmod, int order,
 			 double **Z, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
-int set_panel_structure_from_vars (const char *line, 
+int set_panel_structure_from_vars (int uv, int tv, 
+				   double ***pZ, 
+				   DATAINFO *pdinfo);
+
+int set_panel_structure_from_line (const char *line, 
 				   double ***pZ, 
 				   DATAINFO *pdinfo);
 

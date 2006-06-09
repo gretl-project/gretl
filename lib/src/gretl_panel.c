@@ -25,7 +25,7 @@
 #include "gretl_model.h"
 #include "gretl_panel.h"
 
-#define PDEBUG 0
+#define PDEBUG 1
 
 enum vcv_ops {
     VCV_INIT,
@@ -2430,26 +2430,33 @@ static int compare_obs (const void *a, const void *b)
     return ret;
 }
 
-static int dataset_sort_by (double **Z, int n, int v,
-			    double *tmp, int v1, int v2)
+static int dataset_sort_by (double **Z, int n, int nvars,
+			    int uv, int tv)
 {
+    double *tmp;
     int i, t;
     sorter s;
 
+    tmp = malloc(n * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
     s.points = malloc(n * sizeof *s.points);
     if (s.points == NULL) {
+	free(tmp);
 	return E_ALLOC;
     } 
 
-    s.sortvar1 = v1;
-    s.sortvar2 = v2;
+    s.sortvar1 = uv;
+    s.sortvar2 = tv;
     
     sorter_fill_points(&s, (const double **) Z, n);
 
     qsort((void *) s.points, (size_t) n, sizeof s.points[0], 
 	  compare_obs);
 
-    for (i=1; i<v; i++) {
+    for (i=1; i<nvars; i++) {
 	for (t=0; t<n; t++) {
 	    tmp[t] = Z[i][t];
 	}
@@ -2459,6 +2466,7 @@ static int dataset_sort_by (double **Z, int n, int v,
     }
 
     free(s.points);
+    free(tmp);
 
     return 0;
 }
@@ -2544,8 +2552,15 @@ static int maybe_pad_dataset (const double *uid, int uv, int nunits,
 		uobs[i] += 1;
 	    }
 	}
+#if PDEBUG
+	fprintf(stderr, "unit %d: found %d obs\n", i, uobs[i]);
+#endif
 	totmiss += nperiods - uobs[i];
     }
+
+#if PDEBUG
+    fprintf(stderr, "calculated %d total missing obs\n", totmiss);
+#endif
 
     if (totmiss > 0) {
 	err = dataset_add_observations(totmiss, pZ, pdinfo, OPT_NONE);
@@ -2574,7 +2589,7 @@ static int is_positive (const double *x, int n)
     return 1;
 }
 
-static int uv_tv_from_line (const char *line, DATAINFO *pdinfo,
+static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
 			    int *uv, int *tv)
 {
     char uvname[VNAMELEN];
@@ -2608,30 +2623,24 @@ static int uv_tv_from_line (const char *line, DATAINFO *pdinfo,
     return err;
 }
 
-int set_panel_structure_from_vars (const char *line, 
+int set_panel_structure_from_vars (int uv, int tv, 
 				   double ***pZ, 
 				   DATAINFO *pdinfo)
 {
-    int uv, tv;
     double *uid = NULL;
     double *tid = NULL;
     int n = pdinfo->n;
     int nunits = 0;
     int nperiods = 0;
-    int err;
+    int err = 0;
 
-    if (!strncmp(line, "setobs", 6)) {
-	line += 7;
-    }
+    /* FIXME sub-sampled dataset?? */
 
-    err = uv_tv_from_line(line, pdinfo, &uv, &tv);
-    if (err) {
-	return err;
-    }
-
-    if (!is_positive((*pZ)[uv], n) || !is_positive((*pZ)[tv], n)) {
-	return E_DATA;
-    }
+#if PDEBUG
+    fprintf(stderr, "set_panel_structure_from_vars:\n "
+	    "using var %d ('%s') for unit, var %d ('%s') for time\n",
+	    uv, pdinfo->varname[uv], tv, pdinfo->varname[tv]);
+#endif
 
     uid = copyvec((*pZ)[uv], n);
     tid = copyvec((*pZ)[tv], n);
@@ -2648,27 +2657,25 @@ int set_panel_structure_from_vars (const char *line,
     nperiods = count_distinct_values(tid, pdinfo->n);
 
     if (nunits == 1 || nperiods == 1 || 
-	nunits == n || nperiods == n) {
+	nunits == n || nperiods == n ||
+	n > nunits * nperiods) {
 	fprintf(stderr, "Dataset does not have a panel structure\n");
 	err = E_DATA;
 	goto bailout;
     }
 
-#if 0
-    printf("Found %d units, %d periods\n", nunits, nperiods);
-    printf("Units: min %g, max %g\n", uid[0], uid[n - 1]);
-    printf("Periods: min %g, max %g\n", tid[0], tid[n - 1]);
+#if PDEBUG
+    fprintf(stderr, "Found %d units, %d periods\n", nunits, nperiods);
+    fprintf(stderr, "Units: min %g, max %g\n", uid[0], uid[n - 1]);
+    fprintf(stderr, "Periods: min %g, max %g\n", tid[0], tid[n - 1]);
 #endif
 
-    /* sort full dataset by unit and period: note that
-       uid is used as workspace here, and gets unsorted
-    */
-    err = dataset_sort_by(*pZ, pdinfo->n, pdinfo->v, uid, uv, tv);
+    /* sort full dataset by unit and period */
+    err = dataset_sort_by(*pZ, pdinfo->n, pdinfo->v, uv, tv);
 
     if (!err) {
 	/* in case of unbalanced panel, pad out with missing
 	   values */
-	qsort(uid, n, sizeof *uid, gretl_compare_doubles);
 	rearrange_id_array(uid, nunits, n);
 	rearrange_id_array(tid, nperiods, n);
 	err = maybe_pad_dataset(uid, uv, nunits, 
@@ -2696,6 +2703,30 @@ int set_panel_structure_from_vars (const char *line,
     free(tid);
 
     return err;
+}
+
+int set_panel_structure_from_line (const char *line, 
+				   double ***pZ, 
+				   DATAINFO *pdinfo)
+{
+    int n = pdinfo->n; /* ? */
+    int uv, tv;
+    int err = 0;
+
+    if (!strncmp(line, "setobs", 6)) {
+	line += 7;
+    }
+
+    err = uv_tv_from_line(line, pdinfo, &uv, &tv);
+    if (err) {
+	return err;
+    }
+
+    if (!is_positive((*pZ)[uv], n) || !is_positive((*pZ)[tv], n)) {
+	return E_DATA;
+    }
+
+    return set_panel_structure_from_vars(uv, tv, pZ, pdinfo);
 }
 
 /* utility functions */

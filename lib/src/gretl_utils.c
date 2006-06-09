@@ -373,7 +373,8 @@ int gretl_compare_ints (const void *a, const void *b)
  * @x: sorted array of doubles.
  * @n: number of elements in array.
  *
- * Returns: the number of distinct values in @x.
+ * Returns: the number of distinct values in array @x,
+ * provided that @x is already sorted.
  */
 
 int count_distinct_values (const double *x, int n)
@@ -392,8 +393,8 @@ int count_distinct_values (const double *x, int n)
 /**
  * rearrange_id_array:
  * @x: sorted array of doubles.
- * @n: number of elements in array.
  * @m: number of distinct values in array.
+ * @n: number of elements in array.
  *
  * Rearranges the sorted array @x such that the first @m 
  * elements contain the @m distinct values in sorted order.
@@ -406,12 +407,8 @@ int rearrange_id_array (double *x, int m, int n)
 {
     int i, k = 1;
 
-    if (m > n) {
+    if (m >= n || m == 1) {
 	return 1;
-    }
-
-    if (m == n || m == 1) {
-	return 0;
     }
 
     for (i=1; i<n && k<m; i++) {
@@ -671,7 +668,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (opt & OPT_P) {
-	return set_panel_structure_from_vars(line, pZ, pdinfo);
+	return set_panel_structure_from_line(line, pZ, pdinfo);
     }
 
     if (sscanf(line, "%*s %d %10s", &pd, stobs) != 2) {

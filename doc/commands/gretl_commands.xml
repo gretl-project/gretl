@@ -4904,6 +4904,44 @@
 
   </command>
 
+  <command name="panel-mode" section="Dataset" context="gui"
+    label="Panel data organization">
+
+    <description>
+      <para>
+	This dialog offers three options with regard to defining a data
+	set as a panel.  The first two options require that the data set
+	is already organized in a panel format (although this may not yet
+	be recognized by gretl).  The third option requires that the data
+	set contains variables that represent the panel structure.
+      </para>
+      <para>
+	Stacked time series: Let there be N cross-sectional
+	units in the data set, and let T = the number of time-series
+	observations per unit.  By selecting this option you are
+	telling gretl that the data set is currently composed of N
+	consecutive blocks of T time-series observations, one for each
+	cross-sectional unit.  The next step will be to specify the value
+	of N.
+      </para>
+      <para>
+	Stacked cross sections: You are telling gretl that the data set is
+	currently composed of T consecutive blocks of N cross-sectional
+	observations, one for each time period.  The next step, again,
+	will be to specify the value of N.
+      </para>
+      <para>
+	Use index variables: You are saying that the data set is currently
+	organized any old way (it doesn't matter how), but that it
+	contains two variables that index the cross-sectional units and
+	the time periods respectively.  The next step will be to select
+	those two variables.  Note that these index variables must be
+	strictly positive.
+      </para>
+    </description>
+
+  </command>
+
   <command name="pca" section="Statistics"
     label="Principal Components Analysis">
 

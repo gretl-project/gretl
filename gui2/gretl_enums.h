@@ -84,6 +84,7 @@ enum extra_cmds {
     VAROMIT,
     DEFINE_LIST,
     PANEL_WLS,
+    PANEL_MODE,
     GUI_CMD_MAX
 };
 

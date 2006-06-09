@@ -27,6 +27,7 @@
 #include "menustate.h"
 #include "dlgutils.h"
 #include "database.h"
+#include "gretl_panel.h"
 
 static int all_done;
 
@@ -2877,6 +2878,7 @@ enum {
     DW_STARTING_OBS,
     DW_PANEL_MODE,
     DW_PANEL_SIZE,
+    DW_PANEL_VARS,
     DW_CONFIRM,
     DW_DONE
 };
@@ -2891,6 +2893,7 @@ static const char *wizcode_string (int code)
 	N_("Starting observation:"),
 	N_("Panel data organization"),
 	N_("Number of cross-sectional units:"),
+	N_("Panel index variables"),
 	N_("Confirm dataset structure:")
     };
 
@@ -2997,6 +3000,13 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	}
     }
 
+    /* special: reorganizing dataset based on panel index vars */
+    if (dwinfo->structure == PANEL_UNKNOWN) {
+	err = set_panel_structure_from_vars(dwinfo->t1, dwinfo->t2,
+					    &Z, datainfo);
+	goto finalize;
+    }
+
     /* check for nothing to be done */
     if (dwinfo->structure == datainfo->structure &&
 	dwinfo->pd == datainfo->pd &&
@@ -3047,6 +3057,8 @@ datawiz_make_changes (DATAINFO *dwinfo)
 
     err = set_obs(setline, NULL, datainfo, opt);
 
+ finalize:
+
     if (err) {
 	errbox(get_gretl_errmsg());
     } else {
@@ -3060,7 +3072,7 @@ datawiz_make_changes (DATAINFO *dwinfo)
 }
 
 #define TS_INFO_MAX 8
-#define PANEL_INFO_MAX 2
+#define PANEL_INFO_MAX 3
 
 struct freq_info {
     int pd;
@@ -3085,7 +3097,8 @@ struct panel_info {
 
 struct panel_info pan_info[] = {
     { STACKED_TIME_SERIES,   N_("Stacked time series") },
-    { STACKED_CROSS_SECTION, N_("Stacked cross sections") }
+    { STACKED_CROSS_SECTION, N_("Stacked cross sections") },
+    { PANEL_UNKNOWN,         N_("Use index variables") }
 };
 
 static int radio_default (DATAINFO *dwinfo, int code)
@@ -3262,6 +3275,10 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	ntodate_full(stobs, dwinfo->t1, dwinfo);
 	ntodate_full(endobs, lastobs, dwinfo);
 	sprintf(ctxt, "%s, %s to %s", tslabel, stobs, endobs);
+    } else if (dwinfo->structure == PANEL_UNKNOWN) {
+	sprintf(ctxt, _("panel data (%s)\n"
+			"%d cross-sectional units observed over %d periods"),
+		_("stacked time series"), dwinfo->n, dwinfo->pd);
     } else if (dataset_is_panel(dwinfo)) {
 	int nunits = dwinfo->t1;
 	int nperiods = datainfo->n / nunits;
@@ -3438,7 +3455,203 @@ static void dw_set_t1 (GtkWidget *w, DATAINFO *dwinfo)
 #if DWDEBUG
     fprintf(stderr, "dw_set_t1: set 'dwinfo->t1' = %d\n", dwinfo->t1);
 #endif
+}
 
+static int process_panel_vars (DATAINFO *dwinfo)
+{
+    int n = datainfo->n;
+    double *uid = NULL;
+    double *tid = NULL;
+    int uv, tv;
+    int nunits = 0;
+    int nperiods = 0;
+    int err = 0;
+
+    /* FIXME sub-sampled dataset? */
+
+    uv = dwinfo->t1;
+    tv = dwinfo->t2;
+
+    if (uv == tv) {
+	errbox(_("The unit and time index variables must be distinct"));
+	return E_DATA;
+    }
+
+    uid = copyvec(Z[uv], n);
+    tid = copyvec(Z[tv], n);
+
+    if (uid == NULL || tid == NULL) {
+	errbox(_("Out of memory!"));
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	qsort(uid, n, sizeof *uid, gretl_compare_doubles);
+	nunits = count_distinct_values(uid, n);
+
+	qsort(tid, n, sizeof *tid, gretl_compare_doubles);
+	nperiods = count_distinct_values(tid, n);
+
+	if (nunits == 1 || nperiods == 1 || 
+	    nunits == n || nperiods == n ||
+	    n > nunits * nperiods) {
+	    errbox(_("The selected index variables do not represent "
+		     "a panel structure"));
+	    err = E_DATA;
+	} else {
+	    dwinfo->n = nunits; 
+	    dwinfo->pd = nperiods;
+	}
+    }
+
+    free(uid);
+    free(tid);
+
+    return err;
+}
+
+/* try to assemble a list of at least two potential panel index
+   variables: return NULL if this can't be done */
+
+static GList *panelvars_list (void)
+{
+    GList *vlist = NULL;
+    int i, t, ok;
+
+    for (i=1; i<datainfo->v; i++) {
+	if (var_is_scalar(datainfo, i)) {
+	    continue;
+	}
+	ok = 1;
+	for (t=datainfo->t1; t<=datainfo->t2; t++) {
+	    if (na(Z[i][t]) || Z[i][t] <= 0.0) {
+		ok = 0;
+		break;
+	    }
+	}
+	if (ok) {
+	   vlist = g_list_append(vlist, datainfo->varname[i]); 
+	}
+    }
+
+    if (vlist != NULL && g_list_length(vlist) < 2) {
+	g_list_free(vlist);
+	vlist = NULL;
+    }
+
+    return vlist;
+}
+
+static gboolean update_panel_var (GtkEditable *entry, DATAINFO *dwinfo)
+{
+    const gchar *vname = gtk_entry_get_text(GTK_ENTRY(entry));
+    int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(entry), "index"));
+    int v = varindex(datainfo, vname);
+
+    /* note: borrowing t1, t2 here to record index var IDs */
+
+    if (i == 0) {
+	dwinfo->t1 = v;
+    } else {
+	dwinfo->t2 = v;
+    }
+
+    return FALSE;
+}
+
+static 
+void panelvar_candidates (GList *vlist, char *uname, char *tname)
+{
+    GList *mylist = vlist;
+    const char *vname;
+    char vtest[VNAMELEN];
+
+    *uname = '\0';
+    *tname = '\0';
+
+    while (mylist != NULL) {
+	vname = (const char *) mylist->data;
+	strcpy(vtest, vname);
+	lower(vtest);
+	if (!strcmp(vtest, "time") || 
+	    !strcmp(vtest, "year") ||
+	    !strcmp(vtest, "period")) {
+	    strcpy(tname, vname);
+	} else if (!strcmp(vtest, "unit") ||
+		   !strcmp(vtest, "group")) {
+	    strcpy(uname, vname);
+	}
+	mylist = g_list_next(mylist);
+    }
+}
+
+static void 
+maybe_set_panelvar (GtkEntry *entry, GList *vlist,
+		    char *uname, char *tname, int i)
+{
+    if (i == 0) {
+	if (*uname != '\0') {
+	    gtk_entry_set_text(entry, uname);
+	} else {
+	    strcpy(uname, (char *) vlist->data);
+	}
+    } else {
+	if (*tname != '\0') {
+	    gtk_entry_set_text(entry, tname);
+	} else {	    
+	    GList *mylist = vlist;
+
+	    while (mylist != NULL) {
+		if (strcmp(uname, (char *) mylist->data)) {
+		    gtk_entry_set_text(entry, mylist->data);
+		    break;
+		}
+		mylist = g_list_next(mylist);
+	    }
+	}
+    }
+}
+
+static GtkWidget *dwiz_combo (GList *vlist, DATAINFO *dwinfo)
+{
+    const char *strs[] = {
+	N_("Unit or group index variable:"),
+	N_("Time index variable:")
+    };
+    GtkWidget *w;
+    GtkWidget *table;
+    GtkWidget *combo;
+    char uname[VNAMELEN];
+    char tname[VNAMELEN];
+    int i;
+
+    panelvar_candidates(vlist, uname, tname);
+
+    table = gtk_table_new(2, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(table), 5);
+    gtk_table_set_row_spacings(GTK_TABLE(table), 5);
+
+    for (i=0; i<2; i++) {
+	w = gtk_label_new(_(strs[i]));
+	gtk_table_attach_defaults(GTK_TABLE(table), w, 0, 1, i, i+1);
+
+	combo = gtk_combo_new();
+	gtk_table_attach_defaults(GTK_TABLE(table), combo, 1, 2, i, i+1);
+
+#ifndef OLD_GTK
+	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), 15);
+#endif
+	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
+	gtk_combo_set_popdown_strings(GTK_COMBO(combo), vlist); 
+	g_object_set_data(G_OBJECT(GTK_COMBO(combo)->entry), "index",
+			  GINT_TO_POINTER(i));
+	g_signal_connect(G_OBJECT(GTK_COMBO(combo)->entry), "destroy",
+			 G_CALLBACK(update_panel_var), dwinfo);
+	maybe_set_panelvar(GTK_ENTRY(GTK_COMBO(combo)->entry), vlist,
+			   uname, tname, i);
+    }
+
+    return table;
 }
 
 static GtkWidget *dwiz_spinner (GtkWidget *hbox, DATAINFO *dwinfo, int step)
@@ -3511,6 +3724,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     GtkWidget *tempwid;
     GtkWidget *button = NULL;
     GSList *group = NULL;
+    GList *vlist = NULL;
     int nopts = 0;
     int setval = 0;
     int i, deflt, ret = DW_FORWARD;
@@ -3524,6 +3738,14 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     if (step == DW_CONFIRM && dataset_is_panel(dwinfo) &&
 	test_for_unbalanced(dwinfo)) {
 	return DW_BACK;
+    }
+
+    if (step == DW_PANEL_VARS) {
+	vlist = panelvars_list();
+	if (vlist == NULL) {
+	    errbox(_("The data set contains no suitable index variables"));
+	    return DW_BACK;
+	}
     }
 
     dialog = gretl_dialog_new(_("Data structure wizard"), NULL,
@@ -3629,6 +3851,18 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	gtk_widget_show(hbox);
     }
 
+    /* panel: selectors for unit and time index variables? */
+    if (step == DW_PANEL_VARS) {
+	GtkWidget *hbox = gtk_hbox_new(FALSE, 5);
+	GtkWidget *table = dwiz_combo(vlist, dwinfo);
+
+	gtk_box_pack_start(GTK_BOX(hbox), table, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, 
+			   FALSE, FALSE, 5);
+	gtk_widget_show_all(hbox);
+	g_list_free(vlist);
+    }	
+
     /* confirming? */
     if (step == DW_CONFIRM) {
 	char ctxt[256];
@@ -3669,6 +3903,12 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
     /* "Cancel" button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    if (step == DW_PANEL_MODE) {
+	context_help_button(GTK_DIALOG(dialog)->action_area, PANEL_MODE);
+    }
+
+    /* FIXME: Help button for some steps? */
 
     main_menus_enable(FALSE);
     gtk_widget_show(dialog);
@@ -3720,6 +3960,8 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 		    } else {
 			step = DW_PANEL_MODE;
 		    }
+		} else if (dwinfo->structure == PANEL_UNKNOWN) {
+		    step = DW_PANEL_MODE;
 		} else {
 		    dwinfo->pd = 1;
 		    step = DW_CONFIRM;
@@ -3739,7 +3981,17 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_WEEK_DAYS || step == DW_WEEKLY_SELECT) {
 		step = DW_STARTING_OBS;
 	    } else if (step == DW_PANEL_MODE) {
-		step = DW_PANEL_SIZE;
+		if (dwinfo->structure == PANEL_UNKNOWN) {
+		    step = DW_PANEL_VARS;
+		} else {
+		    step = DW_PANEL_SIZE;
+		}
+	    } else if (step == DW_PANEL_VARS) {
+		if (process_panel_vars(dwinfo)) {
+		    step = DW_PANEL_VARS; /* or just quit? */
+		} else {
+		    step = DW_CONFIRM;
+		}
 	    } else if (step == DW_STARTING_OBS || step == DW_PANEL_SIZE) {
 		step = DW_CONFIRM;
 	    } 

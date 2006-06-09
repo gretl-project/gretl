@@ -11,6 +11,7 @@ THISDIR=`pwd`
 
 # add gnuplot distribution
 function process_gnuplot {
+    echo "adding content of $GNUPLOT_ZIPFILE" >> ../FILELIST
     unzip -X $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
 	| awk '{ print $NF }' >> MANIFEST
 }
@@ -21,7 +22,8 @@ function add_file {
     if [ `basename $1` != "CVS" ] && [ ! -d $1 ] ; then
 	cp -p $1 windist/$2
 	echo $2
-	echo $2 >> windist/MANIFEST
+        echo "$1 -> $2" >> FILELIST
+        echo $2 >> windist/MANIFEST
     fi
 }
 
@@ -30,6 +32,7 @@ VERSION=$(grep GRETL_VERSION[^_] $TOPDIR/lib/src/version.h | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
 
 rm -f windist/MANIFEST
+rm -f FILELIST
 rm -rf windist/gretl windist/gnuplot
 
 # make directory structure
@@ -80,7 +83,9 @@ done
 
 # gtk runtime files
 for f in `cat ${HOME_WIN32}/gtk-runtime.files` ; do
+    srcfile="${CROSSDIR}/$f"
     instfile=`echo $f | sed s+^bin/++`
+    echo "$srcfile -> gretl/$instfile" >> FILELIST
     echo "gretl/$instfile" >> windist/MANIFEST
     cp -ap ${CROSSDIR}/$f windist/gretl/$instfile
 done
