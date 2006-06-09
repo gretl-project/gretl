@@ -1461,10 +1461,6 @@ static int exec_line (char *line, PRN *prn)
 	break;
 #endif
 
-    case PANELDAT:	
-	err = set_panel_structure(cmd.opt, datainfo, prn);
-	break;
-
     case PERGM:
 	err = periodogram(cmd.list[1], &Z, datainfo, cmd.opt | OPT_N, prn);
 	if (err) {

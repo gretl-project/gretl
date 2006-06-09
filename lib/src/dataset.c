@@ -196,29 +196,6 @@ void dataset_obs_info_default (DATAINFO *pdinfo)
     pdinfo->decpoint = '.';
 }
 
-static char **allocate_obslen_strings (int n)
-{
-    char **S;
-    int j, t;
-
-    S = malloc(n * sizeof *S);
-    if (S == NULL) return NULL;
-
-    for (t=0; t<n; t++) {
-	S[t] = malloc(OBSLEN);
-	if (S[t] == NULL) {
-	    for (j=0; j<t; j++) {
-		free(S[j]);
-	    }
-	    free(S);
-	    return NULL;
-	}
-	S[t][0] = '\0';
-    }
-
-    return S;
-}
-
 /**
  * dataset_allocate_obs_markers:
  * @pdinfo: dataset information struct
@@ -238,7 +215,7 @@ int dataset_allocate_obs_markers (DATAINFO *pdinfo)
 
     if (pdinfo->S == NULL) {
 	/* not already allocated */
-	S = allocate_obslen_strings(pdinfo->n);
+	S = strings_array_new_with_length(pdinfo->n, OBSLEN);
 	if (S == NULL) {
 	    err = E_ALLOC;
 	} else {
@@ -439,39 +416,21 @@ create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
 int allocate_Z (double ***pZ, const DATAINFO *pdinfo)
 {
     double **Z;
-    int i, j, t;
+    int i, t;
     int err = 0;
 
     if (*pZ != NULL) {
 	free(*pZ);
     }
 
-    Z = malloc(pdinfo->v * sizeof *Z);
+    Z = doubles_array_new(pdinfo->v, pdinfo->n);
 
     if (Z == NULL) {
 	err = E_ALLOC;
     } else {
-	for (i=0; i<pdinfo->v && !err; i++) {
-	    Z[i] = malloc(pdinfo->n * sizeof **Z);
-	    if (Z[i] == NULL) {
-		for (j=0; j<i; j++) {
-		    free(Z[j]);
-		}
-		free(Z);
-		Z = NULL;
-		err = E_ALLOC;
-	    }
-	}
-    }
-
-    if (!err) {
 	for (i=0; i<pdinfo->v; i++) {
 	    for (t=0; t<pdinfo->n; t++) {
-		if (i == 0) {
-		    Z[i][t] = 1.0; 
-		} else {
-		    Z[i][t] = NADBL;
-		}
+		Z[i][t] = (i == 0)? 1.0 : NADBL;
 	    }
 	}
     }

@@ -97,7 +97,9 @@ char *space_to_score (char *s);
 
 char *safecpy (char *targ, const char *src, int n);
 
-char **create_strings_array (int nstrs);
+char **strings_array_new (int nstrs);
+
+char **strings_array_new_with_length (int nstrs, int len);
 
 void free_strings_array (char **strs, int nstrs);
 

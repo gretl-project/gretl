@@ -55,28 +55,24 @@ struct panelmod_t_ {
 };
 
 struct {
-    int ts;
     int n;
     int T;
     int offset;
 } panidx;
 
-static void 
-panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
-{
-    panidx.ts = (pdinfo->structure == STACKED_TIME_SERIES);
-    panidx.n = nunits;
-    panidx.T = T;
-    panidx.offset = pdinfo->t1;
-}
-
 static int 
 varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 		   panelmod_t *pan);
 
-#define panel_index(i,t) ((panidx.ts)? (i * panidx.T + t + panidx.offset) : \
-                                       (t * panidx.n + i + panidx.offset))
+#define panel_index(i,t) (i * panidx.T + t + panidx.offset)
 
+static void 
+panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
+{
+    panidx.n = nunits;
+    panidx.T = T;
+    panidx.offset = pdinfo->t1;
+}
 
 static void 
 panelmod_init (panelmod_t *pan, MODEL *pmod, gretlopt opt)
@@ -135,7 +131,7 @@ static int var_is_varying (const int *list, int v)
 }
 
 /* Durbin-Watson statistic for fixed effects model on a 
-   balanced panel, stacked time series */
+   balanced panel */
 
 static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
 {
@@ -143,10 +139,6 @@ static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
     double ut, u1;
     double num = 0.0;
     int i, t, s, n;
-
-    if (pdinfo->structure != STACKED_TIME_SERIES) {
-	return;
-    }
 
     if (pmod->ess <= 0.0) {
 	return;
@@ -1088,11 +1080,7 @@ static int random_effects (panelmod_t *pan,
 
 	    for (t=0; t<pan->T; t++) {
 		bigt = panel_index(i, t);
-		if (pdinfo->structure == STACKED_TIME_SERIES) {
-		    rt = u * pan->T + t;
-		} else {
-		    rt = t * pan->effn + u;
-		}
+		rt = u * pan->T + t;
 		if (relist[j] == 0) {
 		    /* the intercept */
 		    reZ[0][rt] -= theta_i;
@@ -1293,13 +1281,8 @@ static int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
 	return -1;
     }
 
-    if (pdinfo->structure == STACKED_TIME_SERIES) {
-	nunits = nmaj;
-	T = nmin;
-    } else {
-	nunits = nmin;
-	T = nmaj;
-    }
+    nunits = nmaj;
+    T = nmin;
 
     for (i=0; i<nunits; i++) {
 	unit_obs[i] = 0;
@@ -1357,20 +1340,15 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod,
 
     panelmod_init(pan, pmod, opt);
 
-    if (get_panel_structure(pdinfo, &pan->nunits, &pan->T)) {
-	err = E_DATA;
-    } 
+    pan->nunits = pdinfo->n / pdinfo->pd;
+    pan->T = pdinfo->pd;
 
-    if (!err) {
-	panel_index_init(pdinfo, pan->nunits, pan->T);
-    }
+    panel_index_init(pdinfo, pan->nunits, pan->T);
     
-    if (!err) {
-	pan->unit_obs = malloc(pan->nunits * sizeof *pan->unit_obs);
-	if (pan->unit_obs == NULL) {
-	    err = E_ALLOC;
-	} 
-    }
+    pan->unit_obs = malloc(pan->nunits * sizeof *pan->unit_obs);
+    if (pan->unit_obs == NULL) {
+	err = E_ALLOC;
+    } 
 
     if (!err) {
 	pan->effn = n_included_units(pmod, pdinfo, pan->unit_obs);
@@ -1814,10 +1792,8 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&mdl);
 
-    if (get_panel_structure(pdinfo, &nunits, &T)) {
-	mdl.errcode = E_DATA;
-	return mdl;
-    }
+    nunits = pdinfo->n / pdinfo->pd;
+    T = pdinfo->pd;
 
     panel_index_init(pdinfo, nunits, T);
 
@@ -2055,7 +2031,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     if (order > pdinfo->pd - 1) return E_DF;
     if (pmod->ncoeff + order >= sn) return E_DF;
 
-    if (pdinfo->structure != STACKED_TIME_SERIES || !balanced_panel(pdinfo)) { 
+    if (!balanced_panel(pdinfo)) { 
         return E_DATA;
     }
 
@@ -2178,83 +2154,72 @@ int panel_autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
+/**
+ * switch_panel_orientation:
+ * @Z: data array.
+ * @pdinfo: dataset information struct.
+ * 
+ * Reorganizes the data array @Z and rewrites the dataset information
+ * @pdinfo, transforming from stacked cross sections to stacked
+ * time series or vice versa.  If the transformation is from
+ * stacked time series to stacked cross section, the dataset will
+ * no longer be acceptable as a panel for gretl's purposes; it
+ * may be useful for export purposes, though.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
 int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 {
     int sts = (pdinfo->structure == STACKED_TIME_SERIES);
-    double **tmpZ;
-    int i, j, k, t, nvec;
+    double *tmp;
+    char **markers = NULL;
+    double pdx;
     int pd = pdinfo->pd;
     int nblocks = pdinfo->n / pd;
-    double pdx;
-    char **markers = NULL;
+    int i, j, t;
 
-    tmpZ = malloc((pdinfo->v - 1) * sizeof *tmpZ);
-    if (tmpZ == NULL) {
+    if (pdinfo->structure != STACKED_TIME_SERIES &&
+	pdinfo->structure != STACKED_CROSS_SECTION) {
+	return E_DATA;
+    }
+
+    tmp = malloc(pdinfo->n * sizeof *tmp);
+    if (tmp == NULL) {
 	return E_ALLOC;
     }
 
-    /* allocate temporary data matrix */
-    j = 0;
+    /* copy the data series across in transformed order */
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    tmpZ[j] = malloc(pdinfo->n * sizeof **tmpZ);
-	    if (tmpZ[j] == NULL) {
-		for (i=0; i<j; i++) {
-		    free(tmpZ[i]);
-		}
-		free(tmpZ);
-		return E_ALLOC;
+	if (var_is_scalar(pdinfo, i)) {
+	    continue;
+	}
+	for (t=0; t<pdinfo->n; t++) {
+	    tmp[t] = Z[i][t];
+	}
+	for (j=0; j<pd; j++) {
+	    for (t=0; t<nblocks; t++) {
+		Z[i][j * nblocks + t] = tmp[j + pd * t];
 	    }
-	    j++;
-	} 
+	}
     }
-    nvec = j;
 
-    /* allocate marker space if relevant */
+    /* rearrange observations markers if relevant */
     if (pdinfo->S != NULL) {
-	markers = malloc(pdinfo->n * sizeof *markers);
+	markers = strings_array_new_with_length(pdinfo->n, OBSLEN);
 	if (markers != NULL) {
 	    for (t=0; t<pdinfo->n; t++) {
-		markers[t] = malloc(OBSLEN);
-		if (markers[t] == NULL) {
-		    free(markers);
-		    markers = NULL;
-		    break;
-		} else {
-		    strcpy(markers[t], pdinfo->S[t]);
+		strcpy(markers[t], pdinfo->S[t]);
+	    }
+	    for (j=0; j<pd; j++) {
+		for (t=0; t<nblocks; t++) {
+		    strcpy(pdinfo->S[j * nblocks + t], markers[j + pd * t]);
 		}
 	    }
-	}
-    }
-
-    /* copy the data (vectors) across */
-    j = 0;
-    for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i)) {
-	    for (t=0; t<pdinfo->n; t++) {
-		tmpZ[j][t] = Z[i][t];
-	    }
-	    j++;
-	} 
-    }
-
-    /* copy the data back in transformed order; also do markers if
-       present */
-    for (k=0; k<pd; k++) {
-	j = 0;
-	for (i=1; i<pdinfo->v; i++) {
-	    if (var_is_scalar(pdinfo, i)) {
-		continue;
-	    }
-	    for (t=0; t<nblocks; t++) {
-		Z[i][k * nblocks + t] = tmpZ[j][k + pd * t];
-	    }
-	    j++;
-	}
-	if (markers != NULL) {
-	    for (t=0; t<nblocks; t++) {
-		strcpy(pdinfo->S[k * nblocks + t], markers[k + pd * t]);
-	    }
+	    free_strings_array(markers, pdinfo->n);
+	} else {
+	    /* should we flag an error? */
+	    dataset_destroy_obs_markers(pdinfo); 
 	}
     }
 
@@ -2272,19 +2237,7 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
     ntodate(pdinfo->stobs, 0, pdinfo);
     ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 
-    /* clean up */
-
-    for (i=0; i<nvec; i++) {
-	free(tmpZ[i]);
-    }
-    free(tmpZ);
-
-    if (markers != NULL) {
-	for (t=0; t<pdinfo->n; t++) {
-	    free(markers[t]);
-	}
-	free(markers);
-    }
+    free(tmp);
 
     return 0;
 }
@@ -2430,10 +2383,12 @@ static int compare_obs (const void *a, const void *b)
     return ret;
 }
 
-static int dataset_sort_by (double **Z, int n, int nvars,
+static int dataset_sort_by (double **Z, DATAINFO *pdinfo,
 			    int uv, int tv)
 {
-    double *tmp;
+    int n = pdinfo->n;
+    char **S = NULL;
+    double *tmp = NULL;
     int i, t;
     sorter s;
 
@@ -2448,6 +2403,15 @@ static int dataset_sort_by (double **Z, int n, int nvars,
 	return E_ALLOC;
     } 
 
+    if (pdinfo->S != NULL) {
+	S = strings_array_new_with_length(n, OBSLEN);
+	if (S == NULL) {
+	    free(tmp);
+	    free(s.points);
+	    return E_ALLOC;
+	}
+    }
+
     s.sortvar1 = uv;
     s.sortvar2 = tv;
     
@@ -2456,7 +2420,7 @@ static int dataset_sort_by (double **Z, int n, int nvars,
     qsort((void *) s.points, (size_t) n, sizeof s.points[0], 
 	  compare_obs);
 
-    for (i=1; i<nvars; i++) {
+    for (i=1; i<pdinfo->v; i++) {
 	for (t=0; t<n; t++) {
 	    tmp[t] = Z[i][t];
 	}
@@ -2464,6 +2428,16 @@ static int dataset_sort_by (double **Z, int n, int nvars,
 	    Z[i][t] = tmp[s.points[t].obsnum];
 	}	
     }
+
+    if (S != NULL) {
+	for (t=0; t<n; t++) {
+	    strcpy(S[t], pdinfo->S[t]);
+	}
+	for (t=0; t<n; t++) {
+	    strcpy(pdinfo->S[t], S[s.points[t].obsnum]);
+	}
+	free_strings_array(S, n);
+    }	
 
     free(s.points);
     free(tmp);
@@ -2671,7 +2645,7 @@ int set_panel_structure_from_vars (int uv, int tv,
 #endif
 
     /* sort full dataset by unit and period */
-    err = dataset_sort_by(*pZ, pdinfo->n, pdinfo->v, uv, tv);
+    err = dataset_sort_by(*pZ, pdinfo, uv, tv);
 
     if (!err) {
 	/* in case of unbalanced panel, pad out with missing
@@ -2750,61 +2724,6 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
     }
 
     return ret;
-}
-
-/* 
-   nunits = number of cross-sectional units
-   T = number pf time-periods per cross-sectional unit
-*/
-
-int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T)
-{
-    int err = 0;
-
-    if (pdinfo->structure == STACKED_TIME_SERIES) {
-        *nunits = pdinfo->n / pdinfo->pd;
-        *T = pdinfo->pd;
-    } else if (pdinfo->structure == STACKED_CROSS_SECTION) {
-	*nunits = pdinfo->pd;
-	*T = pdinfo->n / pdinfo->pd;
-    } else {
-	err = 1;
-    }
-
-    return err;
-}
-
-int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
-{
-    int nunits, T;
-    int old_ts = pdinfo->structure;
-
-    if (pdinfo->pd == 1) {
-	pputs(prn, _("The current data frequency, 1, is not "
-		"compatible with panel data.\nPlease see the 'setobs' "
-		"command.\n"));
-	return 1;
-    }
-
-    if (opt == OPT_C) {
-	pdinfo->structure = STACKED_CROSS_SECTION;
-    } else {
-	pdinfo->structure = STACKED_TIME_SERIES;
-    }
-
-    if (get_panel_structure(pdinfo, &nunits, &T)) {
-	pputs(prn, _("Failed to set panel structure\n"));
-	pdinfo->structure = old_ts;
-	return 1;
-    } else {
-	pprintf(prn, _("Panel structure set to %s\n"),
-		(pdinfo->structure == STACKED_CROSS_SECTION)? 
-		_("stacked cross sections") : _("stacked time series"));
-	pprintf(prn, _("(%d units observed in each of %d periods)\n"),
-		nunits, T);
-    }
-
-    return 0;
 }
 
 int balanced_panel (const DATAINFO *pdinfo)

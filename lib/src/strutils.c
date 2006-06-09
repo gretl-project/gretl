@@ -909,7 +909,7 @@ char *safecpy (char *targ, const char *src, int n)
 }
 
 /**
- * create_strings_array:
+ * strings_array_new:
  * @nstrs: number of strings in array.
  *
  * Allocates storage for @nstrs strings and initalizes all 
@@ -918,7 +918,7 @@ char *safecpy (char *targ, const char *src, int n)
  * Returns: the allocated array, or %NULL on failure.
  */
 
-char **create_strings_array (int nstrs)
+char **strings_array_new (int nstrs)
 {
     char **s;
     int i;
@@ -935,6 +935,45 @@ char **create_strings_array (int nstrs)
     }
 
     return s;
+}
+
+/**
+ * strings_array_new_with_length:
+ * @nstrs: number of strings in array.
+ * @len: number of bytes per string.
+ *
+ * Allocates storage for @nstrs strings, each of them 
+ * @len bytes long.  The first byte of each string is
+ * initialized to 0.
+ * 
+ * Returns: the allocated array, or %NULL on failure.
+ */
+
+char **strings_array_new_with_length (int nstrs, int len)
+{
+    char **S;
+    int j, t;
+
+    if (nstrs <= 0) {
+	return NULL;
+    }
+
+    S = malloc(nstrs * sizeof *S);
+    if (S == NULL) return NULL;
+
+    for (t=0; t<nstrs; t++) {
+	S[t] = malloc(len);
+	if (S[t] == NULL) {
+	    for (j=0; j<t; j++) {
+		free(S[j]);
+	    }
+	    free(S);
+	    return NULL;
+	}
+	S[t][0] = '\0';
+    }
+
+    return S;
 }
 
 /**

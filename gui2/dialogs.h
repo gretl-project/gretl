@@ -97,8 +97,6 @@ void compute_default_ts_info (DATAINFO *dwinfo, int newdata);
 
 void data_structure_wizard (gpointer p, guint u, GtkWidget *w);
 
-void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
-
 void lmax_dialog (double *lmax, double ymax);
 
 #endif /* DIALOGS_H */

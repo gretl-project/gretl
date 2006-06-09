@@ -1666,7 +1666,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	    Fline(pmod, prn);
 	}
 
-	if (pmod->ci == PANEL && pdinfo->structure == STACKED_TIME_SERIES) {
+	if (pmod->ci == PANEL) {
 	    dwline(pmod, prn);
 	} 
 

@@ -519,9 +519,6 @@ void set_sample_label (DATAINFO *pdinfo)
     ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
 			   dataset_is_panel(pdinfo));
 
-    flip(mdata->ifac, "/Sample/Restructure panel...", 
-	 dataset_is_panel(pdinfo));
-
     flip(mdata->ifac, "/Sample/Transpose data...", 
 	 !dataset_is_panel(pdinfo));
 

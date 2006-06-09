@@ -41,9 +41,7 @@ int set_panel_structure_from_line (const char *line,
 				   double ***pZ, 
 				   DATAINFO *pdinfo);
 
-int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T);
-
-int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn); 
+int switch_panel_orientation (double **Z, DATAINFO *pdinfo);
 
 int balanced_panel (const DATAINFO *pdinfo);
 

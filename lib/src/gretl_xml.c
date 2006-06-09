@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_xml.h"
+#include "gretl_panel.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1949,6 +1950,13 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
     if (doc != NULL) {
 	xmlFreeDoc(doc);
 	xmlCleanupParser();
+    }
+
+    /* pre-process stacked cross-sectional panels: put into canonical
+       stacked time series form
+    */
+    if (!err && tmpdinfo->structure == STACKED_CROSS_SECTION) {
+	err = switch_panel_orientation(tmpZ, tmpdinfo);
     }
 
     if (err) {

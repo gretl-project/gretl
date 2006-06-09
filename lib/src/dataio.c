@@ -1454,10 +1454,6 @@ static void dataset_type_string (char *str, const DATAINFO *pdinfo)
 	strcpy(str, _("time series"));
     } else if (dataset_is_panel(pdinfo)) {
         strcpy(str, _("panel"));
-	strcat(str, " (");
-	strcat(str, (pdinfo->structure == STACKED_TIME_SERIES)? 
-	       _("Stacked time series") : _("Stacked cross sections"));
-	strcat(str, ")");       
     } else {
         strcpy(str, _("undated"));
     }

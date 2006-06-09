@@ -97,6 +97,8 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
 double *copyvec (const double *src, int n);
 
+double **doubles_array_new (int m, int n);
+
 int ijton (int i, int j, int nrows);
 
 int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);

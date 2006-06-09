@@ -6613,10 +6613,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 #endif
 
-    case PANELDAT:
-	err = set_panel_structure(cmd.opt, datainfo, prn);
-	break;
-
     case PERGM:
 	err = periodogram(cmd.list[1], &Z, datainfo, cmd.opt | OPT_N, outprn);
 	if (err) pprintf(prn, _("Failed to generate periodogram\n"));

@@ -105,7 +105,7 @@ static int finfo_init (function_info *finfo)
 {
     finfo->n_public = finfo->publist[0];
 
-    finfo->help = create_strings_array(finfo->n_public);
+    finfo->help = strings_array_new(finfo->n_public);
     if (finfo->help == NULL) {
 	errbox(_("Out of memory!"));
 	finfo->canceled = 1;

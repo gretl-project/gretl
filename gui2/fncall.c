@@ -68,14 +68,14 @@ static int cinfo_args_init (call_info *cinfo)
     cinfo->rets = NULL;
 
     if (cinfo->n_params > 0) {
-	cinfo->args = create_strings_array(cinfo->n_params);
+	cinfo->args = strings_array_new(cinfo->n_params);
 	if (cinfo->args == NULL) {
 	    err = E_ALLOC;
 	}
     }
 
     if (!err && cinfo->n_returns > 0) {
-	cinfo->rets = create_strings_array(cinfo->n_returns);
+	cinfo->rets = strings_array_new(cinfo->n_returns);
 	if (cinfo->rets == NULL) {
 	    err = E_ALLOC;
 	}

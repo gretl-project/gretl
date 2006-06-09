@@ -1059,7 +1059,7 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
 	return NULL;
     }
 
-    vcv->names = create_strings_array(nc);
+    vcv->names = strings_array_new(nc);
     if (vcv->names == NULL) {
 	free(vcv);
 	return NULL;

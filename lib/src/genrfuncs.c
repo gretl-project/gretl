@@ -368,30 +368,6 @@ static int panel_x_offset (const DATAINFO *pdinfo, int *bad)
     return offset;
 }
 
-static void 
-make_x_panel_dummy (double *x, const DATAINFO *pdinfo, int i)
-{
-    int t, offset, bad = 0;
-    int dmin, dmax;
-
-    offset = panel_x_offset(pdinfo, &bad);
-
-    dmin = (i - 1) * pdinfo->pd;
-    dmax = i * pdinfo->pd - offset;
-
-    if (i > 1) dmin -= offset;
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (bad) {
-	    x[t] = NADBL;
-	} else if (t >= dmin && t < dmax) {
-	    x[t] = 1.0;
-	} else {
-	    x[t] = 0.0;
-	}
-    }
-}
-
 static int n_new_dummies (const DATAINFO *pdinfo,
 			  int nunits, int nperiods)
 {
@@ -470,18 +446,9 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     char vname[VNAMELEN];
     char vlabel[MAXLABEL];
     int vi, t, yy, pp, mm;
-    int ndums, nnew = 0;
+    int ndums = pdinfo->pd, nnew = 0;
     int di, di0 = pdinfo->v;
     double xx, dx;
-
-    if (pdinfo->structure == STACKED_CROSS_SECTION) {
-	ndums = pdinfo->n / pdinfo->pd;
-	if (pdinfo->n % pdinfo->pd) {
-	    ndums++;
-	}
-    } else {
-	ndums = pdinfo->pd;
-    }
 
     if (ndums == 1 || ndums > 99999) {
 	strcpy(gretl_errmsg, _("This command won't work with the current periodicity"));
@@ -526,19 +493,15 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
 	strcpy(pdinfo->varname[di], vname);
 	strcpy(VARLABEL(pdinfo, di), vlabel);
 
-	if (pdinfo->structure == STACKED_CROSS_SECTION) {
-	    make_x_panel_dummy((*pZ)[di], pdinfo, vi);
-	} else {
-	    for (t=0; t<pdinfo->n; t++) {
-		xx = date(t, pdinfo->pd, pdinfo->sd0);
-		if (dataset_is_daily(pdinfo)) { /* FIXME weekly? */
-		    xx += .1;
-		}
-		yy = (int) xx;
-		pp = (int) (mm * (xx - yy) + 0.5);
-		dx = (pp == vi)? 1.0 : 0.0;
-		(*pZ)[di][t] = dx;
+	for (t=0; t<pdinfo->n; t++) {
+	    xx = date(t, pdinfo->pd, pdinfo->sd0);
+	    if (dataset_is_daily(pdinfo)) { /* FIXME weekly? */
+		xx += .1;
 	    }
+	    yy = (int) xx;
+	    pp = (int) (mm * (xx - yy) + 0.5);
+	    dx = (pp == vi)? 1.0 : 0.0;
+	    (*pZ)[di][t] = dx;
 	}
     }
 
@@ -565,41 +528,30 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 {
     char vname[16];
     int vi, t, yy, pp, mm;
-    int xsect, orig_v = pdinfo->v;
-    int ndum, nnew, n_blockdum = 0, n_freqdum = 0;
+    int orig_v = pdinfo->v;
+    int ndum, nnew;
+    int n_unitdum = 0;
+    int n_timedum = 0;
     int newvnum, offset, bad = 0;
     double xx;
 
-    xsect = (pdinfo->structure == STACKED_CROSS_SECTION);
+    n_unitdum = pdinfo->n / pdinfo->pd;
+    if (pdinfo->n % pdinfo->pd) {
+	n_unitdum++;
+    }
+    if (n_unitdum == 1) {
+	return E_PDWRONG;
+    }
 
-    /* in case xsect, block dummies are per time-period,
-       frequency dummies are for units;
-       in case of stacked time series, block dummies are
-       per cross-sectional unit, frequency ones are for periods
-    */
-
-    if (both || xsect) {
-	n_freqdum = pdinfo->pd;
-	if (n_freqdum == 1) {
+    if (both) {
+	n_timedum = pdinfo->pd;
+	if (n_timedum == 1) {
 	    return E_PDWRONG;
 	}
     }
 
-    if (both || !xsect) {
-	n_blockdum = pdinfo->n / pdinfo->pd;
-	if (pdinfo->n % pdinfo->pd) {
-	    n_blockdum++;
-	}
-	if (n_blockdum == 1) {
-	    return E_PDWRONG;
-	}
-    }
-
-    ndum = n_freqdum + n_blockdum;
-
-    nnew = n_new_dummies(pdinfo, 
-			 (xsect)? n_freqdum : n_blockdum,
-			 (xsect)? n_blockdum : n_freqdum);
+    ndum = n_timedum + n_unitdum;
+    nnew = n_new_dummies(pdinfo, n_unitdum, n_timedum);
 
     if (dataset_add_series(nnew, pZ, pdinfo)) {
 	return E_ALLOC;
@@ -613,15 +565,12 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 
     newvnum = orig_v;
 
-    /* first generate the frequency-based dummies */
-    for (vi=1; vi<=n_freqdum; vi++) {
+    /* first generate the time-based dummies */
+
+    for (vi=1; vi<=n_timedum; vi++) {
 	int dnum;
 
-	if (xsect) {
-	    sprintf(vname, "du_%d", vi);
-	} else {
-	    sprintf(vname, "dt_%d", vi);
-	}
+	sprintf(vname, "dt_%d", vi);
 
 	dnum = varindex(pdinfo, vname);
 	if (dnum >= orig_v) {
@@ -631,7 +580,7 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 	strcpy(pdinfo->varname[dnum], vname);
 	sprintf(VARLABEL(pdinfo, dnum), 
 		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
-		(xsect)? _("unit"): _("period"), vi);
+		_("period"), vi);
 
 	for (t=0; t<pdinfo->n; t++) {
 	    xx = date(t, pdinfo->pd, pdinfo->sd0);
@@ -643,19 +592,16 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 
     offset = panel_x_offset(pdinfo, &bad);
 
-    /* and then the block-based ones */
-    for (vi=1; vi<=n_blockdum; vi++) {
+    /* and then the unit-based ones */
+
+    for (vi=1; vi<=n_unitdum; vi++) {
 	int dmin = (vi-1) * pdinfo->pd;
 	int dmax = vi * pdinfo->pd - offset;
 	int dnum;
 
 	if (vi > 1) dmin -= offset;
 
-	if (xsect) {
-	    sprintf(vname, "dt_%d", vi);
-	} else {
-	    sprintf(vname, "du_%d", vi);
-	}
+	sprintf(vname, "du_%d", vi);
 
 	dnum = varindex(pdinfo, vname);
 	if (dnum >= orig_v) {
@@ -665,7 +611,7 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 	strcpy(pdinfo->varname[dnum], vname);
 	sprintf(VARLABEL(pdinfo, dnum), 
 		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
-		(xsect)? _("period"): _("unit"), vi);
+		_("unit"), vi);
 
 	for (t=0; t<pdinfo->n; t++) {
 	    if (bad) {
@@ -729,8 +675,7 @@ int genrunit (double ***pZ, DATAINFO *pdinfo)
     int xt = 0;
     int i, t;
 
-    if (pdinfo->structure != STACKED_TIME_SERIES &&
-	pdinfo->structure != STACKED_CROSS_SECTION) {
+    if (pdinfo->structure != STACKED_TIME_SERIES) {
 	strcpy(gretl_errmsg, "'genr unit' can be used only with "
 	       "panel data");
 	return 1;
@@ -745,22 +690,12 @@ int genrunit (double ***pZ, DATAINFO *pdinfo)
     strcpy(pdinfo->varname[i], "unit");
     strcpy(VARLABEL(pdinfo, i), _("cross-sectional unit index"));
 
-    if (pdinfo->structure == STACKED_CROSS_SECTION) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t % pdinfo->pd == 0) {
-		xt = 1;
-	    }
-	    (*pZ)[i][t] = (double) xt++;
+    for (t=0; t<pdinfo->n; t++) {
+	if (t % pdinfo->pd == 0) {
+	    xt++;
 	}
-    } else {
-	/* stacked time series */
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t % pdinfo->pd == 0) {
-		xt++;
-	    }
-	    (*pZ)[i][t] = (double) xt;
-	}
-    }    
+	(*pZ)[i][t] = (double) xt;
+    }
 
     return 0;
 }
@@ -796,21 +731,11 @@ make_panel_time_var (double *x, const DATAINFO *pdinfo)
 {
     int t, xt = 0;
 
-    if (pdinfo->structure == STACKED_TIME_SERIES) {
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t % pdinfo->pd == 0) {
-		xt = 1;
-	    }
-	    x[t] = (double) xt++;
+    for (t=0; t<pdinfo->n; t++) {
+	if (t % pdinfo->pd == 0) {
+	    xt = 1;
 	}
-    } else {
-	/* stacked cross-sections */
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t % pdinfo->pd == 0) {
-		xt++;
-	    }
-	    x[t] = (double) xt;
-	}
+	x[t] = (double) xt++;
     }
 }
 
@@ -850,9 +775,7 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
 	strcpy(VARLABEL(pdinfo, i), _("data index variable"));
     }
     
-    if (tm && 
-	(pdinfo->structure == STACKED_TIME_SERIES ||
-	 pdinfo->structure == STACKED_CROSS_SECTION)) {
+    if (tm && pdinfo->structure == STACKED_TIME_SERIES) {
 	make_panel_time_var((*pZ)[i], pdinfo);
     } else {
 	for (t=0; t<pdinfo->n; t++) {

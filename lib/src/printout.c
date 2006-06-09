@@ -536,10 +536,7 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
     } 
 
     if (dataset_is_panel(pdinfo)) {
-	pprintf(prn, "%s: %s\n", _("panel"),
-		(pdinfo->structure == STACKED_TIME_SERIES)?
-		_("stacked time series") :
-		_("stacked cross sections"));
+	pprintf(prn, "%s\n", _("panel"));
     }
 }
 
@@ -2266,7 +2263,7 @@ static int real_do_printf (const char *line, double ***pZ,
     /* play safe with sizes here */
     xvals = malloc(argc * sizeof *xvals);
     str = malloc(strlen(line) + 1);
-    svals = create_strings_array(argc);
+    svals = strings_array_new(argc);
 
     if (xvals == NULL || svals == NULL || str == NULL) {
 	err = E_ALLOC;

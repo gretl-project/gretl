@@ -472,7 +472,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/_Add case markers..."), NULL, open_data, OPEN_MARKERS, NULL, GNULL },
     { N_("/Sample/Remove case _markers"), NULL, do_remove_markers, 0, NULL, GNULL },
     { "/Sample/sep5", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Sample/Restructure panel..."), NULL, panel_restructure_dialog, 0, NULL, GNULL },
     { N_("/Sample/Transpose data..."), NULL, gui_transpose_data, 0, NULL, GNULL },
 
     /* Variable menu */

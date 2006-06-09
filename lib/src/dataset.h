@@ -163,8 +163,7 @@ typedef enum {
  * Attempt to determine whether a data set contains panel
  * data (1) or not (0).
  */
-#define dataset_is_panel(p) ((p)->structure == STACKED_TIME_SERIES || \
-                             (p)->structure == STACKED_CROSS_SECTION)
+#define dataset_is_panel(p) ((p)->structure == STACKED_TIME_SERIES)
 
 /**
  * var_is_discrete:

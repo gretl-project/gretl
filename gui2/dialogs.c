@@ -3908,8 +3908,6 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	context_help_button(GTK_DIALOG(dialog)->action_area, PANEL_MODE);
     }
 
-    /* FIXME: Help button for some steps? */
-
     main_menus_enable(FALSE);
     gtk_widget_show(dialog);
 
@@ -4032,42 +4030,6 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
     }
 
     free(dwinfo);
-}
-
-void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
-{
-    int sts = (datainfo->structure == STACKED_TIME_SERIES);
-    int resp;
-    gchar *msg;
-
-    msg = g_strdup_printf(_("Do you want to restructure the current panel data set\n"
-			    "as %s?"), (sts)? _("stacked cross sections") : 
-			  _("stacked time series"));
-
-    resp = yes_no_dialog(_("gretl: panel structure"), msg, 0);
-    g_free(msg);
-
-    if (resp == GRETL_YES) {
-	void *handle;
-	int (*switch_panel_orientation) (double **, DATAINFO *);
-
-	switch_panel_orientation = gui_get_plugin_function("switch_panel_orientation",
-							   &handle);
-	
-	if (switch_panel_orientation != NULL) {
-	    if (switch_panel_orientation(Z, datainfo)) {
-		errbox(_("Failed to change panel structure"));
-	    } else {
-		msg = g_strdup_printf(_("Panel structure changed to %s"), 
-				      (sts)? _("stacked cross sections") : 
-				      _("stacked time series"));
-		infobox(msg);
-		g_free(msg);
-		mark_dataset_as_modified();
-	    }
-	    close_plugin(handle);
-	}
-    }
 }
 
 struct lmax_opt {

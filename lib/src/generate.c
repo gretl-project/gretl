@@ -1214,13 +1214,7 @@ static double get_lag_at_obs (int v, int tmp, int lag,
 	Z = *genr->pZ;
     }
 
-    /* stacked X-section needs rather special handling */
-    if (genr->pdinfo->structure == STACKED_CROSS_SECTION) {
-	lt = t - lag * genr->pdinfo->pd;
-	if (lt >= 0 && lt < genr->pdinfo->n) {
-	    x = Z[v][lt];
-	}
-    } else if (dated_daily_data(genr->pdinfo)) {
+    if (dated_daily_data(genr->pdinfo)) {
 	lt = t - lag;
 	if (lt >= 0 && lt < genr->pdinfo->n) {
 	    while (lt >= 0 && na(Z[v][lt])) {
@@ -4409,11 +4403,7 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
 	    xx = mvec[t];
 
 	    /* get "earlier" value */
-	    if (pdinfo->structure == STACKED_CROSS_SECTION) {
-		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
-	    } else {
-		yy = mvec[t - t0];
-	    }
+	    yy = mvec[t - t0];
 
 	    if (na(xx) || na(yy)) {
 		x[t] = NADBL;

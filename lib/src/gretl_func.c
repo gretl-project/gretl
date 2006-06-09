@@ -2161,7 +2161,7 @@ get_separated_fields (const char *line, int *nfields, int maxlen,
 	    }
 	}
 	if (!*err) {
-	    fields = create_strings_array(nf);
+	    fields = strings_array_new(nf);
 	    if (fields == NULL) {
 		*err = E_ALLOC;
 	    }

@@ -659,8 +659,14 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     char stobs[OBSLEN];
     int structure = STRUCTURE_UNKNOWN;
     int pd, dated = 0;
+    int err = 0;
 
     *gretl_errmsg = '\0';
+
+    if (opt & OPT_R) {
+	/* restructure panel: "hidden" option */
+	return switch_panel_orientation(*pZ, pdinfo);
+    }    
 
     if (!strcmp(line, "setobs")) {
 	/* we'll just print current obs info */
@@ -774,7 +780,14 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     ntodate_full(pdinfo->stobs, 0, pdinfo); 
     ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 
-    return 0;
+    /* pre-process stacked cross-sectional panels: put into canonical
+       stacked time series form
+    */
+    if (pdinfo->structure == STACKED_CROSS_SECTION) {
+	err = switch_panel_orientation(*pZ, pdinfo);
+    }	
+
+    return err;
 }
 
 /**
@@ -928,6 +941,43 @@ double *copyvec (const double *src, int n)
     }
 
     return targ;
+}
+
+/**
+ * doubles_array_new:
+ * @m: number of sub-arrays.
+ * @n: length of each sub-array.
+ *
+ * Allocates a 2-dimensional array of doubles, that is,
+ * @m arrays each containing @n elements.
+ * 
+ * Returns: the allocated array, or %NULL on failure.
+ */
+
+double **doubles_array_new (int m, int n)
+{
+    double **X;
+    int i, j;
+
+    X = malloc(m * sizeof *X);
+
+    if (X == NULL) {
+	return X;
+    }
+
+    for (i=0; i<m; i++) {
+	X[i] = malloc(n * sizeof **X);
+	if (X[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(X[j]);
+	    }
+	    free(X);
+	    X = NULL;
+	    break;
+	}
+    }
+
+    return X;
 }
 
 int re_estimate (char *model_spec, MODEL *tmpmod, 

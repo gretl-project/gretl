@@ -119,8 +119,7 @@ struct _selector {
 
 #define dataset_lags_ok(d) ((d)->structure == TIME_SERIES || \
 			    (d)->structure == SPECIAL_TIME_SERIES || \
-                            (d)->structure == STACKED_TIME_SERIES || \
-                            (d)->structure == STACKED_CROSS_SECTION)
+                            (d)->structure == STACKED_TIME_SERIES)
 
 #define select_lags_upper(c) (c == VAR || c == VECM || c == VLAGSEL || c == TSLS)
 #define select_lags_lower(c) (MODEL_CODE(c)) 

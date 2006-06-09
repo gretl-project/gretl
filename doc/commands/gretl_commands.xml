@@ -2266,8 +2266,7 @@
 	<li>
 	  <para>
 	    <cmd>genr paneldum</cmd> creates a set of special dummy variables
-	    for use with a panel data set &mdash; see
-	    <cmdref targ="paneldat"/>.
+	    for use with a panel data set.
 	  </para>
 	</li>
       </ilist>
@@ -2847,9 +2846,9 @@
     <description>
       <para>
 	This test is available only after estimating a pooled OLS model
-	(see also <cmd>paneldat</cmd> and <cmd>setobs</cmd>).  It tests
-	the simple pooled model against the principal alternatives, the
-	fixed effects and random effects models.</para>
+	(see also <cmd>setobs</cmd>).  It tests the simple pooled model
+	against the principal alternatives, the fixed effects and random
+	effects models.</para>
 
       <para>
 	The fixed effects model adds a dummy variable for all but one
@@ -4868,39 +4867,6 @@
     <gui-access>
       <menu-path>/Model/Panel</menu-path>
     </gui-access>
-
-  </command>
-
-
-  <command name="paneldat" section="Dataset" context="cli"
-    label="Panel data structure">
-
-    <usage>
-      <options>
-        <option>
-	  <flag>--cross-section</flag>
-	  <effect>stacked cross sections</effect>
-        </option>
-        <option>
-	  <flag>--time-series</flag>
-	  <effect>stacked time series</effect>
-        </option>
-      </options>
-    </usage>
-
-    <description>
-      <para>
-	Request that the current data set be interpreted as a panel
-	(pooled cross section and time series). By default, or with the
-	<lit>--time-series</lit> flag, the data set is taken to be in the
-	form of stacked time series (successive blocks of data contain
-	time series for each cross-sectional unit).  With the
-	<lit>--cross-section</lit> flag, the data set is read as stacked
-	cross-sections (successive blocks contain cross sections for each
-	time period).  See also
-	<cmdref targ="setobs"/>.
-      </para>
-    </description>
 
   </command>
 

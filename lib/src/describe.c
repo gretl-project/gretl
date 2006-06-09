@@ -2977,7 +2977,7 @@ VMatrix *corrlist (int *list, const double **Z, const DATAINFO *pdinfo)
     corrmat->dim = lo = list[0];  
     mm = (lo * (lo + 1)) / 2;
 
-    corrmat->names = create_strings_array(lo);
+    corrmat->names = strings_array_new(lo);
     if (corrmat->names == NULL) {
 	free(corrmat);
 	return NULL;

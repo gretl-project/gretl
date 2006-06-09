@@ -677,7 +677,7 @@ static void system_estimator_list (GtkWidget *vbox, gpointer data)
     gchar **strs;
     int i;
 
-    strs = create_strings_array(SYS_MAX);
+    strs = strings_array_new(SYS_MAX);
 
     for (i=SYS_SUR; i<SYS_MAX; i++) {
 	strs[i] = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
