@@ -1358,8 +1358,6 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod,
     return err;
 }
 
-#define ALLOW_UNBAL 1
-
 int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn)
 {
@@ -1409,21 +1407,12 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 #endif
 
     /* can we do the Hausman test or not? */
-#ifdef ALLOW_UNBAL
     if (xdf > 0) {
 	err = hausman_allocate(&pan);
 	if (err) {
 	    goto bailout;
 	}
     } 
-#else
-    if (!unbal && xdf > 0) {
-	err = hausman_allocate(&pan);
-	if (err) {
-	    goto bailout;
-	}
-    } 
-#endif
 
     if (!unbal) {
 	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
@@ -1436,14 +1425,6 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (err) {
 	goto bailout;
     }
-
-#ifndef ALLOW_UNBAL
-    if (unbal) {
-	pprintf(prn, "Omitting random effects model since "
-		"panel is unbalanced\n");
-	goto bailout;
-    }
-#endif
 
     breusch_pagan_LM(&pan, pdinfo, prn);
 
