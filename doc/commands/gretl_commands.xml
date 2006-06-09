@@ -6101,7 +6101,7 @@
 
       <para>* Add or edit the "display name" for the variable.  This
 	string (maximum 19 characters) is shown in place of the
-	variable name when the variable is displayed in a graph.  This
+	variable name when the variable is displayed in a graph.  Thus
 	for instance you can associate a more comprehensible string
 	such as "T-bill rate" with a cryptically named variable such
 	as "tb3".</para>
