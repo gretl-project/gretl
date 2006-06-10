@@ -654,13 +654,33 @@ static gboolean opt_v_callback (GtkWidget *w, dialog_t *dlg)
     return FALSE;
 }
 
-static void verbosity_switch (GtkWidget *vbox, dialog_t *dlg)
+static gboolean opt_r_callback (GtkWidget *w, dialog_t *dlg)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	dlg->opt |= OPT_R;
+    } else {
+	dlg->opt &= ~OPT_R;
+    }
+
+    return FALSE;
+}
+
+static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
+				  gretlopt opt)
 {
     GtkWidget *b, *hbox;
 
-    b = gtk_check_button_new_with_label(_("Show details of iterations"));
-    g_signal_connect(G_OBJECT(b), "toggled", 
-		     G_CALLBACK(opt_v_callback), dlg);
+    if (opt == OPT_V) {
+	b = gtk_check_button_new_with_label(_("Show details of iterations"));
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(opt_v_callback), dlg);
+    } else if (opt == OPT_R) {
+	b = gtk_check_button_new_with_label(_("Robust standard errors"));
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(opt_r_callback), dlg);
+    } else {
+	return;
+    }
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), b, TRUE, TRUE, 5);
@@ -810,7 +830,11 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     } else if (cmdcode == SYSTEM) {
 	system_estimator_list(top_vbox, d);
     } else if (cmdcode == NLS || cmdcode == MLE) {
-	verbosity_switch(top_vbox, d);
+	dialog_option_switch(top_vbox, d, OPT_V);
+    }
+    
+    if (cmdcode == NLS) {
+	dialog_option_switch(top_vbox, d, OPT_R);
     }
 
     if (varclick == VARCLICK_INSERT_ID) { 

@@ -2710,7 +2710,7 @@ static void build_selector_switches (selector *sr)
 {
     GtkWidget *hbox, *tmp;
 
-    if (sr->code == OLS || sr->code == WLS ||  
+    if (sr->code == OLS || sr->code == WLS || 
 	sr->code == GARCH || sr->code == TSLS || sr->code == VAR || 
 	sr->code == LOGIT || sr->code == PROBIT) {
 	GtkWidget *b1;

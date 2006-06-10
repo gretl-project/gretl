@@ -1092,6 +1092,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     DATAINFO *gdinfo;
     int *glist;
     MODEL gnr;
+    gretlopt lsqopt;
     int i, j, t;
     int T = spec->nobs;
     int iters = spec->iters;
@@ -1177,7 +1178,13 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     print_GNR_dataset(glist, gZ, gdinfo);
 #endif
 
-    gnr = lsq(glist, &gZ, gdinfo, OLS, OPT_A);
+    lsqopt = OPT_A;
+    if (spec->opt & OPT_R) {
+	/* robust variance matrix, if wanted */
+	lsqopt |= OPT_R;
+    }
+
+    gnr = lsq(glist, &gZ, gdinfo, OLS, lsqopt);
 
 #if NLS_DEBUG
     gnr.name = gretl_strdup("GNR for NLS");
@@ -1962,7 +1969,7 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
 
 /**
  * nls_parse_line:
- * @ci: either %NLS or %MLE (doco not finished on this)
+ * @ci: either %NLS or %MLE (docs not finished on this)
  * @line: specification of regression function or derivative
  *        of this function with respect to a parameter.
  * @Z: data array.
@@ -2214,7 +2221,8 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
  * nls:
  * @pZ: pointer to data array.
  * @pdinfo: information on dataset.
- * @opt: may include %OPT_V for verbose output.
+ * @opt: may include %OPT_V for verbose output, %OPT_R
+ * for robust covariance matrix.
  * @prn: printing struct.
  *
  * Computes estimates of a model via nonlinear least squares.

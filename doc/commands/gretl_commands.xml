@@ -4318,6 +4318,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -4392,7 +4396,8 @@
 	Optionally, the user may specify the derivatives of the
 	regression function with respect to each of the parameters; if
 	analytical derivatives are not supplied, a numerical
-	approximation to the Jacobian is computed.</para>
+	approximation to the Jacobian is computed.
+      </para>
 
       <para>
 	It is easiest to show what is required by example.  The
@@ -4401,9 +4406,9 @@
 	<book>Econometric Analysis</book> (Chapter 11 of the 4th
 	edition, or Chapter 9 of the 5th).  The numbers to the left of
 	the lines are for reference and are not part of the commands.
-	Note that the <lit>--vcv</lit> option, for printing the
-	covariance matrix of the parameter estimates, attaches to the
-	final command, <lit>end nls</lit>.
+	Note that any option flags, such as <lit>--vcv</lit> for
+	printing the covariance matrix of the parameter estimates,
+	should be appended to the final command, <lit>end nls</lit>.
       </para>
       <code>
 	1   open greene11_3.gdt

@@ -42,6 +42,7 @@ version 1.5.2, in progress
   defining the structure by reference to two index variables, one
   for the unit and one for the period -- this is implemented in
   the "setobs" command and the GUI data structure wizard  
+- Add --robust option to nls command (nonlinear least squares)  
 
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality

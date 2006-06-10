@@ -1388,7 +1388,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     fprintf(stderr, "parsing '%s'\n", line);
 #endif
 
-    /* look for ramu practice files */
+    /* legacy: look for Ramanathan practice files */
     if (line[0] == '(' && line[1] == '*') {
 	cmd->ignore = 1;
 	gotdata = trydatafile(line, cmd);

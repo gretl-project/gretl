@@ -135,6 +135,8 @@ struct gretl_option gretl_opts[] = {
     { MPOLS,    OPT_O, "vcv" },
     { MPOLS,    OPT_Q, "quiet" },
     { MPOLS,    OPT_S, "simple-print" },
+    { NLS,      OPT_O, "vcv" },
+    { NLS,      OPT_R, "robust" },
     { NLS,      OPT_V, "verbose" },
     { OLS,      OPT_N, "no-df-corr" },
     { OLS,      OPT_O, "vcv" }, 
@@ -486,7 +488,7 @@ gretlopt get_gretl_options (char *line, int *err)
 	return oflags;
     }
 
-    /* to enable reading of trad. esl input files */
+    /* to enable reading of trad. ESL input files */
     if (line[n-2] == ';' && isspace(line[n-1])) {
 	line[n-2] = '\0';
     } else if (line[n-1] == ';') {
