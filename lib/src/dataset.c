@@ -1784,11 +1784,11 @@ int is_log_variable (int i, const DATAINFO *pdinfo, char *parent)
     *parent = '\0';
 
     if (s != NULL && *s != '\0') {
-	if (sscanf(s, "= log of %15s", parent)) {
+	if (sscanf(s, "= log of %15s", parent) == 1) {
 	    return 1;
 	}
 	s += strcspn(s, "=");
-	if (sscanf(s, "=log(%15[^-+*()=^])", parent)) {
+	if (sscanf(s, "=log(%15[^-+*()=^])", parent) == 1) {
 	    return 1;
 	}
     }

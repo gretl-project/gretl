@@ -2347,7 +2347,7 @@ void nls_spec_destroy (nls_spec *spec)
 
 /* below: apparatus for BFGS, borrowed from R */
 
-static double **Lmatrix (int n)
+static double **triangular_array_new (int n)
 {
     double **m;
     int i;
@@ -2363,7 +2363,7 @@ static double **Lmatrix (int n)
     return m;
 }
 
-static void free_Lmatrix (double **m, int n)
+static void free_triangular_array (double **m, int n)
 {
     int i;
 
@@ -2377,7 +2377,38 @@ static void free_Lmatrix (double **m, int n)
 
 #define BFGS_DEBUG 0
 
-#define stepredn	0.2
+#if BFGS_DEBUG
+
+static void print_H (double **m, int n, int iter)
+{
+    char msg[32];
+    gretl_matrix *a;
+    double x;
+    int i, j;
+
+    a = gretl_matrix_alloc(n, n);
+    if (a == NULL) {
+	return;
+    }
+
+    for (i=0; i<n; i++) {
+	for (j=0; j<=i; j++) {
+	    x = m[i][j];
+	    gretl_matrix_set(a, i, j, x);
+	    if (i != j) {
+		gretl_matrix_set(a, j, i, x);
+	    }
+	}
+    }
+
+    sprintf(msg, "BFGS H at iter %d\n", iter);
+    gretl_matrix_print(a, msg);
+    gretl_matrix_free(a);
+}
+
+#endif
+
+#define stepfrac	0.2
 #define acctol		0.0001 
 #define reltest		10.0
 
@@ -2427,22 +2458,21 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	      BFGS_LL_FUNC get_ll, BFGS_GRAD_FUNC get_gradient, 
 	      void *callback_data, gretlopt opt, PRN *prn)
 {
-    int accpoint, enough;
-    double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **B = NULL;
-    int count, funcount, gradcount;
-    double fmax, f, gradproj;
-    int i, j, ilast, iter = 0;
-    double s, steplength = 0.0;
+    double *g = NULL, *d = NULL, *X = NULL, *c = NULL, **H = NULL;
+    int quit, ndelta, fcount, gcount;
+    double fmax, f, sumgrad;
+    int i, j, ilast, iter;
+    double s, steplen = 0.0;
     double D1, D2;
     int err = 0;
 
     g = malloc(n * sizeof *g);
-    t = malloc(n * sizeof *t);
+    d = malloc(n * sizeof *d);
     X = malloc(n * sizeof *X);
     c = malloc(n * sizeof *c);
-    B = Lmatrix(n);
+    H = triangular_array_new(n);
 
-    if (g == NULL || t == NULL || X == NULL || c == NULL || B == NULL) {
+    if (g == NULL || d == NULL || X == NULL || c == NULL || H == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -2456,146 +2486,163 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
     }
 
     fmax = f;
-    funcount = gradcount = 1;
+    fcount = ilast = gcount = iter = 1;
     get_gradient(b, g, callback_data);
     reverse_gradient(g, n);
-    iter++;
-    ilast = gradcount;
 
     do {
 	if (opt & OPT_V) {
-	    print_mle_iter_stats(f, n, b, g, iter, steplength, prn);
+	    print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
 	}
-	if (ilast == gradcount) {
+	if (ilast == gcount) {
+	    /* initialize H to identity matrix */
 	    for (i=0; i<n; i++) {
 		for (j=0; j<i; j++) {
-		    B[i][j] = 0.0;
+		    H[i][j] = 0.0;
 		}
-		B[i][i] = 1.0;
+		H[i][i] = 1.0;
 	    }
 	}
 	for (i=0; i<n; i++) {
+	    /* copy coeff values to X, gradient to c */
 	    X[i] = b[i];
 	    c[i] = g[i];
 	}
-	gradproj = 0.0;
+	sumgrad = 0.0;
 	for (i=0; i<n; i++) {
 	    s = 0.0;
 	    for (j=0; j<=i; j++) {
-		s -= B[i][j] * g[j];
+		s -= H[i][j] * g[j];
 	    }
 	    for (j=i+1; j<n; j++) {
-		s -= B[j][i] * g[j];
+		s -= H[j][i] * g[j];
 	    }
-	    t[i] = s;
-	    gradproj += s * g[i];
+	    d[i] = s;
+	    sumgrad += s * g[i];
 	}
 
-	if (gradproj < 0.0) {	
-	    /* search direction is uphill */
-	    steplength = 1.0;
-	    accpoint = 0;
-	    do {
-		count = 0;
-		for (i=0; i<n; i++) {
-		    b[i] = X[i] + steplength * t[i];
-		    if (reltest + X[i] == reltest + b[i]) {
-			/* no change */
-			count++;
-		    }
-		}
-		if (count < n) {
-		    f = get_ll(b, callback_data);
-		    funcount++;
-		    accpoint = !na(f) &&
-			(f >= fmax + gradproj * steplength * acctol);
-		    if (!accpoint) {
-			steplength *= stepredn;
-		    }
-		}
-	    } while (!(count == n || accpoint));
-
-	    enough = fabs(fmax - f) > reltol * (fabs(fmax) + reltol);
 #if BFGS_DEBUG
-	    fprintf(stderr, "enough = %d: f=%g, "
-		    "fabs(fmax - f) = %g,\n reltol * "
-		    "(fabs(fmax) + reltol) = %g\n",
-		    enough, f, fabs(fmax - f), 
-		    reltol * (fabs(fmax) + reltol));
+	fprintf(stderr, "sumgrad = %g\n", sumgrad);   
 #endif
 
-	    /* stop if value is small or if relative change is low */
-	    if (!enough) {
-		count = n;
+	if (sumgrad < 0.0) {	
+	    /* heading in the right direction */
+	    steplen = 1.0;
+	    do {
+		ndelta = n;
+		for (i=0; i<n; i++) {
+		    b[i] = X[i] + steplen * d[i];
+		    if (reltest + X[i] == reltest + b[i]) {
+			/* no change in coefficient */
+			ndelta--;
+		    }
+		}
+		if (ndelta > 0) {
+		    f = get_ll(b, callback_data);
+		    fcount++;
+		    if (na(f) || f < fmax + sumgrad * steplen * acctol) {
+			/* the step we tried didn't work; try a smaller one */
+			steplen *= stepfrac;
+		    } else {
+			break;
+		    }
+		}
+	    } while (ndelta > 0);
+
+	    quit = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
+#if BFGS_DEBUG
+	    fprintf(stderr, "ndelta = %d, quit = %d: LHS = %g, RHS = %g\n",
+		    ndelta, quit, fabs(fmax - f), reltol * (fabs(fmax) + reltol));
+#endif
+
+	    /* stop if value or relative change is small enough */
+	    if (quit) {
+		ndelta = 0;
 		fmax = f;
+#if 1
+		break; /* ??? (FIXME added by A.C.) */
+#endif
 	    }
 
-	    if (count < n) {
+	    if (ndelta > 0) {
 		/* making progress */
 		fmax = f;
 		get_gradient(b, g, callback_data);
 		reverse_gradient(g, n);
-		gradcount++;
+		gcount++;
 		iter++;
 		D1 = 0.0;
 		for (i=0; i<n; i++) {
-		    t[i] = steplength * t[i];
+		    d[i] *= steplen;
 		    c[i] = g[i] - c[i];
-		    D1 += t[i] * c[i];
+		    D1 += d[i] * c[i];
 		}
 		if (D1 > 0) {
 		    D2 = 0.0;
 		    for (i=0; i<n; i++) {
 			s = 0.0;
 			for (j=0; j<=i; j++) {
-			    s += B[i][j] * c[j];
+			    s += H[i][j] * c[j];
 			}
 			for (j=i+1; j<n; j++) {
-			    s += B[j][i] * c[j];
+			    s += H[j][i] * c[j];
 			}
 			X[i] = s;
 			D2 += s * c[i];
 		    }
 		    D2 = 1.0 + D2 / D1;
+		    /* set Hessian */
 		    for (i=0; i<n; i++) {
 			for (j=0; j<=i; j++) {
-			    B[i][j] += (D2 * t[i] * t[j]
-					- X[i] * t[j] - t[i] * X[j]) / D1;
+			    H[i][j] += (D2 * d[i] * d[j]
+					- X[i] * d[j] - d[i] * X[j]) / D1;
 			}
 		    }
 		} else {
-		    /* D1 < 0 */
-		    ilast = gradcount;
+		    /* D1 <= 0 */
+		    ilast = gcount;
 		}
 	    } else {
-		/* no progress */
-		if (ilast < gradcount) {
-		    count = 0;
-		    ilast = gradcount;
+		/* ndelta == 0: no progress */
+		if (ilast < gcount) {
+#if BFGS_DEBUG
+		    fprintf(stderr, "ndelta = %d but ilast = %d < gcount = %d\n"
+			    " resetting delta = %d\n", ndelta, ilast, gcount, n);
+#endif
+		    ndelta = n;
+		    ilast = gcount;
 		}
 	    }
 	} else {
-	    /* downhill search */
-	    count = 0;
-	    if (ilast == gradcount) {
-		count = n;
+	    /* not headed anywhere useful: reset unless we just did
+	       so already */
+	    ndelta = n;
+	    if (ilast == gcount) {
+		ndelta = 0;
 	    } else {
-		ilast = gradcount;
+		ilast = gcount;
 	    }
-	    /* Resets unless has just been reset */
 	}
 	if (iter >= maxit) {
 	    break;
 	}
-	if (gradcount - ilast > 2 * n) {
-	    ilast = gradcount;	/* periodic restart */
+	if (gcount - ilast > 2 * n) {
+	    ilast = gcount; /* periodic restart */
 	}
-    } while (count != n || ilast != gradcount);
 
 #if BFGS_DEBUG
-    fprintf(stderr, "terminated: count=%d, n=%d, ilast=%d, gradcount=%d\n",
-	    count, n, ilast, gradcount);
+	print_H(H, n, iter);
+	fprintf(stderr, "Continue?  ");
+	if (ndelta > 0) {
+	    fprintf(stderr, "Yes, because ndelta = %d\n\n", ndelta);
+	} else if (ilast != gcount) {
+	    fprintf(stderr, "Yes, because ilast = %d != gcount = %d\n\n",
+		    ilast, gcount);
+	} else {
+	    fprintf(stderr, "No, done\n\n");
+	}
 #endif
+    } while (ndelta > 0 || ilast != gcount);
 
     if (iter >= maxit) {
 	fprintf(stderr, "stopped after %d iterations\n", iter);
@@ -2603,25 +2650,28 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
     }
 
     if (fncount != NULL) {
-	*fncount = funcount;
+	*fncount = fcount;
     }
     if (grcount != NULL) {
-	*grcount = gradcount;
+	*grcount = gcount;
     }
 
     if (opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	
-	print_mle_iter_stats(f, n, b, g, iter, steplength, prn);
+	print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
 	pputs(nprn, "\n\n");	
+#if BFGS_DEBUG
+	print_H(H, n, iter);
+#endif
     }
 
  bailout:
 
     free(g);
-    free(t);
+    free(d);
     free(X);
     free(c);
-    free_Lmatrix(B, n);
+    free_triangular_array(H, n);
 
     return err;
 }

@@ -4014,6 +4014,15 @@ static double evaluate_math_function (double arg, int fn, int *err)
     return x;
 }
 
+static void invalid_arg_error (int fn, int *err)
+{
+    const char *fword = get_genr_func_word(fn);
+
+    sprintf(gretl_errmsg, _("Invalid argument for %s"), 
+	    (fword != NULL)? fword : _("function"));
+    *err = E_INVARG;
+}
+
 static double *get_mp_series (const char *s, GENERATOR *genr,
 			      int fn, int *err)
 {
@@ -4033,7 +4042,7 @@ static double *get_mp_series (const char *s, GENERATOR *genr,
 #endif
 
     if (*err) {
-	*err = E_INVARG;
+	invalid_arg_error(fn, err);
     }
 
     return x;
@@ -4142,7 +4151,7 @@ static double evaluate_pvalue (const char *s, const double **Z,
     double x = batch_pvalue(s, Z, pdinfo, NULL, OPT_G);
 
     if (na(x)) {
-	*err = E_INVARG;
+	invalid_arg_error(T_PVALUE, err);
     }
 
     return x;
@@ -4154,7 +4163,7 @@ static double evaluate_critval (const char *s, const double **Z,
     double x = genr_get_critical(s, Z, pdinfo);
 
     if (na(x) || x == -1.0) {
-	*err = E_INVARG;
+	invalid_arg_error(T_CRIT, err);
     }
 
     return x;
@@ -4171,7 +4180,7 @@ evaluate_bivariate_statistic (const char *s, GENERATOR *genr,
     }
 
     if (na(x)) {
-	genr->err = E_INVARG;
+	invalid_arg_error(fn, &genr->err);
     }
 
     return x;

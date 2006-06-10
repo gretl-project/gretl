@@ -448,6 +448,60 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
     return targ;
 }
 
+/**
+ * gretl_model_get_param_number:
+ * @pmod: pointer to model.
+ * @pdinfo: dataset information.
+ * @pname: name of model parameter.
+ *
+ * Returns the zero-based index of the coefficient in @pmod
+ * corresponding to @pname, or -1 if @pname is not the name
+ * of a parameter.
+ */
+
+int gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
+				  char *pname)
+{
+    int idx = -1;
+
+    if (pmod == NULL) {
+	return -1;
+    }
+
+    idx = positive_int_from_string(pname);
+    if (idx >= 0) {
+	if (idx < pmod->ncoeff) {
+	    return idx;
+	} else {
+	    return -1;
+	}
+    }
+
+    if (pmod->params != NULL) {
+	int i;
+
+	for (i=1; i<pmod->nparams; i++) {
+	    if (!strcmp(pname, pmod->params[i])) {
+		idx = i - 1;
+		break;
+	    }
+	}
+    } else if (pmod->list != NULL) {
+	int v = varindex(pdinfo, pname);
+
+	if (v < pdinfo->v) {
+	    idx = gretl_list_position(v, pmod->list);
+	    if (idx > 1) {
+		idx -= 2;
+	    } else {
+		idx = -1;
+	    }
+	}
+    }
+
+    return idx;
+}
+
 void free_coeff_intervals (CoeffIntervals *cf)
 {
     int i;
@@ -2199,31 +2253,25 @@ static ARINFO *copy_ar_info (const ARINFO *src)
     if (targ == NULL) return NULL;
 
     if (src->arlist != NULL) {
-	int i, m = src->arlist[0];
+	int m = src->arlist[0];
 
       	if ((targ->rho = copyvec(src->rho, m)) == NULL) {
 	    free(targ);
-	    targ = NULL;
 	    return NULL; 
 	}
 
       	if ((targ->sderr = copyvec(src->sderr, m)) == NULL) { 
 	    free(targ->rho);
 	    free(targ);
-	    targ = NULL;
 	    return NULL; 
 	}
 
-	targ->arlist = malloc((m + 1) * sizeof(int));
+	targ->arlist = gretl_list_copy(src->arlist);
 	if (targ->arlist == NULL) {
 	    free(targ->rho);
 	    free(targ->sderr);
 	    free(targ);
-	    targ = NULL;
 	    return NULL; 
-	}
-	for (i=0; i<=m; i++) {
-	    targ->arlist[i] = src->arlist[i];
 	}
     }    
 
@@ -3165,27 +3213,13 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     int xstart;
     int i, j;
 
-    pmod->params = malloc(np * sizeof pmod->params);
+    pmod->params = strings_array_new_with_length(np, VNAMELEN);
     if (pmod->params == NULL) {
 	pmod->errcode = E_ALLOC;
 	return 1;
     }
 
     pmod->nparams = np;
-
-    for (i=0; i<np; i++) {
-	pmod->params[i] = malloc(VNAMELEN);
-	if (pmod->params[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(pmod->params[j]);
-	    }
-	    free(pmod->params);
-	    pmod->params = NULL;
-	    pmod->nparams = 0;
-	    pmod->errcode = E_ALLOC;
-	    return 1;
-	}
-    }
 
     strcpy(pmod->params[0], pdinfo->varname[yno]);
 
@@ -3237,27 +3271,13 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo)
     int np = pmod->list[0];
     int i, j, v;
 
-    pmod->params = malloc(np * sizeof pmod->params);
+    pmod->params = strings_array_new_with_length(np, VNAMELEN);
     if (pmod->params == NULL) {
 	pmod->errcode = E_ALLOC;
 	return 1;
     }
 
     pmod->nparams = np;
-
-    for (i=0; i<np; i++) {
-	pmod->params[i] = malloc(VNAMELEN);
-	if (pmod->params[i] == NULL) {
-	    for (j=0; j<i; j++) {
-		free(pmod->params[j]);
-	    }
-	    free(pmod->params);
-	    pmod->params = NULL;
-	    pmod->nparams = 0;
-	    pmod->errcode = E_ALLOC;
-	    return 1;
-	}
-    }
 
     j = 1;
     for (i=1; i<=pmod->list[0]; i++) {

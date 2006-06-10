@@ -26,6 +26,53 @@
 
 #include <errno.h>
 
+struct model_grab {
+    int idx;
+    const char *mword;
+};
+
+struct model_grab grabs[] = {
+    { M_ESS,        "$ess" },
+    { M_T,          "$t" },
+    { M_RSQ,        "$rsq" },
+    { M_SIGMA,      "$sigma" },
+    { M_DF,         "$df" },
+    { M_NCOEFF,     "$ncoeff" },
+    { M_LNL,        "$lnl" },
+    { M_AIC,        "$aic" },
+    { M_BIC,        "$bic" },
+    { M_HQC,        "$hqc" },
+    { M_TRSQ,       "$trsq" },
+    { M_SCALAR_MAX,  NULL },
+    { M_COEFF_S,    "$coeff" },
+    { M_SE_S,       "$stderr" },
+    { M_VCV_S,      "$vcv" },
+    { M_RHO_S,      "$rho" },
+    { M_ELEM_MAX,    NULL },
+    { M_UHAT,       "$uhat" },
+    { M_YHAT,       "$yhat" },
+    { M_H,          "$m" },
+    { M_SERIES_MAX,  NULL },
+    { M_COEFF,      "$coeff" },
+    { M_SE,         "$ess" },
+    { M_VCV,        "$vcv" },
+    { M_RHO,        "$rho" },
+    { M_MAX,         NULL }
+};
+
+static const char *get_model_stat_word (int idx)
+{
+    int i;
+
+    for (i=0; grabs[i].idx != M_MAX; i++) {
+	if (idx == grabs[i].idx) {
+	    return grabs[i].mword;
+	}
+    }
+
+    return NULL;
+}
+
 static double hp_lambda (const DATAINFO *pdinfo)
 {
     double la = get_hp_lambda();
@@ -82,20 +129,9 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 
     lambda = hp_lambda(pdinfo);
 
-    V = malloc(4 * sizeof *V);
-    if (V == NULL) return E_ALLOC;
-
-    for (i=0; i<4; i++) {
-	V[i] = malloc(T * sizeof **V);
-	if (V[i] == NULL) {
-	    int j;
-	    
-	    for (j=0; j<i; j++) {
-		free(V[j]);
-	    }
-	    free(V);
-	    return E_ALLOC;
-	}
+    V = doubles_array_new(4, T);
+    if (V == NULL) {
+	return E_ALLOC;
     }
 
     /* adjust starting points */
@@ -1050,29 +1086,10 @@ double genr_cov_corr (const char *s, double ***pZ,
     return ret;
 }
 
-static int 
-get_model_param_number (const MODEL *pmod, const char *vname)
-{
-    int i, ret = 0;
-
-    if (pmod->params == NULL) {
-	return 0;
-    }
-
-    for (i=0; i<=pmod->ncoeff; i++) {
-	if (!strcmp(vname, pmod->params[i])) {
-	    ret = i + 1;
-	    break;
-	}
-    }
-
-    return ret;
-}
-
 double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod)
 {
     int v1 = 0, v2 = 0;
-    int i, j, k, v1l, v2l;
+    int i, j, k;
     char v1str[VNAMELEN], v2str[VNAMELEN];
     int gotit;
     double ret = NADBL;
@@ -1085,30 +1102,15 @@ double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod)
 	return NADBL;
     }
 
-    /* are the varnames valid? */
-    if (pmod->ci != NLS && pmod->ci != ARMA) {
-	v1 = varindex(pdinfo, v1str);
-	v2 = varindex(pdinfo, v2str);
-	if (v1 >= pdinfo->v || v2 >= pdinfo->v) {
-	    return NADBL;
-	}
-    }
-
-    /* check model list */
-    if (pmod->ci == NLS || pmod->ci == ARMA) {
-	v1l = get_model_param_number(pmod, v1str);
-	v2l = get_model_param_number(pmod, v2str);
-    } else {
-	v1l = gretl_list_position(v1, pmod->list);
-	v2l = gretl_list_position(v2, pmod->list);
-    }
-
-    if (v1l == 0 || v2l == 0) {
+    v1 = gretl_model_get_param_number(pmod, pdinfo, v1str);
+    if (v1 < 0) {
 	return NADBL;
     }
 
-    v1l -= 2;
-    v2l -= 2;
+    v2 = gretl_model_get_param_number(pmod, pdinfo, v2str);
+    if (v2 < 0) {
+	return NADBL;
+    }
 
     /* make model vcv matrix if need be */
     if (pmod->vcv == NULL && makevcv(pmod)) {
@@ -1116,10 +1118,10 @@ double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod)
     }
 
     /* now find the right entry */
-    if (v1l > v2l) {
-	k = v1l;
-	v1l = v2l;
-	v2l = k;
+    if (v1 > v2) {
+	k = v1;
+	v1 = v2;
+	v2 = k;
     }
 
     gotit = 0;
@@ -1129,7 +1131,7 @@ double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod)
 	    if (j < i) {
 		continue;
 	    }
-	    if (i == v1l && j == v2l) {
+	    if (i == v1 && j == v2) {
 		ret = pmod->vcv[k];
 		gotit = 1;
 		break;
@@ -1374,26 +1376,13 @@ int get_t_from_obs_string (char *s, const double **Z,
     return t;
 }
 
-static int arma_model_stat_pos (const char *s, const MODEL *pmod)
+static void invalid_stat_error (int idx, int *err)
 {
-    int p = -1;
+    const char *mword = get_model_stat_word(idx);
 
-    if (numeric_string(s)) {
-	p = atoi(s) - 1;
-	if (p >= pmod->ncoeff) p = -1;
-	return p;
-    } else if (pmod->params != NULL) {
-	int i;
-
-	for (i=1; i<=pmod->ncoeff; i++) {
-	    if (!strcmp(s, pmod->params[i])) {
-		p = i - 1;
-		break;
-	    }
-	}
-    }
-
-    return p;
+    sprintf(gretl_errmsg, _("Invalid argument for %s"), 
+	    (mword != NULL)? mword : _("function"));
+    *err = E_INVARG;    
 }
 
 /* retrieve a specific element from one of the arrays of data
@@ -1405,7 +1394,7 @@ get_model_data_element (MODEL *pmod, int idx, const char *key,
 {
     char s[32] = {0};
     const char *p;
-    int lv, vi = 0;
+    int vi = 0;
     double x = NADBL;
 
     /* extract arg string in parentheses */
@@ -1420,7 +1409,7 @@ get_model_data_element (MODEL *pmod, int idx, const char *key,
 
     if (idx == M_RHO_S) {
 	if (!(numeric_string(s))) {
-	    *err = E_INVARG;
+	    invalid_stat_error(idx, err);
 	} else if (dot_atof(s) == 1 && AR1_MODEL(pmod->ci)) {
 	    x = gretl_model_get_double(pmod, "rho_in");
 	} else if (pmod->ci != AR && dot_atof(s) == 1) {
@@ -1428,35 +1417,26 @@ get_model_data_element (MODEL *pmod, int idx, const char *key,
 	} else if (pmod->arinfo == NULL || 
 		   pmod->arinfo->arlist == NULL || 
 		   pmod->arinfo->rho == NULL) {
-	    *err = E_INVARG;
+	    invalid_stat_error(idx, err);
 	} else if (!(vi = gretl_list_position(atoi(s), pmod->arinfo->arlist))) {
-	    *err = E_INVARG;
+	    invalid_stat_error(idx, err);
 	} else {
 	    x = pmod->arinfo->rho[vi-1];
 	}
     } else if (idx == M_VCV_S) {
 	x = genr_vcv(s, pdinfo, pmod);
 	if (na(x)) {
-	    *err = E_INVARG;
+	    invalid_stat_error(idx, err);
 	}
     } else if (idx == M_COEFF_S || idx == M_SE_S) {
 	if (pmod == NULL || pmod->list == NULL) {
-	    *err = E_INVARG;
-	} else if (pmod->ci == ARMA) {
-	    vi = arma_model_stat_pos(s, pmod);
-	    if (vi < 0) {
-		*err = E_INVARG;
-	    }
+	    invalid_stat_error(idx, err);
 	} else {
-	    lv = numeric_string(s)? atoi(s) : varindex(pdinfo, s);
-	    vi = gretl_list_position(lv, pmod->list);
-
-	    if (vi < 2) {
-		*err = E_INVARG;
-	    } else {
-		vi -= 2;
+	    vi = gretl_model_get_param_number(pmod, pdinfo, s);
+	    if (vi < 0) {
+		invalid_stat_error(idx, err);
 	    }
-	}
+	} 
 
 	if (!*err) {
 	    if (idx == M_COEFF_S && pmod->coeff != NULL) { 
@@ -1464,7 +1444,7 @@ get_model_data_element (MODEL *pmod, int idx, const char *key,
 	    } else if (pmod->sderr != NULL) {
 		x = pmod->sderr[vi];
 	    } else {
-		*err = E_INVARG;
+		invalid_stat_error(idx, err);
 	    }
 	}
     } 
