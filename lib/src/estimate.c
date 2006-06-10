@@ -500,8 +500,8 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 			    pdinfo->n, Z, NULL);
 	if (pmod->ci == OLS && dataset_is_panel(pdinfo) && 
 	    pmod->missmask != NULL) {
-	    /* FIXME: is this really needed? */
 	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
+		/* panel methods need to know */
 		gretl_model_set_int(pmod, "unbalanced", 1);
 	    } 
 	}
@@ -961,10 +961,7 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Generate model selection statistics */
-    gretl_calculate_criteria(mdl.ess, mdl.nobs, mdl.ncoeff, &mdl.lnL, 
-			     &mdl.criterion[C_AIC],
-			     &mdl.criterion[C_BIC],
-			     &mdl.criterion[C_HQC]);
+    ls_criteria(&mdl, (const double **) *pZ, pdinfo);
 
     /* hccm command or HC3a */
     if (jackknife) {
@@ -2770,7 +2767,7 @@ MODEL ar_func (const int *list, double ***pZ,
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     }
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
-    ls_criteria(&ar);
+    ls_criteria(&ar, NULL, NULL);
     ar.dw = dwstat(maxlag, &ar, (const double **) *pZ);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 

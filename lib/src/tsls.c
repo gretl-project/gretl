@@ -707,7 +707,7 @@ static void tsls_extra_stats (MODEL *pmod, const double **Z)
 
     pmod->fstt = pmod->rsq * pmod->dfd / (pmod->dfn * r);
 
-    ls_criteria(pmod);
+    ls_criteria(pmod, NULL, NULL);
 
     if (pmod->missmask == NULL) {
 	/* no missing obs within sample range */

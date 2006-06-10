@@ -225,7 +225,6 @@ static void print_theta (const panelmod_t *pan, double theta,
 	pputs(prn, "Panel is unbalanced: theta varies across units\n");
     }
     pputc(prn, '\n');
-
 }
 
 /* construct a version of the dataset from which the group means
@@ -872,7 +871,7 @@ static void fix_within_stats (MODEL *targ, MODEL *src, panelmod_t *pan)
     }
 
     targ->ncoeff = targ->dfn + 1;
-    ls_criteria(targ);
+    ls_criteria(targ, NULL, NULL);
     targ->ncoeff = nc;
 }
 
@@ -1005,7 +1004,7 @@ static void fix_gls_stats (MODEL *targ, MODEL *src, panelmod_t *pan,
 
     nc = targ->ncoeff;
     targ->ncoeff = targ->dfn + 1;
-    ls_criteria(targ);
+    ls_criteria(targ, NULL, NULL);
     targ->ncoeff = nc;
 }
 
@@ -1269,20 +1268,22 @@ static int get_maj_min (const DATAINFO *pdinfo, int *maj, int *min)
     return 0;
 }
 
+/* Based on the residuals from pooled OLS, determine how many
+   cross-sectional units were actually included in the regression
+   (after omitting any missing values); in addition, determine the
+   number of observations included for each unit.
+*/
+
 static int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
 			     int *unit_obs)
 {
-    int nmaj, nmin;
     int nunits, T;
     int i, t;
     int ninc = 0;
 
-    if (get_maj_min(pdinfo, &nmaj, &nmin)) {
+    if (get_maj_min(pdinfo, &nunits, &T)) {
 	return -1;
     }
-
-    nunits = nmaj;
-    T = nmin;
 
     for (i=0; i<nunits; i++) {
 	unit_obs[i] = 0;
@@ -1299,6 +1300,11 @@ static int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
     return ninc;
 }
 
+/* Determine the maximum number of observations included for any
+   cross-sectional unit.  (This may vary across units due to omission
+   of missing values.)
+*/
+
 static int effective_T (const int *unit_obs, int nunits)
 {
     int i, effT = 0;
@@ -1312,12 +1318,14 @@ static int effective_T (const int *unit_obs, int nunits)
     return effT;
 }
 
+/* Construct an array of char to record which parameters in the full
+   model correspond to time-varying regressors
+*/
+
 static int panel_set_varying (panelmod_t *pan, const MODEL *pmod)
 {
     int i;
 
-    /* char array to record which params in the full model
-       correspond to time-varying regressors */
     pan->varying = calloc(pmod->ncoeff, 1);
     if (pan->varying == NULL) {
 	return E_ALLOC; 

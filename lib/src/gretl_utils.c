@@ -494,12 +494,10 @@ int gretl_calculate_criteria (double ess, int n, int k,
     return err;
 }
 
-int ls_criteria (MODEL *pmod)
+int ls_criteria (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
 {
     double ll, aic, bic, hqc;
     int err;
-
-    /* should this be ncoeff + 1 below? (1 for variance) */
 
     err = gretl_calculate_criteria(pmod->ess, pmod->nobs, pmod->ncoeff,
 				   &ll, &aic, &bic, &hqc);
@@ -508,6 +506,25 @@ int ls_criteria (MODEL *pmod)
     pmod->criterion[C_AIC] = aic;
     pmod->criterion[C_BIC] = bic;
     pmod->criterion[C_HQC] = hqc;
+
+    if (!err && Z != NULL && pdinfo != NULL) {
+	char parent[VNAMELEN];
+
+	if (is_log_variable(pmod->list[1], pdinfo, parent)) {
+	    double jll = ll;
+	    int t;
+
+	    for (t=0; t<pdinfo->n; t++) {
+		if (!na(pmod->uhat[t])) {
+		    jll -= Z[pmod->list[1]][t];
+		}
+	    }
+	    gretl_model_set_double(pmod, "jll", jll);
+	    gretl_model_set_string_as_data(pmod, 
+					   "log-parent", 
+					   gretl_strdup(parent));
+	}
+    }
 
     return err;
 }

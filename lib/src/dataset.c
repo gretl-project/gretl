@@ -1765,6 +1765,36 @@ int is_hidden_variable (int i, const DATAINFO *pdinfo)
 }
 
 /**
+ * is_log_variable:
+ * @i: ID number of variable.
+ * @pdinfo: dataset information.
+ *
+ * Tries to determine if the variable with ID number @i is
+ * the logarithm of some other variable.
+ *
+ * Returns: 1 if variable @i appears to be a log, else 0.
+ */
+
+int is_log_variable (int i, const DATAINFO *pdinfo, char *parent)
+{
+    const char *s = VARLABEL(pdinfo, i);
+
+    *parent = '\0';
+
+    if (s != NULL && *s != '\0') {
+	if (sscanf(s, "= log of %15s", parent)) {
+	    return 1;
+	}
+	s += strcspn(s, "=");
+	if (sscanf(s, "=log(%15[^-+*()^])", parent)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/**
  * set_var_discrete:
  * @p: pointer to data information struct.
  * @i: index number of variable.

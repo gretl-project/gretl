@@ -266,6 +266,8 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 
 int is_hidden_variable (int i, const DATAINFO *pdinfo);
 
+int is_log_variable (int i, const DATAINFO *pdinfo, char *parent);
+
 void set_var_discrete (DATAINFO *pdinfo, int i, int s);
 
 void set_var_scalar (DATAINFO *pdinfo, int i, int s);
