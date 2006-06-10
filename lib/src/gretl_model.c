@@ -966,30 +966,32 @@ int gretl_model_allocate_storage (MODEL *pmod)
 {
     int k = pmod->ncoeff;
     int T = pmod->full_n;
-    int t;
 
-    pmod->coeff = malloc(k * sizeof *pmod->coeff);
-    if (pmod->coeff == NULL) {
-	return E_ALLOC;
+    if (k > 0) {
+	pmod->coeff = malloc(k * sizeof *pmod->coeff);
+	if (pmod->coeff == NULL) {
+	    return E_ALLOC;
+	}
+	pmod->sderr = malloc(k * sizeof *pmod->sderr);
+	if (pmod->sderr == NULL) {
+	    return E_ALLOC;
+	}
     }
 
-    pmod->sderr = malloc(k * sizeof *pmod->sderr);
-    if (pmod->sderr == NULL) {
-	return E_ALLOC;
-    }
+    if (T > 0) {
+	int t;
 
-    pmod->uhat = malloc(T * sizeof *pmod->uhat);
-    if (pmod->uhat == NULL) {
-	return E_ALLOC;
-    }    
-
-    pmod->yhat = malloc(T * sizeof *pmod->yhat);
-    if (pmod->yhat == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<T; t++) {
-	pmod->uhat[t] = pmod->yhat[t] = NADBL;
+	pmod->uhat = malloc(T * sizeof *pmod->uhat);
+	if (pmod->uhat == NULL) {
+	    return E_ALLOC;
+	}    
+	pmod->yhat = malloc(T * sizeof *pmod->yhat);
+	if (pmod->yhat == NULL) {
+	    return E_ALLOC;
+	}
+	for (t=0; t<T; t++) {
+	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
+	}
     }
 
     return 0;

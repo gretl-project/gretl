@@ -1378,10 +1378,10 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
 {
 #if ARMA_DEBUG
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
-    gretlopt opt = OPT_A | OPT_V;
+    gretlopt nlsopt = OPT_A | OPT_V;
 #else
     PRN *prn = NULL;
-    gretlopt opt = OPT_A;
+    gretlopt nlsopt = OPT_A | OPT_C;
 #endif
     char fnstr[MAXLINE];
     char term[32];
@@ -1485,7 +1485,7 @@ static int arma_get_nls_model (MODEL *amod, struct arma_info *ainfo,
     }
 
     if (!err) {
-	*amod = model_from_nls_spec(spec, pZ, pdinfo, opt, prn);
+	*amod = model_from_nls_spec(spec, pZ, pdinfo, nlsopt, prn);
 	err = amod->errcode;
 #if ARMA_DEBUG
 	if (!err) {

@@ -1237,19 +1237,18 @@ static int mle_model_allocate (MODEL *pmod, nls_spec *spec)
 {
     int k = spec->nparam;
     int nvc = (k * k + k) / 2;
-    int err = 0;
 
     pmod->coeff = malloc(k * sizeof *pmod->coeff);
     pmod->sderr = malloc(k * sizeof *pmod->sderr);
     pmod->vcv = malloc(nvc * sizeof *pmod->vcv);
 
     if (pmod->coeff == NULL || pmod->sderr == NULL || pmod->vcv == NULL) {
-	err = E_ALLOC;
+	pmod->errcode = E_ALLOC;
     } else {
 	pmod->ncoeff = k;
     }
 
-    return err;
+    return pmod->errcode;
 }
 
 /* work up the results of ML estimation into the form of a gretl
@@ -1258,11 +1257,9 @@ static int mle_model_allocate (MODEL *pmod, nls_spec *spec)
 static int make_mle_model (MODEL *pmod, nls_spec *spec, 
 			   const DATAINFO *pdinfo)
 {
-    int err;
-    
-    err = mle_model_allocate(pmod, spec);
-    if (err) {
-	return err;
+    mle_model_allocate(pmod, spec);
+    if (pmod->errcode) {
+	return pmod->errcode;
     }
 
     pmod->t1 = pspec->t1;
@@ -1279,19 +1276,34 @@ static int make_mle_model (MODEL *pmod, nls_spec *spec,
 
     add_coeffs_to_model(pmod, spec->coeff);
 
-    err = add_param_names_to_model(pmod, spec, pdinfo);
+    pmod->errcode = add_param_names_to_model(pmod, spec, pdinfo);
 
-    if (!err) {
-	err = add_OPG_vcv(pmod, spec);
+    if (!pmod->errcode) {
+	pmod->errcode = add_OPG_vcv(pmod, spec);
     }
 
-    if (!err) {
+    if (!pmod->errcode) {
 	gretl_model_set_int(pmod, "fncount", pspec->fncount);
 	gretl_model_set_int(pmod, "grcount", pspec->grcount);
 	gretl_model_set_double(pmod, "tol", spec->tol);
     }
 
-    return err;
+    return pmod->errcode;
+}
+
+static int add_nls_coeffs (MODEL *pmod, nls_spec *spec)
+{
+    pmod->ncoeff = spec->nparam;
+    pmod->full_n = 0;
+
+    pmod->errcode = 
+	gretl_model_allocate_storage(pmod);
+
+    if (!pmod->errcode) {
+	add_coeffs_to_model(pmod, spec->coeff);
+    }
+
+    return pmod->errcode;
 }
 
 /* free up resources associated with the nlspec struct */
@@ -2179,10 +2191,15 @@ static MODEL real_nls (nls_spec *spec, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	if (pspec->ci == NLS) {
-	    /* We have parameter estimates; now use a Gauss-Newton
-	       regression for covariance matrix, standard errors. */
-	    nlsmod = GNR(fvec, jac, pspec, (const double **) *pZ, 
-			 pdinfo, prn);
+	    if (pspec->opt & OPT_C) {
+		/* coefficients only: don't bother with GNR */
+		add_nls_coeffs(&nlsmod, pspec);
+	    } else {
+		/* Use Gauss-Newton Regression for covariance matrix,
+		   standard errors */
+		nlsmod = GNR(fvec, jac, pspec, (const double **) *pZ, 
+			     pdinfo, prn);
+	    }
 	} else {
 	    make_mle_model(&nlsmod, pspec, pdinfo);
 	    if (pspec->depvar > 0) {
@@ -2244,7 +2261,9 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn)
  * @pZ: pointer to data array.
  * @pdinfo: information on dataset.
  * @opt: may include %OPT_V for verbose output, %OPT_A to
- * treat as an auxiliary model.
+ * treat as an auxiliary model, %OPT_C to produce coefficient
+ * estimates only (don't bother with GNR to produce standard
+ * errors).
  * @prn: printing struct.
  *
  * Computes estimates of the model specified in @spec, via nonlinear 
