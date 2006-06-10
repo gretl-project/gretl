@@ -25,7 +25,7 @@
 #include "gretl_model.h"
 #include "gretl_panel.h"
 
-#define PDEBUG 1
+#define PDEBUG 0
 
 enum vcv_ops {
     VCV_INIT,
