@@ -1768,6 +1768,8 @@ int is_hidden_variable (int i, const DATAINFO *pdinfo)
  * is_log_variable:
  * @i: ID number of variable.
  * @pdinfo: dataset information.
+ * @parent: location to which to write the name of the
+ * "parent" variable if any.
  *
  * Tries to determine if the variable with ID number @i is
  * the logarithm of some other variable.
