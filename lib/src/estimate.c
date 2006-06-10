@@ -960,8 +960,10 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	mdl.fstt = NADBL;
     }
 
-    /* Generate model selection statistics */
-    ls_criteria(&mdl, (const double **) *pZ, pdinfo);
+    if (!(opt & OPT_A)) {
+	/* Generate model selection statistics */
+	ls_criteria(&mdl, (const double **) *pZ, pdinfo);
+    }
 
     /* hccm command or HC3a */
     if (jackknife) {
