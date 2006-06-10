@@ -1786,7 +1786,7 @@ int is_log_variable (int i, const DATAINFO *pdinfo, char *parent)
 	    return 1;
 	}
 	s += strcspn(s, "=");
-	if (sscanf(s, "=log(%15[^-+*()^])", parent)) {
+	if (sscanf(s, "=log(%15[^-+*()=^])", parent)) {
 	    return 1;
 	}
     }
