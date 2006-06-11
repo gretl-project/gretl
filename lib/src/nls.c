@@ -2385,7 +2385,7 @@ static double *transcribe_hessian (double **m, int n)
     }
 
     for (i=0; i<n; i++) {
-	for (j=0; j<=n; j++) {
+	for (j=0; j<=i; j++) {
 	    vcv[ijton(i, j, n)] = m[i][j];
 	}
     }
@@ -2520,7 +2520,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		for (i=0; i<n; i++) {
 		    b[i] = X[i] + steplen * t[i];
 		    if (reltest + X[i] == reltest + b[i]) {
-			/* no change */
+			/* no change in coefficient */
 			ndelta--;
 		    }
 		}
