@@ -2548,7 +2548,8 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    if (done) {
 		ndelta = 0;
 		fmax = f;
-#if 1 /* Need to think about this? */
+#if 1 /* Prevent a "final pass" that destroys the Hessian estimate:
+	 not sure this is right? */
 		break;
 #endif
 	    }
