@@ -188,7 +188,7 @@ l'algoritmo.
 Lo script per \app{gretl} diventa quindi
 \begin{code}
     scalar m = mean(x)
-    scalar alpha = var(x)/m
+    scalar alpha = m/var(x)
     scalar p = m*alpha
 
     mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
