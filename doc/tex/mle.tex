@@ -193,7 +193,7 @@ are consistent, and therefore suitable to be used as starting point
 for the algorithm.  The gretl script code then becomes
 \begin{code}
     scalar m = mean(x)
-    scalar alpha = var(x)/m
+    scalar alpha = m/var(x)
     scalar p = m*alpha
 
     mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax 
