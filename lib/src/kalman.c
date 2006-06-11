@@ -51,7 +51,7 @@ struct kalman_ {
     gretl_matrix *S1; /* state vector, after updating */
     gretl_matrix *P0; /* MSE matrix, before updating */
     gretl_matrix *P1; /* MSE matrix, after updating */
-    gretl_matrix *E;  /* one-step forecast error(s), time t */
+    gretl_matrix *e;  /* one-step forecast error(s), time t */
 
     /* constant data matrices */
     const gretl_matrix *F; /* state transition matrix */
@@ -62,6 +62,8 @@ struct kalman_ {
 
     const gretl_matrix *y; /* dependent variable vector (or matrix) */
     const gretl_matrix *x; /* independent variables matrix */
+    
+    gretl_matrix *E;       /* forecast errors, all time-steps */
 
     /* workspace matrices */
     gretl_matrix *PH;
@@ -90,7 +92,7 @@ void kalman_free (kalman *K)
     gretl_matrix_free(K->S1);
     gretl_matrix_free(K->P0);
     gretl_matrix_free(K->P1);
-    gretl_matrix_free(K->E);
+    gretl_matrix_free(K->e);
 
     gretl_matrix_free(K->PH);
     gretl_matrix_free(K->HPH);
@@ -115,7 +117,7 @@ kalman_check_dimensions (kalman *K,
 			 const gretl_matrix *F, const gretl_matrix *A,
 			 const gretl_matrix *H, const gretl_matrix *Q,
 			 const gretl_matrix *R, const gretl_matrix *y,
-			 const gretl_matrix *x)
+			 const gretl_matrix *x, const gretl_matrix *E)
 {
     K->r = gretl_matrix_rows(S);
     K->k = gretl_matrix_rows(A);
@@ -177,6 +179,16 @@ kalman_check_dimensions (kalman *K,
 	    gretl_matrix_cols(x) != K->k - 1) {
 	    fprintf(stderr, "kalman: matrix x should be %d x %d\n", 
 		    K->T, K->k - 1);
+	    return 1;
+	}
+    }
+
+    /* E should be T x n, if present */
+    if (E != NULL) {
+	if (gretl_matrix_rows(E) != K->T ||
+	    gretl_matrix_cols(E) != K->n) {
+	    fprintf(stderr, "kalman: matrix E should be %d x %d\n", 
+		    K->T, K->n);
 	    return 1;
 	}
     }
@@ -253,6 +265,7 @@ static int count_nonshifts (const gretl_matrix *F)
  * @y: T x n matrix of dependent variable(s).
  * @x: T x k matrix of exogenous variable(s).  May be %NULL if there
  * are no exogenous variables, or if there's only a constant.
+ * @E: T x n matrix in which to record forecast errors (or %NULL).
  * @ncoeff: number of adjustable coefficients (used when the
  * Kalman filter is employed for estimation purposes).
  * @err: location to receive error code.
@@ -271,8 +284,8 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 		    const gretl_matrix *F, const gretl_matrix *A,
 		    const gretl_matrix *H, const gretl_matrix *Q,
 		    const gretl_matrix *R, const gretl_matrix *y,
-		    const gretl_matrix *x, int ncoeff, int ifc,
-		    int *err)
+		    const gretl_matrix *x, gretl_matrix *E,
+		    int ncoeff, int ifc, int *err)
 {
     kalman *K;
 
@@ -284,15 +297,14 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	return NULL;
     }
 
-    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R, y, x)) {
+    if (kalman_check_dimensions(K, S, P, F, A, H, Q, R, y, x, E)) {
 	fprintf(stderr, "failed on kalman_check_dimensions\n");
 	*err = E_NONCONF;
 	free(K);
 	return NULL;
     }
 
-    K->E = NULL;
-
+    K->e = NULL;
     K->PH = NULL;
     K->HPH = NULL;
     K->FPH = NULL;
@@ -322,7 +334,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->P1 = gretl_matrix_copy(P);
 
     /* forecast error vector, per observation */
-    K->E = gretl_matrix_alloc(K->n, 1);
+    K->e = gretl_matrix_alloc(K->n, 1);
 
     /* just use const pointers for const matrices, don't copy */
     K->F = F;
@@ -332,6 +344,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->R = R;
     K->y = y;
     K->x = x;
+    K->E = E;
 
     K->nonshift = -1;
 
@@ -364,7 +377,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
     K->Tmprr_2b = gretl_matrix_alloc(K->r, K->r);
 
     if (K->S0 == NULL || K->S1 == NULL || K->P0 == NULL || K->P1 == NULL ||
-	K->E == NULL || K->F == NULL || K->A == NULL ||
+	K->e == NULL || K->F == NULL || K->A == NULL ||
 	K->H == NULL || K->Q == NULL || 
 	K->PH == NULL || K->HPH == NULL ||
 	K->FPH == NULL || K->V == NULL || K->VE == NULL ||
@@ -375,7 +388,7 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 	kalman_free(K);
 	K = NULL;
     } else {
-	gretl_matrix_zero(K->E);
+	gretl_matrix_zero(K->e);
     }
 
     return K;
@@ -583,16 +596,16 @@ static int kalman_iter_1 (kalman *K, double *llt)
     err += multiply_by_F(K, K->S0, K->S1, 0);
 
     /* form E = y - A'x - H'S */
-    err += gretl_matrix_subtract_from(K->E, K->Ax);
+    err += gretl_matrix_subtract_from(K->e, K->Ax);
     fast_A_prime_B(K->H, K->S0, K->Tmpnn);
-    err += gretl_matrix_subtract_from(K->E, K->Tmpnn);
+    err += gretl_matrix_subtract_from(K->e, K->Tmpnn);
 
     /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "VE" */
-    fast_multiply(K->V, K->E, K->VE);
+    fast_multiply(K->V, K->e, K->VE);
 
     if (llt != NULL) {
 	/* form (y - Ax - H'S)' * (H'PH + R)^{-1} * (y - Ax - H'S) */
-	fast_A_prime_B(K->E, K->VE, K->Tmpnn);
+	fast_A_prime_B(K->e, K->VE, K->Tmpnn);
 
 	/* contribution to log-likelihood of the above -- see Hamilton
 	   (1994) equation [13.4.1] page 385.
@@ -657,7 +670,7 @@ static void kalman_print_state (kalman *K, int t)
     for (j=0; j<K->n; j++) {
 	fprintf(stderr, "y[%d] = %.8g, err[%d] = %.8g\n", j, 
 		gretl_matrix_get(K->y, t, j), 
-		j, gretl_vector_get(K->E, j));
+		j, gretl_vector_get(K->e, j));
     }
 
     gretl_matrix_print(K->S0, "K->S0");
@@ -714,21 +727,21 @@ kalman_initialize_error (kalman *K, int t)
     int i;
 
     for (i=0; i<K->n; i++) {
-	K->E->val[i] = K->y->val[mdx(K->y, t, i)];
+	K->e->val[i] = K->y->val[mdx(K->y, t, i)];
     }
 }
 
 /* read the current forecast error and write it into the appropriate
-   row of the recorder matrix, E
+   row of the recorder matrix, K->E
 */
 
 static void
-kalman_record_error (gretl_matrix *E, kalman *K, int t)
+kalman_record_error (kalman *K, int t)
 {
     int i;
 
     for (i=0; i<K->n; i++) {
-	E->val[mdx(E, t, i)] = K->E->val[i]; /* K->E is a vector */
+	K->E->val[mdx(K->E, t, i)] = K->e->val[i]; /* K->e is a row vector */
     }
 }
 
@@ -739,7 +752,7 @@ static int kalman_incr_S (kalman *K)
     double x;
     int err = 0;
 
-    x = gretl_scalar_b_X_b(K->E, GRETL_MOD_TRANSPOSE,
+    x = gretl_scalar_b_X_b(K->e, GRETL_MOD_TRANSPOSE,
 			   K->V, &err);
     if (!err) {
 	K->SSRw += x;
@@ -751,8 +764,6 @@ static int kalman_incr_S (kalman *K)
 /**
  * kalman_forecast:
  * @K: pointer to Kalman struct: see kalman_new().
- * @E: T x n matrix to hold one-step ahead forecast errors (or %NULL
- * if these do not have to be recorded).
  *
  * Generates a series of one-step ahead forecasts for y, based on
  * information entered initially using kalman_new(), and possibly
@@ -766,7 +777,7 @@ static int kalman_incr_S (kalman *K)
  * Returns: 0 on success, non-zero on error.
  */
 
-int kalman_forecast (kalman *K, gretl_matrix *E)
+int kalman_forecast (kalman *K)
 {
     double ldet;
     int update_P = 1;
@@ -791,13 +802,6 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	/* no exogenous vars */
 	gretl_matrix_copy_values(K->Ax, K->A);
     } 
-
-    if (E != NULL) {
-	if (gretl_matrix_rows(E) != K->T || 
-	    gretl_matrix_cols(E) != K->n) {
-	    return E_NONCONF;
-	}
-    }
 
     for (t=0; t<K->T && !err; t++) {
 	double llt = 0.0;
@@ -852,8 +856,8 @@ int kalman_forecast (kalman *K, gretl_matrix *E)
 	}
 	
 	/* record forecast errors if wanted */
-	if (!err && E != NULL) {
-	    kalman_record_error(E, K, t);
+	if (!err && K->E != NULL) {
+	    kalman_record_error(K, t);
 	}
 
 	/* update state vector */

@@ -493,6 +493,7 @@ static gretl_matrix *F = NULL;
 static gretl_matrix *A = NULL;
 static gretl_matrix *H = NULL;
 static gretl_matrix *Q = NULL;
+static gretl_matrix *E = NULL;
 
 static gretl_matrix *Svar;
 static gretl_matrix *Svar2;
@@ -769,14 +770,32 @@ static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
     return err;
 }
 
-/* add innovations based on Kalman forecast, and also covariance
-   matrix and standard errors based on Outer Product of the
-   estimated innovations */
+/* add covariance matrix and standard errors based on numerical
+   approximation to the Hessian from BFGS
+*/
 
-static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b, 
-			     double s2, int k, int T)
+static void arma_hessian_vcv (MODEL *pmod, double *vcv, int k)
 {
-    gretl_matrix *E = NULL;
+    int t, i = 0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->uhat[t] = gretl_vector_get(E, i++);
+    }
+
+    pmod->vcv = vcv;
+
+    for (i=0; i<k; i++) {
+	pmod->sderr[i] = sqrt(vcv[ijton(i, i, k)]);
+    }
+}
+
+/* add covariance matrix and standard errors based on Outer Product of
+   Gradient
+*/
+
+static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b, 
+			 double s2, int k, int T)
+{
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
     const double eps = 1.0e-8;
@@ -785,16 +804,12 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b,
     int i, j, s, t;
     int err = 0;
 
-    E = gretl_column_vector_alloc(T);
     G = gretl_matrix_alloc(k, T);
     V = gretl_matrix_alloc(k, k);
-    if (E == NULL || G == NULL || V == NULL) {
-	err = E_ALLOC;
+    if (G == NULL || V == NULL) {
+	pmod->errcode = err = E_ALLOC;
 	goto bailout;
     }
-
-    /* get estimate of innovations */
-    kalman_forecast(K, E);
 
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
@@ -806,14 +821,14 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b,
     for (i=0; i<k && !err; i++) {
 	b[i] -= eps;
 	rewrite_kalman_matrices(K, b, i);
-	err = kalman_forecast(K, E);
+	err = kalman_forecast(K);
 	for (t=0; t<T; t++) {
 	    g0 = gretl_vector_get(E, t);
 	    gretl_matrix_set(G, i, t, g0);
 	}
 	b[i] += 2.0 * eps;
 	rewrite_kalman_matrices(K, b, i);
-	err = kalman_forecast(K, E);
+	err = kalman_forecast(K);
 	for (t=0; t<T; t++) {
 	    g1 = gretl_vector_get(E, t);
 	    g0 = gretl_matrix_get(G, i, t);
@@ -845,7 +860,6 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b,
 
  bailout:
 
-    gretl_matrix_free(E);
     gretl_matrix_free(G);
     gretl_matrix_free(V);
     
@@ -855,7 +869,8 @@ static int arma_OPG_stderrs (MODEL *pmod, kalman *K, double *b,
 /* in Kalman case the basic model struct is empty, so we have
    to allocate for coefficients, residuals and so on */
 
-static int kalman_arma_model_allocate (MODEL *pmod, int k, int T)
+static int kalman_arma_model_allocate (MODEL *pmod, int k, int T,
+				       double *vcv)
 {
     int err = 0;
 
@@ -864,7 +879,7 @@ static int kalman_arma_model_allocate (MODEL *pmod, int k, int T)
 
     err = gretl_model_allocate_storage(pmod);
 
-    if (!err) {
+    if (!err && vcv == NULL) {
 	err = gretl_model_new_vcv(pmod, NULL);
     }
 
@@ -874,7 +889,8 @@ static int kalman_arma_model_allocate (MODEL *pmod, int k, int T)
 static int kalman_arma_finish (MODEL *pmod, const int *alist,
 			       struct arma_info *ainfo,
 			       const double **Z, const DATAINFO *pdinfo, 
-			       kalman *K, double *b, int k, int T)
+			       kalman *K, double *b, double *vcv,
+			       int k, int T)
 {
     double s2;
     int i;
@@ -883,7 +899,7 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     pmod->t2 = ainfo->t2;
     pmod->nobs = T;
 
-    pmod->errcode = kalman_arma_model_allocate(pmod, k, ainfo->T);
+    pmod->errcode = kalman_arma_model_allocate(pmod, k, ainfo->T, vcv);
     if (pmod->errcode) {
 	return pmod->errcode;
     }
@@ -895,9 +911,13 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     s2 = kalman_get_arma_variance(K);
     pmod->sigma = sqrt(s2);
 
-    pmod->errcode = arma_OPG_stderrs(pmod, K, b, s2, k, T);
-
     pmod->lnL = kalman_get_loglik(K);
+
+    if (vcv != NULL) {
+	arma_hessian_vcv(pmod, vcv, k);
+    } else {
+	arma_OPG_vcv(pmod, K, b, s2, k, T);
+    }
 
     write_arma_model_stats(pmod, alist, ainfo, Z, pdinfo);
     arma_model_add_roots(pmod, ainfo, b);
@@ -935,7 +955,7 @@ static double kalman_arma_ll (const double *b, void *p)
     K = (kalman *) p;
     err = rewrite_kalman_matrices(K, b, KALMAN_ALL);
     if (!err) {
-	err = kalman_forecast(K, NULL);
+	err = kalman_forecast(K);
 	ll = kalman_get_loglik(K);
     }
 
@@ -968,7 +988,7 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
 #endif
 	err = rewrite_kalman_matrices(K, b, i);
 	if (!err) {
-	    err = kalman_forecast(K, NULL);
+	    err = kalman_forecast(K);
 	    ll1 = kalman_get_loglik(K);
 	}
 	if (err) {
@@ -981,7 +1001,7 @@ static int kalman_arma_gradient (double *b, double *g, void *p)
 #endif
 	err = rewrite_kalman_matrices(K, b, i);
 	if (!err) {
-	    err = kalman_forecast(K, NULL);
+	    err = kalman_forecast(K);
 	    ll2 = kalman_get_loglik(K);
 	}
 	if (err) {
@@ -1141,6 +1161,7 @@ static int kalman_arma (const int *alist, double *coeff,
     int grcount = 0;
 
     double *b;
+    double *hess = NULL;
     int i, T, err = 0;
 
     b = malloc(ainfo->nc * sizeof *b);
@@ -1196,6 +1217,7 @@ static int kalman_arma (const int *alist, double *coeff,
     F = gretl_matrix_alloc(r, r);
     A = gretl_column_vector_alloc(k);
     H = gretl_column_vector_alloc(r);
+    E = gretl_column_vector_alloc(T);
     Q = gretl_matrix_alloc(r, r);
 
     Svar = gretl_matrix_alloc(r2, r2);
@@ -1211,7 +1233,8 @@ static int kalman_arma (const int *alist, double *coeff,
     }
 
     if (err || S == NULL || P == NULL || F == NULL || A == NULL ||
-	H == NULL || Q == NULL || Svar == NULL || vQ == NULL) {
+	H == NULL || E == NULL || Q == NULL || Svar == NULL || 
+	vQ == NULL) {
 	free(b);
 	gretl_matrix_free(y);
 	gretl_matrix_free(x);
@@ -1232,7 +1255,7 @@ static int kalman_arma (const int *alist, double *coeff,
     /* publish ainfo */
     kainfo = ainfo;
 
-    K = kalman_new(S, P, F, A, H, Q, NULL, y, x, ainfo->nc, ainfo->ifc, &err);
+    K = kalman_new(S, P, F, A, H, Q, NULL, y, x, E, ainfo->nc, ainfo->ifc, &err);
 
     if (err) {
 	fprintf(stderr, "kalman_new(): err = %d\n", err);
@@ -1243,9 +1266,17 @@ static int kalman_arma (const int *alist, double *coeff,
 	    kalman_set_nonshift(K, r);
 	}
 	kalman_use_ARMA_ll(K);
-	err = BFGS_max(ainfo->nc, b, maxit, reltol, &fncount, &grcount,
-		       kalman_arma_ll, kalman_arma_gradient, K,
-		       (prn != NULL)? OPT_V : OPT_NONE, prn);
+	if (getenv("ARMA_HESSIAN") != NULL) {
+	    err = BFGS_max(ainfo->nc, b, maxit, reltol, 
+			   &fncount, &grcount, &hess,
+			   kalman_arma_ll, kalman_arma_gradient, K,
+			   (prn != NULL)? OPT_V : OPT_NONE, prn);
+	} else {
+	    err = BFGS_max(ainfo->nc, b, maxit, reltol, 
+			   &fncount, &grcount, NULL,
+			   kalman_arma_ll, kalman_arma_gradient, K,
+			   (prn != NULL)? OPT_V : OPT_NONE, prn);
+	}	    
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
 	}
@@ -1257,7 +1288,7 @@ static int kalman_arma (const int *alist, double *coeff,
 	gretl_model_set_int(pmod, "fncount", fncount);
 	gretl_model_set_int(pmod, "grcount", grcount);
 	kalman_arma_finish(pmod, alist, ainfo, Z, pdinfo, 
-			   K, b, ainfo->nc, T);
+			   K, b, hess, ainfo->nc, T);
     } 
 
     kalman_free(K);
@@ -1267,6 +1298,7 @@ static int kalman_arma (const int *alist, double *coeff,
     gretl_matrix_free(F);
     gretl_matrix_free(A);
     gretl_matrix_free(H);
+    gretl_matrix_free(E);
     gretl_matrix_free(Q);
 
     gretl_matrix_free(y);

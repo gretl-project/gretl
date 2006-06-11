@@ -26,12 +26,12 @@ kalman *kalman_new (const gretl_matrix *S, const gretl_matrix *P,
 		    const gretl_matrix *F, const gretl_matrix *A,
 		    const gretl_matrix *H, const gretl_matrix *Q,
 		    const gretl_matrix *R, const gretl_matrix *y,
-		    const gretl_matrix *x, int ncoeff, int ifc,
-		    int *err);
+		    const gretl_matrix *x, gretl_matrix *E,
+		    int ncoeff, int ifc, int *err);
 
 void kalman_free (kalman *K);
 
-int kalman_forecast (kalman *K, gretl_matrix *E);
+int kalman_forecast (kalman *K);
 
 int kalman_get_ncoeff (const kalman *K);
 

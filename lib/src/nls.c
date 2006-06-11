@@ -1558,7 +1558,7 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 
     if (!err) {
 	err = BFGS_max(n, spec->coeff, maxit, pspec->tol, 
-		       &spec->fncount, &spec->grcount, 
+		       &spec->fncount, &spec->grcount, NULL,
 		       get_mle_ll, get_mle_gradient, NULL,
 		       pspec->opt, nprn);
     }
@@ -2375,38 +2375,27 @@ static void free_triangular_array (double **m, int n)
     }
 }
 
-#define BFGS_DEBUG 0
-
-#if BFGS_DEBUG
-
-static void print_H (double **m, int n, int iter)
+static double *transcribe_hessian (double **m, int n)
 {
-    char msg[32];
-    gretl_matrix *a;
-    double x;
+    double *vcv;
+    int nxpx = (n * n + n) / 2;
     int i, j;
 
-    a = gretl_matrix_alloc(n, n);
-    if (a == NULL) {
-	return;
+    vcv = malloc(nxpx * sizeof *vcv);
+    if (vcv == NULL) {
+	return NULL;
     }
 
     for (i=0; i<n; i++) {
-	for (j=0; j<=i; j++) {
-	    x = m[i][j];
-	    gretl_matrix_set(a, i, j, x);
-	    if (i != j) {
-		gretl_matrix_set(a, j, i, x);
-	    }
+	for (j=0; j<=n; j++) {
+	    vcv[ijton(i, j, n)] = m[i][j];
 	}
     }
 
-    sprintf(msg, "BFGS H at iter %d\n", iter);
-    gretl_matrix_print(a, msg);
-    gretl_matrix_free(a);
+    return vcv;
 }
 
-#endif
+#define BFGS_DEBUG 0
 
 #define stepfrac	0.2
 #define acctol		0.0001 
@@ -2425,6 +2414,44 @@ static void reverse_gradient (double *g, int n)
     }
 }
 
+static double BFGS_hessian (double *X,
+			    double *g, double *c,
+			    double *d, double **H, 
+			    double steplen, int n)
+{
+    double s, D1 = 0.0, D2;
+    int i, j;
+
+    for (i=0; i<n; i++) {
+	d[i] *= steplen;
+	c[i] = g[i] - c[i];
+	D1 += d[i] * c[i];
+    }
+    if (D1 > 0) {
+	D2 = 0.0;
+	for (i=0; i<n; i++) {
+	    s = 0.0;
+	    for (j=0; j<=i; j++) {
+		s += H[i][j] * c[j];
+	    }
+	    for (j=i+1; j<n; j++) {
+		s += H[j][i] * c[j];
+	    }
+	    X[i] = s;
+	    D2 += s * c[i];
+	}
+	D2 = 1.0 + D2 / D1;
+	for (i=0; i<n; i++) {
+	    for (j=0; j<=i; j++) {
+		H[i][j] += (D2 * d[i] * d[j]
+			    - X[i] * d[j] - d[i] * X[j]) / D1;
+	    }
+	}
+    }
+
+    return D1;
+}
+
 /**
  * BFGS_max:
  * @n: number elements in array @b.
@@ -2433,6 +2460,8 @@ static void reverse_gradient (double *g, int n)
  * @reltol: relative tolerance for terminating iteration.
  * @fncount: location to receive count of function evaluations.
  * @grcount: location to receive count of gradient evaluations.
+ * @hessvcv: location to receive packed triangular representation
+ * of the negative Hessian at the last iteration, or %NULL.
  * @get_ll: pointer to function used to calculate log
  * likelihood.
  * @get_gradient: pointer to function used to calculate the 
@@ -2454,16 +2483,15 @@ static void reverse_gradient (double *g, int n)
  */
 
 int BFGS_max (int n, double *b, int maxit, double reltol,
-	      int *fncount, int *grcount,  
+	      int *fncount, int *grcount, double **hessvcv,
 	      BFGS_LL_FUNC get_ll, BFGS_GRAD_FUNC get_gradient, 
 	      void *callback_data, gretlopt opt, PRN *prn)
 {
     double *g = NULL, *d = NULL, *X = NULL, *c = NULL, **H = NULL;
     int quit, ndelta, fcount, gcount;
-    double fmax, f, sumgrad;
+    double fmax, f, sumgrad, D1;
     int i, j, ilast, iter;
     double s, steplen = 0.0;
-    double D1, D2;
     int err = 0;
 
     g = malloc(n * sizeof *g);
@@ -2521,10 +2549,6 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    sumgrad += s * g[i];
 	}
 
-#if BFGS_DEBUG
-	fprintf(stderr, "sumgrad = %g\n", sumgrad);   
-#endif
-
 	if (sumgrad < 0.0) {	
 	    /* heading in the right direction */
 	    steplen = 1.0;
@@ -2550,17 +2574,14 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    } while (ndelta > 0);
 
 	    quit = fabs(fmax - f) <= reltol * (fabs(fmax) + reltol);
-#if BFGS_DEBUG
-	    fprintf(stderr, "ndelta = %d, quit = %d: LHS = %g, RHS = %g\n",
-		    ndelta, quit, fabs(fmax - f), reltol * (fabs(fmax) + reltol));
-#endif
 
-	    /* stop if value or relative change is small enough */
+	    /* stop if relative change is small enough */
 	    if (quit) {
-		ndelta = 0;
 		fmax = f;
 #if 1
-		break; /* ??? (FIXME added by A.C.) */
+		break; /* not perfectly certain this is right (?) */
+#else
+		ndelta = 0;
 #endif
 	    }
 
@@ -2571,47 +2592,13 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		reverse_gradient(g, n);
 		gcount++;
 		iter++;
-		D1 = 0.0;
-		for (i=0; i<n; i++) {
-		    d[i] *= steplen;
-		    c[i] = g[i] - c[i];
-		    D1 += d[i] * c[i];
-		}
-		if (D1 > 0) {
-		    D2 = 0.0;
-		    for (i=0; i<n; i++) {
-			s = 0.0;
-			for (j=0; j<=i; j++) {
-			    s += H[i][j] * c[j];
-			}
-			for (j=i+1; j<n; j++) {
-			    s += H[j][i] * c[j];
-			}
-			X[i] = s;
-			D2 += s * c[i];
-		    }
-		    D2 = 1.0 + D2 / D1;
-		    /* set Hessian */
-		    for (i=0; i<n; i++) {
-			for (j=0; j<=i; j++) {
-			    H[i][j] += (D2 * d[i] * d[j]
-					- X[i] * d[j] - d[i] * X[j]) / D1;
-			}
-		    }
-		} else {
-		    /* D1 <= 0 */
+		D1 = BFGS_hessian(X, g, c, d, H, steplen, n);
+		if (D1 <= 0.0) {
 		    ilast = gcount;
 		}
-	    } else {
-		/* ndelta == 0: no progress */
-		if (ilast < gcount) {
-#if BFGS_DEBUG
-		    fprintf(stderr, "ndelta = %d but ilast = %d < gcount = %d\n"
-			    " resetting delta = %d\n", ndelta, ilast, gcount, n);
-#endif
-		    ndelta = n;
-		    ilast = gcount;
-		}
+	    } else if (ilast < gcount) {
+		ndelta = n;
+		ilast = gcount;
 	    }
 	} else {
 	    /* not headed anywhere useful: reset unless we just did
@@ -2649,20 +2636,17 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	err = E_NOCONV;
     }
 
-    if (fncount != NULL) {
-	*fncount = fcount;
-    }
-    if (grcount != NULL) {
-	*grcount = gcount;
+    *fncount = fcount;
+    *grcount = gcount;
+
+    if (!err && hessvcv != NULL) {
+	*hessvcv = transcribe_hessian(H, n);
     }
 
     if (opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	
 	print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
 	pputs(nprn, "\n\n");	
-#if BFGS_DEBUG
-	print_H(H, n, iter);
-#endif
     }
 
  bailout:

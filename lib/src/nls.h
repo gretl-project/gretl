@@ -57,7 +57,7 @@ MODEL model_from_nls_spec (nls_spec *spec, double ***pZ,
 double get_default_nls_toler (void);
 
 int BFGS_max (int n, double *b, int maxit, double reltol,
-	      int *fncount, int *grcount, 
+	      int *fncount, int *grcount, double **hessvcv,
 	      BFGS_LL_FUNC get_ll, BFGS_GRAD_FUNC get_gradient, 
 	      void *callback_data, gretlopt opt, PRN *prn);
 
