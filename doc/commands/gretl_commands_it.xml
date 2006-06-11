@@ -181,6 +181,10 @@
 	  <flag>--verbose</flag>
 	  <effect>mostra i risultati della regressione</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+	</option>
       </options>
       <examples>
 	<example>adf 0 y</example>
@@ -1330,6 +1334,69 @@
     </gui-access>
 
   </command>
+  
+  <command name="discrete" section="Transformations" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>lista-variabili</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--reverse</flag>
+	  <effect>marca le variabili come continue</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Marca ogni variabile della <repl>lista-variabili</repl> come discreta.
+        In modalità predefinita, tutte le variabili sono considerate come
+        continue; marcando una variabile come discreta, essa viene trattata in
+        modo speciale nei diagrammi di frequenza, e può esere usata con i
+        comandi <cmdref targ="xtab"/> (cross-tabulazione) e <cmdref targ="dummify"/>.
+      </para>
+      <para>
+        Usando l'opzione <lit>--reverse</lit>, l'operazione viene invertita,
+        ossia, le variabili nella <repl>lista-variabili</repl> sono marcate come
+        continue.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="dummify" section="Transformations" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>lista-variabili</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Per ogni variabile della <repl>lista-variabili</repl>, che sia stata
+        marcata come discreta in precedenza, crea un insieme di variabili dummy
+        che codificano i valori distinti di quella variabile. Così, ad esempio,
+        se una variabile discreta <lit>x</lit> ha 5 valori distinti, verranno
+        create 5 variabili dummy, di nome <lit>Dx_1</lit>, <lit>Dx_2</lit> e
+        così via. La prima variabile dummy avrà valore 1 per le osservazioni in
+        cui <lit>x</lit> assume il suo valore minimo, e 0 altrove; la successiva
+        variabile dummy avrà valore 1 dove <lit>x</lit> assume il secondo tra i
+        suoi valori, e così via.
+      </para>
+      <para>
+	Questo comando può anche essere usato nel contesto di una regressione.
+        Ad esempio, la riga seguente specifica un modello in cui
+	<lit>y</lit> viene regredita sull'insieme di variabili dummy che
+        codificano <lit>x</lit>.
+      </para>
+      <code>
+	ols y dummify(x)</code>
+    </description>
+
+  </command>
 
   <command name="else" section="Programming" context="cli">
 
@@ -2146,8 +2213,8 @@
             nel secondo trimestre e 0 altrove, e così via.</para>
 	</li>
 	<li><para><cmd>genr paneldum</cmd> crea una serie di variabili dummy
-            da usare in un dataset di tipo panel &mdash; si veda
-	    <cmdref targ="paneldat"/>.</para>
+            da usare in un dataset di tipo panel.
+	    </para>
 	</li>
       </ilist>
 
@@ -2729,12 +2796,11 @@
 
     <description>
       <para>
-	Questo test è disponibile solo dopo aver stimato un modello con
-        il comando <cmdref targ="pooled"/> (si veda anche <cmd>paneldat</cmd>
-        e <cmd>setobs</cmd>). Testa il semplice modello <quote>pooled</quote>
-        (con tutte le osservazioni considerate indistintamente) contro 
-        le principali alternative: il modello a effetti fissi e quello
-        a effetti casuali.</para>
+        Questo test è disponibile solo dopo aver stimato un modello OLS
+        <quote>pooled</quote> (si veda anche <cmd>setobs</cmd>). Testa il
+        semplice modello pooled (con tutte le osservazioni considerate
+        indistintamente) contro le principali alternative: il modello a effetti
+        fissi e quello a effetti casuali.</para>
 
       <para>
 	Il modello a effetti fissi aggiunge una variabile dummy per
@@ -3025,6 +3091,10 @@
       </arguments>
       <options>
         <option>
+	  <flag>--octave</flag>
+	  <effect>dati GNU octave</effect>
+        </option>
+        <option>
 	  <flag>--box1</flag>
 	  <effect>dati BOX1</effect>
         </option>
@@ -3033,14 +3103,18 @@
 
     <description>
       <para>
-        Importa dati da un file in formato valori separati da virgole
-        (CSV: comma-separated values), che può essere facilmente
-        prodotto da un foglio elettronico. Il file deve contenere i nomi
-        delle variabili sulla prima riga e una matrice rettangolare di
-        dati nelle righe rimanenti. Le variabili devono essere disposte
-	<quote>per osservazione</quote> (una colonna per variabile, ogni
-        riga rappresenta un'osservazione).
-	Si veda la <guideref targ="datafiles"/> per i dettagli.
+        Se non si specifica alcuna opzione, importa dati da un file in formato
+        valori separati da virgole (CSV: comma-separated values), che può essere
+        facilmente prodotto da un foglio elettronico. Il file deve contenere i
+        nomi delle variabili sulla prima riga e una matrice rettangolare di dati
+        nelle righe rimanenti. Le variabili devono essere disposte <quote>per
+          osservazione</quote> (una colonna per variabile, ogni riga rappresenta
+        un'osservazione).  Si veda la <guideref targ="datafiles"/> per i
+        dettagli.
+      </para>
+      <para>
+	Con l'opzione <lita>--octave</lit> viene letto un file nel formato di
+        GNU octave.
       </para>
 
       <para>
@@ -3110,65 +3184,6 @@
 
   </command>
 
-  <command name="label" section="Dataset" label="Modifica degli attributi di una variabile">
-
-    <usage>
-      <arguments>
-        <argument>nome-variabile</argument>
-        <argument flag="-d ">descrizione</argument>
-        <argument flag="-n ">nome-grafici</argument>
-      </arguments>
-      <examples>
-        <example>label x1 -d "Descrizione di x1" -n "Nome per i grafici"</example>
-      </examples>
-    </usage>
-
-    <description context="cli">
-      <para>Imposta l'etichetta descrittiva per la variabile indicata
-        (usando l'opzione <lit>-d</lit> seguita da una stringa tra
-        virgolette doppie) e/o un <quote>nome per i grafici</quote>,
-        usato per indicare la variabile nei grafici (usando l'opzione
-	<lit>-n</lit>, seguita da una stringa tra virgolette doppie).
-      </para>
-      <para>
-        Se non viene usata alcuna opzione, il comando mostra l'etichetta
-        descrittiva per la variabile specificata, se esiste.
-      </para>
-    </description>
-
-    <description context="gui">
-
-      <para>
-	In questa finestra di dialogo è possibile:</para>
-
-      <para>* Rinominare una variabile.</para>
-
-      <para>* Aggiungere o modificare una descrizione della variabile,
-        che appare accanto al nome della variabile nella finestra
-        principale di gretl.</para>
-
-      <para>* Aggiungere o modificare il "nome per i grafici" della
-        variabile. Questa stringa (lunga al massimo 19 caratteri) viene
-        usata al posto del nome della variabile quando questa compare in
-        un grafico. Così, ad esempio, è possibile associare una stringa
-        più comprensibile come "Tariffe telefoniche" a un nome criptico
-        come "tartel".</para>
-
-      <para>* Impostare (nel caso di un dataset di serie storiche) il
-        metodo di compattamento per la variabile, che verrà usato se si
-        decide di ridurre la frequenza del dataset, o se si importa la
-        variabile da un dataset che ha una frequenza maggiore di quella
-        del dataset in uso.
-      </para>
-
-    </description>
-
-    <gui-access>
-      <menu-path>/Variabile/Modifica attributi</menu-path>
-      <other-access>Menù pop-up nella finestra principale</other-access>
-    </gui-access>
-
-  </command>
 
   <command name="kpss" section="Tests" label="Test KPSS">
 
@@ -3185,6 +3200,10 @@
 	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i risultati della regressione</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
 	</option>
       </options>
       <examples>
@@ -3842,6 +3861,18 @@
         dal menù Dati di gretl.</para>
     </description>
   </command>
+ 
+  <command name="matrix" section="Programming" context="cli">
+
+    <description>
+      <para>
+	La parola chiave <lit>matrix</lit> deve precedere tutti i comandi che
+        creano, manipolano o mostrano matrici. Si veda il
+	<guideref targ="chap-matrices"/> per i dettagli.
+      </para>
+    </description>
+
+  </command>
 
   <command name="meantest" section="Tests"
     label="Test per la differenza delle medie">
@@ -4141,6 +4172,20 @@
         <argument>variabile-dipendente</argument>
         <argument>variabili-indipendenti</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+        </option>
+	<option>
+	  <flag>--simple-print</flag>
+	  <effect>non mostra le statistiche ausiliarie</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+        </option>
+      </options>
     </usage>
 
     <description>
@@ -4152,16 +4197,9 @@
       </para>
 
       <para context="cli">
-	Si si vuole stimare un'interpolazione polinomiale usando l'aritmetica a
-        precisione multipla per generare le potenze volute della
-        variabile indipendente, si può usare la sintassi <cmd>mpols y 0 x ; 2
-        3 4</cmd>. Si otterrà una regressione di <lit>y</lit> su <lit>x</lit>,
-	<lit>x</lit> quadro, <lit>x</lit> al cubo e <lit>x</lit> alla
-        quarta potenza, ossia, i numeri (interi positivi) a destra del
-        punto e virgola specificano le potenze di <lit>x</lit> da usare.
-        Se si indica più di una variabile indipendente, l'ultima
-        variabile prima del punto e virgola è quella di cui verranno
-        calcolate le potenze.
+        È possibile recuperare diverse variabili interne con il comando
+        <cmdref targ="genr"/>, a condizione che <cmd>genr</cmd> venga invocato
+        immediatamente dopo questo comando.
       </para>
     </description>
 
@@ -4220,8 +4258,16 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+        </option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
       </options>
     </usage>
@@ -4299,8 +4345,8 @@
         Analysis</book> di William Greene (capitolo 11 della quarta
         edizione, o capitolo 9 della quinta). I numeri alla sinistra
         delle righe sono dei punti di riferimento e non fanno parte dei
-        comandi. Si noti che l'opzione <lit>--vcv</lit> per mostrare la
-	matrice di covarianza delle stime dei parametri, si applica al
+        comandi. Si noti che le opzioni, come ad esempio <lit>--vcv</lit> per mostrare la
+	matrice di covarianza delle stime dei parametri, vanno aggiunte al
         comando finale <lit>end nls</lit>.</para>
 
       <code>
@@ -4350,13 +4396,6 @@
 
   </command>
 
-  <command name="noecho" section="Obsolete" context="cli">
-    <description>
-      <para>Comando obsoleto.  Si veda <cmdref targ="set"/>.
-      </para>
-    </description>
-  </command>
-
   <command name="nulldata" section="Dataset"
     label="Creazione di un dataset vuoto">
 
@@ -4404,6 +4443,10 @@
         <option>
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
+        </option>
+        <option>
+	  <flag>--simple-print</flag>
+	  <effect>non mostra le statistiche ausiliarie</effect>
         </option>
         <option>
 	  <flag>--quiet</flag>
@@ -4707,37 +4750,90 @@
 
   </command>
 
-  <command name="paneldat" section="Dataset" context="cli"
-    label="Struttura dei dati panel">
+  <command name="panel" section="Estimation" context="cli"
+    label="Modelli panel">
 
     <usage>
       <options>
-        <option>
-	  <flag>--cross-section</flag>
-	  <effect>pila di dati cross section</effect>
+ 	<option>
+	  <flag>--random-effects</flag>
+	  <effect>effetti casuali invece che fissi</effect>
+	</option>
+	<option>
+	  <flag>--unit-weights</flag>
+	  <effect>minimi quadrati ponderati</effect>
+	</option>
+	<option>
+	  <flag>--iterate</flag>
+	  <effect>stima iterativa</effect>
+	</option>
+	  <flag>--quiet</flag>
+	  <effect>mostra meno risultati</effect>
         </option>
         <option>
-	  <flag>--time-series</flag>
-	  <effect>pila di dati serie storiche</effect>
-        </option>
+	  <flag>--verbose</flag>
+	  <effect>mostra più risultati</effect>
       </options>
     </usage>
 
     <description>
-      <para>Richiede che il dataset in uso sia
-        interpretato come un panel (unione di dati cross section e serie
-        storiche). L'impostazione predefinita corrisponde all'opzione
-	<lit>--time-series</lit> e prevede di interpretare il dataset
-        come una pila di serie storiche (costituita da blocchi successivi 
-        di dati che contengono serie storiche per ogni unità cross section).
-	Usando l'opzione <lit>--cross-section</lit> il dataset viene
-        letto come una pila di dati cross-section (blocchi successivi di
-        dati contengono dati cross section per ognuno dei periodi
-        temporali). Si veda anche <cmdref targ="setobs"/>.
+      <para>
+        Stima un modello panel, usando gli effetti fissi o, se si usa l'opzione
+        <lit>--random-effects</lit>, gli effetti casuali.
+      </para>
+      <para>
+        In alternativa, con l'opzione <lit>--unit-weights</lit>, il modello viene
+        stimato con i minimi quadrati ponderati, con i pesi costruiti a partire
+        dalla varianza residua per le rispettive unità cross section nel
+        campione. Solo in questo caso, è possibile usare l'opzione
+        <lit>--iterate</lit> per produrre stime iterative: nel caso di
+        convergenza, le stime sono di massima verosimiglianza.
+      </para>
+      <para>
+	FIXME add more detail here.
       </para>
     </description>
 
+    <gui-access>
+      <menu-path>/Model/Panel</menu-path>
+    </gui-access>
+
   </command>
+  
+  <command name="panel-mode" section="Dataset" context="gui"
+    label="Organizzazione dei dati panel">
+
+    <description>
+      <para>
+	Questa finestra di dialogo offre tre opzioni per definire un dataset
+        come panel. Le prime due opzioni richiedono che il dataset sia già
+        organizzato in un formato panel (anche se gretl può non essersi accorto
+        di ciò). La terza opzione richiede che il dataset contenga variabili che
+        rappresentano la struttura panel.
+      </para>
+      <para>
+        Pila di serie storiche: date N unità cross section nel dataset e T
+        osservazioni temporali per ogni unità, selezionando questa opzione si
+        dice a gretl che il dataset attuale è composto da N blocchi consecutivi
+        di T osservazioni ciascuno. Il passo successivo consiste nello
+        specificare il valore di N.
+      </para>
+      <para>
+        Pila di dati cross section: si indica a gretl che il dataset è composto
+        da T blocchi consecutivi di N osservazioni cross section ciascuno.
+        observations, one for each time period.  Il passo successivo consiste
+        nello specificare il valore di N.
+      </para>
+      <para>
+	Usa variabili indice: si indica che il dataset è organizzato in modo
+        qualsiasi, ma contiene due variabili che indicizzano le unità cross
+        section e quelle temporali. Il passo successivo consiste nell'indicare
+        queste due variabili, che devono essere strettamente positive.
+       </para>
+     </description>
+ 
+   </command>
+
 
   <command name="pca" section="Statistics"
     label="Analisi delle componenti principali">
@@ -4917,54 +5013,6 @@
         variabili in modo appropriato. Si veda anche <cmdref targ="gnuplot"/>.
       </para>
     </description>
-
-  </command>
-
-  <command name="pooled" section="Estimation"
-    label="Stima pooled OLS">
-
-    <usage>
-      <arguments>
-        <argument>variabile-dipendente</argument>
-        <argument>variabili-indipendenti</argument>
-      </arguments>
-      <options>
- 	<option>
-	  <flag>--unit-weights</flag>
-	  <effect>stimatore feasible GLS</effect>
-	</option>
-	<option>
-	  <flag>--iterate</flag>
-	  <effect>itera fino alla soluzione di massima verosimiglianza</effect>
-	</option>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostra la matrice di covarianza</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>In modalità predefinita, stima un modello con OLS (si veda <cmdref
-      targ="ols"/> per i dettagli sulla sintassi) e lo marca come modello
-      pooled o panel, rendendo disponibile il comando <cmdref
-      targ="hausman"/>.
-      </para>
-      <para>Con l'opzione <lit>--unit-weights</lit>, viene usato lo stimatore
-	feasible GLS, con i pesi costruiti a partire dalle varianze specifiche
-        degli errori per ogni unità cross section. Questa modalità offre un
-        guadagno di efficienza rispetto alla stima OLS nel caso in cui la
-        varianza differisca tra le diverse unità.
-      </para>
-      <para>Se viene usata anche l'opzione <lit>--iterate</lit>, lo stimatore
-	GLS viene iterato: se la procedura converge, verranno prodotte stime di
-        massima verosimiglianza.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modello/POOLED - Pooled OLS (panel)</menu-path>
-    </gui-access>
 
   </command>
 
@@ -5732,16 +5780,6 @@
 
   </command>
 
-
-  
-
-  <command name="seed" section="Obsolete" context="cli">
-    <description>
-      <para>Comando obsoleto.  Si veda <cmdref targ="set"/>.
-      </para>
-    </description>
-  </command>
-
   <command name="seed" section="Programming" context="gui"
     label="Seme dei numeri casuali">
 
@@ -5942,15 +5980,105 @@
 
     </description>
   </command>
+  
+  <command name="setinfo" section="Dataset" label="Modifica degli attributi di una variabile">
+
+    <usage>
+      <arguments>
+        <argument>nome-variabile</argument>
+        <argument flag="-d ">descrizione</argument>
+        <argument flag="-n ">nome-grafici</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--discrete</flag>
+	  <effect>marca la variabile come discreta</effect>
+	</option>
+	<option>
+	  <flag>--continuous</flag>
+	  <effect>marca la variabile come continua</effect>
+	</option>
+      </options>
+      <examples>
+        <example>setinfo x1 -d "Descrizione di x1" -n "Nome nei grafici"</example>
+	<example>setinfo z --discrete</example>
+      </examples>
+    </usage>
+
+    <description context="cli">
+      <para>
+        Imposta fino a tre attributi di una variabile, nel modo seguente.
+      </para>
+      <para>
+        Usando l'opzione <lit>-d</lit> seguita da una stringa tra
+        virgolette doppie, la stringa verrà usata come etichetta descrittiva per
+        la variabile indicata, che viene mostrata dal comando <cmdref
+        targ="labels"/> e anche nella finestra principale del programma.
+      </para>
+      <para>
+        Usando l'opzione <lit>-n</lit> seguita da una stringa tra
+        virgolette doppie, la stringa verrà usata nei grafici al posto del nome
+        della variabile.
+      </para>
+      <para>
+        Usando una delle opzioni <lit>--discrete</lit> o
+        <lit>--continuous</lit>, viene impostato il carattere numerico della
+        variabile.  In modalità predefinita, tutte le variabili sono considerate come
+        continue; marcando una variabile come discreta, essa viene trattata in
+        modo speciale nei diagrammi di frequenza, e può esere usata con i
+        comandi <cmdref targ="xtab"/> (cross-tabulazione) e <cmdref targ="dummify"/>.
+      </para>
+    </description>
+
+    <description context="gui">
+
+      <para>
+	In questa finestra di dialogo è possibile:</para>
+
+      <para>* Rinominare una variabile.</para>
+
+      <para>* Aggiungere o modificare una descrizione della variabile,
+        che appare accanto al nome della variabile nella finestra
+        principale di gretl.</para>
+
+      <para>* Aggiungere o modificare il "nome per i grafici" della
+        variabile. Questa stringa (lunga al massimo 19 caratteri) viene
+        usata al posto del nome della variabile quando questa compare in
+        un grafico. Così, ad esempio, è possibile associare una stringa
+        più comprensibile come "Tariffe telefoniche" a un nome criptico
+        come "tartel".</para>
+
+      <para>* Impostare (nel caso di un dataset di serie storiche) il
+        metodo di compattamento per la variabile, che verrà usato se si
+        decide di ridurre la frequenza del dataset, o se si importa la
+        variabile da un dataset che ha una frequenza maggiore di quella
+        del dataset in uso.
+      </para>
+
+      <para>* Marca una variabile come discreta. In questo modo, essa viene
+        trattata in modo speciale nei diagrammi di frequenza, e può esere usata
+        con i comandi <cmdref targ="xtab"/> (cross-tabulazione) e <cmdref
+        targ="dummify"/>.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variabile/Modifica attributi</menu-path>
+      <other-access>Menù pop-up nella finestra principale</other-access>
+    </gui-access>
+
+  </command>
 
   <command name="setobs" section="Dataset" context="cli"
     label="Frequenza e osservazione iniziale">
 
     <usage>
-      <arguments>
-        <argument>periodicità</argument>
-        <argument>oss-iniziale</argument>
-      </arguments>
+      <altforms>
+        <altform><repl>periodicità</repl> <repl>oss-iniziale</repl></altform>
+	<altform><repl>variabile-unità</repl> <repl>variabile-periodi</repl></altform>
+      </altforms>
+      <options>
       <options>
         <option>
 	  <flag>--cross-section</flag>
@@ -5968,12 +6096,17 @@
 	  <flag>--stacked-time-series</flag>
 	  <effect>interpreta come panel</effect>
         </option>
+        <option>
+	  <flag>--panel-vars</flag>
+	  <effect>usa variabili indice (si veda oltre)</effect>
+        </option>
       </options>
       <examples>
         <example>setobs 4 1990:1 --time-series</example>
         <example>setobs 12 1978:03</example>
 	<example>setobs 1 1 --cross-section</example>
         <example>setobs 20 1:1 --stacked-time-series</example>
+	<example>setobs unita anno --panel-vars</example>
       </examples>
     </usage>
 
@@ -5983,15 +6116,15 @@
         struttura specificata.
       </para>
       <para>
-	La <repl>periodicità</repl>, che deve essere un valore intero,
-        nel caso delle serie storiche rappresenta la frequenza delle osservazioni
-        (1 = annuale; 4 = trimestrale; 12 = mensile; 52 = settimanale; 5, 6, o 7 =
-	giornaliera; 24 = oraria). Nel caso di dati panel, la periodicità
-	è il numero di righe per ogni blocco di dati, ossia il numero di
-        unità cross section se i dati sono organizzati come pila di dati
-        cross section, o il numero di periodi se i dati sono organizzati come
-        pila di serie storiche. Nel caso di semplici dati cross section,
-        la periodicità dev'essere impostata a 1.
+        Nella prima forma del comando, la <repl>periodicità</repl>, che deve
+        essere un valore intero, nel caso delle serie storiche rappresenta la
+        frequenza delle osservazioni (1 = annuale; 4 = trimestrale; 12 =
+        mensile; 52 = settimanale; 5, 6, o 7 = giornaliera; 24 = oraria). Nel
+        caso di dati panel, la periodicità è il numero di righe per ogni blocco
+        di dati, ossia il numero di unità cross section se i dati sono
+        organizzati come pila di dati cross section, o il numero di periodi se i
+        dati sono organizzati come pila di serie storiche. Nel caso di semplici
+        dati cross section, la periodicità dev'essere impostata a 1.
       </para>
       <para>
 	L'osservazione iniziale rappresenta la data iniziale nel caso
@@ -6002,6 +6135,14 @@
 	1:1, mentre nel caso di dati cross section come 1. L'osservazione
         iniziale per i dati giornalieri o settimanali va indicata nella forma
 	AA/MM/GG o AAAA/MM/GG (oppure semplicemente 1 per i dati non datati).
+      </para>
+      <para>
+        La seconda forma del comando (che richiede l'uso dell'opzione
+	<lit>--panel-vars</lit>) può essere usata per imporre un'interpretazione
+        panel dei dati, quando il dataset contiene variabili che identificano in
+        modo univoco le unità cross section e i periodi. Il dataset verrà
+        ordinato come pila di serie storiche, per valori crescenti della
+        variabile che rappresenta le unità, <repl>variabile-unità</repl>.
       </para>
       <para>
 	Se non viene usata nessuna opzione per indicare esplicitamente
@@ -7104,6 +7245,10 @@
 	  <flag>--robust</flag>
 	  <effect>errori standard robusti</effect>
         </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>non mostra i risultati</effect>
+        </option>
       </options> 
     </usage>
 
@@ -7145,6 +7290,58 @@
     <gui-access>
       <menu-path>/Modello/WLS - Minimi quadrati ponderati</menu-path>
     </gui-access>
+
+  </command>
+ 
+  <command name="xtab" section="Statistics" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>variabile1 variabile2</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--chi-square</flag>
+	  <effect>mostra i risultati del test chi-quadro</effect>
+        </option>
+        <option>
+	  <flag>--row</flag>
+	  <effect>mostra le percentuali per riga</effect>
+        </option>
+        <option>
+	  <flag>--column</flag>
+	  <effect>mostra le percentuali per colonna</effect>
+        </option>
+        <option>
+	  <flag>--zeros</flag>
+	  <effect>mostra i valori pari a zero</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Se non vengono usate opzioni, mostra la tabella di contingenza tra
+        la <repl>variabile1</repl> per riga e la <repl>variabile2</repl> per
+        colonna; ognuna di esse può essere referenziata per nome o per numero.
+        Si noti che entrambe le variabili devono essere marcate come discrete.
+      </para>
+      <para>
+	Le opzioni <lit>--row</lit> e <lit>--column</lit> sono mutualmente
+        esclusive; al posto del conteggio delle frequenze, mostrano le
+        percentuali, rispettivamente per ogni riga e ogni colonna. L'opzione
+	<lit>--zeros</lit> può essere utile per importare la tabella in un altro
+        programma, ad esempio un foglio elettronico.
+      </para>
+      <para>
+        Il test chi quadro di Pearson per l'indipendenza viene mostrato
+        automaticamente se la frequenza attesa nell'ipotesi di indipendenza è
+        superiore a 5 per almeno l'80 per cento delle celle. L'opzione
+	<lit>--chi-square</lit> fa in modo che il test sia mostrato in tutti i
+        casi.
+      </para>
+
+    </description>
 
   </command>
 
