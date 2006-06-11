@@ -53,7 +53,7 @@ static const char *auto_ols_string = "# plot includes automatic OLS line\n";
 static int gp_small_font_size;
 
 struct gnuplot_info {
-    gnuplot_flags flags;
+    GnuplotFlags flags;
     int ts_plot;
     int yscale;
     int impulses;
@@ -870,7 +870,7 @@ static const char *series_name (const DATAINFO *pdinfo, int v)
 }
 
 static int
-get_gnuplot_output_file (FILE **fpp, gnuplot_flags flags, 
+get_gnuplot_output_file (FILE **fpp, GnuplotFlags flags, 
 			 int *plot_count, int code)
 {
     const char *plotfile = gretl_plotfile();
@@ -1111,7 +1111,7 @@ print_gp_data (struct gnuplot_info *gpinfo, const int *list,
 }
 
 static void 
-gp_info_init (struct gnuplot_info *gpinfo, gnuplot_flags flags,
+gp_info_init (struct gnuplot_info *gpinfo, GnuplotFlags flags,
 	      int lo, const char *literal, int t1, int t2)
 {
     gpinfo->flags = flags;
@@ -1157,7 +1157,7 @@ gp_info_init (struct gnuplot_info *gpinfo, gnuplot_flags flags,
 }
 
 #if GP_DEBUG
-static void print_gnuplot_flags (unsigned int flags)
+static void print_gnuplot_flags (GnuplotFlags flags)
 {
     fprintf(stderr, "*** gnuplot() called with flags:\n");
 
@@ -1191,7 +1191,7 @@ static void print_gnuplot_flags (unsigned int flags)
 }
 #endif
 
-static void set_withstr (gnuplot_flags flags, const int *lines, 
+static void set_withstr (GnuplotFlags flags, const int *lines, 
 			 int i, char *str)
 {
     int ltest = 0;
@@ -1280,7 +1280,7 @@ static void graph_list_adjust_sample (int *list,
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @plot_count: pointer to count of graphs drawn so far.
- * @flags: bitwise OR of zero or more options from #gnuplot_flags
+ * @flags: bitwise OR of zero or more options from #GnuplotFlags
  *
  * Writes a gnuplot plot file to display the values of the
  * variables in @list and calls gnuplot to make the graph.
@@ -1291,7 +1291,7 @@ static void graph_list_adjust_sample (int *list,
 
 int gnuplot (int *list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
-	     int *plot_count, gnuplot_flags flags)
+	     int *plot_count, GnuplotFlags flags)
 {
     FILE *fp = NULL;
     char s1[MAXDISP] = {0};
@@ -1556,7 +1556,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
 int multi_scatters (const int *list, double ***pZ, 
 		    const DATAINFO *pdinfo, int *plot_count, 
-		    gnuplot_flags flags)
+		    GnuplotFlags flags)
 {
     int i, t, err = 0, xvar, yvar;
     int *plotlist = NULL;
@@ -1638,7 +1638,11 @@ int multi_scatters (const int *list, double ***pZ,
 		(yvar)? pdinfo->varname[yvar] :
 		pdinfo->varname[plotlist[i+1]]);
 
-	fputs("plot '-' using 1:2\n", fp);
+	fputs("plot '-' using 1:2", fp);
+	if (flags & GP_LINES) {
+	    fputs(" with lines", fp);
+	}
+	fputc('\n', fp);
 
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    double xx;
@@ -1750,7 +1754,7 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 int gnuplot_3d (int *list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo,  
-		int *plot_count, gnuplot_flags flags)
+		int *plot_count, GnuplotFlags flags)
 {
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;

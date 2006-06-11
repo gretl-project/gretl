@@ -233,14 +233,16 @@ int fn_get_line (void)
     return err;
 }
 
-gnuplot_flags gp_flags (int batch, gretlopt opt)
+GnuplotFlags gp_flags (int batch, gretlopt opt)
 {
-    gnuplot_flags flags = 0;
+    GnuplotFlags flags = 0;
 
     if (batch) flags |= GP_BATCH;
 
     if (opt & OPT_M) flags |= GP_IMPULSES;
-    else if (opt & OPT_Z) flags |= GP_DUMMY;
+    else if (opt & OPT_L) flags |= GP_LINES;
+
+    if (opt & OPT_Z) flags |= GP_DUMMY;
     else if (opt & OPT_S) flags |= GP_OLS_OMIT;
 
     return flags;

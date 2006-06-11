@@ -413,7 +413,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
     } else if (action == VLAGSEL) {
 	selection_dialog(_("gretl: VAR lag selection"), do_vector_model, action, 0);
     } else if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
-	       || action == SCATTERS || action == GR_3D) {
+	       || action == SCATTERS || action == LINEPLOTS || action == GR_3D) {
 	int (*selfunc)() = NULL;
 
 	switch (action) {
@@ -428,6 +428,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	    selfunc = do_dummy_graph;
 	    break;
 	case SCATTERS:
+	case LINEPLOTS:
 	    selfunc = do_scatters;
 	    break;
 	default:

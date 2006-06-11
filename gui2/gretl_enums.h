@@ -85,6 +85,7 @@ enum extra_cmds {
     DEFINE_LIST,
     PANEL_WLS,
     PANEL_MODE,
+    LINEPLOTS,
     GUI_CMD_MAX
 };
 

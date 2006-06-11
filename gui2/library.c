@@ -4572,17 +4572,25 @@ void do_boxplot_var (int varnum)
 int do_scatters (selector *sr)
 {
     const char *buf = selector_list(sr);
+    int action = selector_code(sr);
+    GnuplotFlags flags = 0;
     int err; 
 
     if (buf == NULL) return 1;
 
-    gretl_command_sprintf("scatters %s", buf);
+    gretl_command_sprintf("scatters %s%s", buf, 
+			  (action == LINEPLOTS)? 
+			  " --with-lines" : "");
 
     if (check_and_record_command()) {
 	return 1;
     }
 
-    err = multi_scatters(cmd.list, &Z, datainfo, NULL, 0);
+    if (action == LINEPLOTS) {
+	flags |= GP_LINES;
+    }
+
+    err = multi_scatters(cmd.list, &Z, datainfo, NULL, flags);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -5814,9 +5822,9 @@ static int script_model_test (int test_ci, int model_id, PRN *prn)
     return 0;
 }
 
-static gnuplot_flags gp_flags (int batch, gretlopt opt)
+static GnuplotFlags gp_flags (int batch, gretlopt opt)
 {
-    gnuplot_flags flags = 0;
+    GnuplotFlags flags = 0;
 
     if (batch) {
 	flags |= GP_BATCH;
@@ -5824,11 +5832,15 @@ static gnuplot_flags gp_flags (int batch, gretlopt opt)
 
     if (opt & OPT_M) {
 	flags |= GP_IMPULSES;
-    } else if (opt & OPT_Z) {
+    } else if (opt & OPT_L) {
+	flags |= GP_LINES;
+    }
+
+    if (opt & OPT_Z) {
 	flags |= GP_DUMMY;
     } else if (opt & OPT_S) {
 	flags |= GP_OLS_OMIT;
-    }
+    } 
 
     return flags;
 }
@@ -5875,7 +5887,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     char runfile[MAXLEN], datfile[MAXLEN];
     char linecopy[1024];
     char texfile[MAXLEN];
-    unsigned int plotflags = 0;
+    GnuplotFlags plotflags = 0;
     gretlopt testopt = OPT_NONE;
     MODEL tmpmod;
     GRETL_VAR *var = NULL;
