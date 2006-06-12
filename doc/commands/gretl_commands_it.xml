@@ -3113,7 +3113,7 @@
         dettagli.
       </para>
       <para>
-	Con l'opzione <lita>--octave</lit> viene letto un file nel formato di
+	Con l'opzione <lit>--octave</lit> viene letto un file nel formato di
         GNU octave.
       </para>
 
@@ -4767,12 +4767,14 @@
 	  <flag>--iterate</flag>
 	  <effect>stima iterativa</effect>
 	</option>
+	<option>
 	  <flag>--quiet</flag>
 	  <effect>mostra meno risultati</effect>
         </option>
         <option>
 	  <flag>--verbose</flag>
 	  <effect>mostra più risultati</effect>
+        </option>
       </options>
     </usage>
 
@@ -6078,7 +6080,6 @@
         <altform><repl>periodicità</repl> <repl>oss-iniziale</repl></altform>
 	<altform><repl>variabile-unità</repl> <repl>variabile-periodi</repl></altform>
       </altforms>
-      <options>
       <options>
         <option>
 	  <flag>--cross-section</flag>
