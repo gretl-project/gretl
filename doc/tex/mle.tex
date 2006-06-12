@@ -202,6 +202,27 @@ for the algorithm.  The gretl script code then becomes
     end mle 
 \end{code}
 
+Another thing to note is that sometimes parameters are constrained
+within certain boundaries: in this case, for example, both $\alpha$
+and $p$ must be positive numbers. \app{gretl} does not check for this:
+it is the user's responsibility to ensure that the function is
+always evaluated at an admissible point in the parameter space during
+the iterative search for the maximum. An effective technique is to
+define a variable for checking that the parameters are admissible and
+setting the log-likelihood as undefined if the check fails. An example
+follows:
+\begin{code}
+    scalar m = mean(x)
+    scalar alpha = m/var(x)
+    scalar p = m*alpha
+
+    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax + (1-check)*NA
+    series ax = alpha*x
+    scalar check = (alpha>0) * (p>0)
+    params alpha p
+    end mle 
+\end{code}
+
 \section{Stochastic frontier cost function}
 \label{sec:frontier}
 

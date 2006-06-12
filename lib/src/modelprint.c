@@ -63,9 +63,9 @@ static void noconst (const MODEL *pmod, PRN *prn)
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %#.*g\n", _("Mean of dependent variable"), 
+	pprintf(prn, "  %s = %.*g\n", _("Mean of dependent variable"), 
 		XDIGITS(pmod), pmod->ybar);
-	pprintf(prn, "  %s = %#.*g\n", _("Standard deviation of dep. var."), 
+	pprintf(prn, "  %s = %.*g\n", _("Standard deviation of dep. var."), 
 		XDIGITS(pmod), pmod->sdy);
     } else if (tex_format(prn)) {
 	char x1str[32], x2str[32];
@@ -112,9 +112,9 @@ real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
     }
 
     if (plain_format(prn)) {    
-	pprintf(prn, "  %s = %#.*g\n", _("Sum of squared residuals"), 
+	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
 		XDIGITS(pmod), ess);
-	pprintf(prn, "  %s = %#.*g\n", _("Standard error of residuals"), 
+	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
 		XDIGITS(pmod), sigma);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
@@ -158,10 +158,10 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) { 
-	pprintf(prn, "  %s = %#.*g\n", _("Unadjusted R-squared"), 
+	pprintf(prn, "  %s = %.*g\n", _("Unadjusted R-squared"), 
 		XDIGITS(pmod), pmod->rsq);
 	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
-	    pprintf(prn, "  %s = %#.*g\n", _("Adjusted R-squared"),  
+	    pprintf(prn, "  %s = %.*g\n", _("Adjusted R-squared"),  
 		    XDIGITS(pmod), pmod->adjrsq);
 	}
     } else if (rtf_format(prn)) {
@@ -206,11 +206,11 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) { 
-	pprintf(prn, "  %s (%s) = %#.*g\n", _(aic_str), _(aic_abbrev),
+	pprintf(prn, "  %s (%s) = %.*g\n", _(aic_str), _(aic_abbrev),
 		XDIGITS(pmod), crit[C_AIC]);
-	pprintf(prn, "  %s (%s) = %#.*g\n", _(bic_str), _(bic_abbrev),
+	pprintf(prn, "  %s (%s) = %.*g\n", _(bic_str), _(bic_abbrev),
 		XDIGITS(pmod), crit[C_BIC]);
-	pprintf(prn, "  %s (%s) = %#.*g\n", _(hqc_str), _(hqc_abbrev),
+	pprintf(prn, "  %s (%s) = %.*g\n", _(hqc_str), _(hqc_abbrev),
 		XDIGITS(pmod), crit[C_HQC]);
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_(aic_str), crit[C_AIC]);
@@ -335,7 +335,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	if (na(pmod->fstt)) {
 	    pprintf(prn, "  %s %s\n", tmp, _("undefined"));
 	} else {
-	    pprintf(prn, "  %s = %#.*g", tmp, XDIGITS(pmod), pmod->fstt);
+	    pprintf(prn, "  %s = %.*g", tmp, XDIGITS(pmod), pmod->fstt);
 	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     } else if (tex_format(prn)) {
@@ -366,10 +366,10 @@ static void dwline (const MODEL *pmod, PRN *prn)
 {
     if (plain_format(prn)) {
 	if (!na(pmod->dw)) {
-	    pprintf(prn, "  %s = %#.*g\n", _("Durbin-Watson statistic"), 
+	    pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
 		    XDIGITS(pmod), pmod->dw);
 	    if (pmod->ci != PANEL) {
-		pprintf(prn, "  %s = %#.*g\n", _("First-order autocorrelation coeff."), 
+		pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
 			XDIGITS(pmod), pmod->rho);
 	    }
 	} 
@@ -1438,14 +1438,14 @@ static void print_ll (const MODEL *pmod, PRN *prn)
     if (plain_format(prn)) {
 	double jll;
 
-	pprintf(prn, "  %s = %#.*g\n", _("Log-likelihood"), lldig, pmod->lnL);
+	pprintf(prn, "  %s = %.*g\n", _("Log-likelihood"), lldig, pmod->lnL);
 	jll = gretl_model_get_double(pmod, "jll");
 	if (!na(jll)) {
 	    char jllstr[64];
 
 	    sprintf(jllstr, _("Log-likelihood for %s"), 
 		    (const char *) gretl_model_get_data(pmod, "log-parent"));
-	    pprintf(prn, "  (%s = %#.*g)\n", jllstr, lldig, jll);
+	    pprintf(prn, "  (%s = %.*g)\n", jllstr, lldig, jll);
 	}
     } else if (rtf_format(prn)) {
 	pprintf(prn, RTFTAB "%s = %.*g\n", I_("Log-likelihood"), GRETL_DIGITS,

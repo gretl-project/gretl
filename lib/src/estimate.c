@@ -536,7 +536,26 @@ lagged_depvar_check (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
     }
 }
 
+static void 
+log_depvar_ll (MODEL *pmod, const double **Z, const DATAINFO *pdinfo)
+{
+    char parent[VNAMELEN];
 
+    if (is_log_variable(pmod->list[1], pdinfo, parent)) {
+	double jll = pmod->lnL;
+	int t;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!na(pmod->uhat[t])) {
+		jll -= Z[pmod->list[1]][t];
+	    }
+	}
+	gretl_model_set_double(pmod, "jll", jll);
+	gretl_model_set_string_as_data(pmod, 
+				       "log-parent", 
+				       gretl_strdup(parent));
+    }
+}
 
 #define COLL_DEBUG 0
 
@@ -960,9 +979,10 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	mdl.fstt = NADBL;
     }
 
-    if (!(opt & OPT_A)) {
-	/* Generate model selection statistics */
-	ls_criteria(&mdl, (const double **) *pZ, pdinfo);
+    /* Generate model selection statistics */
+    ls_criteria(&mdl);
+    if (!(opt & OPT_A) && !na(mdl.lnL)) {
+	log_depvar_ll(&mdl, (const double **) *pZ, pdinfo);
     }
 
     /* hccm command or HC3a */
@@ -2769,7 +2789,7 @@ MODEL ar_func (const int *list, double ***pZ,
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     }
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
-    ls_criteria(&ar, NULL, NULL);
+    ls_criteria(&ar);
     ar.dw = dwstat(maxlag, &ar, (const double **) *pZ);
     ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 

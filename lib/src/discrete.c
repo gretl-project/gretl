@@ -893,7 +893,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     pmod->list[1] = dv;
     gretl_model_set_double(pmod, "lmax", lmax);
     pmod->ci = LOGISTIC;
-    ls_criteria(pmod, NULL, NULL);
+    ls_criteria(pmod);
 
     return 0;
 }

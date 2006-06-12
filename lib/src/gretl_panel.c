@@ -871,7 +871,7 @@ static void fix_within_stats (MODEL *targ, MODEL *src, panelmod_t *pan)
     }
 
     targ->ncoeff = targ->dfn + 1;
-    ls_criteria(targ, NULL, NULL);
+    ls_criteria(targ);
     targ->ncoeff = nc;
 }
 
@@ -1004,7 +1004,7 @@ static void fix_gls_stats (MODEL *targ, MODEL *src, panelmod_t *pan,
 
     nc = targ->ncoeff;
     targ->ncoeff = targ->dfn + 1;
-    ls_criteria(targ, NULL, NULL);
+    ls_criteria(targ);
     targ->ncoeff = nc;
 }
 

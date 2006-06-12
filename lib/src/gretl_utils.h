@@ -119,7 +119,7 @@ int gretl_calculate_criteria (double ess, int nobs, int ncoeff,
 
 int gretl_print_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
-int ls_criteria (MODEL *pmod, const double **Z, const DATAINFO *pdinfo);
+int ls_criteria (MODEL *pmod);
 
 /* hypothesis tests mechanism */
 

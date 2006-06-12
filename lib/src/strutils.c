@@ -485,7 +485,7 @@ char *gretl_trunc (char *str, size_t n)
 
 /**
  * gretl_varchar_spn:
- * @s: the string to truncate.
+ * @s: the string to examine.
  *
  * Returns: the length of the intial segment of @s which
  * consists of characters that are valid in a gretl

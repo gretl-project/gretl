@@ -1786,10 +1786,18 @@ int is_log_variable (int i, const DATAINFO *pdinfo, char *parent)
     if (s != NULL && *s != '\0') {
 	if (sscanf(s, "= log of %15s", parent) == 1) {
 	    return 1;
-	}
-	s += strcspn(s, "=");
-	if (sscanf(s, "=log(%15[^-+*()=^])", parent) == 1) {
-	    return 1;
+	} else {
+	    s += strcspn(s, "=");
+	    if (!strncmp(s, "=log(", 5)) {
+		int len;
+
+		s += 5;
+		len = gretl_varchar_spn(s);
+		if (len < VNAMELEN && s[len] == ')') {
+		    sscanf(s, "%15[^)]", parent);
+		    return 1;
+		}
+	    }
 	}
     }
 

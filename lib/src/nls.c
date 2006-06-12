@@ -1213,7 +1213,7 @@ static MODEL GNR (double *uhat, double *jac, nls_spec *spec,
     }
 
     if (gnr.errcode == 0) {
-	ls_criteria(&gnr, NULL, NULL);
+	ls_criteria(&gnr);
 	add_coeffs_to_model(&gnr, spec->coeff);
 	add_param_names_to_model(&gnr, spec, pdinfo);
 	add_fit_resid_to_model(&gnr, spec, uhat, Z, perfect);
@@ -2421,7 +2421,8 @@ static void reverse_gradient (double *g, int n)
  * @fncount: location to receive count of function evaluations.
  * @grcount: location to receive count of gradient evaluations.
  * @hessvcv: location to receive packed triangular representation
- * of the negative Hessian at the last iteration, or %NULL.
+ * of BFGS approximation to negative Hessian at the last iteration, 
+ * or %NULL.
  * @get_ll: pointer to function used to calculate log
  * likelihood.
  * @get_gradient: pointer to function used to calculate the 
@@ -2485,7 +2486,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
 	}
 	if (ilast == gcount) {
-	    /* initialize Hessian */
+	    /* (re-)start: initialize curvature matrix */
 	    for (i=0; i<n; i++) {
 		for (j=0; j<i; j++) {
 		    H[i][j] = 0.0;
@@ -2512,10 +2513,13 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	}
 
 	if (sumgrad < 0.0) {	
-	    /* search direction is uphill */
+	    /* search direction is uphill, actually */
 	    steplen = 1.0;
 	    ll_ok = 0;
 	    do {
+		/* loop so long as (a) we haven't achieved a definite
+		   improvement in the log-likelihood and (b) there is
+		   still some prospect of doing so */
 		ndelta = n;
 		for (i=0; i<n; i++) {
 		    b[i] = X[i] + steplen * t[i];
@@ -2530,7 +2534,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		    ll_ok = !na(f) &&
 			(f >= fmax + sumgrad * steplen * acctol);
 		    if (!ll_ok) {
-			/* bad loglik: try smaller step */
+			/* loglik not good: try smaller step */
 			steplen *= stepfrac;
 		    }
 		}
@@ -2548,7 +2552,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    if (done) {
 		ndelta = 0;
 		fmax = f;
-#if 1 /* Prevent a "final pass" that destroys the Hessian estimate:
+#if 1 /* Prevent a "final pass" that destroys the curvature matrix:
 	 not sure this is right? */
 		break;
 #endif
@@ -2567,7 +2571,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		    c[i] = g[i] - c[i];
 		    D1 += t[i] * c[i];
 		}
-		if (D1 > 0) {
+		if (D1 > 0.0) {
 		    D2 = 0.0;
 		    for (i=0; i<n; i++) {
 			s = 0.0;
@@ -2588,33 +2592,37 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 			}
 		    }
 		} else {
-		    /* D1 <= 0 */
+		    /* D1 <= 0.0 */
 		    ilast = gcount;
 		}
-	    } else {
-		/* no progress */
-		if (ilast < gcount) {
-		    ndelta = n;
-		    ilast = gcount;
-		}
-	    }
-	} else {
-	    /* downhill search: reset? */
-	    ndelta = n;
-	    if (ilast == gcount) {
-		ndelta = 0;
-	    } else {
+	    } else if (ilast < gcount) {
+		ndelta = n;
 		ilast = gcount;
 	    }
+	} else {
+	    /* downhill search */
+	    if (ilast == gcount) {
+		/* we just reset: don't reset again; set ndelta = 0 so
+		   that we exit the main loop
+		*/
+		ndelta = 0;
+	    } else {
+		/* reset for another attempt */
+		ilast = gcount;
+		ndelta = n;
+	    }
 	}
+
 	if (iter >= maxit) {
 	    break;
 	}
+
 	if (gcount - ilast > 2 * n) {
-	    /* periodic restart */
+	    /* periodic restart of curvature computation */
 	    ilast = gcount;
 	}
-    } while (ndelta != 0 || ilast != gcount);
+
+    } while (ndelta > 0 || ilast < gcount);
 
 #if BFGS_DEBUG
     fprintf(stderr, "terminated: ndelta=%d, ilast=%d, gcount=%d\n",
@@ -2649,3 +2657,6 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 
     return err;
 }
+
+
+
