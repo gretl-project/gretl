@@ -1767,12 +1767,12 @@ static int ar_init_by_ls (const int *list, double *coeff,
 
     if (nonlin) {
 #if ARMA_DEBUG
-	fprintf(stderr, "ar_init_by_ls: doing NLS\n");
+	fprintf(stderr, "arma:_init_by_ls: doing NLS\n");
 #endif
 	err = arma_get_nls_model(&armod, ainfo, narmax, &aZ, adinfo);
     } else {
 #if ARMA_DEBUG
-	printlist(alist, "'alist' in ar_init_by_ls");
+	printlist(alist, "'alist' in ar_init_by_ls (OLS)");
 #endif
 	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
 	err = armod.errcode;
@@ -1877,6 +1877,8 @@ static int alt_ar_init (const int *list, double *coeff,
     int *pass2list = NULL;
     int *arlags = NULL;
     int *malags = NULL;
+    double *theta = NULL;
+    double *Theta = NULL;
     MODEL armod;
     int xstart;
     int m, pos, s;
@@ -2078,12 +2080,18 @@ static int alt_ar_init (const int *list, double *coeff,
 #if ARMA_DEBUG
 	    fprintf(stderr, "theta[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
 #endif
+	    if (i == 0) {
+		theta = armod.coeff + pos2;
+	    }
 	    coeff[pos++] = armod.coeff[pos2++];
 	}
 	for (i=0; i<nQ; i++) { /* Theta */
 #if ARMA_DEBUG
 	    fprintf(stderr, "Theta[%d] = coeff[%d] = %g\n", i+1, pos2, armod.coeff[pos2]);
 #endif
+	    if (i == 0) {
+		Theta = armod.coeff + pos2;
+	    }
 	    coeff[pos++] = armod.coeff[pos2];
 	    pos2 += nq + 1;
 	}
@@ -2103,6 +2111,11 @@ static int alt_ar_init (const int *list, double *coeff,
     free(malags);
     destroy_dataset(aZ, adinfo);
     clear_model(&armod);
+
+    /* check MA values? */
+    if (!err && (ainfo->q > 0 || ainfo->Q > 0)) {
+	err = ma_out_of_bounds(ainfo, theta, Theta);
+    }
 
     return err;
 }
@@ -2286,6 +2299,11 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	err = alt_ar_init_check(pdinfo, &ainfo);
 	if (!err) {
 	    err = alt_ar_init(alist, coeff, Z, pdinfo, &ainfo);
+#if ARMA_DEBUG
+	    if (err) {
+		fputs("alt_ar_init failed, will try ar_init_by_ls\n", stderr);
+	    }
+#endif
 	}
 	if (!err) {
 	    init_done = 1;

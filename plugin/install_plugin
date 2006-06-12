@@ -9,5 +9,6 @@ if [ "x$PLUG" = "x" ] ; then
 fi
 
 make ${PLUG}.la
-../libtool --mode=install /bin/install -c -m 755 ${PLUG}.la $DEST
+../libtool --mode=install install -c -m 755 ${PLUG}.la $DEST
+
 
