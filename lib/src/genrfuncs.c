@@ -847,12 +847,12 @@ typedef enum {
     PLOTVAR_MAX
 } plotvar_type; 
 
-struct plotvar {
+struct plotvar_t {
     int ptype;
     char *pname;
 };
 
-static struct plotvar pvars[] = {
+static struct plotvar_t pvars[] = {
     { PLOTVAR_INDEX,    "index" },
     { PLOTVAR_TIME,     "time" },
     { PLOTVAR_ANNUAL,   "annual" },

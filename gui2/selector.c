@@ -150,9 +150,6 @@ static int *vecxlist;
 
 static GtkWidget *multiplot_label;
 static GtkWidget *multiplot_menu;
-#ifdef OLD_GTK
-static GtkWidget *x_axis_item;
-#endif
 
 static selector *open_selector;
 
@@ -1445,7 +1442,7 @@ static void get_rlvars_data (selector *sr, int rows, int context)
     gchar *rvstr;
     int added = 0;
     int i, j = 1;
-	
+
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars));
     gtk_tree_model_get_iter_first(model, &iter);
 
@@ -1808,16 +1805,22 @@ static void construct_cmdlist (selector *sr)
 	return;
     }
 
-    if (sr->code == SCATTERS || sr->code == LINEPLOTS) {
-	add_to_cmdlist(sr, " ;");
-    }
-
     if (sr->code == GR_DUMMY || sr->code == GR_3D) { 
 	parse_special_graph_data(sr);
 	return;
     } 
 
     rows = varlist_row_count(sr, SR_RLVARS, &realrows);
+
+    if (sr->code == SCATTERS || sr->code == LINEPLOTS) {
+	if (rows > 0) {
+	    add_to_cmdlist(sr, " ;");
+	} else {
+	    sr->error = E_ARGS;
+	    gui_errmsg(sr->error);
+	    return;
+	}
+    }    
 
     if (VEC_CODE(sr->code) && rows < 2) {
 	errbox(_("You must select two or more endogenous variables"));
@@ -1878,16 +1881,11 @@ static void construct_cmdlist (selector *sr)
     }
 
     if ((sr->code == SCATTERS || sr->code == LINEPLOTS) && !sr->error) {
+	GtkWidget *m;
 	int xstate;
 
-#ifndef OLD_GTK	
-	GtkWidget *m = GTK_OPTION_MENU(multiplot_menu)->menu_item;
-	xstate = 
-	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(m),
-					  "x-axis-item"));
-#else
-	xstate = GTK_OPTION_MENU(multiplot_menu)->menu_item == x_axis_item;
-#endif
+	m = GTK_OPTION_MENU(multiplot_menu)->menu_item;
+	xstate = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(m), "x-axis-item"));
 	if (xstate) {
 	    reverse_list(sr->cmdlist);
 	}
@@ -2018,12 +2016,8 @@ static char *extra_string (int cmdnum)
 
 static gint flip_multiplot_axis (GtkMenuItem *m, GtkOptionMenu *popdown)
 {
-#ifdef OLD_GTK
-    gint xstate = (popdown->menu_item == x_axis_item);
-#else
     gint xstate = 
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(m), "x-axis-item"));
-#endif
 
     if (xstate) {
 	gtk_label_set_text(GTK_LABEL(multiplot_label), _("Y-axis variables"));
@@ -2048,12 +2042,9 @@ static GtkWidget *multiplot_popdown (int ci)
 	g_signal_connect(G_OBJECT(child), "activate",
 			 G_CALLBACK(flip_multiplot_axis), popdown);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
-#ifdef OLD_GTK
-	x_axis_item = child;
-#else
 	g_object_set_data(G_OBJECT(child), "x-axis-item", 
 			  GINT_TO_POINTER(1));
-#endif
+
 	child = gtk_menu_item_new_with_label(_("Y-axis variable"));
 	g_signal_connect(G_OBJECT(child), "activate",
 			 G_CALLBACK(flip_multiplot_axis), popdown);
@@ -2068,12 +2059,8 @@ static GtkWidget *multiplot_popdown (int ci)
 	g_signal_connect(G_OBJECT(child), "activate",
 			 G_CALLBACK(flip_multiplot_axis), popdown);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
-#ifdef OLD_GTK
-	x_axis_item = child;
-#else
 	g_object_set_data(G_OBJECT(child), "x-axis-item", 
 			  GINT_TO_POINTER(1));
-#endif
     }
 
     gtk_option_menu_set_menu(GTK_OPTION_MENU(popdown), menu);
@@ -2142,6 +2129,15 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
 	sr->depvar = entry_with_label_and_chooser(sr, right_vbox,
 						  _("X-axis variable"), 0,
 						  set_dependent_var_callback);
+    }
+
+    if (sr->code == LINEPLOTS) {
+	int v = varindex(datainfo, "time");
+
+	if (v < datainfo->v) {
+	    gtk_entry_set_text(GTK_ENTRY(sr->depvar), "time");
+	    g_object_set_data(G_OBJECT(sr->depvar), "data", GINT_TO_POINTER(v));
+	}
     }
 }
 
@@ -3114,6 +3110,9 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     if (ci == SAVE_FUNCTIONS) {
 	functions_list(sr);
     } else {
+	if (ci == LINEPLOTS && dataset_is_time_series(datainfo)) {
+	    plotvar_from_varname(&Z, datainfo, "time");
+	}
 	for (i=0; i<datainfo->v; i++) {
 	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
@@ -3166,7 +3165,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 	    tmp = gtk_label_new(_("Y-axis variables"));
 	} else if (ci == SCATTERS) {
 	    multiplot_label = tmp = gtk_label_new(_("X-axis variables"));
-	} else if (ci == LINEPLOTS) { /* FIXME? */
+	} else if (ci == LINEPLOTS) { 
 	    multiplot_label = tmp = gtk_label_new(_("Y-axis variables"));
 	} else if (ci == SAVE_FUNCTIONS) {
 	    tmp = gtk_label_new(_("Helper functions"));
