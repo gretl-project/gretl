@@ -2412,6 +2412,61 @@ static void reverse_gradient (double *g, int n)
     }
 }
 
+#if 0 /* by no means ready! */
+
+static int compute_hessian (double *b, double *g, double *c, int n,
+			    BFGS_GRAD_FUNC gradfunc, void *data)
+{
+    double eps = 1.0e-4, d = 0.0001, v = 1.0;
+    int r = 4;
+    double b0, h, x;
+    gretl_matrix *H;
+    int i, j, k;
+
+    H = gretl_matrix_alloc(n, n);
+
+    for (k=0; k<r; k++) {
+	for (j=0; j<n; j++) {
+	    b0 = b[j];
+	    h = fabs(d * b0) + eps * (b0 == 0.0);
+	    if (k > 0) {
+		h /= v;
+	    }
+	    b[j] = b0 - h;
+	    gradfunc(b, g, data);
+	    b[j] = b0 + h;
+	    gradfunc(b, c, data);
+	    for (i=0; i<n; i++) {
+		if ((i == 0 && j > 0) || (j == 0 && i > 0)) {
+		    x = 0.0;
+		} else {
+		    x = (g[i] - c[i]) / (2.0 * h);
+		}
+		gretl_matrix_set(H, i, j, x);
+	    }
+	    b[j] = b0;
+	}
+	v *= 2.0;
+    }
+
+    gretl_matrix_print(H, "H");
+    if (gretl_invert_general_matrix(H)) {
+	fprintf(stderr, "H inversion failed\n");
+    } else {
+	gretl_matrix_print(H, "H-inverse");
+	for (i=0; i<n; i++) {
+	    x = gretl_matrix_get(H, i, i);
+	    fprintf(stderr, "sqrt H(%d,%d) = %g\n", i, i, sqrt(x));
+	}
+    }
+
+    gretl_matrix_free(H);
+
+    return 0;
+}
+
+#endif
+
 /**
  * BFGS_max:
  * @n: number elements in array @b.
@@ -2552,7 +2607,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    if (done) {
 		ndelta = 0;
 		fmax = f;
-#if 1 /* Prevent a "final pass" that destroys the curvature matrix:
+#if 0 /* Prevent a "final pass" that destroys the curvature matrix:
 	 not sure this is right? */
 		break;
 #endif
@@ -2640,6 +2695,12 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
     if (!err && hessvcv != NULL) {
 	*hessvcv = transcribe_hessian(H, n);
     }
+
+#if 0
+    if (!err) {
+	compute_hessian(b, g, c, n, get_gradient, callback_data);
+    }
+#endif
 
     if (opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	

@@ -141,6 +141,11 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     return err;
 }
 
+static void bounds_checker_cleanup (void)
+{
+    ma_out_of_bounds(NULL, NULL, NULL);
+}
+
 static void do_MA_partials (double *drv,
 			    struct arma_info *ainfo,
 			    const double *theta,
@@ -2115,6 +2120,7 @@ static int alt_ar_init (const int *list, double *coeff,
     /* check MA values? */
     if (!err && (ainfo->q > 0 || ainfo->Q > 0)) {
 	err = ma_out_of_bounds(ainfo, theta, Theta);
+	bounds_checker_cleanup();
     }
 
     return err;
@@ -2332,7 +2338,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     free(ainfo.dy);
 
     /* cleanup in MA roots checker */
-    ma_out_of_bounds(NULL, NULL, NULL);
+    bounds_checker_cleanup();
 
     errprn = NULL;
 
