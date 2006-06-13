@@ -126,8 +126,6 @@ gretl_matrix *gretl_matrix_alloc (int rows, int cols);
 
 gretl_matrix *gretl_matrix_reuse (gretl_matrix *m, int rows, int cols);
 
-gretl_matrix *gretl_packed_matrix_alloc (int rows);
-
 gretl_matrix *gretl_identity_matrix_new (int n);
 
 gretl_matrix *gretl_zero_matrix_new (int r, int c);
@@ -271,6 +269,8 @@ int gretl_invert_general_matrix (gretl_matrix *a);
 int gretl_invert_symmetric_matrix (gretl_matrix *a);
 
 int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet);
+
+int gretl_invert_packed_symmetric_matrix (gretl_matrix *v);
 
 int gretl_invert_diagonal_matrix (gretl_matrix *a);
 

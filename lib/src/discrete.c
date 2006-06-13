@@ -665,49 +665,50 @@ MODEL logit_probit (const int *list, double ***pZ, DATAINFO *pdinfo,
    X'X must be Cholesky-decomposed already.
 */
 
-static int neginv (const double *xpx, double *diag, int nv)
+static int neginv (const double *xpx, double *diag, int n)
 {
     int kk, l, m, k, i, j;
-    const int nxpx = nv * (nv + 1) / 2;
-    double d, e, *tmp;
+    const int nxpx = n * (n + 1) / 2;
+    double *tmp;
+    double d, e;
 
-    tmp = malloc((nv + 1) * sizeof *tmp);
+    tmp = malloc((n + 1) * sizeof *tmp);
     if (tmp == NULL) {
-	return 1;
+	return E_ALLOC;
     }
 
-    for (i=0; i<=nv; i++) {
+    for (i=0; i<=n; i++) {
 	tmp[i] = 0.0;
     }
 
     kk = 0;
 
-    for (l=1; l<=nv-1; l++) {
+    for (l=1; l<=n-1; l++) {
         d = xpx[kk];
         tmp[l] = d;
         e = d * d;
         m = 0;
         if (l > 1) {
 	    for (j=1; j<=l-1; j++) {
-		m += nv - j;
+		m += n - j;
 	    }
 	}
-        for (i=l+1; i<=nv; i++) {
+        for (i=l+1; i<=n; i++) {
             d = 0.0;
             k = i + m - 1;
             for (j=l; j<=i-1; j++) {
                 d += tmp[j] * xpx[k];
-                k += nv - j;
+                k += n - j;
             }
             d = -d * xpx[k];
             tmp[i] = d;
             e += d * d;
         }
-        kk += nv + 1 - l;
+        kk += n + 1 - l;
         diag[l-1] = e;
     }
 
-    diag[nv - 1] = xpx[nxpx - 1] * xpx[nxpx - 1];
+    diag[n - 1] = xpx[nxpx - 1] * xpx[nxpx - 1];
 
     free(tmp);
 

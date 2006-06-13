@@ -1548,33 +1548,41 @@ int gnuplot (int *list, const int *lines, const char *literal,
  * @plot_count: count of graphs shown to date.
  * @flags: option flags.
  *
- * Writes a gnuplot plot file to display up to 6 small X-Y graphs.
- * variables in @list and calls gnuplot to make the graph.
+ * Writes a gnuplot plot file to display up to 6 small graphs
+ * based on the variables in @list, and calls gnuplot to make 
+ * the graph.
  *
  * Returns: 0 on successful completion, error code on error.
  */
 
 int multi_scatters (const int *list, double ***pZ, 
-		    const DATAINFO *pdinfo, int *plot_count, 
+		    DATAINFO *pdinfo, int *plot_count, 
 		    GnuplotFlags flags)
 {
-    int i, t, err = 0, xvar, yvar;
+    int xvar = 0, yvar = 0, timevar = 0;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
+    int i, t, err = 0;
 
     pos = gretl_list_separator_position(list);
 
-    if (pos > 2) { 
+    if (pos == 0) {
+	/* plot against time or index */
+	timevar = plotvar(pZ, pdinfo);
+	if (timevar < 0) {
+	    return E_ALLOC;
+	}
+	plotlist = gretl_list_copy(list);
+	flags |= GP_LINES;
+    } else if (pos > 2) { 
 	/* plot several yvars against one xvar */
-	yvar = 0;
-	plotlist = malloc(pos * sizeof *plotlist);
+	plotlist = gretl_list_new(pos - 1);
 	xvar = list[list[0]];
     } else {       
 	/* plot one yvar against several xvars */
+	plotlist = gretl_list_new(list[0] - pos);
 	yvar = list[1];
-	plotlist = malloc((list[0] + 1 - pos) * sizeof *plotlist);
-	xvar = 0;
     }
 
     if (plotlist == NULL) {
@@ -1582,12 +1590,10 @@ int multi_scatters (const int *list, double ***pZ,
     }
 
     if (yvar) {
-	plotlist[0] = list[0] - pos;
 	for (i=1; i<=plotlist[0]; i++) {
 	   plotlist[i] = list[i + pos]; 
 	}
-    } else {
-	plotlist[0] = pos - 1;
+    } else if (xvar) {
 	for (i=1; i<pos; i++) {
 	   plotlist[i] = list[i]; 
 	}
@@ -1607,9 +1613,17 @@ int multi_scatters (const int *list, double ***pZ,
     fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
 	  "set multiplot\n", fp);
     fputs("set nokey\n", fp);
-    fputs("set noxtics\nset noytics\n", fp);
 
     gretl_push_c_numeric_locale();
+
+    if (timevar) {
+	double startdate = (*pZ)[timevar][pdinfo->t1];
+	int jump = (pdinfo->t2 - pdinfo->t1 + 1) / (2 * pdinfo->pd);
+
+	fprintf(fp, "set xtics %g, %d\n", startdate, jump);
+    } else {
+	fputs("set noxtics\nset noytics\n", fp);
+    }
 
     for (i=0; i<nplots; i++) {  
 	if (nplots <= 4) {
@@ -1630,9 +1644,13 @@ int multi_scatters (const int *list, double ***pZ,
 	    else if (i == 5) fputs("0.64,0.0\n", fp);
 	}
 
-	fprintf(fp, "set xlabel '%s'\n",
-		(yvar)? pdinfo->varname[plotlist[i+1]] :
-		pdinfo->varname[xvar]);
+	if (timevar) {
+	    fputs("set noxlabel\n", fp);
+	} else {
+	    fprintf(fp, "set xlabel '%s'\n",
+		    (yvar)? pdinfo->varname[plotlist[i+1]] :
+		    pdinfo->varname[xvar]);
+	}
 
 	fprintf(fp, "set ylabel '%s'\n", 
 		(yvar)? pdinfo->varname[yvar] :
@@ -1648,7 +1666,7 @@ int multi_scatters (const int *list, double ***pZ,
 	    double xx;
 	    int m;
 
-	    m = (yvar)? plotlist[i+1] : xvar;
+	    m = (yvar)? plotlist[i+1] : (xvar)? xvar : timevar;
 	    xx = (*pZ)[m][t];
 
 	    if (na(xx)) {

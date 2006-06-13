@@ -4578,16 +4578,15 @@ int do_scatters (selector *sr)
 
     if (buf == NULL) return 1;
 
-    gretl_command_sprintf("scatters %s%s", buf, 
-			  (action == LINEPLOTS)? 
-			  " --with-lines" : "");
+    if (action == LINEPLOTS) {
+	gretl_command_sprintf("scatters %s --with-lines", buf);
+	flags |= GP_LINES;
+    } else {
+	gretl_command_sprintf("scatters %s", buf);
+    }
 
     if (check_and_record_command()) {
 	return 1;
-    }
-
-    if (action == LINEPLOTS) {
-	flags |= GP_LINES;
     }
 
     err = multi_scatters(cmd.list, &Z, datainfo, NULL, flags);

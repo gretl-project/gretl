@@ -444,7 +444,9 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
     } else if (action == ELLIPSE) {
 	simple_selection(_("gretl: model tests"), do_confidence_region, action, vwin);
     } else if (action == GR_PLOT) {
-	simple_selection(_("gretl: define graph"), do_graph_from_selector, action, vwin);
+	simple_selection(_("gretl: define graph"), do_graph_from_selector, action, NULL);
+    } else if (action == TSPLOTS) {
+	simple_selection(_("gretl: define graph"), do_scatters, action, vwin);
     } else if (action == SPEARMAN) {
 	strcat(title, _("rank correlation"));
 	simple_selection(title, do_spearman, action, vwin);

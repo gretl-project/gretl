@@ -2130,15 +2130,6 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
 						  _("X-axis variable"), 0,
 						  set_dependent_var_callback);
     }
-
-    if (sr->code == LINEPLOTS) {
-	int v = varindex(datainfo, "time");
-
-	if (v < datainfo->v) {
-	    gtk_entry_set_text(GTK_ENTRY(sr->depvar), "time");
-	    g_object_set_data(G_OBJECT(sr->depvar), "data", GINT_TO_POINTER(v));
-	}
-    }
 }
 
 static void maybe_activate_depvar_lags (GtkWidget *w, selector *sr)
@@ -3110,9 +3101,6 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     if (ci == SAVE_FUNCTIONS) {
 	functions_list(sr);
     } else {
-	if (ci == LINEPLOTS && dataset_is_time_series(datainfo)) {
-	    plotvar_from_varname(&Z, datainfo, "time");
-	}
 	for (i=0; i<datainfo->v; i++) {
 	    if (list_show_var(i, ci, 0)) {
 		list_append_var_simple(store, &iter, i);
@@ -3762,8 +3750,9 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     g_signal_connect(G_OBJECT(sr->add_button), "clicked", 
 		     G_CALLBACK(add_to_rlvars_callback), sr);
 
-    if (p == NULL && !TWO_VARS_CODE(sr->code)) {
+    if (p == NULL && !TWO_VARS_CODE(sr->code) && sr->code != TSPLOTS) {
 	/* data save action */
+	fprintf(stderr, "adding ALL button\n");
 	tmp = gtk_button_new_with_label (_("All ->"));
 	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
 	g_signal_connect (G_OBJECT(tmp), "clicked", 

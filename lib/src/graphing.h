@@ -162,7 +162,7 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	     int *plot_count, GnuplotFlags flags);
 
 int multi_scatters (const int *list, 
-		    double ***pZ, const DATAINFO *pdinfo, 
+		    double ***pZ, DATAINFO *pdinfo, 
 		    int *plot_count, GnuplotFlags flags);
 
 int gnuplot_3d (int *list, const char *literal,

@@ -3253,6 +3253,60 @@ int gretl_invert_symmetric_matrix2 (gretl_matrix *a, double *ldet)
 }
 
 /**
+ * gretl_invert_packed_symmetric_matrix:
+ * @v: symmetric matrix in vech form (lower triangle packed
+ * as a column vector).
+ * 
+ * Computes the inverse of a symmetric positive definite matrix,
+ * stored in vech form, using Cholesky factorization.  On exit 
+ * @v is overwritten with the lower triangle of the inverse.
+ * Uses the lapack functions %dpptrf and %dpptri.
+ *
+ * Returns: 0 on success; non-zero error code on failure.
+ */
+
+int gretl_invert_packed_symmetric_matrix (gretl_matrix *v)
+{
+    integer info, n;
+    char uplo = 'L';
+    int err = 0;
+
+    if (v->cols != 1) {
+	fprintf(stderr, "gretl_invert_packed_symmetric_matrix:\n"
+		" matrix is not in vech form\n");
+	return E_DATA;
+    }
+
+    if (v->rows == 1) {
+	v->val[0] = 1.0 / v->val[0];
+	return 0;
+    }
+
+    n = (integer) ((sqrt(1.0 + 8.0 * v->rows) - 1.0) / 2.0);
+
+    dpptrf_(&uplo, &n, v->val, &info);   
+
+    if (info != 0) {
+	fprintf(stderr, "gretl_invert_packed_symmetric_matrix:\n"
+		" dpptrf failed with info = %d (n = %d)\n", (int) info, (int) n);
+	if (info > 0) {
+	    fputs(" matrix is not positive definite\n", stderr);
+	}
+	return E_SINGULAR;
+    } 
+
+    dpptri_(&uplo, &n, v->val, &info);
+
+    if (info != 0) {
+	err = E_SINGULAR;
+	fprintf(stderr, "gretl_invert_packed_symmetric_matrix:\n"
+		" dpptri failed with info = %d\n", (int) info);
+    } 
+
+    return err;
+}
+
+/**
  * gretl_eigen_sort:
  * @evals: array of eigenvalues.
  * @evecs: matrix of eigenvectors.

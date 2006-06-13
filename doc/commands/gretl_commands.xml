@@ -5790,7 +5790,7 @@
 
 
   <command name="scatters" section="Graphs"
-    label="Multiple scatterplots">
+    label="Multiple pairwise graphs">
 
     <usage>
       <arguments>
@@ -5798,15 +5798,22 @@
         <argument separated="true">xvarlist</argument>
 	<argument alternate="true">yvarlist ; xvar</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--with-lines</flag>
+	  <effect>create line graphs</effect>
+	</option>
+      </options>
       <examples>
         <example>scatters 1 ; 2 3 4 5</example>
         <example>scatters 1 2 3 4 5 6 ; 7</example>
+	<example>scatters y1 y2 y3 ; x --with-lines</example>
       </examples>
     </usage>
 
     <description>
       <para context="cli">
-	Plots pairwise scatters of <repl>yvar</repl> against all the
+	Generates pairwise graphs of <repl>yvar</repl> against all the
 	variables in <repl>xvarlist</repl>, or of all the variables in
 	<repl>yvarlist</repl> against <repl>xvar</repl>.  The first
 	example above puts variable 1 on the <mathvar>y</mathvar>-axis
@@ -5819,18 +5826,23 @@
 	number of plots is six; any extra variable in the list will be
 	ignored.
       </para>
+      <para context="cli">
+	By default the graphs are scatterplots, but if you give the
+	<lit>--with-lines</lit> flag they will be line graphs.
+      </para>
       <para context="gui">
-	Draws a set of pairwise scatters of the selected <quote>Y-axis
+	Generates pairwise graphs of the selected <quote>Y-axis
 	  variable</quote> against each of the selected <quote>X-axis
-	  variables</quote> in turn.  Scanning a set of such plots can
-	be a useful step in exploratory data analysis.  The maximum
-	number of plots is six; any extra variables in the X-axis list
-	will be ignored.
+	  variables</quote> in turn.  (Or you can select several variables
+	for the Y-axis and one for the X-axis.)  Scanning a set of such
+	plots can be a useful step in exploratory data analysis.  The
+	maximum number of plots is six; any extra variables will be
+	ignored.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Data/Multiple scatterplots</menu-path>
+      <menu-path>/Data/Multiple graphs</menu-path>
     </gui-access>
 
   </command>

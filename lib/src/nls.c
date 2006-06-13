@@ -2373,26 +2373,6 @@ static void free_triangular_array (double **m, int n)
     }
 }
 
-static double *transcribe_hessian (double **m, int n)
-{
-    double *vcv;
-    int nxpx = (n * n + n) / 2;
-    int i, j;
-
-    vcv = malloc(nxpx * sizeof *vcv);
-    if (vcv == NULL) {
-	return NULL;
-    }
-
-    for (i=0; i<n; i++) {
-	for (j=0; j<=i; j++) {
-	    vcv[ijton(i, j, n)] = m[i][j];
-	}
-    }
-
-    return vcv;
-}
-
 #define BFGS_DEBUG 0
 
 #define stepfrac	0.2
@@ -2412,60 +2392,193 @@ static void reverse_gradient (double *g, int n)
     }
 }
 
-#if 0 /* by no means ready! */
+/* apparatus for constructing numerical approximation to
+   the Hessian */
 
-static int compute_hessian (double *b, double *g, double *c, int n,
-			    BFGS_GRAD_FUNC gradfunc, void *data)
+static void hess_h_init (double *h, double *h0, int n)
 {
-    double eps = 1.0e-4, d = 0.0001, v = 1.0;
-    int r = 4;
-    double b0, h, x;
-    gretl_matrix *H;
-    int i, j, k;
+    int i;
 
-    H = gretl_matrix_alloc(n, n);
-
-    for (k=0; k<r; k++) {
-	for (j=0; j<n; j++) {
-	    b0 = b[j];
-	    h = fabs(d * b0) + eps * (b0 == 0.0);
-	    if (k > 0) {
-		h /= v;
-	    }
-	    b[j] = b0 - h;
-	    gradfunc(b, g, data);
-	    b[j] = b0 + h;
-	    gradfunc(b, c, data);
-	    for (i=0; i<n; i++) {
-		if ((i == 0 && j > 0) || (j == 0 && i > 0)) {
-		    x = 0.0;
-		} else {
-		    x = (g[i] - c[i]) / (2.0 * h);
-		}
-		gretl_matrix_set(H, i, j, x);
-	    }
-	    b[j] = b0;
-	}
-	v *= 2.0;
+    for (i=0; i<n; i++) {
+	h[i] = h0[i];
     }
-
-    gretl_matrix_print(H, "H");
-    if (gretl_invert_general_matrix(H)) {
-	fprintf(stderr, "H inversion failed\n");
-    } else {
-	gretl_matrix_print(H, "H-inverse");
-	for (i=0; i<n; i++) {
-	    x = gretl_matrix_get(H, i, i);
-	    fprintf(stderr, "sqrt H(%d,%d) = %g\n", i, i, sqrt(x));
-	}
-    }
-
-    gretl_matrix_free(H);
-
-    return 0;
 }
 
-#endif
+static void hess_h_reduce (double *h, double v, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	h[i] /= v;
+    }
+}
+
+static void hess_b_adjust_i (double *c, double *b, double *h, int n, 
+			     int i, double sgn)
+{
+    int k;
+
+    for (k=0; k<n; k++) {
+	c[k] = b[k] + (k == i) * sgn * h[i];
+    }
+}
+
+static void hess_b_adjust_ij (double *c, double *b, double *h, int n, 
+			      int i, int j, double sgn)
+{
+    int k;
+
+    for (k=0; k<n; k++) {
+	c[k] = b[k] + (k == i) * sgn * h[i] +
+	    (k == j) * sgn * h[j];
+    }
+}
+
+/* The algorithm below implements the method of Richardson
+   Extrapolation.  It is derived from code in the gnu R package
+   "numDeriv" by Paul Gilbert, which was in turn derived from C code
+   by Xingqiao Liu.  Turned back into C and modified for gretl by
+   Allin Cottrell, June 2006.
+*/
+
+static double *numerical_hessian (double *b, double *c, int n,
+				  BFGS_LL_FUNC func, void *data)
+{
+    double *D = NULL;
+    double *h0 = NULL;
+    double *h = NULL;
+    double *Dx = NULL;
+    double *Hx = NULL;
+    double *Hd = NULL;
+
+    gretl_matrix *V = NULL;
+    double *vcv = NULL;
+
+    /* numerical parameters */
+    double eps = 1.0e-4;
+    double d = 0.0001;
+    double v = 2.0;      /* reduction factor for h */
+    int r = 4;           /* number of Richardson steps */
+
+    double f0, f1, f2;
+    double p4m;
+
+    int vn = (n * (n + 1)) / 2;
+    int dn = vn + n;
+    int i, j, k, m, u;
+    int err = 0;
+
+    h0 = malloc(n * sizeof *h0);
+    h  = malloc(n * sizeof *h);
+    Dx = malloc(r * sizeof *Dx);
+    Hx = malloc(r * sizeof *Hx);
+    Hd = malloc(n * sizeof *Hd);
+    D  = malloc(dn * sizeof *D);
+
+    if (h0 == NULL || h == NULL || Dx == NULL || 
+	Hx == NULL || Hd == NULL || D == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* vech form of variance matrix */
+    V = gretl_column_vector_alloc(vn);
+    if (V == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }	
+
+    for (i=0; i<n; i++) {
+	h0[i] = d * b[i] + eps * (b[i] == 0.0);
+    }
+
+    f0 = func(b, data);
+
+    /* first derivatives and Hessian diagonal */
+
+    for (i=0; i<n; i++) {
+	hess_h_init(h, h0, n);
+	for (k=0; k<r; k++) {
+	    hess_b_adjust_i(c, b, h, n, i, 1.0);
+	    f1 = func(c, data);
+	    hess_b_adjust_i(c, b, h, n, i, -1.0);
+	    f2 = func(c, data);
+	    /* F'(i) */
+	    Dx[k] = (f1 - f2) / (2.0 * h[i]); 
+	    /* F''(i) */
+	    Hx[k] = (f1 - 2.0 * f0 + f2) / (h[i] * h[i]);
+	    hess_h_reduce(h, v, n);
+	}
+	p4m = 4.0;
+	for (m=0; m<r-1; m++) {
+	    for (k=0; k<r-m; k++) {
+		Dx[k] = (Dx[k+1] * p4m - Dx[k]) / (p4m - 1.0);
+		Hx[k] = (Hx[k+1] * p4m - Hx[k]) / (p4m - 1.0);
+	    }
+	    p4m *= 4.0;
+	}
+	D[i] = Dx[0];
+	Hd[i] = Hx[0];
+    }
+
+    /* second derivatives: lower half of Hessian only */
+
+    u = n - 1;
+    for (i=0; i<n; i++) {
+	for (j=0; j<=i; j++) {
+	    u++;
+	    if (i == j) {
+		D[u] = Hd[i];
+	    } else {
+		hess_h_init(h, h0, n);
+		for (k=0; k<r; k++) {
+		    hess_b_adjust_ij(c, b, h, n, i, j, 1.0);
+		    f1 = func(c, data);
+		    hess_b_adjust_ij(c, b, h, n, i, j, -1.0);
+		    f2 = func(c, data);
+		    /* cross-partial */
+		    Dx[k] = (f1 - 2.0 * f0 + f2 - Hd[i] * h[i] * h[i]
+			     - Hd[j] * h[j] * h[j]) / (2.0 * h[i] * h[j]);
+		    hess_h_reduce(h, v, n);
+		}
+		p4m = 4.0;
+		for (m=0; m<r-1; m++) {
+		    for (k=0; k<r-m; k++) {
+			Dx[k] = (Dx[k+1] * p4m - Dx[k]) / (p4m - 1.0);
+		    }
+		    p4m *= 4.0;
+		}
+		D[u] = Dx[0];
+	    }
+	}
+    }
+
+    u = n;
+    for (i=0; i<n; i++) {
+	for (j=0; j<=i; j++) {
+	    k = ijton(i, j, n);
+	    V->val[k] = -D[u++];
+	}
+    }
+
+    err = gretl_invert_packed_symmetric_matrix(V);
+    if (!err) {
+	vcv = gretl_matrix_steal_data(V);
+    }  
+
+    gretl_matrix_free(V);
+
+ bailout:
+
+    free(D);
+    free(h0);
+    free(h);
+    free(Dx);
+    free(Hx);
+    free(Hd);
+
+    return vcv;
+}
 
 /**
  * BFGS_max:
@@ -2607,10 +2720,6 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    if (done) {
 		ndelta = 0;
 		fmax = f;
-#if 0 /* Prevent a "final pass" that destroys the curvature matrix:
-	 not sure this is right? */
-		break;
-#endif
 	    }
 
 	    if (ndelta > 0) {
@@ -2693,14 +2802,8 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
     *grcount = gcount;
 
     if (!err && hessvcv != NULL) {
-	*hessvcv = transcribe_hessian(H, n);
+	*hessvcv = numerical_hessian(b, c, n, get_ll, callback_data);
     }
-
-#if 0
-    if (!err) {
-	compute_hessian(b, g, c, n, get_gradient, callback_data);
-    }
-#endif
 
     if (opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	
@@ -2718,6 +2821,3 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 
     return err;
 }
-
-
-

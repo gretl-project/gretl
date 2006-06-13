@@ -267,7 +267,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 #define NEEDS_LISTSEP(c) (c == AR || \
                           c == ARMA || \
                           c == GARCH || \
-                          c == SCATTERS || \
                           c == TSLS)
 
 #define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \

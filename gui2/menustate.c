@@ -176,6 +176,7 @@ void time_series_menu_state (gboolean s)
     /* Plots */
     flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", sx);
     flip(mdata->ifac, "/Variable/Time series plot", sx);
+    flip(mdata->ifac, "/Data/Multiple graphs/time series...", sx);
 
     /* Variable menu */
     flip(mdata->ifac, "/Variable/Correlogram", s);
