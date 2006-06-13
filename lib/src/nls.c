@@ -2523,10 +2523,9 @@ static double *numerical_hessian (double *b, double *c, int n,
 
     /* second derivatives: lower half of Hessian only */
 
-    u = n - 1;
+    u = n;
     for (i=0; i<n; i++) {
 	for (j=0; j<=i; j++) {
-	    u++;
 	    if (i == j) {
 		D[u] = Hd[i];
 	    } else {
@@ -2550,9 +2549,11 @@ static double *numerical_hessian (double *b, double *c, int n,
 		}
 		D[u] = Dx[0];
 	    }
+	    u++;
 	}
     }
 
+    /* transcribe the negative of the Hessian */
     u = n;
     for (i=0; i<n; i++) {
 	for (j=0; j<=i; j++) {
