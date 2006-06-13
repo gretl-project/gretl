@@ -2589,8 +2589,8 @@ static double *numerical_hessian (double *b, double *c, int n,
  * @fncount: location to receive count of function evaluations.
  * @grcount: location to receive count of gradient evaluations.
  * @hessvcv: location to receive packed triangular representation
- * of BFGS approximation to negative Hessian at the last iteration, 
- * or %NULL.
+ * of covariance matrix, based on numerical approximation to the
+ * Hessian at the last iteration, or %NULL.
  * @get_ll: pointer to function used to calculate log
  * likelihood.
  * @get_gradient: pointer to function used to calculate the 
@@ -2716,7 +2716,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		    done);
 #endif
 
-	    /* stop if relative change is small enough */
+	    /* prepare to stop if relative change is small enough */
 	    if (done) {
 		ndelta = 0;
 		fmax = f;
