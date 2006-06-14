@@ -4016,6 +4016,14 @@
 	  <effect>print covariance matrix</effect>
 	</option>
 	<option>
+	  <flag>--hessian</flag>
+	  <effect>base covariance matrix on the Hessian</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>QML covariance matrix</effect>
+	</option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>print details of iterations</effect>
 	</option>
@@ -4064,6 +4072,14 @@
       <code>
 	genr p = 0.5
       </code>
+
+      <para>
+	By default, standard errors are based on the Outer Product of the
+	Gradient.  If the robust standard errors box is checked, a QML
+	estimator is used (namely, a sandwich of the negative inverse of
+	the Hessian and the covariance matrix of the gradient).  The
+	Hessian is approximated numerically.
+      </para>
 
     </description>
 
@@ -4124,8 +4140,18 @@
       </para>
 
       <para>
-	The option flags, <lit>--vcv</lit> or <lit>--verbose</lit>,
-	should be appended to the ending line of the MLE block.
+	Note that any option flags should be appended to the ending line
+	of the MLE block.
+      </para>
+
+      <para>
+	By default, estimated standard errors are based on the Outer
+	Product of the Gradient.  If the <lit>--hessian</lit> option is
+	given, they are instead based on the negative inverse of the
+	Hessian (which is approximated numerically).  If the
+	<lit>--robust</lit> option is given, a QML estimator is used
+	(namely, a sandwich of the negative inverse of the Hessian and the
+	covariance matrix of the gradient). 
       </para>
 
     </description>

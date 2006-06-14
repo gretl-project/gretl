@@ -1895,13 +1895,18 @@ gretl_matrix *gretl_matrix_from_scalar (double x)
 }
 
 static int 
-matrix_multiply_self_transpose (const gretl_matrix *a,
-				gretl_matrix *c)
+matrix_multiply_self_transpose (const gretl_matrix *a, gretl_matrix *c,
+				int ltr)
 {
     register int i, j, k;
-    int nc = a->cols;
-    int nr = a->rows;
-    double targ;
+    int nc = (ltr)? a->cols : a->rows;
+    int nr = (ltr)? a->rows : a->cols;
+    int idx1, idx2;
+    double x;
+
+    if (c->rows != nc) {
+	return E_NONCONF;
+    }
 
     if (gretl_is_vector(a)) {
 	fprintf(stderr, "matrix_multiply_self_transpose: got vector\n");
@@ -1909,12 +1914,14 @@ matrix_multiply_self_transpose (const gretl_matrix *a,
 
     for (i=0; i<nc; i++) {
 	for (j=i; j<nc; j++) {
-	    targ = 0.0;
+	    x = 0.0;
 	    for (k=0; k<nr; k++) {
-		targ += a->val[mdxtr(a,i,k)] * a->val[mdx(a,k,j)];
+		idx1 = (ltr)? mdxtr(a,i,k) : mdx(a,i,k);
+		idx2 = (ltr)? mdx(a,k,j) : mdxtr(a,k,j);
+		x += a->val[idx1] * a->val[idx2];
 	    }
-	    c->val[mdx(c,i,j)] = targ;
-	    c->val[mdx(c,j,i)] = targ;
+	    c->val[mdx(c,i,j)] = x;
+	    c->val[mdx(c,j,i)] = x;
 	}
     } 
 
@@ -1962,8 +1969,8 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, GretlMatrixMod amod,
 	return 1;
     }
 
-    if (a == b && atr && !btr && c->rows == a->cols && c->cols == a->cols) {
-	return matrix_multiply_self_transpose(a, c);
+    if (a == b && atr != btr && c->rows == c->cols) {
+	return matrix_multiply_self_transpose(a, c, atr);
     }
 
     lrows = (atr)? a->cols : a->rows;

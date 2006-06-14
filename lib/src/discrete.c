@@ -20,6 +20,7 @@
 /* discrete.c for gretl: logit and probit models */
 
 #include "libgretl.h"
+#include "libset.h"
 
 #define TINY 1.0e-13
 
@@ -137,7 +138,7 @@ static int add_slopes_to_model (MODEL *pmod, double fbx)
     return 0;
 }
 
-static double *hess_wts (MODEL *pmod, const double **Z, int opt) 
+static double *hess_wts (MODEL *pmod, const double **Z, int ci) 
 {
     int t, tw, n = pmod->t2 - pmod->t1 + 1;
     double q, bx, xx;
@@ -158,7 +159,7 @@ static double *hess_wts (MODEL *pmod, const double **Z, int opt)
 	q = 2.0 * Z[pmod->list[1]][t] - 1.0;
 	bx = pmod->yhat[t];
 
-	if (opt == LOGIT) {
+	if (ci == LOGIT) {
 	    w[tw] = -1.0 * logit(bx) * (1.0 - logit(bx));
 	} else {
 	    xx = (q * normal_pdf(q * bx)) / normal_cdf(q * bx);
@@ -169,7 +170,7 @@ static double *hess_wts (MODEL *pmod, const double **Z, int opt)
     return w;
 }
 
-static double *hessian (MODEL *pmod, const double **Z, int opt) 
+static double *hessian (MODEL *pmod, const double **Z, int ci) 
 {
     int i, j, li, lj, m, t;
     const int l0 = pmod->list[0];
@@ -183,7 +184,7 @@ static double *hessian (MODEL *pmod, const double **Z, int opt)
 	return NULL;
     }
 
-    wt = hess_wts(pmod, Z, opt);
+    wt = hess_wts(pmod, Z, ci);
     if (wt == NULL) {
 	free(xpx);
 	return NULL;
@@ -300,7 +301,7 @@ compute_QML_vcv (MODEL *pmod, const double **Z)
 	}
     }
 
-    gretl_model_set_int(pmod, "robust", 1);
+    gretl_model_set_int(pmod, "ml_vcv", VCV_QML);
 
  bailout:
 

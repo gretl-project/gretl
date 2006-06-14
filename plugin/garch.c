@@ -405,7 +405,7 @@ int do_fcp (const int *list, double **Z, double scale,
 			  list, amax, nparam, pad, res, h);
 	make_packed_vcv(pmod, vcv, nparam, ncoeff, scale);
 	gretl_model_set_int(pmod, "iters", iters);
-	gretl_model_set_int(pmod, "garch_vcv", vopt);
+	gretl_model_set_int(pmod, "ml_vcv", vopt);
     }
 
  bailout:

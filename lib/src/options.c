@@ -131,6 +131,8 @@ struct gretl_option gretl_opts[] = {
     { MAHAL,    OPT_S, "save" },
     { MAHAL,    OPT_V, "vcv" },
     { MEANTEST, OPT_O, "unequal-vars" },
+    { MLE,      OPT_H, "hessian" },
+    { MLE,      OPT_R, "robust" },
     { MLE,      OPT_V, "verbose" },
     { MPOLS,    OPT_O, "vcv" },
     { MPOLS,    OPT_Q, "quiet" },
@@ -274,6 +276,7 @@ struct flag_match flag_matches[] = {
     { OPT_E, 'e' },
     { OPT_F, 'f' },
     { OPT_G, 'g' },
+    { OPT_H, 'h' },
     { OPT_I, 'i' },
     { OPT_L, 'l' },
     { OPT_M, 'm' },
@@ -291,7 +294,7 @@ struct flag_match flag_matches[] = {
     { 0L,   '\0' }
 };
 
-static const char *ok_flags = "abcdefgilmnopqrstvwxz";
+static const char *ok_flags = "abcdefghilmnopqrstvwxz";
 
 #define isflag(c) (strchr(ok_flags, c) != NULL)
 

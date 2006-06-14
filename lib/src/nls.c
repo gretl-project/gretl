@@ -45,7 +45,9 @@ struct _nls_param {
 struct _nls_spec {
     int ci;             /* NLS or MLE */
     int mode;           /* derivatives: numeric or analytic */
-    gretlopt opt;       /* can include OPT_V for verbose output */
+    gretlopt opt;       /* can include OPT_V for verbose output; if ci = MLE
+			   can also include OPT_H (Hessian) or OPT_R (QML)
+			   to control the estimator of the variance matrix */
     int depvar;         /* ID number of dependent variable */
     int uhatnum;        /* ID number of variable holding residuals */
     char *nlfunc;       /* string representation of nonlinear function,
@@ -65,6 +67,8 @@ struct _nls_spec {
     nls_param *params;  /* array of information on function parameters
 			   (see the _nls_param struct above) */
     doublereal *coeff;  /* coefficient estimates */
+    double *hessvec;    /* vech representation of negative inverse of
+			   Hessian */
     char **aux;         /* auxiliary commands */
     GENERATOR **genrs;  /* variable-generation pointers */
 };
@@ -851,17 +855,57 @@ static void add_stats_to_model (MODEL *pmod, nls_spec *spec,
     pmod->adjrsq = NADBL;
 }
 
-/* MLE: add variance matrix elements and standard errors based
-   on OPG: (GG')^{-1} */
+static int QML_vcv (nls_spec *spec, gretl_matrix *V)
+{
+    gretl_matrix *Hinv = NULL;
+    gretl_matrix *tmp = NULL;
+    int k = V->rows;
+    double x;
+    int i, j;
+    
+    Hinv = gretl_matrix_alloc(k, k);
+    tmp = gretl_matrix_alloc(k, k);
 
-static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
+    if (Hinv == NULL || tmp == NULL) {
+	free(Hinv);
+	free(tmp);
+	return E_ALLOC;
+    }
+
+    /* expand Hinv (this would be unnecessary if we had
+       a special multiplication routine for vech's) 
+    */
+    for (i=0; i<k; i++) {
+	for (j=0; j<=i; j++) {
+	    x = spec->hessvec[ijton(i, j, k)];
+	    gretl_matrix_set(Hinv, i, j, x);
+	    gretl_matrix_set(Hinv, j, i, x);
+	}
+    }
+	    
+    /* form sandwich: V <- H^{-1} V H^{-1} */
+    gretl_matrix_multiply(Hinv, V, tmp);
+    gretl_matrix_multiply(tmp, Hinv, V);
+
+    gretl_matrix_free(Hinv);
+    gretl_matrix_free(tmp);
+
+    return 0;
+}
+
+/* add variance matrix based on OPG, (GG')^{-1}, or on QML sandwich,
+   H^{-1} GG' H^{-1}
+*/
+
+static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
     double x = 0.0;
     int k = spec->nparam;
     int T = spec->nobs;
-    int i, v, t, err = 0;
+    int i, j, v, t;
+    int err = 0;
 
     G = gretl_matrix_alloc(k, T);
     V = gretl_matrix_alloc(k, k);
@@ -915,18 +959,21 @@ static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
 			      G, GRETL_MOD_TRANSPOSE,
 			      V);
 
-    err = gretl_invert_symmetric_matrix(V);
+    if ((spec->opt & OPT_R) && spec->hessvec != NULL) {
+	/* robust option -> QML */
+	err = QML_vcv(spec, V);
+	*vcvopt = VCV_QML;
+    } else {
+	/* plain OPG */
+	err = gretl_invert_symmetric_matrix(V);
+	*vcvopt = VCV_OP;
+    }
 
     if (!err) {
-	int j;
-
 	for (i=0; i<k; i++) {
 	    for (j=0; j<=i; j++) {
 		x = gretl_matrix_get(V, i, j);
 		pmod->vcv[ijton(i, j, k)] = x;
-		if (i == j) {
-		    pmod->sderr[i] = sqrt(x);
-		} 
 	    }
 	}
     }
@@ -935,6 +982,37 @@ static int add_OPG_vcv (MODEL *pmod, nls_spec *spec)
 
     gretl_matrix_free(G);
     gretl_matrix_free(V);
+
+    return err;
+}
+
+static int mle_add_vcv (MODEL *pmod, nls_spec *spec)
+{
+    int i, k = spec->nparam;
+    int vcvopt = VCV_OP;
+    double x;
+    int err = 0;
+
+    if ((spec->opt & OPT_H) && spec->hessvec != NULL) {
+	/* vcv based on Hessian */
+	int n = (k * (k + 1)) / 2;
+
+	for (i=0; i<n; i++) {
+	    pmod->vcv[i] = spec->hessvec[i];
+	}
+	vcvopt = VCV_HESSIAN;
+    } else {
+	/* either OPG or QML */
+	err = mle_build_vcv(pmod, spec, &vcvopt);
+    }
+
+    if (!err) {
+	for (i=0; i<k; i++) {
+	    x = pmod->vcv[ijton(i, i, k)];
+	    pmod->sderr[i] = sqrt(x);
+	}
+	gretl_model_set_int(pmod, "ml_vcv", vcvopt);
+    }    
 
     return err;
 }
@@ -1280,7 +1358,7 @@ static int make_mle_model (MODEL *pmod, nls_spec *spec,
     pmod->errcode = add_param_names_to_model(pmod, spec, pdinfo);
 
     if (!pmod->errcode) {
-	pmod->errcode = add_OPG_vcv(pmod, spec);
+	pmod->errcode = mle_add_vcv(pmod, spec);
     }
 
     if (!pmod->errcode) {
@@ -1346,6 +1424,9 @@ static void clear_nls_spec (nls_spec *spec)
 
     free(spec->coeff);
     spec->coeff = NULL;
+
+    free(spec->hessvec);
+    spec->hessvec = NULL;
 
     spec->ci = NLS;
     spec->mode = NUMERIC_DERIVS;
@@ -1560,9 +1641,11 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     if (!err) {
 	BFGS_GRAD_FUNC gradfun = (spec->mode == ANALYTIC_DERIVS)?
 	    get_mle_gradient : NULL;
+	double **hessp = (spec->opt & (OPT_H | OPT_R))?
+	    &spec->hessvec : NULL;
 
 	err = BFGS_max(n, spec->coeff, maxit, pspec->tol, 
-		       &spec->fncount, &spec->grcount, NULL,
+		       &spec->fncount, &spec->grcount, hessp,
 		       get_mle_ll, gradfun, NULL,
 		       pspec->opt, nprn);
     }
@@ -1767,7 +1850,7 @@ lm_approximate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
  * @pdinfo: information on dataset.
  *
  * Adds an analytical derivative to @spec.  This pointer must
- * have previously been obtained by a call to #nls_spec_new.
+ * have previously been obtained by a call to nls_spec_new().
  * The required format for @dstr is "%varname = %formula", where
  * %varname is the name of the (scalar) variable holding the parameter
  * in question, and %formula is an expression, of the sort that
@@ -1846,7 +1929,7 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
  *
  * Adds the specification of an auxiliary variable to @spec, 
  * which pointer must have previously been obtained by a call 
- * to #nls_spec_new.
+ * to nls_spec_new().
  *
  * Returns: 0 on success, non-zero error code on error.
  */
@@ -1887,7 +1970,7 @@ int nls_spec_add_aux (nls_spec *spec, const char *s)
  * @pdinfo: information on dataset.
  *
  * Adds the regression function to @spec.  This pointer must
- * have previously been obtained by a call to #nls_spec_new.
+ * have previously been obtained by a call to nls_spec_new().
  * The required format for @fnstr is "%varname = %formula", where
  * %varname is the name of the dependent variable and %formula
  * is an expression of the sort that is fed to gretl's %genr command.
@@ -1965,7 +2048,7 @@ nls_spec_set_regression_function (nls_spec *spec, const char *fnstr,
  * @t2: ending observation.
  *
  * Sets the sample range for estimation of @spec.  This pointer must
- * have previously been obtained by a call to #nls_spec_new.
+ * have previously been obtained by a call to nls_spec_new().
  */
 
 void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
@@ -2271,10 +2354,10 @@ MODEL nls (double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn)
  * @prn: printing struct.
  *
  * Computes estimates of the model specified in @spec, via nonlinear 
- * least squares. The @spec must first be obtained using #nls_spec_new, and
- * initialized using #nls_spec_set_regression_function.  If analytical
+ * least squares. The @spec must first be obtained using nls_spec_new(), and
+ * initialized using nls_spec_set_regression_function().  If analytical
  * derivatives are to be used (which is optional but recommended)
- * these are set using #nls_spec_add_param_with_deriv.
+ * these are set using nls_spec_add_param_with_deriv().
  *
  * Returns: a model struct containing the parameter estimates
  * and associated statistics.
@@ -2316,6 +2399,7 @@ nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo)
     spec->ngenrs = 0;
     
     spec->coeff = NULL;
+    spec->hessvec = NULL;
 
     spec->ci = ci;
     spec->mode = NUMERIC_DERIVS;

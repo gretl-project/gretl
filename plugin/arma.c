@@ -1532,12 +1532,13 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
    nonlinearity due to either (a) the presence of both a seasonal and
    a non-seasonal AR component or (b) the presence of exogenous
    variables in the context of a non-zero AR order, where estimation
-   will be via exact ML.
+   will be via exact ML.  In this initialization any MA coefficients
+   are simply set to zero.
 */
 
-static int ar_init_by_ls (const int *list, double *coeff, 
-			  const double **Z, const DATAINFO *pdinfo,
-			  struct arma_info *ainfo)
+static int ar_arma_init (const int *list, double *coeff, 
+			 const double **Z, const DATAINFO *pdinfo,
+			 struct arma_info *ainfo)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
     int np = ainfo->p, nq = ainfo->q;
@@ -1557,7 +1558,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
     int err = 0;
 
 #if ARMA_DEBUG
-    fprintf(stderr, "ar_init_by_ls: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
+    fprintf(stderr, "ar_arma_init: pdinfo->t1=%d, pdinfo->t2=%d (n=%d); "
 	    "ainfo->t1=%d, ainfo->t2=%d\n",
 	    pdinfo->t1, pdinfo->t2, pdinfo->n, ainfo->t1, ainfo->t2);
 #endif
@@ -1724,7 +1725,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
 	err = arma_get_nls_model(&armod, ainfo, narmax, &aZ, adinfo);
     } else {
 #if ARMA_DEBUG
-	printlist(alist, "'alist' in ar_init_by_ls (OLS)");
+	printlist(alist, "'alist' in ar_arma_init (OLS)");
 #endif
 	armod = lsq(alist, &aZ, adinfo, OLS, OPT_A | OPT_Z);
 	err = armod.errcode;
@@ -1776,7 +1777,7 @@ static int ar_init_by_ls (const int *list, double *coeff,
 
 #define MINLAGS 16
 
-static int alt_ar_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
+static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
 {
     int nobs = pdinfo->t2 - ainfo->t1 + 1; /* ?? */
     int nlags = (ainfo->P + ainfo->Q) * pdinfo->pd;
@@ -1796,23 +1797,23 @@ static int alt_ar_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
     }
 
 #if ARMA_DEBUG
-    fprintf(stderr, "alt_ar_init_check: ncoeff=%d, nobs=%d, 'df'=%d\n", 
+    fprintf(stderr, "hr_init_check: ncoeff=%d, nobs=%d, 'df'=%d\n", 
 	    ncoeff, nobs, df);
 #endif
 
     return err;
 }
 
-/* Alternative initialization via two OLS passes. In the first pass
-   we run an OLS regression of y on the exogenous vars plus a certain
-   (biggish) number of lags. In the second we estimate the ARMA model
-   by OLS, substituting innovations and corresponding lags with the
-   first-pass residuals.
+/* Hannan-Rissanen ARMA initialization via two OLS passes. In the
+   first pass we run an OLS regression of y on the exogenous vars plus
+   a certain (biggish) number of lags. In the second we estimate the
+   ARMA model by OLS, substituting innovations and corresponding lags
+   with the first-pass residuals.
 */
 
-static int alt_ar_init (const int *list, double *coeff, 
-			const double **Z, const DATAINFO *pdinfo,
-			struct arma_info *ainfo)
+static int hr_arma_init (const int *list, double *coeff, 
+			 const double **Z, const DATAINFO *pdinfo,
+			 struct arma_info *ainfo)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
     int np = ainfo->p, nq = ainfo->q;
@@ -1856,7 +1857,7 @@ static int alt_ar_init (const int *list, double *coeff,
     }
 
 #if ARMA_DEBUG
-    fprintf(stderr, "alt_ar_init: dataset allocated: %d vars, %d obs\n", 
+    fprintf(stderr, "hr_arma_init: dataset allocated: %d vars, %d obs\n", 
 	    pass1v + qtotal, an);
 #endif
 
@@ -2168,9 +2169,17 @@ static int bhhh_arma (const int *alist, double *coeff,
     return pmod->errcode;
 }
 
-static int prefer_alt_init (struct arma_info *ainfo)
+/* Should we try Hannan-Rissanen initialization of ARMA
+   coefficients? */
+
+static int prefer_hr_init (struct arma_info *ainfo)
 {
     int ret = 0;
+
+    /* unlikely to work well with small sample */
+    if (ainfo->t2 - ainfo->t1 < 100) {
+	return 0;
+    }
 
     if (ainfo->q > 1 || ainfo->Q > 0) {
 	ret = 1;
@@ -2248,13 +2257,13 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* initialize the coefficients */
 
-    if (prefer_alt_init(&ainfo)) {
-	err = alt_ar_init_check(pdinfo, &ainfo);
+    if (prefer_hr_init(&ainfo)) {
+	err = hr_init_check(pdinfo, &ainfo);
 	if (!err) {
-	    err = alt_ar_init(alist, coeff, Z, pdinfo, &ainfo);
+	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo);
 #if ARMA_DEBUG
 	    if (err) {
-		fputs("alt_ar_init failed, will try ar_init_by_ls\n", stderr);
+		fputs("hr_arma_init failed, will try ar_arma_init\n", stderr);
 	    }
 #endif
 	}
@@ -2264,7 +2273,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     }
 
     if (!init_done) {
-	err = ar_init_by_ls(alist, coeff, Z, pdinfo, &ainfo);
+	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo);
     }
 
     if (err) {

@@ -687,9 +687,9 @@ static void hc_vcv_line (const MODEL *pmod, PRN *prn)
     }	
 }
 
-static void garch_vcv_line (const MODEL *pmod, PRN *prn)
+static void ml_vcv_line (const MODEL *pmod, PRN *prn)
 {
-    int v = gretl_model_get_int(pmod, "garch_vcv");
+    int v = gretl_model_get_int(pmod, "ml_vcv");
     int tex = tex_format(prn);
     int utf = plain_format(prn);
     const char *vcvstr = NULL;
@@ -723,13 +723,6 @@ static void garch_vcv_line (const MODEL *pmod, PRN *prn)
     }
 }
 
-static void qml_vcv_line (PRN *prn)
-{
-    const char *vcvstr = N_("QML standard errors");
-
-    pprintf(prn, "%s\n", (plain_format(prn))? _(vcvstr) : I_(vcvstr));
-}
-
 static void tex_vecm_depvar_name (char *s, const char *vname)
 {
     char tmp[9];
@@ -754,12 +747,9 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	hac_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "hc")) {
 	hc_vcv_line(pmod, prn);
-    } else if (gretl_model_get_int(pmod, "garch_vcv")) {
-	garch_vcv_line(pmod, prn);
-    } else if ((pmod->ci == LOGIT || pmod->ci == PROBIT) && 
-	       gretl_model_get_int(pmod, "robust")) {
-	qml_vcv_line(prn);
-    }
+    } else if (gretl_model_get_int(pmod, "ml_vcv")) {
+	ml_vcv_line(pmod, prn);
+    } 
 }
 
 static void print_model_droplist (const MODEL *pmod, 
