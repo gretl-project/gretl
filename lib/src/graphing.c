@@ -1622,7 +1622,7 @@ int multi_scatters (const int *list, double ***pZ,
 	double startdate = (*pZ)[timevar][pdinfo->t1];
 	int jump = (pdinfo->t2 - pdinfo->t1 + 1) / (2 * pdinfo->pd);
 
-	fprintf(fp, "set xtics %g, %d\n", startdate, jump);
+	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
     } else {
 	fputs("set noxtics\nset noytics\n", fp);
     }

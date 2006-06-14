@@ -831,12 +831,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	system_estimator_list(top_vbox, d);
     } else if (cmdcode == NLS || cmdcode == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V);
-    }
-    
-    if (cmdcode == NLS) {
 	dialog_option_switch(top_vbox, d, OPT_R);
     }
-
+    
     if (varclick == VARCLICK_INSERT_ID) { 
 	active_edit_id = d->edit; 
     } else if (varclick == VARCLICK_INSERT_NAME) {

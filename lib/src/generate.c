@@ -174,6 +174,9 @@ struct genr_func funcs[] = {
     { T_ROWS,     "rows" },
     { T_COLS,     "cols" },
     { T_TRANSP,   "transp" },
+    { T_VEC,      "vec" },
+    { T_VECH,     "vech" },
+    { T_UNVECH,   "unvech" },
     { T_IMAT,     "I" },
     { T_ZEROS,    "zeros" },
     { T_ONES,     "ones" },
@@ -213,7 +216,8 @@ struct genr_func funcs[] = {
 #define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG || f == T_CDMEAN || \
                                f == T_INV || f == T_CHOL || f == T_QR || \
                                f == T_SUMR || f == T_SUMC || f == T_EIGSYM || \
-			       f == T_EIGGEN)
+			       f == T_EIGGEN || f == T_VEC || \
+                               f == T_VECH || f == T_UNVECH)
 
 #define MULTI_MATRIX_FUNC(f) (f == T_QR || f == T_EIGSYM || f == T_EIGGEN)
 
@@ -1348,6 +1352,12 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	    R = gretl_matrix_get_diagonal(M, &genr->err);
 	} else if (atom->func == T_TRANSP) {
 	    R = gretl_matrix_copy_transpose(M);
+	} else if (atom->func == T_VEC) {
+	    R = user_matrix_vec(M);
+	} else if (atom->func == T_VECH) {
+	    R = user_matrix_vech(M, &genr->err);
+	} else if (atom->func == T_UNVECH) {
+	    R = user_matrix_unvech(M, &genr->err);
 	} else if (atom->func == T_SORT) {
 	    R = user_matrix_get_sorted_vector(M, SORT_ASCENDING, &genr->err);
 	} else if (atom->func == T_DSORT) {
@@ -3347,7 +3357,7 @@ genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 	    return genr;
 	}
     } else {
-	/* matrix genr: handle tranpose of compound matrices */
+	/* matrix genr: handle transpose of compound matrices */
 	genr->err = reposition_transpose_symbol(s);
 	if (genr->err) {
 	    return genr;

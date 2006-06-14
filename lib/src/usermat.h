@@ -74,6 +74,12 @@ gretl_matrix *user_matrix_cholesky_decomp (const gretl_matrix *m);
 
 gretl_matrix *user_matrix_column_demean (const gretl_matrix *m);
 
+gretl_matrix *user_matrix_vec (const gretl_matrix *m);
+
+gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);
+
+gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err);
+
 gretl_matrix *
 user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn, int *err);

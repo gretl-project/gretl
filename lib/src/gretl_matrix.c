@@ -501,6 +501,8 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	}
     }
 
+    c->t = m->t;
+
     return c;
 }
 
@@ -1249,17 +1251,14 @@ int gretl_matrix_add_self_transpose (gretl_matrix *m)
 int 
 gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src)
 {
-    int i, j, n = src->rows * src->cols;
+    int i, n = src->rows * src->cols;
 
     if (targ->cols != 1 || targ->rows != n) {
 	return E_NONCONF;
     }
 
-    n = 0;
-    for (j=0; j<src->cols; j++) {
-	for (i=0; i<src->rows; i++) {
-	    targ->val[n++] = src->val[mdx(src, i, j)];
-	}
+    for (i=0; i<n; i++) {
+	targ->val[i] = src->val[i];
     }
 
     return 0;
@@ -1281,17 +1280,14 @@ gretl_matrix_vectorize (gretl_matrix *targ, const gretl_matrix *src)
 int 
 gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
 {
-    int i, j, n = targ->rows * targ->cols;
+    int i, n = targ->rows * targ->cols;
 
     if (src->cols != 1 || src->rows != n) {
 	return E_NONCONF;
     }
 
-    n = 0;
-    for (j=0; j<targ->cols; j++) {
-	for (i=0; i<targ->rows; i++) {
-	    targ->val[mdx(targ, i, j)] = src->val[n++];
-	}
+    for (i=0; i<n; i++) {
+	targ->val[i] = src->val[i];
     }
 
     return 0;
@@ -1314,17 +1310,18 @@ gretl_matrix_unvectorize (gretl_matrix *targ, const gretl_matrix *src)
 int 
 gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
 {
-    int n = src->rows, m = n * (n+1) / 2;
+    int n = src->rows;
+    int m = n * (n+1) / 2;
     int i, j;
 
     if (targ->cols != 1 || targ->rows != m) {
 	return E_NONCONF;
     }
 
-    n = 0;
-    for (i=0; i<src->rows; i++) {
-	    for (j=0; j<=i; j++) {
-	    targ->val[n++] = src->val[mdx(src, i, j)];
+    m = 0;
+    for (i=0; i<n; i++) {
+	for (j=i; j<n; j++) {
+	    targ->val[m++] = src->val[mdx(src, i, j)];
 	}
     }
 
@@ -1336,9 +1333,9 @@ gretl_matrix_vectorize_h (gretl_matrix *targ, const gretl_matrix *src)
  * @targ: target matrix, n x n.
  * @src: source vector, m x 1.
  *
- * Rearranges successive blocks of increasing length from @src into 
+ * Rearranges successive blocks of decreasing length from @src into 
  * the successive columns of @targ (that is, performs the
- * inverse of the vech() operation). @targ comes out symmetric.
+ * inverse of the vech() operation): @targ comes out symmetric.
  * 
  * Returns: 0 on successful completion, or %E_NONCONF if
  * @targ is not correctly dimensioned.
@@ -1908,22 +1905,26 @@ matrix_multiply_self_transpose (const gretl_matrix *a, gretl_matrix *c,
 	return E_NONCONF;
     }
 
-    if (gretl_is_vector(a)) {
-	fprintf(stderr, "matrix_multiply_self_transpose: got vector\n");
-    }
-
-    for (i=0; i<nc; i++) {
-	for (j=i; j<nc; j++) {
-	    x = 0.0;
-	    for (k=0; k<nr; k++) {
-		idx1 = (ltr)? mdxtr(a,i,k) : mdx(a,i,k);
-		idx2 = (ltr)? mdx(a,k,j) : mdxtr(a,k,j);
-		x += a->val[idx1] * a->val[idx2];
-	    }
-	    c->val[mdx(c,i,j)] = x;
-	    c->val[mdx(c,j,i)] = x;
+    if (c->rows == 1) {
+	k = a->cols * a->rows;
+	c->val[0] = 0.0;
+	for (i=0; i<k; i++) {
+	    c->val[0] += a->val[i] * a->val[i];
 	}
-    } 
+    } else {
+	for (i=0; i<nc; i++) {
+	    for (j=i; j<nc; j++) {
+		x = 0.0;
+		for (k=0; k<nr; k++) {
+		    idx1 = (ltr)? mdxtr(a,i,k) : mdx(a,i,k);
+		    idx2 = (ltr)? mdx(a,k,j) : mdxtr(a,k,j);
+		    x += a->val[idx1] * a->val[idx2];
+		}
+		c->val[mdx(c,i,j)] = x;
+		c->val[mdx(c,j,i)] = x;
+	    }
+	} 
+    }
 
     return 0;
 }
@@ -3811,7 +3812,7 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 /**
  * gretl_matrix_set_int:
  * @m: matrix to operate on.
- * @t: value to set.
+ * @t: integer value to set.
  * 
  * Sets an integer value on the gretl_matrix (used for internal
  * information).  
@@ -3826,7 +3827,7 @@ void gretl_matrix_set_int (gretl_matrix *m, int t)
  * gretl_matrix_get_int:
  * @m: matrix to read from.
  * 
- * Returns the integer that has been set on the matrix, or zero.
+ * Returns: the integer that has been set on the matrix, or zero.
  */
 
 int gretl_matrix_get_int (const gretl_matrix *m)

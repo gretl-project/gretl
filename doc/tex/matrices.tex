@@ -248,7 +248,10 @@ matrix are:
 \texttt{cholesky()} & Cholesky decomposition \\
 \texttt{diag()} & extract principal diagonal \\
 \texttt{transp()} & transpose \\
-\texttt{cdemean()} & subtract column means 
+\texttt{cdemean()} & subtract column means \\ 
+\texttt{vec()} & organize elements as column vector \\
+\texttt{vech()} & vectorize lower triangle \\
+\texttt{unvech()} & undo \texttt{vech}
 \end{tabular}
 \end{center}
 
@@ -271,6 +274,17 @@ $n$-vector $v$ such that $v_i = a_{ii}$.
 The \texttt{cdemean} function applied to an $m \times n$ matrix $A$
 returns an $m \times n$ matrix $B$ such that $b_{ij} = a_{ij} -
 \bar{A}_j$, where $\bar{A}_j$ denotes the mean of column $j$ of $A$.  
+
+The \texttt{vec} function applied to an $m \times n$ matrix $A$
+returns a column vector of length $mn$ formed by stacking the columns
+of $A$.  
+
+The \texttt{vech} function applied to an $n \times n$ matrix $A$
+returns a column vector of length $n(n+1)/2$ formed by stacking the
+elements of the lower triangle of $A$, column by column.  Note that
+$A$ must be square; for the operation to make sense $A$ should also
+be symmetric.  The \texttt{unvech} function performs the inverse
+operation.
 
 \subsection{Matrix filling functions}
 \label{matrix-fill}

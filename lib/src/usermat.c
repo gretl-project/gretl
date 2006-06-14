@@ -2136,6 +2136,57 @@ gretl_matrix *user_matrix_column_demean (const gretl_matrix *m)
     return R;
 }
 
+gretl_matrix *user_matrix_vec (const gretl_matrix *m)
+{
+    gretl_matrix *R = NULL;
+
+    if (m != NULL) {
+	R = gretl_matrix_alloc(m->rows * m->cols, 1);
+	if (R != NULL) {
+	    gretl_matrix_vectorize(R, m);
+	} 
+    }
+
+    return R;
+}
+
+gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *R = NULL;
+
+    if (m != NULL) {
+	if (m->rows != m->cols) {
+	    *err = E_NONCONF;
+	} else {
+	    int n = m->rows;
+	    int k = n * (n + 1) / 2;
+
+	    R = gretl_matrix_alloc(k, 1);
+	    if (R != NULL) {
+		*err = gretl_matrix_vectorize_h(R, m);
+	    }
+	} 
+    }
+
+    return R;
+}
+
+gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err)
+{
+    gretl_matrix *R = NULL;
+    int n;
+
+    if (m != NULL && m->cols == 1) {
+	n = (int) ((sqrt(1.0 + 8.0 * m->rows) - 1.0) / 2.0);
+	R = gretl_matrix_alloc(n, n);
+	if (R != NULL) {
+	    *err = gretl_matrix_unvectorize_h(R, m);
+	} 
+    }
+
+    return R;
+}
+
 static int 
 real_user_matrix_QR_decomp (const gretl_matrix *m, gretl_matrix **Q, 
 			    gretl_matrix **R)
