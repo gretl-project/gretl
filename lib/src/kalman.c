@@ -581,6 +581,36 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
     return ret;
 }
 
+/* simplified version of the function below, for ARMA */
+
+static int kalman_arma_iter_1 (kalman *K)
+{
+    double ve;
+    int err = 0;
+
+    /* write F*S into S+ */
+    err += multiply_by_F(K, K->S0, K->S1, 0);
+
+    /* form E = y - A'x - H'S */
+    K->e->val[0] -= K->Ax->val[0];
+    fast_A_prime_B(K->H, K->S0, K->Tmpnn);
+    K->e->val[0] -= K->Tmpnn->val[0];
+    
+    /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "ve" */
+    ve = K->e->val[0] * K->V->val[0];
+
+    /* form FPH */
+    err += multiply_by_F(K, K->PH, K->FPH, 0);
+
+    /* form FPH * (H'PH + R)^{-1} * (y - A'x - H'S) */
+    gretl_matrix_multiply_by_scalar(K->FPH, ve);
+
+    /* complete calculation of S+ */
+    err += gretl_matrix_add_to(K->S1, K->FPH);
+
+    return err;
+}
+
 /* Hamilton (1994) equation [13.2.23] page 381, in simplified notation:
 
    S+ = FS + FPH(H'PH + R)^{-1} * (y - A'x - H'S) 
@@ -599,7 +629,7 @@ static int kalman_iter_1 (kalman *K, double *llt)
     err += gretl_matrix_subtract_from(K->e, K->Ax);
     fast_A_prime_B(K->H, K->S0, K->Tmpnn);
     err += gretl_matrix_subtract_from(K->e, K->Tmpnn);
-
+    
     /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "VE" */
     fast_multiply(K->V, K->e, K->VE);
 
@@ -810,6 +840,14 @@ int kalman_forecast (kalman *K)
 	kalman_print_state(K, t);
 #endif
 
+	/* read slice from y */
+	kalman_initialize_error(K, t);
+
+	/* and from x if applicable */
+	if (K->x != NULL) {
+	    kalman_set_Ax(K, t);
+	}	
+
 	/* initial matrix calculations */
 	fast_multiply(K->P0, K->H, K->PH);
 	fast_A_prime_B(K->H, K->PH, K->HPH);
@@ -828,17 +866,9 @@ int kalman_forecast (kalman *K)
 	    llt = -(K->n / 2.0) * LN_2_PI - .5 * ldet;
 	}
 
-	/* read slice from y */
-	kalman_initialize_error(K, t);
-
-	/* and from x if applicable */
-	if (K->x != NULL) {
-	    kalman_set_Ax(K, t);
-	}
-
 	/* first stage of dual iteration */
 	if (arma_ll(K)) {
-	    err = kalman_iter_1(K, NULL);
+	    err = kalman_arma_iter_1(K);
 	    if (!err) {
 		err = kalman_incr_S(K);
 	    }
@@ -874,8 +904,8 @@ int kalman_forecast (kalman *K)
 	    /* update MSE matrix, if needed */
 	    if (arma_ll(K) && update_P && t > 20) {
 		if (!matrix_diff(K->P1, K->P0)) {
-		    update_P = 0;
 		    K->P0->val[0] += 1.0;
+		    update_P = 0;
 		}
 	    }
 	    if (update_P) {
