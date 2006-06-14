@@ -612,11 +612,8 @@ static double get_mle_ll (const double *b, void *unused)
 
     update_nls_param_values(b);
 
-    /* calculate ll given current parameter estimates */
+    /* calculate log-likelihood given current parameter estimates */
     if (nls_calculate_fvec()) {
-#if NLS_DEBUG
-	fprintf(stderr, "get_mle_ll: returning NA\n");
-#endif
 	return NADBL;
     }
 
@@ -628,40 +625,14 @@ static double get_mle_ll (const double *b, void *unused)
     return pspec->ll;
 }
 
-/* used in the context of BFGS */
+/* analytical derivatives, used in the context of BFGS */
 
-static int get_mle_gradient (double *b, double *g, void *unused)
+static int get_mle_gradient (double *b, double *g, int n, 
+			     BFGS_LL_FUNC llfunc,
+			     void *unused)
 {
     int i, t, v;
     int err = 0;
-
-    if (pspec->mode == NUMERIC_DERIVS) {
-	const double eps = 1e-8;
-	double val1, val2;
-
-	for (i=0; i<pspec->nparam; i++) {
-	    val1 = val2 = 0.0;
-	    b[i] -= eps;
-	    update_nls_param_values(b);
-	    if (nls_calculate_fvec()) {
-		return 1;
-	    }
-	    for (t=pspec->t1; t<=pspec->t2; t++) {
-		val1 -= (*nZ)[pspec->uhatnum][t];
-	    }
-	    b[i] += 2.0 * eps;
-	    update_nls_param_values(b);
-	    if (nls_calculate_fvec()) {
-		return 1;
-	    }
-	    for (t=pspec->t1; t<=pspec->t2; t++) {
-		val2 -= (*nZ)[pspec->uhatnum][t];
-	    }
-	    b[i] -= eps;
-	    g[i] = (val2 - val1) / (2.0 * eps);
-	}
-	return 0;
-    }
 
     update_nls_param_values(b);
 
@@ -695,7 +666,37 @@ static int get_mle_gradient (double *b, double *g, void *unused)
     return err;
 }
 
-/* used in the context of BFGS */
+/* default numerical calculation of gradient in context of BFGS */
+
+static int BFGS_numeric_gradient (double *b, double *g, int n,
+				  BFGS_LL_FUNC llfunc,
+				  void *p)
+{
+    const double h = 1.0e-8;
+    double b0, f1, f2;
+    int i;
+
+    /* consider Richardson extrapolation here? */
+
+    for (i=0; i<n; i++) {
+	b0 = b[i];
+	b[i] = b0 - h;
+	f1 = llfunc(b, p);
+	if (na(f1)) {
+	    b[i] = b0;
+	    return 1;
+	}
+	b[i] = b0 + h;
+	f2 = llfunc(b, p);
+	if (na(f2)) {
+	    b[i] = b0;
+	    return 1;
+	}
+	g[i] = (f2 - f1) / (2.0 * h);
+    }
+
+    return 0;
+}
 
 static void 
 print_mle_iter_stats (double ll, int nparam, const double *b, const double *g, 
@@ -1557,9 +1558,12 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     }
 
     if (!err) {
+	BFGS_GRAD_FUNC gradfun = (spec->mode == ANALYTIC_DERIVS)?
+	    get_mle_gradient : NULL;
+
 	err = BFGS_max(n, spec->coeff, maxit, pspec->tol, 
 		       &spec->fncount, &spec->grcount, NULL,
-		       get_mle_ll, get_mle_gradient, NULL,
+		       get_mle_ll, gradfun, NULL,
 		       pspec->opt, nprn);
     }
 
@@ -2595,7 +2599,7 @@ static double *numerical_hessian (double *b, double *c, int n,
  * @get_ll: pointer to function used to calculate log
  * likelihood.
  * @get_gradient: pointer to function used to calculate the 
- * gradient.
+ * gradient, or %NULL for default numerical calculation.
  * @callback_data: pointer that will be passed as the last
  * parameter to the callback functions @get_ll and @get_gradient.
  * @opt: may contain %OPT_V for verbose operation.
@@ -2626,6 +2630,10 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
     double D1, D2;
     int err = 0;
 
+    if (get_gradient == NULL) {
+	get_gradient = BFGS_numeric_gradient;
+    }
+
     g = malloc(n * sizeof *g);
     t = malloc(n * sizeof *t);
     X = malloc(n * sizeof *X);
@@ -2647,7 +2655,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 
     fmax = f;
     iter = ilast = fcount = gcount = 1;
-    get_gradient(b, g, callback_data);
+    get_gradient(b, g, n, get_ll, callback_data);
     reverse_gradient(g, n);
 
     do {
@@ -2726,7 +2734,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    if (ndelta > 0) {
 		/* making progress */
 		fmax = f;
-		get_gradient(b, g, callback_data);
+		get_gradient(b, g, n, get_ll, callback_data);
 		reverse_gradient(g, n);
 		gcount++;
 		iter++;

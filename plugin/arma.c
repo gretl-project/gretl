@@ -971,59 +971,6 @@ static double kalman_arma_ll (const double *b, void *p)
     return ll;
 }
 
-static int kalman_arma_gradient (double *b, double *g, void *p)
-{
-    kalman *K = (kalman *) p;
-    double eps = 1.0e-8;
-    double bi0, ll1, ll2;
-    int i, k, err = 0;
-
-#if ARMA_DEBUG
-    fprintf(stderr, "kalman_gradient_ll():\n\n");
-#endif
-
-    k = kalman_get_ncoeff(K);
-
-    for (i=0; i<k && !err; i++) {
-	ll1 = ll2 = 0.0;
-	bi0 = b[i];
-	b[i] -= eps;
-#if ARMA_DEBUG
-	fprintf(stderr, "trying b[%d] = %.15g\n", i, b[i]);
-#endif
-	err = rewrite_kalman_matrices(K, b, i);
-	if (!err) {
-	    err = kalman_forecast(K);
-	    ll1 = kalman_get_loglik(K);
-	}
-	if (err) {
-	    b[i] = bi0;
-	    break;
-	}
-	b[i] = bi0 + eps;
-#if ARMA_DEBUG
-	fprintf(stderr, "trying b[%d] = %.15g\n", i, b[i]);
-#endif
-	err = rewrite_kalman_matrices(K, b, i);
-	if (!err) {
-	    err = kalman_forecast(K);
-	    ll2 = kalman_get_loglik(K);
-	}
-	if (err) {
-	    b[i] = bi0;
-	    break;
-	}
-	b[i] = bi0; /* reset to original value */
-	g[i] = (ll2 - ll1) / (2.0 * eps); /* sign? */
-#if ARMA_DEBUG
-	fprintf(stderr, "ll2 = %g, ll1 = %g, ll2 - ll1 = %g, g[%d] = %.8g\n", 
-		ll2, ll1, ll2 - ll1, i, g[i]);
-#endif
-    }
-
-    return err;
-}
-
 static gretl_matrix *form_arma_y_vector (const int *alist, 
 					 const double **Z,
 					 struct arma_info *ainfo,
@@ -1274,12 +1221,12 @@ static int kalman_arma (const int *alist, double *coeff,
 	if (getenv("ARMA_HESSIAN") != NULL) {
 	    err = BFGS_max(ainfo->nc, b, maxit, reltol, 
 			   &fncount, &grcount, &hess,
-			   kalman_arma_ll, kalman_arma_gradient, K,
+			   kalman_arma_ll, NULL, K,
 			   (prn != NULL)? OPT_V : OPT_NONE, prn);
 	} else {
 	    err = BFGS_max(ainfo->nc, b, maxit, reltol, 
 			   &fncount, &grcount, NULL,
-			   kalman_arma_ll, kalman_arma_gradient, K,
+			   kalman_arma_ll, NULL, K,
 			   (prn != NULL)? OPT_V : OPT_NONE, prn);
 	}	    
 	if (err) {

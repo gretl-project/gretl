@@ -23,7 +23,8 @@
 typedef struct _nls_spec nls_spec;
 
 typedef double (*BFGS_LL_FUNC) (const double *, void *);
-typedef int (*BFGS_GRAD_FUNC) (double *, double *, void *);
+typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
+			       double (*llfun)(), void *);
 
 nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo);
 
