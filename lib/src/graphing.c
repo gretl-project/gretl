@@ -402,7 +402,8 @@ write_gnuplot_font_string (char *fstr, const char *grfont, PlotType ptype)
 {
     int shrink = 0;
 
-    if (ptype == PLOT_MULTI_IRF && gp_small_font_size > 0) {
+    if ((ptype == PLOT_MULTI_IRF || ptype == PLOT_MULTI_SCATTER) 
+	&& gp_small_font_size > 0) {
 	char fname[64];
 	int fsize;
 
@@ -1605,6 +1606,7 @@ int multi_scatters (const int *list, double ***pZ,
     }
 
     nplots = plotlist[0];
+    gp_small_font_size = (nplots > 4)? 6 : 0;
 
     if (get_gnuplot_output_file(&fp, flags, plot_count, PLOT_MULTI_SCATTER)) {
 	return E_FOPEN;
@@ -1626,6 +1628,8 @@ int multi_scatters (const int *list, double ***pZ,
     }
 
     for (i=0; i<nplots; i++) {  
+	int pv = plotlist[i+1];
+
 	if (nplots <= 4) {
 	    fputs("set size 0.45,0.5\n", fp);
 	    fputs("set origin ", fp);
@@ -1646,15 +1650,16 @@ int multi_scatters (const int *list, double ***pZ,
 
 	if (timevar) {
 	    fputs("set noxlabel\n", fp);
+	    fputs("set noylabel\n", fp);
+	    fprintf(fp, "set title '%s'\n", pdinfo->varname[pv]);
 	} else {
 	    fprintf(fp, "set xlabel '%s'\n",
-		    (yvar)? pdinfo->varname[plotlist[i+1]] :
+		    (yvar)? pdinfo->varname[pv] :
 		    pdinfo->varname[xvar]);
+	    fprintf(fp, "set ylabel '%s'\n", 
+		    (yvar)? pdinfo->varname[yvar] :
+		    pdinfo->varname[pv]);
 	}
-
-	fprintf(fp, "set ylabel '%s'\n", 
-		(yvar)? pdinfo->varname[yvar] :
-		pdinfo->varname[plotlist[i+1]]);
 
 	fputs("plot '-' using 1:2", fp);
 	if (flags & GP_LINES) {
@@ -1675,7 +1680,7 @@ int multi_scatters (const int *list, double ***pZ,
 		fprintf(fp, "%.8g ", xx);
 	    }
 
-	    m = (yvar)? yvar : plotlist[i+1];
+	    m = (yvar)? yvar : pv;
 	    xx = (*pZ)[m][t];
 
 	    if (na(xx)) {
