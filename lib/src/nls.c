@@ -2441,7 +2441,7 @@ static void hess_b_adjust_ij (double *c, double *b, double *h, int n,
 /* The algorithm below implements the method of Richardson
    Extrapolation.  It is derived from code in the gnu R package
    "numDeriv" by Paul Gilbert, which was in turn derived from C code
-   by Xingqiao Liu.  Turned back into C and modified for gretl by
+   by Xinqiao Liu.  Turned back into C and modified for gretl by
    Allin Cottrell, June 2006.
 */
 
