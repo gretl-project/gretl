@@ -52,6 +52,25 @@ static int delete_matrix_by_name (const char *name);
 static double ***gZ;
 static DATAINFO *gdinfo;
 
+#if MDEBUG > 1
+static void print_matrix_stack (const char *msg)
+{
+    int i;
+
+    fprintf(stderr, "\nmatrix stack, %s:\n", msg);
+    for (i=0; i<n_matrices; i++) {
+	if (matrices[i] == NULL) {
+	    fprintf(stderr, " %d: NULL\n", i);
+	} else {
+	    fprintf(stderr, " %d: '%s' at %p (%d x %d)\n",
+		    i, matrices[i]->name, (void *) matrices[i]->M,
+		    matrices[i]->M->rows, matrices[i]->M->cols);
+	}
+    }
+    fputc('\n', stderr);
+}
+#endif
+
 int n_user_matrices (void)
 {
     return n_matrices;
@@ -1068,7 +1087,10 @@ int destroy_user_matrices_at_level (int level)
 
 #if MDEBUG
     fprintf(stderr, "destroy_user_matrices_at_level: level = %d, "
-	    "n_matrices = %d\n", level, n_matrices);
+	    "total n_matrices = %d\n", level, n_matrices);
+#endif
+#if MDEBUG > 1
+    print_matrix_stack("at top of destroy_user_matrices_at_level");
 #endif
 
     for (i=0; i<n_matrices; i++) {
@@ -1077,14 +1099,15 @@ int destroy_user_matrices_at_level (int level)
 	}
 	if (matrices[i]->level == level) {
 #if MDEBUG
-	    fprintf(stderr, "destroying matrix[%d] (M at %p)\n",
-		    i, (void *) matrices[i]->M);
+	    fprintf(stderr, "destroying matrix[%d] ('%s' at %p)\n",
+		    i, matrices[i]->name, (void *) matrices[i]->M);
 #endif
 	    destroy_user_matrix(matrices[i]);
 	    for (j=i; j<n_matrices - 1; j++) {
 		matrices[j] = matrices[j+1];
 	    }
 	    matrices[n_matrices - 1] = NULL;
+	    i--;
 	} else {
 	    nm++;
 	}
@@ -1104,6 +1127,10 @@ int destroy_user_matrices_at_level (int level)
 	    }
 	}
     }
+
+#if MDEBUG > 1
+    print_matrix_stack("at end of destroy_user_matrices_at_level");
+#endif
 
     return err;
 }

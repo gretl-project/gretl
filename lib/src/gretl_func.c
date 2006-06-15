@@ -428,8 +428,8 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 		    err = gretl_matrix_copy_values(T, S);
 		} else {
 #if FN_DEBUG
-		    fprintf(stderr, " renaming matrix '%s' (%p) as '%s'\n",
-			    cfun->returns[i].name, (void *) S, call->assv[i]);
+		    fprintf(stderr, " naming matrix '%s' (%p) as '%s' (level = %d)\n",
+			    cfun->returns[i].name, (void *) S, call->assv[i], nc-1);
 #endif
 		    /* rename matrix as caller desired and mark as global */
 		    err = user_matrix_set_name_and_level(S, call->assv[i], nc - 1);
@@ -3070,8 +3070,8 @@ static int check_function_assignments (ufunc *fun, int *asslist,
 	v = varindex(pdinfo, assv[i]);
 	if (v < pdinfo->v) {
 #if FN_DEBUG
-	    fprintf(stderr, " variable '%s' has ID %d, vector = %d\n", assv[i], 
-		    v, pdinfo->vector[v]);
+	    fprintf(stderr, " variable '%s' has ID %d, series = %d\n", assv[i], 
+		    v, var_is_series(pdinfo, v));
 #endif
 	    if ((fun->returns[i].type == ARG_SCALAR && var_is_series(pdinfo, v)) ||
 		(fun->returns[i].type == ARG_SERIES && var_is_scalar(pdinfo, v))) {
