@@ -375,8 +375,14 @@ int ok_in_loop (int ci)
 	     ci == SQUARE || 
 	     ci == SUMMARY ||
 	     ci == VARLIST ||
-	     ci == VARTEST) {
+	     ci == VARTEST ||
+	     ci == XTAB ) {
 	ok = 1;
+    }
+
+    /* frequencies --- no graph allowed */
+    else if (ci == FREQ) {
+	return 1;
     }
 
     /* modeling commands */
@@ -2751,6 +2757,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case SUMMARY:
 	    case VARLIST:
 	    case VARTEST: 
+	    case XTAB:
 		err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
 		break;
 
@@ -2779,6 +2786,12 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    err = gretl_loop_exec(linecpy, pZ, ppdinfo, models, prn);
 		    pdinfo = *ppdinfo;
 		} 
+		break;
+
+	    case FREQ:
+		/* note: no graphs in loops */
+		err = freqdist(cmd.list[1], (const double **) *pZ, pdinfo, 0, 
+			       cmd.opt, prn);
 		break;
 
 	    case GENR:

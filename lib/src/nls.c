@@ -273,6 +273,14 @@ static int nlspec_allocate_param (nls_spec *spec)
     return 0;
 }
 
+static void nls_param_init (nls_param *param, const char *vname, int v)
+{
+    strcpy(param->name, vname);
+    param->deriv = NULL;
+    param->varnum = v;
+    param->dernum = 0;
+}
+
 /* allocate space for an additional regression parameter in the
    nls_spec struct and add its info */
 
@@ -291,12 +299,7 @@ real_add_param_to_spec (const char *vname, int vnum, double initval,
     }
 
     i = spec->nparam - 1;
-    
-    spec->params[i].varnum = vnum;
-    spec->params[i].dernum = 0;
-    strcpy(spec->params[i].name, vname);
-    spec->params[i].deriv = NULL;
-
+    nls_param_init(&spec->params[i], vname, vnum);
     spec->coeff[i] = initval;
 
     return 0;
@@ -451,10 +454,7 @@ nls_spec_add_params_from_line (nls_spec *spec, const char *s,
 	    if (v >= pdinfo->v || var_is_series(pdinfo, v)) {
 		err = E_DATA;
 	    } else {
-		spec->params[i].varnum = v;
-		spec->params[i].dernum = 0;
-		strcpy(spec->params[i].name, pname);
-		spec->params[i].deriv = NULL;
+		nls_param_init(&spec->params[i], pname, v);
 		spec->coeff[i] = Z[v][0];
 	    }
 	    free(pname);
@@ -510,10 +510,7 @@ int nls_spec_add_param_list (nls_spec *spec, const int *list,
 	if (v >= pdinfo->v || var_is_series(pdinfo, v)) {
 	    err = E_DATA;
 	} else {
-	    spec->params[i].varnum = v;
-	    spec->params[i].dernum = 0;
-	    strcpy(spec->params[i].name, pdinfo->varname[v]);
-	    spec->params[i].deriv = NULL;
+	    nls_param_init(&spec->params[i], pdinfo->varname[v], v);
 	    spec->coeff[i] = Z[v][0];
 	}
     }

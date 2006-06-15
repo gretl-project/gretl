@@ -101,6 +101,8 @@ char **strings_array_new (int nstrs);
 
 char **strings_array_new_with_length (int nstrs, int len);
 
+char **strings_array_dup (char **strs, int n);
+
 void free_strings_array (char **strs, int nstrs);
 
 char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo);

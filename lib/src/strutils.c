@@ -952,7 +952,7 @@ char **strings_array_new (int nstrs)
 char **strings_array_new_with_length (int nstrs, int len)
 {
     char **S;
-    int j, t;
+    int i, j;
 
     if (nstrs <= 0) {
 	return NULL;
@@ -961,16 +961,54 @@ char **strings_array_new_with_length (int nstrs, int len)
     S = malloc(nstrs * sizeof *S);
     if (S == NULL) return NULL;
 
-    for (t=0; t<nstrs; t++) {
-	S[t] = malloc(len);
-	if (S[t] == NULL) {
-	    for (j=0; j<t; j++) {
+    for (i=0; i<nstrs; i++) {
+	S[i] = malloc(len);
+	if (S[i] == NULL) {
+	    for (j=0; j<i; j++) {
 		free(S[j]);
 	    }
 	    free(S);
 	    return NULL;
 	}
-	S[t][0] = '\0';
+	S[i][0] = '\0';
+    }
+
+    return S;
+}
+
+/**
+ * strings_array_dup:
+ * @strs: array of strings to be copied.
+ * @n: number of strings in array.
+ *
+ * Returns: an allocated copy of @strs, or %NULL on failure.
+ */
+
+char **strings_array_dup (char **strs, int n)
+{
+    char **S;
+    int i, j;
+
+    if (n <= 0 || strs == NULL) {
+	return NULL;
+    }
+
+    S = malloc(n * sizeof *S);
+    if (S == NULL) return NULL;
+
+    for (i=0; i<n; i++) {
+	if (strs[i] == NULL) {
+	    S[i] = NULL;
+	} else {
+	    S[i] = gretl_strdup(strs[i]);
+	    if (S[i] == NULL) {
+		for (j=0; j<i; j++) {
+		    free(S[j]);
+		}
+		free(S);
+		return NULL;
+	    }
+	}
     }
 
     return S;
