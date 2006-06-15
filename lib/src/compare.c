@@ -1244,9 +1244,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     int smpl_t1 = pdinfo->t1;
     int smpl_t2 = pdinfo->t2;
     int *chowlist = NULL;
-    int newvars = pmod->list[0] - 1;
+    int newvars = 0;
     int i, t, v = pdinfo->v;
-    char chowdate[OBSLEN], s[OBSLEN];
+    char chowdate[OBSLEN];
     MODEL chow_mod;
     double F;
     int split = 0, err = 0;
@@ -1271,16 +1271,12 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     }
 
     if (!err) {
-	/* take the original regression list, add a split dummy
-	   and interaction terms. */
-	if (pmod->ifc == 0) {
-	    newvars++;
-	}
+	newvars = pmod->ncoeff;
 	if (dataset_add_series(newvars, pZ, pdinfo)) {
 	    newvars = 0;
 	    err = E_ALLOC;
 	} else {
-	    chowlist = malloc((pmod->list[0] + newvars + 1) * sizeof *chowlist);
+	    chowlist = gretl_list_new(pmod->list[0] + newvars);
 	    if (chowlist == NULL) {
 		err = E_ALLOC;
 	    }
@@ -1288,37 +1284,37 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     }
 
     if (!err) {
-	chowlist[0] = pmod->list[0] + newvars;
-	for (i=1; i<=pmod->list[0]; i++) { 
+	double *dum = (*pZ)[v];
+	int l0 = pmod->list[0];
+
+	for (i=1; i<=l0; i++) { 
 	    chowlist[i] = pmod->list[i];
 	}
 
 	/* generate the split variable */
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[v][t] = (double) (t > split); 
+	    dum[t] = (double) (t > split); 
 	}
 	strcpy(pdinfo->varname[v], "splitdum");
 	strcpy(VARLABEL(pdinfo, v), _("dummy variable for Chow test"));
-	chowlist[pmod->list[0] + 1] = v;
+	chowlist[l0 + 1] = v;
 
 	/* and the interaction terms */
 	for (i=1; i<newvars; i++) {
-	    int orig = i + 1 + pmod->ifc;
-	    int plo = pmod->list[orig];
+	    int pv = pmod->list[i + 1 + pmod->ifc];
+	    int sv = v + i;
 
 	    for (t=0; t<pdinfo->n; t++) {
 		if (model_missing(pmod, t)) {
-		    (*pZ)[v+i][t] = NADBL;
+		    (*pZ)[sv][t] = NADBL;
 		} else {
-		    (*pZ)[v+i][t] = (*pZ)[v][t] * (*pZ)[plo][t];
+		    (*pZ)[sv][t] = dum[t] * (*pZ)[pv][t];
 		}
 	    }
-	    strcpy(s, pdinfo->varname[plo]); 
-	    gretl_trunc(s, 5);
-	    strcpy(pdinfo->varname[v+i], "sd_");
-	    strcat(pdinfo->varname[v+i], s);
-	    sprintf(VARLABEL(pdinfo, v+i), "splitdum * %s", pdinfo->varname[plo]);
-	    chowlist[pmod->list[0] + 1 + i] = v + i;
+	    strcpy(pdinfo->varname[sv], "sd_");
+	    strncat(pdinfo->varname[sv], pdinfo->varname[pv], VNAMELEN - 4);
+	    sprintf(VARLABEL(pdinfo, sv), "splitdum * %s", pdinfo->varname[pv]);
+	    chowlist[l0 + 1 + i] = sv;
 	}
 
 	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A);
@@ -1327,16 +1323,17 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    err = chow_mod.errcode;
 	    errmsg(err, prn);
 	} else {
+	    int dfn = chow_mod.ncoeff - pmod->ncoeff;
 	    double pval;
 
 	    chow_mod.aux = AUX_CHOW;
 	    printmodel(&chow_mod, pdinfo, OPT_NONE, prn);
 	    F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
-		(chow_mod.ess * newvars);
-	    pval = fdist(F, newvars, chow_mod.dfd);
+		(chow_mod.ess * dfn);
+	    pval = fdist(F, dfn, chow_mod.dfd);
 	    pprintf(prn, _("\nChow test for structural break at observation %s:\n"
 		    "  F(%d, %d) = %f with p-value %f\n\n"), chowdate,
-		    newvars, chow_mod.dfd, F, pval);
+		    dfn, chow_mod.dfd, F, pval);
 
 	    if (opt & OPT_S) {
 		ModelTest *test = model_test_new(GRETL_TEST_CHOW);
@@ -1344,7 +1341,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		if (test != NULL) {
 		    model_test_set_teststat(test, GRETL_STAT_F);
 		    model_test_set_param(test, chowdate);
-		    model_test_set_dfn(test, newvars);
+		    model_test_set_dfn(test, dfn);
 		    model_test_set_dfd(test, chow_mod.dfd);
 		    model_test_set_value(test, F);
 		    model_test_set_pvalue(test, pval);

@@ -674,7 +674,7 @@ static int get_mle_gradient (double *b, double *g, int n,
 /* default numerical calculation of gradient in context of BFGS */
 
 static int BFGS_numeric_gradient (double *b, double *g, int n,
-				  BFGS_LL_FUNC func, void *p)
+				  BFGS_LL_FUNC func, void *data)
 {
     double bi0, f1, f2;
     gretlopt opt = OPT_NONE;
@@ -695,17 +695,13 @@ static int BFGS_numeric_gradient (double *b, double *g, int n,
 	    h = d * b[i] + eps * (b[i] == 0.0);
 	    for (k=0; k<r; k++) {
 		b[i] = bi0 - h;
-		f1 = func(b, p);
-		if (na(f1)) {
-		    b[i] = bi0;
-		    return 1;
-		}		
+		f1 = func(b, data);
 		b[i] = bi0 + h;
-		f2 = func(b, p);
-		if (na(f2)) {
+		f2 = func(b, data);
+		if (na(f1) || na(f2)) {
 		    b[i] = bi0;
 		    return 1;
-		}
+		}		    
 		df[k] = (f2 - f1) / (2.0 * h); 
 		h /= v;
 	    }
@@ -726,15 +722,11 @@ static int BFGS_numeric_gradient (double *b, double *g, int n,
 	for (i=0; i<n; i++) {
 	    bi0 = b[i];
 	    b[i] = bi0 - h;
-	    f1 = func(b, p);
-	    if (na(f1)) {
-		b[i] = bi0;
-		return 1;
-	    }
+	    f1 = func(b, data);
 	    b[i] = bi0 + h;
-	    f2 = func(b, p);
-	    if (na(f2)) {
-		b[i] = bi0;
+	    f2 = func(b, data);
+	    b[i] = bi0;
+	    if (na(f1) || na(f2)) {
 		return 1;
 	    }
 	    g[i] = (f2 - f1) / (2.0 * h);
@@ -935,6 +927,55 @@ static int QML_vcv (nls_spec *spec, gretl_matrix *V)
     return 0;
 }
 
+static double *mle_score_callback (const double *b, int i, void *data)
+{
+    nls_spec *spec = (nls_spec *) data;
+
+    update_nls_param_values(b);
+    nls_calculate_fvec();
+
+    return (*nZ)[spec->uhatnum] + spec->t1;
+}
+
+/* build the G matrix, given a final set of coefficient
+   estimates, b, and a function for calculating the score
+   vector, scorefun
+*/
+
+gretl_matrix *build_OPG_matrix (double *b, int k, int T,
+				BFGS_SCORE_FUNC scorefun,
+				void *data)
+{
+    const double h = 1e-8;
+    gretl_matrix *G;
+    const double *x;
+    double bi0, x0;
+    int i, t;
+
+    G = gretl_matrix_alloc(k, T);
+    if (G == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<k; i++) {
+	bi0 = b[i];
+	b[i] = bi0 - h;
+	x = scorefun(b, i, data);
+	for (t=0; t<T; t++) {
+	    gretl_matrix_set(G, i, t, x[t]);
+	}
+	b[i] = bi0 + h;
+	x = scorefun(b, i, data);
+	for (t=0; t<T; t++) {
+	    x0 = gretl_matrix_get(G, i, t);
+	    gretl_matrix_set(G, i, t, (x[t] - x0) / (2.0 * h));
+	}
+	b[i] = bi0;
+    }
+
+    return G;
+}
+
 /* add variance matrix based on OPG, (GG')^{-1}, or on QML sandwich,
    H^{-1} GG' H^{-1}
 */
@@ -949,52 +990,35 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
     int i, j, v, t;
     int err = 0;
 
-    G = gretl_matrix_alloc(k, T);
     V = gretl_matrix_alloc(k, k);
-    if (G == NULL || V == NULL) {
-	err = E_ALLOC;
-	goto bailout;
+    if (V == NULL) {
+	return E_ALLOC;
     }
 
     if (pspec->mode == NUMERIC_DERIVS) {
-	const double eps = 1e-8;
-	double bi, x0, x1;
-
-	/* construct approximation to G matrix based
-	   on finite differences */
-
-	for (i=0; i<pspec->nparam; i++) {
-	    bi = spec->coeff[i];
-	    spec->coeff[i] = bi - eps;
-	    update_nls_param_values(spec->coeff);
-	    nls_calculate_fvec();
-	    for (t=0; t<T; t++) {
-		x0 = (*nZ)[pspec->uhatnum][t + spec->t1];
-		gretl_matrix_set(G, i, t, x0);
-	    }
-	    spec->coeff[i] = bi + eps;
-	    update_nls_param_values(spec->coeff);
-	    nls_calculate_fvec();
-	    for (t=0; t<T; t++) {
-		x1 = (*nZ)[pspec->uhatnum][t + spec->t1];
-		x0 = gretl_matrix_get(G, i, t);
-		gretl_matrix_set(G, i, t, (x1 - x0) / (2.0 * eps));
-	    }
-	    spec->coeff[i] = bi;
-	}
+	G = build_OPG_matrix(spec->coeff, k, T, mle_score_callback, 
+			     (void *) spec);
     } else {
-	for (i=0; i<k; i++) {
-	    v = spec->params[i].dernum;
-	    if (var_is_scalar(ndinfo, v)) {
-		x = (*nZ)[v][0];
-	    }
-	    for (t=0; t<T; t++) {
-		if (var_is_series(ndinfo, v)) {
-		    x = (*nZ)[v][t + spec->t1];
+	G = gretl_matrix_alloc(k, T);
+	if (G != NULL) {
+	    for (i=0; i<k; i++) {
+		v = spec->params[i].dernum;
+		if (var_is_scalar(ndinfo, v)) {
+		    x = (*nZ)[v][0];
 		}
-		gretl_matrix_set(G, i, t, x);
+		for (t=0; t<T; t++) {
+		    if (var_is_series(ndinfo, v)) {
+			x = (*nZ)[v][t + spec->t1];
+		    }
+		    gretl_matrix_set(G, i, t, x);
+		}
 	    }
 	}
+    }
+
+    if (G == NULL) {
+	gretl_matrix_free(V);
+	return E_ALLOC;
     }
 
     gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
@@ -1019,8 +1043,6 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 	    }
 	}
     }
-
- bailout:
 
     gretl_matrix_free(G);
     gretl_matrix_free(V);

@@ -25,6 +25,8 @@ typedef struct _nls_spec nls_spec;
 typedef double (*BFGS_LL_FUNC) (const double *, void *);
 typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
 			       double (*llfun)(), void *);
+typedef double *(*BFGS_SCORE_FUNC) (const double *, int, void *);
+
 
 nls_spec *nls_spec_new (int ci, const DATAINFO *pdinfo);
 
@@ -61,5 +63,9 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	      int *fncount, int *grcount, double **hessvcv,
 	      BFGS_LL_FUNC get_ll, BFGS_GRAD_FUNC get_gradient, 
 	      void *callback_data, gretlopt opt, PRN *prn);
+
+gretl_matrix *build_OPG_matrix (double *b, int k, int T,
+				BFGS_SCORE_FUNC scorefun,
+				void *data);
 
 #endif /* GRETL_NLS_H */

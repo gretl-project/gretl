@@ -794,6 +794,16 @@ static void arma_hessian_vcv (MODEL *pmod, double *vcv, int k)
     }
 }
 
+static double *
+kalman_arma_score_callback (const double *b, int i, void *data)
+{
+    kalman *K = (kalman *) data;
+
+    rewrite_kalman_matrices(K, b, i);
+    kalman_forecast(K);
+    return E->val;
+}
+
 /* add covariance matrix and standard errors based on Outer Product of
    Gradient
 */
@@ -803,43 +813,20 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 {
     gretl_matrix *G = NULL;
     gretl_matrix *V = NULL;
-    const double eps = 1.0e-8;
-    double g0, g1;
-    double x = 0.0;
+    double x;
     int i, j, s, t;
-    int err = 0;
-
-    G = gretl_matrix_alloc(k, T);
-    V = gretl_matrix_alloc(k, k);
-    if (G == NULL || V == NULL) {
-	pmod->errcode = err = E_ALLOC;
-	goto bailout;
-    }
+    int idx, err = 0;
 
     s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	pmod->uhat[t] = gretl_vector_get(E, s++);
     }
 
-    /* construct approximation to G matrix based
-       on finite differences */
-    for (i=0; i<k && !err; i++) {
-	b[i] -= eps;
-	rewrite_kalman_matrices(K, b, i);
-	err = kalman_forecast(K);
-	for (t=0; t<T; t++) {
-	    g0 = gretl_vector_get(E, t);
-	    gretl_matrix_set(G, i, t, g0);
-	}
-	b[i] += 2.0 * eps;
-	rewrite_kalman_matrices(K, b, i);
-	err = kalman_forecast(K);
-	for (t=0; t<T; t++) {
-	    g1 = gretl_vector_get(E, t);
-	    g0 = gretl_matrix_get(G, i, t);
-	    gretl_matrix_set(G, i, t, (g1 - g0) / (2.0 * eps));
-	}
-	b[i] -= eps;
+    G = build_OPG_matrix(b, k, T, kalman_arma_score_callback, (void *) K);
+    V = gretl_matrix_alloc(k, k);
+    if (G == NULL || V == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
     gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
@@ -849,8 +836,6 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     err = gretl_invert_symmetric_matrix(V);
 
     if (!err) {
-	int idx;
-
 	for (i=0; i<k; i++) {
 	    for (j=0; j<=i; j++) {
 		idx = ijton(i, j, k);
@@ -864,6 +849,8 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
     }
 
  bailout:
+
+    pmod->errcode = err;
 
     gretl_matrix_free(G);
     gretl_matrix_free(V);
