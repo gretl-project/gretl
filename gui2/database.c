@@ -678,7 +678,7 @@ static int make_db_series_list (int action, char *fname, char *buf)
     int cb = 0;
     int err = 0;
 
-    if (buf == NULL) {
+    if (action == REMOTE_SERIES && buf == NULL) {
 	return 1;
     }
 
@@ -1410,7 +1410,7 @@ void open_db_index (GtkWidget *w, gpointer data)
 #endif
 
     build_path(dbfile, dbdir, fname, NULL);
-    
+
 #ifndef OLD_GTK
     g_free(fname);
     g_free(dbdir);
@@ -1473,7 +1473,6 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
     } else {
 	update_statusline(vwin, "OK");
 	make_db_series_list(REMOTE_SERIES, fname, getbuf);
-	/* check for error */
     }
 
 #ifndef OLD_GTK

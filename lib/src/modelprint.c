@@ -455,7 +455,7 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
 {
     int k = pmod->ncoeff - pmod->ifc;
 
-    if (k < 2) return;
+    if (k < 3) return;
 
     if ((k = least_signif_coeff(pmod))) {
 	char tmp[128];
