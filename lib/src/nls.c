@@ -26,6 +26,7 @@
 #include "../../minpack/minpack.h"  
 
 #define NLS_DEBUG 0
+#define RSTEPS 4
 
 enum {
     NUMERIC_DERIVS,
@@ -673,30 +674,71 @@ static int get_mle_gradient (double *b, double *g, int n,
 /* default numerical calculation of gradient in context of BFGS */
 
 static int BFGS_numeric_gradient (double *b, double *g, int n,
-				  BFGS_LL_FUNC llfunc,
-				  void *p)
+				  BFGS_LL_FUNC func, void *p)
 {
-    const double h = 1.0e-8;
-    double b0, f1, f2;
+    double bi0, f1, f2;
+    gretlopt opt = OPT_NONE;
     int i;
 
-    /* consider Richardson extrapolation here? */
+    if (opt == OPT_R) {
+	/* Richardson */
+	double df[RSTEPS];
+	double eps = 1.0e-4;
+	double d = 0.0001;
+	double v = 2.0;
+	double h, p4m;
+	int r = RSTEPS;
+	int k, m;
 
-    for (i=0; i<n; i++) {
-	b0 = b[i];
-	b[i] = b0 - h;
-	f1 = llfunc(b, p);
-	if (na(f1)) {
-	    b[i] = b0;
-	    return 1;
+	for (i=0; i<n; i++) {
+	    bi0 = b[i];
+	    h = d * b[i] + eps * (b[i] == 0.0);
+	    for (k=0; k<r; k++) {
+		b[i] = bi0 - h;
+		f1 = func(b, p);
+		if (na(f1)) {
+		    b[i] = bi0;
+		    return 1;
+		}		
+		b[i] = bi0 + h;
+		f2 = func(b, p);
+		if (na(f2)) {
+		    b[i] = bi0;
+		    return 1;
+		}
+		df[k] = (f2 - f1) / (2.0 * h); 
+		h /= v;
+	    }
+	    b[i] = bi0;
+	    p4m = 4.0;
+	    for (m=0; m<r-1; m++) {
+		for (k=0; k<r-m; k++) {
+		    df[k] = (df[k+1] * p4m - df[k]) / (p4m - 1.0);
+		}
+		p4m *= 4.0;
+	    }
+	    g[i] = df[0];
 	}
-	b[i] = b0 + h;
-	f2 = llfunc(b, p);
-	if (na(f2)) {
-	    b[i] = b0;
-	    return 1;
+    } else {
+	/* simple gradient calculation */
+	const double h = 1.0e-8;
+
+	for (i=0; i<n; i++) {
+	    bi0 = b[i];
+	    b[i] = bi0 - h;
+	    f1 = func(b, p);
+	    if (na(f1)) {
+		b[i] = bi0;
+		return 1;
+	    }
+	    b[i] = bi0 + h;
+	    f2 = func(b, p);
+	    if (na(f2)) {
+		b[i] = bi0;
+		return 1;
+	    }
+	    g[i] = (f2 - f1) / (2.0 * h);
 	}
-	g[i] = (f2 - f1) / (2.0 * h);
     }
 
     return 0;
@@ -2532,21 +2574,21 @@ static void hess_b_adjust_ij (double *c, double *b, double *h, int n,
 static double *numerical_hessian (double *b, double *c, int n,
 				  BFGS_LL_FUNC func, void *data)
 {
+    double Dx[RSTEPS];
+    double Hx[RSTEPS];
     double *D = NULL;
     double *h0 = NULL;
     double *h = NULL;
-    double *Dx = NULL;
-    double *Hx = NULL;
     double *Hd = NULL;
 
     gretl_matrix *V = NULL;
     double *vcv = NULL;
 
     /* numerical parameters */
+    int r = RSTEPS;      /* number of Richardson steps */
     double eps = 1.0e-4;
     double d = 0.0001;
     double v = 2.0;      /* reduction factor for h */
-    int r = 4;           /* number of Richardson steps */
 
     double f0, f1, f2;
     double p4m;
@@ -2558,13 +2600,10 @@ static double *numerical_hessian (double *b, double *c, int n,
 
     h0 = malloc(n * sizeof *h0);
     h  = malloc(n * sizeof *h);
-    Dx = malloc(r * sizeof *Dx);
-    Hx = malloc(r * sizeof *Hx);
     Hd = malloc(n * sizeof *Hd);
     D  = malloc(dn * sizeof *D);
 
-    if (h0 == NULL || h == NULL || Dx == NULL || 
-	Hx == NULL || Hd == NULL || D == NULL) {
+    if (h0 == NULL || h == NULL || Hd == NULL || D == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -2662,8 +2701,6 @@ static double *numerical_hessian (double *b, double *c, int n,
     free(D);
     free(h0);
     free(h);
-    free(Dx);
-    free(Hx);
     free(Hd);
 
     return vcv;
@@ -2894,14 +2931,14 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
     *fncount = fcount;
     *grcount = gcount;
 
-    if (!err && hessvcv != NULL) {
-	*hessvcv = numerical_hessian(b, c, n, get_ll, callback_data);
-    }
-
     if (opt & OPT_V) {
 	pputs(nprn, "\n--- FINAL VALUES: \n");	
 	print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
 	pputs(nprn, "\n\n");	
+    }
+
+    if (!err && hessvcv != NULL) {
+	*hessvcv = numerical_hessian(b, c, n, get_ll, callback_data);
     }
 
  bailout:
