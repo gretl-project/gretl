@@ -58,13 +58,13 @@ done
 
 mkdir -p windist/gretl/lib/gtk-2.0/2.4.0/engines
 mkdir -p windist/gretl/lib/gtk-2.0/2.4.0/loaders
-mkdir -p windist/gretl/lib/pango/1.4.0/modules
+mkdir -p windist/gretl/lib/pango/1.5.0/modules
 mkdir -p windist/gretl/etc/gtk-2.0
 mkdir -p windist/gretl/etc/pango
 
-# mkdir -p windist/gretl/share/themes/Default/gtk-2.0
-# mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
-
+mkdir -p windist/gretl/share/themes/Default/gtk-2.0
+mkdir -p windist/gretl/share/themes/Default/gtk-2.0-key
+mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
 
 # put binaries in place
@@ -82,7 +82,7 @@ for f in plugins/*.dll ; do
 done
 
 # gtk runtime files
-for f in `cat ${HOME_WIN32}/gtk-runtime.files` ; do
+for f in `cat ${HOME_WIN32}/gtk-runtime.files-2.8` ; do
     srcfile="${CROSSDIR}/$f"
     instfile=`echo $f | sed s+^bin/++`
     echo "$srcfile -> gretl/$instfile" >> FILELIST

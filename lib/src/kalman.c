@@ -581,32 +581,36 @@ static int multiply_by_F (kalman *K, const gretl_matrix *A,
     return ret;
 }
 
-/* simplified version of the function below, for ARMA */
+/* Simplified version of the function below, for ARMA:
+   in this case we have H = (r x 1) and S = (r x 1),
+   although F and P are (r x r).
+*/
 
 static int kalman_arma_iter_1 (kalman *K)
 {
     double ve;
-    int err = 0;
+    int i, err = 0;
 
     /* write F*S into S+ */
     err += multiply_by_F(K, K->S0, K->S1, 0);
 
     /* form E = y - A'x - H'S */
     K->e->val[0] -= K->Ax->val[0];
-    fast_A_prime_B(K->H, K->S0, K->Tmpnn);
-    K->e->val[0] -= K->Tmpnn->val[0];
-    
+    for (i=0; i<K->r; i++) {
+	K->e->val[0] -= K->H->val[i] * K->S0->val[i];
+    }
+   
     /* form (H'PH + R)^{-1} * (y - Ax - H'S) = "ve" */
     ve = K->e->val[0] * K->V->val[0];
 
     /* form FPH */
     err += multiply_by_F(K, K->PH, K->FPH, 0);
 
-    /* form FPH * (H'PH + R)^{-1} * (y - A'x - H'S) */
-    gretl_matrix_multiply_by_scalar(K->FPH, ve);
-
-    /* complete calculation of S+ */
-    err += gretl_matrix_add_to(K->S1, K->FPH);
+    /* form FPH * (H'PH + R)^{-1} * (y - A'x - H'S),
+       and complete calculation of S+ */
+    for (i=0; i<K->r; i++) {
+	K->S1->val[i] += K->FPH->val[i] * ve;
+    }
 
     return err;
 }
@@ -811,7 +815,9 @@ int kalman_forecast (kalman *K)
 {
     double ldet;
     int update_P = 1;
-    int t, err = 0;
+    int Sdim = K->r * K->n;
+    int Pdim = K->r * K->r;
+    int i, t, err = 0;
 
 #if KDEBUG
     fprintf(stderr, "kalman_forecast: T = %d\n", K->T);
@@ -850,13 +856,23 @@ int kalman_forecast (kalman *K)
 
 	/* initial matrix calculations */
 	fast_multiply(K->P0, K->H, K->PH);
-	fast_A_prime_B(K->H, K->PH, K->HPH);
-	if (K->R != NULL) {
-	    gretl_matrix_add_to(K->HPH, K->R);
+	if (arma_ll(K)) {
+	    K->HPH->val[0] = 0.0;
+	    for (i=0; i<K->r; i++) {
+		K->HPH->val[0] += K->H->val[i] * K->PH->val[i];
+	    }
+	    ldet = log(K->HPH->val[0]);
+	    K->V->val[0] = 1.0 / K->HPH->val[0];
+	} else {
+	    fast_A_prime_B(K->H, K->PH, K->HPH);
+	    if (K->R != NULL) {
+		gretl_matrix_add_to(K->HPH, K->R);
+	    }
+	    gretl_matrix_copy_values(K->V, K->HPH);
+	    err = gretl_invert_symmetric_matrix2(K->V, &ldet);
 	}
-	gretl_matrix_copy_values(K->V, K->HPH);
 
-	err = gretl_invert_symmetric_matrix2(K->V, &ldet);
+	/* likelihood bookkeeping */
 	if (err) {
 	    K->loglik = NADBL;
 	    break;
@@ -892,7 +908,9 @@ int kalman_forecast (kalman *K)
 
 	/* update state vector */
 	if (!err) {
-	    gretl_matrix_copy_values(K->S0, K->S1);
+	    for (i=0; i<Sdim; i++) {
+		K->S0->val[i] = K->S1->val[i];
+	    }
 	}
 
 	if (!err && update_P) {
@@ -909,7 +927,9 @@ int kalman_forecast (kalman *K)
 		}
 	    }
 	    if (update_P) {
-		gretl_matrix_copy_values(K->P0, K->P1);
+		for (i=0; i<Pdim; i++) {
+		    K->P0->val[i] = K->P1->val[i];
+		}		
 	    } 
 	}
     }

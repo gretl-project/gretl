@@ -350,8 +350,13 @@ void set_up_windows_look (void)
 	int needslash = (paths.gretldir[n-1] != SLASH);
 	gchar *wimprc;
 
+#if 1
+	wimprc = g_strdup_printf("%s%sshare\\themes\\MS-Windows\\gtk-2.0\\gtkrc", 
+				 paths.gretldir, (needslash)? "\\" : "");
+#else
 	wimprc = g_strdup_printf("%s%setc\\gtk-2.0\\gtkrc.wimp", 
 				 paths.gretldir, (needslash)? "\\" : "");
+#endif
 	gtk_rc_parse(wimprc);
 	g_free(wimprc);
     } else {

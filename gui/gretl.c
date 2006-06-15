@@ -467,7 +467,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/_Model"), NULL, NULL, 0, "<Branch>" },
     { N_("/Model/_Ordinary Least Squares..."), NULL, model_callback, OLS, NULL },
     { N_("/Model/_Weighted Least Squares..."), NULL, model_callback, WLS, NULL },
-    { "/Model/sep1",  NULL, NULL, 0, "<Separator>" },
     { N_("/Model/H_eteroskedasticity corrected..."), NULL, model_callback, 
       HSK, NULL },
     { "/Model/sep2",  NULL, NULL, 0, "<Separator>" },
