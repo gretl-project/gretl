@@ -240,7 +240,10 @@ matrice sono:
 \texttt{cholesky()} & scomposizione di Cholesky \\
 \texttt{diag()} & diagonale principale \\
 \texttt{transp()} & trasposta \\
-\texttt{cdemean()} & sottrazione della media delle colonne 
+\texttt{cdemean()} & sottrazione della media delle colonne \\
+\texttt{vec()} & organizza gli elementi come vettore colonna \\
+\texttt{vech()} & organizza gli elementi del triangolo inferiore come vettore colonna \\
+\texttt{unvech()} & annulla l'operazione \texttt{vech}
 \end{tabular}
 \end{center}
 
@@ -262,6 +265,17 @@ tale che $v_i = a_{ii}$.
 La funzione \texttt{cdemean} applicata a una matrice $A$ $m \times n$
 restituisce una matrice $B$ $m \times n$ tale che $b_{ij} = a_{ij} -
 \bar{A}_j$, dove $\bar{A}_j$ indica la media della colonna $j$ di $A$.  
+
+La funzione \texttt{vec} applicata a una matrice $A$ $m \times n$
+restituisce un vettore colonna di lunghezza $mn$ formato impilando le
+colonne di $A$.
+
+La funzione \texttt{vech} applicata a una matrice $A$ $n \times n$
+restituisce un vettore colonna di lunghezza $n(n+1)/2$ formeato impilando
+gli elementi del triangolo inferiore di $A$, colonna per colonna.
+Si noti che $A$ deve essere quadrata e, perché l'operazione abbia senso,
+simmetrica. La funzione \texttt{unvech} esegue l'operazione inversa, producendo
+una matrice simmetrica.
 
 \subsection{Funzioni da scalare a matrice}
 \label{matrix-fill}

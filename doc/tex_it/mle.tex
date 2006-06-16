@@ -197,6 +197,27 @@ Lo script per \app{gretl} diventa quindi
     end mle 
 \end{code}
 
+Un'altro fatto di cui tener conto è che talvolta i parametri sono vincolati
+all'interno di certi intervalli: in questo caso, ad esempio, sia $\alpha$
+che $p$ devono essere numeri positivi. \app{gretl} non controlla queste
+condizioni: è responsabilità dell'utente assicurarsi che la funzione venga
+sempre valutata in un punto ammissibile dello spazio dei parametri, durante la
+ricerca iterativa del massimo. Un metodo efficace per far questo consiste nel
+definire una variabile per controllare che i parametri siano ammissibili e
+impostare la log-verosimiglianza come indefinita se il controllo fallisce. Ad
+esempio:
+\begin{code}
+    scalar m = mean(x)
+    scalar alpha = m/var(x)
+    scalar p = m*alpha
+
+    mle logl =  p*ln(ax) - lngamma(p) - ln(x) - ax + (1-check)*NA
+    series ax = alpha*x
+    scalar check = (alpha>0) * (p>0)
+    params alpha p
+    end mle 
+\end{code}
+
 \section{Funzioni di costo con frontiera stocastica}
 \label{sec:frontier}
 
