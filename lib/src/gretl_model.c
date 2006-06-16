@@ -1982,6 +1982,7 @@ static int gretl_test_print_string (const ModelTest *test, PRN *prn)
 	N_("Non-linearity test (squares)"),
 	N_("White's test for heteroskedasticity"),
 	N_("Sargan over-identification test"),
+	N_("Hausman test"),
 	N_("Hausman test")
     };
     char ordstr[16];
@@ -2068,7 +2069,8 @@ static int gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
 	N_("relationship is linear"),
 	N_("heteroskedasticity not present"),
 	N_("all instruments are valid"),
-	N_("OLS estimates are consistent")
+	N_("OLS estimates are consistent"),
+	N_("GLS estimates are consistent")
     };
 
     if (test->type >= GRETL_TEST_MAX) {

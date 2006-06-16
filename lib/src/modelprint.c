@@ -326,8 +326,8 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "  %s = %g\n", _("'within' variance"), ws2);
-	pprintf(prn, "  %s = %g\n", _("'between' variance"), bs2);
+	pprintf(prn, "  %s = %g\n", _("'Within' variance"), ws2);
+	pprintf(prn, "  %s = %g\n", _("'Between' variance"), bs2);
 	if (!na(theta)) {
 	    pprintf(prn, "  %s = %g\n", _("theta used for quasi-demeaning"), theta);
 	}

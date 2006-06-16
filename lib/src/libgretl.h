@@ -108,7 +108,8 @@ enum auto_genr {
     GENR_RESID,
     GENR_FITTED,
     GENR_RESID2,
-    GENR_H
+    GENR_H,
+    GENR_AHAT
 };
 
 enum progress_flags {

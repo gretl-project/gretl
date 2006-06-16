@@ -1161,13 +1161,16 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo)
 {
     char vname[VNAMELEN], vlabel[MAXLABEL];
+    const double *x = NULL;
     int i, t;
-    double *h = NULL;
 
     if (code == GENR_H) {
-	h = gretl_model_get_data(pmod, "garch_h");
-	if (h == NULL) return E_DATA;
-    }
+	x = gretl_model_get_data(pmod, "garch_h");
+	if (x == NULL) return E_DATA;
+    } else if (code == GENR_AHAT) {
+	x = gretl_model_get_data(pmod, "ahat");
+	if (x == NULL) return E_DATA;
+    }	
 
     if (dataset_add_series(1, pZ, pdinfo)) {
 	return E_ALLOC;
@@ -1207,9 +1210,16 @@ int genr_fit_resid (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	sprintf(vname, "h%d", pmod->ID);
 	sprintf(vlabel, _("fitted variance from model %d"), pmod->ID);
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    (*pZ)[i][t] = h[t];
+	    (*pZ)[i][t] = x[t];
 	}
-    }
+    } else if (code == GENR_AHAT) { 
+	/* fixed-effects constants */
+	sprintf(vname, "ahat%d", pmod->ID);
+	sprintf(vlabel, _("per-unit constants from model %d"), pmod->ID);
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    (*pZ)[i][t] = x[t];
+	}
+    }	
 
     strcpy(pdinfo->varname[i], vname);
 

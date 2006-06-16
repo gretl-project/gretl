@@ -46,6 +46,38 @@ struct COMPARE {
     int robust;    /* = 1 when robust vcv is in use, else 0 */
 };
 
+/* Critical values for Quandt likelihood ratio (break) test:
+   columns contain the 10%, 5% and 1% values respectively,
+   for the given number of restrictions, q, and 15% trimming.  
+   Taken from Stock and Watson, Introduction to Econometrics
+   (Addison-Wesley, 2003), based on Andrews.
+*/
+
+#define QLR_QMAX 20
+
+static double QLR_critvals[QLR_QMAX][3] = {
+    { 7.12, 8.68, 12.16 }, /*  1 */
+    { 5.00, 5.86,  7.78 }, /*  2 */
+    { 4.09, 4.71,  6.02 }, /*  3 */
+    { 3.59, 4.09,  5.12 }, /*  4 */
+    { 3.26, 3.66,  4.53 }, /*  5 */
+    { 3.02, 3.37,  4.12 }, /*  6 */
+    { 2.84, 3.15,  3.82 }, /*  7 */
+    { 2.69, 2.98,  3.57 }, /*  8 */
+    { 2.58, 2.84,  3.38 }, /*  9 */
+    { 2.48, 2.71,  3.23 }, /* 10 */
+    { 2.40, 2.62,  3.09 }, /* 11 */
+    { 2.33, 2.54,  2.97 }, /* 12 */
+    { 2.27, 2.46,  2.87 }, /* 13 */
+    { 2.21, 2.40,  2.78 }, /* 14 */
+    { 2.16, 2.34,  2.71 }, /* 15 */
+    { 2.12, 2.29,  2.64 }, /* 16 */
+    { 2.08, 2.25,  2.58 }, /* 17 */
+    { 2.05, 2.20,  2.53 }, /* 18 */
+    { 2.01, 2.17,  2.48 }, /* 19 */
+    { 1.99, 2.13,  2.43 }  /* 20 */
+};
+
 /* Given a list of variables, check them against the independent
    variables included in a model, and construct a mask with 1s in
    positions where there is a match, 0s otherwise.  If the test list
@@ -1297,6 +1329,45 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return chowlist;
 }
 
+static void QLR_print_result (double Fmax, int tmax, int dfn, int dfd,
+			      const DATAINFO *pdinfo, PRN *prn)
+{
+    char datestr[OBSLEN];
+    double crit = 0.0;
+    int i, a = 0, approx = 0;
+
+    ntodate(datestr, tmax, pdinfo);
+    pprintf(prn, "QLR test: maximum F(%d, %d) = %g is "
+	    "at observation %s\n", dfn, dfd, Fmax, datestr);
+
+    if (dfn > QLR_QMAX) {
+	dfn = QLR_QMAX;
+	approx = 1;
+    }
+
+    for (i=2; i>=0; i--) {
+	if (Fmax > QLR_critvals[dfn][i]) {
+	    a = (i == 2)? 1 : (i == 1)? 5 : 10;
+	    crit = QLR_critvals[dfn][i];
+	    break;
+	}
+    }
+
+    if (a > 0) {
+	pprintf(prn, "Significant at the %d percent level ", a);
+	pprintf(prn, "(%d%% critical value %s %g)\n", a, 
+		(approx)? "<" : "=", crit);
+    } else {
+	if (approx) {
+	    pprintf(prn, "10%% critical value for q = 20 is %g\n",
+		    crit);
+	} else {
+	    pputs(prn, "Not significant at the 10 percent level ");
+	    pprintf(prn, "(10%% value = %g)\n", crit);
+	}
+    }
+}
+
 /**
  * chow_test:
  * @line: command line for parsing.
@@ -1321,7 +1392,9 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     char chowdate[OBSLEN];
     MODEL chow_mod;
     double F;
-    int split = 0, err = 0;
+    int QLR = 0;
+    int split, smax;
+    int err = 0;
 
     if (pmod->ci != OLS) {
 	return E_OLSONLY;
@@ -1334,19 +1407,59 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     gretl_model_init(&chow_mod);
 
     if (sscanf(line, "%*s %8s", chowdate) != 1) {
-	err = E_PARSE;
+	QLR = 1;
+	/* 15 percent trimming */
+	split = pmod->t1 + 0.15 * pmod->nobs;
+	smax = pmod->t1 + 0.85 * pmod->nobs;
     } else {
 	split = dateton(chowdate, pdinfo) - 1;
 	if (split <= 0 || split >= pdinfo->n) { 
 	    err = E_SPLIT;
 	}
+	smax = split;
     }
 
     if (!err) {
 	chowlist = make_chow_list(pmod, pZ, pdinfo, split, &err);
     }
 
-    if (!err) {
+    if (!err && QLR) {
+	/* Quandt likelihood ratio */
+	double Fmax = 0.0;
+	int dfn = 0, dfd = 0;
+	int tmax = 0;
+	int i, t;
+	
+	for (t=split; t<=smax; t++) {
+	    chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A);
+	    if (chow_mod.errcode) {
+		err = chow_mod.errcode;
+		errmsg(err, prn);
+		break;
+	    }
+	    dfn = chow_mod.ncoeff - pmod->ncoeff;
+	    dfd = chow_mod.dfd;
+	    F = (pmod->ess - chow_mod.ess) * dfd / (chow_mod.ess * dfn);
+	    if (F > Fmax) {
+		tmax = t;
+		Fmax = F;
+	    }
+#if 0
+	    fprintf(stderr, "split at t=%d: F(%d,%d)=%g\n", t, 
+		    dfn, dfd, F);
+#endif
+	    for (i=0; i<pmod->ncoeff; i++) {
+		(*pZ)[origv+i][t+1] = 0.0;
+	    }
+	    clear_model(&chow_mod);
+	}
+
+	if (!err) {
+	    QLR_print_result(Fmax, tmax, dfn, dfd, pdinfo, prn);
+	}
+
+    } else if (!err) {
+	/* regular Chow test */
 	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A);
 
 	if (chow_mod.errcode) {

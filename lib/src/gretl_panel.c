@@ -55,15 +55,17 @@ struct panelmod_t_ {
 };
 
 struct {
-    int n;
-    int T;
-    int offset;
+    int n;      /* number of cross-sectional units */
+    int T;      /* number of observations per unit */
+    int offset; /* sampling offset into full dataset */
 } panidx;
 
 static int 
 varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 		   panelmod_t *pan);
 
+/* translate from (i = unit, t = time period for that unit) to
+   overall index into the data set */
 #define panel_index(i,t) (i * panidx.T + t + panidx.offset)
 
 static void 
@@ -1309,27 +1311,8 @@ breusch_pagan_LM (panelmod_t *pan, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-static int do_hausman_test (panelmod_t *pan, PRN *prn)
+static void print_hausman_result (panelmod_t *pan, PRN *prn)
 {
-#if PDEBUG
-    int i, ns = pan->nbeta;
-    int nterms = (ns * ns + ns) / 2;
-
-    for (i=0; i<ns; i++) {
- 	fprintf(stderr, "b%d_FE - beta%d_RE = %g\n", i, i, pan->bdiff[i]);
-    }
-    fputc('\n', stderr);
-
-    for (i=0; i<nterms; i++) {
- 	fprintf(stderr, "vcv_diff[%d] = %g\n", i, pan->sigma[i]);
-    }
-#endif
-
-    if (bXb(pan)) { 
-	pputs(prn, _("Error attempting to invert vcv difference matrix\n"));
-	return 1;
-    }
-
     if (na(pan->H)) {
 	pputs(prn, _("\nHausman test matrix is not positive definite (this "
 		     "result may be treated as\n\"fail to reject\" the random effects "
@@ -1342,8 +1325,61 @@ static int do_hausman_test (panelmod_t *pan, PRN *prn)
 		     "the random effects\nmodel is consistent, in favor of the fixed "
 		     "effects model.)\n"));
     }
+}
 
-    return 0;
+static void save_hausman_result (panelmod_t *pan)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_PANEL_HAUSMAN);
+
+    if (test != NULL) {
+	model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
+	model_test_set_dfn(test, pan->nbeta);
+	model_test_set_value(test, pan->H);
+	model_test_set_pvalue(test, chisq(pan->H, pan->nbeta));
+	maybe_add_test_to_model(pan->pooled, test);
+    }	    
+}
+
+#if PDEBUG
+static void print_hausman_details (panelmod_t *pan)
+{
+    int i, ns = pan->nbeta;
+    int nterms = (ns * ns + ns) / 2;
+
+    for (i=0; i<ns; i++) {
+ 	fprintf(stderr, "b%d_FE - beta%d_RE = %g\n", i, i, pan->bdiff[i]);
+    }
+    fputc('\n', stderr);
+
+    for (i=0; i<nterms; i++) {
+ 	fprintf(stderr, "vcv_diff[%d] = %g\n", i, pan->sigma[i]);
+    }
+}
+#endif
+
+static int do_hausman_test (panelmod_t *pan, PRN *prn)
+{
+    int err = 0;
+
+#if PDEBUG
+    print_hausman_details(pan);
+#endif
+
+    if (bXb(pan)) { 
+	err = 1;
+    }
+
+    if (pan->opt & OPT_V) {
+	if (err) {
+	    pputs(prn, _("Error attempting to invert vcv difference matrix\n"));
+	} else {
+	    print_hausman_result(pan, prn);
+	}
+    } else if (!err) {
+	save_hausman_result(pan);
+    }
+
+    return err;
 }
 
 static int get_maj_min (const DATAINFO *pdinfo, int *maj, int *min)
@@ -1659,9 +1695,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    random_effects(&pan, (const double **) *pZ, pdinfo, 
 			   (const double **) gZ, prn);
-#if 0 /* should be printed after the model */
 	    do_hausman_test(&pan, prn);
-#endif
 	}
 
 	if (ginfo != NULL) {

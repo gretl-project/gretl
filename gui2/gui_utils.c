@@ -3029,6 +3029,11 @@ static GtkItemFactoryEntry garch_data_item = {
     fit_resid_callback, GENR_H, NULL, GNULL 
 };
 
+static GtkItemFactoryEntry fixed_effects_data_item = {
+    N_("/Model data/Add to data set/per-unit constants"), NULL, 
+    fit_resid_callback, GENR_AHAT, NULL, GNULL 
+};
+
 static GtkItemFactoryEntry define_var_items[] = {
     { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Model data/Define new variable..."), NULL, model_genr_callback,
@@ -3081,6 +3086,11 @@ static GtkItemFactoryEntry garch_data_item = {
     fit_resid_callback, GENR_H, NULL
 };
 
+static GtkItemFactoryEntry fixed_effects_data_item = {
+    N_("/Model data/Add to data set/per-unit constants"), NULL, 
+    fit_resid_callback, GENR_AHAT, NULL  
+};
+
 static GtkItemFactoryEntry define_var_items[] = {
     { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Model data/Define new variable..."), NULL, model_genr_callback,
@@ -3091,8 +3101,8 @@ static GtkItemFactoryEntry define_var_items[] = {
 
 static void add_model_dataset_items (windata_t *vwin)
 {
-    int i, n;
     MODEL *pmod = vwin->data;
+    int i, n;
 
     n = sizeof model_dataset_basic_items / 
 	sizeof model_dataset_basic_items[0];
@@ -3100,6 +3110,10 @@ static void add_model_dataset_items (windata_t *vwin)
     for (i=0; i<n; i++) {
 	gtk_item_factory_create_item(vwin->ifac, &model_dataset_basic_items[i], 
 				     vwin, 1);
+    }
+
+    if (gretl_model_get_data(pmod, "ahat") != NULL) {
+	gtk_item_factory_create_item(vwin->ifac, &fixed_effects_data_item, vwin, 1);
     }
 
     if (pmod->ci != GARCH) {

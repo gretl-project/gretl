@@ -3556,7 +3556,7 @@ void residual_correlogram (gpointer data, guint u, GtkWidget *widget)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
-    if (add_fit_resid(pmod, 0, 1)) return;
+    if (add_fit_resid(pmod, GENR_RESID, 1)) return;
 
     /* handle model estimated on different subsample */
     if (pmod->dataset != NULL) {
@@ -3629,7 +3629,7 @@ void residual_periodogram (gpointer data, guint opt, GtkWidget *widget)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
-    if (add_fit_resid(pmod, 0, 1)) return;
+    if (add_fit_resid(pmod, GENR_RESID, 1)) return;
 
     /* handle model estimated on different subsample */
     if (pmod->dataset != NULL) {
@@ -3901,14 +3901,16 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 
 	populate_varlist();
 
-	if (code == 0) {
+	if (code == GENR_RESID) {
 	    gretl_command_sprintf("genr %s = $uhat", datainfo->varname[v]);
-	} else if (code == 1) {
+	} else if (code == GENR_FITTED) {
 	    gretl_command_sprintf("genr %s = $yhat", datainfo->varname[v]);
-	} else if (code == 2) {
+	} else if (code == GENR_RESID2) {
 	    gretl_command_sprintf("genr %s = $uhat*$uhat", datainfo->varname[v]);
-	} else if (code == 3) {
+	} else if (code == GENR_H) {
 	    gretl_command_sprintf("genr %s = $h", datainfo->varname[v]);
+	} else if (code == GENR_AHAT) {
+	    gretl_command_sprintf("genr %s = $ahat", datainfo->varname[v]);
 	}
 
 	model_command_init(pmod->ID);
@@ -4082,7 +4084,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
-    if (add_fit_resid(pmod, 0, 1)) return;
+    if (add_fit_resid(pmod, GENR_RESID, 1)) return;
 
     /* handle model estimated on different subsample */
     if (pmod->dataset != NULL) {
@@ -4183,7 +4185,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     origv = ginfo->v;
 
     /* add fitted values to data set temporarily */
-    if (add_fit_resid(pmod, 1, 1)) {
+    if (add_fit_resid(pmod, GENR_FITTED, 1)) {
 	return;
     }
 
