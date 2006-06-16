@@ -17,7 +17,7 @@
  *
  */
 
-/*  modelprint.c */ 
+/* modelprint.c */ 
 
 #include "libgretl.h"
 #include "libset.h"
@@ -311,6 +311,42 @@ static void print_f_pval_str (double pval, PRN *prn)
 
 	    tex_dcolumn_double(pval, pstr);
 	    pprintf(prn, "%s $F()$ & %s \\\\\n", I_("p-value for"), pstr);
+	}
+    }
+}
+
+static void panel_variance_lines (const MODEL *pmod, PRN *prn)
+{
+    double ws2 = gretl_model_get_double(pmod, "within-variance");
+    double bs2 = gretl_model_get_double(pmod, "between-variance");
+    double theta = gretl_model_get_double(pmod, "gls-theta");
+
+    if (na(ws2) || na(bs2)) {
+	return;
+    }
+
+    if (plain_format(prn)) {
+	pprintf(prn, "  %s = %g\n", _("'within' variance"), ws2);
+	pprintf(prn, "  %s = %g\n", _("'between' variance"), bs2);
+	if (!na(theta)) {
+	    pprintf(prn, "  %s = %g\n", _("theta used for quasi-demeaning"), theta);
+	}
+    } else if (tex_format(prn)) {
+	char xstr[32];
+
+	tex_dcolumn_double(ws2, xstr);
+	pprintf(prn, "$\\hat{\\sigma}^2_{\\varepsilon}$ & %s \\\\\n", xstr);
+	tex_dcolumn_double(bs2, xstr);
+	pprintf(prn, "$\\hat{\\sigma}^2_u$ & %s \\\\\n", xstr);
+	if (!na(theta)) {
+	    tex_dcolumn_double(theta, xstr);
+	    pprintf(prn, "$\\theta$ & %s \\\\\n", xstr);
+	}
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %g", I_("within variance"), ws2);
+	pprintf(prn, RTFTAB "%s = %g", I_("between variance"), bs2);
+	if (!na(theta)) {
+	    pprintf(prn, RTFTAB "%s = %g", I_("theta used for quasi-demeaning"), theta);
 	}
     }
 }
@@ -1662,7 +1698,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	rsqline(pmod, prn);
 
-	if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
+	if (pmod->ci == PANEL && gretl_model_get_int(pmod, "random-effects")) {
+	    panel_variance_lines(pmod, prn);
+	} else if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
 	    Fline(pmod, prn);
 	}
 

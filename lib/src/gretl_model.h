@@ -42,6 +42,7 @@ typedef enum {
     M_ELEM_MAX,   /* -- separator -- */
     M_UHAT,       /* residuals */
     M_YHAT,       /* fitted values */
+    M_AHAT,       /* per-unit intercepts in panel model */
     M_H,          /* GARCH predicted variances */
     M_SERIES_MAX, /* -- separator -- */
     M_COEFF,      /* parameter estimates */

@@ -364,7 +364,8 @@ void gretl_lists_cleanup (void)
  * holds a count of the number of elements that follow.  This
  * leading element is initialized appropriately.  For example, if
  * @nterms = 4, space for 5 integers is allocated and the first
- * element of the array is set to 4.
+ * element of the array is set to 4.  The other elements of 
+ * the list are initialized to 0.
  *
  * Returns: the newly allocated list, or %NULL on failure.
  */

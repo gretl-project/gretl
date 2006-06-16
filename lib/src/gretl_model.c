@@ -3285,7 +3285,7 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo)
 	if (v < pdinfo->v) {
 	    strcpy(pmod->params[i-1], pdinfo->varname[v]);
 	} else {
-	    sprintf(pmod->params[i-1], "unit_%d", j++);
+	    sprintf(pmod->params[i-1], "ahat_%d", j++);
 	}
     }
 
@@ -3473,6 +3473,8 @@ int gretl_model_data_index (const char *s)
 	return M_UHAT;
     if (!strcmp(test, "$yhat"))
 	return M_YHAT;
+    if (!strcmp(test, "$ahat"))
+	return M_AHAT;
     if (!strcmp(test, "$h"))
 	return M_H;
 
@@ -3583,7 +3585,7 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 			ModelDataIndex idx, int *err)
 {
     double *x = NULL;
-    double *garch_h = NULL;
+    double *mdata = NULL;
     int t;
 
     if (pmod->t2 - pmod->t1 + 1 > pdinfo->n || 
@@ -3593,7 +3595,9 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 	       _("Can't retrieve uhat: data set has changed") :
 	       (idx == M_YHAT)?
 	       _("Can't retrieve yhat: data set has changed") :
-	       _("Can't retrieve ht: data set has changed"));
+	       (idx == M_H)?
+	       _("Can't retrieve ht: data set has changed") :
+	       _("Can't retrieve series: data set has changed"));
 	*err = 1;
 	return NULL;
     }   
@@ -3604,9 +3608,16 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 	return NULL;
     }
 
-    if (idx == M_H) {
-	garch_h = gretl_model_get_data(pmod, "garch_h");
-	if (garch_h == NULL) {
+    if (idx == M_AHAT) {
+	mdata = gretl_model_get_data(pmod, "ahat");
+	if (mdata == NULL) {
+	    strcpy(gretl_errmsg, _("Can't retrieve intercepts"));
+	    *err = 1;
+	    return NULL;
+	}
+    } else if (idx == M_H) {
+	mdata = gretl_model_get_data(pmod, "garch_h");
+	if (mdata == NULL) {
 	    strcpy(gretl_errmsg, _("Can't retrieve error variance"));
 	    *err = 1;
 	    return NULL;
@@ -3627,9 +3638,9 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 		x[t] = pmod->uhat[t];
 	    } else if (idx == M_YHAT) {
 		x[t] = pmod->yhat[t];
-	    } else if (idx == M_H) {
-		x[t] = garch_h[t];
-	    }
+	    } else if (idx == M_AHAT || idx == M_H) {
+		x[t] = mdata[t];
+	    } 
 	}
     }
 	    
@@ -3685,13 +3696,20 @@ model_get_hatvec (const MODEL *pmod, int idx, int *err)
     return v;
 }
 
-static gretl_matrix *model_get_hvec (const MODEL *pmod, int *err)
+static gretl_matrix *
+model_get_special_vec (const MODEL *pmod, ModelDataIndex idx, int *err)
 {
-    double *garch_h = gretl_model_get_data(pmod, "garch_h");
     gretl_matrix *v = NULL;
+    double *mdata = NULL;
     int t;
 
-    if (garch_h == NULL) {
+    if (idx == M_AHAT) {
+	mdata = gretl_model_get_data(pmod, "ahat");
+    } else if (idx == M_H) {
+	mdata = gretl_model_get_data(pmod, "garch_h");
+    }
+
+    if (mdata == NULL) {
 	*err = E_BADSTAT;
     }
 
@@ -3701,7 +3719,7 @@ static gretl_matrix *model_get_hvec (const MODEL *pmod, int *err)
     } else {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    /* FIXME: is indexation right? */
-	    gretl_vector_set(v, t - pmod->t1, garch_h[t]);
+	    gretl_vector_set(v, t - pmod->t1, mdata[t]);
 	}
     }
 
@@ -3777,11 +3795,18 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
     case M_VCV:
 	M = gretl_vcv_matrix_from_model(pmod, NULL);
 	break;
-    case M_H:
-	if (pmod->ci != GARCH) {
+    case M_AHAT:
+	if (gretl_model_get_data(pmod, "ahat") == NULL) {
 	    *err = E_BADSTAT;
 	} else {
-	    M = model_get_hvec(pmod, err);
+	    M = model_get_special_vec(pmod, M_AHAT, err);
+	}
+	break;
+    case M_H:
+	if (gretl_model_get_data(pmod, "garch_h") == NULL) {
+	    *err = E_BADSTAT;
+	} else {
+	    M = model_get_special_vec(pmod, M_H, err);
 	}
 	break;
     case M_RHO:
