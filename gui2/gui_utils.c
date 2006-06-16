@@ -3682,6 +3682,21 @@ static void VAR_resid_plot_call (gpointer p, guint vecm, GtkWidget *w)
     }
 }
 
+static void VAR_resid_mplot_call (gpointer p, guint vecm, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    int err;
+
+    err = gretl_VAR_residual_mplot(var, &Z, datainfo);
+    
+    if (err) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
+}
+
 static void add_VAR_menu_items (windata_t *vwin, int vecm)
 {
     GtkItemFactoryEntry varitem;
@@ -3804,8 +3819,18 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path); 
 
+    if (neqns <= 6) {
+	/* separate residual plot */
+	varitem.path = g_strdup_printf("%s/%s", _(gpath), _("residual plots"));
+	varitem.callback = VAR_resid_mplot_call;
+	varitem.callback_action = vecm;
+	varitem.item_type = NULL;
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
+    }
+
     /* combined residual plot */
-    varitem.path = g_strdup_printf("%s/%s", _(gpath), _("residual plot"));
+    varitem.path = g_strdup_printf("%s/%s", _(gpath), _("combined residual plot"));
     varitem.callback = VAR_resid_plot_call;
     varitem.callback_action = vecm;
     varitem.item_type = NULL;

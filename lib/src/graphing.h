@@ -209,6 +209,9 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 int gretl_VAR_residual_plot (const GRETL_VAR *var, 
 			     double ***pZ, DATAINFO *pdinfo);
 
+int gretl_VAR_residual_mplot (const GRETL_VAR *var, 
+			      double ***pZ, DATAINFO *pdinfo);
+
 int gretl_VAR_roots_plot (GRETL_VAR *var);
 
 int confidence_ellipse_plot (gretl_matrix *V, double *b, double t, double c,

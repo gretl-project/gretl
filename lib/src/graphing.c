@@ -3198,6 +3198,108 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
     return gnuplot_make_graph();
 }
 
+int gretl_VAR_residual_mplot (const GRETL_VAR *var, 
+			      double ***pZ, DATAINFO *pdinfo)
+{
+    const gretl_matrix *E;
+    FILE *fp = NULL;
+    double startdate;
+    double xmin, xmax, xrange;
+    int nvars, nobs;
+    int i, v, t, t1;
+    int jump, timevar;
+    int err = 0;
+
+    E = gretl_VAR_get_residual_matrix(var);
+    if (E == NULL) {
+	return E_DATA;
+    }
+
+    nvars = gretl_matrix_cols(E);
+    if (nvars > 6) {
+	return 1;
+    }
+
+    timevar = plotvar(pZ, pdinfo);
+    if (timevar < 0) {
+	return E_ALLOC;
+    }
+
+    nobs = gretl_matrix_rows(E);
+    t1 = gretl_VAR_get_t1(var);
+
+    err = gnuplot_init(PLOT_MULTI_SCATTER, &fp);
+    if (err) {
+	return err;
+    }
+
+    fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
+	  "set multiplot\n", fp);
+    fputs("set nokey\n", fp);
+    fputs("set xzeroaxis\n", fp);
+
+    gretl_push_c_numeric_locale();
+
+    startdate = (*pZ)[timevar][t1];
+    jump = nobs / (2 * pdinfo->pd);
+    fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
+
+    gretl_minmax(t1, t1 + nobs - 1, (*pZ)[timevar], &xmin, &xmax);
+    xrange = xmax - xmin;
+    xmin -= xrange * .025;
+    xmax += xrange * .025;
+    fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);	
+
+    for (i=0; i<nvars; i++) { 
+
+	if (nvars <= 4) {
+	    fputs("set size 0.45,0.5\n", fp);
+	    fputs("set origin ", fp);
+	    if (i == 0) fputs("0.0,0.5\n", fp);
+	    else if (i == 1) fputs("0.5,0.5\n", fp);
+	    else if (i == 2) fputs("0.0,0.0\n", fp);
+	    else if (i == 3) fputs("0.5,0.0\n", fp);
+	} else {
+	    fputs("set size 0.31,0.45\n", fp);
+	    fputs("set origin ", fp);
+	    if (i == 0) fputs("0.0,0.5\n", fp);
+	    else if (i == 1) fputs("0.32,0.5\n", fp);
+	    else if (i == 2) fputs("0.64,0.5\n", fp);
+	    else if (i == 3) fputs("0.0,0.0\n", fp);
+	    else if (i == 4) fputs("0.32,0.0\n", fp);
+	    else if (i == 5) fputs("0.64,0.0\n", fp);
+	}
+
+	fputs("set noxlabel\n", fp);
+	fputs("set noylabel\n", fp);
+	v = gretl_VAR_get_variable_number(var, i);
+	fprintf(fp, "set title '%s'\n", pdinfo->varname[v]);
+
+	fputs("plot '-' using 1:2 with lines\n", fp);
+
+	for (t=0; t<nobs; t++) {
+	    double xx;
+
+	    xx = (*pZ)[timevar][t+t1];
+	    fprintf(fp, "%.8g\t", xx);
+	    xx = gretl_matrix_get(E, t, i);
+	    if (na(xx)) {
+		fputs("?\n", fp);
+	    } else {
+		fprintf(fp, "%.8g\n", xx);
+	    }
+	}
+
+	fputs("e\n", fp);
+    } 
+
+    gretl_pop_c_numeric_locale();
+    fputs("set nomultiplot\n", fp);
+    fclose(fp);
+
+    return gnuplot_make_graph();
+}
+
 int gretl_VAR_roots_plot (GRETL_VAR *var)
 {
     const gretl_matrix *lam;
