@@ -2832,6 +2832,32 @@ int genr_function_from_string (const char *s)
     return 0;
 }
 
+/* "reserved word" data */
+
+static const char *res1[] = {
+    "const",
+    "CONST",
+    "pi",
+    "NA",
+    "null"
+};
+
+static const char *res2[] = {
+    "t",
+    "annual",
+    "qtrs",
+    "months",
+    "hours"
+};
+
+static const char *res3[] = {
+    "i",
+    "obs",
+    "scalar",
+    "series",
+    "matrix"
+};
+
 /**
  * gretl_reserved_word:
  * @str: string to be tested.
@@ -2842,36 +2868,44 @@ int genr_function_from_string (const char *s)
 
 int gretl_reserved_word (const char *str)
 {
-    const char *uses[] = {
+    const char *ruses[] = {
 	N_("constant"),
 	N_("plotting variable"),
 	N_("internal variable"),
 	N_("math function")
     };
-    int ret = 0;
+    static int n1 = sizeof res1 / sizeof res1[0];
+    static int n2 = sizeof res2 / sizeof res2[0];
+    static int n3 = sizeof res3 / sizeof res3[0];
+    int i, ret = 0;
 
-    if (!strcmp(str, "const") ||
-	!strcmp(str, "CONST") ||
-	!strcmp(str, "pi") ||
-	!strcmp(str, "NA") ||
-	!strcmp(str, "null")) {
-	ret = 1;
-    } else if (!strcmp(str, "t") ||
-	       !strcmp(str, "annual") ||
-	       !strcmp(str, "qtrs") ||
-	       !strcmp(str, "months") ||
-	       !strcmp(str, "hours")) {
-	ret = 2;
-    } else if (!strcmp(str, "obs") ||
-	       !strcmp(str, "series")) {
-	ret = 3;
-    } else if (genr_function_from_string(str)) {
-	ret = 4;
+    for (i=0; i<n1 && !ret; i++) {
+	if (!strcmp(str, res1[i])) {
+	    ret = 1;
+	}
+    }
+
+    for (i=0; i<n2 && !ret; i++) {
+	if (!strcmp(str, res2[i])) {
+	    ret = 2;
+	}
+    }
+
+    for (i=0; i<n3 && !ret; i++) {
+	if (!strcmp(str, res3[i])) {
+	    ret = 3;
+	}
+    }
+
+    if (!ret) {
+	if (genr_function_from_string(str)) {
+	    ret = 4;
+	}
     }
 
     if (ret > 0) {
 	sprintf(gretl_errmsg, _("'%s' refers to a %s and may not be used as a "
-			    "variable name"), str, _(uses[ret - 1])); 
+			    "variable name"), str, _(ruses[ret - 1])); 
     }
  
     return ret;

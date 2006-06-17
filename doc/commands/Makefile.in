@@ -56,7 +56,7 @@ else
   OUTPUT_DIR = $(SHAREDIR)/latin1
 endif
 
-progs: xsltrans skeleton reflow validate 
+progs: xsltrans skeleton reflow validate tables
 
 xsltrans: xsltrans.c 
 	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
@@ -70,10 +70,16 @@ skeleton: skeleton.o
 validate: validate.o
 	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
 
+tables: tables.o
+	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
+
 skeleton.o: skeleton.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
 validate.o: validate.c
+	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
+
+tables.o: tables.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
 # test generation of XML skeleton from libgretl info:
@@ -112,6 +118,14 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	touch $@
 
 .PHONY:
+
+# generate some tables for manual automatically, to ensure
+# they remain in step with the actual code (FIXME!)
+textables: tables
+	./tables --constants > tabconstants.tex
+	./tables --internals > tabinternals.tex
+	./tables --functions > tabfunctions.tex
+	./tables --loopcmds > tabloopcmds.tex
 
 # test validity of skeleton.xml, and ability of xsltrans
 # to generate formatted output (text and XML)
