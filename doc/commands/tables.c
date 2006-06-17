@@ -5,7 +5,7 @@
    Allin Cottrell, June 2006.
 */
 
-#include "generate.c"
+#include "generate.c" /* need access to some private stuff */
 
 int sort_strings (const void *a, const void *b)
 {
@@ -160,7 +160,7 @@ int print_loop_commands (void)
     int err = 0;
 
     for (i=0; i<NC && !err; i++) {
-	if (ok_in_loop(i)) {
+	if (ok_in_loop(i) && !(HIDDEN_COMMAND(i))) {
 	    err = push_string_on_array(&S, gretl_command_word(i), n++);
 	}
     }

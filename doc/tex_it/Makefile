@@ -11,12 +11,12 @@ XMLFILES = ../chapters_it/cmdlist.xml \
 TEXXSLT = ../gretltex.xsl
 MANXSLT = ../commands/gretlman.xsl
 
-$(GUIDE): gretl-guide-it.tex links
+$(GUIDE): gretl-guide-it.tex links textables
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-it.tex refbody.tex reftables.tex links
+$(REF): gretl-ref-it.tex refbody.tex reftables.tex textables links
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -26,6 +26,11 @@ refbody.tex: $(XMLFILES) $(TEXXSLT)
 
 ../chapters_it/cmdlist.xml: ../commands/gretl_commands_it.xml $(MANXSLT)
 	make -C ../commands -f cmdref.mk dbtex_it
+
+.PHONY : textables links onepass refpass thumbs install clean
+
+textables:
+	make -C ../commands textables
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty

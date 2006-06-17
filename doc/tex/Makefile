@@ -13,7 +13,7 @@ XMLFILES = ../chapters/cmdlist.xml \
 TEXXSLT = ../gretltex.xsl
 MANXSLT = ../commands/gretlman.xsl
 
-$(GUIDE): gretl-guide.tex links
+$(GUIDE): gretl-guide.tex links textables
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -47,7 +47,7 @@ refbody.tex: $(XMLFILES) $(TEXXSLT)
 ../chapters/cmdlist.xml: ../commands/gretl_commands.xml $(MANXSLT)
 	make -C ../commands -f cmdref.mk dbtex
 
-.PHONY : links alt thumbs install clean
+.PHONY : links textables alt onepass refpass thumbs install clean
 
 links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty

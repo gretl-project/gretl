@@ -3817,20 +3817,18 @@
       </para>
 
       <para>This command opens a special mode in which the program
-	accepts commands to be executed repeatedly.  Within a loop,
-	only certain commands can be used: <cmd>genr</cmd>,
-	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>printf</cmd>,
-	<cmd>pvalue</cmd>, <cmd>sim</cmd>, <cmd>smpl</cmd>,
-	<cmd>store</cmd>, <cmd>summary</cmd>, <cmd>if</cmd>,
-	<cmd>else</cmd> and <cmd>endif</cmd>. You exit the mode of
-	entering loop commands with <cmd>endloop</cmd>: at this point
-	the stacked commands are executed.
+	accepts commands to be executed repeatedly.  You exit the mode
+	of entering loop commands with <cmd>endloop</cmd>: at this
+	point the stacked commands are executed.
       </para>
 
       <para>See <guideref targ="looping"/> for further details and
 	examples.  The effect of the <lit>--progressive</lit> option
 	(which is designed for use in Monte Carlo simulations) is
-	explained there.</para>
+	explained there. Not all gretl commands may be used within
+	a loop; the commands available in this context are also
+	set out there.
+      </para>
     </description>
 
   </command>

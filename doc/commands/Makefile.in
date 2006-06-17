@@ -79,7 +79,8 @@ skeleton.o: skeleton.c
 validate.o: validate.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-tables.o: tables.c
+tables.o: tables.c $(topsrc)/lib/src/generate.c \
+	$(topsrc)/lib/src/monte_carlo.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
 # test generation of XML skeleton from libgretl info:
@@ -117,7 +118,7 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 	./reflow $(FLOWOPT) < guilist.txt > $(OUTPUT_DIR)/gretlgui.hlp.it
 	touch $@
 
-.PHONY:
+.PHONY: test
 
 # generate some tables for manual automatically, to ensure
 # they remain in step with the actual code
@@ -126,6 +127,7 @@ textables: tables
 	./tables --internals > $(topsrc)/doc/tex/tabinternals.tex
 	./tables --functions > $(topsrc)/doc/tex/tabfunctions.tex
 	./tables --loopcmds > $(topsrc)/doc/tex/tabloopcmds.tex
+	touch $@
 
 # test validity of skeleton.xml, and ability of xsltrans
 # to generate formatted output (text and XML)

@@ -6,8 +6,8 @@
 
 The command \cmd{loop} opens a special mode in which \app{gretl}
 accepts a block of commands to be repeated one or more times.  This
-feature is designed for use with Monte Carlo simulations,
-bootstrapping of test statistics, and iterative estimation procedures.
+feature may be useful for, among other things, Monte Carlo simulations,
+bootstrapping of test statistics and iterative estimation procedures.
 The general form of a loop is:
 
 \begin{code}
@@ -16,11 +16,21 @@ The general form of a loop is:
       endloop
 \end{code}
 
-Five forms of control-expression are available, as explained below.
-In the loop body the following commands are accepted: \cmd{genr},
-\cmd{ols}, \cmd{print}, \cmd{printf}, \cmd{pvalue}, \cmd{sim},
-\cmd{smpl}, \cmd{store}, \cmd{summary}, \cmd{if}, \cmd{else} and
-\cmd{endif}.
+Five forms of control-expression are available, as explained in
+section~\ref{loop-control}.
+
+Not all \app{gretl} commands are available within loops.  The commands
+that are accepted in this context are shown in
+Table~\ref{tab:loopcmds}.
+
+\begin{table}[htbp]
+\caption{Commands usable in loops}
+\label{tab:loopcmds}
+\begin{center}
+%% The following is generated automatically
+\input tabloopcmds.tex
+\end{center}
+\end{table}
 
 By default, the \cmd{genr} command operates quietly in the context of
 a loop (without printing information on the variable generated).  To
