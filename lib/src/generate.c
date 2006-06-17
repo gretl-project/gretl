@@ -1701,7 +1701,9 @@ static int add_statistic_to_genr (GENERATOR *genr, genatom *atom)
 
 static int maybe_free_genr_matrix (gretl_matrix *M, const char *s)
 {
-    if (M == NULL || is_user_matrix(M) || matrix_is_on_atom(M)) {
+    if (is_user_matrix(M) || matrix_is_on_atom(M)) {
+	MPRINTF(("tmp matrix '%s' at %p: %s, not freeing\n", s, (void *) M,
+		(is_user_matrix(M))? "is user matrix" : "is on atom"));
 	return 0;
     }
 
@@ -1801,25 +1803,34 @@ static int evaluate_matrix_genr (GENERATOR *genr)
 		DPRINTF(("pushed NULL at level %d\n", level));
 		npush++;
 	    }
-	} else if (Abak != A && maybe_free_genr_matrix(Abak, "Abak")) {
+	} else if (Abak != A && Abak != NULL && 
+		   maybe_free_genr_matrix(Abak, "Abak")) {
 	    /* not pushing matrix Abak: free it, if it's not "spoken for" */
 	    Abak = NULL;
 	}
 
 	/* matrix 'B': free it if there's no further call on it */
-	if (freeB && maybe_free_genr_matrix(B, "B")) {
+	if (freeB && B != NULL && maybe_free_genr_matrix(B, "B")) {
 	    B = NULL;
 	}
 
 	/* matrix 'Apop': free it if there's no further call on it */
-	maybe_free_genr_matrix(Apop, "Apop");
+	if (Apop != NULL) {
+	    maybe_free_genr_matrix(Apop, "Apop");
+	}
 
 	level = atom->level;
 
-	MPRINTF(("old Abak = %p, setting Abak = %p\n", (void *) Abak, (void *) A));
-	MPRINTF(("old Abak: user_matrix? %s; atom_matrix? %s\n",
+#if GEN_MATRIX_DEBUG
+	if (Abak == NULL) {
+	    fprintf(stderr, "Abak = NULL, setting to %p\n", (void *) A);
+	} else {
+	    fprintf(stderr, "Abak = %p, resetting to %p\n", (void *) Abak, (void *) A);
+	    fprintf(stderr, "(old Abak: user_matrix? %s; atom_matrix? %s)\n",
 		 is_user_matrix(Abak)? "yes" : "no",
-		 matrix_is_on_atom(Abak)? "yes" : "no"));
+		 matrix_is_on_atom(Abak)? "yes" : "no");
+	}
+#endif
 	Abak = A;
     }
 

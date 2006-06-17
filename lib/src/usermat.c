@@ -1033,6 +1033,10 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 	if (pZ != NULL && pdinfo != NULL) {
 	    usermat_publish_dataset(pZ, pdinfo);
 	}
+#if MDEBUG
+	fprintf(stderr, "add_or_replace_user_matrix: M=%p, name='%s', R=%p\n",
+		(void *) M, name, (void *) R);
+#endif
 	err = replace_user_matrix(u, M, R, mask);
 	usermat_unpublish_dataset(pZ);
     } else {
@@ -1799,6 +1803,9 @@ print_matrix_by_name (const char *name, const char *mask,
 	    }
 	    gretl_matrix_free(S);
 	} else {
+#if MDEBUG
+	    fprintf(stderr, "printing matrix '%s' (%p)\n", name, (void *) M);
+#endif
 	    gretl_matrix_print_to_prn(M, name, prn);
 	}
 	if (transp) {
@@ -1845,6 +1852,10 @@ int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     char word[9];
     char *p;
     int err = 0;
+
+#if MDEBUG
+    fprintf(stderr, "*** matrix_command: '%s'\n", line);
+#endif
 
     if (!strncmp(line, "matrix ", 7)) line += 7;
     while (isspace(*line)) line++;
@@ -1909,11 +1920,11 @@ static void print_calc_input_info (gretl_matrix *A, gretl_matrix *B, char op)
 {
     fprintf(stderr, "matrix_calc_AB: A = %p", (void *) A);
     if (A != NULL) {
-	fprintf(stderr, " (%dx%d)", gretl_matrix_rows(A), gretl_matrix_cols(A));
+	fprintf(stderr, " (%dx%d)", A->rows, A->cols);
     } 
     fprintf(stderr, ", B = %p", (void *) B);
     if (B != NULL) {
-	fprintf(stderr, " (%dx%d), ", gretl_matrix_rows(B), gretl_matrix_cols(B));
+	fprintf(stderr, " (%dx%d), ", B->rows, B->cols);
     }
     if (isprint(op)) {
 	fprintf(stderr, "op='%c'\n", op);
@@ -1924,6 +1935,14 @@ static void print_calc_input_info (gretl_matrix *A, gretl_matrix *B, char op)
     if (A != NULL) gretl_matrix_print(A, "input A");
     if (B != NULL) gretl_matrix_print(B, "input B");
 # endif
+
+    if (op == '\0') {
+	if (is_user_matrix(B)) {
+	    fprintf(stderr, "B is a user matrix: copy to target\n");
+	} else {
+	    fprintf(stderr, "B is a not a user matrix: assign to target\n");
+	}
+    }
 }
 #endif
 
@@ -1946,7 +1965,11 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 
     switch (op) {
     case '\0':
-	C = B;
+	if (is_user_matrix(B)) {
+	    C = gretl_matrix_copy(B);
+	} else {
+	    C = B;
+	}
 	break;
     case '=':
 	C = matrix_test_equality(A, B, err);

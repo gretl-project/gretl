@@ -501,7 +501,9 @@ gretl_matrix_copy_mod (const gretl_matrix *m, int mod)
 	}
     }
 
+#if 0
     c->t = m->t;
+#endif
 
     return c;
 }
