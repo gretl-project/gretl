@@ -311,11 +311,11 @@ int replace_file (char *dest, char *src)
 	FILE *fs, *fd;
 	int err;
 
-	if ((fs = fopen(src, "rb")) == NULL) {
+	if ((fs = gretl_fopen(src, "rb")) == NULL) {
 	    fprintf(stderr," replace: can't open %s\n", src);
 	    return ZE_TEMP;
 	}
-	if ((fd = fopen(dest, "wb")) == NULL) {
+	if ((fd = gretl_fopen(dest, "wb")) == NULL) {
 	    fclose(fs);
 	    return ZE_CREAT;
 	}

@@ -379,7 +379,7 @@ plugins/audio.dll: audio.o midi_utils.o dllinit.o
 plugins/gretlzip.dll: gretlzip.o zfileio.o zipfile.o zipmain.o zipwork.o \
 	zsystem.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) -lz
+	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) -lz $(GRETLLIB)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<

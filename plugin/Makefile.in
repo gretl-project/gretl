@@ -258,7 +258,7 @@ garch.la: garch.lo fcp.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 gretlzip.la: gretlzip.lo $(ZIPOBJ)
-	$(LINK) -o $@ $^ $(ZIP_LIBS)
+	$(LINK) -o $@ $^ $(ZIP_LIBS) $(GRETLLIB)
 
 audio.la: audio.lo midi_utils.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(AUDIO_LIBS)

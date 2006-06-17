@@ -1069,7 +1069,7 @@ static int session_overwrite_check (const char *fname)
     int ret = 0;
 
     if (strcmp(fname, sessionfile)) {
-	FILE *fp = fopen(fname, "r");
+	FILE *fp = gretl_fopen(fname, "r");
 
 	if (fp != NULL) {
 	    int resp;

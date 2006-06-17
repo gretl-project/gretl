@@ -38,7 +38,7 @@ struct panelmod_t_ {
     int nunits;           /* total cross-sectional units */
     int effn;             /* effective (included) cross-section units */
     int T;                /* times-series length of panel */
-    int effT;             /* effective times-series length */
+    int effT;             /* effective times-series length (max usable obs per unit) */
     int ndum;             /* number of dummy variables added for FE model */
     int *unit_obs;        /* array of number of observations per x-sect unit */
     char *varying;        /* array to record properties of pooled-model regressors */
@@ -912,14 +912,14 @@ static int fe_model_add_ahat (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	    }
 	}
     } else {
-	/* used de-meaned data */
+	/* used de-meaned data: FIXME indexing */
 	for (i=0; i<pan->nunits; i++) {
 	    int Ti = pan->unit_obs[i];
 
 	    if (Ti > 0) {
 		double ahi = 0.0;
 
-		for (t=0; t<pan->effT; t++) {
+		for (t=0; t<pan->T; t++) {
 		    s = panel_index(i, t);
 		    if (!na(pan->pooled->uhat[s])) {
 			ahi += Z[pmod->list[1]][s];
@@ -929,7 +929,7 @@ static int fe_model_add_ahat (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 		    }
 		}
 		ahi /= Ti;
-		for (t=0; t<pan->effT; t++) {
+		for (t=0; t<pan->T; t++) {
 		    s = panel_index(i, t);
 		    if (!na(pan->pooled->uhat[s])) {
 			ahat[s] = ahi;
