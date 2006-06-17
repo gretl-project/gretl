@@ -18,7 +18,7 @@ $(GUIDE): gretl-guide.tex links
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref.tex refbody.tex links
+$(REF): gretl-ref.tex refbody.tex reftables.tex textables links
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<
@@ -53,12 +53,15 @@ links:
 	rm -f gretl.sty && ln -s ../gretl.sty ./gretl.sty
 	rm -f figures && ln -s ../figures ./figures
 
+textables:
+	make -C ../../build/doc/commands textables
+
 alt: gretl-guide-a4.pdf gretl-ref-a4.pdf
 
 onepass:
 	pdflatex gretl-guide
 
-refpass: refbody.tex
+refpass: refbody.tex textables
 	pdflatex gretl-ref
 
 thumbs: $(DOC)

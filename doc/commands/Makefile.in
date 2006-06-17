@@ -120,12 +120,12 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 .PHONY:
 
 # generate some tables for manual automatically, to ensure
-# they remain in step with the actual code (FIXME!)
+# they remain in step with the actual code
 textables: tables
-	./tables --constants > tabconstants.tex
-	./tables --internals > tabinternals.tex
-	./tables --functions > tabfunctions.tex
-	./tables --loopcmds > tabloopcmds.tex
+	./tables --constants > $(topsrc)/doc/tex/tabconstants.tex
+	./tables --internals > $(topsrc)/doc/tex/tabinternals.tex
+	./tables --functions > $(topsrc)/doc/tex/tabfunctions.tex
+	./tables --loopcmds > $(topsrc)/doc/tex/tabloopcmds.tex
 
 # test validity of skeleton.xml, and ability of xsltrans
 # to generate formatted output (text and XML)

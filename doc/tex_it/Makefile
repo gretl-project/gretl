@@ -16,7 +16,7 @@ $(GUIDE): gretl-guide-it.tex links
 	pdflatex $<
 	pdflatex $<
 
-$(REF): gretl-ref-it.tex refbody.tex links
+$(REF): gretl-ref-it.tex refbody.tex reftables.tex links
 	pdflatex $<
 	pdflatex $<
 	pdflatex $<

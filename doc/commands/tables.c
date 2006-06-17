@@ -7,13 +7,37 @@
 
 #include "generate.c"
 
-#define COLS 8
+int sort_strings (const void *a, const void *b)
+{
+    const char **sa = (const char **) a;
+    const char **sb = (const char **) b;
 
-void print_tabsep (int *n)
+    return strcmp(*sa, *sb);
+}
+
+int push_string_on_array (char ***arr, const char *s, int i)
+{
+    char **S = realloc(*arr, (i + 1) * sizeof *S);
+
+    if (S == NULL) {
+	return 1;
+    }
+    
+    S[i] = gretl_strdup(s);
+    if (S[i] == NULL) {
+	return 1;
+    }
+
+    *arr = S;
+
+    return 0;
+}
+
+void print_tabsep (int cols, int *n)
 {
     *n += 1;
 
-    if (*n == COLS) {
+    if (*n == cols) {
 	fputs(" \\\\\n", stdout);
 	*n = 0;
     } else {
@@ -21,90 +45,131 @@ void print_tabsep (int *n)
     }
 }
 
-void print_tabtop (void)
+void print_tabtop (int cols)
 {
     int i;
 
     fputs("\\begin{tabular}{", stdout);
-    for (i=0; i<COLS; i++) {
+    for (i=0; i<cols; i++) {
 	putchar('l');
     }
     fputs("}\n", stdout);
 }
 
-void print_tabfoot (int n)
+void print_tabfoot (int cols, int n)
 {
-    if (n < COLS) {
+    if (n < cols) {
 	fputs("\\\\\n", stdout);
     }
 
     fputs("\\end{tabular}\n\n", stdout);
 }
 
+void sort_and_print_text (char **S, int n)
+{
+    int i;
+
+    qsort(S, n, sizeof *S, sort_strings);    
+
+    for (i=0; i<n; i++) {
+	printf("\\texttt{%s}", S[i]);
+	if (i < n - 1) {
+	    fputs(", ", stdout);
+	} else {
+	    fputs(".\n\n", stdout);
+	}
+    }
+
+    free_strings_array(S, n);
+}
+
+void sort_and_print_tabular (char **S, int n, int cols)
+{
+    int i, t = 0;
+
+    qsort(S, n, sizeof *S, sort_strings);    
+
+    print_tabtop(cols);
+
+    for (i=0; i<n; i++) {
+	printf("%s", S[i]);
+	print_tabsep(cols, &t);
+    }
+
+    print_tabfoot(cols, t);
+
+    free_strings_array(S, n);
+}
+
 void print_constants (void)
 {
     int n1 = sizeof res1 / sizeof res1[0];
+    char **S = NULL;
     int i, n = 0;
+    int err = 0;
 
-    print_tabtop();
-
-    for (i=0; i<n1; i++) {
-	printf("%s", res1[i]);
-	print_tabsep(&n);
+    for (i=0; i<n1 && !err; i++) {
+	err = push_string_on_array(&S, res1[i], n++);
     }	
 
-    print_tabfoot(n);
+    if (!err) {
+	sort_and_print_text(S, n);
+    }   
 }
 
 void print_internals (void)
 {
     int n2 = sizeof res2 / sizeof res2[0];
     int n3 = sizeof res3 / sizeof res3[0];
+    char **S = NULL;
     int i, n = 0;
+    int err = 0;
 
-    print_tabtop();
-
-    for (i=0; i<n2; i++) {
-	printf("%s", res2[i]);
-	print_tabsep(&n);
+    for (i=0; i<n2 && !err; i++) {
+	err = push_string_on_array(&S, res2[i], n++);
     }
 
-    for (i=0; i<n3; i++) {
-	printf("%s", res3[i]);
-	print_tabsep(&n);
+    for (i=0; i<n3 && !err; i++) {
+	err = push_string_on_array(&S, res3[i], n++);
     }
 
-    print_tabfoot(n);
+    if (!err) {
+	sort_and_print_text(S, n);
+    }    
 }
 
 void print_func_words (void)
 {
+    char **S = NULL;
     int i, n = 0;
+    int err = 0;
 
-    print_tabtop();
+    for (i=0; funcs[i].fnum != 0 && !err; i++) {
+	err = push_string_on_array(&S, funcs[i].fword, n++);
+    }  
 
-    for (i=0; funcs[i].fnum != 0; i++) {
-	printf("%s", funcs[i].fword);
-	print_tabsep(&n);
-    }
-
-    print_tabfoot(n);
+    if (!err) {
+	sort_and_print_tabular(S, n, 8);
+    }    
 }
 
-void print_loop_commands (void)
+int print_loop_commands (void)
 {
+    char **S = NULL;
     int i, n = 0;
+    int err = 0;
 
-    print_tabtop();
-
-    for (i=0; i<NC; i++) {
+    for (i=0; i<NC && !err; i++) {
 	if (ok_in_loop(i)) {
-	    printf("%s", gretl_command_word(i));
-	    print_tabsep(&n);
+	    err = push_string_on_array(&S, gretl_command_word(i), n++);
 	}
     }
 
-    print_tabfoot(n);
+    if (!err) {
+	sort_and_print_tabular(S, n, 8);
+    }
+
+    return err;
 }
 
 enum {
