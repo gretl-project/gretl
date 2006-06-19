@@ -2156,6 +2156,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     if (pmod->ncoeff + order >= sn) return E_DF;
 
     if (!balanced_panel(pdinfo)) { 
+	/* FIXME: check should be on balance of model? */
         return E_DATA;
     }
 
@@ -2507,6 +2508,47 @@ static int compare_obs (const void *a, const void *b)
     return ret;
 }
 
+static int transcribe_panel_indices (const double *uid, int n,
+				     const double *tid, int T,
+				     const double **Z, DATAINFO *pdinfo,
+				     int uv, int tv)
+{
+    int i, j, err;
+
+    err = dataset_allocate_panel_info(pdinfo);
+    if (err) {
+	return err;
+    }
+
+    for (i=0; i<pdinfo->n; i++) {
+	for (j=0; j<n; j++) {
+	    if (Z[uv][i] == uid[j]) {
+		pdinfo->paninfo->unit[i] = j;
+		break;
+	    }
+	}
+	for (j=0; j<T; j++) {
+	    if (Z[tv][i] == tid[j]) {
+		pdinfo->paninfo->period[i] = j;
+		break;
+	    }
+	}
+    }
+
+#if PDEBUG
+    fprintf(stderr, "transcribe_panel_indices:\n");
+    for (i=0; i<pdinfo->n; i++) {
+	fprintf(stderr, " i=%d, unit=%d, period=%d\n", i, 
+		pdinfo->paninfo->unit[i],
+		pdinfo->paninfo->period[i]);
+    }
+#endif
+
+    err = dataset_finalize_panel_indices(pdinfo);
+
+    return err;
+}
+
 static int dataset_sort_by (double **Z, DATAINFO *pdinfo,
 			    int uv, int tv)
 {
@@ -2732,7 +2774,7 @@ int set_panel_structure_from_vars (int uv, int tv,
     int nperiods = 0;
     int err = 0;
 
-    /* FIXME sub-sampled dataset?? */
+    /* FIXME sub-sampled dataset (needs to be disallowed?) */
 
 #if PDEBUG
     fprintf(stderr, "set_panel_structure_from_vars:\n "
@@ -2773,12 +2815,19 @@ int set_panel_structure_from_vars (int uv, int tv,
 
     if (!err) {
 	/* in case of unbalanced panel, pad out with missing
-	   values */
+	   values (??) */
 	rearrange_id_array(uid, nunits, n);
 	rearrange_id_array(tid, nperiods, n);
 	err = maybe_pad_dataset(uid, uv, nunits, 
 				tid, tv, nperiods, 
 				pZ, pdinfo);
+    }
+
+    /* transcribe the indexes into pdinfo */
+    if (!err) {
+	err = transcribe_panel_indices(uid, nunits, tid, nperiods,
+				       (const double **) *pZ, pdinfo, 
+				       uv, tv);
     }
 
     if (!err) {

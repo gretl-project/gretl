@@ -22,6 +22,7 @@
 #include "dbwrite.h"
 #include "libset.h"
 #include "gretl_xml.h"
+#include "gretl_panel.h"
 
 #include <ctype.h>
 #include <time.h>
@@ -425,7 +426,9 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
     fscanf(fp, "%s", str);
     i += skipcomments(fp, str); 
 
-    while (1) { /* find number of variables */
+    /* find number of variables */
+
+    while (1) {
         if (fscanf(fp, "%s", str) != 1) {
 	    fclose(fp);
 	    sprintf(gretl_errmsg, _("Opened header file %s\n"
@@ -551,13 +554,12 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo,
 		strcpy(pdinfo->descrip, dbuf);
 	    }
 	    free(dbuf);
-	}
-	else if (lines < 0) {
+	} else if (lines < 0) {
 	    fprintf(stderr, I_("Failed to store data comments\n"));
 	}
 	fclose(fp);
     } 
-	
+
     return 0;
 
     varname_error:
@@ -813,7 +815,13 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 	x = pdinfo->sd0 + 10 * t;
 	sprintf(datestr, "%d", (int) x);
 	return datestr;
-    }	
+    } else if (pdinfo->paninfo != NULL) {
+	/* indexed panel data */
+	sprintf(datestr, "%d:%0*d", pdinfo->paninfo->unit[t] + 1,
+		pdinfo->paninfo->olen,
+		pdinfo->paninfo->period[t] + 1);
+	return datestr;
+    }
 
     x = date(t, pdinfo->pd, pdinfo->sd0);
 
@@ -1819,6 +1827,26 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 	}
     }
 
+    if (gzsuff) {
+	err = gz_readdata(fz, tmpdinfo, tmpZ, binary); 
+	gzclose(fz);
+    } else {
+	err = readdata(dat, tmpdinfo, tmpZ, binary, old_byvar); 
+	fclose(dat);
+    }
+
+    if (err) goto bailout;
+
+    if (tmpdinfo->structure == STACKED_CROSS_SECTION) {
+	err = switch_panel_orientation(tmpZ, tmpdinfo);
+    }
+
+    if (!err && tmpdinfo->structure == STACKED_TIME_SERIES) {
+	err = dataset_add_default_panel_indices(tmpdinfo);
+    }
+
+    if (err) goto bailout;
+
     /* print out basic info from the files read */
     pprintf(prn, I_("periodicity: %d, maxobs: %d,\n"
 	   "observations range: %s-%s\n"), tmpdinfo->pd, tmpdinfo->n,
@@ -1832,16 +1860,6 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 	pputc(prn, '\n');
     }
     pprintf(prn, " %s\n\n", datfile);
-
-    if (gzsuff) {
-	err = gz_readdata(fz, tmpdinfo, tmpZ, binary); 
-	gzclose(fz);
-    } else {
-	err = readdata(dat, tmpdinfo, tmpZ, binary, old_byvar); 
-	fclose(dat);
-    }
-
-    if (err) goto bailout;
 
     /* Set sample range to entire length of dataset by default */
     tmpdinfo->t1 = 0; 

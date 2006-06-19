@@ -787,6 +787,10 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
 	err = switch_panel_orientation(*pZ, pdinfo);
     }	
 
+    if (!err && pdinfo->structure == STACKED_TIME_SERIES) {
+	err = dataset_add_default_panel_indices(pdinfo);
+    }
+
     return err;
 }
 

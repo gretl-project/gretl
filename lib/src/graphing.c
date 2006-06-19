@@ -2859,8 +2859,9 @@ static void get_x_and_y_sizes (int n, int *x, int *y)
     }
 }
 
-/* plot one variable as a time series, with separate plots for
-   each cross-sectional unit */
+/* panel: plot one variable as a time series, with separate plots for
+   each cross-sectional unit 
+*/
 
 int 
 gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo) 
@@ -2895,12 +2896,12 @@ gretl_panel_ts_plot (const int *list, const double **Z, DATAINFO *pdinfo)
     fprintf(fp, "set xlabel '%s'\n", _("time"));
     fputs("set xzeroaxis\n", fp);
 
+    gretl_push_c_numeric_locale();
+
     if (yfrac > 1.4 * xfrac) {
 	yfrac = 1.4 * xfrac;
     }
     fprintf(fp, "set size %g,%g\n", xfrac, yfrac);
-
-    gretl_push_c_numeric_locale();
 
     k = 0;
     t0 = 0;

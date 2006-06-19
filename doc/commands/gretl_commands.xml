@@ -6178,8 +6178,8 @@
 
     <usage>
       <altforms>
-        <altform><repl>periodicity</repl> <repl>startobs</repl></altform>
-	<altform><repl>unitvar</repl> <repl>timevar</repl></altform>
+        <altform>setobs <repl>periodicity</repl> <repl>startobs</repl></altform>
+	<altform>setobs <repl>unitvar</repl> <repl>timevar</repl></altform>
       </altforms>
       <options>
         <option>

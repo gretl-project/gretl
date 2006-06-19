@@ -989,6 +989,14 @@ int *gretl_model_get_x_list (const MODEL *pmod)
 		}
 	    }
 	}
+    } else if (pmod->ci == PANEL) {
+	nx = pmod->list[0] - 1;
+	list = gretl_list_new(nx);
+	if (list != NULL) {
+	    for (i=1; i<=list[0]; i++) {
+		list[i] = pmod->list[i + 1];
+	    }
+	}	
     } else if (pmod->ci != NLS && pmod->ci != MLE) {
 	nx = pmod->ncoeff;
 	list = gretl_list_new(nx);
@@ -3027,7 +3035,7 @@ int command_ok_for_model (int test_ci, int model_ci)
     case OMIT:
     case OMITFROM:
 	if (model_ci == NLS || model_ci == ARMA || 
-	    model_ci == GARCH) {
+	    model_ci == GARCH || model_ci == PANEL) {
 	    ok = 0;
 	}
 	break;
@@ -3035,7 +3043,8 @@ int command_ok_for_model (int test_ci, int model_ci)
     case COEFFSUM:
     case VIF:
 	if (model_ci == NLS || model_ci == TSLS ||
-	    model_ci == ARMA || model_ci == GARCH) {
+	    model_ci == ARMA || model_ci == GARCH ||
+	    model_ci == PANEL) {
 	    ok = 0;
 	}
 	break;

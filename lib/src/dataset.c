@@ -75,6 +75,16 @@ static void free_sorted_markers (DATAINFO *pdinfo, int v)
     }    
 }
 
+static void free_panel_info (DATAINFO *pdinfo)
+{
+    if (pdinfo->paninfo != NULL) {
+	free(pdinfo->paninfo->unit);
+	free(pdinfo->paninfo->period);
+	free(pdinfo->paninfo);
+	pdinfo->paninfo = NULL;
+    }
+}
+
 static void free_varinfo (DATAINFO *pdinfo, int v)
 {
     free_sorted_markers(pdinfo, v);
@@ -127,6 +137,9 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	    }
 	    free(pdinfo->varinfo);
 	    pdinfo->varinfo = NULL;
+	}
+	if (pdinfo->paninfo != NULL) {
+	    free_panel_info(pdinfo);
 	}
 	if (pdinfo->descrip != NULL) {
 	    free(pdinfo->descrip);
@@ -230,6 +243,165 @@ int dataset_allocate_obs_markers (DATAINFO *pdinfo)
     return err;
 }
 
+/**
+ * dataset_allocate_panel_info:
+ * @pdinfo: dataset information struct
+ *
+ * Allocates space in @pdinfo for two indices representing
+ * the unit or group and time-period, respectively,  of each 
+ * observation in a panel data set.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int dataset_allocate_panel_info (DATAINFO *pdinfo)
+{
+    PANINFO *pan;
+    int i;
+
+    /* just in case, clean out any previous stuff */
+    free_panel_info(pdinfo);  
+
+    pan = malloc(sizeof *pan);
+    if (pan == NULL) {
+	return E_ALLOC;
+    }
+
+    pan->unit = pan->period = NULL;
+
+    pan->unit = malloc(pdinfo->n * sizeof *pan->unit);
+    pan->period = malloc(pdinfo->n * sizeof *pan->period);
+
+    if (pan->unit == NULL || pan->period == NULL) {
+	free(pan->unit);
+	free(pan->period);
+	free(pan);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<pdinfo->n; i++) {
+	pan->unit[i] = pan->period[i] = -1; /* deliberately invalid */
+    }
+
+    pan->nunits = 0;
+    pan->Tmin = pan->Tmax = 0;
+    pan->olen = 0;
+
+    pdinfo->paninfo = pan;
+
+    return 0;
+}
+
+/**
+ * dataset_add_default_panel_indices:
+ * @pdinfo: dataset information struct.
+ *
+ * Adds a pair of indices for panel unit and panel period.
+ * The default is that both are zero-based and increase
+ * consecutively, per unit and per period respectively.
+ * This function assumes a balanced panel.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int dataset_add_default_panel_indices (DATAINFO *pdinfo)
+{
+    int nunits, T;
+    int i, s, t, err;
+
+    if (pdinfo->n % pdinfo->pd != 0) {
+	return E_DATA;
+    }
+
+    err = dataset_allocate_panel_info(pdinfo);
+
+    if (!err) {
+	char test[32];
+
+	T = pdinfo->pd;
+	nunits = pdinfo->n / pdinfo->pd;
+	s = 0;
+	for (i=0; i<nunits; i++) {
+	    for (t=0; t<T; t++) {
+		pdinfo->paninfo->unit[s] = i;
+		pdinfo->paninfo->period[s] = t;
+		s++;
+	    }
+	}
+	pdinfo->paninfo->nunits = nunits;
+	pdinfo->paninfo->Tmin = T;
+	pdinfo->paninfo->Tmax = T;
+
+	sprintf(test, "%d", T);
+	pdinfo->paninfo->olen = strlen(test);
+    }
+
+    return err;
+}
+
+/**
+ * dataset_finalize_panel_indices:
+ * @pdinfo: dataset information struct.
+ *
+ * Having already added a pair of indices for panel unit 
+ * and panel period, check these for consistency and
+ * calculate the number of panel units and the minimum
+ * and maximum observations per unit.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int dataset_finalize_panel_indices (DATAINFO *pdinfo)
+{
+    PANINFO *pan = pdinfo->paninfo;
+    char test[32];
+    int u0, ubak;
+    int i, Ti, len;
+
+    if (pan == NULL) {
+	return E_DATA;
+    }
+
+    pan->nunits = 1;
+    pan->Tmax = 0;
+    pan->Tmin = 999999;
+    pan->olen = 0;
+
+    u0 = ubak = pan->unit[0];
+    Ti = 0;
+
+    /* basic validity check */
+    for (i=0; i<pdinfo->n; i++) {
+	if (pan->unit[i] < 0 || pan->period[i] < 0) {
+	    strcpy(gretl_errmsg, "Panel index information is corrupted");
+	    return E_DATA;
+	}
+	sprintf(test, "%d", pan->period[i] + 1);
+	len = strlen(test);
+	if (len > pan->olen) {
+	    pan->olen = len;
+	}
+    }
+
+    for (i=0; i<pdinfo->n; i++) {
+	if (pan->unit[i] == ubak) {
+	    Ti++;
+	} else {
+	    pan->nunits += 1;
+	    if (Ti > pan->Tmax) {
+		pan->Tmax = Ti;
+	    }
+	    if (Ti < pan->Tmin) {
+		pan->Tmin = Ti;
+	    }	    
+	    Ti = 1;
+	    ubak = pan->unit[i];
+	}
+    }
+
+    return 0;
+}
+
 static void gretl_varinfo_init (VARINFO *vinfo)
 {
     vinfo->label[0] = '\0';
@@ -324,6 +496,7 @@ DATAINFO *datainfo_new (void)
 
     dinfo->varname = NULL;
     dinfo->varinfo = NULL;    
+    dinfo->paninfo = NULL;
 
     dinfo->markers = NO_MARKERS;  
     dinfo->delim = ',';
@@ -451,6 +624,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     if (resample) {
 	pdinfo->varname = NULL;
 	pdinfo->varinfo = NULL;
+	pdinfo->paninfo = NULL; /* ?? */
     } else if (dataset_allocate_varnames(pdinfo)) {
 	free_Z(*pZ, pdinfo);
 	*pZ = NULL;
@@ -722,7 +896,7 @@ maybe_extend_dummies (double **Z, const DATAINFO *pdinfo, int oldn)
  * the missing value code, #NADBL, with the exception of
  * simple deterministic variables when %OPT_A is given.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, non-zero code on error.
  */
 
 int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
@@ -733,6 +907,10 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     int i, t, bign;
 
     if (newobs <= 0) return 0;
+
+    if (pdinfo->paninfo != NULL) {
+	return E_DATA;
+    }
 
     bign = pdinfo->n + newobs;
 
@@ -784,7 +962,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
  * Deletes @n observations from the end of each series in the 
  * dataset.
  *
- * Returns: 0 on success, %E_ALLOC on error.
+ * Returns: 0 on success, non-zero code on error.
  */
 
 int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
@@ -793,6 +971,10 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
     int i, newn;
 
     if (n <= 0) return 0;
+
+    if (pdinfo->paninfo != NULL) {
+	return E_DATA;
+    }
 
     newn = pdinfo->n - n;
 
@@ -811,7 +993,7 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
 	    return E_ALLOC;
 	}
     }
-    
+
     if (pdinfo->t2 > newn - 1) {
 	pdinfo->t2 = newn - 1;
     }

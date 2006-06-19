@@ -87,6 +87,7 @@ void main_menubar_state (gboolean s)
     flip(mdata->ifac, "/File/Send To...", s);
     flip(mdata->ifac, "/File/Create data set", !s);
     flip(mdata->ifac, "/Data", s);
+    flip(mdata->ifac, "/Add", s);
     flip(mdata->ifac, "/Sample", s);
     flip(mdata->ifac, "/Variable", s);
     flip(mdata->ifac, "/Model", s);
@@ -219,8 +220,8 @@ void time_series_menu_state (gboolean s)
 void panel_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Data/Add variables/unit dummies", s);
-	flip(mdata->ifac, "/Data/Add variables/panel dummies", s);
+	flip(mdata->ifac, "/Add/unit dummies", s);
+	flip(mdata->ifac, "/Add/panel dummies", s);
 	flip(mdata->ifac, "/Model/Panel", s);
     }
 
@@ -246,14 +247,14 @@ void ts_or_panel_menu_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
 
-    flip(mdata->ifac, "/Data/Add variables/time trend", s);
-    flip(mdata->ifac, "/Data/Add variables/lags of selected variables", s);
-    flip(mdata->ifac, "/Data/Add variables/first differences of selected variables", s);
-    flip(mdata->ifac, "/Data/Add variables/log differences of selected variables", s);
+    flip(mdata->ifac, "/Add/time trend", s);
+    flip(mdata->ifac, "/Add/lags of selected variables", s);
+    flip(mdata->ifac, "/Add/first differences of selected variables", s);
+    flip(mdata->ifac, "/Add/log differences of selected variables", s);
 
-    flip(mdata->ifac, "/Data/Add variables/seasonal differences of selected variables",
+    flip(mdata->ifac, "/Add/seasonal differences of selected variables",
 	 dataset_is_seasonal(datainfo));
-    flip(mdata->ifac, "/Data/Add variables/periodic dummies", 
+    flip(mdata->ifac, "/Add/periodic dummies", 
 	 dataset_is_seasonal(datainfo));
 }
 
@@ -294,6 +295,7 @@ void main_menus_enable (gboolean s)
 	flip(mdata->ifac, "/Utilities", s);
 	flip(mdata->ifac, "/Session", s);
 	flip(mdata->ifac, "/Data", s);
+	flip(mdata->ifac, "/Add", s);
 	flip(mdata->ifac, "/Sample", s);
 	flip(mdata->ifac, "/Model", s);
     }

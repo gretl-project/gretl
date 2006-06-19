@@ -212,6 +212,7 @@ struct _cmplx {
 typedef unsigned long gretlopt;
 
 typedef struct VARINFO_ VARINFO;
+typedef struct PANINFO_ PANINFO;
 typedef struct DATAINFO_ DATAINFO;
 typedef struct PATHS_ PATHS;
 typedef struct VMatrix_ VMatrix;
@@ -237,6 +238,16 @@ struct VARINFO_ {
     char **sorted_markers;
 };
 
+/* panel indexing information */
+struct PANINFO_ {
+    int nunits;   /* number of cross-sectional units */
+    int Tmin;     /* min. number of time-series observations per unit */
+    int Tmax;     /* max. number of time-series observations per unit */
+    int olen;     /* length in digits of highest time-series index value */
+    int *unit;    /* index array, cross-sectional units */
+    int *period;  /* index array, time periods */
+};
+
 /* information on data set */
 struct DATAINFO_ { 
     int v;              /* number of variables */
@@ -249,6 +260,7 @@ struct DATAINFO_ {
     char endobs[OBSLEN]; /* string representation of ending obs */
     char **varname;     /* array of names of variables */
     VARINFO **varinfo;  /* array of specific info on vars */
+    PANINFO *paninfo;   /* additional info for panel data */
     char markers;       /* whether (1) or not (0) the data file has
 			   observation markers */
     char delim;         /* default delimiter for "CSV" files */

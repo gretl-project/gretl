@@ -1012,6 +1012,66 @@ void gretl_xml_header (FILE *fp)
     fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", enc);
 }
 
+static int real_balanced_panel (const DATAINFO *pdinfo)
+{
+    const PANINFO *pan = pdinfo->paninfo;
+    int *test;
+    int i, s, t, T;
+    int bal = 1;
+
+    if (pan->Tmin != pan->Tmax) {
+	return 0;
+    }
+
+    T = pan->Tmin;
+	
+    test = malloc(T * sizeof *test);
+    if (test == NULL) {
+	return 0;
+    }
+
+    for (i=0; i<T; i++) {
+	test[i] = pan->period[i];
+    }
+
+    s = T;
+    for (i=1; i<pan->nunits && bal; i++) {
+	for (t=0; t<T && bal; t++) {
+	    if (pan->period[s++] != test[t]) {
+		bal = 0;
+	    }
+	}
+    }
+	
+    free(test);
+
+#if 0
+    fprintf(stderr, "full balance test: bal = %d\n", bal);
+#endif
+
+    return bal;
+}
+
+/* should we print unit and period info for each observation
+   in a panel dataset? */
+
+static int query_print_panel_obs (const DATAINFO *pdinfo)
+{
+    int bal;
+
+    if (pdinfo->paninfo == NULL ||
+	pdinfo->paninfo->unit == NULL ||
+	pdinfo->paninfo->period == NULL) {
+	return 0;
+    }
+
+    /* printing panel obs info is redundant if the panel
+       is perfectly balanced */
+    bal = real_balanced_panel(pdinfo);
+
+    return !bal;
+}
+
 /**
  * gretl_write_gdt:
  * @fname: name of file to write.
@@ -1036,6 +1096,7 @@ int gretl_write_gdt (const char *fname, const int *list,
     const char *enc;
     int gz = (fmt == GRETL_DATA_GZIPPED);
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
+    int panelobs = 0;
     int *pmax = NULL;
     char startdate[OBSLEN], enddate[OBSLEN];
     char datname[MAXLEN], freqstr[32];
@@ -1247,25 +1308,43 @@ int gretl_write_gdt (const char *fname, const int *list,
 
     alt_puts("</variables>\n", fp, fz);
 
+    panelobs = query_print_panel_obs(pdinfo);
+
     /* then listing of observations */
+    alt_puts("<observations ", fp, fz);
     if (gz) {
-	gzprintf(fz, "<observations count=\"%d\" labels=\"%s\">\n",
+	gzprintf(fz, "count=\"%d\" labels=\"%s\"",
 		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
     } else {
-	fprintf(fp, "<observations count=\"%d\" labels=\"%s\">\n",
+	fprintf(fp, "count=\"%d\" labels=\"%s\"",
 		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
     }
+    if (panelobs) {
+	alt_puts(" panel-info=\"true\"", fp, fz);
+    }
+    alt_puts(">\n", fp, fz);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	alt_puts("<obs", fp, fz);
 	if (pdinfo->markers && pdinfo->S != NULL) {
 	    if (gz) {
-		gzprintf(fz, "<obs label=\"%s\">", pdinfo->S[t]);
+		gzprintf(fz, " label=\"%s\"", pdinfo->S[t]);
 	    } else {
-		fprintf(fp, "<obs label=\"%s\">", pdinfo->S[t]);
+		fprintf(fp, " label=\"%s\"", pdinfo->S[t]);
 	    }
-	} else {
-	    alt_puts("<obs>", fp, fz);
+	} 
+	if (panelobs) {
+	    if (gz) {
+		gzprintf(fz, " unit=\"%d\" period=\"%d\"", 
+			 pdinfo->paninfo->unit[t], 
+			 pdinfo->paninfo->period[t]);
+	    } else {
+		fprintf(fp, " unit=\"%d\" period=\"%d\"", 
+			pdinfo->paninfo->unit[t], 
+			pdinfo->paninfo->period[t]);
+	    }	    
 	}
+	alt_puts(">", fp, fz);
 	for (i=1; i<=nvars; i++) {
 	    v = savenum(list, i);
 	    if (var_is_scalar(pdinfo, v)) {
@@ -1493,6 +1572,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 {
     xmlNodePtr cur;
     xmlChar *tmp;
+    int panelobs = 0;
     int n, i, t;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
@@ -1535,6 +1615,18 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	return 1;
     }
 
+    tmp = xmlGetProp(node, (XUC) "panel-info");
+    if (tmp) {
+	if (!strcmp((char *) tmp, "true")) {
+	    if (dataset_allocate_panel_info(pdinfo)) {
+		sprintf(gretl_errmsg, "Out of memory");
+		return 1;
+	    }
+	    panelobs = 1;
+	} 
+	free(tmp);
+    } 
+
     if (pdinfo->endobs[0] == '\0') {
 	sprintf(pdinfo->endobs, "%d", pdinfo->n);
     }
@@ -1573,6 +1665,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     t = 0;
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (XUC) "obs")) {
+
 	    if (pdinfo->markers) {
 		tmp = xmlGetProp(cur, (XUC) "label");
 		if (tmp) {
@@ -1583,6 +1676,27 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    sprintf(gretl_errmsg, _("Case marker missing at obs %d"), t+1);
 		    return 1;
 		}
+	    }
+
+	    if (panelobs) {
+		int j, s, ok = 0;
+
+		tmp = xmlGetProp(cur, (XUC) "unit");
+		if (tmp) {
+		    ok += sscanf((char *) tmp, "%d", &j);
+		    free(tmp);
+		} 
+		tmp = xmlGetProp(cur, (XUC) "period");
+		if (tmp) {
+		    ok += sscanf((char *) tmp, "%d", &s);
+		    free(tmp);
+		} 
+		if (ok < 2) {
+		    sprintf(gretl_errmsg, "Panel index missing at obs %d", t+1);
+		    return 1;
+		}
+		pdinfo->paninfo->unit[t] = j;
+		pdinfo->paninfo->period[t] = s;
 	    }
 
 	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
@@ -1957,6 +2071,14 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
     */
     if (!err && tmpdinfo->structure == STACKED_CROSS_SECTION) {
 	err = switch_panel_orientation(tmpZ, tmpdinfo);
+    }
+
+    if (!err && tmpdinfo->structure == STACKED_TIME_SERIES) {
+	if (tmpdinfo->paninfo == NULL) {
+	    err = dataset_add_default_panel_indices(tmpdinfo);
+	} else {
+	    err = dataset_finalize_panel_indices(tmpdinfo);
+	}
     }
 
     if (err) {

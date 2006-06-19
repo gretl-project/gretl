@@ -1297,7 +1297,7 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	/* generate the split variable */
 	for (t=0; t<pdinfo->n; t++) {
-	    dum[t] = (double) (t > split); 
+	    dum[t] = (double) (t >= split); 
 	}
 
 	strcpy(pdinfo->varname[v], "splitdum");
@@ -1310,7 +1310,7 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    int sv = v + i;
 
 	    for (t=0; t<pdinfo->n; t++) {
-		if (t <= split) {
+		if (t < split) {
 		    (*pZ)[sv][t] = 0.0;
 		} else if (model_missing(pmod, t)) {
 		    (*pZ)[sv][t] = NADBL;
@@ -1412,7 +1412,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	split = pmod->t1 + 0.15 * pmod->nobs;
 	smax = pmod->t1 + 0.85 * pmod->nobs;
     } else {
-	split = dateton(chowdate, pdinfo) - 1;
+	split = dateton(chowdate, pdinfo);
 	if (split <= 0 || split >= pdinfo->n) { 
 	    err = E_SPLIT;
 	}
@@ -1447,11 +1447,13 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 #if 0
 	    fprintf(stderr, "split at t=%d: F(%d,%d)=%g\n", t, 
 		    dfn, dfd, F);
+	    fprintf(stderr, " pmod->ess = %g, chow_mod.ess = %g\n", 
+		    pmod->ess, chow_mod.ess);
 #endif
-	    for (i=0; i<pmod->ncoeff; i++) {
-		(*pZ)[origv+i][t+1] = 0.0;
-	    }
 	    clear_model(&chow_mod);
+	    for (i=0; i<pmod->ncoeff; i++) {
+		(*pZ)[origv+i][t] = 0.0;
+	    }
 	}
 
 	if (!err) {
@@ -1477,7 +1479,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    pprintf(prn, _("\nChow test for structural break at observation %s:\n"
 		    "  F(%d, %d) = %f with p-value %f\n\n"), chowdate,
 		    dfn, chow_mod.dfd, F, pval);
-
+	    
 	    if (opt & OPT_S) {
 		ModelTest *test = model_test_new(GRETL_TEST_CHOW);
 
