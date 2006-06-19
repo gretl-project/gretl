@@ -45,6 +45,9 @@ struct panelmod_t_ {
     int *vlist;           /* list of time-varying variables from pooled model */
     gretlopt opt;         /* option flags */
     int nbeta;            /* number of slope coeffs for Hausman test */
+    double ybar;          /* mean of dependent variable */
+    double sdy;           /* standard deviation of dependent variable */
+    double tss;           /* total sum of squares, dependent variable */
     double sigma_e;       /* fixed-effects standard error */
     double H;             /* Hausman test statistic */
     double *bdiff;        /* array of coefficient differences */
@@ -233,6 +236,26 @@ static void print_theta (const panelmod_t *pan, double theta,
     pputc(prn, '\n');
 }
 
+static void within_depvarstats (panelmod_t *pan, double *y, int n)
+{
+    double x = 0.0;
+    int t;
+
+    for (t=0; t<n; t++) {
+	x += y[t];
+    }
+
+    pan->ybar = x / n;
+    pan->tss = 0.0;
+
+    for (t=0; t<n; t++) {
+	x = y[t] - pan->ybar;
+	pan->tss += x * x;
+    }
+
+    pan->sdy = sqrt(pan->tss / (n - 1));
+}
+
 /* Construct a version of the dataset from which the group means
    are subtracted, for the "within" regression when not using
    the dummy variables approach.  Nota bene: this auxiliary
@@ -243,26 +266,37 @@ static DATAINFO *
 within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 {
     DATAINFO *winfo;
+    double *wy = NULL;
     int wnobs = 0;
     double xbar;
     int i, j, k;
     int s, t, bigt;
 
 #if PDEBUG
-    fprintf(stderr, "within_groups: nvar=%d, pooled model nobs=%d, *wZ=%p\n", 
-	    pan->vlist[0], pan->pooled->nobs, (void *) *wZ);
+    fprintf(stderr, "within_groups: nvar=%d, pooled model nobs=%d\n", 
+	    pan->vlist[0], pan->pooled->nobs);
 #endif
+
+    /* real number of included units */
+    pan->effn = 0;
 
     for (i=0; i<pan->nunits; i++) { 
 	if (pan->unit_obs[i] > 1) {
 	    /* we need more than one observation to compute any
 	       within group variation */
 	    wnobs += pan->unit_obs[i];
+	    pan->effn += 1;
 	}
+    }
+
+    wy = malloc(wnobs * sizeof *wy);
+    if (wy == NULL) {
+	return NULL;
     }
 
     winfo = create_new_dataset(wZ, pan->vlist[0], wnobs, 0);
     if (winfo == NULL) {
+	free(wy);
 	return NULL;
     }
 
@@ -317,11 +351,17 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 #if PDEBUG > 1
 		    fprintf(stderr, "Set wZ[%d][%d] = %g\n", k, s, (*wZ)[k][s]);
 #endif
+		    if (j == 1) {
+			wy[s] = Z[pan->vlist[j]][bigt];
+		    }
 		    s++;
 		}
 	    }
 	}
     }
+
+    within_depvarstats(pan, wy, wnobs);
+    free(wy);
 
     return winfo;
 }
@@ -561,7 +601,15 @@ static void apply_panel_df_correction (MODEL *pmod, int ndf)
     }
 }
 
-#define MINOBS 1
+/* The minimum number of observations we'll accept for a given
+   cross-sectional unit, to include it in the fixed-effects
+   regression.  The idea is that if there's only one observation
+   for a given unit, this is nugatory when we're including a 
+   dummy for that unit, or subtracting the means from the
+   respective data series.
+*/
+
+#define MINOBS 2 /* was 1 */
 
 /* Calculate the fixed effects or "within" regression, either via
    dummy variables or by subtracting the group means from the data.
@@ -581,8 +629,16 @@ fixed_effects_model (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo)
     gretl_model_init(&wmod);
 
     for (i=0; i<pan->nunits; i++) {
+#if PDEBUG
+	fprintf(stderr, "pan unit %d: obs (based on OLS) = %d\n", 
+		i, pan->unit_obs[i]);
+#endif
 	if (pan->unit_obs[i] >= MINOBS) {
 	    ndum++;
+	} else if (pan->unit_obs[i] > 0) {
+	    /* a unit we need to exclude */
+	    ndum = 0;
+	    break;
 	}
     }
 
@@ -631,7 +687,7 @@ fixed_effects_model (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	/* OPT_Z: do _not_ automatically eliminate perfectly
-	   collinear variables */
+	   collinear variables (?) */
 	wmod = lsq(felist, &wZ, winfo, OLS, OPT_A | OPT_Z);
 
 	if (wmod.errcode) {
@@ -643,7 +699,7 @@ fixed_effects_model (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    /* we estimated a bunch of group means, and have to
 	       subtract that many degrees of freedom */
-	    apply_panel_df_correction(&wmod, pan->nunits);
+	    apply_panel_df_correction(&wmod, pan->effn);
 #if PDEBUG
 	    printmodel(&wmod, winfo, OPT_O, prn);
 #endif
@@ -843,36 +899,63 @@ static void fix_panelmod_list (MODEL *targ, MODEL *src, panelmod_t *pan)
 #if PDEBUG
     printlist(targ->list, "new targ->list");
 #endif
-
 }
 
-static void fix_within_stats (MODEL *targ, MODEL *src, panelmod_t *pan)
+/* correct various model statistics, in the case where we estimated
+   the fixed effects or "within" model on an auxiliary dataset
+   from which the group means were subtracted
+*/
+
+static void fix_within_stats (MODEL *wmod, MODEL *pooled, panelmod_t *pan)
 {
-    int nc = targ->ncoeff;
+    int nc = wmod->ncoeff;
 
-    fix_panelmod_list(targ, src, pan);
+    fix_panelmod_list(wmod, pooled, pan);
 
-    targ->ybar = src->ybar;
-    targ->sdy = src->sdy;
-    targ->ifc = 1;
+    if (wmod->full_n < pooled->full_n) {
+	double *uhat = wmod->uhat;
+	double *yhat = wmod->yhat;
+	int t;
 
-    targ->rsq = 1.0 - (targ->ess / src->tss);
+	wmod->uhat = pooled->uhat;
+	wmod->yhat = pooled->yhat;
+	pooled->uhat = NULL;
+	pooled->yhat = NULL;
 
-    if (targ->dfd > 0) {
-	double den = targ->tss * targ->dfd;
+	/* FIXME indexing */
 
-	targ->adjrsq = 1 - (targ->ess * (targ->nobs - 1) / den);
+	for (t=0; t<pooled->full_n; t++) {
+	    wmod->uhat[t] = uhat[t];
+	    wmod->yhat[t] = yhat[t];
+	}
+
+	wmod->full_n = pooled->full_n;
+
+	free(uhat);
+	free(yhat);
     }
 
-    if (targ->rsq < 0.0) {
-	targ->rsq = 0.0;
+    wmod->ybar = pan->ybar;
+    wmod->sdy = pan->sdy;
+    wmod->ifc = 1;
+
+    wmod->rsq = 1.0 - (wmod->ess / pan->tss);
+
+    if (wmod->dfd > 0) {
+	double den = pan->tss * wmod->dfd;
+
+	wmod->adjrsq = 1 - (wmod->ess * (wmod->nobs - 1) / den);
+    }
+
+    if (wmod->rsq < 0.0) {
+	wmod->rsq = 0.0;
     } else {
-	targ->fstt = (targ->rsq / (1.0 - targ->rsq)) * ((double) targ->dfd / targ->dfn);
+	wmod->fstt = (wmod->rsq / (1.0 - wmod->rsq)) * ((double) wmod->dfd / wmod->dfn);
     }
 
-    targ->ncoeff = targ->dfn + 1;
-    ls_criteria(targ);
-    targ->ncoeff = nc;
+    wmod->ncoeff = wmod->dfn + 1;
+    ls_criteria(wmod);
+    wmod->ncoeff = nc;
 }
 
 /* Fixed-effects model: add the per-unit intercept estimates
@@ -916,7 +999,7 @@ static int fe_model_add_ahat (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	for (i=0; i<pan->nunits; i++) {
 	    int Ti = pan->unit_obs[i];
 
-	    if (Ti > 0) {
+	    if (Ti > 1) {
 		double ahi = 0.0;
 
 		for (t=0; t<pan->T; t++) {

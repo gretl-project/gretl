@@ -762,7 +762,7 @@ real_mask_leaves_balanced_panel (const char *mask,
     char *sig = make_panel_signature(pdinfo, mask, mt1, mt2, neg);
     char *sig_0 = NULL;
 
-    /* FIXME: allow for possibility that starting obs is not 1:1 */
+    /* FIXME: allow for possibility that starting obs is not 1:1 ?? */
 
     if (sig == NULL) {
 	return 0;

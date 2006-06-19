@@ -624,7 +624,6 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     if (resample) {
 	pdinfo->varname = NULL;
 	pdinfo->varinfo = NULL;
-	pdinfo->paninfo = NULL; /* ?? */
     } else if (dataset_allocate_varnames(pdinfo)) {
 	free_Z(*pZ, pdinfo);
 	*pZ = NULL;
@@ -636,6 +635,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->delim = ',';
     pdinfo->descrip = NULL;
     pdinfo->data = NULL;
+    pdinfo->paninfo = NULL;
     pdinfo->submask = NULL;
     pdinfo->submode = 0;
     
