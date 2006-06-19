@@ -2330,6 +2330,21 @@ static int is_varname_or_model_data_selector (const char *s)
     return ret;
 }
 
+/* check for string composed of digits and ':', 
+   ending with a digit */
+
+static int maybe_date (const char *s)
+{
+    while (*s) {
+	if (!isdigit(*s) && *s != ':') {
+	    return 0;
+	}
+	s++;
+    }
+
+    return isdigit(*(s-1));
+}
+
 static int token_is_atomic (const char *s, GENERATOR *genr)
 {
     int count = 0;
@@ -2340,8 +2355,11 @@ static int token_is_atomic (const char *s, GENERATOR *genr)
     if (numeric_string(s)) {
 	/* number in scientific notation */
 	atomic = 1;
+    } else if (maybe_date(s)) {
+	atomic = 1;
     } else if (isdigit((unsigned char) *s)) {
-	/* not numeric string but begins with digit: can't be atomic */
+	/* not numeric string and not plausible date,
+	   but begins with digit: can't be atomic */
 	atomic = 0;
     } else if (get_lagvar(s, NULL, genr)) {
 	/* treat lag variable as atom */

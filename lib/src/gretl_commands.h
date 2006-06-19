@@ -110,6 +110,7 @@ typedef enum {
     PROBIT,
     PVALUE, 
     PWE,
+    QLRTEST,
     QUIT,
     REMEMBER,
     RENAME,
@@ -186,6 +187,7 @@ typedef enum {
                         c == PRINT || \
                         c == PRINTF || \
                         c == PVALUE || \
+                        c == QLRTEST || \
                         c == RESET || \
                         c == RMPLOT || \
                         c == RUNS || \

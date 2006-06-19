@@ -1930,6 +1930,8 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 
 	ntodate(brkstr, brk, datainfo);
 	gretl_command_sprintf("chow %s", brkstr);
+    } else if (action == QLRTEST) {
+	gretl_command_strcpy("qlrtest");
     } else {
 	gretl_command_strcpy("cusum");
     }
@@ -1938,7 +1940,7 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 	return;
     }
 
-    if (action == CHOW) {
+    if (action == CHOW || action == QLRTEST) {
 	err = chow_test(cmdline, pmod, &Z, datainfo, OPT_S, prn);
     } else {
 	err = cusum_test(pmod, &Z, datainfo, OPT_S, prn);
@@ -1957,6 +1959,8 @@ void do_chow_cusum (gpointer data, guint action, GtkWidget *w)
 
 	view_buffer(prn, 78, 400, (action == CHOW)?
 		    _("gretl: Chow test output") : 
+		    (action == QLRTEST)?
+		    _("gretl: QLR test output") : 
 		    _("gretl: CUSUM test output"),
 		    action, NULL);
     }
@@ -6148,9 +6152,10 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case CHOW:
     case CUSUM:
+    case QLRTEST:
     case RESET:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	if (cmd.ci == CHOW) {
+	if (cmd.ci == CHOW || cmd.ci == QLRTEST) {
 	    err = chow_test(line, models[0], &Z, datainfo, testopt, outprn);
 	} else if (cmd.ci == CUSUM) {
 	    err = cusum_test(models[0], &Z, datainfo, testopt, outprn);

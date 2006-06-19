@@ -155,6 +155,7 @@ typedef enum {
     GRETL_TEST_AUTOCORR,
     GRETL_TEST_CHOW,
     GRETL_TEST_CUSUM,
+    GRETL_TEST_QLR,
     GRETL_TEST_GROUPWISE,
     GRETL_TEST_LOGS,
     GRETL_TEST_NORMAL,
@@ -165,6 +166,8 @@ typedef enum {
     GRETL_TEST_SARGAN,
     GRETL_TEST_TSLS_HAUSMAN,
     GRETL_TEST_PANEL_HAUSMAN,
+    GRETL_TEST_PANEL_F,
+    GRETL_TEST_PANEL_BP,
     GRETL_TEST_MAX
 } ModelTestType;
 
@@ -294,6 +297,9 @@ void model_test_set_value (ModelTest *test, double val);
 void model_test_set_pvalue (ModelTest *test, double pval);
 void model_test_set_param (ModelTest *test, const char *s);
 void model_test_set_allocated_param (ModelTest *test, char *s);
+void model_test_set_crit_and_alpha (ModelTest *test, 
+				    double crit,
+				    double alpha);
 
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn);
 void gretl_model_print_last_test (const MODEL *pmod, PRN *prn);

@@ -1246,7 +1246,9 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
 
     if (pdinfo->markers && pdinfo->S != NULL) {
 	for (t=0; t<pdinfo->n; t++) {
-	    if (!strcmp(test, pdinfo->S[t])) return t + 1;
+	    if (!strcmp(test, pdinfo->S[t])) {
+		return t + 1;
+	    }
 	}
 	if (calendar_data(pdinfo)) {
 	    charsub(test, ':', '/');
@@ -1261,7 +1263,9 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
 
     if (pdinfo->structure == TIME_SERIES) {
 	t = dateton(test, pdinfo);
-	if (t >= 0) return t + 1;
+	if (t >= 0) {
+	    return t + 1;
+	}
     }
 
     if (calendar_data(pdinfo)) {

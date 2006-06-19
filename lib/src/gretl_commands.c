@@ -120,6 +120,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { PROBIT,   "probit" },
     { PVALUE,   "pvalue" },  
     { PWE,      "pwe" },
+    { QLRTEST,  "qlrtest" }, 
     { QUIT,     "quit" }, 
     { REMEMBER, "remember" },
     { RENAME,   "rename" },

@@ -5371,6 +5371,37 @@
 
   </command>
 
+  <command name="qlrtest" section="Tests" 
+    label="Quandt likelihood ratio test">
+
+    <description>
+      <para>
+	For a model estimated on time-series data via OLS, performs the
+	Quandt likelihood ratio (QLR) test for a structural break at an
+	unknown point in time, with 15 percent trimming at the beginning
+	and end of the sample period.
+      </para>
+      <para>
+	For each potential break point within the central 70 percent of
+	the observations, a Chow test is performed (see <cmdref
+	  targ="chow"/>). The QLR test statistic is the maximum of the
+	<mathvar>F</mathvar> values from these tests.  It follows a
+	non-standard distribution, the critical values of which are taken
+	from Stock and Watson's <book>Introduction to Econometrics</book>
+	(2003). If the QLR statistic exceeds the critical value at the
+	chosen level of significance, one can infer that the parameters of
+	the model are not constant.  This statistic can be used to detect
+	forms of instability other than a single discrete break (such as
+	multiple breaks or a slow drifting of the parameters). 
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/QLR test</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="quit" section="Utilities" context="cli">
 
     <description>

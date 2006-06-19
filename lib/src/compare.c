@@ -1329,15 +1329,37 @@ make_chow_list (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return chowlist;
 }
 
-static void QLR_print_result (double Fmax, int tmax, int dfn, int dfd,
-			      const DATAINFO *pdinfo, PRN *prn)
+static void save_QLR_test (MODEL *pmod, char *datestr,
+			   double Fmax, double crit, double alpha,
+			   int dfn, int dfd)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_QLR);
+
+    if (test != NULL) {
+	model_test_set_teststat(test, GRETL_STAT_SUP_WALD);
+	model_test_set_param(test, datestr);
+	model_test_set_value(test, Fmax);
+	model_test_set_crit_and_alpha(test, crit, alpha);
+	model_test_set_dfn(test, dfn);
+	model_test_set_dfd(test, dfd);
+	maybe_add_test_to_model(pmod, test);
+    }	  
+}
+
+static void QLR_print_result (MODEL *pmod,
+			      double Fmax, int tmax, int dfn, int dfd,
+			      const DATAINFO *pdinfo, gretlopt opt,
+			      PRN *prn)
 {
     char datestr[OBSLEN];
     double crit = 0.0;
     int i, a = 0, approx = 0;
 
     ntodate(datestr, tmax, pdinfo);
-    pprintf(prn, "QLR test: maximum F(%d, %d) = %g is "
+
+    pputs(prn, "Quandt likelihood ratio test for structural break at an "
+	  "unknown point,\nwith 15 percent trimming:\n\n");
+    pprintf(prn, "The maximum F(%d, %d) = %g occurs "
 	    "at observation %s\n", dfn, dfd, Fmax, datestr);
 
     if (dfn > QLR_QMAX) {
@@ -1366,6 +1388,32 @@ static void QLR_print_result (double Fmax, int tmax, int dfn, int dfd,
 	    pprintf(prn, "(10%% value = %g)\n", crit);
 	}
     }
+
+    pputs(prn, "\nThis statistic does not follow the standard "
+	  "F distribution;\ncritical values are from Stock and Watson "
+	  "(2003).\n\n");
+
+    if (opt & OPT_S) {
+	save_QLR_test(pmod, datestr, Fmax, crit, a / 100.0,
+		      dfn, dfd);
+    }
+}
+
+static void save_chow_test (MODEL *pmod, char *chowdate,
+			    double F, double pval,
+			    int dfn, int dfd)
+{
+    ModelTest *test = model_test_new(GRETL_TEST_CHOW);
+
+    if (test != NULL) {
+	model_test_set_teststat(test, GRETL_STAT_F);
+	model_test_set_param(test, chowdate);
+	model_test_set_value(test, F);
+	model_test_set_pvalue(test, pval);
+	model_test_set_dfn(test, dfn);
+	model_test_set_dfd(test, dfd);
+	maybe_add_test_to_model(pmod, test);
+    }	  
 }
 
 /**
@@ -1457,7 +1505,8 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	}
 
 	if (!err) {
-	    QLR_print_result(Fmax, tmax, dfn, dfd, pdinfo, prn);
+	    QLR_print_result(pmod, Fmax, tmax, dfn, dfd, pdinfo, opt, prn);
+	    record_test_result(Fmax, NADBL, "QLR");
 	}
 
     } else if (!err) {
@@ -1481,17 +1530,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		    dfn, chow_mod.dfd, F, pval);
 	    
 	    if (opt & OPT_S) {
-		ModelTest *test = model_test_new(GRETL_TEST_CHOW);
-
-		if (test != NULL) {
-		    model_test_set_teststat(test, GRETL_STAT_F);
-		    model_test_set_param(test, chowdate);
-		    model_test_set_dfn(test, dfn);
-		    model_test_set_dfd(test, chow_mod.dfd);
-		    model_test_set_value(test, F);
-		    model_test_set_pvalue(test, pval);
-		    maybe_add_test_to_model(pmod, test);
-		}	  
+		save_chow_test(pmod, chowdate, F, pval, dfn, chow_mod.dfd);
 	    }
 
 	    record_test_result(F, pval, "Chow");

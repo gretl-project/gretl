@@ -41,6 +41,8 @@ struct ModelTest_ {
     int dfn, dfd;
     double value;
     double pvalue;
+    double crit;
+    double alpha;
 };
 
 static void gretl_test_init (ModelTest *test, ModelTestType ttype)
@@ -51,6 +53,7 @@ static void gretl_test_init (ModelTest *test, ModelTestType ttype)
     test->teststat = GRETL_STAT_NONE;
     test->dfn = test->dfd = 0;
     test->value = test->pvalue = NADBL;
+    test->crit = test->alpha = NADBL;
 }
 
 static void free_model_data_item (model_data_item *item)
@@ -1098,15 +1101,38 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
     return err;
 }
 
+static double *copy_vcv_subset (const MODEL *pmod)
+{
+    double *V;
+    int nc = pmod->ncoeff;
+    int k = pmod->list[0] - 1;
+    int n = k * (k + 1) / 2;
+    int i, j;
+
+    V = malloc(n * sizeof *V);
+    if (V == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<k; i++) {
+	for (j=0; j<=i; j++) {
+	    V[ijton(i, j, k)] = pmod->vcv[ijton(i, j, nc)];
+	}
+    }
+
+    return V;
+}
+
 /**
  * gretl_model_get_vcv:
  * @pmod: pointer to model.
  * @pdinfo: dataset information.
  * 
  * Supplies the caller with a copy of the variance-covariance 
- * matrix for the parameter estimates in @pmod.  See also
- * free_vcv().  To get the covariance matrix in gretl_matrix
- * format, see gretl_vcv_matrix_from_model().
+ * matrix for the parameter estimates in @pmod, in a format
+ * suitable for printing.  See also free_vcv().  To get the 
+ * covariance matrix as a gretl_matrix, see 
+ * gretl_vcv_matrix_from_model().
  *
  * Returns: #VMatrix struct or %NULL on error.
  */
@@ -1114,7 +1140,8 @@ int gretl_model_new_vcv (MODEL *pmod, int *nelem)
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
 {
     char varname[VNAMELEN];
-    int i, nt, nc = pmod->ncoeff;
+    int i, k = pmod->ncoeff;
+    int special = 0;
     VMatrix *vcv;
 
     vcv = vmatrix_new();
@@ -1123,13 +1150,25 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
 	return NULL;
     }
 
-    vcv->names = strings_array_new(nc);
+    /* special for fixed effects panel model: strip out the
+       vcv elements for per-unit dummies, if present
+    */
+    if (pmod->ci == PANEL) {
+	int k2 = pmod->list[0] - 1;
+
+	if (k > k2) {
+	    k = k2;
+	    special = 1;
+	}
+    } 
+
+    vcv->names = strings_array_new(k);
     if (vcv->names == NULL) {
 	free(vcv);
 	return NULL;
     }
 
-    for (i=0; i<nc; i++) {
+    for (i=0; i<k; i++) {
 	gretl_model_get_param_name(pmod, pdinfo, i, varname);
 	vcv->names[i] = gretl_strdup(varname);
 	if (vcv->names[i] == NULL) {
@@ -1143,18 +1182,21 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
 	return NULL;
     }
 
-    /* calculate number of elements in vcv */
-    nt = (nc * nc + nc) / 2;
+    if (special) {
+	/* copy subset of vcv */
+	vcv->vec = copy_vcv_subset(pmod);
+    } else {
+	/* copy full vcv */
+	vcv->vec = copyvec(pmod->vcv, k * (k + 1)  / 2);
+    }
 
-    /* copy vcv */
-    vcv->vec = copyvec(pmod->vcv, nt);
     if (vcv->vec == NULL) {
 	free_vmatrix(vcv);
 	return NULL;
     }
 
     vcv->ci = pmod->ci;
-    vcv->dim = nc;
+    vcv->dim = k;
     vcv->t1 = pmod->t1;
     vcv->t2 = pmod->t2;
     
@@ -1745,6 +1787,8 @@ static void copy_test (ModelTest *targ, const ModelTest *src)
     targ->order = src->order;
     targ->value = src->value;
     targ->pvalue = src->pvalue;
+    targ->crit = src->crit;
+    targ->alpha = src->alpha;
 }
 
 static int copy_model_tests (MODEL *targ, const MODEL *src)
@@ -1802,6 +1846,8 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node)
 	got += gretl_xml_get_prop_as_double(cur, "value", &test.value);
 	got += gretl_xml_get_prop_as_double(cur, "pvalue", &test.pvalue);
 	got += gretl_xml_get_prop_as_string(cur, "param", &test.param);
+	got += gretl_xml_get_prop_as_double(cur, "crit", &test.crit);
+	got += gretl_xml_get_prop_as_double(cur, "alpha", &test.alpha);
 	if (got < 7) {
 	    err = E_DATA;
 	} else {
@@ -1828,6 +1874,11 @@ static void serialize_test (const ModelTest *src, FILE *fp)
     fprintf(fp, "order=\"%d\" ", src->order);
     fprintf(fp, "value=\"%.15g\" ", src->value);
     fprintf(fp, "pvalue=\"%.15g\" ", src->pvalue);
+    
+    if (!na(src->crit)) {
+	fprintf(fp, "crit=\"%g\" ", src->crit);
+	fprintf(fp, "alpha=\"%g\" ", src->alpha);
+    }
 
     fputs("/>\n", fp);
 }
@@ -1964,6 +2015,14 @@ void model_test_set_pvalue (ModelTest *test, double pval)
     test->pvalue = pval;
 }
 
+void model_test_set_crit_and_alpha (ModelTest *test, 
+				    double crit,
+				    double alpha)
+{
+    test->crit = crit;
+    test->alpha = alpha;
+}
+
 void model_test_set_param (ModelTest *test, const char *s)
 {
     test->param = gretl_strdup(s);
@@ -1974,29 +2033,84 @@ void model_test_set_allocated_param (ModelTest *test, char *s)
     test->param = s;
 }
 
+struct test_strings {
+    ModelTestType ID;
+    const char *descrip;
+    const char *H0;
+};
+
+static struct test_strings tstrings[] = {
+    { GRETL_TEST_ADD,
+      N_("Test for addition of variables"),
+      N_("parameters are zero for the variables") },
+    { GRETL_TEST_ARCH,
+      N_("Test for ARCH of order %s"),
+      N_("no ARCH effect is present") },
+    { GRETL_TEST_AUTOCORR,
+      N_("LM test for autocorrelation up to order %s"),
+      N_("no autocorrelation") },
+    { GRETL_TEST_CHOW,
+      N_("Chow test for structural break at observation %s"),
+      N_("no structural break") },
+    { GRETL_TEST_CUSUM,
+      N_("CUSUM test for parameter stability"),
+      N_("no change in parameters") },
+    { GRETL_TEST_QLR,
+      N_("QLR test for structural break"),
+      N_("no structural break") },
+    { GRETL_TEST_GROUPWISE,
+      N_("Likelihood ratio test for groupwise heteroskedasticity"),
+      N_("the units have a common error variance") },
+    { GRETL_TEST_LOGS,
+      N_("Non-linearity test (logs)"),
+      N_("relationship is linear") },
+    { GRETL_TEST_NORMAL,
+      N_("Test for normality of residual"),
+      N_("error is normally distributed") },
+    { GRETL_TEST_OMIT,
+      N_("Test for omission of variables"),
+      N_("parameters are zero for the variables") },
+    { GRETL_TEST_RESET,
+      N_("RESET test for specification"),
+      N_("specification is adequate") },
+    { GRETL_TEST_SQUARES,
+      N_("Non-linearity test (squares)"),
+      N_("relationship is linear") },
+    { GRETL_TEST_WHITES,
+      N_("White's test for heteroskedasticity"),
+      N_("heteroskedasticity not present") },
+    { GRETL_TEST_SARGAN,
+      N_("Sargan over-identification test"),
+      N_("all instruments are valid") },
+    { GRETL_TEST_TSLS_HAUSMAN,
+      N_("Hausman test"),
+      N_("OLS estimates are consistent") },
+    { GRETL_TEST_PANEL_HAUSMAN,
+      N_("Hausman test"),
+      N_("GLS estimates are consistent") },
+    { GRETL_TEST_PANEL_F,
+      N_("Test for differing group intercepts"),
+      N_("The groups have a common intercept") },
+    { GRETL_TEST_PANEL_BP,
+      N_("Breusch-Pagan test"),
+      N_("Variance of the unit-specific error = 0") },
+    { GRETL_TEST_MAX, NULL, NULL }
+};   
+
 static int gretl_test_print_string (const ModelTest *test, PRN *prn)
 {
-    const char *test_strs[] = {
-	N_("Test for addition of variables"),
-	N_("Test for ARCH of order %s"),
-	N_("LM test for autocorrelation up to order %s"),
-	N_("Chow test for structural break at observation %s"),
-	N_("CUSUM test for parameter stability"),
-	N_("Likelihood ratio test for groupwise heteroskedasticity"),
-	N_("Non-linearity test (logs)"),
-	N_("Test for normality of residual"),
-	N_("Test for omission of variables"),
-	N_("RESET test for specification"),
-	N_("Non-linearity test (squares)"),
-	N_("White's test for heteroskedasticity"),
-	N_("Sargan over-identification test"),
-	N_("Hausman test"),
-	N_("Hausman test")
-    };
-    char ordstr[16];
+    const char *descrip = NULL;
     char *param = NULL;
+    char ordstr[16];
+    int i;
 
-    if (test->type >= GRETL_TEST_MAX) {
+    for (i=0; tstrings[i].ID < GRETL_TEST_MAX; i++) {
+	if (test->type == tstrings[i].ID) {
+	    descrip = tstrings[i].descrip;
+	}
+    }
+
+    if (descrip == NULL) {
 	return 1;
     }
 
@@ -2009,15 +2123,15 @@ static int gretl_test_print_string (const ModelTest *test, PRN *prn)
 
     if (param != NULL) {
 	if (plain_format(prn)) {
-	    pprintf(prn, _(test_strs[test->type]), param);
+	    pprintf(prn, _(descrip), param);
 	} else {
-	    pprintf(prn, I_(test_strs[test->type]), param);
+	    pprintf(prn, I_(descrip), param);
 	}
     } else {
 	if (plain_format(prn)) {
-	    pputs(prn, _(test_strs[test->type]));
+	    pputs(prn, _(descrip));
 	} else {
-	    pputs(prn, I_(test_strs[test->type]));
+	    pputs(prn, I_(descrip));
 	}
     }
 
@@ -2063,32 +2177,23 @@ static int print_add_omit_varnames (const char *s, PRN *prn)
 
 static int gretl_test_print_h_0 (const ModelTest *test, PRN *prn)
 {
-    const char *h_0_strs[] = {
-	N_("parameters are zero for the variables"),
-	N_("no ARCH effect is present"),
-	N_("no autocorrelation"),
-	N_("no structural break"),
-	N_("no change in parameters"),
-	N_("the units have a common error variance"),
-	N_("relationship is linear"),
-	N_("error is normally distributed"),
-	N_("parameters are zero for the variables"),
-	N_("specification is adequate"),
-	N_("relationship is linear"),
-	N_("heteroskedasticity not present"),
-	N_("all instruments are valid"),
-	N_("OLS estimates are consistent"),
-	N_("GLS estimates are consistent")
-    };
+    const char *H0 = NULL;
+    int i;
 
-    if (test->type >= GRETL_TEST_MAX) {
+    for (i=0; tstrings[i].ID < GRETL_TEST_MAX; i++) {
+	if (test->type == tstrings[i].ID) {
+	    H0 = tstrings[i].H0;
+	}
+    }
+
+    if (H0 == NULL) {
 	return 1;
-    }  
+    }    
 
     if (plain_format(prn)) {
-	pputs(prn, _(h_0_strs[test->type]));
+	pputs(prn, _(H0));
     } else {
-	pputs(prn, I_(h_0_strs[test->type]));
+	pputs(prn, I_(H0));
     }  
 
     if (test->type == GRETL_TEST_ADD || test->type == GRETL_TEST_OMIT) {
@@ -2115,6 +2220,7 @@ get_test_stat_string (const ModelTest *test, char *str, PRN *prn)
 	break;
     case GRETL_STAT_F:
     case GRETL_STAT_RESET:
+    case GRETL_STAT_SUP_WALD:	
 	if (tex) {
 	    sprintf(str, "$F(%d, %d)$ = %g", test->dfn, test->dfd, test->value);
 	} else {
@@ -2204,7 +2310,7 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 {
     const ModelTest *test;
-    char test_str[128], pval_str[128];
+    char buf[128];
     const char *tstat;
 
     if (i >= pmod->ntests) {
@@ -2219,34 +2325,49 @@ void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 	tstat = N_("Test statistic");
     }
 
-    get_test_stat_string(test, test_str, prn);
-    get_test_pval_string(test, pval_str, prn);
+    get_test_stat_string(test, buf, prn);
 
     if (plain_format(prn)) {
 	gretl_test_print_string(test, prn);
 	pprintf(prn, " -\n  %s: ", _("Null hypothesis"));
 	gretl_test_print_h_0(test, prn);
-	pprintf(prn, "\n  %s: %s\n"
-		"  %s = %s\n\n",
-		_(tstat), test_str, 
-		_("with p-value"), pval_str);
+	pprintf(prn, "\n  %s: %s\n", _(tstat), buf);
     } else if (tex_format(prn)) {
 	gretl_test_print_string(test, prn);
 	pprintf(prn, " --\\\\\n\\quad %s: ", I_("Null hypothesis"));
 	gretl_test_print_h_0(test, prn);
-	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n"
-		"\\quad %s = %s\\\\\n",
-		I_(tstat), test_str, 
-		I_("with p-value"), pval_str);
+	pprintf(prn, "\\\\\n\\quad %s: %s\\\\\n", I_(tstat), buf);
     } else if (rtf_format(prn)) {
 	pputs(prn, "\\par \\ql ");
 	gretl_test_print_string(test, prn);
 	pprintf(prn, " -\\par\n %s: ", I_("Null hypothesis"));
 	gretl_test_print_h_0(test, prn);
-	pprintf(prn, "\\par\n %s: %s\\par\n"
-		" %s = %s\\par\n\n",
-		I_(tstat), test_str, 
-		I_("with p-value"), pval_str);
+	pprintf(prn, "\\par\n %s: %s\\par\n", I_(tstat), buf);
+    }
+
+    get_test_pval_string(test, buf, prn);
+
+    if (*buf) {
+	if (plain_format(prn)) {
+	    pprintf(prn, "  %s = %s\n\n", _("with p-value"), buf);
+	} else if (tex_format(prn)) {
+	    pprintf(prn, "\\quad %s = %s\\\\\n", I_("with p-value"), buf);
+	} else if (rtf_format(prn)) {
+	    pprintf(prn, " %s = %s\\par\n\n", I_("with p-value"), buf);
+	}
+    } else if (!na(test->crit) && !na(test->alpha)) {
+	double a = test->alpha * 100.0;
+
+	if (plain_format(prn)) {
+	    sprintf(buf, _("%g percent critical value"), a);
+	    pprintf(prn, "  (%s = %g)", buf, test->crit);
+	} else if (tex_format(prn)) {
+	    sprintf(buf, I_("%g percent critical value"), a);
+	    pprintf(prn, "\\quad (%s = %g)\\\\\n", buf, test->crit);
+	} else if (rtf_format(prn)) {
+	    sprintf(buf, I_("%g percent critical value"), a);
+	    pprintf(prn, " (%s = %g)\\par\n\n", buf, test->crit);
+	}
     }
 }
 
@@ -3062,6 +3183,7 @@ int command_ok_for_model (int test_ci, int model_ci)
     case ARCH:
     case CHOW:
     case CUSUM:
+    case QLRTEST:
     case LEVERAGE:
     case RESET:
 	if (model_ci != OLS) ok = 0;

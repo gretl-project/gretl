@@ -1020,6 +1020,7 @@ static int exec_line (char *line, PRN *prn)
     case CUSUM:
     case RESET:
     case CHOW:
+    case QLRTEST:
     case VIF:
         if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	if (cmd.ci == COEFFSUM) {
@@ -1028,7 +1029,7 @@ static int exec_line (char *line, PRN *prn)
 	    err = cusum_test(models[0], &Z, datainfo, OPT_NONE, prn);
 	} else if (cmd.ci == RESET) {
 	    err = reset_test(models[0], &Z, datainfo, OPT_NONE, prn);
-	} else if (cmd.ci == CHOW) {
+	} else if (cmd.ci == CHOW || cmd.ci == QLRTEST) {
 	    err = chow_test(line, models[0], &Z, datainfo, OPT_NONE, prn);
 	} else {
 	    err = vif_test(models[0], &Z, datainfo, prn);

@@ -240,6 +240,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == OUTFILE || \
                        c == PRINTF || \
 	               c == PVALUE || \
+                       c == QLRTEST || \
 	               c == QUIT || \
                        c == RENAME || \
                        c == RESET || \
