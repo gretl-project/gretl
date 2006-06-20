@@ -89,6 +89,7 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_V, "verbose" },
     { DISCRETE, OPT_R, "reverse" },
     { EQNPRINT, OPT_O, "complete" },
+    { EQNPRINT, OPT_T, "t-ratios" },
     { TABPRINT, OPT_O, "complete" },
     { ESTIMATE, OPT_M, "geomean" },
     { ESTIMATE, OPT_N, "no-df-corr" },

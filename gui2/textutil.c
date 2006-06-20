@@ -431,7 +431,9 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 	    err = 1;
 	} else {
 	    if (tex_format(prn)) {
-		tex_print_model(pmod, datainfo, prn);
+		tex_print_model(pmod, datainfo, 
+				get_tex_eqn_opt(), 
+				prn);
 	    } else {
 		printmodel(pmod, datainfo, OPT_NONE, prn);
 	    }

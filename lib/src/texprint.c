@@ -660,7 +660,8 @@ void gretl_tex_preamble (PRN *prn, int ams)
  * tex_print_equation:
  * @pmod:  pointer to gretl MODEL struct.
  * @pdinfo:  information regarding the data set.
- * @standalone: print as full doc (1) or fragment (0).
+ * @opt: can include %OPT_S for a standalone document, and
+ * %OPT_T to print t-ratios rather than standard errors.
  * @prn: gretl printing struct.
  *
  * Prints to @prn a gretl model in the form of a LaTeX equation, either as
@@ -671,9 +672,9 @@ void gretl_tex_preamble (PRN *prn, int ams)
  */
 
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
-			int standalone, PRN *prn)
+			gretlopt opt, PRN *prn)
 {
-    double tstat;
+    double x;
     char tmp[48];
     int i, nc = pmod->ncoeff;
     int split = 0, offvar = 0;
@@ -688,7 +689,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     split = (nc > MAXCOEFF);
 
-    if (standalone) {
+    if (opt & OPT_S) {
 	gretl_tex_preamble(prn, 1);
     } else{
 	pputs(prn, "%%% the following needs the amsmath LaTeX package\n\n");
@@ -725,10 +726,16 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    pputc(prn, '+');
 	    tex_print_float(1.0, prn);
 	} else {
-	    tstat = pmod->coeff[i] / pmod->sderr[i];
-	    pprintf(prn, "%s\\underset{(%.3f)}{", 
-		    (pmod->coeff[i] < 0.0)? "-" :
-		    (i > 0)? "+" : "", tstat);
+	    if (opt & OPT_T) {
+		x = pmod->coeff[i] / pmod->sderr[i];
+		pprintf(prn, "%s\\underset{(%.3f)}{", 
+			(pmod->coeff[i] < 0.0)? "-" :
+			(i > 0)? "+" : "", x);
+	    } else {
+		pprintf(prn, "%s\\underset{(%.5g)}{", 
+			(pmod->coeff[i] < 0.0)? "-" :
+			(i > 0)? "+" : "", pmod->sderr[i]);
+	    }
 	    tex_print_float(pmod->coeff[i], prn);
 	    pputc(prn, '}');
 	}
@@ -776,24 +783,40 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	int p = pmod->list[2];
 	int r = pmod->list[0] - 4;
 
-	tstat = pmod->coeff[r] / pmod->sderr[r];
-
-	pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.3f)}{%g} ", 
-		tstat, pmod->coeff[r]);
+	if (opt & OPT_T) {
+	    x = pmod->coeff[r] / pmod->sderr[r];
+	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.3f)}{%g} ", 
+		    x, pmod->coeff[r]);
+	} else {
+	    pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.5g)}{%g} ", 
+		    pmod->sderr[r], pmod->coeff[r]);
+	}	    
 
 	for (i=1; i<=q; i++) {
-	    tstat = pmod->coeff[r+i] / pmod->sderr[r+i];
-	    pprintf(prn, "%s\\underset{(%.3f)}{", 
-		    (pmod->coeff[r+i] < 0.0)? "-" : "+", tstat);
+	    if (opt & OPT_T) {
+		x = pmod->coeff[r+i] / pmod->sderr[r+i];
+		pprintf(prn, "%s\\underset{(%.3f)}{", 
+			(pmod->coeff[r+i] < 0.0)? "-" : "+", x);
+	    } else {
+		pprintf(prn, "%s\\underset{(%.5g)}{", 
+			(pmod->coeff[r+i] < 0.0)? "-" : "+", 
+			pmod->sderr[r+i]);
+	    }		
 	    tex_print_float(pmod->coeff[r+i], prn);
 	    pputs(prn, "}\\,");
 	    pprintf(prn, "\\varepsilon^2_{t-%d}", i);
 	}
 
 	for (i=1; i<=p; i++) {
-	    tstat = pmod->coeff[q+r+i] / pmod->sderr[q+r+i];
-	    pprintf(prn, "%s\\underset{(%.3f)}{", 
-		    (pmod->coeff[q+r+i] < 0.0)? "-" : "+", tstat);
+	    if (opt & OPT_T) {
+		x = pmod->coeff[q+r+i] / pmod->sderr[q+r+i];
+		pprintf(prn, "%s\\underset{(%.3f)}{", 
+			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", x);
+	    } else {
+		pprintf(prn, "%s\\underset{(%.5g)}{", 
+			(pmod->coeff[q+r+i] < 0.0)? "-" : "+", 
+			pmod->sderr[q+r+i]);
+	    }		
 	    tex_print_float(pmod->coeff[q+r+i], prn);
 	    pputs(prn, "}\\,");
 	    pprintf(prn, "\\sigma^2_{t-%d}", i);
@@ -841,10 +864,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     pputs(prn, "\\notag \\\\\n");
     pprintf(prn, "\\centerline{(%s)} \\notag\n",
-	  I_("$t$-statistics in parentheses"));
+	    (opt & OPT_T)? I_("$t$-statistics in parentheses") :
+	    I_("standard errors in parentheses"));
     pputs(prn, "\\end{gather}\n");
 
-    if (standalone) {
+    if (opt & OPT_S) {
 	pputs(prn, "\n\\end{document}\n");
     }
 
@@ -855,6 +879,9 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
  * tex_print_model:
  * @pmod:  pointer to gretl MODEL struct.
  * @pdinfo: information regarding the data set.
+ * @opt: may include %OPT_T in case of printing a model
+ * in equation format, to use t-ratios instead of standard
+ * errors.
  * @prn: gretl printing struct.
  *
  * Prints to @prn a gretl model in the form of either a LaTeX 
@@ -867,13 +894,17 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion.
  */
 
-int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
+		     gretlopt opt, PRN *prn)
 {
-    int docopt = tex_doc_format(prn);
     int ret;
 
+    if (tex_doc_format(prn)) {
+	opt |= OPT_S;
+    }
+
     if (tex_eqn_format(prn)) { 
-	ret = tex_print_equation(pmod, pdinfo, docopt, prn);
+	ret = tex_print_equation(pmod, pdinfo, opt, prn);
     } else {
 	ret = printmodel(pmod, pdinfo, OPT_NONE, prn);
     }
@@ -888,7 +919,8 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
  * @texfile: name of file to save.
  * @opt: if opt & %OPT_O, complete doc, else fragment;
  * if opt & %OPT_E print as equation, otherwise use tabular
- * format.
+ * format; if opt & %OPT_T show t-ratios rather than standard
+ * errors when printing in equation format.
  *
  * Prints to file a gretl model in the form of a LaTeX table or
  * equation, either as a stand-alone document or as a fragment 
@@ -909,7 +941,7 @@ int texprint (MODEL *pmod, const DATAINFO *pdinfo,
     if (prn == NULL) {
 	err = 1;
     } else {
-	err = tex_print_model(pmod, pdinfo, prn);
+	err = tex_print_model(pmod, pdinfo, opt, prn);
 	gretl_print_destroy(prn);
     }
 

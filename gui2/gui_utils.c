@@ -226,6 +226,22 @@ static void model_output_save_callback (gpointer p, guint u, GtkWidget *w)
     copy_format_dialog(vwin, 1, W_SAVE);    
 }
 
+static gretlopt tex_eqn_opt;
+
+static void eqn_set_show_stderrs (gpointer p, guint u, GtkWidget *w)
+{
+    if (u) {
+	tex_eqn_opt = OPT_NONE;
+    } else {
+	tex_eqn_opt = OPT_T;
+    }
+}
+
+gretlopt get_tex_eqn_opt (void)
+{
+    return tex_eqn_opt;
+}
+
 #ifndef OLD_GTK
 
 static GtkItemFactoryEntry model_items[] = {
@@ -256,29 +272,29 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
     { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL, GNULL },
-    { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL, GNULL },
-    { N_("/Tests/QLR test"), NULL, do_chow_cusum, QLRTEST, NULL, GNULL },
     { N_("/Tests/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/autocorrelation"), NULL, do_autocorr, LMTEST, NULL, GNULL },
     { N_("/Tests/ARCH"), NULL, do_arch, ARCH, NULL, GNULL },
+    { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL, GNULL },
+    { N_("/Tests/QLR test"), NULL, do_chow_cusum, QLRTEST, NULL, GNULL },
     { N_("/Tests/CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL, GNULL },
     { N_("/Tests/sep4"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
+    { N_("/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }, 
     { N_("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Graphs/fitted, actual plot"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/_Model data"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Model data/Display actual, fitted, residual"), NULL, 
+    { N_("/_Analysis"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Analysis/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL, GNULL },
-    { N_("/Model data/Forecasts..."), NULL, 
+    { N_("/Analysis/Forecasts..."), NULL, 
       do_forecast, FCASTERR, NULL, GNULL },
-    { N_("/Model data/Confidence intervals for coefficients"), NULL, 
+    { N_("/Analysis/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL, GNULL },
-    { N_("/Model data/Confidence ellipse..."), NULL, 
+    { N_("/Analysis/Confidence ellipse..."), NULL, 
       selector_callback, ELLIPSE, NULL, GNULL },
-    { N_("/Model data/coefficient covariance matrix"), NULL, 
+    { N_("/Analysis/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL, GNULL },
-    { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>", GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -312,29 +328,29 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL },
     { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL },
-    { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL },
-    { N_("/Tests/QLR test"), NULL, do_chow_cusum, QLRTEST, NULL },
     { N_("/Tests/sep3"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/autocorrelation"), NULL, do_autocorr, LMTEST, NULL },
     { N_("/Tests/ARCH"), NULL, do_arch, ARCH, NULL },
+    { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL },
+    { N_("/Tests/QLR test"), NULL, do_chow_cusum, QLRTEST, NULL },
     { N_("/Tests/CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL },
     { N_("/Tests/sep4"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL },
+    { N_("/_Save"), NULL, NULL, 0, "<Branch>" },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
     { N_("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>" },
     { N_("/Graphs/fitted, actual plot"), NULL, NULL, 0, "<Branch>" },
-    { N_("/_Model data"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Model data/Display actual, fitted, residual"), NULL, 
+    { N_("/_Analysis"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Analysis/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
-    { N_("/Model data/Forecasts..."), NULL, 
+    { N_("/Analysis/Forecasts..."), NULL, 
       do_forecast, FCASTERR, NULL },
-    { N_("/Model data/Confidence intervals for coefficients"), NULL, 
+    { N_("/Analysis/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
-    { N_("/Model data/Confidence ellipse..."), NULL, 
+    { N_("/Analysis/Confidence ellipse..."), NULL, 
       selector_callback, ELLIPSE, NULL },
-    { N_("/Model data/coefficient covariance matrix"), NULL, 
+    { N_("/Analysis/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL },
-    { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>" },
     { NULL, NULL, NULL, 0, NULL}
 };
 #endif /* old versus new GTK */
@@ -357,7 +373,13 @@ static GtkItemFactoryEntry model_tex_items[] = {
     { N_("/LaTeX/Save/Tabular"), NULL, model_tex_save, 
       GRETL_FORMAT_TEX, NULL, GNULL },
     { N_("/LaTeX/Save/Equation"), NULL, model_tex_save, 
-      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL }
+      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL },
+    { N_("/LaTeX/Equation options"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/Equation options/show standard errors"), NULL, 
+      eqn_set_show_stderrs, 1, "<RadioItem>", GNULL },
+    { N_("/LaTeX/Equation options/show t-ratios"), NULL, 
+      eqn_set_show_stderrs, 0, "/LaTeX/Equation options/show standard errors", 
+      GNULL }
 };
 
 static GtkItemFactoryEntry VAR_tex_items[] = {
@@ -417,7 +439,12 @@ static GtkItemFactoryEntry model_tex_items[] = {
     { N_("/LaTeX/Save/Tabular"), NULL, model_tex_save, 
       GRETL_FORMAT_TEX, NULL },
     { N_("/LaTeX/Save/Equation"), NULL, model_tex_save, 
-      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL }
+      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL },
+    { N_("/LaTeX/Equation options"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Equation options/show standard errors"), NULL, 
+      eqn_set_show_stderrs, 1, "<RadioItem>" },
+    { N_("/LaTeX/Equation options/show t-ratios"), NULL, 
+      eqn_set_show_stderrs, 0, "/LaTeX/Equation options/show standard errors" } 
 };
 
 static GtkItemFactoryEntry VAR_tex_items[] = {
@@ -2848,7 +2875,7 @@ static void minimal_model_check (GtkItemFactory *ifac, const MODEL *pmod)
     if (pmod->ncoeff == 1) {
 	flip(ifac, "/Tests/omit variables", FALSE);
 	flip(ifac, "/Tests/sum of coefficients", FALSE);
-	flip(ifac, "/Model data/Confidence ellipse...", FALSE);
+	flip(ifac, "/Analysis/Confidence ellipse...", FALSE);
 
 	if (pmod->ifc) {
 	    flip(ifac, "/Tests/heteroskedasticity", FALSE);
@@ -2917,7 +2944,7 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
 
 static void arma_x12_menu_mod (windata_t *vwin)
 {
-    flip(vwin->ifac, "/Model data/coefficient covariance matrix", FALSE);
+    flip(vwin->ifac, "/Analysis/coefficient covariance matrix", FALSE);
     add_x12_output_menu_item(vwin);
 }
 
@@ -2932,7 +2959,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (pmod->ci == MLE) {
 	/* some of this could be relaxed later */
-	flip(vwin->ifac, "/Model data", FALSE);
+	flip(vwin->ifac, "/Analysis", FALSE);
 	flip(vwin->ifac, "/Graphs", FALSE);
     } else if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
 	arma_x12_menu_mod(vwin);
@@ -2990,112 +3017,112 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 #ifndef OLD_GTK
 
 static GtkItemFactoryEntry model_dataset_basic_items[] = {
-    { N_("/Model data/Add to data set/fitted values"), NULL, 
+    { N_("/Save/fitted values"), NULL, 
       fit_resid_callback, GENR_FITTED, NULL, GNULL },
-    { N_("/Model data/Add to data set/residuals"), NULL, 
+    { N_("/Save/residuals"), NULL, 
       fit_resid_callback, GENR_RESID, NULL, GNULL },
-    { N_("/Model data/Add to data set/squared residuals"), NULL, 
+    { N_("/Save/squared residuals"), NULL, 
       fit_resid_callback, GENR_RESID2, NULL, GNULL }
 };
 
 static GtkItemFactoryEntry ess_items[] = {
-    { N_("/Model data/Add to data set/error sum of squares"), NULL, 
+    { N_("/Save/error sum of squares"), NULL, 
       model_stat_callback, ESS, NULL, GNULL },
-    { N_("/Model data/Add to data set/standard error of residuals"), NULL, 
+    { N_("/Save/standard error of residuals"), NULL, 
       model_stat_callback, SIGMA, NULL, GNULL }
 }; 
 
 static GtkItemFactoryEntry r_squared_items[] = {
-    { N_("/Model data/Add to data set/R-squared"), NULL, 
+    { N_("/Save/R-squared"), NULL, 
       model_stat_callback, R2, NULL, GNULL },
-    { N_("/Model data/Add to data set/T*R-squared"), NULL, 
+    { N_("/Save/T*R-squared"), NULL, 
       model_stat_callback, TR2, NULL, GNULL }
 };   
 
 static GtkItemFactoryEntry lnl_data_item = {
-    N_("/Model data/Add to data set/log likelihood"), NULL, 
+    N_("/Save/log likelihood"), NULL, 
     model_stat_callback, LNL, NULL, GNULL 
 };
 
 static GtkItemFactoryEntry criteria_items[] = {
-    { N_("/Model data/Add to data set/Akaike Information Criterion"), NULL, 
+    { N_("/Save/Akaike Information Criterion"), NULL, 
       model_stat_callback, AIC, NULL, GNULL },
-    { N_("/Model data/Add to data set/Bayesian Information Criterion"), NULL, 
+    { N_("/Save/Bayesian Information Criterion"), NULL, 
       model_stat_callback, BIC, NULL, GNULL },
-    { N_("/Model data/Add to data set/Hannan-Quinn Information Criterion"), NULL, 
+    { N_("/Save/Hannan-Quinn Information Criterion"), NULL, 
       model_stat_callback, HQC, NULL, GNULL }
 };
 
 static GtkItemFactoryEntry garch_data_item = {
-    N_("/Model data/Add to data set/predicted error variance"), NULL, 
+    N_("/Save/predicted error variance"), NULL, 
     fit_resid_callback, GENR_H, NULL, GNULL 
 };
 
 static GtkItemFactoryEntry fixed_effects_data_item = {
-    N_("/Model data/Add to data set/per-unit constants"), NULL, 
+    N_("/Save/per-unit constants"), NULL, 
     fit_resid_callback, GENR_AHAT, NULL, GNULL 
 };
 
 static GtkItemFactoryEntry define_var_items[] = {
-    { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Model data/Define new variable..."), NULL, model_genr_callback,
+    { N_("/Save/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
+    { N_("/Save/Define new variable..."), NULL, model_genr_callback,
       MODEL_GENR, NULL, GNULL }
 };
 
 #else /* old GTK versions */
 
 static GtkItemFactoryEntry model_dataset_basic_items[] = {
-    { N_("/Model data/Add to data set/fitted values"), NULL, 
+    { N_("/Save/fitted values"), NULL, 
       fit_resid_callback, GENR_FITTED, NULL },
-    { N_("/Model data/Add to data set/residuals"), NULL, 
+    { N_("/Save/residuals"), NULL, 
       fit_resid_callback, GENR_RESID, NULL },
-    { N_("/Model data/Add to data set/squared residuals"), NULL, 
+    { N_("/Save/squared residuals"), NULL, 
       fit_resid_callback, GENR_RESID2, NULL },
-    { N_("/Model data/Add to data set/degrees of freedom"), NULL, 
+    { N_("/Save/degrees of freedom"), NULL, 
       model_stat_callback, DF, NULL }
 };
 
 static GtkItemFactoryEntry ess_items[] = {
-    { N_("/Model data/Add to data set/error sum of squares"), NULL, 
+    { N_("/Save/error sum of squares"), NULL, 
       model_stat_callback, ESS, NULL },
-    { N_("/Model data/Add to data set/standard error of residuals"), NULL, 
+    { N_("/Save/standard error of residuals"), NULL, 
       model_stat_callback, SIGMA, NULL }
 }; 
 
 static GtkItemFactoryEntry r_squared_items[] = {
-    { N_("/Model data/Add to data set/R-squared"), NULL, 
+    { N_("/Save/R-squared"), NULL, 
       model_stat_callback, R2, NULL },
-    { N_("/Model data/Add to data set/T*R-squared"), NULL, 
+    { N_("/Save/T*R-squared"), NULL, 
       model_stat_callback, TR2, NULL }
 };  
 
 static GtkItemFactoryEntry lnl_data_item = {
-    N_("/Model data/Add to data set/log likelihood"), NULL, 
+    N_("/Save/log likelihood"), NULL, 
     model_stat_callback, LNL, NULL
 };
 
 static GtkItemFactoryEntry criteria_items[] = {
-    { N_("/Model data/Add to data set/Akaike Information Criterion"), NULL, 
+    { N_("/Save/Akaike Information Criterion"), NULL, 
       model_stat_callback, AIC, NULL },
-    { N_("/Model data/Add to data set/Bayesian Information Criterion"), NULL, 
+    { N_("/Save/Bayesian Information Criterion"), NULL, 
       model_stat_callback, BIC, NULL },
-    { N_("/Model data/Add to data set/Hannan-Quinn Information Criterion"), NULL, 
+    { N_("/Save/Hannan-Quinn Information Criterion"), NULL, 
       model_stat_callback, HQC, NULL }
 };
 
 static GtkItemFactoryEntry garch_data_item = {
-    N_("/Model data/Add to data set/predicted error variance"), NULL, 
+    N_("/Save/predicted error variance"), NULL, 
     fit_resid_callback, GENR_H, NULL
 };
 
 static GtkItemFactoryEntry fixed_effects_data_item = {
-    N_("/Model data/Add to data set/per-unit constants"), NULL, 
+    N_("/Save/per-unit constants"), NULL, 
     fit_resid_callback, GENR_AHAT, NULL  
 };
 
 static GtkItemFactoryEntry define_var_items[] = {
-    { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Model data/Define new variable..."), NULL, model_genr_callback,
+    { N_("/Save/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Save/Define new variable..."), NULL, model_genr_callback,
       MODEL_GENR, NULL }
 };
 
@@ -3156,14 +3183,19 @@ static void add_model_tex_items (windata_t *vwin)
 {
     int i, n = sizeof model_tex_items / sizeof model_tex_items[0];
     MODEL *pmod = (MODEL *) vwin->data;
+    int eqn_ok = command_ok_for_model(EQNPRINT, pmod->ci);
+    GtkWidget *w;
 
     for (i=0; i<n; i++) {
 	gtk_item_factory_create_item(vwin->ifac, &model_tex_items[i], 
 				     vwin, 1);
     }  
 
-    model_tex_equation_state(vwin->ifac, !pmod->errcode && 
-			     command_ok_for_model(EQNPRINT, pmod->ci));
+    model_tex_equation_state(vwin->ifac, !pmod->errcode && eqn_ok);
+    w = gtk_item_factory_get_widget(vwin->ifac, 
+				    "/LaTeX/Equation options/show t-ratios");
+    gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(w),
+				   (gboolean) get_tex_eqn_opt());
 }
 
 static void add_vars_to_plot_menu (windata_t *vwin)
@@ -3421,7 +3453,7 @@ static void panel_heteroskedasticity_menu (windata_t *vwin)
 static void add_x12_output_menu_item (windata_t *vwin)
 {
     GtkItemFactoryEntry item;
-    const gchar *mpath = "/Model data";
+    const gchar *mpath = "/Analysis";
 
     item.accelerator = NULL; 
     item.callback_action = 0;
@@ -3719,9 +3751,9 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 
     const gchar *tpath = N_("/Tests");
     const gchar *gpath = N_("/Graphs");
-    const gchar *mpath = N_("/Model data");
-    const gchar *fpath = N_("/Model data/Forecasts");
-    const gchar *dpath = N_("/Model data/Add to data set");
+    const gchar *mpath = N_("/Analysis");
+    const gchar *fpath = N_("/Analysis/Forecasts");
+    const gchar *dpath = N_("/Save");
 
     GRETL_VAR *var = NULL;
     int neqns, vtarg, vshock;
@@ -3740,7 +3772,7 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
 
-    varitem.path = g_strdup(_("/_Model data"));
+    varitem.path = g_strdup(_("/_Analysis"));
     gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
     g_free(varitem.path);
 
@@ -3984,7 +4016,7 @@ static void add_SYS_menu_items (windata_t *vwin)
 {
     GtkItemFactoryEntry sysitem;
     const gchar *tpath = N_("/Tests");
-    const gchar *dpath = N_("/Model data/Add to data set");
+    const gchar *dpath = N_("/Save");
     gretl_equation_system *sys;
     int i, neqns;
 
@@ -4001,7 +4033,7 @@ static void add_SYS_menu_items (windata_t *vwin)
     sysitem.item_type = "<Branch>";
 
     /* model data menu path */
-    sysitem.path = g_strdup(_("/_Model data"));
+    sysitem.path = g_strdup(_("/_Analysis"));
     gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
     g_free(sysitem.path);
 
@@ -4043,10 +4075,10 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	flip(mwin->ifac, "/File/Save to session as icon", FALSE);
 	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
 	flip(mwin->ifac, "/Edit/Copy all", FALSE);
-	flip(mwin->ifac, "/Model data", FALSE);
+	flip(mwin->ifac, "/Analysis", FALSE);
 	flip(mwin->ifac, "/Tests", FALSE);
 	flip(mwin->ifac, "/Graphs", FALSE);
-	flip(mwin->ifac, "/Model data", FALSE);
+	flip(mwin->ifac, "/Analysis", FALSE);
 	flip(mwin->ifac, "/LaTeX", FALSE);
 
 	return FALSE;
@@ -4072,13 +4104,13 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
     flip(mwin->ifac, "/Tests", ok);
     flip(mwin->ifac, "/Graphs", graphs_ok);
-    flip(mwin->ifac, "/Model data/Display actual, fitted, residual", ok);
-    flip(mwin->ifac, "/Model data/Forecasts...", ok);
-    flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", ok);
-    flip(mwin->ifac, "/Model data/Add to data set/fitted values", ok);
-    flip(mwin->ifac, "/Model data/Add to data set/residuals", ok);
-    flip(mwin->ifac, "/Model data/Add to data set/squared residuals", ok);
-    flip(mwin->ifac, "/Model data/Define new variable...", ok);
+    flip(mwin->ifac, "/Analysis/Display actual, fitted, residual", ok);
+    flip(mwin->ifac, "/Analysis/Forecasts...", ok);
+    flip(mwin->ifac, "/Analysis/Confidence intervals for coefficients", ok);
+    flip(mwin->ifac, "/Save/fitted values", ok);
+    flip(mwin->ifac, "/Save/residuals", ok);
+    flip(mwin->ifac, "/Save/squared residuals", ok);
+    flip(mwin->ifac, "/Save/Define new variable...", ok);
 
     if (!ok) {
 	const char *msg = get_gretl_errmsg();
