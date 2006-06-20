@@ -438,7 +438,7 @@ full_model_list (const MODEL *pmod, const int *inlist)
 
 static MODEL replicate_estimator (MODEL *orig, int **plist,
 				  double ***pZ, DATAINFO *pdinfo,
-				  gretlopt lsqopt, PRN *prn)
+				  gretlopt myopt, PRN *prn)
 {
     MODEL rep;
     double rho = 0.0;
@@ -459,7 +459,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 			   &rep.errcode, hlopt, prn);
     } else if (gretl_model_get_int(orig, "unit_weights")) {
 	/* panel model with per-unit weights */
-	lsqopt |= OPT_W;
+	myopt |= OPT_W;
     } else if (orig->ci == WLS || orig->ci == AR || 
 	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
 	int *full_list = full_model_list(orig, list);
@@ -479,20 +479,20 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     switch (orig->ci) {
 
     case AR:
-	rep = ar_func(list, pZ, pdinfo, lsqopt, prn);
+	rep = ar_func(list, pZ, pdinfo, myopt, prn);
 	break;
     case ARCH:
 	order = gretl_model_get_int(orig, "arch_order");
-	rep = arch_model(list, order, pZ, pdinfo, lsqopt, prn);
+	rep = arch_model(list, order, pZ, pdinfo, myopt, prn);
 	break;
     case LOGIT:
     case PROBIT:
 	if (gretl_model_get_int(orig, "robust")) {
-	    lsqopt = OPT_R;
+	    myopt = OPT_R;
 	} else {
-	    lsqopt = OPT_NONE;
+	    myopt = OPT_NONE;
 	}
-	rep = logit_probit(list, pZ, pdinfo, orig->ci, lsqopt);
+	rep = logit_probit(list, pZ, pdinfo, orig->ci, myopt);
 	break;
     case TOBIT:
 	rep = tobit_model(list, pZ, pdinfo, NULL);
@@ -504,7 +504,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	rep = poisson_model(list, pZ, pdinfo, NULL);
 	break;
     case TSLS:
-	rep = tsls_func(list, TSLS, pZ, pdinfo, lsqopt);
+	rep = tsls_func(list, TSLS, pZ, pdinfo, myopt);
 	break;
     case LOGISTIC: 
 	{
@@ -516,19 +516,25 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 	    rep = logistic_model(list, pZ, pdinfo, lmaxstr);
 	}
 	break;
+    case PANEL:
+	if (gretl_model_get_int(orig, "random-effects")) {
+	    myopt |= OPT_R;
+	}
+	rep = real_panel_model(list, pZ, pdinfo, myopt, NULL);
+	break;
     default:
 	/* handles OLS, WLS, HSK, HCCM, etc. */
 	if (gretl_model_get_int(orig, "robust")) {
-	    lsqopt |= OPT_R;
+	    myopt |= OPT_R;
 	}
 	if (gretl_model_get_int(orig, "hc_version") == 4) {
 	    repci = HCCM;
 	}
 	if (rho != 0.0) {
-	    rep = ar1_lsq(list, pZ, pdinfo, repci, lsqopt, rho);
+	    rep = ar1_lsq(list, pZ, pdinfo, repci, myopt, rho);
 	} else {
 	    /* FIXME panel WLS by unit? */
-	    rep = lsq(list, pZ, pdinfo, repci, lsqopt);
+	    rep = lsq(list, pZ, pdinfo, repci, myopt);
 	}
 	break;
     }
@@ -552,7 +558,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
 
     /* if the model count went up for an aux regression,
        bring it back down */
-    if (be_quiet(lsqopt) && get_model_count() > mc) {
+    if (be_quiet(myopt) && get_model_count() > mc) {
 	model_count_minus();
     }
 
@@ -743,7 +749,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     const int orig_nvar = pdinfo->v; 
     int err = 0;
 
-    if (orig == NULL || orig->list == NULL) {
+    if (orig == NULL || orig->list == NULL || addvars == NULL) {
 	return 1;
     }
 
@@ -760,6 +766,8 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     /* create augmented regression list */
     if (orig->ci == TSLS) {
 	tmplist = tsls_list_add(orig->list, addvars, opt, &err);
+    } else if (orig->ci == PANEL) {
+	tmplist = panel_list_add(orig, addvars, &err);
     } else {
 	tmplist = gretl_list_add(orig->list, addvars, &err);
     }
@@ -877,7 +885,9 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
     /* create list for test model */
     if (orig->ci == TSLS) {
-	tmplist = tsls_list_omit(orig->list, omitvars, opt, &err);	
+	tmplist = tsls_list_omit(orig->list, omitvars, opt, &err);
+    } else if (orig->ci == PANEL) {
+	tmplist = panel_list_omit(orig, omitvars, &err);
     } else if (omitlast) {
 	/* special: just drop the last variable */
 	tmplist = gretl_list_omit_last(orig->list, &err);

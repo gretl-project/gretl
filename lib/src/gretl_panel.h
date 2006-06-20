@@ -45,4 +45,8 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo);
 
 int balanced_panel (const DATAINFO *pdinfo);
 
+int *panel_list_omit (const MODEL *orig, const int *drop, int *err);
+
+int *panel_list_add (const MODEL *orig, const int *add, int *err);
+
 #endif /* GRETL_PANEL_H_ */

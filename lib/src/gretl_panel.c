@@ -28,14 +28,14 @@
 #define PDEBUG 0
 
 /* The minimum number of observations we'll accept for a given
-   cross-sectional unit, to include it in the fixed-effects
-   regression.  The idea is that if there's only one observation
-   for a given unit, this is nugatory when we're including a 
-   dummy for that unit, or subtracting the means from the
-   respective data series.
+   cross-sectional unit, to include that unit in the fixed-effects
+   regression.  If there's only one observation for a given unit, this
+   is nugatory when we're including a dummy for that unit, or
+   subtracting the means from the respective data series, which argues
+   for a value of 2 -- or does it?
 */
 
-#define MINOBS 2
+#define MINOBS 1
 
 enum vcv_ops {
     VCV_INIT,
@@ -328,7 +328,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
     pan->effn = 0;
 
     for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] > 1) {
+	if (pan->unit_obs[i] >= MINOBS) {
 	    /* we need more than one observation to compute any
 	       within group variation */
 	    wnobs += pan->unit_obs[i];
@@ -473,6 +473,10 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 
 	    if (Ti != pan->effT) {
 		theta_i = 1.0 - sqrt(pan->within_s2 / (Ti * pan->between_s2));
+#if PDEBUG
+		fprintf(stderr, "unit %d: T_i = %d, theta_i = %g\n",
+			i, Ti, theta_i);
+#endif
 		pan->balanced = 0;
 	    } else {
 		theta_i = pan->theta;
@@ -1352,6 +1356,9 @@ static int random_effects (panelmod_t *pan,
        will actually vary across the units.
     */
     pan->theta = 1.0 - sqrt(pan->within_s2 / (pan->effT * pan->between_s2));
+#if PDEBUG
+    fprintf(stderr, "random_effects: theta = %g\n", pan->theta);
+#endif
 
     /* make special transformed dataset, and regression list */
     reinfo = random_effects_dataset(Z, pdinfo, gZ, &reZ, relist, pan);
@@ -3121,6 +3128,106 @@ int balanced_panel (const DATAINFO *pdinfo)
 
     return ret;
 }
+
+/**
+ * panel_list_omit:
+ * @orig: list specifying original panel model.
+ * @drop: list of variables to be omitted.
+ * @err: pointer to receive error code.
+ *
+ * Creates a new panel regression list, by first reconstructing 
+ * the regression specification from @orig then deleting from 
+ * the reconstruction the variables found in @drop.
+ *
+ * Returns: the new, reduced list or %NULL on error.
+ */
+
+int *panel_list_omit (const MODEL *orig, const int *drop, int *err)
+{
+    int *newlist = NULL;
+    int i;
+
+    /* sorry, can't drop the constant */
+    if (drop != NULL) {
+	int cpos = in_gretl_list(drop, 0);
+
+	if (cpos >= 2) {
+	    strcpy(gretl_errmsg, "Panel models must include an intercept");
+	    *err = E_DATA;
+	    return NULL;
+	}
+    }
+
+    if (gretl_model_get_int(orig, "fixed-effects")) {
+	int *panlist;
+
+	/* fixed-effects lists have the constant removed, 
+	   so we need to put it back first 
+	*/
+	panlist = gretl_list_new(orig->list[0] + 1);
+	if (panlist != NULL) {
+	    panlist[1] = orig->list[1];
+	    panlist[2] = 0;
+	    for (i=3; i<=panlist[0]; i++) {
+		panlist[i] = orig->list[i-1];
+	    }
+	    if (drop == NULL) {
+		newlist = gretl_list_omit_last(panlist, err);
+	    } else {
+		newlist = gretl_list_omit(panlist, drop, 2, err);
+	    }
+	    free(panlist);
+	}
+    } else if (drop == NULL) {
+	newlist = gretl_list_omit_last(orig->list, err);
+    } else {
+	newlist = gretl_list_omit(orig->list, drop, 2, err);
+    }
+	
+    return newlist;
+}
+
+/**
+ * panel_list_add:
+ * @orig: list specifying original panel model.
+ * @add: list of variables to be added.
+ * @err: pointer to receive error code.
+ *
+ * Creates a new panel regression list, by first reconstructing 
+ * the regression specification from @orig then adding to 
+ * the reconstruction the variables found in @add.
+ *
+ * Returns: the new, augmented list or %NULL on error.
+ */
+
+int *panel_list_add (const MODEL *orig, const int *add, int *err)
+{
+    int *newlist = NULL;
+    int i;
+
+    if (gretl_model_get_int(orig, "fixed-effects")) {
+	int *panlist;
+
+	/* fixed-effects lists have the constant removed, 
+	   so we need to put it back first 
+	*/
+	panlist = gretl_list_new(orig->list[0] + 1);
+	if (panlist != NULL) {
+	    panlist[1] = orig->list[1];
+	    panlist[2] = 0;
+	    for (i=3; i<=panlist[0]; i++) {
+		panlist[i] = orig->list[i-1];
+	    }
+	    newlist = gretl_list_add(panlist, add, err);
+	    free(panlist);
+	}
+    } else {
+	newlist = gretl_list_add(orig->list, add, err);
+    }
+	
+    return newlist;
+}    
+
 
 
 

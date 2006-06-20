@@ -3156,7 +3156,7 @@ int command_ok_for_model (int test_ci, int model_ci)
     case OMIT:
     case OMITFROM:
 	if (model_ci == NLS || model_ci == ARMA || 
-	    model_ci == GARCH || model_ci == PANEL) {
+	    model_ci == GARCH) {
 	    ok = 0;
 	}
 	break;
