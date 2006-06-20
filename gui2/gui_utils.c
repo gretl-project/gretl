@@ -2928,6 +2928,11 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	flip(ifac, "/Tests/autocorrelation", FALSE);
     }
 
+    /* panel diagnostics: only for pooled OLS model on
+       panel data */
+    flip(ifac, "/Tests/panel diagnostics", 
+	 pmod->ci == OLS && dataset_is_panel(datainfo));
+
     minimal_model_check(ifac, pmod);
 }
 

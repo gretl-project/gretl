@@ -1731,6 +1731,9 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (pan.effn < pan.nunits) {
 	fprintf(stderr, "number of units included = %d\n", pan.effn);
+	if (pan.effn <= 0) {
+	    return E_DATA;
+	}
     }
 
     /* figure out which of the original regressors are time-varying,
