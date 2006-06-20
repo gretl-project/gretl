@@ -378,6 +378,33 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     return NADBL;
 }
 
+/**
+ * gretl_model_get_list:
+ * @pmod: pointer to model.
+ * @key: key string.
+ *
+ * Returns: the list of integers identified by @key, or 
+ * %NULL on failure.
+ */
+
+int *gretl_model_get_list (const MODEL *pmod, const char *key)
+{
+    int *list = NULL;
+    int i;
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	if (pmod->data_items[i]->type != MODEL_DATA_LIST) {
+	    continue;
+	}
+	if (!strcmp(key, pmod->data_items[i]->key)) {
+	    list = (int *) pmod->data_items[i]->ptr;
+	    break;
+	}
+    }
+
+    return list;
+}
+
 static void adjust_vecm_name (const char *orig, char *cname)
 {
     int cnum;
@@ -3392,6 +3419,8 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
  * gretl_model_add_panel_varnames:
  * @pmod: pointer to target model.
  * @pdinfo: dataset information.
+ * @ulist: list of index numbers of cross-sectional
+ * units included in the model.
  * 
  * Composes a set of names to be given to the regressors in an
  * panel model.
@@ -3399,7 +3428,8 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo)
+int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+				    const int *ulist)
 {
     int np = pmod->list[0];
     int i, j, v;
@@ -3417,6 +3447,8 @@ int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo)
 	v = pmod->list[i];
 	if (v < pdinfo->v) {
 	    strcpy(pmod->params[i-1], pdinfo->varname[v]);
+	} else if (ulist != NULL) {
+	    sprintf(pmod->params[i-1], "ahat_%d", ulist[j++]);
 	} else {
 	    sprintf(pmod->params[i-1], "ahat_%d", j++);
 	}

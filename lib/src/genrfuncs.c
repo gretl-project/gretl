@@ -555,12 +555,20 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center)
     return di0;
 }
 
-/* if both == 1, generate both unit and period dummies,
-   otherwise just generate unit dummies
-*/
+/**
+ * panel_dummies:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @opt: %OPT_T for time dummies, otherwise unit dummies.
+ *
+ * Adds to the data set a set of dummy variables corresponding
+ * to either the cross-sectional units in a panel, or the
+ * time periods.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
 
-static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
-			  int both)
+int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 {
     char vname[16];
     int vi, t, yy, pp, mm;
@@ -571,22 +579,20 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
     int newvnum, offset, bad = 0;
     double xx;
 
-    n_unitdum = pdinfo->n / pdinfo->pd;
-    if (pdinfo->n % pdinfo->pd) {
-	n_unitdum++;
+    if (opt & OPT_T) {
+	ndum = n_timedum = pdinfo->pd;
+    } else {	
+	n_unitdum = pdinfo->n / pdinfo->pd;
+	if (pdinfo->n % pdinfo->pd) {
+	    n_unitdum++;
+	}
+	ndum = n_unitdum;
     }
-    if (n_unitdum == 1) {
+    
+    if (ndum == 1) {
 	return E_PDWRONG;
     }
 
-    if (both) {
-	n_timedum = pdinfo->pd;
-	if (n_timedum == 1) {
-	    return E_PDWRONG;
-	}
-    }
-
-    ndum = n_timedum + n_unitdum;
     nnew = n_new_dummies(pdinfo, n_unitdum, n_timedum);
 
     if (dataset_add_series(nnew, pZ, pdinfo)) {
@@ -601,7 +607,7 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 
     newvnum = orig_v;
 
-    /* first generate the time-based dummies */
+    /* generate time-based dummies, if wanted */
 
     for (vi=1; vi<=n_timedum; vi++) {
 	int dnum;
@@ -628,7 +634,7 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 
     offset = panel_x_offset(pdinfo, &bad);
 
-    /* and then the unit-based ones */
+    /* generate unit-based dummies, if wanted */
 
     for (vi=1; vi<=n_unitdum; vi++) {
 	int dmin = (vi-1) * pdinfo->pd;
@@ -664,38 +670,6 @@ static int real_paneldum (double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
- * panel_unit_dummies:
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Adds to the data set a set of dummy variables corresponding
- * to the cross-sectional units in a panel.
- *
- * Returns: 0 on successful completion, error code on error.
- */
-
-int panel_unit_dummies (double ***pZ, DATAINFO *pdinfo)
-{
-    return real_paneldum(pZ, pdinfo, 0);
-}
-
-/**
- * paneldum:
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Adds to the data set a set of panel data dummy variables (for
- * both unit and period).
- *
- * Returns: 0 on successful completion, error code on error.
- */
-
-int paneldum (double ***pZ, DATAINFO *pdinfo)
-{
-    return real_paneldum(pZ, pdinfo, 1);
-}
-
-/**
  * genrunit:
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
@@ -719,8 +693,8 @@ int genrunit (double ***pZ, DATAINFO *pdinfo)
 
     i = varindex(pdinfo, "unit");
 
-    if (i == pdinfo->v) {
-	if (dataset_add_series(1, pZ, pdinfo)) return E_ALLOC;
+    if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
+	return E_ALLOC;
     }
 
     strcpy(pdinfo->varname[i], "unit");

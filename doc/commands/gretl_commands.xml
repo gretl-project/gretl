@@ -2265,8 +2265,10 @@
 	</li>
 	<li>
 	  <para>
-	    <cmd>genr paneldum</cmd> creates a set of special dummy variables
-	    for use with a panel data set.
+	    <cmd>genr unitdum</cmd> and <cmd>genr timedum</cmd> create 
+	    sets of special dummy variables for use with panel data.
+	    The first codes for the cross-sectional units and the second
+	    for the time period of the observations.
 	  </para>
 	</li>
       </ilist>
@@ -2845,25 +2847,25 @@
 
     <description>
       <para>
-	This test is available only after estimating a pooled OLS model
-	(see also <cmd>setobs</cmd>).  It tests the simple pooled model
-	against the principal alternatives, the fixed effects and random
-	effects models.</para>
+	This test is available only after estimating an OLS model
+	using panel data (see also <cmd>setobs</cmd>).  It tests the
+	simple pooled model against the principal alternatives, the fixed
+	effects and random effects models.
+      </para>
 
       <para>
-	The fixed effects model adds a dummy variable for all but one
-	of the cross-sectional units, allowing the intercept of the
-	regression to vary across the units.  An
-	<mathvar>F</mathvar>-test for the joint significance of these
-	dummies is presented.  The random effects model decomposes the
-	residual variance into two parts, one part specific to the
+	The fixed effects model allows the intercept of the regression to
+	vary across the cross-sectional units.  An
+	<mathvar>F</mathvar>-test is reported for the null hypotheses that
+	the intercepts do not differ. The random effects model decomposes
+	the residual variance into two parts, one part specific to the
 	cross-sectional unit and the other specific to the particular
-	observation.  (This estimator can be computed only if the
-	number of cross-sectional units in the data set exceeds the
-	number of parameters to be estimated.) The Breusch&ndash;Pagan
-	LM statistic tests the null hypothesis (that the pooled OLS
-	estimator is adequate) against the random effects
-	alternative.</para>
+	observation.  (This estimator can be computed only if the number
+	of cross-sectional units in the data set exceeds the number of
+	parameters to be estimated.) The Breusch&ndash;Pagan LM statistic
+	tests the null hypothesis that the pooled OLS estimator is
+	adequate against the random effects alternative.
+      </para>
 
       <para>
 	The pooled OLS model may be rejected against both of the
@@ -4846,11 +4848,14 @@
 
   </command>
 
-  <command name="panel" section="Estimation" context="cli"
-    label="Panel models">
+  <command name="panel" section="Estimation" label="Panel models">
 
     <usage>
       <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
+	</option>
         <option>
 	  <flag>--random-effects</flag>
 	  <effect>random rather than fixed effects</effect>
@@ -4876,10 +4881,17 @@
 
     <description>
       <para>
-	Estimates a panel model, using either fixed effects or, if the
-	<lit>--random-effects</lit> flag is given, random effects.
+	Estimates a panel model, by default using the fixed effects
+	estimator.  Depending on the number of cross-sectional units and
+	the number of independent variables, this is implemented either by
+	adding a set of dummy variables representing the units, or by
+	subtracting the group or unit means from the original data.
       </para>
-      <para>
+      <para context="cli">
+	If the <lit>--random-effects</lit> flag is given, random effects
+	estimates are computed, using the method of Swamy and Arora.
+      </para>
+      <para context="cli">
 	Alternatively, if the <lit>--unit-weights</lit> flag is given, the
 	model is estimated via weighted least squares, with the weights
 	based on the residual variance for the respective cross-sectional
@@ -4888,9 +4900,17 @@
 	iteration converges, the resulting estimates are Maximum
 	Likelihood.
       </para>
-      <para>
-	FIXME add more detail here.
+      <para context="cli">
+	For more details on panel estimation, please see <guideref
+	  targ="chap-panel"/>.
       </para>
+      <para context="gui">
+	If the "Random effects" button is checked, random effects
+	estimates are computed, using the method of Swamy and Arora.
+	For details on panel estimation, please see <guideref
+	  targ="chap-panel"/>.
+      </para>
+      
     </description>
 
     <gui-access>
@@ -4932,6 +4952,30 @@
 	the time periods respectively.  The next step will be to select
 	those two variables.  Note that these index variables must be
 	strictly positive.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="panel-wls" section="Estimation" context="gui"
+    label="Groupwise weighted least squares">
+
+    <description>
+      <para>
+	Groupwise weighted least squares for panel data.  Computes
+	weighted least squares (WLS) estimates, with the weights based on
+	the estimated error variances for the respective cross-sectional
+	units in the sample.
+      </para>
+      <para>
+	If the iteration option is seleted, the procedure is iterated: at
+	each round the residuals are re-computed using the current WLS
+	parameter estimates, which gives rise to a new set of estimates of
+	the error variances, and a hence a new set of weights. Iteration
+	stops when the maximum difference in the parameter estimates from
+	one round to the next falls below 0.0001 or the number of
+	iterations reaches 20.  If the iteration converges, the resulting
+	estimates are Maximum Likelihood.
       </para>
     </description>
 

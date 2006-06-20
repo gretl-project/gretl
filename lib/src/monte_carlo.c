@@ -17,8 +17,7 @@
  *
  */
 
-/*  monte_carlo.c - loop simulation procedures
-*/  
+/*  monte_carlo.c - loop simulation procedures */
 
 #include "libgretl.h" 
 #include "loop_private.h"

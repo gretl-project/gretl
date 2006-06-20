@@ -271,15 +271,19 @@ static void tex_panel_coeff_name (char *targ, const char *src,
     char vnesc[32];
     int i;
 
-    if (sscanf(src, "unit_%d", &i)) {
+    if (sscanf(src, "ahat_%d", &i)) {
 	if (inmath) {
-	    sprintf(targ, "\\mbox{unit%d}", i);
+	    sprintf(targ, "a_{%d}", i);
 	} else {
-	    sprintf(targ, "unit%d", i);
+	    sprintf(targ, "$a_{%d}$", i);
 	}
     } else {
 	tex_escape(vnesc, src);
-	strcpy(targ, vnesc);
+	if (inmath) {
+	    sprintf(targ, "\\mbox{%s}", vnesc);
+	} else {
+	    strcpy(targ, vnesc);
+	}
     }
 }
 

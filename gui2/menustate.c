@@ -118,7 +118,6 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 };
 
 static GtkItemFactoryEntry panel_model_items[] = {
-    { N_("/Model/Panel/Pooled OLS..."), NULL, model_callback, OLS, NULL, GNULL },
     { N_("/Model/Panel/Fixed or random effects..."), NULL, model_callback, PANEL, NULL, GNULL },
     { N_("/Model/Panel/Weighted least squares..."), NULL, model_callback, PANEL_WLS, NULL, GNULL }
 };
@@ -143,7 +142,6 @@ static GtkItemFactoryEntry time_series_model_items[] = {
 };
 
 static GtkItemFactoryEntry panel_model_items[] = {
-    { N_("/Model/Panel/Pooled OLS..."), NULL, model_callback, OLS, NULL },
     { N_("/Model/Panel/Fixed or random effects..."), NULL, model_callback, PANEL, NULL },
     { N_("/Model/Panel/Weighted least squares..."), NULL, model_callback, PANEL_WLS, NULL }
 };
@@ -221,14 +219,14 @@ void panel_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Add/unit dummies", s);
-	flip(mdata->ifac, "/Add/panel dummies", s);
+	flip(mdata->ifac, "/Add/time dummies", s);
 	flip(mdata->ifac, "/Model/Panel", s);
     }
 
     if (s) {
 	GtkWidget *w =  
 	    gtk_item_factory_get_widget(mdata->ifac, 
-					"/Model/Panel/Pooled OLS...");
+					"/Model/Panel/Fixed or random effects...");
 
 	if (w == NULL) {
 	    int i, n = sizeof panel_model_items / 

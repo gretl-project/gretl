@@ -65,9 +65,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo, int center);
 
 int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
 
-int panel_unit_dummies (double ***pZ, DATAINFO *pdinfo);
-
-int paneldum (double ***pZ, DATAINFO *pdinfo);
+int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt);
 
 int plotvar (double ***pZ, DATAINFO *pdinfo);
 

@@ -228,6 +228,12 @@ enum calc_functions {
     CALC_TEST
 };
 
+enum auto_dummies {
+    TS_DUMMIES,
+    PANEL_UNIT_DUMMIES,
+    PANEL_TIME_DUMMIES
+};
+
 enum dynamic_forecast_status {
     DYNAMIC_NA,
     DYNAMIC_OK,

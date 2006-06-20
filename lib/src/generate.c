@@ -2880,7 +2880,6 @@ static const char *res2[] = {
 };
 
 static const char *res3[] = {
-    "i",
     "obs",
     "scalar",
     "series",
@@ -3222,7 +3221,7 @@ static int genr_add_xvec (GENERATOR *genr)
 }
 
 #define genr_special_func(s) (strcmp(s, "dummy") == 0 || \
-                              strcmp(s, "paneldum") == 0 || \
+                              strcmp(s, "timedum") == 0 || \
                               strcmp(s, "unitdum") == 0 || \
                               strcmp(s, "time") == 0 || \
                               strcmp(s, "index") == 0 || \
@@ -3248,13 +3247,13 @@ static int genr_handle_special (const char *s, GENERATOR *genr,
 	} else {
 	    pputs(genr->prn, _("Periodic dummy variables already present.\n"));
 	}
-    } else if (!strcmp(s, "paneldum")) {
-	err = paneldum(pZ, pdinfo);
+    } else if (!strcmp(s, "timedum")) {
+	err = panel_dummies(pZ, pdinfo, OPT_T);
 	if (!err) {
 	    pputs(genr->prn, _("Panel dummy variables generated.\n"));
 	}
-    } else if (strcmp(s, "unitdum") == 0) {
-	err = panel_unit_dummies(pZ, pdinfo);
+    } else if (!strcmp(s, "unitdum")) {
+	err = panel_dummies(pZ, pdinfo, OPT_NONE);
 	if (!err) {
 	    pputs(genr->prn, _("Panel dummy variables generated.\n"));
 	}

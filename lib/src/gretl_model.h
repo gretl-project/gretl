@@ -227,6 +227,8 @@ int gretl_model_get_int (const MODEL *pmod, const char *key);
 
 double gretl_model_get_double (const MODEL *pmod, const char *key);
 
+int *gretl_model_get_list (const MODEL *pmod, const char *key);
+
 char *gretl_model_get_param_name (const MODEL *pmod, 
 				  const DATAINFO *pdinfo,
 				  int i, char *targ);
@@ -319,7 +321,8 @@ int gretl_model_add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				   int yno, int p, int q, int P, int Q, 
 				   int r);
 
-int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo);
+int gretl_model_add_panel_varnames (MODEL *pmod, const DATAINFO *pdinfo,
+				    const int *ulist);
 
 void gretl_model_add_allocated_varnames (MODEL *pmod, char **vnames);
 

@@ -129,7 +129,8 @@ static struct gui_help_item gui_help_items[] = {
     { MINIBUF,        "minibuffer" },
     { VLAGSEL,        "VAR-lagselect" },
     { VAROMIT,        "VAR-omit" },
-    { PANEL_MODE,      "panel-mode" },
+    { PANEL_MODE,     "panel-mode" },
+    { PANEL_WLS,      "panel-wls" },
     { -1,          NULL },
 };
 

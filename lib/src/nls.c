@@ -102,8 +102,8 @@ static void destroy_genrs_array (GENERATOR **genrs, int n)
     free(genrs);
 }
 
-/* new-style: "compile" the required equations first, so we can
-   subsequently execute the compiled versions for greater
+/* we "compile" the required equations first, so we can
+   subsequently execute the compiled versions for max
    efficiency */
 
 static int nls_genr_setup (void)
@@ -114,9 +114,7 @@ static int nls_genr_setup (void)
     int v, err = 0;
 
     pspec->ngenrs = 0;
-
     nparam = (pspec->mode == ANALYTIC_DERIVS)? pspec->nparam : 0;
-
     n_gen = 1 + pspec->naux + nparam;
 
 #if NLS_DEBUG
@@ -153,20 +151,6 @@ static int nls_genr_setup (void)
 	fprintf(stderr, "genrs[%d] = %p, err = %d\n", i, (void *) genrs[i], err);
 #endif
 
-	/* first pass calculating residual: ensure all parameters are
-	   non-zero so we can get a valid reading on possible missing
-	   values */
-	if (i == pspec->naux) {
-	    int k;
-
-	    for (k=0; k<pspec->nparam; k++) {
-		v = pspec->params[k].varnum;
-		if ((*nZ)[v][0] == 0.0) {
-		    (*nZ)[v][0] = 0.0001;
-		}
-	    }	    
-	}
-
 	if (!err) {
 	    err = execute_genr(genrs[i], ndinfo->v);
 	}
@@ -201,33 +185,39 @@ static int nls_auto_genr (int i)
 {
     int j;
 
+#if NLS_DEBUG
+    fprintf(stderr, "nls_auto_genr: input i = %d\n", i);
+#endif
+
     if (pspec->genrs == NULL) {
 	genr_err = nls_genr_setup();
 	if (genr_err) {
-	    fprintf(stderr, "nls_genr_setup failed\n");
+	    fprintf(stderr, " nls_genr_setup failed\n");
 	}
+#if NLS_DEBUG
+	fprintf(stderr, " initialized, returning\n");
+#endif
 	return genr_err;
     }
 
     for (j=0; j<pspec->naux; j++) {
 #if NLS_DEBUG
-	fprintf(stderr, "nls_auto_genr: generating aux var:\n %s\n", pspec->aux[j]);
+	fprintf(stderr, " generating aux var %d:\n %s\n", j, pspec->aux[j]);
 #endif
 	genr_err = execute_genr(pspec->genrs[j], ndinfo->v);
     }
 
     j = pspec->naux + i;
 #if NLS_DEBUG
-    fprintf(stderr, "nls_auto_genr: executing genr[%d] at %p, with oldv = %d\n",
-	    j, (void *) pspec->genrs[j], ndinfo->v);
+    fprintf(stderr, " executing genr[%d]\n", j);
 #endif
     genr_err = execute_genr(pspec->genrs[j], ndinfo->v);
 
 
 #if NLS_DEBUG
     if (genr_err) {
-	fprintf(stderr, " varnum = %d, err = %d\n", genr_get_varnum(pspec->genrs[j]), 
-		genr_err);
+	int v = genr_get_varnum(pspec->genrs[j]);
+	fprintf(stderr, " varnum = %d, err = %d\n", v, genr_err);
 	errmsg(genr_err, nprn);
     } 
 #endif
@@ -528,6 +518,45 @@ int nls_spec_add_param_list (nls_spec *spec, const int *list,
     return err;
 }
 
+static int maybe_adjust_params (nls_spec *spec, char **pzlist)
+{
+    char *zlist = NULL;
+    int i, v;
+
+    for (i=0; i<pspec->nparam; i++) {
+	v = pspec->params[i].varnum;
+	if ((*nZ)[v][0] == 0.0) {
+	    zlist = calloc(pspec->nparam, 1);
+	    break;
+	}
+    }
+
+    if (zlist != NULL) {
+	for (i=0; i<pspec->nparam; i++) {
+	    v = pspec->params[i].varnum;
+	    if ((*nZ)[v][0] == 0.0) {
+		zlist[i] = 1;
+		(*nZ)[v][0] = 0.0001;
+	    }
+	}
+	*pzlist = zlist;
+    }
+
+    return (zlist != NULL);
+}
+
+static void readjust_params (nls_spec *spec, const char *zlist)
+{
+    int i, v;
+
+    for (i=0; i<pspec->nparam; i++) {
+	v = pspec->params[i].varnum;
+	if (zlist[i]) {
+	    (*nZ)[v][0] = 0.0;
+	}
+    }
+}
+
 /* Adjust starting and ending points of sample if need be, to avoid
    missing values; abort if there are missing values within the
    (possibly reduced) sample range.  For this purpose we generate
@@ -536,9 +565,14 @@ int nls_spec_add_param_list (nls_spec *spec, const int *list,
 
 static int nls_missval_check (nls_spec *spec)
 {
+    char *zlist = NULL;
     int t, v, miss = 0;
     int t1 = spec->t1, t2 = spec->t2;
-    int err = 0;
+    int adj, err = 0;
+
+    /* a rigorous check for missing values requires that
+       all parameters be non-zero */
+    adj = maybe_adjust_params(pspec, &zlist);
 
 #if NLS_DEBUG
     fprintf(stderr, "nls_missval_check: calling nls_calculate_fvec\n");
@@ -546,6 +580,13 @@ static int nls_missval_check (nls_spec *spec)
 
     /* generate the nls residual variable */
     err = nls_calculate_fvec();
+
+    /* if we messed with any parameters, reset them now */
+    if (zlist != NULL) {
+	readjust_params(pspec, zlist);
+	free(zlist);
+    }
+
     if (err) {
 	return err;
     }
@@ -554,9 +595,9 @@ static int nls_missval_check (nls_spec *spec)
     v = pspec->uhatnum;
 
 #if NLS_DEBUG
-    fprintf(stderr, "nls_missval_check: checking var %d (%s)\n",
+    fprintf(stderr, " checking var %d (%s)\n",
 	    v, ndinfo->varname[v]);
-    fprintf(stderr, " before trimming: spec->t1 = %d, spec->t2 = %d\n",
+    fprintf(stderr, "  before trimming: spec->t1 = %d, spec->t2 = %d\n",
 	    spec->t1, spec->t2);
 #endif
 
@@ -582,7 +623,7 @@ static int nls_missval_check (nls_spec *spec)
 
     for (t=t1; t<=t2; t++) {
 	if (na((*nZ)[v][t])) {
-	    fprintf(stderr, " nls_missval_check: after setting t1=%d, t2=%d, "
+	    fprintf(stderr, "  after setting t1=%d, t2=%d, "
 		    "got NA for var %d at obs %d\n", t1, t2, v, t);
 	    miss = 1;
 	    break;
@@ -599,9 +640,12 @@ static int nls_missval_check (nls_spec *spec)
     spec->nobs = t2 - t1 + 1;
 
 #if NLS_DEBUG
-    fprintf(stderr, " after: spec->t1 = %d, spec->t2 = %d, spec->nobs = %d\n\n",
+    fprintf(stderr, "  after: spec->t1 = %d, spec->t2 = %d, spec->nobs = %d\n\n",
 	    spec->t1, spec->t2, spec->nobs);
 #endif
+
+    /* if we adjusted any params above, recalculate fvec */
+    nls_calculate_fvec();
 
     return 0;
 }
@@ -792,7 +836,7 @@ static int get_nls_fvec (double *fvec)
 	}
 	fvec[j] = (*nZ)[v][t];
 #if NLS_DEBUG > 1
-	fprintf(stderr, "fvec[%d] = nZ[%d][%d] = %g\n", j, v, t, fvec[j]);
+	fprintf(stderr, "fvec[%d] = nZ[%d][%d] = %.14g\n", j, v, t, fvec[j]);
 #endif
 	if (pspec->ci == MLE) {
 	    pspec->ll -= fvec[j];
@@ -846,7 +890,7 @@ static int get_nls_deriv (int i, double *deriv)
 	    deriv[j] = - (*nZ)[v][0];
 	}
 #if NLS_DEBUG > 1
-	fprintf(stderr, " set deriv[%d] = nZ[%d][%d] = %g\n", j, v, 
+	fprintf(stderr, " set deriv[%d] = nZ[%d][%d] = %.14g\n", j, v, 
 		(vec)? t : 0, deriv[j]);
 #endif
 	j++;
@@ -1542,7 +1586,7 @@ static void update_nls_param_values (const double *x)
 	v = pspec->params[i].varnum;
 	(*nZ)[v][0] = x[i];
 #if NLS_DEBUG
-	fprintf(stderr, "revised param[%d] = %g\n", i, x[i]);
+	fprintf(stderr, "revised param[%d] = %.14g\n", i, x[i]);
 #endif
     }
 }
@@ -1611,10 +1655,10 @@ static int check_derivatives (integer m, integer n, double *x,
     fprintf(stderr, "\nchkder, starting: m=%d, n=%d, ldjac=%d\n",
 	    (int) m, (int) n, (int) ldjac);
     for (i=0; i<pspec->nparam; i++) {
-	fprintf(stderr, "x[%d] = %g\n", i, x[i]);
+	fprintf(stderr, "x[%d] = %.14g\n", i, x[i]);
     }    
     for (i=0; i<pspec->nobs; i++) {
-	fprintf(stderr, "fvec[%d] = %g\n", i, fvec[i]);
+	fprintf(stderr, "fvec[%d] = %.14g\n", i, fvec[i]);
     }
 #endif
 
@@ -1631,7 +1675,7 @@ static int check_derivatives (integer m, integer n, double *x,
 #if NLS_DEBUG > 1
     fprintf(stderr, "\nchkder, calculated gradient\n");
     for (i=0; i<T; i++) {
-	fprintf(stderr, "jac[%d] = %g\n", i, jac[i]);
+	fprintf(stderr, "jac[%d] = %.14g\n", i, jac[i]);
     }
 #endif
 
@@ -1651,7 +1695,7 @@ static int check_derivatives (integer m, integer n, double *x,
 #if NLS_DEBUG > 1
     fprintf(stderr, "\nchkder, done mode 2:\n");
     for (i=0; i<m; i++) {
-	fprintf(stderr, "%d: fvec = %.12g, fvecp = %.12g, err = %g\n", i, 
+	fprintf(stderr, "%d: fvec = %.14g, fvecp = %.14g, err = %g\n", i, 
 		fvec[i], fvecp[i], err[i]);
     }
 #endif
@@ -1681,7 +1725,7 @@ static int check_derivatives (integer m, integer n, double *x,
     free(err);
     free(fvecp);
 
-    return (zerocount > m/4);
+    return (zerocount > m / 4);
 }
 
 /* driver for BFGS code below */
@@ -1974,7 +2018,7 @@ nls_spec_add_param_with_deriv (nls_spec *spec, const char *dstr,
 #if NLS_DEBUG
     if (param->deriv != NULL) {
 	fprintf(stderr, "add_param_with_deriv: '%s'\n"
-		" set varnum = %d, initial value = %g\n", dstr, 
+		" set varnum = %d, initial value = %.14g\n", dstr, 
 		param->varnum, spec->coeff[i]);
     }
 #endif

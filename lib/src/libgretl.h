@@ -160,10 +160,11 @@ enum gretl_opt_flags {
     OPT_R = 1 << 15,
     OPT_S = 1 << 16,
     OPT_T = 1 << 17,
-    OPT_V = 1 << 18,
-    OPT_W = 1 << 19,
-    OPT_X = 1 << 20,
-    OPT_Z = 1 << 21,
+    OPT_U = 1 << 18,
+    OPT_V = 1 << 19,
+    OPT_W = 1 << 20,
+    OPT_X = 1 << 21,
+    OPT_Z = 1 << 22,
     OPT_UNSET = 1 << 30
 };
 

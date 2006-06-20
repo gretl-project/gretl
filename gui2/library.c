@@ -3695,38 +3695,33 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 
 void add_dummies (gpointer data, guint u, GtkWidget *widget)
 {
+    gretlopt opt = OPT_NONE;
     gint err;
 
-    if (u > 0) {
-	if (datainfo->structure == STACKED_TIME_SERIES ||
-	    datainfo->structure == STACKED_CROSS_SECTION) {
-	    if (u == 1) {
-		gretl_command_strcpy("genr unitdum");
-	    } else {
-		gretl_command_strcpy("genr paneldum");
-	    }
+    if (u == TS_DUMMIES) {
+	gretl_command_strcpy("genr dummy");
+    } else if (dataset_is_panel(datainfo)) {
+	if (u == PANEL_UNIT_DUMMIES) {
+	    gretl_command_strcpy("genr unitdum");
 	} else {
-	    errbox(_("Data set is not recognized as a panel.\n"
-		   "Please use \"Sample/Set frequency, startobs\"."));
-	    return;
+	    gretl_command_strcpy("genr timedum");
+	    opt = OPT_T;
 	}
     } else {
-	gretl_command_strcpy("genr dummy");
+	errbox(_("Data set is not recognized as a panel.\n"
+		 "Please use \"Sample/Set frequency, startobs\"."));
+	return;
     }
 
     if (check_and_record_command()) {
 	return;
     }
 
-    if (u == 0) {
+    if (u == TS_DUMMIES) {
 	err = dummy(&Z, datainfo, 0) == 0;
-    } else if (u == 1) {
-	err = panel_unit_dummies(&Z, datainfo);
-    } else if (u == 2) {
-	err = paneldum(&Z, datainfo);
     } else {
-	err = 1;
-    }
+	err = panel_dummies(&Z, datainfo, opt);
+    } 
 
     if (err) {
 	gui_errmsg(err);
