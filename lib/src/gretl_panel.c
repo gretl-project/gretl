@@ -29,13 +29,10 @@
 
 /* The minimum number of observations we'll accept for a given
    cross-sectional unit, to include that unit in the fixed-effects
-   regression.  If there's only one observation for a given unit, this
-   is nugatory when we're including a dummy for that unit, or
-   subtracting the means from the respective data series, which argues
-   for a value of 2 -- or does it?
+   regression.  This was previously set at 2.
 */
 
-#define MINOBS 1
+#define FE_MINOBS 1
 
 enum vcv_ops {
     VCV_INIT,
@@ -268,7 +265,7 @@ static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 
 /* Fix for statistics on the dependent variable, for the case
    where we do the "within" regression on an auxiliary de-meaned
-   data set 
+   data set.
 */
 
 static void within_depvarstats (panelmod_t *pan, double *y, int n)
@@ -328,7 +325,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
     pan->effn = 0;
 
     for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] >= MINOBS) {
+	if (pan->unit_obs[i] >= FE_MINOBS) {
 	    wnobs += pan->unit_obs[i];
 	    pan->effn += 1;
 	}
@@ -369,7 +366,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 #if PDEBUG
 	    fprintf(stderr, "looking at x-sect unit %d: Ti = %d\n", i, Ti);
 #endif
-	    if (Ti < MINOBS) {
+	    if (Ti < FE_MINOBS) {
 		continue;
 	    }
 
@@ -413,6 +410,11 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 
     return winfo;
 }
+
+/* Construct a quasi-demeaned version of the dataset so we can apply
+   least squares to estimate the random effects model.  This dataset
+   is not necessarily of full length.
+*/
 
 static DATAINFO *
 random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
@@ -672,7 +674,7 @@ vcv_slopes (panelmod_t *pan, const MODEL *pmod, int op)
     }
 }
 
-/* calculate Hausman test statistic */
+/* calculate Hausman test statistic, matrix diff style */
 
 static int bXb (panelmod_t *pan)
 {
@@ -726,7 +728,7 @@ static int bXb (panelmod_t *pan)
     return info;
 }
 
-static void apply_panel_df_correction (MODEL *pmod, int ndf)
+static void panel_df_correction (MODEL *pmod, int ndf)
 {
     double dfcorr = sqrt((double) pmod->dfd / (pmod->dfd - ndf));
     int i, j, idx;
@@ -796,7 +798,7 @@ static int print_fe_results (panelmod_t *pan,
        estimates */
     if (pan->ndum > 0) {
 	for (i=0, j=0; i<pan->nunits; i++) {
-	    if (pan->unit_obs[i] >= MINOBS) {
+	    if (pan->unit_obs[i] >= FE_MINOBS) {
 		char dumstr[VNAMELEN];
 		double b;
 
@@ -887,9 +889,9 @@ fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 #endif
 }
 
-/* correct various model statistics, in the case where we estimated
+/* Correct various model statistics, in the case where we estimated
    the fixed effects or "within" model on an auxiliary dataset
-   from which the group means were subtracted
+   from which the group means were subtracted.
 */
 
 static void fix_within_stats (MODEL *targ, panelmod_t *pan)
@@ -1057,6 +1059,11 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
     pmod->yhat = yhat;
 }
 
+/* Estimate the fixed-effects model using the approach of creating a
+   parallel dataset with the group means subtracted from all
+   variables.
+*/
+
 static MODEL 
 fixed_effects_by_demeaning (panelmod_t *pan, const double **Z, 
 			    DATAINFO *pdinfo, PRN *prn)
@@ -1106,7 +1113,7 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
     } else {
 	/* we estimated a bunch of group means, and have to
 	   subtract that many degrees of freedom */
-	apply_panel_df_correction(&femod, pan->effn);
+	panel_df_correction(&femod, pan->effn);
 #if PDEBUG
 	printmodel(&femod, winfo, OPT_O, prn);
 #endif
@@ -1121,6 +1128,9 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
 
     return femod;
 }
+
+/* Estimate the fixed-effects model using the Least Squares Dummy
+   Variables approach */
 
 static MODEL 
 fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
@@ -1155,7 +1165,7 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
     for (i=0, j=0; i<pan->nunits && j<pan->ndum; i++) {
 	int t, dv = oldv + j;
 
-	if (pan->unit_obs[i] < MINOBS) {
+	if (pan->unit_obs[i] < FE_MINOBS) {
 	    continue;
 	}
 
@@ -1229,7 +1239,7 @@ static int get_fixed_effects_method (panelmod_t *pan)
 	fprintf(stderr, "pan unit %d: obs (based on OLS) = %d\n", 
 		i, pan->unit_obs[i]);
 #endif
-	if (pan->unit_obs[i] >= MINOBS) {
+	if (pan->unit_obs[i] >= FE_MINOBS) {
 	    nd++;
 	} else if (pan->unit_obs[i] > 0) {
 	    /* a unit we need to exclude: hard to handle with
@@ -1246,8 +1256,11 @@ static int get_fixed_effects_method (panelmod_t *pan)
     return pan->ndum;
 }
 
-/* construct a gretl list containing the index numbers of the
+/* Construct a gretl list containing the index numbers of the
    cross-sectional units included in the fixed-effects regression
+   FIXME: we should actually read those index numbers from 
+   datainfo.  This is for the purpose of naming the per-unit
+   intercepts.
 */
 
 int *fe_units_list (const panelmod_t *pan)
@@ -1256,7 +1269,7 @@ int *fe_units_list (const panelmod_t *pan)
     int i, j, n = 0;
 
     for (i=0; i<pan->nunits; i++) { 
-	if (pan->unit_obs[i] >= MINOBS) {
+	if (pan->unit_obs[i] >= FE_MINOBS) {
 	    n++;
 	}
     }
@@ -1266,7 +1279,7 @@ int *fe_units_list (const panelmod_t *pan)
     if (ulist != NULL) {
 	j = 1;
 	for (i=0; i<pan->nunits; i++) { 
-	    if (pan->unit_obs[i] >= MINOBS) {
+	    if (pan->unit_obs[i] >= FE_MINOBS) {
 		ulist[j++] = i + 1;
 	    }
 	} 
@@ -1274,6 +1287,16 @@ int *fe_units_list (const panelmod_t *pan)
 
     return ulist;
 }
+
+/* Compose a list referencing all variables that were dropped from the
+   final panel model relative to the incoming regression
+   specification.  This may include some variables that were dropped
+   at the stage of running the baseline pooled model (e.g. because of
+   perfect collinearity).  In the case of fixed effects it may include
+   additional variables dropped due to the fact that they are
+   time-invariant.  We want to be able to show this list to the user
+   when printing the model.
+*/
 
 static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 {
@@ -1696,73 +1719,50 @@ static int do_hausman_test (panelmod_t *pan, PRN *prn)
     return err;
 }
 
-static int get_maj_min (const DATAINFO *pdinfo, int *maj, int *min)
-{
-    int startmaj, startmin;
-    int endmaj, endmin;
-
-    if (sscanf(pdinfo->stobs, "%d:%d", &startmaj, &startmin) != 2) {
-	return 1;
-    }
-
-    if (sscanf(pdinfo->endobs, "%d:%d", &endmaj, &endmin) != 2) {
-	return 1;
-    } 
-
-    *maj = endmaj - startmaj + 1;
-    *min = endmin - startmin + 1;
-
-    return 0;
-}
-
-/* Based on the residuals from pooled OLS, determine how many
-   cross-sectional units were actually included in the regression
-   (after omitting any missing values); in addition, determine the
-   number of observations included for each unit.
+/* Based on the residuals from pooled OLS, do some accounting to see
+   (a) how many cross-sectional units were actually included (after
+   omitting any missing values); (b) how many time-series observations
+   were included for each unit; and (c) what was the maximum number
+   of time-series observations used.  Return 0 if all goes OK,
+   non-zero otherwise.
 */
 
-static int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
-			     int *unit_obs)
+static int panel_obs_accounts (const MODEL *pmod, int nunits, int T, 
+			       int *effn, int *effT, 
+			       int **unit_obs)
 {
-    int nunits, T;
-    int i, t;
+    int *uobs;
     int ninc = 0;
+    int obsmax = 0;
+    int i, t;
+    
+    *effn = *effT = 0;
 
-    if (get_maj_min(pdinfo, &nunits, &T)) {
-	return -1;
+    uobs = malloc(nunits * sizeof *uobs);
+    if (uobs == NULL) {
+	return E_ALLOC;
     }
 
     for (i=0; i<nunits; i++) {
-	unit_obs[i] = 0;
+	uobs[i] = 0;
 	for (t=0; t<T; t++) {
 	    if (!na(pmod->uhat[panel_index(i, t)])) {
-		unit_obs[i] += 1;
+		uobs[i] += 1;
 	    }
 	}
-	if (unit_obs[i] > 0) {
+	if (uobs[i] > 0) {
 	    ninc++;
+	    if (uobs[i] > obsmax) {
+		obsmax = uobs[i];
+	    }
 	}
     }
 
-    return ninc;
-}
+    *effn = ninc;
+    *effT = obsmax;
+    *unit_obs = uobs;
 
-/* Determine the maximum number of observations included for any
-   cross-sectional unit.  (This may vary across units due to omission
-   of missing values.)
-*/
-
-static int effective_T (const int *unit_obs, int nunits)
-{
-    int i, effT = 0;
-
-    for (i=0; i<nunits; i++) {
-	if (unit_obs[i] > effT) {
-	    effT = unit_obs[i];
-	}
-    }
-
-    return effT;
+    return 0;
 }
 
 /* Construct an array of char to record which parameters in the full
@@ -1795,28 +1795,26 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod,
 
     panelmod_init(pan, pmod, opt);
 
+    /* assumes (possibly padded) balanced panel */
     pan->nunits = pdinfo->n / pdinfo->pd;
     pan->T = pdinfo->pd;
 
     panel_index_init(pdinfo, pan->nunits, pan->T);
     
-    pan->unit_obs = malloc(pan->nunits * sizeof *pan->unit_obs);
-    if (pan->unit_obs == NULL) {
-	err = E_ALLOC;
-    } 
+    err = panel_obs_accounts(pmod, pan->nunits, pan->T,
+			     &pan->effn, &pan->effT, 
+			     &pan->unit_obs);
 
-    if (!err) {
-	pan->effn = n_included_units(pmod, pdinfo, pan->unit_obs);
-	pan->effT = effective_T(pan->unit_obs, pan->nunits);
-    }
-
-    if (pan->opt & (OPT_U | OPT_F)) {
+    if (!err && (pan->opt & (OPT_U | OPT_F))) {
 	pan->realmod = malloc(sizeof *pan->realmod);
 	if (pan->realmod == NULL) {
-	    free(pan->unit_obs);
-	    pan->unit_obs = NULL;
 	    err = E_ALLOC;
 	}
+    }
+    
+    if (err && pan->unit_obs != NULL) {
+	free(pan->unit_obs);
+	pan->unit_obs = NULL;
     }
 
     return err;
@@ -1963,8 +1961,8 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mod;
     }
 
-    if (!(opt & OPT_U) && !(opt & OPT_W)) {
-	/* add OPT_F to save the fixed effects model */
+    if (!(opt & OPT_U)) {
+	/* default: add OPT_F to save the fixed effects model */
 	pan_opt |= OPT_F;
     }
 
@@ -2249,33 +2247,30 @@ MODEL panel_wls_by_unit (const int *list, double ***pZ, DATAINFO *pdinfo,
 	wlsopt |= OPT_A;
     }
 
-    gretl_model_init(&mdl);
+    /* baseline pooled model */
+    mdl = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    if (mdl.errcode) {
+	goto bailout;
+    }
 
     nunits = pdinfo->n / pdinfo->pd;
     T = pdinfo->pd;
 
     panel_index_init(pdinfo, nunits, T);
 
-    unit_obs = malloc(nunits * sizeof *unit_obs);
-    if (unit_obs == NULL) {
-	mdl.errcode = E_ALLOC;
-	return mdl;
-    }
-
-    uvar = malloc(nunits * sizeof *uvar);
-    if (unit_obs == NULL) {
-	free(unit_obs);
-	mdl.errcode = E_ALLOC;
-	return mdl;
-    }    
-    
-    mdl = lsq(list, pZ, pdinfo, OLS, OPT_A);
+    mdl.errcode = panel_obs_accounts(&mdl, nunits, T,
+				     &effn, &effT,
+				     &unit_obs);
     if (mdl.errcode) {
 	goto bailout;
     }
 
-    effn = n_included_units(&mdl, pdinfo, unit_obs);
-    effT = effective_T(unit_obs, nunits);  
+    uvar = malloc(nunits * sizeof *uvar);
+    if (uvar == NULL) {
+	free(unit_obs);
+	mdl.errcode = E_ALLOC;
+	return mdl;
+    }  
 
     if (opt & OPT_T) {
 	if (singleton_check(unit_obs, nunits)) {
