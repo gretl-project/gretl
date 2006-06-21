@@ -3236,6 +3236,75 @@ int command_ok_for_model (int test_ci, int model_ci)
     return ok;
 }
 
+/**
+ * model_test_ok:
+ * @ci: index of a model test command.
+ * @opt: option associated with test command, if any.
+ * @pmod: the model to be tested.
+ * @pdinfo: dataset information.
+ *
+ * A more rigorous version of command_ok_for_model().  Use
+ * this function if the extra information is available.
+ * 
+ * Returns: 1 if the test command @ci (with possible option
+ * @opt) is acceptable in the context of the model @pmod, and 
+ * the dataset described by @pdinfo, otherwise 0.
+ */
+
+int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
+		   const DATAINFO *pdinfo)
+{
+    int ok = command_ok_for_model(ci, pmod->ci);
+
+    if (ok && pmod->missmask != NULL) {
+	/* can't do these with embedded missing obs */
+	if (ci == ARCH || ci == CUSUM || 
+	    (ci == LMTEST && (opt & OPT_A))) {
+	    ok = 0;
+	}
+    }
+
+    if (ok && pmod->ncoeff == 1) {
+	if (ci == OMIT || ci == OMITFROM || ci == COEFFSUM) {
+	    ok = 0;
+	} else if (pmod->ifc && ci == LMTEST) {
+	    /* const only: rule out squares, logs, White's */
+	    if (opt & (OPT_W | OPT_S | OPT_L)) {
+		ok = 0;
+	    }
+	}
+    }
+
+    if (ok && !dataset_is_time_series(pdinfo)) {
+	/* time-series-only tests */
+	if (ci == ARCH || ci == CHOW || ci == CUSUM || ci == QLRTEST) {
+	    ok = 0;
+	}
+    }
+
+    if (ok && !dataset_is_time_series(pdinfo) &&
+	!dataset_is_panel(pdinfo)) {
+	/* time-series or panel tests */
+	if (ci == LMTEST && (opt & OPT_A)) {
+	    ok = 0;
+	}
+    }
+
+    if (ok && !dataset_is_panel(pdinfo)) {
+	/* panel-only tests */
+	if (ci == HAUSMAN || (ci == LMTEST && (opt & OPT_P))) {
+	    ok = 0;
+	}
+    }
+
+    if (ok && pmod->ncoeff - pmod->ifc <= 1 && ci == VIF) {
+	/* needs at least two independent vars */
+	ok = 0;
+    }
+
+    return ok;
+}
+
 static int gretl_model_count;
 
 int get_model_count (void)

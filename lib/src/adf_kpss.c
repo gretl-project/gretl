@@ -329,6 +329,14 @@ static int real_adf_test (int varno, int order, int niv,
     fprintf(stderr, "real_adf_test: got order = %d\n", order);
 #endif
 
+    if (opt & OPT_F) {
+	/* difference the variable before testing */
+	varno = diffgenr(varno, DIFF, pZ, pdinfo);
+	if (varno < 0) {
+	    return E_DATA;
+	}
+    }
+
     if (order < 0) {
 	auto_order = 1;
 	order = -order;
@@ -531,6 +539,14 @@ int kpss_test (int order, int varno, double ***pZ,
     /* sanity check */
     if (order < 0 || varno <= 0 || varno >= pdinfo->v) {
 	return 1;
+    }
+
+    if (opt & OPT_F) {
+	/* difference the variable before testing */
+	varno = diffgenr(varno, DIFF, pZ, pdinfo);
+	if (varno < 0) {
+	    return E_DATA;
+	}
     }
 
     if (opt & OPT_T) {

@@ -188,6 +188,10 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
 	</option>
+	<option>
+	  <flag>--difference</flag>
+	  <effect>use first difference of variable</effect>
+	</option>
       </options>
       <examples>
 	<example>adf 0 y</example>
@@ -201,9 +205,12 @@
 	Dickey&ndash;Fuller test is run.</para>
 
       <para>
-	Computes statistics for a set of Dickey&ndash;Fuller tests on
-	the specified variable, the null hypothesis being that the
-	variable has a unit root.
+	Computes statistics for a set of Dickey&ndash;Fuller tests on the
+	specified variable, the null hypothesis being that the variable
+	has a unit root.  (But if the differencing option is selected, the
+	first difference of the variable is taken prior to testing, and
+	the discussion below must be taken as referring to the transformed
+	variable.)
       </para>
 
       <para>By default, three variants of the test are shown: one
@@ -3262,6 +3269,10 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
 	</option>
+	<option>
+	  <flag>--difference</flag>
+	  <effect>use first difference of variable</effect>
+	</option>
       </options>
       <examples>
 	<example>kpss 8 y</example>
@@ -3272,20 +3283,21 @@
     <description>
 
       <para context="gui">
-	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and
-	Shin, 1992) for stationarity of a variable.  The null
-	hypothesis is that the variable in question is stationary,
-	either around a level or, if the <quote>include a
-	  trend</quote> box is checked, around a deterministic linear
-	trend.  
+	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and Shin,
+	1992) for stationarity of the given variable (or its first
+	difference, if the differencing option is selected).  The null
+	hypothesis is that the variable in question is stationary, either
+	around a level or, if the <quote>include a trend</quote> box is
+	checked, around a deterministic linear trend.  
       </para>
 
       <para context="cli">
-	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and
-	Shin, 1992) for stationarity of a variable.  The null
-	hypothesis is that the variable in question is stationary,
-	either around a level or, if the <lit>--trend</lit> option is
-	given, around a deterministic linear trend.  
+	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and Shin,
+	1992) for stationarity of the specified variable (or its first
+	difference, if the <lit>--difference</lit> option is selected).
+	The null hypothesis is that the variable in question is
+	stationary, either around a level or, if the <lit>--trend</lit>
+	option is given, around a deterministic linear trend.  
       </para>
 
       <para context="gui">
@@ -3545,6 +3557,9 @@
   <command name="lmtest" section="Tests" label="LM tests">
 
     <usage>
+      <arguments>
+        <argument optional="true">order</argument>
+      </arguments>
       <options>
         <option>
 	  <flag>--logs</flag>
@@ -3560,7 +3575,11 @@
         </option>
         <option>
 	  <flag>--white</flag>
-	  <effect>heteroskedasticity (White's test)</effect>
+	  <effect>heteroskedasticity, White's test</effect>
+        </option>
+        <option>
+	  <flag>--panel</flag>
+	  <effect>heteroskedasticity, groupwise</effect>
         </option>
       </options>
     </usage>
@@ -3585,14 +3604,24 @@
 
     <description context="cli">
       <para>
-	Must immediately follow an <cmd>ols</cmd> command. Depending
-	on the options given, this command carries out some
-	combination of the following: Lagrange Multiplier tests for
-	nonlinearity (logs and squares); White's test for
-	heteroskedasticity; and the LMF test for serial correlation up
-	to the periodicity (see Kiviet, 1986).  The corresponding
-	auxiliary regression coefficients are also printed out.  See
-	Ramanathan, Chapters 7, 8, and 9 for details. 
+	Must immediately follow an <cmd>ols</cmd> command. Depending on
+	the options given, this command carries out some combination of
+	the following: Lagrange Multiplier tests for nonlinearity (logs
+	and squares); White's test for heteroskedasticity; and the LMF
+	test for serial correlation (see Kiviet, 1986).  The corresponding
+	auxiliary regression coefficients are also printed out.
+      </para>
+      <para>
+	The optional <lit>order</lit> argument is relevant only in case
+	the <lit>--autocorr</lit> option is selected.  The default is
+	to test for autocorrelation up to the periodicity of the data
+	but this can be adjusted by supplying a specific lag order.
+      </para>
+      <para>
+	The <lit>--panel</lit> option is available only when the model
+	is estimated on panel data: in this case a test for groupwise
+	heteroskedasticity is performed (that is, for a differing
+	error variance across the cross-sectional units).
       </para>
     </description>
 

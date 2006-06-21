@@ -75,7 +75,8 @@ int radio_dialog_with_spinner (const char *title, const char **opts,
 			       int spinmin, int spinmax);
 
 int checks_dialog (const char *title, const char **opts, int nopts, 
-		   int *active, int *spinvar, const char *spintxt, 
+		   int *active, int nradios, int *rvar,
+		   int *spinvar, const char *spintxt, 
 		   int spinmin, int spinmax, int helpcode);
 
 int spin_dialog (const char *title, int *spinvar, const char *spintxt, 

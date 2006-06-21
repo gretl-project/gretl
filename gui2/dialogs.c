@@ -2655,13 +2655,14 @@ static void set_checks_opt (GtkWidget *w, int *active)
 /* general purpose dialog offering check-button options and/or
    a spinner with numerical values */
 
-int checks_dialog (const char *title, const char **opts, int nopts, 
-		   int *active, int *spinvar, const char *spintxt, 
-		   int spinmin, int spinmax, int helpcode)
+int checks_dialog (const char *title, const char **opts, int nopts,
+		   int *active, int nradios, int *rvar, int *spinvar, 
+		   const char *spintxt, int spinmin, int spinmax, 
+		   int helpcode)
 {
     GtkWidget *dialog;
-    GtkWidget *button;
     GtkWidget *tempwid;
+    GtkWidget *button = NULL;
     int i, ret = 0;
 
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
@@ -2677,7 +2678,7 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     /* create check buttons, if any */
     for (i=0; i<nopts; i++) {
 	button = gtk_check_button_new_with_label(_(opts[i]));
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   button, TRUE, TRUE, 0);
 	if (active[i] > 0) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
@@ -2687,6 +2688,30 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_checks_opt), active);
 	g_object_set_data(G_OBJECT(button), "optnum", 
+			  GINT_TO_POINTER(i));
+	gtk_widget_show(button);
+    }
+
+    /* create radio buttons, if any */
+    for (i=0; i<nradios; i++) {
+	int j = nopts + i;
+	GSList *group;
+
+	if (i == 0) {
+	    group = NULL;
+	    tempwid = gtk_hseparator_new();
+	    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			       tempwid, TRUE, TRUE, 5);
+	    gtk_widget_show(tempwid);
+	} else {
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	}
+	button = gtk_radio_button_new_with_label(group, _(opts[j]));
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			   button, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_radio_opt), rvar);
+	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(i));
 	gtk_widget_show(button);
     }
@@ -2715,7 +2740,7 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 int spin_dialog (const char *title, int *spinvar, const char *spintxt, 
 		 int spinmin, int spinmax, int helpcode)
 {
-    return checks_dialog(title, NULL, 0, NULL,
+    return checks_dialog(title, NULL, 0, NULL, 0, NULL,
 			 spinvar, spintxt,
 			 spinmin, spinmax, helpcode);
 }

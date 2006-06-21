@@ -884,11 +884,15 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	N_("with constant, trend and trend squared"),
 	N_("include seasonal dummies"),
 	N_("show regression results"),
-	N_("test down from maximum lag order")
+	N_("test down from maximum lag order"),
+	N_("use level of variable"),
+	N_("use first difference of variable")
     };
     const char *kpss_opts[] = {
 	N_("include a trend"),
-	N_("show regression results")
+	N_("show regression results"),
+	N_("use level of variable"),
+	N_("use first difference of variable")
     };
 
     const char *adf_title = N_("gretl: ADF test");
@@ -901,7 +905,8 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     static int adf_active[] = { 0, 1, 1, 1, 0, 0, 0 };
     static int kpss_active[] = { 1, 0 };
     static int order = 1;
-    
+
+    int difference = 0;
     int v = mdata_active_var();
 
     int okT, omax, err;
@@ -938,6 +943,7 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     err = checks_dialog(_(title), opts,
 			(action == ADF)? 7 : 2,
 			(action == ADF)? adf_active : kpss_active,
+			2, &difference,
 			&order, _(spintext),
 			0, omax, action);
     if (err < 0) {
@@ -968,6 +974,10 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	if (kpss_active[0]) gretl_command_strcat(" --trend");
 	if (kpss_active[1]) gretl_command_strcat(" --verbose");
     } 
+
+    if (difference) {
+	gretl_command_strcat(" --difference");
+    }
 
     if (check_and_record_command() || bufopen(&prn)) {
 	return;
@@ -2029,7 +2039,7 @@ void do_autocorr (gpointer data, guint u, GtkWidget *widget)
 	gretl_print_destroy(prn);
     } else {
 	update_model_tests(vwin);
-	gretl_command_sprintf("lmtest -m %d", order);
+	gretl_command_sprintf("lmtest --autocorr %d", order);
 	model_command_init(pmod->ID);
 	view_buffer(prn, 78, 400, title, LMTEST, NULL); 
     }
@@ -6483,34 +6493,10 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case LMTEST:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	/* non-linearity (squares) */
-	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = nonlinearity_test(models[0], &Z, datainfo, AUX_SQ, 
-				    testopt, outprn);
-	    if (err) errmsg(err, prn);
-	}
-	/* non-linearity (logs) */
-	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = nonlinearity_test(models[0], &Z, datainfo, AUX_LOG, 
-				    testopt, outprn);
-	    if (err) errmsg(err, prn);
-	}
-	/* autocorrelation or heteroskedasticity */
-	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {
-	    int order = atoi(cmd.param);
-
-	    err = autocorr_test(models[0], order, &Z, datainfo, testopt, outprn);
-	    if (err) errmsg(err, prn);
-	    /* FIXME: need to respond? */
-	} 
-	if ((cmd.opt & OPT_W) || !cmd.opt) {
-	    err = whites_test(models[0], &Z, datainfo, testopt, outprn);
-	    if (err) errmsg(err, prn);
-	}
-	/* groupwise heteroskedasticity */
-	if (cmd.opt & OPT_P) {
-	    err = groupwise_hetero_test(models[0], &Z, datainfo, outprn);
-	    if (err) errmsg(err, prn);
+	err = lmtest_driver(cmd.param, models[0], &Z, datainfo, 
+			    cmd.opt, prn);
+	if (err) {
+	    errmsg(err, prn);
 	}
 	break;
 

@@ -2870,33 +2870,9 @@ static void model_tex_equation_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/LaTeX/Copy/Equation", s);
 }
 
-static void minimal_model_check (GtkItemFactory *ifac, const MODEL *pmod)
-{
-    if (pmod->ncoeff == 1) {
-	flip(ifac, "/Tests/omit variables", FALSE);
-	flip(ifac, "/Tests/sum of coefficients", FALSE);
-	flip(ifac, "/Analysis/Confidence ellipse...", FALSE);
-
-	if (pmod->ifc) {
-	    flip(ifac, "/Tests/heteroskedasticity", FALSE);
-	    flip(ifac, "/Tests/non-linearity (squares)", FALSE);
-	    flip(ifac, "/Tests/non-linearity (logs)", FALSE);
-	}
-    }
-
-    if (pmod->ncoeff - pmod->ifc <= 1) {
-	flip(ifac, "/Tests/collinearity", FALSE);
-    }
-
-    if (pmod->missmask != NULL) {
-	flip(ifac, "/Tests/autocorrelation", FALSE);
-	flip(ifac, "/Tests/CUSUM test", FALSE);
-	flip(ifac, "/Tests/ARCH", FALSE);
-    }
-}
-
 static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 {
+    gretlopt opt = OPT_NONE;
     int i, cmd_ci, ok;
 
     if (pmod->ci == MLE || pmod->ci == MPOLS) { /* FIXME? */
@@ -2908,37 +2884,29 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	if (model_items[i].item_type == NULL &&
 	    strstr(model_items[i].path, "Tests")) {
 	    cmd_ci = model_items[i].callback_action;
-	    if (cmd_ci == LMTEST_SQUARES || 
-		cmd_ci == LMTEST_LOGS ||
-		cmd_ci == LMTEST_WHITE) {
+
+	    if (cmd_ci == LMTEST_SQUARES) {
 		cmd_ci = LMTEST;
+		opt = OPT_S;
+	    } else if (cmd_ci == LMTEST_LOGS) {
+		cmd_ci = LMTEST;
+		opt = OPT_L;
+	    } else if (cmd_ci == LMTEST_WHITE) {
+		cmd_ci = LMTEST;
+		opt = OPT_W;
+	    } else if (cmd_ci == LMTEST) { 
+		/* unqualified: aurocorrelation */
+		opt = OPT_A;
 	    }
-	    ok = command_ok_for_model(cmd_ci, pmod->ci);
+		
+	    ok = model_test_ok(cmd_ci, opt, pmod, datainfo);
 	    flip(ifac, model_items[i].path, ok);
 	}
     }
 
-    /* cross-sectional data: disallow time-series tests */
-    if (!dataset_is_time_series(datainfo)) {
-	flip(ifac, "/Tests/CUSUM test", FALSE);
-	flip(ifac, "/Tests/ARCH", FALSE);
+    if (pmod->ncoeff == 1) {
+	flip(ifac, "/Analysis/Confidence ellipse...", FALSE);
     }
-
-    if (!dataset_is_time_series(datainfo) && !dataset_is_panel(datainfo)) {
-	flip(ifac, "/Tests/autocorrelation", FALSE);
-    }
-
-    /* panel diagnostics: only for pooled OLS model on
-       panel data */
-    flip(ifac, "/Tests/panel diagnostics", 
-	 pmod->ci == OLS && dataset_is_panel(datainfo));
-
-    minimal_model_check(ifac, pmod);
-}
-
-static void arch_menu_off (GtkItemFactory *ifac)
-{
-    flip(ifac, "/Tests/ARCH", FALSE);
 }
 
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
@@ -2970,10 +2938,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 	arma_x12_menu_mod(vwin);
     } 
 
-    /* FIXME restrictions on confidence ellipse */
-
-    if (dataset_is_panel(datainfo)) {
-	arch_menu_off(vwin->ifac);
+    if (dataset_is_panel(datainfo) && pmod->ci == OLS) {
 	panel_heteroskedasticity_menu(vwin);
     }
 }
@@ -3395,7 +3360,7 @@ static void VAR_model_data_callback (gpointer p, guint code, GtkWidget *w)
 	title = g_strdup_printf("gretl: %s", 
 				(code == VAR_IRF)? _("impulse responses") :
 				_("variance decompositions"));
-	err = checks_dialog(title, NULL, 0, NULL,
+	err = checks_dialog(title, NULL, 0, NULL, 0, NULL,
 			    &h, _("forecast horizon (periods):"),
 			    2, datainfo->n / 2, 0);
 	g_free(title);
@@ -3494,6 +3459,7 @@ static int impulse_response_setup (int *horizon, int *bootstrap)
 			impulse_opts, 
 			1, 
 			active,
+			0, NULL,
 			&h, _("forecast horizon (periods):"),
 			2, datainfo->n / 2, IRF_BOOT);
     g_free(title);

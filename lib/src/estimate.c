@@ -3561,12 +3561,16 @@ int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL wmod;
     int err;
 
+    if (pmod->ci != OLS) {
+	return E_NOTIMP;
+    }
+
     if (!dataset_is_panel(pdinfo)) {
 	strcpy(gretl_errmsg, _("This test is only available for panel data"));
 	return 1;
     }
 
-    wmod = panel_model(pmod->list, pZ, pdinfo, OPT_W | OPT_T | OPT_A, prn);
+    wmod = panel_wls_by_unit(pmod->list, pZ, pdinfo, OPT_T | OPT_A, prn);
     err = wmod.errcode;
 
     if (!err) {

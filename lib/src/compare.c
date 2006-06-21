@@ -2156,3 +2156,60 @@ int sum_test (const int *sumvars, MODEL *pmod,
 
     return err;
 }
+
+/**
+ * lmtest_driver:
+ * @param: auxiliary parameter for some uses.
+ * @pmod: pointer to model.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: controls which test(s) will be performed.
+ * @prn: gretl printing struct.
+ * 
+ * Performs some subset of gretl's "lmtest" tests on @pmod,
+ * and prints the results to @prn.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int lmtest_driver (const char *param, MODEL *pmod, 
+		   double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn)
+{
+    int err = 0;
+
+    if (opt == OPT_NONE) {
+	pprintf(prn, "lmtest: no options selected\n");
+	return 0;
+    }
+
+    /* non-linearity (squares) */
+    if (!err && (opt & OPT_S)) {
+	err = nonlinearity_test(pmod, pZ, pdinfo, 
+				AUX_SQ, OPT_NONE, prn);
+    }
+
+    /* non-linearity (logs) */
+    if (!err && (opt & OPT_L)) {
+	err = nonlinearity_test(pmod, pZ, pdinfo, 
+				AUX_LOG, OPT_NONE, prn);
+    }
+
+    /* heteroskedasticity, White */
+    if (!err && (opt & OPT_W)) {
+	err = whites_test(pmod, pZ, pdinfo, OPT_NONE, prn);
+    }
+
+    /* autocorrelation */
+    if (!err && (opt & OPT_A)) {
+	err = autocorr_test(pmod, atoi(param), pZ, pdinfo, 
+			    OPT_NONE, prn);
+    }
+
+    /* groupwise heteroskedasticity */
+    if (!err && (opt & OPT_P)) {
+	err = groupwise_hetero_test(pmod, pZ, pdinfo, prn);
+    }
+
+    return err;
+}

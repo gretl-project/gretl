@@ -1326,39 +1326,10 @@ static int exec_line (char *line, PRN *prn)
 
     case LMTEST:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	/* non-linearity (squares) */
-	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    clear_model(models[1]);
-	    err = nonlinearity_test(models[0], &Z, datainfo, 
-				    AUX_SQ, OPT_NONE, prn);
-	    if (err) errmsg(err, prn);
-	    if (cmd.opt == OPT_S) break;
-	    if (!err && !batch && scroll_pause_or_quit()) break; 
-	}
-	/* non-linearity (logs) */
-	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = nonlinearity_test(models[0], &Z, datainfo, 
-				    AUX_LOG, OPT_NONE, prn);
-	    if (err) errmsg(err, prn);
-	    if (cmd.opt == OPT_L) break;
-	    if (!err && !batch && scroll_pause_or_quit()) break;
-	}
-	/* autocorrelation */
-	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {
-	    int order = atoi(cmd.param);
-
-	    err = autocorr_test(models[0], order, &Z, datainfo, OPT_NONE, prn);
-	    if (err) errmsg(err, prn);
-	}
-	/* heteroskedasticity */
-	if ((cmd.opt & OPT_W) || !cmd.opt) {
-	    err = whites_test(models[0], &Z, datainfo, OPT_NONE, prn);
-	    if (err) errmsg(err, prn);
-	}
-	/* groupwise heteroskedasticity */
-	if (cmd.opt & OPT_P) {
-	    err = groupwise_hetero_test(models[0], &Z, datainfo, prn);
-	    if (err) errmsg(err, prn);
+	err = lmtest_driver(cmd.param, models[0], &Z, datainfo, 
+			    cmd.opt, prn);
+	if (err) {
+	    errmsg(err, prn);
 	}
 	break;
 

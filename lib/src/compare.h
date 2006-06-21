@@ -102,3 +102,6 @@ int sum_test (const int *sumvars, MODEL *pmod,
 	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn);
 
+int lmtest_driver (const char *param, MODEL *pmod, 
+		   double ***pZ, DATAINFO *pdinfo, 
+		   gretlopt opt, PRN *prn);
