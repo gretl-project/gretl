@@ -794,19 +794,21 @@ static void show_varinfo_changes (int v)
     for (i=1; i<datainfo->v; i++) {
 	gtk_tree_model_iter_next(model, &iter);
 	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
-	if (v == atoi(idstr)) break;
+	if (v == atoi(idstr)) {
+	    break;
+	}
 	g_free(idstr); 
 	idstr = NULL;
     }
 
-    if (idstr == NULL) return;
-
-    gtk_list_store_set (GTK_LIST_STORE(model), &iter, 
-			0, idstr, 
-			1, datainfo->varname[v],
-			2, VARLABEL(datainfo, v),
-			-1);
-    g_free(idstr);
+    if (idstr != NULL) {
+        gtk_tree_store_set(GTK_TREE_STORE(model), &iter, 
+                           0, idstr, 
+                           1, datainfo->varname[v],
+                           2, VARLABEL(datainfo, v),
+                           -1);
+	g_free(idstr);
+    }
 }
 
 #endif
@@ -1028,6 +1030,10 @@ void varinfo_dialog (int varnum, int full)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);  
+
+    /* Of editing actions, editing the descriptive string is the most
+       likely?  On this assumption we'll focus that widget */
+    gtk_widget_grab_focus(vset->label_entry);
 
     /* read/set display name? */
     if (full) {
