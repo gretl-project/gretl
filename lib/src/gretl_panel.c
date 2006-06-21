@@ -159,15 +159,18 @@ static int var_is_varying (const panelmod_t *pan, int v)
     return 0;
 }
 
-/* Durbin-Watson statistic for fixed effects model on a 
+/* Durbin-Watson statistic for pooled or fixed effects model on a 
    balanced panel */
 
-static void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
+void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int T = pdinfo->pd;
     double ut, u1;
     double num = 0.0;
     int i, t, s, n;
+
+    pmod->dw = NADBL;
+    pmod->rho = NADBL;
 
     if (pmod->ess <= 0.0) {
 	return;

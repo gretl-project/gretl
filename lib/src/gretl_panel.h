@@ -33,6 +33,8 @@ int panel_autocorr_test (MODEL *pmod, int order,
 			 double **Z, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn);
 
+void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo);
+
 int set_panel_structure_from_vars (int uv, int tv, 
 				   double ***pZ, 
 				   DATAINFO *pdinfo);

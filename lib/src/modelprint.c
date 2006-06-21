@@ -400,27 +400,32 @@ static void Fline (const MODEL *pmod, PRN *prn)
 
 static void dwline (const MODEL *pmod, PRN *prn)
 {
-    if (plain_format(prn)) {
-	if (!na(pmod->dw)) {
-	    pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
-		    XDIGITS(pmod), pmod->dw);
-	    if (pmod->ci != PANEL) {
-		pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
-			XDIGITS(pmod), pmod->rho);
-	    }
-	} 
-    } else if (tex_format(prn)) {
-	char x1str[32], x2str[32];
+    if (na(pmod->dw)) {
+	return;
+    }
 
-	tex_dcolumn_double(pmod->dw, x1str);
-	tex_dcolumn_double(pmod->rho, x2str);
-	pprintf(prn, "%s & %s \\\\\n%s & %s \\\\\n",
-		I_("Durbin--Watson statistic"), x1str, 
-		I_("First-order autocorrelation coeff."), x2str);
+    if (plain_format(prn)) {
+	pprintf(prn, "  %s = %.*g\n", _("Durbin-Watson statistic"), 
+		XDIGITS(pmod), pmod->dw);
+	if (!na(pmod->rho)) {
+	    pprintf(prn, "  %s = %.*g\n", _("First-order autocorrelation coeff."), 
+		    XDIGITS(pmod), pmod->rho);
+	}
+    } else if (tex_format(prn)) {
+	char xstr[32];
+
+	tex_dcolumn_double(pmod->dw, xstr);
+	pprintf(prn, "%s & %s \\\\\n",
+		I_("Durbin--Watson statistic"), xstr); 
+	if (!na(pmod->rho)) {
+	    tex_dcolumn_double(pmod->rho, xstr);
+	    pprintf(prn, "%s & %s \\\\\n",
+		    I_("First-order autocorrelation coeff."), xstr);
+	}
     } else if (rtf_format(prn)) {
-	if (!na(pmod->dw)) {
-	    pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin-Watson statistic"), 
-		    pmod->dw);
+	pprintf(prn, RTFTAB "%s = %g\n", I_("Durbin-Watson statistic"), 
+		pmod->dw);
+	if (!na(pmod->rho)) {
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("First-order autocorrelation coeff."), 
 		    pmod->rho);
 	} 
@@ -1515,6 +1520,12 @@ static void maybe_print_first_stage_F (const MODEL *pmod, PRN *prn)
     }
 }
 
+#define fixed_effects_model(m) (m->ci == PANEL && \
+                                gretl_model_get_int(m, "fixed-effects"))
+
+#define random_effects_model(m) (m->ci == PANEL && \
+                                 gretl_model_get_int(m, "random-effects"))
+
 /**
  * printmodel:
  * @pmod: pointer to gretl model.
@@ -1698,13 +1709,14 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	rsqline(pmod, prn);
 
-	if (pmod->ci == PANEL && gretl_model_get_int(pmod, "random-effects")) {
+	if (random_effects_model(pmod)) {
 	    panel_variance_lines(pmod, prn);
 	} else if (pmod->ci != NLS && pmod->aux != AUX_VECM) {
 	    Fline(pmod, prn);
 	}
 
-	if (pmod->ci == PANEL) {
+	if (pmod->ci == PANEL || 
+	    (pmod->ci == OLS && dataset_is_panel(pdinfo))) {
 	    dwline(pmod, prn);
 	} 
 
@@ -1724,7 +1736,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
 
 	if (pmod->aux != AUX_VECM) {
-	    if (pmod->ci == OLS || pmod->ci == MPOLS) {
+	    if (pmod->ci == OLS || pmod->ci == MPOLS ||
+		fixed_effects_model(pmod)) {
 		print_ll(pmod, prn);
 	    }
 	    info_stats_lines(pmod, prn);

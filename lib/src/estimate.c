@@ -966,9 +966,13 @@ MODEL ar1_lsq (const int *list, double ***pZ, DATAINFO *pdinfo,
 	fix_wls_values(&mdl, *pZ);
     }
 
-    if ((opt & OPT_T) && mdl.missmask == NULL) {
-	mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
-	mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
+    if (mdl.missmask == NULL) {
+	if (opt & OPT_T) {
+	    mdl.rho = rhohat(1, mdl.t1, mdl.t2, mdl.uhat);
+	    mdl.dw = dwstat(1, &mdl, (const double **) *pZ);
+	} else if (dataset_is_panel(pdinfo)) {
+	    panel_dwstat(&mdl, pdinfo);
+	}
     } else {
 	mdl.rho = mdl.dw = NADBL;
     }
