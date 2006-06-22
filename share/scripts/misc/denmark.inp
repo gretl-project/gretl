@@ -1,0 +1,15 @@
+open denmark.gdt
+
+# determination of the cointegration rank
+coint2 2 LRM LRY IBO IDE --rc --seasonal
+
+# estimation of the vector EC model
+vecm 2 1 LRM LRY IBO IDE --rc --seasonal
+
+# retrieve the cointegration vector and the loadings
+matrix alpha = $jalpha
+matrix beta = $jbeta
+matrix Pi = alpha*beta'
+
+print "Restricted long-run matrix"
+matrix Pi
