@@ -57,6 +57,8 @@ struct model_grab grabs[] = {
     { M_SE,         "$ess" },
     { M_VCV,        "$vcv" },
     { M_RHO,        "$rho" },
+    { M_JALPHA,     "$jalpha" }, 
+    { M_JBETA,      "$jbeta" },
     { M_MAX,         NULL }
 };
 

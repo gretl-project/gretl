@@ -350,7 +350,7 @@ void set_up_windows_look (void)
 	int needslash = (paths.gretldir[n-1] != SLASH);
 	gchar *wimprc;
 
-#if 1
+#ifdef NEW_GTK
 	wimprc = g_strdup_printf("%s%sshare\\themes\\MS-Windows\\gtk-2.0\\gtkrc", 
 				 paths.gretldir, (needslash)? "\\" : "");
 #else

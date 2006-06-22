@@ -3091,6 +3091,7 @@ double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo,
 gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
 				    int *err)
 {
+    const gretl_matrix *src = NULL;
     gretl_matrix *M = NULL;
 
     if (var == NULL) {
@@ -3098,23 +3099,26 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	return NULL;
     }
 
-    switch (idx) {  
-    case M_UHAT:
-	M = gretl_matrix_copy(var->E);
-	break;
-    case M_COEFF:
-	M = gretl_matrix_copy(var->A);
-	break;
-    case M_VCV:
-	M = gretl_matrix_copy(var->S);
-	break;
-    default:
-	*err = E_BADSTAT;
-	break;
+    if (idx == M_UHAT) {
+	src = var->E;
+    } else if (idx == M_COEFF) {
+	src = var->A;
+    } else if (idx == M_VCV) {
+	src = var->S;
+    } else if (idx == M_JALPHA || idx == M_JBETA) {
+	if (var->jinfo != NULL) {
+	    src = (idx == M_JALPHA)? var->jinfo->Alpha : 
+		var->jinfo->Beta;
+	}
     }
 
-    if (M == NULL && !*err) {
-	*err = E_ALLOC;
+    if (src == NULL) {
+	*err = E_BADSTAT;
+    } else {
+	M = gretl_matrix_copy(src);
+	if (M == NULL) {
+	    *err = E_ALLOC;
+	}
     }
 
     return M;

@@ -3711,6 +3711,10 @@ int gretl_model_data_index (const char *s)
 	return M_AHAT;
     if (!strcmp(test, "$h"))
 	return M_H;
+    if (!strcmp(test, "$jalpha")) 
+	return M_JALPHA;
+    if (!strcmp(test, "$jbeta")) 
+	return M_JBETA;
 
     if (!msel && strchr(s, '(')) {
 	/* selecting scalar element from array? */
