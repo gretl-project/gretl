@@ -411,6 +411,19 @@ void delimiter_dialog (gretlopt *optp)
 		      GINT_TO_POINTER('\t'));    
     gtk_widget_show (button);
 
+    /* semicolon separator */
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("semicolon"));
+    gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
+    if (csvp->delim == ';') {
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+    }
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_delim), csvp);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(';'));    
+    gtk_widget_show (button);
+
 #ifdef ENABLE_NLS
     if (',' == get_local_decpoint()) {
 	GSList *decgroup;
