@@ -857,7 +857,7 @@ static void fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 	(wmod->ess * pan->Fdfn);
 }
 
-static void 
+static int
 fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 {
     int i;
@@ -869,8 +869,10 @@ fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 #endif
 
     free(targ->list);
-    targ->list = pan->pooled->list;
-    pan->pooled->list = NULL;
+    targ->list = gretl_list_copy(pan->pooled->list);
+    if (targ->list == NULL) {
+	return E_ALLOC;
+    }
 
     /* remove any non-varying variables */
     for (i=2; i<=targ->list[0]; i++) {
@@ -887,6 +889,8 @@ fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 #if PDEBUG
     printlist(targ->list, "new targ->list");
 #endif
+
+    return 0;
 }
 
 /* Correct various model statistics, in the case where we estimated
@@ -894,11 +898,15 @@ fix_panelmod_list (MODEL *targ, panelmod_t *pan)
    from which the group means were subtracted.
 */
 
-static void fix_within_stats (MODEL *targ, panelmod_t *pan)
+static int fix_within_stats (MODEL *targ, panelmod_t *pan)
 {
     int nc = targ->ncoeff;
+    int err = 0;
 
-    fix_panelmod_list(targ, pan);
+    err = fix_panelmod_list(targ, pan);
+    if (err) {
+	return err;
+    }
 
     targ->ybar = pan->ybar;
     targ->sdy = pan->sdy;
@@ -922,6 +930,8 @@ static void fix_within_stats (MODEL *targ, panelmod_t *pan)
     targ->ncoeff = targ->dfn + 1;
     ls_criteria(targ);
     targ->ncoeff = nc;
+
+    return err;
 }
 
 /* Fixed-effects model: add the per-unit intercept estimates
@@ -1344,17 +1354,21 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
 
 /* spruce up femod and attach it to pan */
 
-static void save_fixed_effects_model (MODEL *femod, panelmod_t *pan,
-				      const double **Z,
-				      const DATAINFO *pdinfo)
+static int save_fixed_effects_model (MODEL *femod, panelmod_t *pan,
+				     const double **Z,
+				     const DATAINFO *pdinfo)
 {
     int *ulist;
+    int err = 0;
 
     femod->ci = PANEL;
     gretl_model_set_int(femod, "fixed-effects", 1);
 
     if (pan->ndum == 0) {
-	fix_within_stats(femod, pan);
+	err = fix_within_stats(femod, pan);
+	if (err) {
+	    return err;
+	}
     } 
 
     /* compose list of dropped variables, if any */
@@ -1371,6 +1385,8 @@ static void save_fixed_effects_model (MODEL *femod, panelmod_t *pan,
     save_fixed_effects_F(pan, femod);
 
     *pan->realmod = *femod;
+
+    return err;
 }
 
 /* drive the calculation of the fixed effects regression, print the
@@ -1422,9 +1438,12 @@ static int within_variance (panelmod_t *pan,
 	}
 
 	if (pan->opt & OPT_F) {
-	    save_fixed_effects_model(&femod, pan, 
-				     (const double **) *pZ,
-				     pdinfo);
+	    err = save_fixed_effects_model(&femod, pan, 
+					   (const double **) *pZ,
+					   pdinfo);
+	    if (err) {
+		clear_model(&femod);
+	    }
 	} else {
 	    clear_model(&femod);
 	}
@@ -3066,6 +3085,18 @@ static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
     return err;
 }
 
+#if PDEBUG
+static void print_unit_var (int uv, double **Z, int n)
+{
+    int i;
+
+    fprintf(stderr, "unit_var:\n");
+    for (i=0; i<n && i<20; i++) {
+	fprintf(stderr, " Z[%d][%d] = %g\n", uv, i, Z[uv][i]);
+    }
+}
+#endif
+
 int set_panel_structure_from_vars (int uv, int tv, 
 				   double ***pZ, 
 				   DATAINFO *pdinfo)
@@ -3083,6 +3114,7 @@ int set_panel_structure_from_vars (int uv, int tv,
     fprintf(stderr, "set_panel_structure_from_vars:\n "
 	    "using var %d ('%s') for unit, var %d ('%s') for time\n",
 	    uv, pdinfo->varname[uv], tv, pdinfo->varname[tv]);
+    print_unit_var(uv, *pZ, n);
 #endif
 
     uid = copyvec((*pZ)[uv], n);
@@ -3115,6 +3147,10 @@ int set_panel_structure_from_vars (int uv, int tv,
 
     /* sort full dataset by unit and period */
     err = dataset_sort_by(*pZ, pdinfo, uv, tv);
+
+#if PDEBUG
+    print_unit_var(uv, *pZ, n);
+#endif
 
     if (!err) {
 	/* in case of unbalanced panel, pad out with missing

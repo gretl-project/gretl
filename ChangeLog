@@ -22,13 +22,11 @@ version 1.5.2, in progress
   the old weight variable
 - Don't print the "model has no constant" message, and do not
   use special methods to calculate R^2 and F, if the set of
-  regressors "effectively" contains a constant (e.g. there's
-  no explicit const but a jointly exhaustive set of dummy
-  variables is included)
+  regressors spans the space of a constant
 - Revamp panel data estimation: redefine the "panel" command for
   fixed- or random-effects estimation, rename the old "panel"
   command as "paneldat"
-- Lags in main window: make these visible "under" their parent
+- Lags in main window: make these visible under their parent
   variable, via a "twisty" triangle
 - Revamp multiple-precision models: add more statistics, and make
   them available for capture via genr
@@ -46,6 +44,14 @@ version 1.5.2, in progress
 - Add --hessian and --robust options to the mle command, which
   respectively produce a covariance matrix based on the Hessian
   and a QML sandwich estimator of the covariance matrix
+- Add Quandt likelihood ratio test for structural break
+- ADF and KPSS tests: add option to difference the selected
+  variable before testing
+- Delimiter for "CSV" files: add semicolon to the list of
+  options
+- VECMs: make Johansen's alpha and beta retrievable as matrices
+  with identifiers $jalpha and $jbeta
+- Several bug-fixes for the matrix manipulation facility
 
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality

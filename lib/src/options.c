@@ -296,7 +296,7 @@ struct flag_match flag_matches[] = {
     { 0L,   '\0' }
 };
 
-static const char *ok_flags = "abcdefghilmnopqrstvwxz";
+static const char *ok_flags = "abcdefghilmnopqrstuvwxz";
 
 #define isflag(c) (strchr(ok_flags, c) != NULL)
 

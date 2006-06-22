@@ -2886,7 +2886,6 @@ static void build_panel_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
-
 static void build_vec_radios (selector *sr)
 {
     GtkWidget *tmp;
