@@ -624,6 +624,8 @@ static char delim_from_arg (const char *s)
 	ret = ' ';
     } else if (!strcmp(s, "tab")) {
 	ret = '\t';
+    } else if (!strcmp(s, "semicolon")) {
+	ret = ';';
     }
 
     return ret;
@@ -639,10 +641,11 @@ static const char *arg_from_delim (char c)
 	ret = "space";
     } else if (c == '\t') {
 	ret = "tab";
+    } else if (c == ';') {
+	ret = "semicolon";
     }
 
     return ret;
-
 }
 
 static int display_settings (PRN *prn)

@@ -2880,7 +2880,7 @@ static void build_panel_radios (selector *sr)
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Random effects"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_R, 1);
+    pack_switch(b2, sr, FALSE, FALSE, OPT_U, 1);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
