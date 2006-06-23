@@ -185,6 +185,10 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
 	</option>
+	<option>
+	  <flag>--difference</flag>
+	  <effect>usa la differenza prima della variabile</effect>
+	</option>
       </options>
       <examples>
 	<example>adf 0 y</example>
@@ -200,7 +204,11 @@
       <para>
 	Calcola le statistiche per un gruppo di test Dickey&ndash;Fuller sulla
         variabile specificata, assumendo come ipotesi nulla che la variabile
-	abbia una radice unitaria.</para>
+        abbia una radice unitaria. Se si usa l'opzione di differenziazione, i
+        test vengono condotti sulla differenza prima della variabile e la
+        discussione che segue va riferita a questa trasformazione della
+        variabile.
+      </para>
 
       <para>Per impostazione predefinita, vengono mostrate tre varianti del
         test: una basata su una regressione che contiene solo una costante,
@@ -2212,8 +2220,10 @@
             nel primo trimestre e 0 altrove, <lit>dummy_2</lit> che vale 1
             nel secondo trimestre e 0 altrove, e così via.</para>
 	</li>
-	<li><para><cmd>genr paneldum</cmd> crea una serie di variabili dummy
-            da usare in un dataset di tipo panel.
+        <li><para><cmd>genr unitdum</cmd> e <cmd>genr timedum</cmd> creano insiemi di
+            variabili dummy speciali da usare in un dataset di tipo panel. Il
+            primo comando crea dummy che rappresentano le unità cross section,
+            il secondo i periodi di osservazione.
 	    </para>
 	</li>
       </ilist>
@@ -2796,25 +2806,23 @@
 
     <description>
       <para>
-        Questo test è disponibile solo dopo aver stimato un modello OLS
-        <quote>pooled</quote> (si veda anche <cmd>setobs</cmd>). Testa il
-        semplice modello pooled (con tutte le osservazioni considerate
+        Questo test è disponibile solo dopo aver stimato un modello OLS su dati
+        panel (si veda anche <cmd>setobs</cmd>). Testa il semplice modello
+        <quote>pooled</quote> (con tutte le osservazioni considerate
         indistintamente) contro le principali alternative: il modello a effetti
         fissi e quello a effetti casuali.</para>
 
       <para>
-	Il modello a effetti fissi aggiunge una variabile dummy per
-        tutte le unità cross section tranne una, permettendo così
-        all'intercetta della regressione di variare per ogni unità.
-	Viene poi eseguito un test <mathvar>F</mathvar> per la
-        significatività congiunta di queste dummy. Il modello a effetti
-        casuali scompone la varianza dei residui in due parti: una
-        specifica all'unità cross section e una specifica all'osservazione
-        particolare (la stima può essere eseguita solo se il numero
-        delle unità cross section nel dataset è maggiore del numero dei
-        parametri da stimare). La statistica LM di Breusch&ndash;Pagan
-	testa l'ipotesi nulla (che il modello pooled OLS sia adeguato)
-        contro l'alternativa a effetti casuali.</para>
+        Il modello a effetti fissi permette all'intercetta della regressione di
+        variare per ogni unità cross section. Viene eseguito un test
+        <mathvar>F</mathvar> per l'ipotesi nulla che le intercette non
+        differiscano tra loro.  Il modello a effetti casuali scompone la
+        varianza dei residui in due parti: una specifica all'unità cross section
+        e una specifica all'osservazione particolare (la stima può essere
+        eseguita solo se il numero delle unità cross section nel dataset è
+        maggiore del numero dei parametri da stimare). La statistica LM di
+        Breusch&ndash;Pagan testa l'ipotesi nulla che il modello pooled OLS sia
+        adeguato contro l'alternativo modello a effetti casuali.</para>
 
       <para>
 	Può accadere che il modello pooled OLS sia rifiutato nei confronti
@@ -3205,6 +3213,10 @@
 	  <flag>--quiet</flag>
 	  <effect>non mostra i risultati</effect>
 	</option>
+	<option>
+	  <flag>--difference</flag>
+	  <effect>usa la differenza prima della variabile</effect>
+	</option>
       </options>
       <examples>
 	<example>kpss 8 y</example>
@@ -3215,14 +3227,16 @@
     <description>
       <para context="gui">
 	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e
-	Shin, 1992) per la stazionarietà di una variabile. L'ipotesi
+	Shin, 1992) per la stazionarietà di una variabile (o della sua
+        differenza prima, se si usa l'opzione di differenziazione). L'ipotesi
         nulla è che la variabile in questione sia stazionaria, attorno
         a un valore fisso o, se è stata selezionata l'opzione <lit>includi un trend</lit>,
         attorno a un trend deterministico lineare.
       </para>
       <para context="cli">
 	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e
-	Shin, 1992) per la stazionarietà di una variabile. L'ipotesi
+	Shin, 1992) per la stazionarietà di una variabile (o della sua
+        differenza prima, se si usa l'opzione <lit>--difference</lit>. L'ipotesi
         nulla è che la variabile in questione sia stazionaria, attorno
         a un valore fisso o, se è stata usata l'opzione <lit>--trend</lit>,
         attorno a un trend deterministico lineare.
@@ -3485,6 +3499,9 @@
   <command name="lmtest" section="Tests" label="Test LM">
 
     <usage>
+      <arguments>
+        <argument optional="true">ordine</argument>
+      </arguments>
       <options>
         <option>
 	  <flag>--logs</flag>
@@ -3500,7 +3517,11 @@
         </option>
         <option>
 	  <flag>--white</flag>
-	  <effect>eteroschedasticità (test di White)</effect>
+	  <effect>eteroschedasticità, test di White</effect>
+        </option>
+        <option>
+	  <flag>--panel</flag>
+	  <effect>eteroschedasticità, a gruppi</effect>
         </option>
       </options>
     </usage>
@@ -3530,7 +3551,18 @@
         quadrati), test di White per l'eteroschedasticità e test LMF per la
         correlazione seriale di ordine pari alla periodicità (si veda Kiviet,
         1986), mostrando anche i coefficienti delle corrispondenti regressioni
-        ausiliarie. Si veda Ramanathan, capitoli 7, 8 e 9 per i dettagli.
+        ausiliarie.
+      </para>
+      <para>
+	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
+        scelga l'opzione <lit>--autocorr</lit>. Per impostazione predefinita
+        l'ordine viene scelto pari alla periodicità dei dati.
+      </para>
+      <para>
+	L'opzione <lit>--panel</lit> è disponibile solo se il modello viene
+        stimato su dati panel: in questo caso viene eseguito un test per
+        eteroschedasticità a gruppi (ossia per una varianza dell'errore diversa
+        fra le unità cross section).
       </para>
     </description>
 
@@ -3761,17 +3793,15 @@
       </para>
 
       <para>Questo comando apre una modalità speciale, in cui il
-        programma accetta comandi da eseguire più volte. All'interno di
-        un loop possono essere usati solo alcuni tipi di comandi:
-        <cmd>genr</cmd>, <cmd>ols</cmd>, <cmd>print</cmd>, <cmd>printf</cmd>
-        <cmd>pvalue</cmd>, <cmd>sim</cmd>, <cmd>smpl</cmd>, <cmd>store</cmd> e
-        <cmd>summary</cmd>, <cmd>if</cmd>, <cmd>else</cmd> e <cmd>endif</cmd>.
-        Si esce dalla modalità loop con l'istruzione <cmd>endloop</cmd>: solo a
-        questo punto i comandi indicati vengono eseguiti.
+        programma accetta comandi da eseguire più volte.  Si esce dalla modalità
+        loop con l'istruzione <cmd>endloop</cmd>: solo a questo punto i comandi
+        indicati vengono eseguiti.
       </para>
 
-      <para>Si veda la <guideref targ="looping"/> per ulteriori dettagli,
-      esempi e per la spiegazione dell'opzione <lit>--progressive</lit> (che è destinata
+      <para>Non tutti i comandi di gretl possono essere usati all'interno di un
+        loop: i comandi disponibili in questo contesto sono elencati nella
+        <guideref targ="looping"/>, che contiene anche altri dettagli, esempi e
+        la spiegazione dell'opzione <lit>--progressive</lit> (che è destinata
       ad essere usata nelle simulazioni Monte Carlo).</para>
     </description>
 
@@ -3955,6 +3985,14 @@
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
 	<option>
+	  <flag>--hessian</flag>
+	  <effect>calcola la matrice di covarianza a partire dall'Hessiana</effect>
+	</option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>matrice di covarianza QML</effect>
+	</option>
+	<option>
 	  <flag>--verbose</flag>
 	  <effect>mostra i dettagli delle iterazioni</effect>
 	</option>
@@ -4006,6 +4044,14 @@
       <code>
 	genr p = 0.5
       </code>
+
+      <para>
+	Per impostazione predefinita, gli errori standard sono basati sul
+        prodotto esterno del gradiente. Se si richiedono errori standard
+        robusti, viene usato uno stimatore QML (ossia, un sandwich dell'inversa
+        negativa dell'Hessiana e della matrice di covarianza del gradiente).
+        L'Hessiana è approssimata numericamente.
+      </para>
 
     </description>
 
@@ -4063,8 +4109,18 @@
        e in questo caso la derivata verrebbe calcolata numericamente.
       </para>
       <para>
-       Eventuali opzioni <lit>--vcv</lit> o <lit>--verbose</lit> vanno indicate
-       nella riga finale del blocco MLE.
+       Si noti che eventuali opzioni vanno indicate nella riga finale del blocco
+       MLE.
+      </para>
+
+      <para>
+	Per impostazione predefinita, gli errori standard sono basati sul
+        prodotto esterno del gradiente. Se si usa l'opzione
+        <lit>--hessian</lit>, vengono basati sull'inversa
+        negativa dell'Hessiana (che è approssimata numericamente). Se si usa
+        l'opzione <lit>--robust</lit>, viene usato uno stimatore QML
+        (ossia, un sandwich dell'inversa negativa dell'Hessiana e della matrice
+        di covarianza del gradiente).
       </para>
 
     </description>
@@ -4750,11 +4806,14 @@
 
   </command>
 
-  <command name="panel" section="Estimation" context="cli"
-    label="Modelli panel">
+  <command name="panel" section="Estimation" label="Modelli panel">
 
     <usage>
       <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostra la matrice di covarianza</effect>
+	</option>
  	<option>
 	  <flag>--random-effects</flag>
 	  <effect>effetti casuali invece che fissi</effect>
@@ -4780,10 +4839,17 @@
 
     <description>
       <para>
-        Stima un modello panel, usando gli effetti fissi o, se si usa l'opzione
-        <lit>--random-effects</lit>, gli effetti casuali.
+        Stima un modello panel, per impostazione predefinita usando lo stimatore
+        a effetti fissi. A seconda del numero di unità cross section e di
+        variabili indipendenti, la stima è implementata aggiungendo un insieme
+        di variabili dummy che rappresentano le unità, oppure sottraendo le
+        medie di gruppo o delle unità dai dati originali.
       </para>
-      <para>
+      <para context="cli">
+        Se si usa l'opzione <lit>--random-effects</lit>, viene usato il modello
+        a effetti casuali, usando il metodo di Swamy e Arora.
+      </para>
+      <para context="cli">
         In alternativa, con l'opzione <lit>--unit-weights</lit>, il modello viene
         stimato con i minimi quadrati ponderati, con i pesi costruiti a partire
         dalla varianza residua per le rispettive unità cross section nel
@@ -4791,9 +4857,16 @@
         <lit>--iterate</lit> per produrre stime iterative: nel caso di
         convergenza, le stime sono di massima verosimiglianza.
       </para>
-      <para>
-	FIXME add more detail here.
+      <para context="cli">
+	Per maggiori dettagli sulla stima panel, si veda la <guideref
+	  targ="chap-panel"/>.
       </para>
+      <para context="gui">
+        Se si seleziona la casella "Effetti casuali", vengono calcolate stime a
+        effetti casuali, usando il metodo di Swamy e Arora.
+	Per maggiori dettagli sulla stima panel, si veda la <guideref
+	  targ="chap-panel"/>.
+       </para>
     </description>
 
     <gui-access>
@@ -4834,8 +4907,30 @@
        </para>
      </description>
  
-   </command>
+  </command>
 
+  <command name="panel-wls" section="Estimation" context="gui"
+    label="Minimi quadrati ponderati a gruppi">
+
+    <description>
+      <para>
+        Minimi quadrati ponderati a gruppi per dati panel. Calcola le stime WLS
+	con i pesi basati sulle varianze stimate degli errori per le rispettive
+        unità cross section nel campione.
+      </para>
+      <para>
+	Selezionando l'opzione di iterazione, la procedura viene iterata: ad
+        ogni passo, i residui vengono ricalcolati usando le stime WLS
+        disponibili per i parametri, fornendo così un nuovo insieme di stime per
+        le varianze degli errori, e quindi un nuovo insieme di pesi.
+	Le iterazioni si arrestanso quando la massima differenza nelle stime dei
+        parametri tra un passo e l'altro scende sotto 0.0001, oppure se il
+        numero di iterazioni supera 20. Se la procedura converge, le stime
+        risultanti sono di massima verosimiglianza.
+      </para>
+    </description>
+
+  </command>
 
   <command name="pca" section="Statistics"
     label="Analisi delle componenti principali">
@@ -5265,6 +5360,37 @@
 
     <gui-access>
       <menu-path>/Modello/Serie storiche/PWE - Prais-Winsten</menu-path>
+    </gui-access>
+
+  </command>
+  
+  <command name="qlrtest" section="Tests" 
+    label="Quandt likelihood ratio test">
+
+    <description>
+      <para>
+        Per un modello stimato con OLS su serie storiche, esegue il test del
+        rapporto di verosimiglianza di Quandt (QLR) per un break strutturale in
+        un punto incognito del campione, escludendo il 15% delle osservazioni
+        all'inizio e ella fine del campione.
+      </para>
+      <para>
+	Per ogni possibile punto di rottura compreso nel 70% centrale delle
+        osservazioni, viene eseguito un test di Chow (si veda <cmdref
+          targ="chow"/>). La statistica del test QLR è il massimo dei valori
+	<mathvar>F</mathvar> di questi test; segue una distribuzione non
+        standard, i cui valori critici sono presi da <book>Introduction to
+          Econometrics</book> di Stock e Watson (2003). Se la statistica QLR
+        eccede il valore critico per un dato livello di significatività, è
+        possibile inferire che i parametri del modello non sono costanti.
+        Questa statistica può essere usata per riconoscere forme di instabilità
+        diverse da un singolo punto di rottura, ad esempio più punti di rottura
+        o un lento cambiamento dei parametri.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Finestra del modello, /Tests/QLR</menu-path>
     </gui-access>
 
   </command>
@@ -5713,7 +5839,7 @@
 
 
   <command name="scatters" section="Graphs"
-    label="Grafici a dispersione multipli">
+    label="Grafici multipli per coppie di variabili">
 
     <usage>
       <arguments>
@@ -5721,6 +5847,12 @@
         <argument separated="true">lista-variabili-x</argument>
 	<argument alternate="true">lista-variabili-y ; variabile-x</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--with-lines</flag>
+	  <effect>crea grafici lineari</effect>
+	</option>
+      </options>
       <examples>
         <example>scatters 1 ; 2 3 4 5</example>
         <example>scatters 1 2 3 4 5 6 ; 7</example>
@@ -5729,10 +5861,9 @@
 
     <description>
       <para context="cli">
-	Produce grafici a dispersione della <repl>variabile-y</repl>
-        rispetto ad ognuna delle variabili nella
-        <repl>lista-variabili-x</repl>, oppure di tutte le variabili
-        nella <repl>lista-variabili-y</repl> rispetto alla
+        Produce grafici della <repl>variabile-y</repl> rispetto ad ognuna delle
+        variabili nella <repl>lista-variabili-x</repl>, oppure di tutte le
+        variabili nella <repl>lista-variabili-y</repl> rispetto alla
         <repl>variabile-x</repl>.  Il primo esempio visto sopra assegna
         la variabile 1 all'asse <mathvar>y</mathvar> e produce quattro
         grafici, il primo con la variabile 2 sull'asse
@@ -5744,18 +5875,23 @@
         a sei grafici alla volta, eventuali variabili in sovrappiù
         saranno ignorate.
       </para>
+      <para context="cli">
+        Per impostazione predefinita vengono prodotti grafici a dispersione, ma
+        se si usa l'opzione <lit>--with-lines</lit>, vengono prodotti grafici
+        lineari.
+      </para>
       <para context="gui">
 	Produce grafici a dispersione della <quote>Variabile asse
         Y</quote> selezionata rispetto ad ognuna delle <quote>Variabili
-        asse X</quote> selezionate. Questi gruppi di grafici sono utili
-        nell'analisi esplorativa dei dati. È possibile creare fino a sei
-        grafici alla volta, eventuali variabili in sovrappiù saranno
-        ignorate.
+        asse X</quote> selezionate (ma è possibile fare anche viceversa). Questi
+        gruppi di grafici sono utili nell'analisi esplorativa dei dati. È
+        possibile creare fino a sei grafici alla volta, eventuali variabili in
+        sovrappiù saranno ignorate.
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Grafici multipli a dispersione</menu-path>
+      <menu-path>/Dati/Grafici multipli</menu-path>
     </gui-access>
 
   </command>
@@ -6077,8 +6213,8 @@
 
     <usage>
       <altforms>
-        <altform><repl>periodicità</repl> <repl>oss-iniziale</repl></altform>
-	<altform><repl>variabile-unità</repl> <repl>variabile-periodi</repl></altform>
+        <altform>setobs <repl>periodicità</repl> <repl>oss-iniziale</repl></altform>
+	<altform>setobs <repl>variabile-unità</repl> <repl>variabile-periodi</repl></altform>
       </altforms>
       <options>
         <option>
