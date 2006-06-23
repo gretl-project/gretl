@@ -16,11 +16,21 @@ generale di un loop, o ciclo, è:
       endloop
 \end{code}
 
-Come si vedrà di seguito, sono disponibili cinque tipi di espressione di
-controllo. Nel corpo del loop sono accettati i seguenti comandi:
-\cmd{genr}, \cmd{ols}, \cmd{print}, \cmd{printf}, \cmd{pvalue},
-\cmd{sim}, \cmd{smpl}, \cmd{store}, \cmd{summary}, \cmd{if},
-\cmd{else} e \cmd{endif}.
+Sono disponibili cinque tipi di espressione di controllo, come si vede nella
+sezione~\ref{loop-control}.
+
+Non tutti i comandi di \app{gretl} sono disponibili all'interno di un loop: i
+comandi accettabili in questo contesto sono mostrati nella
+Tabella~\ref{tab:loopcmds}.
+
+\begin{table}[htbp]
+\caption{Comandi utilizzabili in un loop}
+\label{tab:loopcmds}
+\begin{center}
+%% The following is generated automatically
+\input tabloopcmds.tex
+\end{center}
+\end{table}
 
 In modalità predefinita, il comando \cmd{genr} all'interno di un loop
 opera in modo silenzioso (senza mostrare informazioni sulle variabili

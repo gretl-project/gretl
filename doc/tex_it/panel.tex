@@ -26,10 +26,8 @@ due modi:
   cross-section.
 \end{itemize}
 
-È possibile usare entrambi i metodi. Il menù \textsf{Campione} di
-\app{gretl} contiene il comando ``Ristruttura panel'', che permette di
-passare dalla disposizione "pila di dati cross-section" a quella "pila
-di serie storiche" e viceversa.
+È possibile usare entrambi i metodi per inserire i dati. Internamente,
+\app{gretl} usa il formato ``pila di serie storiche'' per immagazzinare i dati.
 
 Quando si importano dati panel in \app{gretl} da un foglio di calcolo o
 da un file con valori separati da virgole, la struttura panel non verrà
@@ -162,23 +160,16 @@ nell'esempio seguente, che ipotizza una situazione uguale a quella precedente
 In uno studio panel, può nascere l'esigenza di costruire delle
 variabili dummy di uno dei seguenti tipi: (a) dummy che identificano
 ciascuna delle unità cross-section, o (b) dummy che identificano
-ciascuna delle unità temporali. Il primo tipo può essere usato per
+ciascuno dei periodi. Il primo tipo può essere usato per
 permettere all'intercetta della regressione di variare tra le unità
 cross-section, il secondo per permettere all'intercetta di variare tra
 i periodi.
 
-Per creare questo tipo di dummy, è possibile usare le tre funzioni
+Per creare questo tipo di dummy, è possibile usare le due funzioni
 speciali del menù \textsf{Dati, Aggiungi variabile}, o del comando
 testuale \cmd{genr}.
 
 \begin{enumerate}
-\item ``Dummy periodiche'' (comando testuale \cmd{genr dummy}). Questo
-  comando crea un insieme di variabili dummy che identificano i
-  periodi.  La variabile \verb+dummy_1+ avrà valore 1 in ogni riga dei
-  dati che corrisponde a un'osservazione del primo periodo, e 0
-  altrove; \verb+dummy_2+ avrà valore 1 in ogni riga dei dati che
-  corrisponde a un'osservazione del secondo, e così via.
-      
 \item ``Dummy per unità'' (comando testuale \cmd{genr unitdum}).
   Questo comando crea un insieme di variabili dummy che identificano
   le unità cross section.  La variabile \verb+du_1+ avrà valore 1 in
@@ -187,12 +178,13 @@ testuale \cmd{genr}.
   riga dei dati che corrisponde a un'osservazione della seconda unità
   cross section, e così via.
         
-\item ``Dummy panel'' (comando testuale \cmd{genr paneldum}). Questo
-  comando crea entrambi i tipi di dummy: sia quelle periodiche e
-  quelle relative alle unità cross section (longitudinali). Le dummy
-  longitudinali sono chiamate \verb+du_1+, \verb+du_2+ e così via,
-  mentre le dummy periodiche sono chiamate \verb+dt_1+, \verb+dt_2+,
-  ecc.
+\item ``Dummy temporali'' (comando testuale \cmd{genr timedum}).
+  Questo comando crea un insieme di variabili dummy che identificano
+  i periodi.  La variabile \verb+dt_1+ avrà valore 1 in ogni riga dei dati che
+  corrisponde a un'osservazione del primo periodo, e 0 altrove; \verb+dt_2+ avrà
+  valore 1 in ogni riga dei dati che corrisponde a un'osservazione del secondo
+  periodo, e così via.
+
 \end{enumerate}
 
 Se un dataset panel contiene l'anno di ogni osservazione all'interno
@@ -224,28 +216,26 @@ codice di valore mancante, laddove il ritardo non è disponibile.  Quanto
 si esegue una regressione che include questo tipo di variabili, il
 programma escluderà automaticamente le osservazioni mancanti.
 
-\section{Stima pooled}
+\section{Stima OLS pooled}
 \label{pooled-est}
 
-Esiste un comando speciale di stima utilizzabile con i dati panel, il
-comando \textsf{Pooled OLS} nel menù \textsf{Modello}. Questo comando
-è disponibile solo se il dataset è riconosciuto come panel; per
-usarlo, occorre specificare un modello senza alcuna variabile dummy
-relativa alle unità cross-section. Il comando esegue una semplice
-stima OLS, trattando allo stesso modo la variazione longitudinale e
-quella temporale presente nei dati. Questo modello può essere
-appropriato o no: il menù \textsf{Test} della finestra del modello
-contiene il comando \textsf{Diagnosi panel}, che esegue un test del
-modello OLS pooled contro le principali alternative: il modello a
-effetti fissi e quello a effetti casuali.  
+Una volta che un dataset è riconosciuto come panel, quando si stima un modello
+usando i minimi quadrati ordinari (OLS) è disponibile un tipo di test
+aggiuntivo: nel menù \textsf{Test} della finestra del modello è il comando
+``Diagnosi panel'', mentre nella versione a riga di comando del programma è
+il comando \cmd{hausman}.
 
-Il modello a \emph{effetti fissi} aggiunge una variabile dummy per tutte le
-unità cross section tranne una, permettendo così all'intercetta della
-regressione di variare per ogni unità.  Viene eseguito un test
-\emph{F} per la significatività congiunta di queste dummy: un basso
-p-value per questo test va contro l'ipotesi nulla (che il semplice
-modello pooled OLS sia adeguato) e a favore del modello a effetti
-fissi.
+Per eseguire questo test, occorre specificare un modello senza alcuna variabile
+dummy relativa alle unità cross-section. Il test confronta il semplice modello
+OLS con le due principali alternative: il modello a effetti fissi e quello a
+effetti casuali.
+
+Il modello a \emph{effetti fissi} sopprime la costante e aggiunge una variabile
+dummy per tutte le unità cross section, permettendo così all'intercetta della
+regressione di variare per ogni unità.  Viene eseguito un test \emph{F} per
+testare l'ipotesi nulla che l'intercetta sia uguale per tutte le
+unità: un basso p-value per questo test depone contro l'ipotesi nulla e a favore
+dell'adeguatezza del modello a effetti fissi.
 
 Il modello a \emph{effetti casuali}, d'altra parte, scompone la varianza dei
 residui in due parti: una specifica all'unità cross section, o
@@ -253,8 +243,8 @@ residui in due parti: una specifica all'unità cross section, o
 essere eseguita solo se il panel è abbastanza ``largo'', ossia se il
 numero delle unità cross section nel dataset è maggiore del numero dei
 parametri da stimare).  La statistica LM di Breusch--Pagan testa
-l'ipotesi nulla (che il modello pooled OLS sia adeguato) contro
-l'alternativa a effetti casuali.  
+l'ipotesi nulla che il modello pooled OLS sia adeguato, rispetto all'alternativo
+modello a effetti casuali.
 
 Può accadere che il modello pooled OLS sia rifiutato nei confronti di
 entrambe le alternative, a effetti fissi o casuali. Come giudicare
@@ -274,6 +264,11 @@ modello a effetti fissi.
 
 Per una discussione rigorosa di questo argomento, si veda il capitolo
 14 di Greene (2000).
+ 
+\section{Stimatori panel}
+\label{panel-est}
+
+(da scrivere)
 
 \section{Esempio: la Penn World Table}
 \label{PWT}
