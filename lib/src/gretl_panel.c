@@ -1234,12 +1234,6 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
 	felist[i] = i;
     }
 
-#if 0    
-    if (pan->opt & OPT_R) {
-	lsqopt |= OPT_R;
-    }
-#endif
-
     femod = lsq(felist, &wZ, winfo, OLS, lsqopt);
 
     if (femod.errcode) {
@@ -1278,7 +1272,7 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
 		       PRN *prn)
 {
     MODEL femod;
-    gretlopt lsqopt = OPT_A | OPT_Z;
+    gretlopt lsqopt = OPT_A | OPT_Z | OPT_C;
     int *felist;
     int oldv = pdinfo->v;
     int i, j;
@@ -1338,12 +1332,6 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
 
 #if PDEBUG
     printlist(felist, "felist");
-#endif
-
-#if 0
-    if (pan->opt & OPT_R) {
-	lsqopt |= OPT_R;
-    }
 #endif
 
     femod = lsq(felist, pZ, pdinfo, OLS, lsqopt);
