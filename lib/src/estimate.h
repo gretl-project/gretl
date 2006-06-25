@@ -74,7 +74,7 @@ MODEL arch_model (const int *list, int order,
 		  double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt, PRN *prn);
 
-int makevcv (MODEL *pmod);
+int makevcv (MODEL *pmod, double sigma);
 
 int *augment_regression_list (const int *orig, int aux, 
 			      double ***pZ, DATAINFO *pdinfo);

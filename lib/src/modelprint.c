@@ -690,6 +690,16 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
+static void panel_robust_vcv_line (const MODEL *pmod, PRN *prn)
+{
+    if (plain_format(prn)) {
+	pputs(prn, _("Robust (HAC) standard errors"));
+    } else {
+	pputs(prn, I_("Robust (HAC) standard errors"));
+    }
+    pputc(prn, '\n');
+}
+
 static void hac_vcv_line (const MODEL *pmod, PRN *prn)
 {
     int lag = gretl_model_get_int(pmod, "hac_lag");
@@ -790,7 +800,9 @@ void print_model_vcv_info (const MODEL *pmod, PRN *prn)
 	hc_vcv_line(pmod, prn);
     } else if (gretl_model_get_int(pmod, "ml_vcv")) {
 	ml_vcv_line(pmod, prn);
-    } 
+    } else if (gretl_model_get_int(pmod, "panel_hac")) {
+	panel_robust_vcv_line(pmod, prn);
+    }
 }
 
 static void print_model_droplist (const MODEL *pmod, 

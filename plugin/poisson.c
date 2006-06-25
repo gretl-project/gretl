@@ -129,8 +129,8 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     targ->adjrsq = NADBL;
     targ->fstt = NADBL;
 
-    /* make and correct the variance matrix */
-    if (makevcv(src)) {
+    /* make the covariance matrix */
+    if (makevcv(src, 1.0)) {
 	err = 1;
     } else {
 	int idx;
@@ -140,12 +140,6 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
 	}
 	targ->vcv = src->vcv;
 	src->vcv = NULL;
-	for (i=0; i<targ->ncoeff; i++) {
-	    for (j=i; j<targ->ncoeff; j++) {
-		idx = ijton(i, j, targ->ncoeff);
-		targ->vcv[idx] /= sigma2;
-	    }
-	}
     }   
 
     return err;

@@ -417,6 +417,24 @@ static void gretl_varinfo_init (VARINFO *vinfo)
 }
 
 /**
+ * copy_varinfo:
+ * @targ: target to which to copy.
+ * @src: source to copy from.
+ *
+ * Copies all relevant information from @src to @targ.
+ */
+
+void copy_varinfo (VARINFO *targ, const VARINFO *src)
+{
+    strcpy(targ->label, src->label);
+    strcpy(targ->display_name, src->display_name);
+    targ->flags = src->flags;
+    targ->compact_method = src->compact_method;
+    targ->stack_level = src->stack_level;
+    targ->sorted_markers = NULL;
+}
+
+/**
  * dataset_allocate_varnames:
  * @pdinfo: dataset information struct.
  *

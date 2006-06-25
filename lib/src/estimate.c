@@ -49,7 +49,7 @@
 			     squares value to be effectively zero */
 
 /* define for lots of debugging info */
-#undef XPX_DEBUG
+#define XPX_DEBUG 0
 
 /* private function prototypes */
 static int form_xpxxpy (const int *list, int t1, int t2, 
@@ -161,7 +161,7 @@ transcribe_ld_vcv (MODEL *targ, MODEL *src)
     int nxpx = (nv * nv + nv) / 2;
     int i, j;
 
-    if (makevcv(src)) {
+    if (makevcv(src, src->sigma)) {
 	return 1;
     }
 
@@ -741,7 +741,7 @@ static int gretl_choleski_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     form_xpxxpy(pmod->list, pmod->t1, pmod->t2, (const double **) *pZ, 
 		pmod->nwt, rho, pwe, pmod->xpx, xpy, pmod->missmask);
 
-#ifdef XPX_DEBUG
+#if XPX_DEBUG
     for (i=0; i<=l0; i++) {
 	fprintf(stderr, "xpy[%d] = %g\n", i, xpy[i]);
     }
@@ -1539,6 +1539,8 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
 /**
  * makevcv:
  * @pmod: pointer to model.
+ * @sigma: square root of error variance, or 1.0 to
+ * produce just X'X^{-1}.
  *
  * Inverts the Cholesky-decomposed X'X matrix and computes the 
  * coefficient covariance matrix.
@@ -1546,7 +1548,7 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
  * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int makevcv (MODEL *pmod)
+int makevcv (MODEL *pmod, double sigma)
 {
     int dec, mst, kk, i, j, kj, icnt, m, k, l = 0;
     const int nv = pmod->ncoeff;
@@ -1606,15 +1608,15 @@ int makevcv (MODEL *pmod)
 	}
     }
 
-    if (pmod->ci == CUSUM) {
-	return 0;
+    if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	sigma = 1.0;
     }
 
-    /* some estimators need special treatment */
+    if (sigma != 1.0) {
+	double s2 = sigma * sigma;
 
-    if (pmod->ci != HCCM && pmod->ci != LOGIT && pmod->ci != PROBIT) {
 	for (k=0; k<nxpx; k++) {
-	    pmod->vcv[k] *= pmod->sigma * pmod->sigma;
+	    pmod->vcv[k] *= s2;
 	}
     }
 
@@ -2367,7 +2369,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 
     pmod->ci = HCCM;
 
-    if (makevcv(pmod)) {
+    if (makevcv(pmod, 1.0)) {
 	err = E_ALLOC;
 	goto bailout;
     }

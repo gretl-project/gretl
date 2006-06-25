@@ -226,6 +226,8 @@ void dataset_obs_info_default (DATAINFO *pdinfo);
 
 void copy_dataset_obs_info (DATAINFO *targ, const DATAINFO *src);
 
+void copy_varinfo (VARINFO *targ, const VARINFO *src);
+
 void set_sorted_markers (DATAINFO *pdinfo, int v, char **S);
 
 void dataset_set_regular_markers (DATAINFO *pdinfo);

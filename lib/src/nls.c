@@ -1129,7 +1129,7 @@ static int add_nls_std_errs_to_model (MODEL *pmod)
 {
     int i, k;
 
-    if (pmod->vcv == NULL && makevcv(pmod)) {
+    if (pmod->vcv == NULL && makevcv(pmod, pmod->sigma)) {
 	return E_ALLOC;
     }
 

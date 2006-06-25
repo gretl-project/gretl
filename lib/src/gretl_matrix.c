@@ -4604,7 +4604,7 @@ gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
     int k = pmod->ncoeff;
 
     /* first ensure the model _has_ a vcv */
-    if (makevcv(pmod)) {
+    if (makevcv(pmod, pmod->sigma)) {
 	return NULL;
     }
 

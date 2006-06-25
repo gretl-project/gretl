@@ -156,6 +156,120 @@ static int var_is_varying (const panelmod_t *pan, int v)
     return 0;
 }
 
+static gretl_matrix *fe_model_xpx (MODEL *pmod)
+{
+    gretl_matrix *X;
+    int k = pmod->ncoeff;
+    double x;
+    int i, j, m;
+
+    makevcv(pmod, 1.0); /* invert X'X into pmod->vcv */
+
+    X = gretl_matrix_alloc(k, k);
+    if (X == NULL) {
+	return NULL;
+    }  
+
+    m = 0;
+    for (j=0; j<k; j++) {
+	for (i=j; i<k; i++) {
+	    x = pmod->vcv[m++];
+	    X->val[mdx(X, i, j)] = X->val[mdx(X, j, i)] = x;
+	}
+    }
+
+    return X;
+}
+
+static int 
+fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
+{
+    gretl_vector *e = NULL;
+    gretl_matrix *Xi = NULL;
+    gretl_vector *eXi = NULL;
+    gretl_matrix *tmp = NULL;
+    gretl_matrix *XX = NULL;
+    gretl_matrix *W = NULL;
+    int Ti, T = pan->effT;
+    int k = pmod->ncoeff;
+    int i, j, v, s, t;
+    int err = 0;
+
+    e = gretl_vector_alloc(T);
+    Xi = gretl_matrix_alloc(T, k);
+    eXi = gretl_vector_alloc(k);
+    tmp = gretl_matrix_alloc(k, k);
+    XX = fe_model_xpx(pmod);
+    W = gretl_matrix_alloc(k, k);
+
+    if (e == NULL || Xi == NULL || eXi == NULL ||
+	tmp == NULL || XX == NULL || W == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    gretl_matrix_zero(W);
+
+    s = 0;
+    for (i=0; i<pan->nunits; i++) {
+	Ti = pan->unit_obs[i];
+	if (Ti < FE_MINOBS) {
+	    continue;
+	}
+	e = gretl_matrix_reuse(e, Ti, 1);
+	Xi = gretl_matrix_reuse(Xi, Ti, k);
+	for (t=0; t<Ti; t++) {
+	    gretl_vector_set(e, t, pmod->uhat[s]);
+	    for (j=0; j<k; j++) {
+		v = pmod->list[j + 2];
+		gretl_matrix_set(Xi, t, j, Z[v][s]);
+	    }
+	    s++;
+	}
+	gretl_matrix_multiply_mod(e, GRETL_MOD_TRANSPOSE,
+				  Xi, GRETL_MOD_NONE,
+				  eXi);
+	gretl_matrix_multiply_mod(eXi, GRETL_MOD_TRANSPOSE,
+				  eXi, GRETL_MOD_NONE,
+				  tmp);
+	gretl_matrix_add_to(W, tmp);
+    }
+
+#if 0
+    gretl_matrix_print(W, "sum_eXi");
+#endif
+
+    /* now form V(b_W) = (X'X)^{-1} W (X'X)^{-1} */
+
+    gretl_matrix_multiply(XX, W, tmp);
+    gretl_matrix_multiply(tmp, XX, W);
+
+#if 0
+    gretl_matrix_print(W, "V(b_W)");
+#endif
+
+    s = 0;
+    for (i=0; i<k; i++) {
+	for (j=i; j<k; j++) {
+	    pmod->vcv[s++] = W->val[mdx(W, i, j)];
+	}
+	pmod->sderr[i] = sqrt(W->val[mdx(W, i, i)]);
+    }
+
+    gretl_model_set_int(pmod, "panel_hac", 1);
+
+ bailout:
+
+    gretl_matrix_free(e);
+    gretl_matrix_free(Xi);
+    gretl_matrix_free(eXi);
+    gretl_matrix_free(tmp);
+    gretl_matrix_free(XX);
+    gretl_matrix_free(W);
+
+    return err;
+}
+
 /* Durbin-Watson statistic for pooled or fixed effects model on a 
    balanced panel */
 
@@ -174,6 +288,10 @@ void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
     }
 
     if (pmod->nobs % T != 0) {
+#if PDEBUG
+	fprintf(stderr, "panel_dwstat: skipping: pmod->nobs = %d, T = %d\n", 
+		pmod->nobs, T);
+#endif
 	return;
     }
 
@@ -196,6 +314,22 @@ void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo)
     }
 
     pmod->dw = num / pmod->ess;
+}
+
+static void private_panel_dwstat (MODEL *pmod, DATAINFO *pdinfo, 
+				  const panelmod_t *pan)
+{
+    if (pan->ndum > 0) {
+	panel_dwstat(pmod, pdinfo);
+    } else if (pan->balanced) {
+	int pd = pdinfo->pd;
+
+	pdinfo->pd = pan->effT;
+	panel_dwstat(pmod, pdinfo);
+	pdinfo->pd = pd;
+    } else {
+	pmod->rho = pmod->dw = NADBL;
+    }
 }
 
 /* Allocate the arrays needed to perform the Hausman test,
@@ -323,11 +457,14 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 
     /* real number of included units */
     pan->effn = 0;
+    pan->balanced = 1;
 
     for (i=0; i<pan->nunits; i++) { 
 	if (pan->unit_obs[i] >= FE_MINOBS) {
 	    wnobs += pan->unit_obs[i];
 	    pan->effn += 1;
+	} else if (pan->unit_obs[i] != pan->effT) {
+	    pan->balanced = 0;
 	}
     }
 
@@ -731,7 +868,7 @@ static int bXb (panelmod_t *pan)
 static void panel_df_correction (MODEL *pmod, int ndf)
 {
     double dfcorr = sqrt((double) pmod->dfd / (pmod->dfd - ndf));
-    int i, j, idx;
+    int i;
 
     pmod->dfd -= ndf;
     pmod->dfn += ndf - 1; 
@@ -740,17 +877,6 @@ static void panel_df_correction (MODEL *pmod, int ndf)
 
     for (i=0; i<pmod->ncoeff; i++) {
 	pmod->sderr[i] *= dfcorr;
-    }
-
-    dfcorr *= dfcorr;
-
-    if (pmod->vcv != NULL) {
-	for (i=0; i<pmod->ncoeff; i++) {
-	    for (j=i; j<pmod->ncoeff; j++) {
-		idx = ijton(i, j, pmod->ncoeff);
-		pmod->vcv[idx] *= dfcorr;
-	    }
-	}
     }
 }
 
@@ -1079,7 +1205,7 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
 			    DATAINFO *pdinfo, PRN *prn)
 {
     MODEL femod;
-    gretlopt lsqopt = OPT_A | OPT_Z;
+    gretlopt lsqopt = OPT_A | OPT_Z | OPT_C;
     double **wZ = NULL;
     DATAINFO *winfo = NULL;
     int *felist = NULL;
@@ -1107,10 +1233,12 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
     for (i=1; i<=felist[0]; i++) {
 	felist[i] = i;
     }
-    
+
+#if 0    
     if (pan->opt & OPT_R) {
 	lsqopt |= OPT_R;
     }
+#endif
 
     femod = lsq(felist, &wZ, winfo, OLS, lsqopt);
 
@@ -1128,8 +1256,11 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
 	printmodel(&femod, winfo, OPT_O, prn);
 #endif
 	if (pan->opt & OPT_F) {
-	    /* saving the FE model: need to fix uhat, yhat */
+	    /* saving the FE model */
 	    fix_panel_hatvars(&femod, winfo, pan, NULL);
+	    if (pan->opt & OPT_R) {
+		fe_robust_vcv(&femod, pan, (const double **) wZ);
+	    } 
 	}
     }
 
@@ -1209,9 +1340,11 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
     printlist(felist, "felist");
 #endif
 
+#if 0
     if (pan->opt & OPT_R) {
 	lsqopt |= OPT_R;
     }
+#endif
 
     femod = lsq(felist, pZ, pdinfo, OLS, lsqopt);
 
@@ -1240,6 +1373,13 @@ static int get_fixed_effects_method (panelmod_t *pan)
 #if PDEBUG
     /* allow override via an environment variable */
     if (getenv("NODUMMIES") != NULL) {
+	return 0;
+    }
+#endif
+
+#if 1
+    if ((pan->opt & OPT_R) && (pan->opt & OPT_F)) {
+	fprintf(stderr, "Robust: will use demeaning\n");
 	return 0;
     }
 #endif
@@ -1352,11 +1492,12 @@ static int compose_panel_droplist (MODEL *pmod, panelmod_t *pan)
     return gretl_model_set_list_as_data(pmod, "droplist", dlist);
 }
 
+
 /* spruce up femod and attach it to pan */
 
 static int save_fixed_effects_model (MODEL *femod, panelmod_t *pan,
 				     const double **Z,
-				     const DATAINFO *pdinfo)
+				     DATAINFO *pdinfo)
 {
     int *ulist;
     int err = 0;
@@ -1381,7 +1522,7 @@ static int save_fixed_effects_model (MODEL *femod, panelmod_t *pan,
     fe_model_add_ahat(femod, Z, pdinfo, pan);
     femod->list[0] -= pan->ndum;
     set_model_id(femod);
-    panel_dwstat(femod, pdinfo);
+    private_panel_dwstat(femod, pdinfo, pan);
     save_fixed_effects_F(pan, femod);
 
     *pan->realmod = *femod;
@@ -1432,7 +1573,7 @@ static int within_variance (panelmod_t *pan,
 	}
 
 	if (pan->sigma != NULL) {
-	    makevcv(&femod);
+	    makevcv(&femod, femod.sigma);
 	    pan->sigma_e = femod.sigma;
 	    vcv_slopes(pan, &femod, VCV_INIT);
 	}
@@ -1464,6 +1605,8 @@ static void fix_gls_stats (MODEL *gmod, panelmod_t *pan)
     gmod->rsq = NADBL;
     gmod->adjrsq = NADBL;
     gmod->fstt = NADBL;
+    gmod->rho = NADBL;
+    gmod->dw = NADBL;
 
     nc = gmod->ncoeff;
     gmod->ncoeff = gmod->dfn + 1;
@@ -1560,7 +1703,7 @@ static int random_effects (panelmod_t *pan,
 		pan->bdiff[k++] -= remod.coeff[i];
 	    }
 	}
-	makevcv(&remod);
+	makevcv(&remod, remod.sigma);
 	vcv_slopes(pan, &remod, VCV_SUBTRACT);
     }
 
@@ -1605,14 +1748,20 @@ unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
 
 static void save_breusch_pagan_result (panelmod_t *pan)
 {
-    ModelTest *test = model_test_new(GRETL_TEST_PANEL_BP);
+    ModelTest *test;
+
+    if (pan->realmod == NULL || na(pan->BP)) {
+	return;
+    }
+
+    test = model_test_new(GRETL_TEST_PANEL_BP);
 
     if (test != NULL) {
 	model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
 	model_test_set_dfn(test, 1);
 	model_test_set_value(test, pan->BP);
 	model_test_set_pvalue(test, chisq(pan->BP, 1));
-	maybe_add_test_to_model(pan->pooled, test);
+	maybe_add_test_to_model(pan->realmod, test);
     }	    
 }
 
@@ -1624,9 +1773,14 @@ breusch_pagan_LM (panelmod_t *pan, const DATAINFO *pdinfo, PRN *prn)
 {
     double A = 0.0;
     int n = pan->pooled->nobs;
+    int print_means = 0;
     int i, t, M = 0;
 
-    if (pan->opt & OPT_V) {
+    if ((pan->opt & OPT_V) && pan->effn <= 10) {
+	print_means = 1;
+    }
+
+    if (print_means) {
 	pputs(prn, _("\nMeans of pooled OLS residuals for cross-sectional "
 		     "units:\n\n"));
     }
@@ -1643,7 +1797,7 @@ breusch_pagan_LM (panelmod_t *pan, const DATAINFO *pdinfo, PRN *prn)
 		    usum += u;
 		}
 	    }
-	    if (pan->opt & OPT_V) {
+	    if (print_means) {
 		pprintf(prn, _(" unit %2d: %13.5g\n"), i + 1, 
 			usum / (double) Ti);
 	    }
@@ -1685,14 +1839,20 @@ static void print_hausman_result (panelmod_t *pan, PRN *prn)
 
 static void save_hausman_result (panelmod_t *pan)
 {
-    ModelTest *test = model_test_new(GRETL_TEST_PANEL_HAUSMAN);
+    ModelTest *test;
+
+    if (pan->realmod == NULL || na(pan->H)) {
+	return;
+    }
+
+    test = model_test_new(GRETL_TEST_PANEL_HAUSMAN);
 
     if (test != NULL) {
 	model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
 	model_test_set_dfn(test, pan->nbeta);
 	model_test_set_value(test, pan->H);
 	model_test_set_pvalue(test, chisq(pan->H, pan->nbeta));
-	maybe_add_test_to_model(pan->pooled, test);
+	maybe_add_test_to_model(pan->realmod, test);
     }	    
 }
 

@@ -856,7 +856,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, Z[dv]);
 
     /* make the VCV matrix before messing with the model stats */
-    makevcv(pmod);
+    makevcv(pmod, pmod->sigma);
 
     pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {

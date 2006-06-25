@@ -1022,6 +1022,9 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
     subinfo->varinfo = (*ppdinfo)->varinfo;
     subinfo->descrip = (*ppdinfo)->descrip;
 
+    /* FIXME need to deal properly with panel data in here
+       somewhere */
+
     /* set up case markers? */
     if ((*ppdinfo)->markers) {
 	err = dataset_allocate_obs_markers(subinfo);
@@ -1307,13 +1310,6 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     free(missvec);
 
     return missval;
-}
-
-static void copy_varinfo (VARINFO *dest, const VARINFO *src)
-{
-    strcpy(dest->label, src->label);
-    strcpy(dest->display_name, src->display_name);
-    dest->compact_method = src->compact_method;
 }
 
 static void copy_series_info (DATAINFO *dest, const DATAINFO *src)

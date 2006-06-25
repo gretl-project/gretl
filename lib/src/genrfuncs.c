@@ -1089,7 +1089,7 @@ double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod)
     }
 
     /* make model vcv matrix if need be */
-    if (pmod->vcv == NULL && makevcv(pmod)) {
+    if (pmod->vcv == NULL && makevcv(pmod, pmod->sigma)) {
 	return NADBL;
     }
 

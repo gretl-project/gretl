@@ -1204,7 +1204,7 @@ VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo)
 	}
     }
 
-    if (pmod->vcv == NULL && makevcv(pmod)) {
+    if (pmod->vcv == NULL && makevcv(pmod, pmod->sigma)) {
 	free_vmatrix(vcv);
 	return NULL;
     }

@@ -1661,7 +1661,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		}
 		cresid[j] = (*pZ)[yno][t] - yy;
 		cum_mod.ci = CUSUM;
-		makevcv(&cum_mod);
+		makevcv(&cum_mod, 1.0);
 		xx = vprime_M_v(xvec, cum_mod.vcv, cum_mod.ncoeff);
 		cresid[j] /= sqrt(1.0 + xx);
 #if 0
