@@ -582,11 +582,6 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	}
     }
 
-#if PDEBUG
-    fprintf(stderr, "random_effects_dataset: nvars=%d, nobs=%d\n",
-	    pan->pooled->list[0], re_n);
-#endif
-
     if (hreg) {
 	/* apparatus for regression version of Hausman test */
 	for (i=1; i<pan->vlist[0]; i++) {
@@ -595,7 +590,12 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 		hlist[i-1] = v1 + i - 2;
 	    }
 	}
-    }    
+    }  
+
+#if PDEBUG
+    fprintf(stderr, "random_effects_dataset: nvars=%d, nobs=%d\n",
+	    v1 + v2, re_n);
+#endif
 
     reinfo = dataset_with_panel_info(reZ, v1 + v2, re_n);
     if (reinfo == NULL) {
