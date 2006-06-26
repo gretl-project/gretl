@@ -80,6 +80,7 @@ static void free_panel_info (DATAINFO *pdinfo)
     if (pdinfo->paninfo != NULL) {
 	free(pdinfo->paninfo->unit);
 	free(pdinfo->paninfo->period);
+	free(pdinfo->paninfo->padmask);
 	free(pdinfo->paninfo);
 	pdinfo->paninfo = NULL;
     }
@@ -122,6 +123,10 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 
     pdinfo->submode = 0;
 
+    if (pdinfo->paninfo != NULL) {
+	free_panel_info(pdinfo);
+    }    
+
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
     if (code == CLEAR_FULL) {
 	if (pdinfo->varname != NULL) {
@@ -137,9 +142,6 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	    }
 	    free(pdinfo->varinfo);
 	    pdinfo->varinfo = NULL;
-	}
-	if (pdinfo->paninfo != NULL) {
-	    free_panel_info(pdinfo);
 	}
 	if (pdinfo->descrip != NULL) {
 	    free(pdinfo->descrip);
@@ -268,6 +270,7 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
     }
 
     pan->unit = pan->period = NULL;
+    pan->padmask = NULL;
 
     pan->unit = malloc(pdinfo->n * sizeof *pan->unit);
     pan->period = malloc(pdinfo->n * sizeof *pan->period);
@@ -288,6 +291,34 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
     pan->olen = 0;
 
     pdinfo->paninfo = pan;
+
+    return 0;
+}
+
+static int reallocate_panel_info (DATAINFO *pdinfo, int n)
+{
+    PANINFO *pan = pdinfo->paninfo;
+    int *unit;
+    int *period;
+    int t;
+
+    unit = realloc(pan->unit, n * sizeof *unit);
+    if (unit == NULL) {
+	return E_ALLOC;
+    }
+
+    pan->unit = unit;
+
+    period = realloc(pan->period, n * sizeof *period);
+    if (period == NULL) {
+	return E_ALLOC;
+    }
+
+    pan->period = period;
+
+    for (t=pdinfo->n; t<n; t++) {
+	pan->unit[t] = pan->period[t] = -1;
+    }
 
     return 0;
 }
@@ -346,7 +377,10 @@ int dataset_add_default_panel_indices (DATAINFO *pdinfo)
  * Having already added a pair of indices for panel unit 
  * and panel period, check these for consistency and
  * calculate the number of panel units and the minimum
- * and maximum observations per unit.
+ * and maximum observations per unit.  If it turns out
+ * there's only one unit, or only one period, in the
+ * dataset, then it's not really a panel: we destroy
+ * the panel info and return %E_PDWRONG.
  *
  * Returns: 0 on success, non-zero code on error.
  */
@@ -398,6 +432,18 @@ int dataset_finalize_panel_indices (DATAINFO *pdinfo)
 	    ubak = pan->unit[i];
 	}
     }
+
+    if (pan->nunits == 1 || pan->Tmax < 2) {
+	free_panel_info(pdinfo);
+	pdinfo->structure = CROSS_SECTION;
+	return E_PDWRONG;
+    }
+
+#if 0
+    fprintf(stderr, "dataset_finalize_panel_indices:\n "
+	    "nunits=%d, Tmin=%d, Tmax=%d, olen=%d\n", pan->nunits,
+	    pan->Tmin, pan->Tmax, pan->olen);
+#endif
 
     return 0;
 }
@@ -907,7 +953,10 @@ maybe_extend_dummies (double **Z, const DATAINFO *pdinfo, int oldn)
  * @pdinfo: dataset information.
  * @opt: use %OPT_A to attempt to recognize and
  * automatically extend simple deterministic variables such 
- * as a time trend and periodic dummy variables.
+ * as a time trend and periodic dummy variables; also can
+ * use %OPT_D to drop any observation markers rather than
+ * expanding the set of markers and padding it out with
+ * dummy values.
  *
  * Extends all series in the dataset by the specified number of
  * extra observations.  The added values are initialized to
@@ -926,10 +975,6 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
 
     if (newobs <= 0) return 0;
 
-    if (pdinfo->paninfo != NULL) {
-	return E_DATA;
-    }
-
     bign = pdinfo->n + newobs;
 
     for (i=0; i<pdinfo->v; i++) {
@@ -946,11 +991,21 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     }
     
     if (pdinfo->markers && pdinfo->S != NULL) {
-	if (reallocate_markers(pdinfo, bign)) {
-	    return E_ALLOC;
+	if (opt & OPT_D) {
+	    dataset_destroy_obs_markers(pdinfo);
+	} else {
+	    if (reallocate_markers(pdinfo, bign)) {
+		return E_ALLOC;
+	    }
+	    for (t=oldn; t<bign; t++) {
+		sprintf(pdinfo->S[t], "%d", t + 1);
+	    }
 	}
-	for (t=oldn; t<bign; t++) {
-	    sprintf(pdinfo->S[t], "%d", t + 1);
+    }
+
+    if (pdinfo->paninfo != NULL) {
+	if (reallocate_panel_info(pdinfo, bign)) {
+	    return E_ALLOC;
 	}
     }
     
@@ -990,10 +1045,6 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
 
     if (n <= 0) return 0;
 
-    if (pdinfo->paninfo != NULL) {
-	return E_DATA;
-    }
-
     newn = pdinfo->n - n;
 
     for (i=0; i<pdinfo->v; i++) {
@@ -1011,6 +1062,12 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
 	    return E_ALLOC;
 	}
     }
+
+    if (pdinfo->paninfo != NULL) {
+	if (reallocate_panel_info(pdinfo, newn)) {
+	    return E_ALLOC;
+	}
+    }    
 
     if (pdinfo->t2 > newn - 1) {
 	pdinfo->t2 = newn - 1;

@@ -498,13 +498,6 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	/* we'll try to compensate for missing obs */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    pdinfo->n, Z, NULL);
-	if (pmod->ci == OLS && dataset_is_panel(pdinfo) && 
-	    pmod->missmask != NULL) {
-	    if (!model_mask_leaves_balanced_panel(pmod, pdinfo)) {
-		/* panel methods need to know */
-		gretl_model_set_int(pmod, "unbalanced", 1);
-	    } 
-	}
     }
 
 #if SMPL_DEBUG

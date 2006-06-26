@@ -1,0 +1,216 @@
+\chapter{Discrete variables}
+\label{chap-discrete}
+
+When a variable can take only a finite, typically small, number of
+values, then the variable is said to be \emph{discrete}. Some
+\app{gretl} commands act in a slight different way when applied to
+discrete variables; moreover, \app{gretl} provides a few extra
+commands that only apply to discrete variables,
+
+
+\section{Declaring variables as discrete}
+\label{discr-declare}
+
+When a data file is created form scratch, no variables are considered
+discrete. If you want to mark a variable as such, you can do it in two
+ways.
+\begin{enumerate}
+\item From the graphical interface, select ``Variable, Edit
+  Attributes'' from the menu. A dialog box will appear, in which you
+  will see a tick box labeled ``Treat this variable as discrete''. The
+  same dialog box can be invoked via the context menu (right-click on
+  a variable) or by pressing the F2 key;
+\item From the command-line interface, via the \texttt{discrete}
+  command. The command takes one or more arguments, which can be
+  either variables or list of variables. For example:
+\begin{code}
+  list xlist = x1 x2 x3
+  discrete z1 xlist z2
+\end{code}
+This syntax makes it possible to declare as discrete many
+variables at once, which cannot presently be done via the graphical
+interface. The switch \texttt{--reverse} reverses the declaration of a
+variable as discrete, or in other words marks it as continuous.
+For example:
+\begin{code}
+  discrete foo
+  # now foo is discrete
+  discrete foo --reverse
+  # now foo is continuous
+\end{code}
+\end{enumerate}
+
+Note that marking a variable as discrete does not affect its
+content. It is the user's responsibility to make sure that marking a
+variable as discrete is a sensible thing to do. If you want to recode
+a continuous variable into classes, you can use the \texttt{genr}
+command and its arithmetic functions, as in the following example:
+\begin{code}
+  nulldata 100
+  # generate a variable with mean 2 and variance 1
+  genr x = normal() + 2
+  # split into 4 classes
+  genr z = (x>0) + (x>2) + (x>4)
+  # now declare z as discrete
+  discrete z
+\end{code}
+
+Once a variable is marked as discrete, this setting is remembered when
+you save the file.
+
+\section{Commands for discrete variables}
+\label{discr-commands}
+
+\subsection{The \texttt{dummify} command}
+\label{discr-dummify}
+
+The \texttt{dummify} command takes as argument a series $x$ and creates
+dummy variables for each distinct value present in $x$, which must
+have already been declared as discrete.  Example:
+\begin{code}
+  open greene22_2
+  discrete Z5 # mark Z5 as discrete
+  dummify Z5
+\end{code}
+
+The effect of the above command is to generate 5 new dummy variables,
+labeled \texttt{DZ5\_1} through \texttt{DZ5\_5}, which correspond to
+the different values in \texttt{Z5}. Hence, the variable
+\texttt{DZ5\_4} is 1 if \texttt{Z5} equals 4 and 0 otherwise. This
+functionality is also available through the graphical interface \ldots
+(maybe add screenshot).
+
+
+The \texttt{dummify} command can also be used with the following
+syntax:
+\begin{code}
+  list dlist = dummify(x)
+\end{code}
+which not only creates the dummy variables, but also a named list (see
+subsection~\ref{named-lists}) that can be used afterwards. The
+following example computes summary statistics for the variable \texttt{Y} for
+each value of \texttt{Z5}:
+\begin{code}
+  open greene22_2
+  discrete Z5 # mark Z5 as discrete
+  list foo = dummify(Z5)
+  loop foreach i foo
+    smpl $i --restrict --replace
+    summary Y
+  end loop
+  smpl full
+\end{code}
+% $
+
+Since \texttt{dummify} generates a list, it can also be used directly
+in commands like \texttt{ols}, as in 
+\begin{code}
+  open greene22_2
+  discrete Z5 # mark Z5 as discrete
+  ols Y 0 dummify(Z5)
+\end{code}
+
+\subsection{The \texttt{freq} command}
+\label{discr-freq}
+
+The \texttt{freq} command displays absolute and relative frequencies
+for a given variable. The way frequencies are counted depends on
+whether the variable is continuous or discrete.
+
+For discrete variables, frequencies are counted for each different
+value that the variable takes. For continuous variables, values are
+grouped into ``bins'' and then the frequencies are computed for each
+bin. The number of bins is computed as a function of the number of
+valid observations in the currently selected sample via the following
+rule:
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{cc}
+\hline
+  Observations & Bins \\
+\hline
+  $8 \le n < 16$ & 5 \\
+  $16 \le n < 50 $ & 7 \\
+  $50 \le n \le 850 $ & $\lceil \sqrt{n} \rceil$  \\
+  $n > 850 $ & 29 \\
+\hline
+\end{tabular}
+\caption{Number of bins for various sample sizes}
+\label{tab:bins}
+\end{table}
+
+For example, the following code
+\begin{code}
+  open greene19_1
+  freq TUCE
+  discrete TUCE # mark TUCE as discrete
+  freq TUCE
+\end{code}
+yields
+\begin{code}
+gretl version 1.5.1
+Current session: 2006/06/26 16:19
+? open greene19_1
+
+Read datafile /usr/local/share/gretl/data/greene/greene19_1.gdt
+periodicity: 1, maxobs: 32,
+observations range: 1-32
+
+Listing 5 variables:
+  0) const    1) GPA      2) TUCE     3) PSI      4) GRADE  
+
+? freq TUCE
+
+Frequency distribution for TUCE, obs 1-32
+number of bins = 7, mean = 21.9375, sd = 3.90151
+
+       interval          midpt   frequency    rel.     cum.
+
+          <  13.417     12.000        1      3.12%    3.12% *
+    13.417 - 16.250     14.833        1      3.12%    6.25% *
+    16.250 - 19.083     17.667        6     18.75%   25.00% ******
+    19.083 - 21.917     20.500        6     18.75%   43.75% ******
+    21.917 - 24.750     23.333        9     28.12%   71.88% **********
+    24.750 - 27.583     26.167        7     21.88%   93.75% *******
+          >= 27.583     29.000        2      6.25%  100.00% **
+
+Test for null hypothesis of normal distribution:
+Chi-square(2) = 1.872 with p-value 0.39211
+? discrete TUCE # mark TUCE as discrete
+? freq TUCE
+
+Frequency distribution for TUCE, obs 1-32
+
+          frequency    rel.     cum.
+
+  12           1      3.12%    3.12% *
+  14           1      3.12%    6.25% *
+  17           3      9.38%   15.62% ***
+  19           3      9.38%   25.00% ***
+  20           2      6.25%   31.25% **
+  21           4     12.50%   43.75% ****
+  22           2      6.25%   50.00% **
+  23           4     12.50%   62.50% ****
+  24           3      9.38%   71.88% ***
+  25           4     12.50%   84.38% ****
+  26           2      6.25%   90.62% **
+  27           1      3.12%   93.75% *
+  28           1      3.12%   96.88% *
+  29           1      3.12%  100.00% *
+
+Test for null hypothesis of normal distribution:
+Chi-square(2) = 1.872 with p-value 0.39211
+\end{code}
+
+
+\subsection{The \texttt{xtab} command}
+\label{discr-xtab}
+
+\ldots More to follow \ldots
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 

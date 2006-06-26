@@ -242,12 +242,13 @@ struct VARINFO_ {
 
 /* panel indexing information */
 struct PANINFO_ {
-    int nunits;   /* number of cross-sectional units */
-    int Tmin;     /* min. number of time-series observations per unit */
-    int Tmax;     /* max. number of time-series observations per unit */
-    int olen;     /* length in digits of highest time-series index value */
-    int *unit;    /* index array, cross-sectional units */
-    int *period;  /* index array, time periods */
+    int nunits;    /* number of cross-sectional units */
+    int Tmin;      /* min. number of time-series observations per unit */
+    int Tmax;      /* max. number of time-series observations per unit */
+    int olen;      /* length in digits of highest time-series index value */
+    int *unit;     /* index array, cross-sectional units */
+    int *period;   /* index array, time periods */
+    char *padmask; /* mask recording padding, when subsampled */
 };
 
 /* information on data set */

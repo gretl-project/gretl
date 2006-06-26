@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_func.h"
+#include "gretl_panel.h"
 
 #define SUBDEBUG 0
 
@@ -439,16 +440,24 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
        which may have moved */
     sync_dataset_elements(*ppdinfo);
 
-    /* update values for pre-existing series, which may have been
-       modified via genr etc */
-    update_full_data_values((const double **) *pZ, *ppdinfo);
+    /* subsampled panel data: remove any added padding */
+    if (dataset_is_panel(*ppdinfo)) {
+	err = unpad_panel_dataset(pZ, *ppdinfo);
+    }
 
-    /* if case markers were added when subsampled, carry them back */
-    update_case_markers(*ppdinfo);
+    if (!err) {
+	/* update values for pre-existing series, which may have been
+	   modified via genr etc */
+	update_full_data_values((const double **) *pZ, *ppdinfo);
 
-    /* in case any new vars were added when subsampled, try to merge
-       them into the full dataset */
-    err = add_new_vars_to_full((const double **) *pZ, *ppdinfo);
+	/* if case markers were added when subsampled, carry them back */
+	update_case_markers(*ppdinfo);
+
+	/* in case any new vars were added when subsampled, try to merge
+	   them into the full dataset */
+	err = add_new_vars_to_full((const double **) *pZ, *ppdinfo);
+    }
+
     if (err == E_ALLOC) {
         sprintf(gretl_errmsg, _("Out of memory expanding data set\n"));
     } else if (err == E_NOMERGE) {
@@ -684,132 +693,6 @@ int get_full_length_n (void)
     return n;
 }
 
-static int block_retained (const char *s)
-{
-    int nrows = 0;
-    int ret = 0;
-
-#if SUBDEBUG
-    fprintf(stderr, "block_retained: s = '%s'\n", s);
-#endif
-
-    while (*s) {
-	if (*s == '1') {
-	    nrows++;
-	}
-	if (nrows > 1) {
-	    ret = 1;
-	    break;
-	}
-	s++;
-    }
-
-    return ret;
-}
-
-static char *make_panel_signature (const DATAINFO *pdinfo,
-				   const char *mask,
-				   int mt1, int mt2,
-				   int neg)
-{
-    char *sig;
-    size_t sz = pdinfo->n + pdinfo->n / pdinfo->pd;
-    int t;
-
-    sig = calloc(sz, 1);
-
-#if SUBDEBUG
-    for (t=0; t<pdinfo->n; t++) {
-	if (t >= mt1 && t <= mt2) {
-	    fprintf(stderr, "mask[%d]=%c\n", t-mt1, mask[t-mt1]);
-	}
-    }
-#endif
-
-    if (sig != NULL) {
-	int i = 0;
-
-	for (t=0; t<pdinfo->n; t++) {
-	    if (t > 0 && t % pdinfo->pd == 0) {
-		i++;
-	    } 
-	    if (t < mt1 || t > mt2) {
-		sig[i++] = '0';
-	    } else {
-		if (neg) {
-		    /* using model missmask: '1' for missing vs '0' */
-		    sig[i++] = (mask[t - mt1] != '1')? '1' : '0';
-		} else {
-		    /* using sample missmask: 0 for missing vs 1 */
-		    sig[i++] = (mask[t - mt1] != 0)? '1' : '0';
-		}
-	    }
-	}
-    }
-
-    return sig;
-}
-
-static int 
-real_mask_leaves_balanced_panel (const char *mask,
-				 const DATAINFO *pdinfo,
-				 int *new_blocks,
-				 int mt1, int mt2, int neg)
-{
-    int i;
-    int ok_blocks = 0, unbal = 0;
-    int nblocks = pdinfo->n / pdinfo->pd;
-    char *sig = make_panel_signature(pdinfo, mask, mt1, mt2, neg);
-    char *sig_0 = NULL;
-
-    /* FIXME: allow for possibility that starting obs is not 1:1 ?? */
-
-    if (sig == NULL) {
-	return 0;
-    }
-
-    for (i=0; i<nblocks; i++) {
-	char *sig_n = sig + i * (pdinfo->pd + 1);
-
-#if SUBDEBUG
-	fprintf(stderr, "block %d: sig_n = '%s'\n", i, sig_n);
-#endif
-
-	if (block_retained(sig_n)) {
-	    if (ok_blocks == 0) {
-		sig_0 = sig_n;
-	    } else {
-		if (strcmp(sig_n, sig_0)) {
-		    unbal = 1;
-		}
-	    }
-	    if (!unbal) {
-		ok_blocks++;
-	    }
-	} 
-	if (unbal) {
-	    break;
-	}
-    }
-
-    free(sig);
-
-    if (new_blocks != NULL) {
-	*new_blocks = ok_blocks;
-    }
-
-    return (ok_blocks > 0 && unbal == 0);
-}
-
-int model_mask_leaves_balanced_panel (const MODEL *pmod,
-				      const DATAINFO *pdinfo)
-{
-    return real_mask_leaves_balanced_panel(pmod->missmask, 
-					   pdinfo, NULL,
-					   pmod->t1, pmod->t2,
-					   1);
-}
-
 /* when subsampling cases from a time series, if the resulting dataset
    is still a time series without internal "holes" then automatically
    set a time series interpretation of the reduced dataset
@@ -848,32 +731,26 @@ maybe_reconstitute_time_series (const DATAINFO *pdinfo,
     } 
 }
 
-/* when subsampling cases from a panel dataset, if the resulting
-   dataset is still a balanced panel then automatically set the
-   interpretation of the reduced dataset as a panel
-*/
-
-static void
-maybe_reconstitute_panel (const DATAINFO *pdinfo,
-			  const char *mask,
-			  DATAINFO *subinfo)
+static int 
+copy_panel_info_to_subsample (DATAINFO *subinfo, const DATAINFO *pdinfo,
+			      const char *mask)
 {
-    int bal, ok_blocks = 0;
+    int s, t, err;
 
-    bal = real_mask_leaves_balanced_panel(mask, pdinfo, &ok_blocks,
-					  0, pdinfo->n - 1, 0);
+    err = dataset_allocate_panel_info(subinfo);
+    
+    if (!err) {
+	s = 0;
+	for (t=0; t<pdinfo->n; t++) {
+	    if (mask == NULL || mask[t] == 1) {
+		subinfo->paninfo->unit[s] = pdinfo->paninfo->unit[t];
+		subinfo->paninfo->period[s] = pdinfo->paninfo->period[t];
+		s++;
+	    }
+	}	
+    }
 
-    if (bal && ok_blocks > 1) {
-	char line[32];
-	int pd = subinfo->n / ok_blocks;
-	gretlopt opt = OPT_C;
-
-	sprintf(line, "setobs %d 1.1", pd);
-	if (pdinfo->structure == STACKED_TIME_SERIES) {
-	    opt = OPT_S;
-	} 
-	set_obs(line, NULL, subinfo, opt);
-    } 
+    return err;
 }
 
 static void 
@@ -1022,8 +899,15 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
     subinfo->varinfo = (*ppdinfo)->varinfo;
     subinfo->descrip = (*ppdinfo)->descrip;
 
-    /* FIXME need to deal properly with panel data in here
-       somewhere */
+    /* parent dataset is panel: copy panel-specific info */
+    if (dataset_is_panel(*ppdinfo)) {
+	err = copy_panel_info_to_subsample(subinfo, *ppdinfo, mask);
+	if (err) {
+	    free_Z(subZ, subinfo);
+	    free(subinfo);
+	    return E_ALLOC;
+	}
+    }	
 
     /* set up case markers? */
     if ((*ppdinfo)->markers) {
@@ -1033,19 +917,18 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
 	    free(subinfo);
 	    return E_ALLOC;
 	}
-	subinfo->markers = (*ppdinfo)->markers;
     }
 
     /* copy across data (and case markers, if any) */
     copy_data_to_subsample(subZ, subinfo, (const double **) *pZ, 
 			   *ppdinfo, mask);
 
-    if (mode == SUBSAMPLE_USE_DUMMY || 
+    if (dataset_is_panel(*ppdinfo)) {
+	set_panel_structure_from_indices(&subZ, subinfo);
+    } else if (mode == SUBSAMPLE_USE_DUMMY || 
 	mode == SUBSAMPLE_BOOLEAN ||
 	mode == SUBSAMPLE_DROP_MISSING) {
-	if (dataset_is_panel(*ppdinfo)) {
-	    maybe_reconstitute_panel(*ppdinfo, mask, subinfo);
-	} else if (dataset_is_time_series(*ppdinfo)) {
+	if (dataset_is_time_series(*ppdinfo)) {
 	    maybe_reconstitute_time_series(*ppdinfo, mask, subinfo);
 	}
     }

@@ -73,7 +73,4 @@ void free_model_dataset (MODEL *pmod);
 
 void maybe_free_full_dataset (const DATAINFO *pdinfo);
 
-int model_mask_leaves_balanced_panel (const MODEL *pmod,
-				      const DATAINFO *pdinfo);
-
 #endif /* SUBSAMPLE_H */
