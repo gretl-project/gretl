@@ -154,7 +154,10 @@ nell'esempio seguente, che ipotizza una situazione uguale a quella precedente
 \end{code}
 
 
-\section{Variabili dummy}
+\section{Variabili generate}
+\label{panel-genr}
+
+\subsection{Variabili dummy}
 \label{dummies}
 
 In uno studio panel, può nascere l'esigenza di costruire delle
@@ -201,7 +204,7 @@ basta eseguire
 
 
 
-\section{Ritardi e differenze con dati panel}
+\subsection{Ritardi e differenze}
 \label{panel-lagged}
 
 Se i periodi temporali sono distanziati in modo uniforme, è possibile
@@ -216,14 +219,20 @@ codice di valore mancante, laddove il ritardo non è disponibile.  Quanto
 si esegue una regressione che include questo tipo di variabili, il
 programma escluderà automaticamente le osservazioni mancanti.
 
-\section{Stima OLS pooled}
+\section{Stima di modelli panel}
+
+\subsection{Stima pooled OLS}
 \label{pooled-est}
 
-Una volta che un dataset è riconosciuto come panel, quando si stima un modello
-usando i minimi quadrati ordinari (OLS) è disponibile un tipo di test
-aggiuntivo: nel menù \textsf{Test} della finestra del modello è il comando
-``Diagnosi panel'', mentre nella versione a riga di comando del programma è
-il comando \cmd{hausman}.
+Lo stimatore più semplice per i dati panel è quello ``pooled OLS'' (ossia i
+minimi quadrati ordinari utilizzando allo stesso modo tutte le osservazioni del
+campione). In genere questo stimatore non fornisce risultati ottimali, ma
+rappresenta un metro di paragone per stimatori più complessi.
+
+Quando si stima un modello usando i minimi quadrati ordinari (OLS) su dati
+panel, è disponibile un tipo di test aggiuntivo: nel menù \textsf{Test} della
+finestra del modello è il comando ``Diagnosi panel'', mentre nella versione a
+riga di comando del programma è il comando \cmd{hausman}.
 
 Per eseguire questo test, occorre specificare un modello senza alcuna variabile
 dummy relativa alle unità cross-section. Il test confronta il semplice modello
@@ -265,10 +274,58 @@ modello a effetti fissi.
 Per una discussione rigorosa di questo argomento, si veda il capitolo
 14 di Greene (2000).
  
-\section{Stimatori panel}
+\section{I modelli a effetti fissi e casuali}
 \label{panel-est}
 
-(da scrivere)
+La specificazione ``pooled OLS'' si può scrivere come
+\[
+y_{it} = X_{it}\beta + u_{it}
+\]
+dove $y_{it}$ è l'osservazione della variabile dipendente per l'unità cross
+section $i$ nel periodo $t$, $X_{it}$ è un vettore $1\times k$ di variabili
+indipendenti osservate per l'unità $i$ nel periodo $t$,
+$\beta$ è un vettore $k\times 1$ di parametri, e $u_{it}$ è un termine di errore
+o di disturbo specifico all'unità $i$ nel periodo $t$.
+
+I modelli a effetti fissi e casuali rappresentano due modi di scomporre l'errore
+unitario $u_{it}$.  Per il modello a effetti fissi possiamo scrivere
+\[
+u_{it} = \alpha_i + \varepsilon_{it}
+\]
+Ossia, scomponiamo $u_{it}$ in una componente specifica all'unità e invariante
+nel tempo, $\alpha_i$, e un errore specifico all'osservazione,
+$\varepsilon_{it}$.  Gli $\alpha_i$ sono quindi trattati come parametri fissi
+(intercette $y$ specifiche per le unità) da stimare. Questo può essere fatto
+includendo una variabile dummy per ogni unità cross section (e sopprimendo la
+costante comune), oppure è possibile procedere sottraendo le medie di gruppo da
+ognuna delle variabili e stimando un modello senza costante. Nell'ultimo caso la
+variabile dipendente si può scrivere come
+\[
+\tilde{y}_{it} = y_{it} - \frac{1}{T_i} \sum_{t=1}^{T_i} y_{it}
+\]
+dove $T_i$ è il numero di osservazioni per l'unità $i$; in modo simile si
+possono riscrivere le variabili indipendenti. È possibile ottenere stime degli
+$\alpha_i$ usando
+\[
+\hat{\alpha}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} 
+   \left(y_{it} - X_{it}\hat{\beta}\right)
+\]
+
+Questi due metodi sono numericamente equivalenti, e \app{gretl} sceglie tra i
+due a seconda del numero di unità cross section e di variabili indipendenti
+(cercando di minimizzare l'uso delle memoria).
+
+Per il modello a effetti casuali possiamo scrivere
+\[
+u_{it} = v_i + \varepsilon_{it}
+\]
+Invece di trattare gli $v_i$ come parametri fissi, li trattiamo come estrazioni
+casuali da una certa distribuzione di probabilità. Per stimare questo modello
+occorre per prima cosa fare un inferenza a proposito delle rispettive varianze
+di $v_i$ e $\varepsilon_{it}$. La varianza di $v_i$, $\sigma^2_v$, è di solito
+chiamata la varianza ``between'' (esterna, visto che si riferisce alla
+variazione tra le unità cross section), mentre $\sigma^2_{\varepsilon}$ è
+chiamata varianza ``within'' (interna).
 
 \section{Esempio: la Penn World Table}
 \label{PWT}
