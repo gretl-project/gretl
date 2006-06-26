@@ -156,6 +156,8 @@ static int var_is_varying (const panelmod_t *pan, int v)
     return 0;
 }
 
+/* retrieve X'X^{-1} from the fixed effects model */
+
 static gretl_matrix *fe_model_xpx (MODEL *pmod)
 {
     gretl_matrix *X;
@@ -180,6 +182,8 @@ static gretl_matrix *fe_model_xpx (MODEL *pmod)
 
     return X;
 }
+
+/* HAC covariance matrix for the fixed-effects model */
 
 static int 
 fe_robust_vcv (MODEL *pmod, panelmod_t *pan, const double **Z)
@@ -1578,16 +1582,12 @@ static int within_variance (panelmod_t *pan,
 	    print_fe_results(pan, &femod, pdinfo, prn);
 	}
 
-	if (pan->bdiff != NULL) {
-	    /* record the slopes for varying regressors */
+	if (pan->bdiff != NULL && pan->sigma != NULL) {
 	    int nslopes = femod.ncoeff - pan->ndum;
 
 	    for (i=0; i<nslopes; i++) {
 		pan->bdiff[i] = femod.coeff[i];
 	    }
-	}
-
-	if (pan->sigma != NULL) {
 	    makevcv(&femod, femod.sigma);
 	    pan->sigma_e = femod.sigma;
 	    vcv_slopes(pan, &femod, VCV_INIT);
@@ -2177,9 +2177,21 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-/* Estimate either a fixed effects or a random effects model:
-   (opt | OPT_U) indicates random effects.
-*/
+/* real_panel_model:
+ * @list: list containing model specification.
+ * @pZ: pointer to data array.  
+ * @pdinfo: data info pointer. 
+ * @opt: may include %OPT_U for the random effects model,
+ * %OPT_R for robust standard errors (fixed effects model
+ * only), %OPT_H to use the regression approach to the Hausman
+ * test (random effects only)...
+ * @prn: printing struct.
+ *
+ * Estimates a panel model, either fixed effects or random
+ * effects if %OPT_U is included.
+ *
+ * Returns: a #MODEL struct, containing the estimates.
+ */
 
 MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 			gretlopt opt, PRN *prn)
