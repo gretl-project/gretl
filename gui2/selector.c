@@ -104,6 +104,7 @@ struct _selector {
                          c == HILU || \
                          c == LOGIT || \
                          c == OLS || \
+                         c == PANEL || \
                          c == PANEL_WLS || \
                          c == PROBIT || \
                          c == TOBIT || \
@@ -2543,6 +2544,14 @@ static void option_callback (GtkWidget *w, selector *sr)
     } else {
 	sr->opts &= ~opt;
     }  
+
+    if (sr->code == PANEL) {
+	GtkWidget *w = g_object_get_data(G_OBJECT(sr->dlg), "robust-button");
+	
+	if (w != NULL) {
+	    gtk_widget_set_sensitive(w, !(sr->opts & OPT_U));
+	}
+    }
 }
 
 static void reverse_option_callback (GtkWidget *w, selector *sr)
@@ -2713,7 +2722,7 @@ static void pack_switch (GtkWidget *b, selector *sr,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
 
-#define robust_conf(c) (c != LOGIT && c != PROBIT)
+#define robust_conf(c) (c != LOGIT && c != PROBIT && c != PANEL)
 
 static void build_selector_switches (selector *sr) 
 {
@@ -2721,7 +2730,8 @@ static void build_selector_switches (selector *sr)
 
     if (sr->code == OLS || sr->code == WLS || 
 	sr->code == GARCH || sr->code == TSLS || sr->code == VAR || 
-	sr->code == LOGIT || sr->code == PROBIT) {
+	sr->code == LOGIT || sr->code == PROBIT ||
+	sr->code == PANEL) {
 	GtkWidget *b1;
 
 	tmp = gtk_hseparator_new();
@@ -2735,6 +2745,10 @@ static void build_selector_switches (selector *sr)
 
 	if (robust_conf(sr->code) && using_hc_by_default()) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
+	}
+
+	if (sr->code == PANEL) {
+	    g_object_set_data(G_OBJECT(sr->dlg), "robust-button", b1);
 	}
 
 	hbox = gtk_hbox_new(FALSE, 5);

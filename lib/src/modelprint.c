@@ -1330,18 +1330,17 @@ static void model_format_end (PRN *prn)
 static int 
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
+    int nc = pmod->ncoeff;
     int i, err = 0, gotnan = 0;
     int gn = -1;
 
     if (pmod->ci == GARCH) {
 	gn = pmod->list[0] - 4;
     } else if (pmod->ci == PANEL) {
-	if (pmod->ncoeff > pmod->list[0] - 1) {
-	    gn = pmod->list[0] - 1;
-	}
+	nc = pmod->list[0] - 1;
     }
 
-    for (i=0; i<pmod->ncoeff; i++) {
+    for (i=0; i<nc; i++) {
 	if (plain_format(prn)) {
 	    if (i == gn) {
 		pputc(prn, '\n');

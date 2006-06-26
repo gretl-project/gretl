@@ -265,28 +265,6 @@ static void tex_arma_coeff_name (char *targ, const char *src,
     }
 }
 
-static void tex_panel_coeff_name (char *targ, const char *src,
-				  int inmath)
-{
-    char vnesc[32];
-    int i;
-
-    if (sscanf(src, "ahat_%d", &i)) {
-	if (inmath) {
-	    sprintf(targ, "a_{%d}", i);
-	} else {
-	    sprintf(targ, "$a_{%d}$", i);
-	}
-    } else {
-	tex_escape(vnesc, src);
-	if (inmath) {
-	    sprintf(targ, "\\mbox{%s}", vnesc);
-	} else {
-	    strcpy(targ, vnesc);
-	}
-    }
-}
-
 static void tex_lagname (char *s, const DATAINFO *pdinfo, int v)
 {
     const char *lbl = VARLABEL(pdinfo, v);
@@ -364,8 +342,6 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	if (!tex_greek_param(tmp, pmod->params[i+1])) {
 	    tex_escape(tmp, pmod->params[i+1]);
 	}
-    } else if (pmod->ci == PANEL) {
-	tex_panel_coeff_name(tmp, pmod->params[i+1], 0);
     } else if (pmod->ci == ARMA) {
 	tex_arma_coeff_name(tmp, pmod->params[i+1], 0);
     } else if (pmod->ci == GARCH) {
@@ -722,6 +698,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if (pmod->ci == GARCH) {
 	nc -= (1 + pmod->list[1] + pmod->list[2]);
+    } else if (pmod->ci == PANEL) {
+	nc = pmod->list[0] - 1;
     }
 
     /* coefficients times indep vars */
@@ -745,11 +723,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
 	if (i > 0 || pmod->ifc == 0) {
 	    pputs(prn, "\\,");
-	    if (pmod->ci == PANEL) {
-		cchars += strlen(pmod->params[i+1]);
-		tex_panel_coeff_name(tmp, pmod->params[i+1], 1);
-		pputs(prn, tmp);
-	    } else if (pmod->ci == ARMA) {
+	    if (pmod->ci == ARMA) {
 		cchars += strlen(pmod->params[i+1]);
 		tex_arma_coeff_name(tmp, pmod->params[i+1], 1);
 		pputs(prn, tmp);
