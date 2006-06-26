@@ -430,6 +430,9 @@ check_add_transform (int vnum, const double *x,
 /* get_transform: create specified transformation of variable v if
    this variable does not already exist.
 
+   The dummies resulting from DUMMIFY are automatically marked as
+   discrete.
+
    Return the ID number of the transformed var, or -1 on error.
 */
 
@@ -470,7 +473,7 @@ static int get_transform (int ci, int v, int aux, double x,
 	sprintf(label, _("= %s times %s"), pdinfo->varname[v], 
 		pdinfo->varname[aux]);
     } else if (ci == DUMMIFY) {
-	sprintf(label, _("= dummy for %s = %g"), pdinfo->varname[v], x);
+	sprintf(label, _("dummy for %s = %g"), pdinfo->varname[v], x);
     } else {
 	make_transform_label(label, pdinfo->varname[v], ci, aux);
     }
@@ -497,6 +500,10 @@ static int get_transform (int ci, int v, int aux, double x,
 	    /* either we're OK, or there was a fatal error */
 	    break;
 	}
+    }
+
+    if (!err && ci == DUMMIFY && vno > 0) {
+	set_var_discrete(pdinfo, vno, 1);
     }
 
     return vno;

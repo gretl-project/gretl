@@ -379,6 +379,8 @@ GtkItemFactoryEntry data_items[] = {
       add_logs_etc, LOGS, NULL },
     { N_("/Add/squares of selected variables"), NULL, 
       add_logs_etc, SQUARE, NULL },
+    { N_("/Add/dummies for selected discrete variables"), NULL,
+      add_logs_etc, DUMMIFY, NULL },
     { N_("/Add/random normal..."), NULL, 
       add_random_callback, GENR_NORMAL, NULL },
     { N_("/Add/random uniform..."), NULL, 

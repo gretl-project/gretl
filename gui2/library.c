@@ -3809,16 +3809,14 @@ void do_remove_obs (gpointer data, guint u, GtkWidget *widget)
 
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 {
-    gint err = 0;
-    char *liststr, msg[80];
+    char *liststr;
     int order = 0;
+    int err = 0;
 
     liststr = main_window_selection_as_string();
     if (liststr == NULL) {
 	return;
     }
-
-    *msg = '\0';
 
     if (action == LAGS) {
 	int resp;
@@ -3856,14 +3854,24 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 	err = list_xpxgenr(&cmd.list, &Z, datainfo, OPT_NONE);
     } else if (action == DIFF || action == LDIFF || action == SDIFF) {
 	err = list_diffgenr(cmd.list, action, &Z, datainfo);
-    } 
+    } else if (action == DUMMIFY) {
+	int i;
+
+	for (i=1; i<=cmd.list[0]; i++) {
+	    if (!var_is_discrete(datainfo, cmd.list[i])) {
+		err++; 
+	    }
+	}
+	if (err < cmd.list[0]) {
+	    err = list_dumgenr(&cmd.list, &Z, datainfo);
+	} else {
+	    errbox(_("No discrete variables were selected"));
+	    return;
+	}
+    }
 
     if (err) {
-	if (*msg != '\0') {
-	    errbox(msg);
-	} else {
-	    errbox(_("Error adding variables"));
-	}
+	errbox(_("Error adding variables"));
     } else {
 	populate_varlist();
     }
