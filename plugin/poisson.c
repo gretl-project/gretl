@@ -86,9 +86,7 @@ static int
 transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y, 
 			    int iter, int offvar)
 {
-    double sigma = src->sigma;
-    double sigma2 = sigma * sigma;
-    int i, j, t;
+    int i, t;
     int err = 0;
 
     targ->ci = POISSON;
@@ -113,7 +111,7 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     targ->sigma = sqrt(targ->ess / targ->dfd);
 
     for (i=0; i<targ->ncoeff; i++) {
-	targ->sderr[i] = src->sderr[i] / sigma;
+	targ->sderr[i] = src->sderr[i] / src->sigma;
     }
 
     targ->lnL = poisson_ll(y, targ->yhat, targ->t1, targ->t2);
@@ -133,8 +131,6 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     if (makevcv(src, 1.0)) {
 	err = 1;
     } else {
-	int idx;
-
 	if (targ->vcv != NULL) {
 	    free(targ->vcv);
 	}
