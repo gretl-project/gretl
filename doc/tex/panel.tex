@@ -305,6 +305,11 @@ estimates of the $\alpha_i$s using
    \left(y_{it} - X_{it}\hat{\beta}\right)
 \]
 
+These two methods are numerically equivalent, and \app{gretl} chooses
+between them based on the number of cross-sectional units and the
+number of independent variables (with the idea of conserving computer
+memory).
+
 For the random effects model we write
 \[
 u_{it} = v_i + \varepsilon_{it}
