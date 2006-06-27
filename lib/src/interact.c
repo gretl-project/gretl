@@ -263,12 +263,14 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == GARCH || \
                          c == POISSON || \
                          c == SCATTERS || \
-                         c == TSLS)
+                         c == TSLS || \
+                         c == XTAB)
 
 #define NEEDS_LISTSEP(c) (c == AR || \
                           c == ARMA || \
                           c == GARCH || \
-                          c == TSLS)
+                          c == TSLS || \
+                          c == XTAB)
 
 #define DEFAULTS_TO_FULL_LIST(c) (c == CORR || \
                                   c == DIFF || \

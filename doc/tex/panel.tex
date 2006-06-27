@@ -18,10 +18,10 @@ variable occupies one and only one column).  In this context the
 flattening of a panel data set can be done in either of two ways:
 
 \begin{itemize}
-\item Stacked cross-sections: the successive vertical blocks each
-  comprise a cross-section for a given period.
-\item Stacked time-series: the successive vertical blocks each
+\item Stacked time series: the successive vertical blocks each
   comprise a time series for a given cross-sectional unit.
+\item Stacked cross sections: the successive vertical blocks each
+  comprise a cross-section for a given period.
 \end{itemize}
 
 You may input data in whichever arrangement is more convenient.
@@ -31,32 +31,45 @@ the form of stacked time series.
 When you import panel data into \app{gretl} from a spreadsheet or
 comma separated format, the panel nature of the data will not be
 recognized automatically (most likely the data will be treated as
-``undated'').  A panel interpretation can be imposed on the data in
-either of two ways.
+``undated'').  A panel interpretation can be imposed on the data
+using the graphical interface or via the \cmd{setobs} command.
 
-\begin{enumerate}
-\item Use the GUI menu item ``Sample, Dataset structure''.  In the
-  first dialog box that appears, select ``Panel''.  In the next
-  dialog, make a selection between stacked time series or stacked
-  cross sections depending on how your data are organized.  In the
-  next, supply the number of cross-sectional units in the dataset.
-  Finally, check the specification that is shown to you, and confirm
-  the change if it looks OK.
-\item Use the script command \cmd{setobs}.  For panel data this
-  command takes the form \verb+setobs+ \textsl{freq} \verb+1:1+
-  structure, where \textsl{freq} is replaced by the ``block size'' of
-  the data (that is, the number of periods in the case of stacked time
-  series, or the number of cross-sectional units in the case of
-  stacked cross-sections) and structure is either
-  \verb+--stacked-time-series+ or \verb+--stacked-cross-section+.  Two
-  examples are given below: the first is suitable for a panel in the
-  form of stacked time series with observations from 20 periods; the
-  second for stacked cross sections with 5 cross-sectional units.
+In the graphical interface, use the menu item ``Sample, Dataset
+structure''.  In the first dialog box that appears, select ``Panel''.
+In the next dialog you have a three-way choice.  The first two
+options, ``Stacked time series'' and ``Stacked cross sections'' are
+applicable if the data set is already organized in one of these two
+ways.  If you select either of these options, the next step is to
+specify the number of cross-sectional units in the data set.  The
+third option, ``Use index variables'', is applicable if the data set
+contains two variables that index the cross-sectional units and the
+time periods respectively; the next step is then to select those
+variables.  For example, a data file might contain a country code
+variable and a variable representing the year of the observation.  In
+that case \app{gretl} can reconstruct the panel structure of the data
+regardless of how the observation rows are organized.
+
+The \cmd{setobs} command has options that parallel those in the
+graphical interface.  If suitable index variables are available
+you can do, for example
+\begin{code}
+            setobs unitvar timevar --panel-vars
+\end{code}
+where \texttt{unitvar} is a variable that indexes the units and
+\texttt{timevar} is a variable indexing the periods.  Alternatively
+you can use the form \verb+setobs+ \textsl{freq} \verb+1:1+
+\textsl{structure}, where \textsl{freq} is replaced by the ``block
+size'' of the data (that is, the number of periods in the case of
+stacked time series, or the number of cross-sectional units in the
+case of stacked cross-sections) and structure is either
+\verb+--stacked-time-series+ or \verb+--stacked-cross-section+.  Two
+examples are given below: the first is suitable for a panel in the
+form of stacked time series with observations from 20 periods; the
+second for stacked cross sections with 5 cross-sectional units.
 \begin{code}
             setobs 20 1:1 --stacked-time-series
             setobs 5 1:1 --stacked-cross-section
 \end{code}
-\end{enumerate}
 
 \subsection{Panel data arranged by variable}
 
@@ -108,7 +121,7 @@ variables, but in the first instance we ``pretend'' that they are.)
     open panel.txt
     genr x1 = stack(p1..p5) --length=50
     genr x2 = stack(p1..p5) --offset=50 --length=50
-    setobs 50 1.01 --stacked-cross-section
+    setobs 50 1:1 --stacked-cross-section
     store panel.gdt x1 x2
 \end{code}
 
@@ -166,9 +179,9 @@ time periods.  The former may be used to allow the intercept of the
 regression to differ across the units, the latter to allow the
 intercept to differ across periods.
 
-Two special functions are available to create such dummies.  These
-are found under the ``Data, Add variables'' menu in the GUI, or under
-the \cmd{genr} command in script mode or \app{gretlcli}.
+Two special functions are available to create such dummies.  These are
+found under the ``Add'' menu in the GUI, or under the \cmd{genr}
+command in script mode or \app{gretlcli}.
 
 \begin{enumerate}
 \item ``unit dummies'' (script command \cmd{genr unitdum}).  This
@@ -257,21 +270,25 @@ $\beta$ is a $k\times 1$ vector of parameters, and $u_{it}$ is an error
 or disturbance term specific to unit $i$ in period $t$.
 
 The fixed and random effects models have in common that they decompose
-the unitary pooled error $u_{it}$.  For the \textsl{fixed effects}
-model we can write $u_{it} = \alpha_i + \varepsilon_{it}$, yielding
+the unitary pooled error term, $u_{it}$.  For the \textsl{fixed effects}
+model we write $u_{it} = \alpha_i + \varepsilon_{it}$, yielding
 \begin{equation}
 \label{eq:FE}
 y_{it} = X_{it}\beta + \alpha_i + \varepsilon_{it}
 \end{equation}
 That is, we decompose $u_{it}$ into a unit-specific and time-invariant
 component, $\alpha_i$, and an observation-specific error,
-$\varepsilon_{it}$.  The $\alpha_i$s are then treated as fixed
-parameters (in effect, unit-specific $y$-intercepts), which are to be
-estimated.  This can be done by including a dummy variable for each
-cross-sectional unit (and suppressing the global constant).
-Alternatively, one can proceed by subtracting the group or unit mean
-from each of variables and estimating a model without a constant.  In
-the latter case the dependent variable may be written as
+$\varepsilon_{it}$.\footnote{It is possible to break a third component
+  out of $u_{it}$, namely $w_t$, a shock that is time-specific but
+  common to all the units in a given period.  In the interest of
+  simplicity we do not pursue that option here.}  The $\alpha_i$s are
+then treated as fixed parameters (in effect, unit-specific
+$y$-intercepts), which are to be estimated.  This can be done by
+including a dummy variable for each cross-sectional unit (and
+suppressing the global constant).  Alternatively, one can proceed by
+subtracting the group or unit mean from each of variables and
+estimating a model without a constant.  In the latter case the
+dependent variable may be written as
 \[
 \tilde{y}_{it} = y_{it} - \bar{y}_i
 \]
@@ -291,7 +308,16 @@ we can recover estimates of the $\alpha_i$s using
 These two methods (using dummy variables, and using de-meaned data) are
 numerically equivalent, and \app{gretl} chooses between them based on
 the number of cross-sectional units and the number of independent
-variables (with the objective of using the minimum computer memory).
+variables (with the objective of economizing the use of computer memory).
+
+The $\hat{\alpha}_i$ estimates are not printed as part of the standard
+model output in \app{gretl} (there may be a large number of these, and
+typically they are not of much inherent interest).  However you can
+retrieve them after estimation of the fixed effects model if you
+wish.  In the graphical interface, go to the ``Save'' menu in the
+model window and select ``per-unit constants''.  In command-line mode,
+you can do \texttt{genr} \textsl{newname} = \verb+$ahat+, where
+\textsl{newname} is the name you want to give the series. 
 
 For the \textsl{random effects} model we write $u_{it} = v_i +
 \varepsilon_{it}$, so the model becomes
@@ -299,30 +325,61 @@ For the \textsl{random effects} model we write $u_{it} = v_i +
 \label{eq:RE}
 y_{it} = X_{it}\beta + v_i + \varepsilon_{it}
 \end{equation}
-In this context the $v_i$s are not treated as fixed parameters, but as
-random drawings from a given probability distribution.  
+In contrast to the fixed effects model, the $v_i$s are not treated as
+fixed parameters, but as random drawings from a given probability
+distribution.
 
 The celebrated Gauss--Markov theorem, according to which OLS is the
 best linear unbiased estimator (BLUE), depends on the assumption that
 the error term is independently and identically distributed (IID).  In
 the panel context, the IID assumption means that $E(u_{it}^2)$, in
-relation to equation~\ref{eq:pooled}, equals a constant for all $i$
-and $t$, while the covariance $E(u_{it}, u_{is})$ equals zero for all
-$s \neq t$ and the covariance $E(u_{it}, u_{jt})$ equals zero for all
-$j \neq i$.
+relation to equation~\ref{eq:pooled}, equals a constant, $\sigma^2_u$,
+for all $i$ and $t$, while the covariance $E(u_{it} u_{is})$ equals
+zero for all $s \neq t$ and the covariance $E(u_{it} u_{jt})$ equals
+zero for all $j \neq i$.
 
 If these assumptions are not met --- and they are unlikely to be met
 in the context of panel data --- OLS is not the most efficient
 estimator.  Greater efficiency may be gained using generalized least
 squares (GLS), taking into account the covariance structure of the
-error term.  To implement this approach we need to start by estimating
-the respective variances of $v_i$ and $\varepsilon_{it}$.  The
+error term.  To implement this approach we need to obtain estimates
+of the respective variances of $v_i$ and $\varepsilon_{it}$.  The
 variance of $v_i$, namely $\sigma^2_v$, is sometimes called the
 ``between'' variance (since it refers to variation between the
 cross-sectional units), and $\sigma^2_{\varepsilon}$ is called the
 ``within'' variance.
 
-TO BE CONTINUED
+GLS is often implemented by first transforming the data in some way
+and then applying OLS to the modified data.  This is the case with the
+random effects model: it is typically implemented by running OLS on a
+data set where $y$ and $X$ are replaced by ``quasi-demeaned''
+counterparts.  To illustrate with reference to $y$, the transformation
+is
+\[
+\tilde{y}_{it} = {y}_{it} - \theta_i \bar{y}_i
+\]
+where $\bar{y}_i$ is the mean for unit $i$, as above, and the
+coefficient $\theta_i$ is a function of the between and within
+variances, namely
+\[
+\theta_i = 1 - \sqrt{\frac{\sigma^2_\varepsilon}{T_i \sigma^2_v +
+  \sigma^2_\varepsilon}}
+\] 
+Several means of estimating the required variances have been suggested
+in the literature (see Baltagi, 1995); \app{gretl} uses the method of
+Swamy and Arora (1972): $\sigma^2_\varepsilon$ is estimated by the
+residual variance from the fixed effects model, and the sum
+$T_i \sigma^2_v + \sigma^2_\varepsilon$ is estimated as $T_i$ times
+the residual variance from the ``between'' estimator,
+\[
+\bar{y}_i = \bar{X}_i \beta + e_i
+\]
+The latter regression is implemented by constructing a data set
+consisting of the group or unit means of all the relevant variables.
+
+
+\subsection{Choice of estimator}
+\label{panel-choice}
 
 Which panel method should one use, fixed effects or random effects?
 
@@ -343,10 +400,10 @@ issues must be taken into account.
   to the cross-sectional unit but which do not vary over time.  If you
   want to include such variables in the model, the fixed effects
   option is simply not available.  When the fixed effects approach is
-  implemented using dummy variables, the symptom is that the
+  implemented using dummy variables, the problem is that the
   time-invariant variables are perfectly collinear with the per-unit
   dummies.  When using the approach of subtracting the group means,
-  the symptom is that after de-meaning these variables are nothing but
+  the issue is that after de-meaning these variables are nothing but
   zeros.
 \item A somewhat analogous prohibition applies to the random effects
   model.  To appreciate this point it is necessary to note that the
@@ -354,27 +411,59 @@ issues must be taken into account.
   ``within'' estimator (that is, the fixed effects estimator, which
   sweeps out between-unit variation by including per-unit dummy
   variables or by subtracting the unit means) and the ``between''
-  estimator.  The latter estimator, which is generally of little
-  interest other than as a stepping-stone, is expressed in terms of
-  the unit means:
-\[
-\bar{y}_i = \bar{X}_i \beta + e_i
-\]
-The point is that if one has observations on $m$ units and $k$
-independent variables of interest, then if $k>m$ the ``between''
-estimator is undefined --- since we have only $m$ effective
-observations --- and hence so is the random effects estimator.
-
+  estimator.  The point is that if one has observations on $m$ units
+  and $k$ independent variables of interest, then if $k>m$ the
+  ``between'' estimator is undefined --- since we have only $m$
+  effective observations --- and hence so is the random effects
+  estimator.
 \item If one does not fall foul of one or other of the prohibitions
   mentioned above, the choice between fixed effects and random effects
   may be expressed in terms of the two econometric
   \textit{desiderata}, efficiency and consistency.  The short story is
-  that the random effects model is consistent only under more
-  stringent conditions than the fixed effects model, but if these
-  conditions are satisfied the random effects model offers greater
-  efficiency.
+  that the random effects model is consistent only under a more
+  stringent condition than the fixed effects model, but if this
+  condition is satisfied the random effects model offers greater
+  efficiency.  The condition in question is that the unit-specific
+  error, $v_i$, must be unrelated to the independent variables, $X_i$,
+  or more precisely that the expectation of $v_i$ conditional on
+  $X_i$ equals zero.  This point is taken up in relation to the
+  Hausman test in the following section.
 
 \end{enumerate}
+
+\subsection{Testing panel models}
+\label{panel-tests}
+
+If you estimate a fixed effects or random effects model in the
+graphical interface, you may notice that the number of items available
+under the ``Tests'' menu in the model window is relatively limited.
+Panel models carry certain complications that make it difficult to
+implement all of the tests one expects to see for models estimated on
+straight time-series or cross-sectional data.  
+
+Nonetheless, various panel-specific tests are printed along with the
+parameter estimates as a matter of course, as follows.
+
+\begin{itemize}
+\item When you estimate a model using \textsl{fixed effects}, you
+  automatically get an $F$-test for the null hypothesis that the
+  cross-sectional units all have a common intercept.  That is to say
+  that all the $\alpha_i$s are equal, in which case the pooled model
+  (\ref{eq:pooled}), with a column of 1s included in the $X$ matrix,
+  is adequate.
+\item When you estimate using \textsl{random effects}, two relevant
+  tests are presented automatically.  The Breusch--Pagan test is the
+  counterpart to the $F$-test mentioned above.  The null hypothesis is
+  that the variance of $v_i$ equals zero; if this hypothesis is not
+  rejected, then again we conclude that the pooled model is adequate.
+  The Hausman test probes the consistency of the GLS estimates.  The
+  null hypothesis is that these estimates are consistent, that is,
+  that the requirement of orthogonality of the $v_i$ and the $X_i$ is
+  satisfied.  If the Hausman $\chi^2$ value is ``large'' this suggests
+  that the random effects estimator is not consistent and fixed
+  effects may be preferable.
+\end{itemize}
+
 
 
 \section{Illustration: the Penn World Table}

@@ -408,12 +408,16 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     int n5 = 0;
     double pearson = 0.0;
 
-    pprintf(prn,"\n       ");
+    pputc(prn, '\n');
+    pprintf(prn, _("Cross-tabulation of %s (rows) against %s (columns)"),
+	    tab->rvarname, tab->cvarname);
+
+    pputs(prn, "\n\n       ");
     for (j=0; j<c; j++) {
 	pprintf(prn, "[%4d]", (tab->cval)[j]);
     } 
 
-    pprintf(prn,"  TOT.\n\n");
+    pprintf(prn,"  %s\n  \n", _("TOT."));
 
     for (i=0; i<r; i++) {
 
@@ -462,7 +466,8 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	}
     }
 
-    pputs(prn,_("\nTOTAL  "));
+    pputc(prn, '\n');
+    pputs(prn, _("TOTAL  "));
 
     for (j=0; j<c; j++) {
 	if (opt & OPT_R) {
@@ -476,7 +481,9 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
     pprintf(prn, "%6d\n", tab->n);
 
     if (tab->missing) {
-	pprintf(prn, "\n%d missing values\n", tab->missing);
+	pputc(prn, '\n');
+	pprintf(prn, _("%d missing values"), tab->missing);
+	pputc(prn, '\n');
     }
 
     if (!na(pearson)) {
@@ -485,8 +492,10 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
 	if (n5p >= .80 || (opt & OPT_X)) {
 	    df = (r - 1) * (c - 1);
-	    pprintf(prn, "\nPearson chi-square test = %g (%d df, p-value = %g)\n", 
+	    pputc(prn, '\n');
+	    pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
 		    pearson, df, chisq(pearson, df));
+	    pputc(prn, '\n');
 	}
     }
 }
