@@ -75,6 +75,7 @@ struct set_vars_ {
     int gretl_echo;             /* echoing commands or not */
     int gretl_msgs;             /* emitting non-error messages or not */
     char delim;                 /* delimiter for CSV data export */
+    int longdigits;             /* digits for printing data in long form */
     struct robust_opts ropts;   /* robust standard error options */
     struct garch_opts gopts;    /* GARCH covariance matrix */
     struct bkbp_opts bkopts;    /* Baxter-King filter */
@@ -171,6 +172,7 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
     sv->gretl_echo = state->gretl_echo; 
     sv->gretl_msgs = state->gretl_msgs; 
     sv->delim = state->delim; 
+    sv->longdigits = state->longdigits; 
 
     robust_opts_copy(&sv->ropts);
     garch_opts_copy(&sv->gopts);
@@ -208,6 +210,7 @@ static void state_vars_init (set_vars *sv)
     sv->gretl_echo = 1; 
     sv->gretl_msgs = 1; 
     sv->delim = UNSET_INT;
+    sv->longdigits = 10;
 
     robust_opts_init(&sv->ropts);
     garch_opts_init(&sv->gopts);
@@ -278,6 +281,21 @@ int set_bhhh_maxiter (int n)
 	err = 1;
     } else {
 	state->maxopts.maxiter = n;
+    }
+
+    return err;
+}
+
+int set_long_digits (int n)
+{
+    int err = 0;
+
+    check_for_state();
+
+    if (n < 1 || n > 20) {
+	err = 1;
+    } else {
+	state->longdigits = n;
     }
 
     return err;
@@ -447,6 +465,12 @@ char get_csv_delim (const DATAINFO *pdinfo)
     } else {
 	return pdinfo->delim;
     }
+}
+
+int get_long_digits (void)
+{
+    check_for_state();
+    return state->longdigits;
 }
 
 int get_hac_lag (int m)
@@ -704,6 +728,7 @@ static int display_settings (PRN *prn)
 
     pprintf(prn, " shell_ok = %d\n", state->shell_ok);
     pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
+    pprintf(prn, " longdigits = %s\n", state->longdigits);
 
     return 0;
 }
@@ -877,7 +902,11 @@ int execute_set_line (const char *line, PRN *prn)
 	    if (isdigit(*setarg)) {
 		err = set_bhhh_maxiter(atoi(setarg));
 	    }
-	}
+	} else if (!strcmp(setobj, "longdigits")) {
+	    if (isdigit(*setarg)) {
+		err = set_long_digits(atoi(setarg));
+	    }
+	}	    
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
 	    err = set_bkbp_periods(setarg, setarg2, prn);

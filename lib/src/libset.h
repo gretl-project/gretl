@@ -88,6 +88,9 @@ int gretl_echo_on (void);
 void set_gretl_messages (int e);
 int gretl_messages_on (void);
 
+int set_long_digits (int n);
+int get_long_digits (void);
+
 char get_csv_delim (const DATAINFO *pdinfo);
 
 int execute_set_line (const char *line, PRN *prn);

@@ -1553,18 +1553,12 @@ static void loop_store_free (LOOPSET *loop)
     int i;
 
     if (loop->storename != NULL) {
-	for (i=0; i<loop->n_storevars; i++) {
-	    free(loop->storename[i]);
-	}
-	free(loop->storename);
+	free_strings_array(loop->storename, loop->n_storevars);
 	loop->storename = NULL;
     }
 
     if (loop->storelbl != NULL) {
-	for (i=0; i<loop->n_storevars; i++) {
-	    free(loop->storelbl[i]);
-	}
-	free(loop->storelbl);
+	free_strings_array(loop->storelbl, loop->n_storevars);
 	loop->storelbl = NULL;
     }
 
@@ -1608,31 +1602,19 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
     loop->storefile[0] = '\0';
     strncat(loop->storefile, fname, MAXLEN - 1);
 
-    loop->storename = malloc(list[0] * sizeof *loop->storename);
+    loop->storename = strings_array_new_with_length(list[0], VNAMELEN);
     if (loop->storename == NULL) return E_ALLOC;
 
-    loop->storelbl = malloc(list[0] * sizeof *loop->storelbl);
+    loop->storelbl = strings_array_new_with_length(list[0], MAXLABEL);
     if (loop->storelbl == NULL) goto cleanup;
 
     loop->storeval = malloc(tot * sizeof *loop->storeval);
     if (loop->storeval == NULL) goto cleanup;
 
     for (i=0; i<loop->n_storevars; i++) {
-	loop->storename[i] = NULL;
-	loop->storelbl[i] = NULL;
-    }
-
-    for (i=0; i<loop->n_storevars; i++) {
 	char *p;
 
-	loop->storename[i] = malloc(VNAMELEN);
-	if (loop->storename[i] == NULL) goto cleanup;
-
 	strcpy(loop->storename[i], pdinfo->varname[list[i+1]]);
-
-	loop->storelbl[i] = malloc(MAXLABEL);
-	if (loop->storelbl[i] == NULL) goto cleanup;
-
 	strcpy(loop->storelbl[i], VARLABEL(pdinfo, list[i+1]));
 	if ((p = strstr(loop->storelbl[i], "(scalar)"))) {
 	    *p = 0;
@@ -2218,6 +2200,9 @@ static int save_loop_store (LOOPSET *loop, PRN *prn)
     char *xmlbuf = NULL;
     time_t writetime;
     int i, t;
+
+    /* FIXME respect options to store command, or explicitly
+       disclaim them in loop context */
 
     /* organize filename */
     if (loop->storefile[0] == '\0') {

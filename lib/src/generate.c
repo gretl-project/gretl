@@ -297,6 +297,11 @@ static GENERATOR *genr_new (double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 {
     GENERATOR *genr;
 
+    if (pZ == NULL || *pZ == NULL || pdinfo == NULL) {
+	strcpy(gretl_errmsg, _("You must open a data file first"));
+	return NULL;
+    }
+
     genr = malloc(sizeof *genr);
     if (genr == NULL) {
 	return NULL;
@@ -3728,6 +3733,10 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
 
     genr = genr_compile(line, pZ, pdinfo, opt, prn);
+    if (genr == NULL) {
+	return 1;
+    }
+
     err = genr_get_err(genr);
 
     if (!genr->done) {

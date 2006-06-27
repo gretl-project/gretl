@@ -1001,15 +1001,15 @@ static void fcast_print_x (double x, int n, int pmax, PRN *prn)
     }
 }
 
-static void printstr_ten (PRN *prn, double xx, int *ls)
+static void printstr_long (PRN *prn, double xx, int d, int *ls)
 {
     int lwrd;    
-    char str[32];
+    char str[64];
 
     if (na(xx)) {
 	strcpy(str, "NA");
     } else {
-	sprintf(str, "%.10g", xx);
+	sprintf(str, "%#.*E", d, xx);
     }
     strcat(str, "  ");
     lwrd = strlen(str);
@@ -1046,19 +1046,24 @@ static void printstr (PRN *prn, double xx, int *ls)
 static void printz (const double *z, const DATAINFO *pdinfo, 
 		    PRN *prn, gretlopt opt)
 {
-    int t, t1 = pdinfo->t1, t2 = pdinfo->t2, ls = 0;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t, dig = 10, ls = 0;
     double xx;
+
+    if (opt & OPT_T) {
+	dig = get_long_digits();
+    }
 
     if (gretl_isconst(t1, t2, z)) {
 	if (opt & OPT_T) {
-	    printstr_ten(prn, z[t1], &ls);
+	    printstr_long(prn, z[t1], dig, &ls);
 	} else {
 	    printstr(prn, z[t1], &ls);
 	}
     } else for (t=t1; t<=t2; t++) {
 	xx = z[t];
 	if (opt & OPT_T) {
-	    printstr_ten(prn, xx, &ls);
+	    printstr_long(prn, xx, dig, &ls);
 	} else {
 	    printstr(prn, xx, &ls);
 	}

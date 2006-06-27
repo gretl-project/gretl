@@ -457,7 +457,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	} else {
 	    val = get_le_double(q->data + 6);
 	    prow = rows + i;
-	    prow->cells[j] = g_strdup_printf("%.10g", val);
+	    prow->cells[j] = g_strdup_printf("%.15g", val);
 	    dprintf("Got NUMBER (%g), row=%d, col=%d\n", val, i, j);
 	}
 	break;
@@ -468,7 +468,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	} else {
 	    val = biff_get_rk(q->data + 6);
 	    prow = rows + i;
-	    prow->cells[j] = g_strdup_printf("%.10g", val);
+	    prow->cells[j] = g_strdup_printf("%.15g", val);
 	    dprintf("Got RK (%g), row=%d, col=%d\n", val, i, j);
 	}
 	break;
@@ -483,7 +483,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	    }
 	    val = biff_get_rk(q->data + 6 + 6 * k);
 	    prow = rows + i; /* might have moved */
-	    prow->cells[j] = g_strdup_printf("%.10g", val);
+	    prow->cells[j] = g_strdup_printf("%.15g", val);
 	    dprintf(" MULRK[col=%d] = %g\n", j, val);
 	    j++;
 	}
@@ -523,7 +523,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 		    fprintf(stderr, "Got a NaN\n");
 		    prow->cells[j] = g_strdup("-999.0");
 		} else {
-		    prow->cells[j] = g_strdup_printf("%.10g", val);
+		    prow->cells[j] = g_strdup_printf("%.15g", val);
 		}
 	    }
 	}
