@@ -2287,6 +2287,18 @@ static int matrix_scalar_function_word (const char *s)
     return 0;
 }
 
+static int contains_op_or_paren (const char *s)
+{
+    while (*s) {
+	if (op_level(*s) || *s == '(') {
+	    return 1;
+	}
+	s++;
+    }
+    
+    return 0;
+}
+
 static int is_varname_or_model_data_selector (const char *s)
 {
     int ret = 0;
@@ -2296,12 +2308,12 @@ static int is_varname_or_model_data_selector (const char *s)
 	if (*s == '\0') {
 	    /* got a possible varname */
 	    return 1;
-	}
-	if (!strncmp(s, ".$", 2)) {
+	} else if (!strncmp(s, ".$", 2)) {
+	    /* see below */
 	    s++;
-	} else if (*s == '[') {
+	} else if (*s == '[' && s[strlen(s) - 1] == ']') {
 	    /* matrix slice? */
-	    if (s[strlen(s) - 1] == ']') {
+	    if (!contains_op_or_paren(s + 1)) {
 		return 1;
 	    } else {
 		return 0;
@@ -2347,7 +2359,6 @@ static int maybe_date (const char *s)
 
 static int token_is_atomic (const char *s, GENERATOR *genr)
 {
-    int count = 0;
     int atomic = 0;
 
     DPRINTF(("token_is_atomic: looking at '%s'\n", s));
@@ -2368,20 +2379,9 @@ static int token_is_atomic (const char *s, GENERATOR *genr)
 	/* treat, e.g., "$coeff(x)" as atom */
 	atomic = 1;
     } else {
-	while (*s) {
-	    /* token is non-atomic if it contains an operator
-	       or parentheses, otherwise atomic */
-	    if (op_level(*s) || *s == '(') {
-		count++;
-	    }
-	    if (count > 0) {
-		break;
-	    }
-	    s++;
-	}
-	if (count == 0) {
-	    atomic = 1;
-	} 
+	/* token is non-atomic if it contains an operator
+	   or parentheses, otherwise atomic */
+	atomic = !contains_op_or_paren(s);
     }
 
     DPRINTF(("token_is_atomic: returning %d\n", atomic));
