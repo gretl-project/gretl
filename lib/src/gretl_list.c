@@ -1424,7 +1424,7 @@ int gretl_list_split_on_separator (const int *list, int **plist1, int **plist2)
     }
 
     if (n < 0) {
-	return 1;
+	return E_PARSE;
     }
 
     list1 = gretl_list_new(n - 1);

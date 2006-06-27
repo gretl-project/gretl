@@ -1638,10 +1638,9 @@ int crosstab (const int *list, const double **Z,
 	      const DATAINFO *pdinfo, gretlopt opt, 
 	      PRN *prn)
 {
-    Xtab *tab = NULL;
     int *rowvar = NULL;
     int *colvar = NULL;
-    int i, j;
+    int i, j, k;
 
     int pos = gretl_list_separator_position(list);
     int nrv = pos - 1;
@@ -1653,36 +1652,41 @@ int crosstab (const int *list, const double **Z,
     }
 
     rowvar = gretl_list_new(nrv);
+    colvar = gretl_list_new(ncv);
+    if (rowvar == NULL || colvar == NULL) {
+	free(rowvar);
+	free(colvar);
+	return E_ALLOC;
+    }
 
+    j = 1;
     for (i=1; i<=nrv; i++) {
 	if (var_is_discrete(pdinfo, list[i]) && !var_is_scalar(pdinfo, list[i])) {
-	    rowvar[i] = list[i];
+	    rowvar[j++] = list[i];
 	} else {
-	    nrv--;
+	    rowvar[0] -= 1;
 	}
     }
 
-    colvar = gretl_list_new(ncv);
-    j = pos;
+    j = 1;
     for (i=1; i<=ncv; i++) {
-	j = pos + i;
-	if (var_is_discrete(pdinfo, list[j]) && !var_is_scalar(pdinfo, list[j])) {
-	    colvar[i] = list[j];
+	k = pos + i;
+	if (var_is_discrete(pdinfo, list[k]) && !var_is_scalar(pdinfo, list[k])) {
+	    colvar[j++] = list[k];
 	} else {
-	    ncv--;
+	    colvar[0] -= 1;
 	}
     }
 
-    if (nrv == 0 || ncv == 0) {
+    if (rowvar[0] == 0 || colvar[0] == 0) {
+	free(rowvar);
+	free(colvar);
 	return E_DATATYPE;
-    } else {
-	rowvar[0] = nrv;
-	colvar[0] = ncv;
     }
 
-    for (i=1; i<=nrv && !err; i++) {
-	for (j=1; j<=ncv && !err; j++) {
-	    tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo); 
+    for (i=1; i<=rowvar[0] && !err; i++) {
+	for (j=1; j<=colvar[0] && !err; j++) {
+	    Xtab *tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo); 
 
 	    if (tab == NULL) {
 		err = E_ALLOC;

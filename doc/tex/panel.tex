@@ -342,35 +342,67 @@ If these assumptions are not met --- and they are unlikely to be met
 in the context of panel data --- OLS is not the most efficient
 estimator.  Greater efficiency may be gained using generalized least
 squares (GLS), taking into account the covariance structure of the
-error term.  To implement this approach we need to obtain estimates
-of the respective variances of $v_i$ and $\varepsilon_{it}$.  The
-variance of $v_i$, namely $\sigma^2_v$, is sometimes called the
-``between'' variance (since it refers to variation between the
-cross-sectional units), and $\sigma^2_{\varepsilon}$ is called the
-``within'' variance.
+error term.  
 
-GLS is often implemented by first transforming the data in some way
-and then applying OLS to the modified data.  This is the case with the
-random effects model: it is typically implemented by running OLS on a
-data set where $y$ and $X$ are replaced by ``quasi-demeaned''
-counterparts.  To illustrate with reference to $y$, the transformation
-is
+Consider two observation on the same unit $i$ at two different times
+$s$ and $t$. From the hypotheses above it can be worked out that
+$\mbox{Var}(u_{is}) = \mbox{Var}(u_{it}) = \sigma^2_{v} +
+\sigma^2_{\varepsilon}$, while the covariance between $u_{is}$ and
+$u_{it}$ is given by $\mbox{Cov}(u_{is},u_{it}) = \sigma^2_{v}$.
+
+In matrix notation, we may group all the $T_i$ observations for unit
+$i$ into the vector $\mathbf{y}_i$ and write it as
+\begin{equation}
+\label{eq:REvec}
+\mathbf{y}_{i} = \mathbf{X}_{i} \beta + \mathbf{u}_i
+\end{equation}
+The vector $\mathbf{u}_i$, which includes all the disturbances for
+individual $i$, has a variance--covariance matrix given by
+\begin{equation}
+\label{eq:CovMatUnitI}
+  \mbox{Var}(\mathbf{u}_i) = \Sigma_i = \sigma^2_{\varepsilon} I + \sigma^2_{v} J
+\end{equation}
+where $J$ is a square matrix with all elements equal to 1. It can be
+shown that the matrix
 \[
-\tilde{y}_{it} = {y}_{it} - \theta_i \bar{y}_i
+  K_i = I - \frac{\theta}{T_i} J,
 \]
-where $\bar{y}_i$ is the mean for unit $i$, as above, and the
-coefficient $\theta_i$ is a function of the between and within
-variances, namely
+where $\theta = 1 -
+\sqrt{\frac{\sigma^2_{\varepsilon}}{\sigma^2_{\varepsilon} + T_i
+    \sigma^2_{v}}}$, has the property
 \[
-\theta_i = 1 - \sqrt{\frac{\sigma^2_\varepsilon}{T_i \sigma^2_v +
-  \sigma^2_\varepsilon}}
-\] 
-Several means of estimating the required variances have been suggested
-in the literature (see Baltagi, 1995); \app{gretl} uses the method of
-Swamy and Arora (1972): $\sigma^2_\varepsilon$ is estimated by the
-residual variance from the fixed effects model, and the sum
-$T_i \sigma^2_v + \sigma^2_\varepsilon$ is estimated as $T_i$ times
-the residual variance from the ``between'' estimator,
+  K_i \Sigma K_i' = \sigma^2_{\varepsilon} I
+\]
+It follows that the transformed system
+\begin{equation}
+\label{eq:REGLS}
+K_i \mathbf{y}_{i} = K_i \mathbf{X}_{i} \beta + K_i \mathbf{u}_i
+\end{equation}
+satisfies the Gauss--Markov conditions, and OLS estimation of
+(\ref{eq:REGLS}) provides efficient inference. But since 
+\[
+  K_i \mathbf{y}_{i} = \mathbf{y}_{i} - \theta \bar{\mathbf{y}}_{i}
+\]
+GLS estimation is equivalent to OLS using ``quasi-demeaned''
+variables; that is, variables from which we subtract a fraction
+$\theta$ of their average. Notice that for $\sigma^2_{\varepsilon} \to
+0$, $\theta \to 1$, while for $\sigma^2_{v} \to 0$, $\theta \to 0$.
+This means that if all the variance is attributable to the individual
+effects, then the fixed effects estimator is optimal; if, on the other
+hand, individual effects are negligible, then pooled OLS turns out,
+unsurprisingly, to be the optimal estimator.
+
+To implement the GLS approach we need to calculate $\theta$, which in
+turn requires estimates of the variances $\sigma^2_{\varepsilon}$ and
+$\sigma^2_v$.  (These are often referred to as the ``within'' and
+``between'' variances respectively, since the former refers to
+variation within each cross-sectional unit and the latter to variation
+between the units).  Several means of estimating these magnitudes have
+been suggested in the literature (see Baltagi, 1995); \app{gretl} uses
+the method of Swamy and Arora (1972): $\sigma^2_\varepsilon$ is
+estimated by the residual variance from the fixed effects model, and
+the sum $\sigma^2_\varepsilon + T_i \sigma^2_v$ is estimated as $T_i$
+times the residual variance from the ``between'' estimator,
 \[
 \bar{y}_i = \bar{X}_i \beta + e_i
 \]
