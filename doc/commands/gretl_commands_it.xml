@@ -7434,7 +7434,8 @@
 
     <usage>
       <arguments>
-        <argument>variabile1 variabile2</argument>
+        <argument>lista-y</argument>
+        <argument separated="true">lista-x</argument>
       </arguments>
       <options>
 	<option>
@@ -7458,10 +7459,11 @@
 
     <description>
       <para>
-        Se non vengono usate opzioni, mostra la tabella di contingenza tra
-        la <repl>variabile1</repl> per riga e la <repl>variabile2</repl> per
-        colonna; ognuna di esse può essere referenziata per nome o per numero.
-        Si noti che entrambe le variabili devono essere marcate come discrete.
+        Se non vengono usate opzioni, mostra la tabella di contingenza, o la
+        tabulazione incrociata, tra ognuna delle variabili della <repl>lista-y</repl>
+        (per riga) e ognuna delle variabili della <repl>lista-x</repl> (per
+        colonna). Le variabili in queste liste possono essere referenziate per
+        nome o per numero, e devono essere state marcate come discrete.
       </para>
       <para>
 	Le opzioni <lit>--row</lit> e <lit>--column</lit> sono mutualmente
