@@ -2063,7 +2063,7 @@ int is_log_variable (int i, const DATAINFO *pdinfo, char *parent)
 
 /**
  * set_var_discrete:
- * @p: pointer to data information struct.
+ * @pdinfo: pointer to data information struct.
  * @i: index number of variable.
  * @s: non-zero to mark variable as discrete, zero to 
  * mark as not discrete.
@@ -2082,7 +2082,7 @@ void set_var_discrete (DATAINFO *pdinfo, int i, int s)
 
 /**
  * set_var_scalar:
- * @p: pointer to data information struct.
+ * @pdinfo: pointer to data information struct.
  * @i: index number of variable.
  * @s: non-zero to mark variable as a scalar, zero to 
  * mark as not scalar (i.e. a series).

@@ -2312,12 +2312,14 @@ static int is_varname_or_model_data_selector (const char *s)
 	    /* see below */
 	    s++;
 	} else if (*s == '[' && s[strlen(s) - 1] == ']') {
-	    /* matrix slice? */
-	    if (!contains_op_or_paren(s + 1)) {
-		return 1;
-	    } else {
-		return 0;
+	    /* single matrix slice? */
+	    while (*s) {
+		if (*s == ']' && *(s+1)) {
+		    return 0;
+		}
+		s++;
 	    }
+	    return 1;
 	} else {
 	    return 0;
 	}

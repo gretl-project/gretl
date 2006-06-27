@@ -1931,6 +1931,7 @@ static void print_calc_input_info (gretl_matrix *A, gretl_matrix *B, char op)
     } else {
 	fprintf(stderr, "op=%d\n", (int) op);
     }
+
 # if MDEBUG > 1
     if (A != NULL) gretl_matrix_print(A, "input A");
     if (B != NULL) gretl_matrix_print(B, "input B");

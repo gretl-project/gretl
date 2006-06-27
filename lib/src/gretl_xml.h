@@ -39,7 +39,7 @@ void gretl_xml_put_double_array (const char *tag, double *x, int n,
 void gretl_xml_put_strings_array (const char *tag, const char **strs, int n,
 				  FILE *fp);
 
-void gretl_xml_put_named_list (const char *tag, const int *list, FILE *fp);
+void gretl_xml_put_named_list (const char *name, const int *list, FILE *fp);
 
 void gretl_xml_put_tagged_list (const char *tag, const int *list, FILE *fp);
 

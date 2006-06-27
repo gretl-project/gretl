@@ -24,7 +24,7 @@ typedef struct _nls_spec nls_spec;
 
 typedef double (*BFGS_LL_FUNC) (const double *, void *);
 typedef int (*BFGS_GRAD_FUNC) (double *, double *, int, 
-			       double (*llfun)(), void *);
+			       BFGS_LL_FUNC, void *);
 typedef double *(*BFGS_SCORE_FUNC) (const double *, int, void *);
 
 

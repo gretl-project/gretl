@@ -347,7 +347,7 @@ void gretl_xml_put_named_list (const char *name, const int *list, FILE *fp)
 
 /**
  * gretl_xml_put_tagged_list:
- * @name: tag in which list should be wrapped.
+ * @tag: tag in which list should be wrapped.
  * @list: list of integers to be written.
  * @fp: file to which to write.
  * 
@@ -425,7 +425,7 @@ int gretl_xml_get_prop_as_int (xmlNodePtr node, const char *tag,
  * gretl_xml_get_prop_as_char:
  * @node: XML node pointer.
  * @tag: name by which character property is known.
- * @u: location to write value.
+ * @c: location to write value.
  * 
  * Returns: 1 if a char is found and read successfully, 0
  * otherwise.

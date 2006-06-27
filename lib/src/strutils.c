@@ -1243,7 +1243,7 @@ int gretl_xml_validate (const char *s)
 
 /**
  * gretl_xml_encode:
- * @buf: NUL-terminated source string.
+ * @str: NUL-terminated source string.
  *
  * Returns: an allocated re-write of @buf, with characters that are
  * special in XML encoded as character entities.  See also

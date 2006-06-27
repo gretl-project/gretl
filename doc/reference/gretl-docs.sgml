@@ -23,6 +23,7 @@
 <!ENTITY gretl-list     SYSTEM "xml/gretl_list.xml">
 <!ENTITY gretl-matrix   SYSTEM "xml/gretl_matrix.xml">
 <!ENTITY gretl-model    SYSTEM "xml/gretl_model.xml">
+<!ENTITY gretl-panel    SYSTEM "xml/gretl_panel.xml">
 <!ENTITY gretl-paths    SYSTEM "xml/gretl_paths.xml">
 <!ENTITY gretl-prn      SYSTEM "xml/gretl_prn.xml">
 <!ENTITY gretl-restrict SYSTEM "xml/gretl_restrict.xml">
@@ -31,6 +32,7 @@
 <!ENTITY gretl-win32    SYSTEM "xml/gretl_win32.xml">
 <!ENTITY gretl-xml      SYSTEM "xml/gretl_xml.xml">
 <!ENTITY interact       SYSTEM "xml/interact.xml">
+<!ENTITY kalman         SYSTEM "xml/kalman.xml">
 <!ENTITY libgretl       SYSTEM "xml/libgretl.xml">
 <!ENTITY libset         SYSTEM "xml/libset.xml">
 <!ENTITY missing        SYSTEM "xml/missing.xml">
@@ -39,6 +41,7 @@
 <!ENTITY monte-carlo    SYSTEM "xml/monte_carlo.xml">
 <!ENTITY nls            SYSTEM "xml/nls.xml">
 <!ENTITY nonparam       SYSTEM "xml/nonparam.xml">
+<!ENTITY objstack       SYSTEM "xml/objstack.xml">
 <!ENTITY options        SYSTEM "xml/options.xml">
 <!ENTITY plugins        SYSTEM "xml/plugins.xml">
 <!ENTITY printout       SYSTEM "xml/printout.xml">
@@ -51,6 +54,7 @@
 <!ENTITY texprint       SYSTEM "xml/texprint.xml">
 <!ENTITY transforms     SYSTEM "xml/transforms.xml">
 <!ENTITY tsls           SYSTEM "xml/tsls.xml">
+<!ENTITY usermat        SYSTEM "xml/usermat.xml">
 <!ENTITY var            SYSTEM "xml/var.xml">
 <!ENTITY varprint       SYSTEM "xml/varprint.xml">
 
@@ -60,7 +64,7 @@
 
   <bookinfo>
     <title>Libgretl Reference Manual</title>
-    <releaseinfo>for gretl 1.5.0</releaseinfo>
+    <releaseinfo>for gretl 1.5.2</releaseinfo>
   </bookinfo>
   
   <chapter id="ch-overview">
@@ -89,6 +93,7 @@
     &estimate;
     &discrete;   
     &nonparam; 
+    &gretl-panel;
     &gretl-model;
     &modelspec;
     &tsls;
@@ -97,6 +102,7 @@
     &var;   
     &bhhh-max;
     &forecast;
+    &kalman;
   </chapter>
 
   <chapter id="ch-tests">
@@ -129,7 +135,8 @@
 
   <chapter id="ch-matrix">
     <title>Matrix manipulation</title>
-    &gretl-matrix;   
+    &gretl-matrix; 
+    &usermat;  
   </chapter>
 
   <chapter id="ch-func">
@@ -141,7 +148,8 @@
   <chapter id="ch-interact">
     <title>User interaction, options and errors</title>
     &gretl-commands; 
-    &interact;   
+    &interact; 
+    &objstack;  
     &libset;
     &options;
     &gretl-errors; 

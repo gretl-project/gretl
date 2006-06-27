@@ -48,6 +48,7 @@ get_date_x
 write_data
 data_report
 is_gzipped
+gretl_is_pkzip_file
 gz_switch_ext
 merge_data
 gretl_get_data
@@ -75,6 +76,7 @@ logistic_ymax_lmax
 nls_spec
 BFGS_LL_FUNC
 BFGS_GRAD_FUNC
+BFGS_SCORE_FUNC
 nls_spec_new
 nls_spec_destroy
 nls_spec_add_param_with_deriv
@@ -86,6 +88,7 @@ nls
 model_from_nls_spec
 get_default_nls_toler
 BFGS_max
+build_OPG_matrix
 </SECTION>
 
 <SECTION>
@@ -98,7 +101,8 @@ arma
 tobit_model
 poisson_model
 garch
-pooled
+mp_ols
+panel_model
 groupwise_hetero_test
 hsk_func
 whites_test
@@ -134,12 +138,12 @@ reset_test
 autocorr_test
 chow_test
 cusum_test
-hausman_test
+panel_hausman_test
 vif_test
 leverage_test
 add_leverage_values_to_dataset
-mp_ols
 sum_test
+lmtest_driver
 </SECTION>
 
 <SECTION>
@@ -147,16 +151,17 @@ sum_test
 printmodel
 estimator_string
 print_model_vcv_info
-print_mpols_results
 </SECTION>
 
 <SECTION>
 <FILE>describe</FILE>
 Summary
 FreqDist
+Xtab
 MahalDist
 Summary_
 FreqDist_
+Xtab_
 eval_ytest
 gretl_minmax
 gretl_mean
@@ -175,6 +180,7 @@ gretl_moments
 free_freq
 get_freq
 freqdist
+crosstab
 model_error_dist
 auto_acf_order
 corrgram
@@ -220,8 +226,7 @@ genr_function_from_string
 get_t_from_obs_string
 dummy
 panel_unit_first_obs
-panel_unit_dummies
-paneldum
+panel_dummies
 plotvar
 plotvar_from_varname
 genrtime
@@ -230,8 +235,8 @@ genrtime
 <SECTION>
 <FILE>graphing</FILE>
 GRAPH_NO_DATA
-gnuplot_flags
-gptspec_flags
+GnuplotFlags
+PlotSpecFlags
 MAXTITLE
 MAX_PLOT_LABELS
 MAX_PLOT_LINES
@@ -267,6 +272,7 @@ plot_fcast_errs
 gretl_VAR_plot_impulse_response
 gretl_VAR_plot_multiple_irf
 gretl_VAR_residual_plot
+gretl_VAR_residual_mplot
 gretl_VAR_roots_plot
 confidence_ellipse_plot
 is_auto_ols_string
@@ -278,52 +284,6 @@ get_gnuplot_pallette
 gnuplot_test_command
 pprint_gnuplot_encoding
 fprint_gnuplot_encoding
-</SECTION>
-
-<SECTION>
-<FILE>gretl_utils</FILE>
-model_selection_criteria
-floateq
-floatneq
-floatgt
-floatlt
-libgretl_init
-libgretl_cleanup
-date
-gretl_isdummy
-gretl_iszero
-gretl_isconst
-gretl_isunits
-gretl_isdiscrete
-true_const
-format_obs
-set_obs
-printlist
-gretl_int_from_string
-positive_int_from_string
-varnum_from_string
-rename_var_by_id
-re_estimate
-copyvec
-ijton
-ztox
-get_xvalue
-gretl_compare_doubles
-gretl_inverse_compare_doubles
-gretl_copy_file
-gretl_spawn
-gretl_calculate_criteria
-gretl_print_criteria
-ls_criteria
-get_panel_structure
-set_panel_structure
-balanced_panel
-free_gretl_mp_results
-gretl_mp_results_new
-allocate_mp_varnames
-record_test_result
-get_last_test_statistic
-get_last_pvalue
 </SECTION>
 
 <SECTION>
@@ -393,6 +353,8 @@ gretl_VECM_rank
 gretl_VECM_list
 gretl_VAR_get_series
 gretl_VAR_get_matrix
+gretl_VAR_serialize
+gretl_VAR_from_XML
 </SECTION>
 
 <SECTION>
@@ -464,7 +426,9 @@ tailstrip
 compress_spaces
 space_to_score
 safecpy
-create_strings_array
+strings_array_new
+strings_array_new_with_length
+strings_array_dup
 free_strings_array
 get_obs_string
 get_full_obs_string
@@ -473,12 +437,14 @@ colonize_obs
 modify_date_for_csv
 csv_obs_to_prn
 print_time
+gretl_xml_validate
 gretl_xml_encode
 unescape_url
 make_varname_unique
 fix_varname_duplicates
 append_dir
 build_path
+path_last_element
 varname_match_list
 </SECTION>
 
@@ -505,23 +471,25 @@ PMAX_NOT_AVAILABLE
 screen_zero
 GretlOp
 GretlMathFunc
+cmplx
 gretlopt
 VARINFO
+PANINFO
 DATAINFO
 PATHS
 VMatrix
 SAMPLE
 ARINFO
 MODEL
-GRAPHT
 PRN
 FITRESID
 DATASET
 GRETL_VAR
-mp_results
 model_data_item
 ModelTest
+gretl_equation_system
 VARINFO_
+PANINFO_
 DATAINFO_
 DATASET_
 PATHS_
@@ -529,8 +497,6 @@ VMatrix_
 SAMPLE_
 ARINFO_
 MODEL_
-GRAPHT_
-mp_results_
 VARLABEL
 DISPLAYNAME
 COMPACT_METHOD
@@ -540,7 +506,6 @@ SORTED_MARKER
 
 <SECTION>
 <FILE>system</FILE>
-gretl_equation_system
 gretl_system_methods
 system_start
 get_system_name_from_line
@@ -608,6 +573,8 @@ gretl_system_add_resids_to_dataset
 gretl_equation_system_get_series
 gretl_equation_system_get_matrix
 highest_numbered_var_in_system
+gretl_system_serialize
+gretl_system_from_XML
 </SECTION>
 
 <SECTION>
@@ -617,6 +584,7 @@ gretl_execute_loop
 ok_in_loop
 gretl_loop_append_line
 gretl_loop_exec
+model_is_in_loop
 </SECTION>
 
 <SECTION>
@@ -639,6 +607,7 @@ gui_logo
 text_print_model_confints
 print_freq
 printcorr
+print_xtab
 print_smpl
 print_contemp_covariance_matrix
 outcovmx
@@ -708,11 +677,11 @@ gretl_matrix_set
 gretl_vector_set
 gretl_matrix_alloc
 gretl_matrix_reuse
-gretl_packed_matrix_alloc
 gretl_identity_matrix_new
 gretl_zero_matrix_new
 gretl_unit_matrix_new
 gretl_matrix_copy
+gretl_matrix_inscribe_I
 gretl_matrix_copy_transpose
 gretl_column_vector_from_array
 gretl_data_series_to_vector
@@ -736,12 +705,18 @@ gretl_matrix_steal_data
 gretl_matrix_copy_values
 gretl_matrix_add_to
 gretl_matrix_subtract_from
+gretl_matrix_I_minus
 gretl_matrix_transpose
 gretl_square_matrix_transpose
 gretl_matrix_add_self_transpose
+gretl_matrix_vectorize
+gretl_matrix_unvectorize
+gretl_matrix_vectorize_h
+gretl_matrix_unvectorize_h
 gretl_matrix_multiply_mod
 gretl_matrix_multiply
 gretl_matrix_kronecker_product
+gretl_matrix_kronecker_product_new
 gretl_matrix_dot_product
 gretl_vector_dot_product
 gretl_matrix_dot_multiply
@@ -761,6 +736,8 @@ gretl_matrix_one_norm
 gretl_LU_solve
 gretl_invert_general_matrix
 gretl_invert_symmetric_matrix
+gretl_invert_symmetric_matrix2
+gretl_invert_packed_symmetric_matrix
 gretl_invert_diagonal_matrix
 gretl_invert_matrix
 gretl_SVD_invert_matrix
@@ -787,7 +764,7 @@ debug_print_matrix
 gretl_matrix_set_int
 gretl_matrix_get_int
 gretl_is_identity_matrix
-gretl_is_zero_vector
+gretl_is_zero_matrix
 gretl_matrices_are_equal
 gretl_covariance_matrix_from_varlist
 gretl_matrix_row_to_array
@@ -795,6 +772,7 @@ gretl_matrix_array_alloc
 gretl_matrix_array_alloc_with_size
 gretl_matrix_array_free
 gretl_matrix_data_subset
+lapack_mem_free
 </SECTION>
 
 <SECTION>
@@ -823,8 +801,13 @@ expand_data_set
 <SECTION>
 <FILE>subsample</FILE>
 SubsampleMode
+fetch_full_Z
+reset_full_Z
+fetch_full_datainfo
 copy_subsample_mask
 copy_datainfo_submask
+write_datainfo_submask
+write_model_submask
 submask_cmp
 attach_subsample_to_model
 restrict_sample
@@ -837,7 +820,6 @@ count_missing_values
 add_dataset_to_model
 free_model_dataset
 maybe_free_full_dataset
-model_mask_leaves_balanced_panel
 </SECTION>
 
 <SECTION>
@@ -894,6 +876,7 @@ gretl_string_table_written
 gretl_path_prepend
 gretl_fopen
 gretl_gzopen
+gretl_is_xml_file
 addpath
 getopenfile
 show_paths
@@ -912,6 +895,32 @@ set_gretl_png_font
 
 <SECTION>
 <FILE>gretl_xml</FILE>
+XUC
+gretl_xml_header
+gretl_xml_open_doc_root
+gretl_xml_put_double
+gretl_xml_put_double_array
+gretl_xml_put_strings_array
+gretl_xml_put_named_list
+gretl_xml_put_tagged_list
+gretl_xml_put_tagged_string
+gretl_xml_put_raw_string
+gretl_xml_put_matrix
+gretl_xml_get_prop_as_int
+gretl_xml_get_prop_as_char
+gretl_xml_get_prop_as_uchar
+gretl_xml_get_prop_as_double
+gretl_xml_get_prop_as_string
+gretl_xml_node_get_int
+gretl_xml_node_get_double
+gretl_xml_node_get_list
+gretl_xml_node_get_string
+gretl_xml_node_get_trimmed_string
+gretl_xml_get_int_array
+gretl_xml_get_double_array
+gretl_xml_get_cmplx_array
+gretl_xml_get_matrix
+gretl_xml_get_submask
 gretl_write_gdt
 gretl_read_gdt
 gretl_get_gdt_description
@@ -924,6 +933,8 @@ model_data_is_scalar
 model_data_is_scalar_element
 model_data_is_series
 model_data_is_matrix
+ModelDataType
+ArmaFlags
 CoeffIntervals
 CoeffIntervals_
 AR_MODEL
@@ -935,9 +946,11 @@ LSQ_MODEL
 ASYMPTOTIC_MODEL
 is_model_ref_cmd
 ModelTestType
+attach_model_tests_from_xml
 gretl_model_new
 gretl_model_new_protected
 gretl_model_init
+gretl_model_allocate_storage
 gretl_model_array_new
 gretl_model_array_destroy
 gretl_model_smpl_init
@@ -949,6 +962,7 @@ gretl_model_free_on_exit
 gretl_model_set_data_with_destructor
 gretl_model_set_data
 gretl_model_set_list_as_data
+gretl_model_set_string_as_data
 gretl_model_destroy_data_item
 gretl_model_detach_data_item
 gretl_model_set_int
@@ -957,7 +971,9 @@ gretl_model_get_data
 gretl_model_get_data_and_size
 gretl_model_get_int
 gretl_model_get_double
+gretl_model_get_list
 gretl_model_get_param_name
+gretl_model_get_param_number
 free_coeff_intervals
 gretl_model_get_coeff_intervals
 gretl_model_get_depvar
@@ -970,11 +986,13 @@ gretl_arma_model_get_AR_MA_coeffs
 gretl_arma_model_get_x_coeffs
 gretl_model_new_vcv
 gretl_model_get_vcv
+gretl_model_add_arinfo
 gretl_model_copy
 swap_models
 is_model_cmd
 is_quiet_model_test
 command_ok_for_model
+model_test_ok
 get_model_count
 reset_model_count
 model_count_plus
@@ -990,6 +1008,7 @@ model_test_set_value
 model_test_set_pvalue
 model_test_set_param
 model_test_set_allocated_param
+model_test_set_crit_and_alpha
 gretl_model_test_print
 gretl_model_print_last_test
 gretl_model_destroy_tests
@@ -998,6 +1017,8 @@ highest_numbered_var_in_model
 mle_criteria
 coeff_pval
 gretl_model_add_arma_varnames
+gretl_model_add_panel_varnames
+gretl_model_add_allocated_varnames
 gretl_model_get_fitted_formula
 gretl_model_set_name
 gretl_model_get_name
@@ -1005,6 +1026,8 @@ gretl_model_data_index
 gretl_model_get_scalar
 gretl_model_get_series
 gretl_model_get_matrix
+gretl_model_serialize
+gretl_model_from_XML
 </SECTION>
 
 <SECTION>
@@ -1104,12 +1127,16 @@ gretl_list_is_consecutive
 gretl_list_split_on_separator
 gretl_list_duplicates
 full_var_list
+n_saved_lists
+get_list_name_by_index
 get_list_by_name
 remember_list
 stack_localized_list_as
 copy_named_list_as
 destroy_saved_lists_at_level
 gretl_lists_cleanup
+load_user_lists_file
+gretl_serialize_lists
 </SECTION>
 
 <SECTION>
@@ -1124,11 +1151,25 @@ gretl_restriction_set_finalize
 
 <SECTION>
 <FILE>gretl_func</FILE>
+FuncArgTypes
+ufunc
+n_user_functions
+get_user_function_by_index
+fn_n_params
+fn_param_type
+fn_param_name
+fn_param_default
+fn_param_minval
+fn_param_maxval
+user_func_get_return_types
+user_function_name_by_index
+user_function_index_by_name
 gretl_compiling_function
 gretl_executing_function
 gretl_start_compiling_function
 gretl_function_append_line
 gretl_is_user_function
+gretl_is_public_user_function
 gretl_get_user_function
 is_user_matrix_function
 gretl_function_start_exec
@@ -1136,6 +1177,20 @@ gretl_function_get_line
 gretl_function_stack_depth
 gretl_function_stop_on_error
 gretl_function_flagged_error
+gretl_function_set_info
+gretl_function_get_info
+gretl_function_print_code
+gretl_function_set_private
+write_function_package
+function_package_get_info
+write_user_function_file
+user_function_file_is_loaded
+load_user_function_file
+get_function_file_info
+get_function_file_code
+get_function_file_header
+update_function_from_script
+user_function_help
 gretl_functions_cleanup
 </SECTION>
 
@@ -1175,6 +1230,8 @@ list_diffgenr
 list_laggenr
 list_loggenr
 list_xpxgenr
+list_dumgenr
+list_makediscrete
 gettrend
 gretl_transforms_cleanup
 </SECTION>
@@ -1262,6 +1319,7 @@ utf8_to_iso_latin_1
 <SECTION>
 <FILE>dataset</FILE>
 DatasetMarkerType
+VarinfoFlags
 dataset_is_time_series
 dataset_is_seasonal
 custom_time_series
@@ -1275,6 +1333,9 @@ dated_weekly_data
 calendar_data
 quarterly_or_monthly
 dataset_is_panel
+var_is_discrete
+var_is_scalar
+var_is_series
 free_Z
 datainfo_new
 create_new_dataset
@@ -1284,8 +1345,12 @@ allocate_Z
 dataset_allocate_varnames
 dataset_allocate_obs_markers
 dataset_destroy_obs_markers
+dataset_allocate_panel_info
+dataset_add_default_panel_indices
+dataset_finalize_panel_indices
 dataset_obs_info_default
 copy_dataset_obs_info
+copy_varinfo
 set_sorted_markers
 dataset_set_regular_markers
 start_new_Z
@@ -1306,6 +1371,9 @@ dataset_destroy_hidden_variables
 dataset_drop_last_variables
 dataset_stack_variables
 is_hidden_variable
+is_log_variable
+set_var_discrete
+set_var_scalar
 </SECTION>
 
 <SECTION>
@@ -1316,6 +1384,7 @@ write_db_data
 <SECTION>
 <FILE>objstack</FILE>
 GretlObjType
+SavedObjectFlags
 set_as_last_model
 gretl_model_protect
 get_last_model
@@ -1325,6 +1394,7 @@ get_VECM_by_name
 get_equation_system_by_name
 gretl_get_object_by_name
 gretl_get_object_and_type
+object_is_on_stack
 gretl_stack_object
 gretl_stack_object_as
 remove_model_from_stack
@@ -1343,6 +1413,21 @@ gretl_object_get_name
 parse_object_command
 match_object_command
 gretl_saved_objects_cleanup
+</SECTION>
+
+<SECTION>
+<FILE>kalman</FILE>
+kalman
+kalman_new
+kalman_free
+kalman_forecast
+kalman_get_ncoeff
+kalman_get_loglik
+kalman_get_arma_variance
+kalman_set_initial_state_vector
+kalman_set_initial_MSE_matrix
+kalman_set_nonshift
+kalman_use_ARMA_ll
 </SECTION>
 
 <SECTION>
@@ -1401,11 +1486,60 @@ get_model_data_element
 </SECTION>
 
 <SECTION>
+<FILE>gretl_utils</FILE>
+model_selection_criteria
+floateq
+floatneq
+floatgt
+floatlt
+ok_int
+libgretl_init
+libgretl_cleanup
+date
+gretl_isdummy
+gretl_iszero
+gretl_isconst
+gretl_isunits
+gretl_isdiscrete
+true_const
+format_obs
+set_obs
+gretl_compare_doubles
+gretl_inverse_compare_doubles
+count_distinct_values
+rearrange_id_array
+gretl_compare_ints
+printlist
+gretl_int_from_string
+positive_int_from_string
+varnum_from_string
+rename_var_by_id
+re_estimate
+copyvec
+doubles_array_new
+ijton
+ztox
+get_xvalue
+gretl_copy_file
+gretl_spawn
+gretl_calculate_criteria
+gretl_print_criteria
+ls_criteria
+record_test_result
+get_last_test_statistic
+get_last_pvalue
+</SECTION>
+
+<SECTION>
 <FILE>usermat</FILE>
+n_user_matrices
+user_matrix_by_index
+get_matrix_name_by_index
 get_matrix_by_name
 get_matrix_by_name_at_level
 get_matrix_transpose_by_name
 named_matrix_get_variable
+add_user_matrix
 add_or_replace_user_matrix
 copy_named_matrix_as
 user_matrix_set_name_and_level
@@ -1420,6 +1554,9 @@ user_matrix_get_log_determinant
 user_matrix_get_inverse
 user_matrix_cholesky_decomp
 user_matrix_column_demean
+user_matrix_vec
+user_matrix_vech
+user_matrix_unvech
 user_matrix_QR_decomp
 user_matrix_eigen_analysis
 user_matrix_get_transformation
@@ -1429,13 +1566,19 @@ reposition_transpose_symbol
 </SECTION>
 
 <SECTION>
-<FILE>kalman</FILE>
-kalman
-kalman_new
-kalman_free
-kalman_forecast
-kalman_get_loglik
-kalman_set_initial_state_vector
-kalman_set_initial_MSE_matrix
+<FILE>gretl_panel</FILE>
+panel_diagnostics
+real_panel_model
+panel_wls_by_unit
+panel_autocorr_test
+panel_dwstat
+set_panel_structure_from_vars
+set_panel_structure_from_line
+set_panel_structure_from_indices
+unpad_panel_dataset
+switch_panel_orientation
+balanced_panel
+panel_list_omit
+panel_list_add
 </SECTION>
 
