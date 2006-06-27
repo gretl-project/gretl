@@ -1,7 +1,7 @@
 \chapter{Panel data}
 \label{chap-panel}
 
-\section{Panel structure}
+\section{Panel data structure}
 \label{panel-structure}
 
 Panel data are inherently three dimensional --- the dimensions being
@@ -214,14 +214,14 @@ observations.
 
 \section{Estimation of panel models}
 
-\subsection{Pooled OLS estimation}
+\subsection{Pooled Ordinary Least Squares}
 \label{pooled-est}
 
 The simplest estimator for panel data is pooled OLS.  In most cases
 this is unlikely to be adequate, but it provides a baseline for
 comparison with more complex estimators.
 
-If you estimate a model on panel data using plain OLS an additional test
+If you estimate a model on panel data using OLS an additional test
 item becomes available.  In the GUI model window this is the item
 ``panel diagnostics'' under the \textsf{Tests} menu; the script
 counterpart is the \cmd{hausman} command.
@@ -229,104 +229,152 @@ counterpart is the \cmd{hausman} command.
 To take advantage of this test, you should specify a model without any
 dummy variables representing cross-sectional units.  The test compares
 pooled OLS against the principal alternatives, the fixed effects and
-random effects models.
+random effects models.  These alternatives are explained in the
+following section.
 
-The \emph{fixed effects} model suppresses the overall constant and
-adds a dummy variable for each of the cross-sectional units, allowing
-the intercept of the regression to vary across the units.  An
-\emph{F}-test is reported for the null hypothesis that the intercept
-is the same for all units: if the p-value for this test is small, that
-counts against the null hypothesis (that the simple pooled model is
-adequate) and in favor of the fixed effects model.
-
-The \emph{random effects} model, on the other hand, decomposes the
-residual variance into two parts, one part specific to the
-cross-sectional unit or ``group'' and the other specific to the
-particular observation.  (This estimator can be computed only if the
-panel is ``wide'' enough, that is, if the number of cross-sectional
-units in the data set exceeds the number of parameters to be
-estimated.)  The Breusch--Pagan LM statistic tests the null hypothesis
-that the pooled OLS estimator is adequate against the random
-effects alternative.
-
-It is quite possible that the pooled OLS model is rejected against
-both of the alternatives, fixed effects and random effects. How, then,
-do we assess the relative merits of the two alternative estimators?
-The Hausman test (also reported, provided the random effects model can
-be estimated) addresses this issue.  If the unit- or group-specific
-error is uncorrelated with the independent variables, the random
-effects estimator is more efficient than the fixed effects estimator;
-otherwise the random effects estimator is inconsistent, in which case
-the fixed effects estimator is to be preferred.  The null hypothesis
-for the Hausman test is that the group-specific error is not so
-correlated (and therefore the random effects model is preferable).
-Thus a low p-value for this tests counts against the random effects
-model and in favor of fixed effects.
-
-For a rigorous discussion of this topic, see Greene (2000), chapter
-14.
-
-\section{The fixed and random effects models}
+\subsection{The fixed and random effects models}
 \label{panel-est}
 
+In \app{gretl} version 1.5.2 and higher, the fixed and random effects
+models for panel data can be estimated in their own right.  In the
+graphical interface these options are found under the menu item
+``Model/Panel/Fixed and random effects''.  In the command-line
+interface one uses the \cmd{panel} command, with or without the
+\verb+--random-effects+ option.
+
+This section explains the nature of these models and comments on their
+estimation via \app{gretl}.
+
 The pooled OLS specification may be written as 
-\[
+\begin{equation}
+\label{eq:pooled}
 y_{it} = X_{it}\beta + u_{it}
-\]
+\end{equation}
 where $y_{it}$ is the observation on the dependent variable for
 cross-sectional unit $i$ in period $t$, $X_{it}$ is a $1\times k$
 vector of independent variables observed for unit $i$ in period $t$,
 $\beta$ is a $k\times 1$ vector of parameters, and $u_{it}$ is an error
 or disturbance term specific to unit $i$ in period $t$.
 
-The fixed and random effects models have in common that they involve
-decomposing the unitary error $u_{it}$.  For the fixed effects model we
-can write
-\[
-u_{it} = \alpha_i + \varepsilon_{it}
-\]
+The fixed and random effects models have in common that they decompose
+the unitary pooled error $u_{it}$.  For the \textsl{fixed effects}
+model we can write $u_{it} = \alpha_i + \varepsilon_{it}$, yielding
+\begin{equation}
+\label{eq:FE}
+y_{it} = X_{it}\beta + \alpha_i + \varepsilon_{it}
+\end{equation}
 That is, we decompose $u_{it}$ into a unit-specific and time-invariant
 component, $\alpha_i$, and an observation-specific error,
 $\varepsilon_{it}$.  The $\alpha_i$s are then treated as fixed
-parameters (unit-specific $y$-intercepts) to be estimated.  This can
-be done by including a dummy variable for each cross-sectional unit
-(and suppressing the global constant).  Alternatively, one can proceed
-by subtracting the group or unit means from each of variables and
-estimating a model without a constant.  In the latter case
-the dependent variable may be written as
+parameters (in effect, unit-specific $y$-intercepts), which are to be
+estimated.  This can be done by including a dummy variable for each
+cross-sectional unit (and suppressing the global constant).
+Alternatively, one can proceed by subtracting the group or unit mean
+from each of variables and estimating a model without a constant.  In
+the latter case the dependent variable may be written as
 \[
-\tilde{y}_{it} = y_{it} - \frac{1}{T_i} \sum_{t=1}^{T_i} y_{it}
+\tilde{y}_{it} = y_{it} - \bar{y}_i
 \]
-where $T_i$ is the number of observations for unit $i$,
-and similarly for the independent variables.  We can recover
-estimates of the $\alpha_i$s using
+The ``group mean'', $\bar{y}_i$, is defined as
+\[
+\bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{it}
+\]
+where $T_i$ is the number of observations for unit $i$.  An exactly
+analogous formulation applies to the independent variables.  Given
+parameter estimates, $\hat{\beta}$, obtained using such de-meaned data
+we can recover estimates of the $\alpha_i$s using
 \[
 \hat{\alpha}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} 
    \left(y_{it} - X_{it}\hat{\beta}\right)
 \]
 
-These two methods are numerically equivalent, and \app{gretl} chooses
-between them based on the number of cross-sectional units and the
-number of independent variables (with the idea of conserving computer
-memory).
+These two methods (using dummy variables, and using de-meaned data) are
+numerically equivalent, and \app{gretl} chooses between them based on
+the number of cross-sectional units and the number of independent
+variables (with the objective of using the minimum computer memory).
 
-For the random effects model we write
+For the \textsl{random effects} model we write $u_{it} = v_i +
+\varepsilon_{it}$, so the model becomes
+\begin{equation}
+\label{eq:RE}
+y_{it} = X_{it}\beta + v_i + \varepsilon_{it}
+\end{equation}
+In this context the $v_i$s are not treated as fixed parameters, but as
+random drawings from a given probability distribution.  
+
+The celebrated Gauss--Markov theorem, according to which OLS is the
+best linear unbiased estimator (BLUE), depends on the assumption that
+the error term is independently and identically distributed (IID).  In
+the panel context, the IID assumption means that $E(u_{it}^2)$, in
+relation to equation~\ref{eq:pooled}, equals a constant for all $i$
+and $t$, while the covariance $E(u_{it}, u_{is})$ equals zero for all
+$s \neq t$ and the covariance $E(u_{it}, u_{jt})$ equals zero for all
+$j \neq i$.
+
+If these assumptions are not met --- and they are unlikely to be met
+in the context of panel data --- OLS is not the most efficient
+estimator.  Greater efficiency may be gained using generalized least
+squares (GLS), taking into account the covariance structure of the
+error term.  To implement this approach we need to start by estimating
+the respective variances of $v_i$ and $\varepsilon_{it}$.  The
+variance of $v_i$, namely $\sigma^2_v$, is sometimes called the
+``between'' variance (since it refers to variation between the
+cross-sectional units), and $\sigma^2_{\varepsilon}$ is called the
+``within'' variance.
+
+TO BE CONTINUED
+
+Which panel method should one use, fixed effects or random effects?
+
+One way of answering this question is in relation to the nature of the
+data set.  If the panel comprises observations on a fixed and
+relatively small set of units of interest (say, the member states of
+the European Union), there is a presumption in favor of fixed effects.
+If it comprises observations on a large number of randomly selected
+individuals (as in many epidemiological and other longitudinal
+studies), there is a presumption in favor of random effects.
+
+Besides this general heuristic, however, various statistical
+issues must be taken into account.
+
+\begin{enumerate}
+
+\item Some panel data sets contain variables whose values are specific
+  to the cross-sectional unit but which do not vary over time.  If you
+  want to include such variables in the model, the fixed effects
+  option is simply not available.  When the fixed effects approach is
+  implemented using dummy variables, the symptom is that the
+  time-invariant variables are perfectly collinear with the per-unit
+  dummies.  When using the approach of subtracting the group means,
+  the symptom is that after de-meaning these variables are nothing but
+  zeros.
+\item A somewhat analogous prohibition applies to the random effects
+  model.  To appreciate this point it is necessary to note that the
+  random effects estimator is a matrix-weighted average of the
+  ``within'' estimator (that is, the fixed effects estimator, which
+  sweeps out between-unit variation by including per-unit dummy
+  variables or by subtracting the unit means) and the ``between''
+  estimator.  The latter estimator, which is generally of little
+  interest other than as a stepping-stone, is expressed in terms of
+  the unit means:
 \[
-u_{it} = v_i + \varepsilon_{it}
+\bar{y}_i = \bar{X}_i \beta + e_i
 \]
-Rather than treating the $v_i$s as fixed parameters, we treat tham as
-random drawings from a given probability distribution.  To estimate
-this model we need to start by making an inference regarding the
-respective variances of $v_i$ and $\varepsilon_{it}$.  The variance
-of $v_i$, $\sigma^2_v$, is sometimes called the ``between'' variance
-(since it refers to variation between the cross-sectional units), and 
-$\sigma^2_{\varepsilon}$ is called the ``within'' variance.
+The point is that if one has observations on $m$ units and $k$
+independent variables of interest, then if $k>m$ the ``between''
+estimator is undefined --- since we have only $m$ effective
+observations --- and hence so is the random effects estimator.
 
+\item If one does not fall foul of one or other of the prohibitions
+  mentioned above, the choice between fixed effects and random effects
+  may be expressed in terms of the two econometric
+  \textit{desiderata}, efficiency and consistency.  The short story is
+  that the random effects model is consistent only under more
+  stringent conditions than the fixed effects model, but if these
+  conditions are satisfied the random effects model offers greater
+  efficiency.
 
-FIXME.  This needs to be written.  It should give a reasonably
-detailed account of the fixed- and random-effects estimators and also
-groupwise weighted least squares.  Plus some references to further
-reading, e.g.\ Baltagi.
+\end{enumerate}
 
 
 \section{Illustration: the Penn World Table}
