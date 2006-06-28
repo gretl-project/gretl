@@ -131,7 +131,6 @@ struct LOOPSET_ {
     int n_models;
     int n_loop_models;
     int n_prints;
-    int n_storevars;
 
     char **lines;
     int *ci;
@@ -140,9 +139,9 @@ struct LOOPSET_ {
     LOOP_MODEL *lmodels;
     LOOP_PRINT *prns;
     char storefile[MAXLEN];
-    char **storename;
-    char **storelbl;
-    double *storeval;
+    gretlopt storeopt;
+    double **sZ;
+    DATAINFO *sdinfo;
     LOOPSET *parent;
     LOOPSET **children;
     int n_children;
@@ -1392,7 +1391,6 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->n_models = 0;
     loop->n_loop_models = 0;
     loop->n_prints = 0;
-    loop->n_storevars = 0;
 
     loop->lines = NULL;
     loop->ci = NULL;
@@ -1404,9 +1402,9 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->prns = NULL;
 
     loop->storefile[0] = '\0';
-    loop->storename = NULL;
-    loop->storelbl = NULL;
-    loop->storeval = NULL;
+    loop->storeopt = OPT_NONE;
+    loop->sZ = NULL;
+    loop->sdinfo = NULL;
 
     loop->parent = NULL;
     loop->children = NULL;
@@ -1550,24 +1548,9 @@ static int loop_print_init (LOOP_PRINT *lprn, const int *list)
 
 static void loop_store_free (LOOPSET *loop)
 {
-    int i;
-
-    if (loop->storename != NULL) {
-	free_strings_array(loop->storename, loop->n_storevars);
-	loop->storename = NULL;
-    }
-
-    if (loop->storelbl != NULL) {
-	free_strings_array(loop->storelbl, loop->n_storevars);
-	loop->storelbl = NULL;
-    }
-
-    if (loop->storeval != NULL) { 
-	free(loop->storeval);
-	loop->storeval = NULL;
-    }
-
-    loop->n_storevars = 0;
+    destroy_dataset(loop->sZ, loop->sdinfo);
+    loop->sZ = NULL;
+    loop->sdinfo = NULL;
 }
 
 /**
@@ -1576,6 +1559,7 @@ static void loop_store_free (LOOPSET *loop)
  * @fname: name of file in which to store data.
  * @list: list of variables to be stored (written to file).
  * @pdinfo: data information struct.
+ * @opt: option for data storage format.
  *
  * Set up @loop for saving a set of variables.
  *
@@ -1583,51 +1567,37 @@ static void loop_store_free (LOOPSET *loop)
  */
 
 static int loop_store_init (LOOPSET *loop, const char *fname, 
-			    const int *list, DATAINFO *pdinfo)
+			    const int *list, DATAINFO *pdinfo,
+			    gretlopt opt)
 {
-    int i, tot = list[0] * loop->itermax;
+    int i;
 
-    if (loop->n_storevars > 0) {
+    if (loop->sZ != NULL) {
 	strcpy(gretl_errmsg, "Only one 'store' command is allowed in a "
 	       "progressive loop");
 	return E_DATA;
     }
 
-    loop->n_storevars = list[0];
-
-    loop->storename = NULL;
-    loop->storelbl = NULL;
-    loop->storeval = NULL;
+    loop->sdinfo = create_new_dataset(&loop->sZ, list[0] + 1, 
+				      loop->itermax, 0);
+    if (loop->sdinfo == NULL) {
+	return E_ALLOC;
+    }
 
     loop->storefile[0] = '\0';
     strncat(loop->storefile, fname, MAXLEN - 1);
 
-    loop->storename = strings_array_new_with_length(list[0], VNAMELEN);
-    if (loop->storename == NULL) return E_ALLOC;
-
-    loop->storelbl = strings_array_new_with_length(list[0], MAXLABEL);
-    if (loop->storelbl == NULL) goto cleanup;
-
-    loop->storeval = malloc(tot * sizeof *loop->storeval);
-    if (loop->storeval == NULL) goto cleanup;
-
-    for (i=0; i<loop->n_storevars; i++) {
+    for (i=1; i<loop->sdinfo->v; i++) {
 	char *p;
 
-	strcpy(loop->storename[i], pdinfo->varname[list[i+1]]);
-	strcpy(loop->storelbl[i], VARLABEL(pdinfo, list[i+1]));
-	if ((p = strstr(loop->storelbl[i], "(scalar)"))) {
+	strcpy(loop->sdinfo->varname[i], pdinfo->varname[list[i]]);
+	strcpy(VARLABEL(loop->sdinfo, i), VARLABEL(pdinfo, list[i]));
+	if ((p = strstr(VARLABEL(loop->sdinfo, i), "(scalar)"))) {
 	    *p = 0;
 	}
     }
 
     return 0;
-
- cleanup:
-
-    loop_store_free(loop);
-
-    return E_ALLOC;
 }
 
 static int add_model_record (LOOPSET *loop)
@@ -2195,91 +2165,33 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
 
 static int save_loop_store (LOOPSET *loop, PRN *prn)
 {
-    FILE *fp;
-    char gdtfile[MAXLEN], infobuf[1024];
-    char *xmlbuf = NULL;
-    time_t writetime;
-    int i, t;
+    char fname[MAXLEN];
+    int *list;
+    int err = 0;
 
-    /* FIXME respect options to store command, or explicitly
-       disclaim them in loop context */
+    list = gretl_consecutive_list_new(1, loop->sdinfo->v - 1);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
 
     /* organize filename */
     if (loop->storefile[0] == '\0') {
-	sprintf(gdtfile, "%sloopdata.gdt", gretl_user_dir());	
+	sprintf(fname, "%sloopdata.gdt", gretl_user_dir());	
     } else {
-	strcpy(gdtfile, loop->storefile);
+	strcpy(fname, loop->storefile);
     }
 
-    if (strchr(gdtfile, '.') == NULL) {
-	strcat(gdtfile, ".gdt");
+    if (loop->storeopt == OPT_NONE &&
+	strchr(fname, '.') == NULL) {
+	strcat(fname, ".gdt");
     }
 
-    fp = gretl_fopen(gdtfile, "w");
-    if (fp == NULL) {
-	return E_FOPEN;
-    }
+    err = write_data(fname, list, (const double **) loop->sZ, 
+		     loop->sdinfo, loop->storeopt, NULL);
 
-    writetime = time(NULL);
+    free(list);
 
-    pprintf(prn, _("printing %d values of variables to %s\n"), 
-	    loop->itermax, gdtfile);
-
-    fprintf(fp, "<?xml version=\"1.0\"?>\n"
-	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-	    "<gretldata name=\"%s\" frequency=\"1\" "
-	    "startobs=\"1\" endobs=\"%d\" ", 
-	    gdtfile, loop->itermax);
-
-    fprintf(fp, "type=\"cross-section\">\n");
-
-    sprintf(infobuf, "%s %s", _("simulation data written"),
-	    print_time(&writetime)); 
-    xmlbuf = gretl_xml_encode(infobuf);
-    fprintf(fp, "<description>\n%s\n</description>\n", xmlbuf);
-    free(xmlbuf);
-
-    gretl_push_c_numeric_locale();
-
-    /* print info on variables */
-    fprintf(fp, "<variables count=\"%d\">\n", loop->n_storevars);
-
-    for (i=0; i<loop->n_storevars; i++) {
-	xmlbuf = gretl_xml_encode(loop->storename[i]);
-	fprintf(fp, "<variable name=\"%s\"", xmlbuf);
-	free(xmlbuf);
-	xmlbuf = gretl_xml_encode(loop->storelbl[i]);
-	fprintf(fp, "\n label=\"%s\"/>\n", xmlbuf);
-	free(xmlbuf);
-    }
-
-    fputs("</variables>\n", fp);
-
-    fprintf(fp, "<observations count=\"%d\" labels=\"false\">\n",
-	    loop->itermax);
-
-    for (t=0; t<loop->itermax; t++) {
-	double x;
-
-	fputs("<obs>", fp);
-	for (i=0; i<loop->n_storevars; i++) {
-	    x = loop->storeval[loop->itermax * i + t];
-	    if (na(x)) {
-		fputs("NA ", fp);
-	    } else {
-		fprintf(fp, "%g ", x);
-	    }
-	}
-	fputs("</obs>\n", fp);
-    }
-
-    fprintf(fp, "</observations>\n</gretldata>\n");
-
-    gretl_pop_c_numeric_locale();
-
-    fclose(fp);
-
-    return 0;
+    return err;
 }
 
 static int 
@@ -2356,16 +2268,16 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 static void update_loop_store (const int *list, LOOPSET *loop,
 			       const double **Z, DATAINFO *pdinfo)
 {
-    int i, sv;
+    int i;
 
-    for (i=0; i<list[0]; i++) {
-	sv = i * loop->itermax + loop->iter;
-	if (var_is_series(pdinfo, list[i+1])) { 
-	    loop->storeval[sv] = Z[list[i+1]][pdinfo->t1 + 1];
+    for (i=1; i<=list[0]; i++) {
+	if (var_is_series(pdinfo, list[i])) { 
+	    loop->sZ[i][loop->iter] = Z[list[i]][pdinfo->t1 + 1]; /* ?? */
 	} else {
-	    loop->storeval[sv] = Z[list[i+1]][0];
+	    loop->sZ[i][loop->iter] = Z[list[i]][0];
 	}
     }
+
 }
 
 static int clr_attach_var (controller *clr, const DATAINFO *pdinfo)
@@ -2966,7 +2878,8 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case STORE:
 		if (loop_is_progressive(loop)) {
 		    if (loop->iter == 0) {
-			err = loop_store_init(loop, cmd.param, cmd.list, pdinfo);
+			err = loop_store_init(loop, cmd.param, cmd.list, 
+					      pdinfo, cmd.opt);
 			if (err) {
 			    break;
 			}
