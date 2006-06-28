@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define GRETLCLI
+
 #include "libgretl.h"
 
 #define NINTS 2867200

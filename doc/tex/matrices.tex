@@ -407,7 +407,9 @@ matrices associated with models previously estimated:
 \texttt{\$uhat} & vector of residuals \\
 \texttt{\$yhat} & vector of fitted values \\
 \texttt{\$vcv} & covariance matrix for coefficients \\
-\texttt{\$rho} & autoregressive coefficients for error process
+\texttt{\$rho} & autoregressive coefficients for error process \\
+\texttt{\$jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
+\texttt{\$jbeta} & matrix $\beta$ (cointegration vectors) from Johansen's procedure
 \end{tabular}
 \end{center}
 
@@ -436,6 +438,14 @@ the cross-equation covariance matrix; in the special case of a VAR or
 a VECM, \texttt{\$coeff} returns the companion matrix. At present the
 other accessors are not available for equation systems.
 
+After a vector error correction model is estimated via Johansen's
+procedure, the matrices \texttt{\$jalpha} and \texttt{\$jbeta} are
+also available. These have a number of columns equal to the chosen
+cointegration rank; therefore, the product
+\begin{code}
+  matrix Pi = $jalpha * $jbeta'
+\end{code}
+returns the reduced-rank estimate of $A(1)$.
 
 \section{Selecting sub-matrices}
 \label{matrix-sub}

@@ -170,6 +170,7 @@ struct gretl_option gretl_opts[] = {
     { PERGM,    OPT_O, "bartlett" },
     { PLOT,     OPT_O, "one-scale" },
     { PRINT,    OPT_O, "byobs" },
+    { PRINT,    OPT_L, "long" },
     { PRINT,    OPT_N, "no-dates" },
     { PRINT,    OPT_T, "ten" },
     { PROBIT,   OPT_R, "robust" },

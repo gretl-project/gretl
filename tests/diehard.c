@@ -35,7 +35,7 @@ static doublereal c_b1033 = .33333;
 
 /* ************top of file */
 /* Main program */ 
-int MAIN__()
+int main ()
 {
     /* Format strings */
     static char fmt_766[] = "(a78)";

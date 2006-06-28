@@ -94,7 +94,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z)
 {
-    char dbbin[MAXLEN], numstr[16];
+    char dbbin[MAXLEN], numstr[32];
     FILE *fp;
     int t, n = sinfo->nobs;
     dbnumber val;
@@ -110,7 +110,7 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
     fseek(fp, (long) sinfo->offset, SEEK_SET);
     for (t=0; t<n; t++) {
 	fread(&val, sizeof val, 1, fp);
-	sprintf(numstr, "%g", val);
+	sprintf(numstr, "%.7g", val); /* N.B. converting a float */
 	Z[1][t] = atof(numstr);
 	if (Z[1][t] == DBNA) {
 	    Z[1][t] = NADBL;
@@ -681,7 +681,6 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 			    double **Z)
 {
     RATSData rdata;
-    char numstr[16];
     int miss = 0, i, t = 0;
     double val;
     
@@ -692,8 +691,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 	/* the RATSData struct is actually 256 bytes.  Yay! */
 	fread(&rdata, sizeof rdata, 1, fp);
 	for (i=0; i<31 && t<sinfo->nobs; i++) {
-	    sprintf(numstr, "%g", rdata.data[i]);
-	    val = atof(numstr);
+	    val = rdata.data[i];
 	    if (isnan(val)) {
 		val = NADBL;
 		miss = 1;

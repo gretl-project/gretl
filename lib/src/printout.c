@@ -1050,8 +1050,9 @@ static void printz (const double *z, const DATAINFO *pdinfo,
     int t, dig = 10, ls = 0;
     double xx;
 
-    if (opt & OPT_T) {
+    if (opt & OPT_L) {
 	dig = get_long_digits();
+	opt = OPT_T;
     }
 
     if (gretl_isconst(t1, t2, z)) {
@@ -1467,8 +1468,10 @@ static void print_scalar (double x, const char *vname,
 	if (x >= 0.0) {
 	    pputc(prn, ' ');
 	}
-	if (opt & OPT_T) {
-	    pprintf(prn, "%.10e", x);
+	if (opt & OPT_L) {
+	    pprintf(prn, "%#.*E", get_long_digits(), x);
+	} else if (opt & OPT_T) {
+	    pprintf(prn, "%#.10E", x);
 	} else {
 	    pprintf(prn, "%#.6g", x);
 	}
@@ -1491,9 +1494,10 @@ int get_printdata_blocks (void)
  * @list: list of variables to print.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @opt: if OPT_O, print the data by observation (series in columns);
- *       if OPT_N, use simple obs numbers, not dates; 
- *       if OPT_T, print the data to 10 significant digits.
+ * @opt: if %OPT_O, print the data by observation (series in columns);
+ * if %OPT_N, use simple obs numbers, not dates; if %OPT_T, print the 
+ * data to 10 significant digits; if %OPT_L, print the data to a number 
+ * of digits set by "set longdigits" (default 10).
  * @prn: gretl printing struct.
  *
  * Print the data for the variables in @list, from observations t1 to
@@ -1999,7 +2003,7 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
 
 /* apparatus for user-defined printf statements */
 
-#define PRINTF_DEBUG 1
+#define PRINTF_DEBUG 0
 
 #define is_format_char(c) (c == 'e' || \
                            c == 'E' || \

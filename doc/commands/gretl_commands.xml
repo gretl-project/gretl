@@ -2087,10 +2087,20 @@
       <ilist>
 	<li>
 	  <para>Standard mathematical functions: <func>abs</func>,
-	    <func>cos</func>, <func>exp</func>, <func>int</func> (integer part),
-	    <func>ln</func> (natural logarithm: <func>log</func> is a synonym),
-	    <func>sin</func>, <func>sqrt</func>.  All of these take a single
-	    argument, which may be either a series or a scalar.
+	    <func>exp</func>, <func>int</func> (integer part),
+	    <func>ln</func> (natural logarithm: <func>log</func> is a
+	    synonym), <func>log10</func> (log to the base 10),
+	    <func>log2</func> (log to the base 2), <func>sqrt</func>.  All
+	    of these take a single argument, which may be either a series
+	    or a scalar.
+	  </para>
+	</li>
+
+	<li>
+	  <para>Trigonometric functions: <func>cos</func>,
+	    <func>sin</func>, <func>tan</func> and <func>atan</func> (arc
+	    tangent). These functions also take a single series or scalar
+	    argument.
 	  </para>
 	</li>
 
@@ -5205,8 +5215,8 @@
 	  <effect>by observations</effect>
 	</option>
 	<option>
-	  <flag>--ten</flag>
-	  <effect>use 10 significant digits</effect>
+	  <flag>--long</flag>
+	  <effect>use 10 significant digits or more</effect>
 	</option>
 	<option>
 	  <flag>--no-dates</flag>
@@ -5225,9 +5235,14 @@
 	specified variables; if no list is given, prints the values of
 	all variables in the current data file. If the
 	<lit>--byobs</lit> flag is given the data are printed by
-	observation, otherwise they are printed by variable.  If the
-	<lit>--ten</lit> flag is given the data are printed by
-	variable to 10 significant digits.
+	observation, otherwise they are printed by variable.
+      </para>
+
+      <para>
+	If the <lit>--long</lit> flag is given the data are printed, by
+	variable, to greater than usual precision.  The default in this
+	case is to show 10 significant digits but you can adjust that
+	figure using the <cmdref targ="set"/> command.
       </para>
 
       <para>
@@ -6178,8 +6193,15 @@
 	    1.0E&minus;06 for <cmd>arma</cmd> and 1.0E&minus;10 for
 	    <cmd>tobit</cmd>; these values may be re-established by typing
 	    <lit>default</lit> in place of a numeric value.
-	    </para>
-	    </li>
+	  </para>
+	</li>
+	<li>	  
+	  <para><lit>longdigits</lit>: one positive integer value, less
+	    than or equal to 20.  Determines the number of digits of
+	    precision used when printing the values of variables using the
+	    <lit>--long</lit> option (see <cmdref targ="print"/>).
+	  </para>
+	</li>
       </ilist>
 
     </description>

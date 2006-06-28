@@ -448,20 +448,44 @@ issues must be taken into account.
   ``between'' estimator is undefined --- since we have only $m$
   effective observations --- and hence so is the random effects
   estimator.
-\item If one does not fall foul of one or other of the prohibitions
-  mentioned above, the choice between fixed effects and random effects
-  may be expressed in terms of the two econometric
-  \textit{desiderata}, efficiency and consistency.  The short story is
-  that the random effects model is consistent only under a more
-  stringent condition than the fixed effects model, but if this
-  condition is satisfied the random effects model offers greater
-  efficiency.  The condition in question is that the unit-specific
-  error, $v_i$, must be unrelated to the independent variables, $X_i$,
-  or more precisely that the expectation of $v_i$ conditional on
-  $X_i$ equals zero.  This point is taken up in relation to the
-  Hausman test in the following section.
-
 \end{enumerate}
+
+If one does not fall foul of one or other of the prohibitions
+mentioned above, the choice between fixed effects and random effects
+may be expressed in terms of the two econometric \textit{desiderata},
+efficiency and consistency.  
+
+From a purely statistical viewpoint, we could say that there is a
+tradeoff between robustness and efficiency. In the fixed effects
+approach, we do not make any hypotheses on the individual effects
+beyond the fact that they exist (and even that can be tested --- see
+below). As a consequence, once individual effects are swept out by
+taking deviations from individual means, the remaining parameters can
+be estimated.
+
+On the contrary, the random effects approach attempts to model those
+individual effects instead of removing them. This requires that
+individual effects are representable as a legitimate part of the
+disturbance term, that is, zero-mean random variables, uncorrelated
+with the regressors.
+
+As a consequence, the fixed-effects estimator ``always works'', but at
+the cost of not being able to estimate the effect of time-invariant
+regressors, since any time-invariant effect is, by definition, an
+individual-specific feature and therefore ignored. On the other hand,
+the richer hypothesis set of the random-effects estimator ensures that
+parameters for time-invariant regressors can be estimated and that
+estimation of the parameters for time-varying regressors is carried
+out more efficiently.  These advantages, though, are tied to the
+validity of these additional hypotheses. If, for example, there is
+reason to think that individual effects may be correlated with some of
+the explanatory variables, then the random-effects estimator would be
+inconsistent, while fixed-effects estimates would be perfectly valid.
+It is precisely on this principle that the Hausman test is built (see
+below): if fixed- and random-effects estimates agree, there is no
+reason to think the additional hypotheses invalid, and as a
+consequence, not to use the RE estimator, which is more efficient.
+
 
 \subsection{Testing panel models}
 \label{panel-tests}

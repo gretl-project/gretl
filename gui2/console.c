@@ -414,7 +414,7 @@ void show_gretl_console (void)
     introlen = strlen(_(intro));
 #endif
 
-    vwin = view_file(fname, 1, 0, 78, 400, CONSOLE);
+    vwin = view_file(fname, 1, 1, 78, 400, CONSOLE);
     console_view = vwin->w;
 
 #ifndef OLD_GTK

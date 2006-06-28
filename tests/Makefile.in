@@ -47,7 +47,7 @@ randcheck: diehard mtrand
 	./mtrand && ./diehard
 
 diehard: diehard.c
-	$(CC) -o $@ $< $(FLIB) -lm
+	$(CC) -I$(topsrc)/lib/src -o $@ $< $(FLIB) -lm
 
 mtrand: mtrand.o
 	../libtool --mode=link $(CC) -o $@ $< $(RAND_LIBS)

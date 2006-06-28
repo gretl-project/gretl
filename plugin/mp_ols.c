@@ -175,15 +175,12 @@ static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
     int t, s = 0; 
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	/* do trick with strings? */
 	if (digits != NULL && digits[i] != NULL) {
+	    /* do trick with strings */
 	    sprintf(numstr, "%.*g", digits[i][t], Z[i][t]);
-#if MP_DEBUG
-	    printf("setting mpZ[%d][%d] from '%s'\n", mpi, s, numstr);
-#endif
 	    mpf_init_set_str(mpZ[mpi][s], numstr, 10);
 	} else { 
-	    /* or do straight conversion */
+	    /* do straight conversion */
 	    mpf_init_set_d(mpZ[mpi][s], Z[i][t]);
 	}
 	s++;

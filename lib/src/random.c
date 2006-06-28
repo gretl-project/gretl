@@ -159,6 +159,22 @@ unsigned int gretl_rand_int_max (unsigned int max)
 }
 
 /**
+ * gretl_rand_int:
+ *
+ * Returns: a pseudo-random unsigned int on the interval
+ * [0,0xffffffff] using the Mersenne Twister.
+ */
+
+unsigned int gretl_rand_int (void)
+{
+#ifdef HAVE_G_RAND
+    return g_rand_int(gretl_rand);
+#else
+    return genrand_int32();
+#endif
+}
+
+/**
  * gretl_rand_free:
  *
  * Free the gretl_rand structure (may be called at program exit).

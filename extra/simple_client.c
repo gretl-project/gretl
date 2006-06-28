@@ -19,6 +19,8 @@
 
 /* Trivial sample client program for libgretl */
 
+#define GRETLCLI /* don't include libxml headers */
+
 #include <gretl/libgretl.h>   
 
 void noalloc(void)

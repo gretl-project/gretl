@@ -184,7 +184,7 @@ typedef enum {
 
 typedef enum {
     T_NONE,
-    T_LOG, 
+    T_LOG,
     T_EXP, 
     T_SIN, 
     T_COS,
@@ -200,6 +200,8 @@ typedef enum {
     T_LNGAMMA,
     T_NORMAL, 
     T_UNIFORM, 
+    T_LOG10,
+    T_LOG2,
     T_MATHMAX
 } GretlMathFunc;
 

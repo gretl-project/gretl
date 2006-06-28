@@ -1212,7 +1212,9 @@ int write_data (const char *fname, const int *list,
 	fp = gretl_fopen(datfile, "w");
     }
 
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	return E_FOPEN;
+    }
 
     if (fmt == GRETL_DATA_FLOAT) { 
 	/* single-precision binary */

@@ -1586,6 +1586,7 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
 
     loop->storefile[0] = '\0';
     strncat(loop->storefile, fname, MAXLEN - 1);
+    loop->storeopt = opt;
 
     for (i=1; i<loop->sdinfo->v; i++) {
 	char *p;

@@ -28,6 +28,8 @@ void gretl_normal_dist (double *a, int t1, int t2);
 
 unsigned int gretl_rand_int_max (unsigned int max);
 
+unsigned int gretl_rand_int (void);
+
 void gretl_rand_init (void);
 
 void gretl_rand_free (void);

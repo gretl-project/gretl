@@ -263,6 +263,8 @@ static void script_window_update (windata_t *vwin, const char *fname)
 	vwin->role = EDIT_SCRIPT;
     }
 
+    mark_content_saved(vwin);
+
     /* make the window editable */
 #ifndef OLD_GTK
     if (!gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w))) {

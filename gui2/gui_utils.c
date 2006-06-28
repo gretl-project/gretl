@@ -165,11 +165,11 @@ static void mark_content_changed (windata_t *vwin)
 	if (w != NULL) {
 	    gtk_widget_set_sensitive(w, TRUE);
 	}
-	vwin->active_var = 1;	
+	vwin->active_var = 1;
     }
 }
 
-static void mark_content_saved (windata_t *vwin) 
+void mark_content_saved (windata_t *vwin) 
 {
     GtkWidget *w = get_toolbar_button_by_flag(GTK_TOOLBAR(vwin->mbar), 
 					      SAVE_ITEM);
@@ -178,6 +178,12 @@ static void mark_content_saved (windata_t *vwin)
 	gtk_widget_set_sensitive(w, FALSE);
     }
     vwin->active_var = 0;
+
+    w = get_toolbar_button_by_flag(GTK_TOOLBAR(vwin->mbar), 
+				   SAVE_AS_ITEM);
+    if (w != NULL) {
+	gtk_widget_set_sensitive(w, TRUE);
+    }
 }
 
 static void close_model (gpointer data, guint close, GtkWidget *w)
@@ -2114,6 +2120,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    /* nothing to save just yet */
 	    gtk_widget_set_sensitive(w, FALSE);
 	} 
+	if (viewbar_items[i].flag == SAVE_AS_ITEM &&
+	    strstr(vwin->fname, "script_tmp")) {
+	    gtk_widget_set_sensitive(w, FALSE);
+	}
     }
 
     gtk_widget_show(vwin->mbar);

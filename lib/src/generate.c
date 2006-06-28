@@ -105,6 +105,8 @@ struct genr_func {
 
 struct genr_func funcs[] = {
     { T_LOG,      "log" }, 
+    { T_LOG10,    "log10" }, 
+    { T_LOG2,     "log2" }, 
     { T_EXP,      "exp" }, 
     { T_SIN,      "sin" }, 
     { T_COS,      "cos" }, 
@@ -189,7 +191,8 @@ struct genr_func funcs[] = {
 
 #define LEVELS 7
 
-#define STANDARD_MATH(f) (f == T_LOG || f == T_EXP || \
+#define STANDARD_MATH(f) (f == T_LOG || f == T_LOG10 || f == T_LOG2 || \
+                          f == T_EXP || \
                           f == T_SIN || f == T_COS || f == T_TAN || \
                           f == T_ATAN || f == T_INT || f == T_ABS || \
                           f == T_DNORM || f == T_CNORM || f == T_QNORM || \
@@ -490,7 +493,20 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
     return v;
 }
 
-/* also used in do_printf function */
+/**
+ * get_generated_value:
+ * @rhs: string representation of value to be retrieved.
+ * @val: location to return scalar value.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @t: observation number (if applicable).
+ *
+ * Gets a scalar value, either from a numeric string, or
+ * by looking up a variable at a specific observation, or
+ * by calculating the value of an expression.
+ * 
+ * Returns: 0 on success, non-zero on error.
+ */
 
 int get_generated_value (const char *rhs, double *val,
 			 double ***pZ, DATAINFO *pdinfo,
@@ -507,8 +523,12 @@ int get_generated_value (const char *rhs, double *val,
     if (t < pdinfo->n) {
 	v = varindex(pdinfo, rhs);
 	if (v < pdinfo->v) {
-	    *val = (*pZ)[v][t];
-	    return 0;
+	    if (var_is_scalar(pdinfo, v) && t > 0) {
+		return E_DATA;
+	    } else {
+		*val = (*pZ)[v][t];
+		return 0;
+	    }
 	}
     }
 
@@ -2188,14 +2208,20 @@ static int catch_special_operators (GENERATOR *genr, char *s)
 	    *s = OP_LTE;
 	    lshift = 1;
 	} else if (*s == '.' && *(s+1) == '*') {
-	    *s = OP_DOTMULT;
-	    lshift = 1;
+	    if (genr_is_matrix(genr)) {
+		*s = OP_DOTMULT;
+		lshift = 1;
+	    }
 	} else if (*s == '.' && *(s+1) == '/') {
-	    *s = OP_DOTDIV;
-	    lshift = 1;
+	    if (genr_is_matrix(genr)) {
+		*s = OP_DOTDIV;
+		lshift = 1;
+	    }
 	} else if (*s == '.' && *(s+1) == '^') {
-	    *s = OP_DOTPOW;
-	    lshift = 1;
+	    if (genr_is_matrix(genr)) {
+		*s = OP_DOTPOW;
+		lshift = 1;
+	    }
 	} else if (*s == '*' && *(s+1) == '*') {
 	    if (genr_is_matrix(genr)) {
 		*s = OP_KRON;
@@ -2817,6 +2843,14 @@ static int parenthesize (char *str)
     return 0;
 }
 
+/**
+ * get_func_word:
+ * @fnum: index number of a gretl function.
+ *
+ * Returns: the name of the function corresponding to
+ * @fnum, or %NULL if @fnum is out of range.
+ */
+
 const char *get_genr_func_word (int fnum)
 {
     int i;
@@ -2829,6 +2863,14 @@ const char *get_genr_func_word (int fnum)
 
     return NULL;
 }
+
+/**
+ * genr_function_from_string:
+ * @s: the string to look up.
+ *
+ * Returns: the index number of the funtion corresponding
+ * to the name @s, or 0 if there is no such function.
+ */
 
 int genr_function_from_string (const char *s)
 {
@@ -3171,8 +3213,7 @@ static int gentoler (const char *s, PRN *prn)
     return err;
 }
 
-static void 
-make_genr_varname (GENERATOR *genr, const char *vname)
+static void make_genr_varname (GENERATOR *genr, const char *vname)
 {
     if (!strncmp(vname, "__", 2)) {
 	strcpy(genr->varname, vname + 2);
@@ -3309,6 +3350,19 @@ static void genr_type_check (GENERATOR *genr)
 	}
     }
 }
+
+/**
+ * genr_compile:
+ * @line: expression defining a variable.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ * @opt:
+ * @prn: printing struct (which is attached to the returned
+ * pointer).
+ * 
+ *
+ * Returns: pointer to a #GENERATOR struct, or %NULL on failure.
+ */
 
 GENERATOR *
 genr_compile (const char *line, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
@@ -3574,6 +3628,17 @@ static void finalize_genr (GENERATOR *genr, int oldv)
     } 
 }
 
+/**
+ * execute_genr:
+ * @genr: pointer to variable-generator struct.
+ * @oldv: the number of variables in the dataset prior
+ * to execution.
+ *
+ * Executes a pre-compiled genr expression; see genr_compile().
+ *
+ * Returns: the error code on @genr (which will be 0 on success).
+ */
+
 int execute_genr (GENERATOR *genr, int oldv)
 {
     if (genr->err) {
@@ -3754,7 +3819,13 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-/* simple accessor, used in nls.c */
+/**
+ * genr_get_varnum:
+ * @genr: pointer to variable-generator struct.
+ *
+ * Returns: the index number of the variable created by
+ * the last run of execute_genr().
+ */
 
 int genr_get_varnum (const GENERATOR *genr)
 {
@@ -4010,7 +4081,12 @@ static double calc_xy (double x, double y, char op, int t, int *err)
 	}
 	break;
     default:
-	fprintf(stderr, "unsupported operator\n");
+	if (isprint(op)) {
+	    fprintf(stderr, "unsupported operator '%c'\n", op);
+	} else {
+	    fprintf(stderr, "unsupported operator %d\n", op);
+	}
+	x = NADBL;
 	*err = 1;
 	break;
     } 
@@ -4035,11 +4111,18 @@ static double evaluate_math_function (double arg, int fn, int *err)
     switch (fn) {
 
     case T_LOG:
+    case T_LOG10:
+    case T_LOG2:
 	if (arg <= 0.0) {
 	    fprintf(stderr, "genr: log arg = %g\n", arg);
 	    *err = E_LOGS;
 	} else {
 	    x = log(arg);
+	    if (fn == T_LOG10) {
+		x /= log(10.0);
+	    } else if (fn == T_LOG2) {
+		x /= log(2.0);
+	    }
 	}
 	break;	
     case T_EXP:
