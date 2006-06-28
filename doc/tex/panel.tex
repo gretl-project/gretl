@@ -486,7 +486,6 @@ below): if fixed- and random-effects estimates agree, there is no
 reason to think the additional hypotheses invalid, and as a
 consequence, not to use the RE estimator, which is more efficient.
 
-
 \subsection{Testing panel models}
 \label{panel-tests}
 
@@ -521,6 +520,24 @@ parameter estimates as a matter of course, as follows.
 \end{itemize}
 
 
+\subsection{Robust standard errors}
+\label{panel-robust}
+
+For most estimators, \app{gretl} offers the option of computing an
+estimate of the covariance matrix that is robust with respect to
+heteroskedasticity and/or autocorrelation (and hence also robust
+standard errors).  In the case of panel data, a robust covariance
+matrix is available for the fixed effects model but not currently for
+random effects.  The estimator used for fixed effects is
+\[
+\left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
+\left[ \sum_{i=1}^m \tilde{X}_i^{\prime} \tilde{u}_i 
+    \tilde{u}_i^{\prime} \tilde{X}_i \right]
+\left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
+\]
+where $\tilde{X}$ is the matrix of regressors with the group means
+subtracted, $\tilde{u}_i$ denotes the FE residuals for unit $i$, and $m$
+is the number of cross-sectional units.
 
 \section{Illustration: the Penn World Table}
 \label{PWT}
