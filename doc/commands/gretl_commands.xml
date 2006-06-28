@@ -5263,14 +5263,17 @@
 
     <description>
       <para>
-	Prints scalar values under the control of a format string
-	(providing a small subset of the <lit>printf()</lit> statement
-	in the C programming language). Recognized formats are
-	<lit>%g</lit> and <lit>%f</lit>, in each case with the various
-	modifiers available in C.  Examples: the format
-	<lit>%.10g</lit> prints a value to 10 significant figures;
-	<lit>%12.6f</lit> prints a value to 6 decimal places, with a
-	width of 12 characters.</para>  
+	Prints scalar values and/or strings under the control of a
+	format string (providing a small subset of the
+	<lit>printf()</lit> statement in the C programming language).
+	Recognized numeric formats are <lit>%e</lit>, <lit>%E</lit>,
+	<lit>%f</lit>, <lit>%g</lit>, <lit>%G</lit> and <lit>%d</lit>,
+	in each case with the various modifiers available in C.
+	Examples: the format <lit>%.10g</lit> prints a value to 10
+	significant figures; <lit>%12.6f</lit> prints a value to 6
+	decimal places, with a width of 12 characters.  The format
+	<lit>%s</lit> should be used for strings.
+      </para>
 
       <para>The format string itself must be enclosed in double
 	quotes.  The values to be printed must follow the format

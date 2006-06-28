@@ -1999,10 +1999,22 @@ int print_fit_resid (const MODEL *pmod, const double **Z,
 
 /* apparatus for user-defined printf statements */
 
-#define PRINTF_DEBUG 0
+#define PRINTF_DEBUG 1
 
-#define is_format_char(c) (c == 'f' || c == 'g' || c == 'd' || c == 's')
-#define numeric_conv(c)   (c == 'f' || c == 'g' || c == 'd')
+#define is_format_char(c) (c == 'e' || \
+                           c == 'E' || \
+                           c == 'f' || \
+                           c == 'g' || \
+                           c == 'G' || \
+                           c == 'd' || \
+                           c == 's')
+
+#define numeric_conv(c) (c == 'e' || \
+                         c == 'E' || \
+                         c == 'f' || \
+                         c == 'g' || \
+                         c == 'G' || \
+			 c == 'd')
 
 static int print_arg (const char **pfmt, double val, 
 		      const char *str, PRN *prn)
@@ -2019,7 +2031,7 @@ static int print_arg (const char **pfmt, double val,
 	fmt[2] = '\0';
 	n = 2;
     } else {
-	sscanf(*pfmt + 1, "%14[^gfsd]", fmt + 1);
+	sscanf(*pfmt + 1, "%14[^eEfgGsd]", fmt + 1);
 	n = strlen(fmt);
 	fc = *(*pfmt + n);
 	fmt[n] = fc;
