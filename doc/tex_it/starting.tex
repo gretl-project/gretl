@@ -185,7 +185,7 @@ a una stampante.
 \label{menus}
 
 Sulla barra dei menù della finestra principale si trovano, nell'ordine
-da sinistra a destra, i menù File, Utilità, Sessione, Dati, Campione,
+da sinistra a destra, i menù File, Utilità, Sessione, Dati, Aggiungi, Campione,
 Variabile, Modello e Aiuto.
 
     \begin{center}
@@ -276,7 +276,7 @@ Variabile, Modello e Aiuto.
     scegliendone il nome.
   \end{itemize}
 
-\item \textsf{Menù Dati}
+\item \textsf{Menù dati}
   \begin{itemize}
   \item \textsf{Mostra valori}: apre una finestra con un elenco (non
     modificabile) dei valori delle variabili (tutte o un sottoinsieme
@@ -326,13 +326,6 @@ Variabile, Modello e Aiuto.
   \item \textsf{Differenza delle varianze}: calcola la statistica
     \emph{F} per l'ipotesi nulla che le varianze della popolazione
     siano uguali per due variabili scelte, mostrando il p-value.
-  \item \textsf{Aggiungi variabili}: mostra un menù di trasformazioni
-    standard per le variabili (logaritmi, ritardi, quadrati, ecc) che
-    è possibile aggiungere al dataset. Dà anche l'opzione di
-    aggiungere variabili casuali e (per i dataset di serie storiche)
-    variabili dummy stagionali (ad es. variabili dummy trimestrali per
-    dati trimestrali). Include la possibilità di impostare il seme del
-    generatore di numeri pseudo-casuali.
   \item \textsf{Aggiungi osservazioni}: mostra una finestra di dialogo
     in cui è possibile scegliere un numero di osservazioni da
     aggiungere alla fine del dataset attuale; da usare per le
@@ -346,6 +339,13 @@ Variabile, Modello e Aiuto.
     l'elenco mantenuto internamente dal programma.
   \end{itemize}
 
+\item \textsf{Menù aggiungi}: offre alcune trasformazioni
+  standard per le variabili (logaritmi, ritardi, quadrati, ecc) che
+  è possibile aggiungere al dataset. Dà anche l'opzione di
+  aggiungere variabili casuali e (per i dataset di serie storiche)
+  variabili dummy stagionali (ad es. variabili dummy trimestrali per
+  dati trimestrali). Include la possibilità di impostare il seme del
+  generatore di numeri pseudo-casuali.
 \item \textsf{Menù campione}
   \begin{itemize}
   \item \textsf{Imposta intervallo}: seleziona punti di partenza e
@@ -390,11 +390,6 @@ Variabile, Modello e Aiuto.
     informazioni al dataset. Si veda il capitolo~\ref{datafiles}.
   \item \textsf{Rimuovi marcatori}: attivo solo se il dataset contiene
     marcatori per le osservazioni; rimuove questi marcatori.
-  \item \textsf{Ristruttura panel}: permette di convertire un dataset
-    panel da una struttura ``pila di dati cross-section'' a una ``pila di
-    serie storiche'', o viceversa. A differenza del comando
-    \textsf{Struttura dataset}, questo modifica effettivamente
-    l'organizzazione dei dati.
   \item \textsf{Trasponi dati}: trasforma ogni osservazione in una
     variabile e viceversa (o, in altre parole, ogni riga della matrice
     dei dati diventa una colonna della nuova matrice dei dati); può
@@ -424,7 +419,7 @@ Variabile, Modello e Aiuto.
   da questo menù, si consulti la \GCR\ oppure il capitolo ``Stima'' della
   guida in linea. Si veda anche il capitolo~\ref{chap-nls} a proposito
   della stima di modelli non lineari.
-\item \textsf{Menù Aiuto}: usatelo!  Fornisce dettagli sulla sintassi
+\item \textsf{Menù aiuto}: usatelo!  Fornisce dettagli sulla sintassi
   dei comandi e delle finestre di dialogo.
 \end{itemize}
 
