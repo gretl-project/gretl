@@ -815,7 +815,15 @@ int gretl_int_from_string (const char *s, const double **Z,
     char *test;
     int n = 0;
 
+    errno = 0;
+
     n = strtol(s, &test, 10);
+
+    if (errno == ERANGE) {
+	*err = E_DATA;
+	errno = 0;
+	return 0;
+    }
 
     if (*test == '\0') {
 	return n;

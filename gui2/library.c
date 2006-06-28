@@ -2907,7 +2907,8 @@ void do_graph_model (GPT_SPEC *spec)
 void do_simdata (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf;
-    int err, nulldata_n;
+    int nulldata_n = 0;
+    int err = 0;
 
     buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
@@ -2917,13 +2918,13 @@ void do_simdata (GtkWidget *widget, dialog_t *dlg)
 	return;
     }
 
-    nulldata_n = atoi(cmd.param);
-    if (nulldata_n < 2) {
-	errbox(_("Data series length missing or invalid"));
-	return;
+    nulldata_n = gretl_int_from_string(buf, (const double **) Z, 
+				       datainfo, &err);
+    if (!err && nulldata_n < 2) {
+	err = 1;
     }
-    if (nulldata_n > 1000000) {
-	errbox(_("Data series too long"));
+    if (err) {
+	errbox(_("Data series length missing or invalid"));
 	return;
     }
 
@@ -6569,15 +6570,13 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	if (dataset_locked()) {
 	    break;
 	}
-	k = atoi(cmd.param);
-	if (k < 2) {
-	    pprintf(prn, _("Data series length count missing or invalid\n"));
+	k = gretl_int_from_string(cmd.param, (const double **) Z, 
+				  datainfo, &err);
+	if (!err && k < 2) {
 	    err = 1;
-	    break;
 	}
-	if (k > 1000000) {
-	    pprintf(prn, _("Data series too long\n"));
-	    err = 1;
+	if (err) {
+	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    break;
 	}
 	if (data_status & HAVE_DATA) {

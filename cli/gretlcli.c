@@ -1384,15 +1384,13 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case NULLDATA:
-	k = atoi(cmd.param);
-	if (k < 2) {
-	    pputs(prn, _("Data series length count missing or invalid\n"));
+	k = gretl_int_from_string(cmd.param, (const double **) Z, 
+				  datainfo, &err);
+	if (!err && k < 2) {
 	    err = 1;
-	    break;
 	}
-	if (k > 1000000) {
-	    pputs(prn, _("Data series too long\n"));
-	    err = 1;
+	if (err) {
+	    pputs(prn, _("Data series length count missing or invalid\n"));
 	    break;
 	}
 	if (data_status) {
