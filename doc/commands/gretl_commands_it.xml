@@ -5183,14 +5183,17 @@
 
     <description>
       <para>
-	Stampa valori scalari nel formato indicato da una stringa di
-        formato (che supporta un piccolo sottoinsieme del comando
-        <lit>printf()</lit> del linguaggio di programmazione C). I
-        formati riconosciuti sono <lit>%g</lit> e <lit>%f</lit>, con i
-        vari modificatori disponibili in C. Esempi: la stringa <lit>%.10g</lit>
-        stampa un valore con 10 cifre significative; <lit>%12.6f</lit>
-        stampa un valore con 6 cifre decimali e una larghezza di 12
-        caratteri.</para>  
+        Stampa valori scalari e/o stringhe formattandoli secondo le indicazioni
+        di una stringa di formato (che supporta un piccolo sottoinsieme del
+        comando <lit>printf()</lit> del linguaggio di programmazione C). I
+        formati numerici riconosciuti sono <lit>%e</lit>, <lit>%E</lit>,
+        <lit>%f</lit>, <lit>%g</lit>, <lit>%G</lit> e <lit>%d</lit>, con i
+        vari modificatori disponibili in C. Esempi: la stringa di formato
+        <lit>%.10g</lit> stampa un valore con 10 cifre significative;
+        <lit>%12.6f</lit> stampa un valore con 6 cifre decimali e una larghezza
+        di 12 caratteri. Per formattare le stringhe occorre usare la stringa
+        di formato <lit>%s</lit>.
+      </para>  
 
       <para>La stringa di formato deve essere racchiusa tra virgolette
         doppie, i valori da stampare devono seguire la stringa di
