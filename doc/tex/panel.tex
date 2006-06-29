@@ -350,8 +350,8 @@ best linear unbiased estimator (BLUE), depends on the assumption that
 the error term is independently and identically distributed (IID).  In
 the panel context, the IID assumption means that $E(u_{it}^2)$, in
 relation to equation~\ref{eq:pooled}, equals a constant, $\sigma^2_u$,
-for all $i$ and $t$, while the covariance $E(u_{it} u_{is})$ equals
-zero for all $s \neq t$ and the covariance $E(u_{it} u_{jt})$ equals
+for all $i$ and $t$, while the covariance $E(u_{is} u_{it})$ equals
+zero for all $s \neq t$ and the covariance $E(u_{jt} u_{it})$ equals
 zero for all $j \neq i$.
 
 If these assumptions are not met --- and they are unlikely to be met
@@ -364,7 +364,7 @@ Consider two observation on the same unit $i$ at two different times
 $s$ and $t$. From the hypotheses above it can be worked out that
 $\mbox{Var}(u_{is}) = \mbox{Var}(u_{it}) = \sigma^2_{v} +
 \sigma^2_{\varepsilon}$, while the covariance between $u_{is}$ and
-$u_{it}$ is given by $\mbox{Cov}(u_{is},u_{it}) = \sigma^2_{v}$.
+$u_{it}$ is given by $E(u_{is}u_{it}) = \sigma^2_{v}$.
 
 In matrix notation, we may group all the $T_i$ observations for unit
 $i$ into the vector $\mathbf{y}_i$ and write it as
@@ -423,7 +423,7 @@ times the residual variance from the ``between'' estimator,
 \bar{y}_i = \bar{X}_i \beta + e_i
 \]
 The latter regression is implemented by constructing a data set
-consisting of the group or unit means of all the relevant variables.
+consisting of the group means of all the relevant variables.
 
 
 \subsection{Choice of estimator}
@@ -455,15 +455,12 @@ issues must be taken into account.
   zeros.
 \item A somewhat analogous prohibition applies to the random effects
   model.  To appreciate this point it is necessary to note that the
-  random effects estimator is a matrix-weighted average of the
-  ``within'' estimator (that is, the fixed effects estimator, which
-  sweeps out between-unit variation by including per-unit dummy
-  variables or by subtracting the unit means) and the ``between''
-  estimator.  The point is that if one has observations on $m$ units
-  and $k$ independent variables of interest, then if $k>m$ the
-  ``between'' estimator is undefined --- since we have only $m$
-  effective observations --- and hence so is the random effects
-  estimator.
+  random effects estimator is a matrix-weighted average of the pooled
+  OLS estimator and the ``between'' estimator.  The point is that if
+  one has observations on $m$ units and $k$ independent variables of
+  interest, then if $k>m$ the ``between'' estimator is undefined ---
+  since we have only $m$ effective observations --- and hence so is
+  the random effects estimator.
 \end{enumerate}
 
 If one does not fall foul of one or other of the prohibitions
@@ -487,21 +484,20 @@ random variables, uncorrelated with the regressors.
 
 As a consequence, the fixed-effects estimator ``always works'', but at
 the cost of not being able to estimate the effect of time-invariant
-regressors, since any time-invariant effect is, by definition, an
-group-specific feature and therefore ignored.  The richer hypothesis
-set of the random-effects estimator ensures that parameters for
-time-invariant regressors can be estimated and that estimation of the
-parameters for time-varying regressors is carried out more
-efficiently.  These advantages, though, are tied to the validity of
-these additional hypotheses. If, for example, there is reason to think
-that individual effects may be correlated with some of the explanatory
-variables, then the random-effects estimator would be inconsistent,
-while fixed-effects estimates would be perfectly valid.  It is
-precisely on this principle that the Hausman test is built (see
-below): if the fixed- and random-effects estimates agree, to within
-the usual statistical margin of error, there is no reason to think the
-additional hypotheses invalid, and as a consequence, no reason not to
-use the more efficient RE estimator.
+regressors.  The richer hypothesis set of the random-effects estimator
+ensures that parameters for time-invariant regressors can be
+estimated, and that estimation of the parameters for time-varying
+regressors is carried out more efficiently.  These advantages, though,
+are tied to the validity of these additional hypotheses. If, for
+example, there is reason to think that individual effects may be
+correlated with some of the explanatory variables, then the
+random-effects estimator would be inconsistent, while fixed-effects
+estimates would be perfectly valid.  It is precisely on this principle
+that the Hausman test is built (see below): if the fixed- and
+random-effects estimates agree, to within the usual statistical margin
+of error, there is no reason to think the additional hypotheses
+invalid, and as a consequence, no reason \textit{not} to use the more
+efficient RE estimator.
 
 \subsection{Testing panel models}
 \label{panel-tests}
@@ -516,26 +512,76 @@ straight time-series or cross-sectional data.
 Nonetheless, various panel-specific tests are printed along with the
 parameter estimates as a matter of course, as follows.
 
+When you estimate a model using \textsl{fixed effects}, you
+automatically get an $F$-test for the null hypothesis that the
+cross-sectional units all have a common intercept.  That is to say
+that all the $\alpha_i$s are equal, in which case the pooled model
+(\ref{eq:pooled}), with a column of 1s included in the $X$ matrix, is
+adequate.
+
+When you estimate using \textsl{random effects}, the Breusch--Pagan
+and Hausman tests are presented automatically.  
+
+The Breusch--Pagan test is the counterpart to the $F$-test mentioned
+above.  The null hypothesis is that the variance of $v_i$ equals zero;
+if this hypothesis is not rejected, then again we conclude that the
+pooled model is adequate.
+
+The Hausman test probes the consistency of the GLS estimates.  The
+null hypothesis is that these estimates are consistent, that is, that
+the requirement of orthogonality of the $v_i$ and the $X_i$ is
+satisfied.  The test is based on a measure, $H$, of the ``distance''
+between the fixed-effects and random-effects estimates, constructed
+such that under the null it follows the $\chi^2$ distribution with
+degrees of freedom equal to the number of time-varying regressors in
+the matrix $X$.  If the value of $H$ is large enough this suggests
+that the random effects estimator is not consistent and the
+fixed-effects model is preferable.
+
+There are two ways of calculating $H$, the matrix-difference method
+and the regression method.  The procedure for the matrix-difference
+method is this:
 \begin{itemize}
-\item When you estimate a model using \textsl{fixed effects}, you
-  automatically get an $F$-test for the null hypothesis that the
-  cross-sectional units all have a common intercept.  That is to say
-  that all the $\alpha_i$s are equal, in which case the pooled model
-  (\ref{eq:pooled}), with a column of 1s included in the $X$ matrix,
-  is adequate.
-\item When you estimate using \textsl{random effects}, two relevant
-  tests are presented automatically.  The Breusch--Pagan test is the
-  counterpart to the $F$-test mentioned above.  The null hypothesis is
-  that the variance of $v_i$ equals zero; if this hypothesis is not
-  rejected, then again we conclude that the pooled model is adequate.
-  The Hausman test probes the consistency of the GLS estimates.  The
-  null hypothesis is that these estimates are consistent, that is,
-  that the requirement of orthogonality of the $v_i$ and the $X_i$ is
-  satisfied.  If the Hausman $\chi^2$ value is ``large'' this suggests
-  that the random effects estimator is not consistent and fixed
-  effects may be preferable.
+\item Collect the fixed-effects estimates in a vector
+  $\tilde{\beta}$ and the corresponding random-effects estimates in
+  $\hat{\beta}$, then form the difference vector $(\tilde{\beta} -
+  \hat{\beta})$. 
+\item Form the covariance matrix of the difference vector as
+  $\mbox{Var}(\tilde{\beta} - \hat{\beta}) = \mbox{Var}(\tilde{\beta})
+  - \mbox{Var}(\hat{\beta}) = \Psi$, where $\mbox{Var}(\tilde{\beta})$
+  and $\mbox{Var}(\hat{\beta})$ are estimated by the sample variance
+  matrices of the fixed- and random-effects models
+  respectively.\footnote{Hausman (1978) showed that the covariance of
+    the difference takes this simple form when $\hat{\beta}$ is an
+    efficient estimator and $\tilde{\beta}$ is inefficient.}
+\item Compute $H = \left(\tilde{\beta} - \hat{\beta}\right)' \Psi^{-1}
+   \left(\tilde{\beta} - \hat{\beta}\right)$.
 \end{itemize}
 
+Given the relative efficiencies of $\tilde{\beta}$ and $\hat{\beta}$,
+the matrix $\Psi$ ``should be'' positive definite, in which case $H$ is
+positive, but in finite samples this is not guaranteed and of course
+a negative $\chi^2$ value is not admissible.  The regression method
+avoids this potential problem.  The procedure is:
+\begin{itemize}
+\item Treat the random-effects model as the restricted model, and
+  record its sum of squared residuals as SSR$_r$.
+\item Estimate via OLS an unrestricted model in which the dependent
+  variable is quasi-demeaned $y$ and the regressors include both
+  quasi-demeaned $X$ (as in the RE model) and the de-meaned variants
+  of all the time-varying variables (i.e.\ the fixed-effects
+  regressors); record the sum of squared residuals from this model
+  as SSR$_u$.
+\item Compute $H = n \left(\mbox{SSR}_r - \mbox{SSR}_u\right) /
+  \mbox{SSR}_u$, where $n$ is the total number of observations used.
+  On this variant $H$ cannot be negative, since adding additional
+  regressors to the RE model cannot raise the SSR.
+\end{itemize}
+
+By default \app{gretl} computes the Hausman test via the
+matrix-difference method (largely for comparability with other
+software), but it uses the regression method if you pass the
+option \verb+--hausman-reg+ to the \cmd{panel} command.
 
 \subsection{Robust standard errors}
 \label{panel-robust}
@@ -612,51 +658,37 @@ underlying errors, $\varepsilon_{it}$, are not themselves serially
 correlated.
 
 The Anderson--Hsiao estimator is not provided as a built-in function
-in \app{gretl}, but it can be programmed in script mode quite
-easily --- see Example~\ref{anderson-hsiao}, which is based
-on a study of country growth rates by Nerlove (1999).\footnote{Also
-  see Clint Cummins' benchmarks page,
-  \url{http://www.stanford.edu/~clint/bench/}.}  Note that after
-running the second OLS regression it is necessary to correct the
-residuals and standard errors: these must be based on the actual data
-for $\Delta y_{i,t-1}$, not the fitted value obtained from the
-first-stage regression.
-
+in \app{gretl}, since \app{gretl}'s sensible handling of lags and
+differences for panel data makes it a simple application of regression
+with instrumental variables --- see Example~\ref{anderson-hsiao},
+which is based on a study of country growth rates by Nerlove
+(1999).\footnote{Also see Clint Cummins' benchmarks page,
+  \url{http://www.stanford.edu/~clint/bench/}.}
+ 
 Although the Anderson--Hsiao estimator is consistent, it is not most
 efficient: it does not make the fullest use of the available
 instruments for $\Delta y_{i,t-1}$, nor does it take into account the
 differenced structure of the error $\eta_{it}$.  It is improved upon
-by the method of Arellano and Bond (1991).  The latter method is not
-yet supported in \app{gretl}; it is likely to be added in a future
-release of the program.
+by the methods of Arellano and Bond (1991) and Blundell and Bond
+(1998).  These methods are not yet supported in \app{gretl}; the
+former is likely to be added in a future release of the program.
 
 \begin{script}[htbp]
   \caption{The Anderson--Hsiao estimator for a dynamic panel model}
   \label{anderson-hsiao}
 \begin{code}
-  # Penn World Table data as used by Nerlove
-  open penngrow.gdt
-  # generate lagged dependent variable
-  genr Y1 = Y(-1)
-  # Fixed effects (for comparison)
-  panel Y 0 Y1 X
-  # Random effects (for comparison)
-  panel Y 0 Y1 X --random-effects
-  # Anderson-Hsiao, using Y(-2) as instrument
-  # take differences of all variables
-  diff Y X Y1
-  # first stage: obtain fitted values for \Delta Y_{t-1} 
-  ols d_Y1 0 Y(-2) d_X
-  genr DY1 = $yhat
-  # second stage: run OLS using the fitted DY1
-  ols d_Y DY1 d_X --simple-print
-  # calculate corrected residuals and related statistics
-  genr yh = $coeff(DY1) * d_Y1 + $coeff(d_X) * d_X
-  genr uh = d_Y - yh
-  genr SSR = sum(uh * uh)
-  genr s = sqrt(SSR / $df)
-  genr se_1 = $stderr(DY1) * s/$sigma
-  genr se_2 = $stderr(d_X) * s/$sigma
+   # Penn World Table data as used by Nerlove
+   open penngrow.gdt
+   # Fixed effects (for comparison)
+   panel Y 0 Y(-1) X
+   # Random effects (for comparison)
+   panel Y 0 Y(-1) X --random-effects
+   # take differences of all variables
+   diff Y X
+   # Anderson-Hsiao, using Y(-2) as instrument
+   tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
+   # Anderson-Hsiao, using d_Y(-2) as instrument
+   tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
 \end{code}
 \end{script}
 
