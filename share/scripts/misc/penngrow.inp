@@ -1,0 +1,23 @@
+# Penn World Table data as used by Nerlove
+open penngrow.gdt
+# generate lagged dependent variable
+genr Y1 = Y(-1)
+# Fixed effects (for comparison)
+panel Y 0 Y1 X
+# Random effects (for comparison)
+panel Y 0 Y1 X -u
+# Anderson-Hsiao, using Y(-2) as instrument
+# take differences of all variables
+diff Y X Y1
+# obtain a fitted value for \Delta Y_{t-1} 
+ols d_Y1 0 Y(-2) d_X
+genr DY1 = $yhat
+# run OLS using the fitted DY1
+ols d_Y DY1 d_X --simple-print
+# calculate corrected residuals and other statistics
+genr yh = $coeff(DY1) * d_Y1 + $coeff(d_X) * d_X
+genr uh = d_Y - yh
+genr SSR = sum(uh * uh)
+genr s = sqrt(SSR / $df)
+genr se_1 = $stderr(DY1) * s/$sigma
+genr se_2 = $stderr(d_X) * s/$sigma
