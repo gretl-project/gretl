@@ -5,10 +5,17 @@
 \label{panel-structure}
 
 Panel data are inherently three dimensional --- the dimensions being
-variable, cross-sectional unit, and time-period.  For representation
-in a textual computer file (and also for gretl's internal
-calculations) these three dimensions must somehow be flattened into
-two.  This ``flattening'' involves taking layers of the data that
+variable, cross-sectional unit, and time-period.  For example, a
+particular number in a panel data set might be identified as the
+observation on capital stock for General Motors in 1980.  (A note on
+terminology: we use the terms ``cross-sectional unit'', ``unit'' and
+``group'' interchangeably below to refer to the entities that compose
+the cross-sectional dimension of the panel.  These might, for
+instance, be firms, countries or persons.)
+
+For representation in a textual computer file (and also for gretl's
+internal calculations) the three dimensions must somehow be flattened
+into two.  This ``flattening'' involves taking layers of the data that
 would naturally stack in a third dimension, and stacking them in the
 vertical dimension.
 
@@ -19,7 +26,7 @@ flattening of a panel data set can be done in either of two ways:
 
 \begin{itemize}
 \item Stacked time series: the successive vertical blocks each
-  comprise a time series for a given cross-sectional unit.
+  comprise a time series for a given unit.
 \item Stacked cross sections: the successive vertical blocks each
   comprise a cross-section for a given period.
 \end{itemize}
@@ -42,12 +49,12 @@ applicable if the data set is already organized in one of these two
 ways.  If you select either of these options, the next step is to
 specify the number of cross-sectional units in the data set.  The
 third option, ``Use index variables'', is applicable if the data set
-contains two variables that index the cross-sectional units and the
-time periods respectively; the next step is then to select those
-variables.  For example, a data file might contain a country code
-variable and a variable representing the year of the observation.  In
-that case \app{gretl} can reconstruct the panel structure of the data
-regardless of how the observation rows are organized.
+contains two variables that index the units and the time periods
+respectively; the next step is then to select those variables.  For
+example, a data file might contain a country code variable and a
+variable representing the year of the observation.  In that case
+\app{gretl} can reconstruct the panel structure of the data regardless
+of how the observation rows are organized.
 
 The \cmd{setobs} command has options that parallel those in the
 graphical interface.  If suitable index variables are available
@@ -60,12 +67,12 @@ where \texttt{unitvar} is a variable that indexes the units and
 you can use the form \verb+setobs+ \textsl{freq} \verb+1:1+
 \textsl{structure}, where \textsl{freq} is replaced by the ``block
 size'' of the data (that is, the number of periods in the case of
-stacked time series, or the number of cross-sectional units in the
-case of stacked cross-sections) and structure is either
-\verb+--stacked-time-series+ or \verb+--stacked-cross-section+.  Two
-examples are given below: the first is suitable for a panel in the
-form of stacked time series with observations from 20 periods; the
-second for stacked cross sections with 5 cross-sectional units.
+stacked time series, or the number of units in the case of stacked
+cross-sections) and structure is either \verb+--stacked-time-series+
+or \verb+--stacked-cross-section+.  Two examples are given below: the
+first is suitable for a panel in the form of stacked time series with
+observations from 20 periods; the second for stacked cross sections
+with 5 units.
 \begin{code}
             setobs 20 1:1 --stacked-time-series
             setobs 5 1:1 --stacked-cross-section
@@ -174,8 +181,8 @@ periods), but with 20 variables rather than 2.
 
 In a panel study you may wish to construct dummy variables of one or
 both of the following sorts: (a) dummies as unique identifiers for the
-cross-sectional units, and (b) dummies as unique identifiers for the
-time periods.  The former may be used to allow the intercept of the
+units or groups, and (b) dummies as unique identifiers for the time
+periods.  The former may be used to allow the intercept of the
 regression to differ across the units, the latter to allow the
 intercept to differ across periods.
 
@@ -210,20 +217,29 @@ thereafter, 0 otherwise, do
       genr dum = ((index-1)%30) = 0
 \end{code}
 
-\subsection{Lags and differences}
+\subsection{Lags, differences, trends}
 \label{panel-lagged}
 
 If the time periods are evenly spaced you may want to use lagged
-values of variables in a panel regression; you may also with to
-construct first differences of variables of interest.
+values of variables in a panel regression (but see
+section~\ref{panel-dyn} below); you may also wish to construct first
+differences of variables of interest.
 
-Once a dataset is properly identified as a panel, \app{gretl} will
-handle the generation of such variables correctly.  For example the
-command \verb+genr x1_1 = x1(-1)+ will create a variable that contains
-the first lag of \verb+x1+ where available, and the missing value code
-where the lag is not available.  When you run a regression using such
-variables, the program will automatically skip the missing
-observations.
+Once a dataset is identified as a panel, \app{gretl} will handle the
+generation of such variables correctly.  For example the command
+\verb+genr x1_1 = x1(-1)+ will create a variable that contains the
+first lag of \verb+x1+ where available, and the missing value code
+where the lag is not available (e.g.\ at the start of the time series
+for each group).  When you run a regression using such variables, the
+program will automatically skip the missing observations.
+
+When a panel data set has a fairly substantial time dimension, you may
+wish to include a trend in the analysis.  The command \cmd{genr time} 
+creates a variable named \varname{time} which runs from 1 to $T$ for
+each unit, where $T$ is the length of the time-series dimension of the
+panel.  If you want to create an index that runs consecutively from 1
+to $m\times T$, where $m$ is the number of units in the panel, use
+\cmd{genr index}.
 
 \section{Estimation of panel models}
 
@@ -457,34 +473,35 @@ efficiency and consistency.
 
 From a purely statistical viewpoint, we could say that there is a
 tradeoff between robustness and efficiency. In the fixed effects
-approach, we do not make any hypotheses on the individual effects
-beyond the fact that they exist (and even that can be tested --- see
-below). As a consequence, once individual effects are swept out by
-taking deviations from individual means, the remaining parameters can
-be estimated.
+approach, we do not make any hypotheses on the ``group effects'' (that
+is, the time-invariant differences in mean between the groups) beyond
+the fact that they exist --- and that can be tested; see below. As a
+consequence, once these effects are swept out by taking deviations
+from the group means, the remaining parameters can be estimated.
 
-On the contrary, the random effects approach attempts to model those
-individual effects instead of removing them. This requires that
-individual effects are representable as a legitimate part of the
-disturbance term, that is, zero-mean random variables, uncorrelated
-with the regressors.
+On the other hand, the random effects approach attempts to model the
+group effects as drawings from a probability distribution instead of
+removing them. This requires that individual effects are representable
+as a legitimate part of the disturbance term, that is, zero-mean
+random variables, uncorrelated with the regressors.
 
 As a consequence, the fixed-effects estimator ``always works'', but at
 the cost of not being able to estimate the effect of time-invariant
 regressors, since any time-invariant effect is, by definition, an
-individual-specific feature and therefore ignored. On the other hand,
-the richer hypothesis set of the random-effects estimator ensures that
-parameters for time-invariant regressors can be estimated and that
-estimation of the parameters for time-varying regressors is carried
-out more efficiently.  These advantages, though, are tied to the
-validity of these additional hypotheses. If, for example, there is
-reason to think that individual effects may be correlated with some of
-the explanatory variables, then the random-effects estimator would be
-inconsistent, while fixed-effects estimates would be perfectly valid.
-It is precisely on this principle that the Hausman test is built (see
-below): if fixed- and random-effects estimates agree, there is no
-reason to think the additional hypotheses invalid, and as a
-consequence, not to use the RE estimator, which is more efficient.
+group-specific feature and therefore ignored.  The richer hypothesis
+set of the random-effects estimator ensures that parameters for
+time-invariant regressors can be estimated and that estimation of the
+parameters for time-varying regressors is carried out more
+efficiently.  These advantages, though, are tied to the validity of
+these additional hypotheses. If, for example, there is reason to think
+that individual effects may be correlated with some of the explanatory
+variables, then the random-effects estimator would be inconsistent,
+while fixed-effects estimates would be perfectly valid.  It is
+precisely on this principle that the Hausman test is built (see
+below): if the fixed- and random-effects estimates agree, to within
+the usual statistical margin of error, there is no reason to think the
+additional hypotheses invalid, and as a consequence, no reason not to
+use the more efficient RE estimator.
 
 \subsection{Testing panel models}
 \label{panel-tests}
@@ -539,6 +556,111 @@ where $\tilde{X}$ is the matrix of regressors with the group means
 subtracted, $\tilde{u}_i$ denotes the FE residuals for unit $i$, and $m$
 is the number of cross-sectional units.
 
+\section{Dynamic panel models}
+\label{panel-dyn}
+
+Special problems arise when a lag of the dependent variable is
+included among the regressors in a panel model.  Consider a dynamic
+variant of the pooled model (\ref{eq:pooled}):
+\begin{equation}
+\label{eq:pooled-dyn}
+y_{it} = X_{it}\beta + \rho y_{it-1} + u_{it}
+\end{equation}
+First, if the error $u_{it}$ includes a group effect, $v_i$, then
+$y_{it-1}$ is bound to be correlated with the error, since the value
+of $v_i$ affects $y_i$ at all $t$.  That means that OLS applied to
+(\ref{eq:pooled-dyn}) will be inconsistent as well as inefficient.
+The fixed-effects model sweeps out the group effects and so overcomes
+this particular problem, but a subtler issue remains, which applies to
+both fixed and random effects estimation.  Consider the de-meaned
+representation of fixed effects, as applied to the dynamic model,
+\[
+\tilde{y}_{it} = \tilde{X}_{it}\beta + \rho \tilde{y}_{i,t-1} 
+  + \varepsilon_{it}
+\]
+where $\tilde{y}_{it} = y_{it} - \bar{y}_i$ and $\varepsilon_{it} =
+u_{it} - \bar{u}_i$ (or $u_{it} - \alpha_i$, using the notation of
+equation~\ref{eq:FE}).  The trouble is that $\tilde{y}_{i,t-1}$ will be
+correlated with $\varepsilon_{it}$ via the group mean, $\bar{y}_i$.
+The disturbance $\varepsilon_{it}$ influences $y_{it}$ directly, which
+influences $\bar{y}_i$, which, by construction, affects the value of
+$\tilde{y}_{it}$ for all $t$.  The same issue arises in relation to
+the quasi-demeaning used for random effects.  Estimators which ignore
+this correlation will be consistent only as $T \to \infty$ (in which
+case the marginal effect of $\varepsilon_{it}$ on the group mean of 
+$y$ tends to vanish).  
+
+One strategy for handling this problem, and producing consistent
+estimates of $\beta$ and $\rho$, was proposed by Anderson and Hsiao
+(1981).  Instead of de-meaning the data, they suggest taking the first
+difference of (\ref{eq:pooled-dyn}), an alternative tactic for
+sweeping out the group effects:
+\begin{equation}
+\label{eq:fe-dyn}
+\Delta y_{it} = \Delta X_{it}\beta + \rho \Delta y_{i,t-1} 
+  + \eta_{it}
+\end{equation}
+where $\eta_{it} = \Delta u_{it} = \Delta(v_i + \varepsilon_{it}) =
+\varepsilon_{it} - \varepsilon_{i,t-1}$.  We're not in the clear yet,
+given the structure of the error $\eta_{it}$: the disturbance
+$\varepsilon_{i,t-1}$ is an influence on both $\eta_{it}$ and $\Delta
+y_{i,t-1} = y_{it} - y_{i,t-1}$.  The next step is then to find an
+instrument for the ``contaminated'' $\Delta y_{i,t-1}$. Anderson and
+Hsiao suggest using either $y_{i,t-2}$ or $\Delta y_{i,t-2}$, both of
+which will be uncorrelated with $\eta_{it}$ provided that the
+underlying errors $\varepsilon_{it}$ are not themselves serially
+correlated.
+
+The Anderson--Hsiao estimator is not provided as a built-in function
+in \app{gretl}, but it can be programmed in script mode quite
+easily --- see Example~\ref{anderson-hsiao}, which is based
+on a study of country growth rates by Nerlove (1999).\footnote{Also
+  see Clint Cummins' benchmarks page,
+  \url{http://www.stanford.edu/~clint/bench/}.}  Note that after
+running the second OLS regression it is necessary to correct the
+residuals and standard errors: these must be based on the actual data
+for $\Delta y_{i,t-1}$, not the fitted value obtained from the
+first-stage regression.
+
+Although the Anderson--Hsiao estimator is consistent, it is not most
+efficient: it does not make the fullest use of the available
+instruments for $\Delta y_{i,t-1}$, and neither does it take into
+account the differenced structure of the error $\eta_{it}$.  It is
+improved upon by the method of Arellano and Bond (1991).  The latter
+method is not yet supported in \app{gretl}; it is likely to be added
+in a future release of the program.
+
+\begin{script}[htbp]
+  \caption{The Anderson--Hsiao estimator for a dynamic panel model}
+  \label{anderson-hsiao}
+\begin{code}
+  # Penn World Table data as used by Nerlove
+  open penngrow.gdt
+  # generate lagged dependent variable
+  genr Y1 = Y(-1)
+  # Fixed effects (for comparison)
+  panel Y 0 Y1 X
+  # Random effects (for comparison)
+  panel Y 0 Y1 X --random-effects
+  # Anderson-Hsiao, using Y(-2) as instrument
+  # take differences of all variables
+  diff Y X Y1
+  # first stage: obtain fitted values for \Delta Y_{t-1} 
+  ols d_Y1 0 Y(-2) d_X
+  genr DY1 = $yhat
+  # second stage: run OLS using the fitted DY1
+  ols d_Y DY1 d_X --simple-print
+  # calculate corrected residuals and related statistics
+  genr yh = $coeff(DY1) * d_Y1 + $coeff(d_X) * d_X
+  genr uh = d_Y - yh
+  genr SSR = sum(uh * uh)
+  genr s = sqrt(SSR / $df)
+  genr se_1 = $stderr(DY1) * s/$sigma
+  genr se_2 = $stderr(d_X) * s/$sigma
+\end{code}
+\end{script}
+
+
 \section{Illustration: the Penn World Table}
 \label{PWT}
 
@@ -564,22 +686,22 @@ part of countries starting from a low base).
   \caption{Use of the Penn World Table}
   \label{examp-pwt}
 \begin{code}
-          open pwt56_60_89.gdt 
-          # for 1989 (the last obs), lag 29 gives 1960, the first obs 
-          genr gdp60 = RGDPL(-29) 
-          # find total growth of real GDP over 30 years
-          genr gdpgro = (RGDPL - gdp60)/gdp60
-          # restrict the sample to a 1989 cross-section 
-          smpl --restrict YEAR=1989 
-          # convergence: did countries with a lower base grow faster?  
-          ols gdpgro const gdp60 
-          # result: No! Try an inverse relationship?
-          genr gdp60inv = 1/gdp60 
-          ols gdpgro const gdp60inv 
-          # no again.  Try treating Africa as special? 
-          genr afdum = (CCODE = 1)
-          genr afslope = afdum * gdp60 
-          ols gdpgro const afdum gdp60 afslope 
+  open pwt56_60_89.gdt 
+  # for 1989 (the last obs), lag 29 gives 1960, the first obs 
+  genr gdp60 = RGDPL(-29) 
+  # find total growth of real GDP over 30 years
+  genr gdpgro = (RGDPL - gdp60)/gdp60
+  # restrict the sample to a 1989 cross-section 
+  smpl --restrict YEAR=1989 
+  # convergence: did countries with a lower base grow faster?  
+  ols gdpgro const gdp60 
+  # result: No! Try an inverse relationship?
+  genr gdp60inv = 1/gdp60 
+  ols gdpgro const gdp60inv 
+  # no again.  Try treating Africa as special? 
+  genr afdum = (CCODE = 1)
+  genr afslope = afdum * gdp60 
+  ols gdpgro const afdum gdp60 afslope 
 \end{code}
 \end{script}
 
