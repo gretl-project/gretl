@@ -329,6 +329,43 @@ sample range.\footnote{\cmd{genr} also offers the inverse function to
   \cmd{misszero}, namely \cmd{zeromiss}, which replaces zeros in a
   given series with the missing observation code.}
 
+\section{Maximum size of data sets}
+\label{data-limits}
+
+Basically, the size of data sets (both in terms of number of variables
+and number of observations per variable) is limited only by the
+characteristics of your computer.  \app{Gretl} allocates memory
+dynamically, and will ask the operating system for as much memory as
+your data require.  Obviously, then, you are ultimately limited by the
+size of RAM.  
+
+Aside from the multiple-precision OLS option, gretl uses
+double-precision floating-point numbers throughout.  The size of such
+numbers in bytes depends on the computer platform, but is typically
+eight.  To give a rough notion of magnitudes, suppose we have a data
+set with 10,000 observations on 500 variables.  That's 5 million
+floating-point numbers or 40 million bytes.  If we define the megabyte
+(MB) as $1024 \times 1024$ bytes, as is standard in talking about RAM,
+it's slightly over 38 MB.  The program needs additional memory for
+workspace, but even so, handling a data set of this size should be
+quite feasible on a current PC, which at the time of writing is likely
+to have at least 256 MB of RAM.
+
+If RAM is not an issue, there is one further limitation on data size
+(though it's very unlikely to be a binding constraint).  That is,
+variables and observations are indexed by integers, and on a typical
+PC these will be 32-bit values, capable of representing 2,147,483,647
+at maximum.  
+
+The limits mentioned above apply to \app{gretl}'s ``native''
+functionality.  There are tighter limits with regard to two
+third-party programs that are available as add-ons to \app{gretl} for
+certain sorts of time-series analysis including seasonal adjustment,
+namely \app{TRAMO/SEATS} and \app{X-12-ARIMA}.  These programs used a
+fixed-size memory allocation, and can't handle series of more than 600
+observations.  
+
+
 \section{Data file collections}
 \label{collections}
 

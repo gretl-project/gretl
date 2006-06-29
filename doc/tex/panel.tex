@@ -608,7 +608,7 @@ y_{i,t-1} = y_{it} - y_{i,t-1}$.  The next step is then to find an
 instrument for the ``contaminated'' $\Delta y_{i,t-1}$. Anderson and
 Hsiao suggest using either $y_{i,t-2}$ or $\Delta y_{i,t-2}$, both of
 which will be uncorrelated with $\eta_{it}$ provided that the
-underlying errors $\varepsilon_{it}$ are not themselves serially
+underlying errors, $\varepsilon_{it}$, are not themselves serially
 correlated.
 
 The Anderson--Hsiao estimator is not provided as a built-in function
@@ -624,11 +624,11 @@ first-stage regression.
 
 Although the Anderson--Hsiao estimator is consistent, it is not most
 efficient: it does not make the fullest use of the available
-instruments for $\Delta y_{i,t-1}$, and neither does it take into
-account the differenced structure of the error $\eta_{it}$.  It is
-improved upon by the method of Arellano and Bond (1991).  The latter
-method is not yet supported in \app{gretl}; it is likely to be added
-in a future release of the program.
+instruments for $\Delta y_{i,t-1}$, nor does it take into account the
+differenced structure of the error $\eta_{it}$.  It is improved upon
+by the method of Arellano and Bond (1991).  The latter method is not
+yet supported in \app{gretl}; it is likely to be added in a future
+release of the program.
 
 \begin{script}[htbp]
   \caption{The Anderson--Hsiao estimator for a dynamic panel model}
