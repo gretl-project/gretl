@@ -786,7 +786,7 @@ print_mle_iter_stats (double ll, int nparam, const double *b, const double *g,
     if (na(ll)) {
 	pprintf(prn, "Iteration %d: log likelihood = NA", iter);	
     } else {
-	pprintf(prn, "Iteration %d: log likelihood = %.8g", iter, ll);
+	pprintf(prn, "Iteration %d: log likelihood = %#.12g", iter, ll);
     }
     if (iter > 1) {
 	pprintf(prn, " (steplength = %.8g)", sl);
@@ -795,13 +795,13 @@ print_mle_iter_stats (double ll, int nparam, const double *b, const double *g,
 	
     pputs(prn, "Parameters: ");
     for (i=0; i<nparam; i++) {
-	pprintf(prn, "%#12.5g", b[i]);
+	pprintf(prn, "%#15.8g", b[i]);
     }
     pputc(prn, '\n');
 
     pputs(prn, "Gradients:  ");
     for (i=0; i<nparam; i++) {
-	pprintf(prn, "%#12.5g", -g[i]);
+	pprintf(prn, "%#15.8g", -g[i]);
     }
     pputs(prn, "\n\n");
 }
@@ -985,7 +985,7 @@ static double *mle_score_callback (const double *b, int i, void *data)
 
 gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 				BFGS_SCORE_FUNC scorefun,
-				void *data)
+				void *data, int *err)
 {
     const double h = 1e-8;
     gretl_matrix *G;
@@ -995,23 +995,48 @@ gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 
     G = gretl_matrix_alloc(k, T);
     if (G == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
+
+    gretl_matrix_zero(G);
 
     for (i=0; i<k; i++) {
 	bi0 = b[i];
 	b[i] = bi0 - h;
 	x = scorefun(b, i, data);
+	if (x == NULL) {
+	    *err = E_NAN;
+	    goto bailout;
+	}
 	for (t=0; t<T; t++) {
 	    gretl_matrix_set(G, i, t, x[t]);
 	}
 	b[i] = bi0 + h;
 	x = scorefun(b, i, data);
+	if (x == NULL) {
+	    *err = E_NAN;
+	    goto bailout;
+	}
 	for (t=0; t<T; t++) {
 	    x0 = gretl_matrix_get(G, i, t);
 	    gretl_matrix_set(G, i, t, (x[t] - x0) / (2.0 * h));
 	}
 	b[i] = bi0;
+#if NLS_DEBUG
+	fprintf(stderr, "b[%d]: using %#.12g and %#.12g\n", i, bi0 - h, bi0 + h);
+#endif
+    }
+
+#if NLS_DEBUG
+    gretl_matrix_print(G, "Numerically estimated score");
+#endif
+
+ bailout:
+
+    if (*err) {
+	gretl_matrix_free(G);
+	G = NULL;
     }
 
     return G;
@@ -1038,10 +1063,17 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 
     if (pspec->mode == NUMERIC_DERIVS) {
 	G = build_OPG_matrix(spec->coeff, k, T, mle_score_callback, 
-			     (void *) spec);
+			     (void *) spec, &err);
+	if (err) {
+	    gretl_matrix_free(V);
+	    return err;
+	}
     } else {
 	G = gretl_matrix_alloc(k, T);
-	if (G != NULL) {
+	if (G == NULL) {
+	    gretl_matrix_free(V);
+	    return E_ALLOC;
+	} else {
 	    for (i=0; i<k; i++) {
 		v = spec->params[i].dernum;
 		if (var_is_scalar(ndinfo, v)) {
@@ -1055,11 +1087,6 @@ static int mle_build_vcv (MODEL *pmod, nls_spec *spec, int *vcvopt)
 		}
 	    }
 	}
-    }
-
-    if (G == NULL) {
-	gretl_matrix_free(V);
-	return E_ALLOC;
     }
 
     gretl_matrix_multiply_mod(G, GRETL_MOD_NONE,
@@ -1746,13 +1773,15 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     if (!err) {
 	BFGS_GRAD_FUNC gradfun = (spec->mode == ANALYTIC_DERIVS)?
 	    get_mle_gradient : NULL;
-	double **hessp = (spec->opt & (OPT_H | OPT_R))?
-	    &spec->hessvec : NULL;
 
 	err = BFGS_max(n, spec->coeff, maxit, pspec->tol, 
-		       &spec->fncount, &spec->grcount, hessp,
+		       &spec->fncount, &spec->grcount, 
 		       get_mle_ll, gradfun, NULL,
 		       pspec->opt, nprn);
+	if (!err && (spec->opt & (OPT_H | OPT_R))) {
+	    /* doing Hessian or QML covariance matrix */
+	    spec->hessvec = numerical_hessian(spec->coeff, n, get_mle_ll, NULL);
+	}
     }
 
     return err;    
@@ -2634,11 +2663,11 @@ static void hess_b_adjust_ij (double *c, double *b, double *h, int n,
    Allin Cottrell, June 2006.
 */
 
-static double *numerical_hessian (double *b, double *c, int n,
-				  BFGS_LL_FUNC func, void *data)
+double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
 {
     double Dx[RSTEPS];
     double Hx[RSTEPS];
+    double *c = NULL;
     double *D = NULL;
     double *h0 = NULL;
     double *h = NULL;
@@ -2661,12 +2690,14 @@ static double *numerical_hessian (double *b, double *c, int n,
     int i, j, k, m, u;
     int err = 0;
 
+    c  = malloc(n * sizeof *c);
     h0 = malloc(n * sizeof *h0);
     h  = malloc(n * sizeof *h);
     Hd = malloc(n * sizeof *Hd);
     D  = malloc(dn * sizeof *D);
 
-    if (h0 == NULL || h == NULL || Hd == NULL || D == NULL) {
+    if (c == NULL || h0 == NULL || h == NULL || 
+	Hd == NULL || D == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -2691,8 +2722,16 @@ static double *numerical_hessian (double *b, double *c, int n,
 	for (k=0; k<r; k++) {
 	    hess_b_adjust_i(c, b, h, n, i, 1.0);
 	    f1 = func(c, data);
+	    if (na(f1)) {
+		err = E_NAN;
+		goto bailout;
+	    }
 	    hess_b_adjust_i(c, b, h, n, i, -1.0);
 	    f2 = func(c, data);
+	    if (na(f2)) {
+		err = E_NAN;
+		goto bailout;
+	    }
 	    /* F'(i) */
 	    Dx[k] = (f1 - f2) / (2.0 * h[i]); 
 	    /* F''(i) */
@@ -2723,8 +2762,16 @@ static double *numerical_hessian (double *b, double *c, int n,
 		for (k=0; k<r; k++) {
 		    hess_b_adjust_ij(c, b, h, n, i, j, 1.0);
 		    f1 = func(c, data);
+		    if (na(f1)) {
+			err = E_NAN;
+			goto bailout;
+		    }
 		    hess_b_adjust_ij(c, b, h, n, i, j, -1.0);
 		    f2 = func(c, data);
+		    if (na(f2)) {
+			err = E_NAN;
+			goto bailout;
+		    }
 		    /* cross-partial */
 		    Dx[k] = (f1 - 2.0 * f0 + f2 - Hd[i] * h[i] * h[i]
 			     - Hd[j] * h[j] * h[j]) / (2.0 * h[i] * h[j]);
@@ -2755,12 +2802,17 @@ static double *numerical_hessian (double *b, double *c, int n,
     err = gretl_invert_packed_symmetric_matrix(V);
     if (!err) {
 	vcv = gretl_matrix_steal_data(V);
-    }  
+    } 
 
     gretl_matrix_free(V);
 
  bailout:
 
+    if (err == E_NAN) {
+	fprintf(stderr, "Got E_NAN in numerical_hessian()\n");
+    }
+
+    free(c);
     free(D);
     free(h0);
     free(h);
@@ -2777,9 +2829,6 @@ static double *numerical_hessian (double *b, double *c, int n,
  * @reltol: relative tolerance for terminating iteration.
  * @fncount: location to receive count of function evaluations.
  * @grcount: location to receive count of gradient evaluations.
- * @hessvcv: location to receive packed triangular representation
- * of covariance matrix, based on numerical approximation to the
- * Hessian at the last iteration, or %NULL.
  * @get_ll: pointer to function used to calculate log
  * likelihood.
  * @get_gradient: pointer to function used to calculate the 
@@ -2801,7 +2850,7 @@ static double *numerical_hessian (double *b, double *c, int n,
  */
 
 int BFGS_max (int n, double *b, int maxit, double reltol,
-	      int *fncount, int *grcount, double **hessvcv,
+	      int *fncount, int *grcount, 
 	      BFGS_LL_FUNC get_ll, BFGS_GRAD_FUNC get_gradient, 
 	      void *callback_data, gretlopt opt, PRN *prn)
 {
@@ -2998,10 +3047,6 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	pputs(nprn, "\n--- FINAL VALUES: \n");	
 	print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
 	pputs(nprn, "\n\n");	
-    }
-
-    if (!err && hessvcv != NULL) {
-	*hessvcv = numerical_hessian(b, c, n, get_ll, callback_data);
     }
 
  bailout:

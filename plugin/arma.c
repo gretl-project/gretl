@@ -776,7 +776,7 @@ static int rewrite_kalman_matrices (kalman *K, const double *b, int i)
 }
 
 /* add covariance matrix and standard errors based on numerical
-   approximation to the Hessian from BFGS
+   approximation to the Hessian
 */
 
 static void arma_hessian_vcv (MODEL *pmod, double *vcv, int k)
@@ -798,10 +798,17 @@ static double *
 kalman_arma_score_callback (const double *b, int i, void *data)
 {
     kalman *K = (kalman *) data;
+    int err;
 
     rewrite_kalman_matrices(K, b, i);
-    kalman_forecast(K);
-    return E->val;
+    err = kalman_forecast(K);
+
+#if ARMA_DEBUG
+    fprintf(stderr, "kalman_arma_score: kalman f'cast gave "
+	    "err = %d, ll = %#.12g\n", err, kalman_get_loglik(K));
+#endif
+
+    return (err)? NULL : E->val;
 }
 
 /* add covariance matrix and standard errors based on Outer Product of
@@ -822,9 +829,13 @@ static int arma_OPG_vcv (MODEL *pmod, kalman *K, double *b,
 	pmod->uhat[t] = gretl_vector_get(E, s++);
     }
 
-    G = build_OPG_matrix(b, k, T, kalman_arma_score_callback, (void *) K);
+    G = build_OPG_matrix(b, k, T, kalman_arma_score_callback, (void *) K, &err);
+    if (err) {
+	goto bailout;
+    }
+
     V = gretl_matrix_alloc(k, k);
-    if (G == NULL || V == NULL) {
+    if (V == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -905,6 +916,11 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
 
     pmod->lnL = kalman_get_loglik(K);
 
+#if ARMA_DEBUG
+    fprintf(stderr, "kalman_arma_finish: doing VCV, method %s\n",
+	    (vcv != NULL)? "Hessian" : "OPG");
+#endif
+
     if (vcv != NULL) {
 	arma_hessian_vcv(pmod, vcv, k);
     } else {
@@ -919,6 +935,8 @@ static int kalman_arma_finish (MODEL *pmod, const int *alist,
     return pmod->errcode;
 }
 
+static int kalman_do_ma_check = 1;
+
 static double kalman_arma_ll (const double *b, void *p)
 {
     int offset = kainfo->ifc + kainfo->p + kainfo->P;
@@ -932,14 +950,14 @@ static double kalman_arma_ll (const double *b, void *p)
     int i;
     fprintf(stderr, "kalman_arma_ll():\n");
     for (i=0; i<kainfo->q; i++) {
-	fprintf(stderr, "theta[%d] = %g\n", i, theta[i]);
+	fprintf(stderr, "theta[%d] = %#.12g\n", i, theta[i]);
     }
     for (i=0; i<kainfo->Q; i++) {
-	fprintf(stderr, "Theta[%d] = %g\n", i, Theta[i]);
+	fprintf(stderr, "Theta[%d] = %#.12g\n", i, Theta[i]);
     }    
 #endif
 
-    if (ma_out_of_bounds(kainfo, theta, Theta)) {
+    if (kalman_do_ma_check && ma_out_of_bounds(kainfo, theta, Theta)) {
 	pputs(errprn, "arma: MA estimate(s) out of bounds\n");
 	return NADBL;
     }
@@ -952,7 +970,7 @@ static double kalman_arma_ll (const double *b, void *p)
     }
 
 #if ARMA_DEBUG
-    fprintf(stderr, "loglik = %g\n", ll);
+    fprintf(stderr, "kalman_arma_ll: loglik = %#.12g\n", ll);
 #endif
 
     return ll;
@@ -1205,19 +1223,16 @@ static int kalman_arma (const int *alist, double *coeff,
 	    kalman_set_nonshift(K, r);
 	}
 	kalman_use_ARMA_ll(K);
-	if (getenv("ARMA_HESSIAN") != NULL) {
-	    err = BFGS_max(ainfo->nc, b, maxit, reltol, 
-			   &fncount, &grcount, &hess,
-			   kalman_arma_ll, NULL, K,
-			   (prn != NULL)? OPT_V : OPT_NONE, prn);
-	} else {
-	    err = BFGS_max(ainfo->nc, b, maxit, reltol, 
-			   &fncount, &grcount, NULL,
-			   kalman_arma_ll, NULL, K,
-			   (prn != NULL)? OPT_V : OPT_NONE, prn);
-	}	    
+	err = BFGS_max(ainfo->nc, b, maxit, reltol, 
+		       &fncount, &grcount, 
+		       kalman_arma_ll, NULL, K,
+		       (prn != NULL)? OPT_V : OPT_NONE, prn);
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
+	} else if (1 || getenv("ARMA_HESSIAN")) { /* Hello! Testing */
+	    kalman_do_ma_check = 0;
+	    hess = numerical_hessian(b, ainfo->nc, kalman_arma_ll, K);
+	    kalman_do_ma_check = 1;
 	}
     }
 
@@ -1525,7 +1540,7 @@ static int *make_ar_ols_list (struct arma_info *ainfo, int av, int ptotal)
 
 static int ar_arma_init (const int *list, double *coeff, 
 			 const double **Z, const DATAINFO *pdinfo,
-			 struct arma_info *ainfo)
+			 struct arma_info *ainfo, PRN *prn)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
     int np = ainfo->p, nq = ainfo->q;
@@ -1754,6 +1769,14 @@ static int ar_arma_init (const int *list, double *coeff,
     }
 #endif
 
+    if (!err && prn != NULL) {
+	if (nonlin) {
+	    pputs(prn, "\narma initialization: using nonlinear AR model\n\n");
+	} else {
+	    pputs(prn, "\narma initialization: using linear AR model\n\n");
+	}
+    }
+
     /* clean up */
     free(alist);
     destroy_dataset(aZ, adinfo);
@@ -1800,7 +1823,7 @@ static int hr_init_check (const DATAINFO *pdinfo, struct arma_info *ainfo)
 
 static int hr_arma_init (const int *list, double *coeff, 
 			 const double **Z, const DATAINFO *pdinfo,
-			 struct arma_info *ainfo)
+			 struct arma_info *ainfo, PRN *prn)
 {
     int an = pdinfo->t2 - ainfo->t1 + 1;
     int np = ainfo->p, nq = ainfo->q;
@@ -2058,7 +2081,37 @@ static int hr_arma_init (const int *list, double *coeff,
 	bounds_checker_cleanup();
     }
 
+    if (!err && prn != NULL) {
+	pputs(prn, "\narma initialization: using Hannan-Rissanen method\n\n");
+    }
+
     return err;
+}
+
+static int user_arma_init (double *coeff, struct arma_info *ainfo, 
+			   int *init_done, PRN *prn)
+{
+    int i, nc = 0;
+    const double *x = get_init_vals(&nc);
+
+    if (x == NULL) {
+	return 0;
+    }
+
+    if (nc != ainfo->nc) {
+	pprintf(prn, "arma initialization: need %d coeffs but got %d\n",
+		ainfo->nc, nc);
+	return E_DATA;
+    }
+
+    pputs(prn, "\narma initialization: at user-specified values\n\n");
+    for (i=0; i<ainfo->nc; i++) {
+	coeff[i] = x[i];
+    }
+
+    *init_done = 1;
+
+    return 0;
 }
 
 /* set up a model_info struct for passing to bhhh_max */
@@ -2242,12 +2295,20 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	err = arima_difference(Z[ainfo.yno], &ainfo);
     }
 
-    /* initialize the coefficients */
+    /* initialize the coefficients: there are 3 possible methods */
 
-    if (prefer_hr_init(&ainfo)) {
+    /* first pass: see if the user specified some values */
+    err = user_arma_init(coeff, &ainfo, &init_done, prn);
+    if (err) {
+	armod.errcode = err;
+	goto bailout;
+    }
+
+    /* second pass: try Hannan-Rissanen? */
+    if (!init_done && prefer_hr_init(&ainfo)) {
 	err = hr_init_check(pdinfo, &ainfo);
 	if (!err) {
-	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo);
+	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, prn);
 #if ARMA_DEBUG
 	    if (err) {
 		fputs("hr_arma_init failed, will try ar_arma_init\n", stderr);
@@ -2259,8 +2320,9 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 	}
     }
 
+    /* third pass: estimate pure AR model by OLS or NLS */
     if (!init_done) {
-	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo);
+	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, prn);
     }
 
     if (err) {

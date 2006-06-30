@@ -310,7 +310,33 @@ ML or conditional ML.
 \subsection{Forecasting}
 \label{arma-fcast}
 
-To be written.
+ARMA models are often used for forecasting purposes.  The
+autoregressive component, in particular, offers the possibility of
+forecasting a process ``out of sample'' over a substantial time
+horizon.  
+
+\app{Gretl} supports forecasting on the basis of ARMA models using
+the method set out by Box and Jenkins (1976).\footnote{See their
+  ``Program 4'' on p.\ 506ff.}
+
+The Box and Jenkins algorithm produces a set of reduced-form AR
+coefficients which take into account any differencing of the dependent
+variable (seasonal and/or non-seasonal) in the ARIMA context, thus
+making it possible to generate a forecast for the level of the
+original variable.  By contrast, if you first difference a series
+manually and then apply ARMA to the differenced series, forecasts will
+be for the differenced series, not the level.  For example
+\begin{code}
+  arima 1 1 1 ; y
+  fcasterr
+  dy = diff(y)
+  arma 1 1 ; dy
+  fcasterr
+\end{code}
+
+BROKEN needs work.
+
+
 
 \subsection{Limitations}
 

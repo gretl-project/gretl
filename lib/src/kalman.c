@@ -949,7 +949,7 @@ int kalman_forecast (kalman *K)
     }
 
 #if KDEBUG
-    fprintf(stderr, "kalman_forecast: err=%d, ll=%.10g\n", err, 
+    fprintf(stderr, "kalman_forecast: err=%d, ll=%#.12g\n", err, 
 	    K->loglik);
 #endif
 

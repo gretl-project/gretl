@@ -67,6 +67,8 @@ int get_bhhh_maxiter (void);
 int set_bhhh_toler (double tol);
 int set_bhhh_maxiter (int n);
 
+const double *get_init_vals (int *pn);
+
 int get_VAR_horizon (void);
 
 double get_nls_toler (void);

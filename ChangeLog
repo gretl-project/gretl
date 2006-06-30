@@ -4,9 +4,11 @@ version 1.5.2, in progress
   of any models that have been estimated)
 - Add "native" exact ML estimation of ARMA models using the
   Kalman filter
-- Add functionality for analysis of discrete variables (new
-  behavior of frequency distribution, plus cross-tabulation
-  command, "xtab")
+- Add some basic functionality for analysis of discrete variables. 
+  New behavior of frequency distribution, plus new commands: 
+  "discrete" (interpret variables as discrete), "dummify" (create a 
+  set of dummies coding for the values of a discrete variable), and 
+  "xtab" (cross-tabulation of two discrete variables)
 - Don't add an extra newline at the end of plain text data files
   (e.g. CSV)
 - "restrict" command for single equations: add a printout of the
@@ -25,15 +27,11 @@ version 1.5.2, in progress
   regressors spans the space of a constant
 - Revamp panel data estimation: redefine the "panel" command for
   fixed- or random-effects estimation, rename the old "panel"
-  command as "paneldat"
+  command as "paneldat"; refine calculation of Hausman test statistic
 - Lags in main window: make these visible under their parent
   variable, via a "twisty" triangle
 - Revamp multiple-precision models: add more statistics, and make
   them available for capture via genr
-- Add new commands: "discrete" (interpret variables as discrete),
-  "dummify" (create a set of summies coding for the values of a
-  discrete variable), and "xtab" (cross-tabulation of two discrete
-  variables)
 - Revamp test for differences of two means in the GUI hypothesis
   test calculator
 - Imposing panel structure on a data set: add the option of
@@ -52,6 +50,10 @@ version 1.5.2, in progress
 - VECMs: make Johansen's alpha and beta retrievable as matrices
   with identifiers $jalpha and $jbeta
 - Several bug-fixes for the matrix manipulation facility
+- GUI menu partially restructured
+- Add facility for multiple time-series graphs from the GUI
+- Revamp the "--ten" option for printing variables to 10 digits:
+  replace with a configurable "--long" option
 
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality
