@@ -435,7 +435,7 @@
         </option>
         <option>
 	  <flag>--conditional</flag>
-	  <effect>X-12-ARIMA: usa la massima verosimiglianza condizionale per la stima</effect>
+	  <effect>usa la massima verosimiglianza condizionale</effect>
         </option>
       </options>
       <examples>
@@ -498,17 +498,14 @@
         includere termini stagionali.
       </para>
 
-      <para>Il funzionamento predefinito utilizza la funzione ARMA 
-        <quote>interna</quote> di gretl, ma è anche possibile usare
-        <program>X-12-ARIMA</program> (se è stato installato il pacchetto
-        <program>X-12-ARIMA</program> per gretl). In quest'ultimo caso, c'è
-        l'ulteriore opzione di scegliere come metodo di stima quello della
-        massima verosimiglianza esatta o condizionale. Il metodo predefinito
-        usato da <program>X-12-ARIMA</program> è quello della massima
-        verosimiglianza, mentre il metodo della massima verosimiglianza
-        condizionale produrrà stime più vicine a quelle ottenute usando la
-        funzione interna ARMA di gretl. La matrice di covarianza non è
-        disponibile quando la stima utilizza <program>X-12-ARIMA</program>.
+      <para>Il funzionamento predefinito utilizza la funzionalità ARMA 
+        <quote>interna</quote> di gretl, che usa la stima di massima
+        verosimiglianza esatta (usando il filtro di Kalman). In alternativa,
+        è possibile usare la stima di massima verosimiglianza condizionale,
+        oppure usare <program>X-12-ARIMA</program>, con massima verosimiglianza
+        esatta o condizionale (le ultime due opzioni sono disponibili se è stato
+        installato il programma	<program>X-12-ARIMA</program>). Per i dettagli,
+        si veda la <guideref targ="arma-estimation"/>.
       </para>
 
       <para>L'algoritmo interno di gretl per ARMA utilizza una procedura di
@@ -2064,12 +2061,20 @@
 
       <ilist>
 	<li><para>Funzioni matematiche standard: <func>abs</func>,
-	    <func>cos</func>, <func>exp</func>, <func>int</func>
-	    (parte intera), <func>ln</func> (logaritmo naturale:
-	    <func>log</func> è un sinonimo), <func>sin</func>,
-	    <func>sqrt</func> (radice quadrata). Tutte queste accettano un solo
-            argomento, che può essere una serie o uno scalare.</para>
+	    <func>exp</func>, <func>int</func> (parte intera),
+	    <func>ln</func> (logaritmo naturale: <func>log</func> è un
+            sinonimo), <func>log10</func> (logaritmo in base 10),
+            <func>log2</func> (logaritmo in base 2), <func>sqrt</func>.
+            Tutte queste funzioni accettano un singolo argomento, che può essere
+            una serie o uno scalare.
+	  </para>
 	</li>
+	<li>
+	  <para>Funzioni trigonometriche: <func>cos</func>,
+	    <func>sin</func>, <func>tan</func> e <func>atan</func>
+            (arcotangente). Anche queste funzioni accettano un singolo argomento, scalare o serie.
+ 	  </para>
+ 	</li>
 	<li><para>Funzioni statistiche standard, che possono accettare un solo
             argomento e producono un risultato scalare: <func>max</func> (valore
             massimo in una serie), <func>min</func> (minimo),
@@ -5126,8 +5131,8 @@
 	  <effect>per osservazione</effect>
 	</option>
 	<option>
-	  <flag>--ten</flag>
-	  <effect>usa 10 cifre significative</effect>
+	  <flag>--long</flag>
+	  <effect>usa 10 cifre significative, o più</effect>
 	</option>
  	<option>
  	  <flag>--no-dates</flag>
@@ -5146,9 +5151,13 @@
         valori delle variabili specificate, altrimenti stampa i valori
         di tutte le variabili nel dataset in uso. Usando l'opzione
 	<lit>--byobs</lit> i dati vengono stampati per osservazione,
-        altrimenti sono stampati per variabile. Usando l'opzione
-	<lit>--ten</lit> i dati vengono stampati per variabile con 10
-        cifre significative.
+        altrimenti sono stampati per variabile.
+      </para>
+      <para>
+        Usando l'opzione <lit>--long</lit> i dati vengono stampati per variabile
+        con una precisione superiore al normale; in modalità predefinita,
+        vengono mostrate 10 cifre significative, ma è possibile modificare
+        questo numero con il comando  <cmdref targ="set"/>.
       </para>
 
       <para>
@@ -6115,8 +6124,15 @@
             I valori predefiniti sono 1.0E&minus;06 per il comando <cmd>arma</cmd>
             e 1.0E&minus;10 per <cmd>tobit</cmd>; questi valori possono essere reimpostati
             usando la stringa <lit>default</lit> invece di un valore numerico.
-	    </para>
-	    </li>
+	  </para>
+	</li>
+	<li>	  
+	  <para><lit>longdigits</lit>: un valore intero positivo, minore o
+            uguale a 20. Determina il numero di cifre usate per mostrare i
+            valori delle variabili quando vuene usata l'opzione
+	    <lit>--long</lit> (si veda <cmdref targ="print"/>).
+	  </para>
+	</li>
       </ilist>
 
     </description>
