@@ -249,7 +249,34 @@ amounts of data already in machine readable form. You will, of course,
 need to study the \app{gretl} data formats (XML format or
 ``traditional'' format) as described in Appendix~\ref{app-datafile}.
 
-\subsection{Data frequency}
+\section{Structuring a dataset}
+\label{sec:data-structure}
+
+Once your data are read by \app{gretl}, it may be necessary to supply
+some information on the nature of the data. We distinguish between
+three kinds of datasets:
+\begin{enumerate}
+\item Cross-section
+\item Time series
+\item Panel data
+\end{enumerate}
+
+The primary tool for doing this is the ``Sample, Dataset structure''
+menu entry in the graphical interface, or the \texttt{setobs} command
+for scripts and the command-line interface.
+
+\subsection{Cross-section data}
+\label{sec:cross-section-data}
+
+TODO
+This is the default. 
+
+\subsection{Time series data}
+\label{sec:timeser-data}
+
+\ldots Add stuff here \ldots
+
+\subsubsection{Changing frequency}
 
 \app{gretl} has no problem compacting data series of relatively high
 frequency (e.g.\ monthly) to a lower frequency (e.g.\ quarterly): you
@@ -274,6 +301,177 @@ January, February and March of 1990. The expanded variable is
 therefore useless for fine-grained time-series analysis, outside of
 the special case where you know that the variable in question does in
 fact remain constant over the sub-periods.
+
+\subsection{Panel data}
+\label{sec:panel-data}
+
+Panel data are inherently three dimensional --- the dimensions being
+variable, cross-sectional unit, and time-period.  For example, a
+particular number in a panel data set might be identified as the
+observation on capital stock for General Motors in 1980.  (A note on
+terminology: we use the terms ``cross-sectional unit'', ``unit'' and
+``group'' interchangeably below to refer to the entities that compose
+the cross-sectional dimension of the panel.  These might, for
+instance, be firms, countries or persons.)
+
+For representation in a textual computer file (and also for gretl's
+internal calculations) the three dimensions must somehow be flattened
+into two.  This ``flattening'' involves taking layers of the data that
+would naturally stack in a third dimension, and stacking them in the
+vertical dimension.
+
+\app{Gretl} always expects data to be arranged ``by observation'',
+that is, such that each row represents an observation (and each
+variable occupies one and only one column).  In this context the
+flattening of a panel data set can be done in either of two ways:
+
+\begin{itemize}
+\item Stacked time series: the successive vertical blocks each
+  comprise a time series for a given unit.
+\item Stacked cross sections: the successive vertical blocks each
+  comprise a cross-section for a given period.
+\end{itemize}
+
+You may input data in whichever arrangement is more convenient.
+Internally, however, \app{gretl} always stores panel data in
+the form of stacked time series.
+
+When you import panel data into \app{gretl} from a spreadsheet or
+comma separated format, the panel nature of the data will not be
+recognized automatically (most likely the data will be treated as
+``undated'').  A panel interpretation can be imposed on the data
+using the graphical interface or via the \cmd{setobs} command.
+
+In the graphical interface, use the menu item ``Sample, Dataset
+structure''.  In the first dialog box that appears, select ``Panel''.
+In the next dialog you have a three-way choice.  The first two
+options, ``Stacked time series'' and ``Stacked cross sections'' are
+applicable if the data set is already organized in one of these two
+ways.  If you select either of these options, the next step is to
+specify the number of cross-sectional units in the data set.  The
+third option, ``Use index variables'', is applicable if the data set
+contains two variables that index the units and the time periods
+respectively; the next step is then to select those variables.  For
+example, a data file might contain a country code variable and a
+variable representing the year of the observation.  In that case
+\app{gretl} can reconstruct the panel structure of the data regardless
+of how the observation rows are organized.
+
+The \cmd{setobs} command has options that parallel those in the
+graphical interface.  If suitable index variables are available
+you can do, for example
+\begin{code}
+            setobs unitvar timevar --panel-vars
+\end{code}
+where \texttt{unitvar} is a variable that indexes the units and
+\texttt{timevar} is a variable indexing the periods.  Alternatively
+you can use the form \verb+setobs+ \textsl{freq} \verb+1:1+
+\textsl{structure}, where \textsl{freq} is replaced by the ``block
+size'' of the data (that is, the number of periods in the case of
+stacked time series, or the number of units in the case of stacked
+cross-sections) and structure is either \verb+--stacked-time-series+
+or \verb+--stacked-cross-section+.  Two examples are given below: the
+first is suitable for a panel in the form of stacked time series with
+observations from 20 periods; the second for stacked cross sections
+with 5 units.
+\begin{code}
+            setobs 20 1:1 --stacked-time-series
+            setobs 5 1:1 --stacked-cross-section
+\end{code}
+
+\subsubsection{Panel data arranged by variable}
+
+Publicly available panel data sometimes come arranged ``by variable.''
+Suppose we have data on two variables, \varname{x1} and \varname{x2},
+for each of 50 states in each of 5 years (giving a total of 250
+observations per variable).  One textual representation of such a data
+set would start with a block for \varname{x1}, with 50 rows
+corresponding to the states and 5 columns corresponding to the years.
+This would be followed, vertically, by a block with the same structure
+for variable \varname{x2}.  A fragment of such a data file is shown
+below, with quinquennial observations 1965--1985.  Imagine the table
+continued for 48 more states, followed by another 50 rows for variable
+\varname{x2}.
+
+\begin{center}
+  \begin{tabular}{rrrrrr}
+  \varname{x1} \\
+     & 1965 & 1970 & 1975 & 1980 & 1985 \\
+  AR & 100.0 & 110.5 & 118.7 & 131.2 & 160.4\\
+  AZ & 100.0 & 104.3 & 113.8 & 120.9 & 140.6\\
+  \end{tabular}
+\end{center}
+
+If a datafile with this sort of structure is read into \app{gretl},
+the program will interpret the columns as distinct variables, so the
+data will not be usable ``as is.''  But there is a mechanism for
+correcting the situation, namely the \cmd{stack} function within
+the \cmd{genr} command.
+
+Consider the first data column in the fragment above: the first 50 rows
+of this column constitute a cross-section for the variable \varname{x1}
+in the year 1965.  If we could create a new variable by stacking the
+first 50 entries in the second column underneath the first 50 entries
+in the first, we would be on the way to making a data set ``by
+observation'' (in the first of the two forms mentioned above, stacked
+cross-sections).  That is, we'd have a column comprising a
+cross-section for \varname{x1} in 1965, followed by a cross-section for
+the same variable in 1970.
+
+The following gretl script illustrates how we can accomplish the
+stacking, for both \varname{x1} and \varname{x2}.  We assume
+that the original data file is called \texttt{panel.txt}, and that in
+this file the columns are headed with ``variable names'' \varname{p1},
+\varname{p2}, \dots, \varname{p5}.  (The columns are not really
+variables, but in the first instance we ``pretend'' that they are.)
+
+\begin{code}
+    open panel.txt
+    genr x1 = stack(p1..p5) --length=50
+    genr x2 = stack(p1..p5) --offset=50 --length=50
+    setobs 50 1:1 --stacked-cross-section
+    store panel.gdt x1 x2
+\end{code}
+
+The second line illustrates the syntax of the \cmd{stack} function.
+The double dots within the parentheses indicate a range of variables
+to be stacked: here we want to stack all 5 columns (for all 5 years).
+The full data set contains 100 rows; in the stacking of variable
+\varname{x1} we wish to read only the first 50 rows from each column:
+we achieve this by adding \verb+--length=50+.  Note that if you want
+to stack a non-contiguous set of columns you can put a comma-separated
+list within the parentheses, as in
+
+\begin{code}
+    genr x = stack(p1,p3,p5)
+\end{code}
+
+On line 3 we do the stacking for variable \varname{x2}.  Again we want
+a \texttt{length} of 50 for the components of the stacked series, but
+this time we want gretl to start reading from the 50th row of the
+original data, and we specify \verb+--offset=50+.
+Line 4 imposes a panel interpretation on the data; finally, we save
+the data in gretl format, with the panel interpretation, discarding
+the original ``variables'' \varname{p1} through \varname{p5}.
+
+The illustrative script above is appropriate when the number of
+variable to be processed is small.  When then are many variables in
+the data set it will be more efficient to use a command loop to
+accomplish the stacking, as shown in the following script.  The setup
+is presumed to be the same as in the previous section (50 units, 5
+periods), but with 20 variables rather than 2.
+
+\begin{code}
+    open panel.txt
+    loop for i=1..20
+      genr k = ($i - 1) * 50
+      genr x$i = stack(p1..p5) --offset=k --length=50
+    endloop
+    setobs 50 1.01 --stacked-cross-section
+    store panel.gdt x1 x2 x3 x4 x5 x6 x7 x8 x9 x10 \
+      x11 x12 x13 x14 x15 x16 x17 x18 x19 x20
+\end{code}
+
 
 \section{Missing data values}
 \label{missing-data}
@@ -355,7 +553,7 @@ If RAM is not an issue, there is one further limitation on data size
 (though it's very unlikely to be a binding constraint).  That is,
 variables and observations are indexed by signed integers, and on a
 typical PC these will be 32-bit values, capable of representing
-a maximum positive value of 2,147,483,647.
+a maximum positive value of $2^{31} - 1 = 2,147,483,647$.
 
 The limits mentioned above apply to \app{gretl}'s ``native''
 functionality.  There are tighter limits with regard to two
@@ -374,8 +572,7 @@ interested in adding a collection of data files and/or scripts that
 relate specifically to your course, in such a way that students can
 browse and access them easily.
 
-This is quite easy as of \app{gretl} version 1.2.1.  There are three
-ways to access such collections of files:
+There are three ways to access such collections of files:
 
 \begin{itemize}
 \item For data files: select the menu item ``File, Open data, sample

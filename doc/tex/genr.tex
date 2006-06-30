@@ -9,20 +9,58 @@ variables.  It is documented in the \GCR.  This chapter offers a more
 expansive discussion of some of the special functions available via
 \verb+genr+ and some of the finer points of the command.
     
-
 \section{Time-series filters}
-\label{genr-filter}
+\label{sec:filters}
 
-One sort of specialized function in \verb+genr+ is the time-series
-filter.  Two such filters are currently available, the
-Hodrick--Prescott filter and the Baxter--King bandpass filter. These
-are accessed using \verb+hpfilt()+ and \verb+bkfilt()+ respectively:
-in each case the function takes one argument, the name of the variable
-to be processed.
+One sort of specialized function in \verb+genr+ is time-series
+filtering. In addition to the usual application of lags and
+differences, \app{gretl} provides fractional differencing and two
+filters commonly used in macroeconomics for trend-cycle decomposition:
+the Hodrick--Prescott filter and the Baxter--King bandpass filter.
+
+\subsection{Fractional differencing}
+\label{sec:fracdiff}
+
+The concept of differencing a time series $d$ times is pretty obvious
+when $d$ is an integer; it may seem odd when $d$ is
+fractional. However, this idea has a well-defined
+mathematical content: consider the function
+\[
+  f(z) = (1 - z)^{-d},
+\]
+where $z$ and $d$ are real numbers. By taking a Taylor series
+expansion around $z=0$, we see that
+\[
+  f(z) = 1 + dz + \frac{d (d+1)}{2} z^2 + \cdots 
+\]
+or, more compactly,
+\[
+  f(z) = 1 + \sum_{i=1}^{\infty} \psi_i z^i
+\]
+with
+\[
+  \psi_k = \frac{\prod_{i=1}^{k} (d+i-1) }{k!} = \psi_{k-1} \frac{d+k-1}{k}
+\]
+
+The same expansion can be used with the lag operator, so that if we defined
+\[
+  Y_t = (1-L)^{0.5} X_t
+\]
+this could be considered shorthand for
+\[
+Y_t = X_t - 0.5 X_{t-1} - 0.125 X_{t-2} - 0.0625 X_{t-3} - \cdots 
+\]
     
+In \app{gretl} this transformation can be accomplished by the syntax 
+\begin{code}
+  genr Y = fracdiff(X,0.5)
+\end{code}
 
 \subsection{The Hodrick--Prescott filter}
 \label{hodrick-prescott}
+
+This filter is accessed using the \verb+hpfilt()+ function, which
+takes one argument, the name of the variable to be processed.
 
 A time series $y_t$ may be decomposed into a trend or growth
 component $g_t$ and a cyclical component $c_t$.  
@@ -65,6 +103,10 @@ is reasonable for quarterly data.  The default value in \app{gretl} is
 
 \subsection{The Baxter and King filter}
 \label{baxter-king}
+
+This filter is accessed using the \verb+bkfilt()+ function, which
+again takes the the name of the variable to be processed as its single
+argument.
 
 Consider the spectral representation of a time series $y_t$:
 %       
@@ -118,6 +160,74 @@ frequency bounds to 18 and 96, and $k$ to 24, you could do
 These values would then remain in force for calls to the \verb+bkfilt+
 function until changed by a further use of \verb+set+.
       
+\section{Panel data specifics}
+\label{panel-genr}
+
+\subsection{Dummy variables}
+\label{dummies}
+
+In a panel study you may wish to construct dummy variables of one or
+both of the following sorts: (a) dummies as unique identifiers for the
+units or groups, and (b) dummies as unique identifiers for the time
+periods.  The former may be used to allow the intercept of the
+regression to differ across the units, the latter to allow the
+intercept to differ across periods.
+
+Two special functions are available to create such dummies.  These are
+found under the ``Add'' menu in the GUI, or under the \cmd{genr}
+command in script mode or \app{gretlcli}.
+
+\begin{enumerate}
+\item ``unit dummies'' (script command \cmd{genr unitdum}).  This
+  command creates a set of dummy variables identifying the
+  cross-sectional units.  The variable \verb+du_1+ will have value 1
+  in each row corresponding to a unit 1 observation, 0 otherwise;
+  \verb+du_2+ will have value 1 in each row corresponding to a unit 2
+  observation, 0 otherwise; and so on.
+\item ``time dummies'' (script command \cmd{genr timedum}).  This
+  command creates a set of dummy variables identifying the periods.
+  The variable \verb+dt_1+ will have value 1 in each row
+  corresponding to a period 1 observation, 0 otherwise; \verb+dt_2+
+  will have value 1 in each row corresponding to a period 2
+  observation, 0 otherwise; and so on.
+\end{enumerate}
+
+If a panel data set has the \verb+YEAR+ of the observation entered as
+one of the variables you can create a periodic dummy to pick out a
+particular year, e.g.\ \cmd{genr dum = (YEAR=1960)}.  You can also
+create periodic dummy variables using the modulus operator,
+\verb+%+.  For instance, to create a dummy with
+value 1 for the first observation and every thirtieth observation
+thereafter, 0 otherwise, do
+\begin{code}
+      genr index 
+      genr dum = ((index-1)%30) = 0
+\end{code}
+
+\subsection{Lags, differences, trends}
+\label{panel-lagged}
+
+If the time periods are evenly spaced you may want to use lagged
+values of variables in a panel regression (but see
+section~\ref{panel-dyn} below); you may also wish to construct first
+differences of variables of interest.
+
+Once a dataset is identified as a panel, \app{gretl} will handle the
+generation of such variables correctly.  For example the command
+\verb+genr x1_1 = x1(-1)+ will create a variable that contains the
+first lag of \verb+x1+ where available, and the missing value code
+where the lag is not available (e.g.\ at the start of the time series
+for each group).  When you run a regression using such variables, the
+program will automatically skip the missing observations.
+
+When a panel data set has a fairly substantial time dimension, you may
+wish to include a trend in the analysis.  The command \cmd{genr time} 
+creates a variable named \varname{time} which runs from 1 to $T$ for
+each unit, where $T$ is the length of the time-series dimension of the
+panel.  If you want to create an index that runs consecutively from 1
+to $m\times T$, where $m$ is the number of units in the panel, use
+\cmd{genr index}.
+
 
 \section{Resampling and bootstrapping}
 \label{genr-resample}
@@ -177,7 +287,8 @@ bootstrapping, see Davidson and MacKinnon (2004, chapter 4).
        tcount / replics
 \end{code}
 \end{script}
-    
+%$ 
+%$
 
 \section{Handling missing values}
 \label{genr-missing}
