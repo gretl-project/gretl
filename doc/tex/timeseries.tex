@@ -7,120 +7,181 @@
 \subsection{Representation and syntax}
 \label{arma-repr}
 
-The \cmd{arma} command performs estimation of autoregressive-moving
-average (ARMA) models; the most general representation of an ARMA
-model that may be estimated by \app{gretl} is as follows:
+The \cmd{arma} command performs estimation of autoregressive,
+integrated, moving average (ARIMA) models.  The most general ARIMA
+model that can be estimated by \app{gretl} may be represented as
+follows:
 \begin{equation}
   \label{eq:general-arma}
-  A(L) B(L^s) y_t = x_t \beta + C(L) D(L^s) \epsilon_t ,
+  \phi(L) \Phi(L^s) (1-L)^d (1-L)^D \left(y_t - x_t \beta\right) = 
+    \theta(L) \Theta(L^s) \epsilon_t
 \end{equation}
-where $L$ is the lag operator ($L^n x_t = x_{t-n}$), $s$ is the
-number of subperiods for seasonal time series (for example, 12 for
-monthly series), $x_t$ is a vector of exogenous variables and
-$\epsilon_t$ is a white noise process.
+where $\phi()$, $\Phi()$, $\theta()$ and $\Theta()$ are polynomials in
+the lag operator, $L$, defined such that $L^n x_t = x_{t-n}$; $s$ is
+the data frequency for seasonal time series (e.g.\ 4 for quarterly, 12
+for monthly series); $x_t$ is a vector of exogenous variables; and
+$\epsilon_t$ is a white noise process.  This specification allows for
+both non-seasonal and seasonal components throughout: $\phi(L)$ is the
+non-seasonal AR lag polynomial and $\Phi(L^s)$ the seasonal
+counterpart; $\theta(L)$ is the non-seasonal MA polynomial and
+$\Theta(L^s)$ its seasonal counterpart; and $d$ and $D$ are the orders
+of non-seasonal and seasonal differencing respectively.
 
-The basic ARMA model is obtained when $x_t = 1$ and there are no
-seasonal operators. In this case, $B(L^s) = D(L^s) = 1$ and the model
-becomes
+If this seems a little indigestible at first, let's back up to a more
+basic specification.  For many purposes an ARMA model with no
+differencing and no seasonal component may be adequate.  Such a model
+can be written as
 \begin{equation}
   \label{eq:plain-arma}
-  A(L) y_t = \mu + C(L) \epsilon_t ,
+  \phi(L) (y_t - \mu) = \theta(L) \epsilon_t
 \end{equation}
 where, in customary notation, the vector $\beta$ reduces to the
-intercept $\mu$.  The equation above may be written more explicitly
+constant $\mu$.  The equation above may be written more explicitly
 as
-\[
-  y_t = \mu + \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
+\begin{equation}
+  \label{eq:plain-arma2}
+  y_t - \mu = \phi_1\left(y_{t-1} - \mu \right) + \ldots + 
+  \phi_p \left( y_{t-p} - \mu \right) + 
   \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q
   \epsilon_{t-q} 
-\]
+\end{equation}
 The corresponding \app{gretl} syntax is simply
 \begin{code}
   arma p q ; y
 \end{code}
-where \verb|p| and \verb|q| are the desired lag orders; these can be
-either numbers or pre-defined scalars. The parameter $\mu$ can be
-dropped if necessary by appending the option \cmd{--nc} to the command.
+The AR and MA lag orders, \verb|p| and \verb|q|, can be given either as
+numbers or as pre-defined scalars. The parameter $\mu$ can be dropped
+if necessary by appending the option \cmd{--nc} (``no constant'') to
+the command.
+
+At this point we must digress briefly to address the fact that the
+basic ARMA model with constant can be represented in either of two
+ways.  One we have given above (\ref{eq:plain-arma2}); the alternative
+is
+\begin{equation}
+  \label{eq:plain-arma3}
+y_t = \alpha + \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} +
+ \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q
+ \epsilon_{t-q} 
+\end{equation}
+%
+These specifications are essentially equivalent, but if they represent
+one and the same process, $\mu$ and $\alpha$ are, fairly obviously,
+not numerically identical; rather
+\[
+\alpha = \left(1 - \phi_1 - \ldots - \phi_p\right) \mu
+\]
+From the software user's point of view it doesn't matter which
+convention is followed, provided it is clear whether the number
+presented as the ``constant'' is $\hat{\mu}$ or $\hat{\alpha}$.  With
+one exception to be discussed below, \app{gretl} presents $\hat{\mu}$.
 
 If you want to estimate a model with explanatory variables, the above
-syntax must be extended to
+syntax must be extended as in the following example
 \begin{code}
   arma p q ; y const x1 x2
 \end{code}
-This command would estimate the following model:
+This command would, by default, estimate the following model:
 \[
-  y_t = \beta_0 + x_{1,t} \beta_1 + x_{2,t} \beta_2 + 
-  \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
-  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q} .
+  y_t - x_t \beta = \phi_1 \left(y_{t-1} - x_{t-1} \beta \right) + \ldots + 
+   \phi_p \left( y_{t-p} - x_{t-p} \beta \right) + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
 \]
-What \app{gretl} estimates in this case is known as an ARMAX (ARMA +
-eXogenous variables) model, which is different from what some other packages
-call ``regression model with ARMA errors''. The difference is apparent
-by considering the model \app{gretl} estimates:
-\begin{equation}
-  \label{eq:armax}
-  A(L) y_t = x_t \beta + C(L) \epsilon_t ,
-\end{equation}
-and a regression model with ARMA disturbances
-\begin{eqnarray}
-  \label{eq:reg-arma}
+where in this instance $x_t \beta = \beta_0 + x_{t,1} \beta_1 +
+x_{t,2} \beta_2$.  This is sometimes known as a ``regression model
+with ARMA errors'', and is perhaps more clearly represented by the
+pair of equations:
+\begin{eqnarray*}
   y_t & = & x_t \beta + u_t \\
-  A(L) u_t & = & C(L) \epsilon_t ;
-\end{eqnarray}
-the latter would translate into
-\[
-  A(L) y_t = A(L) \left(x_t \beta \right) + C(L) \epsilon_t ;
-\]
-the ARMAX formulation has the advantage that $\beta$ can be
-immediately interpreted as the vector of marginal effects of the $x_t$
-variables on the conditional mean of $y_t$.  Note, however, that
-regression models with purely autoregressive errors can be estimated
-(albeit not with maximum-likelihood techniques) by other \app{gretl}
-commands such as \cmd{corc} and \cmd{pwe}. 
-
-The \cmd{arma} command can be therefore used also for estimating
-\emph{Transfer Function Models}, a type of generalization of
-autoregressive-moving average (ARMA) models adding the effects of
-exogenous variable distributed along time, as in:
+  \phi(L) u_t & = & \theta(L) \epsilon_t
+\end{eqnarray*}
+which can be recombined as
 \begin{equation}
-  \label{eq:tfunc-model}
-  \phi (L) \cdot \Phi (L^s) y_t = \sum_{i=1}^kv_{i}(L)x_{it} + \theta (L)\cdot \Theta (L^s) \epsilon_t ,
+\label{eq:reg-arma}
+  \phi(L) y_t = \phi(L) \left(x_t \beta \right) + \theta(L) \epsilon_t
 \end{equation}
 
-The structure of the \cmd{arma} command does not let you specify
-models with gaps in the lag structure. A more flexible lag
-structure is especially desirable when analyzing time series that
-display strong seasonal patterns. In these cases, the full model
-(\ref{eq:general-arma}) can be used. For example, the syntax
+We now approach a tricky point.  The model just presented is also
+sometimes known as ``ARMAX'' (ARMA + eXogenous variables).  It seems
+to us, however, that this label is more appropriately applied to a
+different model, namely,
+\[
+  y_t = x_t \beta + \phi_1 y_{t-1} + \ldots + \phi_p y_{t-p} + 
+  \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
+\]
+or, equivalently,
+\begin{equation}
+  \label{eq:transfer}
+  \phi(L) y_t = x_t \beta + \theta(L) \epsilon_t
+\end{equation}
+
+The formulation (\ref{eq:transfer}) has the advantage that $\beta$ can
+be immediately interpreted as the vector of marginal effects of the
+$x_t$ variables on the conditional mean of $y_t$.  And by adding lags
+of $x_t$ to this specification one can estimate \emph{Transfer
+  Function models} (which generalize ARMA by adding the effects
+of exogenous variable distributed across time).
+
+We can perhaps clarify the issue broached above by writing a more
+general specification that nests the alternatives; that is
+\begin{equation}
+ \label{armax-general}
+  \phi(L) y_t = \phi(L) \left(x_t \beta\right) + z_t \delta 
+ + \theta(L) \epsilon_t
+\end{equation}
+
+The practical question from the user's point of view is: when you add
+exogenous variables to an ARMA specification in \app{gretl}, are they
+treated as the $x_t$s in (\ref{armax-general}) or as the $z_t$s?  Or
+do you have a choice?  The short answer is that they are treated as
+$x_t$s by default, but you can arrange to have them treated as $z_t$s
+by passing the \verb|--conditional| option to the \cmd{arma} command,
+\textit{without} adding the \verb|--x-12-arima| option.  
+
+There are four options for ARMA estimation --- in effect a $2 \times
+2$ matrix with one dimension being ``native'' ARMA versus use of the
+helper program \app{X-12-ARIMA} and the other being exact Maximum
+Likelihood versus conditional ML.  (For more on these options see the
+section on ``Estimation'' below.)  At present the native, conditional
+option is the odd man out, treating exogenous regressors as in
+(\ref{eq:transfer}), not as in (\ref{eq:reg-arma}).  In line with this
+difference, the native, conditional option also reports the ARMA
+``constant'' (if present) as in (\ref{eq:plain-arma3}), not
+(\ref{eq:plain-arma2}).
+
+Ideally, we would like to generalize the \cmd{arma} command so that
+the user could specify, for any estimation method, whether certain
+exogenous variables should be treated as $x_t$s or $z_t$s, but we're
+not yet at that point (and neither are most other software packages).
+
+\subsection{Seasonal models}
+
+A more flexible lag structure is desirable when analyzing time series
+that display strong seasonal patterns.  For such cases, a fuller form
+of the syntax is available, namely,
+\begin{code}
+  arma p q ; P Q ; y
+\end{code}
+where \texttt{p} and \texttt{q} represent the non-seasonal AR and MA
+orders, and \texttt{P} and \texttt{Q} the seasonal orders.  For
+example,
 \begin{code}
   arma 1 1 ; 1 1 ; y
 \end{code}
-would be used to estimate a model with four parameters:
+would be used to estimate the following model:
 \[
-  ( 1 - \phi L )  ( 1 - \Phi L^s ) y_t = \mu + ( 1 + \theta L ) ( 1 + \Theta L^s ) \epsilon_t;
+  (1 -\phi L)(1 -\Phi L^s) (y_t - \mu) = (1 + \theta L)(1 + \Theta L^s) \epsilon_t
 \]
-assuming that $y_t$ is a quarterly series (and therefore $s=4$), the
-above equation can be written more explicitly as
+If $y_t$ is a quarterly series (and therefore $s=4$), the above
+equation can be written more explicitly as
 \[
-  y_t = \mu + \phi y_{t-1} + \Phi y_{t-4} - (\phi \cdot \Phi) y_{t-5} + 
-  \epsilon_t + \theta \epsilon_{t-1} + \Theta \epsilon_{t-4} +
-  (\theta \cdot \Theta) \epsilon_{t-5} .
+y_t - \mu = \phi (y_{t-1} - \mu) + \Phi (y_{t-4} - \mu) - (\phi
+  \cdot \Phi) (y_{t-5} - \mu) + \epsilon_t + \theta \epsilon_{t-1} + \Theta
+  \epsilon_{t-4} + (\theta \cdot \Theta) \epsilon_{t-5}
 \]
 Such a model is known as a ``multiplicative seasonal ARMA model''.
 
-For more general models, this limitation can be circumvented for the
-autoregressive part by including lags of the dependent variable in the
-exogenous list. As an example, the following command 
-\begin{code}
-  arma 0 0 ; 0 1 ; y const y(-2)
-\end{code}
-on a quarterly series would estimate the parameters of the model
-\[
-  y_t = \mu + \phi y_{t-2} + \epsilon_t + \Theta \epsilon_{t-4}.
-\]
-However, this workaround is not recommended: although this would
-deliver correct estimates, it would break the existing mechanism for
-forecasting.
+\subsection{Differencing and ARIMA}
 
 The above discussion presupposes that the time series $y_t$ has
 already been subjected to all the transformations deemed necessary for
@@ -131,7 +192,7 @@ syntax
 \begin{code}
   arma p d q ; y 
 \end{code}
-would estimate and ARMA(p,q) model on $\Delta^d y_t$, and is
+would estimate an ARMA$(p,q)$ model on $\Delta^d y_t$. It is
 functionally equivalent to 
 \begin{code}
   series tmp = y
@@ -140,87 +201,126 @@ functionally equivalent to
   end loop
   arma p q ; tmp 
 \end{code}
-Such a model is known as an ARIMA (AutoRegressive Integrated
-Moving-Average) model; for this reason, \app{gretl} provides the
-\cmd{arima} command as an alias for \cmd{arma}. Seasonal differencing
-is handled similarly, with the syntax
+except with regard to forecasting after estimation (see below).
+
+When the series $y_t$ is differenced before performing the analysis
+the model is known as ARIMA (``I'' for Integrated); for this reason,
+\app{gretl} provides the \cmd{arima} command as an alias for
+\cmd{arma}.
+
+Seasonal differencing is handled similarly, with the syntax
 \begin{code}
   arma p d q ; P D Q ; y 
 \end{code}
-Thus, the command 
+where \texttt{D} is the order for seasonal differencing.  Thus, the
+command
 \begin{code}
   arma 1 0 0 ; 1 1 1 ; y 
 \end{code}
-would produce the same results as
+would produce the same parameter estimates as
 \begin{code}
   genr dsy = sdiff(y)
   arma 1 0 ; 1 1 ; dsy 
 \end{code}
+where we use the \texttt{sdiff} function to create a seasonal
+difference (e.g.\ for quarterly data, $y_t - y_{t-4}$).
 
 \subsection{Estimation}
 \label{arma-est}
 
-The algorithm \app{gretl} uses to estimate the parameters of an ARMA
-model is conditional maximum likelihood (CML), also known as
-``conditional sum of squares'' --- see Hamilton (1994, p.\ 132).  This
-method was exemplified in the script \ref{jack-arma}, and only a brief
-description will be given here.  Given a sample of size $T$, the CML
-method minimizes the sum of squared one-step-ahead prediction errors
-generated by the model for the observations $t_0, \ldots, T$. The
-starting point $t_0$ depends on the orders of the AR polynomials in the
-model.
+As mentioned above, ARMA models may be estimated using \app{gretl}'s
+own code, or with the help of \app{X-12-ARIMA}.  We begin by
+discussing the \app{gretl} methods.
+
+The default method is exact maximum likelihood estimation (under the
+assumption that the error term is normally distributed), using the
+Kalman filter in conjunction with the BFGS maximization algorithm.
+The gradient of the log-likelihood with respect to the parameter
+estimates is approximated numerically.  This method produces results
+that are directly comparable with many other software packages.  The
+constant, and any exogenous variables, are treated as in equation
+(\ref{eq:reg-arma}).  The covariance matrix for the parameters is
+computed via the OPG (Outer Product of the Gradients) method.
+
+The alternative ``native'' method is conditional maximum likelihood
+(CML), also known as ``conditional sum of squares'' --- see Hamilton
+(1994, p.\ 132).  This method was exemplified in the
+script~\ref{jack-arma}, and only a brief description will be given
+here.  Given a sample of size $T$, the CML method minimizes the sum of
+squared one-step-ahead prediction errors generated by the model for
+the observations $t_0, \ldots, T$.\footnote{The numerical method used
+  is BHHH.  As with exact ML, the covariance matrix is computed via
+  the OPG method.}  The starting point $t_0$ depends on the orders of
+the AR polynomials in the model.
 
 This method is nearly equivalent to maximum likelihood under the
-hypothesis of normality; the difference is that the first $(t_0 -
-1)$ observations are considered fixed and only enter the likelihood
+hypothesis of normality; the difference is that the first $(t_0 - 1)$
+observations are considered fixed and only enter the likelihood
 function as conditioning variables. As a consequence, the two methods
-are asymptotically equivalent under standard conditions.
+are asymptotically equivalent under standard conditions --- except for
+the fact, discussed above, that our CML implementation treats the
+constant and exogeneous variables as per equation (\ref{eq:transfer}).
 
-The numerical method used for maximizing the log-likelihood is BHHH.
-The covariance matrix for the parameters (hence the standard errors)
-are computed via the OPG (Outer Product of the Gradients) method.
-
-Full ML estimation under normality is available in \app{gretl} via
-the \verb|x-12| plugin, which is automatically used if the option
-\verb|--x-12-arima| is appendend to the \cmd{arma} command. For
-example, the following code
+The two methods can be compared as in the following example
 \begin{code}
   open data10-1
   arma 1 1 ; r
-  arma 1 1 ; r --x-12-arima
+  arma 1 1 ; r --conditional
 \end{code}
-produces the estimates shown in Table~\ref{tab:cml-ml}.
+which produces the estimates shown in Table~\ref{tab:ml-cml}.  As you
+can see, the estimates of $\phi$ and $\theta$ are quite similar.  The
+reported constants differ widely, as expected.  However, dividing the
+CML constant by $1-\phi$ we get 7.38, which is not far from the ML
+estimate of 6.93.
 
 \begin{table}[htbp]
-\caption{CML and ML estimates}
-\label{tab:cml-ml}
+\caption{ML and CML estimates}
+\label{tab:ml-cml}
 \begin{center}
   \begin{tabular}{crrrr}
     \hline
-    Parameter & \multicolumn{2}{c}{CML} &
-    \multicolumn{2}{c}{ML (\app{X-12-ARIMA} plugin)} \\
+    Parameter & \multicolumn{2}{c}{ML} &
+    \multicolumn{2}{c}{CML} \\
     \hline 
-    $\mu$ & 1.07322 & (0.488661) &  1.00232 & (0.133002) \\
-    $\phi$ & 0.852772 & (0.0450252) & 0.855373  & (0.0496304) \\
-    $\theta$ & 0.591838 & (0.0456662) & 0.587986 & (0.0799962) \\
+    $\mu$ & 6.93042 & (0.673202) & 1.07322 & (0.488661) \\
+    $\phi$ & 0.855360 & (0.0512026) & 0.852772 & (0.0450252) \\
+    $\theta$ & 0.588056 & (0.0809769) & 0.591838 & (0.0456662) \\
     \hline
   \end{tabular}
 \end{center}
 \end{table}
 
-For comparability with \app{gretl}'s own estimates, you can instruct
-\app{X-12-ARIMA} to produce CML estimates by appending the option
-\verb|--conditional| along with \verb|--x-12-arima|.
+ADD short section on X-12-ARIMA here.
 
 \subsection{Forecasting}
 \label{arma-fcast}
 
-To be written
+To be written.
+
+\subsection{Limitations}
+
+The structure of the \cmd{arma} command does not let you specify
+models with gaps in the lag structure, other than via the seasonal
+specification discussed above.  For example, if you have a monthly
+time series, you cannot estimate an ARMA model with AR terms (or MA
+terms) at just lags 1, 3 and 5.
+
+At a pinch, you could circumvent this limitation in regard to the AR
+specification by the trick of including lags of the dependent variable
+in the ``exogenous'' list.  For example, the following command
+\begin{code}
+  arma 0 0 ; 0 1 ; y const y(-2)
+\end{code}
+on a quarterly series would estimate the parameters of the model
+\[
+  y_t - \mu = \phi \left(y_{t-2} - \mu\right) + \epsilon_t + \Theta \epsilon_{t-4}
+\]
+However, this workaround is not really recommended: it should deliver
+correct estimates, but would break the existing mechanism for
+forecasting.
 
 \section{Unit root tests}
 \label{sec:uroot}
-
-To be completed
 
 \subsection{The ADF test}
 \label{sec:ADFtest}
@@ -264,11 +364,11 @@ alternatives:
   \end{tabular}
 \end{center}
 
-These options are not mutually exclusive and can be used together; in
-this case, the statistic will be reported separately for each case.
-By default, \app{gretl} uses by default the combination
-\verb|--c --ct --ctt|. For each case, approximate p-values are
-calculated by means of the algorithm developed in MacKinnon (1996).
+These options are not mutually exclusive; when they are used together
+the statistic will be reported separately for each case.  By default,
+\app{gretl} uses by default the combination \verb|--c --ct --ctt|. For
+each case, approximate p-values are calculated by means of the
+algorithm developed in MacKinnon (1996).
 
 The \app{gretl} command used to perform the test is \cmd{adf}; for example
 \begin{code}
@@ -474,16 +574,16 @@ latter can be written as
 \[
 u_t = \rho u_{t-1} + \varepsilon_t; \qquad -1 < \rho < 1
 \]
-where the $\varepsilon_t$s are iid with mean zero and constant
-variance $\sigma^2$.  With an AR(1) error, if $\rho$ is positive then
-a positive value of $u_t$ will tend to be followed, with probability
-greater than 0.5, by a positive $u_{t+1}$.  With an ARCH error
-process, a disturbance $u_t$ of large absolute value will tend to be
-followed by further large absolute values, but with no presumption
-that the successive values will be of the same sign.  ARCH in asset
-prices is a ``stylized fact'' and is consistent with market
-efficiency; on the other hand autoregressive behavior of asset prices
-would violate market efficiency.
+where the $\varepsilon_t$s are independently and identically
+distributed with mean zero and variance $\sigma^2$.  With an
+AR(1) error, if $\rho$ is positive then a positive value of $u_t$ will
+tend to be followed, with probability greater than 0.5, by a positive
+$u_{t+1}$.  With an ARCH error process, a disturbance $u_t$ of large
+absolute value will tend to be followed by further large absolute
+values, but with no presumption that the successive values will be of
+the same sign.  ARCH in asset prices is a ``stylized fact'' and is
+consistent with market efficiency; on the other hand autoregressive
+behavior of asset prices would violate market efficiency.
 
 One can test for ARCH of order $q$ in the following
 way:
@@ -508,8 +608,8 @@ reported and if the $TR^2$ from the auxiliary regression has a p-value
 less than 0.10, ARCH estimates are also reported.  These estimates
 take the form of Generalized Least Squares (GLS), specifically
 weighted least squares, using weights that are inversely proportional
-to the predicted standard deviations of the disturbances,
-$\hat{\sigma}_t$, derived from the auxiliary regression.
+to the predicted variances of the disturbances, $\hat{\sigma}_t$,
+derived from the auxiliary regression.
 
 In addition, the ARCH test is available after estimating a vector
 autoregression (VAR).  In this case, however, there is no provision to

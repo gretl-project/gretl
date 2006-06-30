@@ -441,7 +441,7 @@
         </option>
         <option>
 	  <flag>--conditional</flag>
-	  <effect>X-12-ARIMA: use conditional Maximum Likelihood</effect>
+	  <effect>use conditional maximum likelihood</effect>
         </option>
       </options>
       <examples>
@@ -474,11 +474,12 @@
       </para>
 
       <para context="cli">
-	In the univariate case the default is to include an intercept in the
-	model but this can be suppressed with the <lit>--nc</lit> flag.  If
-	<repl>indepvars</repl> are added, the model becomes ARMAX; in this case
-	the constant should be included explicitly if you want an intercept (as
-	in the second example above).
+	In the univariate case the default is to include an intercept
+	in the model but this can be suppressed with the
+	<lit>--nc</lit> flag.  If <repl>indepvars</repl> are added,
+	the model becomes ARMAX; in this case the constant should be
+	included explicitly if you want an intercept (as in the second
+	example above).
       </para>
 
       <para context="cli">
@@ -503,25 +504,15 @@
 
       <para>
 	The default is to use the <quote>native</quote> gretl ARMA
-	function, but there is also the option of using
-	<program>X-12-ARIMA</program> (if the
-	<program>X-12-ARIMA</program> package for gretl is installed). In
-	the latter case there is the further option of using exact or
-	conditional maximum likelihood.  The default with
-	<program>X-12-ARIMA</program> is exact ML, but the conditional
-	variant will produce estimates more closely comparable with native
-	gretl ARMA.  The covariance matrix is not effective when
-	estimation is by <program>X-12-ARIMA</program>.
+	functionality, with estimation by exact ML (using the Kalman
+	filter).  Other options are: native code, conditional ML; 
+	<program>X-12-ARIMA</program>, exact ML; and 
+	<program>X-12-ARIMA</program>, conditional ML.  (The latter
+	two options are available only if
+	<program>X-12-ARIMA</program> is installed.)  For details
+	regarding these options, please see <guideref
+	targ="arma-estimation"/>.
       </para>
-
-      <para>The native gretl ARMA algorithm uses a conditional maximum
-	likelihood procedure, implemented via iterated least squares
-	estimation of the outer product of the gradient (OPG)
-	regression.  See <guideref targ="jack-arma"/> for the logic of
-	the procedure.  The AR coefficients (and those for any
-	additional regressors) are initialized using an OLS
-	auto-regression, and the MA coefficients are initialized at
-	zero.</para>
 
       <para>The AIC value given in connection with ARIMA models is
 	calculated according to the definition used in
@@ -1383,7 +1374,7 @@
 	and <cmdref targ="dummify"/>.
       </para>
       <para>
-	If the <lit>--reverse</lit> flag is given, the operation if reversed;
+	If the <lit>--reverse</lit> flag is given, the operation is reversed;
 	that is, the variables in <repl>varlist</repl> are marked as
 	being continuous.
       </para>
