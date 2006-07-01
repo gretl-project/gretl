@@ -987,7 +987,10 @@ gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 				BFGS_SCORE_FUNC scorefun,
 				void *data, int *err)
 {
-    const double h = 1e-8;
+    double h = 1e-8;
+#if ALT_OPG
+    double d = 1.0e-4;
+#endif
     gretl_matrix *G;
     const double *x;
     double bi0, x0;
@@ -1003,6 +1006,9 @@ gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 
     for (i=0; i<k; i++) {
 	bi0 = b[i];
+#if ALT_OPG
+	h = d * bi0 + d * (b[i] == 0.0);
+#endif
 	b[i] = bi0 - h;
 	x = scorefun(b, i, data);
 	if (x == NULL) {
@@ -1774,7 +1780,7 @@ static int mle_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 	BFGS_GRAD_FUNC gradfun = (spec->mode == ANALYTIC_DERIVS)?
 	    get_mle_gradient : NULL;
 
-	err = BFGS_max(n, spec->coeff, maxit, pspec->tol, 
+	err = BFGS_max(spec->coeff, n, maxit, pspec->tol, 
 		       &spec->fncount, &spec->grcount, 
 		       get_mle_ll, gradfun, NULL,
 		       pspec->opt, nprn);
@@ -2823,23 +2829,23 @@ double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
 
 /**
  * BFGS_max:
- * @n: number elements in array @b.
  * @b: array of adjustable coefficients.
+ * @n: number elements in array @b.
  * @maxit: the maximum number of iterations to allow.
  * @reltol: relative tolerance for terminating iteration.
  * @fncount: location to receive count of function evaluations.
  * @grcount: location to receive count of gradient evaluations.
- * @get_ll: pointer to function used to calculate log
+ * @llfunc: pointer to function used to calculate log
  * likelihood.
- * @get_gradient: pointer to function used to calculate the 
+ * @gradfunc: pointer to function used to calculate the 
  * gradient, or %NULL for default numerical calculation.
- * @callback_data: pointer that will be passed as the last
+ * @data: pointer that will be passed as the last
  * parameter to the callback functions @get_ll and @get_gradient.
  * @opt: may contain %OPT_V for verbose operation.
  * @prn: printing struct (or %NULL).
  *
  * Obtains the set of values for @b which jointly maximize the
- * log-likelihood as calculated by @get_ll.  Uses the BFGS
+ * log-likelihood as calculated by @llfunc.  Uses the BFGS
  * variable-metric method.  Based on Pascal code in J. C. Nash,
  * "Compact Numerical Methods for Computers," 2nd edition, converted
  * by p2c then re-crafted by B. D. Ripley for gnu R.  Revised for 
@@ -2849,10 +2855,10 @@ double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
  * on error.
  */
 
-int BFGS_max (int n, double *b, int maxit, double reltol,
-	      int *fncount, int *grcount, 
-	      BFGS_LL_FUNC get_ll, BFGS_GRAD_FUNC get_gradient, 
-	      void *callback_data, gretlopt opt, PRN *prn)
+int BFGS_max (double *b, int n, int maxit, double reltol,
+	      int *fncount, int *grcount, BFGS_LL_FUNC llfunc, 
+	      BFGS_GRAD_FUNC gradfunc, void *data, 
+	      gretlopt opt, PRN *prn)
 {
     int ll_ok, done;
     double *g = NULL, *t = NULL, *X = NULL, *c = NULL, **H = NULL;
@@ -2863,8 +2869,8 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
     double D1, D2;
     int err = 0;
 
-    if (get_gradient == NULL) {
-	get_gradient = BFGS_numeric_gradient;
+    if (gradfunc == NULL) {
+	gradfunc = BFGS_numeric_gradient;
     }
 
     g = malloc(n * sizeof *g);
@@ -2878,7 +2884,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	goto bailout;
     }
 
-    f = get_ll(b, callback_data);
+    f = llfunc(b, data);
 
     if (na(f)) {
 	fprintf(stderr, "initial value of f is not finite\n");
@@ -2888,7 +2894,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 
     fmax = f;
     iter = ilast = fcount = gcount = 1;
-    get_gradient(b, g, n, get_ll, callback_data);
+    gradfunc(b, g, n, llfunc, data);
     reverse_gradient(g, n);
 
     do {
@@ -2939,7 +2945,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 		    }
 		}
 		if (ndelta > 0) {
-		    f = get_ll(b, callback_data);
+		    f = llfunc(b, data);
 		    fcount++;
 		    ll_ok = !na(f) &&
 			(f >= fmax + sumgrad * steplen * acctol);
@@ -2967,7 +2973,7 @@ int BFGS_max (int n, double *b, int maxit, double reltol,
 	    if (ndelta > 0) {
 		/* making progress */
 		fmax = f;
-		get_gradient(b, g, n, get_ll, callback_data);
+		gradfunc(b, g, n, llfunc, data);
 		reverse_gradient(g, n);
 		gcount++;
 		iter++;

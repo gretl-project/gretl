@@ -59,10 +59,10 @@ MODEL model_from_nls_spec (nls_spec *spec, double ***pZ,
 
 double get_default_nls_toler (void);
 
-int BFGS_max (int n, double *b, int maxit, double reltol,
-	      int *fncount, int *grcount, 
-	      BFGS_LL_FUNC get_ll, BFGS_GRAD_FUNC get_gradient, 
-	      void *callback_data, gretlopt opt, PRN *prn);
+int BFGS_max (double *b, int n, int maxit, double reltol,
+	      int *fncount, int *grcount, BFGS_LL_FUNC llfunc, 
+	      BFGS_GRAD_FUNC gradfunc, void *data, 
+	      gretlopt opt, PRN *prn);
 
 gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 				BFGS_SCORE_FUNC scorefun,

@@ -627,7 +627,7 @@ gretl_model_get_coeff_intervals (const MODEL *pmod,
     return cf;
 }
 
-static int gretl_is_arima_model (const MODEL *pmod)
+int gretl_is_arima_model (const MODEL *pmod)
 {
     int d = (int) gretl_model_get_data(pmod, "arima_d");
     int D = (int) gretl_model_get_data(pmod, "arima_D");
@@ -803,8 +803,10 @@ static int ar_coeff_integrate (double *c0, int d, int D, int s, int pmax)
  * Creates allocated copies of the AR and MA coefficient vectors from
  * @pmod.  If @pmod includes seasonal ARMA terms, the coefficient vectors
  * are suitably expanded, and include the interactions, if any, between 
- * seasonal and non-seasonal terms.  The length of these vectors can
- * be determined using gretl_arma_model_get_max_AR_lag() and
+ * seasonal and non-seasonal terms.  If the dependent variable has
+ * been differenced, the AR coefficients are integrated to account for
+ * the differencing.  The length of these vectors can be determined 
+ * using gretl_arma_model_get_max_AR_lag() and 
  * gretl_arma_model_get_max_MA_lag() respectively.
  *
  * Returns: 0 on success, non-zero on error.
@@ -898,6 +900,53 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 	*arvec = ac;
 	*mavec = mc;
     }
+
+    return err;
+}
+
+int regarima_model_get_AR_coeffs (const MODEL *pmod,
+				  double **phi0,
+				  int *pp)
+{
+    int p = gretl_arma_model_nonseasonal_AR_order(pmod);
+    int P = gretl_model_get_int(pmod, "arma_P");
+    int s = gretl_model_get_int(pmod, "arma_pd");
+    const double *phi = NULL, *Phi = NULL;
+    double *ac = NULL;
+    double x, y;
+    int i, j, k, pmax;
+    int err = 0;
+
+    pmax = p + s * P;
+
+    if (pmax == 0) {
+	*pp = 0;
+	return 0;
+    }
+	
+    ac = malloc((pmax + 1) * sizeof *ac);
+    if (ac == NULL) {
+	return E_ALLOC;
+    }
+
+    phi = pmod->coeff + pmod->ifc;
+    Phi = phi + p;
+
+    for (i=0; i<=pmax; i++) {
+	ac[i] = 0.0;
+    }
+
+    for (i=0; i<=P; i++) {
+	x = (i == 0)? -1 : Phi[i-1];
+	for (j=0; j<=p; j++) {
+	    y = (j == 0)? -1 : phi[j-1];
+	    k = j + s * i;
+	    ac[k] -= x * y;
+	}
+    }
+
+    *phi0 = ac;
+    *pp = pmax;
 
     return err;
 }

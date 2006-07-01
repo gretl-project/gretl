@@ -1223,10 +1223,9 @@ static int kalman_arma (const int *alist, double *coeff,
 	    kalman_set_nonshift(K, r);
 	}
 	kalman_use_ARMA_ll(K);
-	err = BFGS_max(ainfo->nc, b, maxit, reltol, 
-		       &fncount, &grcount, 
-		       kalman_arma_ll, NULL, K,
-		       (prn != NULL)? OPT_V : OPT_NONE, prn);
+	err = BFGS_max(b, ainfo->nc, maxit, reltol, 
+		       &fncount, &grcount, kalman_arma_ll, 
+		       NULL, K, (prn != NULL)? OPT_V : OPT_NONE, prn);
 	if (err) {
 	    fprintf(stderr, "BFGS_max returned %d\n", err);
 	} else if (1 || getenv("ARMA_HESSIAN")) { /* Hello! Testing */

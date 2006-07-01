@@ -1022,6 +1022,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     double *psi = NULL;
     double *phi = NULL;
     double *theta = NULL;
+    double *phi0 = NULL;
     double *Xb = NULL;
     const double *beta;
     const double *y;
@@ -1030,9 +1031,10 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     double mu = NADBL;
     int xvars, yno;
     int *xlist = NULL;
-    int p, q, npsi = 0;
+    int p, q, px = 0, npsi = 0;
     int t1 = fc->t1;
     int ar_smax, ma_smax;
+    int regarima = 0;
     int i, s, t;
     int err = 0;
 
@@ -1077,9 +1079,23 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	int aflags = gretl_model_get_int(pmod, "arma_flags");
 
 	if ((aflags & ARMA_EXACT) || (aflags & ARMA_X12A)) {
+	    if (gretl_is_arima_model(pmod)) {
+		regarima = 1;
+		/* get px and phi0 here */
+		regarima_model_get_AR_coeffs(pmod, &phi0, &px);
+	    }
 	    if (xlist[0] == 1 && xlist[1] == 0) {
 		/* just a const, no ARMAX */
 		mu = pmod->coeff[0];
+		if (phi0 != NULL) {
+		    mu = 1.0;
+		    for (i=1; i<=px; i++) {
+			mu -= phi0[i];
+		    }
+		    mu *= pmod->coeff[0];
+		} else {
+		    mu = pmod->coeff[0];
+		}
 	    } else {
 		Xb = create_Xb_series(fc, pmod, beta, xlist, Z);
 		if (Xb == NULL) {
@@ -1149,6 +1165,20 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	    }
 	}
 
+	if (phi0 != NULL && Xb != NULL) {
+	    /* the regarima case */
+	    for (i=1; i<=px; i++) {
+		s = t - i;
+		if (s < 0) {
+		    miss = 1;
+		} else if (na(Xb[s])) {
+		    miss = 1;
+		} else {
+		    yh -= phi0[i] * Xb[s];
+		} 
+	    }
+	}
+
 	DPRINTF((" Xb contribution = %g\n", yh));
 
 	/* AR contribution (incorporating any differencing) */
@@ -1171,14 +1201,14 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		DPRINTF(("  AR: lag %d, missing value\n", i));
 		miss = 1;
 	    } else {
-		DPRINTF(("  AR: lag %d, using coeff %g\n", i, phi[i]));
-		if (Xb != NULL) {
+		DPRINTF(("  AR: lag %d, using coeff %#.8g\n", i, phi[i]));
+		if (!regarima && Xb != NULL) {
 		    if (na(Xb[s])) {
 			miss = 1;
 		    } else {
 			yh += phi[i] * (yval - Xb[s]);
 		    }
-		} else if (!na(mu)) {
+		} else if (!regarima && !na(mu)) {
 		    yh += phi[i] * (yval - mu);
 		} else {
 		    yh += phi[i] * yval;
@@ -1234,6 +1264,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     free(phi);
     free(theta);
     free(Xb);
+    free(phi0);
 
     return err;
 }

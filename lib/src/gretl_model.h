@@ -263,6 +263,10 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 
 const double *gretl_arma_model_get_x_coeffs (const MODEL *pmod);
 
+int regarima_model_get_AR_coeffs (const MODEL *pmod,
+				  double **phi0,
+				  int *pp);
+
 int gretl_model_new_vcv (MODEL *pmod, int *nelem);
 
 VMatrix *gretl_model_get_vcv (MODEL *pmod, const DATAINFO *pdinfo);
@@ -281,6 +285,8 @@ int command_ok_for_model (int test_ci, int model_ci);
 
 int model_test_ok (int ci, gretlopt opt, const MODEL *pmod, 
 		   const DATAINFO *pdinfo);
+
+int gretl_is_arima_model (const MODEL *pmod);
 
 int get_model_count (void);
 
