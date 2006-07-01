@@ -53,8 +53,9 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     static int qmax;
 
     double re, im, rt;
-    int i, j, k;
-    int err = 0, allzero = 1;
+    int i, j, k, qtot;
+    int tzero = 1, Tzero = 1;
+    int err = 0, cerr = 0;
 
     if (ainfo == NULL) {
 	/* signal for cleanup */
@@ -68,19 +69,19 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
 	return 0;
     }
 
-    for (i=0; i<ainfo->q && allzero; i++) {
+    for (i=0; i<ainfo->q && tzero; i++) {
 	if (theta[i] != 0.0) {
-	    allzero = 0;
+	    tzero = 0;
 	}    
     }  
 
-    for (i=0; i<ainfo->Q && allzero; i++) {
+    for (i=0; i<ainfo->Q && Tzero; i++) {
 	if (Theta[i] != 0.0) {
-	    allzero = 0;
+	    Tzero = 0;
 	}    
     }  
     
-    if (allzero) {
+    if (tzero && Tzero) {
 	return 0;
     }
 
@@ -115,19 +116,37 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     }
 
     /* add seasonal MA and interaction */
-    for (i=0; i<ainfo->Q; i++) {
-	k = (i + 1) * ainfo->pd;
-	temp[k] += Theta[i];
-	for (j=0; j<ainfo->q; j++) {
-	    int m = k + j + 1;
+    if (Tzero) {
+	qtot = ainfo->q;
+    } else {
+	qtot = qmax;
+	for (i=0; i<ainfo->Q; i++) {
+	    k = (i + 1) * ainfo->pd;
+	    temp[k] += Theta[i];
+	    for (j=0; j<ainfo->q; j++) {
+		int m = k + j + 1;
 
-	    temp[m] += Theta[i] * theta[j];
+		temp[m] += Theta[i] * theta[j];
+	    }
 	}
     }
 
-    polrt(temp, tmp2, qmax, roots);
+    cerr = polrt(temp, tmp2, qtot, roots);
+    if (cerr) {
+	fprintf(stderr, "ma_out_of_bounds: polrt returned %d\n", cerr);
+	fprintf(stderr, "q=%d, Q=%d\n", ainfo->q, ainfo->Q);
+	for (i=0; i<ainfo->q; i++) {
+	    fprintf(stderr, "theta[%d] = %g\n", i, theta[i]);
+	}
+	for (i=0; i<ainfo->Q; i++) {
+	    fprintf(stderr, "Theta[%d] = %g\n", i, Theta[i]);
+	}
+	for (i=0; i<qmax; i++) {
+	    fprintf(stderr, "temp[%d] = %g\n", i, temp[i]);
+	}
+    }
 
-    for (i=0; i<qmax; i++) {
+    for (i=0; i<qtot; i++) {
 	re = roots[i].r;
 	im = roots[i].i;
 	rt = re * re + im * im;
@@ -1741,8 +1760,8 @@ static int ar_arma_init (const int *list, double *coeff,
 	    coeff[j++] = armod.coeff[i];
 	}
 	for (i=0; i<nq; i++) {
-	    /* insert zeros for MA coeffs */
-	    coeff[i + np + ainfo->ifc] = 0.0;
+	    /* insert near-zeros for MA coeffs */
+	    coeff[i + np + ainfo->ifc] = 0.0001;
 	} 
     }
 
@@ -2297,7 +2316,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     /* initialize the coefficients: there are 3 possible methods */
 
     /* first pass: see if the user specified some values */
-    err = user_arma_init(coeff, &ainfo, &init_done, prn);
+    err = user_arma_init(coeff, &ainfo, &init_done, errprn);
     if (err) {
 	armod.errcode = err;
 	goto bailout;
@@ -2307,7 +2326,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (!init_done && prefer_hr_init(&ainfo)) {
 	err = hr_init_check(pdinfo, &ainfo);
 	if (!err) {
-	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, prn);
+	    err = hr_arma_init(alist, coeff, Z, pdinfo, &ainfo, errprn);
 #if ARMA_DEBUG
 	    if (err) {
 		fputs("hr_arma_init failed, will try ar_arma_init\n", stderr);
@@ -2321,7 +2340,7 @@ MODEL arma_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* third pass: estimate pure AR model by OLS or NLS */
     if (!init_done) {
-	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, prn);
+	err = ar_arma_init(alist, coeff, Z, pdinfo, &ainfo, errprn);
     }
 
     if (err) {
