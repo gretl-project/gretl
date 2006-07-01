@@ -2808,7 +2808,10 @@ double *numerical_hessian (double *b, int n, BFGS_LL_FUNC func, void *data)
     err = gretl_invert_packed_symmetric_matrix(V);
     if (!err) {
 	vcv = gretl_matrix_steal_data(V);
-    } 
+    } else {
+	fprintf(stderr, "numerical hessian: failed to invert V\n");
+	gretl_packed_matrix_print(V, "V");
+    }
 
     gretl_matrix_free(V);
 

@@ -1387,17 +1387,9 @@ double *gretl_matrix_steal_data (gretl_matrix *m)
     return vals;
 }
 
-/**
- * gretl_matrix_print_to_prn:
- * @m: matrix to print.
- * @msg: accompanying message text (or %NULL if no message is wanted).
- * @prn: pointer to gretl printing struct.
- *
- * Prints the matrix @m to @prn.
- */
-
-void 
-gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
+static void 
+real_matrix_print_to_prn (const gretl_matrix *m, const char *msg, 
+			  int packed, PRN *prn)
 {
     char numstr[32];
     int i, j;
@@ -1412,6 +1404,30 @@ gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 
     if (m == NULL) {
 	pputs(prn, " matrix is NULL\n");
+	return;
+    }
+
+    if (packed) {
+	int v, n;
+
+	v = gretl_vector_get_length(m);
+	if (v == 0) {
+	    pputs(prn, " not a packed matrix\n");
+	    return;
+	}
+
+	n = (sqrt(1.0 + 8.0 * v) - 1.0) / 2.0;
+
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		sprintf(numstr, "%#.5g", m->val[ijton(i, j, n)]);
+		if (strstr(numstr, ".00000")) {
+		    numstr[strlen(numstr) - 1] = 0;
+		}
+		pprintf(prn, "%12s ", numstr);
+	    }
+	    pputc(prn, '\n');
+	}
     } else {
 	for (i=0; i<m->rows; i++) {
 	    for (j=0; j<m->cols; j++) {
@@ -1423,8 +1439,24 @@ gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
 	    }
 	    pputc(prn, '\n');
 	}
-	pputc(prn, '\n');
     }
+
+    pputc(prn, '\n');
+}
+
+/**
+ * gretl_matrix_print_to_prn:
+ * @m: matrix to print.
+ * @msg: accompanying message text (or %NULL if no message is wanted).
+ * @prn: pointer to gretl printing struct.
+ *
+ * Prints the matrix @m to @prn.
+ */
+
+void 
+gretl_matrix_print_to_prn (const gretl_matrix *m, const char *msg, PRN *prn)
+{
+    real_matrix_print_to_prn(m, msg, 0, prn);
 }
 
 /**
@@ -1439,7 +1471,24 @@ void gretl_matrix_print (const gretl_matrix *m, const char *msg)
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
 
-    gretl_matrix_print_to_prn(m, msg, prn);
+    real_matrix_print_to_prn(m, msg, 0, prn);
+    gretl_print_destroy(prn);
+}
+
+/**
+ * gretl_packed_matrix_print:
+ * @m: packed matrix to print.
+ * @msg: accompanying message text (or %NULL if no message is wanted).
+ *
+ * Prints the symmetric matrix @m (packed as lower triangle)
+ * to stderr.
+ */
+
+void gretl_packed_matrix_print (const gretl_matrix *m, const char *msg)
+{
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR);
+
+    real_matrix_print_to_prn(m, msg, 1, prn);
     gretl_print_destroy(prn);
 }
 
