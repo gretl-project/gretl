@@ -313,29 +313,67 @@ ML or conditional ML.
 ARMA models are often used for forecasting purposes.  The
 autoregressive component, in particular, offers the possibility of
 forecasting a process ``out of sample'' over a substantial time
-horizon.  
+horizon.
 
-\app{Gretl} supports forecasting on the basis of ARMA models using
-the method set out by Box and Jenkins (1976).\footnote{See their
-  ``Program 4'' on p.\ 506ff.}
+\app{Gretl} supports forecasting on the basis of ARMA models using the
+method set out by Box and Jenkins (1976).\footnote{See in particular
+  their ``Program 4'' on p.\ 505ff.}  The Box and Jenkins algorithm
+produces a set of integrated AR coefficients which take into account
+any differencing of the dependent variable (seasonal and/or
+non-seasonal) in the ARIMA context, thus making it possible to
+generate a forecast for the level of the original variable.  By
+contrast, if you first difference a series manually and then apply
+ARMA to the differenced series, forecasts will be for the differenced
+series, not the level.  This point is illustrated
+in Example~\ref{arima-fcast-script}.  The parameter estimates are identical
+for the two models.  The forecasts differ but are mutually consistent:
+the variable \texttt{fcdiff} emulates the ARMA forecast (static,
+one step ahead within the sample range, and dynamic out of sample).
 
-The Box and Jenkins algorithm produces a set of reduced-form AR
-coefficients which take into account any differencing of the dependent
-variable (seasonal and/or non-seasonal) in the ARIMA context, thus
-making it possible to generate a forecast for the level of the
-original variable.  By contrast, if you first difference a series
-manually and then apply ARMA to the differenced series, forecasts will
-be for the differenced series, not the level.  For example
+\begin{script}[htbp]
+  \caption{ARIMA forecasting}
+  \label{arima-fcast-script}
 \begin{code}
-  arima 1 1 1 ; y
-  fcasterr
-  dy = diff(y)
+  open greene18_2.gdt
+  # log of quarterly U.S. nominal GNP, 1950:1 to 1983:4
+  genr y = log(Y)
+  # and its first difference
+  genr dy = diff(y)
+  # reserve 2 years for out-of-sample forecast
+  smpl ; 1981:4
+  # Estimate using ARIMA
+  arima 1 1 1 ; y 
+  # forecast over full period
+  smpl --full
+  fcast fc1
+  # Return to sub-sample and run ARMA on the first difference of y
+  smpl ; 1981:4
   arma 1 1 ; dy
-  fcasterr
+  smpl --full
+  fcast fc2
+  genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
+  # compare the forecasts over the later period
+  smpl 1981:1 1983:4
+  print y fc1 fc2 fcdiff --byobs
 \end{code}
+The output from the last command is:
+\begin{code}
+                    y          fc1          fc2       fcdiff
 
-BROKEN needs work.
-
+  1981:1      7.964086     7.940930      0.02668      0.02668
+  1981:2      7.978654     7.997576      0.03349      0.03349
+  1981:3      8.009463     7.997503      0.01885      0.01885
+  1981:4      8.015625     8.033695      0.02423      0.02423
+  1982:1      8.014997     8.029698      0.01407      0.01407
+  1982:2      8.026562     8.046037      0.01634      0.01634
+  1982:3      8.032717     8.063636      0.01760      0.01760
+  1982:4      8.042249     8.081935      0.01830      0.01830
+  1983:1      8.062685     8.100623      0.01869      0.01869
+  1983:2      8.091627     8.119528      0.01891      0.01891
+  1983:3      8.115700     8.138554      0.01903      0.01903
+  1983:4      8.140811     8.157646      0.01909      0.01909
+\end{code}
+\end{script}
 
 
 \subsection{Limitations}
