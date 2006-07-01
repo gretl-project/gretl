@@ -1011,6 +1011,21 @@ static double *create_Xb_series (Forecast *fc, const MODEL *pmod,
     return Xb;
 }
 
+static int want_x_beta_prep (const MODEL *pmod, const int *xlist)
+{
+    int ret = 0;
+
+    if (xlist != NULL) {
+	int aflags = gretl_model_get_int(pmod, "arma_flags");
+
+	if ((aflags & ARMA_EXACT) || (aflags & ARMA_X12A)) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
 /* generate forecasts for AR(I)MA (or ARMAX) models, including
    forecast standard errors if we're doing out-of-sample
    forecasting
@@ -1034,7 +1049,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
     int p, q, px = 0, npsi = 0;
     int t1 = fc->t1;
     int ar_smax, ma_smax;
-    int regarima = 0;
+    int regarma = 0;
     int i, s, t;
     int err = 0;
 
@@ -1056,8 +1071,8 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	t1 = pmod->t2 + 1;
     }
 
-    p = gretl_arma_model_max_AR_lag(pmod);
-    q = gretl_arma_model_max_MA_lag(pmod);
+    p = arma_model_max_AR_lag(pmod);
+    q = arma_model_max_MA_lag(pmod);
 
     xlist = model_xlist(pmod);
     yno = gretl_model_get_depvar(pmod);
@@ -1067,42 +1082,39 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 
     xvars = (xlist != NULL)? xlist[0] : 0;
 
-    err = gretl_arma_model_get_AR_MA_coeffs(pmod, &phi, &theta);
+    err = arma_model_integrated_AR_MA_coeffs(pmod, &phi, &theta);
     if (err) {
 	goto bailout;
     }
 
-    beta = gretl_arma_model_get_x_coeffs(pmod);
+    beta = arma_model_get_x_coeffs(pmod);
 
-    /* setup for case where Xb_{t-i} is needed */
-    if (xlist != NULL) {
-	int aflags = gretl_model_get_int(pmod, "arma_flags");
-
-	if ((aflags & ARMA_EXACT) || (aflags & ARMA_X12A)) {
-	    if (gretl_is_arima_model(pmod)) {
-		regarima = 1;
-		/* get px and phi0 here */
-		regarima_model_get_AR_coeffs(pmod, &phi0, &px);
-	    }
-	    if (xlist[0] == 1 && xlist[1] == 0) {
-		/* just a const, no ARMAX */
-		mu = pmod->coeff[0];
-		if (phi0 != NULL) {
-		    mu = 1.0;
-		    for (i=1; i<=px; i++) {
-			mu -= phi0[i];
-		    }
-		    mu *= pmod->coeff[0];
-		} else {
-		    mu = pmod->coeff[0];
+    if (want_x_beta_prep(pmod, xlist)) {
+	if (gretl_is_arima_model(pmod)) {
+	    regarma = 1;
+	    err = regarma_model_AR_coeffs(pmod, &phi0, &px);
+	}
+	if (xlist[0] == 1 && xlist[1] == 0) {
+	    /* just a const, no ARMAX */
+	    mu = pmod->coeff[0];
+	    if (phi0 != NULL) {
+		mu = 1.0;
+		for (i=1; i<=px; i++) {
+		    mu -= phi0[i];
 		}
+		mu *= pmod->coeff[0];
 	    } else {
-		Xb = create_Xb_series(fc, pmod, beta, xlist, Z);
-		if (Xb == NULL) {
-		    err = E_ALLOC;
-		    goto bailout;
-		}
+		mu = pmod->coeff[0];
 	    }
+	} else {
+	    /* we have ARMAX terms */
+	    Xb = create_Xb_series(fc, pmod, beta, xlist, Z);
+	    if (Xb == NULL) {
+		err = E_ALLOC;
+	    }
+	}
+	if (err) {
+	    goto bailout;
 	}
     }
 
@@ -1166,7 +1178,7 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 	}
 
 	if (phi0 != NULL && Xb != NULL) {
-	    /* the regarima case */
+	    /* the regarma case */
 	    for (i=1; i<=px; i++) {
 		s = t - i;
 		if (s < 0) {
@@ -1202,13 +1214,13 @@ static int arma_fcast (Forecast *fc, MODEL *pmod,
 		miss = 1;
 	    } else {
 		DPRINTF(("  AR: lag %d, using coeff %#.8g\n", i, phi[i]));
-		if (!regarima && Xb != NULL) {
+		if (!regarma && Xb != NULL) {
 		    if (na(Xb[s])) {
 			miss = 1;
 		    } else {
 			yh += phi[i] * (yval - Xb[s]);
 		    }
-		} else if (!regarima && !na(mu)) {
+		} else if (!regarma && !na(mu)) {
 		    yh += phi[i] * (yval - mu);
 		} else {
 		    yh += phi[i] * yval;

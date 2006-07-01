@@ -636,14 +636,14 @@ int gretl_is_arima_model (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_nonseasonal_AR_order:
+ * arma_model_nonseasonal_AR_order:
  * @pmod: pointer to gretl model.
  *
  * Returns: the non-seasonal autoregressive order of @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_nonseasonal_AR_order (const MODEL *pmod)
+int arma_model_nonseasonal_AR_order (const MODEL *pmod)
 {
     int p = 0;
 
@@ -655,14 +655,14 @@ int gretl_arma_model_nonseasonal_AR_order (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_nonseasonal_MA_order:
+ * arma_model_nonseasonal_MA_order:
  * @pmod: pointer to gretl model.
  *
  * Returns: the non-seasonal moving-average order of @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_nonseasonal_MA_order (const MODEL *pmod)
+int arma_model_nonseasonal_MA_order (const MODEL *pmod)
 {
     int q = 0;
 
@@ -678,7 +678,7 @@ int gretl_arma_model_nonseasonal_MA_order (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_max_AR_lag:
+ * arma_model_max_AR_lag:
  * @pmod: pointer to gretl model.
  *
  * Returns: the maximum autoregressive lag in @pmod, or 0 if
@@ -687,12 +687,12 @@ int gretl_arma_model_nonseasonal_MA_order (const MODEL *pmod)
  * an ARIMA model.
  */
 
-int gretl_arma_model_max_AR_lag (const MODEL *pmod)
+int arma_model_max_AR_lag (const MODEL *pmod)
 {
     int pmax = 0;
 
     if (pmod->ci == ARMA) {
-	int p = gretl_arma_model_nonseasonal_AR_order(pmod);
+	int p = arma_model_nonseasonal_AR_order(pmod);
 	int P = gretl_model_get_int(pmod, "arma_P");
 	int s = gretl_model_get_int(pmod, "arma_pd");
 	int d = gretl_model_get_int(pmod, "arima_d");
@@ -706,21 +706,21 @@ int gretl_arma_model_max_AR_lag (const MODEL *pmod)
 }
 
 /**
- * gretl_arma_model_max_MA_lag:
+ * arma_model_max_MA_lag:
  * @pmod: pointer to gretl model.
  *
  * Returns: the maximum moving-average lag in @pmod, or 0 if
  * @pmod is not an ARMA model.
  */
 
-int gretl_arma_model_max_MA_lag (const MODEL *pmod)
+int arma_model_max_MA_lag (const MODEL *pmod)
 {
     int qmax = 0;
 
     if (pmod->ci == ARMA) {
 	int q, Q, pd;
 
-	q = gretl_arma_model_nonseasonal_MA_order(pmod);
+	q = arma_model_nonseasonal_MA_order(pmod);
 	Q = gretl_model_get_int(pmod, "arma_Q");
 	
 	if (Q == 0) {
@@ -795,26 +795,29 @@ static int ar_coeff_integrate (double *c0, int d, int D, int s, int pmax)
 }
 
 /**
- * gretl_arma_model_get_AR_MA_coeffs:
+ * arma_model_integrated_AR_MA_coeffs:
  * @pmod: pointer to gretl model.
- * @arvec: pointer to receive AR coeff vector.
- * @mavec: pointer to receive MA coeff vector.
+ * @phi_star: pointer to receive AR coeff vector.
+ * @theta_star: pointer to receive MA coeff vector.
  *
- * Creates allocated copies of the AR and MA coefficient vectors from
- * @pmod.  If @pmod includes seasonal ARMA terms, the coefficient vectors
- * are suitably expanded, and include the interactions, if any, between 
- * seasonal and non-seasonal terms.  If the dependent variable has
- * been differenced, the AR coefficients are integrated to account for
- * the differencing.  The length of these vectors can be determined 
- * using gretl_arma_model_get_max_AR_lag() and 
+ * Creates consolidated versions of the AR and MA coefficient vectors
+ * from @pmod.  If @pmod includes seasonal ARMA terms, the vectors are
+ * suitably expanded to include the interactions between seasonal and
+ * non-seasonal terms.  If the dependent variable has been
+ * differenced, the AR coefficients are integrated to account for the
+ * differencing.  These are the \Phi^* and \Theta^* as used by Box and
+ * Jenkins for forecasting.
+ *
+ * The length of these vectors can be determined using 
+ * gretl_arma_model_get_max_AR_lag() and 
  * gretl_arma_model_get_max_MA_lag() respectively.
  *
  * Returns: 0 on success, non-zero on error.
  */
 
-int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
-				       double **arvec,
-				       double **mavec)
+int arma_model_integrated_AR_MA_coeffs (const MODEL *pmod,
+					double **phi_star,
+					double **theta_star)
 {
     double *ac = NULL;
     double *mc = NULL;
@@ -827,8 +830,8 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
 	const double *theta = NULL, *Theta = NULL;
 	double x, y;
 
-	int p = gretl_arma_model_nonseasonal_AR_order(pmod);
-	int q = gretl_arma_model_nonseasonal_MA_order(pmod);
+	int p = arma_model_nonseasonal_AR_order(pmod);
+	int q = arma_model_nonseasonal_MA_order(pmod);
 	int P = gretl_model_get_int(pmod, "arma_P");
 	int Q = gretl_model_get_int(pmod, "arma_Q");
 	int d = gretl_model_get_int(pmod, "arima_d");
@@ -897,18 +900,33 @@ int gretl_arma_model_get_AR_MA_coeffs (const MODEL *pmod,
     }
 
     if (!err) {
-	*arvec = ac;
-	*mavec = mc;
+	*phi_star = ac;
+	*theta_star = mc;
     }
 
     return err;
 }
 
-int regarima_model_get_AR_coeffs (const MODEL *pmod,
-				  double **phi0,
-				  int *pp)
+/**
+ * regarma_model_AR_coeffs:
+ * @pmod: pointer to gretl model.
+ * @phi0: pointer to receive AR coeff vector.
+ * @pp: pointer to receive length of @phi0.
+ *
+ * Creates a consolidated version of the AR coefficients from @pmod.
+ * If @pmod includes seasonal AR terms the vector is suitably expanded
+ * to include the interactions between seasonal and non-seasonal
+ * terms, but it is not integrated with respect to any differencing of
+ * the dependent variable.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int regarma_model_AR_coeffs (const MODEL *pmod,
+			     double **phi0,
+			     int *pp)
 {
-    int p = gretl_arma_model_nonseasonal_AR_order(pmod);
+    int p = arma_model_nonseasonal_AR_order(pmod);
     int P = gretl_model_get_int(pmod, "arma_P");
     int s = gretl_model_get_int(pmod, "arma_pd");
     const double *phi = NULL, *Phi = NULL;
@@ -952,7 +970,7 @@ int regarima_model_get_AR_coeffs (const MODEL *pmod,
 }
 
 /**
- * gretl_arma_model_get_x_coeffs:
+ * arma_model_get_x_coeffs:
  * @pmod: pointer to gretl model.
  *
  * Returns: pointer to the array of coefficients on the exogenous
@@ -960,15 +978,15 @@ int regarima_model_get_AR_coeffs (const MODEL *pmod,
  * are no such regressors.
  */
 
-const double *gretl_arma_model_get_x_coeffs (const MODEL *pmod)
+const double *arma_model_get_x_coeffs (const MODEL *pmod)
 {
     const double *xc = NULL;
 
     if (pmod->ci == ARMA && gretl_model_get_int(pmod, "armax")) {
 	xc = pmod->coeff;
 	xc += pmod->ifc;
-	xc += gretl_arma_model_nonseasonal_AR_order(pmod);
-	xc += gretl_arma_model_nonseasonal_MA_order(pmod);
+	xc += arma_model_nonseasonal_AR_order(pmod);
+	xc += arma_model_nonseasonal_MA_order(pmod);
 	xc += gretl_model_get_int(pmod, "arma_P");
 	xc += gretl_model_get_int(pmod, "arma_Q");
     }

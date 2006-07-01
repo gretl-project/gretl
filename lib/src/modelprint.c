@@ -2167,8 +2167,8 @@ static void print_arma_roots (const MODEL *pmod, PRN *prn)
     cmplx *roots = gretl_model_get_data(pmod, "roots");
 
     if (roots != NULL) {
-	int p = gretl_arma_model_nonseasonal_AR_order(pmod);
-	int q = gretl_arma_model_nonseasonal_MA_order(pmod);
+	int p = arma_model_nonseasonal_AR_order(pmod);
+	int q = arma_model_nonseasonal_MA_order(pmod);
 	int P = gretl_model_get_int(pmod, "arma_P");
 	int Q = gretl_model_get_int(pmod, "arma_Q");
 	int i, k, hline;
