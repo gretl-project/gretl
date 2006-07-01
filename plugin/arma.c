@@ -134,16 +134,7 @@ ma_out_of_bounds (struct arma_info *ainfo, const double *theta,
     cerr = polrt(temp, tmp2, qtot, roots);
     if (cerr) {
 	fprintf(stderr, "ma_out_of_bounds: polrt returned %d\n", cerr);
-	fprintf(stderr, "q=%d, Q=%d\n", ainfo->q, ainfo->Q);
-	for (i=0; i<ainfo->q; i++) {
-	    fprintf(stderr, "theta[%d] = %g\n", i, theta[i]);
-	}
-	for (i=0; i<ainfo->Q; i++) {
-	    fprintf(stderr, "Theta[%d] = %g\n", i, Theta[i]);
-	}
-	for (i=0; i<qmax; i++) {
-	    fprintf(stderr, "temp[%d] = %g\n", i, temp[i]);
-	}
+	return 0; /* ?? */
     }
 
     for (i=0; i<qtot; i++) {
