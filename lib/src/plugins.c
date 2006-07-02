@@ -21,7 +21,7 @@
 
 #if defined(WIN32)
 # include <windows.h>
-#elif defined(OSX_PKG)
+#elif defined(OSX_NATIVE)
 # include <mach-o/dyld.h>
 #else
 # include <dlfcn.h>
@@ -199,7 +199,7 @@ static const char *get_plugin_name_for_function (const char *func)
 
 static void *get_plugin_handle (const char *plugin)
 {
-#ifdef OSX_PKG
+#ifdef OSX_NATIVE
     NSObjectFileImage file;
     NSObjectFileImageReturnCode rc;
 #endif
@@ -216,7 +216,7 @@ static void *get_plugin_handle (const char *plugin)
     if (handle == NULL) {
         sprintf(gretl_errmsg, _("Couldn't load plugin %s"), pluginpath);
     }
-#elif defined(OSX_PKG)
+#elif defined(OSX_NATIVE)
     strcat(pluginpath, plugin);
     strcat(pluginpath, ".so");
     rc = NSCreateObjectFileImageFromFile(pluginpath, &file);
@@ -261,7 +261,7 @@ void *get_plugin_function (const char *funcname, void **handle)
 
 #if defined(WIN32)
     funp = GetProcAddress(*handle, funcname);
-#elif defined(OSX_PKG)
+#elif defined(OSX_NATIVE)
     funp = NSLookupSymbolInModule(*handle, funcname);
 #else
     funp = dlsym(*handle, funcname);
@@ -291,7 +291,7 @@ void close_plugin (void *handle)
 
 #if defined(WIN32)
     FreeLibrary(handle);
-#elif defined(OSX_PKG)
+#elif defined(OSX_NATIVE)
     NSUnLinkModule(handle, NSUNLINKMODULE_OPTION_NONE);
 #else
     dlclose(handle);
