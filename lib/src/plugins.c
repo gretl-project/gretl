@@ -19,8 +19,10 @@
 
 #include "libgretl.h"
 
-#ifdef WIN32
+#if defined(WIN32)
 # include <windows.h>
+#elif defined(OSX_PKG)
+# include <mach-o/dyld.h>
 #else
 # include <dlfcn.h>
 #endif
@@ -197,16 +199,33 @@ static const char *get_plugin_name_for_function (const char *func)
 
 static void *get_plugin_handle (const char *plugin)
 {
+#ifdef OSX_PKG
+    NSObjectFileImage file;
+    NSObjectFileImageReturnCode rc;
+#endif
     char pluginpath[MAXLEN];
     void *handle = NULL;
 
     strcpy(pluginpath, gretl_lib_path());
 
-#ifdef WIN32
+#if defined(WIN32)
     append_dir(pluginpath, "plugins");
     strcat(pluginpath, plugin);
     strcat(pluginpath, ".dll");
     handle = LoadLibrary(pluginpath);
+    if (handle == NULL) {
+        sprintf(gretl_errmsg, _("Couldn't load plugin %s"), pluginpath);
+    }
+#elif defined(OSX_PKG)
+    strcat(pluginpath, plugin);
+    strcat(pluginpath, ".so");
+    rc = NSCreateObjectFileImageFromFile(pluginpath, &file);
+    if (rc == NSObjectFileImageSuccess) {
+	handle = NSLinkModule(file, pluginpath,
+			      NSLINKMODULE_OPTION_BINDNOW |
+			      NSLINKMODULE_OPTION_PRIVATE |
+			      NSLINKMODULE_OPTION_RETURN_ON_ERROR);
+    }
     if (handle == NULL) {
         sprintf(gretl_errmsg, _("Couldn't load plugin %s"), pluginpath);
     }
@@ -240,8 +259,10 @@ void *get_plugin_function (const char *funcname, void **handle)
 	return NULL;
     }
 
-#ifdef WIN32
+#if defined(WIN32)
     funp = GetProcAddress(*handle, funcname);
+#elif defined(OSX_PKG)
+    funp = NSLookupSymbolInModule(*handle, funcname);
 #else
     funp = dlsym(*handle, funcname);
     if (funp == NULL) {
@@ -268,8 +289,10 @@ void close_plugin (void *handle)
 {
     if (handle == NULL) return;
 
-#ifdef WIN32
+#if defined(WIN32)
     FreeLibrary(handle);
+#elif defined(OSX_PKG)
+    NSUnLinkModule(handle, NSUNLINKMODULE_OPTION_NONE);
 #else
     dlclose(handle);
 #endif
