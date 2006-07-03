@@ -159,10 +159,12 @@ int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		pputs(prn, "Data ended prematurely\n");
 		return 1;
 	    } else {
+#if 1
 		d = get_data_digits(numstr);
 		if (digits != NULL && digits[i] != NULL) {
 		    digits[i][t] = d;
 		}
+#endif
 		xx = atof(numstr);
 	    }
 	    Z[i][t] = xx;
@@ -247,6 +249,31 @@ void get_difficulty_level (const char *line, char *s)
     }
 }
 
+#define mylog10(x) (log(x) / 2.302585092994046)
+
+static double log_error (double q, double c, PRN *prn)
+{
+    double le;
+
+    /* special: certval is inf.  Can;t really handle this? */
+    if (isinf(c)) {
+	le = -log(0);
+	pprintf(prn, "%10.3f (log abs error)\n", le);
+    } else if (c == 0.0) {
+	le = -mylog10(fabs(q));
+	pprintf(prn, "%10.3f (log abs error)\n", le);
+    } else {
+	le = -mylog10(fabs(q - c) / fabs(c));
+	pprintf(prn, "%10.3f\n", le);
+    }
+
+    if (isnan(le)) {
+	pprintf(prn, "q = %g, c = %g\n", q, c);
+    }
+
+    return le;
+}
+
 static 
 void free_data_digits (DATAINFO *dinfo)
 {
@@ -327,12 +354,21 @@ int read_nist_file (const char *fname,
     if (verbose) pputc(prn, '\n');
 
     /* allow for generated data: powers of x */
-    if (strstr(fname, "Pontius")) npoly = 1;
-    if (strstr(fname, "Filip")) npoly = 9;
-    if (strstr(fname, "Wampler")) npoly = 4;
+    if (strstr(fname, "Pontius")) {
+	npoly = 1;
+    }
+    if (strstr(fname, "Filip")) {
+	npoly = 9;
+    }
+    if (strstr(fname, "Wampler")) {
+	npoly = 4;
+    }
 
-    if (strstr(fname, "NoInt")) noint = 1;
-    else noint = 0;
+    if (strstr(fname, "NoInt")) {
+	noint = 1;
+    } else {
+	noint = 0;
+    }
 
     *difficulty = 0;
     
@@ -401,12 +437,14 @@ int read_nist_file (const char *fname,
 		fclose(fp);
 		return 1;
 	    }
+#if 1
 	    if (allocate_data_digits(dinfo)) {
 		free_mp_results(certvals);
 		free_datainfo(dinfo);
 		fclose(fp);
 		return 1;
-	    }		
+	    }	
+#endif	
 	}
 
 	/* read the certified results */
@@ -434,11 +472,9 @@ int read_nist_file (const char *fname,
 		      "allocated: file is problematic\n");
 		fclose(fp);
 		return 1;
-	    } else {
-		if (grab_nist_data(fp, Z, dinfo, npoly, prn)) {
-		    fclose(fp);
-		    return 1;
-		}
+	    } else if (grab_nist_data(fp, Z, dinfo, npoly, prn)) {
+		fclose(fp);
+		return 1;
 	    } 
 	} /* end if ready to grab data */
 
@@ -457,7 +493,9 @@ int read_nist_file (const char *fname,
 	}
     }
 
-    if (npoly && verbose) pputc(prn, '\n');
+    if (npoly && verbose) {
+	pputc(prn, '\n');
+    }
 
     for (i=2; i<=npoly+1; i++) {
 	if (verbose) {
@@ -479,105 +517,59 @@ int read_nist_file (const char *fname,
     return 0;
 }
 
-static
-void print_result_error (int digits, 
-			 const char *v1, const char *v2, 
-			 const char *str,
-			 PRN *prn)
+static 
+double get_accuracy (MODEL *pmod, mp_results *certvals, PRN *prn)
 {
-    if (verbose) {
-	pprintf(prn, "\nDisagreement at %d significant digits over %s:\n"
-		" Certified value = %s, libgretl value = %s\n",
-		digits, str, v1, v2);
-    }
-}
-
-static
-int doubles_differ (const char *v1, const char *v2)
-{
-    if ((!strcmp(v1, "inf") || !strcmp(v1, "nan")) && 
-	!strncmp(v2, "-999", 4)) {
-	return 0;
-    } else {
-	double diff = fabs(fabs(atof(v1)) - fabs(atof(v2)));
-    
-	return diff > DBL_EPSILON;
-    }
-}
-
-static
-int results_agree (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
-		   int digits, PRN *prn)
-{
+    PRN *vprn;
+    char label[32];
+    double le, lemin = 32;
     int i;
-    char v1[48], v2[48], s[24];
+
+    vprn = (verbose)? prn : NULL;
+
+    pprintf(vprn, "\nstatistic   log relative error\n\n");
 
     for (i=0; i<pmod->ncoeff; i++) {
-	sprintf(v1, "%#.*g", digits, certvals->coeff[i]);
-	sprintf(v2, "%#.*g", digits, pmod->coeff[i]);
-	if (doubles_differ(v1, v2)) {
-	    sprintf(s, "coeff[%d]", i);
-	    print_result_error(digits, v1, v2, s, prn);
-	    return 0;
+	sprintf(label, "B[%d]", i);
+	pprintf(vprn, "%-12s", label);
+	le = log_error(pmod->coeff[i], certvals->coeff[i], vprn);
+	if (le < lemin) {
+	    lemin = le;
 	}
-	/* special case: exact fit, zero standard error */
-	if (certvals->sderr[i] == 0.0) {
-	    double x = pow(10.0, -digits);
-
-	    if (pmod->sderr[i] < x) return 1;
-	}
-	sprintf(v1, "%#.*g", digits, certvals->sderr[i]);
-	sprintf(v2, "%#.*g", digits, pmod->sderr[i]);
-	if (doubles_differ(v1, v2)) {
-	    sprintf(s, "std_err[%d]", i);
-	    print_result_error(digits, v1, v2, s, prn);
-	    return 0; 
-	}
+	sprintf(label, "Std.Err.");
+	pprintf(vprn, "%-12s", label);
+	le = log_error(pmod->sderr[i], certvals->sderr[i], vprn);
+	if (le < lemin) {
+	    lemin = le;
+	}	
     }
 
-    sprintf(v1, "%#.*g", digits, certvals->sigma);
-    sprintf(v2, "%#.*g", digits, pmod->sigma);
-    if (doubles_differ(v1, v2)) {
-	print_result_error(digits, v1, v2, "sigma", prn);
-	return 0;
-    }
+    pprintf(vprn, "%-12s", "sigma");
+    le = log_error(pmod->sigma, certvals->sigma, vprn);
+    if (le < lemin) {
+	lemin = le;
+    }	
+    
 
-    sprintf(v1, "%#.*g", digits, certvals->ess);
-    sprintf(v2, "%#.*g", digits, pmod->ess);
-    if (doubles_differ(v1, v2)) {
-	print_result_error(digits, v1, v2, "ESS", prn);
-	return 0;
-    }
+    pprintf(vprn, "%-12s", "ESS");
+    le = log_error(pmod->ess, certvals->ess, vprn);
+    if (le < lemin) {
+	lemin = le;
+    }	
 
-    sprintf(v1, "%#.*g", digits, certvals->rsq);
-    sprintf(v2, "%#.*g", digits, pmod->rsq);
-    if (doubles_differ(v1, v2)) {
-	print_result_error(digits, v1, v2, "R-squared", prn);
-	return 0;
-    }
+    pprintf(vprn, "%-12s", "R-squared");
+    le = log_error(pmod->rsq, certvals->rsq, vprn);
+    if (le < lemin) {
+	lemin = le;
+    }	
 
-    sprintf(v1, "%#.*g", digits, certvals->fstt);
-    sprintf(v2, "%#.*g", digits, pmod->fstt);
-    if (doubles_differ(v1, v2)) {
-	print_result_error(digits, v1, v2, "F-stat", prn);
-	return 0;
-    }
+    pprintf(vprn, "%-12s", "F-stat");
+    le = log_error(pmod->fstt, certvals->fstt, vprn);
+    if (le < lemin) {
+	lemin = le;
+    }	
 
-    return 1;
-}
-
-static 
-int get_accuracy (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
-		  PRN *prn)
-{
-    int digits;
-
-    for (digits=MAX_DIGITS; digits>=MIN_DIGITS; digits--) {
-	if (results_agree(pmod, certvals, dinfo, digits, prn)) {
-	    return digits;
-	}
-    }
-    return 0;
+    return lemin;
 }
 
 static 
@@ -616,43 +608,12 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 static void *get_mplsq (void **handle); 
 # endif
 
-/* x is certified value, y is gretl MP value */
-
-static 
-int mp_vals_differ (double x, double y, double *diff, PRN *prn)
-{
-    char xstr[32], ystr[32];
-    int ret;
-
-    sprintf(xstr, "%#.*g", MP_CHECK_DIGITS, x);
-    sprintf(ystr, "%#.*g", MP_CHECK_DIGITS, y);
-
-    if (strcmp(xstr, "inf") == 0 && strncmp(ystr, "-999", 4) == 0) {
-	return 0;
-    }
-
-    if (x == 0.0 && y < DBL_EPSILON) return 0;
-
-    ret = (atof(xstr) != atof(ystr));
-
-    if (strcmp(xstr, "inf") && strncmp(xstr, "-999", 4)) { 
-	*diff = fabs (y - x);
-    }
-
-    if (ret && verbose && strcmp(xstr, "inf") && strncmp(xstr, "-999", 4)) {
-	pprintf(prn, " ** using gretl GMP plugin: results differ by "
-		"%#.*g\n", MP_CHECK_DIGITS, *diff);
-	pprintf(prn, "(%#.13g versus %#.13g)\n", x, y);
-    }
-
-    return ret;
-}
-
 static
 int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo, 
 			     mp_results *certvals, int npoly,
 			     int *mpfails, PRN *prn)
 {
+    PRN *vprn;
     void *handle = NULL;
     int (*mplsq)(const int *, const int *, const double **, 
 		 const DATAINFO *, char *, MODEL *, gretlopt);
@@ -661,7 +622,9 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     int i, err = 0;
     int realv = dinfo->v - npoly;
     MODEL model;
-    double diffmax = 0.0, diff = 0.0;
+    double acc;
+
+    vprn = (verbose)? prn : NULL;
 
     gretl_model_init(&model);
 
@@ -718,40 +681,26 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
     if (verbose) {
 	pprintf(prn, "\nChecking gretl multiple-precision results (%d coefficients):\n\n"
 		"%44s%24s\n\n", certvals->ncoeff, "certified", "libgretl");
-    }
 
-    for (i=0; i<certvals->ncoeff; i++) {
-	char label[16];
+	for (i=0; i<certvals->ncoeff; i++) {
+	    char label[16];
 
-	if (verbose && !na(certvals->coeff[i])) {
-	    sprintf(label, "B[%d] estimate", i);
-	    pprintf(prn, " %-20s %#24.*g %#24.*g\n",
-		    label,
-		    MP_CHECK_DIGITS, certvals->coeff[i],
-		    MP_CHECK_DIGITS, model.coeff[i]);
+	    if (!na(certvals->coeff[i])) {
+		sprintf(label, "B[%d] estimate", i);
+		pprintf(prn, " %-20s %#24.*g %#24.*g\n",
+			label,
+			MP_CHECK_DIGITS, certvals->coeff[i],
+			MP_CHECK_DIGITS, model.coeff[i]);
+	    }
+
+	    if (!na(certvals->sderr[i])) {
+		pprintf(prn, " %-20s %#24.*g %#24.*g\n",
+			"(std. error)",
+			MP_CHECK_DIGITS, certvals->sderr[i],
+			MP_CHECK_DIGITS, model.sderr[i]);
+	    }
 	}
 
-	if (mp_vals_differ(certvals->coeff[i], model.coeff[i],
-			   &diff, prn)) {
-	    if (diff > diffmax) diffmax = diff;
-	}
-		
-
-	if (verbose && !na(certvals->sderr[i])) {
-	    pprintf(prn, " %-20s %#24.*g %#24.*g\n",
-		    "(std. error)",
-		    MP_CHECK_DIGITS, certvals->sderr[i],
-		    MP_CHECK_DIGITS, model.sderr[i]);
-	}
-
-	if (mp_vals_differ(certvals->sderr[i], model.sderr[i],
-			   &diff, prn)) {
-	    if (diff > diffmax) diffmax = diff;
-	}
-
-    }
-
-    if (verbose) {
 	pputc(prn, '\n');
 
 	pprintf(prn, " %-20s %#24.*g %#24.*g\n"
@@ -772,30 +721,21 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 		MP_CHECK_DIGITS, model.fstt);
     }
 
-    if (mp_vals_differ(certvals->sigma, model.sigma, &diff, prn)) {
-	if (diff > diffmax) diffmax = diff;
-    }
-    if (mp_vals_differ(certvals->ess, model.ess, &diff, prn)) {
-	if (diff > diffmax) diffmax = diff;
-    }
-    if (mp_vals_differ(certvals->rsq, model.rsq, &diff, prn)) {
-	if (diff > diffmax) diffmax = diff;
-    }
-    if (mp_vals_differ(certvals->fstt, model.fstt, &diff, prn)) {
-	if (diff > diffmax) diffmax = diff;
+    acc = get_accuracy(&model, certvals, prn);
+
+    if (verbose) {
+	pputc(prn, '\n');
     }
 
-    if (verbose) pputc(prn, '\n');
-
-    if (diffmax > 0.0) {
+    if (acc < 12.0) {
 	*mpfails += 1;
 	pprintf(prn, "* Using gretl GMP plugin: errors found when using"
-		" %d significant figures\n  (largest error = %g)\n",
-		MP_CHECK_DIGITS, diffmax);
+		" %d significant figures\n  (worst-case log relative error = %.3f)\n",
+		MP_CHECK_DIGITS, acc);
     } else {
 	pprintf(prn, "* Using gretl GMP plugin: results correct to"
-		" at least %d digits\n",
-		MP_CHECK_DIGITS);
+		" at least %d digits\n", (int) acc);
+	pprintf(prn, "  (worst-case log relative error = %.3f)\n", acc);
     }
 
     clear_model(&model);
@@ -814,7 +754,8 @@ int run_gretl_comparison (const char *datname,
 {
     int *list = NULL;
     MODEL *model = NULL;
-    int i, acc;
+    double acc;
+    int i;
     static int modelnum;
 
     list = malloc((dinfo->v + 1) * sizeof *list);
@@ -839,14 +780,18 @@ int run_gretl_comparison (const char *datname,
     *model = lsq(list, pZ, dinfo, OLS, OPT_D | OPT_Z);
 
     if (model->errcode) {
-	if (verbose) pputc(prn, '\n');
+	if (verbose) {
+	    pputc(prn, '\n');
+	}
 	pprintf(prn, "gretl error code: %d\n", model->errcode);
 	errmsg(model->errcode, prn);
 
 	if (strcmp(datname, "Filip.dat") == 0 &&
 	    model->errcode == E_SINGULAR) {
 	    pputs(prn, "(This error was expected with standard libgretl)\n");
-	} else *errs += 1;
+	} else {
+	    *errs += 1;
+	}
 
 	goto free_stuff;
     }
@@ -868,25 +813,29 @@ int run_gretl_comparison (const char *datname,
 	double xx = 0.0;
 	int t;
 
-	for (t=0; t<dinfo->n; t++) xx += (*pZ)[1][t] *  (*pZ)[1][t];
+	for (t=0; t<dinfo->n; t++) {
+	    xx += (*pZ)[1][t] *  (*pZ)[1][t];
+	}
 	model->rsq = 1.0 - model->ess / xx;
     } 
 
-    acc = get_accuracy(model, certvals, dinfo, prn);
+    acc = get_accuracy(model, certvals, prn);
 
-    if (verbose) pputs(prn, "\n ***");
+    if (verbose) {
+	pputs(prn, "\n ***");
+    }
 
-    if (acc >= 6) {
+    if (acc >= 6.0) {
 	pprintf(prn, "* %s results correct to at least %d digits\n", 
-		LIBGRETLSTR, acc);
-    } else if (acc == 4 || acc == 5) {
+		LIBGRETLSTR, (int) acc);
+    } else if (acc >= MIN_DIGITS) {
 	if (strcmp(datname, "Filip.dat")) {
 	    pprintf(prn, "* %s results correct to only %d digits: "
-		    "POOR\n", LIBGRETLSTR, acc);
+		    "POOR\n", LIBGRETLSTR, (int) acc);
 	    *poor += 1;
 	} else {
 	    pprintf(prn, "* %s results correct to %d digits: "
-		    "OK on Filip.dat\n", LIBGRETLSTR, acc);
+		    "OK on Filip.dat\n", LIBGRETLSTR, (int) acc);
 	}	    
     } else {
 	pprintf(prn, "* %s results correct to less than "
@@ -894,7 +843,14 @@ int run_gretl_comparison (const char *datname,
 	*poor += 1;
     }
 
+    pprintf(prn, "  (worst-case log relative error = %.3f)\n", acc);
+
+    if (verbose) {
+	pputc(prn, '\n');
+    }
+
  free_stuff:
+
     free(list);
     gretl_model_free(model);
 
@@ -944,8 +900,7 @@ int main (int argc, char *argv[])
     strcpy(datadir, ".");
     if (argc == 2 && argv[1][0] != '-') {
 	strcpy(datadir, argv[1]);
-    }
-    else if (argc == 3) {
+    } else if (argc == 3) {
 	strcpy(datadir, argv[2]);
     }
 
@@ -971,7 +926,9 @@ int main (int argc, char *argv[])
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
+#if 1
 	    free_data_digits(datainfo);
+#endif
 	    destroy_dataset(Z, datainfo);
 	    Z = NULL;
 	    datainfo = NULL;
@@ -1065,7 +1022,9 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 
 	    free_mp_results(certvals);
 	    certvals = NULL;
+#if 1
 	    free_data_digits(datainfo);
+#endif
 	    destroy_dataset(Z, datainfo);
 	    Z = NULL;
 	    datainfo = NULL;
