@@ -94,6 +94,19 @@ CMD *get_lib_cmd (void)
     return &cmd;
 }
 
+void lib_cmd_destroy_context (void)
+{
+    gretl_cmd_destroy_context(&cmd);
+}
+
+void lib_modelspec_free (void)
+{
+    if (modelspec != NULL) {
+	free_modelspec(modelspec);
+	modelspec = NULL;
+    }
+}
+
 void set_original_n (int n)
 {
     original_n = n;
@@ -103,13 +116,6 @@ int get_original_n (void)
 {
     return original_n;
 } 
-
-void exit_free_modelspec (void)
-{
-    if (modelspec != NULL) {
-	free_modelspec(modelspec);
-    }
-}
 
 void library_command_init (void)
 {
@@ -261,42 +267,6 @@ void set_sample_label_special (void)
     time_series_menu_state(FALSE);
     panel_menu_state(FALSE);
     ts_or_panel_menu_state(FALSE);
-}
-
-void clear_data (void)
-{
-    *paths.datfile = 0;
-
-    gui_restore_sample();
-
-    if (Z != NULL) {
-	free_Z(Z, datainfo);
-	Z = NULL;
-    } 
-
-    clear_datainfo(datainfo, CLEAR_FULL);
-
-    clear_varlist(mdata->listbox);
-    clear_sample_label();
-
-    data_status = 0;
-    orig_vars = 0;
-    main_menubar_state(FALSE);
-
-    /* clear everything out */
-    clear_model(models[0]);
-    clear_model(models[1]);
-    clear_model(models[2]);
-
-    free_command_stack(); 
-    free_modelspec(modelspec);
-    modelspec = NULL;
-
-    gretl_saved_objects_cleanup();
-
-    reset_model_count();
-
-    gretl_cmd_destroy_context(&cmd);
 }
 
 int gretl_command_sprintf (const char *template, ...)

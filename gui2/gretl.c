@@ -1058,9 +1058,6 @@ int main (int argc, char *argv[])
 	free_datainfo(datainfo);
     }
 
-    free_command_stack();
-    exit_free_modelspec();
-
     destroy_file_collections();
 
     return EXIT_SUCCESS;

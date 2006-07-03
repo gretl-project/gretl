@@ -69,10 +69,6 @@ void gui_errmsg (const int errcode);
 
 void register_graph (void);
 
-void clear_data (void);
-
-void exit_free_modelspec (void);
-
 /* sample-related functions */
 
 void set_sample_label_special (void);

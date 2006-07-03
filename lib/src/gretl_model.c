@@ -1841,6 +1841,9 @@ void gretl_model_free (MODEL *pmod)
 {
     if (pmod != NULL) {
 	clear_model(pmod);
+#if MDEBUG
+	fprintf(stderr, "gretl_model_free: freeing at %p\n", (void *) pmod);
+#endif
 	free(pmod);
     }
 }

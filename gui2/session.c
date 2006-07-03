@@ -34,6 +34,7 @@
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "menustate.h"
+#include "lib_private.h"
 
 #include "var.h"
 #include "varprint.h"
@@ -68,7 +69,7 @@ static void auto_save_gp (windata_t *vwin);
 #include "../pixmaps/model_table.xpm"
 #include "../pixmaps/graph_page.xpm"
 
-#define SESSION_DEBUG 1
+#define SESSION_DEBUG 0
 
 #define OBJNAMLEN   32
 #define SHOWNAMELEN 12
@@ -211,6 +212,7 @@ static GList *icon_list;
 static gui_obj *active_object;
 
 /* private functions */
+static void session_clear_data (void);
 static gui_obj *gui_object_new (gchar *name, int sort);
 static gui_obj *session_add_icon (gpointer data, int sort, int mode);
 static void session_build_popups (void);
@@ -267,6 +269,9 @@ static SESSION_TEXT *session_text_new (const char *name, char *buf)
 static void free_session_model (SESSION_MODEL *mod)
 {
     /* note: remove a reference to this model */
+#if SESSION_DEBUG
+    fprintf(stderr, "free_session_model: unref'ing ptr at %p\n", (void *) mod->ptr);
+#endif
     gretl_object_unref(mod->ptr, mod->type);
     free(mod);
 }
@@ -699,21 +704,7 @@ int session_changed (int set)
     return orig;
 }
 
-void session_init (void)
-{
-    session.models = NULL;
-    session.graphs = NULL;
-    session.texts = NULL;
-    session.notes = NULL;
-    session.nmodels = 0;
-    session.ngraphs = 0;
-    session.ntexts = 0;
-    *session.name = '\0';
-    *session.dirname = '\0';
 
-    session_changed(0);
-    winstack_init();
-}
 
 static void
 session_name_from_session_file (char *sname, const char *fname)
@@ -791,7 +782,6 @@ void do_open_session (void)
     fp = gretl_fopen(tryfile, "r");
     if (fp != NULL) {
 	fclose(fp);
-	strcpy(sessionfile, tryfile);
     } else {
 	errbox(_("Couldn't open %s\n"), tryfile);
 	delete_from_filelist(FILE_LIST_SESSION, tryfile);
@@ -799,10 +789,10 @@ void do_open_session (void)
 	return;
     }
 
-    clear_data();
-    free_session();
-    session_init();
+    /* close existing session, if any, and initialize */
+    close_session();
 
+    strcpy(sessionfile, tryfile);
     fprintf(stderr, I_("\nReading session file %s\n"), sessionfile);
 
     chdir(paths.userdir);
@@ -948,6 +938,22 @@ static void remove_session_dir (void)
     }
 }
 
+void session_init (void)
+{
+    session.models = NULL;
+    session.graphs = NULL;
+    session.texts = NULL;
+    session.notes = NULL;
+    session.nmodels = 0;
+    session.ngraphs = 0;
+    session.ntexts = 0;
+    *session.name = '\0';
+    *session.dirname = '\0';
+
+    session_changed(0);
+    winstack_init();
+}
+
 void free_session (void)
 {
     int i;
@@ -1038,10 +1044,48 @@ int session_file_is_open (void)
     return session_file_open;
 }
 
+static void session_clear_data (void)
+{
+    *paths.datfile = 0;
+
+    gui_restore_sample();
+
+    if (Z != NULL) {
+	free_Z(Z, datainfo);
+	Z = NULL;
+    } 
+
+    clear_datainfo(datainfo, CLEAR_FULL);
+
+    clear_varlist(mdata->listbox);
+    clear_sample_label();
+
+    data_status = 0;
+    orig_vars = 0;
+    main_menubar_state(FALSE);
+
+    /* clear protected models */
+    clear_model(models[0]);
+    clear_model(models[1]);
+    clear_model(models[2]);
+
+    free_command_stack(); 
+    lib_modelspec_free();
+
+    reset_model_count();
+
+    lib_cmd_destroy_context();
+}
+
 void close_session (void)
 {
-    clear_data(); 
+#if SESSION_DEBUG
+    fprintf(stderr, "close_session: starting cleanup\n");
+#endif
+    session_clear_data(); 
+
     free_session();
+
     clear_model_table(NULL);
     clear_graph_page();
 
@@ -1059,6 +1103,8 @@ void close_session (void)
 
     winstack_destroy();
     clear_selector();
+
+    gretl_saved_objects_cleanup(); /* timing of this? */
 
     plot_count = 0;
     zero_boxplot_count();
@@ -1365,6 +1411,10 @@ void session_model_callback (void *ptr, int action)
     if (action == OBJ_ACTION_SHOW) {
 	display_session_model(mod);
     } else if (action == OBJ_ACTION_FREE) {
+#if SESSION_DEBUG
+	fprintf(stderr, "session_model_callback: gretl_object_unref at %p\n", 
+		(void *) ptr);
+#endif
 	/* FIXME not sure here: should we trash the icon too */
 	gretl_object_unref(ptr, mod->type);
     } 

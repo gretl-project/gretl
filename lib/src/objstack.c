@@ -71,6 +71,10 @@ void gretl_object_ref (void *ptr, GretlObjType type)
 
 	if (pmod != NULL) {
 	    pmod->refcount += 1;
+#if ODEBUG
+	    fprintf(stderr, "gretl_object_ref: refcount on %p is now %d\n",
+		    (void *) pmod, pmod->refcount);
+#endif
 	}
     } else if (type == GRETL_OBJ_VAR) {
 	GRETL_VAR *var = (GRETL_VAR *) ptr;
@@ -1076,7 +1080,7 @@ void gretl_saved_objects_cleanup (void)
 	}
 #if ODEBUG
 	fprintf(stderr, "gretl_saved_objects_cleanup:\n"
-		" calling gretl_object_destroy on ostack[%d]\n", i);
+		" calling saved_object_free on ostack[%d]\n", i);
 #endif
 	saved_object_free(&ostack[i]);
     }
