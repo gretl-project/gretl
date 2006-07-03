@@ -30,11 +30,9 @@
 #include <readline/readline.h>
 #include <readline/history.h> 
 
-extern char *xmalloc();
-
 char *dupstr (const char *s) 
 {
-    char *r = xmalloc(strlen(s) + 1);
+    char *r = malloc(strlen(s) + 1);
 
     if (r != NULL) {
 	strcpy(r, s);
