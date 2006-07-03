@@ -3469,8 +3469,23 @@ MODEL mp_ols (const int *list, const double **Z, DATAINFO *pdinfo)
 	return mpmod;
     }
 
-    mpmod.errcode = (*mplsq)(list, NULL, Z, pdinfo,  
-			     gretl_errmsg, &mpmod, OPT_S); 
+    if (gretl_list_has_separator(list)) {
+	int *base = NULL;
+	int *poly = NULL;
+
+	gretl_list_split_on_separator(list, &base, &poly);
+	if (base == NULL || poly == NULL) {
+	    mpmod.errcode = E_ALLOC;
+	} else {
+	    mpmod.errcode = (*mplsq)(base, poly, Z, pdinfo,  
+				     gretl_errmsg, &mpmod, OPT_S);
+	}
+	free(base);
+	free(poly);
+    } else {
+	mpmod.errcode = (*mplsq)(list, NULL, Z, pdinfo,  
+				 gretl_errmsg, &mpmod, OPT_S); 
+    }
 
     close_plugin(handle);
 

@@ -4113,7 +4113,7 @@ static double evaluate_math_function (double arg, int fn, int *err)
     case T_LOG:
     case T_LOG10:
     case T_LOG2:
-	if (arg <= 0.0) {
+	if (arg <= 0.0) { /* treatment of 0 arg? */
 	    fprintf(stderr, "genr: log arg = %g\n", arg);
 	    *err = E_LOGS;
 	} else {

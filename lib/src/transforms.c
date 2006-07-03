@@ -270,7 +270,7 @@ static int get_log (int v, double *logvec, const double **Z,
 	xx = (var_is_series(pdinfo, v))? Z[v][t] : Z[v][0];
 	if (na(xx)) {
 	    logvec[t] = NADBL;
-	} else if (xx <= 0.0) {
+	} else if (xx <= 0.0) { /* ?? treatment of 0 arg */
 	    sprintf(gretl_errmsg, 
 		    _("Log error: Variable '%s', obs %d,"
 		      " value = %g\n"), pdinfo->varname[v],

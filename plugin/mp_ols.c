@@ -208,13 +208,14 @@ static void fill_mp_series (MPMODEL *pmod, const double **Z, mpf_t **mpZ,
 */
 
 static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z, 
-			 const DATAINFO *pdinfo)
+			 const DATAINFO *pdinfo, 
+			 char **xnames)
 {
     int i, s, t;
     int n = mpmod->t2 - mpmod->t1 + 1;
     int l0 = mpmod->list[0];
     int npoly, mp_poly_pos = 0;
-    int listpt, nvars = 0;
+    int listpt, nvars = 0, v = 0;
     mpf_t **mpZ = NULL;
     unsigned char **digits = (unsigned char **) pdinfo->data;
     int err = 0;
@@ -242,6 +243,9 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
 	s = 0;
 	for (t=mpmod->t1; t<=mpmod->t2; t++) {
 	    mpf_init_set_d(mpZ[0][s++], 1.0);
+	}
+	if (xnames != NULL) { 	 
+	    strcpy(xnames[v++], pdinfo->varname[0]); 	 
 	}
 	nvars++;
     } else {
@@ -280,6 +284,9 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
 	    
 	fill_mp_series(mpmod, Z, mpZ, digits, mpmod->list[i], nvars); 
 	mpmod->varlist[i] = mpmod->list[i];
+        if (xnames != NULL && i > 1) { 	 
+	    strcpy(xnames[v++], pdinfo->varname[mpmod->list[i]]); 	 
+	}
 	mpmod->list[i] = nvars;
 	nvars++;
     } /* end processing ordinary data */
@@ -297,6 +304,13 @@ static mpf_t **make_mpZ (MPMODEL *mpmod, const double **Z,
 
 	make_poly_series(mpmod, mpZ, i+1, mp_poly_pos, nvars);
 	mpmod->varlist[i+listpt] = mpmod->polyvar;
+
+        if (xnames != NULL) { 	 
+	    sprintf(xnames[v++], "%s^%d", 	 
+		    pdinfo->varname[mpmod->polyvar], 	 
+		    mpmod->polylist[i+1]); 	 
+	}
+
 	mpmod->list[i+listpt] = nvars;
 	nvars++;
     }
@@ -874,7 +888,7 @@ static void mp_hatvars (const MPMODEL *mpmod, MODEL *pmod,
 
 static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
 			    const DATAINFO *pdinfo, mpf_t **mpZ,
-			    gretlopt opt)
+			    char **xnames, gretlopt opt)
 {
     int tseries = dataset_is_time_series(pdinfo);
     int i, err = 0;
@@ -885,8 +899,15 @@ static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
 
     err = gretl_model_allocate_storage(pmod);
     if (err) {
+	if (xnames != NULL) { 	 
+	    free_strings_array(xnames, pmod->ncoeff); 	 
+	} 	 
 	return err;
     }
+
+    if (xnames != NULL) { 	 
+	gretl_model_add_allocated_varnames(pmod, xnames); 	 
+    } 	 
 
     for (i=0; i<mpmod->ncoeff; i++) {
 	pmod->coeff[i] = mpf_get_d(mpmod->coeff[i]);
@@ -921,6 +942,14 @@ static int copy_mp_results (const MPMODEL *mpmod, MODEL *pmod,
     return err;
 }
 
+static char **allocate_xnames (const int *list) 	 
+{ 	 
+    int n = list[0] - 1; 	 
+    char **s = strings_array_new_with_length(n, VNAMELEN + 6);
+
+    return s;
+}
+
 /**
  * mplsq:
  * @list: dependent variable plus list of regressors.
@@ -945,6 +974,7 @@ int mplsq (const int *list, const int *polylist,
 {
     int l0, i;
     mpf_t **mpZ = NULL;
+    char **xnames = NULL;
     MPXPXXPY xpxxpy;
     MPMODEL mpmod;
     int err = 0;
@@ -983,11 +1013,20 @@ int mplsq (const int *list, const int *polylist,
 	return E_DATA;
     }
 
+    /* enable names for polynomial terms? */
+    if (polylist != NULL && (opt & OPT_S)) { 	 
+	xnames = allocate_xnames(mpmod.list); 	 
+	if (xnames == NULL) { 	 
+	    mp_model_free(&mpmod); 	 
+	    return E_ALLOC; 	 
+	} 	 
+    }
+
     /* see if the regressor list contains a constant */
     mpmod.ifc = mp_rearrange(mpmod.list);
 
     /* construct multiple-precision data matrix */
-    mpZ = make_mpZ(&mpmod, Z, pdinfo);
+    mpZ = make_mpZ(&mpmod, Z, pdinfo, xnames);
 
     if (mpZ == NULL) {
 	mp_model_free(&mpmod);
@@ -1024,7 +1063,7 @@ int mplsq (const int *list, const int *polylist,
 
     err = mpmod.errcode;
     if (!err) {
-	err = copy_mp_results(&mpmod, pmod, pdinfo, mpZ, opt);
+	err = copy_mp_results(&mpmod, pmod, pdinfo, mpZ, xnames, opt);
     } 
 
     /* free all the mpf stuff */

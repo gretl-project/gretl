@@ -470,6 +470,8 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	    strcpy(targ, pmod->params[i + 1]);
 	} else if (pmod->aux == AUX_VECM) {
 	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
+	} else if (pmod->ci == MPOLS && pmod->params != NULL) {
+	    strcpy(targ, pmod->params[i]);
 	} else {
 	    strcpy(targ, pdinfo->varname[pmod->list[i + 2]]);
 	}
