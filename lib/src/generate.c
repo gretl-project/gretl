@@ -2586,6 +2586,8 @@ static int strip_wrapper_parens (char *s)
     return strip;
 }
 
+#define expchar(c) (c == 'd' || c == 'D' || c == 'e' || c == 'E')
+
 static int math_tokenize (char *s, GENERATOR *genr, int level)
 {
     static char prev[TOKLEN];
@@ -2641,6 +2643,8 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
 	    return E_UNBAL;
 	}
 
+	
+
 	if (!inparen && op_level(*p)) {
 	    if (p - q > TOKLEN - 1) {
 		fprintf(stderr, "genr error: token too long: '%s'\n", q);
@@ -2650,9 +2654,16 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
 	    if (p - q > 0) {
 		*tok = '\0';
 		strncat(tok, q, p - q);
-		oldlevel = level;
-		stack_op_and_token(tok, genr, level);
-		q = p;
+		if (isdigit(*q) && p - q >= 2 && expchar(*(p-1))) {
+		    /* watch out, 'op' may be part of a number
+		       in scientific notation */
+		    ; 
+		} else {
+		    DPRINTF(("got break point, tok = '%s'\n", tok));
+		    oldlevel = level;
+		    stack_op_and_token(tok, genr, level);
+		    q = p;
+		}
 	    }
 	    /* ... and peek at the right-hand term */
 	    if (numeric_string(p)) {
@@ -4002,7 +4013,7 @@ static double calc_xy (double x, double y, char op, int t, int *err)
 	x = (double) ((int) x % (int) y);
 	break;
     case '/':
-	if (floateq(y, 0.0)) { 
+	if (y == 0.0) { 
 	    sprintf(gretl_errmsg, _("Zero denominator for obs %d"), t + 1);
 	    x = NADBL;
 	    *err = 1;
