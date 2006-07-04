@@ -118,6 +118,80 @@ Questi valori resteranno in vigore per le chiamate alla funzione
 \verb+set+.
       
 
+\section{Dati panel}
+\label{panel-genr}
+
+\subsection{Variabili dummy}
+\label{dummies}
+
+In uno studio panel, può nascere l'esigenza di costruire delle
+variabili dummy di uno dei seguenti tipi: (a) dummy che identificano
+ciascuna delle unità cross-section, o (b) dummy che identificano
+ciascuno dei periodi. Il primo tipo può essere usato per
+permettere all'intercetta della regressione di variare tra le unità
+cross-section, il secondo per permettere all'intercetta di variare tra
+i periodi.
+
+Per creare questo tipo di dummy, è possibile usare le due funzioni
+speciali del menù \textsf{Aggiungi}, o del comando testuale \cmd{genr}.
+
+\begin{enumerate}
+\item ``Dummy per unità'' (comando testuale \cmd{genr unitdum}).
+  Questo comando crea un insieme di variabili dummy che identificano
+  le unità cross section.  La variabile \verb+du_1+ avrà valore 1 in
+  ogni riga dei dati che corrisponde a un'osservazione della prima
+  unità cross section, e 0 altrove; \verb+du_2+ avrà valore 1 in ogni
+  riga dei dati che corrisponde a un'osservazione della seconda unità
+  cross section, e così via.
+        
+\item ``Dummy temporali'' (comando testuale \cmd{genr timedum}).
+  Questo comando crea un insieme di variabili dummy che identificano
+  i periodi.  La variabile \verb+dt_1+ avrà valore 1 in ogni riga dei dati che
+  corrisponde a un'osservazione del primo periodo, e 0 altrove; \verb+dt_2+ avrà
+  valore 1 in ogni riga dei dati che corrisponde a un'osservazione del secondo
+  periodo, e così via.
+
+\end{enumerate}
+
+Se un dataset panel contiene l'anno di ogni osservazione all'interno
+della variabile \verb+ANNO+, è possibile creare una dummy periodica
+per un anno particolare, ad esempio con \cmd{genr dum = (ANNO=1960)}.
+È anche possibile creare variabili dummy periodiche usando l'operatore
+modulo, \verb+%+.  Ad esempio, per creare una dummy che
+valga 1 ogni trenta osservazioni a partire dalla prima e 0 altrove,
+basta eseguire
+\begin{code}
+      genr index 
+      genr dum = ((index-1)%30) = 0
+\end{code}
+
+
+
+\subsection{Ritardi, differenze, trend}
+\label{panel-lagged}
+
+Se i periodi temporali sono distanziati in modo uniforme, è possibile
+usare valori ritardati delle variabili in una regressione panel (ma si
+veda la sezione~\ref{panel-dyn}; è anche possibile costruire
+differenze prime delle variabili.
+
+Se un dataset è identificato correttamente come panel,  \app{gretl}
+gestirà correttamente la generazione di questo tipo di variabili. Ad
+esempio, il comando \verb+genr x1_1 = x1(-1)+ creerà una variabile che
+contiene il primo ritardo di \verb+x1+, laddove è disponibile, e il
+codice di valore mancante, laddove il ritardo non è disponibile (ad esempio
+nella prima osservazione per ogni gruppo).  Quando si esegue una regressione che
+include questo tipo di variabili, il programma escluderà automaticamente le
+osservazioni mancanti.
+
+Quando un dataset panel ha una dimensione temporale sostanziale, può essere
+utile includere un trend nell'analisi. Il comando \cmd{genr time} 
+crea una variabile di nome \varname{time} che assume valori compresi tra 1 e $T$
+per ogni unità, dove $T$ è la lunghezza della dimensione temporale del panel.
+Per creare un indice che assuma valori compresi tra 1 e $m\times T$, dove $m$
+è il numero di unità nel panel, si usi invece \cmd{genr index}.
+
+
 \section{Ricampionamento e bootstrapping}
 \label{genr-resample}
 
