@@ -2586,7 +2586,9 @@ static int strip_wrapper_parens (char *s)
     return strip;
 }
 
-#define expchar(c) (c == 'd' || c == 'D' || c == 'e' || c == 'E')
+#define expchrs(s) ((*s == '+' || *s == '-') && \
+                    (*(s-1) == 'd' || *(s-1) == 'D' || \
+                     *(s-1) == 'e' || *(s-1) == 'E'))
 
 static int math_tokenize (char *s, GENERATOR *genr, int level)
 {
@@ -2652,8 +2654,8 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
 	    if (p - q > 0) {
 		*tok = '\0';
 		strncat(tok, q, p - q);
-		if (isdigit(*q) && p - q >= 2 && expchar(*(p-1))) {
-		    /* watch out, 'op' may be part of a number
+		if (isdigit(*q) && p - q >= 2 && expchrs(p)) {
+		    /* but watch out, 'op' may be part of a number
 		       in scientific notation */
 		    ; 
 		} else {
