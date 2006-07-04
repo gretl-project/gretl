@@ -2643,8 +2643,6 @@ static int math_tokenize (char *s, GENERATOR *genr, int level)
 	    return E_UNBAL;
 	}
 
-	
-
 	if (!inparen && op_level(*p)) {
 	    if (p - q > TOKLEN - 1) {
 		fprintf(stderr, "genr error: token too long: '%s'\n", q);
