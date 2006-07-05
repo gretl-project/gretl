@@ -19,50 +19,26 @@ riga di comando del programma è il comando \cmd{hausman}.
 Per eseguire questo test, occorre specificare un modello senza alcuna variabile
 dummy relativa alle unità cross-section. Il test confronta il semplice modello
 OLS con le due principali alternative: il modello a effetti fissi e quello a
-effetti casuali.
+effetti casuali. Questi due modelli sono descritti nella prossima sezione.
 
-Il modello a \emph{effetti fissi} sopprime la costante e aggiunge una variabile
-dummy per tutte le unità cross section, permettendo così all'intercetta della
-regressione di variare per ogni unità.  Viene eseguito un test \emph{F} per
-testare l'ipotesi nulla che l'intercetta sia uguale per tutte le
-unità: un basso p-value per questo test depone contro l'ipotesi nulla e a favore
-dell'adeguatezza del modello a effetti fissi.
-
-Il modello a \emph{effetti casuali}, d'altra parte, scompone la varianza dei
-residui in due parti: una specifica all'unità cross section, o
-``gruppo'', e una specifica all'osservazione particolare (la stima può
-essere eseguita solo se il panel è abbastanza ``largo'', ossia se il
-numero delle unità cross section nel dataset è maggiore del numero dei
-parametri da stimare).  La statistica LM di Breusch--Pagan testa
-l'ipotesi nulla che il modello pooled OLS sia adeguato, rispetto all'alternativo
-modello a effetti casuali.
-
-Può accadere che il modello pooled OLS sia rifiutato nei confronti di
-entrambe le alternative, a effetti fissi o casuali. Come giudicare
-quindi l'adeguatezza relativa dei due metodi alternativi di stima? Il
-test di Hausman (i cui risultati sono mostrati a patto che il modello
-a effetti casuali possa essere stimato) cerca di risolvere questo
-problema.  A patto che gli errori specifici di unità o di gruppo siano
-non correlati con le variabili indipendenti, lo stimatore a effetti
-casuali è più efficiente dello stimatore a effetti fissi; nel caso
-contrario lo stimatore a effetti casuali non è consistente e deve
-essergli preferito lo stimatore a effetti fissi.  L'ipotesi nulla per
-il test di Hausman è che l'errore specifico di gruppo non sia
-correlato con le variabili indipendenti (e quindi che il modello a
-effetti casuali sia preferibile). Un basso p-value per questo test
-suggerisce di rifiutare il modello a effetti casuali in favore del
-modello a effetti fissi.  
-
-Per una discussione rigorosa di questo argomento, si veda il capitolo
-14 di Greene (2000).
- 
-\section{I modelli a effetti fissi e casuali}
+\subsection{I modelli a effetti fissi e casuali}
 \label{panel-est}
 
+A partire dalla versione 1.5.2 di \app{gretl}, i modelli a effetti fissi
+e a effetti casuali per i dati panel possono essere stimati separatamente.
+Nell'interfaccia grafica, queste opzioni si trovano nel menù
+``Modello/Panel/Effetti fissi e casuali'', mentre nell'interfaccia a riga
+di comando occorre usare il comando \cmd{panel}, con l'eventuale opzione
+\verb+--random-effects+.
+
+Di seguito viene spiegata la natura di questi modelli e il modo con cui possono
+essere stimati in \app{gretl}.
+
 La specificazione ``pooled OLS'' si può scrivere come
-\[
+\begin{equation}
+\label{eq:pooled}
 y_{it} = X_{it}\beta + u_{it}
-\]
+\end{equation}
 dove $y_{it}$ è l'osservazione della variabile dipendente per l'unità cross
 section $i$ nel periodo $t$, $X_{it}$ è un vettore $1\times k$ di variabili
 indipendenti osservate per l'unità $i$ nel periodo $t$,
@@ -70,44 +46,396 @@ $\beta$ è un vettore $k\times 1$ di parametri, e $u_{it}$ è un termine di errore
 o di disturbo specifico all'unità $i$ nel periodo $t$.
 
 I modelli a effetti fissi e casuali rappresentano due modi di scomporre l'errore
-unitario $u_{it}$.  Per il modello a effetti fissi possiamo scrivere
-\[
-u_{it} = \alpha_i + \varepsilon_{it}
-\]
+unitario $u_{it}$.  Per il modello a \textsl{effetti fissi} possiamo scrivere
+$u_{it} = \alpha_i + \varepsilon_{it}$, che produce
+\begin{equation}
+\label{eq:FE}
+y_{it} = X_{it}\beta + \alpha_i + \varepsilon_{it}
+\end{equation}
 Ossia, scomponiamo $u_{it}$ in una componente specifica all'unità e invariante
 nel tempo, $\alpha_i$, e un errore specifico all'osservazione,
-$\varepsilon_{it}$.  Gli $\alpha_i$ sono quindi trattati come parametri fissi
+$\varepsilon_{it}$\footnote{È possibile individuare un'altra componente di
+  $u_{it}$, ossia $w_t$, uno shock che sia specifico al periodo temporale, ma
+  comune a tutte le unità. Per semplicità non consideriamo questa possibilità.}.
+
+Gli $\alpha_i$ sono quindi trattati come parametri fissi
 (intercette $y$ specifiche per le unità) da stimare. Questo può essere fatto
 includendo una variabile dummy per ogni unità cross section (e sopprimendo la
 costante comune), oppure è possibile procedere sottraendo le medie di gruppo da
 ognuna delle variabili e stimando un modello senza costante. Nell'ultimo caso la
 variabile dipendente si può scrivere come
 \[
-\tilde{y}_{it} = y_{it} - \frac{1}{T_i} \sum_{t=1}^{T_i} y_{it}
+\tilde{y}_{it} = y_{it} - \bar{y}_i
+\]
+La ``media di gruppo'', $\bar{y}_i$, è definita come
+\[
+\bar{y}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} y_{it}
 \]
 dove $T_i$ è il numero di osservazioni per l'unità $i$; in modo simile si
-possono riscrivere le variabili indipendenti. È possibile ottenere stime degli
-$\alpha_i$ usando
+possono riscrivere le variabili indipendenti. Date le stime dei parametri,
+$\hat{\beta}$, ottenute usando questi dati espressi in termini di differenza
+dalla media, possiamo ottenere le stime degli $\alpha_i$ usando
 \[
 \hat{\alpha}_i = \frac{1}{T_i} \sum_{t=1}^{T_i} 
    \left(y_{it} - X_{it}\hat{\beta}\right)
 \]
 
-Questi due metodi sono numericamente equivalenti, e \app{gretl} sceglie tra i
+Questi due metodi (usare le variabili dummy o usare le differenze dalla media)
+sono numericamente equivalenti, e \app{gretl} sceglie tra i
 due a seconda del numero di unità cross section e di variabili indipendenti
 (cercando di minimizzare l'uso delle memoria).
 
-Per il modello a effetti casuali possiamo scrivere
+Le stime $\hat{\alpha}_i$ non vengono mostrate fra i risultati del modello
+tipicamente prodotti da \app{gretl} (possono essere molto numerose, e
+tipicamente non sono molto interessanti), tuttavia è possibile recuperarle dopo
+aver stimato il modello a effetti fissi, se si vuole. Nell'interfaccia grafica,
+basta andare nel menù ``Salva'' della finestra del modello e scegliere
+``costanti per-unità''. Nella modalità a riga di comando, basta eseguire
+\texttt{genr} \textsl{nome} = \verb+$ahat+, dove \textsl{nome} è il nome che
+si vuole dare alla nuova serie.
+
+Per il modello a \textsl{effetti casuali} possiamo scrivere $u_{it} = v_i +
+\varepsilon_{it}$, so the model becomes
+\begin{equation}
+\label{eq:RE}
+y_{it} = X_{it}\beta + v_i + \varepsilon_{it}
+\end{equation}
+Al contrario del modello a effetti fissi, invece di trattare gli $v_i$ come
+parametri fissi, li trattiamo come estrazioni casuali da una certa distribuzione
+di probabilità.
+
+Il famoso teorema di Gauss--Markov, secondo cui OLS è il miglior stimatore
+lineare non distorto (best linear unbiased estimator, BLUE), dipende
+dall'ipotesi che il termine di errore sia indipendente e identicamente
+distribuito (IID). Nel contesto panel l'ipotesi IID significa che
+$E(u_{it}^2)$, in relazione all'equazione~\ref{eq:pooled}, sia pari a una
+costante, $\sigma^2_u$, per ogni $i$ e $t$, mentre la covarianza $E(u_{is}
+u_{it})$ sia pari a zero dove $s \neq t$ e la covarianza $E(u_{jt} u_{it})$
+sia pari a zero dove $j \neq i$.
+
+Se queste ipotesi non sono soddisfatte (ed è probabile che non sia così nel
+contesto di dati panel), OLS non è lo stimatore più efficiente. È possibile
+raggiungere una maggior efficienza usando i minimi quadrati generalizzati (GLS)
+e tenendo conto della struttura di covarianza del termine di errore.
+
+Si considerino due osservazioni sulla stessa unità $i$ in due diversi periodi
+$s$ e $t$. Per l'ipotesi precedente, si può concludere che
+$\mbox{Var}(u_{is}) = \mbox{Var}(u_{it}) = \sigma^2_{v} +
+\sigma^2_{\varepsilon}$, mentre la covarianza tra $u_{is}$ e
+$u_{it}$ è data da $E(u_{is}u_{it}) = \sigma^2_{v}$.
+
+In notazione matriciale, è possibile raggruppare tutte le osservazioni $T_i$
+per l'unità $i$ nel vettore $\mathbf{y}_i$ e scriverlo come
+\begin{equation}
+\label{eq:REvec}
+\mathbf{y}_{i} = \mathbf{X}_{i} \beta + \mathbf{u}_i
+\end{equation}
+Il vettore $\mathbf{u}_i$, che include tutti i disturbi per l'individuo $i$, ha
+una matrice di varianza--covarianza pari a
+\begin{equation}
+\label{eq:CovMatUnitI}
+  \mbox{Var}(\mathbf{u}_i) = \Sigma_i = \sigma^2_{\varepsilon} I + \sigma^2_{v} J
+\end{equation}
+dove $J$ è una matrice quadrata con tutti gli elementi pari a 1. Si può
+mostrare che la matrice
 \[
-u_{it} = v_i + \varepsilon_{it}
+  K_i = I - \frac{\theta}{T_i} J,
 \]
-Invece di trattare gli $v_i$ come parametri fissi, li trattiamo come estrazioni
-casuali da una certa distribuzione di probabilità. Per stimare questo modello
-occorre per prima cosa fare un inferenza a proposito delle rispettive varianze
-di $v_i$ e $\varepsilon_{it}$. La varianza di $v_i$, $\sigma^2_v$, è di solito
-chiamata la varianza ``between'' (esterna, visto che si riferisce alla
-variazione tra le unità cross section), mentre $\sigma^2_{\varepsilon}$ è
-chiamata varianza ``within'' (interna).
+dove $\theta = 1 -
+\sqrt{\frac{\sigma^2_{\varepsilon}}{\sigma^2_{\varepsilon} + T_i
+    \sigma^2_{v}}}$, ha la seguente proprietà:
+\[
+  K_i \Sigma K_i' = \sigma^2_{\varepsilon} I
+\]
+Ne consegue che il sistema trasformato
+\begin{equation}
+\label{eq:REGLS}
+K_i \mathbf{y}_{i} = K_i \mathbf{X}_{i} \beta + K_i \mathbf{u}_i
+\end{equation}
+soddisfa le condizioni di Gauss--Markov, e la stima OLS della
+(\ref{eq:REGLS}) fornisce un'inferenza efficiente. Ma poiché
+\[
+  K_i \mathbf{y}_{i} = \mathbf{y}_{i} - \theta \bar{\mathbf{y}}_{i}
+\]
+la stima GLS è equivalente a OLS usando le variabili espresse in termini
+di ``quasi-differenze'' dalla media; ossia, sottraendo alle variabili una
+frazione $\theta$ della loro media. Si noti che per $\sigma^2_{\varepsilon} \to
+0$, $\theta \to 1$, mentre per $\sigma^2_{v} \to 0$, $\theta \to 0$.
+Ciò significa che se tutta la varianza è attribuibile agli effetti individuali,
+lo stimatore ottimale è quello a effetti fissi; se, al contrario, gli effetti
+individuali sono trascurabili, allora lo stimatore ottimale si rivela essere il
+semplice OLS ``pooled''.
+
+Per implementare l'approccio GLS occorre calcolare $\theta$, che a sua volta
+richiede una stima delle varianze $\sigma^2_{\varepsilon}$ e
+$\sigma^2_v$ (spesso chiamate rispettivamente varianza ``within'', interna, e
+varianza ``between'', esterna, in quanto la prima si riferisce alla variazione
+all'interno di ogni unità cross section, mentre la seconda alla variazione tra
+le unità). In letteratura sono stati suggeriti vari modi di stimare queste
+grandezze (si veda Baltagi 1995); \app{gretl} usa il metodo di Swamy e Arora
+(1972): $\sigma^2_\varepsilon$ è stimata dalla varianza residua dal modello a
+effetti fissi, e la somma $\sigma^2_\varepsilon + T_i \sigma^2_v$ è stimata come
+$T_i$ moltiplicato per la varianza residua dallo stimatore ``between'',
+\[
+\bar{y}_i = \bar{X}_i \beta + e_i
+\]
+L'ultima regressione è implementata costruendo un dataset che comprende le medie
+di gruppo di tutte le variabili rilevanti.
+
+\subsection{Scelta dello stimatore}
+\label{panel-choice}
+
+Che modello panel si deve usare? A effetti fissi o casuali?
+
+Un modo per rispondere a questa domanda consiste nell'esaminare la natura del
+dataset. Se il panel comprende osservazioni su un numero fisso e relativamente
+piccolo di unità (ad esempio, i paesi membri dell'Unione Europea), potrebbe
+essere consigliabile adottare il modello a effetti fissi. Se invece comprende
+osservazioni su un gran numero di individui selezionati in modo casuale (come in
+molti studi epidemiologici o longitudinali in genere), è più appropriato il
+modello a effetti casuali.
+
+A parte questa regola euristica, occorre tener conto di alcune considerazioni
+statistiche:
+
+\begin{enumerate}
+
+\item Alcuni dataset panel contengono variabili i cui valori sono specifici
+  all'unità cross-section, ma che non variano nel tempo. Se si vuole includere
+  queste variabili nel modello, la soluzione a effetti fissi non è utilizzabile.
+  Quando questa viene implementata con l'approccio delle variabili dummy, sorge
+  un problema di perfetta collinearità tra le variabili che non cambiano nel
+  tempo e le dummy caratteristiche delle unità. Usando l'approccio della
+  sottrazione delle medie di gruppo, le variabili che non cambiano nel tempo
+  finiscono per avere valore zero.
+\item Un vincolo simile esiste per il modello a effetti casuali. Per
+  apprezzare questo punto occorre notare che lo stimatore a effetti casuali
+  è una media ponderata (in senso matriciale) dello stimatore ``pooled OLS'' e
+  dello stimatore ``between''. Se si hanno osservazioni su $m$ unità e $k$
+  variabili indipendenti, e se $k>m$ lo stimatore ``between'' non è definito, visto 
+  che abbiamo solo $m$ osservazioni effettive, e quindi non è definito neanche
+  lo stimatore a effetti casuali.
+\end{enumerate}
+
+Se non si ricade in una delle limitazioni appena viste, la scelta tra
+effetti fissi e casuali può essere espressa in termini di due
+\textit{desiderata} econometrici: l'efficienza e la consistenza.
+
+Da un punto di vista puramente statistico, potremmo dire che c'è un trade-off
+tra robustezza ed efficienza. Nell'approccio a effetti fissi, l'unica ipotesi che
+facciamo sugli ``effetti di gruppo'' (ossia sulle differenze nella media tra i
+gruppi, che non variano nel tempo) è che essi esistano, e questa ipotesi può
+essere testata, come vedremo. Di conseguenza, una volta che questi effetti sono
+annullati prendendo le deviazioni dalle medie di gruppo, i parametri rimanenti
+possono essere stimati.
+
+D'altra parte, l'approccio a effetti casuali cerca di modellare gli effetti di
+gruppo come estrazioni da una certa distribuzione di probabilità, invece di
+rimuoverli. Ciò richiede che gli effetti individuali siano rappresentabili come
+parte del termine di disturbo, ossia come variabili casuali a media nulla, non
+correlate con i regressori.
+
+Di conseguenza, lo stimatore a effetti fissi ``funziona sempre'', ma al costo di
+non essere in grado di stimare l'effetto dei regressori che non variano nel
+tempo. L'ipotesi più ricca, lo stimatore a effetti casuali, permette di stimare
+i parametri dei regressori che non variano nel tempo, e di stimare in modo più
+efficiente i parametri dei regressori che variano nel tempo. Questi vantaggi
+dipendono però dalla validità delle ipotesi aggiuntive che sono state fatte. Se,
+ad esempio, c'è motivo di credere che gli effetti individuali possano essere
+correlati con alcune delle variabili esplicative, lo stimatore a effetti casuali
+sarebbe inconsistente, mentre quello a effetti fissi sarebbe perfettamente
+valido. È esattamente su questo principio che si basa il test di Hausman,
+descritto in seguito: se gli stimatori a effetti fissi e casuali concordano, nel
+limite dei consueti margini di errore statistici, non c'è motivo di ritenere
+invalide le ipotesi aggiuntive, e di conseguenza, non c'è motivo di 
+\textit{non} usare il più efficiente stimatore a effetti casuali.
+
+\subsection{Test sui modelli panel}
+\label{panel-tests}
+
+Se si stima un modello a effetti fissi o casuali usando l'interfaccia grafica,
+si noterà che il numero di comandi disponibili nel menù ``Test'' della finestra
+del modello è abbastanza limitato. I modelli panel hanno alcune complicazioni
+che rendono difficile implementare tutti i test che si è soliti utilizzare con i
+modelli stimati su dati cross-section o su serie storiche.
+
+Tuttavia, assieme alle stime dei parametri dei modelli panel vengono mostrati
+alcuni test specifici dei modelli panel.
+
+Quando si stima un modello usando gli \textsl{effetti fissi}, si ottiene
+automaticamente un test $F$ per l'ipotesi nulla che le unità cross section
+abbiano un'intercetta comune, ossia che tutti gli $\alpha_i$ siano uguali, nel
+qual caso il modello ``pooled'' (\ref{eq:pooled}), con una colonna di valori 1
+inclusa nella matrice $X$, è adeguato.
+
+Quando si stima un modello usando gli \textsl{effetti casuali}, vengono
+presentati automaticamente i test di Breusch--Pagan e quello di Hausman.
+
+Il test di Breusch--Pagan è la controparte del test $F$ menzionato sopra.
+L'ipotesi nulla è che la varianza di $v_i$ sia pari a zero; se questa ipotesi
+non viene rifiutata, si può concludere che il modello ``pooled'' è adeguato.
+
+Il test di Hausman verifica la consistenza delle stime GLS. L'ipotesi nulla è
+che queste stime siano consistenti, ossia che sia soddisfatto il requisito di
+ortogonalità di $v_i$ and the $X_i$. Il test è basato su una misura, $H$, della
+``distanza'' tra le stime a effetti fissi e quelle a effetti casuali,
+costruita in modo che sotto l'ipotesi nulla essa segue una distribuzione
+$\chi^2$ con gradi di libertà pari al numero di regressori che variano nel tempo
+contenuti nella matrice $X$. Se il valore di $H$ è abbastanza alto, significa
+che lo stimatore a effetti casuali non è consistente, e quindi il modello a
+effetti fissi è preferibile.
+
+Ci sono due modi per calcolare $H$, il metodo della differenza matriciale e il
+metodo di regressione. La procedura per il primo metodo è la seguente:
+\begin{itemize}
+\item Raccogliere le stime a effetti fissi in un vettore
+  $\tilde{\beta}$ e le corrispondenti stime a effetti variabili in
+  $\hat{\beta}$, quindi formare il vettore differenza $(\tilde{\beta} -
+  \hat{\beta})$. 
+\item Formare la matrice di covarianza del vettore differenza come
+  $\mbox{Var}(\tilde{\beta} - \hat{\beta}) = \mbox{Var}(\tilde{\beta})
+  - \mbox{Var}(\hat{\beta}) = \Psi$, dove $\mbox{Var}(\tilde{\beta})$
+  e $\mbox{Var}(\hat{\beta})$ sono stimati con le matrici di varianza
+  campionaria rispettivamente del modello a effetti fissi e casuali
+  \footnote{Hausman (1978) mostra che la covarianza della differenza assume
+    questa forma semplice quando $\hat{\beta}$ è uno stimatore efficiente e
+    $\tilde{\beta}$ è inefficiente.}.
+\item Calcolare $H = \left(\tilde{\beta} - \hat{\beta}\right)' \Psi^{-1}
+   \left(\tilde{\beta} - \hat{\beta}\right)$.
+\end{itemize}
+
+Date le efficienze relative di $\tilde{\beta}$ e $\hat{\beta}$, la matrice
+$\Psi$ ``dovrebbe'' essere definita positiva, nel qual caso $H$ è positivo, ma
+in campioni finiti ciò non è garantito e ovviamente un valore negativo del
+$\chi^2$ non è ammissibile. Il metodo della regressione evita questo potenziale
+problema. La procedura è la seguente:
+\begin{itemize}
+\item Considerare il modello a effetti casuali come il modello vincolato e 
+  calcolare la sua somma dei quadrati dei residui come SSR$_r$.
+\item Stimare via OLS un modello non vincolato, in cui la variabile dipendente è
+  la quasi-differenza dalla media di $y$ e i regressori includono sia le
+  quasi-differenze dalla media delle $X$ (come nel modello a effetti casuali) e
+  le differenze dalla media di tutte le variabili che variano nel tempo (ossia i
+  regressori degli effetti fissi); calcolare la somma dei quadrati dei residui
+  di questo modello come SSR$_u$.
+\item Calcolare $H = n \left(\mbox{SSR}_r - \mbox{SSR}_u\right) /
+  \mbox{SSR}_u$, dove $n$ è il numero totale di osservazioni usate. In questa
+  variante, $H$ non può essere positivo, visto che aggiungere altri regressori
+  al modello a effetti casuali non può aumentare la SSR.
+\end{itemize}
+
+Per impostazione predefinita, \app{gretl} calcola il test di Hausman usando il
+metodo della differenza matriciale (soprattutto per compatibilità con altri
+programmi), ma usa il metodo della regressione se si usa l'opzione
+\verb+--hausman-reg+ col comando \cmd{panel}.
+
+\subsection{Errori standard robusti}
+\label{panel-robust}
+
+Per la maggior parte degli stimatori, \app{gretl} offre la possibilità di
+calcolare una stima della matrice di covarianza che sia robusta rispetto
+all'eteroschedasticità e/o all'autocorrelazione (e di conseguenza anche errori
+standard robusti). Nel caso di dati panel, una matrice di covarianza robusta è
+disponibile per il modello a effetti fissi, ma al momento non per quello a
+effetti casuali. Lo stimatore usato per gli effetti fissi è
+\[
+\left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
+\left[ \sum_{i=1}^m \tilde{X}_i^{\prime} \tilde{u}_i 
+    \tilde{u}_i^{\prime} \tilde{X}_i \right]
+\left(\tilde{X}^{\prime}\tilde{X}\right)^{-1}
+\]
+dove $\tilde{X}$ è la matrice dei regressori con le medie di gruppo sottratte,
+$\tilde{u}_i$ denota i residui del modello a effetti fissi per l'unità $i$, e
+$m$ è il numero di unità cross-section.
+
+\section{Modelli panel dinamici}
+\label{panel-dyn}
+
+Quando tra i regressori di un modello panel compare un ritardo della variabile
+dipendente nascono problemi speciali. Si consideri una variante dinamica del
+modello pooled (\ref{eq:pooled}):
+\begin{equation}
+\label{eq:pooled-dyn}
+y_{it} = X_{it}\beta + \rho y_{it-1} + u_{it}
+\end{equation}
+Per prima cosa, se l'errore $u_{it}$ include un effetto di gruppo, $v_i$,
+ne consegue che $y_{it-1}$ è correlato con l'errore, visto che il valore di
+$v_i$ influisce su $y_i$ per tutti i $t$.  Ciò significa che OLS applicato alla
+(\ref{eq:pooled-dyn}) sarà inconsistente, oltre che inefficiente.
+Il modello a effetti fissi annulla gli effetti di gruppo e quindi aggira questo
+particolare problema, ma ne rimane uno più sottile, che si applica sia alla
+stima a effetti fissi che a quella a effetti casuali. Si consideri la
+rappresentazione del modello a effetti fissi in termini di differenza dalle
+medie, applicata al modello dinamico
+\[
+\tilde{y}_{it} = \tilde{X}_{it}\beta + \rho \tilde{y}_{i,t-1} 
+  + \varepsilon_{it}
+\]
+dove $\tilde{y}_{it} = y_{it} - \bar{y}_i$ e $\varepsilon_{it} =
+u_{it} - \bar{u}_i$ (o $u_{it} - \alpha_i$, usando la notazione
+dell'equazione~\ref{eq:FE}).  Il problema è che $\tilde{y}_{i,t-1}$ sarà
+correlato con $\varepsilon_{it}$ attraverso la media di gruppo, $\bar{y}_i$.
+Il disturbo $\varepsilon_{it}$ influenza $y_{it}$ direttamente, che influenza
+$\bar{y}_i$, che, per costruzione, influenza il valore di
+$\tilde{y}_{it}$ per ogni $t$.  Lo stesso problema sorge per l'operazione di
+quasi-differenza dalle medie usata nel modello a effetti casuali. Gli stimatori
+che ignorano questa correlazione saranno consistenti solo se $T \to \infty$ (caso in cui
+l'effetto marginale di $\varepsilon_{it}$ sulla media di gruppo di $y$ tende a svanire).
+
+Una strategia per affrontare questo problema e ottenere stime consistenti di
+$\beta$ e $\rho$ è stata proposta da Anderson e Hsiao (1981). Invece di prendere
+la differenza dalla media dei dati, essi suggeriscono di prendere la prima
+differenza della (\ref{eq:pooled-dyn}), un modo alternativo per annullare gli
+effetti di gruppo:
+\begin{equation}
+\label{eq:fe-dyn}
+\Delta y_{it} = \Delta X_{it}\beta + \rho \Delta y_{i,t-1} 
+  + \eta_{it}
+\end{equation}
+dove $\eta_{it} = \Delta u_{it} = \Delta(v_i + \varepsilon_{it}) =
+\varepsilon_{it} - \varepsilon_{i,t-1}$.  Non è ancora sufficiente, data la
+struttura dell'errore $\eta_{it}$: il disturbo
+$\varepsilon_{i,t-1}$ influenza sia $\eta_{it}$ che $\Delta
+y_{i,t-1} = y_{it} - y_{i,t-1}$.  Il passo successivo è quello di trovare uno
+strumento per l'espressione ``contaminata'' $\Delta y_{i,t-1}$. Anderson e
+Hsiao suggeriscono di usare $y_{i,t-2}$ o $\Delta y_{i,t-2}$, che sono entrambi
+non correlati con $\eta_{it}$ a patto che gli errori sottostanti,
+$\varepsilon_{it}$, non siano serialmente correlati.
+
+Lo stimatore di Anderson--Hsiao non è fornito come funzione interna di
+\app{gretl}, visto che le funzionalità di \app{gretl} per la gestione dei
+ritardi e delle differenze nei dati panel lo rendono una semplice applicazione
+di regressione con le variabili strumentali: si veda
+l'esempio~\ref{anderson-hsiao}, basato su uno studio dei tassi di crescita dei
+paesi (Nerlove 1999)\footnote{Si veda anche la pagina dei benchmark di Clint Cummins,
+  \url{http://www.stanford.edu/~clint/bench/}.}.
+ 
+Sebbene lo stimatore di Anderson--Hsiao sia consistente, non è il più
+efficiente: non usa pienamente gli strumenti disponibili per $\Delta y_{i,t-1}$,
+né tiene conto della struttura dell'errore $\eta_{it}$.  Dei miglioramenti sono
+stati proposti da Arellano e Bond (1991) e da Blundell e Bond
+(1998). Questi metodi non sono ancora supportati da \app{gretl}, ma il primo
+potrebbe essere aggiunto in una delle prossime versioni del programma.
+
+\begin{script}[htbp]
+  \caption{Lo stimatore Anderson--Hsiao per un modello panel dinamico}
+  \label{anderson-hsiao}
+\begin{code}
+   # La Penn World Table usata da Nerlove
+   open penngrow.gdt
+   # Effetti fissi (per confronto)
+   panel Y 0 Y(-1) X
+   # Effetti casuali (per confronto)
+   panel Y 0 Y(-1) X --random-effects
+   # Differenza di tutte le variabili
+   diff Y X
+   # Anderson-Hsiao, usando Y(-2) come strumento
+   tsls d_Y d_Y(-1) d_X ; 0 d_X Y(-2)
+   # Anderson-Hsiao, usando d_Y(-2) come strumento
+   tsls d_Y d_Y(-1) d_X ; 0 d_X d_Y(-2)
+\end{code}
+\end{script}
+
 
 \section{Esempio: la Penn World Table}
 \label{PWT}
@@ -138,24 +466,23 @@ situazione peggiore).
   \label{examp-pwt}
 
 \begin{code}
-          open pwt56_60_89.gdt 
-          # Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
-          genr gdp60 = RGDPL(-29) 
-          # Calcola la crescita totale del PIL reale sui 30 anni
-          genr gdpgro = (RGDPL - gdp60)/gdp60
-          # Restringi il campione a una cross-section del 1989
-          smpl --restrict YEAR=1989 
-          # convergenza: i paesi che partono più indietro crescono di più?
-          ols gdpgro const gdp60 
-          # risultato: no! Proviamo una relazione inversa?
-          genr gdp60inv = 1/gdp60 
-          ols gdpgro const gdp60inv 
-          # Ancora no. Proviamo a trattare l'Africa in modo speciale? 
-          genr afdum = (CCODE = 1)
-          genr afslope = afdum * gdp60 
-          ols gdpgro const afdum gdp60 afslope 
+  open pwt56_60_89.gdt 
+  # Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
+  genr gdp60 = RGDPL(-29) 
+  # Calcola la crescita totale del PIL reale sui 30 anni
+  genr gdpgro = (RGDPL - gdp60)/gdp60
+  # Restringi il campione a una cross-section del 1989
+  smpl --restrict YEAR=1989 
+  # convergenza: i paesi che partono più indietro crescono di più?
+  ols gdpgro const gdp60 
+  # risultato: no! Proviamo una relazione inversa?
+  genr gdp60inv = 1/gdp60 
+  ols gdpgro const gdp60inv 
+  # Ancora no. Proviamo a trattare l'Africa in modo speciale? 
+  genr afdum = (CCODE = 1)
+  genr afslope = afdum * gdp60 
+  ols gdpgro const afdum gdp60 afslope 
 \end{code}
-
 \end{script}
 
 

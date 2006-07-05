@@ -9,19 +9,60 @@ variabili. Il comando è documentato nella \GCR, mentre questo
 capitolo offre una discussione più approfondita di alcune delle
 funzioni speciali disponibili con \verb+genr+ e di alcune
 particolarità del comando.
-    
 
 \section{Filtri per serie storiche}
-\label{genr-filter}
+\label{sec:filters}
 
 Un tipo di funzioni speciali di \verb+genr+ consente il filtraggio delle serie
-storiche. Al momento sono disponibili due filtri: il filtro di Hodrick--Prescott
-e quello passa banda di Baxter--King.  Sono forniti rispettivamente dalle
-funzioni \verb+hpfilt()+ e \verb+bkfilt()+, che richiedono come argomento il
-nome della variabile da processare.
+storiche. Oltre alle solite operazioni di ritardo e differenza, \app{gretl}
+fornisce anche la differenza frazionaria e due filtri usati spesso in
+macroeconomia per la scomposizione fra ciclo e trend: il filtro di
+Hodrick--Prescott e quello passa banda di Baxter--King.
+
+\subsection{Differenza frazionaria}
+\label{sec:fracdiff}
+
+Differenziare una serie storica per $d$ volte è un'operazione ovvia quando
+$d$ è un numero intero, ma può sembrare strana quando $d$ è una frazione.
+Tuttavia, questa idea ha un ben preciso fondamento matematico: si consideri la
+funzione
+\[
+  f(z) = (1 - z)^{-d},
+\]
+dove $z$ e $d$ sono numeri reali. L'espansione in serie di Taylor intorno a 
+$z=0$ mostra che
+\[
+  f(z) = 1 + dz + \frac{d (d+1)}{2} z^2 + \cdots 
+\]
+o, più sinteticamente,
+\[
+  f(z) = 1 + \sum_{i=1}^{\infty} \psi_i z^i
+\]
+con
+\[
+  \psi_k = \frac{\prod_{i=1}^{k} (d+i-1) }{k!} = \psi_{k-1} \frac{d+k-1}{k}
+\]
+
+La stessa espansione può essere usata con l'operatore ritardo, così che se
+definiamo
+\[
+  Y_t = (1-L)^{0.5} X_t
+\]
+potrebbe essere considerata equivalente a
+\[
+Y_t = X_t - 0.5 X_{t-1} - 0.125 X_{t-2} - 0.0625 X_{t-3} - \cdots 
+\]
+    
+In \app{gretl} questa trasformazione può essere eseguita con il comando
+\begin{code}
+  genr Y = fracdiff(X,0.5)
+\end{code}
     
 \subsection{Il filtro di Hodrick--Prescott}
 \label{hodrick-prescott}
+
+Questo filtro è utilizzabile tramite la funzione \verb+hpfilt()+, che accetta un
+argomento: il nome della variabile da processare.
 
 Una serie storica $y_t$ può essere scomposta in un trend, o componente di
 crescita $g_t$ e in una componente ciclica $c_t$.  
@@ -63,6 +104,9 @@ parametro \cmd{hp\_lambda}.  Ad esempio, \cmd{set hp\_lambda 1200}.
 \subsection{Il filtro di Baxter e King}
 \label{baxter-king}
 
+Questo filtro è utilizzabile tramite la funzione \verb+bkfilt()+; anche questa
+accetta come unico argomento il nome della variabile da processare.
+
 Si consideri la rappresentazione spettrale di una serie storica $y_t$:
 %	
 \[ y_t = \int_{-\pi}^{\pi} e^{i\omega} \mathrm{d} Z(\omega) \]
@@ -83,7 +127,7 @@ $A(L)$:
 %	
 \[ c_t = A(L) y_t \]
 %
-dove $A(L)$ è definito come
+dove $A$($L$) è definito come
 %	
 \[ A(L) = \sum_{i=-k}^{k} a_i L^i \]
 
@@ -116,7 +160,6 @@ eseguire
 Questi valori resteranno in vigore per le chiamate alla funzione
 \verb+bkfilt+ finché non saranno modificati da un altro uso di
 \verb+set+.
-      
 
 \section{Dati panel}
 \label{panel-genr}

@@ -169,12 +169,13 @@ I file CSV possono usare virgole, spazi o tab come separatori fra le
 colonne: il separatore da usare può essere selezionato subito dopo
 aver eseguito il comando ``Importa CSV''. Se invece si usa ``Importa
 ASCII'' il programma cerca di riconoscere automaticamente il
-separatore usato nei dati. Se si usa un foglio elettronico per
-preparare i dati, è possibile applicare varie trasformazioni ai dati
-``grezzi'' (sommare variabili, calcolare percentuali, ecc.), ma queste
-elaborazioni possono essere compiute, forse più facilmente, anche in
-\app{gretl}, usando gli strumenti disponibili nel menù ``Dati,
-Aggiungi variabili'' e/o ``Variabile, Definisci nuova variabile''.
+separatore usato nei dati. 
+
+Se si usa un foglio elettronico per preparare i dati, è possibile applicare
+varie trasformazioni ai dati ``grezzi'' (sommare variabili, calcolare
+percentuali, ecc.), ma queste elaborazioni possono essere compiute, forse più
+facilmente, anche in \app{gretl}, usando gli strumenti disponibili nel menù
+``Dati, Aggiungi variabili'' e/o ``Variabile, Definisci nuova variabile''.
 
 \subsection{Importare dati e aggiungerli}
 
@@ -262,26 +263,26 @@ quello ``tradizionale'') descritti nell'appendice~\ref{app-datafile}.
 \section{Struttura di un dataset}
 \label{sec:data-structure}
 
-Once your data are read by \app{gretl}, it may be necessary to supply
-some information on the nature of the data. We distinguish between
-three kinds of datasets:
+Una volta che i dati sono stati letti da \app{gretl}, può essere necessario
+dover fornire alcune informazioni sulla natura dei dati stessi. Distinguiamo tre
+tipi di dataset:
 \begin{enumerate}
 \item Cross-section
-\item Time series
-\item Panel data
+\item Serie storiche
+\item Dati panel
 \end{enumerate}
 
-The primary tool for doing this is the ``Sample, Dataset structure''
-menu entry in the graphical interface, or the \texttt{setobs} command
-for scripts and the command-line interface.
+Lo strumento principale per eseguire questa operazione è il comando del menù
+``Campione, Struttura Dataset'' nell'interfaccia grafica, o il comando
+\texttt{setobs} negli script e nell'interfaccia a riga di comando.
 
-\subsection{Cross-section data}
+\subsection{Dati cross-section}
 \label{sec:cross-section-data}
 
 TODO
 This is the default. 
 
-\subsection{Time series data}
+\subsection{Serie storiche}
 \label{sec:timeser-data}
 
 \ldots Add stuff here \ldots
