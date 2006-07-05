@@ -638,8 +638,9 @@ static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
     /* skip past "set initvals" */
     s += 12;
 
-    if (sscanf(s, "%15s", mname) != 1) {
-	err = E_PARSE;
+    if (sscanf(s, "%15s", mname) != 1 || !strcmp(mname, "auto")) {
+	gretl_matrix_free(state->initvals);
+	state->initvals = NULL;
     } else {
 	m = get_matrix_by_name(mname, pdinfo);
 	if (m == NULL) {

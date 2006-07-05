@@ -182,6 +182,11 @@
 	    <entry>Truncated dependent variable</entry>
 	  </row>
 	  <row>
+	    <entry>Poisson
+	      (<command>poisson</command>)</entry>
+	    <entry>Model for count data</entry>
+	  </row>
+	  <row>
 	    <entry>Logistic
 	      (<command>logistic</command>)</entry>
 	    <entry>OLS, with logistic transformation of dependent
@@ -196,11 +201,6 @@
 	    <entry>Rank Correlation
 	      (<command>spearman</command>)</entry>
 	    <entry>Correlation with ordinal data</entry>
-	  </row>
-	  <row>
-	    <entry>Pooled OLS (<command>pooled</command>)</entry>
-	    <entry>OLS estimation for pooled cross-section, time
-	      series data</entry>
 	  </row>
 	  <row>
 	    <entry>Multiple precision OLS (<command>mpols</command>)</entry>

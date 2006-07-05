@@ -178,13 +178,17 @@ following \app{minpack} functions are called:
 
 On successful completion of the Levenberg--Marquandt iteration, a
 Gauss--Newton regression is used to calculate the covariance matrix
-for the parameter estimates.  Since NLS results are asymptotic, there
-is room for debate over whether or not a correction for degrees of
-freedom should be applied when calculating the standard error of the
-regression (and the standard errors of the parameter estimates).  For
-comparability with OLS, and in light of the reasoning given in
-Davidson and MacKinnon (1993), the estimates shown in \app{gretl}
-\emph{do} use a degrees of freedom correction.
+for the parameter estimates.  If the \verb|--robust| flag is given a
+robust variant is computed.  The documentation for the \cmd{set}
+command explains the specific options available in this regard.
+
+Since NLS results are asymptotic, there is room for debate over
+whether or not a correction for degrees of freedom should be applied
+when calculating the standard error of the regression (and the
+standard errors of the parameter estimates).  For comparability with
+OLS, and in light of the reasoning given in Davidson and MacKinnon
+(1993), the estimates shown in \app{gretl} \emph{do} use a degrees of
+freedom correction.
 
 \section{Numerical accuracy}
 \label{nls-accuracy}

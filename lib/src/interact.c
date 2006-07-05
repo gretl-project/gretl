@@ -2490,9 +2490,10 @@ print_cmd_list (const CMD *cmd, const DATAINFO *pdinfo,
 
 #undef ECHO_DEBUG
 
-static int is_silent (const CMD *cmd)
+static int is_silent (const CMD *cmd, const char *line)
 {
-    if (cmd->ci == FUNCERR) {
+    if (cmd->ci == FUNCERR || cmd->ci == PRINTF ||
+	(cmd->ci == PRINT && strchr(line, '"'))) {
 	return 1;
     }
 
@@ -2537,7 +2538,7 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 #endif
 
     /* don't echo certain things */
-    if (is_silent(cmd)) {
+    if (is_silent(cmd, line)) {
 	return;
     }
 

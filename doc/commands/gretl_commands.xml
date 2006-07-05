@@ -436,12 +436,12 @@
 	  <effect>do not include a constant</effect>
         </option>
         <option>
-	  <flag>--x-12-arima</flag>
-	  <effect>use X-12-ARIMA for estimation</effect>
-        </option>
-        <option>
 	  <flag>--conditional</flag>
 	  <effect>use conditional maximum likelihood</effect>
+        </option>
+        <option>
+	  <flag>--x-12-arima</flag>
+	  <effect>use X-12-ARIMA for estimation</effect>
         </option>
       </options>
       <examples>
@@ -492,8 +492,7 @@
 	valid way to specify an ARMA(2, 1) model:
       </para>
       <code context="cli">
-	arma 2 1 ; y
-      </code>
+	arma 2 1 ; y</code>
 
       <para context="gui">
 	Estimates an ARMA model, with or without exogenous regressors. If
@@ -596,8 +595,7 @@
 	comparative boxplots with the following <repl
 	  quote="true">varlist</repl>:</para>
       <code>
-	salary (GENDER=1) salary (GENDER=0)
-      </code>
+	salary (GENDER=1) salary (GENDER=0)</code>
 
       <para>Some details of gretl's boxplots can be controlled via a
 	(plain text) file named <filename>.boxplotrc</filename>.  For
@@ -846,8 +844,7 @@
                   0      c = 0  c = 3       c = 0  c = 1
                   1      c = 1  c = 3       c = 1  c = 2
                   2      c = 2  c = 3       c = 2  c = 3
-                 ---------------------------------------
-      </code>
+                 ---------------------------------------</code>
 
       <para>
 	See also the <cmdref targ="vecm"/> command.
@@ -1345,7 +1342,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Add variables/first differences</menu-path>
+      <menu-path>/Add/first differences</menu-path>
     </gui-access>
 
   </command>
@@ -1991,8 +1988,7 @@
 	example, to get the conditional variance:  
       </para>
       <code context="cli">
-	genr ht = $h
-      </code>
+	genr ht = $h</code>
 
     </description>
 
@@ -2231,8 +2227,7 @@
 	genr p1 = pvalue(z, 2.2)
 	genr p2 = pvalue(X, 3, 5.67)
 	genr c1 = critical(t, 20, 0.025)
-	genr c2 = critical(F, 4, 48, 0.05)
-      </code>
+	genr c2 = critical(F, 4, 48, 0.05)</code>
 
       <para>
 	The functions relating to the standard normal density work thus, for a
@@ -2331,6 +2326,11 @@
 	<li>
 	  <para>
 	   <lit>$bic</lit>: Schwarz's Bayesian Information Criterion
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$hqc</lit>: Hannan&ndash;Quinn Criterion
 	  </para>
 	</li>
 	<li>
@@ -3407,7 +3407,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Add variables/lags of selected variables</menu-path>
+      <menu-path>/Add/lags of selected variables</menu-path>
     </gui-access>
 
   </command>
@@ -3472,12 +3472,11 @@
       </para>
       <code>
 	ld_x = log(x) - log(x(-1))
-	ld_y = log(y) - log(y(-1))
-      </code>
+	ld_y = log(y) - log(y(-1))</code>
     </description>
 
     <gui-access>
-      <menu-path>/Data/Add variables/log differences</menu-path>
+      <menu-path>/Add/log differences</menu-path>
     </gui-access>
 
   </command>
@@ -3764,8 +3763,7 @@
 	rather construct the logit variable, as in
       </para>
       <code>
-	genr lgt_p = log(p/(1 - p))
-      </code>
+	genr lgt_p = log(p/(1 - p))</code>
       <para>and use this as the dependent variable in an OLS regression.  
 	See Ramanathan, Chapter 12.
       </para>
@@ -3787,17 +3785,16 @@
 
     <description>
       <para>
-	The natural log of each of the variables in
-	<repl>varlist</repl> is obtained and the result stored in a
-	new variable with the prefix <lit>l_</lit> which is
-	<quote>el</quote> underscore.  <cmd>logs x y</cmd> creates the
-	new variables <lit>l_x</lit> = ln(<lit>x</lit>) and
-	<lit>l_y</lit> = ln(<lit>y</lit>).
+	The natural log of each of the variables in <repl>varlist</repl>
+	is obtained and the result stored in a new variable with the
+	prefix <lit>l_</lit> (<quote>el</quote> underscore).  For example,
+	<cmd>logs x y</cmd> creates the new variables <lit>l_x</lit> =
+	ln(<lit>x</lit>) and <lit>l_y</lit> = ln(<lit>y</lit>).
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Data/Add variables/logs of selected variables</menu-path>
+      <menu-path>/Add/logs of selected variables</menu-path>
     </gui-access>
 
   </command>
@@ -3957,7 +3954,7 @@
 
     <description>
       <para>
-	The identifer <lit>matrix</lit> must precede all commands
+	The keyword <lit>matrix</lit> must precede all commands
 	that create, manipulate and print matrices.  Please see
 	<guideref targ="chap-matrices"/> for details.
       </para>
@@ -4085,8 +4082,7 @@
 	lines:</para>
       <code>
 	loglik = X*log(p) + (1-X)*log(1-p)
-	deriv p = X/p - (1-X)/(1-p)
-      </code>
+	deriv p = X/p - (1-X)/(1-p)</code>
 
       <para>
 	The first line specifies the log-likelihood function, and the
@@ -4100,8 +4096,7 @@
 	preface the above lines with something like the following:
       </para>
       <code>
-	genr p = 0.5
-      </code>
+	genr p = 0.5</code>
 
       <para>
 	By default, standard errors are based on the Outer Product of the
@@ -4142,9 +4137,8 @@
       <para>We then construct the MLE command block:</para>
       <code>
 	mle loglik = X*log(p) + (1-X)*log(1-p)
-	deriv p = X/p - (1-X)/(1-p)
-	end mle
-      </code>
+	  deriv p = X/p - (1-X)/(1-p)
+	end mle</code>
 
       <para>
 	The first line above specifies the log-likelihood function. It
@@ -4162,9 +4156,8 @@
       </para>
       <code>
 	mle loglik = X*log(p) + (1-X)*log(1-p)
-	params p
-	end mle
-      </code>
+	  params p
+	end mle</code>
       <para>
 	in which case numerical derivatives would be used.
       </para>
@@ -4309,15 +4302,31 @@
     <description>
       <para>
 	Computes OLS estimates for the specified model using multiple
-	precision floating-point arithmetic.  This command is
-	available only if <program>gretl</program> is compiled with
-	support for the Gnu Multiple Precision library (GMP).
+	precision floating-point arithmetic.  This command is available
+	only if <program>gretl</program> is compiled with support for the
+	Gnu Multiple Precision (GMP) library.  By default 256 bits of
+	precision are used for the calculations, but this can be increased
+	via the environment variable <lit>GRETL_MP_BITS</lit>.  For
+	example, when using the bash shell one could issue the following
+	command, before starting gretl, to set a precision of 1024 bits.
       </para>
+      <code>
+	export GRETL_MP_BITS=1024</code>
+
       <para context="cli">
-	Various internal variables may be retrieved using the <cmdref
-	  targ="genr"/> command, provided
-	<cmd>genr</cmd> is invoked immediately after this command.
+	A rather arcane option is available for this command (primarily
+	for testing purposes): if the <repl>indepvars</repl> list is
+	followed by a semicolon and a further list of numbers, those
+	numbers are taken as powers of <repl>x</repl> to be added to the
+	regression, where <repl>x</repl> is the last variable in
+	<repl>indepvars</repl>.  These additional terms are computed and
+	stored in multiple precision.  In the following example
+	<lit>y</lit> is regressed on <lit>x</lit> and the second, third
+	and fourth powers of <lit>x</lit>:
       </para>
+      <code context="cli">
+	mpols y 0 x ; 2 3 4</code>
+
     </description>
 
     <gui-access>
@@ -4418,8 +4427,7 @@
 	C = alpha + beta * Y^gamma
 	deriv alpha = 1
 	deriv beta = Y^gamma
-	deriv gamma = beta * Y^gamma * log(Y)
-      </code>
+	deriv gamma = beta * Y^gamma * log(Y)</code>
 
       <para>The first line specifies the regression
 	function, and the next three lines supply the derivatives of
@@ -4433,8 +4441,7 @@
       <code>
 	genr alpha = 1
 	genr beta = 1
-	genr gamma = 1
-      </code>
+	genr gamma = 1</code>
 
       <para>For further details on NLS estimation please see 
 	<guideref targ="chap-nls"/>.</para>
@@ -4476,8 +4483,7 @@
 	7   deriv alpha = 1
 	8   deriv beta = Y^gamma
 	9   deriv gamma = beta * Y^gamma * log(Y)
-	10  end nls --vcv
-      </code>
+	10  end nls --vcv</code>
 
       <para>
 	It is often convenient to initialize the parameters by
@@ -5294,8 +5300,7 @@
 	ols 1 0 2 3
 	genr b = $coeff(2)
 	genr se_b = $stderr(2)
-	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
-      </code>
+	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b</code>
 
       <para>
 	The next lines illustrate the use of the varname and date
@@ -5305,8 +5310,7 @@
       </para>
       <code>
 	printf "The name of variable %d is %s\n", i, varname(i)
-	printf "The date of observation %d is %s\n", j, date(j)
-      </code>
+	printf "The date of observation %d is %s\n", j, date(j)</code>
 
       <para>
 	The maximum length of a format string is 127 characters.  The
@@ -5861,8 +5865,7 @@
       </para>
       <code>
 	genr signx1 = x1 - median(x1)
-	runs signx1
-      </code>
+	runs signx1</code>
     </description>
 
     <gui-access>
@@ -6002,7 +6005,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Add variables/seasonal differences</menu-path>
+      <menu-path>/Add/seasonal differences</menu-path>
     </gui-access>
 
   </command>
@@ -6636,7 +6639,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Add variables/squares of variables</menu-path>
+      <menu-path>/Add/squares of variables</menu-path>
     </gui-access>
 
   </command>

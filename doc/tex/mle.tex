@@ -11,25 +11,26 @@ procedures. Gretl provides a way to implement this method for a wide
 range of estimation problems, by use of the \texttt{mle} command. We
 give here a few examples.
 
-To give a fiundation for the examples that follow, we start from a
+To give a foundation for the examples that follow, we start from a
 brief reminder on the basics of ML estimation.  Given a sample of size
 $T$, it is possible to define the density function\footnote{We are
-  imagining here that our data are a realisation of continuous random
-  variables. For discrete random variable, everything continues to
+  supposing here that our data are a realization of continuous random
+  variables. For discrete random variables, everything continues to
   apply by referring to the probability function instead of the
   density. In both cases, the distribution may be conditional on some
   exogenous variables.} for the whole sample, namely the joint
 distribution of all the observations $f(\mathbf{Y} ; \theta)$, where
 $\mathbf{Y} = \left\{ y_1, \ldots, y_T \right\}$.  Its shape is
-determined by a vector of unknown parameters $\theta$, which we assume
-is contained in a set $\Theta$, and which can be used to evaluate the
-probability of observing a sample with any given characteristic.
+determined by a $k$-vector of unknown parameters $\theta$, which we
+assume is contained in a set $\Theta$, and which can be used to
+evaluate the probability of observing a sample with any given
+characteristic.
 
 After observing the data, the values $\mathbf{Y}$ are given, and this
 function can be evaluated for any legitimate value of $\theta$. In
 this case, we prefer to call it the \emph{likelihood} function; the
 need for another name stems from the fact that this function works as
-a density when we use the $y_t$'s as arguments and $\theta$ as
+a density when we use the $y_t$s as arguments and $\theta$ as
 parameters, whereas in this context $\theta$ is taken as the
 function's argument, and the data $\mathbf{Y}$ only have the role of
 determining its shape.
@@ -39,12 +40,12 @@ of the maximum is unaffected if we consider the logarithm of the
 likelihood (or log-likelihood for short): this function will be
 denoted as
 \[
-  \LogLik(\theta) = \log  f(\mathbf{Y}; \theta) .
+  \LogLik(\theta) = \log  f(\mathbf{Y}; \theta)
 \] 
 The log-likelihood functions that gretl can handle are those when
 $\LogLik(\theta)$ can be written as
 \[
-  \LogLik(\theta) = \sum_{t=1}^T \ell_t(\theta) ,
+  \LogLik(\theta) = \sum_{t=1}^T \ell_t(\theta)
 \] 
 which is true in most cases of interest. The functions $\ell_t(\theta)$
 are called the log-likelihood contributions.
@@ -64,46 +65,70 @@ $\hat{\theta}(\mathbf{Y})$; in general, it need not be so. In these
 circumstances, the maximum can be found by means of numerical
 techniques. These often rely on the fact that the log-likelihood is a
 smooth function of $\theta$, and therefore on the maximum its partial
-derivatives should all be 0. The gradient of the log-likelihood is
-called the \emph{score} vector and is a function that enjoys many
-interesting statistical properties in its own right; it will be
-denoted here as $\mathbf{s}(\theta)$.
+derivatives should all be 0.  The \textsl{gradient vector}, or
+\textsl{score vector}, is a function that enjoys many interesting
+statistical properties in its own right; it will be denoted here as
+$\mathbf{g}(\theta)$.  It is a $k$-vector with typical element
+\[
+g_i(\theta) = \frac{\partial\LogLik(\theta)}{\partial\theta_i} 
+  = \sum_{t=1}^T \frac{\partial\ell_t(\theta)}{\partial\theta_i}
+\]
 
 Gradient-based methods can be shortly illustrated as follows:
 
 \begin{enumerate}
-\item pick a point $\theta_0 \in \Theta$ ;
-\item evaluate $\mathbf{s}(\theta_0)$;
-\item if $\mathbf{s}(\theta_0)$ is ``small'', stop. Otherwise, compute
-  a direction vector $d(\mathbf{s}(\theta_0))$;
-\item evaluate $\theta_1 = \theta_0 + d(\mathbf{s}(\theta_0))$ ;
-\item substitute $\theta_0$ with $\theta_1$ ;
+\item pick a point $\theta_0 \in \Theta$;
+\item evaluate $\mathbf{g}(\theta_0)$;
+\item if $\mathbf{g}(\theta_0)$ is ``small'', stop. Otherwise, compute
+  a direction vector $d(\mathbf{g}(\theta_0))$;
+\item evaluate $\theta_1 = \theta_0 + d(\mathbf{g}(\theta_0))$;
+\item substitute $\theta_0$ with $\theta_1$;
 \item restart from 2.
 \end{enumerate}
 
 Many algorithms of this kind exist; they basically differ from one
 another in the way they compute the direction vector
-$d(\mathbf{s}(\theta_0))$, to ensure that $\LogLik(\theta_1) >
+$d(\mathbf{g}(\theta_0))$, to ensure that $\LogLik(\theta_1) >
 \LogLik(\theta_0)$ (so that we eventually end up on the maximum).
 
 The method \app{gretl} uses to maximize the log-likelihood is a
 gradient-based algorithm known as the \textbf{BFGS} (Broyden,
 Fletcher, Goldfarb and Shanno) method. This technique is used in most
-econometric and statistical packages, as is well-established and
+econometric and statistical packages, as it is well-established and
 remarkably powerful. Clearly, in order to make this technique
 operational, it must be possible to compute the vector
-$\mathbf{s}(\theta)$ for any value of $\theta$. In some cases, the
-function $\mathbf{s}(\theta)$ can be written explicitly in term of
-$\mathbf{Y}$. At times, this is not possible or too difficult;
-therefore, the function $\mathbf{s}(\theta)$ is evaluated numerically.
+$\mathbf{g}(\theta)$ for any value of $\theta$. In some cases this
+vector can be written explicitly as a function of $\mathbf{Y}$. If
+this is not possible or too difficult the gradient may be evaluated
+numerically.
 
-The choice of the starting value $\theta_0$ is crucial in some contexts
+The choice of the starting value, $\theta_0$, is crucial in some contexts
 and inconsequential in others. In general, however, it is
 advisable to start the algorithm from ``sensible'' values whenever
 possible. If a consistent estimator is available, this is usually a
 safe and efficient choice: this ensures that in large samples the
 starting point will be likely close to $\hat{\theta}$ and convergence
 can be achieved in few iterations. 
+
+\subsection{Covariance matrix and standard errors}
+
+By default the covariance matrix of the parameter estimates is
+based on the Outer Product of the Gradient.  That is,
+\[
+\widehat{\mbox{Var}}_{\mbox{\scriptsize OPG}}(\hat{\theta}) =
+  \left(G'(\hat{\theta}) G(\hat{\theta}) \right)^{-1}
+\]
+where $G(\hat{\theta})$ is the $T \times k$ matrix of contributions to
+the gradient.  Two other options are available.  If the
+\verb|--hessian| flag is given, the covariance matrix is computed from
+a numerical approximation to the Hessian at convergence.  If the
+\verb|--robust| option is selected, the quasi-ML ``sandwich''
+estimator is used:
+\[
+\widehat{\mbox{Var}}_{\mbox{\scriptsize QML}}(\hat{\theta}) = H(\hat{\theta})^{-1}
+  G'(\hat{\theta}) G(\hat{\theta}) H(\hat{\theta})^{-1}
+\]
+where $H$ denotes the numerical approximation to the Hessian.
 
 \section{Gamma estimation}
 \label{sec:gamma}
@@ -114,7 +139,7 @@ function for each observation $x_t$ is
 \begin{equation}
   \label{eq:gammadens}
   f(x_t) = \frac{\alpha^p}{\Gamma(p)} x_t^{p-1} \exp\left({-\alpha
-      x_t}\right) .
+      x_t}\right)
 \end{equation}
 The log-likelihood for the entire sample can be written as the
 logarithm of the joint density of all the observations. Since these
@@ -124,7 +149,7 @@ individual densities, and hence its log is
   \label{eq:gammaloglik}
   \LogLik(\alpha, p) = \sum_{t=1}^T \log \left[ \frac{\alpha^p}{\Gamma(p)} x_t^{p-1} \exp\left({-\alpha
       x_t}\right) \right] = 
-      \sum_{t=1}^T \ell_t ,
+      \sum_{t=1}^T \ell_t
 \end{equation}
 where 
 \[
@@ -182,7 +207,7 @@ method-of-moments estimators of $p$ and $\alpha$ can be simply
 recovered from the sample mean $m$ and variance $V$: since it can be
 shown that
 \[
-  E(x_t) = p/\alpha \qquad  V(x_t) = p/\alpha^2 ,
+  E(x_t) = p/\alpha \qquad  V(x_t) = p/\alpha^2
 \]
 it follows that the following estimators 
 \begin{eqnarray*}
@@ -234,7 +259,7 @@ between firms, but also because two firms could be operating at a
 different efficiency level, despite being identical under all other
 respects. In this case we may write
 \[
-  C_i = C^*_i + u_i + v_i ,
+  C_i = C^*_i + u_i + v_i
 \]
 where $C_i$ is some variable cost indicator, $C_i^*$ is its
 ``theoretical'' value, $u_i$ is a zero-mean disturbance term and
@@ -257,7 +282,7 @@ of $\varepsilon_i$ has the form:
   f(\varepsilon_i) = 
    \sqrt{\frac{2}{\pi}} 
    \Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right)
-   \frac{1}{\sigma} \phi\left(\frac{\varepsilon_i}{\sigma}\right) ,
+   \frac{1}{\sigma} \phi\left(\frac{\varepsilon_i}{\sigma}\right)
 \end{equation}
 where $\Phi(\cdot)$ and $\phi(\cdot)$ are, respectively, the distribution and density
 function of the standard normal, $\sigma =
@@ -268,16 +293,16 @@ form (apart form an irrelevant constant)
 \[
   \ell_t = 
   \log\Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right) -
-  \left[ \log(\sigma) + \frac{\varepsilon_i^2}{2 \sigma^2} \right];
+  \left[ \log(\sigma) + \frac{\varepsilon_i^2}{2 \sigma^2} \right]
 \]
-therefore, a Cobb--Douglas cost function with stochastic frontier is the
+Therefore, a Cobb--Douglas cost function with stochastic frontier is the
 model described by the following equations: 
 \begin{eqnarray*}
   \log C_i & = & \log C^*_i + \varepsilon_i \\
   \log C^*_i & = & c + \sum_{j=1}^m \beta_j \log y_{ij} + \sum_{j=1}^n \alpha_j \log p_{ij} \\
   \varepsilon_i & = & u_i + v_i \\
   u_i & \sim & N(0,\sigma_u^2) \\
-  v_i & \sim & \left|N(0,\sigma_v^2)\right|  .
+  v_i & \sim & \left|N(0,\sigma_v^2)\right| 
 \end{eqnarray*}
 
 In most cases, one wants to ensure that the homogeneity of the cost
@@ -288,7 +313,7 @@ equation for $C^*_i$ can be rewritten as
 \begin{equation}
   \label{eq:CobbDouglasFrontier}
   \log C_i - \log p_{in}  = c + \sum_{j=1}^m \beta_j \log y_{ij} +
-  \sum_{j=2}^n \alpha_j (\log p_{ij} - \log p_{in})  + \varepsilon_i.
+  \sum_{j=2}^n \alpha_j (\log p_{ij} - \log p_{in})  + \varepsilon_i
 \end{equation}
 
 The above equation could be estimated by OLS, but it would suffer from
@@ -382,20 +407,20 @@ By means of the properties of conditional distributions, the joint
 density can be factorized as follows
 \[
   f(y_t, y_{t-1}, \ldots) = \left[ \prod_{t=1}^T f(y_t |F_{t-1})
-  \right] \cdot f(y_0) ;
+  \right] \cdot f(y_0)
 \]
-if we treat $y_0$ as fixed, then the term $f(y_0)$ does not depend on
+If we treat $y_0$ as fixed, then the term $f(y_0)$ does not depend on
 the unknown parameters, and therefore the conditional log-likelihood
 can then be written as the sum of the individual contributions as
 \begin{equation}
   \label{eq:garchloglik}
-  \LogLik(\mu,\omega,\alpha,\beta) = \sum_{t=1}^T \ell_t ,
+  \LogLik(\mu,\omega,\alpha,\beta) = \sum_{t=1}^T \ell_t
 \end{equation}
 where 
 \[
   \ell_t = \log \left[ \frac{1}{\sqrt{h_t}} \phi\left( \frac{y_t - \mu}{\sqrt{h_t}}
     \right) \right] = 
-    - \frac{1}{2} \left[ \log(h_t) + \frac{(y_t - \mu)^2}{h_t} \right] .
+    - \frac{1}{2} \left[ \log(h_t) + \frac{(y_t - \mu)^2}{h_t} \right]
 \]
 
 The following script shows a simple application of this technique,
@@ -433,7 +458,7 @@ derivative, namely
 \[
   \pder{\LogLik(\theta_1, \ldots, \theta_n)}{\theta_i} \simeq 
   \frac{\LogLik(\theta_1, \ldots, \theta_i + h, \ldots, \theta_n) -
-    \LogLik(\theta_1, \ldots, \theta_i - h, \ldots, \theta_n)}{2h} ,
+    \LogLik(\theta_1, \ldots, \theta_i - h, \ldots, \theta_n)}{2h}
 \]
 where $h$ is a small number. 
 
@@ -473,13 +498,13 @@ probability $\Phi(\beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t}) =
 \pi_t$.  The probability function for one observation can be written
 as
 \[
-  P(y_t) = \pi_t^{y_t} ( 1 -\pi_t )^{1-y_t} ;
+  P(y_t) = \pi_t^{y_t} ( 1 -\pi_t )^{1-y_t}
 \]
-since the observations are independent and identically distributed,
+Since the observations are independent and identically distributed,
 the log-likelihood is simply the sum of the individual
 contributions. Hence
 \[
-  \LogLik = \sum_{t=1}^T y_t \log(\pi_t) + (1 - y_t) \log(1 - \pi_t) .
+  \LogLik = \sum_{t=1}^T y_t \log(\pi_t) + (1 - y_t) \log(1 - \pi_t)
 \]
 The \texttt{--verbose} switch at the end of the \texttt{end mle}
 statement produces a detailed account of the iterations done by the
@@ -496,7 +521,7 @@ via the chain rule, and it is easy to see that
   \pder{\LogLik}{\pi_t} & = & \frac{y_t}{\pi_t} - \frac{1 - y_t}{1 -
     \pi_t} \\
   \pder{\pi_t}{\beta_i} & = & \phi(\beta_1 x_{1t} + \beta_2 x_{2t} +
-  \beta_3 x_{3t}) \cdot x_{it} .
+  \beta_3 x_{3t}) \cdot x_{it}
 \end{eqnarray*}
 
 The \texttt{mle} block in the above script can therefore be modified
