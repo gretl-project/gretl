@@ -43,11 +43,21 @@ void output_lang_file (void)
 
     /* functions in "genr" command */
     puts("<keyword-list _name = \"Genr-functions\" style = \"Function\"");
-    puts("  case-sensitive=\"TRUE\">");
+    puts("  case-sensitive=\"TRUE\" end-regex=\"(\">");
     for (i=1; i<T_IDENTITY; i++) {
 	printf(" <keyword>%s</keyword>\n", get_genr_func_word(i));
     }    
     puts("</keyword-list>\n");
+
+#if 0 /* not yet */
+    /* command option strings */
+    puts("<keyword-list _name = \"Options\" style = \"Data Type\" case-sensitive=\"TRUE\"");
+    puts("    beginning-regex=\"--\" end-regex=\"[ \\n]\">");
+    for (i=1; i<XX; i++) {
+	printf(" <keyword>%s</keyword>\n", XX);
+    }    
+    puts("</keyword-list>\n");
+#endif
 
     puts("<pattern-item _name = \"Internal-Variables\" style = \"Data Type\">");
     puts(" <regex>[$][$]?[a-zA-Z_][a-zA-Z0-9_]*</regex>");
