@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "libset.h"
+#include "usermat.h"
 
 #define PDEBUG 0
 
@@ -32,8 +33,6 @@ enum {
 /* for values that really want a non-negative integer */
 #define UNSET_INT -1
 #define is_unset(i) (i == UNSET_INT)
-
-#define INITVALS_MAX 20
 
 typedef struct set_vars_ set_vars;
 
@@ -78,7 +77,7 @@ struct set_vars_ {
     int gretl_msgs;             /* emitting non-error messages or not */
     char delim;                 /* delimiter for CSV data export */
     int longdigits;             /* digits for printing data in long form */
-    double *initvals;           /* for parameter initialization */
+    gretl_matrix *initvals;     /* for parameter initialization */
     struct robust_opts ropts;   /* robust standard error options */
     struct garch_opts gopts;    /* GARCH covariance matrix */
     struct bkbp_opts bkopts;    /* Baxter-King filter */
@@ -143,44 +142,12 @@ static void bhhh_opts_copy (struct bhhh_opts *opts)
     opts->maxiter = state->maxopts.maxiter;
 }
 
-static double *initvals_copy (double *ivals)
+static void print_initvals (const gretl_matrix *ivals, PRN *prn)
 {
-    int n;
-
     if (ivals == NULL) {
-	return NULL;
-    }
-
-    for (n=0; ivals[n] != NADBL; n++) {
-	if (n > INITVALS_MAX) {
-	    return NULL;
-	}
-    }
-
-    return copyvec(ivals, n);
-}
-
-static void print_initvals (double *ivals, PRN *prn)
-{
-    int i, n = 0;
-
-    if (ivals != NULL) {
-	for (n=0; ivals[n] != NADBL; n++) {
-	    if (n > INITVALS_MAX) {
-		n = 0;
-		break;
-	    }
-	}
-    }
-
-    if (n == 0) {
 	pputs(prn, " initvals = auto\n");
     } else {
-	pputs(prn, " initvals =");
-	for (i=0; i<n - 1; i++) {
-	    pprintf(prn, " %#.8g", ivals[i]);
-	}
-	pputc(prn, '\n');
+	gretl_matrix_print_to_prn(ivals, " initvals =", prn);
     }
 }
 
@@ -217,7 +184,7 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
     sv->gretl_msgs = state->gretl_msgs; 
     sv->delim = state->delim; 
     sv->longdigits = state->longdigits; 
-    sv->initvals = initvals_copy(state->initvals);
+    sv->initvals = gretl_matrix_copy(state->initvals);
 
     robust_opts_copy(&sv->ropts);
     garch_opts_copy(&sv->gopts);
@@ -519,24 +486,8 @@ int get_long_digits (void)
     return state->longdigits;
 }
 
-const double *get_init_vals (int *pn)
+const gretl_matrix *get_init_vals (void)
 {
-    int n;
-
-    if (state->initvals == NULL) {
-	*pn = 0;
-	return NULL;
-    }
-
-    for (n=0; state->initvals[n] != NADBL; n++) {
-	if (n > INITVALS_MAX) {
-	    *pn = 0;
-	    return NULL;
-	}
-    }
-
-    *pn = n;
-
     return state->initvals;
 }    
 
@@ -678,42 +629,28 @@ static int set_bkbp_periods (const char *s0, const char *s1,
     return 0;
 }
 
-static int set_initvals (const char *s)
+static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
 {
-    int i, n;
-    double *x = NULL;
+    gretl_matrix *m;
+    char mname[VNAMELEN];
     int err = 0;
 
     /* skip past "set initvals" */
     s += 12;
 
-    n = count_fields(s);
-
-    if (n == 0) {
-	free(state->initvals);
-	state->initvals = NULL;
-	return 0;
-    } else if (n > INITVALS_MAX) {
-	return E_DATA;
-    }
-
-    x = malloc((n + 1) * sizeof *x);
-    if (x == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<n; i++) {
-	x[i] = gretl_double_from_string(s, &s);
-	if (na(x[i])) {
+    if (sscanf(s, "%15s", mname) != 1) {
+	err = E_PARSE;
+    } else {
+	m = get_matrix_by_name(mname, pdinfo);
+	if (m == NULL) {
+	    pprintf(prn, _("'%s': no such matrix\n"), mname);
 	    err = E_DATA;
-	    break;
+	} else {
+	    state->initvals = gretl_matrix_copy(m);
+	    if (state->initvals == NULL) {
+		err = E_ALLOC;
+	    }
 	}
-    }
-
-    if (!err) {
-	free(state->initvals);
-	x[n] = NADBL; /* sentinel */
-	state->initvals = x;
     }
 
     return err;
@@ -848,7 +785,8 @@ static int display_settings (PRN *prn)
 #define boolean_off(s) (!strcmp(s, "off") || !strcmp(s, "0") || \
                         !strcmp(s, "false"))
 
-int execute_set_line (const char *line, PRN *prn)
+int execute_set_line (const char *line, const DATAINFO *pdinfo,
+		      PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
     int nw, err = E_PARSE;
@@ -868,7 +806,7 @@ int execute_set_line (const char *line, PRN *prn)
 	if (!strcmp(setobj, "plotfile")) {
 	    return parse_set_plotfile(line);
 	} else if (!strcmp(setobj, "initvals")) {
-	    return set_initvals(line);
+	    return set_initvals(line, pdinfo, prn);
 	}
     }
 
@@ -1209,7 +1147,7 @@ static void free_state (set_vars *sv)
     }
 
     if (sv->initvals != NULL) {
-	free(sv->initvals);
+	gretl_matrix_free(sv->initvals);
     }
 
     free(sv);

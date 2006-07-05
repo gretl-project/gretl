@@ -67,7 +67,7 @@ int get_bhhh_maxiter (void);
 int set_bhhh_toler (double tol);
 int set_bhhh_maxiter (int n);
 
-const double *get_init_vals (int *pn);
+const gretl_matrix *get_init_vals (void);
 
 int get_VAR_horizon (void);
 
@@ -95,7 +95,8 @@ int get_long_digits (void);
 
 char get_csv_delim (const DATAINFO *pdinfo);
 
-int execute_set_line (const char *line, PRN *prn);
+int execute_set_line (const char *line, const DATAINFO *pdinfo,
+		      PRN *prn);
 
 #endif /* LIBSET_H */
 

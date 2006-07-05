@@ -6644,7 +6644,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case SET:
-	err = execute_set_line(line, prn);
+	err = execute_set_line(line, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}

@@ -1526,7 +1526,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case SET:
-	err = execute_set_line(line, prn);
+	err = execute_set_line(line, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}
