@@ -22,6 +22,7 @@ lib/src/gretl_intl.c
 lib/src/gretl_list.c
 lib/src/gretl_matrix.c
 lib/src/gretl_model.c
+lib/src/gretl_panel.c
 lib/src/gretl_paths.c
 lib/src/gretl_prn.c
 lib/src/gretl_restrict.c
@@ -81,6 +82,8 @@ gui2/dialogs.c
 gui2/dlgutils.c
 gui2/filelists.c
 gui2/fileselect.c
+gui2/fncall.c
+gui2/fnsave.c
 gui2/font_filter.c
 gui2/gpt_control.c
 gui2/gpt_dialog.c
@@ -90,6 +93,7 @@ gui2/gretlwin32.c
 gui2/gtkfontselhack.c
 gui2/guiprint.c
 gui2/guiprint_common.c
+gui2/gui_recode.c
 gui2/gui_utils.c
 gui2/helpfiles.c
 gui2/lagpref.c
@@ -102,6 +106,7 @@ gui2/obsbutton.c
 gui2/selector.c
 gui2/series_view.c
 gui2/session.c
+gui2/session_xml.c
 gui2/settings.c
 gui2/ssheet.c
 gui2/textbuf.c
@@ -121,6 +126,7 @@ plugin/fiml.c
 plugin/fractals.c
 plugin/garch.c
 plugin/gnumeric_import.c
+plugin/gretlzip.c
 plugin/import_common.c
 plugin/johansen.c
 plugin/kernel.c
@@ -130,7 +136,6 @@ plugin/liml.c
 plugin/mailer.c
 plugin/midi_utils.c
 plugin/mp_ols.c
-plugin/panel_data.c
 plugin/pca.c
 plugin/poisson.c
 plugin/progress_bar.c

@@ -5467,6 +5467,26 @@ int latex_compile (char *texshort)
     return err;
 }
 
+#ifdef OSX_PKG
+
+#include <Files.h>
+#include <LSOpen.h>
+
+int osx_open_file (const char *path)
+{
+    FSRef *inRef;
+    int err;
+    
+    err = FSPathMakeRef(path, inRef, FALSE);
+    if (!err) {
+	err = LSOpenFSRef(inRef, NULL);
+    }
+
+    return err;
+}
+
+#endif /* OSX_PKG */
+
 static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
@@ -5513,7 +5533,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     err = latex_compile(texshort);
 
     if (err == LATEX_OK) {
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
 	if (!strncmp(latex, "pdf", 3)) {
 	    sprintf(tmp, "\"%s.pdf\"", texbase);
 	    if ((int) ShellExecute(NULL, "open", tmp, NULL, NULL, SW_SHOW) <= 32) {
@@ -5526,6 +5546,15 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 		DWORD dw = GetLastError();
 		win_show_error(dw);
 	    }
+	}
+#elif defined(OSX_PKG)
+	if (!strncmp(latex, "pdf", 3)) {
+	    sprintf(tmp, "\"%s.pdf\"", texbase);
+	} else {
+	    sprintf(tmp, "\"%s.dvi\"", texbase);
+	}
+	if (osx_open_file(tmp)) {
+	    errbox(_("Couldn't open %s"), tmp);
 	}
 #else
 	if (!strncmp(latex, "pdf", 3)) {

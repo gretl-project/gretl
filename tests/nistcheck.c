@@ -36,6 +36,7 @@
 
 #define MIN_DIGITS 4
 #define MP_CHECK_DIGITS 12
+#define MP_PRINT_DIGITS 15
 
 #ifdef USE_GMP
 # define LIBGRETLSTR "Standard libgretl:"
@@ -249,14 +250,17 @@ void get_difficulty_level (const char *line, char *s)
     }
 }
 
-#define mylog10(x) (log(x) / 2.302585092994046)
+#define mylog10(x) (log(x) / 2.3025850929940459)
 
 static double log_error (double q, double c, PRN *prn)
 {
-    double le;
+    double le = 0.0;
 
-    /* special: certval is inf.  Can;t really handle this? */
-    if (isinf(c)) {
+    if (q == c) {
+	le = 15.0;
+	pprintf(prn, "%10.3f\n", le);
+    } else if (isinf(c)) {
+	/* certval is inf: can't really handle this? */
 	le = -log(0);
 	pprintf(prn, "%10.3f (log abs error)\n", le);
     } else if (c == 0.0) {
@@ -689,15 +693,15 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 		sprintf(label, "B[%d] estimate", i);
 		pprintf(prn, " %-20s %#24.*g %#24.*g\n",
 			label,
-			MP_CHECK_DIGITS, certvals->coeff[i],
-			MP_CHECK_DIGITS, model.coeff[i]);
+			MP_PRINT_DIGITS, certvals->coeff[i],
+			MP_PRINT_DIGITS, model.coeff[i]);
 	    }
 
 	    if (!na(certvals->sderr[i])) {
 		pprintf(prn, " %-20s %#24.*g %#24.*g\n",
 			"(std. error)",
-			MP_CHECK_DIGITS, certvals->sderr[i],
-			MP_CHECK_DIGITS, model.sderr[i]);
+			MP_PRINT_DIGITS, certvals->sderr[i],
+			MP_PRINT_DIGITS, model.sderr[i]);
 	    }
 	}
 
@@ -708,17 +712,17 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 		" %-20s %#24.*g %#24.*g\n"
 		" %-20s %#24.*g %#24.*g\n", 
 		"standard error", 
-		MP_CHECK_DIGITS, certvals->sigma, 
-		MP_CHECK_DIGITS, model.sigma,
+		MP_PRINT_DIGITS, certvals->sigma, 
+		MP_PRINT_DIGITS, model.sigma,
 		"error sum of squares", 
-		MP_CHECK_DIGITS, certvals->ess, 
-		MP_CHECK_DIGITS, model.ess,
+		MP_PRINT_DIGITS, certvals->ess, 
+		MP_PRINT_DIGITS, model.ess,
 		"R-squared", 
-		MP_CHECK_DIGITS, certvals->rsq, 
-		MP_CHECK_DIGITS, model.rsq,
+		MP_PRINT_DIGITS, certvals->rsq, 
+		MP_PRINT_DIGITS, model.rsq,
 		"F", 
-		MP_CHECK_DIGITS, certvals->fstt, 
-		MP_CHECK_DIGITS, model.fstt);
+		MP_PRINT_DIGITS, certvals->fstt, 
+		MP_PRINT_DIGITS, model.fstt);
     }
 
     acc = get_accuracy(&model, certvals, prn);
@@ -956,6 +960,14 @@ static void nist_intro (PRN *prn)
 	  "the bottom you will see a summary of the results: if all is well "
 	  "there should be 0 values for \"data files missing\", \"unexpected "
 	  "errors\" and \"poor results\".\n\n");
+
+    pputs(prn, "The \"log relative error\" is defined as the negative of the "
+	  "base-10 logarithm of (|q - c| / |c|), where q denotes the result "
+	  "produced by gretl and c denotes the certified value.  It represents "
+	  "the number of correct digits in the gretl output.  For more details, "
+	  "see B. D. McCullough, \"Assessing the Reliability of "
+	  "Statistical Software: Part I\", The American Statistician, 52 "
+	  "(1998), pp. 358-366.\n\n");
 
 #ifdef USE_GMP
     pputs(prn, "Each test cases is run twice, once using the standard "
