@@ -278,29 +278,26 @@
 	      linkend="tab-path"/> per i valori predefiniti).</para>
 	</listitem>
 	<listitem><para>In qualsiasi directory immediatamente contenuta nella
-	    directory gretl dell'utente.</para></listitem> <listitem><para>Nel
-	  caso di un file di dati, la ricerca continua nella directory
-	  principale dei dati di <application>gretl</application>.  Nel caso di
-	  un file di comandi, la ricerca continua nella directory principale dei
-	  file di comandi. Si veda la <xref
-	      linkend="tab-path"/> per i valori predefiniti.
-	  <filename>PREFISSO</filename> indica la directory base scelta al
-	  momento dell'installazione di
-	  <application>gretl</application>.</para>
+            directory gretl dell'utente.</para>
+        </listitem>
+        <listitem><para>Nel caso di un file di dati, la ricerca continua nella
+            directory principale dei dati di <application>gretl</application>.
+            Nel caso di un file di comandi, la ricerca continua nella directory
+            principale dei file di comandi. Si veda la <xref
+              linkend="tab-path"/> per i valori predefiniti.
+            <filename>PREFISSO</filename> indica la directory base scelta al
+            momento dell'installazione di
+            <application>gretl</application>.</para>
 	</listitem>
 	<listitem><para>Nel caso dei file di dati, la ricerca continua in tutte
 	    le directory immediatamente contenute nella directory principale dei
-	    dati.
-	  </para>
+            dati.</para>
 	</listitem>
     </orderedlist>
 
     <table id="tab-path" frame="none">
       <title>Impostazioni predefinite dei percorsi</title>
-      <tgroup cols="3" style="allpara">
-	<colspec colwidth="120pt"/>
-	<colspec colwidth="160pt"/>
-	<colspec colwidth="160pt"/>
+      <tgroup cols="3">
 	<thead>
 	  <row>
 	    <entry>&nbsp;</entry>
