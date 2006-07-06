@@ -5534,7 +5534,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
     if (err == LATEX_OK) {
 #if defined(G_OS_WIN32)
 	if (!strncmp(latex, "pdf", 3)) {
-	    sprintf(tmp, "\"%s.pdf\"", texbase);
+	    sprintf(tmp, "%s.pdf", texbase);
 	    if ((int) ShellExecute(NULL, "open", tmp, NULL, NULL, SW_SHOW) <= 32) {
 		DWORD dw = GetLastError();
 		win_show_error(dw);
@@ -5548,9 +5548,9 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 	}
 #elif defined(OSX_PKG)
 	if (!strncmp(latex, "pdf", 3)) {
-	    sprintf(tmp, "\"%s.pdf\"", texbase);
+	    sprintf(tmp, "%s.pdf", texbase);
 	} else {
-	    sprintf(tmp, "\"%s.dvi\"", texbase);
+	    sprintf(tmp, "%s.dvi", texbase);
 	}
 	if (osx_open_file(tmp)) {
 	    errbox(_("Couldn't open %s"), tmp);
