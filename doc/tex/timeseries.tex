@@ -275,6 +275,53 @@ $1-\phi$ we get 7.38, which is not far from the ML estimate of 6.93.
 \end{center}
 \end{table}
 
+\subsection{Convergence and initialization}
+
+The numerical methods used to maximize the likelihood for ARMA models
+are not guaranteed to converge.  Whether or not convergence is
+achieved, and whether or not the true maximum of the likelihood
+function is attained, may depend on the starting values for the
+parameters.  \app{Gretl} employs one of the following two
+initialization mechanisms, depending on the specification of the model
+and the estimation method chosen.
+
+\begin{enumerate}
+\item Estimate a pure AR model by Least Squares (nonlinear least
+  squares if the model requires it, otherwise OLS).  Set the AR
+  parameter values based on this regression and set the MA
+  parameters to a small positive value (0.0001).
+\item The Hannan--Rissanen method: First estimate an autoregressive
+  model by OLS and save the residuals.  Then in a second OLS pass add
+  appropriate lags of the first-round residuals to the model, to
+  obtain estimates of the MA parameters.
+\end{enumerate}
+
+To see the details of the ARMA estimation procedure, add the
+\verb|--verbose| option to the command.  This prints a notice of the
+initialization method used, as well as the parameter values and
+log-likelihood at each iteration.
+
+Besides the build-in initialization mechanisms, the user has the
+option of specifying a set of starting values manually.  This is done
+via the \cmd{set} command: the first argument should be the keyword
+\texttt{initvals} and the second should be the name of a pre-specified
+matrix containing starting values.  For example
+\begin{code}
+  matrix start = { 0, 0.85, 0.34 }
+  set initvals start
+  arma 1 1 ; y
+\end{code}
+The specified matrix should have just as many parameters as the model:
+in the example above there are three parameters, since the model
+implicitly includes a constant.  The constant, if present, is always
+given first; otherwise the order in which the parameters are
+expected is the same as the order of specification in the \cmd{arma}
+or \cmd{arima} command.  In the example the constant is set to zero,
+$\phi_1$ to 0.85, and $\theta_1$ to 0.34.
+
+You can get \app{gretl} to revert to automatic initialization via
+the command \cmd{set initvals auto}.
+
 \subsection{Estimation via X-12-ARIMA}
 
 As an alternative to estimating ARMA models using ``native'' code,

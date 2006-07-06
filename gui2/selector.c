@@ -126,7 +126,7 @@ struct _selector {
 #define select_lags_lower(c) (MODEL_CODE(c)) 
 #define select_lags_depvar(c) (MODEL_CODE(c) && c != ARMA) 
 
-static int default_var;
+static int default_var = -1;
 static int want_seasonals;
 static int default_order;
 static int vartrend;
@@ -222,7 +222,7 @@ static int lags_button_relevant (selector *sr, int locus)
 
 void clear_selector (void)
 {
-    default_var = 0;
+    default_var = -1;
     default_order = 0;
     vartrend = 0;
 
@@ -252,11 +252,17 @@ void clear_selector (void)
 
 static int selector_get_depvar_number (selector *sr)
 {
-    int ynum = 0;
+    int ynum = -1;
 
     if (sr != NULL && sr->depvar != NULL) {
-	ynum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), 
-						 "data"));
+	const char *txt = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
+
+	if (txt != NULL && *txt != '\0') {
+	    ynum = varindex(datainfo, txt);
+	    if (ynum == datainfo->v) {
+		ynum = -1;
+	    }
+	}
     }
 
     return ynum;
@@ -584,15 +590,17 @@ static void remove_as_indep_var (selector *sr, gint v)
     GtkTreeView *view = GTK_TREE_VIEW(sr->rlvars);
     GtkTreeModel *model = gtk_tree_view_get_model(view);
     GtkTreeIter iter;
+    gboolean ok;
     gint xnum;
 
     if (gtk_tree_model_get_iter_first(model, &iter)) {
 	do {
+	    ok = TRUE;
 	    gtk_tree_model_get(model, &iter, 0, &xnum, -1);
 	    if (xnum == v) {
-		gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
+		ok = gtk_list_store_remove(GTK_LIST_STORE(model), &iter);
 	    }
-        } while (gtk_tree_model_iter_next(model, &iter));
+        } while (ok && gtk_tree_model_iter_next(model, &iter));
     }
 }
 
@@ -684,21 +692,23 @@ static void dependent_var_cleanup (selector *sr, int newy)
 {
     int oldy = selector_get_depvar_number(sr);
 
-    if (oldy > 0) {
-	remove_as_indep_var(sr, oldy);
-	if (oldy != newy) {
-	    y_x_lags_enabled = 0;
-	    y_w_lags_enabled = 0;
+    if (oldy != newy) {
+	if (oldy > 0) {
+	    remove_as_indep_var(sr, oldy); /* lags business */
 	}
+	y_x_lags_enabled = 0;
+	y_w_lags_enabled = 0;
+	remove_as_indep_var(sr, newy);
     }
-    remove_as_indep_var(sr, newy);
 }
 
 static void set_dependent_var_from_active (selector *sr)
 {
     gint v = sr->active_var;
 
-    if (sr->depvar == NULL) return;
+    if (sr->depvar == NULL) {
+	return;
+    }
 
     /* models: if we select foo as regressand, remove it from the list
        of regressors if need be; also remove lags associated with the
@@ -709,7 +719,6 @@ static void set_dependent_var_from_active (selector *sr)
     }
 
     gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[v]);
-    g_object_set_data(G_OBJECT(sr->depvar), "data", GINT_TO_POINTER(v));
 
     if (select_lags_depvar(sr->code)) {
 	maybe_insert_depvar_lags(sr, v, 0);
@@ -729,7 +738,6 @@ static void real_set_dependent_var (GtkTreeModel *model, GtkTreePath *path,
     }
 
     gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
-    g_object_set_data(G_OBJECT(sr->depvar), "data", GINT_TO_POINTER(v));
 
     if (select_lags_depvar(sr->code)) {
 	maybe_insert_depvar_lags(sr, v, 0);
@@ -1138,7 +1146,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(sr->default_check),
 				     FALSE);
-	default_var = 0;
+	default_var = -1;
     }
 
     if (sr->code == GR_DUMMY || sr->code == GR_3D) {
@@ -1366,7 +1374,13 @@ static char *get_lagpref_string (int v, char context)
     char *s = NULL;
 
     if (v == 0) {
-	return g_strdup(" 0");
+	if (context == LAG_Y_X || context == LAG_Y_W) {
+	    /* const as dependent: empty lags string */
+	    return g_strdup("");
+	} else {
+	    /* const as indep var: just return itself */
+	    return g_strdup(" 0");
+	}
     }
 
     get_lag_preference(v, &lmin, &lmax, &laglist, context);
@@ -1720,15 +1734,12 @@ static void vec_get_spinner_data (selector *sr, int *order)
 static void parse_depvar_widget (selector *sr, char *endbit, char **dvlags,
 				 char **idvlags)
 {
-    const gchar *txt = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
+    int ynum = selector_get_depvar_number(sr);
 
-    txt = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
-
-    if (txt == NULL || *txt == 0) {
+    if (ynum < 0) {
 	topslot_empty(sr->code);
 	sr->error = 1;
     } else {
-	int ynum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), "data"));
 	char numstr[8];
 
 	if (sr->code == GR_XY || sr->code == GR_IMP) {
@@ -1785,7 +1796,7 @@ static void construct_cmdlist (selector *sr)
     if (sr->cmdlist == NULL) {
 	return;
     }
-    sr->cmdlist[0] = 0;
+    *sr->cmdlist = '\0';
 
     /* deal with content of "extra" widgets */
     if (sr->code == ARMA || sr->code == GARCH) {
@@ -2144,7 +2155,7 @@ static void maybe_activate_depvar_lags (GtkWidget *w, selector *sr)
     }
 }
 
-/* returns 1 if a variable is pre-inserted as dependent, 0 otherwise */
+/* returns ID number of variable pre-inserted as dependent, or -1 */
 
 static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
 				 int preselect)
@@ -2175,10 +2186,8 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     g_signal_connect(G_OBJECT(sr->depvar), "changed",
 		     G_CALLBACK(maybe_activate_depvar_lags), sr);
 
-    if (yvar) {
+    if (yvar >= 0) {
         gtk_entry_set_text(GTK_ENTRY(sr->depvar), datainfo->varname[yvar]);
-        g_object_set_data(G_OBJECT(sr->depvar), "data",
-                          GINT_TO_POINTER(yvar));
     }
 
     gtk_box_pack_start(GTK_BOX(depvar_hbox), sr->depvar, FALSE, FALSE, 0);
@@ -4620,7 +4629,7 @@ static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 
     llen = sep = 0;
 
-    if (ynum == 0 && nv[0] == 0 && nv[1] == 0) {
+    if (ynum < 0 && nv[0] == 0 && nv[1] == 0) {
 	/* no vars to deal with */
 	errbox("Please add some variables to the model first");
     } else {

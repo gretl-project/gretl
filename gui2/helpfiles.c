@@ -58,6 +58,7 @@ static help_head **en_cli_heads, **en_gui_heads;
 
 static windata_t *helpwin (int cli, int en);
 static void real_do_help (int hcode, int pos, int cli, int en);
+static void en_text_cmdref (gpointer p, guint u, GtkWidget *w);
 
 /* searching stuff */
 static void find_in_text (GtkWidget *widget, gpointer data);
@@ -459,12 +460,10 @@ static void free_help_heads (help_head **heads, int nh)
     free(heads);
 }
 
-static int add_topic_to_head (help_head *head, int j, const char *word,
-			      char *label, int gui)
+static void add_topic_to_head (help_head *head, int j, const char *word,
+			       char *label, int gui)
 {
-    int hnum, err = 0;
-
-    hnum = help_topic_number(word, gui);
+    int hnum = help_topic_number(word, gui);
 
     if (hnum > 0) {
 	head->topics[j] = hnum;
@@ -472,17 +471,20 @@ static int add_topic_to_head (help_head *head, int j, const char *word,
 	    head->topicnames[j] = label;
 	}
     } else {
-	fprintf(stderr, "helpfile: add_topic_to_head: hnum=%d for word='%s'\n", 
-		hnum, word);
-	err = 1;
+	fprintf(stderr, "helpfile error: word='%s' not recognized\n", word);
+#if 0
+	head->topics[j] = 0;
+	head->topicnames[j] = NULL;
+#endif
+	if (label != NULL) {
+	    free(label);
+	}
     }
 
 #if HDEBUG
     fprintf(stderr, "add_topic_to_head: topic %d: word = %s: hnum = %d\n", 
 	    j+1, word, hnum);
 #endif
-
-    return err;
 }
 
 static int 
@@ -558,7 +560,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 	/* heading with at least one topic */
 	heads[nh2] = help_head_new(tmp, nt, gui);
 	if (heads[nh2] == NULL) {
-	    fprintf(stderr, "healp_head_new() failed\n");
+	    fprintf(stderr, "help_head_new() failed\n");
 	    err = 1;
 	}
 
@@ -582,12 +584,7 @@ get_helpfile_structure (help_head ***pheads, int gui, const char *fname)
 	    }
 
 	    if (!err) {
-		err = add_topic_to_head(heads[nh2], j, tmp, label, gui);
-		if (err) {
-		    if (label != NULL) {
-			free(label);
-		    }
-		}
+		add_topic_to_head(heads[nh2], j, tmp, label, gui);
 	    }
 	}
 
@@ -647,7 +644,7 @@ static int real_helpfile_init (int gui, int en)
     err = get_helpfile_structure(&heads, gui, helpfile);
 
     if (err) {
-	errbox(_("help file %s is not accessible\n"), helpfile);
+	errbox(_("help file %s is not up to date\n"), helpfile);
     } else {
 	if (gui) {
 	    if (en) {
@@ -823,10 +820,10 @@ static void add_en_help_item (windata_t *hwin, int cli)
 
 static void add_help_topics (windata_t *hwin, int cli, int en)
 {
-    int i, j;
     GtkItemFactoryEntry hitem;
     const gchar *mpath = N_("/_Topics");
     help_head **hds;
+    int i, j;
 
     if (en) {
 	hds = (cli)? en_cli_heads : en_gui_heads;
@@ -834,18 +831,20 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
 	hds = (cli)? cli_heads : gui_heads;
     }
 
-    hitem.accelerator = NULL;
+    /* Are there any topics to add? */
+    if (hds == NULL) {
+	return;
+    }
 
-    /* See if there are any topics to add */
-    if (hds == NULL) return;
+    hitem.accelerator = NULL;
 
 #ifndef OLD_GTK
     if (cli) {
 	/* Add general index as "topic" */
 	hitem.callback_action = 0; 
 	hitem.item_type = NULL;
-	hitem.path = g_strdup_printf("%s/%s", mpath, _("Index"));
-	hitem.callback = plain_text_cmdref;
+	hitem.path = g_strdup_printf("%s/%s", mpath, (en)? "Index" : _("Index"));
+	hitem.callback = (en)? en_text_cmdref : plain_text_cmdref;
 	gtk_item_factory_create_item(hwin->ifac, &hitem, 
 				     GINT_TO_POINTER(0), 
 				     1);
@@ -855,12 +854,15 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
 
     /* put the topics under the menu heading */
     for (i=0; hds[i] != NULL; i++) {
+	const char *headname = (en)? hds[i]->name : _(hds[i]->name);
 
-	if (hds[i]->ntopics == 0) continue;
+	if (hds[i]->ntopics == 0) {
+	    continue;
+	}
 
 	hitem.callback_action = 0; 
 	hitem.item_type = "<Branch>";
-	hitem.path = g_strdup_printf("%s/%s", mpath, _(hds[i]->name));
+	hitem.path = g_strdup_printf("%s/%s", mpath, headname);
 	hitem.callback = NULL; 
 
 	gtk_item_factory_create_item(hwin->ifac, &hitem, NULL, 1);
@@ -879,11 +881,11 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
 	    if (hds[i]->topicnames != NULL) {
 		hitem.path = 
 		    g_strdup_printf("%s/%s/%s", 
-				    mpath, _(hds[i]->name), 
+				    mpath, headname, 
 				    hds[i]->topicnames[j]);
 #if HDEBUG
 		fprintf(stderr, "(1) Built help topic path from\n"
-			" '%s', '%s' and '%s'\n", mpath, _(hds[i]->name),
+			" '%s', '%s' and '%s'\n", mpath, headname),
 			hds[i]->topicnames[j]);
 #endif
 	    } else {
@@ -891,11 +893,11 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
 		    /* a regular gretl command */
 		    hitem.path = 
 			g_strdup_printf("%s/%s/%s", 
-					mpath, _(hds[i]->name), 
+					mpath, headname, 
 					gretl_command_word(tnum));
 #if HDEBUG
 		    fprintf(stderr, "(2) Built help topic path from\n"
-			    " '%s', '%s' and '%s'\n", mpath, _(hds[i]->name),
+			    " '%s', '%s' and '%s'\n", mpath, headname),
 			    gretl_command_word(tnum));
 #endif
 		} else if (!cli) {
@@ -905,10 +907,10 @@ static void add_help_topics (windata_t *hwin, int cli, int en)
 		    if (gstr != NULL) {
 			hitem.path = 
 			    g_strdup_printf("%s/%s/%s", 
-					    mpath, _(hds[i]->name), gstr);
+					    mpath, headname, gstr);
 #if HDEBUG
 			fprintf(stderr, "(3) Built help topic path from\n"
-				" '%s', '%s' and '%s'\n", mpath, _(hds[i]->name),
+				" '%s', '%s' and '%s'\n", mpath, headname,
 				gstr);
 #endif
 		    } else {
@@ -1078,12 +1080,18 @@ void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
     if (cmdnum > 0) {
 	pos = cli_pos_from_cmd(cmdnum, en);
 	if (pos < 0 && !en && translated_helpfile == 1) {
+	    /* no translated entry: fall back on English */
 	    en = 1;
 	    pos = cli_pos_from_cmd(cmdnum, en);
 	}
     }
 
     real_do_help(cmdnum, pos, cli, en);
+} 
+
+static void en_text_cmdref (gpointer p, guint u, GtkWidget *w)
+{
+    real_do_help(0, 0, 1, 1);
 } 
 
 #ifndef OLD_GTK
