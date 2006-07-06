@@ -5486,15 +5486,27 @@ int osx_open_file (const char *path)
 
 int osx_open_url (const char *url)
 {
+    CFStringRef s;
     CFURLRef inURL;
     int err;
-
-    inURL = CFURLCreateWithString(NULL, url, NULL);
-    if (inURL == NULL) {
-	err = 1;
+    
+    fprintf(stderr, "url='%s'\n", url);
+    
+    s = CFStringCreateWithBytes(NULL, url, strlen(url), 
+                                kCFStringEncodingASCII, 
+				0);
+    if (s == NULL) {
+        err = 1;
     } else {
-	err = LSOpenCFURLRef(inURL, NULL);
-	CFRelease(inURL);
+        inURL = CFURLCreateWithString(NULL, s, NULL);
+        if (inURL == NULL) {
+	    err = 1;
+        } else {
+            fprintf(stderr, "inURL=%p\n", inURL);
+	    err = LSOpenCFURLRef(inURL, NULL);
+	    CFRelease(inURL);
+	}
+	CFRelease(s);
     }
 
     return err;
