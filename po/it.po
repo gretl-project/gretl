@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.5.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-05 16:31-0400\n"
-"PO-Revision-Date: 2006-07-06 15:37+0200\n"
+"PO-Revision-Date: 2006-07-07 00:01+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -5887,15 +5887,15 @@ msgstr "/Utilità/T_erminale di gretl"
 
 #: gui/gretl.c:287 gui2/gretl.c:340
 msgid "/Utilities/Function package editor"
-msgstr "Utilità/Editor pacchetti funzioni"
+msgstr "/Utilità/Editor pacchetti funzioni"
 
 #: gui/gretl.c:288 gui2/gretl.c:341
 msgid "/Utilities/Function package editor/existing package"
-msgstr "Utilità/Editor pacchetti funzioni/Pacchetto esistente"
+msgstr "/Utilità/Editor pacchetti funzioni/Pacchetto esistente"
 
 #: gui/gretl.c:290 gui2/gretl.c:343
 msgid "/Utilities/Function package editor/new package"
-msgstr "Utilità/Editor pacchetti funzioni/Nuovo pacchetto"
+msgstr "/Utilità/Editor pacchetti funzioni/Nuovo pacchetto"
 
 #: gui/gretl.c:293 gui2/gretl.c:346
 msgid "/Utilities/Start GNU R"
