@@ -269,6 +269,51 @@ $1-\phi$ si ottiene 7.38, che non è molto distante dalla stima ML di 6.93.
 \end{center}
 \end{table}
 
+\subsection{Convergenza e inizializzazione}
+
+I metodi numerici usati per massimizzare la verosimiglianza per i modelli ARMA
+non sempre convergono. I valori iniziali dei parametri possono influire sul
+raggiungimento della convergenza e sul raggiungimento del vero massimo della
+funzione di verosimiglianza. \app{Gretl} utilizza uno dei due seguenti
+meccanismi per inizializzare i parametri, a seconda della specificazione del
+modello e del metodo di stima scelto.
+
+\begin{enumerate}
+\item Stima di un un modello AR puro usando i minimi quadrati (non lineari, se
+  il modello lo richiede, altrimenti OLS). Impostazione del parametro AR secondo
+  i risultati di questa regressione e impostazione dei parametri MA a un valore
+  positivo ma piccolo (0.0001).
+\item Il metodo di Hannan--Rissanen: per prima cosa, stima di un modello
+  autoregressivo usando OLS e salvataggio dei residui. Quindi stima di un
+  secondo modello OLS, aggiungendo appropriati ritardi dei residui della prima
+  regressione, per ottenere le stime dei parametri MA.
+\end{enumerate}
+
+Per vedere i dettagli della procedura di stima ARMA, basta aggiungere l'opzione
+\verb|--verbose| al comando. Verrà mostrato un messaggio sul metodo di
+inizializzazione scelto, oltre che i valori dei parametri e della
+log-verosimiglianza ad ogni iterazione.
+
+Oltre a questi meccanismi automatici di inizializzazione, l'utente può
+specificare manualmente un insieme di valori di partenza, attraverso il comando
+\cmd{set}: il primo argomento deve essere la parola chiave
+\texttt{initvals}, mentre il secondo dev'essere il nome di una matrice
+pre-specificata che contiene i valori iniziali. Ad esempio
+\begin{code}
+  matrix start = { 0, 0.85, 0.34 }
+  set initvals start
+  arma 1 1 ; y
+\end{code}
+La matrice specificata deve avere un numero di parametri pari a quello del
+modello: nell'esempio precedente ci sono tre parametri, visto che il modello
+contiene implicitamente una costante. La costante, se presente, è sempre
+indicata per prima, altrimenti, l'ordine in cui vanno indicati i parametri è lo
+stesso della specificazione nel comando \cmd{arma} o \cmd{arima}. Nell'esempio,
+la costante è impostata a zero, $\phi_1$ a 0.85 e $\theta_1$ a 0.34.
+
+Per far tornare \app{gretl} ad usare l'inizializzazione automatica, basta
+eseguire il comando \cmd{set initvals auto}.
+
 \subsection{Stima con X-12-ARIMA}
 
 In alternativa alla stima di modelli ARMA usando le proprie funzionalità
