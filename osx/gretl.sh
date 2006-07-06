@@ -1,16 +1,22 @@
 #!/bin/sh
 
-export GDK_USE_XFT=1
+# if no fonts are available, do
+#   sudo fc-cache
+# before running this program
 
 PREFIX=`pwd | sed s+/bin$++`
 
 # echo "PREFIX=$PREFIX" > ~/where
 
+if [ -f ~/.profile ] ; then
+  . ~/.profile
+fi  
+
 GRETL_HOME="$PREFIX/share/gretl/"
 export GRETL_HOME
 GTK_EXE_PREFIX="$PREFIX"
 export GTK_EXE_PREFIX
-GDK_PIXBUF_MODULEDIR="$PREFIX/lib/gtk-2.0/2.0.0/loaders"
+GDK_PIXBUF_MODULEDIR="$PREFIX/lib/gtk-2.0/2.4.0/loaders"
 export GDK_PIXBUF_MODULEDIR
 PANGO_RC_FILE="$PREFIX/etc/pangorc"
 export PANGO_RC_FILE
@@ -19,14 +25,6 @@ export GTK_IM_MODULE_FILE
 DYLD_LIBRARY_PATH="$PREFIX/lib"
 export DYLD_LIBRARY_PATH
 
-# strenuous attempt to get fonts right!
-XFT_CONFIG="$PREFIX/etc/XftConfig"
-export XFT_CONFIG
-echo "dir \"$PREFIX/fonts\"" > "$XFT_CONFIG"
-echo "match any family == \"serif\" edit family += \"Luxi Serif\";" >> "$XFT_CONFIG"
-echo "match any family == \"sans\"  edit family += \"Luxi Sans\";"  >> "$XFT_CONFIG"
-echo "match any family == \"mono\"  edit family += \"Luxi Mono\";"  >> "$XFT_CONFIG"
-
 # location of gnuplot help file
 GNUHELP=$PREFIX/share/gnuplot/4.0/gnuplot.gih
 export GNUHELP
@@ -34,10 +32,10 @@ export GNUHELP
 GNUPLOT_DRIVER_DIR=$PREFIX/libexec/gnuplot/4.0
 export GNUPLOT_DRIVER_DIR
 # path for fonts for GD fonts (check this)
-GDFONTPATH=$PREFIX/share/fonts:/usr/X11R6/lib/X11/fonts/TTF
+GDFONTPATH=$PREFIX/fonts:/usr/X11R6/lib/X11/fonts/TTF
 export GDFONTPATH
 # default font for gnuplot PNG
-GNUPLOT_DEFAULT_GDFONT=$PREFIX/share/fonts/Vera.ttf
+GNUPLOT_DEFAULT_GDFONT=$PREFIX/fonts/Vera.ttf
 export GNUPLOT_DEFAULT_GDFONT
 
 export PATH=$PREFIX/bin:$PATH
