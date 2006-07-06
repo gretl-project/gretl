@@ -430,12 +430,12 @@
          <effect>non include l'intercetta</effect>
         </option>
         <option>
-	  <flag>--x-12-arima</flag>
-	  <effect>usa X-12-ARIMA per la stima</effect>
-        </option>
-        <option>
 	  <flag>--conditional</flag>
 	  <effect>usa la massima verosimiglianza condizionale</effect>
+        </option>
+        <option>
+	  <flag>--x-12-arima</flag>
+	  <effect>usa X-12-ARIMA per la stima</effect>
         </option>
       </options>
       <examples>
@@ -488,8 +488,7 @@
         un modello ARMA(2,1):
       </para>
       <code context="cli">
-	arma 2 1 ; y
-      </code>
+	arma 2 1 ; y</code>
       
       <para context="gui">
 	Stima un modello ARMA, con o senza regressori esogeni. Se l'ordine di
@@ -597,8 +596,7 @@
 	  quote="true">lista-variabili</repl>:</para>
 
       <code>
-	salario (GENERE=1) salario (GENERE=0)
-      </code>
+	salario (GENERE=1) salario (GENERE=0)</code>
 
       <para>Alcuni dettagli del funzionamento dei boxplot di gretl possono
         essere controllati attraverso un file testuale chiamato
@@ -835,8 +833,7 @@
                   0      c = 0  c = 3       c = 0  c = 1
                   1      c = 1  c = 3       c = 1  c = 2
                   2      c = 2  c = 3       c = 2  c = 3
-                 ---------------------------------------
-      </code>
+                 ---------------------------------------</code>
  
       <para>
 	Si veda anche il comando <cmdref targ="vecm"/>.
@@ -1335,7 +1332,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Aggiungi variabili/Differenze</menu-path>
+      <menu-path>/Aggiungi/Differenze</menu-path>
     </gui-access>
 
   </command>
@@ -1974,8 +1971,7 @@
         esempio, per ottenere la varianza condizionale è possibile scrivere: 
         </para>
       <code context="cli">
-        genr ht = $h
-      </code>
+        genr ht = $h</code>
 
     </description>
 
@@ -2190,8 +2186,7 @@
 	genr p1 = pvalue(z, 2.2)
 	genr p2 = pvalue(X, 3, 5.67)
 	genr c1 = critical(t, 20, 0.025)
-	genr c2 = critical(F, 4, 48, 0.05)
-      </code>
+	genr c2 = critical(F, 4, 48, 0.05)</code>
 
       <para>
 	Le funzioni relative alla densità normale standard funzionano nel modo
@@ -2282,6 +2277,11 @@
 	<li>
 	  <para>
 	   <lit>$bic</lit>: criterio di informazione bayesiana di Schwarz
+	  </para>
+	</li>
+	<li>
+	  <para>
+	   <lit>$hqc</lit>: criterio di Hannan&ndash;Quinn
 	  </para>
 	</li>
 	<li>
@@ -3351,7 +3351,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Aggiungi variabili/Ritardi delle variabili selezionate</menu-path>
+      <menu-path>/Aggiungi/Ritardi delle variabili selezionate</menu-path>
     </gui-access>
 
   </command>
@@ -3419,12 +3419,11 @@
       </para>
       <code>
 	ld_x = log(x) - log(x(-1))
-	ld_y = log(y) - log(y(-1))
-      </code>
+	ld_y = log(y) - log(y(-1))</code>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Aggiungi variabili/Differenze logaritmiche</menu-path>
+      <menu-path>/Aggiungi/Differenze logaritmiche</menu-path>
     </gui-access>
 
   </command>
@@ -3712,8 +3711,7 @@
         la variabile logit come
       </para>
       <code>
-	genr lgt_p = log(p/(1 - p))
-      </code>
+	genr lgt_p = log(p/(1 - p))</code>
       <para>
         e usare questa come variabile dipendente in una regressione OLS.
         Si veda Ramanathan, capitolo 12.
@@ -3739,14 +3737,14 @@
 	Calcola il logaritmo naturale di ognuna delle variabili
         della <repl>lista-variabili</repl> e lo salva in una nuova
         variabile col prefisso <lit>l_</lit>, ossia una
-        <quote>elle</quote> seguita da un trattino basso.
+        <quote>elle</quote> seguita da un trattino basso. Ad esempio
         <cmd>logs x y</cmd> crea le nuove variabili <lit>l_x</lit> =
         ln(<lit>x</lit>) e <lit>l_y</lit> = ln(<lit>y</lit>).
       </para>
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Aggiungi variabili/Logaritmi delle variabili selezionate</menu-path>
+      <menu-path>/Aggiungi/Logaritmi delle variabili selezionate</menu-path>
     </gui-access>
 
   </command>
@@ -4031,8 +4029,7 @@
 
       <code>
 	loglik = X*log(p) + (1-X)*log(1-p)
-	deriv p = X/p - (1-X)/(1-p)
-      </code>
+	deriv p = X/p - (1-X)/(1-p)</code>
 
       <para>
 	La prima riga specifica la funzione di log-verosimiglianza, mentre
@@ -4047,8 +4044,7 @@
       </para>
 
       <code>
-	genr p = 0.5
-      </code>
+	genr p = 0.5</code>
 
       <para>
 	Per impostazione predefinita, gli errori standard sono basati sul
@@ -4090,8 +4086,7 @@
       <code>
        mle loglik = X*log(p) + (1-X)*log(1-p)
        deriv p = X/p - (1-X)/(1-p)
-       end mle
-      </code>
+       end mle</code>
 
       <para>
         La prima riga specifica la funzione di log-verosimiglianza: inizia con
@@ -4108,8 +4103,7 @@
       <code>
        mle loglik = X*log(p) + (1-X)*log(1-p)
        params p
-       end mle
-      </code>
+       end mle</code>
       <para>
        e in questo caso la derivata verrebbe calcolata numericamente.
       </para>
@@ -4254,14 +4248,29 @@
 	Calcola le stime OLS per il modello indicato usando aritmetica
         in virgola mobile a precisione multipla. Questo comando è
         disponibile solo se <program>gretl</program> è compilato con il
-        supporto per la libreria Gnu Multiple Precision (GMP).
+        supporto per la libreria Gnu Multiple Precision (GMP). Per impostazione
+        predefinita, vengono usati 256 bit di precisione nei calcoli, ma è
+        possibile aumentare questo valore usando la variabile d'ambiente
+        <lit>GRETL_MP_BITS</lit>.  Ad esempio, usando l'interprete dei comandi
+        bash, è possibile aumentare la precisione a 1024 bit eseguendo il
+        comando seguente prima di avviare gretl
       </para>
+      <code>
+	export GRETL_MP_BITS=1024</code>
 
       <para context="cli">
-        È possibile recuperare diverse variabili interne con il comando
-        <cmdref targ="genr"/>, a condizione che <cmd>genr</cmd> venga invocato
-        immediatamente dopo questo comando.
+	Per questo comando è disponibile un'opzione abbastanza speciale (utile
+        soprattutto a scopo di test): se la lista <repl>variabili-indipendeti</repl>
+        è seguita da un punto e virgola, e da un'ulteriore lista di numeri,
+        questi numeri vengono interpretati come potenze di <repl>x</repl> da aggiungere
+        alla regressione, dove <repl>x</repl> è l'ultima variabile della lista
+        <repl>variabili-indipendeti</repl>. Questi termini addizionali vengono
+        calcolati e memorizzati in precisione multipla. Nell'esempio seguente,
+	<lit>y</lit> è regredita su <lit>x</lit> e sulla seconda, terza e quarta
+        potenza di <lit>x</lit>:
       </para>
+      <code context="cli">
+	mpols y 0 x ; 2 3 4</code>
     </description>
 
     <gui-access>
@@ -4379,8 +4388,7 @@
       <code>
 	genr alpha = 1
 	genr beta = 1
-	genr gamma = 1
-      </code>
+	genr gamma = 1</code>
 
       <para>Per ulteriori dettagli sulla stima NLS si veda la
 	<guideref targ="chap-nls"/>.</para>
@@ -4420,8 +4428,7 @@
 	7   deriv alfa = 1
 	8   deriv beta = Y^gamma
 	9   deriv gamma = beta * Y^gamma * log(Y)
-	10  end nls --vcv
-      </code>
+	10  end nls --vcv</code>
 
       <para>
 	Spesso è comodo inizializzare i parametri con riferimento a un
@@ -5216,8 +5223,7 @@
 	ols 1 0 2 3
 	genr b = $coeff(2)
 	genr se_b = $stderr(2)
-	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
-      </code>
+	printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b</code>
 
       <para>
  	Le prossime righe mostrano l'uso delle funzioni varname e date, che
@@ -5227,8 +5233,7 @@
  
        <code>
  	printf "Il nome della variabile %d è %s\n", i, varname(i)
- 	printf "La data dell'osservazione %d è %s\n", j, date(j)
-       </code>
+ 	printf "La data dell'osservazione %d è %s\n", j, date(j)</code>
  
        <para>
 	La lunghezza massima di una stringa di formato è di 127
@@ -5785,8 +5790,7 @@
 
       <code>
 	genr signx1 = x1 - median(x1)
-	runs signx1
-      </code>
+	runs signx1</code>
     </description>
 
     <gui-access>
@@ -5925,7 +5929,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Aggiungi variabili/Differenze stagionali</menu-path>
+      <menu-path>/Aggiungi/Differenze stagionali</menu-path>
     </gui-access>
 
   </command>
@@ -6573,7 +6577,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Aggiungi variabili/Quadrati delle variabili selezionate</menu-path>
+      <menu-path>/Aggiungi/Quadrati delle variabili selezionate</menu-path>
     </gui-access>
 
   </command>
