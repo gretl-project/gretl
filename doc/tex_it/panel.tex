@@ -60,7 +60,7 @@ $\varepsilon_{it}$\footnote{È possibile individuare un'altra componente di
 
 Gli $\alpha_i$ sono quindi trattati come parametri fissi
 (intercette $y$ specifiche per le unità) da stimare. Questo può essere fatto
-includendo una variabile dummy per ogni unità cross section (e sopprimendo la
+includendo una variabile dummy per ogni unità cross-section (e sopprimendo la
 costante comune), oppure è possibile procedere sottraendo le medie di gruppo da
 ognuna delle variabili e stimando un modello senza costante. Nell'ultimo caso la
 variabile dipendente si può scrivere come
@@ -82,7 +82,7 @@ dalla media, possiamo ottenere le stime degli $\alpha_i$ usando
 
 Questi due metodi (usare le variabili dummy o usare le differenze dalla media)
 sono numericamente equivalenti, e \app{gretl} sceglie tra i
-due a seconda del numero di unità cross section e di variabili indipendenti
+due a seconda del numero di unità cross-section e di variabili indipendenti
 (cercando di minimizzare l'uso delle memoria).
 
 Le stime $\hat{\alpha}_i$ non vengono mostrate fra i risultati del modello
@@ -95,7 +95,7 @@ basta andare nel menù ``Salva'' della finestra del modello e scegliere
 si vuole dare alla nuova serie.
 
 Per il modello a \textsl{effetti casuali} possiamo scrivere $u_{it} = v_i +
-\varepsilon_{it}$, so the model becomes
+\varepsilon_{it}$, così che il modello diventa
 \begin{equation}
 \label{eq:RE}
 y_{it} = X_{it}\beta + v_i + \varepsilon_{it}
@@ -130,7 +130,7 @@ per l'unità $i$ nel vettore $\mathbf{y}_i$ e scriverlo come
 \label{eq:REvec}
 \mathbf{y}_{i} = \mathbf{X}_{i} \beta + \mathbf{u}_i
 \end{equation}
-Il vettore $\mathbf{u}_i$, che include tutti i disturbi per l'individuo $i$, ha
+Il vettore $\mathbf{u}_i$, che include tutti i disturbi per l'unità $i$, ha
 una matrice di varianza--covarianza pari a
 \begin{equation}
 \label{eq:CovMatUnitI}
@@ -170,7 +170,7 @@ Per implementare l'approccio GLS occorre calcolare $\theta$, che a sua volta
 richiede una stima delle varianze $\sigma^2_{\varepsilon}$ e
 $\sigma^2_v$ (spesso chiamate rispettivamente varianza ``within'', interna, e
 varianza ``between'', esterna, in quanto la prima si riferisce alla variazione
-all'interno di ogni unità cross section, mentre la seconda alla variazione tra
+all'interno di ogni unità cross-section, mentre la seconda alla variazione tra
 le unità). In letteratura sono stati suggeriti vari modi di stimare queste
 grandezze (si veda Baltagi 1995); \app{gretl} usa il metodo di Swamy e Arora
 (1972): $\sigma^2_\varepsilon$ è stimata dalla varianza residua dal modello a
@@ -263,7 +263,7 @@ Tuttavia, assieme alle stime dei parametri dei modelli panel vengono mostrati
 alcuni test specifici dei modelli panel.
 
 Quando si stima un modello usando gli \textsl{effetti fissi}, si ottiene
-automaticamente un test $F$ per l'ipotesi nulla che le unità cross section
+automaticamente un test $F$ per l'ipotesi nulla che le unità cross-section
 abbiano un'intercetta comune, ossia che tutti gli $\alpha_i$ siano uguali, nel
 qual caso il modello ``pooled'' (\ref{eq:pooled}), con una colonna di valori 1
 inclusa nella matrice $X$, è adeguato.
@@ -277,7 +277,7 @@ non viene rifiutata, si può concludere che il modello ``pooled'' è adeguato.
 
 Il test di Hausman verifica la consistenza delle stime GLS. L'ipotesi nulla è
 che queste stime siano consistenti, ossia che sia soddisfatto il requisito di
-ortogonalità di $v_i$ and the $X_i$. Il test è basato su una misura, $H$, della
+ortogonalità di $v_i$ e di $X_i$. Il test è basato su una misura, $H$, della
 ``distanza'' tra le stime a effetti fissi e quelle a effetti casuali,
 costruita in modo che sotto l'ipotesi nulla essa segue una distribuzione
 $\chi^2$ con gradi di libertà pari al numero di regressori che variano nel tempo

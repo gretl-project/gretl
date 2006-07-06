@@ -59,7 +59,7 @@ $z_t$, il modello diventerebbe
 La formulazione (\ref{eq:arma-with-z}) ha il vantaggio che $\gamma$
 può essere immediatamente interpretato come il vettore degli effetti marginali
 delle variabili $z_t$ sulla media condizionale di $y_t$.  E aggiungendo i
-ritardi di $z_t$ a questa specificazione è possibile stimare dei \emph{Modelli
+ritardi di $z_t$ a questa specificazione è possibile stimare dei \emph{modelli
 di funzione di trasferimento} (che generalizzano gli ARMA aggiungendo gli effetti
 delle variabili esogene distribuiti nel tempo).
 
@@ -101,8 +101,8 @@ al comando l'opzione \texttt{--conditional}, come in
   arma p q ; y --conditional
 \end{code}
 
-Generalizzando questo principio alla stima di
-(\ref{eq:arma-with-x}) o (\ref{eq:arma-with-z}), si ottiene che
+Generalizzando questo principio alla stima della
+(\ref{eq:arma-with-x}) o della (\ref{eq:arma-with-z}), si ottiene che
 \begin{code}
   arma p q ; y const x1 x2
 \end{code}
@@ -113,7 +113,9 @@ stimerebbe il modello seguente:
   \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
 \]
 dove in questo caso $x_t \beta = \beta_0 + x_{t,1} \beta_1 +
-x_{t,2} \beta_2$. Usando l'opzione \texttt{--conditional}, come in
+x_{t,2} \beta_2$. 
+
+Usando l'opzione \texttt{--conditional}, come in
 \begin{code}
   arma p q ; y const x1 x2 --conditional
 \end{code}
@@ -130,8 +132,8 @@ ossia
  \label{armax-general}
   \phi(L) \left(y_t - x_t \beta\right) = z_t \gamma  + \theta(L) \epsilon_t ;
 \end{equation}
-Sarebbe auspicabile che il comando \cmd{arma} fosse generalizzato in modo che
-l'utente potesse specificare se, per ogni metodo di stima, certe variabili
+Una possibile generalizzazione del comando \cmd{arma} permetterebbe all'utente di
+specificare se, per ogni metodo di stima, certe variabili
 esogene vanno trattate come $x_t$ o come $z_t$, ma non siamo ancora a questo
 livello (né lo è la maggior parte degli altri pacchetti software).
 
@@ -322,8 +324,8 @@ interne, \app{gretl} offre l'opzione di usare il programma esterno
 Bureau.
 
 \app{Gretl} include un modulo che si interfaccia con \app{X-12-ARIMA}:
-traduce i comandi \cmd{arma} dalla sintassi vista sopra in una forma riconoscita
-da \app{X-12-ARIMA}, esegue il programma, e recupera i risultati per ulteriori
+traduce i comandi \cmd{arma} dalla sintassi vista sopra in una forma riconosciuta
+da \app{X-12-ARIMA}, esegue il programma e recupera i risultati per ulteriori
 analisi in \app{gretl}. Per usare questa funzionalità, occore installare
 \app{X-12-ARIMA} separatamente: sul sito di \app{gretl},
 \url{http://gretl.sourceforge.net/}, sono disponibili pacchetti per MS Windows e
@@ -335,15 +337,12 @@ Per invocare \app{X-12-ARIMA} come motore di stima, basta usare l'opzione
   arma p q ; y --x-12-arima
 \end{code}
 Come accade con le stime effettuate da \app{gretl}, per impostazione predefinita
-viene usata la massima verosimiglianza esatta, ma c'è l'opzione di usare la
+viene usata la massima verosimiglianza esatta, ma è possibile usare la
 massima verosimiglianza condizionale con l'opzione \verb|--conditional|.
 Comunque, occorre notare che quando si usa \app{X-12-ARIMA} in modalità di
 massima verosimiglianza condizionale, quanto detto sopra a proposito dei
-trattamenti della media del processo $y_t$ \textit{non si applica}.
-% TODO: the ``variant``???
-% the comments above regarding the variant treatments of the
-% mean of the process $y_t$ \textit{do not apply}.  That is, when you
-Ossia, quando si usa \app{X-12-ARIMA} il modello stimato è
+diversi modi di trattare la media del processo $y_t$ \textit{non si applica}.
+Ossia, quando si usa \app{X-12-ARIMA} l'equazione stimata è la
 (\ref{eq:arma-with-x}), a prescindere dal fatto che la stima sia condotta con la
 massima verosimiglianza esatta o condizionale.
 
@@ -357,9 +356,9 @@ del processo ``fuori dal campione'' su un certo orizzonte temporale.
 
 \app{Gretl} supporta le previsioni basate su modelli ARMA usando il metodo
 illustrato da Box e Jenkins (1976)\footnote{Si veda in particolare il loro
-``Programma 4'' alle pagine 505 e seguenti.}, L'algoritmo di Box e Jenkins
+``Programma 4'' alle pagine 505 e seguenti.}. L'algoritmo di Box e Jenkins
 produce un insieme di coefficienti AR integrati che tiene conto delle operazioni
-di differenziazione sulla variabile dipendente (stagionali e/o non stagionali)
+di differenziazione (stagionale e/o non stagionale) sulla variabile dipendente
 in un contesto ARIMA, rendendo così possibile una previsione per il livello
 della variabile originale. Per contrasto, se si differenzia una serie
 manualmente e poi si applica ARMA alla serie differenziata, le previsioni
