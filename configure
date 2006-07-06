@@ -25933,6 +25933,11 @@ fi
 if test "$highlight" = "yes" && \
    test "$have_gtksourceview" = "no" && \
    test "$have_libxml2" = "yes" ; then
+     cat >>confdefs.h <<\_ACEOF
+#define USE_GTKSOURCEVIEW 1
+_ACEOF
+
+     use_gtksourceview="yes"
 
 
 
@@ -26035,24 +26040,11 @@ if test `eval echo '${'$as_ac_var'}'` = yes; then
 #define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
  have_gnu_regex="yes"
-     cat >>confdefs.h <<\_ACEOF
-#define USE_GTKSOURCEVIEW 1
-_ACEOF
-
-     have_gnu_regex="yes"
-     use_gtksourceview="yes"
 else
-  use_gtksourceview="no"
+  have_gnu_regex="no"
 fi
 done
 
-fi
-
-if test "$highlight" = "yes" && \
-   test "$have_gtksourceview" = "no" && \
-   test "$have_libxml2" = "yes" && \
-   test "$use_gtksourceview" = "no" ; then
-   use_gtksourceview="yes"
 fi
 
 if test "$build_gui" = "yes" && test "$have_gtk" = "no" ; then

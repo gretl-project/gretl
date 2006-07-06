@@ -474,19 +474,11 @@ dnl Now try using supplied gtksourceview if preconditions are met
 if test "$highlight" = "yes" && \
    test "$have_gtksourceview" = "no" && \
    test "$have_libxml2" = "yes" ; then
-     AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
      AC_DEFINE(USE_GTKSOURCEVIEW)
-     have_gnu_regex="yes"
-     use_gtksourceview="yes",
-     use_gtksourceview="no")
-fi
-
-dnl OS X special (we'll use supplied regex)
-if test "$highlight" = "yes" && \
-   test "$have_gtksourceview" = "no" && \
-   test "$have_libxml2" = "yes" && \
-   test "$use_gtksourceview" = "no" ; then
-   use_gtksourceview="yes"
+     use_gtksourceview="yes"
+     AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
+     have_gnu_regex="yes",
+     have_gnu_regex="no")
 fi
 
 dnl Or fall back on GTK 1.2
