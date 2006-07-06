@@ -1,5 +1,5 @@
 /* driver for NIST nonlinear regression tests
-   Allin Cottrell, originally May 2003
+   Allin Cottrell, May 2003
 */
 
 #include <stdio.h>
@@ -9,7 +9,9 @@
 #include <float.h>
 
 #include <getopt.h>
+
 #include <gretl/libgretl.h>
+#include <gretl/libset.h>
 
 #define MAXCOEFF   12
 #define MAX_DIGITS 15
@@ -38,8 +40,8 @@ double **Z;
 
 int verbose;
 int use_derivs = 0;
-int avg_coeff_min = 0;
-int avg_sd_min = 0;
+double avg_coeff_min = 0.0;
+double avg_sd_min = 0.0;
 int n_ok = 0;
 int n_fail = 0;
 int total_iters = 0;
@@ -53,8 +55,8 @@ int ok_sderrs = 0;
 
 int n_analytic = 0;
 
-int worst_coeff_acc = 20;
-int worst_sderr_acc = 20;
+double worst_coeff_acc = 20.0;
+double worst_sderr_acc = 20.0;
 char worst_coeff_name[16];
 char worst_sderr_name[16];
 
@@ -208,71 +210,51 @@ const char *rat43_derivs[] = {
 
 static int print_derivs (char *line, PRN *prn)
 {
-    int i, err = 0;
     const char **derivs = NULL;
+    int i, err = 0;
 
-    if (strcmp(tester.datname, "Misra1a") == 0) {
+    if (!strcmp(tester.datname, "Misra1a")) {
 	derivs = misra1a_derivs;
-    }
-    else if (strcmp(tester.datname, "Misra1b") == 0) {
+    } else if (!strcmp(tester.datname, "Misra1b")) {
 	derivs = misra1b_derivs;
-    }
-    else if (strcmp(tester.datname, "Misra1c") == 0) {
+    } else if (!strcmp(tester.datname, "Misra1c")) {
 	derivs = misra1c_derivs;
-    }
-    else if (strcmp(tester.datname, "Misra1d") == 0) {
+    } else if (!strcmp(tester.datname, "Misra1d")) {
 	derivs = misra1d_derivs;
-    }
-    else if (strcmp(tester.datname, "DanWood") == 0) {
+    } else if (!strcmp(tester.datname, "DanWood")) {
 	derivs = danwood_derivs;
-    }    
-    else if (strcmp(tester.datname, "Hahn1") == 0 ||
-	     strcmp(tester.datname, "Thurber") == 0) {
+    } else if (!strcmp(tester.datname, "Hahn1") ||
+	       !strcmp(tester.datname, "Thurber")) {
 	derivs = hahn_derivs;
-    }    
-    else if (strcmp(tester.datname, "Nelson") == 0) {
+    } else if (!strcmp(tester.datname, "Nelson")) {
 	derivs = nelson_derivs;
-    }
-    else if (strncmp(tester.datname, "Lanczos", 7) == 0) {
+    } else if (!strncmp(tester.datname, "Lanczos", 7)) {
 	derivs = lanczos_derivs;
-    }
-    else if (strncmp(tester.datname, "BoxBOD", 6) == 0) {
+    } else if (!strncmp(tester.datname, "BoxBOD", 6)) {
 	derivs = boxbod_derivs;
-    }
-    else if (strncmp(tester.datname, "MGH09", 5) == 0) {
+    } else if (!strncmp(tester.datname, "MGH09", 5)) {
 	derivs = mgh09_derivs;
-    }    
-    else if (strncmp(tester.datname, "MGH10", 5) == 0) {
+    } else if (!strncmp(tester.datname, "MGH10", 5)) {
 	derivs = mgh10_derivs;
-    }
-    else if (strncmp(tester.datname, "MGH17", 5) == 0) {
+    } else if (!strncmp(tester.datname, "MGH17", 5)) {
 	derivs = mgh17_derivs;
-    }   
-    else if (strncmp(tester.datname, "Chwirut", 7) == 0) {
+    } else if (!strncmp(tester.datname, "Chwirut", 7)) {
 	derivs = chwirut_derivs;
-    }   
-    else if (strncmp(tester.datname, "Kirby", 5) == 0) {
+    } else if (!strncmp(tester.datname, "Kirby", 5)) {
 	derivs = kirby_derivs;
-    }  
-    else if (strncmp(tester.datname, "Eckerle", 7) == 0) {
+    } else if (!strncmp(tester.datname, "Eckerle", 7)) {
 	derivs = eckerle_derivs;
-    } 
-    else if (strncmp(tester.datname, "Gauss", 5) == 0) {
+    } else if (!strncmp(tester.datname, "Gauss", 5)) {
 	derivs = gauss_derivs;
-    } 
-    else if (strcmp(tester.datname, "ENSO") == 0) {
+    } else if (!strcmp(tester.datname, "ENSO")) {
 	derivs = enso_derivs;
-    } 
-    else if (strcmp(tester.datname, "Bennett5") == 0) {
+    } else if (!strcmp(tester.datname, "Bennett5")) {
 	derivs = bennett_derivs;
-    }
-    else if (strcmp(tester.datname, "Roszman1") == 0) {
+    } else if (!strcmp(tester.datname, "Roszman1")) {
 	derivs = roszman_derivs;
-    }
-    else if (strcmp(tester.datname, "Rat42") == 0) {
+    } else if (!strcmp(tester.datname, "Rat42")) {
 	derivs = rat42_derivs;
-    } 
-    else if (strcmp(tester.datname, "Rat43") == 0) {
+    } else if (!strcmp(tester.datname, "Rat43")) {
 	derivs = rat43_derivs;
     }
 
@@ -281,8 +263,11 @@ static int print_derivs (char *line, PRN *prn)
 	fprintf(stderr, "%s: using analytical derivs\n", tester.datname);
 	for (i=0; i<tester.nparam; i++) {
 	    sprintf(line, "deriv %s = %s", tester.coeffs[i].name, derivs[i]);
-	    if (verbose) printf("%s\n", line);
-	    err = nls_parse_line(NLS, line, (const double **) Z, datainfo, NULL);
+	    if (verbose) {
+		printf("%s\n", line);
+	    }
+	    err = nls_parse_line(NLS, line, (const double **) Z, 
+				 datainfo, prn);
 	    if (err) {
 		errmsg(err, prn);
 		break;
@@ -303,10 +288,14 @@ static void missing (const char *what)
 
 static int is_blank (const char *s)
 {
-    if (s == NULL) return 1;
+    if (s == NULL) {
+	return 1;
+    }
 
     while (*s) {
-	if (!isspace(*s)) return 0;
+	if (!isspace(*s)) {
+	    return 0;
+	}
 	s++;
     }
 
@@ -315,11 +304,13 @@ static int is_blank (const char *s)
 
 static int get_id (const char *s)
 {
-    if (sscanf(s, "%s", tester.datname) != 1)
+    if (sscanf(s, "%s", tester.datname) != 1) {
 	return 1;
+    }
 
-    if (verbose)
+    if (verbose) {
 	printf("Identified %s\n", tester.datname);
+    }
 
     return 0;
 }
@@ -328,8 +319,12 @@ static int get_nvars (const char *s)
 {
     int nv;
 
-    if (sscanf(s, " %d", &nv) != 1) return 1;
+    if (sscanf(s, " %d", &nv) != 1) {
+	return 1;
+    }
+
     tester.nvars = nv + 1;
+
     return 0;
 }
 
@@ -337,12 +332,16 @@ static void tail_strip (char *s)
 {
     size_t i, n = strlen(s);
 
-    if (n == 0) return;
+    if (n == 0) {
+	return;
+    }
 
     for (i=n-1; i>0; i--) {
-	if (isspace(s[i]) || s[i] == '\r')
+	if (isspace(s[i]) || s[i] == '\r') {
 	    s[i] = 0;
-	else break;
+	} else {
+	    break;
+	}
     }
 }
 
@@ -350,19 +349,29 @@ static int parse_model_line (char *s)
 {
     char *p = s;
 
-    if (is_blank(s)) return 0;
+    if (is_blank(s)) {
+	return 0;
+    }
 
-    if (strstr(s, "pi = 3")) return 0;
+    if (strstr(s, "pi = 3")) {
+	return 0;
+    }
 
     while (*p) {
-	if (*p == '[') *p = '(';
-	else if (*p == ']') *p = ')';
+	if (*p == '[') {
+	    *p = '(';
+	} else if (*p == ']') {
+	    *p = ')';
+	}
 	p++;
     }
 
     while (*s) {
-	if (isspace(*s)) s++;
-	else break;
+	if (isspace(*s)) {
+	    s++;
+	} else {
+	    break;
+	}
     }
 
     strcat(tester.model_spec, s);
@@ -375,10 +384,13 @@ static void trim_error (char *s)
     size_t len = strlen(s);
     char *p = strstr(s, "  +  e");
 
-    if (p != NULL) *p = 0;
+    if (p != NULL) {
+	*p = 0;
+    }
 
-    if (len > 4 && strncmp(s + len - 4, " + e", 4) == 0)
-	s[len-4] = 0;
+    if (len > 4 && strncmp(s + len - 4, " + e", 4) == 0) {
+	s[len - 4] = 0;
+    }
 }
 
 static int read_data (FILE *fp)
@@ -400,8 +412,7 @@ static int read_data (FILE *fp)
     strcpy(datainfo->varname[1], "y");
     if (tester.nvars == 2) {
 	strcpy(datainfo->varname[2], "x");
-    }
-    else if (tester.nvars == 3) {
+    } else if (tester.nvars == 3) {
 	strcpy(datainfo->varname[2], "x1");
 	strcpy(datainfo->varname[3], "x2");
     }	
@@ -412,8 +423,7 @@ static int read_data (FILE *fp)
 	    Z[2][n] = x1;
 	    Z[3][n] = x2;
 	    n++;
-	}
-	else if (tester.nvars == 2 && sscanf(line, "%lf %lf", &y, &x1) == 2) {
+	} else if (tester.nvars == 2 && sscanf(line, "%lf %lf", &y, &x1) == 2) {
 	    Z[1][n] = y;
 	    Z[2][n] = x1;
 	    n++;
@@ -445,8 +455,12 @@ static int read_params (FILE *fp)
 	    blank_count++;
 	    continue;
 	}
-	if (strstr(line, "Start")) continue;
-	if (blank_count > 1) break;
+	if (strstr(line, "Start")) {
+	    continue;
+	}
+	if (blank_count > 1) {
+	    break;
+	}
 	if (sscanf(line, "%7s = %lf %lf %lf %lf", 
 		   tester.coeffs[i].name, 
 		   &tester.coeffs[i].s1, &tester.coeffs[i].s2, 
@@ -477,18 +491,24 @@ static int read_model_lines (const char *s, FILE *fp)
     int err = 0;
     int blank_count = 0;
     
-    if (verbose) printf("%s\n", s);
+    if (verbose) {
+	printf("%s\n", s);
+    }
     
     while (fgets(line, sizeof line, fp) && !err) {
 	tail_strip(line);
-	if (is_blank(line)) blank_count++;
+	if (is_blank(line)) {
+	    blank_count++;
+	}
 	if (blank_count == 0) {
-	    if (verbose) printf("%s\n", line);
-	}
-	else if (blank_count == 1) {
+	    if (verbose) {
+		printf("%s\n", line);
+	    }
+	} else if (blank_count == 1) {
 	    err = parse_model_line(line);
+	} else {
+	    break;
 	}
-	else break;
     }
 
     trim_error(tester.model_spec);
@@ -541,8 +561,7 @@ static int read_nist_nls_data (const char *fname)
 	if (strstr(line, "Dataset Name:")) {
 	    err = get_id(line + 13);
 	    if (!err) got_name = 1;
-	}
-	else if (strstr(line, "Number of Observations:")) {
+	} else if (strstr(line, "Number of Observations:")) {
 	    if (sscanf(line + 24, "%d", &tester.nobs) != 1) {
 		err = 1;
 	    } else {
@@ -554,33 +573,34 @@ static int read_nist_nls_data (const char *fname)
 		    err = 1;
 		}
 	    }
-	}
-	else if (strncmp(line, "Model:", 6) == 0) {
+	} else if (strncmp(line, "Model:", 6) == 0) {
 	    err = read_model_lines(line, fp);
 	    if (!err) got_model = 1;
-	}
-	else if (strstr(line, "Starting") && strstr(line, "Certified")) {
+	} else if (strstr(line, "Starting") && strstr(line, "Certified")) {
 	    err = read_params(fp);
-	}
-	else if (strncmp(line, "Data:", 5) == 0) {
+	} else if (strncmp(line, "Data:", 5) == 0) {
 	    if (got_data < 0) {
 		got_data = 0;
 	    } else {
 		err = read_data(fp);
 		if (!err) got_data = 1;
 	    }
-	}
-	else if (strstr(line, "Predictor")) {
+	} else if (strstr(line, "Predictor")) {
 	    err = get_nvars(line);
-	}
-	else if (strstr(line, "evel of Diffic")) {
+	} else if (strstr(line, "evel of Diffic")) {
 	    print_grade(line);
 	}
     }
 
-    if (!got_name) missing("dataset identifier");
-    if (!got_model) missing("model specification");
-    if (tester.nparam == 0) missing("parameter values");
+    if (!got_name) {
+	missing("dataset identifier");
+    }
+    if (!got_model) {
+	missing("model specification");
+    }
+    if (tester.nparam == 0) {
+	missing("parameter values");
+    }
 
     if (got_data <= 0) {
 	missing("input data");
@@ -589,15 +609,15 @@ static int read_nist_nls_data (const char *fname)
     }
 
     fclose(fp);
+
     return err;
 }
 
-static int set_tolerance (char *line)
+static void set_tolerance (void)
 {
-    if (toler == 0.0) return 0;
-
-    sprintf(line, "genr toler = %g", toler);
-    return generate(line, &Z, datainfo, OPT_NONE);
+    if (toler != 0.0) {
+	set_nls_toler(toler); /* libset.c */
+    }
 }
 
 static int generate_params (char *line, int round, PRN *prn)
@@ -607,16 +627,17 @@ static int generate_params (char *line, int round, PRN *prn)
 
     printf("Initialization %d:\n", round);
 
-    for (i=0; i<tester.nparam; i++) {
+    for (i=0; i<tester.nparam && !err; i++) {
 	x = (round == 1)? tester.coeffs[i].s1 : tester.coeffs[i].s2;
 	sprintf(line, "genr %s = %g", tester.coeffs[i].name, x);
-	if (verbose) printf("%s\n", line);
-	err = generate(line, &Z, datainfo, OPT_NONE);
+	if (verbose) {
+	    printf("%s\n", line);
+	}
+	err = generate(line, &Z, datainfo, OPT_NONE, NULL);
 	if (err) {
 	    fprintf(stderr, "%s: ERROR: genr failed in round %d\n '%s'\n", 
 		    tester.datname, round, line);
 	    errmsg(err, prn);
-	    break;
 	}
     }
 
@@ -643,6 +664,8 @@ static void catch_arctan (void)
 {
     char *p;
 
+    /* convert "arctan" to "atan" for gretl */
+
     if ((p = strstr(tester.model_spec, "arctan"))) {
 	*p++ = ' ';
 	*p++ = ' ';
@@ -650,48 +673,62 @@ static void catch_arctan (void)
     }
 }
 
-static int doubles_differ (const char *v1, const char *v2)
-{
-    if ((!strcmp(v1, "inf") || !strcmp(v1, "nan")) && 
-	!strncmp(v2, "-999", 4)) {
-	return 0;
-    } else {
-	double diff = fabs(fabs(atof(v1)) - fabs(atof(v2)));
-
-	return diff > DBL_EPSILON;
-    }
-}
-
-static void print_result_error (int digits, 
-			 const char *v1, const char *v2, 
-			 const char *str)
-{
-    if (verbose) {
-	int missing = !strncmp(v2, "-999", 4);
-
-	printf("\nDisagreement at %d significant digits over %s:\n"
-	       " Certified value = %s, libgretl value = %s\n",
-	       digits, str, v1, (missing)? "NA" : v2);
-    }
-}
-
 int find_coeff_number (const MODEL *pmod, const char *param)
 {
     int i;
 
-    if (pmod->params == NULL) return -1;
+    if (pmod->params == NULL) {
+	return -1;
+    }
 
     for (i=0; i<pmod->ncoeff; i++) {
-	if (strcmp(param, pmod->params[i+1]) == 0) return i;
+	if (!strcmp(param, pmod->params[i+1])) {
+	    return i;
+	}
     }
     
     return -1;
 }
 
-static void estimates_ok (MODEL *pmod)
+#define mylog10(x) (log(x) / 2.3025850929940459)
+
+static double log_error (double q, double c, PRN *prn)
 {
+    double le = 0.0;
+
+    if (q == c) {
+	le = 15.0;
+	pprintf(prn, "%10.3f\n", le);
+    } else if (isinf(c)) {
+	/* certval is inf: can't really handle this? */
+	le = -log(0);
+	pprintf(prn, "%10.3f (log abs error)\n", le);
+    } else if (c == 0.0) {
+	le = -mylog10(fabs(q));
+	pprintf(prn, "%10.3f (log abs error)\n", le);
+    } else {
+	le = -mylog10(fabs(q - c) / fabs(c));
+	pprintf(prn, "%10.3f\n", le);
+    }
+
+    if (isnan(le)) {
+	pprintf(prn, "q = %g, c = %g\n", q, c);
+    }
+
+    return le;
+}
+
+static 
+void get_accuracy (MODEL *pmod, double *coeff_acc, double *sderr_acc,
+		   PRN *prn)
+{
+    char label[32];
+    double b_lemin = 32.0;
+    double s_lemin = 32.0;
+    double le;
     int i, j;
-    char v1[48], v2[48];
+
+    pprintf(prn, "\nstatistic   log relative error\n\n");
 
     for (i=0; i<pmod->ncoeff; i++) {
 	j = find_coeff_number(pmod, tester.coeffs[i].name);
@@ -700,97 +737,39 @@ static void estimates_ok (MODEL *pmod)
 		    tester.datname, tester.coeffs[i].name);
 	    continue;
 	}
-	/* coefficients */
+	sprintf(label, "%s", tester.coeffs[i].name);
+	pprintf(prn, "%-12s", label); 
+	le = log_error(pmod->coeff[j], tester.coeffs[i].val, prn);
+	if (le < b_lemin) {
+	    b_lemin = le;
+	}
 	total_coeffs++;
-	sprintf(v1, "%#.*g", CHECK_DIGITS, tester.coeffs[i].val);
-	sprintf(v2, "%#.*g", CHECK_DIGITS, pmod->coeff[j]);
-	if (na(pmod->coeff[j])) continue;
-	if (doubles_differ(v1, v2) == 0) ok_coeffs++;
-	/* standard errors -- Lanczos1 is a special case */
-	if (strcmp(tester.datname, "Lanczos1")) {
-	    total_sderrs++;
-	    sprintf(v1, "%#.*g", CHECK_DIGITS, tester.coeffs[i].sderr);
-	    sprintf(v2, "%#.*g", CHECK_DIGITS, pmod->sderr[j]);
-	    if (na(pmod->sderr[j])) continue;
-	    if (doubles_differ(v1, v2) == 0) ok_sderrs++;
+	if (le >= CHECK_DIGITS) {
+	    ok_coeffs++;
 	}
-    }
-}
-
-static int results_agree (MODEL *pmod, int digits, int errs, int *abort)
-{
-    int i, j;
-    char v1[48], v2[48];
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	j = find_coeff_number(pmod, tester.coeffs[i].name);
-	if (j < 0) {
-	    fprintf(stderr, "%s: ERROR: Couldn't find param '%s'\n",
-		    tester.datname, tester.coeffs[i].name);
-	    continue;
+	sprintf(label, "Std.Err.");
+	pprintf(prn, "%-12s", label);
+	le = log_error(pmod->sderr[j], tester.coeffs[i].sderr, prn);
+	if (le < s_lemin) {
+	    s_lemin = le;
 	}
-	if (errs == 0) {
-	    sprintf(v1, "%#.*g", digits, tester.coeffs[i].val);
-	    sprintf(v2, "%#.*g", digits, pmod->coeff[j]);
-	    if (na(pmod->coeff[j])) *abort = 1;
-	    if (doubles_differ(v1, v2)) {
-		char s[32];
-
-		sprintf(s, "coeff for %s", tester.coeffs[i].name);
-		print_result_error(digits, v1, v2, s);
-		return 0;
-	    }
-	} else {
-	    sprintf(v1, "%#.*g", digits, tester.coeffs[i].sderr);
-	    sprintf(v2, "%#.*g", digits, pmod->sderr[j]);
-	    if (na(pmod->sderr[j])) *abort = 1;
-	    if (doubles_differ(v1, v2)) {
-		char s[32];
-
-		sprintf(s, "std err for %s", tester.coeffs[i].name);
-		print_result_error(digits, v1, v2, s);
-		return 0; 
-	    }
-	}
+	total_sderrs++;
+	if (le >= CHECK_DIGITS) {
+	    ok_sderrs++;
+	}	
     }
 
-    return 1;
-}
-
-static void get_accuracy (MODEL *pmod, int *coeff_acc, int *sderr_acc)
-{
-    int digits, abort;
-
-    *coeff_acc = 0;
-    *sderr_acc = 0;
-
-    abort = 0;
-    for (digits=MAX_DIGITS; digits>=MIN_DIGITS; digits--) {
-	if (results_agree(pmod, digits, 0, &abort)) {
-	    *coeff_acc = digits;
-	    break;
-	}
-	if (abort) break;
-    }
-
-    abort = 0;
-    for (digits=MAX_DIGITS; digits>=MIN_DIGITS; digits--) {
-	if (results_agree(pmod, digits, 1, &abort)) {
-	    *sderr_acc = digits;
-	    break;
-	}
-	if (abort) break;
-    }
-
-    /* tallies */
-    estimates_ok(pmod);
+    *coeff_acc = b_lemin;
+    *sderr_acc = s_lemin;
 }
 
 static int real_run_check (int round, PRN *prn)
 {
-    int coeff_acc = 0, sderr_acc = 0, err = 0;
-    char line[256];
+    double coeff_acc = 0.0;
+    double sderr_acc = 0.0;
+    char line[512];
     MODEL *pmod = NULL;
+    int err = 0;
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
@@ -798,8 +777,7 @@ static int real_run_check (int round, PRN *prn)
 	return 1;
     }
 
-    err = set_tolerance(line);
-
+    set_tolerance();
     catch_arctan();
 
     if (!err) {
@@ -810,7 +788,9 @@ static int real_run_check (int round, PRN *prn)
 	catch_log_depvar();
 	err = nls_parse_line(NLS, tester.model_spec, (const double **) Z, 
 			     datainfo, prn);
-	if (verbose) printf("%s\n", tester.model_spec);
+	if (verbose) {
+	    printf("%s\n", tester.model_spec);
+	}
 	if (err) {
 	    fprintf(stderr, "%s: ERROR: in nls_parse_line\n '%s'\n",
 		    tester.datname, tester.model_spec);
@@ -825,13 +805,15 @@ static int real_run_check (int round, PRN *prn)
 
     if (!err) {
 	*pmod = nls(&Z, datainfo, OPT_NONE, prn);
+
 	if (pmod->errcode) {
 	    char errtext[128];
 
 	    err = pmod->errcode;
-	    get_errmsg(err, errtext, NULL);
-	    fprintf(stderr, "%s: ERROR: model error %d (%s)\n", tester.datname, 
-		    err, errtext);
+	    if (get_errmsg(err, errtext, NULL) != NULL) {
+		fprintf(stderr, "%s: ERROR: model error %d (%s)\n", 
+			tester.datname, err, errtext);
+	    }
 	    errmsg(err, prn);
 	} else {
 	    if (verbose) {
@@ -842,11 +824,12 @@ static int real_run_check (int round, PRN *prn)
 	    print_tol = gretl_model_get_double(pmod, "tol");
 	    total_iters += gretl_model_get_int(pmod, "iters");
 
-	    get_accuracy(pmod, &coeff_acc, &sderr_acc);
+	    get_accuracy(pmod, &coeff_acc, &sderr_acc, prn);
 	    if (coeff_acc < worst_coeff_acc) {
 		worst_coeff_acc = coeff_acc;
 		strcpy(worst_coeff_name, tester.datname);
 	    }
+
 	    /* Lanczos1 is weird */
 	    if (strcmp(tester.datname, "Lanczos1") && 
 		sderr_acc < worst_sderr_acc) {
@@ -862,38 +845,39 @@ static int real_run_check (int round, PRN *prn)
 	printf(" Estimation failed\n");
     }
 
-    if (err) n_fail++;
-    else {
+    if (err) {
+	n_fail++;
+    } else {
 	avg_coeff_min += coeff_acc;
 	avg_sd_min += sderr_acc;
 	n_ok++;
     }
 
     if (!err) {
-	if (verbose) printf("\n ***\n");
+	if (verbose) {
+	    printf("\n ***\n");
+	}
 
 	if (coeff_acc >= 6) {
-	    printf(" coefficient accuracy >= %d digits\n", coeff_acc);
-	}
-	else if (coeff_acc >= MIN_DIGITS) {
-	    printf(" coefficient accuracy >= %d digits\n", coeff_acc);
-	}
-	else {
+	    printf(" coefficient accuracy = %.3f digits\n", coeff_acc);
+	} else if (coeff_acc >= MIN_DIGITS) {
+	    printf(" coefficient accuracy = %.3f digits\n", coeff_acc);
+	} else {
 	    printf(" min. coefficient accuracy < %d digits\n", MIN_DIGITS);
 	}
+
 	if (sderr_acc >= 6) {
-	    printf(" stderr accuracy >= %d digits\n", sderr_acc);
-	}
-	else if (sderr_acc >= MIN_DIGITS) {
-	    printf(" stderr accuracy >= %d digits\n", sderr_acc);
-	}
-	else {
+	    printf(" stderr accuracy = %.3f digits\n", sderr_acc);
+	} else if (sderr_acc >= MIN_DIGITS) {
+	    printf(" stderr accuracy = %.3f digits\n", sderr_acc);
+	} else {
 	    printf(" min. stderr accuracy < %d digits\n", MIN_DIGITS);
 	}
     }
 
-    if (verbose) 
+    if (verbose) {
 	printf("Round %d, error code = %d\n", round, err);
+    }
 	
     return err;
 }
@@ -919,15 +903,17 @@ static int run_gretl_nls_check (void)
 
 static int add_file_to_list (const char *fname)
 {
-    int i = nfiles;
+    int n = nfiles;
 
-    file_list = realloc(file_list, (i + 1) * sizeof *file_list);
-    if (file_list == NULL) return 1;
+    file_list = realloc(file_list, (n + 1) * sizeof *file_list);
+    if (file_list == NULL) {
+	return 1;
+    }
 
-    file_list[i] = malloc(strlen(fname) + 1);
-    if (file_list[i] == NULL) return 1;
-
-    strcpy(file_list[i], fname);
+    file_list[n] = gretl_strdup(fname);
+    if (file_list[n] == NULL) {
+	return 1;
+    }
 
     nfiles++;
 
@@ -936,22 +922,25 @@ static int add_file_to_list (const char *fname)
 
 static int make_file_list (void)
 {
+    const char *datlist = "datalist";
     FILE *fp;
     char line[32];
     int err = 0;
 
-    fp = fopen("datalist", "r");
+    fp = fopen(datlist, "r");
+
     if (fp == NULL) {
-	fputs("Couldn't open data file list\n", stderr);
+	fprintf(stderr, "Couldn't open '%s'\n", datlist);
 	return 1;
     }
 
     while (fgets(line, sizeof line, fp)) {
 	tail_strip(line);
-	if (is_blank(line)) continue;
-	if (add_file_to_list(line)) {
-	    err = 1;
-	    break;
+	if (!is_blank(line)) {
+	    if (add_file_to_list(line)) {
+		err = 1;
+		break;
+	    }
 	}
     }
 
@@ -964,25 +953,29 @@ static void free_file_list (void)
 {
     int i;
 
-    if (file_list == NULL) return;
-
-    for (i=0; i<nfiles; i++) {
-	free(file_list[i]);
+    if (file_list != NULL) {
+	for (i=0; i<nfiles; i++) {
+	    free(file_list[i]);
+	}
+	free(file_list);
     }
-    free(file_list);
 }
 
 static void print_nls_summary (void)
 {
     printf("\nConvergence tolerance = %g\n", print_tol);
     printf("Number of 'OK' runs = %d\n", n_ok);
-    if (n_ok == 0) return;
+
+    if (n_ok == 0) {
+	return;
+    }
+
     printf("Cases using analytical derivatives = %d\n", n_analytic);
     printf("Number of estimation failures = %d\n", n_fail);
     printf("Avg. min. correct figures, coeffs, OK runs = %.3f\n",
-	   (double) avg_coeff_min / n_ok);
+	   avg_coeff_min / n_ok);
     printf("Avg. min. correct figures, std. errs, OK runs = %.3f\n",
-	   (double) avg_sd_min / n_ok);
+	   avg_sd_min / n_ok);
     printf("Proportion of coeffs OK to %d figs = %d/%d = %.3f\n",
 	   CHECK_DIGITS, ok_coeffs, total_coeffs, 
 	   (double) ok_coeffs / total_coeffs);
@@ -990,11 +983,41 @@ static void print_nls_summary (void)
 	   CHECK_DIGITS, ok_sderrs, total_sderrs, 
 	   (double) ok_sderrs / total_sderrs);
     printf("Avg. number of iterations = %d\n", total_iters / n_ok);
-    printf("Worst minimum coefficient accuracy = %d figs (%s)\n",
+    printf("Worst minimum coefficient accuracy = %g figs (%s)\n",
 	   worst_coeff_acc, worst_coeff_name);
-    printf("Worst minimum std. error accuracy = %d figs (%s)\n",
+    printf("Worst minimum std. error accuracy = %g figs (%s)\n",
 	   worst_sderr_acc, worst_sderr_name);
     printf("(Note: the std err summary numbers exclude Lanczos1)\n");
+}
+
+static void print_options (const char *prog, const char *fname,
+			   const char *tolstr)
+{
+    printf("%s: using these options:\n", prog);
+
+    if (verbose) {
+	printf(" verbose operation\n");
+    } else {
+	printf(" non-verbose operation\n");
+    }
+
+    if (use_derivs) {
+	printf(" use analytical derivatives where available\n");
+    } else {
+	printf(" use numerical derivatives\n");
+    }
+
+    if (fname != NULL) {
+	printf(" specified input file: %s\n", fname);
+    } else {
+	printf(" all files in datalist\n");
+    }
+
+    if (tolstr != NULL) {
+	printf(" specified tolerance (%s)\n", tolstr);
+    } else {
+	printf(" default tolerance setting\n");
+    }
 }
 
 int main (int argc, char *argv[])
@@ -1029,17 +1052,11 @@ int main (int argc, char *argv[])
         }
     }
 
-#if 0
-    printf("%s: using these options:\n", argv[0]);
-    if (verbose) printf(" verbose operation\n");
-    if (use_derivs) printf(" use analytical derivatives where available\n");
-    if (nistfile) printf(" specified input file (%s)\n", nistfile);
-    if (tolstr) printf(" specified tolerance (%s)\n", tolstr);
-#endif
+    print_options(argv[0], nistfile, tolstr);
 
-    if (tolstr) {
+    if (tolstr != NULL) {
 	toler = atof(tolstr);
-	if (toler == 0.0) {
+	if (toler <= 0.0) {
 	    fprintf(stderr, "Invalid tolerance '%s'\n", tolstr);
 	    err = 1;
 	}
@@ -1051,7 +1068,11 @@ int main (int argc, char *argv[])
 	err = make_file_list();
     } 
 
-    if (err) exit(EXIT_FAILURE);
+    if (err) {
+	exit(EXIT_FAILURE);
+    }
+
+    libgretl_init();
 
     for (i=0; i<nfiles; i++) {
 	char *thisfile;
@@ -1066,8 +1087,8 @@ int main (int argc, char *argv[])
 	if (!err) {
 	    err = run_gretl_nls_check();
 	}
-
-	destroy_dataset(Z, datainfo);
+	free_Z(Z, datainfo);
+	free_datainfo(datainfo);
 	Z = NULL;
 	datainfo = NULL;
     }
@@ -1076,6 +1097,8 @@ int main (int argc, char *argv[])
 	print_nls_summary();
 	free_file_list();
     }
+
+    libgretl_cleanup();
 
     return err;
 }
