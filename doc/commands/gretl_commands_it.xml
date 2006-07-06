@@ -6137,6 +6137,12 @@
 	    <lit>--long</lit> (si veda <cmdref targ="print"/>).
 	  </para>
 	</li>
+	<li>	  
+          <para><lit>initvals</lit>: una matrice pre-specificata. Permette di
+            impostare manualmente le stime dei parametri ARMA. Per i dettagli,
+            si veda la <guideref targ="arma-estimation"/>.
+	  </para>
+	</li>
       </ilist>
 
     </description>
