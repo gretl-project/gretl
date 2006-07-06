@@ -187,13 +187,15 @@ sono usate le seguenti funzioni \app{minpack}:
 
 In caso di successo nell'iterazione Levenberg--Marquandt, viene usata
 una regressione Gauss--Newton per calcolare la matrice di covarianza
-per le stime dei parametri. Poiché i risultati NLS sono asintotici, si
-può discutere sulla necessità di applicare una correzione per i gradi
-di libertà nel calcolo dell'errore standard della regressione (e di
-quello delle stime dei parametri). Per confrontabilità con OLS, e
-seguendo il ragionamento in Davidson e MacKinnon (1993), le stime
-calcolate in \app{gretl} \emph{usano} una correzione per i gradi di
-libertà.
+per le stime dei parametri. Se si usa l'opzione \verb|--robust|, viene
+calcolata una variante robusta. La documentazione del comando \cmd{set}
+spiega le opzioni disponibili a questo proposito.
+
+Poiché i risultati NLS sono asintotici, si può discutere sulla necessità di
+applicare una correzione per i gradi di libertà nel calcolo dell'errore standard
+della regressione (e di quello delle stime dei parametri). Per confrontabilità
+con OLS, e seguendo il ragionamento in Davidson e MacKinnon (1993), le stime
+calcolate in \app{gretl} \emph{usano} una correzione per i gradi di libertà.
 
 \section{Accuratezza numerica}
 \label{nls-accuracy}

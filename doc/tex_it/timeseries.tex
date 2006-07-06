@@ -18,167 +18,165 @@ in modo che $L^n x_t = x_{t-n}$, e $\epsilon_t$ è un processo di rumore bianco.
 Il contenuto esatto di $y_t$, del polinomio AR $\phi()$ e del polinomio MA $\theta()$
 verrà spiegato in seguito.
 
-\subsection{Mean terms}
+\subsection{Media del processo}
 \label{sec:arma-nonzeromean}
 
-The process $y_t$ as written in equation (\ref{eq:plain-0-arma}) has,
-without further qualifications, mean zero. If the model is to be
-applied to real data, it is necessary to include some term to handle
-the possibility that $y_t$ has non-zero mean. There are two possible
-ways to represent processes with nonzero mean: one is to define $\mu_t$
-as the \emph{unconditional} mean of $y_t$, namely the central value of
-is marginal distribution. Therefore, the series $\tilde{y}_t = y_t -
-\mu_t$ has mean 0, and the model (\ref{eq:plain-0-arma}) applies to
-$\tilde{y}_t$. In practice, assuming that $\mu_t$ is a linear function
-of some observable variables $x_t$, the model becomes
+Il processo $y_t$ mostrato nell'equazione (\ref{eq:plain-0-arma}) ha
+media zero, se non si danno altre indicazioni. Se il modello deve essere
+applicato a dati reali, è necessario includere un termine per gestire la
+possibilità che $y_t$ abbia una media diversa da zero.
+Ci sono due modi possibili per rappresentare processi con media nulla: uno
+consiste nel definire $\mu_t$ come la media \emph{non condizionale} di $y_t$,
+ossia il valore centrale della sua distribuzione marginale.
+Quindi, la serie $\tilde{y}_t = y_t - \mu_t$ ha media 0, e il modello
+(\ref{eq:plain-0-arma}) si applica a $\tilde{y}_t$. In pratica, assumendo che
+$\mu_t$ sia una funzione lineare di alcune variabili osservabili $x_t$,
+il modello diventa
 \begin{equation}
   \label{eq:arma-with-x}
   \phi(L) (y_t - x_t \beta) = \theta(L) \epsilon_t
 \end{equation}
-This is sometimes known as a ``regression model with ARMA errors'';
-its structure may be more apparent if we represent it using two
-equations:
+Questo viene talvolta chiamato un ``modello di regressione con errori ARMA'';
+la sua struttura può risultare più chiara se lo rappresentiamo usando due
+equazioni:
 \begin{eqnarray*}
   y_t & = & x_t \beta + u_t \\
   \phi(L) u_t & = & \theta(L) \epsilon_t
 \end{eqnarray*}
 
-The model just presented is also sometimes known as ``ARMAX'' (ARMA +
-eXogenous variables).  It seems to us, however, that this label is
-more appropriately applied to a different model: another way to
-include a mean term in (\ref{eq:plain-0-arma}) is to base the
-representation on the \emph{conditional} mean of $y_t$, that is the
-central value of the distribution of $y_t$ \emph{given its own past}.
-Assuming, again, that this can be represented as a linear combination
-of some observable variables $z_t$, the model would expand to
+Il modello appena presentato viene talvolta chiamato ``ARMAX'' (ARMA + variabili
+esogene), anche se questo nome sembra più appropriato per un altro tipo di
+modello: un altro modo per includere un termine di media nella
+(\ref{eq:plain-0-arma}) consiste nel basare la rappresentazione sulla media
+\emph{condizionale} di $y_t$, ossia il valore centrale della distribuzione di
+$y_t$ \emph{dato il proprio passato}. Assumendo, ancora, che questa possa essere
+rappresentata come combinazione lineare di qualche variabile osservabile
+$z_t$, il modello diventerebbe
 \begin{equation}
   \label{eq:arma-with-z}
   \phi(L) y_t = z_t \gamma + \theta(L) \epsilon_t
 \end{equation}
-The formulation (\ref{eq:arma-with-z}) has the advantage that $\gamma$
-can be immediately interpreted as the vector of marginal effects of
-the $z_t$ variables on the conditional mean of $y_t$.  And by adding
-lags of $z_t$ to this specification one can estimate \emph{Transfer
-  Function models} (which generalize ARMA by adding the effects of
-exogenous variable distributed across time).
+La formulazione (\ref{eq:arma-with-z}) ha il vantaggio che $\gamma$
+può essere immediatamente interpretato come il vettore degli effetti marginali
+delle variabili $z_t$ sulla media condizionale di $y_t$.  E aggiungendo i
+ritardi di $z_t$ a questa specificazione è possibile stimare dei \emph{Modelli
+di funzione di trasferimento} (che generalizzano gli ARMA aggiungendo gli effetti
+delle variabili esogene distribuiti nel tempo).
 
-\app{Gretl} provides a way to estimate both forms. Models written as
-in (\ref{eq:arma-with-x}) are estimated by maximum likelihood; models
-written as in (\ref{eq:arma-with-z}) are estimated by conditional
-maximum likelihood. (For more on these options see the section on
-``Estimation'' below.)  
+\app{Gretl} fornisce un modo per stimare entrambe le forme. I modelli scritti
+come nella (\ref{eq:arma-with-x}) vengono stimati con la massima
+verosimiglianza; i modelli scritti come nella (\ref{eq:arma-with-z}) vengono
+stimati con la massima verosimiglianza condizionale (per maggiori informazioni
+su queste opzioni, si veda la sezione ``Stima'' in seguito).
 
-In the special case when $x_t = z_t = 1$ (that is, the models include
-a constant but no exogenous variables) the two specifications discussed
-above reduce to
+Nel caso speciale in cui $x_t = z_t = 1$ (ossia il modello include una costante
+ma nessuna variabile esogena) le due specificazioni discusse finora diventano
 \begin{equation}
   \phi(L) (y_t - \mu) = \theta(L) \epsilon_t
   \label{eq:arma-with-xconst} 
 \end{equation}
-and
+e
 \begin{equation}
   \phi(L) y_t = \alpha + \theta(L) \epsilon_t
   \label{eq:arma-with-zconst}
 \end{equation}
-respectively.  These formulations are essentially equivalent, but if
-they represent one and the same process $\mu$ and $\alpha$ are, fairly
-obviously, not numerically identical; rather
+rispettivamente. Queste formulazioni sono essenzialmente equivalenti, ma se
+rappresentano lo stesso processo, ovviamente $\mu$ e $\alpha$ non sono
+numericamente identici; piuttosto:
 \[
 \alpha = \left(1 - \phi_1 - \ldots - \phi_p\right) \mu
 \]
 
-The \app{gretl} syntax for estimating (\ref{eq:arma-with-xconst}) is simply
+La sintassi di \app{gretl} per stimare la (\ref{eq:arma-with-xconst}) è
+semplicemente
 \begin{code}
   arma p q ; y
 \end{code}
-The AR and MA lag orders, \verb|p| and \verb|q|, can be given either as
-numbers or as pre-defined scalars. The parameter $\mu$ can be dropped
-if necessary by appending the option \cmd{--nc} (``no constant'') to
-the command. If estimation of (\ref{eq:arma-with-zconst}) is needed,
-the switch \texttt{--conditional} must be appended to the command, as
-in 
+Gli ordini di ritardo AR e MA, \verb|p| e \verb|q|, possono essere indicati come
+numeri o come scalari definiti in precedenza. Il parametro $\mu$ può essere
+omesso se necessario, aggiungendo l'opzione \cmd{--nc} (``no constant'') al
+comando. Se occorre stimare la (\ref{eq:arma-with-zconst}), bisogna aggiungere
+al comando l'opzione \texttt{--conditional}, come in
 \begin{code}
   arma p q ; y --conditional
 \end{code}
 
-Generalizing this principle to the estimation of
-(\ref{eq:arma-with-x}) or (\ref{eq:arma-with-z}), you get that
+Generalizzando questo principio alla stima di
+(\ref{eq:arma-with-x}) o (\ref{eq:arma-with-z}), si ottiene che
 \begin{code}
   arma p q ; y const x1 x2
 \end{code}
-would estimate the following model:
+stimerebbe il modello seguente:
 \[
   y_t - x_t \beta = \phi_1 \left(y_{t-1} - x_{t-1} \beta \right) + \ldots + 
    \phi_p \left( y_{t-p} - x_{t-p} \beta \right) + 
   \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
 \]
-where in this instance $x_t \beta = \beta_0 + x_{t,1} \beta_1 +
-x_{t,2} \beta_2$. Appending the \texttt{--conditional} switch, as in 
+dove in questo caso $x_t \beta = \beta_0 + x_{t,1} \beta_1 +
+x_{t,2} \beta_2$. Usando l'opzione \texttt{--conditional}, come in
 \begin{code}
   arma p q ; y const x1 x2 --conditional
 \end{code}
-would estimate the following model:
+si stimerebbe il modello seguente:
 \[
   y_t = x_t \gamma + \phi_1 y_{t-1} + \ldots +  \phi_p y_{t-p} + 
   \epsilon_t + \theta_1 \epsilon_{t-1} + \ldots + \theta_q \epsilon_{t-q}
 \]
 
-Ideally, the issue broached above could be made moot by writing a more
-general specification that nests the alternatives; that is
+Idealmente, la situazione descritta finora potrebbe essere sistematizzata
+scrivendo una specificazione più generale che comprende tutte le alternative,
+ossia
 \begin{equation}
  \label{armax-general}
   \phi(L) \left(y_t - x_t \beta\right) = z_t \gamma  + \theta(L) \epsilon_t ;
 \end{equation}
-we would like to generalize the \cmd{arma} command so that
-the user could specify, for any estimation method, whether certain
-exogenous variables should be treated as $x_t$s or $z_t$s, but we're
-not yet at that point (and neither are most other software packages).
+Sarebbe auspicabile che il comando \cmd{arma} fosse generalizzato in modo che
+l'utente potesse specificare se, per ogni metodo di stima, certe variabili
+esogene vanno trattate come $x_t$ o come $z_t$, ma non siamo ancora a questo
+livello (né lo è la maggior parte degli altri pacchetti software).
 
-\subsection{Seasonal models}
+\subsection{Modelli stagionali}
 
-A more flexible lag structure is desirable when analyzing time series
-that display strong seasonal patterns. Model (\ref{eq:plain-0-arma})
-can be expanded to
+Quando si analizzano serie storiche che mostrano un marcato andamento
+stagionale, è opportuno usare una struttura di ritardi più flessibile.
+Il modello (\ref{eq:plain-0-arma}) può essere espanso nel seguente
 \begin{equation}
   \label{eq:seasonal-arma}
   \phi(L) \Phi(L^s) y_t = \theta(L) \Theta(L^s) \epsilon_t .
 \end{equation}
-For such cases, a fuller form of the syntax is available, namely,
+In questi casi, è disponibile una versione ampliata della sintassi, ossia:
 \begin{code}
   arma p q ; P Q ; y
 \end{code}
-where \texttt{p} and \texttt{q} represent the non-seasonal AR and MA
-orders, and \texttt{P} and \texttt{Q} the seasonal orders.  For
-example,
+dove \texttt{p} e \texttt{q} rappresentano gli ordini AR e MA non stagionali,
+mentre \texttt{P} e \texttt{Q} gli ordini stagionali. Ad esempio
 \begin{code}
   arma 1 1 ; 1 1 ; y
 \end{code}
-would be used to estimate the following model:
+stima il modello seguente:
 \[
   (1 -\phi L)(1 -\Phi L^s) (y_t - \mu) = (1 + \theta L)(1 + \Theta L^s) \epsilon_t
 \]
-If $y_t$ is a quarterly series (and therefore $s=4$), the above
-equation can be written more explicitly as
+Se $y_t$ è una serie trimestrale (e quindi $s=4$), l'equazione precedente può
+essere scritta in modo più esplicito come
 \[
 y_t - \mu = \phi (y_{t-1} - \mu) + \Phi (y_{t-4} - \mu) - (\phi
   \cdot \Phi) (y_{t-5} - \mu) + \epsilon_t + \theta \epsilon_{t-1} + \Theta
   \epsilon_{t-4} + (\theta \cdot \Theta) \epsilon_{t-5}
 \]
-Such a model is known as a ``multiplicative seasonal ARMA model''.
+Un tale modello è noto come ``modello ARMA stagionale moltiplicativo''.
 
-\subsection{Differencing and ARIMA}
+\subsection{Differenziazione e ARIMA}
 
-The above discussion presupposes that the time series $y_t$ has
-already been subjected to all the transformations deemed necessary for
-ensuring stationarity (see also section \ref{sec:uroot}). Differencing
-is the most common of these transformations, and \app{gretl} provides
-a mechanism to include this step into the \cmd{arma} command: the
-syntax
+La discussione svolta finora presuppone che la serie storica $y_t$ sia già stata
+soggetta a tutte le trasformazioni ritenute necessarie per assicurarne la
+stazionarietà (si veda anche la sezione \ref{sec:uroot}). La differenziazione è
+la più comune tra queste trasformazioni, e \app{gretl} fornisce un meccanismo
+per includere questo passo nel comando \cmd{arma}: la sintassi
 \begin{code}
   arma p d q ; y 
 \end{code}
-would estimate an ARMA$(p,q)$ model on $\Delta^d y_t$. It is
-functionally equivalent to 
+stima un modello ARMA$(p,q)$ su $\Delta^d y_t$. È funzionalmente equivalente a
 \begin{code}
   series tmp = y
   loop for i=1..d
@@ -186,84 +184,81 @@ functionally equivalent to
   end loop
   arma p q ; tmp 
 \end{code}
-except with regard to forecasting after estimation (see below).
+tranne che per quanto riguarda la previsione dopo la stima (si veda oltre).
 
-When the series $y_t$ is differenced before performing the analysis
-the model is known as ARIMA (``I'' for Integrated); for this reason,
-\app{gretl} provides the \cmd{arima} command as an alias for
+Quando la serie $y_t$ viene differenziata prima di effettuare l'analisi, il
+modello viene chiamato ARIMA (la ``I'' sta per ``Integrato''); per questo
+motivo, \app{gretl} fornisce anche il comando \cmd{arima} come alias per
 \cmd{arma}.
 
-Seasonal differencing is handled similarly, with the syntax
+La differenziazione stagionale è trattata in modo simile, con la sintassi
 \begin{code}
   arma p d q ; P D Q ; y 
 \end{code}
-where \texttt{D} is the order for seasonal differencing.  Thus, the
-command
+dove \texttt{D} è l'ordine di differenziazione stagionale. Così, il comando
 \begin{code}
   arma 1 0 0 ; 1 1 1 ; y 
 \end{code}
-would produce the same parameter estimates as
+produrrebbe le stesse stime dei parametri date da
 \begin{code}
   genr dsy = sdiff(y)
   arma 1 0 ; 1 1 ; dsy 
 \end{code}
-where we use the \texttt{sdiff} function to create a seasonal
-difference (e.g.\ for quarterly data, $y_t - y_{t-4}$).
+dove usiamo la funzione \texttt{sdiff} per creare una differenza stagionale (ad
+esempio per dati trimestrali: $y_t - y_{t-4}$).
 
 \subsection{Stima}
 \label{arma-est}
 
-%TODO
-The default estimation method for ARMA models is exact maximum
-likelihood estimation (under the assumption that the error term is
-normally distributed), using the Kalman filter in conjunction with the
-BFGS maximization algorithm.  The gradient of the log-likelihood with
-respect to the parameter estimates is approximated numerically.  This
-method produces results that are directly comparable with many other
-software packages.  The constant, and any exogenous variables, are
-treated as in equation (\ref{eq:arma-with-x}).  The covariance matrix
-for the parameters is computed via the OPG (Outer Product of the
-Gradients) method.
+Il metodo di stima predefinito per i modelli ARMA è quello della massima
+verosimiglianza esatta (sotto l'ipotesi che il termine di errore sia distribuito
+normalmente), usando il filtro di Kalman insieme all'algoritmo di
+massimizzazione BFGS. Il gradiente della log-verosimiglianza rispetto alle stime
+dei parametri è approssimato numericamente. Questo metodo produce risultati che
+sono direttamente confrontabili con quelli di molti altri pacchetti software.
+La costante ed eventuali altre variabili esogene sono trattate come mostrato
+nell'equazione (\ref{eq:arma-with-x}). La matrice di covarianza per i parametri
+è calcolata usando un'approssimazione numerica dell'Hessiana alla convergenza.
 
-The alternative method, invoked with the \verb|--conditional| switch,
-is conditional maximum likelihood (CML), also known as ``conditional
-sum of squares'' --- see Hamilton (1994, p.\ 132).  This method was
-exemplified in the script~\ref{jack-arma}, and only a brief
-description will be given here.  Given a sample of size $T$, the CML
-method minimizes the sum of squared one-step-ahead prediction errors
-generated by the model for the observations $t_0, \ldots,
-T$.\footnote{The numerical method used is BHHH.  As with exact ML, the
-  covariance matrix is computed via the OPG method.}  The starting
-point $t_0$ depends on the orders of the AR polynomials in the model.
+Il metodo alternativo, utilizzabile con l'opzione \verb|--conditional|, è quello
+della massima verosimiglianza condizionale (CML), noto anche come ``somma dei
+quadrati condizionale'' (si veda Hamilton 1994, p.\ 132). Questo metodo è stato
+esemplificato nello script~\ref{jack-arma} e ne verrà qui data solo una breve
+descrizione. Data un'ampiezza campionaria $T$, il metodo CML minimizza
+la somma dei quadrati degli errori di previsione ``one-step-ahead'' (per il
+periodo successivo) generata dal modello per le osservazioni $t_0, \ldots,
+T$. Il punto di partenza $t_0$ dipende dall'ordine dei polinomi AR nel
+modello. Il metodo numerico di massimizzazione usato è il BHHH, e la
+matrice di covarianza è calcolata usando una regressione di Gauss--Newton.
 
-Questo metodo è quasi equivalente a quello della massima verosimiglianza in
+Il metodo CML è quasi equivalente a quello della massima verosimiglianza in
 ipotesi di normalità; la differenza sta nel fatto che le prime $(t_0 - 1)$
 osservazioni sono considerate fisse ed entrano nella funzione di verosimiglianza
 solo come variabili condizionanti. Di conseguenza, i due metodi sono
 asintoticamente equivalenti sotto le consuete ipotesi, tranne per il fatto,
 discusso sopra, che la nostra implementazione CML tratta la costante e le
-variabili esogente come mostrato nell'equazione (\ref{eq:arma-with-z}).
+variabili esogene come mostrato nell'equazione (\ref{eq:arma-with-z}).
 
-The two methods can be compared as in the following example
+I due metodi possono essere confrontati nell'esempio seguente
 \begin{code}
   open data10-1
   arma 1 1 ; r
   arma 1 1 ; r --conditional
 \end{code}
-which produces the estimates shown in Table~\ref{tab:ml-cml}.  As you
-can see, the estimates of $\phi$ and $\theta$ are quite similar.  The
-reported constants differ widely, as expected --- see the discussion
-following equations (\ref{eq:arma-with-xconst}) and
-(\ref{eq:arma-with-zconst}).  However, dividing the CML constant by
-$1-\phi$ we get 7.38, which is not far from the ML estimate of 6.93.
+che produce le stime mostrate nella Tabella~\ref{tab:ml-cml}. Come si può
+vedere, le stime di $\phi$ e $\theta$ sono abbastanza simili. Le costanti
+riportate sono molto diverse, come ci si può aspettare; in proposito,
+si veda la discussione delle equazioni (\ref{eq:arma-with-xconst}) e
+(\ref{eq:arma-with-zconst}). In ogni caso, dividendo la costante CML per
+$1-\phi$ si ottiene 7.38, che non è molto distante dalla stima ML di 6.93.
 
 \begin{table}[htbp]
-\caption{ML and CML estimates}
+\caption{Stime ML e CML}
 \label{tab:ml-cml}
 \begin{center}
   \begin{tabular}{crrrr}
     \hline
-    Parameter & \multicolumn{2}{c}{ML} &
+    Parametro & \multicolumn{2}{c}{ML} &
     \multicolumn{2}{c}{CML} \\
     \hline 
     $\mu$ & 6.93042 & (0.673202) & 1.07322 & (0.488661) \\
@@ -274,88 +269,88 @@ $1-\phi$ we get 7.38, which is not far from the ML estimate of 6.93.
 \end{center}
 \end{table}
 
-\subsection{Estimation via X-12-ARIMA}
+\subsection{Stima con X-12-ARIMA}
 
-As an alternative to estimating ARMA models using ``native'' code,
-\app{gretl} offers the option of using the external program
-\app{X-12-ARIMA}.  This is the seasonal adjustment software produced
-and maintained by the U.S. Census Bureau; it is used for all official
-seasonal adjustments at the Bureau.
+In alternativa alla stima di modelli ARMA usando le proprie funzionalità
+interne, \app{gretl} offre l'opzione di usare il programma esterno
+\app{X-12-ARIMA} per l'aggiustamento stagionale, curato dallo U.S. Census
+Bureau.
 
-\app{Gretl} includes a module which interfaces with \app{X-12-ARIMA}:
-it translates \cmd{arma} commands using the syntax outlined above into
-a form recognized by \app{X-12-ARIMA}, executes the program, and
-retrieves the results for viewing and further analysis within
-\app{gretl}.  To use this facility you have to install
-\app{X-12-ARIMA} separately.  Packages for both MS Windows and
-GNU/Linux are available from the \app{gretl} website,
-\url{http://gretl.sourceforge.net/}.
+\app{Gretl} include un modulo che si interfaccia con \app{X-12-ARIMA}:
+traduce i comandi \cmd{arma} dalla sintassi vista sopra in una forma riconoscita
+da \app{X-12-ARIMA}, esegue il programma, e recupera i risultati per ulteriori
+analisi in \app{gretl}. Per usare questa funzionalità, occore installare
+\app{X-12-ARIMA} separatamente: sul sito di \app{gretl},
+\url{http://gretl.sourceforge.net/}, sono disponibili pacchetti per MS Windows e
+GNU/Linux.
 
-To invoke \app{X-12-ARIMA} as the estimation engine, append the flag
-\verb|--x-12-arima|, as in
+Per invocare \app{X-12-ARIMA} come motore di stima, basta usare l'opzione
+\verb|--x-12-arima|, come in questo esempio:
 \begin{code}
   arma p q ; y --x-12-arima
 \end{code}
-As with native estimation, the default is to use exact ML but there is
-the option of using conditional ML with the \verb|--conditional| flag.
-However, please note that when \app{X-12-ARIMA} is used in conditional
-ML mode, the comments above regarding the variant treatments of the
-mean of the process $y_t$ \textit{do not apply}.  That is, when you
-use \app{X-12-ARIMA} the model that is estimated is
-(\ref{eq:arma-with-x}), regardless of whether estimation is by exact
-ML or conditional ML.
+Come accade con le stime effettuate da \app{gretl}, per impostazione predefinita
+viene usata la massima verosimiglianza esatta, ma c'è l'opzione di usare la
+massima verosimiglianza condizionale con l'opzione \verb|--conditional|.
+Comunque, occorre notare che quando si usa \app{X-12-ARIMA} in modalità di
+massima verosimiglianza condizionale, quanto detto sopra a proposito dei
+trattamenti della media del processo $y_t$ \textit{non si applica}.
+% TODO: the ``variant``???
+% the comments above regarding the variant treatments of the
+% mean of the process $y_t$ \textit{do not apply}.  That is, when you
+Ossia, quando si usa \app{X-12-ARIMA} il modello stimato è
+(\ref{eq:arma-with-x}), a prescindere dal fatto che la stima sia condotta con la
+massima verosimiglianza esatta o condizionale.
 
 
-\subsection{Forecasting}
+\subsection{Previsione}
 \label{arma-fcast}
 
-ARMA models are often used for forecasting purposes.  The
-autoregressive component, in particular, offers the possibility of
-forecasting a process ``out of sample'' over a substantial time
-horizon.
+I modelli ARMA sono spesso usati a scopo previsionale. La componente
+autoregressiva, in particolare, offre la possibilità di prevedere l'andamento
+del processo ``fuori dal campione'' su un certo orizzonte temporale.
 
-\app{Gretl} supports forecasting on the basis of ARMA models using the
-method set out by Box and Jenkins (1976).\footnote{See in particular
-  their ``Program 4'' on p.\ 505ff.}  The Box and Jenkins algorithm
-produces a set of integrated AR coefficients which take into account
-any differencing of the dependent variable (seasonal and/or
-non-seasonal) in the ARIMA context, thus making it possible to
-generate a forecast for the level of the original variable.  By
-contrast, if you first difference a series manually and then apply
-ARMA to the differenced series, forecasts will be for the differenced
-series, not the level.  This point is illustrated
-in Example~\ref{arima-fcast-script}.  The parameter estimates are identical
-for the two models.  The forecasts differ but are mutually consistent:
-the variable \texttt{fcdiff} emulates the ARMA forecast (static,
-one step ahead within the sample range, and dynamic out of sample).
+\app{Gretl} supporta le previsioni basate su modelli ARMA usando il metodo
+illustrato da Box e Jenkins (1976)\footnote{Si veda in particolare il loro
+``Programma 4'' alle pagine 505 e seguenti.}, L'algoritmo di Box e Jenkins
+produce un insieme di coefficienti AR integrati che tiene conto delle operazioni
+di differenziazione sulla variabile dipendente (stagionali e/o non stagionali)
+in un contesto ARIMA, rendendo così possibile una previsione per il livello
+della variabile originale. Per contrasto, se si differenzia una serie
+manualmente e poi si applica ARMA alla serie differenziata, le previsioni
+saranno riferite alla serie differenziata, non al suo livello. Questo punto è
+illustrato dall'Esempio~\ref{arima-fcast-script}. Le stime dei parametri sono
+identiche per i due modelli; le previsioni sono diverse ma coerenti tra loro: la
+variabile \texttt{fcdiff} emula la previsione ARMA (statica, per il periodo
+successivo all'interno del campione, e dinamica, fuori dal campione).
 
 \begin{script}[htbp]
-  \caption{ARIMA forecasting}
+  \caption{Previsione ARIMA}
   \label{arima-fcast-script}
 \begin{code}
   open greene18_2.gdt
-  # log of quarterly U.S. nominal GNP, 1950:1 to 1983:4
+  # Logaritmo del PIL nominale trimestrale degli USA, da 1950:1 a 1983:4
   genr y = log(Y)
-  # and its first difference
+  # La sua differenza prima
   genr dy = diff(y)
-  # reserve 2 years for out-of-sample forecast
+  # Teniamo 2 anni per la previsione fuori dal campione
   smpl ; 1981:4
-  # Estimate using ARIMA
+  # Stima con ARIMA
   arima 1 1 1 ; y 
-  # forecast over full period
+  # Previsione su tutto il periodo
   smpl --full
   fcast fc1
-  # Return to sub-sample and run ARMA on the first difference of y
+  # Torniamo al campione ristretto ed eseguiamo ARMA sulla differenza prima di y
   smpl ; 1981:4
   arma 1 1 ; dy
   smpl --full
   fcast fc2
   genr fcdiff = (t<=1982:1)*(fc1 - y(-1)) + (t>1982:1)*(fc1 - fc1(-1))
-  # compare the forecasts over the later period
+  # Confronto delle previsioni sull'ultimo periodo
   smpl 1981:1 1983:4
   print y fc1 fc2 fcdiff --byobs
 \end{code}
-The output from the last command is:
+Il risultato dell'ultimo comando è:
 \begin{code}
                     y          fc1          fc2       fcdiff
 
@@ -375,33 +370,29 @@ The output from the last command is:
 \end{script}
 
 
-\subsection{Limitations}
+\subsection{Limitazioni}
 
-The structure of \app{gretl}'s \cmd{arma} command does not allow you
-to specify models with gaps in the lag structure, other than via the
-seasonal specification discussed above.  For example, if you have a
-monthly time series, you cannot estimate an ARMA model with AR terms
-(or MA terms) at just lags 1, 3 and 5.
+La struttura del comando \cmd{arma} di \app{gretl} non permette di specificare
+modelli che contengono buchi nella struttura dei ritardi, se non usando la
+specificazione stagionale discussa sopra. Ad esempio, se si ha una serie
+mensile, non è possibile stimare un modello ARMA con termini AR (o MA) per i
+soli ritardi di ordine 1, 3 e 5.
 
-At a pinch, you could circumvent this limitation in respect of the AR
-part of the specification by the trick of including lags of the
-dependent variable in the list of ``exogenous'' variables.  For
-example, the following command
+Un modo per aggirare questa limitazione con riguardo alla parte AR della
+specificazione consiste nell'includere ritardi della variabile dipendente nella
+lista delle variabili ``esogene''. Ad esempio, il comando
 \begin{code}
   arma 0 0 ; 0 1 ; y const y(-2)
 \end{code}
-on a quarterly series would estimate the parameters of the model
+su una serie trimestrale, stimerebbe i parametri del modello
 \[
   y_t - \mu = \phi \left(y_{t-2} - \mu\right) + \epsilon_t + \Theta \epsilon_{t-4}
 \]
-However, this workaround is not really recommended: it should deliver
-correct estimates, but will break the existing mechanism for
-forecasting.
+Tuttavia, questa scorciatoia non è raccomandabile: produce stime corrette, ma
+rende inutilizzabile il meccanismo usato per le previsioni.
 
 \section{Test per radici unitarie}
 \label{sec:uroot}
-
-(da completare)
 
 \subsection{Il test ADF}
 \label{sec:ADFtest}

@@ -22,7 +22,7 @@ ampiezza $T$, è possibile definire la funzione di densità\footnote{Stiamo
   casi, la distribuzione può essere condizionale su alcune variabili esogene.}
 per l'intero campione, ossia la distribuzione congiunta di tutte le
 osservazioni $f(\mathbf{Y} ; \theta)$, dove $\mathbf{Y} =
-\left\{ y_1, \ldots, y_T \right\}$.  La sua forma è determinata da un vettore di
+\left\{ y_1, \ldots, y_T \right\}$.  La sua forma è determinata da un $k$-vettore di
 parametri sconosciuti $\theta$, che assumiamo contenuti in un insieme $\Theta$,
 e che possono essere usati per stimare la probabilità di osservare un campione
 con qualsiasi data caratteristica.
@@ -38,12 +38,12 @@ Nei casi più comuni, questa funzione possiede un massimo unico, la cui posizione
 non viene alterata dal fatto di considerare il logaritmo della verosimiglianza
 (ossia la log-verosimiglianza): questa funzione si esprime come
 \[
-  \LogLik(\theta) = \log  f(\mathbf{Y}; \theta) .
+  \LogLik(\theta) = \log  f(\mathbf{Y}; \theta)
 \] 
 Le funzioni di log-verosimiglianza gestite da gretl sono quelle in cui
 $\LogLik(\theta)$ può essere scritta come
 \[
-  \LogLik(\theta) = \sum_{t=1}^T \ell_t(\theta) ,
+  \LogLik(\theta) = \sum_{t=1}^T \ell_t(\theta)
 \] 
 che è vero nella maggior parte dei casi di interesse. Le funzioni
 $\ell_t(\theta)$ vengono chiamate contributi di log-verosimiglianza.
@@ -63,25 +63,31 @@ $\hat{\theta}(\mathbf{Y})$, ma in generale ciò non è sempre vero, e il massimo
 va cercato con tecniche numeriche. Queste si basano spesso sul fatto che la
 log-verosimiglianza è una funzione continuamente differenziabile di $\theta$, e
 quindi nel massimo le sue derivate parziali devono essere tutte pari a 0.
-Il gradiente della log-verosimiglianza è chiamato il vettore degli \emph{score},
-ed è una funzione con molte proprietà interessanti dal punto di vista
-statistico, che verrà denotata con $\mathbf{s}(\theta)$.
+Il \textsl{vettore gradiente}, o \textsl{vettore degli score}, è una funzione
+con molte proprietà interessanti dal punto di vista
+statistico, che verrà denotata con $\mathbf{g}(\theta)$.
+È un $k$-vettore con elemento tipico
+\[
+g_i(\theta) = \frac{\partial\LogLik(\theta)}{\partial\theta_i} 
+  = \sum_{t=1}^T \frac{\partial\ell_t(\theta)}{\partial\theta_i}
+\]
+
 
 I metodi basati sul gradiente possono essere illustrati brevemente:
 
 \begin{enumerate}
-\item scegliere un punto $\theta_0 \in \Theta$ ;
-\item valutare $\mathbf{s}(\theta_0)$;
-\item se $\mathbf{s}(\theta_0)$ è ``piccolo'', fermarsi; altrimenti calcolare
-  un vettore di direzione $d(\mathbf{s}(\theta_0))$;
-\item valutare $\theta_1 = \theta_0 + d(\mathbf{s}(\theta_0))$ ;
-\item sostituire $\theta_0$ con $\theta_1$ ;
+\item scegliere un punto $\theta_0 \in \Theta$;
+\item valutare $\mathbf{g}(\theta_0)$;
+\item se $\mathbf{g}(\theta_0)$ è ``piccolo'', fermarsi; altrimenti calcolare
+  un vettore di direzione $d(\mathbf{g}(\theta_0))$;
+\item valutare $\theta_1 = \theta_0 + d(\mathbf{g}(\theta_0))$;
+\item sostituire $\theta_0$ con $\theta_1$;
 \item ricominciare dal punto 2.
 \end{enumerate}
 
 Esistono molti algoritmi di questo tipo; si differenziano nel modo con cui
 calcolano il vettore di direzione
-$d(\mathbf{s}(\theta_0))$, per assicurarsi che sia $\LogLik(\theta_1) >
+$d(\mathbf{g}(\theta_0))$, per assicurarsi che sia $\LogLik(\theta_1) >
 \LogLik(\theta_0)$ (in modo che prima o poi si arrivi a un massimo).
 
 Il metodo usato da \app{gretl} per massimizzare la log-verosimiglianza è un algoritmo
@@ -89,10 +95,10 @@ basato sul gradiente, noto come metodo di \textbf{BFGS} (Broyden,
 Fletcher, Goldfarb e Shanno). Questa tecnica è usata in molti pacchetti
 statistici ed econometrici, visto che è ritenuta valida e molto potente.
 Ovviamente, per rendere operativa questa tecnica, deve essere possibile
-calcolare il vettore $\mathbf{s}(\theta)$ per ogni valore di $\theta$.  In
-alcuni casi, la funzione $\mathbf{s}(\theta)$ può essere vista esplicitamente in
-termini di $\mathbf{Y}$. Talvolta questo non è possibile, o è troppo difficile,
-quindi la funzione $\mathbf{s}(\theta)$ è valutata numericamente.
+calcolare il vettore $\mathbf{g}(\theta)$ per ogni valore di $\theta$.  In
+alcuni casi, la funzione $\mathbf{g}(\theta)$ può essere vista esplicitamente in
+termini di $\mathbf{Y}$. Se questo non è possibile, o è troppo difficile,
+il gradiente può essere valutato numericamente.
 
 La scelta del valore iniziale $\theta_0$ è cruciale in alcuni contesti e
 ininfluente in altri. In generale è consigliabile far partire l'algoritmo da
@@ -100,6 +106,26 @@ valori ``sensibili'', quando è possibile. Se è disponibile uno stimatore
 consistente, di solito è una scelta valida ed efficiente: ci si assicura che per
 grandi campioni il punto di partenza sarà probabilmente vicino a $\hat{\theta}$
 e la convergenza sarà raggiunta in poche iterazioni.
+
+\subsection{Matrice di covarianza ed errori standard}
+
+Per impostazione predefinita, la matrice delle stime dei parametri è basata sul
+prodotto esterno del gradiente (OPG, Outer Product of the Gradient), ossia:
+\[
+\widehat{\mbox{Var}}_{\mbox{\scriptsize OPG}}(\hat{\theta}) =
+  \left(G'(\hat{\theta}) G(\hat{\theta}) \right)^{-1}
+\]
+dove $G(\hat{\theta})$ è la matrice $T \times k$ dei contributi al
+gradiente. Sono disponibili due altre possibilità: se si usa l'opzione
+\verb|--hessian|, la matrice di covarianza viene calcolata con
+un'approssimazione numerica dell'Hessiana alla convergenza. Se si usa l'opzione
+\verb|--robust|, viene usato lo stimatore ``sandwich'' di quasi-massima
+verosimiglianza:
+\[
+\widehat{\mbox{Var}}_{\mbox{\scriptsize QML}}(\hat{\theta}) = H(\hat{\theta})^{-1}
+  G'(\hat{\theta}) G(\hat{\theta}) H(\hat{\theta})^{-1}
+\]
+dove $H$ denota l'approssimazione numerica dell'Hessiana.
 
 \section{Stima di una Gamma}
 \label{sec:gamma}
@@ -110,7 +136,7 @@ ogni osservazione $x_t$ è
 \begin{equation}
   \label{eq:gammadens}
   f(x_t) = \frac{\alpha^p}{\Gamma(p)} x_t^{p-1} \exp\left({-\alpha
-      x_t}\right) .
+      x_t}\right)
 \end{equation}
 La log-verosimiglianza per l'intero campione può essere scritta come il
 logaritmo della densità congiunta di tutte le osservazioni. Visto che queste
@@ -120,7 +146,7 @@ individuali, e quindi il suo logaritmo è
   \label{eq:gammaloglik}
   \LogLik(\alpha, p) = \sum_{t=1}^T \log \left[ \frac{\alpha^p}{\Gamma(p)} x_t^{p-1} \exp\left({-\alpha
       x_t}\right) \right] = 
-      \sum_{t=1}^T \ell_t ,
+      \sum_{t=1}^T \ell_t
 \end{equation}
 dove
 \[
@@ -176,7 +202,7 @@ In ogni caso, stimatori consistenti basati sul metodo dei momenti
 per $p$ e $\alpha$ possono essere ricavati dalla media campionaria
 $m$ e dalla varianza $V$: visto che si può dimostrare che
 \[
-  E(x_t) = p/\alpha \qquad  V(x_t) = p/\alpha^2 ,
+  E(x_t) = p/\alpha \qquad  V(x_t) = p/\alpha^2
 \]
 segue che gli stimatori
 \begin{eqnarray*}
@@ -228,7 +254,7 @@ solo per l'eterogeneità (non osservata) tra le imprese, ma anche perché due
 imprese, uguali sotto tutti gli aspetti, potrebbero operare a diversi regimi di
 efficienza. In questo caso, possiamo scrivere
 \[
-  C_i = C^*_i + u_i + v_i ,
+  C_i = C^*_i + u_i + v_i
 \]
 dove $C_i$ è qualche indicatore dei costi variabili, $C_i^*$ è il suo valore
 ``teorico'', $u_i$ è un termine di disturbo a media zero e $v_i$ è il termine
@@ -251,7 +277,7 @@ funzione di densità di $\varepsilon_i$ ha la forma:
   f(\varepsilon_i) = 
    \sqrt{\frac{2}{\pi}} 
    \Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right)
-   \frac{1}{\sigma} \phi\left(\frac{\varepsilon_i}{\sigma}\right) ,
+   \frac{1}{\sigma} \phi\left(\frac{\varepsilon_i}{\sigma}\right)
 \end{equation}
 dove $\Phi(\cdot)$ e $\phi(\cdot)$ sono, rispettivamente, la funzione di
 distribuzione e quella di densità della normale standard, $\sigma =
@@ -262,9 +288,9 @@ Di conseguenza, la log-verosimiglianza per una osservazione ha la seguente forma
 \[
   \ell_t = 
   \log\Phi\left(\frac{\lambda \varepsilon_i}{\sigma}\right) -
-  \left[ \log(\sigma) + \frac{\varepsilon_i^2}{2 \sigma^2} \right];
+  \left[ \log(\sigma) + \frac{\varepsilon_i^2}{2 \sigma^2} \right]
 \]
-e quindi il modello di funzione di costo Cobb-Douglas con frontiera stocastica è
+Quindi il modello di funzione di costo Cobb-Douglas con frontiera stocastica è
 descritto dalle seguenti equazioni:
 
 \begin{eqnarray*}
@@ -272,7 +298,7 @@ descritto dalle seguenti equazioni:
   \log C^*_i & = & c + \sum_{j=1}^m \beta_j \log y_{ij} + \sum_{j=1}^n \alpha_j \log p_{ij} \\
   \varepsilon_i & = & u_i + v_i \\
   u_i & \sim & N(0,\sigma_u^2) \\
-  v_i & \sim & \left|N(0,\sigma_v^2)\right|  .
+  v_i & \sim & \left|N(0,\sigma_v^2)\right|
 \end{eqnarray*}
 
 In molti casi, si intende assicurarsi che l'omogeneità della funzione di costo
@@ -283,7 +309,7 @@ può essere riscritta come
 \begin{equation}
   \label{eq:CobbDouglasFrontier}
   \log C_i - \log p_{in}  = c + \sum_{j=1}^m \beta_j \log y_{ij} +
-  \sum_{j=2}^n \alpha_j (\log p_{ij} - \log p_{in})  + \varepsilon_i.
+  \sum_{j=2}^n \alpha_j (\log p_{ij} - \log p_{in})  + \varepsilon_i
 \end{equation}
 
 Questa equazione può essere stimata con OLS, ma con due inconvenienti: per prima
@@ -374,20 +400,20 @@ Per le proprietà delle distribuzioni condizionali, la densità congiunta può
 essere fattorizzata nel modo seguente
 \[
   f(y_t, y_{t-1}, \ldots) = \left[ \prod_{t=1}^T f(y_t |F_{t-1})
-  \right] \cdot f(y_0) ;
+  \right] \cdot f(y_0)
 \]
-se trattiamo $y_0$ come fissato, il termine $f(y_0)$ non dipende dai parametri
+Se trattiamo $y_0$ come fissato, il termine $f(y_0)$ non dipende dai parametri
 sconosciuti, e quindi la log-verosimiglianza condizionale può essere scritta
 come la somma dei contributi individuali
 \begin{equation}
   \label{eq:garchloglik}
-  \LogLik(\mu,\omega,\alpha,\beta) = \sum_{t=1}^T \ell_t ,
+  \LogLik(\mu,\omega,\alpha,\beta) = \sum_{t=1}^T \ell_t
 \end{equation}
 dove 
 \[
   \ell_t = \log \left[ \frac{1}{\sqrt{h_t}} \phi\left( \frac{y_t - \mu}{\sqrt{h_t}}
     \right) \right] = 
-    - \frac{1}{2} \left[ \log(h_t) + \frac{(y_t - \mu)^2}{h_t} \right] .
+    - \frac{1}{2} \left[ \log(h_t) + \frac{(y_t - \mu)^2}{h_t} \right]
 \]
 
 Lo script seguente mostra una semplice applicazione di questa tecnica, che usa
@@ -423,7 +449,7 @@ $i$-esimo è effettuato tramite un'approssimazione finita della derivata, ossia
 \[
   \pder{\LogLik(\theta_1, \ldots, \theta_n)}{\theta_i} \simeq 
   \frac{\LogLik(\theta_1, \ldots, \theta_i + h, \ldots, \theta_n) -
-    \LogLik(\theta_1, \ldots, \theta_i - h, \ldots, \theta_n)}{2h} ,
+    \LogLik(\theta_1, \ldots, \theta_i - h, \ldots, \theta_n)}{2h}
 \]
 dove $h$ è un numero piccolo.
 
@@ -461,12 +487,12 @@ $y_t^* = \beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t} +
 $\Phi(\beta_1 x_{1t} + \beta_2 x_{2t} + \beta_3 x_{3t}) = \pi_t$.
 La funzione di probabilità per un'osservazione può essere scritta come
 \[
-  P(y_t) = \pi_t^{y_t} ( 1 -\pi_t )^{1-y_t} ;
+  P(y_t) = \pi_t^{y_t} ( 1 -\pi_t )^{1-y_t}
 \]
-visto che le osservazioni sono indipendenti e identicamente distribuite, la
+Visto che le osservazioni sono indipendenti e identicamente distribuite, la
 log-verosimiglianza è semplicemente la somma dei contributi individuali. Quindi
 \[
-  \LogLik = \sum_{t=1}^T y_t \log(\pi_t) + (1 - y_t) \log(1 - \pi_t) .
+  \LogLik = \sum_{t=1}^T y_t \log(\pi_t) + (1 - y_t) \log(1 - \pi_t)
 \]
 L'opzione \texttt{--verbose} alla dine del comando \texttt{end mle}
 produce un resoconto dettagliato delle iterazioni compiute dall'algoritmo
@@ -483,7 +509,7 @@ ed è facile vedere che
   \pder{\LogLik}{\pi_t} & = & \frac{y_t}{\pi_t} - \frac{1 - y_t}{1 -
     \pi_t} \\
   \pder{\pi_t}{\beta_i} & = & \phi(\beta_1 x_{1t} + \beta_2 x_{2t} +
-  \beta_3 x_{3t}) \cdot x_{it} .
+  \beta_3 x_{3t}) \cdot x_{it}
 \end{eqnarray*}
 
 Il blocco \texttt{mle} nello script precedente può quindi essere modificato nel
