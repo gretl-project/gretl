@@ -193,7 +193,8 @@ RCVAR rc_vars[] = {
 #ifdef G_OS_WIN32
     { "wimp", N_("Emulate Windows look"), NULL, &wimp, 
       BOOLSET, 0, 1, NULL },
-#else
+#endif
+#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "browser", N_("Web browser"), NULL, Browser, 
       ROOTSET, MAXSTR, 3, NULL },
 #endif

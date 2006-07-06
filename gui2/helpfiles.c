@@ -58,7 +58,9 @@ static help_head **en_cli_heads, **en_gui_heads;
 
 static windata_t *helpwin (int cli, int en);
 static void real_do_help (int hcode, int pos, int cli, int en);
+#ifndef OLD_GTK
 static void en_text_cmdref (gpointer p, guint u, GtkWidget *w);
+#endif
 
 /* searching stuff */
 static void find_in_text (GtkWidget *widget, gpointer data);
@@ -1089,12 +1091,12 @@ void plain_text_cmdref (gpointer p, guint cmdnum, GtkWidget *w)
     real_do_help(cmdnum, pos, cli, en);
 } 
 
+#ifndef OLD_GTK
+
 static void en_text_cmdref (gpointer p, guint u, GtkWidget *w)
 {
     real_do_help(0, 0, 1, 1);
 } 
-
-#ifndef OLD_GTK
 
 gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 		       windata_t *vwin)

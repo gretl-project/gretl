@@ -101,12 +101,12 @@ extern int mainwin_height;
 
 #if defined(G_OS_WIN32)
 extern int wimp;
-#elif defined (OSX_BUILD)
-extern char Browser[MAXSTR];
 #else
+# ifndef OSX_BUILD
 extern char viewps[MAXSTR];
 extern char viewpdf[MAXSTR];
 extern char Browser[MAXSTR];
+# endif
 #endif
 
 extern char calculator[MAXSTR];

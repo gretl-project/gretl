@@ -38,9 +38,9 @@ int winfork (char *cmdline, const char *dir, int wshow,
 #endif
 
 #ifdef OSX_BUILD
-
 int osx_open_file (const char *path);
 
+int osx_open_url (const char *url);
 #endif
 
 typedef struct _selector selector;

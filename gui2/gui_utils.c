@@ -4211,12 +4211,14 @@ char *double_underscores (char *targ, const char *src)
 
 int browser_open (const char *url)
 {
-# ifdef USE_GNOME
+# if defined(USE_GNOME)
 #  ifndef OLD_GTK
     gnome_url_show(url, NULL); 
 #  else
     gnome_url_show(url); 
-#  endif  
+#  endif 
+# elif defined(OSX_BUILD)
+    osx_open_url(url);
 # else
     int err;
     char ns_cmd[256];
@@ -4226,7 +4228,7 @@ int browser_open (const char *url)
     if (err) {
 	gretl_fork(Browser, url);
     }
-# endif /* USE_GNOME */
+# endif /* !GNOME, !OSX */
 
     return 0;
 }

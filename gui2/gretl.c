@@ -139,7 +139,6 @@ char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "pdflatex";
 char viewdvi[MAXSTR] = "xdvi";
 char Rcommand[MAXSTR] = "xterm -e R";
-char Browser[MAXSTR] = "mozilla"; /* FIXME */
 #else
 char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "latex";

@@ -5484,6 +5484,22 @@ int osx_open_file (const char *path)
     return err;
 }
 
+int osx_open_url (const char *url)
+{
+    CFURLRef inURL;
+    int err;
+
+    inURL = CFURLCreateWithString(NULL, url, NULL);
+    if (inURL == NULL) {
+	err = 1;
+    } else {
+	err = LSOpenCFURLRef(inURL, NULL);
+	CFRelease(inURL);
+    }
+
+    return err;
+}
+
 #endif /* OSX_BUILD */
 
 static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
