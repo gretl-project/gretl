@@ -485,7 +485,7 @@ dnl OS X special (we'll use supplied regex)
 if test "$highlight" = "yes" && \
    test "$have_gtksourceview" = "no" && \
    test "$have_libxml2" = "yes" && \
-   test "$use_gtksourceview = "no" ; then
+   test "$use_gtksourceview" = "no" ; then
    use_gtksourceview="yes"
 fi
 
