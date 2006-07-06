@@ -90,6 +90,38 @@ static model_data_item *create_data_item (const char *key, void *ptr,
     return item;
 }
 
+static model_data_item *
+replicate_data_item (const model_data_item *orig)
+{
+    model_data_item *item = malloc(sizeof *item);
+
+    if (item != NULL) {
+	item->key = gretl_strdup(orig->key);
+	if (item->key == NULL) {
+	    free(item);
+	    item = NULL;
+	}
+    }
+
+    if (item != NULL) {
+	item->ptr = malloc(orig->size);
+	if (item->ptr == NULL) {
+	    free(item->key);
+	    free(item);
+	    item = NULL;
+	}
+    }
+    
+    if (item != NULL) {
+	memcpy(item->ptr, orig->ptr, orig->size);
+	item->type = orig->type;
+	item->size = orig->size;
+	item->destructor = orig->destructor;
+    }
+
+    return item;
+}
+
 /**
  * gretl_model_set_data_with_destructor:
  * @pmod: pointer to #MODEL.
@@ -1017,6 +1049,12 @@ static int arma_depvar_pos (const MODEL *pmod)
 	dvpos = (seasonal)? 9 : 5;
     } else {
 	dvpos = (seasonal)? 7 : 4;
+    }
+
+    /* safety: should be impossible */
+    if (dvpos == LISTSEP) {
+	fprintf(stderr, "internal error in arma_depvar_pos\n");
+	dvpos = 0;
     }
 
     return dvpos;
@@ -2607,52 +2645,32 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
     int err = 0;
 
     targ->data_items = malloc(n * sizeof *targ->data_items);
-    if (targ->data_items == NULL) return 1;
+    if (targ->data_items == NULL) {
+	return 1;
+    }
 
-    for (i=0; i<src->n_data_items; i++) {
+    for (i=0; i<n; i++) {
 	targ->data_items[i] = NULL;
     }
 
-    for (i=0; i<src->n_data_items; i++) {
-	model_data_item *targitem, *srcitem;
-
-	targitem = malloc(sizeof *targitem);
-	if (targitem == NULL) {
+    for (i=0; i<n; i++) {
+	targ->data_items[i] = replicate_data_item(src->data_items[i]);
+	if (targ->data_items[i] == NULL) {
 	    err = 1;
 	    break;
 	}
-
-	srcitem = src->data_items[i];
-	targ->data_items[i] = targitem;
-	
-	targitem->key = gretl_strdup(srcitem->key);
-	if (targitem->key == NULL) {
-	    err = 1;
-	    break;
-	}
-
-	targitem->ptr = malloc(srcitem->size);
-	if (targitem->ptr == NULL) {
-	    free(targitem->key);
-	    err = 1;
-	    break;
-	}
-
-	memcpy(targitem->ptr, srcitem->ptr, srcitem->size);
-	targitem->size = srcitem->size;
-	targitem->destructor = srcitem->destructor;
     }
 
     if (err) {
-	for (i=0; i<src->n_data_items; i++) {
+	for (i=0; i<n; i++) {
 	    free(targ->data_items[i]);
 	}
 	free(targ->data_items);
 	targ->data_items = NULL;
 	targ->n_data_items = 0;
+    } else {
+	targ->n_data_items = n;
     }
-
-    targ->n_data_items = src->n_data_items;
 
     return err;
 }
