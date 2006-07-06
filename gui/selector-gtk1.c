@@ -343,11 +343,12 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
 	rows = GTK_CLIST(w)->rows;
 
 	for (i=0; i<rows; i++) {
-	    gtk_clist_get_text(GTK_CLIST(w), i, 1, &modv);
-	    fprintf(stderr, "maybe_insert_depvar_lags: modv=%s\n", modv);
-	    if (atoi(modv) > 0) {
-		append = 0;
-		break;
+	    if (gtk_clist_get_text(GTK_CLIST(w), i, 1, &modv)) {
+		fprintf(stderr, "maybe_insert_depvar_lags: modv=%s\n", modv);
+		if (atoi(modv) > 0) {
+		    append = 0;
+		    break;
+		}
 	    }
 	    rnum++;
 	} 
