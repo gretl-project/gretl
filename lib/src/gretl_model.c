@@ -2459,13 +2459,13 @@ void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 
 	if (plain_format(prn)) {
 	    sprintf(buf, _("%g percent critical value"), a);
-	    pprintf(prn, "  (%s = %g)", buf, test->crit);
+	    pprintf(prn, "  (%s = %.2f)\n\n", buf, test->crit);
 	} else if (tex_format(prn)) {
 	    sprintf(buf, I_("%g percent critical value"), a);
-	    pprintf(prn, "\\quad (%s = %g)\\\\\n", buf, test->crit);
+	    pprintf(prn, "\\quad (%s = %.2f)\\\\\n", buf, test->crit);
 	} else if (rtf_format(prn)) {
 	    sprintf(buf, I_("%g percent critical value"), a);
-	    pprintf(prn, " (%s = %g)\\par\n\n", buf, test->crit);
+	    pprintf(prn, " (%s = %.2f)\\par\n\n", buf, test->crit);
 	}
     }
 }

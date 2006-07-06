@@ -1363,7 +1363,8 @@ static void QLR_print_result (MODEL *pmod,
 {
     char datestr[OBSLEN];
     double crit = 0.0;
-    int i, a = 0, approx = 0;
+    int a = 0, approx = 0;
+    int i, j;
 
     ntodate(datestr, tmax, pdinfo);
 
@@ -1372,31 +1373,38 @@ static void QLR_print_result (MODEL *pmod,
     pprintf(prn, "The maximum F(%d, %d) = %g occurs "
 	    "at observation %s\n", dfn, dfd, Fmax, datestr);
 
-    if (dfn > QLR_QMAX) {
-	dfn = QLR_QMAX;
+    j = dfn - 1;
+
+    if (j >= QLR_QMAX) {
+	j = QLR_QMAX - 1;
 	approx = 1;
-    }
+    } 
 
     for (i=2; i>=0; i--) {
-	if (Fmax > QLR_critvals[dfn][i]) {
+	if (Fmax > QLR_critvals[j][i]) {
 	    a = (i == 2)? 1 : (i == 1)? 5 : 10;
-	    crit = QLR_critvals[dfn][i];
+	    crit = QLR_critvals[j][i];
 	    break;
 	}
     }
 
+    if (crit == 0.0) {
+	crit = QLR_critvals[j][0];
+    }
+
     if (a > 0) {
 	pprintf(prn, "Significant at the %d percent level ", a);
-	pprintf(prn, "(%d%% critical value %s %g)\n", a, 
+	pprintf(prn, "(%d%% critical value %s %.2f)\n", a, 
 		(approx)? "<" : "=", crit);
     } else {
 	if (approx) {
-	    pprintf(prn, "10%% critical value for q = 20 is %g\n",
+	    pprintf(prn, "10%% critical value for q = 20 is %.2f\n",
 		    crit);
 	} else {
 	    pputs(prn, "Not significant at the 10 percent level ");
-	    pprintf(prn, "(10%% value = %g)\n", crit);
+	    pprintf(prn, "(10%% value = %.2f)\n", crit);
 	}
+	a = 10;
     }
 
     pputs(prn, "\nThis statistic does not follow the standard "
