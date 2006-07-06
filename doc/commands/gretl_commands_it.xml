@@ -5940,7 +5940,7 @@
     <description>
       <para>Richiede un argomento intero. Imposta il seme del generatore
       di numeri pseudo-casuali usato dalle opzioni Variabile casuale
-      uniforme e normale nel menù Dati, Aggiungi variabili.
+      uniforme e normale nel menù Aggiungi.
       </para>
       <para>
       Di solito il seme è impostato al momento dell'avvio del programma usando

@@ -6016,7 +6016,7 @@
     <description>
       <para>Requires an integer as input.  Sets the seed for the
 	pseudo-random number generator used by the random uniform and
-	random normal options under the Data, Add variables menu.
+	random normal options under the Add menu.
       </para>
       <para>
 	By default the seed is set when the program is started, using
