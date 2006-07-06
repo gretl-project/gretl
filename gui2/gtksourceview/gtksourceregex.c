@@ -30,7 +30,7 @@
 #include <sys/types.h>
 #include <regex.h>
 #else
-#include "gnu-regex/regex.h"
+#include "regex.h"
 #endif
 
 #include "gtksourceview-i18n.h"

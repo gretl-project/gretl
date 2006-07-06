@@ -5469,17 +5469,16 @@ int latex_compile (char *texshort)
 
 #ifdef OSX_PKG
 
-#include <Files.h>
-#include <LSOpen.h>
+#include <Carbon/Carbon.h>
 
 int osx_open_file (const char *path)
 {
-    FSRef *inRef;
+    FSRef inRef;
     int err;
     
-    err = FSPathMakeRef(path, inRef, FALSE);
+    err = FSPathMakeRef(path, &inRef, NULL);
     if (!err) {
-	err = LSOpenFSRef(inRef, NULL);
+	err = LSOpenFSRef(&inRef, NULL);
     }
 
     return err;

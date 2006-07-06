@@ -30,6 +30,7 @@ XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
 USE_NLS = @USE_NLS@
 INETLIB = @INETLIB@
+CARBONLIB = @CARBONLIB@
 
 GTK_EXTRA_CFLAGS = -I$(topsrc)/gui2/gtkextra-lite
 GTK_EXTRA_LIB = -L./gtkextra-lite -lgtkextra-lite
@@ -154,7 +155,7 @@ GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
 $(PROG): .deps $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE) $(MY_SOURCEVIEW_LIB)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB) $(CARBONLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 	$(CC) $(CFLAGS) $(GTK_CFLAGS) -c $<

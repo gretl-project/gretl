@@ -358,6 +358,14 @@ case $host_os in
 esac
 AM_PATH_LAPACK(, have_lapack="yes")
 
+dnl And while we're at it...
+case $host_os in
+  *darwin*) 
+    CARBONLIB="-Wl,-framework -Wl,Carbon"
+    AC_SUBST(CARBONLIB)
+  ;; 
+esac
+
 dnl
 dnl Check for FLITE?
 dnl
@@ -467,9 +475,18 @@ if test "$highlight" = "yes" && \
    test "$have_gtksourceview" = "no" && \
    test "$have_libxml2" = "yes" ; then
      AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
+     have_gnu_regex="yes"
      AC_DEFINE(USE_GTKSOURCEVIEW)
      use_gtksourceview="yes",
      use_gtksourceview="no")
+fi
+
+dnl OS X special (we'll use supplied regex)
+if test "$highlight" = "yes" && \
+   test "$have_gtksourceview" = "no" && \
+   test "$have_libxml2" = "yes" && \
+   test "$use_gtksourceview = "no" ; then
+   use_gtksourceview="yes"
 fi
 
 dnl Or fall back on GTK 1.2
@@ -495,6 +512,7 @@ AC_SUBST(have_gmp)
 AC_SUBST(have_mpfr)
 AC_SUBST(have_gtksourceview)
 AC_SUBST(use_gtksourceview)
+AC_SUBST(have_gnu_regex)
 AC_SUBST(have_audio)
 AC_SUBST(build_mailer)
 AC_SUBST(GLIB_CFLAGS)
