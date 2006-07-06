@@ -173,8 +173,6 @@ static double stirf (double x)
     return y;
 }
 
-double gamma (double x);
-
 double cephes_gamma (double x)
 {
     double p, q, z;
@@ -440,11 +438,6 @@ double lgam (double x)
     }
 
     return q;
-}
-
-double gamma (double x)
-{
-    return cephes_gamma(x);
 }
 
 double cephes_lgamma (double x)

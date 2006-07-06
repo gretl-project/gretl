@@ -5473,12 +5473,12 @@ int latex_compile (char *texshort)
 
 int osx_open_file (const char *path)
 {
-    FSRef inRef;
+    FSRef r;
     int err;
     
-    err = FSPathMakeRef(path, &inRef, NULL);
+    err = FSPathMakeRef(path, &r, NULL);
     if (!err) {
-	err = LSOpenFSRef(&inRef, NULL);
+	err = LSOpenFSRef(&r, NULL);
     }
 
     return err;
@@ -5487,10 +5487,8 @@ int osx_open_file (const char *path)
 int osx_open_url (const char *url)
 {
     CFStringRef s;
-    CFURLRef inURL;
+    CFURLRef u;
     int err;
-    
-    fprintf(stderr, "url='%s'\n", url);
     
     s = CFStringCreateWithBytes(NULL, url, strlen(url), 
                                 kCFStringEncodingASCII, 
@@ -5498,13 +5496,12 @@ int osx_open_url (const char *url)
     if (s == NULL) {
         err = 1;
     } else {
-        inURL = CFURLCreateWithString(NULL, s, NULL);
-        if (inURL == NULL) {
+        u = CFURLCreateWithString(NULL, s, NULL);
+        if (u == NULL) {
 	    err = 1;
         } else {
-            fprintf(stderr, "inURL=%p\n", inURL);
-	    err = LSOpenCFURLRef(inURL, NULL);
-	    CFRelease(inURL);
+	    err = LSOpenCFURLRef(u, NULL);
+	    CFRelease(u);
 	}
 	CFRelease(s);
     }

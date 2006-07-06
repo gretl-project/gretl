@@ -11,7 +11,7 @@ extern double SQRTH;
  
 double cephes_exp (double);              /* unity.c */
 double expx2 (double, int);              /* expx2.c */
-double gamma (double);                   /* gamma.c */
+double cephes_gamma (double);            /* gamma.c */
 double igam (double, double);            /* igam.c */
 double igamc (double, double);           /* igam.c */
 double igami (double, double);           /* igami.c */

@@ -146,7 +146,7 @@ double incbet (double  aa, double bb, double xx)
 	t *= pow(x,a);
 	t /= a;
 	t *= w;
-	t *= gamma(a+b) / (gamma(a) * gamma(b));
+	t *= cephes_gamma(a+b) / (cephes_gamma(a) * cephes_gamma(b));
 	goto done;
     }
 
@@ -382,7 +382,7 @@ static double pseries (double a, double b, double x)
     u = a * log(x);
 
     if ((a+b) < MAXGAM && fabs(u) < MAXLOG) {
-	t = gamma(a+b)/(gamma(a)*gamma(b));
+	t = cephes_gamma(a+b)/(cephes_gamma(a)*cephes_gamma(b));
 	s = s * t * pow(x, a);
     } else {
 	t = lgam(a+b) - lgam(a) - lgam(b) + u + log(s);
