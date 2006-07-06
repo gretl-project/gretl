@@ -115,7 +115,11 @@
 	  <row>
 	    <entry>Hildreth&ndash;Lu (<command>hilu</command>)</entry>
 	    <entry>Autocorrelazione del prim'ordine</entry>
-	  </row>
+          </row>
+          <row>
+            <entry>Prais&ndash;Winsten (<command>pwe</command>)</entry>
+	    <entry>Autocorrelazione del prim'ordine</entry>
+          </row>
 	  <row>
 	    <entry>Stima autoregressiva
 	      (<command>ar</command>)</entry>
@@ -126,7 +130,12 @@
 	    <entry>ARMAX
 	      (<command>arma</command>)</entry>
 	    <entry>Modelli di serie storiche con errori ARMA</entry>
-	  </row>
+          </row>
+
+          <row>
+            <entry>GARCH (<command>garch</command>)</entry>
+            <entry>Eteroschedasticità condizionale autoregressiva generalizzata</entry>
+          </row>
 	  <row>
 	    <entry>Autoregressione vettoriale
 	      (<command>var</command>)</entry>
@@ -163,7 +172,11 @@
 	    <entry>Tobit
 	      (<command>tobit</command>)</entry>
 	    <entry>Variabile dipendente troncata</entry>
-	  </row>
+          </row>
+          <row>
+            <entry>Poisson (<command>poisson</command>)</entry>
+            <entry>Modello per dati di conteggio</entry>
+          </row>
 	  <row>
 	    <entry>Logistica
 	      (<command>logistic</command>)</entry>
@@ -178,11 +191,6 @@
 	    <entry>Correlazione di rango
 	      (<command>spearman</command>)</entry>
 	    <entry>Correlazione con dati ordinali</entry>
-	  </row>
-	  <row>
-	    <entry>Pooled OLS (<command>pooled</command>)</entry>
-	    <entry>Stima OLS per dati cross-section e serie storiche
-            mischiati</entry>
 	  </row>
 	  <row>
 	    <entry>OLS a precisione multipla (<command>mpols</command>)</entry>
