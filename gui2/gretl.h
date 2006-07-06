@@ -99,8 +99,10 @@ extern int main_y;
 extern int mainwin_width;
 extern int mainwin_height;
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
 extern int wimp;
+#elif defined (OSX_BUILD)
+extern char Browser[MAXSTR];
 #else
 extern char viewps[MAXSTR];
 extern char viewpdf[MAXSTR];

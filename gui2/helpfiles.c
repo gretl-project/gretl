@@ -1858,11 +1858,13 @@ void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
 	return;
     }
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
     if ((int) ShellExecute(NULL, "open", fullpath, NULL, NULL, SW_SHOW) <= 32) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
     }
+#elif defined(OSX_BUILD)
+    osx_open_file(fullpath);
 #else
     gretl_fork(viewpdf, fullpath);
 #endif

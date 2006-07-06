@@ -274,6 +274,7 @@ char **get_all_option_strings (int *pn)
 		    optstrs[j] = optstrs[j+1];
 		}
 		optstrs[m-1] = NULL;
+		i--;
 		m--;
 	    }
 	}

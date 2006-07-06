@@ -5,6 +5,8 @@
 
 void output_lang_file (void)
 {
+    char **strs;
+    int nopts;
     int i;
 
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
@@ -33,38 +35,47 @@ void output_lang_file (void)
     puts(" <end-regex>&quot;</end-regex>");
     puts("</string>\n");
 
+    /* gretl data types */
+    puts("<keyword-list _name = \"Grel-types\" style = \"Data Type\"");
+    puts("  case-sensitive=\"TRUE\">");
+    puts(" <keyword>scalar</keyword>");
+    puts(" <keyword>series</keyword>");
+    puts(" <keyword>matrix</keyword>");
+    puts(" <keyword>list</keyword>");
+    puts("</keyword-list>\n");
+
     /* gretl commands */
     puts("<keyword-list _name = \"Commands\" style = \"Keyword\" case-sensitive=\"TRUE\"");
     puts("  beginning-regex=\"\\b\" end-regex=\"\\b\">");
     for (i=1; i<NC; i++) {
-	printf(" <keyword>%s</keyword>\n", gretl_command_word(i));
+	if (strcmp(gretl_command_word(i), "matrix")) {
+	    printf(" <keyword>%s</keyword>\n", gretl_command_word(i));
+	}
     }
     puts("</keyword-list>\n");
 
     /* functions in "genr" command */
     puts("<keyword-list _name = \"Genr-functions\" style = \"Function\"");
-    puts("  case-sensitive=\"TRUE\" end-regex=\"(\">");
+    puts("  case-sensitive=\"TRUE\">");
     for (i=1; i<T_IDENTITY; i++) {
 	printf(" <keyword>%s</keyword>\n", get_genr_func_word(i));
     }    
     puts("</keyword-list>\n");
 
-#if 0 /* not yet */
     /* command option strings */
-    puts("<keyword-list _name = \"Options\" style = \"Data Type\" case-sensitive=\"TRUE\"");
-    puts("    beginning-regex=\"--\" end-regex=\"[ \\n]\">");
-    for (i=1; i<XX; i++) {
-	printf(" <keyword>%s</keyword>\n", XX);
-    }    
-    puts("</keyword-list>\n");
-#endif
+    strs = get_all_option_strings(&nopts);
+    if (strs != NULL) {
+	puts("<keyword-list _name = \"Options\" style = \"Data Type\" "
+	     "case-sensitive=\"TRUE\">");
+	for (i=1; i<nopts; i++) {
+	    printf(" <keyword>%s</keyword>\n", strs[i]);
+	}    
+	puts("</keyword-list>\n");
+	free_strings_array(strs, nopts);
+    }
 
     puts("<pattern-item _name = \"Internal-Variables\" style = \"Data Type\">");
     puts(" <regex>[$][$]?[a-zA-Z_][a-zA-Z0-9_]*</regex>");
-    puts("</pattern-item>\n");
-
-    puts("<pattern-item _name = \"Options\" style = \"Data Type\">");
-    puts(" <regex>--[a-z-]*[ \\n]*</regex>");
     puts("</pattern-item>\n");
 
     puts("<string _name = \"Character Constant\" style = \"String\" end-at-line-end = \"TRUE\">");

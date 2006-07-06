@@ -207,7 +207,7 @@ RCVAR rc_vars[] = {
       ROOTSET, MAXSTR, 3, NULL },
     { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
       ROOTSET, MAXSTR, 3, NULL },
-#ifndef G_OS_WIN32
+#if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "viewps", N_("Command to view postscript files"), NULL, viewps, 
       ROOTSET, MAXSTR, 3, NULL },
     { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf, 

@@ -5467,7 +5467,7 @@ int latex_compile (char *texshort)
     return err;
 }
 
-#ifdef OSX_PKG
+#ifdef OSX_BUILD
 
 #include <Carbon/Carbon.h>
 
@@ -5484,7 +5484,7 @@ int osx_open_file (const char *path)
     return err;
 }
 
-#endif /* OSX_PKG */
+#endif /* OSX_BUILD */
 
 static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 {
@@ -5546,7 +5546,7 @@ static void view_or_save_latex (PRN *bprn, const char *fname, int saveit)
 		win_show_error(dw);
 	    }
 	}
-#elif defined(OSX_PKG)
+#elif defined(OSX_BUILD)
 	if (!strncmp(latex, "pdf", 3)) {
 	    sprintf(tmp, "%s.pdf", texbase);
 	} else {

@@ -37,6 +37,12 @@ int winfork (char *cmdline, const char *dir, int wshow,
 	     DWORD flags);
 #endif
 
+#ifdef OSX_BUILD
+
+int osx_open_file (const char *path);
+
+#endif
+
 typedef struct _selector selector;
 
 void library_command_init (void);

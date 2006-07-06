@@ -26039,6 +26039,7 @@ _ACEOF
 #define USE_GTKSOURCEVIEW 1
 _ACEOF
 
+     have_gnu_regex="yes"
      use_gtksourceview="yes"
 else
   use_gtksourceview="no"

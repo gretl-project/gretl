@@ -475,8 +475,8 @@ if test "$highlight" = "yes" && \
    test "$have_gtksourceview" = "no" && \
    test "$have_libxml2" = "yes" ; then
      AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
-     have_gnu_regex="yes"
      AC_DEFINE(USE_GTKSOURCEVIEW)
+     have_gnu_regex="yes"
      use_gtksourceview="yes",
      use_gtksourceview="no")
 fi

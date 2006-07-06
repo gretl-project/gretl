@@ -528,12 +528,14 @@ static int real_display_gpage (void)
 	fname = gpage_fname(".ps", 0);
     }
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
     if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
 	err = 1;
     }
+#elif defined(OSX_BUILD)
+    err = osx_open_file(fname);
 #else
     viewer = (gpage.output == PDF_OUTPUT)? viewpdf : viewps;
     err = gretl_fork(viewer, fname);

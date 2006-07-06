@@ -129,11 +129,17 @@ int mainwin_height = 420;
 
 char dbproxy[21];
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
 char Rcommand[MAXSTR] = "RGui.exe";
 char calculator[MAXSTR] = "calc.exe";
 char latex[MAXSTR] = "pdflatex.exe";
 char viewdvi[MAXSTR] = "windvi.exe";
+#elif defined(OSX_BUILD)
+char calculator[MAXSTR] = "xcalc";
+char latex[MAXSTR] = "pdflatex";
+char viewdvi[MAXSTR] = "xdvi";
+char Rcommand[MAXSTR] = "xterm -e R";
+char Browser[MAXSTR] = "mozilla"; /* FIXME */
 #else
 char calculator[MAXSTR] = "xcalc";
 char latex[MAXSTR] = "latex";
