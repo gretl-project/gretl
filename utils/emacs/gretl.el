@@ -128,6 +128,33 @@ All Gretl abbrevs start with a grave accent (`).")
    "transp" "vec" "vech" "unvech" "I" "zeros")
   "Builtin functions for Gretl's genr command.")
 
+(defvar gretl-option-flags
+ '("arma-init" "autocorr" "bartlett" "both"
+   "box1" "byobs" "c" "chi-square"
+   "close" "column" "complete" "conditional"
+   "continuous" "cross" "cross-section" "crt"
+   "csv" "ct" "ctt" "dat"
+   "database" "difference" "discrete" "dummy"
+   "dynamic" "exit" "full" "gamma"
+   "geomean" "gnu-R" "gnu-octave" "gzipped"
+   "hausman-reg" "hessian" "impulse-responses" "inst"
+   "iterate" "lagselect" "logs" "long"
+   "nc" "no-corc" "no-dates" "no-df-corr"
+   "no-missing" "notches" "octave" "omit-obs"
+   "one-scale" "overwrite" "panel" "panel-vars"
+   "plot" "print-final" "progressive" "quiet"
+   "random" "random-effects" "rc" "replace"
+   "restrict" "restructure" "reverse" "robust"
+   "row" "save" "save-all" "seasonals"
+   "silent" "simple-print" "special-time-series" "squares"
+   "stacked-cross-section" "stacked-time-series" "static" "suppress-fitted"
+   "t-ratios" "tall" "ten" "time-series"
+   "traditional" "trend" "unequal-vars" "unit-weights"
+   "variance-decomp" "vcv" "verbose" "white"
+   "with-impulses" "with-lines" "write" "x-12-arima"
+   "zeros")
+  "Gretl option flags.")
+
 (defvar gretl-variables
   '("GRETL_USE_QR" "HOME" "GRETL_MP_BITS")
   "Builtin variables in Gretl.")
@@ -147,7 +174,9 @@ parenthetical grouping.")
 		 "\\)\\>")
 	 'font-lock-keyword-face)
    ;; Fontify all option flags.
-   (cons "[ \t]--[-a-z]+\\>"
+   (cons (concat "[ \t]--\\("
+		 (mapconcat 'identity gretl-option-flags "\\|")
+		 "\\)")
 	 'font-lock-constant-face)
    ;; Fontify all command words.
    (cons (concat "\\<\\("
@@ -330,6 +359,9 @@ newline or semicolon after an else or end keyword."
 (defvar gretl-block-match-alist
   '(("loop" . ("endloop"))
     ("if" . ("else" "endif"))
+    ("nls" . ("end"))
+    ("mle" . ("end"))
+    ("restrict" . ("end"))
     ("system" . ("end")))
   "Alist with Gretl's matching block keywords.
 Has Gretl's begin keywords as keys and a list of the matching else or

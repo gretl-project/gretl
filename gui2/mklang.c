@@ -5,6 +5,8 @@
 
 void output_emacs_block (void)
 {
+    char **strs;
+    int nopts;
     int i, n;
 
     /* gretl commands */
@@ -40,6 +42,26 @@ void output_emacs_block (void)
 	n++;
     }
     puts(")\n  \"Builtin functions for Gretl's genr command.\")\n");
+
+    /* option strings */
+    strs = get_all_option_strings(&nopts);
+    if (strs != NULL) {
+	n = 1;
+	fputs("(defvar gretl-option-flags\n '(", stdout);
+	for (i=1; i<nopts; i++) {
+	    printf("\"%s\"", strs[i]);
+	    if (i < nopts-1) {
+		if (n % 4 == 0) {
+		    fputs("\n   ", stdout);
+		} else {
+		    putchar(' ');
+		}
+	    }
+	    n++;
+	}
+	puts(")\n  \"Gretl option flags.\")\n");
+	free_strings_array(strs, nopts);
+    }
 }
 
 void output_lang_file (void)
