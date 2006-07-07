@@ -3,8 +3,8 @@
 ;; Copyright (C) 2005 Allin Cottrell
 
 ;; Author:     Allin Cottrell <cottrell@wfu.edu>
-;; Created:    January 18 2005
-;; Version:    0.1
+;; Created:    July 7 2006
+;; Version:    0.2
 ;; Keywords:   gretl, econometrics
 
 ;; With hefty borrowings from octave-mod.el
@@ -81,7 +81,7 @@ All Gretl abbrevs start with a grave accent (`).")
   "Regexp to match the start of an Gretl comment up to its body.")
 
 (defvar gretl-begin-keywords
-  '("loop" "function" "if" "system"))
+  '("loop" "function" "if" "system" "mle" "nls" "restrict"))
 
 (defvar gretl-else-keywords
   '("else"))
@@ -97,36 +97,39 @@ All Gretl abbrevs start with a grave accent (`).")
   "Reserved words in Gretl.")
 
 (defvar gretl-command-words
-  '("add" "addto" "adf" "append" "ar" "arch" "arma" "break" "boxplot" 
-    "chow" "coeffsum" "coint" "coint2" "corc" "corr" "corrgm" 
-    "criteria" "critical" "cusum" "data" "delete" "diff" "else" 
-    "eqnprint" "equation" "estimate"
-    "fcast" "fcasterr" "fit" "freq" "garch" "genr"      
-    "gnuplot" "graph" "hausman" "hccm" "help" "hilu" "hsk" "if" 
-    "import" "info" "kpss" "label" "labels" "lad" "lags" "ldiff" 
-    "leverage" "lmtest" "logistic" "logit" "logs" "loop"
-    "meantest" "modeltab" "mpols" "multiply" "nls" "nulldata" 
-    "ols" "omit" "omitfrom" "open" "outfile" "panel" "pca" "pergm" 
-    "plot" "pooled" "print" "printf" "probit" "pvalue" "pwe" 
-    "quit" "rename" "reset" "restrict" "rhodiff" "rmplot" "run" 
-    "runs" "scatters" "set" "setobs" "setmiss" "shell" "sim"      
-    "smpl" "spearman" "square" "store" "summary" 
-    "tabprint" "testuhat" "tobit" "tsls" "var" "varlist" 
-    "vartest" "vif" "wls")
+ '("add" "addobs" "addto" "adf" "append" "ar" "arch" "arima"
+   "break" "boxplot" "chow" "coeffsum" "coint" "coint2" "corc" "corr"
+   "corrgm" "criteria" "critical" "cusum" "data" "delete" "diff" "discrete"
+   "dummify" "else" "end" "endif" "endloop" "eqnprint" "equation" "estimate"
+   "fcast" "fcasterr" "fit" "fncall" "freq" "function" "error" "garch"
+   "genr" "gnuplot" "graph" "hausman" "hccm" "help" "hilu" "hsk"
+   "hurst" "if" "import" "include" "info" "kpss" "labels" "lad"
+   "lags" "ldiff" "leverage" "lmtest" "logistic" "logit" "logs" "loop"
+   "mahal"  "meantest" "mle" "modeltab" "mpols" "multiply" "nls"
+   "nulldata" "ols" "omit" "omitfrom" "open" "outfile" "panel" "pca"
+   "pergm" "plot" "poisson" "print" "printf" "probit" "pvalue" "pwe"
+   "qlrtest" "quit" "remember" "rename" "reset" "restrict" "rhodiff" "rmplot"
+   "run" "runs" "scatters" "sdiff" "set" "setinfo" "setobs" "setmiss"
+   "shell" "smpl" "spearman" "square" "store" "summary" "system" "tabprint"
+   "testuhat" "tobit" "transpos" "tsls" "var" "varlist" "vartest" "vecm"
+   "vif" "wls" "xtab")
   "Commands in Gretl (these names are also reserved).")
 
 (defvar gretl-genr-functions
-  '("log" "exp" "sin" "cos" "tan" "atan" "diff"
-    "ldiff" "mean" "sd" "min" "max" "sort" 
-    "int" "ln" "coeff" "abs" "rho" "sqrt" "sum"
-    "nobs" "normal" "uniform" "resample" "stderr"
-    "cum" "hpfilt" "bkfilt" "missing" "misszero"
-    "corr" "vcv" "var" "cov" "median" "zeromiss"
-    "pvalue" "mpow" "mlog" "sst")
+ '("log" "exp" "sin" "cos" "tan" "atan" "int" "abs"
+   "sqrt" "dnorm" "cnorm" "qnorm" "gamma" "lngamma" "normal" "uniform"
+   "log10" "log2" "diff" "ldiff" "sdiff" "mean" "sd" "min"
+   "max" "sort" "dsort" "sum" "nobs" "firstobs" "lastobs" "cum"
+   "missing" "ok" "misszero" "corr" "var" "lrvar" "sst" "cov"
+   "median" "gini" "zeromiss" "pvalue" "critical" "obsnum" "mpow" "mlog"
+   "resample" "hpfilt" "bkfilt" "fracdiff" "varnum" "isseries" "islist" "nelem"
+   "det" "inv" "cholesky" "cdemean" "diag" "qrdecomp" "eigensym" "eigengen"
+   "ldet" "tr" "sumr" "sumc" "onenorm" "rcond" "rows" "cols"
+   "transp" "vec" "vech" "unvech" "I" "zeros")
   "Builtin functions for Gretl's genr command.")
 
 (defvar gretl-variables
-  '("GRETL_USE_QR" "HOME")
+  '("GRETL_USE_QR" "HOME" "GRETL_MP_BITS")
   "Builtin variables in Gretl.")
 
 (defvar gretl-function-header-regexp

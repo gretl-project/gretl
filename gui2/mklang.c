@@ -3,6 +3,45 @@
 #include "libgretl.h"
 #include "genstack.h"
 
+void output_emacs_block (void)
+{
+    int i, n;
+
+    /* gretl commands */
+    n = 1;
+    fputs("(defvar gretl-command-words\n '(", stdout);
+    for (i=1; i<NC; i++) {
+	if (strcmp(gretl_command_word(i), "matrix")) {
+	    printf("\"%s\"", gretl_command_word(i));
+	}
+	if (i < NC-1) {
+	    if (n % 8 == 0) {
+		fputs("\n   ", stdout);
+	    } else {
+		putchar(' ');
+	    }
+	}
+	n++;
+    } 
+    puts(")\n  \"Commands in Gretl (these names are also reserved).\")");
+
+    /* functions in "genr" command */
+    n = 1;
+    fputs("(defvar gretl-genr-functions\n '(", stdout);
+    for (i=1; i<T_IDENTITY; i++) {
+	printf("\"%s\"", get_genr_func_word(i));
+	if (i < T_IDENTITY-1) {
+	    if (n % 8 == 0) {
+		fputs("\n   ", stdout);
+	    } else {
+		putchar(' ');
+	    }
+	}
+	n++;
+    }
+    puts(")\n  \"Builtin functions for Gretl's genr command.\")\n");
+}
+
 void output_lang_file (void)
 {
     char **strs;
@@ -86,9 +125,13 @@ void output_lang_file (void)
     puts("</language>");
 }
 
-int main (void)
+int main (int argc, char **argv)
 {
-    output_lang_file();
+    if (argc == 2 && !strcmp(argv[1], "--emacs")) {
+	output_emacs_block();
+    } else {
+	output_lang_file();
+    }
 
     return 0;
 }
