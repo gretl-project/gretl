@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.5.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-05 16:31-0400\n"
-"PO-Revision-Date: 2006-07-07 00:01+0200\n"
+"PO-Revision-Date: 2006-07-07 11:50+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1795,7 +1795,7 @@ msgstr "Questo test è disponibile solo per dati panel"
 
 #: lib/src/forecast.c:2053
 msgid "predicted values"
-msgstr "valori previsti"
+msgstr "Valori previsti"
 
 #: lib/src/forecast.c:2057
 msgid "forecast standard errors"
@@ -2794,7 +2794,7 @@ msgid ""
 "      PARAMETER       ESTIMATE          STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr ""
-"      PARAMETRO       STIMA         ERRORE STANDARD   T STAT   P-VALUE\n"
+"      PARAMETRO       STIMA             ERRORE STD    T STAT   P-VALUE\n"
 "\n"
 
 #: lib/src/gretl_restrict.c:941 lib/src/modelprint.c:1240
@@ -2802,7 +2802,7 @@ msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT   P-VALUE\n"
 "\n"
 msgstr ""
-"      VARIABILE      COEFFICIENTE        ERRORE STD   STAT T   P-VALUE\n"
+"      VARIABILE      COEFFICIENTE       ERRORE STD    STAT T   P-VALUE\n"
 "\n"
 
 #: lib/src/gretl_restrict.c:1008
@@ -3860,13 +3860,13 @@ msgstr "La variabile dei pesi è una variabile dummy, osservazioni effettive ="
 
 #: lib/src/modelprint.c:1228
 msgid "      VARIABLE            COEFFICIENT                  STDERROR\n"
-msgstr "      VARIABILE        COEFFICIENTE                 ERRORE STD.\n"
+msgstr "      VARIABILE        COEFFICIENTE                 ERRORE STD\n"
 
 #: lib/src/modelprint.c:1232
 msgid ""
 "      VARIABLE       COEFFICIENT        STDERROR      T STAT       SLOPE\n"
 msgstr ""
-"      VARIABILE      COEFFICIENTE        ERRORE STD   STAT T       PENDENZA\n"
+"      VARIABILE      COEFFICIENTE       ERRORE STD    STAT T       PENDENZA\n"
 
 #: lib/src/modelprint.c:1235
 msgid "(at mean)"
@@ -4625,7 +4625,7 @@ msgstr "Errore std"
 #: lib/src/printout.c:1910
 #, c-format
 msgid "   95%% confidence interval\n"
-msgstr " intervallo di confidenza al 95%%\n"
+msgstr "   Int. di confidenza al 95%%\n"
 
 #: lib/src/pvalues.c:38
 msgid ""
@@ -8914,7 +8914,7 @@ msgstr "Linee"
 #: gui2/gpt_dialog.c:983
 #, c-format
 msgid "line %d: "
-msgstr "Riga %d: "
+msgstr "Linea %d: "
 
 #: gui2/gpt_dialog.c:990
 msgid "legend"
@@ -8967,11 +8967,11 @@ msgstr "Asse Y2"
 
 #: gui2/gpt_dialog.c:1311
 msgid "auto axis range"
-msgstr "Intervallo assi automatico"
+msgstr "Intervallo asse automatico"
 
 #: gui2/gpt_dialog.c:1327
 msgid "manual range:"
-msgstr "Intervallo manuale:"
+msgstr "Intervallo asse manuale"
 
 #: gui2/gpt_dialog.c:1338
 msgid "minimum"
@@ -9281,7 +9281,7 @@ msgstr "/Test/COEFFSUM - Somma coefficienti"
 #: gui2/gui_utils.c:271 gui2/gui_utils.c:327 gui2/gui_utils.c:426
 #: gui2/gui_utils.c:490
 msgid "/Tests/linear restrictions"
-msgstr "/Test/vincoli lineari"
+msgstr "/Test/Vincoli lineari"
 
 #: gui2/gui_utils.c:272 gui2/gui_utils.c:328
 msgid "/Tests/sep1"
@@ -9338,7 +9338,7 @@ msgstr "/Test/CHOW - Break strutturale"
 
 #: gui2/gui_utils.c:285 gui2/gui_utils.c:341
 msgid "/Tests/QLR test"
-msgstr "/Test/QLR"
+msgstr "/Test/QLR - Break strutturale"
 
 #: gui2/gui_utils.c:286 gui2/gui_utils.c:342
 msgid "/Tests/CUSUM test"
@@ -9829,7 +9829,7 @@ msgstr "normalità dei residui"
 
 #: gui2/gui_utils.c:3802 gui2/library.c:2253
 msgid "linear restrictions"
-msgstr "vincoli lineari"
+msgstr "Vincoli lineari"
 
 #: gui2/gui_utils.c:3815
 msgid "omit exogenous variables..."
