@@ -769,6 +769,8 @@ static int exec_line (char *line, PRN *prn)
     double rho;
     int k, err = 0;
 
+    static int in_comment;
+
     if (string_is_blank(line)) {
 	return 0;
     }
@@ -781,17 +783,18 @@ static int exec_line (char *line, PRN *prn)
 	return err;
     } 
 
-    /* catch requests relating to saved objects, which are not
-       really "commands" as such */
-    k = saved_object_action(line, prn);
-    if (k == 1) return 0;   /* action was OK */
-    if (k == -1) return 1;  /* action was faulty */
+    if (!in_comment) {
+	/* catch requests relating to saved objects, which are not
+	   really "commands" as such */
+	k = saved_object_action(line, prn);
+	if (k == 1) return 0;   /* action was OK */
+	if (k == -1) return 1;  /* action was faulty */
 
-    /* are we ready for this? */
-    if (!data_status && !cmd.ignore && 
-	!ready_for_command(line)) {
-	fprintf(stderr, _("You must open a data file first\n"));
-	return 1;
+	/* are we ready for this? */
+	if (!data_status && !cmd.ignore && !ready_for_command(line)) {
+	    fprintf(stderr, _("You must open a data file first\n"));
+	    return 1;
+	}
     }
 
     /* tell libgretl if we're in batch mode */
@@ -811,6 +814,9 @@ static int exec_line (char *line, PRN *prn)
 	errmsg(err, prn);
 	return err;
     }
+
+    /* are we in a multi-line comment block? */
+    in_comment = cmd.ignore;
 
     /* if in batch mode, echo comments from input */
     if (batch && cmd.ci == CMD_COMMENT && gretl_echo_on()) {

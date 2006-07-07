@@ -5936,6 +5936,8 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     PRN *outprn = NULL;
     int k, err = 0;
 
+    static int in_comment;
+
 #if CMD_DEBUG
     fprintf(stderr, "gui_exec_line: exec_code = %d\n",
 	    exec_code);
@@ -5956,15 +5958,18 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	return err;
     }     
 
-    /* catch requests relating to saved objects, which are not
-       really "commands" as such */
-    k = saved_object_action(line, prn);
-    if (k == 1) return 0;   /* action was OK */
-    if (k == -1) return 1;  /* action was faulty */
-	
-    if (!data_status && !ready_for_command(line)) {
-	pprintf(prn, _("You must open a data file first\n"));
-	return 1;
+    if (!in_comment) {
+	/* catch requests relating to saved objects, which are not
+	   really "commands" as such */
+	k = saved_object_action(line, prn);
+	if (k == 1) return 0;   /* action was OK */
+	if (k == -1) return 1;  /* action was faulty */
+
+	/* are we ready for this? */
+	if (!data_status && !cmd.ignore && !ready_for_command(line)) {
+	    pprintf(prn, _("You must open a data file first\n"));
+	    return 1;
+	}
     }
 
     *linecopy = 0;
@@ -5985,6 +5990,9 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
         errmsg(err, prn);
         return 1;
     }
+
+    /* are we in a multi-line comment block? */
+    in_comment = cmd.ignore;
 
     if (cmd.ci < 0) {
 	return 0; /* nothing there, or a comment */

@@ -182,6 +182,26 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void pseudorsqline (const MODEL *pmod, PRN *prn)
+{
+    if (na(pmod->rsq)) {
+	return;
+    }
+
+    if (plain_format(prn)) { 
+	pprintf(prn, "  %s = %.*g\n", _("McFadden's pseudo-R-squared"), 
+		XDIGITS(pmod), pmod->rsq);
+    } else if (rtf_format(prn)) {
+	pprintf(prn, RTFTAB "%s = %g\n", I_("McFadden's pseudo-R{\\super 2}"), 
+		pmod->rsq);
+    } else if (tex_format(prn)) {  
+	char r2[32];
+
+	tex_dcolumn_double(pmod->rsq, r2);
+	pprintf(prn, "%s & %s \\\\\n", I_("McFadden's pseudo-$R^2$"), r2);
+    }
+}
+
 static const char *aic_str = N_("Akaike information criterion");
 static const char *bic_str = N_("Schwarz Bayesian criterion");
 static const char *hqc_str = N_("Hannan-Quinn criterion");
@@ -1608,6 +1628,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (pmod->ci == POISSON) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
+	pseudorsqline(pmod, prn);
 	print_ll(pmod, prn);
 	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
@@ -2407,6 +2428,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	}
 	pprintf(prn, "  f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
 		pmod->sdy);
+	pseudorsqline(pmod, prn);
 	pprintf(prn, "  %s = %g\n", _("Log-likelihood"), pmod->lnL);
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
@@ -2420,9 +2442,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_BIC]);
 	pprintf(prn, "  %s (%s) = %g\n", _(hqc_str), _(hqc_abbrev),
 		crit[C_HQC]);
-	pprintf(prn, "  %s = %g\n", _("McFadden's pseudo-R-squared"), pmod->rsq);
-	pputc(prn, '\n');
 
+	pputc(prn, '\n');
 	if (act_pred != NULL) {
 	    plain_print_act_pred(act_pred, prn);
 	}
@@ -2440,6 +2461,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	}
 	pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 
 		pmod->sdy);
+	pseudorsqline(pmod, prn);
 	pprintf(prn, "\\par %s = %g\n", I_("Log-likelihood"), pmod->lnL);
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
@@ -2453,8 +2475,6 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_BIC]);
 	pprintf(prn, "\\par %s (%s) = %g\\par\n", I_(hqc_str), I_(hqc_abbrev),
 		crit[C_HQC]);
-	pprintf(prn, "\\par %s = %g\\par\n", I_("McFadden's pseudo-R{\\super 2}"), 
-		pmod->rsq);
 	pputc(prn, '\n');
     }
 
@@ -2472,6 +2492,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 		    I_("Number of cases `correctly predicted'"), 
 		    correct, pc_correct);
 	}
+	pseudorsqline(pmod, prn);
 	pprintf(prn, "$f(\\beta'x)$ %s = %.3f\\\\\n", I_("at mean of independent vars"), 
 		pmod->sdy);
 	tex_float_str(pmod->lnL, lnlstr);
@@ -2488,7 +2509,6 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_BIC]);
 	pprintf(prn, "%s (%s) = %g\\\\\n", I_(tex_hqc_str), I_(hqc_abbrev),
 		crit[C_HQC]);
-	pprintf(prn, "%s = %g\\\\\n", I_("McFadden's pseudo-$R^2$"), pmod->rsq);
 	pputs(prn, "\\end{raggedright}\n");
     }
 }

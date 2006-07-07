@@ -20,7 +20,8 @@
 
 #include "libgretl.h"
 
-#undef PDEBUG 
+#define PDEBUG 0
+#define PR2DEBUG 0
 
 #define POISSON_TOL 1.0e-10 
 #define POISSON_MAX_ITER 100 
@@ -82,9 +83,63 @@ static double poisson_ll (const double *y, const double *mu,
     return loglik;
 }
 
+static double pseudoR2 (const double *y, const double *offset, 
+			int t1, int t2, double ll1, double offmean)
+{
+    double llt, ll0 = 0.0;
+    double K, ytfact;
+    double ybar = gretl_mean(t1, t2, y);
+    double R2 = NADBL;
+    int t;
+
+    if (offset != NULL) {
+	K = ybar * (log(ybar/offmean) - 1.0);
+    } else {
+	K = ybar * (log(ybar) - 1.0);
+    }
+
+#if PR2DEBUG
+    fprintf(stderr, "K = %g\n", K);
+#endif
+
+    for (t=t1; t<=t2; t++) {
+	if (na(y[t])) {
+	    continue;
+	}
+
+	ytfact = x_factorial(y[t]);
+	if (na(ytfact)) {
+	    ll0 = NADBL;
+	    break;
+	}
+
+	llt = K - log(ytfact);
+
+	if (offset != NULL && !na(offset[t])) {
+	    llt += y[t] * log(offset[t]); 
+	}
+
+#if PR2DEBUG
+	fprintf(stderr, "ll[%d] = %g\n", t, llt);
+#endif
+	ll0 += llt;
+    }  
+
+#if PR2DEBUG
+    fprintf(stderr, "ll0 = %g\n", ll0);
+#endif
+
+    if (!na(ll0)) {
+	R2 = 1.0 - ll1 / ll0;
+    }
+
+    return R2;
+}
+
 static int 
 transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y, 
-			    int iter, int offvar)
+			    int iter, int offvar, const double *offset, 
+			    double offmean)
 {
     int i, t;
     int err = 0;
@@ -115,15 +170,17 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     }
 
     targ->lnL = poisson_ll(y, targ->yhat, targ->t1, targ->t2);
+    targ->rsq = pseudoR2(y, offset, targ->t1, targ->t2, targ->lnL, offmean);
 
-#ifdef PDEBUG
+#if PDEBUG
     fprintf(stderr, "log-likelihood = %g\n", targ->lnL);
 #endif
-
+#if PR2DEBUG
+    fprintf(stderr, "Pseudo R2 = %g\n", targ->rsq);
+#endif
     mle_criteria(targ, 0); 
 
     /* mask invalid statistics */
-    targ->rsq = NADBL;
     targ->adjrsq = NADBL;
     targ->fstt = NADBL;
 
@@ -274,7 +331,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 	for (i=0; i<tmpmod.ncoeff; i++) { 
 	    pmod->coeff[i] += tmpmod.coeff[i];
-#ifdef PDEBUG
+#if PDEBUG
 	    fprintf(stderr, "coeff[%d] = %g,\tgrad[%d] = %g\n", 
 		    i, pmod->coeff[i], i, tmpmod.coeff[i]);
 #endif
@@ -301,7 +358,8 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     } 
 
     if (pmod->errcode == 0) {
-	transcribe_poisson_results(pmod, &tmpmod, y, iter, offvar);
+	transcribe_poisson_results(pmod, &tmpmod, y, iter, offvar, 
+				   offset, offmean);
     }
 
  bailout:

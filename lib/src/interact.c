@@ -119,6 +119,10 @@ static int filter_comments (char *line, CMD *cmd)
     tmpstr[j] = '\0';
     strcpy(line, tmpstr);
 
+#if CMD_DEBUG
+    fprintf(stderr, "filter_comments: cmd->ignore = %d\n", cmd->ignore);
+#endif
+
     return (*line == '\0');
 }
 
@@ -3409,6 +3413,8 @@ int ready_for_command (const char *line)
     if (string_is_blank(line) || gretl_compiling_function()) {
 	ok = 1;
     } else if (*line == 'q' || *line == 'x' || *line == '#') {
+	ok = 1;
+    } else if (*line == '/' && *(line+1) == '*') {
 	ok = 1;
     } else {
 	for (i=0; ok_cmds[i] != NULL && !ok; i++) {
