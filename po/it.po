@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.5.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-05 16:31-0400\n"
-"PO-Revision-Date: 2006-07-07 11:50+0200\n"
+"PO-Revision-Date: 2006-07-07 12:20+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -343,7 +343,7 @@ msgid ""
 "sigmahat                 = %g\n"
 "\n"
 msgstr ""
-"sigmahat                  = %g\n"
+"Sigmahat                  = %g\n"
 "\n"
 
 #: lib/src/compare.c:1698
@@ -3906,7 +3906,7 @@ msgstr "Errore Std."
 
 #: lib/src/modelprint.c:1289 lib/src/modelprint.c:1300
 msgid "t-statistic"
-msgstr "statistica t"
+msgstr "Statistica t"
 
 #: lib/src/modelprint.c:1397
 msgid ""
@@ -5971,36 +5971,36 @@ msgstr "/Dati/_Ordina variabili/Per _nome"
 
 #: gui/gretl.c:320 gui2/gretl.c:376
 msgid "/Data/_Graph specified vars"
-msgstr "/Dati/_Grafico delle variabili"
+msgstr "/Dati/_Grafico variabili"
 
 #: gui/gretl.c:321 gui2/gretl.c:377
 msgid "/Data/Graph specified vars/Time series plot..."
-msgstr "/Dati/Grafico delle variabili/_Temporale..."
+msgstr "/Dati/Grafico variabili/_Serie storica..."
 
 #: gui/gretl.c:323 gui2/gretl.c:379
 msgid "/Data/Graph specified vars/X-Y scatter..."
-msgstr "/Dati/Grafico delle variabili/X-Y a _dispersione..."
+msgstr "/Dati/Grafico variabili/X-Y a _dispersione..."
 
 #: gui/gretl.c:325 gui2/gretl.c:381
 msgid "/Data/Graph specified vars/X-Y with impulses..."
-msgstr "/Dati/Grafico delle variabili/X-Y a _impulsi..."
+msgstr "/Dati/Grafico variabili/X-Y a _impulsi..."
 
 #: gui/gretl.c:327 gui2/gretl.c:383
 msgid "/Data/Graph specified vars/X-Y with factor separation..."
-msgstr "/Dati/Grafico delle variabili/X-Y con _fattore..."
+msgstr "/Dati/Grafico variabili/X-Y con _fattore..."
 
 #: gui/gretl.c:329 gui2/gretl.c:385
 msgid "/Data/Graph specified vars/Boxplots..."
-msgstr "/Dati/Grafico delle variabili/_Boxplot..."
+msgstr "/Dati/Grafico variabili/_Boxplot..."
 
 #  notched boxplot???
 #: gui/gretl.c:331 gui2/gretl.c:387
 msgid "/Data/Graph specified vars/Notched boxplots..."
-msgstr "/Dati/Grafico delle variabili/Boxplot a t_acca..."
+msgstr "/Dati/Grafico variabili/Boxplot a t_acca..."
 
 #: gui/gretl.c:333 gui2/gretl.c:389
 msgid "/Data/Graph specified vars/3D plot..."
-msgstr "/Dati/Grafico delle variabili/Grafico _3D..."
+msgstr "/Dati/Grafico variabili/Grafico _3D..."
 
 #: gui/gretl.c:335 gui2/gretl.c:391
 msgid "/Data/_Multiple graphs"
@@ -6012,11 +6012,11 @@ msgstr "/Dati/Grafici multipli/X-Y a _dispersione..."
 
 #: gui/gretl.c:338 gui2/gretl.c:394
 msgid "/Data/Multiple graphs/line graphs..."
-msgstr "/Dati/Grafici multipli/_lineari..."
+msgstr "/Dati/Grafici multipli/X-Y con _linea..."
 
 #: gui/gretl.c:340 gui2/gretl.c:396
 msgid "/Data/Multiple graphs/time series..."
-msgstr "/Dati/Grafici multipli/_serie storiche..."
+msgstr "/Dati/Grafici multipli/_Serie storiche..."
 
 #: gui/gretl.c:343 gui2/gretl.c:399
 msgid "/Data/_Read info"
@@ -9687,12 +9687,12 @@ msgstr "/Salva/Gradi di libertà"
 #: gui2/gui_utils.c:3199
 #, c-format
 msgid "%s/correlogram"
-msgstr "%s/correlogramma"
+msgstr "%s/Correlogramma"
 
 #: gui2/gui_utils.c:3203
 #, c-format
 msgid "%s/spectrum"
-msgstr "%s/spettro"
+msgstr "%s/Spettro"
 
 #: gui2/gui_utils.c:3211
 #, c-format
@@ -10413,7 +10413,7 @@ msgstr "Numero di ritardi da creare:"
 
 #: gui2/library.c:3839
 msgid "No discrete variables were selected"
-msgstr "Nessuna variabile discreta è stata selezionata"
+msgstr "Non è stata selezionata alcuna variabile discreta"
 
 #: gui2/library.c:3967
 #, c-format

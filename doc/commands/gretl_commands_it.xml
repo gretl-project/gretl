@@ -606,7 +606,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Grafico delle variabili/Boxplot</menu-path>
+      <menu-path>/Dati/Grafico variabili/Boxplot</menu-path>
     </gui-access>
 
   </command>
@@ -2588,7 +2588,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Grafico delle variabili</menu-path>
+      <menu-path>/Dati/Grafico variabili</menu-path>
       <other-access>Menù pop-up nella finestra principale, pulsante grafico sulla barra degli strumenti</other-access>
     </gui-access>
 
@@ -5407,7 +5407,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Tests/QLR</menu-path>
+      <menu-path>Finestra del modello, /Test/QLR</menu-path>
     </gui-access>
 
   </command>
@@ -5892,9 +5892,9 @@
         saranno ignorate.
       </para>
       <para context="cli">
-        Per impostazione predefinita vengono prodotti grafici a dispersione, ma
-        se si usa l'opzione <lit>--with-lines</lit>, vengono prodotti grafici
-        lineari.
+        Per impostazione predefinita vengono prodotti dei classici grafici a
+        dispersione, ma se si usa l'opzione <lit>--with-lines</lit> vengono
+        mostrate anche le linee di collegamento tra i punti del grafico.
       </para>
       <para context="gui">
 	Produce grafici a dispersione della <quote>Variabile asse
