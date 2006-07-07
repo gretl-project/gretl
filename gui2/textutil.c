@@ -583,7 +583,9 @@ static void window_copy_or_save (windata_t *vwin, guint fmt, int action)
 {
     gchar *cpybuf = NULL;
 
-    if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
+    if (vwin->role == VIEW_MODEL && fmt == GRETL_FORMAT_CSV) {
+	special_text_handler(vwin, fmt, action);
+    } else if (MULTI_FORMAT_ENABLED(vwin->role) && SPECIAL_FORMAT(fmt)) {
 	special_text_handler(vwin, fmt, action);
     } else if (fmt == GRETL_FORMAT_CSV || fmt == GRETL_FORMAT_TABLE) {
 	csv_copy_listed_vars(vwin, fmt, action);

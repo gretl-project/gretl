@@ -647,8 +647,12 @@ CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
     return button;
 }
 
+#define can_do_tabbed(v) ((v->role == PRINT && v->data != NULL) || \
+		           v->role == VIEW_SERIES)
+
 #define can_do_csv(v) ((v->role == PRINT && v->data != NULL) || \
-		        v->role == VIEW_SERIES)
+		        v->role == VIEW_SERIES || \
+                        v->role == VIEW_MODEL)
 
 void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 {
@@ -710,9 +714,14 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 
 # endif /* G_OS_WIN32 */
 
-    if (can_do_csv(vwin)) {
+    /* Tabbed text option */
+    if (can_do_tabbed(vwin)) {
 	button = table_copy_button(group, myvbox, finfo);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
+
+    /* CSV option */
+    if (can_do_csv(vwin)) {
 	button = CSV_copy_button(group, myvbox, finfo);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }	

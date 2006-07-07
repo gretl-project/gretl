@@ -27,6 +27,7 @@ struct PRN_ {
     size_t bufsize;
     PrnFormat format;
     int fixed;
+    char delim;
 };
 
 #undef PRN_DEBUG
@@ -90,6 +91,7 @@ static PRN *real_gretl_print_new (PrnType ptype,
     prn->bufsize = 0;
     prn->format = GRETL_FORMAT_TXT;
     prn->fixed = 0;
+    prn->delim = ',';
 
     if (ptype == GRETL_PRINT_FILE) {
 	prn->fp = gretl_fopen(fname, "w");
@@ -260,6 +262,21 @@ void gretl_print_set_format (PRN *prn, PrnFormat format)
 	    format = GRETL_FORMAT_RTF | GRETL_FORMAT_DOC;
 	}
 	prn->format = format;
+    }
+}
+
+/**
+ * gretl_print_set_delim:
+ * @prn: printing struct.
+ * @delim: desired CSV field-delimiter.
+ * 
+ * Sets the CSV delimiter on @prn.
+ */
+
+void gretl_print_set_delim (PRN *prn, char delim)
+{
+    if (prn != NULL) {
+	prn->delim = delim;
     }
 }
 
@@ -676,4 +693,16 @@ int tex_eqn_format (PRN *prn)
 int csv_format (PRN *prn)
 {
     return (prn != NULL && (prn->format & GRETL_FORMAT_CSV));
+}
+
+/**
+ * prn_delim:
+ * @prn: gretl printing struct.
+ * 
+ * Returns: The character to be used as delimiter for CSV.
+ */
+
+char prn_delim (PRN *prn)
+{
+    return (prn != NULL)? prn->delim : ',';
 }

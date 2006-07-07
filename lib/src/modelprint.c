@@ -29,6 +29,8 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 			int i, PRN *prn);
 static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			    int i, PRN *prn);
+static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
+			    int i, PRN *prn);
 static void print_mp_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 			    int c, PRN *prn);
 static void depvarstats (const MODEL *pmod, PRN *prn);
@@ -80,7 +82,12 @@ static void depvarstats (const MODEL *pmod, PRN *prn)
 		pmod->ybar);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard deviation of dep. var."), 
 		pmod->sdy);
-    }
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Mean of dependent variable"), 
+		prn_delim(prn), pmod->ybar);
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Standard deviation of dep. var."), 
+		prn_delim(prn), pmod->sdy);
+    }	
 }
 
 static void garch_variance_line (const MODEL *pmod, PRN *prn)
@@ -97,6 +104,8 @@ static void garch_variance_line (const MODEL *pmod, PRN *prn)
 
 	tex_dcolumn_double(v, xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_(varstr), xstr);
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_(varstr), prn_delim(prn), v);
     }
 }
 
@@ -129,7 +138,12 @@ real_essline (const MODEL *pmod, double ess, double sigma, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n%s ($\\hat{\\sigma}$) & %s \\\\\n",
 		I_("Sum of squared residuals"), x1str,
 		I_("Standard error of residuals"), x2str);
-    }
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of squared residuals"), 
+		prn_delim(prn), ess);
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Standard error of residuals"), 
+		prn_delim(prn), sigma);
+    }	
 
     return 0;
 }
@@ -179,7 +193,14 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	    tex_dcolumn_double(pmod->adjrsq, r2);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
 	}
-    }
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Unadjusted R-squared"), 
+		prn_delim(prn), pmod->rsq);
+	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
+	    pprintf(prn, "\"%s\"%c%.15g\n", I_("Adjusted R-squared"),  
+		    prn_delim(prn), pmod->adjrsq);
+	}
+    }	
 }
 
 static void pseudorsqline (const MODEL *pmod, PRN *prn)
@@ -199,7 +220,10 @@ static void pseudorsqline (const MODEL *pmod, PRN *prn)
 
 	tex_dcolumn_double(pmod->rsq, r2);
 	pprintf(prn, "%s & %s \\\\\n", I_("McFadden's pseudo-$R^2$"), r2);
-    }
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("McFadden's pseudo-R-squared"), 
+		prn_delim(prn), pmod->rsq);
+    }	
 }
 
 static const char *aic_str = N_("Akaike information criterion");
@@ -245,7 +269,14 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n", I_(bic_str), cval);
 	tex_dcolumn_double(crit[C_HQC], cval);
 	pprintf(prn, "%s & %s \\\\\n", I_(tex_hqc_str), cval);
-    }
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s (%s)\"%c%.15g\n", I_(aic_str), I_(aic_abbrev),
+		prn_delim(prn), crit[C_AIC]);
+	pprintf(prn, "\"%s (%s)\"%c%.15g\n", I_(bic_str), I_(bic_abbrev),
+		prn_delim(prn), crit[C_BIC]);
+	pprintf(prn, "\"%s (%s)\"%c%.15g\n", I_(hqc_str), I_(hqc_abbrev),
+		prn_delim(prn), crit[C_HQC]);
+    }	
 }
 
 static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
@@ -289,6 +320,11 @@ static void ladstats (const MODEL *pmod, PRN *prn)
 		I_("Sum of absolute residuals"), x1str); 
 	pprintf(prn, "%s & %s \\\\\n",
 		I_("Sum of squared residuals"), x2str); 
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of absolute residuals"),
+		prn_delim(prn), pmod->rho);
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Sum of squared residuals"),
+		prn_delim(prn), pmod->ess);
     } else {
 	pprintf(prn, "  %s = %.*g\n", 
 		(utf)? _("Sum of absolute residuals") :
@@ -321,9 +357,7 @@ static void print_f_pval_str (double pval, PRN *prn)
 	    pprintf(prn, " (%s = %.3g)\n", 
 		    (utf)? _("p-value") : I_("p-value"), pval);
 	}
-    }
-
-    else if (tex_format(prn)) {
+    } else if (tex_format(prn)) {
 	if (pval < .00001) {
 	    return;
 	} else {
@@ -332,6 +366,8 @@ static void print_f_pval_str (double pval, PRN *prn)
 	    tex_dcolumn_double(pval, pstr);
 	    pprintf(prn, "%s $F()$ & %s \\\\\n", I_("p-value for"), pstr);
 	}
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%g\n", I_("p-value"), prn_delim(prn), pval);
     }
 }
 
@@ -368,7 +404,16 @@ static void panel_variance_lines (const MODEL *pmod, PRN *prn)
 	if (!na(theta)) {
 	    pprintf(prn, RTFTAB "%s = %g", I_("theta used for quasi-demeaning"), theta);
 	}
-    }
+    } else if (csv_format(prn)) {
+	char d = prn_delim(prn);
+
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("'Within' variance"), d, ws2);
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("'Between' variance"), d, bs2);
+	if (!na(theta)) {
+	    pprintf(prn, "\"%s\"%c%.15g\n", I_("theta used for quasi-demeaning"), 
+		    d, theta);
+	}
+    }	
 }
 
 static void Fline (const MODEL *pmod, PRN *prn)
@@ -380,6 +425,9 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "%s & %d \\\\\n", I_("Degrees of freedom"), pmod->dfd);
 	} else if (rtf_format(prn)) {
 	    pprintf(prn, RTFTAB "%s = %d\n", I_("Degrees of freedom"), pmod->dfd);
+	} else if (csv_format(prn)) {
+	    pprintf(prn, "\"%s\"%c%d\n", I_("Degrees of freedom"), 
+		    prn_delim(prn), pmod->dfd);
 	}
 	return;
     }
@@ -415,7 +463,16 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, RTFTAB "%s = %g", tmp, pmod->fstt);
 	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
-    }
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s (%d, %d)\"%c", I_("F-statistic"), pmod->dfn, pmod->dfd,
+		prn_delim(prn));
+	if (na(pmod->fstt)) {
+	    pprintf(prn, "\"%s\"\n", I_("undefined"));
+	} else {
+	    pprintf(prn, "%.15g%c", pmod->fstt, prn_delim(prn));
+	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	}
+    }	
 }
 
 static void dwline (const MODEL *pmod, PRN *prn)
@@ -449,6 +506,13 @@ static void dwline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("First-order autocorrelation coeff."), 
 		    pmod->rho);
 	} 
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Durbin-Watson statistic"), 
+		prn_delim(prn), pmod->dw);
+	if (!na(pmod->rho)) {
+	    pprintf(prn, "\"%s\"%c%.15g\n", I_("First-order autocorrelation coeff."), 
+		    prn_delim(prn), pmod->rho);
+	}
     }
 }
 
@@ -488,6 +552,8 @@ static void dhline (const MODEL *pmod, PRN *prn)
 	tex_dcolumn_double(h, x1str);
 	pprintf(prn, "%s & %s \\\\\n",
 		I_("Durbin's $h$ statistic"), x1str);
+    } else if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"%c%.15g\n", I_("Durbin's h"), prn_delim(prn), h);
     }
 }
 
@@ -712,11 +778,14 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 
 static void panel_robust_vcv_line (const MODEL *pmod, PRN *prn)
 {
-    if (plain_format(prn)) {
+    if (csv_format(prn)) {
+	pprintf(prn, "\"%s\"", I_("Robust (HAC) standard errors"));
+    } else if (plain_format(prn)) {
 	pputs(prn, _("Robust (HAC) standard errors"));
     } else {
 	pputs(prn, I_("Robust (HAC) standard errors"));
-    }
+    } 
+
     pputc(prn, '\n');
 }
 
@@ -790,7 +859,11 @@ static void ml_vcv_line (const MODEL *pmod, PRN *prn)
     }
 
     if (vcvstr != NULL) {
-	pprintf(prn, "%s\n", (utf)? _(vcvstr) : I_(vcvstr));
+	if (csv_format(prn)) {
+	    pprintf(prn, "\"%s\"\n", I_(vcvstr));
+	} else {
+	    pprintf(prn, "%s\n", (utf)? _(vcvstr) : I_(vcvstr));
+	}
     }
 }
 
@@ -950,6 +1023,7 @@ static void print_model_heading (const MODEL *pmod,
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = tex_format(prn);
     int utf = plain_format(prn);
+    int csv = csv_format(prn);
     int order = 0;
 
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
@@ -972,6 +1046,8 @@ static void print_model_heading (const MODEL *pmod,
 	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn)));
 	} else if (tex) {
 	    pprintf(prn, "\n%s\n", I_(aux_string(pmod->aux, prn)));
+	} else if (csv) {
+	    pprintf(prn, "\"%s\"\n", I_(aux_string(pmod->aux, prn)));
 	} else { /* RTF */
 	    pprintf(prn, "%s\\par\n", I_(aux_string(pmod->aux, prn)));
 	}
@@ -1014,11 +1090,21 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_ADD:
     default:
 	if (pmod->ID < 0 || (opt & OPT_S)) {
-	    pputc(prn, '\n');
+	    if (!csv) {
+		pputc(prn, '\n');
+	    }
 	} else if (pmod->name) {
-	    pprintf(prn, "\n%s:\n", pmod->name);
+	    if (csv) {
+		pprintf(prn, "\"%s:\"\n", pmod->name);
+	    } else {
+		pprintf(prn, "\n%s:\n", pmod->name);
+	    }
 	} else {
-	    pprintf(prn, "\n%s %d: ", (utf)? _("Model") : I_("Model"), pmod->ID);
+	    if (csv) {
+		pprintf(prn, "\"%s %d: ", I_("Model"), pmod->ID);
+	    } else {
+		pprintf(prn, "\n%s %d: ", (utf)? _("Model") : I_("Model"), pmod->ID);
+	    }
 	}
 	break;
     }
@@ -1066,6 +1152,8 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
+    if (csv) pputc(prn, '"');
+
     if (pmod->aux != AUX_VAR && pmod->aux != AUX_VECM) {
 	gretl_prn_newline(prn);
     }
@@ -1073,6 +1161,8 @@ static void print_model_heading (const MODEL *pmod,
     if (pmod->ci == ARMA && plain_format(prn)) {
 	arma_extra_info(pmod, prn);
     }
+
+    if (csv) pputc(prn, '"');
 
     /* special formulations for dependent variable in various cases */
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
@@ -1119,6 +1209,8 @@ static void print_model_heading (const MODEL *pmod,
 	}
     }
 
+    if (csv) pputc(prn, '"');
+
     gretl_prn_newline(prn);
 
     /* supplementary strings below the estimator and sample info */
@@ -1156,9 +1248,12 @@ static void print_model_heading (const MODEL *pmod,
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
 	    pputs(prn, "\\\\\n");
 	}
-	pprintf(prn, "%s: %s\n", 
+	if (csv) pputc(prn, '"');
+	pprintf(prn, "%s: %s", 
 		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
 		(tex)? vname : pdinfo->varname[pmod->nwt]);
+	if (csv) pputc(prn, '"');
+	pputc(prn, '\n');
     }
 
     /* rhohat for CORC and HILU (TeX) */
@@ -1261,6 +1356,25 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 			 "      T STAT   P-VALUE\n\n"));
 	}
 	return;
+    } else if (csv_format(prn)) {
+	char d = prn_delim(prn);
+
+	if (pmod->ci == MPOLS) {
+	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"\n",
+		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"));
+	} else if (discrete) {
+	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
+		    d, I_("T STAT"), d, I_("SLOPE at mean"));
+	} else if (use_param) {
+	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    I_("PARAMETER"), d, I_("ESTIMATE"), d, I_("STDERROR"),
+		    d, I_("T STAT"), d, I_("P-VALUE"));
+	} else {
+	    pprintf(prn, "\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"%c\"%s\"\n",
+		    I_("VARIABLE"), d, I_("COEFFICIENT"), d, I_("STDERROR"),
+		    d, I_("T STAT"), d, I_("P-VALUE"));
+	}	
     } else {
 	char col1[16], col2[16];
 
@@ -1326,7 +1440,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn)
 
 static void print_coeff_table_end (PRN *prn)
 {
-    if (plain_format(prn)) {
+    if (plain_format(prn) || csv_format(prn)) {
 	pputc(prn, '\n');
     } else if (tex_format(prn)) {
 	pputs(prn, "\\end{tabular*}\n\n");
@@ -1380,6 +1494,11 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 		pputc(prn, '\n');
 	    }
 	    err = rtf_print_coeff(pdinfo, pmod, i, prn);
+	} else if (csv_format(prn)) {
+	    if (i == gn) {
+		pputc(prn, '\n');
+	    }
+	    err = csv_print_coeff(pdinfo, pmod, i, prn);
 	}
 
 	if (err) gotnan = 1;
@@ -2054,6 +2173,61 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
  rtf_coeff_getout:
     pputs(prn, " \\intbl \\row\n");
+
+    return gotnan;
+}
+
+static int csv_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
+			    int i, PRN *prn)
+{
+    char d = prn_delim(prn);
+    double t, pvalue = 999.0;
+    int gotnan = 0;
+    int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
+    char varname[24];
+
+    gretl_model_get_param_name(pmod, pdinfo, i, varname);
+    pprintf(prn, "\"%s\"", varname);
+    
+    /* print coeff value if well-defined */
+    if (isnan(pmod->coeff[i]) || na(pmod->coeff[i])) {
+	pprintf(prn, "%c\"%s\"", d, I_("undefined"));
+	gotnan = 1;
+    } else {
+	pprintf(prn, "%c%.15g", d, pmod->coeff[i]);
+    }
+
+    /* get out if std error is undefined */
+    if (isnan(pmod->sderr[i]) || na(pmod->sderr[i])) {
+	pprintf(prn, "%c\"%s\"\n", d, I_("undefined"));
+	return 1;
+    }
+
+    pprintf(prn, "%c%.15g", d, pmod->sderr[i]);
+
+
+    /* std error is well-defined, but is it positive? */
+    if (pmod->sderr[i] > 0.) {
+	t = pmod->coeff[i] / pmod->sderr[i];
+	pprintf(prn, "%c%.15g", d, t);
+	if (do_pval) {
+	    pvalue = coeff_pval(pmod, t, pmod->dfd);
+	    pprintf(prn, "%c%.15g", d, pvalue);
+	}
+    } else if (do_pval) { 
+	pprintf(prn, "%c\"%s\"\n", d, I_("undefined"));
+    }
+
+    if ((pmod->ci == LOGIT || pmod->ci == PROBIT) &&
+	       pmod->list[i+2] != 0) { 
+	double *slopes = gretl_model_get_data(pmod, "slopes");
+
+	if (slopes != NULL) {
+	    pprintf(prn, "%c%.15g", d, slopes[i]);
+	}
+    }
+
+    pputc(prn, '\n');
 
     return gotnan;
 }

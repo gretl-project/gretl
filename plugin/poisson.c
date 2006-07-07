@@ -90,9 +90,10 @@ static double pseudoR2 (const double *y, const double *offset,
     double K, ytfact;
     double ybar = gretl_mean(t1, t2, y);
     double R2 = NADBL;
+    int use_offset = (offset != NULL);
     int t;
 
-    if (offset != NULL) {
+    if (use_offset) {
 	K = ybar * (log(ybar/offmean) - 1.0);
     } else {
 	K = ybar * (log(ybar) - 1.0);
@@ -103,7 +104,7 @@ static double pseudoR2 (const double *y, const double *offset,
 #endif
 
     for (t=t1; t<=t2; t++) {
-	if (na(y[t])) {
+	if (na(y[t]) || (use_offset && na(offset[t]))) {
 	    continue;
 	}
 
@@ -115,7 +116,7 @@ static double pseudoR2 (const double *y, const double *offset,
 
 	llt = K - log(ytfact);
 
-	if (offset != NULL && !na(offset[t])) {
+	if (use_offset) {
 	    llt += y[t] * log(offset[t]); 
 	}
 
@@ -130,7 +131,7 @@ static double pseudoR2 (const double *y, const double *offset,
 #endif
 
     if (!na(ll0)) {
-	R2 = 1.0 - ll1 / ll0;
+	R2 = 1.0 - (ll1 / ll0);
     }
 
     return R2;

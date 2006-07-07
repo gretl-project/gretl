@@ -58,6 +58,8 @@ void gretl_print_set_format (PRN *prn, PrnFormat format);
 
 void gretl_print_toggle_doc_flag (PRN *prn);
 
+void gretl_print_set_delim (PRN *prn, char delim);
+
 int pprintf (PRN *prn, const char *template, ...);
 
 int pputs (PRN *prn, const char *s);
@@ -89,5 +91,7 @@ int tex_doc_format (PRN *prn);
 int tex_eqn_format (PRN *prn);
 
 int csv_format (PRN *prn);
+
+char prn_delim (PRN *prn);
 
 #endif /* GRETL_PRN_H */
