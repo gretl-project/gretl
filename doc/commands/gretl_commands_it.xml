@@ -110,7 +110,7 @@
     </description>
     
     <gui-access>
-     <menu-path>/Data/Aggiungi osservazioni</menu-path>
+     <menu-path>/Dati/Aggiungi osservazioni</menu-path>
     </gui-access>
 
   </command>
@@ -3069,7 +3069,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/Esponente di Hurst</menu-path>
+      <menu-path>/Variabile/Esponente di Hurst</menu-path>
     </gui-access>
 
   </command>
@@ -4882,7 +4882,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Panel</menu-path>
+      <menu-path>/Modello/Panel</menu-path>
     </gui-access>
 
   </command>
@@ -7359,7 +7359,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/VECM</menu-path>
+      <menu-path>/Modello/Serie storiche/VECM</menu-path>
     </gui-access>
 
   </command>
