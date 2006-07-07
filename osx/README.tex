@@ -18,7 +18,7 @@
 
 \begin{center}
 {\color{gold} \titlefont gretl} \\[1ex]
-version 1.3.0 for Mac OS X \\[2ex]
+version 1.6.0 for Mac OS X \\[2ex]
 
 \textit{GNU Regression, Econometrics and Time-series Library\\
   This is free software under the GNU General Public License.}
@@ -44,42 +44,48 @@ or rename any components within that folder or the program will break.
 \section{System requirements}
 \label{sec:os}
 
-This gretl package has been tested on Mac OS X v10.2.4 (``Jaguar'').
-I gather it may work on version 10.3 (``Panther''), although there may
-be a problem with fonts (see below).  It almost certainly will not
-work on any Mac operating system prior to 10.2.
+This gretl package was built on Mac OS X v10.4.6 (``Tiger'').  I'm not
+able to to test it on earlier versions of OS X; it may work on 10.3
+but will almost certainly will not work on any Mac operating system
+prior to 10.3.
 
-The package requires Apple's X11 for Mac OS.  At one time this was
-available as a ``beta'' for OS X v10.2.  It is currently (July, 2004)
-available as an ``optional install from the third Mac OS X v10.3
-Panther CD'' (quoting the Apple website).  If you're running v10.2 and
-have not already installed X11 I think you're probably out of luck.
+The package requires Apple's version of the X11 window system, which
+is available as an optional install from the Tiger distribution DVD.
 
 The package does \textit{not} depend on third-party enhancements for
 OS X such as \textsf{Fink}.
 
-\section{Fonts}
+\section{Font problems?}
 \label{sec:fonts}
 
-When you start gretl you may find that the font used for the menus is
-poorly chosen---or, worse, that the menus display lots of funny little
-squares where letters should be.
-
-If the menus are legible but the font is not good, you can try
-selecting a different font under the ``File, Preferences, Menu font''
-menu item.  If the menus are not legible at all, you might try this
-repair:
+If gretl will not start at all, or if it starts but fonts are missing
+or font selection doesn't work (you should be able to select fonts
+under the ``Preferences'' item on the File menu) try this fix:
 
 \begin{enumerate}
-\item Navigate to the \texttt{bin} folder inside
-  \texttt{Gretl\_Folder}.
-\item Open the file \texttt{gretl.sh} in a text editor.
-\item Replace the line (near the top), \texttt{export
-    GDK\_USE\_XFT=1}, with \texttt{export GDK\_USE\_XFT=0}, and save
-  the file.
+\item Open a Terminal window.
+\item Type the command \texttt{sudo fc-cache}
+\item Hit the Enter key, then enter the root (admin) password if
+  prompted.
+\item If you see something like \texttt{fc-cache: not found} then
+   X11 is not installed (properly); otherwise the X11 font cache
+   should be created/updated.
 \item Restart gretl.
 \end{enumerate}
 
+\section{Other problems?}
+
+If the AppleScript launcher for gretl doesn't work for you, try
+opening an xterm, going into the \textsf{bin} folder of the
+gretl package, and executing \textsf{gretl.sh} manually.  That is, do
+something like:
+
+\begin{verbatim}
+cd Gretl_Folder/bin
+./gretl.sh
+\end{verbatim}
+
+Hopefully this will give you an informative error message.
 
 \section{Documentation}
 \label{sec:doc}
@@ -87,64 +93,13 @@ repair:
 When you start gretl, please consult the program's Help menu for
 documentation in various formats.
 
-\section{Notes for OS X hackers}
-\label{sec:hack}
-
-You will notice that this is not a very slick packaging job.  I had
-intended to produce a proper OS X ``bundle'' for gretl, but failed to
-do so.  I'm not sure whether this is due to my lack of familiarity
-with Mac concepts, to bugs in the tools I was using, or to problems
-with the system on which I was trying to build the bundle (OS X
-10.2.4, which had to be ``recovered'' after an abortive attempt to
-update to 10.2.8).
-
-Briefly, this was my experience:
-
-\begin{itemize}
-\item Tried \textsf{osacompile}, which I had read would compile a text
-  representation of an AppleScript into a bundle skeleton using
-  something like
-
-\texttt{osacompile -o foo.app foo.txt}
-
-But this produced a zero-byte output file.
-\item Tried the Apple \textsf{Package Builder} app, having first arranged my
-  files in the layout of a bundle (\texttt{Contents/MacOS},
-  \texttt{Contents/Resources} and all that).  This produced a
-  spiffy-looking package, but when I installed it nothing worked.  It
-  didn't seem to act like a real bundle and the script wouldn't launch
-  (with cryptic numeric error codes).
-\item Tried the third-party \textsf{App Bundler}.  This looked
-  promising, but when it came to actually building the bundle the
-  program bombed out with an error message, ``Unable to create
-  resource files.''
-\end{itemize}
-
-I'd appreciate any guidance on how to get this right.  In the
-meantime, here's a description of how the package is currently set up.
-
-\begin{itemize}
-\item The gretl program icon represents a little AppleScript, which
-  just activates X11, changes directory into the \textsf{bin} folder
-  of the package, and launches \textsf{gretl.sh}.
-\item The shell script \textsf{gretl.sh} then does most of the work,
-  setting up the environment so that the \textsf{GTK} libraries and
-  \textsf{gnuplot} will work in an arbitary location.  Once all the
-  environment variables are set, this script launches the real
-  executable, \textsf{gretl\_x11}.
-\end{itemize}
-
-If the AppleScript launcher doesn't work for you (Panther issues?) you
-could try opening an xterm, going into the \textsf{bin} folder of the
-gretl package, and executing \textsf{gretl.sh} manually. 
-
 \vspace{.25in}
 
 \raggedright
 Allin Cottrell \\
 Wake Forest University \\
 \texttt{cottrell@wfu.edu} \\
-July, 2004
+July, 2006
 
 
 

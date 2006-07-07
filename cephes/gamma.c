@@ -145,8 +145,14 @@ static double STIR[5] = {
 
 static double SQTPI = 2.50662827463100050242E0;
 
-int sgngam = 0;
-extern int sgngam;
+int cephes_sgngam = 0;
+
+/* accessor for sgngam */
+
+int get_cephes_sgngam (void)
+{
+    return cephes_sgngam;
+}
 
 /* Gamma function computed by Stirling's formula.
  * The polynomial STIR is valid for 33 <= x <= 172.
@@ -178,7 +184,7 @@ double cephes_gamma (double x)
     double p, q, z;
     int i;
 
-    sgngam = 1;
+    cephes_sgngam = 1;
 #ifdef NANS
     if (isnan(x)) {
 	return x;
@@ -207,7 +213,7 @@ double cephes_gamma (double x)
 	    if (p == q) {
 #ifdef NANS
 	    gamnan:
-		mtherr("gamma", DOMAIN);
+		mtherr("gamma", CEPHES_DOMAIN);
 		return NAN;
 #else
 		goto goverf;
@@ -215,7 +221,7 @@ double cephes_gamma (double x)
 	    }
 	    i = p;
 	    if ((i & 1) == 0) {
-		sgngam = -1;
+		cephes_sgngam = -1;
 	    }
 	    z = q - p;
 	    if (z > 0.5) {
@@ -225,11 +231,11 @@ double cephes_gamma (double x)
 	    z = q * sin( PI * z );
 	    if (z == 0.0) {
 #ifdef INFINITIES
-		return sgngam * INFINITY;
+		return cephes_sgngam * INFINITY;
 #else
 	    goverf:
-		mtherr("gamma", OVERFLOW);
-		return sgngam * MAXNUM;
+		mtherr("gamma", CEPHES_OVERFLOW);
+		return cephes_sgngam * MAXNUM;
 #endif
 	    }
 	    z = fabs(z);
@@ -237,7 +243,7 @@ double cephes_gamma (double x)
 	} else {
 	    z = stirf(x);
 	}
-	return sgngam * z;
+	return cephes_sgngam * z;
     }
 
     z = 1.0;
@@ -282,7 +288,7 @@ double cephes_gamma (double x)
 	return INFINITY;
 # endif
 #else
-	mtherr("gamma", SING);
+	mtherr("gamma", CEPHES_SING);
 	return MAXNUM;
 #endif
     } else {
@@ -334,7 +340,7 @@ double lgam (double x)
     double p, q, u, w, z;
     int i;
 
-    sgngam = 1;
+    cephes_sgngam = 1;
 
 #ifdef NANS
     if (isnan(x)) {
@@ -350,12 +356,12 @@ double lgam (double x)
 
     if (x < -34.0) {
 	q = -x;
-	w = lgam(q); /* note this modifies sgngam! */
+	w = lgam(q); /* note this modifies cephes_sgngam! */
 	p = floor(q);
 	if (p == q) {
 	lgsing:
 #ifdef INFINITIES
-	    mtherr("lgam", SING);
+	    mtherr("lgam", CEPHES_SING);
 	    return INFINITY;
 #else
 	    goto loverf;
@@ -363,9 +369,9 @@ double lgam (double x)
 	}
 	i = p;
 	if ((i & 1) == 0) {
-	    sgngam = -1;
+	    cephes_sgngam = -1;
 	} else {
-	    sgngam = 1;
+	    cephes_sgngam = 1;
 	}
 	z = q - p;
 	if (z > 0.5) {
@@ -399,10 +405,10 @@ double lgam (double x)
 	    u = x + p;
 	}
 	if (z < 0.0) {
-	    sgngam = -1;
+	    cephes_sgngam = -1;
 	    z = -z;
 	} else {
-	    sgngam = 1;
+	    cephes_sgngam = 1;
 	}
 	if (u == 2.0) {
 	    return log(z);
@@ -415,11 +421,11 @@ double lgam (double x)
 
     if (x > MAXLGM) {
 #ifdef INFINITIES
-	return sgngam * INFINITY;
+	return cephes_sgngam * INFINITY;
 #else
     loverf:
-	mtherr("lgam", OVERFLOW);
-	return sgngam * MAXNUM;
+	mtherr("lgam", CEPHES_OVERFLOW);
+	return cephes_sgngam * MAXNUM;
 #endif
     }
 

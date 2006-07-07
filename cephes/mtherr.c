@@ -57,46 +57,54 @@ Direct inquiries to 30 Frost Street, Cambridge, MA 02140
 #include <stdio.h>
 #include "mconf.h"
 
-int merror = 0;
+static int cephes_errno = 0;
 
 /* Notice: the order of appearance of the following
  * messages is bound to the error codes defined
  * in mconf.h.
  */
-static char *ermsg[7] = {
-"unknown",      /* error code 0 */
-"domain",       /* error code 1 */
-"singularity",  /* et seq.      */
-"overflow",
-"underflow",
-"total loss of precision",
-"partial loss of precision"
+static const char *ermsg[] = {
+    "no error",
+    "domain",       /* error code 1 */
+    "singularity",  /* et seq.      */
+    "overflow",
+    "underflow",
+    "total loss of precision",
+    "partial loss of precision",
+    "unknown"
 };
 
-
-int mtherr( name, code )
-char *name;
-int code;
+int mtherr (char *name, int code)
 {
+    /* Display string passed by calling program,
+     * which is supposed to be the name of the
+     * function in which the error occurred:
+     */
+    fprintf(stderr, "\n%s ", name);
 
-/* Display string passed by calling program,
- * which is supposed to be the name of the
- * function in which the error occurred:
- */
-fprintf(stderr, "\n%s ", name );
+    /* Display error message defined
+     * by the code argument.
+     */
+    if (code <= 0 || code > CEPHES_UNKNOWN)
+	code = CEPHES_UNKNOWN;
 
-/* Set global error message word */
-merror = code;
+    /* Set global error message number */
+    cephes_errno = code;
 
-/* Display error message defined
- * by the code argument.
- */
-if( (code <= 0) || (code >= 7) )
-	code = 0;
-fprintf(stderr, "%s error\n", ermsg[code] );
+    /* Display error message defined
+     * by the code argument.
+     */
+    fprintf(stderr, "%s error\n", ermsg[code]);
 
-/* Return to calling
- * program
- */
-return( 0 );
+    /* Return to calling program */
+    return 0;
+}
+
+int get_cephes_errno (void)
+{
+    int ret = cephes_errno;
+
+    cephes_errno = 0; /* clear the code */
+
+    return ret;
 }

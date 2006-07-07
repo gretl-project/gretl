@@ -19,12 +19,14 @@ double bdtrc (int k, int n, double p);
  * of the Chi square probability density function with
  * v degrees of freedom.
  */
+
 double chdtr (double v, double x);
 
 /* area under the right hand tail (from x to infinity)
  * of the Chi square probability density function with
  * v degrees of freedom.
  */
+
 double chdtrc (double v, double x);
 
 /*
@@ -32,6 +34,7 @@ double chdtrc (double v, double x);
  * from x to infinity of the Chi-square density is equal
  * to the given cumulative probability y.
  */
+
 double chdtri (double df, double y);
 
 /*
@@ -39,6 +42,7 @@ double chdtri (double df, double y);
  * function (also known as Snedcor's density or the
  * variance ratio density).
  */
+
 double fdtrc (int ia, int ib, double x);
 
 /*
@@ -46,24 +50,28 @@ double fdtrc (int ia, int ib, double x);
  * from x to infinity of the F density is equal to the
  * given probability p.
  */
+
 double fdtri (int ia, int ib, double y);
 
 /*
  * Computes the integral from minus infinity to t of the Student
  * t distribution with integer k > 0 degrees of freedom.
  */
+
 double stdtr (int k, double t);
 
 /*
  * Given probability p, finds the argument t such that stdtr(k,t)
  * is equal to p.
  */
+
 double stdtri (int k, double p);
 
 /*
  * Returns the area under the Gaussian probability density
  * function, integrated from minus infinity to x.
  */
+
 double ndtr (double a);
 
 /*
@@ -71,23 +79,34 @@ double ndtr (double a);
  * Gaussian probability density function (integrated from
  * minus infinity to x) is equal to y.
  */
+
 double ndtri (double y0);
 
 /*
  * Returns gamma function of the argument.  The result is
  * correctly signed.
-*/
+ */
 
-double cephes_gamma (double x); /* alias for gamma() */
+double cephes_gamma (double x); /* cephes' gamma(), renamed */
 
 /*
  * Returns the base e (2.718...) logarithm of the absolute
  * value of the gamma function of the argument.
- * The sign (+1 or -1) of the gamma function is returned in a
- * global (extern) variable named sgngam.
-*/
+ * The sign (+1 or -1) of the gamma function is set in a
+ * global variable named cephes_sgngam.
+ */
 
-double cephes_lgamma (double x); /* alias for lgam() */
+double cephes_lgamma (double x); /* alias for cephes' lgam() */
+
+/*
+ * Returns the current value of cephes_sgngam.
+ */
+
+int get_cephes_sgngam (void);
+
+/* Accessor for cephes error code */
+
+int get_cephes_errno (void);
 
 #endif /* LIBPROB_H */
 

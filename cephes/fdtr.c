@@ -167,7 +167,7 @@ double fdtrc (int ia, int ib, double x)
     double a, b, w;
 
     if ((ia < 1) || (ib < 1) || (x < 0.0)) {
-	mtherr("fdtrc", DOMAIN);
+	mtherr("fdtrc", CEPHES_DOMAIN);
 	return 0.0;
     }
 
@@ -183,7 +183,7 @@ double fdtr (int ia, int ib, double x)
     double a, b, w;
 
     if ((ia < 1) || (ib < 1) || (x < 0.0)) {
-	mtherr("fdtr", DOMAIN);
+	mtherr("fdtr", CEPHES_DOMAIN);
 	return 0.0;
     }
 
@@ -200,7 +200,7 @@ double fdtri (int ia, int ib, double y)
     double a, b, w, x;
 
     if ((ia < 1) || (ib < 1) || (y <= 0.0) || (y > 1.0)) {
-	mtherr("fdtri", DOMAIN);
+	mtherr("fdtri", CEPHES_DOMAIN);
 	return 0.0;
     }
 

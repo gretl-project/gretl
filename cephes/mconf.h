@@ -80,20 +80,16 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 /* Version number of package */
 #define VERSION "2.7"
 
-/* Constant definitions for math error conditions
- */
-
-#if !defined(DOMAIN)
-#define DOMAIN		1	/* argument domain error */
-#define SING		2	/* argument singularity */
-#define OVERFLOW	3	/* overflow range error */
-#define UNDERFLOW	4	/* underflow range error */
-#define TLOSS		5	/* total loss of precision */
-#define PLOSS		6	/* partial loss of precision */
-#endif 
-
-#define EDOM		33
-#define ERANGE		34
+/* math error conditions */
+enum {
+    CEPHES_DOMAIN = 1,  /* argument domain error */
+    CEPHES_SING,        /* argument singularity */
+    CEPHES_OVERFLOW,    /* overflow range error */
+    CEPHES_UNDERFLOW,   /* underflow range error */
+    CEPHES_TLOSS,       /* total loss of precision */
+    CEPHES_PLOSS,       /* partial loss of precision */
+    CEPHES_UNKNOWN      /* unspecified error */
+};
 
 /* Complex numeral.  */
 typedef struct {
@@ -136,7 +132,6 @@ typedef struct {
 
 /* Mechanism for error reporting.  See mtherr.c.  */
 int mtherr (char *, int);
-extern int merror;
 
 /* private functions */
 

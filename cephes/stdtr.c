@@ -92,7 +92,7 @@ double stdtr (int k, double t)
     int j;
 
     if (k <= 0) {
-	mtherr("stdtr", DOMAIN);
+	mtherr("stdtr", CEPHES_DOMAIN);
 	return 0.0;
     }
 
@@ -170,7 +170,7 @@ double stdtri (int k, double p)
     int rflg;
 
     if (k <= 0 || p <= 0.0 || p >= 1.0) {
-	mtherr("stdtri", DOMAIN);
+	mtherr("stdtri", CEPHES_DOMAIN);
 	return 0.0;
     }
 

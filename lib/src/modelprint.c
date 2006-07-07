@@ -1670,6 +1670,14 @@ static void maybe_print_first_stage_F (const MODEL *pmod, PRN *prn)
     }
 }
 
+static char active_decpoint (void)
+{
+    char test[4];
+
+    sprintf(test, "%.1f", 1.0);
+    return test[1];
+}
+ 
 #define fixed_effects_model(m) (m->ci == PANEL && \
                                 gretl_model_get_int(m, "fixed-effects"))
 
@@ -1700,7 +1708,13 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	return 0;
     }
 
-    /* FIXME utf vs iso-88* */
+    if (csv_format(prn)) {
+	if (active_decpoint() == ',') {
+	    gretl_print_set_delim(prn, '\t');
+	} else {
+	    gretl_print_set_delim(prn, ',');
+	}
+    }
 
     if (!plain_format(prn)) {
 	model_format_start(prn);

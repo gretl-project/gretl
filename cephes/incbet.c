@@ -92,7 +92,7 @@ double incbet (double  aa, double bb, double xx)
 	    return 1.0;
 	}
     domerr:
-	mtherr("incbet", DOMAIN);
+	mtherr("incbet", CEPHES_DOMAIN);
 	return 0.0;
     }
 

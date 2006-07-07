@@ -100,7 +100,7 @@ Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
 double gdtr (double a, double b, double x)
 {
     if (x < 0.0) {
-	mtherr("gdtr", DOMAIN);
+	mtherr("gdtr", CEPHES_DOMAIN);
 	return 0.0;
     }
     return igam(b, a * x);
@@ -109,7 +109,7 @@ double gdtr (double a, double b, double x)
 double gdtrc (double a, double b, double x)
 {
     if (x < 0.0) {
-	mtherr("gdtrc", DOMAIN);
+	mtherr("gdtrc", CEPHES_DOMAIN);
 	return 0.0;
     }
     return igamc(b, a * x);

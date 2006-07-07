@@ -100,7 +100,7 @@ static double pseudoR2 (const double *y, const double *offset,
     }
 
 #if PR2DEBUG
-    fprintf(stderr, "K = %g\n", K);
+    fprintf(stderr, "pseudoR2: K = %g\n", K);
 #endif
 
     for (t=t1; t<=t2; t++) {
@@ -110,7 +110,6 @@ static double pseudoR2 (const double *y, const double *offset,
 
 	ytfact = x_factorial(y[t]);
 	if (na(ytfact)) {
-	    ll0 = NADBL;
 	    break;
 	}
 

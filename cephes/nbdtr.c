@@ -126,7 +126,7 @@ double nbdtrc (int k, int n, double p)
 
     if (k < 0) {
     domerr:
-	mtherr("nbdtr", DOMAIN);
+	mtherr("nbdtr", CEPHES_DOMAIN);
 	return 0.0;
     }
 
@@ -144,7 +144,7 @@ double nbdtr( int k, int n, double p )
 
     if (k < 0) {
     domerr:
-	mtherr("nbdtr", DOMAIN);
+	mtherr("nbdtr", CEPHES_DOMAIN);
 	return 0.0;
     }
 
@@ -162,7 +162,7 @@ double nbdtri( int k, int n, double p )
 
     if (k < 0) {
     domerr:
-	mtherr( "nbdtri", DOMAIN );
+	mtherr("nbdtri", CEPHES_DOMAIN);
 	return 0.0;
     }
 

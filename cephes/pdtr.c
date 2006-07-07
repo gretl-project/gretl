@@ -127,42 +127,42 @@ Copyright 1984, 1987, 1995, 2000 by Stephen L. Moshier
 
 #include "mconf.h"
 
-double pdtrc( int k, double m )
+double pdtrc (int k, double m)
 {
-double v;
+    double v;
 
-if( (k < 0) || (m <= 0.0) )
-	{
-	mtherr( "pdtrc", DOMAIN );
-	return( 0.0 );
-	}
-v = k+1;
-return( igam( v, m ) );
+    if ((k < 0) || (m <= 0.0)) {
+	mtherr("pdtrc", CEPHES_DOMAIN);
+	return 0.0;
+    }
+
+    v = k+1;
+    return igam(v, m);
 }
 
-double pdtr( int k, double m )
+double pdtr (int k, double m)
 {
-double v;
+    double v;
 
-if( (k < 0) || (m <= 0.0) )
-	{
-	mtherr( "pdtr", DOMAIN );
-	return( 0.0 );
-	}
-v = k+1;
-return( igamc( v, m ) );
+    if ((k < 0) || (m <= 0.0)) {
+	mtherr("pdtr", CEPHES_DOMAIN);
+	return 0.0;
+    }
+
+    v = k+1;
+    return igamc(v, m);
 }
 
-double pdtri( int k, double y )
+double pdtri (int k, double y)
 {
-double v;
+    double v;
 
-if( (k < 0) || (y < 0.0) || (y >= 1.0) )
-	{
-	mtherr( "pdtri", DOMAIN );
-	return( 0.0 );
-	}
-v = k+1;
-v = igami( v, y );
-return( v );
+    if ((k < 0) || (y < 0.0) || (y >= 1.0)) {
+	mtherr("pdtri", CEPHES_DOMAIN);
+	return 0.0;
+    }
+
+    v = k+1;
+    v = igami(v, y);
+    return v;
 }

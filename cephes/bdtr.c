@@ -159,7 +159,7 @@ double bdtrc (int k, int n, double p)
 
     if (n < k) {
     domerr:
-	mtherr("bdtrc", DOMAIN);
+	mtherr("bdtrc", CEPHES_DOMAIN);
 	return 0.0;
     }
 
@@ -187,7 +187,7 @@ double bdtr (int k, int n, double p)
 	goto domerr;
     if (k < 0 || n < k) {
     domerr:
-	mtherr("bdtr", DOMAIN);
+	mtherr("bdtr", CEPHES_DOMAIN);
 	return 0.0;
     }
 
@@ -213,7 +213,7 @@ double bdtri (int k, int n, double y)
 	goto domerr;
     if (k < 0 || n <= k) {
     domerr:
-	mtherr("bdtri", DOMAIN);
+	mtherr("bdtri", CEPHES_DOMAIN);
 	return 0.0;
     }
 

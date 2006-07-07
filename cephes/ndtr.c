@@ -257,7 +257,7 @@ static double cephes_erfc (double a)
 
     if (z < -MAXLOG) {
     under:
-	mtherr("erfc", UNDERFLOW);
+	mtherr("erfc", CEPHES_UNDERFLOW);
 	if (a < 0) {
 	    return 2.0;
 	} else {
