@@ -1678,7 +1678,7 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
 #ifdef OSX_PKG
 static void osx_help (int uguide)
 {
-    char *prefix, *syscmd;
+    char *prefix, *fname;
    
     prefix = getenv("GTK_EXE_PREFIX");
     if (prefix == NULL) {
@@ -1686,9 +1686,15 @@ static void osx_help (int uguide)
 	return;
     }
     
-    syscmd = g_strdup_printf("%s/bin/manual.sh %s", prefix, (uguide)? "uguide" : "ref");
-    system(syscmd);
-    g_free(syscmd);
+    fname = g_strdup_printf("%s/share/doc/%s", prefix, 
+                            (uguide)? "gretl-guide.pdf" : 
+			    "gretl-ref.pdf");
+    if (fname == NULL) {
+    	errbox(_("Out of memory!"));
+    } else {
+        osx_open_file(fname);
+	g_free(fname);
+    }    
 }
 #endif 
 

@@ -16,8 +16,8 @@ GRETL_HOME="$PREFIX/share/gretl/"
 export GRETL_HOME
 GTK_EXE_PREFIX="$PREFIX"
 export GTK_EXE_PREFIX
-GDK_PIXBUF_MODULEDIR="$PREFIX/lib/gtk-2.0/2.4.0/loaders"
-export GDK_PIXBUF_MODULEDIR
+GDK_PIXBUF_MODULE_FILE="$PREFIX/etc/gtk-2.0/gdk-pixbuf.loaders"
+export GDK_PIXBUF_MODULE_FILE
 PANGO_RC_FILE="$PREFIX/etc/pangorc"
 export PANGO_RC_FILE
 GTK_IM_MODULE_FILE="$PREFIX/etc/gtk-2.0/gtk.immodules"
