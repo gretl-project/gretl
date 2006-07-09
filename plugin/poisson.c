@@ -64,19 +64,19 @@ static double poisson_ll (const double *y, const double *mu,
 			  int t1, int t2)
 {
     double loglik = 0.0;
-    double ytfact, llt;
+    double lytfact, llt;
     int t;
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t]) || na(mu[t])) {
 	    continue;
 	}
-	ytfact = x_factorial(y[t]);
-	if (na(ytfact)) {
+	lytfact = log_x_factorial(y[t]);
+	if (na(lytfact)) {
 	    loglik = NADBL;
 	    break;
 	}
-	llt = (-mu[t] + y[t] * log(mu[t]) - log(ytfact));
+	llt = (-mu[t] + y[t] * log(mu[t]) - lytfact);
 	loglik += llt;
     }  
 
@@ -87,7 +87,7 @@ static double pseudoR2 (const double *y, const double *offset,
 			int t1, int t2, double ll1, double offmean)
 {
     double llt, ll0 = 0.0;
-    double K, ytfact;
+    double K, lytfact;
     double ybar = gretl_mean(t1, t2, y);
     double R2 = NADBL;
     int use_offset = (offset != NULL);
@@ -108,12 +108,12 @@ static double pseudoR2 (const double *y, const double *offset,
 	    continue;
 	}
 
-	ytfact = x_factorial(y[t]);
-	if (na(ytfact)) {
+	lytfact = log_x_factorial(y[t]);
+	if (na(lytfact)) {
 	    break;
 	}
 
-	llt = K - log(ytfact);
+	llt = K - lytfact;
 
 	if (use_offset) {
 	    llt += y[t] * log(offset[t]); 

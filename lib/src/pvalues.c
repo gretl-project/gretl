@@ -101,6 +101,39 @@ double x_factorial (double x)
 }
 
 /**
+ * log_x_factorial:
+ * @x: input value.
+ * 
+ * Returns: the log of the factorial of int(x), cast to a double, or
+ * NADBL on failure.
+ */
+
+double log_x_factorial (double x)
+{
+    double lfact;
+    int n = x;
+
+    if (x < 0.0) {
+	lfact = NADBL;
+    } else if (x > 12.0) {
+	lfact = cephes_lgamma(1.0 + x);
+	if (get_cephes_errno()) {
+	    lfact = NADBL;
+	}
+    } else if (n == 0) {
+	lfact = 0.0;
+    } else {
+	lfact = n;
+	while (--n > 1) {
+	    lfact *= n;
+	}
+	lfact = log(lfact);
+    }
+
+    return lfact;
+}
+
+/**
  * tcrit95:
  * @df: degrees of freedom.
  * 

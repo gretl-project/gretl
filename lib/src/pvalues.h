@@ -26,6 +26,8 @@ double binomial_pvalue (int k, int n, double p);
 
 double x_factorial (double x);
 
+double log_x_factorial (double x);
+
 double normal_pvalue_2 (double x);
 
 double normal_pvalue_1 (double x);
