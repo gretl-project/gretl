@@ -1784,7 +1784,7 @@ int gnuplot_3d (int *list, const char *literal,
     int orig_t1 = pdinfo->t1, orig_t2 = pdinfo->t2;
     int lo = list[0];
     int datlist[4];
-    char surface[64] = {0};
+    char surface[128] = {0};
 
     if (lo != 3) {
 	fprintf(stderr, "gnuplot_3d needs three variables (only)\n");
