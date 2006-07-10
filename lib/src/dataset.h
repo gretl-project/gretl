@@ -28,7 +28,8 @@ typedef enum {
 
 typedef enum {
     VAR_DISCRETE = 1 << 0,
-    VAR_SCALAR   = 1 << 1
+    VAR_SCALAR   = 1 << 1,
+    VAR_HIDDEN   = 1 << 2
 } VarinfoFlags;
 
 /**
@@ -194,6 +195,15 @@ typedef enum {
  */
 #define var_is_series(p, i) (!((p)->varinfo[i]->flags & VAR_SCALAR))
 
+/**
+ * var_is_hidden:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Determine whether or not a variable is hidden.
+ */
+#define var_is_hidden(p, i) ((p)->varinfo[i]->flags & VAR_HIDDEN)
+
 void free_Z (double **Z, DATAINFO *pdinfo);
 
 DATAINFO *datainfo_new (void);
@@ -265,19 +275,20 @@ int dataset_drop_listed_variables (const int *list, double ***pZ,
 
 int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo); 
 
-int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo);
+int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
+				      int vmin);
 
 int dataset_drop_last_variables (int delvars, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo, 
 			     char *newvar, char *s, PRN *prn);
 
-int is_hidden_variable (int i, const DATAINFO *pdinfo);
-
 int is_log_variable (int i, const DATAINFO *pdinfo, char *parent);
 
 void set_var_discrete (DATAINFO *pdinfo, int i, int s);
 
 void set_var_scalar (DATAINFO *pdinfo, int i, int s);
+
+void set_var_hidden (DATAINFO *pdinfo, int i);
 
 #endif /* DATASET_H */

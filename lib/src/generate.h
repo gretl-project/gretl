@@ -25,6 +25,16 @@ enum {
     SORT_DESCENDING
 };
 
+typedef enum {
+    R_NOBS = 1,  /* number of observations in current sample range */
+    R_NVARS,     /* number of variables in dataset (including the constant) */
+    R_PD,        /* periodicity of dataset */
+    R_DSET_MAX,  /* separator */
+    R_TEST_STAT, /* test statistic from last explicit test performed */
+    R_TEST_PVAL, /* p-value from last explicit test performed */
+    R_MAX
+} RetrievalIndex;
+
 typedef struct _GENERATOR GENERATOR;
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
@@ -59,6 +69,8 @@ int genr_function_from_string (const char *s);
 int get_t_from_obs_string (char *s, const double **Z, 
 			   const DATAINFO *pdinfo);
 
+const char *get_retriever_word (int idx);
+
 /* genrfuncs.c, public functions */
 
 int dummy (double ***pZ, DATAINFO *pdinfo, int center);
@@ -72,6 +84,8 @@ int plotvar (double ***pZ, DATAINFO *pdinfo);
 int plotvar_from_varname (double ***pZ, DATAINFO *pdinfo, const char *vname);
 
 int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
+
+const char *get_model_stat_word (int idx);
 
 #endif /* GENERATE_H */
 

@@ -1313,7 +1313,7 @@ static int var_is_ok (int i, int code)
 {
     int ret = 1;
 
-    if (is_hidden_variable(i, datainfo)) {
+    if (var_is_hidden(datainfo, i)) {
 	ret = 0;
     } else if (var_is_scalar(datainfo, i)) {
 	ret = 0;
@@ -1491,7 +1491,7 @@ static int n_ok_series (void)
 
     if (datainfo != NULL) {
 	for (i=1; i<datainfo->v; i++) {
-	    if (var_is_series(datainfo, i) && !is_hidden_variable(i, datainfo)) {
+	    if (var_is_series(datainfo, i) && !var_is_hidden(datainfo, i)) {
 		nv++;
 	    }
 	}
@@ -1507,7 +1507,7 @@ static int n_ok_dummies (void)
     if (datainfo != NULL) {
 	for (i=1; i<datainfo->v; i++) {
 	    if (var_is_series(datainfo, i) && 
-		!is_hidden_variable(i, datainfo) &&
+		!var_is_hidden(datainfo, i) &&
 		gretl_isdummy(datainfo->t1, datainfo->t2, Z[i])) {
 		nv++;
 	    }

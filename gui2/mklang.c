@@ -5,6 +5,7 @@
 
 void output_emacs_block (void)
 {
+    const char *word;
     char **strs;
     int nopts;
     int i, n;
@@ -25,7 +26,7 @@ void output_emacs_block (void)
 	}
 	n++;
     } 
-    puts(")\n  \"Commands in Gretl (these names are also reserved).\")");
+    puts(")\n  \"Commands in Gretl (these names are also reserved).\")\n");
 
     /* functions in "genr" command */
     n = 1;
@@ -62,10 +63,42 @@ void output_emacs_block (void)
 	puts(")\n  \"Gretl option flags.\")\n");
 	free_strings_array(strs, nopts);
     }
+
+    /* dollar variables */
+    n = 1;
+    fputs("(defvar gretl-internal-vars\n '(", stdout);
+    for (i=1; i<M_MAX; i++) {
+	word = get_model_stat_word(i);
+	if (word != NULL) {
+	    printf("\"%s\"", word + 1);
+	    if (n % 8 == 0) {
+		fputs("\n   ", stdout);
+	    } else {
+		putchar(' ');
+	    }
+	    n++;
+	}
+    }
+    for (i=1; i<R_MAX; i++) {
+	word = get_retriever_word(i);
+	if (word != NULL) {
+	    printf("\"%s\"", word + 1);
+	    if (i < R_MAX-1) {
+		if (n % 8 == 0) {
+		    fputs("\n   ", stdout);
+		} else {
+		    putchar(' ');
+		}
+	    }
+	    n++;
+	}
+    }
+    puts(")\n  \"Model-related variables.\")\n");    
 }
 
 void output_lang_file (void)
 {
+    const char *word;
     char **strs;
     int nopts;
     int i;
@@ -97,8 +130,7 @@ void output_lang_file (void)
     puts("</string>\n");
 
     /* gretl data types */
-    puts("<keyword-list _name = \"Grel-types\" style = \"Data Type\"");
-    puts("  case-sensitive=\"TRUE\">");
+    puts("<keyword-list _name = \"Gretl-types\" style = \"Data Type\" case-sensitive=\"TRUE\">");
     puts(" <keyword>scalar</keyword>");
     puts(" <keyword>series</keyword>");
     puts(" <keyword>matrix</keyword>");
@@ -106,8 +138,7 @@ void output_lang_file (void)
     puts("</keyword-list>\n");
 
     /* gretl commands */
-    puts("<keyword-list _name = \"Commands\" style = \"Keyword\" case-sensitive=\"TRUE\"");
-    puts("  beginning-regex=\"\\b\" end-regex=\"\\b\">");
+    puts("<keyword-list _name = \"Commands\" style = \"Keyword\" case-sensitive=\"TRUE\">");
     for (i=1; i<NC; i++) {
 	if (strcmp(gretl_command_word(i), "matrix")) {
 	    printf(" <keyword>%s</keyword>\n", gretl_command_word(i));
@@ -116,8 +147,7 @@ void output_lang_file (void)
     puts("</keyword-list>\n");
 
     /* functions in "genr" command */
-    puts("<keyword-list _name = \"Genr-functions\" style = \"Function\"");
-    puts("  case-sensitive=\"TRUE\">");
+    puts("<keyword-list _name = \"Genr-functions\" style = \"Function\" case-sensitive=\"TRUE\">");
     for (i=1; i<T_IDENTITY; i++) {
 	printf(" <keyword>%s</keyword>\n", get_genr_func_word(i));
     }    
@@ -126,8 +156,8 @@ void output_lang_file (void)
     /* command option strings */
     strs = get_all_option_strings(&nopts);
     if (strs != NULL) {
-	puts("<keyword-list _name = \"Options\" style = \"Data Type\" "
-	     "case-sensitive=\"TRUE\">");
+	puts("<keyword-list _name = \"Options\" style = \"Data Type\" case-sensitive=\"TRUE\"");
+	puts(" match-empty-string-at-beginning = \"FALSE\" beginning-regex=\"--\">");
 	for (i=1; i<nopts; i++) {
 	    printf(" <keyword>%s</keyword>\n", strs[i]);
 	}    
@@ -135,9 +165,23 @@ void output_lang_file (void)
 	free_strings_array(strs, nopts);
     }
 
-    puts("<pattern-item _name = \"Internal-Variables\" style = \"Data Type\">");
-    puts(" <regex>[$][$]?[a-zA-Z_][a-zA-Z0-9_]*</regex>");
-    puts("</pattern-item>\n");
+    /* dollar variables */
+    puts("<keyword-list _name = \"InternalVars\" style = \"Data Type\" case-sensitive=\"TRUE\"");
+    puts(" match-empty-string-at-beginning = \"FALSE\" match-empty-string-at-end = \"FALSE\"");
+    puts(" beginning-regex=\"\\$\">");
+    for (i=1; i<M_MAX; i++) {
+	word = get_model_stat_word(i);
+	if (word != NULL) {
+	    printf(" <keyword>%s</keyword>\n", word + 1);
+	}
+    }
+    for (i=1; i<R_MAX; i++) {
+	word = get_retriever_word(i);
+	if (word != NULL) {
+	    printf(" <keyword>%s</keyword>\n", word + 1);
+	}
+    }	
+    puts("</keyword-list>\n");
 
     puts("<string _name = \"Character Constant\" style = \"String\" end-at-line-end = \"TRUE\">");
     puts(" <start-regex>&apos;</start-regex>");

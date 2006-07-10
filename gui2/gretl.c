@@ -1198,7 +1198,7 @@ void populate_varlist (void)
     for (i=0; i<datainfo->v; i++) {
 	int pv;
 
-	if (is_hidden_variable(i, datainfo)) {
+	if (var_is_hidden(datainfo, i)) {
 	    continue;
 	}
 	if (i > 0 && is_standard_lag(i, datainfo, &pv)) {

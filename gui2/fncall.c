@@ -203,7 +203,7 @@ static GList *get_selection_list (int type)
 
     if (type == ARG_SERIES || type == ARG_SCALAR) {
 	for (i=1; i<datainfo->v; i++) {
-	    if (is_hidden_variable(i, datainfo)) {
+	    if (var_is_hidden(datainfo, i)) {
 		continue;
 	    }
 	    if ((type == ARG_SERIES && var_is_series(datainfo, i)) ||

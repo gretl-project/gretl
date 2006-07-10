@@ -33,6 +33,8 @@ $(ALTREF): gretl-ref-a4.tex links
 	pdflatex $<
 	pdflatex $<
 
+letter: $(GUIDE) $(REF)
+
 a4: $(ALTGUIDE) $(ALTREF)
 
 gretl-guide-a4.tex: gretl-guide.tex

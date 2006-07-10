@@ -276,8 +276,11 @@ static void get_seats_command (char *seats, const char *tramo)
 
     strcpy(seats, tramo);
     p = strrchr(seats, SLASH);
-    if (p != NULL) strcpy(p + 1, "seats");
-    else strcpy(seats, "seats");
+    if (p != NULL) {
+	strcpy(p + 1, "seats");
+    } else {
+	strcpy(seats, "seats");
+    }
 }
 
 static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
@@ -297,8 +300,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 	    fputs("set xtics nomirror 0,1\n", fp); 
 	    fputs("set mxtics 4\n", fp);
 	}
-    }
-    if (pdinfo->pd == 12) {
+    } else if (pdinfo->pd == 12) {
 	if ((pdinfo->t2 - pdinfo->t1) / 12 < 8) {
 	    fputs("set xtics nomirror 0,1\n", fp); 
 	    fputs("set mxtics 12\n", fp);
@@ -313,10 +315,12 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
     } else {
 	sprintf(title, "%s - 1", I_("irregular"));
     }
+
     fprintf(fp, "set bars 0\n"
 	    "set origin 0.0,0.0\n"
 	    "plot '-' using 1:($2-1.0) title '%s' w impulses\n",
 	    title);
+
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	double y = Z[D13 + 1][t];
 
@@ -326,28 +330,34 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
     fputs("e\n", fp);
 
     /* actual vs trend/cycle */
+
     fprintf(fp, "set origin 0.0,0.33\n"
 	    "plot '-' using 1:2 title '%s' w l, \\\n"
 	    " '-' using 1:2 title '%s' w l\n",
 	    pdinfo->varname[0], I_("trend/cycle"));
+
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[0][t]);
     }
     fputs("e , \\\n", fp);
+
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[D12 + 1][t]);
     }
     fputs("e\n", fp);
 
     /* actual vs seasonally adjusted */
+
     fprintf(fp, "set origin 0.0,0.66\n"
 	    "plot '-' using 1:2 title '%s' w l, \\\n"
 	    " '-' using 1:2 title '%s' w l\n",
 	    pdinfo->varname[0], I_("adjusted"));
+
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[0][t]);
     }
     fputs("e\n", fp);
+
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[D11 + 1][t]);
     }
@@ -558,8 +568,11 @@ static int write_tramo_file (const char *fname,
     startyr = (int) x;
     sprintf(tmp, "%g", x);
     p = strchr(tmp, '.');
-    if (p != NULL) startper = atoi(p + 1);
-    else startper = 1;
+    if (p != NULL) {
+	startper = atoi(p + 1);
+    } else {
+	startper = 1;
+    }
 
     fprintf(fp, "%s\n", pdinfo->varname[v]);
     fprintf(fp, "%d %d %d %d\n", tsamp, startyr, startper, pdinfo->pd);
@@ -606,8 +619,11 @@ static int write_spc_file (const char *fname,
     startyr = (int) x;
     sprintf(tmp, "%g", x);
     p = strchr(tmp, '.');
-    if (p != NULL) startper = atoi(p + 1);
-    else startper = 1;
+    if (p != NULL) {
+	startper = atoi(p + 1);
+    } else {
+	startper = 1;
+    }
 
     fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, 
 	    pdinfo->varname[v]);
@@ -621,7 +637,9 @@ static int write_spc_file (const char *fname,
 	} else {
 	    fprintf(fp, "%g ", Z[v][t]);
 	}
-	if ((i + 1) % 7 == 0) fputc('\n', fp);
+	if ((i + 1) % 7 == 0) {
+	    fputc('\n', fp);
+	}
 	i++;
     }
     fputs(" )\n}\n", fp);
@@ -715,20 +733,28 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 static int helper_spawn (const char *prog, const char *vname,
 			 const char *workdir, int code)
 {
-    char cmd[MAXLEN];
+    char *cmd = NULL;
+    int ret;
 
     if (code == TRAMO_ONLY) {
-	sprintf(cmd, "\"%s\" -i %s -k serie", prog, vname);
+	cmd = g_strdup_printf("\"%s\" -i %s -k serie", prog, vname);
     } else if (code == TRAMO_SEATS) {
-	sprintf(cmd, "\"%s\" -OF %s", prog, vname);
+	cmd = g_strdup_printf("\"%s\" -OF %s", prog, vname);
     } else if (code == X12A) {
-	sprintf(cmd, "\"%s\" %s -r -p -q", prog, vname);
+	cmd = g_strdup_printf("\"%s\" %s -r -p -q", prog, vname);
     } else {
 	return 1;
     }
 
-    return winfork(cmd, workdir, SW_SHOWMINIMIZED, 
-		   CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+    if (cmd == NULL) {
+	ret = E_ALLOC;
+    } else {
+	ret = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
+		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+	g_free(cmd);
+    }
+
+    return ret;
 }
 
 #elif defined(USE_GSPAWN)
@@ -756,21 +782,29 @@ static int helper_spawn (const char *prog, const char *vname,
 static int helper_spawn (const char *prog, const char *vname,
 			 const char *workdir, int code)
 {
-    char cmd[MAXLEN];
+    char *cmd = NULL;
+    int ret;
 
     if (code == TRAMO_ONLY) {
-	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", 
-		workdir, prog, vname);
+	cmd = g_strdup_printf("cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", 
+			      workdir, prog, vname);
     } else if (code == TRAMO_SEATS) {
-	sprintf(cmd, "cd \"%s\" && \"%s\" -OF %s", workdir, prog, vname);	
+	cmd = g_strdup_printf("cd \"%s\" && \"%s\" -OF %s", workdir, prog, vname);	
     } else if (code == X12A) {
-	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
-		workdir, prog, vname);
+	cmd = g_strdup_printf("cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
+			      workdir, prog, vname);
     } else {
 	return 1;
     }
 
-    return gretl_spawn(cmd);
+    if (cmd == NULL) {
+	ret = E_ALLOC;
+    } else {
+	ret = gretl_spawn(cmd);
+	g_free(cmd);
+    }
+
+    return ret;    
 }
 
 #endif /* end spawn versions switch */

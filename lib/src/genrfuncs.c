@@ -51,7 +51,8 @@ struct model_grab grabs[] = {
     { M_ELEM_MAX,    NULL },
     { M_UHAT,       "$uhat" },
     { M_YHAT,       "$yhat" },
-    { M_H,          "$m" },
+    { M_AHAT,       "$ahat" },
+    { M_H,          "$h" },
     { M_SERIES_MAX,  NULL },
     { M_COEFF,      "$coeff" },
     { M_SE,         "$ess" },
@@ -62,7 +63,7 @@ struct model_grab grabs[] = {
     { M_MAX,         NULL }
 };
 
-static const char *get_model_stat_word (int idx)
+const char *get_model_stat_word (int idx)
 {
     int i;
 
@@ -916,6 +917,7 @@ int plotvar_from_varname (double ***pZ, DATAINFO *pdinfo, const char *vname)
     }
 
     strcpy(pdinfo->varname[v], pname);
+    set_var_hidden(pdinfo, v);
 
     y1 = (int) pdinfo->sd0;
     rm = pdinfo->sd0 - y1;

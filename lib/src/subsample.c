@@ -294,14 +294,14 @@ static int update_case_markers (const DATAINFO *pdinfo)
 
 static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 {
-    int newvars = pdinfo->v - fullinfo->v;
-    int V = fullinfo->v;
+    int V1 = pdinfo->v;
+    int V0 = fullinfo->v;
     int N = fullinfo->n;
     double **newZ = NULL;
     int i, t, subt;
     int err = 0;
 
-    if (newvars <= 0) {
+    if (V1 <= V0) {
 	return 0;
     }
 
@@ -310,7 +310,7 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     }
 
     /* allocate expanded data array */
-    newZ = realloc(fullZ, pdinfo->v * sizeof *fullZ);
+    newZ = realloc(fullZ, V1 * sizeof *fullZ);
 
     if (newZ == NULL) {
 	return E_ALLOC;
@@ -318,15 +318,13 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 
     fullZ = newZ;
 
-    for (i=0; i<newvars && !err; i++) {
-	int vi = V + i;
-
-	if (var_is_series(pdinfo, vi)) {
-	    fullZ[vi] = malloc(N * sizeof **newZ);
+    for (i=V0; i<pdinfo->v && !err; i++) {
+	if (var_is_series(pdinfo, i)) {
+	    fullZ[i] = malloc(N * sizeof **newZ);
 	} else {
-	    fullZ[vi] = malloc(sizeof **newZ);
+	    fullZ[i] = malloc(sizeof **newZ);
 	}
-	if (fullZ[vi] == NULL) {
+	if (fullZ[i] == NULL) {
 	    err = E_ALLOC;
 	}
     }
@@ -334,8 +332,8 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
     if (err) {
 	return E_ALLOC;
     }
-    
-    for (i=V; i<pdinfo->v; i++) {
+
+    for (i=V0; i<pdinfo->v; i++) {
 	if (var_is_scalar(pdinfo, i)) {
 	   fullZ[i][0] = Z[i][0]; 
 	}
@@ -345,14 +343,14 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 
     for (t=0; t<N; t++) {
 	if (pdinfo->submask[t]) {
-	    for (i=V; i<pdinfo->v; i++) {
+	    for (i=V0; i<pdinfo->v; i++) {
 		if (var_is_series(pdinfo, i)) {
 		    fullZ[i][t] = Z[i][subt];
 		}
 	    }
 	    subt++;
 	} else {
-	    for (i=V; i<pdinfo->v; i++) { 
+	    for (i=V0; i<pdinfo->v; i++) { 
 		if (var_is_series(pdinfo, i)) {
 		    fullZ[i][t] = NADBL;
 		}
@@ -360,7 +358,7 @@ static int add_new_vars_to_full (const double **Z, DATAINFO *pdinfo)
 	}
     }
 
-    fullinfo->v = pdinfo->v;
+    fullinfo->v = V1;
 
     return 0;
 }
@@ -453,9 +451,14 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
 	/* if case markers were added when subsampled, carry them back */
 	update_case_markers(*ppdinfo);
 
+	/* delete any newly added hidden vars */
+	err = dataset_destroy_hidden_variables(pZ, *ppdinfo, fullinfo->v);
+
 	/* in case any new vars were added when subsampled, try to merge
 	   them into the full dataset */
-	err = add_new_vars_to_full((const double **) *pZ, *ppdinfo);
+	if (!err) {
+	    err = add_new_vars_to_full((const double **) *pZ, *ppdinfo);
+	}
     }
 
     if (err == E_ALLOC) {
@@ -1142,7 +1145,7 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	tmiss = 0;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (is_hidden_variable(i, pdinfo) || var_is_scalar(pdinfo, i)) {
+	    if (var_is_hidden(pdinfo, i) || var_is_scalar(pdinfo, i)) {
 		continue;
 	    }
 	    if (na((*pZ)[i][t])) {

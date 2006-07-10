@@ -3038,7 +3038,7 @@ static int list_show_var (int v, int code, int show_lags)
 	;
     } else if (v == 0 && (!MODEL_CODE(code) || code == ARMA)) {
 	ret = 0;
-    } else if (is_hidden_variable(v, datainfo)) {
+    } else if (var_is_hidden(datainfo, v)) {
 	ret = 0;
     } else if (screen_scalar(v, code)) {
 	ret = 0;

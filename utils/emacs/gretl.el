@@ -78,7 +78,7 @@ All Gretl abbrevs start with a grave accent (`).")
   "String to insert to start a new Gretl in-line comment.")
 
 (defvar gretl-comment-start-skip "\\s<+\\s-*"
-  "Regexp to match the start of an Gretl comment up to its body.")
+  "Regexp to match the start of a Gretl comment up to its body.")
 
 (defvar gretl-begin-keywords
   '("loop" "function" "if" "system" "mle" "nls" "restrict"))
@@ -155,9 +155,12 @@ All Gretl abbrevs start with a grave accent (`).")
    "zeros")
   "Gretl option flags.")
 
-(defvar gretl-variables
-  '("GRETL_USE_QR" "HOME" "GRETL_MP_BITS")
-  "Builtin variables in Gretl.")
+(defvar gretl-internal-vars
+ '("ess" "t" "rsq" "sigma" "df" "ncoeff" "lnl" "aic"
+   "bic" "hqc" "trsq" "coeff" "stderr" "vcv" "rho" "uhat"
+   "yhat" "ahat" "h" "coeff" "ess" "vcv" "rho" "jalpha"
+   "jbeta" "nobs" "nvars" "pd" "pvalue" "test")
+  "Model-related variables.")
 
 (defvar gretl-function-header-regexp
   (concat "^\\s-*\\<\\(function\\)\\>"
@@ -188,11 +191,12 @@ parenthetical grouping.")
 	 (if (boundp 'font-lock-builtin-face)
 	     'font-lock-builtin-face
 	   'font-lock-preprocessor-face))
-   ;; Fontify all builtin variables.
-   (cons (concat "\\<\\("
-		 (mapconcat 'identity gretl-variables "\\|")
+   ;; Fontify all internal variables.
+   (cons (concat "\\$\\("
+		 (mapconcat 'identity gretl-internal-vars "\\|")
 		 "\\)\\>")
 	 'font-lock-variable-name-face)
+
    ;; Fontify all genr functions.
    (cons (concat "\\<\\("
 		 (mapconcat 'identity gretl-genr-functions "\\|")
@@ -357,7 +361,7 @@ newline or semicolon after an else or end keyword."
   (concat gretl-block-else-regexp "\\|" gretl-block-end-regexp))
 
 (defvar gretl-block-match-alist
-  '(("loop" . ("endloop"))
+  '(("loop" . ("end" "endloop"))
     ("if" . ("else" "endif"))
     ("nls" . ("end"))
     ("mle" . ("end"))
@@ -1199,7 +1203,7 @@ otherwise."
 	  (mapcar '(lambda (var) (cons var var))
 		  (append gretl-command-words
 			  gretl-genr-functions
-			  gretl-variables)))))
+			  gretl-internal-vars)))))
 
 (defun gretl-complete-symbol ()
   "Perform completion on Gretl symbol preceding point.

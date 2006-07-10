@@ -90,14 +90,6 @@ static double evaluate_critval (const char *s, const double **Z,
 				const DATAINFO *pdinfo, int *err);
 static void free_genr_S (GENERATOR *genr);
 
-enum retrieve {
-    R_NOBS = 1,  /* number of observations in current sample range */
-    R_NVARS,     /* number of variables in dataset (including the constant) */
-    R_PD,        /* periodicity of dataset */
-    R_TEST_STAT, /* test statistic from last explicit test performed */
-    R_TEST_PVAL  /* p-value from last explicit test performed */
-};
-
 struct genr_func {
     int fnum;
     const char *fword;
@@ -187,6 +179,20 @@ struct genr_func funcs[] = {
 #endif
     { T_IDENTITY, "ident" },
     { 0, NULL }
+};
+
+struct retriever {
+    int rnum;
+    const char *rword;
+};
+
+struct retriever retrievers[] = {
+    { R_NOBS,      "$nobs" },
+    { R_NVARS,     "$nvars" },
+    { R_PD,        "$pd" },
+    { R_TEST_STAT, "$pvalue" },
+    { R_TEST_PVAL, "$test" },
+    { R_MAX,       NULL }
 };
 
 #define LEVELS 7
@@ -983,42 +989,30 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
     }
 }
 
-static int dataset_var_index (const char *s)
+const char *get_retriever_word (int idx)
 {
-    char test[VNAMELEN];
-    int ret = 0;
+    int i;
 
-    *test = '\0';
-    strncat(test, s, VNAMELEN - 1);
-    lower(test);
-
-    if (!strcmp(test, "$nobs")) {
-	ret = R_NOBS;
-    } else if (!strcmp(test, "$pd")) {
-	ret = R_PD;
-    } else if (!strcmp(test, "$nvars")) {
-	ret = R_NVARS;
+    for (i=0; retrievers[i].rnum < R_MAX; i++) {
+	if (idx == retrievers[i].rnum) {
+	    return retrievers[i].rword;
+	}
     }
 
-    return ret;
+    return NULL;
 }
 
-static int test_stat_index (const char *s)
+static int retriever_index (const char *s)
 {
-    char test[VNAMELEN];
-    int ret = 0;
+    int i;
 
-    *test = '\0';
-    strncat(test, s, VNAMELEN - 1);
-    lower(test);
-
-    if (!strcmp(test, "$pvalue")) { 
-	ret = R_TEST_PVAL;
-    } else if (!strcmp(test, "$test")) {
-	ret = R_TEST_STAT;
+    for (i=0; retrievers[i].rnum < R_MAX; i++) {
+	if (!strcmp(s, retrievers[i].rword)) {
+	    return retrievers[i].rnum;
+	}
     }
 
-    return ret;
+    return 0;
 }
 
 static void 
@@ -1029,12 +1023,13 @@ atom_get_dollar_var (const char *s, GENERATOR *genr, genatom *atom)
     DPRINTF(("atom_get_dollar_var: s='%s'\n", s));
 
     if (*s == '$') {
-	if ((i = dataset_var_index(s)) > 0) {
+	i = retriever_index(s);
+	if (i > 0 && i < R_DSET_MAX) {
 	    DPRINTF(("recognized '%s' as dataset var, index #%d\n", s, i));
 	    atom->val = get_dataset_statistic(genr->pdinfo, i);
 	    atom->atype = ATOM_SCALAR;
 	    found = 1;
-	} else if ((i = test_stat_index(s)) > 0) {
+	} else if (i > R_DSET_MAX) {
 	    DPRINTF(("recognized '%s' as test-related var, index #%d\n", s, i));
 	    atom->val = get_test_stat_value(genr->label, i);
 	    atom->atype = ATOM_SCALAR;

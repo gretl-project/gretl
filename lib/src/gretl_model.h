@@ -44,13 +44,13 @@ typedef enum {
     M_YHAT,       /* fitted values */
     M_AHAT,       /* per-unit intercepts in panel model */
     M_H,          /* GARCH predicted variances */
-    M_JALPHA,     /* Johansen's alpha */
-    M_JBETA,      /* Johansen's beta */
     M_SERIES_MAX, /* -- separator -- */
     M_COEFF,      /* parameter estimates */
     M_SE,         /* parameter standard errors */
     M_VCV,        /* parameter covariance matrix */
     M_RHO,        /* autoregressive coefficients */
+    M_JALPHA,     /* Johansen's alpha */
+    M_JBETA,      /* Johansen's beta */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 

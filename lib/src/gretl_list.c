@@ -1526,7 +1526,7 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
     int *list = NULL;
 
     for (i=1; i<pdinfo->v; i++) {
-	if (var_is_series(pdinfo, i) && !is_hidden_variable(i, pdinfo)) {
+	if (var_is_series(pdinfo, i) && !var_is_hidden(pdinfo, i)) {
 	    nv++;
 	}
     }
@@ -1542,7 +1542,7 @@ int *full_var_list (const DATAINFO *pdinfo, int *nvars)
     if (list != NULL) {
 	j = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (var_is_series(pdinfo, i) && !is_hidden_variable(i, pdinfo)) {
+	    if (var_is_series(pdinfo, i) && !var_is_hidden(pdinfo, i)) {
 		list[j++] = i;
 	    }
 	}

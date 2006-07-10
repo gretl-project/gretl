@@ -1454,11 +1454,6 @@ static int real_dataset_drop_listed_vars (const int *list, double ***pZ,
 #if DROPDBG
     fprintf(stderr, "dataset_drop_listed_variables: dropping %d vars:\n",
 	    list[0]);
-    if (drop == DROP_NORMAL) {
-	for (i=1; i<=list[0]; i++) {
-	    fprintf(stderr, " %d: %s\n", list[i], pdinfo->varname[list[i]]);
-	}
-    }
 #endif
 
     /* free and set to NULL all the vars to be deleted */
@@ -1476,6 +1471,10 @@ static int real_dataset_drop_listed_vars (const int *list, double ***pZ,
 	    }
 	    ndel++;
 	}
+    }
+
+    if (ndel == 0) {
+	return 0;
     }
 
     /* rearrange pointers if necessary */
@@ -1497,7 +1496,7 @@ static int real_dataset_drop_listed_vars (const int *list, double ***pZ,
 		for (i=v; i<vmax; i++) {
 		    if (drop == DROP_NORMAL) {
 			if (renumber != NULL && 
-			    !is_hidden_variable(i + gap, pdinfo)) {
+			    !var_is_hidden(pdinfo, i + gap)) {
 			    *renumber = 1;
 			}
 			pdinfo->varname[i] = pdinfo->varname[i + gap];
@@ -1574,22 +1573,27 @@ int dataset_drop_variable (int v, double ***pZ, DATAINFO *pdinfo)
  * dataset_destroy_hidden_variables:
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
+ * @vmin: do not drop variables with ID numbers less than this.
  *
- * Deletes from the dataset all "hidden" variables that have
+ * Deletes from the dataset any "hidden" variables that have
  * been added automatically (for example, auto-generated variables
- * used for the x-axis in graph plotting).  Does not delete the
+ * used for the x-axis in graph plotting), and that have ID
+ * numbers greater than or equal to @vmin.  Never deletes the
  * automatically generated constant (ID number 0).
  *
  * Returns: 0 on success, %E_ALLOC on error.
  */
 
-int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo)
+int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo,
+				      int vmin)
 {
     int i, nhid = 0;
     int err = 0;
 
-    for (i=1; i<pdinfo->v; i++) {
-	if (is_hidden_variable(i, pdinfo)) {
+    if (vmin <= 1) vmin = 1;
+
+    for (i=vmin; i<pdinfo->v; i++) {
+	if (var_is_hidden(pdinfo, i)) {
 	    nhid++;
 	}
     }
@@ -1602,8 +1606,8 @@ int dataset_destroy_hidden_variables (double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    int j = 1;
 
-	    for (i=1; i<pdinfo->v; i++) {
-		if (is_hidden_variable(i, pdinfo)) {
+	    for (i=vmin; i<pdinfo->v; i++) {
+		if (var_is_hidden(pdinfo, i)) {
 		    hidlist[j++] = i;
 		}
 	    }	    
@@ -1997,31 +2001,6 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
 }
 
 /**
- * is_hidden_variable:
- * @i: ID number of variable.
- * @pdinfo: dataset information.
- *
- * Used in various contexts to screen a list of variables being 
- * presented to the user.
- *
- * Returns: 1 if variable @i is a "hidden", automatically
- * generated variable, otherwise 0.  
- */
-
-int is_hidden_variable (int i, const DATAINFO *pdinfo)
-{
-    if (strcmp(pdinfo->varname[i], "annual") == 0 ||
-	strcmp(pdinfo->varname[i], "qtrs") == 0 ||
-	strcmp(pdinfo->varname[i], "months") == 0 ||
-	strcmp(pdinfo->varname[i], "hrs") == 0 ||
-	strcmp(pdinfo->varname[i], "decdate") == 0) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-/**
  * is_log_variable:
  * @i: ID number of variable.
  * @pdinfo: dataset information.
@@ -2097,4 +2076,19 @@ void set_var_scalar (DATAINFO *pdinfo, int i, int s)
     } else {
 	pdinfo->varinfo[i]->flags &= ~VAR_SCALAR;
     }
+}
+
+/**
+ * set_var_hidden:
+ * @pdinfo: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Mark a variable as being "hidden" (an automatically
+ * generated variable that will not be shown in the main
+ * GUI window).
+ */
+
+void set_var_hidden (DATAINFO *pdinfo, int i) 
+{
+    pdinfo->varinfo[i]->flags |= VAR_HIDDEN;
 }

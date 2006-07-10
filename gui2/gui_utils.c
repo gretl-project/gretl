@@ -269,22 +269,22 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL, GNULL },
     { N_("/Tests/sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL, GNULL },
     { N_("/Tests/linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
-    { N_("/Tests/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Tests/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, LMTEST_SQUARES, NULL, GNULL },
     { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL, GNULL },
     { N_("/Tests/Ramsey's RESET"), NULL, do_reset, RESET, NULL, GNULL },
-    { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Tests/sep2", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
     { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
     { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL, GNULL },
-    { N_("/Tests/sep3"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Tests/sep3", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/autocorrelation"), NULL, do_autocorr, LMTEST, NULL, GNULL },
     { N_("/Tests/ARCH"), NULL, do_arch, ARCH, NULL, GNULL },
     { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL, GNULL },
     { N_("/Tests/QLR test"), NULL, do_chow_cusum, QLRTEST, NULL, GNULL },
     { N_("/Tests/CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL, GNULL },
-    { N_("/Tests/sep4"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Tests/sep4", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
     { N_("/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }, 
@@ -325,22 +325,22 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
     { N_("/Tests/sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL },
     { N_("/Tests/linear restrictions"), NULL, gretl_callback, RESTRICT, NULL },
-    { N_("/Tests/sep1"), NULL, NULL, 0, "<Separator>" },
+    { "/Tests/sep1", NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, LMTEST_SQUARES, NULL },
     { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL },
     { N_("/Tests/Ramsey's RESET"), NULL, do_reset, RESET, NULL },
-    { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
+    { "/Tests/sep2", NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL },
     { N_("/Tests/normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL },
     { N_("/Tests/influential observations"), NULL, do_leverage, LEVERAGE, NULL },
     { N_("/Tests/collinearity"), NULL, do_vif, VIF, NULL },
-    { N_("/Tests/sep3"), NULL, NULL, 0, "<Separator>" },
+    { "/Tests/sep3", NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/autocorrelation"), NULL, do_autocorr, LMTEST, NULL },
     { N_("/Tests/ARCH"), NULL, do_arch, ARCH, NULL },
     { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL },
     { N_("/Tests/QLR test"), NULL, do_chow_cusum, QLRTEST, NULL },
     { N_("/Tests/CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL },
-    { N_("/Tests/sep4"), NULL, NULL, 0, "<Separator>" },
+    { "/Tests/sep4", NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL },
     { N_("/_Save"), NULL, NULL, 0, "<Branch>" },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
@@ -3044,7 +3044,7 @@ static GtkItemFactoryEntry fixed_effects_data_item = {
 };
 
 static GtkItemFactoryEntry define_var_items[] = {
-    { N_("/Save/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Save/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Save/Define new variable..."), NULL, model_genr_callback,
       MODEL_GENR, NULL, GNULL }
 };
@@ -3101,7 +3101,7 @@ static GtkItemFactoryEntry fixed_effects_data_item = {
 };
 
 static GtkItemFactoryEntry define_var_items[] = {
-    { N_("/Save/sep1"), NULL, NULL, 0, "<Separator>" },
+    { "/Save/sep1", NULL, NULL, 0, "<Separator>" },
     { N_("/Save/Define new variable..."), NULL, model_genr_callback,
       MODEL_GENR, NULL }
 };
