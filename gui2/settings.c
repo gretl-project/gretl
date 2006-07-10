@@ -464,7 +464,10 @@ void set_tramo_ok (int set)
 {
     static int ok;
 
-    if (set >= 0) ok = set;
+    if (set >= 0) {
+	ok = set;
+    }
+
     if (mdata != NULL) {
 	flip(mdata->ifac, "/Variable/TRAMO analysis", ok);
     }
@@ -476,7 +479,10 @@ void set_x12a_ok (int set)
 {
     static int ok;
 
-    if (set >= 0) ok = set;
+    if (set >= 0) {
+	ok = set;
+    }
+
     if (mdata != NULL) {
 	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ok);
     }
@@ -498,8 +504,28 @@ static const char *get_reg_base (const char *key)
 
 static void set_tramo_x12a_dirs (void)
 {
-    set_tramo_ok(check_for_prog(tramo));
-    set_x12a_ok(check_for_prog(paths.x12a));
+    char test[MAXSTR];
+    int ok;
+
+    ok = check_for_prog(tramo);
+    if (!ok) {
+	sprintf(test, "%stramo/tramo", paths.gretldir);
+	ok = check_for_prog(test);
+	if (ok) {
+	    strcpy(tramo, test);
+	}
+    }
+    set_tramo_ok(ok);
+
+    ok = check_for_prog(paths.x12a);
+    if (!ok) {
+	sprintf(test, "%sx12arima/x12a", paths.gretldir);
+	ok = check_for_prog(test);
+	if (ok) {
+	    strcpy(paths.x12a, test);
+	}
+    }
+    set_x12a_ok(ok);
 }
 
 # else /* not G_OS_WIN32 */

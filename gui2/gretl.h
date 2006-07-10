@@ -67,7 +67,7 @@
 #endif
 
 #define GRETL_BUFSIZE 8192
-#define MAXSTR 255
+#define MAXSTR FILENAME_MAX
 
 /* basic global program vars */
 extern double **Z;
