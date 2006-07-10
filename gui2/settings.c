@@ -504,49 +504,82 @@ static const char *get_reg_base (const char *key)
 
 static void set_tramo_x12a_dirs (void)
 {
-    char test[MAXSTR];
     int ok;
-
+    
     ok = check_for_prog(tramo);
-    if (!ok) {
-	sprintf(test, "%stramo/tramo", paths.gretldir);
-	ok = check_for_prog(test);
-	if (ok) {
-	    strcpy(tramo, test);
-	}
-    }
     set_tramo_ok(ok);
 
     ok = check_for_prog(paths.x12a);
-    if (!ok) {
-	sprintf(test, "%sx12arima/x12a", paths.gretldir);
-	ok = check_for_prog(test);
-	if (ok) {
-	    strcpy(paths.x12a, test);
-	}
-    }
     set_x12a_ok(ok);
 }
 
 # else /* not G_OS_WIN32 */
 
+#ifdef OSX_BUILD
+static int alt_ok (const char *prog)
+{ 
+    char *p, test[MAXSTR];
+    int tr = strstr(prog, "tramo") != NULL;
+    int ok;
+    
+    strcpy(test, paths.gretldir);
+    p = strstr(test, "share/gretl");
+    if (p != NULL) {
+    	*p = 0;
+    }
+    
+    if (tr) {
+         strcat(test, "tramo/tramo");
+    } else {
+         strcat(test, "x12arima/x12a");
+    }
+
+    ok = check_for_prog(test);
+    
+    if (ok) {
+        if (tr) {
+            strcpy(tramo, test);
+	} else {
+	    strcpy(paths.x12a, test);
+	}
+    }
+    
+    return ok;
+}
+#endif
+
 static void set_tramo_x12a_dirs (void)
 {
     char dirname[MAXLEN];
     DIR *test;
+    int ok;
 
-#  ifdef HAVE_TRAMO 
-    set_tramo_ok(check_for_prog(tramo));
+#ifdef HAVE_TRAMO
+    ok =  check_for_prog(tramo);
+# ifdef OSX_BUILD
+    if (!ok) {
+        ok = alt_ok(tramo);
+    }
+# endif    
+    set_tramo_ok(ok); 
+       
     if (*tramodir == '\0') {
 	build_path(tramodir, paths.userdir, "tramo", NULL);
     }
-#  endif
-#  ifdef HAVE_X12A
-    set_x12a_ok(check_for_prog(paths.x12a));
+#endif
+
+#ifdef HAVE_X12A
+    ok = check_for_prog(paths.x12a);
+# ifdef OSX_BUILD    
+    if (!ok) {
+	ok = alt_ok(paths.x12a);
+    }
+# endif    
+    set_x12a_ok(ok);
+    
     if (*paths.x12adir == '\0') {
 	build_path(paths.x12adir, paths.userdir, "x12arima", NULL);
     }
-#  endif
 
     /* don't make dir structure (yet) if userdir doesn't exist */
     test = opendir(paths.userdir);
@@ -555,10 +588,13 @@ static void set_tramo_x12a_dirs (void)
     } else {
 	closedir(test);
     }
-#  ifdef HAVE_X12A
+#endif
+    
+#ifdef HAVE_X12A
     gretl_mkdir(paths.x12adir);
-#  endif
-#  ifdef HAVE_TRAMO
+#endif
+
+#ifdef HAVE_TRAMO
     if (gretl_mkdir(tramodir)) return;
     sprintf(dirname, "%s/output", tramodir);
     gretl_mkdir(dirname);
@@ -574,7 +610,7 @@ static void set_tramo_x12a_dirs (void)
     gretl_mkdir(dirname);
     sprintf(dirname, "%s/graph/spectra", tramodir);
     gretl_mkdir(dirname);
-#  endif /* HAVE_TRAMO */
+#endif /* HAVE_TRAMO */
 }
 
 # endif /* G_OS_WIN32 */
