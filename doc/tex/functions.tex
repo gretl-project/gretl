@@ -1,17 +1,14 @@
 \chapter{User-defined functions}
 \label{functions}
 
-\section{Introduction}
-\label{func-intro}
+\section{Defining a function}
+\label{func-define}
 
 As of version 1.4.0, \app{gretl} contains a revised mechanism for
 defining functions in the context of a script.  Details
 follow.\footnote{Note that the revised definition of functions
   represents a backward-incompatible change relative to version 1.3.3
   of the program.}
-    
-\section{Defining a function}
-\label{func-define}
 
 Functions must be defined before they are called.  The syntax for
 defining a function looks like this
@@ -137,9 +134,10 @@ return values to variables in the caller:
       (SSR, resids) = ess_uhat price, xlist
 \end{code}
 
+\section{Function programming details}
+\label{func-details}
 
-\section{Scope of variables}
-\label{func-scope}
+\subsection{Scope of variables}
 
 All variables created within a function are local to that function,
 and are destroyed when the function exits, unless they are made
@@ -155,8 +153,7 @@ scope are never modified by a function other than via assignment of
 the return values from the function.
     
 
-\section{Return values}
-\label{func-return}
+\subsection{Return values}
 
 Functions can return zero or more values; these can be scalars, series
 or matrices (not lists).  Return values are specified via a statement
@@ -184,8 +181,7 @@ a string is provided, this is printed on exit otherwise a generic
 error message is printed.
     
 
-\section{Error checking}
-\label{func-errors}
+\subsection{Error checking}
 
 When gretl first reads and ``compiles'' a function definition there is
 minimal error-checking: the only checks are that the function name is
@@ -194,7 +190,92 @@ trying to define a function inside a function (see Section
 \ref{func-define}). Otherwise, if the function body contains invalid
 commands this will become apparent only when the function is called,
 and its commands are executed.
-    
+
+\section{Function packages}
+\label{func-packages}
+
+As of \app{gretl} 1.6.0, there is a mechanism to package functions and
+make them available to other users of \app{gretl}.  This is currently
+experimental, but here is a walk-through of the process.
+
+Start the GUI program and take a look at the ``Utilities'' menu.
+There should be an item there labeled ``Function packager,'' but it
+will probably be disabled: it is enabled only if at least one
+user-defined function is currently loaded in memory.
+
+There are several ways to load a function:
+
+\begin{itemize}
+\item If you have a script file containing function definitions, open
+  that file and run it.
+\item Create a script file from scratch.  Include at least one
+  function definition, and run the script.
+\item Open the GUI console and type a function definition
+  interactively.  This method is not particularly recommended; you are
+  probably better composing a function non-interactively.
+\end{itemize}
+
+After loading a function, look again under ``Utilities'': the
+``Function packager'' should now be enabled --- try it.  In the first
+dialog you get to select:
+
+\begin{itemize}
+\item One or more public functions to package.
+\item Zero or more ``private'' auxiliary functions.
+\end{itemize}
+
+Public functions will be available to users; private functions are
+part of the ``behind the scenes'' mechanism in a function package.
+
+On clicking ``OK'' a second dialog should appear, where you get to
+enter the package information (currently, author, version, date, and a
+short description).  You also get to enter help text for the public
+interface(s).  If there's more than one such interface, you get a
+drop-down selector that can be used to activate the various interfaces.  
+
+Clicking ``OK'' in this dialog leads you to a File Save dialog.  All
+being well, this should be pointing towards a directory named
+\texttt{functions}, either under the \app{gretl} system directory (if
+you have write permission on that) or the \app{gretl} user directory.
+This is the recommended place to save function package files, since
+that is where the program will look in the special routine for opening
+such files (see below).
+
+\vspace{6pt}
+
+A word on the file you just saved.  By default, it will have a
+\texttt{.gfn} extension.  This is a ``function package'' file: unlike
+an ordinary \app{gretl} script file, it is an XML file containing both
+the function code and the extra information entered in the packager.
+Hackers might wish to write such a file from scratch rather than using
+the GUI packager, but most people are likely to find it awkward.  Note
+that XML-special characters in the function code have to be escaped,
+e.g.\ \texttt{\&} must be represented as \texttt{\&amp;}.  Also, some
+elements of the function syntax differ from the standard script
+representation: the parameters and return values (if any) are
+represented in XML.  Basically, the function is pre-parsed, and ready
+for fast loading using \textsf{libxml}.
+
+\vspace{6pt}
+
+Why package functions in this way?  To see what's on offer so far, try
+this second phase of the walk-through.
+
+Close gretl, then re-open it.  Now go to /File/Open command
+file/function file.  If the first stage above has gone OK, you should
+see the file you packaged and saved, with its short description.  If
+you click on ``Info'' you get all the information gretl has gleaned
+from the function package.  If you click on ``Code'' you get a script
+view window showing the actual function code.  If you click ``Open''
+the functions are loaded; try doing that.
+
+After loading the function(s) from the package, open the GUI console.
+Try typing \texttt{help foo}, replacing \texttt{foo} with the name of
+a public interface from the loaded function package: if any help text
+was provided for the function, it should be presented.
+
+FIXME more needed here. 
+
 %%% Local Variables: 
 %%% mode: latex
 %%% TeX-master: "gretl-guide"
