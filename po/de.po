@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-05 16:31-0400\n"
-"PO-Revision-Date: 2006-07-10 19:55+0100\n"
+"PO-Revision-Date: 2006-07-11 18:58+0100\n"
 "Last-Translator: Sven Schreiber <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -1678,7 +1678,7 @@ msgid ""
 "      S.D.            C.V.            SKEW          EXCSKURT\n"
 "\n"
 msgstr ""
-"      St'abw.     Var'Koeff.    Schiefe         Über-Wölb.\n"
+"      St'abw.     Var'Koeff.         Schiefe         Über-Wölb.\n"
 "\n"
 
 #: lib/src/describe.c:2904
@@ -2242,9 +2242,9 @@ msgid "fitted variance from model %d"
 msgstr "angepasste Varianz aus Modell %d"
 
 #: lib/src/genrfuncs.c:1194
-#, fuzzy, c-format
+#, c-format
 msgid "per-unit constants from model %d"
-msgstr "Residuenquadratsumme von Modell %d"
+msgstr "Einheiten-spezifische Konstanten von Modell %d"
 
 #: lib/src/graphing.c:790
 #, c-format
@@ -2321,7 +2321,6 @@ msgstr "Dichte"
 
 # ist aus Spektralanalyse
 #: lib/src/graphing.c:2043
-#, fuzzy
 msgid "Relative frequency"
 msgstr "Skalierte Frequenz"
 
@@ -2443,7 +2442,7 @@ msgstr "Befehl hat zu wenige Argumente"
 
 #: lib/src/gretl_errors.c:51
 msgid "This command is implemented only for OLS models"
-msgstr "Dieser Befehl ist nur für OLS-Modelle implementiert"
+msgstr "Dieser Befehl ist nur für KQ-Modelle implementiert"
 
 #: lib/src/gretl_errors.c:52
 msgid "Invalid argument for coeff, corr, stderr, rho, pvalue, critical or mpow"
@@ -2740,7 +2739,7 @@ msgstr "Hausman-Test"
 
 #: lib/src/gretl_model.c:2186
 msgid "OLS estimates are consistent"
-msgstr "OLS-Schätzungen sind konsistent"
+msgstr "KQ-Schätzungen sind konsistent"
 
 #: lib/src/gretl_model.c:2189
 msgid "GLS estimates are consistent"
@@ -2848,7 +2847,7 @@ msgid ""
 "\n"
 msgstr ""
 "(Ein niedriger p-Wert ist Evidenz gegen die Nullhypothese, dass das gepoolte KQ-Modell\n"
-" angemessen ist, zu Gunsten der Alternative fixer Effekte.)\n"
+"angemessen ist, zu Gunsten der Alternative fixer Effekte.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:1572
@@ -2856,14 +2855,11 @@ msgid "Error estimating fixed effects model\n"
 msgstr "Fehler beim Schätzen des Fixed-Effects-Modells\n"
 
 #: lib/src/gretl_panel.c:1662
-#, fuzzy
 msgid ""
 "\n"
 "Hausman test matrix is not positive definite (this result may be treated as\n"
 "\"fail to reject\" the random effects specification).\n"
 msgstr ""
-"\n"
-"Hausmantest-Matrix is nicht positiv-definit...\n"
 
 #: lib/src/gretl_panel.c:1666
 #, c-format
@@ -2921,7 +2917,7 @@ msgid ""
 "\n"
 msgstr ""
 "(Ein niedriger p-Wert ist Evidenz gegen die Nullhypothese, dass das gepoolte KQ-Modell\n"
-" angemessen ist, zu Gunsten der Alternative random effects.)\n"
+"angemessen ist, zu Gunsten der Alternative random effects.)\n"
 "\n"
 
 #: lib/src/gretl_panel.c:1943
@@ -3934,7 +3930,7 @@ msgstr "Gruppenweise Heteroskedastizität"
 #: lib/src/varprint.c:812
 #: gui2/selector.c:1943
 msgid "OLS"
-msgstr "OLS"
+msgstr "KQ"
 
 #: lib/src/modelprint.c:545
 #: lib/src/modelprint.c:590
@@ -3991,7 +3987,7 @@ msgstr "Poisson"
 
 #: lib/src/modelprint.c:556
 msgid "NLS"
-msgstr "NLS"
+msgstr "NLKQ"
 
 #: lib/src/modelprint.c:557
 msgid "ML"
@@ -4634,7 +4630,7 @@ msgstr "Jacobi-Berechnung schlug fehl"
 
 #: lib/src/nls.c:1747
 msgid "NLS: The supplied derivatives seem to be incorrect"
-msgstr "NLKQ: Die angebenen Ableitungen anscheinend falsch"
+msgstr "NLKQ: Angebenen Ableitungen sind anscheinend falsch"
 
 #: lib/src/nls.c:1750
 msgid ""
@@ -5038,7 +5034,7 @@ msgstr "Prognose"
 
 #: lib/src/printout.c:1909
 msgid " std. error"
-msgstr "Std. Fehler"
+msgstr " Std.-fehler"
 
 #: lib/src/printout.c:1910
 #, c-format
@@ -5278,7 +5274,7 @@ msgstr "Ungültiger Freiheitsgrad\n"
 
 #: lib/src/pvalues.c:819
 msgid "Invalid sample size\n"
-msgstr "Ungültige Stichproben-Größe\n"
+msgstr "Ungültige Stichprobengröße\n"
 
 #: lib/src/pvalues.c:860
 #: gui2/calculator.c:253
@@ -5391,7 +5387,7 @@ msgstr "Scheinbar unverbundene Regressionen"
 
 #: lib/src/system.c:80
 msgid "Three-Stage Least Squares"
-msgstr "Drei-stufiges Least Squares"
+msgstr "Drei-stufige Kleinste Quadrate"
 
 #: lib/src/system.c:81
 msgid "Full Information Maximum Likelihood"
@@ -5407,7 +5403,7 @@ msgstr "Methode der Kleinsten Quadrate"
 
 #: lib/src/system.c:84
 msgid "Two-Stage Least Squares"
-msgstr "Zwei-stufiges Least Squares"
+msgstr "Zwei-stufige Kleinste Quadrate"
 
 #: lib/src/system.c:85
 msgid "Weighted Least Squares"
@@ -5451,7 +5447,7 @@ msgstr "SUR Residuum, Gleichung %d"
 #: lib/src/system.c:1140
 #, c-format
 msgid "3SLS residual, equation %d"
-msgstr "3SLS Residuum, Gleichung %d"
+msgstr "3S-KQ Residuum, Gleichung %d"
 
 #: lib/src/system.c:1147
 #, c-format
@@ -5661,7 +5657,7 @@ msgstr "fortgesetzt"
 #: gui2/guiprint_common.c:794
 #: gui2/guiprint_common.c:887
 msgid "std. error"
-msgstr "Std. Fehler"
+msgstr "Std.-fehler"
 
 #: lib/src/varprint.c:583
 msgid "Case 1: No constant"
@@ -7866,7 +7862,7 @@ msgstr "Teststatistik: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:888
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr "Nullhypothese: Gleiche Proportionen in Grundgesamtheiten\n"
+msgstr "Nullhypothese: Gleiche Anteile in Grundgesamtheiten\n"
 
 #: gui2/calculator.c:891
 #, c-format
@@ -8022,7 +8018,7 @@ msgstr "2 Varianzen"
 
 #: gui2/calculator.c:1531
 msgid "2 proportions"
-msgstr "2 Proportionen"
+msgstr "2 Anteile"
 
 #: gui2/calculator.c:1572
 msgid "sample mean"
@@ -8070,7 +8066,7 @@ msgstr "Standardabw., Stichprobe 1"
 #: gui2/calculator.c:1610
 #: gui2/calculator.c:1621
 msgid "size of sample 1"
-msgstr "Größe von Stichprobe 1"
+msgstr "Größe Stichprobe 1"
 
 #: gui2/calculator.c:1599
 msgid "mean of sample 2"
@@ -8084,7 +8080,7 @@ msgstr "Standardabw., Stichprobe 2"
 #: gui2/calculator.c:1615
 #: gui2/calculator.c:1626
 msgid "size of sample 2"
-msgstr "Größe von Stichprobe 2"
+msgstr "Größe Stichprobe 2"
 
 #: gui2/calculator.c:1602
 msgid "H0: Difference of means ="
@@ -8116,7 +8112,7 @@ msgstr "Anteil, Stichprobe 2"
 
 #: gui2/calculator.c:1627
 msgid "H0: Difference of proportions = 0"
-msgstr "H0: Differenz der Proportionen = 0"
+msgstr "H0: Differenz der Anteile = 0"
 
 #: gui2/calculator.c:1637
 msgid "Show graph of sampling distribution"
@@ -8528,7 +8524,7 @@ msgstr "Suchen..."
 
 #: gui2/database.c:591
 msgid "Codebook"
-msgstr ""
+msgstr "Datendokumentation"
 
 #: gui2/database.c:601
 #: gui2/database.c:612
@@ -8560,7 +8556,7 @@ msgstr "/Suchen/Suchen in Fenster"
 #: gui2/database.c:606
 #: gui2/database.c:616
 msgid "/_Codebook"
-msgstr ""
+msgstr "/_Datendokumentation"
 
 #: gui2/database.c:607
 msgid "/Codebook/_Open"
@@ -8626,11 +8622,11 @@ msgstr "Unbekannt: Zugriffsfehler"
 
 #: gui2/database.c:2023
 msgid "Not up to date"
-msgstr "Nicht auf letztem Stand"
+msgstr "Nicht aktuell"
 
 #: gui2/database.c:2025
 msgid "Up to date"
-msgstr "Auf letztem Stand"
+msgstr "Aktuell"
 
 #: gui2/database.c:2163
 #: gui2/database.c:2254
@@ -8741,9 +8737,8 @@ msgid "Find"
 msgstr "Suchen"
 
 #: gui2/datafiles.c:1077
-#, fuzzy
 msgid "Call"
-msgstr "Abbruch"
+msgstr "Aufrufen"
 
 #: gui2/datafiles.c:1084
 #: gui2/menustate.c:341
@@ -10840,9 +10835,8 @@ msgstr "/Speichern/Prognosefehlervarianz"
 
 #: gui2/gui_utils.c:3042
 #: gui2/gui_utils.c:3099
-#, fuzzy
 msgid "/Save/per-unit constants"
-msgstr "Restringierte Konstante"
+msgstr "/Speichern/einheitenspezifische Konstanten"
 
 #: gui2/gui_utils.c:3047
 #: gui2/gui_utils.c:3104
@@ -11417,7 +11411,7 @@ msgstr "Gini-Koeffizient"
 
 #: gui2/library.c:1891
 msgid "This test only implemented for OLS models"
-msgstr "Dieser Test ist nur für OLS-Modelle implementiert"
+msgstr "Dieser Test ist nur für KQ-Modelle implementiert"
 
 #: gui2/library.c:1900
 msgid "gretl: Chow test"
@@ -11589,13 +11583,12 @@ msgid "gretl: coefficient covariances"
 msgstr "gretl: Kovarianzen der Koeffizienten"
 
 #: gui2/library.c:3692
-#, fuzzy
 msgid ""
 "Data set is not recognized as a panel.\n"
 "Please use \"Sample/Set frequency, startobs\"."
 msgstr ""
 "Datensatz wird nicht als Panel erkannt.\n"
-"Bitte benutzen Sie ..."
+"Bitte benutzen Sie \"Stichprobe/Datensatzstruktur\"."
 
 #: gui2/library.c:3723
 msgid "Error generating time trend"
@@ -12076,7 +12069,7 @@ msgstr "Leider können ARMA-Modelle nicht in die Modelltabelle"
 
 #: gui2/model_table.c:156
 msgid "Sorry, TSLS models can't be put in the model table"
-msgstr "Sorry, TSLS-Modelle nicht möglich in Modelltabelle"
+msgstr "Sorry, 2S-KQ-Modelle nicht möglich in Modelltabelle "
 
 #: gui2/model_table.c:174
 msgid "Can't add model to table -- this model has a different dependent variable"
@@ -12243,9 +12236,8 @@ msgid "You must specify a set of instrumental variables"
 msgstr "Sie müssen Instrumentvariablen spezifizieren"
 
 #: gui2/selector.c:1866
-#, fuzzy
 msgid "You must specify a public interface"
-msgstr "Sie müssen eine Liste von Lags angeben"
+msgstr "Sie müssen eine öffentliche Schnittstelle angeben"
 
 #: gui2/selector.c:1945
 msgid "HCCM"
@@ -12265,7 +12257,7 @@ msgstr "Gewichtete KQ-Methode"
 
 #: gui2/selector.c:1970
 msgid "Two-stage least squares"
-msgstr "Zweistufige KQ-Methode"
+msgstr "Zwei-stufige Kleinste Quadrate"
 
 #: gui2/selector.c:1972
 msgid "Autoregressive"
@@ -12302,9 +12294,8 @@ msgid "Y-axis variable"
 msgstr "Y-Achsen-Variable"
 
 #: gui2/selector.c:2012
-#, fuzzy
 msgid "Public interfaces"
-msgstr "a_i = Achsenabschnitte"
+msgstr "Öffentliche Schnittstellen"
 
 #: gui2/selector.c:2024
 #: gui2/selector.c:3166
@@ -12494,7 +12485,7 @@ msgstr "faktorisierter Graph"
 
 #: gui2/selector.c:3063
 msgid "functions to package"
-msgstr ""
+msgstr "zu 'verpackende' Funktionen"
 
 #: gui2/selector.c:3160
 msgid "Variables to test"
@@ -12509,9 +12500,8 @@ msgid "Independent variables"
 msgstr "Unabhängige Variablen"
 
 #: gui2/selector.c:3172
-#, fuzzy
 msgid "Helper functions"
-msgstr "gretl: Funktionsdateien"
+msgstr "Hilfsfunktionen"
 
 #: gui2/selector.c:3293
 msgid "Select variables for logging"
@@ -12567,7 +12557,7 @@ msgstr "Zu kopierende Variablen wählen"
 
 #: gui2/selector.c:3331
 msgid "Define named list"
-msgstr ""
+msgstr "Definiere benannte Liste"
 
 #: gui2/selector.c:3707
 msgid "Available vars"
@@ -13102,7 +13092,7 @@ msgstr "X-Y-Graph"
 
 #: gui2/toolbar.c:166
 msgid "OLS model"
-msgstr "OLS-Modell"
+msgstr "KQ-Modell"
 
 #: gui2/toolbar.c:167
 msgid "open dataset"
@@ -13269,7 +13259,7 @@ msgstr "Gradienten bei letzter Iteration"
 
 #: plugin/fractals.c:40
 msgid "Rescaled-range plot for"
-msgstr ""
+msgstr "Reskalierte-Spannen-Graph für"
 
 #: plugin/fractals.c:41
 msgid "log(sample size)"
@@ -13277,7 +13267,7 @@ msgstr "log(Stichprobenumfang)"
 
 #: plugin/fractals.c:42
 msgid "log(R/S)"
-msgstr ""
+msgstr "log(R/S)"
 
 #: plugin/fractals.c:224
 msgid "Sample is too small for Hurst exponent"
@@ -13286,7 +13276,7 @@ msgstr "Stichprobe zu klein für Hurst-Exponenten"
 #: plugin/fractals.c:234
 #, c-format
 msgid "Rescaled range figures for %s"
-msgstr ""
+msgstr "Reskalierte-Spannen-Werte für %s"
 
 #: plugin/fractals.c:237
 msgid "(logs are to base 2)"
