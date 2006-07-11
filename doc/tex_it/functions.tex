@@ -1,16 +1,13 @@
 \chapter{Funzioni definite dall'utente}
 \label{functions}
 
-\section{Introduzione}
-\label{func-intro}
+\section{Definizione di una funzione}
+\label{func-define}
 
 A partire dalla versione 1.4.0, \app{gretl} contiene un nuovo
 meccanismo per definire funzioni all'interno di uno script.
 \footnote{Si noti che il nuovo modo di definire le funzioni presenta
   aspetti non compatibili con quello incluso nella versione 1.3.3 del programma.}
-    
-\section{Definizione di una funzione}
-\label{func-define}
 
 Occorre definire una funzione prima di poterla utilizzare. La sintassi
 per farlo è la seguente:
@@ -138,9 +135,10 @@ valori prodotti dalla funzione ad alcune variabili:
       (SSR, resids) = ess_uhat price, xlist
 \end{code}
 
-
-\section{Ambito delle variabili}
-\label{func-scope}
+\section{Programmazione delle funzioni}
+\label{func-details}
+ 
+\subsection{Ambito delle variabili}
 
 Tutte le variabili create in una funzione sono locali a quella
 funzione, e vengono distrutte quando la funzione termina la sua
@@ -158,8 +156,7 @@ funzione, a meno che non vengano assegnate come valore prodotto da una
 funzione.
 
 
-\section{Valori di uscita}
-\label{func-return}
+\subsection{Valori di uscita}
 
 Le funzioni possono produrre zero o più valori di uscita: questi
 possono essere scalari, serie o matrici (non liste). I valori di uscita sono
@@ -190,8 +187,7 @@ messaggio di errore, che può essere generico o rappresentato dalla
 stringa indicata.
     
 
-\section{Controllo degli errori}
-\label{func-errors}
+\subsection{Controllo degli errori}
 
 Quando gretl legge e ``compila'' una definizione di funzione, esegue
 un controllo degli errori minimale: controlla che il nome della
@@ -199,6 +195,87 @@ funzione sia accettabile e che non si tenti di definire una funzione
 all'interno di una funzione (si veda la sezione~\ref{func-define}). Se
 il corpo della funzione contiene comandi non validi, verrà segnalato
 solo quando la funzione viene chiamata.
+
+\section{Pacchetti di funzioni}
+\label{func-packages}
+
+A partire dalla versione 1.6.0, \app{gretl} contiene un meccanismo per creare
+pacchetti di funzioni e renderli disponibili agli altri utenti. Questa
+funzionalità è ancora sperimentale, ma è già utilizzabile seguendo
+le istruzioni contenute in questa sezione.
+
+Usando l'interfaccia grafica del programma, nel menù ``Utilità'', si trova
+una voce ``Editor pacchetti funzioni'', abilitata solo quando è stata caricata
+in memoria almeno una funzione definita dall'utente.
+
+Ci sono vari modi per caricare una funzione in memoria:
+
+\begin{itemize}
+\item Se si ha un file script che contiene definizioni di funzioni, aprendo
+  il file ed eseguendolo;
+\item Creando un file script da zero, includendo almeno una definizione di
+  funzione ed eseguendo lo script;
+\item Aprendo il terminale di gretl e inserendo una definizione di funzione in
+  modalità interattiva. Questo metodo non è particolarmente raccomandato: è
+  probabilmente più comodo definire una funzione in modalità non interattiva.
+\end{itemize}
+
+Dopo aver caricato una funzione, la voce ``Editor pacchetti funzioni'' nel menù
+``Utilità'' dovrebbe essere abilitata. La prima finestra di dialogo presenta due
+alternative:
+
+\begin{itemize}
+\item Una o più funzioni pubbliche da impacchettare;
+\item Zero o più funzioni ausiliarie ``private''.
+\end{itemize}
+
+Le funzioni pubbliche saranno disponibili per gli utenti, quelle private
+fanno parte del meccanismo che lavora ``dietro le quinte'' in un pacchetto di funzioni.
+
+Facendo clic su ``OK'' apparirà una seconda finestra di dialogo, in cui occorre
+inserire le informazioni sul pacchetto (al momento: l'autore, la versione, la
+data e una breve descrizione), oltre che un testo di aiuto che descrive
+l'interfaccia pubblica della funzione. Se una funzione ha più di una interfaccia
+pubblica, verrà mostrato un menù a discesa con cui è possibile attivare le varie
+interfacce.
+
+Facendo clic su ``OK'', si otterrà una finestra di salvataggio del file, che
+suggerirà di salvare il file in una directory chiamata \texttt{functions}, collocata
+sotto la directory di sistema di \app{gretl} (se si ha il permesso di scrittura
+su di essa), oppure nella directory utente di \app{gretl}. Questo è il posto
+suggerito per salvare i pacchetti di funzioni, visto che il programma li
+cercherà automaticamente qui, al momento di aprire questo tipo di file.
+
+\vspace{6pt}
+
+Qualche informazione sui file dei pacchetti di funzioni: per impostazione
+predefinita essi hanno l'estensione \texttt{.gfn}, e, a differenza dei file di
+comandi di \app{gretl}, sono file in formato XML che contengono il codice delle
+funzioni e le informazioni aggiunte dal creatore del pacchetto. Gli utenti
+esperti possono anche scrivere questi file da zero, invece di usare l'editor di
+pacchetti, ma la maggior parte delle persone troverà più comodo usare
+quest'ultimo. Si noti che i caratteri speciali XML nel codice della funzione
+vanno commentati, ad esempio \texttt{\&} va rappresentato come \texttt{\&amp;}.
+Inoltre, alcuni elementi della sintassi delle funzioni differiscono dalla loro
+rappresentazione standard all'interno degli script di comandi: i parametri e i
+valori di uscita (se esistono) vanno rappresentati in XML. Sostanzialmente, la
+funzione viene analizzata e caricata in modo veloce usando la \textsf{libxml}.
+
+\vspace{6pt}
+
+Perché impacchettare le funzioni in questo modo? Per scoprirlo, proviamo a
+chiudere gretl, a riaprirlo, e ad andare nel menù ``File/Apri file comandi/File
+funzioni''. Se le operazioni precedenti sono andate a buon fine, troveremo il
+pacchetto che avevamo creato, insieme alla sua breve descrizione. Facendo clic
+su ``Info'', si ottengono tutte le informazioni disponibili sul pacchetto,
+mentre facendo clic su ``Codice'' si aprirà una finestra che mostra il codice
+delle funzioni contenute nel pacchetto. Facendo clic su ``Apri'', le funzioni
+verranno caricate.
+
+Dopo aver caricato le funzioni contenute nel pacchetto, aprendo il terminale di
+gretl, sarà possibile richiamare il testo di aiuto relativo ad una delle nuove
+funzioni caricate, se esso esiste, con il comando \texttt{help funzione},
+dove \texttt{funzione} è il nome di una delle funzioni del pacchetto caricato.
 
 %%% Local Variables: 
 %%% mode: latex
