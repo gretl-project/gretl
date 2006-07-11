@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.5.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-05 16:31-0400\n"
-"PO-Revision-Date: 2006-07-07 12:20+0200\n"
+"PO-Revision-Date: 2006-07-11 11:57+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -5760,7 +5760,7 @@ msgstr "/File/Consulta database/_RATS 4"
 
 #: gui/gretl.c:225 gui2/gretl.c:270
 msgid "/File/Browse databases/on database _server"
-msgstr "/File/Consulta database/Sul _server di database"
+msgstr "/File/Consulta database/Sul _server di gretl"
 
 #: gui/gretl.c:229 gui2/gretl.c:274
 msgid "/File/Additional functions"
@@ -5768,11 +5768,11 @@ msgstr "/File/_Funzioni aggiuntive..."
 
 #: gui/gretl.c:230 gui2/gretl.c:275
 msgid "/File/Additional functions/on local machine"
-msgstr "/File/Funzioni aggiuntive/sul sistema locale"
+msgstr "/File/Funzioni aggiuntive/Sul sistema _locale"
 
 #: gui/gretl.c:231 gui2/gretl.c:277
 msgid "/File/Additional functions/on server"
-msgstr "/File/Funzioni aggiuntive/sul server"
+msgstr "/File/Funzioni aggiuntive/Sul _server di gretl"
 
 #: gui/gretl.c:234 gui2/gretl.c:281
 msgid "/File/_Create data set"
@@ -7556,11 +7556,11 @@ msgstr "Stato della rete: %s"
 
 #: gui2/database.c:146 gui2/database.c:148
 msgid "Error retrieving data from server"
-msgstr "errore nel recupero dei dati dal server"
+msgstr "Errore nel recupero dei dati dal server"
 
 #: gui2/database.c:168 gui2/database.c:1468
 msgid "Retrieving data..."
-msgstr "recupero dei dati in corso..."
+msgstr "Recupero dei dati in corso..."
 
 #: gui2/database.c:221
 msgid "gretl: display database series"
@@ -7568,7 +7568,7 @@ msgstr "gretl: mostra le serie del database"
 
 #: gui2/database.c:234 gui2/library.c:4558 gui2/library.c:4614
 msgid "boxplot command failed"
-msgstr "comando boxplot fallito"
+msgstr "Comando boxplot fallito"
 
 #: gui2/database.c:257 gui2/fileselect.c:517
 msgid "There were missing observations"
@@ -8193,7 +8193,7 @@ msgstr "Espandi dati trimestrali in annuali"
 
 #: gui2/dialogs.c:2541
 msgid "density estimation options"
-msgstr "opzioni della stima di densità"
+msgstr "Opzioni della stima di densità"
 
 #: gui2/dialogs.c:2546 plugin/kernel.c:130
 msgid "Gaussian kernel"
@@ -8205,7 +8205,7 @@ msgstr "Kernel di Epanechnikov"
 
 #: gui2/dialogs.c:2577
 msgid "bandwidth adjustment factor:"
-msgstr "fattore di aggiustamento della banda:"
+msgstr "Fattore di aggiustamento della banda:"
 
 #: gui2/dialogs.c:2799 plugin/mailer.c:853
 msgid "gretl error"
@@ -8297,7 +8297,7 @@ msgstr "Usa le variabili indice"
 
 #: gui2/dialogs.c:3207
 msgid "Cross-sectional"
-msgstr "cross section"
+msgstr "Cross section"
 
 #: gui2/dialogs.c:3208 gui2/menustate.c:490
 msgid "Time series"
@@ -8465,11 +8465,11 @@ msgstr "Aggiungi lista degli strumenti"
 
 #: gui2/dlgutils.c:609
 msgid "add to current restriction"
-msgstr "aggiungi al vincolo attuale"
+msgstr "Aggiungi al vincolo attuale"
 
 #: gui2/dlgutils.c:616
 msgid "replace current restriction"
-msgstr "sostituisci il vincolo attuale"
+msgstr "Sostituisci il vincolo attuale"
 
 #: gui2/dlgutils.c:674 gui2/selector.c:2782
 msgid "Show details of iterations"
