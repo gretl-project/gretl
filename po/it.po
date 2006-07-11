@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.5.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-05 16:31-0400\n"
-"PO-Revision-Date: 2006-07-11 11:57+0200\n"
+"PO-Revision-Date: 2006-07-11 12:50+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -308,11 +308,11 @@ msgstr "Statistica alternativa"
 
 #: lib/src/compare.c:1240 gui2/gui_utils.c:3774
 msgid "autocorrelation"
-msgstr "autocorrelazione"
+msgstr "Autocorrelazione"
 
 #: lib/src/compare.c:1314
 msgid "dummy variable for Chow test"
-msgstr "variabile dummy per il test Chow"
+msgstr "Variabile dummy per il test Chow"
 
 #: lib/src/compare.c:1538
 #, c-format
@@ -2103,17 +2103,16 @@ msgstr "tempo"
 #: lib/src/graphing.c:2991
 #, c-format
 msgid "response of %s to a shock in %s, with bootstrap confidence interval"
-msgstr ""
-"risposta di %s a uno shock in %s, con intervallo di confidenza bootstrap"
+msgstr "Risposta di %s a uno shock in %s, con intervallo di confidenza bootstrap"
 
 #: lib/src/graphing.c:2996
 #, c-format
 msgid "response of %s to a shock in %s"
-msgstr "risposta di %s a uno shock in %s"
+msgstr "Risposta di %s a uno shock in %s"
 
 #: lib/src/graphing.c:3006
 msgid "point estimate"
-msgstr "stime puntuali"
+msgstr "Stime puntuali"
 
 #: lib/src/graphing.c:3008
 msgid "0.025 and 0.975 quantiles"
@@ -3498,7 +3497,7 @@ msgstr "Varianza 'between'"
 
 #: lib/src/modelprint.c:332 lib/src/modelprint.c:349
 msgid "theta used for quasi-demeaning"
-msgstr "theta usato per la trasformazione"
+msgstr "Theta usato per la trasformazione"
 
 #: lib/src/modelprint.c:346
 msgid "within variance"
@@ -3799,11 +3798,11 @@ msgstr "Test Breusch-Godfrey per"
 
 #: lib/src/modelprint.c:967 lib/src/modelprint.c:968
 msgid "autocorrelation up to order"
-msgstr "autocorrelazione fino all'ordine"
+msgstr "Autocorrelazione fino all'ordine"
 
 #: lib/src/modelprint.c:971 lib/src/modelprint.c:972
 msgid "first-order autocorrelation"
-msgstr "autocorrelazione del prim'ordine"
+msgstr "Autocorrelazione del prim'ordine"
 
 #: lib/src/modelprint.c:978 lib/src/modelprint.c:979
 msgid "Test for ARCH of order"
@@ -5202,7 +5201,7 @@ msgstr "residuo dal sistema VECM, equazione %d"
 #: lib/src/varprint.c:103 lib/src/varprint.c:119 lib/src/varprint.c:134
 #, c-format
 msgid "Responses to a one-standard error shock in %s"
-msgstr "Risposte a uno shock di uno standard error in %s"
+msgstr "Risposte a uno shock in %s pari a un errore standard"
 
 #: lib/src/varprint.c:106 lib/src/varprint.c:122 lib/src/varprint.c:137
 #, c-format
@@ -9622,7 +9621,7 @@ msgstr "Impossibile invertire lo stato di \"%s\"\n"
 
 #: gui2/gui_utils.c:3000 gui2/gui_utils.c:3055
 msgid "/Save/fitted values"
-msgstr "/Salva/valori previsti"
+msgstr "/Salva/Valori previsti"
 
 #: gui2/gui_utils.c:3002 gui2/gui_utils.c:3057
 msgid "/Save/residuals"
@@ -9740,15 +9739,15 @@ msgstr "%s/per %s"
 
 #: gui2/gui_utils.c:3371 gui2/gui_utils.c:3466 gui2/gui_utils.c:3835
 msgid "impulse responses"
-msgstr "impulso-risposta"
+msgstr "Impulso-risposta"
 
 #: gui2/gui_utils.c:3372
 msgid "variance decompositions"
-msgstr "scomposizioni della varianza"
+msgstr "Scomposizioni della varianza"
 
 #: gui2/gui_utils.c:3374 gui2/gui_utils.c:3473
 msgid "forecast horizon (periods):"
-msgstr "orizzonte di previsione (periodi)"
+msgstr "Orizzonte di previsione (periodi)"
 
 #: gui2/gui_utils.c:3384
 msgid "gretl: VAR covariance matrix"
@@ -9764,7 +9763,7 @@ msgstr "gretl: scomposizioni della varianza VAR"
 
 #: gui2/gui_utils.c:3422
 msgid "heteroskedasticity (White's test)"
-msgstr "eteroschedasticità (test di White)"
+msgstr "Eteroschedasticità (test di White)"
 
 #: gui2/gui_utils.c:3444
 msgid "x12sep"
@@ -9776,7 +9775,7 @@ msgstr "Visualizza risultati X-12-ARIMA"
 
 #: gui2/gui_utils.c:3461
 msgid "include bootstrap confidence interval"
-msgstr "includi l'intervallo di confidenza bootstrap"
+msgstr "Includi l'intervallo di confidenza bootstrap"
 
 #: gui2/gui_utils.c:3622 gui2/library.c:1346
 msgid "gretl: forecasts"
@@ -9825,7 +9824,7 @@ msgstr "ARCH"
 
 #: gui2/gui_utils.c:3792 gui2/gui_utils.c:4028
 msgid "normality of residuals"
-msgstr "normalità dei residui"
+msgstr "Normalità dei residui"
 
 #: gui2/gui_utils.c:3802 gui2/library.c:2253
 msgid "linear restrictions"
@@ -9833,19 +9832,19 @@ msgstr "Vincoli lineari"
 
 #: gui2/gui_utils.c:3815
 msgid "omit exogenous variables..."
-msgstr "ometti variabili esogene..."
+msgstr "Ometti variabili esogene..."
 
 #: gui2/gui_utils.c:3844
 msgid "forecast variance decomposition"
-msgstr "scomposizione della varianza di previsione"
+msgstr "Scomposizione della varianza di previsione"
 
 #: gui2/gui_utils.c:3853
 msgid "residual plots"
-msgstr "grafico dei residui"
+msgstr "Grafico dei residui"
 
 #: gui2/gui_utils.c:3862
 msgid "combined residual plot"
-msgstr "grafico dei residui combinato"
+msgstr "Grafico dei residui combinato"
 
 #: gui2/gui_utils.c:3870
 msgid "VAR inverse roots"
