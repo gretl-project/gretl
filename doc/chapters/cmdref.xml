@@ -2,24 +2,17 @@
 
   <chapter id="cmdref"><title>Gretl commands</title>
 
-  <sect1 id="cmd-intro"><title>Notation</title>
+  <sect1 id="cmd-intro"><title>Introduction</title>
 
     <para>
-      The commands defined below may be executed in the command-line
-      client program.  They may also be placed in a
-      <quote>script</quote> file for execution in the GUI, or entered
-      using the latter's <quote>console mode</quote>.  In most cases
-      the syntax given below also applies when you are presented with
-      a line to type in a dialog box in the GUI (but see also
-      <application>gretl</application>'s online help), except that you
-      should <emphasis>not</emphasis> type the initial command word
-      &mdash; it is implicit from the context. One other difference is
-      that some commands support option flags, but you cannot enter
-      these in GUI dialog boxes; generally there are menu items which
-      achieve the same effect.</para>
+      The commands defined below may be executed interactively in the
+      command-line client program or in the console window of the GUI
+      program.  They may also be placed in a <quote>script</quote> or
+      batch file for non-interactive execution.
+    </para>
 
     <para>
-      The following conventions are used below:
+      The following notational conventions are used below:
     </para>
 
     <itemizedlist>
@@ -59,10 +52,6 @@
 
     </itemizedlist>
 
-    <para>
-      Section and Chapter references below are to Ramanathan (2002).
-    </para>
-
   </sect1>
 
   <sect1 id="cmd-cmd">
@@ -72,219 +61,25 @@
   
   </sect1>
 
-  <sect1 id="estimators"><title>Estimators and tests: summary</title>
+  <sect1 id="cmd-topics">
+    <title>Commands by topic</title>
 
     <para>
-      <xref linkend="tab-estim"/> shows the estimators available under the Model
-      menu in <application>gretl</application>'s main window.  The corresponding
-      script command (if there is one available) is shown in parentheses.  For
-      details consult the command's entry in <xref linkend="cmdref"/>.
+      The following tables show the available commands grouped by topic,
+      as follows: estimation commands, <xref linkend="tab-Estimation"/>;
+      hypothesis testing commands, <xref linkend="tab-Tests"/>; 
+      descriptive statistics, <xref linkend="tab-Statistics"/>; commands
+      pertaining to the data set, <xref linkend="tab-Dataset"/>; 
+      graphing commands, <xref linkend="tab-Graphs"/>; 
+      printing commands, <xref linkend="tab-Printing"/>;
+      forecasting commands, <xref linkend="tab-Prediction"/>; 
+      programming commands, <xref linkend="tab-Programming"/>; 
+      and utility commands, <xref linkend="tab-Utilities"/>.
     </para>
 
-    <table id="tab-estim" frame="none">
-      <title>Estimators</title>
-      <tgroup cols="2" style="rpara">
-	<colspec colwidth="150pt"/>
-	<colspec colwidth="275pt"/>
-	<thead>
-	  <row>
-	    <entry>Estimator</entry>
-	    <entry>Comment</entry>
-	  </row>
-	</thead>
-	<tbody>
-	  <row>
-	    <entry>Ordinary Least Squares
-	      (<command>ols</command>)</entry>
-	    <entry>The workhorse estimator</entry>
-	  </row>
-	  <row>
-	    <entry>Weighted Least Squares
-	      (<command>wls</command>)</entry>
-	    <entry>Heteroskedasticity, exclusion of selected
-	      observations</entry>
-	  </row>
-	  <row>
-	    <entry>HCCM (<command>hccm</command>)</entry>
-	    <entry>Heteroskedasticity corrected covariance
-	      matrix</entry>
-	  </row>
-	  <row>
-	    <entry>Heteroskedasticity corrected
-	      (<command>hsk</command>)</entry>
-	    <entry>Weighted Least Squares based on predicted error
-	      variance</entry>
-	  </row>
-	  <row>
-	    <entry>Cochrane&ndash;Orcutt (<command>corc</command>)</entry>
-	    <entry>First-order autocorrelation</entry>
-	  </row>
-	  <row>
-	    <entry>Hildreth&ndash;Lu (<command>hilu</command>)</entry>
-	    <entry>First-order autocorrelation</entry>
-	  </row>
-	  <row>
-	    <entry>Prais&ndash;Winsten (<command>pwe</command>)</entry>
-	    <entry>First-order autocorrelation</entry>
-	  </row>
-	  <row>
-	    <entry>Autoregressive Estimation
-	      (<command>ar</command>)</entry>
-	    <entry>Higher-order autocorrelation
-	      (generalized Cochrane&ndash;Orcutt)</entry>
-	  </row>
-	  <row>
-	    <entry>ARMAX
-	      (<command>arma</command>)</entry>
-	    <entry>Time-series model with ARMA error</entry>
-	  </row>
-	  <row>
-	    <entry>GARCH
-	      (<command>garch</command>)</entry>
-	    <entry>Generalized Autoregressive Conditional
-	      Heteroskedasticity</entry>
-	  </row>
-	  <row>
-	    <entry>Vector Autoregression
-	      (<command>var</command>)</entry>
-	    <entry>Systems of time-series equations</entry>
-	  </row>
-	  <row>
-	    <entry>Cointegration test
-	      (<command>coint</command>)</entry>
-	    <entry>Long-run relationships between series</entry>
-	  </row>
-	  <row>
-	    <entry>Two-Stage Least Squares
-	      (<command>tsls</command>)</entry>
-	    <entry>Simultaneous equations</entry>
-	  </row>
-	  <row>
-	    <entry>Nonlinear Least Squares
-	      (<command>nls</command>)</entry>
-	    <entry>Nonlinear models</entry>
-	  </row>
-	  <row>
-	    <entry>Logit
-	      (<command>logit</command>)</entry>
-	    <entry>Binary dependent variable (logistic
-	      distribution)</entry>
-	  </row>
-	  <row>
-	    <entry>Probit
-	      (<command>probit</command>)</entry>
-	    <entry>Binary dependent variable (normal
-	      distribution)</entry>
-	  </row>
-	  <row>
-	    <entry>Tobit
-	      (<command>tobit</command>)</entry>
-	    <entry>Truncated dependent variable</entry>
-	  </row>
-	  <row>
-	    <entry>Poisson
-	      (<command>poisson</command>)</entry>
-	    <entry>Model for count data</entry>
-	  </row>
-	  <row>
-	    <entry>Logistic
-	      (<command>logistic</command>)</entry>
-	    <entry>OLS, with logistic transformation of dependent
-	      variable</entry>
-	  </row>
-	  <row>
-	    <entry>Least Absolute Deviation
-	      (<command>lad</command>)</entry>
-	    <entry>Alternative to Least Squares</entry>
-	  </row>
-	  <row>
-	    <entry>Rank Correlation
-	      (<command>spearman</command>)</entry>
-	    <entry>Correlation with ordinal data</entry>
-	  </row>
-	  <row>
-	    <entry>Multiple precision OLS (<command>mpols</command>)</entry>
-	    <entry>OLS estimation using multiple precision
-	      arithmetic</entry>
-	  </row>
-	</tbody>
-      </tgroup>
-    </table>
-
-    <para><xref linkend="tab-tests"/> shows the tests that are available
-      under the Tests menu in a model window, after estimation.</para>
-
-    <table id="tab-tests" frame="none">
-      <title>Tests for models</title>
-      <tgroup cols="2">
-	<thead>
-	  <row>
-	    <entry>Test</entry>
-	    <entry>Corresponding command</entry>
-	  </row>
-	</thead>
-	<tbody>
-	  <row>
-	    <entry>Omit variables (<emphasis>F</emphasis>-test if OLS)</entry>
-	    <entry><command>omit</command></entry>
-	  </row>
-	  <row>
-	    <entry>Add variables (<emphasis>F</emphasis>-test if OLS)</entry>
-	    <entry><command>add</command></entry>
-	  </row>
-	  <row>
-	    <entry>Sum of coefficients (<emphasis>t</emphasis>-test if OLS)</entry>
-	    <entry><command>coeffsum</command></entry>
-	  </row>
-	  <row>
-	    <entry>Nonlinearity (squares)</entry>
-	    <entry><command>lmtest --squares</command></entry>
-	  </row>
-	  <row>
-	    <entry>Nonlinearity (logs)</entry>
-	    <entry><command>lmtest --logs</command></entry>
-	  </row>
-	  <row>
-	    <entry>Nonlinearity (Ramsey's RESET)</entry>
-	    <entry><command>reset</command></entry>
-	  </row>
-	  <row>
-	    <entry>Heteroskedasticity (White's test)</entry>
-	    <entry><command>lmtest --white</command></entry>
-	  </row>
-	  <row>
-	    <entry>Influential observations</entry>
-	    <entry><command>leverage</command></entry>
-	  </row>
-	  <row>
-	    <entry>Autocorrelation up to the data frequency</entry>
-	    <entry><command>lmtest --autocorr</command></entry>
-	  </row>
-	  <row>
-	    <entry>Chow (structural break)</entry>
-	    <entry><command>chow</command></entry>
-	  </row>
-	  <row>
-	    <entry>CUSUM (parameter stability)</entry>
-	    <entry><command>cusum</command></entry>
-	  </row>
-	  <row>
-	    <entry>ARCH (conditional heteroskedasticity)</entry>
-	    <entry><command>arch</command></entry>
-	  </row>
-	  <row>
-	    <entry>Normality of residual</entry>
-	    <entry><command>testuhat</command></entry>
-	  </row>
-	  <row>
-	    <entry>Panel diagnostics</entry>
-	    <entry><command>hausman</command></entry>
-	  </row>
-	</tbody>
-      </tgroup>
-    </table>
-
-  </sect1>	
+  &cmdtopics;
+  
+  </sect1>
 
   </chapter>
 

@@ -5,7 +5,7 @@
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>
 
-  <command name="add" section="Tests" label="Add variables">
+  <command name="add" section="Tests" label="Add variables to model">
 
     <usage>
       <arguments>
@@ -87,7 +87,8 @@
 
   </command>
 
-  <command name="addobs" section="Dataset" context="cli">
+  <command name="addobs" section="Dataset" 
+    label="Add observations" context="cli">
 
     <usage>
       <arguments>
@@ -118,7 +119,8 @@
 
   </command>
 
-  <command name="addto" section="Tests" context="cli">
+  <command name="addto" section="Tests" 
+    label="Add variables to specified model" context="cli">
 
     <usage>
       <arguments>
@@ -286,7 +288,8 @@
 
   </command>
 
-  <command name="append" section="Dataset" context="cli">
+  <command name="append" section="Dataset" 
+    label="Append data" context="cli">
 
     <usage>
       <arguments>
@@ -333,7 +336,7 @@
       <para>
 	Computes parameter estimates using the generalized
 	Cochrane&ndash;Orcutt iterative procedure (see Section 9.5 of
-	Ramanathan). Iteration is terminated when successive error
+	Ramanathan, 2002). Iteration is terminated when successive error
 	sums of squares do not differ by more than 0.005 percent or
 	after 20 iterations.</para>
 
@@ -609,7 +612,8 @@
 
   </command>
 
-  <command name="break" section="Programming" context="cli">
+  <command name="break" section="Programming" 
+    label="Break from loop" context="cli">
 
     <description>
 
@@ -967,7 +971,7 @@
     <description>
       <para>
 	Computes parameter estimates using the Cochrane&ndash;Orcutt
-	iterative procedure (see Section 9.4 of Ramanathan). Iteration
+	iterative procedure (see Section 9.4 of Ramanathan, 2002). Iteration
 	is terminated when successive estimates of the autocorrelation
 	coefficient do not differ by more than 0.001 or after 20
 	iterations.
@@ -980,7 +984,8 @@
 
   </command>
 
-  <command name="corr" section="Statistics" context="cli">
+  <command name="corr" section="Statistics" 
+    label="Correlation coefficients" context="cli">
 
     <usage>
       <arguments>
@@ -1057,7 +1062,8 @@
 
   </command>
 
-  <command name="criteria" section="Utilities" context="cli">
+  <command name="criteria" section="Utilities" 
+    label="Model selection criteria" context="cli">
 
     <usage>
       <arguments>
@@ -1102,7 +1108,8 @@
 
   </command>
 
-  <command name="critical" section="Utilities" context="cli">
+  <command name="critical" section="Utilities" 
+    label="Critical values" context="cli">
 
     <usage>
       <arguments>
@@ -1176,7 +1183,8 @@
 
   </command>
 
-  <command name="data" section="Dataset" context="cli">
+  <command name="data" section="Dataset" 
+    label="Import from database" context="cli">
 
     <usage>
       <arguments>
@@ -1224,7 +1232,8 @@
 
   </command>
 
-  <command name="delete" section="Dataset" context="cli">
+  <command name="delete" section="Dataset" 
+    label="Delete variables" context="cli">
 
     <usage>
       <arguments>
@@ -1321,7 +1330,8 @@
 
   </command>
 
-  <command name="diff" section="Transformations" context="cli">
+  <command name="diff" section="Transformations" 
+    label="First differences" context="cli">
 
     <usage>
       <arguments>
@@ -1347,7 +1357,8 @@
 
   </command>
 
-  <command name="discrete" section="Transformations" context="cli">
+  <command name="discrete" section="Transformations" 
+    label="Mark variables as discrete" context="cli">
 
     <usage>
       <arguments>
@@ -1379,7 +1390,8 @@
 
   </command>
 
-  <command name="dummify" section="Transformations" context="cli">
+  <command name="dummify" section="Transformations" 
+    label="Create sets of dummies" context="cli">
 
     <usage>
       <arguments>
@@ -1419,7 +1431,8 @@
 
   </command>
 
-  <command name="end" section="Programming" context="cli">
+  <command name="end" section="Programming" 
+    label="End block of commands" context="cli">
 
     <description>
       <para>
@@ -1437,7 +1450,8 @@
 
   </command>
 
-  <command name="endloop" section="Programming" context="cli">
+  <command name="endloop" section="Programming" 
+    label="End a command loop" context="cli">
 
     <description>
       <para>
@@ -1447,7 +1461,8 @@
 
   </command>
 
-  <command name="eqnprint" section="Printing" context="cli">
+  <command name="eqnprint" section="Printing" 
+    label="Print model as equation" context="cli">
 
     <usage>
       <arguments>
@@ -1485,7 +1500,8 @@
 
   </command>
 
-  <command name="equation" section="Estimation" context="cli">
+  <command name="equation" section="Estimation" 
+    label="Define equation within a system" context="cli">
 
     <usage>
       <arguments>
@@ -1512,7 +1528,8 @@
 
   </command>
 
-  <command name="estimate" section="Estimation" context="cli">
+  <command name="estimate" section="Estimation" 
+    label="Estimate system of equations" context="cli">
 
     <usage>
       <arguments>
@@ -1672,7 +1689,8 @@
   </command>
   
 
-  <command name="fcast" section="Prediction" context="cli">
+  <command name="fcast" section="Prediction" 
+    label="Generate forecasts" context="cli">
 
     <usage>
       <arguments>
@@ -1802,7 +1820,8 @@
 
   </command>
 
-  <command name="fit" section="Prediction" context="cli">
+  <command name="fit" section="Prediction" 
+    label="Generate fitted values" context="cli">
 
     <description>
       <para>
@@ -1817,7 +1836,8 @@
 
   </command>
 
-  <command name="freq" section="Statistics" context="cli">
+  <command name="freq" section="Statistics" 
+    label="Frequency distribution" context="cli">
 
     <usage>
       <arguments>
@@ -1860,7 +1880,8 @@
 
   </command>
 
-  <command name="function" section="Programming" context="cli">
+  <command name="function" section="Programming" 
+    label="Define a function" context="cli">
 
     <usage>
       <arguments>
@@ -2565,7 +2586,8 @@
 
   </command>
 
-  <command name="gnuplot" section="Graphs" context="cli">
+  <command name="gnuplot" section="Graphs" 
+    label="Create a gnuplot graph" context="cli">
 
     <usage>
       <arguments>
@@ -2644,7 +2666,8 @@
 
   </command>
 
-  <command name="graph" section="Graphs" context="cli">
+  <command name="graph" section="Graphs" 
+    label="Create ASCII graph" context="cli">
 
     <usage>
       <arguments>
@@ -2851,7 +2874,7 @@
   </command>
     
   <command name="hausman" section="Tests"
-    label="Hausman test (panel diagnostics)">
+    label="Panel diagnostics">
 
     <description>
       <para>
@@ -2965,7 +2988,8 @@
 
   </command>
 
-  <command name="help" section="Utilities" context="cli">
+  <command name="help" section="Utilities" 
+    label="Help on commands" context="cli">
 
     <description>
       <para>
@@ -3148,7 +3172,8 @@
 
   </command>
 
-  <command name="import" section="Dataset" context="cli">
+  <command name="import" section="Dataset" 
+    label="Import data" context="cli">
 
     <usage>
       <arguments>
@@ -3194,7 +3219,8 @@
 
   </command>
 
-  <command name="include" section="Programming" context="cli">
+  <command name="include" section="Programming" 
+    label="Include function definitions" context="cli">
 
     <usage>
       <arguments>
@@ -3215,7 +3241,8 @@
 
   </command>
 
-  <command name="info" section="Dataset" context="cli">
+  <command name="info" section="Dataset" 
+    label="Information on data set" context="cli">
 
     <description>
       <para>
@@ -3250,7 +3277,7 @@
 
   </command>
 
-  <command name="kpss" section="Tests" label="KPSS test">
+  <command name="kpss" section="Tests" label="KPSS stationarity test">
 
     <usage>
       <arguments>
@@ -3325,7 +3352,8 @@
 
   </command>
 
-  <command name="labels" section="Dataset" context="cli">
+  <command name="labels" section="Dataset" 
+    label="Print labels for variables" context="cli">
 
     <description>
       <para>
@@ -3375,7 +3403,8 @@
 
   </command>
 
-  <command name="lags" section="Transformations" context="cli">
+  <command name="lags" section="Transformations" 
+    label="Create lags" context="cli">
 
     <usage>
       <altforms>
@@ -3455,7 +3484,8 @@
 
   </command>
 
-  <command name="ldiff" section="Transformations" context="cli">
+  <command name="ldiff" section="Transformations" 
+    label="Log-differences" context="cli">
 
     <usage>
       <arguments>
@@ -3765,7 +3795,7 @@
       <code>
 	genr lgt_p = log(p/(1 - p))</code>
       <para>and use this as the dependent variable in an OLS regression.  
-	See Ramanathan, Chapter 12.
+	See Ramanathan (2002, Chapter 12).
       </para>
     </description>
 
@@ -3775,7 +3805,8 @@
 
   </command>
 
-  <command name="logs" section="Transformations" context="cli">
+  <command name="logs" section="Transformations" 
+    label="Create logs" context="cli">
 
     <usage>
       <arguments>
@@ -3799,7 +3830,8 @@
 
   </command>
 
-  <command name="loop" section="Programming" context="cli">
+  <command name="loop" section="Programming" 
+    label="Start a command loop" context="cli">
 
     <usage>
       <arguments>
@@ -3950,7 +3982,8 @@
     </description>
   </command>
 
-  <command name="matrix" section="Programming" context="cli">
+  <command name="matrix" section="Programming" 
+    label="Define or manipulate matrices" context="cli">
 
     <description>
       <para>
@@ -4335,7 +4368,8 @@
 
   </command>
 
-  <command name="multiply" section="Transformations" context="cli">
+  <command name="multiply" section="Transformations" 
+    label="Multiply variables" context="cli">
 
     <usage>
       <arguments>
@@ -4724,7 +4758,8 @@
 
   </command>
 
-  <command name="omitfrom" section="Tests" context="cli">
+  <command name="omitfrom" section="Tests" 
+    label="Omit variables from specified model" context="cli">
 
     <usage>
       <arguments>
@@ -4803,7 +4838,8 @@
     </description>
   </command>
 
-  <command name="open" section="Dataset" context="cli">
+  <command name="open" section="Dataset" 
+    label="Open a data file" context="cli">
 
     <usage>
       <arguments>
@@ -4834,7 +4870,8 @@
 
   </command>
 
-  <command name="outfile" section="Printing" context="cli">
+  <command name="outfile" section="Printing" 
+    label="Direct printing to file" context="cli">
 
     <usage>
       <arguments>
@@ -5102,7 +5139,8 @@
 
   </command>
 
-  <command name="poisson" section="Estimation" label="Poisson">
+  <command name="poisson" section="Estimation" 
+    label="Poisson estimation">
 
     <usage>
       <arguments>
@@ -5173,7 +5211,8 @@
 
   </command>
 
-  <command name="plot" section="Graphs" context="cli">
+  <command name="plot" section="Graphs" 
+    label="ASCII plot" context="cli">
 
     <usage>
       <arguments>
@@ -5199,7 +5238,8 @@
 
   </command>
 
-  <command name="print" section="Printing" context="cli">
+  <command name="print" section="Printing" 
+    label="Print data or strings" context="cli">
 
     <usage>
       <arguments>
@@ -5264,7 +5304,8 @@
 
   </command>
 
-  <command name="printf" section="Printing" context="cli">
+  <command name="printf" section="Printing" 
+    label="Formatted printing" context="cli">
 
     <usage>
       <arguments>
@@ -5373,7 +5414,8 @@
 
   </command>
 
-  <command name="pvalue" section="Utilities" context="cli">
+  <command name="pvalue" section="Utilities" 
+    label="Compute p-values" context="cli">
 
     <usage>
       <arguments>
@@ -5488,7 +5530,8 @@
 
   </command>
 
-  <command name="quit" section="Utilities" context="cli">
+  <command name="quit" section="Utilities" 
+    label="Exit the program" context="cli">
 
     <description>
       <para>
@@ -5503,7 +5546,8 @@
 
   </command>
 
-  <command name="rename" section="Dataset" context="cli">
+  <command name="rename" section="Dataset" 
+    label="Rename variables" context="cli">
 
     <usage>
       <altforms>
@@ -5742,7 +5786,8 @@
 
   </command>
 
-  <command name="rhodiff" section="Transformations" context="cli">
+  <command name="rhodiff" section="Transformations" 
+    label="Quasi-differencing" context="cli">
 
     <usage>
       <arguments>
@@ -5821,7 +5866,8 @@
 
   </command>
 
-  <command name="run" section="Programming" context="cli">
+  <command name="run" section="Programming" 
+    label="Execute a script" context="cli">
 
     <usage>
       <arguments>
@@ -5987,7 +6033,8 @@
 
   </command>
 
-  <command name="sdiff" section="Transformations" context="cli">
+  <command name="sdiff" section="Transformations" 
+    label="Seasonal differencing" context="cli">
 
     <usage>
       <arguments>
@@ -6026,7 +6073,8 @@
     </description>
   </command>
 
-  <command name="set" section="Programming" context="cli">
+  <command name="set" section="Programming" 
+    label="Set program parameters" context="cli">
 
     <usage>
       <arguments>
@@ -6304,7 +6352,7 @@
   </command>
 
   <command name="setobs" section="Dataset" context="cli"
-    label="Frequency and starting observation">
+    label="Set frequency and starting observation">
 
     <usage>
       <altforms>
@@ -6441,7 +6489,8 @@
 
   </command>
 
-  <command name="shell" section="Utilities" context="cli">
+  <command name="shell" section="Utilities" 
+    label="Execute shell commands" context="cli">
 
     <usage>
       <arguments>
@@ -6468,7 +6517,8 @@
 
   </command>
 
-  <command name="smpl" section="Dataset" context="cli">
+  <command name="smpl" section="Dataset" 
+    label="Set the sample range" context="cli">
 
     <!-- don't break the lines below or the text version will get messed
     up -->
@@ -6618,7 +6668,8 @@
 
   </command>
 
-  <command name="square" section="Transformations" context="cli">
+  <command name="square" section="Transformations" 
+    label="Create squares of variables" context="cli">
 
     <usage>
       <arguments>
@@ -6651,7 +6702,7 @@
 
   </command>
 
-  <command name="store" section="Dataset" label="Saving data">
+  <command name="store" section="Dataset" label="Save data">
 
     <usage>
       <arguments>
@@ -6753,7 +6804,8 @@
 
   </command>
 
-  <command name="summary" section="Statistics" context="cli">
+  <command name="summary" section="Statistics" 
+    label="Descriptive statistics" context="cli">
 
     <usage>
       <arguments>
@@ -6888,7 +6940,8 @@
 
   </command>
 
-  <command name="tabprint" section="Printing" context="cli">
+  <command name="tabprint" section="Printing" 
+    label="Print model in tabular form" context="cli">
 
     <usage>
       <arguments>
@@ -7253,7 +7306,8 @@
 
   </command>
 
-  <command name="varlist" section="Dataset" context="cli">
+  <command name="varlist" section="Dataset" 
+    label="Listing of variables" context="cli">
 
     <description>
       <para>
@@ -7528,7 +7582,8 @@
 
   </command>
 
-  <command name="xtab" section="Statistics" context="cli">
+  <command name="xtab" section="Statistics" 
+    label="Cross-tabulate variables" context="cli">
 
     <usage>
       <arguments>

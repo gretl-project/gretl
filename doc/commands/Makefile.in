@@ -9,9 +9,13 @@ XML_LIBS = @XML_LIBS@
 XSLT_CFLAGS = @XSLT_CFLAGS@
 XSLT_LIBS = @XSLT_LIBS@
 
+prefix = @prefix@
+datadir = @datadir@
+localedir = $(datadir)/locale
+
 have_gtk = @have_gtk@
 
-GRETLINC = -I$(topsrc)/lib/src
+GRETLINC = -I$(topsrc)/lib/src -I../..
 GRETLLIB = ../../lib/libgretl-1.0.la
 
 CMDSDIR = $(topsrc)/doc/commands
@@ -25,6 +29,7 @@ LIBTOOL = ../../libtool
 CMDSDIR = $(topsrc)/doc/commands
 CHAPDIR = $(topsrc)/doc/chapters
 CHAPDIR_IT = $(topsrc)/doc/chapters_it
+CHAPDIR_ES = $(topsrc)/doc/chapters_es
 SHAREDIR = $(topsrc)/share
 
 CMDDTD = $(CMDSDIR)/gretl_commands.dtd
@@ -56,7 +61,9 @@ else
   OUTPUT_DIR = $(SHAREDIR)/latin1
 endif
 
-progs: xsltrans skeleton reflow validate tables
+TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
+
+progs: xsltrans skeleton reflow validate topiclist tables
 
 xsltrans: xsltrans.c 
 	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
@@ -70,6 +77,9 @@ skeleton: skeleton.o
 validate: validate.o
 	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
 
+topiclist: topiclist.o
+	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
+
 tables: tables.o
 	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB)
 
@@ -78,6 +88,9 @@ skeleton.o: skeleton.c
 
 validate.o: validate.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
+
+topiclist.o: topiclist.c
+	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
 tables.o: tables.c $(topsrc)/lib/src/generate.c \
 	$(topsrc)/lib/src/monte_carlo.c
@@ -129,6 +142,15 @@ textables: tables
 	./tables --loopcmds > $(topsrc)/doc/tex/tabloopcmds.tex
 	touch $@
 
+topiclists: topiclist
+	./topiclist $(CMDSDIR)/gretl_commands.xml \
+	> $(CHAPDIR)/cmdtopics.xml
+	LANG=it_IT ./topiclist $(CMDSDIR)/gretl_commands_it.xml \
+	> $(CHAPDIR_IT)/cmdtopics.xml
+	LANG=es_ES ./topiclist $(CMDSDIR)/gretl_commands_es.xml \
+	> $(CHAPDIR_ES)/cmdtopics.xml
+	touch $@
+
 # test validity of skeleton.xml, and ability of xsltrans
 # to generate formatted output (text and XML)
 test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
@@ -144,6 +166,11 @@ docbook: xsltrans $(CMDSDIR)/gretl_commands.xml $(MANXSL) $(XMLSTRS)
 docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
 	./xsltrans --docbook $(CMDSDIR)/gretl_commands_it.xml && \
 	cp cmdlist.xml $(CHAPDIR_IT)/cmdlist.xml && \
+	rm cmdlist.xml
+
+docbook_es: xsltrans $(CMDSDIR)/gretl_commands_es.xml $(MANXSL) $(XMLSTRS)
+	./xsltrans --docbook $(CMDSDIR)/gretl_commands_es.xml && \
+	cp cmdlist.xml $(CHAPDIR_ES)/cmdlist.xml && \
 	rm cmdlist.xml
 
 help-all: $(HLPSTAMP) $(FIGSTAMP)

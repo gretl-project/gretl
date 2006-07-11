@@ -240,7 +240,7 @@
 
   </command>
 
-  <command name="arma" section="Estimation" label="Modelo ARMA">
+  <command name="arima" section="Estimation" label="Modelo ARMA">
 
     <usage>
       <arguments>

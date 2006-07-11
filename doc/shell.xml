@@ -27,6 +27,7 @@
 <!ENTITY dollar "\$">
 <!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
 <!ENTITY cmdlist SYSTEM "chapters/cmdlist.xml">
+<!ENTITY cmdtopics SYSTEM "chapters/cmdtopics.xml">
 <!ENTITY optarg SYSTEM "chapters/optarg.xml">
 %mathextra;
 ]>

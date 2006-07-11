@@ -27,6 +27,15 @@ dbtex_es: xsltrans gretl_commands_es.xml gretlman.xsl
 	cat cmdlist.xml >> ../chapters_es/cmdlist.xml && \
 	rm tmp.xml
 
+topics: topiclist gretl_commands.xml 
+	./topiclist gretl_commands.xml ../chapters/cmdtopics.xml
+
+topics_it: topiclist gretl_commands_it.xml 
+	LANG=it_IT ./topiclist gretl_commands_it.xml ../chapters_it/cmdtopics.xml
+
+topics_es: topiclist gretl_commands_es.xml 
+	LANG=es_ES ./topiclist gretl_commands_es.xml ../chapters_es/cmdtopics.xml
+
 xsltrans: xsltrans.c 
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)
 
@@ -43,4 +52,4 @@ olddoc: xsltrans reflow gretl_commands.xml gretl_commands_it.xml gretl_commands_
 	./reflow < guilist.txt > ../../share/latin1/gretlgui.hlp.es
 
 clean: 
-	rm -f cmdlist.xml *list.txt xsltrans reflow
+	rm -f cmdlist.xml *list.txt xsltrans reflow topiclist

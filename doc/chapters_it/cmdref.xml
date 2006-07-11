@@ -68,6 +68,14 @@
   
   </sect1>
 
+  <sect1 id="cmd-topics">
+    <title>Comandi [by topic]</title>
+
+  &cmdtopics;
+  
+  </sect1>
+
+<!--
   <sect1 id="estimators"><title>Stimatori e test: sommario</title>
 
     <para>La <xref linkend="tab-estim"/> mostra gli stimatori disponibili
@@ -274,6 +282,7 @@
     </table>
 
   </sect1>
+-->
 
 </chapter>
 
@@ -281,7 +290,7 @@
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
 mode: xml
-sgml-parent-document:("../manual_it.xml" "book" "chapter")
+sgml-parent-document:("../shell_it.xml" "book" "chapter")
 End:
 -->
 

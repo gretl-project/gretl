@@ -8,6 +8,7 @@ WEBDIR = /home/cottrell/stats/esl/website
 XMLFILES = ../chapters/cmdlist.xml \
 	../chapters/cmdref.xml \
 	../chapters/optarg.xml \
+	../chapters/cmdtopics.xml \
 	../shell.xml
 
 TEXXSLT = ../gretltex.xsl
@@ -47,6 +48,9 @@ refbody.tex: $(XMLFILES) $(TEXXSLT)
 	xsltproc -o refbody.tex $(TEXXSLT) ../shell.xml
 
 ../chapters/cmdlist.xml: ../commands/gretl_commands.xml $(MANXSLT)
+	make -C ../commands -f cmdref.mk dbtex
+
+../chapters/cmdtopics.xml: ../commands/gretl_commands.xml $(MANXSLT)
 	make -C ../commands -f cmdref.mk dbtex
 
 .PHONY : links textables alt onepass refpass thumbs install clean

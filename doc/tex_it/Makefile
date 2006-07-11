@@ -6,6 +6,7 @@ WEBDIR = /home/cottrell/stats/esl/website
 XMLFILES = ../chapters_it/cmdlist.xml \
 	../chapters_it/cmdref.xml \
 	../chapters_it/optarg.xml \
+	../chapters_it/cmdtopics.xml \
 	../shell_it.xml
 
 TEXXSLT = ../gretltex.xsl

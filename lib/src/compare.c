@@ -1368,10 +1368,12 @@ static void QLR_print_result (MODEL *pmod,
 
     ntodate(datestr, tmax, pdinfo);
 
-    pputs(prn, "Quandt likelihood ratio test for structural break at an "
-	  "unknown point,\nwith 15 percent trimming:\n\n");
-    pprintf(prn, "The maximum F(%d, %d) = %g occurs "
-	    "at observation %s\n", dfn, dfd, Fmax, datestr);
+    pputs(prn, _("Quandt likelihood ratio test for structural break at an "
+	  "unknown point,\nwith 15 percent trimming"));
+    pputs(prn, ":\n\n");
+    pprintf(prn, _("The maximum F(%d, %d) = %g occurs "
+	    "at observation %s"), dfn, dfd, Fmax, datestr);
+    pputc(prn, '\n');
 
     j = dfn - 1;
 
@@ -1393,23 +1395,26 @@ static void QLR_print_result (MODEL *pmod,
     }
 
     if (a > 0) {
-	pprintf(prn, "Significant at the %d percent level ", a);
-	pprintf(prn, "(%d%% critical value %s %.2f)\n", a, 
+	pprintf(prn, _("Significant at the %d percent level "), a);
+	pprintf(prn, _("(%d%% critical value %s %.2f)"), a, 
 		(approx)? "<" : "=", crit);
     } else {
 	if (approx) {
-	    pprintf(prn, "10%% critical value for q = 20 is %.2f\n",
+	    pprintf(prn, _("10%% critical value for q = 20 is %.2f"),
 		    crit);
 	} else {
-	    pputs(prn, "Not significant at the 10 percent level ");
-	    pprintf(prn, "(10%% value = %.2f)\n", crit);
+	    pputs(prn, _("Not significant at the 10 percent level "));
+	    pprintf(prn, _("(10%% value = %.2f)"), crit);
 	}
 	a = 10;
     }
 
-    pputs(prn, "\nThis statistic does not follow the standard "
+    pputs(prn, "\n\n");
+    pputs(prn, _("This statistic does not follow the standard "
 	  "F distribution;\ncritical values are from Stock and Watson "
-	  "(2003).\n\n");
+	  "(2003)."));
+    pputs(prn, "\n\n");
+	  
 
     if (opt & OPT_S) {
 	save_QLR_test(pmod, datestr, Fmax, crit, a / 100.0,
