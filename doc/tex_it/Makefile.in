@@ -1,0 +1,88 @@
+topsrc = @top_srcdir@
+docsrc = $(topsrc)/doc
+
+GUIDE = gretl-guide-it.pdf
+REF = gretl-ref-it.pdf
+
+TEXSRC = gretl-guide-it.tex \
+	gretl-ref-it.tex \
+	cli.tex \
+	criteria.tex \
+	graphs.tex \
+	modes.tex \
+	persistent.tex \
+	sampling.tex \
+	trouble.tex \
+	looping.tex \
+	starting.tex \
+	discrete.tex \
+	appendices.tex \
+	matrices.tex \
+	introduction.tex \
+	datafiles.tex \
+	panel.tex \
+	genr.tex \
+	biblio.tex \
+	mle.tex \
+	nls.tex \
+	timeseries.tex \
+	functions.tex \
+	reftables.tex
+
+WEBDIR = /home/cottrell/stats/esl/website
+
+XMLFILES = $(docsrc)/chapters_it/cmdlist.xml \
+	$(docsrc)/chapters_it/cmdref.xml \
+	$(docsrc)/chapters_it/optarg.xml \
+	$(docsrc)/chapters_it/cmdtopics.xml \
+	$(docsrc)/shell_it.xml
+
+TEXXSLT = $(docsrc)/gretltex.xsl
+MANXSLT = $(docsrc)/commands/gretlman.xsl
+
+$(GUIDE): gretl-guide-it.tex links textables
+	pdflatex $<
+	pdflatex $<
+	pdflatex $<
+
+$(REF): gretl-ref-it.tex refbody.tex reftables.tex textables links
+	pdflatex $<
+	pdflatex $<
+	pdflatex $<
+
+refbody.tex: $(XMLFILES) $(TEXXSLT) 
+	xsltproc -o refbody.tex $(TEXXSLT) $(docsrc)/shell_it.xml
+
+$(docsrc)/chapters_it/cmdlist.xml: $(docsrc)/commands/gretl_commands_it.xml $(MANXSLT)
+	make -C ../commands docbook_it
+
+$(docsrc)/chapters/cmdtopics.xml: $(docsrc)/commands/gretl_commands_it.xml $(MANXSLT)
+	make -C ../commands topiclist_it
+
+.PHONY : textables links onepass refpass install clean
+
+textables:
+	make -C ../commands textables
+
+links:
+	rm -f gretl.sty && ln -s $(docsrc)/gretl.sty ./gretl.sty
+	rm -f figures && ln -s $(docsrc)/figures_it ./figures
+	for f in $(TEXSRC) ; do \
+	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_it/$$f . ; fi ; done
+
+onepass: links textables
+	pdflatex gretl-guide-it
+
+refpass: refbody.tex links textables
+	pdflatex gretl-ref-it
+
+install: $(GUIDE) $(REF)
+	cp $(GUIDE) $(REF) $(WEBDIR)
+
+clean:
+	rm -f *.aux *.log *.out *.toc *.tpt *.pdf *~
+	rm -f refbody.tex
+	rm -f ../commands/textables ../commands/topiclist_it
+
+distclean: clean
+	rm -rf CVS
