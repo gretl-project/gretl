@@ -2050,6 +2050,10 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	return 1;
     }
 
+    if (freq->discrete) {
+	fprintf(fp, "set boxwidth 0.75\n");
+    }
+
     /* plot instructions */
     if (use_boxes) {
 	if (gnuplot_has_style_fill()) {
