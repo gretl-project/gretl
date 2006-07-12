@@ -626,7 +626,7 @@
 
   </command>
 
-  <command name="chow" section="Tests" label="Chow">
+  <command name="chow" section="Tests" label="Test di Chow">
 
     <usage>
       <arguments>
@@ -1179,7 +1179,7 @@
 
   </command>
 
-  <command name="data" section="Dataset" label="Importa da database" context="cli">
+  <command name="data" section="Dataset" label="Importazione da database" context="cli">
 
     <usage>
       <arguments>
