@@ -5,10 +5,10 @@
 # Thanks to Daniele "Madrid" Medri for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.5.2\n"
+"Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-11 15:21-0400\n"
-"PO-Revision-Date: 2006-07-11 12:50+0200\n"
+"PO-Revision-Date: 2006-07-12 15:10+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -319,42 +319,45 @@ msgid ""
 "Quandt likelihood ratio test for structural break at an unknown point,\n"
 "with 15 percent trimming"
 msgstr ""
+"Test del rapporto di verosimiglianza di Quandt per break strutturale\n"
+"in un punto sconosciuto del campione, escludendo il 15 percento iniziale e finale"
 
 #: lib/src/compare.c:1374
 #, c-format
 msgid "The maximum F(%d, %d) = %g occurs at observation %s"
-msgstr ""
+msgstr "Il massimo di F(%d, %d) = %g corrisponde all'osservazione %s"
 
 #: lib/src/compare.c:1398
-#, fuzzy, c-format
+#, c-format
 msgid "Significant at the %d percent level "
-msgstr "L'effetto ARCH è significativo al livello del 10 per cento"
+msgstr "Significativo al livello del %d per cento"
 
 #: lib/src/compare.c:1399
-#, fuzzy, c-format
+#, c-format
 msgid "(%d%% critical value %s %.2f)"
-msgstr "Valori critici"
+msgstr "(%d%% valore critico %s %.2f)"
 
 #: lib/src/compare.c:1403
-#, fuzzy, c-format
+#, c-format
 msgid "10%% critical value for q = 20 is %.2f"
-msgstr "Soglia critica per gli outlier:"
+msgstr "Il valore critico al 10%% per q = 20 è %.2f"
 
 #: lib/src/compare.c:1406
-#, fuzzy
 msgid "Not significant at the 10 percent level "
-msgstr "L'effetto ARCH è significativo al livello del 10 per cento"
+msgstr "Non significativo al livello del 10 per cento"
 
 #: lib/src/compare.c:1407
-#, fuzzy, c-format
+#, c-format
 msgid "(10%% value = %.2f)"
-msgstr "z = %.3f pvalue = %.5f"
+msgstr "(valore 10%% = %.2f)"
 
 #: lib/src/compare.c:1413
 msgid ""
 "This statistic does not follow the standard F distribution;\n"
 "critical values are from Stock and Watson (2003)."
 msgstr ""
+"Questa statistica non segue la distribuzione F standard;\n"
+"i valori critici sono in Stock e Watson (2003)."
 
 #: lib/src/compare.c:1551
 #, c-format
@@ -3596,9 +3599,8 @@ msgid "Durbin's $h$ statistic"
 msgstr "Statistica $h$ di Durbin"
 
 #: lib/src/modelprint.c:556
-#, fuzzy
 msgid "Durbin's h"
-msgstr "Stat. h di Durbin %g"
+msgstr "Valore h di Durbin"
 
 #: lib/src/modelprint.c:590
 #, c-format
@@ -3933,41 +3935,39 @@ msgstr "(alla media)"
 
 #: lib/src/modelprint.c:1364 lib/src/modelprint.c:1367
 #: lib/src/modelprint.c:1375
-#, fuzzy
 msgid "VARIABLE"
-msgstr "ARIMA"
+msgstr "VARIABILE"
 
 #: lib/src/modelprint.c:1364 lib/src/modelprint.c:1367
 #: lib/src/modelprint.c:1375
 msgid "COEFFICIENT"
-msgstr ""
+msgstr "COEFFICIENTE"
 
 #: lib/src/modelprint.c:1364 lib/src/modelprint.c:1367
 #: lib/src/modelprint.c:1371 lib/src/modelprint.c:1375
 msgid "STDERROR"
-msgstr ""
+msgstr "ERRORE STD"
 
 #: lib/src/modelprint.c:1368 lib/src/modelprint.c:1372
 #: lib/src/modelprint.c:1376
 msgid "T STAT"
-msgstr ""
+msgstr "STAT T"
 
 #: lib/src/modelprint.c:1368
-#, fuzzy
 msgid "SLOPE at mean"
-msgstr "(alla media)"
+msgstr "PENDENZA nella media"
 
 #: lib/src/modelprint.c:1371
 msgid "PARAMETER"
-msgstr ""
+msgstr "PARAMETRO"
 
 #: lib/src/modelprint.c:1371
 msgid "ESTIMATE"
-msgstr ""
+msgstr "STIMA"
 
 #: lib/src/modelprint.c:1372 lib/src/modelprint.c:1376
 msgid "P-VALUE"
-msgstr ""
+msgstr "P-VALUE"
 
 #: lib/src/modelprint.c:1382
 msgid "Parameter"
@@ -10013,9 +10013,9 @@ msgid "Utilities"
 msgstr "Utilità"
 
 #: gui2/helpfiles.c:649
-#, fuzzy, c-format
+#, c-format
 msgid "help file %s is not up to date\n"
-msgstr "il file di aiuto %s non è accessibile\n"
+msgstr "il file di aiuto %s non è aggiornato\n"
 
 #: gui2/helpfiles.c:818
 msgid "Show English help"
