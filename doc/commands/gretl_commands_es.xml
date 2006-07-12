@@ -1964,7 +1964,7 @@
     <description>
       <para>
         Este contraste sólo está disponible después de haber estimado un 
-	modelo mediante la instrucción <cmdref targ="pooled"/> (ver también
+	modelo mediante la instrucción <cmdref targ="ols"/> (ver también
 	<cmd>panel</cmd> y <cmd>setobs</cmd>).  Contrasta el modelo simple 
 	combinado contra sus alternativas principales, el modelo de 
 	efectos fijos y el modelo de efectos aleatorios.</para>
@@ -2206,7 +2206,7 @@
 
   </command>
 
-  <command name="label" section="Dataset" label="Editar los atributos de una variable">
+  <command name="setinfo" section="Dataset" label="Editar los atributos de una variable">
 
     <usage>
       <arguments>
@@ -3087,13 +3087,6 @@
 
   </command>
 
-  <command name="noecho" section="Obsolete" context="cli">
-    <description>
-      <para>Instrucción obsoleta.  Ver <cmdref targ="set"/>.
-      </para>
-    </description>
-  </command>
-
   <command name="nulldata" section="Dataset"
     label="Crear un conjunto de datos vacío">
 
@@ -3608,35 +3601,6 @@
 	la escala  más adecuada.  Ver también <cmdref targ="gnuplot"/>.
       </para>
     </description>
-
-  </command>
-
-  <command name="pooled" section="Estimation"
-    label="MCO combinados">
-
-    <usage>
-      <arguments>
-        <argument>vardep</argument>
-        <argument>varindeps</argument>
-      </arguments>
-      <options>
-	<option>
-	  <flag>--vcv</flag>
-	  <effect>mostrar la matriz de covarianzas</effect>
-	</option>
-      </options>
-    </usage>
-
-    <description>
-      <para>Estima un modelo vía MCO (ver <cmdref targ="ols"/> para
-        los detalles sobre su sintaxis), y lo marca como 'combinado' o
-	'modelo de panel', de manera que se hace disponible
-	el contraste de <cmdref targ="hausman"/>.</para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Modelo/MCO combinados (panel)</menu-path>
-    </gui-access>
 
   </command>
 
@@ -4187,13 +4151,6 @@
       <menu-path>/Datos/Gráficos bivariantes múltiples</menu-path>
     </gui-access>
 
-  </command>
-
-  <command name="seed" section="Obsolete" context="cli">
-    <description>
-      <para>Instrucción obsoleta.  Ver <cmdref targ="set"/>.
-      </para>
-    </description>
   </command>
 
   <command name="seed" section="Programming" context="gui"

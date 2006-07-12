@@ -4,9 +4,7 @@ docsrc = $(topsrc)/doc
 GUIDE = gretl-guide-it.pdf
 REF = gretl-ref-it.pdf
 
-TEXSRC = gretl-guide-it.tex \
-	gretl-ref-it.tex \
-	cli.tex \
+TEXSRC = cli.tex \
 	criteria.tex \
 	graphs.tex \
 	modes.tex \
@@ -50,6 +48,12 @@ $(REF): gretl-ref-it.tex refbody.tex reftables.tex textables links
 	pdflatex $<
 	pdflatex $<
 
+gretl-guide-it.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_it/$@ . ; fi
+
+gretl-ref-it.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex_it/$@ . ; fi
+
 refbody.tex: $(XMLFILES) $(TEXXSLT) 
 	xsltproc -o refbody.tex $(TEXXSLT) $(docsrc)/shell_it.xml
 
@@ -70,10 +74,10 @@ links:
 	for f in $(TEXSRC) ; do \
 	if [ ! -f $$f ] ; then ln -sf $(docsrc)/tex_it/$$f . ; fi ; done
 
-onepass: links textables
+onepass: gretl-guide-it.tex links textables
 	pdflatex gretl-guide-it
 
-refpass: refbody.tex links textables
+refpass: gretl-ref-it.tex refbody.tex links textables
 	pdflatex gretl-ref-it
 
 install: $(GUIDE) $(REF)

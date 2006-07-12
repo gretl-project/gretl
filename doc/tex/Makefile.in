@@ -6,9 +6,7 @@ REF = gretl-ref.pdf
 ALTGUIDE = gretl-guide-a4.pdf
 ALTREF = gretl-ref-a4.pdf
 
-TEXSRC = gretl-guide.tex \
-	gretl-ref.tex \
-	cli.tex \
+TEXSRC = cli.tex \
 	criteria.tex \
 	graphs.tex \
 	modes.tex \
@@ -62,6 +60,12 @@ $(ALTREF): gretl-ref-a4.tex links
 	pdflatex $<
 	pdflatex $<
 
+gretl-guide.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
+
+gretl-ref.tex:
+	if [ ! -f $@ ] ; then ln -sf $(docsrc)/tex/$@ . ; fi
+
 letter: $(GUIDE) $(REF)
 
 a4: $(ALTGUIDE) $(ALTREF)
@@ -94,11 +98,11 @@ textables:
 
 alt: gretl-guide-a4.pdf gretl-ref-a4.pdf
 
-onepass: links textables 
-	pdflatex gretl-guide
+onepass: gretl-guide.tex links textables 
+	pdflatex $<
 
-refpass: refbody.tex links textables
-	pdflatex gretl-ref
+refpass: gretl-ref.tex refbody.tex links textables
+	pdflatex $<
 
 install: $(GUIDE) $(REF)
 	cp $(GUIDE) $(REF) $(WEBDIR)

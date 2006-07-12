@@ -145,17 +145,14 @@ textables: tables
 topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
 	./topiclist $(CMDSDIR)/gretl_commands.xml \
 	> $(CHAPDIR)/cmdtopics.xml
-	touch $@
 
 topiclist_it: topiclist $(CMDSDIR)/gretl_commands_it.xml
 	LANG=it_IT ./topiclist $(CMDSDIR)/gretl_commands_it.xml \
 	> $(CHAPDIR_IT)/cmdtopics.xml
-	touch $@
 
 topiclist_es: topiclist $(CMDSDIR)/gretl_commands_es.xml
 	LANG=es_ES ./topiclist $(CMDSDIR)/gretl_commands_es.xml \
 	> $(CHAPDIR_ES)/cmdtopics.xml
-	touch $@
 
 # test validity of skeleton.xml, and ability of xsltrans
 # to generate formatted output (text and XML)
@@ -190,6 +187,17 @@ docbook_es: xsltrans $(CMDSDIR)/gretl_commands_es.xml $(MANXSL) $(XMLSTRS)
 	cat cmdlist.xml >> $(CHAPDIR_ES)/cmdlist.xml && \
 	rm cmdlist.xml && rm tmp.xml
 
+olddoc: xsltrans reflow $(CMDSDIR)/gretl_commands.xml \
+	$(CMDSDIR)/gretl_commands_it.xml $(CMDSDIR)/gretl_commands_es.xml \
+	$(CMDSDIR)/gretltxt.xsl
+	mkdir -p $(topsrc)/share/latin1
+	./xsltrans --hlp $(CMDSDIR)/gretl_commands.xml && \
+	./reflow < guilist.txt > $(topsrc)/share/latin1/gretlgui.hlp
+	./xsltrans --hlp $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow < guilist.txt > $(topsrc)/share/latin1/gretlgui.hlp.it
+	./xsltrans --hlp $(CMDSDIR)/gretl_commands_es.xml && \
+	./reflow < guilist.txt > $(topsrc)/share/latin1/gretlgui.hlp.es
+
 help-all: $(HLPSTAMP) $(FIGSTAMP)
 
 # Validate the commands "master" XML files against libgretl
@@ -199,7 +207,9 @@ check: validate
 	-./validate $(CMDSDIR)/gretl_commands_it.xml
 
 docclean:
-	 rm -f skeleton.xml cmdlist.* guilist.txt
+	 rm -f skeleton.xml cmdlist.* guilist.txt clilist.txt
 
 clean: docclean
 	rm -f xsltrans skeleton reflow validate tables topiclist *.o
+	rm -f textables topiclist_*
+	rm -rf .libs

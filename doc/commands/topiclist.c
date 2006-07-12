@@ -86,6 +86,19 @@ static void missing_attrib (const char *element, const char *attrib)
 	    attrib, element);
 }
 
+static int approved_section_title (const char *s)
+{
+    int i;
+
+    for (i=0; labelers[i].title != NULL; i++) {
+	if (!strcmp(s, labelers[i].title)) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static section *section_new (const char *name)
 {
     section *sect;
@@ -183,6 +196,10 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 	missing_attrib("command", "section");
 	return 1;
     } 
+
+    if (!approved_section_title(tmp)) {
+	fprintf(stderr, "*** Found unapproved section heading '%s'\n", tmp);
+    }
 
 #if VERBOSE
     fprintf(stderr, "looking at section name '%s'\n", tmp);
@@ -397,45 +414,6 @@ static const char *section_id_label (int ID)
 
     return NULL;
 }
-
-#if 0
-
-static int print_topic_lists (sectlist *s)
-{
-    const section *sect;
-    const char *label;
-    int i, j;
-    int err = 0;
-
-    for (i=0; i<TAB_MAX; i++) {
-	sect = get_section_by_id(s, i);
-	if (sect == NULL) {
-	    fprintf(stderr, "Section with ID %d is missing!\n", i);
-	    err = 1;
-	    continue;
-	}
-	printf("<table id=\"tab-%s\" frame=\"none\">\n", section_id_label(i));
-	printf(" <title>%s</title>\n", _(sect->name));
-	puts(" <tgroup cols=\"2\" style=\"rpara\">");
-	puts(" <colspec colwidth=\"150pt\"/>");
-	puts(" <colspec colwidth=\"275pt\"/>");
-	puts(" <tbody>");
-	for (j=0; j<sect->ncmds; j++) {
-	    label = sect->cmds[j]->label;
-	    puts(" <row>");
-	    printf("  <entry><command>%s</command></entry>\n", sect->cmds[j]->name);
-	    printf("  <entry>%s</entry>\n", (*label)? label : "&nbsp;");
-	    puts(" </row>");
-	}
-	puts(" </tbody>");
-	puts(" </tgroup>");
-	puts("</table>\n");
-    }
-
-    return err;
-}
-
-#endif
 
 static int print_topic_lists (sectlist *s)
 {
