@@ -136,17 +136,23 @@ $(HLPSTAMP): xsltrans reflow $(CMDSRC) $(CMDDTD) $(HLPXSL) $(XMLSTRS)
 # generate some tables for manual automatically, to ensure
 # they remain in step with the actual code
 textables: tables
-	./tables --constants > $(topsrc)/doc/tex/tabconstants.tex
-	./tables --internals > $(topsrc)/doc/tex/tabinternals.tex
-	./tables --functions > $(topsrc)/doc/tex/tabfunctions.tex
-	./tables --loopcmds > $(topsrc)/doc/tex/tabloopcmds.tex
+	./tables --constants > ../tex/tabconstants.tex
+	./tables --internals > ../tex/tabinternals.tex
+	./tables --functions > ../tex/tabfunctions.tex
+	./tables --loopcmds > ../tex/tabloopcmds.tex
 	touch $@
 
-topiclists: topiclist
+topiclist_en: topiclist $(CMDSDIR)/gretl_commands.xml
 	./topiclist $(CMDSDIR)/gretl_commands.xml \
 	> $(CHAPDIR)/cmdtopics.xml
+	touch $@
+
+topiclist_it: topiclist $(CMDSDIR)/gretl_commands_it.xml
 	LANG=it_IT ./topiclist $(CMDSDIR)/gretl_commands_it.xml \
 	> $(CHAPDIR_IT)/cmdtopics.xml
+	touch $@
+
+topiclist_es: topiclist $(CMDSDIR)/gretl_commands_es.xml
 	LANG=es_ES ./topiclist $(CMDSDIR)/gretl_commands_es.xml \
 	> $(CHAPDIR_ES)/cmdtopics.xml
 	touch $@
@@ -159,30 +165,41 @@ test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 # Generate docbook XML for the command-reference section of the 
 # full manual, cmdlist.xml
 docbook: xsltrans $(CMDSDIR)/gretl_commands.xml $(MANXSL) $(XMLSTRS)
-	./xsltrans --docbook $(CMDSDIR)/gretl_commands.xml && \
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/gretl_commands.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --docbook tmp.xml --docdir=$(CMDSDIR) && \
 	cp cmdlist.xml $(CHAPDIR)/cmdlist.xml && \
-	rm cmdlist.xml
+	rm cmdlist.xml && rm tmp.xml
 
 docbook_it: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL) $(XMLSTRS)
-	./xsltrans --docbook $(CMDSDIR)/gretl_commands_it.xml && \
-	cp cmdlist.xml $(CHAPDIR_IT)/cmdlist.xml && \
-	rm cmdlist.xml
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/gretl_commands_it.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --docbook tmp.xml --docdir=$(CMDSDIR) && \
+	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>" > $(CHAPDIR_IT)/cmdlist.xml && \
+	cat cmdlist.xml >> $(CHAPDIR_IT)/cmdlist.xml && \
+	rm cmdlist.xml && rm tmp.xml
 
 docbook_es: xsltrans $(CMDSDIR)/gretl_commands_es.xml $(MANXSL) $(XMLSTRS)
-	./xsltrans --docbook $(CMDSDIR)/gretl_commands_es.xml && \
-	cp cmdlist.xml $(CHAPDIR_ES)/cmdlist.xml && \
-	rm cmdlist.xml
+	cat $(CMDSDIR)/tex.entities | sed s+DTDDIR+$(CMDSDIR)+ > tmp.xml && \
+	cat $(CMDSDIR)/gretl_commands_es.xml | grep -v DOCTYPE | \
+	grep -v 'xml version' >> tmp.xml && \
+	./xsltrans --docbook tmp.xml --docdir=$(CMDSDIR) && \
+	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>" > $(CHAPDIR_ES)/cmdlist.xml && \
+	cat cmdlist.xml >> $(CHAPDIR_ES)/cmdlist.xml && \
+	rm cmdlist.xml && rm tmp.xml
 
 help-all: $(HLPSTAMP) $(FIGSTAMP)
 
 # Validate the commands "master" XML files against libgretl
 check: validate 
-	./validate $(CMDSDIR)/gretl_commands.xml
-	./validate $(CMDSDIR)/gretl_commands_es.xml
-	./validate $(CMDSDIR)/gretl_commands_it.xml
+	-./validate $(CMDSDIR)/gretl_commands.xml
+	-./validate $(CMDSDIR)/gretl_commands_es.xml
+	-./validate $(CMDSDIR)/gretl_commands_it.xml
 
 docclean:
 	 rm -f skeleton.xml cmdlist.* guilist.txt
 
 clean: docclean
-	rm -f xsltrans skeleton reflow validate *.o
+	rm -f xsltrans skeleton reflow validate tables topiclist *.o

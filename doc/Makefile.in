@@ -1,14 +1,19 @@
+topsrc = @top_srcdir@
+
 # location of various things
 
 WEBDIR = /home/cottrell/stats/esl/website
+CHAPDIR = $(topsrc)/doc/chapters
+CHAPDIR_IT = $(topsrc)/doc/chapters_it
+CMDSDIR = $(topsrc)/doc/commands
 
-REF_CHAPTERS = chapters/cmdref.xml chapters/optarg.xml
+REF_CHAPTERS = $(CHAPDIR)/cmdref.xml $(CHAPDIR)optarg.xml
 CMDLIST = chapters/cmdlist.xml
-CMDREF = commands/gretl_commands.xml
+CMDREF = $(CMDSDIR)/gretl_commands.xml
 
-REF_CHAPTERS_IT = chapters_it/cmdref.xml chapters_it/optarg.xml
+REF_CHAPTERS_IT = $(CHAPDIR_IT)/cmdref.xml $(CHAPDIR_IT)/optarg.xml
 CMDLIST_IT = chapters_it/cmdlist.xml
-CMDREF_IT = commands/gretl_commands.xml
+CMDREF_IT = $(CMDSDIR)/gretl_commands.xml
 
 SUBDIRS = tex tex_it
 

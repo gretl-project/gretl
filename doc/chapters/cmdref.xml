@@ -65,16 +65,7 @@
     <title>Commands by topic</title>
 
     <para>
-      The following tables show the available commands grouped by topic,
-      as follows: estimation commands, <xref linkend="tab-Estimation"/>;
-      hypothesis testing commands, <xref linkend="tab-Tests"/>; 
-      descriptive statistics, <xref linkend="tab-Statistics"/>; commands
-      pertaining to the data set, <xref linkend="tab-Dataset"/>; 
-      graphing commands, <xref linkend="tab-Graphs"/>; 
-      printing commands, <xref linkend="tab-Printing"/>;
-      forecasting commands, <xref linkend="tab-Prediction"/>; 
-      programming commands, <xref linkend="tab-Programming"/>; 
-      and utility commands, <xref linkend="tab-Utilities"/>.
+      The following sections show the available commands grouped by topic.
     </para>
 
   &cmdtopics;

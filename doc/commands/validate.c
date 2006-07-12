@@ -62,7 +62,7 @@ process_option_flag (xmlDocPtr doc, xmlNodePtr node, command *cmd, int i)
     cur = node->xmlChildrenNode;
     while (cur != NULL) {  
         if (!xmlStrcmp(cur->name, (UTF) "flag")) {
-	    cmd->opts[i] = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    cmd->opts[i] = (char *) xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
 	} 
 	cur = cur->next;
     }
@@ -112,9 +112,9 @@ static int check_for_label (xmlNodePtr node)
     char *tmp;
     int err = 0;
 
-    tmp = xmlGetProp(node, (UTF) "label");
+    tmp = (char *) xmlGetProp(node, (UTF) "label");
     if (tmp == NULL) {
-	char *name = xmlGetProp(node, (UTF) "name");
+	char *name = (char *) xmlGetProp(node, (UTF) "name");
 
 	printf("'%s': command is on gui list but has no gui label\n",
 	       name);
@@ -142,7 +142,7 @@ process_command (xmlDocPtr doc, xmlNodePtr node, cmdlist *clist)
 	return 1;
     }
 
-    tmp = xmlGetProp(node, (UTF) "context");
+    tmp = (char *) xmlGetProp(node, (UTF) "context");
     if (tmp == NULL || strcmp(tmp, "cli")) {
 	check_for_label(node);
     }
@@ -151,7 +151,7 @@ process_command (xmlDocPtr doc, xmlNodePtr node, cmdlist *clist)
 	return 0;
     }
 
-    tmp = xmlGetProp(node, (UTF) "name");
+    tmp = (char *) xmlGetProp(node, (UTF) "name");
     if (tmp == NULL) {
 	missing_attrib("command", "name");
 	return 1;
@@ -326,7 +326,7 @@ static int gretl_cmd_in_ref (const char *cmdword, const cmdlist *clist)
     return 0;
 }
 
-static int check_commands (cmdlist *clist)
+static int check_commands (const char *fname, cmdlist *clist)
 {
     const char *cmdword;
     int i, err = 0, missing = 0, extra = 0;
@@ -367,8 +367,10 @@ static int check_commands (cmdlist *clist)
 	err = 1;
     }
 
-    printf("Number of library commands missing from reference: %d\n", missing);
-    printf("Number of extra commands in ref but not in library: %d\n", extra);
+    printf("%s:\n library commands missing from reference: %d\n", 
+	   fname, missing);
+    printf("%s:\n extra commands in ref but not in library: %d\n\n", 
+	   fname, extra);
 
     return err;
 }
@@ -416,9 +418,9 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    printf("Found %d commands in '%s'\n", clist.ncmds, reffile);
+    printf("\nFound %d commands in '%s'\n", clist.ncmds, reffile);
 
-    err = check_commands(&clist);
+    err = check_commands(reffile, &clist);
 
 #if 0
     free_cmdlist(&clist);

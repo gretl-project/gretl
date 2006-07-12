@@ -154,7 +154,7 @@ static int ref_cmd_in_gretl (const char *cmdword)
 
 static int gui_only (xmlNodePtr node)
 {
-    char *tmp = xmlGetProp(node, (UTF) "context");
+    char *tmp = (char *) xmlGetProp(node, (UTF) "context");
     int ret = 0;
 
     if (tmp != NULL) {
@@ -178,7 +178,7 @@ maybe_add_section (xmlDocPtr doc, xmlNodePtr node, sectlist *slist)
 	return 0;
     }
 
-    tmp = xmlGetProp(node, (UTF) "section");
+    tmp = (char *) xmlGetProp(node, (UTF) "section");
     if (tmp == NULL) {
 	missing_attrib("command", "section");
 	return 1;
@@ -228,9 +228,9 @@ place_command (xmlDocPtr doc, xmlNodePtr node, sectlist *s)
 	return 0;
     }
 
-    sname = xmlGetProp(node, (UTF) "section");
-    cname = xmlGetProp(node, (UTF) "name");
-    label = xmlGetProp(node, (UTF) "label");
+    sname = (char *) xmlGetProp(node, (UTF) "section");
+    cname = (char *) xmlGetProp(node, (UTF) "name");
+    label = (char *) xmlGetProp(node, (UTF) "label");
 
     if (!ref_cmd_in_gretl(cname)) {
 	fprintf(stderr, "*** '%s': obsolete command, skipping\n", cname);
@@ -398,6 +398,8 @@ static const char *section_id_label (int ID)
     return NULL;
 }
 
+#if 0
+
 static int print_topic_lists (sectlist *s)
 {
     const section *sect;
@@ -428,6 +430,44 @@ static int print_topic_lists (sectlist *s)
 	puts(" </tbody>");
 	puts(" </tgroup>");
 	puts("</table>\n");
+    }
+
+    return err;
+}
+
+#endif
+
+static int print_topic_lists (sectlist *s)
+{
+    const section *sect;
+    const char *label;
+    int i, j;
+    int err = 0;
+
+    for (i=0; i<TAB_MAX; i++) {
+	sect = get_section_by_id(s, i);
+	if (sect == NULL) {
+	    fprintf(stderr, "Section with ID %d is missing!\n", i);
+	    err = 1;
+	    continue;
+	}
+	printf("<sect2 id=\"sect-%s\"><title>%s</title>\n", 
+	       section_id_label(i), _(sect->name));
+	puts(" <itemizedlist>");
+	for (j=0; j<sect->ncmds; j++) {
+	    label = sect->cmds[j]->label;
+	    puts(" <listitem>");
+	    printf("  <para><command><xref linkend=\"cmd-%s\"/></command>", 
+		   sect->cmds[j]->name);
+	    if (*label) {
+		printf("&nbsp;:&nbsp;&nbsp;%s</para>\n", label);
+	    } else {
+		puts("</para>");
+	    }
+	    puts(" </listitem>");
+	}
+	puts(" </itemizedlist>");
+	puts(" </sect2>");
     }
 
     return err;

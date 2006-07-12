@@ -30050,7 +30050,7 @@ fi
 
 
 if test "${build_docs}" = "yes" ; then
-            ac_config_files="$ac_config_files doc/commands/Makefile"
+                                                    ac_config_files="$ac_config_files doc/Makefile doc/commands/Makefile doc/tex/Makefile doc/tex_it/Makefile doc/tex_es/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -30616,7 +30616,11 @@ do
   "tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES tests/Makefile" ;;
   "extra/Makefile" ) CONFIG_FILES="$CONFIG_FILES extra/Makefile" ;;
   "redhat/gretl.spec" ) CONFIG_FILES="$CONFIG_FILES redhat/gretl.spec" ;;
+  "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
   "doc/commands/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/commands/Makefile" ;;
+  "doc/tex/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/tex/Makefile" ;;
+  "doc/tex_it/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/tex_it/Makefile" ;;
+  "doc/tex_es/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/tex_es/Makefile" ;;
   "default-1" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-1" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
