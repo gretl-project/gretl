@@ -147,54 +147,55 @@ Ad esempio, il codice seguente
 \end{code}
 produce questo risultato
 \begin{code}
-Read datafile /usr/local/share/gretl/data/greene/greene19_1.gdt
-periodicity: 1, maxobs: 32,
-observations range: 1-32
+Lettura del file dati /usr/local/share/gretl/data/greene/greene19_1.gdt
+Periodicità: 1, oss. max.: 32,
+Intervallo delle osservazioni: 1-32
 
-Listing 5 variables:
+5 variabili elencate:
   0) const    1) GPA      2) TUCE     3) PSI      4) GRADE  
 
 ? freq TUCE
 
-Frequency distribution for TUCE, obs 1-32
-number of bins = 7, mean = 21.9375, sd = 3.90151
+Distribuzione di frequenza per TUCE, oss. 1-32
+Numero di intervalli = 7, media = 21,9375, deviazione standard = 3,90151
 
-       interval          midpt   frequency    rel.     cum.
+       Intervallo        P.med.  Frequenza    Rel.     Cum.
 
-          <  13.417     12.000        1      3.12%    3.12% *
-    13.417 - 16.250     14.833        1      3.12%    6.25% *
-    16.250 - 19.083     17.667        6     18.75%   25.00% ******
-    19.083 - 21.917     20.500        6     18.75%   43.75% ******
-    21.917 - 24.750     23.333        9     28.12%   71.88% **********
-    24.750 - 27.583     26.167        7     21.88%   93.75% *******
-          >= 27.583     29.000        2      6.25%  100.00% **
+          <  13,417     12,000        1      3,12%    3,12% *
+    13,417 - 16,250     14,833        1      3,12%    6,25% *
+    16,250 - 19,083     17,667        6     18,75%   25,00% ******
+    19,083 - 21,917     20,500        6     18,75%   43,75% ******
+    21,917 - 24,750     23,333        9     28,12%   71,88% **********
+    24,750 - 27,583     26,167        7     21,88%   93,75% *******
+          >= 27,583     29,000        2      6,25%  100,00% **
 
-Test for null hypothesis of normal distribution:
-Chi-square(2) = 1.872 with p-value 0.39211
-? discrete TUCE # mark TUCE as discrete
+Test per l'ipotesi nulla di distribuzione normale:
+Chi-quadro(2) = 1,872 con p-value 0,39211
+
+? discrete TUCE # marca TUCE come discreta
+
 ? freq TUCE
+Distribuzione di frequenza per TUCE, oss. 1-32
 
-Frequency distribution for TUCE, obs 1-32
+          Frequenza    Rel.     Cum.
 
-          frequency    rel.     cum.
+  12           1      3,12%    3,12% *
+  14           1      3,12%    6,25% *
+  17           3      9,38%   15,62% ***
+  19           3      9,38%   25,00% ***
+  20           2      6,25%   31,25% **
+  21           4     12,50%   43,75% ****
+  22           2      6,25%   50,00% **
+  23           4     12,50%   62,50% ****
+  24           3      9,38%   71,88% ***
+  25           4     12,50%   84,38% ****
+  26           2      6,25%   90,62% **
+  27           1      3,12%   93,75% *
+  28           1      3,12%   96,88% *
+  29           1      3,12%  100,00% *
 
-  12           1      3.12%    3.12% *
-  14           1      3.12%    6.25% *
-  17           3      9.38%   15.62% ***
-  19           3      9.38%   25.00% ***
-  20           2      6.25%   31.25% **
-  21           4     12.50%   43.75% ****
-  22           2      6.25%   50.00% **
-  23           4     12.50%   62.50% ****
-  24           3      9.38%   71.88% ***
-  25           4     12.50%   84.38% ****
-  26           2      6.25%   90.62% **
-  27           1      3.12%   93.75% *
-  28           1      3.12%   96.88% *
-  29           1      3.12%  100.00% *
-
-Test for null hypothesis of normal distribution:
-Chi-square(2) = 1.872 with p-value 0.39211
+Test per l'ipotesi nulla di distribuzione normale:
+Chi-quadro(2) = 1,872 con p-value 0,39211
 \end{code}
 Come si può vedere dall'esempio, viene calcolato automaticamente un test
 Jarque--Bera per la normalità.
@@ -221,54 +222,54 @@ accessibile dall'interfaccia grafica.
 Ad esempio:
 \begin{code}
   open greene22_2
-  discrete Z* # mark Z1-Z8 as discrete
+  discrete Z* # Marca Z1-Z8 come discrete
   xtab Z1 Z4 ; Z5 Z6
 \end{code}
 produce questo risultato
 \begin{code}
-Cross-tabulation of Z1 (rows) against Z5 (columns)
+Tabulazione incrociata di Z1 (righe) rispetto a Z5 (colonne)
 
        [   1][   2][   3][   4][   5]  TOT.
   
 [   0]    20    91    75    93    36    315
 [   1]    28    73    54    97    34    286
 
-TOTAL     48   164   129   190    70    601
+TOTALE    48   164   129   190    70    601
 
-Pearson chi-square test = 5.48233 (4 df, p-value = 0.241287)
+Test chi-quadro di Pearson = 5,48233 (4 df, p-value = 0,241287)
 
-Cross-tabulation of Z1 (rows) against Z6 (columns)
+Tabulazione incrociata di Z1 (righe) rispetto a Z6 (colonne)
 
        [   9][  12][  14][  16][  17][  18][  20]  TOT.
   
 [   0]     4    36   106    70    52    45     2    315
 [   1]     3     8    48    45    37    67    78    286
 
-TOTAL      7    44   154   115    89   112    80    601
+TOTALE     7    44   154   115    89   112    80    601
 
-Pearson chi-square test = 123.177 (6 df, p-value = 3.50375e-24)
+Test chi-quadro di Pearson = 123,177 (6 df, p-value = 3,50375e-24)
 
-Cross-tabulation of Z4 (rows) against Z5 (columns)
+Tabulazione incrociata di Z4 (righe) rispetto a Z5 (colonne)
 
        [   1][   2][   3][   4][   5]  TOT.
   
 [   0]    17    60    35    45    14    171
 [   1]    31   104    94   145    56    430
 
-TOTAL     48   164   129   190    70    601
+TOTALE    48   164   129   190    70    601
 
-Pearson chi-square test = 11.1615 (4 df, p-value = 0.0248074)
+Test chi-quadro di Pearson = 11,1615 (4 df, p-value = 0,0248074)
 
-Cross-tabulation of Z4 (rows) against Z6 (columns)
+Tabulazione incrociata di Z4 (righe) rispetto a Z6 (colonne)
 
        [   9][  12][  14][  16][  17][  18][  20]  TOT.
   
 [   0]     1     8    39    47    30    32    14    171
 [   1]     6    36   115    68    59    80    66    430
 
-TOTAL      7    44   154   115    89   112    80    601
+TOTALE     7    44   154   115    89   112    80    601
 
-Pearson chi-square test = 18.3426 (6 df, p-value = 0.0054306)
+Test chi-quadro di Pearson = 18,3426 (6 df, p-value = 0,0054306)
 \end{code}
 
 Il test chi-quadro di Pearson per l'indipendenza viene mostrato automaticamente
