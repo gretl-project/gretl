@@ -11,15 +11,6 @@
       versione a riga di comando del programma, ma anche in quella con
       con interfaccia grafica (GUI), inserendoli in un file
       <quote>script</quote> da eseguire o nel <quote>terminale di gretl</quote>.
-      Nella maggior parte dei casi, la sintassi presentata nella guida è 
-      valida anche per inserire i comandi nei campi testuali delle finestre di
-      dialogo dell'interfaccia grafica (si veda anche l'aiuto online di
-      <application>gretl</application>). In quest'ultimo caso però
-      <emphasis>non</emphasis> occorre inserire anche il nome del
-      comando nella finestra di dialogo: esso è già sottointeso dal
-      contesto; inoltre, le opzioni di alcuni comandi non possono essere
-      inserite nei campi delle finestre di dialogo: di solito, comunque, sono
-      disponibili delle voci di menù che ne replicano l'effetto.
     </para>
 
     <para>
@@ -28,48 +19,58 @@
 
     <itemizedlist>
 
-      <listitem><para>
+      <listitem>
+        <para>
 	  Il <literal>carattere a larghezza fissa</literal> viene usato
           per indicare ciò che l'utente deve scrivere e per i nomi delle
           variabili.
-	</para></listitem>
+        </para>
+      </listitem>
 
-      <listitem><para>I termini in <replaceable>corsivo</replaceable>
+      <listitem>
+        <para>
+          I termini in <replaceable>corsivo</replaceable>
           sono dei segnaposto da sostituire con termini specifici, ad
           esempio si potrebbe scrivere <varname>reddito</varname> invece
           del generico <replaceable>variabile-x</replaceable>.
-	</para></listitem>
+        </para>
+      </listitem>
 
-      <listitem><para>Il costrutto <literal>[</literal>
+      <listitem>
+        <para>Il costrutto <literal>[</literal>
 	  <replaceable>arg</replaceable> <literal>]</literal>
           indica che l'argomento <replaceable>arg</replaceable> è
           opzionale: è possibile fornirlo oppure no (in ogni caso, le
           parentesi quadre non vanno scritte).
-	</para></listitem>
+        </para>
+      </listitem>
 
-      <listitem><para>La frase <quote>comando di stima</quote> indica un
+      <listitem>
+        <para>La frase <quote>comando di stima</quote> indica un
           comando che genera stime per un certo modello, ad esempio
 	  <command>ols</command>, <command>ar</command> o
 	  <command>wls</command>.
-	</para></listitem>
+        </para>
+      </listitem>
 
     </itemizedlist>
-
-    <para>
-      I capitoli e i paragrafi citati sono quelli di Ramanathan (2002).
-    </para>
 
   </sect1>
 
   <sect1 id="cmd-cmd">
-    <title>Comandi di gretl</title>
+    <title>Comandi in ordine alfabetico</title>
 
   &cmdlist;
   
   </sect1>
 
   <sect1 id="cmd-topics">
-    <title>Comandi [by topic]</title>
+    <title>Comandi raggruppati per argomento</title>
+
+    <para>
+      Nei capitoli seguenti, i comandi disponibili sono raggruppati per
+      argomento.
+    </para>
 
   &cmdtopics;
   
