@@ -158,7 +158,7 @@ static void gui_graph_handler (int err)
 {
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
-    } else if (err < 0) {
+    } else if (err) {
 	const char *msg = get_gretl_errmsg();
 
 	if (*msg) {
@@ -4049,7 +4049,8 @@ void add_model_stat (MODEL *pmod, int which)
 
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
-    int err, origv, ts, plot_list[4], lines[1];
+    GnuplotFlags flags = 0;
+    int err, origv, ts, plotlist[4], lines[1];
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
     int pdum = vwin->active_var; 
@@ -4059,7 +4060,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 
     /* special case: GARCH model (show fitted variance) */
     if (pmod->ci == GARCH && xvar == 0) {
-	err = garch_resid_plot(pmod, &Z, datainfo);
+	err = garch_resid_plot(pmod, datainfo);
 	if (err) {
 	    errbox(_("gnuplot command failed"));
 	} else {
@@ -4072,7 +4073,9 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
-    if (add_fit_resid(pmod, GENR_RESID, 1)) return;
+    if (add_fit_resid(pmod, GENR_RESID, 1)) {
+	return;
+    }
 
     /* handle model estimated on different subsample */
     if (pmod->dataset != NULL) {
@@ -4083,11 +4086,16 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	ginfo = datainfo;
     }    
 
+    flags = GP_GUI | GP_RESIDS;
+    if (pdum) {
+	flags |= GP_DUMMY;
+    }
+
     ts = dataset_is_time_series(ginfo);
     uhatno = ginfo->v - 1; /* residual: last var added */
 
-    plot_list[0] = 2;
-    plot_list[1] = uhatno; 
+    plotlist[0] = 1;
+    plotlist[1] = uhatno; 
 
     strcpy(ginfo->varname[uhatno], _("residual"));
     yno = gretl_model_get_depvar(pmod);
@@ -4096,33 +4104,25 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 
     if (xvar) { 
 	/* plot against specified xvar */
-	plot_list[2] = xvar;
+	plotlist[0] = 2;
+	plotlist[2] = xvar;
 	lines[0] = 0;
     } else {    
 	/* plot against obs index or time */
-	int pv;
-
-	pv = plotvar(gZ, ginfo);
-	if (pv < 0) {
-	    errbox(_("Failed to add plotting index variable"));
-	    dataset_drop_last_variables(1, gZ, ginfo);
-	    return;
-	}
-	plot_list[2] = pv;
+	flags |= GP_IDX;
 	lines[0] = (ts)? 1 : 0;
     } 
 
     /* plot separated by dummy variable? */
     if (pdum) {
-	plot_list[0] = 3;
-	plot_list[3] = pdum;
+	plotlist[0] += 1;
+	plotlist[plotlist[0]] = pdum;
     }
 
     /* generate graph */
-    err = gnuplot(plot_list, lines, NULL, gZ, ginfo, &plot_count, 
-		  (pdum)? (GP_GUI | GP_RESIDS | GP_DUMMY) :
-		  (GP_GUI | GP_RESIDS)); 
-    if (err < 0) {
+    err = gnuplot(plotlist, lines, NULL, gZ, ginfo, &plot_count, flags);
+
+    if (err) {
 	errbox(_("gnuplot command failed"));
     } else {
 	register_graph();
@@ -4133,7 +4133,8 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 
 void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
-    int err, origv, plot_list[4], lines[2] = {0};
+    GnuplotFlags flags = GP_GUI | GP_FA;
+    int err, origv, plotlist[4], lines[2] = {0};
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***gZ;
@@ -4155,13 +4156,13 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     if (formula != NULL) {
 	/* fitted value can be represented as a formula: if feasible,
 	   produces a better-looking graph */
-	plot_list[0] = 3;
-	plot_list[1] = 0; /* placeholder entry */
-	plot_list[2] = gretl_model_get_depvar(pmod);
-	plot_list[3] = xvar;
-	err = gnuplot(plot_list, lines, formula, gZ, ginfo,
-		      &plot_count, GP_GUI | GP_FA);
-	if (err < 0) {
+	plotlist[0] = 3;
+	plotlist[1] = 0; /* placeholder entry */
+	plotlist[2] = gretl_model_get_depvar(pmod);
+	plotlist[3] = xvar;
+	err = gnuplot(plotlist, lines, formula, gZ, ginfo,
+		      &plot_count, flags);
+	if (err) {
 	    errbox(_("gnuplot command failed"));
 	} else {
 	    register_graph();
@@ -4177,15 +4178,15 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	return;
     }
 
-    plot_list[0] = 3;
-    plot_list[1] = ginfo->v - 1; /* last var added (fitted vals) */
+    plotlist[0] = 3;
+    plotlist[1] = ginfo->v - 1; /* last var added (fitted vals) */
 
     /* depvar from regression */
-    plot_list[2] = gretl_model_get_depvar(pmod);
+    plotlist[2] = gretl_model_get_depvar(pmod);
 
     if (xvar) { 
 	/* plot against specified xvar */
-	plot_list[3] = xvar;
+	plotlist[3] = xvar;
 	/* is it a simple regression? */
 	if ((pmod->ifc && pmod->list[0] == 3) || pmod->list[0] == 2) {
 	    lines[0] = 1;
@@ -4196,22 +4197,17 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     } else { 
 	/* plot against obs */
 	int ts = dataset_is_time_series(ginfo);
-	int pv = plotvar(gZ, ginfo);
 
-	if (pv < 0) {
-	    errbox(_("Failed to add plotting index variable"));
-	    dataset_drop_last_variables(1, gZ, ginfo);
-	    return;
-	}
-	plot_list[3] = pv;
+	plotlist[0] -= 1;
+	flags |= GP_IDX;
 	lines[0] = (ts)? 1 : 0; 
 	lines[1] = (ts)? 1 : 0;
     } 
 
-    err = gnuplot(plot_list, lines, NULL, gZ, ginfo,
-		  &plot_count, GP_GUI | GP_FA);
+    err = gnuplot(plotlist, lines, NULL, gZ, ginfo,
+		  &plot_count, flags);
 
-    if (err < 0) {
+    if (err) {
 	errbox(_("gnuplot command failed"));
     } else {
 	register_graph();
@@ -4250,7 +4246,7 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
-    } else if (err < 0) {
+    } else if (err) {
 	errbox(_("gnuplot command failed"));
     } else {
 	launch_gnuplot_interactive();
@@ -4526,7 +4522,8 @@ void do_graph_var (int varnum)
 	return;
     }
 
-    gretl_command_sprintf("gnuplot %s time", datainfo->varname[varnum]);
+    gretl_command_sprintf("gnuplot %s --time-series", 
+			  datainfo->varname[varnum]);
 
     if (check_and_record_command()) {
 	return;
@@ -4534,7 +4531,7 @@ void do_graph_var (int varnum)
 
     lines[0] = 1;
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-		  &plot_count, GP_GUI);
+		  &plot_count, GP_GUI | GP_IDX);
 
     gui_graph_handler(err);
 }
@@ -4579,7 +4576,7 @@ int do_scatters (selector *sr)
 	return 1;
     }
 
-    err = multi_scatters(cmd.list, &Z, datainfo, NULL, flags);
+    err = multi_scatters(cmd.list, (const double **) Z, datainfo, NULL, flags);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -4642,7 +4639,7 @@ int do_dummy_graph (selector *sr)
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
 		  &plot_count, GP_GUI | GP_DUMMY);
 
-    if (err < 0) {
+    if (err) {
 	errbox(_("gnuplot command failed"));
     } else {
 	register_graph();
@@ -4653,6 +4650,7 @@ int do_dummy_graph (selector *sr)
 
 int do_graph_from_selector (selector *sr)
 {
+    GnuplotFlags flags = GP_GUI;
     const char *buf = selector_list(sr);
     gint i, err, *lines = NULL;
     gint imp = (selector_code(sr) == GR_IMP);
@@ -4663,14 +4661,17 @@ int do_graph_from_selector (selector *sr)
 			 (imp)? " --with-impulses" : "");
 
     if (selector_code(sr) == GR_PLOT) { 
-        gretl_command_strcat(" time");
+        gretl_command_strcat(" --time-series");
+	flags |= GP_IDX;
     }
 
     if (check_and_record_command()) {
 	return 1;
     }
 
-    if (!imp) {
+    if (imp) {
+	flags |= GP_IMPULSES;
+    } else {
 	lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
 	if (lines == NULL) {
 	    return 0;
@@ -4684,13 +4685,8 @@ int do_graph_from_selector (selector *sr)
 	}
     }
 
-    if (imp) {
-        err = gnuplot(cmd.list, NULL, NULL, &Z, datainfo,
-                      &plot_count, GP_GUI | GP_IMPULSES);
-    } else {
-        err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-                      &plot_count, GP_GUI);
-    }
+    err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
+		  &plot_count, flags);
 
     gui_graph_handler(err);
 
@@ -4790,7 +4786,7 @@ int do_splot_from_selector (selector *sr)
 
     if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
-    } else if (err < 0) {
+    } else if (err) {
 	errbox(_("gnuplot command failed"));
     } else {
 	launch_gnuplot_interactive();
@@ -4850,8 +4846,11 @@ static int maybe_reorder_list (char *liststr)
 
 void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 {
+    GnuplotFlags flags = GP_GUI;
     char *liststr;
-    gint i, err, *lines = NULL;
+    int *lines = NULL;
+    int llen = 1;
+    gint i, err;
 
     liststr = main_window_selection_as_string();
     if (liststr == NULL || *liststr == 0) {
@@ -4861,31 +4860,33 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
     if (action == GR_XY) {
 	err = maybe_reorder_list(liststr);
 	if (err) return;
+    } else if (action == GR_PLOT) {
+	flags |= GP_IDX;
     }
 
     gretl_command_sprintf("gnuplot%s%s", liststr, 
-			  (action == GR_PLOT)? " time" : "");
+			  (action == GR_PLOT)? " --time-series" : "");
     free(liststr);
 
     if (check_and_record_command()) {
 	return;
     }
 
-    if (cmd.list[0] < 2) {
-	return;
+    if (cmd.list[0] - 1 > llen) {
+	llen = cmd.list[0] - 1;
     }
 
-    lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
+    lines = mymalloc(llen * sizeof *lines);
     if (lines == NULL) {
 	return;
     }
 
-    for (i=0; i<cmd.list[0]-1; i++) {
+    for (i=0; i<llen; i++) {
 	lines[i] = (action == GR_PLOT);
     }
 
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
-		  &plot_count, GP_GUI);
+		  &plot_count, flags);
 
     gui_graph_handler(err);
 
@@ -5864,56 +5865,21 @@ static int script_model_test (int test_ci, int model_id, PRN *prn)
     return 0;
 }
 
-static GnuplotFlags gp_flags (int batch, gretlopt opt)
-{
-    GnuplotFlags flags = 0;
-
-    if (batch) {
-	flags |= GP_BATCH;
-    }
-
-    if (opt & OPT_M) {
-	flags |= GP_IMPULSES;
-    } else if (opt & OPT_L) {
-	flags |= GP_LINES;
-    }
-
-    if (opt & OPT_Z) {
-	flags |= GP_DUMMY;
-    } else if (opt & OPT_S) {
-	flags |= GP_OLS_OMIT;
-    } 
-
-    return flags;
-}
-
 static void do_autofit_plot (PRN *prn)
 {
     int lines[1];
-    int *plotlist;
-    int pv, err;
+    int plotlist[3];
+    int err;
 
-    pv = plotvar(&Z, datainfo);
-    if (pv < 0) {
-	return;
-    }
-
-    plotlist = gretl_list_new(3);
-    if (plotlist == NULL) {
-	return;
-    }
-
+    plotlist[0] = 2;
     plotlist[1] = gretl_model_get_depvar(models[0]);
     plotlist[2] = varindex(datainfo, "autofit");
-    plotlist[3] = pv;
 
     lines[0] = 1; 
     err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
-		  &plot_count, 0); 
+		  &plot_count, OPT_T); 
 
-    free(plotlist);
-
-    if (err < 0) {
+    if (err) {
 	pprintf(prn, _("gnuplot command failed\n"));
     } else {
 	register_graph();
@@ -6402,11 +6368,11 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 			      &Z, datainfo, &plot_count, plotflags);
 	    }
 	} else {
-	    err = multi_scatters(cmd.list, &Z, datainfo, 
+	    err = multi_scatters(cmd.list, (const double **) Z, datainfo, 
 				 &plot_count, plotflags);
 	}
 
-	if (err < 0) {
+	if (err) {
 	    pputs(prn, (cmd.ci == GNUPLOT)? 
 		  _("gnuplot command failed\n") :
 		  _("scatters command failed\n"));

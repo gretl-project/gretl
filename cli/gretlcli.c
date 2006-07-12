@@ -233,21 +233,6 @@ int fn_get_line (void)
     return err;
 }
 
-GnuplotFlags gp_flags (int batch, gretlopt opt)
-{
-    GnuplotFlags flags = 0;
-
-    if (batch) flags |= GP_BATCH;
-
-    if (opt & OPT_M) flags |= GP_IMPULSES;
-    else if (opt & OPT_L) flags |= GP_LINES;
-
-    if (opt & OPT_Z) flags |= GP_DUMMY;
-    else if (opt & OPT_S) flags |= GP_OLS_OMIT;
-
-    return flags;
-}
-
 #ifdef ENABLE_NLS
 
 void nls_init (void)
@@ -728,28 +713,16 @@ static void printf_strip (char *s)
 
 static int do_autofit_plot (PRN *prn)
 {
-    int *plotlist;
-    int pv, err = 0;
+    int plotlist[3];
+    int err = 0;
 
-    pv = plotvar(&Z, datainfo);
-    if (pv < 0) {
-	return 1;
-    }
-
-    plotlist = gretl_list_new(3);
-    if (plotlist == NULL) {
-	return 1;
-    }
-
+    plotlist[0] = 2;
     plotlist[1] = gretl_model_get_depvar(models[0]);
     plotlist[2] = varindex(datainfo, "autofit");
-    plotlist[3] = pv;
 
     lines[0] = 1;
     err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
-		  &plot_count, gp_flags(batch, 0));
-
-    free(plotlist);
+		  &plot_count, gp_flags(batch, OPT_T));
 
     if (err) {
 	pputs(prn, _("gnuplot command failed\n"));
@@ -1206,7 +1179,7 @@ static int exec_line (char *line, PRN *prn)
 			  &Z, datainfo, &plot_count, 
 			  gp_flags(batch, 0));
 	}
-	if (err < 0) {
+	if (err) {
 	    pputs(prn, _("gnuplot command failed\n"));
 	} else if (batch) {
 	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());

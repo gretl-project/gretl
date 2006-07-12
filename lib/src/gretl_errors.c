@@ -80,6 +80,7 @@ const char *gretl_error_messages[] = {
     N_("Matrices not conformable for operation"),                /* E_NONCONF */
     N_("Data types not conformable for operation"),              /* E_TYPES */
     N_("Wrong data type"),                                       /* E_DATATYPE */
+    N_("Incompatible options"),                                  /* E_BADOPT */
     NULL,                                                        /* E_DB_DUP */
     NULL,                                                        /* E_OK */
     NULL                                                         /* E_MAX */

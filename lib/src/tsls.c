@@ -286,7 +286,7 @@ tsls_list_omit (const int *orig, const int *drop, gretlopt opt, int *err)
 
     if ((opt & OPT_T) && (opt & OPT_B)) {
 	/* incoherent options */
-	*err = E_PARSE;
+	*err = E_BADOPT;
 	return NULL;
     }
 
@@ -333,7 +333,7 @@ tsls_list_add (const int *orig, const int *add, gretlopt opt, int *err)
 
     if ((opt & OPT_T) && (opt & OPT_B)) {
 	/* incoherent options */
-	*err = E_PARSE;
+	*err = E_BADOPT;
 	return NULL;
     }
 

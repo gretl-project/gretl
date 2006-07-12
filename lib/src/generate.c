@@ -2927,11 +2927,7 @@ static const char *res1[] = {
 };
 
 static const char *res2[] = {
-    "t",
-    "annual",
-    "qtrs",
-    "months",
-    "hours"
+    "t"
 };
 
 static const char *res3[] = {

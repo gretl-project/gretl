@@ -799,19 +799,6 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
     return 0;
 }
 
-static int plotvar_is_full_size (int v, int n, const double *x)
-{
-    int t;
-
-    for (t=0; t<n; t++) {
-	if (na(x[t])) {
-	    return 0;
-	}
-    }
-
-    return 1;
-}
-
 typedef enum {
     PLOTVAR_INDEX,
     PLOTVAR_TIME,
@@ -823,35 +810,6 @@ typedef enum {
     PLOTVAR_HOURLY,
     PLOTVAR_MAX
 } plotvar_type; 
-
-struct plotvar_t {
-    int ptype;
-    char *pname;
-};
-
-static struct plotvar_t pvars[] = {
-    { PLOTVAR_INDEX,    "index" },
-    { PLOTVAR_TIME,     "time" },
-    { PLOTVAR_ANNUAL,   "annual" },
-    { PLOTVAR_QUARTERS, "qtrs" },
-    { PLOTVAR_MONTHS,   "months" },
-    { PLOTVAR_CALENDAR, "caldate" },
-    { PLOTVAR_DECADES,  "decades" },
-    { PLOTVAR_HOURLY,   "hrs" }
-};
-
-static int ptype_from_name (const char *pname)
-{
-    int i;
-
-    for (i=0; i<PLOTVAR_MAX; i++) {
-	if (!strcmp(pvars[i].pname, pname)) {
-	    return pvars[i].ptype;
-	}
-    }
-
-    return -1;
-}
 
 int plotvar_code (const DATAINFO *pdinfo)
 {
@@ -876,136 +834,114 @@ int plotvar_code (const DATAINFO *pdinfo)
 }
 
 /**
- * plotvar_from_varname:
- * @pZ: pointer to data matrix.
+ * gretl_plotx:
  * @pdinfo: data information struct.
- * @vname: name for the plotting variable.
  *
- * Adds to the dataset a special dummy variable named @vname,
- * for use on the x-axis in plotting, or simply retrieves the 
- * ID number of the variable if it already exists.  
+ * Finds or creates a special dummy variable for use on the
+ * x-axis in plotting; this will have the full length of the
+ * data series as given in @pdinfo, and will be appropriately
+ * configured for the data frequency.  Do not try to free this
+ * variable.
  *
- * Returns: the ID number of the variable (> 0) or -1 on failure.
+ * Returns: pointer to plot x-variable, or %NULL on failure.
  */
 
-int plotvar_from_varname (double ***pZ, DATAINFO *pdinfo, const char *vname)
+const double *gretl_plotx (const DATAINFO *pdinfo)
 {
-    int t, v, y1, n = pdinfo->n;
-    const char *pname;
-    int ptype;
+    static double *x;
+    static int ptype;
+    static int T;
+
+    int t, y1;
+    int new_ptype;
     float rm;
 
-    if (vname != NULL) {
-	pname = vname;
-	ptype = ptype_from_name(pname);
-	if (ptype < 0) {
-	    return -1;
-	}
-    } else {
-	ptype = plotvar_code(pdinfo);
-	pname = pvars[ptype].pname;
+    if (pdinfo == NULL) {
+	/* cleanup signal */
+	free(x);
+	ptype = 0;
+	T = 0;
+	return NULL;
     }
 
-    v = varindex(pdinfo, pname);
+    new_ptype = plotvar_code(pdinfo);
 
-    if (v < pdinfo->v) {
-	if (plotvar_is_full_size(v, pdinfo->n, (*pZ)[v])) {
-	    return v;
-	} 
-    } else if (dataset_add_series(1, pZ, pdinfo)) {
-	return -1;
+    if (x != NULL && new_ptype == ptype && T == pdinfo->n) {
+	/* a suitable array is already at hand */
+	return x;
     }
 
-    strcpy(pdinfo->varname[v], pname);
-    set_var_hidden(pdinfo, v);
+    if (x != NULL) {
+	free(x);
+    }
+
+    x = malloc(pdinfo->n * sizeof *x);
+    if (x == NULL) {
+	return NULL;
+    }
+
+    T = pdinfo->n;
+    ptype = new_ptype;
 
     y1 = (int) pdinfo->sd0;
     rm = pdinfo->sd0 - y1;
 
     switch (ptype) {
     case PLOTVAR_ANNUAL: 
-	strcpy(VARLABEL(pdinfo, v), _("annual plotting variable")); 
-	for (t=0; t<n; t++) {
-	    (*pZ)[v][t] = (double) (t + atoi(pdinfo->stobs));
+	for (t=0; t<T; t++) {
+	    x[t] = (double) (t + atoi(pdinfo->stobs));
 	}
 	break;
     case PLOTVAR_QUARTERS:
-	strcpy(VARLABEL(pdinfo, v), _("quarterly plotting variable"));
-	(*pZ)[v][0] = y1 + (10.0 * rm - 1.0) / 4.0;
-	for (t=1; t<n; t++) {
-	    (*pZ)[v][t] = (*pZ)[v][t-1] + .25;
+	x[0] = y1 + (10.0 * rm - 1.0) / 4.0;
+	for (t=1; t<T; t++) {
+	    x[t] = x[t-1] + .25;
 	}
 	break;
     case PLOTVAR_MONTHS:
-	strcpy(VARLABEL(pdinfo, v), _("monthly plotting variable"));
-	(*pZ)[v][0] = y1 + (100.0 * rm - 1.0) / 12.0;
-	for (t=1; t<n; t++) {
-	    (*pZ)[v][t] = (*pZ)[v][t-1] + (1.0 / 12.0);
+	x[0] = y1 + (100.0 * rm - 1.0) / 12.0;
+	for (t=1; t<T; t++) {
+	    x[t] = x[t-1] + (1.0 / 12.0);
 	}
 	break;
     case PLOTVAR_HOURLY:
-	strcpy(VARLABEL(pdinfo, v), _("hourly plotting variable"));
-	(*pZ)[v][0] = y1 + (100.0 * rm - 1.0) / 24.0;
-	for (t=1; t<n; t++) {
-	    (*pZ)[v][t] = (*pZ)[v][t-1] + (1.0 / 24.0);
+	x[0] = y1 + (100.0 * rm - 1.0) / 24.0;
+	for (t=1; t<T; t++) {
+	    x[t] = x[t-1] + (1.0 / 24.0);
 	}
 	break;
     case PLOTVAR_CALENDAR:
-	strcpy(VARLABEL(pdinfo, v), _("daily plotting variable"));
-	for (t=0; t<n; t++) {
+	for (t=0; t<T; t++) {
 	    if (pdinfo->S != NULL) {
-		(*pZ)[v][t] = get_dec_date(pdinfo->S[t]);
+		x[t] = get_dec_date(pdinfo->S[t]);
 	    } else {
 		char datestr[OBSLEN];
 		    
 		calendar_date_string(datestr, t, pdinfo);
-		(*pZ)[v][t] = get_dec_date(datestr);
+		x[t] = get_dec_date(datestr);
 	    }
 	}
 	break;
     case PLOTVAR_DECADES:
-	strcpy(pdinfo->varname[v], "time");
-	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
-	for (t=0; t<n; t++) {
-	    (*pZ)[v][t] = pdinfo->sd0 + 10 * t;
+	for (t=0; t<T; t++) {
+	    x[t] = pdinfo->sd0 + 10 * t;
 	}
 	break;
     case PLOTVAR_INDEX:
-	strcpy(VARLABEL(pdinfo, v), _("index variable"));
-	for (t=0; t<n; t++) {
-	    (*pZ)[v][t] = (double) (t + 1);
+	for (t=0; t<T; t++) {
+	    x[t] = (double) (t + 1);
 	}
 	break;
     case PLOTVAR_TIME:
-	strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
-	for (t=0; t<n; t++) {
-	    (*pZ)[v][t] = (double) (t + 1);
+	for (t=0; t<T; t++) {
+	    x[t] = (double) (t + 1);
 	}
 	break;
     default:
 	break;
     }
 
-    return v;
-}
-
-/**
- * plotvar:
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Adds to the dataset a special dummy variable for use on the
- * x-axis in plotting, or simple retrieves the ID number of the
- * plotting variable if it already exists.  The name of the variable 
- * is assigned automatically based on the characteristics of the 
- * dataset.
- *
- * Returns: the ID number of the variable (> 0) or -1 on failure.
- */
-
-int plotvar (double ***pZ, DATAINFO *pdinfo)
-{
-    return plotvar_from_varname(pZ, pdinfo, NULL);
+    return x;
 }
 
 static int varnames_from_arg (const char *s, char *v1str, char *v2str)

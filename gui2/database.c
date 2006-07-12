@@ -224,11 +224,12 @@ static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
 
 static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 {
-    int err, lines[1], list[3];
-    int pv;
+    int lines[1], list[2];
+    int err;
+
+    list[0] = list[1] = 1;
 
     if (dbdinfo->structure == CROSS_SECTION) {
-	list[0] = 1; list[1] = 1;
 	err = boxplots(list, NULL, dbZ, dbdinfo, 0);
 	if (err) {
 	    errbox(_("boxplot command failed"));
@@ -236,26 +237,15 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 	return;
     }
 
-    pv = plotvar(dbZ, dbdinfo);
-    if (pv < 0) {
-	errbox(_("gnuplot command failed"));
-	return;
-    }
-
     lines[0] = 1;
-    list[0] = 2; list[1] = 1; list[2] = pv;
 
     err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
-		  &plot_count, GP_GUI);
+		  &plot_count, GP_GUI | GP_IDX);
 
-    if (err < 0) {
+    if (err) {
 	errbox(_("gnuplot command failed"));
 	return;
     }
-
-    if (err > 0) {
-	infobox(_("There were missing observations"));
-    }    
 
     register_graph();
 }

@@ -787,31 +787,28 @@ static int auto_transform_ok (const char *s, int *lnum,
     return ok;
 } 
 
-static int plot_var_ok (const char *s, int *lnum,
+static int add_time_ok (const char *s, int *lnum,
 			double ***pZ, DATAINFO *pdinfo,
 			CMD *cmd)
 {
-    int pnum, ok = 1;
-    
-    if (strcmp(s, "qtrs") &&
-	strcmp(s, "months") &&
-	strcmp(s, "time")) { 
-	return 0;
-    }
-
-    pnum = plotvar_from_varname(pZ, pdinfo, s);
-
-    if (pnum < 0) {
-	cmd->errcode = 1;
-	ok = 0;
-	sprintf(gretl_errmsg, 
-		_("Failed to add plotting index variable"));
+    if (strcmp(s, "time")) {
+	return 0; /* not handled */
+    } else if (cmd->ci == GNUPLOT) {
+	cmd->list[0] -= 1;
+	cmd->opt |= OPT_T;
+	return 1; /* handled */
     } else {
-	cmd->list[*lnum] = pnum;
-	*lnum += 1;
-    }
+	int err = genrtime(pZ, pdinfo, 1);
 
-    return ok;
+	if (err) {
+	    cmd->errcode = err;
+	} else {
+	    cmd->list[*lnum] = varindex(pdinfo, "time");
+	    *lnum += 1;
+	}
+
+	return err == 0;
+    }
 } 
 
 #if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
@@ -1752,9 +1749,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		    }
 		}
 
-		/* Case 3: special plotting variable */
+		/* Case 3: add "time" automatically? */
 		else if (!cmd->errcode && 
-			 plot_var_ok(field, &lnum, pZ, pdinfo, cmd)) {
+			 add_time_ok(field, &lnum, pZ, pdinfo, cmd)) {
 		    /* handled, get on with it */
 		    pos += strlen(field) + 1;
 		    continue; 
@@ -1881,6 +1878,10 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (NEEDS_TWO_VARS(cmd->ci) && cmd->list[0] == 1) {
+	cmd->errcode = E_ARGS;
+    }
+
+    if (cmd->ci == GNUPLOT && !(cmd->opt & OPT_T) && cmd->list[0] < 2) {
 	cmd->errcode = E_ARGS;
     }
 

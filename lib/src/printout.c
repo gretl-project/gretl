@@ -1874,7 +1874,7 @@ int text_print_forecast (const FITRESID *fr,
 			 double ***pZ, DATAINFO *pdinfo, 
 			 gretlopt opt, PRN *prn)
 {
-    int t, pv, err = 0;
+    int t, err = 0;
     int do_errs = (fr->sderr != NULL);
     int pmax = fr->pmax;
     int errpmax = fr->pmax;
@@ -1955,11 +1955,12 @@ int text_print_forecast (const FITRESID *fr,
     /* do we really want a plot for non-time series? */
 
     if (plot && fr->nobs > 0) {
-	pv = plotvar(pZ, pdinfo);
-	if (pv < 0) {
+	const double *obs = gretl_plotx(pdinfo);
+
+	if (obs == NULL) {
 	    err = 1;
 	} else {
-	    err = plot_fcast_errs(fr->t0, fr->t2, (*pZ)[pv], 
+	    err = plot_fcast_errs(fr->t0, fr->t2, obs, 
 				  fr->actual, fr->fitted, maxerr, 
 				  fr->depvar, 
 				  (time_series)? pdinfo->pd : 0);

@@ -3538,9 +3538,8 @@ MODEL panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     *gretl_errmsg = '\0';
 
     if (check_panel_options(opt)) {
-	strcpy(gretl_errmsg, "panel model: inconsistent options");
 	gretl_model_init(&mod);
-	mod.errcode = E_DATA;
+	mod.errcode = E_BADOPT;
     } else if (opt & OPT_W) {
 	mod = panel_wls_by_unit(list, pZ, pdinfo, opt, prn);
     } else {

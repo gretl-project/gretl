@@ -3702,7 +3702,7 @@ static void VAR_resid_plot_call (gpointer p, guint vecm, GtkWidget *w)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int err;
 
-    err = gretl_VAR_residual_plot(var, &Z, datainfo);
+    err = gretl_VAR_residual_plot(var, datainfo);
     
     if (err) {
 	errbox(_("gnuplot command failed"));
@@ -3717,7 +3717,7 @@ static void VAR_resid_mplot_call (gpointer p, guint vecm, GtkWidget *w)
     GRETL_VAR *var = (GRETL_VAR *) vwin->data;
     int err;
 
-    err = gretl_VAR_residual_mplot(var, &Z, datainfo);
+    err = gretl_VAR_residual_mplot(var, datainfo);
     
     if (err) {
 	errbox(_("gnuplot command failed"));

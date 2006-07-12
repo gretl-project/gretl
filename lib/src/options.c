@@ -108,6 +108,7 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_O, "with-lines" },
     { GNUPLOT,  OPT_M, "with-impulses" },
     { GNUPLOT,  OPT_S, "suppress-fitted" },
+    { GNUPLOT,  OPT_T, "time-series" },
     { GNUPLOT,  OPT_Z, "dummy" },
     { GRAPH,    OPT_O, "tall" },
     { HILU,     OPT_B, "no-corc" },

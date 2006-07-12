@@ -286,8 +286,14 @@ static void get_seats_command (char *seats, const char *tramo)
 static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 {
     FILE *fp = NULL;
+    const double *obs;
     char title[32];
     int t;
+
+    obs = gretl_plotx(pdinfo);
+    if (obs == NULL) {
+	return E_ALLOC;
+    }
 
     if (gnuplot_init(PLOT_TRI_GRAPH, &fp)) {
 	return E_FOPEN;
@@ -324,7 +330,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	double y = Z[D13 + 1][t];
 
-	fprintf(fp, "%g %g\n", Z[XAXIS][t], 
+	fprintf(fp, "%g %g\n", obs[t], 
 		(opt == TRAMO_SEATS && tramo_got_irfin)? y / 100.0 : y);
     }
     fputs("e\n", fp);
@@ -337,12 +343,12 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 	    pdinfo->varname[0], I_("trend/cycle"));
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[0][t]);
+	fprintf(fp, "%g %g\n", obs[t], Z[0][t]);
     }
     fputs("e , \\\n", fp);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[D12 + 1][t]);
+	fprintf(fp, "%g %g\n", obs[t], Z[D12 + 1][t]);
     }
     fputs("e\n", fp);
 
@@ -354,12 +360,12 @@ static int graph_series (double **Z, DATAINFO *pdinfo, int opt)
 	    pdinfo->varname[0], I_("adjusted"));
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[0][t]);
+	fprintf(fp, "%g %g\n", obs[t], Z[0][t]);
     }
     fputs("e\n", fp);
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[D11 + 1][t]);
+	fprintf(fp, "%g %g\n", obs[t], Z[D11 + 1][t]);
     }
     fputs("e\n", fp);
 
@@ -947,17 +953,12 @@ int write_tx_data (char *fname, int varnum,
 	    }
 
 	    if (request.opt[TRIGRAPH].save) {
-		int pv = plotvar(&tmpZ, tmpinfo);
-
-		if (pv < 0) {
-		    err = 1;
+		err = graph_series(tmpZ, tmpinfo, request.code);
+		if (err) {
+		    fprintf(stderr, "graph_series() failed\n");
 		} else {
-		    err = graph_series(tmpZ, tmpinfo, request.code);
-		    if (err) {
-			fprintf(stderr, "graph_series() failed\n");
-		    }
+		    *graph = 1;
 		}
-		if (!err) *graph = 1;
 	    }
 	}
 

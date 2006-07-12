@@ -52,21 +52,26 @@ static char gnuplot_path[MAXLEN];
 static const char *auto_ols_string = "# plot includes automatic OLS line\n";
 static int gp_small_font_size;
 
-struct gnuplot_info {
+typedef struct gnuplot_info_ gnuplot_info;
+
+struct gnuplot_info_ {
     GnuplotFlags flags;
+    int err;
+    int lo;
     int ts_plot;
     int yscale;
     int impulses;
-    int lo;
     int ols_ok;
     int t1;
     int t2;
     int npoints;
-    int miss;
     int oddman;
     int toomany;
     double xrange;
+    FILE *fp;
+    int *list;
     const char *yformula;
+    const double *x;
     double *yvar1;
     double *yvar2;
 };
@@ -205,23 +210,55 @@ int gnuplot_test_command (const char *cmd)
 
 #endif /* ! USE_GSPAWN, ! WIN32 */
 
-static int printvars (FILE *fp, int t, const int *list, const double **Z,
-		      const char *label, double offset)
+GnuplotFlags gp_flags (int batch, gretlopt opt)
 {
-    int i, miss = 0;
-    double xx;
+    GnuplotFlags flags = 0;
+
+    if (batch) {
+	flags |= GP_BATCH;
+    }
+
+    if (opt & OPT_M) {
+	flags |= GP_IMPULSES;
+    } else if (opt & OPT_L) {
+	flags |= GP_LINES;
+    }
+
+    if (opt & OPT_Z) {
+	flags |= GP_DUMMY;
+    } else {
+	if (opt & OPT_S) {
+	    flags |= GP_OLS_OMIT;
+	}
+	if (opt & OPT_T) {
+	    flags |= GP_IDX;
+	}
+    }
+
+    return flags;
+}
+
+static void printvars (FILE *fp, int t, const int *list, const double **Z,
+		       const double *x, const char *label, double offset)
+{
+    double xt;
+    int i;
+
+    if (x != NULL) {
+	xt = x[t] + offset;
+	fprintf(fp, "%.8g ", xt);
+    }
 
     for (i=1; i<=list[0]; i++) {
-	xx = Z[list[i]][t];
-	if (na(xx)) {
+	xt = Z[list[i]][t];
+	if (na(xt)) {
 	    fputs("? ", fp);
-	    miss = 1;
 	} else {
-	    if (i == 1) { 
+	    if (x == NULL && i == 1) { 
 		/* the x variable */
-		xx += offset;
+		xt += offset;
 	    }
-	    fprintf(fp, "%.8g ", xx);
+	    fprintf(fp, "%.8g ", xt);
 	}
     }
 
@@ -230,15 +267,13 @@ static int printvars (FILE *fp, int t, const int *list, const double **Z,
     }
 
     fputc('\n', fp);
-    
-    return miss;
 }
 
-static int factorized_vars (struct gnuplot_info *gpinfo,
-			    const double **Z, int ynum, int dum)
+static int factorized_vars (gnuplot_info *gpinfo, const double **Z)
 {
-    int fn, t, i = 0;
-    double xx;
+    int ynum = gpinfo->list[1];
+    int dum = gpinfo->list[3];
+    int fn, t, i;
 
     fn = gpinfo->t2 - gpinfo->t1 + 1;
 
@@ -253,13 +288,13 @@ static int factorized_vars (struct gnuplot_info *gpinfo,
 	return 1;
     }
 
+    i = 0;
     for (t=gpinfo->t1; t<=gpinfo->t2; t++) {
 	if (na(Z[ynum][t])) {
 	    gpinfo->yvar1[i] = NADBL;
 	    gpinfo->yvar2[i] = NADBL;
 	} else {
-	    xx = Z[dum][t];
-	    if (floateq(xx, 1.)) {
+	    if (Z[dum][t] == 1.0) {
 		gpinfo->yvar1[i] = Z[ynum][t];
 		gpinfo->yvar2[i] = NADBL;
 	    } else {
@@ -766,21 +801,8 @@ enum {
     GTITLE_AFV
 } graph_titles;
 
-static int auto_plot_var (const char *s)
-{
-    if (strcmp(s, "t") == 0 ||
-	strcmp(s, "annual") == 0 ||
-	strcmp(s, "decdate") == 0 ||
-	strcmp(s, "qtrs") == 0 ||
-	strcmp(s, "months") == 0 ||
-	strcmp(s, "hrs") == 0) {
-	return 1;
-    } else {
-	return 0;
-    }
-}
-
-static void make_gtitle (FILE *fp, int code, const char *s1, const char *s2)
+static void make_gtitle (gnuplot_info *gpinfo, int code, 
+			 const char *s1, const char *s2)
 {
     char title[128];
     char depvar[VNAMELEN];
@@ -800,7 +822,7 @@ static void make_gtitle (FILE *fp, int code, const char *s1, const char *s2)
 	sprintf(title, I_("Actual and fitted %s"), s1);
 	break;
     case GTITLE_AFV:
-	if (s2 == NULL || auto_plot_var(s2)) {
+	if (s2 == NULL || gpinfo->ts_plot) {
 	    sprintf(title, I_("Actual and fitted %s"), s1);
 	} else {
 	    sprintf(title, I_("Actual and fitted %s versus %s"), s1, s2);
@@ -812,7 +834,7 @@ static void make_gtitle (FILE *fp, int code, const char *s1, const char *s2)
     }
 
     if (*title != '\0') {
-	fprintf(fp, "set title '%s'\n", title);
+	fprintf(gpinfo->fp, "set title '%s'\n", title);
     }
 }
 
@@ -905,9 +927,9 @@ get_gnuplot_output_file (FILE **fpp, GnuplotFlags flags,
     return err;
 }
 
-static int 
-get_ols_line (struct gnuplot_info *gpinfo, const int *list, 
-	      double ***pZ, DATAINFO *pdinfo, char *ols_line)
+static int get_ols_line (gnuplot_info *gpinfo, 
+			 double ***pZ, DATAINFO *pdinfo, 
+			 char *ols_line)
 {
     MODEL plotmod;
     char title[48];
@@ -920,9 +942,9 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
 #endif
 
     olslist[0] = 3;
-    olslist[1] = list[1];
+    olslist[1] = gpinfo->list[1];
     olslist[2] = 0;
-    olslist[3] = list[2];
+    olslist[3] = gpinfo->list[2];
 	
     plotmod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
     err = plotmod.errcode;
@@ -952,11 +974,11 @@ get_ols_line (struct gnuplot_info *gpinfo, const int *list,
 }
 
 static void 
-print_x_range (struct gnuplot_info *gpinfo, const double *x, FILE *fp)
+print_x_range (gnuplot_info *gpinfo, const double *x)
 {
     if (gretl_isdummy(gpinfo->t1, gpinfo->t2, x)) {
-	fputs("set xrange [-1:2]\n", fp);	
-	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fp);
+	fputs("set xrange [-1:2]\n", gpinfo->fp);	
+	fputs("set xtics (\"0\" 0, \"1\" 1)\n", gpinfo->fp);
 	gpinfo->xrange = 3;
     } else {
 	double xmin, xmax;
@@ -965,7 +987,7 @@ print_x_range (struct gnuplot_info *gpinfo, const double *x, FILE *fp)
 	gpinfo->xrange = xmax - xmin;
 	xmin -= gpinfo->xrange * .025;
 	xmax += gpinfo->xrange * .025;
-	fprintf(fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
+	fprintf(gpinfo->fp, "set xrange [%.7g:%.7g]\n", xmin, xmax);
 	gpinfo->xrange = xmax - xmin;
     }
 }
@@ -974,8 +996,7 @@ print_x_range (struct gnuplot_info *gpinfo, const double *x, FILE *fp)
    to use two y axes */
 
 static void
-check_for_yscale (struct gnuplot_info *gpinfo, const int *list, 
-		  const double **Z)
+check_for_yscale (gnuplot_info *gpinfo, const double **Z)
 {
     double ymin[6], ymax[6];
     double ratio;
@@ -986,15 +1007,16 @@ check_for_yscale (struct gnuplot_info *gpinfo, const int *list,
 #endif
 
     /* find minima, maxima of the y-axis vars */
-    for (i=1; i<list[0]; i++) {
-	gretl_minmax(gpinfo->t1, gpinfo->t2, Z[list[i]], &ymin[i], &ymax[i]);
+    for (i=1; i<gpinfo->list[0]; i++) {
+	gretl_minmax(gpinfo->t1, gpinfo->t2, Z[gpinfo->list[i]], 
+		     &ymin[i], &ymax[i]);
     }
 
     gpinfo->yscale = 0;
 
-    for (i=1; i<list[0]; i++) {
+    for (i=1; i<gpinfo->list[0]; i++) {
 	oddcount = 0;
-	for (j=1; j<list[0]; j++) {
+	for (j=1; j<gpinfo->list[0]; j++) {
 	    if (j == i) {
 		continue;
 	    }
@@ -1004,46 +1026,50 @@ check_for_yscale (struct gnuplot_info *gpinfo, const int *list,
 		oddcount++;
 	    }
 	}
-	if (oddcount == list[0] - 2) {
+	if (oddcount == gpinfo->list[0] - 2) {
 	    gpinfo->oddman = i;
 	    break;
 	}
     }
 }
 
-static int 
-print_gp_dummy_data (struct gnuplot_info *gpinfo, int *list,
-		     const double **Z, const DATAINFO *pdinfo,
-		     FILE *fp)
+static int print_gp_dummy_data (gnuplot_info *gpinfo, 
+				const double **Z, 
+				const DATAINFO *pdinfo)
 {
     double xx, yy;
-    int i, t;
+    int i, s, t;
 
     for (i=0; i<2; i++) {
 	for (t=gpinfo->t1; t<=gpinfo->t2; t++) {
-	    xx = Z[list[2]][t];
-	    if (na(xx)) {
-		continue;
-	    }
-	    yy = (i)? gpinfo->yvar2[t-gpinfo->t1] : gpinfo->yvar1[t-gpinfo->t1];
-	    if (na(yy)) {
-		fprintf(fp, "%.8g ?\n", xx);
+	    s = t - gpinfo->t1;
+	    if (gpinfo->x != NULL) {
+		xx = gpinfo->x[t];
 	    } else {
-		fprintf(fp, "%.8g %.8g", xx, yy);
+		xx = Z[gpinfo->list[2]][t];
+		if (na(xx)) {
+		    continue;
+		}
+	    }
+	    yy = (i > 0)? gpinfo->yvar2[s] : gpinfo->yvar1[s];
+	    if (na(yy)) {
+		fprintf(gpinfo->fp, "%.8g ?\n", xx);
+	    } else {
+		fprintf(gpinfo->fp, "%.8g %.8g", xx, yy);
 		if (!gpinfo->ts_plot) {
 		    if (pdinfo->markers) {
-			fprintf(fp, " # %s", pdinfo->S[t]);
+			fprintf(gpinfo->fp, " # %s", pdinfo->S[t]);
 		    } else if (dataset_is_time_series(pdinfo)) {
 			char obs[OBSLEN];
 
 			ntodate(obs, t, pdinfo);
-			fprintf(fp, " # %s", obs);
+			fprintf(gpinfo->fp, " # %s", obs);
 		    }
 		}
-		fputc('\n', fp);
+		fputc('\n', gpinfo->fp);
 	    }
 	}
-	fputs("e\n", fp);
+	fputs("e\n", gpinfo->fp);
     }
 
     return 0;
@@ -1063,30 +1089,37 @@ maybe_print_panel_jot (int t, const DATAINFO *pdinfo, FILE *fp)
 }
 
 static void
-print_gp_data (struct gnuplot_info *gpinfo, const int *list,
-	       const double **Z, const DATAINFO *pdinfo,
-	       FILE *fp)
+print_gp_data (gnuplot_info *gpinfo, const double **Z, 
+	       const DATAINFO *pdinfo)
 {
     double offset = 0.0;
     int datlist[3];
+    int ynum = 2;
     int i, t;
 
     /* multi impulse plot? calculate offset for lines */
-    if ((gpinfo->flags & GP_IMPULSES) && list[gpinfo->lo] > 2) {
+    if ((gpinfo->flags & GP_IMPULSES) && gpinfo->list[gpinfo->lo] > 2) {
 	offset = 0.10 * gpinfo->xrange / gpinfo->npoints;
-    }	
+    }
 
-    datlist[0] = 2;
-    datlist[1] = list[gpinfo->lo];
+    if (gpinfo->x != NULL) {
+	datlist[0] = 1;
+	ynum = 1;
+    } else {
+	datlist[0] = 2;
+	datlist[1] = gpinfo->list[gpinfo->lo];
+    }
+
+    /* loop across the variables, printing x then y[i] for each i */
 
     for (i=1; i<gpinfo->lo; i++) {
 	double xoff = offset * (i - 1);
 
-	datlist[2] = list[i];
+	datlist[ynum] = gpinfo->list[i];
+
 	for (t=gpinfo->t1; t<=gpinfo->t2; t++) {
 	    const char *label = NULL;
 	    char obs[OBSLEN];
-	    int t_miss;
 
 	    if (!gpinfo->ts_plot && i == 1) {
 		if (pdinfo->markers) {
@@ -1098,23 +1131,23 @@ print_gp_data (struct gnuplot_info *gpinfo, const int *list,
 	    }
 
 	    if (gpinfo->ts_plot && pdinfo->structure == STACKED_TIME_SERIES) {
-		maybe_print_panel_jot(t, pdinfo, fp);
+		maybe_print_panel_jot(t, pdinfo, gpinfo->fp);
 	    }
 
-	    t_miss = printvars(fp, t, datlist, Z, label, xoff);
-
-	    if ((gpinfo->flags & GP_GUI) && gpinfo->miss == 0) {
-		gpinfo->miss = t_miss;
-	    }
+	    printvars(gpinfo->fp, t, datlist, Z, gpinfo->x, label, xoff);
 	}
-	fputs("e\n", fp);
+
+	fputs("e\n", gpinfo->fp);
     }
 }
 
 static void 
-gp_info_init (struct gnuplot_info *gpinfo, GnuplotFlags flags,
-	      int lo, const char *literal, int t1, int t2)
+gp_info_init (gnuplot_info *gpinfo, GnuplotFlags flags, FILE *fp,
+	      const int *list, const char *literal, int t1, int t2)
 {
+    int lo = list[0];
+
+    gpinfo->err = 0;
     gpinfo->flags = flags;
     gpinfo->ts_plot = 1;   /* plotting against time on x-axis? */
     gpinfo->yscale = 0;    /* two y axis scales needed? */
@@ -1124,11 +1157,32 @@ gp_info_init (struct gnuplot_info *gpinfo, GnuplotFlags flags,
     gpinfo->t1 = t1;
     gpinfo->t2 = t2;
     gpinfo->npoints = 0;
-    gpinfo->miss = 0;
     gpinfo->oddman = 0;
     gpinfo->xrange = 0.0;
     gpinfo->toomany = 0;
     gpinfo->yformula = NULL;
+    gpinfo->fp = fp;
+
+    gpinfo->x = NULL;
+    gpinfo->yvar1 = NULL;
+    gpinfo->yvar2 = NULL;
+    gpinfo->list = NULL;
+
+    if (list[0] < 2 && !(flags & GP_IDX)) {
+	gpinfo->err = E_ARGS;
+	return;
+    }
+
+    if ((flags & GP_DUMMY) && (flags & GP_IDX)) {
+	gpinfo->err = E_BADOPT;
+	return;
+    }
+
+    gpinfo->list = gretl_list_copy(list);
+    if (gpinfo->list == NULL) {
+	gpinfo->err = E_ALLOC;
+	return;
+    }
 
     if (lo > MAX_PLOT_LINES + 1) {
 	gpinfo->toomany = 1;
@@ -1153,8 +1207,17 @@ gp_info_init (struct gnuplot_info *gpinfo, GnuplotFlags flags,
     if (literal != NULL && strstr(literal, "set style data")) {
 	gpinfo->flags |= GP_DATA_STYLE;
     }
+}
 
-    gpinfo->yvar1 = gpinfo->yvar2 = NULL;
+static void destroy_gpinfo (gnuplot_info *gpinfo)
+{
+    free(gpinfo->yvar1);
+    free(gpinfo->yvar2);
+    free(gpinfo->list);
+
+    if (gpinfo->fp != NULL) {
+	fclose(gpinfo->fp);
+    }
 }
 
 #if GP_DEBUG
@@ -1189,6 +1252,9 @@ static void print_gnuplot_flags (GnuplotFlags flags)
     if (flags & GP_FILE) {
 	fprintf(stderr, " GP_FILE\n");
     }
+    if (flags & GP_IDX) {
+	fprintf(stderr, " GP_IDX\n");
+    }
 }
 #endif
 
@@ -1214,7 +1280,7 @@ static void set_withstr (GnuplotFlags flags, const int *lines,
 }
 
 static void graph_list_adjust_sample (int *list, 
-				      struct gnuplot_info *ginfo,
+				      gnuplot_info *ginfo,
 				      const double **Z)
 {
     int t1min = ginfo->t1;
@@ -1272,9 +1338,48 @@ static void graph_list_adjust_sample (int *list,
     ginfo->lo = list[0];
 }
 
+static void maybe_add_plotx (gnuplot_info *gpinfo, 
+			     const DATAINFO *pdinfo)
+{
+    int add0 = 0;
+
+    /* are we really doing a time-series plot? */
+    if (!strcmp(pdinfo->varname[gpinfo->list[gpinfo->lo]], "time")) {
+	; /* yes */
+    } else if (gpinfo->flags & GP_IDX) {
+	add0 = 1; /* yes */
+    } else {
+	/* no: get out */
+	gpinfo->ts_plot = 0;
+	return;
+    }
+
+    gpinfo->x = gretl_plotx(pdinfo);
+    if (gpinfo->x == NULL) {
+	gpinfo->err = E_ALLOC;
+    }
+
+    /* a bit ugly, but add a dummy list entry for
+       the 'virtual' plot variable */
+    if (add0) {
+	gretl_list_append_term(&gpinfo->list, 0);
+	if (gpinfo->list == NULL) {
+	    gpinfo->err = E_ALLOC;
+	} else {
+	    gpinfo->lo = gpinfo->list[0];
+	}
+    }
+
+#if GP_DEBUG
+    fprintf(stderr, "maybe_add_plotx: gpinfo->x at %p\n", 
+	    (void *) gpinfo->x);
+    printlist(gpinfo->list, "gpinfo->list");
+#endif
+}
+
 /**
  * gnuplot:
- * @list: list of variables to plot, by ID number.
+ * @plotlist: list of variables to plot, by ID number.
  * @lines: vector of 1s and 0s to indicate whether variables should
  * be represented by lines or not (or NULL).
  * @literal: commands to be passed to gnuplot.
@@ -1286,29 +1391,30 @@ static void graph_list_adjust_sample (int *list,
  * Writes a gnuplot plot file to display the values of the
  * variables in @list and calls gnuplot to make the graph.
  *
- * Returns: 0 on successful completion, -1 if the gnuplot system
- * command fails, or 1 if there are missing data values.
+ * Returns: 0 on successful completion, non-zero code on error.
  */
 
-int gnuplot (int *list, const int *lines, const char *literal,
+int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
 	     int *plot_count, GnuplotFlags flags)
 {
     FILE *fp = NULL;
+    int *list = NULL;
     char s1[MAXDISP] = {0};
     char s2[MAXDISP] = {0};
     char xlabel[MAXDISP] = {0};
     char withstr[16] = {0};
     char keystr[48] = {0};
     char ols_line[128] = {0};
-    int xvar, i;
+    int i;
 
-    struct gnuplot_info gpinfo;
+    gnuplot_info gpinfo;
 
     *gretl_errmsg = '\0';
 
 #if GP_DEBUG
     print_gnuplot_flags(flags);
+    printlist(plotlist, "gnuplot: plotlist");
 #endif
 
     /* below: did have "height 1 width 1 box" for win32,
@@ -1319,40 +1425,37 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	return E_FOPEN;
     } 
 
-    gp_info_init(&gpinfo, flags, list[0], literal, pdinfo->t1, pdinfo->t2);
+    gp_info_init(&gpinfo, flags, fp, plotlist, literal, 
+		 pdinfo->t1, pdinfo->t2);
+    if (gpinfo.err) {
+	goto bailout;
+    }
+
+    maybe_add_plotx(&gpinfo, pdinfo);
+    if (gpinfo.err) {
+	goto bailout;
+    }
 
     if (gpinfo.impulses) {
 	strcpy(withstr, "w i");
     }
 
-    /* check whether we're doing a time-series plot */
-    if (!strcmp(pdinfo->varname[list[gpinfo.lo]], "time")) {
-	int pv;
-
-	pv = plotvar(pZ, pdinfo);
-	if (pv > 0) {
-	    list[gpinfo.lo] = pv;
-	} else {
-	    fclose(fp);
-	    return E_ALLOC;
-	}
-    } else if (!auto_plot_var(pdinfo->varname[list[gpinfo.lo]])) {
-	gpinfo.ts_plot = 0;
-    } 
+    /* convenience pointer */
+    list = gpinfo.list;
 
     /* set x-axis label for non-time series plots */
     if (!gpinfo.ts_plot) {
 	if (flags & GP_DUMMY) {
-	    strcpy(xlabel, series_name(pdinfo, list[2])); 
+	    strcpy(xlabel, series_name(pdinfo, gpinfo.list[2])); 
 	} else {
-	    strcpy(xlabel, series_name(pdinfo, list[gpinfo.lo]));
+	    strcpy(xlabel, series_name(pdinfo, gpinfo.list[gpinfo.lo]));
 	}
     }	
 
     /* add a simple regression line if appropriate */
     if (!gpinfo.impulses && !(flags & GP_OLS_OMIT) && gpinfo.lo == 2 && 
 	!gpinfo.ts_plot && !(flags & GP_RESIDS)) {
-	get_ols_line(&gpinfo, list, pZ, pdinfo, ols_line);
+	get_ols_line(&gpinfo, pZ, pdinfo, ols_line);
 	if (gpinfo.ols_ok) {
 	    fprintf(fp, "# X = '%s' (%d)\n", pdinfo->varname[list[2]], list[2]);
 	    fprintf(fp, "# Y = '%s' (%d)\n", pdinfo->varname[list[1]], list[1]);
@@ -1362,16 +1465,15 @@ int gnuplot (int *list, const int *lines, const char *literal,
     /* adjust sample range, and reject if it's empty */
     graph_list_adjust_sample(list, &gpinfo, (const double **) *pZ);
     if (gpinfo.t1 == gpinfo.t2 || gpinfo.lo == 1) {
-	fclose(fp);
-	return GRAPH_NO_DATA;
+	gpinfo.err = GRAPH_NO_DATA;
+	goto bailout;
     }
 
     /* separation by dummy: create special vars */
     if (flags & GP_DUMMY) { 
-	if (gpinfo.lo != 3 ||
-	    factorized_vars(&gpinfo, (const double **) *pZ, list[1], list[3])) {
-	    fclose(fp);
-	    return -1;
+	if (gpinfo.lo != 3 || factorized_vars(&gpinfo, (const double **) *pZ)) {
+	    gpinfo.err = E_DATA;
+	    goto bailout;
 	}
     } 
 
@@ -1405,15 +1507,15 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	if (gpinfo.ols_ok) {
 	    fputs(auto_ols_string, fp);
 	    if (flags & GP_FA) {
-		make_gtitle(fp, GTITLE_AFV, series_name(pdinfo, list[1]), 
+		make_gtitle(&gpinfo, GTITLE_AFV, series_name(pdinfo, list[1]), 
 			    series_name(pdinfo, list[2]));
 	    } else {
-		make_gtitle(fp, GTITLE_VLS, series_name(pdinfo, list[1]), 
+		make_gtitle(&gpinfo, GTITLE_VLS, series_name(pdinfo, list[1]), 
 			    xlabel);
 	    }
 	}
 	if (flags & GP_RESIDS && !(flags & GP_DUMMY)) { 
-	    make_gtitle(fp, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
+	    make_gtitle(&gpinfo, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	    fprintf(fp, "set ylabel '%s'\n", I_("residual"));
 	} else {
 	    fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[1]));
@@ -1422,14 +1524,14 @@ int gnuplot (int *list, const int *lines, const char *literal,
 	    strcpy(keystr, "set nokey\n");
 	}
     } else if ((flags & GP_RESIDS) && (flags & GP_DUMMY)) { 
-	make_gtitle(fp, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
+	make_gtitle(&gpinfo, GTITLE_RESID, VARLABEL(pdinfo, list[1]), NULL);
 	fprintf(fp, "set ylabel '%s'\n", I_("residual"));
     } else if (flags & GP_FA) {
 	if (list[3] == pdinfo->v - 1) { 
 	    /* x var is just time or index: is this always right? */
-	    make_gtitle(fp, GTITLE_AF, series_name(pdinfo, list[2]), NULL);
+	    make_gtitle(&gpinfo, GTITLE_AF, series_name(pdinfo, list[2]), NULL);
 	} else {
-	    make_gtitle(fp, GTITLE_AFV, series_name(pdinfo, list[2]), 
+	    make_gtitle(&gpinfo, GTITLE_AFV, series_name(pdinfo, list[2]), 
 			series_name(pdinfo, list[3]));
 	}
 	fprintf(fp, "set ylabel '%s'\n", series_name(pdinfo, list[2]));
@@ -1443,11 +1545,16 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     gretl_push_c_numeric_locale();
 
-    xvar = (flags & GP_DUMMY)? list[gpinfo.lo - 1] : list[gpinfo.lo];
-    print_x_range(&gpinfo, (const double *) (*pZ)[xvar], fp);
+    if (gpinfo.x != NULL) {
+	print_x_range(&gpinfo, gpinfo.x);
+    } else {
+	int v = (flags & GP_DUMMY)? list[gpinfo.lo - 1] : list[gpinfo.lo];
+
+	print_x_range(&gpinfo, (const double *) (*pZ)[v]);
+    }
 
     if (gpinfo.yscale) { 
-	check_for_yscale(&gpinfo, list, (const double **) *pZ);
+	check_for_yscale(&gpinfo, (const double **) *pZ);
 	if (gpinfo.yscale) {
 	    fputs("set ytics nomirror\n", fp);
 	    fputs("set y2tics\n", fp);
@@ -1520,31 +1627,32 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     /* print the data to be graphed */
     if (flags & GP_DUMMY) {
-	print_gp_dummy_data(&gpinfo, list, (const double **) *pZ, pdinfo,
-			    fp);
-	free(gpinfo.yvar1);
-	free(gpinfo.yvar2);
+	print_gp_dummy_data(&gpinfo, (const double **) *pZ, pdinfo);
     } else {
-	print_gp_data(&gpinfo, list, (const double **) *pZ, pdinfo, fp);
+	print_gp_data(&gpinfo, (const double **) *pZ, pdinfo);
     }
+
+    /* flush stream */
+    fclose(gpinfo.fp);
+    gpinfo.fp = NULL;
 
     gretl_pop_c_numeric_locale();
 
-    fclose(fp);
-
     if (!(flags & GP_BATCH)) {
-	if (gnuplot_make_graph()) {
-	    gpinfo.miss = -1;
-	}
+	gpinfo.err = gnuplot_make_graph();
     }
 
-    return gpinfo.miss;
+ bailout:
+
+    destroy_gpinfo(&gpinfo);
+
+    return gpinfo.err;
 }
 
 /**
  * multi_scatters:
  * @list: list of variables to plot, by ID number.
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: data information struct.
  * @plot_count: count of graphs shown to date.
  * @flags: option flags.
@@ -1556,11 +1664,12 @@ int gnuplot (int *list, const int *lines, const char *literal,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int multi_scatters (const int *list, double ***pZ, 
-		    DATAINFO *pdinfo, int *plot_count, 
+int multi_scatters (const int *list, const double **Z, 
+		    const DATAINFO *pdinfo, int *plot_count, 
 		    GnuplotFlags flags)
 {
-    int xvar = 0, yvar = 0, timevar = 0;
+    int xvar = 0, yvar = 0;
+    const double *obs = NULL;
     int *plotlist = NULL;
     int pos, nplots = 0;
     FILE *fp = NULL;
@@ -1570,8 +1679,8 @@ int multi_scatters (const int *list, double ***pZ,
 
     if (pos == 0) {
 	/* plot against time or index */
-	timevar = plotvar(pZ, pdinfo);
-	if (timevar < 0) {
+	obs = gretl_plotx(pdinfo);
+	if (obs == NULL) {
 	    return E_ALLOC;
 	}
 	plotlist = gretl_list_copy(list);
@@ -1618,8 +1727,8 @@ int multi_scatters (const int *list, double ***pZ,
 
     gretl_push_c_numeric_locale();
 
-    if (timevar) {
-	double startdate = (*pZ)[timevar][pdinfo->t1];
+    if (obs != NULL) {
+	double startdate = obs[pdinfo->t1];
 	int jump = (pdinfo->t2 - pdinfo->t1 + 1) / (2 * pdinfo->pd);
 
 	fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
@@ -1648,7 +1757,7 @@ int multi_scatters (const int *list, double ***pZ,
 	    else if (i == 5) fputs("0.64,0.0\n", fp);
 	}
 
-	if (timevar) {
+	if (obs != NULL) {
 	    fputs("set noxlabel\n", fp);
 	    fputs("set noylabel\n", fp);
 	    fprintf(fp, "set title '%s'\n", pdinfo->varname[pv]);
@@ -1669,10 +1778,8 @@ int multi_scatters (const int *list, double ***pZ,
 
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    double xx;
-	    int m;
 
-	    m = (yvar)? plotlist[i+1] : (xvar)? xvar : timevar;
-	    xx = (*pZ)[m][t];
+	    xx = (yvar)? Z[pv][t] : (xvar)? Z[xvar][t] : obs[t];
 
 	    if (na(xx)) {
 		fputs("? ", fp);
@@ -1680,8 +1787,7 @@ int multi_scatters (const int *list, double ***pZ,
 		fprintf(fp, "%.8g ", xx);
 	    }
 
-	    m = (yvar)? yvar : pv;
-	    xx = (*pZ)[m][t];
+	    xx = (yvar)? Z[yvar][t] : Z[pv][t];
 
 	    if (na(xx)) {
 		fputs("?\n", fp);
@@ -1837,7 +1943,7 @@ int gnuplot_3d (int *list, const char *literal,
 	if (pdinfo->markers) {
 	    label = pdinfo->S[t];
 	}
-	printvars(fq, t, datlist, (const double **) *pZ, label, 0.0);
+	printvars(fq, t, datlist, (const double **) *pZ, NULL, label, 0.0);
     }	
     fputs("e\n", fq);
 
@@ -2149,7 +2255,6 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
 
     gretl_pop_c_numeric_locale();
 
-
     fputs("set missing \"?\"\n", fp);
 
     if (time_series) {
@@ -2211,29 +2316,26 @@ int plot_fcast_errs (int t1, int t2, const double *obs,
     return gnuplot_make_graph();
 }
 
-int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
+int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
 {
     FILE *fp = NULL;
-    double *h, *obs;
+    const double *obs;
+    const double *h;
     double sd2;
-    int t, pv;
-    int err;
+    int t, err;
 
     h = gretl_model_get_data(pmod, "garch_h");
     if (h == NULL) {
 	return E_DATA;
     }
 
-    if ((err = gnuplot_init(PLOT_GARCH, &fp))) {
-	return err;
+    obs = gretl_plotx(pdinfo);
+    if (obs == NULL) {
+	return E_ALLOC;
     }
 
-    pv = plotvar(pZ, pdinfo);
-    if (pv > 0) {
-	obs = (*pZ)[pv];
-    } else {
-	fclose(fp);
-	return E_ALLOC;
+    if ((err = gnuplot_init(PLOT_GARCH, &fp))) {
+	return err;
     }
 
     fprintf(fp, "set key left top\n"
@@ -3140,12 +3242,12 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
     return gnuplot_make_graph();
 }
 
-int gretl_VAR_residual_plot (const GRETL_VAR *var, 
-			     double ***pZ, DATAINFO *pdinfo)
+int gretl_VAR_residual_plot (const GRETL_VAR *var, const DATAINFO *pdinfo)
 {
     const gretl_matrix *E;
     FILE *fp = NULL;
-    int nvars, nobs, pv;
+    const double *obs;
+    int nvars, nobs;
     int i, v, t, t1, err;
 
     E = gretl_VAR_get_residual_matrix(var);
@@ -3159,6 +3261,8 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
     if (err) {
 	return err;
     }
+
+    obs = gretl_plotx(pdinfo);
 
     nvars = gretl_matrix_cols(E);
     nobs = gretl_matrix_rows(E);
@@ -3179,16 +3283,14 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
 	}
     }
 
-    pv = plotvar(pZ, pdinfo);
-	
     gretl_push_c_numeric_locale();
 
     for (i=0; i<nvars; i++) {
 	for (t=0; t<nobs; t++) {
 	    double eti = gretl_matrix_get(E, t, i);
 
-	    if (pv > 0) {
-		fprintf(fp, "%g %.8g\n", (*pZ)[pv][t+t1], eti);
+	    if (obs != NULL) {
+		fprintf(fp, "%g %.8g\n", obs[t+t1], eti);
 	    } else {
 		fprintf(fp, "%d %.8g\n", t+1, eti);
 	    }
@@ -3203,16 +3305,15 @@ int gretl_VAR_residual_plot (const GRETL_VAR *var,
     return gnuplot_make_graph();
 }
 
-int gretl_VAR_residual_mplot (const GRETL_VAR *var, 
-			      double ***pZ, DATAINFO *pdinfo)
+int gretl_VAR_residual_mplot (const GRETL_VAR *var, const DATAINFO *pdinfo) 
 {
     const gretl_matrix *E;
     FILE *fp = NULL;
+    const double *obs;
     double startdate;
     double xmin, xmax, xrange;
-    int nvars, nobs;
+    int nvars, nobs, jump;
     int i, v, t, t1;
-    int jump, timevar;
     int err = 0;
 
     E = gretl_VAR_get_residual_matrix(var);
@@ -3225,8 +3326,8 @@ int gretl_VAR_residual_mplot (const GRETL_VAR *var,
 	return 1;
     }
 
-    timevar = plotvar(pZ, pdinfo);
-    if (timevar < 0) {
+    obs = gretl_plotx(pdinfo);
+    if (obs == NULL) {
 	return E_ALLOC;
     }
 
@@ -3245,11 +3346,11 @@ int gretl_VAR_residual_mplot (const GRETL_VAR *var,
 
     gretl_push_c_numeric_locale();
 
-    startdate = (*pZ)[timevar][t1];
+    startdate = obs[t1];
     jump = nobs / (2 * pdinfo->pd);
     fprintf(fp, "set xtics %g, %d\n", ceil(startdate), jump);
 
-    gretl_minmax(t1, t1 + nobs - 1, (*pZ)[timevar], &xmin, &xmax);
+    gretl_minmax(t1, t1 + nobs - 1, obs, &xmin, &xmax);
     xrange = xmax - xmin;
     xmin -= xrange * .025;
     xmax += xrange * .025;
@@ -3285,8 +3386,7 @@ int gretl_VAR_residual_mplot (const GRETL_VAR *var,
 	for (t=0; t<nobs; t++) {
 	    double xx;
 
-	    xx = (*pZ)[timevar][t+t1];
-	    fprintf(fp, "%.8g\t", xx);
+	    fprintf(fp, "%.8g\t", obs[t+t1]);
 	    xx = gretl_matrix_get(E, t, i);
 	    if (na(xx)) {
 		fputs("?\n", fp);

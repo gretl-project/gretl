@@ -209,15 +209,16 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 			  double ***pZ, DATAINFO *pdinfo)
 {
     FILE *fp = NULL;
-    int t, xvar = 0;
+    const double *obs = NULL;
+    int t;
 
     if (gnuplot_init(PLOT_LEVERAGE, &fp)) {
 	return E_FOPEN;
     }
 
     if (dataset_is_time_series(pdinfo)) { 
-	xvar = plotvar(pZ, pdinfo);
-	if (xvar < 0) {
+	obs = gretl_plotx(pdinfo);
+	if (obs == NULL) {
 	    if (fp != NULL) {
 		fclose(fp);
 	    }
@@ -230,7 +231,7 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
     fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fp);
     fputs("set xzeroaxis\n", fp);
     fputs("set nokey\n", fp); 
-    if (!xvar) { 
+    if (obs == NULL) { 
 	fprintf(fp, "set xrange [%g:%g]\n", 
 		pmod->t1 + 0.5, pmod->t2 + 1.5);
     }
@@ -246,14 +247,14 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	double h = gretl_matrix_get(S, t - pmod->t1, 0);
 
 	if (na(h)) {
-	    if (xvar) {
-		fprintf(fp, "%g ?\n", (*pZ)[xvar][t]);
+	    if (obs != NULL) {
+		fprintf(fp, "%g ?\n", obs[t]);
 	    } else { 
 		fprintf(fp, "%d ?\n", t + 1);
 	    }
 	} else {
-	    if (xvar) {
-		fprintf(fp, "%g %g\n", (*pZ)[xvar][t], h);
+	    if (obs != NULL) {
+		fprintf(fp, "%g %g\n", obs[t], h);
 	    } else { 
 		fprintf(fp, "%d %g\n", t + 1, h);
 	    }
@@ -272,14 +273,14 @@ static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 	double f = gretl_matrix_get(S, t - pmod->t1, 1);
 
 	if (na(f)) {
-	    if (xvar) {
-		fprintf(fp, "%g ?\n", (*pZ)[xvar][t]);
+	    if (obs != NULL) {
+		fprintf(fp, "%g ?\n", obs[t]);
 	    } else {
 		fprintf(fp, "%d ?\n", t + 1);
 	    }
 	} else {
-	    if (xvar) {
-		fprintf(fp, "%g %g\n", (*pZ)[xvar][t], f);
+	    if (obs != NULL) {
+		fprintf(fp, "%g %g\n", obs[t], f);
 	    } else {
 		fprintf(fp, "%d %g\n", t + 1, f);
 	    }

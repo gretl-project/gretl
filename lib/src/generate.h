@@ -79,11 +79,9 @@ int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
 
 int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt);
 
-int plotvar (double ***pZ, DATAINFO *pdinfo);
-
-int plotvar_from_varname (double ***pZ, DATAINFO *pdinfo, const char *vname);
-
 int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
+
+const double *gretl_plotx (const DATAINFO *pdinfo);
 
 const char *get_model_stat_word (int idx);
 

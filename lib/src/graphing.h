@@ -36,7 +36,8 @@ typedef enum {
     GP_GUI        = 1 << 6,  /* called from GUI context */
     GP_OLS_OMIT   = 1 << 7,  /* Don't draw fitted line on graph */
     GP_DATA_STYLE = 1 << 8,  /* data style is set by user */
-    GP_FILE       = 1 << 9   /* send output to named file */
+    GP_FILE       = 1 << 9,  /* send output to named file */
+    GP_IDX        = 1 << 10  /* plot against time or obs index */
 } GnuplotFlags;
 
 typedef enum {
@@ -157,12 +158,14 @@ PlotType plot_type_from_string (const char *str);
 
 int gnuplot_make_graph (void);
 
-int gnuplot (int *list, const int *lines, const char *literal,
+GnuplotFlags gp_flags (int batch, gretlopt opt);
+
+int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, 
 	     int *plot_count, GnuplotFlags flags);
 
-int multi_scatters (const int *list, 
-		    double ***pZ, DATAINFO *pdinfo, 
+int multi_scatters (const int *list, const double **Z,
+		    const DATAINFO *pdinfo, 
 		    int *plot_count, GnuplotFlags flags);
 
 int gnuplot_3d (int *list, const char *literal,
@@ -171,7 +174,7 @@ int gnuplot_3d (int *list, const char *literal,
 
 int plot_freq (FreqDist *freq, DistCode dist);
 
-int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo); 
+int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo); 
 
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp);
 
@@ -206,11 +209,9 @@ gretl_VAR_plot_multiple_irf (GRETL_VAR *var, int periods,
 			     const double **Z,
 			     const DATAINFO *pdinfo);
 
-int gretl_VAR_residual_plot (const GRETL_VAR *var, 
-			     double ***pZ, DATAINFO *pdinfo);
+int gretl_VAR_residual_plot (const GRETL_VAR *var, const DATAINFO *pdinfo);
 
-int gretl_VAR_residual_mplot (const GRETL_VAR *var, 
-			      double ***pZ, DATAINFO *pdinfo);
+int gretl_VAR_residual_mplot (const GRETL_VAR *var, const DATAINFO *pdinfo); 
 
 int gretl_VAR_roots_plot (GRETL_VAR *var);
 
