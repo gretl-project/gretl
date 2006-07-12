@@ -56,7 +56,7 @@ refbody.tex: $(XMLFILES) $(TEXXSLT)
 $(docsrc)/chapters_es/cmdlist.xml: $(docsrc)/commands/gretl_commands_es.xml $(MANXSLT)
 	make -C ../commands docbook_es
 
-$(docsrc)/chapters/cmdtopics.xml: $(docsrc)/commands/gretl_commands_es.xml $(MANXSLT)
+$(docsrc)/chapters_es/cmdtopics.xml: $(docsrc)/commands/gretl_commands_es.xml $(MANXSLT)
 	make -C ../commands topiclist_es
 
 .PHONY : textables links onepass refpass install clean
