@@ -311,8 +311,9 @@ static int do_binomial_pdf (const char *s, PRN *prn)
 	pputs(prn, "\n\n");
 	pprintf(prn, " P(x <= %d) = %g\n", k, x1);
 	pprintf(prn, " P(x > %d)  = %g\n", k, x2);
-	/* FIXME */
-	pprintf(prn, " P(x = %d)  = %g", k, binomial_cdf(k+1, n, p) - x1);
+	if (k > 0) {
+	    pprintf(prn, " P(x = %d)  = %g", k, x1 - binomial_cdf(k-1, n, p));
+	}
     }
 
     return err;

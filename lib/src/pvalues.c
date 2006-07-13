@@ -666,9 +666,16 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
     case 'B':
 	pv = binomial_cdf_comp(n[2], n[1], x[0]);
 	if (!na(pv)) {
+	    double pc = binomial_cdf(n[2], n[1], x[0]);
+
 	    pprintf(prn, _("\nBinomial (p = %g, n = %d):"
 			   "\n Prob(x > %d) = %g\n"), 
 		    x[0], n[1], n[2], pv);
+	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), n[2], pc);
+	    if (n[2] > 0) {
+		pprintf(prn, _(" Prob(x = %d) = %g\n"), n[2],
+			pc - binomial_cdf(n[2] - 1, n[1], x[0]));
+	    }		
 	}
 	break;
 
