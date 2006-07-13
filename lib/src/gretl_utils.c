@@ -1072,9 +1072,10 @@ double get_xvalue (int i, const double **Z, const DATAINFO *pdinfo)
 
 static int font_not_found (const char *s)
 {
-    /* "Could not find/open font when opening font X, using default" */
+    /* "Could not find/open font when opening font X, using default" 
+       or "gnuplot_x11: Some character sets not available" */
 
-    if (strstr(s, "using default")) {
+    if (strstr(s, "using default") || strstr(s, "character sets not available")) {
 	return 1;
     } else {
 	return 0;
@@ -1104,9 +1105,9 @@ int gretl_spawn (char *cmdline)
 	g_error_free(error);
 	ret = 1;
     } else if (errout && *errout) {
-	strcpy(gretl_errmsg, errout);
 	fprintf(stderr, "stderr: '%s'\n", errout);
 	if (!font_not_found(errout)) {
+	    strcpy(gretl_errmsg, errout);
 	    ret = 1;
 	}
     } else if (status != 0) {

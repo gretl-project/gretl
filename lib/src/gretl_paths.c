@@ -602,7 +602,7 @@ struct INTERNAL_PATHS {
     char libpath[MAXLEN];
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
-    char pngfont[32];
+    char pngfont[128];
     unsigned char status;
 };
 

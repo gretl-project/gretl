@@ -524,10 +524,10 @@ const char *get_gretl_png_term_line (PlotType ptype)
 
 static void png_font_to_emf (const char *pngfont, char *emfline)
 {
-    char name[32];
+    char name[128];
     int pt;
 
-    if (sscanf(pngfont, "%31s %d", name, &pt) == 2) {
+    if (sscanf(pngfont, "%127s %d", name, &pt) == 2) {
 	char ptstr[8];
 
 	if (pt <= 8) {

@@ -411,7 +411,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
 	if (tmp != NULL && *tmp != '\0') {
 	    const char *fname = get_font_filename(tmp);
-	    char pngfont[32];
+	    char pngfont[128];
 
 	    if (fname != NULL && ptsize > 5 && ptsize < 25) {
 		sprintf(pngfont, "%s %d", fname, ptsize);

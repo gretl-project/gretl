@@ -37,8 +37,8 @@ void edit_info_state (gboolean s)
 
 void add_remove_markers_state (gboolean s)
 {
-    flip(mdata->ifac, "/Sample/Add case markers...", !s);
-    flip(mdata->ifac, "/Sample/Remove case markers", s);
+    flip(mdata->ifac, "/Data/Add case markers...", !s);
+    flip(mdata->ifac, "/Data/Remove case markers", s);
 }
 
 /* by using gretl_set_window_modal() we make the main
@@ -85,7 +85,7 @@ void main_menubar_state (gboolean s)
     flip(mdata->ifac, "/File/Save data as", s);
     flip(mdata->ifac, "/File/Export data", s);
     flip(mdata->ifac, "/File/Send To...", s);
-    flip(mdata->ifac, "/File/Create data set", !s);
+    flip(mdata->ifac, "/Tools/Create data set", !s);
     flip(mdata->ifac, "/Data", s);
     flip(mdata->ifac, "/Add", s);
     flip(mdata->ifac, "/Sample", s);
@@ -259,9 +259,9 @@ void ts_or_panel_menu_state (gboolean s)
 void session_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Session/Icon view", s);
-	flip(mdata->ifac, "/Session/Save", s);
-	flip(mdata->ifac, "/Session/Save as...", s);
+	flip(mdata->ifac, "/Tools/Icon view", s);
+	flip(mdata->ifac, "/File/Session files/Save session", s);
+	flip(mdata->ifac, "/File/Session files/Save session as...", s);
     }	
 }
 
@@ -290,8 +290,7 @@ void main_menus_enable (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/File", s);
-	flip(mdata->ifac, "/Utilities", s);
-	flip(mdata->ifac, "/Session", s);
+	flip(mdata->ifac, "/Tools", s);
 	flip(mdata->ifac, "/Data", s);
 	flip(mdata->ifac, "/Add", s);
 	flip(mdata->ifac, "/Sample", s);

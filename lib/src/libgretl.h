@@ -299,7 +299,7 @@ struct PATHS_ {
     char x12a[MAXLEN];
     char x12adir[MAXLEN];
     char dbhost[32];
-    char pngfont[32];
+    char pngfont[128];
 };
 
 struct VMatrix_ {

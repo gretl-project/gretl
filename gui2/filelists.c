@@ -335,8 +335,8 @@ static void clear_files_list (int filetype, char **filep)
     gchar itempath[80];
     const gchar *fpath[] = {
 	N_("/File/Open data"), 
-	N_("/Session"),
-	N_("/File/Open command file")
+	N_("/File/Session files"),
+	N_("/File/Script files")
     };
     int i;
 
@@ -562,13 +562,13 @@ static void real_add_files_to_menus (int ftype)
     GtkItemFactoryEntry fileitem;
     const gchar *msep[] = {
 	N_("/File/Open data/sep"),
-	N_("/Session/sep"),
-	N_("/File/Open command file/sep")
+	N_("/File/Session files/sep"),
+	N_("/File/Script files/sep")
     };
     const gchar *mpath[] = {
 	N_("/File/Open data"),
-	N_("/Session"),
-	N_("/File/Open command file")
+	N_("/File/Session files"),
+	N_("/File/Script files")
     };
     int jmin = 0, jmax = 3;
     int i, j;
