@@ -302,8 +302,13 @@ GtkItemFactoryEntry data_items[] = {
       "<StockItem>", GTK_STOCK_OPEN },
     { N_("/File/Function files/on server..."), "", display_files, 
       REMOTE_FUNC_FILES, "<StockItem>", GTK_STOCK_NETWORK },
+#ifdef GTK_STOCK_EDIT
     { N_("/File/Function files/edit package..."), "", display_files, 
       FUNC_EDIT, "<StockItem>", GTK_STOCK_EDIT },
+#else
+    { N_("/File/Function files/edit package..."), "", display_files, 
+      FUNC_EDIT, NULL, GNULL },
+#endif
     { N_("/File/Function files/new package"), "", file_save, 
       SAVE_FUNCTIONS, "<StockItem>", GTK_STOCK_NEW },
     { "/File/sep5", NULL, NULL, 0, "<Separator>", GNULL },

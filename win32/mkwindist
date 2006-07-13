@@ -126,8 +126,8 @@ for lang in es it ; do
 done
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
-add_file ${TOPDIR}/doc/tex/gretl-guide.pdf gretl/doc/gretl-guide.pdf
-add_file ${TOPDIR}/doc/tex/gretl-ref.pdf gretl/doc/gretl-ref.pdf
+add_file ${TOPDIR}/build/doc/tex/gretl-guide.pdf gretl/doc/gretl-guide.pdf
+add_file ${TOPDIR}/build/doc/tex/gretl-ref.pdf gretl/doc/gretl-ref.pdf
 
 # user readme file
 add_file $HOME_WIN32/readme.user gretl/user/README.txt
