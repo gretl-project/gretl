@@ -1319,7 +1319,8 @@ johansen_LR_calc (GRETL_VAR *jvar, const double *eigvals, PRN *prn)
 	pprintf(prn, "Unrestricted loglikelihood (lu) = %g\n", jvar->ll);
 	pprintf(prn, "Restricted loglikelihood (lr) = %g\n", llr);
 	pprintf(prn, "2 * (lu - lr) = %g\n", x);
-	pprintf(prn, "P(Chi-Square(%d) > %g = %g\n", df, x, chisq(x, df));
+	pprintf(prn, "P(Chi-Square(%d) > %g = %g\n", df, x, 
+		chisq_cdf_comp(x, df));
     }
 
     return err;

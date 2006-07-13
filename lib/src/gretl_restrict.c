@@ -1138,13 +1138,13 @@ static int test_restriction_set (gretl_restriction_set *rset,
     robust = gretl_model_get_int(rset->pmod, "robust");
 
     if (asym) {
-	pval = chisq(test_stat, rset->k);
+	pval = chisq_cdf_comp(test_stat, rset->k);
 	pprintf(prn, "\n%s: %s(%d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust chi^2"): "chi^2",
 		rset->k, test_stat);
     } else {
 	test_stat /= rset->k;
-	pval = fdist(test_stat, rset->k, rset->pmod->dfd);
+	pval = f_cdf_comp(test_stat, rset->k, rset->pmod->dfd);
 	pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		(robust)? _("Robust F"): "F",
 		rset->k, rset->pmod->dfd, test_stat);

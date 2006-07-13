@@ -44,31 +44,47 @@ const char negval[] = N_("\nEnter x value (value < 0 will exit menu): ");
  * @p: probability of success on each trial.
  *
  * Returns: the probability of @k or less successes on
- * @n trials given binomial probability @p.
+ * @n trials given binomial probability @p, or
+ * #NADBL on failure.
  */
 
 double binomial_cdf (int k, int n, double p)
 {
-    double x = bdtr(k, n, p);
+    double x = NADBL;
 
-    return (isnan(x))? NADBL : x;
+    if (p >= 0.0 && n >= 0 && k >= 0) {
+	x = bdtr(k, n, p);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
 }
 
 /**
- * binomial_pvalue:
- * @k: number of successes.
+ * binomial_cdf_comp:
+ * @k: maximum number of successes.
  * @n: number of trials.
  * @p: probability of success on each trial.
  *
  * Returns: the probability of @k + 1 or more successes on
- * @n trials given binomial probability @p.
+ * @n trials given binomial probability @p, or
+ * #NADBL on failure.
  */
 
-double binomial_pvalue (int k, int n, double p)
+double binomial_cdf_comp (int k, int n, double p)
 {
-    double x = bdtrc(k, n, p);
+    double x = NADBL;
 
-    return (isnan(x))? NADBL : x;
+    if (p >= 0.0 && n >= 0 && k >= 0) {
+	x = bdtrc(k, n, p);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
 }
 
 /**
@@ -88,6 +104,9 @@ double x_factorial (double x)
 	fact = NADBL;
     } else if (x > 12.0) {
 	fact = cephes_gamma(1.0 + x);
+	if (get_cephes_errno()) {
+	    fact = NADBL;
+	}
     } else if (n == 0) {
 	fact = 1.0;
     } else {
@@ -138,12 +157,22 @@ double log_x_factorial (double x)
  * @df: degrees of freedom.
  * 
  * Returns: the two-sided 95 percent critical value for the t 
- * distribution with @df degrees of freedom.
+ * distribution with @df degrees of freedom, or #NADBL on
+ * failure.
  */
 
 double tcrit95 (int df)
 {
-    return stdtri(df, 0.975);
+    double x = NADBL;
+
+    if (df > 0) {
+	x = stdtri(df, 0.975);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
 }
 
 /**
@@ -151,14 +180,26 @@ double tcrit95 (int df)
  * @n: sample size.
  * 
  * Returns: the two-sided 95 percent critical value for the sample
- * correlation coefficient, sample size @n.
+ * correlation coefficient, sample size @n, or #NADBL on
+ * failure.
  */
 
 double rhocrit95 (int n)
 {
-    double x = stdtri(n - 2, 0.975);
+    double x = NADBL;
+
+    if (n - 2 > 0) {
+	x = stdtri(n - 2, 0.975);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	} else {
+	    double x2 = x * x;
+
+	    x = sqrt(x2 / (x2 - 2 + n));
+	}
+    }
     
-    return sqrt(x*x / (x*x - 2 + n));
+    return x;
 }
 
 /**
@@ -174,7 +215,9 @@ double rhocrit95 (int n)
 
 double normal_pvalue_2 (double x)
 {
-    return 2.0 * (1.0 - ndtr(fabs(x)));
+    double p = (x < 0.0)? ndtr(x) : ndtr(-x);
+
+    return 2.0 * p;
 }
 
 /**
@@ -195,79 +238,231 @@ double normal_pvalue_1 (double x)
 }
 
 /**
+ * t_cdf:
+ * @x: the cutoff point in the distribution.
+ * @df: degrees of freedom.
+ * 
+ * Returns: the integral from minus infinity to @x of
+ * the t distribution with @df degrees of freedom, or
+ * #NADBL on failure.
+ */
+
+double t_cdf (double x, int df)
+{
+    double p = NADBL;
+
+    if (df > 0) {
+	p = stdtr(df, x);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	}
+    }
+
+    return p;
+}
+
+/**
+ * t_cdf_comp:
+ * @x: the cutoff point in the distribution.
+ * @df: degrees of freedom.
+ * 
+ * Returns: the integral from @x to infinity of
+ * the t distribution with @df degrees of freedom, or
+ * #NADBL on failure.
+ */
+
+double t_cdf_comp (double x, int df)
+{
+    double p = NADBL;
+
+    if (df > 0) {
+	p = stdtr(df, x);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	} else {
+	    p = 1.0 - p;
+	}
+    }
+
+    return p;
+}
+
+/**
  * t_pvalue_2:
  * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
  * 
  * Returns: the probability that t(@df) is greater than @x
- * (two-sided, using the absolute value of @x).
+ * (two-sided, using the absolute value of @x), or
+ * #NADBL on failure.
  */
 
 double t_pvalue_2 (double x, int df)
 {
-    double ret = -1.0;
+    double p = NADBL;
 
     if (df > 0) {
-	double s = stdtr(df, fabs(x));
-	
-	ret = 2.0 * (1.0 - s);
-	if (ret < 0.0) {
-	    ret = 0.0;
+	if (x < 0.0) {
+	    p = stdtr(df, x);
+	} else {
+	    p = stdtr(df, -x);
+	}
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	} else {
+	    p *= 2.0;
 	}
     }
 
-    return ret;
+    return p;
 }
 
 /**
- * fdist:
+ * chisq_cdf:
+ * @x: the cutoff point in the distribution.
+ * @df: degrees of freedom.
+ * 
+ * Returns: the integral from 0 to @x of the chi-squared
+ * distribution with @df degrees of freedom, or #NADBL
+ * on failure.
+ */
+
+double chisq_cdf (double x, int df)
+{
+    double p = NADBL;
+
+    if (df > 0 && x >= 0.0) {
+	p = chdtr(df, x);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	}
+    }
+
+    return p;
+}
+
+/**
+ * chisq_cdf_comp:
+ * @x: the cutoff point in the distribution.
+ * @df: degrees of freedom.
+ * 
+ * Returns: the integral from @x to infinity of the chi-squared
+ * distribution with @df degrees of freedom, or #NADBL
+ * on failure.
+ */
+
+double chisq_cdf_comp (double x, int df)
+{
+    double p = NADBL;
+
+    if (df > 0 && x >= 0.0) {
+	p = chdtrc(df, x);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	}
+    }
+
+    return p;
+}
+
+/**
+ * chisq_critval:
+ * @a: tail probability.
+ * @df: degrees of freedom.
+ * 
+ * Returns: the Chi-square argument x such that the integral
+ * from x to infinity of the Chi-square density is equal
+ * to the given cumulative probability @a, or #NADBL
+ * on failure.
+ */
+
+double chisq_critval (double a, int df)
+{
+    double x = NADBL;
+
+    if (df > 0 && a >= 0.0) {
+	x = chdtri(df, a);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
+}
+
+/**
+ * f_cdf:
  * @x: the cutoff point in the distribution.
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
  * 
- * Returns: the probability a random variable distributed as
- * F(@dfn, @dfd) is greater than @x, or -1 if either @dfn or @dfd is
- * negative.
+ * Returns: the integral of the F distribution with @dfn and
+ * @dfd degrees of freedom, from 0 to @x, or #NADBL on failure.
  */
 
-double fdist (double x, int dfn, int dfd)
+double f_cdf (double x, int dfn, int dfd)
 {
-    double ret = 1.0;
+    double p = NADBL;
 
-    if (dfn < 1 || dfd < 1) {
-        ret = -1.0;
-    } else if (x > 0.0) {
-	if (0 && dfd > 300) {
-	    /* FIXME igamc underflow ?? */
-	    ret = chisq(x * dfn, dfn);
-	} else {
-	    ret = fdtrc(dfn, dfd, x);
+    if (dfn > 0 && dfd > 0 && x >= 0.0) {
+	p = fdtr(dfn, dfd, x);
+	if (get_cephes_errno()) {
+	    p = NADBL;
 	}
     }
 
-    return ret;
+    return p;
 }
 
 /**
- * chisq:
+ * f_cdf_comp:
  * @x: the cutoff point in the distribution.
- * @df: degrees of freedom.
+ * @dfn: numerator degrees of freedom.
+ * @dfd: denominator degrees of freedom.
  * 
- * Returns: the probability that a random variable distributed as
- * Chi-squared(@df) is greater than @x.
+ * Returns: the integral of the F distribution with @dfn and
+ * @dfd degrees of freedom, from @x to infinity, or #NADBL 
+ * on failure.
  */
 
-double chisq (double x, int df)
+double f_cdf_comp (double x, int dfn, int dfd)
 {
-    double ret = 1.0;
+    double p = NADBL;
 
-    if (df < 0) {
-	ret = -1.0;
-    } else if (x > 0.0) {
-	ret = chdtrc(df, x);
+    if (dfn > 0 && dfd > 0 && x >= 0.0) {
+	p = fdtrc(dfn, dfd, x);
+	if (get_cephes_errno()) {
+	    p = NADBL;
+	}
     }
 
-    return ret;
+    return p;
+}
+
+/**
+ * f_critval:
+ * @a: tail probability.
+ * @dfn: numerator degrees of freedom.
+ * @dfd: denominator degrees of freedom.
+ * 
+ * Returns: the F argument x such that the integral
+ * from x to infinity of the F density is equal
+ * to the given cumulative probability @a, or #NADBL
+ * on failure.
+ */
+
+double f_critval (double a, int dfn, int dfd)
+{
+    double x = NADBL;
+
+    if (dfn > 0 && dfd > 0 && a >= 0.0) {
+	x = fdtri(dfn, dfd, a);
+	if (get_cephes_errno()) {
+	    x = NADBL;
+	}
+    }
+
+    return x;
 }
 
 /**
@@ -404,17 +599,17 @@ static char normalize_stat (char c)
 
 static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
 {
-    double tmp, pv = NADBL;
+    double pv = NADBL;
 
     switch (st) {
 
     case 'z':
-	tmp = x[0];
-	if (x[0] > 0.0) tmp = -tmp;
-	pv = normal_cdf(tmp);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {	
+	if (x[0] < 0.0) {
+	    pv = normal_cdf(x[0]);
+	} else {
+	    pv = normal_cdf(-x[0]);
+	}
+	if (!na(pv)) {	
 	    pprintf(prn, _("\nStandard normal: area to the %s "
 			   "of %g = %g\n"), (x[0] > 0)? _("right"): _("left"), 
 		    x[0], pv);
@@ -424,11 +619,12 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
 	break;
 
     case 't':
-	pv = t_pvalue_2(x[1], n[0]);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
-	    pv *= 0.5;
+	if (x[1] < 0.0) {
+	    pv = t_cdf(x[1], n[0]);
+	} else {
+	    pv = t_cdf_comp(x[1], n[0]);
+	}
+	if (!na(pv)) {
 	    pprintf(prn, _("\nt(%d): area to the %s of %g = %g\n"), 
 		    n[0], (x[1] > 0)? _("right"): _("left"),
 		    x[1], pv);
@@ -438,24 +634,20 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
 	break;
 
     case 'X':
-	pv = chisq(x[1], n[0]);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
+	pv = chisq_cdf_comp(x[1], n[0]);
+	if (!na(pv)) {
 	    pprintf(prn, _("\nChi-square(%d): area to the right of %g = %g\n"), 
 		    n[0], x[1], pv);
-	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
+	    pprintf(prn, _("(to the left: %g)\n"), chisq_cdf(x[1], n[0]));
 	}
 	break;
 
     case 'F':
-	pv = fdist(x[2], n[0], n[1]);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
+	pv = f_cdf_comp(x[2], n[0], n[1]);
+	if (!na(pv)) {
 	    pprintf(prn, _("\nF(%d, %d): area to the right of %g = %g\n"), 
 		    n[0], n[1], x[2], pv);
-	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
+	    pprintf(prn, _("(to the left: %g)\n"), f_cdf(x[2], n[0], n[1]));
 	}
 	break;
 
@@ -472,10 +664,8 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
 	break;
 
     case 'B':
-	pv = binomial_pvalue(n[2], n[1], x[0]);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
+	pv = binomial_cdf_comp(n[2], n[1], x[0]);
+	if (!na(pv)) {
 	    pprintf(prn, _("\nBinomial (p = %g, n = %d):"
 			   "\n Prob(x > %d) = %g\n"), 
 		    x[0], n[1], n[2], pv);
@@ -685,7 +875,7 @@ static void ptvalue (void)
     zx = getx();
     if(zx < 0.0) return;
     xsq = zx * zx;
-    xx = fdist(xsq, 1, n)/2.0;
+    xx = f_cdf_comp(xsq, 1, n)/2.0;
     printf(_("\nFor Student's t(%d), area (one-tail) to the "
 	   "right of %g is "), n, zx);
     putxx(xx);
@@ -702,7 +892,7 @@ static void pchisq (void)
     printf("%s", _(negval));
     zx = getx();
     if(zx < 0.0) return;
-    xx = chisq(zx, n);
+    xx = chisq_cdf_comp(zx, n);
     printf(_("\nFor Chi-square(%d), area to the right of %g is "), 
 	   n, zx);
     putxx(xx);
@@ -722,7 +912,7 @@ static void pfvalue (void)
     printf("%s", _(negval));
     zx = getx();
     if (zx < 0.0) return;
-    xx = fdist(zx, m, n);
+    xx = f_cdf_comp(zx, m, n);
     printf(_("\nFor F(%d, %d), area to the right of %g is "),
 	   m, n, zx);
     putxx(xx);
@@ -761,33 +951,6 @@ static double getx (void)
 static void getdf (const char *str)
 {
     printf(_("\nEnter d.f.%s(value <= 0 will exit menu): "), str);
-}
-
-/**
- * f_crit_a:
- * @a: significance level.
- * @df1: numerator degrees of freedom.
- * @df2: denominator degrees of freedom.
- *
- * Returns: the one-sided critical value for F(@df1, @df2, @a).
- */
-
-double f_crit_a (double a, int df1, int df2)
-{
-    if (df1 < 1 || df2 < 1 || a < 0.0) {
-	return NADBL;
-    } else {
-	return fdtri(df1, df2, a);
-    }
-}
-
-static double chi_crit_a (double a, int df)
-{
-    if (df < 1 || a < 0.0) {
-	return NADBL;
-    } else {
-	return chdtri(df, a);
-    }
 }
 
 static int 
@@ -892,9 +1055,9 @@ int print_critical (const char *line, PRN *prn)
     case 'F':
 	pprintf(prn, _("Approximate critical values of F(%d, %d)\n\n"),
 		df, n);
-	pprintf(prn, _(" 10%% in right tail %.2f\n"), f_crit_a(.10, df, n));
-	pprintf(prn, "  5%%               %.2f\n", f_crit_a(.05, df, n));	
-	pprintf(prn, "  1%%               %.2f\n", f_crit_a(.01, df, n));
+	pprintf(prn, _(" 10%% in right tail %.2f\n"), f_critval(.10, df, n));
+	pprintf(prn, "  5%%               %.2f\n", f_critval(.05, df, n));	
+	pprintf(prn, "  1%%               %.2f\n", f_critval(.01, df, n));
 	break;
     case 'd':
 	(*dw)(n, prn);
@@ -990,15 +1153,9 @@ double genr_get_critical (const char *line, const double **Z,
     }	
 
     if (st == 'F') {
-	ret = f_crit_a(alpha, dfn, dfd);
-	if (ret < 0) {
-	    ret = NADBL;
-	}
+	ret = f_critval(alpha, dfn, dfd);
     } else if (st == 'X') {
-	ret = chi_crit_a(alpha, dfn);
-	if (ret < 0) {
-	    ret = NADBL;
-	}
+	ret = chisq_critval(alpha, dfn);
     } else if (st == 't') {
 	if (alpha > 0.5) {
 	    ret = stdtri(dfn, 1.0 - alpha);

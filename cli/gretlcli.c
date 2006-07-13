@@ -1187,8 +1187,8 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case SCATTERS:
-	err = multi_scatters(cmd.list, &Z, datainfo, &plot_count, 
-			     gp_flags(batch, cmd.opt));
+	err = multi_scatters(cmd.list, (const double **) Z, datainfo, 
+			     &plot_count, gp_flags(batch, cmd.opt));
 	if (err) {
 	    pputs(prn, _("scatters command failed\n"));
 	} else if (batch) {

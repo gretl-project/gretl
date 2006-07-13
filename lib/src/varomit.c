@@ -105,7 +105,7 @@ static int gretl_VAR_real_omit_test (const GRETL_VAR *orig,
 
     LR = orig->T * (new->ldet - orig->ldet);
     df = orig->neqns * omitlist[0];
-    pval = chisq(LR, df);
+    pval = chisq_cdf_comp(LR, df);
     
     pputs(prn, _("\n  Null hypothesis: the regression parameters are "
 		 "zero for the variables\n\n"));

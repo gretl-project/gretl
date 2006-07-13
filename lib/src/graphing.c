@@ -1851,7 +1851,7 @@ maybe_add_surface (const int *list, double ***pZ, DATAINFO *pdinfo,
     smod = lsq(olslist, pZ, pdinfo, OLS, OPT_A);
 
     if (!smod.errcode && !na(smod.fstt) &&
-	(fdist(smod.fstt, smod.dfn, smod.dfd) < .10 || flags & GP_FA)) {
+	(f_cdf_comp(smod.fstt, smod.dfn, smod.dfd) < .10 || flags & GP_FA)) {
 	double uadj = (umax - umin) * 0.02;
 	double vadj = (vmax - vmin) * 0.02;
 
@@ -2093,7 +2093,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 			I_("Test statistic for normality"),
 			label_front());
 		print_freq_test_label(label, I_("Chi-squared(2) = %.3f pvalue = %.5f"), 
-				      freq->test, chisq(freq->test, 2));
+				      freq->test, chisq_cdf_comp(freq->test, 2));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, label_front());
 	    }	

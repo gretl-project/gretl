@@ -252,9 +252,9 @@ static void get_critical (GtkWidget *w, gpointer data)
 	case F_DIST:
 	    pprintf(prn, _("Approximate critical values of F(%d, %d)\n\n"),
 		    df, n);
-	    pprintf(prn, _(" 10%% in right tail %.2f\n"), f_crit_a(.10, df, n));
-	    pprintf(prn, "  5%%               %.2f\n", f_crit_a(.05, df, n));	
-	    pprintf(prn, "  1%%               %.2f\n", f_crit_a(.01, df, n));
+	    pprintf(prn, _(" 10%% in right tail %.2f\n"), f_critval(.10, df, n));
+	    pprintf(prn, "  5%%               %.2f\n", f_critval(.05, df, n));	
+	    pprintf(prn, "  1%%               %.2f\n", f_critval(.01, df, n));
 	    break;
 
 	case DW_DIST:
@@ -300,7 +300,7 @@ static int do_binomial_pdf (const char *s, PRN *prn)
     }
 
     x1 = binomial_cdf(k, n, p);
-    x2 = binomial_pvalue(k, n, p);
+    x2 = binomial_cdf_comp(k, n, p);
 
     if (na(x1) || na(x2)) {
 	err = 1;
@@ -311,6 +311,7 @@ static int do_binomial_pdf (const char *s, PRN *prn)
 	pputs(prn, "\n\n");
 	pprintf(prn, " P(x <= %d) = %g\n", k, x1);
 	pprintf(prn, " P(x > %d)  = %g\n", k, x2);
+	/* FIXME */
 	pprintf(prn, " P(x = %d)  = %g", k, binomial_cdf(k+1, n, p) - x1);
     }
 
@@ -440,26 +441,6 @@ static void print_pv (PRN *prn, double p1, double p2)
 	    p1, p2);
 }
 
-/* v. rough 99.9 percent critical value of chi-square */
-
-static double chi_crit (const int df)
-{
-    double x = 10.0;
-    
-    while (chisq(x, df) > .001) x += .5;
-    return x;
-}
-
-/* v. rough 99.9 percent critical value of F */
-
-static double f_crit (const int df1, const int df2)
-{
-    double x = 2.0;
-
-    while (fdist(x, df1, df2) > .001) x += .5;
-    return x;
-}
-
 static void htest_graph (int dist, double x, int df1, int df2)
 {
     double xx, prange, spike = 0.0;
@@ -481,9 +462,11 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	fprintf(fp, "set yrange [0:.50]\n");
 	fprintf(fp, "set xlabel '%s'\n", I_("Standard errors"));
     } else if (dist == CHISQ_DIST || dist == F_DIST) {
-	prange = (dist == CHISQ_DIST)? chi_crit(df1) : f_crit(df1, df2);
-	if (x > prange) 
+	prange = (dist == CHISQ_DIST)? chisq_critval(0.001, df1) : 
+	    f_critval(0.001, df1, df2);
+	if (x > prange) {
 	    prange = 1.1 * x;
+	}
 	spike = 1.0 / prange;
 	fprintf(fp, "set xrange [0:%.3f]\n", prange);
     } 
@@ -645,9 +628,9 @@ static void h_test (GtkWidget *w, gpointer data)
 		n1-1, n1-1, x[0], x[1], ts);
 
 	if (x[0] > x[1]) {
-	    pv = chisq(ts, n1 - 1);
+	    pv = chisq_cdf_comp(ts, n1 - 1);
 	} else {
-	    pv = 1.0 - chisq(ts, n1 -1);
+	    pv = chisq_cdf(ts, n1 - 1);
 	}
 	print_pv(prn, 2.0 * pv, pv);
 	if (grf) {
@@ -848,12 +831,12 @@ static void h_test (GtkWidget *w, gpointer data)
 	    ts = x[0] / x[1];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
 		    n1 - 1, n2 - 1, ts);
-	    pv = fdist(ts, n1 - 1, n2 - 1);
+	    pv = f_cdf_comp(ts, n1 - 1, n2 - 1);
 	} else {
-	    ts = x[1]/x[0];
+	    ts = x[1] / x[0];
 	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
 		    n2 - 1, n1 - 1, ts);
-	    pv = fdist(ts, n2 - 1, n1 - 1);
+	    pv = f_cdf_comp(ts, n2 - 1, n1 - 1);
 	}
 
 	print_pv(prn, 2.0 * pv, pv);

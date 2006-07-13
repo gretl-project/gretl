@@ -2538,7 +2538,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	printmodel(&white, pdinfo, OPT_NONE, prn);
 
 	TR2 = white.rsq * white.nobs;
-	pval = chisq(TR2, white.ncoeff - 1);
+	pval = chisq_cdf_comp(TR2, white.ncoeff - 1);
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_WHITES);
@@ -3022,7 +3022,7 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 	archmod.aux = AUX_ARCH;
 	gretl_model_set_int(&archmod, "arch_order", order);
 	LM = archmod.nobs * archmod.rsq;
-	xx = chisq(LM, order);
+	xx = chisq_cdf_comp(LM, order);
 
 	if (full) {
 	    printmodel(&archmod, pdinfo, OPT_NONE, prn);

@@ -895,19 +895,19 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->order, dfd, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\\\\\n", I_("p-value"), 
-			fdist(var->Fvals[k], var->order, dfd));
+			f_cdf_comp(var->Fvals[k], var->order, dfd));
 	    } else if (rtf) {
 		pprintf(prn, I_("All lags of %-15s "), pdinfo->varname[v]);
 		pprintf(prn, "F(%d, %d) = %8.5g, ", var->order, dfd, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
-			fdist(var->Fvals[k], var->order, dfd));
+			f_cdf_comp(var->Fvals[k], var->order, dfd));
 	    } else {
 		pputs(prn, "  ");
 		pprintf(prn, _("All lags of %-15s "), pdinfo->varname[v]);
 		sprintf(Fstr, "F(%d, %d)", var->order, dfd);
 		pprintf(prn, "%12s = %#8.5g, ", Fstr, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\n", _("p-value"), 
-			fdist(var->Fvals[k], var->order, dfd));
+			f_cdf_comp(var->Fvals[k], var->order, dfd));
 	    }
 	    k++;
 	}
@@ -918,19 +918,19 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 		pputs(prn, "& ");
 		pprintf(prn, "$F(%d, %d) = %g$ & ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\\\\\n", I_("p-value"), 
-			fdist(var->Fvals[k], var->neqns, dfd));
+			f_cdf_comp(var->Fvals[k], var->neqns, dfd));
 	    } else if (rtf) {
 		pprintf(prn, I_("All vars, lag %-13d "), var->order);
 		pprintf(prn, "F(%d, %d) = %8.5g, ", var->neqns, dfd, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\\par\n", I_("p-value"), 
-			fdist(var->Fvals[k], var->neqns, dfd));
+			f_cdf_comp(var->Fvals[k], var->neqns, dfd));
 	    } else {
 		pputs(prn, "  ");
 		pprintf(prn, _("All vars, lag %-13d "), var->order);
 		sprintf(Fstr, "F(%d, %d)", var->neqns, dfd);
 		pprintf(prn, "%12s = %#8.5g, ", Fstr, var->Fvals[k]);
 		pprintf(prn, "%s %.4f\n", _("p-value"), 
-			fdist(var->Fvals[k], var->neqns, dfd));
+			f_cdf_comp(var->Fvals[k], var->neqns, dfd));
 	    } 
 	    k++;
 	}
@@ -968,14 +968,14 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    pprintf(prn, "%s: %s\\par\n", I_("Alternative hypothesis"), h1str);
 	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f (%s %f)\\par\n",
 		    I_("Likelihood ratio test"), 
-		    df, var->LR, I_("p-value"), chisq(var->LR, df));
+		    df, var->LR, I_("p-value"), chisq_cdf_comp(var->LR, df));
 	} else if (rtf) {
 	    pprintf(prn, "\\par %s\n", I_("For the system as a whole"));
 	    pprintf(prn, "\\par %s: %s\n", I_("Null hypothesis"), h0str);
 	    pprintf(prn, "\\par %s: %s\n", I_("Alternative hypothesis"), h1str);
 	    pprintf(prn, "\\par %s: %s(%d) = %g (%s %f)\n",
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
-		    df, var->LR, I_("p-value"), chisq(var->LR, df));
+		    df, var->LR, I_("p-value"), chisq_cdf_comp(var->LR, df));
 	} else {
 	    int ordlen = (var->order > 10)? 2 : 1;
 
@@ -984,7 +984,7 @@ int gretl_VAR_print (GRETL_VAR *var, const DATAINFO *pdinfo, gretlopt opt,
 	    pprintf(prn, "  %s: %s\n", _("Alternative hypothesis"), h1str);
 	    pprintf(prn, "  %s: %s(%d) = %g (%s %f)\n",
 		    _("Likelihood ratio test"), _("Chi-square"), 
-		    df, var->LR, _("p-value"), chisq(var->LR, df));
+		    df, var->LR, _("p-value"), chisq_cdf_comp(var->LR, df));
 	    /* Info criteria comparison */
 	    pprintf(prn, "\n  %s:\n", _("Comparison of information criteria"));
 	    pputs(prn, "  ");

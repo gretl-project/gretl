@@ -172,7 +172,7 @@ double chdtri (double df, double y)
     double x;
 
     if ((y < 0.0) || (y > 1.0) || (df < 1.0)) {
-	mtherr( "chdtri", CEPHES_DOMAIN);
+	mtherr("chdtri", CEPHES_DOMAIN);
 	return 0.0;
     }
 

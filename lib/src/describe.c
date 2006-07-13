@@ -1100,7 +1100,7 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
     } else {
 	pputs(prn, "Test for multivariate normality of residuals\n");
 	pprintf(prn, "Doornik-Hansen Chi-square(%d) = %g, ", 2 * p, X2);
-	pprintf(prn, "with p-value = %g\n", chisq(X2, 2 * p));
+	pprintf(prn, "with p-value = %g\n", chisq_cdf_comp(X2, 2 * p));
     }
 
  bailout:
@@ -1986,7 +1986,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	box += (nobs * (nobs + 2.0)) * acf[t] * acf[t] / (nobs - t + 1);
 	pprintf(prn, "%12.4f", box);
 	if (t >= nparam) {
-	    pprintf(prn, "  [%5.3f]", chisq(box, dfQ++));
+	    pprintf(prn, "  [%5.3f]", chisq_cdf_comp(box, dfQ++));
 	}
 	pputc(prn, '\n');
     }
@@ -3268,7 +3268,7 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	dfd = n1 - 1;
     }
 
-    pval = fdist(F, dfn, dfd);
+    pval = f_cdf_comp(F, dfn, dfd);
 
     pputs(prn, _("\nEquality of variances test\n\n"));
     pprintf(prn, "   %s: ", pdinfo->varname[list[1]]);
@@ -3280,7 +3280,7 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    _("The two population variances are equal"));
     pprintf(prn, "   %s: F(%d,%d) = %g\n", _("Test statistic"), dfn, dfd, F);
     pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
-    if (fdist(F, dfn, dfd) > .10)
+    if (f_cdf_comp(F, dfn, dfd) > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
 
     record_test_result(F, pval, _("difference of variances"));

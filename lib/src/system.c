@@ -617,7 +617,7 @@ system_print_F_test (const gretl_equation_system *sys,
 
     pprintf(prn, "%s:\n", _("F test for the specified restrictions"));
     pprintf(prn, "  F(%d,%d) = %g %s %g\n", dfn, dfu, F,
-	    _("with p-value"), fdist(F, dfn, dfu));
+	    _("with p-value"), f_cdf_comp(F, dfn, dfu));
     pputc(prn, '\n');    
 
  bailout:
@@ -646,7 +646,7 @@ system_print_LR_test (const gretl_equation_system *sys,
     pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), llr);
     pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
     pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-	    df, X2, _("with p-value"), chisq(X2, df));
+	    df, X2, _("with p-value"), chisq_cdf_comp(X2, df));
     pputc(prn, '\n');    
 }
 

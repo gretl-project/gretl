@@ -1531,7 +1531,7 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
 		gretl_matrix_set(lltab, m, 1, 0);
 	    } else {
 		LRtest = 2.0 * (ll - gretl_matrix_get(lltab, m-1, 0));
-		gretl_matrix_set(lltab, m, 1, chisq(LRtest, g * g));
+		gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(LRtest, g * g));
 	    }	
 	    
 	    for (c=0; c<N_IVALS; c++) {
@@ -1549,7 +1549,7 @@ gretl_VAR_do_lagsel (GRETL_VAR *var, struct var_lists *vl,
     if (!err) {
 	gretl_matrix_set(lltab, m, 0, var->ll);
 	LRtest = 2.0 * (var->ll - gretl_matrix_get(lltab, m - 1, 0));
-	gretl_matrix_set(lltab, m, 1, chisq(LRtest, g * g));
+	gretl_matrix_set(lltab, m, 1, chisq_cdf_comp(LRtest, g * g));
 	gretl_matrix_set(crittab, m, 0, var->AIC);
 	gretl_matrix_set(crittab, m, 1, var->BIC);
 	gretl_matrix_set(crittab, m, 2, var->HQC);

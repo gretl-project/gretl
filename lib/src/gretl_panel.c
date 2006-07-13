@@ -983,7 +983,7 @@ static int print_fe_results (panelmod_t *pan,
     }
 
     pprintf(prn, " F(%d, %d) = %g %s %g\n", pan->Fdfn, pan->Fdfd, pan->F, 
-	    _("with p-value"), fdist(pan->F, pan->Fdfn, pan->Fdfd));
+	    _("with p-value"), f_cdf_comp(pan->F, pan->Fdfn, pan->Fdfd));
 
     pputs(prn, _("(A low p-value counts against the null hypothesis that "
 		 "the pooled OLS model\nis adequate, in favor of the fixed "
@@ -1001,7 +1001,7 @@ static void save_fixed_effects_F (panelmod_t *pan, MODEL *wmod)
 	model_test_set_dfn(test, pan->Fdfn);
 	model_test_set_dfd(test, pan->Fdfd);
 	model_test_set_value(test, pan->F);
-	model_test_set_pvalue(test, fdist(pan->F, pan->Fdfn, pan->Fdfd));
+	model_test_set_pvalue(test, f_cdf_comp(pan->F, pan->Fdfn, pan->Fdfd));
 	maybe_add_test_to_model(wmod, test);
     }	    
 }
@@ -1665,7 +1665,8 @@ static void print_hausman_result (panelmod_t *pan, PRN *prn)
     } else {
 	pprintf(prn, _("\nHausman test statistic:\n"
 		       " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"),
-		pan->H, pan->nbeta, pan->H, chisq(pan->H, pan->nbeta));
+		pan->H, pan->nbeta, pan->H, 
+		chisq_cdf_comp(pan->H, pan->nbeta));
 	pputs(prn, _("(A low p-value counts against the null hypothesis that "
 		     "the random effects\nmodel is consistent, in favor of the fixed "
 		     "effects model.)\n"));
@@ -1686,7 +1687,7 @@ static void save_hausman_result (panelmod_t *pan)
 	model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
 	model_test_set_dfn(test, pan->nbeta);
 	model_test_set_value(test, pan->H);
-	model_test_set_pvalue(test, chisq(pan->H, pan->nbeta));
+	model_test_set_pvalue(test, chisq_cdf_comp(pan->H, pan->nbeta));
 	maybe_add_test_to_model(pan->realmod, test);
     }	    
 }
@@ -1844,7 +1845,7 @@ static void save_breusch_pagan_result (panelmod_t *pan)
 	model_test_set_teststat(test, GRETL_STAT_WALD_CHISQ);
 	model_test_set_dfn(test, 1);
 	model_test_set_value(test, pan->BP);
-	model_test_set_pvalue(test, chisq(pan->BP, 1));
+	model_test_set_pvalue(test, chisq_cdf_comp(pan->BP, 1));
 	maybe_add_test_to_model(pan->realmod, test);
     }	    
 }
@@ -1895,7 +1896,7 @@ breusch_pagan_LM (panelmod_t *pan, const DATAINFO *pdinfo, PRN *prn)
     if (pan->opt & OPT_V) {
 	pprintf(prn, _("\nBreusch-Pagan test statistic:\n"
 		       " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"), 
-		pan->BP, pan->BP, chisq(pan->BP, 1));
+		pan->BP, pan->BP, chisq_cdf_comp(pan->BP, 1));
 
 	pputs(prn, _("(A low p-value counts against the null hypothesis that "
 		     "the pooled OLS model\nis adequate, in favor of the random "
@@ -2361,7 +2362,7 @@ print_wald_test (double W, int nunits, const int *unit_obs, PRN *prn)
 	    _("Distribution free Wald test for heteroskedasticity"),
 	    _("based on the FGLS residuals"));
     pprintf(prn, "%s(%d) = %g, ",  _("Chi-square"), df, W);
-    pprintf(prn, _("with p-value = %g\n\n"), chisq(W, df));
+    pprintf(prn, _("with p-value = %g\n\n"), chisq_cdf_comp(W, df));
 }
 
 static double 
@@ -2424,7 +2425,7 @@ ml_hetero_test (MODEL *pmod, double s2, const double *uvar,
 	model_test_set_teststat(test, GRETL_STAT_LR);
 	model_test_set_dfn(test, df);
 	model_test_set_value(test, x2);
-	model_test_set_pvalue(test, chisq(x2, df));
+	model_test_set_pvalue(test, chisq_cdf_comp(x2, df));
 	maybe_add_test_to_model(pmod, test);
     } else {
 	err = 1;
@@ -2828,7 +2829,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
 	printmodel(&aux, tmpinfo, OPT_NONE, prn);
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq / (1.0 - aux.rsq)) * dfd / order; 
-	pval = fdist(LMF, order, dfd);
+	pval = f_cdf_comp(LMF, order, dfd);
 
 	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
@@ -2837,7 +2838,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
 	pprintf(prn, "\n%s: TR^2 = %f,\n", 
 		_("Alternative statistic"), trsq);
 	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
-		_("Chi-square"), order, trsq, chisq(trsq, order));
+		_("Chi-square"), order, trsq, chisq_cdf_comp(trsq, order));
 
 	if (opt & OPT_S) {
 	    ModelTest *test = model_test_new(GRETL_TEST_AUTOCORR);

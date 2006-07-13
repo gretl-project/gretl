@@ -190,8 +190,8 @@ struct retriever retrievers[] = {
     { R_NOBS,      "$nobs" },
     { R_NVARS,     "$nvars" },
     { R_PD,        "$pd" },
-    { R_TEST_STAT, "$pvalue" },
-    { R_TEST_PVAL, "$test" },
+    { R_TEST_STAT, "$test" },
+    { R_TEST_PVAL, "$pvalue" },
     { R_MAX,       NULL }
 };
 

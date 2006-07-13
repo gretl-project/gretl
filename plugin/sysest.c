@@ -49,7 +49,7 @@ print_system_vcv (const gretl_equation_system *sys, PRN *prn)
 
 	    pprintf(prn, "%s:\n", _("LR test for diagonal covariance matrix"));
 	    pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-		    df, lr, _("with p-value"), chisq(lr, df));
+		    df, lr, _("with p-value"), chisq_cdf_comp(lr, df));
 	}
     } else {
 	double lm = sys->diag;
@@ -57,7 +57,7 @@ print_system_vcv (const gretl_equation_system *sys, PRN *prn)
 	if (lm > 0) {
 	    pprintf(prn, "%s:\n", _("Breusch-Pagan test for diagonal covariance matrix"));
 	    pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-		    df, lm, _("with p-value"), chisq(lm, df));
+		    df, lm, _("with p-value"), chisq_cdf_comp(lm, df));
 	}
     }
 
@@ -467,7 +467,7 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 	pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), sys->ll);
 	pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), sys->llu);
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-		df, X2, _("with p-value"), chisq(X2, df));
+		df, X2, _("with p-value"), chisq_cdf_comp(X2, df));
 	pputc(prn, '\n');
     } else if ((sys->method == SYS_3SLS || sys->method == SYS_SUR) && df > 0) {
 
@@ -480,7 +480,7 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 
 	pprintf(prn, "%s:\n", _("Hansen-Sargan over-identification test"));
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
-		df, sys->X2, _("with p-value"), chisq(sys->X2, df));
+		df, sys->X2, _("with p-value"), chisq_cdf_comp(sys->X2, df));
 	pputc(prn, '\n');
     }
 }
@@ -586,7 +586,7 @@ static int hansen_sargan_test (gretl_equation_system *sys,
 
 #if SDEBUG
     fprintf(stderr, "Hansen-Sargan: Chi-square(%d) = %g (p-value %g)\n", 
-	    df, X2, chisq(X2, df));
+	    df, X2, chisq_cdf_comp(X2, df));
 #endif
     sys->X2 = X2;
 

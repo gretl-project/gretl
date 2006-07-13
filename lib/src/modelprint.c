@@ -300,7 +300,7 @@ static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
 
 	    pprintf(prn, "  %s:\n", _("LR over-identification test"));
 	    pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
-		    idf, X2, _("with p-value"), chisq(X2, idf));
+		    idf, X2, _("with p-value"), chisq_cdf_comp(X2, idf));
 	} else if (idf == 0) {
 	    pprintf(prn, "  %s\n", _("Equation is just identified"));
 	}
@@ -440,7 +440,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "  %s %s\n", tmp, _("undefined"));
 	} else {
 	    pprintf(prn, "  %s = %.*g", tmp, XDIGITS(pmod), pmod->fstt);
-	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(f_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     } else if (tex_format(prn)) {
 	if (na(pmod->fstt)) {
@@ -451,7 +451,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 
 	    tex_dcolumn_double(pmod->fstt, x1str);
 	    pprintf(prn, "$F(%d, %d)$ & %s \\\\\n", pmod->dfn, pmod->dfd, x1str);
-	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(f_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     } else if (rtf_format(prn)) {
 	char tmp[32];
@@ -461,7 +461,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, RTFTAB "%s %s\n", tmp, I_("undefined"));
 	} else {
 	    pprintf(prn, RTFTAB "%s = %g", tmp, pmod->fstt);
-	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(f_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     } else if (csv_format(prn)) {
 	pprintf(prn, "\"%s (%d, %d)\"%c", I_("F-statistic"), pmod->dfn, pmod->dfd,
@@ -470,7 +470,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 	    pprintf(prn, "\"%s\"\n", I_("undefined"));
 	} else {
 	    pprintf(prn, "%.15g%c", pmod->fstt, prn_delim(prn));
-	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    print_f_pval_str(f_cdf_comp(pmod->fstt, pmod->dfn, pmod->dfd), prn);
 	}
     }	
 }
@@ -1584,21 +1584,21 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
 		_("with p-value"), _("Chi-square"), 
 		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
-		chisq(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+		chisq_cdf_comp(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
     } else if (rtf_format(prn)) { /* FIXME */
 	pprintf(prn, "\\par \\ql\n%s: TR{\\super 2} = %f,\n", I_("Test statistic"), 
 		pmod->rsq * pmod->nobs);
 	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
 		I_("with p-value"), I_("Chi-square"), 
 		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
-		chisq(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+		chisq_cdf_comp(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
     } else if (tex_format(prn)) {
 	pprintf(prn, "\n%s: $TR^2$ = %f,\n", I_("Test statistic"), 
 		pmod->rsq * pmod->nobs);
 	pprintf(prn, "%s = $P$($\\chi^2(%d)$ > %f) = %f\n\n",
 		I_("with p-value"), 
 		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
-		chisq(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
+		chisq_cdf_comp(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
     }
 }
 
@@ -2622,7 +2622,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "  %s: %s(%d) = %g (%s %f)\n",
 		    _("Likelihood ratio test"), _("Chi-square"), 
-		    i, model_chisq, _("p-value"), chisq(model_chisq, i));
+		    i, model_chisq, _("p-value"), 
+		    chisq_cdf_comp(model_chisq, i));
 	}
 	pprintf(prn, "  %s (%s) = %g\n", _(aic_str), _(aic_abbrev),
 		crit[C_AIC]);
@@ -2655,7 +2656,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "\\par %s: %s(%d) = %g (%s %f)\n",
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
-		    i, model_chisq, I_("p-value"), chisq(model_chisq, i));
+		    i, model_chisq, I_("p-value"), 
+		    chisq_cdf_comp(model_chisq, i));
 	}
 	pprintf(prn, "\\par %s (%s) = %g\n", I_(aic_str), I_(aic_abbrev),
 		crit[C_AIC]);
@@ -2689,7 +2691,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 	    i = pmod->ncoeff - 1;
 	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f (%s %f)\\\\\n",
 		    I_("Likelihood ratio test"), 
-		    i, model_chisq, I_("p-value"), chisq(model_chisq, i));
+		    i, model_chisq, I_("p-value"), 
+		    chisq_cdf_comp(model_chisq, i));
 	}
 	pprintf(prn, "%s (%s) = %g\\\\\n", I_(aic_str), I_(aic_abbrev),
 		crit[C_AIC]);

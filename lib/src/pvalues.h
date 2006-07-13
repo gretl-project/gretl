@@ -22,7 +22,7 @@
 
 double binomial_cdf (int k, int n, double p);
 
-double binomial_pvalue (int k, int n, double p);
+double binomial_cdf_comp (int k, int n, double p);
 
 double x_factorial (double x);
 
@@ -32,11 +32,23 @@ double normal_pvalue_2 (double x);
 
 double normal_pvalue_1 (double x);
 
+double t_cdf (double x, int df);
+
+double t_cdf_comp (double x, int df);
+
 double t_pvalue_2 (double x, int df);
 
-double fdist (double x, int dfn, int dfd);
+double chisq_cdf (double x, int df);
 
-double chisq (double x, int df);
+double chisq_cdf_comp (double x, int df);
+
+double chisq_critval (double a, int df);
+
+double f_cdf (double x, int dfn, int dfd);
+
+double f_cdf_comp (double x, int dfn, int dfd);
+
+double f_critval (double a, int dfn, int dfd);
 
 double normal_cdf (double x);
 
@@ -55,8 +67,6 @@ double batch_pvalue (const char *str,
                      PRN *prn, gretlopt opt);
 
 void interact_pvalue (void);
-
-double f_crit_a (double a, int df1, int df2);
 
 int print_critical (const char *line, PRN *prn);
 

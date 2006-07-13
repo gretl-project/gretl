@@ -1527,7 +1527,7 @@ int do_confidence_region (selector *sr)
     b[1] = pmod->coeff[v[1]];
 
     t = tcrit95(pmod->dfd);
-    kF = 2.0 * f_crit_a(.05, 2, pmod->dfd);
+    kF = 2.0 * f_critval(.05, 2, pmod->dfd);
 
     gretl_model_get_param_name(pmod, datainfo, v[0], iname);
     gretl_model_get_param_name(pmod, datainfo, v[1], jname);
@@ -3199,7 +3199,7 @@ static void normal_test (MODEL *pmod, FreqDist *freq)
 	model_test_set_teststat(test, GRETL_STAT_NORMAL_CHISQ);
 	model_test_set_dfn(test, 2);
 	model_test_set_value(test, freq->test);
-	model_test_set_pvalue(test, chisq(freq->test, 2));
+	model_test_set_pvalue(test, chisq_cdf_comp(freq->test, 2));
 	maybe_add_test_to_model(pmod, test);
     }
 }

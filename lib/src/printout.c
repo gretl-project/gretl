@@ -275,7 +275,7 @@ static void print_freq_test (const FreqDist *freq, PRN *prn)
     double pval = NADBL;
 
     if (freq->dist == DIST_NORMAL) {
-	pval = chisq(freq->test, 2);
+	pval = chisq_cdf_comp(freq->test, 2);
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of normal distribution"));
 	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
@@ -494,7 +494,7 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 	    df = (r - 1) * (c - 1);
 	    pputc(prn, '\n');
 	    pprintf(prn, _("Pearson chi-square test = %g (%d df, p-value = %g)"), 
-		    pearson, df, chisq(pearson, df));
+		    pearson, df, chisq_cdf_comp(pearson, df));
 	    pputc(prn, '\n');
 	}
     }
