@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-11 15:21-0400\n"
-"PO-Revision-Date: 2006-07-13 00:42+0200\n"
+"PO-Revision-Date: 2006-07-15 01:50+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -17,19 +17,19 @@ msgstr ""
 
 #: lib/src/adf_kpss.c:122 gui2/library.c:851
 msgid "test without constant"
-msgstr "test senza costante"
+msgstr "Test senza costante"
 
 #: lib/src/adf_kpss.c:123
 msgid "test with constant"
-msgstr "test con costante"
+msgstr "Test con costante"
 
 #: lib/src/adf_kpss.c:124 gui2/library.c:853
 msgid "with constant and trend"
-msgstr "con costante e trend"
+msgstr "Con costante e trend"
 
 #: lib/src/adf_kpss.c:125
 msgid "with constant and quadratic trend"
-msgstr "con costante e trend quadratico"
+msgstr "Con costante e trend quadratico"
 
 #: lib/src/adf_kpss.c:133 lib/src/adf_kpss.c:136 lib/src/modelprint.c:355
 #: lib/src/modelprint.c:358 lib/src/modelprint.c:370 lib/src/modelprint.c:1408
@@ -75,15 +75,15 @@ msgstr "Ampiezza campionaria %d\n"
 
 #: lib/src/adf_kpss.c:148
 msgid "unit-root null hypothesis: a = 1"
-msgstr "ipotesi nulla di radice unitaria: a = 1"
+msgstr "Ipotesi nulla di radice unitaria: a = 1"
 
 #: lib/src/adf_kpss.c:155
 msgid "plus seasonal dummies"
-msgstr "con dummy stagionali"
+msgstr "Con dummy stagionali"
 
 #: lib/src/adf_kpss.c:160
 msgid "model"
-msgstr "modello"
+msgstr "Modello"
 
 #: lib/src/adf_kpss.c:163 gui2/selector.c:2229
 msgid "lag order:"
@@ -91,7 +91,7 @@ msgstr "Ordine dei ritardi:"
 
 #: lib/src/adf_kpss.c:170
 msgid "estimated value of (a - 1)"
-msgstr "valore stimato di (a - 1)"
+msgstr "Valore stimato di (a - 1)"
 
 #: lib/src/adf_kpss.c:171 lib/src/describe.c:2117 lib/src/describe.c:2356
 #: gui2/calculator.c:542
@@ -118,7 +118,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"test KPSS per %s %s\n"
+"Test KPSS per %s %s\n"
 "\n"
 
 #: lib/src/adf_kpss.c:630
@@ -1670,7 +1670,7 @@ msgstr "Distanze salvate in '%s'"
 
 #: lib/src/describe.c:3543
 msgid "illegal negative value"
-msgstr "valore negativo non valido"
+msgstr "Valore negativo non valido"
 
 #: lib/src/describe.c:3623
 msgid "Lorenz curve"
@@ -1686,7 +1686,7 @@ msgstr "Coefficiente di Gini campionario"
 
 #: lib/src/describe.c:3688
 msgid "Estimate of population value"
-msgstr "Stima del valore della popolazione"
+msgstr "Stima del valore nella popolazione"
 
 #: lib/src/discrete.c:359
 #, c-format
@@ -2528,29 +2528,33 @@ msgstr "tutti gli strumenti sono validi"
 msgid "Hausman test"
 msgstr "Test di Hausman"
 
+# Tenere minuscolo
 #: lib/src/gretl_model.c:2224
 msgid "OLS estimates are consistent"
-msgstr "Le stime OLS sono consistenti"
+msgstr "le stime OLS sono consistenti"
 
+# Tenere minuscolo
 #: lib/src/gretl_model.c:2227
 msgid "GLS estimates are consistent"
-msgstr "Le stime GLS sono consistenti"
+msgstr "le stime GLS sono consistenti"
 
 #: lib/src/gretl_model.c:2229
 msgid "Test for differing group intercepts"
 msgstr "Test per la differenza delle intercette di gruppo"
 
+# Tenere minuscolo
 #: lib/src/gretl_model.c:2230
 msgid "The groups have a common intercept"
-msgstr "I gruppi hanno un'intercetta comune"
+msgstr "i gruppi hanno un'intercetta comune"
 
 #: lib/src/gretl_model.c:2232
 msgid "Breusch-Pagan test"
 msgstr "Test Breusch-Pagan"
 
+# Tenere minuscolo
 #: lib/src/gretl_model.c:2233
 msgid "Variance of the unit-specific error = 0"
-msgstr "Varianza dell'errore specifico all'unità = 0"
+msgstr "varianza dell'errore specifico all'unità = 0"
 
 #: lib/src/gretl_model.c:2499 lib/src/gretl_model.c:2502
 #: lib/src/gretl_model.c:2505
@@ -3896,7 +3900,7 @@ msgstr "Sono state scartate osservazioni mancanti o incomplete"
 #: lib/src/modelprint.c:1144 lib/src/modelprint.c:1145
 #, c-format
 msgid "%s estimates using %d observations"
-msgstr "stime %s usando %d osservazioni"
+msgstr "Stime %s usando %d osservazioni"
 
 #: lib/src/modelprint.c:1150 lib/src/modelprint.c:1151
 #, c-format
@@ -4072,9 +4076,10 @@ msgstr "Stime dei coefficienti AR"
 msgid "Sum of AR coefficients"
 msgstr "Somma dei coefficienti AR"
 
+# Non modificare la spaziatura, è stata testata.
 #: lib/src/modelprint.c:2331
 msgid "                        Real  Imaginary    Modulus  Frequency"
-msgstr "                        Reale Immaginario  Modulo   Frequenza"
+msgstr "                      Reale   Immaginario   Modulo  Frequenza"
 
 #: lib/src/modelprint.c:2341 lib/src/modelprint.c:2344
 #: lib/src/modelprint.c:2357
@@ -4240,7 +4245,7 @@ msgstr ""
 #: lib/src/monte_carlo.c:2036
 #, c-format
 msgid "%s estimates using the %d observations %s-%s\n"
-msgstr "stime %s usando le %d osservazioni %s-%s\n"
+msgstr "Stime %s usando le %d osservazioni %s-%s\n"
 
 #: lib/src/monte_carlo.c:2040
 #, c-format
@@ -5752,35 +5757,35 @@ msgstr "/File/A_ggiungi dati"
 
 #: gui/gretl.c:190 gui2/gretl.c:239
 msgid "/File/Append data/standard format..."
-msgstr "/File/Aggiungi dati/formato _standard..."
+msgstr "/File/Aggiungi dati/_Gretl..."
 
 #: gui/gretl.c:191 gui2/gretl.c:240
 msgid "/File/Append data/from CSV..."
-msgstr "/File/Aggiungi dati/Da _CSV..."
+msgstr "/File/Aggiungi dati/_CSV..."
 
 #: gui/gretl.c:192 gui2/gretl.c:241
 msgid "/File/Append data/from ASCII..."
-msgstr "/File/Aggiungi dati/Da _ASCII..."
+msgstr "/File/Aggiungi dati/_ASCII..."
 
 #: gui/gretl.c:193 gui2/gretl.c:242
 msgid "/File/Append data/from Octave..."
-msgstr "/File/Aggiungi dati/Da _Octave..."
+msgstr "/File/Aggiungi dati/_Octave..."
 
 #: gui/gretl.c:194 gui2/gretl.c:243
 msgid "/File/Append data/from Gnumeric..."
-msgstr "/File/Aggiungi dati/Da _Gnumeric..."
+msgstr "/File/Aggiungi dati/_Gnumeric..."
 
 #: gui/gretl.c:195 gui2/gretl.c:244
 msgid "/File/Append data/from Excel..."
-msgstr "/File/Aggiungi dati/Da _Excel..."
+msgstr "/File/Aggiungi dati/_Excel..."
 
 #: gui/gretl.c:196 gui2/gretl.c:245
 msgid "/File/Append data/from Eviews..."
-msgstr "/File/Aggiungi dati/Da _Eviews..."
+msgstr "/File/Aggiungi dati/_Eviews..."
 
 #: gui/gretl.c:197 gui2/gretl.c:246
 msgid "/File/Append data/from Stata..."
-msgstr "/File/Aggiungi dati/Da _Stata..."
+msgstr "/File/Aggiungi dati/_Stata..."
 
 #: gui/gretl.c:200 gui2/gretl.c:249
 msgid "/File/_Save data"
@@ -5792,15 +5797,15 @@ msgstr "/File/Sa_lva dati come"
 
 #: gui/gretl.c:202 gui2/gretl.c:251
 msgid "/File/Save data as/_standard format..."
-msgstr "/File/Salva dati come/_gretl..."
+msgstr "/File/Salva dati come/_Gretl..."
 
 #: gui/gretl.c:203 gui2/gretl.c:253
 msgid "/File/Save data as/_gzipped..."
-msgstr "/File/Salva dati come/g_zip..."
+msgstr "/File/Salva dati come/Gretl g_zip..."
 
 #: gui/gretl.c:204 gui2/gretl.c:255
 msgid "/File/Save data as/_database..."
-msgstr "/File/Salva dati come/_database..."
+msgstr "/File/Salva dati come/_Database..."
 
 #: gui/gretl.c:207 gui2/gretl.c:259
 msgid "/File/_Export data"
@@ -6056,36 +6061,36 @@ msgstr "/Dati/_Ordina variabili/Per _nome"
 
 #: gui/gretl.c:320 gui2/gretl.c:381
 msgid "/Data/_Graph specified vars"
-msgstr "/Dati/_Grafico variabili"
+msgstr "/Dati/_Grafico"
 
 #: gui/gretl.c:321 gui2/gretl.c:382
 msgid "/Data/Graph specified vars/Time series plot..."
-msgstr "/Dati/Grafico variabili/_Serie storica..."
+msgstr "/Dati/Grafico/_Serie storica..."
 
 #: gui/gretl.c:323 gui2/gretl.c:384
 msgid "/Data/Graph specified vars/X-Y scatter..."
-msgstr "/Dati/Grafico variabili/X-Y a _dispersione..."
+msgstr "/Dati/Grafico/X-Y a _dispersione..."
 
 #: gui/gretl.c:325 gui2/gretl.c:386
 msgid "/Data/Graph specified vars/X-Y with impulses..."
-msgstr "/Dati/Grafico variabili/X-Y a _impulsi..."
+msgstr "/Dati/Grafico/X-Y a _impulsi..."
 
 #: gui/gretl.c:327 gui2/gretl.c:388
 msgid "/Data/Graph specified vars/X-Y with factor separation..."
-msgstr "/Dati/Grafico variabili/X-Y con _fattore..."
+msgstr "/Dati/Grafico/X-Y con _fattore..."
 
 #: gui/gretl.c:329 gui2/gretl.c:390
 msgid "/Data/Graph specified vars/Boxplots..."
-msgstr "/Dati/Grafico variabili/_Boxplot..."
+msgstr "/Dati/Grafico/_Boxplot..."
 
 #  notched boxplot???
 #: gui/gretl.c:331 gui2/gretl.c:392
 msgid "/Data/Graph specified vars/Notched boxplots..."
-msgstr "/Dati/Grafico variabili/Boxplot a t_acca..."
+msgstr "/Dati/Grafico/Boxplot a t_acca..."
 
 #: gui/gretl.c:333 gui2/gretl.c:394
 msgid "/Data/Graph specified vars/3D plot..."
-msgstr "/Dati/Grafico variabili/Grafico _3D..."
+msgstr "/Dati/Grafico/_3D..."
 
 #: gui/gretl.c:335 gui2/gretl.c:396
 msgid "/Data/_Multiple graphs"
@@ -6489,15 +6494,15 @@ msgstr "/Aiuto/Guida _comandi"
 
 #: gui/gretl.c:502 gui2/gretl.c:564
 msgid "/Help/Command reference/plain text"
-msgstr "/Aiuto/Guida _comandi/testo semplice"
+msgstr "/Aiuto/Guida _comandi/Guida in linea"
 
 #: gui/gretl.c:503 gui2/gretl.c:566
 msgid "/Help/Command reference/PDF"
-msgstr "/Aiuto/Guida _comandi/PDF"
+msgstr "/Aiuto/Guida _comandi/Versione PDF"
 
 #: gui/gretl.c:504 gui2/gretl.c:568
 msgid "/Help/_User's guide"
-msgstr "/Aiuto/Guida all'_uso"
+msgstr "/Aiuto/Guida all'_uso di gretl"
 
 #: gui/gretl.c:506 gui2/gretl.c:571
 msgid "/Help/Check for _updates"
@@ -7494,7 +7499,7 @@ msgstr "gretl: test delle varianze"
 
 #: gui2/callbacks.c:474
 msgid "gretl: restrict sample"
-msgstr "gretl: condizione campione"
+msgstr "gretl: impostazione campione"
 
 #: gui2/callbacks.c:475
 msgid "Enter boolean condition for selecting cases:"
@@ -7894,9 +7899,10 @@ msgstr "gretl: database sul server"
 msgid "gretl: function packages on server"
 msgstr "gretl: pacchetti di funzioni sul server"
 
+# Deve stare in 18 caratteri
 #: gui2/datafiles.c:1040
 msgid "Get series listing"
-msgstr "Scarica l'elenco delle serie"
+msgstr "Serie contenute"
 
 #: gui2/datafiles.c:1042 gui2/gpt_control.c:1985 gui2/gpt_control.c:2052
 #: gui2/session.c:182 gui2/session.c:190 gui2/session.c:2045
@@ -8032,7 +8038,7 @@ msgstr "punto (.)"
 
 #: gui2/dialogs.c:470
 msgid "include observations column"
-msgstr "includi la colonna delle osservazioni"
+msgstr "Includi la colonna delle osservazioni"
 
 #: gui2/dialogs.c:669
 msgid "gretl: select format"
@@ -8088,7 +8094,7 @@ msgstr "Nome mostrato nei grafici"
 
 #: gui2/dialogs.c:1097
 msgid "compaction method (for reducing frequency):"
-msgstr "Metodo di compattamento (per ridurre la frequenza):"
+msgstr "Metodo di compattamento (in caso di riduzione della frequenza):"
 
 #: gui2/dialogs.c:1214
 msgid "gretl: database description"
@@ -8243,23 +8249,23 @@ msgstr "annuale"
 
 #: gui2/dialogs.c:2218
 msgid "Compact quarterly data to annual"
-msgstr "Compatta dati trimestrali in annuali"
+msgstr "Compatta dati, da frequenza trimestrale ad annuale"
 
 #: gui2/dialogs.c:2221
 msgid "Compact monthly data to:"
-msgstr "Compatta dati mensili in:"
+msgstr "Compatta dati, da frequenza mensile a:"
 
 #: gui2/dialogs.c:2227
 msgid "Compact daily data to:"
-msgstr "Compatta dati giornalieri in:"
+msgstr "Compatta dati, da frequenza giornaliera a:"
 
 #: gui2/dialogs.c:2230
 msgid "Compact daily data to weekly"
-msgstr "Compatta dati giornalieri in settimanali"
+msgstr "Compatta dati da frequenza giornaliera a settimanale"
 
 #: gui2/dialogs.c:2237
 msgid "Compact weekly data to monthly"
-msgstr "Compatta dati settimanali in mensili"
+msgstr "Compatta dati da frequenza settimanale a mensile"
 
 #: gui2/dialogs.c:2367
 msgid "gretl: expand data"
@@ -8272,11 +8278,11 @@ msgstr "Si sta aggiungendo una serie %s a un dataset %s"
 
 #: gui2/dialogs.c:2377
 msgid "Expand annual data to:"
-msgstr "Espandi dati annuali in:"
+msgstr "Espandi dati da frequenza annuale a:"
 
 #: gui2/dialogs.c:2382
 msgid "Expand quarterly data to monthly"
-msgstr "Espandi dati trimestrali in annuali"
+msgstr "Espandi dati da frequenza trimestrale ad annuale"
 
 #: gui2/dialogs.c:2550
 msgid "density estimation options"
@@ -8318,11 +8324,11 @@ msgstr "Frequenza delle serie storiche"
 
 #: gui2/dialogs.c:2944
 msgid "Days in week"
-msgstr "Giorni nella settimana"
+msgstr "Numero di giorni in una settimana"
 
 #: gui2/dialogs.c:2945
 msgid "Daily date to represent week:"
-msgstr "Giorno per rappresentare la settimana:"
+msgstr "Scegliere un giorno per rappresentare la settimana:"
 
 #: gui2/dialogs.c:2946
 msgid "Starting observation:"
@@ -8368,7 +8374,7 @@ msgstr "Decennale"
 
 #: gui2/dialogs.c:3143
 msgid "Other"
-msgstr "Altro"
+msgstr "Altra frequenza"
 
 #: gui2/dialogs.c:3152
 msgid "Stacked time series"
@@ -8380,7 +8386,7 @@ msgstr "Pila di dati cross section"
 
 #: gui2/dialogs.c:3154
 msgid "Use index variables"
-msgstr "Usa le variabili indice"
+msgstr "Usa variabili indice"
 
 #: gui2/dialogs.c:3216
 msgid "Cross-sectional"
@@ -8436,7 +8442,7 @@ msgstr "Domenica"
 
 #: gui2/dialogs.c:3231
 msgid "None (don't use dates)"
-msgstr "Nessuno (non usa date)"
+msgstr "Nessuno (non usare date)"
 
 #: gui2/dialogs.c:3305
 #, c-format
@@ -8445,11 +8451,11 @@ msgstr "%s, osservazioni da 1 a %d"
 
 #: gui2/dialogs.c:3305
 msgid "cross-sectional data"
-msgstr "dati cross section"
+msgstr "Dati cross section"
 
 #: gui2/dialogs.c:3312
 msgid "time-series data"
-msgstr "dati serie storiche"
+msgstr "Dati serie storiche"
 
 #: gui2/dialogs.c:3332 gui2/dialogs.c:3339
 #, c-format
@@ -8457,7 +8463,7 @@ msgid ""
 "panel data (%s)\n"
 "%d cross-sectional units observed over %d periods"
 msgstr ""
-"dati panel (%s)\n"
+"Dati panel (%s)\n"
 "%d unità cross section osservate per %d periodi"
 
 #: gui2/dialogs.c:3334 gui2/dialogs.c:3342
@@ -8897,7 +8903,7 @@ msgstr "Stampa..."
 
 #: gui2/gpt_control.c:1981 gui2/gpt_control.c:2050
 msgid "OLS estimates"
-msgstr "stime OLS"
+msgstr "Stime OLS"
 
 #: gui2/gpt_control.c:1983 gui2/gpt_control.c:2051
 msgid "Numerical values"
@@ -9514,11 +9520,11 @@ msgstr "/LaTeX/Opzioni equazione"
 
 #: gui2/gui_utils.c:384 gui2/gui_utils.c:450
 msgid "/LaTeX/Equation options/show standard errors"
-msgstr "LaTeX/Opzioni equazione/mostra errori standard"
+msgstr "LaTeX/Opzioni equazione/Mostra errori standard"
 
 #: gui2/gui_utils.c:386 gui2/gui_utils.c:452
 msgid "/LaTeX/Equation options/show t-ratios"
-msgstr "LaTeX/Opzioni equazione/mostra rapporti t"
+msgstr "LaTeX/Opzioni equazione/Mostra rapporti t"
 
 #: gui2/gui_utils.c:1210
 msgid "Failed to import data"
@@ -10049,7 +10055,7 @@ msgstr "Non ci sono dati disponibili per il grafico"
 #: gui2/library.c:263
 #, c-format
 msgid "Undated: Full range n = %d; current sample n = %d"
-msgstr "Senza data: intervallo completo n = %d; campione attuale n = %d"
+msgstr "Senza data: campione completo n = %d; campione attuale n = %d"
 
 #: gui2/library.c:327
 msgid "Out of memory allocating output buffer"
@@ -10632,7 +10638,7 @@ msgstr ""
 
 #: gui2/library.c:5210
 msgid "Data transposed"
-msgstr "Dati trasposti"
+msgstr "I dati sono stati trasposti"
 
 #: gui2/library.c:5221
 msgid "OK to overwrite?"
@@ -10864,12 +10870,12 @@ msgstr "Non datato"
 #: gui2/menustate.c:526
 #, c-format
 msgid "%s: Full range %s - %s"
-msgstr "%s: intervallo completo %s - %s"
+msgstr "%s: campione completo %s - %s"
 
 #: gui2/menustate.c:535
 #, c-format
 msgid "%s; sample %s - %s"
-msgstr "%s; campione %s - %s"
+msgstr "%s; campione attuale %s - %s"
 
 #: gui2/menustate.c:557
 msgid " Unsaved data "
@@ -10946,7 +10952,7 @@ msgstr "La tabella modelli è vuota"
 #: gui2/model_table.c:754 gui2/model_table.c:842 gui2/model_table.c:948
 #, c-format
 msgid "%s estimates"
-msgstr "stime %s"
+msgstr "Stime %s"
 
 #: gui2/model_table.c:759
 #, c-format
@@ -11133,7 +11139,7 @@ msgstr "rango di cointegrazione:"
 
 #: gui2/selector.c:2254
 msgid "maximum lag:"
-msgstr "ritardo massimo:"
+msgstr "Ritardo massimo:"
 
 #: gui2/selector.c:2279
 msgid "Factor (dummy)"
@@ -11153,7 +11159,7 @@ msgstr "<- Rimuovi"
 
 #: gui2/selector.c:2322 gui2/selector.c:2964 gui2/selector.c:3201
 msgid "lags..."
-msgstr "ritardi..."
+msgstr "Ritardi..."
 
 #: gui2/selector.c:2397 gui2/selector.c:2406
 msgid "Exogenous variables"
@@ -12037,7 +12043,7 @@ msgstr "Gradienti all'ultima iterazione"
 
 #: plugin/fractals.c:40
 msgid "Rescaled-range plot for"
-msgstr "Grafico a intervallo riscalato di"
+msgstr "Grafico dell'intervallo riscalato di"
 
 #: plugin/fractals.c:41
 msgid "log(sample size)"
@@ -12045,16 +12051,16 @@ msgstr "log(ampiezza campionaria)"
 
 #: plugin/fractals.c:42
 msgid "log(R/S)"
-msgstr "log(R/S)"
+msgstr "log(RS)"
 
 #: plugin/fractals.c:224
 msgid "Sample is too small for Hurst exponent"
-msgstr "Il campione è troppo piccolo per l'esponente di Hurst"
+msgstr "Il campione è troppo piccolo per calcolare l'esponente di Hurst"
 
 #: plugin/fractals.c:234
 #, c-format
 msgid "Rescaled range figures for %s"
-msgstr "Valori a intervallo riscalato per %s"
+msgstr "Valori dell'intervallo riscalato per %s"
 
 #: plugin/fractals.c:237
 msgid "(logs are to base 2)"
@@ -12185,7 +12191,7 @@ msgstr "Impossibile trovare gli autovalori\n"
 #: plugin/kernel.c:132
 #, c-format
 msgid "bandwidth = %g"
-msgstr "banda = %g"
+msgstr "Banda = %g"
 
 #: plugin/kernel.c:135
 #, c-format
@@ -12417,7 +12423,7 @@ msgstr "Valori critici al 5% per la statistica di Durbin-Watson"
 
 #: plugin/stats_tables.c:335
 msgid "       Number of explanatory variables (excluding the constant)"
-msgstr "       Numero delle variabili esplicative (esclusa la costante):"
+msgstr "       Numero delle variabili esplicative (esclusa la costante)"
 
 #: plugin/stats_tables.c:360
 msgid ""
