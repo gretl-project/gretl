@@ -85,12 +85,14 @@ void main_menubar_state (gboolean s)
     flip(mdata->ifac, "/File/Save data as", s);
     flip(mdata->ifac, "/File/Export data", s);
     flip(mdata->ifac, "/File/Send To...", s);
-    flip(mdata->ifac, "/File/New data set", !s);
     flip(mdata->ifac, "/Data", s);
     flip(mdata->ifac, "/Add", s);
     flip(mdata->ifac, "/Sample", s);
     flip(mdata->ifac, "/Variable", s);
     flip(mdata->ifac, "/Model", s);
+    flip(mdata->ifac, "/Tools/Sort variables", s);
+
+    flip(mdata->ifac, "/File/New data set", !s);
 
     if (s) {
 	edit_info_state(!(data_status & BOOK_DATA));
