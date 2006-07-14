@@ -3643,6 +3643,15 @@ static void maybe_set_listdef_vars (selector *sr)
     }
 }
 
+static void maybe_set_tsplot_vars (selector *sr)
+{
+    int mc = mdata_selection_count();
+
+    if (mc > 1 && mc < 7) {
+	set_vars_from_main(sr);
+    }
+}
+
 static void selector_add_top_entry (selector *sr)
 {
     GtkWidget *src;
@@ -3820,6 +3829,8 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
 	select_singleton(sr);
     } else if (sr->code == DEFINE_LIST) {
 	maybe_set_listdef_vars(sr);
+    } else if (sr->code == TSPLOTS) {
+	maybe_set_tsplot_vars(sr);
     }
 
     gtk_widget_show(sr->dlg);

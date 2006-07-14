@@ -1063,18 +1063,25 @@ int main (int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
+static void set_varmenu_state (int single)
+{
+    if (mdata != NULL) {
+	flip(mdata->ifac, "/Variable", single);
+	flip(mdata->ifac, "/Data/Summary statistics/selected variables", 
+	     !single);
+	flip(mdata->ifac, "/Data/Correlation matrix/selected variables", 
+	     !single);
+	flip(mdata->ifac, "/Data/Multivariate statistics", 
+	     !single);
+    }
+}
+
 static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 {
     if (mdata->ifac != NULL) {
-	int selcount = selection_count(select, NULL);
+	int sc = selection_count(select, NULL);
 
-	flip(mdata->ifac, "/Variable", (selcount == 1));
-	flip(mdata->ifac, "/Data/Summary statistics/selected variables", 
-	     (selcount > 1));
-	flip(mdata->ifac, "/Data/Correlation matrix/selected variables", 
-	     (selcount > 1));
-	flip(mdata->ifac, "/Data/Multivariate statistics", 
-	     (selcount > 1));
+	set_varmenu_state(sc == 1);
     }
 }
 
@@ -1101,6 +1108,11 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (key->keyval == GDK_g) {
 	/* invoke genr */
 	gretl_callback(NULL, GENR, NULL);
+	return FALSE;
+    }
+
+    if (key->keyval == GDK_r) {
+	refresh_data();
 	return FALSE;
     }
 
@@ -1260,6 +1272,8 @@ void populate_varlist (void)
 			 mdata);
 	click_connected = 1;
     }
+
+    set_varmenu_state(1);
 }
 
 static gint 
