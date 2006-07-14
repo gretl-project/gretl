@@ -3039,7 +3039,7 @@
   
     <description>
       <para>
-       Calcolate l'esponente di Hurst (una misura di persistenza, o di memoria
+       Calcola l'esponente di Hurst (una misura di persistenza, o di memoria
        lunga) per una serie storica con almeno 128 osservazioni.
       </para>
   
@@ -3067,7 +3067,7 @@
        maggiori di 0.5 indicano persistenza della serie, mentre valori minori di
        0.5 indicano anti-persistenza (autocorrelazione negativa). In teoria
        l'esponente deve essere compreso tra 0 e 1, ma in campioni finiti è
-       possibile ottenere delle stime per l'esponente maggiorni di 1.
+       possibile ottenere delle stime per l'esponente maggiori di 1.
       </para>
 
       <para>
