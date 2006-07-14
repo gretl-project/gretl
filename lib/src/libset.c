@@ -774,7 +774,7 @@ static int display_settings (PRN *prn)
 
     pprintf(prn, " shell_ok = %d\n", state->shell_ok);
     pprintf(prn, " csv_delim = %s\n", arg_from_delim(state->delim));
-    pprintf(prn, " longdigits = %s\n", state->longdigits);
+    pprintf(prn, " longdigits = %d\n", state->longdigits);
     print_initvals(state->initvals, prn);
 
     return 0;
