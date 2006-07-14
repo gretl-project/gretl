@@ -79,7 +79,9 @@ void toolbar_command_reference (void)
 static void xy_graph (void)
 {
     if (data_status) {
-	if (mdata_selection_count() == 2) {
+	if (datainfo->v == 2) {
+	    do_graph_var(mdata->active_var);
+	} else if (mdata_selection_count() == 2) {
 	    plot_from_selection(NULL, GR_XY, NULL);
 	} else {
 	    selector_callback(NULL, GR_XY, NULL);
