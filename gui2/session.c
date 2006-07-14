@@ -1044,11 +1044,9 @@ int session_file_is_open (void)
     return session_file_open;
 }
 
-static void session_clear_data (void)
+void gui_clear_dataset (void)
 {
     *paths.datfile = 0;
-
-    gui_restore_sample();
 
     if (Z != NULL) {
 	free_Z(Z, datainfo);
@@ -1063,6 +1061,12 @@ static void session_clear_data (void)
     data_status = 0;
     orig_vars = 0;
     main_menubar_state(FALSE);
+}
+
+static void session_clear_data (void)
+{
+    gui_restore_sample();
+    gui_clear_dataset();
 
     /* clear protected models */
     clear_model(models[0]);

@@ -33,7 +33,8 @@ int maybe_raise_dialog (void);
 
 GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode);
 
-GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ);
+GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
+				 int *canceled);
 
 GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
 				  int *opt);
@@ -48,7 +49,8 @@ GtkWidget *back_button (GtkWidget *hbox);
 
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
-		  guint hlpcode, guint varclick);
+		  guint hlpcode, guint varclick,
+		  int *canceled);
 
 const gchar *edit_dialog_get_text (dialog_t *dlg);
 

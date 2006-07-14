@@ -1690,7 +1690,7 @@ static void osx_help (int uguide)
                             (uguide)? "gretl-guide.pdf" : 
 			    "gretl-ref.pdf");
     if (fname == NULL) {
-    	errbox(_("Out of memory!"));
+    	nomem();
     } else {
         osx_open_file(fname);
 	g_free(fname);

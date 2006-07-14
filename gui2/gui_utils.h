@@ -96,6 +96,8 @@ void *mymalloc (size_t size);
 
 void *myrealloc (void *ptr, size_t size);
 
+void nomem (void);
+
 void mark_dataset_as_modified (void);
 
 void register_data (char *fname, const char *user_fname,

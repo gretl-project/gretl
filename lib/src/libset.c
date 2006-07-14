@@ -61,7 +61,7 @@ struct sample_info {
 };
     
 struct bhhh_opts {
-    double tolerance;
+    double toler;
     int maxiter;
 };
 
@@ -132,13 +132,13 @@ static void bkbp_opts_copy (struct bkbp_opts *opts)
 
 static void bhhh_opts_init (struct bhhh_opts *opts)
 {
-    opts->tolerance = NADBL;
+    opts->toler = NADBL;
     opts->maxiter = 500;
 }
 
 static void bhhh_opts_copy (struct bhhh_opts *opts)
 {
-    opts->tolerance = state->maxopts.tolerance;
+    opts->toler = state->maxopts.toler;
     opts->maxiter = state->maxopts.maxiter;
 }
 
@@ -260,7 +260,7 @@ void get_bkbp_periods (int *periods)
 double get_bhhh_toler (void)
 {
     check_for_state();
-    return state->maxopts.tolerance;
+    return state->maxopts.toler;
 }
 
 int get_bhhh_maxiter (void)
@@ -278,7 +278,7 @@ int set_bhhh_toler (double tol)
     if (tol <= 0.0) {
 	err = 1;
     } else {
-	state->maxopts.tolerance = tol;
+	state->maxopts.toler = tol;
     }
 
     return err;

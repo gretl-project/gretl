@@ -324,7 +324,7 @@ gint bufopen (PRN **pprn)
     *pprn = gretl_print_new(GRETL_PRINT_BUFFER);
 
     if (*pprn == NULL) {
-	errbox(_("Out of memory allocating output buffer"));
+	nomem();
 	return 1;
     }
 
@@ -337,9 +337,10 @@ static int freq_error (FreqDist *freq, PRN *prn)
 
     if (freq == NULL) {
 	if (prn == NULL) {
-	    errbox(_("Out of memory in frequency distribution"));
+	    nomem();
 	} else {
-	    pprintf(prn, _("Out of memory in frequency distribution\n"));
+	    pputs(prn, _("Out of memory!"));
+	    pputc(prn, '\n');
 	}
 	err = 1;
     } else if (get_gretl_errno()) {
@@ -517,7 +518,7 @@ void add_mahalanobis_data (windata_t *vwin)
     }
 
     if (dataset_add_series(1, &Z, datainfo)) {
-	errbox(_("Out of memory attempting to add variable"));
+	nomem();
 	return;
     }
 
@@ -596,7 +597,7 @@ void add_fcast_data (windata_t *vwin)
     int v, t;
 
     if (dataset_add_series(1, &Z, datainfo)) {
-	errbox(_("Out of memory attempting to add variable"));
+	nomem();
 	return;
     }
 
@@ -1412,7 +1413,7 @@ int do_add_omit (selector *sr)
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
-	errbox(_("Out of memory"));
+	nomem();
 	gretl_print_destroy(prn);
 	return 0;
     }
@@ -2513,7 +2514,7 @@ static void real_do_nonlinear_model (dialog_t *dlg, int ci)
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
-	errbox(_("Out of memory"));
+	nomem();
 	return;
     }
 
@@ -2609,7 +2610,7 @@ int do_model (selector *sr)
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
-	errbox(_("Out of memory"));
+	nomem();
 	return 1;
     }
 
@@ -2849,7 +2850,7 @@ void do_graph_model (GPT_SPEC *spec)
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
-	errbox(_("Out of memory"));
+	nomem();
 	return;
     }
 
@@ -2872,42 +2873,6 @@ void do_graph_model (GPT_SPEC *spec)
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title);     
-}
-
-void do_simdata (GtkWidget *widget, dialog_t *dlg) 
-{
-    const gchar *buf;
-    int nulldata_n = 0;
-    int err = 0;
-
-    buf = edit_dialog_get_text(dlg);
-    if (buf == NULL) return;
-
-    gretl_command_sprintf("nulldata %s", buf);
-    if (check_and_record_command()) {
-	return;
-    }
-
-    nulldata_n = gretl_int_from_string(buf, (const double **) Z, 
-				       datainfo, &err);
-    if (!err && nulldata_n < 2) {
-	err = 1;
-    }
-    if (err) {
-	errbox(_("Data series length missing or invalid"));
-	return;
-    }
-
-    close_dialog(dlg);
-    
-    err = open_nulldata(&Z, datainfo, data_status, nulldata_n, NULL);
-    if (err) { 
-	errbox(_("Failed to create empty data set"));
-	return;
-    }
-
-    *paths.datfile = '\0';
-    register_data(NULL, NULL, 0);
 }
 
 void do_minibuf (GtkWidget *widget, dialog_t *dlg) 
@@ -3224,7 +3189,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     }
 
     if (genr_fit_resid(pmod, rZ, rinfo, GENR_RESID, 1)) {
-	errbox(_("Out of memory attempting to add variable"));
+	nomem();
 	return;
     }
 
@@ -3871,7 +3836,7 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
     }
 
     if (err) {
-	errbox(_("Out of memory attempting to add variable"));
+	nomem();
 	return 1;
     }
 
@@ -3926,7 +3891,7 @@ int add_system_resid (gpointer data, int eqnum, int ci)
     }	
 
     if (err) {
-	errbox(_("Out of memory attempting to add variable"));
+	nomem();
 	return 1;
     }
 
@@ -3954,7 +3919,7 @@ void add_model_stat (MODEL *pmod, int which)
     int i, n;
 
     if (dataset_add_scalar(&Z, datainfo)) {
-	errbox(_("Out of memory attempting to add variable"));
+	nomem();
 	return;
     }
 
@@ -4282,7 +4247,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	err = printdata(NULL, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
-	    errbox(_("Out of memory in display buffer"));
+	    nomem();
 	    gretl_print_destroy(prn);
 	    return;
 	}
@@ -4339,7 +4304,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
 	err = printdata(list, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
-	    errbox(_("Out of memory in display buffer"));
+	    nomem();
 	    gretl_print_destroy(prn);
 	    free(list);
 	    return;
@@ -4479,7 +4444,7 @@ void delete_selected_vars (int id)
     err = dataset_drop_listed_variables(cmd.list, &Z, datainfo, &renumber);
 
     if (err) {
-	errbox(_("Out of memory reorganizing data set"));
+	nomem();
     } else {
 	refresh_data();
 	if (renumber) {
@@ -4931,7 +4896,7 @@ void display_var (void)
 
 	err = printdata(list, (const double **) Z, datainfo, OPT_O, prn);
 	if (err) {
-	    errbox(_("Out of memory in display buffer"));
+	    nomem();
 	    gretl_print_destroy(prn);
 	    return;
 	}
@@ -6768,7 +6733,8 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case TESTUHAT:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
-	    pprintf(prn, _("Out of memory attempting to add variable\n"));
+	    pputs(prn, _("Out of memory!"));
+	    pputc(prn, '\n');
 	    err = 1;
 	} else {
 	    FreqDist *freq; 

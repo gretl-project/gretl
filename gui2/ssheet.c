@@ -53,6 +53,7 @@ typedef struct {
     int added_vars;
     int orig_main_v;
     int modified;
+    int flags;
     guint cid;
     guint point;
 } Spreadsheet;
@@ -249,7 +250,7 @@ static int real_add_new_var (Spreadsheet *sheet, const char *varname)
 {
     GtkTreeViewColumn *column;
     gint cols, colnum;
-    char tmp[16];
+    char tmp[32];
 
     if (add_data_column(sheet)) {
 	return 1;
@@ -436,18 +437,18 @@ static void name_var_dialog (Spreadsheet *sheet)
 {
     edit_dialog (_("gretl: name variable"), 
 		 _("Enter name for new variable\n"
-		   "(max. 8 characters)"),
+		   "(max. 15 characters)"),
 		 NULL, name_new_var, sheet, 
-		 0, 0);
+		 0, VARCLICK_NONE, NULL);
 }
 
 static void new_case_dialog (Spreadsheet *sheet) 
 {
     edit_dialog (_("gretl: case marker"), 
 		 _("Enter case marker for new obs\n"
-		   "(max. 8 characters)"),
+		   "(max. 15 characters)"),
 		 NULL, name_new_obs, sheet, 
-		 0, 0);
+		 0, VARCLICK_NONE, NULL);
 }
 
 static int add_data_column (Spreadsheet *sheet)
@@ -1233,7 +1234,7 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
     set_dataset_locked(FALSE);
 }
 
-static Spreadsheet *spreadsheet_new (void)
+static Spreadsheet *spreadsheet_new (int flags)
 {
     Spreadsheet *sheet;
 
@@ -1253,19 +1254,30 @@ static Spreadsheet *spreadsheet_new (void)
     sheet->orig_main_v = 0;
     sheet->modified = 0;
     sheet->cid = 0;
+    sheet->flags = flags;
 
     return sheet;
 }
 
-static int first_var_all_missing (void)
+static void empty_dataset_guard (void)
 {
-    int t;
+    int t, empty = 0;
 
-    for (t=0; t<datainfo->n; t++) {
-	if (!na(Z[1][t])) return 0;
+    if (datainfo->v == 2) {
+	empty = 1;
+	for (t=0; t<datainfo->n; t++) {
+	    if (!na(Z[1][t])) {
+		empty = 0;
+		break;
+	    }
+	}
     }
 
-    return 1;
+    if (empty) {
+	data_status |= (GUI_DATA | MODIFIED_DATA);
+	register_data(NULL, NULL, 0);
+	infobox(_("Warning: there were missing observations"));
+    }
 }
 
 static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
@@ -1278,12 +1290,13 @@ static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 				"made to the current data set?"), 1);
 	if (resp == GRETL_YES) {
 	    get_data_from_sheet(NULL, sheet);
+	} else if (resp == GRETL_CANCEL || resp == -1) {
+	    return FALSE;
 	}
-	else if (resp == GRETL_CANCEL || resp == -1) return FALSE;
-    } else if (datainfo->v == 2 && first_var_all_missing()) {
-	data_status |= (GUI_DATA|MODIFIED_DATA);
-	register_data(NULL, NULL, 0);
-	infobox(_("Warning: there were missing observations"));
+    } 
+
+    if (sheet->flags == SHEET_NEW_DATASET) {
+	empty_dataset_guard();
     }
   
     gtk_widget_destroy(sheet->win);
@@ -1305,6 +1318,10 @@ static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
 	} else if (resp == GRETL_CANCEL) {
 	    return TRUE;
 	}
+    }
+
+    if (sheet->flags == SHEET_NEW_DATASET) {
+	empty_dataset_guard();
     }
 
     return FALSE;
@@ -1333,7 +1350,7 @@ void show_spreadsheet (SheetCode code)
 	return;
     }
 
-    sheet = spreadsheet_new();
+    sheet = spreadsheet_new(code);
     if (sheet == NULL) {
 	return;
     }

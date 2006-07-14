@@ -107,7 +107,7 @@ static int finfo_init (function_info *finfo)
 
     finfo->help = strings_array_new(finfo->n_public);
     if (finfo->help == NULL) {
-	errbox(_("Out of memory!"));
+	nomem();
 	finfo->canceled = 1;
 	return E_ALLOC;
     }
@@ -761,7 +761,7 @@ void prepare_functions_save (void)
 
     list = gretl_list_from_string(storelist);
     if (list == NULL) {
-	errbox(_("Out of memory!"));
+	nomem();
 	free(finfo);
 	return;
     }
@@ -769,7 +769,7 @@ void prepare_functions_save (void)
     if (gretl_list_has_separator(list)) {
 	if (gretl_list_split_on_separator(list, &finfo->privlist, 
 					  &finfo->publist)) {
-	    errbox(_("Out of memory!"));
+	    nomem();
 	    free(finfo);
 	    free(list);
 	    return;

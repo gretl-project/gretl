@@ -165,8 +165,6 @@ int out_of_sample_info (int add_ok, int *t2);
 
 /* variable-related functions */
 
-void do_simdata (GtkWidget *widget, dialog_t *dlg);
-
 void do_minibuf (GtkWidget *widget, dialog_t *dlg);
 
 void do_genr (GtkWidget *widget, dialog_t *dlg);

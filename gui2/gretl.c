@@ -261,9 +261,12 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL, GNULL },
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, EXPORT_OCTAVE, NULL, GNULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
+
+    /* File, data misc */
 #ifdef ENABLE_MAILER
     { N_("/File/Send To..."), NULL, email_data, OPEN_DATA, "<StockItem>", GRETL_STOCK_MAIL },
 #endif
+    { N_("/File/_New data set"), NULL, newdata_callback, 0, "<StockItem>", GTK_STOCK_NEW },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, "<StockItem>", GTK_STOCK_CLEAR },
     { "/File/sep1", NULL, NULL, 0, "<Separator>", GNULL },
 
@@ -316,50 +319,25 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Tools menu */
     { N_("/_Tools"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Tools/Statistical tables"), NULL, stats_calculator, CALC_DIST, NULL, GNULL },
-    { N_("/Tools/p-value finder"), NULL, stats_calculator, CALC_PVAL, NULL, GNULL },
-    { N_("/Tools/Test statistic calculator"), NULL, stats_calculator, CALC_TEST, 
+    { N_("/Tools/_Statistical tables"), NULL, stats_calculator, CALC_DIST, NULL, GNULL },
+    { N_("/Tools/_p-value finder"), NULL, stats_calculator, CALC_PVAL, NULL, GNULL },
+    { N_("/Tools/_Test statistic calculator"), NULL, stats_calculator, CALC_TEST, 
       NULL, GNULL },
     { "/Tools/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tools/_Icon view"), NULL, view_session, 0, NULL, GNULL },
-    { N_("/Tools/_View command log"), NULL, view_command_log, 0, NULL, GNULL },
-    { N_("/Tools/Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },
-    { N_("/Tools/Start GNU R"), NULL, startRcallback, 0, NULL, GNULL },
+    { N_("/Tools/_Command log"), NULL, view_command_log, 0, NULL, GNULL },
+    { N_("/Tools/_Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },
+    { N_("/Tools/Start GNU _R"), NULL, startRcallback, 0, NULL, GNULL },
     { "/Tools/sep2", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tools/Sort variables"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Tools/Sort variables/by ID number"), NULL, sort_varlist, 0, NULL, GNULL },
     { N_("/Tools/Sort variables/by name"), NULL, sort_varlist, 1, NULL, GNULL },
     { "/Tools/sep3", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tools/_Create data set"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Tools/Create data set/time-series"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Tools/Create data set/time-series/annual"), 
-      NULL, newdata_callback, 1, NULL, GNULL },    
-    { N_("/Tools/Create data set/time-series/quarterly"), 
-      NULL, newdata_callback, 4, NULL, GNULL },    
-    { N_("/Tools/Create data set/time-series/monthly"), 
-      NULL, newdata_callback, 12, NULL, GNULL },
-    { N_("/Tools/Create data set/time-series/high frequency"), 
-      NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Tools/Create data set/time-series/high frequency/weekly"), 
-      NULL, newdata_callback, 52, NULL, GNULL }, 
-    { N_("/Tools/Create data set/time-series/high frequency/daily (5-day week)"), 
-      NULL, newdata_callback, 5, NULL, GNULL }, 
-    { N_("/Tools/Create data set/time-series/high frequency/daily (6-day week)"), 
-      NULL, newdata_callback, 6, NULL, GNULL }, 
-    { N_("/Tools/Create data set/time-series/high frequency/daily (7-day week)"), 
-      NULL, newdata_callback, 7, NULL, GNULL }, 
-    { N_("/Tools/Create data set/time-series/high frequency/hourly"), 
-      NULL, newdata_callback, 24, NULL, GNULL }, 
-    { N_("/Tools/Create data set/cross-sectional"), 
-      NULL, newdata_callback, 0, NULL, GNULL }, 
-    { N_("/Tools/Create data set/simulation"), NULL, gretl_callback, 
-      NULLDATA, NULL, GNULL },
-    { "/Tools/sep5", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tools/NIST test suite"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Tools/NIST test suite/basic"), NULL, do_nistcheck, 0, NULL, GNULL },
     { N_("/Tools/NIST test suite/verbose"), NULL, do_nistcheck, 1, NULL, GNULL },
     { N_("/Tools/NIST test suite/very verbose"), NULL, do_nistcheck, 2, NULL, GNULL },
-    { "/Tools/sep6", NULL, NULL, 0, "<Separator>", GNULL },
+    { "/Tools/sep4", NULL, NULL, 0, "<Separator>", GNULL },
 
     /* Tools, preferences */
     { N_("/Tools/_Preferences"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -420,12 +398,15 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Summary statistics/_selected variables"), NULL, 
       do_menu_op, SUMMARY_SELECTED, NULL, GNULL },
     { N_("/Data/_Correlation matrix"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Data/_Correlation matrix/_all variables"), 
+    { N_("/Data/Correlation matrix/_all variables"), 
       NULL, do_menu_op, CORR, NULL, GNULL },
-    { N_("/Data/_Correlation matrix/_selected variables"), NULL, do_menu_op, 
+    { N_("/Data/Correlation matrix/_selected variables"), NULL, do_menu_op, 
       CORR_SELECTED, NULL, GNULL },
-    { N_("/Data/_Principal components"), NULL, do_menu_op, PCA, NULL, GNULL },
-    { N_("/Data/_Mahalanobis distances"), NULL, do_menu_op, MAHAL, NULL, GNULL },
+    { N_("/Data/_Multivariate statistics"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Data/Multivariate statistics/_Principal components"), NULL, 
+      do_menu_op, PCA, NULL, GNULL },
+    { N_("/Data/Multivariate statistics/_Mahalanobis distances"), NULL, 
+      do_menu_op, MAHAL, NULL, GNULL },
 
     /* "Add" (variables) menu */
     { N_("/_Add"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -575,7 +556,7 @@ GtkItemFactoryEntry data_items[] = {
     /* Help menu */
     { N_("/_Help"), NULL, NULL, 0, "<LastBranch>", GNULL },
     { N_("/Help/_Command reference"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Help/Command reference/plain text"), NULL, plain_text_cmdref, 0, "<StockItem>", 
+    { N_("/Help/Command reference/plain text"), "F1", plain_text_cmdref, 0, "<StockItem>", 
       GRETL_STOCK_BOOK },
     { N_("/Help/Command reference/PDF"), NULL, display_pdf_help, 0, "<StockItem>", 
       GRETL_STOCK_PDF },
@@ -1088,11 +1069,11 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 	int selcount = selection_count(select, NULL);
 
 	flip(mdata->ifac, "/Variable", (selcount == 1));
+	flip(mdata->ifac, "/Data/Summary statistics/selected variables", 
+	     (selcount > 1));
 	flip(mdata->ifac, "/Data/Correlation matrix/selected variables", 
 	     (selcount > 1));
-	flip(mdata->ifac, "/Data/Principal components", 
-	     (selcount > 1));
-	flip(mdata->ifac, "/Data/Mahalanobis distances", 
+	flip(mdata->ifac, "/Data/Multivariate statistics", 
 	     (selcount > 1));
     }
 }
@@ -1129,8 +1110,9 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	return FALSE;
     }
 
-    if (
-	key->keyval == GDK_Return                        /* display variable(s) */
+    /* enable Home, End, PgUp, PgDown? */
+
+    if (key->keyval == GDK_Return                        /* display variable(s) */
 	|| key->keyval == GDK_Delete                     /* delete variable(s) */
 	|| key->keyval == GDK_e || key->keyval == GDK_F2 /* edit variable's info */
 	|| key->keyval == GDK_t                          /* graph variable */
@@ -1159,8 +1141,12 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 		display_selected(NULL, 0, NULL);
 	    }
 	}
-	    
     } 
+
+    /* suppress useless keystrokes */
+    if (key->keyval != GDK_Up && key->keyval != GDK_Down) {
+	return TRUE;
+    }
 
     return FALSE;
 }

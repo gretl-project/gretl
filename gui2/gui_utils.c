@@ -1065,12 +1065,19 @@ gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
 /* ........................................................... */
 
+void nomem (void)
+{
+    errbox(_("Out of memory!"));
+}
+
 void *mymalloc (size_t size) 
 {
     void *mem;
    
-    if ((mem = malloc(size)) == NULL) 
-	errbox(_("Out of memory!"));
+    if ((mem = malloc(size)) == NULL) {
+	nomem();
+    }
+
     return mem;
 }
 
@@ -1078,8 +1085,10 @@ void *myrealloc (void *ptr, size_t size)
 {
     void *mem;
    
-    if ((mem = realloc(ptr, size)) == NULL) 
-	errbox(_("Out of memory!"));
+    if ((mem = realloc(ptr, size)) == NULL) {
+	nomem();
+    }
+
     return mem;
 }
 

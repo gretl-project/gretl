@@ -209,9 +209,12 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL },
     { N_("/File/Export data/GNU _octave..."), NULL, file_save, EXPORT_OCTAVE, NULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL },
+
+    /* File, data misc */
 #ifdef ENABLE_MAILER
     { N_("/File/Send To..."), NULL, email_data, OPEN_DATA, NULL },
 #endif
+    { N_("/File/_New data set"), NULL, newdata_callback, 0, NULL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },
     { "/File/sep0", NULL, NULL, 0, "<Separator>" },
 
@@ -265,36 +268,11 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Tools/Sort variables/by ID number"), NULL, sort_varlist, 0, NULL },
     { N_("/Tools/Sort variables/by name"), NULL, sort_varlist, 1, NULL },
     { "/Tools/sep3", NULL, NULL, 0, "<Separator>" },
-    { N_("/Tools/_Create data set"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Tools/Create data set/time-series"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Tools/Create data set/time-series/annual"), 
-      NULL, newdata_callback, 1, NULL },    
-    { N_("/Tools/Create data set/time-series/quarterly"), 
-      NULL, newdata_callback, 4, NULL },    
-    { N_("/Tools/Create data set/time-series/monthly"), 
-      NULL, newdata_callback, 12, NULL },
-    { N_("/Tools/Create data set/time-series/high frequency"), 
-      NULL, NULL, 0, "<Branch>" },
-    { N_("/Tools/Create data set/time-series/high frequency/weekly"), 
-      NULL, newdata_callback, 52, NULL }, 
-    { N_("/Tools/Create data set/time-series/high frequency/daily (5-day week)"), 
-      NULL, newdata_callback, 5, NULL }, 
-    { N_("/Tools/Create data set/time-series/high frequency/daily (6-day week)"), 
-      NULL, newdata_callback, 6, NULL }, 
-    { N_("/Tools/Create data set/time-series/high frequency/daily (7-day week)"), 
-      NULL, newdata_callback, 7, NULL }, 
-    { N_("/Tools/Create data set/time-series/high frequency/hourly"), 
-      NULL, newdata_callback, 24, NULL }, 
-    { N_("/Tools/Create data set/cross-sectional"), 
-      NULL, newdata_callback, 0, NULL }, 
-    { N_("/Tools/Create data set/simulation"), NULL, gretl_callback, 
-      NULLDATA, NULL },
-    { "/Tools/sep5", NULL, NULL, 0, "<Separator>" },
     { N_("/Tools/NIST test suite"), NULL, NULL, 0, "<Branch>" },
     { N_("/Tools/NIST test suite/basic"), NULL, do_nistcheck, 0, NULL },
     { N_("/Tools/NIST test suite/verbose"), NULL, do_nistcheck, 1, NULL },
     { N_("/Tools/NIST test suite/very verbose"), NULL, do_nistcheck, 2, NULL },
-    { "/Tools/sep6", NULL, NULL, 0, "<Separator>" },
+    { "/Tools/sep4", NULL, NULL, 0, "<Separator>" },
 
     /* Tools, preferences */
     { N_("/Tools/_Preferences"), NULL, NULL, 0, "<Branch>" },
@@ -358,8 +336,11 @@ GtkItemFactoryEntry data_items[] = {
       NULL, do_menu_op, CORR, NULL },
     { N_("/Data/_Correlation matrix/_selected variables"), NULL, do_menu_op, 
       CORR_SELECTED, NULL },
-    { N_("/Data/_Principal components"), NULL, do_menu_op, PCA, NULL },
-    { N_("/Data/_Mahalanobis distances"), NULL, do_menu_op, MAHAL, NULL },
+    { N_("/Data/_Multivariate statistics"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Data/Multivariate statistics/_Principal components"), NULL, 
+      do_menu_op, PCA, NULL },
+    { N_("/Data/Multivariate statistics/_Mahalanobis distances"), NULL, 
+      do_menu_op, MAHAL, NULL },
 
     /* "Add" (variables) menu */
     { N_("/_Add"), NULL, NULL, 0, "<Branch>" },
@@ -969,11 +950,11 @@ static void check_varmenu_state (GtkCList *list, gint i, gint j,
 	gint selcount = mdata_selection_count();
 
 	flip(mdata->ifac, "/Variable", (selcount == 1));
+	flip(mdata->ifac, "/Data/Summary statistics/selected variables", 
+	     (selcount > 1));
 	flip(mdata->ifac, "/Data/Correlation matrix/selected variables", 
 	     (selcount > 1));
-	flip(mdata->ifac, "/Data/Principal components", 
-	     (selcount > 1));
-	flip(mdata->ifac, "/Data/Mahalanobis distances", 
+	flip(mdata->ifac, "/Data/Multivariate statistics", 
 	     (selcount > 1));
     }
 }

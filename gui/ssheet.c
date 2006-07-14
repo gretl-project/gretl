@@ -38,11 +38,13 @@ static GtkWidget *locator;
 static GtkWidget *topentry;
 static GtkWidget *sheet_popup;
 
-static char newvarname[9], newobsmarker[9];
+static char newvarname[VNAMELEN];
+static char newobsmarker[OBSLEN];
 static int numcolumns, numrows;
 static int sheet_modified;
 static int origvars;
 static int orig_main_v;
+static int sheetcode;
 
 static void sheet_add_var_callback (void);
 static void sheet_add_obs_callback (void);
@@ -121,7 +123,7 @@ static void real_add_new_var (GtkWidget *widget, dialog_t *ddata)
     }
 
     *newvarname = '\0';
-    strncat(newvarname, buf, 8);
+    strncat(newvarname, buf, VNAMELEN - 1);
 
     close_dialog(ddata);
 
@@ -144,7 +146,7 @@ static void real_add_named_obs (dialog_t *ddata, int flag)
     if (buf == NULL) return;
 
     *newobsmarker = '\0';
-    strncat(newobsmarker, buf, 8);
+    strncat(newobsmarker, buf, OBSLEN - 1);
 
     close_dialog(ddata);
 
@@ -182,20 +184,20 @@ static void name_var_dialog (void)
 {
     edit_dialog (_("gretl: name variable"), 
 		 _("Enter name for new variable\n"
-		 "(max. 8 characters)"),
+		 "(max. 15 characters)"),
 		 NULL, real_add_new_var, mdata, 
-		 0, 0);
+		 0, VARCLICK_NONE, NULL);
 }
 
 static void name_obs_dialog (int flag) 
 {
     edit_dialog (_("gretl: case marker"), 
 		 _("Enter case marker for new obs\n"
-		 "(max. 8 characters)"),
+		 "(max. 15 characters)"),
 		 NULL, 
 		 (flag == SHEET_AT_POINT)? insert_named_obs : append_named_obs, 
 		 mdata, 
-		 0, 0);
+		 0, VARCLICK_NONE, NULL);
 }
 
 static void sheet_add_var_callback (void)
@@ -604,15 +606,25 @@ static void free_spreadsheet (GtkWidget *widget, gpointer data)
     set_dataset_locked(FALSE);
 }
 
-static int first_var_all_missing (void)
+static void empty_dataset_guard (void)
 {
-    int t;
+    int t, empty = 0;
 
-    for (t=0; t<datainfo->n; t++) {
-	if (!na(Z[1][t])) return 0;
+    if (datainfo->v == 2) {
+	empty = 1;
+	for (t=0; t<datainfo->n; t++) {
+	    if (!na(Z[1][t])) {
+		empty = 0;
+		break;
+	    }
+	}
     }
 
-    return 1;
+    if (empty) {
+	data_status |= (GUI_DATA | MODIFIED_DATA);
+	register_data(NULL, NULL, 0);
+	infobox(_("Warning: there were missing observations"));
+    }
 }
 
 static void maybe_exit_sheet (GtkWidget *w, GtkWidget *swin)
@@ -625,15 +637,37 @@ static void maybe_exit_sheet (GtkWidget *w, GtkWidget *swin)
 				"made to the current data set?"), 1);
 	if (resp == GRETL_YES) {
 	    get_data_from_sheet();
+	} else if (resp == GRETL_CANCEL || resp == -1) {
+	    return;
 	}
-	else if (resp == GRETL_CANCEL || resp == -1) return;
-    } else if (datainfo->v == 2 && first_var_all_missing()) {
-	data_status |= (GUI_DATA|MODIFIED_DATA);
-	register_data(NULL, NULL, 0);
-	infobox(_("Warning: there were missing observations"));
+    } 
+
+    if (sheetcode == SHEET_NEW_DATASET) {
+	empty_dataset_guard();
     }
   
     gtk_widget_destroy(swin);
+}
+
+static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
+				gpointer p)
+{
+    int resp;
+
+    if (sheet_modified) {
+	resp = yes_no_dialog ("gretl", 
+			      _("Do you want to save changes you have\n"
+				"made to the current data set?"), 0);
+	if (resp == GRETL_YES) {
+	    get_data_from_sheet();
+	} 
+    }
+
+    if (sheetcode == SHEET_NEW_DATASET) {
+	empty_dataset_guard();
+    }
+
+    return FALSE;
 }
 
 void show_spreadsheet (SheetCode code) 
@@ -654,9 +688,14 @@ void show_spreadsheet (SheetCode code)
 	return;
     }
 
+    sheetcode = code;
     sheetwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(sheetwin), _("gretl: edit data"));
     gtk_widget_set_usize(GTK_WIDGET(sheetwin), 600, 400);
+
+    gtk_signal_connect(GTK_OBJECT(sheetwin), "delete_event",
+		       (GtkSignalFunc) sheet_delete_event, 
+		       NULL);
 
     main_vbox = gtk_vbox_new(FALSE, 1);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 2); 

@@ -76,6 +76,8 @@ void session_init (void);
 
 void do_open_session (void);
 
+void gui_clear_dataset (void);
+
 void verify_clear_data (void);
 
 void close_session (void);

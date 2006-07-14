@@ -24,12 +24,12 @@
 #include "session.h"
 #include "database.h"
 #include "datafiles.h"
-#include "ssheet.h"
 #include "textbuf.h"
 #include "textutil.h"
 #include "boxplots.h"
 #include "dlgutils.h"
 #include "fileselect.h"
+#include "ssheet.h"
 
 #ifdef OLD_GTK
 # include <gtkextra/gtkiconfilesel.h>
@@ -390,7 +390,7 @@ void model_genr_callback (gpointer data, guint u, GtkWidget *widget)
 
     edit_dialog(_("gretl: add var"), _("Enter formula for new variable:"),
 		"", do_model_genr, mydata, 
-		MODEL_GENR, VARCLICK_INSERT_NAME);   
+		MODEL_GENR, VARCLICK_INSERT_NAME, NULL);   
 }
 
 void selector_callback (gpointer data, guint action, GtkWidget *widget)
@@ -482,12 +482,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	       "pseudo-random number generator:");
 	okfunc = do_seed;
 	break; 
-    case NULLDATA:
-	title = N_("gretl: simulation data");
-	query = N_("Series length for simulation data set:");
-	defstr = "100";
-	okfunc = do_simdata;
-	break;         
     case GENR:
 	title = N_("gretl: add var");
 	query = N_("Enter formula for new variable:");
@@ -546,7 +540,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     }
 
     edit_dialog(_(title), _(query), defstr, okfunc, data, 
-		action, varclick);   
+		action, varclick, NULL);   
 }
 
 void run_script_callback (GtkWidget *w, gpointer data)
@@ -594,120 +588,39 @@ void add_random_callback (gpointer data, guint code, GtkWidget *widget)
 		       "minimum and maximum values:"), 
 		     "unif 0 1",  
 		     do_random, NULL, 
-		     GENR_UNIFORM, GENR);
+		     GENR_UNIFORM, VARCLICK_NONE, NULL);
     } else if (code == GENR_NORMAL) {
 	edit_dialog (_("gretl: normal variable"), 
 		     _("Enter name, mean and standard deviation:"), 
 		     "norm 0 1", 
 		     do_random, NULL, 
-		     GENR_NORMAL, GENR);
+		     GENR_NORMAL, VARCLICK_NONE, NULL);
     }
-}
-
-static void name_first_ssheet_var (GtkWidget *widget, dialog_t *dlg) 
-{
-    const gchar *buf;
-
-    buf = edit_dialog_get_text(dlg);
-
-    if (buf == NULL || validate_varname(buf)) {
-	return;
-    }
-
-    datainfo->varname[1][0] = 0;
-    strncat(datainfo->varname[1], buf, VNAMELEN - 1);
-
-    close_dialog(dlg);
-
-    show_spreadsheet(SHEET_NEW_DATASET);
-}
-
-static int prep_spreadsheet (const char *dataspec)
-{
-    char stobs[OBSLEN], endobs[OBSLEN];
-    int t1, t2;
-
-    if (sscanf(dataspec, "%10s %10s", stobs, endobs) != 2) {
-	errbox(_("Insufficient dataset information supplied"));
-	return 1;
-    }
-
-    t1 = dateton(stobs, datainfo);
-    t2 = dateton(endobs, datainfo);
-
-    strcpy(datainfo->stobs, stobs);
-    strcpy(datainfo->endobs, endobs);
-
-    datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
-
-    datainfo->n = t2 - t1 + 1;
-    datainfo->t1 = 0;
-    datainfo->t2 = datainfo->n - 1;
-
-    datainfo->v = 2;
-    start_new_Z(&Z, datainfo, 0);
-    datainfo->markers = 0;
-
-    edit_dialog (_("gretl: name variable"), 
-		 _("Enter name for new variable\n"
-		   "(max. 8 characters)"),
-		 NULL, name_first_ssheet_var, NULL, 
-		 0, 0);
-
-    return 0;
-}
-
-static void n_obs_callback (GtkWidget *w, dialog_t *dlg)
-{
-    const gchar *buf;
-    char obsstr[32];
-    int n;
-
-    buf = edit_dialog_get_text(dlg);
-    if (buf == NULL) return;
-
-    n = atoi(buf);
-    if (n < 1 || n > 10000) {
-	errbox(_("Invalid number of observations"));
-	return;
-    }
-
-    close_dialog(dlg);
-
-    datainfo->n = n;
-    sprintf(obsstr, "1 %d", n);
-    prep_spreadsheet(obsstr);
 }
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget) 
 {
+    int resp, n = 50;
+
     if (dataset_locked()) {
 	return;
     }
 
-    if (pd_code == 0) {
-	/* cross-sectional dataset */
-	datainfo->structure = CROSS_SECTION;
-	datainfo->pd = 1;
-	datainfo->sd0 = 1.0;
-	strcpy(datainfo->stobs, "1");
-	edit_dialog (_("gretl: create data set"), 
-		     _("Number of observations:"), "50",
-		     n_obs_callback, NULL, 0, 0);
-    } else {
-	gchar *obsstr = NULL;
+    resp = spin_dialog (_("gretl: create data set"), &n, 
+			_("Number of observations:"), 
+			2, 100000, 0);
 
-	datainfo->structure = TIME_SERIES;
-	datainfo->pd = pd_code;
-	compute_default_ts_info(datainfo, 1);
-
-	sample_range_dialog(&obsstr, CREATE_DATASET, NULL);
-
-	if (obsstr != NULL) {
-	    prep_spreadsheet(obsstr);
-	    g_free(obsstr);
-	}
+    if (resp < 0) {
+	/* canceled */
+	return;
     }
+
+    if (open_nulldata(&Z, datainfo, data_status, n, NULL)) {
+	errbox(_("Failed to create empty data set"));
+	return;
+    }
+
+    data_structure_wizard(NULL, 1, NULL);
 }
 
 void do_nistcheck (gpointer p, guint v, GtkWidget *w)

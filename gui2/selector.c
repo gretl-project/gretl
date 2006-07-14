@@ -4458,7 +4458,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     gtk_widget_show(tmp);
 
     /* "Cancel" button */
-    tmp = cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
+    tmp = cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(lags_set_cancel), &ret);
 

@@ -323,7 +323,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	}
 
 	if (!overwrite && dataset_add_series(1, &Z, datainfo)) {
-	    errbox(_("Out of memory adding series"));
+	    nomem();
 	    return;
 	}
 
@@ -375,7 +375,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	}
 
 	if (xvec == NULL) {
-	    errbox(_("Out of memory attempting to add variable"));
+	    nomem();
 	    if (!overwrite) {
 		dataset_drop_last_variables(1, &Z, datainfo);
 	    }
@@ -486,7 +486,7 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
 
     dbinfo = create_new_dataset(&dbZ, 2, sinfo->nobs, 0);
     if (dbinfo == NULL) {
-	errbox(_("Out of memory"));
+	nomem();
 	return;
     }
 

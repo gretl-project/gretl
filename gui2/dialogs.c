@@ -26,6 +26,7 @@
 #include "textutil.h"
 #include "menustate.h"
 #include "dlgutils.h"
+#include "ssheet.h"
 #include "database.h"
 #include "gretl_panel.h"
 
@@ -754,7 +755,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
     gtk_widget_show(tempwid);
 
     /* and "Cancel" button */
-    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
+    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
 
     /* Help button if needed */
     if (can_do_csv(vwin)) {
@@ -1651,7 +1652,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_widget_grab_default(tempwid);
 
     /* And a Cancel button */
-    cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg);
+    cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, NULL);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
@@ -1961,7 +1962,7 @@ int select_var_from_list (const int *list, const char *query)
     gtk_widget_grab_default(tempwid);
 
     /* And a Cancel button */
-    cancel_delete_button(GTK_DIALOG(dlg)->action_area, dlg);
+    cancel_delete_button(GTK_DIALOG(dlg)->action_area, dlg, NULL);
 
     gtk_widget_show_all(dlg);
 
@@ -2664,6 +2665,8 @@ static GtkWidget *option_spinbox (int *spinvar, const char *spintxt,
 	*pobj = adj;
     }
 
+    g_object_set_data(G_OBJECT(hbox), "spin-button", button);
+
     return hbox;
 }
 
@@ -2672,6 +2675,11 @@ static void set_checks_opt (GtkWidget *w, int *active)
     int i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "optnum"));
 
     active[i] = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+}
+
+static void trigger_ok (GtkWidget *w, GtkWidget *b)
+{
+    gtk_widget_activate(b);
 }
 
 /* general purpose dialog offering check-button options and/or
@@ -2683,18 +2691,20 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 		   int helpcode)
 {
     GtkWidget *dialog;
-    GtkWidget *tempwid;
+    GtkWidget *tmp, *okb;
     GtkWidget *button = NULL;
+    GtkWidget *spin = NULL;
     int i, ret = 0;
 
     dialog = gretl_dialog_new(title, NULL, GRETL_DLG_BLOCK);
 
     /* create spinner if wanted */
     if (spinvar != NULL) {
-	tempwid = option_spinbox(spinvar, spintxt, spinmin, spinmax, NULL);
-	gtk_widget_show(tempwid);
+	tmp = option_spinbox(spinvar, spintxt, spinmin, spinmax, NULL);
+	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), 
-			   tempwid, TRUE, TRUE, 5);
+			   tmp, TRUE, TRUE, 5);
+	spin = g_object_get_data(G_OBJECT(tmp), "spin-button");
     }
 
     /* create check buttons, if any */
@@ -2721,10 +2731,10 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 
 	if (i == 0) {
 	    group = NULL;
-	    tempwid = gtk_hseparator_new();
+	    tmp = gtk_hseparator_new();
 	    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			       tempwid, TRUE, TRUE, 5);
-	    gtk_widget_show(tempwid);
+			       tmp, TRUE, TRUE, 5);
+	    gtk_widget_show(tmp);
 	} else {
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	}
@@ -2739,12 +2749,16 @@ int checks_dialog (const char *title, const char **opts, int nopts,
     }
 
     /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+    okb = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(okb), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    gtk_widget_grab_default(okb);
+    gtk_widget_show(okb);
+    if (spin != NULL) {
+	g_signal_connect(G_OBJECT(spin), "activate",
+			 G_CALLBACK(trigger_ok), okb);
+    }
 
     /* Create the "Cancel" button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
@@ -2982,6 +2996,58 @@ static void dwinfo_init (DATAINFO *dwinfo)
 #endif
 }
 
+/* for the case where the structure wizard is being used
+   to create a new dataset */
+
+static void prep_spreadsheet (GtkWidget *widget, dialog_t *dlg) 
+{
+    const gchar *buf;
+    int t;
+
+    buf = edit_dialog_get_text(dlg);
+
+    if (buf == NULL || validate_varname(buf)) {
+	return;
+    }
+
+    datainfo->varname[1][0] = 0;
+    strncat(datainfo->varname[1], buf, VNAMELEN - 1);
+
+    close_dialog(dlg);
+
+    /* blank out the auto "index" variable */
+    for (t=0; t<datainfo->n; t++) {
+	Z[1][t] = NADBL;
+    }
+    *(VARLABEL(datainfo, 1)) = 0;
+
+    show_spreadsheet(SHEET_NEW_DATASET);
+}
+
+static void maybe_start_editing (void)
+{
+    int canceled = 0;
+    int resp;
+
+    resp = yes_no_dialog("gretl: new dataset", 
+			 "Do you want to start entering data values\n"
+			 "using gretl's spreadsheet?", 0);
+
+    if (resp == GRETL_YES) {
+	edit_dialog(_("gretl: name variable"), 
+		    _("Enter name for first variable\n"
+		      "(max. 15 characters)"),
+		    NULL, prep_spreadsheet, NULL, 
+		    CREATE_DATASET, VARCLICK_NONE, 
+		    &canceled);
+    } 
+
+    if (resp == GRETL_NO || canceled) {
+	/* accept the default blank dataset */
+	register_data(NULL, NULL, 0);
+    }	
+}
+
 /* for balanced panel checking */
 
 static int least_factor (int n)
@@ -3036,7 +3102,7 @@ static int test_for_unbalanced (const DATAINFO *dwinfo)
 }
 
 static int
-datawiz_make_changes (DATAINFO *dwinfo)
+datawiz_make_changes (DATAINFO *dwinfo, int create)
 {
     char setline[32];
     gretlopt opt = OPT_NONE;
@@ -3064,8 +3130,12 @@ datawiz_make_changes (DATAINFO *dwinfo)
     if (dwinfo->structure == datainfo->structure &&
 	dwinfo->pd == datainfo->pd &&
 	strcmp(dwinfo->stobs, datainfo->stobs) == 0) {
-	infobox(_("No changes were made"));
-	return 0;
+	if (create) {
+	    goto finalize;
+	} else {
+	    infobox(_("No changes were made"));
+	    return 0;
+	}
     }
 
     /* if converting to time series, we probably don't want to
@@ -3114,6 +3184,12 @@ datawiz_make_changes (DATAINFO *dwinfo)
 
     if (err) {
 	errbox(get_gretl_errmsg());
+    } else if (create) {
+	if (datainfo->n < 1001) {
+	    maybe_start_editing();
+	} else {
+	    register_data(NULL, NULL, 0);
+	}
     } else {
 	if (delete_markers) {
 	    dataset_destroy_obs_markers(datainfo);
@@ -3534,7 +3610,7 @@ static int process_panel_vars (DATAINFO *dwinfo)
     tid = copyvec(Z[tv], n);
 
     if (uid == NULL || tid == NULL) {
-	errbox(_("Out of memory!"));
+	nomem();
 	err = E_ALLOC;
     }
 
@@ -3967,11 +4043,13 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     return ret;
 }
 
-/* take the user through a series of dialogs, to define the
-   structure of the data set
+/* Take the user through a series of dialogs to define the
+   structure of the data set.  If "create" is non-zero we're
+   creating a new data set, otherwise we're restructuring an
+   existing data set.
 */
 
-void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
+void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
 {
     DATAINFO *dwinfo;
     int step = DW_SET_TYPE;
@@ -3979,7 +4057,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 
     dwinfo = datainfo_new();
     if (dwinfo == NULL) {
-	errbox(_("Out of memory"));
+	nomem();
 	return;
     }
 
@@ -4079,7 +4157,11 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
     }
 
     if (ret != DW_CANCEL && !all_done) {
-	datawiz_make_changes(dwinfo);
+	datawiz_make_changes(dwinfo, create);
+    }
+
+    if (ret == DW_CANCEL && !all_done && create) {
+	gui_clear_dataset();
     }
 
     free(dwinfo);

@@ -78,16 +78,28 @@ GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
     return w;
 }
 
-GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ)
+static void set_canceled (GtkWidget *w, int *c)
+{
+    if (c != NULL) *c = 1;
+}
+
+GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
+				 int *canceled)
 {
     GtkWidget *w;
 
     w = standard_button(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+    if (canceled != NULL) {
+	g_signal_connect(G_OBJECT(w), "clicked", 
+			 G_CALLBACK(set_canceled), 
+			 canceled);
+    }
     g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     targ);
+	
     gtk_widget_show(w);
 
     return w;
@@ -287,6 +299,7 @@ struct dialog_t_ {
     GtkWidget *popup;
     gpointer data;
     gint code;
+    gint blocking;
     gretlopt opt;
 };
 
@@ -295,6 +308,10 @@ static GtkWidget *open_edit_dialog;
 static void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
     dialog_t *d = (dialog_t *) data;
+
+    if (d->blocking) {
+	gtk_main_quit();
+    }
 
     g_free(d); 
 
@@ -305,8 +322,23 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
     if (active_edit_text) active_edit_text = NULL;
 }
 
+#ifdef OLD_GTK
+static void cancel_on_delete (GtkWidget *w, int *c)
+{
+    *c = 1;
+}
+#else
+static void cancel_on_delete (GtkDialog *d, int resp, int *c)
+{
+    if (resp == GTK_RESPONSE_NONE || resp == GTK_RESPONSE_DELETE_EVENT) {
+	*c = 1;
+    }
+}
+#endif
+
 static dialog_t *
-dialog_data_new (gpointer data, gint code, const char *title)
+dialog_data_new (gpointer data, gint code, const char *title,
+		 int *canceled)
 {
     dialog_t *d = mymalloc(sizeof *d);
 
@@ -320,13 +352,22 @@ dialog_data_new (gpointer data, gint code, const char *title)
     d->dialog = gtk_dialog_new();
     d->popup = NULL;
 
+    if (canceled != NULL) {
+	g_signal_connect(G_OBJECT(d->dialog), "delete_event",
+			 G_CALLBACK(cancel_on_delete), 
+			 canceled);
+	d->blocking = 1;
+    } else {
+	d->blocking = 0;
+    }
+
     gtk_window_set_title(GTK_WINDOW(d->dialog), title);
 
     gtk_box_set_homogeneous(GTK_BOX 
 			    (GTK_DIALOG(d->dialog)->action_area), TRUE);
     gtk_window_set_position(GTK_WINDOW(d->dialog), GTK_WIN_POS_MOUSE);
 
-    g_signal_connect(G_OBJECT (d->dialog), "destroy", 
+    g_signal_connect(G_OBJECT(d->dialog), "destroy", 
 		     G_CALLBACK(destroy_dialog_data), d);
 
     return d;
@@ -362,7 +403,7 @@ const gchar *edit_dialog_get_text (dialog_t *dlg)
     buf = gtk_entry_get_text(GTK_ENTRY(dlg->edit));
 
     if (buf == NULL || *buf == '\0') {
-	if (dlg->code != CORRGM) {
+	if (dlg->code != CORRGM && dlg->code != CREATE_DATASET) {
 	    gtk_widget_destroy(dlg->dialog);
 	}
 	return NULL;
@@ -737,8 +778,8 @@ static int edit_dialog_help_code (int ci, void *p)
 {
     int hc = ci;
 
-    if (ci == PRINT || ci == CREATE_USERDIR ||
-	ci == GENR_NORMAL || ci == GENR_UNIFORM) {
+    if (ci == PRINT || ci == CREATE_USERDIR || ci == CREATE_DATASET
+	|| ci == GENR_NORMAL || ci == GENR_UNIFORM) {
 	hc = 0;
     } else if (ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) p;
@@ -757,7 +798,8 @@ static int edit_dialog_help_code (int ci, void *p)
 
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
-		  guint cmdcode, guint varclick)
+		  guint cmdcode, guint varclick, 
+		  int *canceled)
 {
     dialog_t *d;
     GtkWidget *tempwid;
@@ -769,7 +811,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	return;
     }
 
-    d = dialog_data_new(okptr, cmdcode, diagtxt);
+    d = dialog_data_new(okptr, cmdcode, diagtxt, canceled);
     if (d == NULL) return;
 
     open_edit_dialog = d->dialog;
@@ -857,7 +899,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     /* Create a "Cancel" button */
     if (cmdcode != CREATE_USERDIR) {
-	cancel_delete_button(button_box, d->dialog);
+	cancel_delete_button(button_box, d->dialog, canceled);
     }
 
     /* Create a "Help" button if wanted */
@@ -875,6 +917,10 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     if (modal) {
 	gretl_set_window_modal(d->dialog);
+    }
+
+    if (d->blocking) {
+	gtk_main();
     }
 }
 

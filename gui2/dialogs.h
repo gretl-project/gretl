@@ -96,7 +96,7 @@ int forecast_dialog (int t1min, int t1max, int *t1,
 
 void compute_default_ts_info (DATAINFO *dwinfo, int newdata);
 
-void data_structure_wizard (gpointer p, guint u, GtkWidget *w);
+void data_structure_wizard (gpointer p, guint create, GtkWidget *w);
 
 void lmax_dialog (double *lmax, double ymax);
 

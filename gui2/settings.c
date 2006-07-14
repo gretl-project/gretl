@@ -778,12 +778,26 @@ static void option_dialog_canceled (GtkWidget *w, int *c)
     *c = 1;
 }
 
+static void options_dialog_delete (GtkWidget *w, gpointer p)
+{
+    GtkWidget **wp = (GtkWidget **) p;
+
+    *wp = NULL;
+    gtk_main_quit();
+}
+
 int options_dialog (int page) 
 {
-    GtkWidget *dialog;
+    static GtkWidget *dialog;
+
     GtkWidget *notebook;
     GtkWidget *button;
     int canceled = 0;
+
+    if (dialog != NULL) {
+	gdk_window_raise(dialog->window);
+	return 0;
+    }	
 
     dialog = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: options"));
@@ -795,13 +809,9 @@ int options_dialog (int page)
     gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
-    g_signal_connect(G_OBJECT(dialog), "delete_event", 
-		     G_CALLBACK(delete_widget), 
-		     dialog);
-
     g_signal_connect(G_OBJECT(dialog), "destroy", 
-		     G_CALLBACK(gtk_main_quit), 
-		     NULL);
+		     G_CALLBACK(options_dialog_delete), 
+		     &dialog);
 
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), notebook, 
@@ -2430,7 +2440,8 @@ void first_time_set_user_dir (void)
 		   "Please enter a directory for gretl user files."),
                  paths.userdir, 
                  real_set_userdir, NULL, 
-                 CREATE_USERDIR, 0);
+                 CREATE_USERDIR, VARCLICK_NONE,
+		 NULL);
 }
 
 #endif /* G_OS_WIN32 */
