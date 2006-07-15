@@ -119,7 +119,7 @@ static struct gui_help_item gui_help_items[] = {
     { GUI_HELP,       "dialog" },
     { MODELTABLE,     "modeltab" },
     { GRAPHPAGE,      "graphpag" },
-    { SETSEED,        "seed" },
+    { GENR_RANDOM,    "genrand" },
     { KERNEL_DENSITY, "density" },
     { HCCME,          "hccme" },
     { IRF_BOOT,       "irfboot" },

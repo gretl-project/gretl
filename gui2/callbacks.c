@@ -476,12 +476,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	okfunc = do_samplebool;
 	varclick = VARCLICK_INSERT_NAME;
 	break;
-    case SETSEED:
-	title = N_("gretl: random variables");
-	query = N_("Enter integer seed for\n"
-	       "pseudo-random number generator:");
-	okfunc = do_seed;
-	break; 
     case GENR:
 	title = N_("gretl: add var");
 	query = N_("Enter formula for new variable:");
@@ -580,22 +574,41 @@ void file_save_callback (GtkWidget *w, gpointer data)
     file_save(data, u, w);
 }
 
-void add_random_callback (gpointer data, guint code, GtkWidget *widget) 
+void add_rand_callback (gpointer data, guint r, GtkWidget *widget) 
 {
-    if (code == GENR_UNIFORM) {
+    double *seedval;
+
+    seedval = mymalloc(sizeof *seedval);
+    if (seedval == NULL) {
+	return;
+    }
+
+    if (r == RANDOM_UNIFORM) {
 	edit_dialog (_("gretl: uniform variable"), 
 		     _("Enter name for variable, and\n"
 		       "minimum and maximum values:"), 
 		     "unif 0 1",  
-		     do_random, NULL, 
-		     GENR_UNIFORM, VARCLICK_NONE, NULL);
-    } else if (code == GENR_NORMAL) {
+		     do_random_uniform, seedval, 
+		     GENR_RANDOM, VARCLICK_NONE, NULL);
+    } else if (r == RANDOM_NORMAL) {
 	edit_dialog (_("gretl: normal variable"), 
 		     _("Enter name, mean and standard deviation:"), 
 		     "norm 0 1", 
-		     do_random, NULL, 
-		     GENR_NORMAL, VARCLICK_NONE, NULL);
-    }
+		     do_random_normal, seedval, 
+		     GENR_RANDOM, VARCLICK_NONE, NULL);
+    } else if (r == RANDOM_CHISQ) {
+	edit_dialog (_("gretl: chi-square variable"), 
+		     _("Enter name and degrees of freedom:"), 
+		     "chi 5", 
+		     do_random_chisq, seedval, 
+		     GENR_RANDOM, VARCLICK_NONE, NULL);
+    } else if (r == RANDOM_ST) {
+	edit_dialog (_("gretl: Student's t variable"), 
+		     _("Enter name and degrees of freedom:"), 
+		     "st 20", 
+		     do_random_st, seedval, 
+		     GENR_RANDOM, VARCLICK_NONE, NULL);
+    }	
 }
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget) 

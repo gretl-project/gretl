@@ -57,7 +57,7 @@ void gp_send_callback (GtkWidget *w, gpointer data);
 
 void file_save_callback (GtkWidget *w, gpointer data);
 
-void add_random_callback (gpointer data, guint code, GtkWidget *widget);
+void add_rand_callback (gpointer data, guint r, GtkWidget *widget);
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);
 

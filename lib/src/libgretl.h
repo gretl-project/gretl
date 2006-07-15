@@ -198,8 +198,10 @@ typedef enum {
     T_QNORM,
     T_GAMMA,
     T_LNGAMMA,
-    T_NORMAL, 
     T_UNIFORM, 
+    T_NORMAL, 
+    T_CHISQ, 
+    T_STUDENT,
     T_LOG10,
     T_LOG2,
     T_MATHMAX

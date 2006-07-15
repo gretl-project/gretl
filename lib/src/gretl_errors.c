@@ -49,8 +49,7 @@ const char *gretl_error_messages[] = {
        "exceed those in the data set"),                          /* E_NODATA */
     N_("Command has insufficient arguments"),                    /* E_ARGS */
     N_("This command is implemented only for OLS models"),       /* E_OLSONLY */
-    N_("Invalid argument for coeff, corr, stderr, rho, "
-       "pvalue, critical or mpow"),                              /* E_INVARG */
+    N_("Invalid argument for function"),                         /* E_INVARG */
     N_("Invalid sample split for Chow test"),                    /* E_SPLIT */
     N_("Syntax error in command line"),                          /* E_PARSE */
     N_("No independent variables left after omissions"),         /* E_NOVARS */

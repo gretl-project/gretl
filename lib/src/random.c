@@ -123,22 +123,121 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 
 void gretl_normal_dist (double *a, int t1, int t2) 
 {
+    double x, y, z;
     int t;
-    double xx, yy, zz;
 
     for (t=t1; t<=t2; t++) {
     tryagain:
 #ifdef HAVE_G_RAND
-	xx = g_rand_double(gretl_rand);
-	yy = g_rand_double(gretl_rand);
+	x = g_rand_double(gretl_rand);
+	y = g_rand_double(gretl_rand);
 #else
-	xx = genrand_real2();
-	yy = genrand_real2();
+	x = genrand_real2();
+	y = genrand_real2();
 #endif
-	zz = sqrt(-2. * log(xx));
-	if (isnan(zz) || isinf(zz)) goto tryagain;
-	a[t] = zz * cos(2. * M_PI * yy);
+	z = sqrt(-2. * log(x));
+	if (isnan(z) || isinf(z)) {
+	    goto tryagain;
+	}
+	a[t] = z * cos(2. * M_PI * y);
     }
+}
+
+/**
+ * gretl_chisq_dist:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @v: degrees of freedom.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the Chi-Squared distribution with @v degrees of freedom, 
+ * using the Mersenne Twister for uniform input and the Box-Muller 
+ * method for converting to the normal distribution.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_chisq_dist (double *a, int t1, int t2, int v) 
+{
+    double x, y, z;
+    int i, t;
+
+    if (v < 1) {
+	return E_INVARG;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	a[t] = 0.0;
+	for (i=0; i<v; i++) {
+	tryagain:
+#ifdef HAVE_G_RAND
+	    x = g_rand_double(gretl_rand);
+	    y = g_rand_double(gretl_rand);
+#else
+	    x = genrand_real2();
+	    y = genrand_real2();
+#endif
+	    z = sqrt(-2. * log(x));
+	    if (isnan(z) || isinf(z)) {
+		goto tryagain;
+	    }
+	    z *= cos(2. * M_PI * y);
+	    a[t] += z * z;
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_t_dist:
+ * @a: target array.
+ * @t1: start of the fill range.
+ * @t2: end of the fill range.
+ * @v: degrees of freedom.
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the Student t distribution with @v degrees of freedom, 
+ * using the Mersenne Twister for uniform input and the Box-Muller 
+ * method for converting to the normal distribution.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int gretl_t_dist (double *a, int t1, int t2, int v) 
+{
+    double *Norm = NULL;
+    double *X2 = NULL;
+    int T = t2 - t1 + 1;
+    int t;
+
+    if (v < 1) {
+	return E_INVARG;
+    }
+
+    Norm = malloc(T * sizeof *Norm);
+    if (Norm == NULL) {
+	return E_ALLOC;
+    }
+
+    X2 = malloc(T * sizeof *X2);
+    if (X2 == NULL) {
+	free(Norm);
+	return E_ALLOC;
+    }
+
+    gretl_normal_dist(Norm, 0, T-1);
+    gretl_chisq_dist(X2, 0, T-1, v);
+
+    for (t=0; t<T; t++) {
+	a[t + t1] = Norm[t] / sqrt(X2[t] / v);
+    }
+
+    free(Norm);
+    free(X2);
+
+    return 0;
 }
 
 /**

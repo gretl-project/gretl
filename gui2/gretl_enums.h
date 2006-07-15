@@ -8,14 +8,12 @@ enum extra_cmds {
     SMPLDUM,
     SMPLBOOL,
     SMPLRAND,
-    SETSEED,
     MARKERS,
     STORE_MODEL,
     VAR_SUMMARY,
     CORR_SELECTED,
     SUMMARY_SELECTED,
-    GENR_NORMAL,
-    GENR_UNIFORM,
+    GENR_RANDOM,
     ONLINE,
     EXPORT,
     MEANTEST2,
@@ -238,6 +236,13 @@ enum dynamic_forecast_status {
     DYNAMIC_NA,
     DYNAMIC_OK,
     DYNAMIC_FORCED
+};
+
+enum random_types {
+    RANDOM_UNIFORM,
+    RANDOM_NORMAL,
+    RANDOM_CHISQ,
+    RANDOM_ST
 };
 
 #define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \

@@ -171,9 +171,13 @@ void do_genr (GtkWidget *widget, dialog_t *dlg);
 
 void do_model_genr (GtkWidget *widget, dialog_t *dlg);
 
-void do_random (GtkWidget *widget, dialog_t *dlg);
+void do_random_uniform (GtkWidget *widget, dialog_t *dlg);
 
-void do_seed (GtkWidget *widget, dialog_t *dlg);
+void do_random_normal (GtkWidget *widget, dialog_t *dlg);
+
+void do_random_chisq (GtkWidget *widget, dialog_t *dlg);
+
+void do_random_st (GtkWidget *widget, dialog_t *dlg);
 
 void do_global_setmiss (GtkWidget *widget, dialog_t *dlg);
 

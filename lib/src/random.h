@@ -26,6 +26,10 @@ void gretl_uniform_dist (double *a, int t1, int t2);
 
 void gretl_normal_dist (double *a, int t1, int t2);
 
+int gretl_chisq_dist (double *a, int t1, int t2, int v);
+
+int gretl_t_dist (double *a, int t1, int t2, int v);
+
 unsigned int gretl_rand_int_max (unsigned int max);
 
 unsigned int gretl_rand_int (void);

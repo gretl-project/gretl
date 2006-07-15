@@ -408,7 +408,7 @@
 
   </command>
 
-  <command name="arima" section="Estimation" label="ARMA/ARIMA model">
+  <command name="arima" section="Estimation" label="ARMA model">
 
     <usage>
       <arguments>
@@ -2188,18 +2188,25 @@
 	</li>
 
 	<li><para>
-	    Pseudo-random numbers: <func>uniform</func> and <func>normal</func>.
-	    These functions do not take an argument and should be written with
-	    empty parentheses: <lit>uniform()</lit>, <lit>normal()</lit>.  They
-	    create pseudo-random series drawn from the uniform (0&ndash;1) and
-	    standard normal distributions respectively.  See also the <cmdref
-	      targ="set"/> command,
-	    <lit>seed</lit> option.  Uniform series are generated using the
-	    Mersenne Twister;<footnote><para>See Matsumoto and Nishimura (1998).
-		The implementation is provided by <program>glib</program>, if
-		available, or by the C code written by Nishimura and
-		Matsumoto.</para></footnote> for normal series the method of Box
-	    and Muller (1958) is used, taking input from the Mersenne Twister.
+	    Pseudo-random numbers: <func>uniform</func>,
+	    <func>normal</func>, <func>chisq</func> and
+	    <func>student</func>. The first two functions do not take
+	    an argument and should be written with empty parentheses:
+	    <lit>uniform()</lit>, <lit>normal()</lit>.  They create
+	    pseudo-random series drawn from the uniform (0&ndash;1)
+	    and standard normal distributions respectively.  The
+	    latter two take a single argument, namely the (integer)
+	    degrees of freedom; they generate drawings from the
+	    Chi-square and Student's t distributions respectively.
+	    Uniform series are generated using the Mersenne
+	    Twister;<footnote><para>See Matsumoto and
+		Nishimura (1998). The implementation is provided by
+		<program>glib</program>, if available, or by the C
+		code written by Nishimura and
+		Matsumoto.</para></footnote> for normal series the
+	    method of Box and Muller (1958) is used, taking input from
+	    the Mersenne Twister. See also the <cmdref
+	      targ="set"/> command, <lit>seed</lit> option.
 	  </para>
 	</li>
       </ilist> 
@@ -2584,6 +2591,47 @@
       <other-access>Main window pop-up menu</other-access>
     </gui-access>
 
+  </command>
+
+  <command name="genrand" section="Programming" context="gui"
+    label="Generating random variables">
+
+    <description>
+      <para>
+	The first piece of input required here is the name you want to
+	give the generated variable.  The additional information
+	depends on the distribution of the pseudo-random variable, as
+	follows.
+      </para>
+
+      <ilist>
+	<li>
+	  <para>
+	    Uniform: a lower and an upper bound for the distribution.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Normal: the mean and standard deviation.  The latter must
+	    be positive.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Chi-square and Student's t: the degrees of freedom, which
+	    must be positive.
+	  </para>
+	</li>
+      </ilist>
+
+      <para>
+	Setting the "seed": by default the seed is set when the
+	program is started, using the system time.  If you want to
+	obtain repeatable sequences of pseudo-random numbers you need
+	to set the seed manually (and take note of the value you
+	used).
+      </para>
+    </description>
   </command>
 
   <command name="gnuplot" section="Graphs" 
@@ -6055,22 +6103,6 @@
       <menu-path>/Add/seasonal differences</menu-path>
     </gui-access>
 
-  </command>
-
-  <command name="seed" section="Programming" context="gui"
-    label="Random seed">
-
-    <description>
-      <para>Requires an integer as input.  Sets the seed for the
-	pseudo-random number generator used by the random uniform and
-	random normal options under the Add menu.
-      </para>
-      <para>
-	By default the seed is set when the program is started, using
-	the system time.  If you want to obtain repeatable sequences
-	of pseudo-random numbers you need to set the seed manually.
-      </para>
-    </description>
   </command>
 
   <command name="set" section="Programming" 

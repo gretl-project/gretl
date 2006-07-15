@@ -86,6 +86,7 @@ void main_menubar_state (gboolean s)
     flip(mdata->ifac, "/File/Export data", s);
     flip(mdata->ifac, "/File/Send To...", s);
     flip(mdata->ifac, "/Data", s);
+    flip(mdata->ifac, "/View", s);
     flip(mdata->ifac, "/Add", s);
     flip(mdata->ifac, "/Sample", s);
     flip(mdata->ifac, "/Variable", s);
@@ -175,9 +176,9 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ifac, "/File/Save data as/database...", DATASET_DB_OK(datainfo));
 
     /* Plots */
-    flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", sx);
+    flip(mdata->ifac, "/View/Graph specified vars/Time series plot...", sx);
+    flip(mdata->ifac, "/View/Multiple graphs/time series...", sx);
     flip(mdata->ifac, "/Variable/Time series plot", sx);
-    flip(mdata->ifac, "/Data/Multiple graphs/time series...", sx);
 
     /* Variable menu */
     flip(mdata->ifac, "/Variable/Correlogram", s);
@@ -195,9 +196,9 @@ void time_series_menu_state (gboolean s)
     /* Model menu */
     flip(mdata->ifac, "/Model/Time series", s);
     /* Sample menu */
-    flip(mdata->ifac, "/Sample/Compact data...", 
+    flip(mdata->ifac, "/Data/Compact data...", 
 	 s && (COMPACTABLE(datainfo) || dated_weekly_data(datainfo)));
-    flip(mdata->ifac, "/Sample/Expand data...", s && EXPANSIBLE(datainfo));
+    flip(mdata->ifac, "/Data/Expand data...", s && EXPANSIBLE(datainfo));
 
     if (s) {
 	GtkWidget *w =  
@@ -220,8 +221,8 @@ void time_series_menu_state (gboolean s)
 void panel_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Add/unit dummies", s);
-	flip(mdata->ifac, "/Add/time dummies", s);
+	flip(mdata->ifac, "/Add/Unit dummies", s);
+	flip(mdata->ifac, "/Add/Time dummies", s);
 	flip(mdata->ifac, "/Model/Panel", s);
     }
 
@@ -247,14 +248,14 @@ void ts_or_panel_menu_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
 
-    flip(mdata->ifac, "/Add/time trend", s);
-    flip(mdata->ifac, "/Add/lags of selected variables", s);
-    flip(mdata->ifac, "/Add/first differences of selected variables", s);
-    flip(mdata->ifac, "/Add/log differences of selected variables", s);
+    flip(mdata->ifac, "/Add/Time trend", s);
+    flip(mdata->ifac, "/Add/Lags of selected variables", s);
+    flip(mdata->ifac, "/Add/First differences of selected variables", s);
+    flip(mdata->ifac, "/Add/Log differences of selected variables", s);
 
-    flip(mdata->ifac, "/Add/seasonal differences of selected variables",
+    flip(mdata->ifac, "/Add/Seasonal differences of selected variables",
 	 dataset_is_seasonal(datainfo));
-    flip(mdata->ifac, "/Add/periodic dummies", 
+    flip(mdata->ifac, "/Add/Periodic dummies", 
 	 dataset_is_seasonal(datainfo));
 }
 
@@ -284,7 +285,7 @@ void drop_obs_state (gboolean s)
 void compact_data_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Sample/Compact data...", s);
+	flip(mdata->ifac, "/Data/Compact data...", s);
     }
 }
 
@@ -294,6 +295,7 @@ void main_menus_enable (gboolean s)
 	flip(mdata->ifac, "/File", s);
 	flip(mdata->ifac, "/Tools", s);
 	flip(mdata->ifac, "/Data", s);
+	flip(mdata->ifac, "/View", s);
 	flip(mdata->ifac, "/Add", s);
 	flip(mdata->ifac, "/Sample", s);
 	flip(mdata->ifac, "/Model", s);
@@ -521,7 +523,7 @@ void set_sample_label (DATAINFO *pdinfo)
     ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
 			   dataset_is_panel(pdinfo));
 
-    flip(mdata->ifac, "/Sample/Transpose data...", 
+    flip(mdata->ifac, "/Data/Transpose data...", 
 	 !dataset_is_panel(pdinfo));
 
     sprintf(labeltxt, _("%s: Full range %s - %s"), 

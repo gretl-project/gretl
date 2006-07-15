@@ -313,6 +313,11 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
 	gtk_main_quit();
     }
 
+    if (d->code == GENR_RANDOM) {
+	/* pointer to double */
+	free(d->data);
+    }
+
     g_free(d); 
 
     open_edit_dialog = NULL;
@@ -706,6 +711,33 @@ static gboolean opt_r_callback (GtkWidget *w, dialog_t *dlg)
     return FALSE;
 }
 
+static void maybe_set_seed (GtkWidget *w, double *d)
+{
+    *d = GTK_ADJUSTMENT(w)->value;
+}
+
+static void dialog_seed_spinner (GtkWidget *vbox, dialog_t *dlg)
+{
+    double curr = (double) get_gretl_random_seed();
+    GtkWidget *tmp, *hbox;
+    GtkObject *adj;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Seed for generator:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+
+    adj = gtk_adjustment_new(curr, 1, (gdouble) UINT_MAX, 
+			     1, 1000, 0);
+    g_signal_connect(G_OBJECT(adj), "value-changed",
+                     G_CALLBACK(maybe_set_seed), dlg->data);
+
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+    gtk_widget_show_all(hbox);
+}
+
 static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 				  gretlopt opt)
 {
@@ -778,8 +810,7 @@ static int edit_dialog_help_code (int ci, void *p)
 {
     int hc = ci;
 
-    if (ci == PRINT || ci == CREATE_USERDIR || ci == CREATE_DATASET
-	|| ci == GENR_NORMAL || ci == GENR_UNIFORM) {
+    if (ci == PRINT || ci == CREATE_USERDIR || ci == CREATE_DATASET) {
 	hc = 0;
     } else if (ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) p;
@@ -874,6 +905,8 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     } else if (cmdcode == NLS || cmdcode == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V);
 	dialog_option_switch(top_vbox, d, OPT_R);
+    } else if (cmdcode == GENR_RANDOM) {
+	dialog_seed_spinner(top_vbox, d);
     }
     
     if (varclick == VARCLICK_INSERT_ID) { 

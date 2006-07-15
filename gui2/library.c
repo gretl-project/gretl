@@ -2947,51 +2947,89 @@ void do_model_genr (GtkWidget *widget, dialog_t *dlg)
     finish_genr(pmod, dlg);
 }
 
-void do_random (GtkWidget *widget, dialog_t *dlg) 
+static void do_seed (guint32 newseed)
 {
+    guint32 oldseed = get_gretl_random_seed();
+
+    if (newseed == oldseed) {
+	return;
+    }
+	
+    gretl_command_sprintf("set seed %u", newseed); 
+    if (check_and_record_command()) {
+	return;
+    }
+
+    gretl_rand_set_seed(newseed);
+}
+
+static void real_do_random (dialog_t *dlg, int action) 
+{
+    char vname[VNAMELEN];
     const gchar *buf;
-    char tmp[32], vname[VNAMELEN];
-    int action = edit_dialog_get_action(dlg);
     double f1, f2;
+    double *s;
+    int v;
 
     buf = edit_dialog_get_text(dlg);
     if (buf == NULL) return;
 
-    if (sscanf(buf, "%31s %lf %lf", tmp, &f1, &f2) != 3) {
-	if (action == GENR_NORMAL) 
+    if (action == RANDOM_CHISQ || action == RANDOM_ST) {
+	if (sscanf(buf, "%15s %d", vname, &v) != 2) {
 	    errbox(_("Specification is malformed\n"
-		   "Should be like \"foo 1 2.5\""));
-	else
+		     "Should be like \"foo 5\""));
+	    return;
+	}
+    } else if (sscanf(buf, "%15s %lf %lf", vname, &f1, &f2) != 3) {
+	if (action == RANDOM_NORMAL) {
 	    errbox(_("Specification is malformed\n"
-		   "Should be like \"foo 0 10\""));
+		     "Should be like \"foo 1 2.5\""));
+	} else {
+	    errbox(_("Specification is malformed\n"
+		     "Should be like \"foo 0 10\""));
+	}
 	return;
     }
-    if (action == GENR_NORMAL && f2 < 0) {
+
+    if (action == RANDOM_NORMAL && f2 <= 0.0) {
 	errbox(_("Can't have a negative standard deviation!"));
 	return;
-    } else if (action == GENR_UNIFORM && f1 >= f2) {
+    } else if (action == RANDOM_UNIFORM && f1 >= f2) {
 	errbox(_("Range is non-positive!"));
+	return;
+    } else if ((action == RANDOM_CHISQ || action == RANDOM_ST) 
+	       && v < 1) {
+	errbox(_("The degrees of freedom must be positive"));
+	return;
+    }	
+
+    if (validate_varname(vname)) {
 	return;
     }
 
-    *vname = 0;
-    strncat(vname, tmp, VNAMELEN - 1);
-    if (validate_varname(vname)) return;
+    s = (double *) edit_dialog_get_data(dlg);
+    if (s != NULL) {
+	do_seed((guint32) *s);
+    }
 
-    if (action == GENR_NORMAL) {
+    if (action == RANDOM_NORMAL) {
 	if (f1 != 0. || f2 != 1.) {
 	    gretl_command_sprintf("genr %s = %g * normal() + %g", 
 				  vname, f2, f1);
 	} else {
 	    gretl_command_sprintf("genr %s = normal()", vname); 
 	}
-    } else if (action == GENR_UNIFORM) {
+    } else if (action == RANDOM_UNIFORM) {
 	if (f1 != 0. || f2 != 1.) {
 	    gretl_command_sprintf("genr %s = %g + (uniform() * %g)", 
 				  vname, f1, (f2 - f1));
 	} else {
 	    gretl_command_sprintf("genr %s = uniform()", vname); 
 	}
+    } else if (action == RANDOM_CHISQ) {
+	gretl_command_sprintf("genr %s = chisq(%d)", vname, v); 
+    } else if (action == RANDOM_ST) {
+	gretl_command_sprintf("genr %s = student(%d)", vname, v); 
     }
 
     if (check_and_record_command()) {
@@ -3001,24 +3039,24 @@ void do_random (GtkWidget *widget, dialog_t *dlg)
     finish_genr(NULL, dlg);
 }
 
-void do_seed (GtkWidget *widget, dialog_t *dlg)
+void do_random_uniform (GtkWidget *widget, dialog_t *dlg) 
 {
-    const gchar *buf;
-    char tmp[32];
+    real_do_random(dlg, RANDOM_UNIFORM);
+}
 
-    buf = edit_dialog_get_text(dlg);
-    if (buf == NULL) return;
+void do_random_normal (GtkWidget *widget, dialog_t *dlg) 
+{
+    real_do_random(dlg, RANDOM_NORMAL);
+}
 
-    sscanf(buf, "%31s", tmp);
-	
-    gretl_command_sprintf("set seed %s", tmp); 
-    if (check_and_record_command()) {
-	return;
-    }
+void do_random_chisq (GtkWidget *widget, dialog_t *dlg) 
+{
+    real_do_random(dlg, RANDOM_CHISQ);
+}
 
-    gretl_rand_set_seed(atoi(tmp));
-
-    close_dialog(dlg);
+void do_random_st (GtkWidget *widget, dialog_t *dlg) 
+{
+    real_do_random(dlg, RANDOM_ST);
 }
 
 static int finish_genr (MODEL *pmod, dialog_t *dlg)

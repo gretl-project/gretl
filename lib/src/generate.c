@@ -69,6 +69,9 @@ static int get_obs_value (const char *s, const double **Z,
 static int op_level (int c);
 
 static double *get_random_series (DATAINFO *pdinfo, int fn);
+static double *get_random_series_with_args (const char *s, 
+					    GENERATOR *genr,
+					    int fn); 
 static double *get_mp_series (const char *s, GENERATOR *genr,
 			      int fn, int *err);
 static double *get_tmp_series (double *x, GENERATOR *genr,
@@ -120,8 +123,10 @@ struct genr_func funcs[] = {
     { T_NOBS,     "nobs" },
     { T_T1,       "firstobs" },
     { T_T2,       "lastobs" },
-    { T_NORMAL,   "normal" }, 
     { T_UNIFORM,  "uniform" }, 
+    { T_NORMAL,   "normal" }, 
+    { T_CHISQ,    "chisq" }, 
+    { T_STUDENT,  "student" }, 
     { T_CUM,      "cum" }, 
     { T_MISSING,  "missing" },
     { T_OK,       "ok" },        /* opposite of missing */
@@ -939,6 +944,7 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 
     if (MP_MATH(atom->func) || atom->func == T_PVALUE || 
 	atom->func == T_CRIT || atom->func == T_FRACDIFF ||
+	atom->func == T_CHISQ || atom->func == T_STUDENT ||
 	BIVARIATE_STAT(atom->func)) {
 	genr->err = set_atom_arg_string(s, genr, atom);
     } else if (MULTI_MATRIX_FUNC(atom->func) && genr_is_matrix(genr)) {
@@ -1438,12 +1444,26 @@ static int genr_add_temp_var (double *x, GENERATOR *genr, genatom *atom)
     return genr->err;
 }
 
-static int add_random_series_to_genr (GENERATOR *genr, genatom *atom)
+static int add_simple_rand_series_to_genr (GENERATOR *genr, genatom *atom)
 {
     double *x;
 
     x = get_random_series(genr->pdinfo, atom->func);
-    if (x == NULL) return 1;
+    if (x == NULL) {
+	return E_ALLOC;
+    }
+
+    return genr_add_temp_var(x, genr, atom);
+}
+
+static int add_rand_series_to_genr (GENERATOR *genr, genatom *atom)
+{
+    double *x;
+
+    x = get_random_series_with_args(atom->str, genr, atom->func);
+    if (x == NULL) {
+	return genr->err;
+    }
 
     return genr_add_temp_var(x, genr, atom);
 }
@@ -1902,7 +1922,7 @@ static int evaluate_genr (GENERATOR *genr)
 	if (atom->atype & ATOM_MODELDAT) {
 	    genr->err = add_model_series_to_genr(genr, atom);
 	} else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
-	    genr->err = add_random_series_to_genr(genr, atom);
+	    genr->err = add_simple_rand_series_to_genr(genr, atom);
 	} else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
 		   atom->func == T_SDIFF || atom->func == T_CUM ||
 		   atom->func == T_SORT || atom->func == T_DSORT ||
@@ -1915,6 +1935,8 @@ static int evaluate_genr (GENERATOR *genr)
 	    atom_stack_bookmark(genr);
 	    genr->err = add_statistic_to_genr(genr, atom);
 	    atom_stack_resume(genr);
+	} else if (atom->func == T_CHISQ || atom->func == T_STUDENT) {
+	    genr->err = add_rand_series_to_genr(genr, atom);
 	} else if (MP_MATH(atom->func)) {
 	    genr->err = add_mp_series_to_genr(genr, atom);
 	} else if (needs_arg(atom->func) && !arg_atom_available(atom)) {
@@ -2277,6 +2299,8 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
 	!strncmp(s, "pvalue", 6) ||
 	!strncmp(s, "critical", 8) ||
 	!strncmp(s, "fracdiff", 8) ||
+	!strncmp(s, "chisq", 5) ||
+	!strncmp(s, "student", 7) ||
 	!strncmp(s, "mpow", 4) ||
 	!strncmp(s, "mlog", 4) ||
 	!strncmp(s, "zeros", 5) ||
@@ -4228,7 +4252,47 @@ static double *get_random_series (DATAINFO *pdinfo, int fn)
 	gretl_normal_dist(x, pdinfo->t1, pdinfo->t2);
     } else if (fn == T_UNIFORM) {
 	gretl_uniform_dist(x, pdinfo->t1, pdinfo->t2);
+    } 
+
+    return x;
+}
+
+static double *
+get_random_series_with_args (const char *s, GENERATOR *genr, 
+			     int fn)
+{
+    double *x = NULL;
+    double xv;
+    int v;
+
+    genr->err = get_generated_value(s, &xv, genr->pZ, genr->pdinfo, 0);
+    if (genr->err) {
+	return NULL;
     }
+
+    if (xv < 0 || xv > (double) INT_MAX) {
+	genr->err = E_INVARG;
+	return NULL;
+    }
+
+    x = malloc(genr->pdinfo->n * sizeof *x);
+    if (x == NULL) {
+	genr->err = E_ALLOC;
+	return NULL;
+    }
+
+    v = (int) xv;
+
+    if (fn == T_CHISQ) {
+	genr->err = gretl_chisq_dist(x, genr->pdinfo->t1, genr->pdinfo->t2, v);
+    } else if (fn == T_STUDENT) {
+	genr->err = gretl_t_dist(x, genr->pdinfo->t1, genr->pdinfo->t2, v);
+    }
+
+    if (genr->err) {
+	free(x);
+	x = NULL;
+    }    
 
     return x;
 }
