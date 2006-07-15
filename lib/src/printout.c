@@ -380,10 +380,8 @@ void print_freq (const FreqDist *freq, PRN *prn)
     missing = total - valid;
 
     if (missing > 0) {
-	pputc(prn, '\n');
-	pprintf(prn, _("Invalid cases = %d (%5.2f%%)"), missing, 
-		100 * (double) missing / total);
-	pputc(prn, '\n');
+	pprintf(prn, "\n%s = %d (%5.2f%%)\n", _("Missing observations"), 
+		missing, 100 * (double) missing / total);
     }
 
     if (!na(freq->test)) {

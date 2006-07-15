@@ -4047,6 +4047,10 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
    structure of the data set.  If "create" is non-zero we're
    creating a new data set, otherwise we're restructuring an
    existing data set.
+
+   If the wizard is being used to configure a new blank dataset,
+   making it a panel is an option but there is no choice of "panel
+   modes": it has to be stacked time series
 */
 
 void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
@@ -4086,6 +4090,9 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
 		    if (!panel_possible()) {
 			step = DW_DONE;
 			ret = DW_CANCEL;
+		    } else if (create) {
+			dwinfo->structure = STACKED_TIME_SERIES;
+			step = DW_PANEL_SIZE;
 		    } else {
 			step = DW_PANEL_MODE;
 		    }
@@ -4140,7 +4147,7 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
 	    } else if (step == DW_WEEK_DAYS || step == DW_WEEKLY_SELECT) {
 		step = DW_TS_FREQUENCY;
 	    } else if (step == DW_PANEL_SIZE) {
-		step = DW_PANEL_MODE;
+		step = (create)? DW_SET_TYPE : DW_PANEL_MODE;
 	    } else if (step == DW_CONFIRM) {
 		if (dwinfo->structure == TIME_SERIES || 
 		    dwinfo->structure == SPECIAL_TIME_SERIES) {
