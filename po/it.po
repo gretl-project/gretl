@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-11 15:21-0400\n"
-"PO-Revision-Date: 2006-07-15 01:50+0200\n"
+"PO-Revision-Date: 2006-07-15 16:07+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4360,11 +4360,11 @@ msgstr ""
 
 #: lib/src/nls.c:2397
 msgid "Using numerical derivatives\n"
-msgstr "Usate derivate numeriche\n"
+msgstr "Sono state usate derivate numeriche\n"
 
 #: lib/src/nls.c:2398
 msgid "Using analytical derivatives\n"
-msgstr "Usate derivate analitiche\n"
+msgstr "Sono state usate derivate analitiche\n"
 
 #: lib/src/nls.c:2417
 #, c-format
@@ -4640,13 +4640,14 @@ msgstr "Campione attuale"
 msgid "Cross-equation VCV for residuals"
 msgstr "Matrice varianza-covarianza tra equazioni per i residui"
 
+# Lasciare minuscolo
 #: lib/src/printout.c:682
 msgid "correlations above the diagonal"
 msgstr "correlazioni sopra la diagonale"
 
 #: lib/src/printout.c:702
 msgid "log determinant"
-msgstr "log determinante"
+msgstr "Log determinante"
 
 #: lib/src/printout.c:764
 msgid ""
@@ -5060,11 +5061,11 @@ msgstr "Minimi quadrati a tre stadi"
 
 #: lib/src/system.c:81
 msgid "Full Information Maximum Likelihood"
-msgstr "Massima verosimiglianza ad informazione completa"
+msgstr "Massima verosimiglianza ad informazione completa (FIML)"
 
 #: lib/src/system.c:82
 msgid "Limited Information Maximum Likelihood"
-msgstr "Massima verosimiglianza ad informazione limitata"
+msgstr "Massima verosimiglianza ad informazione limitata (LIML)"
 
 #: lib/src/system.c:83
 msgid "Ordinary Least Squares"
@@ -5137,7 +5138,7 @@ msgstr "Matrice di covarianza tra le equazioni"
 
 #: lib/src/texprint.c:464 lib/src/varprint.c:722
 msgid "determinant"
-msgstr "determinante"
+msgstr "Determinante"
 
 #: lib/src/texprint.c:478 lib/src/varprint.c:608
 msgid "Cointegrating vectors"
@@ -6358,7 +6359,7 @@ msgstr "/Variabile/Grafico _range-mean"
 
 #: gui/gretl.c:453 gui2/gretl.c:511
 msgid "/Variable/_Time series plot"
-msgstr "/Variabile/Grafico _temporale"
+msgstr "/Variabile/Grafico _serie storica"
 
 #: gui/gretl.c:454 gui2/gretl.c:512
 msgid "/Variable/Correlogram"
@@ -10797,7 +10798,7 @@ msgstr "Statistiche descrittive"
 #: gui2/menustate.c:311 gui2/menustate.c:356 gui2/menustate.c:418
 #: gui2/menustate.c:438
 msgid "Time series plot"
-msgstr "Grafico temporale"
+msgstr "Grafico serie storica"
 
 #: gui2/menustate.c:313 gui2/menustate.c:357
 msgid "Frequency distribution"
@@ -11135,7 +11136,7 @@ msgstr "Imposta come predefinito"
 
 #: gui2/selector.c:2230
 msgid "cointegration rank:"
-msgstr "rango di cointegrazione:"
+msgstr "Rango di cointegrazione:"
 
 #: gui2/selector.c:2254
 msgid "maximum lag:"
@@ -12146,27 +12147,27 @@ msgstr "Genera output di debug"
 
 #: plugin/johansen.c:232
 msgid "renormalized beta"
-msgstr "beta rinormalizzato"
+msgstr "Beta rinormalizzato"
 
 #: plugin/johansen.c:233
 msgid "renormalized alpha"
-msgstr "alfa rinormalizzato"
+msgstr "Alfa rinormalizzato"
 
 #: plugin/johansen.c:236
 msgid "beta (cointegrating vectors)"
-msgstr "beta (vettori di cointegrazione)"
+msgstr "Beta (vettori di cointegrazione)"
 
 #: plugin/johansen.c:237
 msgid "alpha (adjustment vectors)"
-msgstr "alfa (vettori di aggiustamento)"
+msgstr "Alfa (vettori di aggiustamento)"
 
 #: plugin/johansen.c:327
 msgid "long-run matrix (alpha * beta')"
-msgstr "matrice di lungo periodo (alfa * beta')"
+msgstr "Matrice di lungo periodo (alfa * beta')"
 
 #: plugin/johansen.c:756
 msgid "eigenvalue"
-msgstr "autovalore"
+msgstr "Autovalore"
 
 #: plugin/johansen.c:1016
 msgid "Rank"
