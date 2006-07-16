@@ -83,10 +83,10 @@ Il comando \texttt{dummify} può essere usato anche con la sintassi seguente:
 \begin{code}
   list dlist = dummify(x)
 \end{code}
-che crea non solo le variabili dummy, ma anche una lista (si veda il paragrafo~\ref{named-lists})
-che può essere usata in seguito. L'esempio seguente calcola le statistiche
-descrittive per la variabile \texttt{Y} in corrispondenza di ogni valore di
-\texttt{Z5}:
+In questo modo, vengono create non solo le variabili dummy, ma anche una lista
+che può essere usata in seguito (si veda la sezione~\ref{named-lists}).
+L'esempio seguente calcola le statistiche descrittive per la variabile
+\texttt{Y} in corrispondenza di ogni valore di \texttt{Z5}:
 \begin{code}
   open greene22_2
   discrete Z5 # marca Z5 come discreta
@@ -99,8 +99,9 @@ descrittive per la variabile \texttt{Y} in corrispondenza di ogni valore di
 \end{code}
 % $
 
-Poiché \texttt{dummify} genera una lista, può anche essere usato direttamente in
-comandi come \texttt{ols}, come in questo esempio:
+Poiché \texttt{dummify} genera una lista, può essere usato direttamente in
+comandi che accettano una lista come input, come \texttt{ols}.
+Ad esempio:
 \begin{code}
   open greene22_2
   discrete Z5 # marca Z5 come discreta
@@ -120,7 +121,7 @@ Per variabili discrete, le frequenze sono contate per ogni diverso valore
 assunto dalla variabile. Per le variabili continue, i valori sono raggruppati in
 ``classi'' e quindi le frequenze sono calcolate per ogni classe.
 Il numero di classi è calcolato in funzione del numero di osservazioni valide
-nel campione selezionato al momento, nel modo seguente:
+nel campione selezionato al momento, come mostrato nella Tabella~\ref{tab:bins}.
 
 \begin{table}[htbp]
   \centering
