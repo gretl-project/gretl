@@ -3,15 +3,15 @@
 
 When a variable can take only a finite, typically small, number of
 values, then the variable is said to be \emph{discrete}. Some
-\app{gretl} commands act in a slight different way when applied to
+\app{gretl} commands act in a slightly different way when applied to
 discrete variables; moreover, \app{gretl} provides a few extra
-commands that only apply to discrete variables,
+commands that only apply to discrete variables.
 
 
 \section{Declaring variables as discrete}
 \label{discr-declare}
 
-When a data file is created form scratch, no variables are considered
+When a data file is created from scratch, no variables are considered
 discrete. If you want to mark a variable as such, you can do it in two
 ways.
 \begin{enumerate}
@@ -19,7 +19,7 @@ ways.
   Attributes'' from the menu. A dialog box will appear, in which you
   will see a tick box labeled ``Treat this variable as discrete''. The
   same dialog box can be invoked via the context menu (right-click on
-  a variable) or by pressing the F2 key;
+  a variable) or by pressing the F2 key.
 \item From the command-line interface, via the \texttt{discrete}
   command. The command takes one or more arguments, which can be
   either variables or list of variables. For example:
@@ -78,15 +78,15 @@ labeled \texttt{DZ5\_1} through \texttt{DZ5\_5}, which correspond to
 the different values in \texttt{Z5}. Hence, the variable
 \texttt{DZ5\_4} is 1 if \texttt{Z5} equals 4 and 0 otherwise. This
 functionality is also available through the graphical interface by
-selecting the ``Add, dummies for selected discrete variables''.
+selecting the menu item ``Add, Dummies for selected discrete variables''.
 
 The \texttt{dummify} command can also be used with the following
 syntax:
 \begin{code}
   list dlist = dummify(x)
 \end{code}
-which not only creates the dummy variables, but also a named list (see
-subsection~\ref{named-lists}) that can be used afterwards. The
+This not only creates the dummy variables, but also a named list (see
+section~\ref{named-lists}) that can be used afterwards. The
 following example computes summary statistics for the variable \texttt{Y} for
 each value of \texttt{Z5}:
 \begin{code}
@@ -101,8 +101,9 @@ each value of \texttt{Z5}:
 \end{code}
 % $
 
-Since \texttt{dummify} generates a list, it can also be used directly
-in commands like \texttt{ols}, as in 
+Since \texttt{dummify} generates a list, it can be used directly
+in commands that call for a list as input, such as \texttt{ols}.  For
+example:
 \begin{code}
   open greene22_2
   discrete Z5 # mark Z5 as discrete
@@ -122,8 +123,8 @@ For discrete variables, frequencies are counted for each different
 value that the variable takes. For continuous variables, values are
 grouped into ``bins'' and then the frequencies are computed for each
 bin. The number of bins is computed as a function of the number of
-valid observations in the currently selected sample via the following
-rule:
+valid observations in the currently selected sample via the 
+rule shown in Table~\ref{tab:bins}.
 
 \begin{table}[htbp]
   \centering
