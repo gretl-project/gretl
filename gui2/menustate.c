@@ -173,11 +173,11 @@ void time_series_menu_state (gboolean s)
     }
 
     /* File menu */
-    flip(mdata->ifac, "/File/Save data as/database...", DATASET_DB_OK(datainfo));
+    flip(mdata->ifac, "/File/Save data as/Database...", DATASET_DB_OK(datainfo));
 
     /* Plots */
     flip(mdata->ifac, "/View/Graph specified vars/Time series plot...", sx);
-    flip(mdata->ifac, "/View/Multiple graphs/time series...", sx);
+    flip(mdata->ifac, "/View/Multiple graphs/Time series...", sx);
     flip(mdata->ifac, "/Variable/Time series plot", sx);
 
     /* Variable menu */
