@@ -87,10 +87,10 @@ static double evaluate_missval_func (double arg, int fn);
 static double evaluate_bivariate_statistic (const char *s, 
 					    GENERATOR *genr, 
 					    int fn);
-static double evaluate_pvalue (const char *s, const double **Z,
-			       const DATAINFO *pdinfo, int *err);
-static double evaluate_critval (const char *s, const double **Z,
-				const DATAINFO *pdinfo, int *err);
+static double evaluate_pdist_val (int fn, const char *s, 
+				  const double **Z, 
+				  const DATAINFO *pdinfo, 
+				  int *err);
 static void free_genr_S (GENERATOR *genr);
 
 struct genr_func {
@@ -139,6 +139,7 @@ struct genr_func funcs[] = {
     { T_MEDIAN,   "median" },
     { T_GINI,     "gini" },
     { T_ZEROMISS, "zeromiss" },
+    { T_CDF,      "cdf" },
     { T_PVALUE,   "pvalue" },
     { T_CRIT,     "critical" },
     { T_OBSNUM,   "obsnum" },
@@ -641,7 +642,7 @@ set_atom_arg_string (const char *s, GENERATOR *genr, genatom *atom)
 	strncat(atom->str, p + 1, n);
     }
 
-    if (atom->func == T_PVALUE || atom->func == T_CRIT) {
+    if (atom->func == T_CDF || atom->func == T_PVALUE || atom->func == T_CRIT) {
 	err = evaluate_genr_function_args(atom->str, genr);
     } else if (atom->func == T_FRACDIFF) {
 	char vname[9];
@@ -945,23 +946,18 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
     if (MP_MATH(atom->func) || atom->func == T_PVALUE || 
 	atom->func == T_CRIT || atom->func == T_FRACDIFF ||
 	atom->func == T_CHISQ || atom->func == T_STUDENT ||
-	BIVARIATE_STAT(atom->func)) {
+	atom->func == T_CDF || BIVARIATE_STAT(atom->func)) {
 	genr->err = set_atom_arg_string(s, genr, atom);
     } else if (MULTI_MATRIX_FUNC(atom->func) && genr_is_matrix(genr)) {
 	genr->err = set_atom_arg_string(s, genr, atom);
     }
 
-    if (atom->func == T_PVALUE) {
+    if (atom->func == T_CDF || atom->func == T_PVALUE ||
+	atom->func == T_CRIT) {
 	if (!genr->err) {
-	    atom->val = evaluate_pvalue(atom->str, (const double **) *genr->pZ,
-					genr->pdinfo, &genr->err);
-	    atom->atype = ATOM_SCALAR;
-	    atom->func = 0;
-	}
-    } else if (atom->func == T_CRIT) {
-	if (!genr->err) {
-	    atom->val = evaluate_critval(atom->str, (const double **) *genr->pZ,
-					 genr->pdinfo, &genr->err);
+	    atom->val = evaluate_pdist_val(atom->func, atom->str, 
+					   (const double **) *genr->pZ,
+					   genr->pdinfo, &genr->err);
 	    atom->atype = ATOM_SCALAR;
 	    atom->func = 0;
 	}
@@ -2296,6 +2292,7 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
     if (!strncmp(s, "vcv", 3) ||
 	!strncmp(s, "corr", 4) ||
 	!strncmp(s, "cov", 3) ||
+	!strncmp(s, "cdf", 3) ||
 	!strncmp(s, "pvalue", 6) ||
 	!strncmp(s, "critical", 8) ||
 	!strncmp(s, "fracdiff", 8) ||
@@ -4377,25 +4374,22 @@ static double evaluate_statistic (double *z, GENERATOR *genr, int fn)
     return x;
 }
 
-static double evaluate_pvalue (const char *s, const double **Z,
-			       const DATAINFO *pdinfo, int *err)
+static double evaluate_pdist_val (int fn, const char *s, 
+				  const double **Z, const DATAINFO *pdinfo, 
+				  int *err)
 {
-    double x = batch_pvalue(s, Z, pdinfo, NULL, OPT_G);
+    double x = NADBL;
 
-    if (na(x)) {
-	invalid_arg_error(T_PVALUE, err);
+    if (fn == T_PVALUE) {
+	x = batch_pvalue(s, Z, pdinfo, NULL, OPT_G);
+    } else if (fn == T_CDF) {
+	x = batch_pvalue(s, Z, pdinfo, NULL, OPT_G | OPT_C);
+    } else if (fn == T_CRIT) {
+	x = genr_get_critical(s, Z, pdinfo);
     }
 
-    return x;
-}
-
-static double evaluate_critval (const char *s, const double **Z,
-				const DATAINFO *pdinfo, int *err)
-{
-    double x = genr_get_critical(s, Z, pdinfo);
-
-    if (na(x) || x == -1.0) {
-	invalid_arg_error(T_CRIT, err);
+    if (na(x)) {
+	invalid_arg_error(fn, err);
     }
 
     return x;

@@ -507,7 +507,7 @@ static void dlg_text_set_from_sys (gretl_equation_system *sys,
 	return;
     }
 
-    print_equation_system_info(sys, datainfo, prn);
+    print_equation_system_info(sys, datainfo, OPT_NONE, prn);
     buf = gretl_print_get_buffer(prn);
 #ifdef OLD_GTK
     gtk_text_insert(GTK_TEXT(d->edit), fixed_font, 
@@ -862,7 +862,9 @@ static int edit_dialog_help_code (int ci, void *p)
 {
     int hc = ci;
 
-    if (ci == PRINT || ci == CREATE_USERDIR || ci == CREATE_DATASET) {
+    if (ci == SYSTEM && p != NULL) {
+	hc = 0;
+    } else if (ci == PRINT || ci == CREATE_USERDIR || ci == CREATE_DATASET) {
 	hc = 0;
     } else if (ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) p;
@@ -970,7 +972,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	active_edit_name = d->edit;
     } else if (varclick == VARCLICK_INSERT_TEXT) { 
 	active_edit_text = d->edit;
-    } else {
+    } else if (cmdcode != SYSTEM) {
 	modal = 1;
     }
 

@@ -2283,11 +2283,25 @@ record_sys_commands_from_buf (const gchar *buf, const char *startline,
     return 0;
 }
 
+static void maybe_grab_system_name (const char *s, char *name)
+{
+    s = strstr(s, "name=");
+    if (s != NULL) {
+	s += 5;
+	if (*s == '"') {
+	    sscanf(s + 1, "%31[^\"]", name);
+	} else {
+	    sscanf(s, "%31s", name);
+	}
+    }
+}
+
 void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 {
     gretl_equation_system *my_sys = NULL;
     gchar *buf;
     PRN *prn;
+    char sysname[32];
     char bufline[MAXLINE];
     int *slist = NULL;
     char *startline = NULL;
@@ -2302,6 +2316,7 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
     method = edit_dialog_get_opt(dlg);
 
     bufgets_init(buf);
+    *sysname = 0;
 
     while (bufgets(bufline, MAXLINE, buf) && !err) {
 	if (string_is_blank(bufline) || *bufline == '#') {
@@ -2316,6 +2331,7 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 	}	    
 
 	if (!strncmp(bufline, "system", 6)) {
+	    maybe_grab_system_name(bufline, sysname);
 	    continue;
 	} 
 
@@ -2374,27 +2390,32 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 	errmsg(err, prn);
     } else {
 	record_sys_commands_from_buf(buf, startline, got_end_line);
+	if (*sysname != 0) {
+	    my_sys->name = g_strdup(sysname);
+	}
     }
 
     g_free(buf);
     g_free(startline);
 
-    view_buffer(prn, 78, 450, _("gretl: simultaneous equations system"), 
+    view_buffer(prn, 78, 450, 
+		(my_sys->name != NULL)? my_sys->name: 
+		_("gretl: simultaneous equations system"), 
 		SYSTEM, my_sys);
 }
 
 void do_saved_eqn_system (GtkWidget *widget, dialog_t *dlg)
 {
-    gretl_equation_system *sys;
+    gretl_equation_system *my_sys;
     PRN *prn;
     int err = 0;
 
-    sys = (gretl_equation_system *) edit_dialog_get_data(dlg);
-    if (sys == NULL) {
+    my_sys = (gretl_equation_system *) edit_dialog_get_data(dlg);
+    if (my_sys == NULL) {
 	return;
     }
 
-    sys->method = edit_dialog_get_opt(dlg);
+    my_sys->method = edit_dialog_get_opt(dlg);
 
     close_dialog(dlg);
 
@@ -2402,7 +2423,7 @@ void do_saved_eqn_system (GtkWidget *widget, dialog_t *dlg)
 	return; 
     }
 
-    err = gretl_equation_system_estimate(sys, &Z, datainfo,
+    err = gretl_equation_system_estimate(my_sys, &Z, datainfo,
 					 OPT_NONE, prn);
     if (err) {
 	errmsg(err, prn);
@@ -2410,7 +2431,7 @@ void do_saved_eqn_system (GtkWidget *widget, dialog_t *dlg)
 
     /* ref count? */
 
-    view_buffer(prn, 78, 450, sys->name, SYSTEM, sys);
+    view_buffer(prn, 78, 450, my_sys->name, SYSTEM, my_sys);
 }
 
 static int do_nls_genr (void)

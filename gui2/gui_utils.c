@@ -2995,19 +2995,9 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	MODEL *pmod = (MODEL *) vwin->data;
 
 	adjust_model_menu_state(vwin, pmod);
-    } else if (vwin->role == VAR || vwin->role == VECM) {
-	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-	const char *name = gretl_VAR_get_name(var);
-
-	if (name != NULL && *name != '\0') {
-	    model_save_state(vwin->ifac, FALSE);
-	}	
-    } else if (vwin->role == SYSTEM) {
-	gretl_equation_system *sys = vwin->data;
-
-	if (sys->name != NULL && *sys->name != '\0') {
-	    model_save_state(vwin->ifac, FALSE);
-	}	
+    } else if (vwin->role == VAR || vwin->role == VECM || 
+	       vwin->role == SYSTEM) {
+	model_save_state(vwin->ifac, !is_session_model(vwin->data));
     }
 }
 
@@ -4038,7 +4028,7 @@ static void add_SYS_menu_items (windata_t *vwin)
 #endif
 
     /* add to dataset menu path */
-    sysitem.path = g_strdup(_(dpath));
+    sysitem.path = g_strdup(_("/_Save"));
     gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
     g_free(sysitem.path);
 

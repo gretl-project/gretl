@@ -88,6 +88,8 @@ int highest_numbered_variable_in_session (void);
 
 int is_session_file (const char *fname);
 
+int is_session_model (void *p);
+
 void view_session (void);
 
 void save_session_callback (GtkWidget *w, guint i, gpointer data);

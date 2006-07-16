@@ -358,6 +358,11 @@ static int session_append_model (SESSION_MODEL *mod)
     session.models[nm] = mod;
     session.nmodels += 1;
 
+#if SESSION_DEBUG
+    fprintf(stderr, "session_append_model: nmodels now = %d\n",
+	    session.nmodels);
+#endif
+
     return 0;
 }
 
@@ -407,6 +412,23 @@ static void edit_session_notes (void)
 	gdk_window_show(notes_window->window);
 	gdk_window_raise(notes_window->window);
     }
+}
+
+int is_session_model (void *p)
+{
+    int i;
+
+#if SESSION_DEBUG
+    fprintf(stderr, "is_session_model: testing %p (nmodels = %d)\n", 
+	    p, session.nmodels);
+#endif
+
+    for (i=0; i<session.nmodels; i++) {
+	if (p == session.models[i]->ptr) {
+	    return 1;
+	}
+    }
+    return 0;
 }
 
 static SESSION_MODEL *get_session_model_by_name (const char *name)
@@ -668,17 +690,24 @@ void model_add_as_icon (gpointer p, guint type, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
     void *ptr = vwin->data;
+    const char *name;
 
     if (ptr == NULL) {
 	return;
     }
+
+#if SESSION_DEBUG
+    fprintf(stderr, "model_add_as_icon: ptr = %p\n", ptr);
+#endif
 
     if (get_session_model_by_data(ptr)) {
 	infobox(_("Model is already saved"));
 	return;
     }
 
-    if (real_add_model_to_session(ptr, NULL, type)) {
+    name = gretl_object_get_name(ptr, type);
+
+    if (real_add_model_to_session(ptr, name, type)) {
 	return;
     }
 

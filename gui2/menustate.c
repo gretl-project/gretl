@@ -262,7 +262,7 @@ void ts_or_panel_menu_state (gboolean s)
 void session_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Tools/Icon view", s);
+	flip(mdata->ifac, "/View/Icon view", s);
 	flip(mdata->ifac, "/File/Session files/Save session", s);
 	flip(mdata->ifac, "/File/Session files/Save session as...", s);
     }	

@@ -259,7 +259,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Tools/Test statistic calculator"), NULL, stats_calculator, CALC_TEST, 
       NULL },
     { "/Tools/sep1", NULL, NULL, 0, "<Separator>" },
-    { N_("/Tools/_Icon view"), NULL, view_session, 0, NULL },
     { N_("/Tools/_View command log"), NULL, view_command_log, 0, NULL },
     { N_("/Tools/Gretl console"), NULL, show_gretl_console, 0, NULL },
     { N_("/Tools/Start GNU R"), NULL, startRcallback, 0, NULL },
@@ -309,6 +308,8 @@ GtkItemFactoryEntry data_items[] = {
 
     /* View menu */
     { N_("/_View"), NULL, NULL, 0, "<Branch>" },
+    { N_("/View/_Icon view"), NULL, view_session, 0, NULL },
+    { "/View/sep0", NULL, NULL, 0, "<Separator>" },
     { N_("/View/_Graph specified vars"), NULL, NULL, 0, "<Branch>" },
     { N_("/View/Graph specified vars/Time series plot..."), 
       NULL, selector_callback, GR_PLOT, NULL },

@@ -597,7 +597,68 @@ static char normalize_stat (char c)
     return 0;
 }
 
-static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
+static double find_cdf (char st, int n[3], double x[3])
+{
+    double p = NADBL;
+
+    if (st == 'z') {
+	p = normal_cdf(x[0]);
+    } else if (st == 't') {
+	p = t_cdf(x[1], n[0]);
+    } else if (st == 'X') {
+	p = chisq_cdf(x[1], n[0]);
+    } else if (st == 'F') {
+	p = f_cdf(x[2], n[0], n[1]);
+    } else if (st == 'G') {
+	p = 1.0 - gamma_cdf_comp(x[0], x[1], x[2], 2);
+    } else if (st == 'B') {
+	p = binomial_cdf(n[2], n[1], x[0]);
+    }
+
+    return p;
+}
+
+static double find_pvalue (char st, int n[3], double x[3])
+{
+    double p = NADBL;
+
+    if (st == 'z') {
+	p = 1.0 - normal_cdf(x[0]);
+    } else if (st == 't') {
+	p = t_cdf_comp(x[1], n[0]);
+    } else if (st == 'X') {
+	p = chisq_cdf_comp(x[1], n[0]);
+    } else if (st == 'F') {
+	p = f_cdf_comp(x[2], n[0], n[1]);
+    } else if (st == 'G') {
+	p = gamma_cdf_comp(x[0], x[1], x[2], 2);
+    } else if (st == 'B') {
+	p = binomial_cdf_comp(n[2], n[1], x[0]);
+    }
+
+    return p;
+}
+
+static void 
+print_pv_string (double x, double p, int left, PRN *prn)
+{
+    if (left) {
+	if (p == 1.0) {
+	    pprintf(prn, _("area to the left of %g =~ %g\n"), x, p);
+	} else {
+	    pprintf(prn, _("area to the left of %g = %g\n"), x, p);
+	}
+    } else {
+	if (p == 1.0) {
+	    pprintf(prn, _("area to the right of %g =~ %g\n"), x, p);
+	} else {
+	    pprintf(prn, _("area to the right of %g = %g\n"), x, p);
+	}
+    }
+}
+
+static double 
+find_and_print_pvalue (char st, int n[3], double x[3], PRN *prn)
 {
     double pv = NADBL;
 
@@ -610,9 +671,8 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
 	    pv = normal_cdf(-x[0]);
 	}
 	if (!na(pv)) {	
-	    pprintf(prn, _("\nStandard normal: area to the %s "
-			   "of %g = %g\n"), (x[0] > 0)? _("right"): _("left"), 
-		    x[0], pv);
+	    pprintf(prn, "\n%s: ", _("Standard normal"));
+	    print_pv_string(x[0], pv, (x[0] < 0), prn);
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2.0 * pv, 1.0 - 2.0 * pv);
 	}
@@ -625,9 +685,8 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
 	    pv = t_cdf_comp(x[1], n[0]);
 	}
 	if (!na(pv)) {
-	    pprintf(prn, _("\nt(%d): area to the %s of %g = %g\n"), 
-		    n[0], (x[1] > 0)? _("right"): _("left"),
-		    x[1], pv);
+	    pprintf(prn, "\nt(%d): ", n[0]);
+	    print_pv_string(x[1], pv, (x[1] < 0), prn);
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2.0 * pv, 1.0 - 2.0 * pv);
 	}
@@ -636,8 +695,8 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
     case 'X':
 	pv = chisq_cdf_comp(x[1], n[0]);
 	if (!na(pv)) {
-	    pprintf(prn, _("\nChi-square(%d): area to the right of %g = %g\n"), 
-		    n[0], x[1], pv);
+	    pprintf(prn, "\n%s(%d): ", _("Chi-square"), n[0]);
+	    print_pv_string(x[1], pv, 0, prn);
 	    pprintf(prn, _("(to the left: %g)\n"), chisq_cdf(x[1], n[0]));
 	}
 	break;
@@ -645,14 +704,14 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
     case 'F':
 	pv = f_cdf_comp(x[2], n[0], n[1]);
 	if (!na(pv)) {
-	    pprintf(prn, _("\nF(%d, %d): area to the right of %g = %g\n"), 
-		    n[0], n[1], x[2], pv);
+	    pprintf(prn, "\nF(%d, %d): ", n[0], n[1]);
+	    print_pv_string(x[2], pv, 0, prn);
 	    pprintf(prn, _("(to the left: %g)\n"), f_cdf(x[2], n[0], n[1]));
 	}
 	break;
 
     case 'G':
-	pv = gamma_dist(x[0], x[1], x[2], 2);
+	pv = gamma_cdf_comp(x[0], x[1], x[2], 2);
 	if (pv < 0) {
 	    pv = NADBL;
 	} else if (!na(pv)) {
@@ -698,8 +757,9 @@ static double find_pvalue (char st, int n[3], double x[3], PRN *prn)
  * @Z: the data matrix.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
- * @opt: OPT_G (for use within genr) forces uses of '.' as
- * decimal separator.
+ * @opt: (for internal use) %OPT_G forces uses of '.' as
+ * decimal separator; %OPT_C actually evaluate cdf instead of
+ * p-value.
  * 
  * Returns: the probability that a random variable distributed as
  * specified in the command line @str exceeds the value indicated
@@ -782,7 +842,13 @@ double batch_pvalue (const char *str,
 	return NADBL;
     }
 
-    pv = find_pvalue(st, n, x, prn);
+    if (opt & OPT_C) {
+	pv = find_cdf(st, n, x);
+    } else if (opt & OPT_G) {
+	pv = find_pvalue(st, n, x);
+    } else {
+	pv = find_and_print_pvalue(st, n, x, prn);
+    }
 
     if (na(pv)) {
 	pputs(prn, _("\nError computing pvalue\n"));
@@ -939,7 +1005,7 @@ static void pgamma (void)
     printf("%s", _(negval));
     zx = getx();
     if (zx < 0.0) return;
-    xx = 1.0 - gamma_dist(mean, variance, zx, 2);
+    xx = 1.0 - gamma_cdf_comp(mean, variance, zx, 2);
     printf(_("\nFor Gamma (mean %g, variance %g), area to the right of %g is "),
 	   mean, variance, zx);
     putxx(xx);
@@ -1188,51 +1254,32 @@ double genr_get_critical (const char *line, const double **Z,
 
 static const double gamma_tol = 1e-7;
 
-/* internal functions */
-
-static double gamma_integral (double lambda, double x);
-static double gamma_integral_expansion (double lambda, double x);
-static double gamma_integral_fraction (double lambda, double x);
-static double gammadist_wilson_hilferty (double shape, double scale, double x);
-
-/* Control 1 : s1, s2 = shape, scale
-           2 : s1, s2 = expectation, variance
-   Returns NADBL on error 
+/* Gamma distribution function.
+   See Johnson, Kotz and Balakrishnan: 
+   Continuous Univariate Distributions
+   vol 1, 2nd ed, Wiley 1994
 */
 
-double gamma_dist (double s1, double s2, double x, int control)
+static double gammadist_wilson_hilferty (double shape, double scale, double x)
 {
-    double shape, scale, xx;
+    double df = 2.0 * shape;
+    double xscaled = x * 2.0 / scale;
+    double xx;
 
-    if (control == 1) {
-	shape = s1; 
-	scale = s2; 
-    } else {
-	scale = s2 / s1; 
-	shape = s1 / scale; 
-    }	
+    xx = exp(log(xscaled/df)/3) - 1 + (double)(2) / 9 / df;
+    xx *= sqrt(9 * df / 2);
 
-    if ((shape > 20) && (x / scale < 0.9 * shape) && (x > 1)) {
-	xx = gammadist_wilson_hilferty(shape, scale, x);
-    } else {
-	xx = gamma_integral(shape, x / scale);
-	if (!na(xx)) {
-	    xx /= cephes_gamma(shape);
-	}
-    }
+    return normal_cdf(xx);
+} 
 
-    return xx;
-}
-
-/* end exported functions */
+/* Expansion of Gamma Integral int_0^x t^lambda-1 exp(-t)
+   Abramowitz and Stegun p. 262
+   Note that the series is alternating.
+*/
 
 static double gamma_integral_expansion (double lambda, double x)
-     /* Expansion of Gamma Integral int_0^x t^lambda-1 exp(-t)
-	Abramowitz and Stegun p. 262
-	Note that the series is alternating.
-     */
 {
-    double xx, x1 = 1.0;
+    double g, x1 = 1.0;
     double x2, x3 = 1.0 / lambda;
     int i = 0;
 
@@ -1244,23 +1291,24 @@ static double gamma_integral_expansion (double lambda, double x)
     } while (fabs(x2) >= gamma_tol && i <= 100);
 
     if (i == 100) {
-	xx = NADBL;
+	g = NADBL;
     } else {
-	xx = x3 * exp(lambda * log(x));
+	g = x3 * exp(lambda * log(x));
     }
 
-    return xx;
+    return g;
 }
 
+/* Continued Fraction Expansion for Gamma Integral
+   int_0^x t^lambda-1 exp(-t) dx
+   Abramowitz and Stegun p. 263
+   Implemented in Fortran by
+   B. L. Shea (1988): Chi-squared and incomplete gamma integral,
+   Applied Statistics, vol 37, pp. 466-473.
+   See also Schwartz p. 120.      
+*/
+
 static double gamma_integral_fraction (double lambda, double x)
-     /* Continued Fraction Expansion for Gamma Integral
-	int_0^x t^lambda-1 exp(-t) dx
-	Abramowitz and Stegun p. 263
-	Implemented in Fortran by
-	B. L. Shea (1988): Chi-squared and incomplete gamma integral,
-	Applied Statistics, vol 37, pp. 466-473.
-	See also Schwartz p. 120.      
-     */
 {
     double a = 1 - lambda;
     double b = a + x + 1;
@@ -1293,37 +1341,52 @@ static double gamma_integral_fraction (double lambda, double x)
 
 static double gamma_integral (double lambda, double x)
 {
-    double xx;
+    double g;
 
     if (x < 0.0)  { 
-	xx = NADBL;
+	g = NADBL;
     } else if (x < gamma_tol) {
-	xx = 0.0;
+	g = 0.0;
     } else if (x <= 1.0 || x < 0.9 * lambda) {
-	xx = gamma_integral_expansion(lambda, x);
+	g = gamma_integral_expansion(lambda, x);
     } else {
-	xx = gamma_integral_fraction(lambda, x);
+	g = gamma_integral_fraction(lambda, x);
+    }
+
+    return g;
+}
+
+/* Control 1 : s1, s2 = shape, scale
+           2 : s1, s2 = expectation, variance
+   Returns NADBL on error 
+*/
+
+double gamma_cdf_comp (double s1, double s2, double x, int control)
+{
+    double shape, scale, xx;
+
+    if (control == 1) {
+	shape = s1; 
+	scale = s2; 
+    } else {
+	scale = s2 / s1; 
+	shape = s1 / scale; 
+    }	
+
+    if ((shape > 20) && (x / scale < 0.9 * shape) && (x > 1)) {
+	xx = gammadist_wilson_hilferty(shape, scale, x);
+    } else {
+	xx = gamma_integral(shape, x / scale);
+	if (!na(xx)) {
+	    xx /= cephes_gamma(shape);
+	}
     }
 
     return xx;
 }
 
-static double gammadist_wilson_hilferty (double shape, double scale, double x)
-     /* Gamma distribution function.
-	See Johnson, Kotz and Balakrishnan: 
-	Continuous Univariate Distributions
-        vol 1, 2nd ed, Wiley 1994
-     */
-{
-    double df = 2.0 * shape;
-    double xscaled = x * 2.0 / scale;
-    double xx;
 
-    xx = exp(log(xscaled/df)/3) - 1 + (double)(2) / 9 / df;
-    xx *= sqrt(9 * df / 2);
 
-    return normal_cdf(xx);
-} 
 
 
 

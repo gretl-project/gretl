@@ -56,7 +56,7 @@ double normal_pdf (double x);
 
 double log_normal_pdf (double x);
 
-double gamma_dist (double s1, double s2, double x, int control);
+double gamma_cdf_comp (double s1, double s2, double x, int control);
 
 double tcrit95 (int df);
 

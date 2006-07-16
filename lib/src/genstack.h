@@ -114,6 +114,7 @@ enum transformations {
     T_MEDIAN,
     T_GINI,
     T_ZEROMISS,
+    T_CDF,
     T_PVALUE,
     T_CRIT,
     T_OBSNUM,

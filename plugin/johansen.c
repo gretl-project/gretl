@@ -136,7 +136,7 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
 	}
     }
 
-    g = gamma_dist(mt, vt, tracetest, 2);
+    g = gamma_cdf_comp(mt, vt, tracetest, 2);
     if (na(g)) {
 	pval[0] = NADBL;
     } else {
@@ -146,7 +146,7 @@ gamma_par_asymp (double tracetest, double lmaxtest, JohansenCode det,
 	}
     }
 
-    g = gamma_dist(ml, vl, lmaxtest, 2);
+    g = gamma_cdf_comp(ml, vl, lmaxtest, 2);
     if (na(g)) {
 	pval[1] = NADBL;
     } else {

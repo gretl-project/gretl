@@ -990,7 +990,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     models = sys->models;
 	    
     if ((method == SYS_FIML || method == SYS_LIML) && !(opt & OPT_Q)) {
-	print_equation_system_info(sys, pdinfo, prn);
+	print_equation_system_info(sys, pdinfo, OPT_H, prn);
     }
 
     /* First estimate the equations separately, and put the

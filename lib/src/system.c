@@ -116,13 +116,19 @@ print_system_equation (const int *list, const DATAINFO *pdinfo,
 
 static void 
 print_system_identity (const identity *ident, const DATAINFO *pdinfo, 
-		       PRN *prn)
+		       gretlopt opt, PRN *prn)
 {
     int i;
 
-    pprintf(prn, "identity %s = %s ", 
-	    pdinfo->varname[ident->depvar],
-	    pdinfo->varname[ident->atoms[0].varnum]);
+    if (opt & OPT_H) {
+	pprintf(prn, "Identity: %s = %s ", 
+		pdinfo->varname[ident->depvar],
+		pdinfo->varname[ident->atoms[0].varnum]);
+    } else {
+	pprintf(prn, "identity %s = %s ", 
+		pdinfo->varname[ident->depvar],
+		pdinfo->varname[ident->atoms[0].varnum]);
+    }
 
     for (i=1; i<ident->n_atoms; i++) {
 	pprintf(prn, "%c %s ", (ident->atoms[i].op == OP_PLUS)? '+' : '-',
@@ -132,28 +138,41 @@ print_system_identity (const identity *ident, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 }
 
+/**
+ * print_equation_system_info:
+ * @sys: gretl equation system.
+ * @pdinfo: dataset information.
+ * @opt: use %OPT_H for printing in a form designed to appear
+ * in the header when results of estimation are printed.
+ * @prn: printing struct.
+ * 
+ * Prints details of an equation system to @prn.
+ */
+
 void 
 print_equation_system_info (const gretl_equation_system *sys, 
-			    const DATAINFO *pdinfo, PRN *prn)
+			    const DATAINFO *pdinfo, 
+			    gretlopt opt, PRN *prn)
 {
     int i;
 
-#if 0
-    if (sys->name != NULL) {
+    
+    if ((opt & OPT_H) && sys->name != NULL) {
 	pprintf(prn, "Equation system %s\n", sys->name);
     }
-#endif
 
-    for (i=0; i<sys->n_equations; i++) {
-	print_system_equation(sys->lists[i], pdinfo, prn);
-    }    
+    if (!(opt & OPT_H)) {
+	for (i=0; i<sys->n_equations; i++) {
+	    print_system_equation(sys->lists[i], pdinfo, prn);
+	}    
+    }
 
     for (i=0; i<sys->n_identities; i++) {
-	print_system_identity(sys->idents[i], pdinfo, prn);
+	print_system_identity(sys->idents[i], pdinfo, opt, prn);
     }
 
     if (sys->endog_vars != NULL) {
-	pputs(prn, "endog");
+	pputs(prn, (opt & OPT_H)? "Endogenous variables:" : "endog");
 	for (i=1; i<=sys->endog_vars[0]; i++) {
 	    pprintf(prn, " %s", pdinfo->varname[sys->endog_vars[i]]);
 	}
@@ -161,7 +180,7 @@ print_equation_system_info (const gretl_equation_system *sys,
     }
 
     if (sys->instr_vars != NULL) {
-	pputs(prn, "instr");
+	pputs(prn, (opt & OPT_H)? "Exogenous variables:" : "instr");
 	for (i=1; i<=sys->instr_vars[0]; i++) {
 	    pprintf(prn, " %s", pdinfo->varname[sys->instr_vars[i]]);
 	}

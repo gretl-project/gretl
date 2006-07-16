@@ -287,8 +287,74 @@ bootstrapping, see Davidson and MacKinnon (2004, chapter 4).
        tcount / replics
 \end{code}
 \end{script}
-%$ 
-%$
+
+\section{Cumulative densities and p-values}
+\label{genr-cdf}
+
+The two functions \cmd{cdf} and \cmd{pvalue} provide complementary
+means of examining values from several probability distributions: the
+standard normal, Student's $t$, $\chi^2$, $F$, gamma, and binomial.
+The syntax of these functions is set out in the \GCR; here we expand
+on some subtleties.
+
+The cumulative density function or CDF for a random variable
+is the integral of the variable's density from its lower limit
+(tyically either $-\infty$ or 0) to any specified value $x$.  The
+p-value (at least the one-tailed, right-hand p-value as returned by
+the \cmd{pvalue} function) is the complementary probability, the
+integral from $x$ to the upper limit of the distribution, typically
+$+\infty$.  
+
+In principle, therefore, there is no need for two distinct functions:
+given a CDF value $p_0$ you could easily find the corresponding
+p-value as $1-p_0$ (or vice versa).  In practice, with
+finite-precision computer arithmetic, the two functions are not
+redundant.  This requires a little explanation.  In \app{gretl}, as in
+most statistical programs, floating point numbers are represented as
+``doubles'' --- double-precision values that typically have a storage
+size of eight bytes or 64 bits.  Since there are only so many bits
+available, only so many floating-point numbers can be represented:
+\textit{doubles do not model the real line}.  Typically doubles can
+represent numbers over the range (roughly) $\pm 1.7977 \times
+10^{308}$, but only to about 15 digits of precision.
+
+Suppose you're interested in the left tail of the $\chi^2$ distribution
+with 50 degrees of freedom: you'd like to know the CDF value for $x =
+0.9$.  Take a look at the following interactive session: 
+\begin{code}
+  ? genr p1 = cdf(X, 50, 0.9)
+  Generated scalar p1 (ID 2) = 8.94977e-35
+  ? genr p2 = pvalue(X, 50, 0.9)
+  Generated scalar p2 (ID 3) = 1
+  ? genr test = 1 - p2
+  Generated scalar test (ID 4) = 0
+\end{code}
+
+The \cmd{cdf} function has produced an accurate value, but the
+\cmd{pvalue} function gives an answer of 1, from which it is not
+possible to retrieve the answer to the CDF question.  This may seem
+surprising at first, but consider: if the value of \texttt{p1} above
+is correct, then the correct value for \texttt{p2} is $1 - 8.94977
+\times 10^{-35}$.  But there's no way that value can be represented as
+a double: that would require over 30 digits of precision.
+
+Of course this is an extreme example.  If the $x$ in question is not
+too far off into one or other tail of the distribution, the \cmd{cdf}
+and \cmd{pvalue} functions will in fact produce complementary
+answers, as shown below:
+\begin{code}
+  ? genr p1 = cdf(X, 50, 30)
+  Generated scalar p1 (ID 2) = 0.0111648
+  ? genr p2 = pvalue(X, 50, 30)
+  Generated scalar p2 (ID 3) = 0.988835
+  ? genr test = 1 - p2
+  Generated scalar test (ID 4) = 0.0111648
+\end{code}
+But the moral is that if you want to examine extreme values
+you should be careful in selecting the function you need, in the
+knowledge that values very close to zero can be represented as doubles
+while values very close to 1 cannot.
+
 
 \section{Handling missing values}
 \label{genr-missing}

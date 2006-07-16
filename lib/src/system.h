@@ -159,7 +159,8 @@ int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 
 void 
 print_equation_system_info (const gretl_equation_system *sys, 
-			    const DATAINFO *pdinfo, PRN *prn);
+			    const DATAINFO *pdinfo, 
+			    gretlopt opt, PRN *prn);
 
 void 
 system_set_restriction_matrices (gretl_equation_system *sys,
