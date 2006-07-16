@@ -240,7 +240,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     MODEL lmod;
     int *reglist;
     int idf;
-    int T = system_n_obs(sys);
+    int T = sys->n_obs;
     int i, k;
     int err = 0;
 
@@ -344,7 +344,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     }
 
     /* compute and set log-likelihood, etc */
-    ll = system_n_equations(sys) * LN_2_PI;
+    ll = sys->n_equations * LN_2_PI;
     ll += log(lmin);
     ll += gretl_matrix_log_determinant(W1, &err);
     ll *= -(T / 2.0);
@@ -374,10 +374,9 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
 int liml_driver (gretl_equation_system *sys, double ***pZ, 
 		 DATAINFO *pdinfo, PRN *prn)
 {
-    int g = system_n_equations(sys);
     int i, err = 0;
 
-    for (i=0; i<g && !err; i++) {
+    for (i=0; i<sys->n_equations && !err; i++) {
 #if LDEBUG > 1
 	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);
 #endif

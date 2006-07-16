@@ -480,6 +480,11 @@ static int real_add_model_to_session (void *ptr, const char *name,
 {
     SESSION_MODEL *mod;
 
+#if SESSION_DEBUG
+    fprintf(stderr, "real_add_model_to_session: doing session_model_new\n"
+	    " with ptr = %p\n", ptr);
+#endif
+
     mod = session_model_new(ptr, name, type);
     if (mod == NULL || session_append_model(mod)) {
 	return 1;
@@ -703,8 +708,6 @@ int session_changed (int set)
 
     return orig;
 }
-
-
 
 static void
 session_name_from_session_file (char *sname, const char *fname)
@@ -1373,9 +1376,9 @@ static int display_session_model (SESSION_MODEL *sm)
 	return 0;
     }  
 
-    if (bufopen(&prn)) {
+    if (sm->type != GRETL_OBJ_SYS && bufopen(&prn)) {
 	return 1;
-    }    
+    }
 
     if (sm->type == GRETL_OBJ_EQN) {
 	MODEL *pmod = (MODEL *) sm->ptr;
@@ -1390,13 +1393,8 @@ static int display_session_model (SESSION_MODEL *sm)
     } else if (sm->type == GRETL_OBJ_SYS) {
 	gretl_equation_system *sys = (gretl_equation_system *) sm->ptr;
 
-	err = estimate_saved_equation_system(sys, &Z, datainfo, prn);
-	if (err) {
-	    gui_errmsg(err);
-	    gretl_print_destroy(prn);
-	} else {
-	    view_buffer(prn, 78, 450, sm->name, SYSTEM, sys);
-	}
+	edit_dialog(sm->name, NULL, NULL, do_saved_eqn_system, sys, 
+		    SYSTEM, VARCLICK_NONE, NULL); 
     }
 
     return err;

@@ -207,7 +207,6 @@ int gretl_chisq_dist (double *a, int t1, int t2, int v)
 
 int gretl_t_dist (double *a, int t1, int t2, int v) 
 {
-    double *Norm = NULL;
     double *X2 = NULL;
     int T = t2 - t1 + 1;
     int t;
@@ -216,25 +215,18 @@ int gretl_t_dist (double *a, int t1, int t2, int v)
 	return E_INVARG;
     }
 
-    Norm = malloc(T * sizeof *Norm);
-    if (Norm == NULL) {
-	return E_ALLOC;
-    }
-
     X2 = malloc(T * sizeof *X2);
     if (X2 == NULL) {
-	free(Norm);
 	return E_ALLOC;
     }
 
-    gretl_normal_dist(Norm, 0, T-1);
+    gretl_normal_dist(a, t1, t2);
     gretl_chisq_dist(X2, 0, T-1, v);
 
     for (t=0; t<T; t++) {
-	a[t + t1] = Norm[t] / sqrt(X2[t] / v);
+	a[t + t1] /= sqrt(X2[t] / v);
     }
 
-    free(Norm);
     free(X2);
 
     return 0;

@@ -20,7 +20,6 @@
 #include "libgretl.h"
 #include "gretl_matrix.h"
 #include "system.h"
-#include "system_private.h"
 
 #define SDEBUG 0
 
@@ -972,7 +971,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* number of equations */
-    m = system_n_equations(sys);
+    m = sys->n_equations;
 
     /* max indep vars per equation */
     k = system_max_indep_vars(sys);

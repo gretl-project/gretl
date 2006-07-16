@@ -2987,7 +2987,9 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     gtk_accel_group_attach(accel, GTK_OBJECT(window));
 #endif
 
-    if (vwin->data == NULL) return;
+    if (vwin->data == NULL) {
+	return;
+    }
 
     if (vwin->role == VIEW_MODEL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
@@ -2998,6 +3000,12 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	const char *name = gretl_VAR_get_name(var);
 
 	if (name != NULL && *name != '\0') {
+	    model_save_state(vwin->ifac, FALSE);
+	}	
+    } else if (vwin->role == SYSTEM) {
+	gretl_equation_system *sys = vwin->data;
+
+	if (sys->name != NULL && *sys->name != '\0') {
 	    model_save_state(vwin->ifac, FALSE);
 	}	
     }
@@ -4015,17 +4023,19 @@ static void add_SYS_menu_items (windata_t *vwin)
 	return;
     }
 
-    neqns = system_n_equations(sys);
+    neqns = sys->n_equations;
 
     sysitem.accelerator = NULL;
     sysitem.callback = NULL;
     sysitem.callback_action = 0;
     sysitem.item_type = "<Branch>";
 
+#if 0
     /* model data menu path */
     sysitem.path = g_strdup(_("/_Analysis"));
     gtk_item_factory_create_item(vwin->ifac, &sysitem, vwin, 1);
     g_free(sysitem.path);
+#endif
 
     /* add to dataset menu path */
     sysitem.path = g_strdup(_(dpath));

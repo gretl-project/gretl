@@ -139,6 +139,8 @@ void do_mle_model (GtkWidget *widget, dialog_t *dlg);
 
 void do_eqn_system (GtkWidget *widget, dialog_t *dlg);
 
+void do_saved_eqn_system (GtkWidget *widget, dialog_t *dlg);
+
 int do_model (selector *sr);
 
 int do_vector_model (selector *sr);

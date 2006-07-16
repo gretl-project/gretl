@@ -21,7 +21,6 @@
 #include "var.h"
 #include "johansen.h"
 #include "system.h"
-#include "system_private.h"
 #include "objstack.h"
 #include "genrfuncs.h"
 #include "usermat.h"
@@ -375,6 +374,18 @@ get_object_by_name (const char *oname, GretlObjType type, int *onum)
 #if ODEBUG
     fprintf(stderr, "get_object_by_name: name='%s', type=%d, ptr=%p\n",
 	    oname, type, (void *) ptr);
+    if (ptr == NULL) {
+	if (n_obj == 0) {
+	    fprintf(stderr, "(no currently saved objects)\n");
+	} else {
+	    fprintf(stderr, "failed: current objects:\n");
+	    for (i=0; i<n_obj; i++) {
+		fprintf(stderr, " %02d: '%s' (%p, type %d)\n", i,
+			gretl_object_get_name(ostack[i].ptr, ostack[i].type),
+			ostack[i].ptr, ostack[i].type);
+	    }
+	}
+    }
 #endif    
 
     return ptr;

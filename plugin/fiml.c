@@ -89,8 +89,8 @@ static fiml_system *fiml_system_new (gretl_equation_system *sys)
 
     fsys->sys = sys;
 
-    fsys->g = system_n_equations(sys);
-    fsys->n = system_n_obs(sys);
+    fsys->g = sys->n_equations;
+    fsys->n = sys->n_obs;
     fsys->gn = fsys->g * fsys->n;
     fsys->totk = system_n_indep_vars(sys);
 
@@ -348,11 +348,11 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     fsys->uhat = NULL;
 
     /* record restricted and unrestricted log-likelihood */
-    system_set_ll(fsys->sys, fsys->ll);
-    system_set_llu(fsys->sys, fsys->llu);
+    fsys->sys->ll = fsys->ll;
+    fsys->sys->llu = fsys->llu;
 
     /* record number of iterations taken */
-    system_set_iters(fsys->sys, iters);
+    fsys->sys->iters = iters;
 }
 
 /* form the LHS stacked vector for the artificial regression */
@@ -459,7 +459,7 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
 
 static void fiml_uhat_init (fiml_system *fsys)
 {
-    gretl_matrix *uhat = system_get_uhat(fsys->sys);
+    gretl_matrix *uhat = fsys->sys->uhat;
     double x;
     int i, t;
 
@@ -891,7 +891,7 @@ static void fiml_print_gradients (const gretl_matrix *b, PRN *prn)
 int fiml_driver (gretl_equation_system *sys, double ***pZ, 
 		 DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    const gretl_matrix *R = system_get_R_matrix(sys);
+    const gretl_matrix *R = NULL;
     fiml_system *fsys;
     int t1 = pdinfo->t1;
     double llbak;
@@ -928,7 +928,11 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	if (verbose) {
 	    pprintf(prn, "*** initial ll = %.8g\n", fsys->ll);
 	}
-    }    
+    } 
+
+    if ((sys->flags & GRETL_SYS_RESTRICT) && sys->R != NULL) {
+	R = sys->R;
+    }
 
     while (crit > tol && iters < FIML_ITER_MAX) {
 	double step;

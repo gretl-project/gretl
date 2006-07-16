@@ -21,7 +21,6 @@
 
 #include "libgretl.h"
 #include "system.h"
-#include "system_private.h"
 #include "objstack.h"
 #include "gretl_xml.h"
 
@@ -94,12 +93,34 @@ static void destroy_ident (identity *ident);
 static int make_instrument_list (gretl_equation_system *sys);
 
 static void 
+print_system_equation (const int *list, const DATAINFO *pdinfo, 
+		       PRN *prn)
+{
+    int i, v;
+
+    pputs(prn, "equation");
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (v == LISTSEP) {
+	    pputs(prn, " ;");
+	} else if (v > 0 && v < pdinfo->v) {
+	    pprintf(prn, " %s", pdinfo->varname[v]);
+	} else {
+	    pprintf(prn, " %d", v);
+	}
+    }
+
+    pputc(prn, '\n');
+}
+
+static void 
 print_system_identity (const identity *ident, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
     int i;
 
-    pprintf(prn, "Identity: %s = %s ", 
+    pprintf(prn, "identity %s = %s ", 
 	    pdinfo->varname[ident->depvar],
 	    pdinfo->varname[ident->atoms[0].varnum]);
 
@@ -117,16 +138,22 @@ print_equation_system_info (const gretl_equation_system *sys,
 {
     int i;
 
+#if 0
     if (sys->name != NULL) {
 	pprintf(prn, "Equation system %s\n", sys->name);
     }
+#endif
+
+    for (i=0; i<sys->n_equations; i++) {
+	print_system_equation(sys->lists[i], pdinfo, prn);
+    }    
 
     for (i=0; i<sys->n_identities; i++) {
 	print_system_identity(sys->idents[i], pdinfo, prn);
     }
 
     if (sys->endog_vars != NULL) {
-	pputs(prn, "Endogenous variables:");
+	pputs(prn, "endog");
 	for (i=1; i<=sys->endog_vars[0]; i++) {
 	    pprintf(prn, " %s", pdinfo->varname[sys->endog_vars[i]]);
 	}
@@ -134,13 +161,12 @@ print_equation_system_info (const gretl_equation_system *sys,
     }
 
     if (sys->instr_vars != NULL) {
-	pputs(prn, "Exogenous variables:");
+	pputs(prn, "instr");
 	for (i=1; i<=sys->instr_vars[0]; i++) {
 	    pprintf(prn, " %s", pdinfo->varname[sys->instr_vars[i]]);
 	}
 	pputc(prn, '\n');
     }
-
 }
 
 int gretl_system_method_from_string (const char *s)
@@ -631,7 +657,7 @@ static void
 system_print_LR_test (const gretl_equation_system *sys,
 		      double llu, PRN *prn)
 {
-    double llr = system_get_ll(sys);
+    double llr = sys->ll;
     int df = gretl_matrix_rows(sys->R);
     double X2;
 
@@ -739,6 +765,60 @@ static int estimate_with_test (gretl_equation_system *sys,
     return err;
 }
 
+static void 
+adjust_sys_flags_for_method (gretl_equation_system *sys, int method)
+{
+    char old_flags = sys->flags;
+
+    sys->flags = 0;
+
+    if (old_flags & GRETL_SYS_ITERATE) {
+	/* the iterate option is only available for WLS, SUR or 3SLS */
+	if (sys->method == SYS_WLS || sys->method == SYS_SUR ||
+	    sys->method == SYS_3SLS) {
+	    sys->flags |= GRETL_SYS_ITERATE;
+	}
+    }
+
+    /* by default, apply a df correction for single-equation methods */
+    if (sys->method == SYS_OLS || sys->method == SYS_WLS ||
+	sys->method == SYS_TSLS || sys->method == SYS_LIML) {
+	if (old_flags & GRETL_SYSTEM_DFCORR) {
+	    sys->flags |= GRETL_SYSTEM_DFCORR;
+	}
+    } 
+
+    if (old_flags & GRETL_SYS_VCV_GEOMEAN) {
+	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
+    }    
+}
+
+static void 
+set_sys_flags_from_opt (gretl_equation_system *sys, gretlopt opt)
+{
+    sys->flags = 0;
+
+    if (opt & OPT_T) {
+	/* the iterate option is only available for WLS, SUR or 3SLS */
+	if (sys->method == SYS_WLS || sys->method == SYS_SUR ||
+	    sys->method == SYS_3SLS) {
+	    sys->flags |= GRETL_SYS_ITERATE;
+	}
+    }
+
+    /* by default, apply a df correction for single-equation methods */
+    if (sys->method == SYS_OLS || sys->method == SYS_WLS ||
+	sys->method == SYS_TSLS || sys->method == SYS_LIML) {
+	if (!(opt & OPT_N)) {
+	    sys->flags |= GRETL_SYSTEM_DFCORR;
+	}
+    } 
+
+    if (opt & OPT_M) {
+	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
+    } 
+}
+
 /**
  * gretl_equation_system_estimate:
  * @sys: pre-defined equation system.
@@ -766,6 +846,18 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
 
     *gretl_errmsg = 0;
 
+    if (opt == OPT_UNSET) {
+	opt = OPT_NONE;
+	adjust_sys_flags_for_method(sys, sys->method);
+    } else {
+	set_sys_flags_from_opt(sys, opt);
+    }
+
+    /* if restrictions are in place, reset the restricted flag */
+    if (sys->R != NULL && sys->q != NULL) {
+	sys->flags |= GRETL_SYS_RESTRICT;
+    } 
+
     /* in case we're re-estimating */
     system_clear_results(sys);
 
@@ -786,7 +878,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     stest = sys_test_type(sys);
 
     if (stest == SYS_TEST_NOTIMP) {
-	pprintf(prn, _("Sorry, command not available for this estimator"));
+	pputs(prn, _("Sorry, command not available for this estimator"));
 	pputc(prn, '\n');
 	err = 1;
     } else if (stest != SYS_NO_TEST) {
@@ -803,7 +895,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     }
 
     if (!err) {
-	set_as_last_model(sys, SYSTEM);
+	set_as_last_model(sys, GRETL_OBJ_SYS);
     } 
 
     return err;
@@ -863,59 +955,6 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     return err;
 }
 
-static void 
-adjust_sys_flags_for_method (gretl_equation_system *sys, int method)
-{
-    char old_flags = sys->flags;
-
-    sys->flags = 0;
-
-    if (old_flags & GRETL_SYS_ITERATE) {
-	/* the iterate option is only available for WLS, SUR or 3SLS */
-	if (sys->method == SYS_WLS || sys->method == SYS_SUR ||
-	    sys->method == SYS_3SLS) {
-	    sys->flags |= GRETL_SYS_ITERATE;
-	}
-    }
-
-    /* by default, apply a df correction for single-equation methods */
-    if (sys->method == SYS_OLS || sys->method == SYS_WLS ||
-	sys->method == SYS_TSLS || sys->method == SYS_LIML) {
-	if (old_flags & GRETL_SYSTEM_DFCORR) {
-	    sys->flags |= GRETL_SYSTEM_DFCORR;
-	}
-    } 
-
-    if (old_flags & GRETL_SYS_VCV_GEOMEAN) {
-	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
-    }    
-}
-
-static void 
-set_sys_flags_from_opt (gretl_equation_system *sys, gretlopt opt)
-{
-    sys->flags = 0;
-
-    if (opt & OPT_T) {
-	/* the iterate option is only available for WLS, SUR or 3SLS */
-	if (sys->method == SYS_WLS || sys->method == SYS_SUR ||
-	    sys->method == SYS_3SLS) {
-	    sys->flags |= GRETL_SYS_ITERATE;
-	}
-    }
-
-    /* by default, apply a df correction for single-equation methods */
-    if (sys->method == SYS_OLS || sys->method == SYS_WLS ||
-	sys->method == SYS_TSLS || sys->method == SYS_LIML) {
-	if (!(opt & OPT_N)) {
-	    sys->flags |= GRETL_SYSTEM_DFCORR;
-	}
-    } 
-
-    if (opt & OPT_M) {
-	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
-    } 
-}
 
 /* Implement the "estimate" command, which must give the name of a pre-defined
    equation system and an estimation method, as in:
@@ -962,31 +1001,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     sys->method = method;
 
-    if (opt == OPT_UNSET) {
-	opt = OPT_NONE;
-	adjust_sys_flags_for_method(sys, method);
-    } else {
-	set_sys_flags_from_opt(sys, opt);
-    }
-
-    /* if restrictions are in place, reset the restricted flag */
-    if (sys->R != NULL && sys->q != NULL) {
-	sys->flags |= GRETL_SYS_RESTRICT;
-    } 
-
     return gretl_equation_system_estimate(sys, pZ, pdinfo, opt, prn);
-}
-
-int estimate_saved_equation_system (gretl_equation_system *sys, 
-				    double ***pZ, DATAINFO *pdinfo,
-				    PRN *prn)
-{
-    char line[128];
-    int err;
-
-    sprintf(line, "estimate \"%s\"", sys->name);
-    err = estimate_named_system(line, pZ, pdinfo, OPT_UNSET, prn);
-    return err;
 }
 
 static int get_real_list_length (const int *list)
@@ -1047,11 +1062,6 @@ void gretl_system_set_name (gretl_equation_system *sys, const char *name)
     sys->name = gretl_strdup(name);
 }
 
-const char *gretl_system_get_name (const gretl_equation_system *sys)
-{
-    return sys->name;
-}
-
 int system_adjust_t1t2 (gretl_equation_system *sys,
 			int *t1, int *t2, const double **Z)
 {
@@ -1104,16 +1114,6 @@ int *compose_tsls_list (gretl_equation_system *sys, int i)
     }
 
     return list;
-}
-
-void system_set_n_obs (gretl_equation_system *sys, int n)
-{
-    sys->n_obs = n;
-}
-
-void system_set_iters (gretl_equation_system *sys, int n)
-{
-    sys->iters = n;
 }
 
 int system_normality_test (const gretl_equation_system *sys, PRN *prn)
@@ -1195,20 +1195,6 @@ const char *system_get_full_string (const gretl_equation_system *sys)
     }
 }
 
-const gretl_matrix *system_get_R_matrix (const gretl_equation_system *sys)
-{
-    if (sys->flags & GRETL_SYS_RESTRICT) {
-	return sys->R;
-    } else {
-	return NULL;
-    }
-}
-
-const gretl_matrix *system_get_q_matrix (const gretl_equation_system *sys)
-{
-    return sys->q;
-}
-
 int system_save_uhat (const gretl_equation_system *sys)
 {
     return sys->flags & GRETL_SYSTEM_SAVE_UHAT;
@@ -1229,16 +1215,6 @@ int system_want_df_corr (const gretl_equation_system *sys)
     return sys->flags & GRETL_SYSTEM_DFCORR;
 }
 
-int system_n_equations (const gretl_equation_system *sys)
-{
-    return sys->n_equations;
-}
-
-int system_n_indentities (const gretl_equation_system *sys)
-{
-    return sys->n_identities;
-}
-
 int system_n_restrictions (const gretl_equation_system *sys)
 {
     int nr = 0;
@@ -1248,16 +1224,6 @@ int system_n_restrictions (const gretl_equation_system *sys)
     }
 
     return nr;
-}
-
-int system_n_obs (const gretl_equation_system *sys)
-{
-    return sys->n_obs;
-}
-
-int system_iters (const gretl_equation_system *sys)
-{
-    return sys->iters;
 }
 
 int *system_get_list (const gretl_equation_system *sys, int i)
@@ -1287,11 +1253,6 @@ int *system_get_endog_vars (const gretl_equation_system *sys)
 int *system_get_instr_vars (const gretl_equation_system *sys)
 {
     return sys->instr_vars;
-}
-
-gretl_matrix *system_get_uhat (const gretl_equation_system *sys)
-{
-    return sys->uhat;
 }
 
 void system_attach_coeffs (gretl_equation_system *sys, gretl_matrix *b)
@@ -1330,11 +1291,6 @@ void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *uhat)
     sys->uhat = uhat;
 }
 
-gretl_matrix *system_get_sigma (const gretl_equation_system *sys)
-{
-    return sys->sigma;
-}
-
 MODEL *system_get_model (const gretl_equation_system *sys, int i)
 {
     if (sys->models == NULL || i >= sys->n_equations) {
@@ -1342,56 +1298,6 @@ MODEL *system_get_model (const gretl_equation_system *sys, int i)
     }   
 
     return sys->models[i];
-}
-
-double system_get_ll (const gretl_equation_system *sys)
-{
-    return sys->ll;
-}
-
-double system_get_llu (const gretl_equation_system *sys)
-{
-    return sys->llu;
-}
-
-double system_get_ess (const gretl_equation_system *sys)
-{
-    return sys->ess;
-}
-
-double system_get_X2 (const gretl_equation_system *sys)
-{
-    return sys->X2;
-}
-
-double system_get_diag_stat (const gretl_equation_system *sys)
-{
-    return sys->diag;
-}
-
-void system_set_ll (gretl_equation_system *sys, double ll)
-{
-    sys->ll = ll;
-}
-
-void system_set_llu (gretl_equation_system *sys, double llu)
-{
-    sys->llu = llu;
-}
-
-void system_set_X2 (gretl_equation_system *sys, double X2)
-{
-    sys->X2 = X2;
-}
-
-void system_set_ess (gretl_equation_system *sys, double ess)
-{
-    sys->ess = ess;
-}
-
-void system_set_diag_stat (gretl_equation_system *sys, double s)
-{
-    sys->diag = s;
 }
 
 /* for case of applying df correction to cross-equation 
@@ -2148,3 +2054,4 @@ int gretl_system_serialize (gretl_equation_system *sys, SavedObjectFlags flags,
 
     return err;
 }
+

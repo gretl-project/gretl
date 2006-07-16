@@ -715,6 +715,7 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, pos = 0;
     int ccount = 0;
+    int ninst = 0;
     char vname[16];
     int tex = tex_format(prn);
     int utf = plain_format(prn);
@@ -759,8 +760,13 @@ print_tsls_instruments (const int *list, const DATAINFO *pdinfo, PRN *prn)
 		    }
 		    ccount = 0;
 		}
+		ninst++;
 	    }
 	}
+    }
+
+    if (ninst == 0) {
+	pputs(prn, _("none"));
     }
 
     if (ccount > 0) {

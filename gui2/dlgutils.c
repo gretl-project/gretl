@@ -458,13 +458,13 @@ static void dialog_table_setup (dialog_t *dlg, int hsize)
 
 #ifdef OLD_GTK
 
-static GtkWidget *text_edit_new (int *hsize)
+static GtkWidget *dlg_text_edit_new (int *hsize, gboolean s)
 {
     GtkWidget *tbuf;
 
     tbuf = gtk_text_new(NULL, NULL);
 
-    gtk_text_set_editable(GTK_TEXT(tbuf), TRUE);
+    gtk_text_set_editable(GTK_TEXT(tbuf), s);
     gtk_text_set_word_wrap(GTK_TEXT(tbuf), FALSE);
     *hsize *= gdk_char_width(fixed_font, 'W');
     *hsize += 48;
@@ -474,7 +474,7 @@ static GtkWidget *text_edit_new (int *hsize)
 
 #else
 
-static GtkWidget *text_edit_new (int *hsize)
+static GtkWidget *dlg_text_edit_new (int *hsize, gboolean s)
 {
     GtkTextBuffer *tbuf;
     GtkWidget *tview;
@@ -489,13 +489,34 @@ static GtkWidget *text_edit_new (int *hsize)
     gtk_widget_modify_font(GTK_WIDGET(tview), fixed_font);
     *hsize *= get_char_width(tview);
     *hsize += 48;
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(tview), TRUE);
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(tview), s);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tview), TRUE);
 
     return tview;
 }
 
 #endif
+
+static void dlg_text_set_from_sys (gretl_equation_system *sys,
+				   dialog_t *d)
+{
+    const char *buf;
+    PRN *prn;
+
+    if (bufopen(&prn)) {
+	return;
+    }
+
+    print_equation_system_info(sys, datainfo, prn);
+    buf = gretl_print_get_buffer(prn);
+#ifdef OLD_GTK
+    gtk_text_insert(GTK_TEXT(d->edit), fixed_font, 
+		    NULL, NULL, buf, strlen(buf));
+#else
+    textview_set_text(d->edit, buf);
+#endif
+    gretl_print_destroy(prn);
+}
 
 enum {
     ADD_EQN,
@@ -763,12 +784,18 @@ static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
     gtk_widget_show(hbox);
 }
 
-static void system_estimator_list (GtkWidget *vbox, gpointer data)
+static void system_estimator_list (GtkWidget *vbox, dialog_t *d)
 {
+    gretl_equation_system *sys = NULL;
     GList *items = NULL;
     GtkWidget *w, *hbox;
     gchar **strs;
+    int method = -1;
     int i;
+
+    if (d->data != NULL) {
+	sys = (gretl_equation_system *) d->data;
+    }
 
     strs = strings_array_new(SYS_MAX);
 
@@ -776,6 +803,9 @@ static void system_estimator_list (GtkWidget *vbox, gpointer data)
 	strs[i] = g_strdup_printf("%s (%s)", _(system_method_full_string(i)),
 				  system_method_short_string(i));
 	items = g_list_append(items, strs[i]);
+	if (sys != NULL && sys->method == i) {
+	    method = i;
+	}
     }
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -791,9 +821,31 @@ static void system_estimator_list (GtkWidget *vbox, gpointer data)
     gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(w)->entry), FALSE);
     g_signal_connect(G_OBJECT(w), "destroy", G_CALLBACK(free_sys_strings), strs);
     g_signal_connect(G_OBJECT(GTK_COMBO(w)->entry), "changed",
-		     G_CALLBACK(set_sys_method), data);
+		     G_CALLBACK(set_sys_method), d);
+
+    if (method >= 0) {
+	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), strs[method]);
+    }
+
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);
     gtk_widget_show(w);  
+}
+
+static void dlg_display_sys (dialog_t *d)
+{
+    gretl_equation_system *sys = d->data;
+    GtkWidget *w;
+    int hsize = 62;
+
+    w = gtk_label_new(sys->name);
+    gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
+		       w, TRUE, TRUE, 10);
+    gtk_widget_show(w);
+
+    d->edit = dlg_text_edit_new(&hsize, FALSE);
+    dialog_table_setup(d, hsize);
+    dlg_text_set_from_sys(sys, d); 
 }
 
 static void raise_and_focus_dialog (GtkEditable *editable, gpointer p)
@@ -833,7 +885,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 		  int *canceled)
 {
     dialog_t *d;
-    GtkWidget *tempwid;
+    GtkWidget *w;
     GtkWidget *top_vbox, *button_box;
     int hlpcode, modal = 0;
 
@@ -853,20 +905,23 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     top_vbox = GTK_DIALOG(d->dialog)->vbox;
     button_box = GTK_DIALOG(d->dialog)->action_area;
 
-    if (cmdcode == NLS || cmdcode == MLE || 
+    if (cmdcode == SYSTEM && d->data != NULL) {
+	/* revisiting saved equation system */
+	dlg_display_sys(d);
+    } else if (cmdcode == NLS || cmdcode == MLE || 
 	cmdcode == SYSTEM || cmdcode == RESTRICT) {
 	int hsize = 62;
 	gchar *lbl;
 
 	lbl = g_strdup_printf("%s\n%s", infotxt,
 			      _("(Please refer to Help for guidance)"));
-	tempwid = gtk_label_new(lbl);
-	gtk_label_set_justify(GTK_LABEL(tempwid), GTK_JUSTIFY_CENTER);
-	gtk_box_pack_start(GTK_BOX(top_vbox), tempwid, TRUE, TRUE, 10);
-	gtk_widget_show(tempwid);
+	w = gtk_label_new(lbl);
+	gtk_label_set_justify(GTK_LABEL(w), GTK_JUSTIFY_CENTER);
+	gtk_box_pack_start(GTK_BOX(top_vbox), w, TRUE, TRUE, 10);
+	gtk_widget_show(w);
 	g_free(lbl);
 
-	d->edit = text_edit_new(&hsize);
+	d->edit = dlg_text_edit_new(&hsize, TRUE);
 	dialog_table_setup(d, hsize);
 
 	if (cmdcode != RESTRICT) {
@@ -874,9 +929,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			     G_CALLBACK(edit_dialog_popup_handler), d);
 	}
     } else {
-	tempwid = gtk_label_new(infotxt);
-	gtk_box_pack_start (GTK_BOX(top_vbox), tempwid, TRUE, TRUE, 5);
-	gtk_widget_show (tempwid);
+	w = gtk_label_new(infotxt);
+	gtk_box_pack_start (GTK_BOX(top_vbox), w, TRUE, TRUE, 5);
+	gtk_widget_show (w);
 
 	d->edit = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(top_vbox), d->edit, TRUE, TRUE, 5);
@@ -922,13 +977,13 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     gtk_widget_grab_focus(d->edit);
 
     /* Create the "OK" button */
-    tempwid = ok_button(button_box);
+    w = ok_button(button_box);
     if (okfunc) {
-	g_signal_connect(G_OBJECT(tempwid), "clicked", 
+	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(okfunc), d);
     }
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    gtk_widget_grab_default(w);
+    gtk_widget_show(w);
 
     /* Create a "Cancel" button */
     if (cmdcode != CREATE_USERDIR) {

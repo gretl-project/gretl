@@ -2322,7 +2322,7 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 	if (my_sys == NULL) {
 	    startline = g_strdup_printf("system method=%s", 
 					system_method_short_string(method));
-	    my_sys = system_start(startline, OPT_NONE); /* FIXME */
+	    my_sys = system_start(startline, OPT_NONE); /* FIXME opt? */
 	    if (my_sys == NULL) {
 		fprintf(stderr, "do_eqn_system: sys is NULL\n");
  		err = 1;
@@ -2381,6 +2381,36 @@ void do_eqn_system (GtkWidget *widget, dialog_t *dlg)
 
     view_buffer(prn, 78, 450, _("gretl: simultaneous equations system"), 
 		SYSTEM, my_sys);
+}
+
+void do_saved_eqn_system (GtkWidget *widget, dialog_t *dlg)
+{
+    gretl_equation_system *sys;
+    PRN *prn;
+    int err = 0;
+
+    sys = (gretl_equation_system *) edit_dialog_get_data(dlg);
+    if (sys == NULL) {
+	return;
+    }
+
+    sys->method = edit_dialog_get_opt(dlg);
+
+    close_dialog(dlg);
+
+    if (bufopen(&prn)) {
+	return; 
+    }
+
+    err = gretl_equation_system_estimate(sys, &Z, datainfo,
+					 OPT_NONE, prn);
+    if (err) {
+	errmsg(err, prn);
+    } 
+
+    /* ref count? */
+
+    view_buffer(prn, 78, 450, sys->name, SYSTEM, sys);
 }
 
 static int do_nls_genr (void)

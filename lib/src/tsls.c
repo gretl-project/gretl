@@ -938,9 +938,8 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     OverIdRank = instlist[0] - reglist[0] + 1;
     if (OverIdRank < 0) {
         sprintf(gretl_errmsg, 
-		_("Order condition for identification is not satisfied.\n"
-		"varlist 2 needs at least %d more variable(s) not in "
-		"varlist1."), -OverIdRank);
+		_("The order condition for identification is not satisfied.\n"
+		  "At least %d more instruments are needed."), -OverIdRank);
 	tsls.errcode = E_UNSPEC; 
 	goto bailout;
     }
