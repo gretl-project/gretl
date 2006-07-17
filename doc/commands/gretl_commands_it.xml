@@ -2108,15 +2108,17 @@
           </para>
         </li>
         <li>
-          <para>Funzioni statistiche speciali: <func>pvalue</func> e
-          <func>critical</func> (si veda oltre), <func>cnorm</func> (funzione di
-          ripartizione normale standard), <func>dnorm</func> (funzione di
-          densità normale standard), <func>qnorm</func> (quantili della
-          normale standard, o inversa della funzione di densità normale standard),
-          <func>resample</func> (ricampiona una serie
-          con rimpiazzo, utile per il bootstrap), <func>hpfilt</func>
-          (componente di <quote>ciclo</quote> della serie), <func>bkfilt</func>
-          (filtro passa-banda di Baxter&ndash;King).</para>
+          <para>Funzioni statistiche speciali: <func>pvalue</func>,
+            <func>cdf</func> e <func>critical</func> (si veda oltre),
+            <func>cnorm</func> (funzione di ripartizione normale standard),
+            <func>dnorm</func> (funzione di densità normale standard),
+            <func>qnorm</func> (quantili della normale standard, o inversa della
+            funzione di densità normale standard), <func>resample</func>
+            (ricampiona una serie con rimpiazzo, utile per il bootstrap),
+            <func>hpfilt</func> (componente di <quote>ciclo</quote> della
+            serie), <func>bkfilt</func> (filtro passa-banda di
+            Baxter&ndash;King).
+          </para>
 	</li>
 	<li><para>Funzioni per serie storiche: <func>diff</func>
             (differenza prima), <func>ldiff</func> (log-differenza,
@@ -2163,7 +2165,7 @@
 
       <para>
         Tutte le funzioni viste sopra, con l'eccezione di <func>cov</func>,
-        <func>corr</func>, <func>pvalue</func>, <func>critical</func>,
+        <func>corr</func>, <func>pvalue</func>, <func>cdf</func>, <func>critical</func>,
         <func>fracdiff</func>, <func>uniform</func> e <func>normal</func> hanno
         come unico argomento il nome di una variabile o un'espressione che si
         risolve in una variabile (ad es. <lit>ln((x1+x2)/2)</lit>).
@@ -2172,9 +2174,13 @@
 	La funzione <func>pvalue</func> richiede gli stessi argomenti del
 	comando <cmdref targ="pvalue"/>, ma in questo caso occorre separare
 	gli argomenti con delle virgole. Questa funzione produce un p-value
-        a una coda, che nel caso delle distribuzioni normale e
-        <emphasis>t</emphasis> è la <quote>coda corta</quote>. Con la normale,
-        ad esempio, sia 1.96 sia -1.96 daranno un risultato di circa 0.025.
+        destro a una coda, ossia l'integrale della funzione di densità dal
+        valore specificato a più infinito. Anche la funzione
+        <func>cdf</func> accetta gli stessi argomenti del comando
+        <cmdref targ="pvalue"/>, ma produce il valore complementare, ossia
+        l'integrale della funzione di densità dal suo limite inferiore (meno
+        infinito o zero) al valore specificato. Per ulteriori precisazioni su
+        queste due funzioni, si veda la <guideref targ="chap-genr"/>.
       </para>
 
       <para>
