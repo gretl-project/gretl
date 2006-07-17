@@ -295,6 +295,71 @@ metodi bootstrap, si veda Davidson e MacKinnon (2004, capitolo 4).
 \end{script}
    
 
+\section{Densità cumulate e p-value}
+\label{genr-cdf}
+
+Le due funzioni \cmd{cdf} e \cmd{pvalue} forniscono strumenti complementari per
+esaminare i valori di varie distribuzioni di probabilità: la normale standard,
+la $t$ di Student, la $\chi^2$, la $F$, la gamma, e la binomiale.
+La sintassi di queste funzioni è spiegata nella \GCR; in questa sede viene
+presentato un aspetto particolare riguardante la precisione dei risultati.
+
+La funzione di ripartizione, o di densità cumulata (CDF), per una variabile
+casuale è l'integrale della densità della variabile, dal suo limite inferiore
+(tipicamente $-\infty$ o 0) fino a un certo valore $x$. Il p-value (almeno il
+p-value destro, a una coda, fornito dalla funzione \cmd{pvalue}) è la
+probabilità complementare, l'integrale da $x$ al limite superiore della
+distribuzione, tipicamente $+\infty$.  
+
+In linea di principio non c'è bisogno di due funzioni distinte: dato un valore
+della funzione di ripartizione $p_0$ è possibile ricavare facilmente il p-value
+come $1-p_0$ (o viceversa).  In pratica, poiché il computer usa aritmetica a
+precisione finita, due funzioni non sono ridondanti. In \app{gretl}, come nella
+maggior parte dei programmi statistici, i numeri a virgola mobile sono
+rappresentati tramite dei ``double'' --- valori a precisione doppia, che sono
+tipicamente memorizzati in 8 byte, o 64 bit. Visto che il numero di bit
+disponibili è fisso, i numeri in virgola mobile che possono essere rappresentati
+sono limitati: \textit{i ``double'' non modellano esattamente la retta reale}.
+Tipicamente, i ``double'' possono rappresentare numeri che stanno all'incirca
+nell'intervallo $\pm 1.7977 \times 10^{308}$, ma con circa solo 15 cifre di
+precisione.
+
+Supponiamo di essere interessati alla coda sinistra della distribuzione $\chi^2$
+con 50 gradi di libertà, ossia di voler conoscere il valore della CDF per $x =
+0.9$.  Vediamo la seguente sessione interattiva:
+\begin{code}
+  ? genr p1 = cdf(X, 50, 0.9)
+  Generato lo scalare p1 (ID 2) = 8.94977e-35
+  ? genr p2 = pvalue(X, 50, 0.9)
+  Generato lo scalare p2 (ID 3) = 1
+  ? genr test = 1 - p2
+  Generato lo scalare test (ID 4) = 0
+\end{code}
+
+La funzione \cmd{cdf} ha prodotto un valore accurato, ma la funzione
+\cmd{pvalue} ha dato come risultato 1, da cui non è possibile ricavare il valore
+della CDF. Questo può sembrare sorprendente, ma si spiega considerando che se il
+valore di \texttt{p1} è corretto, il valore corretto di \texttt{p2} è $1 -
+8.94977 \times 10^{-35}$, ma non c'è modo di rappresentare questo valore con un
+``double'': richiederebbe oltre 30 cifre di precisione.
+
+Ovviamente questo è un esempio estremo. Se il valore di $x$ in questione non si
+trova alle estremità di una delle due code della distribuzione, le funzioni
+\cmd{cdf} e \cmd{pvalue} produrranno risultati complementari, come si vede da
+questo esempio:
+\begin{code}
+  ? genr p1 = cdf(X, 50, 30)
+  Generato lo scalare p1 (ID 2) = 0.0111648
+  ? genr p2 = pvalue(X, 50, 30)
+  Generato lo scalare p2 (ID 3) = 0.988835
+  ? genr test = 1 - p2
+  Generato lo scalare test (ID 4) = 0.0111648
+\end{code}
+La morale è che se occorre esaminare valori estremi, occorre scegliere
+attentamente la funzione da usare, tenendo presente che valori molto vicini allo
+zero possono essere rappresentati con ``double'', mentre valori molto vicini a 1
+possono non esserlo.
+
 \section{Gestione dei valori mancanti}
 \label{genr-missing}
 
