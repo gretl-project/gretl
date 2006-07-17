@@ -36,11 +36,9 @@ build_docs="no"
 have_readline="no"
 new_readline="no"
 have_zlib="no"
-have_libole2="NA"
 have_gtk="no"
 have_gtksourceview="no"
 have_gnome="no"
-have_gtkextra="NA"
 have_gmp="no"
 have_mpfr="no"
 have_lapack="no"
@@ -120,24 +118,6 @@ else
 fi,
 try_readline=yes)
 
-AC_ARG_WITH(gtk2,
-[  --with-gtk2          Build with gtk 2.0 support [[default=auto]]],
-if test "x${withval}" = "xno"
-then
-  try_gtk2=no
-else
-  try_gtk2=yes
-fi,
-try_gtk2=yes)
-
-AC_ARG_WITH(libxml1,
-[  --with-libxml1       Prefer libxml1 to libxml2 [[default=auto]]],
-if test "x${withval}" = "xyes"
-then
-  prefer_xml1=yes
-fi,
-prefer_xml1=no)
-
 AC_ARG_WITH(gnome,
 [  --with-gnome         Build with gnome support [[default=auto]]],
 if test "x${withval}" = "xno"
@@ -156,19 +136,8 @@ then
   gnome_prefix=${withval}
 fi,)
 
-AC_ARG_WITH(libole2,
-[  --with-libole2        Use installed libole2 (gtk 1.2 only) [[default=auto]]],
-if test "x${withval}" = "xno"
-then
-  try_ole=no
-  have_libole2=no
-else
-  try_ole=yes
-fi,
-try_ole=yes)
-
 AC_ARG_WITH(gtksourceview,
-[  --with-gtksourceview  Use installed gtksourceview (gtk 2.0 only) [[default=auto]]],
+[  --with-gtksourceview  Use installed gtksourceview [[default=auto]]],
 if test "x${withval}" = "xno" || test "$try_gnome" = "no"
 then
   try_installed_sourceview=no
@@ -176,17 +145,6 @@ else
   try_installed_sourceview=yes
 fi,
 try_installed_sourceview=yes)
-
-AC_ARG_WITH(gtkextra,
-[  --with-gtkextra       Use installed gtkextra (gtk 1.2 only) [[default=auto]]],
-if test "x${withval}" = "xno"
-then
-  try_gtkextra=no
-  have_gtkextra=no
-else
-  try_gtkextra=yes
-fi,
-try_gtkextra=yes)
 
 AC_ARG_WITH(gmp,
 [  --with-gmp            Use Gnu Multiple Precision library [[default=auto]]],
@@ -421,22 +379,22 @@ fi
 dnl
 dnl Preliminary check for pkg-config
 dnl
-if test "$try_gtk2" = "yes" ; then
+if test "$build_gui" = "yes" ; then
    if test -z "$PKG_CONFIG"; then
       AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
    fi
    if test "$PKG_CONFIG" = "no" ; then
-      echo "*** pkg-config not found, can't build with gtk 2.0" 
-      try_gtk2="no"
+      echo "*** pkg-config not found, can't build graphical interface" 
+      build_gui="no"
    fi
 fi
 
 dnl
-dnl Check for GTK 2.0, if appropriate
+dnl Check for GTK 2.0
 dnl
 orig_CFLAGS=$CFLAGS
-if test "$build_gui" = "yes" && test "$try_gtk2" = "yes" ; then
-    PKG_CHECK_MODULES(GTK, gtk+-2.0,
+if test "$build_gui" = "yes" ; then
+    PKG_CHECK_MODULES(GTK, gtk+-2.0 >= 2.4.0,
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="2.0"
@@ -466,8 +424,6 @@ if test "$have_gtk" = "2.0" && test "$highlight" = "yes" && \
      PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0,
      have_libxml2="yes",
      have_libxml2="no")
-     PKG_CHECK_MODULES(GTK2, gtk+-2.0 >= 2.2.0,,
-     highlight="no")
 fi
 
 dnl Now try using supplied gtksourceview if preconditions are met
@@ -479,21 +435,6 @@ if test "$highlight" = "yes" && \
      AC_CHECK_FUNCS([re_compile_pattern re_compile_fastmap re_search re_match],
      have_gnu_regex="yes",
      have_gnu_regex="no")
-fi
-
-dnl Or fall back on GTK 1.2
-if test "$build_gui" = "yes" && test "$have_gtk" = "no" ; then
-   AM_PATH_GTK(1.2.3,have_gtk="1.2",have_gtk="no")
-   if test "$have_gtk" = "no" ; then
-      exit
-   fi
-   CFLAGS="$CFLAGS $GTK_CFLAGS"
-   LIBS="$LIBS $GTK_LIBS"
-   GLIB_CFLAGS=`glib-config --cflags`
-   GLIB_LIBS=`glib-config --libs`
-   if test $try_gtkextra = yes ; then
-      AM_PATH_GTK_EXTRA(0.99.15,have_gtkextra="yes",have_gtkextra="no")
-   fi
 fi
 
 dnl record the results of the above tests
@@ -513,16 +454,6 @@ AC_SUBST(GTKSOURCEVIEW_CFLAGS)
 AC_SUBST(GTKSOURCEVIEW_LIBS)
 
 dnl
-dnl Should we try to use an installed version of libole2?
-dnl
-if test $try_ole = "yes" && test $have_gtk = "1.2" ; then
-    AM_PATH_LIBOLE2(0.2.4,
-        have_libole2="yes",
-        have_libole2="no"
-    )
-fi
-
-dnl
 dnl Check for libpng (first with pkg-config, then fallback)
 dnl
 if test $build_gui = "no" ; then
@@ -530,13 +461,13 @@ if test $build_gui = "no" ; then
 fi
 
 if test $png_comments = "yes" ; then
-    PKG_CHECK_MODULES(PNG, libpng,
+    PKG_CHECK_MODULES(PNG, libpng12,
         png_failed="no",
 	png_failed="yes"
    )
 fi
 if test $png_comments = "yes" && test $png_failed = "yes" ; then
-    PKG_CHECK_MODULES(PNG, libpng12,
+    PKG_CHECK_MODULES(PNG, libpng,
         png_failed="no",
 	png_failed="yes"
    )
@@ -569,13 +500,6 @@ if test ${have_gtk} = "2.0" ; then
 	pixbuf_failed="yes"
    )
 fi
-if test ${have_gtk} = "1.2" ; then
-    AM_PATH_GDK_PIXBUF(,
-        pixbuf_failed="no",
-        pixbuf_failed="yes"
-    )
-fi
-
 if test ${pixbuf_failed} = "yes" ; then
     echo "* gretl wants but did not find the gdk-pixbuf library for PNG graphs."
     exit
@@ -585,48 +509,23 @@ dnl
 dnl Check for gnome, if we haven't been told not to
 dnl
 if test "$build_gui" = "yes" && test "$try_gnome" = "yes" ; then
-dnl If we have gtk 2.0, test for gnome 2.0
-    if test "$have_gtk" = "2.0" ; then
-        PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.2 libgnomeprintui-2.2 gconf-2.0,
-           AC_DEFINE(USE_GNOME)
-           have_gnome="2.0"
-           if test "${gnome_prefix}" = "NA" ; then
-               gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
-           fi,
-           have_gnome="no"
-        )
-        if test "$have_gnome" = "2.0" ; then
-            PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
-	    AC_PATH_PROG(GCONFTOOL, gconftool-2, no)
-	    if test x"$GCONFTOOL" = xno; then
-              AC_MSG_ERROR([gconftool-2 executable not found in your path])
-            else
-	      AM_GCONF_SOURCE_2
-            fi
-        fi 
-    else
-dnl Still trying for gnome, but we don't have gtk 2.0 so test for gnome 1.4  
-       AC_DEFUN([AC_PROG_GNOME],
-       [AC_CHECK_PROG(GNOME,gnome-config,yes)])
-
-       AC_PROG_GNOME
-       GNOME_CFLAGS=''
-       GNOME_LIBS=''
-       if test x"${GNOME}" = xyes ; then
-           AM_PATH_GNOME_PRINT(0.1.0,
-             AC_DEFINE(USE_GNOME)
-             have_gnome="1.4"
-             if test "${gnome_prefix}" = "NA" ; then
-                gnome_prefix="`gnome-config --prefix`"
-             fi
-             GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
-             GNOME_LIBS=`gnome-config --libs gnomeui print`
-             XML_CFLAGS=`gnome-config --cflags xml`
-             XML_LIBS=`gnome-config --libs xml`,
-             echo "* gretl will be built without gnome support"
-           )
-       fi
-    fi
+   PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.2 libgnomeprintui-2.2 gconf-2.0,
+     AC_DEFINE(USE_GNOME)
+     have_gnome="2.0"
+     if test "${gnome_prefix}" = "NA" ; then
+         gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
+     fi,
+     have_gnome="no"
+   )
+   if test "$have_gnome" = "2.0" ; then
+      PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
+	 AC_PATH_PROG(GCONFTOOL, gconftool-2, no)
+	 if test x"$GCONFTOOL" = xno; then
+            AC_MSG_ERROR([gconftool-2 executable not found in your path])
+         else
+	    AM_GCONF_SOURCE_2
+         fi
+    fi 
     AC_SUBST(have_gnome)
     AC_SUBST(gnome_prefix)
     AC_SUBST(GNOME_CFLAGS)
@@ -640,11 +539,7 @@ if test x"${XML_LIBS}" = x ; then
     PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.5.0)
   else 
     XMLCONF=''
-    if test "$prefer_xml1" = "yes" ; then
-      AC_CHECK_PROGS(XMLCONF,xml-config xml2-config,)
-    else
-      AC_CHECK_PROGS(XMLCONF,xml2-config xml-config,)
-    fi
+    AC_CHECK_PROGS(XMLCONF,xml2-config xml-config,)
     if test x"${XMLCONF}" != x ; then
       XML_CFLAGS=`$XMLCONF --cflags`
       XML_LIBS=`$XMLCONF --libs`
@@ -667,8 +562,6 @@ AC_SUBST(XSLT_CFLAGS)
 AC_SUBST(XSLT_LIBS)
 AC_SUBST(GDK_PIXBUF_CFLAGS)
 AC_SUBST(GDK_PIXBUF_LIBS) 
-AC_SUBST(LIBOLE_CFLAGS)
-AC_SUBST(LIBOLE_LIBS)
 
 dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then
@@ -683,9 +576,6 @@ Makefile
 gretl_sh
 gretl-config
 gretl.pc 
-gui/Makefile
-gui/debug
-gui/gtkextra-lite/Makefile
 gui2/Makefile
 gui2/debug
 gui2/gtkextra-lite/Makefile
@@ -713,13 +603,6 @@ if test "${build_docs}" = "yes" ; then
     doc/tex_it/Makefile
     doc/tex_es/Makefile
   ])
-fi
-
-dnl Make links for gtk-1.2 build
-if test "${have_gtk}" = "1.2" ; then
-  echo -n "creating links for gtk-1.2 build... "
-  $srcdir/tools/mkguilinks $srcdir
-  echo "done"
 fi
 
 if test "${have_zlib}" = "no" ; then
@@ -755,8 +638,6 @@ Configuration:
   Build with GTK version:                 ${have_gtk}
   Script syntax highlighting:             ${use_gtksourceview}
   Use installed gtksourceview:            ${have_gtksourceview}
-  Use installed libole2:                  ${have_libole2}
-  Use installed gtkextra:                 ${have_gtkextra}
   Build with gnome support:               ${have_gnome}
   Build gretl documentation:              ${build_docs}
   Gnome installation prefix:              ${gnome_prefix}
