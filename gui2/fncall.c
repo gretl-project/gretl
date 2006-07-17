@@ -140,13 +140,7 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt, int center)
 
 static gboolean update_int_arg (GtkWidget *w, call_info *cinfo)
 {
-#ifdef OLD_GTK
-    GtkAdjustment *adj = 
-	gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(w));
-    int val = (int) adj->value;
-#else
     int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
-#endif
     int i = 
 	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "argnum"));
 
@@ -377,13 +371,9 @@ static GtkWidget *spin_arg_selector (call_info *cinfo, int i)
     spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     g_object_set_data(G_OBJECT(spin), "argnum", GINT_TO_POINTER(i));
     g_object_set_data(G_OBJECT(spin), "cinfo", cinfo);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(adj), "value-changed", 
-		       GTK_SIGNAL_FUNC(update_int_arg), cinfo);
-#else
     g_signal_connect(G_OBJECT(spin), "value-changed", 
 		     G_CALLBACK(update_int_arg), cinfo);
-#endif
+
     cinfo->args[i] = g_strdup_printf("%d", (na(deflt))? minv : 
 				     (int) deflt);
 

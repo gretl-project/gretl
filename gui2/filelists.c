@@ -78,7 +78,7 @@ static const char *file_sections[] = {
     "recent_script_files"
 };
 
-#if defined(USE_GNOME) && !defined(OLD_GTK)
+#if defined(USE_GNOME)
 
 static void printfilelist (int filetype, GConfClient *client)
 {
@@ -341,13 +341,8 @@ static void clear_files_list (int filetype, char **filep)
     int i;
 
     for (i=0; i<MAXRECENT; i++) {
-#ifndef OLD_GTK
 	sprintf(itempath, "%s/%d. %s", fpath[filetype],
 		i+1, endbit(tmpname, filep[i], 0)); 
-#else
-	sprintf(itempath, "%s/%d. %s", fpath[filetype],
-		i+1, endbit(tmpname, filep[i], -1)); 
-#endif
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
 	if (w != NULL) {
 	    gtk_item_factory_delete_item(mdata->ifac, itempath);
@@ -389,19 +384,13 @@ void mkfilelist (int filetype, char *fname_in)
     char **filep;
     char *fname;
     int i, match = -1;
-#ifndef OLD_GTK
     char trfname[MAXLEN];
-#endif
 
     cut_multiple_slashes(fname_in);
 
-#ifndef OLD_GTK
     strcpy(trfname, fname_in);
     my_filename_to_utf8(trfname);
     fname = trfname;
-#else
-    fname = fname_in;
-#endif
 
     filep = get_file_list(filetype);
     if (filep == NULL) {
@@ -526,7 +515,7 @@ static void copy_sys_filename (char *targ, const char *src)
 {
     strcpy(targ, src);
     /* check this: very confusing! */
-#if !defined(OLD_GTK) && !defined(G_OS_WIN32)
+#if !defined(G_OS_WIN32)
     my_filename_from_utf8(targ);
 #endif
 }    

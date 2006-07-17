@@ -33,11 +33,8 @@
 #include <sys/types.h>
 #include <dirent.h>
 
-#if defined(USE_GNOME) && !defined(OLD_GTK)
-# define GNOME2
-#endif
-
-#ifdef GNOME2
+#ifdef USE_GNOME
+# define USE_GCONF
 # include <gconf/gconf-client.h>
 #endif
 
@@ -48,9 +45,7 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # include <errno.h>
-# ifndef OLD_GTK
-#  include "gtkfontselhack.h"
-# endif
+# include "gtkfontselhack.h"
 #endif
 
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
@@ -78,21 +73,16 @@ static void read_rc (void);
 #ifdef G_OS_WIN32
 static char fixedfontname[MAXLEN] = "Courier New 10";
 #else
-# ifndef OLD_GTK
-#  ifdef OSX_BUILD
+# ifdef OSX_BUILD
 static char fixedfontname[MAXLEN] = "Luxi Mono 12";
-#  else
-static char fixedfontname[MAXLEN] = "Monospace 10";
-#  endif
 # else
-static char fixedfontname[MAXLEN] = 
-"-b&h-lucidatypewriter-medium-r-normal-sans-12-*-*-*-*-*-*-*";
+static char fixedfontname[MAXLEN] = "Monospace 10";
 # endif
 #endif
 
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "tahoma 8";
-#elif !defined(USE_GNOME) && !defined(OLD_GTK)
+#elif !defined(USE_GNOME)
 # ifdef OSX_BUILD
 static char appfontname[MAXLEN] = "Luxi Sans 12";
 # else
@@ -100,11 +90,7 @@ static char appfontname[MAXLEN] = "Sans 10";
 # endif
 #endif
 
-#ifndef OLD_GTK
 PangoFontDescription *fixed_font;
-#else
-GdkFont *fixed_font;
-#endif
 
 static int usecwd;
 static int olddat;
@@ -255,7 +241,7 @@ RCVAR rc_vars[] = {
       BOOLSET, 0, 1, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
       USERSET, MAXLEN, 0, NULL },
-#if !defined(USE_GNOME) && !defined(OLD_GTK)
+#if !defined(USE_GNOME)
     { "App_font", N_("Menu font"), NULL, appfontname, 
       USERSET, MAXLEN, 0, NULL },
 #endif
@@ -335,14 +321,11 @@ void force_english_help (void)
 
 void set_fixed_font (void)
 {
-#ifndef OLD_GTK
-    if (fixed_font != NULL) 
+    if (fixed_font != NULL) {
 	pango_font_description_free(fixed_font);
+    }
 
     fixed_font = pango_font_description_from_string(fixedfontname);
-#else
-    fixed_font = gdk_font_load(fixedfontname);
-#endif
 }
 
 #ifndef G_OS_WIN32
@@ -367,7 +350,7 @@ static void record_shell_opt (void)
 
 #endif
 
-#if !defined(USE_GNOME) && !defined(OLD_GTK)
+#ifndef USE_GNOME
 
 const char *get_app_fontname (void)
 {
@@ -757,8 +740,6 @@ void set_rcfile (void)
     strcpy(rcfile, tmp);
 # if defined(OSX_PKG)
     strcat(rcfile, "/.gretlosxrc");
-# elif defined(OLD_GTK)
-    strcat(rcfile, "/.gretlrc");        
 # else
     strcat(rcfile, "/.gretl2rc");
 # endif
@@ -1165,10 +1146,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    list = get_settings_list(rc->var);
 	    gtk_combo_set_popdown_strings(GTK_COMBO(rc->widget), list);
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), strvar);
-#ifndef OLD_GTK
 	    gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rc->widget)->entry), 
 				      rc->len - 1);
-#endif
 	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rc->widget)->entry), 
 				      FALSE);
 	    gtk_widget_show(rc->widget);
@@ -1371,7 +1350,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     proxy_init(dbproxy);
 }
 
-#ifndef GNOME2
+#ifndef USE_GCONF
 
 static void str_to_boolvar (char *s, void *b)
 {
@@ -1430,11 +1409,10 @@ static void common_read_rc_setup (void)
 }
 
 /* next section: variant versions of write_rc and read_rc, depending
-   on both GTK version and platform
+   on both gconf presence and platform
 */
 
-/* first the gnome 2 versions */
-#ifdef GNOME2 
+#ifdef USE_GCONF 
 
 void write_rc (void) 
 {
@@ -1521,67 +1499,7 @@ static void read_rc (void)
     common_read_rc_setup();
 }
 
-/* then the gnome 1 versions */
-#elif defined(USE_GNOME)  
-
-void write_rc (void) 
-{
-    char key[MAXSTR];
-    char cval[8];
-    char *strvar;
-    int i;
-
-    for (i=0; rc_vars[i].key != NULL; i++) {
-	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
-	if (rc_vars[i].flags & BOOLSET) {
-	    boolvar_to_str(rc_vars[i].var, cval);
-	    gnome_config_set_string(key, cval);
-	} else if (rc_vars[i].flags & INTSET) {
-	    sprintf(cval, "%d", *(int *) rc_vars[i].var);
-	    gnome_config_set_string(key, cval);
-	} else {
-	    strvar = (char *) rc_vars[i].var;
-	    gnome_config_set_string(key, strvar);
-	}
-    }
-
-    save_file_lists();
-    gnome_config_sync();
-    set_paths(&paths, set_paths_opt);
-    record_shell_opt();
-}
-
-static void read_rc (void) 
-{
-    gchar *value = NULL;
-    char key[MAXSTR];
-    char *strvar;
-    int i;
-
-    for (i=0; rc_vars[i].key != NULL; i++) {
-	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, 
-		rc_vars[i].key);
-	value = gnome_config_get_string(key);
-	if (value != NULL && *value != '\0') {
-	    if (rc_vars[i].flags & BOOLSET) {
-		str_to_boolvar(value, rc_vars[i].var);
-	    } else if (rc_vars[i].flags & INTSET) {
-		str_to_int(value, rc_vars[i].var);
-	    } else {
-		strvar = (char *) rc_vars[i].var;
-		*strvar = '\0';
-		strncat(strvar, value, rc_vars[i].len - 1);
-	    }
-	    g_free(value);
-	}
-    }
-
-    read_file_lists();
-
-    common_read_rc_setup();
-}
-
-/* end of gnome versions, now win32 */
+/* end of gconf version, now win32 */
 
 #elif defined(G_OS_WIN32)
 
@@ -1740,7 +1658,7 @@ void read_rc (void)
     set_app_font(NULL);
 }
 
-#else /* end of gnome and win32 versions, now plain GTK */
+#else /* end of gconf and win32 versions, now plain GTK */
 
 void write_rc (void) 
 {
@@ -1830,7 +1748,6 @@ static void read_rc (void)
 /* font selection: non-Windows, gtk-2.0 version first */
 
 #ifndef G_OS_WIN32
-# ifndef OLD_GTK
 
 static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 {
@@ -1851,20 +1768,20 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 	write_rc();
     } 
 
-#  ifdef PLOT_FONT_SELECTOR
+# ifdef PLOT_FONT_SELECTOR
     else if (which == GRAPH_FONT_SELECTION) {
 	GtkWidget *fentry = g_object_get_data(G_OBJECT(fs), "font_entry");
 
 	gtk_entry_set_text(GTK_ENTRY(fentry), fontname);
     }
-#  endif
+# endif
 
-#  ifndef USE_GNOME /* gnome handles the app font */
+# ifndef USE_GNOME /* gnome handles the app font */
     else if (which == APP_FONT_SELECTION) {
 	set_app_font(fontname);
 	write_rc();
     }
-#  endif
+# endif
 
     g_free(fontname);
     gtk_widget_destroy(GTK_WIDGET(fs));
@@ -1882,9 +1799,9 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
     char *title = NULL;
     const char *fontname = NULL;
 
-#  ifdef USE_GNOME
+# ifdef USE_GNOME
     if (which == APP_FONT_SELECTION) return; /* shouldn't happen */
-#  endif
+# endif
 
     if (fontsel != NULL) {
 	if (!GTK_WIDGET_VISIBLE(fontsel)) gtk_widget_show (fontsel);
@@ -1897,17 +1814,17 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 	filter = GTK_FONT_HACK_LATIN_MONO;
 	fontname = fixedfontname;
     }
-#  ifndef USE_GNOME
+# ifndef USE_GNOME
     else if (which == APP_FONT_SELECTION) {
 	title = _("Font for menus and labels");
 	fontname = appfontname;
     }
-#  endif
-#  ifdef PLOT_FONT_SELECTOR
+# endif
+# ifdef PLOT_FONT_SELECTOR
     else if (which == GRAPH_FONT_SELECTION) {
 	fontname = paths.pngfont;
     }
-#  endif
+# endif
 
     fontsel = gtk_font_selection_hack_dialog_new(title);
     gtk_font_selection_hack_dialog_set_filter
@@ -1916,11 +1833,11 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 	(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fontname); 
     g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
 
-#  ifdef PLOT_FONT_SELECTOR
+# ifdef PLOT_FONT_SELECTOR
     if (which == GRAPH_FONT_SELECTION) {
 	 g_object_set_data(G_OBJECT(fontsel), "font_entry", widget);
     }
-#  endif
+# endif
 
     gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
 
@@ -1943,70 +1860,6 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 
     gtk_main();
 }
-
-# else /* done gtk 2, now gtk 1.2 */
-
-static void font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
-{
-    gchar *fstring = gtk_font_selection_dialog_get_font_name(fs);
-
-    if (fstring != NULL && *fstring != '\0') {
-	fprintf(stderr, "fstring = '%s'\n", fstring);
-        strcpy(fixedfontname, fstring);
-        gdk_font_unref(fixed_font);
-        fixed_font = gdk_font_load(fixedfontname);
-        write_rc();
-    }
-
-    g_free(fstring);
-    gtk_widget_destroy(GTK_WIDGET(fs));
-}
-
-void font_selector (gpointer data, guint u, GtkWidget *w)
-{
-    static GtkWidget *fontsel = NULL;
-    gchar *spacings[] = { "c", "m", NULL };
-
-    if (!fontsel) {
-	fontsel = gtk_font_selection_dialog_new 
-	    (_("Font for gretl output windows"));
-
-	gtk_window_set_position(GTK_WINDOW(fontsel), GTK_WIN_POS_MOUSE);
-
-	gtk_font_selection_dialog_set_filter(GTK_FONT_SELECTION_DIALOG(fontsel),
-					     GTK_FONT_FILTER_BASE, GTK_FONT_ALL,
-					     NULL, NULL, NULL, NULL, 
-					     spacings, NULL);
-
-	gtk_font_selection_dialog_set_font_name 
-	    (GTK_FONT_SELECTION_DIALOG(fontsel), fixedfontname);
-
-	gtk_signal_connect (GTK_OBJECT(fontsel), "destroy",
-			    GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-			    &fontsel);
-
-	gtk_signal_connect (GTK_OBJECT 
-			    (GTK_FONT_SELECTION_DIALOG 
-			     (fontsel)->ok_button),
-			    "clicked", GTK_SIGNAL_FUNC(font_selection_ok),
-			    GTK_FONT_SELECTION_DIALOG (fontsel));
-
-	gtk_signal_connect_object (GTK_OBJECT 
-				   (GTK_FONT_SELECTION_DIALOG 
-				    (fontsel)->cancel_button),
-				   "clicked", 
-				   GTK_SIGNAL_FUNC(gtk_widget_destroy),
-				   GTK_OBJECT(fontsel));
-    }
-
-    if (!GTK_WIDGET_VISIBLE(fontsel)) {
-	gtk_widget_show(fontsel);
-    } else {
-	gtk_widget_destroy(fontsel);
-    }
-}
-
-# endif /* non-Windows, gtk version branches */
 
 #else /* end non-win32 font selection, start win32 */
 
@@ -2106,11 +1959,7 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 
 static double scale_round (double val)
 {
-#ifndef OLD_GTK
     return val * 255.0 / 65535.0;
-#else
-    return val * 255.0;
-#endif
 }
 
 #define XPMROWS 19
@@ -2118,13 +1967,7 @@ static double scale_round (double val)
 
 static GtkWidget *get_image_for_color (const char *colstr)
 {
-#ifndef OLD_GTK
     GdkPixbuf *icon;
-#else
-    GdkPixmap *pixmap;
-    GdkBitmap *mask;
-    GtkStyle *style;
-#endif
     GtkWidget *image;
     static char **xpm = NULL;
     int i;
@@ -2162,17 +2005,8 @@ static GtkWidget *get_image_for_color (const char *colstr)
 	xpm[1][10+i] = colstr[1+i];
     }    
 
-#ifndef OLD_GTK
     icon = gdk_pixbuf_new_from_xpm_data((const char **) xpm);
     image = gtk_image_new_from_pixbuf(icon);
-#else
-    style = gtk_widget_get_style(mdata->w);
-    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
-					  &mask, 
-					  &style->bg[GTK_STATE_NORMAL], 
-					  xpm);
-    image = gtk_pixmap_new(pixmap, mask);
-#endif
     
     return image;
 }
@@ -2181,23 +2015,13 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 {
     GtkWidget *csel;
     GtkWidget *color_button, *image;
-#ifndef OLD_GTK
     GdkColor color;
-#else
-    gdouble color[4];
-#endif
     char color_string[12];
     gint i;
 
-#ifndef OLD_GTK
     color_button = g_object_get_data(G_OBJECT(w), "color_button");
-#else
-    color_button = gtk_object_get_data(GTK_OBJECT(w), "color_button");
-#endif
-
     csel = GTK_COLOR_SELECTION_DIALOG(w)->colorsel;
 
-#ifndef OLD_GTK
     gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &color);
     sprintf(color_string, "x%02x%02x%02x",
 	    (guint) (scale_round (color.red)),
@@ -2205,15 +2029,6 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 	    (guint) (scale_round (color.blue)));
 
     i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
-#else
-    gtk_color_selection_get_color(GTK_COLOR_SELECTION(csel), color);
-    sprintf(color_string, "x%02x%02x%02x",
-	    (guint) (scale_round (color[0])),
-	    (guint) (scale_round (color[1])),
-	    (guint) (scale_round (color[2])));
-
-    i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "colnum"));
-#endif
 
     set_gnuplot_pallette(i, color_string);
 
@@ -2223,11 +2038,7 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 	    get_gnuplot_pallette(2, 0),
 	    get_gnuplot_pallette(3, 0));
 
-#ifndef OLD_GTK
     image = g_object_get_data(G_OBJECT(color_button), "image");
-#else
-    image = gtk_object_get_data(GTK_OBJECT(color_button), "image");
-#endif
     gtk_widget_destroy(image);
     image = get_image_for_color(color_string);
     gtk_widget_show(image);
@@ -2264,64 +2075,6 @@ GtkWidget *color_patch_button (int colnum)
 
     return button;
 }
-
-#ifdef OLD_GTK
-
-static int colstr_to_color (const char *colstr, gdouble *color)
-{
-    char s[3];
-    int ci, i;
-
-    for (i=0; i<3; i++) {
-	*s = '\0';
-	strncat(s, colstr + 2*i + 1, 2);
-	if (sscanf(s, "%x", &ci) == 1) {
-	    color[i] = ci / 255.0;
-	} else {
-	    color[i] = 0.0;
-	}
-    }
-
-    return 0;
-}
-
-void gnuplot_color_selector (GtkWidget *w, gpointer p)
-{
-    GtkWidget *cdlg;
-    GtkWidget *button;
-    gint i = GPOINTER_TO_INT(p);
-    gdouble color[4];
-    const gchar *colstr;
-
-    if (i == COLOR_MAX) {
-	colstr = get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE);
-    } else {
-	colstr = get_gnuplot_pallette(i, 0); 
-    }
-
-    colstr_to_color(colstr, color);
-
-    cdlg = gtk_color_selection_dialog_new("gretl color selection");
-
-    gtk_object_set_data(GTK_OBJECT(cdlg), "colnum", GINT_TO_POINTER(i));
-    gtk_object_set_data(GTK_OBJECT(cdlg), "color_button", w);
-
-    gtk_color_selection_set_color(GTK_COLOR_SELECTION
-				  (GTK_COLOR_SELECTION_DIALOG(cdlg)->colorsel),
-				  color);
-
-    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->ok_button;
-    gtk_signal_connect(GTK_OBJECT(button), "clicked", 
-		       GTK_SIGNAL_FUNC(color_select_callback), cdlg);
-
-    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->cancel_button;
-    gtk_signal_connect(GTK_OBJECT(button), "clicked", 
-		       GTK_SIGNAL_FUNC(color_cancel), cdlg);
-    
-    gtk_widget_show(cdlg);
-}
-
-#else  /* !OLD_GTK */
 
 void gnuplot_color_selector (GtkWidget *w, gpointer p)
 {
@@ -2361,8 +2114,6 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
     
     gtk_widget_show(cdlg);
 }
-
-#endif /* gtk versions */
 
 /* end graph color selection apparatus */
 

@@ -507,9 +507,7 @@ static void finfo_dialog (function_info *finfo)
 	gtk_widget_show(label);
 
 	entry = gtk_entry_new();
-#ifndef OLD_GTK
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 40);
-#endif
 	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
 	gtk_widget_show(entry); 
@@ -543,13 +541,8 @@ static void finfo_dialog (function_info *finfo)
     }
 
     finfo->text = create_text(finfo->dlg, -1, -1, TRUE);
-#ifdef OLD_GTK
-    tbl = text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
-    gtk_widget_set_usize(finfo->dlg, 640, 440);
-#else
     text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
     gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 480);
-#endif
 
     set_dialog_info_from_fn(finfo, finfo->publist[1], HIDX_INIT);
 
@@ -626,9 +619,7 @@ static void login_dialog (login_info *linfo)
 	gtk_widget_show(label);
 
 	entry = gtk_entry_new();
-#ifndef OLD_GTK
 	gtk_entry_set_width_chars(GTK_ENTRY(entry), 34);
-#endif
 	gtk_entry_set_editable(GTK_ENTRY(entry), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), entry, 1, 2, i, i+1);
 	if (src != NULL) {

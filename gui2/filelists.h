@@ -15,7 +15,7 @@ void delete_from_filelist (int filetype, const char *fname);
 
 void add_files_to_menus (void);
 
-#if defined(USE_GNOME) && !defined(OLD_GTK)
+#if defined(USE_GNOME)
 # include <gconf/gconf-client.h>
 void save_file_lists (GConfClient *client);
 void read_file_lists (GConfClient *client);

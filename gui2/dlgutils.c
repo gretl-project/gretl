@@ -26,41 +26,6 @@
 
 #include "system.h"
 
-#ifdef OLD_GTK
-
-/* compatibility functions */
-
-GtkWidget *standard_button (int code)
-{
-    const char *button_strings[] = {
-	N_("OK"),
-	N_("Cancel"),
-	N_("Clear"),
-	N_("Close"),
-	N_("Apply"),
-	N_("Help"),
-	N_("Forward"),
-	N_("Back"),
-	N_("Find next"),
-    };
-
-    return gtk_button_new_with_label(_(button_strings[code]));
-}
-
-GtkWidget *
-gtk_spin_button_new_with_range (double lo, double hi, double step)
-{
-    GtkAdjustment *adj;
-    GtkWidget *sb;
-
-    adj = (GtkAdjustment *) gtk_adjustment_new(lo, lo, hi, step, 10 * step, 0);
-    sb = gtk_spin_button_new(adj, 0, 0);
-
-    return sb;
-}
-
-#endif
-
 /* Various buttons, usable in several sorts of dialogs */
 
 GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
@@ -110,14 +75,12 @@ static void opt_invalid (GtkWidget *w, int *opt)
     *opt = -1;
 }
 
-#ifndef OLD_GTK
 static void maybe_opt_invalid (GtkDialog *d, int resp, int *opt)
 {
     if (resp == GTK_RESPONSE_NONE || resp == GTK_RESPONSE_DELETE_EVENT) {
 	*opt = -1;
     }
 }
-#endif
 
 GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
 				  int *opt)
@@ -131,15 +94,9 @@ GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(opt_invalid), 
 			 opt);
-#ifdef OLD_GTK
-	g_signal_connect(G_OBJECT(targ), "delete_event", 
-			 G_CALLBACK(opt_invalid), 
-			 opt);
-#else
 	g_signal_connect(GTK_DIALOG(targ), "response", 
 			 G_CALLBACK(maybe_opt_invalid), 
 			 opt);
-#endif
     }
 
     g_signal_connect(G_OBJECT(w), "clicked", 
@@ -207,11 +164,7 @@ static void set_dialog_border_widths (GtkWidget *dlg)
 
 static void gretl_dialog_set_resizeable (GtkWidget *w, gboolean s)
 {
-#ifdef OLD_GTK
-    gtk_window_set_policy(GTK_WINDOW(w), FALSE, s, !s);
-#else
     gtk_window_set_resizable(GTK_WINDOW(w), s);
-#endif
 }
 
 static GtkWidget *current_dialog;
@@ -238,9 +191,8 @@ static gint dialog_unblock (GtkWidget *w, gpointer p)
 static gint dialog_set_destruction (GtkWidget *w, gpointer p)
 {
     gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(p));
-#ifndef OLD_GTK
     gtk_window_set_destroy_with_parent(GTK_WINDOW(w), TRUE);
-#endif
+
     return FALSE;
 }
 
@@ -327,19 +279,12 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
     if (active_edit_text) active_edit_text = NULL;
 }
 
-#ifdef OLD_GTK
-static void cancel_on_delete (GtkWidget *w, int *c)
-{
-    *c = 1;
-}
-#else
 static void cancel_on_delete (GtkDialog *d, int resp, int *c)
 {
     if (resp == GTK_RESPONSE_NONE || resp == GTK_RESPONSE_DELETE_EVENT) {
 	*c = 1;
     }
 }
-#endif
 
 static dialog_t *
 dialog_data_new (gpointer data, gint code, const char *title,
@@ -437,42 +382,18 @@ static void dialog_table_setup (dialog_t *dlg, int hsize)
     GtkWidget *sw;
 
     sw = gtk_scrolled_window_new (NULL, NULL);
-#ifdef OLD_GTK
-    gtk_widget_set_usize(sw, hsize, 200);
-#else
     gtk_widget_set_size_request(sw, hsize, 200);
-#endif
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg->dialog)->vbox), 
 		       sw, TRUE, TRUE, FALSE);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
-				    GTK_POLICY_AUTOMATIC,
-				    GTK_POLICY_AUTOMATIC);
-#ifndef OLD_GTK
-    gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
-					 GTK_SHADOW_IN);
-#endif
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW (sw),
+				   GTK_POLICY_AUTOMATIC,
+				   GTK_POLICY_AUTOMATIC);
+    gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW (sw),
+					GTK_SHADOW_IN);
     gtk_container_add(GTK_CONTAINER(sw), dlg->edit); 
     gtk_widget_show(dlg->edit);
     gtk_widget_show(sw);
 }
-
-#ifdef OLD_GTK
-
-static GtkWidget *dlg_text_edit_new (int *hsize, gboolean s)
-{
-    GtkWidget *tbuf;
-
-    tbuf = gtk_text_new(NULL, NULL);
-
-    gtk_text_set_editable(GTK_TEXT(tbuf), s);
-    gtk_text_set_word_wrap(GTK_TEXT(tbuf), FALSE);
-    *hsize *= gdk_char_width(fixed_font, 'W');
-    *hsize += 48;
-
-    return tbuf;
-}
-
-#else
 
 static GtkWidget *dlg_text_edit_new (int *hsize, gboolean s)
 {
@@ -495,8 +416,6 @@ static GtkWidget *dlg_text_edit_new (int *hsize, gboolean s)
     return tview;
 }
 
-#endif
-
 static void dlg_text_set_from_sys (gretl_equation_system *sys,
 				   dialog_t *d)
 {
@@ -509,12 +428,7 @@ static void dlg_text_set_from_sys (gretl_equation_system *sys,
 
     print_equation_system_info(sys, datainfo, OPT_NONE, prn);
     buf = gretl_print_get_buffer(prn);
-#ifdef OLD_GTK
-    gtk_text_insert(GTK_TEXT(d->edit), fixed_font, 
-		    NULL, NULL, buf, strlen(buf));
-#else
     textview_set_text(d->edit, buf);
-#endif
     gretl_print_destroy(prn);
 }
 
@@ -564,19 +478,12 @@ static gint edit_popup_click (GtkWidget *w, dialog_t *d)
     }
 
     if (ins != NULL) {
-#ifndef OLD_GTK
 	GtkTextBuffer *tbuf;
 	GtkTextIter pos;
 
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(d->edit));
 	gtk_text_buffer_get_end_iter(tbuf, &pos);
 	gtk_text_buffer_insert(tbuf, &pos, ins, strlen(ins));
-#else
-	int pos = gtk_editable_get_position(GTK_EDITABLE(d->edit));
-
-	gtk_editable_insert_text(GTK_EDITABLE(d->edit), 
-				 ins, strlen(ins), &pos);
-#endif
     }
 
     gtk_widget_destroy(d->popup);
@@ -617,12 +524,7 @@ static GtkWidget *build_edit_popup (dialog_t *d)
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(edit_popup_click), d);
 	gtk_widget_show(item);
-#ifndef OLD_GTK
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-#else
-	GTK_WIDGET_SET_FLAGS(item, GTK_SENSITIVE | GTK_CAN_FOCUS);
-	gtk_menu_append(GTK_MENU(menu), item);
-#endif
     }
 
     return menu;
@@ -999,9 +901,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	modal = 0;
     }
 
-#ifndef OLD_GTK
     gtk_window_set_destroy_with_parent(GTK_WINDOW(d->dialog), TRUE);
-#endif
 
     gtk_widget_show(d->dialog); 
 

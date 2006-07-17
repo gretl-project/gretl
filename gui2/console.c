@@ -160,30 +160,6 @@ static char *pop_history_line (int keyval)
     return ret;
 }
 
-#ifdef OLD_GTK
-
-static int last_console_line_len (int len)
-{
-    int i, c;
-
-    for (i=len; i>0; i--) {
-	c = GTK_TEXT_INDEX(GTK_TEXT(console_view), i - 1);
-	if (c == '\n') {
-	    break; 
-	}
-    }
-    return len - i - 2;
-}
-
-static void console_scroll_to_end (void)
-{
-    int len = gtk_text_get_length(GTK_TEXT(console_view));
-
-    gtk_editable_set_position(GTK_EDITABLE(console_view), len);
-}
-
-#else
-
 static void console_scroll_to_end (GtkTextBuffer *buf, 
 				   GtkTextIter *start)
 {
@@ -194,8 +170,6 @@ static void console_scroll_to_end (GtkTextBuffer *buf,
     gtk_text_view_scroll_mark_onscreen(GTK_TEXT_VIEW(console_view),
 				       mark);
 }
-
-#endif
 
 enum {
     SAMPLE_RECORD,
@@ -258,26 +232,17 @@ static int console_function_exec (char *execline)
 
 static void console_exec (void)
 {
-#ifndef OLD_GTK
     GtkTextBuffer *buf;
     GtkTextIter start, end;
-#else
-    extern GdkColor red;
-    int len;
-#endif
     static int redirected;
     int oldv = datainfo->v;
     char execline[MAXLINE];
     int err = 0;
 
-#ifndef OLD_GTK
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(console_view));
     gtk_text_buffer_get_end_iter(buf, &end);
     start = end;
     gtk_text_iter_set_line_offset(&start, 2);
-#else
-    len = gtk_text_get_length(GTK_TEXT(console_view));
-#endif
 
     top_n_tail(cbuf);
 
@@ -319,20 +284,13 @@ static void console_exec (void)
 
     redirected = printing_is_redirected(console_prn);
 
-#ifndef OLD_GTK
     gtk_text_buffer_get_end_iter(buf, &start);
     gtk_text_buffer_insert(buf, &start, "\n", 1);
-#else
-    gtk_text_freeze(GTK_TEXT(console_view));
-    gtk_editable_insert_text(GTK_EDITABLE(console_view), 
-			     "\n", 1, &len);
-#endif
 
     if (!redirected) {
 	const char *cbuf = gretl_print_get_buffer(console_prn);
 
         /* put results into console window */
-#ifndef OLD_GTK
 	if (!g_utf8_validate(cbuf, -1, NULL)) {
 	    gchar *trbuf = my_locale_to_utf8(cbuf);
 
@@ -342,32 +300,18 @@ static void console_exec (void)
 	} else {
 	    gtk_text_buffer_insert(buf, &start, cbuf, strlen(cbuf));
 	}
-#else
-	gtk_text_insert(GTK_TEXT(console_view), fixed_font, 
-			NULL, NULL, cbuf, strlen(cbuf));
-#endif
 	gretl_print_destroy(console_prn);
 	console_prn = NULL;
     } else {
 	gretl_print_reset_buffer(console_prn);
     }
 
-#ifndef OLD_GTK
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
 					     (gretl_compiling_loop())? "\n> " : "\n? ", 
 					     3, "redtext", NULL);
-#else
-    gtk_text_insert(GTK_TEXT(console_view), fixed_font,
-		    &red, NULL, (gretl_compiling_loop())? "\n> " : "\n? ", 3);
-    gtk_text_thaw(GTK_TEXT(console_view));
-#endif
 
     /* scroll to end of buffer */
-#ifndef OLD_GTK
     console_scroll_to_end(buf, &start);
-#else
-    console_scroll_to_end();
-#endif
 
     /* update variable listing in main window if needed */
     if (datainfo->v != oldv || !strncmp(execline, "rename", 6)) {
@@ -385,12 +329,8 @@ void show_gretl_console (void)
     PRN *prn;
     char fname[MAXLEN];
     windata_t *vwin;
-#ifndef OLD_GTK
     GtkTextBuffer *buf;
     GtkTextIter end;
-#else
-    size_t introlen;
-#endif
     const char *intro = 
 	N_("gretl console: type 'help' for a list of commands\n? ");
 
@@ -410,40 +350,21 @@ void show_gretl_console (void)
 
     pputs(prn, _(intro));
     gretl_print_destroy(prn);
-#ifdef OLD_GTK
-    introlen = strlen(_(intro));
-#endif
 
     vwin = view_file(fname, 1, 1, 78, 400, CONSOLE);
     console_view = vwin->w;
 
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(console_view), "destroy",
 		     G_CALLBACK(gretl_console_free),
 		     NULL);
     g_signal_connect(G_OBJECT(console_view), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed),
 		     &console_view);
-#else
-    gtk_signal_connect(GTK_OBJECT(console_view), "destroy",
-		       GTK_SIGNAL_FUNC(gretl_console_free),
-		       NULL);
-    gtk_signal_connect(GTK_OBJECT(console_view), "destroy",
-		       GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-		       &console_view);
-#endif
 
     /* go to end of last line of text */
-#ifndef OLD_GTK
     buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(console_view));
     gtk_text_buffer_get_end_iter(buf, &end);
     gtk_text_buffer_place_cursor(buf, &end);
-#else
-    gtk_text_set_point(GTK_TEXT(console_view), introlen); 
-    GTK_TEXT(console_view)->cursor_pos_x = 2 * gdk_char_width(fixed_font, 'X');
-    gtk_editable_set_position(GTK_EDITABLE(console_view), introlen);
-    gtk_editable_changed(GTK_EDITABLE(console_view));
-#endif
 
     gtk_widget_grab_focus(console_view);
 }
@@ -479,8 +400,6 @@ static int bslash_cont (const gchar *line)
 
     return bslash;
 }
-
-#ifndef OLD_GTK
 
 gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 {
@@ -601,129 +520,8 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
     return FALSE;
 }
 
-#else /* alternate gtk versions */
-
-static void replace_command_line (int cw, const char *repl)
-{
-    int len = gtk_text_get_length(GTK_TEXT(console_view));
-    int adjust;
-
-    adjust = GTK_TEXT(console_view)->cursor_pos_x / cw - 2;
-    gtk_editable_delete_text(GTK_EDITABLE(console_view), 
-			     len - adjust, len);
-    len = gtk_text_get_length(GTK_TEXT(console_view));
-    if (repl != NULL) {
-	gtk_editable_insert_text(GTK_EDITABLE(console_view), 
-				 repl, strlen(repl),
-				 &len);
-    }
-}
-
-gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
-{
-    int cw = gdk_char_width(fixed_font, 'X'); 
-    int len = gtk_text_get_length(GTK_TEXT(console_view));
-    int currpos, linelen, xpos;
-    GdkModifierType mods;
-
-    /* where are we? */
-    currpos = GTK_EDITABLE(console_view)->current_pos;
-    xpos = GTK_TEXT(console_view)->cursor_pos_x / cw; 
-    linelen = last_console_line_len(len);
-
-    /* if at start of command line, backspacing does nothing */
-    if (IS_BACKKEY(key->keyval) && xpos < 3) {
-	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
-	return TRUE;
-    }
-
-    /* if not on prompt line, return to (the end of) it */
-    if (currpos < len - linelen) {
-	gtk_text_set_point(GTK_TEXT(console_view), len);
-	gtk_editable_set_position(GTK_EDITABLE(console_view), len);
-	gtk_text_set_editable(GTK_TEXT(console_view), TRUE);
-	return TRUE;
-    }
-
-    /* make return key execute the command, unless backslash-
-       continuation is happening */
-    if (key->keyval == GDK_Return) {
-	gchar *bit;
-	int start, cont = 0;
-	extern GdkColor red;
-
-	start = len - last_console_line_len(len);
-	bit = gtk_editable_get_chars(GTK_EDITABLE(console_view), 
-				     start, -1);
-	if (bit != NULL) {
-	    cont = bslash_cont(bit);
-	    g_free(bit);
-	}
-
-	if (cont) {
-	    gtk_text_insert(GTK_TEXT(console_view), fixed_font,
-			    &red, NULL, "\n> ", 3);
-	    console_scroll_to_end();
-	} else {
-	    console_exec();
-	}
-
-	key->keyval = GDK_End;
-	return FALSE;
-    }
-
-    /* up and down arrows: command history */
-    if (key->keyval == GDK_Up || key->keyval == GDK_Down) {
-	char *histline;
-
-	histline = pop_history_line(key->keyval);
-
-	if (histline != NULL || key->keyval == GDK_Down) {
-	    replace_command_line(cw, histline);
-	}
-	key->keyval = GDK_VoidSymbol;
-	return TRUE;
-    }
-
-    /* response to Ctrl-A: go to start of typing area */
-    gdk_window_get_pointer(console_view->window, NULL, NULL, &mods);
-    if (mods & GDK_CONTROL_MASK && 
-	gdk_keyval_to_upper(key->keyval) == GDK_A) {
-	gtk_editable_set_position(GTK_EDITABLE(console_view), 
-				  len - last_console_line_len(len));	
-	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
-	return TRUE;
-    }
-
-    /* tab completion for gretl commands */
-    if (key->keyval == GDK_Tab) {
-	gchar *bit;
-	int start;
-
-	start = len - last_console_line_len(len);
-	bit = gtk_editable_get_chars(GTK_EDITABLE(console_view), 
-				     start, -1);
-
-	if (bit != NULL && *bit != 0) {
-	    const char *complete = gretl_command_complete(bit);
-
-	    g_free(bit);
-	    if (complete != NULL) {
-		replace_command_line(cw, complete);
-	    }
-	}
-	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
-	return TRUE;
-    }    
-
-    return FALSE;
-}
-
-#endif
-
 static gint on_last_line (void)
 {
-#ifndef OLD_GTK
     GtkTextBuffer *buf;
     GtkTextIter iter;
     
@@ -732,12 +530,6 @@ static gint on_last_line (void)
 
     return (gtk_text_iter_get_line(&iter) == 
 	    gtk_text_buffer_get_line_count(buf) - 1);
-#else
-    int len = gtk_text_get_length(GTK_TEXT(console_view));
-    int currpos = GTK_EDITABLE(console_view)->current_pos;
-
-    return (currpos >= len - last_console_line_len(len));
-#endif
 }
 
 gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
@@ -745,11 +537,7 @@ gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
 {
     int lline = on_last_line();
 
-#ifndef OLD_GTK
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), lline);
-#else
-    gtk_text_set_editable(GTK_TEXT(w), lline);
-#endif
 
     return FALSE;
 }

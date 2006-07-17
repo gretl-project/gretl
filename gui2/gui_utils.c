@@ -55,35 +55,12 @@
 
 char *storelist = NULL;
 
-#ifdef OLD_GTK
-#include "../pixmaps/stock_save_16.xpm"
-#include "../pixmaps/stock_save_as_16.xpm"
-#include "../pixmaps/stock_exec_16.xpm"
-#include "../pixmaps/stock_copy_16.xpm"
-#include "../pixmaps/stock_paste_16.xpm"
-#include "../pixmaps/stock_search_16.xpm"
-#include "../pixmaps/stock_search_replace_16.xpm"
-#include "../pixmaps/stock_undo_16.xpm"
-#include "../pixmaps/stock_help_16.xpm"
-#include "../pixmaps/stock_add_16.xpm"
-#include "../pixmaps/stock_close_16.xpm"
-#include "../pixmaps/stock_sort_16.xpm"
-#include "../pixmaps/stock_convert_16.xpm"
-#include "../pixmaps/stock_properties_16.xpm"
-# if defined(USE_GNOME)
-#  include "../pixmaps/stock_print_16.xpm"
-# endif
-#endif
-
 #include "../pixmaps/mini.tex.xpm"
 #include "../pixmaps/mail_16.xpm"
 #include "../pixmaps/mini.tsplot.xpm"
 #include "../pixmaps/mini.boxplot.xpm"
-
-#ifndef OLD_GTK
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.manual.xpm"
-#endif
 
 #if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION < 4)
 # include "../pixmaps/stock_network_16.xpm"
@@ -248,8 +225,6 @@ gretlopt get_tex_eqn_opt (void)
     return tex_eqn_opt;
 }
 
-#ifndef OLD_GTK
-
 static GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, 
@@ -303,65 +278,6 @@ static GtkItemFactoryEntry model_items[] = {
       do_outcovmx, 0, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
-
-#else /* now old versions */
-
-static GtkItemFactoryEntry model_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, NULL },
-    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
-      GRETL_OBJ_EQN, NULL },
-    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
-      GRETL_OBJ_EQN, NULL },
-# if defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-# endif
-    { N_("/File/Close"), NULL, close_model, 0, NULL },
-
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy"), "", model_copy_callback, 1, NULL },
-    { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/Tests/Omit variables"), NULL, selector_callback, OMIT, NULL },
-    { N_("/Tests/Add variables"), NULL, selector_callback, ADD, NULL },
-    { N_("/Tests/Sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL },
-    { N_("/Tests/Linear restrictions"), NULL, gretl_callback, RESTRICT, NULL },
-    { "/Tests/sep1", NULL, NULL, 0, "<Separator>" },
-    { N_("/Tests/Non-linearity (squares)"), NULL, do_lmtest, LMTEST_SQUARES, NULL },
-    { N_("/Tests/Non-linearity (logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL },
-    { N_("/Tests/Ramsey's RESET"), NULL, do_reset, RESET, NULL },
-    { "/Tests/sep2", NULL, NULL, 0, "<Separator>" },
-    { N_("/Tests/Heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL },
-    { N_("/Tests/Normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL },
-    { N_("/Tests/Influential observations"), NULL, do_leverage, LEVERAGE, NULL },
-    { N_("/Tests/Collinearity"), NULL, do_vif, VIF, NULL },
-    { "/Tests/sep3", NULL, NULL, 0, "<Separator>" },
-    { N_("/Tests/Autocorrelation"), NULL, do_autocorr, LMTEST, NULL },
-    { N_("/Tests/ARCH"), NULL, do_arch, ARCH, NULL },
-    { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL },
-    { N_("/Tests/QLR test"), NULL, do_chow_cusum, QLRTEST, NULL },
-    { N_("/Tests/CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL },
-    { "/Tests/sep4", NULL, NULL, 0, "<Separator>" },
-    { N_("/Tests/Panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL },
-    { N_("/_Save"), NULL, NULL, 0, "<Branch>" },
-    { N_("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
-    { N_("/Graphs/Residual plot"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Graphs/Fitted, actual plot"), NULL, NULL, 0, "<Branch>" },
-    { N_("/_Analysis"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Analysis/Display actual, fitted, residual"), NULL, 
-      display_fit_resid, 0, NULL },
-    { N_("/Analysis/Forecasts..."), NULL, 
-      do_forecast, FCASTERR, NULL },
-    { N_("/Analysis/Confidence intervals for coefficients"), NULL, 
-      do_coeff_intervals, 0, NULL },
-    { N_("/Analysis/Confidence ellipse..."), NULL, 
-      selector_callback, ELLIPSE, NULL },
-    { N_("/Analysis/Coefficient covariance matrix"), NULL, 
-      do_outcovmx, 0, NULL },
-    { NULL, NULL, NULL, 0, NULL}
-};
-#endif /* old versus new GTK */
-
-#ifndef OLD_GTK
 
 static GtkItemFactoryEntry model_tex_items[] = {
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -426,73 +342,6 @@ static GtkItemFactoryEntry SYS_items[] = {
     { N_("/Tests/linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
-
-#else
-
-static GtkItemFactoryEntry model_tex_items[] = {
-    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/View/_Tabular"), NULL, model_tex_view, 
-      GRETL_FORMAT_TEX, NULL },
-    { N_("/LaTeX/View/_Equation"), NULL, model_tex_view, 
-      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL },
-    { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Copy/_Tabular"), NULL, window_copy, 
-      GRETL_FORMAT_TEX, NULL },
-    { N_("/LaTeX/Copy/_Equation"), NULL, window_copy, 
-      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL },
-    { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Save/Tabular"), NULL, model_tex_save, 
-      GRETL_FORMAT_TEX, NULL },
-    { N_("/LaTeX/Save/Equation"), NULL, model_tex_save, 
-      GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL },
-    { N_("/LaTeX/Equation options"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Equation options/Show standard errors"), NULL, 
-      eqn_set_show_stderrs, 1, "<RadioItem>" },
-    { N_("/LaTeX/Equation options/Show t-ratios"), NULL, 
-      eqn_set_show_stderrs, 0, "/LaTeX/Equation options/Show standard errors" } 
-};
-
-static GtkItemFactoryEntry VAR_tex_items[] = {
-    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/_View"), NULL, var_tex_callback, 0, NULL },
-    { N_("/LaTeX/_Copy"), NULL, var_tex_callback, 1, NULL },
-    { N_("/LaTeX/_Save"), NULL, var_tex_callback, 2, NULL }
-};
-
-static GtkItemFactoryEntry VAR_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, NULL },
-    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
-      GRETL_OBJ_VAR, NULL },
-    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
-      GRETL_OBJ_VAR, NULL },
-# if defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-# endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy"), "", model_copy_callback, 1, NULL },
-    { NULL, NULL, NULL, 0, NULL}
-};
-
-static GtkItemFactoryEntry SYS_items[] = {
-    { N_("/_File"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
-      GRETL_OBJ_SYS, NULL },
-    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
-      GRETL_OBJ_SYS, NULL },
-# if defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, NULL },
-# endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy"), "", model_copy_callback, 0, NULL },
-    { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
-    { N_("/Tests/Linear restrictions"), NULL, gretl_callback, RESTRICT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
-
-#endif /* old versus new GTK */
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
 {
@@ -852,8 +701,6 @@ void delete_widget (GtkWidget *widget, gpointer data)
     gtk_widget_destroy(GTK_WIDGET(data));
 }
 
-#ifndef OLD_GTK
-
 static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
 {
     GdkModifierType mods;
@@ -866,8 +713,6 @@ static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
 
     return FALSE;
 }
-
-#endif
 
 #ifdef G_OS_WIN32
 
@@ -897,7 +742,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	edit_script_help(NULL, NULL, vwin);
     }
 
-#if !defined(OLD_GTK) && !defined(USE_GTKSOURCEVIEW)
+#ifndef USE_GTKSOURCEVIEW
     else if (key->keyval == GDK_Return) {
 	/* newline: correct line color */
 	correct_line_color(vwin);
@@ -983,15 +828,9 @@ void audio_render_window (windata_t *vwin, int key)
 
 static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
-#ifndef OLD_GTK
     if (gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w))) {
 	return catch_edit_key(w, key, vwin);
     }
-#else
-    if (GTK_EDITABLE(vwin->w)->editable) {
-	return catch_edit_key(w, key, vwin);
-    }    
-#endif
 
     if (key->keyval == GDK_q) { 
         gtk_widget_destroy(w);
@@ -1262,7 +1101,7 @@ int get_worksheet_data (char *fname, int datatype, int append,
 static void copy_utf8_filename (char *targ, const char *src)
 {
     strcpy(targ, src);
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+#ifdef ENABLE_NLS
     my_filename_to_utf8(targ);
 #endif
 }
@@ -1423,15 +1262,7 @@ void verify_open_session (void)
 
 static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
-#ifndef OLD_GTK
     text_set_cursor(vwin->w, GDK_QUESTION_ARROW);
-#else
-    GdkCursor *cursor = gdk_cursor_new(GDK_QUESTION_ARROW);
-
-    gdk_window_set_cursor(GTK_TEXT(vwin->w)->text_area, cursor);
-    gdk_cursor_destroy(cursor);
-#endif
-
     set_window_help_active(vwin);
 }
 
@@ -1618,11 +1449,7 @@ void free_windata (GtkWidget *w, gpointer data)
 
 	/* menu stuff */
 	if (vwin->popup != NULL) {
-#ifndef OLD_GTK 
 	    gtk_widget_destroy(GTK_WIDGET(vwin->popup));
-#else
-	    gtk_object_unref(GTK_OBJECT(vwin->popup));
-#endif
 	}
 	if (vwin->ifac != NULL) {
 	    g_object_unref(G_OBJECT(vwin->ifac));
@@ -1678,8 +1505,6 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
-#ifndef OLD_GTK
-
 void gretl_stock_icons_init (void)
 {
     char **xpms[] = {
@@ -1732,7 +1557,6 @@ void gretl_stock_icons_init (void)
 	gtk_icon_factory_add_default(ifac);
     }
 }
-#endif
 
 #if defined(G_OS_WIN32) || defined(USE_GNOME) 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
@@ -1758,18 +1582,14 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 static int vwin_selection_present (gpointer p)
 {
     windata_t *vwin = (windata_t *) p;
+    GtkTextBuffer *buf;
     int ret = 0;
-#ifndef OLD_GTK
-    GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 
     if (gtk_text_buffer_get_selection_bounds(buf, NULL, NULL)) {
 	ret = 1;
     }
-#else
-    GtkEditable *ed = GTK_EDITABLE(vwin->w);
-
-    ret = ed->has_selection;
-#endif
 
     return ret;
 }
@@ -1862,16 +1682,10 @@ static void view_code_callback (GtkWidget *w, windata_t *vwin)
 
 struct viewbar_item {
     const char *str;
-#ifndef OLD_GTK
     const gchar *icon;
-#else
-    gchar **toolxpm;
-#endif
     void (*toolfunc)();
     int flag;
 };
-
-#ifndef OLD_GTK
 
 static struct viewbar_item viewbar_items[] = {
     { N_("Save"), GTK_STOCK_SAVE, view_window_save, SAVE_ITEM },
@@ -1897,52 +1711,15 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
     { N_("Help"), GTK_STOCK_HELP, window_help, HELP_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
-    { NULL, NULL, NULL, 0 }};
-
-#else
-
-static struct viewbar_item viewbar_items[] = {
-    { N_("Save"), stock_save_16_xpm, view_window_save, SAVE_ITEM },
-    { N_("Save as..."), stock_save_as_16_xpm, file_save_callback, SAVE_AS_ITEM },
-    { N_("Send to gnuplot"), stock_exec_16_xpm, gp_send_callback, GP_ITEM },
-# ifdef USE_GNOME
-    { N_("Print..."), stock_print_16_xpm, window_print_callback, 0 },
-# endif
-    { N_("Run"), stock_exec_16_xpm, run_script_callback, RUN_ITEM },
-    { N_("Copy"), stock_copy_16_xpm, text_copy_callback, COPY_ITEM }, 
-    { N_("Paste"), stock_paste_16_xpm, text_paste_callback, EDIT_ITEM },
-    { N_("Find..."), stock_search_16_xpm, text_find_callback, 0 },
-    { N_("View code"), stock_properties_16_xpm, view_code_callback, CODE_ITEM },
-    { N_("Replace..."), stock_search_replace_16_xpm, text_replace_callback, EDIT_ITEM },
-    { N_("Undo"), stock_undo_16_xpm, text_undo_callback, EDIT_ITEM },
-    { N_("Sort"), stock_sort_16, series_view_sort, SORT_ITEM },  
-    { N_("Sort by..."), stock_sort_16, series_view_sort_by, SORT_BY_ITEM },  
-    { N_("Send To..."), mail_16_xpm, mail_script_callback, MAIL_ITEM },
-    { N_("Help on command"), stock_help_16_xpm, activate_script_help, RUN_ITEM },
-    { N_("LaTeX"), mini_tex_xpm, window_tex_callback, TEX_ITEM },
-    { N_("Graph"), mini_tsplot_xpm, series_view_graph, PLOT_ITEM },
-    { N_("Reformat..."), stock_convert_16_xpm, series_view_format_dialog, FORMAT_ITEM },
-    { N_("Add to dataset..."), stock_add_16_xpm, add_data_callback, ADD_ITEM },
-    { N_("Help"), stock_help_16_xpm, window_help, HELP_ITEM },
-    { N_("Close"), stock_close_16_xpm, delete_file_viewer, 0 },
-    { NULL, NULL, NULL, 0 }};
-
-#endif /* old versus new GTK */
+    { NULL, NULL, NULL, 0 }
+};
 
 static void set_plot_icon (struct viewbar_item *vitem)
 {
     if (dataset_is_time_series(datainfo)) {
-#ifndef OLD_GTK
 	vitem->icon = GRETL_STOCK_TS;
-#else
-	vitem->toolxpm = mini_tsplot_xpm;
-#endif
     } else {
-#ifndef OLD_GTK
 	vitem->icon = GRETL_STOCK_BOX;
-#else
-	vitem->toolxpm = mini_boxplot_xpm;
-#endif
     }
 }
 
@@ -1955,11 +1732,6 @@ static void set_plot_icon (struct viewbar_item *vitem)
 static void make_viewbar (windata_t *vwin, int text_out)
 {
     GtkWidget *hbox, *button;
-#ifdef OLD_GTK
-    GdkPixmap *icon;
-    GdkBitmap *mask;
-    GdkColormap *cmap;
-#endif
     void (*toolfunc)() = NULL;
     int i;
 
@@ -1988,11 +1760,9 @@ static void make_viewbar (windata_t *vwin, int text_out)
     int plot_ok    = (vwin->role == VIEW_SERIES);
     int latex_ok   = latex_is_ok();
 
-#ifndef OLD_GTK
     if (MULTI_FORMAT_ENABLED(vwin->role) && latex_ok) {
 	gretl_stock_icons_init();
     }
-#endif
 
     if (text_out || vwin->role == SCRIPT_OUT) {
 	g_object_set_data(G_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
@@ -2001,19 +1771,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
 
-#ifndef OLD_GTK
     vwin->mbar = gtk_toolbar_new();
-#else
-    vwin->mbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
-    gtk_toolbar_set_button_relief(GTK_TOOLBAR(vwin->mbar), GTK_RELIEF_NONE);
-    gtk_toolbar_set_space_size(GTK_TOOLBAR(vwin->mbar), 3);
-#endif
     gtk_box_pack_start(GTK_BOX(hbox), vwin->mbar, FALSE, FALSE, 0);
-
-#ifdef OLD_GTK
-    cmap = gdk_colormap_get_system();
-    colorize_tooltips(GTK_TOOLBAR(vwin->mbar)->tooltips);
-#endif
 
     for (i=0; viewbar_items[i].str != NULL; i++) {
 	GtkWidget *w;
@@ -2105,22 +1864,12 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    set_plot_icon(&viewbar_items[i]);
 	}
 
-#ifndef OLD_GTK
 	button = gtk_image_new();
 	gtk_image_set_from_stock(GTK_IMAGE(button), viewbar_items[i].icon, 
 				 GTK_ICON_SIZE_MENU);
         w = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
 				    NULL, _(viewbar_items[i].str), NULL,
 				    button, toolfunc, vwin);
-#else
-	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
-						     viewbar_items[i].toolxpm);
-	button = gtk_pixmap_new(icon, mask);
-	w = gtk_toolbar_append_item(GTK_TOOLBAR(vwin->mbar),
-				    NULL, _(viewbar_items[i].str), NULL,
-				    button, toolfunc, vwin);
-	gtk_toolbar_append_space(GTK_TOOLBAR(vwin->mbar));
-#endif
 
 	g_object_set_data(G_OBJECT(w), "flag", 
 			  GINT_TO_POINTER(viewbar_items[i].flag));
@@ -2142,18 +1891,12 @@ static void make_viewbar (windata_t *vwin, int text_out)
 static void add_edit_items_to_viewbar (windata_t *vwin)
 {
     GtkWidget *button;
-#ifdef OLD_GTK
-    GdkPixmap *icon;
-    GdkBitmap *mask;
-    GdkColormap *cmap = gdk_colormap_get_system();
-#endif
     int i, pos = 0;
 
     for (i=0; viewbar_items[i].str != NULL; i++) {
 	if (viewbar_items[i].flag == SAVE_ITEM ||
 	    viewbar_items[i].flag == EDIT_ITEM) {
 
-#ifndef OLD_GTK
 	    button = gtk_image_new();
 	    gtk_image_set_from_stock(GTK_IMAGE(button), 
 				     viewbar_items[i].icon, 
@@ -2162,23 +1905,9 @@ static void add_edit_items_to_viewbar (windata_t *vwin)
 				    NULL, _(viewbar_items[i].str), NULL,
 				    button, viewbar_items[i].toolfunc, 
 				    vwin, pos);
-#else
-	    icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
-							 viewbar_items[i].toolxpm);
-	    button = gtk_pixmap_new(icon, mask);
-	    gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
-				    NULL, _(viewbar_items[i].str), NULL,
-				    button, viewbar_items[i].toolfunc, 
-				    vwin, pos);
-	    gtk_toolbar_insert_space(GTK_TOOLBAR(vwin->mbar), pos + 1);
-#endif
 	}
 	if (viewbar_items[i].flag != GP_ITEM) {
-#ifndef OLD_GTK	    
 	    pos++;
-#else
-	    pos += 2;
-#endif
 	}
     }
 }
@@ -2210,7 +1939,7 @@ static gchar *make_viewer_title (int role, const char *fname)
 
 	    title = g_strdup_printf("gretl: %s", 
 				    (p != NULL)? p + 1 : fname);
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+#ifdef ENABLE_NLS
 	    my_filename_to_utf8(title);
 #endif	    
 	} 
@@ -2238,16 +1967,11 @@ static void content_changed (GtkWidget *w, windata_t *vwin)
 
 static void attach_content_changed_signal (windata_t *vwin)
 {
-#ifndef OLD_GTK
     GtkTextBuffer *tbuf;
 
     tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
     g_signal_connect(G_OBJECT(tbuf), "changed", 
 		     G_CALLBACK(content_changed), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
-		       GTK_SIGNAL_FUNC(content_changed), vwin);
-#endif
 }
 
 static windata_t *common_viewer_new (int role, const char *title, 
@@ -2398,28 +2122,12 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	/* FIXME add callback for updating fn code */
     }
 
-#ifndef OLD_GTK    
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
     cursor_to_top(vwin);
-#endif
 
     return vwin;
 }
-
-#ifdef OLD_GTK
-static void set_file_view_style (GtkWidget *w)
-{
-    static GtkStyle *style;
-
-    if (style == NULL) {
-	style = gtk_style_new();
-	gdk_font_unref(style->font);
-	style->font = fixed_font;
-    }
-    gtk_widget_set_style(w, style);
-}
-#endif
 
 windata_t *view_file (const char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role)
@@ -2466,10 +2174,6 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 #endif
 
     text_table_setup(vwin->vbox, vwin->w);
-
-#ifdef OLD_GTK
-    set_file_view_style(GTK_WIDGET(vwin->w));
-#endif
 
     /* special case: the gretl console */
     if (role == CONSOLE) {
@@ -2530,57 +2234,14 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
 
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
     cursor_to_top(vwin);
-#endif
 
     gtk_widget_grab_focus(vwin->w);
 
     return vwin;
 }
-
-#ifdef OLD_GTK
-
-void g_error_free (GError *err)
-{
-    free(err->message);
-    free(err);
-}
-
-int g_file_get_contents (const char *fname, char **pbuf, void *v1, void *v2)
-{
-    char *buf = NULL;
-    FILE *fp = NULL;
-    long sz = 0L;
-    int ret = FALSE;
-
-    fp = fopen(fname, "r");
-    if (fp == NULL) {
-	return FALSE;
-    }
-
-    fseek(fp, 0, SEEK_END);
-    sz = ftell(fp);
-
-    if (sz > 0) {
-	buf = malloc(sz + 1);
-	if (buf != NULL) {
-	    rewind(fp);
-	    fread(buf, 1, sz, fp);
-	    buf[sz] = 0;
-	    *pbuf = buf;
-	    ret = TRUE;
-	}
-    }
-
-    fclose(fp);
-
-    return ret;
-}
-
-#endif /* OLD_GTK */
 
 windata_t *
 view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
@@ -2606,10 +2267,6 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     vwin->w = create_text(vwin->dialog, hsize, vsize, FALSE);
     text_table_setup(vwin->vbox, vwin->w);
 
-#ifdef OLD_GTK
-    set_file_view_style(GTK_WIDGET(vwin->w));
-#endif
-
     /* "Close" button */
     viewer_add_close_button(vwin);
 
@@ -2621,7 +2278,6 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
 
-#ifndef OLD_GTK
     if (vwin->role == CLI_HELP || vwin->role == CLI_HELP_EN) {
 	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
 			 G_CALLBACK(help_popup_handler), 
@@ -2630,7 +2286,6 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 	g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 			 G_CALLBACK(catch_button_3), vwin->w);
     }	
-#endif
 
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
@@ -2645,12 +2300,8 @@ view_help_file (const char *filename, int role, GtkItemFactoryEntry *menu_items)
 
 void view_window_set_editable (windata_t *vwin)
 {
-#ifndef OLD_GTK
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), TRUE);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), TRUE);
-#else
-    gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
-#endif
     g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
     attach_content_changed_signal(vwin);
     g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
@@ -2701,7 +2352,6 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     text_table_setup(vwin->vbox, vwin->w);
     
     /* insert the buffer text */
-#ifndef OLD_GTK
     if (*pbuf) {
 	GtkTextBuffer *tbuf = 
 	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
@@ -2712,18 +2362,6 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 		     G_CALLBACK(catch_button_3), vwin->w);
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
-#else
-    if (*pbuf) {
-	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-			NULL, NULL, *pbuf, strlen(*pbuf));
-    } else {
-	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-			NULL, NULL, "A", 1);
-	gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
-    }
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_edit_key), vwin);	
-#endif	
 
     attach_content_changed_signal(vwin);
 
@@ -2741,9 +2379,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
 
-#ifndef OLD_GTK
     cursor_to_top(vwin);
-#endif
 
     return vwin;
 }
@@ -2810,16 +2446,10 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gretl_print_destroy(prn);
 
     /* attach shortcuts */
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
-#else
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_viewer_key), 
-		       vwin);
-#endif
 
     /* don't allow deletion of model window when a model
        test dialog is active */
@@ -2835,9 +2465,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_widget_show(vwin->vbox);
     gtk_widget_show_all(vwin->dialog);
 
-#ifndef OLD_GTK
     cursor_to_top(vwin);
-#endif
 
     return 0;
 }
@@ -2965,27 +2593,17 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[])
 {
-#ifdef OLD_GTK
-    GtkAccelGroup *accel = gtk_accel_group_new();
-#endif
     gint n_items = 0;
 
     while (items[n_items].path != NULL) n_items++;
 
-#ifdef OLD_GTK
-    vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", accel);
-#else
     vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
-#endif
 
-# ifdef ENABLE_NLS
+#ifdef ENABLE_NLS
     gtk_item_factory_set_translate_func(vwin->ifac, menu_translate, NULL, NULL);
-# endif
+#endif
     gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
-#ifdef OLD_GTK
-    gtk_accel_group_attach(accel, GTK_OBJECT(window));
-#endif
 
     if (vwin->data == NULL) {
 	return;
@@ -3000,8 +2618,6 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	model_save_state(vwin->ifac, !is_session_model(vwin->data));
     }
 }
-
-#ifndef OLD_GTK
 
 static GtkItemFactoryEntry model_dataset_basic_items[] = {
     { N_("/Save/Fitted values"), NULL, 
@@ -3055,65 +2671,6 @@ static GtkItemFactoryEntry define_var_items[] = {
     { N_("/Save/Define new variable..."), NULL, model_genr_callback,
       MODEL_GENR, NULL, GNULL }
 };
-
-#else /* old GTK versions */
-
-static GtkItemFactoryEntry model_dataset_basic_items[] = {
-    { N_("/Save/Fitted values"), NULL, 
-      fit_resid_callback, GENR_FITTED, NULL },
-    { N_("/Save/Residuals"), NULL, 
-      fit_resid_callback, GENR_RESID, NULL },
-    { N_("/Save/Squared residuals"), NULL, 
-      fit_resid_callback, GENR_RESID2, NULL },
-    { N_("/Save/Degrees of freedom"), NULL, 
-      model_stat_callback, DF, NULL }
-};
-
-static GtkItemFactoryEntry ess_items[] = {
-    { N_("/Save/Error sum of squares"), NULL, 
-      model_stat_callback, ESS, NULL },
-    { N_("/Save/Standard error of residuals"), NULL, 
-      model_stat_callback, SIGMA, NULL }
-}; 
-
-static GtkItemFactoryEntry r_squared_items[] = {
-    { N_("/Save/R-squared"), NULL, 
-      model_stat_callback, R2, NULL },
-    { N_("/Save/T*R-squared"), NULL, 
-      model_stat_callback, TR2, NULL }
-};  
-
-static GtkItemFactoryEntry lnl_data_item = {
-    N_("/Save/Log likelihood"), NULL, 
-    model_stat_callback, LNL, NULL
-};
-
-static GtkItemFactoryEntry criteria_items[] = {
-    { N_("/Save/Akaike Information Criterion"), NULL, 
-      model_stat_callback, AIC, NULL },
-    { N_("/Save/Bayesian Information Criterion"), NULL, 
-      model_stat_callback, BIC, NULL },
-    { N_("/Save/Hannan-Quinn Information Criterion"), NULL, 
-      model_stat_callback, HQC, NULL }
-};
-
-static GtkItemFactoryEntry garch_data_item = {
-    N_("/Save/Predicted error variance"), NULL, 
-    fit_resid_callback, GENR_H, NULL
-};
-
-static GtkItemFactoryEntry fixed_effects_data_item = {
-    N_("/Save/Per-unit constants"), NULL, 
-    fit_resid_callback, GENR_AHAT, NULL  
-};
-
-static GtkItemFactoryEntry define_var_items[] = {
-    { "/Save/sep1", NULL, NULL, 0, "<Separator>" },
-    { N_("/Save/Define new variable..."), NULL, model_genr_callback,
-      MODEL_GENR, NULL }
-};
-
-#endif /* GTK versions alternates */
 
 static void add_model_dataset_items (windata_t *vwin)
 {
@@ -3944,11 +3501,7 @@ static void add_VAR_menu_items (windata_t *vwin, int vecm)
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
 	    w = gtk_item_factory_get_widget_by_action(vwin->ifac, j);
-#ifndef OLD_GTK
 	    g_object_set_data(G_OBJECT(w), "targ", GINT_TO_POINTER(i));
-#else
-	    gtk_object_set_data(GTK_OBJECT(w), "targ", GINT_TO_POINTER(i));
-#endif
 	}
     }
 
@@ -4165,21 +3718,13 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 }
 
 void add_popup_item (const gchar *label, GtkWidget *menu,
-#ifndef OLD_GTK
 		     GCallback callback, 
-#else
-		     GtkSignalFunc callback, 
-#endif
 		     gpointer data)
 {
     GtkWidget *item;
 
     item = gtk_menu_item_new_with_label(label);
-#ifndef OLD_GTK
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-#else
-    gtk_menu_append(GTK_MENU(menu), item);
-#endif
     g_signal_connect (G_OBJECT(item), "activate",
 		      G_CALLBACK(callback), data);
     gtk_widget_show(item);
@@ -4221,11 +3766,7 @@ char *double_underscores (char *targ, const char *src)
 int browser_open (const char *url)
 {
 # if defined(USE_GNOME)
-#  ifndef OLD_GTK
     gnome_url_show(url, NULL); 
-#  else
-    gnome_url_show(url); 
-#  endif 
 # elif defined(OSX_BUILD)
     osx_open_url(url);
 # else
@@ -4348,22 +3889,3 @@ void startR (const char *Rcommand)
 }
 
 #endif /* ! G_OS_WIN32 */
-
-#ifdef OLD_GTK /* for forwards compatibility */
-
-static gint entry_activate (GtkWidget *w, GdkEventKey *key, gpointer p)
-{
-    GtkWidget *top = gtk_widget_get_toplevel(w);
-
-    gtk_window_activate_default(GTK_WINDOW(top));
-
-    return FALSE;
-}
-
-void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting)
-{
-    gtk_signal_connect(GTK_OBJECT(entry), "activate", 
-		       GTK_SIGNAL_FUNC(entry_activate), NULL);
-}
-
-#endif /* old GTK */

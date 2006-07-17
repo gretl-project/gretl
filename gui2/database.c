@@ -25,12 +25,7 @@
 #include "datafiles.h"
 #include "webget.h"
 #include "menustate.h"
-
-#if !GLIB_CHECK_VERSION(2,0,0)
-# define OLD_GTK
-#else
-# include "treeutils.h"
-#endif
+#include "treeutils.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,10 +36,6 @@
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 #include <netinet/in.h>
-#endif
-
-#ifdef OLD_GTK
-extern GdkColor gray;
 #endif
 
 /* private functions */
@@ -59,8 +50,6 @@ enum db_data_actions {
     DB_GRAPH,
     DB_IMPORT
 };
-
-#ifndef OLD_GTK
 
 int validate_string (char *orig)
 {
@@ -89,8 +78,6 @@ int validate_string (char *orig)
 
     return err;
 }
-
-#endif
 
 static void update_statusline (windata_t *vwin, const char *s)
 {
@@ -557,11 +544,9 @@ static void db_menu_find (GtkWidget *w, windata_t *vwin)
 
 static void build_db_popup (windata_t *vwin, int cb)
 {
-#ifndef OLD_GTK /* ?? */    
     if (vwin->popup != NULL) {
 	return;
     }
-#endif
 
     vwin->popup = gtk_menu_new();
 
@@ -586,7 +571,6 @@ static void build_db_popup (windata_t *vwin, int cb)
 
 static void set_up_db_menu (windata_t *vwin, int cb)
 {
-#ifndef OLD_GTK
     GtkItemFactoryEntry db_items[] = {
 	{ N_("/_Series/_Display"), NULL, gui_get_db_series, DB_DISPLAY, NULL, GNULL },
 	{ N_("/_Series/_Graph"), NULL, gui_get_db_series, DB_GRAPH, NULL, GNULL },
@@ -597,23 +581,10 @@ static void set_up_db_menu (windata_t *vwin, int cb)
 	{ N_("/Codebook/_Open"), NULL, book_callback_wrapper, 0, "<StockItem>", 
 	  GTK_STOCK_OPEN }
     };
-#else
-    GtkItemFactoryEntry db_items[] = {
-	{ N_("/_Series/_Display"), NULL, gui_get_db_series, DB_DISPLAY, NULL},
-	{ N_("/_Series/_Graph"), NULL, gui_get_db_series, DB_GRAPH, NULL },
-	{ N_("/_Series/_Import"), NULL, gui_get_db_series, DB_IMPORT, NULL },
-	{ N_("/_Find"), NULL, menu_find, 1, NULL },
-	{ N_("/_Codebook"), NULL, book_callback_wrapper, 0, NULL }
-    };
-#endif
     gint n_items = sizeof db_items / sizeof db_items[0];
 
     if (!cb) {
-#ifndef OLD_GTK
 	n_items -= 2;
-#else
-	n_items--;
-#endif
     }
 
     vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
@@ -624,7 +595,6 @@ static void set_up_db_menu (windata_t *vwin, int cb)
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
 }
 
-#ifndef OLD_GTK
 static void destroy_db_win (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
@@ -638,7 +608,6 @@ static void destroy_db_win (GtkWidget *w, gpointer data)
 	vwin = NULL;
     }
 }
-#endif
 
 static void test_db_book (const char *fname, int *cb)
 {
@@ -682,14 +651,8 @@ static int make_db_series_list (int action, char *fname, char *buf)
 
     vwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->w), "destroy", 
 		     G_CALLBACK(destroy_db_win), vwin);
-#else
-    gtk_signal_connect (GTK_OBJECT (vwin->w), "destroy",
-			GTK_SIGNAL_FUNC (free_windata),
-			vwin);
-#endif
 
     db_width *= gui_scale;
     db_height *= gui_scale;
@@ -738,12 +701,6 @@ static int make_db_series_list (int action, char *fname, char *buf)
     gtk_box_pack_start (GTK_BOX (main_vbox), closebutton, FALSE, TRUE, 0);
     g_signal_connect (G_OBJECT(closebutton), "clicked", 
 		      G_CALLBACK(delete_widget), vwin->w);
-
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(vwin->w), "key_press_event",
-		       GTK_SIGNAL_FUNC(catch_listbox_key),
-		       vwin);
-#endif
 
     if (action == NATIVE_SERIES) { 
 	err = make_local_db_series_list(vwin);
@@ -832,12 +789,8 @@ static void db_drag_connect (windata_t *vwin)
 
 static int make_local_db_series_list (windata_t *vwin)
 {
-#ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter; 
-#else
-    gint i;
-#endif
     gchar *row[3];
     char sername[VNAMELEN];
     char line1[256], line2[72], dbidx[MAXLEN];
@@ -861,14 +814,10 @@ static int make_local_db_series_list (windata_t *vwin)
 	return 1;
     }
 
-#ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
 			   (GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear (store);
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
-#else
-    i = 0;
-#endif
 
     while (fgets(line1, sizeof line1, fp) != NULL && !err) {
 
@@ -876,9 +825,8 @@ static int make_local_db_series_list (windata_t *vwin)
 	    continue;
 	}
 
-#ifndef OLD_GTK
 	err = validate_string(line1);
-#endif
+
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
 
@@ -902,27 +850,12 @@ static int make_local_db_series_list (windata_t *vwin)
 	    err = check_serinfo(line2, sername);
 	}
 
-#ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
 			    2, row[2], -1);
-#else
-	gtk_clist_append(GTK_CLIST(vwin->listbox), row);
-
-	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), 
-				     i, &gray);
-	}
-	i++;
-#endif
     }
 
     fclose(fp);
-
-#ifdef OLD_GTK
-    vwin->active_var = 0;
-    gtk_clist_select_row(GTK_CLIST(vwin->listbox), vwin->active_var, 1);
-#endif
 
     db_drag_connect(vwin);
 
@@ -931,23 +864,17 @@ static int make_local_db_series_list (windata_t *vwin)
 
 static int make_remote_db_series_list (windata_t *vwin, char *buf)
 {
-#ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter;  
-#else
-    gint i = 0;
-#endif
     gchar *row[3];
     char sername[VNAMELEN];
     char line1[150], line2[150];
     int n, err = 0;
 
-#ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
 			   (GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-#endif
 
     bufgets_init(buf);
 
@@ -960,9 +887,7 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
 
-#ifndef OLD_GTK
 	err = validate_string(line1);
-#endif
 
 	if (sscanf(line1, "%15s", sername) != 1) {
 	    break;
@@ -981,26 +906,15 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 	    err = check_serinfo(line2, sername);
 	}
 
-#ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
 			    2, row[2], -1);
-#else
-	gtk_clist_append(GTK_CLIST(vwin->listbox), row);
-	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), 
-				     i, &gray);
-	}
-	i++;
-#endif
     }
 
     db_drag_connect(vwin);
 
     return 0;
 }
-
-#ifndef OLD_GTK
 
 static gchar *iso_comment_to_utf8 (const gchar *src, int *err)
 {
@@ -1029,30 +943,20 @@ static gchar *iso_comment_to_utf8 (const gchar *src, int *err)
     return conv;
 }
 
-#endif
-
 static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
 {
-#ifndef OLD_GTK
     GtkTreeView *view = GTK_TREE_VIEW(w);
     GtkListStore *store;
     GtkTreeIter iter;
     gchar *comment;
     int err = 0;
     int *perr = &err;
-#else
-    GtkCList *clist = GTK_CLIST(w);
-    gchar *row[3];
-#endif
     int i;
 
-#ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
-#endif
 
     for (i=0; i<tbl->nrows; i++) {    
-#ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);
 
 	comment = iso_comment_to_utf8(tbl->rows[i].comment, perr);
@@ -1074,12 +978,6 @@ static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
 			       2, tbl->rows[i].obsinfo, 
 			       -1);
 	}	    
-#else
-	row[0] = tbl->rows[i].varname;
-	row[1] = tbl->rows[i].comment;
-	row[2] = tbl->rows[i].obsinfo;
-	gtk_clist_append(clist, row);
-#endif	
 
 	free(tbl->rows[i].varname);
 	free(tbl->rows[i].comment);
@@ -1115,16 +1013,10 @@ static int make_rats_db_series_list (windata_t *vwin)
 
     vwin->active_var = 0;
 
-#ifdef OLD_GTK
-    gtk_clist_select_row(GTK_CLIST(vwin->listbox), vwin->active_var, 1);  
-#endif
-
     db_drag_connect(vwin);
 
     return 0;
 }
-
-#ifndef OLD_GTK
 
 static GtkWidget *database_window (windata_t *vwin) 
 {
@@ -1150,63 +1042,6 @@ static GtkWidget *database_window (windata_t *vwin)
     return box;
 }
 
-#else /* now the old gtk version */
-
-static GtkWidget *database_window (windata_t *vwin) 
-{
-    char *titles[] = {
-	_("Name"), 
-	_("Description"), 
-	_("Observations")
-    };
-    GtkWidget *box, *scroller;
-    int i, cols = 3;
-    int col_width[] = {72, 450, 240};
-    int db_width = 540, db_height = 320;
-
-    vwin->active_var = 1; 
-
-    db_width *= gui_scale;
-    db_height *= gui_scale;
-
-    box = gtk_vbox_new(FALSE, 0);
-    gtk_widget_set_usize(box, db_width, db_height);
-   
-    scroller = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
-				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-    vwin->listbox = gtk_clist_new_with_titles(cols, titles);
-    gtk_clist_column_titles_passive(GTK_CLIST(vwin->listbox));
-    gtk_container_add(GTK_CONTAINER(scroller), vwin->listbox);
-    gtk_clist_set_selection_mode(GTK_CLIST(vwin->listbox), 
-				 GTK_SELECTION_BROWSE);
-    for (i=0; i<cols; i++) {
-	col_width[i] *= gui_scale;
-	gtk_clist_set_column_width(GTK_CLIST(vwin->listbox), i,
-				   col_width[i]);
-	gtk_clist_set_column_justification(GTK_CLIST(vwin->listbox), i, 
-					   GTK_JUSTIFY_LEFT);
-    }    
-    gtk_box_pack_start(GTK_BOX(box), scroller, TRUE, TRUE, TRUE);
-
-    gtk_signal_connect(GTK_OBJECT(vwin->listbox), 
-		       "button_press_event",
-		       GTK_SIGNAL_FUNC(popup_menu_handler), 
-		       (gpointer) vwin->popup);
-
-    gtk_signal_connect_after(GTK_OBJECT(vwin->listbox), "select_row", 
-			     GTK_SIGNAL_FUNC(selectrow), 
-			     (gpointer) vwin);
-
-    gtk_widget_show(vwin->listbox);
-    gtk_widget_show(scroller);
-    gtk_widget_show(box);
-
-    return box;
-}
-
-#endif /* old versus new gtk */
-
 static SERIESINFO *get_series_info (windata_t *vwin, int action)
 {
     char pdc;
@@ -1226,73 +1061,39 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
 	sinfo->offset = 0;
 	for (i=0; i<vwin->active_var; i++) {
 	    n = 0;
-#ifndef OLD_GTK
 	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 				 i, 2, &temp);
-#else
-	    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
-			       i, 2, &temp);
-#endif
 	    sscanf(temp, "%*c %*s %*s %*s %*s %*s %d", &n);
-#ifndef OLD_GTK
 	    g_free(temp);
-#endif
 	    sinfo->offset += n;
 	}
 	sinfo->offset *= sizeof(dbnumber);
     }
 
-#ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &temp);
-#else
-    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
-		       vwin->active_var, 0, &temp);
-#endif    
 
     *sinfo->varname = 0;
     strncat(sinfo->varname, temp, VNAMELEN - 1);
-
-#ifndef OLD_GTK
     g_free(temp);
-#endif
 
-#ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 1, &temp);
-#else
-    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
-		       vwin->active_var, 1, &temp);
-#endif
-
     *sinfo->descrip = 0;
     strncat(sinfo->descrip, temp, MAXLABEL - 1);
-
-#ifndef OLD_GTK
     g_free(temp);
-#endif
 
-#ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 2, &temp);
-#else
-    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
-		       vwin->active_var, 2, &temp);
-#endif
-
     if (sscanf(temp, "%c %10s %*s %10s %*s %*s %d", 
 	       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
 	errbox(_("Failed to parse series information"));
 	free(sinfo);
-#ifndef OLD_GTK
 	g_free(temp);
-#endif
 	return NULL;
     }
 
-#ifndef OLD_GTK
     g_free(temp);
-#endif
 
     sinfo->pd = 1;
     sinfo->undated = 0;
@@ -1378,33 +1179,20 @@ void open_db_index (GtkWidget *w, gpointer data)
     int action = NATIVE_SERIES;
     windata_t *vwin = (windata_t *) data;
 
-#ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &fname);
-#else
-    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
-		       vwin->active_var, 0, &fname);
-#endif
 
     if (has_rats_suffix(fname)) {
 	action = RATS_SERIES;
     }
 
-#ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, (action == RATS_SERIES)? 1 : 2, 
 			 &dbdir);
-#else
-    dbdir = gtk_clist_get_row_data(GTK_CLIST(vwin->listbox),
-				   vwin->active_var);
-#endif
 
     build_path(dbfile, dbdir, fname, NULL);
-
-#ifndef OLD_GTK
     g_free(fname);
     g_free(dbdir);
-#endif
 
     make_db_series_list(action, dbfile, NULL); 
 
@@ -1447,13 +1235,8 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 
     *errbuf = '\0';
 
-#ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &fname);
-#else
-    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
-		       vwin->active_var, 0, &fname);
-#endif
 
     update_statusline(vwin, _("Retrieving data..."));
     err = retrieve_remote_db_index(fname, &getbuf, errbuf);
@@ -1465,9 +1248,7 @@ void open_remote_db_index (GtkWidget *w, gpointer data)
 	make_db_series_list(REMOTE_SERIES, fname, getbuf);
     }
 
-#ifndef OLD_GTK
     g_free(fname);
-#endif
     free(getbuf);
 }
 
@@ -1653,13 +1434,8 @@ static int real_install_file_from_server (windata_t *vwin, int op)
     FILE *fp;
     int err = 0;
 
-#ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &objname);
-#else
-    gtk_clist_get_text(GTK_CLIST(vwin->listbox), 
-		       vwin->active_var, 0, &objname);
-#endif
     
     target = mymalloc(MAXLEN);
     if (target == NULL) {
@@ -1725,9 +1501,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 
     if (err) {
 	show_network_error(NULL, errbuf);
-#ifndef OLD_GTK
 	free(objname);
-#endif
 	free(target);
 	return err;
     } 
@@ -1761,9 +1535,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
 	}
     }
 
-#ifndef OLD_GTK
     free(objname);
-#endif
     free(target);
 
     return 0;
@@ -1813,9 +1585,7 @@ real_get_db_description (const char *fullname, const char *binname,
 	    char *s = tmp + 2;
 
 	    tailstrip(s);
-#ifndef OLD_GTK
 	    validate_string(s);
-#endif
 	    descrip = g_strdup(s);
 	}
     }
@@ -1887,8 +1657,6 @@ int write_db_description (const char *binname, const char *descrip)
     return err;
 }
 
-#ifndef OLD_GTK
-
 static int
 read_db_files_in_dir (DIR *dir, int dbtype, const char *dbdir, 
 		      GtkListStore *store, GtkTreeIter *iter)
@@ -1922,55 +1690,6 @@ read_db_files_in_dir (DIR *dir, int dbtype, const char *dbdir,
 
     return ndb;
 }
-
-#else
-
-static int
-read_db_files_in_dir (DIR *dir, char *dbdir, windata_t *vwin, int ndb)
-{
-    struct dirent *dirent;
-    char *fname;
-    char *descrip;
-    gchar *row[2];
-    int n, i;
-
-    while ((dirent = readdir(dir)) != NULL) {
-	int addrow = 0;
-
-	fname = dirent->d_name;
-	n = strlen(fname);
-	if (vwin->role == NATIVE_DB) {
-	    if (!g_strcasecmp(fname + n - 4, ".bin")) {
-		row[0] = fname;
-		descrip = real_get_db_description(NULL, fname, dbdir);
-		if (descrip != NULL) {
-		    addrow = 1;
-		    row[1] = descrip;
-		    i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
-		    gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, dbdir);
-		    g_free(descrip);
-		    ndb++;
-		} 
-	    }
-	} else if (!g_strcasecmp(fname + n - 4, ".rat")) {
-	    /* RATS database */
-	    addrow = 1;
-	    row[0] = fname;
-	    row[1] = NULL;
-	    i = gtk_clist_append(GTK_CLIST(vwin->listbox), row);
-	    gtk_clist_set_row_data(GTK_CLIST(vwin->listbox), i, dbdir);
-	    ndb++;
-	}
-
-	if (addrow && ndb % 2) {
-	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), i, &gray);
-	}
-    }
-
-    return ndb;
-}
-
-#endif
 
 static void get_local_object_status (char *fname, int role, char *status, 
 				     time_t remtime)
@@ -2070,10 +1789,8 @@ static int read_remote_filetime (char *line, char *fname, time_t *date)
 
 gint populate_remote_object_list (windata_t *vwin)
 {
-#ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter;  
-#endif  
     char *getbuf = NULL;
     char line[1024];
     char fname[16], errbuf[80], status[20];
@@ -2096,15 +1813,10 @@ gint populate_remote_object_list (windata_t *vwin)
 	return err;
     }
 
-#ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
 			   (GTK_TREE_VIEW(vwin->listbox)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-#else
-    gtk_clist_clear(GTK_CLIST(vwin->listbox));
-    gtk_clist_freeze(GTK_CLIST(vwin->listbox));
-#endif
 
     bufgets_init(getbuf);
     i = 0;
@@ -2120,31 +1832,18 @@ gint populate_remote_object_list (windata_t *vwin)
 	row[0] = strip_extension(fname);
 
 	if (bufgets(line, sizeof line, getbuf)) {
-#ifndef OLD_GTK
 	    validate_string(line);
-#endif
 	    row[1] = line + 2;
 	} else {
 	    row[1] = NULL;
 	}
 
 	row[2] = status;
-#ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, row[0], 1, row[1],
 			   2, row[2], -1);
-#else
-	gtk_clist_append(GTK_CLIST(vwin->listbox), row);
-	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(vwin->listbox), i, &gray);
-	}
-#endif
 	i++;
     }
-
-#ifdef OLD_GTK
-    gtk_clist_thaw(GTK_CLIST(vwin->listbox));
-#endif
 
     free(getbuf);
 
@@ -2157,21 +1856,13 @@ gint populate_remote_object_list (windata_t *vwin)
 	err = 1;
     }
 
-#ifdef OLD_GTK
-    if (i > 0) {
-	gtk_clist_select_row(GTK_CLIST(vwin->listbox), 0, 0);
-    }
-#endif
-
     return err;
 }
 
 gint populate_dbfilelist (windata_t *vwin)
 {
-#ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter;
-#endif
     gchar *dbdir;
     DIR *dir = NULL;
     int tries = 0;
@@ -2203,25 +1894,15 @@ gint populate_dbfilelist (windata_t *vwin)
 	}
     }
 
-#ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-#endif
 
     if (vwin->role == RATS_DB) {
-#ifndef OLD_GTK
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(vwin->listbox),
 					  FALSE);
-#else
-	gtk_clist_column_titles_hide(GTK_CLIST(vwin->listbox));
-#endif
     }
 
-#ifndef OLD_GTK
     ndb = read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
-#else
-    ndb = read_db_files_in_dir(dir, dbdir, vwin, 0);
-#endif
 
     closedir(dir);
 
@@ -2231,11 +1912,7 @@ gint populate_dbfilelist (windata_t *vwin)
     dir = opendir(dbdir);
 
     if (dir != NULL) {
-# ifndef OLD_GTK
 	ndb += read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
-# else
-	ndb = read_db_files_in_dir(dir, dbdir, vwin, ndb);
-# endif
 	closedir(dir);
     }
 #endif /* !G_OS_WIN32 */ 
@@ -2244,10 +1921,6 @@ gint populate_dbfilelist (windata_t *vwin)
 	errbox(_("No database files found"));
 	return 1;
     }
-
-#ifdef OLD_GTK
-    gtk_clist_select_row(GTK_CLIST(vwin->listbox), 0, 0);
-#endif
 
     return 0;
 }

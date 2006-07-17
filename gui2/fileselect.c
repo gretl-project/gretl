@@ -17,7 +17,7 @@
  *
  */
 
-/* fileselect.c for gretl -- use the gtkextra file selector under X11,
+/* fileselect.c for gretl -- use the gtk file chooser under X11,
    the native MS file selector under MS Windows */
 
 #include "gretl.h"
@@ -29,16 +29,6 @@
 #include "filelists.h"
 #include "fileselect.h"
 #include "fnsave.h"
-
-#if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION >= 4)
-# ifndef G_OS_WIN32
-#  define USE_GTK_CHOOSER
-# endif
-#endif
-
-#ifdef OLD_GTK
-# include "menustate.h"
-#endif
 
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
                           i == SAVE_DATA_AS || \
@@ -266,15 +256,9 @@ static void script_window_update (windata_t *vwin, const char *fname)
     mark_content_saved(vwin);
 
     /* make the window editable */
-#ifndef OLD_GTK
     if (!gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w))) {
 	view_window_set_editable(vwin);
     }
-#else
-    if (vwin->role == EDIT_SCRIPT) {
-	view_window_set_editable(vwin);
-    } 
-#endif
 }
 
 static void 
@@ -282,7 +266,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 {
     FILE *fp;
     gchar *buf;
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+#ifdef ENABLE_NLS
     gchar *trbuf;
 #endif
 
@@ -299,7 +283,7 @@ save_editable_content (int action, const char *fname, windata_t *vwin)
 	return;
     }
 
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+#ifdef ENABLE_NLS
     trbuf = my_locale_from_utf8(buf);
     if (trbuf != NULL) {
 	system_print_buf(trbuf, fp);
@@ -542,13 +526,14 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     }
 }
 
+#ifdef G_OS_WIN32 
+
 /* ........................................................... */
 
           /* MS Windows version of file selection code */
 
 /* ........................................................... */
 
-#ifdef G_OS_WIN32 
 
 #include <windows.h>
 
@@ -795,43 +780,6 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 
 #else /* End of MS Windows file selection code, start GTK */
 
-# ifndef USE_GTK_CHOOSER
-
-struct fsinfo_t {
-    GtkWidget *w;
-    char fname[FILENAME_MAX];
-};
-
-static void filesel_callback (GtkWidget *w, struct fsinfo_t *fsinfo) 
-{
-# ifdef OLD_GTK
-    GtkIconFileSel *fsel = GTK_ICON_FILESEL(fsinfo->w);
-    char *test;
-# endif
-    const gchar *path;
-
-    *fsinfo->fname = '\0';
-
-# ifndef OLD_GTK
-    path = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fsinfo->w));
-    if (path == NULL || *path == '\0' || isdir(path)) {
-	return;
-    }
-    strcpy(fsinfo->fname, path);
-# else
-    test = gtk_entry_get_text(GTK_ENTRY(fsel->file_entry));
-    if (test == NULL || *test == '\0') {
-	return;
-    }
-    path = gtk_file_list_get_path(GTK_FILE_LIST(fsel->file_list));
-    sprintf(fsinfo->fname, "%s%s", path, test);
-# endif
-
-    gtk_widget_destroy(GTK_WIDGET(fsinfo->w));
-}
-
-# endif /* !USE_GTK_CHOOSER */
-
 static char *get_filter_suffix (int action, gpointer data, char *suffix)
 {
     
@@ -845,10 +793,6 @@ static char *get_filter_suffix (int action, gpointer data, char *suffix)
 
     return suffix;
 }
-
-# ifndef OLD_GTK
-
-# ifdef USE_GTK_CHOOSER
 
 static GtkFileFilter *get_file_filter (int action, gpointer data)
 {
@@ -955,227 +899,4 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
     }
 }
 
-# else
-
-#include <glob.h> /* POSIX */
-
-static void
-gtk_file_selection_glob_populate (GtkFileSelection *fs, 
-				  const gchar *dirname, const gchar *suffix)
-{
-    glob_t globbuf;
-    GtkTreeIter iter;
-    GtkListStore *file_model;
-    gchar *pattern;
-    size_t i, dirlen;
-
-    g_return_if_fail (GTK_IS_FILE_SELECTION (fs));
-
-    if (dirname == NULL || *dirname == 0 || suffix == NULL || *suffix == 0)
-	return;
-
-    pattern = g_build_path(G_DIR_SEPARATOR_S, dirname, suffix, NULL);
-    dirlen = strlen(pattern) - strlen(suffix);
-
-    glob(pattern, 0, NULL, &globbuf);
-
-    file_model = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fs->file_list)));
-
-    gtk_list_store_clear (file_model);
-
-    for (i=0; i<globbuf.gl_pathc; i++) {
-	gtk_list_store_append (file_model, &iter);
-	gtk_list_store_set (file_model, &iter, 0, globbuf.gl_pathv[i] + dirlen, -1);
-    }
-
-    globfree(&globbuf);
-    g_free(pattern);
-}
-
-void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
-{
-    struct fsinfo_t fsinfo;
-    GtkWidget *filesel;
-    char suffix[16], startdir[MAXLEN];
-    int do_glob = 1;
-
-    *fsinfo.fname = '\0';
-
-    set_startdir(startdir, action);
-
-    filesel = gtk_file_selection_new(msg);
-    fsinfo.w = filesel;
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(filesel)->ok_button),
-		     "clicked", 
-		     G_CALLBACK(filesel_callback), &fsinfo);
-
-    gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), startdir);
-
-    /* special cases */
-
-    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
-	char *savename = suggested_savename(paths.datfile);
-
-	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
-					savename);
-	if (!strstr(savename, startdir)) do_glob = 0;
-	g_free(savename);
-    } else if (EXPORT_ACTION(action, src) && paths.datfile[0]) {
-	char *savename = suggested_exportname(paths.datfile, action);
-
-	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
-					savename);
-	if (!strstr(savename, startdir)) do_glob = 0;
-	g_free(savename);
-    } else if ((action == SAVE_SESSION) && *scriptfile != '\0') {
-	gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
-					scriptfile);
-	if (!strstr(scriptfile, startdir)) do_glob = 0;
-    } else if (action == SAVE_FUNCTIONS) {
-	const char *savename = get_fnsave_filename();
-
-	if (savename != NULL) {
-	    gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
-					    savename);
-	}
-    } else if (action == SET_PATH) {
-	char *strvar = (char *) data;
-
-	if (strvar != NULL && slashpos(strvar) > 0) {
-	    gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
-					    strvar);
-	} else {
-	    gtk_file_selection_set_filename(GTK_FILE_SELECTION(filesel), 
-					    "/usr/bin/");
-	}	    
-	do_glob = 0;
-    }	
-
-    /* end special cases */
-
-    g_signal_connect(G_OBJECT(filesel), "destroy",
-		     gtk_main_quit, NULL);
-    g_signal_connect(G_OBJECT(GTK_FILE_SELECTION(filesel)->cancel_button),
-		     "clicked", G_CALLBACK(delete_widget), filesel);
-
-    gtk_widget_show(filesel);
-
-    if (do_glob) {
-	get_filter_suffix(action, data, suffix);
-	gtk_file_selection_glob_populate (GTK_FILE_SELECTION(filesel), 
-					  startdir, suffix);
-    }
-
-    gtk_window_set_modal(GTK_WINDOW(filesel), TRUE);
-    gtk_main(); 
-
-    if (*fsinfo.fname != '\0') {
-	file_selector_process_result(fsinfo.fname, action, src, data);
-    } 
-}
-
-# endif
-
-# else /* gtk version diffs continue */
-
-void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
-{
-    struct fsinfo_t fsinfo;
-    GtkWidget *filesel;
-    int gotdir = 0;
-    char suffix[8], startdir[MAXLEN];
-
-    *fsinfo.fname = '\0';
-
-    set_startdir(startdir, action);
-
-    filesel = gtk_icon_file_selection_new(msg);
-
-    if (strstr(startdir, "/.")) {
-	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), TRUE);
-    } else {
-	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), FALSE);
-    }
-
-    get_filter_suffix(action, data, suffix);
-    gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), suffix);
-
-    fsinfo.w = filesel;
-    gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->ok_button),
-		       "clicked", 
-		       GTK_SIGNAL_FUNC(filesel_callback), &fsinfo);
-
-    /* special cases */
-
-    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
-	char *savename = suggested_savename(paths.datfile);
-	char startd[MAXLEN];
-
-	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
-			   savename);
-	if (!(data_status & BOOK_DATA) && get_base(startd, paths.datfile, SLASH)) {
-	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
-	    gotdir = 1;
-	}
-	g_free(savename);
-    } else if (EXPORT_ACTION(action, src) && paths.datfile[0]) {
-	char *savename = suggested_exportname(paths.datfile, action);
-	char startd[MAXLEN];
-
-	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
-			   savename);
-	if (get_base(startd, paths.datfile, SLASH)) {
-	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
-	    gotdir = 1;
-	}
-	g_free(savename);
-    } else if (action == SAVE_FUNCTIONS) {
-	const char *savename = get_fnsave_filename();
-	char startd[MAXLEN];
-
-	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
-			   savename);
-	if (get_base(startd, savename, SLASH)) {
-	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
-	    gotdir = 1;
-	}	
-    } else if (action == SET_PATH) {
-	char *strvar = (char *) data;
-	char startd[MAXLEN];
-
-	if (get_base(startd, strvar, SLASH) == 1) {
-	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
-	    gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
-			       strvar + slashpos(strvar) + 1);
-	} else {
-	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), 
-					     "/usr/bin/");
-	}
-	gotdir = 1;
-    }
-
-    if (!gotdir) {
-	gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startdir);
-    }
-
-    gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)), "destroy",
-                       gtk_main_quit, NULL);
-    gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->cancel_button),
-			      "clicked", (GtkSignalFunc) gtk_widget_destroy,
-			      GTK_OBJECT(filesel));
-
-    gtk_widget_show(filesel);
-    gretl_set_window_modal(filesel);
-    gtk_main(); 
-
-    if (*fsinfo.fname != '\0') {
-	file_selector_process_result(fsinfo.fname, action, src, data);
-    } 
-}
-
-# endif /* old gtk */
-
 #endif /* end of non-MS Windows code */
-
-
-

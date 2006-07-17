@@ -26,10 +26,6 @@
 #include "clipboard.h"
 #include "fileselect.h"
 
-#ifdef OLD_GTK
-# include "menustate.h"
-#endif
-
 /* find-and-replace related materials */
 
 struct search_replace {
@@ -125,139 +121,9 @@ static void replace_string_dialog (struct search_replace *s)
 
     gtk_widget_grab_focus(s->f_entry);
     gtk_widget_show (s->w);
-#ifdef OLD_GTK /* ?? */
-    gretl_set_window_modal(s->w);
-#endif
+
     gtk_main();
 }
-
-#ifdef OLD_GTK
-
-void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
-{
-    gchar *buf;
-    int count = 0;
-    gint pos = 0;
-    guint sel_start, sel_end;
-    size_t sz, fullsz, len, diff;
-    char *replace = NULL, *find = NULL;
-    char *modbuf, *p, *q;
-    gchar *old;
-    struct search_replace *s;
-    GtkEditable *gedit = GTK_EDITABLE(mydata->w);
-
-    s = mymalloc(sizeof *s);
-    if (s == NULL) return;
-
-    replace_string_dialog(s);
-
-    if (s->f_text == NULL || s->r_text == NULL) {
-	free(s);
-	return;
-    }
-
-    find = s->f_text;
-    replace = s->r_text;
-
-    if (!strlen(find)) {
-	free(find);
-	free(replace);
-	free(s);
-	return;
-    }
-
-    if (gedit->has_selection) {
-	sel_start = gedit->selection_start_pos;
-	sel_end = gedit->selection_end_pos;
-    } else {
-	sel_start = 0;
-	sel_end = 0;
-    }
-
-    buf = gtk_editable_get_chars(gedit, sel_start, (sel_end)? sel_end : -1);
-    if (buf == NULL || !(sz = strlen(buf))) 
-	return;
-
-    fullsz = gtk_text_get_length(GTK_TEXT(mydata->w));
-    len = strlen(find);
-    diff = strlen(replace) - len;
-
-    p = buf;
-    while (*p) {
-	if ((q = strstr(p, find))) {
-	    count++;
-	    p = q + 1;
-	}
-	else break;
-    }
-    if (count) {
-	fullsz += count * diff;
-    } else {
-	errbox(_("String to replace was not found"));
-	free(buf);
-	return;
-    }
-
-    modbuf = mymalloc(fullsz + 1);
-    if (modbuf == NULL) {
-	free(find);
-	free(replace);
-	free(s);
-	return;
-    }
-
-    *modbuf = '\0';
-
-    if (sel_start) {
-	gchar *tmp = gtk_editable_get_chars(gedit, 0, sel_start);
-
-	strcat(modbuf, tmp);
-	g_free(tmp);
-    }
-
-    p = buf;
-    while (*p) {
-	if ((q = strstr(p, find))) {
-	    strncat(modbuf, p, q - p);
-	    strcat(modbuf, replace);
-	    p = q + len;
-	} else {
-	    strcat(modbuf, p);
-	    break;
-	}
-    }
-
-    if (sel_end) {
-	gchar *tmp = gtk_editable_get_chars(gedit, sel_end, -1);
-
-	strcat(modbuf, tmp);
-	g_free(tmp);
-    }    
-
-    /* save original buffer for "undo" */
-    old = gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
-    if (old != NULL) {
-	g_free(old);
-	gtk_object_remove_data(GTK_OBJECT(mydata->w), "undo");
-    }
-    gtk_object_set_data(GTK_OBJECT(mydata->w), "undo", 
-			gtk_editable_get_chars(gedit, 0, -1));
-
-    /* now insert the modified buffer */
-    gtk_text_freeze(GTK_TEXT(mydata->w));
-    gtk_editable_delete_text(gedit, 0, -1);
-    gtk_editable_insert_text(gedit, modbuf, strlen(modbuf), &pos);
-    gtk_text_thaw(GTK_TEXT(mydata->w));
-
-    /* and clean up */
-    free(find);
-    free(replace);
-    free(s);
-    free(modbuf);
-    g_free(buf);
-}
-
-#else /* not gtk-1.2 */
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 {
@@ -389,8 +255,6 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     g_free(buf);
 }
 
-#endif /* old versus new gtk */
-
 static int special_text_handler (windata_t *vwin, guint fmt, int what)
 {
     int cmd = vwin->role;
@@ -514,26 +378,6 @@ void var_tex_callback (gpointer data, guint opt, GtkWidget *w)
     special_text_handler(vwin, GRETL_FORMAT_TEX, opt);
 }
 
-#ifdef OLD_GTK
-
-static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
-{
-    GtkEditable *ed = GTK_EDITABLE(vwin->w);
-    gchar *cpybuf = NULL;
-
-    if (!select) {
-	cpybuf = gtk_editable_get_chars(ed, 0, -1);
-    } else if (ed->has_selection) {
-	cpybuf = gtk_editable_get_chars(ed, 
-					ed->selection_start_pos,
-					ed->selection_end_pos);
-    } 
-
-    return cpybuf;
-}
-
-#else
-
 static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
 {
     GtkTextBuffer *textbuf = 
@@ -552,17 +396,12 @@ static gchar *text_window_get_copy_buf (windata_t *vwin, int select)
     return cpybuf;
 }
 
-#endif
-
 static gchar *maybe_amend_buffer (gchar *inbuf, int fmt)
 {
-    gchar *outbuf = inbuf;
+    gchar *outbuf = my_locale_from_utf8(inbuf);
 
-#ifndef OLD_GTK
-    outbuf = my_locale_from_utf8(inbuf);
     free(inbuf);
     inbuf = outbuf;
-#endif
 
     /* FIXME win32: saving as text?? */
 
@@ -638,8 +477,6 @@ void window_save (windata_t *vwin, guint fmt)
 void window_print (windata_t *vwin, guint u, GtkWidget *widget) 
 {
     char *buf, *selbuf = NULL;
-
-# ifndef OLD_GTK
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
 
@@ -649,16 +486,6 @@ void window_print (windata_t *vwin, guint u, GtkWidget *widget)
     if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
 	selbuf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
     }
-# else
-    GtkEditable *gedit = GTK_EDITABLE(vwin->w);
-
-    buf = gtk_editable_get_chars(gedit, 0, -1);
-    if (gedit->has_selection) {
-	selbuf = gtk_editable_get_chars(gedit, 
-					gedit->selection_start_pos,
-					gedit->selection_end_pos);
-    }
-# endif /* OLD_GTK */
 
     winprint(buf, selbuf);
 }

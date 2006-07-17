@@ -66,11 +66,4 @@ void close_dialog (dialog_t *dlg);
 
 char *entry_box_get_trimmed_text (GtkWidget *w);
 
-#ifdef OLD_GTK
-GtkWidget *standard_button (int code);
-
-GtkWidget *gtk_spin_button_new_with_range (double lo, double hi, 
-					   double step);
-#endif
-
 #endif /* DLGUTILS_H */

@@ -116,8 +116,6 @@ static void new_script_callback (void)
 
 /* end toolbar icon callbacks */
 
-#ifndef OLD_GTK
-
 static GtkWidget *image_button_new (GdkPixbuf *pix, void (*toolfunc)())
 {
     GtkWidget *image = gtk_image_new_from_pixbuf(pix);
@@ -140,21 +138,12 @@ static void gretl_toolbar_append_tool (GtkWidget *tbar,
     gretl_tooltips_add(w, toolstr);
 }
 
-#endif /* !OLD_GTK */
-
 static void make_toolbar (GtkWidget *w, GtkWidget *box)
 {
     GtkWidget *button;
     GtkWidget *toolbar;
-#ifdef OLD_GTK
-    GtkWidget *iconw;
-    GdkPixmap *icon;
-    GdkBitmap *mask;
-    GdkColormap *cmap;
-#else
     GtkWidget *hbox;
     GdkPixbuf *icon;
-#endif
     int i;
     const char *toolstrings[] = {
 	N_("launch calculator"), 
@@ -173,21 +162,6 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     void (*toolfunc)() = NULL;
     const char *toolstr;
 
-#ifdef OLD_GTK
-    cmap = gdk_colormap_get_system();
-    toolbar_box = gtk_handle_box_new();
-    gtk_handle_box_set_shadow_type(GTK_HANDLE_BOX(toolbar_box), 
-				   GTK_SHADOW_NONE);
-    gtk_box_pack_start(GTK_BOX(box), toolbar_box, FALSE, FALSE, 0);
-
-    toolbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL,
-			      GTK_TOOLBAR_ICONS);
-    gtk_container_set_border_width(GTK_CONTAINER(toolbar), 0);
-    gtk_toolbar_set_space_size(GTK_TOOLBAR(toolbar), 0);
-    gtk_container_add(GTK_CONTAINER(toolbar_box), toolbar);
-
-    colorize_tooltips(GTK_TOOLBAR(toolbar)->tooltips);
-#else
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(box), hbox, FALSE, FALSE, 0);
 
@@ -196,7 +170,6 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 
     toolbar = gtk_hbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(toolbar_box), toolbar);
-#endif
 
     for (i=0; toolstrings[i] != NULL; i++) {
 	switch (i) {
@@ -245,27 +218,13 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	}
 
 	toolstr = _(toolstrings[i]);
-#ifdef OLD_GTK
-	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, 
-						     NULL, toolxpm);
-	iconw = gtk_pixmap_new(icon, mask);
-	button = gtk_toolbar_append_item(GTK_TOOLBAR(toolbar),
-					 NULL, toolstr, NULL,
-					 iconw, toolfunc, NULL);
-#else
 	icon = gdk_pixbuf_new_from_xpm_data((const char **) toolxpm);
 	button = image_button_new(icon, toolfunc);
 	gretl_toolbar_append_tool(toolbar, button, toolstr);
 	gdk_pixbuf_unref(icon);
-#endif
     }
 
-#ifdef OLD_GTK
-    gtk_widget_show(toolbar);
-    gtk_widget_show(toolbar_box);
-#else
     gtk_widget_show_all(hbox);
-#endif
 }
 
 /* public interface */

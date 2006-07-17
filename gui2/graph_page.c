@@ -376,7 +376,7 @@ static int get_dvips_path (char *path)
     return (ret == 0);
 }
 
-#elif !defined(OLD_GTK)
+#else
 
 #include <signal.h>
 
@@ -436,8 +436,6 @@ int dvips_compile (char *texshort)
 {
 #ifdef G_OS_WIN32
     static char dvips_path[MAXLEN];
-#endif
-#if defined(G_OS_WIN32) || defined(OLD_GTK)
     char tmp[MAXLEN];
 #endif
     int err = 0;
@@ -453,9 +451,6 @@ int dvips_compile (char *texshort)
     if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
 	return 1;
     }
-#elif defined(OLD_GTK)
-    sprintf(tmp, "cd \"%s\" && dvips -o %s.ps %s", paths.userdir, texshort, texshort);
-    err = system(tmp);
 #else
     err = spawn_dvips(texshort);
 #endif 

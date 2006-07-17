@@ -30,12 +30,7 @@
 #include "dlgutils.h"
 #include "fileselect.h"
 #include "ssheet.h"
-
-#ifdef OLD_GTK
-# include <gtkextra/gtkiconfilesel.h>
-#else
-# include "treeutils.h"
-#endif
+#include "treeutils.h"
 
 /* these live in dialogs.c */
 extern GtkWidget *active_edit_id;
@@ -76,8 +71,6 @@ static void doubleclick_action (windata_t *win)
 	break;
     }
 }
-
-#ifndef OLD_GTK
 
 void listbox_select_row (GtkTreeSelection *selection, gpointer data)
 {
@@ -156,64 +149,6 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
 
     return FALSE;
 }
-
-#else /* now comes an old gtk function */
-
-void selectrow (GtkCList *clist, gint row, gint column, 
-	        GdkEventButton *event, gpointer data) 
-{
-    gchar *numstr, *edttext;
-    windata_t *win = (windata_t *) data;
-
-    if (win == mdata) { /* main window */
-	gtk_clist_get_text(clist, row, 0, &numstr);
-	win->active_var = atoi(numstr);
-    } else {
-	win->active_var = row;
-    }
-
-    if (active_edit_id != NULL) {
-	gchar addvar[VNAMELEN];
-
-	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_id));
-	if (*edttext != '\0') {
-	    sprintf(addvar, " %d", win->active_var);
-	} else {
-	    sprintf(addvar, "%d", win->active_var);
-	}
-	gtk_entry_append_text(GTK_ENTRY(active_edit_id), addvar);
-    } else if (active_edit_name != NULL) {
-	edttext = gtk_entry_get_text (GTK_ENTRY(active_edit_name));
-	gtk_entry_append_text(GTK_ENTRY(active_edit_name), 
-			      datainfo->varname[win->active_var]);
-	gtk_entry_append_text(GTK_ENTRY(active_edit_name), " ");
-    }
-
-    /* response to double-click */
-    if (event != NULL && event->type == GDK_2BUTTON_PRESS 
-	&& event->button == 1) {
-	doubleclick_action(win);
-    }
-}
-
-void unselectrow (GtkCList *clist, gint row, gint column, 
-		  GdkEventButton *event, gpointer data) 
-{
-    windata_t *win = (windata_t *) data;
-
-    if (win != mdata) { /* main window */
-	return;
-    } else {
-	gchar *numstr;
-
-	gtk_clist_get_text(clist, row, 0, &numstr);
-	if (win->active_var == atoi(numstr)) {
-	    win->active_var = clist->focus_row;
-	}
-    }
-}
-
-#endif /* old versus new gtk */
 
 void open_data (gpointer data, guint code, GtkWidget *widget)
 {

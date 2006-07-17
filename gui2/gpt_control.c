@@ -40,10 +40,6 @@
 # include <png.h>
 #endif
 
-#if !GLIB_CHECK_VERSION(2,0,0)
-# define OLD_GTK
-#endif
-
 enum {
     PLOT_SAVED          = 1 << 0,
     PLOT_HAS_CONTROLLER = 1 << 1,
@@ -1497,59 +1493,6 @@ static int make_alt_label (gchar *alt, const gchar *label)
     return err;
 }
 
-#ifdef OLD_GTK
-
-static void
-write_label_to_plot (png_plot *plot, int i, gint x, gint y)
-{
-    const gchar *label = plot->spec->markers[i];
-    static GdkFont *label_font;
-
-    if (plot_is_roots(plot)) {
-	gchar alt_label[12];
-	
-	if (make_alt_label(alt_label, label)) {
-	    return;
-	}
-
-	label = alt_label;
-    }
-
-    if (plot->invert_gc == NULL) {
-	create_selection_gc(plot);
-    }
-
-    if (label_font == NULL) {
-	label_font = gdk_font_load("fixed");
-    }
-
-    /* draw the label */
-    gdk_draw_text (plot->pixmap,
-		   label_font,
-		   plot->invert_gc,
-		   x, y,
-		   label,
-		   strlen(label));
-
-    /* show the modified pixmap */
-    gdk_window_copy_area(plot->canvas->window,
-			 plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
-			 0, 0,
-			 plot->pixmap,
-			 0, 0,
-			 plot->pixel_width, plot->pixel_height);
-
-    /* draw (invert) again to erase the text */
-    gdk_draw_text (plot->pixmap,
-		   label_font,
-		   plot->invert_gc,
-		   x, y,
-		   label,
-		   strlen(label));
-}
-
-#else
-
 static void
 write_label_to_plot (png_plot *plot, int i, gint x, gint y)
 {
@@ -1593,8 +1536,6 @@ write_label_to_plot (png_plot *plot, int i, gint x, gint y)
     plot->format |= PLOT_MARKERS_UP;
 }
 
-#endif /* GTK versions */
-
 #define TOLDIST 0.01
 
 static gint
@@ -1624,7 +1565,6 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	return TRUE;
     }
 
-#ifndef OLD_GTK
     /* need array to keep track of which points are labeled */
     if (plot->spec->labeled == NULL) {
 	plot->spec->labeled = calloc(plot->spec->nobs, 1);
@@ -1632,7 +1572,6 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	    return TRUE;
 	}
     }
-#endif
 
     if (plot_is_zoomed(plot)) {
 	min_xdist = xrange = plot->zoom_xmax - plot->zoom_xmin;
@@ -1682,12 +1621,10 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	}
     }
 
-#ifndef OLD_GTK
     /* if the point is already labeled, skip */
     if (plot->spec->labeled[best_match]) {
 	return TRUE;
     }
-#endif
 
 #if GPDEBUG > 2
     fprintf(stderr, " best_match=%d, with data_x[%d]=%g, data_y[%d]=%g\n", 
@@ -1700,10 +1637,8 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 	min_xdist < TOLDIST * xrange &&
 	min_ydist < TOLDIST * yrange) {
 	write_label_to_plot(plot, best_match, pixel_x, pixel_y);
-#ifndef OLD_GTK
 	/* flag the point as labeled already */
 	plot->spec->labeled[best_match] = 1;
-#endif
     }
 
     return TRUE;
@@ -1951,16 +1886,12 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	context_help(NULL, GINT_TO_POINTER(RMPLOT));
     } else if (plot_is_hurst(plot) && !strcmp(item, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(HURST));
-    }
-#ifndef OLD_GTK
-    else if (!strcmp(item, _("Freeze data labels"))) {
+    } else if (!strcmp(item, _("Freeze data labels"))) {
 	plot->spec->flags |= GPTSPEC_ALL_MARKERS;
 	redisplay_edited_png(plot);
     } else if (!strcmp(item, _("Clear data labels"))) { 
 	zoom_unzoom_png(plot, PNG_REDISPLAY);
-    }
-#endif
-    else if (!strcmp(item, _("Zoom..."))) { 
+    } else if (!strcmp(item, _("Zoom..."))) { 
 	GdkCursor* cursor;
 
 	cursor = gdk_cursor_new(GDK_CROSSHAIR);
@@ -2036,10 +1967,8 @@ static void build_plot_menu (png_plot *plot)
 	N_("Copy to clipboard"),
 #endif
 	N_("Save to session as icon"),
-#ifndef OLD_GTK
 	N_("Freeze data labels"),
 	N_("Clear data labels"),
-#endif
 	N_("Zoom..."),
 #ifdef USE_GNOME
 	N_("Print..."),
@@ -2101,14 +2030,12 @@ static void build_plot_menu (png_plot *plot)
 	    i++;
 	    continue;
 	}	    
-#ifndef OLD_GTK
 	if (!plot_has_data_markers(plot) &&
 	    (!strcmp(plot_items[i], "Freeze data labels") ||
 	     !strcmp(plot_items[i], "Clear data labels"))) {
 	    i++;
 	    continue;
 	}
-#endif
 	if (!plot_has_regression_list(plot) &&
 	    !strcmp(plot_items[i], "OLS estimates")) {
 	    i++;
@@ -2381,53 +2308,16 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 			 event->area.width, event->area.height);
 }
 
-#ifdef OLD_GTK
-
-#include <errno.h>
-
-static int test_file_open (const char *fname)
-{
-    FILE *fp;
-    int err = 0;
-
-    errno = 0;
-
-    fp = fopen(fname, "r");
-    if (fp == NULL) {
-	errbox(_("Couldn't open %s: %s"), fname, strerror(errno));
-	err = 1;
-    } else {
-	fclose(fp);
-    }
-
-    return err;
-}
-#endif
-
 static void render_pngfile (png_plot *plot, int view)
 {
     gint width;
     gint height;
     GdkPixbuf *pbuf;
     char pngname[MAXLEN];
-#ifndef OLD_GTK
     GError *error = NULL;
-#endif
 
     build_path(pngname, paths.userdir, "gretltmp.png", NULL);
 
-#ifdef OLD_GTK
-    if (test_file_open(pngname)) {
-	return;
-    }
-    pbuf = gdk_pixbuf_new_from_file(pngname);
-    if (pbuf == NULL) {
-	fputs("Failed in gdk_pixbuf_new_from_file()\n", stderr);
-	errbox(_("Malformed PNG file for graph"));
-	remove(pngname);
-	return;
-    }
-#else
     pbuf = gdk_pixbuf_new_from_file(pngname, &error);
     if (pbuf == NULL) {
         errbox(error->message);
@@ -2435,41 +2325,30 @@ static void render_pngfile (png_plot *plot, int view)
 	remove(pngname);
 	return;
     }
-#endif
 
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
 
     if (width == 0 || height == 0) {
 	errbox(_("Malformed PNG file for graph"));
-#ifdef OLD_GTK
-	gdk_pixbuf_unref(pbuf);
-#else
 	g_object_unref(pbuf);
-#endif
 	remove(pngname);
 	return;
     }
 
-#ifndef OLD_GTK
     /* scrap any old record of which points are labeled */
     if (plot->spec->labeled != NULL) {
 	free(plot->spec->labeled);
 	plot->spec->labeled = NULL;
 	plot->format &= ~PLOT_MARKERS_UP;
     }
-#endif
 
     gdk_pixbuf_render_to_drawable(pbuf, plot->pixmap, 
 				  plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
 				  0, 0, 0, 0, width, height,
 				  GDK_RGB_DITHER_NONE, 0, 0);
 
-#ifdef OLD_GTK
-    gdk_pixbuf_unref(pbuf);
-#else
     g_object_unref(pbuf);
-#endif
     remove(pngname);
     
     if (view != PNG_START) { 
@@ -2919,25 +2798,13 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	plot->pixel_width = plot->pixel_height;
     }
 
-#ifdef OLD_GTK
-    gtk_widget_push_visual(gdk_rgb_get_visual());
-    gtk_widget_push_colormap(gdk_rgb_get_cmap());
     plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_widget_pop_visual();
-    gtk_widget_pop_colormap();
-#else
-    plot->shell = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-#endif
 
     /* note need for corresponding unref */
     gtk_widget_ref(plot->shell);
 
     gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: gnuplot graph")); 
-#ifdef OLD_GTK
-    gtk_window_set_policy(GTK_WINDOW(plot->shell), FALSE, FALSE, FALSE);
-#else
     gtk_window_set_resizable(GTK_WINDOW(plot->shell), FALSE);
-#endif
 
     vbox = gtk_vbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
@@ -2964,13 +2831,8 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     /* Create drawing-area widget */
     plot->canvas = gtk_drawing_area_new();
-#ifdef OLD_GTK
-    gtk_drawing_area_size(GTK_DRAWING_AREA(plot->canvas), 
-			  plot->pixel_width, plot->pixel_height);
-#else
     gtk_widget_set_size_request(GTK_WIDGET(plot->canvas), 
 				plot->pixel_width, plot->pixel_height);
-#endif
     gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
                            | GDK_BUTTON_PRESS_MASK
@@ -2999,12 +2861,8 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     /* the statusbar */
     plot->statusbar = gtk_statusbar_new();
 
-#ifdef OLD_GTK
-    gtk_widget_set_usize(plot->statusbar, 1, -1);
-#else
     gtk_widget_set_size_request(plot->statusbar, 1, -1);
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(plot->statusbar), FALSE);
-#endif
 
     gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
 				  GTK_RESIZE_QUEUE);
@@ -3046,11 +2904,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     if (plot_has_xrange(plot)) {
 	gtk_widget_realize(plot->cursor_label);
-#ifdef OLD_GTK
-	gtk_widget_set_usize(plot->cursor_label, 140, -1);
-#else
 	gtk_widget_set_size_request(plot->cursor_label, 140, -1);
-#endif
     }
 
     gtk_widget_show(vbox);

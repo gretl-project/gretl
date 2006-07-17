@@ -578,41 +578,23 @@ void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
-#ifndef OLD_GTK
     g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
 			      G_CALLBACK (gtk_widget_destroy), 
 			      G_OBJECT (w));
-#else
-    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
-			GTK_SIGNAL_FUNC (delete_widget), 
-			GTK_OBJECT (w));
-#endif
 
     tmp = standard_button(GTK_STOCK_CANCEL);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
-#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (tmp), "clicked", 
 		      G_CALLBACK (series_view_format_cancel), sview);
     g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
 			      G_CALLBACK (gtk_widget_destroy), 
 			      G_OBJECT (w));
-#else
-    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
-			GTK_SIGNAL_FUNC (series_view_format_cancel), sview);
-    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
-			GTK_SIGNAL_FUNC (delete_widget), 
-			GTK_OBJECT (w));
-#endif
 
     gtk_container_add(GTK_CONTAINER(vbox), hbox);
     gtk_container_add(GTK_CONTAINER(w), vbox);
 
     gtk_widget_show_all(w);
-
-#ifdef OLD_GTK
-    gtk_window_set_transient_for(GTK_WINDOW(w), GTK_WINDOW(vwin->dialog));
-#endif
 
     gretl_set_window_modal(w);
 

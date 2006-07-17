@@ -52,10 +52,6 @@
 # include <windows.h>
 #endif
 
-#ifdef OLD_GTK
-# include <gdk-pixbuf/gdk-pixbuf.h>
-#endif
-
 static void auto_save_gp (windata_t *vwin);
 
 #include "../pixmaps/model.xpm"
@@ -227,9 +223,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 				    GdkEventButton *event,
 				    gpointer data);
 static int real_delete_model_from_session (SESSION_MODEL *model);
-#ifndef OLD_GTK
 static void rename_session_object (gui_obj *obj, const char *newname);
-#endif
 
 static int session_saved;
 
@@ -1330,9 +1324,6 @@ static gchar *graph_str (SESSION_GRAPH *graph)
 	    }
 	}
 	if (gotxy == 2) {
-#ifdef OLD_GTK
-	    buf = g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
-#else
 	    char *tmp = 
 		g_strdup_printf("%s %s %s", ylabel, _("versus"), xlabel);
 
@@ -1340,7 +1331,6 @@ static gchar *graph_str (SESSION_GRAPH *graph)
 		buf = my_locale_to_utf8(tmp);
 		free(tmp);
 	    }
-#endif /* OLD_GTK */
 	}
 
 	fclose(fp);
@@ -1384,12 +1374,7 @@ static int maybe_raise_object_window (gpointer p)
     int ret = 0;
 
     if (w != NULL) {
-#ifdef OLD_GTK 
-	gdk_window_show(w->window);
-	gdk_window_raise(w->window);
-#else
 	gtk_window_present(GTK_WINDOW(w));
-#endif
 	ret = 1;
     }
 
@@ -1618,8 +1603,6 @@ static void maybe_delete_session_object (gui_obj *obj)
     g_free(msg);
 }
 
-#ifndef OLD_GTK
-
 static void rename_session_graph (SESSION_GRAPH *graph, const char *newname)
 {
     int i;
@@ -1649,8 +1632,6 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 
     set_replay_off();
 }
-
-#endif /* !OLD_GTK */
 
 static gui_obj *get_gui_obj_from_data (void *finddata)
 {
@@ -1769,27 +1750,6 @@ static GdkColor *get_white (void)
     return white;
 }
 
-#ifdef OLD_GTK
-
-static void white_bg_style (GtkWidget *widget, gpointer data)
-{
-     GtkRcStyle *rc_style;
-     static GdkColor *white;
-
-     if (white == NULL) {
-	 white = get_white();
-     }
-
-     rc_style = gtk_rc_style_new();
-     rc_style->bg[GTK_STATE_NORMAL] = *white;
-     rc_style->color_flags[GTK_STATE_NORMAL] |= GTK_RC_BG;
-
-     gtk_widget_modify_style(widget, rc_style);
-     gtk_rc_style_unref(rc_style);
-}
-
-#else
-
 static void white_bg_style (GtkWidget *widget, gpointer data)
 {
     static GdkColor *white;
@@ -1800,9 +1760,6 @@ static void white_bg_style (GtkWidget *widget, gpointer data)
 
     gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, white);
 }
-
-#endif /* OLD_GTK */
-
 
 static void real_pack_icon (gui_obj *gobj, int row, int col)
 {
@@ -2364,25 +2321,6 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     return gobj;
 }
 
-#ifdef OLD_GTK
-
-static GtkWidget *create_popup_item (GtkWidget *popup, char *str, 
-				     GtkSignalFunc callback)
-{
-    GtkWidget *item;
-
-    item = gtk_menu_item_new_with_label(str);
-    gtk_signal_connect(GTK_OBJECT(item), "activate",
-		       callback,
-		       str);
-    gtk_widget_show(item);
-    gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
-
-    return item;
-}
-
-#else 
-
 static GtkWidget *create_popup_item (GtkWidget *popup, char *str, 
 				     GtkCallback callback)
 {
@@ -2397,8 +2335,6 @@ static GtkWidget *create_popup_item (GtkWidget *popup, char *str,
 
     return item;
 }
-
-#endif
 
 static void session_build_popups (void)
 {
@@ -2530,10 +2466,8 @@ void view_session (void)
     gtk_container_set_border_width(GTK_CONTAINER(scroller), 0);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
 				   GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(scroller), "button_press_event",
 		     G_CALLBACK(session_icon_click), NULL);
-#endif
 
     gtk_box_pack_start(GTK_BOX(hbox), scroller, TRUE, TRUE, 0); 
 
@@ -2557,9 +2491,7 @@ void view_session (void)
     gtk_widget_grab_focus(icon_table);
 }
 
-/* apparatus for renaming session objects (gtk2 only) */
-
-#ifndef OLD_GTK
+/* apparatus for renaming session objects */
 
 static void size_name_entry (GtkWidget *w, const char *name)
 {
@@ -2638,8 +2570,6 @@ static gboolean start_rename_object (GtkWidget *w,
     return TRUE;
 }
 
-#endif /* !OLD_GTK -- object renaming stuff */
-
 static void make_short_label_string (char *targ, const char *src)
 {
     if (strlen(src) > SHOWNAMELEN) {
@@ -2650,47 +2580,6 @@ static void make_short_label_string (char *targ, const char *src)
 	strcpy(targ, src);
     }
 }
-
-#ifdef OLD_GTK
-
-static void create_gobj_icon (gui_obj *gobj, char **xpm)
-{
-    GdkPixmap *pixmap;
-    GdkBitmap *mask;
-    GtkStyle *style;
-    GtkWidget *image;
-    gchar shortname[SHOWNAMELEN + 1];
-
-    style = gtk_widget_get_style(iconview);
-    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
-					  &mask, 
-					  &style->bg[GTK_STATE_NORMAL], 
-					  xpm);
-
-    gobj->icon = gtk_event_box_new();
-    gtk_widget_set_usize(gobj->icon, 36, 36);
-
-    image = gtk_pixmap_new(pixmap, mask);
-
-    gtk_container_add(GTK_CONTAINER(gobj->icon), image);
-    gtk_widget_show(image);
-
-    if (gobj->sort == GRETL_OBJ_MODTAB || gobj->sort == GRETL_OBJ_GPAGE) {
-	session_drag_setup(gobj);
-    }
-
-    make_short_label_string(shortname, gobj->name);
-    gobj->label = gtk_label_new(shortname);
-    
-    gtk_signal_connect(GTK_OBJECT(gobj->icon), "button_press_event",
-		       GTK_SIGNAL_FUNC(session_icon_click), gobj);
-    gtk_signal_connect(GTK_OBJECT(gobj->icon), "enter_notify_event",
-		       GTK_SIGNAL_FUNC(icon_entered), gobj);
-    gtk_signal_connect(GTK_OBJECT(gobj->icon), "leave_notify_event",
-		       GTK_SIGNAL_FUNC(icon_left), gobj);
-}
-
-#else
 
 static void create_gobj_icon (gui_obj *gobj, const char **xpm)
 {
@@ -2741,8 +2630,6 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
 		     G_CALLBACK(icon_left), gobj);
 }
 
-#endif /* OLD_GTK */
-
 static gui_obj *gui_object_new (gchar *name, int sort)
 {
     gui_obj *gobj;
@@ -2770,35 +2657,10 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     default: break;
     }
 
-#ifdef OLD_GTK
-    create_gobj_icon(gobj, xpm);
-#else
     create_gobj_icon(gobj, (const char **) xpm);
-#endif
 
     return gobj;
 } 
-
-#ifdef OLD_GTK
-
-static void auto_save_gp (windata_t *vwin)
-{
-    FILE *fp;
-    gchar *buf;
-
-    if ((fp = gretl_fopen(vwin->fname, "w")) == NULL) {
-	buf = g_strdup_printf(_("Couldn't write to %s"), vwin->fname);
-	errbox(buf); 
-	g_free(buf);
-    } else {
-	buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-	fprintf(fp, "%s", buf);
-	g_free(buf); 
-	fclose(fp);
-    }
-}
-
-#else 
 
 static void auto_save_gp (windata_t *vwin)
 {
@@ -2834,8 +2696,6 @@ static void auto_save_gp (windata_t *vwin)
     g_free(buf); 
     fclose(fp);
 }
-
-#endif /* OLD_GTK */
 
 #ifdef G_OS_WIN32
 
@@ -2875,26 +2735,6 @@ static char *add_pause_to_plotfile (const char *fname)
 
 #endif /* G_OS_WIN32 */
 
-#ifdef OLD_GTK
-
-void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
-{
-    gchar *buf = NULL;
-    windata_t *vwin = (windata_t *) data;
-
-    auto_save_gp(vwin);
-
-    buf = g_strdup_printf("gnuplot -persist \"%s\"", vwin->fname);
-
-    if (system(buf)) {
-        errbox(_("gnuplot command failed"));
-    }
-
-    g_free(buf);
-}
-
-#else /* gtk-2.0 */
-
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
     gchar *buf = NULL;
@@ -2927,8 +2767,6 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 
     g_free(buf);
 }
-
-#endif /* gtk versions fork */
 
 void save_plot_commands_callback (GtkWidget *w, gpointer p)
 {

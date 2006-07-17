@@ -101,8 +101,6 @@ void main_menubar_state (gboolean s)
     }
 }
 
-#ifndef OLD_GTK
-
 static GtkItemFactoryEntry time_series_model_items[] = {
     { N_("/Model/Time series/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL, GNULL },
     { N_("/Model/Time series/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL, GNULL },
@@ -124,32 +122,6 @@ static GtkItemFactoryEntry panel_model_items[] = {
     { N_("/Model/Panel/_Fixed or random effects..."), NULL, model_callback, PANEL, NULL, GNULL },
     { N_("/Model/Panel/_Weighted least squares..."), NULL, model_callback, PANEL_WLS, NULL, GNULL }
 };
-
-#else
-
-static GtkItemFactoryEntry time_series_model_items[] = {
-    { N_("/Model/Time series/_Cochrane-Orcutt..."), NULL, model_callback, CORC, NULL },
-    { N_("/Model/Time series/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
-    { N_("/Model/Time series/_Prais-Winsten..."), NULL, model_callback, PWE, NULL },
-    { N_("/Model/Time series/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
-    { N_("/Model/Time series/ARI_MA..."), NULL, model_callback, ARMA, NULL },
-    { N_("/Model/Time series/_GARCH..."), NULL, model_callback, GARCH, NULL },
-    { N_("/Model/Time series/_Vector Autoregression..."), NULL, selector_callback, VAR, NULL },
-    { N_("/Model/Time series/VAR _lag selection..."), NULL, selector_callback, VLAGSEL, NULL },
-    { N_("/Model/Time series/V_ECM..."), NULL, selector_callback, VECM, NULL },
-    { N_("/Model/Time series/_Cointegration test"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Model/Time series/Cointegration test/_Engle-Granger..."), NULL, 
-      selector_callback, COINT, NULL },
-    { N_("/Model/Time series/Cointegration test/_Johansen..."), NULL, 
-      selector_callback, COINT2, NULL }
-};
-
-static GtkItemFactoryEntry panel_model_items[] = {
-    { N_("/Model/Panel/_Fixed or random effects..."), NULL, model_callback, PANEL, NULL },
-    { N_("/Model/Panel/_Weighted least squares..."), NULL, model_callback, PANEL_WLS, NULL }
-};
-
-#endif
 
 #define COMPACTABLE(d) (d->structure == TIME_SERIES && \
                         (d->pd == 4 || d->pd == 12 || \
@@ -390,12 +362,7 @@ GtkWidget *build_var_popup (void)
 			 G_CALLBACK(var_popup_click),
 			 _(var_items[i]));
 	gtk_widget_show(var_item);
-#ifndef OLD_GTK
 	gtk_menu_shell_append(GTK_MENU_SHELL(var_menu), var_item);
-#else
-	GTK_WIDGET_SET_FLAGS (var_item, GTK_SENSITIVE | GTK_CAN_FOCUS); /* ?? */
-	gtk_menu_append(GTK_MENU(var_menu), var_item);
-#endif
     }
 
     return var_menu;
@@ -452,11 +419,7 @@ GtkWidget *build_selection_popup (void)
 			 G_CALLBACK(selection_popup_click),
 			 _(items[i]));
 	gtk_widget_show(item);
-#ifndef OLD_GTK
 	gtk_menu_shell_append(GTK_MENU_SHELL(sel_menu), item);
-#else 
-	gtk_menu_append(GTK_MENU(sel_menu), item);
-#endif
     }
 
     return sel_menu;

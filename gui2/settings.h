@@ -29,7 +29,7 @@ void font_selector (gpointer data, guint which, GtkWidget *widget);
 
 void set_fixed_font (void);
 
-#if !defined(OLD_GTK) && !defined(USE_GNOME)
+#ifndef USE_GNOME
 
 void set_app_font (const char *fontname);
 

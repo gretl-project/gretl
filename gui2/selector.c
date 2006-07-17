@@ -25,13 +25,10 @@
 #include "menustate.h"
 #include "fileselect.h"
 #include "fnsave.h"
+#include "treeutils.h"
 
 #include "var.h"
 #include "gretl_func.h"
-
-#ifndef OLD_GTK
-# include "treeutils.h"
-#endif
 
 #define VLDEBUG 0
 
@@ -267,10 +264,6 @@ static int selector_get_depvar_number (selector *sr)
 
     return ynum;
 }
-
-#ifdef OLD_GTK
-# include "selector-gtk1.c"
-#else
 
 static gint dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, 
 				selector *sr); 
@@ -1099,8 +1092,6 @@ static gint listvar_special_click (GtkWidget *widget, GdkEventButton *event,
     return FALSE;
 }
 
-#endif /* functions specific to gtk-2.0 */
-
 static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event, 
 			       selector *sr)
 {
@@ -1119,8 +1110,6 @@ static gint lvars_right_click (GtkWidget *widget, GdkEventButton *event,
 }
 
 /* end special click callbacks */
-
-#ifndef OLD_GTK
 
 static void varlist_insert_const (GtkWidget *w)
 {
@@ -1217,8 +1206,6 @@ static gint varlist_row_count (selector *sr, int locus, int *realrows)
 
     return n;
 }
-
-#endif
 
 static void topslot_empty (int code)
 {
@@ -1447,8 +1434,6 @@ static int maybe_resize_exog_recorder_lists (selector *sr, int n)
     return err;
 }
 
-#ifndef OLD_GTK
-
 static void get_rlvars_data (selector *sr, int rows, int context)
 {
     GtkTreeModel *model;
@@ -1500,57 +1485,6 @@ static void get_rlvars_data (selector *sr, int rows, int context)
 	add_to_cmdlist(sr, " 0");
     }
 }
-
-#else
-
-static void get_rlvars_data (selector *sr, int rows, int context)
-{
-    gchar *rvstr, *lagstr;
-    int lag;
-    int added = 0;
-    int i, j = 1;
-
-    for (i=0; i<rows; i++) {
-	lagstr = NULL;
-	lag = 0;
-
-	gtk_clist_get_text(GTK_CLIST(sr->rlvars), i, 0, &rvstr);
-	gtk_clist_get_text(GTK_CLIST(sr->rlvars), i, 1, &lagstr);
-	if (lagstr != NULL) {
-	    lag = atoi(lagstr);
-	}
-
-	if (is_lag_dummy(atoi(rvstr), lag, context)) {
-	    continue;
-	}
-
-	if (context) {
-	    lagstr = get_lagpref_string(atoi(rvstr), context);
-	    add_to_cmdlist(sr, lagstr);
-	    free(lagstr);
-	    added++;
-	} else {
-	    add_to_cmdlist(sr, " ");
-	    add_to_cmdlist(sr, rvstr);
-	    added++;
-	}
-
-	if (MODEL_CODE(sr->code) && xlist != NULL) { 
-	    xlist[j++] = atoi(rvstr);
-	} else if (VEC_CODE(sr->code) && veclist != NULL) {
-	    veclist[j++] = atoi(rvstr);
-	}
-    }
-
-    if (sr->code == ARMA && added && !(sr->opts & OPT_N)) {
-	/* add const explicitly */
-	add_to_cmdlist(sr, " 0");
-    }
-}
-
-#endif
-
-#ifndef OLD_GTK
 
 static int get_ruvars_data (selector *sr, int rows, int context)
 {
@@ -1606,67 +1540,6 @@ static int get_ruvars_data (selector *sr, int rows, int context)
 
     return err;
 } 
-
-#else
-
-static int get_ruvars_data (selector *sr, int rows, int context)
-{
-    gchar *tmp;
-    gchar *exog;
-    gchar *lstr;
-    int *reclist = NULL;
-    int lag, ynum, xnum;
-    int i, j = 1;
-    int err = 0;
-
-    if (sr->code == TSLS) {
-	reclist = instlist;
-    } else if (USE_VECXLIST(sr->code)) {
-	reclist = vecxlist;
-    }
-
-    ynum = selector_get_depvar_number(sr);
-
-    for (i=0; i<rows; i++) {
-	lstr = NULL;
-	lag = 0;
-
-	gtk_clist_get_text(GTK_CLIST(sr->ruvars), i, 0, &exog);
-	gtk_clist_get_text(GTK_CLIST(sr->ruvars), i, 1, &lstr);
-
-	if (lstr != NULL) {
-	    lag = atoi(lstr);
-	}
-
-	xnum = atoi(exog);
-	if (sr->code == TSLS && xnum == ynum && lag == 0) {
-	    errbox("You can't use the dependent variable as an instrument");
-	    err = 1;
-	    break;
-	}	    
-
-	if (is_lag_dummy(xnum, lag, context)) {
-	    continue;
-	}
-
-	if (context) {
-	    tmp = get_lagpref_string(xnum, context);
-	    add_to_cmdlist(sr, tmp);
-	    free(tmp);
-	} else {
-	    add_to_cmdlist(sr, " ");
-	    add_to_cmdlist(sr, exog);
-	}
-
-	if (reclist != NULL) {
-	    reclist[j++] = xnum;
-	}
-    }
-
-    return err;
-}
-
-#endif
 
 static void parse_extra_widgets (selector *sr, char *endbit)
 {
@@ -1935,11 +1808,9 @@ static void cancel_selector (GtkWidget *widget, selector *sr)
 
 static void destroy_selector (GtkWidget *w, selector *sr) 
 {
-#ifndef OLD_GTK
     if (SAVE_DATA_ACTION(sr->code) || sr->code == SAVE_FUNCTIONS) {
 	gtk_main_quit();
     }
-#endif
 
     free(sr->cmdlist);
     free(sr);
@@ -2108,13 +1979,9 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
 		      G_CALLBACK(clickfunc), sr);
     gtk_widget_show(tmp); 
 
-#ifdef OLD_GTK
-    entry = gtk_entry_new_with_max_length(VNAMELEN-1);
-#else
     entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(entry), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(entry), VNAMELEN+3);
-#endif
 
     gtk_box_pack_start(GTK_BOX(x_hbox), entry, FALSE, FALSE, 0);
     gtk_widget_show(entry); 
@@ -2175,13 +2042,9 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
                       G_CALLBACK(set_dependent_var_callback), sr);
     gtk_widget_show(tmp); 
 
-#ifdef OLD_GTK
-    sr->depvar = gtk_entry_new_with_max_length(VNAMELEN-1);
-#else
     sr->depvar = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN-1);
     gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMELEN+3);
-#endif
 
     g_signal_connect(G_OBJECT(sr->depvar), "changed",
 		     G_CALLBACK(maybe_activate_depvar_lags), sr);
@@ -2216,15 +2079,9 @@ static void lag_order_spin (selector *sr, GtkWidget *vbox, int code)
 {
     GtkWidget *tmp, *hbox;
     GtkObject *adj;
-#ifdef OLD_GTK
-    gfloat lag; 
-    gfloat minlag;
-    gfloat maxlag;
-#else
     gdouble lag; 
     gdouble minlag;
     gdouble maxlag;
-#endif
     const char *labels[] = {
 	N_("lag order:"),
 	N_("cointegration rank:")
@@ -2296,13 +2153,8 @@ static void extra_var_box (selector *sr, GtkWidget *vbox)
 
 static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
 {
-#ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter;
-#else
-    GtkWidget *store;
-    gint iter = 0;
-#endif
     int *reclist = NULL;
     
     GtkWidget *tmp, *remove, *midhbox, *button_vbox;
@@ -2331,13 +2183,9 @@ static void auxiliary_varlist_box (selector *sr, GtkWidget *right_vbox)
 
     /* then the listing */
     sr->ruvars = var_list_box_new(GTK_BOX(midhbox), sr, SR_RUVARS);
-#ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->ruvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-#else
-    store = sr->ruvars;
-#endif
 
     if (sr->code == TSLS) {
 	reclist = instlist;
@@ -2832,19 +2680,12 @@ static void build_selector_switches (selector *sr)
 static void unhide_lags_callback (GtkWidget *w, selector *sr)
 {
     int i, show_lags = GTK_TOGGLE_BUTTON(w)->active;
-#ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-#else
-    GtkWidget *store = sr->lvars;
-    gint iter = 0;
-
-    gtk_clist_clear(GTK_CLIST(sr->lvars));
-#endif
 
     for (i=1; i<datainfo->v; i++) {
 	if (list_show_var(i, sr->code, show_lags)) {
@@ -3079,13 +2920,8 @@ static GtkWidget *selection_dialog_top_label (int ci)
 void selection_dialog (const char *title, int (*callback)(), guint ci,
 		       int preselect) 
 {
-#ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter;
-#else
-    GtkWidget *store;
-    gint iter = 0;
-#endif
     GtkWidget *right_vbox, *tmp;
     GtkWidget *big_hbox;
     GtkWidget *button_vbox;
@@ -3112,13 +2948,9 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 
     /* LHS: list of elements to choose from */
     sr->lvars = var_list_box_new(GTK_BOX(big_hbox), sr, SR_LVARS);
-#ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-#else
-    store = sr->lvars;
-#endif
 
     if (ci == SAVE_FUNCTIONS) {
 	functions_list(sr);
@@ -3211,14 +3043,10 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 
 	/* then the listing */
 	sr->rlvars = var_list_box_new(GTK_BOX(indepvar_hbox), sr, SR_RLVARS);
-#ifndef OLD_GTK
 	store = 
 	    GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->rlvars)));
 	gtk_list_store_clear (store);
 	gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-#else
-	store = sr->rlvars;
-#endif
 
 	if (MODEL_CODE(ci)) {
 	    if (ci != ARMA) {
@@ -3343,110 +3171,6 @@ static char *get_topstr (int cmdnum)
     }
 }
 
-#ifdef OLD_GTK
-
-static int add_omit_list (gpointer p, selector *sr)
-{
-    windata_t *vwin = (windata_t *) p;
-    GRETL_VAR *var = NULL;
-    MODEL *pmod = NULL;
-    gchar *row[3] = { NULL, NULL, NULL };
-    gchar id[5];
-    int i, nvars = 0;
-
-    if (sr->code == VAROMIT) {
-	var = (GRETL_VAR *) vwin->data;
-    } else {
-	pmod = (MODEL *) vwin->data;
-    }
-
-    if (sr->code == ELLIPSE) {
-	char pname[VNAMELEN];
-
-	for (i=0; i<pmod->ncoeff; i++) {
-	    gretl_model_get_param_name(pmod, datainfo, i, pname);
-	    sprintf(id, "%d", i);
-	    row[0] = id;
-	    row[2] = pname;
-	    gtk_clist_append(GTK_CLIST(sr->lvars), row);
-	    nvars++;
-	}
-	g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
-			  GINT_TO_POINTER(1));
-    } else if (sr->code == OMIT || sr->code == COEFFSUM) {
-	for (i=2; i<=pmod->list[0]; i++) {
-	    if (pmod->list[i] == 0) {
-		continue;
-	    }
-	    if (pmod->list[i] == LISTSEP) {
-		break;
-	    }
-	    sprintf(id, "%d", pmod->list[i]);
-	    row[0] = id;
-	    row[2] = datainfo->varname[pmod->list[i]];
-	    gtk_clist_append(GTK_CLIST(sr->lvars), row);
-	    nvars++;
-	} 
-    } else if (sr->code == ADD) {
-	for (i=1; i<datainfo->v; i++) {
-	    int j, match = 0;
-
-	    for (j=1; j<=pmod->list[0]; j++) {
-		if (i == pmod->list[j]) {
-		    match = 1;
-		    break;
-		}
-	    }
-	    if (match) continue;
-	    sprintf(id, "%d", i);
-	    row[0] = id;
-	    row[2] = datainfo->varname[i];
-	    gtk_clist_append(GTK_CLIST(sr->lvars), row);
-	    nvars++;
-	}
-    } else if (sr->code == VAROMIT) {
-	int err, vi, *exolist;
-
-	exolist = gretl_VAR_get_exo_list(var, &err);
-	if (exolist != NULL) {
-	    for (i=1; i<=exolist[0]; i++) {
-		vi = exolist[i];
-		sprintf(id, "%d", vi);
-		row[0] = id;
-		row[2] = datainfo->varname[vi];
-		gtk_clist_append(GTK_CLIST(sr->lvars), row);
-		nvars++;
-	    }	    
-	} 
-    } 
-
-    return nvars;
-}
-
-static int functions_list (selector *sr)
-{
-    const char *fnname;
-    gchar *row[3] = { NULL, NULL, NULL };
-    gchar id[5];
-    int i, nfn;
-
-    nfn = n_user_functions();
-
-    for (i=0; i<nfn; i++) {
-	fnname = user_function_name_by_index(i);
-	sprintf(id, "%d", i);
-	row[0] = id;
-	row[2] = (char *) fnname;
-	gtk_clist_append(GTK_CLIST(sr->lvars), row);
-    }
-    g_object_set_data(G_OBJECT(sr->lvars), "keep_names",
-		      GINT_TO_POINTER(1));
-
-    return nfn;
-}
-
-#else
-
 static int add_omit_list (gpointer p, selector *sr)
 {
     windata_t *vwin = (windata_t *) p;
@@ -3560,8 +3284,6 @@ static int functions_list (selector *sr)
     return nfn;
 }
 
-#endif
-
 static GtkWidget *simple_selection_top_label (int code)
 {
     GtkWidget *label = NULL;
@@ -3581,31 +3303,6 @@ static gboolean remove_busy_signal (GtkWidget *w, windata_t *vwin)
     }
     return FALSE;
 }
-
-#ifdef OLD_GTK
-
-static void 
-add_to_rlvars_from_named_list (selector *sr, const int *list)
-{
-    gchar *row[3];
-    gchar id[8];
-    int i;
-    
-    if (!GTK_IS_CLIST(sr->rlvars)) {
-	return;
-    }
-
-    row[1] = NULL;
-
-    for (i=1; i<=list[0]; i++) {
-	sprintf(id, "%d", list[i]);
-	row[0] = id;
-	row[2] = datainfo->varname[list[i]];
-	gtk_clist_append(GTK_CLIST(sr->rlvars), row);
-    }
-}
-
-#else
 
 static void 
 add_to_rlvars_from_named_list (selector *sr, const int *list)
@@ -3627,8 +3324,6 @@ add_to_rlvars_from_named_list (selector *sr, const int *list)
 			   0, v, 1, 0, 2, datainfo->varname[v], -1);
     }
 }
-
-#endif
 
 static void maybe_set_listdef_vars (selector *sr)
 {
@@ -3682,13 +3377,8 @@ static void selector_add_top_entry (selector *sr)
 void simple_selection (const char *title, int (*callback)(), guint ci,
 		       gpointer p) 
 {
-#ifndef OLD_GTK
     GtkListStore *store;
     GtkTreeIter iter;
-#else
-    GtkWidget *store;
-    gint iter = 0;
-#endif
     GtkWidget *left_vbox, *button_vbox, *right_vbox, *tmp;
     GtkWidget *top_hbox, *big_hbox, *remove_button;
     selector *sr;
@@ -3744,13 +3434,9 @@ void simple_selection (const char *title, int (*callback)(), guint ci,
     left_vbox = gtk_vbox_new(FALSE, 5);
 
     sr->lvars = var_list_box_new(GTK_BOX(left_vbox), sr, SR_LVARS);
-#ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sr->lvars)));
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-#else
-    store = sr->lvars;
-#endif
 
     if (ci == OMIT || ci == ADD || ci == COEFFSUM ||
 	ci == ELLIPSE || ci == VAROMIT) {
@@ -3847,27 +3533,6 @@ struct list_maker {
     int overflow;
 };
 
-#ifdef OLD_GTK
-
-static void selection_add_item (gint i, struct list_maker *lmkr)
-{
-    gchar *varnum = NULL;
-
-    if (lmkr->len > MAXLEN - 12) {
-	lmkr->overflow = 1;
-	return;
-    }
-
-    if (gtk_clist_get_text(GTK_CLIST(mdata->listbox), i, 0, &varnum)) {   
-	strcat(lmkr->liststr, " ");
-	strcat(lmkr->liststr, varnum);
-	lmkr->len += strlen(varnum) + 1;
-	lmkr->n_items += 1;
-    }
-}
-
-#else
-
 static void selection_add_item (GtkTreeModel *model, GtkTreePath *path,
 				GtkTreeIter *iter, struct list_maker *lmkr)
 {
@@ -3886,15 +3551,9 @@ static void selection_add_item (GtkTreeModel *model, GtkTreePath *path,
     lmkr->n_items += 1;
 }
 
-#endif
-
 char *main_window_selection_as_string (void) 
 {
-#ifdef OLD_GTK
-    GList *select;
-#else
     GtkTreeSelection *select;
-#endif
     struct list_maker lmkr;
 
     lmkr.liststr = mymalloc(MAXLEN);
@@ -3906,20 +3565,11 @@ char *main_window_selection_as_string (void)
     lmkr.n_items = lmkr.overflow = 0;
     lmkr.len = 0;
 
-#ifdef OLD_GTK
-    select = GTK_CLIST(mdata->listbox)->selection;
-    if (select != NULL) {
-	g_list_foreach(select, (GFunc) selection_add_item, 
-		       &lmkr);
-    }
-#else
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
-
     gtk_tree_selection_selected_foreach(select, 
 					(GtkTreeSelectionForeachFunc) 
 					selection_add_item,
 					&lmkr); 
-#endif
 
     if (lmkr.overflow) {
 	errbox(_("Too many items were selected"));
@@ -3986,10 +3636,8 @@ void data_save_selection_wrapper (int file_code, gpointer p)
 			 data_save_selection_callback, file_code, p);
     }
 
-#ifndef OLD_GTK
     gtk_main(); /* the corresponding gtk_main_quit() is in
 		   the function destroy_selector() */
-#endif
 }
 
 /* accessor functions */
@@ -4111,35 +3759,16 @@ static void lag_entry_callback (GtkWidget *w, gpointer p)
     }
 }
 
-#ifdef OLD_GTK
-
-static int spinner_get_int (GtkWidget *w)
-{
-    GtkAdjustment *adj = 
-	gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(w));
-
-    return (int) adj->value;
-}
-
-#else
-
 static int spinner_get_int (GtkWidget *w)
 {
     return (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
 }
-
-#endif
 
 static void lag_set_callback (GtkWidget *w, gpointer p)
 {
     var_lag_info *vlinfo;
     double dlag;
     int *lag;
-
-#ifdef OLD_GTK
-    /* inputs are swapped */
-    w = GTK_WIDGET(p);
-#endif
 
     vlinfo = (var_lag_info *) g_object_get_data(G_OBJECT(w), "vlinfo");
 
@@ -4261,16 +3890,8 @@ static void activate_y_lags (GtkWidget *w, var_lag_info *vlinfo)
 
 static void lagsel_spin_connect (GtkWidget *button)
 {
-#ifdef OLD_GTK
-    GtkAdjustment *adj;
-
-    adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(button));
-    gtk_signal_connect(GTK_OBJECT(adj), "value-changed", 
-		       GTK_SIGNAL_FUNC(lag_set_callback), button);
-#else
     g_signal_connect(G_OBJECT(button), "value-changed", 
 		     G_CALLBACK(lag_set_callback), NULL);
-#endif
 }
 
 static void lags_set_ok (GtkWidget *w, gpointer p)
@@ -4397,9 +4018,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 
 	/* entry widget for specific lags */
 	vlinfo[j].entry = gtk_entry_new();
-#ifndef OLD_GTK
 	gtk_entry_set_width_chars(GTK_ENTRY(vlinfo[j].entry), 16);
-#endif
 	gtk_table_attach_defaults(GTK_TABLE(tbl), vlinfo[j].entry, 6, 7, i, i+1);
 	g_signal_connect(G_OBJECT(vlinfo[j].entry), "changed", 
 			 G_CALLBACK(lag_entry_callback), &vlinfo[j]);
@@ -4496,56 +4115,6 @@ static int laggable_var (int v, int lag, int context)
     return 1;
 }
 
-#ifdef OLD_GTK
-
-static void 
-revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
-{
-    GtkWidget *w;
-    char *vnum;
-    int modv;
-    int k, rows;
-
-    w = (locus == SR_RUVARS)? sr->ruvars : sr->rlvars;
-    rows = GTK_CLIST(w)->rows;
-
-    for (k=0; k<rows; k++) {
-	gtk_clist_get_text(GTK_CLIST(w), k, 0, &vnum);
-	modv = atoi(vnum);
-	if (modv == vlinfo->v) {
-	    varlist_insert_var_full(vlinfo->v, w, k, sr, locus);
-	    break;
-	}
-    }
-}
-
-static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
-{
-    gint rows, xnum, lag;
-    int k, n = 0;
-
-    if (!GTK_IS_CLIST(w)) {
-	return 0;
-    }  
-
-    rows = GTK_CLIST(w)->rows;
-
-    for (k=0; k<rows; k++) {
-	clist_row_get_v_and_lag(GTK_CLIST(w), k, &xnum, &lag);
-	if (laggable_var(xnum, lag, context)) {
-	    if (list != NULL) {
-		list[*i] = xnum;
-		*i += 1;
-	    }
-	    n++;
-	}
-    }
-
-    return n;
-}
-
-#else
-
 static void 
 revise_var_string (var_lag_info *vlinfo, selector *sr, int locus)
 {
@@ -4603,8 +4172,6 @@ static int get_laggable_vars (GtkWidget *w, int context, int *list, int *i)
 
     return n;
 }
-
-#endif
 
 static int *sr_get_stoch_list (selector *sr, int *nset, int *pcontext)
 {

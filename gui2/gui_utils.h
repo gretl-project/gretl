@@ -20,53 +20,9 @@
 #ifndef GUI_UTILS_H
 #define GUI_UTILS_H
 
-#ifdef OLD_GTK
-
-/* various forward-compatibility bodges for GTK+ 1.2 */
-
-enum {
-    GTK_STOCK_OK,
-    GTK_STOCK_CANCEL,
-    GTK_STOCK_CLEAR,
-    GTK_STOCK_CLOSE,
-    GTK_STOCK_APPLY,
-    GTK_STOCK_HELP,
-    GTK_STOCK_GO_FORWARD,
-    GTK_STOCK_GO_BACK,
-    GTK_STOCK_FIND
-};
-
-# define G_OBJECT(o)                    GTK_OBJECT(o)
-# define g_object_set_data(o,s,d)       gtk_object_set_data(o,s,d)
-# define g_object_get_data(o,s)         gtk_object_get_data(o,s)
-# define g_object_unref(o)              gtk_object_unref(o)
-# define G_CALLBACK(f)                  GTK_SIGNAL_FUNC(f)
-# define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
-# define g_signal_connect_after(o,s,f,p) gtk_signal_connect_after(o,s,f,p)
-# define gtk_radio_button_get_group(b)  gtk_radio_button_group(b)
-# define gtk_notebook_set_current_page(n, p) gtk_notebook_set_page(n, p)
-# define gtk_widget_set_size_request(v,w,h) gtk_widget_set_usize(v,w,h)
-
-void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting);
-
-typedef struct GError_ GError;
-
-struct GError_ {
-    int code;
-    char *message;
-};
-
-void g_error_free (GError *err);
-
-int g_file_get_contents (const char *fname, char **pbuf, void *v1, void *v2);
-
-#else
-
-# define standard_button(s) gtk_button_new_from_stock(s)
+#define standard_button(s) gtk_button_new_from_stock(s)
 
 void gretl_stock_icons_init (void);
-
-#endif /* OLD_GTK */
 
 #ifdef ENABLE_NLS
 gchar *menu_translate (const gchar *path, gpointer p);

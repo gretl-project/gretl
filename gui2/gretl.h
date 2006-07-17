@@ -39,12 +39,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#if GTK_MAJOR_VERSION < 2
-# define OLD_GTK
-# include <gtkextra/gtkiconfilesel.h>
-#else
-# define GNULL (gconstpointer) NULL
-#endif
+#define GNULL (gconstpointer) NULL
 
 #ifdef USE_GTKSOURCEVIEW
 # include <gtksourceview/gtksourceview.h>
@@ -120,11 +115,7 @@ extern char midiplayer[MAXSTR];
 /* global GUI equipment */
 extern windata_t *mdata;
 extern GtkTargetEntry gretl_drag_targets[];
-#ifdef OLD_GTK
-extern GdkFont *fixed_font;
-#else
 extern PangoFontDescription *fixed_font;
-#endif
 
 #include "gretl_enums.h"
 

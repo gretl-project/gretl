@@ -43,8 +43,4 @@ void gretl_tooltips_init (void);
 
 void gretl_tooltips_add (GtkWidget *w, const gchar *str);
 
-#ifdef OLD_GTK
-void colorize_tooltips (GtkTooltips *tip);
-#endif
-
 #endif /* HELPFILES_H */

@@ -33,10 +33,6 @@
 # include <windows.h>
 #endif
 
-#if GTK_MAJOR_VERSION < 2
-# define OLD_GTK
-#endif
-
 typedef struct GretlChild_ GretlChild;
 typedef struct test_t_ test_t;
 typedef struct lookup_t_ lookup_t;

@@ -130,16 +130,12 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     wstr = gtk_entry_get_text(GTK_ENTRY(w));
 
     if (wstr != NULL && *wstr != '\0') {
-#ifndef OLD_GTK
 	gchar *trstr = force_locale_from_utf8(wstr);
 
 	if (trstr != NULL) {
 	    strncat(targ, trstr, n-1);
 	    g_free(trstr);
 	}
-#else
-	strncat(targ, wstr, n-1);
-#endif /* OLD_GTK */
     }
 }
 
@@ -200,12 +196,11 @@ static double entry_to_gp_double (GtkWidget *w)
 
 static void gp_string_to_entry (GtkWidget *w, const char *str)
 {
-#ifndef OLD_GTK
-# ifdef ENABLE_NLS
+#ifdef ENABLE_NLS
     int l2 = use_latin_2();
-# else
+#else
     int l2 = 0;
-# endif /* ENABLE_NLS */
+#endif
     gchar *trstr;
 
     if (l2) {
@@ -221,9 +216,6 @@ static void gp_string_to_entry (GtkWidget *w, const char *str)
 	gtk_entry_set_text(GTK_ENTRY(w), trstr);
 	g_free(trstr);
     }    
-#else 
-    gtk_entry_set_text(GTK_ENTRY(w), str);
-#endif /* OLD_GTK */
 }
 
 static int
@@ -350,11 +342,6 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 
     for (i=0; i<MAX_PLOT_LABELS && !err; i++) {
-#ifdef OLD_GTK
-	GtkWidget *active_item;
-	int opt;
-#endif
-
 	entry_to_gp_string(labeltext[i], spec->labels[i].text, 
 			   sizeof spec->labels[0].text);
 	if (string_is_blank(spec->labels[i].text)) {
@@ -364,15 +351,8 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	if (err) {
 	    break;
 	}
-#ifdef OLD_GTK
-	active_item = GTK_OPTION_MENU(labeljust[i])->menu_item;
-	opt = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(active_item), 
-						  "option"));
-	spec->labels[i].just = opt;
-#else
 	spec->labels[i].just = 
 	    gtk_option_menu_get_history(GTK_OPTION_MENU(labeljust[i]));
-#endif
     } 
 
     if (!err && border_check != NULL) {
@@ -403,11 +383,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     if (!err && ttfcombo != NULL && ttfspin != NULL) {
 	const gchar *tmp = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry));
-#ifdef OLD_GTK
-	int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ttfspin));
-#else
 	int ptsize = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(ttfspin));
-#endif
 
 	if (tmp != NULL && *tmp != '\0') {
 	    const char *fname = get_font_filename(tmp);
@@ -717,9 +693,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     /* set TT font (if gnuplot uses libgd and freetype) */
     if (gnuplot_has_ttf()) {
 	GtkWidget *ebox, *hsep;
-#ifdef OLD_GTK
-	GtkObject *adj;
-#endif
 	GList *fontnames = NULL;
 	struct font_info *ttflist;
 	const char *default_font = NULL;
@@ -755,30 +728,21 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(label);
 	gtk_widget_show(ebox);
 
+	/* FIXME max length of font name? */
+
 	ttfcombo = gtk_combo_new();
 	gtk_entry_set_max_length(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfcombo, 1, 2, 
 				  tbl_len-1, tbl_len);
 	gtk_combo_set_popdown_strings(GTK_COMBO(ttfcombo), fontnames); 
 	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), default_font);
-#ifdef OLD_GTK
-	gtk_signal_connect(GTK_OBJECT(GTK_COMBO(ttfcombo)->entry), "activate", 
-			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			   spec);
-#else
 	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
 	g_signal_connect(G_OBJECT(GTK_COMBO(ttfcombo)->entry), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
-#endif
 	gtk_widget_show (ttfcombo);
 
-#ifdef OLD_GTK
-	adj = gtk_adjustment_new(10, 6, 24, 1, 1, 1);
-	ttfspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-#else
 	ttfspin = gtk_spin_button_new_with_range(6, 24, 1);
-#endif
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ttfspin), 
 				  get_point_size(gretl_png_font()));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfspin, 2, 3, 
@@ -1045,16 +1009,10 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	    linescale[i] = gtk_entry_new();
 	    gtk_entry_set_max_length(GTK_ENTRY(linescale[i]), 6);
 	    gtk_entry_set_text(GTK_ENTRY(linescale[i]), spec->lines[i].scale);
-#ifdef OLD_GTK
-	    gtk_signal_connect(GTK_OBJECT(linescale[i]), "activate", 
-			       GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			       spec);
-#else
 	    gtk_entry_set_width_chars(GTK_ENTRY(linescale[i]), 6);
 	    g_signal_connect(G_OBJECT(linescale[i]), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);
-#endif
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      linescale[i], 2, 3, tbl_len-1, tbl_len);
 	    gtk_widget_show(linescale[i]);
@@ -1117,12 +1075,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	GtkWidget *hbox, *button, *image;
-#ifdef OLD_GTK
-	GdkPixmap *pixmap;
-	GdkBitmap *mask;	
-#else
 	GdkPixbuf *icon;
-#endif
 
 	/* label text */
 	tbl_len++;
@@ -1142,16 +1095,10 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	labeltext[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
 	gp_string_to_entry(labeltext[i], spec->labels[i].text);
-#ifdef OLD_GTK
-	gtk_signal_connect (GTK_OBJECT(labeltext[i]), "activate", 
-			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			    spec);
-#else
 	gtk_entry_set_width_chars(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
 	g_signal_connect (G_OBJECT(labeltext[i]), "activate", 
 			  G_CALLBACK(apply_gpt_changes), 
 			  spec);
-#endif
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  labeltext[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show(labeltext[i]);
@@ -1172,16 +1119,10 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	labelpos[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
 	label_pos_to_entry(spec->labels[i].pos, labelpos[i]);
-#ifdef OLD_GTK
-	gtk_signal_connect(GTK_OBJECT(labelpos[i]), "activate", 
-			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			   spec);
-#else
 	gtk_entry_set_width_chars(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
 	g_signal_connect(G_OBJECT(labelpos[i]), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
-#endif
 	gtk_container_add(GTK_CONTAINER(hbox), labelpos[i]);
 	gtk_widget_show(labelpos[i]);
 
@@ -1191,15 +1132,9 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	    g_object_set_data(G_OBJECT(button), "labelpos_entry", labelpos[i]);
 	    g_signal_connect(G_OBJECT(button), "clicked",
 			     G_CALLBACK(plot_label_position_click), spec);
-#ifdef OLD_GTK
-	    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
-						  &mask, NULL, mini_mouse_xpm);
-	    image = gtk_pixmap_new(pixmap, mask);
-#else
 	    icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
 	    image = gtk_image_new_from_pixbuf(icon);
 	    gtk_widget_set_size_request(button, 32, 26);
-#endif
 	    gtk_container_add (GTK_CONTAINER(button), image);
 	    gtk_container_add(GTK_CONTAINER(hbox), button);
 	    gtk_widget_show_all(button);
@@ -1224,9 +1159,6 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 	    item = gtk_menu_item_new_with_label(gp_justification_string(j));
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-#ifdef OLD_GTK
-	    gtk_object_set_data(GTK_OBJECT(item), "option", GINT_TO_POINTER(j));
-#endif
 	}
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(labeljust[i]), menu);	
 	gtk_option_menu_set_history(GTK_OPTION_MENU(labeljust[i]),

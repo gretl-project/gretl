@@ -27,8 +27,6 @@
 # include "build.h"
 #endif
 
-/* some material that is common between gtk 1.2 and gtk 2 variants */
-
 const gchar *copyright = "Copyright (C) 2000-2006 Allin Cottrell";
 const gchar *website = "http://gretl.sourceforge.net/";
 
@@ -38,20 +36,6 @@ const gchar *
 gretl_gnome_blurb = N_("An econometrics program for the gnome desktop "
 		       "issued under the GNU General Public License.  "
 		       "http://gretl.sourceforge.net/");
-#else
-gchar *no_gpl_text (void)
-{
-    return g_strdup_printf(_("Cannot find the license agreement file COPYING. "
-			     "Please make sure it's in %s"), 
-			   paths.gretldir);
-}
-#endif
-
-/* end of common stuff */
-
-#ifndef OLD_GTK  /* we'll start with the newer GTK versions */
-
-# ifdef USE_GNOME
 
 void about_dialog (gpointer data)
 {
@@ -111,7 +95,14 @@ void about_dialog (gpointer data)
     gtk_widget_show(about);
 }
 
-# else /* plain GTK 2 version of About dialog follows */
+#else /* plain GTK version of About dialog follows */
+
+gchar *no_gpl_text (void)
+{
+    return g_strdup_printf(_("Cannot find the license agreement file COPYING. "
+			     "Please make sure it's in %s"), 
+			   paths.gretldir);
+}
 
 static GtkWidget *open_logo (const char *pngname)
 {
@@ -181,16 +172,16 @@ void about_dialog (gpointer data)
 	gtk_widget_show(tempwid);
     }
 
-#  ifdef ENABLE_NLS
+# ifdef ENABLE_NLS
     if (strcmp(_("translator_credits"), "translator_credits")) {
 	tr_credit = _("translator_credits");
     }
-#  endif    
+# endif    
     
     tempstr = g_strdup_printf("gretl, version %s\n"
-#  ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
 			      BUILD_DATE
-#  endif
+# endif
 			      "%s\n%s\n%s",
 			      GRETL_VERSION, copyright, 
 			      website, tr_credit);
@@ -261,189 +252,4 @@ void about_dialog (gpointer data)
     gtk_widget_show(dialog);
 }
          
-# endif /* end of gnome/plain gtk variants for gtk 2 */
-
-#else /* now on to the old gtk variants */
-
-# ifdef USE_GNOME
-
-void about_dialog (gpointer data) 
-{
-    GtkWidget* dlg;
-    char const *authors[] = {
-	"Allin Cottrell",
-	"Riccardo \"Jack\" Lucchetti",
-	NULL
-    };
-    gchar *comment = NULL;
-
-#  ifdef ENABLE_NLS
-    if (strcmp(_("translator_credits"), "translator_credits")) {
-	comment = g_strconcat(_(gretl_gnome_blurb), " ", _("translator_credits"),
-			      NULL);
-    }
-#  endif 
-
-    dlg = gnome_about_new("gretl", GRETL_VERSION,
-			  copyright, 
-			  authors, 
-			  (comment != NULL)? comment : _(gretl_gnome_blurb),
-			  gnome_pixmap_file("gretl-logo.xpm") 
-			  );
-
-    if (comment != NULL) g_free(comment);
-
-    gnome_dialog_set_parent(GNOME_DIALOG(dlg), GTK_WINDOW(mdata->w));
-
-    gtk_widget_show(dlg);
-}
-
-# else /* plain gtk 1.2 version of About dialog follows */
-
-static int open_xpm (char *filename, GtkWidget *parent, GdkPixmap **pixmap, 
-		     GdkBitmap **mask) 
-{
-    char exfile[MAXLEN];
-    GtkStyle *style;
-
-    if (*filename == '\0') return 1;
-    strcpy(exfile, paths.gretldir);
-    if (exfile[strlen(exfile) - 2] != SLASH) {
-	strcat(exfile, SLASHSTR);
-    }
-    strcat(exfile, filename);
-
-    style = gtk_widget_get_style(parent);
-    *pixmap = gdk_pixmap_create_from_xpm(parent->window, 
-					 mask, 
-					 &style->bg[GTK_STATE_NORMAL], 
-					 exfile);
-
-    return *pixmap != NULL;
-}
-
-void about_dialog (gpointer data) 
-{
-    GtkWidget *tempwid, *notebook, *box, *label, *view, *vscroll;
-    GdkPixmap *logo_pixmap;
-    GdkBitmap *logo_mask;
-    char *tempstr, buf[MAXSTR];
-    const gchar *tr_credit = "";
-    GtkWidget *dialog;
-    FILE *fd;
-
-    dialog = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(dialog), _("About gretl"));
-    gtk_widget_set_usize(dialog, 522, 470);
-
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dialog)->vbox), 10);
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dialog)->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
-    gtk_signal_connect_object(GTK_OBJECT(dialog), 
-			      "delete_event", GTK_SIGNAL_FUNC 
-			      (gtk_widget_destroy), GTK_OBJECT(dialog));
-    gtk_widget_realize(dialog);
-      
-    notebook = gtk_notebook_new();
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       notebook, TRUE, TRUE, 0);
-    gtk_widget_show(notebook);
-   
-    box = gtk_vbox_new(TRUE, 5);
-    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
-    gtk_widget_show(box);
-   
-    if (open_xpm("gretl-logo.xpm", mdata->w, &logo_pixmap, &logo_mask)) {
-	tempwid = gtk_pixmap_new(logo_pixmap, logo_mask);
-	gtk_box_pack_start(GTK_BOX(box), tempwid, FALSE, FALSE, 0);
-	gtk_widget_show(tempwid);
-    }
-
-#  ifdef ENABLE_NLS
-    if (strcmp(_("translator_credits"), "translator_credits")) {
-	tr_credit = _("translator_credits");
-    }
-#  endif  
-
-    tempstr = g_strdup_printf("gretl, version %s\n"
-			      "%s\n%s\n%s",
-			      GRETL_VERSION, copyright, 
-			      website, tr_credit);
-    tempwid = gtk_label_new(tempstr);
-    g_free(tempstr);
-
-    gtk_box_pack_start(GTK_BOX(box), tempwid, FALSE, FALSE, 0);
-    gtk_widget_show(tempwid);
-   
-    label = gtk_label_new(_("About"));
-    gtk_widget_show(label);
-   
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, label);
-
-    box = gtk_vbox_new(FALSE, 5);
-    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
-    gtk_widget_show(box);
-
-    tempwid = gtk_table_new(1, 2, FALSE);
-    gtk_box_pack_start(GTK_BOX(box), tempwid, TRUE, TRUE, 0);
-    gtk_widget_show(tempwid);
-
-    view = gtk_text_new(NULL, NULL);
-    gtk_text_set_editable(GTK_TEXT(view), FALSE);
-    gtk_text_set_word_wrap(GTK_TEXT(view), TRUE);
-    gtk_table_attach(GTK_TABLE(tempwid), view, 0, 1, 0, 1,
-		     GTK_FILL | GTK_EXPAND, GTK_FILL | 
-		     GTK_EXPAND | GTK_SHRINK, 0, 0);
-    gtk_widget_show(view);
-
-    vscroll = gtk_vscrollbar_new(GTK_TEXT(view)->vadj);
-    gtk_table_attach(GTK_TABLE(tempwid), vscroll, 1, 2, 0, 1,
-		     GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_widget_show(vscroll);
-
-    label = gtk_label_new(_("License Agreement"));
-    gtk_widget_show(label);
-   
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, label);
-
-    tempwid = gtk_button_new_with_label(_("  Close  "));
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       tempwid, FALSE, FALSE, 0);
-    gtk_signal_connect_object(GTK_OBJECT(tempwid), "clicked", 
-			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      GTK_OBJECT(dialog));
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
-
-    tempstr = g_strdup_printf("%s/COPYING", paths.gretldir);
-    if ((fd = gretl_fopen(tempstr, "r")) == NULL) {
-	gchar *msg = no_gpl_text();
-
-	gtk_text_insert(GTK_TEXT(view), NULL, NULL, NULL, 
-			msg, strlen(msg));
-	gtk_widget_show(dialog);
-	g_free(tempstr);
-	g_free(msg);
-	return;
-    }
-    g_free(tempstr);
-   
-    memset(buf, 0, sizeof buf);
-    while (fread(buf, 1, sizeof buf - 1, fd)) {
-	gtk_text_insert(GTK_TEXT(view), fixed_font, NULL, NULL, 
-			buf, strlen(buf));
-	memset(buf, 0, sizeof buf);
-    }
-    fclose(fd);
-
-    gtk_widget_show(dialog);
-} 
-        
-# endif /* not GNOME */
-
-#endif /* end of gtk version alternation */
+#endif /* end of gnome/plain gtk variants */

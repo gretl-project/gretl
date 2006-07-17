@@ -171,45 +171,6 @@ static void gui_graph_handler (int err)
     }
 }
 
-#ifdef OLD_GTK
-
-#include <errno.h>
-#include <signal.h>
-
-static void launch_gnuplot_interactive (void)
-{
-    pid_t pid;
-    char term[8];
-
-    if (get_terminal(term)) return;
-
-    signal(SIGCHLD, SIG_IGN);
-
-    pid = fork();
-    if (pid == -1) {
-	errbox(_("Couldn't fork"));
-	perror("fork");
-	return;
-    } else if (pid == 0) {
-	extern int errno;
-
-	errno = 0;
-
-	execlp(term, term, 
-	       "+sb", "+ls",
-	       "-geometry", "40x4", 
-	       "-title", "gnuplot: type q to quit",
-	       "-e", paths.gnuplot, gretl_plotfile(), "-", 
-	       NULL);
-	fprintf(stderr, "execlp: %s: %s\n", term, strerror(errno));
-	_exit(EXIT_FAILURE);
-    }
-
-    signal(SIGCHLD, SIG_DFL);
-}
-
-#else
-
 static void launch_gnuplot_interactive (void)
 {
 # ifdef G_OS_WIN32
@@ -253,8 +214,6 @@ static void launch_gnuplot_interactive (void)
     }
 # endif
 }
-
-#endif
 
 void set_sample_label_special (void)
 {
@@ -1534,29 +1493,6 @@ int do_confidence_region (selector *sr)
     return 0;
 }
 
-#ifdef OLD_GTK
-
-static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
-{
-    if (w != NULL) {
-	PRN *prn;
-	const char *txt;
-
-	if (bufopen(&prn)) return;
-
-	gretl_model_print_last_test(pmod, prn);
-	txt = gretl_print_get_buffer(prn);
-	
-	gtk_text_freeze(GTK_TEXT(w));
-	gtk_text_insert(GTK_TEXT(w), fixed_font, NULL, NULL, txt, 
-			strlen(txt));
-	gtk_text_thaw(GTK_TEXT(w));
-	gretl_print_destroy(prn);
-    }
-}
-
-#else
-
 static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
 {
     if (w != NULL) {
@@ -1575,8 +1511,6 @@ static void print_test_to_window (const MODEL *pmod, GtkWidget *w)
 	gretl_print_destroy(prn);
     }
 }
-
-#endif /* !OLD_GTK */
 
 static void update_model_tests (windata_t *vwin)
 {
@@ -5368,7 +5302,7 @@ int do_store (char *savename, gretlopt opt, int overwrite)
     return err;
 }
 
-#if defined(G_OS_WIN32)
+#ifdef G_OS_WIN32
 
 static int get_latex_path (char *latex_path)
 {
@@ -5378,27 +5312,6 @@ static int get_latex_path (char *latex_path)
     ret = SearchPath(NULL, latex, NULL, MAXLEN, latex_path, &p);
 
     return (ret == 0);
-}
-
-#elif defined (OLD_GTK)
-
-static int spawn_latex (char *texsrc)
-{
-    char tmp[MAXLEN];
-    struct stat sbuf;
-    int pdf = strstr(latex, "pdf") != NULL;
-    int ret = LATEX_OK;
-
-    sprintf(tmp, "cd %s && %s \\\\batchmode \\\\input %s", 
-	    paths.userdir, latex, texsrc);
-    system(tmp);
-    sprintf(tmp, "%s%s.%s", paths.userdir, texsrc, (pdf)? "pdf" : "dvi");
-    if (stat(tmp, &sbuf)) {
-	errbox(_("Failed to process TeX file"));
-	ret = LATEX_EXEC_FAILED;
-    } 
-
-    return ret;
 }
 
 #else

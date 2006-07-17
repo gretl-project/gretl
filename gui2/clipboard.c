@@ -36,9 +36,7 @@ GtkTargetEntry full_targets[] = {
     { "application/rtf", 0, TARGET_RTF }
 };
 
-#ifndef OLD_GTK
 static int n_basic = sizeof basic_targets / sizeof basic_targets[0];
-#endif
 static int n_full = sizeof full_targets / sizeof full_targets[0];
 
 static void gretl_clipboard_set (int copycode);
@@ -69,8 +67,6 @@ int buf_to_clipboard (const char *buf)
 
     return err;
 }
-
-#ifndef OLD_GTK
 
 static void gretl_clipboard_get (GtkClipboard *clip,
 				 GtkSelectionData *selection_data,
@@ -155,84 +151,6 @@ static void gretl_clipboard_set (int fmt)
     }
 }
 
-#else /* gtk-1.2 version */
-
-static gint 
-gretl_clipboard_get (GtkWidget *widget,
-		     GtkSelectionData *selection_data,
-		     guint info,
-		     guint time)
-{
-    gchar *str;
-    gint length;
-
-    str = clipboard_buf;
-    if (str == NULL) {
-	return TRUE;
-    }
-
-    length = strlen(str);
-
-#ifdef CLIPDEBUG
-    fprintf(stderr, "info = %d\n", (int) info);
-    if (info == TARGET_STRING) {
-	fprintf(stderr, " = TARGET_STRING\n");
-    } else if (info == TARGET_TEXT) {
-	fprintf(stderr, " = TARGET_STRING\n");
-    } else if (info == TARGET_COMPOUND_TEXT) {
-	fprintf(stderr, " = TARGET_COMPOUND_STRING\n");
-    } else if (info == TARGET_RTF) {
-	fprintf(stderr, " = TARGET_RTF\n");
-    }
-#endif    
-  
-    if (info == TARGET_STRING || info == TARGET_RTF) {
-	gtk_selection_data_set (selection_data,
-				GDK_SELECTION_TYPE_STRING,
-				8 * sizeof(gchar), 
-				(guchar *) str, 
-				length);
-    } else if (info == TARGET_TEXT || info == TARGET_COMPOUND_TEXT) {
-	guchar *text;
-	gchar c;
-	GdkAtom encoding;
-	gint format;
-	gint new_length;
-
-	c = str[length];
-	str[length] = '\0';
-	gdk_string_to_compound_text(str, &encoding, &format, 
-				    &text, &new_length);
-	gtk_selection_data_set(selection_data, encoding, format, 
-			       text, new_length);
-	gdk_free_compound_text(text);
-	str[length] = c;
-    }
-
-    return TRUE;
-}
-
-static void gretl_clip_init (int copycode, GdkAtom clipatom)
-{
-    gtk_selection_add_targets(mdata->w, clipatom, full_targets, n_full);
-    gtk_signal_connect(GTK_OBJECT(mdata->w), "selection_get",
-		       GTK_SIGNAL_FUNC(gretl_clipboard_get), NULL); 
-}
-
-static void gretl_clipboard_set (int copycode)
-{
-    GdkAtom clipatom = GDK_NONE;
-
-    if (clipatom == GDK_NONE) {
-	clipatom = gdk_atom_intern("CLIPBOARD", FALSE);
-	gretl_clip_init(copycode, clipatom);
-    }
-
-    gtk_selection_owner_set(mdata->w, clipatom, GDK_CURRENT_TIME);      
-}
-
-#endif
-
 int prn_to_clipboard (PRN *prn, int fmt)
 {
     const char *buf = gretl_print_get_buffer(prn);
@@ -245,12 +163,8 @@ int prn_to_clipboard (PRN *prn, int fmt)
     gretl_clipboard_free();
 
     if (fmt == GRETL_FORMAT_TXT || fmt == GRETL_FORMAT_RTF_TXT) { 
-#ifndef OLD_GTK
 	/* need to convert from utf8 */
 	gchar *trbuf = my_locale_from_utf8(buf);
-#else
-	const char *trbuf = buf;
-#endif
 
 	if (trbuf == NULL) {
 	    err = 1;
@@ -265,11 +179,9 @@ int prn_to_clipboard (PRN *prn, int fmt)
 		err = 1;
 	    }
 	}
-#ifndef OLD_GTK
 	if (trbuf != NULL) {
 	    g_free(trbuf);
 	}
-#endif
     } else { 
 	/* copying TeX, RTF or CSV */
 	clipboard_buf = gretl_strdup(buf);
