@@ -27,10 +27,6 @@
 #include <ctype.h>
 #include <float.h>
 
-#if (GTK_MINOR_VERSION < 2) 
-# define OLD_SELECTION
-#endif
-
 #undef SSDEBUG
 #undef CELLDEBUG
 
@@ -137,8 +133,6 @@ static void set_locator_label (Spreadsheet *sheet, GtkTreePath *path,
     g_free(row_label);
 }
 
-#ifndef OLD_SELECTION
-
 static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
 			       GtkTreeViewColumn *column)
 {
@@ -174,8 +168,6 @@ static void move_to_next_cell (Spreadsheet *sheet, GtkTreePath *path,
     }
     /* couldn't find a "next cell" to go to */
 }
-
-#endif
 
 static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
@@ -217,9 +209,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       colnum, new_text, -1);
 	    sheet->modified = 1;
 	}
-#ifndef OLD_SELECTION
 	move_to_next_cell(sheet, path, column);
-#endif
 	gtk_tree_path_free(path);
 	g_free(old_text);
     }
@@ -578,8 +568,6 @@ static void build_sheet_popup (Spreadsheet *sheet)
 		   sheet);
 }
 
-#ifndef OLD_SELECTION
-
 static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
 {
     GtkTreePath *path = NULL;
@@ -627,8 +615,6 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
 
     return TRUE; /* is this right? */
 }
-
-#endif /* !OLD_SELECTION */
 
 static int 
 var_added_since_ssheet_opened (int i, Spreadsheet *sheet, int main_v)
@@ -888,9 +874,7 @@ set_up_sheet_column (GtkTreeViewColumn *column, gint width, gboolean expand)
     gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
     gtk_tree_view_column_set_resizable(column, TRUE);
     gtk_tree_view_column_set_min_width(column, width);
-#if (GTK_MINOR_VERSION >= 4)
     gtk_tree_view_column_set_expand(column, expand);
-#endif
 }
 
 static void create_sheet_cell_renderers (Spreadsheet *sheet)
@@ -912,73 +896,6 @@ static void create_sheet_cell_renderers (Spreadsheet *sheet)
 		      G_CALLBACK(sheet_cell_edited), sheet);
     sheet->datacell = r;
 }
-
-#ifdef OLD_SELECTION
-
-/* relatively minimal version for gtk 2.0.N */
-
-static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
-				     Spreadsheet *sheet)
-{   
-    GdkModifierType mods; 
-    gint ret = FALSE;
-    
-    gdk_window_get_pointer(view->window, NULL, NULL, &mods);
-
-    if (mods & GDK_BUTTON3_MASK) {
-	GdkEventButton *bevent = (GdkEventButton *) event;
-
-	if (sheet->popup == NULL) 
-	    build_sheet_popup(sheet);
-
-	gtk_menu_popup (GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
-			bevent->button, bevent->time);
-	return TRUE;
-    }
-    
-    if (mods & GDK_BUTTON1_MASK) {
-	GdkEventButton *bevent = (GdkEventButton *) event;
-	GtkTreePath *path;
-	GtkTreeViewColumn *column;
-	
-	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(sheet->view),
-				      (gint) bevent->x, 
-				      (gint) bevent->y,
-				      &path, &column,
-				      NULL, NULL);
-	if (column != NULL) {
-	    gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
-	    gint colnum = GPOINTER_TO_INT(p);
-
-	    if (colnum == 0) {
-		/* don't respond to a click in a non-data column */
-		ret = TRUE;
-	    } 
-	}
-	gtk_tree_path_free(path);
-    }
-
-    return ret;
-}
-
-static gboolean update_selected (GtkTreeSelection *selection, Spreadsheet *sheet)
-{
-    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
-    GtkTreePath *path;
-    GtkTreeViewColumn *column;
-
-    gtk_tree_view_get_cursor(view, &path, &column);
-
-    if (path && column) {
-	gtk_tree_view_set_cursor(view, path, column, TRUE);
-	set_locator_label(sheet, path, column);
-	gtk_tree_path_free(path);
-    }
-
-    return FALSE;
-}
-
-#else
 
 static void manufacture_keystroke (GtkWidget *widget, guint uval)
 {
@@ -1123,8 +1040,6 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
     return ret;
 }
 
-#endif /* end of gtk >= 2.2 code */
-
 static int build_sheet_view (Spreadsheet *sheet)
 {
     GtkListStore *store; 
@@ -1200,19 +1115,12 @@ static int build_sheet_view (Spreadsheet *sheet)
 
     /* set the selection property on the tree view */
     select = gtk_tree_view_get_selection (GTK_TREE_VIEW(view));
-#ifdef OLD_SELECTION
-    gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
-
-    g_signal_connect (G_OBJECT(select), "changed",
-		      G_CALLBACK(update_selected), sheet);
-#else
     gtk_tree_selection_set_mode(select, GTK_SELECTION_NONE);
 
     g_signal_connect (G_OBJECT(view), "cursor-changed",
 		      G_CALLBACK(update_cell_position), sheet);
     g_signal_connect (G_OBJECT(view), "key_press_event",
 		      G_CALLBACK(catch_spreadsheet_key), sheet);
-#endif
 
     /* attach to sheet struct */
     sheet->view = view;

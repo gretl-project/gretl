@@ -52,10 +52,7 @@
 #include "library.h"
 #include "settings.h"
 #include "helpfiles.h"
-
-#if GTK_MAJOR_VERSION >= 2
-# include "gui_recode.h"
-#endif
+#include "gui_recode.h"
 
 #ifdef ENABLE_NLS
 # include "locale.h"

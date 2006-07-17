@@ -44,11 +44,7 @@ static GdkPixbuf *png_mono_pixbuf (const char *fname)
     remove(temp);
 
     build_path(temp, paths.userdir, GRETL_PBM_TMP, NULL);
-#if GTK_MAJOR_VERSION >= 2
     pbuf = gdk_pixbuf_new_from_file(temp, NULL);
-#else
-    pbuf = gdk_pixbuf_new_from_file(temp);
-#endif
     remove(temp);
 
     return pbuf;

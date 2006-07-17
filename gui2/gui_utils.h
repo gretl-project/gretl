@@ -111,13 +111,8 @@ gint catch_listbox_key (GtkWidget *w, GdkEventKey *key,
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 			 gpointer data);
 
-#if GTK_MAJOR_VERSION >= 2
 void add_popup_item (const gchar *label, GtkWidget *menu,
 		     GCallback callback, gpointer data);
-#else
-void add_popup_item (const gchar *label, GtkWidget *menu,
-		     GtkSignalFunc callback, gpointer data);
-#endif
 
 void get_stats_table (void);
 
