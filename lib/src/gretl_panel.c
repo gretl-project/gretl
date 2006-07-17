@@ -3304,6 +3304,64 @@ int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
+#if 0
+
+static int really_pad_dataset (const double *uid, int uv, int nunits,
+			       const double *tid, int tv, int nperiods, 
+			       const int *uobs, double **Z, 
+			       DATAINFO *pdinfo)
+{
+    double *x;
+    int i, j, k, s, t;
+
+    x = malloc(pdinfo->n * sizeof *x);
+    if (x == NULL) {
+	return E_ALLOC;
+    }
+
+    t = 0;
+    for (i=0; i<nunits; i++) {
+	for (s=0; s<nperiods; s++) {
+	    x[t] = NADBL;
+	}
+	for (s=0; s<uobs[i]; s++) {
+	    x[XX] = 
+	    
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (var_is_scalar(pdinfo, i)) {
+	    continue;
+	}
+
+	if (i == uv || i == tv) {
+	    /* don't scramble the indices */
+	    continue;
+	}
+
+	t = 0;
+	for (j=0; j<nunits; j++) {
+	    for (k=0; k<nperiods; k++) {
+		s = get_uid_tid(uid[j], tid[k], uv, tv, Z, pdinfo);
+		if (s < 0) {
+		    x[t++] = NADBL;
+		} else {
+		    x[t++] = Z[i][s];
+		}
+	    }
+	}
+
+	for (t=0; t<pdinfo->n; t++) {
+	    Z[i][t] = x[t];
+	}
+    }
+
+    free(x);
+
+    return 0;
+}
+
+#else
+
 static int really_pad_dataset (const double *uid, int uv, int nunits,
 			       const double *tid, int tv, int nperiods, 
 			       const int *uobs, double **Z, 
@@ -3313,6 +3371,9 @@ static int really_pad_dataset (const double *uid, int uv, int nunits,
     int i, j, t = 0;
 
     for (i=0; i<nunits; i++) {
+#if PDEBUG
+	fprintf(stderr, "unit[%d] ('%g'), obs = %d\n", i, uid[i], uobs[i]);
+#endif
 	if (uobs[i] == nperiods) {
 	    /* no missing obs for this unit */
 	    t += nperiods;
@@ -3320,18 +3381,24 @@ static int really_pad_dataset (const double *uid, int uv, int nunits,
 	}
 	ni = uobs[i];
 	for (j=0; j<nperiods; ) {
-	    if (j > ni || Z[tv][t] != tid[j]) {
-		if (j > ni) {
+	    if (j >= ni || Z[tv][t] != tid[j]) {
+		if (j >= ni) {
 		    shift = nperiods - ni;
 		} else {
 		    shift = 1; /* this is lame */
 		}
+#if PDEBUG
+		fprintf(stderr, " per=%d ('%g'), shift=%d\n", j, tid[j], shift);
+#endif
 		shift_data_forward(Z, pdinfo, t, uid[i], 
 				   tid, j, uv, tv, shift);
 		ni += shift;
 		j += shift;
 		t += shift;
 	    } else {
+#if PDEBUG
+		fprintf(stderr, " per=%d ('%g'), obs OK\n", j, tid[j]);
+#endif
 		j++;
 		t++;
 	    }
@@ -3340,6 +3407,8 @@ static int really_pad_dataset (const double *uid, int uv, int nunits,
 
     return 0;
 }
+
+#endif
 
 static int maybe_pad_dataset (const double *uid, int uv, int nunits,
 			      const double *tid, int tv, int nperiods, 
@@ -3363,7 +3432,7 @@ static int maybe_pad_dataset (const double *uid, int uv, int nunits,
 	    }
 	}
 #if PDEBUG
-	fprintf(stderr, "unit %d: found %d obs\n", i, uobs[i]);
+	fprintf(stderr, "unit %d (%g): found %d obs\n", i, uid[i], uobs[i]);
 #endif
 	totmiss += nperiods - uobs[i];
     }
@@ -3375,9 +3444,9 @@ static int maybe_pad_dataset (const double *uid, int uv, int nunits,
     if (totmiss > 0) {
 	err = dataset_add_observations(totmiss, pZ, pdinfo, OPT_D);
 	if (!err) {
-	    really_pad_dataset(uid, uv, nunits,
-			       tid, tv, nperiods,
-			       uobs, *pZ, pdinfo);
+	    err = really_pad_dataset(uid, uv, nunits,
+				     tid, tv, nperiods,
+				     uobs, *pZ, pdinfo);
 	}
     }
 		

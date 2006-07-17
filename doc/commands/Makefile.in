@@ -51,15 +51,9 @@ EQNXSL = $(CMDSDIR)/equations.xsl
 
 HLPSTAMP = $(SHAREDIR)/hlp.stamp
 FIGSTAMP = $(SHAREDIR)/fig.stamp
-
-ifeq ($(have_gtk),2.0)
-  HLPOPT = --hlp --markup
-  FLOWOPT = --markup
-  OUTPUT_DIR = $(SHAREDIR)
-else
-  HLPOPT = --hlp
-  OUTPUT_DIR = $(SHAREDIR)/latin1
-endif
+HLPOPT = --hlp --markup
+FLOWOPT = --markup
+OUTPUT_DIR = $(SHAREDIR)
 
 TOPICDEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 
@@ -186,17 +180,6 @@ docbook_es: xsltrans $(CMDSDIR)/gretl_commands_es.xml $(MANXSL) $(XMLSTRS)
 	echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\" ?>" > $(CHAPDIR_ES)/cmdlist.xml && \
 	cat cmdlist.xml >> $(CHAPDIR_ES)/cmdlist.xml && \
 	rm cmdlist.xml && rm tmp.xml
-
-olddoc: xsltrans reflow $(CMDSDIR)/gretl_commands.xml \
-	$(CMDSDIR)/gretl_commands_it.xml $(CMDSDIR)/gretl_commands_es.xml \
-	$(CMDSDIR)/gretltxt.xsl
-	mkdir -p $(topsrc)/share/latin1
-	./xsltrans --hlp $(CMDSDIR)/gretl_commands.xml && \
-	./reflow < guilist.txt > $(topsrc)/share/latin1/gretlgui.hlp
-	./xsltrans --hlp $(CMDSDIR)/gretl_commands_it.xml && \
-	./reflow < guilist.txt > $(topsrc)/share/latin1/gretlgui.hlp.it
-	./xsltrans --hlp $(CMDSDIR)/gretl_commands_es.xml && \
-	./reflow < guilist.txt > $(topsrc)/share/latin1/gretlgui.hlp.es
 
 help-all: $(HLPSTAMP) $(FIGSTAMP)
 

@@ -27,19 +27,13 @@ endif
 ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es
 IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
 
-ifeq ($(have_gtk),2.0)
-   INSTALL_GUI_SCRIPT_HELP = install_gui_script_help
-   INSTALL_HELP_FIGS = install_helpfigs
-   EN_GUI_HLP = $(sharesrc)/gretlgui.hlp
-   ES_GUI_HLP = $(sharesrc)/gretlgui.hlp.es
-   ES_CMD_HLP = $(sharesrc)/gretlcmd.hlp.es
-   IT_GUI_HLP = $(sharesrc)/gretlgui.hlp.it
-   IT_CMD_HLP = $(sharesrc)/gretlcmd.hlp.it
-else
-   EN_GUI_HLP = $(sharesrc)/latin1/gretlgui.hlp
-   ES_GUI_HLP = $(sharesrc)/latin1/gretlgui.hlp.es
-   IT_GUI_HLP = $(sharesrc)/latin1/gretlgui.hlp.it
-endif
+INSTALL_GUI_SCRIPT_HELP = install_gui_script_help
+INSTALL_HELP_FIGS = install_helpfigs
+EN_GUI_HLP = $(sharesrc)/gretlgui.hlp
+ES_GUI_HLP = $(sharesrc)/gretlgui.hlp.es
+ES_CMD_HLP = $(sharesrc)/gretlcmd.hlp.es
+IT_GUI_HLP = $(sharesrc)/gretlgui.hlp.it
+IT_CMD_HLP = $(sharesrc)/gretlcmd.hlp.it
 
 VPATH = $(sharesrc)
 
