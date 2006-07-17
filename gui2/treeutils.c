@@ -181,6 +181,73 @@ bool_col_toggled (GtkCellRendererToggle *cell, gchar *path_str, windata_t *vwin)
     gtk_tree_path_free(path);
 }
 
+static gint tree_store_go_to (windata_t *vwin, int k)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(vwin->listbox);
+    GtkTreeModel *model = gtk_tree_view_get_model(view);
+    GtkTreePath *path = NULL;
+    GtkTreeIter iter;
+
+    if (!gtk_tree_model_get_iter_first(model, &iter)) {
+	return FALSE;
+    }
+
+    if (vwin == mdata && !gtk_tree_model_iter_next(model, &iter)) {
+	return FALSE;
+    }
+
+    if (k == GDK_Home) {
+	path = gtk_tree_model_get_path(model, &iter);
+    } else if (k == GDK_End) {
+	int rows = gtk_tree_model_iter_n_children(model, NULL);
+
+	path = gtk_tree_path_new_from_indices(rows - 1, -1);
+    } else {
+	/* page up/down */
+	GtkTreePath *p0, *p1;
+
+	if (gtk_tree_view_get_visible_range(view, &p0, &p1)) {
+	    if (k == GDK_Page_Down) {
+		gtk_tree_view_scroll_to_cell(view, p1, NULL,
+					     TRUE, 0.0, 0.0);
+		gtk_tree_path_free(p0);
+		path = p1;
+	    } else {
+		gtk_tree_view_scroll_to_cell(view, p0, NULL,
+					     TRUE, 1.0, 0.0);
+		gtk_tree_path_free(p1);
+		if (vwin == mdata) {
+		    gint *idx = gtk_tree_path_get_indices(p0);
+
+		    if (idx[0] == 0) {
+			gtk_tree_path_free(p0);
+			p0 = gtk_tree_path_new_from_indices(1, -1);
+		    }
+		}
+		path = p0;
+	    }
+	}
+    }
+
+    if (path != NULL) {
+	gtk_tree_view_set_cursor(view, path, NULL, FALSE);
+	gtk_tree_path_free(path);
+    }
+
+    return TRUE;
+}
+
+gint listbox_motion_keys (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    int k = key->keyval;
+
+    if (k == GDK_Home || k == GDK_End || k == GDK_Page_Up || k == GDK_Page_Down) {
+	return tree_store_go_to(vwin, k);
+    }
+
+    return FALSE;
+}
+
 void vwin_add_list_box (windata_t *vwin, GtkBox *box, 
 			int ncols, gboolean hidden_col,
 			GType *types, const char **titles,
@@ -274,9 +341,11 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
     }
 
     g_signal_connect(G_OBJECT(view), "key_press_event",
+		     G_CALLBACK(listbox_motion_keys),
+		     vwin);
+    g_signal_connect(G_OBJECT(view), "key_press_event",
 		     G_CALLBACK(catch_listbox_key),
 		     vwin);
-
     g_signal_connect(G_OBJECT(view), "button_press_event",
 		     G_CALLBACK(listbox_double_click),
 		     vwin);

@@ -490,7 +490,7 @@ static GtkWidget *dlg_text_edit_new (int *hsize, gboolean s)
     *hsize *= get_char_width(tview);
     *hsize += 48;
     gtk_text_view_set_editable(GTK_TEXT_VIEW(tview), s);
-    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tview), TRUE);
+    gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(tview), s);
 
     return tview;
 }
