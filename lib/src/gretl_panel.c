@@ -3304,64 +3304,6 @@ int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-#if 0
-
-static int really_pad_dataset (const double *uid, int uv, int nunits,
-			       const double *tid, int tv, int nperiods, 
-			       const int *uobs, double **Z, 
-			       DATAINFO *pdinfo)
-{
-    double *x;
-    int i, j, k, s, t;
-
-    x = malloc(pdinfo->n * sizeof *x);
-    if (x == NULL) {
-	return E_ALLOC;
-    }
-
-    t = 0;
-    for (i=0; i<nunits; i++) {
-	for (s=0; s<nperiods; s++) {
-	    x[t] = NADBL;
-	}
-	for (s=0; s<uobs[i]; s++) {
-	    x[XX] = 
-	    
-
-    for (i=1; i<pdinfo->v; i++) {
-	if (var_is_scalar(pdinfo, i)) {
-	    continue;
-	}
-
-	if (i == uv || i == tv) {
-	    /* don't scramble the indices */
-	    continue;
-	}
-
-	t = 0;
-	for (j=0; j<nunits; j++) {
-	    for (k=0; k<nperiods; k++) {
-		s = get_uid_tid(uid[j], tid[k], uv, tv, Z, pdinfo);
-		if (s < 0) {
-		    x[t++] = NADBL;
-		} else {
-		    x[t++] = Z[i][s];
-		}
-	    }
-	}
-
-	for (t=0; t<pdinfo->n; t++) {
-	    Z[i][t] = x[t];
-	}
-    }
-
-    free(x);
-
-    return 0;
-}
-
-#else
-
 static int really_pad_dataset (const double *uid, int uv, int nunits,
 			       const double *tid, int tv, int nperiods, 
 			       const int *uobs, double **Z, 
@@ -3407,8 +3349,6 @@ static int really_pad_dataset (const double *uid, int uv, int nunits,
 
     return 0;
 }
-
-#endif
 
 static int maybe_pad_dataset (const double *uid, int uv, int nunits,
 			      const double *tid, int tv, int nperiods, 
