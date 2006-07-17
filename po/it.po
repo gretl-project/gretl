@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-17 16:33-0400\n"
-"PO-Revision-Date: 2006-07-15 16:07+0200\n"
+"PO-Revision-Date: 2006-07-17 23:59+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2225,9 +2225,8 @@ msgid "This command is implemented only for OLS models"
 msgstr "Questo comando è implementato solo per modelli OLS"
 
 #: lib/src/gretl_errors.c:52
-#, fuzzy
 msgid "Invalid argument for function"
-msgstr "Argomento non valido per %s"
+msgstr "Argomento non valido per la funzione"
 
 #: lib/src/gretl_errors.c:53
 msgid "Invalid sample split for Chow test"
@@ -2339,9 +2338,8 @@ msgid "Wrong data type"
 msgstr "Tipo di dati sconosciuto"
 
 #: lib/src/gretl_errors.c:82
-#, fuzzy
 msgid "Incompatible options"
-msgstr "opzioni tabella modelli"
+msgstr "Opzioni incompatibili"
 
 #: lib/src/gretl_func.c:1395 lib/src/gretl_utils.c:1171 gui2/boxplots.c:1339
 #: gui2/fileselect.c:443 gui2/fncall.c:702 gui2/fnsave.c:795
@@ -3748,9 +3746,8 @@ msgid "Instruments"
 msgstr "Strumenti"
 
 #: lib/src/modelprint.c:769
-#, fuzzy
 msgid "none"
-msgstr "Nessuno"
+msgstr "nessuno"
 
 #: lib/src/modelprint.c:788 lib/src/modelprint.c:790 lib/src/modelprint.c:792
 msgid "Robust (HAC) standard errors"
@@ -4281,33 +4278,32 @@ msgid "There were missing data values"
 msgstr "Ci sono valori mancanti nei dati"
 
 #: lib/src/nls.c:787
-#, fuzzy, c-format
+#, c-format
 msgid "Iteration %d: log likelihood = NA"
-msgstr "Log-verosimiglianza vincolata"
+msgstr "Iterazione %d: log verosimiglianza = NA"
 
 #: lib/src/nls.c:789
 #, c-format
 msgid "Iteration %d: log likelihood = %#.12g"
-msgstr ""
+msgstr "Iterazione %d: log verosimiglianza = %#.12g"
 
 #: lib/src/nls.c:792
-#, fuzzy, c-format
+#, c-format
 msgid " (steplength = %.8g)"
-msgstr "Lunghezza del passo"
+msgstr " (lunghezza del passo = %.8g)"
 
 #: lib/src/nls.c:796
-#, fuzzy
 msgid "Parameters: "
-msgstr "Parametro"
+msgstr "Parametri: "
 
 #: lib/src/nls.c:802
 msgid "Gradients:  "
-msgstr ""
+msgstr "Gradienti:  "
 
 #: lib/src/nls.c:852
 #, c-format
 msgid "iteration %2d: SSR = %.8g\n"
-msgstr ""
+msgstr "iterazione %2d: SSR = %.8g\n"
 
 #: lib/src/nls.c:1320
 msgid "Perfect fit achieved\n"
@@ -4328,7 +4324,7 @@ msgstr "NLS: le derivate indicate non sembrano corrette"
 #: lib/src/nls.c:1748
 #, c-format
 msgid "%d out of %d tests gave zero\n"
-msgstr ""
+msgstr "%d test su %d hanno dato zero\n"
 
 #: lib/src/nls.c:1750
 msgid ""
@@ -4362,7 +4358,7 @@ msgstr "Non è stata specificata alcuna funzione di regressione"
 
 #: lib/src/nls.c:2253
 msgid "You cannot supply both a \"params\" line and analytical derivatives"
-msgstr ""
+msgstr "Non è possibile fornire sia una riga \"params\", sia le derivate analitiche"
 
 #: lib/src/nls.c:2264
 msgid "Analytical derivatives supplied: \"params\" line will be ignored"
@@ -4383,19 +4379,21 @@ msgid "Tolerance = %g\n"
 msgstr "Tolleranza = %g\n"
 
 #: lib/src/nls.c:3048
-#, fuzzy, c-format
+#, c-format
 msgid "stopped after %d iterations\n"
-msgstr "Convergenza raggiunta dopo %d iterazioni\n"
+msgstr "Arrestato dopo %d iterazioni\n"
 
 #: lib/src/nls.c:3056
 msgid ""
 "\n"
 "--- FINAL VALUES: \n"
 msgstr ""
+"\n"
+"--- VALORI FINALI: \n"
 
 #: lib/src/nonparam.c:243
 msgid "spearman command requires two variables\n"
-msgstr "il comando spearman richiede due variabili\n"
+msgstr "Il comando spearman richiede due variabili\n"
 
 #: lib/src/nonparam.c:260
 #, c-format
@@ -4816,12 +4814,12 @@ msgstr ""
 #: lib/src/pvalues.c:733
 #, c-format
 msgid " Prob(x <= %d) = %g\n"
-msgstr ""
+msgstr " Prob(x <= %d) = %g\n"
 
 #: lib/src/pvalues.c:735
 #, c-format
 msgid " Prob(x = %d) = %g\n"
-msgstr ""
+msgstr " Prob(x = %d) = %g\n"
 
 #  Qui "pvalue" è l'omonimo comando!
 #: lib/src/pvalues.c:793
@@ -5646,7 +5644,7 @@ msgstr "comando scatters fallito\n"
 
 #: cli/gretlcli.c:1213 gui2/library.c:6334
 msgid "import command is malformed\n"
-msgstr "il comando import è malformato\n"
+msgstr "Il comando import è malformato\n"
 
 #: cli/gretlcli.c:1230 gui2/library.c:6353
 msgid "You should now use the \"print\" command to verify the data\n"
@@ -5659,7 +5657,7 @@ msgstr "Se sono OK, usare il comando \"store\" per salvarli in formato gretl\n"
 
 #: cli/gretlcli.c:1241
 msgid "'open' command is malformed\n"
-msgstr "il comando 'open' è malformato\n"
+msgstr "Il comando 'open' è malformato\n"
 
 #: cli/gretlcli.c:1250
 #, c-format
@@ -7306,28 +7304,28 @@ msgid "Confirm dataset structure:"
 msgstr "Conferma la struttura del dataset:"
 
 #: gui2/dialogs.c:2720
-#, fuzzy
 msgid "gretl: new dataset"
-msgstr "gretl: crea dataset"
+msgstr "gretl: nuovo dataset"
 
 #: gui2/dialogs.c:2721
 msgid ""
 "Do you want to start entering data values\n"
 "using gretl's spreadsheet?"
 msgstr ""
+"Si desidera iniziare a inserire i dati\n"
+"usando il foglio elettronico interno di gretl?"
 
 #: gui2/dialogs.c:2725 gui2/ssheet.c:438
 msgid "gretl: name variable"
 msgstr "gretl: nome variabile"
 
 #: gui2/dialogs.c:2726
-#, fuzzy
 msgid ""
 "Enter name for first variable\n"
 "(max. 15 characters)"
 msgstr ""
-"Inserire un nome per la nuova variabile\n"
-"(max. 8 caratteri)"
+"Inserire un nome per la prima variabile\n"
+"(max. 15 caratteri)"
 
 #: gui2/dialogs.c:2769
 #, c-format
@@ -8648,48 +8646,40 @@ msgid "/Add/_Time trend"
 msgstr "/Aggiungi/_Trend temporale"
 
 #: gui2/gretl.c:428
-#, fuzzy
 msgid "/Add/_Random variable"
-msgstr "/Aggiungi/Variabile _indice"
+msgstr "/Aggiungi/Variabile _casuale"
 
 #: gui2/gretl.c:429
-#, fuzzy
 msgid "/Add/Random variable/_Uniform..."
-msgstr "/Aggiungi/Variabile casuale _uniforme..."
+msgstr "/Aggiungi/Variabile casuale/_Uniforme..."
 
 #: gui2/gretl.c:431
-#, fuzzy
 msgid "/Add/Random variable/_Normal..."
-msgstr "/Aggiungi/Variabile casuale _normale..."
+msgstr "/Aggiungi/Variabile casuale/_Normale..."
 
 #: gui2/gretl.c:433
-#, fuzzy
 msgid "/Add/Random variable/_Chi-square..."
-msgstr "/Aggiungi/Variabile casuale _normale..."
+msgstr "/Aggiungi/Variabile casuale/_Chi-quadro..."
 
 #: gui2/gretl.c:435
 msgid "/Add/Random variable/Student's _t..."
-msgstr ""
+msgstr "/Aggiungi/Variabile casuale/_t di Student..."
 
 #: gui2/gretl.c:439
-#, fuzzy
 msgid "/Add/_Periodic dummies"
 msgstr "/Aggiungi/Dummy _periodiche"
 
 #: gui2/gretl.c:440
-#, fuzzy
 msgid "/Add/_Unit dummies"
 msgstr "/Aggiungi/Dummy per _unità"
 
 #: gui2/gretl.c:441
-#, fuzzy
 msgid "/Add/_Time dummies"
 msgstr "/Aggiungi/Dummy _temporali"
 
 #: gui2/gretl.c:442
-#, fuzzy
 msgid "/Add/Dummies for selected _discrete variables"
-msgstr "/Aggiungi/Dummy per le variabili discrete selezionate"
+msgstr "/Aggiungi/Dummy per le variabili _discrete selezionate"
 
 #: gui2/gretl.c:446
 msgid "/Add/Define _new variable..."
@@ -8862,120 +8852,99 @@ msgstr "/Modello/_OLS - Minimi quadrati ordinari..."
 
 #: gui2/gretl.c:509
 msgid "/Model/Other _linear models"
-msgstr ""
+msgstr "/Modello/Altri modelli _lineari"
 
 #: gui2/gretl.c:510
-#, fuzzy
 msgid "/Model/Other linear models/_Weighted Least Squares..."
-msgstr "/Modello/_WLS - Minimi quadrati ponderati..."
+msgstr "/Modello/Altri modelli lineari/_WLS - Minimi quadrati ponderati..."
 
 #: gui2/gretl.c:512
-#, fuzzy
 msgid "/Model/Other linear models/H_eteroskedasticity corrected..."
-msgstr "/Modello/H_SK - WLS corretti per eteroschedasticità..."
+msgstr "/Modello/Altri modelli lineari/H_SK - WLS corretti per eteroschedasticità..."
 
 #: gui2/gretl.c:514
-#, fuzzy
 msgid "/Model/Other linear models/_Two-Stage Least Squares..."
-msgstr "/Modello/_TSLS - Minimi quadrati a due stadi..."
+msgstr "/Modello/Altri modelli lineari/_TSLS - Minimi quadrati a due stadi..."
 
 #: gui2/gretl.c:517
-#, fuzzy
 msgid "/Model/Other linear models/High _precision OLS..."
-msgstr "/Modello/_MPOLS - Minimi quadrati in alta precisione..."
+msgstr "/Modello/Altri modelli lineari/_MPOLS - Minimi quadrati in alta precisione..."
 
 #: gui2/gretl.c:521
-#, fuzzy
 msgid "/Model/_Time series"
 msgstr "/Modello/_Serie storiche"
 
 #: gui2/gretl.c:523
-#, fuzzy
 msgid "/Model/_Panel"
-msgstr "/Modello/Panel"
+msgstr "/Modello/_Panel"
 
 #: gui2/gretl.c:525
-#, fuzzy
 msgid "/Model/_Nonlinear models"
-msgstr "/Modello/_NLS - Minimi quadrati non lineari..."
+msgstr "/Modello/Modelli _non lineari"
 
 #: gui2/gretl.c:526
-#, fuzzy
 msgid "/Model/Nonlinear models/_Logit..."
-msgstr "/Modello/_NLS - Minimi quadrati non lineari..."
+msgstr "/Modello/Modelli non lineari/_Logit..."
 
 #: gui2/gretl.c:527
 #, fuzzy
 msgid "/Model/Nonlinear models/_Probit..."
-msgstr "/Modello/_NLS - Minimi quadrati non lineari..."
+msgstr "/Modello/Modelli non lineari/_Probit..."
 
 #: gui2/gretl.c:528
-#, fuzzy
 msgid "/Model/Nonlinear models/To_bit..."
-msgstr "/Modello/_NLS - Minimi quadrati non lineari..."
+msgstr "/Modello/Modelli non lineari/_Tobit..."
 
 #: gui2/gretl.c:529
-#, fuzzy
 msgid "/Model/Nonlinear models/Poi_sson..."
-msgstr "/Modello/Poi_sson..."
+msgstr "/Modello/Modelli non lineari/Poi_sson..."
 
 #: gui2/gretl.c:530
-#, fuzzy
 msgid "/Model/Nonlinear models/Lo_gistic..."
-msgstr "/Modello/Lo_gistico..."
+msgstr "/Modello/Modelli non lineari/Lo_gistico..."
 
 #: gui2/gretl.c:531
-#, fuzzy
 msgid "/Model/Nonlinear models/_Nonlinear Least Squares..."
-msgstr "/Modello/_NLS - Minimi quadrati non lineari..."
+msgstr "/Modello/Modelli non lineari/_NLS - Minimi quadrati non lineari..."
 
 #: gui2/gretl.c:534
-#, fuzzy
 msgid "/Model/_Robust estimation"
-msgstr "Intervallo di stima del modello:"
+msgstr "/Modello/Stima _robusta"
 
 #: gui2/gretl.c:535
-#, fuzzy
 msgid "/Model/Robust estimation/Least _Absolute Deviation..."
-msgstr "/Modello/L_AD - Minime deviazioni assolute..."
+msgstr "/Modello/Stima robusta/L_AD - Minime deviazioni assolute..."
 
 #: gui2/gretl.c:537
-#, fuzzy
 msgid "/Model/Robust estimation/_Rank correlation..."
-msgstr "/Modello/SPEA_RMAN - Correlazione di rango..."
+msgstr "/Modello/Stima robusta/SPEA_RMAN - Correlazione di rango..."
 
 #: gui2/gretl.c:540
 msgid "/Model/_Bivariate tests"
-msgstr ""
+msgstr "/Modello/Test _bivariati"
 
 #: gui2/gretl.c:541
-#, fuzzy
 msgid "/Model/Bivariate tests/Difference of _means"
-msgstr "/Dati/Differenza delle _medie"
+msgstr "/Modello/Test bivariati/Differenza delle _medie"
 
 #: gui2/gretl.c:542
-#, fuzzy
 msgid "/Model/Bivariate tests/Difference of means/Assuming _equal variances..."
-msgstr "/Dati/Differenza delle medie/Assumi varianze _uguali..."
+msgstr "/Modello/Test bivariati/Differenza delle medie/Assumi varianze _uguali..."
 
 #: gui2/gretl.c:544
-#, fuzzy
 msgid ""
 "/Model/Bivariate tests/Difference of means/Assuming _unequal variances..."
-msgstr "/Dati/Differenza delle medie/Assumi varianze _diverse..."
+msgstr "/Modello/Test bivariati/Differenza delle medie/Assumi varianze _diverse..."
 
 #: gui2/gretl.c:546
-#, fuzzy
 msgid "/Model/Bivariate tests/Difference of _variances..."
-msgstr "/Dati/Differenza delle _varianze..."
+msgstr "/Modello/Test bivariati/Differenza delle _varianze..."
 
 #: gui2/gretl.c:549
-#, fuzzy
 msgid "/Model/_Maximum likelihood..."
 msgstr "/Modello/_ML - Massima verosimiglianza..."
 
 #: gui2/gretl.c:551
-#, fuzzy
 msgid "/Model/_Simultaneous equations..."
 msgstr "/Modello/_Equazioni simultanee..."
 
@@ -8988,14 +8957,12 @@ msgid "/Help/_Command reference"
 msgstr "/Aiuto/Guida _comandi"
 
 #: gui2/gretl.c:556
-#, fuzzy
 msgid "/Help/Command reference/Plain _text"
-msgstr "/Aiuto/Guida _comandi/Guida in linea"
+msgstr "/Aiuto/Guida _comandi/Guida in _linea"
 
 #: gui2/gretl.c:558
-#, fuzzy
 msgid "/Help/Command reference/_PDF"
-msgstr "/Aiuto/Guida _comandi/Versione PDF"
+msgstr "/Aiuto/Guida _comandi/Versione _PDF"
 
 #: gui2/gretl.c:560
 msgid "/Help/_User's guide"
@@ -9107,14 +9074,14 @@ msgid "Cannot open the clipboard"
 msgstr "Impossibile aprire gli appunti"
 
 #: gui2/gretlwin32.c:669
-#, fuzzy, c-format
+#, c-format
 msgid "Please find the gretl data file %s attached.\n"
-msgstr "Si prega di dare un nome al dataset attuale"
+msgstr "In allegato, il file dati di gretl %s.\n"
 
 #: gui2/gretlwin32.c:672
 #, c-format
 msgid "Please find the gretl script %s attached.\n"
-msgstr ""
+msgstr "In allegato, lo script di comandi di gretl %s.\n"
 
 #: gui2/gretlwin32.c:802
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
@@ -9352,27 +9319,22 @@ msgid "/_Tests"
 msgstr "/_Test"
 
 #: gui2/gui_utils.c:243
-#, fuzzy
 msgid "/Tests/Omit variables"
 msgstr "/Test/OMIT - Ometti variabili"
 
 #: gui2/gui_utils.c:244
-#, fuzzy
 msgid "/Tests/Add variables"
 msgstr "/Test/ADD - Aggiungi variabili"
 
 #: gui2/gui_utils.c:245
-#, fuzzy
 msgid "/Tests/Sum of coefficients"
 msgstr "/Test/COEFFSUM - Somma coefficienti"
 
 #: gui2/gui_utils.c:246
-#, fuzzy
 msgid "/Tests/Linear restrictions"
 msgstr "/Test/Vincoli lineari"
 
 #: gui2/gui_utils.c:248
-#, fuzzy
 msgid "/Tests/Non-linearity (squares)"
 msgstr "/Test/LMTEST - Non-linearità (quadrati)"
 
@@ -10725,7 +10687,7 @@ msgstr ""
 
 #: gui2/library.c:6367
 msgid "'open' command is malformed"
-msgstr "il comando 'open' è malformato"
+msgstr "Il comando 'open' è malformato"
 
 #: gui2/library.c:6566
 msgid "Please use the Close button to exit\n"
@@ -12170,23 +12132,20 @@ msgid "log(sample size)"
 msgstr "log(ampiezza campionaria)"
 
 #: plugin/fractals.c:42 plugin/fractals.c:120
-#, fuzzy
 msgid "log(RS)"
 msgstr "log(RS)"
 
 #: plugin/fractals.c:119
-#, fuzzy
 msgid "Size"
-msgstr "_Dimensione:"
+msgstr "Dimensione"
 
 #: plugin/fractals.c:119
 msgid "RS(avg)"
-msgstr ""
+msgstr "RS(media)"
 
 #: plugin/fractals.c:120
-#, fuzzy
 msgid "log(Size)"
-msgstr "log(RS)"
+msgstr "log(Dimensione)"
 
 #: plugin/fractals.c:224
 msgid "Sample is too small for Hurst exponent"
@@ -12211,17 +12170,17 @@ msgstr "Risultati della regressione"
 
 #: plugin/fractals.c:253
 msgid "coeff"
-msgstr ""
+msgstr "coeff"
 
 #: plugin/fractals.c:254
 #, c-format
 msgid "Intercept %12.6g   %g\n"
-msgstr ""
+msgstr "Intercetta %12.6g   %g\n"
 
 #: plugin/fractals.c:255
 #, c-format
 msgid "Slope     %12.6g   %g\n"
-msgstr ""
+msgstr "Pendenza  %12.6g   %g\n"
 
 #: plugin/fractals.c:257
 msgid "Estimated Hurst exponent"
@@ -12400,18 +12359,18 @@ msgid "Message"
 msgstr "Messaggio"
 
 #: plugin/mailer.c:591
-#, fuzzy, c-format
+#, c-format
 msgid "Please find the gretl data file %s attached."
-msgstr "Si prega di dare un nome al dataset attuale"
+msgstr "In allegato, il file dati di gretl %s."
 
 #: plugin/mailer.c:594
 #, c-format
 msgid "Please find the gretl script %s attached."
-msgstr ""
+msgstr "In allegato, lo script di comandi di gretl %s."
 
 #: plugin/mailer.c:623
 msgid "Append signature"
-msgstr ""
+msgstr "Aggiungi la firma"
 
 #: plugin/mailer.c:635
 msgid "Mail setup"
