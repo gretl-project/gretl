@@ -1001,7 +1001,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     sys = get_equation_system_by_name(sysname);
     if (sys == NULL) {
-	sprintf(gretl_errmsg, "'%s': unrecognized name", sysname);
+	sprintf(gretl_errmsg, _("'%s': unrecognized name"), sysname);
 	free(sysname);
 	return 1;
     }
@@ -1158,7 +1158,7 @@ void make_system_data_info (gretl_equation_system *sys, int eqn,
 	} else if (sys->method == SYS_3SLS) {
 	    sprintf(VARLABEL(pdinfo, v), _("3SLS residual, equation %d"), eqn);
 	} else {
-	    sprintf(VARLABEL(pdinfo, v), "system residual, equation %d", eqn);
+	    sprintf(VARLABEL(pdinfo, v), _("system residual, equation %d"), eqn);
 	}
     } else if (code == GRETL_SYSTEM_SAVE_YHAT) {
 	sprintf(pdinfo->varname[v], "yhat_s%02d", eqn);
@@ -1167,7 +1167,7 @@ void make_system_data_info (gretl_equation_system *sys, int eqn,
 	} else if (sys->method == SYS_3SLS) {
 	    sprintf(VARLABEL(pdinfo, v), _("3SLS fitted value, equation %d"), eqn);
 	} else {
-	    sprintf(VARLABEL(pdinfo, v), "system fitted value, equation %d", eqn);
+	    sprintf(VARLABEL(pdinfo, v), _("system fitted value, equation %d"), eqn);
 	}
     }
 }
@@ -1605,7 +1605,7 @@ add_aux_list_to_sys (gretl_equation_system *sys, const char *line,
 	    int *sublist = get_list_by_name(vname);
 
 	    if (sublist == NULL) {
-		sprintf(gretl_errmsg, "Undefined variable '%s'.", vname);
+		sprintf(gretl_errmsg, _("Undefined variable '%s'."), vname);
 		err = 1;
 	    } else {
 		err = gretl_list_insert_list_minus(&list, sublist, j);

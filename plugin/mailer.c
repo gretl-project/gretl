@@ -635,10 +635,10 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 	    gchar *note;
 
 	    if (datafile) {
-		note = g_strdup_printf("Please find the gretl data file %s attached.",
+		note = g_strdup_printf(_("Please find the gretl data file %s attached."),
 				       short_fname);
 	    } else {
-		note = g_strdup_printf("Please find the gretl script %s attached.",
+		note = g_strdup_printf(_("Please find the gretl script %s attached."),
 				       short_fname);
 	    }		
 	    gtk_entry_set_text(GTK_ENTRY(w), note);
@@ -667,7 +667,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     if (md.minfo->sig != NULL) {
 	GtkWidget *w;
 
-	w = gtk_check_button_new_with_label("Append signature");
+	w = gtk_check_button_new_with_label(_("Append signature"));
 	g_signal_connect(G_OBJECT(w), "toggled", G_CALLBACK(sig_callback), minfo);
 	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), w, 0, 2, 4, 5);

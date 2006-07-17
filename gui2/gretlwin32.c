@@ -666,10 +666,10 @@ int send_file (char *fullname)
 	mfd.nPosition = 1; /* ? */
 
 	if (strstr(fname, ".gdt") != NULL) {
-	    note = g_strdup_printf("Please find the gretl data file %s attached.\n", fname);
+	    note = g_strdup_printf(_("Please find the gretl data file %s attached.\n"), fname);
 	    msg.lpszSubject  = "dataset";
 	} else {
-	    note = g_strdup_printf("Please find the gretl script %s attached.\n", fname);
+	    note = g_strdup_printf(_("Please find the gretl script %s attached.\n"), fname);
 	    msg.lpszSubject  = "script";
 	}
 

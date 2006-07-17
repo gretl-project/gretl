@@ -784,22 +784,22 @@ print_mle_iter_stats (double ll, int nparam, const double *b, const double *g,
     int i;
 
     if (na(ll)) {
-	pprintf(prn, "Iteration %d: log likelihood = NA", iter);	
+	pprintf(prn, _("Iteration %d: log likelihood = NA"), iter);	
     } else {
-	pprintf(prn, "Iteration %d: log likelihood = %#.12g", iter, ll);
+	pprintf(prn, _("Iteration %d: log likelihood = %#.12g"), iter, ll);
     }
     if (iter > 1) {
-	pprintf(prn, " (steplength = %.8g)", sl);
+	pprintf(prn, _(" (steplength = %.8g)"), sl);
     }	
     pputc(prn, '\n');
 	
-    pputs(prn, "Parameters: ");
+    pputs(prn, _("Parameters: "));
     for (i=0; i<nparam; i++) {
 	pprintf(prn, "%#15.8g", b[i]);
     }
     pputc(prn, '\n');
 
-    pputs(prn, "Gradients:  ");
+    pputs(prn, _("Gradients:  "));
     for (i=0; i<nparam; i++) {
 	pprintf(prn, "%#15.8g", -g[i]);
     }
@@ -849,7 +849,7 @@ static int get_nls_fvec (double *fvec)
     pspec->iters += 1;
 
     if (pspec->ci == NLS && (pspec->opt & OPT_V)) {
-	pprintf(nprn, "iteration %2d: SSR = %.8g\n", pspec->iters, pspec->ess);
+	pprintf(nprn, _("iteration %2d: SSR = %.8g\n"), pspec->iters, pspec->ess);
     }
 
     return 0;
@@ -1745,7 +1745,7 @@ static int check_derivatives (integer m, integer n, double *x,
     if (zerocount > 0) {
 	strcpy(gretl_errmsg, 
 	       _("NLS: The supplied derivatives seem to be incorrect"));
-	fprintf(stderr, "%d out of %d tests gave zero\n", zerocount, (int) m);
+	fprintf(stderr, _("%d out of %d tests gave zero\n"), zerocount, (int) m);
     } else if (badcount > 0) {
 	pputs(prn, _("Warning: The supplied derivatives may be incorrect, or perhaps\n"
 		     "the data are ill-conditioned for this function.\n"));
@@ -2250,8 +2250,8 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 	    if (*line == 'd') {
 		/* "deriv" */
 		if (pspec->mode != ANALYTIC_DERIVS && pspec->params != NULL) {
-		    strcpy(gretl_errmsg, "You cannot supply both a \"params\" "
-			   "line and analytical derivatives");
+		    strcpy(gretl_errmsg, _("You cannot supply both a \"params\" "
+			   "line and analytical derivatives"));
 		    err = E_PARSE;
 		} else {
 		    err = nls_spec_add_param_with_deriv(pspec, line, Z, pdinfo);
@@ -3045,7 +3045,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 #endif
 
     if (iter >= maxit) {
-	fprintf(stderr, "stopped after %d iterations\n", iter);
+	fprintf(stderr, _("stopped after %d iterations\n"), iter);
 	err = E_NOCONV;
     }
 
@@ -3053,7 +3053,7 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
     *grcount = gcount;
 
     if (opt & OPT_V) {
-	pputs(nprn, "\n--- FINAL VALUES: \n");	
+	pputs(nprn, _("\n--- FINAL VALUES: \n"));	
 	print_mle_iter_stats(f, n, b, g, iter, steplen, prn);
 	pputs(nprn, "\n\n");	
     }

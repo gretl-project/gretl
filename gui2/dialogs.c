@@ -1140,8 +1140,8 @@ void varinfo_dialog (int varnum, int full)
     /* mark variable as discrete or not? */
     if (full && gretl_isdiscrete(0, datainfo->n - 1, Z[varnum])) {
 	hbox = gtk_hbox_new(FALSE, 5);
-	vset->check = gtk_check_button_new_with_label("Treat this variable "
-						      "as discrete");
+	vset->check = gtk_check_button_new_with_label(_("Treat this variable "
+						      "as discrete"));
 	if (var_is_discrete(datainfo, varnum)) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->check), TRUE);
 	}
@@ -3029,9 +3029,9 @@ static void maybe_start_editing (void)
     int canceled = 0;
     int resp;
 
-    resp = yes_no_dialog("gretl: new dataset", 
-			 "Do you want to start entering data values\n"
-			 "using gretl's spreadsheet?", 0);
+    resp = yes_no_dialog(_("gretl: new dataset"), 
+			 _("Do you want to start entering data values\n"
+			 "using gretl's spreadsheet?"), 0);
 
     if (resp == GRETL_YES) {
 	edit_dialog(_("gretl: name variable"), 
@@ -3403,7 +3403,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 
 	ntodate_full(stobs, dwinfo->t1, dwinfo);
 	ntodate_full(endobs, lastobs, dwinfo);
-	sprintf(ctxt, "%s, %s to %s", tslabel, stobs, endobs);
+	sprintf(ctxt, _("%s, %s to %s"), tslabel, stobs, endobs);
     } else if (dwinfo->structure == PANEL_UNKNOWN) {
 	sprintf(ctxt, _("panel data (%s)\n"
 			"%d cross-sectional units observed over %d periods"),

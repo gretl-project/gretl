@@ -39,7 +39,7 @@ do_hurst_plot (int n, double **Z, const MODEL *pmod, const char *vname)
     fputs("set nokey\n", fp);
     fprintf(fp, "set title '%s %s'\n", I_("Rescaled-range plot for"), vname);
     fprintf(fp, "set xlabel '%s'\n", I_("log(sample size)"));
-    fprintf(fp, "set ylabel '%s'\n", I_("log(R/S)"));
+    fprintf(fp, "set ylabel '%s'\n", I_("log(RS)"));
     fputs("plot \\\n", fp);
     fprintf(fp, "%g+%g*x notitle w lines lt 2 ,\\\n", 
 	    pmod->coeff[0], pmod->coeff[1]);
@@ -116,8 +116,8 @@ static int hurst_calc (const double *x, int n, int depth,
 {
     int m, i, j;
 
-    pprintf(prn, "%5s%11s%11s%11s\n", "Size", "R/S(avg)",
-	    "log(Size)", "log(R/S)");
+    pprintf(prn, "%5s%11s%11s%11s\n", _("Size"), _("RS(avg)"),
+	    _("log(Size)"), _("log(RS)"));
 
     for (i=0, m=n; i<depth; i++, m/=2) {
 	double RS = 0.0;
@@ -250,9 +250,9 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 	errmsg(err, prn);
     } else {
 	pprintf(prn, "\n%s (n = %d)\n\n", _("Regression results"), k);
-	pprintf(prn, "          %12s  %11s\n", "coeff", "std. error"); 
-	pprintf(prn, "Intercept %12.6g   %g\n", hmod.coeff[0], hmod.sderr[0]);
-	pprintf(prn, "Slope     %12.6g   %g\n", hmod.coeff[1], hmod.sderr[1]);
+	pprintf(prn, "          %12s  %11s\n", _("coeff"), _("std. error")); 
+	pprintf(prn, _("Intercept %12.6g   %g\n"), hmod.coeff[0], hmod.sderr[0]);
+	pprintf(prn, _("Slope     %12.6g   %g\n"), hmod.coeff[1], hmod.sderr[1]);
 	pputc(prn, '\n');
 	pprintf(prn, "%s = %g\n", _("Estimated Hurst exponent"), hmod.coeff[1]);
     }
