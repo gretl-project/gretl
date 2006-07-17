@@ -323,10 +323,15 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	do_gini(NULL, 0, NULL);
     else if (!strcmp(item, _("Correlogram")))
 	do_corrgm(NULL, CORRGM, NULL);
+#if 0
     else if (!strcmp(item, _("Spectrum"))) 
 	do_pergm(NULL, 0, NULL);
     else if (!strcmp(item, _("Spectrum (Bartlett)"))) 
 	do_pergm(NULL, 1, NULL);
+#else
+    else if (!strcmp(item, _("Spectrum"))) 
+	do_pergm(NULL, 1, NULL);
+#endif
     else if (!strcmp(item, _("ARIMA model"))) 
 	model_callback(GINT_TO_POINTER(v), ARMA, NULL);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
@@ -360,6 +365,7 @@ GtkWidget *build_var_popup (void)
 	N_("Frequency plot"),
 	N_("Boxplot"),
 	N_("Correlogram"),
+	N_("Spectrum"),
 	N_("Edit attributes"),
 	N_("Copy to clipboard"),
 	N_("Delete"),
@@ -373,7 +379,7 @@ GtkWidget *build_var_popup (void)
     var_menu = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (i == 5 && !dataset_is_time_series(datainfo)) {
+	if ((i == 5 || i == 6) && !dataset_is_time_series(datainfo)) {
 	    continue;
 	}
 	if (i == 2 && !extended_ts(datainfo)) {
