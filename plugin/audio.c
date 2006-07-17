@@ -32,15 +32,6 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 
-#if GLIB_CHECK_VERSION(2,0,0)
-# define GLIB2
-#else
-# include <unistd.h>
-# include <signal.h>
-# include <wait.h>
-# include <errno.h>
-#endif
-
 #undef DEBUG
 
 #ifdef HAVE_FLITE
@@ -921,7 +912,7 @@ static int midi_fork (const char *fname, const char *midiplayer)
     return err;
 }
 
-#else /* non-Windows versions */
+#else /* non-Windows version */
 
 static char **get_midi_args (int *argc, const char *fname,
 			     const char *midiplayer)
@@ -981,8 +972,6 @@ static char **get_midi_args (int *argc, const char *fname,
     return argv;
 }
 
-# ifdef GLIB2
-
 static int real_midi_fork (char **argv)
 {
     gboolean run;
@@ -992,45 +981,6 @@ static int real_midi_fork (char **argv)
 
     return !run;
 }
-
-# else
-
-static volatile int fork_err;
-
-static void fork_err_set (int signum)
-{
-    fork_err = 1;
-}
-
-static int real_midi_fork (char **argv)
-{
-    pid_t pid;
-
-    fork_err = 0;
-
-    signal(SIGUSR1, fork_err_set);
-
-    pid = fork();
-    if (pid == -1) {
-	perror("fork");
-	return 1;
-    } else if (pid == 0) {
-	execvp(argv[0], argv);
-	perror("execlp");
-	kill(getppid(), SIGUSR1);
-	_exit(EXIT_FAILURE);
-    }
-    
-    sleep(1);
-
-    if (fork_err) {
-	fprintf(stderr, "%s: %s", _("Command failed"), argv[0]);
-    }
-
-    return fork_err;
-}
-
-# endif
 
 static int midi_fork (const char *fname, const char *midiplayer)
 {
@@ -1050,7 +1000,7 @@ static int midi_fork (const char *fname, const char *midiplayer)
     return err;
 }
 
-#endif
+#endif /* ! MS Windows */
 
 int midi_play_graph (const char *fname, const char *userdir,
 		     const char *midiplayer)

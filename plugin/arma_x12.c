@@ -29,13 +29,8 @@
 # include <windows.h>
 # include <io.h>
 #else
-# if GLIB_CHECK_VERSION(2,0,0)
-#  define GLIB2
-#  include <signal.h>
-# endif /* GLIB_CHECK_VERSION */
+# include <signal.h>
 #endif
-
-#ifdef GLIB2
 
 static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 {
@@ -109,8 +104,6 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     
     return ret;
 }
-
-#endif
 
 #include "arma_common.c"
 
@@ -761,9 +754,6 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     char yname[VNAMELEN], path[MAXLEN];
     int *alist = NULL;
     PRN *aprn = NULL;
-#ifndef GLIB2
-    char cmd[MAXLEN];
-#endif
     MODEL armod;
     struct arma_info ainfo;
     int err = 0;
@@ -817,16 +807,12 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     delete_old_files(path);
 
     /* run the program */
-#if defined(WIN32)
+#ifdef WIN32
     sprintf(cmd, "\"%s\" %s -r -p -q", prog, yname);
     err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
 		  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
-#elif defined(GLIB2)
-    err = tramo_x12a_spawn(workdir, prog, yname, "-r", "-p", "-q", "-n", NULL);
 #else
-    sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q -n >/dev/null", 
-	    workdir, prog, yname);
-    err = gretl_spawn(cmd);
+    err = tramo_x12a_spawn(workdir, prog, yname, "-r", "-p", "-q", "-n", NULL);
 #endif
 
     if (!err) {

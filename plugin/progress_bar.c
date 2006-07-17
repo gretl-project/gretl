@@ -55,19 +55,11 @@ static int progress_window (ProgressData **ppdata, int flag)
     if (*ppdata == NULL) return 1;
 
     (*ppdata)->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-#if GTK_MAJOR_VERSION >= 2
     gtk_window_set_resizable(GTK_WINDOW((*ppdata)->window), FALSE);
 
     g_signal_connect(G_OBJECT((*ppdata)->window), "destroy",
 		     G_CALLBACK(destroy_progress),
 		     ppdata);
-#else
-    gtk_window_set_policy(GTK_WINDOW((*ppdata)->window), FALSE, FALSE, TRUE);
-
-    gtk_signal_connect(GTK_OBJECT((*ppdata)->window), "destroy",
-		       GTK_SIGNAL_FUNC(destroy_progress),
-		       ppdata);
-#endif
 
     if (flag == SP_LOAD_INIT) {
 	gtk_window_set_title(GTK_WINDOW((*ppdata)->window), _("gretl: loading data"));
@@ -97,10 +89,6 @@ static int progress_window (ProgressData **ppdata, int flag)
     /* Create the GtkProgressBar */
     (*ppdata)->pbar = gtk_progress_bar_new();
     gtk_container_add(GTK_CONTAINER(align), (*ppdata)->pbar);
-#if GTK_MAJOR_VERSION < 2
-    gtk_progress_set_format_string(GTK_PROGRESS((*ppdata)->pbar), "%p%%");
-    gtk_progress_set_show_text(GTK_PROGRESS((*ppdata)->pbar), TRUE);
-#endif
     gtk_widget_show((*ppdata)->pbar);
 
     /* Add separator and cancel button? */
@@ -147,11 +135,7 @@ int show_progress (long res, long expected, int flag)
 	    return 0; 
 	}
 
-#if GTK_MAJOR_VERSION >= 2
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), (gdouble) 0);
-#else
-	gtk_progress_bar_update(GTK_PROGRESS_BAR(pdata->pbar), (gfloat) 0);
-#endif
 
 	if (flag == SP_LOAD_INIT) {
 	    bytestr = g_strdup_printf("%s %ld Kbytes", _("Retrieving"),
@@ -183,13 +167,8 @@ int show_progress (long res, long expected, int flag)
     }
 
     if (offs <= expected && pdata != NULL) {
-#if GTK_MAJOR_VERSION >= 2
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(pdata->pbar), 
 				      (gdouble) ((double) offs / expected));
-#else
-	gtk_progress_bar_update(GTK_PROGRESS_BAR(pdata->pbar), 
-				(gfloat) ((double) offs / expected));
-#endif
 	while (gtk_events_pending()) gtk_main_iteration();
     } else {
 	if (pdata != NULL && pdata->window != NULL) {

@@ -89,9 +89,7 @@ unsigned char leverage_data_dialog (void)
     finfo->flag = &flag;
     
     gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: save data")); 
-#if GTK_MAJOR_VERSION >= 2
     gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
-#endif
     gtk_container_set_border_width (GTK_CONTAINER 
 				    (GTK_DIALOG (dialog)->vbox), 10);
     gtk_container_set_border_width (GTK_CONTAINER 
@@ -100,13 +98,8 @@ unsigned char leverage_data_dialog (void)
 
     gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
 
-#if GTK_MAJOR_VERSION >= 2
     g_signal_connect (G_OBJECT(dialog), "destroy", 
 		      G_CALLBACK(destroy_save_dialog), finfo);
-#else
-    gtk_signal_connect (GTK_OBJECT(dialog), "destroy", 
-			GTK_SIGNAL_FUNC(destroy_save_dialog), finfo);
-#endif
 
     internal_vbox = gtk_vbox_new (FALSE, 5);
 
@@ -121,13 +114,8 @@ unsigned char leverage_data_dialog (void)
     button = gtk_check_button_new_with_label(_("leverage"));
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-#if GTK_MAJOR_VERSION >= 2
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(update_save_flag), finfo);
-#else
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(update_save_flag), finfo);
-#endif   
     gtk_widget_show (button);
     finfo->levcheck = button;
 
@@ -135,13 +123,8 @@ unsigned char leverage_data_dialog (void)
     button = gtk_check_button_new_with_label(_("influence"));
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-#if GTK_MAJOR_VERSION >= 2
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(update_save_flag), finfo);
-#else
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(update_save_flag), finfo);
-#endif
     gtk_widget_show (button);
     finfo->infcheck = button;
 
@@ -149,13 +132,8 @@ unsigned char leverage_data_dialog (void)
     button = gtk_check_button_new_with_label(_("DFFITS"));
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
-#if GTK_MAJOR_VERSION >= 2
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(update_save_flag), finfo);
-#else
-    gtk_signal_connect(GTK_OBJECT(button), "clicked",
-		       GTK_SIGNAL_FUNC(update_save_flag), finfo);
-#endif
     gtk_widget_show (button);
     finfo->dffcheck = button;
 
@@ -169,15 +147,9 @@ unsigned char leverage_data_dialog (void)
     gtk_widget_show (hbox);
 
     /* Create the "OK" button */
-#if GTK_MAJOR_VERSION >= 2
     tempwid = gtk_button_new_from_stock (GTK_STOCK_OK);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(save_dialog_finalize), finfo);
-#else
-    tempwid = gtk_button_new_with_label(_("OK"));
-    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
-		       GTK_SIGNAL_FUNC(save_dialog_finalize), finfo);
-#endif
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
@@ -185,15 +157,9 @@ unsigned char leverage_data_dialog (void)
     gtk_widget_show (tempwid);
 
     /* "Cancel" button */
-#if GTK_MAJOR_VERSION >= 2
     tempwid = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(cancel_set_flag), finfo);
-#else
-    tempwid = gtk_button_new_with_label(_("Cancel"));
-    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
-		       GTK_SIGNAL_FUNC(cancel_set_flag), finfo);
-#endif    
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
     gtk_widget_show (tempwid);

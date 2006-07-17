@@ -66,50 +66,7 @@ typedef enum {
 
 #define SBSIZE 4096
 
-#if GTK_MAJOR_VERSION < 2
-
-enum {
-    GTK_STOCK_OK,
-    GTK_STOCK_CANCEL
-};
-
-# define G_OBJECT(o)                    GTK_OBJECT(o)
-# define g_object_set_data(o,s,d)       gtk_object_set_data(o,s,d)
-# define g_object_get_data(o,s)         gtk_object_get_data(o,s)
-# define G_CALLBACK(f)                  GTK_SIGNAL_FUNC(f)
-# define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
-# define gtk_widget_set_size_request(g,w,h) gtk_widget_set_usize(g,w,h)
-# define gtk_notebook_set_current_page(n,p) gtk_notebook_set_page(n,p)
-
-GtkWidget *standard_button (int code)
-{
-    const char *button_strings[] = {
-	N_("OK"),
-	N_("Cancel")
-    };
-
-    return gtk_button_new_with_label(_(button_strings[code]));
-}
-
-static gint entry_activate (GtkWidget *w, GdkEventKey *key, gpointer p)
-{
-    GtkWidget *top = gtk_widget_get_toplevel(w);
-
-    gtk_window_activate_default(GTK_WINDOW(top));
-    return FALSE;
-}
-
-void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting)
-{
-    gtk_signal_connect(GTK_OBJECT(entry), "activate", 
-		       GTK_SIGNAL_FUNC(entry_activate), NULL);
-}
-
-#else
-
-# define standard_button(s) gtk_button_new_from_stock(s)
-
-#endif /* alternate gtk versions */
+#define standard_button(s) gtk_button_new_from_stock(s)
 
 struct msg_info {
     char *recip;
@@ -458,11 +415,7 @@ static void finalize_pop_settings (GtkWidget *w, struct pop_dialog *pd)
 
 static void border_width (GtkWidget *w, int b)
 {
-#if GTK_MAJOR_VERSION < 2
-    gtk_container_border_width(GTK_CONTAINER(w), b);
-#else
     gtk_container_set_border_width(GTK_CONTAINER(w), b); 
-#endif
 }
 
 static void set_dialog_border_widths (GtkWidget *dlg)
@@ -701,13 +654,10 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     gtk_misc_set_alignment(GTK_MISC(lbl), 1, 0.5);
     gtk_table_attach(GTK_TABLE(tbl), lbl, 0, 1, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
 
-#if GTK_MAJOR_VERSION < 2
-    md.port_entry = gtk_entry_new_with_max_length(5);
-#else
     md.port_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(md.port_entry), 5);
     gtk_entry_set_width_chars(GTK_ENTRY(md.port_entry), 8);
-#endif
+
     gtk_table_attach_defaults(GTK_TABLE(tbl), md.port_entry, 1, 2, 1, 2);
     port_str = g_strdup_printf("%d", md.minfo->port);
     gtk_entry_set_text(GTK_ENTRY(md.port_entry), port_str);
@@ -839,49 +789,6 @@ static int pop_info_dialog (struct mail_info *minfo)
     return err;
 }
 
-#if GTK_MAJOR_VERSION < 2
-
-static void mail_infobox (const char *msg, int err) 
-{
-    GtkWidget *w, *label, *button, *vbox, *hbox;
-
-    w = gtk_window_new(GTK_WINDOW_DIALOG);
-
-    gtk_container_border_width(GTK_CONTAINER(w), 5);
-    gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
-    if (err) {
-	gtk_window_set_title(GTK_WINDOW (w), _("gretl error"));
-    } else {
-	gtk_window_set_title(GTK_WINDOW (w), _("gretl info"));
-    } 
-
-    vbox = gtk_vbox_new(FALSE, 5);
-    gtk_container_add(GTK_CONTAINER(w), vbox);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
-
-    /* text of message */
-    label = gtk_label_new(msg);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
-
-    /* button */
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
-    
-    button = gtk_button_new_with_label(_("OK"));
-
-    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
-
-    gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
-			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      (gpointer) w);
-
-    gtk_widget_show_all(w);
-}
-
-#else /* GTK versions switch */
-
 static void mail_infobox (const char *msg, int err)
 {
     GtkWidget *dialog;
@@ -894,8 +801,6 @@ static void mail_infobox (const char *msg, int err)
     gtk_dialog_run(GTK_DIALOG (dialog));
     gtk_widget_destroy(dialog);
 }
-
-#endif
 
 #define VERBOSE 1
 

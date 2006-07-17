@@ -17,8 +17,6 @@ GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
-LIBOLE2_CFLAGS = @LIBOLE2_CFLAGS@
-LIBOLE2_LIBS = @LIBOLE2_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
 MPFR_CFLAGS = @MPFR_CFLAGS@
@@ -52,17 +50,10 @@ LINK = $(LIBTOOL) --mode=link $(CC) -module -avoid-version -rpath $(plugindir)
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
 
-ifeq ($(have_gtk),2.0)
-  plugindir = $(prefix)/lib/gretl-gtk2
-  GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell pkg-config --cflags glib-2.0)
-  GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(shell pkg-config --cflags glib-2.0)
-  GRETL_ZIP_LIBS := $(shell pkg-config --libs glib-2.0) -lz
-else
-  plugindir = $(prefix)/lib/gretl-gtk1
-  GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell glib-config --cflags)
-  GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(shell glib-config --cflags)
-  GRETL_ZIP_LIBS := $(shell glib-config --libs) -lz
-endif  
+plugindir = $(prefix)/lib/gretl-gtk2
+GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell pkg-config --cflags glib-2.0)
+GRETL_ZIP_CFLAGS := -I$(topsrc)/plugin/zipunzip $(shell pkg-config --cflags glib-2.0)
+GRETL_ZIP_LIBS := $(shell pkg-config --libs glib-2.0) -lz
 
 SRCS = excel_import.c \
 	fiml.c \
@@ -154,12 +145,8 @@ ifeq ($(HAVE_AUDIO),1)
   AUDIO_LIBS = $(FLITE_LIBS)
 endif  
 
-ifeq ($(LIBOLE2_LIBS),)
-  query-ms-ole.lo = ms-ole.lo
-  vpath %.c $(topsrc)/plugin/libole2
-  vpath %.h $(topsrc)/plugin/libole2
-  LIBOLE2_CFLAGS = $(GRETL_LIBOLE2_CFLAGS)
-endif
+vpath %.c $(topsrc)/plugin/libole2
+vpath %.h $(topsrc)/plugin/libole2
 
 ifeq ($(LIBGSF_LIBS),)
   vpath %.c $(topsrc)/plugin/zipunzip
@@ -172,7 +159,7 @@ endif
 URCDATA = $(topsrc)/plugin/data/urcdata.gz
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(MPFR_CFLAGS) \
-	$(XML_CFLAGS) $(LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) -I. $(GMPDEF)
+	$(XML_CFLAGS) $(GRETL_LIBOLE2_CFLAGS) $(ZIP_CFLAGS) $(AUDIO_CFLAGS) -I. $(GMPDEF)
 
 %.lo: %.c
 	$(COMPILE) $< 
@@ -224,8 +211,8 @@ progress_bar.la: progress_bar.lo
 gnumeric_import.la: gnumeric_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
-excel_import.la: excel_import.lo workbook.lo $(query-ms-ole.lo)
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
+excel_import.la: excel_import.lo workbook.lo ms-ole.lo
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
 
 mp_ols.la: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS) $(MPFR_LIBS)

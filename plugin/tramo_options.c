@@ -118,11 +118,7 @@ tramo_custom_tabs_set_sensitive (GtkWidget *notebook, gboolean s)
 
 static void main_auto_callback (GtkWidget *w, GtkWidget *notebook)
 {
-#if GTK_MAJOR_VERSION >= 2
     tramo_options *opts = g_object_get_data(G_OBJECT(notebook), "opts");
-#else
-    tramo_options *opts = gtk_object_get_data(GTK_OBJECT(notebook), "opts");
-#endif
 
     if (w == NULL || GTK_TOGGLE_BUTTON(w)->active) {
 	tramo_custom_tabs_set_sensitive(notebook, FALSE);
@@ -292,35 +288,20 @@ static void set_no_seats (GtkWidget *w, tramo_options *opts)
 
 static void set_out (GtkWidget *w, tramo_options *opts)
 {
-#if GTK_MAJOR_VERSION >= 2
     opts->out = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), 
 						  "out_value"));
-#else
-    opts->out = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), 
-						    "out_value"));
-#endif
 }
 
 static void set_lam (GtkWidget *w, tramo_options *opts)
 {
-#if GTK_MAJOR_VERSION >= 2
     opts->lam = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), 
 						  "lam_value"));
-#else
-    opts->lam = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), 
-						    "lam_value"));
-#endif
 }
 
 static void set_imean (GtkWidget *w, tramo_options *opts)
 {
-#if GTK_MAJOR_VERSION >= 2
     opts->imean = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), 
 						    "imean_value"));
-#else
-    opts->imean = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), 
-						      "imean_value"));
-#endif
 }
 
 static GtkWidget *make_notebook_page_table (GtkWidget *notebook, 
@@ -365,19 +346,11 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
     row++;
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
-#if GTK_MAJOR_VERSION >= 2
     g_object_set_data(G_OBJECT(notebook), "opts",
 		      request->opts);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(main_auto_callback), 
 		     notebook);
-#else
-    gtk_object_set_data(GTK_OBJECT(notebook), "opts",
-			request->opts);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(main_auto_callback), 
-		       notebook);
-#endif
 
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -388,11 +361,7 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     /* TRAMO + SEATS option */
     tmp = gtk_radio_button_new_with_label(NULL, _(radio_labels[0]));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd > 1));
-#if GTK_MAJOR_VERSION >= 2
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-#else
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
-#endif
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
@@ -400,25 +369,15 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     if (request->pd == 1) {
 	gtk_widget_set_sensitive(tmp, FALSE);
     } else {    
-#if GTK_MAJOR_VERSION >= 2
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(set_seats), 
 			 request->opts);
-#else
-	gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-			   GTK_SIGNAL_FUNC(set_seats), 
-			   request->opts);
-#endif
     }
 
     /* TRAMO-only option */
     tmp = gtk_radio_button_new_with_label(group, _(radio_labels[1]));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (request->pd == 1));
-#if GTK_MAJOR_VERSION >= 2
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-#else
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
-#endif
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
@@ -426,15 +385,9 @@ static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
     if (request->pd == 1) {
 	gtk_widget_set_sensitive(tmp, FALSE);
     } else {   
-#if GTK_MAJOR_VERSION >= 2
 	g_signal_connect(G_OBJECT(tmp), "clicked",
 			 G_CALLBACK(set_no_seats), 
 			 request->opts);
-#else
-	gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-			   GTK_SIGNAL_FUNC(set_no_seats), 
-			   request->opts);
-#endif
     }
 }
 
@@ -457,52 +410,28 @@ static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
     /* full detail option */
     tmp = gtk_radio_button_new_with_label(NULL, _("Full details"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);    
-#if GTK_MAJOR_VERSION >= 2
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-#else
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
-#endif
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
     
-#if GTK_MAJOR_VERSION >= 2
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(set_out), 
 		     request->opts);
     g_object_set_data(G_OBJECT(tmp), "out_value", 
                       GINT_TO_POINTER(0));
-#else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(set_out), 
-		       request->opts);
-    gtk_object_set_data(GTK_OBJECT(tmp), "out_value", 
-			GINT_TO_POINTER(0));
-#endif
 
     /* reduced output option */
     tmp = gtk_radio_button_new_with_label(group, _("Reduced output"));
-#if GTK_MAJOR_VERSION >= 2
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-#else
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
-#endif
     gtk_widget_show(tmp);
     gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
     row++;
-#if GTK_MAJOR_VERSION >= 2
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(set_out), 
 		     request->opts);
     g_object_set_data(G_OBJECT(tmp), "out_value", 
                       GINT_TO_POINTER(1));
-#else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(set_out), 
-		       request->opts);
-    gtk_object_set_data(GTK_OBJECT(tmp), "out_value", 
-			GINT_TO_POINTER(1));
-#endif
 
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -569,75 +498,42 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
 
     /* logs option */
     b1 = gtk_radio_button_new_with_label(NULL, _("Log transformation"));
-#if GTK_MAJOR_VERSION >= 2
     log_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
-#else
-    log_group = gtk_radio_button_group(GTK_RADIO_BUTTON(b1));
-#endif
     gtk_widget_show(b1);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b1, 0, 2, row, row + 1);
     row++;
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(b1), "clicked",
 		     G_CALLBACK(set_lam), 
 		     opts);
     g_object_set_data(G_OBJECT(b1), "lam_value", 
                       GINT_TO_POINTER(0));
-#else
-    gtk_signal_connect(GTK_OBJECT(b1), "clicked",
-		       GTK_SIGNAL_FUNC(set_lam), 
-		       opts);
-    gtk_object_set_data(GTK_OBJECT(b1), "lam_value", 
-			GINT_TO_POINTER(0));
-#endif
 
     /* no logs option */
     b2 = gtk_radio_button_new_with_label(log_group, _("No log transformation"));
-#if GTK_MAJOR_VERSION >= 2
     log_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
-#else
-    log_group = gtk_radio_button_group(GTK_RADIO_BUTTON(b2));
-#endif
     gtk_widget_show(b2);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b2, 0, 2, row, row + 1);
     row++;
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(b2), "clicked",
 		     G_CALLBACK(set_lam), 
 		     opts);
     g_object_set_data(G_OBJECT(b2), "lam_value", 
                       GINT_TO_POINTER(1));
-#else
-    gtk_signal_connect(GTK_OBJECT(b2), "clicked",
-		       GTK_SIGNAL_FUNC(set_lam), 
-		       opts);
-    gtk_object_set_data(GTK_OBJECT(b2), "lam_value", 
-			GINT_TO_POINTER(1));
-#endif
 
     /* automatic log/level option */
     b3 = gtk_radio_button_new_with_label(log_group, _("Automatic"));
-#if GTK_MAJOR_VERSION >= 2
     log_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b3));
-#else
-    log_group = gtk_radio_button_group(GTK_RADIO_BUTTON(b3));
-#endif
     gtk_widget_show(b3);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b3, 0, 2, row, row + 1);
     row++;
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(b3), "clicked",
 		     G_CALLBACK(set_lam), 
 		     opts);
     g_object_set_data(G_OBJECT(b3), "lam_value", 
                       GINT_TO_POINTER(-1));
-#else
-    gtk_signal_connect(GTK_OBJECT(b3), "clicked",
-		       GTK_SIGNAL_FUNC(set_lam), 
-		       opts);
-    gtk_object_set_data(GTK_OBJECT(b3), "lam_value", 
-			GINT_TO_POINTER(-1));
-#endif
 
     switch (opts->lam) {
     case  0: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE); 
@@ -657,49 +553,27 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
 
     /* mean correction: radio group */
     b1 = gtk_radio_button_new_with_label(NULL, _("Mean correction"));
-#if GTK_MAJOR_VERSION >= 2 
     mean_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
-#else
-    mean_group = gtk_radio_button_group(GTK_RADIO_BUTTON(b1));
-#endif
     gtk_widget_show(b1);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b1, 0, 2, row, row + 1);
     row++;
-#if GTK_MAJOR_VERSION >= 2    
+
     g_signal_connect(G_OBJECT(b1), "clicked",
 		     G_CALLBACK(set_imean), 
 		     opts);
     g_object_set_data(G_OBJECT(b1), "imean_value", 
                       GINT_TO_POINTER(1));
-#else
-    gtk_signal_connect(GTK_OBJECT(b1), "clicked",
-		       GTK_SIGNAL_FUNC(set_imean), 
-		       opts);
-    gtk_object_set_data(GTK_OBJECT(b1), "imean_value", 
-			GINT_TO_POINTER(1));
-#endif
 
     b2 = gtk_radio_button_new_with_label(mean_group, _("No mean correction"));
-#if GTK_MAJOR_VERSION >= 2 
     mean_group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b2));
-#else
-    mean_group = gtk_radio_button_group(GTK_RADIO_BUTTON(b2));
-#endif
     gtk_widget_show(b2);
     gtk_table_attach_defaults(GTK_TABLE(tbl), b2, 0, 2, row, row + 1);
-#if GTK_MAJOR_VERSION >= 2  
+
     g_signal_connect(G_OBJECT(b2), "clicked",
 		     G_CALLBACK(set_imean), 
 		     opts);
     g_object_set_data(G_OBJECT(b2), "imean_value", 
                       GINT_TO_POINTER(0));
-#else
-    gtk_signal_connect(GTK_OBJECT(b2), "clicked",
-		       GTK_SIGNAL_FUNC(set_imean), 
-		       opts);
-    gtk_object_set_data(GTK_OBJECT(b2), "imean_value", 
-			GINT_TO_POINTER(0));
-#endif
 
     switch (opts->imean) {
     case  1: gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE); 
@@ -710,17 +584,10 @@ static void tramo_tab_transform (GtkWidget *notebook, tramo_options *opts)
     }
 }
 
-#if GTK_MAJOR_VERSION >= 2 
 static void get_va_value (GtkSpinButton *sb, tramo_options *opts)
 {
     opts->va = (float) gtk_spin_button_get_value(sb);
 }
-#else
-static void get_va_value (GtkAdjustment *adj, tramo_options *opts)
-{
-    opts->va = (float) adj->value;
-}
-#endif
 
 static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
 {
@@ -737,15 +604,10 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
     row++;
     gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->iatip != 0));
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(flip_iatip), 
 		     opts);
-#else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(flip_iatip), 
-		       opts);
-#endif
 
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -767,15 +629,10 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
     row++;
     gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->aio < 3));
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(tramo_aio_callback), 
 		     opts);
-#else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(tramo_aio_callback), 
-		       opts);
-#endif
 
     /* level-shift button */
     tmp = gtk_check_button_new_with_label(_("shifts of level"));
@@ -784,15 +641,10 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
     row++;
     gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->aio > 1));
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(tramo_aio_callback), 
 		     opts);
-#else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(tramo_aio_callback), 
-		       opts);
-#endif
 
     /* innovationals button */
     tmp = gtk_check_button_new_with_label(_("innovational outliers"));
@@ -802,15 +654,10 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
     gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->aio == 0));
     gtk_widget_set_sensitive(tmp, opts->seats == 0);
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(tramo_innov_callback), 
 		     opts);
-#else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(tramo_innov_callback), 
-		       opts);
-#endif
     
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -832,15 +679,10 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
     row++;
     gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->va == 0.0));
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(flip_auto_va), 
 		     opts);
-#else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(flip_auto_va), 
-		       opts);
-#endif
 
     /* spinner for manual critical value */
     adj = gtk_adjustment_new((opts->va == 0.0)? 3.3 : opts->va, 
@@ -851,24 +693,15 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
 		     0, 0, 0, 0);
     gtk_widget_show(tmp);
     gtk_widget_set_sensitive(tmp, (opts->va != 0.0));
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(tmp), "value-changed",
 		     G_CALLBACK(get_va_value), 
 		     opts);
-#else
-    gtk_signal_connect(GTK_OBJECT(adj), "value-changed",
-		       GTK_SIGNAL_FUNC(get_va_value), 
-		       opts);
-#endif
 }
 
 static void tramo_arima_callback (GtkWidget *w, gint *var)
 {
-#if GTK_MAJOR_VERSION >= 2
     GtkWidget *entry = g_object_get_data(G_OBJECT(w), "entry");
-#else
-    GtkWidget *entry = gtk_object_get_data(GTK_OBJECT(w), "entry");
-#endif
 
     *var = atoi(gtk_entry_get_text(GTK_ENTRY(entry)));
 }
@@ -889,26 +722,15 @@ static GtkWidget *make_labeled_combo (const gchar *label,
     gtk_combo_set_popdown_strings(GTK_COMBO(w), list); 
     sprintf(numstr, "%d", *var);
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(w)->entry), numstr);
-#if GTK_MAJOR_VERSION >= 2
     gtk_widget_set_size_request(w, 48, -1);
-#else
-    gtk_widget_set_usize(w, 48, -1);
-#endif
     gtk_table_attach(GTK_TABLE(tbl), w, 1, 2, row, row + 1,
 		     0, 0, 0, 0);
-#if GTK_MAJOR_VERSION >= 2
+
     g_object_set_data(G_OBJECT(GTK_COMBO(w)->list), "entry", 
 		      GTK_COMBO(w)->entry);
     g_signal_connect(G_OBJECT(GTK_COMBO(w)->list), "selection-changed",
 		     G_CALLBACK(tramo_arima_callback), 
 		     var);
-#else
-    gtk_object_set_data(GTK_OBJECT(GTK_COMBO(w)->list), "entry", 
-			GTK_COMBO(w)->entry);
-    gtk_signal_connect(GTK_OBJECT(GTK_COMBO(w)->list), "selection-changed",
-		       GTK_SIGNAL_FUNC(tramo_arima_callback), 
-		       var);
-#endif
 
     return w;
 }
@@ -945,15 +767,10 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts, int pd)
     row++;
     gtk_widget_show(tmp);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), opts->auto_arima);
-#if GTK_MAJOR_VERSION >= 2
+
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(flip_auto_arima), 
 		     opts);
-#else
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(flip_auto_arima), 
-		       opts);
-#endif
 
     /* difference terms */
     tmp = make_labeled_combo(_("Non-seasonal differences:"), tbl, row,

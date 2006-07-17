@@ -26,10 +26,7 @@
 #ifdef WIN32
 # include <windows.h>
 #else
-# if GLIB_CHECK_VERSION(2,0,0)
-#  define USE_GSPAWN
-#  include <signal.h>
-# endif /* GLIB_CHECK_VERSION */
+# include <signal.h>
 #endif
 
 enum opt_codes {
@@ -63,9 +60,7 @@ const char *default_mdl = {
     "(2 1 2)(0 1 1)\n"
 };  
 
-#ifdef USE_GSPAWN
-
-# define SP_DEBUG 0
+#define SP_DEBUG 0
 
 static int glib_spawn (const char *workdir, const char *fmt, ...)
 {
@@ -94,12 +89,12 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 
     nargs = i;
 
-# if SP_DEBUG
+#if SP_DEBUG
     fputs("spawning the following:\n", stderr);
     for (i=0; i<nargs; i++) {
 	fprintf(stderr, " argv[%d] = '%s'\n", i, argv[i]);
     }
-# endif
+#endif
 
     signal(SIGCHLD, SIG_DFL);
 
@@ -145,27 +140,9 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
     return ret;
 }
 
-#endif /* USE_GSPAWN */
-
-#if GTK_MAJOR_VERSION == 1
-static void tx_dialog_ok (GtkWidget *w, tx_request *request)
-{
-    request->ret = 1;
-    gtk_widget_hide(request->dialog);
-    gtk_main_quit();
-}
-
-static void tx_dialog_cancel (GtkWidget *w, tx_request *request)
-{
-    gtk_widget_hide(request->dialog);
-    gtk_main_quit();
-}
-#endif
-
 static int tx_dialog (tx_request *request)
 {
     GtkWidget *hbox, *vbox, *tmp;
-#if GTK_MAJOR_VERSION >= 2
     gint i, ret = 0;
 
     for (i=0; i<N_COMMON_OPTS; i++) {
@@ -184,12 +161,6 @@ static int tx_dialog (tx_request *request)
 				     GTK_STOCK_CANCEL,
 				     GTK_RESPONSE_REJECT,
 				     NULL);
-#else
-    request->dialog = gtk_dialog_new();
-    gtk_window_set_title (GTK_WINDOW(request->dialog), 
-			  (request->code == TRAMO_SEATS)? 
-			  "TRAMO/SEATS" : "X-12-ARIMA");
-#endif
 
     vbox = gtk_vbox_new(FALSE, 0);    
 
@@ -237,37 +208,12 @@ static int tx_dialog (tx_request *request)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(request->dialog)->vbox),
 		       hbox, FALSE, FALSE, 5);
 
-#if GTK_MAJOR_VERSION >= 2
     ret = gtk_dialog_run (GTK_DIALOG(request->dialog));
+
     if (ret == GTK_RESPONSE_ACCEPT) ret = 1;
     else ret = 0;
+
     return ret;
-#else /* GTK 1.N */
-    request->ret = 0;
-
-    /* Create an "OK" button */
-    tmp = gtk_button_new_with_label (_("OK"));
-    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (request->dialog)->action_area), 
-                        tmp, TRUE, TRUE, FALSE);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-                       GTK_SIGNAL_FUNC(tx_dialog_ok), request);
-    gtk_widget_grab_default (tmp);
-    gtk_widget_show (tmp);
-
-    /* Create a "Cancel" button */
-    tmp = gtk_button_new_with_label (_(" Cancel "));
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (request->dialog)->action_area), 
-                        tmp, TRUE, TRUE, FALSE);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-                       GTK_SIGNAL_FUNC(tx_dialog_cancel), request);
-    gtk_widget_show (tmp);
-
-    gtk_widget_show (request->dialog);
-    gtk_main();
-
-    return request->ret;
-#endif
 }
 
 static void get_seats_command (char *seats, const char *tramo)
@@ -734,7 +680,7 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-#if defined(WIN32)
+#ifdef WIN32
 
 static int helper_spawn (const char *prog, const char *vname,
 			 const char *workdir, int code)
@@ -763,7 +709,7 @@ static int helper_spawn (const char *prog, const char *vname,
     return ret;
 }
 
-#elif defined(USE_GSPAWN)
+#else
 
 static int helper_spawn (const char *prog, const char *vname,
 			 const char *workdir, int code)
@@ -783,37 +729,7 @@ static int helper_spawn (const char *prog, const char *vname,
     return err;
 }
 
-#else
-
-static int helper_spawn (const char *prog, const char *vname,
-			 const char *workdir, int code)
-{
-    char *cmd = NULL;
-    int ret;
-
-    if (code == TRAMO_ONLY) {
-	cmd = g_strdup_printf("cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", 
-			      workdir, prog, vname);
-    } else if (code == TRAMO_SEATS) {
-	cmd = g_strdup_printf("cd \"%s\" && \"%s\" -OF %s", workdir, prog, vname);	
-    } else if (code == X12A) {
-	cmd = g_strdup_printf("cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
-			      workdir, prog, vname);
-    } else {
-	return 1;
-    }
-
-    if (cmd == NULL) {
-	ret = E_ALLOC;
-    } else {
-	ret = gretl_spawn(cmd);
-	g_free(cmd);
-    }
-
-    return ret;    
-}
-
-#endif /* end spawn versions switch */
+#endif
 
 int write_tx_data (char *fname, int varnum, 
 		   double ***pZ, DATAINFO *pdinfo, int *graph, 
