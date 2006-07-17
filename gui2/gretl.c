@@ -65,6 +65,7 @@ static void set_up_main_menu (void);
 static void startRcallback (gpointer p, guint opt, GtkWidget *w);
 static void auto_store (void);
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w);
+static void mdata_select_all (void);
 
 GtkTargetEntry gretl_drag_targets[] = {
     { "text/uri-list", 0, GRETL_FILENAME },
@@ -350,10 +351,9 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Data menu */
     { N_("/_Data"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Data/_Display values"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Data/Display values/_All variables"), NULL, display_data, 0, NULL, GNULL },
-    { N_("/Data/Display values/_Selected variables..."), 
-      NULL, display_selected, 0, NULL, GNULL },
+    { N_("/Data/Select _all"), "<control>A", mdata_select_all, 0, NULL, GNULL },
+    { "/Data/sep0", NULL, NULL, 0, "<Separator>", GNULL },
+    { N_("/Data/_Display values"), NULL, display_selected, 0, NULL, GNULL },
     { N_("/Data/_Edit values"), NULL, spreadsheet_edit, 0, NULL, GNULL },
     { N_("/Data/Add observations..."), NULL, do_add_obs, 0, NULL, GNULL },
     { N_("/Data/Remove extra observations"), NULL, do_remove_obs, 0, NULL, GNULL },
@@ -362,7 +362,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Read info"), NULL, open_info, 0, NULL, GNULL },
     { N_("/Data/Edit _info"), NULL, edit_header, 0, NULL, GNULL },
     { N_("/Data/Print description"), NULL, print_report, 0, NULL, GNULL },
-    { N_("/Data/_Add case markers..."), NULL, open_data, OPEN_MARKERS, NULL, GNULL },
+    { N_("/Data/Add _case markers..."), NULL, open_data, OPEN_MARKERS, NULL, GNULL },
     { N_("/Data/Remove case _markers"), NULL, do_remove_markers, 0, NULL, GNULL },
     { "/Data/sep2", NULL, NULL, 0, "<Separator>", GNULL },
     /* structural items */
@@ -399,22 +399,11 @@ GtkItemFactoryEntry data_items[] = {
       NULL, selector_callback, TSPLOTS, NULL, GNULL },
     { "/View/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     /* descriptive statistics */
-    { N_("/View/_Summary statistics"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/View/_Summary statistics/_All variables"), NULL, 
-      do_menu_op, SUMMARY, NULL, GNULL },
-    { N_("/View/_Summary statistics/_Selected variables"), NULL, 
-      do_menu_op, SUMMARY_SELECTED, NULL, GNULL },
-    { N_("/View/_Correlation matrix"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/View/Correlation matrix/_All variables"), 
-      NULL, do_menu_op, CORR, NULL, GNULL },
-    { N_("/View/Correlation matrix/_Selected variables"), NULL, do_menu_op, 
-      CORR_SELECTED, NULL, GNULL },
+    { N_("/View/_Summary statistics"), NULL, do_menu_op, SUMMARY, NULL, GNULL },
     { "/View/sep2", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/View/_Multivariate statistics"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/View/Multivariate statistics/_Principal components"), NULL, 
-      do_menu_op, PCA, NULL, GNULL },
-    { N_("/View/Multivariate statistics/_Mahalanobis distances"), NULL, 
-      do_menu_op, MAHAL, NULL, GNULL },
+    { N_("/View/_Correlation matrix"), NULL, do_menu_op, CORR, NULL, GNULL },
+    { N_("/View/_Principal components"), NULL, do_menu_op, PCA, NULL, GNULL },
+    { N_("/View/_Mahalanobis distances"), NULL, do_menu_op, MAHAL, NULL, GNULL },
 
     /* "Add" (variables) menu */
     { N_("/_Add"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -1073,12 +1062,9 @@ static void set_varmenu_state (int single)
 {
     if (mdata != NULL) {
 	flip(mdata->ifac, "/Variable", single);
-	flip(mdata->ifac, "/View/Summary statistics/Selected variables", 
-	     !single);
-	flip(mdata->ifac, "/View/Correlation matrix/Selected variables", 
-	     !single);
-	flip(mdata->ifac, "/View/Multivariate statistics", 
-	     !single);
+	flip(mdata->ifac, "/View/Correlation matrix", !single);
+	flip(mdata->ifac, "/View/Principal components", !single);
+	flip(mdata->ifac, "/View/Mahalanobis distances", !single);
     }
 }
 
@@ -1194,6 +1180,14 @@ static int lagvar_get_parent_iter (int pv, GtkTreeIter *parent)
     }
 
     return ret;
+}
+
+static void mdata_select_all (void)
+{
+    GtkTreeSelection *select;
+
+    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
+    gtk_tree_selection_select_all(select);
 }
 
 void populate_varlist (void)

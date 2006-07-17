@@ -647,7 +647,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     strcpy(title, "gretl: ");
 
-    if (action == CORR_SELECTED || action == SUMMARY_SELECTED ||
+    if (action == CORR || action == SUMMARY ||
 	action == PCA || action == MAHAL) {
 	liststr = main_window_selection_as_string();
 	if (liststr == NULL) return;
@@ -655,10 +655,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     switch (action) {
     case CORR:
-	gretl_command_strcpy("corr");
-	strcat(title, _("correlation matrix"));
-	break;
-    case CORR_SELECTED:
 	gretl_command_sprintf("corr%s", liststr);
 	strcat(title, _("correlation matrix"));
 	action = CORR;
@@ -683,10 +679,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	vsize = 200;
 	break;
     case SUMMARY:
-	gretl_command_strcpy("summary");
-	strcat(title, _("summary statistics"));
-	break;
-    case SUMMARY_SELECTED:
 	gretl_command_sprintf("summary%s", liststr);
 	strcat(title, _("summary statistics"));
 	action = SUMMARY;
@@ -4311,38 +4303,6 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
 /* max number of observations for which we expect to be able to 
    use the buffer approach for displaying data, as opposed to
    disk file */
-
-void display_data (gpointer data, guint u, GtkWidget *widget)
-{
-    int err;
-    PRN *prn;
-
-    if (datainfo->v * datainfo->n > MAXDISPLAY) { 
-	/* use file */
-	char fname[MAXLEN];
-
-	if (user_fopen("data_display_tmp", fname, &prn)) {
-	    return;
-	}
-
-	err = printdata(NULL, (const double **) Z, datainfo, OPT_O, prn);
-	gretl_print_destroy(prn);
-	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
-    } else { 
-	/* use buffer */
-	if (bufopen(&prn)) {
-	    return;
-	}
-
-	err = printdata(NULL, (const double **) Z, datainfo, OPT_O, prn);
-	if (err) {
-	    nomem();
-	    gretl_print_destroy(prn);
-	    return;
-	}
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, NULL); 
-    }
-}
 
 void display_selected (gpointer data, guint action, GtkWidget *widget)
 {

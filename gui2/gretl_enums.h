@@ -11,8 +11,6 @@ enum extra_cmds {
     MARKERS,
     STORE_MODEL,
     VAR_SUMMARY,
-    CORR_SELECTED,
-    SUMMARY_SELECTED,
     GENR_RANDOM,
     ONLINE,
     EXPORT,

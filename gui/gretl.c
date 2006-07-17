@@ -52,6 +52,7 @@ static void startRcallback (gpointer p, guint opt, GtkWidget *w);
 static void auto_store (void);
 static void sort_varlist (gpointer p, guint col, GtkWidget *w);
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w);
+static void mdata_select_all (void);
 
 GdkColor red, blue, gray;
 
@@ -285,10 +286,9 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Data menu */
     { N_("/_Data"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Data/_Display values"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Data/Display values/_All variables"), NULL, display_data, 0, NULL },
-    { N_("/Data/Display values/_Selected variables..."), 
-      NULL, display_selected, 0, NULL },
+    { N_("/Data/Select _all"), NULL, mdata_select_all, 0, NULL },
+    { "/Data/sep0", NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/Display values"), NULL, display_selected, 0, NULL },
     { N_("/Data/_Edit values"), NULL, spreadsheet_edit, 0, NULL },
     { N_("/Data/Add observations..."), NULL, do_add_obs, 0, NULL },
     { N_("/Data/Remove extra observations"), NULL, do_remove_obs, 0, NULL },
@@ -334,22 +334,11 @@ GtkItemFactoryEntry data_items[] = {
       NULL, selector_callback, TSPLOTS, NULL },
     { "/View/sep1", NULL, NULL, 0, "<Separator>" },
     /* descriptive statistics */
-    { N_("/View/_Summary statistics"), NULL, NULL, 0, "<Branch>" },
-    { N_("/View/_Summary statistics/_All variables"), NULL, 
-      do_menu_op, SUMMARY, NULL },
-    { N_("/View/_Summary statistics/_Selected variables"), NULL, 
-      do_menu_op, SUMMARY_SELECTED, NULL },
-    { N_("/View/_Correlation matrix"), NULL, NULL, 0, "<Branch>" },
-    { N_("/View/_Correlation matrix/_All variables"), 
-      NULL, do_menu_op, CORR, NULL },
-    { N_("/View/_Correlation matrix/_Selected variables"), NULL, do_menu_op, 
-      CORR_SELECTED, NULL },
+    { N_("/View/_Summary statistics"), NULL, do_menu_op, SUMMARY, NULL },
     { "/View/sep2", NULL, NULL, 0, "<Separator>" },
-    { N_("/View/_Multivariate statistics"), NULL, NULL, 0, "<Branch>" },
-    { N_("/View/Multivariate statistics/_Principal components"), NULL, 
-      do_menu_op, PCA, NULL },
-    { N_("/View/Multivariate statistics/_Mahalanobis distances"), NULL, 
-      do_menu_op, MAHAL, NULL },
+    { N_("/View/_Correlation matrix"), NULL, do_menu_op, CORR, NULL },
+    { N_("/View/_Principal components"), NULL, do_menu_op, PCA, NULL },
+    { N_("/View/_Mahalanobis distances"), NULL, do_menu_op, MAHAL, NULL },
 
     /* "Add" (variables) menu */
     { N_("/_Add"), NULL, NULL, 0, "<Branch>" },
@@ -957,12 +946,9 @@ static void check_varmenu_state (GtkCList *list, gint i, gint j,
 	gint selcount = mdata_selection_count();
 
 	flip(mdata->ifac, "/Variable", (selcount == 1));
-	flip(mdata->ifac, "/View/Summary statistics/Selected variables", 
-	     (selcount > 1));
-	flip(mdata->ifac, "/View/Correlation matrix/Selected variables", 
-	     (selcount > 1));
-	flip(mdata->ifac, "/View/Multivariate statistics", 
-	     (selcount > 1));
+	flip(mdata->ifac, "/View/Correlation matrix", (selcount > 1));
+	flip(mdata->ifac, "/View/Principal components", (selcount > 1));
+	flip(mdata->ifac, "/View/Mahalanobis distances", (selcount > 1));
     }
 }
 
@@ -997,6 +983,11 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 
     return 1;
+}
+
+static void mdata_select_all (void)
+{
+    gtk_clist_select_all(GTK_CLIST(mdata->listbox));
 }
 
 void populate_varlist (void)

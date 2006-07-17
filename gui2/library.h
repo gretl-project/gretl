@@ -237,8 +237,6 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget);
 
 void fit_actual_splot (gpointer data, guint u, GtkWidget *widget);
 
-void display_data (gpointer data, guint select, GtkWidget *widget);
-
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget);
 
 void do_graph_var (int varnum);

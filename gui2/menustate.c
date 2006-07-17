@@ -402,9 +402,9 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
     if (!strcmp(item, _("Display values"))) 
 	display_selected(NULL, 0, NULL); 
     else if (!strcmp(item, _("Descriptive statistics"))) 
-	do_menu_op(NULL, SUMMARY_SELECTED, NULL);
+	do_menu_op(NULL, SUMMARY, NULL);
     else if (!strcmp(item, _("Correlation matrix"))) 
-	do_menu_op(NULL, CORR_SELECTED, NULL);
+	do_menu_op(NULL, CORR, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	plot_from_selection(NULL, GR_PLOT, NULL);
     else if (!strcmp(item, _("XY scatterplot"))) 
