@@ -204,6 +204,26 @@ static gint tree_store_go_to (windata_t *vwin, int k)
 	path = gtk_tree_path_new_from_indices(rows - 1, -1);
     } else {
 	/* page up/down */
+#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
+	GdkRectangle r;
+
+	gtk_tree_view_get_visible_rect(view, &r);
+	if (k == GDK_Page_Down) {
+	    path = gtk_tree_path_new_from_indices(r.y + r.height, -1);
+	    gtk_tree_view_scroll_to_cell(view, path, NULL,
+					 TRUE, 0.0, 0.0);
+	} else {
+	    path = gtk_tree_path_new_from_indices(r.y, -1);
+	    gtk_tree_view_scroll_to_cell(view, path, NULL,
+					 TRUE, 1.0, 0.0);
+	    if (vwin == mdata) {
+		if (r.y == 0) {
+		    gtk_tree_path_free(path);
+		    path = gtk_tree_path_new_from_indices(1, -1);
+		}
+	    }
+	}
+#else
 	GtkTreePath *p0, *p1;
 
 	if (gtk_tree_view_get_visible_range(view, &p0, &p1)) {
@@ -227,6 +247,7 @@ static gint tree_store_go_to (windata_t *vwin, int k)
 		path = p0;
 	    }
 	}
+#endif
     }
 
     if (path != NULL) {

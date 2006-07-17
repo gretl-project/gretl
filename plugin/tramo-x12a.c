@@ -60,6 +60,8 @@ const char *default_mdl = {
     "(2 1 2)(0 1 1)\n"
 };  
 
+#ifndef WIN32
+
 #define SP_DEBUG 0
 
 static int glib_spawn (const char *workdir, const char *fmt, ...)
@@ -139,6 +141,8 @@ static int glib_spawn (const char *workdir, const char *fmt, ...)
 
     return ret;
 }
+
+#endif /* !WIN32 */
 
 static int tx_dialog (tx_request *request)
 {

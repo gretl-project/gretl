@@ -32,6 +32,8 @@
 # include <signal.h>
 #endif
 
+#ifndef WIN32
+
 static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 {
     va_list ap;
@@ -104,6 +106,8 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
     
     return ret;
 }
+
+#endif /* !WIN32 */
 
 #include "arma_common.c"
 
@@ -756,6 +760,9 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
     PRN *aprn = NULL;
     MODEL armod;
     struct arma_info ainfo;
+#ifdef WIN32
+    char *cmd;
+#endif
     int err = 0;
 
     if (verbose) {
@@ -808,9 +815,10 @@ MODEL arma_x12_model (const int *list, const double **Z, const DATAINFO *pdinfo,
 
     /* run the program */
 #ifdef WIN32
-    sprintf(cmd, "\"%s\" %s -r -p -q", prog, yname);
+    cmd = g_strdup_printf("\"%s\" %s -r -p -q", prog, yname);
     err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
 		  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+    g_free(cmd);
 #else
     err = tramo_x12a_spawn(workdir, prog, yname, "-r", "-p", "-q", "-n", NULL);
 #endif
