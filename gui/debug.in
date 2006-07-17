@@ -1,4 +1,0 @@
-#!/bin/sh
-echo "set args $1 $2" > .gretl.gdb
-echo "run" >>.gretl.gdb
-gdb @prefix@/bin/gretl_x11 -x .gretl.gdb
