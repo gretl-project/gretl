@@ -4507,13 +4507,13 @@ void do_boxplot_var (int varnum)
 int do_scatters (selector *sr)
 {
     const char *buf = selector_list(sr);
-    int action = selector_code(sr);
+    gretlopt opt = selector_get_opts(sr);
     GnuplotFlags flags = 0;
     int err; 
 
     if (buf == NULL) return 1;
 
-    if (action == LINEPLOTS) {
+    if (opt & OPT_L) {
 	gretl_command_sprintf("scatters %s --with-lines", buf);
 	flags |= GP_LINES;
     } else {

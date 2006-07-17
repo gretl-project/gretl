@@ -111,7 +111,8 @@ struct _selector {
                          c == VLAGSEL || \
                          c == WLS)
 
-#define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA || c == PANEL)
+#define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA || c == PANEL || \
+                        c == SCATTERS)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
@@ -1212,7 +1213,6 @@ static void topslot_empty (int code)
 	errbox(_("You must select an X-axis variable"));
 	break;
     case SCATTERS:
-    case LINEPLOTS:
 	errbox(_("You must select a Y-axis variable"));
 	break;
     default:
@@ -1693,7 +1693,7 @@ static void construct_cmdlist (selector *sr)
 
     rows = varlist_row_count(sr, SR_RLVARS, &realrows);
 
-    if (sr->code == SCATTERS || sr->code == LINEPLOTS) {
+    if (sr->code == SCATTERS) {
 	if (rows > 0) {
 	    add_to_cmdlist(sr, " ;");
 	} else {
@@ -1761,7 +1761,7 @@ static void construct_cmdlist (selector *sr)
 	}
     }
 
-    if ((sr->code == SCATTERS || sr->code == LINEPLOTS) && !sr->error) {
+    if ((sr->code == SCATTERS) && !sr->error) {
 	GtkWidget *m;
 	int xstate;
 
@@ -1916,31 +1916,17 @@ static GtkWidget *multiplot_popdown (int ci)
     popdown = gtk_option_menu_new();
     menu = gtk_menu_new();
 
-    if (ci == LINEPLOTS) {
-	child = gtk_menu_item_new_with_label(_("X-axis variable"));
-	g_signal_connect(G_OBJECT(child), "activate",
-			 G_CALLBACK(flip_multiplot_axis), popdown);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
-	g_object_set_data(G_OBJECT(child), "x-axis-item", 
-			  GINT_TO_POINTER(1));
+    child = gtk_menu_item_new_with_label(_("Y-axis variable"));
+    g_signal_connect(G_OBJECT(child), "activate",
+		     G_CALLBACK(flip_multiplot_axis), popdown);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
 
-	child = gtk_menu_item_new_with_label(_("Y-axis variable"));
-	g_signal_connect(G_OBJECT(child), "activate",
-			 G_CALLBACK(flip_multiplot_axis), popdown);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
-    } else {
-	child = gtk_menu_item_new_with_label(_("Y-axis variable"));
-	g_signal_connect(G_OBJECT(child), "activate",
-			 G_CALLBACK(flip_multiplot_axis), popdown);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
-
-	child = gtk_menu_item_new_with_label(_("X-axis variable"));
-	g_signal_connect(G_OBJECT(child), "activate",
-			 G_CALLBACK(flip_multiplot_axis), popdown);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
-	g_object_set_data(G_OBJECT(child), "x-axis-item", 
-			  GINT_TO_POINTER(1));
-    }
+    child = gtk_menu_item_new_with_label(_("X-axis variable"));
+    g_signal_connect(G_OBJECT(child), "activate",
+		     G_CALLBACK(flip_multiplot_axis), popdown);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
+    g_object_set_data(G_OBJECT(child), "x-axis-item", 
+		      GINT_TO_POINTER(1));
 
     gtk_option_menu_set_menu(GTK_OPTION_MENU(popdown), menu);
     multiplot_menu = popdown;
@@ -1996,7 +1982,7 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
 
 static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
 {
-    if (sr->code == SCATTERS || sr->code == LINEPLOTS) {
+    if (sr->code == SCATTERS) {
 	sr->depvar = entry_with_label_and_chooser(sr, right_vbox,
 						  NULL, 1,
 						  set_dependent_var_callback);
@@ -2709,6 +2695,22 @@ static void unhide_lags_switch (selector *sr)
     gtk_widget_show_all(hbox);
 } 
 
+static void build_scatters_radios (selector *sr)
+{
+    GtkWidget *b1, *b2;
+    GSList *group;
+
+    b1 = gtk_radio_button_new_with_label(NULL, _("Use points"));
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
+    b2 = gtk_radio_button_new_with_label(group, _("Use lines"));
+    pack_switch(b2, sr, FALSE, FALSE, OPT_L, 1);
+
+    sr->radios[0] = b1;
+    sr->radios[1] = b2;
+}
+
 static void build_arma_radios (selector *sr)
 {
     GtkWidget *b1, *b2;
@@ -2789,6 +2791,8 @@ static void build_selector_radios (selector *sr)
 	build_arma_radios(sr);
     } else if (sr->code == PANEL) {
 	build_panel_radios(sr);
+    } else if (sr->code == SCATTERS) {
+	build_scatters_radios(sr);
     } else {
 	build_vec_radios(sr);
     }
@@ -2901,8 +2905,6 @@ static GtkWidget *selection_dialog_top_label (int ci)
 	s = _("3D plot");
     else if (ci == SCATTERS)
 	s = _("multiple scatterplots");
-    else if (ci == LINEPLOTS)
-	s = _("multiple line plots");
     else if (ci == GR_DUMMY)
 	s = _("factorized plot");
     else if (ci == SAVE_FUNCTIONS) 
@@ -2969,8 +2971,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 	/* models: top right -> dependent variable */
 	yvar = build_depvar_section(sr, right_vbox, preselect);
     } else if (ci == GR_XY || ci == GR_IMP || ci == GR_DUMMY
-	       || ci == SCATTERS || ci == LINEPLOTS || 
-	       ci == GR_3D) {
+	       || ci == SCATTERS || ci == GR_3D) {
 	/* graphs: top right -> x-axis variable */
 	build_x_axis_section(sr, right_vbox);
     }
@@ -3003,8 +3004,6 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 	    tmp = gtk_label_new(_("Y-axis variables"));
 	} else if (ci == SCATTERS) {
 	    multiplot_label = tmp = gtk_label_new(_("X-axis variables"));
-	} else if (ci == LINEPLOTS) { 
-	    multiplot_label = tmp = gtk_label_new(_("Y-axis variables"));
 	} else if (ci == SAVE_FUNCTIONS) {
 	    tmp = gtk_label_new(_("Helper functions"));
 	}

@@ -393,8 +393,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/View/_Multiple graphs"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/View/Multiple graphs/X-Y _scatters..."), 
       NULL, selector_callback, SCATTERS, NULL, GNULL },
-    { N_("/View/Multiple graphs/_Line graphs..."), 
-      NULL, selector_callback, LINEPLOTS, NULL, GNULL },
     { N_("/View/Multiple graphs/_Time series..."), 
       NULL, selector_callback, TSPLOTS, NULL, GNULL },
     { "/View/sep1", NULL, NULL, 0, "<Separator>", GNULL },
