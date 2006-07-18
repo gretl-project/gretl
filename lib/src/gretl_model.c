@@ -2799,8 +2799,8 @@ int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 	    pmod->t1, pmod->t2, pmod->nobs);
     fprintf(fp, "full_n=\"%d\" ncoeff=\"%d\" dfn=\"%d\" dfd=\"%d\" ", 
 	    pmod->full_n, pmod->ncoeff, pmod->dfn, pmod->dfd);
-    fprintf(fp, "ifc=\"%d\" ci=\"%d\" nwt=\"%d\" aux=\"%d\" ", 
-	    pmod->ifc, pmod->ci, pmod->nwt, pmod->aux);
+    fprintf(fp, "ifc=\"%d\" ci=\"%s\" nwt=\"%d\" aux=\"%d\" ", 
+	    pmod->ifc, gretl_command_word(pmod->ci), pmod->nwt, pmod->aux);
 
     gretl_push_c_numeric_locale();
 
@@ -3040,6 +3040,7 @@ static int arinfo_from_xml (xmlNodePtr node, xmlDocPtr doc,
 MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
 {
     MODEL *pmod;
+    char *buf = NULL;
     xmlNodePtr cur;
     int n, got = 0;
 
@@ -3058,14 +3059,26 @@ MODEL *gretl_model_from_XML (xmlNodePtr node, xmlDocPtr doc, int *err)
     got += gretl_xml_get_prop_as_int(node, "dfn", &pmod->dfn);
     got += gretl_xml_get_prop_as_int(node, "dfd", &pmod->dfd);
     got += gretl_xml_get_prop_as_int(node, "ifc", &pmod->ifc);
-    got += gretl_xml_get_prop_as_int(node, "ci", &pmod->ci);
     got += gretl_xml_get_prop_as_int(node, "nwt", &pmod->nwt);
     got += gretl_xml_get_prop_as_int(node, "aux", &pmod->aux);
 
+    got += gretl_xml_get_prop_as_string(node, "ci", &buf);
+
     if (got < 12) {
+	if (buf != NULL) {
+	    free(buf);
+	}
 	*err = E_DATA;
 	goto bailout;
     }
+
+    if (isdigit(*buf)) {
+	/* backward compatibility */
+	pmod->ci = atoi(buf);
+    } else {
+	pmod->ci = gretl_command_number(buf);
+    }
+    free(buf);
 
     gretl_push_c_numeric_locale();
 
