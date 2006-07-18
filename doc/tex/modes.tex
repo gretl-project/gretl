@@ -10,16 +10,16 @@ dialog entries, those commands are recorded in the form of a
 using either \app{gretl} or the command-line client, \app{gretlcli}.
 
 To view the current state of the script at any point in a \app{gretl}
-session, choose ``View command log'' under the File menu. This log
+session, choose ``Command log'' under the Tools menu. This log
 file is called \verb+session.inp+ and it is overwritten whenever you
 start a new session.  To preserve it, save the script under a
 different name.  Script files will be found most easily, using the GUI
 file selector, if you name them with the extension ``\verb+.inp+''.
 
-To open a script you have written independently, use the ``File, Open
-command file'' menu item; to create a script from scratch use the
-``File, Script files, New script'' item or the ``new script'' toolbar button.
-In either case a script window will open (see Figure
+To open a script you have written independently, use the ``File,
+Script files'' menu item; to create a script from scratch use the
+``File, Script files, New script'' item or the ``new script'' toolbar
+button.  In either case a script window will open (see Figure
 \ref{fig-scriptwin}).
 
 \begin{figure}[htbp]
@@ -39,18 +39,18 @@ the last Paste or Replace action; (9) Help (if you place the cursor in
 a command word and press the question mark you will get help on that
 command); (10) Close the window.  
 
-When you click the Execute icon or choose the ``File, Run'' menu item
-all output is directed to a single window, where it can be edited,
-saved or copied to the clipboard.  To learn more about the
-possibilities of scripting, take a look at the \app{gretl} Help item
-``Script commands syntax,'' or start up the command-line program
-\app{gretlcli} and consult its help, or consult the \GCR.
+When you click the Execute icon all output is directed to a single
+window, where it can be edited, saved or copied to the clipboard.  To
+learn more about the possibilities of scripting, take a look at the
+\app{gretl} Help item ``Command reference,'' or start up the
+command-line program \app{gretlcli} and consult its help, or consult
+the \GCR.
 
 In addition, the \app{gretl} package includes over 70 ``practice''
 scripts.  Most of these relate to Ramanathan (2002), but they may also
 be used as a free-standing introduction to scripting in \app{gretl}
 and to various points of econometric theory.  You can explore the
-practice files under ``File, Open command file, practice file'' There
+practice files under ``File, Script files, Practice file'' There
 you will find a listing of the files along with a brief description of
 the points they illustrate and the data they employ.  Open any file
 and run it to see the output.  Note that long commands in a script can
@@ -97,12 +97,12 @@ example of the syntax for achieving this effect:
 That is, you type a name for the model to be saved under, then a
 back-pointing ``assignment arrow'', then the model command.  You may
 use names that have embedded spaces if you like, but such names must
-always be wrapped in double quotes:
+be wrapped in double quotes:
 \begin{code}
       "Model 1" <- ols Ct 0 Yt
 \end{code}
 Models saved in this way will appear as icons in the \app{gretl}
-session window (see Section \ref{session}) after the script is
+icon view window (see Section \ref{session}) after the script is
 executed.  In addition, you can arrange to have a named model
 displayed (in its own window) automatically as follows:
 \begin{code}
@@ -114,8 +114,8 @@ Again, if the name contains spaces it must be quoted:
 \end{code}
 The same facility can be used for graphs.  For example the following
 will create a plot of \verb+Ct+ against \verb+Yt+, save it under the
-name ``CrossPlot'' (it will appear under this name in the session icon
-window), and have it displayed:
+name ``CrossPlot'' (it will appear under this name in the icon
+view window), and have it displayed:
 \begin{code}
       CrossPlot <- gnuplot Ct Yt
       CrossPlot.show
@@ -174,27 +174,27 @@ the session later.
 \end{figure}
 
 If you start \app{gretl} and open a data set, then select ``Icon
-view'' from the Session menu, you should see the basic default set of
-icons: these give you quick access to the command script
-(``Session''), information on the data set (if any), correlation
-matrix (``Correlations'') and descriptive summary statistics
-(``Summary''). All of these are activated by double-clicking the
-relevant icon.  The ``Data set'' icon is a little more complex:
-double-clicking opens up the data in the built-in spreadsheet, but you
-can also right-click on the icon for a menu of other actions.
+view'' from the View menu, you should see the basic default set of
+icons: these give you quick access to information on the data set (if
+any), correlation matrix (``Correlations'') and descriptive summary
+statistics (``Summary''). All of these are activated by
+double-clicking the relevant icon.  The ``Data set'' icon is a little
+more complex: double-clicking opens up the data in the built-in
+spreadsheet, but you can also right-click on the icon for a menu of
+other actions.
 
-To add a model to the session view, first estimate it using the Model
+To add a model to the Icon view, first estimate it using the Model
 menu.  Then pull down the File menu in the model window and select
 ``Save to session as icon\dots{}'' or ``Save as icon and close''.
 Simply hitting the \verb+S+ key over the model window is a shortcut to
 the latter action.
 
-To add a graph, first create it (under the Data menu, ``Graph
+To add a graph, first create it (under the View menu, ``Graph
 specified vars'', or via one of \app{gretl}'s other graph-generating
 commands).  Click on the graph window to bring up the graph menu, and
 select ``Save to session as icon''.
 
-Once a model or graph is added its icon should appear in the Icon View
+Once a model or graph is added its icon will appear in the Icon view
 window.  Double-clicking on the icon redisplays the object, while
 right-clicking brings up a menu which lets you display or delete the
 object.  This popup menu also gives you the option of editing graphs.
@@ -211,7 +211,7 @@ the results (coefficient estimates and standard errors) for a given
 model, and each row contains the estimates for a given variable across
 the models.  
 
-In the Icon View window \app{gretl} provides a means of constructing
+In the Icon view window \app{gretl} provides a means of constructing
 such a table (and copying it in plain text, {\LaTeX} or Rich Text
 Format).  Here is how to do it:\footnote{The model table can also be
   built non-interactively, in script mode.  For details on how to do
@@ -225,10 +225,10 @@ Format).  Here is how to do it:\footnote{The model table can also be
 \item Repeat step 1 for the other models to be included in the table
   (up to a total of six models).
 \item When you are done estimating the models, open the icon view of
-  your gretl session, by selecting ``Icon view'' under the Session
+  your gretl session, by selecting ``Icon view'' under the View
   menu in the main gretl window, or by clicking the ``session icon
   view'' icon on the gretl toolbar.
-\item In session icon view, there is an icon labeled ``Model table''.
+\item In the Icon view, there is an icon labeled ``Model table''.
   Decide which model you wish to appear in the left-most column of the
   model table and add it to the table, either by dragging its icon
   onto the Model table icon, or by right-clicking on the model icon
@@ -263,17 +263,18 @@ Figure~\ref{fig-model-table}.
 The ``graph page'' icon in the session window offers a means of
 putting together several graphs for printing on a single page.  This
 facility will work only if you have the {\LaTeX} typsetting system
-installed, and are able to generate and view PostScript
-output.\footnote{Specifically, you must have \app{dvips} and
-  \app{ghostscript} installed, along with a viewer such as \app{gv},
-  \app{ggv} or \app{kghostview}. The default viewer for systems other
-  than MS Windows is \app{gv}.}  
+installed, and are able to generate and view either PDF or PostScript
+output.\footnote{For PDF output you need \app{pdflatex} and either
+  Adobe's PDF reader or \app{xpdf} on X11.  For PostScript, you must
+  have \app{dvips} and \app{ghostscript} installed, along with a
+  viewer such as \app{gv}, \app{ggv} or \app{kghostview}. The default
+  viewer for systems other than MS Windows is \app{gv}.}
 
-In the Icon View window, you can drag up to eight graphs onto the
+In the Icon view window, you can drag up to eight graphs onto the
 graph page icon.  When you double-click on the icon (or right-click
-and select ``Display''), a page containing the selected graphs (in EPS
-format) will be composed and opened in your postscript viewer.  From
-there you should be able to print the page.
+and select ``Display''), a page containing the selected graphs (in PDF
+or EPS format) will be composed and opened in your viewer.  From there
+you should be able to print the page.
 
 To clear the graph page, right-click on its icon and select ``Clear''.
 
@@ -283,20 +284,22 @@ for the program used to view postscript.  Find that under the
 menu in the main window).  On Windows, you may need to adjust your
 file associations so that the appropriate viewer is called for the
 ``Open'' action on files with the \verb+.ps+ extension.
+FIXME discuss PDF here.
 
 \subsection{Saving and re-opening sessions}
 \label{session-save}
 
 If you create models or graphs that you think you may wish to
-re-examine later, then before quitting \app{gretl} select ``Save
-as\dots{}'' from the Session menu and give a name under which to save
-the session.  To re-open the session later, either
+re-examine later, then before quitting \app{gretl} select ``Session
+files, Save session'' from the File menu and give a name under
+which to save the session.  To re-open the session later, either
 
 \begin{itemize}
 \item Start \app{gretl} then re-open the session file by going to the
-  ``Open'' item under the Session menu, or
-\item From the command line, type \cmd{gretl -r} sessionfile, where
-  sessionfile is the name under which the session was saved.
+  ``File, Session files, Open session'', or
+\item From the command line, type \cmd{gretl -r} \textsl{sessionfile},
+  where \textsl{sessionfile} is the name under which the session was
+  saved.
 \end{itemize}
 
 
