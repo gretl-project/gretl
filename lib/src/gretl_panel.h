@@ -36,11 +36,11 @@ int panel_autocorr_test (MODEL *pmod, int order,
 void panel_dwstat (MODEL *pmod, const DATAINFO *pdinfo);
 
 int set_panel_structure_from_vars (int uv, int tv, 
-				   double ***pZ, 
+				   double **Z, 
 				   DATAINFO *pdinfo);
 
 int set_panel_structure_from_line (const char *line, 
-				   double ***pZ, 
+				   double **Z, 
 				   DATAINFO *pdinfo);
 
 int set_panel_structure_from_indices (double ***pZ, DATAINFO *pdinfo);

@@ -2810,7 +2810,7 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
     /* special: reorganizing dataset based on panel index vars */
     if (dwinfo->structure == PANEL_UNKNOWN) {
 	err = set_panel_structure_from_vars(dwinfo->t1, dwinfo->t2,
-					    &Z, datainfo);
+					    Z, datainfo);
 	goto finalize;
     }
 

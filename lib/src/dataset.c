@@ -631,8 +631,8 @@ create_new_dataset (double ***pZ, int nvar, int nobs, int markers)
  * Allocates the two-dimensional array to which @pZ points,
  * based on the %v (number of variables) and %n (number of
  * observations) members of @pdinfo.  The variable at 
- * position 0 is initialized to all 1s; no other variables
- * are initialized.
+ * position 0 is initialized to all 1s; other variables
+ * are initialized to #NADBL.
  *
  * Returns: 0 on success, %E_ALLOC on error.
  */

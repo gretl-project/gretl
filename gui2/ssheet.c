@@ -42,7 +42,7 @@ typedef struct {
     GtkWidget *popup;
     GtkCellRenderer *dumbcell;
     GtkCellRenderer *datacell;
-    gchar location[20];
+    gchar location[64];
     int datacols, datarows;
     int totcols;
     int orig_vars;
@@ -436,7 +436,7 @@ static void new_case_dialog (Spreadsheet *sheet)
 {
     edit_dialog (_("gretl: case marker"), 
 		 _("Enter case marker for new obs\n"
-		   "(max. 15 characters)"),
+		   "(max. 8 characters)"),
 		 NULL, name_new_obs, sheet, 
 		 0, VARCLICK_NONE, NULL);
 }

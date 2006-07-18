@@ -3067,31 +3067,27 @@ static int compare_obs (const void *a, const void *b)
     return ret;
 }
 
-static int transcribe_panel_indices (const double *uid, int n,
-				     const double *tid, int T,
-				     const double **Z, DATAINFO *pdinfo,
-				     int uv, int tv)
+static int compose_panel_indices (DATAINFO *pdinfo, int T,
+				  char *mask)
 {
-    int i, j, err;
+    int i, u, t;
+    int err;
 
     err = dataset_allocate_panel_info(pdinfo);
     if (err) {
 	return err;
     }
+    
+    pdinfo->paninfo->padmask = mask;
 
+    u = t = 0;
     for (i=0; i<pdinfo->n; i++) {
-	for (j=0; j<n; j++) {
-	    if (Z[uv][i] == uid[j]) {
-		pdinfo->paninfo->unit[i] = j;
-		break;
-	    }
-	}
-	for (j=0; j<T; j++) {
-	    if (Z[tv][i] == tid[j]) {
-		pdinfo->paninfo->period[i] = j;
-		break;
-	    }
-	}
+	if (i > 0 && i % T == 0) {
+	    t = 0;
+	    u++;
+	} 
+	pdinfo->paninfo->unit[i] = u;
+	pdinfo->paninfo->period[i] = t++;
     }
 
 #if PDEBUG
@@ -3170,93 +3166,16 @@ static int dataset_sort_by (double **Z, DATAINFO *pdinfo,
     return 0;
 }
 
-static void shift_indexed_data_forward (double **Z, DATAINFO *pdinfo,
-					int t, int unit, const double *tid,
-					int tmiss, int shift)
+static int get_mask_skip (char *mask, int n, int t)
 {
-    PANINFO *pan = pdinfo->paninfo;
-    int i, s;
+    int s, skip = 1;
 
-    for (s=pdinfo->n-1; s>=t+shift; s--) {
-	pan->unit[s] = pan->unit[s - shift];
-	pan->period[s] = pan->period[s - shift];
-	for (i=1; i<pdinfo->v; i++) {
-	    Z[i][s] = Z[i][s - shift];
-	}
+    for (s=t+1; s<n; s++) {
+	if (mask[s]) skip++;
+	else break;
     }
 
-    for (s=t; s<t+shift; s++) {
-	pan->unit[s] = unit;
-	pan->period[s] = tid[tmiss++];
-	pan->padmask[s] = 1;
-	for (i=1; i<pdinfo->v; i++) {
-	    Z[i][s] = NADBL;
-	}
-    }    
-}
-
-static void shift_data_forward (double **Z, DATAINFO *pdinfo,
-				int t, int unit, const double *tid,
-				int tmiss, int uv, int tv,
-				int shift)
-{
-    int i, s;
-
-    for (i=1; i<pdinfo->v; i++) {
-	for (s=pdinfo->n-1; s>=t+shift; s--) {
-	    Z[i][s] = Z[i][s - shift];
-	}
-	for (s=t; s<t+shift; s++) {
-	    if (i == uv) {
-		Z[i][s] = unit;
-	    } else if (i == tv) {
-		Z[i][s] = tid[tmiss++];
-	    } else {
-		Z[i][s] = NADBL;
-	    }
-	}
-    }
-}
-
-static int really_pad_indexed_dataset (const double *tsort, int grandT, 
-				       const int *uobs, double **Z, 
-				       DATAINFO *pdinfo)
-{
-    PANINFO *pan = pdinfo->paninfo;
-    int ni, shift;
-    int i, j, t = 0;
-
-    pan->padmask = calloc(pdinfo->n, 1);
-    if (pan->padmask == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<pan->nunits; i++) {
-	if (uobs[i] == grandT) {
-	    t += grandT;
-	    continue;
-	}
-	ni = uobs[i];
-	for (j=0; j<grandT; ) {
-	    if (j > ni || pan->period[t] != tsort[j]) {
-		if (j > ni) {
-		    shift = grandT - ni;
-		} else {
-		    shift = 1;
-		}
-		shift_indexed_data_forward(Z, pdinfo, t, pan->unit[i], 
-					   tsort, j, shift);
-		ni += shift;
-		j += shift;
-		t += shift;
-	    } else {
-		j++;
-		t++;
-	    }
-	}
-    }
-
-    return 0;
+    return skip;
 }
 
 /* For when we've subsampled a panel dataset, and have padded out
@@ -3267,8 +3186,11 @@ static int really_pad_indexed_dataset (const double *tsort, int grandT,
 int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo)
 {
     PANINFO *pan = pdinfo->paninfo;
-    int i, s, t, n = pdinfo->n;
-    int drop, err = 0;
+    int n = pdinfo->n;
+    int i, t, s, drop;
+    int skip, nrem;
+    size_t srem;
+    int err = 0;
 
     if (pan == NULL) {
 	return E_DATA;
@@ -3278,16 +3200,27 @@ int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo)
 	return 0;
     }
 
-    for (t=0; t<pdinfo->n; t++) {
-	if (pan->padmask[t]) {
-	    for (s=t; s<n-1; s++) {
-		pan->unit[s] = pan->unit[s+1];
-		pan->period[s] = pan->period[s+1];
-		for (i=1; i<pdinfo->v; i++) {
-		    (*pZ)[i][s] = (*pZ)[i][s+1];
+    fprintf(stderr, "unpad_panel_dataset\n");
+
+    s = 0;
+    for (t=0; t<n; t++) {
+	if (pan->padmask[s]) {
+	    skip = get_mask_skip(pan->padmask, pdinfo->n, s);
+	    fprintf(stderr, "t=%d (s=%d) got skip = %d\n", t, s, skip);
+	    nrem = pdinfo->n - skip - t;
+	    srem = (nrem * sizeof *pan->unit);
+	    memmove(pan->unit + t, pan->unit + t + skip, srem);
+	    memmove(pan->period + t, pan->period + t + skip, srem);
+	    srem = (nrem * sizeof ***pZ);
+	    for (i=1; i<pdinfo->v; i++) {
+		if (var_is_series(pdinfo, i)) {
+		    memmove((*pZ)[i] + t, (*pZ)[i] + t + skip, srem);
 		}
 	    }
-	    n--;
+	    s += skip;
+	    n -= skip;
+	} else {
+	    s++;
 	}
     }
 
@@ -3304,93 +3237,149 @@ int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
-static int really_pad_dataset (const double *uid, int uv, int nunits,
-			       const double *tid, int tv, int nperiods, 
-			       const int *uobs, double **Z, 
-			       DATAINFO *pdinfo)
-{
-    int ni, shift;
-    int i, j, t = 0;
+/* Given the variables coding for panel unit and time period,
+   construct parallel arrays of int that code for the same
+   information, but are zero-based and consecutive.
+*/
 
-    for (i=0; i<nunits; i++) {
-#if PDEBUG
-	fprintf(stderr, "unit[%d] ('%g'), obs = %d\n", i, uid[i], uobs[i]);
-#endif
-	if (uobs[i] == nperiods) {
-	    /* no missing obs for this unit */
-	    t += nperiods;
-	    continue;
+static int normalize_uid_tid (const double *tid, int T,
+			      const double **Z, const DATAINFO *pdinfo,
+			      int uv, int tv, int **pnuid, int **pntid)
+{
+    int *nuid = NULL;
+    int *ntid = NULL;
+    int ui, tmin;
+    int i, t;
+
+    nuid = malloc(pdinfo->n * sizeof *nuid);
+    ntid = malloc(pdinfo->n * sizeof *ntid);
+    if (nuid == NULL || ntid == NULL) {
+	free(nuid);
+	free(ntid);
+	return E_ALLOC;
+    }
+
+    ui = tmin = 0;
+
+    for (i=0; i<pdinfo->n; i++) {
+	if (i > 0 && Z[uv][i] > Z[uv][i-1]) {
+	    tmin = 0;
+	    ui++;
+	} else if (i > 0) {
+	    tmin++;
 	}
-	ni = uobs[i];
-	for (j=0; j<nperiods; ) {
-	    if (j >= ni || Z[tv][t] != tid[j]) {
-		if (j >= ni) {
-		    shift = nperiods - ni;
-		} else {
-		    shift = 1; /* this is lame */
-		}
-#if PDEBUG
-		fprintf(stderr, " per=%d ('%g'), shift=%d\n", j, tid[j], shift);
-#endif
-		shift_data_forward(Z, pdinfo, t, uid[i], 
-				   tid, j, uv, tv, shift);
-		ni += shift;
-		j += shift;
-		t += shift;
-	    } else {
-#if PDEBUG
-		fprintf(stderr, " per=%d ('%g'), obs OK\n", j, tid[j]);
-#endif
-		j++;
-		t++;
+	nuid[i] = ui;
+	for (t=tmin; t<T; t++) {
+	    if (Z[tv][i] == tid[t]) {
+		ntid[i] = t;
+		break;
 	    }
 	}
     }
+
+    *pnuid = nuid;
+    *pntid = ntid;
 
     return 0;
 }
 
-static int maybe_pad_dataset (const double *uid, int uv, int nunits,
+static int pad_panel_dataset (const double *uid, int uv, int nunits,
 			      const double *tid, int tv, int nperiods, 
-			      double ***pZ, DATAINFO *pdinfo)
+			      double **Z, DATAINFO *pdinfo,
+			      char *mask)
 {
-    int *uobs;
-    int totmiss = 0;
-    int i, t;
+    double **bigZ = NULL;
+    int *nuid, *ntid;
+    int n_scalars = 0;
+    int n_orig = pdinfo->n;
+    int t2_orig = pdinfo->t2;
+    int i, j, s, t;
     int err = 0;
 
-    uobs = malloc(nunits * sizeof *uobs);
-    if (uobs == NULL) {
-	return E_ALLOC;
+    for (i=1; i<pdinfo->v; i++) {
+	if (var_is_scalar(pdinfo, i)) {
+	    n_scalars++;
+	}
     }
 
-    for (i=0; i<nunits; i++) {
-	uobs[i] = 0;
-	for (t=0; t<pdinfo->n; t++) {
-	    if ((*pZ)[uv][t] == uid[i]) {
-		uobs[i] += 1;
+    err = normalize_uid_tid(tid, nperiods, (const double **) Z,
+			    pdinfo, uv, tv, &nuid, &ntid);
+
+    if (!err) {
+	/* allocate temporary storage, skipping any scalars */
+	pdinfo->v -= n_scalars;
+	pdinfo->n = nunits * nperiods;
+	pdinfo->t2 = pdinfo->n - 1;
+	err = allocate_Z(&bigZ, pdinfo);
+	pdinfo->v += n_scalars;
+    }
+
+    if (err) {
+	pdinfo->n = n_orig;
+	pdinfo->t2 = t2_orig;
+    } else {
+	int buv = 0, btv = 0;
+	int tref = 0;
+
+	/* write rows from original Z into the right places in bigZ */
+	for (t=0; t<n_orig; t++) {
+	    j = 1;
+	    s = nuid[t] * nperiods + ntid[t];
+	    for (i=1; i<pdinfo->v; i++) {
+		if (var_is_series(pdinfo, i)) {
+		    bigZ[j++][s] = Z[i][t];
+		}
+	    }
+	    if (s > tref) {
+		fprintf(stderr, "padding = %d\n", s - tref);
+		if (mask != NULL) {
+		    for (j=tref; j<s; j++) {
+			mask[j] = 1;
+		    }
+		}
+		tref = s;
+	    }
+	    tref++;
+	}
+
+	/* where are uv and tv in bigZ? */
+	j = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (i == uv) {
+		buv = j;
+	    } else if (i == tv) {
+		btv = j;
+	    }
+	    if (var_is_series(pdinfo, i)) {
+		j++;
 	    }
 	}
-#if PDEBUG
-	fprintf(stderr, "unit %d (%g): found %d obs\n", i, uid[i], uobs[i]);
-#endif
-	totmiss += nperiods - uobs[i];
-    }
 
-#if PDEBUG
-    fprintf(stderr, "calculated %d total missing obs\n", totmiss);
-#endif
-
-    if (totmiss > 0) {
-	err = dataset_add_observations(totmiss, pZ, pdinfo, OPT_D);
-	if (!err) {
-	    err = really_pad_dataset(uid, uv, nunits,
-				     tid, tv, nperiods,
-				     uobs, *pZ, pdinfo);
+	/* complete the index info in slots uv and tv */
+	i = j = 0;
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t > 0 && t % nperiods == 0) {
+		i++;
+		j = 0;
+	    }
+	    bigZ[buv][t] = uid[i];
+	    bigZ[btv][t] = tid[j++];
 	}
+
+	/* swap the padded arrays into Z */
+	j = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (!var_is_scalar(pdinfo, i)) {
+		free(Z[i]);
+		Z[i] = bigZ[j++];
+	    }
+	}
+
+	free(bigZ);
     }
-		
-    free(uobs);
+
+    free(nuid);
+    free(ntid);
 
     return err;
 }
@@ -3443,12 +3432,13 @@ static int uv_tv_from_line (const char *line, const DATAINFO *pdinfo,
 }
 
 #if PDEBUG
-static void print_unit_var (int uv, double **Z, int n)
+static void print_unit_var (int uv, double **Z, int n, int after)
 {
-    int i;
+    int i, imax = 20;
 
-    fprintf(stderr, "unit_var:\n");
-    for (i=0; i<n && i<20; i++) {
+    fprintf(stderr, "Z[uv], %s sorting (first %d obs):\n", 
+	    (after)? "after" : "before", imax);
+    for (i=0; i<n && i<imax; i++) {
 	fprintf(stderr, " Z[%d][%d] = %g\n", uv, i, Z[uv][i]);
     }
 }
@@ -3470,12 +3460,15 @@ static void finalize_panel_datainfo (DATAINFO *pdinfo, int nperiods)
 }
 
 int set_panel_structure_from_vars (int uv, int tv, 
-				   double ***pZ, 
+				   double **Z, 
 				   DATAINFO *pdinfo)
 {
     double *uid = NULL;
     double *tid = NULL;
+    char *mask = NULL;
     int n = pdinfo->n;
+    int totmiss = 0;
+    int fulln = 0;
     int nunits = 0;
     int nperiods = 0;
     int err = 0;
@@ -3486,11 +3479,11 @@ int set_panel_structure_from_vars (int uv, int tv,
     fprintf(stderr, "set_panel_structure_from_vars:\n "
 	    "using var %d ('%s') for unit, var %d ('%s') for time\n",
 	    uv, pdinfo->varname[uv], tv, pdinfo->varname[tv]);
-    print_unit_var(uv, *pZ, n);
+    print_unit_var(uv, Z, n, 0);
 #endif
 
-    uid = copyvec((*pZ)[uv], n);
-    tid = copyvec((*pZ)[tv], n);
+    uid = copyvec(Z[uv], n);
+    tid = copyvec(Z[tv], n);
 
     if (uid == NULL || tid == NULL) {
 	err = E_ALLOC;
@@ -3511,34 +3504,36 @@ int set_panel_structure_from_vars (int uv, int tv,
 	goto bailout;
     }
 
+    fulln = nunits * nperiods;
+    totmiss = fulln - pdinfo->n;
+
 #if PDEBUG
     fprintf(stderr, "Found %d units, %d periods\n", nunits, nperiods);
     fprintf(stderr, "Units: min %g, max %g\n", uid[0], uid[n - 1]);
     fprintf(stderr, "Periods: min %g, max %g\n", tid[0], tid[n - 1]);
+    fprintf(stderr, "Required rows = %d * %d = %d\n", nunits, nperiods, fulln);
+    fprintf(stderr, "Missing rows = %d - %d = %d\n", fulln, pdinfo->n, totmiss);
 #endif
 
     /* sort full dataset by unit and period */
-    err = dataset_sort_by(*pZ, pdinfo, uv, tv);
+    err = dataset_sort_by(Z, pdinfo, uv, tv);
 
 #if PDEBUG
-    print_unit_var(uv, *pZ, n);
+    print_unit_var(uv, Z, n, 1);
 #endif
 
-    if (!err) {
-	/* in case of unbalanced panel, pad out with missing
-	   values */
+    if (!err && totmiss > 0) {
+	/* pad dataset with NAs */
+	mask = calloc(fulln, 1);
 	rearrange_id_array(uid, nunits, n);
 	rearrange_id_array(tid, nperiods, n);
-	err = maybe_pad_dataset(uid, uv, nunits, 
+	err = pad_panel_dataset(uid, uv, nunits, 
 				tid, tv, nperiods, 
-				pZ, pdinfo);
+				Z, pdinfo, mask);
     }
 
-    /* transcribe the indexes into pdinfo */
     if (!err) {
-	err = transcribe_panel_indices(uid, nunits, tid, nperiods,
-				       (const double **) *pZ, pdinfo, 
-				       uv, tv);
+	err = compose_panel_indices(pdinfo, nperiods, mask);
     }
 
     if (!err) {
@@ -3554,7 +3549,7 @@ int set_panel_structure_from_vars (int uv, int tv,
 }
 
 int set_panel_structure_from_line (const char *line, 
-				   double ***pZ, 
+				   double **Z, 
 				   DATAINFO *pdinfo)
 {
     int n = pdinfo->n; /* ? */
@@ -3570,85 +3565,35 @@ int set_panel_structure_from_line (const char *line,
 	return err;
     }
 
-    if (!is_positive((*pZ)[uv], n) || !is_positive((*pZ)[tv], n)) {
+    if (!is_positive(Z[uv], n) || !is_positive(Z[tv], n)) {
 	return E_DATA;
     }
 
-    return set_panel_structure_from_vars(uv, tv, pZ, pdinfo);
+    return set_panel_structure_from_vars(uv, tv, Z, pdinfo);
 }
 
-static int maybe_pad_indexed_dataset (double ***pZ, DATAINFO *pdinfo)
-{
-    const PANINFO *pan = pdinfo->paninfo;
-    double *tsort;
-    int *uobs;
-    int i, t, grandT;
-    int totmiss = 0;
-    int err = 0;
-
-    tsort = malloc(pdinfo->n * sizeof *tsort);
-    if (tsort == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<pdinfo->n; t++) {
-	tsort[t] = pan->period[t];
-    }
-
-    qsort(tsort, pdinfo->n, sizeof *tsort, gretl_compare_doubles);
-    grandT = count_distinct_values(tsort, pdinfo->n);
-    rearrange_id_array(tsort, grandT, pdinfo->n);
-
-    uobs = malloc(pan->nunits * sizeof *uobs);
-    if (uobs == NULL) {
-	free(tsort);
-	return E_ALLOC;
-    }
-
-    for (i=0; i<pan->nunits; i++) {
-	uobs[i] = 0;
-	for (t=0; t<pdinfo->n; t++) {
-	    if (pan->unit[t] == i) {
-		uobs[i] += 1;
-	    }
-	}
-#if PDEBUG
-	fprintf(stderr, " unit[%d]: obs = %d, missing = %d\n", i, uobs[i], grandT - uobs[i]);
-#endif
-	totmiss += grandT - uobs[i];
-    }
-
-#if PDEBUG
-    fprintf(stderr, "totmiss = %d\n", totmiss);
-#endif
-
-    if (totmiss > 0) {
-	err = dataset_add_observations(totmiss, pZ, pdinfo, OPT_D);
-	if (!err) {
-	    err = really_pad_indexed_dataset(tsort, grandT, uobs, *pZ, pdinfo);
-	}
-	if (!err) {
-	    err = dataset_finalize_panel_indices(pdinfo);
-	}
-    }
-
-    if (!err) {
-	finalize_panel_datainfo(pdinfo, grandT);
-    } 
-
-    free(tsort);
-    free(uobs);    
-
-    return err;
-}
+/* used for readjusting panel data structure after sub-sampling */
 
 int set_panel_structure_from_indices (double ***pZ, DATAINFO *pdinfo)
 {
     int err;
 
     err = dataset_finalize_panel_indices(pdinfo);
+
     if (!err) {
-	err = maybe_pad_indexed_dataset(pZ, pdinfo);
+	int t, v = pdinfo->v;
+
+	err = dataset_add_series(2, pZ, pdinfo);
+	if (!err) {
+	    for (t=0; t<pdinfo->n; t++) {
+		(*pZ)[v][t] = pdinfo->paninfo->unit[t];
+		(*pZ)[v+1][t] = pdinfo->paninfo->period[t];
+	    }
+	    err = set_panel_structure_from_vars(v, v+1, *pZ, pdinfo);
+	    if (!err) {
+		err = dataset_drop_last_variables(2, pZ, pdinfo);
+	    }
+	}
     }
 
     return err;

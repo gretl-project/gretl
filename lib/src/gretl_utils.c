@@ -672,7 +672,7 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (opt & OPT_P) {
-	return set_panel_structure_from_line(line, pZ, pdinfo);
+	return set_panel_structure_from_line(line, *pZ, pdinfo);
     }
 
     /* now we get down to business */

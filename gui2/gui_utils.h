@@ -105,9 +105,6 @@ int validate_varname (const char *varname);
 
 gretlopt get_tex_eqn_opt (void);
 
-gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, 
-			windata_t *vwin);
-
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 			 gpointer data);
 

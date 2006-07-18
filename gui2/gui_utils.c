@@ -870,30 +870,6 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     return FALSE;
 }
 
-gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
-{
-    if (key->keyval == GDK_q) { 
-	if (vwin != mdata) {
-	    gtk_widget_destroy(vwin->w);
-	}
-	return TRUE;
-    } else if (key->keyval == GDK_f) {
-	GdkModifierType mods;
-
-	if (vwin == mdata && !data_status) {
-	    return TRUE;
-	}
-
-	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
-	if (mods & GDK_CONTROL_MASK) {
-	    menu_find(vwin, 1, NULL);
-	    return TRUE;
-	}	
-    }
-
-    return FALSE;
-}
-
 /* ........................................................... */
 
 void nomem (void)

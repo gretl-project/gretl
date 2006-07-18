@@ -187,6 +187,7 @@ static gint tree_store_go_to (windata_t *vwin, int k)
     GtkTreeModel *model = gtk_tree_view_get_model(view);
     GtkTreePath *path = NULL;
     GtkTreeIter iter;
+    int rows;
 
     if (!gtk_tree_model_get_iter_first(model, &iter)) {
 	return FALSE;
@@ -199,55 +200,38 @@ static gint tree_store_go_to (windata_t *vwin, int k)
     if (k == GDK_Home) {
 	path = gtk_tree_model_get_path(model, &iter);
     } else if (k == GDK_End) {
-	int rows = gtk_tree_model_iter_n_children(model, NULL);
-
+	rows = gtk_tree_model_iter_n_children(model, NULL);
 	path = gtk_tree_path_new_from_indices(rows - 1, -1);
     } else {
 	/* page up/down */
-#if (GTK_MAJOR_VERSION == 2 && GTK_MINOR_VERSION < 8)
 	GdkRectangle r;
+	gint wx, wy;
 
 	gtk_tree_view_get_visible_rect(view, &r);
+
 	if (k == GDK_Page_Down) {
-	    path = gtk_tree_path_new_from_indices(r.y + r.height, -1);
+	    gtk_tree_view_tree_to_widget_coords(view, r.x, r.y + r.height,
+						&wx, &wy);
+	    gtk_tree_view_get_path_at_pos(view, wx, wy, &path, 
+					  NULL, NULL, NULL);
+	    if (path == NULL) {
+		rows = gtk_tree_model_iter_n_children(model, NULL);
+		path = gtk_tree_path_new_from_indices(rows - 1, -1);
+	    }
 	    gtk_tree_view_scroll_to_cell(view, path, NULL,
 					 TRUE, 0.0, 0.0);
 	} else {
-	    path = gtk_tree_path_new_from_indices(r.y, -1);
+	    gtk_tree_view_tree_to_widget_coords(view, r.x, r.y,
+						&wx, &wy);
+	    gtk_tree_view_get_path_at_pos(view, wx, wy, &path, 
+					  NULL, NULL, NULL);
 	    gtk_tree_view_scroll_to_cell(view, path, NULL,
 					 TRUE, 1.0, 0.0);
-	    if (vwin == mdata) {
-		if (r.y == 0) {
-		    gtk_tree_path_free(path);
-		    path = gtk_tree_path_new_from_indices(1, -1);
-		}
+	    if (vwin == mdata && r.y == 0) {
+		gtk_tree_path_free(path);
+		path = gtk_tree_path_new_from_indices(1, -1);
 	    }
 	}
-#else
-	GtkTreePath *p0, *p1;
-
-	if (gtk_tree_view_get_visible_range(view, &p0, &p1)) {
-	    if (k == GDK_Page_Down) {
-		gtk_tree_view_scroll_to_cell(view, p1, NULL,
-					     TRUE, 0.0, 0.0);
-		gtk_tree_path_free(p0);
-		path = p1;
-	    } else {
-		gtk_tree_view_scroll_to_cell(view, p0, NULL,
-					     TRUE, 1.0, 0.0);
-		gtk_tree_path_free(p1);
-		if (vwin == mdata) {
-		    gint *idx = gtk_tree_path_get_indices(p0);
-
-		    if (idx[0] == 0) {
-			gtk_tree_path_free(p0);
-			p0 = gtk_tree_path_new_from_indices(1, -1);
-		    }
-		}
-		path = p0;
-	    }
-	}
-#endif
     }
 
     if (path != NULL) {
@@ -258,11 +242,32 @@ static gint tree_store_go_to (windata_t *vwin, int k)
     return TRUE;
 }
 
-gint listbox_motion_keys (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     int k = key->keyval;
 
-    if (k == GDK_Home || k == GDK_End || k == GDK_Page_Up || k == GDK_Page_Down) {
+    if (k == GDK_q) { 
+	/* Q = quit */
+	if (vwin != mdata) {
+	    gtk_widget_destroy(vwin->w);
+	}
+	return TRUE;
+    } else if (k == GDK_f) {
+	/* F = find */
+	GdkModifierType mods;
+
+	if (vwin == mdata && !data_status) {
+	    return TRUE;
+	}
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	if (mods & GDK_CONTROL_MASK) {
+	    menu_find(vwin, 1, NULL);
+	    return TRUE;
+	}	
+    } else if (k == GDK_Home || k == GDK_End || 
+	       k == GDK_Page_Up || k == GDK_Page_Down) {
+	/* motion keys not supported by default */
 	return tree_store_go_to(vwin, k);
     }
 
@@ -361,9 +366,6 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 			 vwin);
     }
 
-    g_signal_connect(G_OBJECT(view), "key_press_event",
-		     G_CALLBACK(listbox_motion_keys),
-		     vwin);
     g_signal_connect(G_OBJECT(view), "key_press_event",
 		     G_CALLBACK(catch_listbox_key),
 		     vwin);

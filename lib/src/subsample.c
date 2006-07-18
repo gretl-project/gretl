@@ -439,7 +439,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
     sync_dataset_elements(*ppdinfo);
 
     /* subsampled panel data: remove any added padding */
-    if (dataset_is_panel(*ppdinfo)) {
+    if (0 && dataset_is_panel(*ppdinfo)) {
 	err = unpad_panel_dataset(pZ, *ppdinfo);
     }
 
@@ -596,7 +596,7 @@ static int mask_from_dummy (const char *line,
     }
 
     return err;
-} 
+}
 
 static int count_selected_cases (const char *x, int n)
 {
