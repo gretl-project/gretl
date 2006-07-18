@@ -3330,12 +3330,13 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 		    bigZ[j++][s] = Z[i][t];
 		}
 	    }
-	    if (s > tref) {
+	    if (mask != NULL && s > tref) {
+		/* recording the padding in "mask" */
+#if PDEBUG
 		fprintf(stderr, "padding = %d\n", s - tref);
-		if (mask != NULL) {
-		    for (j=tref; j<s; j++) {
-			mask[j] = 1;
-		    }
+#endif
+		for (j=tref; j<s; j++) {
+		    mask[j] = 1;
 		}
 		tref = s;
 	    }
@@ -3369,11 +3370,14 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	/* swap the padded arrays into Z */
 	j = 1;
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!var_is_scalar(pdinfo, i)) {
+	    if (var_is_series(pdinfo, i)) {
 		free(Z[i]);
 		Z[i] = bigZ[j++];
 	    }
 	}
+
+	free(Z[0]);
+	Z[0] = bigZ[0];
 
 	free(bigZ);
     }
@@ -3524,7 +3528,9 @@ int set_panel_structure_from_vars (int uv, int tv,
 
     if (!err && totmiss > 0) {
 	/* pad dataset with NAs */
+#if 0
 	mask = calloc(fulln, 1);
+#endif
 	rearrange_id_array(uid, nunits, n);
 	rearrange_id_array(tid, nperiods, n);
 	err = pad_panel_dataset(uid, uv, nunits, 

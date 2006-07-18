@@ -440,6 +440,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
 
     /* subsampled panel data: remove any added padding */
     if (0 && dataset_is_panel(*ppdinfo)) {
+	/* FIXME!!! */
 	err = unpad_panel_dataset(pZ, *ppdinfo);
     }
 
