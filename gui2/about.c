@@ -27,7 +27,8 @@
 # include "build.h"
 #endif
 
-const gchar *copyright = "Copyright (C) 2000-2006 Allin Cottrell";
+const gchar *copyright = "Copyright (C) 2000-2006 Allin Cottrell and "
+                         "Riccardo \"Jack\" Lucchetti";
 const gchar *website = "http://gretl.sourceforge.net/";
 
 #ifdef USE_GNOME

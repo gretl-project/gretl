@@ -82,7 +82,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/add variables</menu-path>
+      <menu-path>Model window, /Tests/Add variables</menu-path>
     </gui-access>
 
   </command>
@@ -149,7 +149,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/add variables</menu-path>
+      <menu-path>Model window, /Tests/Add variables</menu-path>
     </gui-access>
 
   </command>
@@ -607,7 +607,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Graph specified vars/Boxplots</menu-path>
+      <menu-path>/View/Graph specified vars/Boxplots</menu-path>
     </gui-access>
 
   </command>
@@ -698,7 +698,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/sum of coefficients</menu-path>
+      <menu-path>Model window, /Tests/Sum of coefficients</menu-path>
     </gui-access>
 
   </command>
@@ -1005,7 +1005,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Correlation matrix</menu-path>
+      <menu-path>/View/Correlation matrix</menu-path>
       <other-access>Main window pop-up menu (multiple selection)</other-access>
     </gui-access>
 
@@ -1142,7 +1142,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Utilities/Statistical tables</menu-path>
+      <menu-path>/Tools/Statistical tables</menu-path>
     </gui-access>
 
   </command>
@@ -1227,7 +1227,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/File/Browse databases</menu-path>
+      <menu-path>/File/Databases</menu-path>
     </gui-access>
 
   </command>
@@ -1352,7 +1352,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Add/first differences</menu-path>
+      <menu-path>/Add/First differences of selected variables</menu-path>
     </gui-access>
 
   </command>
@@ -1736,7 +1736,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Model data/Forecasts</menu-path>
+      <menu-path>Model window, /Analysis/Forecasts</menu-path>
     </gui-access>
 
   </command>
@@ -1815,7 +1815,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Model data/Forecasts</menu-path>
+      <menu-path>Model window, /Analysis/Forecasts</menu-path>
     </gui-access>
 
   </command>
@@ -2014,7 +2014,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Time series/GARCH model</menu-path>
+      <menu-path>/Model/Time series/GARCH</menu-path>
     </gui-access>
 
   </command>
@@ -2714,7 +2714,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Graph specified vars</menu-path>
+      <menu-path>/View/Graph specified vars</menu-path>
       <other-access>Main window pop-up menu, graph button on toolbar</other-access>
     </gui-access>
 
@@ -2968,7 +2968,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/panel diagnostics</menu-path>
+      <menu-path>Model window, /Tests/Panel diagnostics</menu-path>
     </gui-access>
 
   </command>
@@ -3137,7 +3137,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Heteroskedasticity corrected</menu-path>
+      <menu-path>/Model/Other linear models/Heteroskedasticity corrected</menu-path>
     </gui-access>
 
   </command>
@@ -3452,7 +3452,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Least Absolute Deviation</menu-path>
+      <menu-path>/Model/Robust estimation/Least Absolute Deviation</menu-path>
     </gui-access>
 
   </command>
@@ -3490,7 +3490,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Add/lags of selected variables</menu-path>
+      <menu-path>/Add/Lags of selected variables</menu-path>
     </gui-access>
 
   </command>
@@ -3560,7 +3560,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Add/log differences</menu-path>
+      <menu-path>/Add/Log differences of selected variables</menu-path>
     </gui-access>
 
   </command>
@@ -3633,7 +3633,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/influential observations</menu-path>
+      <menu-path>Model window, /Tests/Influential observations</menu-path>
     </gui-access>
 
   </command>
@@ -3786,7 +3786,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Logistic</menu-path>
+      <menu-path>/Model/Nonlinear models/Logistic</menu-path>
     </gui-access>
 
   </command>
@@ -3854,7 +3854,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Logit</menu-path>
+      <menu-path>/Model/Nonlinear models/Logit</menu-path>
     </gui-access>
 
   </command>
@@ -3879,7 +3879,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Add/logs of selected variables</menu-path>
+      <menu-path>/Add/Logs of selected variables</menu-path>
     </gui-access>
 
   </command>
@@ -4013,7 +4013,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Mahalanobis distances</menu-path>
+      <menu-path>/View/Mahalanobis distances</menu-path>
     </gui-access>
 
   </command>  
@@ -4091,7 +4091,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Difference of means</menu-path>
+      <menu-path>/Model/Bivariate tests/Difference of means</menu-path>
     </gui-access>
 
   </command>
@@ -4417,7 +4417,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/High precision OLS</menu-path>
+      <menu-path>/Model/Other linear models/High precision OLS</menu-path>
     </gui-access>
 
   </command>
@@ -4603,7 +4603,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Nonlinear Least Squares</menu-path>
+      <menu-path>/Model/Nonlinear models/Nonlinear Least Squares</menu-path>
     </gui-access>
 
   </command>
@@ -4635,7 +4635,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/File/Create data set</menu-path>
+      <menu-path>/File/New data set</menu-path>
     </gui-access>
 
   </command>
@@ -4807,7 +4807,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/omit variables</menu-path>
+      <menu-path>Model window, /Tests/Omit variables</menu-path>
     </gui-access>
 
   </command>
@@ -4841,7 +4841,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/omit variables</menu-path>
+      <menu-path>Model window, /Tests/Omit variables</menu-path>
     </gui-access>
 
   </command>
@@ -5187,7 +5187,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/spectrum</menu-path>
+      <menu-path>/Variable/Spectrum</menu-path>
       <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
@@ -5260,7 +5260,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Poisson</menu-path>
+      <menu-path>/Model/Nonlinear models/Poisson</menu-path>
     </gui-access>
 
   </command>
@@ -5463,7 +5463,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Probit</menu-path>
+      <menu-path>/Model/Nonlinear models/Probit</menu-path>
     </gui-access>
 
   </command>
@@ -5511,7 +5511,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Utilities/p-value finder</menu-path>
+      <menu-path>/Tools/p-value finder</menu-path>
     </gui-access>
 
   </command>
@@ -5733,7 +5733,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/linear restrictions</menu-path>
+      <menu-path>Model window, /Tests/Linear restrictions</menu-path>
     </gui-access>
 
   </command>
@@ -6082,7 +6082,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Multiple graphs</menu-path>
+      <menu-path>/View/Multiple graphs</menu-path>
     </gui-access>
 
   </command>
@@ -6106,7 +6106,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Add/seasonal differences</menu-path>
+      <menu-path>/Add/Seasonal differences of selected variables</menu-path>
     </gui-access>
 
   </command>
@@ -6470,7 +6470,7 @@
     </description> 
 
     <gui-access>
-      <menu-path>/Sample/Dataset structure</menu-path>
+      <menu-path>/Data/Dataset structure</menu-path>
     </gui-access>
       
   </command>
@@ -6701,7 +6701,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Rank correlation</menu-path>
+      <menu-path>/Model/Robust estimation/Rank correlation</menu-path>
     </gui-access>
 
   </command>
@@ -6735,7 +6735,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Add/squares of variables</menu-path>
+      <menu-path>/Add/Squares of selected variables</menu-path>
     </gui-access>
 
   </command>
@@ -6863,7 +6863,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Summary statistics</menu-path>
+      <menu-path>/View/Summary statistics</menu-path>
       <other-access>Main window pop-up menu</other-access>
     </gui-access>
 
@@ -7030,7 +7030,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/normality of residual</menu-path>
+      <menu-path>Model window, /Tests/Normality of residual</menu-path>
     </gui-access>
 
   </command>
@@ -7085,7 +7085,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Sample/Transpose data</menu-path>
+      <menu-path>/Data/Transpose data</menu-path>
     </gui-access>
 
   </command>
@@ -7165,7 +7165,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Two-Stage least Squares</menu-path>
+      <menu-path>/Model/Other linear models/Two-Stage least Squares</menu-path>
     </gui-access>
 
   </command>
@@ -7381,7 +7381,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Data/Difference of variances</menu-path>
+      <menu-path>/Model/Bivariate tests/Difference of variances</menu-path>
     </gui-access>
 
   </command>
@@ -7544,7 +7544,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window, /Tests/collinearity</menu-path>
+      <menu-path>Model window, /Tests/Collinearity</menu-path>
     </gui-access>
 
   </command>
@@ -7615,7 +7615,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Weighted Least Squares</menu-path>
+      <menu-path>/Model/Other linear models/Weighted Least Squares</menu-path>
     </gui-access>
 
   </command>

@@ -321,7 +321,7 @@ GtkItemFactoryEntry data_items[] = {
     /* Tools menu */
     { N_("/_Tools"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Tools/_Statistical tables"), NULL, stats_calculator, CALC_DIST, NULL, GNULL },
-    { N_("/Tools/_p-value finder"), NULL, stats_calculator, CALC_PVAL, NULL, GNULL },
+    { N_("/Tools/_P-value finder"), NULL, stats_calculator, CALC_PVAL, NULL, GNULL },
     { N_("/Tools/_Test statistic calculator"), NULL, stats_calculator, CALC_TEST, 
       NULL, GNULL },
     { "/Tools/sep1", NULL, NULL, 0, "<Separator>", GNULL },

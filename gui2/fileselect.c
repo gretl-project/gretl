@@ -178,10 +178,6 @@ static const char *get_ext (int action, gpointer data)
 {
     const char *s = NULL;
 
-    if (using_olddat() && IS_DAT_ACTION(action)) { 
-	return ".dat";
-    }
-
     if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 	s = get_gp_ext(plot->termtype);
@@ -375,7 +371,7 @@ static char *suggested_savename (const char *fname)
     sfx = strrchr(s, '.');
 
     if (sfx != NULL && (strlen(sfx) == 4 || !strcmp(sfx, ".gnumeric"))) {
-	const char *test = (using_olddat())? ".dat" : ".gdt";
+	const char *test = ".gdt";
 
 	if (strcmp(test, sfx)) {
 	    strcpy(sfx, test);
@@ -622,17 +618,9 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}
     };
 
-    static struct winfilter olddat_filter = {
-	N_("gretl data files (*.dat)"), "*.dat"
-    };    
-
     static struct winfilter default_filter = {
 	N_("all files (*.*)"), "*.*" 
     };
-
-    if (using_olddat() && IS_DAT_ACTION(action)) {
-	return olddat_filter;
-    }
 
     if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;

@@ -464,9 +464,7 @@ int probably_native_datafile (const char *fname)
 	lower(test);
 	if (!strcmp(test, ".gdt")) {
 	    ret = 1;
-	} else if (using_olddat() && !strcmp(test, ".dat")) {
-	    ret = 1;
-	}
+	} 
     }
 
     return ret;

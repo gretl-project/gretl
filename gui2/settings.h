@@ -7,8 +7,6 @@
 void read_rc (void);
 #endif
 
-int using_olddat (void);
-
 int using_hc_by_default (void);
 
 int get_manpref (void);

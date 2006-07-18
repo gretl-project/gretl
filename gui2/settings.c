@@ -93,7 +93,6 @@ static char appfontname[MAXLEN] = "Sans 10";
 PangoFontDescription *fixed_font;
 
 static int usecwd;
-static int olddat;
 static int useqr;
 static int shellok;
 static int manpref;
@@ -234,9 +233,6 @@ RCVAR rc_vars[] = {
     { "usecwd", N_("Use current working directory as default"), 
       N_("Use gretl user directory as default"), &usecwd, 
       BOOLSET, 0, 4, NULL },
-    { "olddat", N_("Use \".dat\" as default datafile suffix"), 
-      N_("Use \".gdt\" as default datafile suffix"), &olddat, 
-      BOOLSET, 0, 4, NULL },
     { "useqr", N_("Use QR decomposition"), N_("Use Cholesky decomposition"), &useqr, 
       BOOLSET, 0, 1, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
@@ -275,11 +271,6 @@ RCVAR rc_vars[] = {
 };
 
 /* accessor functions */
-
-int using_olddat (void)
-{
-    return olddat;
-}
 
 int using_hc_by_default (void)
 {
