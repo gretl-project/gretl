@@ -225,52 +225,52 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
-    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+    { N_("/File/Save to session as _icon"), NULL, model_add_as_icon, 
       GRETL_OBJ_EQN, NULL, GNULL },
-    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+    { N_("/File/Save as icon and cl_ose"), NULL, model_add_as_icon_and_close, 
       GRETL_OBJ_EQN, NULL, GNULL },
 # if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 # endif
-    { N_("/File/Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
+    { N_("/File/_Close"), NULL, close_model, 0, "<StockItem>", GTK_STOCK_CLOSE },
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 1, "<StockItem>", GTK_STOCK_COPY },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { N_("/Tests/Omit variables"), NULL, selector_callback, OMIT, NULL, GNULL },
-    { N_("/Tests/Add variables"), NULL, selector_callback, ADD, NULL, GNULL },
-    { N_("/Tests/Sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL, GNULL },
-    { N_("/Tests/Linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
+    { N_("/Tests/_Omit variables"), NULL, selector_callback, OMIT, NULL, GNULL },
+    { N_("/Tests/_Add variables"), NULL, selector_callback, ADD, NULL, GNULL },
+    { N_("/Tests/_Sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL, GNULL },
+    { N_("/Tests/_Linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
     { "/Tests/sep1", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/Non-linearity (squares)"), NULL, do_lmtest, LMTEST_SQUARES, NULL, GNULL },
-    { N_("/Tests/Non-linearity (logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL, GNULL },
-    { N_("/Tests/Ramsey's RESET"), NULL, do_reset, RESET, NULL, GNULL },
+    { N_("/Tests/Non-linearity (s_quares)"), NULL, do_lmtest, LMTEST_SQUARES, NULL, GNULL },
+    { N_("/Tests/Non-linearity (_logs)"), NULL, do_lmtest, LMTEST_LOGS, NULL, GNULL },
+    { N_("/Tests/_Ramsey's RESET"), NULL, do_reset, RESET, NULL, GNULL },
     { "/Tests/sep2", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/Heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
-    { N_("/Tests/Normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
-    { N_("/Tests/Influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
-    { N_("/Tests/Collinearity"), NULL, do_vif, VIF, NULL, GNULL },
+    { N_("/Tests/_Heteroskedasticity"), NULL, do_lmtest, LMTEST_WHITE, NULL, GNULL },
+    { N_("/Tests/_Normality of residual"), NULL, do_resid_freq, TESTUHAT, NULL, GNULL },
+    { N_("/Tests/_Influential observations"), NULL, do_leverage, LEVERAGE, NULL, GNULL },
+    { N_("/Tests/_Collinearity"), NULL, do_vif, VIF, NULL, GNULL },
     { "/Tests/sep3", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/Autocorrelation"), NULL, do_autocorr, LMTEST, NULL, GNULL },
-    { N_("/Tests/ARCH"), NULL, do_arch, ARCH, NULL, GNULL },
-    { N_("/Tests/Chow test"), NULL, do_chow_cusum, CHOW, NULL, GNULL },
-    { N_("/Tests/QLR test"), NULL, do_chow_cusum, QLRTEST, NULL, GNULL },
-    { N_("/Tests/CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL, GNULL },
+    { N_("/Tests/_Autocorrelation"), NULL, do_autocorr, LMTEST, NULL, GNULL },
+    { N_("/Tests/A_RCH"), NULL, do_arch, ARCH, NULL, GNULL },
+    { N_("/Tests/_Chow test"), NULL, do_chow_cusum, CHOW, NULL, GNULL },
+    { N_("/Tests/_QLR test"), NULL, do_chow_cusum, QLRTEST, NULL, GNULL },
+    { N_("/Tests/_CUSUM test"), NULL, do_chow_cusum, CUSUM, NULL, GNULL },
     { "/Tests/sep4", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Tests/Panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
+    { N_("/Tests/_Panel diagnostics"), NULL, do_panel_diagnostics, HAUSMAN, NULL, GNULL },
     { N_("/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }, 
-    { N_("/Graphs/Residual plot"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Graphs/Fitted, actual plot"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Graphs/_Residual plot"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Graphs/_Fitted, actual plot"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/_Analysis"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Analysis/Display actual, fitted, residual"), NULL, 
+    { N_("/Analysis/_Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL, GNULL },
-    { N_("/Analysis/Forecasts..."), NULL, 
+    { N_("/Analysis/_Forecasts..."), NULL, 
       do_forecast, FCASTERR, NULL, GNULL },
-    { N_("/Analysis/Confidence intervals for coefficients"), NULL, 
+    { N_("/Analysis/_Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL, GNULL },
-    { N_("/Analysis/Confidence ellipse..."), NULL, 
+    { N_("/Analysis/Confidence _ellipse..."), NULL, 
       selector_callback, ELLIPSE, NULL, GNULL },
-    { N_("/Analysis/Coefficient covariance matrix"), NULL, 
+    { N_("/Analysis/Coefficient covariance _matrix"), NULL, 
       do_outcovmx, 0, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
@@ -288,14 +288,14 @@ static GtkItemFactoryEntry model_tex_items[] = {
     { N_("/LaTeX/Copy/_Equation"), NULL, window_copy, 
       GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL },
     { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Save/Tabular"), NULL, model_tex_save, 
+    { N_("/LaTeX/Save/_Tabular"), NULL, model_tex_save, 
       GRETL_FORMAT_TEX, NULL, GNULL },
-    { N_("/LaTeX/Save/Equation"), NULL, model_tex_save, 
+    { N_("/LaTeX/Save/_Equation"), NULL, model_tex_save, 
       GRETL_FORMAT_TEX | GRETL_FORMAT_EQN, NULL, GNULL },
-    { N_("/LaTeX/Equation options"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/Equation options/Show standard errors"), NULL, 
+    { N_("/LaTeX/_Equation options"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/LaTeX/Equation options/Show _standard errors"), NULL, 
       eqn_set_show_stderrs, 1, "<RadioItem>", GNULL },
-    { N_("/LaTeX/Equation options/Show t-ratios"), NULL, 
+    { N_("/LaTeX/Equation options/Show _t-ratios"), NULL, 
       eqn_set_show_stderrs, 0, "/LaTeX/Equation options/Show standard errors", 
       GNULL }
 };
@@ -311,9 +311,9 @@ static GtkItemFactoryEntry VAR_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/File/_Save as..."), NULL, model_output_save_callback, 0, "<StockItem>", 
       GTK_STOCK_SAVE_AS },
-    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+    { N_("/File/Save to session as _icon"), NULL, model_add_as_icon, 
       GRETL_OBJ_VAR, NULL, GNULL },
-    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+    { N_("/File/Save as icon and cl_ose"), NULL, model_add_as_icon_and_close, 
       GRETL_OBJ_VAR, NULL, GNULL },
 # if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
@@ -325,9 +325,9 @@ static GtkItemFactoryEntry VAR_items[] = {
 
 static GtkItemFactoryEntry SYS_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Save to session as icon"), NULL, model_add_as_icon, 
+    { N_("/File/Save to session as _icon"), NULL, model_add_as_icon, 
       GRETL_OBJ_SYS, NULL, GNULL },
-    { N_("/File/Save as icon and close"), NULL, model_add_as_icon_and_close, 
+    { N_("/File/Save as icon and cl_ose"), NULL, model_add_as_icon_and_close, 
       GRETL_OBJ_SYS, NULL, GNULL },
 # if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
@@ -335,7 +335,7 @@ static GtkItemFactoryEntry SYS_items[] = {
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/Edit/_Copy"), "", model_copy_callback, 0, "<StockItem>", GTK_STOCK_COPY },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { N_("/Tests/linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
+    { N_("/Tests/_Linear restrictions"), NULL, gretl_callback, RESTRICT, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
@@ -2466,9 +2466,21 @@ static void model_tex_equation_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/LaTeX/Copy/Equation", s);
 }
 
+static void copy_no_underscore (char *targ, const char *src)
+{
+    while (*src) {
+	if (*src != '_') {
+	    *targ++ = *src;
+	}
+	src++;
+    }
+    *targ = 0;
+}
+
 static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 {
     gretlopt opt = OPT_NONE;
+    char path[128];
     int i, cmd_ci, ok;
 
     if (pmod->ci == MLE || pmod->ci == MPOLS) { /* FIXME? */
@@ -2496,7 +2508,8 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 	    }
 		
 	    ok = model_test_ok(cmd_ci, opt, pmod, datainfo);
-	    flip(ifac, model_items[i].path, ok);
+	    copy_no_underscore(path, model_items[i].path);
+	    flip(ifac, path, ok);
 	}
     }
 
@@ -2569,55 +2582,55 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 }
 
 static GtkItemFactoryEntry model_dataset_basic_items[] = {
-    { N_("/Save/Fitted values"), NULL, 
+    { N_("/Save/_Fitted values"), NULL, 
       fit_resid_callback, GENR_FITTED, NULL, GNULL },
-    { N_("/Save/Residuals"), NULL, 
+    { N_("/Save/_Residuals"), NULL, 
       fit_resid_callback, GENR_RESID, NULL, GNULL },
-    { N_("/Save/Squared residuals"), NULL, 
+    { N_("/Save/_Squared residuals"), NULL, 
       fit_resid_callback, GENR_RESID2, NULL, GNULL }
 };
 
 static GtkItemFactoryEntry ess_items[] = {
-    { N_("/Save/Error sum of squares"), NULL, 
+    { N_("/Save/_Error sum of squares"), NULL, 
       model_stat_callback, ESS, NULL, GNULL },
-    { N_("/Save/Standard error of residuals"), NULL, 
+    { N_("/Save/_Standard error of residuals"), NULL, 
       model_stat_callback, SIGMA, NULL, GNULL }
 }; 
 
 static GtkItemFactoryEntry r_squared_items[] = {
-    { N_("/Save/R-squared"), NULL, 
+    { N_("/Save/_R-squared"), NULL, 
       model_stat_callback, R2, NULL, GNULL },
-    { N_("/Save/T*R-squared"), NULL, 
+    { N_("/Save/_T*R-squared"), NULL, 
       model_stat_callback, TR2, NULL, GNULL }
 };   
 
 static GtkItemFactoryEntry lnl_data_item = {
-    N_("/Save/Log likelihood"), NULL, 
+    N_("/Save/_Log likelihood"), NULL, 
     model_stat_callback, LNL, NULL, GNULL 
 };
 
 static GtkItemFactoryEntry criteria_items[] = {
-    { N_("/Save/Akaike Information Criterion"), NULL, 
+    { N_("/Save/_Akaike Information Criterion"), NULL, 
       model_stat_callback, AIC, NULL, GNULL },
-    { N_("/Save/Bayesian Information Criterion"), NULL, 
+    { N_("/Save/_Bayesian Information Criterion"), NULL, 
       model_stat_callback, BIC, NULL, GNULL },
-    { N_("/Save/Hannan-Quinn Information Criterion"), NULL, 
+    { N_("/Save/_Hannan-Quinn Information Criterion"), NULL, 
       model_stat_callback, HQC, NULL, GNULL }
 };
 
 static GtkItemFactoryEntry garch_data_item = {
-    N_("/Save/Predicted error variance"), NULL, 
+    N_("/Save/_Predicted error variance"), NULL, 
     fit_resid_callback, GENR_H, NULL, GNULL 
 };
 
 static GtkItemFactoryEntry fixed_effects_data_item = {
-    N_("/Save/Per-unit constants"), NULL, 
+    N_("/Save/Per-unit _constants"), NULL, 
     fit_resid_callback, GENR_AHAT, NULL, GNULL 
 };
 
 static GtkItemFactoryEntry define_var_items[] = {
     { "/Save/sep1", NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Save/Define new variable..."), NULL, model_genr_callback,
+    { N_("/Save/Define _new variable..."), NULL, model_genr_callback,
       MODEL_GENR, NULL, GNULL }
 };
 
@@ -2709,11 +2722,11 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     for (i=0; i<2; i++) {
 	/* residual correlogram and spectrum */
 	if (dataset_is_time_series(datainfo) && i == 0) {
-	    varitem.path = g_strdup_printf(_("%s/Correlogram"), mpath[i]);
+	    varitem.path = g_strdup_printf(_("%s/_Correlogram"), mpath[i]);
 	    varitem.callback = residual_correlogram;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
-	    varitem.path = g_strdup_printf(_("%s/Spectrum"), mpath[i]);
+	    varitem.path = g_strdup_printf(_("%s/_Spectrum"), mpath[i]);
 	    varitem.callback = residual_periodogram;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
@@ -2721,9 +2734,9 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 
 	/* plot against time/obs number */
 	if (dataset_is_time_series(datainfo)) {
-	    varitem.path = g_strdup_printf(_("%s/Against time"), mpath[i]);
+	    varitem.path = g_strdup_printf(_("%s/_Against time"), mpath[i]);
 	} else {
-	    varitem.path = g_strdup_printf(_("%s/By observation number"), mpath[i]);
+	    varitem.path = g_strdup_printf(_("%s/By _observation number"), mpath[i]);
 	}
 	varitem.callback = (i==0)? resid_plot : fit_actual_plot;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
@@ -2745,7 +2758,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    varitem.callback_action = pmod->list[j]; 
 	    double_underscores(tmp, datainfo->varname[pmod->list[j]]);
 	    varitem.path = 
-		g_strdup_printf(_("%s/Against %s"), mpath[i], tmp);
+		g_strdup_printf(_("%s/_Against %s"), mpath[i], tmp);
 	    varitem.callback = (i==0)? resid_plot : fit_actual_plot;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
@@ -2761,7 +2774,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    double_underscores(tmp, datainfo->varname[pmod->list[3]]);
 	    double_underscores(tmp2, datainfo->varname[pmod->list[4]]);
 	    varitem.path =
-		g_strdup_printf(_("%s/Against %s and %s"),
+		g_strdup_printf(_("%s/_Against %s and %s"),
 				mpath[i], tmp, tmp2);
 	    varitem.callback = fit_actual_splot;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
@@ -2932,13 +2945,13 @@ static void panel_heteroskedasticity_menu (windata_t *vwin)
 
     hitem.callback = do_lmtest;
     hitem.callback_action = LMTEST_WHITE;
-    hitem.path = g_strdup_printf("%s/%s", tpath, _("Heteroskedasticity (White's test)"));
+    hitem.path = g_strdup_printf("%s/%s", tpath, _("Heteroskedasticity (_White's test)"));
     gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
     g_free(hitem.path);
 
     hitem.callback = do_lmtest;
     hitem.callback_action =  LMTEST_GROUPWISE;
-    hitem.path = g_strdup_printf("%s/%s", tpath, ("Heteroskedasticity (groupwise)"));
+    hitem.path = g_strdup_printf("%s/%s", tpath, ("Heteroskedasticity (_groupwise)"));
     gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
     g_free(hitem.path);
 }
