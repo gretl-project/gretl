@@ -25,6 +25,7 @@
 #include "toolbar.h"
 #include "dlgutils.h"
 #include "fileselect.h"
+#include "menustate.h"
 
 #include "libset.h"
 #include "version.h"

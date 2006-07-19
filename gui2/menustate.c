@@ -30,6 +30,19 @@ void refresh_data (void)
     }
 }
 
+void flip (GtkItemFactory *ifac, const char *path, gboolean s)
+{
+    if (ifac != NULL) {
+	GtkWidget *w = gtk_item_factory_get_item(ifac, path);
+
+	if (w != NULL) {
+	    gtk_widget_set_sensitive(w, s);
+	} else {
+	    fprintf(stderr, I_("Failed to flip state of \"%s\"\n"), path);
+	}
+    }
+}
+
 void edit_info_state (gboolean s)
 {
     flip(mdata->ifac, "/Data/Edit info", s);
@@ -75,9 +88,19 @@ void gretl_set_window_modal (GtkWidget *w)
 		     NULL);
 }
 
+void variable_menu_state (gboolean s)
+{
+    if (mdata == NULL || mdata->ifac == NULL) return;
+
+    flip(mdata->ifac, "/Variable", s);
+    flip(mdata->ifac, "/View/Correlation matrix", !s);
+    flip(mdata->ifac, "/View/Principal components", !s);
+    flip(mdata->ifac, "/View/Mahalanobis distances", !s);
+}
+
 void main_menubar_state (gboolean s)
 {
-    if (mdata->ifac == NULL) return;
+    if (mdata == NULL || mdata->ifac == NULL) return;
 
     flip(mdata->ifac, "/File/Append data", s);
     flip(mdata->ifac, "/File/Clear data set", s);

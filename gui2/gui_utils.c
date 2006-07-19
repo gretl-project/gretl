@@ -2459,19 +2459,6 @@ static void auto_save_script (windata_t *vwin)
     mark_content_saved(vwin);
 }
 
-void flip (GtkItemFactory *ifac, const char *path, gboolean s)
-{
-    if (ifac != NULL) {
-	GtkWidget *w = gtk_item_factory_get_item(ifac, path);
-
-	if (w != NULL) {
-	    gtk_widget_set_sensitive(w, s);
-	} else {
-	    fprintf(stderr, I_("Failed to flip state of \"%s\"\n"), path);
-	}
-    }
-}
-
 static void model_tex_equation_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX/View/Equation", s);

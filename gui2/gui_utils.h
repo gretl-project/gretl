@@ -34,8 +34,6 @@ int probably_script_file (const char *fname);
 
 int probably_session_file (const char *fname);
 
-void flip (GtkItemFactory *ifac, const char *path, gboolean s);
-
 int gretl_mkdir (const char *path);
 
 int copyfile (const char *src, const char *dest);

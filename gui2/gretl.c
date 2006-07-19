@@ -1058,22 +1058,12 @@ int main (int argc, char *argv[])
     return EXIT_SUCCESS;
 }
 
-static void set_varmenu_state (int single)
-{
-    if (mdata != NULL) {
-	flip(mdata->ifac, "/Variable", single);
-	flip(mdata->ifac, "/View/Correlation matrix", !single);
-	flip(mdata->ifac, "/View/Principal components", !single);
-	flip(mdata->ifac, "/View/Mahalanobis distances", !single);
-    }
-}
-
 static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 {
     if (mdata->ifac != NULL) {
 	int sc = selection_count(select, NULL);
 
-	set_varmenu_state(sc == 1);
+	variable_menu_state(sc == 1);
     }
 }
 
@@ -1273,7 +1263,7 @@ void populate_varlist (void)
 	click_connected = 1;
     }
 
-    set_varmenu_state(1);
+    variable_menu_state(TRUE);
 }
 
 static gint 

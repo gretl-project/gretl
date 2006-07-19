@@ -5,8 +5,11 @@ void refresh_data (void);
 
 void gretl_set_window_modal (GtkWidget *w);
 
+void flip (GtkItemFactory *ifac, const char *path, gboolean s);
+
 void edit_info_state (gboolean s);
 void add_remove_markers_state (gboolean s);
+void variable_menu_state (gboolean s);
 void main_menubar_state (gboolean s);
 void time_series_menu_state (gboolean s);
 void panel_menu_state (gboolean s);
