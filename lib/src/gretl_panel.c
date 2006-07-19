@@ -511,6 +511,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 #endif
 	for (i=0; i<pan->nunits; i++) { 
 	    int Ti = pan->unit_obs[i];
+	    int got = 0;
 
 #if PDEBUG
 	    fprintf(stderr, "looking at x-sect unit %d: Ti = %d\n", i, Ti);
@@ -532,9 +533,11 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 	    fprintf(stderr, "xbar for var %d, unit %d = %g\n", 
 		    pan->vlist[j], i, xbar);
 #endif
-	    for (t=0; t<pan->T; t++) {
+	    for (t=0; t<pan->T && got < Ti; t++) {
 		if (s >= winfo->n) {
-		    fprintf(stderr, "*** Error: overflow of wZ at s = %d!\n", s);
+		    fprintf(stderr, "*** Error: overflow of wZ at unit %d:\n" 
+			    "  pan->T = %d, winfo->n = %d, hit s = %d at t = %d\n",  
+			    i, pan->T, winfo->n, s, t);
 		    break;
 		}
 		bigt = panel_index(i, t);
@@ -548,6 +551,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 			winfo->paninfo->unit[s] = i;
 			winfo->paninfo->period[s] = t;
 		    }
+		    got++;
 		    s++;
 		}
 	    }
@@ -3166,7 +3170,7 @@ static int dataset_sort_by (double **Z, DATAINFO *pdinfo,
     return 0;
 }
 
-static int get_mask_skip (char *mask, int n, int t)
+static int get_mask_skip (const char *mask, int n, int t)
 {
     int s, skip = 1;
 

@@ -13,4 +13,6 @@ int tree_path_get_row_number (GtkTreePath *path);
 gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,
 			windata_t *win);
 
+int *main_window_selection_as_list (void); 
+
 #endif /* TREEUTILS_H */

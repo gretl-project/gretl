@@ -450,6 +450,7 @@ tsls_sargan_test (MODEL *tsls_model, int Orank, int *instlist,
 
     smod = lsq(OT_list, pZ, pdinfo, OLS, OPT_A);
     if (smod.errcode) {
+	fprintf(stderr, "tsls_sargan_test: smod.errcode = %d\n", smod.errcode);
 	err = smod.errcode;
     } else {
 	ModelTest *test = model_test_new(GRETL_TEST_SARGAN);
@@ -483,6 +484,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
 
     hmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A);
     if (hmod.errcode) {
+	fprintf(stderr, "tsls_hausman_test: hmod.errcode (R) = %d\n", hmod.errcode);
 	err = hmod.errcode;
 	goto bailout;
     } 
@@ -499,6 +501,7 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
     hmod = lsq(HT_list, pZ, pdinfo, OLS, OPT_A);
 
     if (hmod.errcode) {
+	fprintf(stderr, "tsls_hausman_test: hmod.errcode (U) = %d\n", hmod.errcode);
 	err = hmod.errcode;
 	goto bailout;
     } else if ((df = hmod.list[0] - reglist[0]) > 0) {
@@ -994,6 +997,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     /* second-stage regression */
     tsls = lsq(s2list, pZ, pdinfo, OLS, (ci == TSLS)? OPT_NONE : OPT_Z);
     if (tsls.errcode) {
+	fprintf(stderr, "tsls_func, stage 2: tsls.errcode = %d\n", tsls.errcode);
 	goto bailout;
     }
 

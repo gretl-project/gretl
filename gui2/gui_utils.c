@@ -2503,7 +2503,7 @@ static void set_tests_menu_state (GtkItemFactory *ifac, const MODEL *pmod)
 		cmd_ci = LMTEST;
 		opt = OPT_W;
 	    } else if (cmd_ci == LMTEST) { 
-		/* unqualified: aurocorrelation */
+		/* unqualified: autocorrelation */
 		opt = OPT_A;
 	    }
 		

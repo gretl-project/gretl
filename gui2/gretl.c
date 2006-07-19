@@ -1099,12 +1099,10 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 
     if (key->keyval == GDK_x && (mods & GDK_MOD1_MASK)) {
-	/* invoke minibuffer */
+	/* invoke command minibuffer */
 	gretl_callback(NULL, MINIBUF, NULL);
 	return FALSE;
     }
-
-    /* enable Home, End, PgUp, PgDown? */
 
     if (key->keyval == GDK_Return                        /* display variable(s) */
 	|| key->keyval == GDK_Delete                     /* delete variable(s) */

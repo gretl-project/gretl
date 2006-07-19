@@ -872,7 +872,7 @@ double dh_root_b1_to_z1 (double rb1, double n)
  * normal score, z2, as set out in Doornik and Hansen, "An Omnibus 
  * Test for Normality", 1994.
  *
- * Returns: the z2 value.
+ * Returns: the z2 value, or #NADBL on failure.
  */
 
 double dh_b2_to_z2 (double b1, double b2, double n)
@@ -889,11 +889,15 @@ double dh_b2_to_z2 (double b1, double b2, double n)
     k = ((n+5) * (n+7) * (n2*n + 37*n2 + 11*n - 313.0)) / (12.0 * d);
 
     alpha = a + b1 * c;
+    z2 =  (1.0 / (9.0 * alpha)) - 1.0;
 
     chi = (b2 - 1.0 - b1) * 2.0 * k;
 
-    z2 = (pow(chi/(2*alpha), 1.0/3.0) - 1.0 + (1.0 / (9.0*alpha))) *
-	sqrt(9.0*alpha);
+    if (chi > 0.0) {
+       z2 += pow(chi/(2*alpha), 1.0 / 3.0);
+    }
+
+    z2 *= sqrt(9.0*alpha);
 
     return z2;
 }
@@ -923,7 +927,11 @@ double doornik_chisq (double skew, double xkurt, int n)
     z1 = dh_root_b1_to_z1(rb1, (double) n);
     z2 = dh_b2_to_z2(b1, b2, (double) n);
 
-    return z1*z1 + z2*z2;
+    if (!na(z2)) {
+	z2 = z1*z1 + z2*z2;
+    }
+
+    return z2;
 }
 
 static int
@@ -1085,8 +1093,13 @@ gretl_system_normality_test (const gretl_matrix *E, const gretl_matrix *Sigma,
 	    double z1i = dh_root_b1_to_z1(skew, n);
 	    double z2i = dh_b2_to_z2(skew * skew, kurt, n);
 
-	    gretl_vector_set(Z1, i, z1i);
-	    gretl_vector_set(Z2, i, z2i);
+	    if (na(z2i)) {
+		X2 = NADBL;
+		err = E_NAN;
+	    } else {
+		gretl_vector_set(Z1, i, z1i);
+		gretl_vector_set(Z2, i, z2i);
+	    }
 	}
     }
 	

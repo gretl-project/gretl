@@ -1401,6 +1401,7 @@ cholbeta (double *xpx, double *xpy, double *coeff, int nv, double *rss)
     double e, d, d1, d2, test, xx;
 
     if (xpx[0] <= 0.0) {
+	fprintf(stderr, "%s: %d: xpx <= 0.0\n", __FILE__, __LINE__);
 	return E_NAN;
     }
 
@@ -1454,6 +1455,10 @@ cholbeta (double *xpx, double *xpy, double *coeff, int nv, double *rss)
     /* calculate regression sum of squares */
     d = 0.0;
     for (j=1; j<=nv; j++) {
+	if (isnan(xpy[j])) {
+	    fprintf(stderr, "%s: %d: xpy[%d] is NaN\n", __FILE__, __LINE__, j);
+	    return E_NAN;
+	}
 	d += xpy[j] * xpy[j];
     }
     *rss = d;
@@ -1477,6 +1482,7 @@ cholbeta (double *xpx, double *xpy, double *coeff, int nv, double *rss)
 
     for (j=0; j<nv; j++) {
 	if (isnan(coeff[j])) {
+	    fprintf(stderr, "%s: %d: coeff %d is NaN\n", __FILE__, __LINE__, j);
 	    return E_NAN;
 	}
     }	

@@ -21,8 +21,9 @@
 #define SSHEET_H
 
 typedef enum {
-    SHEET_EDIT_DATASET,
-    SHEET_NEW_DATASET
+    SHEET_EDIT_DATASET = 0,
+    SHEET_NEW_DATASET  = 1 << 0,
+    SHEET_SUBSAMPLED   = 1 << 2
 } SheetCode;
 
 void show_spreadsheet (SheetCode code);

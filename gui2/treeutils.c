@@ -419,4 +419,46 @@ int tree_path_get_row_number (GtkTreePath *path)
     return gtk_tree_path_get_indices(path)[0];
 }
 
+static void add_to_selection_count (GtkTreeModel *model, GtkTreePath *path,
+				    GtkTreeIter *iter, int *count)
+{
+    *count += 1;
+}
 
+static void add_to_selection_list (GtkTreeModel *model, GtkTreePath *path,
+				   GtkTreeIter *iter, int *list)
+{
+    gchar *varnum = NULL;
+
+    gtk_tree_model_get(model, iter, 0, &varnum, -1);
+    list[0] += 1;
+    list[list[0]] = atoi(varnum);
+    g_free(varnum);
+}
+
+int *main_window_selection_as_list (void) 
+{
+    GtkTreeSelection *select;
+    int *list = NULL;
+    int scount = 0;
+
+    select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
+    gtk_tree_selection_selected_foreach(select, 
+					(GtkTreeSelectionForeachFunc) 
+					add_to_selection_count,
+					&scount); 
+
+    if (scount > 0) {
+	list = gretl_list_new(scount);
+    }
+
+    if (list != NULL) {
+	list[0] = 0;
+	gtk_tree_selection_selected_foreach(select, 
+					    (GtkTreeSelectionForeachFunc) 
+					    add_to_selection_list,
+					    list); 
+    }
+
+    return list;
+}
