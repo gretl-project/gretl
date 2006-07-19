@@ -5103,11 +5103,11 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
     gretl_matrix *M;
     char *mask = NULL;
     int T = t2 - t1 + 1;
-    int n = list[0];
-    int i, s, t, v;
+    int k = list[0];
+    int i, s, t;
     int err = 0;
 
-    if (T <= 0 || n <= 0) {
+    if (T <= 0 || k <= 0) {
 	return NULL;
     }
 
@@ -5122,19 +5122,18 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
 	T = ok_obs(mask, T);
     } 
 
-    M = gretl_matrix_alloc(T, n);
+    M = gretl_matrix_alloc(T, k);
     if (M == NULL) {
 	return NULL;
     }
     
     s = 0;
-    for (t=t1; t<=t2; t++) {
-	if (mask != NULL && mask[t - t1]) {
+    for (t=0; t<T; t++) {
+	if (mask != NULL && mask[t]) {
 	    continue;
 	} else {
-	    for (i=0; i<n; i++) {
-		v = list[i+1];
-		gretl_matrix_set(M, s, i, Z[v][t]);
+	    for (i=0; i<k; i++) {
+		gretl_matrix_set(M, s, i, Z[list[i+1]][t + t1]);
 	    }
 	    s++;
 	}
