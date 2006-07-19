@@ -3200,14 +3200,11 @@ int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo)
 	return 0;
     }
 
-    fprintf(stderr, "unpad_panel_dataset\n");
-
     s = 0;
     for (t=0; t<n; t++) {
 	if (pan->padmask[s]) {
 	    skip = get_mask_skip(pan->padmask, pdinfo->n, s);
-	    fprintf(stderr, "t=%d (s=%d) got skip = %d\n", t, s, skip);
-	    nrem = pdinfo->n - skip - t;
+	    nrem = n - skip - t;
 	    srem = (nrem * sizeof *pan->unit);
 	    memmove(pan->unit + t, pan->unit + t + skip, srem);
 	    memmove(pan->period + t, pan->period + t + skip, srem);
@@ -3219,9 +3216,8 @@ int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo)
 	    }
 	    s += skip;
 	    n -= skip;
-	} else {
-	    s++;
-	}
+	} 
+	s++;
     }
 
     drop = pdinfo->n - n;
@@ -3289,7 +3285,8 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 			      char *mask)
 {
     double **bigZ = NULL;
-    int *nuid, *ntid;
+    int *nuid = NULL;
+    int *ntid = NULL;
     int n_scalars = 0;
     int n_orig = pdinfo->n;
     int t2_orig = pdinfo->t2;
@@ -3332,9 +3329,6 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	    }
 	    if (mask != NULL && s > tref) {
 		/* recording the padding in "mask" */
-#if PDEBUG
-		fprintf(stderr, "padding = %d\n", s - tref);
-#endif
 		for (j=tref; j<s; j++) {
 		    mask[j] = 1;
 		}
@@ -3368,16 +3362,12 @@ static int pad_panel_dataset (const double *uid, int uv, int nunits,
 	}
 
 	/* swap the padded arrays into Z */
-	j = 1;
-	for (i=1; i<pdinfo->v; i++) {
+	for (i=0, j=0; i<pdinfo->v; i++) {
 	    if (var_is_series(pdinfo, i)) {
 		free(Z[i]);
 		Z[i] = bigZ[j++];
 	    }
 	}
-
-	free(Z[0]);
-	Z[0] = bigZ[0];
 
 	free(bigZ);
     }
@@ -3527,10 +3517,8 @@ int set_panel_structure_from_vars (int uv, int tv,
 #endif
 
     if (!err && totmiss > 0) {
-	/* pad dataset with NAs */
-#if 0
+	/* do we want this? */
 	mask = calloc(fulln, 1);
-#endif
 	rearrange_id_array(uid, nunits, n);
 	rearrange_id_array(tid, nperiods, n);
 	err = pad_panel_dataset(uid, uv, nunits, 

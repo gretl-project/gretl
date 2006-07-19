@@ -438,9 +438,9 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
        which may have moved */
     sync_dataset_elements(*ppdinfo);
 
-    /* subsampled panel data: remove any added padding */
-    if (0 && dataset_is_panel(*ppdinfo)) {
-	/* FIXME!!! */
+    /* subsampled panel data: remove any added padding
+       Is this right?? */
+    if (dataset_is_panel(*ppdinfo)) {
 	err = unpad_panel_dataset(pZ, *ppdinfo);
     }
 
