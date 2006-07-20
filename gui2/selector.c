@@ -642,15 +642,16 @@ maybe_insert_or_revise_depvar_lags (selector *sr, int v, int lcontext,
 
 	varlist_remove_var_full(v, mod, &iter);
 
-	gtk_tree_model_get_iter_first(mod, &iter);
-	do {
-	    gtk_tree_model_get(mod, &iter, 0, &modv, -1);
-	    if (modv > 0) {
-		append = 0;
-		break;
-	    }
-	    row++;
-	} while (gtk_tree_model_iter_next(mod, &iter));
+	if (gtk_tree_model_get_iter_first(mod, &iter)) {
+	    do {
+		gtk_tree_model_get(mod, &iter, 0, &modv, -1);
+		if (modv > 0) {
+		    append = 0;
+		    break;
+		}
+		row++;
+	    } while (gtk_tree_model_iter_next(mod, &iter));
+	} 
 
 	for (i=1; i<=laglist[0]; i++) {
 	    if (append) {

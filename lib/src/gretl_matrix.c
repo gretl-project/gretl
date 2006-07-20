@@ -2732,11 +2732,6 @@ int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
 
     work = work2;
 
-#if TRY_SCALING
-    /* scale rows and/or columns? */
-    maybe_scale_matrix(M, &c);
-#endif
-
     /* run actual QR factorization */
     dgeqp3_(&m, &n, M->val, &lda, jpvt, tau, work, &lwork, &info);
     if (info != 0) {

@@ -36,6 +36,7 @@
 
 static double qr_get_tss (MODEL *pmod, const double *y, int *ifc)
 {
+    int pwe = gretl_model_get_int(pmod, "pwe");
     double ymean = 0.0;
     double x, tss = 0.0;
     int t;
@@ -44,21 +45,49 @@ static double qr_get_tss (MODEL *pmod, const double *y, int *ifc)
 	*ifc = check_for_effective_const(pmod, y);
     }
 
-    if (*ifc) {
+    if (pmod->rho != 0.0) {
+	double ry, d;
+
+	if (*ifc) {
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		ry = y[t];
+		if (t == pmod->t1 && pwe) {
+		    ry *= sqrt(1.0 - pmod->rho * pmod->rho);
+		} else {
+		    ry -= pmod->rho * y[t-1];
+		}
+		ymean += ry;
+	    }
+	    ymean /= pmod->nobs;
+	}
+
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    ry = y[t];
+	    if (t == pmod->t1 && pwe) {
+		ry *= sqrt(1.0 - pmod->rho * pmod->rho);
+	    } else {
+		ry -= pmod->rho * y[t-1];
+	    }
+	    d = ry - ymean;
+	    tss += d * d;
+	}
+    } else {
+	if (*ifc) {
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(pmod->yhat[t])) {
+		    ymean += y[t];
+		}
+	    }
+	    ymean /= pmod->nobs;
+	}
+
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    if (!na(pmod->yhat[t])) {
-		ymean += y[t];
+		x = y[t] - ymean;
+		tss += x * x;
 	    }
 	}
-	ymean /= pmod->nobs;
-    }
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (!na(pmod->yhat[t])) {
-	    x = y[t] - ymean;
-	    tss += x * x;
-	}
-    }
+    } 
 
     return tss;
 }
@@ -157,7 +186,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     int qdiff = (pmod->rho != 0.0);
     int pwe = gretl_model_get_int(pmod, "pwe");
     int yvar = pmod->list[1];
-    double u, y;
+    double y;
 
     if (dwt) {
 	dwt = pmod->nwt;
@@ -176,9 +205,9 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		} else {
 		    y -= pmod->rho * Z[yvar][t-1];
 		}
-		u = y - yhat->val[i];
-		pmod->uhat[t] = u;
-		pmod->ess += u * u;
+		pmod->yhat[t] = yhat->val[i];
+		pmod->uhat[t] = y - yhat->val[i];
+		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 		i++;
 	    }
 	}
@@ -690,19 +719,6 @@ int gretl_qr_regress (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     get_model_data(pmod, (const double **) *pZ, Q, y);
 
     err = QR_decomp_plus(Q, R);
-
-#if 0 /* experimenting here */
-    if (1) {
-	fprintf(stderr, "without pivot\n");
-	gretl_matrix_print(Q, "Q");
-	gretl_matrix_print(R, "R");
-	get_model_data(pmod, (const double **) *pZ, Q, y);
-	err = QR_decomp_plus(Q, R, 1);
-	fprintf(stderr, "with pivot\n");
-	gretl_matrix_print(Q, "Q");
-	gretl_matrix_print(R, "R");
-    }
-#endif
 
     if (err == E_SINGULAR && !(opts & OPT_Z) &&
 	redundant_var(pmod, pZ, pdinfo, &droplist)) {
