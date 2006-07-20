@@ -533,7 +533,7 @@ within_groups_dataset (const double **Z, double ***wZ, panelmod_t *pan)
 	    fprintf(stderr, "xbar for var %d, unit %d = %g\n", 
 		    pan->vlist[j], i, xbar);
 #endif
-	    for (t=0; t<pan->T && got < Ti; t++) {
+	    for (t=0; t<pan->T && got < Ti; t++) { 
 		if (s >= winfo->n) {
 		    fprintf(stderr, "*** Error: overflow of wZ at unit %d:\n" 
 			    "  pan->T = %d, winfo->n = %d, hit s = %d at t = %d\n",  
@@ -1184,14 +1184,17 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
     double *uhat = pan->pooled->uhat;
     double *yhat = pan->pooled->yhat;
     int n = pan->pooled->full_n;
+    int re_n = 0;
     double yht;
     int i, j, t, u, p;
 
     if (Z != NULL) {
+	/* random effects model */
 	y = Z[pan->pooled->list[0]];
 	pmod->ess = 0.0;
     }
 
+    /* we've stolen these */
     pan->pooled->uhat = NULL;
     pan->pooled->yhat = NULL;
 
@@ -1209,8 +1212,14 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
 		yht += pmod->coeff[j] * Z[pan->pooled->list[j+2]][t];
 	    }
 	    yhat[t] = yht;
-	    uhat[t] = y[t] - yht;
-	    pmod->ess += uhat[t] * uhat[t];
+	    if (y[t] == NADBL) {
+		/* FIXME: why does this happen in some cases?? */
+		uhat[t] = NADBL;
+	    } else {
+		re_n++;
+		uhat[t] = y[t] - yht;
+		pmod->ess += uhat[t] * uhat[t];
+	    }
 	} else {
 	    uhat[t] = pmod->uhat[i];
 	    yhat[t] = pmod->yhat[i];
@@ -1220,6 +1229,11 @@ fix_panel_hatvars (MODEL *pmod, const DATAINFO *dinfo,
 	} else if (i == pmod->full_n - 1) {
 	    pmod->t2 = t;
 	}
+    }
+
+    if (Z != NULL) {
+	/* random effects model */
+	pmod->sigma = sqrt(pmod->ess / (re_n - (pmod->ncoeff - 1)));
     }
 
     pmod->full_n = n;
