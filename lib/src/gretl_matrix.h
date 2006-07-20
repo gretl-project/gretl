@@ -368,7 +368,11 @@ gretl_matrix_array_alloc_with_size (int n, int rows, int cols);
 void gretl_matrix_array_free (gretl_matrix **A, int n);
 
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
-					int t1, int t2, char **pmask);
+					int t1, int t2, const char *mask);
+
+gretl_matrix *
+gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
+				     int t1, int t2, int *err);
 
 void lapack_mem_free (void);
 

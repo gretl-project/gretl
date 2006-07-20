@@ -411,7 +411,7 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 		 int n, const double **Z, int *misst)
 {
     int i, t, dwt = 0, t1min = *t1, t2max = *t2;
-    int missobs, ret = 0;
+    int vi, missobs, ret = 0;
     double xx;
 
     if (pmod != NULL && gretl_model_get_int(pmod, "wt_dummy")) {
@@ -423,10 +423,11 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     for (t=t1min; t<t2max; t++) {
 	missobs = 0;
 	for (i=1; i<=list[0]; i++) {
-	    if (list[i] == 0 || list[i] == LISTSEP) {
+	    vi = list[i];
+	    if (vi == 0 || vi == LISTSEP) {
 		continue;
 	    }
-	    xx = Z[list[i]][t];
+	    xx = Z[vi][t];
 	    if (dwt) {
 		xx *= Z[dwt][t];
 	    }
@@ -446,10 +447,11 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     for (t=t2max; t>t1min; t--) {
 	missobs = 0;
 	for (i=1; i<=list[0]; i++) {
-	    if (list[i] == 0 || list[i] == LISTSEP) {
+	    vi = list[i];
+	    if (vi == 0 || vi == LISTSEP) {
 		continue;
 	    }
-	    xx = Z[list[i]][t];
+	    xx = Z[vi][t];
 	    if (dwt) {
 		xx *= Z[dwt][t];
 	    }
@@ -470,17 +472,18 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	   flag an error in case any are found */
 	for (t=t1min; t<=t2max; t++) {
 	    for (i=1; i<=list[0]; i++) {
-		if (list[i] == 0 || list[i] == LISTSEP) {
+		vi = list[i];
+		if (vi == 0 || vi == LISTSEP) {
 		    continue;
 		}
-		xx = Z[list[i]][t];
+		xx = Z[vi][t];
 		if (dwt) {
 		    xx *= Z[dwt][t];
 		}
 		if (na(xx)) {
-		    /* indentify first missing obs and var */
+		    /* identify first missing obs and var */
 		    *misst = t + 1;
-		    ret = list[i];
+		    ret = vi;
 		    break;
 		}
 	    }
@@ -494,10 +497,11 @@ int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
 	missobs = 0;
 	for (t=t1min; t<=t2max; t++) {
 	    for (i=1; i<=list[0]; i++) {
-		if (list[i] == 0 || list[i] == LISTSEP) {
+		vi = list[i];
+		if (vi == 0 || vi == LISTSEP) {
 		    continue;
 		}
-		xx = Z[list[i]][t];
+		xx = Z[vi][t];
 		if (dwt) {
 		    xx *= Z[dwt][t];
 		}

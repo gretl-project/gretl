@@ -75,7 +75,7 @@ static void free_sorted_markers (DATAINFO *pdinfo, int v)
     }    
 }
 
-static void free_panel_info (DATAINFO *pdinfo)
+void dataset_destroy_panel_info (DATAINFO *pdinfo)
 {
     if (pdinfo->paninfo != NULL) {
 	free(pdinfo->paninfo->unit);
@@ -124,7 +124,7 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
     pdinfo->submode = 0;
 
     if (pdinfo->paninfo != NULL) {
-	free_panel_info(pdinfo);
+	dataset_destroy_panel_info(pdinfo);
     }    
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
@@ -262,7 +262,7 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
     int i;
 
     /* just in case, clean out any previous stuff */
-    free_panel_info(pdinfo);  
+    dataset_destroy_panel_info(pdinfo);  
 
     pan = malloc(sizeof *pan);
     if (pan == NULL) {
@@ -434,7 +434,7 @@ int dataset_finalize_panel_indices (DATAINFO *pdinfo)
     }
 
     if (pan->nunits == 1 || pan->Tmax < 2) {
-	free_panel_info(pdinfo);
+	dataset_destroy_panel_info(pdinfo);
 	pdinfo->structure = CROSS_SECTION;
 	return E_PDWRONG;
     }

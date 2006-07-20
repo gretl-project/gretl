@@ -534,18 +534,17 @@ tsls_hausman_test (MODEL *tmod, int *reglist, int *hatlist,
    of this matrix; return Q */
 
 static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
-			     const double **Z, int t1, int t2, char **pmask,
+			     const double **Z, int t1, int t2, char *mask,
 			     int *err)
 {
     gretl_matrix *Q = NULL;
     gretl_matrix *R = NULL;
-    char *mask = NULL;
     int rank, ndrop = 0;
     int *droplist = NULL;
     double test;
     int i, k, v;
 
-    Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
+    Q = gretl_matrix_data_subset(instlist, Z, t1, t2, mask);
     if (Q == NULL) {
 	*err = E_ALLOC;
 	return NULL;
@@ -593,8 +592,7 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
 
 	k = instlist[0];
 	gretl_matrix_free(Q);
-	free(mask);
-	Q = gretl_matrix_data_subset(instlist, Z, t1, t2, &mask);
+	Q = gretl_matrix_data_subset(instlist, Z, t1, t2, mask);
 	R = gretl_matrix_reuse(R, k, k);
 	*err = gretl_matrix_QR_decomp(Q, R);
     }
@@ -604,12 +602,10 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
     gretl_matrix_free(R);
 
     if (*err) {
-	free(mask);
 	free(droplist);
 	gretl_matrix_free(Q);
 	Q = NULL;
     } else {
-	*pmask = mask;
 	*pdlist = droplist;
     }
 
@@ -785,7 +781,7 @@ static void compute_first_stage_F (MODEL *pmod, int v, int fitv,
 				   gretl_matrix *Q, 
 				   double **Z, DATAINFO *pdinfo)
 {
-    int n = gretl_matrix_rows(Q);
+    int n = 0;
     int k = gretl_matrix_cols(Q);
     int ifc = pmod->ifc;
     double essr = 0.0, essu = 0.0;
@@ -793,16 +789,21 @@ static void compute_first_stage_F (MODEL *pmod, int v, int fitv,
     int t, dfn, dfd;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	ybar += Z[v][t];
+	if (!na(Z[v][t])) {
+	    ybar += Z[v][t];
+	    n++;
+	}
     }
 
     ybar /= n;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	x = Z[v][t] - ybar;
-	essr += x * x;
-	x = Z[v][t] - Z[fitv][t];
-	essu += x * x;
+	if (!na(Z[v][t])) {
+	    x = Z[v][t] - ybar;
+	    essr += x * x;
+	    x = Z[v][t] - Z[fitv][t];
+	    essu += x * x;
+	}
     }  
 
     dfd = n - k;
@@ -813,6 +814,102 @@ static void compute_first_stage_F (MODEL *pmod, int v, int fitv,
     gretl_model_set_double(pmod, "stage1-F", F);
     gretl_model_set_int(pmod, "stage1-dfn", dfn);
     gretl_model_set_int(pmod, "stage1-dfd", dfd);
+}
+
+static int 
+tsls_adjust_sample (const int *list, int *t1, int *t2, 
+		    const double **Z, char **pmask)
+{
+    int i, t, t1min = *t1, t2max = *t2;
+    char *mask = NULL;
+    int T, vi, missobs;
+    int err = 0;
+
+    /* advance start of sample range to skip missing obs? */
+    for (t=t1min; t<t2max; t++) {
+	missobs = 0;
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi == 0 || vi == LISTSEP) {
+		continue;
+	    }
+	    if (na(Z[vi][t])) {
+		missobs = 1;
+		break;
+	    }
+	}
+	if (missobs) {
+	    t1min++;
+	} else {
+	    break;
+	}
+    }
+
+    /* retard end of sample range to skip missing obs? */
+    for (t=t2max; t>t1min; t--) {
+	missobs = 0;
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi == 0 || vi == LISTSEP) {
+		continue;
+	    }
+	    if (na(Z[vi][t])) {
+		missobs = 1;
+		break;
+	    }
+	}
+	if (missobs) {
+	    t2max--;
+	} else {
+	    break;
+	}	
+    }
+
+    /* count missing values in mid-range of data */
+    missobs = 0;
+    for (t=t1min; t<=t2max; t++) {
+	for (i=1; i<=list[0]; i++) {
+	    vi = list[i];
+	    if (vi == 0 || vi == LISTSEP) {
+		continue;
+	    }
+	    if (na(Z[vi][t])) {
+		missobs++;
+		break;
+	    }
+	}
+    }
+    
+    T = t2max - t1min + 1;
+
+    if (missobs == T) {
+	err = E_MISSDATA;
+    } else if (missobs > 0) {
+	mask = calloc(T, 1);
+	if (mask == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    for (t=t1min; t<=t2max; t++) {
+		for (i=1; i<=list[0]; i++) {
+		    vi = list[i];
+		    if (vi == 0 || vi == LISTSEP) {
+			continue;
+		    }
+		    if (na(Z[vi][t])) {
+			mask[t - t1min] = 1;
+			break;
+		    }
+		}
+	    }
+	}
+    }
+
+
+    *t1 = t1min; 
+    *t2 = t2max;
+    *pmask = mask;
+
+    return err;
 }
 
 /**
@@ -875,8 +972,11 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* adjust sample range for missing observations */
-    varlist_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
-			  (const double **) *pZ); 
+    tsls.errcode = tsls_adjust_sample(list, &pdinfo->t1, &pdinfo->t2, 
+				      (const double **) *pZ, &missmask); 
+    if (tsls.errcode) {
+	return tsls;
+    }
 
     /* 
        reglist: dependent var plus list of regressors
@@ -932,7 +1032,7 @@ MODEL tsls_func (const int *list, int ci, double ***pZ, DATAINFO *pdinfo,
 
     Q = tsls_Q(instlist, reglist, &droplist,
 	       (const double **) *pZ, pdinfo->t1, pdinfo->t2,
-	       &missmask, &tsls.errcode);
+	       missmask, &tsls.errcode);
     if (tsls.errcode) {
 	goto bailout;
     } 

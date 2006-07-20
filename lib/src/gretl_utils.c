@@ -777,6 +777,14 @@ int set_obs (const char *line, double ***pZ, DATAINFO *pdinfo,
     pdinfo->pd = pd;
     pdinfo->structure = structure;
 
+    if (pdinfo->structure != STACKED_TIME_SERIES &&
+	pdinfo->structure != STACKED_CROSS_SECTION &&
+	pdinfo->paninfo != NULL) {
+	/* This could be a problem in some cases, like
+	   if the dataset is subsampled? */
+	dataset_destroy_panel_info(pdinfo);
+    }
+
     ntodate_full(pdinfo->stobs, 0, pdinfo); 
     ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 

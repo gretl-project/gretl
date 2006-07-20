@@ -5029,98 +5029,36 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
     }
 }
 
-static char *
-get_missmask (const int *list, const double **Z, int t1, int t2, 
-	      int *err)
-{
-    char *mask = NULL;
-    int needmask = 0;
-    int i, t;
-
-    for (t=t1; t<=t2 && !needmask; t++) {
-	for (i=1; i<=list[0]; i++) {
-	    if (na(Z[list[i]][t])) {
-		needmask = 1;
-		break;
-	    }
-	}
-    }
-
-    if (needmask) {
-	mask = calloc(t2 - t1 + 1, 1);
-	if (mask == NULL) {
-	    *err = 1;
-	} else {
-	    for (t=t1; t<=t2; t++) {
-		for (i=1; i<=list[0]; i++) {
-		    if (na(Z[list[i]][t])) {
-			mask[t - t1] = 1;
-			break;
-		    }
-		}
-	    }
-	}
-    }  
-
-    return mask;
-}
-
-static int ok_obs (const char *mask, int T)
-{
-    int t, ok = 0;
-
-    for (t=0; t<T; t++) {
-	if (!mask[t]) ok++;
-    }
-
-    return ok;
-}
-
 /**
  * gretl_matrix_data_subset:
  * @list: list of variable to process.
  * @Z: data array.
  * @t1: starting observation.
  * @t2: ending observation.
- * @pmask: pointer to receive missing obs mask, or %NULL.
+ * @mask: missing observations mask, or %NULL.
  *
  * Creates a gretl matrix holding the subset of variables from
  * @Z specified by @list, over the sample range @t1 to @t2,
- * inclusive.  Variables are in columns.  If @pmask is not
- * %NULL and there are missing observations within the
- * range @t1 to @t2, then @pmask receives a mask of length
- * t2 - t1 + 1 (with value 1 for observations with missing
- * values, value 0 otherwise) and the observations with
- * missing values are skipped in constructing the returned
- * matrix.
+ * inclusive.  Variables are in columns.  If @mask is not
+ * %NULL then it should be an array of char of length @t2 - @t1
+ * + 1 with 1s in the positions of observations to exclude
+ * from the subset and zeros elsewhere. This apparatus can be
+ * used to exclude missing observations.
  *
  * Returns: allocated matrix or %NULL on failure. 
  */
 
 gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
-					int t1, int t2, char **pmask)
+					int t1, int t2, const char *mask)
 {
     gretl_matrix *M;
-    char *mask = NULL;
     int T = t2 - t1 + 1;
     int k = list[0];
     int i, s, t;
-    int err = 0;
 
     if (T <= 0 || k <= 0) {
 	return NULL;
     }
-
-    if (pmask != NULL) {
-	mask = get_missmask(list, Z, t1, t2, &err);
-	if (err) {
-	    return NULL;
-	} 
-    }
-
-    if (mask != NULL) {
-	T = ok_obs(mask, T);
-    } 
 
     M = gretl_matrix_alloc(T, k);
     if (M == NULL) {
@@ -5139,12 +5077,67 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
 	}
     }
 
-    if (pmask != NULL) {
-	*pmask = mask;
+    return M;
+}
+
+/**
+ * gretl_matrix_data_subset_no_missing:
+ * @list: list of variable to process.
+ * @Z: data array.
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @err: location to receive error code.
+ *
+ * Creates a gretl matrix holding the subset of variables from
+ * @Z specified by @list, over the sample range @t1 to @t2,
+ * inclusive.  Variables are in columns.  If any missing 
+ * values are encountered this constitutes an error.
+ *
+ * Returns: allocated matrix or %NULL on failure. 
+ */
+
+gretl_matrix *
+gretl_matrix_data_subset_no_missing (const int *list, const double **Z,
+				     int t1, int t2, int *err)
+{
+    gretl_matrix *M;
+    int T = t2 - t1 + 1;
+    int i, t, k = list[0];
+    double x;
+
+    *err = 0;
+
+    if (T <= 0 || k <= 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    M = gretl_matrix_alloc(T, k);
+    if (M == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+    
+    for (t=0; t<T && !*err; t++) {
+	for (i=0; i<k; i++) {
+	    x = Z[list[i+1]][t + t1];
+	    if (na(x)) {
+		*err = E_MISSDATA;
+		break;
+	    } else {
+		gretl_matrix_set(M, t, i, x);
+	    }
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(M);
+	M = NULL;
     }
 
     return M;
 }
+
 
 
 

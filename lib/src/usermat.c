@@ -1524,7 +1524,6 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
 {
     gretl_matrix *M = NULL;
     char word[VNAMELEN];
-    char *mask = NULL;
     const int *list;
     int len;
 
@@ -1542,18 +1541,8 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
 	return NULL;
     }
 
-    M = gretl_matrix_data_subset(list, Z, pdinfo->t1, pdinfo->t2, &mask);
-
-    if (M == NULL) {
-	*err = 1;
-    }
-
-    if (mask != NULL) {
-	*err = E_MISSDATA;
-	free(mask);
-	gretl_matrix_free(M);
-	M = NULL;
-    }
+    M = gretl_matrix_data_subset_no_missing(list, Z, pdinfo->t1, pdinfo->t2, 
+					    err);
 
     if (M != NULL && transp) {
 	gretl_matrix *R = gretl_matrix_copy_transpose(M);
