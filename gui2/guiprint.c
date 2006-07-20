@@ -23,6 +23,7 @@
 #include "gretl.h"
 #include "selector.h"
 #include "textutil.h"
+#include "treeutils.h"
 #include "forecast.h"
 
 #ifdef G_OS_WIN32
