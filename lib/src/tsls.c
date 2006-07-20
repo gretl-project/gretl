@@ -649,8 +649,6 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
 	}
     }
 
-    fprintf(stderr, "formed r, s = %d\n", s);
-
     /* form Qr = QQ'y */
     s = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
@@ -664,8 +662,6 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
 	}
 	s++;
     }
-
-    fprintf(stderr, "formed Qr, s = %d\n", s);
 
     free(r);
 

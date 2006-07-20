@@ -45,10 +45,10 @@ static void print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo,
 				  PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
 
-static void noconst (const MODEL *pmod, PRN *prn)
+static int noconst (const MODEL *pmod, PRN *prn)
 {
     if (na(pmod->rsq) || gretl_model_get_int(pmod, "effconst")) {
-	return;
+	return 0;
     }
 
     pputs(prn, _("The model has no constant term.\n"  
@@ -56,6 +56,8 @@ static void noconst (const MODEL *pmod, PRN *prn)
 	    "Econometrics.\n"
 	    "R-squared is the square of the correlation between the "
 	    "observed and fitted\nvalues of the dependent variable.\n\n"));
+
+    return 1;
 }
 
 #define RTFTAB "\\par \\ql \\tab "
@@ -1708,6 +1710,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 		PRN *prn)
 {
     int is_discrete = (pmod->ci == PROBIT || pmod->ci == LOGIT);
+    int noconst_printed = 0;
     int gotnan = 0;
 
     if (prn == NULL || (opt & OPT_Q)) {
@@ -1839,7 +1842,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	&& pmod->aux != AUX_JOHANSEN && pmod->aux != AUX_VECM
 	&& pmod->ci != ARMA && pmod->ci != MLE 
 	&& plain_format(prn)) {
-	noconst(pmod, prn);
+	noconst_printed = noconst(pmod, prn);
     }
     
     if (pmod->aux == AUX_WHITE) { 
@@ -1917,7 +1920,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_end(prn);
 
 	if (pmod->ci == TSLS && plain_format(prn)) {
-	    r_squared_message(prn);
+	    if (!noconst_printed) {
+		r_squared_message(prn);
+	    }
 	}
     }
 
