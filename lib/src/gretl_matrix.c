@@ -2939,7 +2939,7 @@ int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
 	double d;
 	int i;
 
-	fprintf(stderr, "dtrcon: rcond = %g, but min is %g\n", rcond,
+	fprintf(stderr, "gretl_matrix_QR_rank: rcond = %g, but min is %g\n", rcond,
 		QR_RCOND_MIN);
 
 	if (pmask != NULL) {
@@ -2948,7 +2948,7 @@ int gretl_matrix_QR_rank (gretl_matrix *R, char **pmask, int *errp)
 
 	for (i=0; i<n; i++) {
 	    d = gretl_matrix_get(R, i, i);
-	    if (fabs(d) < R_DIAG_MIN) {
+	    if (isnan(d) || isinf(d) || fabs(d) < R_DIAG_MIN) {
 		if (mask != NULL) {
 		    mask[i] = 1;
 		}
@@ -5029,6 +5029,17 @@ void gretl_matrix_array_free (gretl_matrix **A, int n)
     }
 }
 
+static int get_mask_count (const char *mask, int n)
+{
+    int i, k = 0;
+
+    for (i=0; i<n; i++) {
+	if (mask[i]) k++;
+    }
+
+    return k;
+}
+
 /**
  * gretl_matrix_data_subset:
  * @list: list of variable to process.
@@ -5056,6 +5067,10 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
     int k = list[0];
     int i, s, t;
 
+    if (mask != NULL) {
+	T -= get_mask_count(mask, T);
+    }
+
     if (T <= 0 || k <= 0) {
 	return NULL;
     }
@@ -5064,14 +5079,12 @@ gretl_matrix *gretl_matrix_data_subset (const int *list, const double **Z,
     if (M == NULL) {
 	return NULL;
     }
-    
+
     s = 0;
-    for (t=0; t<T; t++) {
-	if (mask != NULL && mask[t]) {
-	    continue;
-	} else {
+    for (t=t1; t<=t2; t++) {
+	if (mask == NULL || mask[t - t1] == 0) {
 	    for (i=0; i<k; i++) {
-		gretl_matrix_set(M, s, i, Z[list[i+1]][t + t1]);
+		gretl_matrix_set(M, s, i, Z[list[i+1]][t]);
 	    }
 	    s++;
 	}

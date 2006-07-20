@@ -30,7 +30,7 @@ void free_multi_series_view (gpointer p);
 
 void series_view_connect (windata_t *vwin, int varnum);
 
-multi_series_view *multi_series_view_new (int *list);
+multi_series_view *multi_series_view_new (const int *list);
 
 void series_view_graph (GtkWidget *w, windata_t *vwin);
 

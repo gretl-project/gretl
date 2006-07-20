@@ -4240,19 +4240,11 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
 
 void display_selected (gpointer data, guint action, GtkWidget *widget)
 {
-    char *liststr; 
+    int n = datainfo->t2 - datainfo->t1 + 1;
     PRN *prn = NULL;
     int *list = NULL;
-    int n = datainfo->t2 - datainfo->t1 + 1;
 
-    liststr = main_window_selection_as_string();
-    if (liststr == NULL || *liststr == '\0') {
-	return;
-    }
-
-    list = gretl_list_from_string(liststr);
-    free(liststr);
-
+    list = main_window_selection_as_list();
     if (list == NULL) {
 	return;
     }
@@ -4260,8 +4252,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
     /* special case: showing only one series */
     if (list[0] == 1) {
 	display_var();
-	free(list);
-	return;
+	goto display_exit;
     }
 
     if (list[0] * n > MAXDISPLAY) { 
@@ -4269,34 +4260,32 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	char fname[MAXLEN];
 
 	if (user_fopen("data_display_tmp", fname, &prn)) {
-	    return;
+	    goto display_exit;
 	}
-
 	printdata(list, (const double **) Z, datainfo, OPT_O, prn);
 	gretl_print_destroy(prn);
-	free(list);
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA);
     } else { 
 	/* use buffer */
 	multi_series_view *mview = NULL;
-	int err;
 
 	if (bufopen(&prn)) {
-	    return;
+	    goto display_exit;
 	}
-
-	err = printdata(list, (const double **) Z, datainfo, OPT_O, prn);
-	if (err) {
+	if (printdata(list, (const double **) Z, datainfo, OPT_O, prn)) {
 	    nomem();
 	    gretl_print_destroy(prn);
-	    free(list);
-	    return;
+	} else {
+	    if (get_printdata_blocks() == 1) {
+		mview = multi_series_view_new(list);
+	    }
+	    view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, mview);
 	}
-	if (get_printdata_blocks() == 1) {
-	    mview = multi_series_view_new(list);
-	}
-	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, mview);
     }
+
+ display_exit:
+
+    free(list);
 }
 
 void display_fit_resid (gpointer data, guint code, GtkWidget *widget)

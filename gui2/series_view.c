@@ -458,7 +458,7 @@ void series_view_connect (windata_t *vwin, int varnum)
     }
 }
 
-multi_series_view *multi_series_view_new (int *list)
+multi_series_view *multi_series_view_new (const int *list)
 {
     multi_series_view *mview = NULL;
     int i, err = 0;
@@ -478,20 +478,22 @@ multi_series_view *multi_series_view_new (int *list)
     }
 
     if (err) {
-	free(list);
 	return NULL;
     }
 
     mview = malloc(sizeof *mview);
 
     if (mview != NULL) {
-	mview->list = list;
-	mview->sortvar = 0;
-	mview->npoints = 0;
-	mview->points = NULL;
-    } else {
-	free(list);
-    }
+	mview->list = gretl_list_copy(list);
+	if (mview->list == NULL) {
+	    free(mview);
+	    mview = NULL;
+	} else {
+	    mview->sortvar = 0;
+	    mview->npoints = 0;
+	    mview->points = NULL;
+	}
+    } 
 
     return mview;
 }

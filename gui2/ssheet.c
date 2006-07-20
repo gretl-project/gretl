@@ -30,6 +30,13 @@
 #undef SSDEBUG
 #undef CELLDEBUG
 
+typedef enum {
+    SHEET_SUBSAMPLED    = 1 << 1,
+    SHEET_SHORT_VARLIST = 1 << 2,
+    SHEET_INSERT_OBS_OK = 1 << 3,
+    SHEET_ADD_OBS_OK    = 1 << 4
+} SheetExtraFlags;
+
 enum {
     SHEET_AT_END,
     SHEET_AT_POINT
@@ -44,7 +51,6 @@ typedef struct {
     GtkCellRenderer *datacell;
     gchar location[64];
     int *varlist;
-    char *obsmask;
     int datacols, datarows;
     int totcols;
     int orig_nobs;
@@ -79,6 +85,14 @@ static GtkItemFactoryEntry sheet_items[] = {
 static void disable_obs_menu (GtkItemFactory *ifac)
 {
     GtkWidget *w = gtk_item_factory_get_item(ifac, "/Observation");
+
+    gtk_widget_set_sensitive(w, FALSE);
+}
+
+static void disable_insert_obs_item (GtkItemFactory *ifac)
+{
+    GtkWidget *w = 
+	gtk_item_factory_get_item(ifac, "/Observation/Insert obs");
 
     gtk_widget_set_sensitive(w, FALSE);
 }
@@ -301,41 +315,6 @@ spreadsheet_scroll_to_foot (Spreadsheet *sheet, int row, int col)
     g_free(pathstr);
 }
 
-static int add_to_obsmask (Spreadsheet *sheet, int nadd, int pos)
-{
-    int t, T = sheet->datarows + nadd;
-    char *mask = NULL;
-    int err = 0;
-
-    if (sheet->obsmask == NULL) {
-	sheet->obsmask = calloc(T, 1);
-	if (sheet->obsmask != NULL) {
-	    for (t=pos; t<nadd; t++) {
-		sheet->obsmask[t] = 1;
-	    }
-	} else {
-	    err = 1;
-	}
-    } else {
-	mask = realloc(sheet->obsmask, T);
-	if (mask != NULL) {
-	    memmove(mask + pos + nadd, mask + pos, sheet->datarows - pos);
-	    for (t=pos; t<nadd; t++) {
-		mask[t] = 1;
-	    }
-	    sheet->obsmask = mask;
-	} else {
-	    err = 1;
-	}
-    }
-
-    if (err) {
-	nomem();
-    }
-
-    return err;
-}
-
 static void 
 real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
 {
@@ -367,8 +346,6 @@ real_add_new_obs (Spreadsheet *sheet, const char *obsname, int n)
     } else {
 	return;
     }
-
-    add_to_obsmask(sheet, n, rownum);	   
 
     if (datainfo->markers && obsname != NULL) {
 	gtk_list_store_set(store, &iter, 0, obsname, -1);
@@ -600,12 +577,18 @@ static void build_sheet_popup (Spreadsheet *sheet)
     add_popup_item(_("Add Variable"), sheet->popup, 
 		   G_CALLBACK(popup_sheet_add_var),
 		   sheet);
-    add_popup_item(_("Add Observation"), sheet->popup,
-		   G_CALLBACK(popup_sheet_add_obs),
-		   sheet);
-    add_popup_item(_("Insert Observation"), sheet->popup,
-		   G_CALLBACK(popup_sheet_insert_obs),
-		   sheet);
+
+    if (sheet->flags & SHEET_ADD_OBS_OK) {
+	add_popup_item(_("Add Observation"), sheet->popup,
+		       G_CALLBACK(popup_sheet_add_obs),
+		       sheet);
+    } 
+
+    if (sheet->flags & SHEET_INSERT_OBS_OK) {
+	add_popup_item(_("Insert Observation"), sheet->popup,
+		       G_CALLBACK(popup_sheet_insert_obs),
+		       sheet);
+    }
 }
 
 static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
@@ -662,60 +645,19 @@ var_added_since_ssheet_opened (int i, Spreadsheet *sheet, int main_v)
     return (i >= sheet->orig_main_v && i < main_v);
 }
 
-static int get_mask_skip (const char *mask, int n, int t)
-{
-    int s, skip = 1;
-
-    for (s=t+1; s<n; s++) {
-	if (mask[s]) skip++;
-	else break;
-    }
-
-    return skip;
-}
-
-static void sheet_shift_data (Spreadsheet *sheet)
-{
-    int n = datainfo->n;
-    int t = datainfo->t1;
-    int i, j, s, ins;
-    size_t sz;
-
-    /* FIXME */
-
-    for (s=0; s<sheet->datarows; s++) {
-	if (sheet->obsmask[s]) {
-	    ins = get_mask_skip(sheet->obsmask, sheet->datarows, s);
-	    sz = (datainfo->n - t) * sizeof **Z; /* ?? */
-	    for (i=1; i<datainfo->v; i++) {
-		if (var_is_series(datainfo, i)) {
-		    memmove(Z[i] + t + ins, Z[i] + t, sz);
-		    for (j=0; j<ins; j++) {
-			Z[i][t+j] = NADBL;
-		    }
-		}
-	    }
-	    s += ins - 1;
-	    t += ins - 1;
-	}
-    }
-}
-
 /* pull modified values from the data-editing spreadsheet
    into the main dataset */
 
 static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 {
-    int oldv = datainfo->v;
-    int newvars = sheet->added_vars;
-    int newobs = sheet->datarows - sheet->orig_nobs;
-    int missobs = 0;
-
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkTreeIter iter;
     GtkTreeViewColumn *column;
     GtkTreeModel *model;
-
+    int oldv = datainfo->v;
+    int newvars = sheet->added_vars;
+    int newobs = sheet->datarows - sheet->orig_nobs;
+    int missobs = 0;
     int i, colnum, s, t;
 
     if (!sheet->modified) {
@@ -730,8 +672,9 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 
     model = gtk_tree_view_get_model(view);
 
+    /* first extend series length, if needed */
+
     if (newobs > 0) {
-	/* extend series length first, if needed */
 	if (dataset_add_observations(newobs, &Z, datainfo, OPT_A) ||
 	    dataset_destroy_hidden_variables(&Z, datainfo, 0)) {
 	    nomem();
@@ -739,25 +682,25 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 	}
     }
 
-    if (newvars > 0) {
-	int orig_vars = sheet->varlist[0];
+    /* then add any new variables to data set */
 
-	/* then add variables, if needed */
+    if (newvars > 0) {
+	int vi, v0 = sheet->varlist[0];
+	const gchar *newname;
+
 	if (dataset_add_series(newvars, &Z, datainfo)) {
 	    nomem();
 	    return;
 	}
 
 	for (i=0; i<newvars; i++) { 
-	    const gchar *newname;
-	    int vi = oldv + i;
-
+	    vi = oldv + i;
 	    gretl_list_append_term(&sheet->varlist, vi);
 	    if (sheet->varlist == NULL) {
 		nomem();
 		return;
 	    }
-	    colnum = orig_vars + 1 + i;
+	    colnum = v0 + 1 + i;
 	    column = gtk_tree_view_get_column(view, colnum);
 	    newname = gtk_tree_view_column_get_title(column);
 	    strcpy(datainfo->varname[vi], newname); 
@@ -768,13 +711,12 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 	}
     }
 
-    if (sheet->obsmask != NULL) {
-	sheet_shift_data(sheet);
-    }
+    /* copy data values from spreadsheet */
 
     colnum = 1;
     for (i=1; i<=sheet->varlist[0]; i++) {
 	int vi = sheet->varlist[i];
+	gchar *numstr;
 
 	gtk_tree_model_get_iter_first(model, &iter);
 
@@ -782,11 +724,8 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 	fprintf(stderr, " updating data for var %d (%s) from column %d\n",
 		vi, datainfo->varname[vi], colnum);
 #endif
-
 	t = datainfo->t1;
 	for (s=0; s<sheet->datarows; s++) {
-	    gchar *numstr;
-
 	    gtk_tree_model_get(model, &iter, colnum, &numstr, -1);
 	    if (*numstr != '\0') {
 		Z[vi][t++] = atof(numstr); 
@@ -800,11 +739,12 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 	colnum++;
     }
 
+    /* copy observation markers, if relevant */
+
     if (datainfo->markers && datainfo->S != NULL) {
 	gchar *marker;
 
 	gtk_tree_model_get_iter_first(model, &iter);
-
 	t = datainfo->t1;
 	for (s=0; s<sheet->datarows; s++) {
 	    gtk_tree_model_get(model, &iter, 0, &marker, -1);
@@ -853,6 +793,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCode code)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
 
     /* insert observation markers */
+
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
 	get_full_obs_string(rowlabel, t, datainfo);
@@ -1129,7 +1070,11 @@ static int build_sheet_view (Spreadsheet *sheet)
 	} else {
 	    sheet->datacols += 1;
 	}
-    }    
+    }  
+
+    if (sheet->varlist[0] < datainfo->v - 1) {
+	sheet->flags |= SHEET_SHORT_VARLIST;
+    }
 
     /* obs col, data cols */
     sheet->totcols = sheet->datacols + 1;
@@ -1211,7 +1156,6 @@ static void free_spreadsheet (GtkWidget *widget, Spreadsheet **psheet)
     }
 
     free(sheet->varlist);
-    free(sheet->obsmask);
 
     free(sheet);
     *psheet = NULL;
@@ -1239,7 +1183,6 @@ static Spreadsheet *spreadsheet_new (int flags)
     sheet->modified = 0;
     sheet->cid = 0;
     sheet->flags = flags;
-    sheet->obsmask = NULL;
 
     if (datainfo->t1 != 0 || datainfo->t2 < datainfo->n - 1) {
 	sheet->flags |= SHEET_SUBSAMPLED;
@@ -1331,6 +1274,21 @@ static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
     return FALSE;
 }
 
+static void 
+sheet_adjust_menu_state (Spreadsheet *sheet, GtkItemFactory *ifac)
+{
+    sheet->flags |= SHEET_ADD_OBS_OK | SHEET_INSERT_OBS_OK;
+
+    if (complex_subsampled() || datainfo->t2 < datainfo->n - 1) {
+	sheet->flags &= ~SHEET_ADD_OBS_OK;
+	sheet->flags &= ~SHEET_INSERT_OBS_OK;
+	disable_obs_menu(ifac);
+    } else if (sheet->flags & SHEET_SHORT_VARLIST) {
+	sheet->flags &= ~SHEET_INSERT_OBS_OK;
+	disable_insert_obs_item(ifac);
+    }
+}
+
 void show_spreadsheet (SheetCode code) 
 {
     static Spreadsheet *sheet;    
@@ -1388,10 +1346,6 @@ void show_spreadsheet (SheetCode code)
 				  sizeof sheet_items / sizeof sheet_items[0],
 				  sheet_items, sheet);
 
-    if (complex_subsampled()) {
-	disable_obs_menu(ifac);
-    }
-
     mbar = gtk_item_factory_get_widget(ifac, "<main>");
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, FALSE, 0);
     gtk_widget_show(mbar);
@@ -1425,6 +1379,8 @@ void show_spreadsheet (SheetCode code)
     build_sheet_view(sheet);
     gtk_container_add(GTK_CONTAINER(hbox), sheet->view);
     gtk_widget_show(sheet->view); 
+
+    sheet_adjust_menu_state(sheet, ifac);
 
     if (sheet->varlist[0] < 7) {
 	/* padding to fill out the spreadsheet */

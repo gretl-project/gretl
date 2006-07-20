@@ -24,6 +24,8 @@
 #include "libset.h"
 #include "estim_private.h"
 
+#define TDEBUG 0
+
 static void tsls_omitzero (int *list, const double **Z, int t1, int t2)
 {
     int i, v;
@@ -564,6 +566,12 @@ static gretl_matrix *tsls_Q (int *instlist, int *reglist, int **pdlist,
     }
 
     rank = gretl_matrix_QR_rank(R, NULL, err);
+#if TDEBUG
+    fprintf(stderr, "tsls_Q: k = Q->cols = %d, rank = %d\n", k, rank);
+    if (rank == 0) {
+	gretl_matrix_print(R, "R");
+    }
+#endif
     if (*err) {
 	goto bailout;
     } else if (rank < k) {
@@ -617,12 +625,17 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
 {
     double *r;
     int k = gretl_matrix_cols(Q);
-    int i, t, s;
+    int i, t, s = 0;
 
     r = malloc(k * sizeof *r);
     if (r == NULL) {
 	return E_ALLOC;
     }
+
+#if TDEBUG
+    fprintf(stderr, "tsls_form_xhat: t1=%d, t2=%d, mask=%p\n",
+	    pdinfo->t1, pdinfo->t2, (void *) mask);
+#endif
 
     /* form r = Q'y */
     for (i=0; i<k; i++) {
@@ -635,6 +648,8 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
 	    r[i] += gretl_matrix_get(Q, s++, i) * x[t];
 	}
     }
+
+    fprintf(stderr, "formed r, s = %d\n", s);
 
     /* form Qr = QQ'y */
     s = 0;
@@ -649,6 +664,8 @@ static int tsls_form_xhat (gretl_matrix *Q, double *x, double *xhat,
 	}
 	s++;
     }
+
+    fprintf(stderr, "formed Qr, s = %d\n", s);
 
     free(r);
 
@@ -904,6 +921,10 @@ tsls_adjust_sample (const int *list, int *t1, int *t2,
 	}
     }
 
+#if TDEBUG
+    fprintf(stderr, "tsls_adjust_sample: t1=%d, t2=%d, missobs=%d, ok obs=%d\n", 
+	    t1min, t2max, missobs, t2max - t1min + 1 - missobs);
+#endif
 
     *t1 = t1min; 
     *t2 = t2max;

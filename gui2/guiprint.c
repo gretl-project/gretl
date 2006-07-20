@@ -1718,27 +1718,20 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     return 0;
 }
 
-static int real_csv_to_clipboard (const char *liststr)
+static int real_csv_to_clipboard (const int *list)
 {
-    char line[MAXLINE];
-    int *list = NULL;
     PRN *prn = NULL;
     int err = 0;
 
-    sprintf(line, "store csv %s", liststr);
-    list = command_list_from_string(line);
-
-    if (list != NULL) {
-	err = bufopen(&prn);
-	if (!err) {
-	    err = data_to_buf_as_csv(list, prn);
-	}
-	if (!err) {
-	    err = prn_to_clipboard(prn, GRETL_FORMAT_CSV);
-	}
+    if (bufopen(&prn)) {
+	return 1;
     }
 
-    free(list);
+    err = data_to_buf_as_csv(list, prn);
+    if (!err) {
+	prn_to_clipboard(prn, GRETL_FORMAT_CSV);
+    }
+
     gretl_print_destroy(prn);
 
     return err;
@@ -1747,13 +1740,18 @@ static int real_csv_to_clipboard (const char *liststr)
 int csv_to_clipboard (void)
 {
     gretlopt opt = OPT_NONE;
+    int *list = NULL;
     int err = 0;
 
     delimiter_dialog(&opt);
     data_save_selection_wrapper(COPY_CSV, GINT_TO_POINTER(opt));
 
     if (storelist != NULL && *storelist != 0) {
-	err = real_csv_to_clipboard(storelist);
+	list = gretl_list_from_string(storelist);	
+	if (list != NULL) {
+	    err = real_csv_to_clipboard(list);
+	    free(list);
+	}
 	free(storelist);
 	storelist = NULL;
     }
@@ -1763,15 +1761,13 @@ int csv_to_clipboard (void)
 
 int csv_selected_to_clipboard (void)
 {
-    char *liststr;
+    int *list = main_window_selection_as_list();
     int err = 0;
 
-    liststr = main_window_selection_as_string();
-
-    if (liststr != NULL) {
+    if (list != NULL) {
 	delimiter_dialog(NULL);
-	err = real_csv_to_clipboard(liststr);
-	free(liststr);
+	err = real_csv_to_clipboard(list);
+	free(list);
     }
 
     return err;

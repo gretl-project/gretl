@@ -1036,15 +1036,14 @@ fix_panelmod_list (MODEL *targ, panelmod_t *pan)
 	return E_ALLOC;
     }
 
-    /* remove any non-varying variables */
-    for (i=2; i<=targ->list[0]; i++) {
-	if (!in_gretl_list(pan->vlist, targ->list[i])) {
-	    gretl_list_delete_at_pos(targ->list, i--);
-	}
-    }
-
     if (pan->opt & OPT_F) {
-	/* fixed effects: remove the const */
+	/* fixed effects: remove any non-varying variables */
+	for (i=2; i<=targ->list[0]; i++) {
+	    if (!in_gretl_list(pan->vlist, targ->list[i])) {
+		gretl_list_delete_at_pos(targ->list, i--);
+	    }
+	}
+	/* and remove the const */
 	gretl_list_delete_at_pos(targ->list, 2);
     }
 

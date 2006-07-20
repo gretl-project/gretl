@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "console.h"
 #include "guiprint.h"
+#include "ssheet.h"
 
 void refresh_data (void)
 {
@@ -407,6 +408,8 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
 	plot_from_selection(NULL, GR_XY, NULL);
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
+    else if (!strcmp(item, _("Edit"))) 
+	show_spreadsheet(SHEET_EDIT_DATASET);
     else if (!strcmp(item, _("Delete"))) 
 	delete_selected_vars(0);
 
@@ -424,7 +427,8 @@ GtkWidget *build_selection_popup (void)
 	N_("Time series plot"),
 	N_("XY scatterplot"),
 	N_("Copy to clipboard"),
-	N_("Delete"),
+	N_("Edit"),
+	N_("Delete")
     };
 
     GtkWidget *sel_menu;
