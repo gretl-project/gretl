@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "textbuf.h"
 #include "menustate.h"
+#include "selector.h"
 #include "dlgutils.h"
 
 #include "system.h"
@@ -257,6 +258,18 @@ struct dialog_t_ {
 
 static GtkWidget *open_edit_dialog;
 
+static void record_iterinfo (dialog_t *d)
+{
+    const gchar *buf = gtk_entry_get_text(GTK_ENTRY(d->edit));
+    iterinfo *iinfo = (iterinfo *) d->data;
+
+    if (buf == NULL || *buf == '\0') {
+	iinfo->tol = NADBL;
+    } else {
+	iinfo->tol = atof(buf);
+    }
+}
+
 static void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
     dialog_t *d = (dialog_t *) data;
@@ -268,6 +281,8 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
     if (d->code == GENR_RANDOM) {
 	/* pointer to double */
 	free(d->data);
+    } else if (d->code == ITERATIONS) {
+	record_iterinfo(d);
     }
 
     g_free(d); 
@@ -639,20 +654,40 @@ static void maybe_set_seed (GtkWidget *w, double *d)
     *d = GTK_ADJUSTMENT(w)->value;
 }
 
-static void dialog_seed_spinner (GtkWidget *vbox, dialog_t *dlg)
+static void maybe_set_maxiters (GtkWidget *w, iterinfo *iinfo)
 {
-    double curr = (double) get_gretl_random_seed();
+    iinfo->maxiters = (int) GTK_ADJUSTMENT(w)->value;
+}
+
+static void dialog_add_spinner (GtkWidget *vbox, dialog_t *dlg)
+{
+    double currval;
     GtkWidget *tmp, *hbox;
     GtkObject *adj;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new(_("Seed for generator:"));
+
+    if (dlg->code == GENR_RANDOM) {
+	currval = (double) get_gretl_random_seed();
+	tmp = gtk_label_new(_("Seed for generator:"));
+    } else {
+	currval = 100; /* FIXME */
+	tmp = gtk_label_new(_("Maximum iterations:"));
+    }
+
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 
-    adj = gtk_adjustment_new(curr, 1, (gdouble) UINT_MAX, 
-			     1, 1000, 0);
-    g_signal_connect(G_OBJECT(adj), "value-changed",
-                     G_CALLBACK(maybe_set_seed), dlg->data);
+    if (dlg->code == GENR_RANDOM) {
+	adj = gtk_adjustment_new(currval, 1, (gdouble) UINT_MAX, 
+				 1, 1000, 0);
+	g_signal_connect(G_OBJECT(adj), "value-changed",
+			 G_CALLBACK(maybe_set_seed), dlg->data);
+    } else {
+	adj = gtk_adjustment_new(currval, 1, 5000, 
+				 1, 10, 0);
+	g_signal_connect(G_OBJECT(adj), "value-changed",
+			 G_CALLBACK(maybe_set_maxiters), dlg->data);
+    }
 
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
@@ -783,6 +818,21 @@ static int edit_dialog_help_code (int ci, void *p)
     return hc;
 }
 
+static void enter_tol_default (dialog_t *d)
+{
+    iterinfo *iinfo = (iterinfo *) d->data;
+    char numstr[32];
+
+    sprintf(numstr, "%g", iinfo->tol);
+    gtk_entry_set_text(GTK_ENTRY(d->edit), numstr);
+    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(numstr));
+}
+
+static void edit_dialog_ok (GtkWidget *w, dialog_t *d)
+{
+    gtk_widget_destroy(d->dialog);
+}
+
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
 		  guint cmdcode, guint varclick, 
@@ -841,7 +891,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	gtk_box_pack_start(GTK_BOX(top_vbox), d->edit, TRUE, TRUE, 5);
 
 	/* make the Enter key do the business */
-	if (okfunc) {
+	if (okfunc != NULL) {
 	    g_signal_connect(G_OBJECT(d->edit), "activate", 
 			     G_CALLBACK(okfunc), d);
 	}
@@ -849,7 +899,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	if (deftext != NULL && *deftext != '\0') {
 	    gtk_entry_set_text(GTK_ENTRY(d->edit), deftext);
 	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deftext));
-	}
+	} else if (cmdcode == ITERATIONS) {
+	    enter_tol_default(d);
+	}	    
 
 	gtk_widget_show(d->edit);
 
@@ -864,9 +916,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     } else if (cmdcode == NLS || cmdcode == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V);
 	dialog_option_switch(top_vbox, d, OPT_R);
-    } else if (cmdcode == GENR_RANDOM) {
-	dialog_seed_spinner(top_vbox, d);
-    }
+    } else if (cmdcode == GENR_RANDOM || cmdcode == ITERATIONS) {
+	dialog_add_spinner(top_vbox, d);
+    } 
     
     if (varclick == VARCLICK_INSERT_ID) { 
 	active_edit_id = d->edit; 
@@ -882,10 +934,13 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     /* Create the "OK" button */
     w = ok_button(button_box);
-    if (okfunc) {
+    if (okfunc != NULL) {
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(okfunc), d);
-    }
+    } else {
+	g_signal_connect(G_OBJECT(w), "clicked", 
+			 G_CALLBACK(edit_dialog_ok), d);
+    }	
     gtk_widget_grab_default(w);
     gtk_widget_show(w);
 

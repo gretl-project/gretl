@@ -82,6 +82,7 @@ enum extra_cmds {
     PANEL_WLS,
     PANEL_MODE,
     TSPLOTS,
+    ITERATIONS,
     GUI_CMD_MAX
 };
 

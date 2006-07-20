@@ -20,6 +20,14 @@
 #ifndef SELECTOR_H
 #define SELECTOR_H
 
+typedef struct iterinfo_t iterinfo;
+
+struct iterinfo_t {
+    int ci;
+    int maxiters;
+    double tol;
+};
+
 void clear_selector (void);
 
 void selection_dialog (const char *title, int (*callback)(), guint cmdcode,

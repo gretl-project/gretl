@@ -34,6 +34,7 @@
 #include "menustate.h"
 #include "dlgutils.h"
 #include "ssheet.h"
+#include "treeutils.h"
 #include "lib_private.h"
 #include "cmd_private.h"
 #include "libset.h"

@@ -1822,6 +1822,8 @@ static int lm_calculate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
 	goto nls_cleanup; 
     }
 
+    /* note: maxfev is automatically set to 100*(n + 1) */
+
     /* call minpack */
     lmder1_(nls_calc, &m, &n, spec->coeff, fvec, jac, &ldjac, &spec->tol, 
 	    &info, ipvt, wa, &lwa);
@@ -1898,7 +1900,7 @@ lm_approximate (nls_spec *spec, double *fvec, double *jac, PRN *prn)
     n = spec->nparam;            /* number of parameters */
     ldjac = m;                   /* leading dimension of jac array */
 
-    maxfev = 200 * (n + 1);
+    maxfev = 200 * (n + 1);      /* max iterations */
 
     diag = malloc(n * sizeof *diag);
     qtf = malloc(n * sizeof *qtf);

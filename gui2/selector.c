@@ -29,6 +29,7 @@
 
 #include "var.h"
 #include "gretl_func.h"
+#include "libset.h"
 
 #define VLDEBUG 0
 
@@ -2562,6 +2563,45 @@ static void pack_switch (GtkWidget *b, selector *sr,
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b), checked);
 }
 
+#if 0 /* not ready yet */
+
+static void call_iters_dialog (GtkWidget *w, selector *sr)
+{
+    iterinfo iinfo;
+    int canceled = 0;
+
+    iinfo.ci = sr->code;
+
+    /* FIXME need to figure out properly where to get the
+       defaults from, given the command and possible options
+    */
+
+    if (1) {
+	iinfo.maxiters = get_bhhh_maxiter();
+	iinfo.tol = get_bhhh_toler();
+    } else if (sr->code == NLS || sr->code == MLE) {
+	iinfo.maxiters = 400; /* FIXME: 100*(n+1) or 200*(n+1) */
+	iinfo.tol = get_nls_toler();
+    } 
+    
+    edit_dialog("Iterative estimation",
+		"Tolerance for convergence",
+		NULL,
+		NULL,
+		&iinfo,
+		ITERATIONS,
+		VARCLICK_NONE,
+		&canceled);
+
+    if (!canceled) {
+	fprintf(stderr, "iters=%d, tol=%g\n", iinfo.maxiters,
+		iinfo.tol);
+	/* FIXME check and set values */
+    }
+}
+
+#endif
+
 #define robust_conf(c) (c != LOGIT && c != PROBIT && c != PANEL)
 
 static void build_selector_switches (selector *sr) 
@@ -2573,6 +2613,8 @@ static void build_selector_switches (selector *sr)
 	sr->code == LOGIT || sr->code == PROBIT ||
 	sr->code == PANEL) {
 	GtkWidget *b1;
+
+	/* FIXME arma robust variant? */
 
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
@@ -2619,8 +2661,18 @@ static void build_selector_switches (selector *sr)
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
 	    pack_switch(tmp, sr, arma_const, TRUE, OPT_N, 0);
 	}
+#if 0 /* testing */
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_button_new_with_label(_("Configure"));
+	g_signal_connect(G_OBJECT(tmp), "clicked",
+			 G_CALLBACK(call_iters_dialog), sr);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+	gtk_widget_show_all(hbox);
+#else
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_V, 0);
+#endif
     } else if (sr->code == COINT2 || sr->code == VECM || 
 	       sr->code == VAR || sr->code == VLAGSEL) {
 	if (sr->code == VAR || sr->code == VLAGSEL) {
