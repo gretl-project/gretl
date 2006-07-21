@@ -52,7 +52,7 @@ line the covariance matrix of the parameter estimates is printed.
 
 The parameters of the regression function must be given initial values
 prior to the \cmd{nls} command.  This can be done using the \cmd{genr}
-command (or, in the GUI program, via the menu item ``Define new
+command (or, in the GUI program, via the menu item ``Variable, Define new
 variable'').  
 
 In some cases, where the nonlinear function is a generalization of (or
@@ -80,8 +80,8 @@ And in relation to the second example one might do:
 It is probably most convenient to compose the commands for NLS
 estimation in the form of a \app{gretl} script but you can also do so
 interactively, by selecting the item ``Nonlinear Least Squares'' under
-the Model menu.  This opens a dialog box where you can type the
-function specification (possibly prefaced by \cmd{genr} lines to set
+the ``Model, Nonlinear models'' menu.  This opens a dialog box where you can
+type the function specification (possibly prefaced by \cmd{genr} lines to set
 the initial parameter values) and the derivatives, if available.  An
 example of this is shown in Figure \ref{fig-nls-dialog}.  Note that in
 this context you do not have to supply the \cmd{nls} and \cmd{end nls}

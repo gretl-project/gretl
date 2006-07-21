@@ -42,7 +42,7 @@ For the convenience of anyone wanting to carry out more complex data
 analysis, \app{gretl} has a facility for writing out data in the
 native formats of GNU R and GNU Octave (see
 Appendix~\ref{app-advanced}).  In the GUI client this option is found
-under the ``File'' menu; in the command-line client use the
+under the ``File, Export data'' menu; in the command-line client use the
 \cmd{store} command with the flag \cmd{-r} (R) or \cmd{-m} (Octave).
 
 \section{Binary databases}
@@ -66,7 +66,7 @@ Appendix~\ref{app-datafile}.
 As of version 0.40, \app{gretl} is able to access databases via the
 internet.  Several databases are available from Wake Forest
 University.  Your computer must be connected to the internet for this
-option to work.  Please see the item on ``Online databases'' under
+option to work.  Please see the description of the ``data'' command under
 \app{gretl}'s Help menu.
 
 \subsection{RATS 4 databases}
@@ -167,8 +167,7 @@ If you use a spreadsheet to prepare your data you are able to carry
 out various transformations of the ``raw'' data with ease (adding
 things up, taking percentages or whatever): note, however, that you
 can also do this sort of thing easily --- perhaps more easily ---
-within \app{gretl}, by using the tools under the ``Data, Add
-variables'' menu and/or ``Variable, define new variable''.
+within \app{gretl}, by using the tools under the ``Add'' menu.
 
 \subsection{Appending imported data}
 
@@ -204,7 +203,7 @@ button.
 
 Please note that \app{gretl}'s spreadsheet is quite basic and has no
 support for functions or formulas.  Data transformations are done via
-the ``Data'' or ``Variable'' menus in the main \app{gretl} window.
+the ``Add'' or ``Variable'' menus in the main \app{gretl} window.
 
 \subsection{Selecting from a database}
 
@@ -213,10 +212,10 @@ variables from a database.  \app{gretl} comes with a database of US
 macroeconomic time series and, as mentioned above, the program will
 reads RATS 4 databases.
 
-Begin with \app{gretl}'s ``File, Browse databases'' menu item. This
-has three forks: ``gretl native'', ``RATS 4'' and ``on database
+Begin with \app{gretl}'s ``File, Databases'' menu item. This
+has three forks: ``Gretl native'', ``RATS 4'' and ``On database
 server''.  You should be able to find the file \verb+fedstl.bin+ in
-the file selector that opens if you choose the ``gretl native'' option
+the file selector that opens if you choose the ``Gretl native'' option
 --- this file, which contains a large collection of US macroeconomic
 time series, is supplied with the distribution.
 
@@ -227,7 +226,7 @@ Preferences, General'' dialog, select the Databases tab, and fill in
 the correct path to your RATS files.
 
 If your computer is connected to the internet you should find several
-databases (at Wake Forest University) under ``on database server''.
+databases (at Wake Forest University) under ``On database server''.
 You can browse these remotely; you also have the option of installing
 them onto your own computer.  The initial remote databases window has
 an item showing, for each file, whether it is already installed
@@ -235,7 +234,7 @@ locally (and if so, if the local version is up to date with the
 version at Wake Forest).
 
 Assuming you have managed to open a database you can import selected
-series into \app{gretl}'s workspace by using the ``Import'' menu item
+series into \app{gretl}'s workspace by using the ``Series, Import'' menu item
 in the database window, or via the popup menu that appears if you
 click the right mouse button, or by dragging the series into the
 program's main window.
@@ -261,7 +260,7 @@ three kinds of datasets:
 \item Panel data
 \end{enumerate}
 
-The primary tool for doing this is the ``Sample, Dataset structure''
+The primary tool for doing this is the ``Data, Dataset structure''
 menu entry in the graphical interface, or the \texttt{setobs} command
 for scripts and the command-line interface.
 
@@ -342,7 +341,7 @@ recognized automatically (most likely the data will be treated as
 ``undated'').  A panel interpretation can be imposed on the data
 using the graphical interface or via the \cmd{setobs} command.
 
-In the graphical interface, use the menu item ``Sample, Dataset
+In the graphical interface, use the menu item ``Data, Dataset
 structure''.  In the first dialog box that appears, select ``Panel''.
 In the next dialog you have a three-way choice.  The first two
 options, ``Stacked time series'' and ``Stacked cross sections'' are

@@ -223,8 +223,8 @@ complete, but you can find some details by following the link
 \label{app-accuracy}
 
 \app{Gretl} uses double-precision arithmetic throughout --- except for
-the multiple-precision plugin invoked by the menu item ``Model/High
-precision OLS'' which represents floating-point values using a number
+the multiple-precision plugin invoked by the menu item ``Model, Other
+linear models, High precision OLS'' which represents floating-point values using a number
 of bits given by the environment variable \verb+GRETL_MP_BITS+
 (default value 256).  The normal equations of Least Squares are by
 default solved via Cholesky decomposition, which is accurate enough
@@ -334,12 +334,12 @@ data file preserves any time series structure that is apparent to
 should be brought into R using the \cmd{source()} command.
   
 In addition, \app{gretl} has a convenience function for moving data
-quickly into R.  Under \app{gretl}'s Tools menu, you will find the
+quickly into R.  Under \app{gretl}'s ``Tools'' menu, you will find the
 entry ``Start GNU R''.  This writes out an R version of the current
 \app{gretl} data set (in the user's gretl directory), and sources it
 into a new R session.  The particular way R is invoked depends on the
 internal \app{gretl} variable \verb+Rcommand+, whose value may be set
-under the Tools, Preferences menu.  The default command is
+under the ``Tools, Preferences'' menu.  The default command is
 \cmd{RGui.exe} under MS Windows. Under X it is \cmd{xterm -e R}.
 Please note that at most three space-separated elements in this
 command string will be processed; any extra elements are ignored.
