@@ -24,13 +24,14 @@ at first.
 What can you do at this point?  You can browse the supplied data files
 (or databases), open a data file, create a new data file, read the
 help items, or open a command script.  For now let's browse the
-supplied data files.  Under the File menu choose ``Open data, sample
-file, Ramanathan\dots{}''.  A second window should open, presenting a
-list of data files supplied with the package (see
-Figure~\ref{fig-datafiles}).  The numbering of the files corresponds
-to the chapter organization of Ramanathan (2002), which contains
-discussion of the analysis of these data. The data will be useful for
-practice purposes even without the text.
+supplied data files.  Under the File menu choose ``Open data, Sample
+file''.  A second notebook-type window will open, presenting the sets
+of data files supplied with the package (see
+Figure~\ref{fig-datafiles}).  Select the first tab, ``Ramanathan''.
+The numbering of the files in this section corresponds to the chapter
+organization of Ramanathan (2002), which contains discussion of the
+analysis of these data. The data will be useful for practice purposes
+even without the text.
     
 \begin{figure}[htbp]
   \begin{center}
@@ -174,8 +175,7 @@ from the session to a single file.
 \label{menus}
 
 Reading left to right along the main window's menu bar, we find the
-File, Utilities, Session, Data, Add, Sample, Variable, Model and Help
-menus.
+File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
 
 \begin{center}
   \includegraphics[scale=0.75]{figures/menubar}
@@ -198,39 +198,39 @@ menus.
     Separated Values (CSV) format, or the formats of GNU R or GNU
     Octave. See Chapter~\ref{datafiles} and also
     Appendix~\ref{app-advanced}.
-  \item \textsf{Send to}: Send the current data set as an e-mail attachment.
+  \item \textsf{Send to}: Send the current data set as an e-mail
+    attachment.
+  \item \textsf{New data set}: Allows you to create a blank data set,
+    ready for typing in values or for importing series from a
+    database.  See below for more on databases.
   \item \textsf{Clear data set}: Clear the current data set out of
     memory.  Generally you don't have to do this (since opening a new
     data file automatically clears the old one) but sometimes it's
     useful.
-  \item \textsf{Browse databases}: See Section~\ref{dbase}.
-  \item \textsf{Create data set}: Initialize the built-in spreadsheet
-    for entering data manually.  See Section~\ref{scratch}.
-  \item \textsf{View command log}: Open a window containing a record
-    of the commands executed so far.
-  \item \textsf{Open command file}: Open a file of \app{gretl}
-    commands, either one you have created yourself or one of the
-    practice files supplied with the package.  If you want to create a
-    command file from scratch use the next item, \textsf{New command
-      file}.
-  \item \textsf{Preferences}: Set the paths to various files
-    \app{gretl} needs to access. Choose the font in which gretl
-    displays text output.  Select or unselect ``expert mode''. (If
-    this mode is selected various warning messages are suppressed.)
-    Activate or suppress \app{gretl}'s messaging about the
-    availability of program updates.  Configure or turn on/off the
-    main-window toolbar. See the \GCR\ for
-    further details.
+  \item \textsf{Script files}: A ``script'' is a file containing a
+    sequence of \app{gretl} commands.  This item contains entries
+    that let you open a script you have created previously (``User
+    file''), open a sample script, or open an editor window in which
+    you can create a new script.
+  \item \textsf{Session files}: A ``session'' file contains a snapshot
+    of a previous \app{gretl} session, including the data set used
+    and any models or graphs that you saved.  Under this item you
+    can open a saved session or save the current session.
+  \item \textsf{Databases}: Allows you to browse various large
+    databases, either on your own computer or, if you are connected
+    to the internet, on the \app{gretl} database server.  See
+    Section~\ref{dbase} for details.
+  \item \textsf{Function files}: TO BE WRITTEN (new).
   \item \textsf{Exit}: Quit the program. If expert mode is not
     selected you'll be prompted to save any unsaved work.
   \end{itemize}
 
-\item \textsf{Utilities menu}
+\item \textsf{Tools menu}
   \begin{itemize}
   \item \textsf{Statistical tables}: Look up critical values for
     commonly used distributions (normal or Gaussian, \emph{t},
     chi-square, \emph{F} and Durbin--Watson).
-  \item \textsf{p-value finder}: Open a window which enables you to
+  \item \textsf{P-value finder}: Open a window which enables you to
     look up p-values from the Gaussian, \emph{t}, chi-square, \emph{F}
     or gamma distributions. See also the \cmd{pvalue} command in the
     \emph{Gretl Command Reference}.
@@ -242,51 +242,46 @@ menus.
     that take as input data series rather than pre-computed sample
     statistics, see ``Difference of means'' and ``Difference of
     variances'' under the Data menu.
+  \item \textsf{Command log}: Open a window containing a record
+    of the commands executed so far.
   \item \textsf{Gretl console}: Open a ``console'' window into which
     you can type commands as you would using the command-line program,
     \app{gretlcli} (as opposed to using point-and-click).
   \item \textsf{Start Gnu R}: Start \app{R} (if it is installed on
     your system), and load a copy of the data set currently open in
     \app{gretl}.  See Appendix~\ref{app-advanced}.
+  \item \textsf{Sort variables}: Rearrange the listing of variables in
+    the main window, either by ID number or alphabetically by name.
   \item \textsf{NIST test suite}: Check the numerical accuracy of
     \app{gretl} against the reference results for linear regression
     made available by the (US) National Institute of Standards and
     Technology.
-  \end{itemize}
-
-\item \textsf{Session menu}
-  \begin{itemize}
-  \item \textsf{Icon view}: Open a window showing the current
-    \app{gretl} session as a set of icons.  For details see
-    Section~\ref{session}.
-  \item \textsf{Open}: Open a previously saved session file.
-  \item \textsf{Save}: Save the current session to file.
-  \item \textsf{Save as}: Save the current session to file under a
-    chosen name.
+  \item \textsf{Preferences}: Set the paths to various files
+    \app{gretl} needs to access. Choose the font in which gretl
+    displays text output.  Select or unselect ``expert mode''. (If
+    this mode is selected various warning messages are suppressed.)
+    Activate or suppress \app{gretl}'s messaging about the
+    availability of program updates.  Configure or turn on/off the
+    main-window toolbar. See the \GCR\ for
+    further details.
   \end{itemize}
 
 \item \textsf{Data menu}
   \begin{itemize}
+  \item \textsf{Select all}: Several menu items act upon those
+    variables that are currently selected in the main window.  This
+    item lets you select all the variables.
   \item \textsf{Display values}: Pops up a window with a simple (not
-    editable) printout of the values of the variables (either all of
-    them or a selected subset).
-  \item \textsf{Edit values}: Pops up a spreadsheet window where you
-    can make changes, add new variables, and extend the number of
-    observations.
-  \item \textsf{Sort variables}: Rearrange the listing of variables in
-    the main window, either by ID number or alphabetically by name.
-  \item \textsf{Graph specified vars}: Gives a choice between a time
-    series plot, a regular X--Y scatter plot, an X--Y plot using
-    impulses (vertical bars), an X--Y plot ``with factor separation''
-    (i.e.\ with the points colored differently depending to the value
-    of a given dummy variable), boxplots, and a 3-D graph. Serves up a
-    dialog box where you specify the variables to graph. See
-    Chapter~\ref{chap-graphs} for details.
-  \item \textsf{Multiple scatterplots}: Show a collection of (at most
-    six) pairwise plots, with either a given variable on the \emph{y}
-    axis plotted against several different variables on the \emph{x}
-    axis, or several \emph{y} variables plotted against a given
-    \emph{x}. May be useful for exploratory data analysis.
+    editable) printout of the values of the selected variable or
+    variables.
+  \item \textsf{Edit values}: Opens a spreadsheet window where you
+    can edit the values of the selected variables. 
+  \item \textsf{Add observations}: Gives a dialog box in which you can
+    choose a number of observations to add at the end of the current
+    dataset; for use with forecasting.
+  \item \textsf{Remove extra observations}: Active only if extra
+    observations have been added automatically in the process of
+    forecasting; deletes these extra observations.
   \item \textsf{Read info}, \textsf{Edit info}: ``Read info'' just
     displays the summary information for the current data file; ``Edit
     info'' allows you to make changes to it (if you have permission to
@@ -294,48 +289,13 @@ menus.
   \item \textsf{Print description}: Opens a window containing a full
     account of the current dataset, including the summary information
     and any specific information on each of the variables.
-  \item \textsf{Summary statistics}: Shows a fairly full set of
-    descriptive statistics for all variables in the data set, or for
-    selected variables.
-  \item \textsf{Correlation matrix}: Shows the pairwise correlation
-    coefficients for all variables in the data set, or selected
-    variables
-  \item \textsf{Principal components}: Active only if two or more
-    variables are selected; produces a Principal Components Analysis
-    of the selected variables.
-  \item \textsf{Mahalonobis distances}: Active only if two or more
-    variables are selected; computes the Mahalonobis distance of each
-    observation from the centroid of the selected set of variables.
-  \item \textsf{Difference of means}: Calculates the \emph{t}
-    statistic for the null hypothesis that the population means are
-    equal for two selected variables and shows its p-value.
-  \item \textsf{Difference of variances}: Calculates the \emph{F}
-    statistic for the null hypothesis that the population variances
-    are equal for two selected variables and shows its p-value.
-  \item \textsf{Add observations}: Gives a dialog box in which you can
-    choose a number of observations to add at the end of the current
-    dataset; for use with forecasting.
-  \item \textsf{Remove extra observations}: Active only if extra
-    observations have been added automatically in the process of
-    forecasting; deletes these extra observations.
-  \item \textsf{Refresh window}: Sometimes \app{gretl} commands
-    generate new variables.  The ``refresh'' item ensures that the
-    listing of variables visible in the main data window is in sync
-    with the program's internal state.
-  \end{itemize}
-
-\item \textsf{Add menu} Offers various standard transformations
-  of variables (logs, lags, squares, etc.) that you may wish to add to
-  the data set. Also gives the option of adding random variables, and
-  (for time-series data) adding seasonal dummy variables (e.g.\
-  quarterly dummy variables for quarterly data).  Includes an item for
-  seeding the program's pseudo-random number generator.
-
-\item \textsf{Sample menu}
-  \begin{itemize}
-  \item \textsf{Set range}: Select a different starting and/or ending
-    point for the current sample, within the range of data available.
-  \item \textsf{Restore full range}: self-explanatory.
+  \item \textsf{Add case markers}: Prompts for the name of a text file
+    containing ``case markers'' (short strings identifying the
+    individual observations) and adds this information to the data
+    set. See Chapter~\ref{datafiles}.
+  \item \textsf{Remove case markers}: Active only if the dataset has
+    case markers indentifying the observations; removes these case
+    markers.
   \item \textsf{Dataset structure}: invokes a series of dialog boxes
     which allow you to change the structural interpretation of the
     current dataset.  For example, if data were read in as a cross
@@ -347,6 +307,52 @@ menus.
     sum, start of period or end of period).
   \item \textsf{Expand data}: For time-series data, gives you the
     option of expanding the data to a higher frequency.
+  \item \textsf{Transpose data}: Turn each observation into a variable
+    and vice versa (or in other words, each row of the data matrix
+    becomes a column in the modified data matrix); can be useful with
+    imported data that have been read in ``sideways''.
+  \end{itemize}
+
+\item \textsf{View menu} 
+  \begin{itemize}
+  \item \textsf{Icon view}: Opens a window showing the content of
+    the current session as a set of icons; see section~\ref{session}.
+  \item \textsf{Graph specified vars}: Gives a choice between a time
+    series plot, a regular X--Y scatter plot, an X--Y plot using
+    impulses (vertical bars), an X--Y plot ``with factor separation''
+    (i.e.\ with the points colored differently depending to the value
+    of a given dummy variable), boxplots, and a 3-D graph. Serves up a
+    dialog box where you specify the variables to graph. See
+    Chapter~\ref{chap-graphs} for details.
+  \item \textsf{Multiple graphs}: Allows you to compose a set of up to
+    six small graphs, either pairwise scatter-plots or time-series
+    graphs.  These are displayed together in a single window.
+  \item \textsf{Summary statistics}: Shows a fairly full set of
+    descriptive statistics for the variables selected in the main
+    window.
+  \item \textsf{Correlation matrix}: Active only if two or more
+    variables are selected; shows the pairwise correlation
+    coefficients for all variables in the data set, or selected
+    variables
+  \item \textsf{Principal components}: Active only if two or more
+    variables are selected; produces a Principal Components Analysis
+    of the selected variables.
+  \item \textsf{Mahalonobis distances}: Active only if two or more
+    variables are selected; computes the Mahalonobis distance of each
+    observation from the centroid of the selected set of variables.
+  \end{itemize}
+
+\item \textsf{Add menu} Offers various standard transformations
+  of variables (logs, lags, squares, etc.) that you may wish to add to
+  the data set. Also gives the option of adding random variables, and
+  (for time-series data) adding seasonal dummy variables (e.g.\
+  quarterly dummy variables for quarterly data).
+
+\item \textsf{Sample menu}
+  \begin{itemize}
+  \item \textsf{Set range}: Select a different starting and/or ending
+    point for the current sample, within the range of data available.
+  \item \textsf{Restore full range}: self-explanatory.
   \item \textsf{Define, based on dummy}: Given a dummy (indicator)
     variable with values 0 or 1, this drops from the current sample
     all observations for which the dummy variable has value 0.
@@ -365,17 +371,6 @@ menus.
     data set, where it's quite common to encounter missing values.
   \item \textsf{Set missing value code}: Set a numerical value that
     will be interpreted as ``missing'' or ``not available''.
-  \item \textsf{Add case markers}: Prompts for the name of a text file
-    containing ``case markers'' (short strings identifying the
-    individual observations) and adds this information to the data
-    set. See Chapter~\ref{datafiles}.
-  \item \textsf{Remove case markers}: Active only if the dataset has
-    case markers indentifying the observations; removes these case
-    markers.
-  \item \textsf{Transpose data}: Turn each observation into a variable
-    and vice versa (or in other words, each row of the data matrix
-    becomes a column in the modified data matrix); can be useful with
-    imported data that have been read in ``sideways''.
   \end{itemize}
 
 \item \textsf{Variable menu} Most items under here operate on a single
@@ -396,14 +391,17 @@ menus.
   will create a new variable \verb+foo+ as the product of the existing
   variables \verb+x1+ and \verb+x2+.  In these formulae, variables
   must be referenced by name, not number.
+
 \item \textsf{Model menu} For details on the various estimators
   offered under this menu please consult the \emph{Gretl Command
     Reference} and/or the online help under ``Help, Estimation''.
   Also see Chapter~\ref{chap-nls} regarding the estimation of nonlinear
   models.
+
 \item \textsf{Help menu} Please use this as needed! It gives details
   on the syntax required in various dialog entries.
 \end{itemize}
+
 
 \section{Keyboard shortcuts}
 \label{keyb-accel}
@@ -457,26 +455,23 @@ The icons have the following functions, reading from left to right:
   type a series of commands to be sent to the program as a batch.
 \item Open the gretl console.  A shortcut to the ``Gretl console''
   menu item (Section~\ref{menus} above).
-\item Open the gretl session window.
+\item Open the \app{gretl} session icon window.
 \item Open the \app{gretl} website in your web browser.  This will
   work only if you are connected to the Internet and have a properly
   configured browser.
-\item Open the current version of this manual, in PDF format.  As with
-  the previous item, this requires an Internet connection; it also
-  requires that your browser knows how to handle PDF files.
+\item Open this manual in PDF format.
 \item Open the help item for script commands syntax (i.e.\ a listing
   with details of all available commands).
 \item Open the dialog box for defining a graph.
 \item Open the dialog box for estimating a model using ordinary least
   squares.
-\item Open a window listing the datasets associated with Ramanathan's
-  \emph{Introductory Econometrics} (and also the datasets from the
-  various other econometrics texts that are supported by gretl, if
-  they are installed).
+\item Open a window listing the sample datasets supplied with
+  \app{gretl}, and any other data file collections that have been
+  installed.
 \end{enumerate}
 
 If you don't care to have the toolbar displayed, you can turn it off
-under the ``File, Preferences, General'' menu. Go o the Toolbar tab
+under the ``Tools, Preferences, General'' menu. Go o the Toolbar tab
 and uncheck the ``show gretl toolbar'' box.
 
 %%% Local Variables: 
