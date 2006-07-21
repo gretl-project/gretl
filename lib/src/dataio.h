@@ -33,7 +33,8 @@ typedef enum {
     GRETL_DATA_GZIPPED,   /* gzipped data */
     GRETL_DATA_TRAD,      /* traditional (ESL-style) data */
     GRETL_DATA_DAT,       /* data in PcGive format */
-    GRETL_DATA_DB         /* gretl native database format */
+    GRETL_DATA_DB,        /* gretl native database format */
+    GRETL_DATA_JM         /* JMulti ascii data */
 } GretlDataFormat;
 
 typedef enum {

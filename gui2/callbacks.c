@@ -240,6 +240,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case EXPORT_R:
     case EXPORT_OCTAVE:
     case EXPORT_DAT:
+    case EXPORT_JM:
 	data_save_selection_wrapper(file_code, p);
 	break;
     case SAVE_TEX:

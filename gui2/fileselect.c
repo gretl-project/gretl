@@ -66,7 +66,8 @@
 #define EXPORT_ACTION(a,s) ((a == EXPORT_OCTAVE || \
                              a == EXPORT_R || \
                              a == EXPORT_CSV || \
-                             a == EXPORT_DAT) && s != FSEL_DATA_PRN)
+                             a == EXPORT_DAT || \
+                             a == EXPORT_JM) && s != FSEL_DATA_PRN)
 
 struct extmap {
     int action;
@@ -130,6 +131,7 @@ static gretlopt save_action_to_opt (int action, gpointer p)
     case EXPORT_R:      opt = OPT_R; break;
     case EXPORT_CSV:    opt = OPT_C; break;
     case EXPORT_DAT:    opt = OPT_G; break; /* PcGive */
+    case EXPORT_JM:     opt = OPT_J; break; /* JMulti */
     default: break;
     }
 
@@ -163,7 +165,7 @@ static int dat_ext (const char *str, int showerr)
 
     suff = strrchr(str, '.');
 
-    if (suff != NULL && (!strcmp(suff, ".dat") || !strcmp(suff, ".gdt"))) {
+    if (suff != NULL && !strcmp(suff, ".gdt")) {
 	if (showerr) {
 	    errbox(_("The suffix you selected should be used\n"
 		   "only for gretl datafiles"));
@@ -408,6 +410,7 @@ static char *suggested_exportname (const char *fname, int action)
 	    test = ".csv";
 	    break;
 	case EXPORT_DAT:
+	case EXPORT_JM:
 	    test = ".dat";
 	    break;
 	default:
@@ -595,6 +598,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{OPEN_OCTAVE,  { N_("GNU Octave files (*.m)"), "*.m" }},
 	{APPEND_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
 	{EXPORT_DAT,   { N_("PcGive files (*.dat)"), "*.dat" }},
+	{EXPORT_JM,    { N_("JMulti files (*.dat)"), "*.dat" }},
 	{SAVE_OUTPUT,  { N_("text files (*.txt)"), "*.txt" }},
 	{SAVE_TEX,     { N_("TeX files (*.tex)"), "*.tex" }},
 	{SAVE_RTF,     { N_("RTF files (*.rtf)"), "*.rtf" }},

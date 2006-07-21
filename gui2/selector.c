@@ -3209,6 +3209,8 @@ static char *get_topstr (int cmdnum)
     case EXPORT_CSV:
     case EXPORT_R:
     case EXPORT_OCTAVE:
+    case EXPORT_JM:
+    case EXPORT_DAT:
 	return N_("Select variables to save");
     case COPY_CSV:
 	return N_("Select variables to copy");

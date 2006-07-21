@@ -261,6 +261,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/_CSV..."), NULL, file_save, EXPORT_CSV, NULL, GNULL },
     { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL, GNULL },
     { N_("/File/Export data/_Octave..."), NULL, file_save, EXPORT_OCTAVE, NULL, GNULL },
+    { N_("/File/Export data/_JMulti..."), NULL, file_save, EXPORT_JM, NULL, GNULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
 
     /* File, data misc */

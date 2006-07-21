@@ -1092,6 +1092,8 @@ format_from_opt_or_name (gretlopt opt, const char *fname)
 	fmt = GRETL_DATA_DB;
     } else if (opt & OPT_G) {
 	fmt = GRETL_DATA_DAT;
+    } else if (opt & OPT_J) {
+	fmt = GRETL_DATA_JM;
     }
 
     if (fmt == 0) {
@@ -1187,7 +1189,7 @@ int write_data (const char *fname, const int *list,
     /* write header and label files if not exporting to other formats */
     if (fmt != GRETL_DATA_R && fmt != GRETL_DATA_R_TS && 
 	fmt != GRETL_DATA_CSV && fmt != GRETL_DATA_OCTAVE &&
-	fmt != GRETL_DATA_DAT) {
+	fmt != GRETL_DATA_DAT && fmt != GRETL_DATA_JM) {
 	if (!has_suffix(datfile, ".gz")) {
 	    switch_ext(hdrfile, datfile, "hdr");
 	    switch_ext(lblfile, datfile, "lbl");
@@ -1253,7 +1255,8 @@ int write_data (const char *fname, const int *list,
     }
 
     if (fmt == GRETL_DATA_CSV || fmt == GRETL_DATA_OCTAVE || 
-	GRETL_DATA_R || fmt == GRETL_DATA_TRAD || fmt == GRETL_DATA_DAT) { 
+	GRETL_DATA_R || fmt == GRETL_DATA_TRAD || 
+	fmt == GRETL_DATA_DAT || fmt == GRETL_DATA_JM) { 
 	/* an ASCII variant of some sort */
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) {
@@ -1440,6 +1443,42 @@ int write_data (const char *fname, const int *list,
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
 		}
 		fputc('\n', fp);
+	    }
+	    fputc('\n', fp);
+	}
+    } else if (fmt == GRETL_DATA_JM) { 
+	/* JMulti: ascii with comments and date info */
+	int maj, min;
+
+	fputs("/*\n", fp);
+	for (i=1; i<=list[0]; i++) {
+	    fprintf(fp, " %s: %s\n", pdinfo->varname[list[i]], VARLABEL(pdinfo, i));
+	}
+	fputs("*/\n", fp);
+	date_maj_min(pdinfo->stobs, &maj, &min);
+	if (pdinfo->pd == 4 || pdinfo->pd == 12) {
+	    fprintf(fp, "<%d %c%d>\n", maj, (pdinfo->pd == 4)? 'Q' : 'M', min);
+	} else if (pdinfo->pd == 1) {
+	    fprintf(fp, "<%d>\n", maj);
+	} else {
+	    fputs("<1>\n", fp);
+	}
+	for (i=1; i<=list[0]; i++) {
+	    fprintf(fp, " %s", pdinfo->varname[list[i]]);
+	}
+	fputc('\n', fp);
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    for (i=1; i<=list[0]; i++) {
+		v = list[i];
+		if (na(Z[v][t])) {
+		    fputs("NaN ", fp);
+		} else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
+		    fprintf(fp, "%.12g ", Z[v][t]);
+		} else {
+		    fprintf(fp, "%.*f ", pmax[i-1], 
+			    (var_is_series(pdinfo, v))? 
+			    Z[v][t] : Z[v][0]);
+		}
 	    }
 	    fputc('\n', fp);
 	}

@@ -199,6 +199,7 @@ struct gretl_option gretl_opts[] = {
     { STORE,    OPT_D, "database" },
     { STORE,    OPT_F, "overwrite" },
     { STORE,    OPT_G, "dat" },
+    { STORE,    OPT_J, "jmulti" },
     { STORE,    OPT_M, "gnu-octave" },
     { STORE,    OPT_R, "gnu-R" },
     { STORE,    OPT_T, "traditional" },
@@ -335,6 +336,8 @@ struct flag_match flag_matches[] = {
     { OPT_G, 'g' },
     { OPT_H, 'h' },
     { OPT_I, 'i' },
+    { OPT_J, 'i' },
+    { OPT_K, 'k' },
     { OPT_L, 'l' },
     { OPT_M, 'm' },
     { OPT_N, 'n' },
@@ -352,7 +355,7 @@ struct flag_match flag_matches[] = {
     { 0L,   '\0' }
 };
 
-static const char *ok_flags = "abcdefghilmnopqrstuvwxz";
+static const char *ok_flags = "abcdefghijklmnopqrstuvwxz";
 
 #define isflag(c) (strchr(ok_flags, c) != NULL)
 

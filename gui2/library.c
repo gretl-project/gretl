@@ -5196,7 +5196,7 @@ static int db_write_response (const char *savename, const int *list)
     return ret;
 }
 
-#define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | OPT_C | OPT_D))
+#define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | OPT_C | OPT_D | OPT_J))
 
 #define WRITING_DB(o) (o & OPT_D)
 
