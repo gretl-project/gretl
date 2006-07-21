@@ -759,6 +759,7 @@ int run_gretl_comparison (const char *datname,
     int *list = NULL;
     MODEL *model = NULL;
     double acc;
+    int wc = 0;
     int i;
     static int modelnum;
 
@@ -833,13 +834,14 @@ int run_gretl_comparison (const char *datname,
 	pprintf(prn, "* %s results correct to at least %d digits\n", 
 		LIBGRETLSTR, (int) acc);
     } else if (acc >= MIN_DIGITS) {
-	if (strcmp(datname, "Filip.dat")) {
+	if (strcmp(datname, "Filip.dat") && strcmp(datname, "Wampler5.dat")) {
 	    pprintf(prn, "* %s results correct to only %d digits: "
 		    "POOR\n", LIBGRETLSTR, (int) acc);
 	    *poor += 1;
 	} else {
-	    pprintf(prn, "* %s results correct to %d digits: "
-		    "OK on Filip.dat\n", LIBGRETLSTR, (int) acc);
+	    pprintf(prn, "* %s results correct to at least %.2f digits\n"
+		    "  (OK on Filip.dat and Wampler5.dat)\n", LIBGRETLSTR, acc);
+	    wc = 1;
 	}	    
     } else {
 	pprintf(prn, "* %s results correct to less than "
@@ -847,7 +849,9 @@ int run_gretl_comparison (const char *datname,
 	*poor += 1;
     }
 
-    pprintf(prn, "  (worst-case log relative error = %.3f)\n", acc);
+    if (!wc) {
+	pprintf(prn, "  (worst-case log relative error = %.3f)\n", acc);
+    }
 
     if (verbose) {
 	pputc(prn, '\n');
