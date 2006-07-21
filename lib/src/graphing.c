@@ -2752,6 +2752,9 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	if (spec->lines[i].type != 0) {
 	    fprintf(fp, " lt %d", spec->lines[i].type);
 	}
+	if (spec->lines[i].width != 1) {
+	    fprintf(fp, " lw %d", spec->lines[i].width);
+	}
 
 	if (i == n_lines - 1) {
 	    fputc('\n', fp);

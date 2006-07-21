@@ -388,7 +388,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     if (!err && ttfcombo != NULL && ttfspin != NULL) {
 	const gchar *tmp = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry));
-	int ptsize = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(ttfspin));
+	int ptsize = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(ttfspin));
 
 	if (tmp != NULL && *tmp != '\0') {
 	    const char *fname = get_font_filename(tmp);
@@ -1051,7 +1051,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_widget_show(label);
 
 	    hbox = gtk_hbox_new(FALSE, 5);
-	    linewidth[i] = gtk_spin_button_new_with_range(1, 4, 1);
+	    linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
 	    g_signal_connect(G_OBJECT(linewidth[i]), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);
