@@ -2796,7 +2796,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     GtkItemFactoryEntry dumitem;
     MODEL *pmod = vwin->data;
     const gchar *mpath[] = {
-	N_("/Graphs/dumsep"), 
+	"/Graphs/dumsep", 
 	N_("/Graphs/Separation")
     };
     gchar *radiopath = NULL;

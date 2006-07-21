@@ -550,9 +550,9 @@ static void real_add_files_to_menus (int ftype)
     void (*callfunc)() = NULL;
     GtkItemFactoryEntry fileitem;
     const gchar *msep[] = {
-	N_("/File/Open data/sep"),
-	N_("/File/Session files/sep"),
-	N_("/File/Script files/sep")
+	"/File/Open data/sep",
+	"/File/Session files/sep",
+	"/File/Script files/sep"
     };
     const gchar *mpath[] = {
 	N_("/File/Open data"),
