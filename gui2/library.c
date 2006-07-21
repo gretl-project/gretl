@@ -2551,32 +2551,13 @@ static int logistic_model_get_lmax (CMD *cmd)
     return err;
 }
 
-int do_model (selector *sr) 
+static int real_do_model (int action) 
 {
-    const char *buf;
     PRN *prn;
     MODEL *pmod;
-    char title[26], estimator[9];
-    int action;
+    char title[26];
     double rho;
     int err = 0;
-
-    if (selector_error(sr)) {
-	return 1;
-    }
-
-    buf = selector_list(sr);
-    if (buf == NULL) {
-	return 1;
-    }
-
-    action = selector_code(sr);
-    strcpy(estimator, gretl_command_word(action));
-
-    cmd.opt = selector_get_opts(sr);
-
-    gretl_command_sprintf("%s %s%s", estimator, buf, 
-			  print_flags(cmd.opt, action));
 
 #if 0
     fprintf(stderr, "do_model: cmdline = '%s'\n", cmdline);
@@ -2723,6 +2704,31 @@ int do_model (selector *sr)
     return 0;
 }
 
+int do_model (selector *sr) 
+{
+    const char *buf;
+    char estimator[9];
+    int action;
+
+    if (selector_error(sr)) {
+	return 1;
+    }
+
+    buf = selector_list(sr);
+    if (buf == NULL) {
+	return 1;
+    }
+
+    action = selector_code(sr);
+    strcpy(estimator, gretl_command_word(action));
+    cmd.opt = selector_get_opts(sr);
+
+    gretl_command_sprintf("%s %s%s", estimator, buf, 
+			  print_flags(cmd.opt, action));
+
+    return real_do_model(action);
+}
+
 int do_vector_model (selector *sr) 
 {
     GRETL_VAR *var;
@@ -2856,12 +2862,22 @@ void do_graph_model (GPT_SPEC *spec)
 void do_minibuf (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf = edit_dialog_get_text(dlg);
-    gretlopt opt = edit_dialog_get_opt(dlg);
-    PRN *prn = NULL;
+    char cword[9];
     int oldv = datainfo->v;
-    int err;
+    int ci, err;
 
     if (buf == NULL) return;
+
+    sscanf(buf, "%8s", cword);
+    ci = gretl_command_number(cword);
+
+    /* actions we can't/won't handle here (should be more) */
+    if (ci == LOOP || ci == RESTRICT || ci == SYSTEM || 
+	ci == EQUATION || ci == VAR || ci == VECM ||
+	is_model_ref_cmd(ci)) {
+	dummy_call();
+	return;
+    }
 
     gretl_command_sprintf("%s", buf);
 
@@ -2869,16 +2885,16 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
 	close_dialog(dlg);
     }
 
-    if ((opt & OPT_D) && bufopen(&prn)) {
+    if (is_model_cmd(cword)) {
+	real_do_model(ci);
 	return;
     }
 
     console_record_sample(datainfo);
 
-    err = gui_exec_line(cmdline, prn, CONSOLE_EXEC, NULL);
+    err = gui_exec_line(cmdline, NULL, CONSOLE_EXEC, NULL);
     if (err) {
 	gui_errmsg(err);
-	gretl_print_destroy(prn);
 	return;
     }
 
@@ -2890,10 +2906,6 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
     /* update sample info and options if needed */
     if (console_sample_changed(datainfo)) {
 	set_sample_label(datainfo);
-    }
-
-    if (prn != NULL) {
-	view_buffer(prn, 80, 400, "minibuffer results", PRINT, NULL);
     }
 }
 

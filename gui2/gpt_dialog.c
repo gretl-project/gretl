@@ -44,6 +44,7 @@ GtkWidget *linetitle[MAX_PLOT_LINES];
 GtkWidget *stylecombo[MAX_PLOT_LINES];
 GtkWidget *yaxiscombo[MAX_PLOT_LINES];
 GtkWidget *linescale[MAX_PLOT_LINES];
+GtkWidget *linewidth[MAX_PLOT_LINES];
 
 GtkWidget *labeltext[MAX_PLOT_LABELS];
 GtkWidget *labeljust[MAX_PLOT_LABELS];
@@ -337,6 +338,10 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 		entry_to_gp_string(linescale[i], 
 				   spec->lines[i].scale, 
 				   sizeof spec->lines[0].scale);
+	    }
+	    if (linewidth[i] != NULL) {
+		spec->lines[i].width = 
+		    gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(linewidth[i]));
 	    }
 	}
     }
@@ -1032,7 +1037,30 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_entry_set_text (GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry), 
 				(spec->lines[i].yaxis == 1)? "left" : "right");  
 	    gtk_widget_show(yaxiscombo[i]);	
-	} 
+	}
+
+	if (1) {
+	    /* line width adjustment */
+	    GtkWidget *hbox;
+
+	    tbl_len++;
+	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	    label = gtk_label_new(_("line width"));
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				      label, 1, 2, tbl_len-1, tbl_len);
+	    gtk_widget_show(label);
+
+	    hbox = gtk_hbox_new(FALSE, 5);
+	    linewidth[i] = gtk_spin_button_new_with_range(1, 4, 1);
+	    g_signal_connect(G_OBJECT(linewidth[i]), "activate", 
+			     G_CALLBACK(apply_gpt_changes), 
+			     spec);
+	    gtk_box_pack_start(GTK_BOX(hbox), linewidth[i], FALSE, FALSE, 0);
+	    gtk_widget_show(linewidth[i]);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
+				      tbl_len-1, tbl_len);
+	    gtk_widget_show(hbox);
+	}
     }
 }
 

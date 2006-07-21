@@ -64,6 +64,7 @@ typedef struct {
     char scale[8];         /* string representation of scale factor */
     int yaxis;             /* 1 for left, 2 for right */
     int type;              /* 1, 2, ... (color) */
+    int width;             /* default 1, could be bigger */
     int ncols;             /* number of data columns (0 for formula) */
 } GPT_LINE;
 

@@ -22,7 +22,6 @@
 #include "gretl.h"
 #include "textbuf.h"
 #include "menustate.h"
-#include "selector.h"
 #include "dlgutils.h"
 
 #include "system.h"
@@ -258,18 +257,6 @@ struct dialog_t_ {
 
 static GtkWidget *open_edit_dialog;
 
-static void record_iterinfo (dialog_t *d)
-{
-    const gchar *buf = gtk_entry_get_text(GTK_ENTRY(d->edit));
-    iterinfo *iinfo = (iterinfo *) d->data;
-
-    if (buf == NULL || *buf == '\0') {
-	iinfo->tol = NADBL;
-    } else {
-	iinfo->tol = atof(buf);
-    }
-}
-
 static void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
     dialog_t *d = (dialog_t *) data;
@@ -281,9 +268,7 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
     if (d->code == GENR_RANDOM) {
 	/* pointer to double */
 	free(d->data);
-    } else if (d->code == ITERATIONS) {
-	record_iterinfo(d);
-    }
+    } 
 
     g_free(d); 
 
@@ -665,26 +650,22 @@ static void maybe_set_seed (GtkWidget *w, double *d)
     *d = GTK_ADJUSTMENT(w)->value;
 }
 
-static void maybe_set_maxiters (GtkWidget *w, iterinfo *iinfo)
-{
-    iinfo->maxiters = (int) GTK_ADJUSTMENT(w)->value;
-}
-
 static void dialog_add_spinner (GtkWidget *vbox, dialog_t *dlg)
 {
-    double currval;
-    GtkWidget *tmp, *hbox;
-    GtkObject *adj;
+    double currval = 0.0;
+    GtkWidget *hbox, *tmp = NULL;
+    GtkObject *adj = NULL;
+
+    if (dlg->code != GENR_RANDOM) {
+	return;
+    }
 
     hbox = gtk_hbox_new(FALSE, 5);
 
     if (dlg->code == GENR_RANDOM) {
 	currval = (double) get_gretl_random_seed();
 	tmp = gtk_label_new(_("Seed for generator:"));
-    } else {
-	currval = 100; /* FIXME */
-	tmp = gtk_label_new(_("Maximum iterations:"));
-    }
+    } 
 
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
 
@@ -693,12 +674,7 @@ static void dialog_add_spinner (GtkWidget *vbox, dialog_t *dlg)
 				 1, 1000, 0);
 	g_signal_connect(G_OBJECT(adj), "value-changed",
 			 G_CALLBACK(maybe_set_seed), dlg->data);
-    } else {
-	adj = gtk_adjustment_new(currval, 1, 5000, 
-				 1, 10, 0);
-	g_signal_connect(G_OBJECT(adj), "value-changed",
-			 G_CALLBACK(maybe_set_maxiters), dlg->data);
-    }
+    } 
 
     tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
@@ -720,10 +696,6 @@ static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Robust standard errors"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_r_callback), dlg);
-    } else if (opt == OPT_D) {
-	b = gtk_check_button_new_with_label(_("Display results"));
-	g_signal_connect(G_OBJECT(b), "toggled", 
-			 G_CALLBACK(opt_d_callback), dlg);
     } else {
 	return;
     }
@@ -816,7 +788,8 @@ static int edit_dialog_help_code (int ci, void *p)
 
     if (ci == SYSTEM && p != NULL) {
 	hc = 0;
-    } else if (ci == PRINT || ci == CREATE_USERDIR || ci == CREATE_DATASET) {
+    } else if (ci == PRINT || ci == CREATE_USERDIR || 
+	       ci == CREATE_DATASET || ci == MINIBUF) {
 	hc = 0;
     } else if (ci == RESTRICT) {
 	windata_t *vwin = (windata_t *) p;
@@ -831,16 +804,6 @@ static int edit_dialog_help_code (int ci, void *p)
     } 
 
     return hc;
-}
-
-static void enter_tol_default (dialog_t *d)
-{
-    iterinfo *iinfo = (iterinfo *) d->data;
-    char numstr[32];
-
-    sprintf(numstr, "%g", iinfo->tol);
-    gtk_entry_set_text(GTK_ENTRY(d->edit), numstr);
-    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(numstr));
 }
 
 static void edit_dialog_ok (GtkWidget *w, dialog_t *d)
@@ -858,7 +821,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     GtkWidget *top_vbox, *button_box;
     int hlpcode, modal = 0;
 
-    if (open_edit_dialog != NULL) {
+    if (open_edit_dialog != NULL && cmdcode != MINIBUF) {
 	gdk_window_raise(open_edit_dialog->window);
 	return;
     }
@@ -898,9 +861,11 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			     G_CALLBACK(edit_dialog_popup_handler), d);
 	}
     } else {
-	w = gtk_label_new(infotxt);
-	gtk_box_pack_start (GTK_BOX(top_vbox), w, TRUE, TRUE, 5);
-	gtk_widget_show (w);
+	if (infotxt != NULL) {
+	    w = gtk_label_new(infotxt);
+	    gtk_box_pack_start(GTK_BOX(top_vbox), w, TRUE, TRUE, 5);
+	    gtk_widget_show(w);
+	}
 
 	d->edit = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(top_vbox), d->edit, TRUE, TRUE, 5);
@@ -914,9 +879,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	if (deftext != NULL && *deftext != '\0') {
 	    gtk_entry_set_text(GTK_ENTRY(d->edit), deftext);
 	    gtk_editable_select_region(GTK_EDITABLE(d->edit), 0, strlen(deftext));
-	} else if (cmdcode == ITERATIONS) {
-	    enter_tol_default(d);
-	}	    
+	} 
 
 	gtk_widget_show(d->edit);
 
@@ -931,9 +894,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     } else if (cmdcode == NLS || cmdcode == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V);
 	dialog_option_switch(top_vbox, d, OPT_R);
-    } else if (cmdcode == MINIBUF) {
-	dialog_option_switch(top_vbox, d, OPT_D);
-    } else if (cmdcode == GENR_RANDOM || cmdcode == ITERATIONS) {
+    } else if (cmdcode == GENR_RANDOM) {
 	dialog_add_spinner(top_vbox, d);
     } 
     
