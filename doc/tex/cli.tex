@@ -5,12 +5,12 @@
 \label{cli-console}
 
 The \app{gretl} package includes the command-line program
-\app{gretlcli}. On Linux it can be run from the console, or in an
-xterm (or similar).  Under MS Windows it can be run in a console
-window (sometimes inaccurately called a ``DOS box'').  \app{gretlcli}
-has its own help file, which may be accessed by typing ``help'' at the
-prompt. It can be run in batch mode, sending outout directly to a file
-(see also the \emph{Gretl Command Reference}).
+\app{gretlcli}.  On Linux it can be run from a terminal window (xterm,
+rxvt, or similar), or at the text console.  Under MS Windows it can be
+run in a console window (sometimes inaccurately called a ``DOS box'').
+\app{gretlcli} has its own help file, which may be accessed by typing
+``help'' at the prompt. It can be run in batch mode, sending output
+directly to a file (see also the \emph{Gretl Command Reference}).
     
 If \app{gretlcli} is linked to the \app{readline} library (this is
 automatically the case in the MS Windows version; also see
@@ -43,46 +43,21 @@ complete the command name for you.  If there's a unique completion it
 will be put in place automatically.  If there's more than one
 completion, pressing Tab a second time brings up a list.
 
-\section{Changes from Ramanathan's ESL}
+\section{CLI syntax}
 \label{cli-syntax}
 
-\app{gretlcli} inherits its basic command syntax from Ramu
-Ramanathan's \app{ESL}, and command scripts developed for \app{ESL}
-should be usable with few or no changes: the only things to watch for
-are multi-line commands and the \cmd{freq} command.
-    
-\begin{itemize}
-\item In \app{ESL}, a semicolon is used as a terminator for many
-  commands.  I decided to remove this in \app{gretlcli}. Semicolons
-  are simply ignored, apart from a few special cases where they have a
-  definite meaning: as a separator for two lists in the \cmd{ar} and
-  \cmd{tsls} commands, and as a marker for an unchanged starting or
-  ending observation in the \cmd{smpl} command. In \app{ESL} semicolon
-  termination gives the possibility of breaking long commands over
-  more than one line; in \app{gretlcli} this is done by putting a
-  trailing backslash \verb+\+ at the end of a line that is to be
-  continued.
-\item With \cmd{freq}, you can't at present specify user-defined
-  ranges as in \app{ESL}.  A chi-square test for normality has been
-  added to the output of this command.
-\end{itemize}
-
-Note also that the command-line syntax for running a batch job is
-simplified. For \app{ESL} you typed, e.g.
-      
-\begin{code} 
-    esl -b datafile < inputfile > outputfile
-\end{code}
-%
-while for \app{gretlcli} you type:
-%      
+Probably the most useful mode for heavy-duty work with \app{gretlcli}
+is batch (non-interactive) mode, in which the program reads and
+processes a script, and sends the output to file.  For example
 \begin{code}
-    gretlcli -b inputfile > outputfile
+    gretlcli -b scriptfile > outputfile
 \end{code}
 
-The inputfile is treated as a program argument; it should specify a
-datafile to use internally, using the syntax \cmd{open datafile} or
-the special comment \verb+(* !+ datafile \verb+*)+
+The \textsl{scriptfile} is treated as a program argument; it should
+specify a data file to use internally, using the syntax \cmd{open
+  datafile}.  Don't forget the \texttt{-b} (batch) switch, otherwise
+the program will wait for user input after executing the script.
+
     
 %%% Local Variables: 
 %%% mode: latex
