@@ -816,7 +816,7 @@
 	  constant</quote>, which allows for the presence of a non-zero
 	intercept in the cointegrating relations as well as a trend in the
 	levels of the endogenous variables.  In the literature stemming from the
-	work of Johensen (see for example his 1995 book) this is often referred
+	work of Johansen (see for example his 1995 book) this is often referred
 	to as <quote>case 3</quote>.  The other four <quote>radio</quote>
 	buttons produce cases 1, 2, 4 and 5 respectively. The meaning of these
 	cases and the criteria for selecting a case are explained in <guideref
@@ -2910,7 +2910,7 @@
 	but add to the top slot "(gender=0)" and to the bottom "(gender=1)".
 	This would then give you a test for the difference between mean male
 	income and mean female income.  Note that when you type a restriction in
-	this way, you must then press the Enter key to have the sample statistcs
+	this way, you must then press the Enter key to have the sample statistics
 	calculated.  
       </para>
 
@@ -2999,10 +2999,6 @@
 	MacKinnon&ndash;White <quote>jackknife</quote> procedure.
       </para>
     </description>
-
-    <gui-access>
-      <menu-path>/Model/HCCM</menu-path>
-    </gui-access>
 
   </command>
 
@@ -5095,7 +5091,7 @@
 	units in the sample.
       </para>
       <para>
-	If the iteration option is seleted, the procedure is iterated: at
+	If the iteration option is selected, the procedure is iterated: at
 	each round the residuals are re-computed using the current WLS
 	parameter estimates, which gives rise to a new set of estimates of
 	the error variances, and a hence a new set of weights. Iteration
@@ -5148,7 +5144,8 @@
     </description>
 
     <gui-access>
-      <menu-path>Main window pop-up (multiple selection)</menu-path>
+      <menu-path>/View/Principal components</menu-path>
+      <other-access>Main window pop-up (multiple selection)</other-access>
     </gui-access>
 
   </command>
@@ -5511,7 +5508,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Tools/p-value finder</menu-path>
+      <menu-path>/Tools/P-value finder</menu-path>
     </gui-access>
 
   </command>
@@ -7067,7 +7064,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Model/Tobit</menu-path>
+      <menu-path>/Model/Nonlinear models/Tobit</menu-path>
     </gui-access>
 
   </command>
@@ -7264,7 +7261,7 @@
 	complex deterministic variables (&eg; a time trend interacted with a
 	dummy variable) must be put after the semi-colon.  Note that a constant
 	is included automatically unless you give the <lit>--nc</lit> flag, a
-	trend can be added with the <lit>--trend</lit> flag, and seaonal dummy
+	trend can be added with the <lit>--trend</lit> flag, and seasonal dummy
 	variables may be added using the <lit>--seasonals</lit> flag.
       </para>
 
