@@ -649,6 +649,17 @@ static gboolean opt_r_callback (GtkWidget *w, dialog_t *dlg)
     return FALSE;
 }
 
+static gboolean opt_d_callback (GtkWidget *w, dialog_t *dlg)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	dlg->opt |= OPT_D;
+    } else {
+	dlg->opt &= ~OPT_D;
+    }
+
+    return FALSE;
+}
+
 static void maybe_set_seed (GtkWidget *w, double *d)
 {
     *d = GTK_ADJUSTMENT(w)->value;
@@ -709,6 +720,10 @@ static void dialog_option_switch (GtkWidget *vbox, dialog_t *dlg,
 	b = gtk_check_button_new_with_label(_("Robust standard errors"));
 	g_signal_connect(G_OBJECT(b), "toggled", 
 			 G_CALLBACK(opt_r_callback), dlg);
+    } else if (opt == OPT_D) {
+	b = gtk_check_button_new_with_label(_("Display results"));
+	g_signal_connect(G_OBJECT(b), "toggled", 
+			 G_CALLBACK(opt_d_callback), dlg);
     } else {
 	return;
     }
@@ -916,6 +931,8 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     } else if (cmdcode == NLS || cmdcode == MLE) {
 	dialog_option_switch(top_vbox, d, OPT_V);
 	dialog_option_switch(top_vbox, d, OPT_R);
+    } else if (cmdcode == MINIBUF) {
+	dialog_option_switch(top_vbox, d, OPT_D);
     } else if (cmdcode == GENR_RANDOM || cmdcode == ITERATIONS) {
 	dialog_add_spinner(top_vbox, d);
     } 

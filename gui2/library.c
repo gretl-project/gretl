@@ -2856,6 +2856,8 @@ void do_graph_model (GPT_SPEC *spec)
 void do_minibuf (GtkWidget *widget, dialog_t *dlg) 
 {
     const gchar *buf = edit_dialog_get_text(dlg);
+    gretlopt opt = edit_dialog_get_opt(dlg);
+    PRN *prn = NULL;
     int oldv = datainfo->v;
     int err;
 
@@ -2867,11 +2869,17 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
 	close_dialog(dlg);
     }
 
+    if ((opt & OPT_D) && bufopen(&prn)) {
+	return;
+    }
+
     console_record_sample(datainfo);
 
-    err = gui_exec_line(cmdline, NULL, CONSOLE_EXEC, NULL);
+    err = gui_exec_line(cmdline, prn, CONSOLE_EXEC, NULL);
     if (err) {
 	gui_errmsg(err);
+	gretl_print_destroy(prn);
+	return;
     }
 
     /* update variable listing in main window if needed */
@@ -2882,6 +2890,10 @@ void do_minibuf (GtkWidget *widget, dialog_t *dlg)
     /* update sample info and options if needed */
     if (console_sample_changed(datainfo)) {
 	set_sample_label(datainfo);
+    }
+
+    if (prn != NULL) {
+	view_buffer(prn, 80, 400, "minibuffer results", PRINT, NULL);
     }
 }
 
