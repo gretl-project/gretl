@@ -2034,7 +2034,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
     }
     fprintf(fq, "set xrange [0:%d]\n", acf_m + 1);
     fprintf(fq, "plot \\\n"
-	    "'-' using 1:2 notitle w impulses, \\\n"
+	    "'-' using 1:2 notitle w impulses lw 5, \\\n"
 	    "%g title '+- %s' lt 2, \\\n"
 	    "%g notitle lt 2\n", pm95, corrgm_crit_string(), -pm95);
     for (k=0; k<acf_m; k++) {
@@ -2053,7 +2053,7 @@ int corrgram (int varno, int order, int nparam, double ***pZ,
 	}
 	fprintf(fq, "set xrange [0:%d]\n", pacf_m + 1);
 	fprintf(fq, "plot \\\n"
-		"'-' using 1:2 notitle w impulses, \\\n"
+		"'-' using 1:2 notitle w impulses lw 5, \\\n"
 		"%g title '+- %s' lt 2, \\\n"
 		"%g notitle lt 2\n", pm95, corrgm_crit_string(), -pm95);
 	for (k=0; k<pacf_m; k++) {

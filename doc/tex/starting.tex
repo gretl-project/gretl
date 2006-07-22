@@ -231,17 +231,14 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
     commonly used distributions (normal or Gaussian, \emph{t},
     chi-square, \emph{F} and Durbin--Watson).
   \item \textsf{P-value finder}: Open a window which enables you to
-    look up p-values from the Gaussian, \emph{t}, chi-square, \emph{F}
-    or gamma distributions. See also the \cmd{pvalue} command in the
-    \emph{Gretl Command Reference}.
+    look up p-values from the Gaussian, \emph{t}, chi-square,
+    \emph{F}, gamma or binomial distributions. See also the
+    \cmd{pvalue} command in the \emph{Gretl Command Reference}.
   \item \textsf{Test statistic calculator}: Calculate test statistics
     and p-values for a range of common hypothesis tests (population
     mean, variance and proportion; difference of means, variances and
-    proportions).  The relevant sample statistics must be already
-    available for entry into the dialog box. For some simple tests
-    that take as input data series rather than pre-computed sample
-    statistics, see ``Difference of means'' and ``Difference of
-    variances'' under the Data menu.
+    proportions).  See also the item ``Bivariate tests'' under the
+    Model menu.
   \item \textsf{Command log}: Open a window containing a record
     of the commands executed so far.
   \item \textsf{Gretl console}: Open a ``console'' window into which
@@ -300,7 +297,7 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
     which allow you to change the structural interpretation of the
     current dataset.  For example, if data were read in as a cross
     section you can get the program to interpret them as time series
-    or as a panel.  See also Chapter~\ref{chap-panel}.
+    or as a panel.  See also section~\ref{sec:data-structure}.
   \item \textsf{Compact data}: For time-series data of higher than
     annual frequency, gives you the option of compacting the data to a
     lower frequency, using one of four compaction methods (average,
@@ -327,13 +324,12 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
   \item \textsf{Multiple graphs}: Allows you to compose a set of up to
     six small graphs, either pairwise scatter-plots or time-series
     graphs.  These are displayed together in a single window.
-  \item \textsf{Summary statistics}: Shows a fairly full set of
+  \item \textsf{Summary statistics}: Shows a full set of
     descriptive statistics for the variables selected in the main
     window.
   \item \textsf{Correlation matrix}: Active only if two or more
     variables are selected; shows the pairwise correlation
-    coefficients for all variables in the data set, or selected
-    variables
+    coefficients for the selected variables.
   \item \textsf{Principal components}: Active only if two or more
     variables are selected; produces a Principal Components Analysis
     of the selected variables.
@@ -370,7 +366,9 @@ File, Tools, Data, View, Add, Sample, Variable, Model and Help menus.
     where data values are missing. May be useful in examining a panel
     data set, where it's quite common to encounter missing values.
   \item \textsf{Set missing value code}: Set a numerical value that
-    will be interpreted as ``missing'' or ``not available''.
+    will be interpreted as ``missing'' or ``not available''.  This is
+    intended for use with imported data, when \app{gretl} has not
+    recognized the missing-value code used.
   \end{itemize}
 
 \item \textsf{Variable menu} Most items under here operate on a single
