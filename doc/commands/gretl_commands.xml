@@ -1388,6 +1388,10 @@
       </para>
     </description>
 
+    <gui-access>
+      <menu-path>/Variable/Edit attributes</menu-path>
+    </gui-access>
+
   </command>
 
   <command name="dummify" section="Transformations" 
