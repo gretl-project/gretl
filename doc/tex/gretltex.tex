@@ -14,11 +14,11 @@ further processing with \TeX.
 
 This chapter explains the finer points of \app{gretl}'s \TeX-related
 functionality.  The next section describes the relevant menu items;
-section~\ref{tex-tune} discusses ways of fine-tuning \TeX\ output;
-and section~\ref{tex-install} gives some pointers on installing \TeX\
-if you do not already have it on your computer.  (Just to be clear:
-\TeX\ is not included with the \app{gretl} distribution; it is a
-separate package, including several programs and a large number of
+section~\ref{tex-tune} discusses ways of fine-tuning \TeX\ output; and
+section~\ref{tex-install} gives some pointers on installing \TeX\ (and
+learning) if you do not already have it on your computer.  (Just to be
+clear: \TeX\ is not included with the \app{gretl} distribution; it is
+a separate package, including several programs and a large number of
 supporting files.)
 
 Before proceeding, however, it may be useful to set out briefly the
@@ -65,15 +65,27 @@ to something appropriate.
 \section{\TeX-related menu items}
 \label{tex-menus}
 
+\subsection{The model window}
+
 The fullest \TeX\ support in \app{gretl} is found in the GUI model
 window.  This has a menu item titled ``LaTeX'' with sub-items
-``View'', ``Copy'', ``Save'' and ``Equation options''.  The first
-three sub-items have branches titled ``Tabular'' and ``Equation''.  By
-``Tabular'' we mean that the model is represented in the form of a
-table; this is the fullest and most explicit presentation of the
-results.  See Table~\ref{tab:mod1} for an example; this was pasted
-into the manual after using the ``Copy, Tabular'' item in \app{gretl}
-(a few lines were edited out for brevity).
+``View'', ``Copy'', ``Save'' and ``Equation options'' (see
+Figure~\ref{fig:latex-menu}).  
+
+\begin{figure}[htbp]
+  \caption{\LaTeX\ menu in model window}
+  \label{fig:latex-menu}
+  \begin{center}
+    \includegraphics[scale=0.75]{figures/latex_menu}
+  \end{center}
+\end{figure}
+
+The first three sub-items have branches titled ``Tabular'' and
+``Equation''.  By ``Tabular'' we mean that the model is represented in
+the form of a table; this is the fullest and most explicit
+presentation of the results.  See Table~\ref{tab:mod1} for an example;
+this was pasted into the manual after using the ``Copy, Tabular'' item
+in \app{gretl} (a few lines were edited out for brevity).
 
 \begin{table}[htbp]
 \caption{Example of \LaTeX\ tabular output}
@@ -168,14 +180,134 @@ $t$-ratios displayed in parentheses under the parameter estimates?
 The default is to show standard errors; if you want $t$-ratios, select
 that item.  
 
+\subsection{Other windows}
+
+Several other sorts of output windows also have \TeX\ preview, copy
+and save enabled.  In the case of windows having a graphical toolbar,
+look for the \TeX\ button.  Figure~\ref{fig:tex-icon} shows this icon
+(second from the right on the toolbar) along with the dialog that
+appears when you press the button.
+
+\begin{figure}[htbp]
+  \caption{\TeX\ icon and dialog}
+  \label{fig:tex-icon}
+    \begin{center}
+      \includegraphics[scale=0.75]{figures/texdialog} 
+    \end{center}
+\end{figure}
+
+One aspect of \app{gretl}'s \TeX\ support that is likely to be
+particuarly useful for publication purposes is the ability to produce
+a typset version of the ``model table'' (see
+section~\ref{model-table}).  An example of this is shown in
+Table~\ref{tab:modeltab}.
+
+\begin{table}[htbp]
+\caption{Example of model table output}
+\label{tab:modeltab}
+\begin{center}
+OLS estimates\\
+Dependent variable: ENROLL \\
+\vspace{1em}
+
+\begin{tabular}{lccc}
+ & Model 1  & Model 2  & Model 3 \\  [6pt] 
+const & $\,\,$0.2907$^{**}$ & $\,\,$0.2411$^{**}$ & 0.08557 \\
+& \footnotesize{(0.07853)} & \footnotesize{(0.06602)} & \footnotesize{(0.05794)} \\ [4pt] 
+CATHOL & $\,\,$0.2216$^{**}$ & $\,\,$0.2235$^{**}$ & $\,\,$0.2065$^{**}$ \\
+& \footnotesize{(0.04584)} & \footnotesize{(0.04597)} & \footnotesize{(0.05160)} \\ [4pt] 
+PUPIL & $-$0.003035 & $-$0.003382 & $-$0.001697 \\
+& \footnotesize{(0.002727)} & \footnotesize{(0.002720)} & \footnotesize{(0.003025)} \\ [4pt] 
+WHITE & $\,\,$$-$0.1482$^{**}$ & $\,\,$$-$0.1526$^{**}$ & \\
+& \footnotesize{(0.04074)} & \footnotesize{(0.04071)} & \\ [4pt] 
+ADMEXP & $-$0.1551 & & \\
+& \footnotesize{(0.1342)} & & \\ [4pt] 
+$n$ & 51 & 51 & 51 \\
+$\bar R^2$ & 0.4502 & 0.4462 & 0.2956 \\
+$\ell$ & 96.09 & 95.36 & 88.69 \\
+\end{tabular}
+
+\vspace{1em}
+Standard errors in parentheses\\
+{}* indicates significance at the 10 percent level\\
+{}** indicates significance at the 5 percent level\\
+\end{center}
+\end{table}
+
 
 \section{Fine-tuning typeset output}
 \label{tex-tune}
 
-\section{Installing \TeX}
+There are two aspects to this: adjusting the appearance of the output
+produced by \app{gretl} in \LaTeX\ preview mode, and incorporating
+\app{gretl}'s output into your own \TeX\ files.
+
+As regards preview mode, you can control the appearance of
+\app{gretl}'s output using a file named \verb+gretlpre.tex+, which
+should be placed in your \app{gretl} user directory (see the
+\emph{Gretl Command Reference}).  If such a file is found, its
+contents will be used as the ``preamble'' to the \TeX\ source.  The
+default value of the preamble is as follows:
+    
+\begin{code}
+      \documentclass[11pt]{article}
+      \usepackage[latin1]{inputenc}
+      \usepackage{amsmath}
+      \usepackage{dcolumn,longtable}
+      \begin{document}
+      \thispagestyle{empty}
+\end{code}
+
+Note that the \verb+amsmath+ and \verb+dcolumn+ packages are required.
+Beyond that you can, for instance, change the type size or the font by
+altering the \texttt{documentclass} declaration or including
+additional packages.
+
+In addition, if you should wish to typeset \app{gretl} output in more
+than one language, you can set up per-language preamble files.  A
+``localized'' preamble file is identified by a name of the form
+\verb|gretlpre_xx.tex|, where \texttt{xx} is replaced by the first two
+letters of the current setting of the \texttt{LANG} environment
+variable.  For example, if you are running the program in Polish,
+using \verb|LANG=pl_PL|, then \app{gretl} will do the following when
+writing the preamble for a \TeX\ source file.
+
+\begin{enumerate}
+\item Look for a file named \verb|gretlpre_pl.tex| in the \app{gretl}
+  user directory.  If this is not found, then
+\item look for a file named \verb|gretlpre.tex| in the \app{gretl}
+  user directory.  If this is not found, then
+\item use the default preamble.
+\end{enumerate}
+
+Conversely, suppose you usually run \app{gretl} in a language other
+than English, and have a suitable \verb|gretlpre.tex| file in place
+for your native language.  If on some occasions you want to produce
+\TeX\ output in English, then you could create an additional
+file \verb|gretlpre_en.tex|: this file will be used for the preamble
+when \app{gretl} is run with a language setting of, say,
+\verb|en_US|.  
+
+MATERIAL on editing gretl's output.
+
+\section{Installing and learning \TeX}
 \label{tex-install}
 
+This is not the place for a detailed exposition of these matters, but
+here are a few pointers.  
 
+So far as we know, every GNU/Linux distribution has a package or set
+of packages for \TeX, and in fact these are likely to be installed by
+default.  Check the documentation for your distribution.  For MS
+Windows, several packaged versions of \TeX\ are available: one of the
+most popular is MiK\TeX\, at \url{http://www.miktex.org/}.  For Mac OS
+X a nice implementation is i\TeX{}Mac, at
+\url{http://itexmac.sourceforge.net/}.  An essential starting point for
+online \TeX\ resources is the Comprehensive
+\TeX\ Archive Network (CTAN) at \url{http://www.ctan.org/}.
+
+As for learning \TeX, many useful resources are avauilable both online
+and in print.  Among these, we recommend XXX
 
 
 %%% Local Variables: 

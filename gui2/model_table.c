@@ -670,7 +670,7 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
 	/* print log-likelihoods */
 
 	if (tex) {
-	    pputs(prn, "ln$L$");
+	    pputs(prn, "$\\ell$");
 	} else if (rtf) {
 	    pputs(prn, "\\qc lnL\\cell ");
 	} else {
@@ -690,7 +690,11 @@ static void print_n_r_squared (int wid, PRN *prn, int *binary)
 		}		
 	    } else {
 		if (tex) {
-		    pprintf(prn, "& $-$%.2f ", -pmod->lnL);
+		    if (pmod->lnL > 0) {
+			pprintf(prn, "& %.2f ", pmod->lnL);
+		    } else {
+			pprintf(prn, "& $-$%.2f ", -pmod->lnL);
+		    }
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %.3f\\cell ", pmod->lnL);
 		} else {
