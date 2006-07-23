@@ -1,0 +1,183 @@
+\chapter{Gretl e \TeX}
+\label{gretltex}
+
+
+\section{Introduzione}
+\label{tex-intro}
+
+\TeX, sviluppato inizialmente da Donald Knuth della Stanford University
+e poi migliorato da centinaia di sviluppatori di tutto il mondo, è
+il punto di riferimento per la composizione di testi scientifici.
+\app{Gretl} fornisce vari comandi che consentono di vedere un'anteprima
+o di stampare i risultati delle analisi econometriche usando 
+\TeX, oltre che di salvare i risultati in modo da poter essere
+successivamente modificati con \TeX.
+
+Questo capitolo spiega in dettaglio le funzionalità di \app{gretl}
+che interessano \TeX. La prima sezione descrive i menù nell'interfaccia
+grafica; la sezione~\ref{tex-tune} discute vari modi di personalizzare
+i risultati prodotti da \TeX, mentre la sezione~\ref{tex-install}
+fornisce alcune indicazioni per installare \TeX, se ancora non lo si ha
+sul proprio computer. Per chiarezza: \TeX\ non è incluso nella distribuzione
+standard di \app{gretl}, è un pacchetto separato, che comprende vari programmi
+e file di supporto.
+
+Prima di procedere, può essere utile chiarire brevemente il modo in cui
+viene prodotto un documento usando \TeX. La maggior parte di questi dettagli
+non necessitano di alcuna preoccupazione da parte dell'utente, visto che
+sono gestiti automaticamente da \app{gretl}, ma una comprensione di base dei
+meccanismi all'opera può aiutare nella scelta delle opzioni a disposizione.
+
+Il primo passo consiste nella creazione di un file ``sorgente'' testuale,
+che contiene il testo o le espressioni matematiche che compongono il documento,
+assieme ad alcuni comandi mark-up che regolano la formattazione del documento.
+Il secondo passo consiste nel fornire il file a un motore che esegue la
+formattazione vera e propria. Tipicamente, si tratta di:
+\begin{itemize}
+\item un programma chiamato \app{latex}, che genera un risultato in formato
+  DVI (device-independent), oppure
+\item un programma chiamato \app{pdflatex}, che genera un risultato in formato
+  PDF\footnote{Gli utenti più esperti hanno dimestichezza anche con il
+  cosiddetto ``plain \TeX'', che viene processato dal programma \app{tex}.
+  La maggioranza degli utenti di \TeX, comunque, usa le macro fornite dal
+  programma \LaTeX, sviluppato inizialmente da Leslie Lamport. \app{Gretl}
+  non supporta il plain \TeX.}.
+\end{itemize}
+
+Per visualizzare le anteprime, si può utilizzare un visalizzatore DVI,
+(tipicamente \app{xdvi} sui sistemi GNU/Linux) o PDF (tipicamente Adobe Acrobat
+Reader o \app{xpdf}, a seconda di come è stato processato il sorgente.  Se si
+sceglie la via del DVI, c'è un ultimo passo per creare un documento stampabile,
+che tipicamente richiede il programma \app{dvips} per generare un file in
+formato PostScript. Se si sceglie la via del PDF, il documento è pronto per
+essere stampato.
+
+Sulle piattaforme MS Windows e Mac OS X, \app{gretl} richiama
+\app{pdflatex} per processare il file sorgente e si aspetta che il sistema
+operativo sia in grado di eseguire un programma per visualizzare il file PDF; il
+formato DVI non è supportato. Su GNU/Linux, la scelta predefinita è per il formato
+DVI, ma se si preferisce usare il PDF basta seguire queste istruzioni:
+dal menù ``Strumenti, Preferenze, Generali'', nella sezione ``Programmi'',
+impostare il ``Comando per compilare i file TeX'' a \texttt{pdflatex}; inoltre
+assicurarsi che il ``Comando per visualizzare i file PDF'' sia ben impostato.
+
+\section{I comandi \TeX nei menù}
+\label{tex-menus}
+
+The fullest \TeX\ support in \app{gretl} is found in the GUI model
+window.  This has a menu item titled ``LaTeX'' with sub-items
+``View'', ``Copy'', ``Save'' and ``Equation options''.  The first
+three sub-items have branches titled ``Tabular'' and ``Equation''.  By
+``Tabular'' we mean that the model is represented in the form of a
+table; this is the fullest and most explicit presentation of the
+results.  See Table~\ref{tab:mod1} for an example; this was pasted
+into the manual after using the ``Copy, Tabular'' item in \app{gretl}
+(a few lines were edited out for brevity).
+
+\begin{table}[htbp]
+\caption{Example of \LaTeX\ tabular output}
+\label{tab:mod1}
+\begin{center}
+
+Model 1: OLS estimates using the 51 observations 1--51\\
+Dependent variable: ENROLL\\
+
+\vspace{1em}
+
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}
+l% col 1: varname
+  D{.}{.}{-1}% col 2: coeff
+    D{.}{.}{-1}% col 3: sderr
+      D{.}{.}{-1}% col 4: t-stat
+        D{.}{.}{4}}% col 5: p-value (or slope)
+Variable &
+  \multicolumn{1}{c}{Coefficient} &
+    \multicolumn{1}{c}{Std.\ Error} &
+      \multicolumn{1}{c}{$t$-statistic} &
+        \multicolumn{1}{c}{p-value} \\[1ex]
+const &
+  0.241105 &
+    0.0660225 &
+      3.6519 &
+        0.0007 \\
+CATHOL &
+  0.223530 &
+    0.0459701 &
+      4.8625 &
+        0.0000 \\
+PUPIL &
+  -0.00338200 &
+    0.00271962 &
+      -1.2436 &
+        0.2198 \\
+WHITE &
+  -0.152643 &
+    0.0407064 &
+      -3.7499 &
+        0.0005 \\
+\end{tabular*}
+
+\vspace{1em}
+
+\begin{tabular}{lD{.}{.}{-1}}
+Mean of dependent variable & 0.0955686 \\
+ S.D. of dependent variable & 0.0522150 \\
+Sum of squared residuals & 0.0709594 \\
+Standard error of residuals ($\hat{\sigma}$) & 0.0388558 \\
+Unadjusted $R^2$ & 0.479466 \\
+Adjusted $\bar{R}^2$ & 0.446241 \\
+$F(3, 47)$ & 14.4306 \\
+\end{tabular}
+\end{center}
+\end{table}
+
+The ``Equation'' option is fairly self-explanatory --- the results are
+written across the page in equation format, as below:
+
+%%% the following needs the amsmath LaTeX package
+
+\begin{gather}
+\widehat{\rm ENROLL} = 
+\underset{(0.066022)}{0.241105}
++\underset{(0.04597)}{0.223530}\,\mbox{CATHOL}
+-\underset{(0.0027196)}{0.00338200}\,\mbox{PUPIL}
+-\underset{(0.040706)}{0.152643}\,\mbox{WHITE}
+ \notag \\
+T = 51 \quad \bar{R}^2 = 0.4462 \quad F(3,47) = 14.431 \quad \hat{\sigma} = 0.038856\notag \\
+\centerline{(standard errors in parentheses)} \notag
+\end{gather}
+
+The distinction between the ``Copy'' and ``Save'' options (for both
+tabular and equation) is twofold.  First, ``Copy'' puts the \TeX\
+source on the clipboard while with ``Save'' you are prompted for the
+name of a file into which the source should be saved.  Second, with
+``Copy'' the material is copied as a ``fragment'' while with ``Save''
+it is written as a complete file.  The point is that a well-formed
+\TeX\ source file must have a header that defines the
+\texttt{documentclass} (article, report, book or whatever) and tags
+that say \verb|\begin{document}| and \verb|\end{document}|.  This
+material is included when you do ``Save'' but not when you do
+``Copy'', since in the latter case the expectation is that you will
+paste the data into an existing \TeX\ source file that already has the
+relevant apparatus in place.
+
+The items under ``Equation options'' should be self-explanatory: when
+printing the model in equation form, do you want standard errors or
+$t$-ratios displayed in parentheses under the parameter estimates?
+The default is to show standard errors; if you want $t$-ratios, select
+that item.  
+
+
+\section{Personalizzazione dei documenti}
+\label{tex-tune}
+
+\section{Installazione di \TeX}
+\label{tex-install}
+
+
+
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: "gretl-guide"
+%%% End: 
