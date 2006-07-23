@@ -119,29 +119,8 @@ The output window contains menus that allow you to inspect or graph
 the residuals and fitted values, and to run various diagnostic tests
 on the model. 
 
-For most models there is also an option to reprint the regression
-output in {\LaTeX} format.  You can print the results in a tabular
-format (similar to what's in the output window, but properly typeset)
-or as an equation, across the page.  For each of these options you can
-choose to preview the typeset product, or save the output to file for
-incorporation in a {\LaTeX} document.  Previewing requires that you
-have a functioning {\TeX} system on your computer.  You can control
-the appearance of \app{gretl}'s {\LaTeX} output using a file named
-\verb+gretlpre.tex+, which should be placed in your \app{gretl} user
-directory (see the \emph{Gretl Command Reference}).  If a file of this
-name is found, its contents will be used as the {\LaTeX} ``preamble''.
-The default value of the preamble is as follows:
-    
-\begin{code}
-      \documentclass[11pt]{article}
-      \usepackage[latin1]{inputenc}
-      \usepackage{amsmath}
-      \usepackage{dcolumn,longtable}
-      \begin{document}
-      \thispagestyle{empty}
-\end{code}
-
-Note that the \verb+amsmath+ and \verb+dcolumn+ packages are required.
+For most models there is also an option to print the regression
+output in {\LaTeX} format.  See Chapter~\ref{gretltex} for details.
 
 To import \app{gretl} output into a word processor, you may copy and
 paste from an output window, using its \textsf{Edit} menu (or Copy

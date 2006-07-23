@@ -15,11 +15,11 @@ further processing with \TeX.
 This chapter explains the finer points of \app{gretl}'s \TeX-related
 functionality.  The next section describes the relevant menu items;
 section~\ref{tex-tune} discusses ways of fine-tuning \TeX\ output; and
-section~\ref{tex-install} gives some pointers on installing \TeX\ (and
-learning) if you do not already have it on your computer.  (Just to be
-clear: \TeX\ is not included with the \app{gretl} distribution; it is
-a separate package, including several programs and a large number of
-supporting files.)
+section~\ref{tex-install} gives some pointers on installing (and
+learning) \TeX\ if you do not already have it on your computer.  (Just
+to be clear: \TeX\ is not included with the \app{gretl} distribution;
+it is a separate package, including several programs and a large
+number of supporting files.)
 
 Before proceeding, however, it may be useful to set out briefly the
 stages of production of a final document using \TeX.  For the most
@@ -97,7 +97,7 @@ Dependent variable: ENROLL\\
 
 \vspace{1em}
 
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}
+\begin{tabular*}{.8\textwidth}{@{\extracolsep{\fill}}
 l% col 1: varname
   D{.}{.}{-1}% col 2: coeff
     D{.}{.}{-1}% col 3: sderr
@@ -197,8 +197,8 @@ appears when you press the button.
 \end{figure}
 
 One aspect of \app{gretl}'s \TeX\ support that is likely to be
-particuarly useful for publication purposes is the ability to produce
-a typset version of the ``model table'' (see
+particularly useful for publication purposes is the ability to produce
+a typeset version of the ``model table'' (see
 section~\ref{model-table}).  An example of this is shown in
 Table~\ref{tab:modeltab}.
 
@@ -259,9 +259,10 @@ default value of the preamble is as follows:
 \end{code}
 
 Note that the \verb+amsmath+ and \verb+dcolumn+ packages are required.
-Beyond that you can, for instance, change the type size or the font by
-altering the \texttt{documentclass} declaration or including
-additional packages.
+(For some sorts of output the \verb+longtable+ package is also
+needed.)  Beyond that you can, for instance, change the type size or
+the font by altering the \texttt{documentclass} declaration or
+including an alternative font package.
 
 In addition, if you should wish to typeset \app{gretl} output in more
 than one language, you can set up per-language preamble files.  A
@@ -288,7 +289,16 @@ file \verb|gretlpre_en.tex|: this file will be used for the preamble
 when \app{gretl} is run with a language setting of, say,
 \verb|en_US|.  
 
-MATERIAL on editing gretl's output.
+Once you have pasted \app{gretl}'s \TeX\ output into your own
+document, or saved it to file and opened it in an editor, you can of
+course modify the material in any wish you wish.  In some cases,
+machine-generated \TeX\ is hard to understand, but \app{gretl}'s
+output is intended to be human-readable and -editable.  In addition,
+it does not use any non-standard style packages.  Besides the standard
+\LaTeX\ document classes, the only files needed are, as noted above,
+the \verb+amsmath+, \verb+dcolumn+ and \verb+longtable+ packages.
+These should be included in any reasonably full \TeX\ implementation.
+
 
 \section{Installing and learning \TeX}
 \label{tex-install}
@@ -306,8 +316,14 @@ X a nice implementation is i\TeX{}Mac, at
 online \TeX\ resources is the Comprehensive
 \TeX\ Archive Network (CTAN) at \url{http://www.ctan.org/}.
 
-As for learning \TeX, many useful resources are avauilable both online
-and in print.  Among these, we recommend XXX
+As for learning \TeX, many useful resources are available both online
+and in print.  Among online guides, Tony Roberts' ``\LaTeX: from quick
+and dirty to style and finesse'' is very helpful, at
+
+\url{http://www.sci.usq.edu.au/staff/robertsa/LaTeX/latexintro.html}
+
+An excellent source for advanced material is \emph{The \LaTeX\
+  Comapanion} (Goossens \textit{et al.}, 1993).
 
 
 %%% Local Variables: 
