@@ -1,14 +1,14 @@
 \documentclass[oneside]{book}
 \usepackage{url,verbatim,fancyvrb,gretl,appendix}
 \usepackage{lucidabr} % optional
-\usepackage{pifont}
-\usepackage{array}
+%% \usepackage{mathtime}
 \usepackage[T1]{fontenc}
 \usepackage[latin1]{inputenc}
 \usepackage[pdftex]{graphicx}
 \usepackage[italian]{babel}
 \usepackage[a4paper,hmargin=1.1in,top=.5in]{geometry}
 \usepackage[pdftex,hyperfootnotes=false]{hyperref}
+\usepackage{dcolumn,amsmath}
 
 %% \pdfimageresolution=120
 \hypersetup{pdftitle={Guida all'uso di Gretl},
@@ -17,6 +17,7 @@
             colorlinks=true,
             linkcolor=blue,
             urlcolor=red,
+            bookmarks=true,
             bookmarksnumbered=true,
             plainpages=false
 }
@@ -117,7 +118,7 @@ dalla Free Software Foundation (si veda
 
 \part{Dettagli tecnici}
 
-
+\include{gretltex}
 \include{trouble}
 \include{cli}
 
