@@ -187,10 +187,10 @@ necessariamente di estensioni specifiche per certe piattaforme.
 Il programma è stato sviluppato sotto Linux.  La libreria condivisa e
 il client a riga di comando dovrebbero essere compilabili su qualsiasi
 piattaforma che (a) supporti l'ISO/ANSI C e (b) abbia installate le
-seguenti librerie: zlib (per la compressione dei dati), libxml
+seguenti librerie: zlib (per la compressione dei dati), libxml2
 (manipolazione dell'XML) e LAPACK (supporto per l'algebra lineare). La
 home page di zlib si trova a
-\href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org}, libxml
+\href{http://www.info-zip.org/pub/infozip/zlib/}{info-zip.org}, libxml2
 si trova a \href{http:/xmlsoft.org/}{xmlsoft.org}, mentre LAPACK è a
 \href{http://www.netlib.org/lapack/}{netlib.org}.  Se il sistema
 ospita anche la libreria GNU readline, essa sarà usata per
@@ -201,15 +201,14 @@ utilizzare. Si veda la
 
 Il client grafico dovrebbe essere compilabile e utilizzabile su ogni
 sistema che, oltre ai requisiti visti sopra, offra la libreria GTK
-nella versione 1.2.3 o superiore (si veda
+nella versione 2.4.0 o superiore (si veda
 \href{http://www.gtk.org/}{gtk.org}). Al momento della scrittura di
 questo manuale esistono due varianti principali delle librerie GTK: la
-serie 1,2 e la serie 2.0, lanciata nell'estate 2002.  Poiché queste
-varianti sono mutualmente incompatibili, \app{Gretl} può essere
-compilato usando una sola di esse; il pacchetto sorgente contiene due
-directory: \verb+gui+ per GTK 1.2 e \verb+gui2+ per GTK 2.0.
-Raccomando l'uso di GTK 2.0 se è disponibile, visto che offre molti
-vantaggi rispetto a GTK 1.2.
+serie 1.2 e la serie 2.0, lanciata nell'estate 2002.  Queste
+varianti sono mutualmente incompatibili, e fino alla versione 1.5.1 di \app{gretl},
+il programma poteva essere compilato scegliendo una delle due variabili
+di GTK, mentre a partire dalla versione 1.6.0 è stato abbandonato il supporto
+per GTK 1.2.
   
 \app{Gretl} chiama gnuplot per produrre grafici. È possibile trovare
 gnuplot a \href{http://www.gnuplot.info/}{gnuplot.info}. Al momento
@@ -219,14 +218,13 @@ di gnuplot è la 4.0 (dell'Aprile 2004).  La versione MS Windows di
 web di Gretl è possibile trovare un pacchetto rpm di gnuplot 3.8j0 per
 sistemi Linux x86.
   
-Alcune funzionalità di \app{Gretl} fanno uso della libreria
-\app{gtkextra} di Adrian Feguin. È possibile trovare gtkextra a
-\href{http://gtkextra.sourceforge.net/}{gtkextra.sourceforge.net}.  Le
-parti rilevanti di questo pacchetto sono incluse (in forma leggermente
-modificata) con la distribuzione sorgente di \app{Gretl}.
+Alcune funzionalità di \app{Gretl} fanno uso di parti della libreria
+\app{gtkextra} di Adrian Feguin.  Le parti rilevanti di questo pacchetto sono
+incluse (in forma leggermente modificata) con la distribuzione sorgente di
+\app{gretl}.
   
 Una versione binaria del programma è disponibile per la piattaforma
-Microsoft Windows (versione 32-bit, ossia Windows 95 o superiore).
+Microsoft Windows (Windows 98 o superiore).
 Questa versione è cross-compilata su Linux usando mingw (il
 compilatore GNU C, \app{gcc}, portato per l'uso con win32) e collegata
 alla libreria C di Microsoft C, \verb+msvcrt.dll+. Utilizza il port di
@@ -245,7 +243,7 @@ completa, ma è possibile trovare alcuni dettagli seguendo il link
 
 \app{Gretl} usa aritmetica a doppia precisione, ad eccezione del
 plugin per precisione multipla invocabile con il comando del menù
-``Modello, Minimi quadrati in alta precisione'' che rappresenta i
+``Modello, Altri modelli lineari, Minimi quadrati in alta precisione'' che rappresenta i
 valori in virgola mobile usando un numero di bit indicato dalla
 variabile di ambiente \verb+GRETL_MP_BITS+ (valore predefinito: 256).
 Le equazioni normali dei minimi quadrati sono risolte in modo
@@ -291,7 +289,7 @@ seguenti modifiche.
 
 La versione attuale di \app{Gretl} comprende un ``plugin'' che esegue
 la suite NIST di test della regressione lineare. È possibile trovarlo
-nel menù ``Utilità'' della finestra principale. Quando viene eseguito
+nel menù ``Strumenti'' della finestra principale. Quando viene eseguito
 questo test, un'introduzione spiega qual è il risultato atteso: se si
 esegue il test e si ottengono risultati diversi da quelli attesi, si
 prega di inviare un bug report a \verb+cottrell@wfu.edu+.  
@@ -306,51 +304,64 @@ comando \cmd{genr}) e poi visualizzarlo usando il comando \cmd{print
 imposta la variabile interna \texttt{longdigits} a un valore più alto
 usando il comando \cmd{set}).
 
-\chapter{Analisi econometrica avanzata con software libero}
+\chapter{Altro software libero utile}
 \label{app-advanced}
 
-\app{Gretl} offre una raccolta di stimatori abbastanza completa (e in
-continua crescita); inoltre dispone di vari costrutti di scripting che
-possono essere usati per creare nuovi stimatori. Tuttavia, le sue capacità
-di scripting e il supporto per la creazione e la manipolazione di matrici
-potrebbero non essere all'altezza di problemi computazionali complessi e a larga
-scala. Se si cerca software libero che includa queste funzionalità, raccomandiamo
-di dare un'occhiata a GNU R (\href{http://www.r-project.org/}{r-project.org}) o
-GNU Octave (\href{http://www.octave.org/}{www.octave.org}). Questi programmi
-sono molto simili rispettivamente ai programmi commerciali S e Matlab.
-  
+Le possibilità offerte da \app{gretl} sono molte e in continua espansione,
+tuttavia può esserci l'esigenza di compiere operazioni non disponibili in
+\app{gretl}, oppure di confrontare i risultati con quelli di altri programmi.
+Se si è interessati a funzionalità complementari disponibili nell'ambito del
+software libero, o open source, raccomandiamo i programmi seguenti, di cui
+riportiamo la descrizione fornita nei rispettivi siti web.
+
+\begin{itemize}
+
+\item \textbf{GNU R} \href{http://www.r-project.org/}{r-project.org}:
+  ``R è un sistema per il calcolo statistico e i grafici. Consiste in
+  un linguaggio e in un ambiente di lavoro che fornisce grafici, un
+  debugger, l'accesso alle funzioni del sistema e la possibilità di eseguire
+  programmi contenuti all'interno di script\dots\ È compilabile ed eseguibile
+  su un'ampia varietà di piattaforme UNIX, Windows e MacOS''.
+  Commento: esistono molti pacchetti aggiuntivi per R, che coprono le principali
+  aree dell'analisi statistica.
+
+\item \textbf{GNU Octave}
+  \href{http://www.octave.org/}{www.octave.org}:
+  ``GNU Octave è un linguaggio ad alto livello, dedicato principalmente al
+  calcolo numerico. Fornisce una comoda interfaccia a riga di comando per
+  risolvere numericamente problemi lineari e non lineari, e per eseguire altre
+  operazioni numeriche usando un linguaggio per lo più compatibile con quello di
+  Matlab. Può anche essere utilizzato in modalità non interattiva''.
+
+\item \textbf{JMulTi} \href{http://www.jmulti.de/}{www.jmulti.de}:
+  ``JMulTi è stato progettato in origine come strumento per alcune procedure
+  econometriche tipiche dell'analisi delle serie storiche, di difficile utilizzo
+  e reperibilità in altri pacchetti, come l'analisi impulso-risposta con
+  intervalli di confidenza bootstrap per modelli VAR/VEC. In seguito, sono state
+  aggiunte altre funzionalità che permettono di condurre un'analisi completa''.
+  Commento: JMulTi è un programma java con interfaccia grafica; per poterlo
+  usare è necessario installare un java run-time environment.
+
+\end{itemize}
+
 Come già detto sopra, \app{Gretl} offre la possibilità di
 esportare i dati nei formati di Octave e R. Nel caso di Octave, il
 dataset di \app{Gretl} viene salvato come matrice singola \verb+X+:
 una volta importati i dati in Octave, se si vuole, è possibile
 eliminare la matrice \verb+X+, si veda il manuale di Octave per i
 dettagli.  Per quanto riguarda R, il file dei dati esportati conserva
-qualsiasi struttura di serie storiche riconoscibile da \app{Gretl}.
+qualsiasi struttura di serie storiche riconoscibile da \app{gretl}.
 Le serie sono salvate come strutture individuali: i dati vanno
 importati in R con il comando \cmd{source()}.
   
-Di questi due programmi, R è forse quello di più immediato interesse
-per gli econometrici, visto che offre più routine statistiche specializzate.
-\app{Gretl} dispone quindi di una funzione per trasferire velocemente dati in R.
-Il menù Sessione di \app{Gretl} contiene il comando \textsf{Avvia GNU R}, che
-salva una versione per R del dataset in uso (come file \verb+Rdata.tmp+ nella
-directory Gretl dell'utente) e lo carica in una nuova sessione di R.  Di seguito
-sono forniti alcuni dettagli su questa operazione.
-  
-Per prima cosa, i dati vengono importati in R scrivendo una versione
-temporanea di \verb+.Rprofile+ nella directory di lavoro corrente (se
-esiste un file di questo tipo, viene letto da R all'avvio). Se la
-directory contiene una versione personale di \verb+.Rprofile+, il file
-originale viene rinominato temporaneamente come
-\verb+.Rprofile.gretltmp+ e viene ripristinato all'uscita da
-\app{Gretl} (se qualcuno ha un'idea migliore per questa operazione, è
-pregato di segnalarla).
-  
-Inoltre, il modo esatto in cui R viene avviato dipende dalla variabile
-interna \verb+Rcommand+ di \app{Gretl}, il cui valore deve essere
-impostato nel menù \textsf{File, Preferenze}. Il comando predefinito è
-\cmd{RGui.exe} in MS Windows, mentre in X è \cmd{xterm -e R}. Si noti che questa
-stringa può contenere al massimo tre elementi separati da spazi:
+Inoltre, \app{Gretl} dispone di una funzione per trasferire velocemente dati in R.
+Il menù ``Strumenti'' di \app{Gretl} contiene il comando ``Avvia GNU R'', che
+salva il dataset in uso in formato R (nella directory utente di gretl) e lo
+carica avviando una nuova sessione di R. Il modo esatto in cui R viene avviato
+dipende dalla variabile interna \verb+Rcommand+ di \app{gretl}, il cui valore
+deve essere impostato nel menù ``Strumenti, Preferenze''. Il comando
+predefinito è \cmd{RGui.exe} in MS Windows, mentre in X è \cmd{xterm -e R}. Si
+noti che questa stringa può contenere al massimo tre elementi separati da spazi:
 ulteriori elementi saranno ignorati.
 
 \chapter{Elenco degli URL}
@@ -380,6 +391,7 @@ Quello che segue è un elenco degli URL citati nel testo.
 \item[Home page di Gtkextra] \url{http://gtkextra.sourceforge.net/}
 \item[Home page di InfoZip]
   \url{http://www.info-zip.org/pub/infozip/zlib/}
+\item[Home page di JMulTi] \url{http://www.jmulti.de/}
 \item[JRSoftware] \url{http://www.jrsoftware.org/}
 \item[Home page di Mingw (gcc per win32)] \url{http://www.mingw.org/}
 \item[Minpack] \url{http://www.netlib.org/minpack/}

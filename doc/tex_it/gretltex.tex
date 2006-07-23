@@ -44,7 +44,7 @@ formattazione vera e propria. Tipicamente, si tratta di:
   non supporta il plain \TeX.}.
 \end{itemize}
 
-Per visualizzare le anteprime, si può utilizzare un visalizzatore DVI,
+Per visualizzare le anteprime, si può utilizzare un visualizzatore DVI,
 (tipicamente \app{xdvi} sui sistemi GNU/Linux) o PDF (tipicamente Adobe Acrobat
 Reader o \app{xpdf}, a seconda di come è stato processato il sorgente.  Se si
 sceglie la via del DVI, c'è un ultimo passo per creare un documento stampabile,
@@ -64,23 +64,23 @@ assicurarsi che il ``Comando per visualizzare i file PDF'' sia ben impostato.
 \section{I comandi \TeX nei menù}
 \label{tex-menus}
 
-The fullest \TeX\ support in \app{gretl} is found in the GUI model
-window.  This has a menu item titled ``LaTeX'' with sub-items
-``View'', ``Copy'', ``Save'' and ``Equation options''.  The first
-three sub-items have branches titled ``Tabular'' and ``Equation''.  By
-``Tabular'' we mean that the model is represented in the form of a
-table; this is the fullest and most explicit presentation of the
-results.  See Table~\ref{tab:mod1} for an example; this was pasted
-into the manual after using the ``Copy, Tabular'' item in \app{gretl}
-(a few lines were edited out for brevity).
+La maggior parte dei comandi di \app{gretl} relativi a \TeX\ si trova nel menù
+``LaTeX'' della finestra dei modelli, che contiene le voci ``Visualizza'',
+``Copia'', ``Salva'' e ``Opzioni equazione''. Ognuna delle prime tre voci, a sua
+volta, contiene due opzioni, intitolate ``Tabella'' ed ``Equazione''.
+Selezionando ``Tabella'', il modello viene rappresentato in forma tabulare,
+consentendo la rappresentazione più completa ed esplicita dei risultati;
+l'esempio mostrato nella Tabella~\ref{tab:mod1} è stato creato proprio
+scegliendo il comando ``Copia, Tabella'' di \app{gretl} (per brevità sono state
+omesse alcune righe).
 
 \begin{table}[htbp]
-\caption{Example of \LaTeX\ tabular output}
+\caption{Esempio dell'output \LaTeX\ tabulare}
 \label{tab:mod1}
 \begin{center}
 
-Model 1: OLS estimates using the 51 observations 1--51\\
-Dependent variable: ENROLL\\
+Modello 1: Stime OLS usando le 51 osservazioni 1-51\\
+Variabile dipendente: ENROLL\\
 
 \vspace{1em}
 
@@ -90,10 +90,10 @@ l% col 1: varname
     D{.}{.}{-1}% col 3: sderr
       D{.}{.}{-1}% col 4: t-stat
         D{.}{.}{4}}% col 5: p-value (or slope)
-Variable &
-  \multicolumn{1}{c}{Coefficient} &
-    \multicolumn{1}{c}{Std.\ Error} &
-      \multicolumn{1}{c}{$t$-statistic} &
+Variabile &
+  \multicolumn{1}{c}{Coefficiente} &
+    \multicolumn{1}{c}{Errore\ Std.} &
+      \multicolumn{1}{c}{statistica $t$} &
         \multicolumn{1}{c}{p-value} \\[1ex]
 const &
   0.241105 &
@@ -120,19 +120,19 @@ WHITE &
 \vspace{1em}
 
 \begin{tabular}{lD{.}{.}{-1}}
-Mean of dependent variable & 0.0955686 \\
- S.D. of dependent variable & 0.0522150 \\
-Sum of squared residuals & 0.0709594 \\
-Standard error of residuals ($\hat{\sigma}$) & 0.0388558 \\
-Unadjusted $R^2$ & 0.479466 \\
-Adjusted $\bar{R}^2$ & 0.446241 \\
+Media della variabile dipendente & 0.0955686 \\
+ D.S. della variabile dipendente & 0.0522150 \\
+Somma dei quadrati dei residui & 0.0709594 \\
+Errore standard dei residui ($\hat{\sigma}$) & 0.0388558 \\
+$R^2$ & 0.479466 \\
+$\bar{R}^2$ corretto & 0.446241 \\
 $F(3, 47)$ & 14.4306 \\
 \end{tabular}
 \end{center}
 \end{table}
 
-The ``Equation'' option is fairly self-explanatory --- the results are
-written across the page in equation format, as below:
+L'opzione ``Equazione'' si spiega da sé: i risultati della stima vengono scritti
+sotto forma di equazione, nel modo seguente
 
 %%% the following needs the amsmath LaTeX package
 
@@ -144,28 +144,26 @@ written across the page in equation format, as below:
 -\underset{(0.040706)}{0.152643}\,\mbox{WHITE}
  \notag \\
 T = 51 \quad \bar{R}^2 = 0.4462 \quad F(3,47) = 14.431 \quad \hat{\sigma} = 0.038856\notag \\
-\centerline{(standard errors in parentheses)} \notag
+\centerline{(errori standard tra parentesi)} \notag
 \end{gather}
 
-The distinction between the ``Copy'' and ``Save'' options (for both
-tabular and equation) is twofold.  First, ``Copy'' puts the \TeX\
-source on the clipboard while with ``Save'' you are prompted for the
-name of a file into which the source should be saved.  Second, with
-``Copy'' the material is copied as a ``fragment'' while with ``Save''
-it is written as a complete file.  The point is that a well-formed
-\TeX\ source file must have a header that defines the
-\texttt{documentclass} (article, report, book or whatever) and tags
-that say \verb|\begin{document}| and \verb|\end{document}|.  This
-material is included when you do ``Save'' but not when you do
-``Copy'', since in the latter case the expectation is that you will
-paste the data into an existing \TeX\ source file that already has the
-relevant apparatus in place.
+La differenza tra i comandi ``Copia'' e ``Salva'' è di due tipi. Innanzitutto,
+``Copia'' copia il sorgente \TeX\ negli appunti, mentre ``Salva'' richiede il
+nome di un file in cui verrà salvato il sorgente. In secondo luogo, con
+``Copia'' il materiale viene copiato come ``frammento'' di file \TeX, mentre con
+``Salva'' viene salvato come file completo. La differenza si spiega tenendo
+conto che un file sorgente \TeX\ completo comprende un preambolo che contiene
+comandi come \verb|\documentclass|, che definisce il tipo di documento (ad
+esempio articolo, rapporto, libro, ecc.) e come \verb|\begin{document}| e
+\verb|\end{document}|, che delimitano l'inizio e la fine del documento. Questo
+materiale aggiuntivo viene incluso quando si sceglie ``Salva'', ma non quando si
+sceglie ``Copia'', visto che in questo caso si presume che l'utente incollerà i
+dati in un file sorgente \TeX\ già provvisto del preambolo richiesto.
 
-The items under ``Equation options'' should be self-explanatory: when
-printing the model in equation form, do you want standard errors or
-$t$-ratios displayed in parentheses under the parameter estimates?
-The default is to show standard errors; if you want $t$-ratios, select
-that item.  
+I comandi del menù ``Opzioni equazione'' sono chiari: determinano se, quando
+si stampa il modello sotto forma di equazione, verranno mostrati gli errori
+standard o i rapporti $t$ tra parentesi sotto le stime dei parametri.
+L'impostazione predefinita è quella di mostrare gli errori standard.
 
 
 \section{Personalizzazione dei documenti}

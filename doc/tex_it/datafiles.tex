@@ -44,7 +44,7 @@ Per venire incontro a chi vuole eseguire analisi più sofisticate,
 \app{gretl} offre la possibilità di salvare i dati nei formati usati
 dai programmi GNU R e GNU Octave (si veda
 l'appendice~\ref{app-advanced}).  Nell'interfaccia grafica, questa
-opzione si trova nel menù ``File'', mentre nel client a riga di
+opzione si trova nel menù ``File, Esporta dati'', mentre nel client a riga di
 comando occorre usare il comando \cmd{store} con l'opzione \cmd{-r}
 (per R) o \cmd{-m} (per Octave).
 
@@ -58,8 +58,7 @@ nello spazio di lavoro del programma, ma può contenere serie con
 frequenze e intervalli del campione diversi.  È possibile aprire un
 database, selezionare delle serie e importarle nel dataset corrente;
 le serie potranno poi essere salvate in un file di dati. È possibile
-accedere ai database attraverso il comando ``File, Consulta
-database''.
+accedere ai database attraverso il comando ``File, Database''.
 
 Per i dettagli sul formato dei database di \app{gretl}, si veda 
 l'appendice~\ref{app-datafile}.
@@ -70,8 +69,8 @@ l'appendice~\ref{app-datafile}.
 Dalla versione 0.40, \app{gretl} è in grado di accedere ai database
 via internet. Alla Wake Forest University sono disponibili alcuni
 database, a cui è possibile accedere se il proprio computer è connesso
-a internet. Si veda la voce ``Accesso ai database online'' nel menù
-Aiuto di \app{gretl}.
+a internet. Si veda la descrizione del comando ``data'' nel menù
+``Aiuto'' di \app{gretl}.
 
 \subsection{Database RATS 4}
 \label{RATS}
@@ -175,13 +174,13 @@ Se si usa un foglio elettronico per preparare i dati, è possibile applicare
 varie trasformazioni ai dati ``grezzi'' (sommare variabili, calcolare
 percentuali, ecc.), ma queste elaborazioni possono essere compiute, forse più
 facilmente, anche in \app{gretl}, usando gli strumenti disponibili nel menù
-``Dati, Aggiungi variabili'' e/o ``Variabile, Definisci nuova variabile''.
+``Aggiungi''.
 
 \subsection{Importare dati e aggiungerli}
 
 Può essere necessario costruire un dataset di \app{gretl} a poco a
 poco, importando successivamente i dati da varie fonti. Questa
-funzionalità è fornita dai comandi del menu ``File, Aggiungi dati''.
+funzionalità è fornita dai comandi del menù ``File, Aggiungi dati''.
 \app{gretl} controllerà che i nuovi dati siano compatibili con il
 dataset esistente e in caso positivo aggiungerà i nuovi dati. In
 questo modo è possibile aggiungere nuove variabili, a patto che la
@@ -194,7 +193,7 @@ si sceglie ``Apri dati'', il dataset corrente verrà chiuso.
 
 \subsection{Usare il foglio elettronico interno}
 
-È possibile creare un dataset con il comando ``File, Crea dataset'',
+È possibile creare un dataset con il comando ``File, Nuovo dataset'',
 scegliendo il tipo di dati (ad es. serie storiche trimestrali, dati
 cross-section), la data iniziale e quella finale (o il numero di osservazioni),
 e il nome della prima variabile da creare nel dataset. Dopo aver
@@ -213,7 +212,7 @@ importarli nel foglio di lavoro di \app{gretl} premendo il pulsante
 
 Si noti che il foglio elettronico di \app{gretl} è molto semplice e
 non permette di inserire funzioni o formule: per trasformare i dati è
-possibile usare i comandi disponibili nei menù ``Dati'' o
+possibile usare i comandi disponibili nei menù ``Aggiungi'' o
 ``Variabile'' nella finestra principale di \app{gretl}.
 
 \subsection{Estrarre dati da un database}
@@ -223,29 +222,28 @@ variabili da un database.  \app{gretl} include un database di serie
 storiche macroeconomiche relative agli USA e, come visto sopra,
 consente di leggere i database RATS 4.
 
-Selezionando il comando ``File, Consulta database'', vengono
-presentate tre alternative: ``gretl'', ``RATS 4'' e ``sul server di
-database''. Selezionando ``gretl'', si troverà il file
-\verb+fedstl.bin+, che contiene un'ampia raccolta di serie
+Selezionando il comando ``File, Database'', vengono presentate tre alternative:
+``Gretl'', ``RATS 4'' e ``Sul server di gretl''. Selezionando ``Gretl'', si
+troverà il file \verb+fedstl.bin+, che contiene un'ampia raccolta di serie
 macroeconomiche USA ed è distribuito insieme al programma.
 
 Non si troverà nulla sotto ``RATS 4'' a meno di non aver acquistato
 dei dati RATS\footnote{Si veda
   \href{http://www.estima.com/}{www.estima.com}}.  Se si possiedono
-dati RATS, occorre usare il comando ``File, Preferenze, Generali...'',
+dati RATS, occorre usare il comando ``Strumenti, Preferenze, Generali...'',
 selezionare la finestra Database e inserire il percorso completo dei
 propri file RATS.
 
 Se il proprio computer è connesso a internet è possibile accedere a
-vari database presenti alla Wake Forest University scegliendo ``sul server di
-database''. È possibile consultare questi database da remoto, oppure
+vari database presenti alla Wake Forest University scegliendo ``Sul server di
+gretl''. È possibile consultare questi database da remoto, oppure
 installarli sul proprio computer. La finestra dei database ha una
 colonna che mostra, per ogni file, lo stato di installazione e lo
 stato di aggiornamento della copia locale rispetto alla versione
 disponibile alla Wake Forest.
 
 Dopo aver aperto un database è anche possibile importare singole serie
-nello spazio di lavoro di \app{gretl} usando il comando ``Importa''
+nello spazio di lavoro di \app{gretl} usando il comando ``Serie, Importa''
 nella finestra del database, o nel menù che compare facendo clic col
 tasto destro, oppure trascinando la serie nella finestra principale
 del programma.
@@ -273,7 +271,7 @@ tipi di dataset:
 \end{enumerate}
 
 Lo strumento principale per eseguire questa operazione è il comando del menù
-``Campione, Struttura Dataset'' nell'interfaccia grafica, o il comando
+``Dati, Struttura Dataset'' nell'interfaccia grafica, o il comando
 \texttt{setobs} negli script e nell'interfaccia a riga di comando.
 
 \subsection{Dati cross-section}
@@ -587,8 +585,8 @@ una raccolta di file:
 \item Per i file di dati: selezionare dal menù ``File, Apri dati, File
   di esempio'', o fare clic sull'icona a forma di cartella sulla barra
   degli strumenti di \app{gretl}.
-\item Per i file di comandi: selezionare dal menù ``File, Apri file
-  comandi, File di esempio''.
+\item Per i file di comandi: selezionare dal menù ``File, Comandi, File
+  di esempio''.
 \end{itemize}
 
 Quando un utente seleziona uno dei comandi visti sopra:

@@ -11,17 +11,17 @@ ri-eseguiti, usando \app{gretl} o l'applicazione a riga di comando
 \app{gretlcli}.
 
 Per visualizzare lo stato del log dei comandi durante una sessione di
-\app{gretl}, basta scegliere \textsf{Visualizza log comandi} dal menù
-File. Questo file di log è chiamato \verb+session.inp+ e viene
+\app{gretl}, basta scegliere ``Visualizza log comandi'' dal menù
+``Strumenti''. Questo file di log è chiamato \verb+session.inp+ e viene
 sovrascritto ogni volta che si inizia una nuova sessione: per
 conservarlo, basta salvarlo con un nome diverso. I file di comandi
 vengono visualizzati più facilmente nella finestra di selezione dei
 file se vengono salvati con l'estensione ``\verb+.inp+''.
 
 Per aprire uno script di diversa provenienza, occorre usare il comando
-del menù \textsf{File, Apri file comandi}; per creare uno script da
-zero, occorre usare \textsf{File, Nuovo file comandi} dal menù, oppure
-il pulsante \textsf{Nuovo file comandi} dalla barra degli strumenti.
+del menù ``File, Comandi, File utente''; per creare uno script da
+zero, occorre usare ``File, Comandi, Nuovo'' dal menù, oppure
+il pulsante ``Nuovo file comandi'' dalla barra degli strumenti.
 In entrambi i casi si aprirà una finestra comandi (si veda la
 figura~\ref{fig-scriptwin}).
 
@@ -42,20 +42,19 @@ testo; (8) Annulla l'ultimo comando Incolla o Sostituisci; (9) Aiuto
 (spostando il cursore sulla parola di un comando e premendo il punto
 di domanda si ottiene aiuto su quel comando); (10) Chiudi la finestra.
 
-Facendo clic sull'icona Esegui o scegliendo \textsf{File, Esegui} dal
-menù, i risultati dei comandi compariranno in un'unica finestra, dove possono
-essere modificati, salvati, o copiati negli appunti.  Per conoscere
-meglio le possibilità fornite dagli script, è possibile usare il
-comando del menù \textsf{Aiuto, Comandi testuali}, oppure eseguire la
-versione a riga di comando del programma \app{gretlcli} e consultare
-il suo aiuto, oppure ancora consultare la \GCR.  
+Facendo clic sull'icona ``Esegui'' i risultati dei comandi compariranno in
+un'unica finestra, dove possono essere modificati, salvati, o copiati negli
+appunti.  Per conoscere meglio le possibilità fornite dagli script, è possibile
+usare il comando del menù ``Aiuto, Guida comandi'', oppure eseguire la
+versione a riga di comando del programma \app{gretlcli} ed eseguire il comando
+``help'', oppure ancora consultare la \GCR.  
 
 In aggiunta, il pacchetto \app{gretl} contiene più di 70 script ``di
 esempio'': la maggior parte di essi è relativa a Ramanathan (2002),
 ma essi possono essere utili anche per studiare le possibilità di
 scripting offerte da \app{gretl}, oltre ad alcuni aspetti della
 teoria econometrica. È possibile esplorare i file di esempio dal menù
-\textsf{File, Apri file comandi, File di esempio}: si troverà un
+``File, Comandi, File di esempio'': si troverà un
 elenco dei file, insieme a una breve descrizione dei problemi
 illustrati nello script e dei dati utilizzati.  Basta aprire un file ed eseguirlo
 per vederne i risultati.  Si noti che in uno script i comandi lunghi
@@ -111,7 +110,7 @@ modelli, ma occorre racchiudere il nome tra virgolette doppie:
 \end{code}
 
 I modelli salvati in questo modo appariranno come icone nella finestra
-di sessione di \app{gretl} (si veda la sezione~\ref{session}) dopo l'esecuzione
+delle icone di \app{gretl} (si veda la sezione~\ref{session}) dopo l'esecuzione
 dello script. Inoltre, è possibile fare in modo che un modello venga mostrato in
 una finestra in modo automatico, usando:
 \begin{code}
@@ -125,8 +124,8 @@ Ancora: se il nome contiene spazi, occorre metterlo tra virgolette:
 
 È possibile usare la stessa procedura anche per i grafici; ad esempio,
 il comando seguente crea un grafico di \verb+Ct+ rispetto a \verb+Yt+,
-lo salva come ``Grafico'' (apparirà con questo nome nella finestra di
-sessione) e lo mostra automaticamente:
+lo salva come ``Grafico'' (apparirà con questo nome nella finestra delle
+icone) e lo mostra automaticamente:
 \begin{code}
       Grafico <- gnuplot Ct Yt
       Grafico.show
@@ -151,9 +150,9 @@ parti di testo) possono essere eliminati usando il comando
 \section{Il terminale di gretl}
 \label{console}
 
-Un'altra funzionalità comoda è contenuta nel menù Utilità di
-\app{gretl}: il \textsf{Terminale di gretl} (c'è anche un pulsante
-\textsf{Terminale di gretl} nella barra degli strumenti nella finestra
+Un'altra funzionalità comoda è contenuta nel menù ``Strumenti'' di
+\app{gretl}: il ``Terminale di gretl'' (c'è anche un pulsante
+``Terminale di gretl'' nella barra degli strumenti nella finestra
 principale).  Si tratta di una finestra in cui è possibile scrivere
 comandi ed eseguirli interattivamente uno alla volta (premendo il
 tasto Invio), così come avviene nella versione a riga di comando
@@ -184,37 +183,37 @@ ad una successiva riapertura della sessione.
   \begin{center}
     \includegraphics[scale=0.75]{figures/session}
   \end{center}
-  \caption{Icone di sessione: un modello e un grafico sono stati
-    aggiunti alle icone predefinite}
+  \caption{Finestra delle icone: oltre alle icone predefinite, sono stati
+    aggiunti un modello e un grafico}
   \label{fig-session}
 \end{figure}
 
 Avviando \app{gretl}, aprendo un dataset e selezionando
-\textsf{Visualizza icone} dal menù Sessione, è possibile visualizzare
+``Finestra icone'' dal menù ``Visualizza'', è possibile visualizzare
 l'insieme predefinito di icone, che permettono di accedere rapidamente
-al log dei comandi (\textsf{Comandi}), alle informazioni sul dataset
-(se esistono), alla matrice di correlazione (\textsf{Correlazioni}) e
-alle statistiche descrittive di riepilogo (\textsf{Statistiche}).
+al log dei comandi (``Comandi''), alle informazioni sul dataset
+(se esistono), alla matrice di correlazione (``Correlazioni'') e
+alle statistiche descrittive di riepilogo (``Statistiche'').
 Tutte queste funzioni sono attivate facendo doppio clic sull'icona
-relativa. L'icona \textsf{Dataset} è un po' più complessa: un doppio
+relativa. L'icona ``Dataset'' è un po' più complessa: un doppio
 clic apre i dati nel foglio di lavoro integrato, mentre facendo clic
 col tasto destro del mouse si ottiene un menù con le altre azioni
 possibili.
 
-Per aggiungere un modello alla finestra di sessione, occorre per prima
-cosa stimarlo usando il menù Modello, quindi aprire il menù File nella
-finestra del modello e selezionare \textsf{Salva alla sessione come
-  icona\dots{}} o \textsf{Salva come icona e chiudi}.  L'ultima
+Per aggiungere un modello alla finestra delle icone, occorre per prima
+cosa stimarlo usando il menù ``Modello'', quindi aprire il menù ``File'' nella
+finestra del modello e selezionare ``Salva alla sessione come
+  icona\dots{}'' o ``Salva come icona e chiudi''.  L'ultima
 operazione può essere eseguita semplicemente anche premendo il tasto
 \verb+S+ da dentro la finestra del modello.
 
-Per aggiungere un grafico, occorre crearlo (dal menù Dati, \textsf{Grafico delle
-variabili}, o attraverso uno degli altri comandi \app{gretl} di generazione dei
+Per aggiungere un grafico, occorre crearlo (dal menù ``Visualizza, Grafico'',
+o attraverso uno degli altri comandi \app{gretl} di generazione dei
 grafici).  Facendo clic sulla finestra del grafico si ottiene un menù da cui si
-dovrà selezionare \textsf{Salva alla sessione come icona}.
+dovrà selezionare ``Salva alla sessione come icona''.
 
 Una volta che un modello o un grafico è stato aggiunto, la sua icona
-dovrebbe comparire nella finestra delle icone di sessione. Facendo
+dovrebbe comparire nella finestra delle icone. Facendo
 doppio clic sull'icona, l'oggetto viene visualizzato di nuovo, mentre
 facendo clic con il tasto destro del mouse si ottiene un menù che
 permette di visualizzare o cancellare l'oggetto, oppure di
@@ -232,7 +231,7 @@ risultati (stime dei coefficienti e errori standard) per un dato
 modello e ogni riga contiene le stime per una certa variabile nei
 differenti modelli.
 
-Nella finestra delle icone di sessione, \app{gretl} dà la possibilità
+Nella finestra delle icone, \app{gretl} dà la possibilità
 di costruire una tabella simile (e di esportarla in testo semplice,
 {\LaTeX} o RTF - Rich Text Format).  Ecco come fare:\footnote{La
   tabella modelli può anche essere costruita in modo non interattivo
@@ -241,20 +240,20 @@ di costruire una tabella simile (e di esportarla in testo semplice,
 \begin{enumerate}
 \item Stimare un modello che si vuole includere nella tabella e
   selezionare, nel menù File della finestra di visualizzazione del
-  modello, \textsf{Salva alla sessione come icona} o \textsf{Salva
-    come icona e chiudi}.
+  modello, ``Salva alla sessione come icona'' o ``Salva
+    come icona e chiudi''.
 \item Ripetere il punto 1 per gli altri modelli da includere nella
   tabella (fino a un massimo di sei modelli).
 \item Completata la stima dei modelli, aprire l'icona della sessione
-  di gretl, selezionando \textsf{Visualizza Icone} nel menù Sessione
-  della finestra principale di gretl, o facendo clic su \textsf{Icone
-    di sessione} sulla barra degli strumenti di gretl.
-\item La finestra delle icone di sessione contiene un'icona chiamata
-  \textsf{Tabella Modelli}. Per aggiungere alla tabella modelli il
+  di gretl, selezionando ``Finestra icone'' nel menù ``Visualizza''
+  della finestra principale di gretl, o facendo clic sull'icona
+  ``Finestra icone'' della barra degli strumenti di gretl.
+\item La finestra delle icone contiene un'icona chiamata
+  ``Tabella Modelli''. Per aggiungere alla tabella modelli il
   modello che deve apparire nella colonna più a sinistra della
   tabella, basta trascinare l'icona del modello sull'icona della
   Tabella Modelli, oppure fare clic col tasto destro sull'icona del
-  modello e selezionare \textsf{Aggiungi alla tabella modelli} dal
+  modello e selezionare ``Aggiungi alla tabella modelli'' dal
   menù pop-up.
 \item Ripetere il punto 4 per gli altri modelli da aggiungere alla
   tabella. Il secondo modello scelto apparirà nella seconda colonna da
@@ -265,7 +264,7 @@ di costruire una tabella simile (e di esportarla in testo semplice,
   sul menù Modifica della finestra in cui appare la tabella.
 \item Se l'ordinamento dei modelli nella tabella non è quello voluto,
   fare clic col tasto destro sull'icona della tabella modelli e
-  selezionare \textsf{Pulisci}, quindi tornare al punto 4.
+  selezionare ``Pulisci'', quindi tornare al punto 4.
 \end{enumerate}
 
 Un semplice esempio di tabella modelli di \app{gretl} è mostrato nella
@@ -283,47 +282,48 @@ figura~\ref{fig-model-table}.
 \subsection{La pagina dei grafici}
 \label{sect-graphpage}
 
-L'icona \textsf{Grafici} della finestra di sessione offre la
+L'icona ``Grafici'' della finestra delle icone offre la
 possibilità di riunire vari grafici da stampare su una sola pagina, se
 si è installato il sistema di composizione {\LaTeX} e si è in grado di
-generare e visualizzare file in formato postscript\footnote{In
-  particolare occorre avere \app{dvips} e \app{ghostscript}
-  installati, insieme a un visualizzatore come \app{gv}, \app{ggv} o
+generare e visualizzare file in formato PDF o postscript\footnote{Per l'output
+  in PDF occorre avere il lettore Acrobat Reader di Adobe, o \app{xpdf}, se si
+  usa il sistema X11. Per il postscript, occorrono \app{dvips} e \app{ghostscript},
+  insieme a un visualizzatore come \app{gv}, \app{ggv} o
   \app{kghostview}. Il visualizzatore predefinito per sistemi diversi
-  da MS Windows è \app{gv}.}
+  da MS Windows è \app{gv}.}.
 
-Nella finestra della sessione, è possibile trascinare fino a otto
+Nella finestra delle icone, è possibile trascinare fino a otto
 grafici sull'icona della pagina dei grafici. Facendo doppio clic
 sull'icona della pagina dei grafici (o facendo clic col tasto destro e
-selezionando \textsf{Mostra}), una pagina contenente i grafici
-selezionati verrà composta e aperta con il proprio visualizzatore di
-file postscript, da cui sarà possibile stampare la pagina.
+selezionando ``Mostra''), una pagina contenente i grafici
+selezionati (in formato EPS o PDF) verrà composta e aperta con il proprio
+visualizzatore, da cui sarà possibile stamparla.
 
 Per pulire la pagina dei grafici, fare clic col tasto destro
-sull'icona e selezionare \textsf{Pulisci}.
+sull'icona e selezionare ``Pulisci''.
 
 Su sistemi diversi da MS Windows, può essere necessario modificare
 l'impostazione del programma per visualizzare il postscript,
-attraverso la sezione \textsf{Programmi} della finestra di dialogo
-delle Preferenze di gretl (nel menù \textsf{File} della finestra
+attraverso la sezione ``Programmi'' della finestra di dialogo
+delle ``Preferenze'' di gretl (nel menù ``Strumenti'' della finestra
 principale).  Su Windows può essere necessario dover impostare le
 regole di associazione dei file in modo che sia usato il
-visualizzatore adeguato per l'azione \textsf{Apri} sui file con
+visualizzatore adeguato per l'azione ``Apri'' sui file con
 estensione \verb+.ps+.
 
 \subsection{Salvare e riaprire sessioni}
 \label{session-save}
 
 Se si creano modelli o grafici che si pensa di poter riutilizzare in
-seguito, è utile selezionare \textsf{Salva come\dots{}} dal menù
-Sessione prima di uscire da \app{gretl}. Per riaprire la sessione in
+seguito, è utile selezionare ``File, Sessione, Salva come\dots{}''
+prima di uscire da \app{gretl}. Per riaprire la sessione in
 seguito, è possibile:
 
 \begin{itemize}
 \item Avviare \app{gretl} e riaprire il file della sessione usando il
-  comando \textsf{Apri} dal menù Sessione, oppure
+  comando ``File, Sessione, Apri'', oppure
 \item Dalla riga di comando, scrivere \cmd{gretl -r}
-  \verb+file_sessione+, dove \verb+file_sessione+ è il nome del file
+  \textsl{file-sessione}, dove \textsl{file-sessione} è il nome del file
   in cui è stata salvata la sessione.
 \end{itemize}
 

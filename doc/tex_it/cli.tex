@@ -5,9 +5,9 @@
 \label{cli-console}
 
 Il pacchetto \app{gretl} include il programma a riga di comando
-\app{gretlcli}. Su Linux è possibile esegurlo in un terminale testuale
-o in un xterm (o simili), mentre su MS Windows può essere eseguito in
-una finestra di terminale (quella che di solito viene chiamata
+\app{gretlcli}. Su Linux è possibile esegurlo in una finestra di terminale
+(xterm, rxvt, o simili), o in un terminale testuale. Su MS WIndows può essere
+eseguito in una finestra di terminale (quella che di solito viene chiamata
 ``prompt di MS-DOS'').  \app{gretlcli} ha un file di aiuto, a cui si
 accede inserendo il comando ``help'' al prompt. Inoltre, può essere
 usato in modalità batch, inviando i risultati direttamente a un file
@@ -47,48 +47,22 @@ completare le lettere inserite, verrà inserito il comando
 corrispondente, altrimenti premendo Tab una seconda volta verrà
 visualizzata una lista delle alternative possibili.
     
-\section{Gretl e ESL di Ramanathan}
+\section{La modalità non interattiva}
 \label{cli-syntax}
 
-\app{gretlcli} ha ereditato la sintassi di base dei comandi dal
-programma \app{ESL} di Ramu Ramanathan e gli script di comandi
-sviluppati per \app{ESL} dovrebbero essere utilizzabili con con pochi
-cambiamenti: le uniche cose a cui prestare attenzione sono i comandi
-multilinea e il comando \cmd{freq}.
-    
-\begin{itemize}
-\item In \app{ESL} viene usato un punto e virgola come terminatore per
-  molti comandi.  In \app{gretlcli} il carattere punto e virgola è semplicemente
-  ignorato, a parte in alcuni casi speciali in cui esso ha un significato
-  particolare: come separatore per due liste nei comandi \cmd{ar} e
-  \cmd{tsls}, e come segnaposto per l'osservazione iniziale o finale
-  immutata nel comando \cmd{smpl}. In \app{ESL} il punto e virgola dà
-  la possibilità di spezzare le righe di comando su più righe dello
-  schermo; in \app{gretlcli} si ottiene questo risultato inserendo una
-  barra rovesciata \verb+\+ alla fine della riga da spezzare.
-\item Per quanto riguarda \cmd{freq}, al momento non è possibile
-  specificare intervalli personalizzati, come avviene in \app{ESL}.
-  Inoltre, ai risultati del comando è stato aggiunto un test
-  chi-quadro di normalità.
-\end{itemize}
+Probabilmente, il modo più utile per svolgere grosse quantità di lavoro con
+\app{gretlcli} consiste nell'utilizzare la modalità ``batch'' (non interattiva),
+in cui il programma legge ed esegue uno script di comandi, scrivendo il
+risultato su un file. Ad esempio:
 
-Si noti anche che i comandi per usare la modalità batch sono stati
-semplificati. In \app{ESL} si usava, ad esempio:
-      
 \begin{code}
-    esl -b filedati < fileinput > fileoutput
+    gretlcli -b filescript > fileoutput
 \end{code}
 
-mentre in \app{gretlcli} si usa:
-      
-\begin{code}
-    gretlcli -b fileinput > fileoutput
-\end{code}
-
-Il file di input viene trattato come un argomento del programma,
-mentre il file di dati su cui operare va indicato all'interno del file
-di input, usando il comando \cmd{open datafile} o il commento speciale
-\verb+(* !+ filedati \verb+*)+.
+Il \textsl{filescript} fornito come argomento al programma deve specificare al
+proprio interno il file di dati su cui operare, usando il comando
+\cmd{open filedati}. Se non si utilizza l'opzione \texttt{-b} (che sta per ``batch''),
+il programma resterà in attesa di input al termine dell'esecuzione dello script.
     
 %%% Local Variables: 
 %%% mode: latex
