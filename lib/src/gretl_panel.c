@@ -47,6 +47,7 @@ struct panelmod_t_ {
     int effn;             /* effective (included) cross-section units */
     int T;                /* times-series length of panel */
     int effT;             /* effective times-series length (max usable obs per unit) */
+    double Tbar;          /* harmonic mean of per-units tme series lengths */
     int ndum;             /* number of dummy variables added for FE model */
     int *unit_obs;        /* array of number of observations per x-sect unit */
     char *varying;        /* array to record properties of pooled-model regressors */
@@ -67,6 +68,7 @@ struct panelmod_t_ {
     double *sigma;        /* Hausman covariance matrix */
     double within_s2;     /* fixed-effects or "within" error variance */
     double between_s2;    /* group-means or "between" error variance */
+    double s2u;           /* alternative \hat{sigma}^2_u measure (Stata) */
     MODEL *pooled;        /* reference model (pooled OLS) */
     MODEL *realmod;       /* fixed or random effects model */
 };
@@ -100,6 +102,7 @@ panelmod_init (panelmod_t *pan, MODEL *pmod, gretlopt opt)
     pan->effn = 0;
     pan->T = 0;
     pan->effT = 0;
+    pan->Tbar = 0;
     pan->ndum = 0;
     pan->unit_obs = NULL;
     pan->varying = NULL;
@@ -649,7 +652,13 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	    }
 
 	    if (Ti != pan->effT) {
+#if 1
+		double s2e = pan->within_s2;
+
+		theta_i = 1.0 - sqrt(s2e / (Ti * pan->s2u + s2e));
+#else
 		theta_i = 1.0 - sqrt(pan->within_s2 / (Ti * pan->between_s2));
+#endif
 #if PDEBUG
 		fprintf(stderr, "unit %d: T_i = %d, theta_i = %g\n",
 			i, Ti, theta_i);
@@ -726,6 +735,12 @@ group_means_dataset (panelmod_t *pan,
 	if (pj == 0) {
 	    continue;
 	}
+	
+	if (pan->opt & OPT_B) {
+	    /* focus on "between" model: so name the variables */
+	    strcpy(ginfo->varname[k], pdinfo->varname[pj]);
+	}
+
 	s = 0;
 	for (i=0; i<pan->nunits; i++) { 
 	    int Ti = pan->unit_obs[i];
@@ -749,6 +764,27 @@ group_means_dataset (panelmod_t *pan,
     }
 
     return ginfo;
+}
+
+/* spruce up bmod and attach it to pan */
+
+static int save_between_model (MODEL *bmod, panelmod_t *pan)
+{
+    int err = 0;
+
+    bmod->ci = PANEL;
+    gretl_model_set_int(bmod, "between", 1);
+    set_model_id(bmod);
+    bmod->dw = NADBL;
+    free(bmod->list);
+    bmod->list = gretl_list_copy(pan->pooled->list);
+    if (bmod->list == NULL) {
+	err = E_ALLOC;
+    }
+
+    *pan->realmod = *bmod;
+
+    return err;
 }
 
 /* calculate the group means or "between" regression and its error
@@ -785,7 +821,12 @@ between_variance (panelmod_t *pan, double ***gZ, DATAINFO *ginfo)
 #endif
     }
 
-    clear_model(&bmod);
+    if (pan->opt & OPT_B) {
+	err = save_between_model(&bmod, pan);
+    } else {
+	clear_model(&bmod);
+    }
+
     free(blist);
 
     return err;
@@ -1591,7 +1632,12 @@ static int within_variance (panelmod_t *pan,
 	err = femod.errcode;
 	clear_model(&femod);
     } else {
+#if 0
 	pan->within_s2 = femod.sigma * femod.sigma;
+#else
+	/* Stata-compatible */
+	pan->within_s2 = femod.ess / (femod.nobs - pan->effn - pan->vlist[0]  + 1);
+#endif
 
 	fixed_effects_F(pan, &femod);
 
@@ -1748,7 +1794,21 @@ static int random_effects (panelmod_t *pan,
        Swamy and Arora method.  Note: for unbalanced panels, theta
        will actually vary across the units.
     */
-    pan->theta = 1.0 - sqrt(pan->within_s2 / (pan->effT * pan->between_s2));
+    if (1) {
+	/* Stata method */
+	double s2e = pan->within_s2;
+
+	pan->s2u = pan->between_s2 - s2e / pan->Tbar;
+	if (pan->s2u < 0) {
+	    pan->s2u = 0.0;
+	}
+	pan->theta = 1.0 - sqrt(s2e / (pan->effT * pan->s2u + s2e));
+#if PDEBUG
+	fprintf(stderr, "s_u = %.8g, s_e = %.8g\n", sqrt(pan->s2u), sqrt(s2e));
+#endif
+    } else {
+	pan->theta = 1.0 - sqrt(pan->within_s2 / (pan->effT * pan->between_s2));
+    }
 #if PDEBUG
     fprintf(stderr, "random_effects: theta = %g\n", pan->theta);
 #endif
@@ -2047,6 +2107,27 @@ static int panel_set_varying (panelmod_t *pan, const MODEL *pmod)
     return 0;
 }
 
+/* find harmomic mean of the number of time-series observations
+   per included group */
+
+static void calculate_Tbar (panelmod_t *pan)
+{
+    int i;
+
+    if (pan->balanced) {
+	pan->Tbar = pan->effT;
+    } else {
+	double den = 0.0;
+
+	for (i=0; i<pan->nunits; i++) {
+	    if (pan->unit_obs[i] > 0) {
+		den += 1.0 / pan->unit_obs[i];
+	    }
+	}
+	pan->Tbar = pan->effn / den;
+    }
+}
+
 static int 
 panelmod_setup (panelmod_t *pan, MODEL *pmod,
 		const DATAINFO *pdinfo, gretlopt opt)
@@ -2066,7 +2147,7 @@ panelmod_setup (panelmod_t *pan, MODEL *pmod,
 			     &pan->unit_obs,
 			     &pan->balanced);
 
-    if (!err && (pan->opt & (OPT_U | OPT_F))) {
+    if (!err && (pan->opt & (OPT_U | OPT_F | OPT_B))) {
 	pan->realmod = malloc(sizeof *pan->realmod);
 	if (pan->realmod == NULL) {
 	    err = E_ALLOC;
@@ -2125,7 +2206,9 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     err = panel_set_varying(&pan, pmod);
     if (err) {
 	goto bailout;
-    }    
+    }
+
+    calculate_Tbar(&pan);
 
     /* degrees of freedom relative to # of x-sectional units */
     xdf = pan.effn - pmod->ncoeff;
@@ -2195,6 +2278,27 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static int between_model (panelmod_t *pan, const double **Z,
+			  const DATAINFO *pdinfo)
+{
+    double **gZ = NULL;
+    DATAINFO *ginfo;
+    int err = 0;
+
+    ginfo = group_means_dataset(pan, Z, pdinfo, &gZ);
+    if (ginfo == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = between_variance(pan, &gZ, ginfo);
+    }
+
+    if (ginfo != NULL) {
+	destroy_dataset(gZ, ginfo);
+    }
+
+    return err;
+}
+
 /* real_panel_model:
  * @list: list containing model specification.
  * @pZ: pointer to data array.  
@@ -2202,7 +2306,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * @opt: may include %OPT_U for the random effects model,
  * %OPT_R for robust standard errors (fixed effects model
  * only), %OPT_H to use the regression approach to the Hausman
- * test (random effects only)...
+ * test (random effects only), %OPT_B for "between" model.
  * @prn: printing struct.
  *
  * Estimates a panel model, either fixed effects or random
@@ -2233,7 +2337,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	return mod;
     }
 
-    if (!(opt & OPT_U)) {
+    if (!(opt & OPT_U) && !(opt & OPT_B)) {
 	/* default: add OPT_F to save the fixed effects model */
 	pan_opt |= OPT_F;
     }
@@ -2242,6 +2346,13 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
     if (err) {
 	goto bailout;
     }   
+
+    if (opt & OPT_B) {
+	err = between_model(&pan, (const double **) *pZ, pdinfo);
+	goto bailout;
+    }	
+
+    calculate_Tbar(&pan);
 
     /* figure out which of the original regressors are time-varying,
        or unit-varying as the case may be 

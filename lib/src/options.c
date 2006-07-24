@@ -156,6 +156,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_A, "append" },
     { OUTFILE,  OPT_C, "close" },
     { OUTFILE,  OPT_W, "write" },
+    { PANEL,    OPT_B, "between" },
     { PANEL,    OPT_H, "hausman-reg" },
     { PANEL,    OPT_O, "vcv" },
     { PANEL,    OPT_Q, "quiet" },

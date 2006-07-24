@@ -6774,6 +6774,10 @@
 	  <effect>apply gzip compression</effect>
         </option>
         <option>
+	  <flag>--jmulti</flag>
+	  <effect>use JMulti ASCII format</effect>
+        </option>
+        <option>
 	  <flag>--dat</flag>
 	  <effect>use PcGive ASCII format</effect>
         </option>

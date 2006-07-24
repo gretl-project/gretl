@@ -680,9 +680,11 @@ my_estimator_string (const MODEL *pmod, PRN *prn)
     } else if (pmod->ci == PANEL) {
 	if (gretl_model_get_int(pmod, "fixed-effects")) {
 	    return N_("Fixed-effects");
-	} else {
+	} else if (gretl_model_get_int(pmod, "random-effects")) {
 	    return N_("Random-effects (GLS)");
-	}	
+	} else {
+	    return N_("Between-groups");
+	}
     } else {
 	return estimator_string(pmod->ci, prn);
     } 
@@ -1691,6 +1693,9 @@ static char active_decpoint (void)
 
 #define random_effects_model(m) (m->ci == PANEL && \
                                  gretl_model_get_int(m, "random-effects"))
+
+#define between_model(m) (m->ci == PANEL && \
+                          gretl_model_get_int(m, "between"))
 
 /**
  * printmodel:

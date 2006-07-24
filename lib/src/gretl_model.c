@@ -498,7 +498,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
 	    make_cname(pdinfo->varname[pmod->list[i + 2]], targ);
 	} else if (pmod->ci == NLS || pmod->ci == MLE ||
 		   pmod->ci == ARMA || pmod->ci == GARCH || 
-		   pmod->ci == PANEL) {
+		   (pmod->ci == PANEL && !gretl_model_get_int(pmod, "between"))) {
 	    strcpy(targ, pmod->params[i + 1]);
 	} else if (pmod->aux == AUX_VECM) {
 	    adjust_vecm_name(pdinfo->varname[pmod->list[i + 2]], targ);
