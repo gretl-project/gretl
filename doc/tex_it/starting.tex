@@ -124,30 +124,8 @@ ispezionare o mostrare graficamente i residui e i valori stimati, e di
 eseguire vari test diagnostici sul modello.
 
 Per la maggior parte dei modelli c'è anche un'opzione per stampare il
-risultato della regressione in formato {\LaTeX}. È possibile stampare
-i risultati in formato tabulare (simile a quello usato nella finestra
-dei risultati, ma con una migliore composizione tipografica) o sotto
-forma di equazione. Per ognuna di queste opzioni è possibile scegliere
-di vedere un'anteprima della pagina finale, o di salvare il risultato
-in un file da includere in un documento {\LaTeX}. L'anteprima richiede
-che si disponga di un sistema {\TeX} funzionante sul proprio computer.
-È possibile controllare l'aspetto del {\LaTeX} generato da \app{gretl}
-includendo un file chiamato \verb+gretlpre.tex+ nella propria
-directory utente \app{gretl} (si veda la \GCR). Il contenuto di tale file
-verrà usato come ``preambolo'' {\LaTeX}, il cui valore predefinito è
-il seguente:
-    
-\begin{code}
-      \documentclass[11pt]{article}
-      \usepackage[latin1]{inputenc}
-      \usepackage{amsmath}
-      \usepackage{dcolumn,longtable}
-      \begin{document}
-      \thispagestyle{empty}
-\end{code}
-
-Si noti che sono richiesti i pacchetti \verb+amsmath+ e
-\verb+dcolumn+.
+risultato della regressione in formato {\LaTeX}. Si veda il
+capitolo~\ref{gretltex} per i dettagli.
 
 Per importare i risultati di \app{gretl} in un word processor, è
 possibile fare copia e incolla da una finestra dei risultati usando il

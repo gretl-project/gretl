@@ -75,7 +75,7 @@ a internet. Si veda la descrizione del comando ``data'' nel menù
 \subsection{Database RATS 4}
 \label{RATS}
 
-Grazie a Thomas Doan di \emph{Estima}, che mi ha fornito le specifiche
+Grazie a Thomas Doan di \emph{Estima}, che ha reso disponibili le specifiche
 del formato di database usato da RATS 4 (Regression Analysis of Time
 Series), \app{gretl} è in grado di gestire anche alcuni tipi di
 database RATS 4: per la precisione quelli che contengono dati mensili
@@ -277,35 +277,62 @@ Lo strumento principale per eseguire questa operazione è il comando del menù
 \subsection{Dati cross-section}
 \label{sec:cross-section-data}
 
-Questa è la modalità predefinita.
+Per ``dati cross-section'' intendiamo osservazioni su una serie di ``unità''
+(che possono essere imprese, paesi, individui, ecc.) realizzate nello stesso
+periodo temporale. Questa è l'interpretazione predefinita per un file di dati:
+se \app{gretl} non ha informazioni sufficienti per interpretare i dati come
+serie storiche o panel, essi sono automaticamente interpretati come
+cross-section. Nell'improbabile caso in cui dei dati cross-section siano
+interpretati come serie storiche, è possibile correggere l'errore usando il
+comando del menù ``Dati, Struttura dataset'', facendo clic sul pulsante
+``cross-section'', quindi su ``Avanti'', e infine su ``Ok''.
 
 \subsection{Serie storiche}
 \label{sec:timeser-data}
 
-\subsubsection{Modifica della frequenza dei dati}
+Quando si importano dati da un foglio elettronico o da un file di testo,
+\app{gretl} cerca di estrarre tutte le informazioni temporali dalla prima
+colonna dei dati. Se tuttavia la struttura di serie storiche dei dati non è
+riconosciuta, è possibile usare il comando ``Dati, Struttura dataset'',
+selezionare ``Serie storiche'', e successivamente selezionare la frequenza dei
+dati e l'osservazione iniziale. In ogni momento è possibile fare clic su
+``Indietro'' per correggere le scelte fatte.
 
-\app{gretl} non ha problemi a compattare serie di dati ad alta
-frequenza (ad es. mensile) trasformandole in una frequenza più bassa
-(ad es. trimestrale) utilizzando uno dei 4 metodi supportati (media
-dei dati nel periodo, somma dei dati nel periodo, dato di inizio
-periodo, dato di fine periodo). Se si intende importare serie con frequenza
-diversa da un database, la procedura consigliabile consiste nel \emph{cominciare
-ad importare le serie con la frequenza minore}. In questo
-modo, il dataset di \app{gretl} verrà inizializzato con la frequenza
-più bassa e i dati a frequenza maggiore potranno essere importati in
-seguito.
+È opportuna qualche considerazione ulteriore a proposito della frequenza dei
+dati. In un dataset di serie storiche, tutte le serie devono avere la stessa
+frequenza; se occorre creare un dataset combinando serie di diversa frequenza,
+ad esempio mensili e trimestrali, occorre procedere nel modo seguente.
 
-Se si desidera aggiungere a un dataset una serie di frequenza inferiore, occorre
-per prima cosa ``espandere'' la nuova serie. Questa operazione è disponibile
-solo per le serie annuali e trimestrali, a partire dal menù ``Campione'', ma è
-da utilizzare con cautela, tenendo bene presente il suo funzionamento, che
-consiste nel replicare i valori della serie a frequenza minore per quante volte
-è richiesto dalla nuova frequenza. Ad esempio, ipotizzando di avere una serie
-trimestrale che vale 35.5 in 1990:1, il primo trimestre del 1990. Dopo
+Per prima cosa occorre formulare una strategia: si desidera creare un dataset
+mensile o trimestrale? Un punto da tenere in considerazione consiste nel fatto
+che ``compattare'' i dati da una frequenza più alta (es. mensile) a una più
+bassa (es. trimestrale) di solito non presenta problemi. Ovviamente si perde
+informazione, ma in generale è accettabile, ad esempio, prendere la media di tre
+osservazioni mensili per creare un'osservazione trimestrale. D'altra parte,
+``espandere'' i dati da una frequenza minore a una maggiore, in generale non è
+un'operazione valida.
+
+Nella maggior parte dei casi, la strategia migliore consiste nel creare un
+dataset di frequenza \textit{inferiore}, e di compattare i dati a frequenza
+maggiore. Quando si importano i dati a frequenza maggiore nel dataset, il
+programma propone la scelta del metodo di compattamento (media, somma, valore
+all'inizio del periodo, o alla fine del periodo). Nella maggior parte dei casi,
+prendere la media dei dati è una scelta appropriata.
+
+È anche possibile importare dati di minore frequenza in un dataset a frequenza
+maggiore, ma non è una scelta raccomandabile in generale.
+In questi casi, \app{gretl} replica i valori della serie a frequenza minore per
+quante volte è richiesto dalla nuova frequenza. Ad esempio, ipotizzando di avere
+una serie trimestrale che vale 35.5 in 1990:1, il primo trimestre del 1990. Dopo
 l'espansione alla frequenza mensile, il valore 35.5 verrà assegnato alle
 osservazioni per i mesi di gennaio, febbraio e marzo del 1990. La variabile espansa
 non sarà quindi adatta per analisi temporali ``fini'', a meno che non si abbia
 buona ragione di ipotizzare che il suo valore rimanga costante nei sotto-periodi.
+
+Una volta scelta la frequenza di un dataset, \app{gretl} offre comunque la
+possibilità di compattare o espandere tutte le serie del dataset, usando i
+comandi ``Compatta dati'' ed ``Espandi dati'' del menù ``Dati'', che ovviamente
+vanno eseguiti con cautela.
 
 \subsection{Dati panel}
 \label{sec:panel-data}
