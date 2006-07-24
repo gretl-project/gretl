@@ -72,7 +72,7 @@ option to work.  Please see the description of the ``data'' command under
 \subsection{RATS 4 databases}
 \label{RATS}
 
-Thanks to Thomas Doan of \emph{Estima}, who provided me with the
+Thanks to Thomas Doan of \emph{Estima}, who made available the
 specification of the database format used by RATS 4 (Regression
 Analysis of Time Series), \app{gretl} can also handle such databases.
 Well, actually, a subset of same: I have only worked on time-series
@@ -131,7 +131,7 @@ conditions must be satisfied:
 \item Data values: these should constitute a rectangular block, with
   one variable per column (and one observation per row).  The number
   of variables (data columns) must match the number of variable names
-  given. See also Section~\ref{missing-data}.  Numeric data are
+  given. See also section~\ref{missing-data}.  Numeric data are
   expected, but in the case of importing from ASCII/CSV, the program
   offers limited handling of character (string) data: if a given
   column contains character data only, consecutive numeric codes are
@@ -208,7 +208,7 @@ the ``Add'' or ``Variable'' menus in the main \app{gretl} window.
 \subsection{Selecting from a database}
 
 Another alternative is to establish your dataset by selecting
-variables from a database.  \app{gretl} comes with a database of US
+variables from a database.  \app{Gretl} comes with a database of US
 macroeconomic time series and, as mentioned above, the program will
 reads RATS 4 databases.
 
@@ -234,10 +234,10 @@ locally (and if so, if the local version is up to date with the
 version at Wake Forest).
 
 Assuming you have managed to open a database you can import selected
-series into \app{gretl}'s workspace by using the ``Series, Import'' menu item
-in the database window, or via the popup menu that appears if you
-click the right mouse button, or by dragging the series into the
-program's main window.
+series into \app{gretl}'s workspace by using the ``Series, Import''
+menu item in the database window, or via the popup menu that appears
+if you click the right mouse button, or by dragging the series into
+the program's main window.
 
 \subsection{Creating a gretl data file independently}
 
@@ -255,7 +255,7 @@ Once your data are read by \app{gretl}, it may be necessary to supply
 some information on the nature of the data. We distinguish between
 three kinds of datasets:
 \begin{enumerate}
-\item Cross-section
+\item Cross section
 \item Time series
 \item Panel data
 \end{enumerate}
@@ -267,39 +267,75 @@ for scripts and the command-line interface.
 \subsection{Cross-section data}
 \label{sec:cross-section-data}
 
-TODO
-This is the default. 
+By a cross section we mean observations on a set of ``units'' (which
+may be firms, countries, individuals, or whatever) at a common point
+in time.  This is the default interpretation for a data file: if
+\app{gretl} does not have sufficient information to interpret data as
+time-series or panel data, they are automatically interpreted as a
+cross section.  In the unlikely event that cross-sectional data are
+wrongly interpreted as time series, you can correct this by selecting
+the ``Data, Dataset structure'' menu item.  Click the
+``cross-sectional'' radio button in the dialog box that appears, then
+click ``Forward''.  Click ``OK'' to confirm your selection.
 
 \subsection{Time series data}
 \label{sec:timeser-data}
 
-\ldots Add stuff here \ldots
+When you import data from a spreadsheet or plain text file,
+\app{gretl} will make fairly strenuous efforts to glean time-series
+information from the first column of the data, if it looks at all
+plausible that such information may be present.  If time-series
+structure is present but not recognized, again you can use the ``Data,
+Dataset structure'' menu item.  Select ``Time series'' and click
+``Forward''; select the appropriate data frequency and click
+``Forward'' again; then select or enter the starting observation and
+click ``Forward'' once more.  Finally, click ``OK'' to confirm the
+time-series interpretation if it is correct (or click ``Back'' to make
+adjustments if need be).
 
-\subsubsection{Changing frequency}
+Besides the basic business of getting a data set interpreted as time
+series, further issues may arise relating to the frequency of
+time-series data.  In a gretl time-series data set, all the series
+must have the same frequency.  Suppose you wish to make a combined
+dataset using series that, in their original state, are not all of the
+same frequency.  For example, some series are monthly and some are
+quarterly.
 
-\app{gretl} has no problem compacting data series of relatively high
-frequency (e.g.\ monthly) to a lower frequency (e.g.\ quarterly): you
-are given a choice of method (average, sum, start of period, or end of
-period).  If you want to import series of various different
-frequencies from a database into \app{gretl}, the recommended
-procedure is to \emph{start by importing a series of the lowest
-  frequency you intend to use.} This will initialize your \app{gretl}
-dataset to the low frequency, and higher frequency data can be
-imported subsequently.
+Your first step is to formulate a strategy: Do you want to end up with
+a quarterly or a monthly data set?  A basic point to note here is
+that ``compacting'' data from a higher frequency (e.g.\ monthly) to
+a lower frequency (e.g.\ quarterly) is usually unproblematic.  You
+lose information in doing so, but in general it is perfectly
+legitimate to take (say) the average of three monthly observations to
+create a quarterly observation.  On the other hand, ``expanding'' data
+from a lower to a higher frequency is not, in general, a valid
+operation.  
 
-If you wish to add to a dataset a series that is of lower frequency,
-it is necessary to ``expand'' the new series first.  This option is
-available, for annual or quarterly time series only, under the
-``Sample'' menu, but it should be considered an expert option: you
-need to know what you are doing.  What \app{gretl} does is simply
-replicate the values of the lower-frequency series as many times as
-required. For example, suppose we have a quarterly series with the
-value 35.5 in 1990:1, the first quarter of 1990.  On expansion to
-monthly, the value 35.5 will be assigned to the observations for
-January, February and March of 1990. The expanded variable is
-therefore useless for fine-grained time-series analysis, outside of
-the special case where you know that the variable in question does in
-fact remain constant over the sub-periods.
+In most cases, then, the best strategy is to start by creating a data
+set of the \textit{lower} frequency, and then to compact the higher
+frequency data to match.  When you import higher-frequency data from a
+database into the current data set, you are given a choice of
+compaction method (average, sum, start of period, or end of period).
+In most instances ``average'' is likely to be appropriate.  
+
+You \textit{can} also import lower-frequency data into a
+high-frequency data set, but this is generally not recommended.  What
+\app{gretl} does in this case is simply replicate the values of the
+lower-frequency series as many times as required. For example, suppose
+we have a quarterly series with the value 35.5 in 1990:1, the first
+quarter of 1990.  On expansion to monthly, the value 35.5 will be
+assigned to the observations for January, February and March of 1990.
+The expanded variable is therefore useless for fine-grained
+time-series analysis, outside of the special case where you know that
+the variable in question does in fact remain constant over the
+sub-periods.
+
+When the current data frequency is appropriate, \app{gretl} offers
+both ``Compact data'' and ``Expand data'' options under the ``Data''
+menu.  These options operate on the whole data set, compacting or
+exanding all series.  They should be considered ``expert'' options
+and should be used with caution. 
+
 
 \subsection{Panel data}
 \label{sec:panel-data}
