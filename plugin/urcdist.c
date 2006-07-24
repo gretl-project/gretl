@@ -18,9 +18,9 @@
 
 #include <zlib.h>
 
-#undef URDEBUG
+#define URDEBUG 0
 
-#ifdef URDEBUG
+#if URDEBUG
 FILE *fdb;
 #endif
 
@@ -130,7 +130,7 @@ static int urcval (int niv, int itv, int nobs, double arg,
     sscanf(line, "%s %d %d %d %d", code, &urc.nz, &urc.nreg,
 	   &urc.model, &urc.minsize);
 
-#ifdef URDEBUG
+#if URDEBUG
     fprintf(fdb, "code=%s nz=%d, nreg=%d, model=%d, minsize=%d\n",
 	    code, urc.nz, urc.nreg, urc.model, urc.minsize);
     fflush(fdb);
@@ -682,7 +682,7 @@ double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
     double val = NADBL;
     int check;
 
-#ifdef URDEBUG
+#if URDEBUG
     fdb = fopen("debug.txt", "w");
     fprintf(fdb, "mackinnon_pvalue: tval=%g, n=%d, niv=%d, itv=%d\n",
 	    tval, n, niv, itv);
@@ -695,7 +695,7 @@ double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
     gretl_pop_c_numeric_locale();
 
 
-#ifdef URDEBUG
+#if URDEBUG
     fclose(fdb);
 #endif
 

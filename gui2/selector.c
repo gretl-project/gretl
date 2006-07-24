@@ -2698,6 +2698,12 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label
 	    (_("Cointegrating regression includes a constant"));
 	pack_switch(tmp, sr, TRUE, TRUE, OPT_N, 0);
+	tmp = gtk_check_button_new_with_label
+	    (_("Test down from maximum lag order"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_A, 0);
+	tmp = gtk_check_button_new_with_label
+	    (_("Skip initial DF tests"));
+	pack_switch(tmp, sr, FALSE, FALSE, OPT_S, 0);
     } else if (sr->code == PANEL_WLS) {
 	tmp = gtk_check_button_new_with_label
 	    (_("Iterated weighted least squares"));

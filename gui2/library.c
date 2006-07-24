@@ -734,6 +734,7 @@ int do_coint (selector *sr)
     int action = selector_code(sr);
     GRETL_VAR *jvar = NULL;
     PRN *prn;
+    int auto_order = 0;
     int err = 0, order = 0;
 
     if (buf == NULL) return 1;
@@ -741,6 +742,10 @@ int do_coint (selector *sr)
     cmd.opt = selector_get_opts(sr);
 
     if (action == COINT) {
+	if (cmd.opt & OPT_A) {
+	    auto_order = 1;
+	    cmd.opt &= ~OPT_A;
+	}
 	gretl_command_sprintf("coint %s%s", buf, print_flags(cmd.opt, action));
     } else {
 	gretl_command_sprintf("coint2 %s%s", buf, print_flags(cmd.opt, action));
@@ -758,6 +763,9 @@ int do_coint (selector *sr)
     }
 
     if (action == COINT) {
+	if (auto_order) {
+	    order = -order;
+	}
 	err = coint(order, cmd.list, &Z, datainfo, cmd.opt, prn);
     } else {
 	jvar = johansen_test(order, cmd.list, &Z, datainfo, cmd.opt, prn);

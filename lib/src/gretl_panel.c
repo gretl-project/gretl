@@ -653,9 +653,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 
 	    if (Ti != pan->effT) {
 #if 1
-		double s2e = pan->within_s2;
-
-		theta_i = 1.0 - sqrt(s2e / (Ti * pan->s2u + s2e));
+		theta_i = 1.0 - sqrt(pan->within_s2 / (Ti * pan->s2u + pan->within_s2));
 #else
 		theta_i = 1.0 - sqrt(pan->within_s2 / (Ti * pan->between_s2));
 #endif
@@ -1432,6 +1430,8 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
     }
 #endif
 
+    fprintf(stderr, "fixed_effects_by_LSDV: sigma = %g\n", femod.sigma);
+
     dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
     free(felist);
 
@@ -1636,7 +1636,7 @@ static int within_variance (panelmod_t *pan,
 	pan->within_s2 = femod.sigma * femod.sigma;
 #else
 	/* Stata-compatible */
-	pan->within_s2 = femod.ess / (femod.nobs - pan->effn - pan->vlist[0]  + 1);
+	pan->within_s2 = femod.ess / (femod.nobs - pan->effn - pan->vlist[0] + 1);
 #endif
 
 	fixed_effects_F(pan, &femod);

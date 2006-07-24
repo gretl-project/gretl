@@ -25,7 +25,8 @@
 
 enum {
     ADF_EG_TEST   = 1 << 0,
-    ADF_PRINT_ACK = 1 << 1
+    ADF_PRINT_ACK = 1 << 1,
+    ADF_EG_RESIDS = 1 << 2
 } adf_flags;
 
 static int *
@@ -104,7 +105,7 @@ adf_prepare_vars (int order, int varno, int nseas, int *d0,
 static void 
 print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL *dfmod,
 		   int dfnum, const char *vname, int *blurb_done,
-		   unsigned char flags, int i, int nseas, PRN *prn)
+		   unsigned char flags, int i, int niv, int nseas, PRN *prn)
 {
     const char *models[] = {
 	"(1 - L)y = (a-1)*y(-1) + e",
@@ -124,6 +125,9 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
 	N_("with constant and trend"),
 	N_("with constant and quadratic trend")
     };
+    const char *urcstrs[] = {
+	"nc", "c", "ct", "ctt"
+    };
 
     char pvstr[48];
 
@@ -138,23 +142,29 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
     } 
 
     if (*blurb_done == 0) {
-	if (order > 0 && !auto_order) {
-	    pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
-		    order, vname);
+	if (flags & ADF_EG_RESIDS) {
+	    pputc(prn, '\n');
 	} else {
-	    pprintf(prn, _("\nDickey-Fuller tests for %s\n"), vname);
-	}
+	    if (order > 0 && !auto_order) {
+		pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
+			order, vname);
+	    } else {
+		pprintf(prn, _("\nDickey-Fuller tests for %s\n"), vname);
+	    }
+	} 
 	pprintf(prn, _("sample size %d\n"), dfmod->nobs);
 	pputs(prn, _("unit-root null hypothesis: a = 1"));
 	pputs(prn, "\n\n");
 	*blurb_done = 1;
     }
 
-    pprintf(prn, "   %s ", _(teststrs[i]));
-    if (nseas > 0 && i > 0) {
-	pputs(prn, _("plus seasonal dummies"));
+    if (!(flags & ADF_EG_RESIDS)) {
+	pprintf(prn, "   %s ", _(teststrs[i]));
+	if (nseas > 0 && i > 0) {
+	    pputs(prn, _("plus seasonal dummies"));
+	}
+	pputc(prn, '\n');
     }
-    pputc(prn, '\n');
 
     if (!(flags & ADF_EG_TEST)) {
 	pprintf(prn, "   %s: %s\n", _("model"), 
@@ -165,10 +175,10 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
     }
 
     pprintf(prn, "   %s: %g\n"
-	    "   %s: t = %g\n"
+	    "   %s: tau_%s(%d) = %g\n"
 	    "   %s\n",
 	    _("estimated value of (a - 1)"), dfmod->coeff[dfnum],
-	    _("test statistic"), DFt,
+	    _("test statistic"), urcstrs[i], niv, DFt,
 	    pvstr);	
 }
 
@@ -313,6 +323,7 @@ static int real_adf_test (int varno, int order, int niv,
 {
     MODEL dfmod;
 
+    gretlopt eg_opt = OPT_NONE;
     int orig_nvars = pdinfo->v;
     int blurb_done = 0;
     int auto_order = 0;
@@ -328,6 +339,14 @@ static int real_adf_test (int varno, int order, int niv,
 #if ADF_DEBUG
     fprintf(stderr, "real_adf_test: got order = %d\n", order);
 #endif
+
+    if (flags & ADF_EG_RESIDS) {
+	eg_opt = opt;
+	opt = OPT_N;
+#if ADF_DEBUG
+	fprintf(stderr, "got ADF_EG_RESIDS, opt now = %d\n", (int) opt);
+#endif
+    }
 
     if (opt & OPT_F) {
 	/* difference the variable before testing */
@@ -367,10 +386,14 @@ static int real_adf_test (int varno, int order, int niv,
     if (test_opt_not_set(opt)) {
 	/* the default set of models */
 	opt |= (OPT_C | OPT_T | OPT_R);
+#if ADF_DEBUG
+	fprintf(stderr, "test_opt_not_set: doing default DF models\n");
+#endif
     }
 
     for (i=UR_NO_CONST; i<UR_MAX; i++) {
 	int j, k, dfnum = (i > UR_NO_CONST);
+	int itv = i;
 
 	if (!test_wanted(i, opt)) {
 	    continue;
@@ -436,15 +459,19 @@ static int real_adf_test (int varno, int order, int niv,
 
 	DFt = dfmod.coeff[dfnum] / dfmod.sderr[dfnum];
 
+	if (flags & ADF_EG_RESIDS) {
+	    itv = (eg_opt == OPT_N)? 1 : 2;
+	}
+
 	pv = df_pvalue_from_plugin(DFt, 
 				   /* use asymptotic p-value for augmented case */
 				   (order > 0)? 0 : dfmod.nobs, 
-				   niv, i);
+				   niv, itv);
 
 	if (!(opt & OPT_Q)) {
 	    print_adf_results(order, auto_order, DFt, pv, &dfmod, dfnum, 
 			      pdinfo->varname[varno], &blurb_done, flags, 
-			      i - 1, nseas, prn);
+			      itv - 1, niv, nseas, prn);
 	}
 
 	if (opt & OPT_V) {
@@ -669,6 +696,7 @@ int coint (int order, const int *list, double ***pZ,
 {
     int i, t, n, nv, l0 = list[0];
     int cpos, ifc, cnum = 0;
+    int step = 1;
     MODEL cmod;
     int *cointlist = NULL;
 
@@ -680,26 +708,27 @@ int coint (int order, const int *list, double ***pZ,
 	ifc = 0;
     }
 
-    if (order <= 0 || list[0] - ifc < 2) {
-	strcpy(gretl_errmsg, "coint: needs a positive lag order "
-	       "and at least two variables");
+    if (list[0] - ifc < 2) {
+	strcpy(gretl_errmsg, "coint: needs at least two variables");
 	return 1;
     }
 
     gretl_model_init(&cmod);
 
-    /* step 1: test all the vars for unit root */
-    for (i=1; i<=l0; i++) {
-	if (list[i] == cnum) {
-	    continue;
+    if (!(opt & OPT_S)) {
+	/* test all the vars for unit root */
+	for (i=1; i<=l0; i++) {
+	    if (list[i] == cnum) {
+		continue;
+	    }
+	    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
+		    step++, pdinfo->varname[list[i]]);
+	    real_adf_test(list[i], order, 1, pZ, pdinfo, OPT_NONE, 
+			  ADF_EG_TEST, prn);
 	}
-	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
-		i, pdinfo->varname[list[i]]);
-	real_adf_test(list[i], order, 1, pZ, pdinfo, OPT_NONE, 
-		      ADF_EG_TEST, prn);
     }
 
-    /* step 2: carry out the cointegrating regression */
+    /* carry out the cointegrating regression */
     if (!ifc && !(opt & OPT_N)) {
 	/* add const to coint regression list */
 	cointlist = malloc((l0 + 2) * sizeof *cointlist);
@@ -718,9 +747,9 @@ int coint (int order, const int *list, double ***pZ,
 	}
     }
 
-    pprintf(prn, _("Step %d: cointegrating regression\n"), l0 + 1);
-    
-    cmod = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE); 
+    pprintf(prn, _("Step %d: cointegrating regression\n"), step++);
+
+    cmod = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE);
     cmod.aux = AUX_COINT;
     printmodel(&cmod, pdinfo, OPT_NONE, prn);
 
@@ -744,11 +773,17 @@ int coint (int order, const int *list, double ***pZ,
     strcpy(pdinfo->varname[nv], "uhat");
 
     pputc(prn, '\n');
-    pprintf(prn, _("Step %d: Dickey-Fuller test on residuals\n"), l0 + 2);
+    pprintf(prn, _("Step %d: Dickey-Fuller test on residuals\n"), step);
+
+    if (!(opt & OPT_N)) {
+	/* if not "no-const" then "const", for now */
+	opt = OPT_C;
+    }
 
     /* Run (A)DF test on the residuals */
     real_adf_test(pdinfo->v - 1, order, 1 + cmod.ncoeff - cmod.ifc, 
-		  pZ, pdinfo, OPT_N, ADF_EG_TEST | ADF_PRINT_ACK, prn);
+		  pZ, pdinfo, opt, ADF_EG_TEST | ADF_EG_RESIDS | ADF_PRINT_ACK, 
+		  prn);
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
 		 "(a) The unit-root hypothesis is not rejected for the individual"

@@ -717,6 +717,10 @@
 	  <flag>--nc</flag>
 	  <effect>do not include a constant</effect>
 	</option>
+	<option>
+	  <flag>--skip-df</flag>
+	  <effect>no DF tests on individual variables</effect>
+	</option>
       </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
@@ -724,14 +728,38 @@
     </usage>
 
     <description>
-      <para>
-	The Engle&ndash;Granger cointegration test.  Carries out
-	Augmented Dickey&ndash;Fuller tests on the null hypothesis
-	that each of the variables listed has a unit root, using the
-	given lag order.  The cointegrating regression is estimated,
-	and an ADF test is run on the residuals from this regression.
-	The Durbin&ndash;Watson statistic for the cointegrating
-	regression is also given.
+      <para context="cli">
+	The Engle&ndash;Granger cointegration test.  The default procedure
+	is: (1) carry out Augmented Dickey&ndash;Fuller tests on the null
+	hypothesis that each of the variables listed has a unit root; (2)
+	estimate the cointegrating regression; and (3) run an ADF test
+	on the residuals from the cointegrating regression.  If the
+	<lit>--skip-df</lit> flag is given, step (1) is skipped.
+      </para>
+      <para context="cli">
+	If the specified lag order is positive, all the
+	Dickey&ndash;Fuller tests use that order.  If the order is
+	prefaced with a minus sign, it is taken as the maximum lag and the
+	actual lag order used in each case is obtained by testing down:
+	see the <cmdref targ="adf"/> command for details.
+      </para>
+      <para context="cli">
+	The Engle&ndash;Granger cointegration test.  The default procedure
+	is: (1) carry out Augmented Dickey&ndash;Fuller tests on the null
+	hypothesis that each of the variables listed has a unit root; (2)
+	estimate the cointegrating regression; and (3) run an ADF test on
+	the residuals from the cointegrating regression.  If the box
+	labeled <quote>skip initial DF tests</quote> is checked, however,
+	the first of tese steps is omitted.
+      </para>
+      <para context="gui">
+	If the lag order, <mathvar>k</mathvar>, is greater than 0, then
+	<mathvar>k</mathvar> lags of the dependent variable are included
+	on the right-hand side of each test regression, unless the box
+	labeled <quote>test down from maximum lag</quote> is checked: in
+	that case the selected lag order is taken as a maximum and the
+	actual lag order used is obtained by testing down.  See the
+	<cmdref targ="adf"/> command for details of this procedure.
       </para>
       <para><emphasis>P-</emphasis>values for this test are based on
 	MacKinnon (1996).  The relevant code is included by kind
