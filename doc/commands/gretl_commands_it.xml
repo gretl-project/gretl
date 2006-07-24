@@ -607,7 +607,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Grafico variabili/Boxplot</menu-path>
+      <menu-path>/Visualizza/Grafico/Boxplot</menu-path>
     </gui-access>
 
   </command>
@@ -1004,7 +1004,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Matrice di correlazione</menu-path>
+      <menu-path>/Visualizza/Matrice di correlazione</menu-path>
       <other-access>Menù pop-up nella finestra principale (selezione multipla)</other-access>
     </gui-access>
 
@@ -1138,7 +1138,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Utilità/Tavole statistiche</menu-path>
+      <menu-path>/Strumenti/Tavole statistiche</menu-path>
     </gui-access>
 
   </command>
@@ -1223,7 +1223,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/File/Consulta database</menu-path>
+      <menu-path>/File/Database</menu-path>
     </gui-access>
 
   </command>
@@ -1380,6 +1380,10 @@
         continue.
       </para>
     </description>
+    
+    <gui-access>
+      <menu-path>/Variabile/Modifica attributi</menu-path>
+    </gui-access>
 
   </command>
 
@@ -1721,7 +1725,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Dati modello/Previsioni</menu-path>
+      <menu-path>Finestra del modello, /Analisi/Previsioni</menu-path>
     </gui-access>
 
   </command>
@@ -1798,7 +1802,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Finestra del modello, /Dati modello/Previsioni con errori standard</menu-path>
+      <menu-path>Finestra del modello, /Analisi/Previsioni con errori standard</menu-path>
     </gui-access>
 
   </command>
@@ -1962,7 +1966,7 @@
 
       <para context="gui">La varianza condizionale stimata, insieme ai residui e
         ad altre statistiche del modello, può essere richiamata ed aggiunta al
-        dataset usando il menù <quote>Dati modello</quote> presente nella
+        dataset usando il menù <quote>Analisi</quote> presente nella
         finestra del modello.
       </para>
 
@@ -2346,7 +2350,7 @@
         della finestra principale. Usando la versione grafica, però, è
         possibile anche estrarre i dati da qualunque modello mostrato in una
         finestra (anche se non è il modello più recente) usando il menù
-        <quote>Dati modello</quote> nella finestra del modello.</para>
+        <quote>Analisi</quote> nella finestra del modello.</para>
 
       <para>Le serie interne <lit>uhat</lit> e <lit>yhat</lit>
 	contengono rispettivamente i residui e i valori stimati dell'ultima
@@ -2608,7 +2612,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Grafico variabili</menu-path>
+      <menu-path>/Visualizza/Grafico</menu-path>
       <other-access>Menù pop-up nella finestra principale, pulsante grafico sulla barra degli strumenti</other-access>
     </gui-access>
 
@@ -2832,7 +2836,7 @@
       <para>
         Questo test è disponibile solo dopo aver stimato un modello OLS su dati
         panel (si veda anche <cmd>setobs</cmd>). Testa il semplice modello
-        <quote>pooled</quote> (con tutte le osservazioni considerate
+        <quote>pooled</quote> (con tutte le osservazioni mescolate
         indistintamente) contro le principali alternative: il modello a effetti
         fissi e quello a effetti casuali.</para>
 
@@ -3029,7 +3033,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/WLS corretti per eteroschedasticità</menu-path>
+      <menu-path>/Modello/Altri modelli lineari/HSK - WLS corretti per eteroschedasticità</menu-path>
     </gui-access>
 
   </command>
@@ -3333,7 +3337,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/LAD - Minime deviazioni assolute</menu-path>
+      <menu-path>/Modello/Stima robusta/LAD - Minime deviazioni assolute</menu-path>
     </gui-access>
 
   </command>
@@ -3666,7 +3670,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Logistico</menu-path>
+      <menu-path>/Modello/Modelli non lineari/Logistico</menu-path>
     </gui-access>
 
   </command>
@@ -3738,7 +3742,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Logit</menu-path>
+      <menu-path>/Modello/Modelli non lineari/Logit</menu-path>
     </gui-access>
 
   </command>
@@ -3891,7 +3895,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Distanze di Mahalanobis</menu-path>
+      <menu-path>/Visualizza/Distanze di Mahalanobis</menu-path>
     </gui-access>
 
   </command>
@@ -3967,7 +3971,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Differenza delle medie</menu-path>
+      <menu-path>/Modello/Modelli bivariati/Differenza delle medie</menu-path>
     </gui-access>
 
   </command>
@@ -4187,11 +4191,11 @@
 	<li><para>3. Completata la stima dei modelli, aprire l'icona
         della sessione di gretl (selezionando <quote>Visualizza Icone</quote>
         nel menù Sessione della finestra principale di gretl, o facendo
-        clic su <quote>Icone di sessione</quote> sulla barra degli
+        clic su <quote>Finestra icone</quote> sulla barra degli
         strumenti di gretl).</para>
 	</li>
 
-        <li><para>4. La finestra delle icone di sessione contiene
+        <li><para>4. La finestra delle icone contiene
         un'icona chiamata <quote>Tabella Modelli</quote>. Per aggiungere
         alla tabella modelli il modello che deve apparire nella colonna
         più a sinistra della tabella, basta trascinare l'icona del
@@ -4232,7 +4236,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Finestra di sessione, Icona Tabella Modelli</menu-path>
+      <menu-path>Finestra delle icone, Icona Tabella Modelli</menu-path>
     </gui-access>
 
   </command>
@@ -4292,7 +4296,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/MPOLS - Minimi quadrati in alta precisione</menu-path>
+      <menu-path>/Modello/Altri modelli lineari/MPOLS - Minimi quadrati in alta precisione</menu-path>
     </gui-access>
 
   </command>
@@ -4476,7 +4480,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Minimi quadrati non lineari</menu-path>
+      <menu-path>/Modello/Modelli non lineari/NLS - Minimi quadrati non lineari</menu-path>
     </gui-access>
 
   </command>
@@ -4507,7 +4511,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/File/Crea dataset</menu-path>
+      <menu-path>/File/Nuovo dataset</menu-path>
     </gui-access>
 
   </command>
@@ -4723,8 +4727,8 @@
 	Gretl può accedere ai database della Wake Forest University
 	(se il proprio computer è connesso a internet).</para>
 
-      <para>Dal menù <quote>File, Consulta database</quote>, selezionare
-	<quote>Sul server di database</quote>: apparirà una finestra che
+      <para>Dal menù <quote>File, Database</quote>, selezionare
+	<quote>Sul server di gretl</quote>: apparirà una finestra che
         mostra i database disponibili alla Wake Forest (a seconda della
         località e della velocità della connessione internet,
         l'operazione può richiedere alcuni secondi). Oltre al nome del
@@ -4752,7 +4756,7 @@
       <quote>Installa</quote>. Il database verrà scaricato in formato
       compresso, verrà decompresso e installato sul proprio disco fisso,
       in modo da poter essere caricato usando il menù <quote>File,
-      Consulta database, gretl</quote>.</para>
+      Database, Gretl</quote>.</para>
 
     </description>
   </command>
@@ -5001,7 +5005,8 @@
     </description>
 
     <gui-access>
-      <menu-path>Pop-up nella finestra principale (selezione multipla)</menu-path>
+      <menu-path>/Visualizza/Componenti principali</menu-path>
+      <other-access>Pop-up nella finestra principale (selezione multipla)</other-access>
     </gui-access>
 
   </command>
@@ -5112,7 +5117,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Poisson</menu-path>
+      <menu-path>/Modello/Modelli non lineari/Poisson</menu-path>
     </gui-access>
 
   </command>
@@ -5311,7 +5316,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Probit</menu-path>
+      <menu-path>/Modello/Modelli non lineari/Probit</menu-path>
     </gui-access>
 
   </command>
@@ -5357,7 +5362,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Utilità/Calcola p-value</menu-path>
+      <menu-path>/Strumenti/Calcola p-value</menu-path>
     </gui-access>
 
   </command>
@@ -5924,7 +5929,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Grafici multipli</menu-path>
+      <menu-path>/Visualizza/Grafici multipli</menu-path>
     </gui-access>
 
   </command>
@@ -6335,7 +6340,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Campione/Struttura dataset</menu-path>
+      <menu-path>Dati/Struttura dataset</menu-path>
     </gui-access>
 
   </command>
@@ -6567,7 +6572,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/SPEARMAN - Correlazione di rango</menu-path>
+      <menu-path>/Modello/Stima robusta/SPEARMAN - Correlazione di rango</menu-path>
     </gui-access>
 
   </command>
@@ -6731,7 +6736,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Statistiche descrittive</menu-path>
+      <menu-path>/Visualizza/Statistiche descrittive</menu-path>
       <other-access>Menù pop-up nella finestra principale</other-access>
     </gui-access>
 
@@ -6930,7 +6935,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/Tobit</menu-path>
+      <menu-path>/Modello/Modelli non lineari/Tobit</menu-path>
     </gui-access>
 
   </command>
@@ -6948,7 +6953,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Campione/Trasponi dati</menu-path>
+      <menu-path>/Dati/Trasponi dati</menu-path>
     </gui-access>
 
   </command>
@@ -7241,7 +7246,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Dati/Differenza delle varianze</menu-path>
+      <menu-path>/Modello/Modelli bivatiati/Differenza delle varianze</menu-path>
     </gui-access>
 
   </command>
@@ -7471,7 +7476,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Modello/WLS - Minimi quadrati ponderati</menu-path>
+      <menu-path>/Modello/Altri modelli lineari/WLS - Minimi quadrati ponderati</menu-path>
     </gui-access>
 
   </command>
