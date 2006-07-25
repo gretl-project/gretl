@@ -66,9 +66,9 @@ struct panelmod_t_ {
     double H;             /* Hausman test statistic */
     double *bdiff;        /* array of coefficient differences */
     double *sigma;        /* Hausman covariance matrix */
-    double within_s2;     /* fixed-effects or "within" error variance */
     double between_s2;    /* group-means or "between" error variance */
-    double s2u;           /* alternative \hat{sigma}^2_u measure (Stata) */
+    double s2e;           /* \hat{sigma}^2_e, from fixed-effects estimator */
+    double s2u;           /* \hat{sigma}^2_u measure */
     MODEL *pooled;        /* reference model (pooled OLS) */
     MODEL *realmod;       /* fixed or random effects model */
 };
@@ -395,7 +395,7 @@ static void print_re_model_top (const panelmod_t *pan, PRN *prn)
 {
     pputs(prn, "Variance estimators:\n");
     pprintf(prn, " between = %g\n", pan->between_s2);
-    pprintf(prn, " within = %g\n", pan->within_s2);
+    pprintf(prn, " within = %g\n", pan->s2e);
 
     if (pan->balanced) {
 	pprintf(prn, "theta used for quasi-demeaning = %g\n", pan->theta);
@@ -652,11 +652,7 @@ random_effects_dataset (const double **Z, const DATAINFO *pdinfo,
 	    }
 
 	    if (Ti != pan->effT) {
-#if 1
-		theta_i = 1.0 - sqrt(pan->within_s2 / (Ti * pan->s2u + pan->within_s2));
-#else
-		theta_i = 1.0 - sqrt(pan->within_s2 / (Ti * pan->between_s2));
-#endif
+		theta_i = 1.0 - sqrt(pan->s2e / (Ti * pan->s2u + pan->s2e));
 #if PDEBUG
 		fprintf(stderr, "unit %d: T_i = %d, theta_i = %g\n",
 			i, Ti, theta_i);
@@ -942,13 +938,13 @@ static int bXb (panelmod_t *pan)
     return info != 0;
 }
 
-static void panel_df_correction (MODEL *pmod, int ndf)
+static void panel_df_correction (MODEL *pmod, int k)
 {
-    double dfcorr = sqrt((double) pmod->dfd / (pmod->dfd - ndf));
+    double dfcorr = sqrt((double) pmod->dfd / (pmod->dfd - k));
     int i;
 
-    pmod->dfd -= ndf;
-    pmod->dfn += ndf - 1; 
+    pmod->dfd -= k;
+    pmod->dfn += k - 1; 
 
     pmod->sigma *= dfcorr;
 
@@ -972,7 +968,7 @@ static int print_fe_results (panelmod_t *pan,
 
 #if PDEBUG
     fprintf(stderr, "f.e. variance, wmod.ncoeff=%d, var=%g, "
-	    "list[0]=%d\n", wmod->ncoeff, pan->within_s2, pan->vlist[0]);
+	    "list[0]=%d\n", wmod->ncoeff, pan->s2e, pan->vlist[0]);
 #endif
 
     pputs(prn, 
@@ -1017,7 +1013,7 @@ static int print_fe_results (panelmod_t *pan,
     dfn = pan->effn - 1;
 
     pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
-	    wmod->ess, wmod->nobs, pan->vlist[0] - 1 + dfn, pan->within_s2);
+	    wmod->ess, wmod->nobs, pan->vlist[0] - 1 + dfn, pan->s2e);
 
     if (pan->ndum > 0) {
 	pputs(prn, _("Joint significance of unit dummy variables:\n"));
@@ -1332,7 +1328,7 @@ fixed_effects_by_demeaning (panelmod_t *pan, const double **Z,
 	femod.errcode = E_SINGULAR;
     } else {
 	/* we estimated a bunch of group means, and have to
-	   subtract that many degrees of freedom */
+	   subtract degrees of freedom */
 	panel_df_correction(&femod, pan->effn);
 #if PDEBUG
 	printmodel(&femod, winfo, OPT_O, prn);
@@ -1429,8 +1425,6 @@ fixed_effects_by_LSDV (panelmod_t *pan, double ***pZ, DATAINFO *pdinfo,
 	printmodel(&femod, pdinfo, OPT_NONE, prn);
     }
 #endif
-
-    fprintf(stderr, "fixed_effects_by_LSDV: sigma = %g\n", femod.sigma);
 
     dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);
     free(felist);
@@ -1632,13 +1626,16 @@ static int within_variance (panelmod_t *pan,
 	err = femod.errcode;
 	clear_model(&femod);
     } else {
-#if 0
-	pan->within_s2 = femod.sigma * femod.sigma;
-#else
-	/* Stata-compatible */
-	pan->within_s2 = femod.ess / (femod.nobs - pan->effn - pan->vlist[0] + 1);
-#endif
+	/* Greene: nT - n - K */
+	int den = femod.nobs - pan->effn - (pan->vlist[0] - 2);
 
+	pan->s2e = femod.ess / den;
+#if PDEBUG
+	fprintf(stderr, "nT = %d, n = %d, K = %d\n", femod.nobs,
+		pan->effn, pan->vlist[0] - 2);
+	fprintf(stderr, "pan->s2e = %g / %d = %g\n", femod.ess,
+	       den, pan->s2e);
+#endif
 	fixed_effects_F(pan, &femod);
 
 	if (pan->opt & OPT_V) {
@@ -1701,7 +1698,7 @@ static void save_random_effects_model (MODEL *remod, panelmod_t *pan,
     remod->ci = PANEL;
 
     gretl_model_set_int(remod, "random-effects", 1);
-    gretl_model_set_double(remod, "within-variance", pan->within_s2);
+    gretl_model_set_double(remod, "within-variance", pan->s2e);
     gretl_model_set_double(remod, "between-variance", pan->between_s2);
 
     if (pan->balanced) {
@@ -1792,25 +1789,17 @@ static int random_effects (panelmod_t *pan,
 
     /* Calculate the quasi-demeaning coefficient, theta, using the
        Swamy and Arora method.  Note: for unbalanced panels, theta
-       will actually vary across the units.
+       will actually vary across the units in the final calculation.
     */
-    if (1) {
-	/* Stata method */
-	double s2e = pan->within_s2;
-
-	pan->s2u = pan->between_s2 - s2e / pan->Tbar;
-	if (pan->s2u < 0) {
-	    pan->s2u = 0.0;
-	}
-	pan->theta = 1.0 - sqrt(s2e / (pan->effT * pan->s2u + s2e));
-#if PDEBUG
-	fprintf(stderr, "s_u = %.8g, s_e = %.8g\n", sqrt(pan->s2u), sqrt(s2e));
-#endif
-    } else {
-	pan->theta = 1.0 - sqrt(pan->within_s2 / (pan->effT * pan->between_s2));
+    pan->s2u = pan->between_s2 - pan->s2e / pan->Tbar;
+    if (pan->s2u < 0) {
+	pan->s2u = 0.0;
     }
+    pan->theta = 1.0 - sqrt(pan->s2e / (pan->effT * pan->s2u + pan->s2e));
+
 #if PDEBUG
-    fprintf(stderr, "random_effects: theta = %g\n", pan->theta);
+    fprintf(stderr, "s_u = %.8g, s_e = %.8g\n", sqrt(pan->s2u), sqrt(pan->s2e));
+    fprintf(stderr, "random_effects theta = %g\n", pan->theta);
 #endif
 
     /* make special transformed dataset, and regression list */
@@ -2246,7 +2235,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
     
-    if (xdf > 0 && !na(pan.within_s2)) {
+    if (xdf > 0 && !na(pan.s2e)) {
 	double **gZ = NULL;
 	DATAINFO *ginfo;
 
@@ -2386,7 +2375,7 @@ MODEL real_panel_model (const int *list, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    if ((opt & OPT_U) && !na(pan.within_s2)) {
+    if ((opt & OPT_U) && !na(pan.s2e)) {
 	double **gZ = NULL;
 	DATAINFO *ginfo;
 

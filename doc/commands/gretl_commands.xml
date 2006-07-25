@@ -718,23 +718,32 @@
 	  <effect>do not include a constant</effect>
 	</option>
 	<option>
+	  <flag>--ct</flag>
+	  <effect>include constant and trend</effect>
+	</option>
+	<option>
+	  <flag>--ctt</flag>
+	  <effect>include constant and quadratic trend</effect>
+	</option>
+	<option>
 	  <flag>--skip-df</flag>
 	  <effect>no DF tests on individual variables</effect>
 	</option>
       </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
+	<example>coint 0 y x1 x2 --ct --skip-df</example>
       </examples>
     </usage>
 
     <description>
       <para context="cli">
 	The Engle&ndash;Granger cointegration test.  The default procedure
-	is: (1) carry out Augmented Dickey&ndash;Fuller tests on the null
+	is: (1) carry out Dickey&ndash;Fuller tests on the null
 	hypothesis that each of the variables listed has a unit root; (2)
-	estimate the cointegrating regression; and (3) run an ADF test
+	estimate the cointegrating regression; and (3) run a DF test
 	on the residuals from the cointegrating regression.  If the
-	<lit>--skip-df</lit> flag is given, step (1) is skipped.
+	<lit>--skip-df</lit> flag is given, step (1) is omitted.
       </para>
       <para context="cli">
 	If the specified lag order is positive, all the
@@ -744,13 +753,22 @@
 	see the <cmdref targ="adf"/> command for details.
       </para>
       <para context="cli">
+	By default, the cointegrating regression contains a constant. If
+	you wish to suppress the constant, add the <lit>--nc</lit> flag.
+	If you wish to augment the list of deterministic terms in the
+	cointegrating regression with a linear or quadratic trend, add
+	the <lit>--ct</lit> or <lit>--ctt</lit> flag.  These option
+	flags are mutually exclusive.
+      </para>
+
+      <para context="gui">
 	The Engle&ndash;Granger cointegration test.  The default procedure
-	is: (1) carry out Augmented Dickey&ndash;Fuller tests on the null
+	is: (1) carry out Dickey&ndash;Fuller tests on the null
 	hypothesis that each of the variables listed has a unit root; (2)
-	estimate the cointegrating regression; and (3) run an ADF test on
+	estimate the cointegrating regression; and (3) run a DF test on
 	the residuals from the cointegrating regression.  If the box
 	labeled <quote>skip initial DF tests</quote> is checked, however,
-	the first of tese steps is omitted.
+	the first of these steps is omitted.
       </para>
       <para context="gui">
 	If the lag order, <mathvar>k</mathvar>, is greater than 0, then
@@ -761,14 +779,16 @@
 	actual lag order used is obtained by testing down.  See the
 	<cmdref targ="adf"/> command for details of this procedure.
       </para>
+      <para context="gui">
+	By default, the cointegrating regression contains a constant. If
+	you wish to suppress the constant, or to add a linear or quadratic
+	trend, select the appropriate option from the set of radio buttons
+	in the Cointegration dialog box.
+      </para>
+
       <para><emphasis>P-</emphasis>values for this test are based on
 	MacKinnon (1996).  The relevant code is included by kind
 	permission of the author.
-      </para>
-      <para context="cli">
-	By default, the cointegrating regression contains a constant.
-	If you wish to suppress the constant, add the <lit>--nc</lit>
-	flag. 
       </para>
     </description>
 

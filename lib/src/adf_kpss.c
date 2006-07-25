@@ -144,6 +144,14 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
     if (*blurb_done == 0) {
 	if (flags & ADF_EG_RESIDS) {
 	    pputc(prn, '\n');
+	    pprintf(prn, _("lag order %d\n"), order);
+	} else if (flags & ADF_EG_TEST) {
+	    if (order > 0) {
+		pprintf(prn, _("\nAugmented Dickey-Fuller test, order %d, for %s\n"),
+			order, vname);
+	    } else {
+		pprintf(prn, _("\nDickey-Fuller test for %s\n"), vname);
+	    }
 	} else {
 	    if (order > 0 && !auto_order) {
 		pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
@@ -316,6 +324,21 @@ static int test_wanted (int test, gretlopt opt)
     return ret;
 }
 
+static int engle_granger_itv (gretlopt opt)
+{
+    int itv = UR_CONST;
+
+    if (opt & OPT_N) {
+	itv = UR_NO_CONST;
+    } else if (opt & OPT_T) {
+	itv = UR_TREND;
+    } else if (opt & OPT_R) {
+	itv = UR_QUAD_TREND;
+    }
+
+    return itv;
+}
+
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
 			  gretlopt opt, unsigned char flags,
@@ -341,11 +364,13 @@ static int real_adf_test (int varno, int order, int niv,
 #endif
 
     if (flags & ADF_EG_RESIDS) {
+	/* final step of Engle-Granger test: the (A)DF test regression
+	   will contain no deterministic terms, but the selection of the
+	   p-value is based on the deterministic terms in the cointegrating
+	   regression, represented by "eg_opt".
+	 */
 	eg_opt = opt;
 	opt = OPT_N;
-#if ADF_DEBUG
-	fprintf(stderr, "got ADF_EG_RESIDS, opt now = %d\n", (int) opt);
-#endif
     }
 
     if (opt & OPT_F) {
@@ -362,6 +387,10 @@ static int real_adf_test (int varno, int order, int niv,
     }
 
     order_max = order;
+
+#if ADF_DEBUG
+    fprintf(stderr, "real_adf_test: order = %d, auto_order = %d\n", order, auto_order);
+#endif
 
     if ((opt & OPT_D) && pdinfo->pd > 1) {
 	nseas = pdinfo->pd - 1;
@@ -384,11 +413,8 @@ static int real_adf_test (int varno, int order, int niv,
     gretl_model_init(&dfmod);
 
     if (test_opt_not_set(opt)) {
-	/* the default set of models */
+	/* do the full default set of models */
 	opt |= (OPT_C | OPT_T | OPT_R);
-#if ADF_DEBUG
-	fprintf(stderr, "test_opt_not_set: doing default DF models\n");
-#endif
     }
 
     for (i=UR_NO_CONST; i<UR_MAX; i++) {
@@ -460,7 +486,7 @@ static int real_adf_test (int varno, int order, int niv,
 	DFt = dfmod.coeff[dfnum] / dfmod.sderr[dfnum];
 
 	if (flags & ADF_EG_RESIDS) {
-	    itv = (eg_opt == OPT_N)? 1 : 2;
+	    itv = engle_granger_itv(eg_opt);
 	}
 
 	pv = df_pvalue_from_plugin(DFt, 
@@ -676,6 +702,92 @@ int kpss_test (int order, int varno, double ***pZ,
     return 0;
 }
 
+static int *make_coint_list (const int *list, int detcode, int *nv, 
+			     double ***pZ, DATAINFO *pdinfo,
+			     int *err)
+{
+    int *clist = NULL;
+    int ifc = 0;
+    int i, j = 1;
+
+    /* does the incoming list contain a constant? */
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == 0) {
+	    ifc = 1;
+	    break;
+	}
+    }
+
+    /* check for sufficient arguments */
+    *nv = list[0] - ifc;
+    if (*nv < 2) {
+	*err = E_ARGS;
+	return NULL;
+    }
+
+    /* allocate list for cointegrating regression */
+    clist = gretl_list_new(*nv + detcode - 1);
+    if (clist == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    /* transcribe original vars */
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] != 0) {
+	    clist[j++] = list[i];
+	}
+    }    
+
+    /* add trend, if wanted */
+    if (detcode >= UR_TREND) {
+	clist[j] = gettrend(pZ, pdinfo, 0);
+	if (clist[j++] == 0) {
+	    *err = E_ALLOC;
+	} 
+    }
+
+    /* add trend-squared, if wanted */
+    if (!*err && detcode == UR_QUAD_TREND) {
+	clist[j] = gettrend(pZ, pdinfo, 1);
+	if (clist[j++] == 0) {
+	    *err = E_ALLOC;
+	}
+    }
+
+    /* add const, if wanted */
+    if (!*err && detcode != UR_NO_CONST) {
+	clist[j] = 0;
+    } 
+
+    return clist;
+}
+
+static int 
+coint_check_opts (gretlopt opt, int *detcode, gretlopt *adf_opt)
+{
+    if (opt & OPT_N) {
+	if ((opt & OPT_T) || (opt & OPT_R)) {
+	    return E_BADOPT;
+	} else {
+	    *detcode = UR_NO_CONST;
+	    *adf_opt = OPT_N;
+	}
+    } else if (opt & OPT_T) {
+	if (opt & OPT_R) {
+	    return E_BADOPT;
+	} else {
+	    *detcode = UR_TREND;
+	    *adf_opt = OPT_T;
+	}
+    } else if (opt & OPT_R) {
+	*detcode = UR_QUAD_TREND;
+	*adf_opt = OPT_R;
+    }
+
+    return 0;
+}
+
 /**
  * coint:
  * @order: lag order for the test.
@@ -694,95 +806,63 @@ int kpss_test (int order, int varno, double ***pZ,
 int coint (int order, const int *list, double ***pZ, 
 	   DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    int i, t, n, nv, l0 = list[0];
-    int cpos, ifc, cnum = 0;
-    int step = 1;
+    gretlopt adf_opt = OPT_C;
     MODEL cmod;
-    int *cointlist = NULL;
+    int detcode = UR_CONST;
+    int i, nv, k = 0;
+    int step = 1;
+    int *clist = NULL;
+    int err = 0;
 
-    cpos = gretl_list_const_pos(list, 2, (const double **) *pZ, pdinfo);
-    if (cpos > 0) {
-	cnum = list[cpos];
-	ifc = 1;
-    } else {
-	ifc = 0;
+    err = coint_check_opts(opt, &detcode, &adf_opt);
+    if (err) {
+	return err;
     }
 
-    if (list[0] - ifc < 2) {
-	strcpy(gretl_errmsg, "coint: needs at least two variables");
-	return 1;
+    clist = make_coint_list(list, detcode, &nv, pZ, pdinfo, &err);
+    if (err) {
+	return err;
     }
 
     gretl_model_init(&cmod);
 
-    if (!(opt & OPT_N)) {
-	/* if not "no-const" then "const", for now */
-	opt = OPT_C;
-    }
-
     if (!(opt & OPT_S)) {
-	/* test all the vars for unit root */
-	for (i=1; i<=l0; i++) {
-	    if (list[i] == cnum) {
-		continue;
-	    }
+	/* test all candidate vars for unit root */
+	for (i=1; i<=nv; i++) {
 	    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
-		    step++, pdinfo->varname[list[i]]);
-	    real_adf_test(list[i], order, 1, pZ, pdinfo, opt, 
+		    step++, pdinfo->varname[clist[i]]);
+	    real_adf_test(clist[i], order, 1, pZ, pdinfo, adf_opt, 
 			  ADF_EG_TEST, prn);
-	}
-    }
-
-    /* carry out the cointegrating regression */
-    if (!ifc && !(opt & OPT_N)) {
-	/* add const to coint regression list */
-	cointlist = malloc((l0 + 2) * sizeof *cointlist);
-	if (cointlist == NULL) {
-	    return E_ALLOC;
-	}
-	for (i=0; i<=l0; i++) {
-	    cointlist[i] = list[i];
-	}
-	cointlist[l0 + 1] = 0;
-	cointlist[0] += 1;
-    } else {
-	cointlist = gretl_list_copy(list);
-	if (cointlist == NULL) {
-	    return E_ALLOC;
 	}
     }
 
     pprintf(prn, _("Step %d: cointegrating regression\n"), step++);
 
-    cmod = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE);
+    cmod = lsq(clist, pZ, pdinfo, OLS, OPT_NONE);
+    err = cmod.errcode;
+    if (err) {
+	goto bailout;
+    }
+
     cmod.aux = AUX_COINT;
     printmodel(&cmod, pdinfo, OPT_NONE, prn);
 
     /* add residuals from cointegrating regression to data set */
-    n = pdinfo->n;
-    if (dataset_add_series(1, pZ, pdinfo)) {
-	return E_ALLOC;
-    }
-    nv = pdinfo->v - 1;
-
-    for (t=0; t<cmod.t1; t++) {
-	(*pZ)[nv][t] = NADBL;
-    }
-    for (t=cmod.t1; t<=cmod.t2; t++) {
-	(*pZ)[nv][t] = cmod.uhat[t];
-    }
-    for (t=cmod.t2+1; t<n; t++) {
-	(*pZ)[nv][t] = NADBL;
+    err = dataset_add_allocated_series(cmod.uhat, pZ, pdinfo);
+    if (err) {
+	goto bailout;
     }
 
-    strcpy(pdinfo->varname[nv], "uhat");
+    k = pdinfo->v - 1;
+    strcpy(pdinfo->varname[k], "uhat");
+    cmod.uhat = NULL;
 
     pputc(prn, '\n');
     pprintf(prn, _("Step %d: Dickey-Fuller test on residuals\n"), step);
 
     /* Run (A)DF test on the residuals */
-    real_adf_test(pdinfo->v - 1, order, 1 + cmod.ncoeff - cmod.ifc, 
-		  pZ, pdinfo, opt, ADF_EG_TEST | ADF_EG_RESIDS | ADF_PRINT_ACK, 
+    real_adf_test(k, order, nv, pZ, pdinfo, adf_opt, 
+		  ADF_EG_TEST | ADF_EG_RESIDS | ADF_PRINT_ACK, 
 		  prn);
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
@@ -790,10 +870,13 @@ int coint (int order, const int *list, double ***pZ,
 		 " variables.\n(b) The unit-root hypothesis is rejected for the "
 		 "residuals (uhat) from the \n    cointegrating regression.\n"));
 
-    /* clean up and get out */
+ bailout:
+    
     clear_model(&cmod);
-    free(cointlist);
-    dataset_drop_last_variables(1, pZ, pdinfo);
+    free(clist);
+    if (k > 0) {
+	dataset_drop_variable(k, pZ, pdinfo);
+    }
 
-    return 0;
+    return err;
 }

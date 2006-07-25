@@ -1,4 +1,4 @@
-# PS10.9, for Example 10.7 *)
+# PS10.9, for Example 10.7
 open data10-5
 genr time
 # For testing for random walk, first generate lagged variables
@@ -29,5 +29,6 @@ genr diffut_4 = diffut(-4)
 smpl 1965 1994
 ols diffut ut1 diffut_1 diffut_2 diffut_3 diffut_4
 # compare shortcut command
+smpl 1960 1994
 coint 4 calwage uswage
 

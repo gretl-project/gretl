@@ -113,7 +113,7 @@ struct _selector {
                          c == WLS)
 
 #define WANT_RADIOS(c) (c == COINT2 || c == VECM || c == ARMA || c == PANEL || \
-                        c == SCATTERS)
+                        c == SCATTERS || c == COINT)
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
@@ -2290,7 +2290,7 @@ static void selector_init (selector *sr, guint code, const char *title,
 	}
     } 
 
-    if (WANT_TOGGLES(code)) {
+    if (WANT_TOGGLES(code) && code != COINT) {
 	dlgheight += 40;
     }
 
@@ -2695,9 +2695,6 @@ static void build_selector_switches (selector *sr)
 	tmp = gtk_check_button_new_with_label(_("Fine-tune using Cochrane-Orcutt"));
 	pack_switch(tmp, sr, TRUE, TRUE, OPT_B, 0);
     } else if (sr->code == COINT) {
-	tmp = gtk_check_button_new_with_label
-	    (_("Cointegrating regression includes a constant"));
-	pack_switch(tmp, sr, TRUE, TRUE, OPT_N, 0);
 	tmp = gtk_check_button_new_with_label
 	    (_("Test down from maximum lag order"));
 	pack_switch(tmp, sr, FALSE, FALSE, OPT_A, 0);
