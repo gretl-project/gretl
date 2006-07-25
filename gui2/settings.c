@@ -393,18 +393,37 @@ static void slash_terminate (char *path)
 
 static void get_functions_dir (char *dirname)
 {
+    char *target = NULL;
+    FILE *fp;
     int err;
 
     sprintf(dirname, "%sfunctions", paths.gretldir);
     err = gretl_mkdir(dirname);
-    if (err) {
-	sprintf(dirname, "%sfunctions", paths.userdir);
-	err = gretl_mkdir(dirname);
-    }
+    if (!err) {
+	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
+	fp = gretl_fopen(target, "w");
+	if (fp != NULL) {
+	    fclose(fp);
+	    remove(target);
+	    free(target);
+	    return;
+	}
+    } 
 
-    if (err) {
-	*dirname = '\0';
-    }
+    sprintf(dirname, "%sfunctions", paths.userdir);
+    err = gretl_mkdir(dirname);
+    if (!err) {
+	target = g_strdup_printf("%s%c%s", dirname, SLASH, "wtest");
+	fp = gretl_fopen(target, "w");
+	if (fp != NULL) {
+	    fclose(fp);
+	    remove(target);
+	    free(target);
+	    return;
+	}
+    }	
+
+    *dirname = '\0';
 }
 
 void get_default_dir (char *s, int action)
