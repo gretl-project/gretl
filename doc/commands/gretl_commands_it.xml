@@ -714,6 +714,10 @@
 	  <flag>--nc</flag>
 	  <effect>non include la costante</effect>
 	</option>
+	<option>
+	  <flag>--skip-df</flag>
+	  <effect>non esegue i test DF sulle variabili individuali</effect>
+	</option>
       </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
@@ -721,23 +725,50 @@
     </usage>
 
     <description>
-      <para>
-	Il test di cointegrazione di Engle&ndash;Granger svolge dei test
-	Dickey&ndash;Fuller aumentati sull'ipotesi nulla che ognuna delle
-        variabili elencate abbia una radice unitaria, usando l'ordine di
-        ritardi specificato. Viene stimata la regressione di cointegrazione
-	e viene eseguito un test ADF sui residui di questa regressione, mostrando
-        anche la statistica di Durbin&ndash;Watson per la regressione
-        di cointegrazione.
+      <para context="cli">
+        Il test di cointegrazione di Engle&ndash;Granger. La procedura
+        predefinita è la seguente: (1) eseguire dei test Dickey&ndash;Fuller
+        aumentati, sull'ipotesi nulla che ognuna delle variabili elencate abbia
+        una radice unitaria; (2) stimare la regressione di cointegrazione;
+        (3) eseguire un test ADF sui residui della regressione di
+        cointegrazione. Se si usa l'opzione <lit>--skip-df</lit>, il passo
+        (1) viene saltato.
       </para>
-      <para>I <emphasis>pvalue</emphasis> per questo test si basano su
+      <para context="cli">
+        Se l'ordine di ritardo specificato è positivo, tutti i test
+        Dickey&ndash;Fuller utilizzano questo ordine. Se l'ordine indicato viene
+        preceduto da un segno meno, viene interpretato come l'ordine massimo, e
+        l'ordine utilizzato effettivamente viene ricavato con la stessa
+        procedura di test "all'indietro" descritta per il comando
+        <cmdref targ="adf"/>.
+      </para>
+      <para context="cli">
+        Il test di cointegrazione di Engle&ndash;Granger. La procedura
+        predefinita è la seguente: (1) eseguire dei test Dickey&ndash;Fuller
+        aumentati, sull'ipotesi nulla che ognuna delle variabili elencate abbia
+        una radice unitaria; (2) stimare la regressione di cointegrazione;
+        (3) eseguire un test ADF sui residui della regressione di
+        cointegrazione. Se si attiva la casella <lit>Salta i test DF iniziali</lit>,
+        il passo (1) viene saltato.
+      </para>
+      <para context="gui">
+	Se l'ordine di ritardo, <mathvar>k</mathvar>, è maggior di 0, verranno
+        inclusi <mathvar>k</mathvar> ritardi della variabile dipendente al
+        secondo membro di ognuna delle regressioni di test, a meno che non si
+        usi la casella <quote>test dal massimo ordine di ritardi all'indietro</quote>:
+        in questo caso, l'ordine specificato viene considerato come massimo e
+        l'ordine usato effettivamente viene determinato con la procedura di
+        test "all'indietro" descritta per il comando <cmdref targ="adf"/>.
+      </para>
+      <para>
+        I <emphasis>pvalue</emphasis> per questo test si basano su
 	MacKinnon (1996). Il codice relativo è stato incluso per gentile
         concessione dell'autore.
       </para>
       <para context="cli">
 	La regressione di cointegrazione di solito contiene una costante;
         se si vuole escluderla, basta usare l'opzione <lit>--nc</lit>. 
-       </para>
+      </para>
     </description>
 
     <gui-access>
@@ -6643,6 +6674,10 @@
         <option>
 	  <flag>--gzipped</flag>
 	  <effect>comprime con gzip</effect>
+        </option>
+        <option>
+	  <flag>--jmulti</flag>
+	  <effect>usa il formato ASCII di JMulti</effect>
         </option>
         <option>
 	  <flag>--dat</flag>
