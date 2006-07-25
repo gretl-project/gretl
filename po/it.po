@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-07-17 16:33-0400\n"
-"PO-Revision-Date: 2006-07-21 13:33+0200\n"
+"PO-Revision-Date: 2006-07-24 10:36+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4543,11 +4543,11 @@ msgstr "gretl: client grafico per gretl versione %s,\n"
 
 #: lib/src/printout.c:118
 msgid "copyright Allin Cottrell.\n"
-msgstr "copyright Allin Cottrell.\n"
+msgstr "Copyright Allin Cottrell.\n"
 
 #: lib/src/printout.c:119
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
-msgstr "Questo è software libero SENZA ALCUNA GARANZIA\n"
+msgstr "Questo è software libero SENZA ALCUNA GARANZIA.\n"
 
 #: lib/src/printout.c:220
 #, no-c-format
@@ -5078,11 +5078,11 @@ msgstr "Minimi quadrati a tre stadi"
 
 #: lib/src/system.c:80
 msgid "Full Information Maximum Likelihood"
-msgstr "Massima verosimiglianza ad informazione completa (FIML)"
+msgstr "Massima verosimiglianza ad informazione completa"
 
 #: lib/src/system.c:81
 msgid "Limited Information Maximum Likelihood"
-msgstr "Massima verosimiglianza ad informazione limitata (LIML)"
+msgstr "Massima verosimiglianza ad informazione limitata"
 
 #: lib/src/system.c:82
 msgid "Ordinary Least Squares"
@@ -8426,7 +8426,7 @@ msgstr "/_Visualizza"
 
 #: gui2/gretl.c:376
 msgid "/View/_Icon view"
-msgstr "/Visualizza/Finestra _Icone"
+msgstr "/Visualizza/Finestra _icone"
 
 #: gui2/gretl.c:378
 msgid "/View/_Graph specified vars"
@@ -11766,7 +11766,7 @@ msgstr "Terminale di gretl"
 
 #: gui2/toolbar.c:152
 msgid "session icon view"
-msgstr "Icone di sessione"
+msgstr "Finestra icone"
 
 #: gui2/toolbar.c:153
 msgid "gretl website"
