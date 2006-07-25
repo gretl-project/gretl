@@ -715,6 +715,11 @@ int coint (int order, const int *list, double ***pZ,
 
     gretl_model_init(&cmod);
 
+    if (!(opt & OPT_N)) {
+	/* if not "no-const" then "const", for now */
+	opt = OPT_C;
+    }
+
     if (!(opt & OPT_S)) {
 	/* test all the vars for unit root */
 	for (i=1; i<=l0; i++) {
@@ -723,7 +728,7 @@ int coint (int order, const int *list, double ***pZ,
 	    }
 	    pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		    step++, pdinfo->varname[list[i]]);
-	    real_adf_test(list[i], order, 1, pZ, pdinfo, OPT_NONE, 
+	    real_adf_test(list[i], order, 1, pZ, pdinfo, opt, 
 			  ADF_EG_TEST, prn);
 	}
     }
@@ -774,11 +779,6 @@ int coint (int order, const int *list, double ***pZ,
 
     pputc(prn, '\n');
     pprintf(prn, _("Step %d: Dickey-Fuller test on residuals\n"), step);
-
-    if (!(opt & OPT_N)) {
-	/* if not "no-const" then "const", for now */
-	opt = OPT_C;
-    }
 
     /* Run (A)DF test on the residuals */
     real_adf_test(pdinfo->v - 1, order, 1 + cmod.ncoeff - cmod.ifc, 

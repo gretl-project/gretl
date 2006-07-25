@@ -2807,6 +2807,41 @@ static void build_panel_radios (selector *sr)
     sr->radios[1] = b2;
 }
 
+static void build_coint_radios (selector *sr)
+{
+    GtkWidget *tmp;
+    GtkWidget *button = NULL;
+    GSList *group = NULL;
+    const char *opt_strs[] = {
+        N_("test without constant"),
+        N_("test with constant"),
+        N_("with constant and trend"),
+        N_("with constant and quadratic trend"),
+	NULL
+    };
+    gretlopt opts[] = { 
+	OPT_N, 
+	OPT_NONE, 
+	OPT_T, 
+	OPT_R, 
+    };
+    int i, deflt = 0;
+
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
+    gtk_widget_show(tmp);
+
+    for (i=0; opt_strs[i] != NULL; i++) {
+	if (button != NULL) {
+	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	} else {
+	    group = NULL;
+	}
+	button = gtk_radio_button_new_with_label(group, _(opt_strs[i]));
+	pack_switch(button, sr, (opts[i] == deflt), FALSE, opts[i], 0);
+    }
+}
+
 static void build_vec_radios (selector *sr)
 {
     GtkWidget *tmp;
@@ -2852,6 +2887,8 @@ static void build_selector_radios (selector *sr)
 	build_panel_radios(sr);
     } else if (sr->code == SCATTERS) {
 	build_scatters_radios(sr);
+    } else if (sr->code == COINT) {
+	build_coint_radios(sr);
     } else {
 	build_vec_radios(sr);
     }

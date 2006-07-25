@@ -242,8 +242,7 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
     const double *crit = pmod->criterion;
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
-	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
-	pmod->aux == AUX_AR) {
+	pmod->aux == AUX_WHITE || pmod->aux == AUX_AR) {
 	return;
     }
 
@@ -1832,6 +1831,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (pmod->aux == AUX_COINT) {
 	rsqline(pmod, prn);
 	dwline(pmod, prn);
+	info_stats_lines(pmod, prn);
 	if (!plain_format(prn)) {
 	    print_middle_table_end(prn);
 	}
