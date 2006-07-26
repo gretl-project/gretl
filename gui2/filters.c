@@ -508,17 +508,23 @@ static int filter_dialog (filter_info *finfo)
 static int 
 do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 {
+    int twoplot = 0;
     FILE *fp = NULL;
     const double *obs;
     char title[128];
-    int t;
+    int v, t;
 
     obs = gretl_plotx(datainfo);
     if (obs == NULL) {
 	return E_ALLOC;
     }
 
-    if (gnuplot_init(PLOT_REGULAR, &fp)) {
+    if ((finfo->graph_opt & FILTER_GRAPH_TREND) &&
+	(finfo->graph_opt & FILTER_GRAPH_CYCLE)) {
+	twoplot = 1;
+    }
+
+    if (gnuplot_init((twoplot)? PLOT_TRI_GRAPH : PLOT_REGULAR, &fp)) { 
 	return E_FOPEN;
     }
 
@@ -534,11 +540,47 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	}
     }
 
+    v = finfo->vnum;
+
+    /* FIXME key position */
+
     gretl_push_c_numeric_locale();
 
-    if (finfo->graph_opt & FILTER_GRAPH_TREND) {
-	int v = finfo->vnum;
+    if (twoplot) {
+	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.60\n", fp);
 
+	fputs("set origin 0.0,0.4\n", fp);
+	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
+		" '-' using 1:2 title '%s' w lines\n", datainfo->varname[v], 
+		"Smoothed series");
+	for (t=finfo->t1; t<=finfo->t2; t++) {
+	    fprintf(fp, "%g %g\n", obs[t], Z[v][t]);
+	}
+	fputs("e , \\\n", fp);
+	for (t=finfo->t1; t<=finfo->t2; t++) {
+	    if (na(fx[t])) {
+		fprintf(fp, "%g ?\n", obs[t]);
+	    } else {
+		fprintf(fp, "%g %g\n", obs[t], fx[t]);
+	    }
+	}
+	fputs("e\n", fp);
+
+	fputs("set size 1.0,0.38\n", fp);
+	fputs("set origin 0.0,0.0\n", fp);
+	sprintf(title, I_("Cyclical component of %s"), datainfo->varname[v]);
+	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", title);
+	for (t=finfo->t1; t<=finfo->t2; t++) {
+	    if (na(u[t])) {
+		fprintf(fp, "%g ?\n", obs[t]);
+	    } else {
+		fprintf(fp, "%g %g\n", obs[t], u[t]);
+	    }
+	}
+	fputs("e\n", fp);
+	
+	fputs("set nomultiplot\n", fp);
+    } else if (finfo->graph_opt & FILTER_GRAPH_TREND) {
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
 		" '-' using 1:2 title '%s' w lines\n", datainfo->varname[v], 
 		"Smoothed series");
@@ -555,7 +597,7 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	}
 	fputs("e\n", fp);
     } else if (finfo->graph_opt & FILTER_GRAPH_CYCLE) {
-	sprintf(title, I_("Cyclical component of %s"), datainfo->varname[finfo->vnum]);
+	sprintf(title, I_("Cyclical component of %s"), datainfo->varname[v]);
 	fprintf(fp, "set title '%s'\n", title); 
 	fprintf(fp, "plot '-' using 1:2 title '' w lines\n");
 	for (t=finfo->t1; t<=finfo->t2; t++) {
