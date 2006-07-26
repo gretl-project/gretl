@@ -714,13 +714,22 @@
 	  <flag>--nc</flag>
 	  <effect>non include la costante</effect>
 	</option>
+ 	<option>
+	  <flag>--ct</flag>
+	  <effect>include la costante e il trend</effect>
+	</option>
+	<option>
+	  <flag>--ctt</flag>
+	  <effect>include la costante e il trend quadratico</effect>
+	</option>
 	<option>
 	  <flag>--skip-df</flag>
 	  <effect>non esegue i test DF sulle variabili individuali</effect>
 	</option>
       </options>
       <examples>
-	<example>coint 4 y x1 x2</example>
+        <example>coint 4 y x1 x2</example>
+        <example>coint 0 y x1 x2 --ct --skip-df</example>
       </examples>
     </usage>
 
@@ -730,7 +739,7 @@
         predefinita è la seguente: (1) eseguire dei test Dickey&ndash;Fuller
         aumentati, sull'ipotesi nulla che ognuna delle variabili elencate abbia
         una radice unitaria; (2) stimare la regressione di cointegrazione;
-        (3) eseguire un test ADF sui residui della regressione di
+        (3) eseguire un test DF sui residui della regressione di
         cointegrazione. Se si usa l'opzione <lit>--skip-df</lit>, il passo
         (1) viene saltato.
       </para>
@@ -742,12 +751,20 @@
         procedura di test "all'indietro" descritta per il comando
         <cmdref targ="adf"/>.
       </para>
+       <para context="cli">
+	L'impostazione predefinita consiste nell'includere una costante nella
+        regressione di cointegrazione; se si vuole omettere la costante, basta
+        usare l'opzione <lit>--nc</lit>. Se si vuole aggiungere all'elenco dei
+        termini deterministici della regressione un trend lineare o quadratico,
+        basta usare le opzioni <lit>--ct</lit> o <lit>--ctt</lit>. Queste opzioni
+        sono mutualmente esclusive.
+      </para>
       <para context="cli">
         Il test di cointegrazione di Engle&ndash;Granger. La procedura
         predefinita è la seguente: (1) eseguire dei test Dickey&ndash;Fuller
         aumentati, sull'ipotesi nulla che ognuna delle variabili elencate abbia
         una radice unitaria; (2) stimare la regressione di cointegrazione;
-        (3) eseguire un test ADF sui residui della regressione di
+        (3) eseguire un test DF sui residui della regressione di
         cointegrazione. Se si attiva la casella <lit>Salta i test DF iniziali</lit>,
         il passo (1) viene saltato.
       </para>
@@ -760,14 +777,16 @@
         l'ordine usato effettivamente viene determinato con la procedura di
         test "all'indietro" descritta per il comando <cmdref targ="adf"/>.
       </para>
+      <para context="gui">
+	L'impostazione predefinita consiste nell'includere una costante nella
+        regressione di cointegrazione. Se si vuole omettere la costante, o
+        aggiungere un trend lineare o quadratico, basta selezionare le relative
+        opzioni nella finestra di dialogo.
+      </para>
       <para>
         I <emphasis>pvalue</emphasis> per questo test si basano su
 	MacKinnon (1996). Il codice relativo è stato incluso per gentile
         concessione dell'autore.
-      </para>
-      <para context="cli">
-	La regressione di cointegrazione di solito contiene una costante;
-        se si vuole escluderla, basta usare l'opzione <lit>--nc</lit>. 
       </para>
     </description>
 
