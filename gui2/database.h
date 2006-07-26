@@ -29,4 +29,6 @@ gchar *get_db_description (const char *binname);
 
 int write_db_description (const char *binname, const char *descrip);
 
+void show_network_error (windata_t *vwin, char *buf);
+
 #endif

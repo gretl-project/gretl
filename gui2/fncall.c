@@ -22,6 +22,8 @@
 #include "selector.h"
 #include "gretl_func.h"
 #include "usermat.h"
+#include "webget.h"
+#include "database.h"
 
 #define FCDEBUG 0
 
@@ -241,7 +243,7 @@ static void fncall_help (GtkWidget *w, call_info *cinfo)
     err = user_function_help(fnname, prn);
     if (err) {
 	gretl_print_destroy(prn);
-	errbox("Couldn't get help");
+	dummy_call();
     } else {
 	view_buffer(prn, 80, 400, "help", PRINT, NULL);
     }
@@ -297,7 +299,7 @@ int do_make_list (selector *sr)
     }
 
     if (lname == NULL || *lname == 0) {
-	errbox("No name was given for the list");
+	errbox(_("No name was given for the list"));
 	return 1;
     }    
 
@@ -329,7 +331,7 @@ int do_make_list (selector *sr)
 
 static void launch_list_maker (GtkWidget *w, GtkWidget *entry)
 {
-    simple_selection("Define list", do_make_list, DEFINE_LIST, 
+    simple_selection(_("Define list"), do_make_list, DEFINE_LIST, 
 		     entry);
 }
 
@@ -434,7 +436,7 @@ static void function_call_dialog (call_info *cinfo)
 		     G_CALLBACK(fncall_delete), cinfo);
 
     fnname = user_function_name_by_index(cinfo->iface);
-    txt = g_strdup_printf("Call to function %s", fnname);
+    txt = g_strdup_printf(_("Call to function %s"), fnname);
     hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, txt, 1);
     gtk_widget_show(hbox);
 
@@ -443,24 +445,24 @@ static void function_call_dialog (call_info *cinfo)
     if (cinfo->n_params > 0) {
 	int tcols = (cinfo->need_list)? 4 : 3;
 
-	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, "Required arguments:", 0);
+	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, _("Required arguments:"), 0);
 	gtk_widget_show(hbox);
 
 	tbl = gtk_table_new(cinfo->n_params + 1, tcols, FALSE);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
 			   tbl, FALSE, FALSE, 5);
 
-	label = gtk_label_new("name");
+	label = gtk_label_new(_("name"));
 	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, 0, 1,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
 
-	label = gtk_label_new("type");
+	label = gtk_label_new(_("type"));
 	gtk_table_attach(GTK_TABLE(tbl), label, 1, 2, 0, 1,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
 
-	label = gtk_label_new("selection");
+	label = gtk_label_new(_("selection"));
 	gtk_table_attach(GTK_TABLE(tbl), label, 2, 3, 0, 1,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
@@ -519,7 +521,7 @@ static void function_call_dialog (call_info *cinfo)
     if (cinfo->n_returns > 0) {
 
 	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, 
-			  "Assign return values (optional):", 0);
+			  _("Assign return values (optional):"), 0);
 	gtk_widget_show(hbox);
 
 	tbl = gtk_table_new(cinfo->n_returns + 1, 2, FALSE);
@@ -531,7 +533,7 @@ static void function_call_dialog (call_info *cinfo)
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
 
-	label = gtk_label_new("selection (or new variable)");
+	label = gtk_label_new(_("selection (or new variable)"));
 	gtk_table_attach(GTK_TABLE(tbl), label, 1, 2, 0, 1,
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
@@ -598,7 +600,7 @@ static int check_args_and_rets (call_info *cinfo)
     if (cinfo->args != NULL) {
 	for (i=0; i<cinfo->n_params; i++) {
 	    if (cinfo->args[i] == NULL) {
-		errbox("Argument %d (%s) is missing", i + 1,
+		errbox(_("Argument %d (%s) is missing"), i + 1,
 		       fn_param_name(cinfo->func, i));
 		return 1;
 	    }
@@ -614,7 +616,7 @@ static int check_args_and_rets (call_info *cinfo)
 	    }
 	}
 	if (nr > 0 && nr < cinfo->n_returns) {
-	    errbox("You should assign all return values, or none");
+	    errbox(_("You should assign all return values, or none"));
 	    return E_DATA;
 	}
     }    
@@ -687,27 +689,68 @@ static int function_data_check (call_info *cinfo)
     return err;
 }
 
+static int temp_install_remote_fnpkg (const char *fname, char *target)
+{
+    char errbuf[80];
+    int err = 0;
+
+    build_path(target, paths.userdir, "dltmp", NULL);
+    err = gretl_tempname(target);
+    if (err) {
+	return err;
+    }
+
+    err = retrieve_remote_function_package(fname, target, errbuf);
+    if (err) {
+	show_network_error(NULL, errbuf);
+	return err;
+    } 
+
+    err = load_user_function_file(target);
+    if (err) {
+	fprintf(stderr, "load_user_function_file: failed on %s\n", target);
+	errbox(_("Couldn't open %s"), target);
+    }
+
+    if (err) {
+	remove(target);
+    }
+
+    return err;
+}
+
 void call_function_package (const char *fname, GtkWidget *w)
 {
+    char tmpfile[FILENAME_MAX];
     char fnline[MAXLINE];
     const char *fnname;
     PRN *prn;
     call_info cinfo;
-    int i, err;
+    int i, err = 0;
 
-    if (!user_function_file_is_loaded(fname)) {
-	err = load_user_function_file(fname);
-	if (err) {
-	    fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
-	    errbox(_("Couldn't open %s"), fname);
-	    return;
+    *tmpfile = 0;
+
+    if (strstr(fname, ".gfn") == NULL) {
+	/* not a full filename -> a function package on server */
+	err = temp_install_remote_fnpkg(fname, tmpfile);
+    } else {
+	if (!user_function_file_is_loaded(fname)) {
+	    err = load_user_function_file(fname);
+	    if (err) {
+		fprintf(stderr, "load_user_function_file: failed on %s\n", fname);
+		errbox(_("Couldn't open %s"), fname);
+	    }
 	}
+    }
+
+    if (err) {
+	return;
     }
 
     cinfo_init(&cinfo);
 
     /* get interface(s) for package */
-    err = function_package_get_info(fname,
+    err = function_package_get_info((*tmpfile)? tmpfile : fname,
 				    NULL,
 				    &cinfo.publist,
 				    NULL,
@@ -715,9 +758,13 @@ void call_function_package (const char *fname, GtkWidget *w)
 				    NULL,
 				    NULL);
 
+    if (*tmpfile) {
+	remove(tmpfile);
+    }
+
     if (cinfo.publist == NULL || cinfo.publist[0] == 0) {
 	free(cinfo.publist);
-	errbox("Function package is broken");
+	errbox(_("Function package is broken"));
 	return;
     }	
 
@@ -730,7 +777,7 @@ void call_function_package (const char *fname, GtkWidget *w)
     if (cinfo.func == NULL) {
 	fprintf(stderr, "get_user_function_by_index: got NULL for idx = %d\n", 
 		cinfo.iface);
-	errbox("Couldn't get function package information");
+	errbox(_("Couldn't get function package information"));
 	return;
     }
 
@@ -748,7 +795,7 @@ void call_function_package (const char *fname, GtkWidget *w)
     if (err) {
 	fprintf(stderr, "user_func_get_return_types: failed for idx = %d\n",
 		cinfo.iface);
-	errbox("Couldn't get function package information");
+	errbox(_("Couldn't get function package information"));
 	return;
     }
 

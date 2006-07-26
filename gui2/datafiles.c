@@ -718,16 +718,30 @@ static void browser_functions_handler (windata_t *vwin, int task)
     char fnfile[FILENAME_MAX];
     gchar *fname;
     gchar *dir;
-    int dircol = (vwin->role == FUNC_EDIT)? 2 : 3;
+    int dircol = 0;
+
+    if (vwin->role == FUNC_EDIT) {
+	dircol = 2;
+    } else if (vwin->role == FUNC_FILES) {
+	dircol = 3;
+    } else if (vwin->role != REMOTE_FUNC_FILES) {
+	dummy_call();
+	return;
+    }
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &fname);
-    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
-			 dircol, &dir);
 
-    build_path(fnfile, dir, fname, ".gfn");
+    if (dircol != 0) {
+	tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+			     dircol, &dir);
+	build_path(fnfile, dir, fname, ".gfn");
+	g_free(dir);
+    } else {
+	strcpy(fnfile, fname);
+    }
+
     g_free(fname);
-    g_free(dir);
 
     if (task == LOAD_FN_PKG) {
 	gui_load_user_functions(fnfile);
@@ -899,6 +913,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     case REMOTE_FUNC_FILES:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: function packages on server"));
+	call_func = browser_call_func;
 	browse_func = file_info_from_server;
 	break;
     }
@@ -971,7 +986,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 			 (code == FUNC_FILES)? 
 			 G_CALLBACK(display_function_info) :
 			 G_CALLBACK(display_datafile_info), vwin);
-	if (code != FUNC_FILES) {
+	if (code != FUNC_FILES && code != REMOTE_FUNC_FILES) {
 	    button = gtk_button_new_with_label(_("Find"));
 	    gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	    g_signal_connect(G_OBJECT(button), "clicked",

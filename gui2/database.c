@@ -115,7 +115,7 @@ float retrieve_float (netfloat nf)
 }
 #endif
 
-static void show_network_error (windata_t *vwin, char *buf)
+void show_network_error (windata_t *vwin, char *buf)
 {
     if (*buf != '\0') {
 	size_t n = strlen(buf);
@@ -1496,6 +1496,7 @@ static int real_install_file_from_server (windata_t *vwin, int op)
     if (vwin->role == REMOTE_FUNC_FILES) {
 	if (op == REAL_INSTALL) {
 	    infobox(_("Function package installed"));
+	    populate_filelist(vwin, NULL);
 	} else {
 	    gui_show_function_info(target, VIEW_FUNC_INFO);
 	}
@@ -1815,6 +1816,7 @@ gint populate_remote_object_list (windata_t *vwin)
 	if (read_remote_filetime(line, fname, &remtime)) {
 	    continue;
 	}
+
 	get_local_object_status(fname, vwin->role, status, remtime);
 	row[0] = strip_extension(fname);
 
