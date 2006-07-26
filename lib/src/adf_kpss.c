@@ -180,6 +180,10 @@ print_adf_results (int order, int auto_order, double DFt, double pv, const MODEL
 	if (auto_order) {
 	    pprintf(prn, "   %s %d\n", _("lag order:"), order);
 	}
+	if (!na(dfmod->rho)) {
+	    pprintf(prn, "   %s: %.3f\n", _("1st-order autocorrelation coeff. for e"), 
+		    dfmod->rho);
+	}
     }
 
     pprintf(prn, "   %s: %g\n"

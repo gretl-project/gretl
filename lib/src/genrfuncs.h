@@ -22,10 +22,6 @@
 
 /* private functions, used only in generate.c */
 
-int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo);
-
-int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo);
-
 int get_fracdiff (const double *y, double *diffvec, double d,
 		  const DATAINFO *pdinfo);
 

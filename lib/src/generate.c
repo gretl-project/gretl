@@ -4722,9 +4722,9 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
 
 	free(tmp);
     } else if (fn == T_HPFILT) { 
-	genr->err = hp_filter(mvec, x, pdinfo);	
+	genr->err = hp_filter(mvec, x, pdinfo, OPT_NONE);	
     } else if (fn == T_BKFILT) { 
-	genr->err = bkbp_filter(mvec, x, pdinfo);	
+	genr->err = bkbp_filter(mvec, x, pdinfo, OPT_NONE);	
     } else if (fn == T_FRACDIFF) {
 	genr->err = get_fracdiff(mvec, x, param, pdinfo);
     }

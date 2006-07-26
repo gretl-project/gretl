@@ -184,7 +184,7 @@ cat MANIFEST | ./make_iss.pl $VERSION | todos > gretl.iss
 
 # make Inno installer
 echo "Building gretl installer executable..."
-nice wine "c:/Program Files/Inno Setup 4/ISCC.exe" ./gretl.iss 2>errlog && \
+nice wine "c:/Program Files/Inno Setup 5/ISCC.exe" ./gretl.iss 2>errlog && \
 mv Output/setup.exe Output/gretl_install.exe && \
 ls -l Output/gretl_install.exe
 

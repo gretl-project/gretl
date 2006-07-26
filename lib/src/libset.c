@@ -244,17 +244,51 @@ double get_hp_lambda (void)
     return state->hp_lambda;
 }
 
+int set_hp_lambda (double d)
+{
+    check_for_state();
+    if (d > 0) {
+	state->hp_lambda = d;
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
 int get_bkbp_k (void)
 {
     check_for_state();
     return state->bkopts.k;
 }
 
-void get_bkbp_periods (int *periods)
+int set_bkbp_k (int k)
 {
     check_for_state();
-    periods[0] = state->bkopts.periods[0];
-    periods[1] = state->bkopts.periods[1];
+    if (k > 0) {
+	state->bkopts.k = k;
+	return 0;
+    } else {
+	return 1;
+    }
+}
+
+void get_bkbp_periods (int *bkl, int *bku)
+{
+    check_for_state();
+    *bkl = state->bkopts.periods[0];
+    *bku = state->bkopts.periods[1];
+}
+
+int set_bkbp_periods (int l, int u)
+{
+    check_for_state();
+    if (l > 0 && u > l) {
+	state->bkopts.periods[0] = l;
+	state->bkopts.periods[1] = u;
+	return 0;
+    } else {
+	return 1;
+    }
 }
 
 double get_bhhh_toler (void)
@@ -601,8 +635,8 @@ void set_garch_robust_vcv (const char *s)
     free(scpy);
 }
 
-static int set_bkbp_periods (const char *s0, const char *s1,
-			     PRN *prn)
+static int set_bkbp_limits (const char *s0, const char *s1,
+			    PRN *prn)
 {
     int p0, p1;
 
@@ -961,7 +995,7 @@ int execute_set_line (const char *line, const DATAINFO *pdinfo,
 	} 
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
-	    err = set_bkbp_periods(setarg, setarg2, prn);
+	    err = set_bkbp_limits(setarg, setarg2, prn);
 	}
     }
 		    

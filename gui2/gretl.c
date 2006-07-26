@@ -36,6 +36,7 @@
 #include "toolbar.h"
 #include "menustate.h"
 #include "fileselect.h"
+#include "filters.h"
 
 #include <dirent.h>
 
@@ -487,6 +488,15 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum/_Bartlett lag window"), NULL, do_pergm, 1, NULL, GNULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, unit_root_test, ADF, NULL, GNULL },
     { N_("/Variable/_KPSS test"), NULL, unit_root_test, KPSS, NULL, GNULL },
+    { N_("/Variable/_Filter"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Variable/Filter/_Simple moving average"), NULL, filter_callback, 
+      FILTER_SMA, NULL, GNULL },
+    { N_("/Variable/Filter/_Exponential moving average"), NULL, filter_callback, 
+      FILTER_EMA, NULL, GNULL },
+    { N_("/Variable/Filter/_Hodrick-Prescott"), NULL, filter_callback, 
+      FILTER_HP, NULL, GNULL },
+    { N_("/Variable/Filter/_Baxter-King"), NULL, filter_callback, 
+      FILTER_BK, NULL, GNULL },
 #ifdef HAVE_X12A
     { N_("/Variable/_X-12-ARIMA analysis"), NULL, do_tramo_x12a, X12A, NULL, GNULL },
 #endif

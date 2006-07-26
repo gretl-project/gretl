@@ -190,6 +190,7 @@ GUISRC = about.c \
 	dlgutils.c \
 	filelists.c \
 	fileselect.c \
+	filters.c \
 	fncall.c \
 	fnsave.c \
 	gpt_control.c \

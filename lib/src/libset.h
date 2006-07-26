@@ -56,9 +56,12 @@ int get_hac_lag (int m);
 int get_halt_on_error (void);
 
 double get_hp_lambda (void);
+int set_hp_lambda (double d);
 
 int get_bkbp_k (void);
-void get_bkbp_periods (int *periods);
+void get_bkbp_periods (int *bkl, int *bku);
+int set_bkbp_k (int k);
+int set_bkbp_periods (int bkl, int bku);
 
 int gretl_get_text_pause (void);
 

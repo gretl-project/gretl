@@ -73,6 +73,12 @@ const char *get_retriever_word (int idx);
 
 /* genrfuncs.c, public functions */
 
+int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo, 
+	       gretlopt opt);
+
+int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo,
+		 gretlopt opt);
+
 int dummy (double ***pZ, DATAINFO *pdinfo, int center);
 
 int panel_unit_first_obs (int t, const DATAINFO *pdinfo);

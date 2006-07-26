@@ -90,8 +90,9 @@ static double hp_lambda (const DATAINFO *pdinfo)
 /**
  * hp_filter:
  * @x: array of original data.
- * @hp: array in which Hodrick-Prescott "cycle" is computed.
+ * @hp: array in which filtered series is computed.
  * @pdinfo: data set information.
+ * @opt: if %OPT_T, return the trend rather than the cycle.
  *
  * Calculates the "cycle" component of the time series in
  * array @x, using the Hodrick-Prescott filter.  Adapted from the 
@@ -100,7 +101,8 @@ static double hp_lambda (const DATAINFO *pdinfo)
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
+int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
+	       gretlopt opt)
 {
     int i, t, T, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int err = 0;
@@ -226,8 +228,14 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
     V[3][0] = m[0];
     V[3][1] = m[1];
 
-    for (t=0; t<T; t++) {
-	hp[t] = x[t] - V[3][t];
+    if (opt & OPT_T) {
+	for (t=0; t<T; t++) {
+	    hp[t] = V[3][t];
+	}
+    } else {
+	for (t=0; t<T; t++) {
+	    hp[t] = x[t] - V[3][t];
+	}
     }
 
  bailout:
@@ -245,16 +253,18 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
  * @y: array of original data.
  * @bk: array into which to write the filtered series.
  * @pdinfo: data set information.
+ * @opt: if %OPT_T, return the trend rather than the cycle.
  *
  * Calculates the Baxter & King bandpass filter.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
+int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo,
+		 gretlopt opt)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int periods[2];
+    int bkl, bku;
 
     double omubar, omlbar;
     double avg_a;
@@ -269,15 +279,15 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
     */
 
     /* get user settings if available (or the defaults) */
-    get_bkbp_periods(periods);
+    get_bkbp_periods(&bkl, &bku);
     k = get_bkbp_k();
 
 #if BK_DEBUG
     fprintf(stderr, "lower limit = %d, upper limit = %d, \n", 
-	    periods[0], periods[1]);
+	    bkl, bku);
 #endif
 
-    if (periods[0] >= periods[1]) {
+    if (bkl >= bku) {
 	strcpy(gretl_errmsg, "Error in Baxter-King frequencies");
 	return 1;
     }
@@ -297,8 +307,8 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 	return E_ALLOC;
     }
     
-    omubar = 2.0 * M_PI / periods[0];
-    omlbar = 2.0 * M_PI / periods[1];
+    omubar = 2.0 * M_PI / bkl;
+    omlbar = 2.0 * M_PI / bku;
     
     /* first we compute the coefficients */
 
@@ -328,6 +338,9 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 	    bk[t] = a[0] * y[t];
 	    for (i=1; i<=k; i++) {
 		bk[t] += a[i] * (y[t-i] + y[t+i]);
+	    }
+	    if (opt & OPT_T) {
+		bk[t] = y[t] - bk[t];
 	    }
 	}
     }
