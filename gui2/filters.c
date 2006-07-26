@@ -127,7 +127,7 @@ static void filter_make_savename (filter_info *finfo, int i)
     } else if (finfo->ftype == FILTER_HP) {
 	strcpy(targ, (i == 0)? "hpt_" : "hp_");
     } else if (finfo->ftype == FILTER_BK) {
-	strcpy(targ, (i == 0)? "bkt_" : "bk");
+	strcpy(targ, (i == 0)? "bkt_" : "bk_");
     }
 
     len = strlen(targ);
