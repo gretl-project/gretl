@@ -58,10 +58,12 @@ int get_halt_on_error (void);
 double get_hp_lambda (void);
 int set_hp_lambda (double d);
 
-int get_bkbp_k (void);
-void get_bkbp_periods (int *bkl, int *bku);
+int get_bkbp_k (const DATAINFO *pdinfo);
+void get_bkbp_periods (const DATAINFO *pdinfo, int *l, int *u);
 int set_bkbp_k (int k);
 int set_bkbp_periods (int bkl, int bku);
+void unset_bkbp_k (void);
+void unset_bkbp_periods (void);
 
 int gretl_get_text_pause (void);
 

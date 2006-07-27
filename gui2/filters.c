@@ -57,6 +57,7 @@ struct filter_info_ {
     GtkWidget *entry1;
     GtkWidget *entry2;
     GtkWidget *check;
+    GtkWidget *nspin;
 };
 
 static const char *filter_get_title (int ftype)
@@ -88,14 +89,22 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->bkl = 0;
     finfo->bku = 0;
 
-    finfo->graph_opt = FILTER_GRAPH_TREND;
+    if (ftype == FILTER_BK) {
+	finfo->graph_opt = FILTER_GRAPH_CYCLE;
+    } else {
+	finfo->graph_opt = FILTER_GRAPH_TREND;
+    }
+
     finfo->save_opt = FILTER_SAVE_NONE;
 
     *finfo->save1 = 0;
     *finfo->save2 = 0;
 
     finfo->dlg = NULL;
+    finfo->entry1 = NULL;
+    finfo->entry2 = NULL;
     finfo->check = NULL;
+    finfo->nspin = NULL;
 
     if (ftype == FILTER_SMA) {
 	finfo->nobs = 5;
@@ -107,8 +116,8 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
 	    finfo->lambda = 100 * datainfo->pd * datainfo->pd;
 	}
     } else if (ftype == FILTER_BK) {
-	finfo->k = get_bkbp_k();
-	get_bkbp_periods(&finfo->bkl, &finfo->bku);
+	finfo->k = get_bkbp_k(datainfo);
+	get_bkbp_periods(datainfo, &finfo->bkl, &finfo->bku);
 	if (finfo->bku <= finfo->bkl) {
 	    finfo->bku = finfo->bkl + 1;
 	}
@@ -127,7 +136,7 @@ static void filter_make_savename (filter_info *finfo, int i)
     } else if (finfo->ftype == FILTER_HP) {
 	strcpy(targ, (i == 0)? "hpt_" : "hp_");
     } else if (finfo->ftype == FILTER_BK) {
-	strcpy(targ, (i == 0)? "bkt_" : "bk_");
+	strcpy(targ, "bk_");
     }
 
     len = strlen(targ);
@@ -165,13 +174,8 @@ static void filter_make_varlabel (filter_info *finfo, int v, int i)
 		    datainfo->varname[finfo->vnum], finfo->lambda);
 	}	    
     } else if (finfo->ftype == FILTER_BK) {
-	if (i == FILTER_SAVE_TREND) {
-	    sprintf(targ, "Filtered %s: Baxter-King trend", 
-		    datainfo->varname[finfo->vnum]);
-	} else {
-	    sprintf(targ, "Filtered %s: Baxter-King cycle", 
-		    datainfo->varname[finfo->vnum]);
-	}	    
+	sprintf(targ, "Filtered %s: Baxter-King cycle", 
+		datainfo->varname[finfo->vnum]);
     }
 }
 
@@ -297,6 +301,16 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 	finfo->center = 0;
     }
 
+    if (finfo->nspin != NULL) {
+	if (GTK_WIDGET_SENSITIVE(finfo->nspin)) {
+	    finfo->nobs = (int) 
+		gtk_spin_button_get_value(GTK_SPIN_BUTTON(finfo->nspin));
+	} else {
+	    finfo->nobs = 0;
+	}
+    }
+    
+
     gtk_widget_destroy(finfo->dlg);
 }
 
@@ -394,6 +408,47 @@ static void bkbp_frequencies_table (GtkWidget *dlg, filter_info *finfo)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
 }
 
+static void use_submean (GtkWidget *w, GtkWidget *s)
+{
+    gtk_widget_set_sensitive(s, GTK_TOGGLE_BUTTON(w)->active);
+}
+
+static void ema_obs_radios (GtkWidget *dlg, filter_info *finfo)
+{
+    GtkWidget *tab, *hbox, *w;
+    GtkWidget *r1, *r2;
+    GSList *group;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    w = gtk_label_new(_("The first EMA value is"));
+    gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tab = gtk_table_new(2, 2, FALSE);
+    gtk_table_set_col_spacing(GTK_TABLE(tab), 0, 5);
+
+    /* default */
+    r1 = gtk_radio_button_new_with_label(NULL, _("the mean of the whole series"));
+    gtk_table_attach_defaults(GTK_TABLE(tab), r1, 0, 1, 0, 1);
+
+    /* alternate */
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(r1));
+    r2 = gtk_radio_button_new_with_label(group, _("the mean of the first n observations"));
+    gtk_table_attach_defaults(GTK_TABLE(tab), r2, 0, 1, 1, 2);
+    w = gtk_spin_button_new_with_range(1, (finfo->t2 - finfo->t1 + 1) / 4, 1);
+    gtk_table_attach_defaults(GTK_TABLE(tab), w, 1, 2, 1, 2);
+    gtk_widget_set_sensitive(w, FALSE);
+    finfo->nspin = w;
+
+    /* connect */
+    g_signal_connect(G_OBJECT(r2), "clicked", G_CALLBACK(use_submean), w);
+
+    /* pack everything */
+    gtk_box_pack_start(GTK_BOX(hbox), tab, TRUE, TRUE, 10);  
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+}
+
 static int filter_dialog (filter_info *finfo)
 {
     GtkWidget *dlg;
@@ -450,6 +505,9 @@ static int filter_dialog (filter_info *finfo)
 			 G_CALLBACK(spinner_set_double), &finfo->lambda);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+
+	/* set calculation of initial EMA value */
+	ema_obs_radios(dlg, finfo);
     } else if (finfo->ftype == FILTER_HP) {
 	/* set H-P "lambda" parameter */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -477,16 +535,36 @@ static int filter_dialog (filter_info *finfo)
 	bkbp_frequencies_table(dlg, finfo);
     }
 
-    /* graphical output? */
     filter_dialog_hsep(dlg);
-    filter_graph_check_button(dlg, finfo, _("Graph original and smoothed series"),
-			      FILTER_GRAPH_TREND);
-    filter_graph_check_button(dlg, finfo, _("Graph residual or cycle series"),
-			      FILTER_GRAPH_CYCLE);
 
-    /* save to dataset? */
-    filter_dialog_hsep(dlg);
-    filter_save_check_buttons(dlg, finfo);
+    if (finfo->ftype == FILTER_BK) {
+	/* graphical output? */
+	filter_graph_check_button(dlg, finfo, _("Graph filtered series"),
+				  FILTER_GRAPH_CYCLE);
+	/* save to dataset? */
+	hbox = gtk_hbox_new(FALSE, 5);
+	w = gtk_check_button_new_with_label(_("Save cyclical series as"));
+	g_signal_connect(G_OBJECT(w), "toggled", 
+			 G_CALLBACK(set_cycle_save), &finfo->save_opt);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	w = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(w), VNAMELEN - 1);
+	gtk_entry_set_width_chars(GTK_ENTRY(w), VNAMELEN + 3);
+	filter_make_savename(finfo, 1);
+	gtk_entry_set_text(GTK_ENTRY(w), finfo->save2);
+	gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, FALSE, 5);
+	finfo->entry2 = w;
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
+    } else {
+	/* graphical output? */
+	filter_graph_check_button(dlg, finfo, _("Graph original and smoothed series"),
+				  FILTER_GRAPH_TREND);
+	filter_graph_check_button(dlg, finfo, _("Graph residual or cycle series"),
+				  FILTER_GRAPH_CYCLE);
+	/* save to dataset? */
+	filter_dialog_hsep(dlg);
+	filter_save_check_buttons(dlg, finfo);
+    }
 
     /* convenience pointer for button box */
     hbox = GTK_DIALOG(dlg)->action_area;
@@ -505,14 +583,31 @@ static int filter_dialog (filter_info *finfo)
     return ret;
 }
 
+static void print_gp_data (filter_info *finfo, const double *obs,
+			   const double *x, FILE *fp)
+{
+    int t;
+
+    for (t=finfo->t1; t<=finfo->t2; t++) {
+	if (na(x[t])) {
+	    fprintf(fp, "%g ?\n", obs[t]);
+	} else {
+	    fprintf(fp, "%g %g\n", obs[t], x[t]);
+	}
+    }
+}
+
 static int 
 do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 {
     int twoplot = 0;
+    int zkeypos = 'R';
     FILE *fp = NULL;
     const double *obs;
+    char xtitle[48];
+    char ztitle[48];
     char title[128];
-    int v, t;
+    int v;
 
     obs = gretl_plotx(datainfo);
     if (obs == NULL) {
@@ -542,7 +637,11 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 
     v = finfo->vnum;
 
-    /* FIXME key position */
+    if (finfo->graph_opt & FILTER_GRAPH_TREND) {
+	if (Z[v][finfo->t2] > Z[v][finfo->t1]) {
+	    zkeypos = 'L';
+	}
+    }
 
     gretl_push_c_numeric_locale();
 
@@ -550,63 +649,49 @@ do_filter_graph (filter_info *finfo, const double *fx, const double *u)
 	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.60\n", fp);
 
 	fputs("set origin 0.0,0.4\n", fp);
+	if (zkeypos == 'L') {
+	    fputs("set key top left\n", fp);
+	}
+	sprintf(xtitle, I_("%s (original data)"), datainfo->varname[v]);
+	sprintf(ztitle, I_("%s (smoothed)"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
-		" '-' using 1:2 title '%s' w lines\n", datainfo->varname[v], 
-		"Smoothed series");
-	for (t=finfo->t1; t<=finfo->t2; t++) {
-	    fprintf(fp, "%g %g\n", obs[t], Z[v][t]);
-	}
+		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
+	print_gp_data(finfo, obs, Z[v], fp);
 	fputs("e , \\\n", fp);
-	for (t=finfo->t1; t<=finfo->t2; t++) {
-	    if (na(fx[t])) {
-		fprintf(fp, "%g ?\n", obs[t]);
-	    } else {
-		fprintf(fp, "%g %g\n", obs[t], fx[t]);
-	    }
-	}
+	print_gp_data(finfo, obs, fx, fp);
 	fputs("e\n", fp);
 
 	fputs("set size 1.0,0.38\n", fp);
 	fputs("set origin 0.0,0.0\n", fp);
+	fputs("set xzeroaxis\n", fp);
 	sprintf(title, I_("Cyclical component of %s"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines\n", title);
-	for (t=finfo->t1; t<=finfo->t2; t++) {
-	    if (na(u[t])) {
-		fprintf(fp, "%g ?\n", obs[t]);
-	    } else {
-		fprintf(fp, "%g %g\n", obs[t], u[t]);
-	    }
-	}
+	print_gp_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
-	
 	fputs("set nomultiplot\n", fp);
     } else if (finfo->graph_opt & FILTER_GRAPH_TREND) {
+	if (zkeypos == 'L') {
+	    fputs("set key top left\n", fp);
+	}
+	sprintf(xtitle, I_("%s (original data)"), datainfo->varname[v]);
+	sprintf(ztitle, I_("%s (smoothed)"), datainfo->varname[v]);
 	fprintf(fp, "plot '-' using 1:2 title '%s' w lines, \\\n"
-		" '-' using 1:2 title '%s' w lines\n", datainfo->varname[v], 
-		"Smoothed series");
-	for (t=finfo->t1; t<=finfo->t2; t++) {
-	    fprintf(fp, "%g %g\n", obs[t], Z[v][t]);
-	}
+		" '-' using 1:2 title '%s' w lines\n", xtitle, ztitle);
+	print_gp_data(finfo, obs, Z[v], fp);
 	fputs("e , \\\n", fp);
-	for (t=finfo->t1; t<=finfo->t2; t++) {
-	    if (na(fx[t])) {
-		fprintf(fp, "%g ?\n", obs[t]);
-	    } else {
-		fprintf(fp, "%g %g\n", obs[t], fx[t]);
-	    }
-	}
+	print_gp_data(finfo, obs, fx, fp);
 	fputs("e\n", fp);
     } else if (finfo->graph_opt & FILTER_GRAPH_CYCLE) {
-	sprintf(title, I_("Cyclical component of %s"), datainfo->varname[v]);
-	fprintf(fp, "set title '%s'\n", title); 
-	fprintf(fp, "plot '-' using 1:2 title '' w lines\n");
-	for (t=finfo->t1; t<=finfo->t2; t++) {
-	    if (na(u[t])) {
-		fprintf(fp, "%g ?\n", obs[t]);
-	    } else {
-		fprintf(fp, "%g %g\n", obs[t], u[t]);
-	    }
+	if (finfo->ftype == FILTER_BK) {
+	    sprintf(title, I_("Baxter-King component of %s at frequency %d to %d"), 
+		    datainfo->varname[v], finfo->bkl, finfo->bku);
+	} else {
+	    sprintf(title, I_("Cyclical component of %s"), datainfo->varname[v]);
 	}
+	fprintf(fp, "set title '%s'\n", title); 
+	fputs("set xzeroaxis\n", fp);
+	fprintf(fp, "plot '-' using 1:2 title '' w lines\n");
+	print_gp_data(finfo, obs, u, fp);
 	fputs("e\n", fp);
     }	
 
@@ -658,13 +743,14 @@ static int calculate_filter (filter_info *finfo)
     int saved = 0;
     int t, err = 0;
 
-    fx = malloc(datainfo->n * sizeof *fx);
-    if (fx == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<datainfo->n; t++) {
-	fx[t] = NADBL;
+    if (finfo->ftype != FILTER_BK) {
+	fx = malloc(datainfo->n * sizeof *fx);
+	if (fx == NULL) {
+	    return E_ALLOC;
+	}
+	for (t=0; t<datainfo->n; t++) {
+	    fx[t] = NADBL;
+	}
     }
 
     if ((finfo->graph_opt & FILTER_GRAPH_CYCLE) ||
@@ -680,9 +766,7 @@ static int calculate_filter (filter_info *finfo)
 	int offset = finfo->center ? finfo->nobs / 2 : 0;
 	int i, k, t1, t2;
 
-	/* FIXME offsets */
-
-	t1 = finfo->center ? finfo->t1 + offset : finfo->t1 + finfo->nobs;
+	t1 = finfo->center ? finfo->t1 + offset : finfo->t1 + finfo->nobs - 1;
 	t2 = finfo->center ? finfo->t2 - offset : finfo->t2;
 
 	for (t=t1; t<=t2; t++) {
@@ -694,8 +778,16 @@ static int calculate_filter (filter_info *finfo)
 	    fx[t] /= finfo->nobs;
 	}
     } else if (finfo->ftype == FILTER_EMA) {
-	fx[finfo->t1] = gretl_mean(finfo->t1, finfo->t2, x);
-	for (t=finfo->t1 + 1; t<=finfo->t2; t++) {
+	int t1 = finfo->t1 + 1;
+
+	if (finfo->nobs == 0) {
+	    fx[finfo->t1] = gretl_mean(finfo->t1, finfo->t2, x);
+	} else {
+	    t1 = finfo->t1 + finfo->nobs - 1;
+	    fx[t1] = gretl_mean(finfo->t1, t1, x);
+	    t1++;
+	}
+	for (t=t1; t<=finfo->t2; t++) {
 	    fx[t] = finfo->lambda * x[t] + (1.0 - finfo->lambda) * fx[t-1];
 	}
     } else if (finfo->ftype == FILTER_HP) {
@@ -705,17 +797,14 @@ static int calculate_filter (filter_info *finfo)
 	err = hp_filter(x, fx, datainfo, OPT_T);
 	set_hp_lambda(l);
     } else if (finfo->ftype == FILTER_BK) {
-	int l, u, k = get_bkbp_k();
-
-	get_bkbp_periods(&l, &u);
 	set_bkbp_k(finfo->k);
 	set_bkbp_periods(finfo->bkl, finfo->bku);
-	err = bkbp_filter(x, fx, datainfo, OPT_T);
-	set_bkbp_k(k);
-	set_bkbp_periods(l, u);
+	err = bkbp_filter(x, u, datainfo);
+	unset_bkbp_k();
+	unset_bkbp_periods();
     }
 	
-    if (!err && u != NULL) {
+    if (!err && fx != NULL && u != NULL) {
 	for (t=0; t<datainfo->n; t++) {
 	    if (na(x[t]) || na(fx[t])) {
 		u[t] = NADBL;

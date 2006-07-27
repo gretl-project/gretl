@@ -76,8 +76,7 @@ const char *get_retriever_word (int idx);
 int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo, 
 	       gretlopt opt);
 
-int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo,
-		 gretlopt opt);
+int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo);
 
 int dummy (double ***pZ, DATAINFO *pdinfo, int center);
 

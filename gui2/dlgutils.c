@@ -634,17 +634,6 @@ static gboolean opt_r_callback (GtkWidget *w, dialog_t *dlg)
     return FALSE;
 }
 
-static gboolean opt_d_callback (GtkWidget *w, dialog_t *dlg)
-{
-    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	dlg->opt |= OPT_D;
-    } else {
-	dlg->opt &= ~OPT_D;
-    }
-
-    return FALSE;
-}
-
 static void maybe_set_seed (GtkWidget *w, double *d)
 {
     *d = GTK_ADJUSTMENT(w)->value;

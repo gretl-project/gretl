@@ -118,9 +118,9 @@ static void garch_opts_copy (struct garch_opts *opts)
 
 static void bkbp_opts_init (struct bkbp_opts *opts)
 {
-    opts->k = 8;
-    opts->periods[0] = 8;
-    opts->periods[1] = 32;
+    opts->k = UNSET_INT;
+    opts->periods[0] = UNSET_INT;
+    opts->periods[1] = UNSET_INT;
 }
 
 static void bkbp_opts_copy (struct bkbp_opts *opts)
@@ -161,10 +161,12 @@ static void sample_info_init (struct sample_info *sinfo)
 
 #define sinfo_is_set(s) (s.t1 != UNSET_INT && s.t2 != UNSET_INT)
 
-static void check_for_state (void) 
+static int check_for_state (void) 
 {
     if (state != NULL) {
-	libset_init();
+	return libset_init();
+    } else {
+	return 0;
     }
 }
 
@@ -234,19 +236,28 @@ static void state_vars_init (set_vars *sv)
 
 int get_hc_version (void)
 {
-    check_for_state();
-    return state->ropts.hc_version;
+    if (check_for_state()) {
+	return 0;
+    } else {
+	return state->ropts.hc_version;
+    }
 }
 
 double get_hp_lambda (void)
 {
-    check_for_state();
-    return state->hp_lambda;
+    if (check_for_state()) {
+	return 0.0;
+    } else {
+	return state->hp_lambda;
+    }
 }
 
 int set_hp_lambda (double d)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return E_ALLOC;
+    }
+
     if (d > 0) {
 	state->hp_lambda = d;
 	return 0;
@@ -255,15 +266,33 @@ int set_hp_lambda (double d)
     }
 }
 
-int get_bkbp_k (void)
+int get_bkbp_k (const DATAINFO *pdinfo)
 {
-    check_for_state();
-    return state->bkopts.k;
+    if (check_for_state()) {
+	return 0;
+    }
+
+    if (is_unset(state->bkopts.k)) {
+	if (pdinfo->pd == 1) {
+	    return 3;
+	} else if (pdinfo->pd == 4) {
+	    return 12;
+	} else if (pdinfo->pd == 12) {
+	    return 36;
+	} else {
+	    return 3;
+	}
+    } else {
+	return state->bkopts.k;
+    }
 }
 
 int set_bkbp_k (int k)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return E_ALLOC;
+    }
+
     if (k > 0) {
 	state->bkopts.k = k;
 	return 0;
@@ -272,16 +301,42 @@ int set_bkbp_k (int k)
     }
 }
 
-void get_bkbp_periods (int *bkl, int *bku)
+void unset_bkbp_k (void)
 {
-    check_for_state();
-    *bkl = state->bkopts.periods[0];
-    *bku = state->bkopts.periods[1];
+    if (check_for_state()) {
+	return;
+    }
+
+    state->bkopts.k = UNSET_INT;
+}
+
+void get_bkbp_periods (const DATAINFO *pdinfo, int *l, int *u)
+{
+    if (check_for_state()) {
+	return;
+    }
+
+    if (is_unset(state->bkopts.periods[0])) {
+	*l = (pdinfo->pd == 4)? 6 :
+	    (pdinfo->pd == 12)? 18 : 1;
+    } else {
+	*l = state->bkopts.periods[0];
+    }
+
+    if (is_unset(state->bkopts.periods[1])) {
+	*u = (pdinfo->pd == 4)? 32 :
+	    (pdinfo->pd == 12)? 96 : 8;
+    } else {
+	*u = state->bkopts.periods[1];
+    }
 }
 
 int set_bkbp_periods (int l, int u)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return E_ALLOC;
+    }
+
     if (l > 0 && u > l) {
 	state->bkopts.periods[0] = l;
 	state->bkopts.periods[1] = u;
@@ -291,15 +346,31 @@ int set_bkbp_periods (int l, int u)
     }
 }
 
+void unset_bkbp_periods (void)
+{
+    if (check_for_state()) {
+	return;
+    }
+
+    state->bkopts.periods[0] = UNSET_INT;
+    state->bkopts.periods[1] = UNSET_INT;
+}
+
 double get_bhhh_toler (void)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return 1.0;
+    }
+
     return state->maxopts.toler;
 }
 
 int get_bhhh_maxiter (void)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return 0;
+    }
+
     return state->maxopts.maxiter;
 }
 
@@ -307,7 +378,9 @@ int set_bhhh_toler (double tol)
 {
     int err = 0;
 
-    check_for_state();
+    if (check_for_state()) {
+	return E_ALLOC;
+    }
 
     if (tol <= 0.0) {
 	err = 1;
@@ -322,7 +395,9 @@ int set_bhhh_maxiter (int n)
 {
     int err = 0;
 
-    check_for_state();
+    if (check_for_state()) {
+	return E_ALLOC;
+    }
 
     if (n < 1) {
 	err = 1;
@@ -337,7 +412,9 @@ int set_long_digits (int n)
 {
     int err = 0;
 
-    check_for_state();
+    if (check_for_state()) {
+	return E_ALLOC;
+    }
 
     if (n < 1 || n > 20) {
 	err = 1;
@@ -351,13 +428,18 @@ int set_long_digits (int n)
 
 int get_VAR_horizon (void)
 {
-    check_for_state();
-    return state->horizon;
+    if (check_for_state()) {
+	return 0;
+    } else {
+	return state->horizon;
+    }
 }
 
 double get_nls_toler (void)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return 1.0;
+    }
 
     if (na(state->nls_toler)) {
 	state->nls_toler = get_default_nls_toler();
@@ -370,7 +452,9 @@ int set_nls_toler (double tol)
 {
     int err = 0;
 
-    check_for_state();
+    if (check_for_state()) {
+	return E_ALLOC;
+    }
 
     if (tol <= 0.0) {
 	err = 1;
@@ -383,7 +467,9 @@ int set_nls_toler (double tol)
 
 static int get_or_set_force_hc (int f)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return 0;
+    }
 
     if (f >= 0) {
 	state->ropts.force_hc = f;
@@ -394,7 +480,9 @@ static int get_or_set_force_hc (int f)
 
 static int get_or_set_garch_vcv (int v)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return 0;
+    }
 
     if (v >= 0) {
 	state->gopts.vcv_variant = v;
@@ -405,7 +493,9 @@ static int get_or_set_garch_vcv (int v)
 
 static int get_or_set_garch_robust_vcv (int v)
 {
-    check_for_state();
+    if (check_for_state()) {
+	return 0;
+    }
 
     if (v >= 0) {
 	state->gopts.robust_vcv_variant = v;
@@ -781,9 +871,19 @@ static int display_settings (PRN *prn)
 	pprintf(prn, " hp_lambda = %g\n", state->hp_lambda);
     }
 
-    pprintf(prn, " bkbp_limits = (%d, %d)\n", state->bkopts.periods[0], 
-	    state->bkopts.periods[1]);
-    pprintf(prn, " bkbp_k = %d\n", state->bkopts.k);
+    if (is_unset(state->bkopts.periods[0]) ||
+	is_unset(state->bkopts.periods[1])) {
+	pputs(prn, " bkbp_limits: auto\n");
+    } else {
+	pprintf(prn, " bkbp_limits = (%d, %d)\n", state->bkopts.periods[0], 
+		state->bkopts.periods[1]);
+    }
+
+    if (is_unset(state->bkopts.k)) {
+	pputs(prn, " bkbp_k: auto\n");
+    } else {
+	pprintf(prn, " bkbp_k = %d\n", state->bkopts.k);
+    }
 
     if (is_unset(state->horizon)) {
 	pputs(prn, " horizon: auto\n");

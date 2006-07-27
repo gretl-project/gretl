@@ -253,15 +253,13 @@ int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo,
  * @y: array of original data.
  * @bk: array into which to write the filtered series.
  * @pdinfo: data set information.
- * @opt: if %OPT_T, return the trend rather than the cycle.
  *
  * Calculates the Baxter & King bandpass filter.
  *
  * Returns: 0 on success, non-zero error code on failure.
  */
 
-int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo,
-		 gretlopt opt)
+int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int bkl, bku;
@@ -279,8 +277,8 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo,
     */
 
     /* get user settings if available (or the defaults) */
-    get_bkbp_periods(&bkl, &bku);
-    k = get_bkbp_k();
+    get_bkbp_periods(pdinfo, &bkl, &bku);
+    k = get_bkbp_k(pdinfo);
 
 #if BK_DEBUG
     fprintf(stderr, "lower limit = %d, upper limit = %d, \n", 
@@ -338,9 +336,6 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo,
 	    bk[t] = a[0] * y[t];
 	    for (i=1; i<=k; i++) {
 		bk[t] += a[i] * (y[t-i] + y[t+i]);
-	    }
-	    if (opt & OPT_T) {
-		bk[t] = y[t] - bk[t];
 	    }
 	}
     }

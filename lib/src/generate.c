@@ -4724,7 +4724,7 @@ static double *get_tmp_series (double *mvec, GENERATOR *genr,
     } else if (fn == T_HPFILT) { 
 	genr->err = hp_filter(mvec, x, pdinfo, OPT_NONE);	
     } else if (fn == T_BKFILT) { 
-	genr->err = bkbp_filter(mvec, x, pdinfo, OPT_NONE);	
+	genr->err = bkbp_filter(mvec, x, pdinfo);	
     } else if (fn == T_FRACDIFF) {
 	genr->err = get_fracdiff(mvec, x, param, pdinfo);
     }

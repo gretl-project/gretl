@@ -639,12 +639,6 @@ static gboolean update_cell_position (GtkTreeView *view, Spreadsheet *sheet)
     return TRUE; /* is this right? */
 }
 
-static int 
-var_added_since_ssheet_opened (int i, Spreadsheet *sheet, int main_v)
-{
-    return (i >= sheet->orig_main_v && i < main_v);
-}
-
 /* pull modified values from the data-editing spreadsheet
    into the main dataset */
 
