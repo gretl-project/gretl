@@ -293,4 +293,8 @@ void set_var_scalar (DATAINFO *pdinfo, int i, int s);
 
 void set_var_hidden (DATAINFO *pdinfo, int i);
 
+void var_set_linewidth (DATAINFO *pdinfo, int i, int w);
+
+int var_get_linewidth (const DATAINFO *pdinfo, int i);
+
 #endif /* DATASET_H */

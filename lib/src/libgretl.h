@@ -243,6 +243,7 @@ struct VARINFO_ {
     int flags;
     char compact_method;
     char stack_level;
+    char line_width;
     char **sorted_markers;
 };
 

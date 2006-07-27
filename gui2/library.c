@@ -5839,6 +5839,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 {
     int lines[1];
     int dbdata = 0, alt_model = 0;
+    int grbatch = 0;
     int script_code = exec_code;
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
@@ -5949,6 +5950,10 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     }
 
     check_for_loop_only_options(cmd.ci, cmd.opt, prn);
+
+    if (exec_code == SCRIPT_EXEC && *cmd.savename == 0) {
+	grbatch = 1;
+    }
 
     switch (cmd.ci) {
 
@@ -6306,7 +6311,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case GNUPLOT:
     case SCATTERS:
-	plotflags = gp_flags((exec_code == SCRIPT_EXEC), cmd.opt);
+	plotflags = gp_flags(grbatch, cmd.opt);
 	if (cmd.ci == GNUPLOT) {
 	    if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
 		err = gnuplot(cmd.list, NULL, cmd.param, &Z, datainfo,
@@ -6328,7 +6333,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	} else {
 	    if (exec_code == CONSOLE_EXEC && *cmd.savename == '\0') {
 		register_graph();
-	    } else if (exec_code == SCRIPT_EXEC) {
+	    } else if (grbatch) {
 		pprintf(prn, _("wrote %s\n"), gretl_plotfile());
 	    }
 	    err = maybe_save_graph(&cmd, gretl_plotfile(),

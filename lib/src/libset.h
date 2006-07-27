@@ -100,8 +100,7 @@ int get_long_digits (void);
 
 char get_csv_delim (const DATAINFO *pdinfo);
 
-int execute_set_line (const char *line, const DATAINFO *pdinfo,
-		      PRN *prn);
+int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn);
 
 #endif /* LIBSET_H */
 

@@ -725,6 +725,38 @@ void set_garch_robust_vcv (const char *s)
     free(scpy);
 }
 
+static int set_line_width (const char *s0, const char *s1,
+			   DATAINFO *pdinfo, PRN *prn)
+{
+    int v, w, err = 0;
+
+    if (!isdigit((unsigned char) *s1)) {
+	return 1;
+    }
+
+    if (isdigit((unsigned char) *s0)) {
+	v = atoi(s0);
+    } else {
+	v = varindex(pdinfo, s0);
+    }
+
+    if (v < 1 || v >= pdinfo->v) {
+	return E_DATA;
+    }
+
+    w = atoi(s1);
+
+    if (w < 0 || w > 32) {
+	err = E_DATA;
+    } else {
+	var_set_linewidth(pdinfo, v, w);
+	pprintf(prn, _("Line width for %s = %d\n"), 
+		pdinfo->varname[v], w);
+    }
+
+    return err;
+}
+
 static int set_bkbp_limits (const char *s0, const char *s1,
 			    PRN *prn)
 {
@@ -920,8 +952,7 @@ static int display_settings (PRN *prn)
 #define boolean_off(s) (!strcmp(s, "off") || !strcmp(s, "0") || \
                         !strcmp(s, "false"))
 
-int execute_set_line (const char *line, const DATAINFO *pdinfo,
-		      PRN *prn)
+int execute_set_line (const char *line, DATAINFO *pdinfo, PRN *prn)
 {
     char setobj[16], setarg[16], setarg2[16];
     int nw, err = E_PARSE;
@@ -1096,6 +1127,8 @@ int execute_set_line (const char *line, const DATAINFO *pdinfo,
     } else if (nw == 3) {
 	if (!strcmp(setobj, "bkbp_limits")) {
 	    err = set_bkbp_limits(setarg, setarg2, prn);
+	} else if (!strcmp(setobj, "linewidth")) {
+	    err = set_line_width(setarg, setarg2, pdinfo, prn);
 	}
     }
 		    

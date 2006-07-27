@@ -455,6 +455,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->flags = 0;
     vinfo->compact_method = COMPACT_NONE;
     vinfo->stack_level = 0;
+    vinfo->line_width = 1;
     vinfo->sorted_markers = NULL;
 
     if (gretl_executing_function()) {
@@ -477,6 +478,7 @@ void copy_varinfo (VARINFO *targ, const VARINFO *src)
     targ->flags = src->flags;
     targ->compact_method = src->compact_method;
     targ->stack_level = src->stack_level;
+    targ->line_width = src->line_width;
     targ->sorted_markers = NULL;
 }
 
@@ -2052,10 +2054,12 @@ int is_log_variable (int i, const DATAINFO *pdinfo, char *parent)
 
 void set_var_discrete (DATAINFO *pdinfo, int i, int s) 
 {
-    if (s) {
-	pdinfo->varinfo[i]->flags |= VAR_DISCRETE;
-    } else {
-	pdinfo->varinfo[i]->flags &= ~VAR_DISCRETE;
+    if (i > 0 && i < pdinfo->v) {
+	if (s) {
+	    pdinfo->varinfo[i]->flags |= VAR_DISCRETE;
+	} else {
+	    pdinfo->varinfo[i]->flags &= ~VAR_DISCRETE;
+	}
     }
 }
 
@@ -2071,10 +2075,12 @@ void set_var_discrete (DATAINFO *pdinfo, int i, int s)
 
 void set_var_scalar (DATAINFO *pdinfo, int i, int s) 
 {
-    if (s) {
-	pdinfo->varinfo[i]->flags |= VAR_SCALAR;
-    } else {
-	pdinfo->varinfo[i]->flags &= ~VAR_SCALAR;
+    if (i > 0 && i < pdinfo->v) {
+	if (s) {
+	    pdinfo->varinfo[i]->flags |= VAR_SCALAR;
+	} else {
+	    pdinfo->varinfo[i]->flags &= ~VAR_SCALAR;
+	}
     }
 }
 
@@ -2090,5 +2096,42 @@ void set_var_scalar (DATAINFO *pdinfo, int i, int s)
 
 void set_var_hidden (DATAINFO *pdinfo, int i) 
 {
-    pdinfo->varinfo[i]->flags |= VAR_HIDDEN;
+    if (i > 0 && i < pdinfo->v) {
+	pdinfo->varinfo[i]->flags |= VAR_HIDDEN;
+    }
+}
+
+/**
+ * var_set_linewidth:
+ * @pdinfo: pointer to data information struct.
+ * @i: index number of variable.
+ * @w: with of plot line.
+ *
+ * Set the line width for use when this variable is displayed
+ * in a line graph.
+ */
+
+void var_set_linewidth (DATAINFO *pdinfo, int i, int w) 
+{
+    if (w >= 1 && w <= 32 && i > 0 && i < pdinfo->v) {
+	pdinfo->varinfo[i]->line_width = w;
+    }
+}
+
+/**
+ * var_get_linewidth:
+ * @pdinfo: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Returns: the line width set for use when graphing
+ * variable @i.
+ */
+
+int var_get_linewidth (const DATAINFO *pdinfo, int i) 
+{
+    if (i > 0 && i < pdinfo->v) {
+	return pdinfo->varinfo[i]->line_width;
+    } else {
+	return 0;
+    }
 }

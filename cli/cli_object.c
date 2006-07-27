@@ -156,6 +156,11 @@ static int saved_object_action (const char *line, PRN *prn)
 	return 0;
     }
 
+    /* special: display icon view window, not applicable */
+    if (!strncmp(line, "iconview", 8)) {
+	return 1;
+    }
+
     action = cli_parse_object_request(line, objname, &param, &ptr, &type, prn);
 
     if (action == OBJ_ACTION_NONE) {

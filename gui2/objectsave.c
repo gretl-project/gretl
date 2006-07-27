@@ -317,6 +317,16 @@ int saved_object_action (const char *line, PRN *prn)
 	return 0;
     }
 
+    /* special: display icon view window */
+    if (!strncmp(line, "iconview", 8)) {
+	if (data_status) {
+	    view_session();
+	    return 1;
+	} else {
+	    return -1;
+	}
+    }
+
     action = gui_parse_object_request(line, objname, &param, &ptr, &type, prn);
 
     if (action == OBJ_ACTION_NONE) {

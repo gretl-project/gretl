@@ -1052,6 +1052,10 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
 	    hbox = gtk_hbox_new(FALSE, 5);
 	    linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
+	    if (spec->lines[i].width > 1) {
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(linewidth[i]),
+					  spec->lines[i].width);
+	    }
 	    g_signal_connect(G_OBJECT(linewidth[i]), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);

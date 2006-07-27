@@ -104,6 +104,7 @@ typedef enum {
     PLOT_ELLIPSE,
     PLOT_MULTI_IRF,
     PLOT_PANEL,
+    PLOT_BI_GRAPH,
     PLOT_TYPE_MAX
 } PlotType;
 

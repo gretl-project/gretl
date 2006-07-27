@@ -653,6 +653,7 @@ struct varinfo_settings {
     GtkWidget *label_entry;
     GtkWidget *display_name_entry;
     GtkWidget *compaction_menu;
+    GtkWidget *spin;
     GtkWidget *check;
     int varnum;
     int full;
@@ -764,6 +765,15 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	}
     }
 
+    if (vset->spin != NULL) {
+	int oldlw = var_get_linewidth(datainfo, v);
+	int lw = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(vset->spin));
+
+	if (lw != oldlw) {
+	    var_set_linewidth(datainfo, v, lw);
+	}
+    }
+
     if (vset->check != NULL) {
 	int discrete = 
 	    gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(vset->check));
@@ -819,7 +829,7 @@ static const char *comp_int_to_string (int i)
 
 void varinfo_dialog (int varnum, int full)
 {
-    GtkWidget *tempwid, *hbox;
+    GtkWidget *tmp, *hbox;
     struct varinfo_settings *vset;
     unsigned char flags;
 
@@ -836,6 +846,7 @@ void varinfo_dialog (int varnum, int full)
     vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
     vset->display_name_entry = NULL;
     vset->compaction_menu = NULL;
+    vset->spin = NULL;
     vset->check = NULL;
     vset->full = full;
 
@@ -844,9 +855,9 @@ void varinfo_dialog (int varnum, int full)
 
     /* read/set name of variable */
     hbox = gtk_hbox_new(FALSE, 5);
-    tempwid = gtk_label_new (_("name of variable:"));
-    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
-    gtk_widget_show(tempwid);
+    tmp = gtk_label_new (_("Name of variable:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_widget_show(tmp);
 
     vset->name_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->name_entry), VNAMELEN-1);
@@ -860,29 +871,29 @@ void varinfo_dialog (int varnum, int full)
     gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-		       hbox, FALSE, FALSE, 0);
+		       hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
     
     /* read/set descriptive string */
-    hbox = gtk_hbox_new(FALSE, 0);
-    tempwid = gtk_label_new (_("description:"));
-    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
-    gtk_widget_show(tempwid);
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new (_("Description:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_widget_show(tmp);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
     gtk_widget_show(hbox);
 
-    hbox = gtk_hbox_new(FALSE, 0);
+    hbox = gtk_hbox_new(FALSE, 5);
     vset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
 		       VARLABEL(datainfo, varnum));
-    gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 5);
     gtk_widget_show(vset->label_entry);
     gtk_entry_set_activates_default(GTK_ENTRY(vset->label_entry), TRUE);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-		       hbox, FALSE, FALSE, 0);
+		       hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox);  
 
     /* Of editing actions, editing the descriptive string is the most
@@ -892,9 +903,9 @@ void varinfo_dialog (int varnum, int full)
     /* read/set display name? */
     if (full) {
 	hbox = gtk_hbox_new(FALSE, 5);
-	tempwid = gtk_label_new (_("display name (shown in graphs):"));
-	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
-	gtk_widget_show(tempwid);
+	tmp = gtk_label_new (_("Display name (shown in graphs):"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_widget_show(tmp);
 
 	vset->display_name_entry = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(vset->display_name_entry), 
@@ -904,7 +915,7 @@ void varinfo_dialog (int varnum, int full)
 	gtk_entry_set_text(GTK_ENTRY(vset->display_name_entry), 
 			   DISPLAYNAME(datainfo, varnum));
 	gtk_box_pack_start(GTK_BOX(hbox), 
-			   vset->display_name_entry, FALSE, FALSE, 0);
+			   vset->display_name_entry, FALSE, FALSE, 5);
 	gtk_widget_show(vset->display_name_entry); 
 	gtk_entry_set_activates_default(GTK_ENTRY(vset->display_name_entry), TRUE);
 
@@ -918,35 +929,51 @@ void varinfo_dialog (int varnum, int full)
 	GtkWidget *menu;
 	int i;
 
-	hbox = gtk_hbox_new(FALSE, 0);
-	tempwid = gtk_label_new (_("compaction method (for reducing frequency):"));
-	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
-	gtk_widget_show(tempwid);
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 0);
-	gtk_widget_show(hbox);
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new (_("Compaction method (for reducing frequency):"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_widget_show(tmp);
 
 	vset->compaction_menu = gtk_option_menu_new();
 	menu = gtk_menu_new();
-
 	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
-	    tempwid = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
+	    tmp = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
 	}
-
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(vset->compaction_menu), menu);
 	gtk_option_menu_set_history(GTK_OPTION_MENU(vset->compaction_menu),
 				    COMPACT_METHOD(datainfo, varnum));    
-
-	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), 
-			   vset->compaction_menu, FALSE, FALSE, 0);
+			   vset->compaction_menu, FALSE, FALSE, 5);
 	gtk_widget_show_all(vset->compaction_menu); 
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
-			   hbox, FALSE, FALSE, 0);
+			   hbox, FALSE, FALSE, 5);
 	gtk_widget_show(hbox); 
     }
+
+    /* graph line width */
+    if (full && dataset_is_time_series(datainfo)) {  
+	int w;
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new (_("Graph line width:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_widget_show(tmp);
+
+	tmp = gtk_spin_button_new_with_range(1, 8, 1);
+	w = var_get_linewidth(datainfo, varnum);
+	if (w > 1) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tmp), w);
+	}
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_widget_show(tmp);
+	vset->spin = tmp;
+
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
+	gtk_widget_show(hbox); 
+    }    
 
     /* mark variable as discrete or not? */
     if (full && gretl_isdiscrete(0, datainfo->n - 1, Z[varnum])) {
@@ -957,27 +984,27 @@ void varinfo_dialog (int varnum, int full)
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(vset->check), TRUE);
 	}
 	gtk_widget_show(vset->check);
-	gtk_box_pack_start(GTK_BOX(hbox), vset->check, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), vset->check, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
 	gtk_widget_show(hbox); 
     }
 
     /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG (vset->dlg)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
+    tmp = ok_button(GTK_DIALOG (vset->dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(really_set_variable_info), vset);
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
 
     /* And a Cancel button */
-    tempwid = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    tmp = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
-			tempwid, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT (tempwid), "clicked", 
+			tmp, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT (tmp), "clicked", 
 		     G_CALLBACK(varinfo_cancel), vset);
-    gtk_widget_show (tempwid);
+    gtk_widget_show(tmp);
 
     /* And a Help button? */
     if (full) {

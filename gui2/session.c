@@ -382,7 +382,12 @@ static int session_append_graph (SESSION_GRAPH *graph)
 
 static char *session_file_make_path (char *path, const char *fname)
 {
-    sprintf(path, "%s%c%s", session.dirname, SLASH, fname);
+    if (g_path_is_absolute(fname)) {
+	strcpy(path, fname);
+    } else {
+	sprintf(path, "%s%c%s", session.dirname, SLASH, fname);
+    } 
+    fprintf(stderr, "session_file_make_path: path='%s'\n", path);
     return path;
 }
 
@@ -518,6 +523,9 @@ int real_add_graph_to_session (const char *fname, const char *grname,
 {
     SESSION_GRAPH *graph = get_session_graph_by_name(grname);
     int replace = 0;
+
+    fprintf(stderr, "real_add_graph_to_session: fname='%s', grname='%s'\n",
+	    fname, grname);
 
     if (graph != NULL) {
 	graph->type = type;

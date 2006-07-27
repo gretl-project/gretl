@@ -715,15 +715,15 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
     const char *vname = (i == FILTER_SAVE_TREND)? finfo->save1 :
 	finfo->save2;
     int v = varindex(datainfo, vname);
-    int t, err = 0;
+    int err = 0;
 
     if (v == datainfo->v) {
 	err = dataset_add_allocated_series(x, &Z, datainfo);
     } else {
-	for (t=0; t<datainfo->n; t++) {
-	    Z[v][t] = x[t];
-	}
-	free(x);
+	free(Z[v]);
+	Z[v] = x;
+	set_var_scalar(datainfo, v, 0);
+	set_var_discrete(datainfo, v, 0);
     }
 
     if (!err) {

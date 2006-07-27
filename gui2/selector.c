@@ -165,6 +165,14 @@ static int functions_list (selector *sr);
 
 #include "lagpref.c"
 
+static void box_insert_hsep (GtkWidget *w)
+{
+    GtkWidget *h = gtk_hseparator_new();
+
+    gtk_box_pack_start(GTK_BOX(w), h, FALSE, FALSE, 0);
+    gtk_widget_show(h);
+}
+
 static int selection_at_max (selector *sr, int nsel)
 {
     int ret = 0;
@@ -1974,9 +1982,7 @@ entry_with_label_and_chooser (selector *sr, GtkWidget *vbox,
     gtk_widget_show(x_hbox); 
 
     if (label_active || label_string != NULL) {
-	tmp = gtk_hseparator_new();
-	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
+	box_insert_hsep(vbox);
     }
 
     return entry;
@@ -2047,9 +2053,7 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, FALSE, 0);
     gtk_widget_show(sr->default_check); 
 
-    tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
-    gtk_widget_show(tmp);
+    box_insert_hsep(right_vbox);
 
     return yvar;
 }
@@ -2223,18 +2227,14 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_widget_show(sr->extra[0]); 
     } else if (sr->code == VAR || sr->code == VLAGSEL) {
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
-	tmp = gtk_hseparator_new();
-	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
+	box_insert_hsep(right_vbox);
 	tmp = gtk_label_new(_("Exogenous variables"));
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
 	auxiliary_varlist_box(sr, right_vbox);
     } else if (sr->code == VECM) {
 	lag_order_spin(sr, right_vbox, LAG_AND_RANK);
-	tmp = gtk_hseparator_new();
-	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
+	box_insert_hsep(right_vbox);
 	tmp = gtk_label_new(_("Exogenous variables"));
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
@@ -2243,9 +2243,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	lag_order_spin(sr, right_vbox, LAG_ONLY);
     }
 
-    tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
-    gtk_widget_show(tmp);
+    box_insert_hsep(right_vbox);
 }
 
 static int screen_scalar (int i, int c)
@@ -2262,7 +2260,7 @@ static int screen_scalar (int i, int c)
 static void selector_init (selector *sr, guint code, const char *title,
 			   gpointer p, int (*callback)())
 {
-    GtkWidget *base, *hsep;
+    GtkWidget *base;
     int i, dlgheight = 340;
     double hx;
 
@@ -2360,9 +2358,7 @@ static void selector_init (selector *sr, guint code, const char *title,
     gtk_container_set_border_width(GTK_CONTAINER(sr->vbox), 5);
     gtk_box_set_spacing(GTK_BOX(sr->vbox), 5);
 
-    hsep = gtk_hseparator_new();
-    gtk_widget_show(hsep);
-    gtk_box_pack_start(GTK_BOX(base), hsep, FALSE, FALSE, 0);
+    box_insert_hsep(base);
 
     sr->action_area = gtk_hbox_new(FALSE, 0);
     gtk_widget_show(sr->action_area);
@@ -2616,9 +2612,7 @@ static void build_selector_switches (selector *sr)
 
 	/* FIXME arma robust variant? */
 
-	tmp = gtk_hseparator_new();
-	gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
+	box_insert_hsep(sr->vbox);
 
 	b1 = gtk_check_button_new_with_label(_("Robust standard errors"));
 	g_object_set_data(G_OBJECT(b1), "opt", GINT_TO_POINTER(OPT_R));
@@ -2658,6 +2652,7 @@ static void build_selector_switches (selector *sr)
 
     if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
 	if (sr->code == ARMA) {
+	    box_insert_hsep(sr->vbox);
 	    tmp = gtk_check_button_new_with_label(_("Include a constant"));
 	    pack_switch(tmp, sr, arma_const, TRUE, OPT_N, 0);
 	}
@@ -2734,12 +2729,10 @@ static void unhide_lags_callback (GtkWidget *w, selector *sr)
 
 static void unhide_lags_switch (selector *sr) 
 {
-    GtkWidget *hbox, *tmp;
+    GtkWidget *hbox;
     GtkWidget *button;
 
-    tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-    gtk_widget_show(tmp);
+    box_insert_hsep(sr->vbox);
 
     button = gtk_check_button_new_with_label(_("Show lagged variables"));
     g_signal_connect(G_OBJECT(button), "toggled",
@@ -2772,12 +2765,14 @@ static void build_arma_radios (selector *sr)
     GtkWidget *b1, *b2;
     GSList *group;
 
+    box_insert_hsep(sr->vbox);
+
     b1 = gtk_radio_button_new_with_label(NULL, _("Exact Maximum Likelihood"));
-    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 1);
+    pack_switch(b1, sr, TRUE, FALSE, OPT_NONE, 0);
 
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(b1));
     b2 = gtk_radio_button_new_with_label(group, _("Conditional Maximum Likelihood"));
-    pack_switch(b2, sr, FALSE, FALSE, OPT_C, 1);
+    pack_switch(b2, sr, FALSE, FALSE, OPT_C, 0);
 
     sr->radios[0] = b1;
     sr->radios[1] = b2;
@@ -2806,7 +2801,6 @@ static void build_panel_radios (selector *sr)
 
 static void build_coint_radios (selector *sr)
 {
-    GtkWidget *tmp;
     GtkWidget *button = NULL;
     GSList *group = NULL;
     const char *opt_strs[] = {
@@ -2824,9 +2818,7 @@ static void build_coint_radios (selector *sr)
     };
     int i, deflt = 0;
 
-    tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-    gtk_widget_show(tmp);
+    box_insert_hsep(sr->vbox);
 
     for (i=0; opt_strs[i] != NULL; i++) {
 	if (button != NULL) {
@@ -2841,7 +2833,6 @@ static void build_coint_radios (selector *sr)
 
 static void build_vec_radios (selector *sr)
 {
-    GtkWidget *tmp;
     GtkWidget *button = NULL;
     GSList *group = NULL;
     const char *opt_strs[] = {
@@ -2861,9 +2852,7 @@ static void build_vec_radios (selector *sr)
     };
     int i, deflt = 0;
 
-    tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 0);
-    gtk_widget_show(tmp);
+    box_insert_hsep(sr->vbox);
 
     for (i=0; opt_strs[i] != NULL; i++) {
 	if (button != NULL) {
@@ -3056,9 +3045,7 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
     /* RHS: vertical holder */
     right_vbox = gtk_vbox_new(FALSE, 5);
 
-    tmp = gtk_hseparator_new();
-    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
-    gtk_widget_show(tmp);
+    box_insert_hsep(right_vbox);
 
     if (MODEL_CODE(ci)) { 
 	/* models: top right -> dependent variable */

@@ -400,7 +400,11 @@ void display_session_graph_png (const char *fname)
     gchar *plotcmd;
     int err = 0;
 
-    sprintf(fullname, "%s%s", paths.userdir, fname);
+    if (g_path_is_absolute(fname)) {
+	strcpy(fullname, fname);
+    } else {
+	sprintf(fullname, "%s%s", paths.userdir, fname);
+    }
 
     if (add_png_term_to_plotfile(fullname)) {
 	return;
@@ -549,6 +553,7 @@ static int get_gpt_marker (const char *line, char *label)
                       p == PLOT_MULTI_SCATTER || \
                       p == PLOT_PANEL || \
                       p == PLOT_TRI_GRAPH || \
+                      p == PLOT_BI_GRAPH || \
                       p == PLOT_VAR_ROOTS || \
 		      p == PLOT_ELLIPSE)
 
@@ -585,6 +590,7 @@ static GPT_SPEC *plotspec_new (void)
 	spec->lines[i].scale[0] = 0;
 	spec->lines[i].yaxis = 1;
 	spec->lines[i].type = 0;
+	spec->lines[i].width = 1;
 	spec->lines[i].ncols = 0;
     }
 
@@ -960,7 +966,7 @@ static int get_plot_nobs (FILE *fp, PlotType *ptype, int *do_markers)
 /* parse the "using..." portion of plot specification for a
    given plot line: full form is like:
   
-     using XX axes XX title XX w XX lt XX
+     using XX axes XX title XX w XX lt XX lw XX
 */
 
 static int parse_gp_line_line (const char *s, GPT_SPEC *spec, int i)
@@ -998,7 +1004,6 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec, int i)
 	}
     }
 
-    /* axes */
     if (strstr(s, "axes x1y2")) {
 	spec->lines[i].yaxis = 2;
     } 
@@ -1013,6 +1018,10 @@ static int parse_gp_line_line (const char *s, GPT_SPEC *spec, int i)
 
     if ((p = strstr(s, " lt "))) {
 	sscanf(p + 4, "%d", &spec->lines[i].type);
+    } 
+
+    if ((p = strstr(s, " lw "))) {
+	sscanf(p + 4, "%d", &spec->lines[i].width);
     } 
 
     if (spec->lines[i].ncols == 0 && spec->lines[i].formula[0] == '\0') {

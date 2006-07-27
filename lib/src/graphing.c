@@ -103,6 +103,7 @@ struct plot_type_info ptinfo[] = {
     { PLOT_ELLIPSE,        "confidence ellipse plot" },
     { PLOT_MULTI_IRF,      "multiple impulse responses" },
     { PLOT_PANEL,          "multiple panel plots" },
+    { PLOT_BI_GRAPH,       "double time-series plot" },
     { PLOT_TYPE_MAX,       NULL }
 };
     
@@ -1188,7 +1189,8 @@ gp_info_init (gnuplot_info *gpinfo, GnuplotFlags flags, FILE *fp,
 	gpinfo->toomany = 1;
     }
 
-    if (lo > 2 && lo < 7 && !(flags & GP_RESIDS) && !(flags & GP_FA)
+    if ((lo > 2 || (lo > 1 && (flags & GP_IDX))) && 
+	 lo < 7 && !(flags & GP_RESIDS) && !(flags & GP_FA)
 	&& !(flags & GP_DUMMY)) {
 	/* allow probe for using two y axes */
 	gpinfo->yscale = 1;
@@ -1257,6 +1259,17 @@ static void print_gnuplot_flags (GnuplotFlags flags)
     }
 }
 #endif
+
+static void set_lwstr (const DATAINFO *pdinfo, int v, char *s)
+{
+    int w = var_get_linewidth(pdinfo, v);
+
+    if (w > 0) {
+	sprintf(s, " lw %d", w);
+    } else {
+	strcpy(s, " lw 1");
+    }
+}
 
 static void set_withstr (GnuplotFlags flags, const int *lines, 
 			 int i, char *str)
@@ -1404,6 +1417,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     char s2[MAXDISP] = {0};
     char xlabel[MAXDISP] = {0};
     char withstr[16] = {0};
+    char lwstr[8] = {0};
     char keystr[48] = {0};
     char ols_line[128] = {0};
     int i;
@@ -1580,12 +1594,14 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
     fputs("plot \\\n", fp);
     if (gpinfo.yscale) {
 	for (i=1; i<gpinfo.lo; i++) {
-	    fprintf(fp, "'-' using 1:2 axes %s title '%s (%s)' %s%s",
+	    set_lwstr(pdinfo, list[i], lwstr);
+	    fprintf(fp, "'-' using 1:2 axes %s title '%s (%s)' %s%s%s",
 		    (i == gpinfo.oddman)? "x1y2" : "x1y1",
 		    series_name(pdinfo, list[i]), 
 		    (i == gpinfo.oddman)? I_("right") : I_("left"),
 		    (gpinfo.impulses)? "w impulses" : 
 		    (gpinfo.ts_plot)? "w lines" : "w points",
+		    lwstr,
 		    (i == gpinfo.lo - 1)? "\n" : " , \\\n");
 	}
     } else if (flags & GP_DUMMY) { 
@@ -1604,6 +1620,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	fprintf(fp, " '-' using 1:2 title '%s' %s lt 1\n", I_("actual"), withstr);	
     } else {
 	for (i=1; i<gpinfo.lo; i++)  {
+	    set_lwstr(pdinfo, list[i], lwstr);
 	    if (gpinfo.lo == 2) {
 		*s1 = '\0';
 	    } else {
@@ -1612,7 +1629,7 @@ int gnuplot (const int *plotlist, const int *lines, const char *literal,
 	    if (!gpinfo.impulses) { 
 		set_withstr(gpinfo.flags, lines, i, withstr);
 	    }
-	    fprintf(fp, " '-' using 1:2 title '%s' %s", s1, withstr);
+	    fprintf(fp, " '-' using 1:2 title '%s' %s%s", s1, withstr, lwstr);
 	    if (i < gpinfo.lo - 1 || gpinfo.ols_ok) {
 	        fputs(" , \\\n", fp); 
 	    } else {
