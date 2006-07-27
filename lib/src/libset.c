@@ -318,7 +318,7 @@ void get_bkbp_periods (const DATAINFO *pdinfo, int *l, int *u)
 
     if (is_unset(state->bkopts.periods[0])) {
 	*l = (pdinfo->pd == 4)? 6 :
-	    (pdinfo->pd == 12)? 18 : 1;
+	    (pdinfo->pd == 12)? 18 : 2;
     } else {
 	*l = state->bkopts.periods[0];
     }

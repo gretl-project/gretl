@@ -69,7 +69,7 @@ static const char *filter_get_title (int ftype)
     } else if (ftype == FILTER_HP) {
 	return N_("Hodrick-Prescott filter");
     } else if (ftype == FILTER_BK) {
-	return N_("Baxter-King filter");
+	return N_("Baxter-King Band-pass filter");
     } else {
 	return "";
     }

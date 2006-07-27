@@ -381,21 +381,28 @@ static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
 			     const char *varname, const char *comment,
 			     int n)
 {
-    char pd = 0, pdstr[3], endobs[OBSLEN];
+    char pd = 0, pdstr[4], endobs[OBSLEN];
     int startfrac = 0;
     int err = 0;
 
-    if (dinfo_sanity_check(dinfo)) return 1;
+    if (dinfo_sanity_check(dinfo)) {
+	return 1;
+    }
 
     *pdstr = 0;
 
     if (dinfo->info == 4) {
 	pd = 'Q';
 	sprintf(pdstr, ".%d", dinfo->month);
-	if (dinfo->month == 1) startfrac = 1;
-	else if (dinfo->month > 1 && dinfo->month <= 4) startfrac = 2;
-	else if (dinfo->month > 4 && dinfo->month <= 7) startfrac = 3;
-	else startfrac = 4;
+	if (dinfo->month == 1) {
+	    startfrac = 1;
+	} else if (dinfo->month > 1 && dinfo->month <= 4) {
+	    startfrac = 2;
+	} else if (dinfo->month > 4 && dinfo->month <= 7) {
+	    startfrac = 3;
+	} else {
+	    startfrac = 4;
+	}
     } else if (dinfo->info == 12) {
 	pd = 'M';
 	sprintf(pdstr, ".%02d", dinfo->month);
@@ -423,7 +430,6 @@ static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
 	row->obsinfo = malloc(64);
 	sprintf(row->obsinfo, "%c  %d%s - %s  n = %d", pd, 
 		(int) dinfo->year, pdstr, endobs, n);
-
 #endif
     } 
 
@@ -436,16 +442,23 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
 {
     RATSDirect rdir;
     DATEINFO dinfo;
+    RECNUM ret;
     int err = 0;
+
+    memset(rdir.series_name, 0, NAMELENGTH);
 
     fread(&rdir.back_point, sizeof(RECNUM), 1, fp);
     fread(&rdir.forward_point, sizeof(RECNUM), 1, fp);
     fseek(fp, 4L, SEEK_CUR); /* skip two shorts */
     fread(&rdir.first_data, sizeof(RECNUM), 1, fp);
-    fread(rdir.series_name, 16, 1, fp);  
-    rdir.series_name[8] = '\0';
+    fread(rdir.series_name, NAMELENGTH, 1, fp);  
+    rdir.series_name[15] = '\0';
 
     chopstr(rdir.series_name);
+
+#if DB_DEBUG
+    fprintf(stderr, "read_rats_directory: name='%s'\n", rdir.series_name);
+#endif
 
     if (series_name != NULL && strcmp(series_name, rdir.series_name)) {
 	/* specific series not found yet: keep going */
@@ -462,19 +475,53 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
     fread(&dinfo.month, sizeof(short), 1, fp);
     fread(&dinfo.day, sizeof(short), 1, fp);
 
+#if DB_DEBUG
+    fprintf(stderr, "info=%d, digits=%d, year=%d, mon=%d, day=%d\n", 
+	    (int) dinfo.info, (int) dinfo.digits, (int) dinfo.year, 
+	    (int) dinfo.month, (int) dinfo.day);
+#endif
+
     fread(&rdir.datapoints, sizeof(long), 1, fp);
     fseek(fp, sizeof(short) * 4L, SEEK_CUR);  /* skip 4 shorts */
+
+#if DB_DEBUG
+    fprintf(stderr, "datapoints = %d\n", (int) rdir.datapoints);
+#endif
 
     fread(&rdir.comment_lines, sizeof(short), 1, fp);
     fseek(fp, 1L, SEEK_CUR); /* skip one char */
 
-    fread(rdir.comments[0], 80, 1, fp);
-    rdir.comments[0][79] = '\0';
-    chopstr(rdir.comments[0]);
+#if DB_DEBUG
+    fprintf(stderr, "comment_lines = %d\n", (int) rdir.comment_lines);
+#endif
 
-    fread(rdir.comments[1], 80, 1, fp);
-    rdir.comments[1][79] = '\0';
-    chopstr(rdir.comments[1]);
+    if (rdir.comment_lines > 0) {
+	memset(rdir.comments[0], 0, 80);
+	fread(rdir.comments[0], 80, 1, fp);
+	rdir.comments[0][79] = '\0';
+	chopstr(rdir.comments[0]);
+    } else {
+	rdir.comments[0][0] = 0;
+	fseek(fp, 80, SEEK_CUR);
+    }
+
+#if DB_DEBUG
+    fprintf(stderr, "comment[0] = '%s'\n", rdir.comments[0]);
+#endif
+
+    if (rdir.comment_lines > 1) {
+	memset(rdir.comments[1], 0, 80);
+	fread(rdir.comments[1], 80, 1, fp);
+	rdir.comments[1][79] = '\0';
+	chopstr(rdir.comments[1]);
+    } else {
+	rdir.comments[1][0] = 0;
+	fseek(fp, 80, SEEK_CUR);
+    }
+
+#if DB_DEBUG
+    fprintf(stderr, "comment[1] = '%s'\n", rdir.comments[1]);
+#endif
 
 #if DB_DEBUG
     fprintf(stderr, "read_rats_directory: sinfo = %p, row = %p\n", 
@@ -496,11 +543,13 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
 	    err, (int) rdir.forward_point);
 #endif
 
-    if (err) {
-	return RATS_PARSE_ERROR;
-    } else {
-	return rdir.forward_point;
-    }
+    ret = (err)? RATS_PARSE_ERROR : rdir.forward_point;
+
+#if DB_DEBUG
+    fprintf(stderr, "returning %d\n", (int) ret);
+#endif
+
+    return ret;
 }
 
 #define DB_INIT_ROWS 32
@@ -582,7 +631,6 @@ static void db_table_free (db_table *tbl)
  * 
  * Returns: pointer to a #db_table containing the series info,
  * or NULL in case of failure.
- *
  */
 
 db_table *read_rats_db (FILE *fp) 
@@ -618,6 +666,10 @@ db_table *read_rats_db (FILE *fp)
     i = 0;
     while (forward && !err) {
 	tbl->nrows += 1;
+#if DB_DEBUG
+	fprintf(stderr, "read_rats_db: forward = %d, nrows = %d\n",
+		(int) forward, tbl->nrows);
+#endif    
 	if (tbl->nrows > 0 && tbl->nrows % DB_INIT_ROWS == 0) {
 	    err = db_table_expand(tbl);
 	    if (err) {
@@ -625,11 +677,23 @@ db_table *read_rats_db (FILE *fp)
 	    }
 	}
 	if (!err) {
-	    fseek(fp, (forward - 1) * 256L, SEEK_SET);
-	    forward = read_rats_directory(fp, &tbl->rows[i++], NULL, NULL);
-	    if (forward == RATS_PARSE_ERROR) err = 1;
+	    err = fseek(fp, (forward - 1) * 256L, SEEK_SET);
+	    if (!err) {
+		forward = read_rats_directory(fp, &tbl->rows[i++], NULL, NULL);
+		if (forward == RATS_PARSE_ERROR) {
+		    err = 1;
+		}
+	    }
 	}
+#if DB_DEBUG
+	fprintf(stderr, "bottom of loop, err = %d\n", err);
+#endif    
     }
+
+#if DB_DEBUG
+    fprintf(stderr, "read_rats_db: err = %d, tbl = %p\n",
+	    err, (void *) tbl);
+#endif    
 
     if (err) {
 	db_table_free(tbl);
