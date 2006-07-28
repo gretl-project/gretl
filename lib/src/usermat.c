@@ -1003,10 +1003,10 @@ gretl_matrix *user_matrix_get_slice (const char *s,
 }
 
 /**
- * add_or_replace_user_matrix:
+ * add_or_replace_user_matrix_full:
  * @M: gretl matrix.
  * @name: name for the matrix.
- * @mask: submatrix specification (or empty string).
+ * @mask: submatrix specification (or %NULL).
  * @R: location to receive address of matrix that was
  * replaced, if any (or %NULL).
  * @pZ: pointer to data array.
@@ -1020,9 +1020,9 @@ gretl_matrix *user_matrix_get_slice (const char *s,
  * Returns: 0 on success, %E_ALLOC on failure.
  */
 
-int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
-				const char *mask, gretl_matrix **R,
-				double ***pZ, DATAINFO *pdinfo)
+int add_or_replace_user_matrix_full (gretl_matrix *M, const char *name,
+				     const char *mask, gretl_matrix **R,
+				     double ***pZ, DATAINFO *pdinfo)
 {
     user_matrix *u;
     int err = 0;
@@ -1049,6 +1049,33 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
 	if (v < pdinfo->v && var_is_scalar(pdinfo, v)) {
 	    dataset_drop_variable(v, pZ, pdinfo);
 	}
+    }
+
+    return err;
+}
+
+/**
+ * add_or_replace_user_matrix:
+ * @M: gretl matrix.
+ * @name: name for the matrix.
+ *
+ * Checks whether a matrix of the given @name already exists.
+ * If so, the original matrix is replaced by @M; if not, the
+ * the matrix @M is added to the stack of user-defined
+ * matrices.
+ *
+ * Returns: 0 on success, %E_ALLOC on failure.
+ */
+
+int add_or_replace_user_matrix (gretl_matrix *M, const char *name)
+{
+    user_matrix *u = get_user_matrix_by_name(name);
+    int err = 0;
+
+    if (u != NULL) {
+	err = replace_user_matrix(u, M, NULL, NULL);
+    } else {
+	err = add_user_matrix(M, name);
     }
 
     return err;
@@ -1691,8 +1718,8 @@ static int create_matrix (const char *name, const char *mask,
 	if (err) {
 	    goto finalize;
 	} else if (M != NULL) {
-	    err = add_or_replace_user_matrix(M, name, mask, NULL,
-					     pZ, pdinfo);
+	    err = add_or_replace_user_matrix_full(M, name, mask, NULL,
+						  pZ, pdinfo);
 	    goto finalize;
 	}
     }
@@ -1740,8 +1767,8 @@ static int create_matrix (const char *name, const char *mask,
     }
     
     if (!err) {
-	err = add_or_replace_user_matrix(M, name, mask, NULL,
-					 pZ, pdinfo);
+	err = add_or_replace_user_matrix_full(M, name, mask, NULL,
+					      pZ, pdinfo);
     }
 
  finalize:
@@ -2296,7 +2323,7 @@ static int add_or_replace_aux_matrix (gretl_matrix *A,
 {
     int err;
 
-    err = add_or_replace_user_matrix(A, aname, NULL, NULL, pZ, pdinfo);
+    err = add_or_replace_user_matrix_full(A, aname, NULL, NULL, pZ, pdinfo);
 
     if (!err && gretl_messages_on()) {
 	if (n_matrices > old_nm) {

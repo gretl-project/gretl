@@ -10,18 +10,7 @@
 #define ZIPUNZIP_H_
 
 #include <time.h>
-
-/* remedial treatment for glib 1.2 */
-
 #include <glib.h>
-#if GLIB_MAJOR_VERSION == 1
-typedef struct GError_ GError;
-
-struct GError_ {
-    gint code;
-    gchar *message;
-};
-#endif /* GLIB_MAJOR_VERSION == 1 */
 
 /* The public API for libzipunzip */
 

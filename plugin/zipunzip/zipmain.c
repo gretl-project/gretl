@@ -217,31 +217,6 @@ int ziperr (int err, const char *format, ...)
     return err;
 }
 
-#if GLIB_MAJOR_VERSION == 1
-
-#define G_FILE_TEST_EXISTS 0
-
-static int g_file_test (const char *fname, int unused)
-{
-    struct stat buf;
-
-    return (stat(fname, &buf) == 0);
-}
-
-static void make_gerr (int err, GError **pgerr)
-{
-    GError *gerr = malloc(sizeof *gerr);
-
-    if (gerr != NULL) {
-	transcribe_zip_error(err);
-	gerr->code = err;
-	gerr->message = g_strdup(zerrbuf);
-	*pgerr = gerr;
-    }
-}
-
-#else
-
 static void make_gerr (int err, GError **pgerr)
 {
     GQuark dom;
@@ -252,8 +227,6 @@ static void make_gerr (int err, GError **pgerr)
     gerr = g_error_new(dom, err, zerrbuf);
     *pgerr = gerr;
 }
-
-#endif
 
 static void init_globals (ZipOption opt)
 {

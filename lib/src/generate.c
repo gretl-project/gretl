@@ -3593,8 +3593,8 @@ static int genr_write_matrix (GENERATOR *genr)
     if (M == NULL) {
 	err = 1;
     } else {
-	err = add_or_replace_user_matrix(M, genr->varname, mask, &R,
-					 genr->pZ, genr->pdinfo);
+	err = add_or_replace_user_matrix_full(M, genr->varname, mask, &R,
+					      genr->pZ, genr->pdinfo);
 
 	if (R != NULL) {
 	    /* avoid double-freeing replaced matrix R */

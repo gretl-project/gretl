@@ -652,6 +652,7 @@ struct varinfo_settings {
     GtkWidget *name_entry;
     GtkWidget *label_entry;
     GtkWidget *display_name_entry;
+    GtkWidget *value_entry;
     GtkWidget *compaction_menu;
     GtkWidget *spin;
     GtkWidget *check;
@@ -715,16 +716,12 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
     int v = vset->varnum;
     int changed = 0, gui_changed = 0;
     int comp_changed = 0, disc_changed = 0;
-    int comp_method;
 
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->name_entry));
     newstr = trim_text(edttext);
 
     if (newstr != NULL && strcmp(datainfo->varname[v], newstr)) {
-	int err;
-
-	err = do_rename_variable(v, newstr, vset->full);
-	if (err) {
+	if (do_rename_variable(v, newstr, vset->full)) {
 	    return;
 	} else {
 	    gui_changed = 1;
@@ -756,9 +753,26 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 	free(newstr);
     }
 
+    if (vset->value_entry != NULL) {
+	double val;
+
+	edttext = gtk_entry_get_text(GTK_ENTRY(vset->value_entry));
+	if (check_atof(edttext)) {
+	    errbox(get_gretl_errmsg());
+	    return;
+	} else {
+	    val = atof(edttext);
+	    if (val != Z[v][0]) {
+		Z[v][0] = val;
+		changed = 1;
+	    }
+	}
+    }
+
     if (vset->compaction_menu != NULL) {
-	comp_method = 
+	int comp_method = 
 	    gtk_option_menu_get_history(GTK_OPTION_MENU(vset->compaction_menu));
+
 	if (comp_method != COMPACT_METHOD(datainfo, v)) {
 	    COMPACT_METHOD(datainfo, v) = comp_method;
 	    comp_changed = 1;
@@ -832,6 +846,7 @@ void varinfo_dialog (int varnum, int full)
     GtkWidget *tmp, *hbox;
     struct varinfo_settings *vset;
     unsigned char flags;
+    int series = var_is_series(datainfo, varnum);
 
     vset = mymalloc(sizeof *vset);
     if (vset == NULL) return;
@@ -844,7 +859,9 @@ void varinfo_dialog (int varnum, int full)
 
     vset->varnum = varnum;
     vset->dlg = gretl_dialog_new(_("gretl: variable attributes"), NULL, flags);
+
     vset->display_name_entry = NULL;
+    vset->value_entry = NULL;
     vset->compaction_menu = NULL;
     vset->spin = NULL;
     vset->check = NULL;
@@ -900,8 +917,32 @@ void varinfo_dialog (int varnum, int full)
        likely?  On this assumption we'll focus that widget */
     gtk_widget_grab_focus(vset->label_entry);
 
+    /* set value? (scalars only) */
+    if (full && !series) {
+	char numstr[32];
+
+	hbox = gtk_hbox_new(FALSE, 5);
+	tmp = gtk_label_new (_("Value:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+	gtk_widget_show(tmp);
+
+	vset->value_entry = gtk_entry_new();
+	gtk_entry_set_max_length(GTK_ENTRY(vset->value_entry), 32);
+	gtk_entry_set_width_chars(GTK_ENTRY(vset->value_entry), 20);
+	sprintf(numstr, "%.16g", Z[varnum][0]);
+	gtk_entry_set_text(GTK_ENTRY(vset->value_entry), numstr);
+	gtk_box_pack_start(GTK_BOX(hbox), 
+			   vset->value_entry, FALSE, FALSE, 5);
+	gtk_widget_show(vset->value_entry); 
+	gtk_entry_set_activates_default(GTK_ENTRY(vset->value_entry), TRUE);
+
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
+	gtk_widget_show(hbox); 
+    }	
+
     /* read/set display name? */
-    if (full) {
+    if (full && series) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	tmp = gtk_label_new (_("Display name (shown in graphs):"));
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
@@ -925,7 +966,7 @@ void varinfo_dialog (int varnum, int full)
     }
 
     /* read/set compaction method? */
-    if (full && dataset_is_time_series(datainfo)) {  
+    if (full && series && dataset_is_time_series(datainfo)) {  
 	GtkWidget *menu;
 	int i;
 
@@ -953,7 +994,7 @@ void varinfo_dialog (int varnum, int full)
     }
 
     /* graph line width */
-    if (full && dataset_is_time_series(datainfo)) {  
+    if (full && series && dataset_is_time_series(datainfo)) {  
 	int w;
 
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -976,7 +1017,7 @@ void varinfo_dialog (int varnum, int full)
     }    
 
     /* mark variable as discrete or not? */
-    if (full && gretl_isdiscrete(0, datainfo->n - 1, Z[varnum])) {
+    if (full && series && gretl_isdiscrete(0, datainfo->n - 1, Z[varnum])) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	vset->check = gtk_check_button_new_with_label(_("Treat this variable "
 						      "as discrete"));

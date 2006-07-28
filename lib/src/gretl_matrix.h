@@ -170,6 +170,8 @@ int gretl_matrix_zero_upper (gretl_matrix *m);
 
 int gretl_matrix_zero_lower (gretl_matrix *m);
 
+void gretl_matrix_fill (gretl_matrix *m, double x);
+
 void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x);
 
 int gretl_matrix_divide_by_scalar (gretl_matrix *m, double x);

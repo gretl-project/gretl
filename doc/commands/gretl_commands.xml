@@ -6409,24 +6409,28 @@
       <para>* Add or edit a description of the variable: this appears
 	next to the variable name in the gretl main window.</para>
 
-      <para>* Add or edit the "display name" for the variable.  This
-	string (maximum 19 characters) is shown in place of the
-	variable name when the variable is displayed in a graph.  Thus
-	for instance you can associate a more comprehensible string
-	such as "T-bill rate" with a cryptically named variable such
-	as "tb3".</para>
+      <para>* Add or edit the "display name" for the variable (if the
+	variable is a series, not a scalar).  This string (maximum 19
+	characters) is shown in place of the variable name when the
+	variable is displayed in a graph.  Thus for instance you can
+	associate a more comprehensible string such as "T-bill rate" with
+	a cryptically named variable such as "tb3".</para>
 
-      <para>* (In case of a time-series dataset) set the compaction
-	method for the variable.  This method will be used if you
-	decide to reduce the frequency of the dataset, or if you
-	update the variable by importing from a database where the
-	variable is at a higher frequency than in the working dataset.
+      <para>* (For time-series data) set the compaction method for the
+	variable.  This method will be used if you decide to reduce the
+	frequency of the dataset, or if you update the variable by
+	importing from a database where the variable is at a higher
+	frequency than in the working dataset.
       </para>
 
-      <para>* Mark a variable as discrete.  This affects the way the
-	variable is handled when you ask for a frequency plot, and also
-	allows you to select the variable for the <cmdref
+      <para>* Mark a variable as discrete (for series with integer values
+	only).  This affects the way the variable is handled when you ask
+	for a frequency plot, and also allows you to select the variable
+	for the <cmdref
 	  targ="xtab"/> command (cross-tabulation).
+      </para>
+
+      <para>* (For a scalar variable) set the value of the variable.
       </para>
 
     </description>

@@ -40,9 +40,11 @@ int named_matrix_get_variable (const char *mspec,
 
 int add_user_matrix (gretl_matrix *M, const char *name);
 
-int add_or_replace_user_matrix (gretl_matrix *M, const char *name,
-				const char *mask, gretl_matrix **R,
-				double ***pZ, DATAINFO *pdinfo);
+int add_or_replace_user_matrix (gretl_matrix *M, const char *name);
+
+int add_or_replace_user_matrix_full (gretl_matrix *M, const char *name,
+				     const char *mask, gretl_matrix **R,
+				     double ***pZ, DATAINFO *pdinfo);
 
 int copy_named_matrix_as (const char *orig, const char *new);
 

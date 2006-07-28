@@ -22,10 +22,13 @@
 
 typedef enum {
     SHEET_EDIT_DATASET = 0,
-    SHEET_NEW_DATASET  = 1 << 0
+    SHEET_NEW_DATASET  = 1 << 0,
+    SHEET_EDIT_MATRIX  = 1 << 1
 } SheetCode;
 
 void show_spreadsheet (SheetCode code);
+
+void edit_matrix (gretl_matrix *m);
 
 int dataset_locked (void);
 

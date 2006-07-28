@@ -706,6 +706,117 @@ int kpss_test (int order, int varno, double ***pZ,
     return 0;
 }
 
+/**
+ * variance_ratio_test:
+ * @q: order or window size.
+ * @varno: ID number of the variable to test.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @opt: option flag.
+ * @prn: gretl printing struct.
+ *
+ * Carries out and prints the results of the Lo-MacKinlay 
+ * variance-ration test for stationarity.
+ *
+ * Returns: 0 on successful completion, non-zero on error.
+ */
+
+int variance_ratio_test (int q, int varno, double ***pZ,
+			 DATAINFO *pdinfo, gretlopt opt, 
+			 PRN *prn)
+{
+    double x, muhat, s2, s2q;
+    double sumcdiff;
+    double V, M, R;
+    const double *X;
+    int j, k, t;
+    int t1, t2, n;
+    int err = 0;
+
+    /* sanity check */
+    if (q < 2 || varno <= 0 || varno >= pdinfo->v) {
+	return 1;
+    }
+
+    if (opt & OPT_F) {
+	/* difference the variable before testing */
+	varno = diffgenr(varno, DIFF, pZ, pdinfo);
+	if (varno < 0) {
+	    return E_DATA;
+	}
+    }
+
+    X = (*pZ)[varno];
+
+    t1 = pdinfo->t1;
+    t2 = pdinfo->t2;
+
+    err = array_adjust_t1t2(X, &t1, &t2);
+    if (err) {
+	return err;
+    } 
+
+    n = t2 - t1; /* total obs - 1 */
+    if (n < q) {
+	return E_DATA;
+    }
+
+    k = n / q;
+    pprintf(prn, "n=%d, q=%d, k=%d\n", n, q, k);
+
+    muhat = (X[t2] - X[t1]) / n;
+    pprintf(prn, "t1=%d, t2=%d, muhat=%g\n", t1, t2, muhat);
+
+    sumcdiff = 0.0;
+    for (t=t1+1; t<=t2; t++) {
+	x = X[t] - X[t-1] - muhat;
+	sumcdiff += x * x;
+    }
+    s2 = sumcdiff / (n - 1);
+
+    s2q = 0.0;
+    for (t=t1+q; t<=t2; t++) {
+	x = X[t] - X[t-q] - q * muhat;
+	s2q += x * x;
+    }
+    s2q *= (double) k / ((n - q + 1.0) * (k - 1.0));
+    
+    M = s2q / (q * s2) - 1.0;
+    V = 2.0 * (2.0 * q - 1.0) * (q - 1.0) / (3.0 * n * q);
+
+    pprintf(prn, "Estimate of variance = %g\n", s2);
+    pprintf(prn, "For q = %d, estimate of variance s2_q = %g\n", q, s2q);
+
+    R = s2q / (q * s2);
+    pprintf(prn, "Ratio R = s2_q / (q * s2_q) = %g\n", R);
+
+    R = M / sqrt(V);
+    pprintf(prn, "Standardized R_s = %g\n", R);
+
+    /* FIXME needs work and testing */
+
+    /* robust variant */
+    V = 0.0;
+    for (j=1; j<q; j++) {
+	double x1, x2, delta;
+
+	x = 0.0;
+	for (t=t1+j+1; t<=t2; t++) {
+	    x1 = X[t] - X[t-1] - muhat;
+	    x2 = X[t-j] - X[t-j-1] - muhat;
+	    x += x1 * x1 * x2 * x2;
+	}
+	delta = x / (sumcdiff * sumcdiff);
+	x = 2.0 * (q - j) / (double) q;
+	V += x * x * delta;
+    }
+
+    R = M / sqrt(V);
+    pprintf(prn, "Robust variant: V = %g, Standardized R_s = %g\n", V, R);
+
+    return 0;
+}
+
 static int *make_coint_list (const int *list, int detcode, int *nv, 
 			     double ***pZ, DATAINFO *pdinfo,
 			     int *err)

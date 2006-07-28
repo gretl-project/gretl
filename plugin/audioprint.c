@@ -346,8 +346,6 @@ static int audio_print_special (int role, void *data, const DATAINFO *pdinfo,
     return 0;
 }
 
-#ifdef GLIB2
-
 static int read_listbox_content (windata_t *vwin, int (*should_stop)())
 {
     GtkTreeModel *model;
@@ -433,64 +431,4 @@ int read_window_text (windata_t *vwin, const DATAINFO *pdinfo,
 
     return err;
 }
-
-#else
-
-static int read_listbox_content (windata_t *vwin, int (*should_stop)())
-{
-    gchar *line;
-    gchar *tmpstr[3];
-    int i, err = 0;
-
-    err = speak_line("Contents of list box.\n");
-
-    for (i=0; !err; i++) {
-	if (!gtk_clist_get_text(GTK_CLIST(vwin->listbox), i, 0, &tmpstr[0]) ||
-	    !gtk_clist_get_text(GTK_CLIST(vwin->listbox), i, 1, &tmpstr[1]) ||
-	    !gtk_clist_get_text(GTK_CLIST(vwin->listbox), i, 2, &tmpstr[2])) {
-	    err = 1;
-	}
-
-	if (!err) {
-	    line = g_strdup_printf("%s. %s. %s.\n", tmpstr[0], 
-				   tmpstr[1], tmpstr[2]);
-	    err = speak_line(line);
-	    g_free(line);
-	}
-
-	if (!err && should_stop()) {
-	    break;
-	}
-    }
-
-    return err;
-}
-
-int read_window_text (windata_t *vwin, const DATAINFO *pdinfo,
-		      int (*should_stop)())
-{
-    int err = 0;
-
-    if (pdinfo == NULL) {
-	return read_listbox_content(vwin, should_stop);
-    }
-
-    if (vwin->role == SUMMARY ||
-	vwin->role == VAR_SUMMARY ||
-	vwin->role == CORR ||
-	vwin->role == COVAR ||
-	vwin->role == VIEW_MODEL) {
-	err = audio_print_special(vwin->role, vwin->data, pdinfo, should_stop);
-    } else {
-	gchar *window_text;
-
-	window_text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-	err = speak_buffer(window_text, should_stop);
-	g_free(window_text);
-    }
-
-    return err;
-}
-
-#endif /* GTK versions */
 

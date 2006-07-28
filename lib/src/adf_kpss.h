@@ -34,6 +34,10 @@ int adf_test (int order, int varno, double ***pZ,
 int kpss_test (int order, int varno, double ***pZ,
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
+int variance_ratio_test (int q, int varno, double ***pZ,
+			 DATAINFO *pdinfo, gretlopt opt, 
+			 PRN *prn);
+
 int coint (int order, const int *list, double ***pZ, 
 	   DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 

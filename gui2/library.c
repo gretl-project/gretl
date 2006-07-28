@@ -3179,6 +3179,11 @@ int do_rename_variable (int v, const char *newname, int full)
 {
     int err = 0;
 
+    if (check_varname(newname)) {
+	errbox(get_gretl_errmsg());
+	return 1;
+    }
+
     gretl_command_sprintf("rename %d %s", v, newname);
 
     if (full) {

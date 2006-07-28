@@ -393,6 +393,25 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c)
 }
 
 /**
+ * gretl_matrix_fill:
+ * @m: matrix to fill.
+ * @x: value with which to fill.
+ *
+ * Sets all entries in @m to the value @x.
+ */
+
+void gretl_matrix_fill (gretl_matrix *m, double x)
+{
+    if (m != NULL) {
+	int i, n = m->rows * m->cols;
+
+	for (i=0; i<n; i++) {
+	    m->val[i] = x;
+	}
+    }
+}
+
+/**
  * gretl_column_vector_from_array:
  * @x: pointer to array of elements.
  * @n: number of elements.
