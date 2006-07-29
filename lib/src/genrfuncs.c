@@ -807,6 +807,46 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
     return 0;
 }
 
+/**
+ * genrwkday:
+ * @pZ: pointer to data array.
+ * @pdinfo: data information struct.
+ *
+ * Generates (and adds to the dataset, if it's not already
+ * present) an index representing the day of the week for
+ * each observation (for dated daily data only).
+ * The index has value 1 for Monday, 2 for Tuesday, and
+ * so on.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int genrwkday (double ***pZ, DATAINFO *pdinfo)
+{
+    char datestr[OBSLEN];
+    int i, t;
+
+    if (!dated_daily_data(pdinfo)) {
+	return E_PDWRONG;
+    }
+
+    i = varindex(pdinfo, "weekday");
+
+    if (i == pdinfo->v && dataset_add_series(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
+
+    strcpy(pdinfo->varname[i], "weekday");
+    strcpy(VARLABEL(pdinfo, i), _("day of week (1 = Monday)"));
+    
+    for (t=0; t<pdinfo->n; t++) {
+	ntodate_full(datestr, t, pdinfo);
+	(*pZ)[i][t] = get_day_of_week(datestr);
+    }
+
+    return 0;
+}
+
 typedef enum {
     PLOTVAR_INDEX,
     PLOTVAR_TIME,

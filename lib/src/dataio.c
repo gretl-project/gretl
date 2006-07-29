@@ -1993,9 +1993,11 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-static int check_daily_dates (DATAINFO *pdinfo, int *pd)
+#define DAY_DEBUG 0
+
+static int check_daily_dates (DATAINFO *pdinfo, int *pd, PRN *prn)
 {
-    int fulln = 0, n, t;
+    int fulln = 0, n, t, nbak;
     int oldpd = pdinfo->pd;
     double oldsd0 = pdinfo->sd0;
     long ed1, ed2;
@@ -2008,10 +2010,14 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
 	err = 1;
     }
 
+#if DAY_DEBUG    
+    fprintf(stderr, "S[0] = '%s', ed1 = %ld\n", pdinfo->S[0], ed1);
+#endif
+
     pdinfo->pd = guess_daily_pd(pdinfo);
     pdinfo->structure = TIME_SERIES;
 
-#if 0    
+#if DAY_DEBUG    
     fprintf(stderr, "guessed daily pd = %d\n", pdinfo->pd);
 #endif
 
@@ -2033,35 +2039,42 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
 	    err = 1;
 	} else {
 	    nmiss = fulln - pdinfo->n;
-	    fprintf(stderr, "Observations: %d; days in sample: %d\n", 
+	    pprintf(prn, "Observations: %d; days in sample: %d\n", 
 		    pdinfo->n, fulln);
 	    if (nmiss > 300 * pdinfo->n) {
-		fprintf(stderr, "Probably annual data\n");
+		pprintf(prn, "Probably annual data\n");
 		*pd = 1;
 	    } else if (nmiss > 50 * pdinfo->n) {
-		fprintf(stderr, "Probably quarterly data\n");
+		pprintf(prn, "Probably quarterly data\n");
 		*pd = 4;
 	    } else if (nmiss > 20 * pdinfo->n) {
-		fprintf(stderr, "Probably monthly data\n");
+		pprintf(prn, "Probably monthly data\n");
 		*pd = 12;
 	    } else if (nmiss > 5 * pdinfo->n) {
-		fprintf(stderr, "Probably weekly data\n");
+		pprintf(prn, "Probably weekly data\n");
 		*pd = pdinfo->pd = 52;
 	    } else {
-		fprintf(stderr, "Missing daily observations: %d\n", nmiss);
+		pprintf(prn, "Missing daily observations: %d\n", nmiss);
 	    }
 	}
     }
 
+    nbak = 0;
     for (t=0; t<pdinfo->n && !err; t++) {
 	n = calendar_obs_number(pdinfo->S[t], pdinfo);
 	if (n < t) {
-	    fprintf(stderr, "Error: n = %d < t = %d\n", n, t);
+	    pprintf(prn, "Daily dates error at t = %d:\n"
+		    "  calendar_obs_number() for '%s' = %d but t = %d\n", 
+		    t, pdinfo->S[t], n, t);
 	    err = 1;
 	} else if (n > fulln - 1) {
-	    fprintf(stderr, "Error: n = %d >= fulln = %d\n", n, fulln);
+	    pprintf(prn, "Error: date '%s' out of bounds\n", pdinfo->S[t]);
+	    err = 1;
+	} else if (nbak > 0 && n == nbak) {
+	    pprintf(prn, "Error: date '%s' is repeated\n", pdinfo->S[t]);
 	    err = 1;
 	}
+	nbak = n;
     }
 
     if (err) {
@@ -2297,7 +2310,7 @@ csv_daily_date_check (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 		}
 	    }
 	    pprintf(prn, "? %s - %s\n", lbl1, lbl2);
-	    ret = check_daily_dates(pdinfo, &pd);
+	    ret = check_daily_dates(pdinfo, &pd, prn);
 	    if (ret >= 0 && pd > 0) {
 		if (pd == 52) {
 		    if (csv_weekly_data(pZ, pdinfo)) {

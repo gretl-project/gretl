@@ -2026,6 +2026,19 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 		      GINT_TO_POINTER(COMPACT_SOP));
     gtk_widget_show(button);
     if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
+
+#if 0 /* maybe at some point... */
+    if (dated_daily_data(datainfo)) {
+	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+	button = gtk_radio_button_new_with_label(group, _("Use representative day"));
+	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(set_compact_type), method);
+	g_object_set_data(G_OBJECT(button), "action", 
+			  GINT_TO_POINTER(COMPACT_SOP));
+	gtk_widget_show(button);
+    }
+#endif	
 }
 
 static int compact_methods_set (void)

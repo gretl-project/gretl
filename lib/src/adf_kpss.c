@@ -727,7 +727,8 @@ int variance_ratio_test (int q, int varno, double ***pZ,
 {
     double x, muhat, s2, s2q;
     double sumcdiff;
-    double V, M, R;
+    double V, M, R, z;
+    double *cdiff2;
     const double *X;
     int j, k, t;
     int t1, t2, n;
@@ -761,6 +762,11 @@ int variance_ratio_test (int q, int varno, double ***pZ,
 	return E_DATA;
     }
 
+    cdiff2 = malloc(n * sizeof *cdiff2);
+    if (cdiff2 == NULL) {
+	return E_ALLOC;
+    }
+
     k = n / q;
     pprintf(prn, "n=%d, q=%d, k=%d\n", n, q, k);
 
@@ -768,9 +774,12 @@ int variance_ratio_test (int q, int varno, double ***pZ,
     pprintf(prn, "t1=%d, t2=%d, muhat=%g\n", t1, t2, muhat);
 
     sumcdiff = 0.0;
-    for (t=t1+1; t<=t2; t++) {
-	x = X[t] - X[t-1] - muhat;
-	sumcdiff += x * x;
+    for (t=0; t<n; t++) {
+	int s = t + t1 + 1;
+
+	x = X[s] - X[s-1] - muhat;
+	cdiff2[t] = x * x;
+	sumcdiff += cdiff2[t];
     }
     s2 = sumcdiff / (n - 1);
 
@@ -780,31 +789,29 @@ int variance_ratio_test (int q, int varno, double ***pZ,
 	s2q += x * x;
     }
     s2q *= (double) k / ((n - q + 1.0) * (k - 1.0));
-    
+
+    R = s2q / (q * s2);
     M = s2q / (q * s2) - 1.0;
     V = 2.0 * (2.0 * q - 1.0) * (q - 1.0) / (3.0 * n * q);
+    z = M / sqrt(V);
 
     pprintf(prn, "Estimate of variance = %g\n", s2);
     pprintf(prn, "For q = %d, estimate of variance s2_q = %g\n", q, s2q);
-
-    R = s2q / (q * s2);
-    pprintf(prn, "Ratio R = s2_q / (q * s2_q) = %g\n", R);
-
-    R = M / sqrt(V);
-    pprintf(prn, "Standardized R_s = %g\n", R);
+    pprintf(prn, "OVR = s2_q / (q * s2) = %g\n", R);
+    pprintf(prn, "M = OVR - 1 = %g\n", M);
+    pprintf(prn, "Estimated sampling variance of M = %g\n", V);
+    pprintf(prn, "Test statistic: z = %g / sqrt(%g) = %g\n", M, V, z);
 
     /* FIXME needs work and testing */
 
     /* robust variant */
     V = 0.0;
     for (j=1; j<q; j++) {
-	double x1, x2, delta;
+	double delta;
 
 	x = 0.0;
-	for (t=t1+j+1; t<=t2; t++) {
-	    x1 = X[t] - X[t-1] - muhat;
-	    x2 = X[t-j] - X[t-j-1] - muhat;
-	    x += x1 * x1 * x2 * x2;
+	for (t=j+1; t<n; t++) {
+	    x += cdiff2[t] * cdiff2[t-j];
 	}
 	delta = x / (sumcdiff * sumcdiff);
 	x = 2.0 * (q - j) / (double) q;
@@ -812,7 +819,10 @@ int variance_ratio_test (int q, int varno, double ***pZ,
     }
 
     R = M / sqrt(V);
-    pprintf(prn, "Robust variant: V = %g, Standardized R_s = %g\n", V, R);
+    pprintf(prn, "Heteroskedasticity-robust estimate of variance of M = %g\n", V);
+    pprintf(prn, "Robust test statistic: z = %g / sqrt(%g) = %g\n", M, V, R);
+
+    free(cdiff2);
 
     return 0;
 }

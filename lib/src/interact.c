@@ -2971,12 +2971,6 @@ int simple_commands (CMD *cmd, const char *line,
 	err = kpss_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
 	break;
 
-#if 0
-    case LMK:
-	err = variance_ratio_test(cmd->order, cmd->list[1], pZ, pdinfo, cmd->opt, prn);
-	break;
-#endif
-
     case COINT:
 	err = coint(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, prn);
 	break;

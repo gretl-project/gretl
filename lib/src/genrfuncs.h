@@ -27,6 +27,8 @@ int get_fracdiff (const double *y, double *diffvec, double d,
 
 int genrunit (double ***pZ, DATAINFO *pdinfo);
 
+int genrwkday (double ***pZ, DATAINFO *pdinfo);
+
 double genr_cov_corr (const char *s, double ***pZ, 
 		      const DATAINFO *pdinfo, int fn);
 

@@ -456,7 +456,7 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
     static char format[16] = {0};
     const char *p;
     char vname[VNAMELEN];
-    char ls[8];
+    char ls[VNAMELEN + 1];
     int m = 0, v = 0;
 
     /* an atomic lagvar must end with the first right paren */
@@ -465,7 +465,7 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
     }
 
     if (*format == 0) {
-	sprintf(format, "%%%d[^(](%%7[^)])", VNAMELEN - 1);
+	sprintf(format, "%%%d[^(](%%%d[^)])", VNAMELEN - 1, VNAMELEN);
     }
 
     DPRINTF(("get_lagvar: looking at '%s'\n", s));
@@ -476,7 +476,7 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 	if (v >= genr->pdinfo->v) {
 	    DPRINTF(("get_lagvar: rejecting '%s'\n", s));
 	    v = m = 0;
-	} else if (v < genr->pdinfo->v && var_is_scalar(genr->pdinfo, v)) {
+	} else if (var_is_scalar(genr->pdinfo, v)) {
 	    sprintf(gretl_errmsg, _("Variable %s is a scalar; "
 				    "can't do lags/leads"), 
 		    genr->pdinfo->varname[v]);
@@ -3297,6 +3297,7 @@ static int genr_add_xvec (GENERATOR *genr)
                               strcmp(s, "time") == 0 || \
                               strcmp(s, "index") == 0 || \
                               strcmp(s, "unit") == 0 || \
+                              strcmp(s, "weekday") == 0 || \
                               strncmp(s, "toler=", 6) == 0)
 
 /* special uses of genr which are not of the form "lhs = rhs" */
@@ -3339,7 +3340,10 @@ static int genr_handle_special (const char *s, GENERATOR *genr,
     } else if (!strcmp(s, "unit")) {
 	err = genrunit(pZ, pdinfo);
 	do_message = 1;
-    } 
+    } else if (!strcmp(s, "weekday")) {
+	err = genrwkday(pZ, pdinfo);
+	do_message = 1;
+    }	
 
     if (!err && do_message) {
 	strcpy(genr->varname, s);

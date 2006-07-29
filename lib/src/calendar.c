@@ -173,7 +173,6 @@ static int t_to_epoch_day (int t, long start, int wkdays)
  * 
  * Writes to @str the calendar representation of the date of
  * observation @t, in the form YY[YY]/MM/DD.
- * 
  */
 
 void calendar_date_string (char *str, int t, const DATAINFO *pdinfo)

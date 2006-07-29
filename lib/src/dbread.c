@@ -2162,6 +2162,11 @@ static int get_daily_skip (const DATAINFO *pdinfo, int t)
     int dd = calendar_obs_number(pdinfo->S[t], pdinfo) -
 	calendar_obs_number(pdinfo->S[t-1], pdinfo);
 
+    if (dd == 0) {
+	fprintf(stderr, "get_daily_skip: S[%d] = '%s', S[%d] = '%s'\n", 
+		t, pdinfo->S[t], t-1, pdinfo->S[t-1]);
+    }
+
     return dd - 1;
 }
 
@@ -2221,6 +2226,8 @@ int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
     int nmiss = n_hidden_missing_obs(pdinfo);
     int err = 0;
 
+    fprintf(stderr, "n_hidden_missing_obs: nmiss = %d\n", nmiss);
+
     if (nmiss < 0) {
 	err = 1;
     } else if (nmiss > 0) {
@@ -2267,7 +2274,10 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	   (holidays are just skipped, not marked as NA)
 	*/
 	err = maybe_expand_daily_data(pZ, pdinfo);
-	if (err) return err;
+	if (err) {
+	    strcpy(gretl_errmsg, "Error expanding daily data with missing observations");
+	    return err;
+	}
     }
 
     if (newpd == 12 && oldpd >= 5 && oldpd <= 7) {

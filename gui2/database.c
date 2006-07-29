@@ -1953,7 +1953,7 @@ void do_compact_data_set (void)
 	data_status |= MODIFIED_DATA;
 	set_sample_label(datainfo);
 	if (datainfo->pd == 1 || datainfo->pd == 52) {
-	    flip(mdata->ifac, "/Sample/Compact data...", FALSE);
+	    flip(mdata->ifac, "/Data/Compact data...", FALSE);
 	}
 	set_compact_info_from_default(method);
     }
@@ -1980,7 +1980,7 @@ void do_expand_data_set (void)
 	data_status |= MODIFIED_DATA;
 	set_sample_label(datainfo);
 	if (datainfo->pd == 12) {
-	    flip(mdata->ifac, "/Sample/Expand data...", FALSE);
+	    flip(mdata->ifac, "/Data/Expand data...", FALSE);
 	}
     }
 }
