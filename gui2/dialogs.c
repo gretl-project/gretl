@@ -1837,6 +1837,7 @@ struct compaction_info {
     int *target_pd;
     GtkWidget *monday_button;
     GtkWidget *sunday_button;
+    GtkWidget *wkday_opt;
 };
 
 static void abort_compact (GtkWidget *w, gpointer data)
@@ -1872,6 +1873,10 @@ static void set_target_pd (GtkWidget *w, gpointer data)
 	gtk_widget_set_sensitive(cinfo->sunday_button, 
 				 *cinfo->target_pd == 52);
     }
+    if (cinfo->wkday_opt != NULL) {
+	gtk_widget_set_sensitive(cinfo->wkday_opt, 
+				 *cinfo->target_pd == 52);
+    }    
 }
 
 static void set_mon_start (GtkWidget *w, gpointer data)
@@ -1972,7 +1977,8 @@ enum {
 };
 
 static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
-				    int current_pd, int methods_set)
+				    int current_pd, int methods_set,
+				    struct compaction_info *cinfo)
 {
     GtkWidget *button;
     GtkWidget *vbox;
@@ -2035,8 +2041,9 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_compact_type), method);
 	g_object_set_data(G_OBJECT(button), "action", 
-			  GINT_TO_POINTER(COMPACT_SOP));
+			  GINT_TO_POINTER(COMPACT_WDAY));
 	gtk_widget_show(button);
+	cinfo->wkday_opt = button;
     }
 #endif	
 }
@@ -2077,6 +2084,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     cinfo.target_pd = target_pd;
     cinfo.monday_button = NULL;
     cinfo.sunday_button = NULL;
+    cinfo.wkday_opt = NULL;
 
     if (mon_start != NULL) {
 	*mon_start = 1;
@@ -2146,7 +2154,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     /* per-variable compaction methods not all set already: 
        give choice of default compaction method */
     if (show_method_buttons) {
-	compact_method_buttons(d, method, spd, methods_set);
+	compact_method_buttons(d, method, spd, methods_set, &cinfo);
     } 
 
     /* Create the "OK" button */

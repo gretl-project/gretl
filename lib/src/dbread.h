@@ -36,6 +36,7 @@ typedef enum {
     COMPACT_AVG,
     COMPACT_SOP,
     COMPACT_EOP,
+    COMPACT_WDAY,
     COMPACT_MAX
 } CompactMethod; 
 
