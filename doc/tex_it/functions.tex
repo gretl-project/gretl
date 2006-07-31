@@ -204,9 +204,13 @@ pacchetti di funzioni e renderli disponibili agli altri utenti. Questa
 funzionalità è ancora sperimentale, ma è già utilizzabile seguendo
 le istruzioni contenute in questa sezione.
 
-Usando l'interfaccia grafica del programma, nel menù ``File, Funzioni'', si trova
-una voce ``Editor pacchetti funzioni'', abilitata solo quando è stata caricata
-in memoria almeno una funzione definita dall'utente.
+Usando l'interfaccia grafica del programma, nel menù ``File, Funzioni'', si trovano
+quattro voci: ``Sul sistema locale'', ``Sul server di gretl'', ``Modifica
+pacchetto'', ``Nuovo pacchetto''.
+
+Il comando ``Nuovo pacchetto'' funziona solo quando è stata caricata
+in memoria almeno una funzione definita dall'utente, altrimenti si otterrà
+un messaggio di avvertimento.
 
 Ci sono vari modi per caricare una funzione in memoria:
 
@@ -220,8 +224,8 @@ Ci sono vari modi per caricare una funzione in memoria:
   probabilmente più comodo definire una funzione in modalità non interattiva.
 \end{itemize}
 
-Dopo aver caricato una funzione, la voce ``Editor pacchetti funzioni'' nel menù
-``File, Funzioni'' dovrebbe essere abilitata. La prima finestra di dialogo presenta due
+Dopo aver caricato una funzione, la voce ``Nuovo pacchetto'' nel menù
+``File, Funzioni'' è utilizzabile. La prima finestra di dialogo presenta due
 alternative:
 
 \begin{itemize}
@@ -237,7 +241,10 @@ inserire le informazioni sul pacchetto (al momento: l'autore, la versione, la
 data e una breve descrizione), oltre che un testo di aiuto che descrive
 l'interfaccia pubblica della funzione. Se una funzione ha più di una interfaccia
 pubblica, verrà mostrato un menù a discesa con cui è possibile attivare le varie
-interfacce.
+interfacce. Si ha l'opportunità di modificare il codice delle funzioni,
+selezionandole dal menù e facendo clic su ``Modifica codice della funzione''.
+Infine, è possibile scegliere di caricare il pacchetto sul server di gretl
+appena lo si salva, selezionando l'apposita casella.
 
 Facendo clic su ``OK'', si otterrà una finestra di salvataggio del file, che
 suggerirà di salvare il file in una directory chiamata \texttt{functions}, collocata
@@ -245,6 +252,9 @@ sotto la directory di sistema di \app{gretl} (se si ha il permesso di scrittura
 su di essa), oppure nella directory utente di \app{gretl}. Questo è il posto
 suggerito per salvare i pacchetti di funzioni, visto che il programma li
 cercherà automaticamente qui, al momento di aprire questo tipo di file.
+
+Ovviamente, il comando ``File, Funzioni, Modifica pacchetto'' permette di
+modificare un pacchetto precedentemente salvato.
 
 \vspace{6pt}
 
@@ -264,13 +274,16 @@ funzione viene analizzata e caricata in modo veloce usando la \textsf{libxml}.
 \vspace{6pt}
 
 Perché impacchettare le funzioni in questo modo? Per scoprirlo, proviamo a
-chiudere gretl, a riaprirlo, e ad andare nel menù ``File/Apri file comandi/File
-funzioni''. Se le operazioni precedenti sono andate a buon fine, troveremo il
+chiudere gretl, a riaprirlo, e ad andare nel menù ``File, Funzioni, Sul sistema
+locale''. Se le operazioni precedenti sono andate a buon fine, troveremo il
 pacchetto che avevamo creato, insieme alla sua breve descrizione. Facendo clic
-su ``Info'', si ottengono tutte le informazioni disponibili sul pacchetto,
-mentre facendo clic su ``Codice'' si aprirà una finestra che mostra il codice
-delle funzioni contenute nel pacchetto. Facendo clic su ``Apri'', le funzioni
-verranno caricate.
+su ``Info'', si ottiene una finestra con tutte le informazioni disponibili sul
+pacchetto; facendo clic sull'icona ``Visualizza codice'' della barra degli
+strumenti di questa nuova finestra, si aprirà una finestra che mostra il codice
+delle funzioni contenute nel pacchetto. Tornando alla finestra ``Pacchetti funzioni'',
+facendo clic sul nome di un pacchetto, le funzioni verranno caricate, pronte per
+essere eseguite, usando il pulsante ``Chiama'' o l'interfaccia a riga di
+comando.
 
 Dopo aver caricato le funzioni contenute nel pacchetto, aprendo il terminale di
 gretl, sarà possibile richiamare il testo di aiuto relativo ad una delle nuove
