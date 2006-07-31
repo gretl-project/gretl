@@ -6281,24 +6281,30 @@
         principale di gretl.</para>
 
       <para>* Aggiungere o modificare il "nome per i grafici" della
-        variabile. Questa stringa (lunga al massimo 19 caratteri) viene
+        variabile (se la variabile è una serie e non uno scalare).
+        Questa stringa (lunga al massimo 19 caratteri) viene
         usata al posto del nome della variabile quando questa compare in
         un grafico. Così, ad esempio, è possibile associare una stringa
         più comprensibile come "Tariffe telefoniche" a un nome criptico
         come "tartel".</para>
 
-      <para>* Impostare (nel caso di un dataset di serie storiche) il
+      <para>* Impostare (se i dati sono serie storiche) il
         metodo di compattamento per la variabile, che verrà usato se si
         decide di ridurre la frequenza del dataset, o se si importa la
         variabile da un dataset che ha una frequenza maggiore di quella
         del dataset in uso.
       </para>
 
-      <para>* Marca una variabile come discreta. In questo modo, essa viene
+      <para>* Marcare una variabile come discreta (per serie che contengono
+        solo valori discreti). In questo modo, essa viene
         trattata in modo speciale nei diagrammi di frequenza, e può esere usata
         con i comandi <cmdref targ="xtab"/> (cross-tabulazione) e <cmdref
         targ="dummify"/>.
       </para>
+
+      <para>* Impostare il valore di una variabile (per variabili discrete).
+      </para>
+
 
     </description>
 
