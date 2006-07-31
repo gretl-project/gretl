@@ -2003,8 +2003,6 @@ gboolean select_repday (GtkOptionMenu *menu, int *repday)
 
     *repday = (datainfo->pd == 7)? i : i + 1;
 
-    fprintf(stderr, "got repday = %d\n", *repday);
-    
     return FALSE;
 }
 
