@@ -836,7 +836,7 @@ static void hc_vcv_line (const MODEL *pmod, PRN *prn)
     }
 
     if (rtf_format(prn)) {
-	pputs("\\par\n");
+	pputs(prn, "\\par\n");
     } else {
 	pputc(prn, '\n');
     }
