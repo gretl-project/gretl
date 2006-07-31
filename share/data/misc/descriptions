@@ -17,6 +17,7 @@
 "mccullagh","Ship damage data used by William Greene"
 "mrw","Mankiw, Romer and Weil cross-country data"
 "np","Nelson and Plosser (JME, 1982) US macro data"
+"nysewk","Weekly NYSE closing price, 1996-2006"
 "penngrow","Nerlove cross-country growth data"
 "poisson","Test data for Poisson regression"
 "sw_ch12","International macro data (Stock and Watson)"
