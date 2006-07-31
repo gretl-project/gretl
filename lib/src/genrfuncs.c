@@ -815,7 +815,7 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
  * Generates (and adds to the dataset, if it's not already
  * present) an index representing the day of the week for
  * each observation (for dated daily data only).
- * The index has value 1 for Monday, 2 for Tuesday, and
+ * The index has value 0 for Sunday, 1 for Monday, and
  * so on.
  *
  * Returns: 0 on success, non-zero code on error.

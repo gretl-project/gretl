@@ -56,7 +56,6 @@ struct filter_info_ {
     GtkWidget *dlg;
     GtkWidget *entry1;
     GtkWidget *entry2;
-    GtkWidget *check;
     GtkWidget *nspin;
 };
 
@@ -103,11 +102,12 @@ static void filter_info_init (filter_info *finfo, int ftype, int v,
     finfo->dlg = NULL;
     finfo->entry1 = NULL;
     finfo->entry2 = NULL;
-    finfo->check = NULL;
     finfo->nspin = NULL;
 
     if (ftype == FILTER_SMA) {
-	finfo->nobs = 5;
+	finfo->center = 1;
+	finfo->nobs = (datainfo->pd == 1 || datainfo->pd == 10)? 3 :
+	    datainfo->pd;
     } else if (ftype == FILTER_EMA) {
 	finfo->lambda = 0.1;
     } else if (ftype == FILTER_HP) {
@@ -208,14 +208,6 @@ static void check_bk_limits2 (GtkWidget *s2, GtkWidget *s1)
     }
 }
 
-static void set_center_ok (GtkWidget *s, GtkWidget *w)
-{
-    int n;
-
-    n = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(s));
-    gtk_widget_set_sensitive(w, n % 2 != 0);
-}
-
 static void spinner_set_double (GtkWidget *b, double *a)
 {
     *a = gtk_spin_button_get_value(GTK_SPIN_BUTTON(b));
@@ -267,13 +259,13 @@ static int varname_error (filter_info *finfo, int i)
     const char *s = (i == 1)? finfo->save1 : finfo->save2;
 
     if (*s == 0) {
-	errbox("Variable name is missing");
+	errbox(_("Variable name is missing"));
 	return 1;
     } else if (validate_varname(s)) {
 	return 1;
     } else if (i == 2 && (finfo->save_opt & FILTER_SAVE_TREND)) {
 	if (!strcmp(s, finfo->save1)) {
-	    errbox("Conflicting variable names", s);
+	    errbox(_("Conflicting variable names"));
 	    return 1;
 	}
     }
@@ -296,10 +288,6 @@ static void filter_dialog_ok (GtkWidget *w, filter_info *finfo)
 	    return;
 	} 
     } 
-
-    if (finfo->check != NULL && !GTK_WIDGET_SENSITIVE(finfo->check)) {
-	finfo->center = 0;
-    }
 
     if (finfo->nspin != NULL) {
 	if (GTK_WIDGET_SENSITIVE(finfo->nspin)) {
@@ -485,15 +473,13 @@ static int filter_dialog (filter_info *finfo)
 	/* select centered or not */
 	hbox = gtk_hbox_new(FALSE, 5);
 	w = gtk_check_button_new_with_label(_("Centered"));
+	if (finfo->center) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), TRUE);
+	}
 	g_signal_connect(G_OBJECT(w), "toggled", 
 			 G_CALLBACK(sma_center_callback), &finfo->center);
 	gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 5);    
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, FALSE, FALSE, 0);
-
-	/* cross-connect */
-	finfo->check = w;
-	g_signal_connect(G_OBJECT(nspin), "value-changed",
-			 G_CALLBACK(set_center_ok), w);
     } else if (finfo->ftype == FILTER_EMA) {
 	/* set weight on current observation */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -735,6 +721,50 @@ static int save_filtered_var (filter_info *finfo, double *x, int i,
     return err;
 }
 
+/* centered MA for even number of terms in average */
+
+static int sma_special (const filter_info *finfo, double *fx,
+			const double *x)
+{
+    int offset = finfo->nobs / 2;
+    double *tmp;
+    int t, t1, t2;
+    int i, k, n;
+
+    t1 = finfo->t1 + offset;
+    t2 = finfo->t2 - offset + 1;
+
+    n = t2 - t1 + 1;
+
+    tmp = malloc(n * sizeof *tmp);
+    if (tmp == NULL) {
+	return E_ALLOC;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	fx[t] = 0.0;
+	for (i=0; i<finfo->nobs; i++) {
+	    k = i - offset + 1;
+	    fx[t] += x[t-k];
+	}
+	fx[t] /= finfo->nobs;
+    }
+
+    for (t=0; t<n; t++) {
+	tmp[t] = fx[t+t1];
+    }
+
+    for (t=t1; t<t2; t++) {
+	k = t - t1;
+	fx[t] = (tmp[k] + tmp[k+1]) / 2.0;
+    }
+    fx[t2] = NADBL;
+
+    free(tmp);
+
+    return 0;
+}
+
 static int calculate_filter (filter_info *finfo)
 {
     const double *x = Z[finfo->vnum];
@@ -763,19 +793,23 @@ static int calculate_filter (filter_info *finfo)
     }
 
     if (finfo->ftype == FILTER_SMA) {
-	int offset = finfo->center ? finfo->nobs / 2 : 0;
-	int i, k, t1, t2;
+	if (finfo->center && finfo->nobs % 2 == 0) {
+	    err = sma_special(finfo, fx, x);
+	} else {
+	    int offset = finfo->center ? finfo->nobs / 2 : 0;
+	    int i, k, t1, t2;
 
-	t1 = finfo->center ? finfo->t1 + offset : finfo->t1 + finfo->nobs - 1;
-	t2 = finfo->center ? finfo->t2 - offset : finfo->t2;
+	    t1 = finfo->center ? finfo->t1 + offset : finfo->t1 + finfo->nobs - 1;
+	    t2 = finfo->center ? finfo->t2 - offset : finfo->t2;
 
-	for (t=t1; t<=t2; t++) {
-	    fx[t] = 0.0;
-	    for (i=0; i<finfo->nobs; i++) {
-		k = i - offset;
-		fx[t] += x[t-k];
+	    for (t=t1; t<=t2; t++) {
+		fx[t] = 0.0;
+		for (i=0; i<finfo->nobs; i++) {
+		    k = i - offset;
+		    fx[t] += x[t-k];
+		}
+		fx[t] /= finfo->nobs;
 	    }
-	    fx[t] /= finfo->nobs;
 	}
     } else if (finfo->ftype == FILTER_EMA) {
 	int t1 = finfo->t1 + 1;

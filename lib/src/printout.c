@@ -1487,6 +1487,27 @@ int get_printdata_blocks (void)
     return printdata_blocks;
 }
 
+static int adjust_print_list (int *list, int *screenvar,
+			      gretlopt opt)
+{
+    int pos;
+
+    if (!(opt & OPT_O)) {
+	return E_PARSE;
+    }
+
+    pos = gretl_list_separator_position(list);
+
+    if (list[0] < 3 || pos != list[0] - 1) {
+	return E_PARSE;
+    } else {
+	*screenvar = list[list[0]];
+	list[0] = pos - 1;
+    }
+
+    return 0;
+}
+
 /**
  * printdata:
  * @list: list of variables to print.
@@ -1508,6 +1529,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	       gretlopt opt, PRN *prn)
 {
     int j, v, v1, v2, jc, nvjc, lineno, ncol;
+    int screenvar = 0;
     int allconst, scalars = 0;
     int nvars = 0, sortvar = 0;
     int maxlen = 0, bplen = 13;
@@ -1536,6 +1558,14 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    goto endprint;
 	} else {
 	    return E_ALLOC;
+	}
+    }
+
+    if (gretl_list_has_separator(plist)) {
+	err = adjust_print_list(plist, &screenvar, opt);
+	if (err) {
+	    free(plist);
+	    return err;
 	}
     }
 
@@ -1641,6 +1671,11 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    lineno = 1;
 
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+
+		if (screenvar && Z[screenvar][t] == 0.0) {
+		    /* screened out by boolean */
+		    continue;
+		}
 
 		if (sortvar && plist[0] == 1) {
 		    strcpy(obs_string, SORTED_MARKER(pdinfo, sortvar, t));

@@ -451,6 +451,54 @@ static int print_atom (genatom *atom)
 }
 #endif
 
+#define BADLAG 9999
+
+static int read_lag_value (const char *s, GENERATOR *genr)
+{
+    char *test;
+    int v, ret = BADLAG;
+
+    DPRINTF(("read_lag_value: s = '%s'\n", s));
+
+    strtol(s, &test, 10);
+
+    if (*test != 0) {
+	/* not a straight number: try varname */
+	int sgn = -1;
+
+	if (*s == '-') {
+	    sgn = 1;
+	    s++;
+	} else if (*s == '+') {
+	    s++;
+	}
+	v = varindex(genr->pdinfo, s);
+	if (v == genr->pdinfo->v) {
+	    fprintf(stderr, "unknown var '%s' in lag slot\n", s);
+	    genr->err = E_UNKVAR;
+	} else if (!var_is_scalar(genr->pdinfo, v)) {
+	    fprintf(stderr, "non-scalar var '%s' in lag slot\n", 
+		    genr->pdinfo->varname[v]);
+	    genr->err = E_TYPES;
+	} else {
+	    double x = (*genr->pZ)[v][0];
+	    int ix = (int) x;
+
+	    if ((double) ix != x) {
+		fprintf(stderr, "non-integer var '%s' in lag slot\n", 
+			genr->pdinfo->varname[v]);
+		genr->err = E_TYPES;
+	    } else {
+		ret = ix * sgn;
+	    }
+	} 
+    } else {
+	ret = -atoi(s);
+    }
+
+    return ret;
+}
+
 static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 {
     static char format[16] = {0};
@@ -464,40 +512,38 @@ static int get_lagvar (const char *s, int *lag, GENERATOR *genr)
 	return 0;
     }
 
+    DPRINTF(("get_lagvar: looking at '%s'\n", s));
+
     if (*format == 0) {
 	sprintf(format, "%%%d[^(](%%%d[^)])", VNAMELEN - 1, VNAMELEN);
     }
 
-    DPRINTF(("get_lagvar: looking at '%s'\n", s));
-
-    if (sscanf(s, format, vname, ls) == 2 && sscanf(ls, "%d", &m) == 1) {
-	v = varindex(genr->pdinfo, vname);
-	DPRINTF(("get_lagvar: vname = '%s' (v == %d)\n", vname, v));
-	if (v >= genr->pdinfo->v) {
-	    DPRINTF(("get_lagvar: rejecting '%s'\n", s));
-	    v = m = 0;
-	} else if (var_is_scalar(genr->pdinfo, v)) {
-	    sprintf(gretl_errmsg, _("Variable %s is a scalar; "
-				    "can't do lags/leads"), 
-		    genr->pdinfo->varname[v]);
-	    genr->err = E_DATA;
-	    v = m = 0;
-	} 
+    /* to get a lagvar spec, we must find two elements in the above
+       format */
+    if (sscanf(s, format, vname, ls) != 2) {
+	return 0;
     }
 
-    if (lag == NULL) {
-	/* just testing for atomicity */
-	if (v > 0) {
-	    char *test;
+    /* the first element must be the name of a (non-scalar) variable */
+    v = varindex(genr->pdinfo, vname);
+    if (v == genr->pdinfo->v) {
+	return 0;
+    } else if (var_is_scalar(genr->pdinfo, v)) {
+	sprintf(gretl_errmsg, _("Variable %s is a scalar; "
+				"can't do lags/leads"), 
+		genr->pdinfo->varname[v]);
+	genr->err = E_DATA;
+	return 0;
+    }
 
-	    strtol(ls, &test, 10);
-	    if (*test != 0) {
-		/* string ls contains superfluous stuff */
-		v = 0;
-	    }
-	}
-    } else {
-	*lag = -m;
+    /* the second must be an integer or a scalar variable with
+       integer value */
+    m = read_lag_value(ls, genr);
+
+    if (m == BADLAG) {
+	v = 0;
+    } else if (lag != NULL) {
+	*lag = m;
     }
 
     DPRINTF(("get_lagvar: v = %d, m = %d\n", v, m));
@@ -4823,7 +4869,7 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     int fsd = 0;
     int i, ret = pdinfo->v;
 
-    if (varname == NULL) {
+    if (varname == NULL || *varname == 0) {
 	return ret;
     }
 

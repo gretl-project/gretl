@@ -302,7 +302,29 @@ save_dataset_info (DATAINFO *dinfo, const char *s1, const char *s2)
     return err;
 }
 
-/* use Stata's "date formats" to reonstruct time series information
+static int try_fix_varname (char *name)
+{
+    char test[VNAMELEN];
+    int err = 0;
+
+    *test = 0;
+    strncat(test, name, VNAMELEN - 2);
+    strcat(test, "1");
+    
+    err = check_varname(test);
+    if (!err) {
+	fprintf(stderr, "Warning: illegal name '%s' changed to '%s'\n",
+		name, test);
+	strcpy(name, test);
+    } else {
+	/* get the right error message in place */
+	check_varname(name);
+    }
+
+    return err;
+}
+
+/* use Stata's "date formats" to reconstruct time series information
    FIXME: add recognition for daily data too? 
    (Stata dates are all zero at the start of 1960.)
 */
@@ -390,7 +412,11 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     for (i=0; i<nvar && !err; i++) {
         read_string(fp, namelen + 1, aname, &err);
 	printf("variable %d: name = '%s'\n", i+1, aname);
-	strncat(dinfo->varname[i+1], aname, VNAMELEN - 1);
+	if (check_varname(aname) && try_fix_varname(aname)) {
+	    err = 1;
+	} else {
+	    strncat(dinfo->varname[i+1], aname, VNAMELEN - 1);
+	}
     }
 
     /* sortlist -- not relevant */
@@ -435,25 +461,27 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
     }
 
     /* variable 'characteristics' -- not handled */
-    while (read_byte(fp, 1, &err)) {
-	if (abs(stata_version) >= 7) { /* manual is wrong here */
+    if (!err) {
+	while (read_byte(fp, 1, &err)) {
+	    if (abs(stata_version) >= 7) { /* manual is wrong here */
+		clen = read_int(fp, 1, &err);
+	    } else {
+		clen = read_short(fp, 1, &err);
+	    }
+	    for (i=0; i<clen; i++) {
+		read_signed_byte(fp, 1, &err);
+	    }
+	}
+	if (abs(stata_version) >= 7) {
 	    clen = read_int(fp, 1, &err);
 	} else {
 	    clen = read_short(fp, 1, &err);
 	}
-	for (i=0; i<clen; i++) {
-	    read_signed_byte(fp, 1, &err);
+	if (clen != 0) {
+	    fputs(_("something strange in the file\n"
+		    "(Type 0 characteristic of nonzero length)"), stderr);
+	    fputc('\n', stderr);
 	}
-    }
-    if (abs(stata_version) >= 7) {
-        clen = read_int(fp, 1, &err);
-    } else {
-	clen = read_short(fp, 1, &err);
-    }
-    if (clen != 0) {
-	fputs(_("something strange in the file\n"
-		"(Type 0 characteristic of nonzero length)"), stderr);
-	fputc('\n', stderr);
     }
 
     /* actual data values */
@@ -499,7 +527,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* value labels (??) */
 
-    if (abs(stata_version) > 5) {
+    if (!err && abs(stata_version) > 5) {
 	for (j=0; j<nvar; j++) {
 	    /* first int not needed, use fread directly to trigger EOF */
 	    fread((int *) aname, sizeof(int), 1, fp);

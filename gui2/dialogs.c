@@ -1453,7 +1453,6 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	}
 	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), VNAMELEN-1);
 	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry), FALSE);
-
 	g_signal_connect(G_OBJECT(GTK_COMBO(rset->combo)->entry), "changed",
 			 G_CALLBACK(update_obs_label), rset);
 
@@ -1798,9 +1797,13 @@ int select_var_from_list (const int *list, const char *query)
 		       hbox, FALSE, FALSE, 5);
 
     varlist = compose_var_selection_list(list);
+    if (varlist == NULL) {
+	return -1;
+    }
 	
     combo = gtk_combo_new();
     gtk_combo_set_popdown_strings(GTK_COMBO(combo), varlist); 
+    g_list_free(varlist);
 
     gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(combo)->entry), VNAMELEN-1);
     gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
@@ -1835,6 +1838,7 @@ int select_var_from_list (const int *list, const char *query)
 
 struct compaction_info {
     int *target_pd;
+    int *repday;
     GtkWidget *monday_button;
     GtkWidget *sunday_button;
     GtkWidget *wkday_opt;
@@ -1856,26 +1860,39 @@ static void set_compact_type (GtkWidget *w, gpointer data)
     }
 }
 
+static void sensitize_daylist (GtkWidget *w, GtkWidget *c)
+{
+    if (c != NULL) {
+	gtk_widget_set_sensitive(c, GTK_TOGGLE_BUTTON(w)->active);
+    }
+}
+
 static void set_target_pd (GtkWidget *w, gpointer data)
 {
     struct compaction_info *cinfo = data;
+    gboolean wtarg;
 
-    if (GTK_TOGGLE_BUTTON (w)->active) {
+    if (GTK_TOGGLE_BUTTON(w)->active) {
 	*cinfo->target_pd = 
 	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
     }
 
+    wtarg = *cinfo->target_pd == 52;
+
     if (cinfo->monday_button != NULL) {
-	gtk_widget_set_sensitive(cinfo->monday_button, 
-				 *cinfo->target_pd == 52);
+	gtk_widget_set_sensitive(cinfo->monday_button, wtarg);
     }
     if (cinfo->sunday_button != NULL) {
-	gtk_widget_set_sensitive(cinfo->sunday_button, 
-				 *cinfo->target_pd == 52);
+	gtk_widget_set_sensitive(cinfo->sunday_button, wtarg);
     }
     if (cinfo->wkday_opt != NULL) {
-	gtk_widget_set_sensitive(cinfo->wkday_opt, 
-				 *cinfo->target_pd == 52);
+	GtkWidget *combo = g_object_get_data(G_OBJECT(cinfo->wkday_opt),
+					     "combo");
+						      
+	gtk_widget_set_sensitive(cinfo->wkday_opt, wtarg);
+	if (combo != NULL) {
+	    gtk_widget_set_sensitive(cinfo->wkday_opt, wtarg);
+	}
     }    
 }
 
@@ -1970,6 +1987,27 @@ static void monday_buttons (GtkWidget *dlg, int *mon_start,
     gtk_widget_show (button);
 }
 
+static const char *weekdays[] = {
+    N_("Sunday"),
+    N_("Monday"),
+    N_("Tuesday"),
+    N_("Wednesday"),
+    N_("Thursday"),
+    N_("Friday"),
+    N_("Saturday")
+};
+
+gboolean select_repday (GtkOptionMenu *menu, int *repday)
+{
+    int i = gtk_option_menu_get_history(menu);
+
+    *repday = (datainfo->pd == 7)? i : i + 1;
+
+    fprintf(stderr, "got repday = %d\n", *repday);
+    
+    return FALSE;
+}
+
 enum {
     NO_METHODS_SET,
     SOME_METHODS_SET,
@@ -2033,19 +2071,46 @@ static void compact_method_buttons (GtkWidget *dlg, CompactMethod *method,
     gtk_widget_show(button);
     if (current_pd == 52) gtk_widget_set_sensitive(button, FALSE);
 
-#if 0 /* maybe at some point... */
-    if (dated_daily_data(datainfo)) {
+    if (dated_daily_data(datainfo) && cinfo->repday != NULL) {
+	GtkWidget *hbox, *daymenu, *menu;
+	GtkWidget *tmp;
+	int i;
+
+	hbox = gtk_hbox_new(FALSE, 5);
 	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
 	button = gtk_radio_button_new_with_label(group, _("Use representative day"));
-	gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_compact_type), method);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER(COMPACT_WDAY));
-	gtk_widget_show(button);
 	cinfo->wkday_opt = button;
+
+	daymenu = gtk_option_menu_new();
+	menu = gtk_menu_new();
+	for (i=0; i<7; i++) {
+	    if ((i == 0 && datainfo->pd != 7) ||
+		(i == 6 && datainfo->pd == 5)) {
+		continue;
+	    }
+	    tmp = gtk_menu_item_new_with_label(_(weekdays[i]));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+	}
+	gtk_option_menu_set_menu(GTK_OPTION_MENU(daymenu), menu);
+	gtk_box_pack_start(GTK_BOX(hbox), daymenu, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(daymenu), "changed",
+			 G_CALLBACK(select_repday), cinfo->repday);
+	if (*method != COMPACT_WDAY) {
+	    gtk_widget_set_sensitive(daymenu, FALSE);
+	}
+	
+	g_signal_connect(G_OBJECT(button), "clicked",
+			 G_CALLBACK(sensitize_daylist), daymenu);
+	g_object_set_data(G_OBJECT(button), "daymenu", daymenu);
+
+	gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 0);
+	gtk_widget_show_all(hbox);
     }
-#endif	
 }
 
 static int compact_methods_set (void)
@@ -2069,7 +2134,8 @@ static int compact_methods_set (void)
 }
 
 void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
-			  int *mon_start, CompactMethod *method)
+			  int *mon_start, CompactMethod *method,
+			  int *repday)
 {
     GtkWidget *d, *tempwid;
     int show_pd_buttons = 0;
@@ -2082,6 +2148,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     d = gretl_dialog_new(_("gretl: compact data"), w, GRETL_DLG_BLOCK);
 
     cinfo.target_pd = target_pd;
+    cinfo.repday = repday;
     cinfo.monday_button = NULL;
     cinfo.sunday_button = NULL;
     cinfo.wkday_opt = NULL;

@@ -2863,6 +2863,8 @@ static void check_first_field (const char *line, char delim,
                  !strcmp(s, "N.A.") || \
                  !strcmp(s, "n.a.") || \
                  !strcmp(s, "na") || \
+                 !strcmp(s, "N/A") || \
+                 !strcmp(s, "NaN") || \
                  !strcmp(s, ".") || \
                  !strcmp(s, "..") || \
                  !strncmp(s, "-999", 4))

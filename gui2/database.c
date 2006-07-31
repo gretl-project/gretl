@@ -341,7 +341,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	    }
 
 	    data_compact_dialog(vwin->w, sinfo->pd, &datainfo->pd, NULL, 
-				&method);
+				&method, NULL);
 
 	    if (method == COMPACT_NONE) {
 		if (!overwrite) {
@@ -1929,6 +1929,7 @@ void do_compact_data_set (void)
 {
     CompactMethod method = COMPACT_AVG;
     int err, newpd = 0, monstart = 1;
+    int repday = 0;
     int *pmonstart = NULL;
 
     if (maybe_restore_full_data(COMPACT)) {
@@ -1939,13 +1940,15 @@ void do_compact_data_set (void)
 	pmonstart = &monstart;
     }
 
-    data_compact_dialog(mdata->w, datainfo->pd, &newpd, pmonstart, &method);
+    data_compact_dialog(mdata->w, datainfo->pd, &newpd, pmonstart, 
+			&method, &repday);
+
     if (method == COMPACT_NONE) {
 	/* the user cancelled */
 	return;
     }
 
-    err = compact_data_set(&Z, datainfo, newpd, method, monstart);
+    err = compact_data_set(&Z, datainfo, newpd, method, monstart, repday);
 
     if (err) {
 	gui_errmsg(err);

@@ -267,6 +267,7 @@ static int catch_command_alias (char *line, CMD *cmd)
                          c == GARCH || \
                          c == MPOLS || \
                          c == POISSON || \
+                         c == PRINT || \
                          c == SCATTERS || \
                          c == TSLS || \
                          c == XTAB)
@@ -1507,8 +1508,8 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 
     /** now for a few command which may or may not take a list **/
 
-    /* PRINT can take a list, but not in its string literal variant */
     if (cmd->ci == PRINT && strstr(line, "\"")) {
+	/* no list in string literal variant */
 	cmd->nolist = 1;
 	capture_param(line, cmd, NULL, NULL);
 	return cmd->errcode;

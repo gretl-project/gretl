@@ -50,11 +50,13 @@ version 1.6.0, in progress
 - VECMs: make Johansen's alpha and beta retrievable as matrices
   with identifiers $jalpha and $jbeta
 - Several bug-fixes for the matrix manipulation facility
-- GUI menu partially restructured
+- GUI menus restructured and polished
 - Add facility for multiple time-series graphs from the GUI
 - Revamp the "--ten" option for printing variables to 10 digits:
   replace with a configurable "--long" option
-- Graph editing dialog: make the line width configurable
+- Graph editing dialog: make the line width configurable, and
+  also make the preferred line width settable per variable in 
+  the "Edit attributes" dialog
 - Data export: add option for saving data in JMulti format
 - Gretl command minibuffer: model commands now produce GUI
   model windows (for single-equation methods)
@@ -65,6 +67,15 @@ version 1.6.0, in progress
   value
 - NIST linear regression test suite: re-express accuracy in terms
   of log relative error, plus other enhancements
+- Generating random variables: add option to generate t and
+  chi-square values in GUI; add option of setting the PRNG seed
+  to the GUI variable-generation dialogs
+- Time-series filters: Add Hodrick-Prescott and Baxter-King filters
+  as a GUI menu item, along with simple moving average and
+  exponential moving average
+- Engle-Granger cointegration test: improve printout, add option
+  to test down for the lag order, and fix an issue with the
+  selection of the MacKinnon p-value for this test
   
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality

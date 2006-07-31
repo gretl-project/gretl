@@ -185,6 +185,7 @@ void time_series_menu_state (gboolean s)
     flip(mdata->ifac, "/Variable/Runs test", s);
     flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
     flip(mdata->ifac, "/Variable/KPSS test", s);
+    flip(mdata->ifac, "/Variable/Filter", s);
 #ifdef HAVE_X12A
     flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ss);
 #endif

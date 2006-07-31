@@ -2103,6 +2103,101 @@ static int weekly_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+/* conversion to weekly using a "representative day", e.g. use
+   each Wednesday value.  repday is 0-based on Sunday.
+*/
+
+static int daily_dataset_to_weekly (double **Z, DATAINFO *pdinfo,
+				    int repday)
+{
+    int y1, m1, d1;
+    char obs[OBSLEN];
+    double *x = NULL;
+    int n = 0, n_ok = 0;
+    int wday, ok;
+    int i, t, err = 0;
+
+    fprintf(stderr, "daily_dataset_to_weekly: repday = %d\n", repday);
+
+    for (t=0; t<pdinfo->n; t++) {
+	ntodate_full(obs, t, pdinfo);
+	wday = get_day_of_week(obs);
+	if (wday == repday) {
+	    ok = 0;
+	    for (i=1; i<pdinfo->v; i++) {
+		if (var_is_series(pdinfo, i) && !na(Z[i][t])) {
+		    ok = 1;
+		    break;
+		}
+	    }
+	    if (ok) {
+		n_ok++;
+	    }
+	    if (n == 0) {
+		sscanf(obs, "%d/%d/%d", &y1, &m1, &d1);
+	    }
+	    n++;
+	}
+    }
+
+    if (n_ok == 0) {
+	gretl_errmsg_set(_("Compacted dataset would be empty"));
+	return 1;
+    }	
+
+    fprintf(stderr, "n=%d, n_ok=%d, y1=%d, m1=%d, d1=%d\n", 
+	    n, n_ok, y1, m1, d1);
+
+    x = malloc(n * sizeof *x);
+    if (x == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=1; i<pdinfo->v && !err; i++) {
+	double *tmp;
+	int s = 0;
+
+	if (i > 0 && var_is_scalar(pdinfo, i)) {
+	    continue;
+	}
+	if (i > 0) {
+	    for (t=0; t<pdinfo->n; t++) {
+		ntodate_full(obs, t, pdinfo);
+		wday = get_day_of_week(obs);
+		if (wday == repday) {
+		    x[s++] = Z[i][t];
+		}
+	    }
+	}
+	tmp = realloc(Z[i], n * sizeof **Z);
+	if (tmp == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    Z[i] = tmp;
+	    for (t=0; t<n; t++) { 
+		Z[i][t] = (i == 0)? 1.0 : x[t];
+	    }
+	}
+    }
+
+    free(x);
+
+    if (!err) {
+	pdinfo->n = n;
+	pdinfo->pd = 52;
+	
+	sprintf(pdinfo->stobs, "%04d/%02d/%02d", y1, m1, d1);
+	pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+	pdinfo->t1 = 0;
+	pdinfo->t2 = pdinfo->n - 1;
+	ntodate_full(pdinfo->endobs, pdinfo->t2, pdinfo);
+
+	dataset_destroy_obs_markers(pdinfo);
+    }    
+
+    return err;
+}
+
 static int daily_dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 				     CompactMethod default_method)
 {
@@ -2244,6 +2339,8 @@ int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
  * @newpd: target data frequency.
  * @default_method: code for the default compaction method.
  * @monstart: FIXME add explanation.
+ * @repday: "representative day" for conversion from daily
+ * to weekly data (with method %COMPACT_WDAY only).
  * 
  * Compact the data set from higher to lower frequency.
  *
@@ -2251,7 +2348,8 @@ int maybe_expand_daily_data (double ***pZ, DATAINFO *pdinfo)
  */
 
 int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
-		      CompactMethod default_method, int monstart)
+		      CompactMethod default_method, int monstart,
+		      int repday)
 {
     int newn, oldn = pdinfo->n, oldpd = pdinfo->pd;
     int compfac;
@@ -2280,7 +2378,11 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	}
     }
 
-    if (newpd == 12 && oldpd >= 5 && oldpd <= 7) {
+    if (newpd == 52 && oldpd >= 5 && oldpd <= 7 && 
+	default_method == COMPACT_WDAY) {
+	/* daily to weekly, using "representative day" */
+	return daily_dataset_to_weekly(*pZ, pdinfo, repday);
+    } else if (newpd == 12 && oldpd >= 5 && oldpd <= 7) {
 	/* daily to monthly: special */
 	return daily_dataset_to_monthly(pZ, pdinfo, default_method);
     } else if (oldpd >= 5 && oldpd <= 7) {

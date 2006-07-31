@@ -5398,7 +5398,25 @@
 	If the argument to <cmd>print</cmd> is a literal string (which
 	must start with a double-quote, <lit>"</lit>), the string is
 	printed as is.  See also <cmdref
-	  targ="printf"/>.</para>
+	  targ="printf"/>.
+      </para>
+
+      <para>
+	Note: a special <quote>hack</quote> is available with this
+	command, in conjunction with the <lit>--byobs</lit> flag, which
+	can be useful when working with missing values in a data set.  If
+	you give a list of variables followed by a semi-colon, followed by
+	one final variable, then the final variable is not printed but is
+	used to screen the observations to print.  Any observations for
+	which the screening variable has value 0 are not printed.  As an
+	example of use, suppose you have a daily time series
+	<varname>x</varname>, and you want a list of the dates for which
+	<varname>x</varname> is missing.  You can do
+      </para>
+      <code>
+	genr filt = missing(x)
+	print x ; filt --byobs</code>
+
     </description>
 
     <gui-access>
