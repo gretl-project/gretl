@@ -822,18 +822,24 @@ static void hc_vcv_line (const MODEL *pmod, PRN *prn)
     }
 
     if (plain_format(prn)) {
-	pprintf(prn, "%s, %s%sHC%d%s\n", 
+	pprintf(prn, "%s, %s%sHC%d%s", 
 		_("Heteroskedasticity-robust standard errors"),
 		(jack)? "" : _("variant"),
 		(jack)? "" : " ",
 		hcv, (jack)? " (jackknife)" : "");
     } else {
-	pprintf(prn, "%s, %s%sHC%d%s\n", 
+	pprintf(prn, "%s, %s%sHC%d%s", 
 		I_("Heteroskedasticity-robust standard errors"),
 		(jack)? "" : I_("variant"),
 		(jack)? "" : " ",
 		hcv, (jack)? " (jackknife)" : "");
-    }	
+    }
+
+    if (rtf_format(prn)) {
+	pputs("\\par\n");
+    } else {
+	pputc(prn, '\n');
+    }
 }
 
 static void ml_vcv_line (const MODEL *pmod, PRN *prn)

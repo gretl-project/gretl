@@ -750,7 +750,6 @@ static void browser_functions_handler (windata_t *vwin, int task)
     } else if (task == VIEW_FN_PKG) {
 	gui_show_function_info(fnfile, VIEW_FUNC_INFO);
     } else if (task == EDIT_FN_PKG) {
-	gtk_widget_destroy(vwin->w);
 	edit_function_package(fnfile);
     } else if (task == CALL_FN_PKG) {
 	call_function_package(fnfile, vwin->w);
@@ -883,15 +882,11 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	browse_func = browser_open_ps;
 	break;
     case FUNC_FILES:
-    case FUNC_EDIT:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: function packages"));
-	browse_func = (code == FUNC_EDIT)? browser_edit_func : NULL;
-	if (code == FUNC_FILES) {
-	    call_func = browser_call_func;
-	} else {
-	    delete_func = browser_del_func;
-	}
+	browse_func = browser_edit_func;
+	call_func = browser_call_func;
+	delete_func = browser_del_func;
 	break;
     case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
@@ -960,7 +955,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     if (browse_func != NULL) {
 	label = (code == REMOTE_DB)? N_("Get series listing") :
 	    (code == REMOTE_FUNC_FILES)? N_("Info") :
-	    (code == FUNC_EDIT)? N_("Edit") :
+	    (code == FUNC_FILES)? N_("Edit") :
 	    N_("Open");
 
 	button = gtk_button_new_with_label(_(label));
@@ -995,7 +990,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
     }
 
     if (call_func != NULL) {
-	button = gtk_button_new_with_label(_("Call"));
+	button = gtk_button_new_with_label(_("Execute"));
 	gtk_box_pack_start(GTK_BOX(button_box), button, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(call_func), vwin);
@@ -1128,8 +1123,7 @@ gint populate_filelist (windata_t *vwin, gpointer p)
 	return populate_dbfilelist(vwin);
     } else if (REMOTE_ACTION(vwin->role)) {
 	return populate_remote_object_list(vwin);
-    } else if (vwin->role == FUNC_FILES || 
-	       vwin->role == FUNC_EDIT) {
+    } else if (vwin->role == FUNC_FILES) {
 	return populate_func_list(vwin);
     } else {
 	return read_file_descriptions(vwin, p);

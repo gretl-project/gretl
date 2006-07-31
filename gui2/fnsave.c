@@ -517,6 +517,10 @@ static void finfo_dialog (function_info *finfo)
 	if (entry_texts[i] != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), entry_texts[i]);
 	}
+
+	if (i == 1) {
+	    gtk_widget_grab_focus(entry);
+	}
     }
 
     gtk_widget_show(tbl);
