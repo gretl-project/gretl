@@ -884,7 +884,8 @@ static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)
 
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec) 
 {
-    GtkWidget *label, *vbox, *tbl;
+    GtkWidget *label, *tbl;
+    GtkWidget *vbox, *hbox;
     int i, tbl_len, tbl_num, tbl_col;
     char label_text[32];
     GList *plot_types = NULL;
@@ -957,6 +958,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(label);
 
 	label = gtk_label_new(_("legend"));
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
@@ -980,6 +982,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	label = gtk_label_new(_("type"));
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
@@ -1007,6 +1010,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	    label = gtk_label_new(_("scale"));
+	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      label, 1, 2, tbl_len-1, tbl_len);
 	    gtk_widget_show(label);
@@ -1026,6 +1030,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	    label = gtk_label_new(_("y axis"));
+	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      label, 1, 2, tbl_len-1, tbl_len);
 	    gtk_widget_show(label);
@@ -1039,32 +1044,29 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_widget_show(yaxiscombo[i]);	
 	}
 
-	if (1) {
-	    /* line width adjustment */
-	    GtkWidget *hbox;
+	/* line-width adjustment */
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	label = gtk_label_new(_("line width"));
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  label, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
-	    tbl_len++;
-	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	    label = gtk_label_new(_("line width"));
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      label, 1, 2, tbl_len-1, tbl_len);
-	    gtk_widget_show(label);
-
-	    hbox = gtk_hbox_new(FALSE, 5);
-	    linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
-	    if (spec->lines[i].width > 1) {
-		gtk_spin_button_set_value(GTK_SPIN_BUTTON(linewidth[i]),
-					  spec->lines[i].width);
-	    }
-	    g_signal_connect(G_OBJECT(linewidth[i]), "activate", 
-			     G_CALLBACK(apply_gpt_changes), 
-			     spec);
-	    gtk_box_pack_start(GTK_BOX(hbox), linewidth[i], FALSE, FALSE, 0);
-	    gtk_widget_show(linewidth[i]);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
-				      tbl_len-1, tbl_len);
-	    gtk_widget_show(hbox);
+	hbox = gtk_hbox_new(FALSE, 5);
+	linewidth[i] = gtk_spin_button_new_with_range(1, 6, 1);
+	if (spec->lines[i].width > 1) {
+	    gtk_spin_button_set_value(GTK_SPIN_BUTTON(linewidth[i]),
+				      spec->lines[i].width);
 	}
+	g_signal_connect(G_OBJECT(linewidth[i]), "activate", 
+			 G_CALLBACK(apply_gpt_changes), 
+			 spec);
+	gtk_box_pack_start(GTK_BOX(hbox), linewidth[i], FALSE, FALSE, 0);
+	gtk_widget_show(linewidth[i]);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 2, 3, 
+				  tbl_len-1, tbl_len);
+	gtk_widget_show(hbox);
     }
 }
 
@@ -1120,6 +1122,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_widget_show(label);
 
 	label = gtk_label_new(_("text"));
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
@@ -1140,6 +1143,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	label = gtk_label_new(_("position (X Y)"));
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
@@ -1180,6 +1184,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	label = gtk_label_new(_("justification"));
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  label, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(label);
@@ -1354,6 +1359,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 {
     png_plot *plot = (png_plot *) spec->ptr;
     GtkWidget *button, *notebook;
+    GtkWidget *hbox;
     int i;
 
     if (gpt_control != NULL) {
@@ -1370,16 +1376,9 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	gpt_titles[i].widget = NULL;
     }
 
-    gpt_control = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(gpt_control), _("gretl plot controls"));
-    gtk_container_set_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(gpt_control)->vbox), 10);
-    gtk_container_set_border_width 
-        (GTK_CONTAINER(GTK_DIALOG(gpt_control)->action_area), 5);
+    gpt_control = gretl_dialog_new(_("gretl plot controls"), NULL, 0);
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(gpt_control)->vbox), 2);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 15);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW(gpt_control), GTK_WIN_POS_MOUSE);
+    gtk_dialog_set_has_separator(GTK_DIALOG(gpt_control), FALSE);
 
     if (plot != NULL) {
 	gtk_window_set_transient_for(GTK_WINDOW(gpt_control), 
@@ -1407,20 +1406,17 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     gpt_tab_labels(notebook, spec); 
     gpt_tab_output(notebook, spec);
 
+    hbox = GTK_DIALOG(gpt_control)->action_area;
+
     /* "Apply" button */
-    button = standard_button(GTK_STOCK_APPLY);
-    GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       button, TRUE, TRUE, 0);
+    button = apply_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_gpt_changes), spec);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
     /* "OK" button (apply and close) */
-    button = standard_button(GTK_STOCK_OK);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       button, TRUE, TRUE, 0);
+    button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_gpt_changes), spec);
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -1430,20 +1426,13 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     /* Close button (do not apply changes) */
     button = standard_button(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       button, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(close_gnuplot_dialog), gpt_control);
     gtk_widget_show(button);
 
-    button = standard_button(GTK_STOCK_HELP);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(context_help), 
-		     GINT_TO_POINTER(GR_PLOT));
-    gtk_widget_show(button);
+    /* Help button */
+    context_help_button(hbox, GR_PLOT);
 
     set_keyspec_sensitivity(spec);
 

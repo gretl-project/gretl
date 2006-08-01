@@ -1636,7 +1636,7 @@ static void gretl_child_destroy (GtkWidget *w, gpointer data)
 static GretlChild *gretl_child_new (const gchar *title)
 {
     GretlChild *gchild;
-    GtkWidget *base, *hsep;
+    GtkWidget *base;
 
     gchild = mymalloc(sizeof *gchild);
     if (gchild == NULL) return NULL;
@@ -1654,11 +1654,11 @@ static GretlChild *gretl_child_new (const gchar *title)
     gtk_container_add(GTK_CONTAINER(base), gchild->vbox);
     gtk_container_set_border_width(GTK_CONTAINER(gchild->vbox), 5);
 
-    hsep = gtk_hseparator_new();
-    gtk_widget_show(hsep);
-    gtk_container_add(GTK_CONTAINER(base), hsep);
-    
-    gchild->action_area = gtk_hbox_new(TRUE, 5);
+    gchild->action_area = gtk_hbutton_box_new();
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(gchild->action_area), 
+			      GTK_BUTTONBOX_END);
+    gtk_button_box_set_spacing(GTK_BUTTON_BOX(gchild->action_area),
+			       10);
     gtk_widget_show(gchild->action_area);
     gtk_container_add(GTK_CONTAINER(base), gchild->action_area);
     gtk_container_set_border_width(GTK_CONTAINER(gchild->action_area), 5);
@@ -1748,11 +1748,11 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	}
     }	
 
-    /* OK button */
-    tempwid = standard_button(GTK_STOCK_OK);
+    /* Apply button */
+    tempwid = standard_button(GTK_STOCK_APPLY);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(dialog->action_area), 
-		       tempwid, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(dialog->action_area), 
+		      tempwid);
 
     g_signal_connect(G_OBJECT (tempwid), "clicked", 
 		     (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
@@ -1764,8 +1764,8 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     /* Close button */
     tempwid = standard_button(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(dialog->action_area), 
-		       tempwid, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(dialog->action_area), 
+		      tempwid);
 
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     (code == CALC_PVAL)? G_CALLBACK(trash_pval) :
@@ -1781,8 +1781,10 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     if (code == CALC_TEST) {
 	tempwid = standard_button(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-	gtk_box_pack_start(GTK_BOX(dialog->action_area), 
-			   tempwid, TRUE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER(dialog->action_area), 
+			  tempwid);
+	gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(dialog->action_area),
+					   tempwid, TRUE);
 	g_signal_connect(G_OBJECT(tempwid), "clicked", 
 			 G_CALLBACK(context_help), 
 			 GINT_TO_POINTER(HTEST));

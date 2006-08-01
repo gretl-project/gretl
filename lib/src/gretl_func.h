@@ -36,7 +36,12 @@ typedef enum {
     FN_NEEDS_PANEL   /* function requires panel data */
 } FuncDataReq;
 
+#define NEEDS_TS    "needs-time-series-data"
+#define NEEDS_QM    "needs-qm-data"
+#define NEEDS_PANEL "needs-panel-data"
+
 typedef struct ufunc_ ufunc;
+typedef struct fnpkg_ fnpkg;
 
 int n_user_functions (void);
 
@@ -99,7 +104,8 @@ int gretl_function_print_code (int i, PRN *prn);
 
 void gretl_function_set_private (int i, int priv);
 
-int write_function_package (const char *fname,
+int write_function_package (fnpkg *pkg,
+			    const char *fname,
 			    const int *privlist, 
 			    const int *publist, 
 			    const char *author,
@@ -109,6 +115,7 @@ int write_function_package (const char *fname,
 			    FuncDataReq dreq);
 
 int function_package_get_info (const char *fname,
+			       fnpkg **ppkg,
 			       int **privlist, 
 			       int **publist,
 			       char **author,
@@ -116,6 +123,9 @@ int function_package_get_info (const char *fname,
 			       char **date,
 			       char **descrip,
 			       FuncDataReq *dreq);
+
+int check_function_data_needs (const DATAINFO *pdinfo,
+			       FuncDataReq dreq);
 
 int write_user_function_file (const char *fname);
 

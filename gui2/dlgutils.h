@@ -31,6 +31,8 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 
 int maybe_raise_dialog (void);
 
+void vbox_add_hsep (GtkWidget *vbox);
+
 GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode);
 
 GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
@@ -38,6 +40,8 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ,
 
 GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
 				  int *opt);
+
+GtkWidget *cancel_button (GtkWidget *hbox);
 
 GtkWidget *ok_button (GtkWidget *hbox);
 

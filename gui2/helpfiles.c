@@ -1363,16 +1363,13 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 	return;
     }
 
-    find_window = gtk_dialog_new();
+    find_window = gretl_dialog_new(_("gretl: find"), NULL, 0);
     g_object_set_data(G_OBJECT(find_window), "windat", mydat);
     parent_find(find_window, mydat);
 
     g_signal_connect(G_OBJECT(find_window), "destroy",
 		     G_CALLBACK(close_find_dialog),
 		     find_window);
-
-    gtk_window_set_title(GTK_WINDOW(find_window), _("gretl: find"));
-    gtk_container_set_border_width(GTK_CONTAINER(find_window), 5);
 
     hbox = gtk_hbox_new(TRUE, TRUE);
     label = gtk_label_new(_(" Find what:"));
@@ -1397,28 +1394,21 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG(find_window)->vbox), 
 		       hbox, TRUE, TRUE, 0);
 
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(find_window)->action_area), 15);
-    gtk_box_set_homogeneous(GTK_BOX 
-			    (GTK_DIALOG(find_window)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW(find_window), GTK_WIN_POS_MOUSE);
+    hbox = GTK_DIALOG(find_window)->action_area;
+
+    /* cancel button */
+    button = cancel_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(cancel_find), find_window);
+    gtk_widget_show(button);
 
     /* find button -- make this the default */
     button = standard_button(GTK_STOCK_FIND);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(find_window)->action_area), 
-		       button, TRUE, TRUE, FALSE);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(findfunc), find_window);
     gtk_widget_grab_default(button);
-    gtk_widget_show(button);
-
-    /* cancel button */
-    button = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(find_window)->action_area), 
-		       button, TRUE, TRUE, FALSE);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(cancel_find), find_window);
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(find_entry);

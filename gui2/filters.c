@@ -555,14 +555,14 @@ static int filter_dialog (filter_info *finfo)
     /* convenience pointer for button box */
     hbox = GTK_DIALOG(dlg)->action_area;
 
-    /* Create the "OK" button */
+    /* Cancel button */
+    w = cancel_delete_button(hbox, dlg, &ret);
+
+    /* "OK" button */
     w = ok_button(hbox);
     g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(filter_dialog_ok), finfo);
     gtk_widget_grab_default(w);
-
-    /* Cancel button */
-    w = cancel_delete_button(hbox, dlg, &ret);
 
     gtk_widget_show_all(dlg);
 

@@ -705,12 +705,6 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	strcpy(fname, savename);
 	g_free(savename);
 	get_base(startdir, paths.datfile, SLASH);
-    } else if (action == SAVE_FUNCTIONS) {
-	const char *savename = get_fnsave_filename();
-
-	if (savename != NULL) {
-	    strcpy(fname, savename);
-	}
     } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 
@@ -860,13 +854,6 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
     } else if ((action == SAVE_SESSION) && *scriptfile != '\0') {
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
 				      scriptfile);
-    } else if (action == SAVE_FUNCTIONS) {
-	const char *savename = get_fnsave_filename();
-
-	if (savename != NULL) {
-	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
-					  savename);
-	}
     } else if (action == SET_PATH) {
 	char *strvar = (char *) data;
 

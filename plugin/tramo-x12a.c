@@ -160,15 +160,16 @@ static int tx_dialog (tx_request *request)
 				     NULL,
 				     GTK_DIALOG_MODAL | 
 				     GTK_DIALOG_DESTROY_WITH_PARENT,
-				     GTK_STOCK_OK,
-				     GTK_RESPONSE_ACCEPT,
 				     GTK_STOCK_CANCEL,
 				     GTK_RESPONSE_REJECT,
+				     GTK_STOCK_OK,
+				     GTK_RESPONSE_ACCEPT,
 				     NULL);
 
     vbox = gtk_vbox_new(FALSE, 0);    
 
     if (request->code == TRAMO_SEATS) {
+	gtk_dialog_set_has_separator(GTK_DIALOG(request->dialog), FALSE);
 	show_tramo_options(request, vbox);
     } else {
 	/* X-12-ARIMA */
@@ -212,7 +213,7 @@ static int tx_dialog (tx_request *request)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(request->dialog)->vbox),
 		       hbox, FALSE, FALSE, 5);
 
-    ret = gtk_dialog_run (GTK_DIALOG(request->dialog));
+    ret = gtk_dialog_run(GTK_DIALOG(request->dialog));
 
     if (ret == GTK_RESPONSE_ACCEPT) ret = 1;
     else ret = 0;

@@ -542,6 +542,7 @@ static void function_call_dialog (call_info *cinfo)
 	    GList *list = NULL;
 
 	    label = gtk_label_new(arg_type_string(cinfo->return_types[i]));
+	    gtk_misc_set_alignment(GTK_MISC(label), 0.75, 0.5);
 	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i+1, i+2,
 			     GTK_EXPAND, GTK_FILL, 5, 5);
 	    gtk_widget_show(label);
@@ -565,28 +566,22 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(tbl);
     }
 
-    /* Create the "OK" button */
+    /* Cancel button */
+    button = cancel_button(GTK_DIALOG(cinfo->dlg)->action_area);
+    g_signal_connect(G_OBJECT (button), "clicked", 
+		     G_CALLBACK(fncall_cancel), cinfo);
+    gtk_widget_show(button);
+
+    /* "OK" button */
     button = ok_button(GTK_DIALOG(cinfo->dlg)->action_area);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(fncall_finalize), cinfo);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
-    /* And a Cancel button */
-    button = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->action_area), 
-		       button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT (button), "clicked", 
-		     G_CALLBACK(fncall_cancel), cinfo);
-    gtk_widget_show(button);
-
     /* Help button */
-    button = standard_button(GTK_STOCK_HELP);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->action_area), 
-		       button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT (button), "clicked", 
+    button = context_help_button(GTK_DIALOG(cinfo->dlg)->action_area, -1);
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(fncall_help), cinfo);
     gtk_widget_show(button);    
 
@@ -753,6 +748,7 @@ void call_function_package (const char *fname, GtkWidget *w)
     /* get interface(s) for package */
     err = function_package_get_info((*tmpfile)? tmpfile : fname,
 				    NULL,
+				    NULL,
 				    &cinfo.publist,
 				    NULL,
 				    NULL,
@@ -770,10 +766,14 @@ void call_function_package (const char *fname, GtkWidget *w)
 	return;
     }
 
-    /* FIXME check data requirements */
+    err = check_function_data_needs(datainfo, dreq);
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
 
     /* FIXME selection of interface, if there's more than one
-       available
+       available?
     */
     cinfo.iface = cinfo.publist[1];
     cinfo.func = get_user_function_by_index(cinfo.iface);

@@ -42,6 +42,8 @@ struct function_info_ {
     GtkWidget *ifsel;
     GtkWidget *codesel;
     GtkWidget *check;
+    fnpkg *pkg;
+    char *fname;
     char *author;
     char *version;
     char *date;
@@ -53,7 +55,7 @@ struct function_info_ {
     int iface;
     FuncDataReq dreq;
     int upload;
-    int canceled;
+    int saveas;
 };
 
 struct login_info_ {
@@ -65,18 +67,6 @@ struct login_info_ {
     int canceled;
 };
 
-static const char *fnsave_filename;
-
-static void set_fnsave_filename (const char *fname)
-{
-    fnsave_filename = fname;
-}
-
-const char *get_fnsave_filename (void)
-{
-    return fnsave_filename;
-}
-
 function_info *finfo_new (void)
 {
     function_info *finfo;
@@ -86,12 +76,14 @@ function_info *finfo_new (void)
 	return NULL;
     }
 
+    finfo->pkg = NULL;
+    finfo->fname = NULL;
     finfo->author = NULL;
     finfo->version = NULL;
     finfo->date = NULL;
     finfo->pkgdesc = NULL;
     finfo->upload = 0;
-    finfo->canceled = 0;
+    finfo->saveas = 0;
     finfo->iface = -1;
 
     finfo->n_public = 0;
@@ -110,7 +102,6 @@ static int finfo_init (function_info *finfo)
     finfo->help = strings_array_new(finfo->n_public);
     if (finfo->help == NULL) {
 	nomem();
-	finfo->canceled = 1;
 	return E_ALLOC;
     }
 
@@ -119,6 +110,7 @@ static int finfo_init (function_info *finfo)
 
 static void finfo_free (function_info *finfo)
 {
+    free(finfo->fname);
     free(finfo->author);
     free(finfo->version);
     free(finfo->date);
@@ -199,7 +191,7 @@ static void login_finalize (GtkWidget *w, login_info *linfo)
     gtk_widget_destroy(linfo->dlg);
 }
 
-static void finfo_finalize (GtkWidget *w, function_info *finfo)
+static void real_finfo_save (function_info *finfo)
 {
     char **fields[] = {
 	&finfo->author,
@@ -237,24 +229,36 @@ static void finfo_finalize (GtkWidget *w, function_info *finfo)
 	free(tmp);
     }
 
-    gtk_widget_destroy(finfo->dlg);
+    if (finfo->saveas) {
+	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
+		      FSEL_DATA_MISC, finfo);
+    } else {
+	save_user_functions(finfo->fname, finfo);
+    }
+}
+
+static void finfo_save_as (GtkWidget *w, function_info *finfo)
+{
+    finfo->saveas = 1;
+    real_finfo_save(finfo);
+}
+
+static void finfo_save (GtkWidget *w, function_info *finfo)
+{
+    finfo->saveas = (finfo->fname == NULL);
+
+    real_finfo_save(finfo);
+}
+
+static void finfo_destroy (GtkWidget *w, function_info *finfo)
+{
+    finfo_free(finfo);
 }
 
 static void login_cancel (GtkWidget *w, login_info *linfo)
 {
     linfo->canceled = 1;
     gtk_widget_destroy(linfo->dlg);
-}
-
-static void finfo_cancel (GtkWidget *w, function_info *finfo)
-{
-    finfo->canceled = 1;
-    gtk_widget_destroy(finfo->dlg);
-}
-
-static void finfo_delete (GtkWidget *w, function_info *finfo)
-{
-    finfo->canceled = 1;
 }
 
 enum {
@@ -340,11 +344,22 @@ static gboolean update_iface (GtkOptionMenu *menu,
 
 static void edit_code_callback (GtkWidget *w, function_info *finfo)
 {
-    
     windata_t *vwin;
+    GtkWidget *orig;
+    const char *funname;
+    GQuark q;
     PRN *prn = NULL;
 
     if (finfo->iface < 0) {
+	return;
+    }
+
+    funname = user_function_name_by_index(finfo->iface);
+    q = g_quark_from_string(funname);
+
+    orig = match_window_by_data(GINT_TO_POINTER(q));
+    if (orig != NULL) {
+	gtk_window_present(GTK_WINDOW(orig));
 	return;
     }
 
@@ -354,9 +369,8 @@ static void edit_code_callback (GtkWidget *w, function_info *finfo)
 
     gretl_function_print_code(finfo->iface, prn);
 
-    vwin = view_buffer(prn, 78, 350, 
-		       user_function_name_by_index(finfo->iface),
-		       EDIT_FUNC_CODE, NULL);
+    vwin = view_buffer(prn, 78, 350, funname,
+		       EDIT_FUNC_CODE, GINT_TO_POINTER(q));
 
     if (vwin != NULL) {
 	build_path(vwin->fname, paths.userdir, "pkgedit", NULL);
@@ -385,8 +399,7 @@ enum {
     CHECK_BUTTON
 };
 
-static GtkWidget *button_in_hbox (GtkWidget *w, int btype, const char *txt,
-				  GtkWidget **phbox)
+static GtkWidget *button_in_hbox (GtkWidget *w, int btype, const char *txt)
 {
     GtkWidget *hbox, *button;
 
@@ -400,10 +413,6 @@ static GtkWidget *button_in_hbox (GtkWidget *w, int btype, const char *txt,
     gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     gtk_widget_show(button);
     gtk_widget_show(hbox);
-
-    if (phbox != NULL) {
-	*phbox = hbox;
-    }
 
     return button;
 }
@@ -444,10 +453,45 @@ static GtkWidget *interface_selector (function_info *finfo, int iface)
     return ifmenu;
 }
 
+static void dreq_select (GtkOptionMenu *menu, function_info *finfo)
+{
+    finfo->dreq = gtk_option_menu_get_history(menu);
+}
+
+static void add_data_requirement_menu (GtkWidget *tbl, int i, 
+				       function_info *finfo)
+{
+    const char *datareq[] = {
+	N_("No special requirement"),
+	N_("Time-series data"),
+	N_("Quarterly or monthly data"),
+	N_("Panel data")
+    };
+    GtkWidget *menu, *datamenu, *tmp;
+    int j;
+
+    tmp = gtk_label_new(_("Data requirement"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
+    gtk_widget_show(tmp);
+
+    datamenu = gtk_option_menu_new();
+    menu = gtk_menu_new();
+    for (j=0; j<=FN_NEEDS_PANEL; j++) {
+	tmp = gtk_menu_item_new_with_label(_(datareq[j]));
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+    }
+    gtk_option_menu_set_menu(GTK_OPTION_MENU(datamenu), menu);
+    gtk_option_menu_set_history(GTK_OPTION_MENU(datamenu), finfo->dreq);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), datamenu, 1, 2, i, i+1);
+    gtk_widget_show_all(datamenu);
+    g_signal_connect(G_OBJECT(datamenu), "changed",
+		     G_CALLBACK(dreq_select), finfo);
+}
+
 static void finfo_dialog (function_info *finfo)
 {
     GtkWidget *button, *label;
-    GtkWidget *tbl, *hbox;
+    GtkWidget *tbl, *vbox, *hbox;
     const char *entry_labels[] = {
 	N_("Author"),
 	N_("Version"),
@@ -460,12 +504,6 @@ static void finfo_dialog (function_info *finfo)
 	finfo->date,
 	finfo->pkgdesc
     };
-    const char *datareq[] = {
-	N_("Any data"),
-	N_("Time-series data"),
-	N_("Quarterly or monthly data"),
-	N_("Panel data")
-    };
     const char *fnname;
     int i;
 
@@ -473,18 +511,23 @@ static void finfo_dialog (function_info *finfo)
 	return;
     }
 
-    finfo->dlg = gretl_dialog_new(_("gretl: function package editor"), NULL, 
-				  GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
+    finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
-    /* FIXME want label at top of dialog? */
+    g_signal_connect(G_OBJECT(finfo->dlg), "destroy", 
+		     G_CALLBACK(finfo_destroy), finfo);
 
-    g_signal_connect(G_OBJECT(finfo->dlg), "delete_event",
-		     G_CALLBACK(finfo_delete), finfo);
+    gtk_window_set_title(GTK_WINDOW(finfo->dlg), 
+			 _("gretl: function package editor")); 
+    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 480);
 
+    vbox = gtk_vbox_new(FALSE, 5);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
+    gtk_container_add(GTK_CONTAINER(finfo->dlg), vbox);
+    gtk_widget_show(vbox);
+			 
     tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
-		       tbl, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
 
     for (i=0; i<NENTRIES; i++) {
 	GtkWidget *entry;
@@ -510,32 +553,12 @@ static void finfo_dialog (function_info *finfo)
 	}
     }
 
-    /* data requirements menu */
-    if (1) {
-	GtkWidget *menu, *datamenu, *tmp;
-	int j;
-
-	label = gtk_label_new(_("Data requirement"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, i, i+1);
-	gtk_widget_show(label);
-
-	datamenu = gtk_option_menu_new();
-	menu = gtk_menu_new();
-	for (j=0; j<=FN_NEEDS_PANEL; j++) {
-	    tmp = gtk_menu_item_new_with_label(_(datareq[j]));
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
-	}
-	gtk_option_menu_set_menu(GTK_OPTION_MENU(datamenu), menu);
-	gtk_option_menu_set_history(GTK_OPTION_MENU(datamenu), finfo->dreq);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), datamenu, 1, 2, i, i+1);
-	gtk_widget_show_all(datamenu);
-    }
-
+    add_data_requirement_menu(tbl, i, finfo);
     gtk_widget_show(tbl);
 
     if (finfo->n_public > 1) {
 	/* drop-down selector for public interfaces */
-	hbox = label_hbox(GTK_DIALOG(finfo->dlg)->vbox, _("Help text for"));
+	hbox = label_hbox(vbox, _("Help text for"));
 	finfo->ifsel = interface_selector(finfo, IFACE_PUBLIC);
 	gtk_box_pack_start(GTK_BOX(hbox), finfo->ifsel, FALSE, FALSE, 5);
 	g_signal_connect(G_OBJECT(GTK_OPTION_MENU(finfo->ifsel)), "changed",
@@ -547,24 +570,25 @@ static void finfo_dialog (function_info *finfo)
 
 	fnname = user_function_name_by_index(finfo->publist[1]);
 	ltxt = g_strdup_printf("Help text for %s:", fnname);
-	hbox = label_hbox(GTK_DIALOG(finfo->dlg)->vbox, ltxt);
+	hbox = label_hbox(vbox, ltxt);
 	gtk_widget_show(hbox);
 	g_free(ltxt);
     }
 
-    finfo->text = create_text(finfo->dlg, -1, -1, TRUE);
-    text_table_setup(GTK_DIALOG(finfo->dlg)->vbox, finfo->text);
-    gtk_window_set_default_size(GTK_WINDOW(finfo->dlg), 640, 480);
+    finfo->text = create_text(NULL, -1, -1, TRUE);
+    text_table_setup(vbox, finfo->text);
 
     set_dialog_info_from_fn(finfo, finfo->publist[1], HIDX_INIT);
 
-    /* button for editing the actual code */
-    button = button_in_hbox(GTK_DIALOG(finfo->dlg)->vbox,
-			    REGULAR_BUTTON, "Edit function code", &hbox);
+    /* edit code button, possibly with selector */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
+
+    button = gtk_button_new_with_label(_("Edit function code"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 5);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(edit_code_callback), finfo);
 
-    /* with selector if there's more than one function in package */
     if (finfo->publist[0] > 1 || finfo->privlist != NULL) {
 	finfo->codesel = interface_selector(finfo, IFACE_ALL);
 	gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
@@ -574,26 +598,41 @@ static void finfo_dialog (function_info *finfo)
 	finfo->iface = finfo->publist[1];
     }
 
+    gtk_widget_show_all(hbox);
+
     /* check box for upload option */
-    finfo->check = button_in_hbox(GTK_DIALOG(finfo->dlg)->vbox, CHECK_BUTTON, 
-				  "Upload package to server on save",
-				  NULL);
+    finfo->check = button_in_hbox(vbox, CHECK_BUTTON, 
+				  "Upload package to server on save");
 
-    /* Create the "OK" button */
-    button = ok_button(GTK_DIALOG(finfo->dlg)->action_area);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(finfo_finalize), finfo);
-    gtk_widget_grab_default(button);
-    gtk_widget_show(button);
+    /* control button area */
+    hbox = gtk_hbutton_box_new();
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
+    gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 0);
 
-    /* And a Cancel button */
-    button = standard_button(GTK_STOCK_CANCEL);
+    /* SaveAs button */
+    button = gtk_button_new_from_stock(GTK_STOCK_SAVE_AS);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->action_area), 
-		       button, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(finfo_save_as), finfo);
+
+    /* Save button */
+    button = gtk_button_new_from_stock(GTK_STOCK_SAVE);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(finfo_save), finfo);
+    gtk_widget_grab_default(button);
+
+    /* Close button */
+    button = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
     g_signal_connect(G_OBJECT (button), "clicked", 
-		     G_CALLBACK(finfo_cancel), finfo);
-    gtk_widget_show(button);
+		     G_CALLBACK(delete_widget), finfo->dlg);
+
+    gtk_widget_show_all(hbox);
 
     gtk_widget_show(finfo->dlg);
 }
@@ -656,24 +695,29 @@ static void login_dialog (login_info *linfo)
 			"in your web browser."));
     gtk_widget_show(hbox);
 
-    button = ok_button(GTK_DIALOG(linfo->dlg)->action_area);
+    /* control button area */
+
+    hbox = GTK_DIALOG(linfo->dlg)->action_area;
+
+    /* Cancel */
+    button = cancel_button(hbox);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(login_cancel), linfo);
+    gtk_widget_show(button);
+
+    /* OK */
+    button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(login_finalize), linfo);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
-    button = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(linfo->dlg)->action_area), 
-		       button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(login_cancel), linfo);
-    gtk_widget_show(button);
-
+    /* Website */
     button = gtk_button_new_with_label("Website");
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(linfo->dlg)->action_area), 
-		       button, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), button);
+    gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
+				       button, TRUE);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(web_get_login), NULL);
     gtk_widget_show(button);
@@ -707,6 +751,14 @@ void save_user_functions (const char *fname, gpointer p)
     function_info *finfo = p;
     int i, err;
 
+    /* sync filename with functions editor */
+    if (finfo->fname == NULL) {
+	finfo->fname = g_strdup(fname);
+    } else if (strcmp(fname, finfo->fname)) {
+	g_free(finfo->fname);
+	finfo->fname = g_strdup(fname);
+    }
+
     if (finfo->privlist != NULL) {
 	for (i=1; i<=finfo->privlist[0]; i++) {
 	    gretl_function_set_private(finfo->privlist[i], TRUE);
@@ -725,9 +777,11 @@ void save_user_functions (const char *fname, gpointer p)
     fprintf(stderr, "pkgdesc='%s'\n", finfo->pkgdesc);
     printlist(finfo->privlist, "finfo->privlist");
     printlist(finfo->publist, "finfo->publist");
+    fprintf(stderr, "dreq=%d\n", finfo->dreq);
 #endif
 		
-    err = write_function_package(fname,
+    err = write_function_package(finfo->pkg,
+				 fname,
 				 finfo->privlist, 
 				 finfo->publist,
 				 finfo->author,
@@ -741,8 +795,6 @@ void save_user_functions (const char *fname, gpointer p)
     } else if (finfo->upload) {
 	do_upload(fname);
     }
-
-    finfo_free(finfo);    
 }
 
 /* called from function selection dialog: a set of functions has been
@@ -785,15 +837,8 @@ void prepare_functions_save (void)
 	finfo->privlist = NULL;
     }
 
+    /* Call dialog to do the actual editing */
     finfo_dialog(finfo);
-
-    if (finfo->canceled) {
-	finfo_free(finfo);
-    } else {
-	set_fnsave_filename(NULL);
-	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
-		      FSEL_DATA_MISC, finfo);
-    }
 }
 
 void edit_function_package (const char *fname)
@@ -816,6 +861,7 @@ void edit_function_package (const char *fname)
     }
 
     err = function_package_get_info(fname,
+				    &finfo->pkg,
 				    &finfo->privlist,
 				    &finfo->publist,
 				    &finfo->author,
@@ -831,16 +877,9 @@ void edit_function_package (const char *fname)
 	return;
     }
 
-    set_fnsave_filename(fname);
+    finfo->fname = g_strdup(fname);
 
     finfo_dialog(finfo);
-
-    if (finfo->canceled) {
-	finfo_free(finfo);
-    } else {
-	file_selector(_("Save function package"), SAVE_FUNCTIONS, 
-		      FSEL_DATA_MISC, finfo);
-    }    
 }
 
 

@@ -770,39 +770,26 @@ static void option_dialog_canceled (GtkWidget *w, int *c)
     *c = 1;
 }
 
-static void options_dialog_delete (GtkWidget *w, gpointer p)
-{
-    GtkWidget **wp = (GtkWidget **) p;
-
-    *wp = NULL;
-    gtk_main_quit();
-}
-
 int options_dialog (int page) 
 {
     static GtkWidget *dialog;
 
     GtkWidget *notebook;
     GtkWidget *button;
+    GtkWidget *hbox;
     int canceled = 0;
 
     if (dialog != NULL) {
 	gdk_window_raise(dialog->window);
 	return 0;
-    }	
+    }
 
-    dialog = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: options"));
-    gtk_container_set_border_width(GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 10);
-    gtk_container_set_border_width 
-	(GTK_CONTAINER(GTK_DIALOG(dialog)->action_area), 5);
+    dialog = gretl_dialog_new(_("gretl: options"), mdata->w, GRETL_DLG_BLOCK);
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 2);
-    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->action_area), 15);
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
-    gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
-		     G_CALLBACK(options_dialog_delete), 
+		     G_CALLBACK(gtk_widget_destroyed), 
 		     &dialog);
 
     notebook = gtk_notebook_new();
@@ -817,23 +804,17 @@ int options_dialog (int page)
     make_prefs_tab(notebook, 5);
     make_prefs_tab(notebook, 6);
 
-    /* OK button */
-    button = standard_button(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       button, TRUE, TRUE, 0);
+    hbox = GTK_DIALOG(dialog)->action_area;
+
+    /* Apply button */
+    button = apply_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_changes), NULL);
-    g_signal_connect(G_OBJECT(button), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     dialog);
+    gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
     /* Cancel button */
-    button = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       button, TRUE, TRUE, 0);
+    button = cancel_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(option_dialog_canceled), 
 		     &canceled);
@@ -842,14 +823,13 @@ int options_dialog (int page)
 		     dialog);
     gtk_widget_show(button);
 
-    /* Apply button (the default) */
-    button = standard_button(GTK_STOCK_APPLY);
-    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
-		       button, TRUE, TRUE, 0);
+    /* OK button */
+    button = ok_button(hbox);
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_changes), NULL);
-    gtk_widget_grab_default(button);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
     gtk_widget_show(button);
 
     if (page > 0) {
@@ -857,9 +837,6 @@ int options_dialog (int page)
     }
 
     gtk_widget_show(dialog);
-
-    /* block */
-    gtk_main();
 
     return canceled;
 }

@@ -26,6 +26,14 @@
 
 #include "system.h"
 
+void vbox_add_hsep (GtkWidget *vbox)
+{
+    GtkWidget *h = gtk_hseparator_new();
+    
+    gtk_box_pack_start(GTK_BOX(vbox), h, FALSE, FALSE, 0);
+    gtk_widget_show(h);
+}
+
 /* Various buttons, usable in several sorts of dialogs */
 
 GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
@@ -34,10 +42,14 @@ GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
 
     w = standard_button(GTK_STOCK_HELP);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(w), "clicked", 
-		     G_CALLBACK(context_help), 
-		     GINT_TO_POINTER(cmdcode));
+    gtk_container_add(GTK_CONTAINER(hbox), w);
+    gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(hbox),
+				       w, TRUE);
+    if (cmdcode >= 0) {
+	g_signal_connect(G_OBJECT(w), "clicked", 
+			 G_CALLBACK(context_help), 
+			 GINT_TO_POINTER(cmdcode));
+    }
     gtk_widget_show(w);
 
     return w;
@@ -113,7 +125,7 @@ GtkWidget *ok_button (GtkWidget *hbox)
 
     w = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
 }
@@ -124,7 +136,18 @@ GtkWidget *apply_button (GtkWidget *hbox)
 
     w = standard_button(GTK_STOCK_APPLY);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), w);
+
+    return w;
+}
+
+GtkWidget *cancel_button (GtkWidget *hbox)
+{
+    GtkWidget *w;
+
+    w = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
 }
@@ -135,7 +158,7 @@ GtkWidget *next_button (GtkWidget *hbox)
 
     w = standard_button(GTK_STOCK_GO_FORWARD);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
 }
@@ -146,7 +169,7 @@ GtkWidget *back_button (GtkWidget *hbox)
 
     w = standard_button(GTK_STOCK_GO_BACK);
     GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), w);
 
     return w;
 }
@@ -205,7 +228,8 @@ GtkWidget *gretl_dialog_new (const char *title, GtkWidget *parent,
 	gtk_window_set_title(GTK_WINDOW(d), title);
     }
 
-    gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(d)->action_area), TRUE);
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(GTK_DIALOG(d)->action_area), 
+			      GTK_BUTTONBOX_END);
     set_dialog_border_widths(d);
     gtk_window_set_position(GTK_WINDOW(d), GTK_WIN_POS_MOUSE);
 
@@ -825,6 +849,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     /* convenience pointers */
     top_vbox = GTK_DIALOG(d->dialog)->vbox;
     button_box = GTK_DIALOG(d->dialog)->action_area;
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
+			      GTK_BUTTONBOX_END);
+    
 
     if (cmdcode == SYSTEM && d->data != NULL) {
 	/* revisiting saved equation system */
@@ -899,6 +926,11 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     gtk_widget_grab_focus(d->edit);
 
+    /* Create a "Cancel" button? */
+    if (cmdcode != CREATE_USERDIR) {
+	cancel_delete_button(button_box, d->dialog, canceled);
+    }
+
     /* Create the "OK" button */
     w = ok_button(button_box);
     if (okfunc != NULL) {
@@ -909,12 +941,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 			 G_CALLBACK(edit_dialog_ok), d);
     }	
     gtk_widget_grab_default(w);
-    gtk_widget_show(w);
-
-    /* Create a "Cancel" button */
-    if (cmdcode != CREATE_USERDIR) {
-	cancel_delete_button(button_box, d->dialog, canceled);
-    }
+    gtk_widget_show(w);    
 
     /* Create a "Help" button if wanted */
     hlpcode = edit_dialog_help_code(cmdcode, okptr);

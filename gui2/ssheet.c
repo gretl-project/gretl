@@ -1519,23 +1519,27 @@ static void real_show_spreadsheet (Spreadsheet **psheet, int code)
 	}
     }
 
-    /* apply and close buttons */
-    button_box = gtk_hbox_new (FALSE, 5);
-    gtk_box_set_homogeneous (GTK_BOX (button_box), TRUE);
-    gtk_box_pack_start (GTK_BOX (main_vbox), button_box, FALSE, FALSE, 0);
-    gtk_widget_show(button_box);
-
     g_signal_connect(G_OBJECT(sheet->win), "destroy",
 		     G_CALLBACK(free_spreadsheet), psheet);
 
+    /* apply and close buttons */
+    button_box = gtk_hbutton_box_new();
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(button_box), 
+			      GTK_BUTTONBOX_END);
+    gtk_button_box_set_spacing(GTK_BUTTON_BOX(button_box),
+			       10);
+    gtk_widget_show(button_box);
+    gtk_box_pack_start(GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(button_box), 0);
+
     tmp = gtk_button_new_from_stock(GTK_STOCK_APPLY);
-    gtk_box_pack_start (GTK_BOX (button_box), tmp, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(button_box), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(get_data_from_sheet), sheet);
     gtk_widget_show(tmp);
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
-    gtk_box_pack_start(GTK_BOX (button_box), tmp, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(button_box), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(maybe_exit_sheet), sheet);
     gtk_widget_show(tmp);

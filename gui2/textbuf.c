@@ -1244,7 +1244,9 @@ GtkWidget *create_text (GtkWidget *dlg, int hsize, int vsize,
 	hsize += 48;
     }
 
-    gtk_window_set_default_size(GTK_WINDOW(dlg), hsize, vsize); 
+    if (dlg != NULL) {
+	gtk_window_set_default_size(GTK_WINDOW(dlg), hsize, vsize); 
+    }
     gtk_text_view_set_editable(GTK_TEXT_VIEW(w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(w), editable);
 

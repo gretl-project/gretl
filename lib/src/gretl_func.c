@@ -30,7 +30,6 @@
 typedef struct fn_param_ fn_param;
 typedef struct fn_return_ fn_return;
 typedef struct fncall_ fncall;
-typedef struct fnpkg_ fnpkg;
 
 enum {
     FN_PARAMS,
@@ -1368,7 +1367,8 @@ void gretl_function_set_private (int i, int priv)
     }
 }
 
-int write_function_package (const char *fname,
+int write_function_package (fnpkg *pkg,
+			    const char *fname,
 			    const int *privlist, 
 			    const int *publist,
 			    const char *author,
@@ -1379,7 +1379,9 @@ int write_function_package (const char *fname,
 {
     char *pkgname;
     FILE *fp;
+    int saveas = 0;
     int i, fi;
+    int err = 0;
 
     if (n_ufuns == 0) {
 	fprintf(stderr, "No functions are defined\n");
@@ -1392,6 +1394,10 @@ int write_function_package (const char *fname,
 	return E_DATA;
     }
 
+    if (strcmp(fname, pkg->fname)) {
+	saveas = 1;
+    }
+
     fp = gretl_fopen(fname, "w");
     if (fp == NULL) {
 	sprintf(gretl_errmsg, _("Couldn't open %s"), fname);
@@ -1399,8 +1405,8 @@ int write_function_package (const char *fname,
     }
 
     gretl_xml_header(fp);    
-    fputs("<gretl-functions>\n", fp);
 
+    fputs("<gretl-functions>\n", fp);
     fputs("<gretl-function-package", fp);
 
     pkgname = make_pkgname(fname);
@@ -1410,11 +1416,11 @@ int write_function_package (const char *fname,
     } 
 
     if (dreq == FN_NEEDS_TS) {
-	fputs(" needs-time-series=\"true\"", fp);
+	fprintf(fp, " %s=\"true\"", NEEDS_TS);
     } else if (dreq == FN_NEEDS_QM) {
-	fputs(" needs-qm=\"true\"", fp);
+	fprintf(fp, " %s=\"true\"", NEEDS_QM);
     } else if (dreq == FN_NEEDS_PANEL) {
-	fputs(" needs-panel=\"true\"", fp);
+	fprintf(fp, " %s=\"true\"", NEEDS_PANEL);
     }
 
     fputs(">\n", fp);
@@ -1445,10 +1451,37 @@ int write_function_package (const char *fname,
 
     fclose(fp);
 
-    return 0;
+    if (!saveas) {
+	/* name has not changed: update package info */
+	if (strcmp(author, pkg->author)) {
+	    free(pkg->author);
+	    pkg->author = gretl_strdup(author);
+	}
+	if (strcmp(version, pkg->version)) {
+	    free(pkg->version);
+	    pkg->version = gretl_strdup(version);
+	}
+	if (strcmp(date, pkg->date)) {
+	    free(pkg->date);
+	    pkg->date = gretl_strdup(date);
+	}
+	if (strcmp(descrip, pkg->descrip)) {
+	    free(pkg->descrip);
+	    pkg->descrip = gretl_strdup(descrip);
+	}
+	pkg->dreq = dreq;
+
+	if (pkg->author == NULL || pkg->version == NULL ||
+	    pkg->date == NULL || pkg->descrip == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    return err;
 }
 
 int function_package_get_info (const char *fname,
+			       fnpkg **ppkg,
 			       int **privlist, 
 			       int **publist,
 			       char **author,
@@ -1479,6 +1512,9 @@ int function_package_get_info (const char *fname,
 	return 1;
     }
 
+    if (ppkg != NULL) {
+	*ppkg = pkg;
+    }
     if (author != NULL) {
 	*author = gretl_strdup(pkg->author);
     }
@@ -1694,11 +1730,11 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	gretl_xml_get_prop_as_string(node, "name", pname);
     }
 
-    if (gretl_xml_get_prop_as_bool(node, "needs-time-series")) {
+    if (gretl_xml_get_prop_as_bool(node, NEEDS_TS)) {
 	pkg->dreq = FN_NEEDS_TS;
-    } else if (gretl_xml_get_prop_as_bool(node, "needs-qm")) {
+    } else if (gretl_xml_get_prop_as_bool(node, NEEDS_QM)) {
 	pkg->dreq = FN_NEEDS_QM;
-    } else if (gretl_xml_get_prop_as_bool(node, "needs-panel")) {
+    } else if (gretl_xml_get_prop_as_bool(node, NEEDS_PANEL)) {
 	pkg->dreq = FN_NEEDS_PANEL;
     }
 
@@ -3125,33 +3161,42 @@ static int check_function_assignments (ufunc *fun, int *asslist,
     return err;
 }
 
-static int check_function_data_needs (const DATAINFO *pdinfo,
-				      const ufunc *fun)
+int check_function_data_needs (const DATAINFO *pdinfo,
+			       FuncDataReq dreq)
 {
-    const fnpkg *pkg;
-
-    pkg = ufunc_get_parent_package(fun);
-    if (pkg == NULL) {
-	return 0;
-    }
-
-    if ((pkg->dreq == FN_NEEDS_TS) && 
+    if ((dreq == FN_NEEDS_TS) && 
 	!dataset_is_time_series(pdinfo)) {
+	strcpy(gretl_errmsg, "This function needs time-series data");
 	return 1;
     }
 
-    if ((pkg->dreq == FN_NEEDS_PANEL) && 
+    if ((dreq == FN_NEEDS_PANEL) && 
 	!dataset_is_panel(pdinfo)) {
+	strcpy(gretl_errmsg, "This function needs panel data");
 	return 1;
     }
 
-    if ((pkg->dreq == FN_NEEDS_QM) && 
+    if ((dreq == FN_NEEDS_QM) && 
 	(!dataset_is_time_series(pdinfo) || 
 	 (pdinfo->pd != 4 || pdinfo->pd != 12))) {
+	strcpy(gretl_errmsg, "This function needs quarterly or monthly data");
 	return 1;
     } 
 
     return 0;
+}
+
+static int 
+maybe_check_function_data_needs (const DATAINFO *pdinfo,
+				 const ufunc *fun)
+{
+    const fnpkg *pkg = ufunc_get_parent_package(fun);
+
+    if (pkg == NULL) {
+	return 0;
+    } else {
+	return check_function_data_needs(pdinfo, pkg->dreq);
+    }
 }
 
 int gretl_function_start_exec (const char *line, const char *fname, 
@@ -3177,7 +3222,7 @@ int gretl_function_start_exec (const char *line, const char *fname,
 	return 1;
     }
 
-    err = check_function_data_needs(pdinfo, fun);
+    err = maybe_check_function_data_needs(pdinfo, fun);
     if (err) {
 	return err;
     }

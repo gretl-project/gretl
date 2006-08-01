@@ -158,14 +158,6 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     return FALSE;
 }
 
-static void vbox_add_hsep (GtkWidget *vbox)
-{
-    GtkWidget *hs = gtk_hseparator_new();
-    
-    gtk_box_pack_start(GTK_BOX(vbox), hs, TRUE, TRUE, 0);
-    gtk_widget_show(hs);
-}
-
 /* CSV files: setting the delimiter */
 
 typedef struct {
@@ -627,15 +619,15 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
+    /* "Cancel" button */
+    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
+
     /* "OK" button */
     tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(copy_with_format_callback), finfo);
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
-
-    /* and "Cancel" button */
-    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
 
     /* Help button if needed */
     if (can_do_csv(vwin)) {
@@ -1031,26 +1023,24 @@ void varinfo_dialog (int varnum, int full)
 	gtk_widget_show(hbox); 
     }
 
-    /* Create the "OK" button */
-    tmp = ok_button(GTK_DIALOG (vset->dlg)->action_area);
+    hbox = GTK_DIALOG(vset->dlg)->action_area;
+
+    /* Cancel button */
+    tmp = cancel_button(hbox);
+    g_signal_connect(G_OBJECT (tmp), "clicked", 
+		     G_CALLBACK(varinfo_cancel), vset);
+    gtk_widget_show(tmp);
+
+    /* "OK" button */
+    tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(really_set_variable_info), vset);
     gtk_widget_grab_default(tmp);
     gtk_widget_show(tmp);
 
-    /* And a Cancel button */
-    tmp = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
-			tmp, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT (tmp), "clicked", 
-		     G_CALLBACK(varinfo_cancel), vset);
-    gtk_widget_show(tmp);
-
     /* And a Help button? */
     if (full) {
-	context_help_button(GTK_DIALOG(vset->dlg)->action_area,
-			    SETINFO);
+	context_help_button(hbox, SETINFO);
     }
 
     gtk_widget_show(vset->dlg);
@@ -1471,12 +1461,12 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 
 	/* spinner for number of obs */
 	tempwid = gtk_label_new(labtxt);
-	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
 	adj = gtk_adjustment_new(default_randsize(), 
 				 1, datainfo->n - 1,
 				 1, 1, 1);
 	rset->startspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
-	gtk_box_pack_start(GTK_BOX(hbox), rset->startspin, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), rset->startspin, FALSE, FALSE, 5);
 
 	/* pack the spinner apparatus */
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
@@ -1512,14 +1502,14 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 			 rset);
     }
 
-    /* Create the "OK" button */
+    /* Cancel button */
+    cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, NULL);
+
+    /* "OK" button */
     tempwid = ok_button(GTK_DIALOG (rset->dlg)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(set_sample_from_dialog), rset);
     gtk_widget_grab_default(tempwid);
-
-    /* And a Cancel button */
-    cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, NULL);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
@@ -1554,14 +1544,14 @@ int get_obs_dialog (const char *title, const char *text,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG (rset->dlg)->vbox), 
 		       tempwid, TRUE, TRUE, 0);
 
-    /* Create the "OK" button */
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
+
+    /* "OK" button */
     tempwid = ok_button(GTK_DIALOG (rset->dlg)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(set_obs_from_dialog), rset);
     gtk_widget_grab_default(tempwid);
-
-    /* And a Cancel button */
-    cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
@@ -1679,14 +1669,14 @@ int forecast_dialog (int t1min, int t1max, int *t1,
     /* get the max pre-forecast obs right */
     gtk_adjustment_value_changed(GTK_ADJUSTMENT(rset->adj1));
 
-    /* Create the "OK" button */
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
+
+    /* "OK" button */
     tmp = ok_button(GTK_DIALOG(rset->dlg)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(set_obs_from_dialog), rset);
     gtk_widget_grab_default(tmp);
-
-    /* And a Cancel button */
-    cancel_options_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg, &ret);
 
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
 		     G_CALLBACK(free_rsetting), rset);
@@ -1740,15 +1730,15 @@ int add_obs_dialog (const char *blurb, int addmin)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ainfo.dlg)->vbox), 
 		       hbox, TRUE, TRUE, 0);
 
-    /* Create the "OK" button */
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(ainfo.dlg)->action_area, ainfo.dlg, 
+			  &ainfo.val);
+
+    /* "OK" button */
     tmp = ok_button(GTK_DIALOG(ainfo.dlg)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(set_add_obs), &ainfo);
     gtk_widget_grab_default(tmp);
-
-    /* And a Cancel button */
-    cancel_options_button(GTK_DIALOG(ainfo.dlg)->action_area, ainfo.dlg, 
-			  &ainfo.val);
 
     gtk_widget_show_all(ainfo.dlg);
 
@@ -1818,16 +1808,16 @@ int select_var_from_list (const int *list, const char *query)
     g_object_set_data(G_OBJECT(dlg), "combo", combo);
     g_object_set_data(G_OBJECT(dlg), "selvar", &selvar);
 
-    /* Create the "OK" button */
+    /* Cancel button */
+    cancel_delete_button(GTK_DIALOG(dlg)->action_area, dlg, NULL);
+
+    /* "OK" button */
     tempwid = ok_button(GTK_DIALOG(dlg)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(set_var_from_combo), dlg);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(delete_widget), dlg);
     gtk_widget_grab_default(tempwid);
-
-    /* And a Cancel button */
-    cancel_delete_button(GTK_DIALOG(dlg)->action_area, dlg, NULL);
 
     gtk_widget_show_all(dlg);
 
@@ -2135,7 +2125,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 			  int *mon_start, CompactMethod *method,
 			  int *repday)
 {
-    GtkWidget *d, *tempwid;
+    GtkWidget *d, *tempwid, *hbox;
     int show_pd_buttons = 0;
     int show_monday_buttons = 0;
     int show_method_buttons = 0;
@@ -2189,7 +2179,9 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	methods_set = compact_methods_set();
     }
 
+#if 0
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(d)->action_area), 15);
+#endif
 
     tempwid = gtk_label_new(labelstr);
     g_free(labelstr);
@@ -2222,19 +2214,10 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	compact_method_buttons(d, method, spd, methods_set, &cinfo);
     } 
 
-    /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG(d)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     G_OBJECT(d));
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    hbox = GTK_DIALOG(d)->action_area;
 
-    /* Create the "Cancel" button */
-    tempwid = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d)->action_area), 
-		       tempwid, TRUE, TRUE, FALSE);
+    /* "Cancel" button */
+    tempwid = cancel_button(hbox);
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     G_CALLBACK(abort_compact), method);
     g_signal_connect (G_OBJECT(tempwid), "clicked", 
@@ -2242,8 +2225,16 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 		      G_OBJECT(d));
     gtk_widget_show(tempwid);
 
+    /* "OK" button */
+    tempwid = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     G_OBJECT(d));
+    gtk_widget_grab_default(tempwid);
+    gtk_widget_show(tempwid);
+
     /* Create a "Help" button */
-    context_help_button(GTK_DIALOG(d)->action_area, COMPACT);
+    context_help_button(hbox, COMPACT);
 
     gtk_widget_show(d);
 }
@@ -2309,7 +2300,7 @@ static void abort_expand (GtkWidget *w, gpointer data)
 
 void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
 {
-    GtkWidget *d, *tempwid;
+    GtkWidget *d, *tempwid, *hbox;
     int show_pd_buttons = 0;
     gchar *labelstr = NULL;
 
@@ -2333,7 +2324,9 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
 	}
     }
 
+#if 0
     gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(d)->action_area), 15);
+#endif
 
     tempwid = gtk_label_new(labelstr);
     g_free(labelstr);
@@ -2346,19 +2339,10 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
 	expand_pd_buttons(d, spd, target_pd);
     }
 
-    /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG(d)->action_area);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     G_OBJECT(d));
-    gtk_widget_grab_default(tempwid);
-    gtk_widget_show(tempwid);
+    hbox = GTK_DIALOG(d)->action_area;
 
-    /* Create the "Cancel" button */
-    tempwid = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d)->action_area), 
-		       tempwid, TRUE, TRUE, FALSE);
+    /* Cancel button */
+    tempwid = cancel_button(hbox);
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     G_CALLBACK(abort_expand), target_pd);
     g_signal_connect (G_OBJECT(tempwid), "clicked", 
@@ -2366,8 +2350,16 @@ void data_expand_dialog (GtkWidget *w, int spd, int *target_pd)
 		      G_OBJECT(d));
     gtk_widget_show(tempwid);
 
+    /* "OK" button */
+    tempwid = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     G_OBJECT(d));
+    gtk_widget_grab_default(tempwid);
+    gtk_widget_show(tempwid);
+
     /* Create a "Help" button */
-    context_help_button(GTK_DIALOG(d)->action_area, EXPAND);
+    context_help_button(hbox, EXPAND);
 
     gtk_widget_show(d);
 }
@@ -2434,16 +2426,16 @@ int real_radio_dialog (const char *title, const char *label,
 			   tmp, TRUE, TRUE, 0);
     }
 
-    /* Create the "OK" button */
+    /* "Cancel" button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    /* "OK" button */
     tmp = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
     gtk_widget_grab_default(tmp);
     gtk_widget_show(tmp);
-
-    /* Create the "Cancel" button */
-    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     /* Create a "Help" button? */
     if (helpcode) {
@@ -2537,6 +2529,9 @@ int density_dialog (int vnum, double *bw)
     gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
     gtk_widget_show(tempwid);
 
+    /* "Cancel" button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
     /* "OK" button */
     tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
@@ -2544,9 +2539,6 @@ int density_dialog (int vnum, double *bw)
 		     dialog);
     gtk_widget_grab_default (tempwid);
     gtk_widget_show(tempwid);
-
-    /* "Cancel" button */
-    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     /* "Help" button */
     context_help_button(GTK_DIALOG(dialog)->action_area, KERNEL_DENSITY);
@@ -2672,7 +2664,10 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 	gtk_widget_show(button);
     }
 
-    /* Create the "OK" button */
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    /* "OK" button */
     okb = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(okb), "clicked", 
 		     G_CALLBACK(delete_widget), 
@@ -2683,9 +2678,6 @@ int checks_dialog (const char *title, const char **opts, int nopts,
 	g_signal_connect(G_OBJECT(spin), "activate",
 			 G_CALLBACK(trigger_ok), okb);
     }
-
-    /* Create the "Cancel" button */
-    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     /* Create a "Help" button if wanted */
     if (helpcode) {
@@ -3842,7 +3834,10 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tempwid, TRUE, TRUE, 5);
 	gtk_widget_show(tempwid);
-    }    
+    }  
+
+    /* "Cancel" button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     /* Create a "Back" button? */
     if (step > DW_SET_TYPE) {
@@ -3867,9 +3862,6 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 		     dialog);
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
-
-    /* "Cancel" button */
-    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     if (step == DW_PANEL_MODE) {
 	context_help_button(GTK_DIALOG(dialog)->action_area, PANEL_MODE);
@@ -4019,12 +4011,6 @@ struct lmax_opt {
     double ymax;
 };
 
-static void lmax_opt_free (GtkWidget *w, struct lmax_opt *opt)
-{
-    free(opt);
-    gtk_main_quit();
-}
-
 static void lmax_opt_finalize (GtkWidget *w, struct lmax_opt *opt)
 {
     const gchar *numstr;
@@ -4052,26 +4038,13 @@ static void lmax_opt_cancel (GtkWidget *w, struct lmax_opt *opt)
 void lmax_dialog (double *lmax, double ymax)
 {
     GtkWidget *tmp, *hbox;
+    GtkWidget *entry;
     gchar *numstr;
-    struct lmax_opt *opt;
+    struct lmax_opt opt;
 
-    opt = malloc(sizeof *opt);
-    if (opt == NULL) return;
-
-    opt->dlg = gtk_dialog_new();
-    opt->lmax = lmax;
-    opt->ymax = ymax;
-
-    gtk_window_set_title(GTK_WINDOW(opt->dlg), _("Logistic model"));
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (opt->dlg)->vbox), 10);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (opt->dlg)->action_area), 5); 
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (opt->dlg)->vbox), 5);
-    gtk_window_set_position (GTK_WINDOW (opt->dlg), GTK_WIN_POS_MOUSE);
-
-    g_signal_connect (G_OBJECT(opt->dlg), "destroy", 
-		      G_CALLBACK(lmax_opt_free), opt);
+    opt.dlg = gretl_dialog_new(_("Logistic model"), NULL, GRETL_DLG_BLOCK);
+    opt.lmax = lmax;
+    opt.ymax = ymax;
 
     /* label */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -4079,37 +4052,32 @@ void lmax_dialog (double *lmax, double ymax)
 			   "dependent variable"));
     gtk_label_set_justify(GTK_LABEL(tmp), GTK_JUSTIFY_CENTER);
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opt->dlg)->vbox), 
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opt.dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
 
     /* lmax entry */
     hbox = gtk_hbox_new(FALSE, 5);
-    opt->entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(opt->entry), VNAMELEN-1);
+    entry = gtk_entry_new();
+    gtk_entry_set_width_chars(GTK_ENTRY(entry), 12);
     numstr = g_strdup_printf("%g", *lmax);
-    gtk_entry_set_text(GTK_ENTRY(opt->entry), numstr);
+    gtk_entry_set_text(GTK_ENTRY(entry), numstr);
     g_free(numstr);
-    gtk_entry_set_width_chars(GTK_ENTRY(opt->entry), 6);
-    gtk_entry_set_activates_default(GTK_ENTRY(opt->entry), TRUE);
-    gtk_editable_select_region(GTK_EDITABLE(opt->entry), 0, -1);
-    gtk_box_pack_start(GTK_BOX(hbox), opt->entry, TRUE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opt->dlg)->vbox), 
+    gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
+    gtk_editable_select_region(GTK_EDITABLE(entry), 0, -1);
+    gtk_box_pack_start(GTK_BOX(hbox), entry, TRUE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opt.dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
+    opt.entry = entry;
 
-    /* Create the "OK" button */
-    tmp = ok_button(GTK_DIALOG(opt->dlg)->action_area);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(lmax_opt_finalize), opt);
-
-    /* And a Cancel button */
-    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opt->dlg)->action_area), 
-			tmp, TRUE, TRUE, 0);
-
+    /* Cancel button */
+    tmp = cancel_button(GTK_DIALOG(opt.dlg)->action_area);
     g_signal_connect(G_OBJECT (tmp), "clicked", 
-		     G_CALLBACK(lmax_opt_cancel), opt);
+		     G_CALLBACK(lmax_opt_cancel), &opt);
 
-    gtk_widget_show_all(opt->dlg);
+    /* "OK" button */
+    tmp = ok_button(GTK_DIALOG(opt.dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(lmax_opt_finalize), &opt);
 
-    gtk_main();
+    gtk_widget_show_all(opt.dlg);
 }

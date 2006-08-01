@@ -26,6 +26,4 @@ void prepare_functions_save (void);
 
 void save_user_functions (const char *fname, gpointer p);
 
-const char *get_fnsave_filename (void);
-
 #endif /* FNSAVE_H */
