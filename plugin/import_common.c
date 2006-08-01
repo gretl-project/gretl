@@ -545,8 +545,7 @@ static void wsheet_menu (wbook *book, int multisheet)
     GtkWidget *vbox, *hbox;
     GtkObject *c_adj, *r_adj;
 
-    w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
+    w = gtk_dialog_new();
     gtk_window_set_title(GTK_WINDOW(w), _("gretl: spreadsheet import"));
 
     g_signal_connect_after(G_OBJECT(w), "delete_event",
@@ -554,38 +553,37 @@ static void wsheet_menu (wbook *book, int multisheet)
     g_signal_connect(G_OBJECT(w), "destroy",  
 		     G_CALLBACK(gtk_main_quit), NULL);
 
-    vbox = gtk_vbox_new (FALSE, 5);
-    gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
-    gtk_container_add(GTK_CONTAINER(w), vbox);
+    vbox = GTK_DIALOG(w)->vbox;
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 5);
 
     /* selection of starting column and row */
     label = gtk_label_new(_("Start import at:"));
-    gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), label, FALSE, FALSE, 5);
 
-    hbox = gtk_hbox_new (FALSE, 5);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, TRUE, TRUE, 5);
 
     /* starting column spinner */
     tmp = gtk_label_new(_("column:"));
     c_adj = gtk_adjustment_new(1, 1, 256, 1, 1, 1);
-    book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(c_adj), 1, 0);
-    g_signal_connect (c_adj, "value_changed",
-		      G_CALLBACK (wbook_get_col_offset), book);
+    book->colspin = gtk_spin_button_new(GTK_ADJUSTMENT(c_adj), 1, 0);
+    g_signal_connect(c_adj, "value_changed",
+		     G_CALLBACK(wbook_get_col_offset), book);
     gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->colspin),
 				      GTK_UPDATE_IF_VALID);
-    gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
-    gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), book->colspin, FALSE, FALSE, 5);
 
     /* starting row spinner */
     tmp = gtk_label_new(_("row:"));
     r_adj = gtk_adjustment_new(1, 1, 256, 1, 1, 1);
     book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(r_adj), 1, 0);
-    g_signal_connect (r_adj, "value_changed",
-		      G_CALLBACK (wbook_get_row_offset), book);
+    g_signal_connect(r_adj, "value_changed",
+		     G_CALLBACK(wbook_get_row_offset), book);
     gtk_spin_button_set_update_policy(GTK_SPIN_BUTTON(book->rowspin),
 				      GTK_UPDATE_IF_VALID);
-    gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
-    gtk_box_pack_start (GTK_BOX (hbox), book->rowspin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), book->rowspin, FALSE, FALSE, 5);
 
     /* column label feedback */
     hbox = gtk_hbox_new (FALSE, 5);
@@ -608,26 +606,27 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_box_pack_start(GTK_BOX(vbox), tmp, TRUE, TRUE, 5);
 #endif
 
-    hbox = gtk_hbox_new (TRUE, 5);
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    hbox = GTK_DIALOG(w)->action_area;
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
+    gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
 
-    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
-    gtk_box_pack_start (GTK_BOX (hbox), 
-                        tmp, TRUE, TRUE, 0);
-    g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
-			      G_CALLBACK (gtk_widget_destroy), 
-			      G_OBJECT (w));
-    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
-    gtk_widget_grab_default(tmp);
-
+    /* Cancel button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    gtk_box_pack_start (GTK_BOX (hbox), 
-                        tmp, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT (tmp), "clicked", 
-		      G_CALLBACK(wsheet_menu_cancel), book);
-    g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
-			      G_CALLBACK (gtk_widget_destroy), 
-			      G_OBJECT (w));
+    gtk_container_add(GTK_CONTAINER(hbox), tmp);
+    g_signal_connect(G_OBJECT (tmp), "clicked", 
+		     G_CALLBACK(wsheet_menu_cancel), book);
+    g_signal_connect_swapped(G_OBJECT (tmp), "clicked", 
+			     G_CALLBACK (gtk_widget_destroy), 
+			     G_OBJECT (w));
+
+    /* OK button */
+    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
+    gtk_container_add(GTK_CONTAINER(hbox), tmp);
+    g_signal_connect_swapped(G_OBJECT (tmp), "clicked", 
+			     G_CALLBACK (gtk_widget_destroy), 
+			     G_OBJECT (w));
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_widget_grab_default(tmp);
 
     gtk_entry_set_activates_default(GTK_ENTRY(book->colspin), TRUE);
     gtk_entry_set_activates_default(GTK_ENTRY(book->rowspin), TRUE);

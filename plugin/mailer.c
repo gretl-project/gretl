@@ -66,8 +66,6 @@ typedef enum {
 
 #define SBSIZE 4096
 
-#define standard_button(s) gtk_button_new_from_stock(s)
-
 struct msg_info {
     char *recip;
     char *sender;
@@ -536,6 +534,7 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
 
     gtk_window_set_title(GTK_WINDOW(md.dlg), _("gretl: send mail"));
     set_dialog_border_widths(md.dlg);
+    gtk_dialog_set_has_separator(GTK_DIALOG(md.dlg), FALSE);
     gtk_window_set_position(GTK_WINDOW(md.dlg), GTK_WIN_POS_MOUSE);
 
     nb = gtk_notebook_new();
@@ -665,22 +664,22 @@ mail_to_dialog (const char *fname, struct mail_info *minfo, struct msg_info *msg
     lbl = gtk_label_new("                     ");
     gtk_table_attach_defaults(GTK_TABLE(tbl), lbl, 2, 3, 1, 2);
 
+    hbox = GTK_DIALOG(md.dlg)->action_area;
+
+    /* Cancel button */
+    md.cancel = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(md.cancel, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), md.cancel);
+    g_signal_connect(G_OBJECT(md.cancel), "clicked", 
+		     G_CALLBACK(finalize_mail_settings), &md);
+
     /* Create the "OK" button */
-    md.ok = standard_button(GTK_STOCK_OK);
+    md.ok = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(md.ok, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(md.dlg)->action_area), 
-		       md.ok, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), md.ok);
     g_signal_connect(G_OBJECT(md.ok), "clicked", 
 		     G_CALLBACK(finalize_mail_settings), &md);
     gtk_widget_grab_default(md.ok);
-
-    /* And a Cancel button */
-    md.cancel = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(md.cancel, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(md.dlg)->action_area), 
-		       md.cancel, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(md.cancel), "clicked", 
-		     G_CALLBACK(finalize_mail_settings), &md);
 
     gtk_widget_set_size_request(md.dlg, 420, -1);
     gtk_widget_show_all(md.dlg);
@@ -702,7 +701,8 @@ static int pop_info_dialog (struct mail_info *minfo)
 	N_("Username:"),
 	N_("Password:")
     };
-    GtkWidget *tbl, *lbl, *vbox;
+    GtkWidget *tbl, *lbl;
+    GtkWidget *hbox, *vbox;
     struct pop_dialog pd;
     int i, err = 0;
 
@@ -763,22 +763,22 @@ static int pop_info_dialog (struct mail_info *minfo)
 	} 
     }
 
-    /* Create the "OK" button */
-    pd.ok = standard_button(GTK_STOCK_OK);
+    hbox = GTK_DIALOG(pd.dlg)->action_area;
+
+    /* Cancel button */
+    pd.cancel = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(pd.cancel, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(hbox), pd.cancel);
+    g_signal_connect(G_OBJECT(pd.cancel), "clicked", 
+		     G_CALLBACK(finalize_pop_settings), &pd);
+
+    /* "OK" button */
+    pd.ok = gtk_button_new_from_stock(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(pd.ok, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pd.dlg)->action_area), 
-		       pd.ok, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(hbox), pd.ok);
     g_signal_connect(G_OBJECT(pd.ok), "clicked", 
 		     G_CALLBACK(finalize_pop_settings), &pd);
     gtk_widget_grab_default(pd.ok);
-
-    /* And a Cancel button */
-    pd.cancel = standard_button(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS(pd.cancel, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(pd.dlg)->action_area), 
-		       pd.cancel, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(pd.cancel), "clicked", 
-		     G_CALLBACK(finalize_pop_settings), &pd);
 
     gtk_widget_set_size_request(pd.dlg, 360, -1);
     gtk_widget_show_all(pd.dlg);

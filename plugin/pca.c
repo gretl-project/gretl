@@ -93,7 +93,7 @@ static gboolean pca_dialog_finalize (GtkWidget *w, struct flag_info *finfo)
 static gretlopt pca_flag_dialog (void)
 {
     struct flag_info *finfo;
-    GtkWidget *dialog, *tempwid, *button, *hbox;
+    GtkWidget *dialog, *tmp, *button, *hbox;
     GtkWidget *internal_vbox;
     GSList *group;
     gint flag = PCA_SAVE_MAIN;
@@ -106,33 +106,30 @@ static gretlopt pca_flag_dialog (void)
     finfo->dialog = dialog;
     finfo->flag = &flag;
     
-    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: save data")); 
-    gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (dialog)->vbox), 10);
-    gtk_container_set_border_width (GTK_CONTAINER 
-				    (GTK_DIALOG (dialog)->action_area), 5);
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
+    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save data")); 
+    gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
+    gtk_container_set_border_width(GTK_CONTAINER 
+				   (GTK_DIALOG(dialog)->vbox), 10);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dialog)->vbox), 5);
+    gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
-    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+    g_signal_connect(G_OBJECT(dialog), "destroy", 
+		     G_CALLBACK(destroy_pca_dialog), finfo);
 
-    g_signal_connect (G_OBJECT(dialog), "destroy", 
-		      G_CALLBACK(destroy_pca_dialog), finfo);
-
-    internal_vbox = gtk_vbox_new (FALSE, 5);
+    internal_vbox = gtk_vbox_new(FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tempwid = gtk_label_new (_("Variables to save:"));
-    gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
-    gtk_widget_show(tempwid);
-    gtk_box_pack_start (GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
+    tmp = gtk_label_new (_("Variables to save:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_widget_show(tmp);
+    gtk_box_pack_start(GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox); 
 
     /* Only those with eigenvalues > 1.0 */
     button = gtk_radio_button_new_with_label(NULL, 
 					     _("Components with eigenvalues > 1.0"));
-    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_box_pack_start(GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_pca_flag), finfo);
     g_object_set_data(G_OBJECT(button), "opt", GINT_TO_POINTER(PCA_SAVE_MAIN)); 
@@ -150,30 +147,32 @@ static gretlopt pca_flag_dialog (void)
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
-    gtk_widget_show (hbox);
+    gtk_widget_show(hbox);
 
-    gtk_widget_show (internal_vbox);
+    gtk_widget_show(internal_vbox);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
-    gtk_widget_show (hbox);
+    gtk_widget_show(hbox);
 
-    /* Create the "OK" button */
-    tempwid = gtk_button_new_from_stock (GTK_STOCK_OK);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
-		     G_CALLBACK(pca_dialog_finalize), finfo);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
-			tempwid, TRUE, TRUE, 0);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-    gtk_widget_grab_default (tempwid);
-    gtk_widget_show (tempwid);
+    hbox = GTK_DIALOG(dialog)->action_area;
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox), GTK_BUTTONBOX_END);
+    gtk_button_box_set_spacing(GTK_BUTTON_BOX(hbox), 10);
 
-    /* "Cancel" button */
-    tempwid = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
+    /* Cancel button */
+    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    gtk_container_add(GTK_CONTAINER(hbox), tmp);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(cancel_set_flag), finfo);
-    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
-			tempwid, TRUE, TRUE, 0);
-    gtk_widget_show (tempwid);
+    gtk_widget_show(tmp);
+
+    /* "OK" button */
+    tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
+    gtk_container_add(GTK_CONTAINER(hbox), tmp);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(pca_dialog_finalize), finfo);
+    GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
 
     gtk_widget_show(dialog);
 
