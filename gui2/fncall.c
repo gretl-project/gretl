@@ -724,6 +724,7 @@ void call_function_package (const char *fname, GtkWidget *w)
     char tmpfile[FILENAME_MAX];
     char fnline[MAXLINE];
     const char *fnname;
+    FuncDataReq dreq;
     PRN *prn;
     call_info cinfo;
     int i, err = 0;
@@ -756,7 +757,8 @@ void call_function_package (const char *fname, GtkWidget *w)
 				    NULL,
 				    NULL,
 				    NULL,
-				    NULL);
+				    NULL,
+				    &dreq);
 
     if (*tmpfile) {
 	remove(tmpfile);
@@ -766,7 +768,9 @@ void call_function_package (const char *fname, GtkWidget *w)
 	free(cinfo.publist);
 	errbox(_("Function package is broken"));
 	return;
-    }	
+    }
+
+    /* FIXME check data requirements */
 
     /* FIXME selection of interface, if there's more than one
        available

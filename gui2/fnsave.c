@@ -39,7 +39,7 @@ struct function_info_ {
     GtkWidget *dlg;
     GtkWidget *entries[NENTRIES];
     GtkWidget *text;
-    GtkWidget *combo;
+    GtkWidget *ifsel;
     GtkWidget *codesel;
     GtkWidget *check;
     char *author;
@@ -51,6 +51,7 @@ struct function_info_ {
     int *privlist;
     int n_public;
     int iface;
+    FuncDataReq dreq;
     int upload;
     int canceled;
 };
@@ -97,6 +98,7 @@ function_info *finfo_new (void)
     finfo->help = NULL;
     finfo->publist = NULL;
     finfo->privlist = NULL;
+    finfo->dreq = 0;
 
     return finfo;
 }
@@ -183,19 +185,10 @@ static char *trim_text (const char *s)
 
 static int help_text_index (function_info *finfo)
 {
-    const char *fname;
-    int i, idx;
+    int i;
 
-    fname = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(finfo->combo)->entry));
-    idx = user_function_index_by_name(fname);
-
-    for (i=0; i<finfo->n_public; i++) {
-	if (idx == finfo->publist[i+1]) {
-	    return i;
-	}
-    }
-
-    return -1;
+    i = gtk_option_menu_get_history(GTK_OPTION_MENU(finfo->ifsel));
+    return finfo->publist[i+1];
 }
 
 static void login_finalize (GtkWidget *w, login_info *linfo)
@@ -320,37 +313,26 @@ set_dialog_info_from_fn (function_info *finfo, int idx, int code)
     old_hidx = new_hidx;
 }
 
-static gboolean update_public (GtkEditable *entry, 
+static gboolean update_public (GtkOptionMenu *menu, 
 			       function_info *finfo)
 {
-    const char *fnname;
-    int idx;
+    int i = gtk_option_menu_get_history(menu);
 
-    fnname = gtk_entry_get_text(GTK_ENTRY(entry));
-
-    if (fnname != NULL && *fnname != '\0') {
-	idx = user_function_index_by_name(fnname);
-	if (idx >= 0) {
-	    set_dialog_info_from_fn(finfo, idx, HIDX_SWITCH);
-	}
-    }
+    set_dialog_info_from_fn(finfo, finfo->publist[i+1], HIDX_SWITCH);
 
     return FALSE;
 }
 
-static gboolean update_iface (GtkEditable *entry, 
+static gboolean update_iface (GtkOptionMenu *menu, 
 			      function_info *finfo)
 {
-    const char *fnname;
-    int idx;
+    int i = gtk_option_menu_get_history(menu);
 
-    fnname = gtk_entry_get_text(GTK_ENTRY(entry));
-
-    if (fnname != NULL && *fnname != '\0') {
-	idx = user_function_index_by_name(fnname);
-	if (idx >= 0) {
-	    finfo->iface = idx;
-	}
+    if (i < finfo->publist[0]) {
+	finfo->iface = finfo->publist[i+1];
+    } else {
+	i -= finfo->publist[0];
+	finfo->iface = finfo->privlist[i+1];
     }
 
     return FALSE;
@@ -433,35 +415,33 @@ enum {
 
 static GtkWidget *interface_selector (function_info *finfo, int iface)
 {
-    GList *fn_list = NULL;
-    GtkWidget *combo;
+    GtkWidget *ifmenu, *menu, *tmp;
     const char *fnname;
     int i;
 
-    if (iface == IFACE_ALL) {
-	if (finfo->privlist != NULL) {
-	    finfo->iface = finfo->privlist[1];
-	    for (i=1; i<=finfo->privlist[0]; i++) {
-		fnname = user_function_name_by_index(finfo->privlist[i]);
-		fn_list = g_list_append(fn_list, (gpointer) fnname);
-	    }
-	} else {
-	    finfo->iface = finfo->publist[1];
-	}
-    }	
+    finfo->iface = finfo->publist[1];
+
+    ifmenu = gtk_option_menu_new();
+    menu = gtk_menu_new();
 
     for (i=1; i<=finfo->publist[0]; i++) {
 	fnname = user_function_name_by_index(finfo->publist[i]);
-	fn_list = g_list_append(fn_list, (gpointer) fnname);
+	tmp = gtk_menu_item_new_with_label(fnname);
+	gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
     }
 
-    combo = gtk_combo_new();
-    gtk_combo_set_popdown_strings(GTK_COMBO(combo), fn_list); 
-    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(combo)->entry), FALSE);
-    gtk_widget_show(combo);
-    g_list_free(fn_list);
+    if (iface == IFACE_ALL && finfo->privlist != NULL) {
+	for (i=1; i<=finfo->privlist[0]; i++) {
+	    fnname = user_function_name_by_index(finfo->privlist[i]);
+	    tmp = gtk_menu_item_new_with_label(fnname);
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+	}
+    }	
 
-    return combo;
+    gtk_option_menu_set_menu(GTK_OPTION_MENU(ifmenu), menu);
+    gtk_widget_show_all(ifmenu);
+
+    return ifmenu;
 }
 
 static void finfo_dialog (function_info *finfo)
@@ -480,6 +460,12 @@ static void finfo_dialog (function_info *finfo)
 	finfo->date,
 	finfo->pkgdesc
     };
+    const char *datareq[] = {
+	N_("Any data"),
+	N_("Time-series data"),
+	N_("Quarterly or monthly data"),
+	N_("Panel data")
+    };
     const char *fnname;
     int i;
 
@@ -495,7 +481,8 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(finfo->dlg), "delete_event",
 		     G_CALLBACK(finfo_delete), finfo);
 
-    tbl = gtk_table_new(NENTRIES, 2, FALSE);
+    tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(finfo->dlg)->vbox),
 		       tbl, FALSE, FALSE, 5);
 
@@ -523,14 +510,35 @@ static void finfo_dialog (function_info *finfo)
 	}
     }
 
+    /* data requirements menu */
+    if (1) {
+	GtkWidget *menu, *datamenu, *tmp;
+	int j;
+
+	label = gtk_label_new(_("Data requirement"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, i, i+1);
+	gtk_widget_show(label);
+
+	datamenu = gtk_option_menu_new();
+	menu = gtk_menu_new();
+	for (j=0; j<=FN_NEEDS_PANEL; j++) {
+	    tmp = gtk_menu_item_new_with_label(_(datareq[j]));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
+	}
+	gtk_option_menu_set_menu(GTK_OPTION_MENU(datamenu), menu);
+	gtk_option_menu_set_history(GTK_OPTION_MENU(datamenu), finfo->dreq);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), datamenu, 1, 2, i, i+1);
+	gtk_widget_show_all(datamenu);
+    }
+
     gtk_widget_show(tbl);
 
     if (finfo->n_public > 1) {
 	/* drop-down selector for public interfaces */
 	hbox = label_hbox(GTK_DIALOG(finfo->dlg)->vbox, _("Help text for"));
-	finfo->combo = interface_selector(finfo, IFACE_PUBLIC);
-	gtk_box_pack_start(GTK_BOX(hbox), finfo->combo, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(GTK_COMBO(finfo->combo)->entry), "changed",
+	finfo->ifsel = interface_selector(finfo, IFACE_PUBLIC);
+	gtk_box_pack_start(GTK_BOX(hbox), finfo->ifsel, FALSE, FALSE, 5);
+	g_signal_connect(G_OBJECT(GTK_OPTION_MENU(finfo->ifsel)), "changed",
 			 G_CALLBACK(update_public), finfo);
 	gtk_widget_show(hbox);
     } else {
@@ -560,7 +568,7 @@ static void finfo_dialog (function_info *finfo)
     if (finfo->publist[0] > 1 || finfo->privlist != NULL) {
 	finfo->codesel = interface_selector(finfo, IFACE_ALL);
 	gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(GTK_COMBO(finfo->codesel)->entry), "changed",
+	g_signal_connect(G_OBJECT(GTK_OPTION_MENU(finfo->codesel)), "changed",
 			 G_CALLBACK(update_iface), finfo);
     } else {
 	finfo->iface = finfo->publist[1];
@@ -725,7 +733,8 @@ void save_user_functions (const char *fname, gpointer p)
 				 finfo->author,
 				 finfo->version,
 				 finfo->date,
-				 finfo->pkgdesc);
+				 finfo->pkgdesc,
+				 finfo->dreq);
 
     if (err) {
 	gui_errmsg(err);
@@ -812,7 +821,8 @@ void edit_function_package (const char *fname)
 				    &finfo->author,
 				    &finfo->version,
 				    &finfo->date,
-				    &finfo->pkgdesc);
+				    &finfo->pkgdesc,
+				    &finfo->dreq);
 
     if (err) {
 	fprintf(stderr, "function_package_get_info: failed on %s\n", fname);

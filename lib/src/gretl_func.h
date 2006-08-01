@@ -30,6 +30,12 @@ typedef enum {
     ARG_INT
 } FuncArgTypes;
 
+typedef enum {
+    FN_NEEDS_TS = 1, /* function requires time-series data */
+    FN_NEEDS_QM,     /* function requires quarterly or monthly data */
+    FN_NEEDS_PANEL   /* function requires panel data */
+} FuncDataReq;
+
 typedef struct ufunc_ ufunc;
 
 int n_user_functions (void);
@@ -99,7 +105,8 @@ int write_function_package (const char *fname,
 			    const char *author,
 			    const char *version,
 			    const char *date,
-			    const char *descrip);
+			    const char *descrip,
+			    FuncDataReq dreq);
 
 int function_package_get_info (const char *fname,
 			       int **privlist, 
@@ -107,7 +114,8 @@ int function_package_get_info (const char *fname,
 			       char **author,
 			       char **version,
 			       char **date,
-			       char **descrip);
+			       char **descrip,
+			       FuncDataReq *dreq);
 
 int write_user_function_file (const char *fname);
 

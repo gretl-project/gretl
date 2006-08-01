@@ -527,6 +527,31 @@ int gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag,
 }
 
 /**
+ * gretl_xml_get_prop_as_bool:
+ * @node: XML node pointer.
+ * @tag: name by which property is known.
+ * 
+ * Returns: 1 if the named property is found and has value %true,
+ * else 0.
+ */
+
+int gretl_xml_get_prop_as_bool (xmlNodePtr node, const char *tag)
+{
+    xmlChar *tmp = xmlGetProp(node, (XUC) tag);
+    int ret = 0;
+
+    if (tmp != NULL) {
+	if (!strcmp((char *) tmp, "true") || 
+	    !strcmp((char *) tmp, "1")) {
+	    ret = 1;
+	}
+	free(tmp);
+    }
+
+    return ret;
+}
+
+/**
  * gretl_xml_node_get_int:
  * @node: XML node pointer.
  * @doc: XML document pointer.

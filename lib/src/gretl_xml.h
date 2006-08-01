@@ -66,6 +66,8 @@ int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
 int gretl_xml_get_prop_as_string (xmlNodePtr node, const char *tag,
 				  char **pstr);
 
+int gretl_xml_get_prop_as_bool (xmlNodePtr node, const char *tag);
+
 int gretl_xml_node_get_int (xmlNodePtr node, xmlDocPtr doc, int *i);
 
 int gretl_xml_node_get_double (xmlNodePtr node, xmlDocPtr doc, 

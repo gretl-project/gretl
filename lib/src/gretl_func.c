@@ -74,6 +74,7 @@ struct fncall_ {
 
 struct fnpkg_ {
     int ID;
+    FuncDataReq dreq;
     char *fname;
     char *author;
     char *version;
@@ -1373,7 +1374,8 @@ int write_function_package (const char *fname,
 			    const char *author,
 			    const char *version,
 			    const char *date,
-			    const char *descrip)
+			    const char *descrip,
+			    FuncDataReq dreq)
 {
     char *pkgname;
     FILE *fp;
@@ -1399,13 +1401,23 @@ int write_function_package (const char *fname,
     gretl_xml_header(fp);    
     fputs("<gretl-functions>\n", fp);
 
+    fputs("<gretl-function-package", fp);
+
     pkgname = make_pkgname(fname);
     if (pkgname != NULL) {
-	fprintf(fp, "<gretl-function-package name=\"%s\">\n", pkgname);
+	fprintf(fp, " name=\"%s\"", pkgname);
 	free(pkgname);
-    } else {
-	fputs("<gretl-function-package>\n", fp);
+    } 
+
+    if (dreq == FN_NEEDS_TS) {
+	fputs(" needs-time-series=\"true\"", fp);
+    } else if (dreq == FN_NEEDS_QM) {
+	fputs(" needs-qm=\"true\"", fp);
+    } else if (dreq == FN_NEEDS_PANEL) {
+	fputs(" needs-panel=\"true\"", fp);
     }
+
+    fputs(">\n", fp);
 
     gretl_xml_put_tagged_string("author", author, fp);
     gretl_xml_put_tagged_string("version", version, fp);
@@ -1442,7 +1454,8 @@ int function_package_get_info (const char *fname,
 			       char **author,
 			       char **version,
 			       char **date,
-			       char **descrip)
+			       char **descrip,
+			       FuncDataReq *dreq)
 {
     fnpkg *pkg = NULL;
     int npriv = 0, npub = 0;
@@ -1477,6 +1490,9 @@ int function_package_get_info (const char *fname,
     }
     if (descrip != NULL) {
 	*descrip = gretl_strdup(pkg->descrip);
+    }
+    if (dreq != NULL) {
+	*dreq = pkg->dreq;
     }
 
     for (i=0; i<n_ufuns; i++) {
@@ -1616,6 +1632,7 @@ static fnpkg *function_package_new (const char *fname)
     pkg->version = NULL;
     pkg->date = NULL;
     pkg->descrip = NULL;
+    pkg->dreq = 0;
 
     pkg->fname = gretl_strdup(fname);
     if (pkg->fname == NULL) {
@@ -1677,7 +1694,14 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	gretl_xml_get_prop_as_string(node, "name", pname);
     }
 
-    /* first get general package information */
+    if (gretl_xml_get_prop_as_bool(node, "needs-time-series")) {
+	pkg->dreq = FN_NEEDS_TS;
+    } else if (gretl_xml_get_prop_as_bool(node, "needs-qm")) {
+	pkg->dreq = FN_NEEDS_QM;
+    } else if (gretl_xml_get_prop_as_bool(node, "needs-panel")) {
+	pkg->dreq = FN_NEEDS_PANEL;
+    }
+
     cur = node->xmlChildrenNode;
     while (cur != NULL) {
 	if (!xmlStrcmp(cur->name, (XUC) "author")) {
@@ -3101,6 +3125,35 @@ static int check_function_assignments (ufunc *fun, int *asslist,
     return err;
 }
 
+static int check_function_data_needs (const DATAINFO *pdinfo,
+				      const ufunc *fun)
+{
+    const fnpkg *pkg;
+
+    pkg = ufunc_get_parent_package(fun);
+    if (pkg == NULL) {
+	return 0;
+    }
+
+    if ((pkg->dreq == FN_NEEDS_TS) && 
+	!dataset_is_time_series(pdinfo)) {
+	return 1;
+    }
+
+    if ((pkg->dreq == FN_NEEDS_PANEL) && 
+	!dataset_is_panel(pdinfo)) {
+	return 1;
+    }
+
+    if ((pkg->dreq == FN_NEEDS_QM) && 
+	(!dataset_is_time_series(pdinfo) || 
+	 (pdinfo->pd != 4 || pdinfo->pd != 12))) {
+	return 1;
+    } 
+
+    return 0;
+}
+
 int gretl_function_start_exec (const char *line, const char *fname, 
 			       double ***pZ, DATAINFO *pdinfo)
 {
@@ -3122,6 +3175,11 @@ int gretl_function_start_exec (const char *line, const char *fname,
 
     if (fun == NULL) {
 	return 1;
+    }
+
+    err = check_function_data_needs(pdinfo, fun);
+    if (err) {
+	return err;
     }
 
     err = parse_function_args_etc(line, &argc, &argv, &asslist, &assv, &asstypes);
