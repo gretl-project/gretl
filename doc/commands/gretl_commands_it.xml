@@ -5246,13 +5246,31 @@
         (per serie storiche) o il marcatore (se esiste) all'inizio di ogni riga.
  	L'opzione <lit>--no-dates</lit> sopprime la visualizzazione delle date o
         dei marcatori: viene mostrato solo un semplice numero di osservazione.
-       </para>
+      </para>
  
-       <para>
+      <para>
 	Se l'argomento di <cmd>print</cmd> è una stringa letterale (che
         deve iniziare con le virgolette doppie <lit>"</lit>), la stringa
         viene stampata così come è stata indicata. Si veda anche <cmdref
-	  targ="printf"/>.</para>
+          targ="printf"/>.
+      </para>
+      
+      <para>
+        Nota: c'è un <quote>trucco</quote> con questo comando, usando 
+        l'opzione <lit>--byobs</lit>, che può essere utile quando si lavora
+        su un dataset con valori mancanti. Se si fornisce una lista di variabili
+        seguite da un punto e virgola e da una variabile finale, la variabile
+        finale non viene mostrata, ma viene usata per selezionare le
+        osservazioni da mostrare. Le osservazioni per cui la variabile finale
+        assume valore 0 non verranno mostrate. Ad esempio, si supponga di avere
+        la serie giornaliera <varname>x</varname> e di volere la lista delle date per
+        cui <varname>x</varname> ha valori mancanti. Si può procedere nel modo
+        seguente:
+      </para>
+      <code>
+	genr filt = missing(x)
+	print x ; filt --byobs</code>
+
     </description>
 
     <gui-access>
