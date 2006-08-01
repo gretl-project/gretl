@@ -23,6 +23,7 @@
 #include "textbuf.h"
 #include "webget.h"
 #include "treeutils.h"
+#include "dlgutils.h"
 
 #ifndef G_OS_WIN32
 # include <sys/stat.h>
