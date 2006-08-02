@@ -1110,10 +1110,12 @@ static void cmd_param_grab_word (CMD *cmd, const char *s)
 {
     int n = strcspn(s, " \n\t");
 
-    free(cmd->param);
-    cmd->param = gretl_strndup(s, n);
-    if (cmd->param == NULL) {
-	cmd->errcode = E_ALLOC;
+    if (n > 0) {
+	free(cmd->param);
+	cmd->param = gretl_strndup(s, n);
+	if (cmd->param == NULL) {
+	    cmd->errcode = E_ALLOC;
+	}
     }
 }
 

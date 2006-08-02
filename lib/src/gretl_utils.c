@@ -823,6 +823,11 @@ int gretl_int_from_string (const char *s, const double **Z,
     char *test;
     int n = 0;
 
+    if (s == NULL || *s == 0) {
+	*err = E_DATA;
+	return 0;
+    }
+
     errno = 0;
 
     n = strtol(s, &test, 10);
