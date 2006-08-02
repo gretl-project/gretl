@@ -29,7 +29,7 @@ enum {
     HIGHNUM = 5000,
     TNUM,
     INDEXNUM
-} genr_numbers;
+};
 
 typedef enum {
     R_NOBS = 1,  /* number of observations in current sample range */
