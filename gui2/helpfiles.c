@@ -1445,7 +1445,7 @@ static void osx_help (int uguide)
 	return;
     }
     
-    fname = g_strdup_printf("%s/share/doc/%s", prefix, 
+    fname = g_strdup_printf("%s/share/gretl/doc/%s", prefix, 
                             (uguide)? "gretl-guide.pdf" : 
 			    "gretl-ref.pdf");
     if (fname == NULL) {
