@@ -208,6 +208,7 @@ static double U[] = {
 #define UTHRESH 37.519379347
 
 static double cephes_erfc (double a);
+static double cephes_erf (double x);
 static double erfce (double a);
 
 double ndtr (double a)
@@ -219,7 +220,7 @@ double ndtr (double a)
 
     /* if( z < SQRTH ) */
     if (z < 1.0) {
-	y = 0.5 + 0.5 * erf(x);
+	y = 0.5 + 0.5 * cephes_erf(x);
 
     } else {
 #ifdef USE_EXPXSQ
@@ -250,7 +251,7 @@ static double cephes_erfc (double a)
     }
 
     if (x < 1.0) {
-	return 1.0 - erf(a);
+	return 1.0 - cephes_erf(a);
     }
 
     z = -a * a;
@@ -314,7 +315,7 @@ static double erfce (double x)
     return p/q;
 }
 
-double erf (double x)
+static double cephes_erf (double x)
 {
     double y, z;
 
