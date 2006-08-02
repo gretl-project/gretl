@@ -841,7 +841,9 @@ int gretl_int_from_string (const char *s, const double **Z,
 	int v = varindex(pdinfo, s);
 	double x;
 
-	if (v == pdinfo->v) {
+	if (v == INDEXNUM) {
+	    n = loop_scalar_read(*s);
+	} else if (v >= pdinfo->v) {
 	    *err = E_UNKVAR;
 	} else if (var_is_series(pdinfo, v)) {
 	    *err = E_TYPES;

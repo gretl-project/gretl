@@ -36,4 +36,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 
 int model_is_in_loop (const MODEL *pmod);
 
+int loop_scalar_read (int c);
+
 #endif /* MONTE_CARLO_H */

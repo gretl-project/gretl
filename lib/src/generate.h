@@ -25,6 +25,12 @@ enum {
     SORT_DESCENDING
 };
 
+enum {
+    HIGHNUM = 5000,
+    TNUM,
+    INDEXNUM
+} genr_numbers;
+
 typedef enum {
     R_NOBS = 1,  /* number of observations in current sample range */
     R_NVARS,     /* number of variables in dataset (including the constant) */

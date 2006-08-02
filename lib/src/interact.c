@@ -1079,7 +1079,7 @@ static int fix_semicolon_after_var (char *s)
 
 static int check_end_command (CMD *cmd)
 {
-    if (*cmd->param) {
+    if (cmd->param != NULL && *cmd->param != 0) {
 	int cmdcode = gretl_command_number(cmd->param);
 
 	if (cmdcode == LOOP) {
@@ -1097,32 +1097,24 @@ static int check_end_command (CMD *cmd)
     return cmd->errcode;
 }
 
-static int resize_cmd_param (CMD *cmd, const char *s, int inlen)
+static void cmd_param_grab_string (CMD *cmd, const char *s)
 {
-    char *param;
-    int len;
-
-    if (inlen > 0) {
-	len = inlen;
-    } else if (s != NULL) {
-	if (strchr(s, ' ') == NULL) {
-	    len = strlen(s);
-	} else {
-	    len = strcspn(s, " ");
-	}
-	len++;
-    } else {
-	return 1;
+    free(cmd->param);
+    cmd->param = gretl_strdup(s);
+    if (cmd->param == NULL) {
+	cmd->errcode = E_ALLOC;
     }
+}
 
-    param = realloc(cmd->param, len);
-    if (param == NULL) {
-	return 1;
+static void cmd_param_grab_word (CMD *cmd, const char *s)
+{
+    int n = strcspn(s, " \n\t");
+
+    free(cmd->param);
+    cmd->param = gretl_strndup(s, n);
+    if (cmd->param == NULL) {
+	cmd->errcode = E_ALLOC;
     }
-
-    cmd->param = param;
-    
-    return 0;
 }
 
 /* Capture the next 'word' found following the initial command word
@@ -1152,14 +1144,12 @@ static int capture_param (const char *s, CMD *cmd,
 		    cmd->word);
 	}
     } else {
-	if (resize_cmd_param(cmd, NULL, strlen(s) + 1)) {
-	    cmd->errcode = E_ALLOC;
-	} else if (cmd->ci == PRINT || cmd->ci == FUNCERR) {
+	if (cmd->ci == PRINT || cmd->ci == FUNCERR) {
 	    /* grab the whole remainder of line */
-	    strcpy(cmd->param, s);
+	    cmd_param_grab_string(cmd, s);
 	} else {
 	    /* grab one 'word' */
-	    sscanf(s, "%s", cmd->param);
+	    cmd_param_grab_word(cmd, s);
 	}
 #if CMD_DEBUG
 	fprintf(stderr, "capture_param: s='%s', param='%s'\n",
@@ -1696,11 +1686,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	/* special: optional lag order for correlogram */
 	if (cmd->ci == CORRGM && j == 2) {
 	    cmd->list[0] = 1;
-	    if (resize_cmd_param(cmd, remainder, 0)) {
-		cmd->errcode = E_ALLOC;
-		goto bailout;
-	    }
-	    sscanf(remainder, "%s", cmd->param);
+	    cmd_param_grab_word(cmd, remainder);
 	    break;
 	}
 

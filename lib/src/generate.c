@@ -35,12 +35,6 @@
 #include <errno.h>
 
 enum {
-    HIGHNUM = 5000,
-    TNUM,
-    INDEXNUM
-} genr_numbers;
-
-enum {
     E_MATVAR = E_MAX + 1, /* matrix found where regular var was expected */
     E_SERIES              /* required scalar but got series */
 } genr_errors;

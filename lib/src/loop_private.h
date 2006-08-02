@@ -33,8 +33,6 @@ enum ifcodes {
     RELAX
 };
 
-int loop_scalar_read (int c);
-
 int is_active_index_loop_char (int c);
 
 int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
