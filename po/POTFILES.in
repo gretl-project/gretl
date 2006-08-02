@@ -75,6 +75,7 @@ gui2/dialogs.c
 gui2/dlgutils.c
 gui2/filelists.c
 gui2/fileselect.c
+gui2/filters.c
 gui2/fncall.c
 gui2/fnsave.c
 gui2/font_filter.c
@@ -85,7 +86,6 @@ gui2/gretl.c
 gui2/gretlwin32.c
 gui2/gtkfontselhack.c
 gui2/guiprint.c
-gui2/guiprint_common.c
 gui2/gui_recode.c
 gui2/gui_utils.c
 gui2/helpfiles.c
