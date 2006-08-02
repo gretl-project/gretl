@@ -3242,7 +3242,7 @@ int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 }
 
 static int 
-maybe_check_function_data_needs (const DATAINFO *pdinfo,
+maybe_check_function_needs (const DATAINFO *pdinfo,
 				 const ufunc *fun)
 {
     const fnpkg *pkg = ufunc_get_parent_package(fun);
@@ -3277,7 +3277,7 @@ int gretl_function_start_exec (const char *line, const char *fname,
 	return 1;
     }
 
-    err = maybe_check_function_data_needs(pdinfo, fun);
+    err = maybe_check_function_needs(pdinfo, fun);
     if (err) {
 	return err;
     }
