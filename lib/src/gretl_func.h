@@ -112,7 +112,8 @@ int write_function_package (fnpkg *pkg,
 			    const char *version,
 			    const char *date,
 			    const char *descrip,
-			    FuncDataReq dreq);
+			    FuncDataReq dreq,
+			    float minver);
 
 int function_package_get_info (const char *fname,
 			       fnpkg **ppkg,
@@ -122,10 +123,11 @@ int function_package_get_info (const char *fname,
 			       char **version,
 			       char **date,
 			       char **descrip,
-			       FuncDataReq *dreq);
+			       FuncDataReq *dreq,
+			       float *minver);
 
-int check_function_data_needs (const DATAINFO *pdinfo,
-			       FuncDataReq dreq);
+int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
+			  float minver);
 
 int write_user_function_file (const char *fname);
 

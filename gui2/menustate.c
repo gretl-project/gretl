@@ -344,6 +344,8 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	do_hurst(NULL, 0, NULL);
     else if (!strcmp(item, _("Edit attributes")))  
 	varinfo_dialog(v, 1);
+    else if (!strcmp(item, _("Edit values")))  
+	show_spreadsheet(SHEET_EDIT_DATASET);
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
     else if (!strcmp(item, _("Delete"))) 
@@ -367,6 +369,7 @@ GtkWidget *build_var_popup (void)
 	N_("Correlogram"),
 	N_("Spectrum"),
 	N_("Edit attributes"),
+	N_("Edit values"),
 	N_("Copy to clipboard"),
 	N_("Delete"),
 	N_("Define new variable...")

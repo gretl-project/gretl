@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "version.h"
 #include "gretl_func.h"
 #include "libset.h"
 #include "usermat.h"
@@ -73,6 +74,7 @@ struct fncall_ {
 
 struct fnpkg_ {
     int ID;
+    float minver;
     FuncDataReq dreq;
     char *fname;
     char *author;
@@ -1367,6 +1369,17 @@ void gretl_function_set_private (int i, int priv)
     }
 }
 
+static void get_version_string (float ver, char *vstr)
+{
+    gretl_push_c_numeric_locale();
+    sprintf(vstr, "%.2f", (double) ver);
+    gretl_pop_c_numeric_locale();
+
+    vstr[4] = vstr[3];
+    vstr[3] = '.';
+    vstr[5] = 0;
+}
+
 int write_function_package (fnpkg *pkg,
 			    const char *fname,
 			    const int *privlist, 
@@ -1375,7 +1388,8 @@ int write_function_package (fnpkg *pkg,
 			    const char *version,
 			    const char *date,
 			    const char *descrip,
-			    FuncDataReq dreq)
+			    FuncDataReq dreq,
+			    float minver)
 {
     char *pkgname;
     FILE *fp;
@@ -1421,6 +1435,13 @@ int write_function_package (fnpkg *pkg,
 	fprintf(fp, " %s=\"true\"", NEEDS_QM);
     } else if (dreq == FN_NEEDS_PANEL) {
 	fprintf(fp, " %s=\"true\"", NEEDS_PANEL);
+    }
+
+    if (minver > 0) {
+	char vstr[6];
+
+	get_version_string(minver, vstr);
+	fprintf(fp, " minver=\"%s\"", vstr);
     }
 
     fputs(">\n", fp);
@@ -1470,6 +1491,7 @@ int write_function_package (fnpkg *pkg,
 	    pkg->descrip = gretl_strdup(descrip);
 	}
 	pkg->dreq = dreq;
+	pkg->minver = minver;
 
 	if (pkg->author == NULL || pkg->version == NULL ||
 	    pkg->date == NULL || pkg->descrip == NULL) {
@@ -1488,7 +1510,8 @@ int function_package_get_info (const char *fname,
 			       char **version,
 			       char **date,
 			       char **descrip,
-			       FuncDataReq *dreq)
+			       FuncDataReq *dreq,
+			       float *minver)
 {
     fnpkg *pkg = NULL;
     int npriv = 0, npub = 0;
@@ -1529,6 +1552,9 @@ int function_package_get_info (const char *fname,
     }
     if (dreq != NULL) {
 	*dreq = pkg->dreq;
+    }
+    if (minver != NULL) {
+	*minver = pkg->minver;
     }
 
     for (i=0; i<n_ufuns; i++) {
@@ -1669,6 +1695,7 @@ static fnpkg *function_package_new (const char *fname)
     pkg->date = NULL;
     pkg->descrip = NULL;
     pkg->dreq = 0;
+    pkg->minver = 0;
 
     pkg->fname = gretl_strdup(fname);
     if (pkg->fname == NULL) {
@@ -1712,6 +1739,14 @@ static void packages_destroy (void)
     n_pkgs = 0;
 }
 
+static float version_float_from_string (const char *s)
+{
+    int maj, min, pl;
+
+    sscanf(s, "%d.%d.%d", &maj, &min, &pl);
+    return maj + min / 10.0 + pl / 100.0;
+}
+
 static int 
 read_user_function_package (xmlDocPtr doc, xmlNodePtr node, 
 			    const char *fname, int task, 
@@ -1719,6 +1754,7 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 {
     xmlNodePtr cur;
     fnpkg *pkg;
+    char *vstr = NULL;
     int err = 0;
 
     pkg = function_package_new(fname);
@@ -1736,6 +1772,11 @@ read_user_function_package (xmlDocPtr doc, xmlNodePtr node,
 	pkg->dreq = FN_NEEDS_QM;
     } else if (gretl_xml_get_prop_as_bool(node, NEEDS_PANEL)) {
 	pkg->dreq = FN_NEEDS_PANEL;
+    }
+
+    if (gretl_xml_get_prop_as_string(node, "minver", &vstr)) {
+	pkg->minver = version_float_from_string(vstr);
+	free(vstr);
     }
 
     cur = node->xmlChildrenNode;
@@ -3161,9 +3202,23 @@ static int check_function_assignments (ufunc *fun, int *asslist,
     return err;
 }
 
-int check_function_data_needs (const DATAINFO *pdinfo,
-			       FuncDataReq dreq)
+int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
+			  float minver)
 {
+    static float thisver = 0.0;
+
+    if (thisver == 0.0) {
+	thisver = version_float_from_string(GRETL_VERSION);
+    }
+
+    if (minver > thisver) {
+	char vstr[6];
+
+	get_version_string(minver, vstr);
+	sprintf(gretl_errmsg, "This function needs gretl version %s", vstr);
+	return 1;
+    }
+
     if ((dreq == FN_NEEDS_TS) && 
 	!dataset_is_time_series(pdinfo)) {
 	strcpy(gretl_errmsg, "This function needs time-series data");
@@ -3195,7 +3250,7 @@ maybe_check_function_data_needs (const DATAINFO *pdinfo,
     if (pkg == NULL) {
 	return 0;
     } else {
-	return check_function_data_needs(pdinfo, pkg->dreq);
+	return check_function_needs(pdinfo, pkg->dreq, pkg->minver);
     }
 }
 

@@ -506,7 +506,7 @@ int gretl_xml_get_prop_as_double (xmlNodePtr node, const char *tag,
  * gretl_xml_get_prop_as_string:
  * @node: XML node pointer.
  * @tag: name by which string property is known.
- * @pstr: location to write string.
+ * @pstr: location to assign string.
  * 
  * Returns: 1 if a string is found and read successfully, 0
  * otherwise.

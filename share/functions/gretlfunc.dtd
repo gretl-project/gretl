@@ -11,6 +11,10 @@
 <!ELEMENT gretl-function-package (author, version, date, description, gretl-function+)>
 <!ATTLIST gretl-function-package
    name CDATA #REQUIRED
+   needs-time-series-data (true|false) 'false'
+   needs-qm-data (true|false) 'false'
+   needs-panel-data (true|false) 'false'
+   minver CDATA #IMPLIED
 >
 
 <!ELEMENT author      (#PCDATA)>
@@ -39,16 +43,16 @@
 <!ELEMENT param EMPTY>
 <!ATTLIST param
    name CDATA #REQUIRED
-   type (bool|boolean|int|scalar|series|list|matrix)
    default CDATA #IMPLIED
    min     CDATA #IMPLIED
    max     CDATA #IMPLIED
+   type (bool|boolean|int|scalar|series|list|matrix) 'series'
 >
 
 <!ELEMENT return EMPTY>
 <!ATTLIST return
    name CDATA #REQUIRED
-   type (bool|boolean|int|scalar|series|matrix) 
+   type (bool|boolean|int|scalar|series|matrix) 'series'
 >
 
 <!ELEMENT code (#PCDATA)>

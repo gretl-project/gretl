@@ -54,6 +54,7 @@ struct function_info_ {
     int n_public;
     int iface;
     FuncDataReq dreq;
+    float minver;
     int upload;
     int saveas;
 };
@@ -91,6 +92,7 @@ function_info *finfo_new (void)
     finfo->publist = NULL;
     finfo->privlist = NULL;
     finfo->dreq = 0;
+    finfo->minver = 1.5;
 
     return finfo;
 }
@@ -385,7 +387,7 @@ static GtkWidget *label_hbox (GtkWidget *w, const char *txt)
     GtkWidget *hbox, *label;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 0);
 
     label = gtk_label_new(txt);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
@@ -404,7 +406,7 @@ static GtkWidget *button_in_hbox (GtkWidget *w, int btype, const char *txt)
     GtkWidget *hbox, *button;
 
     hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(w), hbox, FALSE, FALSE, 0);
     if (btype == CHECK_BUTTON) {
 	button = gtk_check_button_new_with_label(txt);
     } else {
@@ -482,10 +484,93 @@ static void add_data_requirement_menu (GtkWidget *tbl, int i,
     }
     gtk_option_menu_set_menu(GTK_OPTION_MENU(datamenu), menu);
     gtk_option_menu_set_history(GTK_OPTION_MENU(datamenu), finfo->dreq);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), datamenu, 1, 2, i, i+1);
-    gtk_widget_show_all(datamenu);
+
+    tmp = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(tmp), datamenu, FALSE, FALSE, 0);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 1, 2, i, i+1);
+    gtk_widget_show_all(tmp);
+
     g_signal_connect(G_OBJECT(datamenu), "changed",
 		     G_CALLBACK(dreq_select), finfo);
+}
+
+static void get_maj_min_pl (float minver, int *maj, int *min, int *pl)
+{
+    char vstr[5], minstr[2], plstr[2];
+
+    gretl_push_c_numeric_locale();
+    sprintf(vstr, "%.2f", (double) minver);
+    gretl_pop_c_numeric_locale();
+
+    sscanf(vstr, "%d.%1s%1s", maj, minstr, plstr);
+    *min = atoi(minstr);
+    *pl = atoi(plstr);
+}
+
+static void adjust_minver (GtkWidget *w, function_info *finfo)
+{
+    int val = (int) gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+    int lev = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "level"));
+    int maj, min, pl;
+
+    get_maj_min_pl(finfo->minver, &maj, &min, &pl);
+
+    if (lev == 1) {
+	finfo->minver = (float) val + min / 10.0 + pl / 100.0;
+    } else if (lev == 2) {
+	finfo->minver = (float) maj + val / 10.0 + pl / 100.0;
+    } else if (lev == 3) {
+	finfo->minver = (float) maj + min / 10.0 + val / 100.0;
+    }
+}
+
+static void add_minver_selector (GtkWidget *tbl, int i, 
+				 function_info *finfo)
+{
+    GtkWidget *tmp, *spin, *hbox;
+    int maj, min, pl;
+
+    get_maj_min_pl(finfo->minver, &maj, &min, &pl);
+
+    tmp = gtk_label_new(_("Minimum gretl version"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, i, i+1);
+    gtk_widget_show(tmp);
+
+    hbox = gtk_hbox_new(FALSE, 0);
+
+    spin = gtk_spin_button_new_with_range(1, 3, 1);
+    if (maj > 1) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) maj);
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+    g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(1));
+    g_signal_connect(G_OBJECT(spin), "value-changed",
+		     G_CALLBACK(adjust_minver), finfo);
+    tmp = gtk_label_new(".");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
+
+    spin = gtk_spin_button_new_with_range(0, 9, 1);
+    if (min > 0) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) min);
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+    g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(2));
+    g_signal_connect(G_OBJECT(spin), "value-changed",
+		     G_CALLBACK(adjust_minver), finfo);
+    tmp = gtk_label_new(".");
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 2);
+
+    spin = gtk_spin_button_new_with_range(0, 9, 1);
+    if (pl > 0) {
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin), (double) pl);
+    }
+    gtk_box_pack_start(GTK_BOX(hbox), spin, FALSE, FALSE, 2);
+    g_object_set_data(G_OBJECT(spin), "level", GINT_TO_POINTER(3));
+    g_signal_connect(G_OBJECT(spin), "value-changed",
+		     G_CALLBACK(adjust_minver), finfo);
+
+    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, i, i+1);
+    gtk_widget_show_all(hbox);
 }
 
 static void finfo_dialog (function_info *finfo)
@@ -495,7 +580,7 @@ static void finfo_dialog (function_info *finfo)
     const char *entry_labels[] = {
 	N_("Author"),
 	N_("Version"),
-	N_("Date"),
+	N_("Date (YYYY-MM-DD)"),
 	N_("Package description")
     };
     char *entry_texts[] = {
@@ -526,7 +611,7 @@ static void finfo_dialog (function_info *finfo)
     gtk_widget_show(vbox);
 			 
     tbl = gtk_table_new(NENTRIES + 1, 2, FALSE);
-    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 4);
     gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 5);
 
     for (i=0; i<NENTRIES; i++) {
@@ -553,6 +638,7 @@ static void finfo_dialog (function_info *finfo)
 	}
     }
 
+    add_minver_selector(tbl, i++, finfo);
     add_data_requirement_menu(tbl, i, finfo);
     gtk_widget_show(tbl);
 
@@ -778,6 +864,7 @@ void save_user_functions (const char *fname, gpointer p)
     printlist(finfo->privlist, "finfo->privlist");
     printlist(finfo->publist, "finfo->publist");
     fprintf(stderr, "dreq=%d\n", finfo->dreq);
+    fprintf(stderr, "minver=%.2f\n", (double) finfo->minver);
 #endif
 		
     err = write_function_package(finfo->pkg,
@@ -788,7 +875,8 @@ void save_user_functions (const char *fname, gpointer p)
 				 finfo->version,
 				 finfo->date,
 				 finfo->pkgdesc,
-				 finfo->dreq);
+				 finfo->dreq,
+				 finfo->minver);
 
     if (err) {
 	gui_errmsg(err);
@@ -868,7 +956,8 @@ void edit_function_package (const char *fname)
 				    &finfo->version,
 				    &finfo->date,
 				    &finfo->pkgdesc,
-				    &finfo->dreq);
+				    &finfo->dreq,
+				    &finfo->minver);
 
     if (err) {
 	fprintf(stderr, "function_package_get_info: failed on %s\n", fname);

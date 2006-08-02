@@ -720,6 +720,7 @@ void call_function_package (const char *fname, GtkWidget *w)
     char fnline[MAXLINE];
     const char *fnname;
     FuncDataReq dreq;
+    float minver;
     PRN *prn;
     call_info cinfo;
     int i, err = 0;
@@ -754,7 +755,8 @@ void call_function_package (const char *fname, GtkWidget *w)
 				    NULL,
 				    NULL,
 				    NULL,
-				    &dreq);
+				    &dreq,
+				    &minver);
 
     if (*tmpfile) {
 	remove(tmpfile);
@@ -766,7 +768,7 @@ void call_function_package (const char *fname, GtkWidget *w)
 	return;
     }
 
-    err = check_function_data_needs(datainfo, dreq);
+    err = check_function_needs(datainfo, dreq, minver);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -813,8 +815,10 @@ void call_function_package (const char *fname, GtkWidget *w)
 	return;
     }
 
-    /* kill the launcher window */
+#if 0
+    /* kill the launcher window? */
     gtk_widget_destroy(w);
+#endif
 
     fnname = user_function_name_by_index(cinfo.iface);
     *fnline = 0;
