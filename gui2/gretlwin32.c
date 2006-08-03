@@ -24,6 +24,7 @@
 #include "textutil.h"
 #include "guiprint.h"
 #include "gpt_control.h"
+#include "menustate.h"
 
 #include <gdk/gdkwin32.h>
 #include <dirent.h>
