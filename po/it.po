@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-08-02 15:00-0400\n"
-"PO-Revision-Date: 2006-08-03 11:19+0200\n"
+"PO-Revision-Date: 2006-08-03 12:11+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -7776,7 +7776,7 @@ msgstr "Limite superiore di frequenza"
 
 #: gui2/filters.c:411
 msgid "The first EMA value is"
-msgstr "Il primo valore EMA è"
+msgstr "Il primo valore è"
 
 #: gui2/filters.c:420
 msgid "the mean of the whole series"
@@ -7790,13 +7790,15 @@ msgstr "la media delle prime n osservazioni"
 msgid "gretl: time-series filter"
 msgstr "gretl: filtro per serie storiche"
 
+# Media mobile
 #: gui2/filters.c:464
 msgid "Number of observations in average:"
-msgstr "Numero di osservazioni in media:"
+msgstr "Numero di osservazioni per la media:"
 
+# Media mobile => femminile
 #: gui2/filters.c:475
 msgid "Centered"
-msgstr "Centrato"
+msgstr "Centrata"
 
 #: gui2/filters.c:486
 msgid "Weight on current observation:"
@@ -7844,7 +7846,7 @@ msgstr "Componente ciclica di %s"
 #: gui2/filters.c:672
 #, c-format
 msgid "Baxter-King component of %s at frequency %d to %d"
-msgstr "Componente Baxter-King di %s alle frequenze da %d a %d"
+msgstr "Componente Baxter-King di %s per le frequenze da %d a %d"
 
 #: gui2/filters.c:885 gui2/library.c:3156
 msgid "This variable is a scalar"
