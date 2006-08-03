@@ -655,7 +655,7 @@ static void finfo_dialog (function_info *finfo)
 	gchar *ltxt;
 
 	fnname = user_function_name_by_index(finfo->publist[1]);
-	ltxt = g_strdup_printf("Help text for %s:", fnname);
+	ltxt = g_strdup_printf(_("Help text for %s:"), fnname);
 	hbox = label_hbox(vbox, ltxt);
 	gtk_widget_show(hbox);
 	g_free(ltxt);
@@ -688,7 +688,7 @@ static void finfo_dialog (function_info *finfo)
 
     /* check box for upload option */
     finfo->check = button_in_hbox(vbox, CHECK_BUTTON, 
-				  "Upload package to server on save");
+				  _("Upload package to server on save"));
 
     /* control button area */
     hbox = gtk_hbutton_box_new();

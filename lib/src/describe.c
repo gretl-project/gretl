@@ -1724,6 +1724,10 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
     FreqDist *freq = NULL;
     int err = 0;
 
+    if (pmod == NULL || pmod->uhat == NULL) {
+	return E_DATA;
+    }
+
     if (genr_fit_resid(pmod, pZ, pdinfo, GENR_RESID, 1)) {
 	pputs(prn, _("Out of memory attempting to add variable\n"));
 	err = E_ALLOC;

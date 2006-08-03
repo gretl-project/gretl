@@ -20,6 +20,7 @@
 /* mp_ols.c - gretl least squares with multiple precision (GMP) */
 
 #include "libgretl.h"
+
 #include <float.h>
 #include <gmp.h>
 
@@ -128,11 +129,6 @@ static int data_problems (const int *list, const double **Z,
 	}
 	allzero = 1;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
-	    if (na(Z[list[i]][t])) {
-		sprintf(errbuf, _("Missing observations for variable '%s'"), 
-			pdinfo->varname[list[i]]);	
-		return 1;
-	    }
 	    if (!floateq(Z[list[i]][t], 0.0)) {
 		allzero = 0;
 	    }
@@ -969,7 +965,7 @@ static char **allocate_xnames (const int *list)
  */
 
 int mplsq (const int *list, const int *polylist,
-	   const double **Z, const DATAINFO *pdinfo, 
+	   const double **Z, DATAINFO *pdinfo, 
 	   char *errbuf, MODEL *pmod, gretlopt opt) 
 {
     int l0, i;
@@ -977,6 +973,8 @@ int mplsq (const int *list, const int *polylist,
     char **xnames = NULL;
     MPXPXXPY xpxxpy;
     MPMODEL mpmod;
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
     int err = 0;
 
     *errbuf = 0;
@@ -1003,22 +1001,32 @@ int mplsq (const int *list, const int *polylist,
     mpmod.polylist = polylist; /* attached for convenience */
 
     if (polylist != NULL && poly_check(&mpmod, list)) {
-	mp_model_free(&mpmod);
-	return E_DATA;
+	err = E_DATA;
+	goto bailout;
     }
 
     /* check for missing obs in sample */
+    err = list_adjust_t1t2(list, Z, pdinfo);
+    if (err) {
+	goto bailout;
+    }
+    
+    /* in case of any changes */
+    mpmod.t1 = pdinfo->t1;
+    mpmod.t2 = pdinfo->t2;
+
+    /* check for other data issues */
     if (data_problems(list, Z, pdinfo, errbuf)) {
-	mp_model_free(&mpmod);
-	return E_DATA;
+	err = E_DATA;
+	goto bailout;
     }
 
     /* enable names for polynomial terms? */
     if (polylist != NULL && (opt & OPT_S)) { 	 
 	xnames = allocate_xnames(mpmod.list); 	 
-	if (xnames == NULL) { 	 
-	    mp_model_free(&mpmod); 	 
-	    return E_ALLOC; 	 
+	if (xnames == NULL) { 
+	    err = E_ALLOC;
+	    goto bailout;
 	} 	 
     }
 
@@ -1029,8 +1037,8 @@ int mplsq (const int *list, const int *polylist,
     mpZ = make_mpZ(&mpmod, Z, pdinfo, xnames);
 
     if (mpZ == NULL) {
-	mp_model_free(&mpmod);
-	return E_ALLOC;
+	err = E_ALLOC;
+	goto bailout;
     }
 
     mpf_constants_init();
@@ -1043,10 +1051,10 @@ int mplsq (const int *list, const int *polylist,
     if (mpmod.nobs < mpmod.ncoeff) { 
         sprintf(errbuf, _("No. of obs (%d) is less than no. "
 			  "of parameters (%d)"), mpmod.nobs, mpmod.ncoeff);
-	mp_model_free(&mpmod);
 	free_mpZ(mpZ, l0, mpmod.nobs);
 	mpf_constants_clear();
-        return E_DF; 
+	err = E_DF;
+	goto bailout;
     }
 
     /* calculate regression results */
@@ -1068,8 +1076,14 @@ int mplsq (const int *list, const int *polylist,
 
     /* free all the mpf stuff */
     free_mpZ(mpZ, l0, mpmod.nobs);
-    mp_model_free(&mpmod);
     mpf_constants_clear();
+
+ bailout:
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
+
+    mp_model_free(&mpmod);
 
     return err;
 }

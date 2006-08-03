@@ -4135,9 +4135,24 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
 	gtk_widget_show_all(hbox);
     }
+    
+    hbox = GTK_DIALOG(dialog)->action_area;
 	
-    /* Create the "OK" button */
-    tmp = ok_button(GTK_DIALOG(dialog)->action_area);
+    /* "Apply" button */
+    tmp = apply_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(lag_toggle_register), &vlinfo[0]);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(delete_widget), dialog);
+    gtk_widget_show(tmp);
+
+    /* "Cancel" button */
+    tmp = cancel_delete_button(hbox, dialog, NULL);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(lags_set_cancel), &ret);
+
+    /* "OK" button */
+    tmp = ok_button(hbox);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(lags_set_ok), &ret);
     g_signal_connect(G_OBJECT(tmp), "clicked",
@@ -4147,21 +4162,8 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     gtk_widget_grab_default(tmp);
     gtk_widget_show(tmp);
 
-    /* Create the "Apply" button */
-    tmp = apply_button(GTK_DIALOG(dialog)->action_area);
-    g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(lag_toggle_register), &vlinfo[0]);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(delete_widget), dialog);
-    gtk_widget_show(tmp);
-
-    /* "Cancel" button */
-    tmp = cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog, NULL);
-    g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(lags_set_cancel), &ret);
-
     /* "Help" button */
-    context_help_button(GTK_DIALOG(dialog)->action_area, LAGS_DIALOG);
+    context_help_button(hbox, LAGS_DIALOG);
 
     gtk_widget_set_sensitive(sr->dlg, FALSE);
     gtk_widget_show(dialog);   

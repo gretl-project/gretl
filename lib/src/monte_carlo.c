@@ -399,7 +399,7 @@ int ok_in_loop (int ci)
     }
 
     /* basic model tests */
-    else if (ci == ADD || ci == OMIT) {
+    else if (ci == ADD || ci == OMIT || ci == TESTUHAT) {
 	ok = 1;
     }
 
@@ -2804,6 +2804,10 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    clear_model(models[1]);
 		}
 		break;	
+
+	    case TESTUHAT:
+		err = model_error_dist(models[0], pZ, pdinfo, prn);
+		break;
 
 	    case MLE:
 	    case NLS:
