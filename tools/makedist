@@ -13,9 +13,6 @@ echo "making dist file for gretl $version using filename $tarfile"
 # make time stamp
 cd ${topdir} && date > share/gretl.stamp
 
-# make old-style help files
-cd ${topdir}/doc/commands && make -f cmdref.mk olddoc 
-
 # make the archive and remove the dist dir
 cd $parent 
 echo "making archive..."
