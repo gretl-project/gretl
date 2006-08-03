@@ -322,6 +322,38 @@ void set_fixed_font (void)
 
 #ifndef G_OS_WIN32
 
+/* remedial setting of font path for libgd, in case it's not
+   set right (which, it seems, is often the case on
+   Linux) 
+*/
+
+static void maybe_set_gd_fontpath (void)
+{
+    char *gdpath = NULL;
+    char *newpath = NULL;
+
+    if (gnuplot_has_ttf()) {
+	/* fonts already found, don't mess with this */
+	return;
+    }
+
+    gdpath = getenv("GDFONTPATH");
+    if (gdpath != NULL) {
+	if (strstr(gdpath, "gretl") == NULL &&
+	    strstr(gdpath, "GRETL") == NULL) {
+	    newpath = g_strdup_printf("%s:%sfonts", gdpath, 
+				      paths.gretldir);
+	}
+    } else {
+	newpath = g_strdup_printf("%sfonts", paths.gretldir);
+    }
+
+    if (newpath != NULL) {
+	setenv("GDFONTPATH", newpath, 1);
+	g_free(newpath);
+    }
+}
+
 static void record_shell_opt (void)
 {
     char shellstamp[FILENAME_MAX];
@@ -755,6 +787,7 @@ void set_rcfile (void)
     strcat(rcfile, "/.gretl2rc");
 # endif
     read_rc(); 
+    maybe_set_gd_fontpath();
 }
 #endif
 
@@ -762,6 +795,7 @@ void set_rcfile (void)
 void set_rcfile (void)
 {
     read_rc();
+    maybe_set_gd_fontpath();
 }
 #endif
 

@@ -48,7 +48,7 @@ help:
 	make -C ../doc/commands help-all
 
 install: installdirs install_datafiles install_scripts install_functions install_help \
-	$(INSTALL_GUI_SCRIPT_HELP) $(INSTALL_HELP_FIGS)
+	install_fonts $(INSTALL_GUI_SCRIPT_HELP) $(INSTALL_HELP_FIGS)
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(gretldir)/gretl.stamp
 	make -C bcih install
 
@@ -101,6 +101,10 @@ install_help: $(AUTO_HELPFILES)
 	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \
 	if test -f $$f ; then $(INSTALL_DATA) $$f $(gretldir)/doc ; fi ; done
 
+install_fonts:
+	for f in $(sharesrc)/fonts/*.ttf ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/fonts ; done
+
 installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 
 	$(tooldir)/mkinstalldirs $(gretldir)/data/greene
@@ -110,6 +114,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(gretldir)/db
 	$(tooldir)/mkinstalldirs $(gretldir)/functions
+	$(tooldir)/mkinstalldirs $(gretldir)/fonts
 
 clean:
 	make -C bcih clean
