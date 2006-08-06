@@ -1549,7 +1549,8 @@ static int exec_line (char *line, PRN *prn)
 	if (rset == NULL) {
 	    if (*cmd.param == '\0') {
 		/* if param is non-blank, we're restricting a named system */
-		if ((err = model_test_start(cmd.ci, 0, prn))) break;
+		err = model_test_start(cmd.ci, 0, prn);
+		if (err) break;
 	    }
 	    rset = restriction_set_start(line, models[0], datainfo, cmd.opt);
 	    if (rset == NULL) {
