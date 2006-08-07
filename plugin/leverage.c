@@ -45,16 +45,23 @@ static gboolean update_save_flag (GtkWidget *w, struct flag_info *finfo)
     int checked = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
 
     if (w == finfo->levcheck) {
-	if (checked) *finfo->flag |= SAVE_LEVERAGE;
-	else *finfo->flag &= ~SAVE_LEVERAGE;
-    }
-    else if (w == finfo->infcheck) {
-	if (checked) *finfo->flag |= SAVE_INFLUENCE;
-	else *finfo->flag &= ~SAVE_INFLUENCE;
-    }
-    else if (w == finfo->dffcheck) {
-	if (checked) *finfo->flag |= SAVE_DFFITS;
-	else *finfo->flag &= ~SAVE_DFFITS;
+	if (checked) {
+	    *finfo->flag |= SAVE_LEVERAGE;
+	} else {
+	    *finfo->flag &= ~SAVE_LEVERAGE;
+	}
+    } else if (w == finfo->infcheck) {
+	if (checked) {
+	    *finfo->flag |= SAVE_INFLUENCE;
+	} else {
+	    *finfo->flag &= ~SAVE_INFLUENCE;
+	}
+    } else if (w == finfo->dffcheck) {
+	if (checked) {
+	    *finfo->flag |= SAVE_DFFITS;
+	} else {
+	    *finfo->flag &= ~SAVE_DFFITS;
+	}
     }    
 
     return FALSE;
@@ -347,7 +354,8 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
 */
 
 gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ, 
-			      DATAINFO *pdinfo, PRN *prn, int plot)
+			      DATAINFO *pdinfo, gretlopt opt,
+			      PRN *prn, int *err)
 {
     integer info, lwork;
     integer m, n, lda;
@@ -355,7 +363,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     doublereal *tau, *work;
     double lp;
     int i, j, t, tq, tmod;
-    int err = 0, serr = 0, gotlp = 0;
+    int serr = 0, gotlp = 0;
     /* allow for missing obs in model range */
     int modn = pmod->t2 - pmod->t1 + 1;
 
@@ -370,7 +378,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     work = malloc(sizeof *work);
 
     if (Q == NULL || tau == NULL || work == NULL) {
-	err = E_ALLOC;
+	*err = E_ALLOC;
 	goto qr_cleanup;
     }
 
@@ -390,7 +398,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     dgeqrf_(&m, &n, Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	err = 1;
+	*err = 1;
 	goto qr_cleanup;
     }
 
@@ -398,7 +406,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     lwork = (integer) work[0];
     work = realloc(work, (size_t) lwork * sizeof *work);
     if (work == NULL) {
-	err = E_ALLOC;
+	*err = E_ALLOC;
 	goto qr_cleanup;
     }
 
@@ -406,14 +414,14 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     dgeqrf_(&m, &n, Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	err = 1;
+	*err = 1;
 	goto qr_cleanup;
     }
 
     /* obtain the real "Q" matrix */
     dorgqr_(&m, &n, &n, Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
-	err = 1;
+	*err = 1;
 	goto qr_cleanup;
     }
 
@@ -424,7 +432,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 
     S = gretl_matrix_alloc(modn, 3);
     if (S == NULL) {
-	err = 1;
+	*err = E_ALLOC;
 	goto qr_cleanup;
     }	
 
@@ -508,7 +516,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 	pprintf(prn, "\n%s\n\n", _("No leverage points were found"));
     }
 
-    if (plot) {
+    if (opt & OPT_P) {
 	leverage_plot(pmod, S, pZ, pdinfo);
     }
 

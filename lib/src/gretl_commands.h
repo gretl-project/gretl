@@ -198,6 +198,24 @@ typedef enum {
                         c == VARTEST || \
                         c == XTAB)
 
+#define NEEDS_MODEL_CHECK(c) (c == ADD || \
+                              c == OMIT || \
+                              c == COEFFSUM || \
+                              c == CUSUM || \
+                              c == RESET || \
+                              c == CHOW || \
+                              c == QLRTEST || \
+                              c == VIF || \
+                              c == TABPRINT || \
+                              c == EQNPRINT || \
+                              c == FCAST || \
+                              c == FIT || \
+                              c == FCASTERR || \
+                              c == HAUSMAN || \
+                              c == LEVERAGE || \
+                              c == LMTEST || \
+                              c == TESTUHAT)
+
 int gretl_command_number (const char *s);
 
 const char *gretl_command_word (int i);

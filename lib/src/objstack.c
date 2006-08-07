@@ -1115,10 +1115,8 @@ int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo,
 
 	err = E_NOTIMP;
 
-	if (ci == RESTRICT) {
-	    if (r > 0) {
-		err = 0;
-	    }
+	if (ci == RESTRICT && r > 0) {
+	    err = 0;
 	} else if (ci == TESTUHAT) {
 	    err = 0;
 	} else if (ci == LMTEST && ((opt & OPT_A) || (opt & OPT_H))) {

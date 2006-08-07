@@ -480,7 +480,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     switch (orig->ci) {
 
     case AR:
-	rep = ar_func(list, pZ, pdinfo, myopt, prn);
+	rep = ar_func(list, pZ, pdinfo, myopt, NULL);
 	break;
     case ARCH:
 	order = gretl_model_get_int(orig, "arch_order");
@@ -1851,8 +1851,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
     if (flags & SAVE_DFFITS) addvars++;
 
     if (dataset_add_series(addvars, pZ, pdinfo)) {
-	strcpy(gretl_errmsg, _("Out of memory adding series"));
-	return 1;
+	return E_ALLOC;
     }
 
     t1 = gretl_matrix_get_int(m);
@@ -1942,7 +1941,8 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 {
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
-				     const DATAINFO *, PRN *, int);
+				     const DATAINFO *, gretlopt,
+				     PRN *, int *);
     gretl_matrix *m;
     int err = 0;
 
@@ -1953,18 +1953,16 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    m = (*model_leverage)(pmod, pZ, pdinfo, prn, 0);
-    if (m == NULL) {
-	err = 1;
-    } else {
-	if (opt & OPT_S) {
-	    err = add_leverage_values_to_dataset(pZ, pdinfo, m, 
-						 SAVE_LEVERAGE |
-						 SAVE_INFLUENCE| 
-						 SAVE_DFFITS);
-	}
-	gretl_matrix_free(m);
+    m = (*model_leverage)(pmod, pZ, pdinfo, OPT_NONE, prn, &err);
+
+    if (!err && (opt & OPT_S)) {
+	err = add_leverage_values_to_dataset(pZ, pdinfo, m, 
+					     SAVE_LEVERAGE |
+					     SAVE_INFLUENCE| 
+					     SAVE_DFFITS);
     }
+
+    gretl_matrix_free(m);
 
     close_plugin(handle);
 
@@ -2191,6 +2189,7 @@ int lmtest_driver (const char *param,
 {
     GretlObjType type;
     void *ptr;
+    int k = 0;
     int err = 0;
 
     if (opt == OPT_NONE) {
@@ -2201,6 +2200,10 @@ int lmtest_driver (const char *param,
     ptr = get_last_model(&type);  
     if (ptr == NULL) {
 	return E_DATA;
+    }
+
+    if ((opt & OPT_A) || (opt & OPT_H)) {
+	k = atoi(param);
     }
 
     /* non-linearity (squares) */
@@ -2235,11 +2238,10 @@ int lmtest_driver (const char *param,
     /* autocorrelation */
     if (!err && (opt & OPT_A)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = autocorr_test(ptr, atoi(param), pZ, pdinfo, 
+	    err = autocorr_test(ptr, k, pZ, pdinfo, 
 				OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    err = gretl_VAR_autocorrelation_test(ptr, atoi(param), 
-						 pZ, pdinfo, prn);
+	    err = gretl_VAR_autocorrelation_test(ptr, k, pZ, pdinfo, prn);
 	} else {
 	    err = E_NOTIMP;
 	}
@@ -2248,9 +2250,9 @@ int lmtest_driver (const char *param,
     /* ARCH */
     if (!err && (opt & OPT_H)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = arch_test_simple(ptr, atoi(param), pZ, pdinfo, prn);
+	    err = arch_test_simple(ptr, k, pZ, pdinfo, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    err = gretl_VAR_arch_test(ptr, atoi(param), pZ, pdinfo, prn);
+	    err = gretl_VAR_arch_test(ptr, k, pZ, pdinfo, prn);
 	} else {
 	    err = E_NOTIMP;
 	}

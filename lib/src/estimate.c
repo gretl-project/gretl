@@ -2811,7 +2811,6 @@ MODEL ar_func (const int *list, double ***pZ,
 
     if (!ar.errcode) {
 	set_model_id(&ar);
-	printmodel(&ar, pdinfo, opt, prn);  
     }  
 
  bailout:

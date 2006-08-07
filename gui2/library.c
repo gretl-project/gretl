@@ -1668,9 +1668,11 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     MODEL *pmod = (MODEL *) vwin->data;
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
-				     DATAINFO *, PRN *, int);
+				     DATAINFO *, gretlopt,
+				     PRN *, int *);
     PRN *prn;
     gretl_matrix *m;
+    int err = 0;
 
     model_leverage = gui_get_plugin_function("model_leverage", 
 					     &handle);
@@ -1683,10 +1685,12 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 	return;
     }	
 	
-    m = (*model_leverage)(pmod, &Z, datainfo, prn, 1);
+    m = (*model_leverage)(pmod, &Z, datainfo, OPT_P, prn, &err);
     close_plugin(handle);
 
-    if (m != NULL) {
+    if (err) {
+	gui_errmsg(err);
+    } else {
 	windata_t *levwin;
 
 	levwin = view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
@@ -1697,9 +1701,7 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 
 	gretl_command_strcpy("leverage");
 	model_command_init(pmod->ID);
-    } else {
-	errbox(_("Command failed"));
-    }
+    } 
 }
 
 void do_vif (gpointer data, guint u, GtkWidget *w)
@@ -2622,7 +2624,7 @@ static int real_do_model (int action)
 
     case AR:
 	*pmod = ar_func(cmd.list, &Z, datainfo, OPT_NONE, prn);
-	err = model_error(pmod);
+	err = model_output(pmod, prn);
 	break;
 
     case LOGIT:
@@ -5764,7 +5766,6 @@ int execute_script (const char *runfile, const char *buf,
     return exec_err;
 }
 
-
 /* trying to do a model test of some sort: do we have a model
    available, and if so, is the command suitable for that model? 
 */
@@ -5827,6 +5828,19 @@ static void do_autofit_plot (PRN *prn)
     } else {
 	register_graph();
     }
+}
+
+static int maybe_print_model (MODEL *pmod, gretlopt opt, PRN *prn)
+{
+    int err = pmod->errcode;
+
+    if (err) {
+	errmsg(err, prn);
+    } else {
+	printmodel(pmod, datainfo, opt, prn);
+    }
+
+    return err;
 }
 
 int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname) 
@@ -5945,6 +5959,16 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     check_for_loop_only_options(cmd.ci, cmd.opt, prn);
 
+    if (NEEDS_MODEL_CHECK(cmd.ci)) {
+	err = model_test_check(&cmd, prn);
+	if (err) {
+	    if (gretl_executing_function()) {
+		gretl_function_stop_on_error(&Z, &datainfo, prn);
+	    }
+	    return err;
+	}
+    }
+
     if (exec_code == SCRIPT_EXEC && *cmd.savename == 0) {
 	grbatch = 1;
     }
@@ -6008,7 +6032,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case ADD:
     case OMIT:
-	if ((err = model_test_check(&cmd, prn))) break;
     plain_add_omit:
 	clear_model(models[1]);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
@@ -6069,11 +6092,15 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case AR:
+    case ARMA:
 	clear_model(models[0]);
-	*models[0] = ar_func(cmd.list, &Z, datainfo, cmd.opt, outprn);
-	if ((err = (models[0])->errcode)) { 
-	    errmsg(err, prn); 
-	}
+	if (cmd.ci == AR) {
+	    *models[0] = ar_func(cmd.list, &Z, datainfo, cmd.opt, outprn);
+	} else {
+	    *models[0] = arma(cmd.list, (const double **) Z, datainfo,
+			      cmd.opt, outprn);
+	}	    
+	err = maybe_print_model(models[0], cmd.opt, outprn);
 	break;
 
     case ARCH:
@@ -6090,17 +6117,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	clear_model(models[1]);
 	break;
 
-    case ARMA:
-	clear_model(models[0]);
-	*models[0] = arma(cmd.list, (const double **) Z, datainfo,
-			  cmd.opt, outprn);
-	if ((err = (models[0])->errcode)) { 
-	    errmsg(err, prn); 
-	} else {	
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
-	break;
-
     case BXPLOT:
 	if (cmd.nolist) { 
 	    err = boolean_boxplots(line, &Z, datainfo, (cmd.opt != 0));
@@ -6109,28 +6125,20 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	}
 	break;
 
-    case CHOW:
-    case CUSUM:
-    case QLRTEST:
-    case RESET:
-	if ((err = model_test_check(&cmd, prn))) break;
-	if (cmd.ci == CHOW || cmd.ci == QLRTEST) {
-	    err = chow_test(line, models[0], &Z, datainfo, testopt, outprn);
-	} else if (cmd.ci == CUSUM) {
-	    err = cusum_test(models[0], &Z, datainfo, testopt, outprn);
-	} else {
-	    err = reset_test(models[0], &Z, datainfo, testopt, outprn);
-	}
-	if (err) {
-	    errmsg(err, prn);
-	} 
-	break;
-
     case COEFFSUM:
+    case CUSUM:
+    case RESET:
+    case CHOW:
+    case QLRTEST:
     case VIF:
-        if ((err = model_test_check(&cmd, prn))) break;
 	if (cmd.ci == COEFFSUM) {
 	    err = sum_test(cmd.list, models[0], &Z, datainfo, outprn);
+	} else if (cmd.ci == CUSUM) {
+	    err = cusum_test(models[0], &Z, datainfo, testopt, outprn);
+	} else if (cmd.ci == RESET) {
+	    err = reset_test(models[0], &Z, datainfo, testopt, outprn);
+	} else if (cmd.ci == CHOW || cmd.ci == QLRTEST) {
+	    err = chow_test(line, models[0], &Z, datainfo, testopt, outprn);
 	} else {
 	    err = vif_test(models[0], &Z, datainfo, outprn);
 	}
@@ -6150,11 +6158,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	}
 	clear_model(models[0]);
 	*models[0] = ar1_lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn);
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
+	err = maybe_print_model(models[0], cmd.opt, outprn);
 	break;
 
     case CORRGM:
@@ -6202,11 +6206,9 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	} else if (!strcmp(cmd.param, "mle") || !strcmp(cmd.param, "nls")) {
 	    clear_model(models[0]);
 	    *models[0] = nls(&Z, datainfo, cmd.opt, outprn);
-	    if ((err = (models[0])->errcode)) {
-		errmsg(err, prn);
-	    } else {
+	    err = maybe_print_model(models[0], cmd.opt, outprn);
+	    if (!err) {
 		alt_model = 1;
-		printmodel(models[0], datainfo, cmd.opt, outprn);
 	    }
 	} else if (!strcmp(cmd.param, "restrict")) {
 	    err = gretl_restriction_set_finalize(rset, (const double **) Z, 
@@ -6242,9 +6244,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	    pprintf(prn, _("Couldn't format model\n"));
 	    break;
 	}
-	if ((err = model_test_check(&cmd, prn))) {
-	    break;
-	}
 	strcpy(texfile, cmd.param);
 	err = texprint(models[0], datainfo, texfile, 
 		       (cmd.ci == EQNPRINT)? (cmd.opt | OPT_E) :
@@ -6258,7 +6257,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case FCAST:
     case FIT:
-	if ((err = model_test_check(&cmd, prn))) break;
 	if (cmd.ci == FIT) {
 	    err = add_forecast("fcast autofit", models[0], &Z, datainfo, cmd.opt);
 	} else {
@@ -6279,7 +6277,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case FCASTERR:
-	if ((err = model_test_check(&cmd, prn))) break;
 	err = display_forecast(line, models[0], &Z, datainfo, 
 			       cmd.opt, outprn);
 	if (err) {
@@ -6336,10 +6333,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case HAUSMAN:
-	err = model_test_check(&cmd, prn);
-	if (!err) {
-	    err = panel_hausman_test(models[0], &Z, datainfo, cmd.opt, outprn);
-	}
+	panel_hausman_test(models[0], &Z, datainfo, cmd.opt, outprn);
 	break;
 
     case HELP:
@@ -6436,9 +6430,8 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case LEVERAGE:
-	if ((err = model_test_check(&cmd, prn))) break;
 	err = leverage_test(models[0], &Z, datainfo, cmd.opt, outprn);
-	if (err > 1) {
+	if (err) {
 	    errmsg(err, prn);
 	} else if (cmd.opt & OPT_S) {
 	    maybe_list_vars(datainfo, prn);
@@ -6446,9 +6439,8 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case LMTEST:
-	if ((err = model_test_check(&cmd, prn))) break;
 	err = lmtest_driver(cmd.param, &Z, datainfo, 
-			    cmd.opt, prn);
+			    cmd.opt, outprn);
 	if (err) {
 	    errmsg(err, prn);
 	}
@@ -6459,6 +6451,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case LAD:
     case LOGISTIC:
     case LOGIT:
+    case PANEL:
     case POISSON:
     case PROBIT:
     case TOBIT:
@@ -6482,16 +6475,14 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	    *models[0] = lad(cmd.list, &Z, datainfo);
 	} else if (cmd.ci == GARCH) {
 	    *models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, outprn);
+	} else if (cmd.ci == PANEL) {
+	    *models[0] = panel_model(cmd.list, &Z, datainfo, cmd.opt, outprn);
 	} else {
 	    /* can't happen */
 	    err = 1;
 	    break;
 	}
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn);
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
+	err = maybe_print_model(models[0], cmd.opt, outprn);
 	break;
 
     case MODELTAB:
@@ -6538,29 +6529,16 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case OLS:
     case WLS:
     case HCCM:
-    case PANEL:
 	clear_model(models[0]);
-	if (cmd.ci == PANEL) {
-	    *models[0] = panel_model(cmd.list, &Z, datainfo, cmd.opt, prn);
-	} else {
-	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
-	}
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn); 
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
+	err = maybe_print_model(models[0], cmd.opt, outprn);
 	break;
 
 #ifdef ENABLE_GMP
     case MPOLS:
 	clear_model(models[0]);
 	*models[0] = mp_ols(cmd.list, (const double **) Z, datainfo);
-	if ((err = (models[0])->errcode)) {
-	    errmsg(err, prn); 
-	} else {
-	    printmodel(models[0], datainfo, cmd.opt, outprn);
-	}
+	err = maybe_print_model(models[0], cmd.opt, outprn);
 	break;
 #endif
 
@@ -6713,7 +6691,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case TESTUHAT:
-	if ((err = model_test_check(&cmd, prn))) break;
 	err = last_model_test_uhat(&Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, prn);
