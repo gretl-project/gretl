@@ -1141,6 +1141,7 @@ void close_session (void)
 
     winstack_destroy();
     clear_selector();
+    edit_dialog_special_get_text(NULL);
 
     gretl_saved_objects_cleanup(); /* timing of this? */
 

@@ -24,6 +24,7 @@
 #include "objstack.h"
 #include "genrfuncs.h"
 #include "usermat.h"
+#include "modelspec.h"
 
 #define ODEBUG 0
 
@@ -1078,6 +1079,83 @@ static void saved_object_free (stacker *s)
     } else if (s->type == GRETL_OBJ_SYS) {
 	gretl_equation_system_destroy(s->ptr);
     }
+}
+
+int last_model_test_ok (int ci, gretlopt opt, const DATAINFO *pdinfo, 
+			PRN *prn)
+{
+    GretlObjType type;
+    void *ptr;
+    int err = 0;
+
+    ptr = get_last_model(&type);  
+    if (ptr == NULL) {
+	pputs(prn, _("Can't do this: no model has been estimated yet\n"));
+	return 1;
+    }
+
+    if (type == GRETL_OBJ_EQN) {
+	MODEL *pmod = (MODEL *) ptr;
+  
+	if (!model_test_ok(ci, opt, pmod, pdinfo)) {
+	    err = E_NOTIMP;
+	}
+	if (model_sample_problem(pmod, pdinfo)) {
+	    pputs(prn, _("Can't do: the current data set is different from "
+			 "the one on which\nthe reference model was estimated\n"));
+	    err = 1;
+	}
+    } else if (type == GRETL_OBJ_SYS) {
+	if (ci != RESTRICT && ci != TESTUHAT) {
+	    err = E_NOTIMP;
+	}
+    } else if (type == GRETL_OBJ_VAR) {
+	GRETL_VAR *var = (GRETL_VAR *) ptr;
+	int r = gretl_VECM_rank(var);
+
+	err = E_NOTIMP;
+
+	if (ci == RESTRICT) {
+	    if (r > 0) {
+		err = 0;
+	    }
+	} else if (ci == TESTUHAT) {
+	    err = 0;
+	} else if (ci == LMTEST && ((opt & OPT_A) || (opt & OPT_H))) {
+	    err = 0;
+	} 
+    }
+
+    if (err == E_NOTIMP) {
+	pputs(prn, _("Sorry, command not available for this estimator"));
+	pputc(prn, '\n');
+    }
+
+    return err;
+}
+
+int last_model_test_uhat (double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    GretlObjType type;
+    void *ptr;
+    int err = 0;
+
+    ptr = get_last_model(&type);  
+    if (ptr == NULL) {
+	return E_DATA;
+    }
+
+    if (type == GRETL_OBJ_EQN) {
+	err = model_error_dist(ptr, pZ, pdinfo, prn);
+    } else if (type == GRETL_OBJ_SYS) {
+	err = system_normality_test(ptr, prn);
+    } else if (type == GRETL_OBJ_VAR) {
+	err = gretl_VAR_normality_test(ptr, prn);
+    } else {
+	err = E_DATA;
+    }
+
+    return err;
 }
 
 void gretl_saved_objects_cleanup (void)

@@ -1729,8 +1729,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
     }
 
     if (genr_fit_resid(pmod, pZ, pdinfo, GENR_RESID, 1)) {
-	pputs(prn, _("Out of memory attempting to add variable\n"));
-	err = E_ALLOC;
+	return E_ALLOC;
     }
 
     if (!err) {
@@ -1749,7 +1748,6 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
     dataset_drop_last_variables(1, pZ, pdinfo);
 
     return err;
-
 }
 
 /* PACF via Durbin-Levinson algorithm */

@@ -26,8 +26,10 @@ typedef struct MODELSPEC_ MODELSPEC;
 
 int model_ci_from_modelspec (const MODELSPEC *spec, int i);
 
-int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
-			const DATAINFO *pdinfo);
+int model_sample_problem (const MODEL *pmod, const DATAINFO *pdinfo);
+
+int modelspec_sample_problem (MODELSPEC *spec, int i, 
+			      const DATAINFO *pdinfo);
 
 int modelspec_last_index (const MODELSPEC *spec);
 

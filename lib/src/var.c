@@ -1968,7 +1968,6 @@ GRETL_VAR *gretl_VAR (int order, int *list, double ***pZ, DATAINFO *pdinfo,
     GRETL_VAR *var = NULL;
     struct var_lists vl;
     int *vlist = NULL;
-    /* record original sample range */
     int oldt1 = pdinfo->t1;
     int oldt2 = pdinfo->t2;
 
@@ -2511,6 +2510,7 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
 {
     GRETL_VAR *jvar;
     int seasonals = (opt & OPT_D);
+    int orig_t1 = pdinfo->t1;
     int orig_v = pdinfo->v;
     int nexo, di0 = 0, l0 = list[0];
     int i, k;
@@ -2662,6 +2662,9 @@ johansen_VAR_prepare (int order, int rank, const int *list, const int *exolist,
 	dataset_drop_last_variables(pdinfo->v - orig_v, pZ, pdinfo);
     }
 
+    /* reset in case we moved this back */
+    pdinfo->t1 = orig_t1;
+
     return jvar;
 }
 
@@ -2745,8 +2748,8 @@ johansen_wrapper (int order, int rank, const int *list, const int *exolist,
 		  double ***pZ, DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     GRETL_VAR *jvar;
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
+    int oldt1 = pdinfo->t1;
+    int oldt2 = pdinfo->t2;
     int oldv = pdinfo->v;
 
     jvar = johansen_VAR_prepare(order, rank, list, exolist, pZ, pdinfo, opt);
@@ -2755,8 +2758,8 @@ johansen_wrapper (int order, int rank, const int *list, const int *exolist,
 	jvar->err = johansen_driver(jvar, pZ, pdinfo, opt, prn);
     }
 
-    pdinfo->t1 = t1;
-    pdinfo->t2 = t2;
+    pdinfo->t1 = oldt1;
+    pdinfo->t2 = oldt2;
 
     if (jvar->err || !(opt & OPT_S)) {
 	dataset_drop_last_variables(pdinfo->v - oldv, pZ, pdinfo);

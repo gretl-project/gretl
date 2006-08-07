@@ -152,17 +152,17 @@ void noalloc (const char *str)
     exit(EXIT_FAILURE);
 }
 
+static int model_test_check (CMD *cmd, PRN *prn)
+{
+    return last_model_test_ok(cmd->ci, cmd->opt, datainfo, prn);
+}
+
 #define MSPEC_DEBUG 0
 
-int model_test_start (int test_ci, int model_id, PRN *prn)
+static int modelspec_test_check (int test_ci, int model_id, PRN *prn)
 {
-    int m, err = 0;
-
-    if (model_id != 0) {
-	m = modelspec_index_from_model_id(modelspec, model_id);
-    } else {
-	m = modelspec_last_index(modelspec);
-    }
+    int m = modelspec_index_from_model_id(modelspec, model_id);
+    int err = 0;
 
 #if MSPEC_DEBUG
     fprintf(stderr, "model_test_start: test_ci=%d, model_id=%d, m=%d\n",
@@ -182,7 +182,7 @@ int model_test_start (int test_ci, int model_id, PRN *prn)
 	pputs(prn, _("Sorry, command not available for this estimator"));
 	pputc(prn, '\n');
 	err = 1;
-    } else if (model_sample_issue(NULL, modelspec, m, datainfo)) {
+    } else if (modelspec_sample_problem(modelspec, m, datainfo)) {
 	pputs(prn, _("Can't do: the current data set is different from "
 		     "the one on which\nthe reference model was estimated\n"));
 	err = 1;
@@ -906,7 +906,7 @@ static int exec_line (char *line, PRN *prn)
 
     case ADD:
     case OMIT:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	if ((err = model_test_check(&cmd, prn))) break;
     plain_add_omit:
 	clear_model(models[1]);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
@@ -932,7 +932,7 @@ static int exec_line (char *line, PRN *prn)
     case ADDTO:
     case OMITFROM:
 	k = atoi(cmd.param);
-	if ((err = model_test_start(cmd.ci, k, prn))) break;
+	if ((err = modelspec_test_check(cmd.ci, k, prn))) break;
 	if (k == models[0]->ID) goto plain_add_omit;
 	err = re_estimate(modelspec_get_command_by_id(modelspec, k), 
 			  &tmpmod, &Z, datainfo);
@@ -1001,7 +1001,7 @@ static int exec_line (char *line, PRN *prn)
     case CHOW:
     case QLRTEST:
     case VIF:
-        if ((err = model_test_start(cmd.ci, 0, prn))) break;
+        if ((err = model_test_check(&cmd, prn))) break;
 	if (cmd.ci == COEFFSUM) {
 	    err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
 	} else if (cmd.ci == CUSUM) {
@@ -1108,7 +1108,7 @@ static int exec_line (char *line, PRN *prn)
     case TABPRINT:
     case EQNPRINT:
 	strcpy(texfile, cmd.param);
-	if ((err = model_test_start(cmd.ci, 0, prn))) {
+	if ((err = model_test_check(&cmd, prn))) {
 	    break;
 	}
 	err = texprint(models[0], datainfo, texfile, 
@@ -1123,7 +1123,7 @@ static int exec_line (char *line, PRN *prn)
 
     case FCAST:
     case FIT:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	if ((err = model_test_check(&cmd, prn))) break;
 	if (cmd.ci == FIT) {
 	    err = add_forecast("fcast autofit", models[0], &Z, datainfo, cmd.opt);
 	} else {
@@ -1143,7 +1143,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case FCASTERR:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	if ((err = model_test_check(&cmd, prn))) break;
 	err = display_forecast(line, models[0], &Z, datainfo, cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
@@ -1197,7 +1197,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case HAUSMAN:
-	err = model_test_start(cmd.ci, 0, prn);
+	err = model_test_check(&cmd, prn);
 	if (!err) {
 	    err = panel_hausman_test(models[0], &Z, datainfo, cmd.opt, prn);
 	}
@@ -1294,7 +1294,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case LEVERAGE:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;	
+	if ((err = model_test_check(&cmd, prn))) break;	
 	err = leverage_test(models[0], &Z, datainfo, cmd.opt, prn);
 	if (err > 1) {
 	    errmsg(err, prn);
@@ -1304,8 +1304,8 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case LMTEST:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = lmtest_driver(cmd.param, models[0], &Z, datainfo, 
+	if ((err = model_test_check(&cmd, prn))) break;
+	err = lmtest_driver(cmd.param, &Z, datainfo, 
 			    cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
@@ -1549,12 +1549,11 @@ static int exec_line (char *line, PRN *prn)
 	if (rset == NULL) {
 	    if (*cmd.param == '\0') {
 		/* if param is non-blank, we're restricting a named system */
-		err = model_test_start(cmd.ci, 0, prn);
+		err = model_test_check(&cmd, prn);
 		if (err) break;
 	    }
-	    rset = restriction_set_start(line, models[0], datainfo, cmd.opt);
-	    if (rset == NULL) {
-		err = 1;
+	    rset = restriction_set_start(line, cmd.opt, &err);
+	    if (err) {
 		errmsg(err, prn);
 	    } else {
 		gretl_cmd_set_context(&cmd, RESTRICT);
@@ -1588,9 +1587,11 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case TESTUHAT:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = model_error_dist(models[0], &Z, datainfo,
-			       prn);
+	if ((err = model_test_check(&cmd, prn))) break;
+	err = last_model_test_uhat(&Z, datainfo, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case VAR:

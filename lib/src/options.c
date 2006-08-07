@@ -122,6 +122,7 @@ struct gretl_option gretl_opts[] = {
     { KPSS,     OPT_F, "difference" },
     { LEVERAGE, OPT_S, "save" },
     { LMTEST,   OPT_A, "autocorr" },
+    { LMTEST,   OPT_H, "arch" },
     { LMTEST,   OPT_L, "logs" },
     { LMTEST,   OPT_S, "squares" }, 
     { LMTEST,   OPT_P, "panel" },

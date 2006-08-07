@@ -3265,7 +3265,7 @@ int is_quiet_model_test (int ci, gretlopt opt)
  * command_ok_for_model:
  * @test_ci:  index of command to be tested.
  * @model_ci: command index of a gretl model (for example,
- * %OLS, %HCCM or %CORC).
+ * %OLS, %WLS or %CORC).
  *
  * Returns: 1 if the model-related command in question is
  * meaningful and acceptable in the context of the specific
@@ -3930,7 +3930,7 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
     int t;
 
     if (pmod->t2 - pmod->t1 + 1 > pdinfo->n || 
-	model_sample_issue(pmod, NULL, 0, pdinfo)) {
+	model_sample_problem(pmod, pdinfo)) {
 	strcpy(gretl_errmsg, 
 	       (idx == M_UHAT)? 
 	       _("Can't retrieve uhat: data set has changed") :

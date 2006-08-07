@@ -188,7 +188,7 @@ int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
     return 0;
 }
 
-static int submask_match (char *s1, char *s2, int n)
+static int submask_match (const char *s1, const char *s2, int n)
 {
     int t;
 
@@ -199,28 +199,17 @@ static int submask_match (char *s1, char *s2, int n)
     return 1;
 }
 
-/* check a model (or modelspec) against the datainfo to see if it may
-   have been estimated on a different (subsampled) data set from the
-   current one
+/* check the subsample mask from a model (or modelspec) against 
+   datainfo to see if it may have been estimated on a different
+   (subsampled) data set from the current one
 */
 
-int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
-			const DATAINFO *pdinfo)
+static int model_submask_issue (const char *submask, 
+				const DATAINFO *pdinfo)
 {
     int n = pdinfo->n;
-    char *submask;
 
-    if (pmod == NULL && spec == NULL) {
-	return 0;
-    }
-
-    if (pmod != NULL) {
-	submask = pmod->submask;
-    } else {
-	submask = spec[i].submask;
-    }
-
-    /* case: model (or modelspec) has no sub-sampling info recorded */
+    /* case: model has no sub-sampling info recorded */
     if (submask == NULL) {
 	/* if data set is not sub-sampled either, we're OK */
 	if (pdinfo->submask == NULL) {
@@ -249,4 +238,20 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 
     /* not reached */
     return 1;
+}
+
+/* check a model (or modelspec) against the datainfo to see if it may
+   have been estimated on a different (subsampled) data set from the
+   current one
+*/
+
+int model_sample_problem (const MODEL *pmod, const DATAINFO *pdinfo)
+{
+    return model_submask_issue(pmod->submask, pdinfo);
+}
+
+int modelspec_sample_problem (MODELSPEC *spec, int i, 
+			      const DATAINFO *pdinfo)
+{
+    return model_submask_issue(spec[i].submask, pdinfo);
 }

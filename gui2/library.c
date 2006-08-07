@@ -2138,8 +2138,7 @@ void do_restrict (GtkWidget *widget, dialog_t *dlg)
 
 	if (my_rset == NULL) {
 	    if (pmod != NULL) {
-		my_rset = restriction_set_start(bufline, pmod, datainfo,
-						OPT_NONE);
+		my_rset = eqn_restriction_set_start(bufline, pmod);
 	    } else if (sys != NULL) {
 		my_rset = cross_restriction_set_start(bufline, sys);
 	    } else {
@@ -5765,41 +5764,31 @@ int execute_script (const char *runfile, const char *buf,
     return exec_err;
 }
 
-static int script_model_test (int test_ci, int model_id, PRN *prn)
-{
-    int m, mc;
-    const char *no_gui_test = 
-	N_("Sorry, can't do this.\nTo operate on a model estimated "
-	   "via the graphical interface, please use the\nmenu items in "
-	   "the model window.\n");
 
-    if (model_id != 0) {
-	m = modelspec_index_from_model_id(modelspec, model_id);
-    } else {
-	m = modelspec_last_index(modelspec);
-    }  
+/* trying to do a model test of some sort: do we have a model
+   available, and if so, is the command suitable for that model? 
+*/
+
+static int model_test_check (CMD *cmd, PRN *prn)
+{
+    return last_model_test_ok(cmd->ci, cmd->opt, datainfo, prn);
+}
+
+static int modelspec_test_check (int test_ci, int model_id, PRN *prn)
+{
+    int m = modelspec_index_from_model_id(modelspec, model_id);
 
 #ifdef MSPEC_DEBUG
-    fprintf(stderr, "model_test_start: test_ci=%d, model_id=%d, m=%d\n",
+    fprintf(stderr, "modelspec_test_check: test_ci=%d, model_id=%d, m=%d\n",
 	    test_ci, model_id, m);
 #endif
 
-    mc = get_model_count();
-
     if (m < 0) { 
-	/* reference model not found */
-	if (mc == 0) {
+	if (get_model_count() == 0) {
 	    pputs(prn, _("Can't do this: no model has been estimated yet\n"));
-	} else if (model_id == 0) {
-	    /* requested "the last model" */
-	    pputs(prn, _(no_gui_test));
-	} else if (model_id > mc) {
-	    /* requested specific, out-of-range model */
-	    pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
 	} else {
-	    /* requested specific, in-range model, but it's a gui model */
-	    pputs(prn, _(no_gui_test));
-	}
+	    pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
+	} 
 	return 1;
     }
      
@@ -5810,7 +5799,7 @@ static int script_model_test (int test_ci, int model_id, PRN *prn)
 	return 1;
     }			      
 
-    if (model_sample_issue(NULL, modelspec, m, datainfo)) {
+    if (modelspec_sample_problem(modelspec, m, datainfo)) {
 	pputs(prn, _("Can't do: the current data set is different from "
 		     "the one on which\nthe reference model was estimated\n"));
 	return 1;
@@ -6019,7 +6008,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case ADD:
     case OMIT:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	if ((err = model_test_check(&cmd, prn))) break;
     plain_add_omit:
 	clear_model(models[1]);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
@@ -6045,7 +6034,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case ADDTO:
     case OMITFROM:
 	k = atoi(cmd.param);
-	if ((err = script_model_test(cmd.ci, k, prn))) {
+	if ((err = modelspec_test_check(cmd.ci, k, prn))) {
 	    break;
 	}
 	if (k == (models[0])->ID) {
@@ -6124,7 +6113,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case CUSUM:
     case QLRTEST:
     case RESET:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	if ((err = model_test_check(&cmd, prn))) break;
 	if (cmd.ci == CHOW || cmd.ci == QLRTEST) {
 	    err = chow_test(line, models[0], &Z, datainfo, testopt, outprn);
 	} else if (cmd.ci == CUSUM) {
@@ -6139,7 +6128,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case COEFFSUM:
     case VIF:
-        if ((err = script_model_test(cmd.ci, 0, prn))) break;
+        if ((err = model_test_check(&cmd, prn))) break;
 	if (cmd.ci == COEFFSUM) {
 	    err = sum_test(cmd.list, models[0], &Z, datainfo, outprn);
 	} else {
@@ -6253,7 +6242,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	    pprintf(prn, _("Couldn't format model\n"));
 	    break;
 	}
-	if ((err = script_model_test(cmd.ci, 0, prn))) {
+	if ((err = model_test_check(&cmd, prn))) {
 	    break;
 	}
 	strcpy(texfile, cmd.param);
@@ -6269,7 +6258,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case FCAST:
     case FIT:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	if ((err = model_test_check(&cmd, prn))) break;
 	if (cmd.ci == FIT) {
 	    err = add_forecast("fcast autofit", models[0], &Z, datainfo, cmd.opt);
 	} else {
@@ -6290,7 +6279,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case FCASTERR:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	if ((err = model_test_check(&cmd, prn))) break;
 	err = display_forecast(line, models[0], &Z, datainfo, 
 			       cmd.opt, outprn);
 	if (err) {
@@ -6347,7 +6336,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case HAUSMAN:
-	err = script_model_test(cmd.ci, 0, prn);
+	err = model_test_check(&cmd, prn);
 	if (!err) {
 	    err = panel_hausman_test(models[0], &Z, datainfo, cmd.opt, outprn);
 	}
@@ -6447,7 +6436,7 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case LEVERAGE:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	if ((err = model_test_check(&cmd, prn))) break;
 	err = leverage_test(models[0], &Z, datainfo, cmd.opt, outprn);
 	if (err > 1) {
 	    errmsg(err, prn);
@@ -6457,8 +6446,8 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case LMTEST:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = lmtest_driver(cmd.param, models[0], &Z, datainfo, 
+	if ((err = model_test_check(&cmd, prn))) break;
+	err = lmtest_driver(cmd.param, &Z, datainfo, 
 			    cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
@@ -6686,11 +6675,10 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	if (rset == NULL) {
 	    if (*cmd.param == '\0') {
 		/* if param is non-blank, we're restricting a named system */
-		if ((err = script_model_test(cmd.ci, 0, prn))) break;
+		if ((err = model_test_check(&cmd, prn))) break;
 	    }	
-	    rset = restriction_set_start(line, models[0], datainfo, cmd.opt);
-	    if (rset == NULL) {
-		err = 1;
+	    rset = restriction_set_start(line, cmd.opt, &err);
+	    if (err) {
 		errmsg(err, prn);
 	    } else {
 		gretl_cmd_set_context(&cmd, RESTRICT);
@@ -6725,21 +6713,10 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case TESTUHAT:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
-	    pputs(prn, _("Out of memory!"));
-	    pputc(prn, '\n');
-	    err = 1;
-	} else {
-	    FreqDist *freq; 
-	 
-	    freq = get_freq(datainfo->v - 1, (const double **) Z, datainfo, 
-			    (models[0])->ncoeff, OPT_NONE);
-	    dataset_drop_last_variables(1, &Z, datainfo);
-	    if (!(err = freq_error(freq, prn))) {
-		print_freq(freq, outprn); 
-		free_freq(freq);
-	    }
+	if ((err = model_test_check(&cmd, prn))) break;
+	err = last_model_test_uhat(&Z, datainfo, prn);
+	if (err) {
+	    errmsg(err, prn);
 	}
 	break;
 

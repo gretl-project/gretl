@@ -3593,7 +3593,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	return FALSE;
     }
 
-    if (model_sample_issue(pmod, NULL, 0, datainfo)) {
+    if (model_sample_problem(pmod, datainfo)) {
 	ok = 0;
 	graphs_ok = (pmod->dataset != NULL);
 	if (!graphs_ok && add_dataset_to_model(pmod, datainfo) == 0) {

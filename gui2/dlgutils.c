@@ -352,20 +352,63 @@ void close_dialog (dialog_t *dlg)
     gtk_widget_destroy(dlg->dialog);
 }
 
+/* saved material from "complex" edit dialog */
+
+static int edit_save_code;
+static char *edit_save_buf;
+
+static void edit_save_buf_clear (void)
+{
+    g_free(edit_save_buf);
+    edit_save_buf = NULL;
+    edit_save_code = 0;
+}
+
+static void set_edit_save_buf (const char *buf, int code)
+{
+    edit_save_buf_clear();
+
+    if (buf != NULL) {
+	edit_save_buf = g_strdup(buf);
+	edit_save_code = code;
+    }
+}
+
+static int dlg_text_set_previous (dialog_t *d)
+{
+    if (d->code == edit_save_code && 
+	edit_save_buf != NULL) {
+	textview_set_text(d->edit, edit_save_buf);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+/* end edit saver apparatus */
+
 gchar *edit_dialog_special_get_text (dialog_t *dlg)
 {
     gchar *buf;
 
+    if (dlg == NULL) {
+	edit_save_buf_clear();
+	return NULL;
+    }
+
     buf = textview_get_text(dlg->edit);
 
     if (buf != NULL && *buf == '\0') {
+	/* nothing was entered */
 	g_free(buf);
 	buf = NULL;
     }
 
     if (buf == NULL) {
 	gtk_widget_destroy(dlg->dialog);
-    }
+    } 
+
+    set_edit_save_buf(buf, dlg->code);
 
     return buf;
 }
@@ -819,6 +862,12 @@ static int edit_dialog_help_code (int ci, void *p)
     return hc;
 }
 
+static void clear_dlg_previous (GtkWidget *w, dialog_t *d)
+{
+    edit_save_buf_clear();
+    textview_set_text(d->edit, NULL);
+}
+
 static void edit_dialog_ok (GtkWidget *w, dialog_t *d)
 {
     gtk_widget_destroy(d->dialog);
@@ -833,6 +882,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     GtkWidget *w;
     GtkWidget *top_vbox, *button_box;
     int hlpcode, modal = 0;
+    int clear = 0;
 
     if (open_edit_dialog != NULL && cmdcode != MINIBUF) {
 	gdk_window_raise(open_edit_dialog->window);
@@ -871,6 +921,12 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
 	d->edit = dlg_text_edit_new(&hsize, TRUE);
 	dialog_table_setup(d, hsize);
+
+	/* insert previous text, if any and if the command
+	   is the same as previously */
+	if (dlg_text_set_previous(d)) {
+	    clear = 1;
+	}
 
 	if (cmdcode != RESTRICT) {
 	    g_signal_connect(G_OBJECT(d->edit), "button_press_event", 
@@ -926,12 +982,21 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     gtk_widget_grab_focus(d->edit);
 
-    /* Create a "Cancel" button? */
+    /* "Clear" button? */
+    if (clear) {
+	w = gtk_button_new_from_stock(GTK_STOCK_CLEAR);
+	gtk_container_add(GTK_CONTAINER(button_box), w);
+	g_signal_connect(G_OBJECT(w), "clicked", 
+			 G_CALLBACK(clear_dlg_previous), d);
+	gtk_widget_show(w);  
+    }    
+
+    /* "Cancel" button? */
     if (cmdcode != CREATE_USERDIR) {
 	cancel_delete_button(button_box, d->dialog, canceled);
     }
 
-    /* Create the "OK" button */
+    /* "OK" button */
     w = ok_button(button_box);
     if (okfunc != NULL) {
 	g_signal_connect(G_OBJECT(w), "clicked", 
@@ -943,7 +1008,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     gtk_widget_grab_default(w);
     gtk_widget_show(w);    
 
-    /* Create a "Help" button if wanted */
+    /* "Help" button, if wanted */
     hlpcode = edit_dialog_help_code(cmdcode, okptr);
     if (hlpcode > 0) {
 	context_help_button(button_box, hlpcode);

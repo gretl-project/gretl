@@ -24,6 +24,7 @@
 #include "libgretl.h"
 #include "libset.h"
 #include "gretl_panel.h"
+#include "var.h"
 #include "missing_private.h"
 
 #undef WDEBUG
@@ -2173,22 +2174,23 @@ int sum_test (const int *sumvars, MODEL *pmod,
 /**
  * lmtest_driver:
  * @param: auxiliary parameter for some uses.
- * @pmod: pointer to model.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: controls which test(s) will be performed.
  * @prn: gretl printing struct.
  * 
- * Performs some subset of gretl's "lmtest" tests on @pmod,
- * and prints the results to @prn.
+ * Performs some subset of gretl's "lmtest" tests on the
+ * model last estimated, and prints the results to @prn.
  * 
  * Returns: 0 on successful completion, error code on error.
  */
 
-int lmtest_driver (const char *param, MODEL *pmod, 
+int lmtest_driver (const char *param, 
 		   double ***pZ, DATAINFO *pdinfo, 
 		   gretlopt opt, PRN *prn)
 {
+    GretlObjType type;
+    void *ptr;
     int err = 0;
 
     if (opt == OPT_NONE) {
@@ -2196,32 +2198,71 @@ int lmtest_driver (const char *param, MODEL *pmod,
 	return 0;
     }
 
+    ptr = get_last_model(&type);  
+    if (ptr == NULL) {
+	return E_DATA;
+    }
+
     /* non-linearity (squares) */
     if (!err && (opt & OPT_S)) {
-	err = nonlinearity_test(pmod, pZ, pdinfo, 
-				AUX_SQ, OPT_NONE, prn);
+	if (type == GRETL_OBJ_EQN) {
+	    err = nonlinearity_test(ptr, pZ, pdinfo, 
+				    AUX_SQ, OPT_NONE, prn);
+	} else {
+	    err = E_NOTIMP;
+	}
     }
 
     /* non-linearity (logs) */
     if (!err && (opt & OPT_L)) {
-	err = nonlinearity_test(pmod, pZ, pdinfo, 
-				AUX_LOG, OPT_NONE, prn);
+	if (type == GRETL_OBJ_EQN) {
+	    err = nonlinearity_test(ptr, pZ, pdinfo, 
+				    AUX_LOG, OPT_NONE, prn);
+	} else {
+	    err = E_NOTIMP;
+	}
     }
 
     /* heteroskedasticity, White */
     if (!err && (opt & OPT_W)) {
-	err = whites_test(pmod, pZ, pdinfo, OPT_NONE, prn);
+	if (type == GRETL_OBJ_EQN) {
+	    err = whites_test(ptr, pZ, pdinfo, OPT_NONE, prn);
+	} else {
+	    err = E_NOTIMP;
+	}
     }
 
     /* autocorrelation */
     if (!err && (opt & OPT_A)) {
-	err = autocorr_test(pmod, atoi(param), pZ, pdinfo, 
-			    OPT_NONE, prn);
+	if (type == GRETL_OBJ_EQN) {
+	    err = autocorr_test(ptr, atoi(param), pZ, pdinfo, 
+				OPT_NONE, prn);
+	} else if (type == GRETL_OBJ_VAR) {
+	    err = gretl_VAR_autocorrelation_test(ptr, atoi(param), 
+						 pZ, pdinfo, prn);
+	} else {
+	    err = E_NOTIMP;
+	}
     }
+
+    /* ARCH */
+    if (!err && (opt & OPT_H)) {
+	if (type == GRETL_OBJ_EQN) {
+	    err = arch_test_simple(ptr, atoi(param), pZ, pdinfo, prn);
+	} else if (type == GRETL_OBJ_VAR) {
+	    err = gretl_VAR_arch_test(ptr, atoi(param), pZ, pdinfo, prn);
+	} else {
+	    err = E_NOTIMP;
+	}
+    }    
 
     /* groupwise heteroskedasticity */
     if (!err && (opt & OPT_P)) {
-	err = groupwise_hetero_test(pmod, pZ, pdinfo, prn);
+	if (type == GRETL_OBJ_EQN) {
+	    err = groupwise_hetero_test(ptr, pZ, pdinfo, prn);
+	} else {
+	    err = E_NOTIMP;
+	}
     }
 
     return err;
