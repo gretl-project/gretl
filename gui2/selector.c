@@ -1715,6 +1715,43 @@ static void construct_cmdlist (selector *sr)
 	maybe_resize_recorder_lists(sr, realrows);
     }
 
+#if 0
+    /* cases with a list box on the upper right */
+    if (sr->code == TSLS || sr->code == SAVE_FUNCTIONS || 
+	USE_VECXLIST(sr->code)) {
+	rows = varlist_row_count(sr, SR_RUVARS, &realrows);
+	if (rows > 0) {
+	    if (realrows > 0) {
+		maybe_resize_exog_recorder_lists(sr, realrows);
+	    }
+	    context = sr_get_lag_context(sr, SR_RUVARS);
+
+	    if (sr->code == TSLS && dvlags != NULL) {
+		add_to_cmdlist(sr, dvlags);
+		free(dvlags);
+		dvlags = NULL;
+	    }
+
+	    if (*sr->cmdlist != '\0') {
+		add_to_cmdlist(sr, " ;");
+	    }
+
+	    sr->error = get_ruvars_data(sr, rows, context);
+	} else if (sr->code == TSLS) {
+	    errbox(_("You must specify a set of instrumental variables"));
+	    sr->error = 1;
+	} else if (sr->code == SAVE_FUNCTIONS) {
+	    errbox(_("You must specify a public interface"));
+	    sr->error = 1;
+	}	    
+    }
+
+    /* varlist on the lower right, which usually contains
+       the independent variables in a regression context */
+    context = sr_get_lag_context(sr, SR_RLVARS);
+    get_rlvars_data(sr, rows, context);
+
+#else
     /* now for the varlist on the lower right, which usually contains
        the independent variables in a regression context */
     context = sr_get_lag_context(sr, SR_RLVARS);
@@ -1749,6 +1786,7 @@ static void construct_cmdlist (selector *sr)
 	    sr->error = 1;
 	}	    
     }
+#endif
 
     /* deal with any trailing strings */
     if (!sr->error) {
@@ -2352,15 +2390,15 @@ static void selector_init (selector *sr, guint code, const char *title,
 
     vbox_add_hsep(base);
 
-    sr->action_area = gtk_hbox_new(FALSE, 0);
+    sr->action_area = gtk_hbutton_box_new();
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(sr->action_area), 
+			      GTK_BUTTONBOX_END);
+    gtk_button_box_set_spacing(GTK_BUTTON_BOX(sr->action_area),
+			       10);
     gtk_widget_show(sr->action_area);
-
-    /* hbox for buttons is not expansible */
-    gtk_box_pack_start(GTK_BOX(base), sr->action_area, 
+    gtk_box_pack_start(GTK_BOX(base), sr->action_area,
 		       FALSE, FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER(sr->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(sr->action_area), 5);
-    gtk_box_set_homogeneous(GTK_BOX(sr->action_area), TRUE);
 } 
 
 static void option_callback (GtkWidget *w, selector *sr)
@@ -2913,7 +2951,9 @@ build_selector_buttons (selector *sr)
 	sr->code != DEFINE_LIST && !SAVE_DATA_ACTION(sr->code)) {
 	tmp = standard_button(GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-	gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
+	gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
+	gtk_button_box_set_child_secondary(GTK_BUTTON_BOX(sr->action_area),
+					   tmp, TRUE);
 	g_signal_connect(G_OBJECT(tmp), "clicked", 
 			 G_CALLBACK(context_help), 
 			 GINT_TO_POINTER(sr->code));
@@ -2922,21 +2962,21 @@ build_selector_buttons (selector *sr)
 
     tmp = standard_button(GTK_STOCK_CLEAR);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(clear_vars), sr);
     gtk_widget_show(tmp);
 
     tmp = standard_button(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(cancel_selector), sr);
     gtk_widget_show(tmp);
 
     tmp = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
+    gtk_container_add(GTK_CONTAINER(sr->action_area), tmp);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(selector_doit), sr);
     gtk_widget_show(tmp);
