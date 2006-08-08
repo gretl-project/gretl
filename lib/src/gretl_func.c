@@ -1382,8 +1382,8 @@ static void get_version_string (float ver, char *vstr)
 
 int write_function_package (fnpkg *pkg,
 			    const char *fname,
-			    const int *privlist, 
-			    const int *publist,
+			    const int *publist, 
+			    const int *privlist,
 			    const char *author,
 			    const char *version,
 			    const char *date,
@@ -1451,6 +1451,13 @@ int write_function_package (fnpkg *pkg,
     gretl_xml_put_tagged_string("date", date, fp);
     gretl_xml_put_tagged_string("description", descrip, fp);
 
+    for (i=1; i<=publist[0]; i++) {
+	fi = publist[i];
+	if (fi >= 0 && fi < n_ufuns) {
+	    write_function_xml(ufuns[fi], fp);
+	}
+    }
+
     if (privlist != NULL) {
 	for (i=1; i<=privlist[0]; i++) {
 	    fi = privlist[i];
@@ -1460,13 +1467,6 @@ int write_function_package (fnpkg *pkg,
 	}
     }
 
-    for (i=1; i<=publist[0]; i++) {
-	fi = publist[i];
-	if (fi >= 0 && fi < n_ufuns) {
-	    write_function_xml(ufuns[fi], fp);
-	}
-    }
-	    
     fputs("</gretl-function-package>\n", fp);
     fputs("</gretl-functions>\n", fp);
 
@@ -1504,8 +1504,8 @@ int write_function_package (fnpkg *pkg,
 
 int function_package_get_info (const char *fname,
 			       fnpkg **ppkg,
-			       int **privlist, 
-			       int **publist,
+			       int **publist, 
+			       int **privlist,
 			       char **author,
 			       char **version,
 			       char **date,
@@ -1567,21 +1567,6 @@ int function_package_get_info (const char *fname,
 	}
     }
 
-    if (!err && privlist != NULL && npriv > 0) {
-	list = gretl_list_new(npriv);
-	if (list != NULL) {
-	    j = 1;
-	    for (i=0; i<n_ufuns; i++) {
-		if (ufuns[i]->pkgID == pkg->ID && ufuns[i]->private) {
-		    list[j++] = i;
-		}
-	    }	    
-	    *privlist = list;
-	} else {
-	    err = E_ALLOC;
-	}
-    }
-
     if (!err && publist != NULL && npub > 0) {
 	list = gretl_list_new(npub);
 	if (list != NULL) {
@@ -1592,6 +1577,21 @@ int function_package_get_info (const char *fname,
 		}
 	    }
 	    *publist = list;
+	} else {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err && privlist != NULL && npriv > 0) {
+	list = gretl_list_new(npriv);
+	if (list != NULL) {
+	    j = 1;
+	    for (i=0; i<n_ufuns; i++) {
+		if (ufuns[i]->pkgID == pkg->ID && ufuns[i]->private) {
+		    list[j++] = i;
+		}
+	    }	    
+	    *privlist = list;
 	} else {
 	    err = E_ALLOC;
 	}

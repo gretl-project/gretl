@@ -861,16 +861,16 @@ void save_user_functions (const char *fname, gpointer p)
     fprintf(stderr, "version='%s'\n", finfo->version);
     fprintf(stderr, "date='%s'\n", finfo->date);
     fprintf(stderr, "pkgdesc='%s'\n", finfo->pkgdesc);
-    printlist(finfo->privlist, "finfo->privlist");
     printlist(finfo->publist, "finfo->publist");
+    printlist(finfo->privlist, "finfo->privlist");
     fprintf(stderr, "dreq=%d\n", finfo->dreq);
     fprintf(stderr, "minver=%.2f\n", (double) finfo->minver);
 #endif
 		
     err = write_function_package(finfo->pkg,
 				 fname,
-				 finfo->privlist, 
-				 finfo->publist,
+				 finfo->publist, 
+				 finfo->privlist,
 				 finfo->author,
 				 finfo->version,
 				 finfo->date,
@@ -911,8 +911,8 @@ void prepare_functions_save (void)
     }
 
     if (gretl_list_has_separator(list)) {
-	if (gretl_list_split_on_separator(list, &finfo->privlist, 
-					  &finfo->publist)) {
+	if (gretl_list_split_on_separator(list, &finfo->publist, 
+					  &finfo->privlist)) {
 	    nomem();
 	    free(finfo);
 	    free(list);
@@ -950,8 +950,8 @@ void edit_function_package (const char *fname)
 
     err = function_package_get_info(fname,
 				    &finfo->pkg,
-				    &finfo->privlist,
 				    &finfo->publist,
+				    &finfo->privlist,
 				    &finfo->author,
 				    &finfo->version,
 				    &finfo->date,
