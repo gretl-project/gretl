@@ -749,8 +749,8 @@ void call_function_package (const char *fname, GtkWidget *w)
     /* get interface(s) for package */
     err = function_package_get_info((*tmpfile)? tmpfile : fname,
 				    NULL,
-				    NULL,
 				    &cinfo.publist,
+				    NULL,
 				    NULL,
 				    NULL,
 				    NULL,
