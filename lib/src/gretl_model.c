@@ -2060,6 +2060,17 @@ static int model_tests_differ (ModelTest *mt1, ModelTest *mt2)
 }
 
 /**
+ * model_test_free:
+ * @test: object to free.
+ */
+
+void model_test_free (ModelTest *test)
+{
+    free(test->param);
+    free(test);
+}
+
+/**
  * model_test_new:
  * @ttype: type of test to add.
  *
@@ -2444,17 +2455,10 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     }
 }
 
-void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
+void gretl_model_test_print_direct (ModelTest *test, PRN *prn)
 {
-    const ModelTest *test;
     char buf[128];
     const char *tstat;
-
-    if (i >= pmod->ntests) {
-	return;
-    }
-
-    test = &pmod->tests[i];
 
     if (test->teststat == GRETL_STAT_WALD_CHISQ) {
 	tstat = N_("Asymptotic test statistic");
@@ -2505,6 +2509,16 @@ void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
 	    sprintf(buf, I_("%g percent critical value"), a);
 	    pprintf(prn, " (%s = %.2f)\\par\n\n", buf, test->crit);
 	}
+    }
+}
+
+void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn)
+{
+    const ModelTest *test;
+
+    if (i < pmod->ntests) {
+	test = &pmod->tests[i];
+	gretl_model_test_print_direct(test, prn);
     }
 }
 
@@ -3761,6 +3775,60 @@ const char *gretl_model_get_name (const MODEL *pmod)
     }
 
     return NULL;
+}
+
+struct model_retriever {
+    int rnum;
+    const char *rword;
+    const char *desc;
+};
+
+struct model_retriever model_retrievers[] = {
+    { M_ESS,    "$ess",    N_("Error sum of squares") },
+    { M_T,      "$t",      N_("Number of observations used") }, 
+    { M_RSQ,    "$rsq",    N_("R-squared") },
+    { M_SIGMA,  "$sigma",  N_("Standard error of residuals") },
+    { M_DF,     "$df",     N_("Degrees of freedom") },  
+    { M_NCOEFF, "$ncoeff", N_("Number of coefficients") },
+    { M_LNL,    "$lnl",    N_("Log-likelihood") },
+    { M_AIC,    "$aic",    N_("Akaike Information Criterion") },
+    { M_BIC,    "$bic",    N_("Schwartz Bayesian criterion") },
+    { M_HQC,    "$hqc",    N_("Hannan-Quinn criterion") },
+    { M_TRSQ,   "$trsq",   N_("Sample size times R-squared") }, 
+    { M_UHAT,   "$uhat",   N_("Regression residuals") },
+    { M_YHAT,   "$yhat",   N_("Fitted values") },
+    { M_AHAT,   "$ahat",   N_("Per-group intercepts") },
+    { M_H,      "$h",      N_("Estimated error variance") },
+    { M_COEFF,  "$coeff",  N_("Regression coefficients") },
+    { M_SE,     "$stderr", N_("Coefficient standard errors") },
+    { M_VCV,    "$vcv",    N_("Covariance matrix") },
+    { M_RHO,    "$rho",    N_("Autoregressive coefficient(s)") },
+    { M_JALPHA, "$jalpha", N_("Cointegrating vector") },
+    { M_JBETA,  "$jbeta",  N_("Adjustments vector") },
+    { M_MAX,     NULL,     NULL }
+};
+
+static int statnum;
+
+int get_first_model_stat (const char **word, const char **desc)
+{
+    statnum = 0;
+    *word = model_retrievers[0].rword;
+    *desc = model_retrievers[0].desc;
+    return model_retrievers[0].rnum;
+}
+
+int get_next_model_stat (const char **word, const char **desc)
+{
+    statnum++;
+
+    if (model_retrievers[statnum].rnum == M_MAX) {
+	return 0;
+    } else {
+	*word = model_retrievers[statnum].rword;
+	*desc = model_retrievers[statnum].desc;
+	return model_retrievers[statnum].rnum;
+    }
 }
 
 int gretl_model_data_index (const char *s)

@@ -640,10 +640,7 @@ int gretl_VAR_arch_test (GRETL_VAR *var, int order,
 
     for (i=0; i<var->neqns && !err; i++) {
 	pprintf(prn, "Equation %d:\n", i + 1);
-	err = arch_test_simple(var->models[i], order, pZ, pdinfo,
-			       prn);
-	gretl_model_test_print(var->models[i], 0, prn);
-	gretl_model_destroy_tests(var->models[i]);
+	err = arch_test_simple(var->models[i], order, pZ, pdinfo, OPT_NONE, prn);
     }
 
     return err;

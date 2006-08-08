@@ -292,6 +292,10 @@ int model_test_ok (int ci, gretlopt opt, const MODEL *pmod,
 
 int gretl_is_arima_model (const MODEL *pmod);
 
+int get_first_model_stat (const char **word, const char **desc);
+
+int get_next_model_stat (const char **word, const char **desc);
+
 int get_model_count (void);
 
 void reset_model_count (void);
@@ -303,6 +307,7 @@ void model_count_minus (void);
 void set_model_id (MODEL *pmod);
 
 ModelTest *model_test_new (ModelTestType ttype);
+void model_test_free (ModelTest *test);
 
 int maybe_add_test_to_model (MODEL *pmod, ModelTest *test);
 
@@ -320,6 +325,7 @@ void model_test_set_crit_and_alpha (ModelTest *test,
 
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn);
 void gretl_model_print_last_test (const MODEL *pmod, PRN *prn);
+void gretl_model_test_print_direct (ModelTest *test, PRN *prn);
 
 void gretl_model_destroy_tests (MODEL *pmod);
 

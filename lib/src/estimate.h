@@ -68,7 +68,7 @@ MODEL arch_test (MODEL *pmod, int order,
 		 gretlopt opt, PRN *prn);
 
 int arch_test_simple (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
-		      PRN *prn);
+		      gretlopt opt, PRN *prn);
 
 MODEL arch_model (const int *list, int order, 
 		  double ***pZ, DATAINFO *pdinfo, 

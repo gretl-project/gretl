@@ -2964,7 +2964,11 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&archmod);
 
-    /* assess the lag order */
+    if (order == 0) {
+	/* use data frequency as default lag order */
+	order = pdinfo->pd;
+    }
+
     if (order < 1 || order > T - pmod->list[0]) {
 	archmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
@@ -3031,7 +3035,7 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 		    archmod.nobs, archmod.rsq);
 	}
 
-	if (opt & OPT_S) {
+	if ((opt & OPT_S) || (opt & OPT_P)) {
 	    ModelTest *test = model_test_new(GRETL_TEST_ARCH);
 
 	    if (test != NULL) {
@@ -3040,7 +3044,12 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 		model_test_set_dfn(test, order);
 		model_test_set_value(test, LM);
 		model_test_set_pvalue(test, xx);
-		maybe_add_test_to_model(pmod, test);
+		if (opt & OPT_S) {
+		    maybe_add_test_to_model(pmod, test);
+		} else {
+		    gretl_model_test_print_direct(test, prn);
+		    model_test_free(test);
+		}
 	    }	    
 	}
 
@@ -3075,7 +3084,7 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 		    if (xx <= 0.0) {
 			xx = (*pZ)[nv][t];
 		    }
-		    (*pZ)[nwt][t] = 1.0 / xx;
+		    (*pZ)[nwt][t] = 1.0 / xx; /* FIXME is this right? */
 		}
 
 		strcpy(pdinfo->varname[nwt], "1/sigma");
@@ -3129,6 +3138,8 @@ MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
  * @order: lag order for ARCH process.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @opt: if %OPT_S, the test is saved to @pmod and not printed,
+ * otherwise it is printed to @prn and discarded.
  * @prn: gretl printing struct.
  *
  * Tests @pmod for Auto-Regressive Conditional Heteroskedasticity.  
@@ -3137,12 +3148,17 @@ MODEL arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
  */
 
 int arch_test_simple (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo, 
-		      PRN *prn)
+		      gretlopt opt, PRN *prn)
 {
     MODEL amod;
     int err;
 
-    amod = real_arch_test(pmod, order, pZ, pdinfo, OPT_S, prn, 0);
+    if (!(opt & OPT_S)) {
+	/* if not saving, then print test */
+	opt = OPT_P;
+    }
+
+    amod = real_arch_test(pmod, order, pZ, pdinfo, opt, prn, 0);
     err = amod.errcode;
     clear_model(&amod);
 

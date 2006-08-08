@@ -1303,8 +1303,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case LMTEST:
-	err = lmtest_driver(cmd.param, &Z, datainfo, 
-			    cmd.opt, prn);
+	err = lmtest_driver(cmd.param, &Z, datainfo, cmd.opt, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}

@@ -2250,7 +2250,7 @@ int lmtest_driver (const char *param,
     /* ARCH */
     if (!err && (opt & OPT_H)) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = arch_test_simple(ptr, k, pZ, pdinfo, prn);
+	    err = arch_test_simple(ptr, k, pZ, pdinfo, OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_VAR) {
 	    err = gretl_VAR_arch_test(ptr, k, pZ, pdinfo, prn);
 	} else {
