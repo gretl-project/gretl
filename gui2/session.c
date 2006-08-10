@@ -67,7 +67,6 @@ static void auto_save_gp (windata_t *vwin);
 
 #define SESSION_DEBUG 0
 
-#define OBJNAMLEN   32
 #define SHOWNAMELEN 12
 
 typedef struct SESSION_ SESSION;
@@ -89,18 +88,18 @@ struct SESSION_ {
 };
 
 struct SESSION_TEXT_ {
-    char name[OBJNAMLEN];
+    char name[MAXSAVENAME];
     char *buf;
 };
 
 struct SESSION_MODEL_ {
-    char name[OBJNAMLEN];
+    char name[MAXSAVENAME];
     void *ptr;
     GretlObjType type;
 };
 
 struct SESSION_GRAPH_ {
-    char name[OBJNAMLEN];
+    char name[MAXSAVENAME];
     char fname[MAXLEN];
     int ID;
     GretlObjType type;
@@ -252,7 +251,7 @@ static SESSION_TEXT *session_text_new (const char *name, char *buf)
     if (text != NULL) {
 	*text->name = '\0';
 	if (name != NULL) {
-	    strncat(text->name, name, OBJNAMLEN - 1);
+	    strncat(text->name, name, MAXSAVENAME - 1);
 	}
 	text->buf = buf;
     }
@@ -283,7 +282,7 @@ static SESSION_MODEL *session_model_new (void *ptr, const char *name,
 	    name = gretl_object_get_name(ptr, type);
 	} 
 	*mod->name = 0;
-	strncat(mod->name, name, OBJNAMLEN - 1);
+	strncat(mod->name, name, MAXSAVENAME - 1);
 
 	/* note: take care of adding a refence to model */
 	gretl_object_ref(ptr, type);
@@ -306,7 +305,7 @@ static SESSION_GRAPH *session_graph_new (const char *name, const char *fname,
     if (graph != NULL) {
 	*graph->name = '\0';
 	if (name != NULL) {
-	    strncat(graph->name, name, OBJNAMLEN - 1);
+	    strncat(graph->name, name, MAXSAVENAME - 1);
 	}
 	*graph->fname = '\0';
 	if (fname != NULL) {
@@ -382,12 +381,20 @@ static int session_append_graph (SESSION_GRAPH *graph)
 
 static char *session_file_make_path (char *path, const char *fname)
 {
+#if SESSION_DEBUG
+    fprintf(stderr, "session_file_make_path: fname = '%s'\n", fname);
+#endif
+
     if (g_path_is_absolute(fname)) {
 	strcpy(path, fname);
     } else {
 	sprintf(path, "%s%c%s", session.dirname, SLASH, fname);
     } 
-    fprintf(stderr, "session_file_make_path: path='%s'\n", path);
+
+#if SESSION_DEBUG
+    fprintf(stderr, "session_file_make_path: path = '%s'\n", path);
+#endif
+
     return path;
 }
 
@@ -518,8 +525,9 @@ static int real_add_model_to_session (void *ptr, const char *name,
     return 0;
 }
 
-int real_add_graph_to_session (const char *fname, const char *grname,
-			       GretlObjType type)
+static int 
+real_add_graph_to_session (const char *fname, const char *grname,
+			   GretlObjType type)
 {
     SESSION_GRAPH *graph = get_session_graph_by_name(grname);
     int replace = 0;
@@ -577,8 +585,8 @@ static int session_dir_ok (void)
 
 void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
 {
-    char fname[OBJNAMLEN];
-    char grname[OBJNAMLEN];
+    char fname[MAXSAVENAME];
+    char grname[MAXSAVENAME];
     char grpath[MAXLEN];
     int boxplot_count;
     
@@ -623,6 +631,34 @@ void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
     }
 
     real_add_graph_to_session(fname, grname, type);
+}
+
+int cli_add_graph_to_session (const char *fname, const char *gname,
+			      GretlObjType type)
+{
+    char name[MAXSAVENAME];
+    char grpath[MAXLEN];
+    
+    errno = 0;
+
+    if (!session_dir_ok()) {
+	errbox(_("Failed to copy graph file"));
+	return ADD_OBJECT_FAIL;
+    }
+
+    chdir(paths.userdir);
+
+    strcpy(name, gname);
+    space_to_score(name);
+
+    session_file_make_path(grpath, name);
+    if (copyfile(fname, grpath)) {
+	errbox(_("Failed to copy graph file"));
+	return ADD_OBJECT_FAIL;
+    } 
+    remove(fname);
+
+    return real_add_graph_to_session(name, gname, type);
 }
 
 void *get_session_object_by_name (const char *name, GretlObjType *type)
@@ -1619,7 +1655,7 @@ static void rename_session_graph (SESSION_GRAPH *graph, const char *newname)
     for (i=0; i<session.ngraphs; i++) {
 	if (session.graphs[i]->ID == graph->ID) { 
 	    session.graphs[i]->name[0] = '\0';
-	    strncat(session.graphs[i]->name, newname, OBJNAMLEN - 1);
+	    strncat(session.graphs[i]->name, newname, MAXSAVENAME - 1);
 	    break;
 	}
     }
@@ -2618,7 +2654,7 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
 	gtk_entry_set_text(GTK_ENTRY(gobj->label), gobj->name);
 	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
 	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);
-	gtk_entry_set_max_length(GTK_ENTRY(gobj->label), OBJNAMLEN);
+	gtk_entry_set_max_length(GTK_ENTRY(gobj->label), MAXSAVENAME);
 	size_name_entry(gobj->label, gobj->name);
 	g_signal_connect(G_OBJECT(gobj->label), "button-press-event",
 			 G_CALLBACK(start_rename_object), gobj);

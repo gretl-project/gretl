@@ -49,12 +49,12 @@ void set_session_saved (int val);
 
 void session_menu_state (gboolean s);
 
-int real_add_graph_to_session (const char *fname, const char *grname,
-			       GretlObjType type);
-
 int real_add_text_to_session (PRN *prn, const char *tname);
 
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
+
+int cli_add_graph_to_session (const char *fname, const char *gname,
+			      GretlObjType type);
 
 void model_add_as_icon (gpointer p, guint type, GtkWidget *w);
 

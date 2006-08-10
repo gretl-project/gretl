@@ -152,8 +152,6 @@ int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type,
 		      PRN *prn)
 {
     char gname[MAXSAVENAME];
-    char savedir[MAXLEN];
-    gchar *tmp, *plotfile;
     int err = 0;
 
     gretl_cmd_get_savename(gname);
@@ -161,33 +159,17 @@ int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type,
 	return 0;
     }
 
-    get_default_dir(savedir, SAVE_THIS_GRAPH);
-
-    tmp = g_strdup(gname);
-    plotfile = g_strdup_printf("%ssession.%s", savedir, 
-			       space_to_score(tmp));
-    g_free(tmp);
-
     if (type == GRETL_OBJ_GRAPH) {
-	err = copyfile(fname, plotfile);
-	if (!err) {
-	    int ret;
+	int ret = cli_add_graph_to_session(fname, gname, GRETL_OBJ_GRAPH);
 
-	    ret = real_add_graph_to_session(plotfile, gname, type);
-	    if (ret == ADD_OBJECT_FAIL) {
-		err = 1;
-	    } else {
-		remove(fname);
-		if (ret == ADD_OBJECT_REPLACE) {
-		    pprintf(prn, _("%s replaced\n"), gname);
-		} else {
-		    pprintf(prn, _("%s saved\n"), gname);
-		}
-	    }
+	if (ret == ADD_OBJECT_FAIL) {
+	    err = 1;
+	} else if (ret == ADD_OBJECT_REPLACE) {
+	    pprintf(prn, _("%s replaced\n"), gname);
+	} else {
+	    pprintf(prn, _("%s saved\n"), gname);
 	}
     }
-
-    g_free(plotfile);
 
     return err;
 }
