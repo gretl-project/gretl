@@ -538,9 +538,7 @@ void set_sample_label (DATAINFO *pdinfo)
 	}
 	if (data_status & MODIFIED_DATA) { 
 	    strcat(labeltxt, "* ");
-	} else if (data_status & GZIPPED_DATA) {
-	    strcat(labeltxt, "[gz] ");
-	}
+	} 
 	if (dlabel != NULL) {
 	    gtk_label_set_text(GTK_LABEL(dlabel), labeltxt);
 	}
