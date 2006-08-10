@@ -427,8 +427,8 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	}
     }
 
-    /* no notches: draw simple inter-quartile box */
     if (confhi == 0.) {
+	/* no notches: draw simple inter-quartile box */
 	if (pc != NULL) { 
 	    gtk_plot_pc_draw_rectangle (pc,
 					FALSE,
@@ -444,7 +444,8 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 				boxwidth, 
 				lq - uq);
 	}
-    } else { /* draw notched boxes */
+    } else { 
+	/* draw notched boxes */
 	if (pc != NULL) {
 	    GtkPlotPoint points[10];
 
@@ -550,7 +551,9 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     }
 
     /* write name of variable beneath */
-    if (plot->bool) nameoff = headroom / 3.5;
+    if (plot->bool) {
+	nameoff = headroom / 3.5;
+    }
     setup_text (area, pixmap, gc, pc, plot->varname, xcenter, 
 		height * (1.0 - nameoff), GTK_JUSTIFY_CENTER);
     if (plot->bool) {
@@ -569,10 +572,13 @@ destroy_boxplots (GtkWidget *w, gpointer data)
 	free(grp->plots[i].outliers);
 	free(grp->plots[i].bool);
     }
+
     free(grp->plots);
     free(grp->numbers);
     g_object_unref(G_OBJECT(grp->pixmap));
     free(grp);
+
+    remove(boxplottmp);
 }
 
 static GtkWidget *
@@ -869,7 +875,7 @@ static int five_numbers (gpointer data)
 static void read_boxrc (PLOTGROUP *grp);
 
 int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo, 
-	      int notches)
+	      gretlopt opt)
 {
     int i, j, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
@@ -912,14 +918,16 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 		continue;
 	    }
 	}
+
 	plotgrp->plots[i].outliers = NULL;
 	qsort(x, n, sizeof *x, compare_doubles);
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
 	quartiles(x, n, &plotgrp->plots[i]);
 	plotgrp->plots[i].n = n;
-	/* notched boxplots wanted? */
-	if (notches) {
+
+	if (opt & OPT_O) {
+	    /* notched boxplots wanted */
 	    if (median_interval(x, n, &plotgrp->plots[i].conf[0],
 				&plotgrp->plots[i].conf[1])) {
 		errbox (_("Couldn't obtain confidence interval"));
@@ -929,7 +937,9 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	} else {
 	    plotgrp->plots[i].conf[0] = plotgrp->plots[i].conf[1] = NADBL;
 	}
+
 	strcpy(plotgrp->plots[i].varname, pdinfo->varname[list[i+1]]);
+
 	if (bools) { 
 	    plotgrp->plots[i].bool = bools[j];
 	} else {
@@ -955,7 +965,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 
     plotgrp->popup = NULL;
     plotgrp->pixmap = NULL;
-    place_plots (plotgrp);
+    place_plots(plotgrp);
 
     if (make_area(plotgrp) == NULL) {
 	free(plotgrp->plots);
@@ -974,6 +984,10 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 			  plotgrp->numbers);
     
     gtk_boxplot_yscale(plotgrp, NULL);
+
+    if (opt & OPT_B) {
+	dump_boxplot(plotgrp);
+    }
     
     return 0;
 }
@@ -1304,6 +1318,7 @@ static int dump_boxplot (PLOTGROUP *grp)
     }
 
     fclose(fp);
+
     return 0;
 }
 
@@ -1537,7 +1552,7 @@ const char *get_boxplots_string (void)
 }
 
 int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo, 
-		      int notches)
+		      gretlopt opt)
 {
     int i, k, v, nvars, nbool, err = 0;
     int n = pdinfo->n, origv = pdinfo->v;
@@ -1643,7 +1658,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	err = boxplots(list, bools, pZ, pdinfo, notches);
+	err = boxplots(list, bools, pZ, pdinfo, opt);
     } 
     
     free(list);

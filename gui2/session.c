@@ -532,9 +532,6 @@ real_add_graph_to_session (const char *fname, const char *grname,
     SESSION_GRAPH *graph = get_session_graph_by_name(grname);
     int replace = 0;
 
-    fprintf(stderr, "real_add_graph_to_session: fname='%s', grname='%s'\n",
-	    fname, grname);
-
     if (graph != NULL) {
 	graph->type = type;
 	strcpy(graph->fname, fname);	

@@ -152,23 +152,21 @@ int maybe_save_graph (const CMD *cmd, const char *fname, GretlObjType type,
 		      PRN *prn)
 {
     char gname[MAXSAVENAME];
-    int err = 0;
+    int ret, err = 0;
 
     gretl_cmd_get_savename(gname);
     if (*gname == 0) {
 	return 0;
     }
 
-    if (type == GRETL_OBJ_GRAPH) {
-	int ret = cli_add_graph_to_session(fname, gname, GRETL_OBJ_GRAPH);
+    ret = cli_add_graph_to_session(fname, gname, type);
 
-	if (ret == ADD_OBJECT_FAIL) {
-	    err = 1;
-	} else if (ret == ADD_OBJECT_REPLACE) {
-	    pprintf(prn, _("%s replaced\n"), gname);
-	} else {
-	    pprintf(prn, _("%s saved\n"), gname);
-	}
+    if (ret == ADD_OBJECT_FAIL) {
+	err = 1;
+    } else if (ret == ADD_OBJECT_REPLACE) {
+	pprintf(prn, _("%s replaced\n"), gname);
+    } else {
+	pprintf(prn, _("%s saved\n"), gname);
     }
 
     return err;

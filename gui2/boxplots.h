@@ -24,10 +24,10 @@ extern char boxplottmp[MAXLEN];
 
 int boxplots (int *list, char **bools, 
 	      double ***pZ, const DATAINFO *pdinfo, 
-	      int notches);
+	      gretlopt opt);
 
 int boolean_boxplots (const char *str, double ***pZ, 
-		      DATAINFO *pdinfo, int notches);
+		      DATAINFO *pdinfo, gretlopt opt);
 
 int retrieve_boxplot (const char *fname);
 

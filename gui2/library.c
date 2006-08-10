@@ -4527,7 +4527,7 @@ void do_boxplot_var (int varnum)
 	return;
     }
 
-    if (boxplots(cmd.list, NULL, &Z, datainfo, 0)) {
+    if (boxplots(cmd.list, NULL, &Z, datainfo, OPT_NONE)) {
 	errbox (_("boxplot command failed"));
     }
 }
@@ -4567,20 +4567,23 @@ void do_box_graph (GtkWidget *widget, dialog_t *dlg)
 {
     int action = edit_dialog_get_action(dlg);
     const char *buf = edit_dialog_get_text(dlg);
+    gretlopt opt;
     int err;
 
     if (buf == NULL) return;
 
+    opt = (action == GR_NBOX)? OPT_O : OPT_NONE;
+
     if (strchr(buf, '(')) {
-	err = boolean_boxplots(buf, &Z, datainfo, (action == GR_NBOX));
+	err = boolean_boxplots(buf, &Z, datainfo, opt);
     } else {
 	gretl_command_sprintf("boxplot %s%s", 
-			      (action == GR_NBOX)? "--notches " : "", buf);
+			      (opt & OPT_O)? "--notches " : "", buf);
 
 	if (check_and_record_command()) {
 	    return;
 	}
-	err = boxplots(cmd.list, NULL, &Z, datainfo, (action == GR_NBOX));
+	err = boxplots(cmd.list, NULL, &Z, datainfo, opt);
     }
 
     if (err) {
@@ -6119,9 +6122,13 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 
     case BXPLOT:
 	if (cmd.nolist) { 
-	    err = boolean_boxplots(line, &Z, datainfo, (cmd.opt != 0));
+	    err = boolean_boxplots(line, &Z, datainfo, cmd.opt | OPT_B);
 	} else {
-	    err = boxplots(cmd.list, NULL, &Z, datainfo, (cmd.opt != 0));
+	    err = boxplots(cmd.list, NULL, &Z, datainfo, cmd.opt | OPT_B);
+	}
+	if (!err) {
+	    err = maybe_save_graph(&cmd, boxplottmp,
+				   GRETL_OBJ_PLOT, prn);
 	}
 	break;
 
