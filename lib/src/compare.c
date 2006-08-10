@@ -29,7 +29,7 @@
 
 #undef WDEBUG
 
-#define print_add_omit_model(m,o) (m->ci != AR && m->ci != ARCH && \
+#define print_add_omit_model(m,o) (m->ci != ARCH && \
                                    !(opt & OPT_Q) && !(opt & OPT_I))
 
 
@@ -480,7 +480,7 @@ static MODEL replicate_estimator (MODEL *orig, int **plist,
     switch (orig->ci) {
 
     case AR:
-	rep = ar_func(list, pZ, pdinfo, myopt, NULL);
+	rep = ar_func(list, pZ, pdinfo, myopt, prn);
 	break;
     case ARCH:
 	order = gretl_model_get_int(orig, "arch_order");

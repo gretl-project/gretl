@@ -1378,6 +1378,32 @@ mainwin_config (GtkWidget *w, GdkEventConfigure *event, gpointer p)
     return FALSE;
 }
 
+static void scale_main_window (void)
+{
+    double wfac = 2.25;
+    double hfac = 2.10;
+    GdkScreen *s;
+    int w = 0, h = 0;
+
+    s = gdk_screen_get_default();
+    if (s != NULL) {
+	w = gdk_screen_get_width(s);
+	h = gdk_screen_get_height(s);
+    }
+
+    /* scale up the main window if it's too tiny
+       in relation to the screen? */
+
+    if (w > 0 && h > 0) {
+	if (mainwin_width < w / wfac) {
+	    mainwin_width = w / wfac;
+	}
+	if (mainwin_height < h / hfac) {
+	    mainwin_height = h / hfac;
+	}
+    }
+}
+
 static GtkWidget *make_main_window (int gui_get_data) 
 {
     GtkWidget *main_vbox;
@@ -1399,6 +1425,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 	/* set default window size */
 	mainwin_width = 580 * gui_scale;
 	mainwin_height = 420 * gui_scale;
+	scale_main_window();
     }
 
     mdata->data = NULL;  

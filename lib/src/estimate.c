@@ -3053,11 +3053,11 @@ real_arch_test (MODEL *pmod, int order, double ***pZ, DATAINFO *pdinfo,
 	    }	    
 	}
 
+	record_test_result(LM, xx, "ARCH");
+
 	if (!full) {
 	    goto arch_test_exit;
 	}
-
-	record_test_result(LM, xx, "ARCH");
 
 	pprintf(prn, _("LM test statistic (%f) is distributed as Chi-square "
 		"(%d)\nArea to the right of LM = %f  "), LM, order, xx);

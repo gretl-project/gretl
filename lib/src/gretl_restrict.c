@@ -336,6 +336,10 @@ static int parse_b_bit (const char *s, int *eq, int *bnum)
 	}	
     }
 
+    if (*bnum > 0) {
+	*bnum -= 1;
+    }
+
     if (*eq > 0) {
 	*eq -= 1;
     }
@@ -490,16 +494,16 @@ static void print_restriction (const gretl_restriction_set *rset,
     for (i=0; i<r->nterms; i++) {
 	print_mult(r->mult[i], i == 0, prn);
 	if (rset->cross) {
-	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, r->coeff[i]);
+	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, r->coeff[i] + 1);
 	} else if (rset->type == GRETL_OBJ_VAR) {
 	    GRETL_VAR *var = rset->obj;
 	    const int *list = gretl_VECM_list(var);
-	    int li = (list == NULL)? 0 : r->coeff[i] + 1;
+	    int li = (list == NULL)? 0 : r->coeff[i];
 
 	    if (li > 0 && li <= list[0]) {
 		pprintf(prn, "b[%s]", pdinfo->varname[list[li]]);
 	    } else {
-		pprintf(prn, "b[%d]", r->coeff[i]);
+		pprintf(prn, "b[%d]", r->coeff[i] + 1);
 	    }
 	} else {
 	    MODEL *pmod = rset->obj;
@@ -617,7 +621,7 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 		    eq + 1);
 	} else if (bnum >= gretl_VECM_n_beta(var)) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-		    bnum);
+		    bnum + 1);
 	} else {
 	    ret = 0;
 	}
@@ -630,7 +634,7 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 		    eq + 1);
 	} else if (bnum >= list[0] - 1) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) out of range "
-				    "for equation %d"), bnum, eq + 1);
+				    "for equation %d"), bnum + 1, eq + 1);
 	} else {
 	    ret = 0;
 	}
@@ -642,7 +646,7 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 		    eq + 1);
 	} else if (bnum >= pmod->ncoeff) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
-		    bnum);
+		    bnum + 1);
 	} else {
 	    ret = 0;
 	}

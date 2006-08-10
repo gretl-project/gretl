@@ -116,8 +116,10 @@ struct gretl_option gretl_opts[] = {
     { HILU,     OPT_B, "no-corc" },
     { IMPORT,   OPT_B, "box1" },
     { IMPORT,   OPT_O, "octave" },
+#if 0 /* not ready */
     { INFO,     OPT_V, "variables" },
     { INFO,     OPT_T, "tests" },
+#endif
     { KPSS,     OPT_T, "trend" },
     { KPSS,     OPT_V, "verbose" },
     { KPSS,     OPT_Q, "quiet" },

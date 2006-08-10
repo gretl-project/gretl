@@ -2927,22 +2927,21 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 {
+#if 0 /* not really ready for this */
     if (opt & OPT_V) {
 	const char *word;
 	const char *desc;
 	int m = get_first_model_stat(&word, &desc);
 
 	while (m > 0) {
-	    pprintf(prn, "%8s %s\n", word, _(desc));
+	    pprintf(prn, "%-8s  %s\n", word, _(desc));
 	    m = get_next_model_stat(&word, &desc);
 	}
     } 
 
-#if 0
     if (opt & OPT_T) {
 	/* print_available_tests(pdinfo, prn); */
     }
-#endif
 
     if (opt == OPT_NONE) {
 	if (pdinfo->descrip != NULL) {
@@ -2951,6 +2950,13 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 	    pputs(prn, _("No data information is available.\n"));
 	}
     }
+#else
+    if (pdinfo->descrip != NULL) {
+	pprintf(prn, "%s\n", pdinfo->descrip);
+    } else {
+	pputs(prn, _("No data information is available.\n"));
+    }
+#endif
 }
 
 /* common code for command-line and GUI client programs, where the
