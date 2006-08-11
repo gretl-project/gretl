@@ -1073,13 +1073,13 @@ int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
     if (idx < v) {
 	return idx;
     }
-    
+
     if (dataset_add_series(1, pZ, pdinfo)) {
 	return 0; /* error: valid value cannot == 0 */
     }
 
     for (t=0; t<pdinfo->n; t++) {
-	x = (double) t + 1;
+	x = (double) t + 1; 
 	(*pZ)[v][t] = (square)? x * x : x;
     }
 

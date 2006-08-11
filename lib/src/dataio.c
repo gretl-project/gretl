@@ -1109,10 +1109,15 @@ format_from_opt_or_name (gretlopt opt, const char *fname)
     return fmt;
 }
 
-static void date_maj_min (const char *s, int *maj, int *min)
+static void date_maj_min (int t, const DATAINFO *pdinfo, int *maj, int *min)
 {
-    *maj = atoi(s);
-    s = strchr(s, ':');
+    char obs[OBSLEN];
+    char *s;
+
+    ntodate(obs, t, pdinfo);
+
+    *maj = atoi(obs);
+    s = strchr(obs, ':');
     if (s != NULL && strlen(s) > 1) {
 	*min = atoi(s + 1);
     } else {
@@ -1422,9 +1427,9 @@ int write_data (const char *fname, const int *list,
 		(pd == 1 || pd == 4 || pd == 12)) {
 		int maj, min;
 
-		date_maj_min(pdinfo->stobs, &maj, &min);
+		date_maj_min(pdinfo->t1, pdinfo, &maj, &min);
 		fprintf(fp, "%d %d ", maj, min);
-		date_maj_min(pdinfo->endobs, &maj, &min);
+		date_maj_min(pdinfo->t2, pdinfo, &maj, &min);
 		fprintf(fp, "%d %d %d", maj, min, pd);
 	    } else {
 		fprintf(fp, "%d 1 %d 1 1", pdinfo->t1, pdinfo->t2);
@@ -1455,7 +1460,7 @@ int write_data (const char *fname, const int *list,
 	    fprintf(fp, " %s: %s\n", pdinfo->varname[list[i]], VARLABEL(pdinfo, i));
 	}
 	fputs("*/\n", fp);
-	date_maj_min(pdinfo->stobs, &maj, &min);
+	date_maj_min(pdinfo->t1, pdinfo, &maj, &min);
 	if (pdinfo->pd == 4 || pdinfo->pd == 12) {
 	    fprintf(fp, "<%d %c%d>\n", maj, (pdinfo->pd == 4)? 'Q' : 'M', min);
 	} else if (pdinfo->pd == 1) {
