@@ -43,6 +43,7 @@ static GtkWidget *database_window (windata_t *vwin);
 static int make_local_db_series_list (windata_t *vwin);
 static int make_remote_db_series_list (windata_t *vwin, char *buf);
 static int make_rats_db_series_list (windata_t *vwin);
+static int make_pcgive_db_series_list (windata_t *vwin);
 static SERIESINFO *get_series_info (windata_t *vwin, int action);
 
 enum db_data_actions {
@@ -250,6 +251,9 @@ init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
     pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
     pdinfo->n = sinfo->nobs;
     pdinfo->v = 2;
+
+    pdinfo->t1 = 0;
+    pdinfo->t2 = pdinfo->n - 1;
 }
 
 static gchar *expand_warning (int mult)
@@ -270,8 +274,7 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
     double *xvec = NULL;
     int n, t, start, stop, pad1 = 0, pad2 = 0;
     CompactMethod method = COMPACT_AVG;
-    int overwrite = 0;
-    int resp, err = 0;
+    int resp, overwrite = 0;
 
     if (data_status) { 
 	/* we already have data in gretl's workspace */
@@ -411,28 +414,18 @@ static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
 	/* time series data? */
 	set_time_series(datainfo);
 
-	start_new_Z(&Z, datainfo, 0);
-
-	if (vwin->role == NATIVE_SERIES) {
-	    err = get_native_db_data(vwin->fname, sinfo, Z);
-	} else if (vwin->role == REMOTE_SERIES) {
-	    err = get_remote_db_data(vwin, sinfo, Z);
-	} else if (vwin->role == RATS_SERIES) {
-	    err = get_rats_data_by_series_number(vwin->fname, 
-						 vwin->active_var + 1,
-						 sinfo, Z);
+	if (start_new_Z(&Z, datainfo, 0)) {
+	    nomem();
+	    return;
 	}
 
-	if (err == DB_NOT_FOUND) {
-	    errbox(_("Couldn't access binary data"));
-	    return;
-	} else if (err == DB_MISSING_DATA) {
-	    infobox(_("Warning: series has missing observations"));
-	} else {
-	    strcpy(datainfo->varname[1], sinfo->varname);
-	    strcpy(VARLABEL(datainfo, 1), sinfo->descrip);	
-	    data_status |= (GUI_DATA | MODIFIED_DATA);
-	}	
+	for (t=0; t<datainfo->n; t++) {
+	    Z[1][t] = dbZ[1][t];
+	}
+	    
+	strcpy(datainfo->varname[1], sinfo->varname);
+	strcpy(VARLABEL(datainfo, 1), sinfo->descrip);	
+	data_status |= (GUI_DATA | MODIFIED_DATA);
     }
 
     register_data(NULL, NULL, 0);
@@ -493,14 +486,16 @@ void gui_get_db_series (gpointer p, guint action, GtkWidget *w)
     } else if (dbcode == REMOTE_SERIES) {
 	err = get_remote_db_data(vwin, sinfo, dbZ);
     } else if (dbcode == RATS_SERIES) {
-	err = get_rats_data_by_series_number(vwin->fname, 
-					     vwin->active_var + 1, 
-					     sinfo, dbZ);
+	err = get_rats_db_data(vwin->fname, sinfo, dbZ);
+    } else if (dbcode == PCGIVE_SERIES) {
+	err = get_pcgive_db_data(vwin->fname, sinfo, dbZ);
     }
 
-    if (dbcode == RATS_SERIES && err == DB_MISSING_DATA) {
-	infobox(_("Warning: series has missing observations"));
-    } else if (err && dbcode != REMOTE_SERIES) {
+    if (action == DB_IMPORT && err == DB_MISSING_DATA) {
+	errbox(_("Warning: series has missing observations"));
+    }
+
+    if (err && err != DB_MISSING_DATA && dbcode != REMOTE_SERIES) {
 	errbox(_("Couldn't access binary datafile"));
 	return;
     } 
@@ -666,7 +661,7 @@ static int make_db_series_list (int action, char *fname, char *buf)
 
     gtk_window_set_title(GTK_WINDOW(vwin->w), titlestr);
 
-    if (action == NATIVE_SERIES) {
+    if (action == NATIVE_SERIES || action == PCGIVE_SERIES) {
 	strip_extension(fname);
     }
 
@@ -706,9 +701,11 @@ static int make_db_series_list (int action, char *fname, char *buf)
 	err = make_local_db_series_list(vwin);
     } else if (action == REMOTE_SERIES) { 
 	err = make_remote_db_series_list(vwin, buf);
-    } else {
+    } else if (action == RATS_SERIES) {
 	err = make_rats_db_series_list(vwin);
-    } 
+    } else if (action == PCGIVE_SERIES) {
+	err = make_pcgive_db_series_list(vwin);
+    }
 
     if (err) {
 	gtk_widget_destroy(vwin->w);
@@ -717,6 +714,16 @@ static int make_db_series_list (int action, char *fname, char *buf)
     }
 
     return err;
+}
+
+void open_rats_window (char *fname)
+{
+    make_db_series_list(RATS_SERIES, fname, NULL);
+}
+
+void open_bn7_window (char *fname)
+{
+    make_db_series_list(PCGIVE_SERIES, fname, NULL);
 }
 
 static int check_serinfo (char *str, char *sername)
@@ -943,48 +950,65 @@ static gchar *iso_comment_to_utf8 (const gchar *src, int *err)
     return conv;
 }
 
+static gchar *format_obs_info (SERIESINFO *sinfo)
+{
+    int pdc = '1';
+
+    if (sinfo->pd == 4) {
+	pdc = 'Q';
+    } else if (sinfo->pd == 12) {
+	pdc = 'M';
+    } else if (sinfo->pd == 5) {
+	pdc = 'B';
+    } else if (sinfo->pd == 6) {
+	pdc = 'S';
+    } else if (sinfo->pd == 7) {
+	pdc = 'D';
+    }
+
+    return g_strdup_printf("%c  %s - %s  n = %d", pdc, 
+			   sinfo->stobs, sinfo->endobs, 
+			   sinfo->nobs);
+}
+
 static void insert_and_free_db_table (db_table *tbl, GtkWidget *w)
 {
     GtkTreeView *view = GTK_TREE_VIEW(w);
     GtkListStore *store;
     GtkTreeIter iter;
-    gchar *comment;
-    int err = 0;
+    int i, err = 0;
     int *perr = &err;
-    int i;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
-    gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    for (i=0; i<tbl->nrows; i++) {    
+    for (i=0; i<tbl->nvars; i++) {    
+	gchar *obsinfo, *comment = NULL;
+
 	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 0, tbl->sinfo[i].varname, -1);
 
-	comment = iso_comment_to_utf8(tbl->rows[i].comment, perr);
-	if (perr != NULL && *perr) {
-	    /* don't keep displaying error messages */
-	    perr = NULL;
-	}
+	if (*tbl->sinfo[i].descrip != 0) {
+	    comment = iso_comment_to_utf8(tbl->sinfo[i].descrip, perr);
+	    if (perr != NULL && *perr) {
+		/* don't keep displaying error messages */
+		perr = NULL;
+	    }
+	} 
 
 	if (comment != NULL) {
-	    gtk_list_store_set(store, &iter, 
-			       0, tbl->rows[i].varname, 
-			       1, comment,
-			       2, tbl->rows[i].obsinfo, 
-			       -1);
+	    gtk_list_store_set(store, &iter, 1, comment, -1);
 	    g_free(comment);
-	} else {
-	    gtk_list_store_set(store, &iter, 
-			       0, tbl->rows[i].varname, 
-			       2, tbl->rows[i].obsinfo, 
-			       -1);
-	}	    
+	}
 
-	free(tbl->rows[i].varname);
-	free(tbl->rows[i].comment);
-	free(tbl->rows[i].obsinfo);
+	obsinfo = format_obs_info(&tbl->sinfo[i]);
+	gtk_list_store_set(store, &iter, 2, obsinfo, -1);
+	g_free(obsinfo);
+
+	gtk_list_store_set(store, &iter, 3, tbl->sinfo[i].offset, -1);
     }
 
-    free(tbl->rows);
+    free(tbl->sinfo);
     free(tbl);
 }
 
@@ -1018,6 +1042,41 @@ static int make_rats_db_series_list (windata_t *vwin)
     return 0;
 }
 
+static int make_pcgive_db_series_list (windata_t *vwin)
+{
+    char in7name[FILENAME_MAX];
+    FILE *fp;
+    db_table *tbl;
+
+    *in7name = 0;
+    strncat(in7name, vwin->fname, FILENAME_MAX - 5);
+    strcat(in7name, ".in7");
+
+    fp = gretl_fopen(in7name, "r");
+
+    if (fp == NULL) {
+	errbox(_("Couldn't open PcGive data file"));
+	return 1;
+    }
+
+    /* extract catalog from PcGive file */
+    tbl = read_pcgive_db(fp);
+    fclose(fp);
+
+    if (tbl == NULL) {
+	errbox(get_gretl_errmsg());
+	return 1;
+    }
+
+    insert_and_free_db_table(tbl, vwin->listbox);
+
+    vwin->active_var = 0;
+
+    db_drag_connect(vwin);
+
+    return 0;
+}
+
 static GtkWidget *database_window (windata_t *vwin) 
 {
     const char *titles[] = {
@@ -1028,12 +1087,13 @@ static GtkWidget *database_window (windata_t *vwin)
     GType types[] = {
 	G_TYPE_STRING,
 	G_TYPE_STRING,
-	G_TYPE_STRING
+	G_TYPE_STRING,
+	G_TYPE_INT
     };
     GtkWidget *box;
 
     box = gtk_vbox_new(FALSE, 0);
-    vwin_add_list_box(vwin, GTK_BOX(box), 3, FALSE, types, titles, 0);
+    vwin_add_list_box(vwin, GTK_BOX(box), 4, TRUE, types, titles, 0);
     g_signal_connect(G_OBJECT(vwin->listbox), "button_press_event",
 		     G_CALLBACK(popup_menu_handler), 
 		     vwin->popup);
@@ -1055,7 +1115,10 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
 	return NULL;
     }
 
-    if (action != RATS_SERIES) {
+    if (action == PCGIVE_SERIES || action == RATS_SERIES) {
+	tree_view_get_int(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+			  3, &sinfo->offset);
+    } else {
 	int i, n;
 
 	sinfo->offset = 0;
@@ -1077,16 +1140,19 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
     strncat(sinfo->varname, temp, VNAMELEN - 1);
     g_free(temp);
 
+    temp = NULL;
+    *sinfo->descrip = 0;
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 1, &temp);
-    *sinfo->descrip = 0;
-    strncat(sinfo->descrip, temp, MAXLABEL - 1);
-    g_free(temp);
+    if (temp != NULL) {
+	strncat(sinfo->descrip, temp, MAXLABEL - 1);
+	g_free(temp);
+    }
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 2, &temp);
     if (sscanf(temp, "%c %10s %*s %10s %*s %*s %d", 
-	       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
+	       &pdc, stobs, endobs, &sinfo->nobs) != 4) {
 	errbox(_("Failed to parse series information"));
 	free(sinfo);
 	g_free(temp);
@@ -1657,22 +1723,15 @@ read_db_files_in_dir (DIR *dir, int dbtype, const char *dbdir,
     while ((dirent = readdir(dir)) != NULL) {
 	fname = dirent->d_name;
 	n = strlen(fname);
-	if (dbtype == NATIVE_DB) {
-	    if (!g_ascii_strcasecmp(fname + n - 4, ".bin")) {
-		descrip = real_get_db_description(NULL, fname, dbdir);
-		if (descrip != NULL) {
-		    gtk_list_store_append(store, iter);
-		    gtk_list_store_set(store, iter, 0, fname, 1, descrip, 
-				       2, dbdir, -1);
-		    g_free(descrip);
-		    ndb++;
-		}
+	if (!g_ascii_strcasecmp(fname + n - 4, ".bin")) {
+	    descrip = real_get_db_description(NULL, fname, dbdir);
+	    if (descrip != NULL) {
+		gtk_list_store_append(store, iter);
+		gtk_list_store_set(store, iter, 0, fname, 1, descrip, 
+				   2, dbdir, -1);
+		g_free(descrip);
+		ndb++;
 	    }
-	} else if (!g_ascii_strcasecmp(fname + n - 4, ".rat")) {
-	    /* RATS database */
-	    gtk_list_store_append(store, iter);
-	    gtk_list_store_set(store, iter, 0, fname, 1, dbdir, -1);
-	    ndb++;
 	}
     }
 
@@ -1852,17 +1911,12 @@ gint populate_dbfilelist (windata_t *vwin)
 {
     GtkListStore *store;
     GtkTreeIter iter;
-    gchar *dbdir;
+    gchar *dbdir = paths.binbase;
     DIR *dir = NULL;
     int tries = 0;
     int ndb = 0;
 
     while (dir == NULL) {
-	if (vwin->role == RATS_DB) {
-	    dbdir = paths.ratsbase;
-	} else {
-	    dbdir = paths.binbase;
-	}
 #ifdef G_OS_WIN32 
 	/* opendir doesn't work on e.g. c:\foo\ !! */
 	if (strlen(dbdir) > 3 && dbdir[strlen(dbdir) - 1] == '\\') {
@@ -1885,11 +1939,6 @@ gint populate_dbfilelist (windata_t *vwin)
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(vwin->listbox)));
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-
-    if (vwin->role == RATS_DB) {
-	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(vwin->listbox),
-					  FALSE);
-    }
 
     ndb = read_db_files_in_dir(dir, vwin->role, dbdir, store, &iter);
 

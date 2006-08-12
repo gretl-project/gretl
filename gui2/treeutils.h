@@ -8,6 +8,8 @@ void vwin_add_list_box (windata_t *vwin, GtkBox *box,
 
 void tree_view_get_string (GtkTreeView *view, int row, int col, gchar **val);
 
+void tree_view_get_int (GtkTreeView *view, int row, int col, int *val);
+
 int tree_path_get_row_number (GtkTreePath *path); 
 
 gboolean main_varclick (GtkWidget *widget, GdkEventButton *event,

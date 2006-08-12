@@ -194,6 +194,10 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case OPEN_MARKERS:
 	file_selector(_("gretl: add markers"), code, FSEL_DATA_NONE, NULL);
 	break;
+    case RATS_DB:
+    case PCGIVE_DB:
+	file_selector(_("gretl: open database"), code, FSEL_DATA_NONE, NULL);
+	break;
     default:
 	errbox("Unrecognized data code");
 	break;

@@ -151,9 +151,11 @@ enum browser_codes {
     FUNC_EDIT,
     NATIVE_DB,
     RATS_DB,
+    PCGIVE_DB,
     REMOTE_DB,
     NATIVE_SERIES,
     RATS_SERIES,
+    PCGIVE_SERIES,
     REMOTE_SERIES,
     MAINWIN
 };

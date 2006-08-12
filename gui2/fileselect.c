@@ -29,6 +29,7 @@
 #include "filelists.h"
 #include "fileselect.h"
 #include "fnsave.h"
+#include "database.h"
 
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
                           i == SAVE_DATA_AS || \
@@ -115,6 +116,8 @@ static struct extmap action_map[] = {
     { APPEND_WF1,        ".wf1" },
     { OPEN_DTA,          ".dta" },
     { APPEND_DTA,        ".dta" },
+    { RATS_DB,           ".rat" },
+    { PCGIVE_DB,         ".bn7" },
     { FILE_OP_MAX,       NULL }
 };
 
@@ -435,7 +438,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     *fname = 0;
     strncat(fname, in_fname, FILENAME_MAX - 1);
 
-    if (action < END_OPEN) {
+    if (action < END_OPEN || action == RATS_DB || action == PCGIVE_DB) {
 	FILE *fp = gretl_fopen(fname, "r");
 
 	if (fp == NULL) {
@@ -458,9 +461,13 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	filesel_open_session(fname);
     } else if (action == OPEN_MARKERS) {
 	do_add_markers(fname);
+    } else if (action == RATS_DB) {
+	open_rats_window(fname);
+    } else if (action == PCGIVE_DB) {
+	open_bn7_window(fname);
     }
 
-    if (action < END_OPEN) {
+    if (action < END_OPEN || action == RATS_DB || action == PCGIVE_DB) {
 	return;
     }
 
@@ -619,6 +626,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{APPEND_WF1,   { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
 	{OPEN_DTA,     { N_("Stata files (*.dta)"), "*.dta" }},
 	{APPEND_DTA,   { N_("Stata files (*.dta)"), "*.dta" }},
+	{RATS_DB,      { N_("RATS databases (*.rat)"), "*.rat" }},
+	{PCGIVE_DB,    { N_("PcGive data files (*.bn7)"), "*.bn7" }},
 	{SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}
     };
 
@@ -742,7 +751,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
     of.lpstrDefExt = NULL;
     of.Flags = OFN_HIDEREADONLY;
 
-    if (action < END_OPEN) {
+    if (action < END_OPEN || action == RATS_DB || action == PCGIVE_DB) {
 	retval = GetOpenFileName(&of);
     } else {
 	/* a file save action */
@@ -804,7 +813,8 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
        in particular when action == SAVE_THIS_GRAPH
     */
 
-    if (action > END_OPEN && action != SET_PATH) {
+    if (action > END_OPEN && action != SET_PATH &&
+	action != RATS_DB && action != PCGIVE_DB) {
 	filesel = gtk_file_chooser_dialog_new(msg, NULL, /* GTK_WINDOW(mdata->w), */
 					      GTK_FILE_CHOOSER_ACTION_SAVE,
 					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,

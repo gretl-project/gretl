@@ -42,20 +42,7 @@ typedef enum {
 
 typedef float dbnumber;
 
-typedef struct _db_table_row db_table_row;
 typedef struct _db_table db_table;
-
-struct _db_table_row {
-    char *varname;
-    char *comment;
-    char *obsinfo;
-};
-
-struct _db_table {
-    int nrows;
-    int nalloc;
-    db_table_row *rows;
-};
 
 typedef struct _SERIESINFO SERIESINFO;
 
@@ -71,15 +58,23 @@ struct _SERIESINFO {
     int undated;
 };
 
+struct _db_table {
+    int nvars;
+    int nalloc;
+    SERIESINFO *sinfo;
+};
+
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z);
 
+int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo, 
+			double **Z);
+
+int get_rats_db_data (const char *fname, SERIESINFO *sinfo, double **Z);
+
 db_table *read_rats_db (FILE *fp);
 
-int get_rats_data_by_series_number (const char *fname, 
-				    int series_number,
-				    SERIESINFO *sinfo, 
-				    double **Z);
+db_table *read_pcgive_db (FILE *fp);
 
 double *compact_db_series (const double *src, SERIESINFO *sinfo,
 			   int target_pd, CompactMethod method);

@@ -1243,7 +1243,7 @@ static int exec_line (char *line, PRN *prn)
 	}
 
 	k = detect_filetype(datfile, &paths, prn);
-	dbdata = (k == GRETL_NATIVE_DB || k == GRETL_RATS_DB);
+	dbdata = (k == GRETL_NATIVE_DB || k == GRETL_RATS_DB || k == GRETL_PCGIVE_DB);
 
 	if (data_status && !batch && !dbdata && cmd.ci != APPEND &&
 	    strcmp(datfile, paths.datfile)) {

@@ -4151,6 +4151,8 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	return GRETL_CSV_DATA;
     if (has_suffix(fname, ".m"))
 	return GRETL_OCTAVE;
+    if (has_suffix(fname, ".bn7"))
+	return GRETL_PCGIVE_DB;
 
     addpath(fname, ppaths, 0); 
 

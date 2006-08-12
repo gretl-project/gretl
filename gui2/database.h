@@ -31,4 +31,8 @@ int write_db_description (const char *binname, const char *descrip);
 
 void show_network_error (windata_t *vwin, char *buf);
 
+void open_rats_window (char *fname);
+
+void open_bn7_window (char *fname);
+
 #endif

@@ -25,7 +25,7 @@
 # include <glib.h>
 #endif
 
-#define DB_DEBUG 0
+#define DB_DEBUG 1
 
 #define RECNUM long
 #define NAMELENGTH 16
@@ -90,36 +90,92 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 			    double ***pZ, DATAINFO *pdinfo,
 			    CompactMethod method, int dbv);
 
+static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
+{
+    char dbbin[MAXLEN];
+    FILE *fp = NULL;
+
+    strcpy(dbbin, dbbase);
+    if (code == GRETL_NATIVE_DB) {
+	if (strstr(dbbin, ".bin") == NULL) {
+	    strcat(dbbin, ".bin");
+	}
+    } else {
+	if (strstr(dbbin, ".bn7") == NULL) {
+	    strcat(dbbin, ".bn7");
+	}
+    }	
+
+    fp = gretl_fopen(dbbin, "rb");
+
+    if (fp == NULL) {
+	*err = DB_NOT_FOUND;
+    } else if (fseek(fp, (long) offset, SEEK_SET)) {
+	*err = DB_PARSE_ERROR;
+	fclose(fp);
+	fp = NULL;
+    }
+
+    return fp;
+}
 
 int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
 			double **Z)
 {
-    char dbbin[MAXLEN], numstr[32];
+    char numstr[32];
     FILE *fp;
-    int t, n = sinfo->nobs;
-    dbnumber val;
+    dbnumber x;
+    int t, err = 0;
 
-    strcpy(dbbin, dbbase);
-    if (strstr(dbbin, ".bin") == NULL) {
-	strcat(dbbin, ".bin");
+    fp = open_binfile(dbbase, GRETL_NATIVE_DB, sinfo->offset, &err);
+    if (err) {
+	return err;
     }
 
-    fp = gretl_fopen(dbbin, "rb");
-    if (fp == NULL) return 1;
-    
-    fseek(fp, (long) sinfo->offset, SEEK_SET);
-    for (t=0; t<n; t++) {
-	fread(&val, sizeof val, 1, fp);
-	sprintf(numstr, "%.7g", val); /* N.B. converting a float */
-	Z[1][t] = atof(numstr);
-	if (Z[1][t] == DBNA) {
-	    Z[1][t] = NADBL;
+    for (t=0; t<sinfo->nobs && !err; t++) {
+	if (fread(&x, sizeof x, 1, fp) != 1) {
+	    err = DB_PARSE_ERROR;
+	} else {
+	    sprintf(numstr, "%.7g", (double) x); /* N.B. converting a float */
+	    Z[1][t] = atof(numstr);
+	    if (Z[1][t] == DBNA) {
+		Z[1][t] = NADBL;
+	    }
 	}
     }
 
     fclose(fp);
 
-    return 0;
+    return err;
+}
+
+int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo, 
+			double **Z)
+{
+    FILE *fp;
+    double x;
+    int t, err = 0;
+
+    fp = open_binfile(dbbase, GRETL_PCGIVE_DB, sinfo->offset, &err);
+    if (err) {
+	return err;
+    }
+
+    for (t=0; t<sinfo->nobs; t++) {
+	if (fread(&x, sizeof x, 1, fp) != 1) {
+	    err = E_DATA;
+	    break;
+	} else if (x == -9999.99 || isnan(x)) {
+	    Z[1][t] = NADBL;
+	    err = DB_MISSING_DATA;
+	} else {
+	    Z[1][t] = x;
+	}
+    }
+
+    fclose(fp);
+
+    return err;
 }
 
 static void get_native_series_comment (SERIESINFO *sinfo, const char *s)
@@ -266,6 +322,84 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     return err;
 }
 
+static int 
+get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
+{
+    FILE *fp;
+    char dbidx[MAXLEN];
+    char line[1024];
+    char *p;
+    int y0, p0, y1, p1;
+    int nf, gotit = 0;
+    int err = 0;
+
+    strcpy(dbidx, db_name);
+    p = strstr(dbidx, ".bn7");
+    if (p != NULL) {
+	strcpy(p, ".in7");
+    } else {
+	strcat(dbidx, ".in7");
+    }
+
+    fp = gretl_fopen(dbidx, "r");
+    if (fp == NULL) {
+	strcpy(gretl_errmsg, _("Couldn't open database index file"));
+	return DB_NOT_FOUND;
+    }
+
+    while (fgets(line, sizeof line, fp) && !gotit) {
+	if (*line == '>') {
+	    *sinfo->varname = 0;
+	    *sinfo->descrip = 0;
+	    nf = sscanf(line + 1, "%15s %d %d %d %d %d %d",
+			sinfo->varname, &y0, &p0, &y1, &p1, 
+			&sinfo->pd, &sinfo->offset);
+	    if (!strcmp(sinfo->varname, series)) {
+		gotit = 1;
+	    }
+	    if (nf == 7 && y0 > 0 && p0 > 0 && y1 > 0 && p1 > 0 &&
+		sinfo->pd >= 1 && sinfo->offset > 0) {
+		while (fgets(line, sizeof line, fp)) {
+		    if (*line == ';') {
+			int rem = MAXLABEL - strlen(sinfo->descrip) - 1;
+
+			if (rem > 0) {
+			    chopstr(line);
+			    strncat(sinfo->descrip, line + 1, rem);
+			}
+		    } else {
+			break;
+		    }
+		}
+		/* transcribe info */
+		if (sinfo->pd == 1) {
+		    sprintf(sinfo->stobs, "%d", y0);
+		    sprintf(sinfo->endobs, "%d", y1);
+		} else if (sinfo->pd == 4) {
+		    sprintf(sinfo->stobs, "%d:%d", y0, p0);
+		    sprintf(sinfo->endobs, "%d:%d", y1, p1);
+		} else if (sinfo->pd == 12) {
+		    sprintf(sinfo->stobs, "%d:%02d", y0, p0);
+		    sprintf(sinfo->endobs, "%d:%02d", y1, p1);
+		} else {
+		    err = E_DATA; /* FIXME? */
+		}
+	    } else {
+		err = E_DATA;
+	    }
+	}
+    }
+
+    fclose(fp);
+
+    if (!err && !gotit) {
+	sprintf(gretl_errmsg, _("Series not found, '%s'"), series);
+	err = DB_NO_SUCH_SERIES;
+    }
+
+    return err;
+}
+
 /* Figure the ending observation date of a series */
 
 static int get_endobs (char *datestr, int startyr, int startfrac, 
@@ -371,73 +505,56 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
     sinfo->offset = offset;
 
 #if DB_DEBUG
-    fprintf(stderr, "'%s': set sinfo->offset = %d\n", varname, (int) offset);
+    fprintf(stderr, "dinfo_to_sinfo: '%s': set sinfo->offset = %d\n", varname, 
+	    (int) offset);
 #endif
 
     return err;
 }
 
-static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
-			     const char *varname, const char *comment,
-			     int n)
+static int in7_to_sinfo (const char *varname, const char *comment,
+			 int y0, int p0, int y1, int p1, int pd,
+			 int offset, SERIESINFO *sinfo)
 {
-    char pd = 0, pdstr[4], endobs[OBSLEN];
-    int startfrac = 0;
     int err = 0;
 
-    if (dinfo_sanity_check(dinfo)) {
-	return 1;
-    }
-
-    *pdstr = 0;
-
-    if (dinfo->info == 4) {
-	pd = 'Q';
-	sprintf(pdstr, ".%d", dinfo->month);
-	if (dinfo->month == 1) {
-	    startfrac = 1;
-	} else if (dinfo->month > 1 && dinfo->month <= 4) {
-	    startfrac = 2;
-	} else if (dinfo->month > 4 && dinfo->month <= 7) {
-	    startfrac = 3;
-	} else {
-	    startfrac = 4;
-	}
-    } else if (dinfo->info == 12) {
-	pd = 'M';
-	sprintf(pdstr, ".%02d", dinfo->month);
-	startfrac = dinfo->month;
-    } else if (dinfo->info == 1) {
-	pd = 'A';
-	startfrac = 0;
+    if (pd == 4) {
+	sprintf(sinfo->stobs, "%d.%d", y0, p0);
+	sprintf(sinfo->endobs, "%d.%d", y1, p1);
+    } else if (pd == 12) {
+	sprintf(sinfo->stobs, "%d.%02d", y0, p0);
+	sprintf(sinfo->endobs, "%d.%02d", y1, p1);
+    } else if (pd == 1) {
+	sprintf(sinfo->stobs, "%d", y0);
+	sprintf(sinfo->endobs, "%d", y1);
     } else {
 	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
-		(int) dinfo->info);
+		pd);
 	fputc('\n', stderr);
 	sprintf(gretl_errmsg, ("frequency (%d) does not make seem to make sense"), 
-		(int) dinfo->info);
+		pd);
 	err = 1;
     }
 
+    sinfo->nobs = (y1 - y0 + 1) * pd - (p0 - 1) - (pd - p1);
+    if (sinfo->nobs <= 0) {
+	err = 1;
+    }
+
+
     if (!err) {
-	get_endobs(endobs, dinfo->year, startfrac, dinfo->info, n);
-	row->varname = gretl_strdup(varname);
-	row->comment = gretl_strdup(comment);
-#ifdef USE_GTK2
-	row->obsinfo = g_strdup_printf("%c  %d%s - %s  n = %d", pd, 
-				       (int) dinfo->year, pdstr, endobs, n);
-#else
-	row->obsinfo = malloc(64);
-	sprintf(row->obsinfo, "%c  %d%s - %s  n = %d", pd, 
-		(int) dinfo->year, pdstr, endobs, n);
-#endif
+	strcpy(sinfo->varname, varname);
+	if (comment != NULL && *comment != 0) {
+	    strcpy(sinfo->descrip, comment);
+	}
+	sinfo->pd = pd;
+	sinfo->offset = offset;
     } 
 
     return err;
 }
 
-static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
-				   const char *series_name,
+static RECNUM read_rats_directory (FILE *fp, const char *series_name,
 				   SERIESINFO *sinfo) 
 {
     RATSDirect rdir;
@@ -523,24 +640,12 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
     fprintf(stderr, "comment[1] = '%s'\n", rdir.comments[1]);
 #endif
 
-#if DB_DEBUG
-    fprintf(stderr, "read_rats_directory: sinfo = %p, row = %p\n", 
-	    (void *) sinfo, (void *) row);
-#endif
-
-    if (sinfo != NULL) {
-	err = dinfo_to_sinfo(&dinfo, sinfo, rdir.series_name, rdir.comments[0],
-			     rdir.datapoints, rdir.first_data);
-    } else if (row != NULL) {
-	err = dinfo_to_tbl_row(&dinfo, row, rdir.series_name, rdir.comments[0],
-			       rdir.datapoints);
-    } else {
-	err = 1;
-    }
+    err = dinfo_to_sinfo(&dinfo, sinfo, rdir.series_name, rdir.comments[0],
+			 rdir.datapoints, rdir.first_data);
 
 #if DB_DEBUG
-    fprintf(stderr, "read_rats_directory: err = %d, rdir.forward_point = %d\n",
-	    err, (int) rdir.forward_point);
+    fprintf(stderr, "read_rats_directory: err = %d, forward_point=%d, first_data=%d\n",
+	    err, (int) rdir.forward_point, (int) rdir.first_data);
 #endif
 
     ret = (err)? RATS_PARSE_ERROR : rdir.forward_point;
@@ -552,56 +657,69 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
     return ret;
 }
 
+static void series_info_init (SERIESINFO *sinfo)
+{
+    *sinfo->varname = 0;
+    *sinfo->descrip = 0;
+    sinfo->nobs = 0;
+    *sinfo->stobs = 0;
+    *sinfo->endobs = 0;
+    sinfo->pd = 1;
+    sinfo->offset = 0;
+    sinfo->err = 0;
+    sinfo->undated = 0;
+}
+
 #define DB_INIT_ROWS 32
 
-static db_table *db_table_new (void)
+static db_table *db_table_new (int nr)
 {
     db_table *tbl;
     int i;
 
+    if (nr == 0) {
+	nr = DB_INIT_ROWS;
+    }
+
     tbl = malloc(sizeof *tbl);
     if (tbl == NULL) return NULL;
 
-    tbl->rows = malloc(DB_INIT_ROWS * sizeof *tbl->rows);
+    tbl->sinfo = malloc(nr * sizeof *tbl->sinfo);
 
-    if (tbl->rows == NULL) {
+    if (tbl->sinfo == NULL) {
 	free(tbl);
 	return NULL;
     }
 
-    for (i=0; i<DB_INIT_ROWS; i++) {
-	tbl->rows[i].varname = NULL;
-	tbl->rows[i].comment = NULL;
-	tbl->rows[i].obsinfo = NULL;
+    for (i=0; i<nr; i++) {
+	series_info_init(&tbl->sinfo[i]);
     }
 
-    tbl->nrows = 0;
-    tbl->nalloc = DB_INIT_ROWS;
+    tbl->nvars = 0;
+    tbl->nalloc = nr;
 
     return tbl;
 }
 
 static int db_table_expand (db_table *tbl)
 {
-    db_table_row *rows;
+    SERIESINFO *sinfo;
     int i, newsz;
 
-    newsz = (tbl->nrows / DB_INIT_ROWS) + 1;
+    newsz = (tbl->nvars / DB_INIT_ROWS) + 1;
     newsz *= DB_INIT_ROWS;
 
-    rows = realloc(tbl->rows, newsz * sizeof *rows);
-    if (rows == NULL) {
-	free(tbl->rows);
-	tbl->rows = NULL;
+    sinfo = realloc(tbl->sinfo, newsz * sizeof *sinfo);
+    if (sinfo == NULL) {
+	free(tbl->sinfo);
+	tbl->sinfo = NULL;
 	return 1;
     }
 
-    tbl->rows = rows;
+    tbl->sinfo = sinfo;
 
     for (i=tbl->nalloc; i<newsz; i++) {
-	tbl->rows[i].varname = NULL;
-	tbl->rows[i].comment = NULL;
-	tbl->rows[i].obsinfo = NULL;
+	series_info_init(&tbl->sinfo[i]);
     }
 
     tbl->nalloc = newsz;
@@ -611,31 +729,142 @@ static int db_table_expand (db_table *tbl)
 
 static void db_table_free (db_table *tbl)
 {
-    int i;
+    free(tbl->sinfo);
+    free(tbl);
+}
 
-    for (i=0; i<tbl->nrows; i++) {
-	free(tbl->rows[i].varname);
-	free(tbl->rows[i].comment);
-	free(tbl->rows[i].obsinfo);
+static int read_in7_series_info (FILE *fp, db_table *tbl)
+{
+    char line[1024];
+    char sname[VNAMELEN];
+    char desc[MAXLABEL];
+    int y0, p0, y1, p1;
+    int pd, offset, pos;
+    int i, nf;
+    int err = 0;
+
+    i = 0;
+    while (fgets(line, sizeof line, fp) && !err) {
+	if (*line == '>') {
+	    nf = sscanf(line + 1, "%15s %d %d %d %d %d %d",
+			sname, &y0, &p0, &y1, &p1, &pd, &offset);
+	    if (nf == 7 && y0 > 0 && p0 > 0 && y1 > 0 && p1 > 0 &&
+		pd >= 1 && offset > 0) {
+		*desc = 0;
+		pos = ftell(fp);
+		while (fgets(line, sizeof line, fp)) {
+		    if (*line == ';') {
+			/* following series description */
+			int rem = MAXLABEL - strlen(desc) - 1;
+
+			if (rem > 0) {
+			    chopstr(line);
+			    strncat(desc, line + 1, rem);
+			}
+			pos = ftell(fp);
+		    } else {
+			/* not a description: throw the line back */
+			fseek(fp, pos, SEEK_SET);
+			break;
+		    }
+		}
+		/* record info */
+		err = in7_to_sinfo(sname, desc, y0, p0, y1, p1,
+				   pd, offset, &tbl->sinfo[i++]);
+		if (!err) {
+		    tbl->nvars += 1;
+		}
+	    }
+	}
     }
 
-    free(tbl->rows);
-    free(tbl);
+    return err;
+}
+
+static int count_in7_series (FILE *fp)
+{
+    char line[1024];
+    char sname[VNAMELEN];
+    int y0, p0, y1, p1;
+    int pd, offset;
+    int nf, nseries = 0;
+
+    while (fgets(line, sizeof line, fp)) {
+	if (*line == '>') {
+	    nf = sscanf(line + 1, "%15s %d %d %d %d %d %d",
+			sname, &y0, &p0, &y1, &p1, &pd, &offset);
+	    if (nf < 7 || y0 < 0 || p0 < 0 || y1 < 0 || p1 < 0 ||
+		pd < 1 || offset < 0) {
+		fprintf(stderr, "Error reading series info\n");
+	    } else {
+		nseries++;
+	    }
+	}
+    }
+
+    return nseries;
+}
+
+/**
+ * read_pcgive_db:
+ * @fp: pre-opened stream (caller to close it)
+ *
+ * Read the series info from a PcGive database, .in7 file
+ * 
+ * Returns: pointer to a #db_table containing the series info,
+ * or NULL in case of failure.
+ */
+
+db_table *read_pcgive_db (FILE *fp) 
+{
+    db_table *tbl;
+    int ns, err = 0;
+
+    *gretl_errmsg = 0;
+
+    ns = count_in7_series(fp);
+    if (ns == 0) {
+	strcpy(gretl_errmsg, _("No valid series found"));
+	return NULL;
+    }
+
+#if DB_DEBUG
+    fprintf(stderr, "in7: found %d series\n", ns);
+#endif
+    
+    /* allocate table for series rows */
+    tbl = db_table_new(ns);
+    if (tbl == NULL) {
+	strcpy(gretl_errmsg, _("Out of memory!"));
+	return NULL;
+    }
+
+    rewind(fp);
+    
+    /* Go find the series info */
+    err = read_in7_series_info(fp, tbl);
+
+    if (err) {
+	db_table_free(tbl);
+	return NULL;
+    }
+
+    return tbl;
 }
 
 /**
  * read_rats_db:
  * @fp: pre-opened stream (caller to close it)
  *
- * Read the series info from a RATS 4.0 database.
+ * Read the series info from a RATS 4.0 database: read the base 
+ * block at offset 0 in the data file, and recurse through the 
+ * directory entries
  * 
  * Returns: pointer to a #db_table containing the series info,
  * or NULL in case of failure.
  */
 
 db_table *read_rats_db (FILE *fp) 
-/* read the base block at offset 0 in the data file,
-   and recurse through the directory entries */
 {
     db_table *tbl;
     long forward;
@@ -656,7 +885,7 @@ db_table *read_rats_db (FILE *fp)
     }
 
     /* allocate table for series rows */
-    tbl = db_table_new();
+    tbl = db_table_new(0);
     if (tbl == NULL) {
 	strcpy(gretl_errmsg, _("Out of memory!"));
 	return NULL;
@@ -665,12 +894,12 @@ db_table *read_rats_db (FILE *fp)
     /* Go find the series */
     i = 0;
     while (forward && !err) {
-	tbl->nrows += 1;
+	tbl->nvars += 1;
 #if DB_DEBUG
-	fprintf(stderr, "read_rats_db: forward = %d, nrows = %d\n",
-		(int) forward, tbl->nrows);
+	fprintf(stderr, "read_rats_db: forward = %d, nvars = %d\n",
+		(int) forward, tbl->nvars);
 #endif    
-	if (tbl->nrows > 0 && tbl->nrows % DB_INIT_ROWS == 0) {
+	if (tbl->nvars > 0 && tbl->nvars % DB_INIT_ROWS == 0) {
 	    err = db_table_expand(tbl);
 	    if (err) {
 		strcpy(gretl_errmsg, _("Out of memory!"));
@@ -679,7 +908,7 @@ db_table *read_rats_db (FILE *fp)
 	if (!err) {
 	    err = fseek(fp, (forward - 1) * 256L, SEEK_SET);
 	    if (!err) {
-		forward = read_rats_directory(fp, &tbl->rows[i++], NULL, NULL);
+		forward = read_rats_directory(fp, NULL, &tbl->sinfo[i++]);
 		if (forward == RATS_PARSE_ERROR) {
 		    err = 1;
 		}
@@ -703,42 +932,6 @@ db_table *read_rats_db (FILE *fp)
     return tbl;
 }
 
-static int find_rats_dir_by_number (FILE *fp, int first_dir, 
-				    int series_number)
-{
-    long forward;
-    int count = 1;
-
-    forward = first_dir;
-
-    while (forward && count < series_number) {
-	fseek(fp, (forward - 1) * 256L, SEEK_SET);
-	fseek(fp, 4L, SEEK_CUR);
-	fread(&forward, 4L, 1, fp);
-	count++;
-    }
-
-    return (int) forward;
-}
-
-static int get_rats_series_offset_by_number (FILE *fp, 
-					     int series_number)
-{
-    long num_series, first_dir;
-    int offset;
-
-    fseek(fp, 6L, SEEK_SET);
-    fread(&num_series, sizeof num_series, 1, fp);
-    if (series_number > num_series) return -1;
-
-    fseek(fp, sizeof(long) * 5L, SEEK_CUR);  
-    fread(&first_dir, sizeof first_dir, 1, fp);
-
-    offset = find_rats_dir_by_number(fp, first_dir, series_number); 
-
-    return offset;
-}
-
 /* retrieve the actual data values from the data blocks */
 
 static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp, 
@@ -747,6 +940,8 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
     RATSData rdata;
     int miss = 0, i, t = 0;
     double val;
+
+    fprintf(stderr, "get_rats_series: starting from offset %d\n", offset);
     
     rdata.forward_point = offset;
 
@@ -768,9 +963,8 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 }
 
 /**
- * get_rats_data_by_series_number:
+ * get_rats_db_data:
  * @fname: name of RATS 4.0 database to read from
- * @series_number: number of the series within the database
  * @sinfo: holds info on the given series (input)
  * @Z: data matrix
  *
@@ -779,34 +973,24 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
  * Returns: DB_OK on successful completion, DB_NOT_FOUND if
  * the data could not be read, and DB_MISSING_DATA if the
  * data were found but there were some missing values.
- *
  */
 
-int get_rats_data_by_series_number (const char *fname, 
-				    int series_number,
-				    SERIESINFO *sinfo, 
-				    double **Z)
-     /* series are numbered from 1 for this function */
+int get_rats_db_data (const char *fname, SERIESINFO *sinfo, double **Z)
 {
     FILE *fp;
-    int offset;
-    long first_data;
     int ret = DB_OK;
 
     fp = gretl_fopen(fname, "rb");
-    if (fp == NULL) return DB_NOT_FOUND;
+    if (fp == NULL) {
+	return DB_NOT_FOUND;
+    }
     
-    offset = get_rats_series_offset_by_number(fp, series_number);
-    if (offset < 0) return DB_NOT_FOUND;
-
 #if DB_DEBUG
-    fprintf(stderr, "get_rats_data_by_series_number: offset = %d\n", offset);
+    fprintf(stderr, "get_rats_db_data: offset = %d\n", sinfo->offset);
 #endif
     
-    fseek(fp, (offset - 1) * 256 + 12, SEEK_SET); 
-    fread(&first_data, sizeof(RECNUM), 1, fp);
-    if (get_rats_series(first_data, sinfo, fp, Z)) {
-	ret = DB_MISSING_DATA;
+    if (get_rats_series(sinfo->offset, sinfo, fp, Z)) {
+	ret = DB_MISSING_DATA; /* FIXME? */
     }
 
     fclose(fp);
@@ -815,8 +999,7 @@ int get_rats_data_by_series_number (const char *fname,
 }
 
 static long 
-get_rats_series_offset_by_name (FILE *fp,
-				const char *series_name,
+get_rats_series_offset_by_name (FILE *fp, const char *series_name,
 				SERIESINFO *sinfo)
 {
     long forward;
@@ -840,7 +1023,7 @@ get_rats_series_offset_by_name (FILE *fp,
     /* Go find the series */
     while (forward) {
 	fseek(fp, (forward - 1) * 256L, SEEK_SET);
-	forward = read_rats_directory(fp, NULL, series_name, sinfo);
+	forward = read_rats_directory(fp, series_name, sinfo);
 	if (forward == RATS_PARSE_ERROR) {
 	    sinfo->offset = -1;
 	}
@@ -894,6 +1077,10 @@ get_rats_data_by_offset (const char *fname,
 
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) return DB_NOT_FOUND;
+
+#if DB_DEBUG
+    fprintf(stderr, "get_rats_series: reading at offset %d\n", sinfo->offset);
+#endif
 
     if (get_rats_series(sinfo->offset, sinfo, fp, Z)) {
 	ret = DB_MISSING_DATA;
@@ -1078,9 +1265,8 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
 	if (filetype == GRETL_NATIVE_DB && 
 	    strstr(db_name, ppaths->binbase) == NULL) {
 	    build_path(db_name, ppaths->binbase, fname, NULL);
-	}
-	else if (filetype == GRETL_RATS_DB && 
-		 strstr(db_name, ppaths->ratsbase) == NULL) {
+	} else if (filetype == GRETL_RATS_DB && 
+		   strstr(db_name, ppaths->ratsbase) == NULL) {
 	    build_path(db_name, ppaths->ratsbase, fname, NULL);
 	}
 	fp = gretl_fopen(db_name, "rb");
@@ -1270,6 +1456,8 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	/* find the series information in the database */
 	if (db_type == GRETL_RATS_DB) {
 	    err = get_rats_series_info_by_name(series, &sinfo);
+	} else if (db_type == GRETL_PCGIVE_DB) {
+	    err = get_pcgive_series_info(series, &sinfo);
 	} else {
 	    err = get_native_series_info(series, &sinfo);
 	} 
@@ -1287,9 +1475,11 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 	if (db_type == GRETL_RATS_DB) {
 	    err = get_rats_data_by_offset(db_name, &sinfo, dbZ);
+	} else if (db_type == GRETL_PCGIVE_DB) {
+	    err = get_pcgive_db_data(db_name, &sinfo, dbZ);
 	} else {
-	    get_native_db_data(db_name, &sinfo, dbZ);
-	}
+	    err = get_native_db_data(db_name, &sinfo, dbZ);
+	} 
 
 	if (!err) {
 	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, this_var_method, v);

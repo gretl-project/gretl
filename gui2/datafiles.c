@@ -501,7 +501,8 @@ char *strip_extension (char *s)
     
     if (p != NULL && 
 	(!strcmp(p, ".gdt") || !strcmp(p, ".inp") ||
-	 !strcmp(p, ".bin") || !strcmp(p, ".gfn"))) {
+	 !strcmp(p, ".bin") || !strcmp(p, ".gfn") ||
+	 !strcmp(p, ".bn7"))) {
 	*p = '\0';
     }
 
@@ -894,7 +895,6 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	browse_func = browser_open_data;
 	break;
     case NATIVE_DB:
-    case RATS_DB:
 	gtk_window_set_title(GTK_WINDOW(vwin->w), 
 			     _("gretl: database files"));
 	browse_func = open_db_index;
@@ -1119,7 +1119,7 @@ gint populate_func_list (windata_t *vwin)
 
 gint populate_filelist (windata_t *vwin, gpointer p)
 {
-    if (vwin->role == NATIVE_DB || vwin->role == RATS_DB) {
+    if (vwin->role == NATIVE_DB) {
 	return populate_dbfilelist(vwin);
     } else if (REMOTE_ACTION(vwin->role)) {
 	return populate_remote_object_list(vwin);
