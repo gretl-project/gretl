@@ -25,7 +25,7 @@
 # include <glib.h>
 #endif
 
-#define DB_DEBUG 1
+#define DB_DEBUG 0
 
 #define RECNUM long
 #define NAMELENGTH 16
@@ -274,9 +274,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	return DB_NOT_FOUND;
     }
 
-    while (!gotit) {
-
-	if (fgets(line1, sizeof line1, fp) == NULL) break;
+    while (fgets(line1, sizeof line1, fp) && !gotit) {
 
 	if (*line1 == '#') continue;
 
@@ -560,7 +558,7 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
     RATSDirect rdir;
     DATEINFO dinfo;
     RECNUM ret;
-    int err = 0;
+    int i, err = 0;
 
     memset(rdir.series_name, 0, NAMELENGTH);
 
@@ -592,65 +590,45 @@ static RECNUM read_rats_directory (FILE *fp, const char *series_name,
     fread(&dinfo.month, sizeof(short), 1, fp);
     fread(&dinfo.day, sizeof(short), 1, fp);
 
-#if DB_DEBUG
-    fprintf(stderr, "info=%d, digits=%d, year=%d, mon=%d, day=%d\n", 
-	    (int) dinfo.info, (int) dinfo.digits, (int) dinfo.year, 
-	    (int) dinfo.month, (int) dinfo.day);
-#endif
-
     fread(&rdir.datapoints, sizeof(long), 1, fp);
     fseek(fp, sizeof(short) * 4L, SEEK_CUR);  /* skip 4 shorts */
 
 #if DB_DEBUG
+    fprintf(stderr, "info=%d, digits=%d, year=%d, mon=%d, day=%d\n", 
+	    (int) dinfo.info, (int) dinfo.digits, (int) dinfo.year, 
+	    (int) dinfo.month, (int) dinfo.day);
     fprintf(stderr, "datapoints = %d\n", (int) rdir.datapoints);
 #endif
 
     fread(&rdir.comment_lines, sizeof(short), 1, fp);
     fseek(fp, 1L, SEEK_CUR); /* skip one char */
 
+    for (i=0; i<2; i++) {
+	if (i < rdir.comment_lines) {
+	    memset(rdir.comments[i], 0, 80);
+	    fread(rdir.comments[i], 80, 1, fp);
+	    rdir.comments[i][79] = '\0';
+	    chopstr(rdir.comments[i]);
+	} else {
+	    rdir.comments[i][0] = 0;
+	    fseek(fp, 80, SEEK_CUR);
+	}
+    }
+
 #if DB_DEBUG
     fprintf(stderr, "comment_lines = %d\n", (int) rdir.comment_lines);
-#endif
-
-    if (rdir.comment_lines > 0) {
-	memset(rdir.comments[0], 0, 80);
-	fread(rdir.comments[0], 80, 1, fp);
-	rdir.comments[0][79] = '\0';
-	chopstr(rdir.comments[0]);
-    } else {
-	rdir.comments[0][0] = 0;
-	fseek(fp, 80, SEEK_CUR);
-    }
-
-#if DB_DEBUG
     fprintf(stderr, "comment[0] = '%s'\n", rdir.comments[0]);
-#endif
-
-    if (rdir.comment_lines > 1) {
-	memset(rdir.comments[1], 0, 80);
-	fread(rdir.comments[1], 80, 1, fp);
-	rdir.comments[1][79] = '\0';
-	chopstr(rdir.comments[1]);
-    } else {
-	rdir.comments[1][0] = 0;
-	fseek(fp, 80, SEEK_CUR);
-    }
-
-#if DB_DEBUG
     fprintf(stderr, "comment[1] = '%s'\n", rdir.comments[1]);
 #endif
 
     err = dinfo_to_sinfo(&dinfo, sinfo, rdir.series_name, rdir.comments[0],
 			 rdir.datapoints, rdir.first_data);
 
-#if DB_DEBUG
-    fprintf(stderr, "read_rats_directory: err = %d, forward_point=%d, first_data=%d\n",
-	    err, (int) rdir.forward_point, (int) rdir.first_data);
-#endif
-
     ret = (err)? RATS_PARSE_ERROR : rdir.forward_point;
 
 #if DB_DEBUG
+    fprintf(stderr, "read_rats_directory: err = %d, forward_point=%d, first_data=%d\n",
+	    err, (int) rdir.forward_point, (int) rdir.first_data);
     fprintf(stderr, "returning %d\n", (int) ret);
 #endif
 
@@ -998,14 +976,23 @@ int get_rats_db_data (const char *fname, SERIESINFO *sinfo, double **Z)
     return ret;
 }
 
-static long 
-get_rats_series_offset_by_name (FILE *fp, const char *series_name,
-				SERIESINFO *sinfo)
+static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 {
+    FILE *fp;
     long forward;
+    int err = DB_OK;
 
     *gretl_errmsg = 0;
-    
+
+    fp = gretl_fopen(db_name, "rb");
+    if (fp == NULL) {
+	return DB_NOT_FOUND;
+    }
+
+#if DB_DEBUG
+    fprintf(stderr, "Opened %s\n", db_name);
+#endif
+
     /* get into position */
     fseek(fp, 30L, SEEK_SET); 
     fread(&forward, sizeof forward, 1, fp);
@@ -1015,7 +1002,7 @@ get_rats_series_offset_by_name (FILE *fp, const char *series_name,
     if (forward <= 0) {
 	strcpy(gretl_errmsg, _("This is not a valid RATS 4.0 database"));
 	fprintf(stderr, "rats database: got forward = %ld\n", forward);
-	return -1;
+	return DB_PARSE_ERROR;
     }
 
     sinfo->offset = 0;
@@ -1030,65 +1017,20 @@ get_rats_series_offset_by_name (FILE *fp, const char *series_name,
 	if (sinfo->offset != 0) {
 	    break;
 	}
-    }
+    }    
 
-    return sinfo->offset;
-}
-
-static int 
-get_rats_series_info_by_name (const char *series_name,
-			      SERIESINFO *sinfo)
-{
-    FILE *fp;
-    int offset;
-    int ret = DB_OK;
-
-    fp = gretl_fopen(db_name, "rb");
-    if (fp == NULL) {
-	return DB_NOT_FOUND;
-    }
-
-#if DB_DEBUG
-    fprintf(stderr, "Opened %s\n", db_name);
-#endif
-    
-    offset = get_rats_series_offset_by_name(fp, series_name, sinfo);
     fclose(fp);
 
-    if (offset <= 0) {
-	return DB_NOT_FOUND;
+    if (sinfo->offset <= 0) {
+	err = DB_NOT_FOUND;
     }
 
 #if DB_DEBUG
-    fprintf(stderr, "get_rats_series_info_by_name: offset = %d\n", offset);
+    fprintf(stderr, "get_rats_series_info: offset = %d\n", sinfo->offset);
     fprintf(stderr, " pd = %d, nobs = %d\n", sinfo->pd, sinfo->nobs);
 #endif
 
-    return ret;
-}
-
-static int 
-get_rats_data_by_offset (const char *fname, 
-			 SERIESINFO *sinfo,
-			 double **Z)
-{
-    FILE *fp;
-    int ret = DB_OK;
-
-    fp = gretl_fopen(fname, "rb");
-    if (fp == NULL) return DB_NOT_FOUND;
-
-#if DB_DEBUG
-    fprintf(stderr, "get_rats_series: reading at offset %d\n", sinfo->offset);
-#endif
-
-    if (get_rats_series(sinfo->offset, sinfo, fp, Z)) {
-	ret = DB_MISSING_DATA;
-    }
-
-    fclose(fp);
-
-    return ret;
+    return err;
 }
 
 /* For importation of database series */
@@ -1455,7 +1397,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 	/* find the series information in the database */
 	if (db_type == GRETL_RATS_DB) {
-	    err = get_rats_series_info_by_name(series, &sinfo);
+	    err = get_rats_series_info(series, &sinfo);
 	} else if (db_type == GRETL_PCGIVE_DB) {
 	    err = get_pcgive_series_info(series, &sinfo);
 	} else {
@@ -1474,7 +1416,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	if (db_type == GRETL_RATS_DB) {
-	    err = get_rats_data_by_offset(db_name, &sinfo, dbZ);
+	    err = get_rats_db_data(db_name, &sinfo, dbZ);
 	} else if (db_type == GRETL_PCGIVE_DB) {
 	    err = get_pcgive_db_data(db_name, &sinfo, dbZ);
 	} else {
