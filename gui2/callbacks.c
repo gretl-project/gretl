@@ -56,7 +56,6 @@ static void doubleclick_action (windata_t *win)
 	browser_edit_func(NULL, win);
 	break;
     case NATIVE_DB:
-    case RATS_DB:	    
 	open_db_index(NULL, win); 
 	break;
     case REMOTE_DB:
@@ -64,6 +63,7 @@ static void doubleclick_action (windata_t *win)
 	break;
     case NATIVE_SERIES:
     case RATS_SERIES:
+    case PCGIVE_SERIES:
     case REMOTE_SERIES:
 	gui_get_db_series(win, 0, NULL);
 	break;
@@ -194,8 +194,8 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case OPEN_MARKERS:
 	file_selector(_("gretl: add markers"), code, FSEL_DATA_NONE, NULL);
 	break;
-    case RATS_DB:
-    case PCGIVE_DB:
+    case OPEN_RATS_DB:
+    case OPEN_PCGIVE_DB:
 	file_selector(_("gretl: open database"), code, FSEL_DATA_NONE, NULL);
 	break;
     default:

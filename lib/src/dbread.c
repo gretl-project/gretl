@@ -88,7 +88,8 @@ static int db_type;
 
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
-			    CompactMethod method, int dbv);
+			    CompactMethod method, int dbv,
+			    int *newdata);
 
 static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
 {
@@ -109,7 +110,7 @@ static FILE *open_binfile (const char *dbbase, int code, int offset, int *err)
     fp = gretl_fopen(dbbin, "rb");
 
     if (fp == NULL) {
-	*err = DB_NOT_FOUND;
+	*err = E_FOPEN;
     } else if (fseek(fp, (long) offset, SEEK_SET)) {
 	*err = DB_PARSE_ERROR;
 	fclose(fp);
@@ -257,7 +258,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     char stobs[11], endobs[11];
     char *p, pdc;
     int offset = 0;
-    int gotit = 0, err = DB_OK;
+    int gotit = 0, err = 0;
     int n;
 
     strcpy(dbidx, db_name);
@@ -271,7 +272,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     fp = gretl_fopen(dbidx, "r");
     if (fp == NULL) {
 	strcpy(gretl_errmsg, _("Couldn't open database index file"));
-	return DB_NOT_FOUND;
+	return E_FOPEN;
     }
 
     while (fgets(line1, sizeof line1, fp) && !gotit) {
@@ -291,8 +292,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	    get_native_series_comment(sinfo, line1);
 	    if (sscanf(line2, "%c %10s %*s %10s %*s %*s %d", 
 		       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
-		strcpy(gretl_errmsg,
-		       _("Failed to parse series information"));
+		strcpy(gretl_errmsg, _("Failed to parse series information"));
 		err = DB_PARSE_ERROR;
 	    } else {
 		get_native_series_pd(sinfo, pdc);
@@ -301,8 +301,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	    }
 	} else {
 	    if (sscanf(line2, "%*c %*s %*s %*s %*s %*s %d", &n) != 1) {
-		strcpy(gretl_errmsg,
-		       _("Failed to parse series information"));
+		strcpy(gretl_errmsg, _("Failed to parse series information"));
 		err = DB_PARSE_ERROR;
 	    } else {
 		offset += n * sizeof(dbnumber);
@@ -318,6 +317,11 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     }
 
     return err;
+}
+
+static int in7_nobs (int y0, int p0, int y1, int p1, int pd)
+{
+    return  (y1 - y0 + 1) * pd - (p0 - 1) - (pd - p1);
 }
 
 static int 
@@ -339,10 +343,14 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 	strcat(dbidx, ".in7");
     }
 
+#if DB_DEBUG
+    fprintf(stderr, "get_pcgive_series_info: dbidx = '%s'\n", dbidx);
+#endif
+
     fp = gretl_fopen(dbidx, "r");
     if (fp == NULL) {
 	strcpy(gretl_errmsg, _("Couldn't open database index file"));
-	return DB_NOT_FOUND;
+	return E_FOPEN;
     }
 
     while (fgets(line, sizeof line, fp) && !gotit) {
@@ -352,8 +360,11 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 	    nf = sscanf(line + 1, "%15s %d %d %d %d %d %d",
 			sinfo->varname, &y0, &p0, &y1, &p1, 
 			&sinfo->pd, &sinfo->offset);
+	    fprintf(stderr, "in7: varname='%s'\n", sinfo->varname);
 	    if (!strcmp(sinfo->varname, series)) {
 		gotit = 1;
+	    } else {
+		continue;
 	    }
 	    if (nf == 7 && y0 > 0 && p0 > 0 && y1 > 0 && p1 > 0 &&
 		sinfo->pd >= 1 && sinfo->offset > 0) {
@@ -370,6 +381,7 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 		    }
 		}
 		/* transcribe info */
+		sinfo->nobs = in7_nobs(y0, p0, y1, p1, sinfo->pd);
 		if (sinfo->pd == 1) {
 		    sprintf(sinfo->stobs, "%d", y0);
 		    sprintf(sinfo->endobs, "%d", y1);
@@ -526,19 +538,20 @@ static int in7_to_sinfo (const char *varname, const char *comment,
 	sprintf(sinfo->stobs, "%d", y0);
 	sprintf(sinfo->endobs, "%d", y1);
     } else {
-	fprintf(stderr, I_("frequency (%d) does not make seem to make sense"),
+	fprintf(stderr, I_("frequency %d is not supported"),
 		pd);
 	fputc('\n', stderr);
-	sprintf(gretl_errmsg, ("frequency (%d) does not make seem to make sense"), 
+	sprintf(gretl_errmsg, ("frequency %d is not supported"), 
 		pd);
 	err = 1;
     }
 
-    sinfo->nobs = (y1 - y0 + 1) * pd - (p0 - 1) - (pd - p1);
-    if (sinfo->nobs <= 0) {
-	err = 1;
+    if (!err) {
+	sinfo->nobs = in7_nobs(y0, p0, y1, p1, pd);
+	if (sinfo->nobs <= 0) {
+	    err = 1;
+	}
     }
-
 
     if (!err) {
 	strcpy(sinfo->varname, varname);
@@ -643,7 +656,7 @@ static void series_info_init (SERIESINFO *sinfo)
     *sinfo->stobs = 0;
     *sinfo->endobs = 0;
     sinfo->pd = 1;
-    sinfo->offset = 0;
+    sinfo->offset = -1;
     sinfo->err = 0;
     sinfo->undated = 0;
 }
@@ -948,7 +961,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
  *
  * Read the actual data values for a series from a RATS database.
  * 
- * Returns: DB_OK on successful completion, DB_NOT_FOUND if
+ * Returns: 0 on successful completion, E_FOPEN if
  * the data could not be read, and DB_MISSING_DATA if the
  * data were found but there were some missing values.
  */
@@ -956,11 +969,11 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 int get_rats_db_data (const char *fname, SERIESINFO *sinfo, double **Z)
 {
     FILE *fp;
-    int ret = DB_OK;
+    int ret = 0;
 
     fp = gretl_fopen(fname, "rb");
     if (fp == NULL) {
-	return DB_NOT_FOUND;
+	return E_FOPEN;
     }
     
 #if DB_DEBUG
@@ -980,13 +993,13 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 {
     FILE *fp;
     long forward;
-    int err = DB_OK;
+    int err = 0;
 
     *gretl_errmsg = 0;
 
     fp = gretl_fopen(db_name, "rb");
     if (fp == NULL) {
-	return DB_NOT_FOUND;
+	return E_FOPEN;
     }
 
 #if DB_DEBUG
@@ -1021,8 +1034,8 @@ static int get_rats_series_info (const char *series_name, SERIESINFO *sinfo)
 
     fclose(fp);
 
-    if (sinfo->offset <= 0) {
-	err = DB_NOT_FOUND;
+    if (sinfo->offset < 0) {
+	err = DB_NO_SUCH_SERIES;
     }
 
 #if DB_DEBUG
@@ -1375,23 +1388,25 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }   
 
+    series_info_init(&sinfo);
+
     line = get_compact_method_and_advance(line, &method);
 
     /* now loop over variable names given on the line */
 
-    while ((line = get_word_and_advance(line, series, 8))) {
+    while ((line = get_word_and_advance(line, series, VNAMELEN - 1)) && !err) {
 	int v, this_var_method = method; 
+	int newdata = 0;
 
 	/* see if the series is already in the dataset */
 	v = varindex(pdinfo, series);
-#if DB_DEBUG
-	fprintf(stderr, "db_get_series: pdinfo->v = %d, v = %d\n", pdinfo->v, v);
-#endif
 	if (v < pdinfo->v && method == COMPACT_NONE) {
 	    this_var_method = COMPACT_METHOD(pdinfo, v);
 	}
 
 #if DB_DEBUG
+	fprintf(stderr, "db_get_series: pdinfo->v = %d, v = %d, series = '%s'\n", 
+		pdinfo->v, v, series);
 	fprintf(stderr, "this_var_method = %d\n", this_var_method);
 #endif
 
@@ -1405,6 +1420,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	} 
 
 	if (err) {
+	    fprintf(stderr, "db_get_series: failed to get series info\n");
 	    return 1;
 	}
 
@@ -1415,6 +1431,10 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    return 1;
 	}
 
+#if DB_DEBUG
+	fprintf(stderr, "db_get_series: offset=%d, nobs=%d\n", sinfo.offset, sinfo.nobs);
+#endif
+
 	if (db_type == GRETL_RATS_DB) {
 	    err = get_rats_db_data(db_name, &sinfo, dbZ);
 	} else if (db_type == GRETL_PCGIVE_DB) {
@@ -1423,8 +1443,18 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	    err = get_native_db_data(db_name, &sinfo, dbZ);
 	} 
 
+#if DB_DEBUG
+	fprintf(stderr, "db_get_series: get_XXX_db_data gave %d\n", err);
+#endif
+
+	if (err == DB_MISSING_DATA) {
+	    fprintf(stderr, "There were missing data\n");
+	    err = 0;
+	}
+
 	if (!err) {
-	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, this_var_method, v);
+	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, this_var_method, v,
+				  &newdata);
 	}
 
 	/* free up temp stuff */
@@ -1434,6 +1464,9 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	if (!err) {
 	    pprintf(prn, _("Series imported OK"));
 	    pputc(prn, '\n');
+	    if (newdata) {
+		print_smpl(pdinfo, 0, prn);
+	    }
 	}
     }
     
@@ -1474,44 +1507,76 @@ int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 	    err = 1;
 	}
     }
+
+#if DB_DEBUG
+    if (err) {
+	fprintf(stderr, "check_db_import: err = %d\n", err);
+	fprintf(stderr, "%s\n", gretl_errmsg);
+	fprintf(stderr, "(pdinfo->n = %d)\n", pdinfo->n);
+    }
+#endif
     
     return err;
 }
 
+void init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
+{
+    pdinfo->pd = sinfo->pd;
+
+    strcpy(pdinfo->stobs, sinfo->stobs);
+    strcpy(pdinfo->endobs, sinfo->endobs);
+    colonize_obs(pdinfo->stobs);
+    colonize_obs(pdinfo->endobs);
+
+    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+    pdinfo->n = sinfo->nobs;
+    pdinfo->v = 2;
+
+    pdinfo->t1 = 0;
+    pdinfo->t2 = pdinfo->n - 1;
+}
+
 static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo, 
 			    double ***pZ, DATAINFO *pdinfo,
-			    CompactMethod method, int dbv)
+			    CompactMethod method, int dbv,
+			    int *newdata)
 {
     double *xvec = NULL;
-    int n, t, start, stop, pad1 = 0, pad2 = 0;
+    int pad1 = 0, pad2 = 0;
+    int t, start, stop;
+    int free_xvec = 0;
     int new = (dbv == pdinfo->v);
 
-    if (check_db_import(sinfo, pdinfo)) {
+    if (pdinfo->n == 0) {
+	/* if the frequency and length of the dataset are not defined yet,
+	   then initialize using sinfo */
+	init_datainfo_from_sinfo(pdinfo, sinfo);
+	pdinfo->v = 0; /* trigger for creating data array below */
+	*newdata = 1;
+	if (pdinfo->pd != 1 || strcmp(pdinfo->stobs, "1")) { 
+	    pdinfo->structure = TIME_SERIES;
+	}	
+    } else if (check_db_import(sinfo, pdinfo)) {
 	return 1;
     }
 
-    /* the data matrix may still be empty */
     if (pdinfo->v == 0) {
-	pdinfo->v = 1;
+	/* the data matrix is still empty */
+	pdinfo->v = 2;
 	dbv = 1;
 	if (start_new_Z(pZ, pdinfo, 0)) {
 	    strcpy(gretl_errmsg, _("Out of memory adding series"));
 	    return 1;
 	}
-    }
-
-#if DB_DEBUG
-    fprintf(stderr, "Z=%p\n", (void *) *pZ);
-    fprintf(stderr, "pdinfo->n = %d, pdinfo->v = %d, pdinfo->varname = %p\n",
-	    pdinfo->n, pdinfo->v, (void *) pdinfo->varname);
-#endif
-
-    if (new && dataset_add_series(1, pZ, pdinfo)) {
+    } else if (new && dataset_add_series(1, pZ, pdinfo)) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
 	return 1;
     }
 
-    n = pdinfo->n;
+#if DB_DEBUG
+    fprintf(stderr, "Z=%p\n", (void *) *pZ);
+    fprintf(stderr, "pdinfo->n = %d, pdinfo->v = %d, dbv = %d\n", pdinfo->n, pdinfo->v, dbv);
+#endif
 
     /* is the frequency of the new var higher? */
     if (sinfo->pd > pdinfo->pd) {
@@ -1532,22 +1597,17 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    return 1;
 	}
 	xvec = compact_db_series(dbZ[1], sinfo, pdinfo->pd, method);
+	if (xvec == NULL) {
+	    strcpy(gretl_errmsg, _("Out of memory adding series"));
+	    if (new) {
+		dataset_drop_last_variables(1, pZ, pdinfo);
+	    }
+	    return 1;
+	}
+	free_xvec = 1;
     } else {  
 	/* series does not need compacting */
-	xvec = malloc(sinfo->nobs * sizeof *xvec);
-	if (xvec != NULL) {
-	    for (t=0; t<sinfo->nobs; t++) {
-		xvec[t] = dbZ[1][t];
-	    }
-	} 
-    }
-
-    if (xvec == NULL) {
-	strcpy(gretl_errmsg, _("Out of memory adding series"));
-	if (new) {
-	    dataset_drop_last_variables(1, pZ, pdinfo);
-	}
-	return 1;
+	xvec = dbZ[1];
     }
 
     /* common stuff for adding a var */
@@ -1564,17 +1624,21 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    (*pZ)[dbv][t] = NADBL;
 	}
 	start = pad1;
-    } else start = 0;
+    } else {
+	start = 0;
+    }
 
     if (pad2 > 0) {
 #if DB_DEBUG
 	fprintf(stderr, "Padding at end, %d obs\n", pad2);
 #endif
-	for (t=n-1; t>=n-1-pad2; t--) {
+	for (t=pdinfo->n - 1; t>=pdinfo->n - 1 - pad2; t--) {
 	    (*pZ)[dbv][t] = NADBL;
 	}
-	stop = n - pad2;
-    } else stop = n;
+	stop = pdinfo->n - pad2;
+    } else {
+	stop = pdinfo->n;
+    }
 
     /* fill in actual data values */
 #if DB_DEBUG
@@ -1584,7 +1648,9 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	(*pZ)[dbv][t] = xvec[t-pad1];
     }
 
-    free(xvec);
+    if (free_xvec) {
+	free(xvec);
+    }
 
     return 0;
 }

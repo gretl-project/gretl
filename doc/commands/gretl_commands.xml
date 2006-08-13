@@ -1241,35 +1241,39 @@
     </usage>
 
     <description>
-      <para>Reads the variables in <repl>varlist</repl> from a
-	database (gretl or RATS 4.0), which must have been opened
-	previously using the <cmdref targ="open"/> command. In
-	addition, a data frequency and sample range must be
-	established using the <cmdref targ="setobs"/> and <cmdref
-	  targ="smpl"/> commands
-	prior to using this command. Here is a full example:</para>
+      <para>
+	Reads the variables in <repl>varlist</repl> from a database
+	(gretl, RATS 4.0 or PcGive), which must have been opened
+	previously using the <cmdref targ="open"/> command.  The
+	data frequency and sample range may be established via the
+	<cmdref targ="setobs"/> and <cmdref targ="smpl"/> commands prior
+	to using this command. Here is a full example:</para>
       <code>
 	open macrodat.rat
 	setobs 4 1959:1
 	smpl ; 1999:4
 	data GDP_JP GDP_UK</code>
-
-      <para>These commands open a database named
-	<filename>macrodat.rat</filename>, establish a quarterly data
-	set starting in the first quarter of 1959 and ending in the
-	fourth quarter of 1999, and then import the series named
+      <para>
+	The commands above open a database named
+	<filename>macrodat.rat</filename>, establish a quarterly data set
+	starting in the first quarter of 1959 and ending in the fourth
+	quarter of 1999, and then import the series named
 	<lit>GDP_JP</lit> and <lit>GDP_UK</lit>.</para>
-
-      <para>If the series to be read are of higher frequency than the
-	working data set, you must specify a compaction method as
-	below:</para>
+      <para>
+	If <lit>setobs</lit> and <lit>smpl</lit> are not used in this way,
+	the data frequency and sample range are set using the first variable
+	read from the database.
+      </para>
+      <para>
+	If the series to be read are of higher frequency than the working
+	data set, you must specify a compaction method as below:</para>
       <code>
 	data (compact=average) LHUR PUNEW</code>
-
-      <para>The four available compaction methods are
-	<quote>average</quote> (takes the mean of the high frequency
-	observations), <quote>last</quote> (uses the last
-	observation), <quote>first</quote> and <quote>sum</quote>.
+      <para>
+	The four available compaction methods are <quote>average</quote>
+	(takes the mean of the high frequency observations),
+	<quote>last</quote> (uses the last observation),
+	<quote>first</quote> and <quote>sum</quote>.
       </para> 
 
     </description>

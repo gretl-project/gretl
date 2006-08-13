@@ -2455,7 +2455,7 @@ get_test_pval_string (const ModelTest *test, char *str, PRN *prn)
     }
 }
 
-void gretl_model_test_print_direct (ModelTest *test, PRN *prn)
+void gretl_model_test_print_direct (const ModelTest *test, PRN *prn)
 {
     char buf[128];
     const char *tstat;

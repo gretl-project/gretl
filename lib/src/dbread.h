@@ -23,11 +23,9 @@
 #define DB_DESCRIP_LEN 72  /* size of array to hold "# description" */
 
 typedef enum {
-    DB_OK = 0,
-    DB_MISSING_DATA,
+    DB_MISSING_DATA = E_MAX + 1,
     DB_NO_SUCH_SERIES,
-    DB_PARSE_ERROR,
-    DB_NOT_FOUND
+    DB_PARSE_ERROR
 } db_error_codes;
 
 typedef enum {
@@ -81,6 +79,8 @@ double *compact_db_series (const double *src, SERIESINFO *sinfo,
 
 double *expand_db_series (const double *src, SERIESINFO *sinfo,
 			  int target_pd);
+
+void init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo);
 
 int set_db_name (const char *fname, int filetype, const PATHS *ppaths, 
 		 PRN *prn);

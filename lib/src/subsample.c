@@ -412,8 +412,8 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
     *gretl_errmsg = '\0';
 
 #if SUBDEBUG
-    fprintf(stderr, "real_restore_full_sample: pZ=%p, ppdinfo=%p cum=%d\n",
-	    (void *) pZ, (void *) ppdinfo, cumulate);
+    fprintf(stderr, "real_restore_full_sample: pZ=%p, ppdinfo=%p\n",
+	    (void *) pZ, (void *) ppdinfo);
     fprintf(stderr, "*pZ=%p, *ppdinfo=%p\n",
 	    (void *) *pZ, (void *) *ppdinfo);
 #endif
@@ -1081,7 +1081,9 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo)
 	return db_set_sample(line, pdinfo);
     }
 
-    if (nf == 1) return 0;
+    if (nf == 1) {
+	return 0;
+    }
 	
     if (nf == 2) {
 	if (sscanf(line, "%4s %10s", cmd, newstart) != 2) {

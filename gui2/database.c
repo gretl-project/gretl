@@ -166,7 +166,7 @@ static int get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo,
     if (err) {
 	show_network_error(vwin, errbuf);
 	free(getbuf);
-	return DB_NOT_FOUND;
+	return E_FOPEN;
     } 
 
     offset = 0L;
@@ -193,7 +193,7 @@ static int get_remote_db_data (windata_t *vwin, SERIESINFO *sinfo,
     update_statusline(vwin, "OK");
     free(getbuf);
 
-    return DB_OK;
+    return 0;
 }
 
 static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
@@ -236,24 +236,6 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     }
 
     register_graph();
-}
-
-static void 
-init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
-{
-    pdinfo->pd = sinfo->pd;
-
-    strcpy(pdinfo->stobs, sinfo->stobs);
-    strcpy(pdinfo->endobs, sinfo->endobs);
-    colonize_obs(pdinfo->stobs);
-    colonize_obs(pdinfo->endobs);
-
-    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
-    pdinfo->n = sinfo->nobs;
-    pdinfo->v = 2;
-
-    pdinfo->t1 = 0;
-    pdinfo->t2 = pdinfo->n - 1;
 }
 
 static gchar *expand_warning (int mult)
@@ -598,7 +580,6 @@ static void destroy_db_win (GtkWidget *w, gpointer data)
 	if (vwin->popup != NULL) {
 	    gtk_widget_destroy(vwin->popup);
 	}
-
 	free(vwin);
 	vwin = NULL;
     }
@@ -726,15 +707,15 @@ void open_bn7_window (char *fname)
     make_db_series_list(PCGIVE_SERIES, fname, NULL);
 }
 
-static int check_serinfo (char *str, char *sername)
+static int check_serinfo (char *str, char *sername, int *nobs)
 {
     char pdc;
     char stobs[OBSLEN], endobs[OBSLEN];
-    int n, err = 0;
+    int err = 0;
 
     if (!isalpha((unsigned char) sername[0]) || 
 	sscanf(str, "%c %10s - %10s %*s = %d", 
-	       &pdc, stobs, endobs, &n) != 4 || 
+	       &pdc, stobs, endobs, nobs) != 4 || 
 	!isdigit((unsigned char) stobs[0]) || 
 	!isdigit((unsigned char) endobs[0]) ||
 	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U' &&
@@ -803,6 +784,7 @@ static int make_local_db_series_list (windata_t *vwin)
     char line1[256], line2[72], dbidx[MAXLEN];
     FILE *fp;
     size_t n;
+    int offset = 0;
     int err = 0;
 
 #if 0
@@ -823,10 +805,11 @@ static int make_local_db_series_list (windata_t *vwin)
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
 			   (GTK_TREE_VIEW(vwin->listbox)));
-    gtk_list_store_clear (store);
-    gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
+    gtk_list_store_clear(store);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     while (fgets(line1, sizeof line1, fp) != NULL && !err) {
+	int nobs = 0;
 
 	if (*line1 == '#') {
 	    continue;
@@ -854,12 +837,15 @@ static int make_local_db_series_list (windata_t *vwin)
 	row[2] = line2;
 
 	if (!err) {
-	    err = check_serinfo(line2, sername);
+	    err = check_serinfo(line2, sername, &nobs);
 	}
 
 	gtk_list_store_append(store, &iter);
-	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
-			    2, row[2], -1);
+	gtk_list_store_set(store, &iter, 0, row[0], 1, row[1],
+			   2, row[2], 3, offset * sizeof(dbnumber),
+			   -1);
+
+	offset += nobs;
     }
 
     fclose(fp);
@@ -876,6 +862,7 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
     gchar *row[3];
     char sername[VNAMELEN];
     char line1[150], line2[150];
+    int offset = 0;
     int n, err = 0;
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
@@ -886,6 +873,7 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
     bufgets_init(buf);
 
     while (bufgets(line1, sizeof line1, buf) && !err) {
+	int nobs = 0;
 
 	if (*line1 == '#') {
 	    continue;
@@ -910,12 +898,15 @@ static int make_remote_db_series_list (windata_t *vwin, char *buf)
 
 	row[2] = line2;
 	if (!err) {
-	    err = check_serinfo(line2, sername);
+	    err = check_serinfo(line2, sername, &nobs);
 	}
 
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set (store, &iter, 0, row[0], 1, row[1],
-			    2, row[2], -1);
+			    2, row[2], 3, nobs * sizeof(dbnumber),
+			    -1);
+
+	offset += nobs;
     }
 
     db_drag_connect(vwin);
@@ -1115,23 +1106,8 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
 	return NULL;
     }
 
-    if (action == PCGIVE_SERIES || action == RATS_SERIES) {
-	tree_view_get_int(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
-			  3, &sinfo->offset);
-    } else {
-	int i, n;
-
-	sinfo->offset = 0;
-	for (i=0; i<vwin->active_var; i++) {
-	    n = 0;
-	    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
-				 i, 2, &temp);
-	    sscanf(temp, "%*c %*s %*s %*s %*s %*s %d", &n);
-	    g_free(temp);
-	    sinfo->offset += n;
-	}
-	sinfo->offset *= sizeof(dbnumber);
-    }
+    tree_view_get_int(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
+		      3, &sinfo->offset);
 
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), 
 			 vwin->active_var, 0, &temp);

@@ -325,7 +325,7 @@ void model_test_set_crit_and_alpha (ModelTest *test,
 
 void gretl_model_test_print (const MODEL *pmod, int i, PRN *prn);
 void gretl_model_print_last_test (const MODEL *pmod, PRN *prn);
-void gretl_model_test_print_direct (ModelTest *test, PRN *prn);
+void gretl_model_test_print_direct (const ModelTest *test, PRN *prn);
 
 void gretl_model_destroy_tests (MODEL *pmod);
 

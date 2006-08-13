@@ -88,8 +88,8 @@ enum extra_cmds {
 
 enum file_ops {
     OPEN_DATA = GUI_CMD_MAX + 1, /* don't collide with extra_cmds */
-    OPEN_DB,
-    OPEN_RATSDB,
+    OPEN_RATS_DB,
+    OPEN_PCGIVE_DB,
     OPEN_SCRIPT,
     OPEN_CSV,
     APPEND_DATA,
@@ -150,8 +150,6 @@ enum browser_codes {
     REMOTE_FUNC_FILES,
     FUNC_EDIT,
     NATIVE_DB,
-    RATS_DB,
-    PCGIVE_DB,
     REMOTE_DB,
     NATIVE_SERIES,
     RATS_SERIES,

@@ -544,7 +544,12 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 
     if (dataset_is_panel(pdinfo)) {
 	pprintf(prn, "%s\n", _("panel"));
+    } 
+#if 0
+    else if (dataset_is_time_series(pdinfo)) {
+	pprintf(prn, "%s\n", _("time series"));
     }
+#endif
 }
 
 /**

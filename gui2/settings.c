@@ -468,7 +468,7 @@ void get_default_dir (char *s, int action)
 	    slash_terminate(s);
 	    return;
 	}
-    } else if (action == RATS_DB) {
+    } else if (action == OPEN_RATS_DB) {
 	strcpy(s, paths.ratsbase);
 	return;
     }

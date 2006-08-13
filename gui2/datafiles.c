@@ -964,8 +964,7 @@ void display_files (gpointer p, guint code, GtkWidget *w)
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(browse_func), vwin);
 
-	if (code != NATIVE_DB && code != RATS_DB && 
-	    code != FUNC_FILES && !REMOTE_ACTION(code)) {
+	if (code != NATIVE_DB && code != FUNC_FILES && !REMOTE_ACTION(code)) {
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(delete_widget), vwin->w); 
 	}
@@ -1200,12 +1199,6 @@ static GtkWidget *files_window (windata_t *vwin)
 	titles = remote_db_titles;
 	cols = 3;
 	full_width = 560;
-	break;
-    case RATS_DB:
-	titles = db_titles;
-	cols = 2;
-	hidden_col = TRUE;
-	full_width = 240;
 	break;
     case PS_FILES:
 	titles = ps_titles;
