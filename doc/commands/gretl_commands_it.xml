@@ -1238,12 +1238,12 @@
     </usage>
 
     <description>
-      <para>Legge le variabili nella <repl>lista-variabili</repl> da un
-	database (gretl o RATS 4.0), che deve essere stato precedentemente
-        aperto con il comando <cmdref targ="open"/>. Inoltre, prima di eseguire
-        questo comando, va impostata una frequenza dei dati e un intervallo del
-        campione, usando i comandi <cmdref targ="setobs"/> e <cmdref
-	  targ="smpl"/>. Ecco un esempio completo:</para>
+      <para>
+        Legge le variabili nella <repl>lista-variabili</repl> da un
+	database (gretl, RATS 4.0 o PcGive), che deve essere stato precedentemente
+        aperto con il comando <cmdref targ="open"/>. La frequenza dei dati l'intervallo
+        del campione possono essere impostati usando i comandi <cmdref targ="setobs"/>
+        e <cmdref targ="smpl"/> prima di questo comando. Ecco un esempio completo:</para>
 
       <code>
 	open macrodat.rat
@@ -1255,11 +1255,17 @@
 	<filename>macrodat.rat</filename>, impostano un dataset trimestrale
 	che inizia nel primo trimestre del 1959 e finisce nel quarto trimestre
 	del 1999 e infine importano le serie <lit>GDP_JP</lit> e <lit>GDP_UK</lit>.
-        </para>
-
-      <para>Se le serie da leggere hanno frequenza maggiore di quella impostata
+      </para>
+      <para>
+        Se non si usano <lit>setobs</lit> e <lit>smpl</lit> nel modo descritto,
+        la frequenza dei dati e l'intervallo del campione vengono impostati
+        usando la prima variabile letta dal database.
+      </para>
+      <para>
+        Se le serie da leggere hanno frequenza maggiore di quella impostata
         nel dataset, occorre specificare un metodo di compattamento, come mostrato
-        di seguito</para>
+        di seguito
+      </para>
 
       <code>
 	data (compact=average) LHUR PUNEW</code>
@@ -3589,6 +3595,10 @@
 	  <effect>correlazione seriale</effect>
         </option>
         <option>
+	  <flag>--arch</flag>
+	  <effect>ARCH</effect>
+        </option>
+        <option>
 	  <flag>--squares</flag>
 	  <effect>non-linearità, quadrati</effect>
         </option>
@@ -3625,15 +3635,17 @@
 	Deve seguire immediatamente un comando <cmd>ols</cmd>. A seconda delle
         opzioni usate, il comando esegue una combinazione dei test seguenti:
         test dei moltiplicatori di Lagrange per la non-linearità (logaritmi e
-        quadrati), test di White per l'eteroschedasticità e test LMF per la
-        correlazione seriale di ordine pari alla periodicità (si veda Kiviet,
-        1986), mostrando anche i coefficienti delle corrispondenti regressioni
-        ausiliarie.
+        quadrati), test di White per l'eteroschedasticità, test LMF per la
+        correlazione seriale (si veda Kiviet, 1986) e test per il modello ARCH
+        (Autoregressive Conditional Heteroskedasticity, si veda anche il comando
+   	<cmd>arch</cmd>).
       </para>
       <para>
 	L'argomento opzionale <lit>ordine</lit> è rilevante solo nel caso si
-        scelga l'opzione <lit>--autocorr</lit>. Per impostazione predefinita
-        l'ordine viene scelto pari alla periodicità dei dati.
+        scelga l'opzione <lit>--autocorr</lit> o l'opzione <lit>--arch</lit>.
+        Per impostazione predefinita, questi test sono eseguiti usando un ordine
+        di ritardo pari alla periodicità dei dati, ma è possibile anche
+        impostare un ordine di ritardo specifico.
       </para>
       <para>
 	L'opzione <lit>--panel</lit> è disponibile solo se il modello viene
@@ -5588,14 +5600,14 @@
         valore numerico al secondo. Nel caso della singola equazione, i
         parametri sono indicati con la sintassi b<repl>N</repl>, dove
         <repl>N</repl> rappresenta la posizione nella lista dei regressori, a
-        partire da zero. Ad esempio, <lit>b1</lit> indica il secondo parametro
+        partire da uno. Ad esempio, <lit>b2</lit> indica il secondo parametro
         della regressione. Nel caso del sistema, i parametri vengono indicati
         con la sintassi <lit>b</lit> seguita da due numeri tra parentesi quadre.
         Il primo numero rappresenta la posizione dell'equazione all'interno del
-        sistema a partire da 1, mentre il secondo indica la posizione nella
-        lista dei regressori, a partire da zero. Ad esempio <lit>b[2,0]</lit>
-        indica il primo parametro della seconda equazione, mentre
-	<lit>b[3,1]</lit> il secondo parametro della terza equazione.
+        sistema, mentre il secondo indica la posizione nella lista dei regressori.
+        Ad esempio <lit>b[2,1]</lit> indica il primo parametro della seconda
+        equazione, mentre <lit>b[3,2]</lit> il secondo parametro della terza
+        equazione.
       </para>
 
       <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
@@ -5659,7 +5671,7 @@
         primo membro e un valore numerico al secondo. Nel caso della singola
         equazione, i parametri sono indicati con la sintassi b<repl>N</repl>,
         dove <repl>N</repl> rappresenta la posizione nella lista dei regressori,
-        a partire da zero. Ad esempio, <lit>b1</lit> indica il secondo parametro
+        a partire da uno. Ad esempio, <lit>b2</lit> indica il secondo parametro
         della regressione.
       </para>
 
@@ -5690,10 +5702,10 @@
         primo membro e un valore numerico al secondo. 
         I parametri vengono indicati con la sintassi <lit>b</lit> seguita da due
         numeri tra parentesi quadre.  Il primo numero rappresenta la posizione
-        dell'equazione all'interno del sistema a partire da 1, mentre il secondo
-        indica la posizione nella lista dei regressori, a partire da zero. Ad
-        esempio <lit>b[2,0]</lit> indica il primo parametro della seconda
-        equazione, mentre <lit>b[3,1]</lit> il secondo parametro della terza
+        dell'equazione all'interno del sistema, mentre il secondo indica la
+        posizione nella lista dei regressori, entrambi contati a partire da uno.
+        Ad esempio <lit>b[2,1]</lit> indica il primo parametro della seconda
+        equazione, mentre <lit>b[3,2]</lit> il secondo parametro della terza
         equazione.
       </para>
 
@@ -5732,8 +5744,8 @@
 
       <para>Se il VECM è di rango 1, è possibile esprimere i parametri nella
         forma b<repl>N</repl>, dove <repl>N</repl> rappresenta la posizione nel
-        vettore di correzione dell'errore, a partire da zero. Ad esempio,
-        <lit>b1</lit> indica il secondo parametro di correzione dell'errore.
+        vettore di correzione dell'errore, a partire da uno. Ad esempio,
+        <lit>b2</lit> indica il secondo parametro di correzione dell'errore.
       </para>
 
       <para>Se il rango è maggiore di 1, è possibile esprimere i parametri
@@ -5750,8 +5762,8 @@
       </para>
 
       <code>
-	b0 + b1 = 0
-	b0 + b2 = 0</code>
+	b1 + b3 = 0
+	b1 + b3 = 0</code>
 
     </description>
 
