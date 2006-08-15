@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-08-02 15:00-0400\n"
-"PO-Revision-Date: 2006-08-12 15:00+0100\n"
+"PO-Revision-Date: 2006-08-14 01:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2486,7 +2486,7 @@ msgstr "Test na nieliniowo¶æ (kwadraty)"
 
 #: lib/src/gretl_model.c:2217 lib/src/modelprint.c:606
 msgid "White's test for heteroskedasticity"
-msgstr "Test White'a na heteroskedastyczno¶æ"
+msgstr "Test White'a na heteroskedastyczno¶æ reszt (zmienno¶æ wariancji resztowej)"
 
 #: lib/src/gretl_model.c:2218
 msgid "heteroskedasticity not present"
@@ -2506,7 +2506,7 @@ msgstr "Test Hausmana"
 
 #: lib/src/gretl_model.c:2224
 msgid "OLS estimates are consistent"
-msgstr "estymator KMNK jest zgodny"
+msgstr "Estymator KMNK jest zgodny"
 
 #: lib/src/gretl_model.c:2227
 msgid "GLS estimates are consistent"
@@ -4564,7 +4564,7 @@ msgstr ""
 #: lib/src/printout.c:280
 msgid "Test for null hypothesis of normal distribution"
 msgstr ""
-"Test Jarque'a-Bera"
+"Test Jarque'a-Bera. "
 "Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny"
  
 #: lib/src/printout.c:287
@@ -6504,7 +6504,7 @@ msgstr "gretl: model równañ wspó³zale¿nych"
 
 #: gui2/callbacks.c:452
 msgid "Specify simultaneous equations:"
-msgstr "Specyfikacja równañ wspó³zale¿nych:"
+msgstr "Specyfikacja równañ wspó³zale¿nych (equation, endog, instr):"
 
 #: gui2/callbacks.c:457
 msgid "gretl: linear restrictions"
@@ -7956,7 +7956,7 @@ msgid ""
 "in your web browser."
 msgstr ""
 "Je¶li nie masz loginu na serwerze gretla, proszê\n"
-"zobaæ stronê http://ricardo.ecn.wfu.edu/gretl/apply/.\n"
+"zobacz stronê http://ricardo.ecn.wfu.edu/gretl/apply/.\n"
 "Przycisk 'Website' otwiera t± stronê do przegl±dania.\n"
 " "
 
@@ -8928,15 +8928,15 @@ msgstr "/Model/Inne _liniowe modele"
 
 #: gui2/gretl.c:522
 msgid "/Model/Other linear models/_Weighted Least Squares..."
-msgstr "/Model/Inne _liniowe modele/_Wa¿ona metoda najmniejszych kwadratów..."
+msgstr "/Model/Inne _liniowe modele/_Wa¿ona metoda najmniejszych kwadratów (UMNK)..."
 
 #: gui2/gretl.c:524
 msgid "/Model/Other linear models/H_eteroskedasticity corrected..."
-msgstr "/Model/Inne _liniowe modele/Korekta H_eteroskedastyczno¶ci..."
+msgstr "/Model/Inne _liniowe modele/Korekta H_eteroskedastyczno¶ci (UMNK)..."
 
 #: gui2/gretl.c:526
 msgid "/Model/Other linear models/_Two-Stage Least Squares..."
-msgstr "/Model/Inne _liniowe modele/_Podwójna metoda najmniejszych kwadratów..."
+msgstr "/Model/Inne _liniowe modele/_Podwójna metoda najmniejszych kwadratów (2MNK)..."
 
 #: gui2/gretl.c:529
 msgid "/Model/Other linear models/High _precision OLS..."
@@ -10745,19 +10745,19 @@ msgstr "B³±d flip dla \"%s\"\n"
 
 #: gui2/menustate.c:129
 msgid "/Model/Time series/_Cochrane-Orcutt..."
-msgstr "/Model/Szeregi czasowe/_Cochrane-Orcutt..."
+msgstr "/Model/Szeregi czasowe/_Cochrane-Orcutt (UMNK)..."
 
 #: gui2/menustate.c:130
 msgid "/Model/Time series/_Hildreth-Lu..."
-msgstr "/Model/Szeregi czasowe/_Hildreth-Lu..."
+msgstr "/Model/Szeregi czasowe/_Hildreth-Lu (UMNK)..."
 
 #: gui2/menustate.c:131
 msgid "/Model/Time series/_Prais-Winsten..."
-msgstr "/Model/Szeregi czasowe/_Prais-Winsten..."
+msgstr "/Model/Szeregi czasowe/_Prais-Winsten (UMNK)..."
 
 #: gui2/menustate.c:132
 msgid "/Model/Time series/_Autoregressive estimation..."
-msgstr "/Model/Szeregi czasowe/_Uogólniony Cochrane-Orcutt..."
+msgstr "/Model/Szeregi czasowe/_Uogólniony Cochrane-Orcutt (UMNK)..."
 
 #: gui2/menustate.c:133
 msgid "/Model/Time series/ARI_MA..."
@@ -11247,7 +11247,7 @@ msgstr "testuje istotno¶æ opó¼nienia od wskazanego maksymalnego rzêdu"
 
 #: gui2/selector.c:2689
 msgid "Skip initial DF tests"
-msgstr "Opuszczono wstêpny test DF"
+msgstr "skrócona forma wydruku"
 
 #: gui2/selector.c:2693
 msgid "Iterated weighted least squares"
@@ -11255,7 +11255,7 @@ msgstr "Iteracyjna wa¿ona MNK"
 
 #: gui2/selector.c:2699
 msgid "Use X-12-ARIMA"
-msgstr "wykorzystaj X-12-ARIMA"
+msgstr "Wykorzystaj X-12-ARIMA"
 
 #: gui2/selector.c:2729
 msgid "Show lagged variables"
