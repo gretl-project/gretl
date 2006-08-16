@@ -5762,7 +5762,7 @@
       </para>
 
       <code>
-	b1 + b3 = 0
+	b1 + b2 = 0
 	b1 + b3 = 0</code>
 
     </description>
@@ -6036,22 +6036,6 @@
 
   </command>
 
-  <command name="seed" section="Programming" context="gui"
-    label="Seme dei numeri casuali">
-
-    <description>
-      <para>Richiede un argomento intero. Imposta il seme del generatore
-      di numeri pseudo-casuali usato dalle opzioni Variabile casuale
-      uniforme e normale nel menù Aggiungi.
-      </para>
-      <para>
-      Di solito il seme è impostato al momento dell'avvio del programma usando
-      l'orologio di sistema, ma per ottenere sequenze ripetibili di numeri
-      pseudo-casuali occorre impostarlo manualmente.
-      </para>
-    </description>
-  </command>
-
   <command name="set" section="Programming" label="Imposta parametri del programma" context="cli">
 
     <usage>
@@ -6113,8 +6097,7 @@
             calcolo delle stime OLS.</para>
 	</li>
         <li>
-          <para><lit>seed</lit>:
-          un intero senza segno. Imposta il seme per il
+          <para><lit>seed</lit>: un intero senza segno. Imposta il seme per il
             generatore di numeri pseudo-casuali. Di solito il seme viene
             impostato a partire dall'ora di sistema, ma se si intende
             generare sequenze ripetibili di numeri casuali occorre impostare
