@@ -806,10 +806,13 @@ static char *convert8to7 (const char *s, int count)
     *dest = '\0';
     strncat(dest, s, count);
     iso_to_ascii(dest);
+#if 0
+    top_n_tail(dest);
+#endif
 
     if (*dest == '\0') {
 	strcpy(dest, "varname");
-    }
+    } 
 
     dprintf("convert8to7: returning '%s'\n", dest);
 

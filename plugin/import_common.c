@@ -19,11 +19,6 @@
 
 #ifdef EXCEL_IMPORTER
 
-# ifndef WIN32
-#  define BUILDING_PLUGIN
-#  include "../gui2/dialogs.h" /* for infobox */
-# endif
-
 static void set_all_missing (double **Z, DATAINFO *pdinfo)
 {
     int i, t;
@@ -405,6 +400,28 @@ static void colspin_changed (GtkEditable *ed, GtkWidget *w)
 }
 
 #ifdef EXCEL_IMPORTER
+# ifndef WIN32
+
+void infobox (const char *template, ...)
+{
+    GtkWidget *dialog;
+    char msg[MAXLEN];
+    va_list args;
+
+    va_start(args, template);
+    vsprintf(msg, template, args);
+    va_end(args);
+
+    dialog = gtk_message_dialog_new (NULL, 
+				     GTK_DIALOG_DESTROY_WITH_PARENT,
+				     GTK_MESSAGE_INFO,
+				     GTK_BUTTONS_CLOSE,
+				     msg);
+    gtk_dialog_run (GTK_DIALOG (dialog));
+    gtk_widget_destroy (dialog);
+}
+
+# endif /* !WIN32 */
 
 static 
 void debug_callback (GtkWidget *w, wbook *book)
@@ -416,19 +433,17 @@ void debug_callback (GtkWidget *w, wbook *book)
     }
 
     if (book_debugging(book) && !done) {
+# ifdef WIN32
 	gchar *msg;
 
-# ifdef WIN32
 	make_debug_fname();
 	msg = g_strdup_printf(I_("Sending debugging output to %s"),
 			      debug_fname);
 	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONINFORMATION);
+	g_free(msg);	
 # else
-	msg = g_strdup_printf(_("Sending debugging output to %s"),
-			      "stderr");
-	infobox(msg);
+	infobox(_("Sending debugging output to %s"), "stderr");
 # endif
-	g_free(msg);
 	done = 1;
     }
 }

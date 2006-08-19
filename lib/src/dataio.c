@@ -3469,8 +3469,10 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
  * @fname: name of file containing case markers.
  * 
  * Read case markers (strings of %OBSLEN - 1 characters or less that identify
- * the observations) from a file, and associate tham with the 
- * current data set.
+ * the observations) from a file, and associate them with the 
+ * current data set.  The file should contain one marker per line,
+ * with a number of lines equal to the number of observations in
+ * the current data set.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
  */
@@ -3479,7 +3481,8 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 {
     char **Sbak = NULL;
     FILE *fp;
-    char marker[OBSLEN], sformat[8];
+    char line[128];
+    char marker[OBSLEN], sformat[10];
     int t, err = 0;
 
     fp = gretl_fopen(fname, "r");
@@ -3488,7 +3491,7 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
     }
 
     if (pdinfo->S != NULL) {
-	/* keep backup copy */
+	/* keep backup copy of existing markers */
 	Sbak = pdinfo->S;
 	pdinfo->S = NULL;
     }
@@ -3498,15 +3501,15 @@ int add_obs_markers_from_file (DATAINFO *pdinfo, const char *fname)
 	goto bailout;
     }
     
-    sprintf(sformat, "%%%ds", OBSLEN - 1);
+    sprintf(sformat, "%%%d[^\n]", OBSLEN - 1);
 
-    for (t=0; t<pdinfo->n; t++) {
-	eatspace(fp);
-	if (fscanf(fp, sformat, marker)) {
-	    strcat(pdinfo->S[t], marker);
-	} else {
+    for (t=0; t<pdinfo->n && !err; t++) {
+	if (fgets(line, sizeof line, fp) == NULL) {
 	    err = E_DATA;
-	    goto bailout;
+	} else if (sscanf(line, sformat, marker) != 1) {
+	    err = E_DATA;
+	} else {
+	    strcat(pdinfo->S[t], marker);
 	}
     }
 
