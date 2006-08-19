@@ -28,7 +28,7 @@
 #include <time.h>
 #include <errno.h>
 
-#ifdef USE_GTK2
+#ifdef USE_GLIB2
 # include <glib.h>
 #endif
 
@@ -3117,7 +3117,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     csvinfo->delim = delim;
 
-#if USE_GTK2
+#if USE_GLIB2
     if (!g_utf8_validate(fname, -1, NULL)) {
 	gchar *trfname = g_locale_to_utf8(fname, -1, NULL, NULL, NULL);
 

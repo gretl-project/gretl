@@ -48,13 +48,8 @@
 #endif
 
 #ifdef ENABLE_NLS
-# ifdef USE_GTK2
-#  define I_(String) iso_gettext (String) 
-#  define M_(String) maybe_iso_gettext (String)
-# else
-#  define I_(String) _(String)
-#  define M_(String) _(String)
-# endif /* USE_GTK2 */
+# define I_(String) iso_gettext (String) 
+# define M_(String) maybe_iso_gettext (String)
 #else
 # define I_(String) String
 # define M_(String) String

@@ -29,7 +29,7 @@
 
 #ifndef WIN32
 # include <signal.h>
-# ifdef USE_GTK2
+# ifdef USE_GLIB2
 #  include <glib.h>
 #  define USE_GSPAWN
 # endif

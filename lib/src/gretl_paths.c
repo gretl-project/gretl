@@ -30,7 +30,7 @@
 # include <dirent.h>
 #endif
 
-#ifdef USE_GTK2
+#ifdef USE_GLIB2
 # include <glib.h>
 # if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
 #  ifdef WIN32
@@ -613,11 +613,7 @@ static void set_gretl_libpath (const char *path)
 #ifdef WIN32
     strcpy(gretl_paths.libpath, path);
 #else
-# ifdef USE_GTK2
     const char *sfx = "-gtk2/";
-# else
-    const char *sfx = "-gtk1/";
-# endif
     char *p = strstr(path, "/share");
 
     if (p) {
@@ -862,19 +858,11 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	    /* force english */
 	    sprintf(ppaths->helpfile, "%sgretlgui.hlp", ppaths->gretldir);
 	    sprintf(ppaths->cli_helpfile, "%sgretlcli.hlp", ppaths->gretldir);
-#ifdef USE_GTK2
 	    sprintf(ppaths->cmd_helpfile, "%sgretlcmd.hlp", ppaths->gretldir);
-#else
-	    sprintf(ppaths->cmd_helpfile, "%sgretlcli.hlp", ppaths->gretldir);
-#endif
 	} else {
 	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlgui.hlp"));
 	    sprintf(ppaths->cli_helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
-#ifdef USE_GTK2
 	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcmd.hlp"));
-#else
-	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
-#endif
 	}
     } else {
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));

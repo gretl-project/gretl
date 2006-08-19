@@ -31,7 +31,7 @@
 #ifdef _WIN32
 # include <windows.h>
 #else
-# ifdef USE_GTK2
+# ifdef USE_GLIB2
 #  define USE_GSPAWN
 #  include <glib.h>
 #  include <signal.h>
@@ -44,7 +44,7 @@
 #  ifndef WIFEXITED
 #   define WIFEXITED(stat_val) (((stat_val) & 255) == 0)
 #  endif
-# endif /* GTK2 */
+# endif /* GLIB2 */
 #endif /* ! _WIN32 */
 
 

@@ -30,7 +30,7 @@ print "; -- gretl.iss --\n";
 print "[Setup]\n";
 print "AppName=gretl\n";
 print "AppVerName=gretl version $verstr\n";
-print "AppCopyright=Copyright C 1999-2005 Allin Cottrell\n";
+print "AppCopyright=Copyright C 1999-2006 Allin Cottrell\n";
 print "DefaultDirName=c:\\userdata\\gretl\n";
 print "DefaultGroupName=gretl\n";
 print "UninstallDisplayIcon={app}\\gretlw32.exe\n";

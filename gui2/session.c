@@ -1064,6 +1064,10 @@ void free_session (void)
 	remove_session_dir();
 	*session.dirname = '\0';
     }
+
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
+    stop_talking();
+#endif
 }
 
 int highest_numbered_variable_in_session (void)

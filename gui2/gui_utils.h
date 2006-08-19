@@ -131,6 +131,7 @@ enum {
 } audio_render_keys;
 
 void audio_render_window (windata_t *vwin, int key);
+void stop_talking (void);
 #endif
 
 #endif /* GUI_UTILS_H */

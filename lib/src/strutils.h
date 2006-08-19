@@ -138,7 +138,7 @@ char *build_path (char *targ, const char *dirname, const char *fname,
 
 const char *path_last_element (const char *path);
 
-#if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
+#if defined(USE_GLIB2) || defined (HAVE_FNMATCH_H)
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern);
 #endif
 

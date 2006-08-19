@@ -398,7 +398,7 @@ if test "$build_gui" = "yes" ; then
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="2.0"
-      AC_DEFINE(USE_GTK2),
+      AC_DEFINE(USE_GLIB2),
       have_gtk="no"      
     )
 fi

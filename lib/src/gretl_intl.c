@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 
-#ifdef USE_GTK2
+#ifdef USE_GLIB2
 # include <glib.h>
 #endif
 
@@ -160,7 +160,7 @@ static int gretl_cpage;
 
 void set_gretl_charset (const char *s)
 {
-# ifdef USE_GTK2
+# ifdef USE_GLIB2
     const char *charset = NULL;
 # else
     char charset[16] = {0};
@@ -168,7 +168,7 @@ void set_gretl_charset (const char *s)
     char gretl_charset[32];
     int using_utf8 = 0;
 
-# ifdef USE_GTK2
+# ifdef USE_GLIB2
     using_utf8 = g_get_charset(&charset);
 # else
     if (*s == 'p' || *s == 'P') {
@@ -299,39 +299,6 @@ char *iso_gettext (const char *msgid)
 } 
 
 #endif  /* ENABLE_NLS */
-
-#ifndef USE_GTK2
-
-int
-utf8_to_iso_latin_1 (unsigned char *out, int outlen, 
-		     unsigned char *in, int inlen)
-{
-    unsigned char* outstart = out;
-    unsigned char* outend = out + outlen;
-    unsigned char* inend = in + inlen;
-    unsigned char c;
-
-    while (in < inend) {
-        c = *in++;
-        if (c < 0x80) {
-            if (out >= outend) {
-		return -1;
-	    }
-            *out++ = c;
-        } else if (((c & 0xFE) == 0xC2) && in < inend) {
-            if (out >= outend) {
-		return -1;
-	    }
-            *out++ = ((c & 0x03) << 6) | (*in++ & 0x3F);
-        } else {
-	    return -2;
-	}
-    }
-
-    return out - outstart;
-}
-
-#endif /* !USE_GTK2 */
 
 static void 
 iso_to_ascii_translate (char *targ, const char *src, int latin)
@@ -880,7 +847,7 @@ char *get_month_name (char *mname, int m)
 
 int get_utf_width (const char *str, int width)
 {
-# ifdef USE_GTK2
+# ifdef USE_GLIB2
     width += strlen(str) - g_utf8_strlen(str, -1);
 # endif
 
@@ -891,7 +858,7 @@ int get_translated_width (const char *str)
 {
     int w = strlen(str);
 
-# ifdef USE_GTK2
+# ifdef USE_GLIB2
     w += w - g_utf8_strlen(str, -1);
 # endif
 

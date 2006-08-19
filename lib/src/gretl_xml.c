@@ -1015,26 +1015,9 @@ int gretl_xml_get_submask (xmlNodePtr node, xmlDocPtr doc,
     return err;
 }
 
-static const char *get_gretl_encoding (void)
-{
-#ifdef USE_GTK2
-    const char *enc = "UTF-8";
-#else
-    const char *enc = get_gretl_charset();
-
-    if (enc == NULL) {
-	enc = "ISO-8859-1";
-    }
-#endif
-
-    return enc;
-}
-
 void gretl_xml_header (FILE *fp)
 {
-    const char *enc = get_gretl_encoding();
-
-    fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", enc);
+    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fp);
 }
 
 static int real_balanced_panel (const DATAINFO *pdinfo)
@@ -1118,7 +1101,6 @@ int gretl_write_gdt (const char *fname, const int *list,
 {
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
-    const char *enc;
     int gz = (fmt == GRETL_DATA_GZIPPED);
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     int panelobs = 0;
@@ -1203,20 +1185,18 @@ int gretl_write_gdt (const char *fname, const int *list,
 	sprintf(freqstr, "%d", pdinfo->pd);
     }
 
-    enc = get_gretl_encoding();
-
     if (gz) {
-	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		 "<gretldata name=\"%s\" frequency=\"%s\" "
 		 "startobs=\"%s\" endobs=\"%s\" ", 
-		 enc, datname, freqstr, startdate, enddate);
+		 datname, freqstr, startdate, enddate);
     } else {
-	fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
+	fprintf(fp, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		"<gretldata name=\"%s\" frequency=\"%s\" "
 		"startobs=\"%s\" endobs=\"%s\" ", 
-		enc, datname, freqstr, startdate, enddate);
+		datname, freqstr, startdate, enddate);
     }
 
     free(xmlbuf);
@@ -1410,33 +1390,14 @@ int gretl_write_gdt (const char *fname, const int *list,
     return err;
 }
 
-static int transcribe_string (char *targ, const char *src, int maxlen,
-			      int convert)
+static void transcribe_string (char *targ, const char *src, int maxlen)
 {
     *targ = '\0';
 
-#ifndef USE_GTK2
-    if (convert) {
-	char tmp[128] = {0};
-
-	if (maxlen > 128) {
-	    maxlen = 128;
-	}
-	strncat(tmp, src, maxlen - 1);
-	utf8_to_iso_latin_1((unsigned char *) targ, maxlen, 
-			    (unsigned char *) tmp, maxlen);
-    } else {
-	strncat(targ, src, maxlen - 1);
-    }
-#else
     strncat(targ, src, maxlen - 1);
-#endif
-
-    return 0;
 }
 
-static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
-			    int to_iso_latin)
+static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 {
     xmlNodePtr cur;
     xmlChar *tmp = xmlGetProp(node, (XUC) "count");
@@ -1486,8 +1447,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
         if (!xmlStrcmp(cur->name, (XUC) "variable")) {
 	    tmp = xmlGetProp(cur, (XUC) "name");
 	    if (tmp != NULL) {
-		transcribe_string(pdinfo->varname[i], (char *) tmp, VNAMELEN,
-				  to_iso_latin); 
+		transcribe_string(pdinfo->varname[i], (char *) tmp, VNAMELEN);
 		free(tmp);
 	    } else {
 		sprintf(gretl_errmsg, _("Variable %d has no name"), i);
@@ -1495,14 +1455,12 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ,
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "label");
 	    if (tmp != NULL) {
-		transcribe_string(VARLABEL(pdinfo, i), (char *) tmp, MAXLABEL,
-				  to_iso_latin);
+		transcribe_string(VARLABEL(pdinfo, i), (char *) tmp, MAXLABEL);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "displayname");
 	    if (tmp != NULL) {
-		transcribe_string(DISPLAYNAME(pdinfo, i), (char *) tmp, MAXDISP,
-				  to_iso_latin);
+		transcribe_string(DISPLAYNAME(pdinfo, i), (char *) tmp, MAXDISP);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (XUC) "compact-method");
@@ -1593,7 +1551,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 
 static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
 				 double ***pZ, DATAINFO *pdinfo,
-				 long progress, int to_iso_latin)
+				 long progress)
 {
     xmlNodePtr cur;
     xmlChar *tmp;
@@ -1694,8 +1652,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    if (pdinfo->markers) {
 		tmp = xmlGetProp(cur, (XUC) "label");
 		if (tmp) {
-		    transcribe_string(pdinfo->S[t], (char *) tmp, OBSLEN,
-				      to_iso_latin); 
+		    transcribe_string(pdinfo->S[t], (char *) tmp, OBSLEN);
 		    free(tmp);
 		} else {
 		    sprintf(gretl_errmsg, _("Case marker missing at obs %d"), t+1);
@@ -1933,7 +1890,6 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
     xmlNodePtr cur;
     int gotvars = 0, gotobs = 0, err = 0;
     int caldata = 0;
-    int to_iso_latin = 0;
     long fsz, progress = 0L;
 
     *gretl_errmsg = '\0';
@@ -1964,12 +1920,6 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	err = 1;
 	goto bailout;
     }
-
-#ifndef USE_GTK2
-    if (doc->encoding != NULL && strstr((char *) doc->encoding, "UTF")) {
-	to_iso_latin = 1;
-    }
-#endif
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
@@ -2023,7 +1973,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	    tmpdinfo->descrip = (char *) 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (XUC) "variables")) {
-	    if (process_varlist(cur, tmpdinfo, &tmpZ, to_iso_latin)) {
+	    if (process_varlist(cur, tmpdinfo, &tmpZ)) {
 		err = 1;
 	    } else {
 		gotvars = 1;
@@ -2033,8 +1983,7 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 		sprintf(gretl_errmsg, _("Variables information is missing"));
 		err = 1;
 	    }
-	    if (process_observations(doc, cur, &tmpZ, tmpdinfo, 
-				     progress, to_iso_latin)) {
+	    if (process_observations(doc, cur, &tmpZ, tmpdinfo, progress)) {
 		err = 1;
 	    } else {
 		gotobs = 1;

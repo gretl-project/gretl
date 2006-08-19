@@ -24,7 +24,7 @@
 #include <errno.h>
 #include <time.h>
 
-#if defined(USE_GTK2)
+#if defined(USE_GLIB2)
 # include <glib.h>
 #else
 # include <fnmatch.h>
@@ -1552,7 +1552,7 @@ const char *path_last_element (const char *path)
     return p;
 }
 
-#if defined(USE_GTK2)
+#if defined(USE_GLIB2)
 
 int *varname_match_list (const DATAINFO *pdinfo, const char *pattern)
 {

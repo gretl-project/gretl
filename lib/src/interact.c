@@ -812,7 +812,7 @@ static int add_time_ok (const char *s, int *lnum,
     }
 } 
 
-#if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
+#if defined(USE_GLIB2) || defined (HAVE_FNMATCH_H)
 
 static int wildcard_expand_ok (const char *s, int *lnum,
 			       const DATAINFO *pdinfo, CMD *cmd)
@@ -1746,7 +1746,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 		    continue; 
 		} 
 
-#if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
+#if defined(USE_GLIB2) || defined (HAVE_FNMATCH_H)
 		/* wildcard expansion? */
 		else if (!cmd->errcode && 
 			 wildcard_expand_ok(field, &lnum, pdinfo, cmd)) {
@@ -1780,7 +1780,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	    }
 	} /* end if isalpha(*field) */
 
-#if defined(USE_GTK2) || defined (HAVE_FNMATCH_H)
+#if defined(USE_GLIB2) || defined (HAVE_FNMATCH_H)
 	else if (*field == '*') {
 	    if (wildcard_expand_ok(field, &lnum, pdinfo, cmd)) {
 		/* handled, get on with it */

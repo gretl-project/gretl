@@ -280,9 +280,6 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
     xmlNodePtr cur = NULL;
     xmlChar *tmp;
     int err = 0;
-#ifndef USE_GTK2 /* FIXME? */
-    int to_iso_latin = 0;
-#endif
 
     LIBXML_TEST_VERSION
 	xmlKeepBlanksDefault(0);
@@ -293,12 +290,6 @@ read_session_xml (const char *fname, struct sample_info *sinfo)
 	gui_errmsg(err);
 	return 1;
     }
-
-#ifndef USE_GTK2
-    if (doc->encoding != NULL && strstr((char *) doc->encoding, "UTF")) {
-	to_iso_latin = 1;
-    }
-#endif
 
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;

@@ -25502,7 +25502,7 @@ echo "${ECHO_T}yes" >&6
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="2.0"
       cat >>confdefs.h <<\_ACEOF
-#define USE_GTK2 1
+#define USE_GLIB2 1
 _ACEOF
 
 fi

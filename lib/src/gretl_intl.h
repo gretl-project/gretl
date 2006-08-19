@@ -76,10 +76,4 @@ void console_off (void);
 
 #endif /* ENABLE_NLS */
 
-#ifndef USE_GTK2
-int
-utf8_to_iso_latin_1 (unsigned char* out, int outlen, 
-		     unsigned char* in, int inlen);
-#endif
-
 #endif /* GRETL_INTL_H */

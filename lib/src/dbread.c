@@ -21,9 +21,11 @@
 
 #include "libgretl.h"
 
-#ifdef USE_GTK2
+/* 
+#ifdef USE_GLIB2
 # include <glib.h>
 #endif
+*/
 
 #define DB_DEBUG 0
 

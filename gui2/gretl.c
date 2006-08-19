@@ -1093,7 +1093,7 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     if (key->keyval == GDK_a) {
 	audio_render_window(vwin, AUDIO_LISTBOX);
     } else if (key->keyval == GDK_x && !(mods & GDK_MOD1_MASK)) {
-	audio_render_window(NULL, AUDIO_LISTBOX);
+	stop_talking();
     }
 #endif
 

@@ -23,17 +23,13 @@
 
 #include <time.h>
 
-#ifdef USE_GTK2
-# define HAVE_G_RAND
-#endif
-
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
 # include <glib.h>
 #else
 # include "mt19937ar.c"
 #endif
 
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
 static GRand *gretl_rand;
 #endif
 
@@ -53,7 +49,7 @@ unsigned int get_gretl_random_seed (void)
 void gretl_rand_init (void)
 {
     useed = time(NULL);
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
     gretl_rand = g_rand_new();
     gretl_rand_set_seed((guint32) useed);
 #else
@@ -78,7 +74,7 @@ void gretl_rand_set_seed (unsigned int seed)
     } else {
 	useed = seed;
     }
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
     g_rand_set_seed(gretl_rand, useed);
 #else
     init_genrand(useed);
@@ -101,7 +97,7 @@ void gretl_uniform_dist (double *a, int t1, int t2)
     int t;
 
     for (t=t1; t<=t2; t++) {
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
 	a[t] = g_rand_double_range(gretl_rand, 0.0, 1.0);
 #else
 	a[t] = genrand_int32() * (1.0 / 4294967296.0);
@@ -128,7 +124,7 @@ void gretl_normal_dist (double *a, int t1, int t2)
 
     for (t=t1; t<=t2; t++) {
     tryagain:
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
 	x = g_rand_double(gretl_rand);
 	y = g_rand_double(gretl_rand);
 #else
@@ -171,7 +167,7 @@ int gretl_chisq_dist (double *a, int t1, int t2, int v)
 	a[t] = 0.0;
 	for (i=0; i<v; i++) {
 	tryagain:
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
 	    x = g_rand_double(gretl_rand);
 	    y = g_rand_double(gretl_rand);
 #else
@@ -242,7 +238,7 @@ int gretl_t_dist (double *a, int t1, int t2, int v)
 
 unsigned int gretl_rand_int_max (unsigned int max)
 {
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
     return g_rand_int_range(gretl_rand, 0, max);
 #else
     return genrand_int32() * (max / 4294967296.0);
@@ -258,7 +254,7 @@ unsigned int gretl_rand_int_max (unsigned int max)
 
 unsigned int gretl_rand_int (void)
 {
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
     return g_rand_int(gretl_rand);
 #else
     return genrand_int32();
@@ -273,7 +269,7 @@ unsigned int gretl_rand_int (void)
 
 void gretl_rand_free (void)
 {
-#ifdef HAVE_G_RAND
+#ifdef USE_GLIB2
     g_rand_free(gretl_rand);
 #else
     return;
