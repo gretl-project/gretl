@@ -632,11 +632,13 @@ static void fix_dbname (char *db)
     FILE *fp = NULL;
 
     if (strstr(db, ".bin") == NULL &&
-	strstr(db, ".rat") == NULL) {
+	strstr(db, ".rat") == NULL &&
+	strstr(db, ".RAT") == NULL &&
+	strstr(db, ".bn7") == NULL) {
 	strcat(db, ".bin");
     }
 
-    fp = fopen(db, "rb");
+    fp = gretl_fopen(db, "rb");
 
     if (fp == NULL && strstr(db, paths.binbase) == NULL) {
 	char tmp[MAXLEN];
@@ -645,7 +647,9 @@ static void fix_dbname (char *db)
 	build_path(db, paths.binbase, tmp, NULL);
     }
 
-    if (fp != NULL) fclose(fp);
+    if (fp != NULL) {
+	fclose(fp);
+    }
 }
 
 static void destroy (GtkWidget *widget, gpointer data)
@@ -845,7 +849,7 @@ int main (int argc, char *argv[])
 	case OPT_DBOPEN:
 	case OPT_WEBDB:
 #ifdef USE_GNOME
-	    strncpy(dbname, optdb, MAXLEN-1);
+	    strncpy(dbname, optdb, MAXLEN - 1);
 #else
 	    if (*filearg == '\0') {
 		gui_usage();
@@ -960,8 +964,10 @@ int main (int argc, char *argv[])
 	    *paths.datfile = '\0';
 	    break;
 	case GRETL_NATIVE_DB:
-	case GRETL_RATS_DB:    
+	case GRETL_RATS_DB:  
+	case GRETL_PCGIVE_DB:
 	    strcpy(dbname, paths.datfile);
+	    *tryfile = '\0';
 	    *paths.datfile = '\0';
 	    fix_dbname(dbname);
 	    gui_get_data = OPT_DBOPEN;

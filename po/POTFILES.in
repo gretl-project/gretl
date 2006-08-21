@@ -121,6 +121,7 @@ plugin/garch.c
 plugin/gnumeric_import.c
 plugin/gretlzip.c
 plugin/import_common.c
+plugin/jmulti_import.c
 plugin/johansen.c
 plugin/kernel.c
 plugin/lad.c

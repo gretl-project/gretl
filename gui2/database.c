@@ -205,17 +205,15 @@ static void display_dbdata (const double **dbZ, DATAINFO *dbdinfo)
     }
 
     printdata(NULL, dbZ, dbdinfo, OPT_O, prn);
-
     view_buffer(prn, 36, 350, _("gretl: display database series"), PRINT,
 		NULL); 
 }
 
 static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 {
-    int lines[1], list[2];
+    int lines[1] = {1};
+    int list[2] = {1, 1};
     int err;
-
-    list[0] = list[1] = 1;
 
     if (dbdinfo->structure == CROSS_SECTION) {
 	err = boxplots(list, NULL, dbZ, dbdinfo, 0);
@@ -224,8 +222,6 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 	}
 	return;
     }
-
-    lines[0] = 1;
 
     err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
 		  &plot_count, GP_GUI | GP_IDX);
@@ -240,15 +236,12 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
 static gchar *expand_warning (int mult)
 {
-    gchar *msg;
-
-    msg = g_strdup_printf(_("Do you really want to add a lower frequency series\n"
-			    "to a higher frequency dataset?\n\n"
-			    "If you say 'yes' I will expand the source data by\n"
-			    "repeating each value %d times.  In general, this is\n"
-			    "not a valid thing to do."),
-			  mult);
-    return msg;
+    return g_strdup_printf(_("Do you really want to add a lower frequency series\n"
+			     "to a higher frequency dataset?\n\n"
+			     "If you say 'yes' I will expand the source data by\n"
+			     "repeating each value %d times.  In general, this is\n"
+			     "not a valid thing to do."),
+			   mult);
 }
 
 static void add_dbdata (windata_t *vwin, double **dbZ, SERIESINFO *sinfo)
@@ -747,13 +740,9 @@ static char *end_trim (char *s)
 
 static char *start_trim (char *s)
 {
-    char *p = s;
+    while (*s == ' ') s++;
 
-    while (*p == ' ') {
-	p++;
-    }
-
-    return p;
+    return s;
 }
 
 static void db_drag_series (GtkWidget *w, GdkDragContext *context,
@@ -825,7 +814,6 @@ static int make_local_db_series_list (windata_t *vwin)
 	}
 
 	n = strlen(sername);
-
 	row[0] = sername;
 	row[1] = start_trim(line1 + n + 1);
 
@@ -955,6 +943,8 @@ static gchar *format_obs_info (SERIESINFO *sinfo)
 	pdc = 'S';
     } else if (sinfo->pd == 7) {
 	pdc = 'D';
+    } else if (sinfo->pd == 52) {
+	pdc = 'W';
     }
 
     return g_strdup_printf("%c  %s - %s  n = %d", pdc, 
@@ -1044,7 +1034,6 @@ static int make_pcgive_db_series_list (windata_t *vwin)
     strcat(in7name, ".in7");
 
     fp = gretl_fopen(in7name, "r");
-
     if (fp == NULL) {
 	errbox(_("Couldn't open PcGive data file"));
 	return 1;
@@ -1060,9 +1049,7 @@ static int make_pcgive_db_series_list (windata_t *vwin)
     }
 
     insert_and_free_db_table(tbl, vwin->listbox);
-
     vwin->active_var = 0;
-
     db_drag_connect(vwin);
 
     return 0;
@@ -1150,6 +1137,8 @@ static SERIESINFO *get_series_info (windata_t *vwin, int action)
 	sinfo->pd = 6;
     } else if (pdc == 'D') {
 	sinfo->pd = 7;
+    } else if (pdc == 'W') {
+	sinfo->pd = 52;
     } else if (pdc == 'U') {
 	sinfo->undated = 1;
     }
@@ -1190,18 +1179,34 @@ static int has_rats_suffix (const char *dbname)
     return ret;
 }
 
+static int has_pcgive_suffix (const char *dbname)
+{
+    const char *p = strrchr(dbname, '.');
+    int ret = 0;
+
+    if (p != NULL && !strcmp(p, ".bn7")) {
+	ret = 1;
+    }
+
+    return ret;
+}
+
 void open_named_db_index (char *dbname)
 {
-    int action = NATIVE_SERIES;
+    int action;
     FILE *fp;
 
     if (has_rats_suffix(dbname)) {
 	action = RATS_SERIES;
+    } else if (has_pcgive_suffix(dbname)) {
+	action = PCGIVE_SERIES;
+    } else {
+	action = NATIVE_SERIES;
     }
 
     fp = gretl_fopen(dbname, "rb");
 
-    if (fp == NULL && action != RATS_SERIES) {
+    if (fp == NULL && action == NATIVE_SERIES) {
 	strcat(dbname, ".bin");
 	fp = gretl_fopen(dbname, "rb");
     }

@@ -36,11 +36,6 @@
 
 static void free_sheet (void);
 static int allocate_row_col (int row, int col, wbook *book);
-static char *copy_unicode_string (unsigned char *src, int remlen, 
-				  int *skip, int *slop);
-static char *convert8to7 (const char *s, int count);
-static char *convert16to7 (const unsigned char *s, int count);
-static char *make_string (char *str);
 
 int debug_print;
 
@@ -203,6 +198,129 @@ static double biff_get_rk (const unsigned char *ptr)
     return NADBL;
 }
 
+static char *convert8to7 (const char *s, int count) 
+{
+    char *dest;
+
+    if (count > VNAMELEN - 1) {
+	count = VNAMELEN - 1;
+    }
+
+    dest = malloc(VNAMELEN);
+    *dest = '\0';
+    strncat(dest, s, count);
+    iso_to_ascii(dest);
+    top_n_tail(dest);
+
+    dprintf("convert8to7: returning '%s'\n", dest);
+
+    return dest;
+}
+
+static char *convert16to7 (const unsigned char *s, int count) 
+{
+    char *dest;
+    int i, u, j = 0;
+
+    dest = malloc(VNAMELEN);
+    if (dest == NULL) {
+	return NULL;
+    }
+
+    memset(dest, 0, VNAMELEN);
+
+    for (i=0; i<count && j<VNAMELEN-1; i++) {
+	u = MS_OLE_GET_GUINT16(s);
+	s += 2;
+	if ((isalnum(u) || ispunct(u)) && u < 128) {
+	    dest[j++] = u;
+	}
+    }
+
+    dprintf("convert16to7: returning '%s'\n", dest);
+
+    return dest;    
+}
+
+static char *
+copy_unicode_string (unsigned char *src, int remlen, 
+		     int *skip, int *slop) 
+{
+    int count = MS_OLE_GET_GUINT16(src);
+    unsigned char flags = *(src + 2);
+    int this_skip = 3, skip_to_next = 3;
+    int csize = (flags & 0x01)? 2 : 1;
+
+    dprintf("copy_unicode_string: count = %d, csize = %d\n",
+	    count, csize);
+
+    if (flags & 0x08) {
+	dprintf(" contains Rich-Text info\n");
+    }
+    if (flags & 0x04) {
+	dprintf(" contains Far-East info\n");
+    }    
+
+    skip_to_next += count * csize;
+
+    if (flags & 0x08) {
+	guint16 rich_text_info_len = 0;
+
+	rich_text_info_len = 4 * MS_OLE_GET_GUINT16(src + 3);
+	this_skip += 2;
+	skip_to_next += 2 + rich_text_info_len;
+    } 
+
+    if (flags & 0x04) {
+	guint32 far_east_info_len = 0;
+	int far_east_offset = 3;
+
+	if (flags & 0x08) {
+	    far_east_offset = 5;
+	}
+	far_east_info_len = MS_OLE_GET_GUINT32(src + far_east_offset);
+	this_skip += 4;
+	skip_to_next += 4 + far_east_info_len;
+    }
+
+    /* skip for the next read */
+    if (skip != NULL) {
+	*skip = skip_to_next;
+    }
+
+    /* size check */
+    if (slop != NULL) {
+	if (remlen > 0 && this_skip + count > remlen) {
+	    *slop = this_skip + count - remlen;
+	} else {
+	    *slop = 0;
+	}
+    }
+
+    if (count > 64) {
+	/* let's not mess with excessive strings */
+	return g_strdup("bigstr");
+    } else if (csize == 1) {
+	return convert8to7((char *) src + this_skip, count);
+    } else { 
+	return convert16to7(src + this_skip, count);
+    }
+}
+
+static char *make_string (char *str) 
+{
+    char *ret = NULL;
+
+    if (str != NULL) {
+	ret = g_strdup_printf("\"%s", str);
+	free(str);
+    } else {
+	ret = g_strdup("\"");
+    }
+
+    return ret;
+}    
+
 static int row_col_err (int row, int col, PRN *prn) 
 {
     static int prevrow = -1, prevcol = -1;
@@ -230,6 +348,12 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	int i, len = strlen(s);
 	int commas = 0;
 	static int warned = 0;
+
+	if (len == 0) {
+	    dprintf("converting sst[%d] '%s' to NA\n", idx, s);
+	    prow->cells[col] = g_strdup("NA");
+	    return 0;
+	}	    
 
 	for (i=0; i<len; i++) {
 	    if (!isdigit(s[i]) && s[i] != ' ' && s[i] != '-' &&
@@ -264,10 +388,9 @@ static int check_copy_string (struct sheetrow *prow, int row, int col,
 	    }
 	    *p = '\0';
 	    dprintf("converting sst[%d] '%s' to numeric as %s\n", idx, s, q);
-	    prow->cells[col] = g_strdup_printf("%s", q);
-	    free(q);
+	    prow->cells[col] = q;
 	    return 0;
-	}
+	} 
     }
 
     dprintf("copying sst[%d] '%s' into place\n", idx, s);
@@ -424,6 +547,7 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	
 	    prow = rows + i;
 	    ptr = q->data + 8;
+	    fprintf(stderr, "BIFF_LABEL: calling convert8to7\n");
 	    prow->cells[j] = make_string(convert8to7((char *) ptr, len));
 	}
 	break;
@@ -713,157 +837,6 @@ static int process_sheet (const char *filename, wbook *book, PRN *prn)
     ms_ole_destroy(&file);
 
     return err;    
-}
-
-static char *make_string (char *str) 
-{
-    char *ret = NULL;
-
-    if (str != NULL) {
-	ret = g_strdup_printf("\"%s", str);
-	free(str);
-    } else {
-	ret = g_strdup("\"");
-    }
-
-    return ret;
-}    
-
-static char *
-copy_unicode_string (unsigned char *src, int remlen, 
-		     int *skip, int *slop) 
-{
-    int count = MS_OLE_GET_GUINT16(src);
-    unsigned char flags = *(src + 2);
-    int this_skip = 3, skip_to_next = 3;
-    int csize = (flags & 0x01)? 2 : 1;
-
-    dprintf("copy_unicode_string: count = %d, csize = %d\n",
-	    count, csize);
-
-    if (flags & 0x08) {
-	dprintf(" contains Rich-Text info\n");
-    }
-    if (flags & 0x04) {
-	dprintf(" contains Far-East info\n");
-    }    
-
-    skip_to_next += count * csize;
-
-    if (flags & 0x08) {
-	guint16 rich_text_info_len = 0;
-
-	rich_text_info_len = 4 * MS_OLE_GET_GUINT16(src + 3);
-	this_skip += 2;
-	skip_to_next += 2 + rich_text_info_len;
-    } 
-
-    if (flags & 0x04) {
-	guint32 far_east_info_len = 0;
-	int far_east_offset = 3;
-
-	if (flags & 0x08) {
-	    far_east_offset = 5;
-	}
-	far_east_info_len = MS_OLE_GET_GUINT32(src + far_east_offset);
-	this_skip += 4;
-	skip_to_next += 4 + far_east_info_len;
-    }
-
-    /* skip for the next read */
-    if (skip != NULL) {
-	*skip = skip_to_next;
-    }
-
-    /* size check */
-    if (slop != NULL) {
-	if (remlen > 0 && this_skip + count > remlen) {
-	    *slop = this_skip + count - remlen;
-	} else {
-	    *slop = 0;
-	}
-    }
-
-    if (count > 64) {
-	/* let's not mess with excessive strings */
-	return g_strdup("bigstr");
-    } else if (csize == 1) {
-	return convert8to7((char *) src + this_skip, count);
-    } else { 
-	return convert16to7(src + this_skip, count);
-    }
-}
-
-static char *convert8to7 (const char *s, int count) 
-{
-    char *dest;
-
-    if (count > VNAMELEN - 1) {
-	count = VNAMELEN - 1;
-    }
-
-    dest = malloc(VNAMELEN);
-    *dest = '\0';
-    strncat(dest, s, count);
-    iso_to_ascii(dest);
-#if 0
-    top_n_tail(dest);
-#endif
-
-    if (*dest == '\0') {
-	strcpy(dest, "varname");
-    } 
-
-    dprintf("convert8to7: returning '%s'\n", dest);
-
-    return dest;
-}
-
-static char *convert16to7 (const unsigned char *s, int count) 
-{
-    char *dest;
-    int i, u, j = 0;
-
-    dest = malloc(VNAMELEN);
-    if (dest == NULL) {
-	return NULL;
-    }
-
-    memset(dest, 0, VNAMELEN);
-
-#if 1
-    for (i=0; i<count && j<VNAMELEN-1; i++) {
-	u = MS_OLE_GET_GUINT16(s);
-	s += 2;
-	if ((isalnum(u) || ispunct(u)) && u < 128) {
-	    dest[j++] = u;
-	}
-    }
-#else
-    printf("convert16to7: count = %d\n", count);
-    for (i=0; i<count; i++) {
-	u = MS_OLE_GET_GUINT16(s);
-	s += 2;
-	if ((isalnum(u) || ispunct(u) || u == ' ') && u < 128) {
-	    putchar(u);
-	    if (j<VNAMELEN-1) {
-		dest[j++] = u;
-	    }
-	    if (i % 56 == 0) {
-		putchar('\n');
-	    }	
-	}
-    }
-    printf("\nconvert16to7: returning '%s'\n", dest);
-#endif
-
-    if (*dest == '\0') {
-	strcpy(dest, "varname");
-    }
-
-    dprintf("convert16to7: returning '%s'\n", dest);
-
-    return dest;    
 }
 
 static void row_init (struct sheetrow *row)

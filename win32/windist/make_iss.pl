@@ -31,7 +31,7 @@ print "\n[Setup]\n";
 print "AppName=gretl\n";
 print "AppVerName=gretl version $verstr\n";
 print "AppCopyright=Copyright C 1999-2006 Allin Cottrell\n";
-print "DefaultDirName={pf}\\gretl\n";
+print "DefaultDirName=c:\\userdata\\gretl\n";
 print "DefaultGroupName=gretl\n";
 print "UninstallDisplayIcon={app}\\gretlw32.exe\n";
 print "ChangesAssociations=yes\n";
@@ -179,9 +179,9 @@ print "                   False, '');\n";
 print "  DataDirPage.Add('');\n";
 print "  DataDirPage.Values[0] := GetPreviousData('DataDir', '');\n";
 print "  if DataDirPage.Values[0] = '' then begin\n";
-print "     if ExpandConstant('{app}') = 'c:\\userdata\\gretl' then
+print "     if ExpandConstant('{app}') = 'c:\\userdata\\gretl' then\n";
 print "       DataDirPage.Values[0] := 'c:\\userdata\gretl\\user'\n";
-print "     else 
+print "     else\n"; 
 print "       DataDirPage.Values[0] := ExpandConstant('{userappdata}\\gretl');\n";
 print "  end\n";
 print "end;\n";

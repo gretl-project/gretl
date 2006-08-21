@@ -1045,10 +1045,17 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
     } 
 
     sr = g_object_get_data(G_OBJECT(data), "selector");
+
     if (sr != NULL && sr->add_button != NULL &&
 	!GTK_WIDGET_SENSITIVE(sr->add_button) &&
 	!selection_at_max(sr, nsel)) {
 	gtk_widget_set_sensitive(sr->add_button, TRUE);
+    }
+
+    if (context && sr != NULL && sr->lags_button != NULL) {
+	if (nsel == 0) {
+	    gtk_widget_set_sensitive(sr->lags_button, FALSE);
+	}
     }
 }
 
@@ -3050,7 +3057,6 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	g_signal_connect(G_OBJECT(sr->lags_button), "clicked", 
 			 G_CALLBACK(lags_dialog_driver), sr);
 	gtk_widget_set_sensitive(sr->lags_button, FALSE);
-	/* FIXME sensitize if vars go in here */
     }
 
     gtk_box_pack_start(GTK_BOX(hbox), bvbox, TRUE, TRUE, 0);
@@ -3067,6 +3073,8 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
 	if (sr->code != ARMA) {
 	    /* stick the constant in by default */
 	    list_append_var(store, &iter, 0, sr, SR_RVARS1);
+	} else {
+	    g_object_set_data(G_OBJECT(sr->rvars1), "selector", sr);
 	}
 	if (xlist != NULL) {
 	    int nx = 0;

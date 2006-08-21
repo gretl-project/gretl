@@ -38,11 +38,12 @@ static void invalid_varname (PRN *prn)
     pputs(prn, _("\nPlease rename this variable and try again"));
 }
 
-static int label_is_date (char *str)
+static int label_is_date (char *str, int *submax)
 {
     int len = strlen(str);
-    int i, d, pd = 0;
-    double dd, sub;
+    int i, d, sub = 0, pd = 0;
+    char *p;
+    double dd;
 
 #if 0
     fprintf(stderr, "label_is_date: looking at '%s'\n", str);
@@ -55,14 +56,29 @@ static int label_is_date (char *str)
 	}
     }
 
-    if (len == 4 && sscanf(str, "%4d", &d) && d > 0 && d < 3000) {
+    p = strchr(str, '.');
+
+    if (len == 4 && sscanf(str, "%d", &d) && d > 0 && d < 3000) {
 	pd = 1;
-    } else if (len == 6 && sscanf(str, "%lf", &dd) && dd > 0 && dd < 3000) { 
-	sub = 10.0 * (dd - (int) dd);
-	if (sub >= .999 && sub <= 4.001) pd = 4;
-    } else if (len == 7 && sscanf(str, "%lf", &dd) && dd > 0 && dd < 3000) {
-	sub = 100.0 * (dd - (int) dd);
-	if (sub >= .9999 && sub <= 12.0001) pd = 12;
+    } else if (p != NULL) {
+	if (len == 6) {
+	    if (sscanf(str, "%lf", &dd) && dd > 0 && dd < 3000) { 
+		sub = atoi(p + 1);
+		if (sub > 0 && sub < 5) {
+		    pd = 4;
+		}
+	    }
+	} else if (len == 7) {
+	    if (sscanf(str, "%lf", &dd) && dd > 0 && dd < 3000) {
+		sub = atoi(p + 1);
+		if (sub > 0 && sub < 13) {
+		    pd = 12;
+		}
+	    }
+	}
+	if (sub > *submax) {
+	    *submax = sub;
+	}
     }
 
     return pd;
@@ -246,6 +262,7 @@ consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels
 {
     int t, tstart = 1 + row_offset;
     int pd = 0, pdbak = 0;
+    int submax = 0;
     double x, xbak = 0.0;
     char *test;
 
@@ -262,12 +279,16 @@ consistent_date_labels (int nrows, int row_offset, int col_offset, char **labels
 	    test++;
 	}
 
-	pd = label_is_date(test);
-
+	pd = label_is_date(test, &submax);
 	if (pd == 0) {
 	    fprintf(stderr, " no: label '%s' on row %d is not a valid date\n", 
 		    test, t + 1);
 	    return 0;
+	}
+
+	if (pd == 12 && t - tstart > 3 && submax == 4) {
+	    /* appeared to be monthly but really quarterly? */
+	    pd = pdbak = 4;
 	}
 
 	x = atof(test);
