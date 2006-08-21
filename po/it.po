@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-08-21 15:52-0400\n"
-"PO-Revision-Date: 2006-08-21 16:27-0400\n"
+"PO-Revision-Date: 2006-08-21 23:24+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1201,14 +1201,13 @@ msgid "frequency (%d) does not make seem to make sense"
 msgstr "la frequenza (%d) non sembra aver senso"
 
 #: lib/src/dbread.c:540
-#, fuzzy, c-format
+#, c-format
 msgid "frequency %d is not supported"
-msgstr "Distribuzione di frequenza"
+msgstr "la frequenza %d non è supportata"
 
 #: lib/src/dbread.c:824
-#, fuzzy
 msgid "No valid series found"
-msgstr "Non è stato trovato alcun file database"
+msgstr "Non è stata trovata alcuna serie valida"
 
 #: lib/src/dbread.c:836 lib/src/dbread.c:888 lib/src/dbread.c:903
 #: lib/src/dbread.c:1437 lib/src/gretl_restrict.c:792
@@ -1871,29 +1870,24 @@ msgid "forecast standard errors"
 msgstr "errori standard della previsione"
 
 #: lib/src/generate.c:191
-#, fuzzy
 msgid "Number of observations"
-msgstr "Numero di osservazioni:"
+msgstr "Numero di osservazioni"
 
 #: lib/src/generate.c:192
-#, fuzzy
 msgid "Number of variables"
-msgstr "Nome della variabile:"
+msgstr "Numero di variabili"
 
 #: lib/src/generate.c:193
-#, fuzzy
 msgid "Frequency of data"
-msgstr "Grafico della frequenza"
+msgstr "Frequenza dei dati"
 
 #: lib/src/generate.c:194
-#, fuzzy
 msgid "Hypothesis test statistic"
-msgstr "Statistica test asintotica"
+msgstr "Statistica per il test di ipotesi"
 
 #: lib/src/generate.c:195
-#, fuzzy
 msgid "P-value for hypothesis test"
-msgstr "Valore non valido per il test di ipotesi"
+msgstr "P-value per il test di ipotesi"
 
 #: lib/src/generate.c:311
 msgid "You must open a data file first"
@@ -2588,14 +2582,12 @@ msgid "%g percent critical value"
 msgstr "Valore critico al %g per cento"
 
 #: lib/src/gretl_model.c:3787
-#, fuzzy
 msgid "Error sum of squares"
-msgstr "/Salva/_Somma dei quadrati degli errori"
+msgstr "Somma dei quadrati degli errori"
 
 #: lib/src/gretl_model.c:3788
-#, fuzzy
 msgid "Number of observations used"
-msgstr "Numero di osservazioni:"
+msgstr "Numero di osservazioni usate"
 
 #: lib/src/gretl_model.c:3789 gui2/model_table.c:620
 msgid "R-squared"
@@ -2613,9 +2605,8 @@ msgid "Degrees of freedom"
 msgstr "Gradi di libertà"
 
 #: lib/src/gretl_model.c:3792
-#, fuzzy
 msgid "Number of coefficients"
-msgstr "Somma dei coefficienti"
+msgstr "Numero dei coefficienti"
 
 #: lib/src/gretl_model.c:3793 lib/src/modelprint.c:1637
 #: lib/src/modelprint.c:1647 lib/src/modelprint.c:1653
@@ -2639,52 +2630,43 @@ msgstr "Criterio di Hannan-Quinn"
 
 #: lib/src/gretl_model.c:3797
 msgid "Sample size times R-squared"
-msgstr ""
+msgstr "Ampiezza del campione per R-quadro"
 
 #: lib/src/gretl_model.c:3798
-#, fuzzy
 msgid "Regression residuals"
-msgstr "Risultati della regressione"
+msgstr "Residui della regressione"
 
 #: lib/src/gretl_model.c:3799
-#, fuzzy
 msgid "Fitted values"
-msgstr "/Salva/Valori _stimati"
+msgstr "Valori stimati"
 
 #: lib/src/gretl_model.c:3800
-#, fuzzy
 msgid "Per-group intercepts"
-msgstr "Test per la differenza delle intercette di gruppo"
+msgstr "Intercette di gruppo"
 
 #: lib/src/gretl_model.c:3801
-#, fuzzy
 msgid "Estimated error variance"
-msgstr "Stima robusta della varianza"
+msgstr "Varianza dell'errore stimata"
 
 #: lib/src/gretl_model.c:3802
-#, fuzzy
 msgid "Regression coefficients"
-msgstr "Coefficienti di correlazione"
+msgstr "Coefficienti della regressione"
 
 #: lib/src/gretl_model.c:3803
-#, fuzzy
 msgid "Coefficient standard errors"
-msgstr "errori standard della previsione"
+msgstr "Errori standard dei coefficienti"
 
 #: lib/src/gretl_model.c:3805
-#, fuzzy
 msgid "Autoregressive coefficient(s)"
-msgstr "AR - Stima autoregressiva"
+msgstr "Coefficienti autoregressivi"
 
 #: lib/src/gretl_model.c:3806
-#, fuzzy
 msgid "Cointegrating vector"
-msgstr "Vettori di cointegrazione"
+msgstr "Vettore di cointegrazione"
 
 #: lib/src/gretl_model.c:3807
-#, fuzzy
 msgid "Adjustments vector"
-msgstr "Alfa (vettori di aggiustamento)"
+msgstr "Vettore di aggiustamento"
 
 #: lib/src/gretl_model.c:4004
 msgid "Can't retrieve uhat: data set has changed"
@@ -6524,9 +6506,8 @@ msgid "gretl: add markers"
 msgstr "gretl: aggiungi marcatori"
 
 #: gui2/callbacks.c:203
-#, fuzzy
 msgid "gretl: open database"
-msgstr "gretl: apri dati"
+msgstr "gretl: apri database"
 
 #: gui2/callbacks.c:214
 msgid "Open script file"
@@ -8105,9 +8086,9 @@ msgid "Help text for"
 msgstr "Testo di aiuto per"
 
 #: gui2/fnsave.c:658
-#, fuzzy, c-format
+#, c-format
 msgid "Help text for %s:"
-msgstr "Testo di aiuto per"
+msgstr "Testo di aiuto per %s:"
 
 #: gui2/fnsave.c:673
 msgid "Edit function code"
@@ -8115,7 +8096,7 @@ msgstr "Modifica codice funzione"
 
 #: gui2/fnsave.c:691
 msgid "Upload package to server on save"
-msgstr ""
+msgstr "Carica il pacchetto sul server subito dopo il salvataggio"
 
 #: gui2/fnsave.c:740
 msgid "gretl: upload"
@@ -11642,7 +11623,7 @@ msgstr "Ritardi della variabile dipendente"
 
 #: gui2/selector.c:4100
 msgid "to"
-msgstr ""
+msgstr "-"
 
 #: gui2/series_view.c:370
 msgid "Variable to sort by"
