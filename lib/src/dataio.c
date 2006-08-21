@@ -4075,6 +4075,8 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
 	sheet_get_data = get_plugin_function("wf1_get_data", &handle);
     } else if (ftype == GRETL_DTA) {
 	sheet_get_data = get_plugin_function("dta_get_data", &handle);
+    } else if (ftype == GRETL_JMULTI) {
+	sheet_get_data = get_plugin_function("jmulti_get_data", &handle);
     } else {
 	pprintf(prn, M_("Unrecognized data type"));
 	pputc(prn, '\n');
@@ -4089,6 +4091,44 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
     close_plugin(handle);
 
     return err;
+}
+
+static int is_jmulti_datafile (const char *fname)
+{
+    FILE *fp;
+    int ret = 0;
+
+    fp = gretl_fopen(fname, "r");
+
+    if (fp != NULL) {
+	char test[128] = {0};
+	int gotobs = 0;
+	int gotcomm = 0;
+	int incomm = 0;
+
+	/* look for characteristic C-style comment and
+	   <obs stuff> field, outside of comment */
+
+	while (fgets(test, sizeof test, fp)) {
+	    if (!incomm && strstr(test, "/*")) {
+		gotcomm = 1;
+		incomm = 1;
+	    }
+	    if (incomm && strstr(test, "*/")) {
+		incomm = 0;
+	    }
+	    if (!incomm && *test == '<' && strchr(test, '>')) {
+		gotobs = 1;
+	    }
+	    if (gotcomm && gotobs) {
+		ret = 1;
+		break;
+	    }
+	} 
+	fclose(fp);
+    } 
+
+    return ret;
 }
 
 int gretl_is_pkzip_file (const char *fname)
@@ -4129,6 +4169,7 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     /* might be a script file? (watch out for DOS-mangled names) */
     if (has_suffix(fname, ".inp")) 
 	return GRETL_SCRIPT;
+
     if (has_suffix(fname, ".gretl")) {
 	if (gretl_is_pkzip_file(fname)) {
 	    return GRETL_SESSION;
@@ -4136,6 +4177,7 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
 	    return GRETL_SCRIPT;
 	}
     }
+
     if (has_suffix(fname, ".gnumeric"))
 	return GRETL_GNUMERIC;
     if (has_suffix(fname, ".xls"))
@@ -4162,6 +4204,10 @@ GretlFileType detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     if (gretl_is_xml_file(fname)) {
 	return GRETL_XML_DATA;  
     } 
+
+    if (has_suffix(fname, ".dat") && is_jmulti_datafile(fname)) {
+	return GRETL_JMULTI; 
+    }
 
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) { 

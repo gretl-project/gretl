@@ -594,7 +594,9 @@ int count_fields (const char *s)
 	    p = strpbrk(s, " ");
 	    if (p != NULL) {
 		s = p + strspn(p, " ");
-		if (*s) nf++;
+		if (*s) {
+		    nf++;
+		}
 	    } else {
 		break;
 	    }

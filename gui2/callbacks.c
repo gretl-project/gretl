@@ -191,6 +191,10 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case APPEND_DTA:
 	file_selector(_("Open Stata file"), code, FSEL_DATA_NONE, NULL);
 	break;
+    case OPEN_JMULTI:
+    case APPEND_JMULTI:
+	file_selector(_("Open JMulTi file"), code, FSEL_DATA_NONE, NULL);
+	break;
     case OPEN_MARKERS:
 	file_selector(_("gretl: add markers"), code, FSEL_DATA_NONE, NULL);
 	break;

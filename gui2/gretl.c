@@ -242,6 +242,7 @@ GtkItemFactoryEntry data_items[] = {
 #endif
     { N_("/File/Open data/Import/_Eviews..."), NULL, open_data, OPEN_WF1, NULL, GNULL },
     { N_("/File/Open data/Import/_Stata..."), NULL, open_data, OPEN_DTA, NULL, GNULL },
+    { N_("/File/Open data/Import/_JMulTi..."), NULL, open_data, OPEN_JMULTI, NULL, GNULL },
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -253,6 +254,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Append data/_Excel..."), NULL, open_data, APPEND_EXCEL, NULL, GNULL },
     { N_("/File/Append data/_Eviews..."), NULL, open_data, APPEND_WF1, NULL, GNULL },
     { N_("/File/Append data/_Stata..."), NULL, open_data, APPEND_DTA, NULL, GNULL },
+    { N_("/File/Append data/_JMulTi..."), NULL, open_data, APPEND_JMULTI, NULL, GNULL },
 
     /* File, Save data */
     { N_("/File/_Save data"), "<control>S", auto_store, 0, "<StockItem>", GTK_STOCK_SAVE },
@@ -269,7 +271,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Export data/_CSV..."), NULL, file_save, EXPORT_CSV, NULL, GNULL },
     { N_("/File/Export data/GNU _R..."), NULL, file_save, EXPORT_R, NULL, GNULL },
     { N_("/File/Export data/_Octave..."), NULL, file_save, EXPORT_OCTAVE, NULL, GNULL },
-    { N_("/File/Export data/_JMulti..."), NULL, file_save, EXPORT_JM, NULL, GNULL },
+    { N_("/File/Export data/_JMulTi..."), NULL, file_save, EXPORT_JM, NULL, GNULL },
     { N_("/File/Export data/_PcGive..."), NULL, file_save, EXPORT_DAT, NULL, GNULL },
 
     /* File, data misc */
@@ -948,6 +950,7 @@ int main (int argc, char *argv[])
 	case GRETL_GNUMERIC:
 	case GRETL_WF1:
 	case GRETL_DTA:
+	case GRETL_JMULTI:
 	    err = get_worksheet_data(paths.datfile, ftype, 0, &gui_get_data);
 	    break;
 	case GRETL_SCRIPT:

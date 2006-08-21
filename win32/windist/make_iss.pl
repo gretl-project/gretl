@@ -178,7 +178,12 @@ print "                  'Select the folder for storing personal data files, the
 print "                   False, '');\n";
 print "  DataDirPage.Add('');\n";
 print "  DataDirPage.Values[0] := GetPreviousData('DataDir', '');\n";
-print "  if DataDirPage.Values[0] = '' then DataDirPage.Values[0] := ExpandConstant('{userappdata}\\gretl');\n";
+print "  if DataDirPage.Values[0] = '' then begin\n";
+print "     if ExpandConstant('{app}') = 'c:\\userdata\\gretl' then
+print "       DataDirPage.Values[0] := 'c:\\userdata\gretl\\user'\n";
+print "     else 
+print "       DataDirPage.Values[0] := ExpandConstant('{userappdata}\\gretl');\n";
+print "  end\n";
 print "end;\n";
 print "\n";
 print "procedure RegisterPreviousData(PreviousDataKey: Integer);\n";

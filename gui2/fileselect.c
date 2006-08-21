@@ -46,7 +46,8 @@
                               i == OPEN_GNUMERIC || \
 	                      i == OPEN_EXCEL || \
                               i == OPEN_WF1 || \
-                              i == OPEN_DTA)
+                              i == OPEN_DTA || \
+                              i == OPEN_JMULTI)
 
 #define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
                                i == APPEND_CSV || \
@@ -55,7 +56,8 @@
                                i == APPEND_EXCEL || \
                                i == APPEND_ASCII || \
                                i == APPEND_WF1 || \
-                               i == APPEND_DTA)
+                               i == APPEND_DTA || \
+                               i == APPEND_JMULTI)
 
 #define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
                               i == SAVE_THIS_GRAPH || \
@@ -116,6 +118,8 @@ static struct extmap action_map[] = {
     { APPEND_WF1,        ".wf1" },
     { OPEN_DTA,          ".dta" },
     { APPEND_DTA,        ".dta" },
+    { OPEN_JMULTI,       ".dat" },
+    { APPEND_JMULTI,     ".dat" },
     { OPEN_RATS_DB,      ".rat" },
     { OPEN_PCGIVE_DB,    ".bn7" },
     { FILE_OP_MAX,       NULL }
@@ -626,6 +630,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ APPEND_WF1,   { N_("Eviews workfiles (*.wf1)"), "*.wf1" }},
 	{ OPEN_DTA,     { N_("Stata files (*.dta)"), "*.dta" }},
 	{ APPEND_DTA,   { N_("Stata files (*.dta)"), "*.dta" }},
+	{ OPEN_JMULTI,  { N_("JMulTi files (*.dat)"), "*.dat" }},
+	{ APPEND_JMULTI,{ N_("JMulTi files (*.dat)"), "*.dat" }},
 	{ OPEN_RATS_DB, { N_("RATS databases (*.rat)"), "*.rat" }},
 	{ OPEN_PCGIVE_DB, { N_("PcGive data files (*.bn7)"), "*.bn7" }},
 	{ SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}

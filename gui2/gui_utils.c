@@ -964,7 +964,8 @@ void register_data (char *fname, const char *user_fname,
                            action == APPEND_EXCEL || \
                            action == APPEND_ASCII || \
                            action == APPEND_WF1 || \
-                           action == APPEND_DTA)
+                           action == APPEND_DTA || \
+                           action == APPEND_JMULTI)
 
 int get_worksheet_data (char *fname, int datatype, int append,
 			int *gui_get_data)
@@ -995,6 +996,9 @@ int get_worksheet_data (char *fname, int datatype, int append,
 						 &handle);
     } else if (datatype == GRETL_DTA) {
 	sheet_get_data = gui_get_plugin_function("dta_get_data",
+						 &handle);
+    } else if (datatype == GRETL_JMULTI) {
+	sheet_get_data = gui_get_plugin_function("jmulti_get_data",
 						 &handle);
     } else {
 	errbox(_("Unrecognized data type"));
@@ -1116,6 +1120,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	datatype = GRETL_WF1;
     } else if (code == OPEN_DTA || code == APPEND_DTA) {
 	datatype = GRETL_DTA;
+    } else if (code == OPEN_JMULTI || code == APPEND_JMULTI) {
+	datatype = GRETL_JMULTI;
     } else if (code == OPEN_BOX) {
 	datatype = GRETL_BOX_DATA;
     } else {
@@ -1133,7 +1139,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL ||
-	datatype == GRETL_WF1 || datatype == GRETL_DTA) {
+	datatype == GRETL_WF1 || datatype == GRETL_DTA ||
+	datatype == GRETL_JMULTI) {
 	get_worksheet_data(tryfile, datatype, append, NULL);
 	return;
     } else if (datatype == GRETL_CSV_DATA) {

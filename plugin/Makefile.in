@@ -61,6 +61,7 @@ SRCS = excel_import.c \
 	gnumeric_import.c \
 	eviews_import.c \
 	stata_import.c \
+	jmulti_import.c \
 	import_common.c \
 	johansen.c \
 	kernel.c \
@@ -96,6 +97,7 @@ PLUGINS = arma.la \
 	arma_x12.la \
 	eviews_import.la \
 	stata_import.la \
+	jmulti_import.la \
 	fractals.la \
 	garch.la \
 	johansen.la \
@@ -182,6 +184,9 @@ eviews_import.la: eviews_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 stata_import.la: stata_import.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+jmulti_import.la: jmulti_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 fractals.la: fractals.lo

@@ -21,12 +21,6 @@
 
 #include "libgretl.h"
 
-/* 
-#ifdef USE_GLIB2
-# include <glib.h>
-#endif
-*/
-
 #define DB_DEBUG 0
 
 #define RECNUM long
@@ -387,10 +381,13 @@ get_pcgive_series_info (const char *series, SERIESINFO *sinfo)
 		if (sinfo->pd == 1) {
 		    sprintf(sinfo->stobs, "%d", y0);
 		    sprintf(sinfo->endobs, "%d", y1);
+		    if (y0 == 1) {
+			sinfo->undated = 1;
+		    }
 		} else if (sinfo->pd == 4) {
 		    sprintf(sinfo->stobs, "%d:%d", y0, p0);
 		    sprintf(sinfo->endobs, "%d:%d", y1, p1);
-		} else if (sinfo->pd == 12) {
+		} else if (sinfo->pd == 12 || sinfo->pd == 52) {
 		    sprintf(sinfo->stobs, "%d:%02d", y0, p0);
 		    sprintf(sinfo->endobs, "%d:%02d", y1, p1);
 		} else {
@@ -436,7 +433,7 @@ static int get_endobs (char *datestr, int startyr, int startfrac,
 	sprintf(datestr, "%d", endyr);
     } else if (pd == 4) {
 	sprintf(datestr, "%d.%d", endyr, endfrac);
-    } else if (pd == 12) {
+    } else if (pd == 12 || pd == 52) {
 	sprintf(datestr, "%d.%02d", endyr, endfrac);
     }
 
@@ -533,7 +530,7 @@ static int in7_to_sinfo (const char *varname, const char *comment,
     if (pd == 4) {
 	sprintf(sinfo->stobs, "%d.%d", y0, p0);
 	sprintf(sinfo->endobs, "%d.%d", y1, p1);
-    } else if (pd == 12) {
+    } else if (pd == 12 || pd == 52) {
 	sprintf(sinfo->stobs, "%d.%02d", y0, p0);
 	sprintf(sinfo->endobs, "%d.%02d", y1, p1);
     } else if (pd == 1) {
@@ -774,15 +771,20 @@ static int read_in7_series_info (FILE *fp, db_table *tbl)
     return err;
 }
 
-static int count_in7_series (FILE *fp)
+static int count_in7_series (FILE *fp, int *err)
 {
     char line[1024];
     char sname[VNAMELEN];
     int y0, p0, y1, p1;
     int pd, offset;
-    int nf, nseries = 0;
+    int nf, i = 0, nseries = 0;
 
     while (fgets(line, sizeof line, fp)) {
+	if (i == 0 && strncmp(line, "pcgive 700", 10)) {
+	    *err = 1;
+	    strcpy(gretl_errmsg, "This is not a PcGive 700 data file");
+	    return 0;
+	}
 	if (*line == '>') {
 	    nf = sscanf(line + 1, "%15s %d %d %d %d %d %d",
 			sname, &y0, &p0, &y1, &p1, &pd, &offset);
@@ -793,6 +795,7 @@ static int count_in7_series (FILE *fp)
 		nseries++;
 	    }
 	}
+	i++;
     }
 
     return nseries;
@@ -815,9 +818,11 @@ db_table *read_pcgive_db (FILE *fp)
 
     *gretl_errmsg = 0;
 
-    ns = count_in7_series(fp);
+    ns = count_in7_series(fp, &err);
     if (ns == 0) {
-	strcpy(gretl_errmsg, _("No valid series found"));
+	if (!err) {
+	    strcpy(gretl_errmsg, _("No valid series found"));
+	}
 	return NULL;
     }
 

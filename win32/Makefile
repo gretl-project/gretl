@@ -57,6 +57,7 @@ PLUGINSRC = \
 	gnumeric_import.c \
 	eviews_import.c \
 	stata_import.c \
+	jmulti_import.c \
 	johansen.c \
 	kernel.c \
 	lad.c \
@@ -93,6 +94,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/eviews_import.dll \
 	plugins/excel_import.dll \
 	plugins/stata_import.dll \
+	plugins/jmulti_import.dll \
 	plugins/mp_ols.dll \
 	plugins/sysest.dll \
 	plugins/johansen.dll \
@@ -330,6 +332,10 @@ plugins/eviews_import.dll: eviews_import.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/stata_import.dll: stata_import.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/jmulti_import.dll: jmulti_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
