@@ -259,9 +259,7 @@ GtkItemFactoryEntry data_items[] = {
     /* File, Save data */
     { N_("/File/_Save data"), "<control>S", auto_store, 0, "<StockItem>", GTK_STOCK_SAVE },
     { N_("/File/Save data _as"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Save data as/_Standard format..."), NULL, file_save, SAVE_DATA_AS, 
-      "<StockItem>", GTK_STOCK_SAVE_AS },
-    { N_("/File/Save data as/_Gzipped..."), NULL, file_save, SAVE_GZDATA, 
+    { N_("/File/Save data as/_Standard format..."), NULL, file_save, SAVE_GZDATA, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
     { N_("/File/Save data as/_Database..."), NULL, file_save, SAVE_DBDATA, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
@@ -1702,12 +1700,14 @@ drag_data_received  (GtkWidget *widget,
 
 static void auto_store (void)
 {
-    gretlopt oflag = OPT_NONE;
+    /* by default, use gzip compression */
+    gretlopt oflag = OPT_Z;
 
-    /* if there's already a datafile, and it's gzipped, then
-       arrange for the new store to be gzipped too */
-    if (*paths.datfile && is_gzipped(paths.datfile)) {
-	oflag = OPT_Z;
+    /* but if there's already a datafile, and it's not gzipped, then
+       arrange for the new file to be uncompressed too
+    */
+    if (*paths.datfile && !is_gzipped(paths.datfile)) {
+	oflag = OPT_NONE;
     }
 
     if ((data_status & USER_DATA) && 

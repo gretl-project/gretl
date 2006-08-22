@@ -4,6 +4,8 @@ version 1.6.0, in progress
   of any models that have been estimated)
 - Add "native" exact ML estimation of ARMA models using the
   Kalman filter
+- Saving data in native gretl format: make gzip compression the
+  default
 - Add some basic functionality for analysis of discrete variables. 
   New behavior of frequency distribution, plus new commands: 
   "discrete" (interpret variables as discrete), "dummify" (create a 
@@ -25,6 +27,8 @@ version 1.6.0, in progress
 - Don't print the "model has no constant" message, and do not
   use special methods to calculate R^2 and F, if the set of
   regressors spans the space of a constant
+- Indexing of coefficients in "restrict" command: standardize on
+  using a 1-based index in all contexts
 - Revamp panel data estimation: redefine the "panel" command for
   fixed- or random-effects estimation, rename the old "panel"
   command as "paneldat"; refine calculation of Hausman test statistic
@@ -42,14 +46,15 @@ version 1.6.0, in progress
 - Add --hessian and --robust options to the mle command, which
   respectively produce a covariance matrix based on the Hessian
   and a QML sandwich estimator of the covariance matrix
-- Add Quandt likelihood ratio test for structural break
+- Add Quandt likelihood ratio (QLR) test for structural break
 - ADF and KPSS tests: add option to difference the selected
   variable before testing
 - Delimiter for "CSV" files: add semicolon to the list of
   options
 - VECMs: make Johansen's alpha and beta retrievable as matrices
   with identifiers $jalpha and $jbeta
-- Several bug-fixes for the matrix manipulation facility
+- Several bug-fixes for the matrix manipulation facility, plus
+  a few new functions (meanr, meanc)
 - GUI menus restructured and polished
 - Add facility for multiple time-series graphs from the GUI
 - Revamp the "--ten" option for printing variables to 10 digits:
@@ -57,13 +62,15 @@ version 1.6.0, in progress
 - Graph editing dialog: make the line width configurable, and
   also make the preferred line width settable per variable in 
   the "Edit attributes" dialog
-- Data export: add option for saving data in JMulti format
+- Data import and export: add option for reading and saving data in 
+  JMulTi format
+- Databases: add capacity to read PcGive in7/bn7 databases
 - Gretl command minibuffer: model commands now produce GUI
   model windows (for single-equation methods)
 - QR decomposition option: fix the F-statistic values produced
   for autoregressive models
 - pvalue() function: always return the right-hand value, but add
-  a complmentary cdf() function that always gives the left-hand
+  a complementary cdf() function that always gives the left-hand
   value
 - NIST linear regression test suite: re-express accuracy in terms
   of log relative error, plus other enhancements

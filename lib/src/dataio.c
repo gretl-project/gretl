@@ -2575,13 +2575,13 @@ static void merge_error (char *msg, PRN *prn)
  * gretl's current working data set.
  * 
  * Returns: 0 on successful completion, non-zero otherwise.
- *
  */
 
 int merge_data (double ***pZ, DATAINFO *pdinfo,
 		double **addZ, DATAINFO *addinfo,
 		PRN *prn)
 {
+    int addsimple = 0;
     int addvars = 0;
     int addobs = 0;
     int offset = 0;
@@ -2589,13 +2589,20 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
     /* first check for conformability */
 
-    if (pdinfo->pd != addinfo->pd) {
+    if (addinfo->pd == 1 && addinfo->structure == CROSS_SECTION &&
+	addinfo->n == pdinfo->n) {
+	/* we'll allow undated data to be merged with dated, provided
+	   the number of observations matches OK */
+	addsimple = 1;
+    } else if (pdinfo->pd != addinfo->pd) {
 	merge_error(_("Data frequency does not match\n"), prn);
 	err = 1;
     }
 
     if (!err) {
-	addobs = compare_ranges(pdinfo, addinfo, &offset);
+	if (!addsimple) {
+	    addobs = compare_ranges(pdinfo, addinfo, &offset);
+	}
 	addvars = count_add_vars(pdinfo, addinfo);
     }
 
@@ -2634,69 +2641,69 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 		continue;
 	    }
 
-	   x = realloc((*pZ)[i], new_n * sizeof *x);
-	   if (x == NULL) {
-	       err = 1;
-	       break;
-	   }
+	    x = realloc((*pZ)[i], new_n * sizeof *x);
+	    if (x == NULL) {
+		err = 1;
+		break;
+	    }
 
-	   for (t=pdinfo->n; t<new_n; t++) {
-	       if (i == 0) {
-		   x[t] = 1.0;
-	       } else {
-		   x[t] = NADBL;
-	       }
-	   }
-	   (*pZ)[i] = x;
-       }
+	    for (t=pdinfo->n; t<new_n; t++) {
+		if (i == 0) {
+		    x[t] = 1.0;
+		} else {
+		    x[t] = NADBL;
+		}
+	    }
+	    (*pZ)[i] = x;
+	}
 
-       if (err) { 
-	   merge_error(_("Out of memory adding data\n"), prn);
-       } else {
-	   pdinfo->n = new_n;
-	   ntodate_full(pdinfo->endobs, new_n - 1, pdinfo);
-	   pdinfo->t2 = pdinfo->n - 1;
-       }
-   }
+	if (err) { 
+	    merge_error(_("Out of memory adding data\n"), prn);
+	} else {
+	    pdinfo->n = new_n;
+	    ntodate_full(pdinfo->endobs, new_n - 1, pdinfo);
+	    pdinfo->t2 = pdinfo->n - 1;
+	}
+    }
 
-   if (!err) { 
-       int k = pdinfo->v;
-       int i, t;
+    if (!err) { 
+	int k = pdinfo->v;
+	int i, t;
 
-       if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
-	   merge_error(_("Out of memory adding data\n"), prn);
-	   err = 1;
-       }
+	if (addvars > 0 && dataset_add_series(addvars, pZ, pdinfo)) {
+	    merge_error(_("Out of memory adding data\n"), prn);
+	    err = 1;
+	}
 
-       for (i=1; i<addinfo->v && !err; i++) {
-	   int v = varindex(pdinfo, addinfo->varname[i]);
-	   int newvar = 0;
+	for (i=1; i<addinfo->v && !err; i++) {
+	    int v = varindex(pdinfo, addinfo->varname[i]);
+	    int newvar = 0;
 
-	   if (v >= k) {
-	       /* a  new variable */
-	       v = k++;
-	       newvar = 1;
-	       strcpy(pdinfo->varname[v], addinfo->varname[i]);
-	   } 
+	    if (v >= k) {
+		/* a  new variable */
+		v = k++;
+		newvar = 1;
+		strcpy(pdinfo->varname[v], addinfo->varname[i]);
+	    } 
 
-	   for (t=0; t<pdinfo->n; t++) {
-	       if (t >= offset && t - offset < addinfo->n) {
-		   (*pZ)[v][t] = addZ[i][t - offset];
-	       } else if (newvar) {
-		   (*pZ)[v][t] = NADBL;
-	       }
-	   }
-       }
-   }
+	    for (t=0; t<pdinfo->n; t++) {
+		if (t >= offset && t - offset < addinfo->n) {
+		    (*pZ)[v][t] = addZ[i][t - offset];
+		} else if (newvar) {
+		    (*pZ)[v][t] = NADBL;
+		}
+	    }
+	}
+    }
 
-   if (!err && (addvars || addobs)) {
-       pputs(prn, _("Data appended OK\n"));
-   }
+    if (!err && (addvars || addobs)) {
+	pputs(prn, _("Data appended OK\n"));
+    }
 
-   free_Z(addZ, addinfo);
-   clear_datainfo(addinfo, CLEAR_FULL);
+    free_Z(addZ, addinfo);
+    clear_datainfo(addinfo, CLEAR_FULL);
 
-   return err;
+    return err;
 }
 
 /* The function below checks for the maximum line length in the given
