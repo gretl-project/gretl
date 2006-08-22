@@ -142,6 +142,8 @@ enum transformations {
     T_TRACE,
     T_SUMR,
     T_SUMC,
+    T_MEANR,
+    T_MEANC,
     T_1NORM,
     T_RCOND,
     T_ROWS,

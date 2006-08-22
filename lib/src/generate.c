@@ -163,6 +163,8 @@ struct genr_func funcs[] = {
     { T_TRACE,    "tr" },
     { T_SUMR,     "sumr" },
     { T_SUMC,     "sumc" },
+    { T_MEANR,    "meanr" },
+    { T_MEANC,    "meanc" },
     { T_1NORM,    "onenorm" },
     { T_RCOND,    "rcond" },
     { T_ROWS,     "rows" },
@@ -225,8 +227,9 @@ struct retriever retrievers[] = {
 
 #define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG || f == T_CDMEAN || \
                                f == T_INV || f == T_CHOL || f == T_QR || \
-                               f == T_SUMR || f == T_SUMC || f == T_EIGSYM || \
-			       f == T_EIGGEN || f == T_VEC || \
+                               f == T_SUMR || f == T_SUMC || \
+                               f == T_MEANR || f == T_MEANC || \
+                               f == T_EIGSYM || f == T_EIGGEN || f == T_VEC || \
                                f == T_VECH || f == T_UNVECH)
 
 #define MULTI_MATRIX_FUNC(f) (f == T_QR || f == T_EIGSYM || f == T_EIGGEN)
@@ -1400,6 +1403,10 @@ static gretl_matrix *eval_matrix_atom (genatom *atom, GENERATOR *genr,
 	    R = gretl_matrix_column_sum(M);
 	} else if (atom->func == T_SUMR) {
 	    R = gretl_matrix_row_sum(M);
+	} else if (atom->func == T_MEANC) {
+	    R = gretl_matrix_column_mean(M);
+	} else if (atom->func == T_MEANR) {
+	    R = gretl_matrix_row_mean(M);
 	} else if (atom->func == T_CDMEAN) {
 	    R = user_matrix_column_demean(M);
 	} else if (atom->func == T_QR) {

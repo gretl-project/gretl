@@ -1,17 +1,12 @@
-/* fdjac2.f -- translated by f2c (version 20030306).
-   You must link the resulting object file with the libraries:
-	-lf2c -lm   (in that order)
-*/
+/* fdjac2.f -- translated by f2c (version 20030306) */
 
 #include "f2c.h"
 
-/* Table of constant values */
-
 static integer c__1 = 1;
 
-/* Subroutine */ int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x, 
-	doublereal *fvec, doublereal *fjac, integer *ldfjac, integer *iflag, 
-	doublereal *epsfcn, doublereal *wa)
+int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x, 
+	    doublereal *fvec, doublereal *fjac, integer *ldfjac, integer *iflag, 
+	    doublereal *epsfcn, doublereal *wa)
 {
     /* Initialized data */
 
@@ -112,10 +107,7 @@ static integer c__1 = 1;
     fjac_offset = 1 + fjac_dim1;
     fjac -= fjac_offset;
 
-    /* Function Body */
-
-/*     epsmch is the machine precision. */
-
+    /* epsmch is the machine precision */
     epsmch = dpmpar_(&c__1);
 
     eps = sqrt((max(*epsfcn,epsmch)));
@@ -135,14 +127,9 @@ static integer c__1 = 1;
 	i__2 = *m;
 	for (i__ = 1; i__ <= i__2; ++i__) {
 	    fjac[i__ + j * fjac_dim1] = (wa[i__] - fvec[i__]) / h__;
-/* L10: */
 	}
-/* L20: */
     }
 L30:
     return 0;
-
-/*     last card of subroutine fdjac2. */
-
-} /* fdjac2_ */
+}
 

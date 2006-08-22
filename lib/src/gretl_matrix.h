@@ -244,9 +244,13 @@ gretl_matrix *gretl_matrix_row_sum (const gretl_matrix *m);
 
 gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m);
 
-double gretl_matrix_row_mean (const gretl_matrix *m, int row);
+gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m);
 
-double gretl_matrix_column_mean (const gretl_matrix *m, int col);
+gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m);
+
+double gretl_matrix_row_i_mean (const gretl_matrix *m, int row);
+
+double gretl_matrix_column_j_mean (const gretl_matrix *m, int col);
 
 void gretl_matrix_demean_by_row (gretl_matrix *m);
 
@@ -297,6 +301,8 @@ gretl_matrix *gretl_matrix_right_nullspace (const gretl_matrix *M);
 gretl_matrix *
 gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
 			 int *err);
+
+gretl_matrix *gretl_matrix_lag (gretl_matrix *m, int k, double missval);
 
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 

@@ -72,6 +72,16 @@ When you provide a named list, the data series are by default placed
 in columns, as is natural in an econometric context: if you want them
 in rows, append the transpose symbol.
 
+As a special case of constructing a matrix from a list of variables,
+you can say
+%
+\begin{code}
+matrix A = { dataset }
+\end{code}
+%
+This builds a matrix using all the series in the current dataset,
+apart from the constant (variable 0).
+
 You can create new matrices, or replace existing matrices, by means of
 various transformations, in a manner similar to the \texttt{genr}
 command for scalars and data series.  To get a matrix result, however,
@@ -104,10 +114,27 @@ The following operators are available for matrices:
 \end{tabular}
 \end{center}
 
-Here are explanations of the less obvious cases.  First, in matrix
-``division'', $A/B$ is algebraically equivalent to $B^{-1}A$
-(pre-multiplication by the inverse of the ``divisor'').  Therefore the
-following two expressions are equivalent in principle:
+Here are explanations of the less obvious cases. 
+
+For matrix addition and subtraction, in general the two matrices have
+to be of the same dimensions but an exception to this rule is granted
+if one of the operands is a $1\times 1$ matrix or scalar.  The scalar
+is implicitly promoted to the status of a matrix of the correct
+dimensions, all of whose elements are equal to the given scalar value.
+For example, if $A$ is an $m \times n$ matrix and $k$ a scalar, then
+the commands
+%
+\begin{code}
+matrix C = A + k
+matrix D = A - k
+\end{code}
+%
+both produce $m \times n$ matrices, with elements $c_{ij} = 
+a_{ij} + k$ and $d_{ij} = a_{ij} - k$ respectively.
+
+In matrix ``division'', $A/B$ is algebraically equivalent to
+$B^{-1}A$ (pre-multiplication by the inverse of the ``divisor'').
+Therefore the following two expressions are equivalent in principle:
 %
 \begin{code}
 matrix C = A / B
@@ -244,6 +271,8 @@ matrix are:
 \begin{tabular}{ll}
 \texttt{sumc()} & sum by column \\
 \texttt{sumr()} & sum by row \\
+\texttt{meanc()} & mean by column \\
+\texttt{meanr()} & mean by row \\
 \texttt{inv()} & inverse \\
 \texttt{cholesky()} & Cholesky decomposition \\
 \texttt{diag()} & extract principal diagonal \\
@@ -260,8 +289,10 @@ the name of an existing matrix or as an expression that evaluates to a
 single matrix.
 
 For a matrix $A$ with $m$ rows and $n$ columns, \texttt{sumc(A)}
-returns a row vector with the $n$ column sums; \texttt{sumr(A)}
-returns a column vector with the $m$ row sums.
+returns a row vector with the $n$ column sums, and \texttt{sumr(A)}
+returns a column vector with the $m$ row sums.  \texttt{meanc(A)}
+returns a row vector with the $n$ column means, and \texttt{meanr(A)}
+a column vector with the $m$ row means.
 
 The \texttt{cholesky} function computes the Cholesky decomposition $L$
 of a symmetric positive definite matrix $A$: $A = LL'$; $L$ is lower

@@ -63,7 +63,7 @@ do {						\
 
 #endif
 
-#else /* use reasonable portable definitions */
+#else /* use reasonably portable definitions */
 
 #define swap_bytes_16(from, to)						\
 do {									\
@@ -117,7 +117,7 @@ do {						\
     __from.s16 = (x);    			\
     swap_bytes_16(__from.u16, __to.u16);	\
     (x) = __to.s16;				\
-} while(0)
+} while (0)
 
 #define swap_bytes_uint(from, to) swap_bytes_32(from, to)
 
@@ -132,7 +132,7 @@ do {						\
     __from.s32 = (from);			\
     swap_bytes_32(__from.u32, __to.u32);	\
     (to) = __to.s32;				\
-} while(0)
+} while (0)
 
 #define reverse_int(x)                          \
 do {						\
@@ -143,7 +143,7 @@ do {						\
     __from.s32 = (x);    			\
     swap_bytes_32(__from.u32, __to.u32);	\
     (x) = __to.s32;				\
-} while(0)
+} while (0)
 
 #define swap_bytes_float(from, to)		\
 do {						\
@@ -154,7 +154,7 @@ do {						\
     __from.f = (from);				\
     swap_bytes_32(__from.u32, __to.u32);	\
     (to) = __to.f;				\
-} while(0)
+} while (0)
 
 #define reverse_float(x)        		\
 do {						\
@@ -165,7 +165,7 @@ do {						\
     __from.f = (x);				\
     swap_bytes_32(__from.u32, __to.u32);	\
     (x) = __to.f;				\
-} while(0)
+} while (0)
 
 #define reverse_double(x) swap_bytes_double(x, x)
 

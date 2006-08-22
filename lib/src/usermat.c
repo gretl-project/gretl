@@ -1545,13 +1545,56 @@ static int matrix_genr (const char *name, const char *mask,
     return err;
 }
 
+static int list_has_scalars (const int *list, const DATAINFO *pdinfo)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (var_is_scalar(pdinfo, list[i])) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+static int *full_series_list (const DATAINFO *pdinfo)
+{
+    int *list = NULL;
+    int i, j, n = 0;
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (var_is_series(pdinfo, i)) {
+	    n++;
+	}
+    }
+
+    if (n == 0) {
+	return NULL;
+    }
+
+    list = gretl_list_new(n);
+    if (list == NULL) {
+	return NULL;
+    }
+
+    for (i=1, j=1; i<pdinfo->v; i++) {
+	if (var_is_series(pdinfo, i)) {
+	    list[j++] = i;
+	}
+    }
+
+    return list;
+}
+
 gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
 				     const DATAINFO *pdinfo, int transp,
 				     int *err)
 {
     gretl_matrix *M = NULL;
     char word[VNAMELEN];
-    const int *list;
+    int *list = NULL;
+    int freelist = 0;
     int len;
 
     while (isspace(*s)) s++;
@@ -1563,9 +1606,19 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
 
     *word = '\0';
     strncat(word, s, len);
-    list = get_list_by_name(word);
-    if (list == NULL) {
-	return NULL;
+
+    if (!strcmp(word, "dataset")) {
+	list = full_series_list(pdinfo);
+	freelist = 1;
+    } else {
+	list = get_list_by_name(word);
+	if (list == NULL) {
+	    return NULL;
+	} 
+	if (list_has_scalars(list, pdinfo)) {
+	    *err = E_TYPES;
+	    return NULL;
+	}
     }
 
     M = gretl_matrix_data_subset_no_missing(list, Z, pdinfo->t1, pdinfo->t2, 
@@ -1582,6 +1635,10 @@ gretl_matrix *fill_matrix_from_list (const char *s, const double **Z,
 	    gretl_matrix_free(M);
 	    M = R;
 	}
+    }
+
+    if (freelist) {
+	free(list);
     }
 
     return M;
@@ -1643,54 +1700,6 @@ get_user_matrix_fn (const char *name, const char *mask, const char *s,
     return ufun;
 }
 
-gretl_matrix *
-matrix_from_dataset (const double **Z, const DATAINFO *pdinfo,
-		     int transp, int *err)
-{
-    gretl_matrix *M;
-    int T = pdinfo->t2 - pdinfo->t1 + 1;
-    int n = pdinfo->v - 1;
-    int i, j, k, t;
-
-    if (T == 0) {
-	*err = E_DATA;
-	return NULL;
-    }
-
-    if (transp) {
-	M = gretl_matrix_alloc(n, T);
-    } else {
-	M = gretl_matrix_alloc(T, n);
-    }
-
-    if (M == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    k = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2 && !*err; t++, k++) {
-	j = 0;
-	for (i=1; i<pdinfo->v && !*err; i++, j++) {
-	    if (na(Z[i][t])) {
-		*err = E_MISSDATA;
-	    } else if (transp) {
-		gretl_matrix_set(M, j, k, Z[i][t]);
-	    } else {
-		gretl_matrix_set(M, k, j, Z[i][t]);
-	    }
-	}
-    }
-
-    if (*err) {
-	gretl_matrix_free(M);
-	M = NULL;
-    }
-
-    return M;
-}
-
-
 /* Currently we can create a user matrix in any one of four ways (but
    we can't mix these in a single matrix specification).
 
@@ -1735,19 +1744,6 @@ static int create_matrix (const char *name, const char *mask,
 	/* can't overwrite data series with matrix */
 	return E_TYPES;
     }
-
-    if (!strcmp(s, "= dataset") || !strcmp(s, "= dataset'")) {
-	transp = strchr(s, '\'') != NULL;
-	M = matrix_from_dataset((const double **) *pZ, pdinfo, 
-				transp, &err);
-	if (err) {
-	    goto finalize;
-	} else if (M != NULL) {
-	    err = add_or_replace_user_matrix_full(M, name, mask, NULL,
-						  pZ, pdinfo);
-	    goto finalize;
-	}
-    }	
 
     p = strchr(s, '{');
 

@@ -87,8 +87,6 @@ static void bin_error (int *err)
     *err = 1;
 }
 
-/** Low-level input **/
-
 static int read_int (FILE *fp, int naok, int *err)
 {
     int i;
@@ -103,7 +101,6 @@ static int read_int (FILE *fp, int naok, int *err)
     return ((i == STATA_INT_NA) & !naok ? NA_INT : i);
 }
 
-/* read a 1-byte signed integer */
 static int read_signed_byte (FILE *fp, int naok, int *err)
 { 
     signed char b;
@@ -115,7 +112,6 @@ static int read_signed_byte (FILE *fp, int naok, int *err)
     return ((b == STATA_BYTE_NA) & !naok)? NA_INT : (int) b;
 }
 
-/* read a single byte  */
 static int read_byte (FILE *fp, int naok, int *err)
 { 
     unsigned char u;
@@ -603,10 +599,8 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     *nvar = read_short(fp, 1, &err);  /* number of variables */
     *nobs = read_int(fp, 1, &err);    /* number of observations */
 
-    if (!err) {
-	/* sanity check */
-	if (*nvar <= 0) err = 1;
-	if (*nobs <= 0) err = 1;
+    if (!err && (*nvar <= 0 || *nobs <= 0)) {
+	err = 1;
     }
 
     if (!err) {

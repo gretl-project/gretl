@@ -20,6 +20,7 @@
 /* dbread.c for gretl */
 
 #include "libgretl.h"
+#include "../plugin/swap_bytes.h"
 
 #define DB_DEBUG 0
 
@@ -162,7 +163,11 @@ int get_pcgive_db_data (const char *dbbase, SERIESINFO *sinfo,
 	if (fread(&x, sizeof x, 1, fp) != 1) {
 	    err = E_DATA;
 	    break;
-	} else if (x == -9999.99 || isnan(x)) {
+	}
+#if WORDS_BIGENDIAN
+	reverse_double(x);
+#endif
+	if (x == -9999.99 || isnan(x)) {
 	    Z[1][t] = NADBL;
 	    err = DB_MISSING_DATA;
 	} else {
@@ -937,7 +942,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 {
     RATSData rdata;
     int miss = 0, i, t = 0;
-    double val;
+    double x;
 
     fprintf(stderr, "get_rats_series: starting from offset %d\n", offset);
     
@@ -948,12 +953,15 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 	/* the RATSData struct is actually 256 bytes.  Yay! */
 	fread(&rdata, sizeof rdata, 1, fp);
 	for (i=0; i<31 && t<sinfo->nobs; i++) {
-	    val = rdata.data[i];
-	    if (isnan(val)) {
-		val = NADBL;
+	    x = rdata.data[i];
+#if WORDS_BIGENDIAN
+	    reverse_double(x);
+#endif
+	    if (isnan(x)) {
+		x = NADBL;
 		miss = 1;
 	    }
-	    Z[1][t++] = val;
+	    Z[1][t++] = x;
 	}
     }
 

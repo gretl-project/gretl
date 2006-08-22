@@ -2490,15 +2490,61 @@ gretl_matrix *gretl_matrix_column_sum (const gretl_matrix *m)
 /**
  * gretl_matrix_row_mean:
  * @m: source matrix.
+ *
+ * Returns: a column vector containing the means of
+ * the rows of @m, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_row_mean (const gretl_matrix *m)
+{
+    gretl_matrix *s = gretl_matrix_sum(m, 0);
+
+    if (s != NULL) {
+	int i;
+
+	for (i=0; i<m->rows; i++) {
+	    s->val[i] /= m->cols;
+	}
+    }
+
+    return s;
+}
+
+/**
+ * gretl_matrix_column_mean:
+ * @m: source matrix.
+ *
+ * Returns: a row vector containing the means of
+ * the columns of @m, or %NULL on failure.
+ */
+
+gretl_matrix *gretl_matrix_column_mean (const gretl_matrix *m)
+{
+    gretl_matrix *s = gretl_matrix_sum(m, 1);
+
+    if (s != NULL) {
+	int j;
+
+	for (j=0; j<m->cols; j++) {
+	    s->val[j] /= m->rows;
+	}
+    }
+
+    return s;
+}
+
+/**
+ * gretl_matrix_row_i_mean:
+ * @m: source matrix.
  * @row: zero-based index of row.
  *
  * Returns: the mean of the elements in row @row of @m,
  * or #NADBL if the row is out of bounds.
  */
 
-double gretl_matrix_row_mean (const gretl_matrix *m, int row)
+double gretl_matrix_row_i_mean (const gretl_matrix *m, int i)
 {
-    double x = row_sum(m, row);
+    double x = row_sum(m, i);
 
     if (!na(x)) {
 	x /= (double) m->cols;
@@ -2508,7 +2554,7 @@ double gretl_matrix_row_mean (const gretl_matrix *m, int row)
 }
 
 /**
- * gretl_matrix_column_mean:
+ * gretl_matrix_column_j_mean:
  * @m: source matrix.
  * @col: zero-based index of column.
  *
@@ -2516,9 +2562,9 @@ double gretl_matrix_row_mean (const gretl_matrix *m, int row)
  * or #NADBL if the column is out of bounds.
  */
 
-double gretl_matrix_column_mean (const gretl_matrix *m, int col)
+double gretl_matrix_column_j_mean (const gretl_matrix *m, int j)
 {
-    double x = col_sum(m, col);
+    double x = col_sum(m, j);
 
     if (!na(x)) {
 	x /= (double) m->rows;
@@ -2541,7 +2587,7 @@ void gretl_matrix_demean_by_row (gretl_matrix *m)
     int i, j;
 
     for (i=0; i<m->rows; i++) {
-	rowmean = gretl_matrix_row_mean(m, i);
+	rowmean = gretl_matrix_row_i_mean(m, i);
 	for (j=0; j<m->cols; j++) {
 	    m->val[mdx(m, i, j)] -= rowmean;
 	}
@@ -2562,7 +2608,7 @@ void gretl_matrix_demean_by_column (gretl_matrix *m)
     int i, j;
 
     for (j=0; j<m->cols; j++) {
-	colmean = gretl_matrix_column_mean(m, j);
+	colmean = gretl_matrix_column_j_mean(m, j);
 	for (i=0; i<m->rows; i++) {
 	    m->val[mdx(m, i, j)] -= colmean;
 	}
@@ -3923,6 +3969,42 @@ gretl_matrix_col_concat (const gretl_matrix *a, const gretl_matrix *b,
     }
 
     return c;
+}
+
+/**
+ * gretl_matrix_lag:
+ * @m: matrix to operate on.
+ * @k: lag order (> 0 for lags, < 0 for leads).
+ * @missval: value to represent missing observations.
+ * 
+ * Returns: A matrix of the same dimensions as @m, containing lags
+ * of the variables in the columns of @m, with missing values set
+ * to @missval.
+ */
+
+gretl_matrix *gretl_matrix_lag (gretl_matrix *m, int k, double missval)
+{
+    gretl_matrix *a = gretl_matrix_alloc(m->rows, m->cols);
+    int s, t, i;
+
+    if (a == NULL) {
+	return NULL;
+    }
+
+    for (t=0; t<m->rows; t++) {
+	s = t - k;
+	if (s < 0 || s >= m->rows) {
+	    for (i=0; i<m->cols; i++) {
+		a->val[mdx(a, t, i)] = missval;
+	    }
+	} else {
+	    for (i=0; i<m->cols; i++) {
+		a->val[mdx(a, t, i)] = m->val[mdx(m, s, i)];
+	    }
+	}
+    }
+
+    return a;
 }
 
 /**
