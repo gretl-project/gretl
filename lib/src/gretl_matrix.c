@@ -31,6 +31,7 @@
 static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
 #define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
+#define matrix_is_scalar(m) (m->rows == 1 && m->cols == 1)
 
 /**
  * gretl_matrix_get:
@@ -1018,6 +1019,28 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
     return 0;
 }
 
+static int add_scalar_to_matrix (gretl_matrix *targ, double x)
+{
+    int i, n = targ->rows * targ->cols;
+
+    for (i=0; i<n; i++) {
+	targ->val[i] += x;
+    }
+
+    return 0;
+}
+
+static int subtract_scalar_from_matrix (gretl_matrix *targ, double x)
+{
+    int i, n = targ->rows * targ->cols;
+    
+    for (i=0; i<n; i++) {
+	targ->val[i] -= x;
+    }
+
+    return 0;
+}
+
 /**
  * gretl_matrix_add_to:
  * @targ: target matrix.
@@ -1026,9 +1049,11 @@ int gretl_matrix_copy_values (gretl_matrix *targ,
  * Adds the elements of @src to the corresponding elements
  * of @targ.
  * 
- * Returns: 0 on successful completion, or
- * %E_NONCONF if the two matrices are not
- * conformable for the operation.
+ * Returns: 0 on successful completion, or %E_NONCONF if the 
+ * two matrices are not conformable for the operation.
+ * In the special case where @src is in fact a scalar, the 
+ * operation always goes through OK, with the scalar being 
+ * added to each element of @targ.
  */
 
 int 
@@ -1037,7 +1062,11 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
     int i, n;
 
     if (targ->rows != src->rows || targ->cols != src->cols) {
-	return E_NONCONF;
+	if (matrix_is_scalar(src)) {
+	    return add_scalar_to_matrix(targ, src->val[0]);
+	} else {
+	    return E_NONCONF;
+	}
     }
 
     n = src->rows * src->cols;
@@ -1057,9 +1086,11 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
  * Subtracts the elements of @src from the corresponding elements
  * of @targ.
  * 
- * Returns: 0 on successful completion, or
- * %E_NONCONF if the two matrices are not
- * conformable for the operation.
+ * Returns: 0 on successful completion, or %E_NONCONF if the 
+ * two matrices are not conformable for the operation.
+ * In the special case where @src is in fact a scalar, the 
+ * operation always goes through OK, with the scalar being 
+ * subtracted from each element of @targ.
  */
 
 int 
@@ -1068,7 +1099,11 @@ gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
     int i, n;
 
     if (targ->rows != src->rows || targ->cols != src->cols) {
-	return E_NONCONF;
+	if (matrix_is_scalar(src)) {
+	    return subtract_scalar_from_matrix(targ, src->val[0]);
+	} else {
+	    return E_NONCONF;
+	}
     }
 
     n = src->rows * src->cols;
@@ -2594,9 +2629,25 @@ gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,
 			   gretl_matrix *c)
 {
-    return gretl_matrix_multiply_mod(a, GRETL_MOD_NONE,
-				     b, GRETL_MOD_NONE,
-				     c);
+    int err = 0;
+
+    if (matrix_is_scalar(a)) {
+	err = gretl_matrix_copy_values(c, b);
+	if (!err) {
+	    gretl_matrix_multiply_by_scalar(c, a->val[0]);
+	}
+    } else if (matrix_is_scalar(b)) {
+	err = gretl_matrix_copy_values(c, a);
+	if (!err) {
+	    gretl_matrix_multiply_by_scalar(c, b->val[0]);
+	}
+    } else {
+	err = gretl_matrix_multiply_mod(a, GRETL_MOD_NONE,
+					b, GRETL_MOD_NONE,
+					c);
+    }
+
+    return err;
 }
 
 /**

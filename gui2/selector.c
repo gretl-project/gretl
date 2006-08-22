@@ -3827,11 +3827,6 @@ struct var_lag_info_ {
     var_lag_info *vlp;
 };
 
-enum {
-    LAGS_OK = 1,
-    LAGS_CANCEL
-};
-
 #define depvar_row(c) (c == LAG_Y_X || c == LAG_Y_W)
 
 static void lag_entry_callback (GtkWidget *w, gpointer p)
@@ -3994,11 +3989,11 @@ static void lagsel_spin_connect (GtkWidget *button)
 		     G_CALLBACK(lag_set_callback), NULL);
 }
 
-static void lags_set_cancel (GtkWidget *w, gpointer p)
+static void lags_set_OK (GtkWidget *w, gpointer p)
 {
     int *resp = (int *) p;
 
-    *resp = LAGS_CANCEL;
+    *resp = GRETL_YES;
 }
 
 static void resensitive_selector (GtkWidget *w, gpointer p)
@@ -4023,7 +4018,7 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     gint tbl_len;
     double lmin, lmax, ldef;
     int i, j;
-    int ret = LAGS_OK;
+    int ret = GRETL_CANCEL;
 
     dialog = gretl_dialog_new(_("lag order"), sr->dlg, 
 			      GRETL_DLG_BLOCK| GRETL_DLG_RESIZE);
@@ -4167,10 +4162,12 @@ lags_dialog (const int *list, var_lag_info *vlinfo, selector *sr)
     /* "Cancel" button */
     tmp = cancel_delete_button(hbox, dialog, NULL);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
-		     G_CALLBACK(lags_set_cancel), &ret);
+		     G_CALLBACK(delete_widget), dialog);
 
     /* "OK" button */
     tmp = ok_button(hbox);
+    g_signal_connect(G_OBJECT(tmp), "clicked", 
+		     G_CALLBACK(lags_set_OK), &ret);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(lag_toggle_register), &vlinfo[0]);
     g_signal_connect(G_OBJECT(tmp), "clicked", 
@@ -4522,7 +4519,7 @@ static gboolean lags_dialog_driver (GtkWidget *w, selector *sr)
     resp = lags_dialog(list, vlinfo, sr);
 
     for (j=0; j<nvl; j++) {
-	if (resp != LAGS_CANCEL) {
+	if (resp != GRETL_CANCEL) {
 	    int changed = set_lags_for_var(&vlinfo[j], yxlags, ywlags);
 
 	    if (vlinfo[j].v != VDEFLT && changed) {

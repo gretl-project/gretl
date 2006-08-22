@@ -1643,6 +1643,54 @@ get_user_matrix_fn (const char *name, const char *mask, const char *s,
     return ufun;
 }
 
+gretl_matrix *
+matrix_from_dataset (const double **Z, const DATAINFO *pdinfo,
+		     int transp, int *err)
+{
+    gretl_matrix *M;
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int n = pdinfo->v - 1;
+    int i, j, k, t;
+
+    if (T == 0) {
+	*err = E_DATA;
+	return NULL;
+    }
+
+    if (transp) {
+	M = gretl_matrix_alloc(n, T);
+    } else {
+	M = gretl_matrix_alloc(T, n);
+    }
+
+    if (M == NULL) {
+	*err = E_ALLOC;
+	return NULL;
+    }
+
+    k = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2 && !*err; t++, k++) {
+	j = 0;
+	for (i=1; i<pdinfo->v && !*err; i++, j++) {
+	    if (na(Z[i][t])) {
+		*err = E_MISSDATA;
+	    } else if (transp) {
+		gretl_matrix_set(M, j, k, Z[i][t]);
+	    } else {
+		gretl_matrix_set(M, k, j, Z[i][t]);
+	    }
+	}
+    }
+
+    if (*err) {
+	gretl_matrix_free(M);
+	M = NULL;
+    }
+
+    return M;
+}
+
+
 /* Currently we can create a user matrix in any one of four ways (but
    we can't mix these in a single matrix specification).
 
@@ -1687,6 +1735,19 @@ static int create_matrix (const char *name, const char *mask,
 	/* can't overwrite data series with matrix */
 	return E_TYPES;
     }
+
+    if (!strcmp(s, "= dataset") || !strcmp(s, "= dataset'")) {
+	transp = strchr(s, '\'') != NULL;
+	M = matrix_from_dataset((const double **) *pZ, pdinfo, 
+				transp, &err);
+	if (err) {
+	    goto finalize;
+	} else if (M != NULL) {
+	    err = add_or_replace_user_matrix_full(M, name, mask, NULL,
+						  pZ, pdinfo);
+	    goto finalize;
+	}
+    }	
 
     p = strchr(s, '{');
 
@@ -1970,9 +2031,9 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 {
     gretl_matrix *C = NULL;
     gretl_matrix *D = NULL;
-    double x;
     int ra, ca;
     int rb, cb;
+    int r, c;
 
     *err = 0;
 
@@ -1993,13 +2054,29 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	break;
     case '+':
     case '-':
-	C = gretl_matrix_copy(A);
+	ra = gretl_matrix_rows(A);
+	ca = gretl_matrix_cols(A);
+
+	if (ra == 1 && ca == 1) {
+	    C = gretl_matrix_copy(B);
+	} else {
+	    C = gretl_matrix_copy(A);
+	}
 	if (C == NULL) {
 	    *err = E_ALLOC;
-	} else if (op == '+') {
-	    *err = gretl_matrix_add_to(C, B);
+	} else if (ra == 1 && ca == 1) {
+	    if (op == '+') {
+		*err = gretl_matrix_add_to(C, A);
+	    } else {
+		gretl_matrix_multiply_by_scalar(C, -1.0);
+		*err = gretl_matrix_add_to(C, A);
+	    }
 	} else {
-	    *err = gretl_matrix_subtract_from(C, B);
+	    if (op == '+') {
+		*err = gretl_matrix_add_to(C, B);
+	    } else {
+		*err = gretl_matrix_subtract_from(C, B);
+	    }
 	}
 	break;
     case '~':
@@ -2013,41 +2090,25 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	cb = gretl_matrix_cols(B);
 
 	if (ra == 1 && ca == 1) {
-	    C = gretl_matrix_copy(B);
-#if MDEBUG
-	    fprintf(stderr, " allocated copy 'C' of B (%dx%d) at %p\n", 
-		    rb, cb, (void *) C);
-#endif
-	    if (C == NULL) {
-		*err = E_ALLOC;	
-	    } else {
-		x = gretl_matrix_get(A, 0, 0);
-		gretl_matrix_multiply_by_scalar(C, x);
-	    }
+	    r = rb;
+	    c = cb;
 	} else if (rb == 1 && cb == 1) {
-	    C = gretl_matrix_copy(A);
-#if MDEBUG
-	    fprintf(stderr, " allocated copy 'C' of A (%dx%d) at %p\n", 
-		    ra, ca, (void *) C);
-#endif
-	    if (C == NULL) {
-		*err = E_ALLOC;	
-	    } else {
-		x = gretl_matrix_get(B, 0, 0);
-		gretl_matrix_multiply_by_scalar(C, x);
-	    }
+	    r = ra;
+	    c = ca;
 	} else {
-	    C = gretl_matrix_alloc(ra, cb);
+	    r = ra;
+	    c = cb;
+	}
+	C = gretl_matrix_alloc(r, c);
+	if (C == NULL) {
+	    *err = E_ALLOC;
+	} else {
 #if MDEBUG
 	    fprintf(stderr, " allocated new 'C' (%dx%d) at %p\n", 
-		    ra, cb, (void *) C);
+		    r, c, (void *) C);
 #endif
-	    if (C == NULL) {
-		*err = E_ALLOC;
-	    } else {
-		*err = gretl_matrix_multiply(A, B, C);
-	    }
-	}
+	    *err = gretl_matrix_multiply(A, B, C);
+	}	
 	break;
     case '/':
 	/* matrix "division" */
@@ -2059,8 +2120,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	    *err = E_ALLOC;
 	} else {
 	    if (rb == 1 && cb == 1) {
-		x = gretl_vector_get(B, 0);
-		*err = gretl_matrix_divide_by_scalar(C, x);
+		*err = gretl_matrix_divide_by_scalar(C, B->val[0]);
 	    } else {
 		D = gretl_matrix_copy(B);
 		if (D == NULL) {
@@ -2091,8 +2151,7 @@ gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B,
 	    if (C == NULL) {
 		*err = E_ALLOC;
 	    } else {
-		x = gretl_matrix_get(B, 0, 0);
-		gretl_matrix_dot_pow(C, x);
+		gretl_matrix_dot_pow(C, B->val[0]);
 	    }
 	}
 	break;
