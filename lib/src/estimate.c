@@ -1249,12 +1249,21 @@ static void compute_r_squared (MODEL *pmod, const double *y, int *ifc)
     }
 
     if (pmod->dfd > 0) {
-	double den = pmod->tss * pmod->dfd;
+	double den;
 
 	if (*ifc) {
+	    den = pmod->tss * pmod->dfd;
 	    pmod->adjrsq = 1 - (pmod->ess * (pmod->nobs - 1) / den);
 	} else {
-	    pmod->rsq = gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
+	    int t;
+
+	    den = 0.0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(y[t])) {
+		    den += y[t] * y[t];
+		}
+	    }
+	    pmod->rsq = 1 - pmod->ess / den; /* NIST method */
 	    pmod->adjrsq = 
 		1.0 - ((1.0 - pmod->rsq) * (pmod->nobs - 1.0) / pmod->dfd);
 	} 
@@ -1351,6 +1360,8 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 #endif
 
     if (sgmasq <= 0.0 || pmod->dfd == 0 || pmod->dfn == 0) {
+	pmod->fstt = NADBL;
+    } else if (pmod->rsq == 1.0) {
 	pmod->fstt = NADBL;
     } else {
 	pmod->fstt = (rss - zz * ifc) / (sgmasq * pmod->dfn);

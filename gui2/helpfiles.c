@@ -1170,30 +1170,30 @@ static int look_for_string (const char *haystack, const char *needle,
     return -1;
 }
 
-static gboolean real_find_in_text (GtkTextView *view, const gchar* str, 
+/* case-insensitive search in text buffer */
+
+static gboolean real_find_in_text (GtkTextView *view, const gchar *s, 
 				   gboolean from_cursor)
 {
     GtkTextBuffer *buf;
-    GtkTextIter iter;
-    gboolean found = FALSE;
-    gboolean wrapped = FALSE;
-    GtkTextSearchFlags search_flags;
+    GtkTextIter iter, start, end;
+    GtkTextMark *vis;
+    int found = 0;
+    int wrapped = 0;
+    int n = strlen(s);
+    gchar *got;
 
-    buf = gtk_text_view_get_buffer (view);
-
-    search_flags = GTK_TEXT_SEARCH_VISIBLE_ONLY | GTK_TEXT_SEARCH_TEXT_ONLY;
+    buf = gtk_text_view_get_buffer(view);
 
  text_search_wrap:
 	
     if (from_cursor) {
 	GtkTextIter sel_bound;
 		
-	gtk_text_buffer_get_iter_at_mark(buf,			
-					 &iter,
+	gtk_text_buffer_get_iter_at_mark(buf, &iter,
 					 gtk_text_buffer_get_mark(buf,
 								  "insert"));
-	gtk_text_buffer_get_iter_at_mark(buf,			
-					 &sel_bound,
+	gtk_text_buffer_get_iter_at_mark(buf, &sel_bound,
 					 gtk_text_buffer_get_mark(buf,
 								  "selection_bound"));
 	gtk_text_iter_order(&sel_bound, &iter);		
@@ -1201,24 +1201,34 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar* str,
 	gtk_text_buffer_get_iter_at_offset(buf, &iter, 0);
     }
 
-    if (*str != '\0') {
-	GtkTextIter match_start, match_end;
-	GtkTextMark *vis;
+    start = end = iter;
 
-	found = gtk_text_iter_forward_search(&iter, str, search_flags,
-					     &match_start, &match_end,
-					     NULL);	
-	if (found) {
-	    gtk_text_buffer_place_cursor(buf, &match_start);
-	    gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &match_end);
-	    vis = gtk_text_buffer_create_mark(buf, "vis", &match_end, FALSE);
-	    gtk_text_view_scroll_to_mark(view, vis, 0.0, TRUE, 0.1, 0.0);
-	} else if (from_cursor && !wrapped) {
-	    /* try wrapping */
-	    from_cursor = FALSE;
-	    wrapped = TRUE;
-	    goto text_search_wrap;
+    if (!gtk_text_iter_forward_chars(&end, n)) {
+	return 0;
+    }
+
+    while (1) {
+	got = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+	if (g_ascii_strcasecmp(got, s) == 0) {
+	    found = 1;
 	}
+	g_free(got);
+	if (found || !gtk_text_iter_forward_char(&start) ||
+	    !gtk_text_iter_forward_char(&end)) {
+	    break;
+	}
+    }
+
+    if (found) {
+	gtk_text_buffer_place_cursor(buf, &start);
+	gtk_text_buffer_move_mark_by_name(buf, "selection_bound", &end);
+	vis = gtk_text_buffer_create_mark(buf, "vis", &end, FALSE);
+	gtk_text_view_scroll_to_mark(view, vis, 0.0, TRUE, 0.1, 0.0);
+    } else if (from_cursor && !wrapped) {
+	/* try wrapping */
+	from_cursor = FALSE;
+	wrapped = 1;
+	goto text_search_wrap;
     }
 
     if (found && wrapped) {
@@ -1230,11 +1240,13 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar* str,
 
 static void find_in_text (GtkWidget *widget, gpointer data)
 {
+    windata_t *vwin = g_object_get_data(G_OBJECT(data), "windat");
     gboolean found;
-    windata_t *vwin = 
-	(windata_t *) g_object_get_data(G_OBJECT(data), "windat");
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
+    if (*needle == '\0') {
+	return;
+    }
 
     found = real_find_in_text(GTK_TEXT_VIEW(vwin->w), needle, TRUE);
 
@@ -1259,7 +1271,10 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 	minvar = 1;
     }
 
-    if (needle) g_free(needle);
+    if (needle) {
+	g_free(needle);
+    }
+
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
     lower(needle);
 

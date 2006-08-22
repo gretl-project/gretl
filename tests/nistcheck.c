@@ -255,24 +255,28 @@ void get_difficulty_level (const char *line, char *s)
 static double log_error (double q, double c, PRN *prn)
 {
     double le = 0.0;
+    int lae = 0;
 
     if (q == c) {
 	le = 15.0;
-	pprintf(prn, "%10.3f\n", le);
     } else if (isinf(c)) {
-	/* certval is inf: can't really handle this? */
-	le = -log(0);
-	pprintf(prn, "%10.3f (log abs error)\n", le);
+	/* certval is inf (e.g. F-stat in some cases): 
+	   can't really handle this? */
+	if (na(q) || isinf(q)) {
+	    le = 15.0;
+	} else {
+	    le = -log(0);
+	}
     } else if (c == 0.0) {
 	le = -mylog10(fabs(q));
-	pprintf(prn, "%10.3f (log abs error)\n", le);
     } else {
 	le = -mylog10(fabs(q - c) / fabs(c));
-	pprintf(prn, "%10.3f\n", le);
     }
 
     if (isnan(le)) {
 	pprintf(prn, "q = %g, c = %g\n", q, c);
+    } else {
+	pprintf(prn, "%10.3f %s\n", le, (lae)? "(log abs error)" : "");
     }
 
     return le;
@@ -979,7 +983,7 @@ static void nist_intro (PRN *prn)
 	  "using mulitple precision arithmetic.\n\n");
 #endif
 
-    pputs(prn, "For more information, please see "
+    pputs(prn, "For more information, please see\n"
 	  "http://www.itl.nist.gov/div898/strd/general/main.html");
 
     pputs(prn, "\n\n");

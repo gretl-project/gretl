@@ -45,21 +45,6 @@ static void print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo,
 				  PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
 
-static int noconst (const MODEL *pmod, PRN *prn)
-{
-    if (na(pmod->rsq) || gretl_model_get_int(pmod, "effconst")) {
-	return 0;
-    }
-
-    pputs(prn, _("The model has no constant term.\n"  
-	    "F is calculated as in Sect. 4.4 of Ramanathan's Introductory "
-	    "Econometrics.\n"
-	    "R-squared is the square of the correlation between the "
-	    "observed and fitted\nvalues of the dependent variable.\n\n"));
-
-    return 1;
-}
-
 #define RTFTAB "\\par \\ql \\tab "
 
 #define XDIGITS(m) (((m)->ci == MPOLS)? GRETL_MP_DIGITS : GRETL_DIGITS)
@@ -1720,7 +1705,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 		PRN *prn)
 {
     int is_discrete = (pmod->ci == PROBIT || pmod->ci == LOGIT);
-    int noconst_printed = 0;
     int gotnan = 0;
 
     if (prn == NULL || (opt & OPT_Q)) {
@@ -1849,13 +1833,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
-    if (!pmod->ifc && pmod->ci != NLS && pmod->aux != AUX_VAR
-	&& pmod->aux != AUX_JOHANSEN && pmod->aux != AUX_VECM
-	&& pmod->ci != ARMA && pmod->ci != MLE 
-	&& plain_format(prn)) {
-	noconst_printed = noconst(pmod, prn);
-    }
-    
     if (pmod->aux == AUX_WHITE) { 
 	rsqline(pmod, prn);
 	print_whites_results(pmod, prn);
@@ -1931,9 +1908,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_end(prn);
 
 	if (pmod->ci == TSLS && plain_format(prn)) {
-	    if (!noconst_printed) {
-		r_squared_message(prn);
-	    }
+	    r_squared_message(prn);
 	}
     }
 

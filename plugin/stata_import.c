@@ -30,7 +30,6 @@
 
 #include "libgretl.h"
 #include "gretl_string_table.h"
-
 #include "swap_bytes.h"
 
 enum {

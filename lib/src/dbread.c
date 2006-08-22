@@ -20,7 +20,7 @@
 /* dbread.c for gretl */
 
 #include "libgretl.h"
-#include "../plugin/swap_bytes.h"
+#include "swap_bytes.h"
 
 #define DB_DEBUG 0
 

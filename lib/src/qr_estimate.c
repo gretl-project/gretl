@@ -100,22 +100,10 @@ static void qr_compute_stats (MODEL *pmod, const double *y, int n,
     pmod->tss = qr_get_tss(pmod, y, &ifc);
 
     if (pmod->dfd > 0) {
-	if (ifc) {
-	    double den = pmod->tss * pmod->dfd;
+	double den = pmod->tss * pmod->dfd;
 
-	    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
-	    pmod->adjrsq = 1.0 - (pmod->ess * (n - 1) / den);
-	} else {
-	    double alt = 
-		gretl_corr_rsq(pmod->t1, pmod->t2, y, pmod->yhat);
-
-	    if (na(alt)) {
-		pmod->rsq = pmod->adjrsq = NADBL;
-	    } else {
-		pmod->rsq = alt;
-		pmod->adjrsq = 1.0 - ((1 - alt) * (n - 1.0) / pmod->dfd);
-	    }
-	}
+	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+	pmod->adjrsq = 1.0 - (pmod->ess * (n - 1) / den);
     } else {
 	pmod->rsq = 1.0;
     }
@@ -128,6 +116,8 @@ static void qr_compute_stats (MODEL *pmod, const double *y, int n,
     if (pmod->dfd > 0 && pmod->dfn > 0) {
 	if (opt & OPT_R) {
 	    pmod->fstt = robust_omit_F(NULL, pmod);
+	} else if (pmod->rsq == 1.0) {
+	    pmod->fstt = NADBL;
 	} else {
 	    pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd / 
 		(pmod->ess * pmod->dfn);
