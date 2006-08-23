@@ -71,6 +71,16 @@ Se si usa il nome di una lista, le serie che la costituiscono vengono usate per
 comporre le colonne, come risulta naturale in un contesto econometrico; se si
 vuole che vengano usate come righe, basta usare il simbolo di trasposizione.
 
+Un caso speciale di costruzione di una matrice usando una lista di variabili
+è il seguente:
+%
+\begin{code}
+matrix A = { dataset }
+\end{code}
+%
+In questo modo, si costruisce una matrice usando tutte le serie del dataset
+corrente, salvo la costante (variabile 0).
+
 È possibile creare nuove matrici, o sostituire matrici esistenti, usando varie
 trasformazioni, in modo simile a quelle usate per il comando \texttt{genr}
 per gli scalari e le serie di dati. Per ottenere una matrice come risultato,
@@ -102,8 +112,24 @@ Per le matrici sono disponibili gli operatori seguenti:
 \end{tabular}
 \end{center}
 
-Ecco qualche spiegazione per i casi meno ovvi. Per prima cosa, la
-``divisione'' tra matrici, $A/B$ è algebricamente equivalente a $B^{-1}A$
+Ecco qualche spiegazione per i casi meno ovvi.
+
+Per l'addizione e la sottrazione matriciale, in generale le due matrici
+devono avere le stesse dimensioni, salvo il caso in cui uno dei termini
+è una matrice $1\times 1$ o uno scalare. In questo caso, lo scalare viene
+implicitamente trasformato in una matrice con le corrette dimensioni, i cui
+elementi sono tutti pari al valore dello scalare. Ad esempio, se
+$A$ è una matrice $m \times n$ e $k$ è uno scalare, i comandi
+%
+\begin{code}
+matrix C = A + k
+matrix D = A - k
+\end{code}
+%
+producono entrambi delle matrici $m \times n$, con elementi $c_{ij} = 
++a_{ij} + k$ e $d_{ij} = a_{ij} - k$ rispettivamente.
+
+La ``divisione'' tra matrici, $A/B$ è algebricamente equivalente a $B^{-1}A$
 (pre-moltiplicazione per mezzo dell'inversa del ``divisore''). Quindi in linea
 di principio le due espressioni seguenti sono equivalenti:
 %
@@ -236,6 +262,8 @@ matrice sono:
 \begin{tabular}{ll}
 \texttt{sumc()} & somma per colonna \\
 \texttt{sumr()} & somma per riga \\
+\texttt{meanc()} & media per colonna \\
+\texttt{meanr()} & media per riga \\
 \texttt{inv()} & inversa \\
 \texttt{cholesky()} & scomposizione di Cholesky \\
 \texttt{diag()} & diagonale principale \\
@@ -251,8 +279,10 @@ Come per il gruppo precedente di funzioni, l'argomento deve essere il nome di
 una matrice esistente o un'espressione che si risolve in una matrice.
 
 Per una matrice $A$ con $m$ righe e $n$ colonne, \texttt{sumc(A)}
-produce un vettore riga con le $n$ somme per colonna; \texttt{sumr(A)}
-produce un vettore colonna con le $m$ somme per riga.
+produce un vettore riga con le $n$ somme per colonna, mentre \texttt{sumr(A)}
+produce un vettore colonna con le $m$ somme per riga. \texttt{meanc(A)}
+produce un vettore riga con le $n$ medie per colonna e \texttt{meanr(A)}
+un vettore colonna con le $m$ medie per riga.
 
 La funzione \texttt{cholesky} calcola la scomposizione di Cholesky
 $L$ di una matrice simmetrica definita positiva $A$: $A = LL'$; $L$ è
