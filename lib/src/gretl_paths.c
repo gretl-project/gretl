@@ -425,6 +425,10 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	return NULL;
     }
 
+    if (ppaths == NULL) {
+	return NULL;
+    }
+
     /* try looking where script was found */
     if (*ppaths->currdir) {
 	if ((fname = search_dir(fname, ppaths->currdir, CURRENT_DIR))) {

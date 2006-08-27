@@ -1771,27 +1771,32 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     double **tmpZ = NULL;
     FILE *dat = NULL;
     gzFile fz = NULL;
-    int err = 0, gzsuff = 0, add_gdt = 0;
-    int binary = 0, old_byvar = 0;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
+    int gdtsuff, gzsuff = 0;
+    int binary = 0, old_byvar = 0;
+    int err = 0;
 
     *gretl_errmsg = '\0';
-
-    /* get filenames organized */
     *hdrfile = '\0';
-    gzsuff = has_suffix(datfile, ".gz");
+
+    gdtsuff = has_suffix(datfile, ".gdt");
+    if (!gdtsuff) {
+	gzsuff = has_suffix(datfile, ".gz");
+    }
 
     if (addpath(datfile, ppaths, 0) == NULL) { /* not found yet */
 	char tryfile[MAXLEN];
 	int found = 0;
 
-	/* try using the .gdt suffix? */
-	*tryfile = '\0';
-	strncat(tryfile, datfile, MAXLEN-1);
-	try_gdt(tryfile); 
-	found = (addpath(tryfile, ppaths, 0) != NULL);
-	if (found) {
-	    add_gdt = 1;
+	if (!gdtsuff) {
+	    /* try using the .gdt suffix? */
+	    *tryfile = '\0';
+	    strncat(tryfile, datfile, MAXLEN-1);
+	    try_gdt(tryfile); 
+	    found = (addpath(tryfile, ppaths, 0) != NULL);
+	    if (found) {
+		gdtsuff = 1;
+	    }
 	}
 
 	/* or maybe the file is gzipped but lacks a .gz extension? */
@@ -1812,7 +1817,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     }
 
     /* catch XML files that have strayed in here? */
-    if (add_gdt && gretl_is_xml_file(datfile)) {
+    if (gdtsuff && gretl_is_xml_file(datfile)) {
 	return gretl_read_gdt(pZ, ppdinfo, datfile, ppaths, 
 			      code, prn, 0);
     }

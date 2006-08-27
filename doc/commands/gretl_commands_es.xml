@@ -4153,20 +4153,6 @@
 
   </command>
 
-  <command name="seed" section="Programming" context="gui"
-    label="Semilla aleatoria">
-
-    <description>
-      <para>Requiere como entrada un número entero. Establece la semilla para el
-	generador de números pseudoaleatorios que se utiliza bajo el menú Datos,
-	Añadir variables, Aleatoria normal y Aleatoria uniforme. Por defecto, la
-	semilla se establece cuando se inicia el programa usando la hora del
-	sistema. Si Vd. desea obtener secuencias de números pseudoaleatorios
-	repetibles necesitará determinar la semilla de forma manual.
-      </para>
-    </description>
-  </command>
-
   <command name="set" section="Programming" context="cli">
 
     <usage>

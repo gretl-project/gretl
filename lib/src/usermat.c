@@ -338,12 +338,14 @@ real_get_matrix_by_name (const char *name, int slevel, const DATAINFO *pdinfo)
 	level = slevel;
     }
 
-    /* if a series or scalar has been created with the same
-       name as the requested matrix, delete the matrix
-    */
-    if (name_is_variable(name, pdinfo)) {
-	delete_matrix_by_name(name);
-	return NULL;
+    if (pdinfo != NULL) {
+	/* if a series or scalar has been created with the same
+	   name as the requested matrix, delete the matrix
+	*/
+	if (name_is_variable(name, pdinfo)) {
+	    delete_matrix_by_name(name);
+	    return NULL;
+	}
     }
 
     for (i=0; i<n_matrices; i++) {

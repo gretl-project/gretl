@@ -7,33 +7,37 @@ build_docs = @build_docs@
 gretldir = $(prefix)/share/gretl
 tooldir = $(topsrc)/tools
 sharesrc = $(topsrc)/share
-pdfdir = $(topsrc)/doc/tex
+pdfdir = ../doc/tex
 
 INSTALL_DATA = cp -fp
 
-ifeq ($(build_docs),yes)
-  AUTO_HELPFILES = \
-	$(sharesrc)/gretlgui.hlp \
-	$(sharesrc)/gretlcmd.hlp \
-	$(sharesrc)/gretlcli.hlp \
-	$(sharesrc)/gretlgui.hlp.es \
-	$(sharesrc)/gretlcmd.hlp.es \
-	$(sharesrc)/gretlcli.hlp.es \
-	$(sharesrc)/gretlgui.hlp.it \
-	$(sharesrc)/gretlcmd.hlp.it \
-	$(sharesrc)/gretlcli.hlp.it 
-endif
-
-ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es
-IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
-
 INSTALL_GUI_SCRIPT_HELP = install_gui_script_help
 INSTALL_HELP_FIGS = install_helpfigs
+
 EN_GUI_HLP = $(sharesrc)/gretlgui.hlp
+EN_CMD_HLP = $(sharesrc)/gretlcmd.hlp
+EN_CLI_HLP = $(sharesrc)/gretlcli.hlp
+
 ES_GUI_HLP = $(sharesrc)/gretlgui.hlp.es
 ES_CMD_HLP = $(sharesrc)/gretlcmd.hlp.es
+ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es
+
 IT_GUI_HLP = $(sharesrc)/gretlgui.hlp.it
 IT_CMD_HLP = $(sharesrc)/gretlcmd.hlp.it
+IT_CLI_HLP = $(sharesrc)/gretlcli.hlp.it
+
+ifeq ($(build_docs),yes)
+  AUTO_HELPFILES = \
+	$(EN_GUI_HLP) \
+	$(EN_CMD_HLP) \
+	$(EN_CLI_HLP) \
+	$(ES_GUI_HLP) \
+	$(ES_CMD_HLP) \
+	$(ES_CLI_HLP) \
+	$(IT_GUI_HLP) \
+	$(IT_CMD_HLP) \
+	$(IT_CLI_HLP)
+endif
 
 VPATH = $(sharesrc)
 
@@ -92,11 +96,14 @@ install_gui_script_help: $(sharesrc)/gretlcmd.hlp
 install_help: $(AUTO_HELPFILES)
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(tooldir)/mkinstalldirs $(gretldir)/doc
-	$(INSTALL_DATA) $(sharesrc)/gretlcli.hlp $(gretldir)/gretlcli.hlp
 	$(INSTALL_DATA) $(EN_GUI_HLP) $(gretldir)/gretlgui.hlp
+	$(INSTALL_DATA) $(EN_CMD_HLP) $(gretldir)/gretlcmd.hlp
+	$(INSTALL_DATA) $(EN_CLI_HLP) $(gretldir)/gretlcli.hlp
 	$(INSTALL_DATA) $(ES_GUI_HLP) $(gretldir)/gretlgui.hlp.es
+	$(INSTALL_DATA) $(ES_CMD_HLP) $(gretldir)/gretlcmd.hlp.es
 	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
 	$(INSTALL_DATA) $(IT_GUI_HLP) $(gretldir)/gretlgui.hlp.it
+	$(INSTALL_DATA) $(IT_CMD_HLP) $(gretldir)/gretlcmd.hlp.it
 	$(INSTALL_DATA) $(IT_CLI_HLP) $(gretldir)/gretlcli.hlp.it
 	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \
 	if test -f $$f ; then $(INSTALL_DATA) $$f $(gretldir)/doc ; fi ; done
