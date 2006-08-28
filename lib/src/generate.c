@@ -3264,26 +3264,6 @@ static void get_genr_formula (char *formula, const char *line,
     copy_compress(formula, line, MAXLINE - 10);
 }
 
-static int gentoler (const char *s, PRN *prn)
-{
-    int err = 0;
-
-    if (numeric_string(s)) {
-	double x = dot_atof(s);
-
-	err = set_nls_toler(x);
-	if (!err) {
-	    pprintf(prn, _("Set tolerance to %g"), x);
-	    pputc(prn, '\n');
-	}
-    } else {
-	strcpy(gretl_errmsg, _("The setting for \"toler\" must be numeric"));
-	err = 1;
-    }
-
-    return err;
-}
-
 static void make_genr_varname (GENERATOR *genr, const char *vname)
 {
     if (!strncmp(vname, "__", 2)) {
@@ -3377,8 +3357,6 @@ static int genr_handle_special (const char *s, GENERATOR *genr,
 	if (!err) {
 	    pputs(genr->prn, _("Panel dummy variables generated.\n"));
 	}
-    } else if (!strncmp(s, "toler=", 6)) {
-	err = gentoler(s + 6, genr->prn);
     } else if (!strcmp(s, "time")) {
 	err = genrtime(pZ, pdinfo, 1);
 	do_message = 1;
