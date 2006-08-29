@@ -25,7 +25,7 @@
 #include "gretl_model.h"
 #include "gretl_panel.h"
 
-#define PDEBUG 0
+#define PDEBUG 1
 
 /* The minimum number of observations we'll accept for a given
    cross-sectional unit, to include that unit in the fixed-effects

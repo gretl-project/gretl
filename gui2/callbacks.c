@@ -519,37 +519,30 @@ void file_save_callback (GtkWidget *w, gpointer data)
 
 void add_rand_callback (gpointer data, guint r, GtkWidget *widget) 
 {
-    double *seedval;
-
-    seedval = mymalloc(sizeof *seedval);
-    if (seedval == NULL) {
-	return;
-    }
-
     if (r == RANDOM_UNIFORM) {
 	edit_dialog (_("gretl: uniform variable"), 
 		     _("Enter name for variable, and\n"
 		       "minimum and maximum values:"), 
 		     "unif 0 1",  
-		     do_random_uniform, seedval, 
+		     do_random_uniform, NULL, 
 		     GENR_RANDOM, VARCLICK_NONE, NULL);
     } else if (r == RANDOM_NORMAL) {
 	edit_dialog (_("gretl: normal variable"), 
 		     _("Enter name, mean and standard deviation:"), 
 		     "norm 0 1", 
-		     do_random_normal, seedval, 
+		     do_random_normal, NULL, 
 		     GENR_RANDOM, VARCLICK_NONE, NULL);
     } else if (r == RANDOM_CHISQ) {
 	edit_dialog (_("gretl: chi-square variable"), 
 		     _("Enter name and degrees of freedom:"), 
 		     "chi 5", 
-		     do_random_chisq, seedval, 
+		     do_random_chisq, NULL, 
 		     GENR_RANDOM, VARCLICK_NONE, NULL);
     } else if (r == RANDOM_ST) {
 	edit_dialog (_("gretl: Student's t variable"), 
 		     _("Enter name and degrees of freedom:"), 
 		     "st 20", 
-		     do_random_st, seedval, 
+		     do_random_st, NULL, 
 		     GENR_RANDOM, VARCLICK_NONE, NULL);
     }	
 }

@@ -2958,28 +2958,11 @@ void do_model_genr (GtkWidget *widget, dialog_t *dlg)
     finish_genr(pmod, dlg);
 }
 
-static void do_seed (guint32 newseed)
-{
-    guint32 oldseed = get_gretl_random_seed();
-
-    if (newseed == oldseed) {
-	return;
-    }
-	
-    gretl_command_sprintf("set seed %u", newseed); 
-    if (check_and_record_command()) {
-	return;
-    }
-
-    gretl_rand_set_seed(newseed);
-}
-
 static void real_do_random (dialog_t *dlg, int action) 
 {
     char vname[VNAMELEN];
     const gchar *buf;
     double f1, f2;
-    double *s;
     int v;
 
     buf = edit_dialog_get_text(dlg);
@@ -3016,11 +2999,6 @@ static void real_do_random (dialog_t *dlg, int action)
 
     if (validate_varname(vname)) {
 	return;
-    }
-
-    s = (double *) edit_dialog_get_data(dlg);
-    if (s != NULL) {
-	do_seed((guint32) *s);
     }
 
     if (action == RANDOM_NORMAL) {

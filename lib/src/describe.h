@@ -74,6 +74,12 @@ int eval_ytest (double y, GretlOp op, double test);
 int gretl_minmax (int t1, int t2, const double *x, 
 		  double *min, double *max);
 
+double gretl_min (int t1, int t2, const double *x);
+
+double gretl_max (int t1, int t2, const double *x);
+
+double gretl_sum (int t1, int t2, const double *x);
+
 double gretl_mean (int t1, int t2, const double *x);
 
 double gretl_restricted_mean (int t1, int t2, const double *x,

@@ -117,6 +117,68 @@ int gretl_minmax (int t1, int t2, const double *x,
 }
 
 /**
+ * gretl_min:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the minimum value of @x over the given range,
+ * or #NADBL if no valid vaues are found.
+ */
+
+double gretl_min (int t1, int t2, const double *x)
+{
+    double min, max;
+
+    gretl_minmax(t1, t2, x, &min, &max);
+    return min;
+}
+
+/**
+ * gretl_max:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the maximum value of @x over the given range,
+ * or #NADBL if no valid vaues are found.
+ */
+
+double gretl_max (int t1, int t2, const double *x)
+{
+    double min, max;
+
+    gretl_minmax(t1, t2, x, &min, &max);
+    return max;
+}
+
+/**
+ * gretl_sum:
+ * @t1: starting observation.
+ * @t2: ending observation.
+ * @x: data series.
+ *
+ * Returns: the sum of the series @x from obs
+ * @t1 to obs @t2, skipping any missing values, or #NADBL 
+ * in case there are no valid observations.
+ */
+
+double gretl_sum (int t1, int t2, const double *x)
+{
+    double sum = 0.0;
+    int t, n = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (!(na(x[t]))) {
+	    sum += x[t];
+	    n++;
+	}
+    }
+    
+    return (n == 0)? NADBL : sum;
+}
+
+/**
  * gretl_mean:
  * @t1: starting observation.
  * @t2: ending observation.
@@ -129,21 +191,14 @@ int gretl_minmax (int t1, int t2, const double *x,
 
 double gretl_mean (int t1, int t2, const double *x)
 {
-    int n;
-    register int t;
     double xbar, sum = 0.0;
-
-    n = t2 - t1 + 1;
-    if (n <= 0) {
-	return NADBL;
-    }
+    int t, n = 0;
 
     for (t=t1; t<=t2; t++) {
 	if (!(na(x[t]))) {
 	    sum += x[t];
-	} else {
-	    n--;
-	}
+	    n++;
+	} 
     }
 
     if (n == 0) {

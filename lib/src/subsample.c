@@ -24,7 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_panel.h"
 
-#define SUBDEBUG 0
+#define SUBDEBUG 1
 
 /*
   The purpose of the static pointers below: When the user subsamples
@@ -412,7 +412,7 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
     *gretl_errmsg = '\0';
 
 #if SUBDEBUG
-    fprintf(stderr, "real_restore_full_sample: pZ=%p, ppdinfo=%p\n",
+    fprintf(stderr, "restore_full_sample: pZ=%p, ppdinfo=%p\n",
 	    (void *) pZ, (void *) ppdinfo);
     fprintf(stderr, "*pZ=%p, *ppdinfo=%p\n",
 	    (void *) *pZ, (void *) *ppdinfo);
@@ -438,11 +438,13 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
        which may have moved */
     sync_dataset_elements(*ppdinfo);
 
+#if 0
     /* subsampled panel data: remove any added padding
        Is this right?? */
     if (dataset_is_panel(*ppdinfo)) {
 	err = unpad_panel_dataset(pZ, *ppdinfo);
     }
+#endif
 
     if (!err) {
 	/* update values for pre-existing series, which may have been

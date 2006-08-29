@@ -1121,6 +1121,66 @@ void database_description_dialog (const char *binname)
     gtk_widget_show(dlg);
 }
 
+static void record_seed (GtkWidget *w, guint32 *s)
+{
+    *s = (guint32) GTK_ADJUSTMENT(w)->value;
+}
+
+static void set_rand_seed (GtkWidget *w, guint32 *s)
+{
+    guint32 newseed = *s;
+	
+    gretl_command_sprintf("set seed %u", newseed); 
+    if (check_and_record_command()) {
+	return;
+    }
+
+    gretl_rand_set_seed(newseed);
+}
+
+void rand_seed_dialog (void)
+{
+    guint32 dseed = get_gretl_random_seed();
+    GtkWidget *dlg;
+    GtkWidget *tmp, *hbox;
+    GtkObject *adj;
+
+    dlg = gretl_dialog_new(_("gretl: seed for random numbers"), NULL,
+			   GRETL_DLG_BLOCK | GRETL_DLG_RESIZE);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    tmp = gtk_label_new(_("Seed for generator:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+
+    adj = gtk_adjustment_new((gdouble) dseed, 1, (gdouble) UINT_MAX, 
+			     1, 1000, 0);
+    g_signal_connect(G_OBJECT(adj), "value-changed",
+		     G_CALLBACK(record_seed), &dseed);
+    
+    tmp = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    gtk_widget_show_all(hbox);
+
+    /* FIXME activates default */
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 5);
+
+    /* Cancel button */
+    cancel_delete_button(GTK_DIALOG(dlg)->action_area, dlg, NULL);
+    
+    /* OK button */
+    tmp = ok_button(GTK_DIALOG(dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_rand_seed), &dseed);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
+
+    gtk_widget_show(dlg);
+}
+
 /* apparatus for setting sample range */
 
 struct range_setting {

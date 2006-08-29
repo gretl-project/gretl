@@ -328,6 +328,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Tools/_P-value finder"), NULL, stats_calculator, CALC_PVAL, NULL, GNULL },
     { N_("/Tools/_Test statistic calculator"), NULL, stats_calculator, CALC_TEST, 
       NULL, GNULL },
+    { N_("/Tools/_Seed for random numbers"), NULL, rand_seed_dialog, 0, 
+      NULL, GNULL },
     { "/Tools/sep1", NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Tools/_Command log"), NULL, view_command_log, 0, NULL, GNULL },
     { N_("/Tools/_Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },

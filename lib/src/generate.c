@@ -4376,28 +4376,24 @@ static double evaluate_statistic (double *z, GENERATOR *genr, int fn)
     if (fn == T_MEAN) {
 	x = gretl_mean(0, i, tmp);
     } else if (fn == T_SUM) {
-	x = gretl_mean(0, i, tmp);
-	x *= (i + 1);
+	x = gretl_sum(0, i, tmp);
     } else if (fn == T_SD) {
 	x = gretl_stddev(0, i, tmp);
     } else if (fn == T_VAR) {
 	x = gretl_variance(0, i, tmp);
-    } else if (fn == T_LRVAR) {
-	int pd = genr->pdinfo->pd;
-
-	x = gretl_long_run_variance(0, i, tmp, 2 * pd);
     } else if (fn == T_SST) {
 	x = gretl_sst(0, i, tmp);
     } else if (fn == T_MEDIAN) {
 	x = gretl_median(0, i, tmp);
     } else if (fn == T_GINI) {
 	x = gretl_gini(0, i, tmp);
-    } else if (fn == T_MIN || fn == T_MAX) {
-	double min, max;
-
-	gretl_minmax(0, i, tmp, &min, &max);
-	x = (fn == T_MIN)? min : max;
-    } 
+    } else if (fn == T_MIN) {
+	x = gretl_min(0, i, tmp);
+    } else if (fn == T_MAX) {
+	x = gretl_max(0, i, tmp);
+    } else if (fn == T_LRVAR) {
+	x = gretl_long_run_variance(0, i, tmp, 2 * genr->pdinfo->pd);
+    }	
 
     free(tmp);
     
