@@ -105,8 +105,10 @@ usermat_publish_dataset (double ***pZ, DATAINFO *pdinfo)
 
 static void usermat_unpublish_dataset (double ***pZ)
 {
-    *pZ = *gZ;
-    gZ = NULL;
+    if (gZ != NULL) {
+	*pZ = *gZ;
+	gZ = NULL;
+    }
     gdinfo = NULL;
 }
 
@@ -707,7 +709,7 @@ static int *parse_slice_spec (const char *s, int n, int *err)
 	}
     }
 
-    if (slice == NULL && !*err) {
+    if (slice == NULL && gZ != NULL && !*err) {
 	/* not found yet: keep trying, for p:q or plain p */
 	char f1[32], f2[32]; /* arbitrary? */
 	double x[2];
@@ -898,6 +900,10 @@ matrix_get_submatrix (const gretl_matrix *M, const char *s,
     int m = gretl_matrix_rows(M);
     int n = gretl_matrix_cols(M);
     int nr, nc;
+
+#if MDEBUG
+    fprintf(stderr, "matrix_get_submatrix: s = '%s'\n", s);
+#endif
 
     /* the selection string should end with ']' */
     p = strrchr(s, ']');
