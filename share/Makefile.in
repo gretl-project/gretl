@@ -11,9 +11,6 @@ pdfdir = ../doc/tex
 
 INSTALL_DATA = cp -fp
 
-INSTALL_GUI_SCRIPT_HELP = install_gui_script_help
-INSTALL_HELP_FIGS = install_helpfigs
-
 EN_GUI_HLP = $(sharesrc)/gretlgui.hlp
 EN_CMD_HLP = $(sharesrc)/gretlcmd.hlp
 EN_CLI_HLP = $(sharesrc)/gretlcli.hlp
@@ -51,8 +48,8 @@ $(AUTO_HELPFILES):
 help:
 	make -C ../doc/commands help-all
 
-install: installdirs install_datafiles install_scripts install_functions install_help \
-	install_fonts $(INSTALL_GUI_SCRIPT_HELP) $(INSTALL_HELP_FIGS)
+install: installdirs install_datafiles install_scripts install_functions \
+	install_help install_fonts
 	$(INSTALL_DATA) $(sharesrc)/gretl.stamp $(gretldir)/gretl.stamp
 	make -C bcih install
 
@@ -83,19 +80,10 @@ install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
 	$(INSTALL_DATA) $(topsrc)/gretl.1 $(prefix)/share/man/man1
 
-install_helpfigs: 
-	$(tooldir)/mkinstalldirs $(gretldir)/helpfigs
-	for f in $(sharesrc)/texfigs/*.png ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/helpfigs ; done
-
-install_gui_script_help: $(sharesrc)/gretlcmd.hlp
-	$(INSTALL_DATA) $(sharesrc)/gretlcmd.hlp $(gretldir)/gretlcmd.hlp
-	$(INSTALL_DATA) $(ES_CMD_HLP) $(gretldir)/gretlcmd.hlp.es
-	$(INSTALL_DATA) $(IT_CMD_HLP) $(gretldir)/gretlcmd.hlp.it
-
 install_help: $(AUTO_HELPFILES)
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(tooldir)/mkinstalldirs $(gretldir)/doc
+	$(tooldir)/mkinstalldirs $(gretldir)/helpfigs
 	$(INSTALL_DATA) $(EN_GUI_HLP) $(gretldir)/gretlgui.hlp
 	$(INSTALL_DATA) $(EN_CMD_HLP) $(gretldir)/gretlcmd.hlp
 	$(INSTALL_DATA) $(EN_CLI_HLP) $(gretldir)/gretlcli.hlp
@@ -105,6 +93,8 @@ install_help: $(AUTO_HELPFILES)
 	$(INSTALL_DATA) $(IT_GUI_HLP) $(gretldir)/gretlgui.hlp.it
 	$(INSTALL_DATA) $(IT_CMD_HLP) $(gretldir)/gretlcmd.hlp.it
 	$(INSTALL_DATA) $(IT_CLI_HLP) $(gretldir)/gretlcli.hlp.it
+	for f in $(sharesrc)/texfigs/*.png ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/helpfigs ; done
 	for f in $(pdfdir)/gretl-ref.pdf $(pdfdir)/gretl-guide.pdf ; do \
 	if test -f $$f ; then $(INSTALL_DATA) $$f $(gretldir)/doc ; fi ; done
 

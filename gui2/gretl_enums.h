@@ -12,6 +12,7 @@ enum extra_cmds {
     STORE_MODEL,
     VAR_SUMMARY,
     GENR_RANDOM,
+    SEED_RANDOM,
     ONLINE,
     EXPORT,
     MEANTEST2,

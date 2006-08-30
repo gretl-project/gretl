@@ -2669,29 +2669,53 @@
       <ilist>
 	<li>
 	  <para>
-	    Uniform: a lower and an upper bound for the distribution.
+	    Uniform: you must give a lower and an upper bound for the
+	    distribution.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Normal: the mean and standard deviation.  The latter must
-	    be positive.
+	    Normal: supply the mean and standard deviation.  The
+	    latter must be positive.
 	  </para>
 	</li>
 	<li>
 	  <para>
-	    Chi-square and Student's t: the degrees of freedom, which
-	    must be positive.
+	    Chi-square and Student's t: give the degrees of freedom,
+	    which must be positive.
 	  </para>
 	</li>
       </ilist>
 
       <para>
-	Setting the "seed": by default the seed is set when the
-	program is started, using the system time.  If you want to
-	obtain repeatable sequences of pseudo-random numbers you need
-	to set the seed manually (and take note of the value you
-	used).
+	If you want to generate repeatable sequences of pseudo-random
+	numbers, you can set the seed, under the Tools menu.
+      </para>
+
+    </description>
+  </command>
+
+  <command name="genseed" section="Programming" context="gui"
+    label="Setting the seed for random numbers">
+
+    <description>
+      <para>
+	The "seed" controls the starting point for the sequence of
+	pseudo-random numbers generated in a given gretl session. By
+	default the seed is set when the program is started, using the
+	system time.  This ensures that you get a different
+	sequence of random numbers each time you run the program.  If
+	you want to obtain repeatable sequences, you need to set the
+	seed manually (and take note of the value you used).
+      </para>
+      <para>
+	Note that whenever you click "OK" in this dialog box, the
+	generator is re-started, using the given seed.  So, for
+	example, if you (a) set the seed to (say) 147; (b) generate a
+	series from the standard normal distribution; (c) revisit
+	this dialog and click "OK" again with the seed still at 147;
+	then (d) generate a second series from the standard normal
+	distribution, the two generated series will be identical.
       </para>
     </description>
   </command>

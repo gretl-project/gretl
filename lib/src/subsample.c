@@ -24,7 +24,7 @@
 #include "gretl_func.h"
 #include "gretl_panel.h"
 
-#define SUBDEBUG 1
+#define SUBDEBUG 0
 
 /*
   The purpose of the static pointers below: When the user subsamples
@@ -260,8 +260,11 @@ update_full_data_values (const double **subZ, const DATAINFO *pdinfo)
 	    fullZ[i][0] = subZ[i][0];
 	} else {
 	    for (t=0; t<fullinfo->n; t++) {
-		if (pdinfo->submask[t]) {
+		if (pdinfo->submask[t] == 1) {
 		    fullZ[i][t] = subZ[i][subt++];
+		} else if (pdinfo->submask[t] == 'p') {
+		    /* skip panel padding (?) */
+		    subt++;
 		}
 	    }
 	}
@@ -437,14 +440,6 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
     /* reattach malloc'd elements of subsampled dataset,
        which may have moved */
     sync_dataset_elements(*ppdinfo);
-
-#if 0
-    /* subsampled panel data: remove any added padding
-       Is this right?? */
-    if (dataset_is_panel(*ppdinfo)) {
-	err = unpad_panel_dataset(pZ, *ppdinfo);
-    }
-#endif
 
     if (!err) {
 	/* update values for pre-existing series, which may have been
@@ -744,11 +739,15 @@ copy_panel_info_to_subsample (DATAINFO *subinfo, const DATAINFO *pdinfo,
     int s, t, err;
 
     err = dataset_allocate_panel_info(subinfo);
+
+#if SUBDEBUG
+    fprintf(stderr, "copying panel_info to subsample\n");
+#endif
     
     if (!err) {
 	s = 0;
 	for (t=0; t<pdinfo->n; t++) {
-	    if (mask == NULL || mask[t] == 1) {
+	    if (mask == NULL || mask[t]) {
 		subinfo->paninfo->unit[s] = pdinfo->paninfo->unit[t];
 		subinfo->paninfo->period[s] = pdinfo->paninfo->period[t];
 		s++;
@@ -766,13 +765,22 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
 {
     int i, t, st;
 
+#if SUBDEBUG
+    fprintf(stderr, "copying data to subsample\n");
+#endif
+
     /* copy data values */
     for (i=1; i<pdinfo->v; i++) {
 	if (var_is_series(pdinfo, i)) {
 	    st = 0;
 	    for (t=0; t<pdinfo->n; t++) {
-		if (mask == NULL || mask[t] == 1) {
+		if (mask == NULL) {
 		    subZ[i][st++] = Z[i][t];
+		} else if (mask[t] == 1) {
+		    subZ[i][st++] = Z[i][t];
+		} else if (mask[t] == 'p') {
+		    /* panel padding */
+		    subZ[i][st++] = NADBL;
 		}
 	    }
 	} else {
@@ -784,7 +792,7 @@ copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
    if (pdinfo->markers && subinfo->markers) {
        st = 0;
        for (t=0; t<pdinfo->n; t++) {
-	   if (mask == NULL || mask[t] == 1) {
+	   if (mask == NULL || mask[t] == 1 || mask[t] == 'p') {
 	       strcpy(subinfo->S[st++], pdinfo->S[t]);
 	   }
        }
@@ -809,6 +817,45 @@ int get_restriction_mode (gretlopt opt)
     } 
 
     return mode;
+}
+
+static int make_panel_submask (char *mask, const DATAINFO *pdinfo)
+{
+    char *umask = NULL;
+    char *pmask = NULL;
+    int i;
+
+    umask = calloc(pdinfo->paninfo->nunits, 1);
+    if (umask == NULL) {
+	return E_ALLOC;
+    }
+
+    pmask = calloc(pdinfo->paninfo->Tmax, 1);
+    if (pmask == NULL) {
+	free(umask);
+	return E_ALLOC;
+    }
+
+    for (i=0; i<pdinfo->n; i++) {
+	if (mask[i]) {
+	    umask[pdinfo->paninfo->unit[i]] = 1;
+	    pmask[pdinfo->paninfo->period[i]] = 1;
+	}
+    }
+
+    for (i=0; i<pdinfo->n; i++) {
+	if (!mask[i]) {
+	    if (umask[pdinfo->paninfo->unit[i]] &&
+		pmask[pdinfo->paninfo->period[i]]) {
+		mask[i] = 'p'; /* mark as padding row */
+	    }
+	}
+    }
+
+    free(umask);
+    free(pmask);
+
+    return 0;
 }
 
 static int 
@@ -868,6 +915,11 @@ make_restriction_mask (int mode, const char *line, const int *list,
 	mask = NULL;
     }
 
+    if (!err && dataset_is_panel(pdinfo)) {
+	/* panel special: figure padding obs, if any */
+	err = make_panel_submask(mask, pdinfo);
+    }
+
     if (err) {
 	free(mask);
     } else {
@@ -899,6 +951,11 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
 	return E_ALLOC;
     }
 
+#if SUBDEBUG
+    fprintf(stderr, "count_selected_cases: %d obs in subsample\n",
+	    subinfo->n);
+#endif
+
     /* link (don't copy) varnames and descriptions, since these are
        not dependent on the series length */
     subinfo->varname = (*ppdinfo)->varname;
@@ -929,12 +986,10 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
     copy_data_to_subsample(subZ, subinfo, (const double **) *pZ, 
 			   *ppdinfo, mask);
 
-    if (dataset_is_panel(*ppdinfo)) {
-	set_panel_structure_from_indices(&subZ, subinfo);
-    } else if (mode == SUBSAMPLE_USE_DUMMY || 
-	mode == SUBSAMPLE_BOOLEAN ||
-	mode == SUBSAMPLE_DROP_MISSING) {
-	if (dataset_is_time_series(*ppdinfo)) {
+    if (dataset_is_time_series(*ppdinfo)) {
+	if (mode == SUBSAMPLE_USE_DUMMY || 
+	    mode == SUBSAMPLE_BOOLEAN ||
+	    mode == SUBSAMPLE_DROP_MISSING) {
 	    maybe_reconstitute_time_series(*ppdinfo, mask, subinfo);
 	}
     }

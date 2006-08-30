@@ -1178,6 +1178,9 @@ void rand_seed_dialog (void)
     gtk_widget_grab_default(tmp);
     gtk_widget_show(tmp);
 
+    /* Help button */
+    context_help_button(GTK_DIALOG(dlg)->action_area, SEED_RANDOM);
+
     gtk_widget_show(dlg);
 }
 

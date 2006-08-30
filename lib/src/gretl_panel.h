@@ -43,10 +43,6 @@ int set_panel_structure_from_line (const char *line,
 				   double **Z, 
 				   DATAINFO *pdinfo);
 
-int set_panel_structure_from_indices (double ***pZ, DATAINFO *pdinfo);
-
-int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo);
-
 int switch_panel_orientation (double **Z, DATAINFO *pdinfo);
 
 int balanced_panel (const DATAINFO *pdinfo);

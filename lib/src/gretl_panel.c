@@ -25,7 +25,7 @@
 #include "gretl_model.h"
 #include "gretl_panel.h"
 
-#define PDEBUG 1
+#define PDEBUG 0
 
 /* The minimum number of observations we'll accept for a given
    cross-sectional unit, to include that unit in the fixed-effects
@@ -3283,73 +3283,6 @@ static int dataset_sort_by (double **Z, DATAINFO *pdinfo,
     return 0;
 }
 
-static int get_mask_skip (const char *mask, int n, int t)
-{
-    int s, skip = 1;
-
-    for (s=t+1; s<n; s++) {
-	if (mask[s]) skip++;
-	else break;
-    }
-
-    return skip;
-}
-
-/* For when we've subsampled a panel dataset, and have padded out
-   the subsample for balance: before restoring the full dataset
-   we need to get rid of the added padding.
-*/
-
-int unpad_panel_dataset (double ***pZ, DATAINFO *pdinfo)
-{
-    PANINFO *pan = pdinfo->paninfo;
-    int n = pdinfo->n;
-    int i, t, s, drop;
-    int skip, nrem;
-    size_t srem;
-    int err = 0;
-
-    if (pan == NULL) {
-	return E_DATA;
-    }
-
-    if (pan->padmask == NULL) {
-	return 0;
-    }
-
-    s = 0;
-    for (t=0; t<n; t++) {
-	if (pan->padmask[s]) {
-	    skip = get_mask_skip(pan->padmask, pdinfo->n, s);
-	    nrem = n - skip - t;
-	    srem = (nrem * sizeof *pan->unit);
-	    memmove(pan->unit + t, pan->unit + t + skip, srem);
-	    memmove(pan->period + t, pan->period + t + skip, srem);
-	    srem = (nrem * sizeof ***pZ);
-	    for (i=1; i<pdinfo->v; i++) {
-		if (var_is_series(pdinfo, i)) {
-		    memmove((*pZ)[i] + t, (*pZ)[i] + t + skip, srem);
-		}
-	    }
-	    s += skip;
-	    n -= skip;
-	} 
-	s++;
-    }
-
-    drop = pdinfo->n - n;
-
-#if PDEBUG
-    fprintf(stderr, "unpad: dropping %d observations\n", drop);
-#endif
-
-    if (drop > 0) {
-	err = dataset_drop_observations(drop, pZ, pdinfo);
-    }
-
-    return err;
-}
-
 /* Given the variables coding for panel unit and time period,
    construct parallel arrays of int that code for the same
    information, but are zero-based and consecutive.
@@ -3681,33 +3614,6 @@ int set_panel_structure_from_line (const char *line,
     }
 
     return set_panel_structure_from_vars(uv, tv, Z, pdinfo);
-}
-
-/* used for readjusting panel data structure after sub-sampling */
-
-int set_panel_structure_from_indices (double ***pZ, DATAINFO *pdinfo)
-{
-    int err;
-
-    err = dataset_finalize_panel_indices(pdinfo);
-
-    if (!err) {
-	int t, v = pdinfo->v;
-
-	err = dataset_add_series(2, pZ, pdinfo);
-	if (!err) {
-	    for (t=0; t<pdinfo->n; t++) {
-		(*pZ)[v][t] = pdinfo->paninfo->unit[t];
-		(*pZ)[v+1][t] = pdinfo->paninfo->period[t];
-	    }
-	    err = set_panel_structure_from_vars(v, v+1, *pZ, pdinfo);
-	    if (!err) {
-		err = dataset_drop_last_variables(2, pZ, pdinfo);
-	    }
-	}
-    }
-
-    return err;
 }
 
 /* utility functions */
