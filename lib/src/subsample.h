@@ -54,7 +54,7 @@ int restrict_sample (const char *line, const int *list,
 		     gretlopt oflag, PRN *prn);
 
 int 
-restrict_sample_from_mask (const char *mask, int mode, 
+restrict_sample_from_mask (char *mask, int mode, 
 			   double ***pZ, DATAINFO **ppdinfo);
 
 int complex_subsampled (void);

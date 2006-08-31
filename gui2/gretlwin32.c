@@ -655,6 +655,7 @@ int send_file (char *fullname)
     } else {
 	char *fname = fname_from_fullname(fullname);
 	gchar *note = NULL;
+	gchar *tmp = NULL;
 	MapiFileDesc mfd;
 	MapiMessage msg;
 	ULONG sd;
@@ -667,12 +668,17 @@ int send_file (char *fullname)
 	mfd.nPosition = 1; /* ? */
 
 	if (strstr(fname, ".gdt") != NULL) {
-	    note = g_strdup_printf(_("Please find the gretl data file %s attached.\n"), fname);
+	    tmp = g_strdup_printf(_("Please find the gretl data file %s attached."), 
+				  fname);
 	    msg.lpszSubject  = "dataset";
 	} else {
-	    note = g_strdup_printf(_("Please find the gretl script %s attached.\n"), fname);
+	    tmp = g_strdup_printf(_("Please find the gretl script %s attached."), 
+				  fname);
 	    msg.lpszSubject  = "script";
 	}
+
+	note = g_strdup_printf("%s\n", tmp);
+	g_free(tmp);
 
 	msg.lpszNoteText = note;
 	msg.nFileCount = 1;

@@ -261,6 +261,10 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
     PANINFO *pan;
     int i;
 
+#if 0
+    fprintf(stderr, "doing dataset_allocate_panel_info\n");
+#endif
+
     /* just in case, clean out any previous stuff */
     dataset_destroy_panel_info(pdinfo);  
 
@@ -341,6 +345,9 @@ int dataset_add_default_panel_indices (DATAINFO *pdinfo)
     int i, s, t, err;
 
     if (pdinfo->n % pdinfo->pd != 0) {
+	fprintf(stderr, "dataset_add_default_panel_indices: "
+		"error: pdinfo->n %% pdinfo->pd = %d\n", 
+		pdinfo->n % pdinfo->pd);	
 	return E_DATA;
     }
 

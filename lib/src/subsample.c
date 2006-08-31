@@ -596,17 +596,47 @@ static int mask_from_dummy (const char *line,
     return err;
 }
 
-static int count_selected_cases (const char *x, int n)
-{
-    int i, count = 0;
+/* how many observations are selected by the given 
+   subsample mask? */
 
-    for (i=0; i<n; i++) {
-	if (x[i] != 0) {
-	    count++;
+static int 
+count_selected_cases (const char *mask, const DATAINFO *pdinfo)
+{
+    int i, n = 0;
+
+    for (i=0; i<pdinfo->n; i++) {
+	if (mask[i]) {
+	    n++;
 	}
     }
 
-    return count;
+    return n;
+}
+
+/* panel: how many distinct cross-sectional units are included 
+   in the masked subset of observations? */
+
+static int 
+count_panel_units (const char *mask, const DATAINFO *pdinfo)
+{
+    int u, ubak = -1;
+    int i, n = 0;
+
+    for (i=0; i<pdinfo->n; i++) {
+	if (mask[i]) {
+	    u = pdinfo->paninfo->unit[i];
+	    if (u != ubak) {
+		n++;
+		ubak = u;
+	    }
+	}
+    }
+
+#if SUBDEBUG
+    fprintf(stderr, "count_panel_units: got n = %d\n", n);
+#endif
+
+    return n;
 }
 
 static int make_random_mask (const char *oldmask, const char *line, 
@@ -663,7 +693,7 @@ static int make_random_mask (const char *oldmask, const char *line,
 	    mask[u] = 1;
 	}
 	if (i >= subn - 1) {
-	    cases = count_selected_cases(mask, pdinfo->n);
+	    cases = count_selected_cases(mask, pdinfo);
 	}
     }
 
@@ -732,32 +762,6 @@ maybe_reconstitute_time_series (const DATAINFO *pdinfo,
     } 
 }
 
-static int 
-copy_panel_info_to_subsample (DATAINFO *subinfo, const DATAINFO *pdinfo,
-			      const char *mask)
-{
-    int s, t, err;
-
-    err = dataset_allocate_panel_info(subinfo);
-
-#if SUBDEBUG
-    fprintf(stderr, "copying panel_info to subsample\n");
-#endif
-    
-    if (!err) {
-	s = 0;
-	for (t=0; t<pdinfo->n; t++) {
-	    if (mask == NULL || mask[t]) {
-		subinfo->paninfo->unit[s] = pdinfo->paninfo->unit[t];
-		subinfo->paninfo->period[s] = pdinfo->paninfo->period[t];
-		s++;
-	    }
-	}	
-    }
-
-    return err;
-}
-
 static void 
 copy_data_to_subsample (double **subZ, DATAINFO *subinfo,
 			const double **Z, const DATAINFO *pdinfo,
@@ -819,21 +823,24 @@ int get_restriction_mode (gretlopt opt)
     return mode;
 }
 
-static int make_panel_submask (char *mask, const DATAINFO *pdinfo)
+static int 
+make_panel_submask (char *mask, const DATAINFO *pdinfo, int *err)
 {
     char *umask = NULL;
     char *pmask = NULL;
-    int i;
+    int i, np = 0;
 
     umask = calloc(pdinfo->paninfo->nunits, 1);
     if (umask == NULL) {
-	return E_ALLOC;
+	*err = E_ALLOC;
+	return 0;
     }
 
     pmask = calloc(pdinfo->paninfo->Tmax, 1);
     if (pmask == NULL) {
 	free(umask);
-	return E_ALLOC;
+	*err = E_ALLOC;
+	return 0;
     }
 
     for (i=0; i<pdinfo->n; i++) {
@@ -848,14 +855,20 @@ static int make_panel_submask (char *mask, const DATAINFO *pdinfo)
 	    if (umask[pdinfo->paninfo->unit[i]] &&
 		pmask[pdinfo->paninfo->period[i]]) {
 		mask[i] = 'p'; /* mark as padding row */
+		np++;
 	    }
 	}
     }
 
+#if SUBDEBUG
+    fprintf(stderr, "make_panel_submask: number of padding rows = %d\n",
+	    np);
+#endif
+
     free(umask);
     free(pmask);
 
-    return 0;
+    return np;
 }
 
 static int 
@@ -896,7 +909,7 @@ make_restriction_mask (int mode, const char *line, const int *list,
     if (oldmask != NULL && mode != SUBSAMPLE_RANDOM) {
 	sn = overlay_masks(mask, oldmask, pdinfo->n);
     } else {
-	sn = count_selected_cases(mask, pdinfo->n);
+	sn = count_selected_cases(mask, pdinfo);
     }
 
     /* does this policy lead to an empty sample, or no change in the
@@ -915,11 +928,6 @@ make_restriction_mask (int mode, const char *line, const int *list,
 	mask = NULL;
     }
 
-    if (!err && dataset_is_panel(pdinfo)) {
-	/* panel special: figure padding obs, if any */
-	err = make_panel_submask(mask, pdinfo);
-    }
-
     if (err) {
 	free(mask);
     } else {
@@ -930,8 +938,8 @@ make_restriction_mask (int mode, const char *line, const int *list,
 }
 
 int 
-restrict_sample_from_mask (const char *mask, int mode, double ***pZ, 
-			   DATAINFO **ppdinfo)
+restrict_sample_from_mask (char *mask, int mode, 
+			   double ***pZ, DATAINFO **ppdinfo)
 {
     double **subZ = NULL;
     DATAINFO *subinfo = NULL;
@@ -943,18 +951,36 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
 	return E_ALLOC;
     }
 
-    /* set up the sub-sampled datainfo */
-    subinfo->n = count_selected_cases(mask, (*ppdinfo)->n);
+    subinfo->n = count_selected_cases(mask, *ppdinfo);
     subinfo->v = (*ppdinfo)->v;
-    if (start_new_Z(&subZ, subinfo, 1)) {
-	free(subinfo);
-	return E_ALLOC;
-    }
 
 #if SUBDEBUG
     fprintf(stderr, "count_selected_cases: %d obs in subsample\n",
 	    subinfo->n);
 #endif
+
+    if (dataset_is_panel(*ppdinfo)) {
+	/* are we able to reconstitute a panel? */
+	int np, n = count_panel_units(mask, *ppdinfo);
+
+	if (n > 1 && subinfo->n > n) {
+	    /* add padding rows if need be */
+	    np = make_panel_submask(mask, *ppdinfo, &err);
+	    if (err) {
+		free(subinfo);
+		return err;
+	    }
+	    subinfo->structure = STACKED_TIME_SERIES;
+	    subinfo->n += np;
+	    subinfo->pd = subinfo->n / n;
+	}
+    }
+
+    /* set up the sub-sampled datainfo */
+    if (start_new_Z(&subZ, subinfo, 1)) {
+	free(subinfo);
+	return E_ALLOC;
+    }
 
     /* link (don't copy) varnames and descriptions, since these are
        not dependent on the series length */
@@ -962,15 +988,18 @@ restrict_sample_from_mask (const char *mask, int mode, double ***pZ,
     subinfo->varinfo = (*ppdinfo)->varinfo;
     subinfo->descrip = (*ppdinfo)->descrip;
 
-    /* parent dataset is panel: copy panel-specific info */
-    if (dataset_is_panel(*ppdinfo)) {
-	err = copy_panel_info_to_subsample(subinfo, *ppdinfo, mask);
+    if (subinfo->structure == STACKED_TIME_SERIES) {
+#if SUBDEBUG
+	fprintf(stderr, "panel subset: nT = %d, pd = %d\n", 
+		subinfo->n, subinfo->pd);
+#endif
+	err = dataset_add_default_panel_indices(subinfo);
 	if (err) {
 	    free_Z(subZ, subinfo);
 	    free(subinfo);
 	    return E_ALLOC;
 	}
-    }	
+    }
 
     /* set up case markers? */
     if ((*ppdinfo)->markers) {
