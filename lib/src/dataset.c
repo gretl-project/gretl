@@ -262,7 +262,8 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
     int i;
 
 #if 0
-    fprintf(stderr, "doing dataset_allocate_panel_info\n");
+    fprintf(stderr, "dataset_allocate_panel_info: pdinfo at %p\n",
+	    (void *) pdinfo);
 #endif
 
     /* just in case, clean out any previous stuff */
