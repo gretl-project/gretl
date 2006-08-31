@@ -82,6 +82,44 @@ void gretl_rand_set_seed (unsigned int seed)
 }
 
 /**
+ * gretl_uniform_dist_minmax:
+ * @a: target array
+ * @t1: start of the fill range
+ * @t2: end of the fill range
+ * @min: lower bound of range.
+ * @min: upper bound of range.
+ *
+ * Fill the selected subset of array @a with pseudo-random drawings
+ * from the uniform distribution on @min-@max, using the Mersenne
+ * Twister.
+ *
+ * Returns: 0 on success, 1 on invalid input.
+ */
+
+int gretl_uniform_dist_minmax (double *a, int t1, int t2,
+			       double min, double max) 
+{
+    int t;
+
+    if (na(min) && na(max)) {
+	min = 0.0;
+	max = 1.0;
+    } else if (na(min) || na(max) || max <= min) {
+	return E_INVARG;
+    }
+
+    for (t=t1; t<=t2; t++) {
+#ifdef USE_GLIB2
+	a[t] = g_rand_double_range(gretl_rand, min, max);
+#else
+	a[t] = min + genrand_int32() * (max / 4294967296.0);
+#endif 
+    }
+
+    return 0;
+}
+
+/**
  * gretl_uniform_dist:
  * @a: target array
  * @t1: start of the fill range
@@ -112,8 +150,8 @@ void gretl_uniform_dist (double *a, int t1, int t2)
  * @t2: end of the fill range
  *
  * Fill the selected range of array @a with pseudo-random drawings
- * from the standard distribution, using the Mersenne Twister for
- * uniform input and the Box-Muller method for converting to the
+ * from the standard normal distribution, using the Mersenne Twister
+ * for uniform input and the Box-Muller method for converting to the
  * normal distribution.
  */
 
@@ -137,6 +175,46 @@ void gretl_normal_dist (double *a, int t1, int t2)
 	}
 	a[t] = z * cos(2. * M_PI * y);
     }
+}
+
+/**
+ * gretl_normal_dist_with_params:
+ * @a: target array
+ * @t1: start of the fill range
+ * @t2: end of the fill range
+ * @mean: mean of the distribution
+ * @sd: standard deviation
+ *
+ * Fill the selected range of array @a with pseudo-random drawings
+ * from the normal distribution with the given mean and standard
+ * deviation, using the Mersenne Twister for uniform input and the 
+ * Box-Muller method for converting to the normal distribution.
+ *
+ * Returns: 0 on success, 1 on invalid input.
+ */
+
+int
+gretl_normal_dist_with_params (double *a, int t1, int t2,
+			       double mean, double sd) 
+{
+    int t;
+
+    if (na(mean) && na(sd)) {
+	mean = 0.0;
+	sd = 1.0;
+    } else if (na(mean) || na(sd) || sd <= 0.0) {
+	return E_INVARG;
+    }
+
+    gretl_normal_dist(a, t1, t2);
+
+    if (mean != 0.0 || sd != 1.0) {
+	for (t=t1; t<=t2; t++) {
+	    a[t] = mean + a[t] * sd;
+	}
+    }
+    
+    return 0;
 }
 
 /**

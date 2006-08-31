@@ -83,6 +83,7 @@ version 1.6.0, in progress
 - Engle-Granger cointegration test: improve printout, add option
   to test down for the lag order, and fix an issue with the
   selection of the MacKinnon p-value for this test
+- Tobit: enable handling of missing observations for this estimator
   
 3/24/2006 version 1.5.1
 - Add matrix manipulation functionality

@@ -24,7 +24,13 @@ void gretl_rand_set_seed (unsigned int seed);
 
 void gretl_uniform_dist (double *a, int t1, int t2);
 
+int gretl_uniform_dist_minmax (double *a, int t1, int t2,
+			       double min, double max);
+
 void gretl_normal_dist (double *a, int t1, int t2);
+
+int gretl_normal_dist_with_params (double *a, int t1, int t2,
+				   double mean, double sd);
 
 int gretl_chisq_dist (double *a, int t1, int t2, int v);
 

@@ -4487,43 +4487,16 @@ static int inverse_compare_vms (const void *a, const void *b)
 static void free_genr_S (GENERATOR *genr)
 {
     if (genr->S != NULL) {
-	int i, n = genr->pdinfo->n;
-
-	for (i=0; i<n; i++) {
-	    if (genr->S[i] != NULL) {
-		free(genr->S[i]);
-	    }
-	}
-	free(genr->S);
+	free_strings_array(genr->S, genr->pdinfo->n);
 	genr->S = NULL;
     }
 }
 
 static int allocate_genr_S (GENERATOR *genr)
 {
-    int i, n = genr->pdinfo->n;
-    int err = 0;
-
-    genr->S = malloc(n * sizeof *genr->S);
-
-    if (genr->S == NULL) {
-	err = 1;
-    } else {
-	for (i=0; i<n; i++) {
-	    genr->S[i] = NULL;
-	}
-	for (i=0; i<n; i++) {
-	    genr->S[i] = malloc(OBSLEN);
-	    if (genr->S[i] == NULL) {
-		err = 1;
-		free_genr_S(genr);
-		break;
-	    }
-	    genr->S[i][0] = '\0';
-	}
-    }
-
-    return err;
+    genr->S = strings_array_new_with_length(genr->pdinfo->n, OBSLEN);
+    
+    return genr->S == NULL;
 }
 
 /* do a simple sort if there are no case markers in the dataset,
