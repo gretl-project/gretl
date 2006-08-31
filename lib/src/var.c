@@ -256,6 +256,7 @@ static void johansen_info_free (JohansenInfo *jv)
     gretl_matrix_free(jv->Beta);
     gretl_matrix_free(jv->Alpha);
     gretl_matrix_free(jv->Bse);
+    gretl_matrix_free(jv->Bvar);
     gretl_matrix_free(jv->D);
 
     free(jv);
@@ -2449,6 +2450,7 @@ johansen_info_new (const int *list, const int *exolist, int rank, gretlopt opt)
     jv->Beta = NULL;
     jv->Alpha = NULL;
     jv->Bse = NULL;
+    jv->Bvar = NULL;
     jv->D = NULL;
 
     jv->difflist = NULL;
@@ -3105,10 +3107,19 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	src = var->A;
     } else if (idx == M_VCV) {
 	src = var->S;
-    } else if (idx == M_JALPHA || idx == M_JBETA) {
+    } else if (idx == M_JALPHA || idx == M_JBETA || idx == M_JVBETA ) {
 	if (var->jinfo != NULL) {
-	    src = (idx == M_JALPHA)? var->jinfo->Alpha : 
-		var->jinfo->Beta;
+	    switch (idx) {
+	    case M_JALPHA: 
+		src = var->jinfo->Alpha;
+		break;
+	    case M_JBETA: 
+		src = var->jinfo->Beta;
+		break;
+	    case M_JVBETA: 
+		src = var->jinfo->Bvar;
+		break;
+	    }
 	}
     }
 

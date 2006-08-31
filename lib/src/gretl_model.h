@@ -51,6 +51,7 @@ typedef enum {
     M_RHO,        /* autoregressive coefficients */
     M_JALPHA,     /* Johansen's alpha */
     M_JBETA,      /* Johansen's beta */
+    M_JVBETA,     /* Covariance matrix for Johansen's normalised beta */
     M_MAX         /* sentinel */
 } ModelDataIndex;
 

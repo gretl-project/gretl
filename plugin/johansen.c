@@ -842,7 +842,6 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix *O = NULL;
     gretl_matrix *aOa = NULL;
     gretl_matrix *HSH = NULL;
-    gretl_matrix *varbeta = NULL;
 
     int r = jrank(vecm);
     int n = gretl_matrix_rows(vecm->jinfo->Beta);
@@ -891,18 +890,18 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix_print(HSH, "HSH = subset(Svv)");
 #endif
 
-    varbeta = gretl_matrix_kronecker_product_new(aOa, HSH);
-    if (varbeta == NULL) {
+    vecm->jinfo->Bvar = gretl_matrix_kronecker_product_new(aOa, HSH);
+    if (vecm->jinfo->Bvar == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
 
-    err = gretl_invert_symmetric_matrix(varbeta);
+    err = gretl_invert_symmetric_matrix(vecm->jinfo->Bvar);
     if (err) {
 	goto bailout;
     }
 
-    gretl_matrix_divide_by_scalar(varbeta, vecm->T);
+    gretl_matrix_divide_by_scalar(vecm->jinfo->Bvar, vecm->T);
 
     vecm->jinfo->Bse = gretl_matrix_alloc(n - r, r);
     if (vecm->jinfo->Bse == NULL) {
@@ -914,14 +913,14 @@ static int beta_variance (GRETL_VAR *vecm)
     for (j=0; j<r; j++) {
 	/* cointegrating vector j */
         for (i=0; i<n-r; i++) {
-	    x = gretl_matrix_get(varbeta, k, k);
+	    x = gretl_matrix_get(vecm->jinfo->Bvar, k, k);
 	    gretl_matrix_set(vecm->jinfo->Bse, i, j, sqrt(x));
 	    k++;
 	}
     }
 
 #if JDEBUG
-    gretl_matrix_print(varbeta, "varbeta");
+    gretl_matrix_print(vecm->jinfo->Bvar, "var(beta)");
     gretl_matrix_print(vecm->jinfo->Bse, "se(beta)");
 #endif
 
@@ -930,7 +929,6 @@ static int beta_variance (GRETL_VAR *vecm)
     gretl_matrix_free(O);
     gretl_matrix_free(aOa);
     gretl_matrix_free(HSH);
-    gretl_matrix_free(varbeta);
 
     return err;
 }

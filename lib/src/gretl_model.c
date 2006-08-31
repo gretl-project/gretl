@@ -3805,6 +3805,7 @@ struct model_retriever model_retrievers[] = {
     { M_RHO,    "$rho",    N_("Autoregressive coefficient(s)") },
     { M_JALPHA, "$jalpha", N_("Cointegrating vector") },
     { M_JBETA,  "$jbeta",  N_("Adjustments vector") },
+    { M_JVBETA, "$jvbeta", N_("Covariance matrix for normalized cointegration matrix") },
     { M_MAX,     NULL,     NULL }
 };
 
@@ -3886,6 +3887,8 @@ int gretl_model_data_index (const char *s)
 	return M_JALPHA;
     if (!strcmp(test, "$jbeta")) 
 	return M_JBETA;
+    if (!strcmp(test, "$jvbeta")) 
+	return M_JVBETA;
 
     if (!msel && strchr(s, '(')) {
 	/* selecting scalar element from array? */

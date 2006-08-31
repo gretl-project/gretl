@@ -39,26 +39,49 @@
    contiguous, so the indexing is a lot easier.
 */
 
-static const double **make_tobit_X (const MODEL *pmod, const double **Z)
+static double **make_tobit_X (const MODEL *pmod, double **Z, int missvals)
 {
-    const double **X;
+    double **X;
     int nv = pmod->list[0];
     int offset = pmod->t1;
     int v, i;
 
-    X = malloc(nv * sizeof *X);
+    if (missvals) {
+	X = doubles_array_new(nv, pmod->nobs);
+    } else {
+	X = malloc(nv * sizeof *X);
+    }
+
     if (X == NULL) return NULL;
 
-    /* constant in slot 0 */
-    X[0] = Z[0] + offset;
+    if (missvals) {
+	int t, s;
 
-    /* dependent var in slot 1 */
-    X[1] = Z[pmod->list[1]] + offset;
+	for (t=0; t<pmod->nobs; t++) {
+	    X[0][t] = 1.0;
+	}
 
-    /* independent vars in slots 2, 3, ... */
-    for (i=2; i<nv; i++) {
-	v = pmod->list[i + 1];
-	X[i] = Z[v] + offset;
+	for (i=1; i<nv; i++) {
+	    v = (i == 1)? pmod->list[1] : pmod->list[i + 1];
+	    s = 0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!na(pmod->uhat[t])) {
+		    X[i][s++] = Z[v][t];
+		}
+	    }
+	}
+    } else {
+	/* constant in slot 0 */
+	X[0] = Z[0] + offset;
+
+	/* dependent var in slot 1 */
+	X[1] = Z[pmod->list[1]] + offset;
+
+	/* independent vars in slots 2, 3, ... */
+	for (i=2; i<nv; i++) {
+	    v = pmod->list[i + 1];
+	    X[i] = Z[v] + offset;
+	}
     }
 
     return X;
@@ -229,8 +252,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 			      double sigma, double ll, const double **X,
 			      gretl_matrix *VCV, double scale, int iters)
 {
-    int i, t, cenc = 0;
-    int offset = pmod->t1;
+    int i, t, s, cenc = 0;
     const double *y = X[1];
     double chi2, ubar, udev, skew, kurt;
 
@@ -252,12 +274,18 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     }
 
     pmod->ess = 0.0;
+    s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	double yt = y[t - offset];
+	double yt;
 
+	if (na(pmod->uhat[t])) {
+	    continue;
+	}
+
+	yt = y[s];
 	pmod->yhat[t] = pmod->coeff[0];
 	for (i=1; i<ncoeff; i++) {
-	    pmod->yhat[t] += pmod->coeff[i] * X[i + 1][t - offset];
+	    pmod->yhat[t] += pmod->coeff[i] * X[i + 1][s];
 	}
 
 	if (scale != 1.0) {
@@ -269,6 +297,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t]; /* Is this meaningful? */
 
 	if (yt == 0.0) cenc++;
+	s++;
     }
 
     if (scale != 1.0) {
@@ -284,14 +313,19 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     add_norm_test_to_model(pmod, chi2);
 
     /* now truncate reported yhat, uhat */
+    s = 0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->uhat[t])) {
+	    continue;
+	}
 	if (pmod->yhat[t] < 0.0) {
 	    pmod->yhat[t] = 0.0;
-	    pmod->uhat[t] = y[t - offset];
+	    pmod->uhat[t] = y[s];
 	    if (scale != 1.0) {
 		pmod->uhat[t] /= scale;
 	    }
 	}
+	s++;
     }
 
     pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
@@ -330,13 +364,14 @@ tobit_model_info_init (int model_obs, int bign, int k, int n_series)
 
 /* Main Tobit function */
 
-static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
-		     double scale, PRN *prn)
+static int do_tobit (double **Z, DATAINFO *pdinfo, MODEL *pmod,
+		     double scale, int missvals, PRN *prn)
 {
-    const double **X;
+    double **X;
     double *coeff, *theta = NULL;
     double sigma, ll;
     int i, j, k, n;
+    int nv = pmod->list[0];
     int n_series = 4;
     int err = 0;
 
@@ -350,8 +385,9 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     k = pmod->ncoeff + 1; /* add the variance */
     n = pmod->nobs;
 
-    /* set of pointers into original data */
-    X = make_tobit_X(pmod, Z);
+    /* set of pointers into original data, or a reduced copy 
+       if need be */
+    X = make_tobit_X(pmod, Z, missvals);
     if (X == NULL) {
 	err = E_ALLOC;
 	goto bailout;
@@ -374,7 +410,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     }
 
     /* call BHHH routine to maximize ll */
-    err = bhhh_max(tobit_ll, X, pmod->coeff, tobit, prn);
+    err = bhhh_max(tobit_ll, (const double **) X, pmod->coeff, tobit, prn);
 
     if (err) {
 	goto bailout;
@@ -430,10 +466,16 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 			      VCV);
 
     ll = model_info_get_ll(tobit);
-    write_tobit_stats(pmod, theta, k-1, sigma, ll, X, VCV, 
-		      scale, model_info_get_iters(tobit));
+    write_tobit_stats(pmod, theta, k-1, sigma, ll, (const double **) X, 
+		      VCV, scale, model_info_get_iters(tobit));
 
  bailout:
+
+    if (missvals) {
+	for (i=0; i<nv; i++) {
+	    free(X[i]);
+	}
+    }
 
     free(X);
 
@@ -452,16 +494,20 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     return err;
 }
 
-static double tobit_depvar_scale (const MODEL *pmod)
+static double tobit_depvar_scale (const MODEL *pmod, int *miss)
 {
     double ut, umax = 0.0;
     double scale = 1.0;
     int t;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	ut = fabs(pmod->uhat[t]);
-	if (ut > umax) {
-	    umax = ut;
+	if (na(pmod->uhat[t])) {
+	    *miss = 1;
+	} else {
+	    ut = fabs(pmod->uhat[t]);
+	    if (ut > umax) {
+		umax = ut;
+	    }
 	}
     }
 
@@ -479,23 +525,28 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn) 
 {
     MODEL model;
+    double *y;
     double scale = 1.0;
+    int missvals = 0;
     int t;
 
-    /* run initial OLS: OPT_M bans missing obs */
-    model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
+    /* run initial OLS: OPT_M would ban missing obs */
+    model = lsq(list, pZ, pdinfo, OLS, OPT_A);
     if (model.errcode) {
 	return model;
     }
 
     /* handle scale issues */
-    scale = tobit_depvar_scale(&model);
+    scale = tobit_depvar_scale(&model, &missvals);
     if (scale != 1.0) {
+	y = (*pZ)[model.list[1]];
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[model.list[1]][t] *= scale;
+	    if (!na(y[t])) {
+		y[t] *= scale;
+	    }
 	}
 	clear_model(&model);
-	model = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M);
+	model = lsq(list, pZ, pdinfo, OLS, OPT_A);
     }
 
 #ifdef TDEBUG
@@ -505,13 +556,16 @@ MODEL tobit_estimate (const int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* do the actual Tobit analysis */
     if (model.errcode == 0) {
-	model.errcode = do_tobit((const double **) *pZ, pdinfo, 
-				 &model, scale, prn);
+	model.errcode = do_tobit(*pZ, pdinfo, &model, scale, 
+				 missvals, prn);
     }
 
     if (scale != 1.0) {
+	y = (*pZ)[model.list[1]];
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[model.list[1]][t] /= scale;
+	    if (!na(y[t])) {
+		y[t] /= scale;
+	    }
 	}
     }
 

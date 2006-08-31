@@ -52,6 +52,7 @@ struct JohansenInfo_ {
     gretl_matrix *Beta;   /* matrix of eigenvectors */
     gretl_matrix *Alpha;  /* matrix of adjustments */
     gretl_matrix *Bse;    /* standard errors of EC terms */
+    gretl_matrix *Bvar;   /* Covariance matrix of betas after triangular normalisation */
     gretl_matrix *D;      /* for testing restrictions on EC coeffs */
 };
 
