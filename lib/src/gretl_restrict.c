@@ -213,11 +213,11 @@ restriction_set_form_matrices (gretl_restriction_set *rset,
     int col, i, j;
 
     R = gretl_matrix_alloc(rset->k, R_n_columns(rset));
-
-    if (R == NULL) return E_ALLOC;
+    if (R == NULL) {
+	return E_ALLOC;
+    }
 
     q = gretl_column_vector_alloc(rset->k);
-
     if (q == NULL) {
 	gretl_matrix_free(R);
 	return E_ALLOC;
@@ -330,18 +330,27 @@ static int parse_b_bit (const char *s, int *eq, int *bnum)
     } else if (*s == '[') {
 	if (sscanf(s, "[%d,%d]", eq, bnum) == 2) {
 	    err = 0;
-	} else if (sscanf(s, "[%d]", bnum)) {
-	    *eq = 0;
+	} else if (sscanf(s, "[%d]", bnum) == 1) {
+	    *eq = 1;
 	    err = 0;
 	}	
     }
 
-    if (*bnum > 0) {
-	*bnum -= 1;
+    if (*bnum < 1) {
+	sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
+		*bnum);
+	err = 1;
+    } else {
+	*bnum -= 1; /* convert to zero base */
     }
 
-    if (*eq > 0) {
-	*eq -= 1;
+    if (*eq < 1) {
+	fprintf(stderr, "borked HERE\n");
+	sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
+		*eq);
+	err = 1;
+    } else {
+	*eq -= 1; /* convert to zero base */
     }
 
     return err;
@@ -353,7 +362,7 @@ parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
     const char *s0 = s;
     int err = E_PARSE;
 
-    *eq = 0;
+    *eq = 1;
 
     while (isspace((unsigned char) *s)) s++;
 
@@ -371,7 +380,7 @@ parse_coeff_chunk (const char *s, double *x, int *eq, int *bnum)
 	}
     }
 
-    if (err) {
+    if (err && *gretl_errmsg == '\0') {
 	sprintf(gretl_errmsg, _("parse error in '%s'\n"), s0);
     } 
 
@@ -489,30 +498,23 @@ static void print_restriction (const gretl_restriction_set *rset,
 {
     const restriction *r = rset->restrictions[j];
     char vname[24];
-    int i;
+    int i, k;
 
     for (i=0; i<r->nterms; i++) {
+	k = r->coeff[i];
 	print_mult(r->mult[i], i == 0, prn);
 	if (rset->cross) {
-	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, r->coeff[i] + 1);
+	    pprintf(prn, "b[%d,%d]", r->eq[i] + 1, k + 1);
 	} else if (rset->type == GRETL_OBJ_VAR) {
-	    GRETL_VAR *var = rset->obj;
-	    const int *list = gretl_VECM_list(var);
-	    int li = (list == NULL)? 0 : r->coeff[i];
-
-	    if (li > 0 && li <= list[0]) {
-		pprintf(prn, "b[%s]", pdinfo->varname[list[li]]);
-	    } else {
-		pprintf(prn, "b[%d]", r->coeff[i] + 1);
-	    }
+	    pprintf(prn, "b[%d]", k + 1);
 	} else {
 	    MODEL *pmod = rset->obj;
 
-	    gretl_model_get_param_name(pmod, pdinfo, 
-				       r->coeff[i], vname);
+	    gretl_model_get_param_name(pmod, pdinfo, k, vname);
 	    pprintf(prn, "b[%s]", vname);
 	}
     }
+
     pprintf(prn, " = %g\n", r->rhs);
 }
 
@@ -537,16 +539,6 @@ print_restriction_set (const gretl_restriction_set *rset,
 	}
 	print_restriction(rset, i, pdinfo, prn);
     }
-
-#if RDEBUG
-    if (rset->pmod != NULL) {
-	pprintf(prn, "Selection mask for coefficients:");
-	for (i=0; i<rset->pmod->ncoeff; i++) {
-	    pprintf(prn, " %d", (int) rset->mask[i]);
-	}
-	pputc(prn, '\n');
-    }
-#endif
 }
 
 static int 
@@ -644,7 +636,7 @@ static int bnum_out_of_bounds (const gretl_restriction_set *rset,
 	if (eq > 0) {
 	    sprintf(gretl_errmsg, _("Equation number (%d) is out of range"), 
 		    eq + 1);
-	} else if (bnum >= pmod->ncoeff) {
+	} else if (bnum >= pmod->ncoeff || bnum < 0) {
 	    sprintf(gretl_errmsg, _("Coefficient number (%d) is out of range"), 
 		    bnum + 1);
 	} else {
@@ -701,7 +693,7 @@ real_restriction_set_parse_line (gretl_restriction_set *rset,
 
     for (i=0; i<nt; i++) {
 	char chunk[32];
-	int len, bnum, eq;
+	int len, bnum = 1, eq = 1;
 	double mult;
 
 	len = strcspn(p, "+-=");
