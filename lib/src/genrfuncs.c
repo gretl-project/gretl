@@ -1214,7 +1214,7 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
 	    }
 	}
 	if (calendar_data(pdinfo)) {
-	    charsub(test, ':', '/');
+	    charsub(test, ':', '/'); /* FIXME */
 	    for (t=0; t<pdinfo->n; t++) {
 		if (!strcmp(test, pdinfo->S[t]) ||
 		    !strcmp(test, pdinfo->S[t] + 2)) {
@@ -1234,7 +1234,7 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
     if (calendar_data(pdinfo)) {
 	char datestr[OBSLEN];
 
-	charsub(test, ':', '/');
+	charsub(test, ':', '/'); /* FIXME */
 	for (t=0; t<pdinfo->n; t++) {
 	    calendar_date_string(datestr, t, pdinfo);
 	    if (!strcmp(test, datestr) ||

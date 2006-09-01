@@ -41,14 +41,6 @@ enum {
 
 static double calc_xy (double x, double y, char op, int t, int *err);
 
-static int genr_mpow (const char *str, double *xvec, double **Z, 
-		      DATAINFO *pdinfo);
-
-#ifdef HAVE_MPFR
-static int genr_mlog (const char *str, double *xvec, double **pZ, 
-		      DATAINFO *pdinfo);
-#endif
-
 static void eval_msg (const GENERATOR *genr);
 static void compose_genr_msg (const GENERATOR *genr, int oldv);
 
@@ -66,8 +58,6 @@ static double *get_random_series (DATAINFO *pdinfo, int fn);
 static double *get_random_series_with_args (const char *s, 
 					    GENERATOR *genr,
 					    int fn); 
-static double *get_mp_series (const char *s, GENERATOR *genr,
-			      int fn, int *err);
 static double *get_tmp_series (double *x, GENERATOR *genr,
 			       int fn, double param);
 static int genr_add_temp_var (double *x, GENERATOR *genr, genatom *atom);
@@ -137,7 +127,6 @@ struct genr_func funcs[] = {
     { T_PVALUE,   "pvalue" },
     { T_CRIT,     "critical" },
     { T_OBSNUM,   "obsnum" },
-    { T_MPOW,     "mpow" },
     { T_DNORM,    "dnorm" },
     { T_CNORM,    "cnorm" },
     { T_QNORM,    "qnorm" },
@@ -176,9 +165,6 @@ struct genr_func funcs[] = {
     { T_IMAT,     "I" },
     { T_ZEROS,    "zeros" },
     { T_ONES,     "ones" },
-#ifdef HAVE_MPFR
-    { T_MLOG,     "mlog" },
-#endif
     { T_IDENTITY, "ident" },
     { 0, NULL }
 };
@@ -237,12 +223,6 @@ struct retriever retrievers[] = {
 #define RAND_FUNC(f) (f == T_UNIFORM || f == T_NORMAL)
 
 #define needs_arg(f) (f > 0 && f != T_UNIFORM && f != T_NORMAL)
-
-#ifdef HAVE_MPFR
-# define MP_MATH(f) (f == T_MPOW || f == T_MLOG)
-#else
-# define MP_MATH(f) (f == T_MPOW)
-#endif
 
 #define MAXTERMS  64
 #define TOKLEN  1024
@@ -987,7 +967,7 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 	return;
     }
 
-    if (MP_MATH(atom->func) || atom->func == T_PVALUE || 
+    if (atom->func == T_PVALUE || 
 	atom->func == T_CRIT || atom->func == T_FRACDIFF ||
 	atom->func == T_CHISQ || atom->func == T_STUDENT ||
 	atom->func == T_CDF || BIVARIATE_STAT(atom->func)) {
@@ -1544,16 +1524,6 @@ static int add_model_series_to_genr (GENERATOR *genr, genatom *atom)
     return err;
 }
 
-static int add_mp_series_to_genr (GENERATOR *genr, genatom *atom)
-{
-    double *x;
-
-    x = get_mp_series(atom->str, genr, atom->func, &genr->err);
-    if (x == NULL) return 1;
-
-    return genr_add_temp_var(x, genr, atom);
-}
-
 static double *eval_compound_arg (GENERATOR *genr,
 				  genatom *this_atom)
 {
@@ -1981,8 +1951,6 @@ static int evaluate_genr (GENERATOR *genr)
 	    atom_stack_resume(genr);
 	} else if (atom->func == T_CHISQ || atom->func == T_STUDENT) {
 	    genr->err = add_rand_series_to_genr(genr, atom);
-	} else if (MP_MATH(atom->func)) {
-	    genr->err = add_mp_series_to_genr(genr, atom);
 	} else if (needs_arg(atom->func) && !arg_atom_available(atom)) {
 	    genr->err = E_SYNTAX; /* FIXME? */
 	    fprintf(stderr, "%s(): needs an argument\n", 
@@ -2346,8 +2314,6 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
 	!strncmp(s, "fracdiff", 8) ||
 	!strncmp(s, "chisq", 5) ||
 	!strncmp(s, "student", 7) ||
-	!strncmp(s, "mpow", 4) ||
-	!strncmp(s, "mlog", 4) ||
 	!strncmp(s, "zeros", 5) ||
 	!strncmp(s, "ones", 4) ||
 	!strncmp(s, "I", 1)) {
@@ -4242,31 +4208,6 @@ static void invalid_arg_error (int fn, int *err)
     *err = E_INVARG;
 }
 
-static double *get_mp_series (const char *s, GENERATOR *genr,
-			      int fn, int *err)
-{
-    double *x = malloc(genr->pdinfo->n * sizeof *x);
-
-    if (x == NULL) {
-	return NULL;
-    }
-
-    if (fn == T_MPOW) {
-	*err = genr_mpow(s, x, *genr->pZ, genr->pdinfo);
-    }
-#ifdef HAVE_MPFR
-    else if (fn == T_MLOG) {
-	*err = genr_mlog(s, x, *genr->pZ, genr->pdinfo);
-    }
-#endif
-
-    if (*err) {
-	invalid_arg_error(fn, err);
-    }
-
-    return x;
-}
-
 static double *get_random_series (DATAINFO *pdinfo, int fn)
 {
     double *x = malloc(pdinfo->n * sizeof *x);
@@ -4874,69 +4815,6 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 
     return ret;
 }
-
-static int genr_mpow (const char *str, double *xvec, double **Z, 
-		      DATAINFO *pdinfo)
-{
-    int err, v;
-    unsigned pwr;
-    char vname[VNAMELEN];
-    void *handle = NULL;
-    int (*mp_raise) (const double *, double *, int, unsigned);
-    
-    if (sscanf(str, "%[^,],%u", vname, &pwr) != 2) {
-	return 1;
-    }
-
-    v = varindex(pdinfo, vname);
-    if (v >= pdinfo->v) {
-	return 1;
-    } 
-
-    mp_raise = get_plugin_function("mp_vector_raise_to_power", &handle);
-    if (mp_raise == NULL) {
-	return 1;
-    }
-
-    err = mp_raise(Z[v], xvec, pdinfo->n, pwr);
-
-    close_plugin(handle);
-    
-    return err;
-}
-
-#ifdef HAVE_MPFR
-
-static int genr_mlog (const char *str, double *xvec, double **Z, 
-		      DATAINFO *pdinfo)
-{
-    int err, v;
-    char vname[VNAMELEN];
-    void *handle = NULL;
-    int (*mp_log) (const double *, double *, int);
-    
-    if (sscanf(str, "%15s", vname) != 1) {
-	return 1;
-    }
-
-    v = varindex(pdinfo, vname);
-    if (v >= pdinfo->v) {
-	return 1;
-    } 
-
-    mp_log = get_plugin_function("mp_vector_ln", &handle);
-    if (mp_log == NULL) {
-	return 1;
-    }
-
-    err = mp_log(Z[v], xvec, pdinfo->n);
-
-    close_plugin(handle);
-    
-    return err;
-}
-
-#endif /* HAVE_MPFR */
 
 static void eval_msg (const GENERATOR *genr)
 {
