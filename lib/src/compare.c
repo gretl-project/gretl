@@ -27,11 +27,21 @@
 #include "var.h"
 #include "missing_private.h"
 
-#undef WDEBUG
+#define WDEBUG 0
 
 #define print_add_omit_model(m,o) (m->ci != ARCH && \
                                    !(opt & OPT_Q) && !(opt & OPT_I))
 
+enum {
+    CHISQ_FORM,
+    F_FORM
+};
+
+enum {
+    ADD_TEST,
+    OMIT_TEST,
+    OMIT_WALD
+};
 
 struct COMPARE {
     int cmd;       /* ADD or OMIT */
@@ -43,8 +53,9 @@ struct COMPARE {
     double F;      /* F test statistic */
     double chisq;  /* Chi-square test statistic */
     double trsq;   /* T*R^2 test statistic */
-    int score;     /* "cases correct" for discrete models */
+    int score;     /* number of info stats showing improvement */
     int robust;    /* = 1 when robust vcv is in use, else 0 */
+    int err;       /* error code */
 };
 
 /* Critical values for Quandt likelihood ratio (break) test:
@@ -86,21 +97,24 @@ static double QLR_critvals[QLR_QMAX][3] = {
 */
 
 static char *
-mask_from_test_list (const int *test, const MODEL *pmod)
+mask_from_test_list (const int *list, const MODEL *pmod, int *err)
 {
     char *mask;
+    int nmask = 0;
     int i, j;
 
     mask = calloc(pmod->ncoeff, 1);
     if (mask == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
-	if (test != NULL) {
-	    for (j=1; j<=test[0]; j++) {
-		if (pmod->list[i+2] == test[j]) {
+	if (list != NULL) {
+	    for (j=1; j<=list[0]; j++) {
+		if (pmod->list[i+2] == list[j]) {
 		    mask[i] = 1;
+		    nmask++;
 		}
 	    }
 	} else {
@@ -110,13 +124,14 @@ mask_from_test_list (const int *test, const MODEL *pmod)
 	}
     }
 
+    if (list != NULL && nmask != list[0]) {
+	fprintf(stderr, "mask from list: list[0] = %d but nmask = %d\n",
+		list[0], nmask);
+	*err = E_DATA;
+    }
+
     return mask;
 }
-
-enum {
-    CHI_SQUARE_FORM,
-    F_FORM
-};
 
 /* Wald (chi-square or F) test for a set of zero restrictions on the
    parameters of a given model, based on the covariance matrix of the
@@ -125,46 +140,43 @@ enum {
    automatic test, for the significance of all vars but the constant.
 */
 
-static double wald_test (const int *list, MODEL *pmod, int form)
+static double wald_test (const int *list, MODEL *pmod, int form,
+			 int *err)
 {
     char *mask = NULL;
     gretl_matrix *C = NULL;
     gretl_vector *b = NULL;
     double w = NADBL;
-    int err = 0;
 
-    mask = mask_from_test_list(list, pmod);
-    if (mask == NULL) {
-	err = 1;
-    } 
+    mask = mask_from_test_list(list, pmod, err);
 
-    if (!err) {
+    if (!*err) {
 	C = gretl_vcv_matrix_from_model(pmod, mask);
 	if (C == NULL) {
-	    err = 1;
+	    *err = E_ALLOC;
 	} 
     }
 
-    if (!err) {
+    if (!*err) {
 	b = gretl_coeff_vector_from_model(pmod, mask);
 	if (b == NULL) {
-	    err = 1;
+	    *err = E_ALLOC;
 	} 
     }  
 
-    if (!err) {
+    if (!*err) {
 #if WDEBUG
 	gretl_matrix_print(C, "Wald VCV matrix");
 	gretl_matrix_print(b, "Wald coeff vector");
 #endif
-	err = gretl_invert_symmetric_matrix(C);
+	*err = gretl_invert_symmetric_matrix(C);
     }
 
-    if (!err) {
-	w = gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, C, &err);
+    if (!*err) {
+	w = gretl_scalar_b_X_b(b, GRETL_MOD_TRANSPOSE, C, err);
     }
 
-    if (form == F_FORM && !err) {
+    if (!*err && form == F_FORM) {
 	w /= gretl_vector_get_length(b);
     }
 
@@ -196,7 +208,9 @@ static double wald_test (const int *list, MODEL *pmod, int form)
 
 double robust_omit_F (const int *list, MODEL *pmod)
 {
-    return wald_test(list, pmod, F_FORM);
+    int err = 0;
+
+    return wald_test(list, pmod, F_FORM, &err);
 }
 
 /* ----------------------------------------------------- */
@@ -241,7 +255,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
     int verbosity = 2;
     int stat_ok, i;
 
-    if (cmp->ci == LAD) {
+    if (cmp->err || cmp->ci == LAD) {
 	return;
     }
 
@@ -257,7 +271,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	test = model_test_new((cmp->cmd == OMIT)? GRETL_TEST_OMIT : GRETL_TEST_ADD);
     }
 
-    if (verbosity > 1) {
+    if (verbosity > 1 && cmp->m2 >= 0) {
 	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
 		cmp->m1, cmp->m2);
     } 
@@ -313,7 +327,7 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 	maybe_add_test_to_model(new, test);
     }
 
-    if (verbosity > 1) {
+    if (verbosity > 1 && cmp->score >= 0) {
 	pprintf(prn, _("  Of the %d model selection statistics, %d "), 
 		C_MAX, cmp->score);
 	if (cmp->score == 1) {
@@ -325,14 +339,16 @@ gretl_make_compare (const struct COMPARE *cmp, const int *diffvars,
 }
 
 static struct COMPARE 
-add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int add,
+add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int flag,
 		     const int *testvars)
 {
     struct COMPARE cmp;
     MODEL *umod, *rmod;
     int i;	
 
-    if (add) {
+    cmp.err = 0;
+
+    if (flag == ADD_TEST) {
 	umod = pmodB;
 	rmod = pmodA;
 	cmp.cmd = ADD;
@@ -343,19 +359,29 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int add,
     }
 
     cmp.m1 = pmodA->ID;
-    cmp.m2 = pmodB->ID;
     cmp.ci = pmodA->ci;
 
     cmp.F = cmp.chisq = cmp.trsq = NADBL;
-    cmp.score = 0;
+    cmp.score = -1;
     cmp.robust = 0;
-    
-    cmp.dfn = umod->ncoeff - rmod->ncoeff;
+    cmp.dfn = 0;
+
+    if (pmodB != NULL) {
+	/* may be NULL for Wald test */
+	cmp.m2 = pmodB->ID;
+	cmp.dfn = umod->ncoeff - rmod->ncoeff;
+    } else {
+	cmp.m2 = -1;
+	cmp.dfn = testvars[0];
+    }
+
     cmp.dfd = umod->dfd;
 
     /* FIXME TSLS (F or chi-square?) */
 
-    if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
+    if (flag == OMIT_WALD) {
+	cmp.chisq = wald_test(testvars, umod, CHISQ_FORM, &cmp.err);
+    } else if (gretl_model_get_int(pmodA, "robust") || pmodA->ci == HCCM) {
 	cmp.F = robust_omit_F(testvars, umod);
 	cmp.robust = 1;
     } else if (LIMDEP(cmp.ci)) {
@@ -363,15 +389,18 @@ add_or_omit_compare (MODEL *pmodA, MODEL *pmodB, int add,
     } else if (cmp.ci == OLS) {
 	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
     } else if (cmp.dfn > 1) {
-	cmp.chisq = wald_test(testvars, umod, CHI_SQUARE_FORM);
+	cmp.chisq = wald_test(testvars, umod, CHISQ_FORM, &cmp.err);
     }
 
-    for (i=0; i<C_MAX; i++) { 
-	if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
-	    continue;
-	}
-	if (pmodB->criterion[i] < pmodA->criterion[i]) {
-	    cmp.score++;
+    if (pmodB != NULL) {
+	cmp.score = 0;
+	for (i=0; i<C_MAX; i++) { 
+	    if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
+		continue;
+	    }
+	    if (pmodB->criterion[i] < pmodA->criterion[i]) {
+		cmp.score++;
+	    }
 	}
     }
 
@@ -809,7 +838,7 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
 	    int *addlist;
 
 	    addlist = gretl_list_diff_new(new->list, orig->list, 2);
-	    cmp = add_or_omit_compare(orig, new, 1, addlist);
+	    cmp = add_or_omit_compare(orig, new, ADD_TEST, addlist);
 
 	    gretl_make_compare(&cmp, addlist, orig, pdinfo, opt, prn);
 	    free(addlist);
@@ -824,6 +853,32 @@ int add_test (const int *addvars, MODEL *orig, MODEL *new,
     pdinfo->t2 = smpl_t2;
 
     free(tmplist);
+
+    return err;
+}
+
+static int wald_omit_test (const int *list, MODEL *pmod, 
+			   const DATAINFO *pdinfo, gretlopt opt,
+			   PRN *prn)
+{
+    struct COMPARE cmp;
+    int *test = NULL;
+    int err = 0;
+
+    /* test validity of omissions */
+    test = gretl_list_omit(pmod->list, list, 2, &err);
+    if (err) {
+	return err;
+    }
+
+    free(test);
+
+    cmp = add_or_omit_compare(pmod, NULL, OMIT_WALD, list);
+    if (cmp.err) {
+	return cmp.err;
+    }
+
+    gretl_make_compare(&cmp, list, pmod, pdinfo, opt, prn);
 
     return err;
 }
@@ -869,6 +924,10 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
     if (!command_ok_for_model(OMIT, orig->ci)) {
 	return E_NOTIMP;
+    }
+
+    if (opt & OPT_W) {
+	return wald_omit_test(omitvars, orig, pdinfo, opt, prn);
     }
 
     /* check that vars to omit have not been redefined */
@@ -947,10 +1006,10 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
 	if (new->nobs == orig->nobs && !omitlast) {
 	    struct COMPARE cmp;
-	    int *omitlist;
+	    int *omitlist = NULL;
 
 	    omitlist = gretl_list_diff_new(orig->list, new->list, 2);
-	    cmp = add_or_omit_compare(orig, new, 0, omitlist);
+	    cmp = add_or_omit_compare(orig, new, OMIT_TEST, omitlist);
 
 	    gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
 	    free(omitlist);

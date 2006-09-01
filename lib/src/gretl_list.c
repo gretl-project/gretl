@@ -1004,10 +1004,10 @@ static int list_count (const int *list)
 
 int *gretl_list_omit (const int *orig, const int *omit, int minpos, int *err)
 {
-    int i, j, k;
-    int *smal;
     const int nomit = omit[0];
     const int norig = list_count(orig);
+    int *smal = NULL;
+    int i, j, k;
 
     *err = 0;
 

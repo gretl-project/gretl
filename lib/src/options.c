@@ -157,6 +157,7 @@ struct gretl_option gretl_opts[] = {
     { OMIT,     OPT_I, "silent" },
     { OMIT,     OPT_Q, "quiet" },
     { OMIT,     OPT_T, "inst" },
+    { OMIT,     OPT_W, "wald" },
     { OMITFROM, OPT_B, "both" },
     { OMITFROM, OPT_Q, "quiet" },
     { OMITFROM, OPT_T, "inst" },
