@@ -4828,6 +4828,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--wald</flag>
+	  <effect>do a Wald test rather than an F-test</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -4855,35 +4859,62 @@
     </usage>
 
     <description>
+      <para context="gui">
+	This command re-estimates the given model after omitting the
+	specified variables.  Besides the usual model output, it gives a
+	test statistic for the joint significance of the omitted
+	variables. When the original model was estimated by OLS, this test
+	statistic is an <mathvar>F</mathvar>-value, based on the sums of
+	squared residuals for the restricted and unrestricted models,
+	otherwise it is an asymptotic Wald chi-square value based on the
+	covariance matrix of the original model.  The null hypothesis
+	is that the true coefficients on all the omitted variables
+	equal zero.
+      </para>
+      <para context="cli">
+	This command must follow an estimation command.  It calculates
+	a test statistic for the joint significance of the variables
+	in <repl>varlist</repl>, which should be a subset of the
+	independent variables in the model previously estimated.
+      </para>
+      <para context="cli">
+	If the original model was estimated by OLS, the test statistic is
+	by default an <mathvar>F</mathvar>-value.  This is based on the
+	sums of squared residuals for the restricted and unrestricted
+	models, unless the original model was estimated with robust
+	standard errors.  In the latter case <mathvar>F</mathvar> is
+	computed from the robust estimate of the covariance matrix for the
+	original model.  (It is the <mathvar>F</mathvar> form of a Wald
+	test).
+      </para>
       <para>
-	This command must follow an estimation command. The selected
-	variables are omitted from the previous model and the new
-	model estimated.  A test statistic for the joint significance
-	of the omitted variables is printed, along with its p-value.
-	The test statistic is <mathvar>F</mathvar> in the case of OLS
-	estimation, an asymptotic Wald chi-square value otherwise. A
-	p-value below 0.05 means that the coefficients are jointly
-	significant at the 5 percent level.
+	For estimators other than OLS, or if the <lit>--wald</lit> option
+	is given, the statistic is an asymptotic Wald chi-square value
+	based on the covariance matrix of the original model.
       </para>
       <para context="cli">
-	If the <lit>--quiet</lit> option is given the printed results
-	are confined to the test for the joint significance of the
-	omitted variables, otherwise the estimates for the reduced
-	model are also printed.  In the latter case, the
-	<lit>--vcv</lit> flag causes the covariance matrix for the
-	coefficients to be printed also.  If the <lit>--silent</lit>
-	option is given, nothing is printed; nonetheless, the results
-	of the test can be retrieved using the special variables
-        <lit>$test</lit> and <lit>$pvalue</lit>.
+	By default, the restricted model is estimated and the estimates
+	are printed.  If the <lit>--wald</lit> option is selected, the
+	restricted model is not estimated. The <lit>--quiet</lit> option
+	suppresses the printout of the restricted model (if applicable):
+	only the result of the test is printed.  If the restricted model
+	is both estimated and printed, the <lit>--vcv</lit> has the effect
+	of printing the covariance matrix for the coefficients in the
+	restricted model.  (Otherwise this option is ignored.)
       </para>
       <para context="cli">
-	If the original model was estimated using two-stage least squares, an
-	ambiguity arises: should the selected variables be omitted as regressors, as
-	instruments, or as both?  This is resolved as follows: by default the
-	variables are dropped from the list of regressors, but if the
-	<lit>--inst</lit> flag is given they are dropped as instruments, or
-	if the <lit>--both</lit> flag is given they are dropped from the
-	model altogether.
+	If the <lit>--silent</lit> option is given, nothing is printed;
+	nonetheless, the results of the test can be retrieved using the
+	special variables <lit>$test</lit> and <lit>$pvalue</lit>.
+      </para>
+      <para context="cli">
+	If the original model was estimated using two-stage least squares,
+	an ambiguity arises: should the selected variables be omitted as
+	regressors, as instruments, or as both?  This is resolved as
+	follows: by default the variables are dropped from the list of
+	regressors, but if the <lit>--inst</lit> flag is given they are
+	dropped as instruments, or if the <lit>--both</lit> flag is given
+	they are dropped from the model altogether.
       </para>
     </description>
 
