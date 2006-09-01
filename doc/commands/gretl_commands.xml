@@ -4884,7 +4884,7 @@
 	models, unless the original model was estimated with robust
 	standard errors.  In the latter case <mathvar>F</mathvar> is
 	computed from the robust estimate of the covariance matrix for the
-	original model.  (It is the <mathvar>F</mathvar> form of a Wald
+	original model.  (It is the <mathvar>F</mathvar>-form of a Wald
 	test).
       </para>
       <para>
@@ -4893,14 +4893,22 @@
 	based on the covariance matrix of the original model.
       </para>
       <para context="cli">
-	By default, the restricted model is estimated and the estimates
-	are printed.  If the <lit>--wald</lit> option is selected, the
-	restricted model is not estimated. The <lit>--quiet</lit> option
-	suppresses the printout of the restricted model (if applicable):
-	only the result of the test is printed.  If the restricted model
-	is both estimated and printed, the <lit>--vcv</lit> has the effect
-	of printing the covariance matrix for the coefficients in the
-	restricted model.  (Otherwise this option is ignored.)
+	By default, the restricted model is estimated, the estimates
+	are printed, and the restricted model replaces the original as
+	the <quote>current model</quote> for the purposes of, for
+	example, retrieving the residuals as <lit>$uhat</lit> (or
+	doing further tests such as <cmd>add</cmd> or
+	<cmd>omit</cmd>).  
+      </para>
+      <para>
+	If the <lit>--wald</lit> option is selected, the restricted
+	model is not estimated (and so the current model is not
+	replaced). The <lit>--quiet</lit> option suppresses the
+	printout of the restricted model (if applicable): only the
+	result of the test is printed.  If the restricted model is
+	both estimated and printed, the <lit>--vcv</lit> has the
+	effect of printing the covariance matrix for the coefficients
+	in the restricted model, otherwise this option is ignored.
       </para>
       <para context="cli">
 	If the <lit>--silent</lit> option is given, nothing is printed;
@@ -4908,13 +4916,16 @@
 	special variables <lit>$test</lit> and <lit>$pvalue</lit>.
       </para>
       <para context="cli">
-	If the original model was estimated using two-stage least squares,
-	an ambiguity arises: should the selected variables be omitted as
-	regressors, as instruments, or as both?  This is resolved as
-	follows: by default the variables are dropped from the list of
-	regressors, but if the <lit>--inst</lit> flag is given they are
-	dropped as instruments, or if the <lit>--both</lit> flag is given
-	they are dropped from the model altogether.
+	If the original model was estimated using two-stage least
+	squares, an ambiguity arises: should the selected variables be
+	omitted as regressors, as instruments, or as both?  This is
+	resolved as follows: by default the variables are dropped from
+	the list of regressors, but if the <lit>--inst</lit> flag is
+	given they are dropped as instruments, or if the
+	<lit>--both</lit> flag is given they are dropped from the
+	model altogether.  These two options are incompatible with the
+	<lit>--wald</lit> option; if one or more instruments are
+	omitted the model must be re-estimated.
       </para>
     </description>
 

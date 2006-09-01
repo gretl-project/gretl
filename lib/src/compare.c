@@ -883,6 +883,19 @@ static int wald_omit_test (const int *list, MODEL *pmod,
     return err;
 }
 
+static int omit_options_inconsistent (gretlopt opt)
+{
+    if ((opt & OPT_T) || (opt & OPT_B)) {
+	/* 2sls: omitting variable as instrument */
+	if (opt & OPT_W) {
+	    /* can't use Wald method on original VCV */
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * omit_test:
  * @omitvars: list of variables to omit from original model.
@@ -919,11 +932,15 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
     int err = 0;
 
     if (orig == NULL || orig->list == NULL) {
-	return 1;
+	err = E_DATA;
+    } else if (!command_ok_for_model(OMIT, orig->ci)) {
+	err = E_NOTIMP;
+    } else if (omit_options_inconsistent(opt)) {
+	err = E_BADOPT;
     }
 
-    if (!command_ok_for_model(OMIT, orig->ci)) {
-	return E_NOTIMP;
+    if (err) {
+	return err;
     }
 
     if (opt & OPT_W) {
