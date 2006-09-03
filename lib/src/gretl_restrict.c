@@ -1198,8 +1198,7 @@ static int test_restriction_set (gretl_restriction_set *rset,
 
     record_test_result(test_stat, pval, _("restriction"));
 
-    if (pmod != NULL && !(rset->opt & OPT_Q)
-	&& pmod->ci != PANEL) {
+    if (pmod != NULL && !(rset->opt & OPT_Q) && pmod->ci == OLS) {
 	do_restricted_estimates(rset, Z, pdinfo, prn);
     }
 

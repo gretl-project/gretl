@@ -25,7 +25,7 @@
 
 #include <errno.h>
 
-#define MDEBUG 1
+#define MDEBUG 0
 
 #define LEVEL_AUTO -1
 
@@ -1042,7 +1042,7 @@ int add_or_replace_user_matrix_full (gretl_matrix *M, const char *name,
 	    usermat_publish_dataset(pZ, pdinfo);
 	}
 #if MDEBUG
-	fprintf(stderr, "add_or_replace_user_matrix: M=%p, name='%s', "
+	fprintf(stderr, "add_or_replace_user_matrix: source M=%p, name='%s', "
 		"mask='%s', R=%p\n",
 		(void *) M, name, mask, (void *) R);
 #endif
