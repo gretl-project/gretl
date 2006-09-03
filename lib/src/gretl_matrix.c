@@ -394,6 +394,28 @@ gretl_matrix *gretl_unit_matrix_new (int r, int c)
 }
 
 /**
+ * gretl_null_matrix_new:
+ *
+ * Returns: pointer to a newly allocated null matrix 
+ * (for use in declaration of a variable as a matrix),
+ * %NULL on failure.
+ */
+
+gretl_matrix *gretl_null_matrix_new (void)
+{
+    gretl_matrix *m = malloc(sizeof *m);
+  
+    if (m != NULL) {
+	m->rows = 0;
+	m->cols = 0;
+	m->val = NULL;
+	m->t = 0;
+    }
+
+    return m;
+}
+
+/**
  * gretl_matrix_fill:
  * @m: matrix to fill.
  * @x: value with which to fill.
@@ -1456,7 +1478,7 @@ real_matrix_print_to_prn (const gretl_matrix *m, const char *msg,
 	pprintf(prn, "%s\n\n", msg);
     }
 
-    if (m == NULL) {
+    if (m == NULL || m->val == NULL) {
 	pputs(prn, " matrix is NULL\n");
 	return;
     }

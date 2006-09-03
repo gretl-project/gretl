@@ -25,7 +25,7 @@
 
 #include <errno.h>
 
-#define MDEBUG 0
+#define MDEBUG 1
 
 #define LEVEL_AUTO -1
 
@@ -275,7 +275,7 @@ static int replace_user_matrix (user_matrix *u, gretl_matrix *M,
 	   into the original matrix, u->M */
 	err = matrix_insert_submatrix(u->M, M, mask);
 	if (!is_user_matrix(M)) {
-	    /* is this always right? */
+	    /* FIXME is this always right? */
 	    gretl_matrix_free(M);
 	}
     } else if (M != u->M) {
@@ -1042,8 +1042,9 @@ int add_or_replace_user_matrix_full (gretl_matrix *M, const char *name,
 	    usermat_publish_dataset(pZ, pdinfo);
 	}
 #if MDEBUG
-	fprintf(stderr, "add_or_replace_user_matrix: M=%p, name='%s', R=%p\n",
-		(void *) M, name, (void *) R);
+	fprintf(stderr, "add_or_replace_user_matrix: M=%p, name='%s', "
+		"mask='%s', R=%p\n",
+		(void *) M, name, mask, (void *) R);
 #endif
 	err = replace_user_matrix(u, M, R, mask);
 	usermat_unpublish_dataset(pZ);

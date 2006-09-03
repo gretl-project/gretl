@@ -132,6 +132,8 @@ gretl_matrix *gretl_zero_matrix_new (int r, int c);
 
 gretl_matrix *gretl_unit_matrix_new (int r, int c);
 
+gretl_matrix *gretl_null_matrix_new (void);
+
 gretl_matrix *gretl_matrix_copy (const gretl_matrix *m);
 
 int gretl_matrix_inscribe_I (gretl_matrix *m, int row, int col, int n);
