@@ -172,16 +172,15 @@ struct genr_func funcs[] = {
 struct retriever {
     int rnum;
     const char *rword;
-    const char *desc;
 };
 
 struct retriever retrievers[] = {
-    { R_NOBS,      "$nobs",   N_("Number of observations") },
-    { R_NVARS,     "$nvars",  N_("Number of variables") },
-    { R_PD,        "$pd",     N_("Frequency of data") },
-    { R_TEST_STAT, "$test",   N_("Hypothesis test statistic") },
-    { R_TEST_PVAL, "$pvalue", N_("P-value for hypothesis test") },
-    { R_MAX,       NULL,      NULL }
+    { R_NOBS,      "$nobs" },
+    { R_NVARS,     "$nvars" },
+    { R_PD,        "$pd" },
+    { R_TEST_STAT, "$test" },
+    { R_TEST_PVAL, "$pvalue" },
+    { R_MAX,       NULL }
 };
 
 #define LEVELS 7

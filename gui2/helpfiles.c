@@ -1480,105 +1480,50 @@ enum {
     SPANISH
 };
 
-#ifdef G_OS_WIN32
-
-static char *full_doc_path (char *path, const char *fname)
+static int get_writable_path (char *path, const char *fname)
 {
-    strcpy(path, paths.gretldir);
-    strcat(path, "doc");
-    strcat(path, SLASHSTR);
-    strcat(path, fname);
+    static int sysdoc_writable = -1;
+    static int userdoc_writable = -1;
 
-    return path;
-}
-
-#else
-
-static int helpfile_exists (char *path, const char *fname, int i)
-{
-    FILE *fp = NULL;
-    int ret = 0;
-
-    if (i == 0) {
-	/* standard location */
-	sprintf(path, "%sdoc/%s", paths.gretldir, fname);
-    } else if (i == 1) {
-	sprintf(path, "%s../doc/%s", paths.gretldir, fname);
-	/* "system" location */
-    } else {
-	/* "user" location */
-	sprintf(path, "%sdoc/%s", paths.userdir, fname);
-    }
-
-    fp = fopen(path, "r");
-
-    if (fp != NULL) {
-	fclose(fp);
-	ret = 1;
-    }
-
-    return ret;
-}
-
-static int helpfile_is_writable (char *path, const char *fname, int i)
-{
     FILE *fp;
     int err = 0;
-    int ret = 0;
 
-    if (i == 0) {
-	/* standard location */
-	sprintf(path, "%sdoc/%s", paths.gretldir, fname);
-    } else if (i == 1) {
-	sprintf(path, "%s../doc/%s", paths.gretldir, fname);
-	/* "system" location */
-    } else {
-	/* "user" location */
-	DIR *dir;
+    if (sysdoc_writable < 0) {
+	sysdoc_writable = 0;
+	sprintf(path, "%sdoc", paths.gretldir);
+	if (gretl_mkdir(path) == 0) {
+	    sprintf(path, "%sdoc%c%s", paths.gretldir, SLASH, fname);
+	    fp = gretl_fopen(path, "w");
+	    if (fp != NULL) {
+		sysdoc_writable = 1;
+		fclose(fp);
+		remove(path);
+	    } 
+	} 
+    }
 
+    if (!sysdoc_writable && userdoc_writable < 0) {
+	userdoc_writable = 0;
 	sprintf(path, "%sdoc", paths.userdir);
-	dir = opendir(path);
-
-	if (dir != NULL) {
-	    closedir(dir);
-	} else if (mkdir(path, 0755)) {
-	    err = 1;
-	}
-	if (!err) {
-	    sprintf(path, "%sdoc/%s", paths.userdir, fname);
-	}
+	if (gretl_mkdir(path) == 0) {
+	    sprintf(path, "%sdoc%c%s", paths.userdir, SLASH, fname);
+	    fp = gretl_fopen(path, "w");
+	    if (fp != NULL) {
+		userdoc_writable = 1;
+		fclose(fp);
+		remove(path);
+	    } 
+	} 
     }
 
-    if (!err) {
-	fp = fopen(path, "w");
-	if (fp != NULL) {
-	    fclose(fp);
-	    remove(path);
-	    ret = 1;
-	}
+    if (!sysdoc_writable && !userdoc_writable) {
+	err = 1;
     }
 
-    return ret;
+    return err;
 }
 
-static char *full_doc_path (char *path, const char *fname)
-{
-    int i;
-
-    for (i=0; i<3; i++) {
-	if (helpfile_exists(path, fname, i)) {
-	    return path;
-	} else if (helpfile_is_writable(path, fname, i)) {
-	    return path;
-	}
-    }
-
-    return NULL;
-}
-
-#endif
-
-static int maybe_grab_pdf (int uguide, int i, char *fullpath)
+static int find_or_download_pdf (int uguide, int i, char *fullpath)
 {
     const char *guide_files[] = {
 	"gretl-guide.pdf",
@@ -1597,35 +1542,43 @@ static int maybe_grab_pdf (int uguide, int i, char *fullpath)
     FILE *fp;
     int err = 0;
 
+    *errtext = '\0';
+
     if (i < 0 || i > 3) {
 	i = 0;
     }
 
-    if (uguide) {
-	fname = guide_files[i];
-    } else {
-	fname = ref_files[i];
-    }
+    fname = (uguide)? guide_files[i] : ref_files[i];
 
-    if (full_doc_path(fullpath, fname) == NULL) {
-	errbox("Failed to download file");
-	return 1;
-    }
-
-    /* see if file exists locally */
-    fp = fopen(fullpath, "r");
+    /* is the file available in public dir? */
+    sprintf(fullpath, "%sdoc%c%s", paths.gretldir, SLASH, fname);
+    fp = gretl_fopen(fullpath, "r");
     if (fp != NULL) {
 	fclose(fp);
 	return 0;
     }
 
-    /* if not, grab from server */
-    err = retrieve_manfile(fname, fullpath, errtext);
+    /* or maybe in user dir? */
+    sprintf(fullpath, "%sdoc%c%s", paths.userdir, SLASH, fname);
+    fp = gretl_fopen(fullpath, "r");
+    if (fp != NULL) {
+	fclose(fp);
+	return 0;
+    }
+
+    /* check for download location */
+    err = get_writable_path(fullpath, fname);
+
+    /* do actual download */
+    if (!err) {
+	err = retrieve_manfile(fname, fullpath, errtext);
+    }
+
     if (err) {
 	if (*errtext) {
 	    errbox(errtext);
 	} else {
-	    errbox("Failed to download file");
+	    errbox(_("Failed to download file"));
 	}
     }
 
@@ -1634,7 +1587,7 @@ static int maybe_grab_pdf (int uguide, int i, char *fullpath)
 
 void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
 {
-    char fullpath[FILENAME_MAX];
+    char fname[FILENAME_MAX];
     int pref, err = 0;
 
 #ifdef OSX_PKG
@@ -1643,20 +1596,19 @@ void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
 #endif  
 
     pref = get_manpref();
-
-    err = maybe_grab_pdf(uguide, pref, fullpath);
+    err = find_or_download_pdf(uguide, pref, fname);
     if (err) {
 	return;
     }
 
 #if defined(G_OS_WIN32)
-    if ((int) ShellExecute(NULL, "open", fullpath, NULL, NULL, SW_SHOW) <= 32) {
+    if ((int) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
     }
 #elif defined(OSX_BUILD)
-    osx_open_file(fullpath);
+    osx_open_file(fname);
 #else
-    gretl_fork(viewpdf, fullpath);
+    gretl_fork(viewpdf, fname);
 #endif
 }
