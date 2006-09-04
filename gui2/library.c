@@ -4900,25 +4900,15 @@ void display_var (void)
     }
 }
 
-#define PGRAB
-#undef SCRIPT_TO_FILE
-
 void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     PRN *prn;
     char *runfile = NULL;
-#ifdef SCRIPT_TO_FILE
-    char fname[MAXLEN];
-#endif
     int err;
 
-#ifdef SCRIPT_TO_FILE
-    if (user_fopen("gretl_output_tmp", fname, &prn)) return;
-#else
     if (bufopen(&prn)) {
-	return ;
+	return;
     }
-#endif
 
     if (code == SCRIPT_EXEC) {
 	runfile = scriptfile;
@@ -4928,15 +4918,13 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	runfile = cmdfile;
     }
 
-    if (data != NULL) { 
+    if (data == NULL) {
+	/* get commands from file */
+	err = execute_script(runfile, NULL, prn, code);
+    } else {	
 	/* get commands from file view buffer */
-#ifdef PGRAB
-	GdkCursor *plswait;
-#endif
 	windata_t *vwin = (windata_t *) data;
-	gchar *buf;
-
-	buf = textview_get_text(vwin->w);
+	gchar *buf = textview_get_text(vwin->w);
 
 	if (buf == NULL || *buf == '\0') {
 	    errbox("No commands to execute");
@@ -4945,44 +4933,37 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 		g_free(buf);
 	    }
 	    return;
+	} else {
+	    GdkDisplay *disp = gdk_display_get_default();
+	    GdkCursor *cursor = gdk_cursor_new(GDK_WATCH);
+	    GdkWindow *w1, *w2;
+	    gint x, y;
+
+	    w1 = gdk_display_get_window_at_pointer(disp, &x, &y);
+	    w2 = gtk_text_view_get_window(GTK_TEXT_VIEW(vwin->w),
+					  GTK_TEXT_WINDOW_TEXT);
+	    gdk_window_set_cursor(w1, cursor);
+	    gdk_window_set_cursor(w2, cursor);
+	    gdk_display_sync(disp);
+	    gdk_cursor_unref(cursor);
+
+	    err = execute_script(NULL, buf, prn, code);
+	    g_free(buf);
+
+	    gdk_window_set_cursor(w1, NULL);
+	    gdk_window_set_cursor(w2, NULL);
 	}
+    } 
 
-#ifdef PGRAB
-	plswait = gdk_cursor_new(GDK_WATCH);
-	gdk_pointer_grab(vwin->dialog->window, TRUE,
-			 GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK |
-			 GDK_BUTTON_RELEASE_MASK,
-			 NULL, plswait,
-			 GDK_CURRENT_TIME); 
-	gdk_cursor_destroy(plswait);
-#endif
-
-	err = execute_script(NULL, buf, prn, code);
-	g_free(buf);
-
-#ifdef PGRAB
-	gdk_pointer_ungrab(GDK_CURRENT_TIME);
-#endif
-    } else {
-	/* get commands from file */
-	err = execute_script(runfile, NULL, prn, code);
+    if (err == -1) {
+	return;
     }
-
-#ifdef SCRIPT_TO_FILE
-    gretl_print_destroy(prn);
-#endif
-
-    if (err == -1) return;
 
     refresh_data();
 
-#ifdef SCRIPT_TO_FILE
-    view_file(fname, 1, 1, 78, 450, SCRIPT_OUT);
-#else
     view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, NULL);
-#endif
 
-    /* re-establish command echo */
+    /* re-establish command echo (??) */
     set_gretl_echo(1);
 }
 
