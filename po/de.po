@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-08-21 15:52-0400\n"
-"PO-Revision-Date: 2006-08-30 23:36+0100\n"
+"PO-Revision-Date: 2006-09-04 11:22+0100\n"
 "Last-Translator: Sven Schreiber <svetosch@gmx.net>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -292,7 +292,7 @@ msgstr "hinzufügen"
 #: lib/src/compare.c:295
 #: lib/src/gretl_model.c:2464
 msgid "Asymptotic test statistic"
-msgstr "Asymptotischer test statistic"
+msgstr "Asymptotische Teststatistik"
 
 #: lib/src/compare.c:297
 #: lib/src/compare.c:1235
@@ -1826,7 +1826,7 @@ msgstr "   Geschätzter Standardfehler = %g\n"
 #: lib/src/describe.c:3217
 #, c-format
 msgid "   Test statistic: t(%d) = %g\n"
-msgstr "Teststatistik: t(%d) = %g\n"
+msgstr "    Teststatistik: t(%d) = %g\n"
 
 #: lib/src/describe.c:3218
 #: lib/src/describe.c:3297
@@ -7057,7 +7057,7 @@ msgstr "gretl: Statistiktabellen"
 
 #: gui2/calculator.c:1686
 msgid "gretl: test calculator"
-msgstr "gretl: Testrechner"
+msgstr "gretl: Test-Rechner"
 
 #: gui2/callbacks.c:164
 msgid "Open data file"
@@ -7335,7 +7335,7 @@ msgstr "Konnte Befehlsdatei nicht zum Schreiben öffnen"
 
 #: gui2/cmdstack.c:440
 msgid "The command log is empty"
-msgstr "Der Befehlslog ist leer"
+msgstr "Das Befehlslog ist leer"
 
 #: gui2/console.c:89
 msgid "Closing redirected output file"
@@ -7437,15 +7437,15 @@ msgstr "Datendokumentation"
 
 #: gui2/database.c:545
 msgid "/_Series/_Display"
-msgstr "/_Daten/_Anzeige"
+msgstr "_Anzeige"
 
 #: gui2/database.c:546
 msgid "/_Series/_Graph"
-msgstr "/_Daten/_Graph"
+msgstr "_Graph"
 
 #: gui2/database.c:547
 msgid "/_Series/_Import"
-msgstr "/_Daten/_Import"
+msgstr "_Import"
 
 #: gui2/database.c:548
 #: gui2/helpfiles.c:70
@@ -9484,7 +9484,7 @@ msgstr "_Menüschriftart..."
 
 #: gui2/gretl.c:359
 msgid "/_Data"
-msgstr "/_Daten"
+msgstr "/Date_n"
 
 #: gui2/gretl.c:360
 msgid "/Data/Select _all"
@@ -9503,9 +9503,8 @@ msgid "/Data/_Add observations..."
 msgstr "Beobachtungen _hinzufügen..."
 
 #: gui2/gretl.c:365
-#, fuzzy
 msgid "/Data/_Remove extra observations"
-msgstr "/Daten/Zusätzliche Beobachtungen entfernen"
+msgstr "Zusätzliche (out-of-sample) Perioden entfernen"
 
 #: gui2/gretl.c:368
 msgid "/Data/_Read info"
@@ -9618,7 +9617,7 @@ msgstr "_Mahalanobis-Distanzen"
 
 #: gui2/gretl.c:416
 msgid "/_Add"
-msgstr "/_Hinzufügen"
+msgstr "/Hin_zufügen"
 
 #: gui2/gretl.c:418
 msgid "/Add/_Logs of selected variables"
@@ -9694,7 +9693,7 @@ msgstr "/Hinzufügen/Definiere neue Variable..."
 
 #: gui2/gretl.c:457
 msgid "/_Sample"
-msgstr "/S_tichprobe"
+msgstr "/_Stichprobe"
 
 #: gui2/gretl.c:458
 msgid "/Sample/_Set range..."
@@ -9903,7 +9902,7 @@ msgstr "_Probit..."
 
 #: gui2/gretl.c:544
 msgid "/Model/Nonlinear models/To_bit..."
-msgstr "To_bit..."
+msgstr "_Tobit..."
 
 #: gui2/gretl.c:545
 msgid "/Model/Nonlinear models/Poi_sson..."
@@ -10744,9 +10743,8 @@ msgid "/Save/_Hannan-Quinn Information Criterion"
 msgstr "_Hannan-Quinn-Informationskriterium"
 
 #: gui2/gui_utils.c:2634
-#, fuzzy
 msgid "/Save/_Predicted error variance"
-msgstr "/Speichern/Prognosefehlervarianz"
+msgstr "Varianz_prognose"
 
 #: gui2/gui_utils.c:2639
 msgid "/Save/Per-unit _constants"
@@ -10810,7 +10808,7 @@ msgid "%s/none"
 msgstr "%s/keine"
 
 #: gui2/gui_utils.c:2863
-#, fuzzy, c-format
+#, c-format
 msgid "%s/By %s"
 msgstr "%s/Gemäß %s"
 
@@ -10964,7 +10962,7 @@ msgstr "Antwort von %s"
 #: gui2/gui_utils.c:3469
 #, c-format
 msgid "to %s"
-msgstr "zu %s"
+msgstr "auf %s"
 
 #: gui2/gui_utils.c:3654
 #, c-format
@@ -12262,9 +12260,8 @@ msgid "Include a constant"
 msgstr "Konstante aufnehmen"
 
 #: gui2/selector.c:2671
-#, fuzzy
 msgid "Configure"
-msgstr "bearbeiten"
+msgstr "Konfigurieren"
 
 #: gui2/selector.c:2686
 msgid "Include a trend"
@@ -12667,7 +12664,7 @@ msgstr "gretl-Hauptverzeichnis"
 
 #: gui2/settings.c:163
 msgid "User's gretl directory"
-msgstr "gretl Benutzerverzeichnis"
+msgstr "gretl-Benutzerverzeichnis"
 
 #: gui2/settings.c:165
 msgid "Expert mode (no warnings)"
@@ -12868,7 +12865,7 @@ msgstr "Daten öffnen/speichern"
 
 #: gui2/settings.c:1019
 msgid "HCCME"
-msgstr "HCCME"
+msgstr "H(A)C"
 
 #: gui2/settings.c:1021
 msgid "Manuals"
