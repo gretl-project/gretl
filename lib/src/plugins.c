@@ -102,11 +102,13 @@ struct plugin_info plugins[] = {
 
 struct plugin_function plugin_functions[] = { 
     /* data importers */
-    { "excel_get_data",  P_EXCEL_IMPORT },
-    { "wbook_get_data",  P_GNUMERIC_IMPORT },
-    { "wf1_get_data",    P_EVIEWS_IMPORT },
-    { "dta_get_data",    P_STATA_IMPORT },
-    { "jmulti_get_data", P_JMULTI_IMPORT },
+    { "excel_get_data",   P_EXCEL_IMPORT },
+    { "cli_get_xls",      P_EXCEL_IMPORT },
+    { "wbook_get_data",   P_GNUMERIC_IMPORT },
+    { "cli_get_gnumeric", P_GNUMERIC_IMPORT },
+    { "wf1_get_data",     P_EVIEWS_IMPORT },
+    { "dta_get_data",     P_STATA_IMPORT },
+    { "jmulti_get_data",  P_JMULTI_IMPORT },
 
     /* Johansen cointegration test and VECM */
     { "johansen_analysis",        P_JOHANSEN },

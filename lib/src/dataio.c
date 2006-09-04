@@ -4064,25 +4064,17 @@ int import_other (double ***pZ, DATAINFO **ppdinfo,
 
     check_for_console(prn);
 
-    if (ftype == GRETL_GNUMERIC || ftype == GRETL_EXCEL) {
-	pputs(prn, "At present Gnumeric and Excel files can only be opened "
-	      "via the GUI menus.\n");
-	return E_DATA;
-    }
-
     fp = gretl_fopen(fname, "r");
     if (fp == NULL) {
 	pprintf(prn, M_("Couldn't open %s\n"), fname);
 	return E_FOPEN;
     }
-
     fclose(fp);
 
-    /* FIXME Gnumeric and XLS */
     if (ftype == GRETL_GNUMERIC) {
-	sheet_get_data = get_plugin_function("wbook_get_data", &handle);
+	sheet_get_data = get_plugin_function("cli_get_gnumeric", &handle);
     } else if (ftype == GRETL_EXCEL) {
-	sheet_get_data = get_plugin_function("excel_get_data", &handle);
+	sheet_get_data = get_plugin_function("cli_get_xls", &handle);
     } else if (ftype == GRETL_WF1) {
 	sheet_get_data = get_plugin_function("wf1_get_data", &handle);
     } else if (ftype == GRETL_DTA) {

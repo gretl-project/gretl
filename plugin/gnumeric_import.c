@@ -639,8 +639,9 @@ sheet_time_series_setup (wsheet *sheet, wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		    PRN *prn)
+static int 
+real_wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		     int gui, PRN *prn)
 {
     wbook gbook;
     wbook *book = &gbook;
@@ -675,12 +676,14 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	goto getout;
     }
 
-    if (book->nsheets > 1) {
-	wsheet_menu(book, 1);
-	sheetnum = book->selected;
-    } else {
-	wsheet_menu(book, 0);
-	sheetnum = 0;
+    if (gui) {
+	if (book->nsheets > 1) {
+	    wsheet_menu(book, 1);
+	    sheetnum = book->selected;
+	} else {
+	    wsheet_menu(book, 0);
+	    sheetnum = 0;
+	}
     }
 
     if (book->selected == -1) {
@@ -830,3 +833,16 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }
+
+int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		    PRN *prn)
+{
+    return real_wbook_get_data(fname, pZ, pdinfo, 1, prn);
+}
+
+int cli_get_gnumeric (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		      PRN *prn)
+{
+    return real_wbook_get_data(fname, pZ, pdinfo, 0, prn);
+}
+

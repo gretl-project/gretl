@@ -1324,8 +1324,9 @@ static void book_time_series_setup (wbook *book, DATAINFO *newinfo, int pd)
     book_unset_obs_labels(book);
 }
 
-int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		    PRN *prn)
+static int 
+real_excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		     int gui, PRN *prn)
 {
     wbook xbook;
     wbook *book = &xbook;
@@ -1357,7 +1358,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	wbook_print_info(book);
     }
 
-    if (!err) {
+    if (!err && gui) {
 	wsheet_menu(book, book->nsheets > 1);
 	if (book_debugging(book)) {
 	    debug_print = 1;
@@ -1526,3 +1527,17 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }  
+
+int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		    PRN *prn)
+{
+    return real_excel_get_data(fname, pZ, pdinfo, 1, prn);
+}
+
+int cli_get_xls (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		 PRN *prn)
+{
+    return real_excel_get_data(fname, pZ, pdinfo, 0, prn);
+}
+
+
