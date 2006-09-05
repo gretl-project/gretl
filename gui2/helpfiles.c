@@ -1450,29 +1450,6 @@ void gretl_tooltips_add (GtkWidget *w, const gchar *str)
     gtk_tooltips_set_tip(gretl_tips, w, str, NULL);
 }
 
-#ifdef OSX_PKG
-static void osx_help (int uguide)
-{
-    char *prefix, *fname;
-   
-    prefix = getenv("GTK_EXE_PREFIX");
-    if (prefix == NULL) {
-        errbox("Couldn't find the manual");
-	return;
-    }
-    
-    fname = g_strdup_printf("%s/share/gretl/doc/%s", prefix, 
-                            (uguide)? "gretl-guide.pdf" : 
-			    "gretl-ref.pdf");
-    if (fname == NULL) {
-    	nomem();
-    } else {
-        osx_open_file(fname);
-	g_free(fname);
-    }    
-}
-#endif 
-
 enum {
     EN_LETTER,
     EN_A4,
@@ -1589,11 +1566,6 @@ void display_pdf_help (gpointer p, guint uguide, GtkWidget *w)
 {
     char fname[FILENAME_MAX];
     int pref, err = 0;
-
-#ifdef OSX_PKG
-    osx_help(uguide);
-    return;
-#endif  
 
     pref = get_manpref();
     err = find_or_download_pdf(uguide, pref, fname);

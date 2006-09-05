@@ -678,25 +678,6 @@ static void real_nls_init (void)
     bind_textdomain_codeset(PACKAGE, "UTF-8");
 }
 
-# elif defined(OSX_PKG)
-
-static void real_nls_init (void)
-{
-    char *prefix = getenv("GTK_EXE_PREFIX");
-    char *localedir;
-    char *loc;
-
-    if (prefix == NULL) return;
-    
-    localedir = g_strdup_printf("%s/share/locale", prefix);
-    loc = setlocale(LC_ALL, "");
-    set_gretl_charset(loc);
-    bindtextdomain(PACKAGE, localedir);
-    textdomain(PACKAGE);
-    bind_textdomain_codeset(PACKAGE, "UTF-8");
-    g_free(localedir);
-}
-
 # else /* regular *nix treatment */
 
 static void real_nls_init (void)

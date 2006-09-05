@@ -784,11 +784,7 @@ void set_rcfile (void)
 
     tmp = getenv("HOME");
     strcpy(rcfile, tmp);
-# if defined(OSX_PKG)
-    strcat(rcfile, "/.gretlosxrc");
-# else
     strcat(rcfile, "/.gretl2rc");
-# endif
     read_rc(); 
     maybe_set_gd_fontpath();
 }
