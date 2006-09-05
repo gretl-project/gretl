@@ -2595,6 +2595,8 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     pprintf(prn, _("Number of observations = %d\n"), nobs);
     if (window) {
 	pprintf(prn, _("Using Bartlett lag window, length %d\n\n"), L);
+    } else {
+	pputc(prn, '\n');
     }
     pputs(prn, _(" omega  scaled frequency  periods  spectral density\n\n"));
 
