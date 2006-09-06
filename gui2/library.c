@@ -4806,7 +4806,6 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
     GnuplotFlags flags = GP_GUI;
     char *liststr;
     int *lines = NULL;
-    int llen = 1;
     gint i, err;
 
     liststr = main_window_selection_as_string();
@@ -4829,16 +4828,13 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    if (cmd.list[0] - 1 > llen) {
-	llen = cmd.list[0] - 1;
-    }
-
-    lines = mymalloc(llen * sizeof *lines);
+    lines = gretl_list_new(cmd.list[0]);
     if (lines == NULL) {
+	nomem();
 	return;
     }
 
-    for (i=0; i<llen; i++) {
+    for (i=1; i<=lines[0]; i++) {
 	lines[i] = (action == GR_PLOT);
     }
 
