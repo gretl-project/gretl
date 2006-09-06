@@ -1811,6 +1811,7 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 		err = data_to_buf_as_csv(list, prn);
 	    }
 	}
+
 	if (!err) {
 	    if (action == W_COPY) {
 		err = prn_to_clipboard(prn, fmt);
@@ -1818,6 +1819,7 @@ int csv_copy_listed_vars (windata_t *vwin, int fmt, int action)
 		file_selector(_("Save data"), EXPORT_CSV, FSEL_DATA_PRN, prn);
 	    }
 	}
+
 	gretl_print_destroy(prn);
 	free(list);
     }

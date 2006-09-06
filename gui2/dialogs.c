@@ -485,15 +485,11 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 }
 
 static GtkWidget *
-table_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
+tab_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
 {
     GtkWidget *button;
 
-#ifdef G_OS_WIN32
-    button = gtk_radio_button_new_with_label(group, "Table (MS Word)");
-#else
-    button = gtk_radio_button_new_with_label(group, "Tabbed text");
-#endif
+    button = gtk_radio_button_new_with_label(group, _("Tab separated"));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
@@ -509,7 +505,7 @@ CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
 {
     GtkWidget *button;
 
-    button = gtk_radio_button_new_with_label(group, "CSV (spreadsheet)");
+    button = gtk_radio_button_new_with_label(group, _("Comma separated"));
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
@@ -561,11 +557,21 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
     gtk_box_pack_start(GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox); 
 
+    /* Tab-separated option */
+    if (can_do_tabbed(vwin)) {
+	button = tab_copy_button(group, myvbox, finfo);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+	button = CSV_copy_button(group, myvbox, finfo);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
+
 # ifdef G_OS_WIN32
 
-    /* RTF option */
-    button = RTF_copy_button(group, myvbox, finfo, multicopy, pref);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    /* RTF option? */
+    if (multicopy || !can_do_tabbed(vwin)) {
+	button = RTF_copy_button(group, myvbox, finfo, multicopy, pref);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
 
     /* LaTeX option? */
     if (multicopy) {
@@ -573,7 +579,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
-# else /* not MS Windows: reverse the first two options */
+# else /* not MS Windows: reverse RTF vs LaTeX options */
 
     /* LaTeX option? */
     if (multicopy) {
@@ -581,20 +587,16 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
-    /* RTF option */
-    button = RTF_copy_button(group, myvbox, finfo, multicopy, pref);
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    /* RTF option? */
+    if (multicopy || !can_do_tabbed(vwin)) {
+	button = RTF_copy_button(group, myvbox, finfo, multicopy, pref);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
 
 # endif /* G_OS_WIN32 */
 
-    /* Tabbed text option */
-    if (can_do_tabbed(vwin)) {
-	button = table_copy_button(group, myvbox, finfo);
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    }
-
-    /* CSV option */
-    if (can_do_csv(vwin)) {
+    /* Comma-separated option */
+    if (can_do_csv(vwin) && !can_do_tabbed(vwin)) {
 	button = CSV_copy_button(group, myvbox, finfo);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }	
