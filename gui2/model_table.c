@@ -807,7 +807,7 @@ int display_model_table (int gui)
    
     if (binary) {
 	pprintf(prn, "%s\n", _("For logit and probit, R-squared is "
-				 "McFadden's pseudo-R-squared"));
+			       "McFadden's pseudo-R-squared"));
     }
 
     if (real_table_n_models() > 5) {
