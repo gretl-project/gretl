@@ -1,14 +1,14 @@
-# Polish translation for gretl-1.5.1
+# Polish translation for gretl-1.6.0.pre2
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>
 # Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>, 2004, 2005, 2006
-# 
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.5.1\n"
+"Project-Id-Version: gretl-1.6.0.pre2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-09-04 15:20-0400\n"
-"PO-Revision-Date: 2006-08-21 23:00+0100\n"
+"PO-Revision-Date: 2006-09-03 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -4683,7 +4683,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"       interval          midpt   frequency    rel.     cum.\n"
+"      Przedzia³y       ¶rednia   liczba   czêsto¶æ  skumlowana\n"
 "\n"
 
 #: lib/src/printout.c:338
@@ -4693,7 +4693,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"          frequency    rel.     cum.\n"
+"         liczba   czêsto¶æ  skumlowana\n"
 "\n"
 
 #: lib/src/printout.c:383
@@ -7233,7 +7233,7 @@ msgstr "Liczba obserwacji do dodania:"
 
 #: gui2/dialogs.c:1842
 msgid "select variable"
-msgstr "wybór zmienej"
+msgstr "wybór zmiennej"
 
 #: gui2/dialogs.c:1972 gui2/dialogs.c:2325 gui2/dialogs.c:3110
 #: gui2/dialogs.c:3266 gui2/menustate.c:487
@@ -7960,7 +7960,7 @@ msgstr "Przypisanie warto¶ci (opcjonalnie):"
 
 #: gui2/fncall.c:536
 msgid "selection (or new variable)"
-msgstr "wybór zmienej (lub nowa zmienna)"
+msgstr "wybór zmiennej (lub nowa zmienna)"
 
 #: gui2/fncall.c:598
 #, c-format
@@ -8572,7 +8572,7 @@ msgstr "/Plik/Pliki sesji gretla/Zapisz sesjê _jako..."
 
 #: gui2/gretl.c:303
 msgid "/File/_Databases"
-msgstr "/Plik/Pliki _Baz danych"
+msgstr "/Plik/Pliki _baz danych"
 
 #: gui2/gretl.c:304
 msgid "/File/Databases/_Gretl native..."
@@ -8589,7 +8589,7 @@ msgstr "/Plik/Pliki baz danych/_zainstalowane bazy danych"
 
 #: gui2/gretl.c:310
 msgid "/File/Databases/On database _server..."
-msgstr "/Plik/Pliki bazy danych/_instalowanie baz danych"
+msgstr "/Plik/Pliki baz danych/_instalowanie baz danych"
 
 #: gui2/gretl.c:315
 msgid "/File/_Function files"
@@ -8682,11 +8682,11 @@ msgstr "/Narzêdzia/_Ustawienia/_Ogólne..."
 
 #: gui2/gretl.c:351
 msgid "/Tools/Preferences/_Fixed font..."
-msgstr "/Narzedzia/_Ustawienia/_Czcionka tekstu..."
+msgstr "/Narzedzia/_Ustawienia/Czcionka _tekstu..."
 
 #: gui2/gretl.c:354
 msgid "/Tools/Preferences/_Menu font..."
-msgstr "/Narzêdzia/Ustawienia/_Czcionka menu..."
+msgstr "/Narzêdzia/Ustawienia/Czcionka _menu..."
 
 #: gui2/gretl.c:359
 msgid "/_Data"
@@ -8742,11 +8742,11 @@ msgstr "/Dane/_Agregowanie danych..."
 
 #: gui2/gretl.c:377
 msgid "/Data/_Expand data..."
-msgstr "/Dane/Dezagregowanie danych..."
+msgstr "/Dane/De­_zagregowanie danych..."
 
 #: gui2/gretl.c:378
 msgid "/Data/_Transpose data..."
-msgstr "/Dane/Transpozycja danych..."
+msgstr "/Dane/_Transpozycja danych..."
 
 #: gui2/gretl.c:380
 msgid "/Data/_Matrix..."
@@ -8766,7 +8766,7 @@ msgstr "/Widok/_Wykresy zmiennych"
 
 #: gui2/gretl.c:388
 msgid "/View/Graph specified vars/_Time series plot..."
-msgstr "/Widok/Wykresy zmiennych/Wykres szeregu czasowego..."
+msgstr "/Widok/Wykresy zmiennych/Wykres szeregów czasowych..."
 
 #: gui2/gretl.c:390
 msgid "/View/Graph specified vars/X-Y _scatter..."
@@ -8798,11 +8798,11 @@ msgstr "/Widok/Wykres _wielokrotny"
 
 #: gui2/gretl.c:403
 msgid "/View/Multiple graphs/X-Y _scatters..."
-msgstr "/Widok/Wykres _wielokrotny/Wykresy _rozrzutu dla wielu zmiennych..."
+msgstr "/Widok/Wykres _wielokrotny/Wykresy _rozrzutu dla kilku zmiennych..."
 
 #: gui2/gretl.c:405
 msgid "/View/Multiple graphs/_Time series..."
-msgstr "/Widok/Wykres _wielokrotny/Wykresy _szeregów czasowych..."
+msgstr "/Widok/Wykres _wielokrotny/Wykresy _kilku szeregów czasowych..."
 
 #: gui2/gretl.c:409
 msgid "/View/_Summary statistics"
@@ -10311,7 +10311,7 @@ msgstr "testuje istotno¶æ opó¼nienia od wskazanego maksymalnego rzêdu"
 
 #: gui2/library.c:819 gui2/library.c:825
 msgid "use level of variable"
-msgstr "wykorzystaj poziomy zmienej"
+msgstr "wykorzystaj poziomy zmiennej"
 
 #: gui2/library.c:820 gui2/library.c:826
 msgid "use first difference of variable"
