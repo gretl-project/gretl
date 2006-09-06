@@ -1,0 +1,35 @@
+# Replicate James Hamilton's analysis of the relationship
+# between the US and Italian price levels and the Dollar
+# to Lira exchange rate (Time Series Analysis, ch. 20)
+
+open hamilton.gdt
+
+# log of US price level
+genr p = 100*(log(PZUNEW)-log(PZUNEW[1973:01]))
+
+# log of exchange rate
+genr s = -100*(log(EXRITL)-log(EXRITL[1973:01]))
+
+# log of Italian price level
+genr pf = 100*(log(PC6IT)-log(PC6IT[1973:01]))
+
+# Set the sample period used by Hamilton
+smpl 1974:2 ;
+
+# Estimate VECM: lag order 12, cointegration rank 1
+Hamilton <- vecm 12 1 p s pf
+
+# First test: Is the middle coefficient zero?  (That is, 
+# the cointegrating vector, "beta", involves only the two 
+# price levels.)
+restrict Hamilton
+  b2 = 0
+end restrict
+
+# Second test: The real exchange rate is stationary, or beta 
+# is proportional to (1, -1, -1)'
+restrict Hamilton
+  b1 + b2 = 0
+  b1 + b3 = 0
+end restrict
+
