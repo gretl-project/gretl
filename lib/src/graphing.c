@@ -2036,6 +2036,21 @@ static void maybe_set_yrange (FreqDist *freq, double lambda, FILE *fp)
     }	
 }
 
+static double minskip (FreqDist *freq)
+{
+    double s, ms = freq->midpt[1] - freq->midpt[0];
+    int i;
+
+    for (i=2; i<freq->numbins; i++) {
+	s = freq->midpt[i] - freq->midpt[i-1];
+	if (s < ms) {
+	    ms = s;
+	}
+    }
+
+    return ms;
+}
+
 /**
  * plot_freq:
  * @freq: pointer to frequency distribution struct.
@@ -2055,7 +2070,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     char withstr[16] = {0};
     char label[80] = {0};
     double plotmin = 0.0, plotmax = 0.0;
-    double barwidth, barskip;
+    double barwidth;
     int plottype, use_boxes = 1;
     int err;
 
@@ -2079,17 +2094,17 @@ int plot_freq (FreqDist *freq, DistCode dist)
     fprintf(stderr, "*** plot_freq called\n");
 #endif  
 
-    barwidth = freq->endpt[K-1] - freq->endpt[K-2];
-    barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
-
-    if (K > 16) {
-	barskip /= 2.0;
+    if (freq->discrete) {
+	barwidth = minskip(freq); 
+    } else {
+	/* equally sized bins, width to be determined */
+	barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     }
 
     gretl_push_c_numeric_locale();
 
     if (dist) {
-	lambda = 1.0 / (freq->n * barwidth - barskip);
+	lambda = 1.0 / (freq->n * barwidth);
 
 	if (dist == DIST_NORMAL) {
 	    fputs("# literal lines = 4\n", fp);
@@ -2100,6 +2115,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	    if (plotmin > freq->xbar - 3.3 * freq->sdx) {
 		plotmin = freq->xbar - 3.3 * freq->sdx;
 	    }
+
 	    plotmax = freq->endpt[K-1] + barwidth;
 	    if (plotmax < freq->xbar + 3.3 * freq->sdx) {
 		plotmax = freq->xbar + 3.3 * freq->sdx;
