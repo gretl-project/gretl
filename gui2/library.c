@@ -6001,12 +6001,10 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	}
 	if (err) {
 	    errmsg(err, prn);
-	} else {
+	} else if (!(cmd.opt & OPT_Q) && !(cmd.opt & OPT_W)) {
 	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
-	    if (!(cmd.opt & OPT_Q) && !(cmd.opt & OPT_W)) {
-		swap_models(models[0], models[1]);
-	    }
+	    swap_models(models[0], models[1]);
 	}
 	if (!(cmd.opt & OPT_W)) {
 	    clear_model(models[1]);
