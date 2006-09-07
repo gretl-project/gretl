@@ -160,6 +160,8 @@ double gretl_matrix_trace (const gretl_matrix *m, int *err);
 
 int gretl_matrix_random_fill (gretl_matrix *m, int dist);
 
+gretl_matrix *gretl_random_matrix_new (int r, int c, int dist);
+
 int gretl_matrix_transform_elements (gretl_matrix *m, GretlMathFunc fn);
 
 double gretl_vector_mean (const gretl_vector *v);

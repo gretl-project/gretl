@@ -1995,10 +1995,10 @@ static void print_freq_dist_label (char *s, int dist, double x, double y)
     }
 #endif
 
-    if (dist == DIST_NORMAL) {
+    if (dist == D_NORMAL) {
 	sprintf(s, "N(%.5g%c%.5g)", x, 
 		((dcomma)? ' ' : ','), y);
-    } else if (dist == DIST_GAMMA) {
+    } else if (dist == D_GAMMA) {
 	sprintf(s, "gamma(%.5g%c%.5g)", x, 
 		((dcomma)? ' ' : ','), y);
     }
@@ -2078,9 +2078,9 @@ int plot_freq (FreqDist *freq, DistCode dist)
 	return 1;
     }
 
-    if (dist == DIST_NORMAL) {
+    if (dist == D_NORMAL) {
 	plottype = PLOT_FREQ_NORMAL;
-    } else if (dist == DIST_GAMMA) {
+    } else if (dist == D_GAMMA) {
 	plottype = PLOT_FREQ_GAMMA;
     } else {
 	plottype = PLOT_FREQ_SIMPLE;
@@ -2106,7 +2106,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
     if (dist) {
 	lambda = 1.0 / (freq->n * barwidth);
 
-	if (dist == DIST_NORMAL) {
+	if (dist == D_NORMAL) {
 	    fputs("# literal lines = 4\n", fp);
 	    fprintf(fp, "sigma = %g\n", freq->sdx);
 	    fprintf(fp, "mu = %g\n", freq->xbar);
@@ -2130,7 +2130,7 @@ int plot_freq (FreqDist *freq, DistCode dist)
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
 			label, label_front());
 	    }	
-	} else if (dist == DIST_GAMMA) {
+	} else if (dist == D_GAMMA) {
 	    double var = freq->sdx * freq->sdx;
 
 	    /* scale param = variance/mean */
@@ -2205,14 +2205,14 @@ int plot_freq (FreqDist *freq, DistCode dist)
 
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:2 %s\n", withstr);
-    } else if (dist == DIST_NORMAL) {
+    } else if (dist == D_NORMAL) {
 	print_freq_dist_label(label, dist, freq->xbar, freq->sdx);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title '%s' %s , \\\n"
 		"1.0/(sqrt(2.0*pi)*sigma)*exp(-.5*((x-mu)/sigma)**2) "
 		"title '%s' w lines\n",
 		freq->varname, withstr, label);
-    } else if (dist == DIST_GAMMA) {
+    } else if (dist == D_GAMMA) {
 	print_freq_dist_label(label, dist, alpha, beta);
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:2 title '%s' %s ,\\\n"

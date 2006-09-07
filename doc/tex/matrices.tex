@@ -330,9 +330,9 @@ a matrix are:
    $m\times n$ zero matrix \\
 \texttt{ones(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
    $m\times n$ matrix filled with 1s \\
-\texttt{uniform(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+\texttt{muniform(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
    $m\times n$ matrix filled with uniform random values \\
-\texttt{normal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+\texttt{mnormal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
    $m\times n$ matrix filled with normal random values \\
 \end{tabular}
 \end{center}
@@ -343,10 +343,10 @@ by reference to pre-existing scalar variables, as in
 \begin{code}
 scalar m = 4
 scalar n = 5
-matrix A = normal(m,n)
+matrix A = mnormal(m,n)
 \end{code}
 %
-The \texttt{uniform()} and \texttt{normal()} matrix functions fill the
+The \texttt{muniform()} and \texttt{mnormal()} matrix functions fill the
 matrix with drawings from the uniform (0--1) distribution and the
 standard normal distribution respectively.
 

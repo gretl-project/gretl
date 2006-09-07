@@ -155,6 +155,8 @@ enum transformations {
     T_IMAT,
     T_ZEROS,
     T_ONES,
+    T_MUNIF,
+    T_MNORM,
     T_IDENTITY,
     T_UFUNC
 };

@@ -328,82 +328,81 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
  * 0 otherwise.
  */
 
-int ok_in_loop (int ci)
+int ok_in_loop (int c)
 {
-    int ok = 0;
-
-    if (ci == GENR ||
-	ci == LOOP ||
-	ci == FNCALL || 
-	ci == MATRIX ||
-	ci == STORE ||
-	ci == PRINT ||
-	ci == PRINTF ||
-	ci == PVALUE ||
-	ci == SMPL ||
-	ci == IF ||
-	ci == ELSE ||
-	ci == ENDIF ||
-	ci == BREAK ||
-	ci == ENDLOOP) { 
-	ok = 1;
+    if (c == GENR ||
+	c == LOOP ||
+	c == FNCALL || 
+	c == MATRIX ||
+	c == STORE ||
+	c == PRINT ||
+	c == PRINTF ||
+	c == PVALUE ||
+	c == SMPL ||
+	c == IF ||
+	c == ELSE ||
+	c == ENDIF ||
+	c == BREAK ||
+	c == ENDLOOP) { 
+	return 1;
     }
 
     /* "simple_commands" */
-    else if (ci == ADF || 
-	     ci == COINT || 
-	     ci == COINT2 || 
-	     ci == CORR ||
-	     ci == CRITERIA || 
-	     ci == CRITICAL || 
-	     ci == DIFF || 
-	     ci == HURST ||	
-	     ci == KPSS ||
-	     ci == LAGS || 
-	     ci == LDIFF || 
-	     ci == LOGS ||
-	     ci == MEANTEST || 
-	     ci == MULTIPLY || 
-	     ci == OUTFILE ||
-	     ci == PCA ||
-	     ci == RHODIFF ||
-	     ci == RUNS || 
-             ci == SETINFO ||
-	     ci == SPEARMAN || 
-	     ci == SQUARE || 
-	     ci == SUMMARY ||
-	     ci == VARLIST ||
-	     ci == VARTEST ||
-	     ci == XTAB ) {
-	ok = 1;
+    if (c == ADF || 
+	c == COINT || 
+	c == COINT2 || 
+	c == CORR ||
+	c == CRITERIA || 
+	c == CRITICAL || 
+	c == DIFF || 
+	c == HURST ||	
+	c == KPSS ||
+	c == LAGS || 
+	c == LDIFF || 
+	c == LOGS ||
+	c == MEANTEST || 
+	c == MULTIPLY || 
+	c == OUTFILE ||
+	c == PCA ||
+	c == REMEMBER || 
+	c == RHODIFF ||
+	c == RUNS || 
+	c == SETINFO ||
+	c == SPEARMAN || 
+	c == SQUARE || 
+	c == SUMMARY ||
+	c == VARLIST ||
+	c == VARTEST ||
+	c == XTAB ) {
+	return 1;
     }
 
     /* frequencies --- no graph allowed */
-    else if (ci == FREQ) {
+    if (c == FREQ) {
 	return 1;
     }
 
     /* modeling commands */
-    else if (OK_LOOP_MODEL(ci)) {
+    if (OK_LOOP_MODEL(c)) {
 	return 1;
     }
 
     /* vector models */
-    else if (ci == VAR || ci == VECM) {
-	ok = 1;
+    if (c == VAR || c == VECM) {
+	return 1;
     }
     
     /* nonlinear models */
-    else if (ci == NLS || ci == MLE || ci == END) {
-	ok = 1;
+    if (c == NLS || c == MLE || c == END) {
+	return 1;
     }
 
     /* basic model tests */
-    else if (ci == ADD || ci == OMIT || ci == TESTUHAT) {
-	ok = 1;
+    if (c == ADD || c == OMIT || c == TESTUHAT) {
+	return 1;
     }
 
-    return ok;
+    return 0;
 }
 
 static int loop_attach_child (LOOPSET *loop, LOOPSET *child)

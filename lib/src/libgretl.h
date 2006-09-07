@@ -180,6 +180,13 @@ typedef enum {
 } GretlOp;
 
 typedef enum {
+    D_NONE = 0,
+    D_UNIFORM,
+    D_NORMAL,
+    D_GAMMA
+} DistCode;
+
+typedef enum {
     T_NONE,
     T_LOG,
     T_EXP, 

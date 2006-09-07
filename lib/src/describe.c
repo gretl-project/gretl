@@ -1285,10 +1285,10 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     if (freq->n > 7) {
 	if (opt & OPT_O) {
 	    freq->test = lockes_test(x, pdinfo->t1, pdinfo->t2);
-	    freq->dist = DIST_GAMMA;
+	    freq->dist = D_GAMMA;
 	} else {
 	    freq->test = doornik_chisq(skew, kurt, freq->n); 
-	    freq->dist = DIST_NORMAL;
+	    freq->dist = D_NORMAL;
 	}
     } else {
 	freq->test = NADBL;
@@ -1446,7 +1446,7 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
     print_freq(freq, prn); 
 
     if (graph && !(opt & OPT_Q)) {
-	if (plot_freq(freq, (opt)? DIST_GAMMA : DIST_NORMAL)) {
+	if (plot_freq(freq, (opt)? D_GAMMA : D_NORMAL)) {
 	    pputs(prn, _("gnuplot command failed\n"));
 	}
     }
@@ -2267,7 +2267,7 @@ gretl_matrix *gretl_matrix_periodogram (const gretl_matrix *x, int m)
 gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
 {
     int m = gretl_vector_get_length(I);
-    gretl_matrix *lambda, *llambda;
+    gretl_matrix *lambda;
     int i;
 
     lambda = gretl_column_vector_alloc(m);
@@ -2276,19 +2276,19 @@ gretl_matrix *LWE_lambda (const gretl_matrix *I, int n, double *lcm)
 	gretl_vector_set(lambda, i, (2.0 * M_PI / n) * (i + 1));
 #if LWE_DEBUG
 	fprintf(stderr, "LWE_obj_func: lambda[%d] = %g\n",
-		i, gretl_vector_get(lambda, i));
+		i, lambda->val[i]);
 #endif
     }
 
-    llambda = gretl_matrix_copy(lambda);
-    gretl_matrix_transform_elements(llambda, T_LOG);
-    *lcm = gretl_vector_mean(llambda);
+    *lcm = 0.0;
+    for (i=0; i<m; i++) {
+	*lcm += log(lambda->val[i]);
+    }
+    *lcm /= m;
 
 #if LWE_DEBUG
     fprintf(stderr, "LWE_lambda: col mean of log lambda = %g\n", *lcm);
 #endif
-
-    gretl_matrix_free(llambda);
 
     return lambda;
 }

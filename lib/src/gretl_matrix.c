@@ -682,7 +682,7 @@ double gretl_matrix_trace (const gretl_matrix *m, int *err)
 /**
  * gretl_matrix_random_fill:
  * @m: input matrix.
- * @dist: either %T_UNIFORM or %T_NORMAL.
+ * @dist: either %D_UNIFORM or %D_NORMAL.
  *
  * Fills @m with pseudo-random values from either the uniform
  * or the standard normal distribution.
@@ -694,19 +694,54 @@ int gretl_matrix_random_fill (gretl_matrix *m, int dist)
 {
     int n;
 
-    if (m == NULL || (dist != T_UNIFORM && dist != T_NORMAL)) {
+    if (m == NULL || (dist != D_UNIFORM && dist != D_NORMAL)) {
 	return 1;
     }
 
     n = m->rows * m->cols;
 
-    if (dist == T_NORMAL) {
+    if (dist == D_NORMAL) {
 	gretl_normal_dist(m->val, 0, n - 1);
-    } else if (dist == T_UNIFORM) {
+    } else if (dist == D_UNIFORM) {
 	gretl_uniform_dist(m->val, 0, n - 1);
     }
 
     return 0;
+}
+
+/**
+ * gretl_random_matrix_new:
+ * @r: number of rows.
+ * @c: number of columns.
+ * @dist: either %D_UNIFORM or %D_NORMAL.
+ *
+ * Creates a new $r x @c matrix and filles it with pseudo-random 
+ * values from either the uniform or the standard normal 
+ * distribution.
+ *
+ * Returns: allocated matrix or %NULL on failure.
+ */
+
+gretl_matrix *gretl_random_matrix_new (int r, int c, int dist)
+{
+    gretl_matrix *m;
+
+    if (dist != D_UNIFORM && dist != D_NORMAL) {
+	return NULL;
+    }
+
+    m = gretl_matrix_alloc(r, c);
+    if (m == NULL) {
+	return NULL;
+    }
+
+    if (dist == D_NORMAL) {
+	gretl_normal_dist(m->val, 0, r * c - 1);
+    } else if (dist == D_UNIFORM) {
+	gretl_uniform_dist(m->val, 0, r * c - 1);
+    }
+
+    return m;
 }
 
 /**

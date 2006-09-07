@@ -77,12 +77,6 @@ typedef enum {
 } gp_just_codes;
 
 typedef enum {
-    DIST_NONE = 0,
-    DIST_NORMAL,
-    DIST_GAMMA
-} DistCode;
-
-typedef enum {
     PLOT_REGULAR = 0,
     PLOT_SAMPLING_DIST,
     PLOT_FORECAST,

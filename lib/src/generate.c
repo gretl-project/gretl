@@ -165,6 +165,8 @@ struct genr_func funcs[] = {
     { T_IMAT,     "I" },
     { T_ZEROS,    "zeros" },
     { T_ONES,     "ones" },
+    { T_MUNIF,    "muniform" },
+    { T_MNORM,    "mnormal" },
     { T_IDENTITY, "ident" },
     { 0, NULL }
 };
@@ -208,7 +210,8 @@ struct retriever retrievers[] = {
 			       f == T_ROWS || f == T_COLS || f == T_1NORM || \
                                f == T_RCOND)
 
-#define MATRIX_FILL_FUNC(f) (f == T_IMAT || f == T_ZEROS || f == T_ONES)
+#define MATRIX_FILL_FUNC(f) (f == T_IMAT || f == T_ZEROS || f == T_ONES || \
+                             f == T_MUNIF || f == T_MNORM)
 
 #define MATRIX_MATRIX_FUNC(f) (f == T_TRANSP || f == T_DIAG || f == T_CDMEAN || \
                                f == T_INV || f == T_CHOL || f == T_QR || \
@@ -218,8 +221,6 @@ struct retriever retrievers[] = {
                                f == T_VECH || f == T_UNVECH)
 
 #define MULTI_MATRIX_FUNC(f) (f == T_QR || f == T_EIGSYM || f == T_EIGGEN)
-
-#define RAND_FUNC(f) (f == T_UNIFORM || f == T_NORMAL)
 
 #define needs_arg(f) (f > 0 && f != T_UNIFORM && f != T_NORMAL)
 
@@ -933,11 +934,10 @@ matrix_gen_function (const char *s, GENERATOR *genr, genatom *atom)
 	    M = gretl_zero_matrix_new(r, c);
 	} else if (atom->func == T_ONES) {
 	    M = gretl_unit_matrix_new(r, c);
-	} else if ((atom->func == T_UNIFORM || atom->func == T_NORMAL)) {
-	    M = gretl_matrix_alloc(r, c);
-	    if (M != NULL) {
-		gretl_matrix_random_fill(M, atom->func);
-	    }
+	} else if (atom->func == T_MUNIF) {
+	    M = gretl_random_matrix_new(r, c, D_UNIFORM);
+	} else if (atom->func == T_MNORM) {
+	    M = gretl_random_matrix_new(r, c, D_NORMAL);
 	}
 	if (M == NULL) {
 	    genr->err = E_ALLOC;
@@ -995,8 +995,6 @@ atom_get_function_data (const char *s, GENERATOR *genr, genatom *atom)
 	atom->val = genr_get_matrix_scalar(s, genr, atom->func);
 	atom->atype = ATOM_SCALAR;
 	atom->func = 0;
-    } else if (RAND_FUNC(atom->func) && genr_is_matrix(genr)) {
-	matrix_gen_function(s, genr, atom);
     } else if (MATRIX_FILL_FUNC(atom->func)) {
 	if (genr_is_matrix(genr)) {
 	    matrix_gen_function(s, genr, atom);
@@ -2315,14 +2313,14 @@ static int string_arg_function_word (const char *s, GENERATOR *genr)
 	!strncmp(s, "student", 7) ||
 	!strncmp(s, "zeros", 5) ||
 	!strncmp(s, "ones", 4) ||
+	!strncmp(s, "muniform", 8) ||
+	!strncmp(s, "mnormal", 7) ||
 	!strncmp(s, "I", 1)) {
 	return 1;
     }
 
     if (genr_is_matrix(genr)) {
-	if (!strncmp(s, "uniform", 7) ||
-	    !strncmp(s, "normal", 6) ||
-	    !strncmp(s, "qrdecomp", 8) ||
+	if (!strncmp(s, "qrdecomp", 8) ||
 	    !strncmp(s, "eigensym", 8) ||
 	    !strncmp(s, "eigengen", 8)) {
 	    return 1;

@@ -274,14 +274,14 @@ static void print_freq_test (const FreqDist *freq, PRN *prn)
 {
     double pval = NADBL;
 
-    if (freq->dist == DIST_NORMAL) {
+    if (freq->dist == D_NORMAL) {
 	pval = chisq_cdf_comp(freq->test, 2);
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of normal distribution"));
 	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
 		_("Chi-square"), freq->test, 
 		_("with p-value"), pval);
-    } else if (freq->dist == DIST_GAMMA) {
+    } else if (freq->dist == D_GAMMA) {
 	pval = normal_pvalue_2(freq->test);
 	pprintf(prn, "\n%s:\n", 
 		_("Test for null hypothesis of gamma distribution"));
@@ -291,7 +291,7 @@ static void print_freq_test (const FreqDist *freq, PRN *prn)
 
     if (!na(pval)) {
 	record_test_result(freq->test, pval, 
-			   (freq->dist == DIST_NORMAL)? 
+			   (freq->dist == D_NORMAL)? 
 			   "normality" : "gamma");
     }
 }

@@ -3250,7 +3250,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 		NULL);
 
     /* show the graph too */
-    if (plot_freq(freq, DIST_NORMAL) == 0) {
+    if (plot_freq(freq, D_NORMAL) == 0) {
 	register_graph();
     }
 
@@ -3274,11 +3274,11 @@ series_has_negative_vals (const double *x)
 void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 {
     FreqDist *freq;
-    gretlopt opt = (dist == DIST_GAMMA)? OPT_O : OPT_NONE;
+    gretlopt opt = (dist == D_GAMMA)? OPT_O : OPT_NONE;
     int v = mdata_active_var();
 
     gretl_command_sprintf("freq %s%s", datainfo->varname[v],
-			  (dist == DIST_GAMMA)? " --gamma" : "");
+			  (dist == D_GAMMA)? " --gamma" : "");
 
     if (check_and_record_command()) {
 	return;
@@ -3287,7 +3287,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     freq = get_freq(v, (const double **) Z, datainfo, 1, opt);
 
     if (!freq_error(freq, NULL)) { 
-	if (dist == DIST_GAMMA && series_has_negative_vals(Z[v])) {
+	if (dist == D_GAMMA && series_has_negative_vals(Z[v])) {
 	    errbox(_("Data contain negative values: gamma distribution not "
 		   "appropriate"));
 	} else {
