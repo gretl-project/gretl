@@ -437,10 +437,13 @@ matrices associated with models previously estimated:
 \texttt{\$stderr} & vector of estimated standard errors \\
 \texttt{\$uhat} & vector of residuals \\
 \texttt{\$yhat} & vector of fitted values \\
-\texttt{\$vcv} & covariance matrix for coefficients \\
+\texttt{\$vcv} & covariance matrix (see below) \\
 \texttt{\$rho} & autoregressive coefficients for error process \\
 \texttt{\$jalpha} & matrix $\alpha$ (loadings) from Johansen's procedure \\
-\texttt{\$jbeta} & matrix $\beta$ (cointegration vectors) from Johansen's procedure
+\texttt{\$jbeta} & matrix $\beta$ (cointegration vectors) from
+Johansen's procedure \\
+\texttt{\$jvbeta} & covariance matrix for the unrestricted elements of
+$\beta$ from Johansen's procedure
 \end{tabular}
 \end{center}
 
@@ -476,7 +479,11 @@ cointegration rank; therefore, the product
 \begin{code}
   matrix Pi = $jalpha * $jbeta'
 \end{code}
-returns the reduced-rank estimate of $A(1)$.
+returns the reduced-rank estimate of $A(1)$. Since $\beta$ is
+automatically identified via the Phillips normalization (see section
+\ref{sec:johansen-ident}), its unrestricted elements do have a proper
+covariance matrix, which can be retrieved through the
+\texttt{\$jvbeta} accessor.
 
 \section{Selecting sub-matrices}
 \label{matrix-sub}
