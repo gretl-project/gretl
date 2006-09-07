@@ -2796,10 +2796,11 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		}
 		if (err) {
 		    errmsg(err, prn);
-		    clear_model(models[1]);
-		} else {
+		} else if (!(cmd.opt & OPT_Q) && !(cmd.opt & OPT_W)) {
 		    swap_models(models[0], models[1]);
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
+		}
+		if (!(cmd.opt & OPT_W)) {
 		    clear_model(models[1]);
 		}
 		break;	

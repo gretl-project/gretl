@@ -1027,7 +1027,6 @@ int omit_test (const int *omitvars, MODEL *orig, MODEL *new,
 
 	    omitlist = gretl_list_diff_new(orig->list, new->list, 2);
 	    cmp = add_or_omit_compare(orig, new, OMIT_TEST, omitlist);
-
 	    gretl_make_compare(&cmp, omitlist, orig, pdinfo, opt, prn); 
 	    free(omitlist);
 	}
