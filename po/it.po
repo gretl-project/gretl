@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.6.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-09-04 15:20-0400\n"
-"PO-Revision-Date: 2006-08-21 23:24+0200\n"
+"PO-Revision-Date: 2006-09-07 23:20+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2640,9 +2640,8 @@ msgid "Adjustments vector"
 msgstr "Vettore di aggiustamento"
 
 #: lib/src/gretl_model.c:3808
-#, fuzzy
 msgid "Covariance matrix for normalized cointegration matrix"
-msgstr "Impossibile generare la matrice di correlazione"
+msgstr "Matrice di covarianza per la matrice di cointegrazione normalizzata"
 
 #: lib/src/gretl_model.c:4007
 msgid "Can't retrieve uhat: data set has changed"
@@ -7155,9 +7154,8 @@ msgid "description:"
 msgstr "Descrizione:"
 
 #: gui2/dialogs.c:1148
-#, fuzzy
 msgid "gretl: seed for random numbers"
-msgstr "gretl: 5 numeri"
+msgstr "gretl: seme per il generatore di numeri casuali"
 
 #: gui2/dialogs.c:1153
 msgid "Seed for generator:"
@@ -8634,9 +8632,8 @@ msgid "/Tools/_Test statistic calculator"
 msgstr "/Strumenti/Calcola _test"
 
 #: gui2/gretl.c:331
-#, fuzzy
 msgid "/Tools/_Seed for random numbers"
-msgstr "/Strumenti/_Ordina variabili"
+msgstr "/Strumenti/Seme per numeri _casuali"
 
 #: gui2/gretl.c:334
 msgid "/Tools/_Command log"
@@ -10228,9 +10225,8 @@ msgid " Find what:"
 msgstr " Trova:"
 
 #: gui2/helpfiles.c:1581
-#, fuzzy
 msgid "Failed to download file"
-msgstr "Impossibile copiare il file del grafico"
+msgstr "Impossibile scaricare il file"
 
 #: gui2/library.c:161 gui2/library.c:4245 gui2/library.c:4745
 msgid "No data were available to graph"
