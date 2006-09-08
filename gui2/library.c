@@ -4631,12 +4631,12 @@ int do_graph_from_selector (selector *sr)
     if (imp) {
 	flags |= GP_IMPULSES;
     } else {
-	lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
+	lines = mymalloc(cmd.list[0] * sizeof *lines);
 	if (lines == NULL) {
 	    return 0;
 	}
-	for (i=1; i<cmd.list[0]; i++) {
-	    lines[i-1] = (selector_code(sr) == GR_PLOT);
+	for (i=0; i<cmd.list[0]; i++) {
+	    lines[i] = (selector_code(sr) == GR_PLOT);
 	}
     }
 
@@ -4826,13 +4826,13 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
+    lines = mymalloc(cmd.list[0] * sizeof *lines);
     if (lines == NULL) {
 	return;
     }
 
-    for (i=1; i<cmd.list[0]; i++) {
-	lines[i-1] = (action == GR_PLOT);
+    for (i=0; i<cmd.list[0]; i++) {
+	lines[i] = (action == GR_PLOT);
     }
 
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
