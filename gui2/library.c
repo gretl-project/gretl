@@ -4047,7 +4047,8 @@ void add_model_stat (MODEL *pmod, int which)
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
     GnuplotFlags flags = 0;
-    int err, origv, ts, plotlist[4], lines[1];
+    int plotlist[4], lines[1] = {0};
+    int err, origv, ts;
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
     int pdum = vwin->active_var; 
@@ -4103,7 +4104,6 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	/* plot against specified xvar */
 	plotlist[0] = 2;
 	plotlist[2] = xvar;
-	lines[0] = 0;
     } else {    
 	/* plot against obs index or time */
 	flags |= GP_IDX;
@@ -4131,7 +4131,8 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
     GnuplotFlags flags = GP_GUI | GP_FA;
-    int err, origv, plotlist[4], lines[2] = {0};
+    int plotlist[4], lines[2] = {0};
+    int err, origv;
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
     double ***gZ;
@@ -4459,7 +4460,8 @@ static void do_stacked_ts_plot (int varnum)
 
 void do_graph_var (int varnum)
 {
-    int err, lines[1];
+    int lines[1] = {1};
+    int err;
 
     if (varnum <= 0) return;
 
@@ -4483,7 +4485,6 @@ void do_graph_var (int varnum)
 	return;
     }
 
-    lines[0] = 1;
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
 		  &plot_count, GP_GUI | GP_IDX);
 
@@ -4609,7 +4610,8 @@ int do_graph_from_selector (selector *sr)
 {
     GnuplotFlags flags = GP_GUI;
     const char *buf = selector_list(sr);
-    gint i, err, *lines = NULL;
+    int *lines = NULL;
+    gint i, err;
     gint imp = (selector_code(sr) == GR_IMP);
 
     if (buf == NULL) return 1;
@@ -4633,12 +4635,8 @@ int do_graph_from_selector (selector *sr)
 	if (lines == NULL) {
 	    return 0;
 	}
-	for (i=0; i<cmd.list[0]-1 ; i++) {
-	    if (selector_code(sr) == GR_PLOT) {
-		lines[i] = 1;
-	    } else {
-		lines[i] = 0;
-	    }
+	for (i=1; i<cmd.list[0]; i++) {
+	    lines[i-1] = (selector_code(sr) == GR_PLOT);
 	}
     }
 
@@ -4828,14 +4826,13 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    lines = gretl_list_new(cmd.list[0]);
+    lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
     if (lines == NULL) {
-	nomem();
 	return;
     }
 
-    for (i=1; i<=lines[0]; i++) {
-	lines[i] = (action == GR_PLOT);
+    for (i=1; i<cmd.list[0]; i++) {
+	lines[i-1] = (action == GR_PLOT);
     }
 
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
@@ -5769,7 +5766,7 @@ static int modelspec_test_check (int test_ci, int model_id, PRN *prn)
 
 static void do_autofit_plot (PRN *prn)
 {
-    int lines[1];
+    int lines[1] = {1};
     int plotlist[3];
     int err;
 
@@ -5777,7 +5774,6 @@ static void do_autofit_plot (PRN *prn)
     plotlist[1] = gretl_model_get_depvar(models[0]);
     plotlist[2] = varindex(datainfo, "autofit");
 
-    lines[0] = 1; 
     err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
 		  &plot_count, OPT_T); 
 
