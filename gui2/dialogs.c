@@ -75,17 +75,19 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 			       GTK_RESPONSE_REJECT);
     }
 
-    label = gtk_label_new (msg);
+    label = gtk_label_new(msg);
     gtk_widget_show(label);
     hbox = gtk_hbox_new(FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 10);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 12);
     gtk_widget_show(hbox);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox),
-		       hbox, FALSE, FALSE, 10);
+		       hbox, FALSE, FALSE, 12);
 
-    ret = gtk_dialog_run (GTK_DIALOG(dialog));
+    gtk_dialog_set_has_separator(GTK_DIALOG(dialog), FALSE);
+
+    ret = gtk_dialog_run(GTK_DIALOG(dialog));
 					  
-    gtk_widget_destroy (dialog);
+    gtk_widget_destroy(dialog);
 
     switch (ret) {
     case GTK_RESPONSE_ACCEPT: 
@@ -632,7 +634,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
     gtk_widget_show(tempwid);
 
     /* Help button if needed */
-    if (can_do_csv(vwin)) {
+    if (can_do_tabbed(vwin)) {
 	context_help_button(GTK_DIALOG(dialog)->action_area, COPY_FORMATS);
     }	
 

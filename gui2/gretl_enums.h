@@ -11,6 +11,8 @@ enum extra_cmds {
     MARKERS,
     STORE_MODEL,
     VAR_SUMMARY,
+    ALL_SUMMARY,
+    ALL_CORR,
     GENR_RANDOM,
     SEED_RANDOM,
     ONLINE,
@@ -247,8 +249,8 @@ enum random_types {
     RANDOM_ST
 };
 
-#define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
-	                         c == CORR || c == FCASTERR || \
+#define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || ALL_SUMMARY || \
+	                         c == CORR || c == ALL_CORR || c == FCASTERR || \
 	                         c == FCAST || c == COEFFINT || \
 	                         c == COVAR || c == VIEW_MODEL || \
                                  c == VIEW_MODELTABLE || c == VAR || c == VECM || \

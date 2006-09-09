@@ -1436,7 +1436,7 @@ void free_windata (GtkWidget *w, gpointer data)
 	}
 
 	/* data specific to certain windows */
-	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY) {
+	if (vwin->role == SUMMARY) {
 	    free_summary(vwin->data); 
 	} else if (vwin->role == CORR || vwin->role == PCA || 
 		   vwin->role == COVAR) {

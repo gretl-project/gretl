@@ -302,9 +302,9 @@ void main_menus_enable (gboolean s)
     }
 }
 
-static gint var_popup_click (GtkWidget *widget, gpointer data)
+static gint var_popup_click (GtkWidget *w, gpointer p)
 {
-    gchar *item = (gchar *) data;
+    gchar *item = (gchar *) p;
     int v = mdata_active_var();
 
     if (!strcmp(item, _("Display values"))) 
@@ -345,7 +345,7 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Edit attributes")))  
 	varinfo_dialog(v, 1);
     else if (!strcmp(item, _("Edit values")))  
-	show_spreadsheet(SHEET_EDIT_DATASET);
+	show_spreadsheet(SHEET_EDIT_VARLIST);
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
     else if (!strcmp(item, _("Delete"))) 
@@ -399,9 +399,9 @@ GtkWidget *build_var_popup (void)
     return var_menu;
 }
 
-static gint selection_popup_click (GtkWidget *widget, gpointer data)
+static gint selection_popup_click (GtkWidget *w, gpointer p)
 {
-    gchar *item = (gchar *) data;
+    gchar *item = (gchar *) p;
 
     if (!strcmp(item, _("Display values"))) 
 	display_selected(NULL, 0, NULL); 
@@ -416,7 +416,7 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
     else if (!strcmp(item, _("Edit"))) 
-	show_spreadsheet(SHEET_EDIT_DATASET);
+	show_spreadsheet(SHEET_EDIT_VARLIST);
     else if (!strcmp(item, _("Delete"))) 
 	delete_selected_vars(0);
 

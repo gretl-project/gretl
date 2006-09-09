@@ -2780,8 +2780,7 @@ static void print_summary_single (const Summary *summ, int j,
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
  *
- * Print the summary statistics for a given variable.
- *
+ * Prints the summary statistics for a given variable.
  */
 
 void print_summary (const Summary *summ,
@@ -2881,7 +2880,6 @@ void print_summary (const Summary *summ,
  * @summ: gretl summary statistics struct
  *
  * Frees all malloced elements of the struct.
- *
  */
 
 void free_summary (Summary *summ)
@@ -2939,12 +2937,10 @@ static Summary *summary_new (const int *list)
  * Calculates descriptive summary statistics for the specified variables.
  *
  * Returns: struct containing the summary statistics.
- *
  */
 
-Summary *summary (const int *list, 
-		       const double **Z, const DATAINFO *pdinfo,
-		       PRN *prn) 
+Summary *summary (const int *list, const double **Z, 
+		  const DATAINFO *pdinfo, PRN *prn) 
 {
     Summary *summ;
     int i, vi, sn, gn;

@@ -267,7 +267,7 @@ static int special_text_handler (windata_t *vwin, guint fmt, int what)
 
     gretl_print_set_format(prn, fmt);
 
-    if (cmd == SUMMARY || cmd == VAR_SUMMARY) {
+    if (cmd == SUMMARY) {
 	Summary *summ = (Summary *) vwin->data;
 
 	special_print_summary(summ, datainfo, prn);

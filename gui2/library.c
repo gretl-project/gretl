@@ -617,6 +617,10 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case CORR:
 	gretl_command_sprintf("corr%s", liststr);
 	strcat(title, _("correlation matrix"));
+	break;
+    case ALL_CORR:
+	gretl_command_strcpy("corr");
+	strcat(title, _("correlation matrix"));
 	action = CORR;
 	break;
     case PCA:
@@ -641,12 +645,17 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case SUMMARY:
 	gretl_command_sprintf("summary%s", liststr);
 	strcat(title, _("summary statistics"));
+	break;
+    case ALL_SUMMARY:
+	gretl_command_strcpy("summary");
+	strcat(title, _("summary statistics"));
 	action = SUMMARY;
 	break;
     case VAR_SUMMARY:
 	gretl_command_sprintf("summary %s", selected_varname());
 	strcat(title, _("summary stats: "));
 	strcat(title, selected_varname());
+	action = SUMMARY;
 	vsize = 300;
 	break;
     default:
@@ -709,7 +718,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	break;
 
     case SUMMARY:
-    case VAR_SUMMARY:	
 	obj = summary(cmd.list, (const double **) Z, datainfo, prn);
 	if (obj == NULL) {
 	    errbox(_("Failed to generate summary statistics"));
@@ -723,7 +731,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     if (err) {
 	gui_errmsg(err);
     } 
-
 
     view_buffer(prn, hsize, vsize, title, action, obj);
 }

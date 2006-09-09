@@ -21,12 +21,13 @@
 #define SSHEET_H
 
 typedef enum {
-    SHEET_EDIT_DATASET = 0,
-    SHEET_NEW_DATASET  = 1 << 0,
-    SHEET_EDIT_MATRIX  = 1 << 1
-} SheetCode;
+    SHEET_EDIT_VARLIST,
+    SHEET_EDIT_DATASET,
+    SHEET_NEW_DATASET,
+    SHEET_EDIT_MATRIX
+} SheetCmd;
 
-void show_spreadsheet (SheetCode code);
+void show_spreadsheet (SheetCmd c);
 
 void edit_matrix (gretl_matrix *m);
 

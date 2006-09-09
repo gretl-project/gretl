@@ -158,7 +158,7 @@ char tramodir[MAXSTR] = "";
 
 static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w) 
 {
-    show_spreadsheet(SHEET_EDIT_DATASET);
+    show_spreadsheet(SHEET_EDIT_VARLIST);
 }
 
 #if 0 /* not yet */

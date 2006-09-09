@@ -32,12 +32,11 @@
 #undef CELLDEBUG
 
 typedef enum {
-    /* continues enum SheetCode */
-    SHEET_SUBSAMPLED    = 1 << 2,
-    SHEET_SHORT_VARLIST = 1 << 3,
-    SHEET_INSERT_OBS_OK = 1 << 4,
-    SHEET_ADD_OBS_OK    = 1 << 5
-} SheetExtraFlags;
+    SHEET_SUBSAMPLED    = 1 << 0,
+    SHEET_SHORT_VARLIST = 1 << 1,
+    SHEET_INSERT_OBS_OK = 1 << 2,
+    SHEET_ADD_OBS_OK    = 1 << 3
+} SheetFlags;
 
 enum {
     SHEET_AT_END,
@@ -60,7 +59,8 @@ typedef struct {
     int added_vars;
     int orig_main_v;
     int modified;
-    int flags;
+    SheetCmd cmd;
+    SheetFlags flags;
     guint cid;
     guint point;
 } Spreadsheet;
@@ -784,7 +784,7 @@ static void get_data_from_sheet (GtkWidget *w, Spreadsheet *sheet)
 {
     if (!sheet->modified) {
 	infobox(_("No changes were made"));
-    } else if (sheet->flags & SHEET_EDIT_MATRIX) {
+    } else if (sheet->cmd == SHEET_EDIT_MATRIX) {
 	update_matrix_from_sheet(sheet);
     } else {
 	update_dataset_from_sheet(sheet);
@@ -839,7 +839,7 @@ static int add_matrix_data_to_sheet (Spreadsheet *sheet)
     return 0;
 }
 
-static int add_data_to_sheet (Spreadsheet *sheet, SheetCode code)
+static int add_data_to_sheet (Spreadsheet *sheet, SheetCmd c)
 {
     gchar rowlabel[OBSLEN];
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
@@ -869,7 +869,7 @@ static int add_data_to_sheet (Spreadsheet *sheet, SheetCode code)
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
-	if (code == SHEET_NEW_DATASET) {
+	if (c == SHEET_NEW_DATASET) {
 	    /* no hidden vars to consider; insert NAs for first var */
 	    gtk_list_store_set(store, &iter, 1, "", -1);
 	} else {
@@ -1286,7 +1286,7 @@ static int sheet_list_empty (Spreadsheet *sheet)
     return ret;
 }
 
-static Spreadsheet *spreadsheet_new (int flags)
+static Spreadsheet *spreadsheet_new (SheetCmd c)
 {
     Spreadsheet *sheet;
 
@@ -1308,9 +1308,10 @@ static Spreadsheet *spreadsheet_new (int flags)
     sheet->cid = 0;
     sheet->varlist = NULL;
     sheet->matrix = NULL;
-    sheet->flags = flags;
+    sheet->cmd = c;
+    sheet->flags = 0;
 
-    if (flags & SHEET_EDIT_MATRIX) {
+    if (c == SHEET_EDIT_MATRIX) {
 	return sheet;
     }
 
@@ -1320,10 +1321,14 @@ static Spreadsheet *spreadsheet_new (int flags)
 
     sheet->orig_nobs = datainfo->t2 - datainfo->t1 + 1;
 
-    if (sheet->flags & SHEET_NEW_DATASET) {
+    if (sheet->cmd == SHEET_NEW_DATASET) {
 	sheet->varlist = gretl_list_new(1);
     } else {
-	sheet->varlist = main_window_selection_as_list();
+	if (sheet->cmd == SHEET_EDIT_VARLIST) {
+	    sheet->varlist = main_window_selection_as_list();
+	} else {
+	    sheet->varlist = full_var_list(datainfo, NULL);
+	}
 	if (sheet_list_empty(sheet)) {
 	    return NULL;
 	}
@@ -1332,7 +1337,7 @@ static Spreadsheet *spreadsheet_new (int flags)
     if (sheet->varlist == NULL) {
 	free(sheet);
 	sheet = NULL;
-    } else if (sheet->flags & SHEET_NEW_DATASET) {
+    } else if (sheet->cmd == SHEET_NEW_DATASET) {
 	sheet->varlist[1] = 1;
     }
 
@@ -1376,7 +1381,7 @@ static gint maybe_exit_sheet (GtkWidget *w, Spreadsheet *sheet)
 	}
     } 
 
-    if (sheet->flags & SHEET_NEW_DATASET) {
+    if (sheet->cmd == SHEET_NEW_DATASET) {
 	empty_dataset_guard();
     }
   
@@ -1402,7 +1407,7 @@ static gint sheet_delete_event (GtkWidget *w, GdkEvent *event,
 	}
     }
 
-    if (sheet->flags & SHEET_NEW_DATASET) {
+    if (sheet->cmd == SHEET_NEW_DATASET) {
 	empty_dataset_guard();
     }
 
@@ -1424,7 +1429,7 @@ sheet_adjust_menu_state (Spreadsheet *sheet, GtkItemFactory *ifac)
     }
 }
 
-static void real_show_spreadsheet (Spreadsheet **psheet, int code) 
+static void real_show_spreadsheet (Spreadsheet **psheet, SheetCmd c) 
 {
     Spreadsheet *sheet = *psheet;
     GtkWidget *tmp, *button_box;
@@ -1548,10 +1553,10 @@ static void real_show_spreadsheet (Spreadsheet **psheet, int code)
 		     G_CALLBACK(catch_spreadsheet_click),
 		     sheet);
 
-    if (code == SHEET_EDIT_MATRIX) {
+    if (c == SHEET_EDIT_MATRIX) {
 	err = add_matrix_data_to_sheet(sheet);
     } else {
-	err = add_data_to_sheet(sheet, code);
+	err = add_data_to_sheet(sheet, c);
     }
 
     if (err) {
@@ -1563,14 +1568,14 @@ static void real_show_spreadsheet (Spreadsheet **psheet, int code)
 
     gtk_widget_show(sheet->win);
 
-    if (code != SHEET_EDIT_MATRIX) {
+    if (c != SHEET_EDIT_MATRIX) {
 	/* we can't have the user making confounding changes elsewhere,
 	   while editing the dataset here */
 	set_dataset_locked(TRUE);
     }
 }
 
-void show_spreadsheet (SheetCode code) 
+void show_spreadsheet (SheetCmd c) 
 {
     static Spreadsheet *sheet;    
 
@@ -1591,12 +1596,12 @@ void show_spreadsheet (SheetCode code)
 	return;
     }
 
-    sheet = spreadsheet_new(code);
+    sheet = spreadsheet_new(c);
     if (sheet == NULL) {
 	return;
     }
 
-    real_show_spreadsheet(&sheet, code);
+    real_show_spreadsheet(&sheet, c);
 }
 
 struct mdialog {

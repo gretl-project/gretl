@@ -2021,27 +2021,38 @@ static gboolean session_icon_click (GtkWidget *widget,
 	case GRETL_OBJ_EQN:
 	case GRETL_OBJ_VAR:
 	case GRETL_OBJ_SYS:
-	    display_session_model(gobj->data); break;
+	    display_session_model(gobj->data); 
+	    break;
 	case GRETL_OBJ_PLOT:
-	    open_boxplot(gobj); break;
+	    open_boxplot(gobj); 
+	    break;
 	case GRETL_OBJ_GRAPH:
-	    open_gui_graph(gobj); break;
+	    open_gui_graph(gobj); 
+	    break;
 	case GRETL_OBJ_TEXT:
-	    open_gui_text(gobj); break;
+	    open_gui_text(gobj); 
+	    break;
 	case GRETL_OBJ_DSET:
-	    show_spreadsheet(SHEET_EDIT_DATASET); break;
+	    show_spreadsheet(SHEET_EDIT_DATASET); 
+	    break;
 	case GRETL_OBJ_INFO:
-	    open_info(NULL, 0, NULL); break;
+	    open_info(NULL, 0, NULL); 
+	    break;
 	case GRETL_OBJ_NOTES:
-	    edit_session_notes(); break;
+	    edit_session_notes(); 
+	    break;
 	case GRETL_OBJ_MODTAB:
-	    display_model_table_wrapper(); break;
+	    display_model_table_wrapper(); 
+	    break;
 	case GRETL_OBJ_GPAGE:
-	    display_graph_page(); break;
+	    display_graph_page(); 
+	    break;
 	case GRETL_OBJ_CORR:
-	    do_menu_op(NULL, CORR, NULL); break;
+	    do_menu_op(NULL, ALL_CORR, NULL); 
+	    break;
 	case GRETL_OBJ_STATS:
-	    do_menu_op(NULL, SUMMARY, NULL); break;
+	    do_menu_op(NULL, ALL_SUMMARY, NULL); 
+	    break;
 	}
 	return TRUE;
     }
