@@ -622,6 +622,10 @@ int *gretl_list_from_string (const char *liststr)
     int *list;
     int n = 0;
 
+    if (liststr == NULL) {
+	return NULL;
+    }
+
     while (*s) {
 	s += strspn(s, " ,()");
 	if (*s && sscanf(s, "%7[^ ,()]", numstr)) {
@@ -1130,6 +1134,10 @@ int *gretl_list_diff_new (const int *biglist, const int *sublist,
     int *targ = NULL;
     int i, j, n, k = 0;
     int match;
+
+    if (biglist == NULL || sublist == NULL) {
+	return NULL;
+    }
 
     n = biglist[0] - sublist[0];
 

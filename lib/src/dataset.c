@@ -1091,6 +1091,64 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
+/**
+ * dataset_shrink_obs_range:
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Truncates the range of observations in the dataset, based on
+ * the current values of the %t1 and %t2 members of @pdinfo.
+ *
+ * Returns: 0 on success, non-zero code on error.
+ */
+
+int dataset_shrink_obs_range (double ***pZ, DATAINFO *pdinfo)
+{
+    int head = pdinfo->t1;
+    int tail = pdinfo->n - 1 - pdinfo->t2;
+    int err = 0;
+
+    if (head > 0) {
+	int mvsize, rem = pdinfo->n - head;
+	double **Z = *pZ;
+	int i;
+
+	mvsize = rem * sizeof **Z;
+	for (i=0; i<pdinfo->v; i++) {
+	    if (var_is_series(pdinfo, i)) {
+		memmove(Z[i], Z[i] + head, mvsize);
+	    }
+	}
+
+	if (pdinfo->markers && pdinfo->S != NULL) {
+	    for (i=0; i<head; i++) {
+		free(pdinfo->S[i]);
+	    }
+	    mvsize = rem * sizeof *pdinfo->S;
+	    memmove(pdinfo->S, pdinfo->S + head, mvsize);
+	}
+
+	if (pdinfo->paninfo != NULL) {
+	    mvsize = rem * sizeof *pdinfo->paninfo->unit;
+	    memmove(pdinfo->paninfo->unit, pdinfo->paninfo->unit + head, mvsize);
+	    memmove(pdinfo->paninfo->period, pdinfo->paninfo->period + head, mvsize);
+	}
+
+	ntodate(pdinfo->stobs, pdinfo->t1, pdinfo);
+	pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+	pdinfo->t1 = 0;
+	pdinfo->t2 -= head;
+	pdinfo->n -= head;
+	ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    }
+
+    if (tail > 0) {
+	err = dataset_drop_observations(tail, pZ, pdinfo);
+    }
+
+    return err;
+}
+
 static int 
 dataset_expand_varinfo (int newvars, DATAINFO *pdinfo)
 {

@@ -4367,11 +4367,11 @@ static int maybe_prune_delete_list (int *list)
     return pruned;
 }
 
-void delete_selected_vars (int id)
+static void real_delete_vars (int id, int *dlist)
 {
     int err, renumber, pruned = 0;
     char *liststr = NULL;
-    char *msg;
+    char *msg = NULL;
 
     if (dataset_locked()) {
 	return;
@@ -4397,24 +4397,28 @@ void delete_selected_vars (int id)
 	} else {
 	    msg = g_strdup_printf(_("Really delete %s?"), datainfo->varname[id]);
 	}
-    } else {
-	/* delete list of vars */
+    } else if (dlist == NULL) {
+	/* delete vars selected in main window */
 	liststr = main_window_selection_as_string();
 	if (liststr == NULL) {
 	    return;
 	}
 	msg = g_strdup_printf(_("Really delete %s?"), liststr);
+    } else {
+	/* delete vars in dlist */
+	liststr = gretl_list_to_string(dlist);
     }
 
-    if (yes_no_dialog(_("gretl: delete"), msg, 0) != GRETL_YES) {
-	g_free(msg);
-	if (liststr != NULL) {
-	    free(liststr);
+    if (msg != NULL) {
+	if (yes_no_dialog(_("gretl: delete"), msg, 0) != GRETL_YES) {
+	    g_free(msg);
+	    if (liststr != NULL) {
+		free(liststr);
+	    }
+	    return;
 	}
-	return;
+	g_free(msg);
     }
-
-    g_free(msg);
 
     if (id > 0) {
 	gretl_command_sprintf("delete %d", id);
@@ -4448,8 +4452,20 @@ void delete_selected_vars (int id)
 	    infobox(_("Take note: variables have been renumbered"));
 	}
 	maybe_clear_selector(cmd.list);
-	mark_dataset_as_modified();
+	if (dlist == NULL) {
+	    mark_dataset_as_modified();
+	}
     }
+}
+
+void delete_single_var (int id)
+{
+    real_delete_vars(id, NULL);
+}
+
+void delete_selected_vars (void)
+{
+    real_delete_vars(0, NULL);
 }
 
 static void do_stacked_ts_plot (int varnum)
@@ -5172,16 +5188,110 @@ static int db_write_response (const char *savename, const int *list)
     return ret;
 }
 
-#define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | OPT_C | OPT_D | OPT_J))
-
 #define WRITING_DB(o) (o & OPT_D)
 
-int do_store (char *savename, gretlopt opt, int overwrite)
+static int set_auto_overwrite (const char *fname, gretlopt opt,
+			       int *sublist)
+{
+    int ret = 0;
+
+    if (fname == paths.datfile) {
+	/* saving current dataset under same name */
+	ret = 1;
+    } else if (WRITING_DB(opt)) {
+	/* allow for appending to databases */
+	ret = 1;
+    } else if (!strcmp(fname, paths.datfile)) {
+	if (storelist == NULL) {
+	    ret = 1;
+	} else {
+	    int *test = gretl_list_from_string(storelist);
+
+	    if (test != NULL) {
+		int i, nv = 0;
+
+		for (i=1; i<datainfo->v; i++) {
+		    if (var_is_series(datainfo, i) && 
+			!var_is_hidden(datainfo, i)) {
+			nv++;
+		    }
+		}
+		if (test[0] == nv) {
+		    /* saving full dataset under same name */
+		    ret = 1;
+		} else {
+		    *sublist = 1;
+		}
+		free(test);
+	    }
+	}
+    }
+
+    return ret;
+}
+
+static int shrink_dataset_to_sample (void)
+{
+    int err;
+
+    if (complex_subsampled()) {
+	maybe_free_full_dataset(datainfo);
+    }
+
+    err = dataset_shrink_obs_range(&Z, datainfo);
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    restore_sample_state(FALSE);
+
+    return err;
+}
+
+static int shrink_dataset_to_sublist (void)
+{
+    int *sublist = NULL;
+    int *full_list = NULL;
+    int *droplist = NULL;
+    int err = 0;
+
+    if (storelist == NULL) {
+	return 0;
+    }
+
+    sublist = gretl_list_from_string(storelist);
+    full_list = full_var_list(datainfo, NULL);
+    droplist = gretl_list_diff_new(full_list, sublist, 1);
+    
+    if (droplist == NULL) {
+	nomem();
+    } else {
+	real_delete_vars(0, droplist);
+    }
+
+    free(sublist);
+    free(full_list);
+    free(droplist);
+
+    return err;
+}
+
+#define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | OPT_C | OPT_D | OPT_J))
+
+/* returning 1 here means that we'll automatically overwrite
+   a file of the same name; returning 0 means we'll query
+   the user about overwriting */
+
+int do_store (char *savename, gretlopt opt)
 {
     gchar *tmp = NULL;
     FILE *fp;
+    int overwrite;
     int showlist = 1;
+    int sublist = 0;
     int err = 0;
+
+    overwrite = set_auto_overwrite(savename, opt, &sublist);
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
@@ -5189,7 +5299,7 @@ int do_store (char *savename, gretlopt opt, int overwrite)
 	goto store_get_out;
     }
 
-    /* "storelist" is a global */
+    /* "storelist" is a global string */
     if (storelist == NULL) {
 	showlist = 0;
     }
@@ -5264,6 +5374,14 @@ int do_store (char *savename, gretlopt opt, int overwrite)
     /* record that data have been saved, etc. */
     if (!DATA_EXPORT(opt)) {
 	mkfilelist(FILE_LIST_DATA, savename);
+	if (paths.datfile == savename || !strcmp(paths.datfile, savename)) {
+	    if (dataset_is_subsampled()) {
+		shrink_dataset_to_sample();
+	    }
+	    if (sublist) {
+		shrink_dataset_to_sublist();
+	    }
+	}	    
 	if (paths.datfile != savename) {
 	    strcpy(paths.datfile, savename);
 	}

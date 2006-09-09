@@ -1130,11 +1130,11 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    } else if (key->keyval == GDK_Return) {
 		display_var();
 	    } else if (key->keyval == GDK_Delete) {
-		delete_selected_vars(mdata->active_var);
+		delete_single_var(mdata->active_var);
 	    }
 	} else if (selcount > 1) {
 	    if (key->keyval == GDK_Delete) {
-		delete_selected_vars(0);
+		delete_selected_vars();
 	    } else if (key->keyval == GDK_Return) {
 		display_selected(NULL, 0, NULL);
 	    }
@@ -1695,7 +1695,7 @@ static void auto_store (void)
 
     if ((data_status & USER_DATA) && 
 	probably_native_datafile(paths.datfile)) {
-	do_store(paths.datfile, oflag, 1);
+	do_store(paths.datfile, oflag);
     } else {
 	file_selector(_("Save data file"), SAVE_DATA, FSEL_DATA_NONE, NULL);
     }	

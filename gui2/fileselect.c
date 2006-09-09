@@ -485,12 +485,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
     } else if (src == FSEL_DATA_PRN) {
 	filesel_save_prn_buffer((PRN *) data, fname);
     } else if (SAVE_DATA_ACTION(action)) {
-	int overwrite = 0;
-
-	if (!strcmp(fname, paths.datfile) || action == SAVE_DBDATA) {
-	    overwrite = 1;
-	}
-	do_store(fname, save_action_to_opt(action, data), overwrite);
+	do_store(fname, save_action_to_opt(action, data));
     } else if (action == SAVE_GNUPLOT) {
 	int err = 0;
 	GPT_SPEC *plot = (GPT_SPEC *) data;
@@ -537,6 +532,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 
 
 #include <windows.h>
+#include <shlobj.h>
 
 struct winfilter {
     const char *descrip;
@@ -680,6 +676,35 @@ static char *make_winfilter (int action, gpointer data)
     return start;
 }
 
+static int select_dirname (char *fname, char *trmsg)
+{
+    BROWSEINFO bi;
+    LPITEMIDLIST pidl;
+    char dirname[MAX_PATH];
+    int ret = 1;
+
+    CoInitialize(NULL);
+
+    bi.hwndOwner = NULL;
+    bi.pidlRoot = NULL; /* FIXME? */
+    bi.pszDisplayName = dirname;
+    bi.lpszTitle = trmsg;
+    bi.ulFlags = 0;
+    bi.lpfn = NULL;
+    bi.lParam = 0;
+    bi.iImage = 0;   
+
+    pidl = SHBrowseForFolder(&bi);
+    if (pidl == NULL) {
+	ret = 0;
+    } else {
+	SHGetPathFromIDList(pidl, fname);
+	CoTaskMemFree(pidl);
+    }
+
+    return ret;
+}
+
 void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
 {
     OPENFILENAME of;
@@ -724,32 +749,36 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	trmsg = g_strdup(msg);
     }
 
-    /* initialize file dialog info struct */
-    memset(&of, 0, sizeof of);
-#ifdef OPENFILENAME_SIZE_VERSION_400
-    of.lStructSize = OPENFILENAME_SIZE_VERSION_400;
-#else
-    of.lStructSize = sizeof of;
-#endif
-    of.hwndOwner = NULL;
-    filter = make_winfilter(action, data);
-    of.lpstrFilter = filter;
-    of.lpstrCustomFilter = NULL;
-    of.nFilterIndex = 1;
-    of.lpstrFile = fname;
-    of.nMaxFile = sizeof fname;
-    of.lpstrFileTitle = endname;
-    of.nMaxFileTitle = sizeof endname;
-    of.lpstrInitialDir = startdir;
-    of.lpstrTitle = trmsg;
-    of.lpstrDefExt = NULL;
-    of.Flags = OFN_HIDEREADONLY;
-
-    if (action < END_OPEN) {
-	retval = GetOpenFileName(&of);
+    if (action == SET_DIR) {
+	retval = select_dirname(fname, trmsg);
     } else {
-	/* a file save action */
-	retval = GetSaveFileName(&of);
+	/* initialize file dialog info struct */
+	memset(&of, 0, sizeof of);
+#ifdef OPENFILENAME_SIZE_VERSION_400
+	of.lStructSize = OPENFILENAME_SIZE_VERSION_400;
+#else
+	of.lStructSize = sizeof of;
+#endif
+	of.hwndOwner = NULL;
+	filter = make_winfilter(action, data);
+	of.lpstrFilter = filter;
+	of.lpstrCustomFilter = NULL;
+	of.nFilterIndex = 1;
+	of.lpstrFile = fname;
+	of.nMaxFile = sizeof fname;
+	of.lpstrFileTitle = endname;
+	of.nMaxFileTitle = sizeof endname;
+	of.lpstrInitialDir = startdir;
+	of.lpstrTitle = trmsg;
+	of.lpstrDefExt = NULL;
+	of.Flags = OFN_HIDEREADONLY;
+
+	if (action < END_OPEN || action == SET_PROG) {
+	    retval = GetOpenFileName(&of);
+	} else {
+	    /* a file save action */
+	    retval = GetSaveFileName(&of);
+	}
     }
 
     free(filter);

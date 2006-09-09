@@ -349,7 +349,7 @@ static gint var_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
     else if (!strcmp(item, _("Delete"))) 
-	delete_selected_vars(v);
+	delete_single_var(v);
     else if (!strcmp(item, _("Define new variable..."))) 
 	gretl_callback(NULL, GENR, NULL);
 
@@ -418,7 +418,7 @@ static gint selection_popup_click (GtkWidget *w, gpointer p)
     else if (!strcmp(item, _("Edit"))) 
 	show_spreadsheet(SHEET_EDIT_VARLIST);
     else if (!strcmp(item, _("Delete"))) 
-	delete_selected_vars(0);
+	delete_selected_vars();
 
     gtk_widget_destroy(mdata->popup);
 

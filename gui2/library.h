@@ -257,7 +257,9 @@ void do_box_graph (GtkWidget *widget, dialog_t *dlg);
 
 int do_dummy_graph (selector *sr);
 
-void delete_selected_vars (int id);
+void delete_selected_vars (void);
+
+void delete_single_var (int id);
 
 void display_selected (gpointer data, guint action, GtkWidget *widget);
 
@@ -273,7 +275,7 @@ void do_new_script (gpointer data, guint action, GtkWidget *widget);
 
 void do_open_csv_box (char *fname, int code, int append);
 
-int do_store (char *mydatfile, gretlopt oflag, int overwrite);
+int do_store (char *mydatfile, gretlopt oflag);
 
 void view_latex (PRN *prn);
 
