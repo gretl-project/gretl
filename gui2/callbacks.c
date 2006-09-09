@@ -235,9 +235,6 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	break;
     case SAVE_DATA:
     case SAVE_DATA_AS:
-    case SAVE_GZDATA:
-    case SAVE_BIN1:
-    case SAVE_BIN2:
     case SAVE_DBDATA:
     case SAVE_FUNCTIONS:	
 	data_save_selection_wrapper(file_code, NULL);

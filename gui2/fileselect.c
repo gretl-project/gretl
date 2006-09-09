@@ -33,9 +33,6 @@
 
 #define IS_DAT_ACTION(i) (i == SAVE_DATA || \
                           i == SAVE_DATA_AS || \
-                          i == SAVE_GZDATA || \
-                          i == SAVE_BIN1 || \
-                          i == SAVE_BIN2 || \
                           i == OPEN_DATA)
 
 #define OPEN_DATA_ACTION(i)  (i == OPEN_DATA || \
@@ -80,9 +77,6 @@ struct extmap {
 static struct extmap action_map[] = {
     { SAVE_DATA,         ".gdt" },
     { SAVE_DATA_AS,      ".gdt" },
-    { SAVE_GZDATA,       ".gdt" },
-    { SAVE_BIN1,         ".gdt" },
-    { SAVE_BIN2,         ".gdt" },
     { SAVE_DBDATA,       ".bin" },
     { SAVE_SCRIPT,       ".inp" },
     { SAVE_CONSOLE,      ".inp" },
@@ -130,9 +124,8 @@ static gretlopt save_action_to_opt (int action, gpointer p)
     gretlopt opt = OPT_NONE;
 
     switch (action) {
-    case SAVE_GZDATA:   opt = OPT_Z; break;
-    case SAVE_BIN1:     opt = OPT_S; break;
-    case SAVE_BIN2:     opt = OPT_O; break;
+    case SAVE_DATA:     opt = OPT_Z; break;
+    case SAVE_DATA_AS:  opt = OPT_Z; break;
     case SAVE_DBDATA:   opt = OPT_D; break;
     case EXPORT_OCTAVE: opt = OPT_M; break;
     case EXPORT_R:      opt = OPT_R; break;
@@ -217,7 +210,7 @@ static int check_maybe_add_ext (char *fname, int action, gpointer data)
 
     /* don't mess if the fname is really a dir */
     if (isdir(fname)) {
-	return 1;
+	return (action != SET_DIR);
     }
 
     /* don't mess with the name of a previously existing file */
@@ -380,10 +373,8 @@ static char *suggested_savename (const char *fname)
     sfx = strrchr(s, '.');
 
     if (sfx != NULL && (strlen(sfx) == 4 || !strcmp(sfx, ".gnumeric"))) {
-	const char *test = ".gdt";
-
-	if (strcmp(test, sfx)) {
-	    strcpy(sfx, test);
+	if (strcmp(sfx, ".gdt")) {
+	    strcpy(sfx, ".gdt");
 	}
     }
 
@@ -477,7 +468,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 
     /* now for the save/export options */
 
-    if (action > SAVE_BIN2 && action != EXPORT_DAT && dat_ext(fname, 1)) { 
+    if (action > SAVE_DBDATA && action != EXPORT_DAT && dat_ext(fname, 1)) { 
 	return;
     }
 
@@ -525,7 +516,7 @@ file_selector_process_result (const char *in_fname, int action, FselDataSrc src,
 	save_session(fname);
     } else if (action == SAVE_FUNCTIONS) {
 	save_user_functions(fname, data);
-    } else if (action == SET_PATH) {
+    } else if (action == SET_PROG || action == SET_DIR) {
 	char *strvar = (char *) data;
 
 	filesel_set_path_callback(fname, strvar);
@@ -592,9 +583,6 @@ static struct winfilter get_filter (int action, gpointer data)
     static struct win32_filtermap map[] = {
 	{ SAVE_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{ SAVE_DATA_AS, { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{ SAVE_GZDATA,  { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{ SAVE_BIN1,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
-	{ SAVE_BIN2,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{ SAVE_DBDATA,  { N_("gretl database files (*.bin)"), "*.bin" }},
 	{ SAVE_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
 	{ SAVE_CONSOLE, { N_("gretl command files (*.inp)"), "*.inp" }},
@@ -634,7 +622,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{ APPEND_JMULTI,{ N_("JMulTi files (*.dat)"), "*.dat" }},
 	{ OPEN_RATS_DB, { N_("RATS databases (*.rat)"), "*.rat" }},
 	{ OPEN_PCGIVE_DB, { N_("PcGive data files (*.bn7)"), "*.bn7" }},
-	{ SET_PATH,     { N_("program files (*.exe)"), "*.exe" }}
+	{ SET_PROG,     { N_("program files (*.exe)"), "*.exe" }}
     };
 
     static struct winfilter default_filter = {
@@ -706,7 +694,7 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
     set_startdir(startdir, action);
 
     /* special cases */
-    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
+    if (action == SAVE_DATA && *paths.datfile != '\0') {
 	char *savename = suggested_savename(paths.datfile);
 
 	strcpy(fname, savename);
@@ -714,13 +702,13 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 	if (!(data_status & BOOK_DATA)) {
 	    get_base(startdir, paths.datfile, SLASH);
 	}
-    } else if (EXPORT_ACTION(action, src) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action, src) && *paths.datfile != '\0') {
 	char *savename = suggested_exportname(paths.datfile, action);
 
 	strcpy(fname, savename);
 	g_free(savename);
 	get_base(startdir, paths.datfile, SLASH);
-    } else if (action == SET_PATH) {
+    } else if (action == SET_PROG) {
 	char *strvar = (char *) data;
 
 	if (strvar != NULL && *strvar != '\0') {
@@ -809,29 +797,38 @@ static GtkFileFilter *get_file_filter (int action, gpointer data)
 
 void file_selector (const char *msg, int action, FselDataSrc src, gpointer data) 
 {
+    GtkWindow *parent = GTK_WINDOW(mdata->w);
     GtkWidget *filesel;
     char startdir[MAXLEN];
     GtkFileFilter *filter;
+    GtkFileChooserAction fa;
+    const gchar *okstr;
 
     set_startdir(startdir, action);
+
+    if (action == SET_DIR) {
+	fa = GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER;
+	okstr = GTK_STOCK_OK;
+    } else if (action == SET_PROG) {
+	fa = GTK_FILE_CHOOSER_ACTION_OPEN;
+	okstr = GTK_STOCK_OK;
+    } else if (action < END_OPEN) {
+	fa = GTK_FILE_CHOOSER_ACTION_OPEN;
+	okstr = GTK_STOCK_OPEN;
+    } else {
+	fa = GTK_FILE_CHOOSER_ACTION_SAVE;
+	okstr = GTK_STOCK_SAVE;
+	parent = NULL;
+    }
 
     /* FIXME: parent window below should not always be mdata->w,
        in particular when action == SAVE_THIS_GRAPH
     */
 
-    if (action > END_OPEN && action != SET_PATH) {
-	filesel = gtk_file_chooser_dialog_new(msg, NULL, /* GTK_WINDOW(mdata->w), */
-					      GTK_FILE_CHOOSER_ACTION_SAVE,
-					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					      GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-					      NULL);
-    } else {
-	filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(mdata->w), 
-					      GTK_FILE_CHOOSER_ACTION_OPEN,
-					      GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-					      GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
-					      NULL);
-    }
+    filesel = gtk_file_chooser_dialog_new(msg, GTK_WINDOW(parent), fa,
+					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					  okstr, GTK_RESPONSE_ACCEPT,
+					  NULL);
 
     gtk_dialog_set_default_response(GTK_DIALOG(filesel), GTK_RESPONSE_ACCEPT);
 
@@ -854,32 +851,39 @@ void file_selector (const char *msg, int action, FselDataSrc src, gpointer data)
 
     /* special cases */
 
-    if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]) {
+    if (action == SAVE_DATA && *paths.datfile != '\0') {
 	char *savename = suggested_savename(paths.datfile);
 
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
 					  savename);
 	g_free(savename);
-    } else if (EXPORT_ACTION(action, src) && paths.datfile[0]) {
+    } else if (EXPORT_ACTION(action, src) && *paths.datfile != '\0') {
 	char *savename = suggested_exportname(paths.datfile, action);
 
 	gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(filesel), 
 					  savename);
 	g_free(savename);
-    } else if ((action == SAVE_SESSION) && *scriptfile != '\0') {
+    } else if (action == SAVE_SESSION && *scriptfile != '\0') {
 	gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
 				      scriptfile);
-    } else if (action == SET_PATH) {
+    } else if (action == SET_PROG) {
 	char *strvar = (char *) data;
 
-	if (strvar != NULL && slashpos(strvar) > 0) {
+	if (strvar != NULL && g_path_is_absolute(strvar)) {
 	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
 					  strvar);
 	} else {
 	    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(filesel), 
 						"/usr/bin");
 	}	    
-    } 
+    } else if (action == SET_DIR) {
+	char *strvar = (char *) data;
+
+	if (strvar != NULL && g_path_is_absolute(strvar)) {
+	    gtk_file_chooser_set_filename(GTK_FILE_CHOOSER(filesel), 
+					  strvar);
+	} 
+    }	
 
     if (gtk_dialog_run(GTK_DIALOG(filesel)) == GTK_RESPONSE_ACCEPT) {
 	char *fname;

@@ -259,7 +259,7 @@ GtkItemFactoryEntry data_items[] = {
     /* File, Save data */
     { N_("/File/_Save data"), "<control>S", auto_store, 0, "<StockItem>", GTK_STOCK_SAVE },
     { N_("/File/Save data _as"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/Save data as/_Standard format..."), NULL, file_save, SAVE_GZDATA, 
+    { N_("/File/Save data as/_Standard format..."), NULL, file_save, SAVE_DATA_AS, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
     { N_("/File/Save data as/_Database..."), NULL, file_save, SAVE_DBDATA, 
       "<StockItem>", GTK_STOCK_SAVE_AS },

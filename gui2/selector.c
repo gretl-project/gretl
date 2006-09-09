@@ -3257,7 +3257,6 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to plot");
     case SAVE_DATA:
     case SAVE_DATA_AS:
-    case SAVE_GZDATA:
     case EXPORT_CSV:
     case EXPORT_R:
     case EXPORT_OCTAVE:

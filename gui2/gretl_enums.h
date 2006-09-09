@@ -117,10 +117,7 @@ enum file_ops {
     END_OPEN,      /* marker for end of file open section */
     SAVE_DATA,
     SAVE_DATA_AS,
-    SAVE_GZDATA,
     SAVE_DBDATA,
-    SAVE_BIN1,
-    SAVE_BIN2,
     EXPORT_OCTAVE,
     EXPORT_R,
     EXPORT_CSV,
@@ -142,7 +139,8 @@ enum file_ops {
     SAVE_GP_CMDS,
     SAVE_CONSOLE,
     SAVE_FUNCTIONS,
-    SET_PATH,
+    SET_PROG,
+    SET_DIR,
     FILE_OP_MAX
 };
 

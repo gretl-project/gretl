@@ -118,6 +118,16 @@ static int lcnumeric = 1;
 char midiplayer[MAXSTR];
 #endif
 
+enum {
+    TAB_NONE = 0,
+    TAB_MAIN,
+    TAB_DBS,
+    TAB_PROGS,
+    TAB_SAVE,
+    TAB_VCV,
+    TAB_MAN
+};
+
 typedef enum {
     ROOTSET  = 1 << 0,
     USERSET  = 1 << 1,
@@ -126,7 +136,8 @@ typedef enum {
     LISTSET  = 1 << 4,
     RADIOSET = 1 << 5,
     INVISET  = 1 << 6,
-    FIXSET   = 1 << 7  /* setting fixed by admin (Windows network use) */
+    FIXSET   = 1 << 7,  /* setting fixed by admin (Windows network use) */
+    BROWSER  = 1 << 8   /* wants "Browse" button */
 } rcflags;
 
 typedef struct {
@@ -159,116 +170,115 @@ typedef struct {
 
 RCVAR rc_vars[] = {
     { "gretldir", N_("Main gretl directory"), NULL, paths.gretldir, 
-      ROOTSET, MAXLEN, 1, NULL },
+      ROOTSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
     { "userdir", N_("User's gretl directory"), NULL, paths.userdir, 
-      USERSET, MAXLEN, 1, NULL },
+      USERSET | BROWSER, MAXLEN, TAB_MAIN, NULL },
     { "expert", N_("Expert mode (no warnings)"), NULL, &expert, 
-      BOOLSET, 0, 1, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
     { "updater", N_("Tell me about gretl updates"), NULL, &updater, 
-      BOOLSET, 0, 1, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
     { "toolbar", N_("Show gretl toolbar"), NULL, &want_toolbar, 
-      BOOLSET, 0, 1, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
 #ifndef G_OS_WIN32
     { "winsize", N_("Remember main window size"), NULL, &winsize, 
-      BOOLSET, 0, 1, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
 #endif
 #ifdef ENABLE_NLS
     { "lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
-      BOOLSET, 0, 1, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
 #endif
 #ifdef G_OS_WIN32
     { "wimp", N_("Emulate Windows look"), NULL, &wimp, 
-      BOOLSET, 0, 1, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
 #endif
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "browser", N_("Web browser"), NULL, Browser, 
-      ROOTSET, MAXSTR, 3, NULL },
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "shellok", N_("Allow shell commands"), NULL, &shellok, 
-      BOOLSET, 0, 1, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
     { "gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
-      ROOTSET, MAXLEN, 3, NULL },
+      ROOTSET | BROWSER, MAXLEN, TAB_PROGS, NULL },
     { "Rcommand", N_("Command to launch GNU R"), NULL, Rcommand, 
-      ROOTSET, MAXSTR, 3, NULL },
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "latex", N_("Command to compile TeX files"), NULL, latex, 
-      ROOTSET, MAXSTR, 3, NULL },
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
-      ROOTSET, MAXSTR, 3, NULL },
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #if !defined(G_OS_WIN32) && !defined(OSX_BUILD)
     { "viewps", N_("Command to view postscript files"), NULL, viewps, 
-      ROOTSET, MAXSTR, 3, NULL },
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
     { "viewpdf", N_("Command to view PDF files"), NULL, viewpdf, 
-      ROOTSET, MAXSTR, 3, NULL },
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
     { "midiplayer", N_("Program to play MIDI files"), NULL, midiplayer, 
-      USERSET, MAXSTR, 3, NULL },
+      USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
     { "calculator", N_("Calculator"), NULL, calculator, 
-      USERSET, MAXSTR, 3, NULL },
+      USERSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #ifdef HAVE_X12A
     { "x12a", N_("path to x12arima"), NULL, paths.x12a, 
-      ROOTSET, MAXSTR, 3, NULL },
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL },
 #endif
 #ifdef HAVE_TRAMO
-    { "tramo", N_("path to tramo"), NULL, tramo, ROOTSET, MAXSTR, 3, NULL},
+    { "tramo", N_("path to tramo"), NULL, tramo, 
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
 #ifdef G_OS_WIN32
     { "x12adir", N_("X-12-ARIMA working directory"), NULL, paths.x12adir, 
-      ROOTSET, MAXSTR, 3, NULL},
-#endif
-#ifdef G_OS_WIN32
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
     { "tramodir", N_("TRAMO working directory"), NULL, tramodir, 
-      ROOTSET, MAXSTR, 3, NULL},
+      ROOTSET | BROWSER, MAXSTR, TAB_PROGS, NULL},
 #endif
     { "binbase", N_("gretl database directory"), NULL, paths.binbase, 
-      USERSET, MAXLEN, 2, NULL },
+      USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },
     { "ratsbase", N_("RATS data directory"), NULL, paths.ratsbase, 
-      USERSET, MAXLEN, 2, NULL },
+      USERSET | BROWSER, MAXLEN, TAB_DBS, NULL },
     { "dbhost", N_("Database server name"), NULL, paths.dbhost, 
-      USERSET, 32, 2, NULL },
+      USERSET, 32, TAB_DBS, NULL },
     { "dbproxy", N_("HTTP proxy (ipnumber:port)"), NULL, dbproxy, 
-      USERSET, 21, 2, NULL },
+      USERSET, 21, TAB_DBS, NULL },
     { "useproxy", N_("Use HTTP proxy"), NULL, &use_proxy, 
-      BOOLSET, 1, 2, NULL },
+      BOOLSET, 1, TAB_DBS, NULL },
     { "usecwd", N_("Use current working directory as default"), 
       N_("Use gretl user directory as default"), &usecwd, 
-      BOOLSET, 0, 4, NULL },
+      BOOLSET, 0, TAB_SAVE, NULL },
     { "useqr", N_("Use QR decomposition"), N_("Use Cholesky decomposition"), &useqr, 
-      BOOLSET, 0, 1, NULL },
+      BOOLSET, 0, TAB_MAIN, NULL },
     { "Fixed_font", N_("Fixed font"), NULL, fixedfontname, 
-      USERSET, MAXLEN, 0, NULL },
+      USERSET, MAXLEN, TAB_NONE, NULL },
 #if !defined(USE_GNOME)
     { "App_font", N_("Menu font"), NULL, appfontname, 
-      USERSET, MAXLEN, 0, NULL },
+      USERSET, MAXLEN, TAB_NONE, NULL },
 #endif
     { "DataPage", "Default data page", NULL, datapage, 
-      INVISET, sizeof datapage, 0, NULL },
+      INVISET, sizeof datapage, TAB_NONE, NULL },
     { "ScriptPage", "Default script page", NULL, scriptpage, 
-      INVISET, sizeof scriptpage, 0, NULL },    
+      INVISET, sizeof scriptpage, TAB_NONE, NULL },    
     { "Png_font", N_("PNG graph font"), NULL, paths.pngfont, 
-      INVISET, 32, 0, NULL },
+      INVISET, 32, TAB_NONE, NULL },
     { "Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 
-      INVISET, sizeof gpcolors, 0, NULL },
+      INVISET, sizeof gpcolors, TAB_NONE, NULL },
     { "main_width", "main window width", NULL, &mainwin_width, 
-      INVISET | INTSET, 0, 0, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_height", "main window height", NULL, &mainwin_height, 
-      INVISET | INTSET, 0, 0, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_x", "main window x position", NULL, &main_x, 
-      INVISET | INTSET, 0, 0, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "main_y", "main window y position", NULL, &main_y, 
-      INVISET | INTSET, 0, 0, NULL },
+      INVISET | INTSET, 0, TAB_NONE, NULL },
     { "HC_by_default", N_("Use robust covariance matrix by default"), NULL,
-      &hc_by_default, BOOLSET, 0, 5, NULL },
+      &hc_by_default, BOOLSET, 0, TAB_VCV, NULL },
     { "HC_xsect", N_("For cross-sectional data"), NULL, hc_xsect, 
-      LISTSET, 5, 5, NULL },
+      LISTSET, 5, TAB_VCV, NULL },
     { "HC_tseri", N_("For time-series data"), NULL, hc_tseri, 
-      LISTSET, 5, 5, NULL },
+      LISTSET, 5, TAB_VCV, NULL },
     { "HC_garch", N_("For GARCH estimation"), NULL, hc_garch, 
-      LISTSET, 5, 5, NULL },
+      LISTSET, 5, TAB_VCV, NULL },
     { "manpref", N_("PDF manual preference"), NULL, &manpref, 
-      RADIOSET | INTSET, 4, 6, NULL },
-    { NULL, NULL, NULL, NULL, 0, 0, 0, NULL }
+      RADIOSET | INTSET, 4, TAB_MAN, NULL },
+    { NULL, NULL, NULL, NULL, 0, 0, TAB_NONE, NULL }
 };
 
 /* accessor functions */
@@ -830,12 +840,12 @@ int options_dialog (int page)
 		       TRUE, TRUE, 0);
     gtk_widget_show(notebook);
 
-    make_prefs_tab(notebook, 1);
-    make_prefs_tab(notebook, 2);
-    make_prefs_tab(notebook, 3);
-    make_prefs_tab(notebook, 4);
-    make_prefs_tab(notebook, 5);
-    make_prefs_tab(notebook, 6);
+    make_prefs_tab(notebook, TAB_MAIN);
+    make_prefs_tab(notebook, TAB_DBS);
+    make_prefs_tab(notebook, TAB_PROGS);
+    make_prefs_tab(notebook, TAB_SAVE);
+    make_prefs_tab(notebook, TAB_VCV);
+    make_prefs_tab(notebook, TAB_MAN);
 
     hbox = GTK_DIALOG(dialog)->action_area;
 
@@ -903,7 +913,13 @@ void filesel_set_path_callback (const char *setting, char *strvar)
 
 static void browse_button_callback (GtkWidget *w, RCVAR *rc)
 {
-    file_selector(_(rc->description), SET_PATH, FSEL_DATA_MISC, rc->var);
+    int code = SET_PROG;
+
+    if (strstr(rc->description, "directory") != NULL) {
+	code = SET_DIR;
+    }
+
+    file_selector(_(rc->description), code, FSEL_DATA_MISC, rc->var);
 }
 
 static GtkWidget *make_path_browse_button (RCVAR *rc)
@@ -961,23 +977,26 @@ static GList *get_settings_list (void *var)
     return list;
 }
 
-static void get_table_sizes (int page, int *b_count, int *s_count)
+static void 
+get_table_sizes (int page, int *n_str, int *n_bool, int *n_browse)
 {
     int i;
-
-    *b_count = 0;
-    *s_count = 0;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	if (rc_vars[i].tab != page) {
 	    continue;
 	}
+
+	if (rc_vars[i].flags & BROWSER) {
+	    *n_browse += 1;
+	}
+
 	if (rc_vars[i].flags & BOOLSET) {
-	    *b_count += 1;
+	    *n_bool += 1;
 	} else if (rc_vars[i].flags & RADIOSET) {
-	    *b_count += 1;
+	    *n_bool += 1;
 	} else if (!(rc_vars[i].flags & INVISET)) {
-	    *s_count += 1;
+	    *n_str += 1;
 	} 
     }
 }
@@ -995,7 +1014,10 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     GtkWidget *b_table = NULL, *s_table = NULL;
     GtkWidget *box, *w = NULL;
     int s_len = 1, b_len = 0, b_col = 0;
-    int s_count, b_count;
+    int n_str = 0;
+    int n_bool = 0;
+    int n_browse = 0;
+    int s_cols;
     RCVAR *rc;
     int i;
    
@@ -1003,34 +1025,36 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
 
-    if (tab == 1) {
+    if (tab == TAB_MAIN) {
 	w = gtk_label_new(_("General"));
-    } else if (tab == 2) {
+    } else if (tab == TAB_DBS) {
 	w = gtk_label_new(_("Databases"));
-    } else if (tab == 3) {
+    } else if (tab == TAB_PROGS) {
 	w = gtk_label_new(_("Programs"));
-    } else if (tab == 4) {
+    } else if (tab == TAB_SAVE) {
 	w = gtk_label_new(_("File Open/Save"));
-    } else if (tab == 5) {
+    } else if (tab == TAB_VCV) {
 	w = gtk_label_new(_("HCCME"));
-    } else if (tab == 6) {
+    } else if (tab == TAB_MAN) {
 	w = gtk_label_new(_("Manuals"));
     }
     
     gtk_widget_show(w);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, w);   
 
-    get_table_sizes(tab, &b_count, &s_count);
+    get_table_sizes(tab, &n_str, &n_bool, &n_browse);
 
-    if (s_count > 0) {
-	s_table = gtk_table_new(s_len, 2, FALSE);
+    s_cols = (n_browse > 0)? 3 : 2;
+
+    if (n_str > 0) {
+	s_table = gtk_table_new(s_len, s_cols, FALSE);
 	gtk_table_set_row_spacings(GTK_TABLE(s_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(s_table), 5);
 	gtk_box_pack_start(GTK_BOX(box), s_table, FALSE, FALSE, 0);
 	gtk_widget_show(s_table);
     }
     
-    if (b_count > 0) {
+    if (n_bool > 0) {
 	b_table = gtk_table_new(1, 2, FALSE);
 	gtk_table_set_row_spacings(GTK_TABLE(b_table), 5);
 	gtk_table_set_col_spacings(GTK_TABLE(b_table), 5);
@@ -1152,7 +1176,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	    s_len++;
 
-	    gtk_table_resize(GTK_TABLE(s_table), s_len, (tab == 3)? 3 : 2);
+	    gtk_table_resize(GTK_TABLE(s_table), s_len, s_cols);
 	    w = gtk_label_new(_(rc->description));
 	    gtk_misc_set_alignment(GTK_MISC(w), 0.75, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
@@ -1211,7 +1235,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 	    s_len++;
 
-	    gtk_table_resize(GTK_TABLE(s_table), s_len, (tab == 3)? 3 : 2);
+	    gtk_table_resize(GTK_TABLE(s_table), s_len, s_cols);
 	    w = gtk_label_new(_(rc->description));
 	    gtk_misc_set_alignment(GTK_MISC(w), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(s_table), 
@@ -1224,8 +1248,8 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    gtk_entry_set_text(GTK_ENTRY(rc->widget), strvar);
 	    gtk_widget_show(rc->widget);
 
-	    /* program browse button */
-	    if (tab == 3 && strstr(rc->description, "directory") == NULL) {
+	    /* path browse button */
+	    if (rc->flags & BROWSER) {
 		w = make_path_browse_button(rc);
 		gtk_table_attach_defaults(GTK_TABLE(s_table), 
 					  w, 2, 3, s_len-1, s_len);
@@ -1239,7 +1263,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	} 
     } 
 
-    if (tab == 5) {
+    if (tab == TAB_VCV) {
 	/* we need a help button */
 	GtkWidget *hb = gtk_hbox_new(FALSE, 0);
 
@@ -1260,32 +1284,40 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 }
 
 #ifdef ENABLE_NLS
+
+#ifdef G_OS_WIN32
+struct langname {
+    const char *abbr;
+    const char *full;
+};
+#endif
+
 static void set_lcnumeric (void)
 {
     if (lcnumeric) {
 #ifdef G_OS_WIN32
+	struct langname names[] = {
+	    { "es", "Spanish" },
+	    { "fr", "French" },
+	    { "it", "Italian" },
+	    { "pl", "Polish" },
+	    { "de", "German" },
+	    { NULL, NULL }
+	};
 	char *lang = getenv("LANG");
 	char *set = NULL;
+	int i;
 
-	if (lang != NULL && !strcmp(lang, "es")) {
-	    set = setlocale(LC_NUMERIC, "Spanish");
-	    if (set == NULL) {
-		set = setlocale(LC_NUMERIC, "es");
-	    }
-	} else if (lang != NULL && !strcmp(lang, "fr")) {
-	    set = setlocale(LC_NUMERIC, "French");
-	    if (set == NULL) {
-		set = setlocale(LC_NUMERIC, "fr");
-	    }	    
-	} else if (lang != NULL && !strcmp(lang, "it")) {
-	    set = setlocale(LC_NUMERIC, "Italian");
-	    if (set == NULL) {
-		set = setlocale(LC_NUMERIC, "it");
-	    }
-	} else if (lang != NULL && !strcmp(lang, "pl")) {
-	    set = setlocale(LC_NUMERIC, "Polish");
-	    if (set == NULL) {
-		set = setlocale(LC_NUMERIC, "pl");
+	if (lang != NULL) {
+	    int i;
+
+	    for (i=0; names[i].abbr != NULL; i++) {
+		if (!strcmp(lang, names[i].abbr)) {
+		    set = setlocale(LC_NUMERIC, names[i].full);
+		    if (set == NULL) {
+			set = setlocale(LC_NUMERIC, names[i].abbr);
+		    }
+		}
 	    }
 	}
 
