@@ -1425,6 +1425,14 @@ obs_spinbox (struct range_setting *rset, const char *label,
     GtkWidget *lbl;
     GtkWidget *vbox;
     GtkWidget *hbox;
+    int smin, smaj;
+
+    if (dataset_is_panel(datainfo)) {
+	smin = smaj = datainfo->pd;
+    } else {
+	smin = 1;
+	smaj = datainfo->pd;
+    }
 
     if (label != NULL && align == SPIN_LABEL_ABOVE) {
 	lbl = gtk_label_new(label);
@@ -1446,7 +1454,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	lbl = gtk_label_new(t1str);
 	gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
     }
-    rset->adj1 = gtk_adjustment_new(*t1, t1min, t1max, 1, 1, 1);
+    rset->adj1 = gtk_adjustment_new(*t1, t1min, t1max, smin, smaj, 1);
     rset->startspin = obs_button_new(GTK_ADJUSTMENT(rset->adj1), datainfo);
     gtk_box_pack_start(GTK_BOX(vbox), rset->startspin, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
@@ -1458,7 +1466,7 @@ obs_spinbox (struct range_setting *rset, const char *label,
 	    lbl = gtk_label_new(t2str);
 	    gtk_box_pack_start(GTK_BOX(vbox), lbl, FALSE, FALSE, 0);
 	}
-	rset->adj2 = gtk_adjustment_new(*t2, t2min, t2max, 1, 1, 1);
+	rset->adj2 = gtk_adjustment_new(*t2, t2min, t2max, smin, smaj, 1);
 	rset->endspin = obs_button_new(GTK_ADJUSTMENT(rset->adj2), datainfo);
 	gtk_box_pack_start(GTK_BOX(vbox), rset->endspin, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);

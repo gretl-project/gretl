@@ -1134,8 +1134,12 @@ int dataset_shrink_obs_range (double ***pZ, DATAINFO *pdinfo)
 	    memmove(pdinfo->paninfo->period, pdinfo->paninfo->period + head, mvsize);
 	}
 
-	ntodate(pdinfo->stobs, pdinfo->t1, pdinfo);
-	pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+	if (pdinfo->structure == CROSS_SECTION) {
+	    ntodate(pdinfo->stobs, 0, pdinfo);
+	} else {
+	    ntodate(pdinfo->stobs, pdinfo->t1, pdinfo);
+	    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
+	}
 	pdinfo->t1 = 0;
 	pdinfo->t2 -= head;
 	pdinfo->n -= head;
