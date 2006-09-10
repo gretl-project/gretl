@@ -300,30 +300,40 @@ int dataset_allocate_panel_info (DATAINFO *pdinfo)
     return 0;
 }
 
-static int reallocate_panel_info (DATAINFO *pdinfo, int n)
+static int resize_panel_info (DATAINFO *pdinfo, int n)
 {
     PANINFO *pan = pdinfo->paninfo;
     int *unit;
     int *period;
-    int t;
 
     unit = realloc(pan->unit, n * sizeof *unit);
     if (unit == NULL) {
 	return E_ALLOC;
     }
-
     pan->unit = unit;
 
     period = realloc(pan->period, n * sizeof *period);
     if (period == NULL) {
 	return E_ALLOC;
     }
-
     pan->period = period;
 
-    for (t=pdinfo->n; t<n; t++) {
-	pan->unit[t] = pan->period[t] = -1;
+    if (n > pdinfo->n) {
+	int uadd = (n - pdinfo->n) / pdinfo->pd;
+	int i, t, j = pdinfo->paninfo->nunits;
+	int s = pdinfo->n;
+
+	for (i=0; i<uadd; i++) {
+	    for (t=0; t<pdinfo->pd; t++) {
+		pan->unit[s + i] = j;
+		pan->period[s + i] = t;
+		s++;
+	    }
+	    j++;
+	}
     }
+
+    pdinfo->paninfo->nunits = n / pdinfo->pd;
 
     return 0;
 }
@@ -983,7 +993,13 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     int oldn = pdinfo->n;
     int i, t, bign;
 
-    if (newobs <= 0) return 0;
+    if (newobs <= 0) {
+	return 0;
+    }
+
+    if (dataset_is_panel(pdinfo) && newobs % pdinfo->pd != 0) {
+	return E_PDWRONG;
+    }
 
     bign = pdinfo->n + newobs;
 
@@ -1014,7 +1030,7 @@ int dataset_add_observations (int newobs, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (pdinfo->paninfo != NULL) {
-	if (reallocate_panel_info(pdinfo, bign)) {
+	if (resize_panel_info(pdinfo, bign)) {
 	    return E_ALLOC;
 	}
     }
@@ -1053,7 +1069,13 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
     double *x;
     int i, newn;
 
-    if (n <= 0) return 0;
+    if (n <= 0) {
+	return 0;
+    }
+
+    if (dataset_is_panel(pdinfo) && n % pdinfo->pd != 0) {
+	return E_PDWRONG;
+    }
 
     newn = pdinfo->n - n;
 
@@ -1074,7 +1096,7 @@ int dataset_drop_observations (int n, double ***pZ, DATAINFO *pdinfo)
     }
 
     if (pdinfo->paninfo != NULL) {
-	if (reallocate_panel_info(pdinfo, newn)) {
+	if (resize_panel_info(pdinfo, newn)) {
 	    return E_ALLOC;
 	}
     }    

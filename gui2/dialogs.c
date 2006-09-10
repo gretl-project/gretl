@@ -1778,11 +1778,22 @@ static gboolean set_add_obs (GtkWidget *w, struct add_obs_info *ainfo)
 
 int add_obs_dialog (const char *blurb, int addmin)
 {
+    int panel = dataset_is_panel(datainfo);
     struct add_obs_info ainfo;
+    int step, addmax;
     GtkWidget *hbox;
     GtkWidget *tmp;
 
-    ainfo.val = 1;
+    if (panel) {
+	ainfo.val = datainfo->pd;
+	addmin = datainfo->pd;
+	step = datainfo->pd;
+	addmax = 10 * datainfo->pd;
+    } else {
+	ainfo.val = 1;
+	step = 1;
+	addmax = 100;
+    }
 
     ainfo.dlg = gretl_dialog_new(_("Add observations"), NULL,
 				 GRETL_DLG_MODAL | GRETL_DLG_BLOCK);
@@ -1799,7 +1810,7 @@ int add_obs_dialog (const char *blurb, int addmin)
     tmp = gtk_label_new(_("Number of observations to add:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
 
-    ainfo.spin = gtk_spin_button_new_with_range(addmin, 100, 1);
+    ainfo.spin = gtk_spin_button_new_with_range(addmin, addmax, step);
     gtk_box_pack_start(GTK_BOX(hbox), ainfo.spin, TRUE, TRUE, 5);
     
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(ainfo.dlg)->vbox), 

@@ -782,6 +782,20 @@ static int merge_dateton (const char *date, const DATAINFO *pdinfo)
 }
 
 static char *
+out_of_range_panel_obs (char *s, int t, const DATAINFO *pdinfo)
+{
+    int i = t / pdinfo->pd + 1;
+    int j = (t + 1) % pdinfo->pd;
+
+    if (j == 0) {
+	j = pdinfo->pd;
+    }
+
+    sprintf(s, "%d:%0*d", i, pdinfo->paninfo->olen, j);
+    return s;
+}
+
+static char *
 real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 {
     double x;
@@ -817,6 +831,9 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 	return datestr;
     } else if (pdinfo->paninfo != NULL) {
 	/* indexed panel data */
+	if (t < 0 || t >= pdinfo->n) {
+	    return out_of_range_panel_obs(datestr, t, pdinfo);
+	}
 	sprintf(datestr, "%d:%0*d", pdinfo->paninfo->unit[t] + 1,
 		pdinfo->paninfo->olen,
 		pdinfo->paninfo->period[t] + 1);
@@ -2931,17 +2948,16 @@ static int add_obs_marker (DATAINFO *pdinfo, int n)
     return 0;
 }
 
-static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
+static int add_single_obs (double ***pZ, DATAINFO *pdinfo)
 {
-    int i;
-    int err = 0;
+    double *x;
+    int i, err = 0;
 
     for (i=0; i<pdinfo->v; i++) {
 	if (var_is_series(pdinfo, i)) {
-	    double *tmp = realloc((*pZ)[i], (pdinfo->n + 1) * sizeof ***pZ);
-
-	    if (tmp != NULL) {
-		(*pZ)[i] = tmp;
+	    x = realloc((*pZ)[i], (pdinfo->n + 1) * sizeof *x);
+	    if (x != NULL) {
+		(*pZ)[i] = x;
 	    } else {
 		return 1;
 	    }
@@ -3305,7 +3321,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	obs_labels_no_varnames(obs_1, csvinfo, numcount)) {
 	pputs(prn, M_("it seems there are no variable names\n"));
 	/* then we undercounted the observations by one */
-	if (dataset_add_obs(&csvZ, csvinfo)) {
+	if (add_single_obs(&csvZ, csvinfo)) {
 	    pputs(prn, _("Out of memory\n"));
 	    goto csv_bailout;
 	}

@@ -1423,7 +1423,8 @@ sheet_adjust_menu_state (Spreadsheet *sheet, GtkItemFactory *ifac)
 	sheet->flags &= ~SHEET_ADD_OBS_OK;
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
 	disable_obs_menu(ifac);
-    } else if (sheet->flags & SHEET_SHORT_VARLIST) {
+    } else if ((sheet->flags & SHEET_SHORT_VARLIST) ||
+	       dataset_is_panel(datainfo)) {
 	sheet->flags &= ~SHEET_INSERT_OBS_OK;
 	disable_insert_obs_item(ifac);
     }
