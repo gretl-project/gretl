@@ -1134,6 +1134,8 @@ int dataset_shrink_obs_range (double ***pZ, DATAINFO *pdinfo)
 	    memmove(pdinfo->paninfo->period, pdinfo->paninfo->period + head, mvsize);
 	}
 
+	/* FIXME panel data */
+
 	if (pdinfo->structure == CROSS_SECTION) {
 	    ntodate(pdinfo->stobs, 0, pdinfo);
 	} else {
