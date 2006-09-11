@@ -2714,10 +2714,6 @@ static int real_do_model (int action)
 
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
 
-#if 1 /* should we really be doing this? */
-    set_as_last_model(pmod, GRETL_OBJ_EQN);
-#endif
-    
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title); 
 
@@ -3063,7 +3059,11 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
     int err = 0;
 
+    set_genr_model(pmod);
+
     err = generate(cmdline, &Z, datainfo, OPT_NONE, NULL); 
+
+    unset_genr_model();
 
     if (err) {
 	gui_errmsg(err);

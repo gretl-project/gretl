@@ -823,12 +823,30 @@ real_get_obj_matrix (void *p, GretlObjType type, int idx, int *err)
     return M;
 }
 
+static stacker genr_model;
+
+void set_genr_model (MODEL *pmod)
+{
+    genr_model.type = GRETL_OBJ_EQN;
+    genr_model.ptr = pmod;
+}
+
+void unset_genr_model (void)
+{
+    genr_model.type = GRETL_OBJ_UNKNOWN;
+    genr_model.ptr = NULL;
+}
+
 static stacker *find_smatch (const char *oname)
 {
     stacker *smatch = NULL;
 
     if (oname == NULL || *oname == '\0') {
-	smatch = &last_model;
+	if (genr_model.ptr != NULL) {
+	    smatch = &genr_model;
+	} else {
+	    smatch = &last_model;
+	}
     } else {
 	const char *test;
 	int i;
