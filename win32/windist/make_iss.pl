@@ -52,6 +52,11 @@ print "Name: {code:GetDataDir}; Flags: uninsneveruninstall\n";
 print "\n[Files]\n";
 
 while ($line = <STDIN>) {
+    if ($line =~ /VERSION/) {
+        next;
+    }   
+    @pathbits = split(/ +/, $line); 
+    $line = $pathbits[@pathbits - 1];
     $line =~ s+/+\\+g;
     chomp($line);
     @pathbits = split(/\\/, $line);

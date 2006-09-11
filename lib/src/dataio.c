@@ -1933,14 +1933,15 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     tmpdinfo->t1 = 0; 
     tmpdinfo->t2 = tmpdinfo->n - 1;
 
-    strcpy(ppaths->datfile, datfile);
-
     err = readlbl(lblfile, tmpdinfo);
     if (err) goto bailout;
 
     if (code == DATA_APPEND) {
 	err = merge_data(pZ, *ppdinfo, tmpZ, tmpdinfo, prn);
     } else {
+	if (ppaths != NULL && datfile != ppaths->datfile) {
+	    strcpy(ppaths->datfile, datfile);
+	}
 	free_Z(*pZ, *ppdinfo);
 	if (code == DATA_CLEAR) {
 	    clear_datainfo(*ppdinfo, CLEAR_FULL);
@@ -2702,10 +2703,11 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 	    int newvar = 0;
 
 	    if (v >= k) {
-		/* a  new variable */
+		/* a new variable */
 		v = k++;
 		newvar = 1;
 		strcpy(pdinfo->varname[v], addinfo->varname[i]);
+		copy_varinfo(pdinfo->varinfo[v], addinfo->varinfo[i]);
 	    } 
 
 	    for (t=0; t<pdinfo->n; t++) {

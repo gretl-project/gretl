@@ -2713,6 +2713,10 @@ static int real_do_model (int action)
     attach_subsample_to_model(pmod, datainfo);
 
     gretl_object_ref(pmod, GRETL_OBJ_EQN);
+
+#if 1 /* should we really be doing this? */
+    set_as_last_model(pmod, GRETL_OBJ_EQN);
+#endif
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title); 

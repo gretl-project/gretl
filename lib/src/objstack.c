@@ -873,6 +873,11 @@ double saved_object_get_scalar_element (const char *oname, const char *key,
     stacker *smatch;
     int idx;
 
+#if ODEBUG
+    fprintf(stderr, "saved_object_get_scalar_element: oname='%s', key='%s'\n",
+	    oname, key);
+#endif
+
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {

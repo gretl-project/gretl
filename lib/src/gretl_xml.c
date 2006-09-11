@@ -2010,10 +2010,6 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	goto bailout;
     }
 
-    if (ppaths != NULL && fname != ppaths->datfile) {
-	strcpy(ppaths->datfile, fname);
-    }
-
     data_read_message(fname, tmpdinfo, prn);
 
     if (data_status == DATA_APPEND) {
@@ -2024,6 +2020,9 @@ int gretl_read_gdt (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	    tmpdinfo = NULL;
 	}
     } else {
+	if (ppaths != NULL && fname != ppaths->datfile) {
+	    strcpy(ppaths->datfile, fname);
+	}
 	free_Z(*pZ, *ppdinfo);
 	if (data_status == DATA_CLEAR) {
 	    clear_datainfo(*ppdinfo, CLEAR_FULL);

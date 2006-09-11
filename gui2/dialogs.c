@@ -2915,12 +2915,11 @@ static void dwinfo_init (DATAINFO *dwinfo)
 {
     dwinfo->pd = datainfo->pd;
     dwinfo->structure = datainfo->structure;
+
     dwinfo->n = datainfo->n;
-
-    dwinfo->sd0 = datainfo->sd0;
-
     strcpy(dwinfo->stobs, datainfo->stobs);
     strcpy(dwinfo->endobs, datainfo->endobs);
+    dwinfo->sd0 = datainfo->sd0;
 
 #if DWDEBUG
     fprintf(stderr, "dwinfo_init:\n"
@@ -3006,18 +3005,11 @@ static int least_factor (int n)
     return (prime)? 1 : factor;
 }
 
-static int panel_possible (void)
+static int n_is_prime (void)
 {
-    int ok = 1;
+    int lf = least_factor(datainfo->n);
 
-    if (least_factor(datainfo->n) == 1) {
-	ok = 0;
-	errbox(_("Panel datasets must be balanced, but\n"
-		 "the number of observations (%d) is a prime number."),
-	       datainfo->n);
-    } 
-
-    return ok;
+    return lf == 1;
 }
 
 static int test_for_unbalanced (const DATAINFO *dwinfo)
@@ -3035,6 +3027,17 @@ static int test_for_unbalanced (const DATAINFO *dwinfo)
     return err;
 }
 
+static void maybe_unrestrict_dataset (void)
+{
+    if (complex_subsampled()) {
+	maybe_free_full_dataset(datainfo);
+	if (datainfo->t1 == 0 && 
+	    datainfo->t2 == datainfo->n - 1) {
+	    restore_sample_state(FALSE);
+	}
+    }
+}
+
 static int
 datawiz_make_changes (DATAINFO *dwinfo, int create)
 {
@@ -3050,6 +3053,11 @@ datawiz_make_changes (DATAINFO *dwinfo, int create)
     } else if (dataset_is_panel(dwinfo)) {
 	if (test_for_unbalanced(dwinfo)) {
 	    return 1;
+	}
+	if (!dataset_is_panel(datainfo)) {
+	    /* Turning a subset of a non-panel dataset into a panel:
+	       this change will be irreversible */
+	    maybe_unrestrict_dataset();
 	}
     }
 
@@ -3788,6 +3796,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     GList *vlist = NULL;
     int nopts = 0;
     int setval = 0;
+    int prime = 0;
     int i, deflt, ret = DW_FORWARD;
 
 #if DWDEBUG
@@ -3835,6 +3844,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     } else if (step == DW_PANEL_MODE) {
 	nopts = PANEL_INFO_MAX;
 	sspin.setvar = &dwinfo->structure;
+	prime = n_is_prime();
     } else if (step == DW_PANEL_SIZE) {
 	sspin.setvar = &dwinfo->pd;
     } 
@@ -3884,7 +3894,11 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 			 G_CALLBACK(datawiz_set_radio_opt), &sspin);
 	g_object_set_data(G_OBJECT(button), "action", GINT_TO_POINTER(setval));
 
-	if (deflt == setval) {
+	if (prime) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+					 setval == PANEL_UNKNOWN);
+	    gtk_widget_set_sensitive(button, setval == PANEL_UNKNOWN);
+	} else if (deflt == setval) {
 #if DWDEBUG
 	    fprintf(stderr, "opts[%d]: setval = deflt = %d\n", i, setval);
 #endif
@@ -4017,10 +4031,7 @@ void data_structure_wizard (gpointer p, guint create, GtkWidget *w)
 		    step = DW_TS_FREQUENCY;
 		} else if (dwinfo->structure == STACKED_TIME_SERIES ||
 			   dwinfo->structure == STACKED_CROSS_SECTION) {
-		    if (!panel_possible()) {
-			step = DW_DONE;
-			ret = DW_CANCEL;
-		    } else if (create) {
+		    if (create) {
 			dwinfo->structure = STACKED_TIME_SERIES;
 			step = DW_PANEL_SIZE;
 		    } else {

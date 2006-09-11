@@ -491,6 +491,10 @@ static void gretl_varinfo_init (VARINFO *vinfo)
 
 void copy_varinfo (VARINFO *targ, const VARINFO *src)
 {
+    if (src == NULL || targ == NULL) {
+	return;
+    }
+
     strcpy(targ->label, src->label);
     strcpy(targ->display_name, src->display_name);
     targ->flags = src->flags;

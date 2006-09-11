@@ -1071,9 +1071,9 @@ atom_get_dollar_var (const char *s, GENERATOR *genr, genatom *atom)
 	    key++;
 	}
 
-	DPRINTF(("dollar var: key='%s'\n", key));
-
 	idx = gretl_model_data_index(key);
+
+	DPRINTF(("dollar var: key='%s', idx=%d\n", key, idx));
 
 	if (genr_is_matrix(genr)) {
 	    gretl_matrix *M = NULL;

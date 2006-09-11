@@ -11,8 +11,9 @@ THISDIR=`pwd`
 # add gnuplot distribution
 function process_gnuplot {
     echo "adding content of $GNUPLOT_ZIPFILE" >> ../FILELIST
-    unzip -X $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
-	| awk '{ print $NF }' >> MANIFEST
+    unzip -l $GNUPLOT_ZIPFILE | grep gretl | egrep -v /$\|\.zip \
+        | awk '{ print $1" "$2" "$3" "$4 }' >> MANIFEST
+    unzip -X $GNUPLOT_ZIPFILE
 }
 
 # add GTK runtime
@@ -20,17 +21,26 @@ function process_gtk {
     echo "adding GTK runtime..."
     mkdir -p $HOME_WIN32/tmp
     cd $HOME_WIN32/tmp
-    tar xvfz ../gtk-runtime.tgz | awk '{ print $NF }' > gtk.files
-    for f in `cat gtk.files | grep /$` ; do
-       echo "make dir: $f"
-       mkdir -p $THISDIR/windist/gretl/$f
+    tar tvfz ../gtk-runtime.tgz | awk '{ print $3" "$4" "$5" "$6 }' > gtk.files
+    tar xfz ../gtk-runtime.tgz
+    for d in `cat gtk.files | awk '{ print $NF }' | grep /$` ; do
+       echo "make dir: $d"
+       mkdir -p $THISDIR/windist/gretl/$d
     done 
-    for f in `cat gtk.files | grep -v /$` ; do
-       instfile=`echo $f | sed s+^bin/++`
-       echo "$f -> gretl/$instfile" >> $THISDIR/FILELIST
-       echo "gretl/$instfile" >> $THISDIR/windist/MANIFEST
-       cp -ap $f $THISDIR/windist/gretl/$instfile
+    save_ifs=$IFS
+    IFS='
+'
+    for line in `cat gtk.files | grep -v /$` ; do
+       fsize=`echo $line | awk '{ print $1 }'`
+       fdate=`echo $line | awk '{ print $2 }'`
+       ftime=`echo $line | awk '{ print $3 }'`
+       fname=`echo $line | awk '{ print $NF }'`
+       instfile=`echo $fname | sed s+^bin/++`
+       echo "$fname -> gretl/$instfile" >> $THISDIR/FILELIST
+       echo "$fsize $fdate $ftime gretl/$instfile" >> $THISDIR/windist/MANIFEST
+       cp -ap $fname $THISDIR/windist/gretl/$instfile || exit 1
     done
+    IFS=$save_ifs
     cd $THISDIR
     rm -rf $HOME_WIN32/tmp
 }
@@ -39,10 +49,11 @@ function process_gtk {
 
 function add_file {
     if [ `basename $1` != "CVS" ] && [ ! -d $1 ] ; then
+        finfo=`ls -l $1 | awk '{ print $5" "$6" "$7 }'`
 	cp -p $1 windist/$2
 	echo $2
         echo "$1 -> $2" >> FILELIST
-        echo $2 >> windist/MANIFEST
+        echo "$finfo $2" >> windist/MANIFEST
     fi
 }
 
@@ -50,7 +61,10 @@ TOPDIR=..
 VERSION=$(grep GRETL_VERSION[^_] $TOPDIR/lib/src/version.h | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
 
-rm -f windist/MANIFEST
+if [ -f windist/MANIFEST ] ; then
+   cp windist/MANIFEST windist/MANIFEST.`date +%Y-%m-%d`
+fi
+echo "VERSION $VERSION" > windist/MANIFEST
 rm -f FILELIST
 rm -rf windist/gretl windist/gnuplot
 
