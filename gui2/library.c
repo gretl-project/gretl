@@ -4301,9 +4301,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	    nomem();
 	    gretl_print_destroy(prn);
 	} else {
-	    if (get_printdata_blocks() == 1) {
-		mview = multi_series_view_new(list);
-	    }
+	    mview = multi_series_view_new(list);
 	    view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, mview);
 	}
     }

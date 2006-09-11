@@ -458,15 +458,25 @@ void series_view_connect (windata_t *vwin, int varnum)
     }
 }
 
+int has_sortable_data (windata_t *vwin)
+{
+    multi_series_view *mview;
+
+    if (vwin == NULL || vwin->role != PRINT || vwin->data == NULL) {
+	return 0;
+    }
+
+    mview = vwin->data;
+
+    return mview->list != NULL && mview->list[0] <= 5;
+}
+
 multi_series_view *multi_series_view_new (const int *list)
 {
     multi_series_view *mview = NULL;
     int i, err = 0;
 
-    /* we do this only for a list of up to five variables,
-       with no scalars */
-
-    if (list == NULL || list[0] > 5) {
+    if (list == NULL) {
 	err = 1;
     } else {
 	for (i=1; i<=list[0]; i++) {

@@ -202,7 +202,7 @@ static void model_output_save_callback (gpointer p, guint u, GtkWidget *w)
 {
     windata_t *vwin = (windata_t *) p;
 
-    copy_format_dialog(vwin, 1, W_SAVE);    
+    copy_format_dialog(vwin, W_SAVE);    
 }
 
 static gretlopt tex_eqn_opt;
@@ -341,7 +341,7 @@ static GtkItemFactoryEntry SYS_items[] = {
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
 {
-    copy_format_dialog((windata_t *) p, u, W_COPY);
+    copy_format_dialog(p, W_COPY);
 }
 
 #ifdef ENABLE_NLS
@@ -1547,7 +1547,7 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
     if (vwin->role == VIEW_SCALAR) {
 	scalar_to_clipboard(vwin);
     } else {
-	copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role), W_COPY);
+	copy_format_dialog(vwin, W_COPY);
     }
 }
 
@@ -1637,7 +1637,7 @@ static void window_help (GtkWidget *w, windata_t *vwin)
 
 static void multi_save_as_callback (GtkWidget *w, windata_t *vwin)
 {
-    copy_format_dialog(vwin, MULTI_FORMAT_ENABLED(vwin->role), W_SAVE);
+    copy_format_dialog(vwin, W_SAVE);
 }
 
 static void view_code_callback (GtkWidget *w, windata_t *vwin)
@@ -1729,7 +1729,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 		   vwin->role == RMPLOT ||
 		   vwin->role == MAHAL);
     int sort_ok    = (vwin->role == VIEW_SERIES);
-    int sort_by_ok = (vwin->role == PRINT && vwin->data != NULL);
+    int sort_by_ok = has_sortable_data(vwin);
     int format_ok  = (vwin->role == VIEW_SERIES || vwin->role == VIEW_SCALAR);
     int plot_ok    = (vwin->role == VIEW_SERIES);
     int latex_ok   = latex_is_ok();

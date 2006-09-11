@@ -48,5 +48,7 @@ PRN *vwin_print_sorted_as_csv (windata_t *vwin);
 
 void scalar_to_clipboard (windata_t *vwin);
 
+int has_sortable_data (windata_t *vwin);
+
 #endif
 

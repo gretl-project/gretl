@@ -405,7 +405,7 @@ static int preferred_format (int f, int multi)
 {
 # ifdef G_OS_WIN32
     static int multi_pref = GRETL_FORMAT_RTF;
-    static int simple_pref = GRETL_FORMAT_RTF_TXT;
+    static int simple_pref = GRETL_FORMAT_TXT;
 # else 
     static int multi_pref = GRETL_FORMAT_TEX;
     static int simple_pref = GRETL_FORMAT_TXT;
@@ -458,7 +458,7 @@ TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 
 static GtkWidget *
 RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
-		 int multicopy, int pref)
+		 int pref)
 {
     GtkWidget *button;
 
@@ -470,7 +470,7 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
     gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
-    if (multicopy) {
+    if (finfo->multi) {
 	g_object_set_data(G_OBJECT(button), "format", 
 			  GINT_TO_POINTER(GRETL_FORMAT_RTF));  
     } else {
@@ -487,7 +487,8 @@ RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
 }
 
 static GtkWidget *
-tab_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
+tab_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
+		 int pref)
 {
     GtkWidget *button;
 
@@ -496,14 +497,18 @@ tab_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", 
-		      GINT_TO_POINTER(GRETL_FORMAT_TABLE));  
+		      GINT_TO_POINTER(GRETL_FORMAT_TAB)); 
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+				 (pref == GRETL_FORMAT_TAB));
     gtk_widget_show(button);
 
     return button;
 }
 
 static GtkWidget *
-CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
+CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
+		 int pref)
 {
     GtkWidget *button;
 
@@ -513,6 +518,29 @@ CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", 
 		      GINT_TO_POINTER(GRETL_FORMAT_CSV));  
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), 
+				 (pref == GRETL_FORMAT_CSV));
+    gtk_widget_show(button);
+
+    return button;
+}
+
+static GtkWidget *
+plain_text_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
+		   int pref)
+{
+    GtkWidget *button;
+
+    button = gtk_radio_button_new_with_label (group, _("plain text"));
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", 
+		      GINT_TO_POINTER(GRETL_FORMAT_TXT));
+
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
+				 (pref == GRETL_FORMAT_TXT));
     gtk_widget_show(button);
 
     return button;
@@ -525,7 +553,7 @@ CSV_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo)
 		        v->role == VIEW_SERIES || \
                         v->role == VIEW_MODEL)
 
-void copy_format_dialog (windata_t *vwin, int multicopy, int action)
+void copy_format_dialog (windata_t *vwin, int action)
 {
     GtkWidget *dialog, *tempwid, *hbox;
     GtkWidget *button;
@@ -543,8 +571,8 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
     finfo->vwin = vwin;
     finfo->dialog = dialog;
 
-    finfo->format = pref = preferred_format(0, multicopy);
-    finfo->multi = multicopy;
+    finfo->multi = MULTI_FORMAT_ENABLED(vwin->role);
+    finfo->format = pref = preferred_format(0, finfo->multi);
     finfo->action = action;
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
@@ -561,63 +589,49 @@ void copy_format_dialog (windata_t *vwin, int multicopy, int action)
 
     /* Tab-separated option */
     if (can_do_tabbed(vwin)) {
-	button = tab_copy_button(group, myvbox, finfo);
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-	button = CSV_copy_button(group, myvbox, finfo);
+	button = tab_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
+
+    /* Comma-separated option */
+    if (can_do_csv(vwin)) {
+	button = CSV_copy_button(group, myvbox, finfo, pref);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    }
+
+    /* plain text option */
+    button = plain_text_button(group, myvbox, finfo, pref);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
 # ifdef G_OS_WIN32
 
-    /* RTF option? */
-    if (multicopy || !can_do_tabbed(vwin)) {
-	button = RTF_copy_button(group, myvbox, finfo, multicopy, pref);
+    if (finfo->multi || !can_do_tabbed(vwin)) {
+	button = RTF_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
-    /* LaTeX option? */
-    if (multicopy) {
+    if (finfo->multi) {
 	button = TeX_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
-# else /* not MS Windows: reverse RTF vs LaTeX options */
+# else /* not MS Windows: reverse RTF and LaTeX options */
 
-    /* LaTeX option? */
-    if (multicopy) {
+    if (finfo->multi) {
 	button = TeX_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
-    /* RTF option? */
-    if (multicopy || !can_do_tabbed(vwin)) {
-	button = RTF_copy_button(group, myvbox, finfo, multicopy, pref);
+    if (finfo->multi || !can_do_tabbed(vwin)) {
+	button = RTF_copy_button(group, myvbox, finfo, pref);
 	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
 # endif /* G_OS_WIN32 */
 
-    /* Comma-separated option */
-    if (can_do_csv(vwin) && !can_do_tabbed(vwin)) {
-	button = CSV_copy_button(group, myvbox, finfo);
-	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    }	
-
-    /* plain text option */
-    button = gtk_radio_button_new_with_label (group, _("plain text"));
-    gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    g_object_set_data(G_OBJECT(button), "format", 
-		      GINT_TO_POINTER(GRETL_FORMAT_TXT));
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button),
-				 (pref == GRETL_FORMAT_TXT));
-    gtk_widget_show(button);
-
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
-
     gtk_widget_show(myvbox);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);

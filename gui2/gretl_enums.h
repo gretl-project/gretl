@@ -247,7 +247,8 @@ enum random_types {
     RANDOM_ST
 };
 
-#define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || ALL_SUMMARY || \
+#define MULTI_FORMAT_ENABLED(c) (c == SUMMARY || c == VAR_SUMMARY || \
+                                 c == ALL_SUMMARY || \
 	                         c == CORR || c == ALL_CORR || c == FCASTERR || \
 	                         c == FCAST || c == COEFFINT || \
 	                         c == COVAR || c == VIEW_MODEL || \

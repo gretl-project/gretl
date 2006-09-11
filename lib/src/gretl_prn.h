@@ -37,7 +37,7 @@ typedef enum {
     GRETL_FORMAT_EQN       = 1 << 5,
     GRETL_FORMAT_SELECTION = 1 << 6,
     GRETL_FORMAT_CSV       = 1 << 7,
-    GRETL_FORMAT_TABLE     = 1 << 8,
+    GRETL_FORMAT_TAB       = 1 << 8,
 } PrnFormat;
 
 /* functions follow */
