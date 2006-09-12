@@ -65,7 +65,7 @@ if [ -f windist/MANIFEST ] ; then
    cp windist/MANIFEST windist/MANIFEST.`date +%Y-%m-%d`
 fi
 echo "VERSION $VERSION" > windist/MANIFEST
-echo "DATE `date`" > windist/MANIFEST
+echo "DATE `date`" >> windist/MANIFEST
 rm -f FILELIST
 rm -rf windist/gretl windist/gnuplot
 

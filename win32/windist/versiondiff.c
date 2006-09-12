@@ -62,8 +62,7 @@ static int compare_versions (finfo *f1, int n1, finfo *f2, int n2)
 	}
     }
 
-
-    printf("Added   files: %d\n", nadd);
+    printf("Added files: %d\n", nadd);
     if (nadd > 0) {
 	for (i=0; i<n2; i++) {
 	    if (f2[i].added) {
@@ -85,12 +84,25 @@ static int compare_versions (finfo *f1, int n1, finfo *f2, int n2)
 
     printf("Modified files: %d\n", nmod);
     if (nmod > 0) {
+	char *s;
+
 	for (i=0; i<n2; i++) {
 	    if (f2[i].modified) {
 		j = f2[i].match;
-		printf(" %s (old %d %s %s, new %d %s %s)\n", f2[i].name,
-		       f1[j].bytes, f1[j].date, f1[j].time,
-		       f2[i].bytes, f2[i].date, f2[i].time);
+		if (!strncmp(f2[i].name, "gretl/", 6)) {
+		    s = f2[i].name + 6;
+		} else {
+		    s = f2[i].name;
+		}
+		if (f1[j].bytes != f2[i].bytes) {
+		    printf(" %s (old %d %s %s, new %d %s %s)\n", s,
+			   f1[j].bytes, f1[j].date, f1[j].time,
+			   f2[i].bytes, f2[i].date, f2[i].time);
+		} else {
+		    printf(" %s (old %s %s, new %s %s)\n", s,
+			   f1[j].date, f1[j].time,
+			   f2[i].date, f2[i].time);
+		}		    
 	    }
 	}
 	putchar('\n');
@@ -134,7 +146,7 @@ int main (int argc, char **argv)
     FILE *f1, *f2;
     char *m1, *m2;
     int n1, n2;
-    int i;
+    int i, err = 0;
 
     if (argc != 3) {
 	fprintf(stderr, "Give the names of two MANIFEST files to compare\n");
@@ -160,9 +172,6 @@ int main (int argc, char **argv)
     n1 = count_lines(f1);
     n2 = count_lines(f2);
 
-    printf("%s: %d lines\n", m1, n1);
-    printf("%s: %d lines\n", m2, n2);
-
     info1 = malloc(n1 * sizeof *info1);
     if (info1 == NULL) {
 	fprintf(stderr, "Out of memory\n");
@@ -175,37 +184,50 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
+    printf("# %s:\n#  %d lines\n", m1, n1);
+
     i = 0;
     while (fgets(line, sizeof line, f1)) {
-	if (!strncmp(line, "VERSION", 7)) {
-	    printf("%s", line);
-	    n1--;
-	    continue;
-	}
-	if (!strncmp(line, "DATE", 4)) {
-	    printf("%s", line);
+	if (!strncmp(line, "VERSION", 7) ||
+	    !strncmp(line, "DATE", 4)) {
+	    printf("#  %s", line);
 	    n1--;
 	    continue;
 	}
 	if (scanline(line, &info1[i++])) {
 	    fprintf(stderr, "Error scanning line %d of %s\n",
 		    i, m1);
+	    err = 1;
 	    break;
 	}
     }
+
+    if (err) {
+	fprintf(stderr, "Exiting on error reading %s\n", m1);
+	exit(EXIT_FAILURE);
+    }
+
+    printf("# %s:\n#  %d lines\n", m2, n2);
 	    
     i = 0;
     while (fgets(line, sizeof line, f2)) {
-	if (!strncmp(line, "VERSION", 7)) {
-	    printf("%s", line);
+	if (!strncmp(line, "VERSION", 7) ||
+	    !strncmp(line, "DATE", 4)) {
+	    printf("#  %s", line);
 	    n2--;
 	    continue;
 	}
 	if (scanline(line, &info2[i++])) {
 	    fprintf(stderr, "Error scanning line %d of %s\n",
 		    i, m2);
+	    err = 1;
 	    break;
 	}
+    }
+
+    if (err) {
+	fprintf(stderr, "Exiting on error reading %s\n", m2);
+	exit(EXIT_FAILURE);
     }
 
     fclose(f1);
@@ -217,5 +239,4 @@ int main (int argc, char **argv)
     free(info2);
 
     return 0;
-
 }
