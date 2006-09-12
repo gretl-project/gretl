@@ -905,7 +905,7 @@ double saved_object_get_scalar_element (const char *oname, const char *key,
     }
 
     if (ret == INVALID_STAT && !*err) {
-	*err = 1;
+	*err = E_BADSTAT;
     }
 
     return ret;
@@ -927,7 +927,7 @@ double *saved_object_get_series (const char *oname, const char *key,
     }
 
     if (x == NULL && !*err) {
-	*err = 1;
+	*err = E_BADSTAT;
     }
 
     return x;
@@ -959,7 +959,7 @@ saved_object_get_matrix (const char *oname, const char *key,
     }
 
     if (M == NULL && !*err) {
-	*err = 1;
+	*err = E_BADSTAT;
     }    
 
     return M;

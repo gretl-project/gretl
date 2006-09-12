@@ -595,6 +595,9 @@ static int get_generated_matrix (const char *rhs, gretl_matrix **M,
     err = generate(genline, pZ, pdinfo, OPT_P | OPT_M | OPT_D, NULL);
     if (!err) {
 	err = genr_retrieve_result(NULL, M);
+#if GENR_DEBUG
+	gretl_matrix_print(*M, "get_generated_matrix: result");
+#endif
     }
 
     return err;
@@ -3771,7 +3774,8 @@ static int genr_try_matrix_expression (GENERATOR *genr, int oldv)
 
     if (g != NULL) {
 	if (gretl_matrix_is_scalar(g)) {
-	    genr->xvec[0] = gretl_vector_get(g, 0);
+	    genr->xvec[0] = genr->xvec[genr->pdinfo->t1] = 
+		gretl_vector_get(g, 0);
 	    genr_set_scalar(genr);
 	} else {
 	    err = 1;
@@ -3904,6 +3908,10 @@ static int genr_write_var (GENERATOR *genr, double ***pZ)
 		(var_is_series(pdinfo, v))? "vector" : "scalar",
 		pdinfo->varname[v], v,
 		(modifying)? "replaced" : "newly created");
+	if (genr_is_scalar(genr)) {
+	    fprintf(stderr, "scalar: xt = xvec[%d] = %g\n", 
+		    pdinfo->t1, xt);
+	}
     }
 #endif
 
