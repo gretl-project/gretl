@@ -13,6 +13,8 @@ have_gtk = @have_gtk@
 have_gmp = @have_gmp@
 build_mailer = @build_mailer@
 
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_LIBS = @GLIB_LIBS@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
@@ -184,7 +186,7 @@ eviews_import.la: eviews_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 stata_import.la: stata_import.lo
-	$(LINK) -o $@ $< $(GRETLLIB)
+	$(LINK) -o $@ $< $(GRETLLIB) $(GLIB_LIBS)
 
 jmulti_import.la: jmulti_import.lo
 	$(LINK) -o $@ $< $(GRETLLIB)

@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include <glib.h>
+
 #include "libgretl.h"
 #include "gretl_string_table.h"
 #include "swap_bytes.h"
@@ -71,7 +73,8 @@ enum {
 #define STATA_DOUBLE_NA pow(2.0, 1023)
 #define STATA_INT_NA 2147483647
 #define STATA_SHORTINT_NA 32767
-#define STATA_BYTE_NA 127
+
+#define STATA_BYTE_NA(b,v) ((v<8 && b==127) || b>=101)
 
 #define NA_INT -999
 
@@ -103,23 +106,36 @@ static int read_int (FILE *fp, int naok, int *err)
 static int read_signed_byte (FILE *fp, int naok, int *err)
 { 
     signed char b;
+    int ret;
 
     if (fread(&b, 1, 1, fp) != 1) {
 	bin_error(err);
+	ret = NA_INT;
+    } else {
+	ret = (int) b;
+
+	if (!naok) {
+	    int v = abs(stata_version);
+
+	    if (STATA_BYTE_NA(b, v)) {
+		ret = NA_INT;
+	    }
+	}
     }
 
-    return ((b == STATA_BYTE_NA) & !naok)? NA_INT : (int) b;
+    return ret;
 }
 
-static int read_byte (FILE *fp, int naok, int *err)
+static int read_byte (FILE *fp, int *err)
 { 
     unsigned char u;
 
     if (fread(&u, 1, 1, fp) != 1) {
 	bin_error(err);
+	return NA_INT;
     }
 
-    return ((u == STATA_BYTE_NA) & !naok)? NA_INT : (int) u;
+    return (int) u;
 }
 
 static int read_short (FILE *fp, int naok, int *err)
@@ -127,8 +143,8 @@ static int read_short (FILE *fp, int naok, int *err)
     unsigned first, second;
     int s;
 	
-    first = read_byte(fp, 1, err);
-    second = read_byte(fp, 1, err);
+    first = read_byte(fp, err);
+    second = read_byte(fp, err);
 
     if (stata_endian == CN_TYPE_BIG) {
 	s = (first << 8) | second;
@@ -225,7 +241,7 @@ static int check_variable_types (FILE *fp, int *types, int nvar, int *nsv)
     *nsv = 0;
 
     for (i=0; i<nvar && !err; i++) {
-   	unsigned char u = read_byte(fp, 1, &err);
+   	unsigned char u = read_byte(fp, &err);
 
 	types[i] = u;
 	if (stata_type_float(u) || stata_type_double(u)) {
@@ -303,8 +319,14 @@ static int try_fix_varname (char *name)
     int err = 0;
 
     *test = 0;
-    strncat(test, name, VNAMELEN - 2);
-    strcat(test, "1");
+
+    if (*name == '_') {
+	strcat(test, "x");
+	strncat(test, name, VNAMELEN - 2);
+    } else {
+	strncat(test, name, VNAMELEN - 2);
+	strcat(test, "1");
+    }
     
     err = check_varname(test);
     if (!err) {
@@ -416,7 +438,7 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 
     /* sortlist -- not relevant */
     for (i=0; i<2*(nvar+1) && !err; i++) {
-        read_byte(fp, 1, &err);
+        read_byte(fp, &err);
     }
     
     /* format list (use it to identify date variables?) */
@@ -451,13 +473,24 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	read_string(fp, labellen, datalabel, &err);
 	if (*datalabel != '\0') {
 	    printf("variable %d: label = '%s'\n", i+1, datalabel);
-	    strncat(VARLABEL(dinfo, i+1), datalabel, MAXLABEL - 1);
+	    if (!g_utf8_validate(datalabel, -1, NULL)) {
+		gsize b;
+		gchar *tr = g_locale_to_utf8(datalabel, -1, NULL,
+					     &b, NULL); 
+
+		if (tr != NULL) {
+		    strncat(VARLABEL(dinfo, i+1), tr, MAXLABEL - 1);
+		    g_free(tr);
+		}
+	    } else {
+		strncat(VARLABEL(dinfo, i+1), datalabel, MAXLABEL - 1);
+	    }
 	}
     }
 
     /* variable 'characteristics' -- not handled */
     if (!err) {
-	while (read_byte(fp, 1, &err)) {
+	while (read_byte(fp, &err)) {
 	    if (abs(stata_version) >= 7) { /* manual is wrong here */
 		clen = read_int(fp, 1, &err);
 	    } else {
@@ -535,9 +568,9 @@ static int read_dta_data (FILE *fp, double **Z, DATAINFO *dinfo,
 	    printf("variable %d: \"aname\" = '%s'\n", i, aname);
 
 	    /* padding */
-	    read_byte(fp, 1, &err);
-	    read_byte(fp, 1, &err);
-	    read_byte(fp, 1, &err);
+	    read_byte(fp, &err);
+	    read_byte(fp, &err);
+	    read_byte(fp, &err);
 
 	    nlabels = read_int(fp, 1, &err);
 	    totlen = read_int(fp, 1, &err);
@@ -576,7 +609,7 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     unsigned char u;
     int err = 0;
     
-    u = read_byte(fp, 1, &err);   /* release version */
+    u = read_byte(fp, &err);   /* release version */
 
     if (!err) {
 	err = get_version_and_namelen(u, namelen);
@@ -590,11 +623,11 @@ static int parse_dta_header (FILE *fp, int *namelen, int *nvar, int *nobs)
     printf("Stata file version %d\n", abs(stata_version));
 
     /* these are file-scope globals */
-    stata_endian = (int) read_byte(fp, 1, &err);
+    stata_endian = (int) read_byte(fp, &err);
     swapends = stata_endian != CN_TYPE_NATIVE;
 
-    read_byte(fp, 1, &err);           /* filetype -- junk */
-    read_byte(fp, 1, &err);           /* padding */
+    read_byte(fp, &err);              /* filetype -- junk */
+    read_byte(fp, &err);              /* padding */
     *nvar = read_short(fp, 1, &err);  /* number of variables */
     *nobs = read_int(fp, 1, &err);    /* number of observations */
 
