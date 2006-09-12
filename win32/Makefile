@@ -329,11 +329,11 @@ plugins/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
 
 plugins/eviews_import.dll: eviews_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/stata_import.dll: stata_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+	--implib plugins/$(<:.o=.a) $^ $(GLIBLIB) $(GRETLLIB)
 
 plugins/jmulti_import.dll: jmulti_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

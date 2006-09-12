@@ -182,6 +182,11 @@ int main (int argc, char **argv)
 	    n1--;
 	    continue;
 	}
+	if (!strncmp(line, "DATE", 4)) {
+	    printf("%s", line);
+	    n1--;
+	    continue;
+	}
 	if (scanline(line, &info1[i++])) {
 	    fprintf(stderr, "Error scanning line %d of %s\n",
 		    i, m1);

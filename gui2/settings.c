@@ -1309,8 +1309,6 @@ static void set_lcnumeric (void)
 	int i;
 
 	if (lang != NULL) {
-	    int i;
-
 	    for (i=0; names[i].abbr != NULL; i++) {
 		if (!strcmp(lang, names[i].abbr)) {
 		    set = setlocale(LC_NUMERIC, names[i].full);
