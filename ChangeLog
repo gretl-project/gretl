@@ -1,4 +1,4 @@
-version 1.6.0, in progress
+9/13/2006 version 1.6.0
 - Revamp mechanism for saving sessions in gui program (we
   now save sessions as zipfiles containing XML representations
   of any models that have been estimated)
