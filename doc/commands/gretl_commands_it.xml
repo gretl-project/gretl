@@ -971,29 +971,23 @@
     <description>
       <para>
 	Per copiare i dati da questa finestra, è possibile scegliere il formato
-        testo semplice o altri tre formati.
+        testo semplice o altri due formati.
       </para>
 
       <para>
-	RTF: il formato <quote>Rich Text Format</quote> di Microsoft. In questo
-        caso, la rappresentazione RTF dei dati è costituita da una tabella che
-        usa un carattere a spazio uniforme (stile macchina da scrivere). I dati
-        appariranno incolonnati, ma sarà difficile convertire questa
-        rappresentazione tabulare in una <quote>vera</quote> tabella in MS Word,
-        visto che il numero di spazi tra le colonne di dati è variabile.
+	Separato da tab: i dati vengono copiati sotto forma di testo semplice, con
+        le colonne separate dal carattere tab. È una buona scelta se si vuole
+        incollare i dati in un programma di videoscrittura: in MS Word o Writer
+        di OpenOffice.org, ad esempio, è possibile selezionare il materiale
+        incollato e convertirlo in una tabella, usando comandi come
+	<quote>Formattazione automatica tabella</quote> o <quote>Converti il testo
+        in tabella</quote>.
       </para>
 
       <para>
-	Testo separato da tab (o <quote>Tabella (MS Word)</quote>): i dati sono
-        copiati sotto forma di testo semplice usando caratteri tab per separare
-        le colonne. Incollando i dati in MS Word e utilizzando il comando di
-        <quote>Formattazione automatica</quote> delle tabelle è possibile
-        produrre una vera e propria tabella.
-      </para>
-
-      <para>
-	CSV (Comma Separated Values): i valori dei dati sono separati da
-        virgole, in modo da poter essere incollati in un foglio elettronico.
+	Separato da virgola: i dati sono copiati negli appunti in formato CSV
+        (Comma Separated Values). Questo metodo è consigliabile se occorre
+        incollare i dati in un foglio elettronico.
       </para>
 
     </description>
@@ -2595,6 +2589,69 @@
       <other-access>Menù pop-up nella finestra principale</other-access>
     </gui-access>
 
+  </command>
+
+  <command name="genrand" section="Programming" context="gui"
+    label="Generazione di variabili casuali">
+
+    <description>
+      <para>
+        La prima informazione che occorre specificare è il nome da dare alla
+        variabile da generare. Le informazioni aggiuntive dipendono dal tipo
+        di distribuzione della variabile pseudo-casuale.
+      </para>
+
+      <ilist>
+	<li>
+	  <para>
+	    Uniforme: occorre fornire un limite superiore e uno inferiore per la
+            distribuzione.
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Normale: occorre fornire la media e l'errore standard (quest'ultimo
+            deve essere positivo).
+	  </para>
+	</li>
+	<li>
+	  <para>
+	    Chi-quadro e t di Student: occorre fornire i gradi di libertà, che
+            devono essere positivi.
+	  </para>
+	</li>
+      </ilist>
+
+      <para>
+	Se occorre generare sequenze ripetibili di numeri pseudo-casuali, è
+        possibile impostare il seme del generatore, nel menù Strumenti.
+      </para>
+
+    </description>
+  </command>
+
+  <command name="genseed" section="Programming" context="gui"
+    label="Impostare il seme per i numeri casuali">
+
+    <description>
+      <para>
+	Il "seme" rappresenta il punto di partenza per la sequenza di numeri
+        pseudo-casuali generati in una sessione di gretl. Per impostazione
+        predefinita, il seme viene impostato all'avvio del programma, basandosi
+        sull'orologio di sistema. Ciò fa sì che si ottenga una diversa sequenza
+        di numeri casuali ogni volta che si usa il programma; se invece si vuole
+        usare sequenze ripetibili di numeri, occorre impostare manualmente il
+        seme (e ricordarsi il valore usato).
+      </para>
+      <para>
+	Si noti che il generatore viene re-impostato ogni volta che si fa clic
+        sul pulsante "OK" di questa finestra di dialogo, quindi, ad esempio,
+	se si imposta il seme a 147, si genera una serie dalla distribuzione
+        normale standard, si riapre questa finestra di dialogo e si fa clic su
+        "OK" indicando ancora 147 come seme, e infine si genera una seconda
+        serie dalla normale standard, le due serie generate saranno identiche.
+      </para>
+    </description>
   </command>
 
   <command name="gnuplot" section="Graphs" label="Crea un grafico Gnuplot" context="cli">
@@ -4683,6 +4740,10 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--wald</flag>
+	  <effect>esegue un test di Wald invece che un test F</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
 	</option>
@@ -4710,25 +4771,61 @@
     </usage>
 
     <description>
-      <para>
-	Questo comando deve seguire un comando di stima. Omette le
-        variabili indicate dal modello precedente e stima il nuovo
-        modello. Viene eseguito un test per la significatività congiunta
-        delle variabili omesse; la statistica test è la <mathvar>F</mathvar>
-        nel caso della stima OLS, altrimenti è un chi-quadro asintotico di Wald.
-        Un p-value inferiore a 0.05 indica che i coefficienti sono
-        congiuntamente significativi al livello del 5 per cento.
+      <para context="gui">
+	Questo comando stima di nuovo il modello dato, dopo aver omesso
+	le variabili specificate. Oltre ai consueti risultati della stima
+        del modello, viene fornita una statistica test per la significatività
+        congiunta delle variabili omesse.  Se il modello originale è stato
+        stimato con OLS, la statistica test è un valore <mathvar>F</mathvar>,
+        basato sulle somme dei quadrati dei residui del modello vincolato e di
+        quello originale, a meno che quest'ultimo sia stato stimato usando
+        errori standard robusti.  In questo caso, il valore <mathvar>F</mathvar>
+        viene calcolato delle stime robuste della matrice di covarianza del
+        modello originale. L'ipotesi nulla è che i coefficienti di tutte le
+        variabili omesse siano pari a zero.
       </para>
       <para context="cli">
-	Se viene usata l'opzione <lit>--quiet</lit>, i risultati
-        mostrati comprendono solo il test per la significatività
-        congiunta delle variabili omesse, altrimenti vengono mostrate
-        anche le stime del modello ridotto. In quest'ultimo caso,
-        l'opzione <lit>--vcv</lit> mostra anche la matrice di covarianza
-        dei coefficienti.
- 	Usando l'opzione <lit>--silent</lit>, non viene mostrato nulla; tuttavia
-        i risultati del test possono essere recuperati usando le variabili
-        speciali <lit>$test</lit> e <lit>$pvalue</lit>.
+	Questo comando deve seguire un comando di stima e calcola una
+        statistica test per la significatività congiunta delle variabili
+        nella <repl>lista-variabili</repl>, che deve essere un sottoinsieme
+        delle variabili indipendenti del modello stimato in precedenza.
+      </para>
+      <para context="cli">
+	Se il modello originale è stato stimato con OLS, la statistica test è
+        un valore <mathvar>F</mathvar>, basato sulle somme dei quadrati dei
+        residui del modello vincolato e di quello originale, a meno che
+        quest'ultimo sia stato stimato usando errori standard robusti.
+	In questo caso, il valore <mathvar>F</mathvar> viene calcolato delle
+        stime robuste della matrice di covarianza del modello originale (è la
+        versione <mathvar>F</mathvar> di un test di Wald).
+      </para>
+      <para>
+	Per gli stimatori diversi da OLS, o se si usa l'opzione <lit>--wald</lit>,
+        la statistica usata è un valore chi-quadro asintotico di Wald, basato
+        sulla matrice di covarianza del modello originale.
+      </para>
+      <para context="cli">
+        Per impostazione predefinita, viene stimato il modello vincolato,
+        vengono mostrate le stime e il modello vincolato rimpiazza quello
+        originale come <quote>modello attuale</quote> nel caso si voglia,
+        ad esempio, recuperare i residui con <lit>$uhat</lit> (o eseguire
+        test ulteriori, come <cmd>add</cmd> o <cmd>omit</cmd>).  
+      </para>
+      <para>
+	Usando l'opzione <lit>--wald</lit>, il modello vincolato
+        non viene stimato (quindi il modello attuale non viene rimpiazzato).
+        L'opzione <lit>--quiet</lit> sopprime la stampa dei risultati del
+        modello vincolato (se esso viene stimato): viene mostrato solo il
+        risultato del test. Se il modello vincolato viene stimato e ne viene
+        chiesta la stampa, l'opzione <lit>--vcv</lit> ha l'effetto di
+        mostrare la matrice di covarianza dei coefficienti del modello
+        vincolato, altrimenti quest'opzione è ignorata.
+      </para>
+      <para context="cli">
+	Se si usa l'opzione <lit>--silent</lit>, non viene mostrato
+        alcun risultato; tuttavia, i risultati del test possono essere
+        recuperati usando le variabili speciali
+	<lit>$test</lit> e <lit>$pvalue</lit>.
       </para>
       <para context="cli">
        Se il modello originale è stato stimato con i minimi quadrati a due
@@ -4737,7 +4834,9 @@
        l'ambiguità, nella modalità predefinita le variabili sono omesse
        dall'elenco dei regressori, se si usa l'opzione <lit>--inst</lit> sono
        omesse dall'elenco degli strumenti, mentre se si usa l'opzione
-       <lit>--both</lit> sono rimosse totalmente dal modello.
+       <lit>--both</lit> sono rimosse totalmente dal modello. Queste due opzioni
+       sono incompatibili con l'opzione <lit>--wald</lit>; se uno o più strumenti
+       vengono omessi, il modello va ri-stimato.
       </para>
     </description>
 
