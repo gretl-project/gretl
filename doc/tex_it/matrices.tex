@@ -320,9 +320,9 @@ matrice sono:
    matrice nulla $m\times n$ \\
 \texttt{ones(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
    matrice $m\times n$ con tutti gli elementi pari a 1 \\
-\texttt{uniform(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+\texttt{muniform(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
    matrice $m\times n$ con elementi casuali uniformi \\
-\texttt{normal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
+\texttt{mnormal(}\textsl{m}\texttt{,}\textsl{n}\texttt{)} &
    matrice $m\times n$ con elementi casuali normali \\
 \end{tabular}
 \end{center}
@@ -333,10 +333,10 @@ per riferimento a variabili scalari pre-esistenti, come in
 \begin{code}
 scalar m = 4
 scalar n = 5
-matrix A = normal(m,n)
+matrix A = mnormal(m,n)
 \end{code}
 %
-Le funzioni matriciali \texttt{uniform()} e \texttt{normal()} riempiono la
+Le funzioni matriciali \texttt{muniform()} e \texttt{mnormal()} riempiono la
 matrice con valori estratti dalla distribuzione uniforme (0--1) e dalla
 distribuzione normale standard.
 
@@ -426,10 +426,11 @@ automaticamente dal programma quando viene stimato un modello:
 \texttt{\$stderr} & vettore degli errori standard stimati \\
 \texttt{\$uhat} & vettore dei residui \\
 \texttt{\$yhat} & vettore dei valori stimati \\
-\texttt{\$vcv} & matrice di covarianza dei coefficienti \\
+\texttt{\$vcv} & matrice di covarianza (si veda oltre) \\
 \texttt{\$rho} & coefficienti di autoregressione per il processo di errore \\
 \texttt{\$jalpha} & matrice $\alpha$ (loading) della procedura di Johansen \\
-\texttt{\$jbeta} & matrice $\beta$ (vettori di cointegrazione) della procedura di Johansen
+\texttt{\$jbeta} & matrice $\beta$ (vettori di cointegrazione) della procedura di Johansen \\
+\texttt{\$jvbeta} & matrice di covarianza per gli elementi non vincolati di $\beta$ della procedura di Johansen
 
 \end{tabular}
 \end{center}
@@ -465,7 +466,12 @@ il prodotto
 \begin{code}
   matrix Pi = $jalpha * $jbeta'
 \end{code}
-produce la stima a rango ridotto di $A(1)$.
+produce la stima a rango ridotto di $A(1)$. Poiché $\beta$ è identificato
+automaticamente attraverso la normalizzazione di Phillips (si veda la sezione
+\ref{sec:johansen-ident}), i suoi elementi non vincolati possiedono una
+matrice di covarianza che può essere recuperata attraverso l'accessorio
+\texttt{\$jvbeta}.
+
 
 
 \section{Selezione di sotto-matrici}
