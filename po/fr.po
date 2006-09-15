@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-09-04 15:20-0400\n"
-"PO-Revision-Date: 2006-09-05 01:02+0100\n"
+"PO-Revision-Date: 2006-09-15 02:34+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -434,23 +434,23 @@ msgid "Significant at the %d percent level "
 msgstr "significatif au seuil de %d%%"
 
 #: lib/src/compare.c:1476
-#, fuzzy, c-format
+#, c-format
 msgid "(%d%% critical value %s %.2f)"
-msgstr "Valeurs critiques"
+msgstr "(%d%% valeur critique %s %.2f)"
 
 #: lib/src/compare.c:1480
-#, fuzzy, c-format
+#, c-format
 msgid "10%% critical value for q = 20 is %.2f"
-msgstr "Valeur critique pour les points abérants :"
+msgstr "10%% valeur critique q = 20 est %.2f"
 
 #: lib/src/compare.c:1483
 msgid "Not significant at the 10 percent level "
 msgstr "Non significatif au seuil de 10%"
 
 #: lib/src/compare.c:1484
-#, fuzzy, c-format
+#, c-format
 msgid "(10%% value = %.2f)"
-msgstr "z = %.3f valeur de P %.5f"
+msgstr "(10%% valeur = %.2f)"
 
 #: lib/src/compare.c:1490
 msgid ""
@@ -915,9 +915,9 @@ msgid "   %s: probably a year... "
 msgstr "   %s : probablement une année... "
 
 #: lib/src/dataio.c:2366
-#, fuzzy, c-format
+#, c-format
 msgid "   %s: probably not a year\n"
-msgstr "   %s : probablement une année... "
+msgstr "   %s : probablement pas une année\n"
 
 #: lib/src/dataio.c:2370
 msgid "   but I can't make sense of the extra bit\n"
@@ -1333,17 +1333,16 @@ msgstr "Ceci n'est pas une base de données RATS 4.0 valide."
 #: lib/src/gretl_utils.c:695
 #, c-format
 msgid "frequency (%d) does not make seem to make sense"
-msgstr "fréquence (%d) ne semble pas être sensée"
+msgstr "fréquence (%d) ne semble pas être correcte"
 
 #: lib/src/dbread.c:545
-#, fuzzy, c-format
+#, c-format
 msgid "frequency %d is not supported"
-msgstr "distribution de fréquence"
+msgstr "fréquence %d n'est pas prise en charge"
 
 #: lib/src/dbread.c:829
-#, fuzzy
 msgid "No valid series found"
-msgstr "Pas de fichier de base de données repéré"
+msgstr "Aucune série valide trouvée"
 
 #: lib/src/dbread.c:841
 #: lib/src/dbread.c:893
@@ -2295,9 +2294,9 @@ msgid "fitted variance from model %d"
 msgstr "variance ajusté à partir du modèle %d"
 
 #: lib/src/genrfuncs.c:1181
-#, fuzzy, c-format
+#, c-format
 msgid "per-unit constants from model %d"
-msgstr "erreur sur la somme des carrés du modèle %d"
+msgstr "constantes individuelles du modèle %d"
 
 #: lib/src/graphing.c:813
 #, c-format
@@ -2550,9 +2549,8 @@ msgid "Weight variable is all zeros, aborting regression"
 msgstr "La variable de pondération ne contient que zéro, abandon de la régression"
 
 #: lib/src/gretl_errors.c:67
-#, fuzzy
 msgid "Weight variable contains negative values"
-msgstr "valeur négative interdite"
+msgstr "La variable de pondération contient des valeurs négatives"
 
 #: lib/src/gretl_errors.c:68
 msgid "Need valid starting and ending observations"
@@ -2663,9 +2661,9 @@ msgid "Error condition in execution of function %s"
 msgstr "Condition d'erreur dans l'exécution de la fonction %s"
 
 #: lib/src/gretl_func.c:3456
-#, fuzzy, c-format
+#, c-format
 msgid "\"%s\" is not defined.\n"
-msgstr "\"%s\" n'est pas une commande gretl.\n"
+msgstr "\"%s\" n'est pas défini.\n"
 
 #: lib/src/gretl_intl.c:105
 #: gui2/gretl.c:226
@@ -2833,7 +2831,7 @@ msgstr "Nombre d'observations utilisées"
 #: lib/src/gretl_model.c:3789
 #: gui2/model_table.c:620
 msgid "R-squared"
-msgstr "R carré"
+msgstr "R{\\super 2}"
 
 #: lib/src/gretl_model.c:3790
 #: lib/src/gretl_restrict.c:1059
@@ -2924,9 +2922,8 @@ msgid "Adjustments vector"
 msgstr "Vecteur d'ajustement"
 
 #: lib/src/gretl_model.c:3808
-#, fuzzy
 msgid "Covariance matrix for normalized cointegration matrix"
-msgstr "Échec de calcul de la matrice de corrélation"
+msgstr "Matrice de variance-covariance pour la matrice de cointégration normalisée"
 
 #: lib/src/gretl_model.c:4007
 msgid "Can't retrieve uhat: data set has changed"
@@ -2941,9 +2938,8 @@ msgid "Can't retrieve ht: data set has changed"
 msgstr "Ne peut récupérer ht : jeu de données a changé"
 
 #: lib/src/gretl_model.c:4012
-#, fuzzy
 msgid "Can't retrieve series: data set has changed"
-msgstr "Ne peut récupérer ht : jeu de données a changé"
+msgstr "Ne peut récupérer les séries : jeu de données a changé"
 
 #: lib/src/gretl_model.c:4026
 msgid "Can't retrieve intercepts"
@@ -3729,9 +3725,8 @@ msgid "Error adding first differences of variables.\n"
 msgstr "Erreur lors de l'ajout des premières différences de variables.\n"
 
 #: lib/src/interact.c:3089
-#, fuzzy
 msgid "Error adding dummy variables.\n"
-msgstr "Erreur d'ajout de variables"
+msgstr "Erreur d'ajout de variables muette.\n"
 
 #: lib/src/interact.c:3099
 msgid "Error adding lags of variables.\n"
@@ -5703,9 +5698,9 @@ msgid "3SLS residual, equation %d"
 msgstr "résidu 3SLS, équation %d"
 
 #: lib/src/system.c:1161
-#, fuzzy, c-format
+#, c-format
 msgid "system residual, equation %d"
-msgstr "résidu SUR, équation %d"
+msgstr "résidu d'estimation en système, équation %d"
 
 #: lib/src/system.c:1166
 #, c-format
@@ -5718,9 +5713,9 @@ msgid "3SLS fitted value, equation %d"
 msgstr "valeur ajustée 3SLS, équation %d"
 
 #: lib/src/system.c:1170
-#, fuzzy, c-format
+#, c-format
 msgid "system fitted value, equation %d"
-msgstr "valeur ajustée SUR, équation %d"
+msgstr "valeur ajustée d'estimation en système, équation %d"
 
 #: lib/src/system.c:1210
 #, c-format
@@ -5811,13 +5806,13 @@ msgid "squared time trend variable"
 msgstr "variable de tendance temporelle quadratique"
 
 #: lib/src/tsls.c:1061
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "The order condition for identification is not satisfied.\n"
 "At least %d more instruments are needed."
 msgstr ""
 "La condition d'ordre pour l'identification n'est pas satisfaite.\n"
-"varlist 2 nécessite au moins %d variables de plus qui ne sont pas dans varlist 1."
+"Au moins %d instruments supplémentaires sont nécessaires."
 
 #: lib/src/usermat.c:2229
 msgid "Matrix inversion failed"
@@ -6346,7 +6341,7 @@ msgstr "Un logiciel d'économétrie pour Gnome distribué sous la licence GNU Gener
 #: gui2/about.c:177
 #: gui2/about.c:178
 msgid "translator_credits"
-msgstr "Traduction française par Michel Robitaille"
+msgstr "Traduction française par Florent Bresson et Michel Robitaille"
 
 #: gui2/about.c:103
 #, c-format
@@ -7575,9 +7570,8 @@ msgid "gretl: practice files"
 msgstr "gretl : fichiers d'entraînement"
 
 #: gui2/datafiles.c:887
-#, fuzzy
 msgid "gretl: function packages"
-msgstr "gretl : fichiers de fonction"
+msgstr "gretl : package de fonction"
 
 #: gui2/datafiles.c:894
 msgid "gretl: data files"
@@ -8121,18 +8115,16 @@ msgid "Number of cross-sectional units:"
 msgstr "Nombre d'unités de coupe transversale :"
 
 #: gui2/dialogs.c:2860
-#, fuzzy
 msgid "Panel index variables"
-msgstr "variable index"
+msgstr "variables d'indéxation en panel"
 
 #: gui2/dialogs.c:2861
 msgid "Confirm dataset structure:"
 msgstr "Confirmer la structure du jeu de données :"
 
 #: gui2/dialogs.c:2929
-#, fuzzy
 msgid "gretl: new dataset"
-msgstr "gretl : créer le jeu de données"
+msgstr "gretl : nouveau jeu de données"
 
 #: gui2/dialogs.c:2930
 msgid ""
@@ -8148,13 +8140,12 @@ msgid "gretl: name variable"
 msgstr "gretl : nom de variable"
 
 #: gui2/dialogs.c:2935
-#, fuzzy
 msgid ""
 "Enter name for first variable\n"
 "(max. 15 characters)"
 msgstr ""
-"Entrer le nom de la nouvelle variable\n"
-"(max 8 caractères)"
+"Entrer le nom pour la première variable\n"
+"(max 15 caractères)"
 
 #: gui2/dialogs.c:2978
 #, c-format
@@ -8605,9 +8596,8 @@ msgid "the mean of the whole series"
 msgstr "la moyenne de l'ensemble de la série"
 
 #: gui2/filters.c:425
-#, fuzzy
 msgid "the mean of the first n observations"
-msgstr "Il y avait des observations manquantes"
+msgstr "la moyenne des n premières observations"
 
 #: gui2/filters.c:447
 #, fuzzy
@@ -8615,18 +8605,16 @@ msgid "gretl: time-series filter"
 msgstr "Pour les données de séries temporelles"
 
 #: gui2/filters.c:464
-#, fuzzy
 msgid "Number of observations in average:"
-msgstr "Nombre d'observations à ajouter :"
+msgstr "Nombre d'observations à la moyenne :"
 
 #: gui2/filters.c:475
 msgid "Centered"
 msgstr "Centré"
 
 #: gui2/filters.c:486
-#, fuzzy
 msgid "Weight on current observation:"
-msgstr "première observation"
+msgstr "Pondération de l'observation courante"
 
 #: gui2/filters.c:500
 msgid "lambda (higher values -> smoother trend):"
@@ -8740,9 +8728,8 @@ msgstr ""
 "mais aucune matrice n'est actuellement définie"
 
 #: gui2/fncall.c:767
-#, fuzzy
 msgid "Function package is broken"
-msgstr "Pas de fichiers de fonctions repéré"
+msgstr "Le package de function est cassé"
 
 #: gui2/fncall.c:786
 #: gui2/fncall.c:804
@@ -8776,7 +8763,7 @@ msgstr "données de panel"
 
 #: gui2/fnsave.c:475
 msgid "Data requirement"
-msgstr ""
+msgstr "Exigences relatives aux données"
 
 #: gui2/fnsave.c:535
 msgid "Minimum gretl version"
@@ -8816,8 +8803,9 @@ msgid "Edit function code"
 msgstr "Editer le code de la fonction"
 
 #: gui2/fnsave.c:691
+#, fuzzy
 msgid "Upload package to server on save"
-msgstr ""
+msgstr "Upload package to server on save"
 
 #: gui2/fnsave.c:740
 msgid "gretl: upload"
@@ -8825,7 +8813,7 @@ msgstr "gretl : charger"
 
 #: gui2/fnsave.c:742
 msgid "Upload function package"
-msgstr ""
+msgstr "Télécharger le package de fonction"
 
 #: gui2/fnsave.c:752
 msgid "Login"
@@ -8842,6 +8830,10 @@ msgid ""
 "The 'Website' button below should open this page\n"
 "in your web browser."
 msgstr ""
+"Si vous n'avez pas de login pour le serveur gretlr\n"
+"voir http://ricardo.ecn.wfu.edu/gretl/apply/.\n"
+"Le bouton 'Website' ouvre cette page\n"
+"dans votre navigateur internet."
 
 #: gui2/gpt_control.c:219
 msgid " Click to set label position"
@@ -10093,9 +10085,9 @@ msgstr "SVP veuillez fournir le nom du jeu de données courant"
 
 #: gui2/gretlwin32.c:675
 #: plugin/mailer.c:593
-#, c-format
+#, fuzzy, c-format
 msgid "Please find the gretl script %s attached."
-msgstr ""
+msgstr "Please find the gretl script %s attached."
 
 #: gui2/gretlwin32.c:809
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
@@ -11364,13 +11356,12 @@ msgid "gretl: GARCH"
 msgstr "gretl : VAR"
 
 #: gui2/library.c:2973
-#, fuzzy
 msgid ""
 "Specification is malformed\n"
 "Should be like \"foo 5\""
 msgstr ""
 "Mauvaise spécification\n"
-"Devrait être quelque chose comme \"foo 1 2.5\""
+"Devrait être quelque chose comme \"foo 5\""
 
 #: gui2/library.c:2979
 msgid ""
@@ -11397,9 +11388,8 @@ msgid "Range is non-positive!"
 msgstr "L'étendue n'est pas positive !"
 
 #: gui2/library.c:2996
-#, fuzzy
 msgid "The degrees of freedom must be positive"
-msgstr "degrés de liberté du modèle %d"
+msgstr "Le nombre de degrés de libertés doit être positif"
 
 #: gui2/library.c:3116
 #, c-format
@@ -11528,9 +11518,8 @@ msgid "Number of lags to create:"
 msgstr "Nombre de reatrds à créer :"
 
 #: gui2/library.c:3836
-#, fuzzy
 msgid "No discrete variables were selected"
-msgstr "Aucune variable indépendante n'a été omise"
+msgstr "Aucune variable discrète n'a été sélectionnée"
 
 #: gui2/library.c:3964
 #, c-format
@@ -11933,9 +11922,8 @@ msgid "Model table cleared"
 msgstr "Table des modèles a déjà été vidée"
 
 #: gui2/model_table.c:142
-#, fuzzy
 msgid "Sorry, this model can't be put in the model table"
-msgstr "Désolé, les modèles NLS ne peuvent être placés dans la table des modèles"
+msgstr "Désolé, ce modèle ne peut être ajouté à la table des modèles"
 
 #: gui2/model_table.c:149
 msgid "Sorry, ARMA models can't be put in the model table"
@@ -12288,8 +12276,9 @@ msgid "Test down from maximum lag order"
 msgstr "Test vers le bas à partir de l'ordre maximum de délai"
 
 #: gui2/selector.c:2707
+#, fuzzy
 msgid "Skip initial DF tests"
-msgstr ""
+msgstr "Skip initial DF tests"
 
 #: gui2/selector.c:2711
 msgid "Iterated weighted least squares"
@@ -12364,8 +12353,9 @@ msgid "factorized plot"
 msgstr "traçé factorisé"
 
 #: gui2/selector.c:3005
+#, fuzzy
 msgid "functions to package"
-msgstr ""
+msgstr "functions to package"
 
 #: gui2/selector.c:3023
 msgid "Variables to test"
@@ -12439,7 +12429,7 @@ msgstr "Sélectionner les variables pour copier"
 #: gui2/selector.c:3270
 #, fuzzy
 msgid "Define named list"
-msgstr ""
+msgstr "Define named list"
 
 #: gui2/selector.c:3517
 msgid "Available vars"
@@ -12600,9 +12590,8 @@ msgstr ""
 "Lecture du fichier de session %s\n"
 
 #: gui2/session.c:915
-#, fuzzy
 msgid "Couldn't set sample"
-msgstr "Ne peut ouvrir le fichier de graphe"
+msgstr "Ne peut établir l'échantillon"
 
 #: gui2/session.c:970
 msgid ""
