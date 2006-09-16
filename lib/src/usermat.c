@@ -1241,6 +1241,8 @@ static int real_delete_user_matrix (user_matrix *u)
 		matrices = tmp;
 	    }
 	}
+
+	n_matrices--;
     }
 
     return err;

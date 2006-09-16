@@ -161,7 +161,7 @@ static struct gretl_cmd gretl_cmds[] = {
 static struct gretl_cmd gretl_cmd_aliases[] = {
     { GENR, "eval" },   
     { GENR, "series" },   
-    { GENR, "scalar" },   
+    { GENR, "scalar" },  
     { LOOP, "for" },   
     { LOOP, "foreach" },
     { LOOP, "while" },

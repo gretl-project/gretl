@@ -1352,6 +1352,19 @@ static int get_sepcount (const char *s)
     return c;
 }
 
+static char *copy_remainder (const char *line, int pos)
+{
+    char *rem;
+
+    if (*(line + pos) == '\0') {
+	rem = gretl_strdup(line + pos);
+    } else {
+	rem = gretl_strdup(line + pos + 1);
+    }
+
+    return rem;
+}
+
 /**
  * parse_command_line:
  * @line: the command line.
@@ -1551,7 +1564,7 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     */
     nf = count_free_fields(line) - 1;
     pos = strlen(cmd->word);
-    remainder = gretl_strdup(line + pos + 1);
+    remainder = copy_remainder(line, pos);
     if (remainder == NULL) {
 	cmd->errcode = E_ALLOC;
 	goto bailout;

@@ -1634,16 +1634,26 @@ static int real_dataset_drop_listed_vars (const int *list, double ***pZ,
 int dataset_drop_listed_variables (const int *list, double ***pZ, 
 				   DATAINFO *pdinfo, int *renumber)
 {
+    const int *dlist;
+    int last[2];
     int err;
 
-    err = real_dataset_drop_listed_vars(list, pZ, pdinfo, renumber,
+    if (list != NULL && list[0] == 0) {
+	last[0] = 1;
+	last[1] = pdinfo->v - 1;
+	dlist = last;
+    } else {
+	dlist = list;
+    }
+
+    err = real_dataset_drop_listed_vars(dlist, pZ, pdinfo, renumber,
 					DROP_NORMAL);
 
     if (!err && complex_subsampled()) {
 	double ***fZ = fetch_full_Z();
 	DATAINFO *fdinfo = fetch_full_datainfo();
 
-	err = real_dataset_drop_listed_vars(list, fZ, fdinfo, NULL,
+	err = real_dataset_drop_listed_vars(dlist, fZ, fdinfo, NULL,
 					    DROP_SPECIAL);
 	reset_full_Z(fZ);
     }
