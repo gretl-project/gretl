@@ -39,6 +39,7 @@
 #include "objstack.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
+#include "usermat.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -899,7 +900,6 @@ static int exec_line (char *line, PRN *prn)
     case LDIFF: 
     case LOGS:
     case MAHAL:
-    case MATRIX:
     case MEANTEST: 
     case MULTIPLY: 
     case OUTFILE: 
@@ -1054,6 +1054,13 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case DELEET:
+	if (get_matrix_by_name(cmd.param)) {
+	    err = user_matrix_destroy(cmd.param, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
+	}	    
 	if (complex_subsampled()) {
 	    pputs(prn, _("Can't delete a variable when in sub-sample"
 			 " mode\n"));

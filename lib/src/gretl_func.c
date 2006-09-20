@@ -410,9 +410,7 @@ static int new_var_assignment (fncall *call, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else {
 	    /* assigning a matrix, not a variable? */
-	    gretl_matrix *S = get_matrix_by_name(cfun->returns[i].name,
-						 pdinfo);
-
+	    gretl_matrix *S = get_matrix_by_name(cfun->returns[i].name);
 
 	    if (S != NULL) {
 		gretl_matrix *T;
@@ -2872,10 +2870,6 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
-#define LOCAL_COPY_LISTS 1
-
-#ifdef LOCAL_COPY_LISTS
-
 /* expand by one element the mapping (in the form of two parallel
    lists) between the ID numbers of "outer scope" variables and
    the ID numbers of the corresponding local copies of those
@@ -2995,8 +2989,6 @@ static int localize_list (const char *oldname, const char *newname,
     return err;
 }
 
-#endif
-
 /* Check number of arguments to function.  If there are trailing
    parameters that have specified default values, it's OK if the
    argument count is short (the defaults will be used).  An excess
@@ -3069,6 +3061,10 @@ static int check_and_allocate_function_args (ufunc *fun,
 	return err;
     }
 
+    /* FIXME: need to check function return types against any pre-
+       existing variables of the same names, to preserve type
+       compatibility */
+
     for (i=0; i<fun->n_params && !err; i++) {
 #if FN_DEBUG
 	fprintf(stderr, "fn argv[%d]: arg='%s', param.name='%s' param.type=%d\n", 
@@ -3113,18 +3109,14 @@ static int check_and_allocate_function_args (ufunc *fun,
 	    } 
 	} else if (fun->params[i].type == ARG_LIST) {
 	    if (get_list_by_name(argv[i]) != NULL || !strcmp(argv[i], "null")) {
-#ifdef LOCAL_COPY_LISTS
 		err = localize_list(argv[i], fun->params[i].name, pZ, pdinfo,
 				    &outlist, &inlist);
-#else
-		err = copy_named_list_as(argv[i], fun->params[i].name);
-#endif
 	    } else {
 		sprintf(gretl_errmsg, "argument %d (%s): not a list", i+1, argv[i]);
 		err = 1;
 	    }
 	} else if (fun->params[i].type == ARG_MATRIX) {
-	    if (get_matrix_by_name(argv[i], pdinfo) != NULL) {
+	    if (get_matrix_by_name(argv[i]) != NULL) {
 		err = copy_named_matrix_as(argv[i], fun->params[i].name);
 #if FN_DEBUG
 		fprintf(stderr, "done copy_named_matrix_as, '%s' -> '%s', err = %d\n", 

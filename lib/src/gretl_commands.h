@@ -87,7 +87,6 @@ typedef enum {
     LOGS,
     LOOP,
     MAHAL,
-    MATRIX,
     MEANTEST,
     MLE,
     MODELTAB,

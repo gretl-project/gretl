@@ -392,11 +392,8 @@ struct MODEL_ {
 #include "interact.h"
 #include "dataset.h"
 #include "estimate.h"
-#ifdef NEW_GENR
-# include "genmain.h"
-#else
-# include "generate.h"
-#endif
+#include "genmain.h"
+#include "genfuncs.h"
 #include "compare.h"
 #include "gretl_intl.h"
 #include "gretl_list.h"

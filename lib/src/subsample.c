@@ -555,7 +555,7 @@ static int mask_from_temp_dummy (const char *line,
 	return err;
     }
 
-    dnum = varindex(pdinfo, "tmpmsk");
+    dnum = varindex(pdinfo, "__tmpmsk");
     err = copy_dummy_to_mask(mask, (*pZ)[dnum], pdinfo->n);
     if (err) {
 	sprintf(gretl_errmsg, _("'%s' is not a dummy variable"), "mask");

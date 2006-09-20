@@ -235,7 +235,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == LEVERAGE || \
                        c == LMTEST || \
                        c == LOOP || \
-                       c == MATRIX || \
                        c == MLE || \
                        c == MODELTAB || \
                        c == NLS || \
@@ -799,7 +798,7 @@ static int add_time_ok (const char *s, int *lnum,
 	cmd->opt |= OPT_T;
 	return 1; /* handled */
     } else {
-	int err = genrtime(pZ, pdinfo, 1);
+	int err = gen_time(pZ, pdinfo, 1);
 
 	if (err) {
 	    cmd->errcode = err;
@@ -1033,11 +1032,15 @@ static int plausible_genr_start (const char *s, CMD *cmd,
 	    while (*s == ' ') s++;
 	    if (strspn(s, ok) && check_varname(word) == 0) {
 		cmd->ci = GENR;
-		if (get_matrix_by_name(word, pdinfo)) {
+		if (get_matrix_by_name(word)) {
 		    cmd->opt = OPT_M;
 		}
 	    }
 	}
+    } else if (varindex(pdinfo, s) < pdinfo->v) {
+	cmd->ci = GENR;
+    } else if (get_matrix_by_name(s)) {
+	cmd->ci = GENR;
     }
 
     return cmd->ci;
@@ -1573,6 +1576,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 #if CMD_DEBUG
     fprintf(stderr, "nf=%d, remainder='%s'\n", nf, remainder);
 #endif
+
+    if (cmd->ci == DELEET && nf == 1 &&
+	get_matrix_by_name(remainder)) {
+	cmd_param_grab_string(cmd, remainder);
+	return cmd->errcode;
+    }
 
     /* need to treat rhodiff specially -- put everything from
        the end of the command word to the first semicolon into
@@ -2940,36 +2949,11 @@ static int add_obs (int n, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 {
-#if 0 /* not really ready for this */
-    if (opt & OPT_V) {
-	const char *word;
-	const char *desc;
-	int m = get_first_model_stat(&word, &desc);
-
-	while (m > 0) {
-	    pprintf(prn, "%-8s  %s\n", word, _(desc));
-	    m = get_next_model_stat(&word, &desc);
-	}
-    } 
-
-    if (opt & OPT_T) {
-	/* print_available_tests(pdinfo, prn); */
-    }
-
-    if (opt == OPT_NONE) {
-	if (pdinfo->descrip != NULL) {
-	    pprintf(prn, "%s\n", pdinfo->descrip);
-	} else {
-	    pputs(prn, _("No data information is available.\n"));
-	}
-    }
-#else
     if (pdinfo->descrip != NULL) {
 	pprintf(prn, "%s\n", pdinfo->descrip);
     } else {
 	pputs(prn, _("No data information is available.\n"));
     }
-#endif
 }
 
 /* common code for command-line and GUI client programs, where the
@@ -3283,10 +3267,6 @@ int simple_commands (CMD *cmd, const char *line,
 	} else if (cmd->opt & OPT_L) {
 	    err = remember_list(cmd->list, cmd->param, prn);
 	} 
-	break;
-
-    case MATRIX:
-	err = matrix_command(line, pZ, pdinfo, prn);
 	break;
 
     case TRANSPOSE:

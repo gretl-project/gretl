@@ -20,7 +20,6 @@ for f in `find gretl/gui -type l` ; do
    rm $f
 done
 make -C gretl/doc/tex clean
-make -C gretl/doc/commands -f cmdref.mk clean
 rm -f gretl/share/*.txt
 
 mv gretl gretl-${version}

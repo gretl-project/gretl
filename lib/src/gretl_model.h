@@ -23,44 +23,6 @@
 #include "objstack.h"
 
 typedef enum {
-    M_ESS = 1,    /* error sum of squares */
-    M_T,          /* observations used */
-    M_RSQ,        /* R-squared */
-    M_SIGMA,      /* standard error of residuals */
-    M_DF,         /* degrees of freedom */
-    M_NCOEFF,     /* total number of estimated coefficients */
-    M_LNL,        /* log-likelihood */
-    M_AIC,        /* Akaike info criterion */
-    M_BIC,        /* Bayesian info criterion */
-    M_HQC,        /* Hannan-Quinn criterion */
-    M_TRSQ,       /* T * R-squared, last model */
-    M_SCALAR_MAX, /* -- separator -- */
-    M_COEFF_S,    /* single coefficient */
-    M_SE_S,       /* single standard error */
-    M_VCV_S,      /* single covariance matrix entry */
-    M_RHO_S,      /* single rho array entry */
-    M_ELEM_MAX,   /* -- separator -- */
-    M_UHAT,       /* residuals */
-    M_YHAT,       /* fitted values */
-    M_AHAT,       /* per-unit intercepts in panel model */
-    M_H,          /* GARCH predicted variances */
-    M_SERIES_MAX, /* -- separator -- */
-    M_COEFF,      /* parameter estimates */
-    M_SE,         /* parameter standard errors */
-    M_VCV,        /* parameter covariance matrix */
-    M_RHO,        /* autoregressive coefficients */
-    M_JALPHA,     /* Johansen's alpha */
-    M_JBETA,      /* Johansen's beta */
-    M_JVBETA,     /* Covariance matrix for Johansen's normalised beta */
-    M_MAX         /* sentinel */
-} ModelDataIndex;
-
-#define model_data_is_scalar(i) (i > 0 && i < M_SCALAR_MAX)
-#define model_data_is_scalar_element(i) (i > M_SCALAR_MAX && i < M_ELEM_MAX)
-#define model_data_is_series(i) (i > M_ELEM_MAX && i < M_SERIES_MAX)
-#define model_data_is_matrix(i) (i > M_ELEM_MAX && i != M_SERIES_MAX)
-
-typedef enum {
     MODEL_DATA_NONE,
     MODEL_DATA_INT,
     MODEL_DATA_LIST,
@@ -238,7 +200,7 @@ char *gretl_model_get_param_name (const MODEL *pmod,
 
 int gretl_model_get_param_number (const MODEL *pmod, 
 				  const DATAINFO *pdinfo,
-				  char *pname);
+				  const char *pname);
 
 void free_coeff_intervals (CoeffIntervals *cf);
 
@@ -356,8 +318,6 @@ void gretl_model_set_name (MODEL *pmod, const char *name);
 
 const char *gretl_model_get_name (const MODEL *pmod);
 
-int gretl_model_data_index (const char *s);
-
 double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx, 
 			       int *err);
 
@@ -367,6 +327,10 @@ gretl_model_get_series (const MODEL *pmod, const DATAINFO *pdinfo,
 
 gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx, 
 				      int *err);
+
+double 
+gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
+			      const DATAINFO *pdinfo, int *err);
 
 int gretl_model_serialize (const MODEL *pmod, SavedObjectFlags flags,
 			   FILE *fp);

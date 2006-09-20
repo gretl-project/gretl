@@ -24,6 +24,7 @@
 #include "libset.h"
 #include "usermat.h"
 #include "gretl_panel.h"
+#include "loop_private.h"
 
 #include <errno.h>
 
@@ -842,13 +843,13 @@ int gretl_int_from_string (const char *s, const double **Z,
 	return n;
     } else if (Z == NULL || pdinfo == NULL) {
 	*err = E_DATA;
+    } else if (test[1] == '\0' && is_active_index_loop_char(*test)) {
+	n = loop_scalar_read(*s);
     } else {
 	int v = varindex(pdinfo, s);
 	double x;
 
-	if (v == INDEXNUM) {
-	    n = loop_scalar_read(*s);
-	} else if (v >= pdinfo->v) {
+	if (v >= pdinfo->v) {
 	    *err = E_UNKVAR;
 	} else if (var_is_series(pdinfo, v)) {
 	    *err = E_TYPES;

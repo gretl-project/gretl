@@ -95,20 +95,19 @@ void gretl_object_ref (void *ptr, GretlObjType type);
 
 void gretl_object_unref (void *ptr, GretlObjType type);
 
-double saved_object_get_scalar (const char *oname, const char *key, int *err);
+double saved_object_get_scalar (const char *oname, int idx, int *err);
 
 int saved_object_print_scalar (const char *oname, const char *key, PRN *prn);
 
 double saved_object_get_scalar_element (const char *oname, const char *key,
 					const DATAINFO *pdinfo, int *err);
 
-double *saved_object_get_series (const char *oname, const char *key, 
-				 const DATAINFO *pdinfo, int *err);
+double *saved_object_get_series (const char *oname, int idx, 
+				 const DATAINFO *pdinfo, 
+				 int *err);
 
 gretl_matrix *
-saved_object_get_matrix (const char *oname, const char *key,
-			 double ***pZ, DATAINFO *pdinfo,
-			 int *err);
+saved_object_get_matrix (const char *oname, int idx, int *err);
 
 int gretl_object_rename (void *p, GretlObjType type, const char *oname);
 

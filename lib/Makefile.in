@@ -75,7 +75,8 @@ PUBLIC_HDRS = \
 	discrete.h \
 	estimate.h \
 	forecast.h \
-	generate.h \
+	genmain.h \
+	genfuncs.h \
 	graphing.h \
 	gretl_commands.h \
 	gretl_errors.h \
@@ -132,9 +133,11 @@ SRCS = adf_kpss.c \
 	discrete.c \
 	estimate.c \
 	forecast.c \
-	generate.c \
-	genrfuncs.c \
-	genstack.c \
+	geneval.c \
+	genfuncs.c \
+	genlex.c \
+	genmain.c \
+	gensyntax.c \
 	graphing.c \
 	gretl_commands.c \
 	gretl_errors.c \

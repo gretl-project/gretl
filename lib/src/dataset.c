@@ -1370,40 +1370,6 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 }
 
 /**
- * dataset_scalar_to_vector:
- * @v: index number of variable to process.
- * @pZ: pointer to data array.
- * @pdinfo: dataset information.
- *
- * Expands an existing scalar member of a dataset to a
- * full-length vector.  All values are initialized to
- * the missing value code, #NABDL.
- *
- * Returns: 0 on success, %E_ALLOC on error.
- */
-
-int dataset_scalar_to_vector (int v, double ***pZ, DATAINFO *pdinfo)
-{
-    double *tmp;
-    int t, err = 0;
-
-    tmp = realloc((*pZ)[v], pdinfo->n * sizeof *tmp);
-
-    if (tmp == NULL) {
-	err = E_ALLOC;
-    } else {
-	/* initialize all vals to missing */
-	for (t=0; t<pdinfo->n; t++) {
-	    tmp[t] = NADBL;
-	}
-	(*pZ)[v] = tmp;
-	set_var_scalar(pdinfo, v, 0);
-    }
-
-    return err;
-}
-
-/**
  * dataset_add_scalar_as:
  * @numstr: string representation of numeric value.
  * @newname: name to give the new variable.
@@ -2110,6 +2076,18 @@ int dataset_stack_variables (double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static int found_log_parent (const char *s, char *targ)
+{
+    int len = gretl_varchar_spn(s);
+
+    if (len < VNAMELEN && s[len] == ')') {
+	sscanf(s, "%15[^)]", targ);
+	return 1;
+    }
+
+    return 0;
+}
+
 /**
  * is_log_variable:
  * @i: ID number of variable.
@@ -2132,17 +2110,12 @@ int is_log_variable (int i, const DATAINFO *pdinfo, char *parent)
     if (s != NULL && *s != '\0') {
 	if (sscanf(s, "= log of %15s", parent) == 1) {
 	    return 1;
+	} else if (!strncmp(s, "log(", 4)) {
+	    return found_log_parent(s + 4, parent);
 	} else {
 	    s += strcspn(s, "=");
 	    if (!strncmp(s, "=log(", 5)) {
-		int len;
-
-		s += 5;
-		len = gretl_varchar_spn(s);
-		if (len < VNAMELEN && s[len] == ')') {
-		    sscanf(s, "%15[^)]", parent);
-		    return 1;
-		}
+		return found_log_parent(s + 5, parent);
 	    }
 	}
     }

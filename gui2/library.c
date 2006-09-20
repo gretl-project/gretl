@@ -41,6 +41,7 @@
 #include "objstack.h"
 #include "gretl_xml.h"
 #include "gretl_panel.h"
+#include "usermat.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -3727,7 +3728,7 @@ void add_index (gpointer data, guint tm, GtkWidget *widget)
 	return;
     }
 
-    if (genrtime(&Z, datainfo, tm)) {
+    if (gen_time(&Z, datainfo, tm)) {
 	errbox((tm)? _("Error generating time trend") :
 	       _("Error generating index variable"));
     } else {
@@ -6081,7 +6082,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case LDIFF: 
     case LOGS:
     case MAHAL:
-    case MATRIX:
     case MEANTEST: 
     case MULTIPLY: 
     case OUTFILE: 
@@ -6254,6 +6254,13 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
 	break;
 
     case DELEET:
+	if (get_matrix_by_name(cmd.param)) {
+	    err = user_matrix_destroy(cmd.param, prn);
+	    if (err) {
+		errmsg(err, prn);
+	    } 
+	    break;
+	}
 	if (dataset_locked()) {
 	    break;
 	}

@@ -798,7 +798,7 @@ static int set_initvals (const char *s, const DATAINFO *pdinfo, PRN *prn)
 	gretl_matrix_free(state->initvals);
 	state->initvals = NULL;
     } else {
-	m = get_matrix_by_name(mname, pdinfo);
+	m = get_matrix_by_name(mname);
 	if (m == NULL) {
 	    pprintf(prn, _("'%s': no such matrix\n"), mname);
 	    err = E_DATA;

@@ -17,65 +17,291 @@
  *
  */
 
-/* various functions for generating variables, mostly 
-   used in generate.c */
+/* various functions called by 'genr' */
 
-#include "libgretl.h"
+#include "genparse.h"
 #include "libset.h"
-#include "genstack.h"
 
 #include <errno.h>
 
-struct model_grab {
-    int idx;
-    const char *mword;
+/* apparatus for saving sorted case markers */
+
+struct val_mark {
+    double x;
+    char mark[OBSLEN];
 };
 
-struct model_grab grabs[] = {
-    { M_ESS,        "$ess" },
-    { M_T,          "$t" },
-    { M_RSQ,        "$rsq" },
-    { M_SIGMA,      "$sigma" },
-    { M_DF,         "$df" },
-    { M_NCOEFF,     "$ncoeff" },
-    { M_LNL,        "$lnl" },
-    { M_AIC,        "$aic" },
-    { M_BIC,        "$bic" },
-    { M_HQC,        "$hqc" },
-    { M_TRSQ,       "$trsq" },
-    { M_SCALAR_MAX,  NULL },
-    { M_COEFF_S,    "$coeff" },
-    { M_SE_S,       "$stderr" },
-    { M_VCV_S,      "$vcv" },
-    { M_RHO_S,      "$rho" },
-    { M_ELEM_MAX,    NULL },
-    { M_UHAT,       "$uhat" },
-    { M_YHAT,       "$yhat" },
-    { M_AHAT,       "$ahat" },
-    { M_H,          "$h" },
-    { M_SERIES_MAX,  NULL },
-    { M_COEFF,      "$coeff" },
-    { M_SE,         "$ess" },
-    { M_VCV,        "$vcv" },
-    { M_RHO,        "$rho" },
-    { M_JALPHA,     "$jalpha" }, 
-    { M_JBETA,      "$jbeta" },
-    { M_JVBETA,     "$jvbeta" },
-    { M_MAX,         NULL }
-};
-
-const char *get_model_stat_word (int idx)
+static int compare_vms (const void *a, const void *b)
 {
-    int i;
+    const struct val_mark *va = (const struct val_mark *) a;
+    const struct val_mark *vb = (const struct val_mark *) b;
+     
+    return (va->x > vb->x) - (va->x < vb->x);
+}
 
-    for (i=0; grabs[i].idx != M_MAX; i++) {
-	if (idx == grabs[i].idx) {
-	    return grabs[i].mword;
+static int inverse_compare_vms (const void *a, const void *b)
+{
+    const struct val_mark *va = (const struct val_mark *) a;
+    const struct val_mark *vb = (const struct val_mark *) b;
+     
+    return (vb->x > va->x) - (vb->x < va->x);
+}
+
+static char **SortedS;
+
+/* do a simple sort if there are no case markers in the dataset,
+   but if there are case markers, keep a record of the sorted
+   markers and attach it to the newly generated variable
+*/
+
+int sort_series (const double *x, double *y, int f, 
+		 const DATAINFO *pdinfo)
+{
+    double *z = NULL;
+    struct val_mark *vm = NULL;
+    int markers = 0;
+    int n = pdinfo->t2 - pdinfo->t1 + 1;
+    int i, t;
+
+    if (pdinfo->S != NULL && !complex_subsampled()) {
+	SortedS = strings_array_new_with_length(pdinfo->n, OBSLEN);
+	markers = SortedS != NULL;
+    }
+
+    if (markers) {
+	vm = malloc(n * sizeof *vm);
+	if (vm == NULL) {
+	    free_strings_array(SortedS, pdinfo->n);
+	    SortedS = NULL;
+	    return E_ALLOC;
+	}
+    } else {
+	z = malloc(n * sizeof *z);
+	if (z == NULL) {
+	    return E_ALLOC;
 	}
     }
 
-    return NULL;
+    i = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (!na(x[t])) {
+	    if (markers) {
+		vm[i].x = x[t];
+		strcpy(vm[i++].mark, pdinfo->S[t]);
+	    } else {
+		z[i++] = x[t];
+	    }
+	}
+    }
+
+    if (f == DSORT) {
+	if (markers) {
+	    qsort(vm, i, sizeof *vm, inverse_compare_vms);
+	} else {
+	    qsort(z, i, sizeof *z, gretl_inverse_compare_doubles);
+	}
+    } else {
+	if (markers) {
+	    qsort(vm, i, sizeof *vm, compare_vms);
+	} else {
+	    qsort(z, i, sizeof *z, gretl_compare_doubles);
+	}
+    }
+
+    i = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(x[t])) {
+	    y[t] = NADBL;
+	} else if (markers) {
+	    y[t] = vm[i].x;
+	    strcpy(SortedS[t], vm[i++].mark);
+	} else {
+	    y[t] = z[i++];
+	}
+    }
+
+    free(z);
+    free(vm);
+
+    return 0;
 }
+
+/**
+ * diff_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @f: function, %DIF, %SDIF or %LDIF.
+ * @pdinfo: data set information.
+ *
+ * Calculates the differenced counterpart to the input 
+ * series @x.  If @f = %SDIF, the seasonal difference is
+ * computed; if @f = %LDIF, the log difference, and if
+ * @f = DIF, the ordinary first difference.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int diff_series (const double *x, double *y, int f, 
+		 const DATAINFO *pdinfo)
+{
+    int t1 = pdinfo->t1;
+    int k = (f == SDIF)? pdinfo->pd : 1;
+    int t, err = 0;
+
+    if (t1 < k) {
+	t1 = k;
+    }
+
+    for (t=t1; t<=pdinfo->t2; t++) {
+	if (pdinfo->structure == STACKED_TIME_SERIES &&
+	    panel_unit_first_obs(t, pdinfo)) {
+	    continue;
+	}
+
+	if (na(x[t]) || na(x[t-k])) {
+	    continue;
+	}
+
+	if (f == DIF || f == SDIF) {
+	    y[t] = x[t] - x[t-k];
+	} else if (f == LDIF) {
+	    if (x[t] <= 0.0 || x[t-k] <= 0.0) {
+		err = E_LOGS; /* FIXME: should be warning? */
+	    } else {
+		y[t] = log(x[t]) - log(x[t-k]);
+	    }
+	}
+    }
+
+    return 0; /* see FIXME above */
+}
+
+/**
+ * fracdiff_series:
+ * @x: array of original data.
+ * @y: array into which to write the result.
+ * @d: fraction by which to difference.
+ * @pdinfo: data set information.
+ *
+ * Calculates the fractionally differenced counterpart
+ * to the input series @x.
+ *
+ * Returns: 0 on success, non-zero error code on failure.
+ */
+
+int fracdiff_series (const double *x, double *y, double d,
+		     const DATAINFO *pdinfo)
+{
+    int dd, t, T;
+    const double TOL = 1.0E-07;
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    double phi = -d;
+    int err;
+
+#if 0
+    fprintf(stderr, "Doing fracdiff_series, with d = %g\n", d);
+#endif
+
+    err = array_adjust_t1t2(y, &t1, &t2);
+    if (err) {
+	return E_DATA;
+    } 
+
+    T = t2 - t1 + 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (t >= t1 && t <= t2) {
+	    y[t] = y[t];
+	} else {
+	    y[t] = NADBL;
+	}
+    }   
+
+    for (dd=1; dd<=T && fabs(phi)>TOL; dd++) {
+	for (t=t1+dd; t<=t2; t++) {
+	    y[t] += phi * x[t - dd];
+	}
+	phi *= (dd - d)/(dd + 1);
+    }
+
+    return 0;
+}
+
+int cum_series (const double *x, double *y, const DATAINFO *pdinfo)
+{
+    int t, s = pdinfo->t1;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(x[t])) {
+	    s++;
+	} else {
+	    break;
+	}
+    }
+
+    if (s < pdinfo->t2) {
+	y[s] = (na(x[s]))? 0.0 : x[s];
+	for (t=s+1; t<=pdinfo->t2; t++) {
+	    y[t] = y[t-1] + (na(x[t]))? 0.0 : x[t];
+	}
+    }
+
+    return 0;
+}
+
+int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
+{
+    int t1 = pdinfo->t1;
+    int t2 = pdinfo->t2;
+    double *z = NULL;
+    int i, t, n;
+
+    array_adjust_t1t2(x, &t1, &t2);
+
+    n = t2 - t1 + 1;
+    if (n <= 1) {
+	return E_DATA;
+    }
+
+    z = malloc(n * sizeof *z);
+    if (z == NULL) {
+	return E_ALLOC;
+    }
+
+    /* generate uniform random series */
+    gretl_uniform_dist(z, 0, n - 1);
+
+    /* sample from source series based on indices */
+    for (t=t1; t<=t2; t++) {
+	i = t1 + n * z[t-t1];
+	i = (i > t2)? t2 : i;
+	y[t] = x[i];
+    }
+
+    free(z);
+
+    return 0;
+}
+
+#if 0
+
+/* handling SortedS: */
+
+int maybe_pick_up_sorted_markers (void)
+{
+    if (!p->err && SortedS != NULL) {
+	if (genr_simple_sort(genr)) {
+	    /* "genr foo = sort(baz)" */
+	    set_sorted_markers(pdinfo, p->lhv, SortedS);
+	} else {
+	    free_strings_array(SortedS, pdinfo->n);
+	}
+    }
+    SortedS = NULL;
+}
+
+#endif
 
 static double hp_lambda (const DATAINFO *pdinfo)
 {
@@ -344,58 +570,6 @@ int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
     free(a);
 
     return err;
-}
-
-/**
- * get_fracdiff:
- * @y: array of original data.
- * @diffvec: array into which to write the result.
- * @d: fraction by which to difference.
- * @pdinfo: data set information.
- *
- * Calculates the fractionally differenced counterpart
- * to the input series @y.
- *
- * Returns: 0 on success, non-zero error code on failure.
- */
-
-int get_fracdiff (const double *y, double *diffvec, double d,
-		  const DATAINFO *pdinfo)
-{
-    int dd, t, T;
-    const double TOL = 1.0E-07;
-    int t1 = pdinfo->t1;
-    int t2 = pdinfo->t2;
-    double phi = -d;
-    int err;
-
-#if 0
-    fprintf(stderr, "Doing get_fracdiff, with d = %g\n", d);
-#endif
-
-    err = array_adjust_t1t2(y, &t1, &t2);
-    if (err) {
-	return E_DATA;
-    } 
-
-    T = t2 - t1 + 1;
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (t >= t1 && t <= t2) {
-	    diffvec[t] = y[t];
-	} else {
-	    diffvec[t] = NADBL;
-	}
-    }   
-
-    for (dd=1; dd<=T && fabs(phi)>TOL; dd++) {
-	for (t=t1+dd; t<=t2; t++) {
-	    diffvec[t] += phi * y[t - dd];
-	}
-	phi *= (dd - d)/(dd + 1);
-    }
-
-    return 0;
 }
 
 static int panel_x_offset (const DATAINFO *pdinfo, int *bad)
@@ -682,7 +856,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 }
 
 /**
- * genrunit:
+ * gen_unit:
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  *
@@ -692,7 +866,7 @@ int panel_dummies (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int genrunit (double ***pZ, DATAINFO *pdinfo)
+int gen_unit (double ***pZ, DATAINFO *pdinfo)
 {
     int xt = 0;
     int i, t;
@@ -762,7 +936,7 @@ make_panel_time_var (double *x, const DATAINFO *pdinfo)
 }
 
 /**
- * genrtime:
+ * gen_time:
  * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  * @tm: if non-zero, an actual time trend is wanted,
@@ -779,7 +953,7 @@ make_panel_time_var (double *x, const DATAINFO *pdinfo)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
+int gen_time (double ***pZ, DATAINFO *pdinfo, int tm)
 {
     int i, t;
 
@@ -809,7 +983,7 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
 }
 
 /**
- * genrwkday:
+ * genr_wkday:
  * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  *
@@ -822,7 +996,7 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
  * Returns: 0 on success, non-zero code on error.
  */
 
-int genrwkday (double ***pZ, DATAINFO *pdinfo)
+int gen_wkday (double ***pZ, DATAINFO *pdinfo)
 {
     char datestr[OBSLEN];
     int i, t;
@@ -993,119 +1167,6 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
     return x;
 }
 
-static int varnames_from_arg (const char *s, char *v1str, char *v2str)
-{
-    int i, p, n = strlen(s);
-
-    if (n > 2 * VNAMELEN + 1) {
-	return 1;
-    }
-
-    p = haschar(',', s);
-    if (p < 0 || p > VNAMELEN - 1) {
-	return 1;
-    }
-
-    /* get first var name */
-    for (i=0; i<p; i++) {
-	v1str[i] = s[i];
-    }
-    v1str[p] = '\0';
-
-    /* get second var name */
-    n = n - p - 1;
-    for (i=0; i<n; i++) {
-	v2str[i] = s[p+1+i];
-    }
-    v2str[i] = '\0';
-
-    return 0;
-}
-
-double genr_cov_corr (const char *s, double ***pZ, 
-		      const DATAINFO *pdinfo, int fn)
-{
-    char v1str[VNAMELEN], v2str[VNAMELEN];
-    int v1, v2;
-    double ret = NADBL;
-
-    if (varnames_from_arg(s, v1str, v2str)) {
-	return NADBL;
-    }
-
-    v1 = varindex(pdinfo, v1str);
-    v2 = varindex(pdinfo, v2str);
-
-    if (v1 >= pdinfo->v || v2 >= pdinfo->v) {
-	return NADBL;
-    }
-
-    if (fn == T_COV) {
-	ret = gretl_covar(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2]);
-    } else if (fn == T_CORR) {
-	ret = gretl_corr(pdinfo->t1, pdinfo->t2, (*pZ)[v1], (*pZ)[v2], NULL);
-    }
-
-    return ret;
-}
-
-double genr_vcv (const char *s, const DATAINFO *pdinfo, MODEL *pmod)
-{
-    int v1 = 0, v2 = 0;
-    int i, j, k;
-    char v1str[VNAMELEN], v2str[VNAMELEN];
-    int gotit;
-    double ret = NADBL;
-
-    if (pmod == NULL || pmod->list == NULL) {
-	return NADBL;
-    }
-
-    if (varnames_from_arg(s, v1str, v2str)) {
-	return NADBL;
-    }
-
-    v1 = gretl_model_get_param_number(pmod, pdinfo, v1str);
-    if (v1 < 0) {
-	return NADBL;
-    }
-
-    v2 = gretl_model_get_param_number(pmod, pdinfo, v2str);
-    if (v2 < 0) {
-	return NADBL;
-    }
-
-    /* make model vcv matrix if need be */
-    if (pmod->vcv == NULL && makevcv(pmod, pmod->sigma)) {
-	return NADBL;
-    }
-
-    /* now find the right entry */
-    if (v1 > v2) {
-	k = v1;
-	v1 = v2;
-	v2 = k;
-    }
-
-    gotit = 0;
-    k = 0;
-    for (i=0; i<pmod->ncoeff && !gotit; i++) {
-	for (j=0; j<pmod->ncoeff; j++) {
-	    if (j < i) {
-		continue;
-	    }
-	    if (i == v1 && j == v2) {
-		ret = pmod->vcv[k];
-		gotit = 1;
-		break;
-	    }
-	    k++;
-	}
-    }
-
-    return ret;
-}
-
 /**
  * genr_fit_resid:
  * @pmod: pointer to model to be tested.
@@ -1214,7 +1275,6 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
 	    }
 	}
 	if (calendar_data(pdinfo)) {
-	    charsub(test, ':', '/'); /* FIXME */
 	    for (t=0; t<pdinfo->n; t++) {
 		if (!strcmp(test, pdinfo->S[t]) ||
 		    !strcmp(test, pdinfo->S[t] + 2)) {
@@ -1234,7 +1294,6 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo)
     if (calendar_data(pdinfo)) {
 	char datestr[OBSLEN];
 
-	charsub(test, ':', '/'); /* FIXME */
 	for (t=0; t<pdinfo->n; t++) {
 	    calendar_date_string(datestr, t, pdinfo);
 	    if (!strcmp(test, datestr) ||
@@ -1254,35 +1313,18 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
     char *test;
     int t = -1;
 
-#if OBS_DEBUG
-    fprintf(stderr, "plain_obs_number: looking at '%s'\n", obs);
-#endif
-
     errno = 0;
 
     strtol(obs, &test, 10);
 
-    if (*test != '\0' || !strcmp(obs, test) || errno == ERANGE) {
-#if OBS_DEBUG
-	fprintf(stderr, "plain_obs_number: failed on '%s'\n", obs);
-#endif
-    } else {
-	t = atoi(obs) - 1; /* convert from 1-based to 0-based */ 
-    } 
-
-    if (t >= pdinfo->n) {
-	t = -1;
+    if (errno == 0 && *test == '\0') {
+	t = atoi(obs) - 1; /* convert from 1-based to 0-based */
+	if (t >= pdinfo->n) {
+	    t = -1;
+	}
     }
 
     return t;
-}
-
-static void fix_calendar_date (char *s)
-{
-    while (*s) {
-	if (*s == ':') *s = '/';
-	s++;
-    }
 }
 
 /* Given what looks like an observation number or date within "[" and
@@ -1293,23 +1335,14 @@ static void fix_calendar_date (char *s)
    space to 0-based indexing for internal purposes.
 */
 
-int get_t_from_obs_string (char *s, const double **Z, 
+int get_t_from_obs_string (const char *s, const double **Z, 
 			   const DATAINFO *pdinfo)
 {
-    int t;
+    int t = dateton(s, pdinfo);
 
 #if OBS_DEBUG
-    fprintf(stderr, "\nget_t_from_obs_string: s ='%s'\n", s);
-#endif
-
-    if (calendar_data(pdinfo)) {
-	fix_calendar_date(s);
-    } 
-
-    t = dateton(s, pdinfo);
-
-#if OBS_DEBUG
-    fprintf(stderr, " dateton gives t = %d\n", t);
+    fprintf(stderr, "\nget_t_from_obs_string: s ='%s', dateton gives t = %d\n", 
+	    s, t);
 #endif
 
     if (t < 0) {
@@ -1353,84 +1386,7 @@ int get_t_from_obs_string (char *s, const double **Z,
     return t;
 }
 
-static void invalid_stat_error (int idx, int *err)
-{
-    const char *mword = get_model_stat_word(idx);
 
-    sprintf(gretl_errmsg, _("Invalid argument for %s"), 
-	    (mword != NULL)? mword : _("function"));
-    *err = E_INVARG;    
-}
 
-/* retrieve a specific element from one of the arrays of data
-   on a model */
 
-double 
-get_model_data_element (MODEL *pmod, int idx, const char *key,
-			const DATAINFO *pdinfo, int *err)
-{
-    char s[32] = {0};
-    const char *p;
-    int vi = 0;
-    double x = NADBL;
 
-    /* extract arg string in parentheses */
-    p = strchr(key, '(');
-    if (p != NULL) {
-	sscanf(p + 1, "%31[^) ]", s);
-    } else {
-	strncat(s, key, 31);
-    }
-
-    DPRINTF(("get_model_data_element: looking at key = '%s'\n", s));
-
-    if (idx == M_RHO_S) {
-	if (!(numeric_string(s))) {
-	    invalid_stat_error(idx, err);
-	} else if (dot_atof(s) == 1 && AR1_MODEL(pmod->ci)) {
-	    x = gretl_model_get_double(pmod, "rho_in");
-	} else if (pmod->ci != AR && dot_atof(s) == 1) {
-	    x = pmod->rho;
-	} else if (pmod->arinfo == NULL || 
-		   pmod->arinfo->arlist == NULL || 
-		   pmod->arinfo->rho == NULL) {
-	    invalid_stat_error(idx, err);
-	} else if (!(vi = gretl_list_position(atoi(s), pmod->arinfo->arlist))) {
-	    invalid_stat_error(idx, err);
-	} else {
-	    x = pmod->arinfo->rho[vi-1];
-	}
-    } else if (idx == M_VCV_S) {
-	x = genr_vcv(s, pdinfo, pmod);
-	if (na(x)) {
-	    invalid_stat_error(idx, err);
-	}
-    } else if (idx == M_COEFF_S || idx == M_SE_S) {
-	if (pmod == NULL || pmod->list == NULL) {
-	    invalid_stat_error(idx, err);
-	} else {
-	    vi = gretl_model_get_param_number(pmod, pdinfo, s);
-	    if (vi < 0) {
-		invalid_stat_error(idx, err);
-	    }
-	} 
-
-	if (!*err) {
-	    if (idx == M_COEFF_S && pmod->coeff != NULL) { 
-		x = pmod->coeff[vi];
-	    } else if (pmod->sderr != NULL) {
-		x = pmod->sderr[vi];
-	    } else {
-		invalid_stat_error(idx, err);
-	    }
-	}
-    } 
-
-    if (*err) {
-	gretl_errno = *err;
-    }
-
-    DPRINTF(("get_model_data_element: err = %d\n", *err));
-
-    return x;
-}

@@ -2370,25 +2370,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	} else if ((special = literal_string(argv)) != NULL) {
 	    svals[i] = special;
 	} else {
-	    int v = varindex(pdinfo, argv);
-
-	    if (v < pdinfo->v) {
-#if PRINTF_DEBUG
-		fprintf(stderr, "'%s' is variable #%d (vector = %d)\n",
-			argv, v, var_is_series(pdinfo, v));
-#endif
-		/* simple existent varname */
-		if (var_is_series(pdinfo, v)) {
-		    xvals[i] = (*pZ)[v][t];
-		} else {
-		    xvals[i] = (*pZ)[v][0];
-		}
-	    } else {
-#if PRINTF_DEBUG
-		fprintf(stderr, "looked up '%s' as variable: not found\n", argv);
-#endif
-		err = get_generated_value(argv, &xvals[i], pZ, pdinfo, t);
-	    }
+	    xvals[i] = generate_scalar(argv, *pZ, pdinfo, &err);
 	}
 
 #if PRINTF_DEBUG

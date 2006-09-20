@@ -3,6 +3,8 @@
 #include "libgretl.h"
 #include "genstack.h"
 
+/* FIXME new genr stuff */
+
 void output_emacs_block (void)
 {
     const char *word;

@@ -22,7 +22,6 @@
 #include "johansen.h"
 #include "system.h"
 #include "objstack.h"
-#include "genrfuncs.h"
 #include "usermat.h"
 #include "modelspec.h"
 
@@ -739,6 +738,8 @@ static double real_get_obj_scalar (void *p, GretlObjType type, int idx)
     return x;
 }
 
+#if 0
+
 /* retrieve from an object some value that is stored on the object in
    the form of a scalar element of an array */
 
@@ -768,8 +769,10 @@ real_get_obj_scalar_element (void *p, GretlObjType type, int idx,
     return x;
 }
 
+#endif
+
 static double *
-real_get_obj_series (void *p, GretlObjType type, int idx, const char *key, 
+real_get_obj_series (void *p, GretlObjType type, int idx,
 		     const DATAINFO *pdinfo, int *err)
 {
     double *x = NULL;
@@ -783,15 +786,7 @@ real_get_obj_series (void *p, GretlObjType type, int idx, const char *key,
 	MODEL *pmod = (MODEL *) p;
 
 	x = gretl_model_get_series(pmod, pdinfo, idx, err);
-    } else if (type == GRETL_OBJ_SYS) {
-	gretl_equation_system *sys = (gretl_equation_system *) p;
-
-	x = gretl_equation_system_get_series(sys, pdinfo, idx, key, err);
-    } else if (type == GRETL_OBJ_VAR) {
-	GRETL_VAR *var = (GRETL_VAR *) p;
-
-	x = gretl_VAR_get_series(var, pdinfo, idx, key, err);
-    }
+    } 
 
     return x;
 }
@@ -863,17 +858,14 @@ static stacker *find_smatch (const char *oname)
     return smatch;
 }
 
-double saved_object_get_scalar (const char *oname, const char *key,
-				int *err)
+double saved_object_get_scalar (const char *oname, int idx, int *err)
 {
     double ret = INVALID_STAT;
     stacker *smatch;
-    int idx;
 
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	idx = gretl_model_data_index(key);
 	ret = real_get_obj_scalar(smatch->ptr, smatch->type, idx);
     }
 
@@ -884,6 +876,7 @@ double saved_object_get_scalar (const char *oname, const char *key,
     return ret;
 }
 
+#if 0
 double saved_object_get_scalar_element (const char *oname, const char *key,
 					const DATAINFO *pdinfo, int *err)
 {
@@ -899,7 +892,11 @@ double saved_object_get_scalar_element (const char *oname, const char *key,
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
+#if 0 /* FIXME */
 	idx = gretl_model_data_index(key);
+#else
+	idx = 0;
+#endif
 	ret = real_get_obj_scalar_element(smatch->ptr, smatch->type, idx, 
 					  key, pdinfo, err);
     }
@@ -910,20 +907,20 @@ double saved_object_get_scalar_element (const char *oname, const char *key,
 
     return ret;
 }
+#endif
 
-double *saved_object_get_series (const char *oname, const char *key, 
-				 const DATAINFO *pdinfo, int *err)
+double *saved_object_get_series (const char *oname, int idx,
+				 const DATAINFO *pdinfo, 
+				 int *err)
 {
     double *x = NULL;
     stacker *smatch;
-    int idx;
 
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	idx = gretl_model_data_index(key);
 	x = real_get_obj_series(smatch->ptr, smatch->type, idx, 
-				key, pdinfo, err);
+				pdinfo, err);
     }
 
     if (x == NULL && !*err) {
@@ -934,28 +931,15 @@ double *saved_object_get_series (const char *oname, const char *key,
 }
 
 gretl_matrix *
-saved_object_get_matrix (const char *oname, const char *key,
-			 double ***pZ, DATAINFO *pdinfo,
-			 int *err)
+saved_object_get_matrix (const char *oname, int idx, int *err)
 {
     gretl_matrix *M = NULL;
-    const char *mspec = NULL;
     stacker *smatch;
-    int idx;
 
     smatch = find_smatch(oname);
 
     if (smatch != NULL) {
-	idx = gretl_model_data_index(key);
 	M = real_get_obj_matrix(smatch->ptr, smatch->type, idx, err);
-	mspec = strchr(key, '[');
-    }
-
-    if (M != NULL && mspec != NULL) {
-	gretl_matrix *S = matrix_get_submatrix(M, mspec, pZ, pdinfo, err);
-	
-	gretl_matrix_free(M);
-	M = S;
     }
 
     if (M == NULL && !*err) {
@@ -963,21 +947,6 @@ saved_object_get_matrix (const char *oname, const char *key,
     }    
 
     return M;
-}
-
-int 
-saved_object_print_scalar (const char *oname, const char *key, PRN *prn)
-{
-    int err = 0;
-    double val = saved_object_get_scalar(oname, key, &err);
-
-    if (err) {
-	pprintf(prn, _("%s: no data for '%s'\n"), oname, key);
-    } else {
-	pprintf(prn, "%s: %s = %.8g\n", oname, key + 1, val);
-    }
-
-    return err;
 }
 
 #define OPDEBUG 0

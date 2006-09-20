@@ -206,7 +206,7 @@ static double controller_evaluate_expr (const char *expr,
 
     if (!strcmp(vname, "iftest")) {
 	iftest = 1;
-	err = get_generated_value(expr, &x, pZ, pdinfo, 0);
+	x = generate_scalar(expr, *pZ, pdinfo, &err);
     } else {
 	err = generate(expr, pZ, pdinfo, OPT_P, NULL);
     }
@@ -333,7 +333,6 @@ int ok_in_loop (int c)
     if (c == GENR ||
 	c == LOOP ||
 	c == FNCALL || 
-	c == MATRIX ||
 	c == STORE ||
 	c == PRINT ||
 	c == PRINTF ||
@@ -2640,7 +2639,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case LAGS: 
 	    case LDIFF: 
 	    case LOGS:
-	    case MATRIX:
 	    case MEANTEST: 
 	    case MULTIPLY: 
 	    case OUTFILE:
@@ -2691,8 +2689,9 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		break;
 
 	    case GENR:
-		err = generate(linecpy, pZ, pdinfo, cmd.opt, 
-			       (loop_is_verbose(loop))? prn : NULL);
+		err = generate(linecpy, pZ, pdinfo, 
+			       (loop_is_verbose(loop))? OPT_NONE : OPT_Q,
+			       prn);
 		break;
 
 	    case ARMA:
@@ -3093,7 +3092,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     while (*line == ' ') line++;
 
-    err = get_generated_value(line, &val, pZ, pdinfo, 0);
+    val = generate_scalar(line, *pZ, pdinfo, &err);
 
 #if IFDEBUG
     fprintf(stderr, "if_eval: generate returned %d\n", err);

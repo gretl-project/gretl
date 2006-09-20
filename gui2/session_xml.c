@@ -391,7 +391,7 @@ static int maybe_read_matrix_file (const char *fname)
 	    } else {
 		m = gretl_xml_get_matrix(cur, doc, &err);
 		if (m != NULL) {
-		    err = add_user_matrix(m, name);
+		    err = user_matrix_add(m, name);
 		}
 		free(name);
 	    }

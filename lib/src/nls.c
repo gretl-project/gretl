@@ -145,14 +145,13 @@ static int nls_genr_setup (void)
 	    sprintf(formula, "$nl_x%d = %s", i, pspec->params[j++].deriv);
 	}
 	
-	genrs[i] = genr_compile(formula, nZ, ndinfo, OPT_P, NULL);
-	err = genr_get_err(genrs[i]);
+	genrs[i] = genr_compile(formula, *nZ, ndinfo, &err);
 #if NLS_DEBUG
 	fprintf(stderr, "genrs[%d] = %p, err = %d\n", i, (void *) genrs[i], err);
 #endif
 
 	if (!err) {
-	    err = execute_genr(genrs[i], ndinfo->v);
+	    err = execute_genr(genrs[i], nZ, ndinfo);
 	}
 
 	if (!err) {
@@ -204,14 +203,14 @@ static int nls_auto_genr (int i)
 #if NLS_DEBUG
 	fprintf(stderr, " generating aux var %d:\n %s\n", j, pspec->aux[j]);
 #endif
-	genr_err = execute_genr(pspec->genrs[j], ndinfo->v);
+	genr_err = execute_genr(pspec->genrs[j], nZ, ndinfo);
     }
 
     j = pspec->naux + i;
 #if NLS_DEBUG
     fprintf(stderr, " executing genr[%d]\n", j);
 #endif
-    genr_err = execute_genr(pspec->genrs[j], ndinfo->v);
+    genr_err = execute_genr(pspec->genrs[j], nZ, ndinfo);
 
 
 #if NLS_DEBUG
@@ -309,7 +308,7 @@ maybe_add_param_to_spec (nls_spec *spec, const char *word,
 #endif
 
     /* if word represents a math function or constant, skip it */
-    if (genr_function_from_string(word) || !strcmp(word, "pi")) {
+    if (function_from_string(word) || const_lookup(word)) {
 	return 0;
     }
 
@@ -609,13 +608,17 @@ static int nls_missval_check (nls_spec *spec)
 	}
     }
 
-    for (t=spec->t2; t>=spec->t1; t--) {
+    for (t=spec->t2; t>=t1; t--) {
 	if (na((*nZ)[v][t])) {
 	    t2--;
 	} else {
 	    break;
 	}
     }
+
+#if NLS_DEBUG
+    fprintf(stderr, "Got here: t1=%d, t2=%d\n", t1, t2);
+#endif
 
     if (t2 - t1 + 1 < spec->nparam) {
 	return E_DF;

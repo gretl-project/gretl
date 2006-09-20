@@ -20,31 +20,47 @@
 #ifndef USERMAT_H_
 #define USERMAT_H_
 
+enum {
+    SEL_RANGE,
+    SEL_MATRIX,
+    SEL_DIAG,
+    SEL_ALL,
+    SEL_NULL
+};
+
+typedef struct matrix_subspec_ matrix_subspec;
+
+union msel {
+    int range[2];
+    gretl_matrix *m;
+};
+
+struct matrix_subspec_ {
+    int type[2];
+    union msel sel[2];
+};
+
 int n_user_matrices (void);
 
 gretl_matrix *user_matrix_by_index (int i, const char **name);
 
 const char *get_matrix_name_by_index (int idx);
 
-gretl_matrix *get_matrix_by_name (const char *name, const DATAINFO *pdinfo);
+gretl_matrix *get_matrix_by_name (const char *name);
 
 gretl_matrix *get_matrix_by_name_at_level (const char *name, int level,
 					   const DATAINFO *pdinfo);
 
-gretl_matrix *
-get_matrix_transpose_by_name (const char *name, const DATAINFO *pdinfo);
+int user_matrix_add (gretl_matrix *M, const char *name);
 
-int named_matrix_get_variable (const char *mspec, 
-			       double ***Z, DATAINFO *pdinfo,
-			       double **px, int *plen);
+int user_matrix_destroy (const char *name, PRN *prn);
 
-int add_user_matrix (gretl_matrix *M, const char *name);
+int user_matrix_replace_matrix (const char *name, gretl_matrix *M);
+
+int user_matrix_replace_submatrix (const char *name, gretl_matrix *M,
+				   matrix_subspec *spec);
 
 int add_or_replace_user_matrix (gretl_matrix *M, const char *name);
-
-int add_or_replace_user_matrix_full (gretl_matrix *M, const char *name,
-				     const char *mask, gretl_matrix **R,
-				     double ***pZ, DATAINFO *pdinfo);
 
 int copy_named_matrix_as (const char *orig, const char *new);
 
@@ -54,17 +70,6 @@ int user_matrix_set_name_and_level (const gretl_matrix *M, char *name,
 void destroy_user_matrices (void);
 
 int destroy_user_matrices_at_level (int level);
-
-int is_user_matrix (const gretl_matrix *m);
-
-gretl_matrix *user_matrix_get_slice (const char *s, 
-				     double ***pZ, DATAINFO *pdinfo,
-				     int *err);
-
-int matrix_command (const char *line, double ***pZ, DATAINFO *pdinfo, PRN *prn);
-
-gretl_matrix *matrix_calc_AB (gretl_matrix *A, gretl_matrix *B, 
-			      char op, int *err);
 
 double user_matrix_get_determinant (const gretl_matrix *m, int *err);
 
@@ -83,24 +88,19 @@ gretl_matrix *user_matrix_vech (const gretl_matrix *m, int *err);
 gretl_matrix *user_matrix_unvech (const gretl_matrix *m, int *err);
 
 gretl_matrix *
-user_matrix_QR_decomp (const char *str, double ***pZ, DATAINFO *pdinfo,
-		       PRN *prn, int *err);
+user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, 
+		       int *err);
 
 gretl_matrix *
-user_matrix_eigen_analysis (const char *str, double ***pZ, DATAINFO *pdinfo,
-			    PRN *prn, int *err, int symm);
+user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
+			    int *err);
 
-gretl_matrix *
-user_matrix_get_transformation (const gretl_matrix *m, GretlMathFunc fn);
+gretl_matrix *matrix_get_submatrix (const gretl_matrix *M, 
+				    matrix_subspec *spec,
+				    int *err);
 
-gretl_matrix *
-user_matrix_get_sorted_vector (const gretl_matrix *m, int s, int *err);
-
-gretl_matrix *
-matrix_get_submatrix (const gretl_matrix *M, const char *s, 
-		      double ***pZ, DATAINFO *pdinfo,
-		      int *err);
-
-int reposition_transpose_symbol (char *s);
+gretl_matrix *user_matrix_get_submatrix (const char *name, 
+					 matrix_subspec *spec,
+					 int *err);
 
 #endif /* USERMAT_H_ */

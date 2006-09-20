@@ -406,10 +406,16 @@ gretl_matrix *gretl_null_matrix_new (void)
     gretl_matrix *m = malloc(sizeof *m);
   
     if (m != NULL) {
-	m->rows = 0;
-	m->cols = 0;
-	m->val = NULL;
 	m->t = 0;
+	m->rows = 1;
+	m->cols = 1;
+	m->val = malloc(sizeof *m->val);
+	if (m->val == NULL) {
+	    free(m);
+	    m = NULL;
+	} else {
+	    m->val[0] = NADBL;
+	}
     }
 
     return m;
@@ -742,98 +748,6 @@ gretl_matrix *gretl_random_matrix_new (int r, int c, int dist)
     }
 
     return m;
-}
-
-/**
- * gretl_matrix_transform_elements:
- * @m: input matrix.
- * @fn: function to apply to each element of @m.
- *
- * Sets all elements of @m to the specified transformation of their 
- * original values.
- *
- * Returns: 0 on success, non-zero on failure.
- */
-
-int gretl_matrix_transform_elements (gretl_matrix *m, GretlMathFunc fn)
-{
-    double x;
-    int i, n;
-    int err = 0;
-
-    if (m == NULL || m->val == NULL) {
-	return 1;
-    }
-
-    n = m->rows * m->cols;
-
-    for (i=0; i<n && !err; i++) {
-	x = m->val[i];
-	switch (fn) {
-	case T_LOG:
-	    if (x <= 0.0) {
-		err = 1;
-		break;
-	    } else {
-		m->val[i] = log(x);
-	    }
-	    break;
-	case T_EXP:
-	    if (exp(x) == HUGE_VAL) {
-		fprintf(stderr, "genr: excessive exponent = %g\n", x);
-		err = E_HIGH;
-	    } else {
-		m->val[i] = exp(x);
-	    }
-	    break;
-	case T_SIN: 
-	    m->val[i] = sin(x);
-	    break;
-	case T_COS:
-	    m->val[i] = cos(x);
-	    break;
-	case T_TAN:
-	    m->val[i] = tan(x);
-	    break;
-	case T_ATAN:
-	    m->val[i] = atan(x);
-	    break; 
-	case T_INT: 
-	    m->val[i] = (double) (int) x;
-	    break; 
-	case T_ABS: 
-	    m->val[i] = (x < 0.0)? -x : x;
-	    break; 
-	case T_SQRT:
-	    if (x < 0.0) {
-		err = 1;
-		break;
-	    } else {
-		m->val[i] = sqrt(x);
-	    }
-	    break; 
-	case T_DNORM:
-	    m->val[i] = normal_pdf(x);
-	    break;
-	case T_CNORM:
-	    m->val[i] = normal_cdf(x); 
-	    break;
-	case T_QNORM:
-	    m->val[i] = ndtri(x);
-	    break;
-	case T_GAMMA:
-	    m->val[i] = cephes_gamma(x);
-	    break;
-	case T_LNGAMMA:
-	    m->val[i] = cephes_lgamma(x);
-	    break;
-	default:
-	    err = 1;
-	    break;
-	}
-    }    
-
-    return err;
 }
 
 /**
@@ -2957,11 +2871,13 @@ int gretl_matrix_QR_decomp_with_pivot (gretl_matrix *M, gretl_matrix *R)
 /**
  * gretl_matrix_QR_decomp:
  * @M: m x n matrix to be decomposed.
- * @R: n x n matrix into which to write R, as in M = Q * R.
+ * @R: n x n matrix into which to write R, as in M = Q * R,
+ * or %NULL if this is not wanted.
  * 
  * Computes the QR factorization of @M.  On successful exit
- * the matrix @M holds Q, and the upper triangle of @R holds R.  
- * Uses the lapack functions %dgeqrf and %dorgqr.
+ * the matrix @M holds Q, and, if @R is not %NULL, the upper 
+ * triangle of @R holds R.  Uses the lapack functions 
+ * %dgeqrf and %dorgqr.
  *
  * Returns: 0 on success, non-zero on failure.
  */
@@ -2982,7 +2898,7 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
     int i, j;
     int err = 0;
 
-    if (R == NULL || R->rows != n || R->cols != n) {
+    if (R != NULL && (R->rows != n || R->cols != n)) {
 	return E_NONCONF;
     }
 
@@ -3022,14 +2938,16 @@ int gretl_matrix_QR_decomp (gretl_matrix *M, gretl_matrix *R)
 	goto bailout;
     }
 
-    /* copy the upper triangular R out of M */
-    for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
-	    if (i <= j) {
-		gretl_matrix_set(R, i, j, 
-				 gretl_matrix_get(M, i, j));
-	    } else {
-		gretl_matrix_set(R, i, j, 0.0);
+    if (R != NULL) {
+	/* copy the upper triangular R out of M */
+	for (i=0; i<n; i++) {
+	    for (j=0; j<n; j++) {
+		if (i <= j) {
+		    gretl_matrix_set(R, i, j, 
+				     gretl_matrix_get(M, i, j));
+		} else {
+		    gretl_matrix_set(R, i, j, 0.0);
+		}
 	    }
 	}
     }

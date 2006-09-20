@@ -183,7 +183,7 @@ static int saved_object_action (const char *line, PRN *prn)
 						 &Z, datainfo, OPT_NONE, prn);
 	} 
     } else if (action == OBJ_ACTION_SHOW_STAT) {
-	err = saved_object_print_scalar(objname, param, prn);
+	err = print_object_var(objname, param, Z, datainfo, prn);
     } else if (action == OBJ_ACTION_IRF) {
 	err = gretl_VAR_do_irf((GRETL_VAR *) ptr, line, 
 			       (const double **) Z, datainfo);

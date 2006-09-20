@@ -524,7 +524,7 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
  */
 
 int gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
-				  char *pname)
+				  const char *pname)
 {
     int idx = -1;
 
@@ -3777,137 +3777,6 @@ const char *gretl_model_get_name (const MODEL *pmod)
     return NULL;
 }
 
-struct model_retriever {
-    int rnum;
-    const char *rword;
-    const char *desc;
-};
-
-struct model_retriever model_retrievers[] = {
-    { M_ESS,    "$ess",    N_("Error sum of squares") },
-    { M_T,      "$t",      N_("Number of observations used") }, 
-    { M_RSQ,    "$rsq",    N_("R-squared") },
-    { M_SIGMA,  "$sigma",  N_("Standard error of residuals") },
-    { M_DF,     "$df",     N_("Degrees of freedom") },  
-    { M_NCOEFF, "$ncoeff", N_("Number of coefficients") },
-    { M_LNL,    "$lnl",    N_("Log-likelihood") },
-    { M_AIC,    "$aic",    N_("Akaike Information Criterion") },
-    { M_BIC,    "$bic",    N_("Schwartz Bayesian criterion") },
-    { M_HQC,    "$hqc",    N_("Hannan-Quinn criterion") },
-    { M_TRSQ,   "$trsq",   N_("Sample size times R-squared") }, 
-    { M_UHAT,   "$uhat",   N_("Regression residuals") },
-    { M_YHAT,   "$yhat",   N_("Fitted values") },
-    { M_AHAT,   "$ahat",   N_("Per-group intercepts") },
-    { M_H,      "$h",      N_("Estimated error variance") },
-    { M_COEFF,  "$coeff",  N_("Regression coefficients") },
-    { M_SE,     "$stderr", N_("Coefficient standard errors") },
-    { M_VCV,    "$vcv",    N_("Covariance matrix") },
-    { M_RHO,    "$rho",    N_("Autoregressive coefficient(s)") },
-    { M_JALPHA, "$jalpha", N_("Cointegrating vector") },
-    { M_JBETA,  "$jbeta",  N_("Adjustments vector") },
-    { M_JVBETA, "$jvbeta", N_("Covariance matrix for normalized cointegration matrix") },
-    { M_MAX,     NULL,     NULL }
-};
-
-static int statnum;
-
-int get_first_model_stat (const char **word, const char **desc)
-{
-    statnum = 0;
-    *word = model_retrievers[0].rword;
-    *desc = model_retrievers[0].desc;
-    return model_retrievers[0].rnum;
-}
-
-int get_next_model_stat (const char **word, const char **desc)
-{
-    statnum++;
-
-    if (model_retrievers[statnum].rnum == M_MAX) {
-	return 0;
-    } else {
-	*word = model_retrievers[statnum].rword;
-	*desc = model_retrievers[statnum].desc;
-	return model_retrievers[statnum].rnum;
-    }
-}
-
-int gretl_model_data_index (const char *s)
-{
-    char test[8] = {0};
-    int ssel = 0;
-    int msel = 0;
-
-    strncat(test, s, 7);
-    lower(test);
-
-    /* scalar values */
-    if (!strcmp(test, "$ess"))  
-	return M_ESS;
-    if (!strcmp(test, "$t")) 
-	return M_T;
-    if (!strcmp(test, "$rsq"))  
-	return M_RSQ;
-    if (!strcmp(test, "$sigma"))  
-	return M_SIGMA;
-    if (!strcmp(test, "$df"))   
-	return M_DF;
-    if (!strcmp(test, "$ncoeff"))   
-	return M_NCOEFF;
-    if (!strcmp(test, "$lnl"))   
-	return M_LNL;
-    if (!strcmp(test, "$aic"))   
-	return M_AIC;
-    if (!strcmp(test, "$bic"))   
-	return M_BIC;
-    if (!strcmp(test, "$hqc"))   
-	return M_HQC;
-    if (!strcmp(test, "$nrsq") || 
-	!strcmp(test, "$trsq")) 
-	return M_TRSQ;
-
-    sscanf(s, "%7[^[( ]", test);
-    lower(test);
-
-    if (strchr(s, '[')) {
-	/* selecting submatrix? */
-	msel = 1;
-    }
-
-    /* series or matrices */
-    if (!strcmp(test, "$uhat")) 
-	return M_UHAT;
-    if (!strcmp(test, "$yhat"))
-	return M_YHAT;
-    if (!strcmp(test, "$ahat"))
-	return M_AHAT;
-    if (!strcmp(test, "$h"))
-	return M_H;
-    if (!strcmp(test, "$jalpha")) 
-	return M_JALPHA;
-    if (!strcmp(test, "$jbeta")) 
-	return M_JBETA;
-    if (!strcmp(test, "$jvbeta")) 
-	return M_JVBETA;
-
-    if (!msel && strchr(s, '(')) {
-	/* selecting scalar element from array? */
-	ssel = 1;
-    } 
-
-    /* matrices, not series */
-    if (!strcmp(test, "$coeff"))  
-	return (ssel)? M_COEFF_S : M_COEFF;
-    if (!strcmp(test, "$stderr"))  
-	return (ssel)? M_SE_S : M_SE;
-    if (!strcmp(test, "$vcv"))   
-	return (ssel)? M_VCV_S : M_VCV;
-    if (!strcmp(test, "$rho"))   
-	return (ssel)? M_RHO_S : M_RHO;
-
-    return 0;
-}
-
 /**
  * gretl_model_get_scalar:
  * @pmod: pointer to target model.
@@ -4235,3 +4104,114 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 
     return M;
 }
+
+static double get_vcv_element (MODEL *pmod, const char *s, 
+			       const DATAINFO *pdinfo)
+{
+    char v1str[VNAMELEN], v2str[VNAMELEN];
+    int v1 = 0, v2 = 0;
+    int i, j, k, gotit;
+    double ret = NADBL;
+
+    if (pmod == NULL || pmod->list == NULL) {
+	return NADBL;
+    }
+
+    if (sscanf(s, "%15[^,],%15s", v1str, v2str) != 2) {
+	return NADBL;
+    }
+
+    v1 = gretl_model_get_param_number(pmod, pdinfo, v1str);
+    v2 = gretl_model_get_param_number(pmod, pdinfo, v2str);
+
+    if (v1 < 0 || v2 < 0) {
+	return NADBL;
+    }
+
+    /* make model vcv matrix if need be */
+    if (pmod->vcv == NULL && makevcv(pmod, pmod->sigma)) {
+	return NADBL;
+    }
+
+    /* now find the right entry */
+    if (v1 > v2) {
+	k = v1;
+	v1 = v2;
+	v2 = k;
+    }
+
+    gotit = 0;
+    k = 0;
+    for (i=0; i<pmod->ncoeff && !gotit; i++) {
+	for (j=0; j<pmod->ncoeff; j++) {
+	    if (j < i) {
+		continue;
+	    }
+	    if (i == v1 && j == v2) {
+		ret = pmod->vcv[k];
+		gotit = 1;
+		break;
+	    }
+	    k++;
+	}
+    }
+
+    return ret;
+}
+
+/* retrieve a specific element from one of the arrays of data
+   on a model */
+
+double 
+gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
+			      const DATAINFO *pdinfo, int *err)
+{
+    double x = NADBL;
+    int vi = 0;
+
+    if (pmod == NULL) {
+	*err = E_INVARG;
+	return x;
+    }
+
+    /* FIXME 0-based versus 1-based indexing */
+
+    if (idx == M_RHO) {
+	if (!(numeric_string(s))) {
+	    *err = E_INVARG;
+	} else if (dot_atof(s) == 1 && AR1_MODEL(pmod->ci)) {
+	    x = gretl_model_get_double(pmod, "rho_in");
+	} else if (pmod->ci != AR && dot_atof(s) == 1) {
+	    x = pmod->rho;
+	} else if (pmod->arinfo == NULL || 
+		   pmod->arinfo->arlist == NULL || 
+		   pmod->arinfo->rho == NULL) {
+	    *err = E_INVARG;
+	} else if (!(vi = gretl_list_position(atoi(s), pmod->arinfo->arlist))) {
+	    *err = E_INVARG;
+	} else {
+	    x = pmod->arinfo->rho[vi-1];
+	}
+    } else if (idx == M_VCV) {
+	x = get_vcv_element(pmod, s, pdinfo);
+	if (na(x)) {
+	    *err = E_INVARG;
+	}
+    } else if (idx == M_COEFF || idx == M_SE) {
+	vi = gretl_model_get_param_number(pmod, pdinfo, s);
+	if (vi < 0) {
+	    *err = E_INVARG;
+	} else {
+	    if (idx == M_COEFF && pmod->coeff != NULL) { 
+		x = pmod->coeff[vi];
+	    } else if (idx == M_SE && pmod->sderr != NULL) {
+		x = pmod->sderr[vi];
+	    } else {
+		*err = E_INVARG;
+	    }
+	}
+    } 
+
+    return x;
+}
+
