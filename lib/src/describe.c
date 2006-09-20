@@ -2806,7 +2806,8 @@ void print_summary (const Summary *summ,
 
     len = (maxlen <= 8)? 10 : maxlen + 1;
 
-    if (len > 13) {
+    if (len > 14) {
+	/* printout gets broken with excessively long varnames */
 	for (i=0; i<summ->list[0]; i++) {
 	    print_summary_single(summ, i, pdinfo, prn);
 	}
