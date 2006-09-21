@@ -209,10 +209,18 @@ enum {
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
 #define bool_comp(s) (s >= B_EQ && s <= B_NEQ)
 
-#define b2sym(s) (binary_op(s) || func2_symb(s) || s == MSL || \
-                  s == MSL2 || s == SUBSL)
+#define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
+                   s == MSL2 || s == SUBSL)
+
+#define b2sym(s) (evalb2(s) || s == DMSTR || s == OVAR || \
+                  s == UFUN)
 
 #define b1sym(s) (unary_op(s) || func_symb(s) || s == LPR || s == EROOT)
+
+#define bnsym(s) (s == MDEF)
+
+#define freestr(s) (s == STR || s == UMAT || s == UOBJ || \
+                    s == LOOPIDX || s == LIST)
 
 /* functions where the right-hand "argument" is actually a return
    location */
@@ -323,7 +331,6 @@ NODE *expr (parser *s);
 NODE *newdbl (double x);
 NODE *subnode (parser *p, NODE *up);
 NODE *msl_node_direct (parser *p);
-void free_tree (NODE *t, const char *msg);
 const char *getsymb (int t, const parser *p);
 int function_lookup (const char *s);
 

@@ -474,12 +474,10 @@ static void look_up_dollar_word (const char *s, parser *p)
     p->idnum = dvar_lookup(s);
     if (p->idnum > 0) {
 	p->sym = DVAR;
-	p->idstr = gretl_strdup(s);
     } else {
 	p->idnum = mvar_lookup(s);
 	if (p->idnum > 0) {
 	    p->sym = MVAR;
-	    p->idstr = gretl_strdup(s);
 	} else {
 	    pprintf(p->prn, "Symbol '%s' is undefined\n", s);
 	    p->err = 1;
@@ -498,7 +496,6 @@ static void look_up_word (const char *s, parser *p)
 	    p->idnum = dummy_lookup(s);
 	    if (p->idnum > 0) {
 		p->sym = DUM;
-		p->idstr = gretl_strdup(s);
 	    } else {	    
 		p->idnum = varindex(p->dinfo, s);
 		if (p->idnum < p->dinfo->v) {
@@ -843,9 +840,8 @@ const char *getsymb (int t, const parser *p)
 	    return fromdbl(p->xval); 
 	} else if (t == UVAR) {
 	    return p->dinfo->varname[p->idnum];
-	} else if (t == UMAT || t == DVAR ||
-		   t == MVAR || t == UOBJ ||
-		   t == LOOPIDX || t == DUM) {
+	} else if (t == UMAT || t == UOBJ ||
+		   t == LOOPIDX) {
 	    return p->idstr;
 	} else if (t == OBS) {
 	    return "OBS";
@@ -867,6 +863,12 @@ const char *getsymb (int t, const parser *p)
 	    return "MDEF";
 	} else if (t == UFUN) {
 	    return "UFUN";
+	} else if (t == DUM) {
+	    return "DUM";
+	} else if (t == DVAR) {
+	    return "DVAR";
+	} else if (t == MVAR) {
+	    return "MVAR";
 	}
     }
 

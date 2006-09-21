@@ -67,13 +67,12 @@ static NODE *newref (parser *p)
     if (n != NULL) {
 	n->t = p->sym;
 	if (n->t == UMAT || n->t == UOBJ ||
-	    n->t == DVAR || n->t == MVAR ||
 	    n->t == LOOPIDX || n->t == LIST) {
 	    n->v.str = p->idstr;
 	} else {
 	    n->v.idnum = p->idnum;
 	}
-	n->aux = (n->t == DVAR || n->t == MVAR)? p->idnum : 0;
+	n->aux = 0;
 	n->tmp = 0;
     }
 

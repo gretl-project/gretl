@@ -356,6 +356,8 @@ static int gen_special (const char *s, double ***pZ,
 	p->lh.v = varindex(pdinfo, s);
 	p->Z = *pZ;
 	p->dinfo = pdinfo;
+	p->targ = VEC;
+	p->flags = 0;
 	p->prn = prn;
 	gen_write_message(p, orig_v, prn);
     }	    
@@ -534,10 +536,8 @@ void destroy_genr (parser *p)
     fprintf(stderr, "\n*** destroy_genr: p = %p\n", (void *) p);
 #endif
 
-    if (p->ret != p->tree) {
-	free_tree(p->tree, "p->tree");
-    }
-
+    p->flags = 0;
+    gen_cleanup(p);
     free(p);
 }
 

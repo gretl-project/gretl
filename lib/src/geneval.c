@@ -52,16 +52,14 @@ static const char *typestr (int t)
     }
 }
 
-void free_tree (NODE *t, const char *msg)
+static void free_tree (NODE *t, const char *msg)
 {
     if (t == NULL) {
 	return;
     }
 
-    /* free recursively: FIXME need to include some other 
-       node types for this treatment
-    */
-    if (b2sym(t->t) || t->t == DMSL) {
+    /* free recursively */
+    if (b2sym(t->t)) {
 	free_tree(t->v.b2.l, msg);
 	free_tree(t->v.b2.r, msg);
     } else if (b1sym(t->t)) {
@@ -85,8 +83,12 @@ void free_tree (NODE *t, const char *msg)
 	}
     }
 
-    if (t->t == STR) {
+    if (freestr(t->t)) {
 	free(t->v.str);
+    }
+
+    if (bnsym(t->t)) {
+	free(t->v.bn.n);
     }
 
     free(t);
@@ -1695,8 +1697,11 @@ static NODE *matrix_def_node (NODE *t, parser *p)
     int seppos = -1;
     int i;
 
-    /* FIXME ban this when the parser is autoregressive,
-       or designed to be reusable */
+    if (autoreg(p) || reusable(p)) {
+	fprintf(stderr, "You can't define a matrix in this context\n");
+	p->err = E_TYPES;
+	return NULL;
+    }
 
 #if EDEBUG
     fprintf(stderr, "Processing MDEF...\n");
@@ -1825,15 +1830,15 @@ static NODE *dollar_var_node (NODE *t, parser *p)
        system or VAR)
     */
 
-    if (dvar_scalar(t->aux)) {
+    if (dvar_scalar(t->v.idnum)) {
 	ret = aux_scalar_node(p);
 	if (ret != NULL && starting(p)) {
-	    ret->v.xval = dvar_get_value(t->aux, p);
+	    ret->v.xval = dvar_get_value(t->v.idnum, p);
 	}
-    } else if (dvar_series(t->aux)) {
+    } else if (dvar_series(t->v.idnum)) {
 	ret = aux_vec_node(p, 0);
 	if (ret != NULL && starting(p)) {
-	    ret->v.xvec = dvar_get_series(t->aux, p);
+	    ret->v.xvec = dvar_get_series(t->v.idnum, p);
 	}
     } 
 
@@ -1867,9 +1872,9 @@ object_var_get_submatrix (const char *oname, NODE *t, parser *p)
 static NODE *object_var_node (NODE *t, parser *p)
 {
     NODE *r = (t->t == MVAR || t->t == DMSL)? t : t->v.b2.r;
-    int scalar = model_data_scalar(r->aux);
-    int series = model_data_series(r->aux);
-    int matrix = model_data_matrix(r->aux);
+    int scalar = model_data_scalar(r->v.idnum);
+    int series = model_data_series(r->v.idnum);
+    int matrix = model_data_matrix(r->v.idnum);
     int mslice = r->t == DMSL;
     NODE *ret = NULL;
 
@@ -1896,12 +1901,12 @@ static NODE *object_var_node (NODE *t, parser *p)
 	    NULL : t->v.b2.l->v.str;
 
 	if (scalar) {
-	    ret->v.xval = saved_object_get_scalar(oname, r->aux, &p->err);
+	    ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, &p->err);
 	} else if (series) {
-	    ret->v.xvec = saved_object_get_series(oname, r->aux, p->dinfo,
+	    ret->v.xvec = saved_object_get_series(oname, r->v.idnum, p->dinfo,
 						  &p->err);
 	} else if (matrix) {
-	    ret->v.m = saved_object_get_matrix(oname, r->aux, &p->err);
+	    ret->v.m = saved_object_get_matrix(oname, r->v.idnum, &p->err);
 	} else if (mslice) {
 	    /* the right subnode needs more work */
 	    ret->v.m = object_var_get_submatrix(oname, r, p);
@@ -1983,7 +1988,7 @@ static NODE *eval (NODE *t, parser *p)
 	return NULL;
     }
 
-    if (b2sym(t->t)) {
+    if (evalb2(t->t)) {
 	l = eval(t->v.b2.l, p);
 	if (l == NULL && p->err == 0) {
 	    p->err = 1;
@@ -3460,6 +3465,7 @@ void gen_cleanup (parser *p)
 	    free_tree(p->tree, "p->tree");
 	}
 	free_tree(p->ret, "p->ret");
+	free(p->lh.substr);
     }
 }
 
