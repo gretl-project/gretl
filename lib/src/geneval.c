@@ -59,7 +59,13 @@ static void free_tree (NODE *t, const char *msg)
     }
 
     /* free recursively */
-    if (b2sym(t->t)) {
+    if (bnsym(t->t)) {
+	int i;
+
+	for (i=0; i<t->v.bn.n_nodes; i++) {
+	    free_tree(t->v.bn.n[i], msg);
+	}
+    } else if (b2sym(t->t)) {
 	free_tree(t->v.b2.l, msg);
 	free_tree(t->v.b2.r, msg);
     } else if (b1sym(t->t)) {
@@ -94,6 +100,13 @@ static void free_tree (NODE *t, const char *msg)
     free(t);
 }
 
+static void parser_aux_init (parser *p)
+{
+    p->aux = NULL;
+    p->n_aux = 0;
+    p->aux_i = 0;
+}
+
 static void parser_free_aux_nodes (parser *p)
 {
     int i;
@@ -106,6 +119,21 @@ static void parser_free_aux_nodes (parser *p)
 	}
 	free(p->aux);
     }
+}
+
+static int is_aux_node (NODE *t, parser *p)
+{
+    int i;
+
+    if (p->aux != NULL) {
+	for (i=0; i<p->n_aux; i++) {
+	    if (t == p->aux[i]) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
 }
 
 static NODE *newvec (int n, int tmp)
@@ -1654,8 +1682,9 @@ static int *full_series_list (const DATAINFO *pdinfo, int *err)
 
 static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 {
-    int *list = full_series_list(p->dinfo, &p->err);
     gretl_matrix *M;
+    int *list = NULL;
+    int freelist = 0;
 
     if (t != NULL) {
 	list = get_list_by_name(t->v.str);
@@ -1664,6 +1693,7 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 	}
     } else {
 	list = full_series_list(p->dinfo, &p->err);
+	freelist = 1;
     }
 
     if (p->err) {
@@ -1674,7 +1704,7 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 					    p->dinfo->t1, p->dinfo->t2, 
 					    &p->err);
 
-    if (t == NULL) {
+    if (freelist) {
 	free(list);
     }
 
@@ -1767,6 +1797,13 @@ static NODE *matrix_def_node (NODE *t, parser *p)
 	ret = aux_matrix_node(p);
 	if (ret != NULL) {
 	    ret->v.m = M;
+	}
+    }
+
+    for (i=0; i<m && !p->err; i++) {
+	if (is_aux_node(t->v.bn.n[i], p)) {
+	    /* forestall double-freeing */
+	    t->v.bn.n[i] = NULL;
 	}
     }
 	
@@ -2624,9 +2661,7 @@ static void get_lh_mspec (parser *p)
     p->err = subp.err;
 
     if (subp.tree != NULL) {
-	subp.aux = NULL;
-	subp.n_aux = 0;
-	subp.aux_i = 0;
+	parser_aux_init(&subp);
 	subp.ret = eval(subp.tree, &subp);
 
 	if (subp.err) {
@@ -3466,6 +3501,7 @@ void gen_cleanup (parser *p)
 	}
 	free_tree(p->ret, "p->ret");
 	free(p->lh.substr);
+	free(p->lh.mspec);
     }
 }
 
@@ -3524,9 +3560,7 @@ int realgen (const char *s, parser *p, double **Z,
 
  starteval:
 
-    p->aux = NULL;
-    p->n_aux = 0;
-    p->aux_i = 0;
+    parser_aux_init(p);
 
     if (p->flags & P_AUTOREG) {
 	/* e.g. y = b*y(-1) : evaluate dynamically */
