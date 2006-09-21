@@ -674,7 +674,7 @@ static NODE *term (parser *p)
     return t;
 }
 
-static NODE *expr5 (parser *p)
+static NODE *expr4 (parser *p)
 {  
     NODE *t;
 
@@ -688,30 +688,6 @@ static NODE *expr5 (parser *p)
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b2.r = term(p);
-	}
-    }
-
-#if SDEBUG
-    notify("expr5", t, p);
-#endif
-
-    return t;
-}
-
-static NODE *expr4 (parser *p)
-{  
-    NODE *t;
-
-    if (p->err || (t = expr5(p)) == NULL) {
-	return NULL;
-    }
-
-    while (!p->err && (p->sym == B_GT || p->sym == B_LT || 
-		       p->sym == B_GTE || p->sym == B_LTE)) {
-	t = newb2(p->sym, t, NULL);
-	if (t != NULL) {
-	    lex(p);
-	    t->v.b2.r = expr5(p);
 	}
     }
 
@@ -730,7 +706,8 @@ static NODE *expr3 (parser *p)
 	return NULL;
     }
 
-    while (!p->err && (p->sym == B_EQ || p->sym == B_NEQ)) {
+    while (!p->err && (p->sym == B_GT || p->sym == B_LT || 
+		       p->sym == B_GTE || p->sym == B_LTE)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
@@ -753,7 +730,7 @@ static NODE *expr2 (parser *p)
 	return NULL;
     }
 
-    while (!p->err && p->sym == B_AND) {
+    while (!p->err && (p->sym == B_EQ || p->sym == B_NEQ)) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
@@ -776,7 +753,7 @@ static NODE *expr1 (parser *p)
 	return NULL;
     }
 
-    while (!p->err && p->sym == B_OR) {
+    while (!p->err && p->sym == B_AND) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);
@@ -799,7 +776,7 @@ NODE *expr (parser *p)
 	return NULL;
     }
 
-    while (!p->err && (p->sym == B_EQ || p->sym == B_NEQ)) {
+    while (!p->err && p->sym == B_OR) {
 	t = newb2(p->sym, t, NULL);
 	if (t != NULL) {
 	    lex(p);

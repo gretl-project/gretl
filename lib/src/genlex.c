@@ -430,16 +430,15 @@ static void look_up_dollar_word (const char *s, parser *p)
     if (p->idnum > 0) {
 	p->sym = DVAR;
 	p->idstr = gretl_strdup(s);
-	return;
-    }
-
-    p->idnum = mvar_lookup(s);
-    if (p->idnum > 0) {
-	p->sym = MVAR;
-	p->idstr = gretl_strdup(s);
     } else {
-	pprintf(p->prn, "Symbol '%s' is undefined\n", s);
-	p->err = 1;
+	p->idnum = mvar_lookup(s);
+	if (p->idnum > 0) {
+	    p->sym = MVAR;
+	    p->idstr = gretl_strdup(s);
+	} else {
+	    pprintf(p->prn, "Symbol '%s' is undefined\n", s);
+	    p->err = 1;
+	}
     }
 }
 

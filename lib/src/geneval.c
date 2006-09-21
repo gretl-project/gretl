@@ -58,7 +58,7 @@ void free_tree (NODE *t, const char *msg)
 	return;
     }
 
-    /* free recursively FIXME need to include some other 
+    /* free recursively: FIXME need to include some other 
        node types for this treatment
     */
     if (b2sym(t->t) || t->t == DMSL) {
@@ -301,14 +301,14 @@ static double xy_calc (double x, double y, int op)
 	    x, y, getsymb(op, NULL));
 #endif
 
-    /* special case: 0.0 * anything (including even NA) = 0.0 */
-    if (op == B_MUL && (x == 0.0 || y == 0.0)) {
-	return 0.0;
-    }
-
     /* assignment */
     if (op == B_ASN) {
 	return y;
+    }    
+
+    /* special case: 0.0 * anything (including even NA) = 0.0 */
+    if (op == B_MUL && (x == 0.0 || y == 0.0)) {
+	return 0.0;
     }
 
     /* otherwise, NA propagates to the result */
@@ -1971,7 +1971,7 @@ static void node_type_error (const NODE *n, parser *p, int t, int badt)
     p->err = E_TYPES;
 }
 
-/* key function: evaluate the parsed syntax tree*/
+/* core function: evaluate the parsed syntax tree */
 
 static NODE *eval (NODE *t, parser *p)
 {  
@@ -2672,7 +2672,7 @@ static void parser_print_result (parser *p, PRN *prn)
 }
 #endif
 
-/* create a "dummy" node to implement the declaration of a
+/* create a dummy node to implement the declaration of a
    new variable */
 
 static NODE *decl_node (parser *p)
@@ -2694,7 +2694,7 @@ static NODE *decl_node (parser *p)
     }
 }
 
-/* create a "dummy" node to facilitate (a) printing an
+/* create a dummy node to facilitate (a) printing an
    existing variable, or (b) incrementing or decrementing
    that variable
 */
@@ -3272,7 +3272,7 @@ static int save_generated_var (parser *p, double ***pZ, PRN *prn)
     double **Z = NULL;
     int t, v;
 
-    /* first we test for type errors */
+    /* test for type mismatch errors */
     gen_check_return_type(p);
     if (p->err) {
 	return p->err;
@@ -3283,7 +3283,7 @@ static int save_generated_var (parser *p, double ***pZ, PRN *prn)
 	    p->targ, p->ret->t, p->op);
 #endif
 
-    /* then allocate dataset storage if needed */
+    /* allocate dataset storage, if needed */
     gen_allocate_storage(p, pZ);
     if (p->err) {
 	return p->err;
