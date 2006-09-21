@@ -125,6 +125,7 @@ static void gen_write_label (parser *p, int oldv)
     }
 
     strcpy(VARLABEL(p->dinfo, p->lh.v), tmp);
+    p->dinfo->varinfo[p->lh.v]->flags |= VAR_GENERATED;
 
 #if GDEBUG
     fprintf(stderr, "varlabel: '%s'\n", VARLABEL(p->dinfo, p->lh.v));

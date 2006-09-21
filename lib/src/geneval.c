@@ -1801,8 +1801,8 @@ static NODE *matrix_def_node (NODE *t, parser *p)
     }
 
     for (i=0; i<m && !p->err; i++) {
+	/* forestall double-freeing: null out any aux nodes */
 	if (is_aux_node(t->v.bn.n[i], p)) {
-	    /* forestall double-freeing */
 	    t->v.bn.n[i] = NULL;
 	}
     }

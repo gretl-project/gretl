@@ -667,6 +667,7 @@ struct varinfo_settings {
     GtkWidget *spin;
     GtkWidget *check;
     int varnum;
+    int formula;
     int full;
 };
 
@@ -718,6 +719,23 @@ static char *trim_text (const char *s)
     return ret;
 }
 
+static int try_regenerate_var (int v, const char *s)
+{
+    char line[MAXLEN];
+    int err;
+
+    /* FIXME use gretl_command_sprintf, etc? */
+
+    if (*s == '=') s++;
+    sprintf(line, "%s=%s", datainfo->varname[v], s);
+    err = generate(line, &Z, datainfo, OPT_NONE, NULL);
+    if (err) {
+	gui_errmsg(err);
+    }
+
+    return err;
+}
+
 static void 
 really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
 {
@@ -744,6 +762,11 @@ really_set_variable_info (GtkWidget *w, struct varinfo_settings *vset)
     newstr = trim_text(edttext);
 
     if (newstr != NULL && strcmp(VARLABEL(datainfo, v), newstr)) {
+	if (vset->formula) {
+	    if (try_regenerate_var(v, newstr)) {
+		return;
+	    }
+	}
 	*VARLABEL(datainfo, v) = 0;
 	strncat(VARLABEL(datainfo, v), newstr, MAXLABEL - 1);
 	changed = 1;
@@ -851,6 +874,20 @@ static const char *comp_int_to_string (int i)
     return N_("not set");
 }
 
+static int formula_ok (int v)
+{
+    if (var_is_generated(datainfo, v)) {
+	const char *s = VARLABEL(datainfo, v);
+	int n = strlen(s);
+
+	if (n > 0 && s[n-1] != '.') {
+	    return 1;
+	}
+    }
+
+    return 0;
+}	    
+
 void varinfo_dialog (int varnum, int full)
 {
     GtkWidget *tmp, *hbox;
@@ -875,6 +912,7 @@ void varinfo_dialog (int varnum, int full)
     vset->compaction_menu = NULL;
     vset->spin = NULL;
     vset->check = NULL;
+    vset->formula = formula_ok(varnum);
     vset->full = full;
 
     g_signal_connect(G_OBJECT(vset->dlg), "destroy", 
@@ -901,9 +939,13 @@ void varinfo_dialog (int varnum, int full)
 		       hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
     
-    /* read/set descriptive string */
+    /* read/set descriptive string or genr formula */
     hbox = gtk_hbox_new(FALSE, 5);
-    tmp = gtk_label_new (_("Description:"));
+    if (vset->formula) {
+	tmp = gtk_label_new(_("Formula:"));
+    } else {
+	tmp = gtk_label_new(_("Description:"));
+    }
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 

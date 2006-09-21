@@ -27,9 +27,10 @@ typedef enum {
 } DatasetMarkerType;
 
 typedef enum {
-    VAR_DISCRETE = 1 << 0,
-    VAR_SCALAR   = 1 << 1,
-    VAR_HIDDEN   = 1 << 2
+    VAR_DISCRETE   = 1 << 0,
+    VAR_SCALAR     = 1 << 1,
+    VAR_HIDDEN     = 1 << 2,
+    VAR_GENERATED  = 1 << 3
 } VarinfoFlags;
 
 /**
@@ -203,6 +204,17 @@ typedef enum {
  * Determine whether or not a variable is hidden.
  */
 #define var_is_hidden(p, i) ((p)->varinfo[i]->flags & VAR_HIDDEN)
+
+/**
+ * var_is_generated:
+ * @p: pointer to data information struct.
+ * @i: index number of variable.
+ *
+ * Determine whether or not a variable was generated using
+ * a formula or transformation function.
+ */
+#define var_is_generated(p, i) ((p)->varinfo[i]->flags & VAR_GENERATED)
+
 
 void free_Z (double **Z, DATAINFO *pdinfo);
 
