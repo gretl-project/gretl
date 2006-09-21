@@ -1396,7 +1396,7 @@ static NODE *series_lag (int v, int k, parser *p)
 	}
 	if (s >= 0 && s < p->dinfo->n) {
 	    ret->v.xvec[t] = x[s];
-	}
+	} 
     }
 
     return ret;
@@ -3531,7 +3531,7 @@ int realgen (const char *s, parser *p, double **Z,
 	    fprintf(stderr, "\n*** autoreg: p->obs = %d\n", p->obs);
 #endif
 	    p->ret = eval(p->tree, p);
-	    if (!na(p->ret->v.xvec[t])) {
+	    if (!na(p->ret->v.xvec[t])) { 
 #if EDEBUG
 		fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d]\n",
 			t, p->ret->v.xvec[t], p->lh.v, t);

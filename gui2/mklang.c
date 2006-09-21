@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "libgretl.h"
-#include "genstack.h"
+#include "genparse.h"
 
 /* FIXME new genr stuff */
 
@@ -16,9 +16,7 @@ void output_emacs_block (void)
     n = 1;
     fputs("(defvar gretl-command-words\n '(", stdout);
     for (i=1; i<NC; i++) {
-	if (strcmp(gretl_command_word(i), "matrix")) {
-	    printf("\"%s\"", gretl_command_word(i));
-	}
+	printf("\"%s\"", gretl_command_word(i));
 	if (i < NC-1) {
 	    if (n % 8 == 0) {
 		fputs("\n   ", stdout);
@@ -31,19 +29,19 @@ void output_emacs_block (void)
     puts(")\n  \"Commands in Gretl (these names are also reserved).\")\n");
 
     /* functions in "genr" command */
-    n = 1;
     fputs("(defvar gretl-genr-functions\n '(", stdout);
-    for (i=1; i<T_IDENTITY; i++) {
-	printf("\"%s\"", get_genr_func_word(i));
-	if (i < T_IDENTITY-1) {
-	    if (n % 8 == 0) {
+    n = gen_func_count();
+    for (i=0; i<n; i++) {
+	printf("\"%s\"", gen_func_name(i));
+	if (i < n-1) {
+	    if ((i+1) % 8 == 0) {
 		fputs("\n   ", stdout);
 	    } else {
 		putchar(' ');
 	    }
 	}
-	n++;
     }
+
     puts(")\n  \"Builtin functions for Gretl's genr command.\")\n");
 
     /* option strings */
@@ -66,36 +64,29 @@ void output_emacs_block (void)
 	free_strings_array(strs, nopts);
     }
 
-    /* dollar variables */
-    n = 1;
+    /* internal "dollar" variables */
     fputs("(defvar gretl-internal-vars\n '(", stdout);
-    for (i=1; i<M_MAX; i++) {
-	word = get_model_stat_word(i);
-	if (word != NULL) {
-	    printf("\"%s\"", word + 1);
-	    if (n % 8 == 0) {
-		fputs("\n   ", stdout);
-	    } else {
-		putchar(' ');
-	    }
-	    n++;
+    /* model variables */
+    n = model_var_count();
+    for (i=0; i<n; i++) {
+	printf("\"%s\"", model_var_name(i));
+	if ((i+1) % 8 == 0) {
+	    fputs("\n   ", stdout);
+	} else {
+	    putchar(' ');
 	}
     }
-    for (i=1; i<R_MAX; i++) {
-	word = get_retriever_word(i);
-	if (word != NULL) {
-	    printf("\"%s\"", word + 1);
-	    if (i < R_MAX-1) {
-		if (n % 8 == 0) {
-		    fputs("\n   ", stdout);
-		} else {
-		    putchar(' ');
-		}
-	    }
-	    n++;
+    /* dataset variables */
+    n = data_var_count();
+    for (i=0; i<n; i++) {
+	printf("\"%s\"", data_var_name(i));
+	if ((i+1) % 8 == 0) {
+	    fputs("\n   ", stdout);
+	} else {
+	    putchar(' ');
 	}
     }
-    puts(")\n  \"Model-related variables.\")\n");    
+    puts(")\n  \"Model- and dataset-related variables.\")\n");    
 }
 
 void output_lang_file (void)
@@ -103,7 +94,7 @@ void output_lang_file (void)
     const char *word;
     char **strs;
     int nopts;
-    int i;
+    int i, n;
 
     puts("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
     puts("<!DOCTYPE language SYSTEM \"language.dtd\">");
@@ -150,8 +141,9 @@ void output_lang_file (void)
 
     /* functions in "genr" command */
     puts("<keyword-list _name = \"Genr-functions\" style = \"Function\" case-sensitive=\"TRUE\">");
-    for (i=1; i<T_IDENTITY; i++) {
-	printf(" <keyword>%s</keyword>\n", get_genr_func_word(i));
+    n = gen_func_count();
+    for (i=0; i<n; i++) {
+	printf(" <keyword>%s</keyword>\n", gen_func_name(i));
     }    
     puts("</keyword-list>\n");
 
@@ -171,17 +163,13 @@ void output_lang_file (void)
     puts("<keyword-list _name = \"InternalVars\" style = \"Data Type\" case-sensitive=\"TRUE\"");
     puts(" match-empty-string-at-beginning = \"FALSE\" match-empty-string-at-end = \"FALSE\"");
     puts(" beginning-regex=\"\\$\">");
-    for (i=1; i<M_MAX; i++) {
-	word = get_model_stat_word(i);
-	if (word != NULL) {
-	    printf(" <keyword>%s</keyword>\n", word + 1);
-	}
+    n = model_var_count();
+    for (i=0; i<n; i++) {
+	printf(" <keyword>%s</keyword>\n", model_var_name(i));
     }
-    for (i=1; i<R_MAX; i++) {
-	word = get_retriever_word(i);
-	if (word != NULL) {
-	    printf(" <keyword>%s</keyword>\n", word + 1);
-	}
+    n = data_var_count();
+    for (i=0; i<n; i++) {
+	printf(" <keyword>%s</keyword>\n", data_var_name(i));
     }	
     puts("</keyword-list>\n");
 

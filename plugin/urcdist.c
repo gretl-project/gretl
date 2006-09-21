@@ -39,7 +39,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 		     double *probs, double stat, int nobs, 
 		     int model, int nreg);
 
-static double eval (double *beta, int model, int nreg, int nobs);
+static double eval_crit (double *beta, int model, int nreg, int nobs);
 
 static int gls (double *xmat, double *yvect, double *omega, 
 		double *beta, double *xomx, double *fits, 
@@ -198,7 +198,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
     /* first, compute all the estimated critical values */
 
     for (i = 1; i <= URCLEN; ++i) {
-	crits[i - 1] = eval(&beta[(i << 2) + 1], model, nreg, nobs);
+	crits[i - 1] = eval_crit(&beta[(i << 2) + 1], model, nreg, nobs);
     }
 
     /* find critical value closest to test statistic */
@@ -343,7 +343,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
     return pval;
 }
 
-static double eval (double *beta, int model, int nreg, int nobs)
+static double eval_crit (double *beta, int model, int nreg, int nobs)
 {
     double d, cval = 0.0;
 

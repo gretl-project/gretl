@@ -332,4 +332,12 @@ int realgen (const char *s, parser *p, double **Z,
 void gen_save_or_print (parser *p, double ***pZ, PRN *prn);
 void gen_cleanup (parser *p);
 
+/* helper functions for manual, gretl.lang file */
+int gen_func_count (void);
+const char *gen_func_name (int i);
+int model_var_count (void);
+const char *model_var_name (int i);
+int data_var_count (void);
+const char *data_var_name (int i);
+
 

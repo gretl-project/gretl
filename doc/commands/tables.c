@@ -5,7 +5,7 @@
    Allin Cottrell, June 2006.
 */
 
-#include "generate.c" /* need access to some private stuff */
+#include "genmain.c" /* need access to some private stuff */
 
 int sort_strings (const void *a, const void *b)
 {
@@ -141,11 +141,12 @@ void print_internals (void)
 void print_func_words (void)
 {
     char **S = NULL;
-    int i, n = 0;
-    int err = 0;
+    int i, n, err = 0;
 
-    for (i=0; funcs[i].fnum != 0 && !err; i++) {
-	err = push_string_on_array(&S, funcs[i].fword, n++);
+    n = gen_func_count();
+
+    for (i=0; i<n && !err; i++) {
+	err = push_string_on_array(&S, gen_func_name(i), i);
     }  
 
     if (!err) {

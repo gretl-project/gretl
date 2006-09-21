@@ -1044,6 +1044,19 @@ static void printstr (PRN *prn, double xx, int *ls)
     *ls += lwrd;
 }
 
+static int really_const (int t1, int t2, const double *x)
+{
+    int t;
+
+    for (t=t1+1; t<=t2; t++) {
+	if (x[t] != x[t1]) {
+	    return 0;
+	}
+    }
+
+    return 1;
+}
+
 /* prints series z from current sample t1 to t2 */
 
 static void printz (const double *z, const DATAINFO *pdinfo, 
@@ -1058,7 +1071,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 	opt = OPT_T;
     }
 
-    if (gretl_isconst(t1, t2, z)) {
+    if (really_const(t1, t2, z)) {
 	if (opt & OPT_T) {
 	    printstr_long(prn, z[t1], dig, &ls);
 	} else {
@@ -1603,7 +1616,7 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	double xx = Z[plist[j]][pdinfo->t1];
 
 	for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) {
-	    if (floatneq(Z[plist[j]][t], xx)) {
+	    if (Z[plist[j]][t] != xx) {
 		allconst = 0;
 		break;
 	    }

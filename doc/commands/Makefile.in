@@ -86,7 +86,7 @@ validate.o: validate.c
 topiclist.o: topiclist.c
 	$(CC) $(CFLAGS) $(TOPICDEFS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-tables.o: tables.c $(topsrc)/lib/src/generate.c \
+tables.o: tables.c $(topsrc)/lib/src/genmain.c \
 	$(topsrc)/lib/src/monte_carlo.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 

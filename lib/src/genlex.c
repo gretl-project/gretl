@@ -70,6 +70,7 @@ struct str_table dvars[] = {
     { R_TEST_STAT, "$test" },
     { R_TEST_PVAL, "$pvalue" },
     { R_INDEX,     "t" },
+    { R_INDEX,     "obs" },
     { 0,           NULL },
 };
 
@@ -106,6 +107,7 @@ struct str_table funcs[] = {
     { TAN,   "tan" },
     { ATAN,  "atan" },
     { LOG,   "log" },
+    { LOG,   "ln" },
     { LOG10, "log10" },
     { LOG2,  "log2" },
     { EXP,   "exp" },
@@ -223,11 +225,6 @@ int function_lookup (const char *s)
 	}
     }
 
-    if (!strcmp(s, "ln")) {
-	/* alias */
-	return LOG;
-    }
-
     return 0;
 }
 
@@ -243,6 +240,54 @@ static const char *funname (int t)
 
     return "unknown";
 }
+
+/* for external purposes (.lang file, manual) */
+
+int gen_func_count (void)
+{
+    int i;
+
+    for (i=0; funcs[i].id != 0; i++) ;
+    return i;
+}
+
+const char *gen_func_name (int i)
+{
+    return funcs[i].str;
+}
+
+int model_var_count (void)
+{
+    int i;
+
+    for (i=0; mvars[i].id != 0; i++) ;
+    return i;
+}
+
+const char *model_var_name (int i)
+{
+    return mvars[i].str + 1;
+}
+
+int data_var_count (void)
+{
+    int i, n = 0;
+
+    for (i=0; dvars[i].id != 0; i++) {
+	if (dvars[i].str[0] == '$') {
+	    n++;
+	}
+    }
+
+    return n;
+}
+
+const char *data_var_name (int i)
+{
+    return dvars[i].str + 1;
+}
+
+/* end external stuff */
 
 static int dummy_lookup (const char *s)
 {
@@ -346,13 +391,13 @@ static double get_quoted_obsnum (parser *p)
 
     t = dateton(obs, p->dinfo);
     if (t >= 0) {
-	x = t;
+	x = t + 1;
     } else {
-	/* try unquoting */
+	/* try unquoting (e.g. we got "1978:1") */
 	obs[strlen(obs) - 1] = '\0';
 	t = dateton(obs + 1, p->dinfo);
 	if (t >= 0) {
-	    x = t;
+	    x = t + 1;
 	}
     }
 
@@ -555,7 +600,7 @@ static void getword (parser *p)
 	return;
     }
 
-    if (*word == '$' || !strcmp(word, "t")) {
+    if (*word == '$' || !strcmp(word, "t") || !strcmp(word, "obs")) {
 	look_up_dollar_word(word, p);
     } else {
 	look_up_word(word, p);
@@ -618,7 +663,7 @@ static double getdbl (parser *p)
     fprintf(stderr, "getdbl: xstr = '%s'\n", xstr);
 #endif
 
-    return atof(xstr);
+    return dot_atof(xstr);
 }
 
 void lex (parser *p)
