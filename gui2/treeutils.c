@@ -111,7 +111,6 @@ static void update_dialogs_from_varclick (int active_var)
 	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_name));
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), 
 				 datainfo->varname[active_var]);
-	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), " ");
     } else if (active_edit_text != NULL) {
 	GtkTextBuffer *tbuf;
 

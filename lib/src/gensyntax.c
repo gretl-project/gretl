@@ -211,6 +211,21 @@ static int push_bn_node (NODE *t, NODE *n)
     return 0;
 }
 
+static void expected_symbol_error (int c, parser *p)
+{
+    parser_print_input(p);
+    pprintf(p->prn, _("Expected '%c' but found '%s'\n"), c, 
+	    getsymb(p->sym, p));
+    p->err = 1;
+}
+
+static void unmatched_symbol_error (int c, parser *p)
+{
+    parser_print_input(p);
+    pprintf(p->prn, _("Unmatched '%c'\n"), c);
+    p->err = E_PARSE;
+}
+
 static NODE *base (parser *p, NODE *up)
 { 
     NODE *t = NULL;
@@ -267,17 +282,16 @@ static NODE *base (parser *p, NODE *up)
 	    } 
 	    lex(p);
 	} else if (p->err == 0) {
-	    parser_print_input(p);
-	    pprintf(p->prn, "expected '%c' but found '%s'\n", ')', 
-		    getsymb(p->sym, p));
-	    p->err = 1;
+	    expected_symbol_error(')', p);
 	}
 	break;
     case LBR: /* left bracket '[' */
 	if (up == NULL) {
 	    goto deferr;
 	}
-	t = subnode(p, up);
+	if (up->t == OBS) {
+	    t = obs_node(p);
+	}
 	if (p->sym == RBR) {
 	    if (up->t == MSL || up->t == DMSL) {
 		if (p->ch == '\'') {
@@ -287,18 +301,12 @@ static NODE *base (parser *p, NODE *up)
 	    }
 	    lex(p);
 	} else if (p->err == 0) {
-	    parser_print_input(p);
-	    pprintf(p->prn, "Expected '%c' but found '%s'\n", ']', 
-		    getsymb(p->sym, p));
-	    p->err = 1;
+	    expected_symbol_error(']', p);
 	}
 	break;
     default: 
     deferr:
-	parser_print_input(p);
-	pprintf(p->prn, "The symbol '%s' is not valid in this context\n", 
-		getsymb(p->sym, p));
-	p->err = 1;
+	context_error(0, p);
 	break;
     }
 
@@ -321,8 +329,10 @@ static NODE *get_string_arg (parser *p)
     if (close < 0 || close > MAXSTR - 2) {
 	p->err = E_PARSE;
 	if (close > 0) {
-	    pprintf(p->prn, "string is too long (%d versus %d max)\n",
+	    pprintf(p->prn, _("String is too long (%d versus %d max)\n"),
 		    close, MAXSTR);
+	} else {
+	    unmatched_symbol_error('(', p);
 	}
 	return NULL;
     }
@@ -383,16 +393,12 @@ static void get_matrix_def (NODE *t, parser *p)
 	if (p->sym == RCB) {
 	    lex(p);
 	} else {
-	    pprintf(p->prn, "Unbalanced '%c'\n", '{');
-	    p->err = E_PARSE;
+	    unmatched_symbol_error('{', p);
 	}
     }
 	    
     if (cexp && p->err == 0) {
-	parser_print_input(p);
-	pprintf(p->prn, "Expected '%c' but found '%s'\n", cexp, 
-		getsymb(p->sym, p));
-	p->err = 1;
+	expected_symbol_error(cexp, p);
     }
 }	
 
@@ -455,10 +461,7 @@ static void get_slice_parts (NODE *t, parser *p)
     }
 	    
     if (cexp && p->err == 0) {
-	parser_print_input(p);
-	pprintf(p->prn, "expected '%c' but found '%s'\n", cexp, 
-		getsymb(p->sym, p));
-	p->err = 1;
+	expected_symbol_error(cexp, p);
     }
 }
 
@@ -509,10 +512,7 @@ static void get_args (NODE *t, parser *p, int opt)
     }
 	    
     if (cexp && p->err == 0) {
-	parser_print_input(p);
-	pprintf(p->prn, "expected '%c' but found '%s'\n", cexp, 
-		getsymb(p->sym, p));
-	p->err = 1;
+	expected_symbol_error(cexp, p);
     }
 }
 
@@ -637,6 +637,10 @@ static NODE *factor (parser *p)
     }
 
     if (unary_op(sym)) {
+	if (p->ch == 0) {
+	    context_error(0, p);
+	    return NULL;
+	}
         t = newb1(sym, NULL, 0);
         if (t != NULL) {
             lex(p);
@@ -796,14 +800,6 @@ NODE *expr (parser *p)
 	    t->v.b2.r = expr1(p);
 	}
     }
-
-#if 0
-    if (p->err == 0 && p->sym < OP_MAX) {
-	/* FIXME this shouldn't be possible */
-	fprintf(stderr, "expr: bad p->sym = %d\n", p->sym);
-	p->err = 1;
-    }
-#endif
 
 #if SDEBUG
     notify("expr", t, p);

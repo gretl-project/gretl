@@ -317,6 +317,7 @@ struct parser_ {
     int idnum;
     char *idstr;
     int err;
+    int warn;
 };
 
 #define starting(p) (p->flags & P_START)
@@ -329,8 +330,9 @@ void parser_print_input (parser *p);
 void lex (parser *s);
 NODE *expr (parser *s);
 NODE *newdbl (double x);
-NODE *subnode (parser *p, NODE *up);
+NODE *obs_node (parser *p);
 NODE *msl_node_direct (parser *p);
+void context_error (int c, parser *p);
 const char *getsymb (int t, const parser *p);
 int function_lookup (const char *s);
 

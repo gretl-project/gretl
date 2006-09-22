@@ -509,8 +509,6 @@ void print_xtab (const Xtab *tab, gretlopt opt, PRN *prn)
 
 void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 {
-    char date1[OBSLEN], date2[OBSLEN];
-
     if (!gretl_messages_on()) {
 	return;
     }
@@ -523,9 +521,6 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 	return;
     }
 
-    ntodate_full(date1, pdinfo->t1, pdinfo);
-    ntodate_full(date2, pdinfo->t2, pdinfo);
-
     if (fulln) {
 	pprintf(prn, _("Full data set: %d observations\n"), fulln);
     } else {
@@ -533,23 +528,15 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 		pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     }
 
-    pprintf(prn, "%s:  %s - %s", _("Current sample"), date1, date2);
-
     if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1 ||
 	(fulln && dataset_is_panel(pdinfo))) {
-	pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
-    } else {
-	pputc(prn, '\n');
-    } 
+	char d1[OBSLEN], d2[OBSLEN];
+	ntodate_full(d1, pdinfo->t1, pdinfo);
+	ntodate_full(d2, pdinfo->t2, pdinfo);
 
-    if (dataset_is_panel(pdinfo)) {
-	pprintf(prn, "%s\n", _("panel"));
-    } 
-#if 0
-    else if (dataset_is_time_series(pdinfo)) {
-	pprintf(prn, "%s\n", _("time series"));
+	pprintf(prn, "%s:  %s - %s", _("Current sample"), d1, d2);
+	pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);
     }
-#endif
 }
 
 /**
@@ -1638,7 +1625,9 @@ int printdata (const int *list, const double **Z, const DATAINFO *pdinfo,
 	    pputc(prn, '\n');
 	}
 	for (j=1; j<=plist[0]; j++) {
-	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[plist[j]]);
+	    if (plist[0] > 1) {
+		pprintf(prn, _("Varname: %s\n"), pdinfo->varname[plist[j]]);
+	    }
 	    print_smpl(pdinfo, 0, prn);
 	    pputc(prn, '\n');
 	    printz(Z[plist[j]], pdinfo, prn, opt);

@@ -1184,20 +1184,50 @@ static void mdata_select_all (void)
     gtk_tree_selection_select_all(select);
 }
 
+static int get_line_pos (GtkTreeModel *mod)
+{
+    GtkTreeIter iter;
+    gchar *idstr;
+    int i = 1, pos = 0;
+
+    if (gtk_tree_model_get_iter_first(mod, &iter)) {
+	while (gtk_tree_model_iter_next(mod, &iter)) {
+	    gtk_tree_model_get(mod, &iter, 0, &idstr, -1);
+	    if (idstr != NULL && atoi(idstr) == mdata->active_var) {
+		pos = i;
+	    }
+	    g_free(idstr);
+	    if (pos) {
+		break;
+	    }
+	    i++;
+	}
+    }
+
+    return pos;
+}
+
 void populate_varlist (void)
 {
     GtkTreeStore *store;
     GtkTreeSelection *select;
     GtkTreeIter iter;    
     char id[4];
+    int pos = 0;
     int i;
 
     static gint check_connected;
     static gint click_connected;
 
-    /* find and clear the existing tree */
     store = GTK_TREE_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox)));
+
+    if (store != NULL) {
+	/* record line position? */
+	pos = get_line_pos(GTK_TREE_MODEL(store));
+    }
+    
     gtk_tree_store_clear(store);
+    sort_varlist(NULL, 0, NULL);
 
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
@@ -1233,16 +1263,38 @@ void populate_varlist (void)
 			   -1);
     } 
 
-    mdata->active_var = 1;
-
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+
+    if (pos != 0) {
+	/* return to previous position? */
+	GtkTreeIter last;
+
+	i = 1;
+	while (1) {
+	    last = iter;
+	    if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter)) {
+		iter = last;
+		break;
+	    } else if (i == pos) {
+		break;
+	    }
+	    i++;
+	}
+	pos = i;
+    } else {
+	pos = 1;
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+    }
+
+    mdata->active_var = pos;
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
     gtk_tree_selection_select_iter(select, &iter);
 
     if (datainfo->v > 1) {
-	GtkTreePath *path = gtk_tree_path_new_from_string("1");
+	GtkTreePath *path;
 
+	sprintf(id, "%d", pos);
+	path = gtk_tree_path_new_from_string(id);
 	gtk_tree_view_set_cursor(GTK_TREE_VIEW(mdata->listbox), path, NULL, FALSE);
 	gtk_tree_path_free(path);
     }

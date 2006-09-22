@@ -891,9 +891,9 @@ gretl_matrix *user_matrix_get_inverse (const gretl_matrix *m)
     }
 
     if (R == NULL) {
-	strcpy(gretl_errmsg, _("Matrix inversion failed"));
+   	strcpy(gretl_errmsg, _("Matrix inversion failed"));
     }
-
+   
     return R;
 }
 

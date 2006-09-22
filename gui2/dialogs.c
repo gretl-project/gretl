@@ -719,19 +719,30 @@ static char *trim_text (const char *s)
     return ret;
 }
 
+/* recreate a generated var in response to a change in
+   the formula given under "Edit attributes" */
+
 static int try_regenerate_var (int v, const char *s)
 {
     char line[MAXLEN];
+    PRN *prn;
     int err;
 
     /* FIXME use gretl_command_sprintf, etc? */
 
+    if (bufopen(&prn)) {
+	return 0;
+    }
+
     if (*s == '=') s++;
     sprintf(line, "%s=%s", datainfo->varname[v], s);
-    err = generate(line, &Z, datainfo, OPT_NONE, NULL);
+    err = generate(line, &Z, datainfo, OPT_NONE, prn);
+
     if (err) {
-	gui_errmsg(err);
+	errbox(gretl_print_get_buffer(prn));
     }
+
+    gretl_print_destroy(prn);
 
     return err;
 }

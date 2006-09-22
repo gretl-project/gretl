@@ -185,41 +185,41 @@ static void series_view_print (windata_t *vwin)
     const char *pbuf;
     int obslen = 8;
     PRN *prn;
-    int t;
+    int t, len;
 
     if (bufopen(&prn)) return;
 
-    pbuf = sview->points[0].label;
-
-    if (strlen(pbuf) == 10 && isdigit(*pbuf) && strchr(pbuf, '/')) {
-	/* daily date strings */
-	obslen = 10;
-    } 
-    
+    for (t=0; t<sview->npoints; t++) {
+	len = strlen(sview->points[t].label);
+	if (len > obslen) {
+	    obslen = len;
+	}
+    }
+	
     /* print formatted data to buffer */
     if (var_is_series(datainfo, sview->varnum)) {
-	pprintf(prn, "\n     Obs ");
-	pprintf(prn, "%*s\n\n", 13, datainfo->varname[sview->varnum]);
+	pprintf(prn, "\n%*s ", obslen, _("Obs"));
+	pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
 	for (t=0; t<sview->npoints; t++) {
 	    if (na(sview->points[t].val)) {
 		pprintf(prn, "%*s\n", obslen, sview->points[t].label);
 	    } else if (sview->format == 'G') {
-		pprintf(prn, "%*s %#13.*g\n", obslen, 
+		pprintf(prn, "%*s %#13.*g\n", obslen,
 			sview->points[t].label,
 			sview->digits, sview->points[t].val);
 	    } else {
-		pprintf(prn, "%*s %13.*f\n", obslen, 
+		pprintf(prn, "%*s %13.*f\n", obslen,
 			sview->points[t].label,
 			sview->digits, sview->points[t].val);
 	    }
 	}
     } else {
 	if (sview->format == 'G') {
-	    pprintf(prn, "\n%*s = %#13.*g", obslen,
+	    pprintf(prn, "\n%s = %#13.*g", 
 		    datainfo->varname[sview->varnum], 
 		    sview->digits, Z[sview->varnum][0]);
 	} else {
-	    pprintf(prn, "\n%*s = %13.*f", obslen, 
+	    pprintf(prn, "\n%s = %13.*f", 
 		    datainfo->varname[sview->varnum], 
 		    sview->digits, Z[sview->varnum][0]);
 	}

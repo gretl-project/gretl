@@ -315,17 +315,6 @@ static int dvar_lookup (const char *s)
     return 0;
 }
 
-#if 0
-const char *dvarname (int t)
-{
-    for (i=0; dvars[i].id != 0; i++) {
-	if (t == dvars[i].id) {
-	    return dvars[i].str;
-	}
-    }
-}
-#endif
-
 static int mvar_lookup (const char *s)
 {
     int i;
@@ -342,6 +331,28 @@ static int mvar_lookup (const char *s)
     }
 
     return 0;
+}
+
+static void undefined_symbol_error (const char *s, parser *p)
+{
+    parser_print_input(p);
+    pprintf(p->prn, _("The symbol '%s' is undefined\n"), s);
+    p->err = E_UNKVAR;
+}
+
+void context_error (int c, parser *p)
+{
+    parser_print_input(p);
+    if (c != 0) {
+	pprintf(p->prn, _("The symbol '%c' is not valid in this context\n"), 
+		p->ch);
+    } else {
+	pprintf(p->prn, _("The symbol '%s' is not valid in this context\n"), 
+		getsymb(p->sym, p));
+    }
+    if (p->err == 0) {
+	p->err = 1;
+    }
 }
 
 static int ok_date_char (int c, char *s, int i)
@@ -436,25 +447,19 @@ static void getobs (char *obs, parser *p)
     } 
 }
 
-NODE *subnode (parser *p, NODE *up)
+NODE *obs_node (parser *p)
 {
     char word[MAXWORD] = {0};
     const char *s = p->point;
     int close, c = p->ch;
     int t = -1;
 
-    if (up == NULL) {
-	return NULL;
-    }
-
     close = parser_charpos(p, ']');
 
     if (close >= 0) {
-	if (up->t == OBS) {
-	    getobs(word, p);
-	    t = get_t_from_obs_string(word, (const double **) p->Z, 
-				      p->dinfo);
-	} 
+	getobs(word, p);
+	t = get_t_from_obs_string(word, (const double **) p->Z, 
+				  p->dinfo);
     }
 
     if (t >= 0) {
@@ -479,8 +484,7 @@ static void look_up_dollar_word (const char *s, parser *p)
 	if (p->idnum > 0) {
 	    p->sym = MVAR;
 	} else {
-	    pprintf(p->prn, "Symbol '%s' is undefined\n", s);
-	    p->err = 1;
+	    undefined_symbol_error(s, p);
 	}
     }
 }
@@ -513,8 +517,7 @@ static void look_up_word (const char *s, parser *p)
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
 		} else {
-		    pprintf(p->prn, "Symbol '%s' is undefined\n", s);
-		    p->err = 1;
+		    undefined_symbol_error(s, p);
 		}
 	    }
 	}
@@ -560,8 +563,7 @@ static void word_check_next_char (parser *p)
     }
 
     if (p->err) {
-	parser_print_input(p);
-	pprintf(p->prn, "The symbol '%c' is not valid in this context\n", p->ch);
+	context_error(p->ch, p);
     }
 }
 
@@ -820,7 +822,8 @@ void lex (parser *p)
 		p->sym = NUM;
 		return;
 	    } else {
-		pprintf(p->prn, "invalid character '%c'\n", p->ch);
+		parser_print_input(p);
+		pprintf(p->prn, "Invalid character '%c'\n", p->ch);
 		p->err = 1;
 		return;
 	    }

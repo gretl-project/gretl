@@ -359,6 +359,7 @@ static int gen_special (const char *s, double ***pZ,
 	p->dinfo = pdinfo;
 	p->targ = VEC;
 	p->flags = 0;
+	p->err = p->warn = 0;
 	p->prn = prn;
 	gen_write_message(p, orig_v, prn);
     }	    

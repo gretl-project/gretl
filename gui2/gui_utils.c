@@ -1870,15 +1870,21 @@ static void add_edit_items_to_viewbar (windata_t *vwin)
     for (i=0; viewbar_items[i].str != NULL; i++) {
 	if (viewbar_items[i].flag == SAVE_ITEM ||
 	    viewbar_items[i].flag == EDIT_ITEM) {
+	    GtkWidget *w;
 
 	    button = gtk_image_new();
 	    gtk_image_set_from_stock(GTK_IMAGE(button), 
 				     viewbar_items[i].icon, 
 				     GTK_ICON_SIZE_MENU);
-	    gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
-				    NULL, _(viewbar_items[i].str), NULL,
-				    button, viewbar_items[i].toolfunc, 
-				    vwin, pos);
+	    w = gtk_toolbar_insert_item(GTK_TOOLBAR(vwin->mbar),
+					NULL, _(viewbar_items[i].str), NULL,
+					button, viewbar_items[i].toolfunc, 
+					vwin, pos);
+	    g_object_set_data(G_OBJECT(w), "flag", 
+			      GINT_TO_POINTER(viewbar_items[i].flag));
+	    if (viewbar_items[i].flag == SAVE_ITEM) { 
+		gtk_widget_set_sensitive(w, FALSE);
+	    } 
 	}
 	if (viewbar_items[i].flag != GP_ITEM) {
 	    pos++;
@@ -2277,11 +2283,11 @@ void view_window_set_editable (windata_t *vwin)
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), TRUE);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), TRUE);
     g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
-    attach_content_changed_signal(vwin);
     g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
 		     G_CALLBACK(query_save_text), vwin);
     vwin->role = EDIT_SCRIPT;
     add_edit_items_to_viewbar(vwin);
+    attach_content_changed_signal(vwin);
 }
 
 static gint query_save_text (GtkWidget *w, GdkEvent *event, 

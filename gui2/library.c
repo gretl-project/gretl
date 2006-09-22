@@ -2935,6 +2935,7 @@ void do_genr (GtkWidget *widget, dialog_t *dlg)
 
     while (isspace((unsigned char) *buf)) buf++;
     sscanf(buf, "%7s", test);
+
     if (!strcmp(test, "series")) {
 	gretl_command_sprintf("%s", buf);
     } else {
@@ -3058,16 +3059,21 @@ void do_random_st (GtkWidget *widget, dialog_t *dlg)
 
 static int finish_genr (MODEL *pmod, dialog_t *dlg)
 {
+    PRN *prn;
     int err = 0;
+
+    if (bufopen(&prn)) {
+	return 1;
+    }
 
     set_genr_model(pmod);
 
-    err = generate(cmdline, &Z, datainfo, OPT_NONE, NULL); 
+    err = generate(cmdline, &Z, datainfo, OPT_NONE, prn); 
 
     unset_genr_model();
 
     if (err) {
-	gui_errmsg(err);
+	errbox(gretl_print_get_buffer(prn));
 	delete_last_command();
     } else {
 	if (dlg != NULL) {
@@ -3076,6 +3082,8 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 	populate_varlist();
 	mark_dataset_as_modified();
     }
+
+    gretl_print_destroy(prn);
 
     return err;
 }

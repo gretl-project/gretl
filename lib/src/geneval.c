@@ -22,6 +22,8 @@
 #include "genparse.h"
 #include "../../cephes/libprob.h"
 
+#include <errno.h>
+
 #if GENDEBUG
 # define EDEBUG 1 /* can be > 1 */
 #else
@@ -321,11 +323,27 @@ static NODE *aux_mspec_node (parser *p)
     return get_aux_node(p, MSPEC, 0, 0);
 }
 
+static void eval_warning (parser *p, int op)
+{
+    if (p->warn == 0) {
+	if (op == B_POW) {
+	    p->warn = E_NAN;
+	    pputs(p->prn, "Warning: invalid operands for '^': ");
+	} else if (op == LOG) {
+	    p->warn = E_LOGS;
+	    pputs(p->prn, "Warning: invalid argument for log function: ");
+	} 
+	pputs(p->prn, "missing values were generated\n");
+    }
+}
+
 /* implementation of binary operators for scalar operands,
    (plus increment/decrement operators) */
 
-static double xy_calc (double x, double y, int op)
+static double xy_calc (double x, double y, int op, parser *p)
 {
+    double z = NADBL;
+
 #if EDEBUG > 1
     fprintf(stderr, "xy_calc: x = %g, y = %g, op = '%s'\n",
 	    x, y, getsymb(op, NULL));
@@ -346,6 +364,8 @@ static double xy_calc (double x, double y, int op)
 	return NADBL;
     }
 
+    errno = 0;
+
     switch (op) {
     case B_ADD: 
 	return x + y;
@@ -357,8 +377,6 @@ static double xy_calc (double x, double y, int op)
 	return x / y;
     case B_MOD: 
 	return (int) x % (int) y;
-    case B_POW: 
-	return pow(x, y);
     case B_AND: 
 	return x != 0 && y != 0;
     case B_OR: 
@@ -379,8 +397,16 @@ static double xy_calc (double x, double y, int op)
 	return x + 1.0;
     case DEC:
 	return x - 1.0;
+    case B_POW:
+	z = pow(x, y);
+	if (errno) {
+	    eval_warning(p, op);
+	    return NADBL;
+	} else {
+	    return z;
+	}
     default: 
-	return 0;
+	return z;
     }
 }
 
@@ -433,7 +459,7 @@ static NODE *scalar_calc (double x, double y, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	ret->v.xval = xy_calc(x, y, f);
+	ret->v.xval = xy_calc(x, y, f, p);
     }
 
     return ret;
@@ -466,7 +492,7 @@ static NODE *series_calc (NODE *l, NODE *r, int f, parser *p)
 	if (r->t == VEC) {
 	    y = r->v.xvec[t];
 	}
-	ret->v.xvec[t] = xy_calc(x, y, f);
+	ret->v.xvec[t] = xy_calc(x, y, f, p);
     }
 
     return ret;
@@ -700,12 +726,12 @@ static NODE *matrix_scalar_calc (NODE *l, NODE *r, int op, parser *p)
 
 	if (l->t == NUM) {
 	    for (i=0; i<n; i++) {
-		y = xy_calc(x, m->val[i], op);
+		y = xy_calc(x, m->val[i], op, p);
 		ret->v.m->val[i] = y;
 	    }
 	} else {
 	    for (i=0; i<n; i++) {
-		y = xy_calc(m->val[i], x, op);
+		y = xy_calc(m->val[i], x, op, p);
 		ret->v.m->val[i] = y;
 	    }	
 	} 
@@ -771,12 +797,26 @@ static NODE *matrix_bool (NODE *l, NODE *r, int op, parser *p)
     return ret;
 }
 
+static void matrix_error (parser *p)
+{
+    if (p->err == 0) {
+	p->err = 1;
+    }
+    if (*gretl_errmsg != '\0') {
+	pprintf(p->prn, "%s\n", gretl_errmsg);
+	*gretl_errmsg = '\0';
+    }
+}
+
 static NODE *matrix_to_scalar_func (const gretl_matrix *m, 
 				    int f, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
+
+	*gretl_errmsg = '\0';
+
 	switch (f) {
 	case ROWS:
 	    ret->v.xval = m->rows;
@@ -803,6 +843,10 @@ static NODE *matrix_to_scalar_func (const gretl_matrix *m,
 	    p->err = 1;
 	    break;
 	}
+    
+	if (na(ret->v.xval)) {
+	    matrix_error(p);
+	}    
     }
 
     return ret;
@@ -814,6 +858,9 @@ static NODE *matrix_to_matrix_func (const gretl_matrix *m,
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
+
+	*gretl_errmsg = '\0';
+
 	switch (f) {
 	case SUMC:
 	    ret->v.m = gretl_matrix_column_sum(m);
@@ -855,8 +902,8 @@ static NODE *matrix_to_matrix_func (const gretl_matrix *m,
 	    break;
 	}
 
-	if (ret->v.m == NULL && !p->err) {
-	    p->err = 1;
+	if (ret->v.m == NULL) {
+	    matrix_error(p);
 	}
     }
 
@@ -870,6 +917,9 @@ static NODE *matrix_to_matrix2_func (const gretl_matrix *m,
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
+
+	*gretl_errmsg = '\0';
+
 	switch (f) {
 	case QR:
 	    ret->v.m = user_matrix_QR_decomp(m, rname, &p->err);
@@ -880,6 +930,10 @@ static NODE *matrix_to_matrix2_func (const gretl_matrix *m,
 	case EIGGEN:
 	    ret->v.m = user_matrix_eigen_analysis(m, rname, 0, &p->err);
 	    break;
+	}
+
+	if (ret->v.m == NULL) {
+	    matrix_error(p);
 	}
     }
 
@@ -1072,7 +1126,7 @@ static NODE *process_subslice (NODE *l, NODE *r, parser *p)
     return ret;
 }
 
-static double real_apply_func (double x, int f, int *err)
+static double real_apply_func (double x, int f, parser *p)
 {
     double y;
 
@@ -1119,7 +1173,7 @@ static double real_apply_func (double x, int f, int *err)
 	return (x == 0.0)? NADBL : x;
     case SQRT:
 	if (x < 0.0) {
-	    *err = E_SQRT;
+	    p->err = E_SQRT;
 	    return NADBL;
 	} else {
 	    return sqrt(x);
@@ -1127,9 +1181,9 @@ static double real_apply_func (double x, int f, int *err)
     case LOG:
     case LOG10:
     case LOG2:
-	if (x <= 0.0) { /* treatment of 0 arg? */
+	if (x <= 0.0) { 
 	    fprintf(stderr, "genr: log arg = %g\n", x);
-	    *err = E_LOGS;
+	    eval_warning(p, LOG);
 	    return NADBL;
 	} else {
 	    y = log(x);
@@ -1144,7 +1198,8 @@ static double real_apply_func (double x, int f, int *err)
 	y = exp(x);
 	if (y == HUGE_VAL) {
 	    fprintf(stderr, "genr: excessive exponent = %g\n", x);
-	    *err = E_HIGH;
+	    p->err = E_HIGH;
+	    return NADBL;
 	} else {
 	    return y;
 	}
@@ -1158,7 +1213,7 @@ static NODE *apply_scalar_func (double x, int f, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL) {
-	ret->v.xval = real_apply_func(x, f, &p->err);
+	ret->v.xval = real_apply_func(x, f, p);
     }
 
     return ret;
@@ -1172,7 +1227,7 @@ static NODE *apply_series_func (const double *x, int f,
 
     if (ret != NULL) {
 	for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
-	    ret->v.xvec[t] = real_apply_func(x[t], f, &p->err);
+	    ret->v.xvec[t] = real_apply_func(x[t], f, p);
 	}
     }
 
@@ -1528,7 +1583,7 @@ apply_matrix_func (const gretl_matrix *m, int f, parser *p)
 
 	for (i=0; i<n && !p->err; i++) {
 	    /* FIXME error handling? */ 
-	    x = real_apply_func(m->val[i], f, &p->err);
+	    x = real_apply_func(m->val[i], f, p);
 	    ret->v.m->val[i] = x;
 	}
     }
@@ -2001,7 +2056,7 @@ static void transpose_matrix_result (NODE *n, parser *p)
 
 static void node_type_error (const NODE *n, parser *p, int t, int badt)
 {
-    pprintf(p->prn, "> ");
+    pputs(p->prn, "> ");
     printnode(n, p);
     pprintf(p->prn, "\nwrong type argument for %s: should be %s",
 	    getsymb(n->t, p), typestr(t));
@@ -2788,7 +2843,7 @@ static void parser_decl_or_print (parser *p)
     }
 }
 
-static int extract_LHS_string (const char *s, char *lhs)
+static int extract_LHS_string (const char *s, char *lhs, parser *p)
 {
     int n = strcspn(s, "+-([= ");
     int b = 0;
@@ -2797,22 +2852,23 @@ static int extract_LHS_string (const char *s, char *lhs)
 
     if (n > 0) {
 	if (*(s+n) == '[') {
-	    const char *p = s + n;
+	    const char *q = s + n;
 
-	    while (*p) {
-		if (*p == '[') {
+	    while (*q) {
+		if (*q == '[') {
 		    b++;
-		} else if (*p == ']') {
+		} else if (*q == ']') {
 		    b--;
 		}
 		n++;
 		if (b == 0) {
 		    break;
 		}
-		p++;
+		q++;
 	    }
 	    if (b != 0) {
-		fprintf(stderr, "Unbalanced '['\n");
+		pprintf(p->prn, "> %s\n", s);
+		pprintf(p->prn, _("Unmatched '%c'\n"), '[');
 	    }
 	}
     }
@@ -2865,7 +2921,7 @@ static void pre_process (parser *p, int flags)
     }
 
     /* LHS varname (possibly with substring) */
-    p->err = extract_LHS_string(s, test);
+    p->err = extract_LHS_string(s, test, p);
     if (p->err) {
 	return;
     } 
@@ -3155,7 +3211,7 @@ static void assign_to_matrix_mod (parser *p)
 	    int i, n = m->rows * m->cols;
 
 	    for (i=0; i<n; i++) {
-		m->val[i] = xy_calc(m->val[i], p->ret->v.xval, p->op);
+		m->val[i] = xy_calc(m->val[i], p->ret->v.xval, p->op, p);
 	    }
 	}
     } else {
@@ -3213,7 +3269,7 @@ static void matrix_edit (parser *p)
 		int i, n = a->rows * a->cols;
 
 		for (i=0; i<n; i++) {
-		    a->val[i] = xy_calc(a->val[i], p->ret->v.xval, p->op);
+		    a->val[i] = xy_calc(a->val[i], p->ret->v.xval, p->op, p);
 		}
 		m = a; /* preserve modified submatrix */
 	    } else {
@@ -3338,16 +3394,16 @@ static int save_generated_var (parser *p, double ***pZ, PRN *prn)
 	/* writing a scalar */
 	t = p->lh.obs;
 	if (r->t == NUM) {
-	    Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op);
+	    Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
 	} else if (r->t == MAT) {
-	    Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op);
+	    Z[v][t] = xy_calc(Z[v][t], r->v.m->val[0], p->op, p);
 	}
 	strcpy(p->dinfo->varname[v], p->lh.name);
     } else if (p->targ == VEC) {
 	/* writing a series */
 	if (r->t == NUM) {
 	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) { 
-		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op);
+		Z[v][t] = xy_calc(Z[v][t], r->v.xval, p->op, p);
 	    }
 	} else if (r->t == VEC) {
 	    int t1 = p->dinfo->t1;
@@ -3358,7 +3414,7 @@ static int save_generated_var (parser *p, double ***pZ, PRN *prn)
 		}
 	    }
 	    for (t=t1; t<=p->dinfo->t2; t++) {
-		Z[v][t] = xy_calc(Z[v][t], r->v.xvec[t], p->op);
+		Z[v][t] = xy_calc(Z[v][t], r->v.xvec[t], p->op, p);
 	    }
 	} else if (r->t == MAT) {
 	    const gretl_matrix *m = r->v.m;
@@ -3368,7 +3424,7 @@ static int save_generated_var (parser *p, double ***pZ, PRN *prn)
 	    for (t=p->dinfo->t1; t<=p->dinfo->t2; t++) {
 		y = (k == 1)? m->val[0] : (k == p->dinfo->n)? m->val[t] : 
 		    m->val[t - p->dinfo->t1]; 
-		Z[v][t] = xy_calc(Z[v][t], y, p->op);
+		Z[v][t] = xy_calc(Z[v][t], y, p->op, p);
 	    }
 	}
 	strcpy(p->dinfo->varname[v], p->lh.name);
@@ -3419,6 +3475,7 @@ static void parser_reinit (parser *p, double **Z,
 
     p->ret = NULL;
     p->err = 0;
+    p->warn = 0;
 }
 
 static void parser_init (parser *p, const char *str, 
@@ -3454,6 +3511,7 @@ static void parser_init (parser *p, const char *str,
     p->idnum = 0;
     p->idstr = NULL;
     p->err = 0;
+    p->warn = 0;
 
     if (p->flags & P_SLICE) {
 	p->lh.t = MAT;
@@ -3470,9 +3528,7 @@ static void parser_init (parser *p, const char *str,
 
 void gen_save_or_print (parser *p, double ***pZ, PRN *prn)
 {
-    if (p->err) {
-	pprintf(p->prn, "eval gave error %d\n", p->err);
-    } else {
+    if (p->err == 0) {
 	if (p->flags & (P_DISCARD | P_PRINT)) {
 	    if (p->ret->t == MAT) {
 		gretl_matrix_print_to_prn(p->ret->v.m, p->lh.name, p->prn);
@@ -3594,6 +3650,12 @@ int realgen (const char *s, parser *p, double **Z,
 #endif
 
     parser_free_aux_nodes(p);
+
+    /* if context is NLS or similar, warnings for
+       producing NAs become errors */
+    if (reusable(p) && p->warn != 0 && p->err == 0) {
+	p->err = p->warn;
+    }
 
     return p->err;
 }
