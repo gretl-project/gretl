@@ -22,8 +22,7 @@
 #include "gretl_func.h"
 #include "libset.h"
 #include "usermat.h"
-
-#include <errno.h>
+#include "gretl_xml.h"
 
 #define MDEBUG 0
 #define LEVEL_AUTO -1
@@ -63,17 +62,6 @@ int n_user_matrices (void)
     return n_matrices;
 }
 
-gretl_matrix *user_matrix_by_index (int i, const char **name)
-{
-    if (i >= 0 && i < n_matrices) {
-	*name = matrices[i]->name;
-	return matrices[i]->M;
-    } else {
-	*name = NULL;
-	return NULL;
-    }
-}
-
 const char *get_matrix_name_by_index (int idx)
 {
     if (idx >= 0 && idx < n_matrices) {
@@ -100,7 +88,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
     return u;
 }
 
-static int is_user_matrix (const gretl_matrix *m)
+static int matrix_is_user_matrix (const gretl_matrix *m)
 {
     int i;
 
@@ -133,7 +121,7 @@ int user_matrix_add (gretl_matrix *M, const char *name)
 	matrices = tmp;
     }
 
-    if (is_user_matrix(M)) {
+    if (matrix_is_user_matrix(M)) {
 	/* ensure uniqueness of matrix pointers */
 	gretl_matrix *Mcpy = gretl_matrix_copy(M);
 
@@ -798,53 +786,6 @@ int user_matrix_destroy (const char *name, PRN *prn)
     return err;
 }
 
-#if 0 /* stuff below removed for now */
-
-/* temporary bodge to allow "matrix A = userfun(args)" */
-
-static int 
-get_user_matrix_fn (const char *name, const char *mask, const char *s, 
-		    double **Z, DATAINFO *pdinfo, int *err)
-{
-    char fword[32];
-    const char *p = s;
-    int len, ufun = 0;
-
-    if (mask != NULL && *mask != 0) {
-	/* can't handle this (sub-matrix) case yet */
-	return 0;
-    }
-
-    p += strspn(s, " =");
-    len = gretl_varchar_spn(p);
-    *fword = 0;
-
-    if (len < 32) {
-	strncat(fword, p, len);
-	if (is_user_matrix_function(fword)) {
-	    ufun = 1;
-	}
-    }
-
-    if (ufun) {
-	len = strlen(s) + strlen(name);
-	if (len > 63) {
-	    ufun = 0;
-	}
-    }
-
-    if (ufun) {
-	char line[64];
-
-	sprintf(line, "%s%s", name, s);
-	*err = gretl_function_start_exec(line, fword, pZ, pdinfo);
-    }
-
-    return ufun;
-}
-
-#endif /* the above commented out for now */
-
 static double 
 real_user_matrix_get_determinant (const gretl_matrix *m, int log, int *err)
 {
@@ -1104,3 +1045,22 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
     return E;
 }
 
+void write_matrices_to_file (FILE *fp)
+{
+    int i;
+
+    gretl_xml_header(fp);
+    fprintf(fp, "<gretl-matrices count=\"%d\">\n", n_matrices);
+
+    gretl_push_c_numeric_locale();
+
+    for (i=0; i<n_matrices; i++) {
+	if (matrices[i]->M != NULL) {
+	    gretl_xml_put_matrix(matrices[i]->M, matrices[i]->name, fp);
+	}
+    }
+
+    gretl_pop_c_numeric_locale();
+
+    fputs("</gretl-matrices>\n", fp);
+}

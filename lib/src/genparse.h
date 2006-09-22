@@ -57,7 +57,7 @@ enum {
     MCAT,     /* matrix concatenation */
     OP_MAX,   /* separator: end of operators */
     ABS,   /* 32 */
-    INT,
+    TOINT,
     SIN,
     COS,
     TAN,

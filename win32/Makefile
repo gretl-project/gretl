@@ -129,9 +129,11 @@ LIBSRC = adf_kpss.c \
         discrete.c \
 	estimate.c \
 	forecast.c \
-	generate.c \
-	genrfuncs.c \
-	genstack.c \
+	geneval.c \
+	genfuncs.c \
+	genlex.c \
+	genmain.c \
+	gensyntax.c \
 	graphing.c \
 	gretl_commands.c \
 	gretl_errors.c \

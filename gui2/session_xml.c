@@ -476,14 +476,10 @@ static SavedObjectFlags model_save_flags (const void *ptr,
 
 static int maybe_write_matrix_file (void)
 {
-    int i, nmatrices = n_user_matrices();
-    gretl_matrix *m;
     char fullname[MAXLEN];
-    const char *name;
     FILE *fp;
-    int err = 0;
 
-    if (nmatrices == 0) {
+    if (n_user_matrices() == 0) {
 	return 0;
     }
 
@@ -493,31 +489,10 @@ static int maybe_write_matrix_file (void)
 	return E_FOPEN;
     }
 
-    gretl_xml_header(fp);
-    fprintf(fp, "<gretl-matrices count=\"%d\">\n", nmatrices);
-
-    gretl_push_c_numeric_locale();
-
-    for (i=0; i<nmatrices && !err; i++) {
-	m = user_matrix_by_index(i, &name);
-	if (m != NULL) {
-	    gretl_xml_put_matrix(m, name, fp);
-	} else {
-	    err = E_DATA;
-	}
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fputs("</gretl-matrices>\n", fp);
-
+    write_matrices_to_file(fp);
     fclose(fp);
 
-    if (err) {
-	remove(fullname);
-    }
-
-    return err;
+    return 0;
 }
 
 static int maybe_write_function_file (void)

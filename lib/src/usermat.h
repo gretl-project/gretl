@@ -42,8 +42,6 @@ struct matrix_subspec_ {
 
 int n_user_matrices (void);
 
-gretl_matrix *user_matrix_by_index (int i, const char **name);
-
 const char *get_matrix_name_by_index (int idx);
 
 gretl_matrix *get_matrix_by_name (const char *name);
@@ -102,5 +100,7 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
 gretl_matrix *user_matrix_get_submatrix (const char *name, 
 					 matrix_subspec *spec,
 					 int *err);
+
+void write_matrices_to_file (FILE *fp);
 
 #endif /* USERMAT_H_ */

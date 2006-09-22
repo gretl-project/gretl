@@ -25,7 +25,7 @@
 #include "gretl_func.h"
 
 #define NUMLEN 32
-#define MAXWORD 64
+#define MAXQUOTE 64
 
 #if GENDEBUG
 # define LDEBUG 1
@@ -115,7 +115,7 @@ struct str_table funcs[] = {
     { DIF,   "diff" },
     { LDIF,  "ldiff" },
     { SDIF,  "sdiff" },
-    { INT,   "int" },
+    { TOINT, "int" },
     { SORT,  "sort" }, 
     { DSORT, "dsort" }, 
     { NOBS,  "nobs" },
@@ -386,7 +386,7 @@ static double get_quoted_obsnum (parser *p)
     double x = NADBL;
     int t, i = 0;
 
-    while (p->ch != 0 && i < MAXWORD - 1) {
+    while (p->ch != 0 && i < MAXQUOTE - 1) {
 	obs[i++] = p->ch;
 	parser_getc(p);
 	if (p->ch == '"') {
@@ -424,7 +424,7 @@ static void getobs (char *obs, parser *p)
 	/* obs identified by quoted string */
 	while (p->ch != 0 && 
 	       (p->ch == '"' || strchr(wordchars, p->ch) != NULL) 
-	       && i < MAXWORD - 1) {
+	       && i < MAXQUOTE - 1) {
 	    obs[i++] = p->ch;
 	    parser_getc(p);
 	}
@@ -449,7 +449,7 @@ static void getobs (char *obs, parser *p)
 
 NODE *obs_node (parser *p)
 {
-    char word[MAXWORD] = {0};
+    char word[MAXQUOTE] = {0};
     const char *s = p->point;
     int close, c = p->ch;
     int t = -1;
