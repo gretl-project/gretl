@@ -1447,26 +1447,44 @@
       <arguments>
         <argument>varlist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--drop-first</flag>
+	  <effect>omit lowest value from encoding</effect>
+	</option>
+	<option>
+	  <flag>--drop-last</flag>
+	  <effect>omit highest value from encoding</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
       <para>
 	For each variable in <repl>varlist</repl>, if it has previously
 	been marked as discrete, creates a set of dummy variables coding
-	for the distinct values of that variable.  Thus for example if a
-	discrete variable <lit>x</lit> has 5 distinct values, 5 dummy
-	variables will be added to the data set, with names
-	<lit>Dx_1</lit>, <lit>Dx_2</lit> and so on.  The first dummy
-	variable will have value 1 for observations where <lit>x</lit>
-	takes on its smallest value, 0 otherwise; the next dummy
-	will have value 1 when <lit>x</lit> takes on its second-smallest
-	value, and so on.  
+	for the distinct values of that variable. 
+      </para>
+      <para>
+	By default a dummy variable is added for each distinct value of
+	the variable in question.  For example if a discrete variable
+	<lit>x</lit> has 5 distinct values, 5 dummy variables will be
+	added to the data set, with names <lit>Dx_1</lit>, <lit>Dx_2</lit>
+	and so on.  The first dummy variable will have value 1 for
+	observations where <lit>x</lit> takes on its smallest value, 0
+	otherwise; the next dummy will have value 1 when <lit>x</lit>
+	takes on its second-smallest value, and so on.  If one of the
+	option flags <lit>--drop-first</lit> or <lit>--drop-last</lit>
+	is added, then either the lowest or the highest value of each
+	variable is omitted from the encoding (which may be useful for
+	avoiding the <quote>dummy variale trap</quote>).
       </para>
       <para>
 	This command can also be embedded in the context of a regression
 	specification.  For example, the following line specifies a model
 	where <lit>y</lit> is regressed on the set of dummy variables
-	coding for <lit>x</lit>.
+	coding for <lit>x</lit>.  (Option flags cannot be passed to
+	<cmd>dummify</cmd> in this context.)
       </para>
       <code>
 	ols y dummify(x)</code>

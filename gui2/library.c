@@ -3795,6 +3795,24 @@ void do_remove_obs (gpointer data, guint u, GtkWidget *widget)
     }
 }
 
+static int dummify_dialog (gretlopt *opt)
+{
+    const char *opts[] = {
+	N_("Encode all values"),
+	N_("Skip the lowest value"),
+	N_("Skip the highest value")
+    };
+    int ret;
+
+    ret = radio_dialog(_("gretl: create dummy variables"), 
+		       _("Encoding variables as dummies"), 
+		       opts, 3, 0, 0);
+
+    *opt = (ret == 1)? OPT_F : (ret == 2)? OPT_L : OPT_NONE;
+
+    return ret;
+}
+
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 {
     char *liststr;
@@ -3810,7 +3828,6 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 	int resp;
 
 	order = default_lag_order(datainfo);
-
 	resp = spin_dialog(_("gretl: generate lags"), 
 			   &order, _("Number of lags to create:"), 
 			   1, datainfo->n - 1, 0);
@@ -3818,12 +3835,40 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 	    free(liststr);
 	    return;
 	}
-
 	if (order > 0) {
 	    gretl_command_sprintf("lags %d ;%s", order, liststr);
 	} else {
 	    gretl_command_sprintf("lags%s", liststr);
 	}
+    } else if (action == DUMMIFY) {
+	int *list = gretl_list_from_string(liststr);
+	gretlopt opt = OPT_NONE;
+	int i, resp, quit = 0;
+
+	for (i=1; i<=list[0]; i++) {
+	    if (!var_is_series(datainfo, list[i]) ||
+		!var_is_discrete(datainfo, list[i])) {
+		err++; 
+	    }
+	}
+	if (err < list[0]) {
+	    resp = dummify_dialog(&opt);
+	    if (resp < 0) {
+		quit = 1;
+	    }
+	} else {
+	    errbox(_("No discrete variables were selected"));
+	    quit = 1;
+	}
+
+	free(list);
+
+	if (quit) {
+	    free(liststr);
+	    return;
+	}
+	    
+	gretl_command_sprintf("dummify%s%s", liststr, print_flags(opt, action));
     } else {
 	gretl_command_sprintf("%s%s", gretl_command_word(action), liststr);
     }
@@ -3843,19 +3888,7 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     } else if (action == DIFF || action == LDIFF || action == SDIFF) {
 	err = list_diffgenr(cmd.list, action, &Z, datainfo);
     } else if (action == DUMMIFY) {
-	int i;
-
-	for (i=1; i<=cmd.list[0]; i++) {
-	    if (!var_is_discrete(datainfo, cmd.list[i])) {
-		err++; 
-	    }
-	}
-	if (err < cmd.list[0]) {
-	    err = list_dumgenr(&cmd.list, &Z, datainfo);
-	} else {
-	    errbox(_("No discrete variables were selected"));
-	    return;
-	}
+	err = list_dumgenr(&cmd.list, &Z, datainfo, cmd.opt);
     }
 
     if (err) {

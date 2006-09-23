@@ -91,6 +91,8 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_R, "rc" },
     { COINT2,   OPT_T, "ct" },
     { DISCRETE, OPT_R, "reverse" },
+    { DUMMIFY,  OPT_F, "drop-first" },
+    { DUMMIFY,  OPT_L, "drop-last" },
     { EQNPRINT, OPT_O, "complete" },
     { EQNPRINT, OPT_T, "t-ratios" },
     { TABPRINT, OPT_O, "complete" },

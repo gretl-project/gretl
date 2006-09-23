@@ -41,7 +41,8 @@ int list_loggenr (int *list, double ***pZ, DATAINFO *pdinfo);
 int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo, 
 		  gretlopt opt);
 
-int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo);
+int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
+		  gretlopt opt);
 
 int list_makediscrete (const int *list, DATAINFO *pdinfo, gretlopt opt);
 

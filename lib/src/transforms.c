@@ -935,15 +935,23 @@ int list_xpxgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
  * the list holds the ID numbers of the generated dummies.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
+ * @opt: can be %OPT_F to drop the first value, %OPT_L to drop
+ * the last, or %OPT_NONE.
  *
- * Generates and adds to the data set dummy variables for the
- * distinct values of the variables given in the list pointed to
- * by @plist. The latter must have already been marked as discrete.
+ * For each of the variables given in the list to which @plist
+ * points, generates and adds to the data set k dummy variables 
+ * coding for the k distinct values of the variable in question.
+ * All these variables must have already been marked as discrete.
+ * If the %OPT_F or %OPT_L option is given, either the first or
+ * the last value of each variable is taken as the "base" and is
+ * not given a dummy encoding (that is, only k - 1 dummies are
+ * added for each variable).
  *
  * Returns: 0 on success, error code on error.
 */
 
-int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo)
+int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo,
+		  gretlopt opt)
 {
     int *list = *plist;
     int *tmplist = NULL;
@@ -968,9 +976,11 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo)
     for (i=1; i<=list[0] && !err; i++) {
 	int vi = list[i];
 	int nuniq, tnum;
+	int jmin, jmax;
 	double xt;
 
-	if (vi == 0 || var_is_scalar(pdinfo, vi) || !var_is_discrete(pdinfo, vi)) {
+	if (vi == 0 || var_is_scalar(pdinfo, vi) || 
+	    !var_is_discrete(pdinfo, vi)) {
 	    continue; 
 	}
 
@@ -995,11 +1005,17 @@ int list_dumgenr (int **plist, double ***pZ, DATAINFO *pdinfo)
 
 	rearrange_id_array(x, nuniq, n);
 
+	jmin = (opt & OPT_F)? 1 : 0;
+	jmax = (opt & OPT_L)? nuniq - 1 : nuniq;
+
 #if DUMDEBUG 
-	fprintf(stderr, "variable %d has %d distinct values:\n", vi, nuniq);
+	fprintf(stderr, "variable %d has %d distinct values\n", vi, nuniq);
+	if (opt & OPT_F) fprintf(stderr, "skipping lowest value\n");
+	if (opt & OPT_L) fprintf(stderr, "skipping highest value\n");
+	fprintf(stderr, "jmin = %d, jmax = %d\n", jmin, jmax);
 #endif
 
-	for (j=0; j<nuniq && !err; j++) {
+	for (j=jmin; j<jmax && !err; j++) {
 	    tnum = get_transform(DUMMIFY, vi, j+1, x[j], pZ, pdinfo, startlen);
 #if DUMDEBUG   
 	    fprintf(stderr, "VALUE = %g, tnum = %d\n", x[j], tnum);

@@ -770,7 +770,7 @@ static int auto_transform_ok (const char *s, int *lnum,
     } else if (trans == LAGS) {
 	err = list_laggenr(&genlist, order, pZ, pdinfo);
     } else if (trans == DUMMIFY) {
-	err = list_dumgenr(&genlist, pZ, pdinfo);
+	err = list_dumgenr(&genlist, pZ, pdinfo, OPT_NONE);
     }
 
     if (err) {
@@ -3081,7 +3081,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case DUMMIFY:
-	err = list_dumgenr(&listcpy, pZ, pdinfo);
+	err = list_dumgenr(&listcpy, pZ, pdinfo, cmd->opt);
 	if (err) {
 	    pputs(prn, _("Error adding dummy variables.\n"));
 	} else {
