@@ -22,11 +22,13 @@
 #define NTESTS 6
 #define NPVAL 6
 #define NLOOKUPS 5
+#define NGRAPHS 2
 #define NTESTENTRY 7
 #define NLOOKUPENTRY 4
 
 #include "gretl.h"
 #include "dlgutils.h"
+#include "../cephes/libprob.h"
 #include <ctype.h>
 
 #ifdef G_OS_WIN32
@@ -54,6 +56,7 @@ struct test_t_ {
 };
 
 struct lookup_t_ {
+    int code;
     GtkWidget *entry[NLOOKUPENTRY];
     GtkWidget *book;
 };
@@ -447,7 +450,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	return;
     }
 
-    fprintf(fp, "set key right top\n");
+    fputs("set key right top\n", fp);
 
     gretl_push_c_numeric_locale();
 
@@ -904,19 +907,109 @@ static void h_test_global (GtkWidget *w, gpointer data)
     h_test(NULL, test[i]);
 }
 
+static double chisq_pdf (double m, double x)
+{
+    return exp(-x/2.0) * pow(x, (m/2 - 1.0)) / 
+	(pow(2.0, m/2) * cephes_gamma(m/2));
+}
+
+static void dist_graph (GtkWidget *w, gpointer data)
+{
+    lookup_t **look = (lookup_t **) data;
+    FILE *fp = NULL;
+    double xmax, ymax;
+    double m, n;
+    int i, err = 0;
+
+    i = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
+
+    if (i==1) {
+	errbox("F is not ready yet, sorry\n");
+	return;
+    }
+
+    if (i == 0) {
+	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
+	if (m <= 0) {
+	    err = 1;
+	}
+    } else {
+	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
+	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[1])));
+	if (m <= 0 || n <= 0) {
+	    err = 1;
+	}
+    }
+
+    if (err) {
+	errbox(_("Invalid degrees of freedom"));
+	return;
+    }
+
+    if ((err = gnuplot_init(PLOT_SAMPLING_DIST, &fp))) {
+	gui_errmsg(err);
+	return;
+    }
+
+    if (m == 1) {
+	ymax = 1;
+	xmax = chdtri(m, 0.0001);
+    } else {
+	ymax = chisq_pdf(m, m - 2);
+	xmax = chdtri(m, 0.0001);
+    }
+
+    /* FIXME gnuplot's "gamma" only handles up to m = 69 */
+
+    fprintf(stderr, "ymax = %g, xmax = %g\n", ymax, xmax);
+
+    fputs("set key right top\n", fp);
+    fprintf(fp, "set xrange [0:%g]\n", xmax);
+    fprintf(fp, "set yrange [0:%g]\n", ymax * 1.25);
+
+    gretl_push_c_numeric_locale();
+
+    fputs("# literal lines = 2\n", fp);
+    fprintf(fp, "m = %.1f\n", m);
+    fputs("chisq(x) = (exp(-x/2)*x**(m/2 - 1))/((2**(m/2)) * gamma(m/2))\n", fp);    
+    fputs("plot \\\n", fp);
+    fprintf(fp, "chisq(x) title 'Chi-square(%g)' w lines\n", m);
+
+    gretl_pop_c_numeric_locale();
+
+    fclose(fp);
+
+    if (gnuplot_make_graph()) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }    
+}
+
+static int dist_to_pos (int dist, int code)
+{
+    if (code == CALC_GRAPH) {
+	return (dist == CHISQ_DIST)? 0 : 1;
+    } else {
+	return dist;
+    }
+}
+
 static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len, 
 			      const gchar *label, lookup_t **look, 
-			      int code, int pval)
+			      int dist)
 {
     GtkWidget *tempwid;
+    int code = look[0]->code;
+    int pos = dist_to_pos(dist, code);
 
     *tbl_len += 1;
 
     /* label */
-    gtk_table_resize(GTK_TABLE (tbl), *tbl_len, 2);
+    gtk_table_resize(GTK_TABLE(tbl), *tbl_len, 2);
     tempwid = gtk_label_new(_(label));
-    gtk_misc_set_alignment(GTK_MISC (tempwid), 1, 0.5);
-    gtk_table_attach_defaults(GTK_TABLE (tbl), 
+    gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tempwid, 0, 1, *tbl_len - 1, *tbl_len);
     gtk_widget_show(tempwid);
 
@@ -924,16 +1017,17 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
     tempwid = gtk_entry_new();
     gtk_table_attach_defaults(GTK_TABLE (tbl), 
 			      tempwid, 1, 2, *tbl_len - 1, *tbl_len);
-    gtk_widget_show (tempwid);
-    look[code]->entry[*tbl_len - 2] = tempwid;
+    gtk_widget_show(tempwid);
+    look[pos]->entry[*tbl_len - 2] = tempwid;
 
     g_signal_connect(G_OBJECT(tempwid), "activate", 
-		     (pval)? G_CALLBACK(get_pvalue) : 
+		     (code == CALC_PVAL)? G_CALLBACK(get_pvalue) : 
+		     (code == CALC_GRAPH)? G_CALLBACK(dist_graph) :
 		     G_CALLBACK(get_critical),
 		     look);
 }
 
-static void make_lookup_tab (GtkWidget *notebook, int code, lookup_t **look) 
+static void make_lookup_tab (GtkWidget *notebook, int d, lookup_t **look)
 {
     GtkWidget *tempwid, *box, *tbl;
     gint tbl_len;
@@ -945,22 +1039,22 @@ static void make_lookup_tab (GtkWidget *notebook, int code, lookup_t **look)
 	N_(" DW ")
     };
    
-    box = gtk_vbox_new (FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (box), 10);
-    gtk_widget_show (box);
+    box = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
+    gtk_widget_show(box);
 
-    tempwid = gtk_label_new (_(titles[code]));
-    gtk_widget_show (tempwid);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
+    tempwid = gtk_label_new(_(titles[d]));
+    gtk_widget_show(tempwid);
+    gtk_notebook_append_page(GTK_NOTEBOOK (notebook), box, tempwid);   
 
     tbl_len = 1;
-    tbl = gtk_table_new (tbl_len, 2, FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
-    gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
-    gtk_box_pack_start (GTK_BOX (box), tbl, FALSE, FALSE, 0);
-    gtk_widget_show (tbl);
+    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE (tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE (tbl), 5);
+    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
+    gtk_widget_show(tbl);
    
-    switch (code) {
+    switch (d) {
 
     case NORMAL_DIST:
 	gtk_table_resize(GTK_TABLE (tbl), ++tbl_len, 1);
@@ -972,20 +1066,20 @@ static void make_lookup_tab (GtkWidget *notebook, int code, lookup_t **look)
 	break;
 
     case T_DIST:
-	add_lookup_entry(tbl, &tbl_len, N_("df"), look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, N_("df"), look, d);
 	break;
 
     case CHISQ_DIST:
-	add_lookup_entry(tbl, &tbl_len, N_("df"), look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, N_("df"), look, d);
 	break;
 
     case F_DIST:
-	add_lookup_entry(tbl, &tbl_len, N_("dfn"), look, code, 0);
-	add_lookup_entry(tbl, &tbl_len, N_("dfd"), look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, N_("dfn"), look, d);
+	add_lookup_entry(tbl, &tbl_len, N_("dfd"), look, d);
 	break;	
 
     case DW_DIST:
-	add_lookup_entry(tbl, &tbl_len, N_("n"), look, code, 0);
+	add_lookup_entry(tbl, &tbl_len, N_("n"), look, d);
 	break;
 
     default:
@@ -993,7 +1087,7 @@ static void make_lookup_tab (GtkWidget *notebook, int code, lookup_t **look)
     } 
 }
 
-static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval) 
+static void make_dist_tab (GtkWidget *notebook, int d, lookup_t **pval) 
 {
     GtkWidget *tempwid, *box, *tbl;
     gint tbl_len;
@@ -1006,61 +1100,61 @@ static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval)
 	N_("binomial")
     };
    
-    box = gtk_vbox_new (FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (box), 10);
-    gtk_widget_show (box);
+    box = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
+    gtk_widget_show(box);
 
-    tempwid = gtk_label_new (_(titles[code]));
-    gtk_widget_show (tempwid);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
+    tempwid = gtk_label_new(_(titles[d]));
+    gtk_widget_show(tempwid);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
 
     tbl_len = 1;
-    tbl = gtk_table_new (tbl_len, 2, FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
-    gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
-    gtk_box_pack_start (GTK_BOX (box), tbl, FALSE, FALSE, 0);
-    gtk_widget_show (tbl);
+    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
+    gtk_widget_show(tbl);
    
-    switch (code) {
+    switch (d) {
 
     case NORMAL_PVAL: 
-	add_lookup_entry(tbl, &tbl_len, N_("value"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("value"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, d);
 	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[1]), "0");
-	add_lookup_entry(tbl, &tbl_len, N_("std. deviation"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("std. deviation"), pval, d);
 	gtk_entry_set_text(GTK_ENTRY(pval[0]->entry[2]), "1");
 	break;
 
     case T_PVAL:
-	add_lookup_entry(tbl, &tbl_len, N_("df"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("value"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("df"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("value"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, d);
 	gtk_entry_set_text(GTK_ENTRY(pval[1]->entry[2]), "0");
-	add_lookup_entry(tbl, &tbl_len, N_("std. deviation"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("std. deviation"), pval, d);
 	gtk_entry_set_text(GTK_ENTRY(pval[1]->entry[3]), "1");
 	break;
 
     case CHISQ_PVAL:
-	add_lookup_entry(tbl, &tbl_len, N_("df"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("df"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, d);
 	break;
 
     case F_PVAL:
-	add_lookup_entry(tbl, &tbl_len, N_("dfn"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("dfd"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("F-value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("dfn"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("dfd"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("F-value"), pval, d);
 	break;
 
     case GAMMA_PVAL:
-	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("variance"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("mean"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("variance"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, d);
 	break;
 
     case BINOMIAL_PVAL:
-	add_lookup_entry(tbl, &tbl_len, N_("Prob"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("trials"), pval, code, 1);
-	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, code, 1);
+	add_lookup_entry(tbl, &tbl_len, N_("Prob"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("trials"), pval, d);
+	add_lookup_entry(tbl, &tbl_len, N_("x-value"), pval, d);
 	break;
 
     default:
@@ -1068,23 +1162,16 @@ static void make_dist_tab (GtkWidget *notebook, int code, lookup_t **pval)
     } 
 }
 
-static void trash_pval (GtkWidget *w, gpointer data)
-{
-    lookup_t **look = (lookup_t **) data;
-    int i;
-
-    for (i=0; i<NPVAL; i++) {
-	free(look[i]);
-    }
-    free(look);
-}
-
 static void trash_look (GtkWidget *w, gpointer data)
 {
     lookup_t **look = (lookup_t **) data;
-    int i;
+    int i, n;
 
-    for (i=0; i<NLOOKUPS; i++) {
+    n = (look[0]->code == CALC_DIST)? NLOOKUPS :
+	(look[0]->code == CALC_PVAL)? NPVAL :
+	NGRAPHS;
+
+    for (i=0; i<n; i++) {
 	free(look[i]);
     }
     free(look);
@@ -1642,8 +1729,9 @@ static GretlChild *gretl_child_new (const gchar *title)
     if (gchild == NULL) return NULL;
 
     gchild->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    if (title != NULL)
+    if (title != NULL) {
 	gtk_window_set_title(GTK_WINDOW(gchild->win), title);
+    }
 
     base = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(gchild->win), base);
@@ -1675,7 +1763,7 @@ static GretlChild *gretl_child_new (const gchar *title)
 void stats_calculator (gpointer data, guint code, GtkWidget *widget) 
 {
     GtkWidget *tempwid = NULL, *notebook;
-    static GtkWidget *winptr[3];
+    static GtkWidget *winptr[4];
     GtkWidget *thiswin;
     GretlChild *dialog;
     test_t **test = NULL;
@@ -1683,14 +1771,16 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     const char *window_titles[] = {
 	N_("gretl: p-value finder"),
 	N_("gretl: statistical tables"),
-	N_("gretl: test calculator")
+	N_("gretl: test calculator"),
+	N_("gretl: distribution graphs"),
     };
     gpointer statp = NULL;
     gint i;
 
     g_return_if_fail(code == CALC_PVAL || 
 		     code == CALC_DIST || 
-		     code == CALC_TEST);
+		     code == CALC_TEST ||
+		     code == CALC_GRAPH);
 
     thiswin = winptr[code];
 
@@ -1708,8 +1798,12 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	look = mymalloc(NPVAL * sizeof *look);
 	if (look == NULL) return;
 	statp = look;
-    } else {
+    } else if (code == CALC_DIST) {
 	look = mymalloc(NLOOKUPS * sizeof *look);
+	if (look == NULL) return;
+	statp = look;
+    } else {
+	look = mymalloc(NGRAPHS * sizeof *look);
 	if (look == NULL) return;
 	statp = look;
     }	
@@ -1737,14 +1831,24 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    look[i] = mymalloc(sizeof **look);
 	    if (look[i] == NULL) return;
 	    look[i]->book = notebook;
+	    look[i]->code = code;
 	    make_dist_tab(notebook, i, look);
 	}	
-    } else {
+    } else if (code == CALC_DIST) {
 	for (i=0; i<NLOOKUPS; i++) {
 	    look[i] = mymalloc(sizeof **look);
 	    if (look[i] == NULL) return;
 	    look[i]->book = notebook;
+	    look[i]->code = code;
 	    make_lookup_tab(notebook, i, look);
+	}
+    } else if (code == CALC_GRAPH) {
+	for (i=0; i<NGRAPHS; i++) {
+	    look[i] = mymalloc(sizeof **look);
+	    if (look[i] == NULL) return;
+	    look[i]->book = notebook;
+	    look[i]->code = code;
+	    make_lookup_tab(notebook, (i==0)? CHISQ_DIST : F_DIST, look);
 	}
     }	
 
@@ -1754,7 +1858,6 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_container_add(GTK_CONTAINER(dialog->action_area), 
 		      tempwid);
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
-		     (code == CALC_PVAL)? G_CALLBACK(trash_pval) :
 		     (code == CALC_TEST)? G_CALLBACK(trash_test) :
 		     G_CALLBACK(trash_look),
 		     statp);
@@ -1772,6 +1875,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     g_signal_connect(G_OBJECT (tempwid), "clicked", 
 		     (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
 		     (code == CALC_DIST)? G_CALLBACK(get_critical) :
+		     (code == CALC_GRAPH)? G_CALLBACK(dist_graph) :
 		     G_CALLBACK(h_test_global),
 		     statp);
     gtk_widget_show(tempwid);

@@ -225,7 +225,8 @@ enum font_selections {
 enum calc_functions {
     CALC_PVAL,
     CALC_DIST,
-    CALC_TEST
+    CALC_TEST,
+    CALC_GRAPH
 };
 
 enum auto_dummies {
