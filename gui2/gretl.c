@@ -1237,7 +1237,8 @@ void populate_varlist (void)
 	if (var_is_hidden(datainfo, i)) {
 	    continue;
 	}
-	if (i > 0 && is_standard_lag(i, datainfo, &pv)) {
+	if (i > 0 && (is_standard_lag(i, datainfo, &pv) ||
+		      is_dummy_child(i, datainfo, &pv))) {
 	    if (pv > 0) {
 		GtkTreeIter child_iter, parent_iter;
 

@@ -152,6 +152,26 @@ int is_standard_lag (int v, const DATAINFO *pdinfo, int *parent)
     return ret;
 }
 
+int is_dummy_child (int v, const DATAINFO *pdinfo, int *parent)
+{
+    const char *test = VARLABEL(pdinfo, v);
+    char pm, vname[VNAMELEN];
+    double val;
+    int ret = 0;
+
+    if (sscanf(test, _("dummy for %s = %g"), vname, &val) == 2 ||
+	sscanf(test, "dummy for %s = %g", vname, &val) == 2) {
+	if (parent != NULL) {
+	    int pv = varindex(pdinfo, vname);
+
+	    *parent = (pv < pdinfo->v)? pv : 0;
+	}
+	ret = 1;
+    }
+
+    return ret;
+}
+
 static void make_xp_varname (char *vname, const char *v1, 
 			     const char *v2, int len)
 {
