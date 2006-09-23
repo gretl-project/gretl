@@ -79,6 +79,8 @@ void *gretl_get_object_by_name (const char *name);
 int gretl_get_object_and_type (const char *name, void **pp, 
 			       GretlObjType *type);
 
+GretlObjType gretl_model_get_type (const char *name);
+
 int object_is_on_stack (const void *ptr);
 
 int gretl_stack_object (void *ptr, GretlObjType type);

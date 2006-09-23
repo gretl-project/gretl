@@ -524,6 +524,8 @@ static void look_up_word (const char *s, parser *p)
     }
 }
 
+#define could_be_matrix(t) (model_data_matrix(t) || t == M_UHAT)
+
 static void word_check_next_char (parser *p)
 {
     if (p->ch == '(') {
@@ -544,7 +546,7 @@ static void word_check_next_char (parser *p)
 	if (p->sym == UMAT) {
 	    /* slice of user matrix */
 	    p->sym = MSL;
-	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
+	} else if (p->sym == MVAR && could_be_matrix(p->idnum)) {
 	    /* slice of $ matrix */
 	    p->sym = DMSL;
 	} else if (p->sym == UVAR && var_is_series(p->dinfo, p->idnum)) {

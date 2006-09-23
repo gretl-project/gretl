@@ -1890,10 +1890,6 @@ static double *dvar_get_series (int i, parser *p)
 {
     double *x = NULL;
 
-#if EDEBUG
-    fprintf(stderr, "dvar_get_series: i = %d\n", i);
-#endif
-
     switch (i) {
     case R_INDEX:
 	x = malloc(p->dinfo->n * sizeof *x);
@@ -1916,11 +1912,6 @@ static double *dvar_get_series (int i, parser *p)
 static NODE *dollar_var_node (NODE *t, parser *p)
 {
     NODE *ret = NULL;
-
-    /* FIXME need to handle case where "dvar" is really
-       a matrix (e.g. uhat/yhat in context of equation
-       system or VAR)
-    */
 
     if (dvar_scalar(t->v.idnum)) {
 	ret = aux_scalar_node(p);
@@ -1991,6 +1982,17 @@ static NODE *object_var_node (NODE *t, parser *p)
     if (ret != NULL && starting(p)) {
 	const char *oname = (t->t == MVAR || t->t == DMSL)?
 	    NULL : t->v.b2.l->v.str;
+
+	if (r->v.idnum == M_UHAT || r->v.idnum == M_YHAT) {
+	    /* could be series or matrix */
+	    GretlObjType type = gretl_model_get_type(oname);
+
+	    if (type != GRETL_OBJ_EQN) {
+		series = 0;
+		matrix = 1;
+		ret->t = MAT;
+	    }
+	}	
 
 	if (scalar) {
 	    ret->v.xval = saved_object_get_scalar(oname, r->v.idnum, &p->err);

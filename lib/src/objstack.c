@@ -738,39 +738,6 @@ static double real_get_obj_scalar (void *p, GretlObjType type, int idx)
     return x;
 }
 
-#if 0
-
-/* retrieve from an object some value that is stored on the object in
-   the form of a scalar element of an array */
-
-static double 
-real_get_obj_scalar_element (void *p, GretlObjType type, int idx, 
-			     const char *key, const DATAINFO *pdinfo, 
-			     int *err)
-{
-    double x = INVALID_STAT;
-    
-    if (idx <= 0) {
-	*err = 1;
-	return x;
-    }
-
-    if (type == GRETL_OBJ_EQN) {
-	MODEL *pmod = (MODEL *) p;
-
-	x = get_model_data_element(pmod, idx, key, pdinfo, err);
-	if (*err) {
-	    x = INVALID_STAT;
-	}
-    } 
-
-    /* FIXME add accessors for systems, VARs */
-
-    return x;
-}
-
-#endif
-
 static double *
 real_get_obj_series (void *p, GretlObjType type, int idx,
 		     const DATAINFO *pdinfo, int *err)
@@ -858,6 +825,20 @@ static stacker *find_smatch (const char *oname)
     return smatch;
 }
 
+/* retrieve the type of a named model, or of the last model
+   if @name is NULL */
+
+GretlObjType gretl_model_get_type (const char *name)
+{
+    stacker *smatch = find_smatch(name);
+
+    if (smatch == NULL) {
+	return GRETL_OBJ_UNKNOWN;
+    } else {
+	return smatch->type;
+    }
+}
+
 double saved_object_get_scalar (const char *oname, int idx, int *err)
 {
     double ret = INVALID_STAT;
@@ -875,39 +856,6 @@ double saved_object_get_scalar (const char *oname, int idx, int *err)
 
     return ret;
 }
-
-#if 0
-double saved_object_get_scalar_element (const char *oname, const char *key,
-					const DATAINFO *pdinfo, int *err)
-{
-    double ret = INVALID_STAT;
-    stacker *smatch;
-    int idx;
-
-#if ODEBUG
-    fprintf(stderr, "saved_object_get_scalar_element: oname='%s', key='%s'\n",
-	    oname, key);
-#endif
-
-    smatch = find_smatch(oname);
-
-    if (smatch != NULL) {
-#if 0 /* FIXME */
-	idx = gretl_model_data_index(key);
-#else
-	idx = 0;
-#endif
-	ret = real_get_obj_scalar_element(smatch->ptr, smatch->type, idx, 
-					  key, pdinfo, err);
-    }
-
-    if (ret == INVALID_STAT && !*err) {
-	*err = E_BADSTAT;
-    }
-
-    return ret;
-}
-#endif
 
 double *saved_object_get_series (const char *oname, int idx,
 				 const DATAINFO *pdinfo, 
