@@ -1748,8 +1748,23 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	}
     }	
 
-    /* Apply button */
-    tempwid = standard_button(GTK_STOCK_APPLY);
+    /* Close button */
+    tempwid = standard_button(GTK_STOCK_CLOSE);
+    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    gtk_container_add(GTK_CONTAINER(dialog->action_area), 
+		      tempwid);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     (code == CALC_PVAL)? G_CALLBACK(trash_pval) :
+		     (code == CALC_TEST)? G_CALLBACK(trash_test) :
+		     G_CALLBACK(trash_look),
+		     statp);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog->win);
+    gtk_widget_show(tempwid);
+
+    /* OK button */
+    tempwid = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(dialog->action_area), 
 		      tempwid);
@@ -1759,22 +1774,6 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 		     (code == CALC_DIST)? G_CALLBACK(get_critical) :
 		     G_CALLBACK(h_test_global),
 		     statp);
-    gtk_widget_show(tempwid);
-
-    /* Close button */
-    tempwid = standard_button(GTK_STOCK_CLOSE);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
-    gtk_container_add(GTK_CONTAINER(dialog->action_area), 
-		      tempwid);
-
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
-		     (code == CALC_PVAL)? G_CALLBACK(trash_pval) :
-		     (code == CALC_TEST)? G_CALLBACK(trash_test) :
-		     G_CALLBACK(trash_look),
-		     statp);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     dialog->win);
     gtk_widget_show(tempwid);
 
     /* Help button? */

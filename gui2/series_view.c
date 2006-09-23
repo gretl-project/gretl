@@ -27,9 +27,9 @@
 #include "series_view.h"
 
 #ifdef G_OS_WIN32
-#include "gretlwin32.h"
+# include "gretlwin32.h"
 #else
-#include "clipboard.h"
+# include "clipboard.h"
 #endif
 
 typedef struct data_point_t data_point;
@@ -99,7 +99,6 @@ static int series_view_allocate (series_view *sview)
 	int t, tp, T = datainfo->t2 - datainfo->t1 + 1;
 	int v = sview->varnum;
 
-	/* allocate storage */
 	sview->points = malloc(T * sizeof *sview->points);
 	if (sview->points == NULL) {
 	    return 1;
@@ -130,7 +129,6 @@ static int multi_series_view_allocate (multi_series_view *mview)
     } else {
 	int T = datainfo->t2 - datainfo->t1 + 1;
 
-	/* allocate storage */
 	mview->points = mymalloc(T * sizeof *mview->points);
 	if (mview->points == NULL) {
 	    return 1;
@@ -346,11 +344,9 @@ void series_view_sort (GtkWidget *w, windata_t *vwin)
 	return;
     }
 
-    /* sort the data */
-    qsort((void *) sview->points, (size_t) sview->npoints, 
+    qsort(sview->points, sview->npoints, 
 	  sizeof sview->points[0], compare_points);
 
-    /* print sorted data to buffer */
     series_view_print(vwin);
 }
 
@@ -375,7 +371,7 @@ void series_view_sort_by (GtkWidget *w, windata_t *vwin)
     mview->sortvar = v;
     mview_fill_points(mview);
 
-    qsort((void *) mview->points, (size_t) mview->npoints, 
+    qsort(mview->points, mview->npoints, 
 	  sizeof mview->points[0], compare_mpoints);
 
     multi_series_view_print_sorted(vwin);
@@ -509,12 +505,6 @@ multi_series_view *multi_series_view_new (const int *list)
 }
 
 static 
-void series_view_format_cancel (GtkWidget *w, series_view *sview)
-{
-    sview->digits = -1;
-}
-
-static 
 void series_view_get_figures (GtkWidget *w, series_view *sview)
 {
     sview->digits = gtk_spin_button_get_value_as_int
@@ -535,82 +525,75 @@ set_series_float_format (GtkWidget *w, gpointer p)
 
 void series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 {
-    GtkWidget *w, *tmp, *label;
-    GtkWidget *vbox, *hbox;
+    GtkWidget *dlg;
+    GtkWidget *tmp, *hbox; 
     GtkObject *adj;
     GSList *group;
     series_view *sview = (series_view *) vwin->data;
 
-    if (series_view_allocate(sview)) return;
+    if (series_view_allocate(sview)) {
+	return;
+    }
 
-    w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(w), _("gretl: data format"));
-    g_signal_connect(G_OBJECT(w), "destroy",  
-		     G_CALLBACK(gtk_main_quit), NULL);
+    dlg = gretl_dialog_new(_("gretl: data format"), NULL,
+			   GRETL_DLG_BLOCK | GRETL_DLG_MODAL);
 
-    vbox = gtk_vbox_new (FALSE, 5);
-    gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
-
-    label = gtk_label_new(_("Select data format"));
-    gtk_box_pack_start (GTK_BOX (vbox), label, FALSE, FALSE, 5);
-
-    hbox = gtk_hbox_new (FALSE, 5);
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, TRUE, TRUE, 5);
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_label_new(_("Select data format"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show_all(hbox);
 
     /* spinner for number of digits */
+    hbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("Show"));
     adj = gtk_adjustment_new(sview->digits, 1, 10, 1, 1, 1);
-    sview->digit_spin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+    sview->digit_spin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     g_signal_connect (adj, "value_changed",
-		      G_CALLBACK (series_view_get_figures), sview);
-    gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
-    gtk_box_pack_start (GTK_BOX (hbox), sview->digit_spin, FALSE, FALSE, 5);
+		      G_CALLBACK(series_view_get_figures), sview);
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), sview->digit_spin, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show_all(hbox);
 
     /* select decimal places versus significant figures */
-    tmp = gtk_radio_button_new_with_label (NULL, _("significant figures"));
-    gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
-    if (sview->format == 'G')
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
+    hbox = gtk_hbox_new(FALSE, 5);
+    tmp = gtk_radio_button_new_with_label(NULL, _("significant figures"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    if (sview->format == 'G') {
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    }
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_series_float_format), sview);
     g_object_set_data(G_OBJECT(tmp), "action", GINT_TO_POINTER('G'));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 0);
+    gtk_widget_show_all(hbox);
 
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (tmp));
+    hbox = gtk_hbox_new(FALSE, 5);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
     tmp = gtk_radio_button_new_with_label(group, _("decimal places"));
-    gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
-    if (sview->format == 'f')
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 5);
+    if (sview->format == 'f') {
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
+    }
     g_signal_connect(G_OBJECT(tmp), "clicked",
                      G_CALLBACK(set_series_float_format), sview);
-    g_object_set_data(G_OBJECT(tmp), "action", GINT_TO_POINTER('f')); 
+    g_object_set_data(G_OBJECT(tmp), "action", GINT_TO_POINTER('f'));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), hbox, TRUE, TRUE, 0);
+    gtk_widget_show_all(hbox);
 
-    /* control buttons */
-    hbox = gtk_hbox_new (TRUE, 5);
-    tmp = standard_button(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
-    gtk_box_pack_start (GTK_BOX (hbox), 
-                        tmp, TRUE, TRUE, 0);
-    g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
-			      G_CALLBACK (gtk_widget_destroy), 
-			      G_OBJECT (w));
+    /* Cancel button */
+    cancel_options_button(GTK_DIALOG(dlg)->action_area, dlg, 
+			  &sview->digits);
+   
+    /* OK button */
+    tmp = ok_button(GTK_DIALOG(dlg)->action_area);
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(delete_widget), dlg);
+    gtk_widget_grab_default(tmp);
+    gtk_widget_show(tmp);
 
-    tmp = standard_button(GTK_STOCK_CANCEL);
-    gtk_box_pack_start (GTK_BOX (hbox), 
-                        tmp, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT (tmp), "clicked", 
-		      G_CALLBACK (series_view_format_cancel), sview);
-    g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
-			      G_CALLBACK (gtk_widget_destroy), 
-			      G_OBJECT (w));
-
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
-    gtk_container_add(GTK_CONTAINER(w), vbox);
-
-    gtk_widget_show_all(w);
-
-    gretl_set_window_modal(w);
-
-    gtk_main(); /* block */
+    gtk_widget_show(dlg);
 
     if (sview->digits > 0) {
 	series_view_print(vwin);
