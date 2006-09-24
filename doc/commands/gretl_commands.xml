@@ -1477,7 +1477,7 @@
 	option flags <lit>--drop-first</lit> or <lit>--drop-last</lit>
 	is added, then either the lowest or the highest value of each
 	variable is omitted from the encoding (which may be useful for
-	avoiding the <quote>dummy variale trap</quote>).
+	avoiding the <quote>dummy variable trap</quote>).
       </para>
       <para>
 	This command can also be embedded in the context of a regression
@@ -4918,7 +4918,7 @@
 	replaced). The <lit>--quiet</lit> option suppresses the
 	printout of the restricted model (if applicable): only the
 	result of the test is printed.  If the restricted model is
-	both estimated and printed, the <lit>--vcv</lit> has the
+	both estimated and printed, the <lit>--vcv</lit> option has the
 	effect of printing the covariance matrix for the coefficients
 	in the restricted model, otherwise this option is ignored.
       </para>
