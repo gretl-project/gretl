@@ -1443,25 +1443,45 @@
       <arguments>
         <argument>lista-variabili</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--drop-first</flag>
+	  <effect>omette dalla codifica il valore minimo</effect>
+	</option>
+	<option>
+	  <flag>--drop-last</flag>
+	  <effect>omette dalla codifica il valore massimo</effect>
+	</option>
+      </options>
     </usage>
 
     <description>
       <para>
         Per ogni variabile della <repl>lista-variabili</repl>, che sia stata
         marcata come discreta in precedenza, crea un insieme di variabili dummy
-        che codificano i valori distinti di quella variabile. Così, ad esempio,
-        se una variabile discreta <lit>x</lit> ha 5 valori distinti, verranno
+        che codificano i valori distinti di quella variabile.
+      </para>
+      <para>
+	Per impostazione predefinita, viene aggiunta una variabile dummy per
+        ognuno dei valori distinti della variabile in questione.
+        Ad esempio, se una variabile discreta <lit>x</lit> ha 5 valori distinti,
+        verranno
         create 5 variabili dummy, di nome <lit>Dx_1</lit>, <lit>Dx_2</lit> e
         così via. La prima variabile dummy avrà valore 1 per le osservazioni in
         cui <lit>x</lit> assume il suo valore minimo, e 0 altrove; la successiva
         variabile dummy avrà valore 1 dove <lit>x</lit> assume il secondo tra i
-        suoi valori, e così via.
+        suoi valori, e così via. Se viene usata una delle opzioni
+	<lit>--drop-first</lit> o <lit>--drop-last</lit>, il più basso o il più
+        alto dei valori della variabile viene omesso dalla codifica (questa
+        funzione può essere utile per evitare la cosiddetta
+	<quote>trappola delle variabili dummy</quote>).
       </para>
       <para>
 	Questo comando può anche essere usato nel contesto di una regressione.
         Ad esempio, la riga seguente specifica un modello in cui
 	<lit>y</lit> viene regredita sull'insieme di variabili dummy che
-        codificano <lit>x</lit>.
+        codificano <lit>x</lit> (in questo contesto non è possibile passare
+        opzioni al comando <cmd>dummify</cmd>).
       </para>
       <code>
 	ols y dummify(x)</code>
