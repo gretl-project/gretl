@@ -920,18 +920,18 @@ static void dist_graph (GtkWidget *w, gpointer data)
     double xmax, ymax;
     double fac1 = 0, fac2 = 0;
     double m = 0, n = 0;
-    int i, err = 0;
+    int d, err = 0;
 
-    i = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
+    d = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
 
-    if (i == 0) {
-	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
+    if (d == 0) {
+	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[0])));
 	if (m <= 0) {
 	    err = 1;
 	}
     } else {
-	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
-	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[1])));
+	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[0])));
+	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[1])));
 	if (m <= 0 || n <= 0) {
 	    err = 1;
 	}
@@ -947,7 +947,22 @@ static void dist_graph (GtkWidget *w, gpointer data)
 	return;
     }
 
-    if (i == 0) {
+#if 0
+    if (d == NORMAL_DIST) {
+	fprintf(fp, "(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
+		"title '%s' w lines , \\\n",
+		I_("Gaussian sampling distribution"));
+    } else if (d == T_DIST) {
+	char tmp[64];
+
+	sprintf(tmp, I_("t(%d) sampling distribution"), df1);
+	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
+		"**(-0.5*(df1+1.0)) "
+		"title '%s' w lines , \\\n", tmp);
+    }
+#endif
+
+    if (d == 0) {
 	if (m == 1) {
 	    ymax = 1;
 	} else {
@@ -956,10 +971,12 @@ static void dist_graph (GtkWidget *w, gpointer data)
 	xmax = chdtri((int) m, 0.0001);
     } else { 
 	/* F() */
-	fac1 = cephes_gamma((m + n) / 2.0) * pow(m/n, m/2.0);
-	fac2 = cephes_gamma(m/2.0) * cephes_gamma(n/2.0);
-	ymax = (1.0 - 2/m) * (1.0 + 2/n) * 1.25;
-	fprintf(stderr, "max = %g\n", (1.0 - 2/m) * (1.0 - 2/n));
+	double x;
+
+	fac1 = cephes_gamma((m + n) / 2) * pow(m/n, m/2);
+	fac2 = cephes_gamma(m/2) * cephes_gamma(n/2);
+	x = (1 - 2 / m) / (1 + 2 / n);
+	ymax = 1.25 * fac1 * pow(x, m/2 - 1) / (fac2 * pow(1 + m*x/n, (m+n)/2));
 	xmax = fdtri((int) m, (int) n, 0.0009);
     }
 
@@ -974,7 +991,7 @@ static void dist_graph (GtkWidget *w, gpointer data)
 
     gretl_push_c_numeric_locale();
 
-    if (i == 0) {
+    if (d == 0) {
 	fputs("# literal lines = 3\n", fp);
 	fprintf(fp, "m = %.1f\n", m);
 	fprintf(fp, "den = %g\n", pow(2, m/2) * cephes_gamma(m/2));
