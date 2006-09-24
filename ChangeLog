@@ -14,6 +14,7 @@ version 1.6.1, in progress
 - When you "Save as" in the Command log window, ensure that all the 
   regular script-editing signals are properly connected (e.g. the 
   state of the Save icon responds appropriately)
+- "dummify" command: add options --drop-first and --drop-last
 
 9/13/2006 version 1.6.0
 - Revamp mechanism for saving sessions in gui program (we

@@ -918,15 +918,11 @@ static void dist_graph (GtkWidget *w, gpointer data)
     lookup_t **look = (lookup_t **) data;
     FILE *fp = NULL;
     double xmax, ymax;
-    double m, n;
+    double fac1 = 0, fac2 = 0;
+    double m = 0, n = 0;
     int i, err = 0;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
-
-    if (i==1) {
-	errbox("F is not ready yet, sorry\n");
-	return;
-    }
 
     if (i == 0) {
 	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
@@ -951,29 +947,50 @@ static void dist_graph (GtkWidget *w, gpointer data)
 	return;
     }
 
-    if (m == 1) {
-	ymax = 1;
-	xmax = chdtri(m, 0.0001);
-    } else {
-	ymax = chisq_pdf(m, m - 2);
-	xmax = chdtri(m, 0.0001);
+    if (i == 0) {
+	if (m == 1) {
+	    ymax = 1;
+	} else {
+	    ymax = chisq_pdf(m, m - 2) * 1.25;
+	}
+	xmax = chdtri((int) m, 0.0001);
+    } else { 
+	/* F() */
+	fac1 = cephes_gamma((m + n) / 2.0) * pow(m/n, m/2.0);
+	fac2 = cephes_gamma(m/2.0) * cephes_gamma(n/2.0);
+	ymax = (1.0 - 2/m) * (1.0 + 2/n) * 1.25;
+	fprintf(stderr, "max = %g\n", (1.0 - 2/m) * (1.0 - 2/n));
+	xmax = fdtri((int) m, (int) n, 0.0009);
     }
 
-    /* FIXME gnuplot's "gamma" only handles up to m = 69 */
-
-    fprintf(stderr, "ymax = %g, xmax = %g\n", ymax, xmax);
+    if (isnan(xmax) || isinf(xmax) || isnan(ymax) || isinf(ymax)) {
+	errbox(_("Can't handle that many degrees of freedom"));
+	return;
+    }
 
     fputs("set key right top\n", fp);
     fprintf(fp, "set xrange [0:%g]\n", xmax);
-    fprintf(fp, "set yrange [0:%g]\n", ymax * 1.25);
+    fprintf(fp, "set yrange [0:%g]\n", ymax);
 
     gretl_push_c_numeric_locale();
 
-    fputs("# literal lines = 2\n", fp);
-    fprintf(fp, "m = %.1f\n", m);
-    fputs("chisq(x) = (exp(-x/2)*x**(m/2 - 1))/((2**(m/2)) * gamma(m/2))\n", fp);    
-    fputs("plot \\\n", fp);
-    fprintf(fp, "chisq(x) title 'Chi-square(%g)' w lines\n", m);
+    if (i == 0) {
+	fputs("# literal lines = 3\n", fp);
+	fprintf(fp, "m = %.1f\n", m);
+	fprintf(fp, "den = %g\n", pow(2, m/2) * cephes_gamma(m/2));
+	fputs("chisq(x) = (exp(-x/2)*x**(m/2 - 1))/den\n", fp);    
+	fputs("plot \\\n", fp);
+	fprintf(fp, "chisq(x) title 'Chi-square(%g)' w lines\n", m);
+    } else {
+	fputs("# literal lines = 5\n", fp);
+	fprintf(fp, "m = %.1f\n", m);
+	fprintf(fp, "n = %.1f\n", n);
+	fprintf(fp, "fac1 = %g\n", fac1);
+	fprintf(fp, "fac2 = %g\n", fac2);
+	fputs("F(x) = fac1*x**(m/2-1)/(fac2*(1+m*x/n)**((m+n)/2))\n", fp);    
+	fputs("plot \\\n", fp);
+	fprintf(fp, "F(x) title 'F(%g,%g)' w lines\n", m, n);
+    }
 
     gretl_pop_c_numeric_locale();
 
