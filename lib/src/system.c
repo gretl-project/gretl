@@ -332,7 +332,9 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
 {
     int i;
 
-    if (sys == NULL || sys->lists == NULL) return;
+    if (sys == NULL || sys->lists == NULL) {
+	return;
+    }
 
     sys->refcount -= 1;
     if (sys->refcount > 0) {

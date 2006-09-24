@@ -336,6 +336,7 @@ int wf1_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	if (*pZ == NULL) {
 	    *pZ = newZ;
 	    *pdinfo = *newinfo;
+	    free(newinfo);
 	} else {
 	    err = merge_data(pZ, pdinfo, newZ, newinfo, prn);
 	}

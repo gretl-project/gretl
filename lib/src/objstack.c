@@ -135,7 +135,6 @@ static void gretl_object_destroy (void *ptr, GretlObjType type)
     }
 }
 
-#if ODEBUG
 static int gretl_object_get_refcount (void *ptr, GretlObjType type)
 {
     int rc = -999;
@@ -163,7 +162,6 @@ static int gretl_object_get_refcount (void *ptr, GretlObjType type)
 
     return rc;
 }    
-#endif
 
 /* The stuff below: Note that we can't "protect" a model (against
    deletion) simply by setting its refcount to some special value,
@@ -292,9 +290,11 @@ void set_as_last_model (void *ptr, GretlObjType type)
 	gretl_object_unref(last_model.ptr, last_model.type);
     }
 
-    last_model.ptr = ptr;
-    last_model.type = type;
-    gretl_object_ref(ptr, type);
+    if (last_model.ptr != ptr || last_model.type != type) {
+	last_model.ptr = ptr;
+	last_model.type = type;
+	gretl_object_ref(ptr, type);
+    }
 
 #if ODEBUG
     fprintf(stderr, " refcount on \"last_model\" = %d\n",
@@ -1102,8 +1102,10 @@ void gretl_saved_objects_cleanup (void)
 
     for (i=0; i<n_obj; i++) {
 	if (ostack[i].ptr == last_model.ptr) {
-	    /* don't double-free! */
-	    last_model.ptr = NULL;
+	    if (gretl_object_get_refcount(ostack[i].ptr, ostack[i].type) == 1) {
+		/* don't double-free! */
+		last_model.ptr = NULL;
+	    }
 	}
 #if ODEBUG
 	fprintf(stderr, "gretl_saved_objects_cleanup:\n"
@@ -1120,8 +1122,8 @@ void gretl_saved_objects_cleanup (void)
     n_vars = 0;
 
     if (last_model.ptr != NULL) {
-	if (last_model.type != GRETL_OBJ_EQN || !
-	    model_is_protected(last_model.ptr)) {
+	if (last_model.type != GRETL_OBJ_EQN || 
+	    !model_is_protected(last_model.ptr)) {
 #if ODEBUG
 	    fprintf(stderr, "gretl_saved_objects_cleanup:\n"
 		    " calling gretl_object_destroy on last_model\n");
