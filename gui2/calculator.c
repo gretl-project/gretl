@@ -22,7 +22,7 @@
 #define NTESTS 6
 #define NPVAL 6
 #define NLOOKUPS 5
-#define NGRAPHS 2
+#define NGRAPHS 4
 #define NTESTENTRY 7
 #define NLOOKUPENTRY 4
 
@@ -441,9 +441,39 @@ static void print_pv (PRN *prn, double p1, double p2)
 	    p1, p2);
 }
 
+static gchar *dist_graph_title (int dist, double x, int df1, int df2)
+{
+    gchar *s = NULL;
+
+    if (na(x)) {
+	if (dist == NORMAL_DIST) {
+	    s = g_strdup(I_("Standard normal distribution"));
+	} else if (dist == T_DIST) {
+	    s = g_strdup_printf(I_("t(%d)"), df1);
+	} else if (dist == CHISQ_DIST) {
+	    s = g_strdup_printf(I_("Chi-square(%d)"), df1);
+	} else if (dist == F_DIST) {
+	    s = g_strdup_printf(I_("F(%d, %d)"), df1, df2);
+	}	
+    } else {
+	if (dist == NORMAL_DIST) {
+	    s = g_strdup(I_("Gaussian sampling distribution"));
+	} else if (dist == T_DIST) {
+	    s = g_strdup_printf(I_("t(%d) sampling distribution"), df1);
+	} else if (dist == CHISQ_DIST) {
+	    s = g_strdup_printf(I_("Chi-square(%d) sampling distribution"), df1);
+	} else if (dist == F_DIST) {
+	    s = g_strdup_printf(I_("F(%d, %d) sampling distribution"), df1, df2);
+	}
+    }
+
+    return s;
+}
+
 static void htest_graph (int dist, double x, int df1, int df2)
 {
     double xx, prange, spike = 0.0;
+    gchar *title = NULL;
     FILE *fp = NULL;
 
     if (gnuplot_init(PLOT_SAMPLING_DIST, &fp)) {
@@ -454,22 +484,38 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     gretl_push_c_numeric_locale();
 
-    if (dist == NORMAL_DIST || dist == T_DIST) {
-	xx = fabs(x);
-	prange = ((xx > 3.5)? xx + .5 : 3.5);
-	spike = .25;
-	fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
-	fprintf(fp, "set yrange [0:.50]\n");
-	fprintf(fp, "set xlabel '%s'\n", I_("Standard errors"));
-    } else if (dist == CHISQ_DIST || dist == F_DIST) {
-	prange = (dist == CHISQ_DIST)? chisq_critval(0.001, df1) : 
-	    f_critval(0.001, df1, df2);
-	if (x > prange) {
-	    prange = 1.1 * x;
-	}
-	spike = 1.0 / prange;
-	fprintf(fp, "set xrange [0:%.3f]\n", prange);
-    } 
+    if (na(x)) {
+	/* no test statistic to be shown */
+	if (dist == NORMAL_DIST || dist == T_DIST) {
+	    prange = 5.0;
+	    spike = .25;
+	    fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
+	    fprintf(fp, "set yrange [0:.50]\n");
+	} else if (dist == CHISQ_DIST || dist == F_DIST) {
+	    prange = (dist == CHISQ_DIST)? chisq_critval(0.001, df1) : 
+		f_critval(0.001, df1, df2);
+	    spike = 1.0 / prange;
+	    fprintf(fp, "set xrange [0:%.3f]\n", prange);
+	}	    
+    } else {
+	/* set range based on test stat */
+	if (dist == NORMAL_DIST || dist == T_DIST) {
+	    xx = fabs(x);
+	    prange = ((xx > 3.5)? xx + .5 : 3.5);
+	    spike = .25;
+	    fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
+	    fprintf(fp, "set yrange [0:.50]\n");
+	    fprintf(fp, "set xlabel '%s'\n", I_("Standard errors"));
+	} else if (dist == CHISQ_DIST || dist == F_DIST) {
+	    prange = (dist == CHISQ_DIST)? chisq_critval(0.001, df1) : 
+		f_critval(0.001, df1, df2);
+	    if (x > prange) {
+		prange = 1.1 * x;
+	    }
+	    spike = 1.0 / prange;
+	    fprintf(fp, "set xrange [0:%.3f]\n", prange);
+	} 
+    }
 
     /* required variables and formulae */
     if (dist == T_DIST) {
@@ -498,33 +544,30 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     fprintf(fp, "plot \\\n");
 
+    title = dist_graph_title(dist, x, df1, df2);
+
     if (dist == NORMAL_DIST) {
 	fprintf(fp, "(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
-		"title '%s' w lines , \\\n",
-		I_("Gaussian sampling distribution"));
+		"title '%s' w lines", title);
     } else if (dist == T_DIST) {
-	char tmp[64];
-
-	sprintf(tmp, I_("t(%d) sampling distribution"), df1);
 	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
 		"**(-0.5*(df1+1.0)) "
-		"title '%s' w lines , \\\n", tmp);
+		"title '%s' w lines", title);
     } else if (dist == CHISQ_DIST) {
-	char tmp[64];
-	
-	sprintf(tmp, I_("Chi-square(%d) sampling distribution"), df1);
-	fprintf(fp, "chi(x) title '%s' w lines , \\\n", tmp);
+	fprintf(fp, "chi(x) title '%s' w lines", title);
     } else if (dist == F_DIST) {
-	char tmp[64];
-
-	sprintf(tmp, I_("F(%d, %d) sampling distribution"), df1, df2);
-	fprintf(fp, "f(x) title '%s' w lines , \\\n", tmp);
+	fprintf(fp, "f(x) title '%s' w lines", title);
     }
 
-    fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
-	    I_("test statistic"));
-    fprintf(fp, "%g %g\n", x, spike);
-    fputs("e\n", fp);
+    if (!na(x)) {
+	fputs(" , \\\n", fp);
+	fprintf(fp, "'-' using 1:2 title '%s' w impulses\n",
+		I_("test statistic"));
+	fprintf(fp, "%g %g\n", x, spike);
+	fputs("e\n", fp);
+    } else {
+	fputc('\n', fp);
+    }
 
     gretl_pop_c_numeric_locale();
 
@@ -907,125 +950,37 @@ static void h_test_global (GtkWidget *w, gpointer data)
     h_test(NULL, test[i]);
 }
 
-static double chisq_pdf (double m, double x)
-{
-    return exp(-x/2.0) * pow(x, (m/2 - 1.0)) / 
-	(pow(2.0, m/2) * cephes_gamma(m/2));
-}
-
 static void dist_graph (GtkWidget *w, gpointer data)
 {
     lookup_t **look = (lookup_t **) data;
-    FILE *fp = NULL;
-    double xmax, ymax;
-    double fac1 = 0, fac2 = 0;
-    double m = 0, n = 0;
+    int m = 0, n = 0;
     int d, err = 0;
 
     d = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
 
-    if (d == 0) {
+    switch (d) {
+    case NORMAL_DIST:
+	break;
+    case T_DIST:
+    case CHISQ_DIST:
 	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[0])));
 	if (m <= 0) {
 	    err = 1;
 	}
-    } else {
+	break;
+    case F_DIST:
 	m = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[0])));
 	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[d]->entry[1])));
 	if (m <= 0 || n <= 0) {
 	    err = 1;
 	}
+	break;
     }
 
     if (err) {
 	errbox(_("Invalid degrees of freedom"));
-	return;
-    }
-
-    if ((err = gnuplot_init(PLOT_SAMPLING_DIST, &fp))) {
-	gui_errmsg(err);
-	return;
-    }
-
-#if 0
-    if (d == NORMAL_DIST) {
-	fprintf(fp, "(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
-		"title '%s' w lines , \\\n",
-		I_("Gaussian sampling distribution"));
-    } else if (d == T_DIST) {
-	char tmp[64];
-
-	sprintf(tmp, I_("t(%d) sampling distribution"), df1);
-	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
-		"**(-0.5*(df1+1.0)) "
-		"title '%s' w lines , \\\n", tmp);
-    }
-#endif
-
-    if (d == 0) {
-	if (m == 1) {
-	    ymax = 1;
-	} else {
-	    ymax = chisq_pdf(m, m - 2) * 1.25;
-	}
-	xmax = chdtri((int) m, 0.0001);
-    } else { 
-	/* F() */
-	double x;
-
-	fac1 = cephes_gamma((m + n) / 2) * pow(m/n, m/2);
-	fac2 = cephes_gamma(m/2) * cephes_gamma(n/2);
-	x = (1 - 2 / m) / (1 + 2 / n);
-	ymax = 1.25 * fac1 * pow(x, m/2 - 1) / (fac2 * pow(1 + m*x/n, (m+n)/2));
-	xmax = fdtri((int) m, (int) n, 0.0009);
-    }
-
-    if (isnan(xmax) || isinf(xmax) || isnan(ymax) || isinf(ymax)) {
-	errbox(_("Can't handle that many degrees of freedom"));
-	return;
-    }
-
-    fputs("set key right top\n", fp);
-    fprintf(fp, "set xrange [0:%g]\n", xmax);
-    fprintf(fp, "set yrange [0:%g]\n", ymax);
-
-    gretl_push_c_numeric_locale();
-
-    if (d == 0) {
-	fputs("# literal lines = 3\n", fp);
-	fprintf(fp, "m = %.1f\n", m);
-	fprintf(fp, "den = %g\n", pow(2, m/2) * cephes_gamma(m/2));
-	fputs("chisq(x) = (exp(-x/2)*x**(m/2 - 1))/den\n", fp);    
-	fputs("plot \\\n", fp);
-	fprintf(fp, "chisq(x) title 'Chi-square(%g)' w lines\n", m);
     } else {
-	fputs("# literal lines = 5\n", fp);
-	fprintf(fp, "m = %.1f\n", m);
-	fprintf(fp, "n = %.1f\n", n);
-	fprintf(fp, "fac1 = %g\n", fac1);
-	fprintf(fp, "fac2 = %g\n", fac2);
-	fputs("F(x) = fac1*x**(m/2-1)/(fac2*(1+m*x/n)**((m+n)/2))\n", fp);    
-	fputs("plot \\\n", fp);
-	fprintf(fp, "F(x) title 'F(%g,%g)' w lines\n", m, n);
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    fclose(fp);
-
-    if (gnuplot_make_graph()) {
-	errbox(_("gnuplot command failed"));
-    } else {
-	register_graph();
-    }    
-}
-
-static int dist_to_pos (int dist, int code)
-{
-    if (code == CALC_GRAPH) {
-	return (dist == CHISQ_DIST)? 0 : 1;
-    } else {
-	return dist;
+	htest_graph(d, NADBL, m, n);
     }
 }
 
@@ -1035,7 +990,6 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
 {
     GtkWidget *tempwid;
     int code = look[0]->code;
-    int pos = dist_to_pos(dist, code);
 
     *tbl_len += 1;
 
@@ -1052,7 +1006,7 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
     gtk_table_attach_defaults(GTK_TABLE (tbl), 
 			      tempwid, 1, 2, *tbl_len - 1, *tbl_len);
     gtk_widget_show(tempwid);
-    look[pos]->entry[*tbl_len - 2] = tempwid;
+    look[dist]->entry[*tbl_len - 2] = tempwid;
 
     g_signal_connect(G_OBJECT(tempwid), "activate", 
 		     (code == CALC_PVAL)? G_CALLBACK(get_pvalue) : 
@@ -1089,33 +1043,29 @@ static void make_lookup_tab (GtkWidget *notebook, int d, lookup_t **look)
     gtk_widget_show(tbl);
    
     switch (d) {
-
     case NORMAL_DIST:
-	gtk_table_resize(GTK_TABLE (tbl), ++tbl_len, 1);
-	tempwid = gtk_label_new(_("Critical values for\n"
-				  "standard normal distribution"));
-	gtk_table_attach_defaults(GTK_TABLE (tbl), 
+	if (look[0]->code == CALC_DIST) {
+	    gtk_table_resize(GTK_TABLE (tbl), ++tbl_len, 1);
+	    tempwid = gtk_label_new(_("Critical values for\n"
+				      "standard normal distribution"));
+	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
 				  tempwid, 0, 2, tbl_len - 1, tbl_len);
-	gtk_widget_show(tempwid);
+	    gtk_widget_show(tempwid);
+	}
 	break;
-
     case T_DIST:
 	add_lookup_entry(tbl, &tbl_len, N_("df"), look, d);
 	break;
-
     case CHISQ_DIST:
 	add_lookup_entry(tbl, &tbl_len, N_("df"), look, d);
 	break;
-
     case F_DIST:
 	add_lookup_entry(tbl, &tbl_len, N_("dfn"), look, d);
 	add_lookup_entry(tbl, &tbl_len, N_("dfd"), look, d);
 	break;	
-
     case DW_DIST:
 	add_lookup_entry(tbl, &tbl_len, N_("n"), look, d);
 	break;
-
     default:
 	break;
     } 
@@ -1826,21 +1776,21 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 
     if (code == CALC_TEST) {
 	test = mymalloc(NTESTS * sizeof *test);
-	if (test == NULL) return;
 	statp = test;
     } else if (code == CALC_PVAL) {
 	look = mymalloc(NPVAL * sizeof *look);
-	if (look == NULL) return;
 	statp = look;
     } else if (code == CALC_DIST) {
 	look = mymalloc(NLOOKUPS * sizeof *look);
-	if (look == NULL) return;
 	statp = look;
     } else {
 	look = mymalloc(NGRAPHS * sizeof *look);
-	if (look == NULL) return;
 	statp = look;
     }	
+
+    if (statp == NULL) {
+	return;
+    }
 
     dialog = gretl_child_new(NULL);
     winptr[code] = dialog->win;
@@ -1882,7 +1832,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    if (look[i] == NULL) return;
 	    look[i]->book = notebook;
 	    look[i]->code = code;
-	    make_lookup_tab(notebook, (i==0)? CHISQ_DIST : F_DIST, look);
+	    make_lookup_tab(notebook, i, look);
 	}
     }	
 
