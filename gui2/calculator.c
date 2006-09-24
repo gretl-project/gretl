@@ -470,7 +470,7 @@ static gchar *dist_graph_title (int dist, double x, int df1, int df2)
     return s;
 }
 
-static void htest_graph (int dist, double x, int df1, int df2)
+static void htest_graph (int d, double x, int df1, int df2)
 {
     double xx, prange, spike = 0.0;
     gchar *title = NULL;
@@ -486,28 +486,28 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     if (na(x)) {
 	/* no test statistic to be shown */
-	if (dist == NORMAL_DIST || dist == T_DIST) {
+	if (d == NORMAL_DIST || d == T_DIST) {
 	    prange = 5.0;
 	    spike = .25;
 	    fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
 	    fprintf(fp, "set yrange [0:.50]\n");
-	} else if (dist == CHISQ_DIST || dist == F_DIST) {
-	    prange = (dist == CHISQ_DIST)? chisq_critval(0.001, df1) : 
+	} else if (d == CHISQ_DIST || d == F_DIST) {
+	    prange = (d == CHISQ_DIST)? chisq_critval(0.001, df1) : 
 		f_critval(0.001, df1, df2);
 	    spike = 1.0 / prange;
 	    fprintf(fp, "set xrange [0:%.3f]\n", prange);
 	}	    
     } else {
 	/* set range based on test stat */
-	if (dist == NORMAL_DIST || dist == T_DIST) {
+	if (d == NORMAL_DIST || d == T_DIST) {
 	    xx = fabs(x);
 	    prange = ((xx > 3.5)? xx + .5 : 3.5);
 	    spike = .25;
 	    fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
 	    fprintf(fp, "set yrange [0:.50]\n");
 	    fprintf(fp, "set xlabel '%s'\n", I_("Standard errors"));
-	} else if (dist == CHISQ_DIST || dist == F_DIST) {
-	    prange = (dist == CHISQ_DIST)? chisq_critval(0.001, df1) : 
+	} else if (d == CHISQ_DIST || d == F_DIST) {
+	    prange = (d == CHISQ_DIST)? chisq_critval(0.001, df1) : 
 		f_critval(0.001, df1, df2);
 	    if (x > prange) {
 		prange = 1.1 * x;
@@ -518,11 +518,11 @@ static void htest_graph (int dist, double x, int df1, int df2)
     }
 
     /* required variables and formulae */
-    if (dist == T_DIST) {
+    if (d == T_DIST) {
 	fputs("# literal lines = 2\n", fp);
 	fprintf(fp, "df1=%.1f\n", (double) df1);
 	fprintf(fp, "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n");
-    } else if (dist == CHISQ_DIST) {
+    } else if (d == CHISQ_DIST) {
 	fprintf(fp, "# literal lines = %d\n", (df1 > 69)? 3 : 2);
 	fprintf(fp, "df1=%.1f\n", (double) df1);
 	if (df1 > 69) {
@@ -533,7 +533,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	    fprintf(fp, "chi(x)=x**(0.5*df1-1.0)*exp(-0.5*x)/gamma(0.5*df1)"
 		    "/2**(0.5*df1)\n");
 	}
-    } else if (dist == F_DIST) {
+    } else if (d == F_DIST) {
 	fputs("# literal lines = 4\n", fp);
 	fprintf(fp, "df1=%.1f\n", (double) df1);
 	fprintf(fp, "df2=%.1f\n", (double) df2);
@@ -544,18 +544,18 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     fprintf(fp, "plot \\\n");
 
-    title = dist_graph_title(dist, x, df1, df2);
+    title = dist_graph_title(d, x, df1, df2);
 
-    if (dist == NORMAL_DIST) {
+    if (d == NORMAL_DIST) {
 	fprintf(fp, "(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
 		"title '%s' w lines", title);
-    } else if (dist == T_DIST) {
+    } else if (d == T_DIST) {
 	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
 		"**(-0.5*(df1+1.0)) "
 		"title '%s' w lines", title);
-    } else if (dist == CHISQ_DIST) {
+    } else if (d == CHISQ_DIST) {
 	fprintf(fp, "chi(x) title '%s' w lines", title);
-    } else if (dist == F_DIST) {
+    } else if (d == F_DIST) {
 	fprintf(fp, "f(x) title '%s' w lines", title);
     }
 
