@@ -226,7 +226,8 @@ enum calc_functions {
     CALC_PVAL,
     CALC_DIST,
     CALC_TEST,
-    CALC_GRAPH
+    CALC_GRAPH,
+    CALC_GRAPH_ADD
 };
 
 enum auto_dummies {

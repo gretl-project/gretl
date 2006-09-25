@@ -187,6 +187,11 @@ GtkWidget *plot_get_shell (png_plot *plot)
     return plot->shell;
 }
 
+GPT_SPEC *plot_get_spec (png_plot *plot)
+{
+    return plot->spec;
+}
+
 int plot_is_mouseable (const png_plot *plot)
 {
     return !(plot->status & PLOT_DONT_MOUSE);
@@ -596,8 +601,10 @@ static GPT_SPEC *plotspec_new (void)
 
     for (i=0; i<4; i++) {
 	spec->titles[i][0] = 0;
-	spec->literal[i] = NULL;
     }
+
+    spec->literal = NULL;
+    spec->n_literal = 0;
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	plot_label_init(&(spec->labels[i]));
@@ -1139,7 +1146,7 @@ static int uneditable_get_markers (GPT_SPEC *spec, FILE *fp, int *polar)
     return err;
 }
 
-#define plot_needs_obs(c) (c != PLOT_ELLIPSE && c != PLOT_SAMPLING_DIST)
+#define plot_needs_obs(c) (c != PLOT_ELLIPSE && c != PLOT_PROB_DIST)
 
 /* Read plotspec struct from gnuplot command file.  This is _not_ a
    general parser for gnuplot files; it is designed specifically for
@@ -1206,8 +1213,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
     /* get the preamble and "set" lines */
     labelno = 0;
     while ((got = fgets(gpline, sizeof gpline, fp))) {
-	int v, litlines = 0;
 	char vname[9];
+	int v;
 
 	if (!strncmp(gpline, "# timeseries", 12)) {
 	    int pd;
@@ -1232,16 +1239,18 @@ static int read_plotspec_from_file (GPT_SPEC *spec, int *plot_pd, int *polar)
 	    continue;
 	}
 	
-	if (sscanf(gpline, "# literal lines = %d", &litlines)) {
-	    for (i=0; i<litlines; i++) {
+	if (sscanf(gpline, "# literal lines = %d", &spec->n_literal)) {
+	    spec->literal = strings_array_new(spec->n_literal);
+	    if (spec->literal == NULL) {
+		err = E_ALLOC;
+		goto plot_bailout;
+	    }
+	    for (i=0; i<spec->n_literal; i++) {
 		if (!fgets(gpline, MAXLEN - 1, fp)) {
 		    errbox(_("Plot file is corrupted"));
 		} else {
 		    top_n_tail(gpline);
 		    spec->literal[i] = g_strdup(gpline);
-#if GPDEBUG
-		    fprintf(stderr, "spec->literal[%d] = '%s'\n", i, spec->literal[i]);
-#endif
 		}
 	    }
 	    continue;
@@ -1886,7 +1895,9 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     gtk_widget_destroy(plot->popup);
     plot->popup = NULL;
 
-    if (!strcmp(item, _("Save as PNG..."))) {
+    if (!strcmp(item, _("Add another curve..."))) {
+	stats_calculator(plot, CALC_GRAPH_ADD, NULL);
+    } else if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
         file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      FSEL_DATA_MISC, plot->spec);
@@ -1968,6 +1979,7 @@ static void build_plot_menu (png_plot *plot)
 {
     GtkWidget *item;    
     const char *regular_items[] = {
+	N_("Add another curve..."),
 #ifdef G_OS_WIN32
 	N_("Save as Windows metafile (EMF)..."),
 #endif
@@ -2020,6 +2032,11 @@ static void build_plot_menu (png_plot *plot)
 
     i = 0;
     while (plot_items[i]) {
+	if (plot->spec->code != PLOT_PROB_DIST &&
+	    !strcmp(plot_items[i], "Add another curve...")) {
+	    i++;
+	    continue;
+	}
 	if (plot_not_zoomable(plot) &&
 	    !strcmp(plot_items[i], "Zoom...")) {
 	    i++;
@@ -2746,7 +2763,7 @@ static png_plot *png_plot_new (void)
     return plot;
 }
 
-int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
+png_plot *gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 {
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
@@ -2763,7 +2780,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     plot = png_plot_new();
     if (plot == NULL) {
-	return 1;
+	return NULL;
     }
 
     if (spec != NULL) {
@@ -2772,7 +2789,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	plot->spec = plotspec_new();
 	if (plot->spec == NULL) {
 	    free(plot);
-	    return 1;
+	    return NULL;
 	}
 	strcpy(plot->spec->fname, plotfile);
     }
@@ -2935,7 +2952,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     render_pngfile(plot, PNG_START);
 
-    return 0;
+    return plot;
 }
 
 /* apparatus for getting coordinate info out of PNG files created using

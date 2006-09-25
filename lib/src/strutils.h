@@ -101,6 +101,8 @@ char *safecpy (char *targ, const char *src, int n);
 
 char **strings_array_new (int nstrs);
 
+int strings_array_add (char ***pS, int *n, const char *p);
+
 char **strings_array_new_with_length (int nstrs, int len);
 
 char **strings_array_dup (char **strs, int n);

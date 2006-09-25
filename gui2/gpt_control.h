@@ -30,7 +30,7 @@ void save_this_graph (GPT_SPEC *spec, const char *fname);
 
 void display_session_graph_png (const char *pltname);
 
-int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved);
+png_plot *gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved);
 
 void plot_label_position_click (GtkWidget *w, GPT_SPEC *spec);
 
@@ -43,6 +43,8 @@ void set_plot_has_y2_axis (png_plot *plot, gboolean s);
 int plot_is_mouseable (const png_plot *plot);
 
 GtkWidget *plot_get_shell (png_plot *plot);
+
+GPT_SPEC *plot_get_spec (png_plot *plot);
 
 int maybe_switch_emf_point_style (char *s, PRN *prn);
 

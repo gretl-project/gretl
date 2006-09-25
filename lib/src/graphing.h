@@ -78,7 +78,8 @@ typedef enum {
 
 typedef enum {
     PLOT_REGULAR = 0,
-    PLOT_SAMPLING_DIST,
+    PLOT_H_TEST,
+    PLOT_PROB_DIST,
     PLOT_FORECAST,
     PLOT_GARCH,
     PLOT_FREQ_SIMPLE,
@@ -123,7 +124,8 @@ typedef struct {
     int n_lines;               /* number of lines */
     int xzeroaxis;             /* show x == 0 (1) or not (0) */
     GPT_LINE *lines;           /* details on individual lines */
-    char *literal[4];          /* additional commands */
+    char **literal;            /* additional commands */
+    int n_literal;             /* number of the above */
     double *data;              /* data to plot */
     char **markers;            /* data-point markers (not always present) */
     int n_markers;             /* number of such markers */
@@ -177,6 +179,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp);
 int go_gnuplot (GPT_SPEC *spec, char *fname);
 
 void free_plotspec (GPT_SPEC *spec);
+
+int plotspec_add_line (GPT_SPEC *spec);
 
 int get_termstr (const GPT_SPEC *spec, char *termstr);
 

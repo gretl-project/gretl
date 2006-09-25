@@ -97,7 +97,8 @@ struct plot_type_info ptinfo[] = {
     { PLOT_MULTI_SCATTER,  "multiple scatterplots" },
     { PLOT_PERIODOGRAM,    "periodogram" },
     { PLOT_RANGE_MEAN,     "range-mean plot" },
-    { PLOT_SAMPLING_DIST,  "sampling distribution" },
+    { PLOT_H_TEST,         "sampling distribution" },
+    { PLOT_PROB_DIST,      "probability distribution" },
     { PLOT_TRI_GRAPH,      "TRAMO / X12A tri-graph" },
     { PLOT_VAR_ROOTS,      "VAR inverse roots plot" },
     { PLOT_ELLIPSE,        "confidence ellipse plot" },
@@ -2403,27 +2404,46 @@ int garch_resid_plot (const MODEL *pmod, const DATAINFO *pdinfo)
     return gnuplot_make_graph();
 }
 
+int plotspec_add_line (GPT_SPEC *spec)
+{
+    GPT_LINE *lines;
+    int n = spec->n_lines;
+
+    lines = realloc(spec->lines, (n + 1) * sizeof *lines);
+    if (lines == NULL) {
+	return E_ALLOC;
+    }
+
+    spec->lines = lines;
+    spec->n_lines += 1;
+
+    lines[n].varnum = 0;
+    lines[n].title[0] = 0;
+    lines[n].formula[0] = 0;
+    lines[n].style[0] = 0;
+    lines[n].scale[0] = 0;
+    lines[n].yaxis = 1;
+    lines[n].type = 0;
+    lines[n].width = 1;
+    lines[n].ncols = 0;
+
+    return 0;
+}
+
 void free_plotspec (GPT_SPEC *spec)
 {
-    int i;
-
     if (spec == NULL) return;
 
     if (spec->lines != NULL) free(spec->lines);
     if (spec->data != NULL) free(spec->data);
     if (spec->reglist != NULL) free(spec->reglist);
 
-    for (i=0; i<4; i++) {
-	if (spec->literal[i] != NULL) {
-	    free(spec->literal[i]);
-	}
+    if (spec->literal != NULL) {
+	free_strings_array(spec->literal, spec->n_literal);
     }
 
     if (spec->markers != NULL) {
-	for (i=0; i<spec->n_markers; i++) {
-	    free(spec->markers[i]);
-	}
-	free(spec->markers);
+	free_strings_array(spec->markers, spec->n_markers);
     }
 
     if (spec->labeled != NULL) {
@@ -2719,7 +2739,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     write_plot_type_string(spec->code, fp);
 
-    for (i=0; i<4; i++) {
+    for (i=0; i<spec->n_literal; i++) {
 	if (spec->literal[i] != NULL && *spec->literal[i] != '\0') {
 	    fprintf(fp, "%s\n", spec->literal[i]);
 	}

@@ -268,7 +268,7 @@ void gretl_object_unref (void *ptr, GretlObjType type)
 
 /**
  * set_as_last_model:
- * @ptr: pointer to gretl obejct (e.g. #MODEL).
+ * @ptr: pointer to gretl object (e.g. #MODEL).
  * @type: type of object.
  *
  * Puts @ptr in place as the "last model" (which will be

@@ -28,8 +28,9 @@
 
 #include "gretl.h"
 #include "dlgutils.h"
+#include "gpt_control.h"
+
 #include "../cephes/libprob.h"
-#include <ctype.h>
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -57,6 +58,7 @@ struct test_t_ {
 
 struct lookup_t_ {
     int code;
+    gpointer p;
     GtkWidget *entry[NLOOKUPENTRY];
     GtkWidget *book;
 };
@@ -470,14 +472,37 @@ static gchar *dist_graph_title (int dist, double x, int df1, int df2)
     return s;
 }
 
+enum {
+    F_BINV,
+    F_CHI,
+    F_LOG2,
+    F_BIGCHI,
+    F_F
+};
+
+static const char *formulae[] = {
+    "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))",
+    "chi(x,m)=x**(0.5*m-1.0)*exp(-0.5*x)/gamma(0.5*m)/2**(0.5*m)",
+    "log2=log(2.0)",
+    "bigchi(x,m)=exp((0.5*m-1.0)*log(x)-0.5*x-lgamma(0.5*m)-df1*0.5*log2)",
+    "f(x,m,n)=Binv(0.5*m,0.5*n)*(m/n)**(0.5*m)*"
+    "x**(0.5*m-1.0)/(1.0+m/n*x)**(0.5*(m+n))"
+};
+
 static void htest_graph (int d, double x, int df1, int df2)
 {
+    PlotType pt = (na(x))? PLOT_PROB_DIST : PLOT_H_TEST;
     double xx, prange, spike = 0.0;
+    int bigchi = 0;
     gchar *title = NULL;
     FILE *fp = NULL;
 
-    if (gnuplot_init(PLOT_SAMPLING_DIST, &fp)) {
+    if (gnuplot_init(pt, &fp)) {
 	return;
+    }
+
+    if (d == CHISQ_DIST && df1 > 69) {
+	bigchi = 1;
     }
 
     fputs("set key right top\n", fp);
@@ -518,28 +543,31 @@ static void htest_graph (int d, double x, int df1, int df2)
     }
 
     /* required variables and formulae */
-    if (d == T_DIST) {
-	fputs("# literal lines = 2\n", fp);
+    if (d == NORMAL_DIST) {
+	fputs("# literal lines = 1\n", fp);
+	fputs("# standard normal\n", fp);
+    } else if (d == T_DIST) {
+	fputs("# literal lines = 3\n", fp);
+	fprintf(fp, "# t(%d)\n", df1);
 	fprintf(fp, "df1=%.1f\n", (double) df1);
-	fprintf(fp, "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n");
+	fprintf(fp, "%s\n", formulae[F_BINV]);
     } else if (d == CHISQ_DIST) {
-	fprintf(fp, "# literal lines = %d\n", (df1 > 69)? 3 : 2);
+	fprintf(fp, "# literal lines = %d\n", (df1 > 69)? 4 : 3);
+	fprintf(fp, "# chi-square(%d)\n", df1);
 	fprintf(fp, "df1=%.1f\n", (double) df1);
-	if (df1 > 69) {
-	    fputs("log2=log(2.0)\n", fp);
-	    fputs("chi(x)=exp((0.5*df1-1.0)*log(x)-0.5*x-"
-		  "lgamma(0.5*df1)-df1*0.5*log2)\n", fp);
+	if (bigchi) {
+	    fprintf(fp, "%s\n", formulae[F_LOG2]);
+	    fprintf(fp, "%s\n", formulae[F_BIGCHI]);
 	} else {
-	    fprintf(fp, "chi(x)=x**(0.5*df1-1.0)*exp(-0.5*x)/gamma(0.5*df1)"
-		    "/2**(0.5*df1)\n");
+	    fprintf(fp, "%s\n", formulae[F_CHI]);
 	}
     } else if (d == F_DIST) {
-	fputs("# literal lines = 4\n", fp);
+	fputs("# literal lines = 5\n", fp);
+	fprintf(fp, "# F(%d,%d)\n", df1, df2);
 	fprintf(fp, "df1=%.1f\n", (double) df1);
 	fprintf(fp, "df2=%.1f\n", (double) df2);
-	fputs("Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n", fp);
-	fputs("f(x)=Binv(0.5*df1,0.5*df2)*(df1/df2)**(0.5*df1)"
-	      "*x**(0.5*df1-1.0)/(1.0+df1/df2*x)**(0.5*(df1+df2))\n", fp);
+	fprintf(fp, "%s\n", formulae[F_BINV]);
+	fprintf(fp, "%s\n", formulae[F_F]);
     }	
 
     fprintf(fp, "plot \\\n");
@@ -554,9 +582,10 @@ static void htest_graph (int d, double x, int df1, int df2)
 		"**(-0.5*(df1+1.0)) "
 		"title '%s' w lines", title);
     } else if (d == CHISQ_DIST) {
-	fprintf(fp, "chi(x) title '%s' w lines", title);
+	fprintf(fp, "%s(x,df1) title '%s' w lines", (bigchi)? "bigchi" : "chi",
+		title);
     } else if (d == F_DIST) {
-	fprintf(fp, "f(x) title '%s' w lines", title);
+	fprintf(fp, "f(x,df1,df2) title '%s' w lines", title);
     }
 
     if (!na(x)) {
@@ -578,6 +607,151 @@ static void htest_graph (int d, double x, int df1, int df2)
     } else {
 	register_graph();
     }
+}
+
+static int get_dist_and_df (const char *s, int *d, int *m, int *n)
+{
+    int ret = 1;
+
+    if (!strncmp(s, "# standard", 10)) {
+	*d = NORMAL_DIST;
+    } else if (sscanf(s, "# t(%d)", m) == 1) {
+	*d = T_DIST;
+    } else if (sscanf(s, "# chi-square(%d)", m) == 1) {
+	*d = CHISQ_DIST;
+    } else if (sscanf(s, "# F(%d,%d)", m, n) == 2) {
+	*d = F_DIST;
+    } else {
+	ret = 0;
+    }
+
+    return ret;
+}
+
+static void revise_dist_plotspec (png_plot *plot, int d, int df1, int df2)
+{
+    GPT_SPEC *spec = plot_get_spec(plot);
+    gchar *title = NULL;
+    const char *s;
+    char dfstr[16];
+    int got[5] = {0};
+    int bigchi = 0;
+    int m, n, prevd, dfmax = 0;
+    int i, err = 0;
+
+    for (i=0; i<spec->n_literal; i++) {
+	int dfid;
+
+	s = spec->literal[i];
+	m = n = 0;
+	prevd = -1;
+	fprintf(stderr, "spec->literal[%d] = '%s'\n", i, s);
+	if (*s == '#') {
+	    if (get_dist_and_df(s, &prevd, &m, &n)) {
+		if (prevd == d && m == df1 && n == df2) {
+		    /* line is already present */
+		    return;
+		}
+		if (prevd == CHISQ_DIST && m > 69) {
+		    got[4] += 1;
+		} else {
+		    got[prevd] += 1;
+		}
+	    }
+	} else if (sscanf(s, "df%d=", &dfid) == 1) {
+	    if (dfid > dfmax) {
+		dfmax = dfid;
+	    }
+	}
+    }
+
+    fprintf(stderr, "spec->n_lines = %d\n", spec->n_lines);
+    
+    for (i=0; i<spec->n_lines; i++) {
+	fprintf(stderr, "type = %d, formula: '%s'\n", spec->lines[i].type,
+		spec->lines[i].formula); 
+    } 
+
+    /* add df line(s) if needed */
+    m = dfmax + 1;
+    if (d == T_DIST || d == CHISQ_DIST || d == F_DIST) {
+	sprintf(dfstr, "df%d=%.1f", m, (double) df1);
+	err = strings_array_add(&spec->literal, &spec->n_literal, dfstr);
+    }
+    if (d == F_DIST && !err) {
+	sprintf(dfstr, "df%d=%.1f", m + 1, (double) df2);
+	err = strings_array_add(&spec->literal, &spec->n_literal, dfstr);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }  
+
+    if (d == CHISQ_DIST && df1 > 69) {
+	bigchi = 1;
+    }
+
+    /* add any required formula lines */
+
+    if (d == T_DIST) {
+	if (!got[T_DIST] && !got[F_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    formulae[F_BINV]);
+	}
+    } else if (d == CHISQ_DIST) {
+	if (bigchi && !got[4]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    formulae[F_LOG2]);
+	    if (!err) {
+		err = strings_array_add(&spec->literal, &spec->n_literal, 
+					formulae[F_BIGCHI]);
+	    }
+	} else if (!bigchi && !got[CHISQ_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    formulae[F_CHI]);
+	}
+    } else if (d == F_DIST) {
+	if (!got[F_DIST] && !got[T_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    formulae[F_BINV]);
+	} 
+	if (!err && !got[F_DIST]) {
+	    err = strings_array_add(&spec->literal, &spec->n_literal, 
+				    formulae[F_F]);
+	}
+    }
+
+    if (!err) {
+	/* add new plot line */
+	err = plotspec_add_line(spec);
+    }
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+
+    n = spec->n_lines - 1;
+
+    strcpy(spec->lines[n].scale, "NA");
+    title = dist_graph_title(d, NADBL, df1, df2);
+    strcpy(spec->lines[n].title, title);
+    g_free(title);
+
+    if (d == NORMAL_DIST) {
+	strcpy(spec->lines[n].formula, "(1/(sqrt(2*pi))*exp(-(x)**2/2))");
+    } else if (d == T_DIST) {
+	dfmax++;
+	sprintf(spec->lines[n].formula, "Binv(0.5*df%d,0.5)/sqrt(df%d)*(1.0+(x*x)/df%d)"
+		"**(-0.5*(df%d+1.0))", m, m, m, m);
+    } else if (d == CHISQ_DIST) {
+	sprintf(spec->lines[n].formula, "%s(x,df%d)", (bigchi)? "bigchi" : "chi", m);
+    } else if (d == F_DIST) {
+	sprintf(spec->lines[n].formula, "f(x,df%d,df%d)", m, m + 1);
+    }
+
+    redisplay_edited_png(plot);
 }
 
 static void h_test (GtkWidget *w, gpointer data)
@@ -950,13 +1124,15 @@ static void h_test_global (GtkWidget *w, gpointer data)
     h_test(NULL, test[i]);
 }
 
-static void dist_graph (GtkWidget *w, gpointer data)
+static void dist_graph (GtkWidget *w, gpointer p)
 {
-    lookup_t **look = (lookup_t **) data;
+    png_plot *plot;
+    lookup_t **look = (lookup_t **) p;
     int m = 0, n = 0;
     int d, err = 0;
 
     d = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
+    plot = look[0]->p;
 
     switch (d) {
     case NORMAL_DIST:
@@ -979,9 +1155,14 @@ static void dist_graph (GtkWidget *w, gpointer data)
 
     if (err) {
 	errbox(_("Invalid degrees of freedom"));
+	return;
+    }
+
+    if (plot != NULL) {
+	revise_dist_plotspec(plot, d, m, n);
     } else {
 	htest_graph(d, NADBL, m, n);
-    }
+    } 
 }
 
 static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len, 
@@ -1010,7 +1191,8 @@ static void add_lookup_entry (GtkWidget *tbl, gint *tbl_len,
 
     g_signal_connect(G_OBJECT(tempwid), "activate", 
 		     (code == CALC_PVAL)? G_CALLBACK(get_pvalue) : 
-		     (code == CALC_GRAPH)? G_CALLBACK(dist_graph) :
+		     (code == CALC_GRAPH || code == CALC_GRAPH_ADD)? 
+		     G_CALLBACK(dist_graph) :
 		     G_CALLBACK(get_critical),
 		     look);
 }
@@ -1704,7 +1886,7 @@ static void gretl_child_destroy (GtkWidget *w, gpointer data)
     free(gchild);
 }
 
-static GretlChild *gretl_child_new (const gchar *title)
+static GretlChild *gretl_child_new (void)
 {
     GretlChild *gchild;
     GtkWidget *base;
@@ -1713,9 +1895,6 @@ static GretlChild *gretl_child_new (const gchar *title)
     if (gchild == NULL) return NULL;
 
     gchild->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    if (title != NULL) {
-	gtk_window_set_title(GTK_WINDOW(gchild->win), title);
-    }
 
     base = gtk_vbox_new(FALSE, 0);
     gtk_container_add(GTK_CONTAINER(gchild->win), base);
@@ -1747,7 +1926,7 @@ static GretlChild *gretl_child_new (const gchar *title)
 void stats_calculator (gpointer data, guint code, GtkWidget *widget) 
 {
     GtkWidget *tempwid = NULL, *notebook;
-    static GtkWidget *winptr[4];
+    static GtkWidget *winptr[5];
     GtkWidget *thiswin;
     GretlChild *dialog;
     test_t **test = NULL;
@@ -1757,14 +1936,16 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	N_("gretl: statistical tables"),
 	N_("gretl: test calculator"),
 	N_("gretl: distribution graphs"),
+	N_("gretl: add distribution graph"),
     };
     gpointer statp = NULL;
-    gint i;
+    int i;
 
     g_return_if_fail(code == CALC_PVAL || 
 		     code == CALC_DIST || 
 		     code == CALC_TEST ||
-		     code == CALC_GRAPH);
+		     code == CALC_GRAPH ||
+		     code == CALC_GRAPH_ADD);
 
     thiswin = winptr[code];
 
@@ -1792,7 +1973,14 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	return;
     }
 
-    dialog = gretl_child_new(NULL);
+    if (code == CALC_GRAPH_ADD) {
+	thiswin = winptr[CALC_GRAPH];
+	if (thiswin != NULL) {
+	    gtk_widget_destroy(thiswin);
+	}
+    }
+
+    dialog = gretl_child_new();
     winptr[code] = dialog->win;
     dialog->data = &(winptr[code]);
 
@@ -1816,6 +2004,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    if (look[i] == NULL) return;
 	    look[i]->book = notebook;
 	    look[i]->code = code;
+	    look[i]->p = NULL;
 	    make_dist_tab(notebook, i, look);
 	}	
     } else if (code == CALC_DIST) {
@@ -1824,14 +2013,16 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    if (look[i] == NULL) return;
 	    look[i]->book = notebook;
 	    look[i]->code = code;
+	    look[i]->p = NULL;
 	    make_lookup_tab(notebook, i, look);
 	}
-    } else if (code == CALC_GRAPH) {
+    } else {
 	for (i=0; i<NGRAPHS; i++) {
 	    look[i] = mymalloc(sizeof **look);
 	    if (look[i] == NULL) return;
 	    look[i]->book = notebook;
 	    look[i]->code = code;
+	    look[i]->p = (code == CALC_GRAPH_ADD)? data : NULL;
 	    make_lookup_tab(notebook, i, look);
 	}
     }	
@@ -1855,11 +2046,11 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(dialog->action_area), 
 		      tempwid);
-
     g_signal_connect(G_OBJECT (tempwid), "clicked", 
 		     (code == CALC_PVAL)? G_CALLBACK(get_pvalue) :
 		     (code == CALC_DIST)? G_CALLBACK(get_critical) :
-		     (code == CALC_GRAPH)? G_CALLBACK(dist_graph) :
+		     (code == CALC_GRAPH || code == CALC_GRAPH_ADD)? 
+		     G_CALLBACK(dist_graph) :
 		     G_CALLBACK(h_test_global),
 		     statp);
     gtk_widget_show(tempwid);
