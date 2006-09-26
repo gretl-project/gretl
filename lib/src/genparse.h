@@ -341,6 +341,12 @@ int realgen (const char *s, parser *p, double **Z,
 void gen_save_or_print (parser *p, double ***pZ, PRN *prn);
 void gen_cleanup (parser *p);
 
+/* name lookup functions */
+const char *constname (int c);
+const char *dvarname (int t);
+const char *mvarname (int t);
+const char *dumname (int t);
+
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);
 const char *gen_func_name (int i);

@@ -198,10 +198,6 @@ char *gretl_model_get_param_name (const MODEL *pmod,
 				  const DATAINFO *pdinfo,
 				  int i, char *targ);
 
-int gretl_model_get_param_number (const MODEL *pmod, 
-				  const DATAINFO *pdinfo,
-				  const char *pname);
-
 void free_coeff_intervals (CoeffIntervals *cf);
 
 CoeffIntervals *

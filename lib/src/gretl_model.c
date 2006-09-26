@@ -523,22 +523,21 @@ char *gretl_model_get_param_name (const MODEL *pmod, const DATAINFO *pdinfo,
  * of a parameter.
  */
 
-int gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
-				  const char *pname)
+static int 
+gretl_model_get_param_number (const MODEL *pmod, const DATAINFO *pdinfo,
+			      const char *s)
 {
+    char pname[16];
     int idx = -1;
 
     if (pmod == NULL) {
 	return -1;
     }
 
-    idx = positive_int_from_string(pname);
-    if (idx >= 0) {
-	if (idx < pmod->ncoeff) {
-	    return idx;
-	} else {
-	    return -1;
-	}
+    if (!strcmp(s, "0")) {
+	strcpy(pname, "const");
+    } else {
+	strcpy(pname, s);
     }
 
     if (pmod->params != NULL) {
@@ -4166,12 +4165,19 @@ double
 gretl_model_get_data_element (MODEL *pmod, int idx, const char *s,
 			      const DATAINFO *pdinfo, int *err)
 {
+    GretlObjType type;
     double x = NADBL;
     int vi = 0;
 
     if (pmod == NULL) {
-	*err = E_INVARG;
-	return x;
+	pmod = get_genr_model(&type);
+	if (pmod == NULL || type != GRETL_OBJ_EQN) {
+	    pmod = get_last_model(&type);
+	    if (pmod == NULL || type != GRETL_OBJ_EQN) {
+		*err = E_INVARG;
+		return x;
+	    }
+	}
     }
 
     /* FIXME 0-based versus 1-based indexing */

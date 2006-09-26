@@ -1965,7 +1965,7 @@ static NODE *object_var_node (NODE *t, parser *p)
        want from that object */
 
 #if EDEBUG
-    fprintf(stderr, "object_var_node: r->t = %d (%s)\n", r->t, getsymb(r->t, p));
+    fprintf(stderr, "object_var_node: r->t = %d (%s)\n", r->t, getsymb(r->t, NULL));
     fprintf(stderr, "scalar=%d, series=%d, matrix=%d, mslice=%d\n",
 	    scalar, series, matrix, mslice);
 #endif
@@ -2019,17 +2019,9 @@ static NODE *dollar_str_node (NODE *t, parser *p)
     if (ret != NULL && starting(p)) {
 	NODE *l = t->v.b2.l;
 	NODE *r = t->v.b2.r;
-	GretlObjType type;
-	MODEL *pmod = get_genr_model(&type);
 
-	if (pmod == NULL) {
-	    pmod = get_last_model(&type);
-	}
-
-	if (pmod != NULL && type == GRETL_OBJ_EQN) {
-	    ret->v.xval = gretl_model_get_data_element(pmod, l->aux, r->v.str, 
-						       p->dinfo, &p->err);
-	} 
+	ret->v.xval = gretl_model_get_data_element(NULL, l->aux, r->v.str, 
+						   p->dinfo, &p->err);
 
 	if (na(ret->v.xval)) {
 	    p->err = 1;
@@ -2065,7 +2057,7 @@ static void node_type_error (const NODE *n, parser *p, int t, int badt)
     pputs(p->prn, "> ");
     printnode(n, p);
     pprintf(p->prn, "\nwrong type argument for %s: should be %s",
-	    getsymb(n->t, p), typestr(t));
+	    getsymb(n->t, NULL), typestr(t));
     if (badt != 0) {
 	pprintf(p->prn, ", is %s\n", typestr(badt));
     } else {
@@ -2440,7 +2432,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = t;
 	break;
     default: 
-	printf("EVAL: weird node %s\n", getsymb(t->t, p));
+	printf("EVAL: weird node %s\n", getsymb(t->t, NULL));
 	p->err = E_PARSE;
 	break;
     }
@@ -2520,7 +2512,7 @@ void parser_print_input (parser *p)
 
 static void printsymb (int symb, const parser *p)
 {
-    pputs(p->prn, getsymb(symb, p));
+    pputs(p->prn, getsymb(symb, NULL));
 }
 
 static void printnode (const NODE *t, const parser *p)
@@ -2554,12 +2546,14 @@ static void printnode (const NODE *t, const parser *p)
 	pprintf(p->prn, "%s", p->dinfo->varname[t->v.idnum]);
     } else if (t->t == UMAT || t->t == UOBJ) {
 	pprintf(p->prn, "%s", t->v.str);
-    } else if (t->t == MVAR) {
-	pprintf(p->prn, "MVAR"); /* FIXME */
     } else if (t->t == DVAR) {
-	pprintf(p->prn, "DVAR"); /* FIXME */
+	pputs(p->prn, dvarname(t->v.idnum));
+    } else if (t->t == MVAR) {
+	pputs(p->prn, mvarname(t->v.idnum));
     } else if (t->t == CON) {
-	printsymb(t->t, p);
+	pputs(p->prn, constname(t->v.idnum));
+    } else if (t->t == DUM) {
+	pputs(p->prn, dumname(t->v.idnum));
     } else if (binary_op(t->t)) {
 	pputc(p->prn, '(');
 	printnode(t->v.b2.l, p);
@@ -2613,7 +2607,7 @@ static void printnode (const NODE *t, const parser *p)
 	pprintf(p->prn, "%s", t->v.str);
     } else if (t->t == MDEF) {
 	pprintf(p->prn, "{ MDEF }");
-    } else if (t->t == DMSTR) {
+    } else if (t->t == DMSTR || t->t == UFUN) {
 	printnode(t->v.b2.l, p);
 	pputc(p->prn, '(');
 	printnode(t->v.b2.r, p);

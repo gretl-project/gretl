@@ -202,7 +202,7 @@ int const_lookup (const char *s)
     return 0;
 }
 
-static const char *constname (int c)
+const char *constname (int c)
 {
     int i;
 
@@ -302,6 +302,19 @@ static int dummy_lookup (const char *s)
     return 0;
 }
 
+const char *dumname (int t)
+{
+    int i;
+
+    for (i=0; dummies[i].id != 0; i++) {
+	if (t == dummies[i].id) {
+	    return dummies[i].str;
+	}
+    }
+
+    return "unknown";
+}
+
 static int dvar_lookup (const char *s)
 {
     int i;
@@ -313,6 +326,19 @@ static int dvar_lookup (const char *s)
     }
 
     return 0;
+}
+
+const char *dvarname (int t)
+{
+    int i;
+
+    for (i=0; dvars[i].id != 0; i++) {
+	if (t == dvars[i].id) {
+	    return dvars[i].str;
+	}
+    }
+
+    return "unknown";
 }
 
 static int mvar_lookup (const char *s)
@@ -331,6 +357,19 @@ static int mvar_lookup (const char *s)
     }
 
     return 0;
+}
+
+const char *mvarname (int t)
+{
+    int i;
+
+    for (i=0; mvars[i].id != 0; i++) {
+	if (t == mvars[i].id) {
+	    return mvars[i].str;
+	}
+    }
+
+    return "unknown";
 }
 
 static void undefined_symbol_error (const char *s, parser *p)
@@ -840,6 +879,25 @@ const char *getsymb (int t, const parser *p)
     if ((t > OP_MAX && t < FUNC_MAX) ||
 	(t > FUNC_MAX && t < F2_MAX)) {
 	return funname(t);
+    }
+
+    /* yes, well */
+    if (t == OBS) {
+	return "OBS";
+    } else if (t == MSL) {
+	return "MSL";
+    } else if (t == DMSL) {
+	return "DMSL";
+    } else if (t == DMSTR) {
+	return "DMSTR";
+    } else if (t == MSL2) {
+	return "MSL2";
+    } else if (t == MSPEC) {
+	return "MSPEC";
+    } else if (t == SUBSL) {
+	return "SUBSL";
+    } else if (t == MDEF) {
+	return "MDEF";
     } 
 
     if (p != NULL) {
@@ -850,34 +908,18 @@ const char *getsymb (int t, const parser *p)
 	} else if (t == UMAT || t == UOBJ ||
 		   t == LOOPIDX) {
 	    return p->idstr;
-	} else if (t == OBS) {
-	    return "OBS";
 	} else if (t == CON) {
 	    return constname(p->idnum);
-	} else if (t == MSL) {
-	    return "MSL";
-	} else if (t == DMSL) {
-	    return "DMSL";
-	} else if (t == DMSTR) {
-	    return "DMSTR";
-	} else if (t == MSL2) {
-	    return "MSL2";
-	} else if (t == MSPEC) {
-	    return "MSPEC";
-	} else if (t == SUBSL) {
-	    return "SUBSL";
-	} else if (t == MDEF) {
-	    return "MDEF";
-	} else if (t == UFUN) {
-	    return "UFUN";
 	} else if (t == DUM) {
-	    return "DUM";
+	    return dumname(p->idnum);
 	} else if (t == DVAR) {
-	    return "DVAR";
+	    return dvarname(p->idnum);
 	} else if (t == MVAR) {
-	    return "MVAR";
-	}
-    }
+	    return mvarname(p->idnum);
+	} else if (t == UFUN) {
+	    return p->idstr;
+	} 
+    } 
 
     switch (t) {
     case B_ASN:
