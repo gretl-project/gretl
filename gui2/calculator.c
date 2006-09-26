@@ -735,6 +735,7 @@ static void revise_dist_plotspec (png_plot *plot, int d, int df1, int df2)
     n = spec->n_lines - 1;
 
     strcpy(spec->lines[n].scale, "NA");
+    strcpy(spec->lines[n].style, "lines");
     title = dist_graph_title(d, NADBL, df1, df2);
     strcpy(spec->lines[n].title, title);
     g_free(title);
