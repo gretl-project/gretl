@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: GNU gretl-1.5.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-09-04 15:20-0400\n"
-"PO-Revision-Date: 2006-09-15 02:34+0100\n"
+"PO-Revision-Date: 2006-09-26 22:37+0100\n"
 "Last-Translator: Florent Bresson <f_bresson@yahoo.fr>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -355,7 +355,7 @@ msgstr ""
 
 #: lib/src/compare.c:649
 msgid "non-linearity"
-msgstr "(non linéarité)"
+msgstr "non linéarité"
 
 #: lib/src/compare.c:1171
 #: lib/src/compare.c:1306
@@ -3843,7 +3843,6 @@ msgid "S.D. of dependent variable"
 msgstr "Écart-type de la variable dépendante"
 
 #: lib/src/modelprint.c:82
-#, fuzzy
 msgid "Unconditional error variance"
 msgstr "Variance non conditionnelle des erreurs"
 
@@ -5123,7 +5122,7 @@ msgid "Test for null hypothesis of gamma distribution"
 msgstr "Test de l'hypothèse nulle de distribution gamma"
 
 #: lib/src/printout.c:322
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "\n"
 "Frequency distribution for %s, obs %d-%d\n"
@@ -5137,14 +5136,13 @@ msgid "number of bins = %d, mean = %g, sd = %g\n"
 msgstr "nombre de classes = %d, moyenne %g, écart-type = %g\n"
 
 #: lib/src/printout.c:336
-#, fuzzy
 msgid ""
 "\n"
 "       interval          midpt   frequency    rel.     cum.\n"
 "\n"
 msgstr ""
 "\n"
-"       intervalle      pt central   fréquence\n"
+"       intervalle  pt central   fréquence   rel.   cum.\n"
 "\n"
 
 #: lib/src/printout.c:338
@@ -5829,9 +5827,8 @@ msgid "VAR system, maximum lag order %d"
 msgstr "Système VAR, ordre maximal des retards %d"
 
 #: lib/src/var.c:1428
-#, fuzzy
 msgid "lags        loglik    p(LR)       AIC          BIC          HQC"
-msgstr "retards   log-vrais    p(LR)       AIC          BIC          HQC"
+msgstr "retards   log-vrais.    p(LR)       AIC          BIC          HQC"
 
 #: lib/src/var.c:1751
 msgid "Not much point in a zero-order \"VAR\" surely?\n"
@@ -7586,9 +7583,8 @@ msgid "gretl: databases on server"
 msgstr "gretl: bases de données sur le serveur"
 
 #: gui2/datafiles.c:910
-#, fuzzy
 msgid "gretl: function packages on server"
-msgstr "gretl: bases de données sur le serveur"
+msgstr "gretl: package de fonction sur le serveur"
 
 #: gui2/datafiles.c:956
 msgid "Get series listing"
@@ -7824,14 +7820,12 @@ msgid "description:"
 msgstr "description :"
 
 #: gui2/dialogs.c:1148
-#, fuzzy
 msgid "gretl: seed for random numbers"
-msgstr "gretl : 5 nombres"
+msgstr "gretl : germe pour nombre aléatoires"
 
 #: gui2/dialogs.c:1153
-#, fuzzy
 msgid "Seed for generator:"
-msgstr " pour le numérateur"
+msgstr "Germe pour le générateur :"
 
 #: gui2/dialogs.c:1357
 #: gui2/dialogs.c:1552
@@ -8051,9 +8045,8 @@ msgid "Compact weekly data to monthly"
 msgstr "Compacter les données journalières en mensuelles"
 
 #: gui2/dialogs.c:2370
-#, fuzzy
 msgid "gretl: expand data"
-msgstr "gretl : ouverture des données"
+msgstr "gretl : étendre les données"
 
 #: gui2/dialogs.c:2374
 #, c-format
@@ -8195,7 +8188,7 @@ msgstr "Coupe transversale empilée"
 
 #: gui2/dialogs.c:3127
 msgid "Use index variables"
-msgstr "Utiliser les variable d'indexation"
+msgstr "Utiliser les variable d'identification"
 
 #: gui2/dialogs.c:3189
 msgid "Cross-sectional"
@@ -8266,24 +8259,23 @@ msgstr "coupe transversale empilée"
 
 #: gui2/dialogs.c:3502
 msgid "The unit and time index variables must be distinct"
-msgstr "Les variables d'indexation individuelles et temporelles doivent être distinctes"
+msgstr "Les variables d'identification individuelles et temporelles doivent être distinctes"
 
 #: gui2/dialogs.c:3524
 msgid "The selected index variables do not represent a panel structure"
-msgstr "Les variables d'indexations sélectionnées ne déterminent pas une structure de panel"
+msgstr "Les variables d' sélectionnées ne déterminent pas une structure de panel"
 
 #: gui2/dialogs.c:3644
-#, fuzzy
 msgid "Unit or group index variable:"
-msgstr "Erreur de génération de la variable index"
+msgstr "Variable d'indentification individuelle ou de groupe :"
 
 #: gui2/dialogs.c:3645
 msgid "Time index variable:"
-msgstr "Variable d'indexation temporelle"
+msgstr "Variable d'identification temporelle"
 
 #: gui2/dialogs.c:3770
 msgid "The data set contains no suitable index variables"
-msgstr "La base de donnée ne contient pas de variable d'indexation"
+msgstr "La base de donnée ne contient pas de variable d'identifications"
 
 #: gui2/dialogs.c:3775
 msgid "Data structure wizard"
@@ -8558,18 +8550,16 @@ msgid "Hodrick-Prescott filter"
 msgstr "filtre de Hodrick-Prescott"
 
 #: gui2/filters.c:71
-#, fuzzy
 msgid "Baxter-King Band-pass filter"
-msgstr "Bande Baxter-King = %d-%d périodes\n"
+msgstr "Filtre Baxter-King Band-pass"
 
 #: gui2/filters.c:262
 msgid "Variable name is missing"
 msgstr "Nom de la variable manquant"
 
 #: gui2/filters.c:268
-#, fuzzy
 msgid "Conflicting variable names"
-msgstr "recherche des noms de variables...\n"
+msgstr "Nom de variable conflictuel"
 
 #: gui2/filters.c:337
 msgid "Save smoothed series as"
@@ -8600,9 +8590,8 @@ msgid "the mean of the first n observations"
 msgstr "la moyenne des n premières observations"
 
 #: gui2/filters.c:447
-#, fuzzy
 msgid "gretl: time-series filter"
-msgstr "Pour les données de séries temporelles"
+msgstr "gretl :filtre de séries temporelles"
 
 #: gui2/filters.c:464
 msgid "Number of observations in average:"
@@ -8711,9 +8700,9 @@ msgid "selection (or new variable)"
 msgstr "sélection (ou nouvelle variable)"
 
 #: gui2/fncall.c:598
-#, fuzzy, c-format
+#, c-format
 msgid "Argument %d (%s) is missing"
-msgstr "Définir les valeurs %d comme \"manquantes\""
+msgstr "Argument %d (%s) manquant"
 
 #: gui2/fncall.c:614
 msgid "You should assign all return values, or none"
@@ -8733,9 +8722,8 @@ msgstr "Le package de function est cassé"
 
 #: gui2/fncall.c:786
 #: gui2/fncall.c:804
-#, fuzzy
 msgid "Couldn't get function package information"
-msgstr "gretl : fichiers de fonction"
+msgstr "Ne trouve pas d'information sur le package de fonction"
 
 #: gui2/fnsave.c:216
 msgid "Some required information is missing"
@@ -9413,9 +9401,8 @@ msgid "/Tools/_Test statistic calculator"
 msgstr "/Outils/Calcul de _test statistique"
 
 #: gui2/gretl.c:331
-#, fuzzy
 msgid "/Tools/_Seed for random numbers"
-msgstr "/Outils/_Trier les variables"
+msgstr "/Outils/_Germe pour nombre aléatoire"
 
 #: gui2/gretl.c:334
 msgid "/Tools/_Command log"
@@ -10079,15 +10066,15 @@ msgstr "Ne peut ouvrir le clipboard"
 
 #: gui2/gretlwin32.c:671
 #: plugin/mailer.c:590
-#, fuzzy, c-format
+#, c-format
 msgid "Please find the gretl data file %s attached."
-msgstr "SVP veuillez fournir le nom du jeu de données courant"
+msgstr "SVP cherchez le fichier de donnée gretl %s attaché."
 
 #: gui2/gretlwin32.c:675
 #: plugin/mailer.c:593
-#, fuzzy, c-format
+#, c-format
 msgid "Please find the gretl script %s attached."
-msgstr "Please find the gretl script %s attached."
+msgstr "SVP cherchez le script gretl %s attaché."
 
 #: gui2/gretlwin32.c:809
 msgid "To paste, use Edit/Paste special.../Enhanced metafile"
@@ -11149,9 +11136,8 @@ msgstr "test vers le bas à partir de l'ordre maximum de délai"
 
 #: gui2/library.c:819
 #: gui2/library.c:825
-#, fuzzy
 msgid "use level of variable"
-msgstr "choissisez une variable"
+msgstr "choissisez la valeur de la variable"
 
 #: gui2/library.c:820
 #: gui2/library.c:826
@@ -12276,9 +12262,8 @@ msgid "Test down from maximum lag order"
 msgstr "Test vers le bas à partir de l'ordre maximum de délai"
 
 #: gui2/selector.c:2707
-#, fuzzy
 msgid "Skip initial DF tests"
-msgstr "Skip initial DF tests"
+msgstr "Passer les tests DF initiaux"
 
 #: gui2/selector.c:2711
 msgid "Iterated weighted least squares"
@@ -12370,9 +12355,8 @@ msgid "Independent variables"
 msgstr "Variables indépendantes"
 
 #: gui2/selector.c:3033
-#, fuzzy
 msgid "Helper functions"
-msgstr "gretl : fichiers de fonction"
+msgstr "Helper functions"
 
 #: gui2/selector.c:3230
 msgid "Select variables for logging"
@@ -12427,9 +12411,8 @@ msgid "Select variables to copy"
 msgstr "Sélectionner les variables pour copier"
 
 #: gui2/selector.c:3270
-#, fuzzy
 msgid "Define named list"
-msgstr "Define named list"
+msgstr "Definir la liste"
 
 #: gui2/selector.c:3517
 msgid "Available vars"
@@ -13367,9 +13350,8 @@ msgid "row:"
 msgstr "ligne :"
 
 #: plugin/import_common.c:638
-#, fuzzy
 msgid "Produce debugging output"
-msgstr "Sortie réduite"
+msgstr "Sortie de correction de bugs"
 
 #: plugin/johansen.c:232
 msgid "renormalized beta"
