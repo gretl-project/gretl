@@ -26,7 +26,6 @@
 
 #include "f2c.h"
 #include "clapack_double.h"
-#include "../../cephes/libprob.h"
 
 static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 

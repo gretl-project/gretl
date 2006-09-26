@@ -881,7 +881,6 @@ static int exec_line (char *line, PRN *prn)
     case COINT2:
     case CORR: 
     case CRITERIA: 
-    case CRITICAL: 
     case DATA:
     case DIFF: 
     case DISCRETE:

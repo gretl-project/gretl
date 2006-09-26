@@ -20,7 +20,6 @@
 /* syntax tree evaluator for 'genr' and related commands */
 
 #include "genparse.h"
-#include "../../cephes/libprob.h"
 
 #include <errno.h>
 
@@ -1158,7 +1157,7 @@ static double real_apply_func (double x, int f, parser *p)
     case DNORM:
 	return normal_pdf(x);
     case QNORM:
-	return ndtri(x);
+	return normal_cdf_inverse(x);
     case GAMMA:
 	return cephes_gamma(x);
     case LNGAMMA:
@@ -2021,7 +2020,11 @@ static NODE *dollar_str_node (NODE *t, parser *p)
 	NODE *l = t->v.b2.l;
 	NODE *r = t->v.b2.r;
 	GretlObjType type;
-	MODEL *pmod = get_last_model(&type);
+	MODEL *pmod = get_genr_model(&type);
+
+	if (pmod == NULL) {
+	    pmod = get_last_model(&type);
+	}
 
 	if (pmod != NULL && type == GRETL_OBJ_EQN) {
 	    ret->v.xval = gretl_model_get_data_element(pmod, l->aux, r->v.str, 
@@ -2029,8 +2032,9 @@ static NODE *dollar_str_node (NODE *t, parser *p)
 	} 
 
 	if (na(ret->v.xval)) {
-	    p->err = E_INVARG;
-	    pprintf(p->prn, _("Invalid argument for %s"), l->v.str);
+	    p->err = 1;
+	    pprintf(p->prn, _("'%s': invalid argument for %s()\n"), 
+		    r->v.str, l->v.str);
 	}
     }
 
@@ -2548,9 +2552,13 @@ static void printnode (const NODE *t, const parser *p)
 	gretl_matrix_print_to_prn(t->v.m, NULL, p->prn);
     } else if (t->t == UVAR) {
 	pprintf(p->prn, "%s", p->dinfo->varname[t->v.idnum]);
-    } else if (t->t == UMAT || t->t == MVAR || t->t == UOBJ) {
+    } else if (t->t == UMAT || t->t == UOBJ) {
 	pprintf(p->prn, "%s", t->v.str);
-    } else if (t->t == CON || t->t == DVAR) {
+    } else if (t->t == MVAR) {
+	pprintf(p->prn, "MVAR"); /* FIXME */
+    } else if (t->t == DVAR) {
+	pprintf(p->prn, "DVAR"); /* FIXME */
+    } else if (t->t == CON) {
 	printsymb(t->t, p);
     } else if (binary_op(t->t)) {
 	pputc(p->prn, '(');

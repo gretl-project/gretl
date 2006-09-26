@@ -266,7 +266,7 @@ int model_var_count (void)
 
 const char *model_var_name (int i)
 {
-    return mvars[i].str + 1;
+    return mvars[i].str;
 }
 
 int data_var_count (void)
@@ -284,7 +284,7 @@ int data_var_count (void)
 
 const char *data_var_name (int i)
 {
-    return dvars[i].str + 1;
+    return dvars[i].str;
 }
 
 /* end external stuff */
@@ -526,7 +526,7 @@ static void look_up_word (const char *s, parser *p)
 
 #define could_be_matrix(t) (model_data_matrix(t) || t == M_UHAT)
 
-static void word_check_next_char (parser *p)
+static void word_check_next_char (const char *s, parser *p)
 {
     if (p->ch == '(') {
 	/* series (lag) or function */
@@ -538,6 +538,7 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == MVAR && model_data_matrix(p->idnum)) {
 	    /* old-style "$coeff(x1)" etc. */
 	    p->sym = DMSTR;
+	    p->idstr = gretl_strdup(s);
 	} else if (!func_symb(p->sym) && !func2_symb(p->sym) &&
 		   p->sym != UFUN) {
 	    p->err = 1;
@@ -549,6 +550,7 @@ static void word_check_next_char (parser *p)
 	} else if (p->sym == MVAR && could_be_matrix(p->idnum)) {
 	    /* slice of $ matrix */
 	    p->sym = DMSL;
+	    p->idstr = gretl_strdup(s);
 	} else if (p->sym == UVAR && var_is_series(p->dinfo, p->idnum)) {
 	    /* observation from series */
 	    p->sym = OBS;
@@ -608,7 +610,7 @@ static void getword (parser *p)
     }
 
     if (!p->err) {
-	word_check_next_char(p);
+	word_check_next_char(word, p);
     }
 
 #if LDEBUG
@@ -825,7 +827,7 @@ void lex (parser *p)
 		return;
 	    } else {
 		parser_print_input(p);
-		pprintf(p->prn, "Invalid character '%c'\n", p->ch);
+		pprintf(p->prn, _("Invalid character '%c'\n"), p->ch);
 		p->err = 1;
 		return;
 	    }

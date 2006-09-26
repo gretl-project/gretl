@@ -7,7 +7,7 @@
 
 void output_emacs_block (void)
 {
-    const char *word;
+    const char *s;
     char **strs;
     int nopts;
     int i, n;
@@ -69,7 +69,12 @@ void output_emacs_block (void)
     /* model variables */
     n = model_var_count();
     for (i=0; i<n; i++) {
-	printf("\"%s\"", model_var_name(i));
+	s = model_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;
+	printf("\"%s\"", s + 1);
 	if ((i+1) % 8 == 0) {
 	    fputs("\n   ", stdout);
 	} else {
@@ -79,7 +84,12 @@ void output_emacs_block (void)
     /* dataset variables */
     n = data_var_count();
     for (i=0; i<n; i++) {
-	printf("\"%s\"", data_var_name(i));
+	s = data_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;
+	printf("\"%s\"", s);
 	if ((i+1) % 8 == 0) {
 	    fputs("\n   ", stdout);
 	} else {
@@ -91,7 +101,7 @@ void output_emacs_block (void)
 
 void output_lang_file (void)
 {
-    const char *word;
+    const char *s;
     char **strs;
     int nopts;
     int i, n;
@@ -165,11 +175,21 @@ void output_lang_file (void)
     puts(" beginning-regex=\"\\$\">");
     n = model_var_count();
     for (i=0; i<n; i++) {
-	printf(" <keyword>%s</keyword>\n", model_var_name(i));
+	s = model_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;
+	printf(" <keyword>%s</keyword>\n", s);
     }
     n = data_var_count();
     for (i=0; i<n; i++) {
-	printf(" <keyword>%s</keyword>\n", data_var_name(i));
+	s = data_var_name(i);
+	if (s == NULL) {
+	    continue;
+	}
+	if (*s == '$') s++;	
+	printf(" <keyword>%s</keyword>\n", s);
     }	
     puts("</keyword-list>\n");
 

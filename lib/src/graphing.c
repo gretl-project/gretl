@@ -22,7 +22,6 @@
 #include "libgretl.h"
 #include "var.h"
 #include "libset.h"
-#include "../../cephes/libprob.h"
 
 #include <unistd.h>
 
@@ -2739,9 +2738,14 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     write_plot_type_string(spec->code, fp);
 
-    for (i=0; i<spec->n_literal; i++) {
-	if (spec->literal[i] != NULL && *spec->literal[i] != '\0') {
-	    fprintf(fp, "%s\n", spec->literal[i]);
+    if (spec->n_literal > 0) {
+	fprintf(fp, "# literal lines = %d\n", spec->n_literal);
+	for (i=0; i<spec->n_literal; i++) {
+	    if (spec->literal[i] != NULL && *spec->literal[i] != '\0') {
+		fprintf(fp, "%s\n", spec->literal[i]);
+	    } else {
+		fputs("# empty line!\n", fp);
+	    }
 	}
     }
 

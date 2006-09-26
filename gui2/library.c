@@ -3074,7 +3074,11 @@ static int finish_genr (MODEL *pmod, dialog_t *dlg)
 
     if (err) {
 	errbox(gretl_print_get_buffer(prn));
-	delete_last_command();
+	if (pmod != NULL) {
+	    model_command_delete(pmod->ID);
+	} else {
+	    delete_last_command();
+	}
     } else {
 	if (dlg != NULL) {
 	    close_dialog(dlg);
@@ -6104,7 +6108,6 @@ int gui_exec_line (char *line, PRN *prn, int exec_code, const char *myname)
     case COINT: 
     case CORR: 
     case CRITERIA: 
-    case CRITICAL: 
     case DATA:
     case DIFF: 
     case DISCRETE:

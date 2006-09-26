@@ -799,6 +799,15 @@ void unset_genr_model (void)
     genr_model.ptr = NULL;
 }
 
+void *get_genr_model (GretlObjType *type)
+{
+    if (type != NULL) {
+	*type = genr_model.type;
+    }
+
+    return genr_model.ptr;
+}
+
 static stacker *find_smatch (const char *oname)
 {
     stacker *smatch = NULL;

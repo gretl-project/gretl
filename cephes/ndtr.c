@@ -218,15 +218,15 @@ double ndtr (double a)
     x = a * SQRTH;
     z = fabs(x);
 
-    /* if( z < SQRTH ) */
+    /* if (z < SQRTH) */
     if (z < 1.0) {
 	y = 0.5 + 0.5 * cephes_erf(x);
 
     } else {
 #ifdef USE_EXPXSQ
-	/* See below for erfce. */
+	/* See below for erfce */
 	y = 0.5 * erfce(z);
-	/* Multiply by exp(-x^2 / 2)  */
+	/* Multiply by exp(-x^2 / 2) */
 	z = expx2(a, -1);
 	y = y * sqrt(z);
 #else

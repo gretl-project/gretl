@@ -93,8 +93,10 @@ int add_command_to_stack (const char *str)
 
 void delete_last_command (void)
 {
-    free(cmd_stack[n_cmds - 1]);
-    n_cmds--;
+    if (n_cmds > 0) {
+	free(cmd_stack[n_cmds - 1]);
+	n_cmds--;
+    }
 }
 
 static model_stack *add_model_stack (int model_id)
@@ -120,6 +122,24 @@ static model_stack *add_model_stack (int model_id)
 #endif
 
     return &mstacks[nm];
+}
+
+static int mstack_delete_last_command (model_stack *mstack)
+{
+    int nc = mstack->n;
+    char **tmp;
+
+    free(mstack->cmds[nc-1]);
+    mstack->n -= 1;
+
+    tmp = realloc(mstack->cmds, (nc - 1) * sizeof *tmp);
+    if (tmp == NULL) {
+	return 1;
+    }
+
+    mstack->cmds = tmp;
+
+    return 0;
 }
 
 static int add_command_to_mstack (model_stack *mstack, const char *str)
@@ -204,6 +224,16 @@ int model_command_init (int model_ID)
     gretl_print_destroy(echo);
 
     return err;
+}
+
+void model_command_delete (int model_ID) 
+{
+    model_stack *mstack;
+
+    mstack = mstack_from_model_id(model_ID);
+    if (mstack != NULL && mstack->n > 0) {
+	mstack_delete_last_command(mstack);
+    }
 }
 
 static void dump_model_cmds (const model_stack *mstack, FILE *fp)

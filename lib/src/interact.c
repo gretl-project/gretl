@@ -212,7 +212,6 @@ static int catch_command_alias (char *line, CMD *cmd)
                        c == BREAK || \
                        c == CHOW || \
 	               c == CRITERIA || \
-	               c == CRITICAL || \
 	               c == CUSUM || \
                        c == DATA || \
                        c == END || \
@@ -3055,10 +3054,6 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) { 
 	    pputs(prn, _("Error in computing model selection criteria.\n"));
 	}
-	break;
-
-    case CRITICAL:
-	err = print_critical(line, prn);
 	break;
 
     case DATA:

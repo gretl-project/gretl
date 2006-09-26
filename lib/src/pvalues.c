@@ -318,6 +318,27 @@ double t_pvalue_2 (double x, int df)
 }
 
 /**
+ * t_critval:
+ * @a: right-tail probability.
+ * @df: degrees of freedom.
+ *
+ * Returns: the argument x such that the integral from x to 
+ * infinity of the t(@df) density is equal to the given
+ * probability @a, or #NADBL on failure.
+ */
+
+double t_critval (double a, int df)
+{
+    double x = stdtri(df, 1.0 - a);
+
+    if (get_cephes_errno()) {
+	x = NADBL;
+    } 
+
+    return x;
+}
+
+/**
  * chisq_cdf:
  * @x: the cutoff point in the distribution.
  * @df: degrees of freedom.
@@ -367,13 +388,12 @@ double chisq_cdf_comp (double x, int df)
 
 /**
  * chisq_critval:
- * @a: tail probability.
+ * @a: right-tail probability.
  * @df: degrees of freedom.
  * 
  * Returns: the Chi-square argument x such that the integral
  * from x to infinity of the Chi-square density is equal
- * to the given cumulative probability @a, or #NADBL
- * on failure.
+ * to the given probability @a, or #NADBL on failure.
  */
 
 double chisq_critval (double a, int df)
@@ -441,14 +461,13 @@ double f_cdf_comp (double x, int dfn, int dfd)
 
 /**
  * f_critval:
- * @a: tail probability.
+ * @a: right-tail probability.
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
  * 
  * Returns: the F argument x such that the integral
  * from x to infinity of the F density is equal
- * to the given cumulative probability @a, or #NADBL
- * on failure.
+ * to the given probability @a, or #NADBL on failure.
  */
 
 double f_critval (double a, int dfn, int dfd)
@@ -470,12 +489,38 @@ double f_critval (double a, int dfn, int dfd)
  * @x: double-precision value.
  * 
  * Returns: the value of the standard normal CDF evaluated
- * at @x.
+ * at @x, or #NADBL on failure.
  */
 
 double normal_cdf (double x)
 {
-    return ndtr(x);
+    double y = ndtr(x);
+
+    if (get_cephes_errno()) {
+	y = NADBL;
+    }
+
+    return y;
+}
+
+/**
+ * normal_cdf_inverse:
+ * @x: double-precision value.
+ * 
+ * Returns the argument, y, for which the area under the
+ * Gaussian probability density function (integrated from
+ * minus infinity to y) is equal to x, or #NADBL on failure.
+ */
+
+double normal_cdf_inverse (double x)
+{
+    double y = ndtri(x);
+
+    if (get_cephes_errno()) {
+	y = NADBL;
+    }
+
+    return y;
 }
 
 /**
@@ -489,6 +534,26 @@ double normal_cdf (double x)
 double normal_pdf (double x)
 {
     return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * x * x);
+}
+
+/**
+ * normal_critval:
+ * @a: right-tail probability.
+ *
+ * Returns: the argument z such that the integral from z to 
+ * infinity of the standard normal density is equal
+ * to the given probability @a, or #NADBL on failure.
+ */
+
+double normal_critval (double a)
+{
+    double z = ndtri(1.0 - a);
+
+    if (get_cephes_errno()) {
+	z = NADBL;
+    } 
+
+    return z;
 }
 
 /**
@@ -1024,126 +1089,6 @@ static double getx (void)
 static void getdf (const char *str)
 {
     printf(_("\nEnter d.f.%s(value <= 0 will exit menu): "), str);
-}
-
-static int 
-parse_critical_input (const char *s, int *df, int *n)
-{
-    int ret = -1;
-
-    if (sscanf(s, "F %d %d", df, n) == 2) {
-	ret ='F';
-    } else if (sscanf(s, "X %d", df)) {
-	ret = 'X';
-    } else if (sscanf(s, "t %d", df)) {
-	ret = 't';
-    } else if (sscanf(s, "d %d", n)) {
-	ret = 'd';
-    } else if (*s == 'N' || *s == 'z') {
-	ret = 'z';
-    } 
-
-    return ret;
-}
-
-/**
- * print_critical:
- * @line: the command line, which should be of one of the following forms:
- * critical z (Normal); or
- * critical N (Normal); or
- * critical t df (student's t); or
- * critical X df (chi-square); or
- * critical F dfn dfd (F distribution); or
- * critical d n (Durbin-Watson, sample size n).
- * @prn: gretl printing struct.
- *
- * Prints critical values for the specified distribution at the
- * commonly used significance levels.
- *
- * Returns: 0 if successful, 1 on error.
- */
-
-int print_critical (const char *line, PRN *prn)
-{
-    void *handle = NULL;
-    void *funp = NULL;
-    void (*norm_table)(PRN *, int) = NULL;
-    void (*dw)(int, PRN *) = NULL;
-    void (*tcrit)(int, PRN *, int) = NULL;
-    void (*chicrit)(int, PRN *, int) = NULL;
-    int st, n = -1, df = -1;
-    int err = 0;
-
-    st = parse_critical_input(line + 9, &df, &n);
-
-    if (st < 0) {
-	pputs(prn, _("Invalid input\n"));
-	err = 1;
-    } else if ((st == 't' || st == 'X' || st == 'F') && df <= 0) {
-	pputs(prn, _("Invalid degrees of freedom\n"));
-    } else if (st == 'F' && n <= 0) {
-	pputs(prn, _("Invalid degrees of freedom\n"));
-	err = 1;
-    } else if (st == 'd' && n <= 0) {
-	pputs(prn, _("Invalid sample size\n"));
-	err = 1;
-    }    
-
-    if (err) return 1;
-
-    switch (st) {
-    case 'z': /* normal */
-	funp = norm_table = get_plugin_function("norm_lookup", &handle);
-	break;
-    case 't': /* t */
-	funp = tcrit = get_plugin_function("t_lookup", &handle);
-	break;
-    case 'X': /* chi-square */
-	funp = chicrit = get_plugin_function("chisq_lookup", &handle);
-	break;
-    case 'F': /* F */
-	break;
-    case 'd': /* DW */
-	funp = dw = get_plugin_function("dw_lookup", &handle);
-	break;
-    default:
-	break;
-    }
-
-    if (st != 'F' && funp == NULL)  {
-	pputs(prn, _("Couldn't load plugin function\n"));
-	return 1;
-    }
-    
-    switch (st) {
-    case 'z':
-	(*norm_table)(prn, 0);
-	break;
-    case 't':
-	(*tcrit)(df, prn, 0);
-	break;
-    case 'X':
-	(*chicrit)(df, prn, 0);
-	break;	
-    case 'F':
-	pprintf(prn, _("Approximate critical values of F(%d, %d)\n\n"),
-		df, n);
-	pprintf(prn, _(" 10%% in right tail %.2f\n"), f_critval(.10, df, n));
-	pprintf(prn, "  5%%               %.2f\n", f_critval(.05, df, n));	
-	pprintf(prn, "  1%%               %.2f\n", f_critval(.01, df, n));
-	break;
-    case 'd':
-	(*dw)(n, prn);
-	break;
-    default:
-	break;
-    }
-
-    if (handle != NULL) {
-	close_plugin(handle);
-    }
-
-    return 0;
 }
 
 static int parse_genr_critical_input (const char *str, 

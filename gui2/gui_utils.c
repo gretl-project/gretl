@@ -951,8 +951,10 @@ void register_data (char *fname, const char *user_fname,
 	check_and_record_command();
     } 
 
-    /* focus the data window */
-    gtk_widget_grab_focus(mdata->listbox);
+    if (fname != NULL) {
+	/* focus the data window */
+	gtk_widget_grab_focus(mdata->listbox);
+    }
 
     /* invalidate "remove extra obs" menu item */
     drop_obs_state(FALSE);

@@ -352,7 +352,6 @@ int ok_in_loop (int c)
 	c == COINT2 || 
 	c == CORR ||
 	c == CRITERIA || 
-	c == CRITICAL || 
 	c == DIFF || 
 	c == HURST ||	
 	c == KPSS ||
@@ -2632,7 +2631,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case COINT: 
 	    case CORR:
 	    case CRITERIA: 
-	    case CRITICAL: 
 	    case DIFF: 
 	    case HURST:	
 	    case KPSS:

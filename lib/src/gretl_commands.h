@@ -40,7 +40,6 @@ typedef enum {
     CORR,     
     CORRGM,   
     CRITERIA,
-    CRITICAL,
     CUSUM,
     DATA,
     DELEET,
@@ -165,7 +164,6 @@ typedef enum {
                         c == CORR || \
                         c == CORRGM || \
                         c == CRITERIA || \
-                        c == CRITICAL || \
                         c == CUSUM || \
                         c == FCAST || \
                         c == FCASTERR || \

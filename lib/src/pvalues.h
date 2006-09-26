@@ -38,6 +38,8 @@ double t_cdf_comp (double x, int df);
 
 double t_pvalue_2 (double x, int df);
 
+double t_critval (double a, int df);
+
 double chisq_cdf (double x, int df);
 
 double chisq_cdf_comp (double x, int df);
@@ -52,7 +54,11 @@ double f_critval (double a, int dfn, int dfd);
 
 double normal_cdf (double x);
 
+double normal_cdf_inverse (double x);
+
 double normal_pdf (double x);
+
+double normal_critval (double a);
 
 double log_normal_pdf (double x);
 
@@ -62,13 +68,15 @@ double tcrit95 (int df);
 
 double rhocrit95 (int n);
 
+double cephes_gamma (double x);
+
+double cephes_lgamma (double x); 
+
 double batch_pvalue (const char *str, 
 		     const double **Z, const DATAINFO *pdinfo, 
                      PRN *prn, gretlopt opt);
 
 void interact_pvalue (void);
-
-int print_critical (const char *line, PRN *prn);
 
 double genr_get_critical (const char *line, const double **Z, 
 			  const DATAINFO *pdinfo);

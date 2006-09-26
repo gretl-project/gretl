@@ -1150,45 +1150,6 @@
 
   </command>
 
-  <command name="critical" section="Utilities" 
-    label="Critical values" context="cli">
-
-    <usage>
-      <arguments>
-        <argument>dist</argument>
-        <argument>param1</argument>
-	<argument optional="true">param2</argument>
-      </arguments>
-      <examples>
-        <example>critical t 20</example>
-        <example>critical X 5</example>
-        <example>critical F 3 37</example>
-	<example>critical d 50</example>
-      </examples>
-    </usage>
-
-    <description>
-      <para>If <repl>dist</repl> is <lit>t</lit>, <lit>X</lit> or
-	<lit>F</lit>, prints out the critical values for the student's
-	<mathvar>t</mathvar>, chi-square or <mathvar>F</mathvar>
-	distribution respectively, for the common significance levels
-	and using the specified degrees of freedom, given as
-	<repl>param1</repl> for t and chi-square, or
-	<repl>param1</repl> and <repl>param2</repl> for
-	<mathvar>F</mathvar>. If <repl>dist</repl> is <lit>d</lit>,
-	prints the upper and lower values of the Durbin&ndash;Watson
-	statistic at 5 percent significance, for the given number of
-	observations, <repl>param1</repl>, and for the range of 1 to 5
-	explanatory variables.
-      </para>
-    </description>
-
-    <gui-access>
-      <menu-path>/Tools/Statistical tables</menu-path>
-    </gui-access>
-
-  </command>
-
   <command name="cusum" section="Tests" label="CUSUM test">
 
     <description>

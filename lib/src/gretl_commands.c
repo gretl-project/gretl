@@ -50,7 +50,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { CORR,     "corr" },     
     { CORRGM,   "corrgm" },   
     { CRITERIA, "criteria" },
-    { CRITICAL, "critical" },
     { CUSUM,    "cusum" },
     { DATA,     "data" },
     { DELEET,   "delete" },

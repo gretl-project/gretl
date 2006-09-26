@@ -586,6 +586,18 @@ void add_graph_to_session (gpointer data, guint type, GtkWidget *w)
     char grname[MAXSAVENAME];
     char grpath[MAXLEN];
     int boxplot_count;
+
+    if (Z == NULL) {
+	/* we may be called via the "stats calculator" when
+	   there's no dataset yet */
+	int err = open_nulldata(&Z, datainfo, DATA_NONE, 10, NULL);
+
+	if (err) {
+	    gui_errmsg(err);
+	    return;
+	}
+	register_data(NULL, NULL, 0);
+    }
     
     errno = 0;
 
