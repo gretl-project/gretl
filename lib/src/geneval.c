@@ -1784,6 +1784,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     int i, m = r->v.bn.n_nodes;
     int rtype;
 
+    fn_args_init(&args);
+
     /* find the function */
     uf = get_user_function_by_name(l->v.str);
     if (uf == NULL) {
@@ -1807,7 +1809,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	return NULL;
     }
 
-    /* evaluate the function arguments */
+    /* evaluate the function arguments, if need be */
     for (i=0; i<m && !p->err; i++) {
 	n = r->v.bn.n[i];
 	if (!ok_ufunc_sym(n->t)) {
@@ -1845,6 +1847,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
 	p->err = function_call_direct(uf, &args, p->Z, p->dinfo, 
 				      &xret, &Xret, &Mret);
+	/* construct a node holding the result */
     }
 #endif
 

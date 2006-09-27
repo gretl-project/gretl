@@ -1386,9 +1386,32 @@ int get_t_from_obs_string (const char *s, const double **Z,
     return t;
 }
 
+
+void fn_args_init (fnargs *args)
+{
+    args->types = NULL;
+    args->nx = 0;
+    args->nX = 0;
+    args->nM = 0;
+    args->nl = 0;
+    args->x = NULL;
+    args->X = NULL;
+    args->M = NULL;
+    args->lists = NULL;
+}
+
 int push_fn_arg (fnargs *args, int type, void *p)
 {
+    char *types;
     int n, err = 0;
+
+    n = args->nx + args->nX + args->nM + args->nl + 1;
+    types = realloc(args->types, n * sizeof *types);
+    if (types == NULL) {
+	return E_ALLOC;
+    }
+
+    types[n-1] = type;
 
     if (type == ARG_SCALAR) {
 	double *x;
@@ -1427,21 +1450,16 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	    args->nM = n;
 	}
     } else if (type == ARG_LIST) {
-	int *l, **lists;
+	char **lists;
 
-	l = get_list_by_name((const char *) p);
-	if (l == NULL) {
-	    err = E_UNKVAR;
+	n = args->nl + 1;
+	lists = realloc(args->lists, n * sizeof *lists);
+	if (lists == NULL) {
+	    err = E_ALLOC;
 	} else {
-	    n = args->nl + 1;
-	    lists = realloc(args->lists, n * sizeof *lists);
-	    if (lists == NULL) {
-		err = E_ALLOC;
-	    } else {
-		lists[n-1] = l;
-		args->lists = lists;
-		args->nl = n;
-	    }
+	    lists[n-1] = (char *) p;
+	    args->lists = lists;
+	    args->nl = n;
 	}
     } else {
 	err = E_TYPES;

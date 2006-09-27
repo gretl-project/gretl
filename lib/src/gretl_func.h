@@ -50,7 +50,7 @@ struct fnargs_ {
     double *x;
     double **X;
     gretl_matrix **M;
-    int **lists;
+    char **lists;
 };
 
 int n_user_functions (void);
