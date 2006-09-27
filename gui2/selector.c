@@ -1900,7 +1900,7 @@ static char *extra_string (int ci)
     case GR_3D:
 	return N_("Y-axis variable");
     case SAVE_FUNCTIONS:
-	return N_("Public interfaces");
+	return N_("Helper functions");
     default:
 	return NULL;
     }
@@ -3030,7 +3030,7 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     } else if (sr->code == SCATTERS) {
 	multiplot_label = tmp = gtk_label_new(_("X-axis variables"));
     } else if (sr->code == SAVE_FUNCTIONS) {
-	tmp = gtk_label_new(_("Helper functions"));
+	tmp = gtk_label_new(_("Public Interfaces"));
     }
 
     if (tmp != NULL) {
