@@ -353,6 +353,54 @@ enum {
     RIGHT_OPT
 };
 
+#if TRYIT
+
+/* gather an unknown number of comma-separated arguments
+   for a user-defined function */
+
+static void get_ufunc_args (NODE *t, parser *p)
+{
+    NODE *n;
+    char cexp = 0;
+
+#if SDEBUG
+    fprintf(stderr, "get_ufunc_args, p->sym = %d\n", p->sym);
+#endif    
+
+    if (p->sym == LPR) {
+	lex(p);
+	while (p->ch != 0 && !p->err) {
+	    n = expr(p);
+	    if (p->err) {
+		break;
+	    } else {
+		p->err = push_bn_node(t, n);
+	    }
+	    if (p->sym == COM) {
+		lex(p);
+	    } else if (p->sym == RPR) {
+		break;
+	    }
+	}
+    } else {
+	cexp = '(';
+    }
+
+    if (cexp == 0) {
+	if (p->sym == RPR) {
+	    lex(p);
+	} else {
+	    unmatched_symbol_error('(', p);
+	}
+    }
+	    
+    if (cexp && p->err == 0) {
+	expected_symbol_error(cexp, p);
+    }
+}
+
+#endif	
+
 static void get_matrix_def (NODE *t, parser *p)
 {
     NODE *n;
@@ -599,7 +647,14 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newstr(p->idstr, 0, STR_STEAL);
 	    lex(p);
+#if TRYIT
+	    t->v.b2.r = newbn(UFARGS);
+	    if (t != NULL) {
+		get_ufunc_args(t->v.b2.r, p);
+	    }
+#else
 	    t->v.b2.r = get_string_arg(p);
+#endif
 	}
     } else {
 	t = base(p, NULL);

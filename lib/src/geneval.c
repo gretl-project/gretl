@@ -30,7 +30,7 @@
 #endif
 
 static void parser_init (parser *p, const char *str, 
-			 double **Z, DATAINFO *dinfo,
+			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags);
 static void printnode (const NODE *t, const parser *p);
 static NODE *eval (NODE *t, parser *p);
@@ -416,15 +416,15 @@ static NODE *eval_pdist (const char *s, int f, parser *p)
     if (ret != NULL && starting(p)) {
 	switch (f) {
 	case PVAL:
-	    ret->v.xval = batch_pvalue(s, (const double **) p->Z, 
+	    ret->v.xval = batch_pvalue(s, (const double **) *p->Z, 
 				       p->dinfo, NULL, OPT_G);
 	    break;
 	case CDF:
-	    ret->v.xval = batch_pvalue(s, (const double **) p->Z, 
+	    ret->v.xval = batch_pvalue(s, (const double **) *p->Z, 
 				       p->dinfo, NULL, OPT_G | OPT_C);
 	    break;
 	case CRIT:
-	    ret->v.xval = genr_get_critical(s, (const double **) p->Z, 
+	    ret->v.xval = genr_get_critical(s, (const double **) *p->Z, 
 					    p->dinfo);
 	    break;
 	default: 
@@ -1437,7 +1437,7 @@ static NODE *series_obs (int v, int t, parser *p)
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	ret->v.xval = p->Z[v][t];
+	ret->v.xval = (*p->Z)[v][t];
     }
 
     return ret;
@@ -1446,7 +1446,7 @@ static NODE *series_obs (int v, int t, parser *p)
 static NODE *series_lag (int v, int k, parser *p)
 {
     NODE *ret;
-    const double *x = p->Z[v];
+    const double *x = (*p->Z)[v];
     int t, s, t1, t2;
 
     ret = aux_vec_node(p, p->dinfo->n);
@@ -1597,12 +1597,12 @@ static NODE *uvar_node (NODE *t, parser *p)
     if (var_is_scalar(p->dinfo, t->v.idnum)) {
 	ret = aux_scalar_node(p);
 	if (ret != NULL && starting(p)) {
-	    ret->v.xval = p->Z[t->v.idnum][0];
+	    ret->v.xval = (*p->Z)[t->v.idnum][0];
 	}
     } else if (var_is_series(p->dinfo, t->v.idnum)) {
 	ret = vec_pointer_node(p);
 	if (ret != NULL && starting(p)) {
-	    ret->v.xvec = p->Z[t->v.idnum];
+	    ret->v.xvec = (*p->Z)[t->v.idnum];
 	}
     }
 
@@ -1754,7 +1754,7 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 	return NULL;
     }
 
-    M = gretl_matrix_data_subset_no_missing(list, (const double **) p->Z, 
+    M = gretl_matrix_data_subset_no_missing(list, (const double **) *p->Z, 
 					    p->dinfo->t1, p->dinfo->t2, 
 					    &p->err);
 
@@ -1764,6 +1764,104 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 
     return M;
 }
+
+#if TRYIT
+
+#define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
+                         s == LIST)
+
+/* evaluate a user-defined function */
+
+static NODE *eval_ufunc (NODE *t, parser *p)
+{
+    fnargs args;
+    const ufunc *uf = NULL;
+    int argc = 0;
+
+    NODE *l = t->v.b2.l;
+    NODE *r = t->v.b2.r;
+    NODE *n, *ret = NULL;
+    int i, m = r->v.bn.n_nodes;
+    int rtype;
+
+    /* find the function */
+    uf = get_user_function_by_name(l->v.str);
+    if (uf == NULL) {
+	p->err = 1;
+	return NULL;
+    }
+
+    /* check that the function returns something suitable */
+    rtype = user_func_first_return_type(uf);
+    if (rtype != ARG_SCALAR && rtype != ARG_SERIES &&
+	rtype != ARG_MATRIX) {
+	p->err = E_TYPES;
+	return NULL;
+    }
+
+    /* check the argument count */
+    argc = fn_n_params(uf);
+    if (m > argc) {
+	pprintf(p->prn, "Too many arguments for function '%s'\n", l->v.str);
+	p->err = 1;
+	return NULL;
+    }
+
+    /* evaluate the function arguments */
+    for (i=0; i<m && !p->err; i++) {
+	n = r->v.bn.n[i];
+	if (!ok_ufunc_sym(n->t)) {
+	    n = eval(n, p);
+	    if (ok_ufunc_sym(n->t)) {
+		free_tree(r->v.bn.n[i], "Ufunc");
+		r->v.bn.n[i] = n;
+	    } else {
+		fprintf(stderr, "eval_ufunc: node type %d: not OK\n", n->t);
+		p->err = E_TYPES;
+		break;
+	    }
+	}
+	fprintf(stderr, "eval_ufunc: arg[%d] is of type %d\n", i, n->t);
+	if (n->t == NUM) {
+	    p->err = push_fn_arg(&args, ARG_SCALAR, &n->v.xval);
+	} else if (n->t == VEC) {
+	    p->err = push_fn_arg(&args, ARG_SERIES, n->v.xvec);
+	} else if (n->t == MAT) {
+	    p->err = push_fn_arg(&args, ARG_MATRIX, n->v.m);
+	} else if (n->t == LIST) {
+	    p->err = push_fn_arg(&args, ARG_LIST, n->v.str);
+	}
+    }
+
+    fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, total=%d\n",
+	    args.nx, args.nX, args.nM, args.nl, m);
+
+    /* try sending args to function */
+#if 0
+    if (!p->err) {
+	double xret;
+	double *Xret;
+	gretl_matrix *Mret;
+
+	p->err = function_call_direct(uf, &args, p->Z, p->dinfo, 
+				      &xret, &Xret, &Mret);
+    }
+#endif
+
+    for (i=0; i<m && !p->err; i++) {
+	/* forestall double-freeing: null out any aux nodes */
+	if (is_aux_node(r->v.bn.n[i], p)) {
+	    r->v.bn.n[i] = NULL;
+	}
+    }
+
+    /* fakery */
+    p->err = 1;
+
+    return ret;
+}
+
+#endif
 
 #define ok_matdef_sym(s) (s == NUM || s == VEC || s == EMPTY || \
                           s == DUM || s == LIST)
@@ -1934,8 +2032,10 @@ object_var_get_submatrix (const char *oname, NODE *t, parser *p)
     gretl_matrix *M, *S = NULL;
     int idx;
 
-    if (r->t != MSPEC) {
-	p->err = 1;
+    if (r == NULL || r->t != MSPEC) {
+	if (!p->err) {
+	    p->err = E_TYPES;
+	}
 	return NULL;
     }
 
@@ -2056,7 +2156,8 @@ static void node_type_error (const NODE *n, parser *p, int t, int badt)
 {
     pputs(p->prn, "> ");
     printnode(n, p);
-    pprintf(p->prn, "\nwrong type argument for %s: should be %s",
+    pputc(p->prn, '\n');
+    pprintf(p->prn, _("Wrong type argument for %s: should be %s"),
 	    getsymb(n->t, NULL), typestr(t));
     if (badt != 0) {
 	pprintf(p->prn, ", is %s\n", typestr(badt));
@@ -2429,7 +2530,11 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case UFUN:
 	/* user-defined function: not integrated yet */
+#if TRYIT
+	ret = eval_ufunc(t, p);
+#else
 	ret = t;
+#endif
 	break;
     default: 
 	printf("EVAL: weird node %s\n", getsymb(t->t, NULL));
@@ -2746,7 +2851,7 @@ static void process_lhs_substr (parser *p)
     if (p->lh.t == NUM) {
 	p->err = E_TYPES;
     } else if (p->lh.t == VEC) {
-	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) p->Z, 
+	p->lh.obs = get_t_from_obs_string(p->lh.substr, (const double **) *p->Z, 
 					  p->dinfo); 
 	if (p->lh.obs < 0) {
 	    p->err = E_PARSE; /* FIXME message */
@@ -2764,7 +2869,7 @@ static void parser_print_result (parser *p, PRN *prn)
     if (p->targ == NUM || p->targ == VEC) {
 	int list[2] = { 1, p->lh.v };
 
-	printdata(list, (const double **) p->Z, p->dinfo, OPT_NONE, prn);
+	printdata(list, (const double **) *p->Z, p->dinfo, OPT_NONE, prn);
     } else if (p->targ == MAT) {
 	gretl_matrix_print_to_prn(p->lh.m1, p->lh.name, prn);
     }
@@ -2810,9 +2915,9 @@ static NODE *lhs_copy_node (parser *p)
     n->aux = n->tmp = 0;
 
     if (p->targ == NUM) {
-	n->v.xval = p->Z[p->lh.v][0];
+	n->v.xval = (*p->Z)[p->lh.v][0];
     } else if (p->targ == VEC) {
-	n->v.xvec = p->Z[p->lh.v];
+	n->v.xvec = (*p->Z)[p->lh.v];
     } else {
 	n->v.m = p->lh.m0;
     }
@@ -3335,24 +3440,24 @@ static int gen_check_return_type (parser *p)
    exist
 */
 
-static int gen_allocate_storage (parser *p, double ***pZ)
+static int gen_allocate_storage (parser *p)
 {
     if (p->targ == NUM && p->lh.v == 0) {
 #if EDEBUG
 	fprintf(stderr, "gen_allocate_storage: adding scalar\n");
 #endif
-	p->err = dataset_add_scalar(pZ, p->dinfo);
+	p->err = dataset_add_scalar(p->Z, p->dinfo);
 	if (!p->err) {
 	    p->lh.v = p->dinfo->v - 1;
 	}
     } else if (p->targ == VEC && p->lh.v == 0) {
-	p->err = dataset_add_series(1, pZ, p->dinfo);
+	p->err = dataset_add_series(1, p->Z, p->dinfo);
 	if (!p->err) {
 	    int t;
 
 	    p->lh.v = p->dinfo->v - 1;
 	    for (t=0; t<p->dinfo->n; t++) {
-		(*pZ)[p->lh.v][t] = NADBL;
+		(*p->Z)[p->lh.v][t] = NADBL;
 	    }
 #if EDEBUG
 	    fprintf(stderr, "gen_allocate_storage: added series #%d\n",
@@ -3361,12 +3466,10 @@ static int gen_allocate_storage (parser *p, double ***pZ)
 	}
     }
 
-    p->Z = *pZ;
-
     return p->err;
 }
 
-static int save_generated_var (parser *p, double ***pZ, PRN *prn)
+static int save_generated_var (parser *p, PRN *prn)
 {
     NODE *r = p->ret;
     double **Z = NULL;
@@ -3384,14 +3487,13 @@ static int save_generated_var (parser *p, double ***pZ, PRN *prn)
 #endif
 
     /* allocate dataset storage, if needed */
-    gen_allocate_storage(p, pZ);
+    gen_allocate_storage(p);
     if (p->err) {
 	return p->err;
     }
 
     /* put the generated data into place */
-
-    Z = *pZ;
+    Z = *p->Z;
     v = p->lh.v;
     
     if (p->targ == NUM) {
@@ -3461,12 +3563,12 @@ static int save_generated_var (parser *p, double ***pZ, PRN *prn)
     return p->err;
 }
 
-static void parser_reinit (parser *p, double **Z, 
+static void parser_reinit (parser *p, double ***pZ, 
 			   DATAINFO *dinfo, PRN *prn) 
 {
     p->flags = (P_START | P_PRIVATE | P_EXEC);
 
-    p->Z = Z;
+    p->Z = pZ;
     p->dinfo = dinfo;
     p->prn = prn;
 
@@ -3483,12 +3585,12 @@ static void parser_reinit (parser *p, double **Z,
 }
 
 static void parser_init (parser *p, const char *str, 
-			 double **Z, DATAINFO *dinfo,
+			 double ***pZ, DATAINFO *dinfo,
 			 PRN *prn, int flags)
 {
     p->input = p->point = str;
     p->rhs = p->input;
-    p->Z = Z;
+    p->Z = pZ;
     p->dinfo = dinfo;
     p->prn = prn;
     p->flags = flags | P_START;
@@ -3530,7 +3632,7 @@ static void parser_init (parser *p, const char *str,
     }
 }
 
-void gen_save_or_print (parser *p, double ***pZ, PRN *prn)
+void gen_save_or_print (parser *p, PRN *prn)
 {
     if (p->err == 0) {
 	if (p->flags & (P_DISCARD | P_PRINT)) {
@@ -3542,8 +3644,8 @@ void gen_save_or_print (parser *p, double ***pZ, PRN *prn)
 	    }
 	} else if (p->flags & P_SCALAR) {
 	    gen_check_return_type(p);
-	} else if (pZ != NULL) {
-	    save_generated_var(p, pZ, prn);
+	} else if (p->Z != NULL) {
+	    save_generated_var(p, prn);
 	} 
     }
 }
@@ -3565,16 +3667,16 @@ void gen_cleanup (parser *p)
     }
 }
 
-int realgen (const char *s, parser *p, double **Z, 
+int realgen (const char *s, parser *p, double ***pZ, 
 	     DATAINFO *pdinfo, PRN *prn, int flags)
 {
     int t;
 
     if (flags & P_EXEC) {
-	parser_reinit(p, Z, pdinfo, prn);
+	parser_reinit(p, pZ, pdinfo, prn);
 	goto starteval;
     } else {
-	parser_init(p, s, Z, pdinfo, prn, flags);
+	parser_init(p, s, pZ, pdinfo, prn, flags);
 	if (p->err) {
 	    errmsg(p->err, prn);
 	    return 1;
@@ -3636,7 +3738,7 @@ int realgen (const char *s, parser *p, double **Z,
 		fprintf(stderr, "writing xvec[%d] = %g into Z[%d][%d]\n",
 			t, p->ret->v.xvec[t], p->lh.v, t);
 #endif
-		p->Z[p->lh.v][t] = p->ret->v.xvec[t];
+		(*p->Z)[p->lh.v][t] = p->ret->v.xvec[t];
 	    }
 	    if (t == p->dinfo->t1) {
 		p->flags &= ~P_START;

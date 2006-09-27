@@ -43,7 +43,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	    pprintf(prn, "Added scalar %s (ID %d)",
 		    p->lh.name, p->lh.v);
 	} else {
-	    double x = p->Z[p->lh.v][p->lh.obs];
+	    double x = (*p->Z)[p->lh.v][p->lh.obs];
 
 	    if (p->lh.v < oldv) {
 		pprintf(prn, "Replaced scalar %s (ID %d)",
@@ -355,7 +355,7 @@ static int gen_special (const char *s, double ***pZ,
     if (!err && msg) {
 	strcpy(p->lh.name, s);
 	p->lh.v = varindex(pdinfo, s);
-	p->Z = *pZ;
+	p->Z = pZ;
 	p->dinfo = pdinfo;
 	p->targ = VEC;
 	p->flags = 0;
@@ -423,12 +423,12 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return gen_special(line + 5, pZ, pdinfo, prn, &p);
     }
 
-    realgen(line, &p, *pZ, pdinfo, prn, flags);
+    realgen(line, &p, pZ, pdinfo, prn, flags);
 
     if (!p.err && p.ret->t == UFUN) {
 	gen_call_ufun(&p, pZ);
     } else {
-	gen_save_or_print(&p, pZ, prn);
+	gen_save_or_print(&p, prn);
     }
 
     if (!p.err && gen_verbose(p.flags)) {
@@ -449,13 +449,13 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 /* simply retrieve a scalar result */
 
-double generate_scalar (const char *s, double **Z, 
+double generate_scalar (const char *s, double ***pZ, 
 			DATAINFO *pdinfo, int *err)
 {
     parser p;
     double x = NADBL;
 
-    *err = realgen(s, &p, Z, pdinfo, NULL, P_SCALAR | P_PRIVATE);
+    *err = realgen(s, &p, pZ, pdinfo, NULL, P_SCALAR | P_PRIVATE);
 
     if (!*err) {
 	x = p.ret->v.xval;
@@ -471,15 +471,15 @@ double generate_scalar (const char *s, double **Z,
 */
 
 int print_object_var (const char *oname, const char *param,
-		      double **Z, DATAINFO *pdinfo,
+		      double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn)
 {
     char line[MAXLEN];
     parser p;
 
     sprintf(line, "%s.%s", oname, param);
-    realgen(line, &p, Z, pdinfo, prn, P_DISCARD);
-    gen_save_or_print(&p, NULL, prn);
+    realgen(line, &p, pZ, pdinfo, prn, P_DISCARD);
+    gen_save_or_print(&p, prn);
     gen_cleanup(&p);
 
     return p.err;
@@ -488,7 +488,7 @@ int print_object_var (const char *oname, const char *param,
 /* create a parsed tree that can be evaluated later, 
    probably multiple times */
 
-parser *genr_compile (const char *s, double **Z, DATAINFO *pdinfo, 
+parser *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo, 
 		      int *err)
 {
     parser *p = malloc(sizeof *p);
@@ -502,7 +502,7 @@ parser *genr_compile (const char *s, double **Z, DATAINFO *pdinfo,
 	return NULL;
     }
 
-    *err = realgen(s, p, Z, pdinfo, NULL, P_COMPILE | P_PRIVATE);
+    *err = realgen(s, p, pZ, pdinfo, NULL, P_COMPILE | P_PRIVATE);
 
     return p;
 }
@@ -519,8 +519,8 @@ int execute_genr (parser *p, double ***pZ, DATAINFO *pdinfo)
     gretl_print_new(GRETL_PRINT_STDERR);
 #endif
 
-    realgen(NULL, p, *pZ, pdinfo, prn, P_EXEC);
-    gen_save_or_print(p, pZ, prn);
+    realgen(NULL, p, pZ, pdinfo, prn, P_EXEC);
+    gen_save_or_print(p, prn);
     gen_cleanup(p);
 
 #if GDEBUG

@@ -145,7 +145,7 @@ static int nls_genr_setup (void)
 	    sprintf(formula, "$nl_x%d = %s", i, pspec->params[j++].deriv);
 	}
 	
-	genrs[i] = genr_compile(formula, *nZ, ndinfo, &err);
+	genrs[i] = genr_compile(formula, nZ, ndinfo, &err);
 #if NLS_DEBUG
 	fprintf(stderr, "genrs[%d] = %p, err = %d\n", i, (void *) genrs[i], err);
 #endif

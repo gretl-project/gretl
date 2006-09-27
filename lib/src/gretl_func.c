@@ -240,6 +240,28 @@ int user_function_index_by_name (const char *name)
     return -1;
 }
 
+int user_func_first_return_type (const ufunc *fun)
+{
+    if (fun != NULL && fun->n_returns > 0) {
+	return fun->returns[0].type;
+    }
+
+    return ARG_NONE;
+}
+
+const ufunc *get_user_function_by_name (const char *name)
+{
+    int i;
+
+    for (i=0; i<n_ufuns; i++) {
+	if (!strcmp(name, ufuns[i]->name)) {
+	    return ufuns[i];
+	}
+    }    
+
+    return NULL;
+}
+
 /* function call stack mechanism */
 
 static int callstack_init (void)
@@ -3354,6 +3376,19 @@ char *gretl_function_get_line (char *line, int len,
 
     return line;
 }
+
+#if 0
+int function_call_direct (ufunc *u, int nx, const double *x, 
+			  int nX, const double **X, 
+			  int nM, const gretl_matrix **M, 
+			  int nl, const int **lists,
+			  double *xret, double **Xret,
+			  gretl_matrix **M mret)
+{
+    
+
+}
+#endif
 
 void gretl_functions_cleanup (void)
 {

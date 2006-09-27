@@ -2372,7 +2372,7 @@ static int real_do_printf (const char *line, double ***pZ,
 	} else if ((special = literal_string(argv)) != NULL) {
 	    svals[i] = special;
 	} else {
-	    xvals[i] = generate_scalar(argv, *pZ, pdinfo, &err);
+	    xvals[i] = generate_scalar(argv, pZ, pdinfo, &err);
 	}
 
 #if PRINTF_DEBUG

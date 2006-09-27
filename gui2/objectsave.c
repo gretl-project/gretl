@@ -341,7 +341,7 @@ int saved_object_action (const char *line, PRN *prn)
     } else if (action == OBJ_ACTION_IRF) {
 	err = session_VAR_do_irf(ptr, param);
     } else if (action == OBJ_ACTION_SHOW_STAT) {
-	err = print_object_var(objname, param, Z, datainfo, prn);
+	err = print_object_var(objname, param, &Z, datainfo, prn);
     } else if (action == OBJ_ACTION_ADD) {
 	err = session_model_add_or_omit(ptr, action, param, prn);
     } else if (action == OBJ_ACTION_OMIT) {

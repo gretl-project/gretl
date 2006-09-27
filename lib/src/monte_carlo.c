@@ -206,7 +206,7 @@ static double controller_evaluate_expr (const char *expr,
 
     if (!strcmp(vname, "iftest")) {
 	iftest = 1;
-	x = generate_scalar(expr, *pZ, pdinfo, &err);
+	x = generate_scalar(expr, pZ, pdinfo, &err);
     } else {
 	err = generate(expr, pZ, pdinfo, OPT_P, NULL);
     }
@@ -3090,7 +3090,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     while (*line == ' ') line++;
 
-    val = generate_scalar(line, *pZ, pdinfo, &err);
+    val = generate_scalar(line, pZ, pdinfo, &err);
 
 #if IFDEBUG
     fprintf(stderr, "if_eval: generate returned %d\n", err);

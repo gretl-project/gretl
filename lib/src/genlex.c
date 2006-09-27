@@ -379,6 +379,13 @@ static void undefined_symbol_error (const char *s, parser *p)
     p->err = E_UNKVAR;
 }
 
+static void function_noargs_error (const char *s, parser *p)
+{
+    parser_print_input(p);
+    pprintf(p->prn, _("'%s': no argument was given\n"), s);
+    p->err = 1;
+}
+
 void context_error (int c, parser *p)
 {
     parser_print_input(p);
@@ -530,7 +537,10 @@ static void look_up_dollar_word (const char *s, parser *p)
 
 static void look_up_word (const char *s, parser *p)
 {
-    p->sym = function_lookup(s);
+    int fsym, err = 0;
+
+    fsym = p->sym = function_lookup(s);
+
     if (p->sym == 0 || p->ch != '(') {
 	p->idnum = const_lookup(s);
 	if (p->idnum > 0) {
@@ -556,9 +566,17 @@ static void look_up_word (const char *s, parser *p)
 		    p->sym = UFUN;
 		    p->idstr = gretl_strdup(s);
 		} else {
-		    undefined_symbol_error(s, p);
+		    err = 1;
 		}
 	    }
+	}
+    }
+
+    if (err) {
+	if (fsym) {
+	    function_noargs_error(s, p);
+	} else {
+	    undefined_symbol_error(s, p);
 	}
     }
 }

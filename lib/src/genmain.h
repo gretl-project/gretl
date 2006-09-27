@@ -69,7 +69,7 @@ typedef struct parser_ GENERATOR;
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn);
 
-GENERATOR *genr_compile (const char *s, double **Z, DATAINFO *pdinfo, 
+GENERATOR *genr_compile (const char *s, double ***pZ, DATAINFO *pdinfo, 
 			 int *err);
  
 int execute_genr (GENERATOR *genr, double ***pZ, DATAINFO *pdinfo);
@@ -84,11 +84,11 @@ int genr_fit_resid (const MODEL *pmod,
 		    double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo);
 
-double generate_scalar (const char *s, double **Z, 
+double generate_scalar (const char *s, double ***pZ, 
 			DATAINFO *pdinfo, int *err);
 
 int print_object_var (const char *oname, const char *param,
-		      double **Z, DATAINFO *pdinfo,
+		      double ***pZ, DATAINFO *pdinfo,
 		      PRN *prn);
 
 int gretl_reserved_word (const char *str);

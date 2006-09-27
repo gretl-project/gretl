@@ -243,7 +243,7 @@ int cum_series (const double *x, double *y, const DATAINFO *pdinfo)
     if (s < pdinfo->t2) {
 	y[s] = (na(x[s]))? 0.0 : x[s];
 	for (t=s+1; t<=pdinfo->t2; t++) {
-	    y[t] = y[t-1] + (na(x[t]))? 0.0 : x[t];
+	    y[t] = y[t-1] + (na(x[t])? 0.0 : x[t]);
 	}
     }
 
@@ -1386,7 +1386,66 @@ int get_t_from_obs_string (const char *s, const double **Z,
     return t;
 }
 
+int push_fn_arg (fnargs *args, int type, void *p)
+{
+    int n, err = 0;
 
+    if (type == ARG_SCALAR) {
+	double *x;
 
+	n = args->nx + 1;
+	x = realloc(args->x, n * sizeof *x);
+	if (x == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    x[n-1] = *(double *) p;
+	    args->x = x;
+	    args->nx = n;
+	}
+    } else if (type == ARG_SERIES) {
+	double **X;
 
+	n = args->nX + 1;
+	X = realloc(args->X, n * sizeof *X);
+	if (X == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    X[n-1] = (double *) p;
+	    args->X = X;
+	    args->nX = n;
+	}
+    } else if (type == ARG_MATRIX) {
+	gretl_matrix **M;
 
+	n = args->nM + 1;
+	M = realloc(args->M, n * sizeof *M);
+	if (M == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    M[n-1] = (gretl_matrix *) p;
+	    args->M = M;
+	    args->nM = n;
+	}
+    } else if (type == ARG_LIST) {
+	int *l, **lists;
+
+	l = get_list_by_name((const char *) p);
+	if (l == NULL) {
+	    err = E_UNKVAR;
+	} else {
+	    n = args->nl + 1;
+	    lists = realloc(args->lists, n * sizeof *lists);
+	    if (lists == NULL) {
+		err = E_ALLOC;
+	    } else {
+		lists[n-1] = l;
+		args->lists = lists;
+		args->nl = n;
+	    }
+	}
+    } else {
+	err = E_TYPES;
+    }
+
+    return err;
+}

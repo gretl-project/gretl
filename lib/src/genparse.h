@@ -21,8 +21,10 @@
 
 #include "libgretl.h"
 #include "usermat.h"
+#include "gretl_func.h"
 
 #define GENDEBUG 0
+#define TRYIT 0
 
 enum {
     U_NEG = 1,
@@ -172,6 +174,7 @@ enum {
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
+    UFARGS,   /* set of arguments to user-defined function */
     EMPTY,
     ABSENT,
     INC,
@@ -212,12 +215,12 @@ enum {
 #define evalb2(s) (binary_op(s) || func2_symb(s) || s == MSL || \
                    s == MSL2 || s == SUBSL)
 
+#define b1sym(s) (unary_op(s) || func_symb(s) || s == LPR || s == EROOT)
+
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == OVAR || \
                   s == UFUN)
 
-#define b1sym(s) (unary_op(s) || func_symb(s) || s == LPR || s == EROOT)
-
-#define bnsym(s) (s == MDEF)
+#define bnsym(s) (s == MDEF || s == UFARGS)
 
 #define freestr(s) (s == STR || s == UMAT || s == UOBJ || \
                     s == LOOPIDX || s == LIST)
@@ -297,7 +300,7 @@ struct parser_ {
     const char *input; /* complete input string */
     const char *point; /* remaining unprocessed input */
     const char *rhs;   /* for use in labelling */
-    double **Z;        /* convenience pointer to data array */
+    double ***Z;       /* convenience pointer to data array */
     DATAINFO *dinfo;   /* convenience pointer to data info */
     PRN *prn;          /* for printing messages */
     int flags;         /* various attributes (see above) */
@@ -336,9 +339,9 @@ void context_error (int c, parser *p);
 const char *getsymb (int t, const parser *p);
 int function_lookup (const char *s);
 
-int realgen (const char *s, parser *p, double **Z, 
+int realgen (const char *s, parser *p, double ***Z, 
 	     DATAINFO *pdinfo, PRN *prn, int flags);
-void gen_save_or_print (parser *p, double ***pZ, PRN *prn);
+void gen_save_or_print (parser *p, PRN *prn);
 void gen_cleanup (parser *p);
 
 /* name lookup functions */
@@ -347,6 +350,9 @@ const char *dvarname (int t);
 const char *mvarname (int t);
 const char *dumname (int t);
 
+/* for handling user-functions */
+int push_fn_arg (fnargs *args, int type, void *p);
+
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);
 const char *gen_func_name (int i);
@@ -354,5 +360,3 @@ int model_var_count (void);
 const char *model_var_name (int i);
 int data_var_count (void);
 const char *data_var_name (int i);
-
-

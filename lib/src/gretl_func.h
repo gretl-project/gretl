@@ -42,8 +42,20 @@ typedef enum {
 
 typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
+typedef struct fnargs_ fnargs;
+
+struct fnargs_ {
+    char *types;
+    int nx, nX, nM, nl;
+    double *x;
+    double **X;
+    gretl_matrix **M;
+    int **lists;
+};
 
 int n_user_functions (void);
+
+const ufunc *get_user_function_by_name (const char *name);
 
 const ufunc *get_user_function_by_index (int idx);
 
@@ -62,6 +74,8 @@ double fn_param_maxval (const ufunc *fun, int i);
 int user_func_get_return_types (const ufunc *fun,
 				int *n_returns,
 				char **return_types);
+
+int user_func_first_return_type (const ufunc *fun);
 
 const char *user_function_name_by_index (int i);
 
