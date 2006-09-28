@@ -352,6 +352,7 @@ const char *dumname (int t);
 
 /* for handling user-functions */
 void fn_args_init (fnargs *args);
+void fn_args_free (fnargs *args);
 int push_fn_arg (fnargs *args, int type, void *p);
 
 /* helper functions for manual, gretl.lang file */

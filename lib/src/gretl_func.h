@@ -55,7 +55,7 @@ struct fnargs_ {
 
 int n_user_functions (void);
 
-const ufunc *get_user_function_by_name (const char *name);
+ufunc *get_user_function_by_name (const char *name);
 
 const ufunc *get_user_function_by_index (int idx);
 
@@ -103,6 +103,10 @@ int gretl_function_start_exec (const char *line, const char *fname,
 char *gretl_function_get_line (char *line, int len,
 			       double ***pZ, DATAINFO **ppdinfo,
 			       int *err);
+
+int function_call_direct (ufunc *u, fnargs *args,
+			  double ***pZ, DATAINFO *pdinfo,
+			  void *ret);
 
 int gretl_function_stack_depth (void);
 

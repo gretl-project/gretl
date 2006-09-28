@@ -323,27 +323,33 @@ static NODE *base (parser *p, NODE *up)
 static NODE *get_string_arg (parser *p)
 {
     char str[MAXSTR] = {0};
-    int close = parser_charpos(p, ')');
-    int i;
+    int i, close = -1;
 
-    if (close < 0 || close > MAXSTR - 2) {
-	p->err = E_PARSE;
-	if (close > 0) {
-	    pprintf(p->prn, _("String is too long (%d versus %d max)\n"),
-		    close, MAXSTR);
-	} else {
-	    unmatched_symbol_error('(', p);
+    if (p->ch != ')') {
+	/* allow for empty arg string "()" */
+	close = parser_charpos(p, ')');
+
+	if (close < 0 || close > MAXSTR - 2) {
+	    p->err = E_PARSE;
+	    if (close > 0) {
+		pprintf(p->prn, _("String is too long (%d versus %d max)\n"),
+			close, MAXSTR);
+	    } else {
+		unmatched_symbol_error('(', p);
+	    }
+	    return NULL;
 	}
-	return NULL;
-    }
 
-    for (i=0; i<=close; i++) {
-	str[i] = p->ch;
-	parser_getc(p);
+	for (i=0; i<=close; i++) {
+	    str[i] = p->ch;
+	    parser_getc(p);
+	}
     }
 
     parser_getc(p);
     lex(p);
+
+    fprintf(stderr, "making newstr using '%s'\n", str);
 
     return newstr(str, 0, STR_COPY);
 }

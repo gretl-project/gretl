@@ -65,7 +65,8 @@ static int cli_parse_object_request (const char *line,
     return action;
 }
 
-static int object_command_setup (CMD *pcmd, char *cmdstr)
+static int object_command_setup (CMD *pcmd, char *cmdstr,
+				 double ***pZ, DATAINFO *pdinfo)
 {
     char *myline;
     int err = 0;
@@ -78,7 +79,7 @@ static int object_command_setup (CMD *pcmd, char *cmdstr)
 	gretl_cmd_init(pcmd);
 	*myline = 0;
 	strncat(myline, cmdstr, MAXLINE - 1);
-	err = parse_command_line(myline, pcmd, &Z, datainfo);
+	err = parse_command_line(myline, pcmd, pZ, pdinfo);
 	free(myline);
     }
 
@@ -86,12 +87,14 @@ static int object_command_setup (CMD *pcmd, char *cmdstr)
 }
 
 static int 
-object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, PRN *prn)
+object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, 
+			  double ***pZ, DATAINFO *pdinfo,
+			  MODEL **models, PRN *prn)
 {
     CMD mycmd;
     int err;
 
-    err = object_command_setup(&mycmd, cmdstr);
+    err = object_command_setup(&mycmd, cmdstr, pZ, pdinfo);
     if (err) {
 	return err;
     }
@@ -99,10 +102,10 @@ object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, PRN *prn)
     clear_model(models[1]);
     if (action == OBJ_ACTION_ADD) {
 	err = add_test(mycmd.list, pmod, models[1], 
-		       &Z, datainfo, mycmd.opt, prn);
+		       pZ, pdinfo, mycmd.opt, prn);
     } else {
 	err = omit_test(mycmd.list, pmod, models[1],
-			&Z, datainfo, mycmd.opt, prn);
+			pZ, pdinfo, mycmd.opt, prn);
     }
 
     if (err) {
@@ -120,18 +123,20 @@ object_model_add_or_omit (MODEL *pmod, int action, char *cmdstr, PRN *prn)
     return err;
 }
 
-static int object_VAR_omit (GRETL_VAR *orig, char *cmdstr, PRN *prn)
+static int object_VAR_omit (GRETL_VAR *orig, char *cmdstr, 
+			    double ***pZ, DATAINFO *pdinfo,
+			    PRN *prn)
 {
     GRETL_VAR *var;
     CMD mycmd;
     int err;
 
-    err = object_command_setup(&mycmd, cmdstr);
+    err = object_command_setup(&mycmd, cmdstr, pZ, pdinfo);
     if (err) {
 	return err;
     }
 
-    var = gretl_VAR_omit_test(mycmd.list, orig, &Z, datainfo, prn, &err);
+    var = gretl_VAR_omit_test(mycmd.list, orig, pZ, pdinfo, prn, &err);
     gretl_VAR_free(var);
 
     if (err) {
@@ -143,7 +148,9 @@ static int object_VAR_omit (GRETL_VAR *orig, char *cmdstr, PRN *prn)
     return err;    
 }
 
-static int saved_object_action (const char *line, PRN *prn)
+static int saved_object_action (const char *line, 
+				double ***pZ, DATAINFO *pdinfo,
+				MODEL **models, PRN *prn)
 {
     char objname[MAXSAVENAME] = {0};
     char *param = NULL;
@@ -175,27 +182,30 @@ static int saved_object_action (const char *line, PRN *prn)
 
     if (action == OBJ_ACTION_SHOW) {
 	if (type == GRETL_OBJ_EQN) {
-	    printmodel((MODEL *) ptr, datainfo, OPT_NONE, prn);
+	    printmodel((MODEL *) ptr, pdinfo, OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    gretl_VAR_print((GRETL_VAR *) ptr, datainfo, OPT_NONE, prn);
+	    gretl_VAR_print((GRETL_VAR *) ptr, pdinfo, OPT_NONE, prn);
 	} else if (type == GRETL_OBJ_SYS) {
 	    err = gretl_equation_system_estimate((gretl_equation_system *) ptr, 
-						 &Z, datainfo, OPT_NONE, prn);
+						 pZ, pdinfo, OPT_NONE, prn);
 	} 
     } else if (action == OBJ_ACTION_SHOW_STAT) {
-	err = print_object_var(objname, param, &Z, datainfo, prn);
+	err = print_object_var(objname, param, pZ, pdinfo, prn);
     } else if (action == OBJ_ACTION_IRF) {
 	err = gretl_VAR_do_irf((GRETL_VAR *) ptr, line, 
-			       (const double **) Z, datainfo);
+			       (const double **) *pZ, pdinfo);
     } else if (action == OBJ_ACTION_FREE) {
 	gretl_object_unref(ptr, GRETL_OBJ_ANY);
     } else if (action == OBJ_ACTION_ADD) {
-	err = object_model_add_or_omit((MODEL *) ptr, action, param, prn);
+	err = object_model_add_or_omit((MODEL *) ptr, action, param, 
+				       pZ, pdinfo, models, prn);
     } else if (action == OBJ_ACTION_OMIT) {
 	if (type == GRETL_OBJ_EQN) {
-	    err = object_model_add_or_omit((MODEL *) ptr, action, param, prn);
+	    err = object_model_add_or_omit((MODEL *) ptr, action, param, 
+					   pZ, pdinfo, models, prn);
 	} else if (type == GRETL_OBJ_VAR) {
-	    err = object_VAR_omit((GRETL_VAR *) ptr, param, prn);
+	    err = object_VAR_omit((GRETL_VAR *) ptr, param, 
+				  pZ, pdinfo, prn);
 	}
     }
 

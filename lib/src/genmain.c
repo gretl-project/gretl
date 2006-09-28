@@ -392,16 +392,18 @@ static int gen_special_call (const char *s)
    has slipped into the genr domain.  This should be
    integrated properly! */
 
-static void gen_call_ufun (parser *p, double ***pZ)
+static void gen_call_ufun (parser *p)
 {
     char line[MAXLEN];
     const char *fname = p->ret->v.b2.l->v.str;
     const char *args = p->ret->v.b2.r->v.str;
 
     sprintf(line, "%s = %s(%s)", p->lh.name, fname, args);
+
+    fprintf(stderr, "\n***gen_call_ufun: '%s'\n", line);
     
     p->err = gretl_function_start_exec(line, fname,
-				       pZ, p->dinfo);
+				       p->Z, p->dinfo);
 }
 
 #define gen_verbose(f) (!(f & P_PRINT) && \
@@ -426,7 +428,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
     realgen(line, &p, pZ, pdinfo, prn, flags);
 
     if (!p.err && p.ret->t == UFUN) {
-	gen_call_ufun(&p, pZ);
+	gen_call_ufun(&p);
     } else {
 	gen_save_or_print(&p, prn);
     }

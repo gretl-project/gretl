@@ -32,7 +32,6 @@ typedef struct call_info_ call_info;
 struct call_info_ {
     GtkWidget *dlg;
     GList *lsels;
-    int *publist;
     int iface;
     int need_list;
     const ufunc *func;
@@ -46,8 +45,9 @@ struct call_info_ {
 
 static void cinfo_init (call_info *cinfo)
 {
+    cinfo->iface = -1;
+
     cinfo->lsels = NULL;
-    cinfo->publist = NULL;
 
     cinfo->func = NULL;
     cinfo->n_params = 0;
@@ -88,7 +88,6 @@ static int cinfo_args_init (call_info *cinfo)
 
 static void cinfo_free (call_info *cinfo)
 {
-    free(cinfo->publist);
     free(cinfo->return_types);
     free_strings_array(cinfo->args, cinfo->n_params);
     free_strings_array(cinfo->rets, cinfo->n_returns);
@@ -633,7 +632,8 @@ static int package_function_exec (char *fnline, PRN *prn)
 #if FCDEBUG
 	    fprintf(stderr, "package_function_exec: '%s'\n", fnline); 
 #endif	    
-	    err = gui_exec_line(fnline, prn, SCRIPT_EXEC, NULL);
+	    err = gui_exec_line(fnline, get_lib_cmd(), &Z, &datainfo,
+				prn, SCRIPT_EXEC, NULL);
 	}
     }
 
@@ -746,10 +746,10 @@ void call_function_package (const char *fname, GtkWidget *w)
 
     cinfo_init(&cinfo);
 
-    /* get interface(s) for package */
+    /* get interface for package */
     err = function_package_get_info((*tmpfile)? tmpfile : fname,
 				    NULL,
-				    &cinfo.publist,
+				    &cinfo.iface,
 				    NULL,
 				    NULL,
 				    NULL,
@@ -762,8 +762,7 @@ void call_function_package (const char *fname, GtkWidget *w)
 	remove(tmpfile);
     }
 
-    if (cinfo.publist == NULL || cinfo.publist[0] == 0) {
-	free(cinfo.publist);
+    if (cinfo.iface < 0) {
 	errbox(_("Function package is broken"));
 	return;
     }
@@ -774,10 +773,6 @@ void call_function_package (const char *fname, GtkWidget *w)
 	return;
     }
 
-    /* FIXME selection of interface, if there's more than one
-       available?
-    */
-    cinfo.iface = cinfo.publist[1];
     cinfo.func = get_user_function_by_index(cinfo.iface);
 
     if (cinfo.func == NULL) {
@@ -859,7 +854,8 @@ void call_function_package (const char *fname, GtkWidget *w)
     fprintf(stderr, "fnline: '%s'\n", fnline);
 #endif
 
-    err = gui_exec_line(fnline, prn, SCRIPT_EXEC, NULL);
+    err = gui_exec_line(fnline, get_lib_cmd(), &Z, &datainfo,
+			prn, SCRIPT_EXEC, NULL);
     if (!err) {
 	err = fn_executor(fnline, prn);
     }

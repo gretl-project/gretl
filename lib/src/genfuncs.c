@@ -1400,6 +1400,15 @@ void fn_args_init (fnargs *args)
     args->lists = NULL;
 }
 
+void fn_args_free (fnargs *args)
+{
+    free(args->types);
+    free(args->x);
+    free(args->X);
+    free(args->M);
+    free(args->lists);
+}
+
 int push_fn_arg (fnargs *args, int type, void *p)
 {
     char *types;
@@ -1412,6 +1421,7 @@ int push_fn_arg (fnargs *args, int type, void *p)
     }
 
     types[n-1] = type;
+    args->types = types;
 
     if (type == ARG_SCALAR) {
 	double *x;

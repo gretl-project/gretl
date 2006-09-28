@@ -223,7 +223,8 @@ static int console_function_exec (char *execline)
 	    break;
 	}
 	if (!err) {
-	    err = gui_exec_line(execline, console_prn, SCRIPT_EXEC, NULL);
+	    err = gui_exec_line(execline, get_lib_cmd(), &Z, &datainfo,
+				console_prn, SCRIPT_EXEC, NULL);
 	}
     }
 
@@ -272,7 +273,8 @@ static void console_exec (void)
     push_history_line(execline); 
 
     /* actually execute the command line */
-    err = gui_exec_line(execline, console_prn, CONSOLE_EXEC, NULL);
+    err = gui_exec_line(execline, get_lib_cmd(), &Z, &datainfo,
+			console_prn, CONSOLE_EXEC, NULL);
 
     while (!err && (gretl_execute_loop() || gretl_executing_function())) {
 	if (gretl_execute_loop()) { 

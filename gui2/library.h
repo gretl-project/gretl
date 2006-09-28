@@ -49,6 +49,8 @@ void library_command_init (void);
 
 void library_command_free (void);
 
+CMD *get_lib_cmd (void);
+
 int replaying (void);
 
 void set_replay_on (void);
@@ -286,8 +288,10 @@ void do_save_text (char *fname, MODEL *pmod);
 int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code);
 
-int gui_exec_line (char *line, PRN *prn, int exec_code, 
-		   const char *myname); 
+int gui_exec_line (char *line, CMD *cmd, 
+		   double ***pZ, DATAINFO **ppdinfo,
+		   PRN *prn, int exec_code, 
+		   const char *myname);
 
 int check_and_record_command (void);
 

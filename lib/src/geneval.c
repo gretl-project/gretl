@@ -1775,7 +1775,7 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 static NODE *eval_ufunc (NODE *t, parser *p)
 {
     fnargs args;
-    const ufunc *uf = NULL;
+    ufunc *uf = NULL;
     int argc = 0;
 
     NODE *l = t->v.b2.l;
@@ -1839,17 +1839,15 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    args.nx, args.nX, args.nM, args.nl, m);
 
     /* try sending args to function */
-#if 0
     if (!p->err) {
-	double xret;
-	double *Xret;
-	gretl_matrix *Mret;
+	void *ret = NULL;
 
 	p->err = function_call_direct(uf, &args, p->Z, p->dinfo, 
-				      &xret, &Xret, &Mret);
-	/* construct a node holding the result */
+				      &ret);
+	/* now construct a node holding the result */
     }
-#endif
+
+    fn_args_free(&args);
 
     for (i=0; i<m && !p->err; i++) {
 	/* forestall double-freeing: null out any aux nodes */

@@ -26,7 +26,7 @@
 
 #define CALLSTACK_DEPTH 8
 #define FN_NAMELEN 32
-#define FN_DEBUG 0
+#define FN_DEBUG 2
 
 typedef struct fn_param_ fn_param;
 typedef struct fn_return_ fn_return;
@@ -249,17 +249,26 @@ int user_func_first_return_type (const ufunc *fun)
     return ARG_NONE;
 }
 
-const ufunc *get_user_function_by_name (const char *name)
+ufunc *get_user_function_by_name (const char *name)
 {
+    ufunc *fun = NULL;
     int i;
 
     for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, ufuns[i]->name)) {
-	    return ufuns[i];
+	if (!strcmp(name, (ufuns[i])->name)) {
+	    fun = ufuns[i];
+	    break;
 	}
-    }    
+    }
 
-    return NULL;
+#if FN_DEBUG
+    if (fun != NULL) {
+	fprintf(stderr, "get_user_function_by_name: name = '%s' (n_ufuns = %d);"
+		" found match\n", name, n_ufuns);
+    }
+#endif
+
+    return fun;
 }
 
 /* function call stack mechanism */
@@ -579,7 +588,6 @@ static int unstack_fncall (double ***pZ, DATAINFO **ppdinfo)
     }
     
     call = callstack[0];
-
     nc = gretl_function_stack_depth();
 
 #if FN_DEBUG
@@ -1973,28 +1981,6 @@ static void free_fncall (fncall *call)
     free(call);
 }
 
-static ufunc *get_ufunc_by_name (const char *name)
-{
-    ufunc *fun = NULL;
-    int i;
-
-    for (i=0; i<n_ufuns; i++) {
-	if (!strcmp(name, (ufuns[i])->name)) {
-	    fun = ufuns[i];
-	    break;
-	}
-    }
-
-#if FN_DEBUG
-    if (fun != NULL) {
-	fprintf(stderr, "get_ufunc_by_name: name = '%s' (n_ufuns = %d);"
-		" found match\n", name, n_ufuns);
-    }
-#endif
-
-    return fun;
-}
-
 static char *function_name_from_line (const char *line, char *name)
 {
     if (*line == '#' || !strncmp(line, "(*", 2)) {
@@ -2034,7 +2020,7 @@ int gretl_is_user_function (const char *line)
 	fprintf(stderr, "gretl_is_user_function: testing '%s'\n", line);
 #endif
 	function_name_from_line(line, name);
-	if (get_ufunc_by_name(name) != NULL) {
+	if (get_user_function_by_name(name) != NULL) {
 	    ret = 1;
 	}
     }
@@ -2044,7 +2030,7 @@ int gretl_is_user_function (const char *line)
 
 int gretl_is_public_user_function (const char *name)
 {
-    ufunc *fun = get_ufunc_by_name(name);
+    ufunc *fun = get_user_function_by_name(name);
 
     if (fun != NULL && !fun->private) {
 	return 1;
@@ -2055,7 +2041,7 @@ int gretl_is_public_user_function (const char *name)
 
 int is_user_matrix_function (const char *word)
 {
-    ufunc *fun = get_ufunc_by_name(word);
+    ufunc *fun = get_user_function_by_name(word);
 
     if (fun != NULL) {
 	if (fun->n_returns == 1 && fun->returns[0].type == ARG_MATRIX) {
@@ -2077,7 +2063,7 @@ int gretl_get_user_function (const char *line, char **fnname)
 	fprintf(stderr, "gretl_is_user_function: testing '%s'\n", line);
 #endif
 	function_name_from_line(line, name);
-	if (get_ufunc_by_name(name) != NULL) {
+	if (get_user_function_by_name(name) != NULL) {
 	    free(*fnname);
 	    *fnname = gretl_strdup(name);
 	    if (*fnname != NULL) {
@@ -2403,7 +2389,7 @@ parse_function_args_etc (const char *s, int *argc, char ***pargv,
 
 static int maybe_delete_function (const char *fname)
 {
-    ufunc *fun = get_ufunc_by_name(fname);
+    ufunc *fun = get_user_function_by_name(fname);
     int err = 0;
 
     if (fun == NULL) {
@@ -2553,6 +2539,19 @@ parse_function_element (char *s, fn_param *param, fn_return *ret, int i)
     return err;
 }
 
+static void arg_tail_strip (char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>=0; i--) {
+	if (isspace(s[i]) || s[i] == ')') {
+	    s[i] = '\0';
+	} else {
+	    break;
+	}
+    }
+}
+
 static int 
 parse_fn_definition_or_returns (char *fname, 
 				fn_param **pparams,
@@ -2583,7 +2582,7 @@ parse_fn_definition_or_returns (char *fname,
 	len = strcspn(str, " (");
 	if (len == 0) {
 	    err = E_PARSE;
-	} else if (len < FN_NAMELEN -1) {
+	} else if (len < FN_NAMELEN - 1) {
 	    sprintf(fmt, "%%%ds", len);
 	}
 	if (!err) {
@@ -2596,6 +2595,10 @@ parse_fn_definition_or_returns (char *fname,
 	}
 	if (!err) {
 	    str += len;
+	}
+	if (*str == '\0') {
+	    /* void function */
+	    return 0;
 	}
     }
 
@@ -2612,15 +2615,21 @@ parse_fn_definition_or_returns (char *fname,
 	}
     }
 
+    if (which == FN_PARAMS && !strcmp(s, ")")) {
+	/* void function "foo()" */
+	free(s);
+	return 0;
+    }
+
     if (!err) {
 	/* strip trailing ')' and space */
-	tailstrip(s);
-	len = strlen(s);
-	if (s[len-1] == ')') {
-	    s[len-1] = 0;
-	}
+	arg_tail_strip(s);
 	np = comma_count(s) + 1;
 	if (which == FN_PARAMS) {
+	    if (np == 1 && !strcmp(s, "void")) {
+		free(s);
+		return 0;
+	    }
 	    params = allocate_params(np);
 	    if (params == NULL) {
 		err = E_ALLOC;
@@ -3271,8 +3280,7 @@ int gretl_function_start_exec (const char *line, const char *fname,
 	    " fname='%s'\n", line, fname);
 #endif
 
-    fun = get_ufunc_by_name(fname);
-
+    fun = get_user_function_by_name(fname);
     if (fun == NULL) {
 	return 1;
     }
@@ -3319,6 +3327,55 @@ int gretl_function_start_exec (const char *line, const char *fname,
     return err;
 }
 
+int function_call_direct (ufunc *u, fnargs *args,
+			  double ***pZ, DATAINFO *pdinfo,
+			  void *ret)
+{
+    fn_param *fp;
+    int argc, i, j;
+    int err;
+
+    err = maybe_check_function_needs(pdinfo, u);
+    if (err) {
+	return err;
+    }
+
+    argc = args->nx + args->nX + args->nM + args->nl;
+
+    fprintf(stderr, "function_call_direct: argc = %d\n", argc);
+    fprintf(stderr, "u->n_params = %d\n", u->n_params);
+
+    j = 0;
+    for (i=0; i<argc && !err; i++) {
+	fp = &u->params[i];
+	if (fp->type != args->types[i]) {
+	    fprintf(stderr, "argv[%d] is of wrong type\n", i);
+	    err = E_TYPES;
+	} else if (fp->type == ARG_SCALAR) {
+	    if ((!na(fp->min) && args->x[j] < fp->min) ||
+		(!na(fp->max) && args->x[j] > fp->max)) {
+		fprintf(stderr, "argv[%d]: scalar value %g out of bounds\n", 
+			i, args->x[j]);
+		err = E_INVARG;
+	    }
+	    j++;
+	}
+    }
+
+    for (i=argc; i<u->n_params && !err; i++) {
+	/* do we have defaults for any empty args? */
+	fp = &u->params[i];
+	if (na(fp->deflt)) {
+	    fprintf(stderr, "not enough arguments\n");
+	    err = E_ARGS;
+	}
+    }
+
+    fprintf(stderr, "function_call_direct: err = %d\n", err);
+
+    return err;    
+}
+
 char *gretl_function_get_line (char *line, int len,
 			       double ***pZ, DATAINFO **ppdinfo,
 			       int *err)
@@ -3362,19 +3419,6 @@ char *gretl_function_get_line (char *line, int len,
 
     return line;
 }
-
-#if 0
-int function_call_direct (ufunc *u, int nx, const double *x, 
-			  int nX, const double **X, 
-			  int nM, const gretl_matrix **M, 
-			  int nl, const int **lists,
-			  double *xret, double **Xret,
-			  gretl_matrix **M mret)
-{
-    
-
-}
-#endif
 
 void gretl_functions_cleanup (void)
 {
@@ -3462,7 +3506,7 @@ static void real_user_function_help (ufunc *fun, fnpkg *pkg, PRN *prn)
 
 int user_function_help (const char *fnname, PRN *prn)
 {
-    ufunc *fun = get_ufunc_by_name(fnname);
+    ufunc *fun = get_user_function_by_name(fnname);
     int err = 0;
 
     if (fun == NULL) {

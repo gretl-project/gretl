@@ -64,26 +64,18 @@ extern void initialize_readline (void);
 
 char runfile[MAXLEN];
 char cmdfile[MAXLEN];
-char datfile[MAXLEN];
 char outfile[MAXLEN];
 char hdrfile[MAXLEN];
 char syscmd[MAXLEN];
-double **Z;                   /* data set */
-MODEL **models;               /* holds ptrs to model structs */
-DATAINFO *datainfo;           /* info on data set */
-CMD cmd;                      /* struct for command characteristics */
 PATHS paths;                  /* useful paths */
 PRN *cmdprn;
 MODELSPEC *modelspec;
-MODEL tmpmod;
 FILE *fb;
 int errfatal, batch;
 int runit;
 int data_status;
 int plot_count;             /* graphs via gnuplot */
-int lines[1];               /* for gnuplot command */
 char *line;                 /* non-Readline command line */
-char texfile[MAXLEN];
 char response[3];
 char linebak[MAXLINE];      /* for storing comments */
 char *line_read;
@@ -91,10 +83,14 @@ char *line_read;
 gretl_equation_system *sys;
 gretl_restriction_set *rset;
 
-static int exec_line (char *line, PRN *prn); 
+static int exec_line (char *line, CMD *cmd,
+		      double ***pZ, DATAINFO **ppdinfo,
+		      MODEL **models, PRN *prn); 
 static int push_input_file (FILE *fp);
 static FILE *pop_input_file (void);
-static int saved_object_action (const char *line, PRN *prn);
+static int saved_object_action (const char *line, double ***pZ,
+				DATAINFO *pdinfo, MODEL **models,
+				PRN *prn);
 
 static void usage(void)
 {
@@ -153,14 +149,16 @@ void noalloc (const char *str)
     exit(EXIT_FAILURE);
 }
 
-static int model_test_check (CMD *cmd, PRN *prn)
+static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
 {
-    return last_model_test_ok(cmd->ci, cmd->opt, datainfo, prn);
+    return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
 }
 
 #define MSPEC_DEBUG 0
 
-static int modelspec_test_check (int test_ci, int model_id, PRN *prn)
+static int modelspec_test_check (int test_ci, int model_id, 
+				 DATAINFO *pdinfo,
+				 PRN *prn)
 {
     int m = modelspec_index_from_model_id(modelspec, model_id);
     int err = 0;
@@ -183,7 +181,7 @@ static int modelspec_test_check (int test_ci, int model_id, PRN *prn)
 	pputs(prn, _("Sorry, command not available for this estimator"));
 	pputc(prn, '\n');
 	err = 1;
-    } else if (modelspec_sample_problem(modelspec, m, datainfo)) {
+    } else if (modelspec_sample_problem(modelspec, m, pdinfo)) {
 	pputs(prn, _("Can't do: the current data set is different from "
 		     "the one on which\nthe reference model was estimated\n"));
 	err = 1;
@@ -192,7 +190,7 @@ static int modelspec_test_check (int test_ci, int model_id, PRN *prn)
     return err;
 }
 
-void file_get_line (void)
+void file_get_line (CMD *cmd)
 {
     clear(line, MAXLINE);
     fgets(line, MAXLINE - 1, fb);
@@ -208,24 +206,24 @@ void file_get_line (void)
 	set_gretl_echo(0);
     }
 
-    if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
+    if (gretl_echo_on() && cmd->ci == RUN && batch && *line == '(') {
 	printf("%s", line);
 	*linebak = 0;
     }
 }
 
-int fn_get_line (void)
+int fn_get_line (CMD *cmd, double ***pZ, DATAINFO **ppdinfo)
 {
     int err = 0;
 
     clear(line, MAXLINE);
-    gretl_function_get_line(line, MAXLINE, &Z, &datainfo, &err);
+    gretl_function_get_line(line, MAXLINE, pZ, ppdinfo, &err);
 
     if (*line != '\0') {
 	*linebak = 0;
 	strncat(linebak, line, MAXLINE - 1);
 
-	if (gretl_echo_on() && cmd.ci == RUN && batch && *line == '(') {
+	if (gretl_echo_on() && cmd->ci == RUN && batch && *line == '(') {
 	    printf("%s", line);
 	    *linebak = 0;
 	}
@@ -282,20 +280,23 @@ static void force_language (int f)
 
 #endif /* ENABLE_NLS */
 
-static int clear_data (void)
+static int clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
+		       MODEL **models)
 {
+    DATAINFO *pdinfo;
     int err = 0;
 
     *paths.datfile = 0;
 
-    err = restore_full_sample(&Z, &datainfo); 
+    err = restore_full_sample(pZ, ppdinfo); 
+    pdinfo = *ppdinfo;
 
-    if (Z != NULL) {
-	free_Z(Z, datainfo); 
-	Z = NULL;
+    if (pZ != NULL && *pZ != NULL) {
+	free_Z(*pZ, pdinfo); 
+	*pZ = NULL;
     }
 
-    clear_datainfo(datainfo, CLEAR_FULL);
+    clear_datainfo(pdinfo, CLEAR_FULL);
 
     data_status = 0;
 
@@ -309,7 +310,7 @@ static int clear_data (void)
 
     reset_model_count();
 
-    gretl_cmd_destroy_context(&cmd);
+    gretl_cmd_destroy_context(cmd);
 
     return err;
 }
@@ -321,7 +322,7 @@ static void get_a_filename (char *fname)
     fgets(fname, MAXLEN - 1, stdin);
 }
 
-static int get_an_input_line (void)
+static int get_an_input_line (CMD *cmd, double ***pZ, DATAINFO **ppdinfo)
 {
     int compiling = gretl_compiling_function() || 
 	gretl_compiling_loop();
@@ -329,10 +330,10 @@ static int get_an_input_line (void)
 
     if (gretl_executing_function()) {
 	/* reading from compiled function */
-	err = fn_get_line();
+	err = fn_get_line(cmd, pZ, ppdinfo);
     } else if (runit || batch) {
 	/* reading from script file */
-	file_get_line();
+	file_get_line(cmd);
     } else {
 	/* normal interactive use */
 #ifdef HAVE_READLINE
@@ -352,7 +353,9 @@ static int get_an_input_line (void)
     return err;
 }
 
-static int maybe_get_input_line_continuation (char *tmp)
+static int maybe_get_input_line_continuation (double ***pZ,
+					      DATAINFO **ppdinfo,
+					      char *tmp)
 {
     int err = 0;
 
@@ -365,7 +368,7 @@ static int maybe_get_input_line_continuation (char *tmp)
 	tmp[0] = '\0';
 
 	if (gretl_executing_function()) {
-	    gretl_function_get_line(tmp, MAXLINE - 1, &Z, &datainfo, &err);
+	    gretl_function_get_line(tmp, MAXLINE - 1, pZ, ppdinfo, &err);
 	} else if (batch || runit) {
 	    fgets(tmp, MAXLINE - 1, fb);
 	} else {
@@ -414,10 +417,14 @@ static void set_errfatal (int code)
 
 int main (int argc, char *argv[])
 {
+    double **Z;
+    DATAINFO *datainfo;
+    MODEL **models;
     int cli_get_data = 0;
     int cmd_overflow = 0;
     char filearg[MAXLEN];
     char tmp[MAXLINE];
+    CMD cmd;
     PRN *prn;
     int err = 0;
 
@@ -629,7 +636,7 @@ int main (int argc, char *argv[])
 	/* re-initialize: will be incremented by "run" cmd */
 	runit = 0;
 	sprintf(line, "run %s", runfile);
-	exec_line(line, prn);
+	exec_line(line, &cmd, &Z, &datainfo, models, prn);
     }
 
     /* should we stop immediately on error, in batch mode? */
@@ -649,21 +656,21 @@ int main (int argc, char *argv[])
 	    }
 	    set_errfatal(ERRFATAL_AUTO);
 	} else {
-	    err = get_an_input_line();
+	    err = get_an_input_line(&cmd, &Z, &datainfo);
 	    if (err) {
 		errmsg(err, prn);
 		continue;
 	    }
 	}
 
-	cmd_overflow = maybe_get_input_line_continuation(tmp);
+	cmd_overflow = maybe_get_input_line_continuation(&Z, &datainfo, tmp);
 	if (cmd_overflow) {
 	    fprintf(stderr, _("Maximum length of command line "
 			      "(%d bytes) exceeded\n"), MAXLINE);
 	    break;
 	} else {
 	    strcpy(linecopy, line);
-	    err = exec_line(line, prn);
+	    err = exec_line(line, &cmd, &Z, &datainfo, models, prn);
 	}
     } /* end of get commands loop */
 
@@ -712,17 +719,18 @@ static void printf_strip (char *s)
     }
 }
 
-static int do_autofit_plot (PRN *prn)
+static int do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+			    PRN *prn)
 {
+    int lines[1] = {1};
     int plotlist[3];
     int err = 0;
 
     plotlist[0] = 2;
-    plotlist[1] = gretl_model_get_depvar(models[0]);
-    plotlist[2] = varindex(datainfo, "autofit");
+    plotlist[1] = gretl_model_get_depvar(pmod);
+    plotlist[2] = varindex(pdinfo, "autofit");
 
-    lines[0] = 1;
-    err = gnuplot(plotlist, lines, NULL, &Z, datainfo,
+    err = gnuplot(plotlist, lines, NULL, pZ, pdinfo,
 		  &plot_count, gp_flags(batch, OPT_T));
 
     if (err) {
@@ -732,28 +740,30 @@ static int do_autofit_plot (PRN *prn)
     return err;
 }
 
-static int maybe_print_model (MODEL *pmod, gretlopt opt, PRN *prn)
+static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
+			      PRN *prn, gretlopt opt)
 {
     int err = pmod->errcode;
 
     if (err) {
 	errmsg(err, prn);
     } else {
-	printmodel(pmod, datainfo, opt, prn);
+	printmodel(pmod, pdinfo, opt, prn);
     }
 
     return err;
 }
 
-static int exec_line (char *line, PRN *prn) 
+static int exec_line (char *line, CMD *cmd, 
+		      double ***pZ, DATAINFO **ppdinfo,
+		      MODEL **models,
+		      PRN *prn) 
 {
-    GRETL_VAR *var = NULL;
+    DATAINFO *pdinfo = *ppdinfo;
     int old_runit = runit;
     int alt_model = 0;
-    int dbdata = 0;
-    unsigned char echo_flags;
-    char s1[12], s2[12];
-    double rho;
+    char datfile[MAXLEN];
+    char runfile[MAXLEN];
     int k, err = 0;
 
     static int in_comment;
@@ -773,12 +783,12 @@ static int exec_line (char *line, PRN *prn)
     if (!in_comment) {
 	/* catch requests relating to saved objects, which are not
 	   really "commands" as such */
-	k = saved_object_action(line, prn);
+	k = saved_object_action(line, pZ, pdinfo, models, prn);
 	if (k == 1) return 0;   /* action was OK */
 	if (k == -1) return 1;  /* action was faulty */
 
 	/* are we ready for this? */
-	if (!data_status && !cmd.ignore && !ready_for_command(line)) {
+	if (!data_status && !cmd->ignore && !ready_for_command(line)) {
 	    fprintf(stderr, _("You must open a data file first\n"));
 	    return 1;
 	}
@@ -789,11 +799,12 @@ static int exec_line (char *line, PRN *prn)
 
     /* if we're stacking commands for a loop, parse "lightly" */
     if (gretl_compiling_loop()) {
-	err = get_command_index(line, &cmd, datainfo);
+	err = get_command_index(line, cmd, pdinfo);
     } else {
-	err = parse_command_line(line, &cmd, &Z, datainfo);
+	err = parse_command_line(line, cmd, pZ, pdinfo);
 	if (err && gretl_executing_function()) {
-	    gretl_function_stop_on_error(&Z, &datainfo, prn);
+	    gretl_function_stop_on_error(pZ, ppdinfo, prn);
+	    pdinfo = *ppdinfo;
 	}	
     }
 
@@ -803,20 +814,20 @@ static int exec_line (char *line, PRN *prn)
     }
 
     /* are we in a multi-line comment block? */
-    in_comment = cmd.ignore;
+    in_comment = cmd->ignore;
 
     /* if in batch mode, echo comments from input */
-    if (batch && cmd.ci == CMD_COMMENT && gretl_echo_on()) {
+    if (batch && cmd->ci == CMD_COMMENT && gretl_echo_on()) {
 	printf_strip(linebak);
     }
 
-    if (cmd.ci < 0) {
+    if (cmd->ci < 0) {
 	/* there's nothing there */ 	
 	return 0;
     }
 
-    if (sys != NULL && cmd.ci != END && cmd.ci != EQUATION &&
-	cmd.ci != SYSTEM) {
+    if (sys != NULL && cmd->ci != END && cmd->ci != EQUATION &&
+	cmd->ci != SYSTEM) {
 	printf(_("Command '%s' ignored; not valid within equation system\n"), 
 	       line);
 	gretl_equation_system_destroy(sys);
@@ -824,27 +835,28 @@ static int exec_line (char *line, PRN *prn)
 	return 1;
     }
 
-    if (cmd.ci == LOOP && !batch && !runit) {
+    if (cmd->ci == LOOP && !batch && !runit) {
 	pputs(prn, _("Enter commands for loop.  "
 		     "Type 'endloop' to get out\n"));
     }
    
-    if (cmd.ci == LOOP || gretl_compiling_loop()) {  
+    if (cmd->ci == LOOP || gretl_compiling_loop()) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(cmd.ci)) {
+	if (!ok_in_loop(cmd->ci)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	} else {
 	    if (gretl_echo_on()) {
-		echo_flags = CMD_ECHO_TO_STDOUT;
+		unsigned char eflags = CMD_ECHO_TO_STDOUT;
+
 		if (gretl_compiling_loop()) {
-		    echo_flags |= CMD_STACKING;
+		    eflags |= CMD_STACKING;
 		}
 		if (batch || runit) {
-		    echo_flags |= CMD_BATCH_MODE;
+		    eflags |= CMD_BATCH_MODE;
 		}
-		echo_cmd(&cmd, datainfo, line, echo_flags, cmdprn);
+		echo_cmd(cmd, pdinfo, line, eflags, cmdprn);
 	    }
-	    err = gretl_loop_append_line(line, cmd.ci, cmd.opt, &Z, datainfo);
+	    err = gretl_loop_append_line(line, cmd->ci, cmd->opt, pZ, pdinfo);
 	    if (err) {
 		set_errfatal(ERRFATAL_FORCE);
 		print_gretl_errmsg(prn);
@@ -854,26 +866,28 @@ static int exec_line (char *line, PRN *prn)
     }
 
     if (gretl_echo_on()) {
-	echo_flags = CMD_ECHO_TO_STDOUT;
+	unsigned char eflags = CMD_ECHO_TO_STDOUT;
+
 	if (batch || runit) {
-	    echo_flags |= CMD_BATCH_MODE;
+	    eflags |= CMD_BATCH_MODE;
 	}
-	echo_cmd(&cmd, datainfo, line, echo_flags, NULL);
+	echo_cmd(cmd, pdinfo, line, eflags, NULL);
     }
 
-    check_for_loop_only_options(cmd.ci, cmd.opt, prn);
+    check_for_loop_only_options(cmd->ci, cmd->opt, prn);
 
-    if (NEEDS_MODEL_CHECK(cmd.ci)) {
-	err = model_test_check(&cmd, prn);
+    if (NEEDS_MODEL_CHECK(cmd->ci)) {
+	err = model_test_check(cmd, pdinfo, prn);
 	if (err) {
 	    if (gretl_executing_function()) {
-		gretl_function_stop_on_error(&Z, &datainfo, prn);
+		gretl_function_stop_on_error(pZ, ppdinfo, prn);
+		pdinfo = *ppdinfo;
 	    }
 	    return err;
 	}
     }
 
-    switch (cmd.ci) {
+    switch (cmd->ci) {
 
     case ADDOBS:
     case ADF: 
@@ -920,7 +934,7 @@ static int exec_line (char *line, PRN *prn)
     case VARLIST:
     case VARTEST: 
     case XTAB:
-	err = simple_commands(&cmd, line, &Z, datainfo, prn);
+	err = simple_commands(cmd, line, pZ, pdinfo, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}
@@ -930,74 +944,81 @@ static int exec_line (char *line, PRN *prn)
     case OMIT:
     plain_add_omit:
 	clear_model(models[1]);
-	if (cmd.ci == ADD || cmd.ci == ADDTO) {
-	    err = add_test(cmd.list, models[0], models[1], 
-			   &Z, datainfo, cmd.opt, prn);
+	if (cmd->ci == ADD || cmd->ci == ADDTO) {
+	    err = add_test(cmd->list, models[0], models[1], 
+			   pZ, pdinfo, cmd->opt, prn);
 	} else {
-	    err = omit_test(cmd.list, models[0], models[1],
-			    &Z, datainfo, cmd.opt, prn);
+	    err = omit_test(cmd->list, models[0], models[1],
+			    pZ, pdinfo, cmd->opt, prn);
 	}
 	if (err) {
 	    errmsg(err, prn);
-	} else if (!(cmd.opt & OPT_Q) && !(cmd.opt & OPT_W)) {
+	} else if (!(cmd->opt & OPT_Q) && !(cmd->opt & OPT_W)) {
 	    /* for command-line use, we keep a "stack" of 
 	       two models, and recycle the places */
 	    swap_models(models[0], models[1]);
 	}
-	if (!(cmd.opt & OPT_W)) {
+	if (!(cmd->opt & OPT_W)) {
 	    clear_model(models[1]);
 	}
 	break;	
 
     case ADDTO:
     case OMITFROM:
-	k = atoi(cmd.param);
-	if ((err = modelspec_test_check(cmd.ci, k, prn))) break;
-	if (k == models[0]->ID) goto plain_add_omit;
-	err = re_estimate(modelspec_get_command_by_id(modelspec, k), 
-			  &tmpmod, &Z, datainfo);
-	if (err) {
-	    pprintf(prn, _("Failed to reconstruct model %d\n"), k);
+	k = atoi(cmd->param);
+	if ((err = modelspec_test_check(cmd->ci, k, pdinfo, prn))) {
 	    break;
-	} 
-	clear_model(models[1]);
-	tmpmod.ID = k;
-	if (cmd.ci == ADDTO) {
-	    err = add_test(cmd.list, &tmpmod, models[1], 
-			   &Z, datainfo, cmd.opt, prn);
-	} else {
-	    err = omit_test(cmd.list, &tmpmod, models[1],
-			    &Z, datainfo, cmd.opt, prn);
 	}
-	if (err) {
-	    errmsg(err, prn);
-	    clear_model(models[1]);
-	    break;
+	if (k == models[0]->ID) {
+	    goto plain_add_omit;
 	} else {
-	    if (!(cmd.opt & OPT_Q)) {
-		swap_models(models[0], models[1]);
+	    MODEL tmpmod;
+
+	    err = re_estimate(modelspec_get_command_by_id(modelspec, k), 
+			      &tmpmod, pZ, pdinfo);
+	    if (err) {
+		pprintf(prn, _("Failed to reconstruct model %d\n"), k);
+		break;
+	    } 
+	    clear_model(models[1]);
+	    tmpmod.ID = k;
+	    if (cmd->ci == ADDTO) {
+		err = add_test(cmd->list, &tmpmod, models[1], 
+			       pZ, pdinfo, cmd->opt, prn);
+	    } else {
+		err = omit_test(cmd->list, &tmpmod, models[1],
+				pZ, pdinfo, cmd->opt, prn);
 	    }
-	    clear_model(models[1]);
+	    if (err) {
+		errmsg(err, prn);
+		clear_model(models[1]);
+		break;
+	    } else {
+		if (!(cmd->opt & OPT_Q)) {
+		    swap_models(models[0], models[1]);
+		}
+		clear_model(models[1]);
+	    }
+	    clear_model(&tmpmod);
 	}
-	clear_model(&tmpmod);
 	break;
 
     case AR:
     case ARMA:
 	clear_model(models[0]);
-	if (cmd.ci == AR) {
-	    *models[0] = ar_func(cmd.list, &Z, datainfo, cmd.opt, prn);
+	if (cmd->ci == AR) {
+	    *models[0] = ar_func(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else {
-	    *models[0] = arma(cmd.list, (const double **) Z, datainfo,
-			      cmd.opt, prn);
+	    *models[0] = arma(cmd->list, (const double **) *pZ, pdinfo,
+			      cmd->opt, prn);
 	}
-	err = maybe_print_model(models[0], cmd.opt, prn);
+	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	break;
 
     case ARCH:
 	clear_model(models[1]);
-	*models[1] = arch_model(cmd.list, cmd.order, &Z, datainfo, 
-				cmd.opt, prn);
+	*models[1] = arch_model(cmd->list, cmd->order, pZ, pdinfo, 
+				cmd->opt, prn);
 	if ((err = models[1]->errcode)) { 
 	    errmsg(err, prn);
 	}
@@ -1014,16 +1035,16 @@ static int exec_line (char *line, PRN *prn)
     case CHOW:
     case QLRTEST:
     case VIF:
-	if (cmd.ci == COEFFSUM) {
-	    err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
-	} else if (cmd.ci == CUSUM) {
-	    err = cusum_test(models[0], &Z, datainfo, OPT_NONE, prn);
-	} else if (cmd.ci == RESET) {
-	    err = reset_test(models[0], &Z, datainfo, OPT_NONE, prn);
-	} else if (cmd.ci == CHOW || cmd.ci == QLRTEST) {
-	    err = chow_test(line, models[0], &Z, datainfo, OPT_NONE, prn);
+	if (cmd->ci == COEFFSUM) {
+	    err = sum_test(cmd->list, models[0], pZ, pdinfo, prn);
+	} else if (cmd->ci == CUSUM) {
+	    err = cusum_test(models[0], pZ, pdinfo, OPT_NONE, prn);
+	} else if (cmd->ci == RESET) {
+	    err = reset_test(models[0], pZ, pdinfo, OPT_NONE, prn);
+	} else if (cmd->ci == CHOW || cmd->ci == QLRTEST) {
+	    err = chow_test(line, models[0], pZ, pdinfo, OPT_NONE, prn);
 	} else {
-	    err = vif_test(models[0], &Z, datainfo, prn);
+	    err = vif_test(models[0], pZ, pdinfo, prn);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -1033,28 +1054,32 @@ static int exec_line (char *line, PRN *prn)
     case CORC:
     case HILU:
     case PWE:
-	rho = estimate_rho(cmd.list, &Z, datainfo, cmd.ci,
-			   &err, cmd.opt, prn);
-	if (err) {
-	    errmsg(err, prn);
-	    break;
+	{
+	    double rho;
+
+	    rho = estimate_rho(cmd->list, pZ, pdinfo, cmd->ci,
+			       &err, cmd->opt, prn);
+	    if (err) {
+		errmsg(err, prn);
+		break;
+	    }
+	    clear_model(models[0]);
+	    *models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);
+	    err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	}
-	clear_model(models[0]);
-	*models[0] = ar1_lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
-	err = maybe_print_model(models[0], cmd.opt, prn);
 	break;
 
     case CORRGM:
-	k = atoi(cmd.param);
-	err = corrgram(cmd.list[1], k, 0, &Z, datainfo, prn, OPT_A);
+	k = atoi(cmd->param);
+	err = corrgram(cmd->list[1], k, 0, pZ, pdinfo, prn, OPT_A);
 	if (err) {
 	    pputs(prn, _("Failed to generate correlogram\n"));
 	}
 	break;
 
     case DELEET:
-	if (get_matrix_by_name(cmd.param)) {
-	    err = user_matrix_destroy(cmd.param, prn);
+	if (get_matrix_by_name(cmd->param)) {
+	    err = user_matrix_destroy(cmd->param, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    } 
@@ -1065,7 +1090,7 @@ static int exec_line (char *line, PRN *prn)
 			 " mode\n"));
 	    break;
 	}	
-	err = dataset_drop_listed_variables(cmd.list, &Z, datainfo, &k);
+	err = dataset_drop_listed_variables(cmd->list, pZ, pdinfo, &k);
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
 	} else {
@@ -1073,27 +1098,27 @@ static int exec_line (char *line, PRN *prn)
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
 	    }
-	    maybe_list_vars(datainfo, prn);
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case END:
-	if (!strcmp(cmd.param, "system")) {
-	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
+	if (!strcmp(cmd->param, "system")) {
+	    err = gretl_equation_system_finalize(sys, pZ, pdinfo, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    }
 	    sys = NULL;
-	} else if (!strcmp(cmd.param, "mle") || !strcmp(cmd.param, "nls")) {
+	} else if (!strcmp(cmd->param, "mle") || !strcmp(cmd->param, "nls")) {
 	    clear_model(models[0]);
-	    *models[0] = nls(&Z, datainfo, cmd.opt, prn);
-	    err = maybe_print_model(models[0], cmd.opt, prn);
+	    *models[0] = nls(pZ, pdinfo, cmd->opt, prn);
+	    err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	    if (!err) {
 		alt_model = 1;
 	    }
-	} else if (!strcmp(cmd.param, "restrict")) {
-	    err = gretl_restriction_set_finalize(rset, (const double **) Z, 
-						 datainfo, prn);
+	} else if (!strcmp(cmd->param, "restrict")) {
+	    err = gretl_restriction_set_finalize(rset, (const double **) *pZ, 
+						 pdinfo, prn);
 	    if (err) {
 		errmsg(err, prn);
 	    }
@@ -1111,7 +1136,7 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case EQUATION:
-	err = gretl_equation_system_append(sys, cmd.list);
+	err = gretl_equation_system_append(sys, cmd->list);
 	if (err) {
 	    sys = NULL;
 	    errmsg(err, prn);
@@ -1120,73 +1145,88 @@ static int exec_line (char *line, PRN *prn)
 
     case TABPRINT:
     case EQNPRINT:
-	strcpy(texfile, cmd.param);
-	err = texprint(models[0], datainfo, texfile, 
-		       (cmd.ci == EQNPRINT)? (cmd.opt | OPT_E) :
-		       cmd.opt);
-	if (err) {
-	    pputs(prn, _("Couldn't open tex file for writing\n"));
+	if ((models[0])->errcode == E_NAN) {
+	    pprintf(prn, _("Couldn't format model\n"));
 	} else {
-	    pprintf(prn, _("Model printed to %s\n"), texfile);
+	    char texfile[MAXLEN];
+	
+	    strcpy(texfile, cmd->param);
+	    err = texprint(models[0], pdinfo, texfile, 
+			   (cmd->ci == EQNPRINT)? (cmd->opt | OPT_E) :
+			   cmd->opt);
+	    if (err) {
+		pputs(prn, _("Couldn't open tex file for writing\n"));
+	    } else {
+		pprintf(prn, _("Model printed to %s\n"), texfile);
+	    }
 	}
 	break;
 
     case FCAST:
     case FIT:
-	if (cmd.ci == FIT) {
-	    err = add_forecast("fcast autofit", models[0], &Z, datainfo, cmd.opt);
+	if (cmd->ci == FIT) {
+	    err = add_forecast("fcast autofit", models[0], pZ, pdinfo, cmd->opt);
 	} else {
-	    err = add_forecast(line, models[0], &Z, datainfo, cmd.opt);
+	    err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
 	}
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    if (cmd.ci == FIT) {
+	    if (cmd->ci == FIT) {
 		pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
 	    }
-	    maybe_list_vars(datainfo, prn);
-	    if (cmd.ci == FIT && dataset_is_time_series(datainfo)) {
-		do_autofit_plot(prn);
+	    maybe_list_vars(pdinfo, prn);
+	    if (cmd->ci == FIT && dataset_is_time_series(pdinfo)) {
+		do_autofit_plot(models[0], pZ, pdinfo, prn);
 	    }
 	}
 	break;
 
     case FCASTERR:
-	err = display_forecast(line, models[0], &Z, datainfo, cmd.opt, prn);
+	err = display_forecast(line, models[0], pZ, pdinfo, cmd->opt, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}
 	break;
 
     case FREQ:
-	err = freqdist(cmd.list[1], (const double **) Z, 
-		       datainfo, !batch, cmd.opt, prn);
+	err = freqdist(cmd->list[1], (const double **) *pZ, 
+		       pdinfo, !batch, cmd->opt, prn);
 	break;
 
     case GENR:
-	err = generate(line, &Z, datainfo, cmd.opt, prn);
+	err = generate(line, pZ, pdinfo, cmd->opt, prn);
 	if (err) { 
 	    errmsg(err, prn);
 	} 
 	break;
 
     case GNUPLOT:
-	if ((cmd.opt & OPT_Z) && 
-	    (cmd.list[0] != 3 || 
-	     !gretl_isdummy(datainfo->t1, datainfo->t2, Z[cmd.list[3]]))) { 
-	    pputs(prn, _("You must supply three variables, the last of "
-			 "which is a dummy variable\n(with values 1 or 0)\n"));
-	    break;
-	}
-	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_Z) || (cmd.opt & OPT_S)) { 
-	    err = gnuplot(cmd.list, NULL, cmd.param, &Z, datainfo,
-			  &plot_count, gp_flags(batch, cmd.opt));
+    case SCATTERS:
+	if (cmd->ci == GNUPLOT) {
+	    if ((cmd->opt & OPT_Z) && 
+		(cmd->list[0] != 3 || 
+		 !gretl_isdummy(pdinfo->t1, pdinfo->t2, (*pZ)[cmd->list[3]]))) { 
+		pputs(prn, _("You must supply three variables, the last of "
+			     "which is a dummy variable\n(with values 1 or 0)\n"));
+		break;
+	    }
+	    if ((cmd->opt & OPT_M) || (cmd->opt & OPT_Z) || (cmd->opt & OPT_S)) { 
+		err = gnuplot(cmd->list, NULL, cmd->param, pZ, pdinfo,
+			      &plot_count, gp_flags(batch, cmd->opt));
+	    } else {
+		int lines[1];
+
+		lines[0] = (cmd->opt & OPT_O)? 1 : 0;
+		err = gnuplot(cmd->list, lines, cmd->param, 
+			      pZ, pdinfo, &plot_count, 
+			      gp_flags(batch, 0));
+	    }
 	} else {
-	    lines[0] = (cmd.opt & OPT_O)? 1 : 0;
-	    err = gnuplot(cmd.list, lines, cmd.param, 
-			  &Z, datainfo, &plot_count, 
-			  gp_flags(batch, 0));
+	    err = multi_scatters(cmd->list, (const double **) *pZ, pdinfo, 
+				 &plot_count, gp_flags(batch, cmd->opt));
 	}
+
 	if (err) {
 	    pputs(prn, _("gnuplot command failed\n"));
 	} else if (batch) {
@@ -1194,22 +1234,12 @@ static int exec_line (char *line, PRN *prn)
 	}
 	break;
 
-    case SCATTERS:
-	err = multi_scatters(cmd.list, (const double **) Z, datainfo, 
-			     &plot_count, gp_flags(batch, cmd.opt));
-	if (err) {
-	    pputs(prn, _("scatters command failed\n"));
-	} else if (batch) {
-	    pprintf(prn, _("wrote %s\n"), gretl_plotfile());
-	}
-	break;
-
     case HAUSMAN:
-	err = panel_hausman_test(models[0], &Z, datainfo, cmd.opt, prn);
+	err = panel_hausman_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	break;
 
     case HELP:
-	help(cmd.param, paths.helpfile, prn);
+	help(cmd->param, paths.helpfile, prn);
 	break;
 
     case IMPORT:
@@ -1219,19 +1249,20 @@ static int exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (data_status) {
-	    clear_data();
+	    clear_data(cmd, pZ, ppdinfo, models);
 	}
-	if (cmd.opt & OPT_B) {
-	    err = import_box(&Z, &datainfo, datfile, prn);
-	} else if (cmd.opt & OPT_O) {
-	    err = import_octave(&Z, &datainfo, datfile, prn);
+	if (cmd->opt & OPT_B) {
+	    err = import_box(pZ, ppdinfo, datfile, prn);
+	} else if (cmd->opt & OPT_O) {
+	    err = import_octave(pZ, ppdinfo, datfile, prn);
 	} else {
-	    err = import_csv(&Z, &datainfo, datfile, prn);
+	    err = import_csv(pZ, ppdinfo, datfile, prn);
 	}
+	pdinfo = *ppdinfo;
 	if (!err) { 
 	    data_status = 1;
-	    print_smpl(datainfo, 0, prn);
-	    varlist(datainfo, prn);
+	    print_smpl(pdinfo, 0, prn);
+	    varlist(pdinfo, prn);
 	    pputs(prn, _("You should now use the \"print\" command "
 			 "to verify the data\n"));
 	    pputs(prn, _("If they are OK, use the \"store\" command "
@@ -1244,71 +1275,72 @@ static int exec_line (char *line, PRN *prn)
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
 	    pputs(prn, _("'open' command is malformed\n"));
-	    break;
-	}
-
-	k = detect_filetype(datfile, &paths, prn);
-	dbdata = (k == GRETL_NATIVE_DB || k == GRETL_RATS_DB || k == GRETL_PCGIVE_DB);
-
-	if (data_status && !batch && !dbdata && cmd.ci != APPEND &&
-	    strcmp(datfile, paths.datfile)) {
-	    fprintf(stderr, _("Opening a new data file closes the "
-			      "present one.  Proceed? (y/n) "));
-	    fgets(response, 2, stdin);
-	    if (*response != 'y' && *response != 'Y') {
-		fprintf(stderr, 
-			_("OK, staying with current data set\n"));
-		break;
-	    }
-	}
-
-	if (data_status && !dbdata && cmd.ci != APPEND) {
-	    clear_data();
-	}
-
-	if (k == GRETL_CSV_DATA) {
-	    err = import_csv(&Z, &datainfo, datfile, prn);
-	} else if (k == GRETL_OCTAVE) {
-	    err = import_octave(&Z, &datainfo, datfile, prn);
-	} else if (k == GRETL_BOX_DATA) {
-	    err = import_box(&Z, &datainfo, datfile, prn);
-	} else if (WORKSHEET_IMPORT(k)) {
-	    err = import_other(&Z, &datainfo, k, datfile, prn);
-	} else if (k == GRETL_XML_DATA) {
-	    err = gretl_read_gdt(&Z, &datainfo, datfile, &paths, 
-				 data_status, prn, 0);
-	} else if (dbdata) {
-	    err = set_db_name(datfile, k, &paths, prn);
 	} else {
-	    err = gretl_get_data(&Z, &datainfo, datfile, &paths, 
-				 data_status, prn);
-	}
+	    int k = detect_filetype(datfile, &paths, prn);
+	    int dbdata = (k == GRETL_NATIVE_DB || k == GRETL_RATS_DB || 
+			  k == GRETL_PCGIVE_DB);
 
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    if (!dbdata && cmd.ci != APPEND) {
-		strncpy(paths.datfile, datfile, MAXLEN-1);
+	    if (data_status && !batch && !dbdata && cmd->ci != APPEND &&
+		strcmp(datfile, paths.datfile)) {
+		fprintf(stderr, _("Opening a new data file closes the "
+				  "present one.  Proceed? (y/n) "));
+		fgets(response, 2, stdin);
+		if (*response != 'y' && *response != 'Y') {
+		    fprintf(stderr, 
+			    _("OK, staying with current data set\n"));
+		    break;
+		}
 	    }
-	    data_status = 1;
-	    if (datainfo->v > 0 && !dbdata) {
-		varlist(datainfo, prn);
+
+	    if (data_status && !dbdata && cmd->ci != APPEND) {
+		clear_data(cmd, pZ, ppdinfo, models);
+		pdinfo = *ppdinfo;
 	    }
-	    paths.currdir[0] = '\0';
+
+	    if (k == GRETL_CSV_DATA) {
+		err = import_csv(pZ, ppdinfo, datfile, prn);
+	    } else if (k == GRETL_OCTAVE) {
+		err = import_octave(pZ, ppdinfo, datfile, prn);
+	    } else if (k == GRETL_BOX_DATA) {
+		err = import_box(pZ, ppdinfo, datfile, prn);
+	    } else if (WORKSHEET_IMPORT(k)) {
+		err = import_other(pZ, ppdinfo, k, datfile, prn);
+	    } else if (k == GRETL_XML_DATA) {
+		err = gretl_read_gdt(pZ, ppdinfo, datfile, &paths, 
+				     data_status, prn, 0);
+	    } else if (dbdata) {
+		err = set_db_name(datfile, k, &paths, prn);
+	    } else {
+		err = gretl_get_data(pZ, ppdinfo, datfile, &paths, 
+				     data_status, prn);
+	    }
+	    pdinfo = *ppdinfo;
+	    if (err) {
+		errmsg(err, prn);
+	    } else {
+		if (!dbdata && cmd->ci != APPEND) {
+		    strncpy(paths.datfile, datfile, MAXLEN-1);
+		}
+		data_status = 1;
+		if (pdinfo->v > 0 && !dbdata) {
+		    varlist(pdinfo, prn);
+		}
+		paths.currdir[0] = '\0';
+	    }
 	}
 	break;
 
     case LEVERAGE:
-	err = leverage_test(models[0], &Z, datainfo, cmd.opt, prn);
+	err = leverage_test(models[0], pZ, pdinfo, cmd->opt, prn);
 	if (err) {
 	    errmsg(err, prn);
-	} else if (cmd.opt & OPT_S) {
-	    maybe_list_vars(datainfo, prn);
+	} else if (cmd->opt & OPT_S) {
+	    maybe_list_vars(pdinfo, prn);
 	}
 	break;
 
     case LMTEST:
-	err = lmtest_driver(cmd.param, &Z, datainfo, cmd.opt, prn);
+	err = lmtest_driver(cmd->param, pZ, pdinfo, cmd->opt, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}
@@ -1325,47 +1357,47 @@ static int exec_line (char *line, PRN *prn)
     case TOBIT:
     case TSLS:
 	clear_model(models[0]);
-	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
-	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
-	} else if (cmd.ci == HSK) {
-	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
-	} else if (cmd.ci == LOGISTIC) {
-	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
-	} else if (cmd.ci == TOBIT) {
-	    *models[0] = tobit_model(cmd.list, &Z, datainfo,
-				     (cmd.opt & OPT_V)? prn : NULL);
-	} else if (cmd.ci == POISSON) {
-	    *models[0] = poisson_model(cmd.list, &Z, datainfo,
-				       (cmd.opt & OPT_V)? prn : NULL);
-	} else if (cmd.ci == TSLS) {
-	    *models[0] = tsls_func(cmd.list, TSLS, &Z, datainfo, cmd.opt);
-	} else if (cmd.ci == LAD) {
-	    *models[0] = lad(cmd.list, &Z, datainfo);
-	} else if (cmd.ci == GARCH) {
-	    *models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, prn);
-	} else if (cmd.ci == PANEL) {
-	    *models[0] = panel_model(cmd.list, &Z, datainfo, cmd.opt, prn);
+	if (cmd->ci == LOGIT || cmd->ci == PROBIT) {
+	    *models[0] = logit_probit(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
+	} else if (cmd->ci == HSK) {
+	    *models[0] = hsk_func(cmd->list, pZ, pdinfo);
+	} else if (cmd->ci == LOGISTIC) {
+	    *models[0] = logistic_model(cmd->list, pZ, pdinfo, cmd->param);
+	} else if (cmd->ci == TOBIT) {
+	    *models[0] = tobit_model(cmd->list, pZ, pdinfo,
+				     (cmd->opt & OPT_V)? prn : NULL);
+	} else if (cmd->ci == POISSON) {
+	    *models[0] = poisson_model(cmd->list, pZ, pdinfo,
+				       (cmd->opt & OPT_V)? prn : NULL);
+	} else if (cmd->ci == TSLS) {
+	    *models[0] = tsls_func(cmd->list, TSLS, pZ, pdinfo, cmd->opt);
+	} else if (cmd->ci == LAD) {
+	    *models[0] = lad(cmd->list, pZ, pdinfo);
+	} else if (cmd->ci == GARCH) {
+	    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
+	} else if (cmd->ci == PANEL) {
+	    *models[0] = panel_model(cmd->list, pZ, pdinfo, cmd->opt, prn);
 	} else {
 	    /* can't happen */
 	    err = 1;
 	    break;
 	}
-	err = maybe_print_model(models[0], cmd.opt, prn);
+	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	break;
 
     case MLE:
     case NLS:
-	err = nls_parse_line(cmd.ci, line, (const double **) Z, datainfo, prn);
+	err = nls_parse_line(cmd->ci, line, (const double **) *pZ, pdinfo, prn);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    gretl_cmd_set_context(&cmd, cmd.ci);
+	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
 	break;
 
     case NULLDATA:
-	k = gretl_int_from_string(cmd.param, (const double **) Z, 
-				  datainfo, &err);
+	k = gretl_int_from_string(cmd->param, (const double **) *pZ, 
+				  pdinfo, &err);
 	if (!err && k < 2) {
 	    err = 1;
 	}
@@ -1374,9 +1406,10 @@ static int exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (data_status) {
-	    clear_data();
+	    clear_data(cmd, pZ, ppdinfo, models);
+	    pdinfo = *ppdinfo;
 	}	
-	err = open_nulldata(&Z, datainfo, data_status, k, prn);
+	err = open_nulldata(pZ, pdinfo, data_status, k, prn);
 	if (err) { 
 	    pputs(prn, _("Failed to create empty data set\n"));
 	} else {
@@ -1388,34 +1421,38 @@ static int exec_line (char *line, PRN *prn)
     case WLS:
     case HCCM:
 	clear_model(models[0]);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt);
-	err = maybe_print_model(models[0], cmd.opt, prn);
+	*models[0] = lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
+	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	break;
 
 #ifdef ENABLE_GMP
     case MPOLS:
 	clear_model(models[0]);
-	*models[0] = mp_ols(cmd.list, (const double **) Z, datainfo);
-	err = maybe_print_model(models[0], cmd.opt, prn);
+	*models[0] = mp_ols(cmd->list, (const double **) *pZ, pdinfo);
+	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	break;
 #endif
 
     case PERGM:
-	err = periodogram(cmd.list[1], &Z, datainfo, cmd.opt | OPT_N, prn);
+	err = periodogram(cmd->list[1], pZ, pdinfo, cmd->opt | OPT_N, prn);
 	if (err) {
 	    pputs(prn, _("Failed to generate periodogram\n"));
 	}
 	break;
 
     case PRINTF:
-	err = do_printf(line, &Z, datainfo, prn);
+	err = do_printf(line, pZ, pdinfo, prn);
 	break;
 
     case PVALUE:
-	if (batch || runit || (sscanf(line, "%s %s", s1, s2) == 2)) {
-	    batch_pvalue(line, (const double **) Z, datainfo, prn, OPT_NONE);
-	} else {
-	    interact_pvalue();
+	{
+	    char s1[12], s2[12];
+
+	    if (batch || runit || (sscanf(line, "%s %s", s1, s2) == 2)) {
+		batch_pvalue(line, (const double **) *pZ, pdinfo, prn, OPT_NONE);
+	    } else {
+		interact_pvalue();
+	    }
 	}
 	break;
 
@@ -1427,14 +1464,14 @@ static int exec_line (char *line, PRN *prn)
 	    if (fb == NULL) {
 		pputs(prn, _("Done\n"));
 	    } else {
-		strcpy(cmd.word, "endrun"); /* overwrite "quit" */
+		strcpy(cmd->word, "endrun"); /* overwrite "quit" */
 	    }
 	    break;
 	}
 	printf(_("commands saved as %s\n"), cmdfile);
 	gretl_print_destroy(cmdprn);
 
-	if (cmd.opt & OPT_X) {
+	if (cmd->opt & OPT_X) {
 	    break;
 	}
 
@@ -1468,7 +1505,7 @@ static int exec_line (char *line, PRN *prn)
 	    pputs(prn, _("Command is malformed\n"));
 	    break;
 	}
-	if (cmd.ci == INCLUDE && gretl_is_xml_file(runfile)) {
+	if (cmd->ci == INCLUDE && gretl_is_xml_file(runfile)) {
 	    err = load_user_function_file(runfile);
 	    if (err) {
 		pputs(prn, _("Error reading function definitions\n"));
@@ -1483,7 +1520,7 @@ static int exec_line (char *line, PRN *prn)
 	    fb = pop_input_file();
 	} else {
 	    fprintf(stderr, _("%s opened OK\n"), runfile);
-	    if (cmd.ci == INCLUDE) {
+	    if (cmd->ci == INCLUDE) {
 		pprintf(cmdprn, "include \"%s\"\n", runfile);
 	    } else {
 		pprintf(cmdprn, "run \"%s\"\n", runfile);
@@ -1493,58 +1530,59 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case SET:
-	err = execute_set_line(line, datainfo, prn);
+	err = execute_set_line(line, pdinfo, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}
 	break;
 
     case SETOBS:
-	err = set_obs(line, &Z, datainfo, cmd.opt);
+	err = set_obs(line, pZ, pdinfo, cmd->opt);
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    if (datainfo->n > 0) {
-		print_smpl(datainfo, 0, prn);
+	    if (pdinfo->n > 0) {
+		print_smpl(pdinfo, 0, prn);
 	    } else {
-		pprintf(prn, _("setting data frequency = %d\n"), datainfo->pd);
+		pprintf(prn, _("setting data frequency = %d\n"), pdinfo->pd);
 	    }
 	}
 	break;
 
     case SETMISS:
-	set_miss(cmd.list, cmd.param, Z, datainfo, prn);
+	set_miss(cmd->list, cmd->param, *pZ, pdinfo, prn);
 	break;
 
     case SMPL:
-	if (cmd.opt == OPT_F) {
-	    err = restore_full_sample(&Z, &datainfo);
-	} else if (cmd.opt) {
-	    err = restrict_sample(line, cmd.list, &Z, &datainfo, 
-				  cmd.opt, prn);
+	if (cmd->opt == OPT_F) {
+	    err = restore_full_sample(pZ, ppdinfo);
+	} else if (cmd->opt) {
+	    err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
+				  cmd->opt, prn);
 	} else { 
-	    err = set_sample(line, (const double **) Z, datainfo);
+	    err = set_sample(line, (const double **) *pZ, pdinfo);
 	}
+	pdinfo = *ppdinfo;
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    print_smpl(datainfo, get_full_length_n(), prn);
+	    print_smpl(pdinfo, get_full_length_n(), prn);
 	}
 	break;
 
     case RESTRICT:
 	/* joint hypothesis test on model or system */
 	if (rset == NULL) {
-	    if (*cmd.param == '\0') {
+	    if (*cmd->param == '\0') {
 		/* if param is non-blank, we're restricting a named system */
-		err = model_test_check(&cmd, prn);
+		err = model_test_check(cmd, pdinfo, prn);
 		if (err) break;
 	    }
-	    rset = restriction_set_start(line, cmd.opt, &err);
+	    rset = restriction_set_start(line, cmd->opt, &err);
 	    if (err) {
 		errmsg(err, prn);
 	    } else {
-		gretl_cmd_set_context(&cmd, RESTRICT);
+		gretl_cmd_set_context(cmd, RESTRICT);
 	    }
 	} else {
 	    err = restriction_set_parse_line(rset, line);
@@ -1558,15 +1596,15 @@ static int exec_line (char *line, PRN *prn)
     case SYSTEM:
 	/* system of equations */
 	if (sys == NULL) {
-	    sys = system_start(line, cmd.opt);
+	    sys = system_start(line, cmd->opt);
 	    if (sys == NULL) {
 		err = 1;
 		errmsg(err, prn);
 	    } else {
-		gretl_cmd_set_context(&cmd, SYSTEM);
+		gretl_cmd_set_context(cmd, SYSTEM);
 	    }
 	} else {
-	    err = system_parse_line(sys, line, datainfo);
+	    err = system_parse_line(sys, line, pdinfo);
 	    if (err) {
 		errmsg(err, prn);
 		sys = NULL;
@@ -1575,57 +1613,59 @@ static int exec_line (char *line, PRN *prn)
 	break;
 
     case TESTUHAT:
-	err = last_model_test_uhat(&Z, datainfo, prn);
+	err = last_model_test_uhat(pZ, pdinfo, prn);
 	if (err) {
 	    errmsg(err, prn);
 	}
 	break;
 
     case VAR:
-	var = gretl_VAR(cmd.order, cmd.list, &Z, datainfo, cmd.opt, 
-			prn, &err);
-	if (var != NULL) {
-	    err = maybe_stack_var(var, &cmd);
-	}
-	if (err) errmsg(err, prn);
-	break;
-
     case VECM:
-	var = vecm(cmd.order, atoi(cmd.extra), cmd.list, &Z, datainfo, 
-		   cmd.opt, prn, &err);
-	if (var != NULL) {
-	    err = maybe_stack_var(var, &cmd);
+	{
+	    GRETL_VAR *var;
+
+	    if (cmd->ci == VAR) {
+		var = gretl_VAR(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, 
+				prn, &err);
+	    } else {
+		var = vecm(cmd->order, atoi(cmd->extra), cmd->list, pZ, pdinfo, 
+			   cmd->opt, prn, &err);
+	    }
+	    if (var != NULL) {
+		err = maybe_stack_var(var, cmd);
+	    }
+	    if (err) errmsg(err, prn);
 	}
-	if (err) errmsg(err, prn);
 	break;
 
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
-		       "in gretlcli\n"), cmd.word);
+		       "in gretlcli\n"), cmd->word);
 	err = 1;
 	break;
     }
 
     if (err && gretl_executing_function()) {
-	gretl_function_stop_on_error(&Z, &datainfo, prn);
+	gretl_function_stop_on_error(pZ, ppdinfo, prn);
+	pdinfo = *ppdinfo;
     }
 
-    if (!err && (is_model_cmd(cmd.word) || alt_model)
-	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
-	attach_subsample_to_model(models[0], datainfo);
+    if (!err && (is_model_cmd(cmd->word) || alt_model)
+	&& !is_quiet_model_test(cmd->ci, cmd->opt)) { 
+	attach_subsample_to_model(models[0], pdinfo);
 #if MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
 		(models[0])->ID, get_model_count());
 #endif
-	if (is_model_cmd(cmd.word)) {
+	if (is_model_cmd(cmd->word)) {
 	    err = modelspec_save(models[0], &modelspec);
 	}
-	maybe_stack_model(models[0], &cmd, prn);
+	maybe_stack_model(models[0], cmd, prn);
     }
 
-    if (!err && cmd.ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
+    if (!err && cmd->ci != QUIT && gretl_echo_on() && !batch && !old_runit) {
 	/* record a successful interactive command */
-	echo_cmd(&cmd, datainfo, line, 0, cmdprn);
+	echo_cmd(cmd, pdinfo, line, 0, cmdprn);
     }
 
     return err;
