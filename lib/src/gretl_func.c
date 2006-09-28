@@ -26,7 +26,7 @@
 
 #define CALLSTACK_DEPTH 8
 #define FN_NAMELEN 32
-#define FN_DEBUG 2
+#define FN_DEBUG 0
 
 typedef struct fn_param_ fn_param;
 typedef struct fn_return_ fn_return;
