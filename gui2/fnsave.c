@@ -48,10 +48,9 @@ struct function_info_ {
     char *version;
     char *date;
     char *pkgdesc;
-    char **help;
-    int *publist;
+    char *help;
+    int pub;
     int *privlist;
-    int n_public;
     int iface;
     FuncDataReq dreq;
     float minver;
@@ -87,27 +86,13 @@ function_info *finfo_new (void)
     finfo->saveas = 0;
     finfo->iface = -1;
 
-    finfo->n_public = 0;
     finfo->help = NULL;
-    finfo->publist = NULL;
+    finfo->pub = -1;
     finfo->privlist = NULL;
     finfo->dreq = 0;
     finfo->minver = 1.5;
 
     return finfo;
-}
-
-static int finfo_init (function_info *finfo)
-{
-    finfo->n_public = finfo->publist[0];
-
-    finfo->help = strings_array_new(finfo->n_public);
-    if (finfo->help == NULL) {
-	nomem();
-	return E_ALLOC;
-    }
-
-    return 0;
 }
 
 static void finfo_free (function_info *finfo)
@@ -117,10 +102,8 @@ static void finfo_free (function_info *finfo)
     free(finfo->version);
     free(finfo->date);
     free(finfo->pkgdesc);
-    free(finfo->publist);
     free(finfo->privlist);
-
-    free_strings_array(finfo->help, finfo->n_public);
+    free(finfo->help);
 
     free(finfo);
 }
@@ -177,14 +160,6 @@ static char *trim_text (const char *s)
     return ret;
 }
 
-static int help_text_index (function_info *finfo)
-{
-    int i;
-
-    i = gtk_option_menu_get_history(GTK_OPTION_MENU(finfo->ifsel));
-    return finfo->publist[i+1];
-}
-
 static void login_finalize (GtkWidget *w, login_info *linfo)
 {
     linfo->login = entry_box_get_trimmed_text(linfo->login_entry);
@@ -220,14 +195,10 @@ static void real_finfo_save (function_info *finfo)
     finfo->upload = 
 	gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(finfo->check));
 
-    if (finfo->n_public > 1) {
-	hidx = help_text_index(finfo);
-    } 
-
     if (hidx >= 0) {
 	char *tmp = textview_get_text(finfo->text);
 
-	finfo->help[hidx] = trim_text(tmp);
+	finfo->help = trim_text(tmp);
 	free(tmp);
     }
 
@@ -268,65 +239,17 @@ enum {
     HIDX_SWITCH
 };
 
-static void 
-set_dialog_info_from_fn (function_info *finfo, int idx, int code)
+const char *print_today (void)
 {
-    const char *attrib = NULL;
-    const char *keys[] = {
-	"author",
-	"version",
-	"date",
-	"pkgdesc"
-    };
-    const char *etxt;
+    static char timestr[16];
+    struct tm *local;
+    time_t t;
 
-    static int old_hidx;
-    int i, new_hidx;
+    t = time(NULL);
+    local = localtime(&t);
+    strftime(timestr, 15, "%Y-%m-%d", local);
 
-    if (code == HIDX_INIT) {
-	old_hidx = new_hidx = 0;
-    } else {
-	new_hidx = help_text_index(finfo);
-    }
-
-    for (i=0; i<NENTRIES; i++) {
-	etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
-	if (*etxt == '\0') {
-	    gretl_function_get_info(idx, keys[i], &attrib);
-	    if (attrib != NULL) {
-		etxt = gtk_entry_get_text(GTK_ENTRY(finfo->entries[i]));
-	    }
-	}
-    }
-
-    if (new_hidx != old_hidx) {
-	/* we're switching the "active" interface, so save the 
-	   help text for the previous interface */
-	char *old_help = textview_get_text(finfo->text);
-
-	free(finfo->help[old_hidx]);
-	finfo->help[old_hidx] = old_help;
-    }
-
-    if (code == HIDX_INIT || new_hidx != old_hidx) {
-	/* initializing or switching: insert new help text */
-	const char *new_help;
-
-	gretl_function_get_info(idx, "help", &new_help);
-	textview_set_text(finfo->text, new_help);
-    }
-
-    old_hidx = new_hidx;
-}
-
-static gboolean update_public (GtkOptionMenu *menu, 
-			       function_info *finfo)
-{
-    int i = gtk_option_menu_get_history(menu);
-
-    set_dialog_info_from_fn(finfo, finfo->publist[i+1], HIDX_SWITCH);
-
-    return FALSE;
+    return timestr;
 }
 
 static gboolean update_iface (GtkOptionMenu *menu, 
@@ -334,11 +257,10 @@ static gboolean update_iface (GtkOptionMenu *menu,
 {
     int i = gtk_option_menu_get_history(menu);
 
-    if (i < finfo->publist[0]) {
-	finfo->iface = finfo->publist[i+1];
+    if (i == 0) {
+	finfo->iface = finfo->pub;
     } else {
-	i -= finfo->publist[0];
-	finfo->iface = finfo->privlist[i+1];
+	finfo->iface = finfo->privlist[i];
     }
 
     return FALSE;
@@ -430,16 +352,14 @@ static GtkWidget *interface_selector (function_info *finfo, int iface)
     const char *fnname;
     int i;
 
-    finfo->iface = finfo->publist[1];
+    finfo->iface = finfo->pub;
 
     ifmenu = gtk_option_menu_new();
     menu = gtk_menu_new();
 
-    for (i=1; i<=finfo->publist[0]; i++) {
-	fnname = user_function_name_by_index(finfo->publist[i]);
-	tmp = gtk_menu_item_new_with_label(fnname);
-	gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
-    }
+    fnname = user_function_name_by_index(finfo->pub);
+    tmp = gtk_menu_item_new_with_label(fnname);
+    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tmp);
 
     if (iface == IFACE_ALL && finfo->privlist != NULL) {
 	for (i=1; i<=finfo->privlist[0]; i++) {
@@ -590,11 +510,10 @@ static void finfo_dialog (function_info *finfo)
 	finfo->pkgdesc
     };
     const char *fnname;
+    int focused = 0;
+    const char *hlp;
+    gchar *ltxt;
     int i;
-
-    if (finfo_init(finfo)) {
-	return;
-    }
 
     finfo->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 
@@ -631,9 +550,16 @@ static void finfo_dialog (function_info *finfo)
 
 	if (entry_texts[i] != NULL) {
 	    gtk_entry_set_text(GTK_ENTRY(entry), entry_texts[i]);
+	} else if (i == 1) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), "1.0");
+	} else if (i == 2) {
+	    gtk_entry_set_text(GTK_ENTRY(entry), print_today());
 	}
 
-	if (i == 1) {
+	if (i == 0 && entry_texts[i] == NULL) {
+	    gtk_widget_grab_focus(entry);
+	    focused = 1;
+	} else if (i == 1 && !focused) {
 	    gtk_widget_grab_focus(entry);
 	}
     }
@@ -642,29 +568,17 @@ static void finfo_dialog (function_info *finfo)
     add_data_requirement_menu(tbl, i, finfo);
     gtk_widget_show(tbl);
 
-    if (finfo->n_public > 1) {
-	/* drop-down selector for public interfaces */
-	hbox = label_hbox(vbox, _("Help text for"));
-	finfo->ifsel = interface_selector(finfo, IFACE_PUBLIC);
-	gtk_box_pack_start(GTK_BOX(hbox), finfo->ifsel, FALSE, FALSE, 5);
-	g_signal_connect(G_OBJECT(GTK_OPTION_MENU(finfo->ifsel)), "changed",
-			 G_CALLBACK(update_public), finfo);
-	gtk_widget_show(hbox);
-    } else {
-	/* only one public interface */
-	gchar *ltxt;
-
-	fnname = user_function_name_by_index(finfo->publist[1]);
-	ltxt = g_strdup_printf(_("Help text for %s:"), fnname);
-	hbox = label_hbox(vbox, ltxt);
-	gtk_widget_show(hbox);
-	g_free(ltxt);
-    }
+    fnname = user_function_name_by_index(finfo->pub);
+    ltxt = g_strdup_printf(_("Help text for %s:"), fnname);
+    hbox = label_hbox(vbox, ltxt);
+    gtk_widget_show(hbox);
+    g_free(ltxt);
 
     finfo->text = create_text(NULL, -1, -1, TRUE);
     text_table_setup(vbox, finfo->text);
 
-    set_dialog_info_from_fn(finfo, finfo->publist[1], HIDX_INIT);
+    gretl_function_get_info(finfo->pub, "help", &hlp);
+    textview_set_text(finfo->text, hlp);
 
     /* edit code button, possibly with selector */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -675,13 +589,13 @@ static void finfo_dialog (function_info *finfo)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(edit_code_callback), finfo);
 
-    if (finfo->publist[0] > 1 || finfo->privlist != NULL) {
+    if (finfo->privlist != NULL) {
 	finfo->codesel = interface_selector(finfo, IFACE_ALL);
 	gtk_box_pack_start(GTK_BOX(hbox), finfo->codesel, FALSE, FALSE, 5);
 	g_signal_connect(G_OBJECT(GTK_OPTION_MENU(finfo->codesel)), "changed",
 			 G_CALLBACK(update_iface), finfo);
     } else {
-	finfo->iface = finfo->publist[1];
+	finfo->iface = finfo->pub;
     }
 
     gtk_widget_show_all(hbox);
@@ -851,17 +765,15 @@ void save_user_functions (const char *fname, gpointer p)
 	}
     }
 
-    for (i=1; i<=finfo->publist[0]; i++) {
-	gretl_function_set_info(finfo->publist[i], finfo->help[i-1]);
-	gretl_function_set_private(finfo->publist[i], FALSE);
-    }
+    gretl_function_set_info(finfo->pub, finfo->help);
+    gretl_function_set_private(finfo->pub, FALSE);
 
 #if 0
     fprintf(stderr, "author='%s'\n", finfo->author);
     fprintf(stderr, "version='%s'\n", finfo->version);
     fprintf(stderr, "date='%s'\n", finfo->date);
     fprintf(stderr, "pkgdesc='%s'\n", finfo->pkgdesc);
-    printlist(finfo->publist, "finfo->publist");
+    fprintf(stderr, "finfo->pub = %d\n", finfo->pub);
     printlist(finfo->privlist, "finfo->privlist");
     fprintf(stderr, "dreq=%d\n", finfo->dreq);
     fprintf(stderr, "minver=%.2f\n", (double) finfo->minver);
@@ -869,7 +781,7 @@ void save_user_functions (const char *fname, gpointer p)
 		
     err = write_function_package(finfo->pkg,
 				 fname,
-				 finfo->publist, 
+				 finfo->pub, 
 				 finfo->privlist,
 				 finfo->author,
 				 finfo->version,
@@ -893,6 +805,7 @@ void prepare_functions_save (void)
 {
     function_info *finfo;
     int *list = NULL;
+    int i;
 
     if (storelist == NULL) {
 	return;
@@ -910,18 +823,22 @@ void prepare_functions_save (void)
 	return;
     }
 
-    if (gretl_list_has_separator(list)) {
-	if (gretl_list_split_on_separator(list, &finfo->publist, 
-					  &finfo->privlist)) {
+    finfo->pub = list[1];
+
+    if (list[0] > 1) {
+	finfo->privlist = gretl_list_new(list[0] - 1);
+	if (finfo->privlist == NULL) {
 	    nomem();
 	    free(finfo);
 	    free(list);
 	    return;
 	} else {
+	    for (i=1; i<=finfo->privlist[0]; i++) {
+		finfo->privlist[i] = list[i+1];
+	    }
 	    free(list);
 	}
     } else {
-	finfo->publist = list;
 	finfo->privlist = NULL;
     }
 
@@ -950,7 +867,7 @@ void edit_function_package (const char *fname)
 
     err = function_package_get_info(fname,
 				    &finfo->pkg,
-				    &finfo->publist,
+				    &finfo->pub,
 				    &finfo->privlist,
 				    &finfo->author,
 				    &finfo->version,

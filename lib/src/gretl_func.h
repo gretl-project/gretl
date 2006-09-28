@@ -120,7 +120,7 @@ void gretl_function_set_private (int i, int priv);
 
 int write_function_package (fnpkg *pkg,
 			    const char *fname,
-			    const int *publist, 
+			    int pub, 
 			    const int *privlist, 
 			    const char *author,
 			    const char *version,
@@ -131,7 +131,7 @@ int write_function_package (fnpkg *pkg,
 
 int function_package_get_info (const char *fname,
 			       fnpkg **ppkg,
-			       int **publist, 
+			       int *pub, 
 			       int **privlist,
 			       char **author,
 			       char **version,

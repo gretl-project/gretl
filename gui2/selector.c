@@ -117,8 +117,7 @@ struct _selector {
 
 #define USE_VECXLIST(c) (c == VAR || c == VLAGSEL || c == VECM)
 
-#define AUX_LAST(c) (c == SAVE_FUNCTIONS || \
-                     c == TSLS || \
+#define AUX_LAST(c) (c == TSLS || \
                      c == VAR || \
                      c == VLAGSEL || \
                      c == VECM)
@@ -261,12 +260,16 @@ static int selector_get_depvar_number (selector *sr)
     int ynum = -1;
 
     if (sr != NULL && sr->depvar != NULL) {
-	const char *txt = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
+	const char *s = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
 
-	if (txt != NULL && *txt != '\0') {
-	    ynum = varindex(datainfo, txt);
-	    if (ynum == datainfo->v) {
-		ynum = -1;
+	if (s != NULL && *s != '\0') {
+	    if (sr->code == SAVE_FUNCTIONS) {
+		ynum = user_function_index_by_name(s);
+	    } else {
+		ynum = varindex(datainfo, s);
+		if (ynum == datainfo->v) {
+		    ynum = -1;
+		}
 	    }
 	}
     }
@@ -696,6 +699,19 @@ static void dependent_var_cleanup (selector *sr, int newy)
     }
 }
 
+static void set_public_from_active (selector *sr)
+{
+    gint v = sr->active_var;
+
+    if (sr->depvar == NULL) {
+	return;
+    }
+
+    dependent_var_cleanup(sr, v);
+    gtk_entry_set_text(GTK_ENTRY(sr->depvar), 
+		       user_function_name_by_index(v));
+}
+
 static void set_dependent_var_from_active (selector *sr)
 {
     gint v = sr->active_var;
@@ -821,27 +837,6 @@ static void select_singleton (selector *sr)
 		       0, v, 1, 0, 2, datainfo->varname[v], -1);
 }
 
-static int lvar_present_on_right (gint lnum, GtkWidget *list)
-{
-    GtkTreeIter iter;
-    GtkTreeModel *rmod;
-    gint rnum;
-
-    g_return_val_if_fail(GTK_IS_TREE_VIEW(list), 0);
-
-    rmod = gtk_tree_view_get_model(GTK_TREE_VIEW(list));
-    if (gtk_tree_model_get_iter_first(rmod, &iter)) {
-	do {
-	    gtk_tree_model_get(rmod, &iter, 0, &rnum, -1);
-	    if (rnum == lnum) {
-		return 1;
-	    }
-	} while (gtk_tree_model_iter_next(rmod, &iter));
-    }
-
-    return 0;
-}
-
 static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter, 
 			      selector *sr, int locus)
 {
@@ -874,11 +869,6 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 	gtk_tree_model_get(srcmodel, srciter, 0, &v, 2, &vname, -1);
     } else {
 	gtk_tree_model_get(srcmodel, srciter, 0, &v, -1);
-    }
-
-    if (sr->code == SAVE_FUNCTIONS && 
-	lvar_present_on_right(v, sr->rvars1)) {
-	return;
     }
 
     nvars = 0;
@@ -924,24 +914,14 @@ static void real_add_generic (GtkTreeModel *srcmodel, GtkTreeIter *srciter,
 static void add_to_rvars1 (GtkTreeModel *model, GtkTreePath *path,
 			   GtkTreeIter *iter, selector *sr)
 {
-    /* models: don't add the regressand to the list of regressors */
-    if (MODEL_CODE(sr->code)) {
+    /* models: don't add the regressand to the list of regressors;
+       functions: keep public and private interfaces distinct */
+    if (MODEL_CODE(sr->code) || sr->code == SAVE_FUNCTIONS) {
 	gint xnum, ynum;
     
 	gtk_tree_model_get(model, iter, 0, &xnum, -1);
 	ynum = selector_get_depvar_number(sr);
 	if (xnum == ynum) {
-	    return;
-	}
-    }
-
-    /* function selector: don't add an interface to both
-       rvars1 and rvars2 */
-    if (sr->code == SAVE_FUNCTIONS) {
-	gint lnum;
-
-	gtk_tree_model_get(model, iter, 0, &lnum, -1);
-	if (lvar_present_on_right(lnum, sr->rvars2)) {
 	    return;
 	}
     }
@@ -1067,7 +1047,7 @@ dblclick_lvars_row (GtkWidget *w, GdkEventButton *event, selector *sr)
 {
     if (event != NULL && event->type == GDK_2BUTTON_PRESS) { 
 	if (sr->code == SAVE_FUNCTIONS) {
-	    add_to_rvars2_callback(NULL, sr);
+	    set_public_from_active(sr);
 	} else {
 	    set_dependent_var_from_active(sr);
 	    if (sr->default_check != NULL) {
@@ -1228,6 +1208,9 @@ static void topslot_empty (int code)
 	break;
     case SCATTERS:
 	errbox(_("You must select a Y-axis variable"));
+	break;
+    case SAVE_FUNCTIONS:
+	errbox(_("You must specify a public interface"));
 	break;
     default:
 	errbox(_("You must select a dependent variable"));
@@ -1721,11 +1704,7 @@ static void construct_cmdlist (selector *sr)
 	errbox(_("You must select two or more endogenous variables"));
 	sr->error = 1;
 	return;
-    } else if (sr->code == SAVE_FUNCTIONS && rows < 1) {
-	errbox(_("You must specify a public interface"));
-	sr->error = 1;
-	return;
-    }	    
+    }
 
     if (realrows > 0) {
 	maybe_resize_recorder_lists(sr, realrows);
@@ -1735,9 +1714,8 @@ static void construct_cmdlist (selector *sr)
     context = sr_get_lag_context(sr, SR_RVARS1);
     get_rvars1_data(sr, rows, context);
 
-    /* cases with a (possible optional) secondary RHS list */
-    if (sr->code == TSLS || sr->code == SAVE_FUNCTIONS || 
-	USE_VECXLIST(sr->code)) {
+    /* cases with a (possibly optional) secondary RHS list */
+    if (sr->code == TSLS || USE_VECXLIST(sr->code)) {
 	rows = varlist_row_count(sr, SR_RVARS2, &realrows);
 	if (rows > 0) {
 	    if (realrows > 0) {
@@ -1899,8 +1877,6 @@ static char *extra_string (int ci)
     case GR_DUMMY:
     case GR_3D:
 	return N_("Y-axis variable");
-    case SAVE_FUNCTIONS:
-	return N_("Helper functions");
     default:
 	return NULL;
     }
@@ -2061,6 +2037,36 @@ static int build_depvar_section (selector *sr, GtkWidget *right_vbox,
     return yvar;
 }
 
+static void 
+build_public_iface_section (selector *sr, GtkWidget *right_vbox)
+{
+    GtkWidget *tmp, *pub_hbox;
+
+    tmp = gtk_label_new(_("Public interface"));
+    gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
+    gtk_widget_show(tmp);
+
+    pub_hbox = gtk_hbox_new(FALSE, 5); 
+
+    tmp = gtk_button_new_with_label(_("Choose ->"));
+    gtk_box_pack_start(GTK_BOX(pub_hbox), tmp, TRUE, TRUE, 0);
+    g_signal_connect (G_OBJECT(tmp), "clicked", 
+                      G_CALLBACK(set_dependent_var_callback), sr);
+    gtk_widget_show(tmp); 
+
+    sr->depvar = gtk_entry_new();
+    gtk_entry_set_max_length(GTK_ENTRY(sr->depvar), VNAMELEN-1);
+    gtk_entry_set_width_chars(GTK_ENTRY(sr->depvar), VNAMELEN+3);
+
+    gtk_box_pack_start(GTK_BOX(pub_hbox), sr->depvar, FALSE, FALSE, 0);
+    gtk_widget_show(sr->depvar); 
+
+    gtk_box_pack_start(GTK_BOX(right_vbox), pub_hbox, FALSE, FALSE, 0);
+    gtk_widget_show(pub_hbox); 
+
+    vbox_add_hsep(right_vbox);
+}
+
 enum {
     LAG_ONLY,
     LAG_AND_RANK
@@ -2207,7 +2213,7 @@ static void auxiliary_rhs_varlist (selector *sr, GtkWidget *vbox)
 			       sr->code == VECM)) {
 	    gtk_widget_set_sensitive(sr->lags_button, TRUE);
 	}
-    } else if (!VEC_CODE(sr->code) && sr->code != SAVE_FUNCTIONS) {
+    } else if (!VEC_CODE(sr->code)) {
 	list_append_var(store, &iter, 0, sr, SR_RVARS2);
     }
 
@@ -2234,7 +2240,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
     if (sr->code == WLS || sr->code == POISSON ||
 	sr->code == GR_DUMMY || sr->code == GR_3D) { 
 	extra_var_box(sr, right_vbox);
-    } else if (sr->code == TSLS || sr->code == SAVE_FUNCTIONS) {
+    } else if (sr->code == TSLS) {
 	primary_rhs_varlist(sr, right_vbox);
     } else if (sr->code == AR) {
 	sr->extra[0] = gtk_entry_new();
@@ -3030,7 +3036,7 @@ static void primary_rhs_varlist (selector *sr, GtkWidget *vbox)
     } else if (sr->code == SCATTERS) {
 	multiplot_label = tmp = gtk_label_new(_("X-axis variables"));
     } else if (sr->code == SAVE_FUNCTIONS) {
-	tmp = gtk_label_new(_("Public Interfaces"));
+	tmp = gtk_label_new(_("Helper functions"));
     }
 
     if (tmp != NULL) {
@@ -3161,11 +3167,13 @@ void selection_dialog (const char *title, int (*callback)(), guint ci,
 	       || ci == SCATTERS || ci == GR_3D) {
 	/* graphs: top right -> x-axis variable */
 	build_x_axis_section(sr, right_vbox);
+    } else if (ci == SAVE_FUNCTIONS) {
+	build_public_iface_section(sr, right_vbox);
     }
 
     /* middle right: used for some estimators and factored plot */
     if (ci == WLS || ci == AR || ci == TSLS || 
-	VEC_CODE(ci) || ci == POISSON || ci == SAVE_FUNCTIONS ||
+	VEC_CODE(ci) || ci == POISSON || 
 	ci == GR_DUMMY || ci == GR_3D) {
 	build_mid_section(sr, right_vbox);
     }

@@ -1402,7 +1402,7 @@ static void get_version_string (float ver, char *vstr)
 
 int write_function_package (fnpkg *pkg,
 			    const char *fname,
-			    const int *publist, 
+			    int pub, 
 			    const int *privlist,
 			    const char *author,
 			    const char *version,
@@ -1423,12 +1423,12 @@ int write_function_package (fnpkg *pkg,
     }
 
     if (author == NULL || version == NULL || date == NULL || 
-	descrip == NULL || publist == NULL || publist[0] == 0) {
+	descrip == NULL || pub < 0) {
 	strcpy(gretl_errmsg, "Function information is incomplete");
 	return E_DATA;
     }
 
-    if (strcmp(fname, pkg->fname)) {
+    if (pkg != NULL && strcmp(fname, pkg->fname)) {
 	saveas = 1;
     }
 
@@ -1471,12 +1471,7 @@ int write_function_package (fnpkg *pkg,
     gretl_xml_put_tagged_string("date", date, fp);
     gretl_xml_put_tagged_string("description", descrip, fp);
 
-    for (i=1; i<=publist[0]; i++) {
-	fi = publist[i];
-	if (fi >= 0 && fi < n_ufuns) {
-	    write_function_xml(ufuns[fi], fp);
-	}
-    }
+    write_function_xml(ufuns[pub], fp);
 
     if (privlist != NULL) {
 	for (i=1; i<=privlist[0]; i++) {
@@ -1492,8 +1487,9 @@ int write_function_package (fnpkg *pkg,
 
     fclose(fp);
 
-    if (!saveas) {
-	/* name has not changed: update package info */
+    if (pkg != NULL && !saveas) {
+	/* existing package, name has not changed: 
+	   update package info */
 	if (strcmp(author, pkg->author)) {
 	    free(pkg->author);
 	    pkg->author = gretl_strdup(author);
@@ -1524,7 +1520,7 @@ int write_function_package (fnpkg *pkg,
 
 int function_package_get_info (const char *fname,
 			       fnpkg **ppkg,
-			       int **publist, 
+			       int *pub, 
 			       int **privlist,
 			       char **author,
 			       char **version,
@@ -1534,7 +1530,8 @@ int function_package_get_info (const char *fname,
 			       float *minver)
 {
     fnpkg *pkg = NULL;
-    int npriv = 0, npub = 0;
+    int pubnum = -1;
+    int npriv = 0;
     int *list = NULL;
     int i, j, err = 0;
 
@@ -1582,24 +1579,13 @@ int function_package_get_info (const char *fname,
 	    if (ufuns[i]->private) {
 		npriv++;
 	    } else {
-		npub++;
+		pubnum = i;
 	    }
 	}
     }
 
-    if (!err && publist != NULL && npub > 0) {
-	list = gretl_list_new(npub);
-	if (list != NULL) {
-	    j = 1;
-	    for (i=0; i<n_ufuns; i++) {
-		if (ufuns[i]->pkgID == pkg->ID && !ufuns[i]->private) {
-		    list[j++] = i;
-		}
-	    }
-	    *publist = list;
-	} else {
-	    err = E_ALLOC;
-	}
+    if (!err && pub != NULL && pubnum >= 0) {
+	*pub = pubnum;
     }
 
     if (!err && privlist != NULL && npriv > 0) {

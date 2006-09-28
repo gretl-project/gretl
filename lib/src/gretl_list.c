@@ -654,7 +654,6 @@ int *gretl_list_from_string (const char *liststr)
 		list[n++] = atoi(numstr);
 	    }
 	    s += strlen(numstr);
-
 	}
     }    
 
