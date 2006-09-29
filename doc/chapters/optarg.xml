@@ -218,13 +218,6 @@
     <para>&mdash; Prints version identification for the
       program.</para>
 
-    <para><command>gretlcli --pvalue</command> (or <command>gretlcli
-	-p</command>)</para>
-
-    <para>&mdash; Starts the program in a mode in which you can
-      interactively determine p-values for various common
-      statistics.</para>
-
     <para><command>gretlcli --english</command> (or <command>gretlcli
 	-e</command>)</para>
 

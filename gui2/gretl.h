@@ -127,7 +127,7 @@ int mdata_selection_count (void);
 int mdata_active_var (void);
 void populate_varlist (void);
 void clear_varlist (GtkWidget *widget);
-int gui_restore_sample (void);
+int gui_restore_sample (double ***pZ, DATAINFO **ppdinfo);
 
 /* functions defined in files other than gretl.c */
 void about_dialog (gpointer data);

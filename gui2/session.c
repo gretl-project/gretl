@@ -42,6 +42,7 @@
 #include "system.h"
 #include "gretl_xml.h"
 #include "gretl_func.h"
+#include "modelspec.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -207,7 +208,6 @@ static GList *icon_list;
 static gui_obj *active_object;
 
 /* private functions */
-static void session_clear_data (void);
 static gui_obj *gui_object_new (gchar *name, int sort);
 static gui_obj *session_add_icon (gpointer data, int sort, int mode);
 static void session_build_popups (void);
@@ -869,7 +869,7 @@ void do_open_session (void)
     }
 
     /* close existing session, if any, and initialize */
-    close_session();
+    close_session(&Z, &datainfo);
 
     strcpy(sessionfile, tryfile);
     fprintf(stderr, I_("\nReading session file %s\n"), sessionfile);
@@ -986,7 +986,7 @@ void verify_clear_data (void)
 	}
     }
 
-    close_session();
+    close_session(&Z, &datainfo);
 }
 
 static const char *readd (DIR *d)
@@ -1146,9 +1146,9 @@ void gui_clear_dataset (void)
     main_menubar_state(FALSE);
 }
 
-static void session_clear_data (void)
+static void session_clear_data (double ***pZ, DATAINFO **ppdinfo)
 {
-    gui_restore_sample();
+    gui_restore_sample(pZ, ppdinfo);
     gui_clear_dataset();
 
     /* clear protected models */
@@ -1157,19 +1157,18 @@ static void session_clear_data (void)
     clear_model(models[2]);
 
     free_command_stack(); 
-    lib_modelspec_free();
-
+    free_modelspec();
     reset_model_count();
 
     lib_cmd_destroy_context();
 }
 
-void close_session (void)
+void close_session (double ***pZ, DATAINFO **ppdinfo)
 {
 #if SESSION_DEBUG
     fprintf(stderr, "close_session: starting cleanup\n");
 #endif
-    session_clear_data(); 
+    session_clear_data(pZ, ppdinfo); 
 
     free_session();
 

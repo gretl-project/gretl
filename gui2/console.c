@@ -25,10 +25,12 @@
 
 #include "libset.h"
 #include "gretl_func.h"
+#include "cmd_private.h"
 
 static GtkWidget *console_view;
 static PRN *console_prn;
 static gchar *cbuf;
+static ExecState cstate;
 
 #define DEFAULT_HLINES 32
 
@@ -66,6 +68,9 @@ static int gretl_console_init (void)
     cbuf = NULL;
 
     set_gretl_echo(1);
+
+    gretl_exec_state_init(&cstate, CONSOLE_EXEC, NULL, 
+			  get_lib_cmd(), models, NULL);
 
     return 0;
 }
@@ -212,19 +217,20 @@ int console_sample_changed (const DATAINFO *pdinfo)
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
 
-static int console_function_exec (char *execline)
+static int console_function_exec (void)
 {
     char *gotline = NULL;
     int err = 0;
 
     while (!gretl_execute_loop()) {
-	gotline = gretl_function_get_line(execline, MAXLINE, &Z, &datainfo, &err);
+	gotline = gretl_function_get_line(cstate.line, MAXLINE, &Z, &datainfo,
+					  &err);
 	if (gotline == NULL || *gotline == '\0') {
 	    break;
 	}
 	if (!err) {
-	    err = gui_exec_line(execline, get_lib_cmd(), &Z, &datainfo,
-				console_prn, SCRIPT_EXEC, NULL);
+	    cstate.flags = SCRIPT_EXEC;
+	    err = gui_exec_line(&cstate, &Z, &datainfo); 
 	}
     }
 
@@ -270,17 +276,20 @@ static void console_exec (void)
 
     console_record_sample(datainfo);
 
-    push_history_line(execline); 
+    push_history_line(execline);
+
+    cstate.line = execline;
+    cstate.flags = CONSOLE_EXEC;
+    cstate.prn = console_prn;
 
     /* actually execute the command line */
-    err = gui_exec_line(execline, get_lib_cmd(), &Z, &datainfo,
-			console_prn, CONSOLE_EXEC, NULL);
+    err = gui_exec_line(&cstate, &Z, &datainfo);
 
     while (!err && (gretl_execute_loop() || gretl_executing_function())) {
 	if (gretl_execute_loop()) { 
 	    err = gretl_loop_exec(execline, &Z, &datainfo, models, console_prn);
 	} else if (gretl_executing_function()) {
-	    err = console_function_exec(execline);
+	    err = console_function_exec();
 	} 
     }
 

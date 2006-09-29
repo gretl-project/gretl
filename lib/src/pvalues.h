@@ -76,8 +76,6 @@ double batch_pvalue (const char *str,
 		     const double **Z, const DATAINFO *pdinfo, 
                      PRN *prn, gretlopt opt);
 
-void interact_pvalue (void);
-
 double genr_get_critical (const char *line, const double **Z, 
 			  const DATAINFO *pdinfo);
 

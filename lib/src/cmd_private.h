@@ -3,9 +3,11 @@
 #ifndef CMD_PRIVATE_H
 #define CMD_PRIVATE_H
 
+#include "gretl_restrict.h"
+
 typedef struct Laginfo_ Laginfo;
 
-struct _CMD {
+struct CMD_ {
     char word[9];               /* command word */
     int ci;                     /* command index number */
     int context;                /* context for subsetted commands */
@@ -21,5 +23,26 @@ struct _CMD {
     Laginfo *linfo;             /* struct for recording info on automatically
                                    generated lags */
 };
+
+struct ExecState_ {
+    ExecFlags flags;
+    CMD *cmd;
+    PRN *prn;
+    char *line;
+    char runfile[MAXLEN];
+    char linecopy[MAXLINE];
+    MODEL **models;
+    gretl_equation_system *sys;
+    gretl_restriction_set *rset;
+    int alt_model;
+    int in_comment;
+};
+
+void gretl_exec_state_init (ExecState *s,
+			    ExecFlags flags,
+			    char *line,
+			    CMD *cmd,
+			    MODEL **models, 
+			    PRN *prn);
 
 #endif /* CMD_PRIVATE_H */

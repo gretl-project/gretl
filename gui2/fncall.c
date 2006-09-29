@@ -22,8 +22,10 @@
 #include "selector.h"
 #include "gretl_func.h"
 #include "usermat.h"
+#include "cmd_private.h"
 #include "webget.h"
 #include "database.h"
+
 
 #define FCDEBUG 0
 
@@ -618,37 +620,37 @@ static int check_args_and_rets (call_info *cinfo)
     return 0;
 }
 
-static int package_function_exec (char *fnline, PRN *prn)
+static int package_function_exec (ExecState *s)
 {
     char *gotline = NULL;
     int err = 0;
 
     while (!gretl_execute_loop()) {
-	gotline = gretl_function_get_line(fnline, MAXLINE, &Z, &datainfo, &err);
+	gotline = gretl_function_get_line(s->line, MAXLINE, &Z, &datainfo, &err);
 	if (gotline == NULL || *gotline == '\0') {
 	    break;
 	}
 	if (!err) {
 #if FCDEBUG
-	    fprintf(stderr, "package_function_exec: '%s'\n", fnline); 
-#endif	    
-	    err = gui_exec_line(fnline, get_lib_cmd(), &Z, &datainfo,
-				prn, SCRIPT_EXEC, NULL);
+	    fprintf(stderr, "package_function_exec: '%s'\n", s->line); 
+#endif	
+	    
+	    err = gui_exec_line(s, &Z, &datainfo);
 	}
     }
 
     return err;
 }
 
-static int fn_executor (char *fnline, PRN *prn)
+static int fn_executor (ExecState *s)
 {
     int err = 0;
 
     while (!err && (gretl_execute_loop() || gretl_executing_function())) {
 	if (gretl_execute_loop()) { 
-	    err = gretl_loop_exec(fnline, &Z, &datainfo, models, prn);
+	    err = gretl_loop_exec(s->line, &Z, &datainfo, models, s->prn);
 	} else if (gretl_executing_function()) {
-	    err = package_function_exec(fnline, prn);
+	    err = package_function_exec(s);
 	}
     }
 
@@ -716,6 +718,7 @@ static int temp_install_remote_fnpkg (const char *fname, char *target)
 
 void call_function_package (const char *fname, GtkWidget *w)
 {
+    ExecState state;
     char tmpfile[FILENAME_MAX];
     char fnline[MAXLINE];
     const char *fnname;
@@ -854,10 +857,12 @@ void call_function_package (const char *fname, GtkWidget *w)
     fprintf(stderr, "fnline: '%s'\n", fnline);
 #endif
 
-    err = gui_exec_line(fnline, get_lib_cmd(), &Z, &datainfo,
-			prn, SCRIPT_EXEC, NULL);
+    gretl_exec_state_init(&state, SCRIPT_EXEC, fnline, get_lib_cmd(),
+			  models, prn);
+
+    err = gui_exec_line(&state, &Z, &datainfo);
     if (!err) {
-	err = fn_executor(fnline, prn);
+	err = fn_executor(&state);
     }
 
     if (err) {

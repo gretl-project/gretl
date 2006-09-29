@@ -80,7 +80,7 @@ void gui_clear_dataset (void);
 
 void verify_clear_data (void);
 
-void close_session (void);
+void close_session (double ***pZ, DATAINFO **ppdinfo);
 
 void free_session (void);
 

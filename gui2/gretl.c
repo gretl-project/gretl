@@ -875,16 +875,10 @@ int main (int argc, char *argv[])
     }
 
     /* allocate memory for models */
-    models = malloc(3 * sizeof *models);
-    if (models == NULL) noalloc(_("models")); 
-
-    models[0] = gretl_model_new_protected();
-    models[1] = gretl_model_new_protected();
-    models[2] = gretl_model_new_protected();
-
-    if (models[0] == NULL || models[1] == NULL || models[2] == NULL) {
-	noalloc(_("models")); 
-    }
+    models = allocate_working_models(3);
+    if (models == NULL) {
+	noalloc(_("models"));
+    } 
 
     library_command_init();
 
@@ -1049,10 +1043,7 @@ int main (int argc, char *argv[])
 	free_Z(Z, datainfo);
     }
 
-    gretl_model_free_on_exit(models[0]);
-    gretl_model_free_on_exit(models[1]);
-    gretl_model_free_on_exit(models[2]);
-    free(models);
+    destroy_working_models(models, 3);
 
     library_command_free();
     libgretl_cleanup();
@@ -1599,11 +1590,11 @@ static void set_up_main_menu (void)
     mdata->mbar = gtk_item_factory_get_widget(mdata->ifac, "<main>");
 }
 
-int gui_restore_sample (void)
+int gui_restore_sample (double ***pZ, DATAINFO **ppdinfo)
 {
     int err;
 
-    err = restore_full_sample(&Z, &datainfo);
+    err = restore_full_sample(pZ, ppdinfo);
     if (err) {
 	gui_errmsg(err);
     } else {
@@ -1615,7 +1606,7 @@ int gui_restore_sample (void)
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 {
-    int err = gui_restore_sample(); 
+    int err = gui_restore_sample(&Z, &datainfo); 
 
     if (verbose && !err) {
 	set_sample_label(datainfo);    

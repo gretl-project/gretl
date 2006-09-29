@@ -26,7 +26,8 @@
 #define CMD_NULL    -1
 #define CMD_COMMENT -2
 
-typedef struct _CMD CMD;
+typedef struct CMD_ CMD;
+typedef struct ExecState_ ExecState;
 
 typedef enum {
     CMD_BATCH_MODE     = 1 << 0,
@@ -37,7 +38,6 @@ typedef enum {
 typedef enum {
     OPT_BATCH = 1,
     OPT_HELP,
-    OPT_PVALS,
     OPT_VERSION,
     OPT_RUNIT,
     OPT_DBOPEN,
@@ -49,6 +49,13 @@ typedef enum {
     ENGLISH = 1,
     BASQUE
 } ForcedLangs;
+
+typedef enum {
+    CONSOLE_EXEC      = 1 << 0,
+    SCRIPT_EXEC       = 1 << 1,
+    SESSION_EXEC      = 1 << 2,
+    INCLUDE_EXEC      = 1 << 3
+} ExecFlags;
 
 #define HIDDEN_COMMAND(c) (c == FNCALL || \
                            c == FUNCERR || \
@@ -96,6 +103,12 @@ void echo_function_call (const char *line, unsigned char flags, PRN *prn);
 int simple_commands (CMD *cmd, const char *line, 
 		     double ***pZ, DATAINFO *pdinfo,
 		     PRN *prn);
+
+int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
+		    PRN *prn);
+
+int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
+		       PRN *prn, gretlopt opt);
 
 int call_pca_plugin (VMatrix *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt *pflag,

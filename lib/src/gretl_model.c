@@ -1629,29 +1629,6 @@ void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->smpl.t2 = pdinfo->t2;
 }
 
-static MODEL *real_gretl_model_new (int protect)
-{
-    MODEL *pmod = malloc(sizeof *pmod);
-
-#if MDEBUG
-    fprintf(stderr, "real_gretl_model_new: model at %p\n", (void *) pmod);
-    if (pmod != NULL) fprintf(stderr, " calling gretl_model_init\n");
-#endif
-
-    if (pmod != NULL) {
-	gretl_model_init(pmod);
-    }
-
-    if (protect) {
-#if MDEBUG
-	fprintf(stderr, " protecting this model\n");
-#endif
-	gretl_model_protect(pmod);
-    }
-
-    return pmod;
-}
-
 /**
  * gretl_model_new:
  * 
@@ -1663,22 +1640,18 @@ static MODEL *real_gretl_model_new (int protect)
 
 MODEL *gretl_model_new (void)
 {
-    return real_gretl_model_new(0);
-}
+    MODEL *pmod = malloc(sizeof *pmod);
 
-/**
- * gretl_model_new_protected:
- * 
- * Allocates memory for a gretl #MODEL struct and initializes the struct,
- * using gretl_model_init().  Unlike plain gretl_model_new(), this function
- * creates a model which will not be freed by the mechanisms in objstack.c.
- *
- * Returns: pointer to model (or %NULL if allocation fails).
- */
+#if MDEBUG
+    fprintf(stderr, "gretl_model_new: model at %p\n", (void *) pmod);
+    if (pmod != NULL) fprintf(stderr, " calling gretl_model_init\n");
+#endif
 
-MODEL *gretl_model_new_protected (void)
-{
-    return real_gretl_model_new(1);
+    if (pmod != NULL) {
+	gretl_model_init(pmod);
+    }
+
+    return pmod;
 }
 
 /**
@@ -1716,6 +1689,34 @@ MODEL **gretl_model_array_new (int n)
 }
 
 /**
+ * allocate_working_models:
+ * @n: number of models in array.
+ * 
+ * Allocates memory for an array of @n gretl #MODEL structs and 
+ * initializes each model using gretl_model_init().  The models
+ * are "protected" against deletion.
+ *
+ * Returns: pointer to models array (or %NULL if allocation fails).
+ */
+
+MODEL **allocate_working_models (int n)
+{
+    MODEL **models;
+    int i;
+
+    models = gretl_model_array_new(n);
+    if (models == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<n; i++) {
+	gretl_model_protect(models[i]);
+    }
+
+    return models;
+}
+
+/**
  * gretl_model_array_destroy:
  * @models: array of gretl models.
  * @n: number of models in array.
@@ -1735,6 +1736,17 @@ void gretl_model_array_destroy (MODEL **models, int n)
 	}
 	free(models);
     }
+}
+
+void destroy_working_models (MODEL **models, int n)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	gretl_model_free_on_exit(models[i]);
+    }
+
+    free(models);
 }
 
 static void clear_ar_info (MODEL *pmod)

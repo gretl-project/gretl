@@ -20,33 +20,36 @@
 #include "libgretl.h"
 #include "modelspec.h"
 
-struct MODELSPEC_ {
+#define MSPEC_DEBUG 0
+
+struct MODELSPEC {
     int ID;
     char *cmd;
     char *submask;
 };
 
+static struct MODELSPEC *mspec;
+
 /**
  * model_ci_from_modelspec:
- * @spec: pointer to array of model specifications.
- * @i: index number of model within array.
+ * @i: index number of model within modelspec array.
  *
  * Returns: the command index (e.g. OLS, CORC) associated
  * with the model specification.
  */
 
-int model_ci_from_modelspec (const MODELSPEC *spec, int i)
+static int model_ci_from_modelspec (int i)
 {
     char mword[9];
     int ci;
 
-    if (spec[i].cmd == NULL) {
+    if (mspec[i].cmd == NULL) {
 	fputs("Internal error: got NULL string in model_ci_from_modelspec\n",
 	      stderr);
 	return -1;
     }
 
-    if (!sscanf(spec[i].cmd, "%8s", mword)) {
+    if (!sscanf(mspec[i].cmd, "%8s", mword)) {
 	ci = -1;
     } else {
 	ci = gretl_command_number(mword);
@@ -55,12 +58,12 @@ int model_ci_from_modelspec (const MODELSPEC *spec, int i)
     return ci;
 }
 
-static int modelspec_n_allocated (const MODELSPEC *spec)
+static int modelspec_n_allocated (void)
 {
     int n = 0;
 
-    if (spec != NULL) {
-	while (spec[n].cmd != NULL) {
+    if (mspec != NULL) {
+	while (mspec[n].cmd != NULL) {
 	    n++;
 	}
 	n++;
@@ -69,18 +72,13 @@ static int modelspec_n_allocated (const MODELSPEC *spec)
     return n;
 }
 
-int modelspec_last_index (const MODELSPEC *spec)
-{
-    return modelspec_n_allocated(spec) - 2;
-}
-
-int modelspec_index_from_model_id (const MODELSPEC *spec, int ID)
+static int modelspec_index_from_model_id (int ID)
 {
     int i = 0, idx = -1;
 
-    if (spec != NULL) {
-	while (spec[i].cmd != NULL) {
-	    if (spec[i].ID == ID) {
+    if (mspec != NULL) {
+	while (mspec[i].cmd != NULL) {
+	    if (mspec[i].ID == ID) {
 		idx = i;
 		break;
 	    }
@@ -91,54 +89,58 @@ int modelspec_index_from_model_id (const MODELSPEC *spec, int ID)
     return idx;
 }
 
-char *modelspec_get_command_by_id (MODELSPEC *spec, int ID)
+char *modelspec_get_command_by_id (int ID)
 {
-    int i = modelspec_index_from_model_id(spec, ID);
-    
-    if (i < 0) return NULL;
+    int i = modelspec_index_from_model_id(ID);
 
-    return spec[i].cmd;
+    return (i < 0)? NULL : mspec[i].cmd;
 }
 
-void free_modelspec (MODELSPEC *spec)
+void free_modelspec (void)
 {
     int i = 0;
 
-    if (spec != NULL) {
-	while (spec[i].cmd != NULL) {
-	    free(spec[i].cmd);
-	    if (spec[i].submask != NULL) {
-		free(spec[i].submask);
+    if (mspec != NULL) {
+	while (mspec[i].cmd != NULL) {
+	    free(mspec[i].cmd);
+	    if (mspec[i].submask != NULL) {
+		free(mspec[i].submask);
 	    }
 	    i++;
 	}
-	free(spec);
+	free(mspec);
+	mspec = NULL;
     }
 }
 
-static int modelspec_expand (MODELSPEC **pmspec, int *idx)
+static int modelspec_expand (int *idx)
 {
-    MODELSPEC *mspec;
+    struct MODELSPEC *big;
     int m;
 
-    if (*pmspec == NULL) {
+    if (mspec == NULL) {
 	m = 0;
-	mspec = malloc(2 * sizeof *mspec);
+	big = malloc(2 * sizeof *big);
     } else {
-	m = modelspec_n_allocated(*pmspec);
-	mspec = realloc(*pmspec, (m + 1) * sizeof *mspec);
+	m = modelspec_n_allocated();
+	big = realloc(mspec, (m + 1) * sizeof *mspec);
 	m--;
     }
-    if (mspec == NULL) return E_ALLOC;
 
-    *pmspec = mspec;
+    if (big == NULL) {
+	return E_ALLOC;
+    }
+
+    mspec = big;
 
     mspec[m].cmd = malloc(MAXLINE);
-    if (mspec[m].cmd == NULL) return E_ALLOC;
+    if (mspec[m].cmd == NULL) {
+	return E_ALLOC;
+    }
 
     mspec[m].submask = NULL;
 
-#ifdef MSPEC_DEBUG
+#if MSPEC_DEBUG
     fprintf(stderr, "malloced modelspec[%d].cmd\n", m);
 #endif
 
@@ -151,38 +153,37 @@ static int modelspec_expand (MODELSPEC **pmspec, int *idx)
     return 0;
 }
 
-int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
+int modelspec_save (MODEL *pmod)
 {
-    MODELSPEC *spec;
     int i;
 
-    if (pmod->list == NULL) return 1;
+    if (pmod->list == NULL) {
+	return E_DATA;
+    }
 
-    if (modelspec_expand(pmspec, &i)) {
+    if (modelspec_expand(&i)) {
 	return E_ALLOC;
     }
 
-    spec = *pmspec;
-
-    sprintf(spec[i].cmd, "%s ", gretl_command_word(pmod->ci));
+    sprintf(mspec[i].cmd, "%s ", gretl_command_word(pmod->ci));
     
     if (pmod->ci == AR) {
-	model_list_to_string(pmod->arinfo->arlist, spec[i].cmd);
-	strcat(spec[i].cmd, "; ");
+	model_list_to_string(pmod->arinfo->arlist, mspec[i].cmd);
+	strcat(mspec[i].cmd, "; ");
     }
 
-    model_list_to_string(pmod->list, spec[i].cmd);
+    model_list_to_string(pmod->list, mspec[i].cmd);
 
     if (pmod->submask != NULL) {
-	spec[i].submask = copy_subsample_mask(pmod->submask);
-	if (spec[i].submask == NULL) return 1;
+	mspec[i].submask = copy_subsample_mask(pmod->submask);
+	if (mspec[i].submask == NULL) return 1;
     }
 
-    spec[i].ID = pmod->ID;
+    mspec[i].ID = pmod->ID;
 
-#ifdef MSPEC_DEBUG
+#if MSPEC_DEBUG
     fprintf(stderr, "save_model_spec: cmd='%s', ID=%d\n", 
-	    spec[i].cmd, spec[i].ID);
+	    mspec[i].cmd, mspec[i].ID);
 #endif
 
     return 0;
@@ -250,8 +251,41 @@ int model_sample_problem (const MODEL *pmod, const DATAINFO *pdinfo)
     return model_submask_issue(pmod->submask, pdinfo);
 }
 
-int modelspec_sample_problem (MODELSPEC *spec, int i, 
-			      const DATAINFO *pdinfo)
+static int modelspec_sample_problem (int i, const DATAINFO *pdinfo)
 {
-    return model_submask_issue(spec[i].submask, pdinfo);
+    return model_submask_issue(mspec[i].submask, pdinfo);
+}
+
+int modelspec_test_check (int test_ci, int model_id, 
+			  DATAINFO *pdinfo, PRN *prn)
+{
+    int m = modelspec_index_from_model_id(model_id);
+
+#if MSPEC_DEBUG
+    fprintf(stderr, "modelspec_test_check: test_ci=%d, model_id=%d, m=%d\n",
+	    test_ci, model_id, m);
+#endif
+
+    if (m < 0) { 
+	if (get_model_count() == 0) {
+	    pputs(prn, _("Can't do this: no model has been estimated yet\n"));
+	} else {
+	    pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
+	} 
+	return 1;
+    }
+     
+    if (!command_ok_for_model(test_ci, model_ci_from_modelspec(m))) {
+	pputs(prn, _("Sorry, command not available for this estimator"));
+	pputc(prn, '\n');
+	return 1;
+    }			      
+
+    if (modelspec_sample_problem(m, pdinfo)) {
+	pputs(prn, _("Can't do: the current data set is different from "
+		     "the one on which\nthe reference model was estimated\n"));
+	return 1;
+    }
+
+    return 0;
 }

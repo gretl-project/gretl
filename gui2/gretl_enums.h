@@ -173,13 +173,6 @@ enum stat_codes {
     HQC
 };
 
-enum exec_codes {
-    CONSOLE_EXEC      = 1 << 0,
-    SCRIPT_EXEC       = 1 << 1,
-    SESSION_EXEC      = 1 << 2,
-    INCLUDE_EXEC      = 1 << 3
-};
-
 enum clipstuff {
     TARGET_STRING,
     TARGET_TEXT,

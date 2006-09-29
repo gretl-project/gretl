@@ -142,15 +142,17 @@ int attach_model_tests_from_xml (MODEL *pmod, xmlNodePtr node);
 
 MODEL *gretl_model_new (void);
 
-MODEL *gretl_model_new_protected (void);
-
 void gretl_model_init (MODEL *pmod);
 
 int gretl_model_allocate_storage (MODEL *pmod);
 
 MODEL **gretl_model_array_new (int n);
 
+MODEL **allocate_working_models (int n);
+
 void gretl_model_array_destroy (MODEL **models, int n);
+
+void destroy_working_models (MODEL **models, int n);
 
 void gretl_model_smpl_init (MODEL *pmod, const DATAINFO *pdinfo);
 

@@ -1137,7 +1137,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     /* destroy the current data set, etc., unless we're explicitly appending */
     if (!append) {
-	close_session();
+	close_session(&Z, &datainfo);
     }
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL ||

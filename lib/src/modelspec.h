@@ -22,24 +22,15 @@
 
 #undef MSPEC_DEBUG
 
-typedef struct MODELSPEC_ MODELSPEC;
-
-int model_ci_from_modelspec (const MODELSPEC *spec, int i);
-
 int model_sample_problem (const MODEL *pmod, const DATAINFO *pdinfo);
 
-int modelspec_sample_problem (MODELSPEC *spec, int i, 
-			      const DATAINFO *pdinfo);
+int modelspec_test_check (int test_ci, int model_id, 
+			  DATAINFO *pdinfo, PRN *prn);
 
-int modelspec_last_index (const MODELSPEC *spec);
+char *modelspec_get_command_by_id (int ID);
 
-int modelspec_index_from_model_id (const MODELSPEC *spec, int ID);
+int modelspec_save (MODEL *pmod);
 
-char *modelspec_get_command_by_id (MODELSPEC *spec, int ID);
-
-int modelspec_save (MODEL *pmod, MODELSPEC **pmspec);
-
-void free_modelspec (MODELSPEC *spec);
-
+void free_modelspec (void);
 
 #endif /* MODELSPEC_H */
