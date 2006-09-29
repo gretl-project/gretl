@@ -349,8 +349,6 @@ static NODE *get_string_arg (parser *p)
     parser_getc(p);
     lex(p);
 
-    fprintf(stderr, "making newstr using '%s'\n", str);
-
     return newstr(str, 0, STR_COPY);
 }
 

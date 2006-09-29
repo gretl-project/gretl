@@ -400,7 +400,9 @@ static void gen_call_ufun (parser *p)
 
     sprintf(line, "%s = %s(%s)", p->lh.name, fname, args);
 
+#if GDEBUG
     fprintf(stderr, "\n***gen_call_ufun: '%s'\n", line);
+#endif
     
     p->err = gretl_function_start_exec(line, fname,
 				       p->Z, p->dinfo);
