@@ -5870,7 +5870,9 @@ int execute_script (const char *runfile, const char *buf,
 		    output_line(line, prn);
 		}
 		strcpy(tmp, line);
-		strcpy(state.runfile, runfile);
+		if (runfile != NULL) {
+		    strcpy(state.runfile, runfile);
+		}
 		state.flags = exec_code;
 		exec_err = gui_exec_line(&state, &Z, &datainfo);
 	    }
