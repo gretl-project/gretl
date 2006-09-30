@@ -1191,7 +1191,7 @@ void close_session (double ***pZ, DATAINFO **ppdinfo)
     clear_selector();
     edit_dialog_special_get_text(NULL);
 
-    gretl_saved_objects_cleanup(); /* timing of this? */
+    libgretl_session_cleanup();
 
     plot_count = 0;
     zero_boxplot_count();

@@ -1213,20 +1213,26 @@ void libgretl_init (void)
     set_gretl_tex_preamble(); 
 }
 
+void libgretl_session_cleanup (void)
+{
+    gretl_saved_objects_cleanup();
+    gretl_transforms_cleanup();
+    gretl_lists_cleanup();
+    destroy_user_matrices();
+    gretl_plotx(NULL);
+}
+
 void libgretl_cleanup (void)
 {
     const char *p;
 
+    libgretl_session_cleanup();
+
     gretl_rand_free();
     gretl_functions_cleanup();
-    gretl_saved_objects_cleanup();
-    gretl_transforms_cleanup();
     libset_cleanup();
-    gretl_lists_cleanup();
     gretl_command_hash_cleanup();
-    destroy_user_matrices();
     lapack_mem_free();
-    gretl_plotx(NULL);
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

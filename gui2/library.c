@@ -5905,7 +5905,7 @@ static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
     return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
 }
 
-static void do_autofit_plot (double ***pZ, DATAINFO *pdinfo,
+static void do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 			     PRN *prn)
 {
     int lines[1] = {1};
@@ -5913,7 +5913,7 @@ static void do_autofit_plot (double ***pZ, DATAINFO *pdinfo,
     int err;
 
     plotlist[0] = 2;
-    plotlist[1] = gretl_model_get_depvar(models[0]);
+    plotlist[1] = gretl_model_get_depvar(pmod);
     plotlist[2] = varindex(datainfo, "autofit");
 
     err = gnuplot(plotlist, lines, NULL, pZ, pdinfo,
@@ -6051,114 +6051,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     switch (cmd->ci) {
 
-    case ADDOBS:
-    case ADF: 
-    case COINT2:
-    case COINT: 
-    case CORR: 
-    case CORRGM:
-    case CRITERIA: 
-    case DATA:
-    case DIFF: 
-    case DISCRETE:
-    case DUMMIFY:
-    case ESTIMATE:
-    case FNCALL:
-    case FUNC:
-    case FUNCERR:
-    case GENR:
-    case GRAPH: 
-    case PLOT: 
-    case HURST: 
-    case INFO: 
-    case KPSS:
-    case LABELS: 
-    case LAGS: 
-    case LDIFF: 
-    case LOGS:
-    case MAHAL:
-    case MEANTEST: 
-    case MULTIPLY: 
-    case OUTFILE: 
-    case PCA:
-    case PERGM:
-    case PRINT: 
-    case PRINTF: 
-    case PVALUE: 
-    case REMEMBER:
-    case RENAME:
-    case RHODIFF:
-    case RMPLOT: 
-    case RUNS: 
-    case SDIFF:
-    case SET:
-    case SETINFO:
-    case SETMISS:
-    case SHELL:
-    case SPEARMAN: 
-    case SQUARE: 
-    case STORE:
-    case SUMMARY:
-    case TRANSPOSE:
-    case VARLIST:
-    case VARTEST: 
-    case XTAB:
-	err = simple_commands(cmd, line, pZ, pdinfo, outprn);
-	if (err) {
-	    errmsg(err, prn);
-	} else if (cmd->ci == DATA) {
-	    register_data(NULL, NULL, 0);
-	}
-	break;
-
-    case OLS:
-    case WLS:
-    case HCCM:
-#ifdef ENABLE_GMP
-    case MPOLS:
-#endif
-    case AR:
-    case ARMA:
-    case ARCH:
-    case CORC:
-    case HILU:
-    case PWE:
-    case GARCH:
-    case HSK:
-    case LAD:
-    case LOGISTIC:
-    case LOGIT:
-    case PANEL:
-    case POISSON:
-    case PROBIT:
-    case TOBIT:
-    case TSLS:
-    case MLE:
-    case NLS:
-    case COEFFSUM:
-    case CUSUM:
-    case RESET:
-    case CHOW:
-    case QLRTEST:
-    case VIF:
-    case TESTUHAT:
-    case HAUSMAN:
-    case LMTEST:
-    case LEVERAGE:
-    case TABPRINT:
-    case EQNPRINT:
-    case FCASTERR:
-    case SYSTEM:
-    case RESTRICT:
-    case ADD:
-    case OMIT:
-    case ADDTO:
-    case OMITFROM:
-    case EQUATION:
-    case END:
-	err = model_commands(s, pZ, pdinfo, outprn);
-	break;
-
     case BXPLOT:
 	if (cmd->nolist) { 
 	    err = boolean_boxplots(line, pZ, pdinfo, cmd->opt | OPT_B);
@@ -6228,7 +6120,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    maybe_list_vars(pdinfo, prn);
 	    if (cmd->ci == FIT && s->flags == CONSOLE_EXEC && 
 		dataset_is_time_series(pdinfo)) {
-		do_autofit_plot(pZ, pdinfo, prn);
+		do_autofit_plot(models[0], pZ, pdinfo, prn);
 	    }
 	}
 	break;
@@ -6504,8 +6396,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     default:
-	pprintf(prn, _("Sorry, the %s command is not yet implemented "
-		       "in libgretl\n"), cmd->word);
+	err = gretl_exec_line(s, pZ, pdinfo, outprn);
 	break;
     } /* end of command switch */
 

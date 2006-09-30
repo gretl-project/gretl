@@ -259,7 +259,8 @@ static int clear_data (CMD *cmd, double ***pZ, DATAINFO **ppdinfo,
     clear_model(models[1]);
 
     free_modelspec();
-    gretl_saved_objects_cleanup();
+
+    libgretl_session_cleanup();
 
     reset_model_count();
 
@@ -815,112 +816,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     switch (cmd->ci) {
 
-    case ADDOBS:
-    case ADF: 
-    case COINT: 
-    case COINT2:
-    case CORR: 
-    case CORRGM:
-    case CRITERIA: 
-    case DATA:
-    case DIFF: 
-    case DISCRETE:
-    case DUMMIFY:
-    case ESTIMATE:
-    case FNCALL:
-    case FUNC:
-    case FUNCERR:
-    case GENR:
-    case GRAPH:
-    case PLOT: 
-    case HURST:
-    case INFO: 
-    case KPSS:
-    case LABELS: 
-    case LAGS: 
-    case LDIFF: 
-    case LOGS:
-    case MAHAL:
-    case MEANTEST: 
-    case MULTIPLY: 
-    case OUTFILE: 
-    case PCA:
-    case PERGM:
-    case PRINT: 
-    case PRINTF: 
-    case PVALUE: 
-    case REMEMBER:
-    case RENAME:
-    case RHODIFF:
-    case RMPLOT: 
-    case RUNS: 
-    case SDIFF:
-    case SET:
-    case SETINFO:
-    case SETMISS:
-    case SHELL:
-    case SPEARMAN:
-    case SQUARE: 
-    case STORE:
-    case SUMMARY:
-    case TRANSPOSE:
-    case VARLIST:
-    case VARTEST: 
-    case XTAB:
-	err = simple_commands(cmd, line, pZ, pdinfo, prn);
-	if (err) {
-	    errmsg(err, prn);
-	}
-	break;
-
-    case OLS:
-    case WLS:
-    case HCCM:
-#ifdef ENABLE_GMP
-    case MPOLS:
-#endif
-    case AR:
-    case ARMA:
-    case ARCH:
-    case CORC:
-    case HILU:
-    case PWE:
-    case GARCH:
-    case HSK:
-    case LAD:
-    case LOGISTIC:
-    case LOGIT:
-    case PANEL:
-    case POISSON:
-    case PROBIT:
-    case TOBIT:
-    case TSLS:
-    case MLE:
-    case NLS:
-    case COEFFSUM:
-    case CUSUM:
-    case RESET:
-    case CHOW:
-    case QLRTEST:
-    case VIF:
-    case TESTUHAT:
-    case HAUSMAN:
-    case LMTEST:
-    case LEVERAGE:
-    case TABPRINT:
-    case EQNPRINT:
-    case FCASTERR:
-    case RESTRICT:
-    case SYSTEM:
-    case ADD:
-    case OMIT:
-    case ADDTO:
-    case OMITFROM:
-    case EQUATION:
-    case END:
-	err = model_commands(s, pZ, pdinfo, prn);
-	break;
-
     case DELEET:
 	if (get_matrix_by_name(cmd->param)) {
 	    err = user_matrix_destroy(cmd->param, prn);
@@ -1257,9 +1152,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	break;
 
     default:
-	pprintf(prn, _("Sorry, the %s command is not yet implemented "
-		       "in gretlcli\n"), cmd->word);
-	err = 1;
+	err = gretl_exec_line(s, pZ, pdinfo, prn);
 	break;
     }
 

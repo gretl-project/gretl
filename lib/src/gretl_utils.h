@@ -41,6 +41,8 @@ typedef enum {
 
 void libgretl_init (void);
 
+void libgretl_session_cleanup (void);
+
 void libgretl_cleanup (void);
 
 double date (int nt, int pd, const double sd0);

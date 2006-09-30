@@ -100,15 +100,8 @@ void echo_cmd (const CMD *cmd, const DATAINFO *pdinfo, const char *line,
 
 void echo_function_call (const char *line, unsigned char flags, PRN *prn);
 
-int simple_commands (CMD *cmd, const char *line, 
-		     double ***pZ, DATAINFO *pdinfo,
+int gretl_exec_line (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 		     PRN *prn);
-
-int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
-		    PRN *prn);
-
-int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
-		       PRN *prn, gretlopt opt);
 
 int call_pca_plugin (VMatrix *corrmat, double ***pZ,
 		     DATAINFO *pdinfo, gretlopt *pflag,

@@ -1082,6 +1082,7 @@ const double *gretl_plotx (const DATAINFO *pdinfo)
     if (pdinfo == NULL) {
 	/* cleanup signal */
 	free(x);
+	x = NULL;
 	ptype = 0;
 	T = 0;
 	return NULL;

@@ -2954,18 +2954,35 @@ static void print_info (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
     }
 }
 
-/* common code for command-line and GUI client programs, where the
-   command doesn't require special handling on the client side 
-*/
-
-int simple_commands (CMD *cmd, const char *line, 
-		     double ***pZ, DATAINFO *pdinfo,
-		     PRN *prn)
+static int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
+			      PRN *prn, gretlopt opt)
 {
-    int err = 0, order = 0;
+    if (pmod->errcode == 0) {
+	printmodel(pmod, pdinfo, opt, prn);
+    }
+
+    return pmod->errcode;
+}
+
+static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
+{
+    return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
+}
+
+int gretl_exec_line (ExecState *s, 
+		     double ***pZ, DATAINFO *pdinfo,
+		     PRN *outprn)
+{
+    CMD *cmd = s->cmd;
+    char *line = s->line;
+    MODEL **models = s->models;
+    PRN *prn = s->prn;
     VMatrix *corrmat;
     Summary *summ;
+    double rho;
     int *listcpy = NULL;
+    int k, order = 0;
+    int err = 0;
 
     if (RETURNS_LIST(cmd->ci)) {
 	/* list is potentially modified -> make a copy */
@@ -3002,8 +3019,9 @@ int simple_commands (CMD *cmd, const char *line,
 	if (cmd->list[0] > 3) {
 	    err = gretl_corrmx(cmd->list, (const double **) *pZ, pdinfo, 
 			       prn);
-	    if (err) 
+	    if (err) {
 		pputs(prn, _("Error in generating correlation matrix\n"));
+	    }
 	    break;
 	}
 	corrmat = corrlist(cmd->list, (const double **) *pZ, pdinfo);
@@ -3304,52 +3322,6 @@ int simple_commands (CMD *cmd, const char *line,
 	err = gretl_shell(line + 1);
 	break;
 
-    default:
-	break;
-    }
-
-    if (listcpy != NULL) {
-	free(listcpy);
-    }
-
-    if (err == E_OK) {
-	err = 0;
-    }
-
-    return err;
-}
-
-int maybe_print_model (MODEL *pmod, DATAINFO *pdinfo,
-		       PRN *prn, gretlopt opt)
-{
-    int err = pmod->errcode;
-
-    if (err) {
-	errmsg(err, prn);
-    } else {
-	printmodel(pmod, pdinfo, opt, prn);
-    }
-
-    return err;
-}
-
-static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
-{
-    return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
-}
-
-int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
-		    PRN *outprn)
-{
-    char *line = s->line;
-    CMD *cmd = s->cmd;
-    MODEL **models = s->models;
-    PRN *prn = s->prn;
-    double rho;
-    int k, err = 0;
-
-    switch (cmd->ci) {
-
     case OLS:
     case WLS:
     case HCCM:
@@ -3382,10 +3354,8 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	clear_model(models[1]);
 	*models[1] = arch_model(cmd->list, cmd->order, pZ, pdinfo, 
 				cmd->opt, outprn);
-	if ((err = (models[1])->errcode)) {
-	    errmsg(err, prn);
-	}
-	if ((models[1])->ci == ARCH) {
+	err = models[1]->errcode;
+	if (models[1]->ci == ARCH) {
 	    s->alt_model = 1;
 	    swap_models(models[0], models[1]);
 	}
@@ -3397,13 +3367,11 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     case PWE:
 	rho = estimate_rho(cmd->list, pZ, pdinfo, cmd->ci,
 			   &err, cmd->opt, prn);
-	if (err) {
-	    errmsg(err, prn);
-	    break;
+	if (!err) {
+	    clear_model(models[0]);
+	    *models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);
+	    err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	}
-	clear_model(models[0]);
-	*models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);
-	err = maybe_print_model(models[0], pdinfo, prn, cmd->opt);
 	break;
 
     case GARCH:
@@ -3449,9 +3417,7 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     case NLS:
 	err = nls_parse_line(cmd->ci, line, (const double **) *pZ, 
 			     pdinfo, prn);
-	if (err) {
-	    errmsg(err, prn);
-	} else {
+	if (!err) {
 	    gretl_cmd_set_context(cmd, cmd->ci);
 	}
 	break;
@@ -3467,9 +3433,7 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	    err = omit_test(cmd->list, models[0], models[1],
 			    pZ, pdinfo, cmd->opt, outprn);
 	}
-	if (err) {
-	    errmsg(err, prn);
-	} else if (!(cmd->opt & OPT_Q) && !(cmd->opt & OPT_W)) {
+	if (!err && !(cmd->opt & OPT_Q) && !(cmd->opt & OPT_W)) {
 	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
 	    swap_models(models[0], models[1]);
@@ -3536,16 +3500,10 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    err = vif_test(models[0], pZ, pdinfo, outprn);
 	}
-	if (err) {
-	    errmsg(err, prn);
-	}
 	break;
 
     case TESTUHAT:
 	err = last_model_test_uhat(pZ, pdinfo, outprn);
-	if (err) {
-	    errmsg(err, prn);
-	}
 	break;
 
     case HAUSMAN:
@@ -3554,16 +3512,11 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 
     case LMTEST:
 	err = lmtest_driver(cmd->param, pZ, pdinfo, cmd->opt, outprn);
-	if (err) {
-	    errmsg(err, prn);
-	}
 	break;
 
     case LEVERAGE:
 	err = leverage_test(models[0], pZ, pdinfo, cmd->opt, outprn);
-	if (err) {
-	    errmsg(err, prn);
-	} else if (cmd->opt & OPT_S) {
+	if (!err && (cmd->opt & OPT_S)) {
 	    /* FIXME gui notification? */
 	    maybe_list_vars(pdinfo, prn);
 	}
@@ -3591,9 +3544,6 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     case FCASTERR:
 	err = display_forecast(line, models[0], pZ, pdinfo, 
 			       cmd->opt, outprn);
-	if (err) {
-	    errmsg(err, prn);
-	}	
 	break;
 
     case RESTRICT:
@@ -3605,15 +3555,12 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 		if (err) break;
 	    }
 	    s->rset = restriction_set_start(line, cmd->opt, &err);
-	    if (err) {
-		errmsg(err, prn);
-	    } else {
+	    if (!err) {
 		gretl_cmd_set_context(cmd, RESTRICT);
 	    }
 	} else {
 	    err = restriction_set_parse_line(s->rset, line);
 	    if (err) {
-		errmsg(err, prn);
 		s->rset = NULL;
 	    }	
 	}
@@ -3625,14 +3572,12 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	    s->sys = system_start(line, cmd->opt);
 	    if (s->sys == NULL) {
 		err = 1;
-		errmsg(err, prn);
 	    } else {
 		gretl_cmd_set_context(cmd, SYSTEM);
 	    }
 	} else {
 	    err = system_parse_line(s->sys, line, pdinfo);
 	    if (err) {
-		errmsg(err, prn);
 		s->sys = NULL;
 	    } 
 	}
@@ -3642,16 +3587,12 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	err = gretl_equation_system_append(s->sys, cmd->list);
 	if (err) {
 	    s->sys = NULL;
-	    errmsg(err, prn);
 	}
 	break;
 
     case END:
 	if (!strcmp(cmd->param, "system")) {
 	    err = gretl_equation_system_finalize(s->sys, pZ, pdinfo, outprn);
-	    if (err) {
-		errmsg(err, prn);
-	    }
 	    s->sys = NULL;
 	} else if (!strcmp(cmd->param, "mle") || !strcmp(cmd->param, "nls")) {
 	    clear_model(models[0]);
@@ -3663,9 +3604,6 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	} else if (!strcmp(cmd->param, "restrict")) {
 	    err = gretl_restriction_set_finalize(s->rset, (const double **) *pZ, 
 						 pdinfo, prn);
-	    if (err) {
-		errmsg(err, prn);
-	    }
 	    s->rset = NULL;
 	} else {
 	    err = 1;
@@ -3675,7 +3613,20 @@ int model_commands (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
 		       "in libgretl\n"), cmd->word);
+	err = 1;
 	break;
+    }
+
+    if (listcpy != NULL) {
+	free(listcpy);
+    }
+
+    if (err == E_OK) {
+	err = 0;
+    }
+
+    if (err) {
+	errmsg(err, prn);
     }
 
     return err;

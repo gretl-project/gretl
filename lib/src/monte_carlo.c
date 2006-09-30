@@ -2517,6 +2517,7 @@ static int next_command (char *targ, LOOPSET *loop, double ***pZ,
 int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo, 
 		     MODEL **models, PRN *prn)
 {
+    ExecState state;
     LOOPSET *loop = currloop;
     DATAINFO *pdinfo = *ppdinfo;
     GRETL_VAR *var = NULL;
@@ -2556,6 +2557,8 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
     if (!err) {
 	push_cmd_src(SRC_LOOP, "starting loop");
     }
+
+    gretl_exec_state_init(&state, 0, linecpy, &cmd, models, prn);
 
     while (!err && loop_condition(loop, pZ, pdinfo)) {
 	int modnum = 0;
@@ -2641,21 +2644,24 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case MULTIPLY: 
 	    case OUTFILE:
 	    case PCA:
+	    case PRINTF:
+	    case PVALUE:
 	    case RHODIFF:
 	    case RUNS: 
 	    case SETINFO:
 	    case SPEARMAN: 
 	    case SQUARE: 
 	    case SUMMARY:
+	    case TESTUHAT:
 	    case VARLIST:
 	    case VARTEST: 
 	    case XTAB:
-		err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
+		err = gretl_exec_line(&state, pZ, pdinfo, prn);
 		break;
 
 	    case FNCALL:
 		push_cmd_src(SRC_FN, "FNCALL");
-		err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
+		err = gretl_exec_line(&state, pZ, pdinfo, prn);
 		break;
 
 	    case LOOP:
@@ -2802,10 +2808,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		}
 		break;	
 
-	    case TESTUHAT:
-		err = model_error_dist(models[0], pZ, pdinfo, prn);
-		break;
-
 	    case MLE:
 	    case NLS:
 		if (loop_is_progressive(loop) || (cmd.opt & OPT_P)) {
@@ -2838,7 +2840,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 
 	    case PRINT:
 		if (cmd.param[0] != '\0') {
-		    err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
+		    err = gretl_exec_line(&state, pZ, pdinfo, prn);
 		} else if (loop_is_progressive(loop)) {
 		    int p = printnum++;
 
@@ -2853,10 +2855,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    err = printdata(cmd.list, (const double **) *pZ, pdinfo, 
 				    cmd.opt, prn);
 		}
-		break;
-
-	    case PRINTF:
-		err = do_printf(linecpy, pZ, pdinfo, prn);
 		break;
 
 	    case SMPL:
@@ -2889,12 +2887,8 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    update_loop_store(cmd.list, loop, (const double **) *pZ, 
 				      pdinfo);
 		} else {
-		    simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
+		    gretl_exec_line(&state, pZ, pdinfo, prn);
 		}
-		break;
-
-	    case PVALUE:
-		batch_pvalue(linecpy, (const double **) *pZ, pdinfo, prn, OPT_NONE);
 		break;
 
 	    case VAR:
