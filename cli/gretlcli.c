@@ -166,27 +166,6 @@ void file_get_line (char *line, CMD *cmd)
     }
 }
 
-int fn_get_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
-{
-    int err = 0;
-
-    clear(s->line, MAXLINE);
-    gretl_function_get_line(s->line, MAXLINE, pZ, ppdinfo, &err);
-
-    if (*s->line != '\0') {
-	*linebak = 0;
-	strncat(linebak, s->line, MAXLINE - 1);
-
-	if (gretl_echo_on() && s->cmd->ci == RUN 
-	    && batch && *s->line == '(') {
-	    printf("%s", s->line);
-	    *linebak = 0;
-	}
-    }
-
-    return err;
-}
-
 #ifdef ENABLE_NLS
 
 void nls_init (void)
@@ -277,16 +256,13 @@ static void get_a_filename (char *fname)
 }
 
 static int 
-get_an_input_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
+get_an_input_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
 {
     int compiling = gretl_compiling_function() || 
 	gretl_compiling_loop();
     int err = 0;
 
-    if (gretl_executing_function()) {
-	/* reading from compiled function */
-	err = fn_get_line(s, pZ, ppdinfo);
-    } else if (runit || batch) {
+    if (runit || batch) {
 	/* reading from script file */
 	file_get_line(s->line, s->cmd);
     } else {
@@ -310,7 +286,7 @@ get_an_input_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 static int maybe_get_input_line_continuation (char *line,
 					      double ***pZ,
-					      DATAINFO **ppdinfo)
+					      DATAINFO *pdinfo)
 {
     char tmp[MAXLINE];
     int err = 0;
@@ -323,9 +299,7 @@ static int maybe_get_input_line_continuation (char *line,
     while (top_n_tail(line)) {
 	tmp[0] = '\0';
 
-	if (gretl_executing_function()) {
-	    gretl_function_get_line(tmp, MAXLINE - 1, pZ, ppdinfo, &err);
-	} else if (batch || runit) {
+	if (batch || runit) {
 	    fgets(tmp, MAXLINE - 1, fb);
 	} else {
 #ifdef HAVE_READLINE
@@ -602,7 +576,7 @@ int main (int argc, char *argv[])
 	    }
 	    set_errfatal(ERRFATAL_AUTO);
 	} else {
-	    err = get_an_input_line(&state, &Z, &datainfo);
+	    err = get_an_input_line(&state, &Z, datainfo);
 	    if (err) {
 		errmsg(err, prn);
 		continue;
@@ -610,7 +584,7 @@ int main (int argc, char *argv[])
 	}
 
 	cmd_overflow = maybe_get_input_line_continuation(line, &Z, 
-							 &datainfo); 
+							 datainfo); 
 	if (cmd_overflow) {
 	    fprintf(stderr, _("Maximum length of command line "
 			      "(%d bytes) exceeded\n"), MAXLINE);
@@ -660,8 +634,9 @@ static void printf_strip (char *s)
     }
 }
 
-static int do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			    PRN *prn)
+static void
+cli_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		     PRN *prn)
 {
     int lines[1] = {1};
     int plotlist[3];
@@ -677,8 +652,18 @@ static int do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (err) {
 	pputs(prn, _("gnuplot command failed\n"));
     }
+}
 
-    return err;
+static void cli_exec_callback (ExecState *s, double ***pZ,
+			       DATAINFO *pdinfo)
+{
+    int ci = s->cmd->ci;
+
+    if (ci == FIT && dataset_is_time_series(pdinfo)) {
+	cli_do_autofit_plot(s->models[0], pZ, pdinfo, s->prn);
+    } else if (ci == VAR || ci == VECM) {
+	maybe_stack_var(s->var, s->cmd);
+    }
 }
 
 static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
@@ -728,7 +713,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     } else {
 	err = parse_command_line(line, cmd, pZ, pdinfo);
 	if (err && gretl_executing_function()) {
-	    gretl_function_stop_on_error(pZ, ppdinfo, prn);
+	    gretl_function_stop_on_error(pZ, pdinfo, prn);
 	    pdinfo = *ppdinfo;
 	}	
     }
@@ -805,14 +790,13 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	err = model_test_check(cmd, pdinfo, prn);
 	if (err) {
 	    if (gretl_executing_function()) {
-		gretl_function_stop_on_error(pZ, ppdinfo, prn);
-		pdinfo = *ppdinfo;
+		gretl_function_stop_on_error(pZ, pdinfo, prn);
 	    }
 	    return err;
 	}
     }
 
-    s->alt_model = 0;
+    s->callback = cli_exec_callback;
 
     switch (cmd->ci) {
 
@@ -839,38 +823,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    }
 	    maybe_list_vars(pdinfo, prn);
 	}
-	break;
-
-    case BREAK:
-    case ENDLOOP:
-	pputs(prn, _("You can't end a loop here, "
-		     "you haven't started one\n"));
-	err = 1;
-	break;
-
-    case FCAST:
-    case FIT:
-	if (cmd->ci == FIT) {
-	    err = add_forecast("fcast autofit", models[0], pZ, pdinfo, cmd->opt);
-	} else {
-	    err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
-	}
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    if (cmd->ci == FIT) {
-		pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
-	    }
-	    maybe_list_vars(pdinfo, prn);
-	    if (cmd->ci == FIT && dataset_is_time_series(pdinfo)) {
-		do_autofit_plot(models[0], pZ, pdinfo, prn);
-	    }
-	}
-	break;
-
-    case FREQ:
-	err = freqdist(cmd->list[1], (const double **) *pZ, 
-		       pdinfo, !batch, cmd->opt, prn);
 	break;
 
     case GNUPLOT:
@@ -1101,64 +1053,31 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	}
 	break;
 
-    case SETOBS:
-	err = set_obs(line, pZ, pdinfo, cmd->opt);
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    if (pdinfo->n > 0) {
-		print_smpl(pdinfo, 0, prn);
-	    } else {
-		pprintf(prn, _("setting data frequency = %d\n"), pdinfo->pd);
-	    }
-	}
-	break;
-
     case SMPL:
-	if (cmd->opt == OPT_F) {
-	    err = restore_full_sample(pZ, ppdinfo);
-	    pdinfo = *ppdinfo;
-	} else if (cmd->opt) {
-	    err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
-				  cmd->opt, prn);
-	    pdinfo = *ppdinfo;
-	} else { 
-	    err = set_sample(line, (const double **) *pZ, pdinfo);
-	}
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    print_smpl(pdinfo, get_full_length_n(), prn);
-	}
-	break;
-
-    case VAR:
-    case VECM:
-	{
-	    GRETL_VAR *var;
-
-	    if (cmd->ci == VAR) {
-		var = gretl_VAR(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, 
-				prn, &err);
-	    } else {
-		var = vecm(cmd->order, atoi(cmd->extra), cmd->list, pZ, pdinfo, 
-			   cmd->opt, prn, &err);
-	    }
-	    if (var != NULL) {
-		err = maybe_stack_var(var, cmd);
-	    }
-	    if (err) errmsg(err, prn);
-	}
-	break;
+ 	if (cmd->opt == OPT_F) {
+ 	    err = restore_full_sample(pZ, ppdinfo);
+ 	    pdinfo = *ppdinfo;
+ 	} else if (cmd->opt) {
+ 	    err = restrict_sample(line, cmd->list, pZ, ppdinfo,
+ 				  cmd->opt, prn);
+ 	    pdinfo = *ppdinfo;
+ 	} else {
+ 	    err = set_sample(line, (const double **) *pZ, pdinfo);
+ 	}
+ 	if (err) {
+ 	    errmsg(err, prn);
+ 	} else {
+ 	    print_smpl(pdinfo, get_full_length_n(), prn);
+ 	}
+ 	break;
 
     default:
-	err = gretl_exec_line(s, pZ, pdinfo, prn);
+	err = gretl_cmd_exec(s, pZ, pdinfo, prn);
 	break;
     }
 
     if (err && gretl_executing_function()) {
-	gretl_function_stop_on_error(pZ, ppdinfo, prn);
-	pdinfo = *ppdinfo;
+	gretl_function_stop_on_error(pZ, pdinfo, prn);
     }
 
     if (!err && (is_model_cmd(cmd->word) || s->alt_model)

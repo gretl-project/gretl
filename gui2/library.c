@@ -206,19 +206,6 @@ static void launch_gnuplot_interactive (void)
 # endif
 }
 
-void set_sample_label_special (void)
-{
-    char labeltxt[80];
-
-    sprintf(labeltxt, _("Undated: Full range n = %d; current sample"
-	    " n = %d"), get_full_length_n(), datainfo->n);
-    gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
-
-    time_series_menu_state(FALSE);
-    panel_menu_state(FALSE);
-    ts_or_panel_menu_state(FALSE);
-}
-
 int gretl_command_sprintf (const char *template, ...)
 {
     va_list args;
@@ -1077,14 +1064,7 @@ int bool_subsample (gretlopt opt)
 	goto alldone;
     }
 
-    if (dataset_is_panel(datainfo) || dataset_is_time_series(datainfo)) {
-	set_sample_label(datainfo);
-    } else {
-	/* special for undated data */
-	set_sample_label_special();
-    }
-
-    restore_sample_state(TRUE);
+    set_sample_label(datainfo);
 
     if (opt & OPT_M) {
 	infobox(_("Sample now includes only complete observations"));
@@ -5823,10 +5803,7 @@ int execute_script (const char *runfile, const char *buf,
 
 	    *line = '\0';
 
-	    if (gretl_executing_function()) {
-		gotline = gretl_function_get_line(line, MAXLINE,
-						  &Z, &datainfo, &exec_err);
-	    } else if (fb != NULL) {
+	    if (fb != NULL) {
 		gotline = fgets(line, MAXLINE, fb);
 	    } else {
 		gotline = bufgets(line, MAXLINE, buf);
@@ -5841,9 +5818,7 @@ int execute_script (const char *runfile, const char *buf,
 		/* handle backslash-continued lines */
 		*tmp = '\0';
 
-		if (gretl_executing_function()) {
-		    gretl_function_get_line(tmp, MAXLINE, &Z, &datainfo, &exec_err);
-		} else if (fb != NULL) {
+		if (fb != NULL) {
 		    fgets(tmp, MAXLINE, fb);
 		} else {
 		    bufgets(tmp, MAXLINE, buf); 
@@ -5905,8 +5880,9 @@ static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
     return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
 }
 
-static void do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-			     PRN *prn)
+static void 
+gui_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		     PRN *prn)
 {
     int lines[1] = {1};
     int plotlist[3];
@@ -5926,6 +5902,23 @@ static void do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 }
 
+static void gui_exec_callback (ExecState *s, double ***pZ,
+			       DATAINFO *pdinfo)
+{
+    int ci = s->cmd->ci;
+
+    if (ci == FIT && s->flags == CONSOLE_EXEC && 
+	dataset_is_time_series(pdinfo)) {
+	gui_do_autofit_plot(models[0], pZ, pdinfo, s->prn);
+    } else if (ci == FREQ && s->flags == CONSOLE_EXEC) {
+	register_graph();
+    } else if (ci == SETOBS || ci == SMPL) {
+	set_sample_label(pdinfo);
+    } else if (ci == VAR || ci == VECM) {
+	maybe_save_var(s->cmd, &s->var, s->prn);
+    }
+}
+
 int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 {
     DATAINFO *pdinfo = *ppdinfo;
@@ -5937,7 +5930,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     int grbatch = 0;
     char datfile[MAXLEN];
     char runfile[MAXLEN];
-    char linecopy[1024];
     GnuplotFlags plotflags = 0;
     int k, err = 0;
 
@@ -5970,9 +5962,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    return 1;
 	}
     }
-
-    *linecopy = 0;
-    strncat(linecopy, line, sizeof linecopy - 1);
 
     /* if we're stacking commands for a loop, parse "lightly" */
     if (gretl_compiling_loop()) { 
@@ -6038,8 +6027,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	err = model_test_check(cmd, pdinfo, prn);
 	if (err) {
 	    if (gretl_executing_function()) {
-		gretl_function_stop_on_error(pZ, ppdinfo, prn);
-		pdinfo = *ppdinfo;
+		gretl_function_stop_on_error(pZ, pdinfo, prn);
 	    }
 	    return err;
 	}
@@ -6048,6 +6036,8 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     if (s->flags == SCRIPT_EXEC && *cmd->savename == 0) {
 	grbatch = 1;
     }
+
+    s->callback = gui_exec_callback;
 
     switch (cmd->ci) {
 
@@ -6094,43 +6084,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	    }
 	    maybe_clear_selector(cmd->list);
 	    maybe_list_vars(pdinfo, prn);
-	}
-	break;
-
-    case BREAK:
-    case ENDLOOP:
-	pprintf(prn, _("You can't end a loop here, "
-		       "you haven't started one\n"));
-	err = 1;
-	break;
-
-    case FCAST:
-    case FIT:
-	if (cmd->ci == FIT) {
-	    err = add_forecast("fcast autofit", models[0], pZ, pdinfo, cmd->opt);
-	} else {
-	    err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
-	}
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    if (cmd->ci == FIT) {
-		pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
-	    }
-	    maybe_list_vars(pdinfo, prn);
-	    if (cmd->ci == FIT && s->flags == CONSOLE_EXEC && 
-		dataset_is_time_series(pdinfo)) {
-		do_autofit_plot(models[0], pZ, pdinfo, prn);
-	    }
-	}
-	break;
-
-    case FREQ:
-	err = freqdist(cmd->list[1], (const double **) *pZ, 
-		       pdinfo, (s->flags == CONSOLE_EXEC),
-		       cmd->opt, prn);
-	if (!err && s->flags == CONSOLE_EXEC) {
-	    register_graph();
 	}
 	break;
 
@@ -6334,76 +6287,33 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	}
 	break;
 
-    case SETOBS:
-	err = set_obs(line, pZ, pdinfo, cmd->opt);
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    if (pdinfo->n > 0) {
-		set_sample_label(pdinfo);
-		print_smpl(pdinfo, 0, prn);
-	    } else {
-		pprintf(prn, _("setting data frequency = %d\n"), pdinfo->pd);
-	    }
-	}
-	break;	
-
     case SMPL:
-	k = 0;
-	if (cmd->opt == OPT_F) {
-	    gui_restore_sample(pZ, ppdinfo);
-	    pdinfo = *ppdinfo;
-	    k = 1;
-	} else if (cmd->opt) {
-	    err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
-				  cmd->opt, prn);
-	    pdinfo = *ppdinfo;
-	} else { 
-	    err = set_sample(line, (const double **) *pZ, pdinfo);
-	}
-
-	if (err) {
-	    errmsg(err, prn);
-	} else {
-	    print_smpl(pdinfo, get_full_length_n(), prn);
-	    if (cmd->opt && cmd->opt != OPT_F) { /* FIXME? */
-		set_sample_label_special();
-	    } else {
-		set_sample_label(pdinfo);
-	    }
-	    if (!k) {
-		restore_sample_state(TRUE);
-	    }
-	}
-	break;
-
-    case VAR:
-    case VECM:
-	{
-	    GRETL_VAR *var;
-
-	    if (cmd->ci == VAR) {
-		var = gretl_VAR(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, 
-				outprn, &err);
-	    } else {
-		var = vecm(cmd->order, atoi(cmd->extra), cmd->list, pZ, pdinfo, 
-			   cmd->opt, outprn, &err);
-	    }
-	    if (var != NULL) {
-		err = maybe_save_var(cmd, &var, prn);
-	    }
-	}
-	break;
+ 	if (cmd->opt == OPT_F) {
+ 	    gui_restore_sample(pZ, ppdinfo);
+ 	    pdinfo = *ppdinfo;
+ 	} else if (cmd->opt) {
+ 	    err = restrict_sample(line, cmd->list, pZ, ppdinfo,
+ 				  cmd->opt, prn);
+ 	    pdinfo = *ppdinfo;
+ 	} else {
+ 	    err = set_sample(line, (const double **) *pZ, pdinfo);
+ 	}
+  	if (err) {
+  	    errmsg(err, prn);
+  	} else {
+  	    print_smpl(pdinfo, get_full_length_n(), prn);
+	    set_sample_label(pdinfo);
+  	}
+  	break;
 
     default:
-	err = gretl_exec_line(s, pZ, pdinfo, outprn);
+	err = gretl_cmd_exec(s, pZ, pdinfo, outprn);
 	break;
     } /* end of command switch */
 
     /* clean up in case a user function bombed */
     if (err && gretl_executing_function()) {
-	gretl_function_stop_on_error(pZ, ppdinfo, prn);
-	pdinfo = *ppdinfo;
+	gretl_function_stop_on_error(pZ, pdinfo, prn);
     }    
 
     /* log the specific command? */

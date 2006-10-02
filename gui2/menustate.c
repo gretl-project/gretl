@@ -514,8 +514,15 @@ void set_sample_label (DATAINFO *pdinfo)
     flip(mdata->ifac, "/Data/Transpose data...", 
 	 !dataset_is_panel(pdinfo));
 
-    sprintf(labeltxt, _("%s: Full range %s - %s"), 
-	    pdstr, stobs, endobs);
+    if (complex_subsampled() && pdinfo->t1 == 0 && 
+	pdinfo->t2 == pdinfo->n - 1 && 
+	datainfo->structure == CROSS_SECTION) {
+	sprintf(labeltxt, _("Undated: Full range n = %d; current sample"
+			    " n = %d"), get_full_length_n(), datainfo->n);
+    } else {
+	sprintf(labeltxt, _("%s: Full range %s - %s"), 
+		pdstr, stobs, endobs);
+    }
 
     if (pdinfo->t1 > 0 || pdinfo->t2 < pdinfo->n - 1) {
 	char t1str[OBSLEN], t2str[OBSLEN];
@@ -547,9 +554,12 @@ void set_sample_label (DATAINFO *pdinfo)
 	gtk_label_set_text(GTK_LABEL(dlabel), labeltxt);
     }
 
+    if (complex_subsampled() || pdinfo->t1 > 0 ||
+	pdinfo->t2 < pdinfo->n - 1) {
+	restore_sample_state(TRUE);
+    }
+
     console_record_sample(datainfo);
 }
-
-
 
 

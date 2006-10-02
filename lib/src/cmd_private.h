@@ -24,18 +24,21 @@ struct CMD_ {
                                    generated lags */
 };
 
+typedef void (*EXEC_CALLBACK) (ExecState *, double ***, DATAINFO *);
+
 struct ExecState_ {
     ExecFlags flags;
     CMD *cmd;
     PRN *prn;
     char *line;
     char runfile[MAXLEN];
-    char linecopy[MAXLINE];
     MODEL **models;
     gretl_equation_system *sys;
     gretl_restriction_set *rset;
+    GRETL_VAR *var;
     int alt_model;
     int in_comment;
+    EXEC_CALLBACK callback;
 };
 
 void gretl_exec_state_init (ExecState *s,

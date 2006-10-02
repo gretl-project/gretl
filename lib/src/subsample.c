@@ -475,6 +475,19 @@ int restore_full_sample (double ***pZ, DATAINFO **ppdinfo)
     return err;
 }
 
+/* simple_restore_full_sample: 
+ * @pdinfo: dataset info. 
+ *
+ * Restore the full data range by shifting the endpoints of the
+ * sample range to the minimum and maximum.
+ */
+
+void simple_restore_full_sample (DATAINFO *pdinfo)
+{
+    pdinfo->t1 = 0;
+    pdinfo->t2 = pdinfo->n - 1;
+}
+
 static int overlay_masks (char *targ, const char *src, int n)
 {
     int i, sn = 0;

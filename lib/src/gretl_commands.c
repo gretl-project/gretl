@@ -66,7 +66,6 @@ static struct gretl_cmd gretl_cmds[] = {
     { FCAST,    "fcast" }, 
     { FCASTERR, "fcasterr" },
     { FIT,      "fit" }, 
-    { FNCALL,   "fncall" },
     { FREQ,     "freq" }, 
     { FUNC,     "function" },
     { FUNCERR,  "error" },

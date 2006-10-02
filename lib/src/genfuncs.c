@@ -1387,7 +1387,6 @@ int get_t_from_obs_string (const char *s, const double **Z,
     return t;
 }
 
-
 void fn_args_init (fnargs *args)
 {
     args->types = NULL;
@@ -1395,10 +1394,14 @@ void fn_args_init (fnargs *args)
     args->nX = 0;
     args->nM = 0;
     args->nl = 0;
+    args->nrefv = 0;
+    args->nrefn = 0;
     args->x = NULL;
     args->X = NULL;
     args->M = NULL;
     args->lists = NULL;
+    args->refv = NULL;
+    args->refnames = NULL;
 }
 
 void fn_args_free (fnargs *args)
@@ -1408,6 +1411,8 @@ void fn_args_free (fnargs *args)
     free(args->X);
     free(args->M);
     free(args->lists);
+    free(args->refv);
+    free(args->refnames);
 }
 
 int push_fn_arg (fnargs *args, int type, void *p)
@@ -1423,6 +1428,10 @@ int push_fn_arg (fnargs *args, int type, void *p)
 
     types[n-1] = type;
     args->types = types;
+
+    if (type == ARG_NONE) {
+	return 0;
+    }
 
     if (type == ARG_SCALAR) {
 	double *x;
@@ -1471,6 +1480,31 @@ int push_fn_arg (fnargs *args, int type, void *p)
 	    lists[n-1] = (char *) p;
 	    args->lists = lists;
 	    args->nl = n;
+	}
+    } else if (type == ARG_REF_SCALAR ||
+	       type == ARG_REF_SERIES) {
+	int *refv;
+
+	n = args->nrefv + 1;
+	refv = realloc(args->refv, n * sizeof *refv);
+	if (refv == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    refv[n-1] = * (int *) p;
+	    args->refv = refv;
+	    args->nrefv = n;
+	}
+    } else if (type == ARG_REF_MATRIX) {
+	char **names;
+
+	n = args->nrefn + 1;
+	names = realloc(args->refnames, n * sizeof *names);
+	if (names == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    names[n-1] = (char *) p;
+	    args->refnames = names;
+	    args->nrefn = n;
 	}
     } else {
 	err = E_TYPES;

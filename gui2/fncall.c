@@ -620,38 +620,12 @@ static int check_args_and_rets (call_info *cinfo)
     return 0;
 }
 
-static int package_function_exec (ExecState *s)
-{
-    char *gotline = NULL;
-    int err = 0;
-
-    while (!gretl_execute_loop()) {
-	gotline = gretl_function_get_line(s->line, MAXLINE, &Z, &datainfo, &err);
-	if (gotline == NULL || *gotline == '\0') {
-	    break;
-	}
-	if (!err) {
-#if FCDEBUG
-	    fprintf(stderr, "package_function_exec: '%s'\n", s->line); 
-#endif	
-	    
-	    err = gui_exec_line(s, &Z, &datainfo);
-	}
-    }
-
-    return err;
-}
-
 static int fn_executor (ExecState *s)
 {
     int err = 0;
 
-    while (!err && (gretl_execute_loop() || gretl_executing_function())) {
-	if (gretl_execute_loop()) { 
-	    err = gretl_loop_exec(s->line, &Z, &datainfo, models, s->prn);
-	} else if (gretl_executing_function()) {
-	    err = package_function_exec(s);
-	}
+    while (!err && gretl_execute_loop()) {
+	err = gretl_loop_exec(s->line, &Z, &datainfo, models, s->prn);
     }
 
     return err;

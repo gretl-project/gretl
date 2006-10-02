@@ -56,7 +56,6 @@ typedef enum {
     FCAST,   
     FCASTERR, 
     FIT,  
-    FNCALL,
     FREQ, 
     FUNC,
     FUNCERR,

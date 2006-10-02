@@ -969,6 +969,7 @@ const char *getsymb (int t, const parser *p)
     case B_LTE: 
 	return "<=";
     case B_AND: 
+    case U_ADDR:
 	return "&";
     case B_OR: 
 	return "|";	

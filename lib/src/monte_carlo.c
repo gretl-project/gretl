@@ -332,7 +332,6 @@ int ok_in_loop (int c)
 {
     if (c == GENR ||
 	c == LOOP ||
-	c == FNCALL || 
 	c == STORE ||
 	c == PRINT ||
 	c == PRINTF ||
@@ -2483,26 +2482,14 @@ static int get_cmd_src (void)
     return srcstack[0];
 }
 
-/* get the next command for a loop: either by pulling a line off the
-   stack of loop commands or, if we're executing a user-defined
-   function, by pulling the appropriate line from the function.
+/* get the next command for a loop by pulling a line off the
+   stack of loop commands.
 */
 
 static int next_command (char *targ, LOOPSET *loop, double ***pZ,
-			 DATAINFO **ppdinfo, int *err, int *j)
+			 DATAINFO *pdinfo, int *err, int *j)
 {
     int ret = 1;
-
-    *targ = '\0';
-
-    while (get_cmd_src() == SRC_FN) {
-	gretl_function_get_line(targ, MAXLINE, pZ, ppdinfo, err);
-	if (*targ == '\0') {
-	    pop_cmd_src("in next_command");
-	} else {
-	    return 1;
-	}
-    }
 
     if (*j < loop->n_cmds) {
 	strcpy(targ, loop->lines[*j]);
@@ -2576,7 +2563,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	}
 
 	j = 0;
-	while (!err && next_command(linecpy, loop, pZ, ppdinfo, &err, &j)) {
+	while (!err && next_command(linecpy, loop, pZ, pdinfo, &err, &j)) {
 
 	    pdinfo = *ppdinfo;
 
@@ -2656,12 +2643,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case VARLIST:
 	    case VARTEST: 
 	    case XTAB:
-		err = gretl_exec_line(&state, pZ, pdinfo, prn);
-		break;
-
-	    case FNCALL:
-		push_cmd_src(SRC_FN, "FNCALL");
-		err = gretl_exec_line(&state, pZ, pdinfo, prn);
+		err = gretl_cmd_exec(&state, pZ, pdinfo, prn);
 		break;
 
 	    case LOOP:
@@ -2840,7 +2822,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 
 	    case PRINT:
 		if (cmd.param[0] != '\0') {
-		    err = gretl_exec_line(&state, pZ, pdinfo, prn);
+		    err = gretl_cmd_exec(&state, pZ, pdinfo, prn);
 		} else if (loop_is_progressive(loop)) {
 		    int p = printnum++;
 
@@ -2887,7 +2869,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    update_loop_store(cmd.list, loop, (const double **) *pZ, 
 				      pdinfo);
 		} else {
-		    gretl_exec_line(&state, pZ, pdinfo, prn);
+		    gretl_cmd_exec(&state, pZ, pdinfo, prn);
 		}
 		break;
 

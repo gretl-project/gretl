@@ -1350,7 +1350,6 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    } else {
 		gtk_widget_destroy(rset->dlg);
 		set_sample_label(datainfo);
-		restore_sample_state(TRUE);
 	    }
 	} else {
 	    /* no change */

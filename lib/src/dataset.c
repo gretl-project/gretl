@@ -1371,21 +1371,20 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 
 /**
  * dataset_add_scalar_as:
- * @numstr: string representation of numeric value.
+ * @x: scalar value.
  * @newname: name to give the new variable.
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
  *
  * Adds to the dataset a new scalar with name @newname and
- * value given by @numstr.  The new variable is added at one
+ * value given by @x.  The new variable is added at one
  * level "deeper" (in terms of function execution) than the
- * current level.  This is for use with user-defined functions,
- * where a numeric string is given as a function argument.
+ * current level.  This is for use with user-defined functions.
  *
  * Returns: 0 on success, %E_ALLOC on error.
  */
 
-int dataset_add_scalar_as (const char *numstr, const char *newname,
+int dataset_add_scalar_as (double x, const char *newname,
 			   double ***pZ, DATAINFO *pdinfo)
 {
     int vnew, err = 0;
@@ -1399,9 +1398,50 @@ int dataset_add_scalar_as (const char *numstr, const char *newname,
 
     if (!err) {
 	vnew = pdinfo->v - 1;
-	(*pZ)[vnew][0] = dot_atof(numstr);
+	(*pZ)[vnew][0] = x;
 	strcpy(pdinfo->varname[vnew], newname);
 	STACK_LEVEL(pdinfo, vnew) += 1;
+    }
+
+    return err;
+}
+
+/**
+ * dataset_add_series_as:
+ * @x: array to be added.
+ * @newname: name to give the new variable.
+ * @pZ: pointer to data array.
+ * @pdinfo: dataset information.
+ *
+ * Adds to the dataset a new series with name @newname and
+ * values given by @x.  The new variable is added at one
+ * level "deeper" (in terms of function execution) than the
+ * current level.  This is for use with user-defined functions.
+ *
+ * Returns: 0 on success, %E_ALLOC on error.
+ */
+
+int dataset_add_series_as (double *x, const char *newname,
+			   double ***pZ, DATAINFO *pdinfo)
+{
+    int vnew, err = 0;
+
+    if (pdinfo->varinfo == NULL) {
+	strcpy(gretl_errmsg, _("Please open a data file first"));
+	return 1;
+    }
+
+    err = real_dataset_add_series(1, NULL, pZ, pdinfo);
+
+    if (!err) {
+	vnew = pdinfo->v - 1;
+	(*pZ)[vnew] = copyvec(x, pdinfo->n);
+	if ((*pZ)[vnew] == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    strcpy(pdinfo->varname[vnew], newname);
+	    STACK_LEVEL(pdinfo, vnew) += 1;
+	}
     }
 
     return err;

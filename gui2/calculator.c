@@ -268,7 +268,7 @@ static void get_critical (GtkWidget *w, CalcChild *child)
 	    pprintf(prn, _("right-tail probability = %g"), a);
 	    pputs(prn, "\n ");
 	    pprintf(prn, _("complementary probability = %g"), 1.0 - a);
-	    if (d == NORMAL_DIST || d == T_DIST) {
+	    if (a < 0.5 && (d == NORMAL_DIST || d == T_DIST)) {
 		pputs(prn, "\n ");
 		pprintf(prn, _("two-tailed probability = %g"), 2.0 * a);
 	    }

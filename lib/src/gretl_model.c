@@ -1742,6 +1742,10 @@ void destroy_working_models (MODEL **models, int n)
 {
     int i;
 
+    if (models == NULL) {
+	return;
+    }
+
     for (i=0; i<n; i++) {
 	gretl_model_free_on_exit(models[i]);
     }
@@ -3807,6 +3811,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
     double x = NADBL;
 
     if (pmod == NULL) {
+	fprintf(stderr, "model get scalar: model is NULL\n");
 	*err = E_BADSTAT;
 	return x;
     }
@@ -3852,6 +3857,7 @@ double gretl_model_get_scalar (const MODEL *pmod, ModelDataIndex idx,
     }
 
     if (na(x)) {
+	fprintf(stderr, "model get scalar: x is NA\n");
 	*err = E_BADSTAT;
     }
 
@@ -4002,6 +4008,7 @@ model_get_special_vec (const MODEL *pmod, ModelDataIndex idx, int *err)
     }
 
     if (mdata == NULL) {
+	fprintf(stderr, "model_get_special_vec: mdata is NULL\n");
 	*err = E_BADSTAT;
     }
 
@@ -4069,6 +4076,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
     gretl_matrix *M = NULL;
 
     if (pmod == NULL) {
+	fprintf(stderr, "gretl_model_get_matrix: pmod is NULL\n");
 	*err = E_BADSTAT;
 	return M;
     }
@@ -4105,6 +4113,7 @@ gretl_matrix *gretl_model_get_matrix (MODEL *pmod, ModelDataIndex idx,
 	M = model_get_rhovec(pmod, err);
 	break;
     default:
+	fprintf(stderr, "gretl_model_get_matrix: got to default\n");
 	*err = E_BADSTAT;
 	break;
     }

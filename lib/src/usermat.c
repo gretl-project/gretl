@@ -315,6 +315,40 @@ int copy_named_matrix_as (const char *orig, const char *new)
 }
 
 /**
+ * copy_matrix_as:
+ * @m: the original matrix.
+ * @new: the name to be given to the copy.
+ *
+ * A copy of matrix @m is added to the stack of saved matrices
+ * under the name @new.  This is intended for use when a matrix is given
+ * is given as the argument to a user-defined function: it is copied
+ * under the name assigned by the function's parameter list.
+ *
+ * Returns: 0 on success, non-zero on error.
+ */
+
+int copy_matrix_as (const gretl_matrix *m, const char *new)
+{
+    gretl_matrix *m2 = gretl_matrix_copy(m);
+    int err;
+
+    if (m2 == NULL) {
+	err = E_ALLOC;
+    } else {
+	err = user_matrix_add(m2, new);
+    }
+
+    if (!err) {
+	/* increment level of last-added matrix */
+	user_matrix *u = matrices[n_matrices - 1];
+
+	u->level += 1;
+    }
+
+    return err;
+}
+
+/**
  * user_matrix_set_name_and_level:
  * @m: matrix to be reconfigured.
  * @name: new name to be given to matrix.
@@ -526,6 +560,12 @@ gretl_matrix *matrix_get_submatrix (const gretl_matrix *M,
     if (*err) {
 	return NULL;
     }
+
+#if MDEBUG
+    printlist(rslice, "rslice");
+    printlist(cslice, "cslice");
+    fprintf(stderr, "M = %d x %d\n", M->rows, M->cols);
+#endif
 
     r = (rslice == NULL)? M->rows : rslice[0];
     c = (cslice == NULL)? M->cols : cslice[0];

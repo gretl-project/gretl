@@ -1765,10 +1765,8 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
     return M;
 }
 
-#if TRYIT
-
 #define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
-                         s == LIST)
+                         s == LIST || s == U_ADDR)
 
 /* evaluate a user-defined function */
 
@@ -1782,7 +1780,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
     NODE *r = t->v.b2.r;
     NODE *n, *ret = NULL;
     int i, m = r->v.bn.n_nodes;
-    int rtype;
+    int rtype = ARG_NONE;
 
     fn_args_init(&args);
 
@@ -1793,18 +1791,23 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	return NULL;
     }
 
-    /* check that the function returns something suitable */
-    rtype = user_func_first_return_type(uf);
-    if (rtype != ARG_SCALAR && rtype != ARG_SERIES &&
-	rtype != ARG_MATRIX) {
-	p->err = E_TYPES;
-	return NULL;
+    /* check that the function returns something suitable, if required */
+    if (!simple_ufun_call(p)) {
+	rtype = user_func_first_return_type(uf);
+	if (rtype != ARG_SCALAR && rtype != ARG_SERIES &&
+	    rtype != ARG_MATRIX) {
+	    p->err = E_TYPES;
+	    return NULL;
+	}
     }
 
     /* check the argument count */
     argc = fn_n_params(uf);
     if (m > argc) {
-	pprintf(p->prn, "Too many arguments for function '%s'\n", l->v.str);
+	pprintf(p->prn, _("Number of arguments (%d) does not "
+			  "match the number of\nparameters for "
+			  "function %s (%d)"),
+		m, l->v.str, argc);
 	p->err = 1;
 	return NULL;
     }
@@ -1824,7 +1827,24 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    }
 	}
 	fprintf(stderr, "eval_ufunc: arg[%d] is of type %d\n", i, n->t);
-	if (n->t == NUM) {
+	if (n->t == U_ADDR) {
+	    NODE *u = n->v.b1.b;
+
+	    if (u->t == UVAR) {
+		if (var_is_scalar(p->dinfo, u->v.idnum)) {
+		    p->err = push_fn_arg(&args, ARG_REF_SCALAR, &u->v.idnum);
+		} else {
+		    p->err = push_fn_arg(&args, ARG_REF_SERIES, &u->v.idnum);
+		}
+	    } else if (u->t == UMAT) {
+		p->err = push_fn_arg(&args, ARG_REF_MATRIX, u->v.str);
+	    } else {
+		pputs(p->prn, "Wrong type of operand for unary '&'\n");
+		p->err = 1;
+	    }
+	} else if (n->t == EMPTY) {
+	    p->err = push_fn_arg(&args, ARG_NONE, NULL);
+	} else if (n->t == NUM) {
 	    p->err = push_fn_arg(&args, ARG_SCALAR, &n->v.xval);
 	} else if (n->t == VEC) {
 	    p->err = push_fn_arg(&args, ARG_SERIES, n->v.xvec);
@@ -1835,16 +1855,36 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
     }
 
-    fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, total=%d\n",
-	    args.nx, args.nX, args.nM, args.nl, m);
+    fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, nrefv=%d, total=%d\n",
+	    args.nx, args.nX, args.nM, args.nl, args.nrefv, m);
 
     /* try sending args to function */
     if (!p->err) {
-	void *ret = NULL;
+	double xret = NADBL;
+	double *Xret = NULL;
+	gretl_matrix *mret = NULL;
 
-	p->err = function_call_direct(uf, &args, p->Z, p->dinfo, 
-				      &ret);
-	/* now construct a node holding the result */
+	p->err = function_call_direct(uf, &args, rtype, p->Z, p->dinfo, 
+				      &xret, &Xret, &mret,
+				      p->prn);
+	if (!p->err) {
+	    if (rtype == ARG_SCALAR) {
+		ret = aux_scalar_node(p);
+		if (ret != NULL) {
+		    ret->v.xval = xret;
+		}
+	    } else if (rtype == ARG_SERIES) {
+		ret = aux_vec_node(p, 0);
+		if (ret != NULL) {
+		    ret->v.xvec = Xret;
+		}
+	    } else if (rtype == ARG_MATRIX) {
+		ret = aux_matrix_node(p);
+		if (ret != NULL) {
+		    ret->v.m = mret;
+		}
+	    } 
+	}
     }
 
     fn_args_free(&args);
@@ -1856,13 +1896,8 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
     }
 
-    /* fakery */
-    p->err = 1;
-
     return ret;
 }
-
-#endif
 
 #define ok_matdef_sym(s) (s == NUM || s == VEC || s == EMPTY || \
                           s == DUM || s == LIST)
@@ -2194,7 +2229,7 @@ static NODE *eval (NODE *t, parser *p)
 		}
 	    }
 	}
-    } else if (b1sym(t->t)) {
+    } else if (b1sym(t->t) && t->t != U_ADDR) {
 	l = eval(t->v.b1.b, p);
 	if (l == NULL && p->err == 0) {
 	    p->err = 1;
@@ -2214,6 +2249,7 @@ static NODE *eval (NODE *t, parser *p)
     case MSPEC:
     case EMPTY:
     case ABSENT:
+    case U_ADDR:
 	/* terminal symbol: pass on through */
 	ret = t;
 	break;
@@ -2530,12 +2566,7 @@ static NODE *eval (NODE *t, parser *p)
 	ret = eval(t->v.b1.b, p);
 	break;
     case UFUN:
-	/* user-defined function: not integrated yet */
-#if TRYIT
 	ret = eval_ufunc(t, p);
-#else
-	ret = t;
-#endif
 	break;
     default: 
 	printf("EVAL: weird node %s\n", getsymb(t->t, NULL));
@@ -3624,6 +3655,8 @@ static void parser_init (parser *p, const char *str,
 	p->lh.t = MAT;
     } else if (p->flags & P_SCALAR) {
 	p->targ = NUM;
+    } else if (p->flags & P_UFUN) {
+	p->targ = EMPTY;
     } else {
 	pre_process(p, flags);
     }

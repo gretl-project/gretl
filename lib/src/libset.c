@@ -56,8 +56,6 @@ struct bkbp_opts {
 struct sample_info {
     int t1;
     int t2;
-    char submode;
-    char *submask;
 };
     
 struct bhhh_opts {
@@ -155,8 +153,6 @@ static void sample_info_init (struct sample_info *sinfo)
 {
     sinfo->t1 = UNSET_INT;
     sinfo->t2 = UNSET_INT;
-    sinfo->submask = NULL;
-    sinfo->submode = 0;
 }
 
 #define sinfo_is_set(s) (s.t1 != UNSET_INT && s.t2 != UNSET_INT)
@@ -196,13 +192,9 @@ static void state_vars_copy (set_vars *sv, const DATAINFO *pdinfo)
     if (pdinfo != NULL) {
 	sv->sinfo.t1 = pdinfo->t1;
 	sv->sinfo.t2 = pdinfo->t2;
-	sv->sinfo.submode = pdinfo->submode;
-	sv->sinfo.submask = copy_datainfo_submask(pdinfo);
 #if PDEBUG
-	fprintf(stderr, " sinfo.t1=%d, sinfo.t2=%d, "
-		"sinfo.submode=%d, sinfo.submask=%p\n", sv->sinfo.t1,
-		sv->sinfo.t2, sv->sinfo.submode,
-		(void *) sv->sinfo.submask);
+	fprintf(stderr, " sinfo.t1=%d, sinfo.t2=%d\n"
+		sv->sinfo.t1, sv->sinfo.t2);
 #endif
     } else {
 	sample_info_init(&sv->sinfo);
@@ -1219,9 +1211,6 @@ static void update_sample_info (set_vars *sv, const DATAINFO *pdinfo)
     if (pdinfo != NULL) {
 	sv->sinfo.t1 = pdinfo->t1;
 	sv->sinfo.t2 = pdinfo->t2;
-	sv->sinfo.submode = pdinfo->submode;
-	free(sv->sinfo.submask);
-	sv->sinfo.submask = copy_datainfo_submask(pdinfo);
     }	 
 }
 
@@ -1288,32 +1277,8 @@ int push_program_state (const DATAINFO *pdinfo)
     return err;
 }
 
-static int 
-subsampled_at_this_level (const DATAINFO *pdinfo, set_vars *sv)
-{
-    int ret = 0;
-
-    if (!complex_subsampled()) {
-	return 0;
-    }
-
-    if (pdinfo->submask != NULL) {
-	if (sv->sinfo.submask == NULL) {
-	    ret = 1;
-	} else if (submask_cmp(pdinfo->submask, sv->sinfo.submask)) {
-	    ret = 1;
-	}
-    } 
-
-    return ret;
-}
-
 static void free_state (set_vars *sv)
 {
-    if (sv->sinfo.submask != NULL) {
-	free(sv->sinfo.submask);
-    }
-
     if (sv->initvals != NULL) {
 	gretl_matrix_free(sv->initvals);
     }
@@ -1322,14 +1287,10 @@ static void free_state (set_vars *sv)
 }
 
 /* Called when a new-style function exits: restores the program state
-   that was in force when the function started executing.  This may
-   involve putting the sample back the way it was.  But if the dataset
-   was complex subsampled either before or after function execution,
-   we will not (currently) mess with the sample state.  That case
-   requires more careful thought.
+   that was in force when the function started executing.  
 */
 
-int pop_program_state (double ***pZ, DATAINFO **ppdinfo)
+int pop_program_state (double ***pZ, DATAINFO *pdinfo)
 {
     set_vars **sstack;
     int ns = n_states;
@@ -1337,7 +1298,7 @@ int pop_program_state (double ***pZ, DATAINFO **ppdinfo)
 
 #if PDEBUG
     fprintf(stderr, "pop_program_state called: ns=%d, pdinfo=%p\n",
-	    ns, (void *) *ppdinfo);
+	    ns, (void *) pdinfo);
 #endif
 
     if (ns < 2) {
@@ -1361,28 +1322,15 @@ int pop_program_state (double ***pZ, DATAINFO **ppdinfo)
     fprintf(stderr, " state is now state_stack[%d]\n", ns - 2);
 #endif
 
-    if (!err && *ppdinfo != NULL && sinfo_is_set(state->sinfo)) {
-	if (subsampled_at_this_level(*ppdinfo, state)) {
-#if PDEBUG
-	    fprintf(stderr, " undoing current sub-sampling\n");
-#endif
-	    restore_full_sample(pZ, ppdinfo);
-	    if (state->sinfo.submask != NULL) {
-#if PDEBUG
-		fprintf(stderr, " reimposing outer sample restriction\n");
-#endif
-		restrict_sample_from_mask(state->sinfo.submask, state->sinfo.submode, 
-					  pZ, ppdinfo);
-	    }
-	}
-	(*ppdinfo)->t1 = state->sinfo.t1;
-	(*ppdinfo)->t2 = state->sinfo.t2;
+    if (!err && pdinfo != NULL && sinfo_is_set(state->sinfo)) {
+	pdinfo->t1 = state->sinfo.t1;
+	pdinfo->t2 = state->sinfo.t2;
     }
 
 #if PDEBUG
-    if (*ppdinfo != NULL) {
+    if (pdinfo != NULL) {
 	fprintf(stderr, " err=%d, pdinfo->t1=%d, pdinfo->t2=%d\n",
-		err, (*ppdinfo)->t1, (*ppdinfo)->t2);
+		err, pdinfo->t1, pdinfo->t2);
     } 
 #endif
 
@@ -1421,13 +1369,13 @@ void libset_cleanup (void)
     n_states = 0;
 }
 
-int libset_restore_state_zero (double ***pZ, DATAINFO **ppdinfo)
+int libset_restore_state_zero (double ***pZ, DATAINFO *pdinfo)
 {
     int i, ns = n_states;
     int err = 0;
 
     for (i=ns; i>=2 && !err; i--) {
-	err = pop_program_state(pZ, ppdinfo);
+	err = pop_program_state(pZ, pdinfo);
     }
 
     return err;

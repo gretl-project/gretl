@@ -278,7 +278,10 @@ int dataset_add_scalars (int n, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
-int dataset_add_scalar_as (const char *numstr, const char *newname,
+int dataset_add_scalar_as (double x, const char *newname,
+			   double ***pZ, DATAINFO *pdinfo);
+
+int dataset_add_series_as (double *x, const char *newname,
 			   double ***pZ, DATAINFO *pdinfo);
 
 int dataset_copy_variable_as (int v, const char *newname,

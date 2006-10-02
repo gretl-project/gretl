@@ -23,6 +23,7 @@
 #include "libset.h"
 #include "usermat.h"
 #include "gretl_xml.h"
+#include "cmd_private.h"
 
 #define CALLSTACK_DEPTH 8
 #define FN_NAMELEN 32
@@ -577,7 +578,7 @@ destroy_or_assign_local_vars (fncall *call, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-static int unstack_fncall (double ***pZ, DATAINFO **ppdinfo)
+static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
 {
     fncall *call;   
     int i, nc;
@@ -596,9 +597,9 @@ static int unstack_fncall (double ***pZ, DATAINFO **ppdinfo)
 	    call->fun->name, nc);
 #endif
 
-    pop_program_state(pZ, ppdinfo);
+    pop_program_state(pZ, pdinfo);
 
-    err = destroy_or_assign_local_vars(call, pZ, *ppdinfo, nc);
+    err = destroy_or_assign_local_vars(call, pZ, pdinfo, nc);
 
     set_executing_off(call);
     free_fncall(call);
@@ -850,6 +851,12 @@ static const char *arg_type_string (int type)
 	return "list";
     } else if (type == ARG_MATRIX) {
 	return "matrix";
+    } else if (type == ARG_REF_SCALAR) {
+	return "scalarref";
+    } else if (type == ARG_REF_SERIES) {
+	return "seriesref";
+    } else if (type == ARG_REF_MATRIX) {
+	return "matrixref";
     } else {
 	return "unknown";
     }
@@ -871,6 +878,9 @@ static int field_to_type (const char *s)
     if (!strcmp(s, "series"))   return ARG_SERIES;
     if (!strcmp(s, "list"))     return ARG_LIST;
     if (!strcmp(s, "matrix"))   return ARG_MATRIX;
+    if (!strcmp(s, "scalarref"))  return ARG_REF_SCALAR;
+    if (!strcmp(s, "seriesref"))  return ARG_REF_SERIES;
+    if (!strcmp(s, "matrixref"))  return ARG_REF_MATRIX;
 
     return 0;
 }    
@@ -2052,7 +2062,7 @@ int is_user_matrix_function (const char *word)
     return 0;
 }
 
-int gretl_get_user_function (const char *line, char **fnname)
+int gretl_get_user_function (const char *line)
 {
     int ret = 0;
 
@@ -2064,11 +2074,7 @@ int gretl_get_user_function (const char *line, char **fnname)
 #endif
 	function_name_from_line(line, name);
 	if (get_user_function_by_name(name) != NULL) {
-	    free(*fnname);
-	    *fnname = gretl_strdup(name);
-	    if (*fnname != NULL) {
-		ret = 1;
-	    }
+	    ret = 1;
 	}
     }
 
@@ -2199,6 +2205,12 @@ static int arg_type_from_string (const char *s)
 	ret = ARG_LIST;
     } else if (!strcmp(s, "matrix")) {
 	ret = ARG_MATRIX;
+    } else if (!strcmp(s, "scalarref")) {
+	ret = ARG_REF_SCALAR;
+    } else if (!strcmp(s, "seriesref")) {
+	ret = ARG_REF_SERIES;
+    } else if (!strcmp(s, "matrixref")) {
+	ret = ARG_REF_MATRIX;
     }
 
     return ret;
@@ -2459,7 +2471,7 @@ static int read_deflt_min_max (char *s, fn_param *param,
 static int 
 parse_function_element (char *s, fn_param *param, fn_return *ret, int i)
 {
-    char tstr[8] = {0};
+    char tstr[10] = {0};
     char *name;
     int type, len;
     int err = 0;
@@ -2468,7 +2480,7 @@ parse_function_element (char *s, fn_param *param, fn_return *ret, int i)
 
     /* get arg or return type */
     len = strcspn(s, " ");
-    if (len > 7) {
+    if (len > 9) {
 	err = E_PARSE;
     } else {
 	strncat(tstr, s, len);
@@ -2887,79 +2899,19 @@ int update_function_from_script (const char *fname, int idx)
     return err;
 }
 
-/* expand by one element the mapping (in the form of two parallel
-   lists) between the ID numbers of "outer scope" variables and
-   the ID numbers of the corresponding local copies of those
-   variables */
-
-static int 
-grow_vars_mapping (int outv, int inv, int **p_outlist, int **p_inlist)
-{
-    int *outlist = NULL, *inlist = NULL;
-    int n;
-
-    if (*p_outlist != NULL) {
-	n = (*p_outlist)[0] + 2;
-    } else {
-	n = 2;
-    }
-
-    outlist = realloc(*p_outlist, n * sizeof *outlist);
-    if (outlist == NULL) {
-	return 1;
-    }
-
-    inlist = realloc(*p_inlist, n * sizeof *inlist);
-    if (inlist == NULL) {
-	*p_outlist = outlist;
-	return 1;
-    }
-
-    outlist[0] = inlist[0] = n - 1;
-    
-    outlist[n-1] = outv;
-    inlist[n-1] = inv;
-
-    *p_outlist = outlist;
-    *p_inlist = inlist;
-
-    return 0;
-}
-
-/* look up a variable by its "outer" ID number: if we've already made
-   a local copy of the variable, return the ID number of the copy
-   (otherwise return 0) */
-
-static int find_mapped_var (int v, const int *outlist, const int *inlist)
-{
-    int i, match = 0;
-
-    if (outlist != NULL && inlist != NULL) {
-	for (i=1; i<=outlist[0]; i++) {
-	    if (v == outlist[i]) {
-		match = inlist[i];
-		break;
-	    }
-	}
-    }
-
-    return match;
-}
-
 /* given a named list of variables supplied as an argument to a function,
    make a revised version of the list in which the original variable
    ID numbers are replaced by the ID numbers of local copies of those
    variables */
 
 static int localize_list (const char *oldname, const char *newname,
-			  double ***pZ, DATAINFO *pdinfo,
-			  int **p_outlist, int **p_inlist)
+			  double ***pZ, DATAINFO *pdinfo)
 {
     int *orig = NULL;
     int *new = NULL;
     int origv = pdinfo->v;
     int orig0 = 0;
-    int i, v, match, err = 0;
+    int i, v, err = 0;
 
     if (!strcmp(oldname, "null")) {
 	new = gretl_null_list();
@@ -2981,16 +2933,12 @@ static int localize_list (const char *oldname, const char *newname,
 	if (v == pdinfo->v) {
 	    /* unknown variable */
 	    err = E_DATA;
-	} else if ((match = find_mapped_var(v, *p_outlist, *p_inlist))) {
-	    /* a local copy of this variable already exists */
-	    new[i] = match;
 	} else {
 	    /* add a local copy of the variable */
 	    err = dataset_copy_variable_as(v, pdinfo->varname[v], 
 					   pZ, pdinfo);
 	    if (!err) {
 		new[i] = pdinfo->v - 1;
-		err = grow_vars_mapping(v, pdinfo->v - 1, p_outlist, p_inlist);
 	    }
 	}
     }
@@ -3006,37 +2954,6 @@ static int localize_list (const char *oldname, const char *newname,
     return err;
 }
 
-/* Check number of arguments to function.  If there are trailing
-   parameters that have specified default values, it's OK if the
-   argument count is short (the defaults will be used).  An excess
-   argument count is always an error.
-*/
-
-static int check_argc (int argc, ufunc *fun) 
-{
-    int err = 1;
-
-    if (argc == fun->n_params) {
-	err = 0;
-    } else if (argc < fun->n_params) {
-	int i, nreq = fun->n_params;
-
-	for (i=fun->n_params-1; i>=0; i--) {
-	    if (!na(fun->params[i].deflt)) {
-		nreq--;
-	    } else {
-		break;
-	    }
-	}
-
-	if (argc >= nreq) {
-	    err = 0;
-	}
-    }
-
-    return err;
-}
-
 /* Scalar function arguments only: if the arg is not supplied, use the
    default that is contained in the function specification, if any.
 */
@@ -3044,7 +2961,7 @@ static int check_argc (int argc, ufunc *fun)
 static int add_scalar_arg_default (fn_param *param, double ***pZ,
 				   DATAINFO *pdinfo)
 {
-    char defstr[32];
+    double x;
 
     if (na(param->deflt)) {
 	/* should be impossible here, but... */
@@ -3052,108 +2969,12 @@ static int add_scalar_arg_default (fn_param *param, double ***pZ,
     }
 
     if (param->type == ARG_BOOL || param->type == ARG_INT) {
-	sprintf(defstr, "%g", floor(param->deflt));
+	x = floor(param->deflt);
     } else {
-	sprintf(defstr, "%g", param->deflt);
+	x = param->deflt;
     }
     
-    return dataset_add_scalar_as(defstr, param->name, pZ, pdinfo);
-}
-
-static int check_and_allocate_function_args (ufunc *fun,
-					     int argc, char **argv, 
-					     double ***pZ,
-					     DATAINFO *pdinfo)
-{
-    int *outlist = NULL;
-    int *inlist = NULL;
-    int i, v, err;
-
-    err = check_argc(argc, fun);
-    if (err) {
-	sprintf(gretl_errmsg, _("Number of arguments (%d) does not "
-				"match the number of\nparameters for "
-				"function %s (%d)"),
-		argc, fun->name, fun->n_params);
-	return err;
-    }
-
-    /* FIXME: need to check function return types against any pre-
-       existing variables of the same names, to preserve type
-       compatibility */
-
-    for (i=0; i<fun->n_params && !err; i++) {
-#if FN_DEBUG
-	fprintf(stderr, "fn argv[%d]: arg='%s', param.name='%s' param.type=%d\n", 
-		i, argv[i], fun->params[i].name, fun->params[i].type);
-#endif
-	if (scalar_arg(fun->params[i].type)) {
-	    if (i >= argc) {
-		err = add_scalar_arg_default(&fun->params[i], pZ, pdinfo);
-	    } else if (numeric_string(argv[i])) {
-		err = dataset_add_scalar_as(argv[i], fun->params[i].name, 
-					    pZ, pdinfo);
-	    } else {
-		v = varindex(pdinfo, argv[i]);
-		if (var_is_scalar(pdinfo, v)) {
-		    err = dataset_copy_variable_as(v, fun->params[i].name, 
-						   pZ, pdinfo);
-		    if (!err) {
-			err = grow_vars_mapping(v, pdinfo->v - 1, &outlist, &inlist);
-		    }
-		} else {
-		    sprintf(gretl_errmsg, "argument %d (%s): not a scalar", 
-			    i+1, argv[i]);
-		    err = 1;
-		} 
-	    }
-	} else if (fun->params[i].type == ARG_SERIES) {
-	    if (numeric_string(argv[i])) {
-		v = atoi(argv[i]);
-	    } else {
-		v = varindex(pdinfo, argv[i]);
-	    }
-	    if (v < pdinfo->v && var_is_series(pdinfo, v)) {
-		err = dataset_copy_variable_as(v, fun->params[i].name, 
-					       pZ, pdinfo);
-		if (!err) {
-		    err = grow_vars_mapping(v, pdinfo->v - 1, &outlist, &inlist);
-		}
-	    } else {
-		sprintf(gretl_errmsg, "argument %d (%s): not a series", 
-			i+1, argv[i]);
-		err = 1;
-	    } 
-	} else if (fun->params[i].type == ARG_LIST) {
-	    if (get_list_by_name(argv[i]) != NULL || !strcmp(argv[i], "null")) {
-		err = localize_list(argv[i], fun->params[i].name, pZ, pdinfo,
-				    &outlist, &inlist);
-	    } else {
-		sprintf(gretl_errmsg, "argument %d (%s): not a list", i+1, argv[i]);
-		err = 1;
-	    }
-	} else if (fun->params[i].type == ARG_MATRIX) {
-	    if (get_matrix_by_name(argv[i]) != NULL) {
-		err = copy_named_matrix_as(argv[i], fun->params[i].name);
-#if FN_DEBUG
-		fprintf(stderr, "done copy_named_matrix_as, '%s' -> '%s', err = %d\n", 
-			argv[i], fun->params[i].name, err);
-#endif
-	    }
-	} else {
-	    /* impossible */
-	    err = 1;
-	}
-    }
-
-    if (inlist != NULL) {
-	free(inlist);
-    }
-    if (outlist != NULL) {
-	free(outlist);
-    }
-
-    return err;
+    return dataset_add_scalar_as(x, param->name, pZ, pdinfo);
 }
 
 static int check_function_assignments (ufunc *fun, int *asslist, 
@@ -3211,6 +3032,39 @@ static int check_function_assignments (ufunc *fun, int *asslist,
     return err;
 }
 
+static int allocate_function_args (ufunc *fun,
+				   int argc, fnargs *args, 
+				   double ***pZ,
+				   DATAINFO *pdinfo)
+{
+    int xi = 0, Xi = 0, Mi = 0, li = 0;
+    int i, err = 0;
+
+    for (i=0; i<fun->n_params && !err; i++) {
+	if (scalar_arg(fun->params[i].type)) {
+	    if (xi >= args->nx) {
+		err = add_scalar_arg_default(&fun->params[i], pZ, pdinfo);
+	    } else {
+		err = dataset_add_scalar_as(args->x[xi++], fun->params[i].name, 
+					    pZ, pdinfo);
+	    } 
+	} else if (fun->params[i].type == ARG_SERIES) {
+	    err = dataset_add_series_as(args->X[Xi++], fun->params[i].name, 
+					pZ, pdinfo);
+	} else if (fun->params[i].type == ARG_MATRIX) {
+	    err = copy_matrix_as(args->M[Mi++], fun->params[i].name);
+	} else if (fun->params[i].type == ARG_LIST) {
+	    const char *lname = args->lists[li++];
+
+	    if (get_list_by_name(lname) != NULL || !strcmp(lname, "null")) {
+		err = localize_list(lname, fun->params[i].name, pZ, pdinfo);
+	    }
+	} 
+    }
+
+    return err;
+}
+
 int check_function_needs (const DATAINFO *pdinfo, FuncDataReq dreq,
 			  float minver)
 {
@@ -3262,6 +3116,8 @@ maybe_check_function_needs (const DATAINFO *pdinfo,
 	return check_function_needs(pdinfo, pkg->dreq, pkg->minver);
     }
 }
+
+#if 0
 
 int gretl_function_start_exec (const char *line, const char *fname, 
 			       double ***pZ, DATAINFO *pdinfo)
@@ -3327,57 +3183,8 @@ int gretl_function_start_exec (const char *line, const char *fname,
     return err;
 }
 
-int function_call_direct (ufunc *u, fnargs *args,
-			  double ***pZ, DATAINFO *pdinfo,
-			  void *ret)
-{
-    fn_param *fp;
-    int argc, i, j;
-    int err;
-
-    err = maybe_check_function_needs(pdinfo, u);
-    if (err) {
-	return err;
-    }
-
-    argc = args->nx + args->nX + args->nM + args->nl;
-
-    fprintf(stderr, "function_call_direct: argc = %d\n", argc);
-    fprintf(stderr, "u->n_params = %d\n", u->n_params);
-
-    j = 0;
-    for (i=0; i<argc && !err; i++) {
-	fp = &u->params[i];
-	if (fp->type != args->types[i]) {
-	    fprintf(stderr, "argv[%d] is of wrong type\n", i);
-	    err = E_TYPES;
-	} else if (fp->type == ARG_SCALAR) {
-	    if ((!na(fp->min) && args->x[j] < fp->min) ||
-		(!na(fp->max) && args->x[j] > fp->max)) {
-		fprintf(stderr, "argv[%d]: scalar value %g out of bounds\n", 
-			i, args->x[j]);
-		err = E_INVARG;
-	    }
-	    j++;
-	}
-    }
-
-    for (i=argc; i<u->n_params && !err; i++) {
-	/* do we have defaults for any empty args? */
-	fp = &u->params[i];
-	if (na(fp->deflt)) {
-	    fprintf(stderr, "not enough arguments\n");
-	    err = E_ARGS;
-	}
-    }
-
-    fprintf(stderr, "function_call_direct: err = %d\n", err);
-
-    return err;    
-}
-
 char *gretl_function_get_line (char *line, int len,
-			       double ***pZ, DATAINFO **ppdinfo,
+			       double ***pZ, DATAINFO *pdinfo,
 			       int *err)
 {
     fncall *call = current_call();
@@ -3410,7 +3217,7 @@ char *gretl_function_get_line (char *line, int len,
     } 
 
     if (unstack) {
-	*err = unstack_fncall(pZ, ppdinfo);
+	*err = unstack_fncall(pZ, pdinfo);
 	return "";
     }	
 
@@ -3420,6 +3227,178 @@ char *gretl_function_get_line (char *line, int len,
     return line;
 }
 
+#endif
+
+static int 
+maybe_exec_function_line (ExecState *s, double ***pZ, DATAINFO *pdinfo)
+{
+    int err = 0;
+
+    if (string_is_blank(s->line)) {
+	return 0;
+    }
+
+    if (gretl_compiling_loop()) { 
+	err = get_command_index(s->line, s->cmd, pdinfo);
+    } else {
+	err = parse_command_line(s->line, s->cmd, pZ, pdinfo);
+    }
+
+    if (err) {
+        errmsg(err, s->prn);
+        return 1;
+    }
+    
+    s->in_comment = s->cmd->ignore;
+
+    if (s->cmd->ci < 0) {
+	return 0; /* nothing there, or a comment */
+    }
+
+    if (s->cmd->ci == LOOP || gretl_compiling_loop()) {  
+	/* accumulating loop commands */
+	if (!ok_in_loop(s->cmd->ci)) {
+            pprintf(s->prn, _("Sorry, this command is not available in loop mode\n"));
+            return 1;
+        }
+	err = gretl_loop_append_line(s->line, s->cmd->ci, s->cmd->opt, pZ, pdinfo);
+	if (err) {
+	    print_gretl_errmsg(s->prn);
+	    return 1;
+	} 
+	return 0;
+    } 
+    
+    err = gretl_cmd_exec(s, pZ, pdinfo, s->prn);
+
+    if (!err && (is_model_cmd(s->cmd->word) || s->alt_model)
+	&& !is_quiet_model_test(s->cmd->ci, s->cmd->opt)) {
+	set_as_last_model(s->models[0], GRETL_OBJ_EQN);
+    }
+
+    return err;
+}
+
+#define ref_type(t) (t == ARG_REF_SCALAR || \
+		     t == ARG_REF_SERIES || \
+		     t == ARG_REF_MATRIX) 
+
+int function_call_direct (ufunc *u, fnargs *args, int rtype,
+			  double ***pZ, DATAINFO *pdinfo,
+			  double *xret, double **Xret,
+			  gretl_matrix **mret, PRN *prn)
+{
+    ExecState state;
+    MODEL **models = NULL;
+    char line[MAXLINE];
+    CMD cmd;
+    fn_param *fp;
+    int argc, i, j;
+    int err;
+
+    err = maybe_check_function_needs(pdinfo, u);
+    if (err) {
+	return err;
+    }
+
+    argc = args->nx + args->nX + args->nM + args->nl;
+
+    fprintf(stderr, "function_call_direct: argc = %d\n", argc);
+    fprintf(stderr, "u->n_params = %d\n", u->n_params);
+
+    j = 0;
+    for (i=0; i<argc && !err; i++) {
+	fp = &u->params[i];
+	if (ref_type(fp->type) && args->types[i] == ARG_NONE) {
+	    ; /* this is OK */
+	} else if (scalar_arg(fp->type) && args->types[i] == ARG_SCALAR) {
+	    ; /* this is OK too */
+	} else if (fp->type != args->types[i]) {
+	    fprintf(stderr, "argv[%d] is of wrong type (got %d, should be %d)\n", 
+		    i, args->types[i], fp->type);
+	    err = E_TYPES;
+	} else if (fp->type == ARG_SCALAR) {
+	    if ((!na(fp->min) && args->x[j] < fp->min) ||
+		(!na(fp->max) && args->x[j] > fp->max)) {
+		fprintf(stderr, "argv[%d]: scalar value %g out of bounds\n", 
+			i, args->x[j]);
+		err = E_INVARG;
+	    }
+	    j++;
+	}
+    }
+
+    for (i=argc; i<u->n_params && !err; i++) {
+	/* do we have defaults for any empty args? */
+	fp = &u->params[i];
+	if (!ref_type(fp->type) && na(fp->deflt)) {
+	    fprintf(stderr, "not enough arguments\n");
+	    err = E_ARGS;
+	}
+    }
+
+    if (!err) {
+	err = allocate_function_args(u, argc, args, pZ, pdinfo);
+    }
+
+    if (!err) {
+	models = allocate_working_models(2);
+	if (models == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	err = gretl_cmd_init(&cmd);
+    }
+
+    if (!err) {
+	*line = '\0';
+	gretl_exec_state_init(&state, 0, line, &cmd, models, prn);
+    }
+
+    /* get function lines in sequence and check, parse, execute */
+
+    for (i=0; i<u->n_lines && !err; i++) {
+	strcpy(line, u->lines[i]);
+	err = maybe_exec_function_line(&state, pZ, pdinfo);
+    }
+
+    /* assign/destroy local variables */
+
+    if (!err) {
+	int v;
+
+	if (rtype == ARG_SCALAR) {
+	    v = varindex(pdinfo, u->returns[0].name);
+	    *xret = (*pZ)[v][0];
+	} else if (rtype == ARG_SERIES) {
+	    v = varindex(pdinfo, u->returns[0].name);
+	    *Xret = copyvec((*pZ)[v], pdinfo->n);
+	} else if (rtype == ARG_MATRIX) {
+	    gretl_matrix *m = get_matrix_by_name(u->returns[0].name);
+
+	    *mret = gretl_matrix_copy(m);
+	}
+
+	for (i=0; i<argc && !err; i++) {
+	    fp = &u->params[i];
+	    if (ref_type(fp->type) && args->types[i] != ARG_NONE) {
+		/* FIXME assign indirect return */
+		fprintf(stderr, "indirect return, name = '%s'\n", fp->name);
+	    } 
+	}
+    }
+
+    destroy_working_models(models, 2);
+
+    /* FIXME complete the cleanup */
+
+    fprintf(stderr, "function_call_direct: err = %d\n", err);
+
+    return err;    
+}
+
 void gretl_functions_cleanup (void)
 {
     callstack_destroy();
@@ -3427,14 +3406,14 @@ void gretl_functions_cleanup (void)
     packages_destroy();
 }
 
-void gretl_function_stop_on_error (double ***pZ, DATAINFO **ppdinfo, PRN *prn)
+void gretl_function_stop_on_error (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     gretl_function_flagged_error(NULL, prn);
 
     callstack_destroy();
 
     if (fn_executing > 0) {
-	libset_restore_state_zero(pZ, ppdinfo);
+	libset_restore_state_zero(pZ, pdinfo);
     }
 
     fn_executing = 0;

@@ -222,7 +222,6 @@ static int catch_command_alias (char *line, CMD *cmd)
 	               c == FCAST || \
 	               c == FCASTERR || \
 	               c == FIT || \
-                       c == FNCALL || \
                        c == FUNC || \
                        c == FUNCERR || \
 	               c == GENR || \
@@ -1469,8 +1468,9 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
 	cmd->ci = gretl_command_number(cmd->word);
 	if (cmd->ci == 0) {
 	    /* call of user-defined function? */
-	    if (gretl_get_user_function(line, &cmd->param)) {
-		cmd->ci = FNCALL;
+	    if (gretl_get_user_function(line)) {
+		cmd->ci = GENR;
+		cmd->opt = OPT_U;
 	    } else if (!plausible_genr_start(line, cmd, pdinfo)) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
@@ -2969,9 +2969,8 @@ static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
     return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
 }
 
-int gretl_exec_line (ExecState *s, 
-		     double ***pZ, DATAINFO *pdinfo,
-		     PRN *outprn)
+int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
+		    PRN *outprn)
 {
     CMD *cmd = s->cmd;
     char *line = s->line;
@@ -2991,6 +2990,8 @@ int gretl_exec_line (ExecState *s,
 	    return E_ALLOC;
 	}
     }
+
+    s->alt_model = 0;
 
     switch (cmd->ci) {
 
@@ -3048,16 +3049,51 @@ int gretl_exec_line (ExecState *s,
 	}
 	break;
 
+    case BREAK:
+    case ENDLOOP:
+	pprintf(prn, _("You can't end a loop here, "
+		       "you haven't started one\n"));
+	err = 1;
+	break;
+
+    case FCAST:
+    case FIT:
+	if (cmd->ci == FIT) {
+	    err = add_forecast("fcast autofit", models[0], pZ, pdinfo, cmd->opt);
+	} else {
+	    err = add_forecast(line, models[0], pZ, pdinfo, cmd->opt);
+	}
+	if (!err) {
+	    if (cmd->ci == FIT) {
+		pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
+	    }
+	    maybe_list_vars(pdinfo, prn);
+	    if (cmd->ci == FIT && s->callback != NULL) {
+		s->callback(s, pZ, pdinfo);
+	    }
+	}
+	break;
+
+    case FREQ:
+#if 0 /* gretlcli.c version */
+	err = freqdist(cmd->list[1], (const double **) *pZ, 
+		       pdinfo, !batch, cmd->opt, prn);
+#else
+	err = freqdist(cmd->list[1], (const double **) *pZ, 
+		       pdinfo, (s->flags == CONSOLE_EXEC),
+		       cmd->opt, prn);
+#endif
+	if (!err && s->callback != NULL) {
+	    s->callback(s, pZ, pdinfo);
+	}
+	break;
+
     case DISCRETE:
 	err = list_makediscrete(cmd->list, pdinfo, cmd->opt);
 	break;
 
     case ESTIMATE:
 	err = estimate_named_system(line, pZ, pdinfo, cmd->opt, prn);
-	break;
-
-    case FNCALL:
-	err = gretl_function_start_exec(line, cmd->param, pZ, pdinfo);
 	break;
 
     case FUNC:
@@ -3280,6 +3316,34 @@ int gretl_exec_line (ExecState *s,
 
     case OUTFILE:
 	err = do_outfile_command(cmd->opt, cmd->param, prn);
+	break;
+
+    case SETOBS:
+	err = set_obs(line, pZ, pdinfo, cmd->opt);
+	if (!err) {
+	    if (pdinfo->n > 0) {
+		print_smpl(pdinfo, 0, prn);
+		if (s->callback != NULL) {
+		    s->callback(s, pZ, pdinfo);
+		}
+	    } else {
+		pprintf(prn, _("setting data frequency = %d\n"), pdinfo->pd);
+	    }
+	}
+	break;
+
+    case SMPL:
+	if (cmd->opt == OPT_F) {
+	    simple_restore_full_sample(pdinfo);
+	} else if (cmd->opt) {
+	    pputs(prn, "You can't do boolean sub-sampling here\n");
+	    err = 1;
+	} else { 
+	    err = set_sample(line, (const double **) *pZ, pdinfo);
+	}
+	if (!err) {
+	    print_smpl(pdinfo, get_full_length_n(), prn);
+	}
 	break;
 
     case STORE:
@@ -3610,6 +3674,23 @@ int gretl_exec_line (ExecState *s,
 	}
 	break;
 
+    case VAR:
+    case VECM:
+	if (cmd->ci == VAR) {
+	    s->var = gretl_VAR(cmd->order, cmd->list, pZ, pdinfo, cmd->opt, 
+			       prn, &err);
+	} else {
+	    s->var = vecm(cmd->order, atoi(cmd->extra), cmd->list, pZ, pdinfo, 
+			  cmd->opt, prn, &err);
+	}
+	if (s->var != NULL) {
+	    if (s->callback != NULL) {
+		s->callback(s, pZ, pdinfo);
+	    }
+	    /* FIXME else ? */
+	}
+	break;
+
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
 		       "in libgretl\n"), cmd->word);
@@ -3705,8 +3786,8 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 #endif
 	if (cmd->ci == 0) {
 	    if (gretl_is_user_function(line)) {
-		cmd->nolist = 1;
-		cmd->ci = FNCALL;
+		cmd->ci = GENR;
+		cmd->opt = OPT_U;
 	    } else if (!plausible_genr_start(line, cmd, pdinfo)) {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
@@ -3887,15 +3968,17 @@ void gretl_exec_state_init (ExecState *s,
     s->cmd = cmd;
 
     *s->runfile = '\0';
-    *s->linecopy = '\0';
 
     s->models = models;
     s->prn = prn;
 
     s->sys = NULL;
     s->rset = NULL;
+    s->var = NULL;
     s->alt_model = 0;
     s->in_comment = 0;
+
+    s->callback = NULL;
 }
 
 

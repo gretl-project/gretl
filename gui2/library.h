@@ -79,8 +79,6 @@ void register_graph (void);
 
 /* sample-related functions */
 
-void set_sample_label_special (void);
-
 int bool_subsample (gretlopt opt);
 
 void do_samplebool (GtkWidget *widget, dialog_t *dlg);

@@ -388,36 +388,25 @@ static int gen_special_call (const char *s)
     return 0;
 }
 
-/* Temporary hack to get a user function called when it
-   has slipped into the genr domain.  This should be
-   integrated properly! */
-
-static void gen_call_ufun (parser *p)
-{
-    char line[MAXLEN];
-    const char *fname = p->ret->v.b2.l->v.str;
-    const char *args = p->ret->v.b2.r->v.str;
-
-    sprintf(line, "%s = %s(%s)", p->lh.name, fname, args);
-
-#if GDEBUG
-    fprintf(stderr, "\n***gen_call_ufun: '%s'\n", line);
-#endif
-    
-    p->err = gretl_function_start_exec(line, fname,
-				       p->Z, p->dinfo);
-}
-
 #define gen_verbose(f) (!(f & P_PRINT) && \
                         !(f & P_DISCARD) && \
-                        !(f & P_PRIVATE))
+                        !(f & P_PRIVATE) && \
+                        !(f & P_UFUN))
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn)
 {
     int oldv = pdinfo->v;
-    int flags = (opt & OPT_P)? P_PRIVATE : 0;
+    int flags = 0;
     parser p;
+
+    if (opt & OPT_P) {
+	flags |= P_PRIVATE;
+    }
+
+    if (opt & OPT_U) {
+	flags |= P_UFUN;
+    }
 
 #if GDEBUG
     fprintf(stderr, "\n*** generate: line = '%s'\n", line);
@@ -429,11 +418,7 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     realgen(line, &p, pZ, pdinfo, prn, flags);
 
-    if (!p.err && p.ret->t == UFUN) {
-	gen_call_ufun(&p);
-    } else {
-	gen_save_or_print(&p, prn);
-    }
+    gen_save_or_print(&p, prn);
 
     if (!p.err && gen_verbose(p.flags)) {
 	gen_write_label(&p, oldv);
@@ -462,7 +447,11 @@ double generate_scalar (const char *s, double ***pZ,
     *err = realgen(s, &p, pZ, pdinfo, NULL, P_SCALAR | P_PRIVATE);
 
     if (!*err) {
-	x = p.ret->v.xval;
+	if (p.ret->t == MAT) {
+	    x = p.ret->v.m->val[0];
+	} else {
+	    x = p.ret->v.xval;
+	}
     }
 
     gen_cleanup(&p);

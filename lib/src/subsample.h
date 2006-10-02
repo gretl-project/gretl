@@ -65,6 +65,8 @@ int set_sample (const char *line, const double **Z, DATAINFO *pdinfo);
 
 int restore_full_sample (double ***pZ, DATAINFO **ppdinfo); 
 
+void simple_restore_full_sample (DATAINFO *pdinfo);
+
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
 int add_dataset_to_model (MODEL *pmod, const DATAINFO *pdinfo);

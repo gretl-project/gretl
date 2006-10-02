@@ -934,12 +934,7 @@ void do_open_session (void)
     register_data(paths.datfile, NULL, 0);
 
     if (sinfo.mask != NULL) {
-	if (dataset_is_panel(datainfo) || dataset_is_time_series(datainfo)) {
-	    set_sample_label(datainfo);
-	} else {
-	    set_sample_label_special();
-	}
-	restore_sample_state(TRUE);
+	set_sample_label(datainfo);
 	free(sinfo.mask);
     }
 

@@ -217,26 +217,6 @@ int console_sample_changed (const DATAINFO *pdinfo)
     return console_sample_handler(pdinfo, SAMPLE_CHECK);
 }
 
-static int console_function_exec (void)
-{
-    char *gotline = NULL;
-    int err = 0;
-
-    while (!gretl_execute_loop()) {
-	gotline = gretl_function_get_line(cstate.line, MAXLINE, &Z, &datainfo,
-					  &err);
-	if (gotline == NULL || *gotline == '\0') {
-	    break;
-	}
-	if (!err) {
-	    cstate.flags = SCRIPT_EXEC;
-	    err = gui_exec_line(&cstate, &Z, &datainfo); 
-	}
-    }
-
-    return err;
-}
-
 static void console_exec (void)
 {
     GtkTextBuffer *buf;
@@ -285,12 +265,8 @@ static void console_exec (void)
     /* actually execute the command line */
     err = gui_exec_line(&cstate, &Z, &datainfo);
 
-    while (!err && (gretl_execute_loop() || gretl_executing_function())) {
-	if (gretl_execute_loop()) { 
-	    err = gretl_loop_exec(execline, &Z, &datainfo, models, console_prn);
-	} else if (gretl_executing_function()) {
-	    err = console_function_exec();
-	} 
+    while (!err && gretl_execute_loop()) {
+	err = gretl_loop_exec(execline, &Z, &datainfo, models, console_prn);
     }
 
     redirected = printing_is_redirected(console_prn);

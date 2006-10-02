@@ -357,8 +357,6 @@ enum {
     RIGHT_OPT
 };
 
-#if TRYIT
-
 /* gather an unknown number of comma-separated arguments
    for a user-defined function */
 
@@ -402,8 +400,6 @@ static void get_ufunc_args (NODE *t, parser *p)
 	expected_symbol_error(cexp, p);
     }
 }
-
-#endif	
 
 static void get_matrix_def (NODE *t, parser *p)
 {
@@ -651,14 +647,10 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newstr(p->idstr, 0, STR_STEAL);
 	    lex(p);
-#if TRYIT
 	    t->v.b2.r = newbn(UFARGS);
 	    if (t != NULL) {
 		get_ufunc_args(t->v.b2.r, p);
 	    }
-#else
-	    t->v.b2.r = get_string_arg(p);
-#endif
 	}
     } else {
 	t = base(p, NULL);
@@ -688,7 +680,9 @@ if (unary_op(sym)) {
 static NODE *factor (parser *p)
 {  
     int sym = p->sym == B_SUB ? U_NEG : 
-	p->sym == B_ADD ? U_POS : p->sym;
+	p->sym == B_ADD ? U_POS : 
+	p->sym == B_AND ? U_ADDR :
+	p->sym;
     NODE *t;
 
     if (p->err) {

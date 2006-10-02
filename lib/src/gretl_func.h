@@ -27,7 +27,10 @@ typedef enum {
     ARG_LIST,
     ARG_MATRIX,
     ARG_BOOL,
-    ARG_INT
+    ARG_INT,
+    ARG_REF_SCALAR,
+    ARG_REF_SERIES,
+    ARG_REF_MATRIX
 } FuncArgTypes;
 
 typedef enum {
@@ -43,14 +46,18 @@ typedef enum {
 typedef struct ufunc_ ufunc;
 typedef struct fnpkg_ fnpkg;
 typedef struct fnargs_ fnargs;
+typedef union retloc_ retloc;
 
 struct fnargs_ {
     char *types;
     int nx, nX, nM, nl;
+    int nrefv, nrefn;
     double *x;
     double **X;
     gretl_matrix **M;
     char **lists;
+    int *refv;
+    char **refnames;
 };
 
 int n_user_functions (void);
@@ -93,24 +100,18 @@ int gretl_is_user_function (const char *line);
 
 int gretl_is_public_user_function (const char *name);
 
-int gretl_get_user_function (const char *line, char **fnname);
+int gretl_get_user_function (const char *line);
 
 int is_user_matrix_function (const char *word);
 
-int gretl_function_start_exec (const char *line, const char *fname,
-			       double ***pZ, DATAINFO *pdinfo);
-
-char *gretl_function_get_line (char *line, int len,
-			       double ***pZ, DATAINFO **ppdinfo,
-			       int *err);
-
-int function_call_direct (ufunc *u, fnargs *args,
+int function_call_direct (ufunc *u, fnargs *args, int rtype,
 			  double ***pZ, DATAINFO *pdinfo,
-			  void *ret);
+			  double *xret, double **Xret,
+			  gretl_matrix **mret, PRN *prn);
 
 int gretl_function_stack_depth (void);
 
-void gretl_function_stop_on_error (double ***pZ, DATAINFO **ppdinfo, PRN *prn);
+void gretl_function_stop_on_error (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
 int gretl_function_flagged_error (const char *s, PRN *prn);
 

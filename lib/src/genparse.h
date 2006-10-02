@@ -24,19 +24,19 @@
 #include "gretl_func.h"
 
 #define GENDEBUG 0
-#define TRYIT 0
 
 enum {
     U_NEG = 1,
     U_POS,
-    U_NOT, 
+    U_NOT,
+    U_ADDR,
     U_MAX,   /* separator: end of unary operators */ 
     B_ASN,
     B_ADD,
     B_SUB,
     B_MUL,
-    B_DIV,
-    B_MOD, /* 10 */
+    B_DIV, /* 10 */
+    B_MOD, 
     B_POW,
     B_EQ,
     B_LT,
@@ -45,8 +45,8 @@ enum {
     B_GTE,
     B_NEQ,
     B_AND,
-    B_OR,
-    LPR,     /* left paren (20) */
+    B_OR,  /* 20 */
+    LPR,     /* left paren */
     RPR,     /* right paren */
     LBR,     /* left bracket */
     RBR,     /* right bracket */
@@ -58,15 +58,15 @@ enum {
     KRON,     /* Kronecker product */
     MCAT,     /* matrix concatenation */
     OP_MAX,   /* separator: end of operators */
-    ABS,   /* 32 */
+    ABS,   /* 33 */
     TOINT,
     SIN,
     COS,
     TAN,
     ATAN,
     LOG,
-    LOG10,
-    LOG2, /* 40 */
+    LOG10, /* 40 */
+    LOG2,
     EXP,
     SQRT,
     DIF,      /* first difference */
@@ -75,8 +75,8 @@ enum {
     SORT,     /* ascending sort */
     DSORT,    /* descending sort */
     NOBS,
-    T1,
-    T2,   /* 50 */
+    T1,   /* 50 */
+    T2,
     CHISQ,
     STUDENT,
     CUM,
@@ -85,8 +85,8 @@ enum {
     MISSZERO,
     ZEROMISS,
     MEDIAN,
-    GINI,
-    SUM,  /* 60 */
+    GINI, /* 60 */
+    SUM,
     MEAN,
     MIN,
     MAX,
@@ -95,8 +95,8 @@ enum {
     LRVAR,    /* long-run variance */
     SST,
     CNORM,
-    DNORM,
-    QNORM,  /* 70 */
+    DNORM,  /* 70 */
+    QNORM,
     GAMMA,
     LNGAMMA,
     HPFILT,
@@ -105,8 +105,8 @@ enum {
     RESAMPLE,
     IMAT,
     SUMR,
-    SUMC,
-    MEANR,  /* 80 */
+    SUMC,  /* 80 */
+    MEANR,
     MEANC,
     CDEMEAN,
     CHOL,
@@ -115,8 +115,8 @@ enum {
     TRANSP,
     TVEC,
     VECH,
-    UNVECH,
-    ROWS,  /* 90 */
+    UNVECH, /* 90 */
+    ROWS,
     COLS,
     DET,
     LDET,
@@ -125,8 +125,8 @@ enum {
     RCOND,
     VARNUM,
     OBSNUM,
-    ISSERIES,
-    ISLIST, /* 100 */
+    ISSERIES, /* 100 */
+    ISLIST,
     LISTLEN,
     PVAL,
     CDF,
@@ -135,8 +135,8 @@ enum {
     COR,
     COV,
     UNIFORM,
-    NORMAL,
-    ZEROS, /* 110 */
+    NORMAL, /* 110 */
+    ZEROS,
     ONES,
     MUNIF,
     MNORM,
@@ -145,8 +145,8 @@ enum {
     EIGGEN,
     F2_MAX,   /* separator: end of two-arg functions */
     COM,      /* comma */
-    DOT,      /* period */
-    SEMI,  /* 120 : semi-colon */
+    DOT,   /* 120: period */
+    SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
     DUM,      /* dummy variable */
@@ -155,8 +155,8 @@ enum {
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
     VEC,      /* series, evaluated */
-    IVEC,     /* vector of integers, evaluated */
-    MAT,  /* 130 : matrix, evaluated */
+    IVEC,  /* 130 : vector of integers, evaluated */
+    MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
     DMSL,     /* "dollar" matrix plus subspec */
@@ -165,8 +165,8 @@ enum {
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
     MDEF,     /* explicit matrix definition {...} */
-    LAG,
-    DVAR, /* 140 : $ dataset variable (scalar or series) */
+    LAG,  /* 140 */
+    DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
     LOOPIDX,  /* loop index variable */
@@ -279,7 +279,8 @@ enum {
     P_PRIVATE = 1 <<  6, /* generating a private or internal var */
     P_COMPILE = 1 <<  7, /* just compiling tree, not evaluating */
     P_EXEC    = 1 <<  8, /* evaluating pre-built tree */ 
-    P_SLICE   = 1 <<  9  /* compute matrix slice specification */
+    P_SLICE   = 1 <<  9, /* compute matrix slice specification */
+    P_UFUN    = 1 << 10  /* user function call with no assignment */
 };
 
 struct lhinfo {
@@ -325,6 +326,7 @@ struct parser_ {
 
 #define starting(p) (p->flags & P_START)
 #define autoreg(p) (p->flags & P_AUTOREG)
+#define simple_ufun_call(p) (p->flags & P_UFUN)
 
 int parser_getc (parser *s);
 void parser_ungetc (parser *s);
