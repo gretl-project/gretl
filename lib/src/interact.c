@@ -2512,7 +2512,7 @@ static int is_silent (const CMD *cmd, const char *line)
     }
 
     if (cmd->ci == SET && !strcmp(cmd->param, "echo") &&
-	gretl_executing_function()) {
+	gretl_function_depth() > 0) {
 	return 1;
     }
 
@@ -2983,6 +2983,13 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     int k, order = 0;
     int err = 0;
 
+    if (NEEDS_MODEL_CHECK(cmd->ci)) {
+	err = model_test_check(cmd, pdinfo, prn);
+	if (err) {
+	    return err;
+	}
+    }
+
     if (RETURNS_LIST(cmd->ci)) {
 	/* list is potentially modified -> make a copy */
 	listcpy = gretl_list_copy(cmd->list);
@@ -3099,10 +3106,6 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     case FUNC:
 	err = gretl_start_compiling_function(line, prn);
 	break;
-
-    case FUNCERR:
-	err = gretl_function_flagged_error(cmd->param, prn);
-	break;	
 
     case GENR:
 	err = generate(line, pZ, pdinfo, cmd->opt, prn);
@@ -3979,6 +3982,12 @@ void gretl_exec_state_init (ExecState *s,
     s->in_comment = 0;
 
     s->callback = NULL;
+}
+
+void gretl_exec_state_clear (ExecState *s)
+{
+    gretl_cmd_free(s->cmd);
+    destroy_working_models(s->models, 2);
 }
 
 

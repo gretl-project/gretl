@@ -139,11 +139,6 @@ void noalloc (const char *str)
     exit(EXIT_FAILURE);
 }
 
-static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
-{
-    return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
-}
-
 void file_get_line (char *line, CMD *cmd)
 {
     clear(line, MAXLINE);
@@ -712,10 +707,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	err = get_command_index(line, cmd, pdinfo);
     } else {
 	err = parse_command_line(line, cmd, pZ, pdinfo);
-	if (err && gretl_executing_function()) {
-	    gretl_function_stop_on_error(pZ, pdinfo, prn);
-	    pdinfo = *ppdinfo;
-	}	
     }
 
     if (err) {
@@ -785,16 +776,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
-
-    if (NEEDS_MODEL_CHECK(cmd->ci)) {
-	err = model_test_check(cmd, pdinfo, prn);
-	if (err) {
-	    if (gretl_executing_function()) {
-		gretl_function_stop_on_error(pZ, pdinfo, prn);
-	    }
-	    return err;
-	}
-    }
 
     s->callback = cli_exec_callback;
 
@@ -1074,10 +1055,6 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     default:
 	err = gretl_cmd_exec(s, pZ, pdinfo, prn);
 	break;
-    }
-
-    if (err && gretl_executing_function()) {
-	gretl_function_stop_on_error(pZ, pdinfo, prn);
     }
 
     if (!err && (is_model_cmd(cmd->word) || s->alt_model)

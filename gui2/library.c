@@ -5871,15 +5871,6 @@ int execute_script (const char *runfile, const char *buf,
     return exec_err;
 }
 
-/* trying to do a model test of some sort: do we have a model
-   available, and if so, is the command suitable for that model? 
-*/
-
-static int model_test_check (CMD *cmd, DATAINFO *pdinfo, PRN *prn)
-{
-    return last_model_test_ok(cmd->ci, cmd->opt, pdinfo, prn);
-}
-
 static void 
 gui_do_autofit_plot (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		     PRN *prn)
@@ -6022,16 +6013,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 
     check_for_loop_only_options(cmd->ci, cmd->opt, prn);
-
-    if (NEEDS_MODEL_CHECK(cmd->ci)) {
-	err = model_test_check(cmd, pdinfo, prn);
-	if (err) {
-	    if (gretl_executing_function()) {
-		gretl_function_stop_on_error(pZ, pdinfo, prn);
-	    }
-	    return err;
-	}
-    }
 
     if (s->flags == SCRIPT_EXEC && *cmd->savename == 0) {
 	grbatch = 1;
@@ -6310,11 +6291,6 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	err = gretl_cmd_exec(s, pZ, pdinfo, outprn);
 	break;
     } /* end of command switch */
-
-    /* clean up in case a user function bombed */
-    if (err && gretl_executing_function()) {
-	gretl_function_stop_on_error(pZ, pdinfo, prn);
-    }    
 
     /* log the specific command? */
     if (s->flags == CONSOLE_EXEC && !err) {

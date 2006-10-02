@@ -43,11 +43,7 @@ static saved_list *saved_list_new (const int *list, const char *name)
     saved_list *sl = malloc(sizeof *sl);
 
     if (sl != NULL) {
-	if (gretl_executing_function()) {
-	    sl->level = gretl_function_stack_depth();
-	} else {
-	    sl->level = 0;
-	}
+	sl->level = gretl_function_depth();
 	if (list != NULL && list[0] > 0) {
 	    sl->list = gretl_list_copy(list);
 	} else {
@@ -75,12 +71,8 @@ static void free_saved_list (saved_list *sl)
 
 static saved_list *get_saved_list_by_name (const char *name)
 {
-    int fsd = 0;
+    int fsd = gretl_function_depth();
     int i;
-
-    if (gretl_executing_function()) {
-	fsd = gretl_function_stack_depth();
-    }
 
     for (i=0; i<n_lists; i++) {
 	if (!strcmp(name, list_stack[i]->name) && 
@@ -312,6 +304,7 @@ int destroy_saved_lists_at_level (int level)
 		list_stack[j] = list_stack[j+1];
 	    }
 	    list_stack[n_lists - 1] = NULL;
+	    i--;
 	} else {
 	    nl++;
 	}

@@ -28,6 +28,8 @@ enum {
     SEL_NULL
 };
 
+typedef struct user_matrix_ user_matrix;
+
 typedef struct matrix_subspec_ matrix_subspec;
 
 union msel {
@@ -46,14 +48,18 @@ const char *get_matrix_name_by_index (int idx);
 
 gretl_matrix *get_matrix_by_name (const char *name);
 
-gretl_matrix *get_matrix_by_name_at_level (const char *name, int level,
-					   const DATAINFO *pdinfo);
+gretl_matrix *get_matrix_by_name_at_level (const char *name, int level);
+
+user_matrix *get_user_matrix_by_name (const char *name);
 
 int user_matrix_add (gretl_matrix *M, const char *name);
 
 int user_matrix_destroy (const char *name, PRN *prn);
 
-int user_matrix_replace_matrix (const char *name, gretl_matrix *M);
+int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M);
+
+int user_matrix_replace_matrix_by_name (const char *name, 
+					gretl_matrix *M);
 
 int user_matrix_replace_submatrix (const char *name, gretl_matrix *M,
 				   matrix_subspec *spec);

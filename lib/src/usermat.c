@@ -27,8 +27,6 @@
 #define MDEBUG 0
 #define LEVEL_AUTO -1
 
-typedef struct user_matrix_ user_matrix;
-
 struct user_matrix_ {
     gretl_matrix *M;
     int level;
@@ -81,7 +79,7 @@ static user_matrix *user_matrix_new (gretl_matrix *M, const char *name)
     }
 
     u->M = M;
-    u->level = gretl_function_stack_depth();
+    u->level = gretl_function_depth();
     *u->name = '\0';
     strncat(u->name, name, VNAMELEN - 1);
 
@@ -178,7 +176,7 @@ real_get_matrix_by_name (const char *name, int slevel)
     int level, i;
 
     if (slevel == LEVEL_AUTO) {
-	level = gretl_function_stack_depth();
+	level = gretl_function_depth();
     } else {
 	level = slevel;
     }
@@ -193,9 +191,9 @@ real_get_matrix_by_name (const char *name, int slevel)
     return NULL;
 }
 
-static user_matrix *get_user_matrix_by_name (const char *name)
+user_matrix *get_user_matrix_by_name (const char *name)
 {
-    int level = gretl_function_stack_depth();
+    int level = gretl_function_depth();
     int i;
 
     for (i=0; i<n_matrices; i++) {
@@ -208,10 +206,8 @@ static user_matrix *get_user_matrix_by_name (const char *name)
     return NULL;
 }
 
-int user_matrix_replace_matrix (const char *name, gretl_matrix *M)
+int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
 {
-    user_matrix *u = get_user_matrix_by_name(name);   
-
     if (u == NULL) {
 	return E_UNKVAR;
     }
@@ -228,9 +224,18 @@ int user_matrix_replace_matrix (const char *name, gretl_matrix *M)
     return 0;
 }
 
+
+int user_matrix_replace_matrix_by_name (const char *name, 
+					gretl_matrix *M)
+{
+    user_matrix *u = get_user_matrix_by_name(name);  
+
+    return user_matrix_replace_matrix(u, M);
+}
+
 static user_matrix *get_user_matrix_by_data (const gretl_matrix *M)
 {
-    int level = gretl_function_stack_depth();
+    int level = gretl_function_depth();
     int i;
 
     for (i=0; i<n_matrices; i++) {
@@ -268,8 +273,7 @@ gretl_matrix *get_matrix_by_name (const char *name)
  * Returns: pointer to matrix, or %NULL if not found.
  */
 
-gretl_matrix *get_matrix_by_name_at_level (const char *name, int level,
-					   const DATAINFO *pdinfo)
+gretl_matrix *get_matrix_by_name_at_level (const char *name, int level)
 {
     return real_get_matrix_by_name(name, level);
 }
@@ -646,7 +650,7 @@ int add_or_replace_user_matrix (gretl_matrix *M, const char *name)
     int err = 0;
 
     if (get_user_matrix_by_name(name) != NULL) {
-	err = user_matrix_replace_matrix(name, M);
+	err = user_matrix_replace_matrix_by_name(name, M);
     } else {
 	err = user_matrix_add(M, name);
     }
@@ -1023,7 +1027,7 @@ user_matrix_QR_decomp (const gretl_matrix *m, const char *rname, int *err)
     }
 
     if (!*err && wantR) {
-	user_matrix_replace_matrix(rname, R);
+	user_matrix_replace_matrix_by_name(rname, R);
     }
 
     return Q;
@@ -1075,7 +1079,7 @@ user_matrix_eigen_analysis (const gretl_matrix *m, const char *rname, int symm,
     }
 
     if (!*err && vecs) {
-	user_matrix_replace_matrix(rname, C);
+	user_matrix_replace_matrix_by_name(rname, C);
     }
 
     if (!vecs) {

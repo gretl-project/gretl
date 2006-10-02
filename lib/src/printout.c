@@ -1355,7 +1355,7 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
 
 void varlist (const DATAINFO *pdinfo, PRN *prn)
 {
-    int level = gretl_function_stack_depth();
+    int level = gretl_function_depth();
     int len, maxlen = 0;
     int nv = 4;
     int i, j, n = 0;

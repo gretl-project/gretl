@@ -1290,7 +1290,7 @@ static void free_state (set_vars *sv)
    that was in force when the function started executing.  
 */
 
-int pop_program_state (double ***pZ, DATAINFO *pdinfo)
+int pop_program_state (DATAINFO *pdinfo)
 {
     set_vars **sstack;
     int ns = n_states;
@@ -1369,13 +1369,13 @@ void libset_cleanup (void)
     n_states = 0;
 }
 
-int libset_restore_state_zero (double ***pZ, DATAINFO *pdinfo)
+int libset_restore_state_zero (DATAINFO *pdinfo)
 {
     int i, ns = n_states;
     int err = 0;
 
     for (i=ns; i>=2 && !err; i--) {
-	err = pop_program_state(pZ, pdinfo);
+	err = pop_program_state(pdinfo);
     }
 
     return err;

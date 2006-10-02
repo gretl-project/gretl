@@ -275,9 +275,7 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 	return 0;
     }
 
-    if (gretl_executing_function()) {
-	fsd = gretl_function_stack_depth();
-    }
+    fsd = gretl_function_depth();
 
 #if GEN_LEVEL_DEBUG
     fprintf(stderr, "varindex for '%s': fsd = %d\n", s, fsd);
@@ -418,7 +416,9 @@ int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     realgen(line, &p, pZ, pdinfo, prn, flags);
 
-    gen_save_or_print(&p, prn);
+    if (!(opt & OPT_U)) {
+	gen_save_or_print(&p, prn);
+    }
 
     if (!p.err && gen_verbose(p.flags)) {
 	gen_write_label(&p, oldv);

@@ -26,7 +26,6 @@
 #include "webget.h"
 #include "database.h"
 
-
 #define FCDEBUG 0
 
 typedef struct call_info_ call_info;
@@ -38,10 +37,9 @@ struct call_info_ {
     int need_list;
     const ufunc *func;
     int n_params;
-    int n_returns;
-    char *return_types;
+    char rettype;
     char **args;
-    char **rets;
+    char *ret;
     int canceled;
 };
 
@@ -54,11 +52,10 @@ static void cinfo_init (call_info *cinfo)
     cinfo->func = NULL;
     cinfo->n_params = 0;
 
-    cinfo->n_returns = 0;
-    cinfo->return_types = NULL;
+    cinfo->rettype = ARG_NONE;
 
     cinfo->args = NULL;
-    cinfo->rets = NULL;
+    cinfo->ret = NULL;
 
     cinfo->need_list = 0;
     cinfo->canceled = 0;
@@ -69,7 +66,7 @@ static int cinfo_args_init (call_info *cinfo)
     int err = 0;
 
     cinfo->args = NULL;
-    cinfo->rets = NULL;
+    cinfo->ret = NULL;
 
     if (cinfo->n_params > 0) {
 	cinfo->args = strings_array_new(cinfo->n_params);
@@ -78,21 +75,13 @@ static int cinfo_args_init (call_info *cinfo)
 	}
     }
 
-    if (!err && cinfo->n_returns > 0) {
-	cinfo->rets = strings_array_new(cinfo->n_returns);
-	if (cinfo->rets == NULL) {
-	    err = E_ALLOC;
-	}
-    } 
-
     return err;
 }
 
 static void cinfo_free (call_info *cinfo)
 {
-    free(cinfo->return_types);
     free_strings_array(cinfo->args, cinfo->n_params);
-    free_strings_array(cinfo->rets, cinfo->n_returns);
+    free(cinfo->ret);
     g_list_free(cinfo->lsels);
 }
 
@@ -183,11 +172,8 @@ static gboolean update_arg (GtkEditable *entry,
 static gboolean update_return (GtkEditable *entry, 
 			       call_info *cinfo)
 {
-    int i = 
-	GPOINTER_TO_INT(g_object_get_data(G_OBJECT(entry), "retnum"));
-
-    free(cinfo->rets[i]);
-    cinfo->rets[i] = entry_box_get_trimmed_text(GTK_WIDGET(entry));
+    free(cinfo->ret);
+    cinfo->ret = entry_box_get_trimmed_text(GTK_WIDGET(entry));
 
     return FALSE;
 }
@@ -509,7 +495,7 @@ static void function_call_dialog (call_info *cinfo)
 	gtk_widget_show(tbl);
     }
 
-    if (cinfo->n_params > 0 && cinfo->n_returns > 0) {
+    if (cinfo->n_params > 0 && cinfo->rettype != ARG_NONE) {
 	GtkWidget *hsep = gtk_hseparator_new();
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
@@ -519,13 +505,14 @@ static void function_call_dialog (call_info *cinfo)
 
     /* function return(s) assignment */
 
-    if (cinfo->n_returns > 0) {
+    if (cinfo->rettype != ARG_NONE) {
+	GList *list = NULL;
 
 	hbox = label_hbox(GTK_DIALOG(cinfo->dlg)->vbox, 
-			  _("Assign return values (optional):"), 0);
+			  _("Assign return value (optional):"), 0);
 	gtk_widget_show(hbox);
 
-	tbl = gtk_table_new(cinfo->n_returns + 1, 2, FALSE);
+	tbl = gtk_table_new(1, 2, FALSE);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(cinfo->dlg)->vbox),
 			   tbl, FALSE, FALSE, 5);
 
@@ -539,30 +526,24 @@ static void function_call_dialog (call_info *cinfo)
 			 GTK_EXPAND, GTK_FILL, 5, 5);
 	gtk_widget_show(label);
 
-	for (i=0; i<cinfo->n_returns; i++) {
-	    GList *list = NULL;
+	label = gtk_label_new(arg_type_string(cinfo->rettype));
+	gtk_misc_set_alignment(GTK_MISC(label), 0.75, 0.5);
+	gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, 1, 2,
+			 GTK_EXPAND, GTK_FILL, 5, 5);
+	gtk_widget_show(label);
 
-	    label = gtk_label_new(arg_type_string(cinfo->return_types[i]));
-	    gtk_misc_set_alignment(GTK_MISC(label), 0.75, 0.5);
-	    gtk_table_attach(GTK_TABLE(tbl), label, 0, 1, i+1, i+2,
-			     GTK_EXPAND, GTK_FILL, 5, 5);
-	    gtk_widget_show(label);
-
-	    sel = gtk_combo_new();
-	    g_object_set_data(G_OBJECT(GTK_COMBO(sel)->entry), "retnum",
-			      GINT_TO_POINTER(i));
-	    g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
-			     G_CALLBACK(update_return), cinfo);
-	    list = get_selection_list(cinfo->return_types[i]);
-	    if (list != NULL) {
-		gtk_combo_set_popdown_strings(GTK_COMBO(sel), list); 
-		g_list_free(list);
-	    }
-	    gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sel)->entry), TRUE);
-	    gtk_table_attach(GTK_TABLE(tbl), sel, 1, 2, i+1, i+2,
-			     GTK_EXPAND, GTK_FILL, 5, 5);
-	    gtk_widget_show(sel);
+	sel = gtk_combo_new();
+	g_signal_connect(G_OBJECT(GTK_COMBO(sel)->entry), "changed",
+			 G_CALLBACK(update_return), cinfo);
+	list = get_selection_list(cinfo->rettype);
+	if (list != NULL) {
+	    gtk_combo_set_popdown_strings(GTK_COMBO(sel), list); 
+	    g_list_free(list);
 	}
+	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(sel)->entry), TRUE);
+	gtk_table_attach(GTK_TABLE(tbl), sel, 1, 2, 1, 2,
+			 GTK_EXPAND, GTK_FILL, 5, 5);
+	gtk_widget_show(sel);
 
 	gtk_widget_show(tbl);
     }
@@ -589,7 +570,7 @@ static void function_call_dialog (call_info *cinfo)
     gtk_widget_show(cinfo->dlg);
 }
 
-static int check_args_and_rets (call_info *cinfo)
+static int check_args (call_info *cinfo)
 {
     int i;
 
@@ -602,20 +583,6 @@ static int check_args_and_rets (call_info *cinfo)
 	    }
 	}
     }
-
-    if (cinfo->rets != NULL) {
-	int nr = 0;
-
-	for (i=0; i<cinfo->n_returns; i++) {
-	    if (cinfo->rets[i] != NULL) {
-		nr++;
-	    }
-	}
-	if (nr > 0 && nr < cinfo->n_returns) {
-	    errbox(_("You should assign all return values, or none"));
-	    return E_DATA;
-	}
-    }    
 
     return 0;
 }
@@ -766,9 +733,7 @@ void call_function_package (const char *fname, GtkWidget *w)
 	return;
     }
 
-    err = user_func_get_return_types(cinfo.func,
-				     &cinfo.n_returns,
-				     &cinfo.return_types);
+    cinfo.rettype = user_func_get_return_type(cinfo.func);
 
     if (err) {
 	fprintf(stderr, "user_func_get_return_types: failed for idx = %d\n",
@@ -782,7 +747,7 @@ void call_function_package (const char *fname, GtkWidget *w)
 	return;
     }
 
-    if (check_args_and_rets(&cinfo)) {
+    if (check_args(&cinfo)) {
 	cinfo_free(&cinfo);
 	return;
     }
@@ -795,18 +760,9 @@ void call_function_package (const char *fname, GtkWidget *w)
     fnname = user_function_name_by_index(cinfo.iface);
     *fnline = 0;
 
-    if (cinfo.rets != NULL) {
-	for (i=0; i<cinfo.n_returns; i++) {
-	    if (cinfo.rets[i] == NULL) {
-		break;
-	    }
-	    strcat(fnline, cinfo.rets[i]);
-	    if (i < cinfo.n_returns - 1) {
-		strcat(fnline, ", ");
-	    } else {
-		strcat(fnline, " = ");
-	    }
-	}
+    if (cinfo.ret != NULL) {
+	strcat(fnline, cinfo.ret);
+	strcat(fnline, " = ");
     }    
 
     strcat(fnline, fnname);

@@ -1793,7 +1793,7 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 
     /* check that the function returns something suitable, if required */
     if (!simple_ufun_call(p)) {
-	rtype = user_func_first_return_type(uf);
+	rtype = user_func_get_return_type(uf);
 	if (rtype != ARG_SCALAR && rtype != ARG_SERIES &&
 	    rtype != ARG_MATRIX) {
 	    p->err = E_TYPES;
@@ -1826,7 +1826,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		break;
 	    }
 	}
+#if EDEBUG
 	fprintf(stderr, "eval_ufunc: arg[%d] is of type %d\n", i, n->t);
+#endif
 	if (n->t == U_ADDR) {
 	    NODE *u = n->v.b1.b;
 
@@ -1837,7 +1839,9 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 		    p->err = push_fn_arg(&args, ARG_REF_SERIES, &u->v.idnum);
 		}
 	    } else if (u->t == UMAT) {
-		p->err = push_fn_arg(&args, ARG_REF_MATRIX, u->v.str);
+		user_matrix *m = get_user_matrix_by_name(u->v.str);
+
+		p->err = push_fn_arg(&args, ARG_REF_MATRIX, m);
 	    } else {
 		pputs(p->prn, "Wrong type of operand for unary '&'\n");
 		p->err = 1;
@@ -1855,18 +1859,28 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	}
     }
 
+#if EDEBUG
     fprintf(stderr, "args: nx=%d, nX=%d, nM=%d, nl=%d, nrefv=%d, total=%d\n",
 	    args.nx, args.nX, args.nM, args.nl, args.nrefv, m);
+#endif
 
     /* try sending args to function */
     if (!p->err) {
 	double xret = NADBL;
 	double *Xret = NULL;
 	gretl_matrix *mret = NULL;
+	void *retp = NULL;
 
-	p->err = function_call_direct(uf, &args, rtype, p->Z, p->dinfo, 
-				      &xret, &Xret, &mret,
-				      p->prn);
+	if (rtype == ARG_SCALAR) {
+	    retp = &xret;
+	} else if (rtype == ARG_SERIES) {
+	    retp = &Xret;
+	} else if (rtype == ARG_MATRIX) {
+	    retp = &mret;
+	}
+
+	p->err = gretl_function_exec(uf, &args, rtype, p->Z, p->dinfo, 
+				     retp, p->prn);
 	if (!p->err) {
 	    if (rtype == ARG_SCALAR) {
 		ret = aux_scalar_node(p);
@@ -3327,13 +3341,13 @@ static void assign_to_matrix (parser *p)
 	}
 
 	if (!p->err) {
-	    p->err = user_matrix_replace_matrix(p->lh.name, m);
+	    p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
 	    p->lh.m1 = m;
 	}
     } else {
 	/* overwrite the old matrix with new */
 	m = grab_or_copy_matrix_result(p);
-	p->err = user_matrix_replace_matrix(p->lh.name, m);
+	p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
 	p->lh.m1 = m;
     }
 }
@@ -3373,7 +3387,7 @@ static void assign_to_matrix_mod (parser *p)
     }
 
     if (!p->err) {
-	p->err = user_matrix_replace_matrix(p->lh.name, m);
+	p->err = user_matrix_replace_matrix_by_name(p->lh.name, m);
 	p->lh.m1 = m;
     }
 }

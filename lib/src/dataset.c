@@ -475,10 +475,7 @@ static void gretl_varinfo_init (VARINFO *vinfo)
     vinfo->stack_level = 0;
     vinfo->line_width = 1;
     vinfo->sorted_markers = NULL;
-
-    if (gretl_executing_function()) {
-	vinfo->stack_level = gretl_function_stack_depth();
-    } 
+    vinfo->stack_level = gretl_function_depth();
 }
 
 /**
@@ -1424,7 +1421,7 @@ int dataset_add_scalar_as (double x, const char *newname,
 int dataset_add_series_as (double *x, const char *newname,
 			   double ***pZ, DATAINFO *pdinfo)
 {
-    int vnew, err = 0;
+    int v, t, err = 0;
 
     if (pdinfo->varinfo == NULL) {
 	strcpy(gretl_errmsg, _("Please open a data file first"));
@@ -1434,14 +1431,12 @@ int dataset_add_series_as (double *x, const char *newname,
     err = real_dataset_add_series(1, NULL, pZ, pdinfo);
 
     if (!err) {
-	vnew = pdinfo->v - 1;
-	(*pZ)[vnew] = copyvec(x, pdinfo->n);
-	if ((*pZ)[vnew] == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    strcpy(pdinfo->varname[vnew], newname);
-	    STACK_LEVEL(pdinfo, vnew) += 1;
+	v = pdinfo->v - 1;
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[v][t] = x[t];
 	}
+	strcpy(pdinfo->varname[v], newname);
+	STACK_LEVEL(pdinfo, v) += 1;
     }
 
     return err;

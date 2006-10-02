@@ -20,6 +20,8 @@
 #ifndef GRETL_FUNC_H
 #define GRETL_FUNC_H
 
+#include "usermat.h"
+
 typedef enum {
     ARG_NONE = 0,
     ARG_SCALAR,
@@ -51,13 +53,14 @@ typedef union retloc_ retloc;
 struct fnargs_ {
     char *types;
     int nx, nX, nM, nl;
-    int nrefv, nrefn;
+    int nrefv, nrefm;
+    int nnull;
     double *x;
     double **X;
     gretl_matrix **M;
     char **lists;
     int *refv;
-    char **refnames;
+    user_matrix **refm;
 };
 
 int n_user_functions (void);
@@ -78,11 +81,7 @@ double fn_param_minval (const ufunc *fun, int i);
 
 double fn_param_maxval (const ufunc *fun, int i);
 
-int user_func_get_return_types (const ufunc *fun,
-				int *n_returns,
-				char **return_types);
-
-int user_func_first_return_type (const ufunc *fun);
+int user_func_get_return_type (const ufunc *fun);
 
 const char *user_function_name_by_index (int i);
 
@@ -90,7 +89,7 @@ int user_function_index_by_name (const char *name);
 
 int gretl_compiling_function (void);
 
-int gretl_executing_function (void);
+int gretl_function_depth (void);
 
 int gretl_start_compiling_function (const char *line, PRN *prn);
 
@@ -102,18 +101,9 @@ int gretl_is_public_user_function (const char *name);
 
 int gretl_get_user_function (const char *line);
 
-int is_user_matrix_function (const char *word);
-
-int function_call_direct (ufunc *u, fnargs *args, int rtype,
-			  double ***pZ, DATAINFO *pdinfo,
-			  double *xret, double **Xret,
-			  gretl_matrix **mret, PRN *prn);
-
-int gretl_function_stack_depth (void);
-
-void gretl_function_stop_on_error (double ***pZ, DATAINFO *pdinfo, PRN *prn);
-
-int gretl_function_flagged_error (const char *s, PRN *prn);
+int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
+			 double ***pZ, DATAINFO *pdinfo,
+			 void *ret, PRN *prn);
 
 int gretl_function_set_info (int i, const char *help);
 

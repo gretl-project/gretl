@@ -48,4 +48,6 @@ void gretl_exec_state_init (ExecState *s,
 			    MODEL **models, 
 			    PRN *prn);
 
+void gretl_exec_state_clear (ExecState *s);
+
 #endif /* CMD_PRIVATE_H */
