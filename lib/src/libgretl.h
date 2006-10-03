@@ -411,7 +411,6 @@ struct MODEL_ {
 #include "texprint.h"
 #include "graphing.h"
 #include "random.h"
-#include "monte_carlo.h"
 #include "nonparam.h"
 #include "options.h"
 #include "discrete.h"

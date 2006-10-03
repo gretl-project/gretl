@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "monte_carlo.h"
 #include "var.h"
 #include "johansen.h"
 #include "system.h"

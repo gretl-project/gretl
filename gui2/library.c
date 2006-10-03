@@ -28,6 +28,7 @@
 #include "system.h"
 #include "gretl_restrict.h"
 #include "gretl_func.h"
+#include "monte_carlo.h"
 #include "modelspec.h"
 #include "forecast.h"
 #include "dbwrite.h"
@@ -5794,7 +5795,7 @@ int execute_script (const char *runfile, const char *buf,
 
     while (strcmp(libcmd.word, "quit")) {
 	if (gretl_execute_loop()) { 
-	    exec_err = gretl_loop_exec(line, &Z, &datainfo, models, prn);
+	    exec_err = gretl_loop_exec(&state, &Z, &datainfo);
 	    if (exec_err) {
 		goto endwhile;
 	    }
@@ -5997,7 +5998,7 @@ int gui_exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         }
-	err = gretl_loop_append_line(line, cmd->ci, cmd->opt, pZ, pdinfo);
+	err = gretl_loop_append_line(s, pZ, pdinfo);
 	if (err) {
 	    print_gretl_errmsg(prn);
 	    return 1;

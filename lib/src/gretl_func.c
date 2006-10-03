@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "monte_carlo.h"
 #include "version.h"
 #include "gretl_func.h"
 #include "libset.h"
@@ -26,7 +27,7 @@
 #include "cmd_private.h"
 
 #define FN_NAMELEN 32
-#define FN_DEBUG 2
+#define FN_DEBUG 0
 
 typedef struct fn_param_ fn_param;
 typedef struct fncall_ fncall;
@@ -1863,7 +1864,7 @@ static int parse_fn_definition (char *fname,
 int gretl_start_compiling_function (const char *line, PRN *prn)
 {
     ufunc *fun = NULL;
-    fn_param *params;
+    fn_param *params = NULL;
     int nf, n_params = 0;
     char fname[FN_NAMELEN];
     char extra[8];
@@ -2229,29 +2230,6 @@ maybe_check_function_needs (const DATAINFO *pdinfo,
     }
 }
 
-#if 0
-
-static int foo (void)
-{
-    /* assigning a matrix, not a variable? */
-    gretl_matrix *S = get_matrix_by_name(cfun->returns[i].name);
-
-    if (S != NULL) {
-	gretl_matrix *T;
-
-	T = get_matrix_by_name_at_level(call->assv[i], nc - 1, pdinfo); 
-	if (T != NULL) {
-	    /* copy values to pre-existing matrix at caller level */
-	    err = gretl_matrix_copy_values(T, S);
-	} else {
-	    /* rename matrix as caller desired and mark as global */
-	    err = user_matrix_set_name_and_level(S, call->assv[i], nc - 1);
-	}
-    }
-}
-
-#endif
-
 enum {
     GET_PTR,
     GET_COPY
@@ -2414,7 +2392,7 @@ maybe_exec_function_line (ExecState *s, ufunc *u, double ***pZ, DATAINFO *pdinfo
             pprintf(s->prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         }
-	err = gretl_loop_append_line(s->line, s->cmd->ci, s->cmd->opt, pZ, pdinfo);
+	err = gretl_loop_append_line(s, pZ, pdinfo);
 	if (err) {
 	    print_gretl_errmsg(s->prn);
 	    return 1;
@@ -2560,7 +2538,8 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 
     if (!err) {
 	*line = '\0';
-	gretl_exec_state_init(&state, 0, line, &cmd, models, prn);
+	gretl_exec_state_init(&state, FUNCTION_EXEC, line, &cmd, 
+			      models, prn);
     }
 
     if (!err) {
@@ -2570,13 +2549,18 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
+	if (gretl_execute_loop()) { 
+	    err = gretl_loop_exec(&state, pZ, &pdinfo);
+	    if (err) {
+		break;
+	    }
+	}
 	strcpy(line, u->lines[i]);
 	err = maybe_exec_function_line(&state, u, pZ, pdinfo);
     }
 
-    /* assign/destroy local variables */
-
     if (!err) {
+	/* assign/destroy local variables */
 	err = function_assign_returns(u, args, argc, rtype, *pZ, pdinfo,
 				      ret, prn);
     }
@@ -2584,7 +2568,9 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     gretl_exec_state_clear(&state);
     stop_fncall(u, pZ, pdinfo, orig_v);
 
+#if FN_DEBUG
     fprintf(stderr, "gretl_function_exec: err = %d\n", err);
+#endif
 
     return err;    
 }

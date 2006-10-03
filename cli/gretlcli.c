@@ -28,6 +28,7 @@
 #define GRETLCLI
 
 #include "libgretl.h"
+#include "monte_carlo.h"
 #include "var.h"
 #include "system.h"
 #include "gretl_restrict.h"
@@ -566,7 +567,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (gretl_execute_loop()) { 
-	    if (gretl_loop_exec(line, &Z, &datainfo, models, prn)) {
+	    if (gretl_loop_exec(&state, &Z, &datainfo)) {
 		return 1;
 	    }
 	    set_errfatal(ERRFATAL_AUTO);
@@ -757,7 +758,7 @@ static int exec_line (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 		}
 		echo_cmd(cmd, pdinfo, line, eflags, cmdprn);
 	    }
-	    err = gretl_loop_append_line(line, cmd->ci, cmd->opt, pZ, pdinfo);
+	    err = gretl_loop_append_line(s, pZ, pdinfo);
 	    if (err) {
 		set_errfatal(ERRFATAL_FORCE);
 		print_gretl_errmsg(prn);

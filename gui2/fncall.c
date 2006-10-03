@@ -21,6 +21,7 @@
 #include "dlgutils.h"
 #include "selector.h"
 #include "gretl_func.h"
+#include "monte_carlo.h"
 #include "usermat.h"
 #include "cmd_private.h"
 #include "webget.h"
@@ -592,7 +593,7 @@ static int fn_executor (ExecState *s)
     int err = 0;
 
     while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(s->line, &Z, &datainfo, models, s->prn);
+	err = gretl_loop_exec(s, &Z, &datainfo);
     }
 
     return err;

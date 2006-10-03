@@ -20,6 +20,7 @@
 /*  monte_carlo.c - loop simulation procedures */
 
 #include "libgretl.h" 
+#include "monte_carlo.h"
 #include "loop_private.h"
 #include "libset.h"
 #include "compat.h"
@@ -32,6 +33,7 @@
 #include <unistd.h>
 
 #define LOOP_DEBUG 0
+#define LOOP_DEBUG2 0
 
 #if LOOP_DEBUG
 # undef ENABLE_GMP
@@ -876,33 +878,11 @@ test_forloop_element (char *s, LOOPSET *loop,
     return err;
 }
 
-static void destroy_each_strings (LOOPSET *loop, int n)
-{
-    int i;
-
-    for (i=0; i<n; i++) {
-	free(loop->eachstrs[i]);
-    }
-    
-    free(loop->eachstrs);
-    loop->eachstrs = NULL;
-}
-
 static int allocate_each_strings (LOOPSET *loop, int n)
 {
-    int i, err = 0;
+    loop->eachstrs = strings_array_new(n);
 
-    loop->eachstrs = malloc(n * sizeof *loop->eachstrs);
-
-    if (loop->eachstrs == NULL) {
-	err = E_ALLOC;
-    } else {
-	for (i=0; i<n; i++) {
-	    loop->eachstrs[i] = NULL;
-	}
-    }
-
-    return err;
+    return (loop->eachstrs == NULL)? E_ALLOC : 0;
 }
 
 static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
@@ -938,7 +918,8 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
     }
 
     if (err && loop->eachstrs != NULL) {
-	destroy_each_strings(loop, list[0]);
+	free_strings_array(loop->eachstrs, list[0]);
+	loop->eachstrs = NULL;
     }
 
     if (!err) {
@@ -985,7 +966,8 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 	    for (i=v1; i<=v2 && !err; i++) {
 		loop->eachstrs[i-v1] = gretl_strdup(pdinfo->varname[i]);
 		if (loop->eachstrs[i-v1] == NULL) {
-		    destroy_each_strings(loop, *nf);
+		    free_strings_array(loop->eachstrs, *nf);
+		    loop->eachstrs = NULL;
 		    err = E_ALLOC;
 		}
 	    }
@@ -1051,7 +1033,8 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 
 	    loop->eachstrs[i] = gretl_strndup(s, len);
 	    if (loop->eachstrs[i] == NULL) {
-		destroy_each_strings(loop, nf);
+		free_strings_array(loop->eachstrs, nf);
+		loop->eachstrs = NULL;
 		err = E_ALLOC;
 	    } else {
 		s += len;
@@ -1121,6 +1104,7 @@ parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
  * parse_loopline:
  * @line: command line.
  * @loop: current loop struct pointer, or %NULL.
+ * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  * @pZ: pointer to data array.
  *
@@ -1131,7 +1115,7 @@ parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
 
 static LOOPSET *
 parse_loopline (char *line, LOOPSET *loop, 
-		DATAINFO *pdinfo, double ***pZ)
+		double ***pZ, DATAINFO *pdinfo)
 {
     LOOPSET *newloop;
     char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
@@ -1178,8 +1162,23 @@ parse_loopline (char *line, LOOPSET *loop,
 	    } 
 	}
     } else {
+#if 1
+	newloop = gretl_loop_new(NULL);
+	if (newloop == NULL) {
+	    gretl_errmsg_set(_("Out of memory!"));
+	    return NULL;
+	} else {
+	    opt = get_gretl_options(line, &err);
+	    if (err) {
+		gretl_loop_destroy(newloop);
+		return NULL;
+	    } 
+	}
+#else
 	/* shouldn't happen: need error message? */
+	fprintf(stderr, "\"shouldn't happen\" has happened 8-/\n");
 	newloop = loop;
+#endif
     }
 
     if (!strncmp(line, "loop", 4)) {
@@ -1194,7 +1193,6 @@ parse_loopline (char *line, LOOPSET *loop,
 #endif
 
     /* try parsing the loop line in various ways */
-
 
     if (sscanf(line, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(newloop, (const double **) *pZ, pdinfo,
@@ -1909,19 +1907,17 @@ static int add_more_loop_lines (LOOPSET *loop)
 
 /**
  * gretl_loop_append_line:
- * @line: command line.
- * @ci: command index number.
- * @opt: option flag(s) associated with the command.
+ * @s: program execuation state.
  * @pZ: pointer to data matrix.
  * @pdinfo: dataset information.
  *
- * Add line and command index to accumulated loop buffer.
+ * Add command line to accumulated loop buffer.
  *
  * Returns: 0 on success, non-zero code on error.
  */
 
-int gretl_loop_append_line (char *line, int ci, gretlopt opt,
-			    double ***pZ, DATAINFO *pdinfo)
+int gretl_loop_append_line (ExecState *s, double ***pZ, 
+			    DATAINFO *pdinfo)
 {
     LOOPSET *loop = currloop;
     LOOPSET *newloop = loop;
@@ -1929,14 +1925,17 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 
     *gretl_errmsg = '\0';
 
-#if LOOP_DEBUG
-    fprintf(stderr, "gretl_loop_append_line: loop = %p, line = '%s'\n", 
-	    (void *) loop, line);
+#if LOOP_DEBUG2
+    fprintf(stderr, "gretl_loop_append_line: currloop = %p, line = '%s'\n", 
+	    (void *) loop, s->line);
 #endif
 
-    if (ci == LOOP) {
+    if (s->cmd->ci == LOOP) {
 	/* starting a new loop, possibly inside another */
-	newloop = parse_loopline(line, loop, pdinfo, pZ);
+	newloop = parse_loopline(s->line, loop, pZ, pdinfo);
+#if LOOP_DEBUG2
+	fprintf(stderr, " got LOOP: made newloop at %p\n", (void *) newloop);
+#endif
 	if (newloop == NULL) {
 	    if (*gretl_errmsg == '\0') {
 		gretl_errmsg_set(_("No valid loop condition was given."));
@@ -1944,13 +1943,19 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 	    err = gretl_errno = E_PARSE;
 	    goto bailout;
 	} else {
-	    set_loop_opts(newloop, opt);
+	    set_loop_opts(newloop, s->cmd->opt);
 	    loop_compiling++;
+	    goto bailout;
 	}
-    } else if (ci == ENDLOOP) {
+    } else if (s->cmd->ci == ENDLOOP) {
 	/* got to the end of a loop */
 	loop_compiling--;
+#if LOOP_DEBUG2
+	fprintf(stderr, " got ENDLOOP, loop_compiling is now %d\n",
+		loop_compiling);
+#endif
 	if (loop_compiling == 0) {
+	    /* set flag to actually run the loop */
 	    loop_execute = 1;
 	} else {
 	    /* back up a level */
@@ -1960,6 +1965,10 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 
     if (loop != NULL) {
 	int nc = loop->n_cmds;
+
+#if LOOP_DEBUG2
+	fprintf(stderr, " loop != NULL, nc = %d\n", nc);
+#endif
 
 	if ((nc + 1) % LOOP_BLOCK == 0) {
 	    if (add_more_loop_lines(loop)) {
@@ -1974,34 +1983,36 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 	    goto bailout;
 	}
 
+#if 0
 	top_n_tail(line);
+#endif
 
-	if (ci == PRINT && loop->type != COUNT_LOOP) {
+	if (s->cmd->ci == PRINT && loop->type != COUNT_LOOP) {
 	    /* fixme: what's going on here? */
 	    loop->ci[nc] = 0;
 	} else {
-	    loop->ci[nc] = ci;
+	    loop->ci[nc] = s->cmd->ci;
 	}
 
 	loop->lines[nc][0] = '\0';
 
-	if (opt) {
-	    const char *flagstr = print_flags(opt, ci);
+	if (s->cmd->opt) {
+	    const char *flagstr = print_flags(s->cmd->opt, s->cmd->ci);
 
-	    if (strlen(line) + strlen(flagstr) >= MAXLEN) {
+	    if (strlen(s->line) + strlen(flagstr) >= MAXLEN) {
 		goto bailout;
 	    } else {
-		sprintf(loop->lines[nc], "%s%s", line, flagstr);
+		sprintf(loop->lines[nc], "%s%s", s->line, flagstr);
 	    }
 	} else {
-	    strcpy(loop->lines[nc], line);
+	    strcpy(loop->lines[nc], s->line);
 	}
 
 	loop->n_cmds += 1;
 
 #if LOOP_DEBUG
-	fprintf(stderr, "loop: n_cmds=%d, line[%d] = '%s'\n",
-		loop->n_cmds, nc, loop->lines[nc]);
+	fprintf(stderr, "loop %p: n_cmds now = %d, line[%d] = '%s'\n",
+		(void *) loop, loop->n_cmds, nc, loop->lines[nc]);
 #endif
     }
 
@@ -2014,6 +2025,9 @@ int gretl_loop_append_line (char *line, int ci, gretlopt opt,
 	}
     } else {
 	currloop = newloop;
+#if LOOP_DEBUG2
+	fprintf(stderr, "set currloop = newloop = %p\n", (void *) currloop);
+#endif
     }
 
     return err;
@@ -2486,12 +2500,15 @@ static int get_cmd_src (void)
    stack of loop commands.
 */
 
-static int next_command (char *targ, LOOPSET *loop, double ***pZ,
-			 DATAINFO *pdinfo, int *err, int *j)
+static int next_command (char *targ, LOOPSET *loop, int *j)
 {
     int ret = 1;
 
     if (*j < loop->n_cmds) {
+	if (!isprint(loop->lines[*j][0])) {
+	    fprintf(stderr, "bad line %d from loop at %p\n", *j, (void *) loop);
+	    exit(EXIT_FAILURE);
+	}
 	strcpy(targ, loop->lines[*j]);
 	*j += 1;
     } else {
@@ -2501,16 +2518,15 @@ static int next_command (char *targ, LOOPSET *loop, double ***pZ,
     return ret;
 }
 
-int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo, 
-		     MODEL **models, PRN *prn)
+int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo) 
 {
-    ExecState state;
     LOOPSET *loop = currloop;
     DATAINFO *pdinfo = *ppdinfo;
-    GRETL_VAR *var = NULL;
+    MODEL **models = s->models;
+    char *line = s->line;
+    CMD *cmd = s->cmd;
+    PRN *prn = s->prn;
     char errline[MAXLINE];
-    char linecpy[MAXLINE];
-    CMD cmd;
     int mod_id = 0;
     int err = 0;
 
@@ -2528,11 +2544,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	return 0;
     }
 
-    err = gretl_cmd_init(&cmd);
-    if (err) {
-	return err;
-    }
-
     set_loop_on(); /* libset.c */
 
 #if LOOP_DEBUG
@@ -2544,8 +2555,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
     if (!err) {
 	push_cmd_src(SRC_LOOP, "starting loop");
     }
-
-    gretl_exec_state_init(&state, 0, linecpy, &cmd, models, prn);
 
     while (!err && loop_condition(loop, pZ, pdinfo)) {
 	int modnum = 0;
@@ -2563,31 +2572,30 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	}
 
 	j = 0;
-	while (!err && next_command(linecpy, loop, pZ, pdinfo, &err, &j)) {
+	while (!err && next_command(line, loop, &j)) {
 
 	    pdinfo = *ppdinfo;
 
 #if LOOP_DEBUG
-	    fprintf(stderr, " j=%d, linecpy='%s'\n", j, linecpy);
+	    fprintf(stderr, " j=%d, line='%s'\n", j, line);
 #endif
-	    strcpy(errline, linecpy);
+	    strcpy(errline, line);
 
 	    if (loop_compiling) {
 		/* compiling loop inside function, inside loop */
-		err = get_command_index(linecpy, &cmd, pdinfo);
+		err = get_command_index(line, cmd, pdinfo);
 		if (!err) {
-		    err = gretl_loop_append_line(linecpy, cmd.ci, cmd.opt, 
-						 pZ, pdinfo);
+		    err = gretl_loop_append_line(s, pZ, pdinfo);
 		}
 		if (err) {
 		    break;
-		} else if (cmd.ci != ENDLOOP) {
+		} else if (s->cmd->ci != ENDLOOP) {
 		    continue;
 		}
 	    }
 
 	    if (!err) {
-		err = make_dollar_substitutions(linecpy, loop, 
+		err = make_dollar_substitutions(line, loop, 
 						(const double **) *pZ,
 						pdinfo);
 	    }
@@ -2596,88 +2604,83 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		break;
 	    }
 
-	    /* We already have the "ci" index recorded, but this line
-	       will do some checking that hasn't been done earlier. */
-	    err = parse_command_line(linecpy, &cmd, pZ, pdinfo);
+	    /* We already have the "ci" index recorded, but here
+	       we do some further parsing. 
+	    */
+	    err = parse_command_line(line, cmd, pZ, pdinfo);
 
-	    if (cmd.ci < 0) {
+	    if (cmd->ci < 0) {
 		continue;
 	    } else if (err) {
 		break;
 	    }
 
 	    if (gretl_echo_on() && indexed_loop(loop)) {
-		if (cmd.ci == ENDLOOP) {
+		if (s->cmd->ci == ENDLOOP) {
 		    pputc(prn, '\n');
 		} else {
-		    echo_cmd(&cmd, pdinfo, linecpy, 0, prn);
+		    echo_cmd(cmd, pdinfo, line, 0, prn);
 		}
 	    }
 
-	    switch (cmd.ci) {
+	    switch (cmd->ci) {
 
-	    case ADF: 
-	    case COINT2: 
-	    case COINT: 
-	    case CORR:
-	    case CRITERIA: 
-	    case DIFF: 
-	    case HURST:	
-	    case KPSS:
-	    case LAGS: 
-	    case LDIFF: 
-	    case LOGS:
-	    case MEANTEST: 
-	    case MULTIPLY: 
-	    case OUTFILE:
-	    case PCA:
-	    case PRINTF:
-	    case PVALUE:
-	    case RHODIFF:
-	    case RUNS: 
-	    case SETINFO:
-	    case SPEARMAN: 
-	    case SQUARE: 
-	    case SUMMARY:
-	    case TESTUHAT:
-	    case VARLIST:
-	    case VARTEST: 
-	    case XTAB:
-		err = gretl_cmd_exec(&state, pZ, pdinfo, prn);
-		break;
-
+#if 0
 	    case LOOP:
 		if (get_cmd_src() == SRC_FN) {
 		    currloop = NULL;
-		    err = gretl_loop_append_line(linecpy, cmd.ci, cmd.opt, pZ, pdinfo);
+		    err = gretl_loop_append_line(s, pZ, pdinfo);
 		} else {
-		    currloop = loop->children[childnum++]; /* FIXME? */
-		    err = gretl_loop_exec(NULL, pZ, ppdinfo, models, prn);
-		    pdinfo = *ppdinfo;
+		    if (childnum < loop->n_children) {
+			currloop = loop->children[childnum++]; /* FIXME? */
+			err = gretl_loop_exec(s, pZ, ppdinfo);
+			pdinfo = *ppdinfo;
+		    } else {
+			fprintf(stderr, "Got a LOOP command, don't know what to do!\n");
+			err = 1;
+		    }
 		}
 		break;
+#else
+	    case LOOP:
+#if LOOP_DEBUG
+		fprintf(stderr, "In gretl_loop_exec, got LOOP, line='%s'\n", line);
+#endif
+		if (childnum < loop->n_children) {
+		    currloop = loop->children[childnum++];
+		    err = gretl_loop_exec(s, pZ, ppdinfo);
+		    pdinfo = *ppdinfo;
+		} else {
+		    /* previously, we had here that if the current command
+		       source was a function, we should launch
+		       gretl_loop_append_line, on the grounds that this
+		       LOOP command would mark the start of an uncompiled
+		       loop that needs compiling.
+		    */
+
+		    /* the loop is not nested within this one */
+		    /* currloop = NULL; */
+		    /* err = gretl_loop_append_line(s, pZ, pdinfo); */
+		} 
+		break;
+#endif
 
 	    case BREAK:
 		loop->brk = 1;
 		break;
 
 	    case ENDLOOP:
-		if (get_cmd_src() == SRC_FN) {
-		    err = gretl_loop_exec(linecpy, pZ, ppdinfo, models, prn);
-		    pdinfo = *ppdinfo;
-		} 
+		/* previously, we had here that if the current command
+		   source was a function, we should start loop execution,
+		   on the basis that reaching ENDLOOP meant that we'd
+		   just finished compiling a loop, and should run it
+		*/
 		break;
 
 	    case FREQ:
 		/* note: no graphs in loops */
-		err = freqdist(cmd.list[1], (const double **) *pZ, pdinfo, 0, 
-			       cmd.opt, prn);
-		break;
-
-	    case GENR:
-		err = generate(linecpy, pZ, pdinfo, 
-			       (loop_is_verbose(loop))? OPT_NONE : OPT_Q,
-			       prn);
+		err = freqdist(cmd->list[1], (const double **) *pZ, pdinfo, 0, 
+			       cmd->opt, prn);
 		break;
 
 	    case ARMA:
@@ -2697,7 +2700,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		if (loop->iter == 0) {
 		    if (loop_is_progressive(loop)) {
 			err = add_loop_model(loop);
-		    } else if (cmd.opt & OPT_P) {
+		    } else if (cmd->opt & OPT_P) {
 			err = add_model_record(loop);
 		    }
 		    if (err) {
@@ -2708,28 +2711,28 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		/* estimate the model called for, using models[0] */
 		clear_model(models[0]);
 
-		if (cmd.ci == OLS || cmd.ci == WLS || cmd.ci == HCCM) {
-		    *models[0] = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt);
-		} else if (cmd.ci == LAD) {
-		    *models[0] = lad(cmd.list, pZ, pdinfo);
-		} else if (cmd.ci == MPOLS) {
-		    *models[0] = mp_ols(cmd.list, (const double **) *pZ, pdinfo);
-		} else if (cmd.ci == HSK) {
-		    *models[0] = hsk_func(cmd.list, pZ, pdinfo);
-		} else if (cmd.ci == ARMA) {
-		    *models[0] = arma(cmd.list, (const double **) *pZ, pdinfo, 
-				      cmd.opt, prn);
-		} else if (cmd.ci == TSLS) {
-		    *models[0] = tsls_func(cmd.list, TSLS, pZ, pdinfo, cmd.opt);
-		} else if (cmd.ci == GARCH) {
-		    *models[0] = garch(cmd.list, pZ, pdinfo, cmd.opt, prn);
-		} else if (cmd.ci == CORC || cmd.ci == HILU || cmd.ci == PWE) {
-		    double rho = estimate_rho(cmd.list, pZ, pdinfo, cmd.ci,
-					      &err, cmd.opt, prn);
+		if (cmd->ci == OLS || cmd->ci == WLS || cmd->ci == HCCM) {
+		    *models[0] = lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt);
+		} else if (cmd->ci == LAD) {
+		    *models[0] = lad(cmd->list, pZ, pdinfo);
+		} else if (cmd->ci == MPOLS) {
+		    *models[0] = mp_ols(cmd->list, (const double **) *pZ, pdinfo);
+		} else if (cmd->ci == HSK) {
+		    *models[0] = hsk_func(cmd->list, pZ, pdinfo);
+		} else if (cmd->ci == ARMA) {
+		    *models[0] = arma(cmd->list, (const double **) *pZ, pdinfo, 
+				      cmd->opt, prn);
+		} else if (cmd->ci == TSLS) {
+		    *models[0] = tsls_func(cmd->list, TSLS, pZ, pdinfo, cmd->opt);
+		} else if (cmd->ci == GARCH) {
+		    *models[0] = garch(cmd->list, pZ, pdinfo, cmd->opt, prn);
+		} else if (cmd->ci == CORC || cmd->ci == HILU || cmd->ci == PWE) {
+		    double rho = estimate_rho(cmd->list, pZ, pdinfo, cmd->ci,
+					      &err, cmd->opt, prn);
 		    if (err) {
 			break;
 		    }
-		    *models[0] = ar1_lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt, rho);
+		    *models[0] = ar1_lsq(cmd->list, pZ, pdinfo, cmd->ci, cmd->opt, rho);
 		}
 
 		if ((err = models[0]->errcode)) {
@@ -2748,7 +2751,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    }
 		    update_loop_model(loop, m, models[0]);
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
-		} else if (cmd.opt & OPT_P) {
+		} else if (cmd->opt & OPT_P) {
 		    /* deferred printing of model results */
 		    int m = modnum++;
 
@@ -2758,7 +2761,7 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 		    model_count_minus();
 		} else {
 		    models[0]->ID = ++mod_id;
-		    printmodel(models[0], pdinfo, cmd.opt, prn);
+		    printmodel(models[0], pdinfo, cmd->opt, prn);
 		    set_as_last_model(models[0], GRETL_OBJ_EQN);
 		}
 		break;
@@ -2767,88 +2770,53 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case OMIT:
 		if (loop_is_progressive(loop)) {
 		    err = 1;
-		    break;
-		}
-		/* FIXME: this needs work, and should only be allowed
-		   under certain conditions */
-		clear_model(models[1]);
-		if (cmd.ci == ADD || cmd.ci == ADDTO) {
-		    err = add_test(cmd.list, models[0], models[1], 
-				   pZ, pdinfo, cmd.opt, prn);
 		} else {
-		    err = omit_test(cmd.list, models[0], models[1],
-				    pZ, pdinfo, cmd.opt, prn);
-		}
-		if (err) {
-		    errmsg(err, prn);
-		} else if (!(cmd.opt & OPT_Q) && !(cmd.opt & OPT_W)) {
-		    swap_models(models[0], models[1]);
-		    set_as_last_model(models[0], GRETL_OBJ_EQN);
-		}
-		if (!(cmd.opt & OPT_W)) {
-		    clear_model(models[1]);
-		}
-		break;	
-
-	    case MLE:
-	    case NLS:
-		if (loop_is_progressive(loop) || (cmd.opt & OPT_P)) {
-		    err = 1;
-		} else {
-		    err = nls_parse_line(cmd.ci, linecpy, (const double **) *pZ, 
-					 pdinfo, prn);
-		    if (err) {
-			errmsg(err, prn);
-		    } else {
-			gretl_cmd_set_context(&cmd, cmd.ci);
-		    }
+		    goto cmd_exec;
 		}
 		break;
 
-	    case END:
-		if (!strcmp(cmd.param, "nls") || !strcmp(cmd.param, "mle")) {
-		    clear_model(models[0]);
-		    *models[0] = nls(pZ, pdinfo, cmd.opt, prn);
-		    if ((err = (models[0])->errcode)) {
-			errmsg(err, prn);
-		    } else {
-			printmodel(models[0], pdinfo, cmd.opt, prn);
-			set_as_last_model(models[0], GRETL_OBJ_EQN);
-		    }
-		} else {
+	    case MLE:
+	    case NLS:
+		if (loop_is_progressive(loop) || (cmd->opt & OPT_P)) {
 		    err = 1;
+		} else {
+		    goto cmd_exec;
 		}
 		break;
 
 	    case PRINT:
-		if (cmd.param[0] != '\0') {
-		    err = gretl_cmd_exec(&state, pZ, pdinfo, prn);
+		if (cmd->param[0] != '\0') {
+		    goto cmd_exec;
 		} else if (loop_is_progressive(loop)) {
 		    int p = printnum++;
 
 		    if (loop->iter == 0) {
-			err = add_loop_print(loop, cmd.list);
+			err = add_loop_print(loop, cmd->list);
 			if (err) {
 			    break;
 			}
 		    }
-		    update_loop_print(loop, p, cmd.list, pZ, pdinfo);
+		    update_loop_print(loop, p, cmd->list, pZ, pdinfo);
 		} else {
-		    err = printdata(cmd.list, (const double **) *pZ, pdinfo, 
-				    cmd.opt, prn);
+		    err = printdata(cmd->list, (const double **) *pZ, pdinfo, 
+				    cmd->opt, prn);
 		}
 		break;
 
 	    case SMPL:
-		if (cmd.opt == OPT_F) {
+		if (s->flags & FUNCTION_EXEC) {
+		    /* can't do complex sub-sampling */
+		    goto cmd_exec;
+		}
+		if (cmd->opt == OPT_F) {
 		    err = restore_full_sample(pZ, ppdinfo);
 		    pdinfo = *ppdinfo;
-		} else if (cmd.opt) {
-		    err = restrict_sample(linecpy, cmd.list, pZ, ppdinfo, 
-					  cmd.opt, NULL);
+		} else if (cmd->opt) {
+		    err = restrict_sample(line, cmd->list, pZ, ppdinfo, 
+					  cmd->opt, NULL);
 		    pdinfo = *ppdinfo;
 		} else { 
-		    err = set_sample(linecpy, (const double **) *pZ, pdinfo);
+		    err = set_sample(line, (const double **) *pZ, pdinfo);
 		}
 		if (err) {
 		    errmsg(err, prn);
@@ -2860,38 +2828,27 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    case STORE:
 		if (loop_is_progressive(loop)) {
 		    if (loop->iter == 0) {
-			err = loop_store_init(loop, cmd.param, cmd.list, 
-					      pdinfo, cmd.opt);
+			err = loop_store_init(loop, cmd->param, cmd->list, 
+					      pdinfo, cmd->opt);
 			if (err) {
 			    break;
 			}
 		    }
-		    update_loop_store(cmd.list, loop, (const double **) *pZ, 
+		    update_loop_store(cmd->list, loop, (const double **) *pZ, 
 				      pdinfo);
 		} else {
-		    gretl_cmd_exec(&state, pZ, pdinfo, prn);
-		}
-		break;
-
-	    case VAR:
-	    case VECM:
-		if (cmd.ci == VAR) {
-		    var = gretl_VAR(cmd.order, cmd.list, pZ, pdinfo, 
-				    cmd.opt, prn, &err);
-		} else {
-		    var = vecm(cmd.order, atoi(cmd.extra), cmd.list, 
-			       pZ, pdinfo, cmd.opt, prn, &err);
-		}
-		if (var != NULL) {
-		    set_as_last_model(var, GRETL_OBJ_VAR);
+		    goto cmd_exec;
 		}
 		break;
 
 	    default: 
-		/* not reachable (since commands were screened in advance) */
-		pprintf(prn, _("command: '%s'\nThis is not available in a loop.\n"),
-			linecpy);
-		err = 1;
+	    cmd_exec:
+		/* check here for a change in function
+		   execution level? */
+		if (cmd->ci == GENR && !loop_is_verbose(loop)) {
+		    cmd->opt |= OPT_Q;
+		}
+		err = gretl_cmd_exec(s, pZ, pdinfo, prn);
 		break;
 
 	    } /* end switch on specific command number */
@@ -2937,8 +2894,6 @@ int gretl_loop_exec (char *line, double ***pZ, DATAINFO **ppdinfo,
 	    gretl_model_free(loop->models[i]);
 	}
     }
-
-    gretl_cmd_free(&cmd);
 
     if (line != NULL) {
 	*line = '\0';

@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "monte_carlo.h"
 #include "gretl_func.h"
 #include "objstack.h"
 #include "cmd_private.h"

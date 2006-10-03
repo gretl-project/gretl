@@ -20,6 +20,7 @@
 /* syntax tree evaluator for 'genr' and related commands */
 
 #include "genparse.h"
+#include "monte_carlo.h"
 
 #include <errno.h>
 

@@ -24,6 +24,7 @@
 #include "menustate.h"
 
 #include "libset.h"
+#include "monte_carlo.h"
 #include "gretl_func.h"
 #include "cmd_private.h"
 
@@ -266,7 +267,7 @@ static void console_exec (void)
     err = gui_exec_line(&cstate, &Z, &datainfo);
 
     while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(execline, &Z, &datainfo, models, console_prn);
+	err = gretl_loop_exec(&cstate, &Z, &datainfo);
     }
 
     redirected = printing_is_redirected(console_prn);

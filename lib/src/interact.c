@@ -20,6 +20,7 @@
 /* interact.c for gretl */
 
 #include "libgretl.h"
+#include "monte_carlo.h"
 #include "var.h"
 #include "gretl_func.h"
 #include "loop_private.h"
