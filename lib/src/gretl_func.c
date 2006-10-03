@@ -2209,7 +2209,9 @@ static int allocate_function_args (ufunc *fun,
 
     xi = Mi = 0;
 
-    /* "pointer" parameters, passed by reference */
+    /* "pointer" parameters, passed by reference: make these vars
+       visible at function level
+    */
 
     for (i=0; i<argc && !err; i++) {
 	fp = &fun->params[i];
@@ -2608,7 +2610,6 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
 	}
     }
 
-    /* assign/destroy local variables */
     function_assign_returns(u, args, argc, rtype, *pZ, pdinfo,
 			    ret, prn, &err);
 
