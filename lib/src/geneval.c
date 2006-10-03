@@ -1326,6 +1326,15 @@ static NODE *object_status (const char *s, int f, parser *p)
 	    if (list != NULL) {
 		ret->v.xval = (f == ISLIST)? 1.0 : list[0];
 	    } else if (f == ISLIST) {
+		ret->v.xval = 0;
+	    }
+	} else if (f == ISNULL) {
+	    ret->v.xval = 1;
+	    if (varindex(p->dinfo, s) < p->dinfo->v) {
+		ret->v.xval = 0.0;
+	    } else if (get_matrix_by_name(s)) {
+		ret->v.xval = 0.0;
+	    } else if (get_list_by_name(s)) {
 		ret->v.xval = 0.0;
 	    }
 	} else if (f == OBSNUM) {
@@ -2557,6 +2566,7 @@ static NODE *eval (NODE *t, parser *p)
     case OBSNUM:
     case ISSERIES:
     case ISLIST:
+    case ISNULL:
     case LISTLEN:
 	if (l->t == STR) {
 	    ret = object_status(l->v.str, t->t, p);

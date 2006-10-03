@@ -127,6 +127,7 @@ enum {
     OBSNUM,
     ISSERIES, /* 100 */
     ISLIST,
+    ISNULL,
     LISTLEN,
     PVAL,
     CDF,
@@ -134,8 +135,8 @@ enum {
     FUNC_MAX, /* separator: end of single-arg functions */
     COR,
     COV,
-    UNIFORM,
-    NORMAL, /* 110 */
+    UNIFORM, /* 110 */
+    NORMAL,
     ZEROS,
     ONES,
     MUNIF,
@@ -144,8 +145,8 @@ enum {
     EIGSYM,
     EIGGEN,
     F2_MAX,   /* separator: end of two-arg functions */
-    COM,      /* comma */
-    DOT,   /* 120: period */
+    COM,   /* 120: comma */
+    DOT,      /* period */
     SEMI,     /* semi-colon */
     COL,      /* colon */
     CON,      /* named constant */
@@ -154,8 +155,8 @@ enum {
     UMAT,     /* user-defined matrix */
     UOBJ,     /* user-defined object (e.g. model) */
     NUM,      /* scalar, evaluated */
-    VEC,      /* series, evaluated */
-    IVEC,  /* 130 : vector of integers, evaluated */
+    VEC,   /* 130: series, evaluated */
+    IVEC,     /* ector of integers, evaluated */
     MAT,      /* matrix, evaluated */
     OBS,      /* observation from a series */
     MSL,      /* matrix plus subspec */
@@ -164,8 +165,8 @@ enum {
     MSL2,     /* unevaluated matrix subspec */
     MSPEC,    /* evaluated matrix subspec */
     SUBSL,    /* row or column component of MSPEC */
-    MDEF,     /* explicit matrix definition {...} */
-    LAG,  /* 140 */
+    MDEF,  /* 140: explicit matrix definition {...} */
+    LAG,
     DVAR,     /* $ dataset variable (scalar or series) */
     MVAR,     /* $ model var (scalar, series, or matrix) */
     OVAR,     /* object variable: variable "under" an object */
@@ -203,7 +204,7 @@ enum {
 #define func_symb(s) ((s > OP_MAX && s < FUNC_MAX) || \
                        s == LAG || s == OBS)
 #define func2_symb(s) (s > FUNC_MAX && s < F2_MAX)
-#define string_arg_func(s) (s == VARNUM || s == ISSERIES || \
+#define string_arg_func(s) (s == VARNUM || s == ISSERIES || s == ISNULL || \
                             s == ISLIST || s == LISTLEN || \
                             s == OBSNUM || s == PVAL || \
                             s == CDF || s == CRIT)

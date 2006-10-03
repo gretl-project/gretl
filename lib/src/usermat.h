@@ -56,6 +56,8 @@ int user_matrix_add (gretl_matrix *M, const char *name);
 
 int user_matrix_destroy (const char *name, PRN *prn);
 
+int user_matrix_adjust_level (user_matrix *u, int adj);
+
 int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M);
 
 int user_matrix_replace_matrix_by_name (const char *name, 

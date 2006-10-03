@@ -224,6 +224,22 @@ int user_matrix_replace_matrix (user_matrix *u, gretl_matrix *M)
     return 0;
 }
 
+int user_matrix_adjust_level (user_matrix *u, int adj)
+{
+    if (u == NULL) {
+	return E_UNKVAR;
+    }
+
+    u->level += adj;
+
+#if MDEBUG
+    fprintf(stderr, " user matrix at %p, new level = %d\n", (void *) u,
+	    u->level);
+#endif
+
+    return 0;
+}
+
 
 int user_matrix_replace_matrix_by_name (const char *name, 
 					gretl_matrix *M)
