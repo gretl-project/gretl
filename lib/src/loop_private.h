@@ -24,7 +24,7 @@
 #ifndef LOOP_PRIVATE_H
 #define LOOP_PRIVATE_H
 
-enum ifcodes {
+enum {
     SET_FALSE,
     SET_TRUE,
     SET_ELSE,

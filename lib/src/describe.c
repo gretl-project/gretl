@@ -1223,6 +1223,7 @@ static int count_distinct_int_values (int *x, int n)
  * with the residual from a regression)
  * @opt: if & OPT_O, compare with gamma distribution, not normal;
  * if includes OPT_Q, do not show a histogram.
+ * @err: location to receive error code.
  *
  * Calculates the frequency distribution for the specified variable.
  *
@@ -1230,7 +1231,7 @@ static int count_distinct_int_values (int *x, int n)
  */
 
 FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
-		    int params, gretlopt opt)
+		    int params, gretlopt opt, int *err)
 {
     FreqDist *freq;
     const double *x = Z[varno];
@@ -1242,21 +1243,18 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 
     freq = freq_new();
     if (freq == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
-
-    gretl_errno = 0;
-    gretl_errmsg[0] = '\0';
 
     n = pdinfo->t2 - pdinfo->t1 + 1;
     n = good_obs(x + pdinfo->t1, n, NULL);
 
     if (n < 8) {
-	gretl_errno = E_DATA;
+	*err = E_DATA;
 	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
 		"distribution for variable %s"), pdinfo->varname[varno]);
-	free_freq(freq);
-	return NULL;
+	goto bailout;
     }
 
     freq->t1 = pdinfo->t1; 
@@ -1266,10 +1264,9 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     strcpy(freq->varname, pdinfo->varname[varno]);
 
     if (gretl_isconst(pdinfo->t1, pdinfo->t2, x)) {
-	gretl_errno = 1;
+	*err = E_DATA;
 	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
-	free_freq(freq);
-	return NULL;
+	goto bailout;
     } 
 
     freq->discrete = var_is_discrete(pdinfo, varno);
@@ -1304,12 +1301,12 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
     if (freq->discrete) {
 	int *ifreq = NULL, *ivals = NULL;
 	int *sorted = NULL;
-	int i, last, err = 0;
+	int i, last;
 
 	sorted = malloc(n * sizeof *sorted);
 	if (sorted == NULL) {
-	    free_freq(freq);
-	    return NULL;
+	    *err = E_ALLOC;
+	    goto bailout;
 	}
 	
 	n = 0;
@@ -1325,7 +1322,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	ifreq = malloc(nbins * sizeof *ifreq);
 	ivals = malloc(nbins * sizeof *ivals);
 	if (ifreq == NULL || ivals == NULL) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	    goto discrete_end;
 	}
 
@@ -1343,7 +1340,7 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	}
 
 	if (freq_add_arrays(freq, nbins)) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	} else {
 	    for (k=0; k<nbins; k++) {
 		freq->endpt[k] = freq->midpt[k] = ivals[k];
@@ -1358,11 +1355,8 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	free(ivals);
 	free(ifreq);
 	
-	if (err) {
-	    gretl_errno = E_ALLOC;
-	    strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
-	    free_freq(freq);
-	    freq = NULL;
+	if (*err) {
+	    goto bailout;
 	}
     } else {
 	/* not discrete (integer) data */
@@ -1380,9 +1374,8 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	}
 	
 	if (freq_add_arrays(freq, nbins)) {
-	    gretl_errno = E_ALLOC;
-	    strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
-	    return freq;
+	    *err = E_ALLOC;
+	    goto bailout;
 	}
 
 	binwidth = range / (nbins - 1);
@@ -1428,6 +1421,13 @@ FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	    }
 	}
     }
+
+ bailout:
+
+    if (*err && freq != NULL) {
+	free_freq(freq);
+	freq = NULL;
+    }
 	
     return freq;
 }
@@ -1436,11 +1436,12 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	      int graph, gretlopt opt, PRN *prn)
 {
     FreqDist *freq;
+    int err = 0;
 
-    freq = get_freq(varno, Z, pdinfo, 1, opt); 
+    freq = get_freq(varno, Z, pdinfo, 1, opt, &err); 
 
-    if (freq == NULL) {
-	return E_ALLOC;
+    if (err) {
+	return err;
     }
 
     print_freq(freq, prn); 
@@ -1561,20 +1562,19 @@ int compare_xtab_rows (const void *a, const void *b)
 */
 
 static Xtab *get_xtab (int rvarno, int cvarno, const double **Z, 
-		       const DATAINFO *pdinfo)
+		       const DATAINFO *pdinfo, int *err)
 {
     Xtab *tab = NULL;
     int **X = NULL;
     int rx = 0, cx = 0;
     int rows, cols;
 
-    FreqDist *rowfreq, *colfreq;
+    FreqDist *rowfreq = NULL, *colfreq = NULL;
 
     int t, i, nr = 0, nc = 0;
     int t1 = pdinfo->t1;
     int t2 = pdinfo->t2;
     int n = 0;
-    int err = 0;
 
     /* count non-missing values */
     for (t=t1; t<=t2; t++) {
@@ -1585,6 +1585,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 
     if (n == 0) {
 	fprintf(stderr, "All values invalid!\n");
+	*err = E_DATA;
 	return NULL;
     }
 
@@ -1592,6 +1593,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 
     tab = xtab_new(n, t1, t2);
     if (tab == NULL) {
+	*err = E_ALLOC;
 	return NULL;
     }
 
@@ -1605,9 +1607,16 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
        and get dimensions for the cross table
      */
 
-    rowfreq = get_freq(rvarno, Z, pdinfo, 0, OPT_D); 
-    colfreq = get_freq(cvarno, Z, pdinfo, 0, OPT_D); 
-    X = malloc(n * sizeof *X);
+    rowfreq = get_freq(rvarno, Z, pdinfo, 0, OPT_D, err); 
+    if (!*err) {
+	colfreq = get_freq(cvarno, Z, pdinfo, 0, OPT_D, err); 
+    }
+    if (!*err) {
+	X = malloc(n * sizeof *X);
+	if (X == NULL) {
+	    *err = E_ALLOC;
+	}
+    }
 
     if (rowfreq == NULL || colfreq == NULL || X == NULL) {
 	free_freq(rowfreq);
@@ -1624,6 +1633,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     cols = colfreq->numbins;
 
     if (xtab_allocate_arrays(tab, rows, cols)) {
+	*err = E_ALLOC;
 	free_xtab(tab);
 	return NULL;
     }
@@ -1650,7 +1660,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
     for (t=t1; t<=t2 && i<n; t++) {
 	X[i] = malloc(2 * sizeof **X);
 	if (X[i] == NULL) {
-	    err = E_ALLOC;
+	    *err = E_ALLOC;
 	    break;
 	} else if (!(na(Z[rvarno][t]) || na(Z[cvarno][t]))) { 
 	    X[i][0] = (int) Z[rvarno][t];
@@ -1659,7 +1669,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 	}
     }
 
-    if (err) {
+    if (*err) {
 	free_xtab(tab);
 	tab = NULL;
     } else {
@@ -1672,7 +1682,7 @@ static Xtab *get_xtab (int rvarno, int cvarno, const double **Z,
 
     /* compute frequencies by going through sorted X */
 
-    for (i=0; i<n && !err; i++) {
+    for (i=0; i<n && !*err; i++) {
 	while (X[i][0] > nr) { /* skip row */
 	    nr = tab->rval[++rx];
 	    cx = 0;
@@ -1754,11 +1764,9 @@ int crosstab (const int *list, const double **Z,
 
     for (i=1; i<=rowvar[0] && !err; i++) {
 	for (j=1; j<=colvar[0] && !err; j++) {
-	    Xtab *tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo); 
+	    Xtab *tab = get_xtab(rowvar[i], colvar[j], Z, pdinfo, &err); 
 
-	    if (tab == NULL) {
-		err = E_ALLOC;
-	    } else {
+	    if (!err) {
 		print_xtab(tab, opt, prn); 
 		free_xtab(tab);
 	    }
@@ -1789,10 +1797,7 @@ int model_error_dist (const MODEL *pmod, double ***pZ,
 
     if (!err) {
 	freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
-			pmod->ncoeff, OPT_NONE);
-	if (freq == NULL) {
-	    err = E_ALLOC;
-	}
+			pmod->ncoeff, OPT_NONE, &err);
     }
 
     if (!err) {

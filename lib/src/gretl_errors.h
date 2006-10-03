@@ -21,7 +21,6 @@
 
 #include <stdio.h>
 
-extern int gretl_errno;
 extern char gretl_errmsg[ERRLEN];
 extern char gretl_msg[ERRLEN];
 
@@ -83,8 +82,6 @@ enum gretl_error_codes {
 char *get_errmsg (const int errcode, char *errtext, PRN *prn);
 
 void errmsg (const int errcode, PRN *prn);
-
-int get_gretl_errno (void);
 
 const char *get_gretl_errmsg (void);
 

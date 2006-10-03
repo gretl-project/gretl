@@ -118,7 +118,7 @@ int gretl_moments (int t1, int t2, const double *x,
 void free_freq (FreqDist *freq);
 
 FreqDist *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
-		    int params, gretlopt opt);
+		    int params, gretlopt opt, int *err);
 
 int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	      int graph, gretlopt opt, PRN *prn);

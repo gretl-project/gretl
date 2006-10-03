@@ -269,31 +269,6 @@ gint bufopen (PRN **pprn)
     return 0;
 }
 
-static int freq_error (FreqDist *freq, PRN *prn)
-{
-    int err = 0;
-
-    if (freq == NULL) {
-	if (prn == NULL) {
-	    nomem();
-	} else {
-	    pputs(prn, _("Out of memory!"));
-	    pputc(prn, '\n');
-	}
-	err = 1;
-    } else if (get_gretl_errno()) {
-	if (prn == NULL) {
-	    gui_errmsg(get_gretl_errno());
-	} else {
-	    errmsg(get_gretl_errno(), prn);
-	}
-	free_freq(freq);
-	err = 1;
-    }
-
-    return err;
-}
-
 static void maybe_quote_filename (char *s, char *cmd)
 {
     size_t len = strlen(cmd);
@@ -3207,6 +3182,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     MODEL *pmod = (MODEL *) vwin->data;
     double ***rZ;
     DATAINFO *rinfo;
+    int err = 0;
 
     if (bufopen(&prn)) return;
     
@@ -3224,11 +3200,12 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     }
 
     freq = get_freq(rinfo->v - 1, (const double **) *rZ, rinfo, 
-		    pmod->ncoeff, OPT_NONE);
+		    pmod->ncoeff, OPT_NONE, &err);
 
     dataset_drop_last_variables(1, rZ, rinfo);
 
-    if (freq_error(freq, NULL)) {
+    if (err) {
+	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -3274,6 +3251,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
     FreqDist *freq;
     gretlopt opt = (dist == D_GAMMA)? OPT_O : OPT_NONE;
     int v = mdata_active_var();
+    int err = 0;
 
     gretl_command_sprintf("freq %s%s", datainfo->varname[v],
 			  (dist == D_GAMMA)? " --gamma" : "");
@@ -3282,21 +3260,24 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	return;
     }
 
-    freq = get_freq(v, (const double **) Z, datainfo, 1, opt);
+    freq = get_freq(v, (const double **) Z, datainfo, 1, opt, &err);
 
-    if (!freq_error(freq, NULL)) { 
-	if (dist == D_GAMMA && series_has_negative_vals(Z[v])) {
-	    errbox(_("Data contain negative values: gamma distribution not "
-		   "appropriate"));
-	} else {
-	    if (plot_freq(freq, dist)) {
-		errbox(_("gnuplot command failed"));
-	    } else {
-		register_graph();
-	    }
-	}
-	free_freq(freq);
+    if (err) {
+	gui_errmsg(err);
+	return;
     }
+
+    if (dist == D_GAMMA && series_has_negative_vals(Z[v])) {
+	errbox(_("Data contain negative values: gamma distribution not "
+		 "appropriate"));
+    } else {
+	if (plot_freq(freq, dist)) {
+	    errbox(_("gnuplot command failed"));
+	} else {
+	    register_graph();
+	}
+    }
+    free_freq(freq);
 }
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)

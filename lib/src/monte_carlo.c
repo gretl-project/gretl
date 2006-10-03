@@ -33,7 +33,8 @@
 #include <unistd.h>
 
 #define LOOP_DEBUG 0
-#define LOOP_DEBUG2 0
+#define SUBST_DEBUG 0
+#define IDX_DEBUG 0
 
 #if LOOP_DEBUG
 # undef ENABLE_GMP
@@ -60,12 +61,6 @@ enum loop_types {
 enum loop_val_codes {
     LOOP_VAL_BAD = 0,
     LOOP_VAL_UNDEF = -9999
-};
-
-enum loop_scalar_codes {
-    LOOP_SCALAR_READ,
-    LOOP_SCALAR_PUT,
-    LOOP_SCALAR_INCR
 };
 
 #define indexed_loop(l) (l->type == INDEX_LOOP || \
@@ -121,6 +116,7 @@ struct LOOPSET_ {
 
     /* control variables */
     char ichar;
+    int ival;
     char brk;
 
     controller init;
@@ -170,7 +166,6 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn);
 static int save_loop_store (LOOPSET *loop, PRN *prn);
 static void set_active_loop (LOOPSET *loop);
-static int loop_scalar_index (int c, int opt, int put);
 
 #define LOOP_BLOCK 32
 #define N_LOOP_INDICES 5
@@ -179,12 +174,12 @@ static int loop_scalar_index (int c, int opt, int put);
 
 static LOOPSET *currloop;
 
-static int loop_compiling;
+static int compile_level;
 static int loop_execute;
 
 int gretl_compiling_loop (void)
 {
-    return loop_compiling;
+    return compile_level;
 }
 
 int gretl_execute_loop (void)
@@ -300,12 +295,25 @@ static double loop_delta (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 #if LOOP_DEBUG
     fprintf(stderr, "loop_incrval, returning %g\n", x);
 #endif
-
     return x;
 }
 
-static void set_loop_opts (LOOPSET *loop, gretlopt opt)
+static int set_loop_opts (LOOPSET *loop, ExecState *s)
 {
+    gretlopt opt = OPT_NONE;
+
+    if (compile_level > 0) {
+	/* options will not have been parsed out already */
+	int err = 0;
+
+	opt = get_gretl_options(s->line, &err);
+	if (err) {
+	    return err;
+	}
+    } else {
+	opt = s->cmd->opt;
+    }
+
     if (opt & OPT_P) {
 	loop_set_progressive(loop);
     }
@@ -315,6 +323,8 @@ static void set_loop_opts (LOOPSET *loop, gretlopt opt)
     if (opt & OPT_Q) {
 	loop_set_quiet(loop);
     }
+
+    return 0;
 }
 
 #define OK_LOOP_MODEL(c) (c == ARMA || c == CORC || c == GARCH || \
@@ -431,9 +441,8 @@ static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
 
 static LOOPSET *gretl_loop_new (LOOPSET *parent)
 {
-    LOOPSET *loop;
+    LOOPSET *loop = malloc(sizeof *loop);
 
-    loop = malloc(sizeof *loop);
     if (loop == NULL) {
 	return NULL;
     }
@@ -583,7 +592,7 @@ static int parse_as_while_loop (LOOPSET *loop,
     x = controller_evaluate_expr(expr, "iftest", 0, pZ, pdinfo);
 
     if (na(x)) {
-	err = 1;
+	err = E_DATA;
 	free(expr);
     }
 
@@ -622,7 +631,7 @@ static int bad_ichar (char c)
 	sprintf(gretl_errmsg, _("The index in a 'for' loop must be a "
 				"single character in the range '%c' to '%c'"),
 		ichars[0], ichars[N_LOOP_INDICES - 1]); 
-	err = 1;
+	err = E_DATA;
     }
 
     return err;
@@ -665,7 +674,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    if (nstart >= 0) {
 		dated = 1;
 	    } else {
-		err = 1;
+		err = E_DATA;
 	    }
 	} else if (numeric_string(start)) {
 	    nstart = atoi(start);
@@ -685,7 +694,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	if (dated) {
 	    nend = dateton(end, pdinfo);
 	    if (nend < 0) {
-		err = 1;
+		err = E_DATA;
 	    }
 	} else if (numeric_string(end)) {
 	    nend = atoi(end);
@@ -704,7 +713,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	loop->final.vnum == 0 && nend <= nstart) {
 	strcpy(gretl_errmsg, _("Ending value for loop index must be greater "
 			       "than starting value."));
-	err = 1;
+	err = E_DATA;
     }
 
     if (!err) {
@@ -749,7 +758,7 @@ static int parse_as_count_loop (LOOPSET *loop,
 
     if (!err && loop->final.vnum == 0 && nt <= 0) {
 	strcpy(gretl_errmsg, _("Loop count must be positive."));
-	err = 1;
+	err = E_DATA;
     }
 
     if (!err) {
@@ -815,7 +824,7 @@ test_forloop_element (char *s, LOOPSET *loop,
 
     if (s == NULL) {
 	/* FIXME: allow empty "for" fields? */
-	return 1;
+	return E_PARSE;
     }
 
     if (i == 1) {
@@ -836,19 +845,19 @@ test_forloop_element (char *s, LOOPSET *loop,
 		    double *x0 = save_delta_state(v, *pZ, pdinfo);
 
 		    if (x0 == NULL) {
-			err = 1;
+			err = E_ALLOC;
 		    } else {
 			x = controller_evaluate_expr(s, vname, v, pZ, pdinfo);
 			restore_delta_state(v, x0, *pZ, pdinfo);
 		    }
 		} else {
-		    err = 1;
+		    err = E_UNKVAR;
 		}
 	    } else {
 		x = controller_evaluate_expr(s, vname, 0, pZ, pdinfo);
 	    }	
 	} else {
-	    err = 1;
+	    err = E_UNKVAR;
 	}
     }
 
@@ -895,7 +904,7 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
     list = get_list_by_name(s);
     
     if (list == NULL) {
-	err = 1;
+	err = E_UNKVAR;
     } else {
 	err = allocate_each_strings(loop, list[0]);
     }
@@ -911,7 +920,7 @@ static int each_strings_from_named_list (LOOPSET *loop, const DATAINFO *pdinfo,
 	    } else {
 		loop->eachstrs[i-1] = gretl_strdup(pdinfo->varname[li]);
 		if (loop->eachstrs[i-1] == NULL) {
-		    err = 1;
+		    err = E_ALLOC;
 		}
 	    }
 	}
@@ -942,7 +951,7 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
     delchar(' ', s);
 
     if (sscanf(s, "%15[^.]..%15s", vn1, vn2) != 2) {
-	err = 1;
+	err = E_PARSE;
     } else {
 	v1 = varindex(pdinfo, vn1);
 	v2 = varindex(pdinfo, vn2);
@@ -985,7 +994,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     int i, nf, err = 0;
 
     if (*s == '\0') {
-	return 1;
+	return E_PARSE;
     }
 
     /* we're looking at the string that follows "loop foreach" */
@@ -994,23 +1003,23 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
 
     /* should be something like "i " */
     if (sscanf(s, "%7s", ivar) != 1) {
-	err = 1;
+	err = E_PARSE;
     } else if (strlen(ivar) > 1) {
-	err = 1;
+	err = E_PARSE;
     } else {
 	ichar = *ivar;
 	err = bad_ichar(ichar);
     }
 
     if (err) {
-	return 1;
+	return err;
     }
 
     s += strlen(ivar);
     nf = count_fields(s);
 
     if (nf == 0) {
-	return 1;
+	return E_PARSE;
     }
 
     loop->ichar = ichar;
@@ -1067,8 +1076,10 @@ parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
 	err = 1;
     } else {
 	len = strcspn(p, ")");
-	if (len < 4 || (forstr = malloc(len + 1)) == NULL) {
-	    err = 1;
+	if (len < 4) {
+	    err = E_PARSE;
+	} else if ((forstr = malloc(len + 1)) == NULL) {
+	    err = E_ALLOC;
 	} else {
 	    i = 0;
 	    /* make compressed copy of string */
@@ -1081,14 +1092,12 @@ parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
 		p++;
 	    }
 	    forstr[i] = '\0';
-
 	    /* split terms separated by ';' */
 	    for (i=0; i<3 && !err; i++) {
 		forbits[i] = strtok((i == 0)? forstr : NULL, ";");
 		err = test_forloop_element(forbits[i], loop, 
 					   pZ, pdinfo, i);
 	    }
-
 	    free(forstr);
 	}
     }
@@ -1100,149 +1109,120 @@ parse_as_for_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo, char *s)
     return err;
 }
 
+static int parse_first_loopline (char *s, LOOPSET *loop, 
+				 double ***pZ, DATAINFO *pdinfo)
+{
+    char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
+    char ichar;
+    int err = 0;
+
+    /* skip preliminary string */
+    while (isspace(*s)) s++;
+    if (!strncmp(s, "loop", 4)) {
+	s += 4;
+	while (isspace(*s)) s++;
+    }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "parse_first_loopline: '%s'\n", s);
+#endif
+
+    if (sscanf(s, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
+	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo,
+				    ichar, NULL, op, rvar);
+    } else if (sscanf(s, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
+	err = parse_as_indexed_loop(loop, (const double **) *pZ, pdinfo, 
+				    0, lvar, op, rvar);
+    } else if (!strncmp(s, "foreach", 7)) {
+	err = parse_as_each_loop(loop, pdinfo, s + 7);
+    } else if (!strncmp(s, "for", 3)) {
+	err = parse_as_for_loop(loop, pZ, pdinfo, s + 3);
+    } else if (!strncmp(s, "while", 5)) {
+	err = parse_as_while_loop(loop, pZ, pdinfo, s + 6);
+    } else if (sscanf(s, "%15s", lvar) == 1) {
+	err = parse_as_count_loop(loop, (const double **) *pZ, pdinfo, lvar);
+    } else {
+	printf("parse_first_loopline: failed on '%s'\n", s);
+	strcpy(gretl_errmsg, _("No valid loop condition was given."));
+	err = 1;
+    }
+
+    if (!err && !na(loop->init.val) && !na(loop->final.val)) {
+	int nt = loop->final.val - loop->init.val;
+
+	if (loop->type != FOR_LOOP && nt <= 0) {
+	    strcpy(gretl_errmsg, _("Loop count missing or invalid"));
+	    err = 1;
+	}
+    }
+
+    return err;
+}
+
 /**
- * parse_loopline:
- * @line: command line.
- * @loop: current loop struct pointer, or %NULL.
+ * start_new_loop:
+ * @s: loop specification line.
+ * @inloop: current loop struct pointer, or %NULL.
  * @pZ: pointer to data array.
  * @pdinfo: data information struct.
  * @pZ: pointer to data array.
+ * @nested: location to receive info on whether a new
+ * loop was created, nested within the input loop.
+ * @err: location to receive error code.
  *
- * Parse a line specifying a loop condition.
+ * Create a new LOOPSET based on the input line; this may or
+ * may not be a child of @inloop.
  *
  * Returns: loop pointer on successful completion, %NULL on error.
  */
 
 static LOOPSET *
-parse_loopline (char *line, LOOPSET *loop, 
-		double ***pZ, DATAINFO *pdinfo)
+start_new_loop (char *s, LOOPSET *inloop, 
+		double ***pZ, DATAINFO *pdinfo,
+		int *nested, int *err)
 {
-    LOOPSET *newloop;
-    char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
-    gretlopt opt = OPT_NONE;
-    int llevel = gretl_compiling_loop();
-    char ichar;
-    int err = 0;
+    LOOPSET *loop = NULL;
 
     *gretl_errmsg = '\0';
 
 #if LOOP_DEBUG
-    fprintf(stderr, "parse_loopline: loop = %p,\n line: '%s'\n", 
-	    (void *) loop, line);
+    fprintf(stderr, "start_new_loop: inloop=%p, line='%s'\n", 
+	    (void *) inloop, s);
 #endif
 
-    while (isspace((unsigned char) *line)) {
-	line++;
-    }
+    if (inloop == NULL || compile_level <= inloop->level) {
+	loop = gretl_loop_new(NULL);
+    } else {
+	loop = gretl_loop_new(inloop);
+	*nested = 1;
+    } 
 
     if (loop == NULL) {
-	/* starting from scratch */
-#if LOOP_DEBUG
-	fprintf(stderr, "parse_loopline: starting from scratch\n");
-#endif
-	newloop = gretl_loop_new(NULL);
-	if (newloop == NULL) {
-	    gretl_errmsg_set(_("Out of memory!"));
-	    return NULL;
-	}
-    } else if (llevel > loop->level) {
-	/* have to nest this loop */
-#if LOOP_DEBUG
-	fprintf(stderr, "parse_loopline: adding child\n");
-#endif
-	newloop = gretl_loop_new(loop);
-	if (newloop == NULL) {
-	    gretl_errmsg_set(_("Out of memory!"));
-	    return NULL;
-	} else {
-	    opt = get_gretl_options(line, &err);
-	    if (err) {
-		gretl_loop_destroy(newloop);
-		return NULL;
-	    } 
-	}
-    } else {
-#if 1
-	newloop = gretl_loop_new(NULL);
-	if (newloop == NULL) {
-	    gretl_errmsg_set(_("Out of memory!"));
-	    return NULL;
-	} else {
-	    opt = get_gretl_options(line, &err);
-	    if (err) {
-		gretl_loop_destroy(newloop);
-		return NULL;
-	    } 
-	}
-#else
-	/* shouldn't happen: need error message? */
-	fprintf(stderr, "\"shouldn't happen\" has happened 8-/\n");
-	newloop = loop;
-#endif
-    }
-
-    if (!strncmp(line, "loop", 4)) {
-	line += 4;
-	while (isspace((unsigned char) *line)) {
-	    line++;
-	}
+	gretl_errmsg_set(_("Out of memory!"));
+	*err = E_ALLOC;
+	return NULL;
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "ready for parse: '%s'\n", line);
+    fprintf(stderr, " added loop at %p (%s)\n", (void *) loop,
+	    (*nested)? "nested" : "independent");
 #endif
 
-    /* try parsing the loop line in various ways */
+    *err = parse_first_loopline(s, loop, pZ, pdinfo);
 
-    if (sscanf(line, "%c = %15[^.]..%15s", &ichar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(newloop, (const double **) *pZ, pdinfo,
-				    ichar, NULL, op, rvar);
-    } else if (sscanf(line, "for %15[^= ] = %15[^.]..%15s", lvar, op, rvar) == 3) {
-	err = parse_as_indexed_loop(newloop, (const double **) *pZ, pdinfo, 
-				    0, lvar, op, rvar);
-    } else if (!strncmp(line, "foreach", 7)) {
-	err = parse_as_each_loop(newloop, pdinfo, line + 7);
-    } else if (!strncmp(line, "for", 3)) {
-	err = parse_as_for_loop(newloop, pZ, pdinfo, line + 3);
-    } else if (!strncmp(line, "while", 5)) {
-	err = parse_as_while_loop(newloop, pZ, pdinfo, line + 6);
-    } else if (sscanf(line, "%15s", lvar) == 1) {
-	err = parse_as_count_loop(newloop, (const double **) *pZ, pdinfo, lvar);
-    } else {
-	/* out of options, complain */
-	printf("parse_loopline: failed on '%s'\n", line);
-	strcpy(gretl_errmsg, _("No valid loop condition was given."));
-	err = 1;
+    if (!*err) {
+	/* allocate loop->lines, loop->ci */
+	*err = prepare_loop_for_action(loop);
     }
 
-    if (!err && !na(newloop->init.val) && !na(newloop->final.val)) {
-	int nt = newloop->final.val - newloop->init.val;
+    if (*err) {
+	free(loop->lines);
+	free(loop->ci);
+	free(loop);
+	loop = NULL;
+    } 
 
-	if (newloop->type != FOR_LOOP && nt <= 0) {
-	    strcpy(gretl_errmsg, _("Loop count missing or invalid\n"));
-	    err = 1;
-	}
-    }
-
-    if (!err) {
-	/* allocates loop->lines, loop->ci */
-	err = prepare_loop_for_action(newloop);
-    }
-
-    if (err) {
-	if (newloop != loop) {
-	    free(newloop->lines);
-	    free(newloop->ci);
-	    free(newloop);
-	}
-	newloop = NULL;
-    }
-
-    if (!err && opt != OPT_NONE) {
-	set_loop_opts(newloop, opt);
-    }
-
-    return newloop;
+    return loop;
 }
 
 #define DEFAULT_MAX_ITER 250
@@ -1374,6 +1354,7 @@ static void gretl_loop_init (LOOPSET *loop)
     loop->iter = 0;
     loop->err = 0;
     loop->ichar = 0;
+    loop->ival = 0;
     loop->brk = 0;
 
     controller_init(&loop->init);
@@ -1903,15 +1884,70 @@ static int add_more_loop_lines (LOOPSET *loop)
     loop->ci = ci;
 
     return 0;
-}    
+}  
+
+static int real_append_line (ExecState *s, LOOPSET *loop)
+{
+    int nc = loop->n_cmds;
+    int err = 0;
+
+    if ((nc + 1) % LOOP_BLOCK == 0) {
+	if (add_more_loop_lines(loop)) {
+	    gretl_errmsg_set(_("Out of memory!"));
+	    return E_ALLOC;
+	}
+    }
+
+    loop->lines[nc] = malloc(MAXLEN);
+    if (loop->lines[nc] == NULL) {
+	gretl_errmsg_set(_("Out of memory!"));
+	return E_ALLOC;
+    }
+
+    if (s->cmd->ci == PRINT && loop->type != COUNT_LOOP) {
+	/* fixme: what's going on here? */
+	loop->ci[nc] = 0;
+    } else {
+	loop->ci[nc] = s->cmd->ci;
+    }
+
+    loop->lines[nc][0] = '\0';
+
+    if (s->cmd->opt) {
+	const char *flagstr = print_flags(s->cmd->opt, s->cmd->ci);
+
+	if (strlen(s->line) + strlen(flagstr) >= MAXLEN) {
+	    strcpy(gretl_errmsg, "loop: line is too long");
+	    err = 1;
+	} else {
+	    sprintf(loop->lines[nc], "%s%s", s->line, flagstr);
+	}
+    } else {
+	strcpy(loop->lines[nc], s->line);
+    }
+
+    loop->n_cmds += 1;
+
+#if LOOP_DEBUG
+    fprintf(stderr, "loop %p: n_cmds = %d, line[%d] = '%s'\n",
+	    (void *) loop, loop->n_cmds, nc, loop->lines[nc]);
+#endif
+
+    return err;
+}  
 
 /**
  * gretl_loop_append_line:
- * @s: program execuation state.
+ * @s: program execution state.
  * @pZ: pointer to data matrix.
  * @pdinfo: dataset information.
  *
- * Add command line to accumulated loop buffer.
+ * Add command line to accumulated loop buffer.  This may be
+ * called "starting from cold", in which case the "line"
+ * member of @s will have been parsed and any options
+ * extracted to s->cmd->opt.  But it may also be called in
+ * the process of ongoing loop compilation, and in that
+ * case option flags will not have been processed already.
  *
  * Returns: 0 on success, non-zero code on error.
  */
@@ -1925,37 +1961,37 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
 
     *gretl_errmsg = '\0';
 
-#if LOOP_DEBUG2
+#if LOOP_DEBUG > 1
     fprintf(stderr, "gretl_loop_append_line: currloop = %p, line = '%s'\n", 
 	    (void *) loop, s->line);
 #endif
 
     if (s->cmd->ci == LOOP) {
-	/* starting a new loop, possibly inside another */
-	newloop = parse_loopline(s->line, loop, pZ, pdinfo);
-#if LOOP_DEBUG2
-	fprintf(stderr, " got LOOP: made newloop at %p\n", (void *) newloop);
+	int nested = 0;
+
+	newloop = start_new_loop(s->line, loop, pZ, pdinfo, 
+				 &nested, &err);
+#if LOOP_DEBUG
+	fprintf(stderr, "got LOOP: newloop at %p\n", (void *) newloop);
 #endif
-	if (newloop == NULL) {
-	    if (*gretl_errmsg == '\0') {
-		gretl_errmsg_set(_("No valid loop condition was given."));
+	if (newloop != NULL) {
+	    err = set_loop_opts(newloop, s);
+	    if (!err) {
+		compile_level++;
+		if (!nested) {
+		    currloop = newloop;
+		    return 0; /* done */
+		}
 	    }
-	    err = gretl_errno = E_PARSE;
-	    goto bailout;
-	} else {
-	    set_loop_opts(newloop, s->cmd->opt);
-	    loop_compiling++;
-	    goto bailout;
 	}
     } else if (s->cmd->ci == ENDLOOP) {
-	/* got to the end of a loop */
-	loop_compiling--;
-#if LOOP_DEBUG2
-	fprintf(stderr, " got ENDLOOP, loop_compiling is now %d\n",
-		loop_compiling);
+	compile_level--;
+#if LOOP_DEBUG
+	fprintf(stderr, "got ENDLOOP, compile_level now %d\n",
+		compile_level);
 #endif
-	if (loop_compiling == 0) {
-	    /* set flag to actually run the loop */
+	if (compile_level == 0) {
+	    /* set flag to run the loop */
 	    loop_execute = 1;
 	} else {
 	    /* back up a level */
@@ -1963,71 +1999,17 @@ int gretl_loop_append_line (ExecState *s, double ***pZ,
 	}
     } 
 
-    if (loop != NULL) {
-	int nc = loop->n_cmds;
-
-#if LOOP_DEBUG2
-	fprintf(stderr, " loop != NULL, nc = %d\n", nc);
-#endif
-
-	if ((nc + 1) % LOOP_BLOCK == 0) {
-	    if (add_more_loop_lines(loop)) {
-		gretl_errmsg_set(_("Out of memory!"));
-		goto bailout;
-	    }
-	}
-
-	loop->lines[nc] = malloc(MAXLEN);
-	if (loop->lines[nc] == NULL) {
-	    gretl_errmsg_set(_("Out of memory!"));
-	    goto bailout;
-	}
-
-#if 0
-	top_n_tail(line);
-#endif
-
-	if (s->cmd->ci == PRINT && loop->type != COUNT_LOOP) {
-	    /* fixme: what's going on here? */
-	    loop->ci[nc] = 0;
-	} else {
-	    loop->ci[nc] = s->cmd->ci;
-	}
-
-	loop->lines[nc][0] = '\0';
-
-	if (s->cmd->opt) {
-	    const char *flagstr = print_flags(s->cmd->opt, s->cmd->ci);
-
-	    if (strlen(s->line) + strlen(flagstr) >= MAXLEN) {
-		goto bailout;
-	    } else {
-		sprintf(loop->lines[nc], "%s%s", s->line, flagstr);
-	    }
-	} else {
-	    strcpy(loop->lines[nc], s->line);
-	}
-
-	loop->n_cmds += 1;
-
-#if LOOP_DEBUG
-	fprintf(stderr, "loop %p: n_cmds now = %d, line[%d] = '%s'\n",
-		(void *) loop, loop->n_cmds, nc, loop->lines[nc]);
-#endif
+    if (!err && loop != NULL && s->cmd->ci != ENDLOOP) {
+	err = real_append_line(s, loop);
     }
-
- bailout:
 
     if (err) {
 	if (loop != NULL) {
 	    gretl_loop_destroy(loop);
-	    loop_compiling = 0;
+	    compile_level = 0;
 	}
     } else {
 	currloop = newloop;
-#if LOOP_DEBUG2
-	fprintf(stderr, "set currloop = newloop = %p\n", (void *) currloop);
-#endif
     }
 
     return err;
@@ -2215,7 +2197,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
     int idx = 0;
     int err = 0;
 
-#if LOOP_DEBUG
+#if SUBST_DEBUG
     fprintf(stderr, "subst_dollar_targ:\n original: '%s'\n", str);
 #endif
 
@@ -2269,7 +2251,7 @@ substitute_dollar_targ (char *str, const LOOPSET *loop,
 	free(q);	
     }
 
-#if LOOP_DEBUG
+#if SUBST_DEBUG
     fprintf(stderr, " after: '%s'\n", str);
 #endif
 
@@ -2288,7 +2270,6 @@ static void update_loop_store (const int *list, LOOPSET *loop,
 	    loop->sZ[i][loop->iter] = Z[list[i]][0];
 	}
     }
-
 }
 
 static int clr_attach_var (controller *clr, const DATAINFO *pdinfo)
@@ -2386,8 +2367,7 @@ top_of_loop (LOOPSET *loop, double ***pZ, DATAINFO *pdinfo)
 
     if (!err) {
 	if (indexed_loop(loop)) {
-	    loop_scalar_index(loop->ichar, LOOP_SCALAR_PUT, 
-			      (int) loop->init.val);
+	    loop->ival = loop->init.val;
 	}
 
 	/* initialization in case this loop is being run more than
@@ -2450,52 +2430,6 @@ make_dollar_substitutions (char *str, const LOOPSET *loop,
     return err;
 }
 
-#define SRC_STACK_SIZE 64
-
-enum {
-    SRC_LOOP = 1,
-    SRC_FN
-};
-
-static char srcstack[SRC_STACK_SIZE];
-
-static void push_cmd_src (char src, char *msg)
-{
-    int i;
-
-    for (i=SRC_STACK_SIZE-1; i>0; i--) {
-	srcstack[i] = srcstack[i-1];
-    }
-    
-    srcstack[0] = src;
-
-#if LOOP_DEBUG
-    fprintf(stderr, "%s: push_cmd_src: src now = %d\n", msg, srcstack[0]);
-#endif
-}
-
-static int pop_cmd_src (char *msg)
-{
-    int i, ret = srcstack[0];
-
-    for (i=0; i<SRC_STACK_SIZE-1; i++) {
-	srcstack[i] = srcstack[i+1];
-    }
-
-    srcstack[SRC_STACK_SIZE-1] = 0;
-
-#if LOOP_DEBUG
-    fprintf(stderr, "%s: pop_cmd_src: returning src = %d\n", msg, ret);
-#endif
-    
-    return ret;
-}
-
-static int get_cmd_src (void)
-{
-    return srcstack[0];
-}
-
 /* get the next command for a loop by pulling a line off the
    stack of loop commands.
 */
@@ -2552,10 +2486,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     err = top_of_loop(loop, pZ, pdinfo);
     
-    if (!err) {
-	push_cmd_src(SRC_LOOP, "starting loop");
-    }
-
     while (!err && loop_condition(loop, pZ, pdinfo)) {
 	int modnum = 0;
 	int lmodnum = 0;
@@ -2575,14 +2505,17 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	while (!err && next_command(line, loop, &j)) {
 
 	    pdinfo = *ppdinfo;
+	    set_active_loop(loop);
 
 #if LOOP_DEBUG
 	    fprintf(stderr, " j=%d, line='%s'\n", j, line);
 #endif
 	    strcpy(errline, line);
 
-	    if (loop_compiling) {
+	    if (compile_level > 0) {
+		/* FIXME is the following dead code? */
 		/* compiling loop inside function, inside loop */
+		fprintf(stderr, "*** in loop, compile_level %d\n", compile_level);
 		err = get_command_index(line, cmd, pdinfo);
 		if (!err) {
 		    err = gretl_loop_append_line(s, pZ, pdinfo);
@@ -2625,56 +2558,22 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 	    switch (cmd->ci) {
 
-#if 0
 	    case LOOP:
-		if (get_cmd_src() == SRC_FN) {
-		    currloop = NULL;
-		    err = gretl_loop_append_line(s, pZ, pdinfo);
-		} else {
-		    if (childnum < loop->n_children) {
-			currloop = loop->children[childnum++]; /* FIXME? */
-			err = gretl_loop_exec(s, pZ, ppdinfo);
-			pdinfo = *ppdinfo;
-		    } else {
-			fprintf(stderr, "Got a LOOP command, don't know what to do!\n");
-			err = 1;
-		    }
-		}
-		break;
-#else
-	    case LOOP:
-#if LOOP_DEBUG
-		fprintf(stderr, "In gretl_loop_exec, got LOOP, line='%s'\n", line);
-#endif
 		if (childnum < loop->n_children) {
 		    currloop = loop->children[childnum++];
 		    err = gretl_loop_exec(s, pZ, ppdinfo);
 		    pdinfo = *ppdinfo;
 		} else {
-		    /* previously, we had here that if the current command
-		       source was a function, we should launch
-		       gretl_loop_append_line, on the grounds that this
-		       LOOP command would mark the start of an uncompiled
-		       loop that needs compiling.
-		    */
-
-		    /* the loop is not nested within this one */
-		    /* currloop = NULL; */
-		    /* err = gretl_loop_append_line(s, pZ, pdinfo); */
-		} 
+		    fprintf(stderr, "Got a LOOP command, don't know what to do!\n");
+		    err = 1;
+		}
 		break;
-#endif
 
 	    case BREAK:
 		loop->brk = 1;
 		break;
 
 	    case ENDLOOP:
-		/* previously, we had here that if the current command
-		   source was a function, we should start loop execution,
-		   on the basis that reaching ENDLOOP meant that we'd
-		   just finished compiling a loop, and should run it
-		*/
 		break;
 
 	    case FREQ:
@@ -2768,16 +2667,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 	    case ADD:
 	    case OMIT:
-		if (loop_is_progressive(loop)) {
-		    err = 1;
-		} else {
-		    goto cmd_exec;
-		}
-		break;
-
 	    case MLE:
 	    case NLS:
-		if (loop_is_progressive(loop) || (cmd->opt & OPT_P)) {
+		if (loop_is_progressive(loop)) {
 		    err = 1;
 		} else {
 		    goto cmd_exec;
@@ -2843,8 +2735,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
 	    default: 
 	    cmd_exec:
-		/* check here for a change in function
-		   execution level? */
 		if (cmd->ci == GENR && !loop_is_verbose(loop)) {
 		    cmd->opt |= OPT_Q;
 		}
@@ -2863,7 +2753,7 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 	loop->iter += 1;
 
 	if (indexed_loop(loop)) {
-	    loop_scalar_index(loop->ichar, LOOP_SCALAR_INCR, 1);
+	    loop->ival += 1;
 	}
 
     } /* end iterations of loop */
@@ -2901,7 +2791,6 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 
     set_active_loop(loop->parent);
     set_loop_off();
-    pop_cmd_src("end of loop_exec");
 
     if (loop->parent == NULL) {
 	/* reached top of stack: clean up */
@@ -2916,73 +2805,41 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
     }
 }
 
-static int ichar_in_parentage (const LOOPSET *loop, int c)
+static const LOOPSET *
+parent_with_ichar (const LOOPSET *loop, int c)
 {
     while ((loop = loop->parent) != NULL) {
 	if (indexed_loop(loop) && loop->ichar == c) {
-	    return 1;
+	    return loop;
 	}
     }
 
-    return 0;
+    return NULL;
 }
 
-/* apparatus relating to retrieval of loop index value in genr */
-
-static int loop_scalar_index (int c, int opt, int put)
-{
-    static int idx[N_LOOP_INDICES];
-    int i = loop_index_char_pos(c);
-    int ret = -1;
-
-#if LOOP_DEBUG
-    fprintf(stderr, "loop_scalar_index: c='%c', opt=%d, put=%d\n", 
-	    c, opt, put);
-#endif
-
-    if (i >= 0) {
-	if (opt == LOOP_SCALAR_PUT) {
-	    idx[i] = put;
-	} else if (opt == LOOP_SCALAR_INCR) {
-	    idx[i] += put;
-	}
-	ret = idx[i];
-    }
-
-#if LOOP_DEBUG
-    fprintf(stderr, "loop_scalar_index: returning %d\n", ret);
-#endif
-
-    return ret;
-}
-
-int loop_scalar_read (int c)
-{
-    return loop_scalar_index(c, LOOP_SCALAR_READ, 0);
-}
-
-static int indexed_loop_record (LOOPSET *loop, int set, int test)
+static const LOOPSET *
+indexed_loop_set_or_get (LOOPSET *loop, int set, int c)
 {
     static LOOPSET *active_loop;
-    int ret = 0;
+    const LOOPSET *ret = NULL;
 
     if (set) {
 	active_loop = loop;
     } else if (active_loop != NULL) {
-	if (indexed_loop(active_loop) && active_loop->ichar == test) {
-	    ret = 1;
-	} else if (ichar_in_parentage(active_loop, test)) {
-	    ret = 1;
+	if (indexed_loop(active_loop) && active_loop->ichar == c) {
+	    ret = active_loop;
+	} else {
+	    ret = parent_with_ichar(active_loop, c);
 	}
     }
 
-#if LOOP_DEBUG > 1
+#if IDX_DEBUG > 1
     if (set) {
 	fprintf(stderr, "indexed_loop_record: set active_loop = %p\n",
 		(void *) loop);
     } else {
-	fprintf(stderr, "indexed_loop_record: returning %d for test='%c'\n",
-		ret, test);
+	fprintf(stderr, "indexed_loop_record: returning %p for c='%c'\n",
+		(void *) ret, c);
     }	
 #endif
 
@@ -2991,12 +2848,19 @@ static int indexed_loop_record (LOOPSET *loop, int set, int test)
 
 static void set_active_loop (LOOPSET *loop)
 {
-    indexed_loop_record(loop, 1, 0);
+    indexed_loop_set_or_get(loop, 1, 0);
 }
 
 int is_active_index_loop_char (int c)
 {
-    return indexed_loop_record(NULL, 0, c);
+    return indexed_loop_set_or_get(NULL, 0, c) != NULL;
+}
+
+int loop_scalar_read (int c)
+{
+    const LOOPSET *loop = indexed_loop_set_or_get(NULL, 0, c);
+
+    return (loop == NULL)? -1 : loop->ival;
 }
 
 #define IFDEBUG 0

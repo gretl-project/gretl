@@ -1369,18 +1369,6 @@ void libset_cleanup (void)
     n_states = 0;
 }
 
-int libset_restore_state_zero (DATAINFO *pdinfo)
-{
-    int i, ns = n_states;
-    int err = 0;
-
-    for (i=ns; i>=2 && !err; i--) {
-	err = pop_program_state(pdinfo);
-    }
-
-    return err;
-}
-
 /* switches for looping, batch mode, and pausing between screens of
    output: these depend on the state of the program calling libgretl,
    but are not user-settable

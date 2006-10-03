@@ -549,7 +549,7 @@ static void look_up_word (const char *s, parser *p)
 	    p->idnum = dummy_lookup(s);
 	    if (p->idnum > 0) {
 		p->sym = DUM;
-	    } else {	    
+	    } else {
 		p->idnum = varindex(p->dinfo, s);
 		if (p->idnum < p->dinfo->v) {
 		    p->sym = UVAR;

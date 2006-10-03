@@ -1468,11 +1468,12 @@ int parse_command_line (char *line, CMD *cmd, double ***pZ, DATAINFO *pdinfo)
     if (cmd->ci == 0) {
 	cmd->ci = gretl_command_number(cmd->word);
 	if (cmd->ci == 0) {
-	    /* call of user-defined function? */
-	    if (gretl_get_user_function(line)) {
+	    if (plausible_genr_start(line, cmd, pdinfo)) {
+		; /* maybe OK */
+	    } else if (gretl_get_user_function(line)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
-	    } else if (!plausible_genr_start(line, cmd, pdinfo)) {
+	    } else {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 			cmd->word);
@@ -3726,7 +3727,8 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
  * Parse @line and assign to the %ci field of @cmd the index number of
  * the command embedded in @line.  Note: this is a "lite" version of
  * parse_command_line().  It is used when commands are being stacked
- * for execution within a loop.
+ * for execution within a loop.  Note that command options are not
+ * parsed out of @line.
  *
  * Returns: 1 on error, otherwise 0.
  */
@@ -3789,10 +3791,12 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
 #endif
 	if (cmd->ci == 0) {
-	    if (gretl_is_user_function(line)) {
+	    if (plausible_genr_start(line, cmd, pdinfo)) {
+		; /* maybe OK */
+	    } else if (gretl_is_user_function(line)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;
-	    } else if (!plausible_genr_start(line, cmd, pdinfo)) {
+	    } else {
 		cmd->errcode = 1;
 		sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 			cmd->word);

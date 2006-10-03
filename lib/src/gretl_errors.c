@@ -22,7 +22,6 @@
 #include "libgretl.h"
 #include "libset.h"
 
-int gretl_errno;
 char gretl_errmsg[ERRLEN];
 char gretl_msg[ERRLEN];
 
@@ -138,11 +137,6 @@ void errmsg (const int errcode, PRN *prn)
     }
 }
 
-int get_gretl_errno (void)
-{
-    return gretl_errno;
-}
-
 const char *get_gretl_errmsg (void)
 {
     return gretl_errmsg;
@@ -155,9 +149,7 @@ int print_gretl_errmsg (PRN *prn)
     if (*gretl_errmsg != '\0') {
 	pprintf(prn, "%s\n", gretl_errmsg);
 	ret = 1;
-    } else if (get_errmsg(gretl_errno, NULL, prn)) {
-	ret = 1;
-    }
+    } 
 
     return ret;
 }

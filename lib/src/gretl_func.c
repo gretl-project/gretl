@@ -2549,14 +2549,15 @@ int gretl_function_exec (ufunc *u, fnargs *args, int rtype,
     /* get function lines in sequence and check, parse, execute */
 
     for (i=0; i<u->n_lines && !err; i++) {
+	strcpy(line, u->lines[i]);
+	err = maybe_exec_function_line(&state, u, pZ, pdinfo);
 	if (gretl_execute_loop()) { 
 	    err = gretl_loop_exec(&state, pZ, &pdinfo);
 	    if (err) {
+		fprintf(stderr, "function_exec: breaking on error in loop\n");
 		break;
 	    }
 	}
-	strcpy(line, u->lines[i]);
-	err = maybe_exec_function_line(&state, u, pZ, pdinfo);
     }
 
     if (!err) {
