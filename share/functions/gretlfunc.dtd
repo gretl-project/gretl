@@ -2,8 +2,8 @@
   Document Type Definition (DTD) for gretl function packages: a package
   needs a name, author, version, date, and description.  It also needs
   at least one gretl-function.  The latter must have a name and must
-  include function code; it may also have help text, one or more parameters
-  and one or more return values.
+  include function code; it may also have help text, zero or more 
+  parameters, and zero or one return values.
  -->
 
 <!ELEMENT gretl-functions (gretl-function-package?)>
@@ -22,7 +22,7 @@
 <!ELEMENT date        (#PCDATA)>
 <!ELEMENT description (#PCDATA)>
 
-<!ELEMENT gretl-function (help?, params?, returns?, code)>
+<!ELEMENT gretl-function (help?, params?, return?, code)>
 <!ATTLIST gretl-function
    name CDATA #REQUIRED
    private (0|1) '0'
@@ -35,17 +35,13 @@
    count CDATA #REQUIRED
 >
 
-<!ELEMENT returns (return+)>
-<!ATTLIST returns
-   count CDATA #REQUIRED
->
-
 <!ELEMENT param EMPTY>
 <!ATTLIST param
    name CDATA #REQUIRED
    default CDATA #IMPLIED
    min     CDATA #IMPLIED
    max     CDATA #IMPLIED
+   optional (true|false) 'false'
    type (bool|boolean|int|scalar|series|list|matrix) 'series'
 >
 

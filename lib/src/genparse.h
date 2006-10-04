@@ -175,7 +175,7 @@ enum {
     STR,      /* string */
     EROOT,    /* dummy root for (...) expression */
     UFUN,     /* user-defined function */
-    UFARGS,   /* set of arguments to user-defined function */
+    FARGS,    /* set of n function arguments */
     EMPTY,
     ABSENT,
     INC,
@@ -205,9 +205,9 @@ enum {
                        s == LAG || s == OBS)
 #define func2_symb(s) (s > FUNC_MAX && s < F2_MAX)
 #define string_arg_func(s) (s == VARNUM || s == ISSERIES || s == ISNULL || \
-                            s == ISLIST || s == LISTLEN || \
-                            s == OBSNUM || s == PVAL || \
-                            s == CDF || s == CRIT)
+                            s == ISLIST || s == LISTLEN || s == OBSNUM)
+
+#define string0_func(s) (s == PVAL || s == CDF || s == CRIT)
 
 #define unary_op(s) (s >= 1 && s < U_MAX)
 #define binary_op(s) (s > U_MAX && s < OP_MAX)
@@ -218,10 +218,12 @@ enum {
 
 #define b1sym(s) (unary_op(s) || func_symb(s) || s == LPR || s == EROOT)
 
+#define evalb1(s) (b1sym(s) && !(string0_func(s)) && s != U_ADDR)
+
 #define b2sym(s) (evalb2(s) || s == DMSTR || s == OVAR || \
                   s == UFUN)
 
-#define bnsym(s) (s == MDEF || s == UFARGS)
+#define bnsym(s) (s == MDEF || s == FARGS)
 
 #define freestr(s) (s == STR || s == UMAT || s == UOBJ || \
                     s == LOOPIDX || s == LIST)
@@ -321,6 +323,7 @@ struct parser_ {
     double xval;
     int idnum;
     char *idstr;
+    int getstr;
     int err;
     int warn;
 };

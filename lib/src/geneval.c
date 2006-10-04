@@ -410,26 +410,117 @@ static double xy_calc (double x, double y, int op, parser *p)
     }
 }
 
-static NODE *eval_pdist (const char *s, int f, parser *p)
+static int dist_argc (char *s, int f)
+{
+    if (strlen(s) > 1) {
+	return 0;
+    }
+
+    switch (s[0]) {
+    case '1':
+    case 'z':
+    case 'n':
+    case 'N':
+	s[0] = 'z';
+	return 1;
+    case '2':
+    case 't':
+	return 2;
+    case '3':
+    case 'c':
+    case 'x':
+    case 'X':
+	s[0] = 'X';
+	return 2;
+    case '4':
+    case 'f':
+    case 'F':
+	s[0] = 'F';
+	return 3;
+    case '5':
+    case 'g':
+    case 'G':
+	s[0] = 'G';
+	return (f == CRIT)? 0 : 3;
+    case '6':
+    case 'b':
+    case 'B':
+	s[0] = 'B';
+	return (f == CRIT)? 0 : 3;
+    }
+
+    return 0;
+}
+
+static NODE *eval_pdist (NODE *n, parser *p)
 {
     NODE *ret = aux_scalar_node(p);
 
     if (ret != NULL && starting(p)) {
-	switch (f) {
+	NODE *e, *s, *r = n->v.b1.b;
+	int i, argc, m = r->v.bn.n_nodes;
+	double parm[3];
+	char *d, tmp[2];
+
+	if (m < 2 || m > 4) {
+	    p->err = 1;
+	    goto disterr;
+	}
+
+	s = r->v.bn.n[0];
+	if (s->t == STR) {
+	    d = s->v.str;
+	} else if (s->t == NUM && s->v.xval > 0 && s->v.xval < 10) {
+	    sprintf(tmp, "%d", (int) s->v.xval);
+	    d = tmp;
+	} else {
+	    p->err = 1;
+	    goto disterr;
+	}
+	    
+	argc = dist_argc(d, n->t);
+	
+	if (argc != m - 1) {
+	    p->err = 1;
+	    goto disterr;
+	}
+
+	for (i=0; i<argc && !p->err; i++) {
+	    s = r->v.bn.n[i+1];
+	    if (s->t == NUM) {
+		parm[i] = s->v.xval;
+	    } else {
+		e = eval(s, p);
+		if (e->t == NUM) {
+		    parm[i] = e->v.xval;
+		    free_tree(s, "Pdist");
+		    r->v.bn.n[i+1] = NULL;
+		} else {
+		    p->err = 1;
+		    goto disterr;
+		}
+	    }
+	}
+
+	switch (n->t) {
 	case PVAL:
-	    ret->v.xval = batch_pvalue(s, (const double **) *p->Z, 
-				       p->dinfo, NULL, OPT_G);
+	    ret->v.xval = gretl_get_pvalue(d[0], parm);
 	    break;
 	case CDF:
-	    ret->v.xval = batch_pvalue(s, (const double **) *p->Z, 
-				       p->dinfo, NULL, OPT_G | OPT_C);
+	    ret->v.xval = gretl_get_cdf(d[0], parm);
 	    break;
 	case CRIT:
-	    ret->v.xval = genr_get_critical(s, (const double **) *p->Z, 
-					    p->dinfo);
+	    ret->v.xval = gretl_get_critval(d[0], parm);
 	    break;
 	default: 
+	    p->err = 1;
 	    break;
+	}
+
+    disterr:
+	if (p->err) {
+	    /* FIXME error message */
+	    pprintf(p->prn, "Error in arguments to %s\n", "pvalue");
 	}
     }
 
@@ -2259,7 +2350,7 @@ static NODE *eval (NODE *t, parser *p)
 		}
 	    }
 	}
-    } else if (b1sym(t->t) && t->t != U_ADDR) {
+    } else if (evalb1(t->t)) {
 	l = eval(t->v.b1.b, p);
 	if (l == NULL && p->err == 0) {
 	    p->err = 1;
@@ -2580,15 +2671,15 @@ static NODE *eval (NODE *t, parser *p)
 	    node_type_error(t, p, STR, l->t);
 	}
 	break;
-    case PVAL:
     case CDF:
     case CRIT:
-	if (l->t == STR) {
-	    ret = eval_pdist(l->v.str, t->t, p);
+    case PVAL:
+	if (t->v.b1.b->t == FARGS) {
+	    ret = eval_pdist(t, p);
 	} else {
-	    node_type_error(t, p, STR, l->t);
+	    node_type_error(t, p, FARGS, t->v.b1.b->t);
 	}
-	break;
+	break;	
     case CON: 
 	/* built-in constant */
 	ret = retrieve_const(t->v.idnum, p);
@@ -3641,6 +3732,7 @@ static void parser_reinit (parser *p, double ***pZ,
     p->xval = 0.0;
     p->idnum = 0;
     p->idstr = NULL;
+    p->getstr = 0;
 
     p->ret = NULL;
     p->err = 0;
@@ -3679,6 +3771,7 @@ static void parser_init (parser *p, const char *str,
     p->xval = 0.0;
     p->idnum = 0;
     p->idstr = NULL;
+    p->getstr = 0;
     p->err = 0;
     p->warn = 0;
 

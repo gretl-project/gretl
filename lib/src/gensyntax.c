@@ -358,15 +358,15 @@ enum {
 };
 
 /* gather an unknown number of comma-separated arguments
-   for a user-defined function */
+   for a (possibly user-defined) function */
 
-static void get_ufunc_args (NODE *t, parser *p)
+static void get_multi_args (NODE *t, parser *p)
 {
     NODE *n;
     char cexp = 0;
 
 #if SDEBUG
-    fprintf(stderr, "get_ufunc_args, p->sym = %d\n", p->sym);
+    fprintf(stderr, "get_multi_args, p->sym = %d\n", p->sym);
 #endif    
 
     if (p->sym == LPR) {
@@ -592,6 +592,16 @@ static NODE *powterm (parser *p)
 	    lex(p);
 	    get_args(t, p, opt);
 	}
+    } else if (string0_func(p->sym)) {
+	t = newb1(p->sym, NULL, 0);
+	if (t != NULL) {
+	    lex(p);
+	    t->v.b1.b = newbn(FARGS);
+	    if (t != NULL) {
+		p->getstr = 1;
+		get_multi_args(t->v.b1.b, p);
+	    }
+	}	
     } else if (string_arg_func(p->sym)) {
 	t = newb1(p->sym, NULL, aux);
 	if (t != NULL) {
@@ -647,11 +657,14 @@ static NODE *powterm (parser *p)
 	if (t != NULL) {
 	    t->v.b2.l = newstr(p->idstr, 0, STR_STEAL);
 	    lex(p);
-	    t->v.b2.r = newbn(UFARGS);
+	    t->v.b2.r = newbn(FARGS);
 	    if (t != NULL) {
-		get_ufunc_args(t->v.b2.r, p);
+		get_multi_args(t->v.b2.r, p);
 	    }
 	}
+    } else if (p->sym == STR) {
+	t = newstr(p->idstr, 0, STR_STEAL);
+	lex(p);
     } else {
 	t = base(p, NULL);
     }

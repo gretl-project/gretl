@@ -651,6 +651,52 @@ static char normalize_stat (char c)
     return 0;
 }
 
+double gretl_get_critval (char st, double *p)
+{
+    double x = NADBL;
+
+    if (st == 'z') {
+	if (p[0] > 0.5) {
+	    x = ndtri(1.0 - p[0]);
+	} else {
+	    x = -ndtri(p[0]);
+	}
+    } else if (st == 't') {
+	if (p[1] > 0.5) {
+	    x = stdtri((int) p[0], 1.0 - p[1]);
+	} else {
+	    x = -stdtri((int) p[0], p[1]);
+	}
+    } else if (st == 'X') {	
+	x = chisq_critval(p[1], (int) p[0]);
+    } else if (st == 'F') {
+	x = f_critval(p[2], (int) p[0], (int) p[1]);
+    }
+
+    return x;
+}
+
+double gretl_get_cdf (char st, double *p)
+{
+    double x = NADBL;
+
+    if (st == 'z') {
+	x = normal_cdf(p[0]);
+    } else if (st == 't') {
+	x = t_cdf(p[1], (int) p[0]);
+    } else if (st == 'X') {
+	x = chisq_cdf(p[1], (int) p[0]);
+    } else if (st == 'F') {
+	x = f_cdf(p[2], (int) p[0], (int) p[1]);
+    } else if (st == 'G') {
+	x = 1.0 - gamma_cdf_comp(p[0], p[1], p[2], 2);
+    } else if (st == 'B') {
+	x = binomial_cdf(p[2], p[1], p[0]);
+    }
+
+    return x;
+}
+
 static double find_cdf (char st, int n[3], double x[3])
 {
     double p = NADBL;
@@ -670,6 +716,27 @@ static double find_cdf (char st, int n[3], double x[3])
     }
 
     return p;
+}
+
+double gretl_get_pvalue (char st, const double *p)
+{
+    double x = NADBL;
+
+    if (st == 'z') {
+	x = 1.0 - normal_cdf(p[0]);
+    } else if (st == 't') {
+	x = t_cdf_comp(p[1], (int) p[0]);
+    } else if (st == 'X') {
+	x = chisq_cdf_comp(p[1], (int) p[0]);
+    } else if (st == 'F') {
+	x = f_cdf_comp(p[2], (int) p[0], (int) p[1]);
+    } else if (st == 'G') {
+	x = gamma_cdf_comp(p[0], p[1], p[2], 2);
+    } else if (st == 'B') {
+	x = binomial_cdf_comp(p[2], (int) p[1], (int) p[0]);
+    }
+
+    return x;
 }
 
 static double find_pvalue (char st, int n[3], double x[3])
@@ -841,6 +908,21 @@ double batch_pvalue (const char *str,
     }
 
     while (*str == ' ') str++;
+
+#if 0 /* not yet */
+    S = gretl_string_split(&n);
+    if (S == NULL) {
+	*err = E_ALLOC;
+    } else {
+	strcpy(line, "pvalue(");
+	for (i=0; i<n; i++) {
+	    strcat(line, S[i]);
+	    strcat(line, (i == n - 1)? ")" : ",");
+	}
+	pv = generate_scalar(line, pZ, pdinfo, err);
+	free_strings_array(S, n);
+    }
+#endif    
     
     if (!sscanf(str, "%c", &st) || 
 	(st = normalize_stat(st)) == 0) {

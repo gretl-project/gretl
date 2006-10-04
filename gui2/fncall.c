@@ -185,6 +185,9 @@ static GList *get_selection_list (int type)
     const char *name;
     int i;
 
+    /* FIXME ref arguments 
+       FIXME int, bool arguments */
+
     if (type == ARG_SERIES || type == ARG_SCALAR) {
 	for (i=1; i<datainfo->v; i++) {
 	    if (var_is_hidden(datainfo, i)) {
@@ -387,6 +390,8 @@ static GtkWidget *combo_arg_selector (call_info *cinfo, int ptype, int i)
 	g_list_free(list);
     } 
 
+    /* FIXME bool etc */
+
     if (ptype == ARG_INT || ptype == ARG_SCALAR) {
 	double x = fn_param_default(cinfo->func, i);
 
@@ -575,6 +580,8 @@ static int check_args (call_info *cinfo)
 {
     int i;
 
+    /* FIXME optional args */
+
     if (cinfo->args != NULL) {
 	for (i=0; i<cinfo->n_params; i++) {
 	    if (cinfo->args[i] == NULL) {
@@ -587,17 +594,6 @@ static int check_args (call_info *cinfo)
 
     return 0;
 }
-
-static int fn_executor (ExecState *s)
-{
-    int err = 0;
-
-    while (!err && gretl_execute_loop()) {
-	err = gretl_loop_exec(s, &Z, &datainfo);
-    }
-
-    return err;
-} 
 
 static int function_data_check (call_info *cinfo)
 {
@@ -769,13 +765,14 @@ void call_function_package (const char *fname, GtkWidget *w)
     strcat(fnline, fnname);
 
     if (cinfo.args != NULL) {
-	strcat(fnline, " ");
+	strcat(fnline, "(");
 	for (i=0; i<cinfo.n_params; i++) {
 	    strcat(fnline, cinfo.args[i]);
 	    if (i < cinfo.n_params - 1) {
 		strcat(fnline, ", ");
 	    }
 	}
+	strcat(fnline, ")");
     }
 
     cinfo_free(&cinfo);
@@ -792,9 +789,6 @@ void call_function_package (const char *fname, GtkWidget *w)
 			  models, prn);
 
     err = gui_exec_line(&state, &Z, &datainfo);
-    if (!err) {
-	err = fn_executor(&state);
-    }
 
     if (err) {
 	gui_errmsg(err);

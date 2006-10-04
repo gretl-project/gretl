@@ -465,6 +465,51 @@ char *gretl_word_strdup (const char *src, const char **ptr)
 }
 
 /**
+ * gretl_string_split:
+ * @s: the source string.
+ * @n: location to receive the number of substrings.
+ *
+ * Parses @s into a set of zero or more space-separated 
+ * substrings, and creates an array of those substrings.
+ * On sucessful exit, @n holds the number of substrings. 
+ *
+ * Returns: the allocated array or %NULL in case of failure.
+ */
+
+char **gretl_string_split (const char *s, int *n)
+{
+    int i, k, m = count_fields(s);
+    char *word;
+    char **S;
+
+    *n = 0;
+
+    if (m == 0) {
+	return NULL;
+    }
+
+    S = strings_array_new(m);
+    if (S == NULL) {
+	return NULL;
+    }
+
+    for (i=0; i<m; i++) {
+	s += strspn(s, " ");
+	k = strcspn(s, " ");
+	word = gretl_strndup(s, k);
+	if (word == NULL) {
+	    free_strings_array(S, m);
+	    return NULL;
+	}
+	S[i] = word;
+    }
+
+    *n = m;
+
+    return S;
+}
+
+/**
  * gretl_double_from_string:
  * @s: the source string.
  * @ptr: location to receive end of field pointer, or %NULL.

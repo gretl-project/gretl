@@ -654,6 +654,14 @@ static void getword (parser *p)
 	parser_getc(p);
     }
 
+    if (p->getstr) {
+	/* uninterpreted string wanted */
+	p->sym = STR;
+	p->idstr = gretl_strdup(word);
+	p->getstr = 0;
+	return;
+    }
+
     /* handle loop index scalar */
     if (word[1] == '\0' && is_active_index_loop_char(word[0])) {
 	p->sym = LOOPIDX;
@@ -917,7 +925,9 @@ const char *getsymb (int t, const parser *p)
 	return "SUBSL";
     } else if (t == MDEF) {
 	return "MDEF";
-    } 
+    } else if (t == FARGS) {
+	return "FARGS";
+    }
 
     if (p != NULL) {
 	if (t == NUM) {
@@ -937,7 +947,9 @@ const char *getsymb (int t, const parser *p)
 	    return mvarname(p->idnum);
 	} else if (t == UFUN) {
 	    return p->idstr;
-	} 
+	} else if (t == STR) {
+	    return p->idstr;
+	}
     } 
 
     switch (t) {

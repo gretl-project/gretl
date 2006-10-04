@@ -71,6 +71,8 @@ char *gretl_strndup (const char *src, size_t n);
 
 char *gretl_word_strdup (const char *src, const char **ptr);
 
+char **gretl_string_split (const char *s, int *n);
+
 double gretl_double_from_string (const char *s, const char **ptr);
 
 char *charsub (char *str, char find, char repl);

@@ -398,11 +398,11 @@ static const char *arg_type_string (int type)
     } else if (type == ARG_MATRIX) {
 	return "matrix";
     } else if (type == ARG_REF_SCALAR) {
-	return "scalarref";
+	return "scalar *";
     } else if (type == ARG_REF_SERIES) {
-	return "seriesref";
+	return "series *";
     } else if (type == ARG_REF_MATRIX) {
-	return "matrixref";
+	return "matrix *";
     } else {
 	return "unknown";
     }
@@ -601,7 +601,7 @@ static void print_deflt_min_max (fn_param *param, PRN *prn)
 
 static void print_function_start (ufunc *fun, PRN *prn)
 {
-    const char *typestr;
+    const char *s;
     int i;
 
     gretl_push_c_numeric_locale();
@@ -611,8 +611,12 @@ static void print_function_start (ufunc *fun, PRN *prn)
 	if (i == 0) {
 	    pputc(prn, '(');
 	}
-	typestr = arg_type_string(fun->params[i].type);
-	pprintf(prn, "%s %s", typestr, fun->params[i].name);
+	s = arg_type_string(fun->params[i].type);
+	if (s[strlen(s) - 1] == '*') {
+	    pprintf(prn, "%s%s", s, fun->params[i].name);
+	} else {
+	    pprintf(prn, "%s %s", s, fun->params[i].name);
+	}
 	if (fun->params[i].type == ARG_BOOL) {
 	    if (!na(fun->params[i].deflt)) {
 		pprintf(prn, "[%g]", fun->params[i].deflt);
@@ -637,8 +641,11 @@ static void print_function_end (ufunc *fun, PRN *prn)
 {
     const char *typestr;
 
-    typestr = arg_type_string(fun->rettype);
-    pprintf(prn, "  return %s %s\n", typestr, fun->retname);
+    if (fun->rettype != ARG_NONE) {
+	typestr = arg_type_string(fun->rettype);
+	pprintf(prn, "  return %s %s\n", typestr, fun->retname);
+    }
+
     pputs(prn, "end function\n");
 }
 
