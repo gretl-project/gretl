@@ -1397,12 +1397,14 @@ void fn_args_init (fnargs *args)
     args->nrefv = 0;
     args->nrefm = 0;
     args->nnull = 0;
+    args->nnames = 0;
     args->x = NULL;
     args->X = NULL;
     args->M = NULL;
     args->lists = NULL;
     args->refv = NULL;
     args->refm = NULL;
+    args->upnames = NULL;
 }
 
 void fn_args_free (fnargs *args)
@@ -1414,6 +1416,7 @@ void fn_args_free (fnargs *args)
     free(args->lists);
     free(args->refv);
     free(args->refm);
+    free_strings_array(args->upnames, args->nnames);
 }
 
 int push_fn_arg (fnargs *args, int type, void *p)

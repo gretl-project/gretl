@@ -55,12 +55,14 @@ struct fnargs_ {
     int nx, nX, nM, nl;
     int nrefv, nrefm;
     int nnull;
+    int nnames;
     double *x;
     double **X;
     gretl_matrix **M;
     char **lists;
     int *refv;
     user_matrix **refm;
+    char **upnames;
 };
 
 int n_user_functions (void);

@@ -2210,7 +2210,7 @@ static int allocate_function_args (ufunc *fun,
     xi = Mi = 0;
 
     /* "pointer" parameters, passed by reference: make these vars
-       visible at function level
+       visible at function level, under their parameter names
     */
 
     for (i=0; i<argc && !err; i++) {
@@ -2218,11 +2218,21 @@ static int allocate_function_args (ufunc *fun,
 	if (ref_type(fp->type)) {
 	    if (args->types[i] == ARG_REF_SCALAR ||
 		args->types[i] == ARG_REF_SERIES) {
-		STACK_LEVEL(pdinfo, args->refv[xi]) += 1;
-		xi++;
+		err = strings_array_add(&args->upnames, &args->nnames, 
+					pdinfo->varname[args->refv[xi]]);
+		if (!err) {
+		    STACK_LEVEL(pdinfo, args->refv[xi]) += 1;
+		    strcpy(pdinfo->varname[args->refv[xi]], fp->name);
+		    xi++;
+		}
 	    } else if (args->types[i] == ARG_REF_MATRIX) {
-		user_matrix_adjust_level(args->refm[Mi], 1);
-		Mi++;
+		err = strings_array_add(&args->upnames, &args->nnames, 
+					user_matrix_get_name(args->refm[Mi]));
+		if (!err) {
+		    user_matrix_adjust_level(args->refm[Mi], 1);
+		    user_matrix_set_name(args->refm[Mi], fp->name);
+		    Mi++;
+		}
 	    }
 	} 
     }
@@ -2358,7 +2368,7 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
 {
     fn_param *fp;
     int vi = 0, mi = 0;
-    int i, err = 0;
+    int i, j, err = 0;
 
     if (*perr == 0) {
 	/* direct return value */
@@ -2380,15 +2390,18 @@ function_assign_returns (ufunc *u, fnargs *args, int argc, int rtype,
        function bombed
     */
 
+    j = 0;
     for (i=0; i<argc; i++) {
 	fp = &u->params[i];
 	if (ref_type(fp->type)) {
 	    if (args->types[i] == ARG_REF_SCALAR ||
 		args->types[i] == ARG_REF_SERIES) {
 		STACK_LEVEL(pdinfo, args->refv[vi]) -= 1;
+		strcpy(pdinfo->varname[args->refv[vi]], args->upnames[j++]);
 		vi++;
 	    } else if (args->types[i] == ARG_REF_MATRIX) {
 		user_matrix_adjust_level(args->refm[mi], -1);
+		user_matrix_set_name(args->refm[mi], args->upnames[j++]);
 		mi++;
 	    }
 	} 

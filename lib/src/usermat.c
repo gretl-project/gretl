@@ -240,6 +240,27 @@ int user_matrix_adjust_level (user_matrix *u, int adj)
     return 0;
 }
 
+int user_matrix_set_name (user_matrix *u, const char *name)
+{
+    if (u == NULL) {
+	return E_UNKVAR;
+    }
+
+    *u->name = '\0';
+    strncat(u->name, name, VNAMELEN - 1);
+
+#if MDEBUG
+    fprintf(stderr, " user matrix at %p, new name = '%s'\n", (void *) u,
+	    name);
+#endif
+
+    return 0;
+}
+
+const char *user_matrix_get_name (user_matrix *u)
+{
+    return (u == NULL)? NULL : u->name;
+}
 
 int user_matrix_replace_matrix_by_name (const char *name, 
 					gretl_matrix *M)
