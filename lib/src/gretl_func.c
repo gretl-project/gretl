@@ -1711,6 +1711,19 @@ static int read_deflt_min_max (char *s, fn_param *param,
     return err;
 }
 
+static int read_param_option (char *s, fn_param *param,
+			      int *namelen)
+{
+    char *p = strstr(s, "[null]");
+
+    if (p != NULL) {
+	param->flags |= ARG_OPTIONAL;
+	*namelen -= 6;
+    }
+
+    return 0;
+}
+
 static int parse_function_param (char *s, fn_param *param, int i)
 {
     char tstr[16] = {0};
@@ -1758,6 +1771,11 @@ static int parse_function_param (char *s, fn_param *param, int i)
 	param->type = type;
 	err = read_deflt_min_max(s, param, &len);
     }
+
+    if (ref_type(type)) {
+	param->type = type;
+	err = read_param_option(s, param, &len);
+    }    
 
     if (!err) {
 	name = gretl_strndup(s, len);

@@ -1776,7 +1776,7 @@ static gretl_matrix *matrix_from_list (NODE *t, parser *p)
 }
 
 #define ok_ufunc_sym(s) (s == NUM || s == VEC || s == MAT || \
-                         s == LIST || s == U_ADDR)
+                         s == LIST || s == U_ADDR || s == DUM)
 
 /* evaluate a user-defined function */
 
@@ -1855,6 +1855,12 @@ static NODE *eval_ufunc (NODE *t, parser *p)
 	    } else {
 		pputs(p->prn, "Wrong type of operand for unary '&'\n");
 		p->err = 1;
+	    }
+	} else if (n->t == DUM) {
+	    if (n->v.idnum == DUM_NULL) {
+		p->err = push_fn_arg(&args, ARG_NONE, NULL);
+	    } else {
+		p->err = E_TYPES;
 	    }
 	} else if (n->t == EMPTY) {
 	    p->err = push_fn_arg(&args, ARG_NONE, NULL);
