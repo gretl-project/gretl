@@ -866,16 +866,60 @@ find_and_print_pvalue (char st, int n[3], double x[3], PRN *prn)
     return pv;
 }
 
+#if 0
+double new_batch_pvalue (const char *str, 
+			 double **pZ, DATAINFO *pdinfo, 
+			 PRN *prn, int *err)
+{
+    double x = NADBL;
+    char line[MAXLEN];
+    char **S;
+    int n, m;
+    
+    if (!strncmp(str, "pvalue ", 7)) {
+	str += 7;
+    }
+
+    while (*str == ' ') str++;
+
+    S = gretl_string_split(s, &n);
+    if (S == NULL) {
+	*err = E_ALLOC;
+	return x;
+    }
+
+    strcpy(line, "pvalue(");
+    m = 8;
+    for (i=0; i<n && !*err; i++) {
+	m += strlen(S[i]) + 1;
+	if (m > MAXLEN) {
+	    *err = E_DATA;
+	} else {
+	    strcat(line, S[i]);
+	    strcat(line, (i == n - 1)? ")" : ",");
+	}
+    }
+
+    if (*err) {
+	x = generate_scalar(line, pZ, pdinfo, err);
+    }
+
+    free_strings_array(S, n);
+
+    return x;
+}
+#endif
+
 /**
  * batch_pvalue:
  * @str: the command line, which should be of one of the following forms:
- * pvalue 1 x (Normal distribution);
- * pvalue 2 df x (t-distribution);
- * pvalue 3 df x (Chi-square);
- * pvalue 4 dfn dfd x (F-distribution); or
- * pvalue 5 mean variance x (Gamma distribution).
- * pvalue 6 prob n x (Binomial distribution).
- * @Z: the data matrix.
+ * pvalue z x (Normal distribution);
+ * pvalue t df x (t-distribution);
+ * pvalue X df x (Chi-square);
+ * pvalue F dfn dfd x (F-distribution); or
+ * pvalue G mean variance x (Gamma distribution).
+ * pvalue B prob n x (Binomial distribution).
+ * @pZ: pointer to the data array.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  * @opt: (for internal use) %OPT_G forces uses of '.' as
