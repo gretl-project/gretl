@@ -2572,7 +2572,7 @@ static NODE *eval (NODE *t, parser *p)
 	} else {
 	    node_type_error(t, p, VEC, (l->t == VEC)? r->t : l->t);
 	} 
-	break;	
+	break;
     case IMAT:
     case ZEROS:
     case ONES:

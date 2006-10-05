@@ -101,7 +101,6 @@ enum {
     LNGAMMA,
     HPFILT,
     BKFILT,
-    FRACDIF,
     RESAMPLE,
     IMAT,
     SUMR,
@@ -137,6 +136,7 @@ enum {
     COV,
     UNIFORM, /* 110 */
     NORMAL,
+    FRACDIF,    
     ZEROS,
     ONES,
     MUNIF,

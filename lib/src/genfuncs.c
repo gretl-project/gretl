@@ -203,7 +203,7 @@ int fracdiff_series (const double *x, double *y, double d,
     fprintf(stderr, "Doing fracdiff_series, with d = %g\n", d);
 #endif
 
-    err = array_adjust_t1t2(y, &t1, &t2);
+    err = array_adjust_t1t2(x, &t1, &t2);
     if (err) {
 	return E_DATA;
     } 
@@ -212,7 +212,7 @@ int fracdiff_series (const double *x, double *y, double d,
 
     for (t=0; t<pdinfo->n; t++) {
 	if (t >= t1 && t <= t2) {
-	    y[t] = y[t];
+	    y[t] = x[t];
 	} else {
 	    y[t] = NADBL;
 	}
