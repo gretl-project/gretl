@@ -3268,8 +3268,7 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
 	break;
 
     case PVALUE:
-	batch_pvalue(line, (const double **) *pZ, pdinfo, 
-		     prn, OPT_NONE);
+	err = batch_pvalue(line, pZ, pdinfo, prn);
 	break;
 
     case RHODIFF:

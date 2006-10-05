@@ -558,99 +558,6 @@ double log_normal_pdf (double x)
     return (x * x) / 2.0 - 0.91893853320467274178;
 }
 
-static double get_number_or_val (const char *s, 
-				 const double **Z,
-				 const DATAINFO *pdinfo)
-{
-    if (numeric_string(s)) {
-	return dot_atof(s);
-    } else {
-	int v = varindex(pdinfo, s);
-
-	if (v > 0 && v < pdinfo->v && var_is_scalar(pdinfo, v)) {
-	    return Z[v][0];
-	}
-    } 
-
-    return NADBL;
-}
-
-static int val_from_string (char *s, const double **Z,
-			    const DATAINFO *pdinfo, 
-			    double *px, int *pn)
-{
-    double x = NADBL;
-    int n = 0, err = 0;
-
-    if (isalpha((unsigned char) *s)) {
-	int v = varindex(pdinfo, s);
-
-	if (v < pdinfo->v) {
-	    if (var_is_series(pdinfo, v)) {
-		x = Z[v][pdinfo->t1];
-	    } else {
-		x = Z[v][0];
-	    }
-	    if (na(x)) {
-		strcpy(gretl_errmsg, _("Missing values encountered"));
-		err = 1;
-	    } else {
-		n = (int) x;
-	    }
-	} else {
-	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), s);
-	    err = 1;
-	}
-    } else if (*s != '\0') {
-	if (check_atof(s)) {
-	    err = 1;
-	} else {
-	    n = atoi(s);
-	    x = atof(s);
-	}
-    }	
-
-    *px = x;
-    *pn = n;
-
-    return err;
-}
-
-static char normalize_stat (char c)
-{
-    switch (c) {
-    case '1':
-    case 'z':
-    case 'n':
-    case 'N':
-	return 'z'; /* Normal */
-    case '2':
-    case 't':
-	return 't'; /* Student's t */
-    case '3':
-    case 'c':
-    case 'x':
-    case 'X':
-	return 'X'; /* Chi-square */
-    case '4':
-    case 'f':
-    case 'F':
-	return 'F'; /* F */
-    case '5':
-    case 'g':
-    case 'G':
-	return 'G'; /* Gamma */
-    case '6':
-    case 'b':
-    case 'B':
-	return 'B'; /* Binomial */
-    default:
-	break;
-    }
-
-    return 0;
-}
-
 double gretl_get_critval (char st, double *p)
 {
     double x = NADBL;
@@ -691,31 +598,10 @@ double gretl_get_cdf (char st, double *p)
     } else if (st == 'G') {
 	x = 1.0 - gamma_cdf_comp(p[0], p[1], p[2], 2);
     } else if (st == 'B') {
-	x = binomial_cdf(p[2], p[1], p[0]);
+	x = binomial_cdf((int) p[2], (int) p[1], p[0]);
     }
 
     return x;
-}
-
-static double find_cdf (char st, int n[3], double x[3])
-{
-    double p = NADBL;
-
-    if (st == 'z') {
-	p = normal_cdf(x[0]);
-    } else if (st == 't') {
-	p = t_cdf(x[1], n[0]);
-    } else if (st == 'X') {
-	p = chisq_cdf(x[1], n[0]);
-    } else if (st == 'F') {
-	p = f_cdf(x[2], n[0], n[1]);
-    } else if (st == 'G') {
-	p = 1.0 - gamma_cdf_comp(x[0], x[1], x[2], 2);
-    } else if (st == 'B') {
-	p = binomial_cdf(n[2], n[1], x[0]);
-    }
-
-    return p;
 }
 
 double gretl_get_pvalue (char st, const double *p)
@@ -733,182 +619,98 @@ double gretl_get_pvalue (char st, const double *p)
     } else if (st == 'G') {
 	x = gamma_cdf_comp(p[0], p[1], p[2], 2);
     } else if (st == 'B') {
-	x = binomial_cdf_comp(p[2], (int) p[1], (int) p[0]);
+	x = binomial_cdf_comp((int) p[2], (int) p[1], p[0]);
     }
 
     return x;
 }
 
-static double find_pvalue (char st, int n[3], double x[3])
-{
-    double p = NADBL;
-
-    if (st == 'z') {
-	p = 1.0 - normal_cdf(x[0]);
-    } else if (st == 't') {
-	p = t_cdf_comp(x[1], n[0]);
-    } else if (st == 'X') {
-	p = chisq_cdf_comp(x[1], n[0]);
-    } else if (st == 'F') {
-	p = f_cdf_comp(x[2], n[0], n[1]);
-    } else if (st == 'G') {
-	p = gamma_cdf_comp(x[0], x[1], x[2], 2);
-    } else if (st == 'B') {
-	p = binomial_cdf_comp(n[2], n[1], x[0]);
-    }
-
-    return p;
-}
-
 static void 
-print_pv_string (double x, double p, int left, PRN *prn)
+print_pv_string (double x, double p, PRN *prn)
 {
-    if (left) {
-	if (p == 1.0) {
-	    pprintf(prn, _("area to the left of %g =~ %g\n"), x, p);
-	} else {
-	    pprintf(prn, _("area to the left of %g = %g\n"), x, p);
-	}
+    if (p == 1.0) {
+	pprintf(prn, _("area to the right of %g =~ %g\n"), x, p);
     } else {
-	if (p == 1.0) {
-	    pprintf(prn, _("area to the right of %g =~ %g\n"), x, p);
-	} else {
-	    pprintf(prn, _("area to the right of %g = %g\n"), x, p);
-	}
+	pprintf(prn, _("area to the right of %g = %g\n"), x, p);
     }
 }
 
-static double 
-find_and_print_pvalue (char st, int n[3], double x[3], PRN *prn)
+void print_pvalue (char st, double *p, double pv, PRN *prn)
 {
-    double pv = NADBL;
+    double pc;
 
     switch (st) {
 
     case 'z':
-	if (x[0] < 0.0) {
-	    pv = normal_cdf(x[0]);
-	} else {
-	    pv = normal_cdf(-x[0]);
-	}
-	if (!na(pv)) {	
-	    pprintf(prn, "\n%s: ", _("Standard normal"));
-	    print_pv_string(x[0], pv, (x[0] < 0), prn);
+    case 'n':
+    case 'N':
+    case '1':
+	pprintf(prn, "\n%s: ", _("Standard normal"));
+	print_pv_string(p[0], pv, prn);
+	if (pv < 0.5) {
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2.0 * pv, 1.0 - 2.0 * pv);
+	} else {
+	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
 	}
 	break;
 
     case 't':
-	if (x[1] < 0.0) {
-	    pv = t_cdf(x[1], n[0]);
-	} else {
-	    pv = t_cdf_comp(x[1], n[0]);
-	}
-	if (!na(pv)) {
-	    pprintf(prn, "\nt(%d): ", n[0]);
-	    print_pv_string(x[1], pv, (x[1] < 0), prn);
+    case '2':
+	pprintf(prn, "\nt(%d): ", (int) p[0]);
+	print_pv_string(p[1], pv, prn);
+	if (pv < 0.5) {
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2.0 * pv, 1.0 - 2.0 * pv);
+	} else {
+	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
 	}
 	break;
 
     case 'X':
-	pv = chisq_cdf_comp(x[1], n[0]);
-	if (!na(pv)) {
-	    pprintf(prn, "\n%s(%d): ", _("Chi-square"), n[0]);
-	    print_pv_string(x[1], pv, 0, prn);
-	    pprintf(prn, _("(to the left: %g)\n"), chisq_cdf(x[1], n[0]));
-	}
+    case 'x':
+    case 'c':
+    case '3':
+	pprintf(prn, "\n%s(%d): ", _("Chi-square"), (int) p[0]);
+	print_pv_string(p[1], pv, prn);
+	pprintf(prn, _("(to the left: %g)\n"), chisq_cdf(p[1], p[0]));
 	break;
 
     case 'F':
-	pv = f_cdf_comp(x[2], n[0], n[1]);
-	if (!na(pv)) {
-	    pprintf(prn, "\nF(%d, %d): ", n[0], n[1]);
-	    print_pv_string(x[2], pv, 0, prn);
-	    pprintf(prn, _("(to the left: %g)\n"), f_cdf(x[2], n[0], n[1]));
-	}
+    case 'f':
+    case '4':
+	pprintf(prn, "\nF(%d, %d): ", (int) p[0], (int) p[1]);
+	print_pv_string(p[2], pv, prn);
+	pprintf(prn, _("(to the left: %g)\n"), f_cdf(p[2], (int) p[0], (int) p[1]));
 	break;
 
     case 'G':
-	pv = gamma_cdf_comp(x[0], x[1], x[2], 2);
-	if (pv < 0) {
-	    pv = NADBL;
-	} else if (!na(pv)) {
-	    pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
-			   "\n area to the right of %g = %g\n"), 
-		    x[0], x[1], x[0] * x[0] / x[1], x[1] / x[0],
-		    x[2], 1.0 - pv);
-	}
+    case 'g':
+    case '5':
+	pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
+		       "\n area to the right of %g = %g\n"), 
+		p[0], p[1], p[0] * p[0] / p[1], p[1] / p[0],
+		p[2], 1.0 - pv);
 	break;
 
     case 'B':
-	pv = binomial_cdf_comp(n[2], n[1], x[0]);
-	if (!na(pv)) {
-	    double pc = binomial_cdf(n[2], n[1], x[0]);
-
-	    pprintf(prn, _("\nBinomial (p = %g, n = %d):"
-			   "\n Prob(x > %d) = %g\n"), 
-		    x[0], n[1], n[2], pv);
-	    pprintf(prn, _(" Prob(x <= %d) = %g\n"), n[2], pc);
-	    if (n[2] > 0) {
-		pprintf(prn, _(" Prob(x = %d) = %g\n"), n[2],
-			pc - binomial_cdf(n[2] - 1, n[1], x[0]));
-	    }		
-	}
+    case 'b':
+    case '6':
+	pc = binomial_cdf(p[2], p[1], p[0]);
+	pprintf(prn, _("\nBinomial (p = %g, n = %d):"
+		       "\n Prob(x > %d) = %g\n"), 
+		p[0], (int) p[1], (int) p[2], pv);
+	pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[2], pc);
+	if (p[2] > 0) {
+	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[2],
+		    pc - binomial_cdf(p[2] - 1, p[1], p[0]));
+	}		
 	break;
 
     default:
 	break;
     }
-
-    return pv;
 }
-
-#if 0
-double new_batch_pvalue (const char *str, 
-			 double **pZ, DATAINFO *pdinfo, 
-			 PRN *prn, int *err)
-{
-    double x = NADBL;
-    char line[MAXLEN];
-    char **S;
-    int n, m;
-    
-    if (!strncmp(str, "pvalue ", 7)) {
-	str += 7;
-    }
-
-    while (*str == ' ') str++;
-
-    S = gretl_string_split(s, &n);
-    if (S == NULL) {
-	*err = E_ALLOC;
-	return x;
-    }
-
-    strcpy(line, "pvalue(");
-    m = 8;
-    for (i=0; i<n && !*err; i++) {
-	m += strlen(S[i]) + 1;
-	if (m > MAXLEN) {
-	    *err = E_DATA;
-	} else {
-	    strcat(line, S[i]);
-	    strcat(line, (i == n - 1)? ")" : ",");
-	}
-    }
-
-    if (*err) {
-	x = generate_scalar(line, pZ, pdinfo, err);
-    }
-
-    free_strings_array(S, n);
-
-    return x;
-}
-#endif
 
 /**
  * batch_pvalue:
@@ -922,220 +724,72 @@ double new_batch_pvalue (const char *str,
  * @pZ: pointer to the data array.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
- * @opt: (for internal use) %OPT_G forces uses of '.' as
- * decimal separator; %OPT_C actually evaluate cdf instead of
- * p-value.
+ *
+ * Calculates and prints the probability that a random variable 
+ * distributed as specified in the command line @str exceeds the 
+ * value indicated in @str.
  * 
- * Returns: the probability that a random variable distributed as
- * specified in the command line @str exceeds the value indicated
- * in @str, or #NADBL in case of failure.
+ * Returns: 0 on success, non-zero code on error.
  */
 
-double batch_pvalue (const char *str, 
-		     const double **Z, const DATAINFO *pdinfo, 
-                     PRN *prn, gretlopt opt)
+int batch_pvalue (const char *str, 
+		  double ***pZ, DATAINFO *pdinfo, 
+		  PRN *prn)
 {
-    int n[3] = {0};
-    double x[3] = {0.0};
-    char st = 0;
-    double pv = NADBL;
-    char s1[32] = {0};
-    char s2[32] = {0};
-    char s3[32] = {0};
-    int commas = 1;
-    int nf = 0;
+    double x = NADBL;
+    char line[MAXLEN];
+    double parm[3];
+    char **S;
+    char st;
+    int i, n, m;
+    int parm_ok = 1;
     int err = 0;
-
+    
     if (!strncmp(str, "pvalue ", 7)) {
 	str += 7;
-	commas = 0;
     }
 
-    while (*str == ' ') str++;
-
-#if 0 /* not yet */
-    S = gretl_string_split(&n);
+    S = gretl_string_split(str, &n);
     if (S == NULL) {
-	*err = E_ALLOC;
-    } else {
-	strcpy(line, "pvalue(");
-	for (i=0; i<n; i++) {
+	return E_ALLOC;
+    }
+
+    st = S[0][0];
+
+    strcpy(line, "pvalue(");
+    m = 8;
+    for (i=0; i<n && !err; i++) {
+	m += strlen(S[i]) + 1;
+	if (m > MAXLEN) {
+	    err = E_DATA;
+	} else {
 	    strcat(line, S[i]);
 	    strcat(line, (i == n - 1)? ")" : ",");
+	    if (i > 0) {
+		if (numeric_string(S[i])) {
+		    parm[i-1] = dot_atof(S[i]);
+		} else {
+		    parm_ok = 0;
+		}
+	    }
 	}
-	pv = generate_scalar(line, pZ, pdinfo, err);
-	free_strings_array(S, n);
-    }
-#endif    
-    
-    if (!sscanf(str, "%c", &st) || 
-	(st = normalize_stat(st)) == 0) {
-	pputs(prn, _("\nunrecognized pvalue code\n"));
-	return NADBL;
     }
 
-    str++;
-    while (*str == ' ' || *str == ',') str++;
+    free_strings_array(S, n);
 
-    if (st == 'z') {
-	nf = sscanf(str, "%31s", s1);
-	if (nf != 1) err = 1;
-    } else if (st == 't' || st == 'X') {
-	if (commas) {
-	    nf = sscanf(str, "%31[^,],%31s", s1, s2);
+    if (!err) {
+	x = generate_scalar(line, pZ, pdinfo, &err);
+    }
+
+    if (!err) {
+	if (parm_ok) {
+	    print_pvalue(st, parm, x, prn);
 	} else {
-	    nf = sscanf(str, "%31s %31s", s1, s2);
-	}
-	if (nf != 2) err = 1;
-    } else {
-	if (commas) {
-	    nf = sscanf(str, "%31[^,],%31[^,],%31s", s1, s2, s3);
-	} else {
-	    nf = sscanf(str, "%31s %31s %31s", s1, s2, s3);
-	}
-	if (nf != 3) err = 1;
-    }	
-
-    if (err) {
-	pputs(prn, _("\npvalue: missing parameter\n"));
-	return NADBL;
-    }
-
-    if (opt & OPT_G) {
-	gretl_push_c_numeric_locale();
-    }
-
-    err = val_from_string(s1, Z, pdinfo, &x[0], &n[0]);
-    if (!err && nf > 1) {
-	err = val_from_string(s2, Z, pdinfo, &x[1], &n[1]);
-    } 
-    if (!err && nf > 2) {
-	err = val_from_string(s3, Z, pdinfo, &x[2], &n[2]);
-    }	
-
-    if (opt & OPT_G) {
-	gretl_pop_c_numeric_locale();
-    }
-
-    if (err) {
-	print_gretl_errmsg(prn);
-	return NADBL;
-    }
-
-    if (opt & OPT_C) {
-	pv = find_cdf(st, n, x);
-    } else if (opt & OPT_G) {
-	pv = find_pvalue(st, n, x);
-    } else {
-	pv = find_and_print_pvalue(st, n, x, prn);
-    }
-
-    if (na(pv)) {
-	pputs(prn, _("\nError computing pvalue\n"));
-    }
-
-    return pv;
-}
-
-static int parse_genr_critical_input (const char *str, 
-				      const double **Z, 
-				      const DATAINFO *pdinfo,
-				      int *st, int *dfn, int *dfd, 
-				      double *a)
-{
-    char dfnstr[VNAMELEN], dfdstr[VNAMELEN];
-    char astr[32];
-    double val;
-    int err = 0;
-
-    dfnstr[0] = dfdstr[0] = astr[0] = '\0';
-
-    gretl_push_c_numeric_locale();
-
-    if (sscanf(str, "F,%8[^,],%8[^,],%24s", dfnstr, dfdstr, astr) == 3) {
-	*st = 'F';
-    } else if (sscanf(str, "X,%8[^,],%24s", dfnstr, astr) == 2) {
-	*st = 'X';
-    } else if (sscanf(str, "t,%8[^,],%24s", dfnstr, astr) == 2) {
-	*st = 't';
-    } else if (sscanf(str, "N,%24s", astr) || sscanf(str, "z,%24s", astr)) {
-	*st = 'z';
-	*dfn = 500;
-    } else {
-	err = 1;
-    }
-
-    gretl_pop_c_numeric_locale();
-
-    if (err) return err;
-
-    if (*dfnstr != '\0') {
-	val = get_number_or_val(dfnstr, Z, pdinfo);
-	if (na(val)) {
-	    err = 1;
-	} else {
-	    *dfn = val;
-	}
-    }
-
-    if (*dfdstr != '\0') {
-	val = get_number_or_val(dfdstr, Z, pdinfo);
-	if (na(val)) {
-	    err = 1;
-	} else {
-	    *dfd = val;
-	}
-    }
-
-    if (*astr != '\0') {
-	*a = get_number_or_val(astr, Z, pdinfo);
-	if (na(*a) || *a < 0.0) {
-	    err = 1;
+	    pprintf(prn, "\n%s = %g\n", ("p-value"), x);
 	}
     }
 
     return err;
-}
-
-double genr_get_critical (const char *line, const double **Z, 
-			  const DATAINFO *pdinfo)
-{
-    double alpha = 0.0, ret = NADBL;
-    int st = 0, dfn = -1, dfd = -1;
-
-    if (parse_genr_critical_input(line, Z, pdinfo,
-				  &st, &dfn, &dfd, &alpha)) {
-	return NADBL;
-    }
-
-    if ((st == 't' || st == 'X' || st == 'F') && dfn <= 0) {
-	strcpy(gretl_errmsg, _("Invalid degrees of freedom\n"));
-	return NADBL;
-    } else if (st == 'F' && dfd <= 0) {
-	strcpy(gretl_errmsg, _("Invalid degrees of freedom\n"));
-	return NADBL;
-    }	
-
-    if (st == 'F') {
-	ret = f_critval(alpha, dfn, dfd);
-    } else if (st == 'X') {
-	ret = chisq_critval(alpha, dfn);
-    } else if (st == 't') {
-	if (alpha > 0.5) {
-	    ret = stdtri(dfn, 1.0 - alpha);
-	} else {
-	    ret = -stdtri(dfn, alpha);
-	}
-    } else {
-	/* normal */
-	if (alpha > 0.5) {
-	    ret = ndtri(1.0 - alpha);
-	} else {
-	    ret = -ndtri(alpha);
-	}
-    } 
-
-    return ret;
 }
 
 /* Functions relating to the gamma distribution.

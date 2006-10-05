@@ -83,42 +83,6 @@ enum {
     TWO_PROPNS
 };
 
-static int printnum (char *dest, const char *s, int d) 
-{
-    char numstr[16];
-
-    if (s == NULL || *s == '\0') {
-	errbox(_("Incomplete entry for p-value"));
-	return 1;
-    }
-
-    if (isalpha(*s)) {
-	int v; 
-	double xx;
-
-	if (data_status && (v = varindex(datainfo, s)) < datainfo->v) {
-	    xx = Z[v][0];
-	    if (na(xx)) {
-		errbox(_("Data missing for variable '%s'"), s);
-		return 1;
-	    }
-	    if (d) sprintf(numstr, "%f", xx);
-	    else sprintf(numstr, "%d", (int) xx);
-	} else {
-	    errbox(_("Unrecognized variable '%s' in p-value command"), s);
-	    return 1;
-	}
-    } else if (d != 0) {
-	sprintf(numstr, "%g ", atof(s));
-    } else {
-	sprintf(numstr, "%d ", atoi(s));
-    }
-
-    strcat(dest, numstr);
-
-    return 0;
-}
-
 /* if pos != 0, value must be positive or it is invalid */ 
 
 static double getval (const char *s, PRN *prn, int pos)
@@ -290,64 +254,22 @@ static void get_critical (GtkWidget *w, CalcChild *child)
     }
 }
 
-static int do_binomial_pdf (const char *s, PRN *prn)
-{
-    int k, n;
-    double p, x1, x2;
-    int err = 0;
-
-    if (sscanf(s, "pvalue 6 %lf %d %d", &p, &n, &k) != 3) {
-	err = 1;
-    } else if (p < 0.0 || p > 1.0) {
-	err = 1;
-    } else if (n <= 0) {
-	err = 1;
-    } else if (k < 0 || k > n) {
-	err = 1;
-    }
-
-    if (err) {
-	errbox(_("Invalid entry"));
-	return err;
-    }
-
-    x1 = binomial_cdf(k, n, p);
-    x2 = binomial_cdf_comp(k, n, p);
-
-    if (na(x1) || na(x2)) {
-	err = 1;
-    } else {
-	pprintf(prn, _("Binomial distribution: p = %g, %d trials"), p, n);
-	pputc(prn, '\n');
-	pputs(prn, _("x = number of 'successes'"));
-	pputs(prn, "\n\n");
-	pprintf(prn, " P(x <= %d) = %g\n", k, x1);
-	pprintf(prn, " P(x > %d)  = %g\n", k, x2);
-	if (k > 0) {
-	    pprintf(prn, " P(x = %d)  = %g", k, x1 - binomial_cdf(k-1, n, p));
-	}
-    }
-
-    return err;
-}
-
 static void get_pvalue (GtkWidget *w, CalcChild *child)
 {
     lookup_t **pval = child->calcp;
-    gint i, j;
-    int df;
+    double pv, parm[3];
+    char st = 0;
+    int i, j, df;
     double val, xx, zz;
     const gchar *tmp;
-    gchar cmd[128];
     PRN *prn;
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(child->book));
 
-    sprintf(cmd, "pvalue %d ", i + 1);
-    
     switch (i) {
 
     case NORMAL_PVAL:
+	st = 'z';
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
 	xx = getval(tmp, NULL, 0); /* value */
 	if (na(xx)) return;
@@ -362,11 +284,11 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 	    errbox(_("Invalid standard deviation"));
 	    return;
 	}
-	xx /= val; 
-	sprintf(cmd, "pvalue 1 %g", xx);
+	parm[0] = xx/val;
 	break;
 
     case T_PVAL: 
+	st = 't';
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
 	df = atoi(tmp);   /* df */
 	if (df <= 0) {
@@ -390,65 +312,77 @@ static void get_pvalue (GtkWidget *w, CalcChild *child)
 	    errbox(_("Invalid standard deviation"));
 	    return;
 	}
-	xx /= val; 
-	sprintf(cmd, "pvalue 2 %d %g", df, xx);
+	parm[0] = df;
+	parm[1] = xx / val;
 	break;
 
     case CHISQ_PVAL:
+	st = 'X';
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
 	df = atoi(tmp);   /* df */
 	if (df <= 0) {
 	    errbox(_("Invalid degrees of freedom"));
 	    return;
 	}	
-	if (printnum(cmd, tmp, 0)) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
-	if (printnum(cmd, tmp, 1)) return;
+	xx = getval(tmp, NULL, 0); /* value */
+	if (na(xx)) return;
+	parm[0] = df;
+	parm[1] = xx;
 	break;
 
     case F_PVAL:
+	st = 'F';
 	for (j=0; j<2; j++) {
 	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
 	    df = atoi(tmp);
 	    if (df <= 0) {
 		errbox(_("Invalid degrees of freedom"));
 		return;
-	    }	    
-	    if (printnum(cmd, tmp, 0)) return;
+	    }
+	    parm[j] = df;
 	}
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[2]));
-	if (printnum(cmd, tmp, 1)) return;
+	xx = getval(tmp, NULL, 0); /* value */
+	if (na(xx)) return;
+	parm[2] = xx;
 	break;
 
     case GAMMA_PVAL: 
+	st = 'G';
 	for (j=0; j<3; j++) {
 	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
-	    if (printnum(cmd, tmp, 1)) return;
+	    xx = getval(tmp, NULL, 0);
+	    if (na(xx)) return;
+	    parm[j] = xx;
 	}
 	break;
 
     case BINOMIAL_PVAL: 
+	st = 'B';
 	for (j=0; j<3; j++) {
 	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
-	    if (printnum(cmd, tmp, 1)) return;
+	    xx = getval(tmp, NULL, 0);
+	    if (na(xx)) return;
+	    parm[j] = xx;
 	}
 	break;
 
     default:
-	break;
+	errbox(_("Failed to compute p-value"));
+	return;
     }
 
     if (bufopen(&prn)) return;
 
-    if (i == BINOMIAL_PVAL) {
-	if (do_binomial_pdf(cmd, prn)) {
-	    return;
-	}
-    } else {
-	batch_pvalue(cmd, (const double **) Z, datainfo, prn, OPT_NONE);
-    }
+    pv = gretl_get_pvalue(st, parm);
 
-    view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
+    if (na(pv)) {
+	errbox(_("Failed to compute p-value"));
+    } else {
+	print_pvalue(st, parm, pv, prn);
+	view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
+    }
 }
 
 static void print_pv (PRN *prn, double p1, double p2)

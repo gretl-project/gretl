@@ -502,6 +502,7 @@ char **gretl_string_split (const char *s, int *n)
 	    return NULL;
 	}
 	S[i] = word;
+	s += k;
     }
 
     *n = m;

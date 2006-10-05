@@ -78,12 +78,11 @@ double gretl_get_cdf (char st, double *p);
 
 double gretl_get_critval (char st, double *p);
 
-double batch_pvalue (const char *str, 
-		     const double **Z, const DATAINFO *pdinfo, 
-                     PRN *prn, gretlopt opt);
+int batch_pvalue (const char *str, 
+		  double ***pZ, DATAINFO *pdinfo, 
+		  PRN *prn);
 
-double genr_get_critical (const char *line, const double **Z, 
-			  const DATAINFO *pdinfo);
+void print_pvalue (char st, double *p, double pv, PRN *prn);
 
 #endif /* PVALUES_H */
 

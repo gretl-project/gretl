@@ -102,7 +102,7 @@ static void gen_write_label (parser *p, int oldv)
 
     *tmp = '\0';
 
-    if (p->lh.v < oldv) {
+    if (p->lh.v < oldv && p->targ == VEC) {
 	int m = get_model_count();
 
 	if (m > 0) {
