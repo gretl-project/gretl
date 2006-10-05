@@ -469,8 +469,8 @@ char *gretl_word_strdup (const char *src, const char **ptr)
  * @s: the source string.
  * @n: location to receive the number of substrings.
  *
- * Parses @s into a set of zero or more space-separated 
- * substrings, and creates an array of those substrings.
+ * Parses @s into a set of zero or more substrings, separated
+ * by one or more spaces, and creates an array of those substrings. 
  * On sucessful exit, @n holds the number of substrings. 
  *
  * Returns: the allocated array or %NULL in case of failure.

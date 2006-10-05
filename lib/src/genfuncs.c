@@ -1518,3 +1518,61 @@ int push_fn_arg (fnargs *args, int type, void *p)
 
     return err;
 }
+
+int check_declarations (char ***pS, parser *p)
+{
+    char **S;
+    const char *s;
+    int i, m, n = 1;
+
+    if (p->lh.substr == NULL) {
+	p->err = E_ALLOC;
+	return 0;
+    }
+
+    s = p->lh.substr;
+    while (*s) {
+	if (*s == ',') n++;
+	s++;
+    }
+
+    S = strings_array_new(n);
+    if (S == NULL) {
+	p->err = E_ALLOC;
+	return 0;
+    }
+
+    s = p->lh.substr;
+    for (i=0; i<n; i++) {
+	S[i] = gretl_word_strdup(s, &s);
+    }
+
+    m = 0;
+    for (i=0; i<n; i++) {
+	if (varindex(p->dinfo, S[i]) < p->dinfo->v || 
+	    get_matrix_by_name(S[i]) ||
+	    get_list_by_name(S[i])) {
+	    /* variable already exists */
+	    free(S[i]);
+	    S[i] = NULL;
+	} else if (check_varname(S[i])) {
+	    /* invalid name */
+	    p->err = E_DATA;
+	} else {
+	    m++;
+	}
+    }
+
+    if (m == 0) {
+	p->err = E_DATA;
+	strcpy(gretl_errmsg, "Invalid declaration");
+    }
+
+    if (p->err) {
+	free_strings_array(S, n);
+    } else {
+	*pS = S;
+    }
+
+    return n;
+}

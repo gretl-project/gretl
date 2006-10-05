@@ -250,7 +250,6 @@ static NODE *base (parser *p, NODE *up)
     case CON: 
     case DVAR:
     case MVAR:
-    case DUM:
     case OBS:
     case LIST:
     case LOOPIDX:
@@ -261,6 +260,14 @@ static NODE *base (parser *p, NODE *up)
 		t->aux = TRANSP;
 		parser_getc(p);
 	    }
+	}
+	lex(p);
+	break;
+    case DUM:
+	if (p->idnum == DUM_NULL) {
+	    t = newempty(EMPTY);
+	} else {
+	    t = newref(p);
 	}
 	lex(p);
 	break;

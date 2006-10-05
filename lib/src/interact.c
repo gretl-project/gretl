@@ -1032,9 +1032,6 @@ static int plausible_genr_start (const char *s, CMD *cmd,
 	    while (*s == ' ') s++;
 	    if (strspn(s, ok) && check_varname(word) == 0) {
 		cmd->ci = GENR;
-		if (get_matrix_by_name(word)) {
-		    cmd->opt = OPT_M;
-		}
 	    }
 	}
     } else if (varindex(pdinfo, s) < pdinfo->v) {
@@ -3717,6 +3714,22 @@ int gretl_cmd_exec (ExecState *s, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static int could_be_varname (const char *s)
+{
+    int n = gretl_varchar_spn(s);
+    char word[VNAMELEN];
+
+    if (n > 0 && n < VNAMELEN) {
+	*word = '\0';
+	strncat(word, s, n);
+	if (check_varname(word) == 0) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 /**
  * get_command_index:
  * @line: command line.
@@ -3790,8 +3803,8 @@ int get_command_index (char *line, CMD *cmd, const DATAINFO *pdinfo)
 	fprintf(stderr, " gretl_command_number(%s) gave %d\n", cmd->word, cmd->ci);
 #endif
 	if (cmd->ci == 0) {
-	    if (plausible_genr_start(line, cmd, pdinfo)) {
-		; /* maybe OK */
+	    if (could_be_varname(line)) {
+		cmd->ci = GENR;
 	    } else if (gretl_is_user_function(line)) {
 		cmd->ci = GENR;
 		cmd->opt = OPT_U;

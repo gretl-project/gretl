@@ -39,9 +39,6 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	if (var_is_series(p->dinfo, p->lh.v)) {
 	    pprintf(prn, "Modified series %s (ID %d)",
 		    p->lh.name, p->lh.v);
-	} else if (p->flags & P_DECL) {
-	    pprintf(prn, "Added scalar %s (ID %d)",
-		    p->lh.name, p->lh.v);
 	} else {
 	    double x = (*p->Z)[p->lh.v][p->lh.obs];
 
@@ -59,10 +56,7 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 	    }
 	}
     } else if (p->targ == VEC) {
-	if (p->flags & P_DECL) {
-	    pprintf(prn, "Added series %s (ID %d)",
-		    p->lh.name, p->lh.v);
-	} else if (p->lh.v < oldv) {
+	if (p->lh.v < oldv) {
 	    pprintf(prn, "Replaced series %s (ID %d)",
 		    p->lh.name, p->lh.v);
 	} else if (p->lh.v < oldv) {
@@ -73,10 +67,8 @@ static void gen_write_message (const parser *p, int oldv, PRN *prn)
 		    p->lh.name, p->lh.v);
 	}
     } else if (p->targ == MAT) {
-	if (p->flags & P_DECL) {
-	    pprintf(prn, "Added matrix %s\n", p->lh.name);
-	} else if (p->lh.m0 != NULL && p->lh.substr != NULL && 
-		   *p->lh.substr !='\0') {
+	if (p->lh.m0 != NULL && p->lh.substr != NULL && 
+	    *p->lh.substr !='\0') {
 	    pprintf(prn, "Modified matrix %s\n", p->lh.name);
 	} else if (p->lh.m0 != NULL) {
 	    pprintf(prn, "Replaced matrix %s\n", p->lh.name);
@@ -389,7 +381,8 @@ static int gen_special_call (const char *s)
 #define gen_verbose(f) (!(f & P_PRINT) && \
                         !(f & P_DISCARD) && \
                         !(f & P_PRIVATE) && \
-                        !(f & P_UFUN))
+                        !(f & P_UFUN) && \
+                        !(f & P_DECL))
 
 int generate (const char *line, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn)

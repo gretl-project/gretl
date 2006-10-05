@@ -36,7 +36,7 @@ static void parser_init (parser *p, const char *str,
 static void printnode (const NODE *t, const parser *p);
 static NODE *eval (NODE *t, parser *p);
 
-#define TMPDATA 1
+enum { TMPDATA = 1 };
 
 static const char *typestr (int t)
 {
@@ -46,9 +46,12 @@ static const char *typestr (int t)
     case VEC:
 	return "series";
     case MAT:
+    case UMAT:
 	return "matrix";
     case STR:
 	return "string";
+    case U_ADDR:
+	return "address";
     default:
 	return "?";
     }
@@ -893,6 +896,7 @@ static void matrix_error (parser *p)
     if (p->err == 0) {
 	p->err = 1;
     }
+
     if (*gretl_errmsg != '\0') {
 	pprintf(p->prn, "%s\n", gretl_errmsg);
 	*gretl_errmsg = '\0';
@@ -1002,14 +1006,29 @@ static NODE *matrix_to_matrix_func (const gretl_matrix *m,
 }
 
 static NODE *matrix_to_matrix2_func (const gretl_matrix *m,
-				     const char *rname,
-				     int f, parser *p)
+				     NODE *r, int f,
+				     parser *p)
 {
     NODE *ret = aux_matrix_node(p);
 
     if (ret != NULL && starting(p)) {
+	const char *rname;
 
 	*gretl_errmsg = '\0';
+
+	/* on the right: address of matrix or null */
+	if (r->t == EMPTY) {
+	    rname = "null";
+	} else {
+	    r = r->v.b1.b;
+	    if (r->t == UMAT) {
+		rname = r->v.str;
+	    } else {
+		p->err = 1;
+		strcpy(gretl_errmsg, "Expected the address of a matrix");
+		return ret;
+	    }
+	}
 
 	switch (f) {
 	case QR:
@@ -2621,14 +2640,13 @@ static NODE *eval (NODE *t, parser *p)
     case QR:
     case EIGSYM:
     case EIGGEN:
-	/* matrix -> matrix functions, with auxiliary return */
+	/* matrix -> matrix functions, with indirect return */
 	if (l->t != MAT) {
 	    node_type_error(t, p, MAT, l->t);
-	} else if (r->t != UMAT && r->t != EMPTY) {
-	    /* FIXME handle "null" on right */
-	    node_type_error(t, p, UMAT, r->t);
+	} else if (r->t != U_ADDR && r->t != EMPTY) {
+	    node_type_error(t, p, U_ADDR, r->t);
 	} else {
-	    ret = matrix_to_matrix2_func(l->v.m, r->v.str, t->t, p);
+	    ret = matrix_to_matrix2_func(l->v.m, r, t->t, p);
 	}
 	break;
     case UVAR: 
@@ -3030,26 +3048,42 @@ static void parser_print_result (parser *p, PRN *prn)
 }
 #endif
 
-/* create a dummy node to implement the declaration of a
-   new variable */
+/* implement the declaration of new variables */
 
-static NODE *decl_node (parser *p)
+static void do_decl (parser *p)
 {
-    if (p->targ == NUM) {
-	return newdbl(NADBL);
-    } else if (p->targ == VEC) {
-	return newvec(p->dinfo->n, TMPDATA);
-    } else {
-	NODE *ret = newmat(TMPDATA);
+    char **S = NULL;
+    int i, v, n;
 
-	if (ret != NULL) {
-	    ret->v.m = gretl_null_matrix_new();
-	    if (ret->v.m == NULL) {
-		p->err = E_ALLOC;
+    n = check_declarations(&S, p);
+
+    if (n > 0) {
+	for (i=0; i<n && !p->err; i++) {
+	    if (S[i] != NULL) {
+		if (p->targ == MAT) {
+		    gretl_matrix *m = gretl_null_matrix_new();
+
+		    if (m == NULL) {
+			p->err = E_ALLOC;
+		    } else {
+			p->err = user_matrix_add(m, S[i]);
+		    }
+		} else {
+		    if (p->targ == NUM) {
+			p->err = dataset_add_scalar(p->Z, p->dinfo);
+		    } else if (p->targ == VEC) {
+			p->err = dataset_add_series(1, p->Z, p->dinfo);
+		    }
+		    if (!p->err) {
+			v = p->dinfo->v - 1;
+			strcpy(p->dinfo->varname[v], S[i]);
+		    }
+		} 
 	    }
 	}
-	return ret;
     }
+
+    free_strings_array(S, n);
 }
 
 /* create a dummy node to facilitate (a) printing an
@@ -3084,16 +3118,11 @@ static NODE *lhs_copy_node (parser *p)
    request to print the value of an existing variable?
 */
 
-static void parser_decl_or_print (parser *p)
+static void parser_try_print (parser *p)
 {
     if (p->lh.v == 0 && p->lh.m0 == NULL) {
 	/* varname on left is not the name of a current variable */
-	if (p->targ == UNK) {
-	    /* no type specifier: can't be a valid declaration */
-	    p->err = E_EQN;
-	} else {
-	    p->flags |= P_DECL;
-	}
+	p->err = E_EQN;
     } else if (p->lh.substr != NULL) {
 	/* could perhaps be construed as a valid print request? */
 	p->err = E_EQN;
@@ -3108,10 +3137,18 @@ static void parser_decl_or_print (parser *p)
 
 static int extract_LHS_string (const char *s, char *lhs, parser *p)
 {
-    int n = strcspn(s, "+-([= ");
-    int b = 0;
+    int n, b = 0;
 
     *lhs = '\0';
+
+    if (p->targ != UNK && strchr(s, '=') == NULL) {
+	/* variable declaration(s) ? */
+	p->flags |= P_DECL;
+	p->lh.substr = gretl_strdup(s);
+	return 0;
+    }
+
+    n = strcspn(s, "+-([= ");
 
     if (n > 0) {
 	if (*(s+n) == '[') {
@@ -3189,6 +3226,10 @@ static void pre_process (parser *p, int flags)
 	return;
     } 
 
+    if (p->flags & P_DECL) {
+	return;
+    }
+
     /* record next read position */
     p->point = s + strlen(test);
 
@@ -3261,9 +3302,9 @@ static void pre_process (parser *p, int flags)
     s = p->point;
     while (isspace(*s)) s++;
 
-    /* expression ends here: a declaration? or call to print? */
+    /* expression ends here: a call to print? */
     if (*s == '\0' || !strcmp(s, "print")) {
-	parser_decl_or_print(p);
+	parser_try_print(p);
 	return;
     }
 
@@ -3802,6 +3843,8 @@ void gen_save_or_print (parser *p, PRN *prn)
 	    }
 	} else if (p->flags & P_SCALAR) {
 	    gen_check_return_type(p);
+	} else if (p->flags & P_DECL) {
+	    do_decl(p);
 	} else if (p->Z != NULL) {
 	    save_generated_var(p, prn);
 	} 
@@ -3841,17 +3884,12 @@ int realgen (const char *s, parser *p, double ***pZ,
 	}
     }
 
-    if (p->op == INC || p->op == DEC) {
-	p->ret = lhs_copy_node(p);
+    if (p->flags & P_DECL) {
 	return p->err;
     }
 
-    if (p->flags & (P_DECL | P_PRINT)) {
-	if (p->flags & P_DECL) {
-	    p->ret = decl_node(p);
-	} else {
-	    p->ret = lhs_copy_node(p);
-	}
+    if (p->op == INC || p->op == DEC || (p->flags & P_PRINT)) {
+	p->ret = lhs_copy_node(p);
 	return p->err;
     }
 

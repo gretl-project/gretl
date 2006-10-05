@@ -1227,7 +1227,9 @@ static int real_dataset_add_series (int newvars, double *x,
 				    double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
-    int i, n = pdinfo->n, v = pdinfo->v;
+    int v = pdinfo->v;
+    int n = pdinfo->n;
+    int i, t;
     int err = 0;
 
     newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
@@ -1247,6 +1249,10 @@ static int real_dataset_add_series (int newvars, double *x,
 		newZ[v+i] = malloc(n * sizeof **newZ);
 		if (newZ[v+i] == NULL) {
 		    err = E_ALLOC;
+		} else {
+		    for (t=0; t<n; t++) {
+			newZ[v+i][t] = 0.0;
+		    }
 		}
 	    }
 	}

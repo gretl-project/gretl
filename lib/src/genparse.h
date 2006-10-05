@@ -361,6 +361,9 @@ void fn_args_init (fnargs *args);
 void fn_args_free (fnargs *args);
 int push_fn_arg (fnargs *args, int type, void *p);
 
+/* handling declarations of variables */
+int check_declarations (char ***pS, parser *p);
+
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);
 const char *gen_func_name (int i);

@@ -413,7 +413,7 @@ gretl_matrix *gretl_null_matrix_new (void)
 	    free(m);
 	    m = NULL;
 	} else {
-	    m->val[0] = NADBL;
+	    m->val[0] = 0.0;
 	}
     }
 
