@@ -128,7 +128,7 @@ static void gen_write_label (parser *p, int oldv)
  * function_from_string:
  * @s: the string to look up.
  *
- * Returns: 1 if there is a funtion corresponding
+ * Returns: 1 if there is a function corresponding
  * to the name @s, or 0 if there is no such function.
  */
 
@@ -195,10 +195,10 @@ static const char *res3[] = {
 int gretl_reserved_word (const char *str)
 {
     const char *ruses[] = {
-	N_("constant"),
-	N_("plotting variable"),
-	N_("internal variable"),
-	N_("math function")
+	N_("a constant"),
+	N_("a plotting variable"),
+	N_("an internal variable"),
+	N_("a function")
     };
     static int n1 = sizeof res1 / sizeof res1[0];
     static int n2 = sizeof res2 / sizeof res2[0];
@@ -230,7 +230,7 @@ int gretl_reserved_word (const char *str)
     }
 
     if (ret > 0) {
-	sprintf(gretl_errmsg, _("'%s' refers to a %s and may not be used as a "
+	sprintf(gretl_errmsg, _("'%s' refers to %s and may not be used as a "
 			    "variable name"), str, _(ruses[ret - 1])); 
     }
  
