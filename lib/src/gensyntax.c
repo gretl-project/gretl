@@ -29,6 +29,11 @@
 # define MDEBUG 0
 #endif
 
+enum {
+    STR_COPY,
+    STR_STEAL
+};
+
 #if SDEBUG
 static void notify (const char *s, NODE *t, parser *p)
 {

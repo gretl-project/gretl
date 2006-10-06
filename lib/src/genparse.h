@@ -194,11 +194,6 @@ enum {
     DUM_DATASET
 };
 
-enum {
-    STR_COPY,
-    STR_STEAL
-};
-
 #define MAXSTR 128
 
 #define func_symb(s) ((s > OP_MAX && s < FUNC_MAX) || \
@@ -364,6 +359,9 @@ int push_fn_arg (fnargs *args, int type, void *p);
 
 /* handling declarations of variables */
 int check_declarations (char ***pS, parser *p);
+
+/* handling sorted market strings */
+int maybe_pick_up_sorted_markers (parser *p);
 
 /* helper functions for manual, gretl.lang file */
 int gen_func_count (void);
