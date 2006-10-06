@@ -25,7 +25,7 @@
 #include "f2c.h"
 #include "../../minpack/minpack.h"  
 
-#define NLS_DEBUG 2
+#define NLS_DEBUG 0
 #define RSTEPS 4
 
 enum {

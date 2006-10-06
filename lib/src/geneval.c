@@ -480,9 +480,9 @@ static NODE *eval_pdist (NODE *n, parser *p)
 	    p->err = 1;
 	    goto disterr;
 	}
-	    
+
 	argc = dist_argc(d, n->t);
-	
+
 	if (argc != m - 1) {
 	    p->err = 1;
 	    goto disterr;
@@ -522,8 +522,7 @@ static NODE *eval_pdist (NODE *n, parser *p)
 
     disterr:
 	if (p->err) {
-	    /* FIXME error message */
-	    pprintf(p->prn, "Error in arguments to %s\n", "pvalue");
+	    sprintf(gretl_errmsg, "Error in arguments to %s\n", "pvalue");
 	}
     }
 

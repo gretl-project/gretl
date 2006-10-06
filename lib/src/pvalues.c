@@ -558,6 +558,17 @@ double log_normal_pdf (double x)
     return (x * x) / 2.0 - 0.91893853320467274178;
 }
 
+static double dparm[3];
+
+static void dparm_set (const double *p)
+{
+    int i;
+
+    for (i=0; i<3; i++) {
+	dparm[i] = p[i];
+    }
+}
+
 double gretl_get_critval (char st, double *p)
 {
     double x = NADBL;
@@ -622,13 +633,21 @@ double gretl_get_pvalue (char st, const double *p)
 	x = binomial_cdf_comp((int) p[2], (int) p[1], p[0]);
     }
 
+    if (!na(x)) {
+	dparm_set(p);
+    }
+
     return x;
 }
 
 static void 
 print_pv_string (double x, double p, PRN *prn)
 {
-    if (p == 1.0) {
+    char numstr[32];
+
+    sprintf(numstr, "%g", p);
+
+    if (!strcmp(numstr, "1")) {
 	pprintf(prn, _("area to the right of %g =~ %g\n"), x, p);
     } else {
 	pprintf(prn, _("area to the right of %g = %g\n"), x, p);
@@ -651,7 +670,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2.0 * pv, 1.0 - 2.0 * pv);
 	} else {
-	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
+	    pc = normal_cdf(p[0]);
+	    pprintf(prn, _("(to the left: %g)\n"), pc);
 	}
 	break;
 
@@ -663,7 +683,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
 	    pprintf(prn, _("(two-tailed value = %g; complement = %g)\n"), 
 		    2.0 * pv, 1.0 - 2.0 * pv);
 	} else {
-	    pprintf(prn, _("(to the left: %g)\n"), 1.0 - pv);
+	    pc = t_cdf(p[1], (int) p[0]);
+	    pprintf(prn, _("(to the left: %g)\n"), pc);
 	}
 	break;
 
@@ -673,7 +694,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case '3':
 	pprintf(prn, "\n%s(%d): ", _("Chi-square"), (int) p[0]);
 	print_pv_string(p[1], pv, prn);
-	pprintf(prn, _("(to the left: %g)\n"), chisq_cdf(p[1], p[0]));
+	pc = chisq_cdf(p[1], p[0]);
+	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
     case 'F':
@@ -681,7 +703,8 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case '4':
 	pprintf(prn, "\nF(%d, %d): ", (int) p[0], (int) p[1]);
 	print_pv_string(p[2], pv, prn);
-	pprintf(prn, _("(to the left: %g)\n"), f_cdf(p[2], (int) p[0], (int) p[1]));
+	pc = f_cdf(p[2], (int) p[0], (int) p[1]);
+	pprintf(prn, _("(to the left: %g)\n"), pc);
 	break;
 
     case 'G':
@@ -696,10 +719,10 @@ void print_pvalue (char st, double *p, double pv, PRN *prn)
     case 'B':
     case 'b':
     case '6':
-	pc = binomial_cdf(p[2], p[1], p[0]);
 	pprintf(prn, _("\nBinomial (p = %g, n = %d):"
 		       "\n Prob(x > %d) = %g\n"), 
 		p[0], (int) p[1], (int) p[2], pv);
+	pc = binomial_cdf(p[2], p[1], p[0]);
 	pprintf(prn, _(" Prob(x <= %d) = %g\n"), (int) p[2], pc);
 	if (p[2] > 0) {
 	    pprintf(prn, _(" Prob(x = %d) = %g\n"), (int) p[2],
@@ -738,11 +761,9 @@ int batch_pvalue (const char *str,
 {
     double x = NADBL;
     char line[MAXLEN];
-    double parm[3];
     char **S;
     char st;
     int i, n, m;
-    int parm_ok = 1;
     int err = 0;
     
     if (!strncmp(str, "pvalue ", 7)) {
@@ -765,13 +786,6 @@ int batch_pvalue (const char *str,
 	} else {
 	    strcat(line, S[i]);
 	    strcat(line, (i == n - 1)? ")" : ",");
-	    if (i > 0) {
-		if (numeric_string(S[i])) {
-		    parm[i-1] = dot_atof(S[i]);
-		} else {
-		    parm_ok = 0;
-		}
-	    }
 	}
     }
 
@@ -782,11 +796,7 @@ int batch_pvalue (const char *str,
     }
 
     if (!err) {
-	if (parm_ok) {
-	    print_pvalue(st, parm, x, prn);
-	} else {
-	    pprintf(prn, "\n%s = %g\n", ("p-value"), x);
-	}
+	print_pvalue(st, dparm, x, prn);
     }
 
     return err;

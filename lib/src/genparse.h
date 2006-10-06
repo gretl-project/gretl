@@ -23,7 +23,7 @@
 #include "usermat.h"
 #include "gretl_func.h"
 
-#define GENDEBUG 1
+#define GENDEBUG 0
 
 enum {
     U_NEG = 1,

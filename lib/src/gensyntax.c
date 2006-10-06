@@ -386,6 +386,9 @@ static void get_multi_args (NODE *t, parser *p)
 		p->err = push_bn_node(t, n);
 	    }
 	    if (p->sym == COM) {
+		/* in case acceptance of plain strings was set,
+		   turn it off after the first arg */
+		p->getstr = 0;
 		lex(p);
 	    } else if (p->sym == RPR) {
 		break;
