@@ -283,7 +283,8 @@ enum {
     P_COMPILE = 1 <<  7, /* just compiling tree, not evaluating */
     P_EXEC    = 1 <<  8, /* evaluating pre-built tree */ 
     P_SLICE   = 1 <<  9, /* compute matrix slice specification */
-    P_UFUN    = 1 << 10  /* user function call with no assignment */
+    P_UFUN    = 1 << 10, /* user function call with no assignment */
+    P_SORT    = 1 << 11  /* doing a simple sort of a variable */
 };
 
 struct lhinfo {

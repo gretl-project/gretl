@@ -65,4 +65,6 @@ int get_observation_number (const char *s, const DATAINFO *pdinfo);
 int get_t_from_obs_string (const char *s, const double **Z, 
 			   const DATAINFO *pdinfo);
 
+int maybe_pick_up_sorted_markers (GENERATOR *p);
+
 #endif /* GENFUNCS_H */

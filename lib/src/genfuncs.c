@@ -284,24 +284,20 @@ int resample_series (const double *x, double *y, const DATAINFO *pdinfo)
     return 0;
 }
 
-#if 0
+/* handling sorted marker strings */
 
-/* handling SortedS: */
-
-int maybe_pick_up_sorted_markers (void)
+int maybe_pick_up_sorted_markers (parser *p)
 {
-    if (!p->err && SortedS != NULL) {
-	if (genr_simple_sort(genr)) {
+    if (SortedS != NULL) {
+	if (p->flags & P_SORT) {
 	    /* "genr foo = sort(baz)" */
-	    set_sorted_markers(pdinfo, p->lhv, SortedS);
+	    set_sorted_markers(p->dinfo, p->lh.v, SortedS);
 	} else {
-	    free_strings_array(SortedS, pdinfo->n);
+	    free_strings_array(SortedS, p->dinfo->n);
 	}
+	SortedS = NULL;	
     }
-    SortedS = NULL;
 }
-
-#endif
 
 static double hp_lambda (const DATAINFO *pdinfo)
 {

@@ -5281,6 +5281,33 @@ static int shrink_dataset_to_sublist (void)
     return err;
 }
 
+static int maybe_shrink_dataset (const char *savename, int sublist)
+{
+    int shrink = 0;
+    int resp;
+
+    if (paths.datfile == savename || !strcmp(paths.datfile, savename)) {
+	shrink = 1;
+    } else {
+	resp = yes_no_dialog(_("gretl: revised data set"), 
+			     _("You have saved a reduced version of the current data set.\n"
+			       "Do you want to switch to the reduced version now?"), 0);
+	shrink = (resp == GRETL_YES);
+    }
+
+    if (shrink) {
+	if (dataset_is_subsampled()) {
+	    shrink_dataset_to_sample();
+	}
+	if (sublist) {
+	    shrink_dataset_to_sublist();
+	}
+	if (paths.datfile != savename) {
+	    strcpy(paths.datfile, savename);
+	}
+    }	
+}
+
 #define DATA_EXPORT(o) (o & (OPT_M | OPT_R | OPT_G | OPT_A | OPT_C | OPT_D | OPT_J))
 
 /* returning 1 here means that we'll automatically overwrite
@@ -5379,15 +5406,9 @@ int do_store (char *savename, gretlopt opt)
     /* record that data have been saved, etc. */
     if (!DATA_EXPORT(opt)) {
 	mkfilelist(FILE_LIST_DATA, savename);
-	if (paths.datfile == savename || !strcmp(paths.datfile, savename)) {
-	    if (dataset_is_subsampled()) {
-		shrink_dataset_to_sample();
-	    }
-	    if (sublist) {
-		shrink_dataset_to_sublist();
-	    }
-	}	    
-	if (paths.datfile != savename) {
+	if (dataset_is_subsampled() || sublist) {
+	    maybe_shrink_dataset(savename, sublist);
+	} else if (paths.datfile != savename) {
 	    strcpy(paths.datfile, savename);
 	}
 	data_status = (HAVE_DATA | USER_DATA);

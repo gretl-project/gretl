@@ -3867,6 +3867,19 @@ void gen_cleanup (parser *p)
     }
 }
 
+static void maybe_set_simple_sort (parser *p)
+{
+    NODE *t = p->tree;
+
+    if (t != NULL && (t->t == SORT || t->t == DSORT)) {
+	NODE *l = t->v.b1.b;
+
+	if (l->t == UVAR) {
+	    p->flags |= P_SORT;
+	}
+    }
+}
+
 int realgen (const char *s, parser *p, double ***pZ, 
 	     DATAINFO *pdinfo, PRN *prn, int flags)
 {
@@ -3913,6 +3926,11 @@ int realgen (const char *s, parser *p, double ***pZ,
 
     if (flags & P_COMPILE) {
 	return p->err;
+    }
+
+    /* set "simple sort" flag here if relevant */
+    if (!p->err) {
+	maybe_set_simple_sort(p);
     }
 
  starteval:
