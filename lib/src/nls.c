@@ -25,7 +25,7 @@
 #include "f2c.h"
 #include "../../minpack/minpack.h"  
 
-#define NLS_DEBUG 0
+#define NLS_DEBUG 2
 #define RSTEPS 4
 
 enum {
@@ -2204,12 +2204,8 @@ void nls_spec_set_t1_t2 (nls_spec *spec, int t1, int t2)
     }
 }
 
-#define genr_line(s) (!strncmp(s, "series", 6) || \
-                      !strncmp(s, "scalar", 6) || \
-                      !strncmp(s, "genr", 4))
-
-#define param_line(s) (!strncmp(s, "deriv", 5) || \
-                       !strncmp(s, "params", 6))
+#define param_line(s) (!strncmp(s, "deriv ", 6) || \
+                       !strncmp(s, "params ", 7))
 
 /**
  * nls_parse_line:
@@ -2245,15 +2241,20 @@ int nls_parse_line (int ci, const char *line, const double **Z,
     pspec = &private_spec;
     pspec->ci = ci;
 
-    if (genr_line(line)) {
-	err = nls_spec_add_aux(pspec, line);
+    if (!strncmp(line, "nls ", 4) || !strncmp(line, "mle ", 4)) {
+	if (pspec->nlfunc != NULL) {
+	    clear_nls_spec(pspec);
+	}
+	err = nls_spec_set_regression_function(pspec, line, pdinfo);
+	if (!err) {
+	    nls_spec_set_t1_t2(pspec, pdinfo->t1, pdinfo->t2);
+	}	
     } else if (param_line(line)) {
 	if (pspec->nlfunc == NULL) {
 	    strcpy(gretl_errmsg, _("No regression function has been specified"));
 	    err = E_PARSE;
 	} else {
-	    if (*line == 'd') {
-		/* "deriv" */
+	    if (!strncmp(line, "deriv ", 6)) {
 		if (pspec->mode != ANALYTIC_DERIVS && pspec->params != NULL) {
 		    strcpy(gretl_errmsg, _("You cannot supply both a \"params\" "
 			   "line and analytical derivatives"));
@@ -2273,14 +2274,7 @@ int nls_parse_line (int ci, const char *line, const double **Z,
 	    }
 	}
     } else {
-	/* do we already have an nls specification under way? */
-	if (pspec->nlfunc != NULL) {
-	    clear_nls_spec(pspec);
-	}
-	err = nls_spec_set_regression_function(pspec, line, pdinfo);
-	if (!err) {
-	    nls_spec_set_t1_t2(pspec, pdinfo->t1, pdinfo->t2);
-	}
+	err = nls_spec_add_aux(pspec, line);
     }
 
     return err;

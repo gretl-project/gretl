@@ -769,10 +769,16 @@ int display_model_table (int gui)
     for (j=0; j<n_models; j++) {
 	char modhd[32];
 
-	if (table_models[j] != NULL) {
-	    sprintf(modhd, _("Model %d"), table_models[j]->ID);
-	    print_centered(modhd, 12, prn);
+	if (table_models[j] == NULL) {
+	    continue;
 	}
+	if (table_models[j]->name != NULL) {
+	    *modhd = '\0';
+	    strncat(modhd, table_models[j]->name, 31);
+	} else {
+	    sprintf(modhd, _("Model %d"), table_models[j]->ID);
+	}
+	print_centered(modhd, 12, prn);
     }
     pputc(prn, '\n');
     
@@ -859,12 +865,19 @@ static int tex_print_model_table (PRN *prn)
     pputs(prn, "}\n");
 
     for (j=0; j<n_models; j++) {
-	char modhd[32];
+	char modhd[48];
 
 	if (table_models[j] == NULL) {
 	    continue;
 	}
-	sprintf(modhd, I_("Model %d"), table_models[j]->ID);
+	if (table_models[j]->name != NULL) {
+	    *modhd = '\0';
+	    strncat(modhd, table_models[j]->name, 16);
+	    tex_escape(tmp, modhd);
+	    strcpy(modhd, tmp);
+	} else {
+	    sprintf(modhd, I_("Model %d"), table_models[j]->ID);
+	}
 	pprintf(prn, " & %s ", modhd);
     }
     pputs(prn, "\\\\ ");
@@ -965,8 +978,15 @@ static int rtf_print_model_table (PRN *prn)
     for (j=0; j<n_models; j++) {
 	char modhd[32];
 
-	if (table_models[j] == NULL) continue;
-	sprintf(modhd, I_("Model %d"), table_models[j]->ID);
+	if (table_models[j] == NULL) {
+	    continue;
+	}
+	if (table_models[j]->name != NULL) {
+	    *modhd = '\0';
+	    strncat(modhd, table_models[j]->name, 31);
+	} else {
+	    sprintf(modhd, I_("Model %d"), table_models[j]->ID);
+	}
 	pprintf(prn, "\\qc %s\\cell ", modhd);
     }
     pputs(prn, "\\intbl \\row\n");
