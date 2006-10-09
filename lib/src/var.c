@@ -3090,6 +3090,10 @@ double *gretl_VAR_get_series (const GRETL_VAR *var, const DATAINFO *pdinfo,
     return x;    
 }
 
+#define vecm_matrix(i) (i == M_JALPHA || i == M_JBETA || \
+                        i == M_JVBETA || i == M_JS00 || \
+                        i == M_JS11 || i == M_JS01)
+
 gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx, 
 				    int *err)
 {
@@ -3107,7 +3111,7 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 	src = var->A;
     } else if (idx == M_VCV) {
 	src = var->S;
-    } else if (idx == M_JALPHA || idx == M_JBETA || idx == M_JVBETA ) {
+    } else if (vecm_matrix(idx)) {
 	if (var->jinfo != NULL) {
 	    switch (idx) {
 	    case M_JALPHA: 
@@ -3118,6 +3122,15 @@ gretl_matrix *gretl_VAR_get_matrix (const GRETL_VAR *var, int idx,
 		break;
 	    case M_JVBETA: 
 		src = var->jinfo->Bvar;
+		break;
+	    case M_JS00:
+		src = var->jinfo->Suu;
+		break;
+	    case M_JS11:
+		src = var->jinfo->Svv;
+		break;
+	    case M_JS01:
+		src = var->jinfo->Suv;
 		break;
 	    }
 	}

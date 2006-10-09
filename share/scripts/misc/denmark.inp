@@ -12,4 +12,4 @@ matrix beta = $jbeta
 matrix Pi = alpha*beta'
 
 print "Restricted long-run matrix"
-matrix Pi
+Pi
