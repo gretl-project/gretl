@@ -4,13 +4,14 @@
 \section{Introduction}
 \label{matrix-intro}
 
-As of version 1.5.1, gretl offers the facility of creating and
-manipulating user-defined matrices.  This is currently experimental.
+Since version 1.5.1, gretl has offered the facility of creating and
+manipulating user-defined matrices.  There are a few changes in this
+respect in version 1.6.1.
 
 \section{Creating matrices}
 \label{matrix-create}
 
-Matrices can be created in any one of four ways:
+Matrices can be created using these four approaches:
 
 \begin{enumerate}
 \item By direct specification of the scalar values that compose the
@@ -24,7 +25,7 @@ Matrices can be created in any one of four ways:
   special functions.
 \end{enumerate}
 
-These methods cannot be mixed in the specification of a given matrix.
+These methods may be combined in the specification of a given matrix.
 Examples of each follow.
 
 To specify a matrix \textit{directly in terms of scalars}, the syntax
@@ -83,11 +84,9 @@ This builds a matrix using all the series in the current dataset,
 apart from the constant (variable 0).
 
 You can create new matrices, or replace existing matrices, by means of
-various transformations, in a manner similar to the \texttt{genr}
-command for scalars and data series.  To get a matrix result, however,
-the command must start with the keyword \texttt{matrix}, not
-\texttt{genr}.  The relevant mechanisms are discussed in the next
-several sections.
+various transformations, just as with the \texttt{genr} command for
+scalars and data series.  The relevant mechanisms are discussed in the
+next several sections.
 
 \tip{Names of matrices must satisfy the same requirements as names of
   gretl variables in general: the name can be no longer than 15
@@ -337,8 +336,9 @@ a matrix are:
 \end{tabular}
 \end{center}
 
-The dimensions \textsl{m} and \textsl{n} may be given numerically, or
-by reference to pre-existing scalar variables, as in
+The dimensions \textsl{m} and \textsl{n} may be given numerically, 
+by reference to pre-existing scalar variables, or as expressions that
+evaluate to scalars.  
 %
 \begin{code}
 scalar m = 4
@@ -367,7 +367,7 @@ one or two matrices are:
 The syntax for these functions is of the form
 %
 \begin{textcode}
-matrix B = func(\textsl{A}, \textsl{C})
+matrix B = func(\textsl{A}, \&\textsl{C})
 \end{textcode}
 %
 The first argument, \ttsl{A}, represents the input data, that is, the
@@ -375,17 +375,15 @@ matrix whose decomposition or analysis is required.  This must be
 given as the name of an existing matrix; a compound expression that
 evaluates to a matrix is not accepted in this context.
 
-The second argument, \ttsl{C}, may be either the name of a matrix, in
-which case an auxiliary result is written to that matrix, or the
-keyword \texttt{null}, in which case the auxiliary result is not
-produced, or is discarded.
+The second argument must be either the name of an existing matrix
+preceded by \verb+&+ (to indicate the ``address'' of the matrix in
+question), in which case an auxiliary result is written to that
+matrix, or the keyword \texttt{null}, in which case the auxiliary
+result is not produced, or is discarded.
 
-In case the name of a matrix is given as the second argument, this
-matrix does not have to be previously defined; a new matrix of this
-name will be created.  If a matrix of the given name already exists,
-it will be over-written with the auxiliary result.  (It is not
-required that the existing matrix, if any, be of the right dimensions
-to receive the result.)
+In case a non-null second argument is given, the specified matrix will
+be over-written with the auxiliary result.  (It is not required that
+the existing matrix be of the right dimensions to receive the result.)
 
 The \texttt{qrdecomp} function computes the QR decomposition of an $m
 \times n$ matrix $A$: $A = QR$, where $Q$ is an $m \times n$
@@ -394,7 +392,8 @@ The matrix $Q$ is returned directly, while $R$ can be retrieved via
 the second argument.  Here are two examples:
 %
 \begin{code}
-matrix Q = qrdecomp(M, R)
+matrix R
+matrix Q = qrdecomp(M, &R)
 matrix Q = qrdecomp(M, null)
 \end{code}
 %
@@ -408,7 +407,8 @@ $n$; if the eigenvectors are required, they are returned in an $n
 \times n$ matrix.  For example:
 %
 \begin{code}
-matrix E = eigensym(M, V)
+matrix V
+matrix E = eigensym(M, &V)
 matrix E = eigensym(M, null)
 \end{code}
 %
@@ -504,11 +504,12 @@ the name of a matrix & selects the specified rows \\
 \end{center}
 
 With regard to the second option, the integer value can be given
-numerically, or as the name of an existing scalar variable.  With the
-last option, the index matrix given in the \textsl{rows} field must be
-either $p\times 1$ or $1\times p$, and should contain integer values
-in the range 1 to $n$, where $n$ is the number of rows in the matrix
-from which the selection is to be made.
+numerically, as the name of an existing scalar variable, or as an
+expression that evaluates to a scalar.  With the last option, the
+index matrix given in the \textsl{rows} field must be either $p\times
+1$ or $1\times p$, and should contain integer values in the range 1 to
+$n$, where $n$ is the number of rows in the matrix from which the
+selection is to be made.
 
 The \textsl{cols} specification works in the same way, \textit{mutatis
   mutandis}.  Here are some examples.
@@ -664,15 +665,15 @@ other than as described in section~\ref{matrix-create-series}.
   matrix y = { price }
   matrix b = inv(X'*X) * X'*y
   printf "estimated coefficient vector\n"
-  matrix b
+  b
   matrix uh = y - X*b
   scalar SSR = uh'*uh
   scalar s2 = SSR / (rows(X) - rows(b))
   matrix V = s2 * inv(X'*X)
-  matrix V
+  V
   matrix se = sqrt(diag(V))
   printf "estimated standard errors\n"
-  matrix se
+  se
   # compare with built-in function
   ols price const sqft --vcv
 \end{code}
