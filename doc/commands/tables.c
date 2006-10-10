@@ -6,6 +6,7 @@
 */
 
 #include "genmain.c" /* need access to some private stuff */
+#include "monte_carlo.h"
 
 int sort_strings (const void *a, const void *b)
 {

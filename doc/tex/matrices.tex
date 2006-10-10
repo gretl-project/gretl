@@ -11,7 +11,7 @@ respect in version 1.6.1.
 \section{Creating matrices}
 \label{matrix-create}
 
-Matrices can be created using these four approaches:
+Matrices can be created using these four methods:
 
 \begin{enumerate}
 \item By direct specification of the scalar values that compose the
@@ -25,9 +25,6 @@ Matrices can be created using these four approaches:
   special functions.
 \end{enumerate}
 
-These methods may be combined in the specification of a given matrix.
-Examples of each follow.
-
 To specify a matrix \textit{directly in terms of scalars}, the syntax
 is, for example:
 
@@ -39,9 +36,10 @@ The matrix is defined by rows; the elements on each row are separated
 by commas and the rows are separated by semi-colons.  The whole
 expression must be wrapped in braces.  Spaces within the braces are
 not significant.  The above expression defines a $2\times3$ matrix.
-Each element must be either a numerical value or the name of a
-pre-existing scalar variable.  Directly after the closing brace you
-can append a single quote (\texttt{'}) to obtain the transpose.
+Each element should be a numerical value, the name of a scalar
+variable, or an expression that evaluates to a scalar.  Directly after
+the closing brace you can append a single quote (\texttt{'}) to obtain
+the transpose.
 
 To specify a matrix \textit{in terms of data series} the syntax is,
 for example,
@@ -50,10 +48,17 @@ for example,
 matrix A = { x1, x2, x3 }
 \end{code}
 %
-where the names of the variables are separated by commas.  By default,
-each variable occupies a column (and there can only be one variable
-per column).  The range of data values included in the matrix depends
-on the current setting of the sample range.
+where the names of the variables are separated by commas.  Besides
+names of existing variables, you can use expressions that evaluate to
+a series.  For example, given a series \texttt{x} you could do
+%
+\begin{code}
+matrix A = { x, x^2 }
+\end{code}
+%
+By default, each variable occupies a column (and there can only be one
+variable per column).  The range of data values included in the matrix
+depends on the current setting of the sample range.
 
 Please note that while gretl's built-in statistical functions are
 capable of handling missing values, the matrix arithmetic functions
@@ -84,9 +89,8 @@ This builds a matrix using all the series in the current dataset,
 apart from the constant (variable 0).
 
 You can create new matrices, or replace existing matrices, by means of
-various transformations, just as with the \texttt{genr} command for
-scalars and data series.  The relevant mechanisms are discussed in the
-next several sections.
+various transformations just as with scalars and data series.  The
+relevant mechanisms are discussed in the next several sections.
 
 \tip{Names of matrices must satisfy the same requirements as names of
   gretl variables in general: the name can be no longer than 15
@@ -199,8 +203,8 @@ The following functions are available for \textit{element-by-element
 \texttt{sin}, \texttt{cos}, \texttt{tan}, \texttt{atan}, \texttt{int},
 \texttt{abs}, \texttt{sqrt}, \texttt{dnorm}, \texttt{cnorm},
 \texttt{qnorm}, \texttt{gamma} and \texttt{lngamma}.  These functions
-have the same meanings as in \texttt{genr}.  For example, if a matrix
-\texttt{A} is already defined, then
+have the effects documented in relation to the \texttt{genr} command.
+For example, if a matrix \texttt{A} is already defined, then
 %
 \begin{code}
 matrix B = sqrt(A)
@@ -398,7 +402,11 @@ matrix Q = qrdecomp(M, null)
 \end{code}
 %
 In the first example, the triangular $R$ is saved as \texttt{R}; in
-the second, $R$ is discarded.
+the second, $R$ is discarded.  The first line above shows an example
+of a ``simple declaration'' of a matrix: \texttt{R} is
+declared to be a matrix variable but is not given any explicit value.
+In this case the variable is initialized as a $1\times 1$ matrix whose
+single element equals zero.
 
 The function \texttt{eigensym} computes the eigenvalues, and
 optionally the right eigenvectors, of a symmetric $n \times n$ matrix.
@@ -557,28 +565,22 @@ matrix A[diag] = d
 
 Matrices share a common namespace with data series and scalar
 variables.  In other words, no two objects of any of these types can
-have the same name.  In case of potential collisions --- where an
-object of one type already exists with a certain name, and you try to
-create an object of a different type with the same name --- gretl
-follows the policy of allowing you to overwrite the existing object, 
-with the exception that \textit{data series are protected and cannot be
-over-written by scalars or matrices}.  Some implications of this
-policy are noted below.
+have the same name.  It is an error to attempt to change the type of
+an existing variable, for example:
 %
-\begin{itemize}
-\item If a series called, say, \texttt{X}, exists and you try to
-  create a matrix named \texttt{X}, an error is flagged.
-\item If you create a series named \texttt{X} --- using the
-  \texttt{genr} or \texttt{series} commands, or by reading from a data
-  file, or by importation from a database --- then any pre-existing
-  matrix named \texttt{X} is automatically deleted.
-\item If you create a scalar named \texttt{X}, any existing matrix
-  \texttt{X} is deleted.
-\end{itemize}
+\begin{code}
+scalar x = 3
+matrix x = ones(2,2) # wrong!
+\end{code}
 %
-If you really want to create a matrix using a name that is currently
-assigned to a data series, you must first delete the data series using
-the \texttt{delete} command or rename it using \texttt{rename}.
+It is possible, however, to delete or rename an existing variable then
+reuse the name for a variable of a different type:
+\begin{code}
+scalar x = 3
+delete x
+matrix x = ones(2,2) # OK
+\end{code}
+
 
 \section{Creating a data series from a matrix}
 \label{matrix-create-series}
@@ -615,46 +617,32 @@ represents the starting observation of the sample range.  Any values
 in the series that are not assigned from the matrix are set to the
 missing code.
  
-Please note that when forming a series in this way, the right-hand
-side of the \texttt{series} command can be \textit{only} the name of a
-matrix, or the name of a matrix plus a selection expression.  There is
-no provision for matrix calculation in this context.
 
-\section{Deleting matrices}
+\section{Deleting a matrix}
 \label{matrix-delete}
 
-To delete a matrix, use the syntax
+To delete a matrix, just write
 %
 \begin{code}
-matrix A delete
+delete M
 \end{code}
 %
-where \texttt{A} is the name of the matrix to be deleted.
+where \texttt{M} is the name of the matrix to be deleted.
 
-\section{Further points and example}
+\section{Printing a matrix}
+
+To print a matrix, simply give the name of the matrix in question
+on a line by itself:
+\begin{code}
+matrix M = mnormal(100,2)
+M
+\end{code}
+
+\section{Example: OLS using matrices}
 \label{matrix-example}
 
 Example \ref{examp-matrix} shows how matrix methods can be used to
-replicate gretl's built-in OLS functionality.  The example illustrates
-various additional points.  
-
-First, if you just write \texttt{matrix A}, where a matrix \texttt{A}
-is already defined, the effect is to print the matrix.
-
-Second, there is some ``cross over'' between matrix expressions and
-\texttt{genr} (actually the synonym \texttt{scalar} is used in the
-script).  In a \texttt{genr} formula, you can use matrix functions
-that produce scalar results (e.g.\ \texttt{rows()}).  You can also
-reference $1\times 1$ matrices as if they were ordinary scalars.  And
-in a \texttt{matrix} formula you can reference scalar variables where
-appropriate.  
-
-Note, however, that ordinary data series cannot be used in
-\texttt{matrix} expressions, other than in the special case of
-defining a matrix from a list of series as in
-section~\ref{matrix-create} above.  Similarly, matrices larger than
-$1\times 1$ cannot be used in the generation of a data series,
-other than as described in section~\ref{matrix-create-series}.
+replicate gretl's built-in OLS functionality.
 
 \begin{script}[htbp]
   \caption{OLS via matrix methods}
