@@ -2512,27 +2512,9 @@ int gretl_loop_exec (ExecState *s, double ***pZ, DATAINFO **ppdinfo)
 #endif
 	    strcpy(errline, line);
 
-	    if (compile_level > 0) {
-		/* FIXME is the following dead code? */
-		/* compiling loop inside function, inside loop */
-		fprintf(stderr, "*** in loop, compile_level %d\n", compile_level);
-		err = get_command_index(line, cmd, pdinfo);
-		if (!err) {
-		    err = gretl_loop_append_line(s, pZ, pdinfo);
-		}
-		if (err) {
-		    break;
-		} else if (s->cmd->ci != ENDLOOP) {
-		    continue;
-		}
-	    }
-
-	    if (!err) {
-		err = make_dollar_substitutions(line, loop, 
-						(const double **) *pZ,
-						pdinfo);
-	    }
-
+	    err = make_dollar_substitutions(line, loop, 
+					    (const double **) *pZ,
+					    pdinfo);
 	    if (err) {
 		break;
 	    }

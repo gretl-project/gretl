@@ -1208,7 +1208,7 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar *s,
 	return 0;
     }
 
-    while (1) {
+    while (!found) {
 	got = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
 	if (g_ascii_strcasecmp(got, s) == 0) {
 	    found = 1;
@@ -1245,7 +1245,7 @@ static void find_in_text (GtkWidget *widget, gpointer data)
     gboolean found;
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
-    if (*needle == '\0') {
+    if (needle == NULL || *needle == '\0') {
 	return;
     }
 
@@ -1256,24 +1256,33 @@ static void find_in_text (GtkWidget *widget, gpointer data)
     }
 }
 
-static void find_in_listbox (GtkWidget *w, gpointer data)
+static void get_tree_model_haystack (GtkTreeModel *mod, GtkTreeIter *iter, int col,
+				     char *haystack)
 {
-    int found = 0, wrapped = 0, minvar = 0;
-    gchar *tmp; 
+    gchar *tmp;
+
+    gtk_tree_model_get(mod, iter, col, &tmp, -1);
+    strcpy(haystack, tmp);
+    lower(haystack);
+    g_free(tmp);
+}
+
+static void find_in_listbox (GtkWidget *w, gpointer p)
+{
+    windata_t *win = g_object_get_data(G_OBJECT(p), "windat");
+    int minvar, wrapped = 0;
     char haystack[MAXLEN];
-    windata_t *win;
     gchar *pstr;
     GtkTreeModel *model;
-    GtkTreeIter iter, iterhere;
+    GtkTreeIter iter, iterbak;
+    int found = -1;
 
-    win = (windata_t *) g_object_get_data(G_OBJECT(data), "windat");
-    if (win == mdata) {
-	/* searching in the main gretl window: start on line 1, not 0 */
-	minvar = 1;
-    }
+    /* if searching in the main gretl window, start on line 1 */
+    minvar = (win == mdata)? 1 : 0;
 
-    if (needle) {
+    if (needle != NULL) {
 	g_free(needle);
+	needle = NULL;
     }
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
@@ -1283,36 +1292,35 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 
     /* try searching downward from the current line plus one */
     pstr = g_strdup_printf("%d", win->active_var);
-    gtk_tree_model_get_iter_from_string (model, &iter, pstr);
+    gtk_tree_model_get_iter_from_string(model, &iter, pstr);
     g_free(pstr);
-    iterhere = iter;
+    iterbak = iter;
     if (!gtk_tree_model_iter_next(model, &iter)) {
-	iter = iterhere;
+	iter = iterbak;
     }
 
  search_wrap:
 
-    while (1) {
+    while (found < 0) {
 	/* try looking in column 1 first */
-	gtk_tree_model_get(model, &iter, 1, &tmp, -1);
-	strcpy(haystack, tmp);
-	g_free(tmp);
-	lower(haystack);
+	get_tree_model_haystack(model, &iter, 1, haystack);
+
 	found = look_for_string(haystack, needle, 0);
-	if (found >= 0) break;
-	if (win == mdata) {
-	    /* then column 2 */
-	    gtk_tree_model_get(model, &iter, 2, &tmp, -1);
-	} else {
-	    /* then column 0 */
-	    gtk_tree_model_get(model, &iter, 0, &tmp, -1);
+
+	if (found < 0) {
+	    if (win == mdata) {
+		/* then column 2 */
+		get_tree_model_haystack(model, &iter, 2, haystack);
+	    } else {
+		/* then column 0 */
+		get_tree_model_haystack(model, &iter, 0, haystack);
+	    }
+	    found = look_for_string(haystack, needle, 0);
 	}
-	strcpy(haystack, tmp);
-	g_free(tmp);
-	lower(haystack);
-	found = look_for_string(haystack, needle, 0);
-	if (found >= 0) break;
-	if (!gtk_tree_model_iter_next(model, &iter)) break;
+
+	if (!gtk_tree_model_iter_next(model, &iter)) {
+	    break;
+	}
     }
 
     if (found < 0 && win->active_var > minvar && !wrapped) {
@@ -1335,7 +1343,9 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 				 path, NULL, FALSE);
 	win->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
-	if (wrapped) infobox(_("Search wrapped"));
+	if (wrapped) {
+	    infobox(_("Search wrapped"));
+	}
     } else {
 	infobox(_("String was not found."));
     }
@@ -1366,12 +1376,12 @@ static void parent_find (GtkWidget *finder, windata_t *caller)
     }
 }
 
-static void find_string_dialog (void (*findfunc)(), gpointer data)
+static void find_string_dialog (void (*findfunc)(), gpointer p)
 {
+    windata_t *mydat = (windata_t *) p;
     GtkWidget *label;
     GtkWidget *button;
     GtkWidget *hbox;
-    windata_t *mydat = (windata_t *) data;
 
     if (find_window != NULL) {
 	g_object_set_data(G_OBJECT(find_window), "windat", mydat);
@@ -1393,10 +1403,9 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
     gtk_widget_show (label);
     find_entry = gtk_entry_new();
 
-    if (needle) {
+    if (needle != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(find_entry), needle);
-	gtk_editable_select_region(GTK_EDITABLE(find_entry), 0, 
-				   strlen(needle));
+	gtk_editable_select_region(GTK_EDITABLE(find_entry), 0, -1);
     }
 
     g_signal_connect(G_OBJECT(find_entry), "activate", 
@@ -1419,7 +1428,7 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 		     G_CALLBACK(cancel_find), find_window);
     gtk_widget_show(button);
 
-    /* find button -- make this the default */
+    /* find button */
     button = standard_button(GTK_STOCK_FIND);
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_container_add(GTK_CONTAINER(hbox), button);
