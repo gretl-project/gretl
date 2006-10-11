@@ -180,6 +180,7 @@ enum {
     ABSENT,
     INC,
     DEC,
+    QUERY,
     UNK
 };
 
@@ -242,6 +243,10 @@ struct branch2 {
     NODE *l, *r; 
 };
 
+struct branch3 {
+    NODE *l, *m, *r; 
+};
+
 struct branchn {
     int n_nodes;
     NODE **n;
@@ -250,6 +255,7 @@ struct branchn {
 union val {
     struct branch1 b1; 
     struct branch2 b2; 
+    struct branch3 b3; 
     struct branchn bn;
     int idnum;
     char *str;

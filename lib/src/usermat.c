@@ -512,6 +512,7 @@ static int matrix_replace_submatrix (gretl_matrix *M,
     int sc = gretl_matrix_cols(S);
     int *rslice = NULL;
     int *cslice = NULL;
+    int sscalar = 0;
     int err = 0;
 
     if (sr > mr || sc > mc) {
@@ -533,24 +534,31 @@ static int matrix_replace_submatrix (gretl_matrix *M,
     fprintf(stderr, "M = %d x %d, S = %d x %d\n", mr, mc, sr, sc);
 #endif
 
-    if (rslice != NULL && rslice[0] != sr) {
+    if (sr == 1 && sc == 1) {
+	sscalar = 1;
+	sr = (rslice == NULL)? mr : rslice[0];
+	sc = (cslice == NULL)? mc : cslice[0];
+    } else if (rslice != NULL && rslice[0] != sr) {
 	err = E_NONCONF;
     } else if (cslice != NULL && cslice[0] != sc) {
 	err = E_NONCONF;
     }
 
     if (!err) {
-	int i, j, k, l;
+	int i, j, l, k = 0;
 	int mi, mj;
 	double x;
 
-	k = 0;
+	x = (sscalar)? S->val[0] : 0.0;
+
 	for (i=0; i<sr; i++) {
 	    mi = (rslice == NULL)? k++ : rslice[i+1] - 1;
 	    l = 0;
 	    for (j=0; j<sc; j++) {
 		mj = (cslice == NULL)? l++ : cslice[j+1] - 1;
-		x = gretl_matrix_get(S, i, j);
+		if (!sscalar) {
+		    x = gretl_matrix_get(S, i, j);
+		}
 		gretl_matrix_set(M, mi, mj, x);
 	    }
 	}

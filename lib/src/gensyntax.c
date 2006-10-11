@@ -171,7 +171,30 @@ static NODE *newb2 (int t, NODE *l, NODE *r)
     return n;
 }
 
-/* node for n > 2 subnodes */
+/* node for ternary operator */
+
+static NODE *newb3 (int t, NODE *l, NODE *m, NODE *r)
+{  
+    NODE *n = malloc(sizeof *n);
+
+#if MDEBUG
+    fprintf(stderr, "newb3:  allocated node at %p (type = %d)\n", 
+	    (void *) n, t);
+#endif
+
+    if (n != NULL) {
+	n->t = t;
+	n->v.b3.l = l;
+	n->v.b3.m = m;
+	n->v.b3.r = r;
+	n->tmp = 0;
+	n->aux = 0;
+    }
+
+    return n;
+}
+
+/* node for unknown number of subnodes */
 
 static NODE *newbn (int t)
 {  
@@ -866,7 +889,7 @@ static NODE *expr1 (parser *p)
     return t;
 }
 
-NODE *expr (parser *p)
+NODE *expr0 (parser *p)
 {  
     NODE *t;
 
@@ -879,6 +902,35 @@ NODE *expr (parser *p)
 	if (t != NULL) {
 	    lex(p);
 	    t->v.b2.r = expr1(p);
+	}
+    }
+
+#if SDEBUG
+    notify("expr0", t, p);
+#endif
+
+    return t;
+}
+
+NODE *expr (parser *p)
+{  
+    NODE *t;
+
+    if (p->err || (t = expr0(p)) == NULL) {
+	return NULL;
+    }
+
+    while (!p->err && p->sym == QUERY) {
+	t = newb3(p->sym, t, NULL, NULL);
+	if (t != NULL) {
+	    lex(p);
+	    t->v.b3.m = expr0(p);
+	    if (p->sym == COL) {
+		lex(p);
+		t->v.b3.r = expr0(p);
+	    } else {
+		expected_symbol_error(':', p);
+	    }
 	}
     }
 
@@ -904,7 +956,3 @@ NODE *msl_node_direct (parser *p)
 
     return t;
 }
-
-	
-
-

@@ -2137,6 +2137,36 @@ static NODE *matrix_def_node (NODE *t, parser *p)
     return ret;
 }
 
+static NODE *eval_query (NODE *t, parser *p)
+{
+    int x = 0;
+
+    /* FIXME this is just experimental */
+
+    if (t->v.b3.l->t != NUM) {
+	NODE *e = eval(t->v.b3.l, p);
+
+	if (e->t != NUM) {
+	    p->err = E_TYPES;
+	} else {
+	    x = e->v.xval;
+	}
+	/* free_tree(e, "Eval_query"); */
+    } else {
+	x = t->v.b3.l->v.xval;
+    }
+
+    if (!p->err) {
+	if (x) {
+	    return eval(t->v.b3.m, p);
+	} else {
+	    return eval(t->v.b3.r, p);
+	}
+    }
+
+    return NULL;
+}
+
 #define dvar_scalar(i) (i <= R_TEST_PVAL)
 #define dvar_series(i) (i == R_INDEX)
 
@@ -2706,6 +2736,9 @@ static NODE *eval (NODE *t, parser *p)
 	break;
     case UFUN:
 	ret = eval_ufunc(t, p);
+	break;
+    case QUERY:
+	ret = eval_query(t, p);
 	break;
     default: 
 	printf("EVAL: weird node %s\n", getsymb(t->t, NULL));

@@ -297,6 +297,8 @@ int maybe_pick_up_sorted_markers (parser *p)
 	}
 	SortedS = NULL;	
     }
+
+    return 0;
 }
 
 static double hp_lambda (const DATAINFO *pdinfo)

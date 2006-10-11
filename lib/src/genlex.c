@@ -859,6 +859,10 @@ void lex (parser *p)
 	    p->sym = COL;
 	    parser_getc(p);
 	    return;
+        case '?': 
+	    p->sym = QUERY;
+	    parser_getc(p);
+	    return;
 	case '.':
 	    if (*p->point == '$') {
 		p->sym = DOT;
@@ -1021,6 +1025,8 @@ const char *getsymb (int t, const parser *p)
 	return ";";
     case COL: 
 	return ":";
+    case QUERY: 
+	return "?";
     case LAG:
 	return "lag";
     default: 

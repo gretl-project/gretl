@@ -17,7 +17,7 @@ HREF="./css-gretl.html">
 <p>Gretl depends on various libraries, as well as the program
 <tt>gnuplot</tt>, for parts of its functionality.  The table below
 gives a summary of these dependencies.  The link on the left leads to
-the main site for the package in question (valid as of April, 2002)
+the main site for the package in question (valid as of October, 2006)
 while the link on the right leads to a search for the package on
 <tt>rpmfind.net</tt>.</p>
 
@@ -32,12 +32,6 @@ while the link on the right leads to a search for the package on
   <td>required</td>
   <td>provides the gretl GUI</td>
   <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk">search</a></td>
-</tr>
-<tr bgcolor="#E0E0E0">
-  <td><a href="http://gtkextra.sourceforge.net/">gtkextra</a></td>
-  <td>optional</td>
-  <td>file selection dialogs, session icon view, data editing spreadsheet</td>
-  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gtk%2Bextra">search</a></td>
 </tr>
 <tr bgcolor="#E0E0E0">
   <td><a href="http://www.xmlsoft.org/">libxml</a></td>
@@ -58,12 +52,6 @@ while the link on the right leads to a search for the package on
   <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gnuplot">search</a></td>
 </tr>
 <tr bgcolor="#E0E0E0">
-  <td><a href="ftp://ftp.gnome.org/pub/GNOME/stable/latest/sources/">gdk-pixbuf</a></td>
-  <td>required</td>
-  <td>handle graphs in PNG format; make gnuplot graphs interactive</td>
-  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gdk-pixbuf">search</a></td>
-</tr>
-<tr bgcolor="#E0E0E0">
   <td><a href="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">readline</a></td>
   <td>optional</td>
   <td>provides a nice editable command line in <tt>gretlcli</tt>,
@@ -73,15 +61,8 @@ while the link on the right leads to a search for the package on
 <tr bgcolor="#E0E0E0">
   <td><a href="http://www.gnome.org/">gnome</a></td>
   <td>optional</td>
-  <td>gretl is integrated into the gnome desktop (file icons and
-      associations, HTML help system and so on)</td>
+  <td>gretl is integrated into the gnome desktop</td>
   <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=gnome">search</a></td>
-</tr>
-<tr bgcolor="#E0E0E0">
-  <td><a href="ftp://ftp.gnome.org/pub/GNOME/sources/libole2/">libole2</a></td>
-  <td>optional [<a href="#note1">1</a>]</td>
-  <td>import data from MS Excel</td>
-  <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libole2">search</a></td>
 </tr>
 <tr bgcolor="#E0E0E0">
   <td><a href="http://swox.com/gmp/">GMP</a></td>
@@ -90,12 +71,5 @@ while the link on the right leads to a search for the package on
   <td><a href="http://rpmfind.net/linux/rpm2html/search.php?query=libgmp">search</a></td>
 </tr>
 </table>
-
-<h3>Notes</h3>
-
-<p><a name="note1">1.</a> The relevant part of the libole2 code is
-included in the gretl source package, and if libole2 is not found on
-your system this code will be compiled into gretl.</p>
-
 
 </body>
