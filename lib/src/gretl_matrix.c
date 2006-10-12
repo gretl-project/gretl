@@ -1390,6 +1390,108 @@ gretl_matrix_unvectorize_h (gretl_matrix *targ, const gretl_matrix *src)
 }
 
 /**
+ * gretl_matrix_inscribe_matrix:
+ * @targ: target matrix.
+ * @src: source matrix.
+ * @row: row offset for insertion (0-based).
+ * @col: column offset for insertion.
+ * @mod: either %GRETL_MOD_TRANSPOSE or %GRETL_MOD_NONE.
+ *
+ * Writes @src into @targ, starting at offset @row, @col.
+ * The @targ matrix must be large enough to sustain the
+ * inscription of @src at the specified point.  If @mod
+ * is %GRETL_MOD_TRANSPOSE it is in fact the transpose of
+ * @src that is written into @targ.
+ * 
+ * Returns: 0 on success, %E_NONCONF if the matrices are
+ * not conformable for the operation.
+ */
+
+int gretl_matrix_inscribe_matrix (gretl_matrix *targ,
+				  const gretl_matrix *src,
+				  int row, int col,
+				  GretlMatrixMod mod)
+{
+    int m = (mod == GRETL_MOD_TRANSPOSE)? src->cols : src->rows;
+    int n = (mod == GRETL_MOD_TRANSPOSE)? src->rows : src->cols;
+    double x;
+    int i, j;
+
+    if (row < 0 || col < 0) {
+	return E_NONCONF;
+    }
+
+    if (row + m > targ->rows ||
+	col + n > targ->cols) {
+	return E_NONCONF;
+    }
+
+    for (i=0; i<m; i++) {
+	for (j=0; j<n; j++) {
+	    if (mod == GRETL_MOD_TRANSPOSE) {
+		x = gretl_matrix_get(src, j, i);
+	    } else {
+		x = gretl_matrix_get(src, i, j);
+	    }
+	    gretl_matrix_set(targ, row + i, col + j, x);
+	}
+    }
+
+    return 0;
+}
+
+/**
+ * gretl_matrix_extract_matrix:
+ * @targ: target matrix.
+ * @src: source matrix.
+ * @row: row offset for extraction (0-based).
+ * @col: column offset for extraction.
+ * @mod: either %GRETL_MOD_TRANSPOSE or %GRETL_MOD_NONE.
+ *
+ * Writes into @targ a sub-matrix of @src, taken from the
+ * offset @row, @col.  The @targ matrix must be large enough
+ * to provide a sub-matrix of the dimensions of @src.
+ * If @mod is %GRETL_MOD_TRANSPOSE it is in fact the transpose 
+ * of the sub-matrix that that is written into @targ.
+ * 
+ * Returns: 0 on success, %E_NONCONF if the matrices are
+ * not conformable for the operation.
+ */
+
+int gretl_matrix_extract_matrix (gretl_matrix *targ,
+				 const gretl_matrix *src,
+				 int row, int col,
+				 GretlMatrixMod mod)
+{
+    int m = (mod == GRETL_MOD_TRANSPOSE)? targ->cols : targ->rows;
+    int n = (mod == GRETL_MOD_TRANSPOSE)? targ->rows : targ->cols;
+    double x;
+    int i, j;
+
+    if (row < 0 || col < 0) {
+	return E_NONCONF;
+    }
+
+    if (row + m > src->rows ||
+	col + n > src->cols) {
+	return E_NONCONF;
+    }
+
+    for (i=0; i<m; i++) {
+	for (j=0; j<n; j++) {
+	    x = gretl_matrix_get(src, row + i, col + j);
+	    if (mod == GRETL_MOD_TRANSPOSE) {
+		gretl_matrix_set(targ, j, i, x);
+	    } else {
+		gretl_matrix_set(targ, i, j, x);
+	    }
+	}
+    }
+
+    return 0;
+}
+
+/**
  * gretl_matrix_steal_data:
  * @m: matrix to operate on.
  *
