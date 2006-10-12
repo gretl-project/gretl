@@ -248,7 +248,7 @@ tobit.la: tobit.lo
 poisson.la: poisson.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) 
 
-garch.la: garch.lo fcp.lo
+garch.la: garch.lo fcp.lo mod_garch.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 gretlzip.la: gretlzip.lo $(ZIPOBJ)

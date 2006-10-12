@@ -64,6 +64,9 @@ int BFGS_max (double *b, int n, int maxit, double reltol,
 	      BFGS_GRAD_FUNC gradfunc, void *data, 
 	      gretlopt opt, PRN *prn);
 
+int BFGS_numeric_gradient (double *b, double *g, int n,
+			   BFGS_LL_FUNC func, void *data);
+
 gretl_matrix *build_OPG_matrix (double *b, int k, int T,
 				BFGS_SCORE_FUNC scorefun,
 				void *data, int *err);

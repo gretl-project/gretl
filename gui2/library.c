@@ -5281,7 +5281,7 @@ static int shrink_dataset_to_sublist (void)
     return err;
 }
 
-static int maybe_shrink_dataset (const char *savename, int sublist)
+static void maybe_shrink_dataset (const char *savename, int sublist)
 {
     int shrink = 0;
     int resp;

@@ -717,8 +717,8 @@ static int get_mle_gradient (double *b, double *g, int n,
 
 /* default numerical calculation of gradient in context of BFGS */
 
-static int BFGS_numeric_gradient (double *b, double *g, int n,
-				  BFGS_LL_FUNC func, void *data)
+int BFGS_numeric_gradient (double *b, double *g, int n,
+			   BFGS_LL_FUNC func, void *data)
 {
     double bi0, f1, f2;
     gretlopt opt = OPT_NONE;
