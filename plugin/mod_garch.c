@@ -446,93 +446,6 @@ static int garch_etht (const double *par, void *ptr)
     return ret;
 } 
 
-static void garch_infomat (garch_container *DH, double **info)
-{
-    double tmpi, tmpj, tmpx1, tmpx2, x;
-    int i, j, t;
-
-    for (i=0; i<DH->k; i++) {
-	for (j=0; j<DH->k; j++) {
-	    info[i][j] = 0.0;
-	}
-    }
-
-    for (t=DH->t1; t<=DH->t2; t++) {
-	for (i=0; i<=DH->ncm; i++) {
-	    tmpi = DH->score_h[i][t] / DH->h[t];
-	    tmpx1 = (i == 0)? 1.0 : DH->X[i-1][t];
-	    tmpx1 *= 2.0;
-	    tmpx1 /= DH->h[t];
-	    for (j=0; j<=i; j++) {
-		tmpj = DH->score_h[j][t] / DH->h[t];
-		tmpx2 = (j == 0)? 1.0 : DH->X[j-1][t];
-		x = tmpx1 * tmpx2 + tmpi * tmpj;
-		info[i][j] += x;
-		info[j][i] += x;
-	    }
-	}
-
-	for (i=DH->ncm+1; i<DH->k; i++) {
-	    tmpi = DH->score_h[i][t] / DH->h[t];
-	    for (j=DH->ncm+1; j<=i; j++) {
-		tmpj = DH->score_h[j][t] / DH->h[t];
-		x = tmpi * tmpj;
-		info[i][j] += x;
-		info[j][i] += x;
-	    }
-	}
-    }
-
-    for (i=0; i<DH->k; i++) {
-	for (j=0; j<DH->k; j++) {
-	    info[i][j] *= 0.5;
-	}
-    }
-
-#if GDEBUG
-    fputs("Information matrix:\n", stderr);
-    for (i=0; i<DH->k; i++) {
-	for (j=0; j<DH->k; j++) {
-	    fprintf(stderr, "%14.6f ", info[i][j]);
-	}
-	fputc('\n', stderr);
-    }
-#endif
-}
-
-static void garch_opg (garch_container *DH, double **GG)
-{
-    double tmpi, x;
-    int t, i, j;
-
-    for (i=0; i<DH->k; i++) {
-	for (j=0; j<DH->k; j++) {
-	    GG[i][j] = 0.0;
-	}
-    }
-
-    for (t=DH->t1; t<=DH->t2; t++) {
-	for (i=0; i<DH->k; i++) {
-	    tmpi = DH->G[i][t];
-	    for (j=0; j<=i; j++) {
-		x = tmpi * DH->G[j][t]; 
-		GG[i][j] += x;
-		GG[j][i] += x;
-	    }
-	}
-    }
-
-#if GDEBUG
-    fputs("OPG matrix:\n", stderr);
-    for (i=0; i<DH->k; i++) {
-	for (j=0; j<DH->k; j++) {
-	    fprintf(stderr, "%14.6f ", GG[i][j]);
-	}
-	fputc('\n', stderr);
-    }
-#endif
-}
-
 static double loglik (const double *theta, void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
@@ -590,6 +503,210 @@ static int anal_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll,
     }
 
     return err;
+}
+
+static int garch_iinfo (garch_container *DH, gretl_matrix *info)
+{
+    double **tmp_info;
+    double tmpi, tmpj, tmpx1, tmpx2, x;
+    int i, j, t;
+
+    tmp_info = doubles_array_new(DH->k, DH->k);
+    if (tmp_info == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<=i; j++) {
+	    tmp_info[i][j] = 0.0;
+	}
+    }
+
+    for (t=DH->t1; t<=DH->t2; t++) {
+	for (i=0; i<=DH->ncm; i++) {
+	    tmpi = DH->score_h[i][t] / DH->h[t];
+	    tmpx1 = (i==0)? 2.0 : 2.0*(DH->X[i-1][t]);
+	    tmpx1 /= DH->h[t];
+	    for (j=0; j<=i; j++) {
+		tmpj = DH->score_h[j][t] / DH->h[t];
+		tmpx2 = (j==0)? 1.0 : 1.0*(DH->X[j-1][t]);
+		x = tmpx1 * tmpx2 + tmpi * tmpj;
+		tmp_info[i][j] += x;
+	    }
+	}
+
+	for (i=DH->ncm+1; i<DH->k; i++) {
+	    tmpi = DH->score_h[i][t] / DH->h[t];
+	    for (j=DH->ncm+1; j<=i; j++) {
+		tmpj = DH->score_h[j][t] / DH->h[t];
+		x = tmpi * tmpj;
+		tmp_info[i][j] += x;
+	    }
+	}
+    }
+
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<=i; j++) {
+	    gretl_matrix_set(info, i, j, 0.5*tmp_info[i][j]);
+	    if (j < i) {
+		gretl_matrix_set(info, j, i, 0.5*tmp_info[i][j]);
+	    }
+	}
+    }
+
+    doubles_array_free(tmp_info, DH->k);
+
+#if GDEBUG
+    gretl_matrix_print(info, "Information matrix");
+#endif
+
+    gretl_invert_symmetric_matrix(info);
+
+#if GDEBUG
+    gretl_matrix_print(info, "Information matrix (inverse)");
+#endif
+
+    return 0;
+}
+
+static int garch_opg (garch_container *DH, gretl_matrix *GG)
+{
+    double **tmp_GG;
+    double tmpi, x;
+    int t, i, j;
+
+    tmp_GG = doubles_array_new(DH->k, DH->k);
+    if (tmp_GG == NULL) {
+	return E_ALLOC;
+    }
+
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<DH->k; j++) {
+	    tmp_GG[i][j] = 0.0;
+	}
+    }
+
+    for (t=DH->t1; t<=DH->t2; t++) {
+	for (i=0; i<DH->k; i++) {
+	    tmpi = DH->G[i][t];
+	    for (j=0; j<=i; j++) {
+		x = tmpi * DH->G[j][t]; 
+		tmp_GG[i][j] += x;
+	    }
+	}
+    }
+
+    for (i=0; i<DH->k; i++) {
+	for (j=0; j<=i; j++) {
+	    gretl_matrix_set(GG, i, j, tmp_GG[i][j]);
+	    if(j<i) {
+		gretl_matrix_set(GG, j, i, tmp_GG[i][j]);
+	    }
+	}
+    }
+
+    doubles_array_free(tmp_GG, DH->k);
+
+#if GDEBUG
+    gretl_matrix_print(GG, "OPG matrix");
+#endif
+
+    return 0;
+}
+
+static int garch_ihess (garch_container *DH, double *theta, gretl_matrix *invH)
+{
+    double vij, *V;
+    int i, j, k, npar = DH->k;
+
+    V = numerical_hessian(theta, npar, loglik, DH);
+    if (V == NULL) {
+	return E_ALLOC;
+    }
+
+    k = 0;
+    for (i=0; i<npar; i++) {
+	for (j=i; j<npar; j++) {
+	    vij = V[k++];
+	    gretl_matrix_set(invH, i, j, vij);
+	    if (i != j) {
+		gretl_matrix_set(invH, j, i, vij);
+	    }
+	}
+    }
+
+#if GDEBUG
+    gretl_matrix_print(invH, "Hessian (inverse)");
+#endif
+
+    free(V);
+
+    return 0;
+}
+
+static gretl_matrix *
+garch_covariance_matrix (int vopt, double *theta, garch_container *DH) 
+{
+    gretl_matrix *V = NULL;
+    gretl_matrix *GG = NULL;
+    gretl_matrix *iinfo = NULL;
+    gretl_matrix *invhess = NULL;
+    int npar = DH->k;
+    int err = 0;
+
+    V = gretl_matrix_alloc(npar, npar);
+    if (V == NULL) {
+	return NULL;
+    }
+
+    if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) { 
+	/* GG' needed */
+	GG = gretl_matrix_alloc(npar, npar);
+	err = garch_opg(DH, GG);
+    }
+
+    if (vopt == VCV_IM || vopt == VCV_BW) { 
+	/* information matrix needed */
+	iinfo = gretl_matrix_alloc(npar, npar);
+	err = garch_iinfo(DH, iinfo);
+    }
+
+    if (vopt == VCV_QML || vopt == VCV_HESSIAN) { 
+	/* Hessian matrix needed */
+	invhess = gretl_matrix_alloc(npar, npar);
+	err = garch_ihess(DH, theta, invhess);
+    }
+
+    switch (vopt) {
+    case VCV_HESSIAN:
+	gretl_matrix_copy_values(V, invhess);
+	break;
+    case VCV_IM:
+	gretl_matrix_copy_values(V, iinfo);
+	break;
+    case VCV_OP:
+	err = gretl_invert_symmetric_matrix(GG);
+	gretl_matrix_copy_values(V, GG);
+	break;
+    case VCV_BW:
+	err = gretl_matrix_multiply(iinfo, GG, V);
+	err = gretl_matrix_multiply(V, iinfo, GG);
+	gretl_matrix_copy_values(V, GG);
+	break;
+    case VCV_QML:
+	err = gretl_matrix_multiply(invhess, GG, V);
+	err = gretl_matrix_multiply(V, invhess, GG);
+	gretl_matrix_copy_values(V, GG);
+	break;
+    default: 
+	break;
+    }
+
+    gretl_matrix_free(GG);
+    gretl_matrix_free(iinfo);
+    gretl_matrix_free(invhess);
+
+    return V;
 }
 
 #if GDEBUG
@@ -660,9 +777,8 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     int npar = 1 + nx + 1 + p + q;
     int analytical = 1;
     double *theta = NULL;
-    double **info = NULL;
-    double vij, *V = NULL;
-    int i, j, k, err = 0;
+    gretl_matrix *V = NULL;
+    int i, j, err = 0;
 
     /* BFGS apparatus */
     int maxit = 1000;
@@ -713,41 +829,26 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     test_score(DH, theta);
 #endif
 
-    V = numerical_hessian(theta, npar, loglik, DH);
+    V = garch_covariance_matrix(vopt, theta, DH);
     if (V == NULL) {
 	err = E_ALLOC;
     } else {
-	k = 0;
+	double vij;
+
+#if GDEBUG
+	gretl_matrix_print(V, "Variance-covariance matrix");
+#endif
 	for (i=0; i<npar; i++) {
 	    for (j=i; j<npar; j++) {
-		vij = V[k++];
+		vij = gretl_matrix_get(V,i,j);
 		vcv[(i*npar) + j] = vij;
 		if (i != j) {
 		    vcv[(j*npar) + i] = vij;
 		}
 	    }
 	}
-#if GDEBUG
-	k = 0;
-	for (i=0; i<npar; i++) {
-	    for (j=i; j<npar; j++) {
-		fprintf(stderr, "V[%d,%d] = %g\t", i, j, V[k++]);
-	    }
-	    fputc('\n', stderr);
-	}
-#endif
+	gretl_matrix_free(V);
     }
-
-    info = doubles_array_new(npar, npar);
-    if (info == NULL) {
-	err = E_ALLOC;
-    } else {
-	garch_infomat(DH, info);
-	garch_opg(DH, info);
-	doubles_array_free(info, npar);
-    }
-
-    free(V);
 
     if (!err) {
 	double sderr;
