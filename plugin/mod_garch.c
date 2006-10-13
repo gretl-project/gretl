@@ -667,9 +667,12 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
     int npar = DH->k;
     int err = 0;
 
-    V = gretl_matrix_alloc(npar, npar);
-    if (V == NULL) {
-	return E_ALLOC;
+    if (vopt == VCV_BW || vopt == VCV_QML) {
+	/* need a distinct matrix for workspace */
+	V = gretl_matrix_alloc(npar, npar);
+	if (V == NULL) {
+	    return E_ALLOC;
+	}
     }
 
     if (vopt == VCV_OP || vopt == VCV_QML || vopt == VCV_BW) { 
@@ -696,14 +699,17 @@ garch_covariance_matrix (int vopt, double *theta, garch_container *DH,
 
     switch (vopt) {
     case VCV_HESSIAN:
-	gretl_matrix_copy_values(V, invhess);
+	V = invhess;
+	invhess = NULL;
 	break;
     case VCV_IM:
-	gretl_matrix_copy_values(V, iinfo);
+	V = iinfo;
+	iinfo = NULL;
 	break;
     case VCV_OP:
-	err = gretl_invert_symmetric_matrix(GG);
-	gretl_matrix_copy_values(V, GG);
+	V = GG;
+	GG = NULL;
+	err = gretl_invert_symmetric_matrix(V);
 	break;
     case VCV_BW:
 	err = gretl_matrix_multiply(iinfo, GG, V);
