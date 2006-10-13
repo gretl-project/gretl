@@ -24,13 +24,8 @@
 */
 
 #include "libgretl.h"
-#include "libset.h"
-#include "gretl_matrix.h"
+#include "libset.h"    /* unused */
 #include "mod_garch.h"
-#include "nls.h"
-
-#include "f2c.h"
-#include "clapack_double.h"
 
 #define GDEBUG 0
 
@@ -76,10 +71,8 @@ static void mark (int *n)
     if (n == NULL) {
 	fprintf(stderr,"Ha!\n"); 
     } else {
-	int locn = *n;
-
-	fprintf(stderr,"Ha! (%d)\n", locn); 
-	*n = ++locn;
+	fprintf(stderr,"Ha! (%d)\n", *n); 
+	*n += 1;
     }
 }
 #endif
@@ -94,36 +87,32 @@ static void free_eh_derivs (garch_container *DH)
     doubles_array_free(DH->blockglue, 2);
 }
 
-static int init_eh_derivs (garch_container *DH)
+static int allocate_eh_derivs (garch_container *DH)
 {
-    DH->score_e = NULL;
-    DH->score_h = NULL;
-    DH->G = NULL;
-    DH->blockglue = NULL;
     int err = 0;
 
-    if (DH->ascore) {
-	DH->score_e = doubles_array_new(DH->k, DH->nobs);
-	DH->score_h = doubles_array_new(DH->k, DH->nobs);
-	DH->G = doubles_array_new(DH->k, DH->nobs);
-	DH->blockglue = doubles_array_new(2, DH->nobs);
+    DH->score_e = doubles_array_new(DH->k, DH->nobs);
+    DH->score_h = doubles_array_new(DH->k, DH->nobs);
+    DH->G = doubles_array_new(DH->k, DH->nobs);
+    DH->blockglue = doubles_array_new(2, DH->nobs);
 
-	if (DH->score_e == NULL ||
-	    DH->score_h == NULL ||
-	    DH->G == NULL ||
-	    DH->blockglue == NULL) {
-	    err = E_ALLOC;
-	}
+    if (DH->score_e == NULL ||
+	DH->score_h == NULL ||
+	DH->G == NULL ||
+	DH->blockglue == NULL) {
+	free_eh_derivs(DH);
+	err = E_ALLOC;
     }
 
     return err;
 }
 
-static garch_container *init_container (double *y, const double **X, 
-					int t1, int t2, int nobs, int nx,
-					int p, int q, int init_method, 
-					double *res, double *h, 
-					int analytical)
+static garch_container *
+garch_container_new (double *y, const double **X, 
+		     int t1, int t2, int nobs, int nx,
+		     int p, int q, int init_method, 
+		     double *res, double *h, 
+		     int analytical)
 {
     garch_container *DH = malloc(sizeof *DH);
 
@@ -151,7 +140,18 @@ static garch_container *init_container (double *y, const double **X,
     DH->ascore = analytical;
     DH->k = 1 + nx + 1 + p + q;
 
-    init_eh_derivs(DH);
+    DH->score_e = NULL;
+    DH->score_h = NULL;
+    DH->G = NULL;
+    DH->blockglue = NULL;
+
+    if (DH->ascore) {
+	if (allocate_eh_derivs(DH)) {
+	    free(DH->e2);
+	    free(DH);
+	    DH = NULL;
+	}
+    }
 
     return DH;
 }
@@ -165,11 +165,9 @@ static void garch_container_destroy (garch_container *DH)
     free(DH);
 }
 
-/* 
-   Compute the *ARCH log-likelihood for Gaussian innovations. 
-*/
+/* *ARCH log-likelihood for Gaussian innovations */
 
-static double normal_ll (const garch_container *DH, int *err)
+static double normal_ll (const garch_container *DH)
 {
     double e2t, ht, ll = 0.0;
     int t;
@@ -178,7 +176,6 @@ static double normal_ll (const garch_container *DH, int *err)
 	e2t = DH->e2[t];
 	ht = DH->h[t];
 	if (na(e2t) || na(ht)) {
-	    *err = E_MISSDATA;
 	    return NADBL;
 	}
 	ll -= log(ht) + e2t / ht;
@@ -360,7 +357,7 @@ static int garch_etht (const double *par, void *ptr)
 		if (t - p < t1 && DH->init == INIT_VAR_RESID) {
 		    dhdq[0][t] += par[k+i] * dhdq[0][t1-1];
 		} else {	
-		    dhdq[0][t] += 2.0 * par[k+i] * (DH->e[t-i]) * dedq[0][t-i];
+		    dhdq[0][t] += 2.0 * par[k+i] * DH->e[t-i] * dedq[0][t-i];
 		}
 	    }
 	    
@@ -373,7 +370,7 @@ static int garch_etht (const double *par, void *ptr)
 		    if (t - p < t1 && DH->init == INIT_VAR_RESID) { // add INIT_THEO here
 			dhdq[i][t] += par[k+j] * dhdq[i][t1-1];
 		    } else {	
-			dhdq[i][t] += 2.0 * par[k+j] * (DH->e[t-j]) * dedq[i][t-j];
+			dhdq[i][t] += 2.0 * par[k+j] * DH->e[t-j] * dedq[i][t-j];
 		    }
 		}
 	    }
@@ -463,12 +460,12 @@ static void garch_infomat (garch_container *DH, double **info)
     for (t=DH->t1; t<=DH->t2; t++) {
 	for (i=0; i<=DH->ncm; i++) {
 	    tmpi = DH->score_h[i][t] / DH->h[t];
-	    tmpx1 = (i==0)? 1.0 : DH->X[i-1][t];
+	    tmpx1 = (i == 0)? 1.0 : DH->X[i-1][t];
 	    tmpx1 *= 2.0;
 	    tmpx1 /= DH->h[t];
 	    for (j=0; j<=i; j++) {
 		tmpj = DH->score_h[j][t] / DH->h[t];
-		tmpx2 = (j==0)? 1.0 : DH->X[j-1][t];
+		tmpx2 = (j == 0)? 1.0 : DH->X[j-1][t];
 		x = tmpx1 * tmpx2 + tmpi * tmpj;
 		info[i][j] += x;
 		info[j][i] += x;
@@ -539,10 +536,15 @@ static void garch_opg (garch_container *DH, double **GG)
 static double loglik (const double *theta, void *ptr)
 {
     garch_container *DH = (garch_container *) ptr;
+    double ll = NADBL;
     int err;
 
     err = garch_etht(theta, DH);
-    return normal_ll(DH, &err);
+    if (!err) {
+	ll = normal_ll(DH);
+    }
+
+    return ll;
 }
 
 static int score_fill_matrices (const double *theta, void *ptr)
@@ -551,6 +553,10 @@ static int score_fill_matrices (const double *theta, void *ptr)
     int i, t, err;
 
     err = garch_etht(theta, DH);
+    if (err) {
+	return err;
+    }
+
     normal_score(DH);
 
     for (t=DH->t1; t<=DH->t2; t++) {
@@ -568,9 +574,12 @@ static int anal_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll,
 {
     garch_container *DH = (garch_container *) ptr;
     double tmp;
-    int t, i, ret = 0;
+    int t, i, err;
 
-    score_fill_matrices(theta, DH);
+    err = score_fill_matrices(theta, DH);
+    if (err) {
+	return err;
+    }
 
     for (i=0; i<npar; i++) {
 	tmp = 0.0;
@@ -580,8 +589,35 @@ static int anal_score (double *theta, double *s, int npar, BFGS_LL_FUNC ll,
 	s[i] = tmp;
     }
 
-    return ret;
+    return err;
 }
+
+#if GDEBUG
+
+static void test_score (garch_container *DH, double *theta)
+{
+    double *testa, *testn;
+    int i, testret;
+
+    testa = malloc(npar * sizeof *testa);
+    testn = malloc(npar * sizeof *testn);
+
+    testret = anal_score(theta, testa, DH->k, loglik, DH);
+    testret = BFGS_numeric_gradient(theta, testn, DH->k, loglik, DH);
+
+    fprintf(stderr, "ret = %d:\n", testret);
+
+    for (i=0; i<DH->k; i++) {
+	fprintf(stderr, "g[%d]: analytical = %14.8f, numerical: = %14.8f, \n", 
+		i, testa[i], testn[i]);
+    }
+    fputc('\n', stderr);
+
+    free(testa);
+    free(testn);
+}
+
+#endif
 
 /*
    Parameters to garch_estimate_mod()
@@ -625,7 +661,7 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     int analytical = 1;
     double *theta = NULL;
     double **info = NULL;
-    double *V, vij;
+    double vij, *V = NULL;
     int i, j, k, err = 0;
 
     /* BFGS apparatus */
@@ -634,10 +670,20 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     int fncount = 0;
     int grcount = 0;
 
-    DH = init_container(y, X, t1, t2, nobs, nx, p, q, INIT_VAR_RESID,
-			res, h, analytical);
+    DH = garch_container_new(y, X, t1, t2, nobs, nx, p, q, 
+			     INIT_VAR_RESID, res, h, 
+			     analytical);
+
+    if (DH == NULL) {
+	return E_ALLOC;
+    }
 
     theta = malloc(npar * sizeof *theta);
+    if (theta == NULL) {
+	garch_container_destroy(DH);
+	return E_ALLOC;
+    }
+
     theta[0] = gretl_mean(t1, t2, y);
     for (i=1; i<=nx; i++) {
 	theta[i] = coeff[i];
@@ -664,65 +710,50 @@ int garch_estimate_mod (int t1, int t2, int nobs,
     fprintf(stderr, "iters = %d (%d)\n", fncount, grcount);
 
 #if GDEBUG
-    if (1) {
-	double *testa, *testn;
-	int testret;
-
-	testa = malloc(npar * sizeof *testa);
-	testn = malloc(npar * sizeof *testn);
-
-	testret = anal_score(theta, testa, npar, loglik, DH);
-	testret = BFGS_numeric_gradient(theta, testn, npar, loglik, DH);
-
-	fprintf(stderr, "ret = %d:\n", testret);
-
-	for (i=0; i<npar; i++) {
-	    fprintf(stderr, "g[%d]: analytical = %14.8f, numerical: = %14.8f, \n", 
-		    i, testa[i], testn[i]);
-	}
-	fputc('\n', stderr);
-
-	free(testa);
-	free(testn);
-    }
+    test_score(DH, theta);
 #endif
 
     V = numerical_hessian(theta, npar, loglik, DH);
-
-    k = 0;
-    for (i=0; i<npar; i++) {
-	for (j=i; j<npar; j++) {
-	    vij = V[k++];
-	    vcv[(i*npar) + j] = vij;
-	    if (i != j) {
-		vcv[(j*npar) + i] = vij;
+    if (V == NULL) {
+	err = E_ALLOC;
+    } else {
+	k = 0;
+	for (i=0; i<npar; i++) {
+	    for (j=i; j<npar; j++) {
+		vij = V[k++];
+		vcv[(i*npar) + j] = vij;
+		if (i != j) {
+		    vcv[(j*npar) + i] = vij;
+		}
 	    }
 	}
-    }
-
 #if GDEBUG
-    k = 0;
-    for (i=0; i<npar; i++) {
-	for (j=i; j<npar; j++) {
-	    fprintf(stderr, "V[%d,%d] = %g\t", i, j, V[k++]);
+	k = 0;
+	for (i=0; i<npar; i++) {
+	    for (j=i; j<npar; j++) {
+		fprintf(stderr, "V[%d,%d] = %g\t", i, j, V[k++]);
+	    }
+	    fputc('\n', stderr);
 	}
-	fputc('\n', stderr);
-    }
 #endif
+    }
 
     info = doubles_array_new(npar, npar);
-    garch_infomat(DH, info);
-    garch_opg(DH, info);
+    if (info == NULL) {
+	err = E_ALLOC;
+    } else {
+	garch_infomat(DH, info);
+	garch_opg(DH, info);
+	doubles_array_free(info, npar);
+    }
 
-    doubles_array_free(info, npar);
     free(V);
 
     if (!err) {
 	double sderr;
 
 	/* transcribe coefficients and standard errors 
-	   note: slightly different from fcp
-	*/
+	   note: slightly different from fcp */
 	for (i=0, j=0; i<npar; i++) {
 	    if (vcv[j] > 0.0) {
 		sderr = sqrt(vcv[j]);
